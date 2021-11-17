@@ -130,6 +130,7 @@ libroken_la_OBJS =			\
 	$(OBJ)\warnerr.obj		\
 	$(OBJ)\warnx.obj		\
         $(OBJ)\win32_alloc.obj          \
+	$(OBJ)\win32_version.obj        \
 	$(OBJ)\writev.obj               \
 	$(OBJ)\xfree.obj
 
@@ -178,6 +179,7 @@ INCFILES = 			\
 	$(INCDIR)\stdbool.h	\
 	$(INCDIR)\syslog.h	\
 	$(INCDIR)\vis.h		\
+	$(INCDIR)\vis-extras.h	\
 !ifndef HAVE_STDINT_H
 	$(INCDIR)\stdint.h	\
 !endif

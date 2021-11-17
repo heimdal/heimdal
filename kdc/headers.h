@@ -98,6 +98,7 @@
 #include <hdb.h>
 #include <hdb_err.h>
 #include <der.h>
+#include <gssapi/gssapi.h>
 
 #ifndef NO_NTLM
 #include <heimntlm.h>

@@ -93,19 +93,7 @@ typedef void (HEIM_CALLCONV *heim_log_log_func_t)(heim_context,
                                                   void *);
 typedef void (HEIM_CALLCONV *heim_log_close_func_t)(void *);
 
-struct heim_log_facility_internal {
-    int min;
-    int max;
-    heim_log_log_func_t log_func;
-    heim_log_close_func_t close_func;
-    void *data;
-};
-
-typedef struct heim_log_facility_s {
-    char *program;
-    int len;
-    struct heim_log_facility_internal *val;
-} heim_log_facility;
+typedef struct heim_log_facility_s heim_log_facility;
 
 typedef uintptr_t
 (HEIM_LIB_CALL *heim_get_instance_func_t)(const char *);
@@ -120,15 +108,17 @@ struct heim_plugin_data {
     heim_get_instance_func_t get_instance;
 };
 
-typedef struct heim_config_binding heim_config_binding;
+/*
+ * heim_config_binding is identical to struct krb5_config_binding
+ * within krb5.h.  Its format is public and used by callers of
+ * krb5_config_get_list() and krb5_config_vget_list().
+ */
+enum heim_config_type {
+    heim_config_string,
+    heim_config_list,
+};
 struct heim_config_binding {
-    enum {
-        heim_config_string,
-        heim_config_list,
-        /* For compatibility in krb5 code */
-        krb5_config_string = heim_config_string,
-        krb5_config_list = heim_config_list,
-    } type;
+    enum heim_config_type type;
     char *name;
     struct heim_config_binding *next;
     union {
@@ -137,6 +127,7 @@ struct heim_config_binding {
         void *generic;
     } u;
 };
+typedef struct heim_config_binding heim_config_binding;
 typedef struct heim_config_binding heim_config_section;
 
 /*
@@ -516,149 +507,8 @@ int heim_w32_setspecific(unsigned long, void *);
 void *heim_w32_getspecific(unsigned long);
 void heim_w32_service_thread_detach(void *);
 
-/*
- * Atomic operations
- */
-
-#if defined(__GNUC__) && defined(HAVE___SYNC_ADD_AND_FETCH)
-
-#define heim_base_atomic_inc(x) __sync_add_and_fetch((x), 1)
-#define heim_base_atomic_dec(x) __sync_sub_and_fetch((x), 1)
-#define heim_base_atomic_type	unsigned int
-#define heim_base_atomic_max    UINT_MAX
-
-#ifndef __has_builtin
-#define __has_builtin(x) 0
-#endif
-
-#if __has_builtin(__sync_swap)
-#define heim_base_exchange_pointer(t,v) __sync_swap((t), (v))
-#else
-#define heim_base_exchange_pointer(t,v) __sync_lock_test_and_set((t), (v))
-#endif
-
-#define heim_base_exchange_32(t,v)	heim_base_exchange_pointer((t), (v))
-#define heim_base_exchange_64(t,v)	heim_base_exchange_pointer((t), (v))
-
-#elif defined(__sun)
-
-#include <sys/atomic.h>
-
-#define heim_base_atomic_inc(x) atomic_inc_uint_nv((volatile uint_t *)(x))
-#define heim_base_atomic_dec(x) atomic_dec_uint_nv((volatile uint_t *)(x))
-#define heim_base_atomic_type	uint_t
-#define heim_base_atomic_max    UINT_MAX
-
-#define heim_base_exchange_pointer(t,v) atomic_swap_ptr((volatile void *)(t), (void *)(v))
-#define heim_base_exchange_32(t,v)	atomic_swap_32((volatile uint32_t *)(t), (v))
-#define heim_base_exchange_64(t,v)	atomic_swap_64((volatile uint64_t *)(t), (v))
-
-#elif defined(_AIX)
-
-#include <sys/atomic_op.h>
-
-#define heim_base_atomic_inc(x) (fetch_and_add((atomic_p)(x)) + 1)
-#define heim_base_atomic_dec(x) (fetch_and_add((atomic_p)(x)) - 1)
-#define heim_base_atomic_type   unsigned int
-#define heim_base_atomic_max    UINT_MAX
-
-static inline void *
-heim_base_exchange_pointer(void *p, void *newval)
-{
-    void *val = *(void **)p;
-
-    while (!compare_and_swaplp((atomic_l)p, (long *)&val, (long)newval))
-        ;
-
-    return val;
-}
-
-static inline uint32_t
-heim_base_exchange_32(uint32_t *p, uint32_t newval)
-{
-    uint32_t val = *p;
-
-    while (!compare_and_swap((atomic_p)p, (int *)&val, (int)newval))
-        ;
-
-    return val;
-}
-
-static inline uint64_t
-heim_base_exchange_64(uint64_t *p, uint64_t newval)
-{
-    uint64_t val = *p;
-
-    while (!compare_and_swaplp((atomic_l)p, (long *)&val, (long)newval))
-        ;
-
-    return val;
-}
-
-#elif defined(_WIN32)
-
-#define heim_base_atomic_inc(x) InterlockedIncrement(x)
-#define heim_base_atomic_dec(x) InterlockedDecrement(x)
-#define heim_base_atomic_type	LONG
-#define heim_base_atomic_max    MAXLONG
-
-#define heim_base_exchange_pointer(t,v) InterlockedExchangePointer((PVOID volatile *)(t), (PVOID)(v))
-#define heim_base_exchange_32(t,v)	((ULONG)InterlockedExchange((LONG volatile *)(t), (LONG)(v)))
-#define heim_base_exchange_64(t,v)	((ULONG64)InterlockedExchange64((LONG64 violatile *)(t), (LONG64)(v)))
-
-#else
-
-#include "heim_threads.h"
-
-#define HEIM_BASE_NEED_ATOMIC_MUTEX 1
-extern HEIMDAL_MUTEX _heim_base_mutex;
-
-#define heim_base_atomic_type	unsigned int
-
-static inline heim_base_atomic_type
-heim_base_atomic_inc(heim_base_atomic_type *x)
-{
-    heim_base_atomic_type t;
-    HEIMDAL_MUTEX_lock(&_heim_base_mutex);
-    t = ++(*x);
-    HEIMDAL_MUTEX_unlock(&_heim_base_mutex);
-    return t;
-}
-
-static inline heim_base_atomic_type
-heim_base_atomic_dec(heim_base_atomic_type *x)
-{
-    heim_base_atomic_type t;
-    HEIMDAL_MUTEX_lock(&_heim_base_mutex);
-    t = --(*x);
-    HEIMDAL_MUTEX_unlock(&_heim_base_mutex);
-    return t;
-}
-
-#define heim_base_atomic_max    UINT_MAX
-
-static inline void *
-heim_base_exchange_pointer(void *target, void *value)
-{
-    void *old;
-    HEIMDAL_MUTEX_lock(&_heim_base_mutex);
-    old = *(void **)target;
-    *(void **)target = value;
-    HEIMDAL_MUTEX_unlock(&_heim_base_mutex);
-    return old;
-}
-
-#endif /* defined(__GNUC__) && defined(HAVE___SYNC_ADD_AND_FETCH) */
-
-#if SIZEOF_TIME_T == 8
-#define heim_base_exchange_time_t(t,v)	heim_base_exchange_64((t), (v))
-#elif SIZEOF_TIME_T == 4
-#define heim_base_exchange_time_t(t,v)	heim_base_exchange_32((t), (v))
-#else
-#error set SIZEOF_TIME_T for your platform
-#endif
-
 #include <heim_threads.h>
+#include "heimbase-atomics.h"
 #include <com_err.h>
 
 /*

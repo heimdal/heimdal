@@ -27,10 +27,40 @@ usage(int e)
     return e;
 }
 
+static const char *sysplugin_dirs[] =  {
+#ifdef _WIN32
+    "$ORIGIN",
+#else
+    "$ORIGIN/../lib/plugin/kdc",
+#endif
+#ifdef __APPLE__
+    LIBDIR "/plugin/kdc",
+#endif
+    NULL
+};
+
+static void
+load_plugins(krb5_context context)
+{
+    const char * const *dirs = sysplugin_dirs;
+#ifndef _WIN32
+    char **cfdirs;
+
+    cfdirs = krb5_config_get_strings(context, NULL, "kdc", "plugin_dir", NULL);
+    if (cfdirs)
+        dirs = (const char * const *)cfdirs;
+#endif
+
+    _krb5_load_plugins(context, "kdc", (const char **)dirs);
+
+#ifndef _WIN32
+    krb5_config_free_strings(cfdirs);
+#endif
+}
+
 int
 main(int argc, char **argv)
 {
-    krb5_kdc_configuration *config;
     krb5_error_code ret;
     krb5_context context;
     krb5_data token;
@@ -60,9 +90,8 @@ main(int argc, char **argv)
 
     if ((ret = krb5_init_context(&context)))
         err(1, "Could not initialize krb5_context");
-    if ((ret = krb5_kdc_get_config(context, &config)))
-        krb5_err(context, 1, ret, "Could not get KDC configuration");
-    config->app = app;
+
+    load_plugins(context);
 
     token_type = argv[0];
     token.data = argv[1];

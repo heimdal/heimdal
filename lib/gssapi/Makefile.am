@@ -85,6 +85,7 @@ mechsrc = \
 	mech/gss_accept_sec_context.c \
 	mech/gss_acquire_cred.c \
 	mech/gss_acquire_cred_from.c \
+	mech/gss_acquire_cred_impersonate_name.c \
 	mech/gss_acquire_cred_with_password.c \
 	mech/gss_add_cred.c \
 	mech/gss_add_cred_from.c \
@@ -171,6 +172,7 @@ mechsrc = \
 spnegosrc = \
 	spnego/accept_sec_context.c \
 	spnego/compat.c \
+	spnego/context_storage.c \
 	spnego/context_stubs.c \
 	spnego/external.c \
 	spnego/init_sec_context.c \

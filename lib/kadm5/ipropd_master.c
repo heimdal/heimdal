@@ -47,6 +47,7 @@ static int time_before_missing;
 static int time_before_gone;
 
 const char *master_hostname;
+const char *pidfile_basename;
 
 static krb5_socket_t
 make_signal_socket (krb5_context context)
@@ -937,9 +938,13 @@ get_first(kadm5_server_context *server_context, int log_fd,
 
     ret = kadm5_log_get_version_fd(server_context, log_fd, LOG_VERSION_FIRST,
                                    initial_verp, initial_timep);
+    if (ret == HEIM_ERR_EOF)
+        ret = kadm5_log_get_version_fd(server_context, log_fd,
+                                       LOG_VERSION_UBER, initial_verp,
+                                       initial_timep);
     if (ret != 0) {
         flock(log_fd, LOCK_UN);
-        krb5_warnx(context, "could not read initial log entry");
+        krb5_warn(context, ret, "could not read initial log entry");
         return -1;
     }
 
@@ -1529,8 +1534,10 @@ static struct getargs args[] = {
       "port ipropd will listen to", "port"},
     { "detach", 0, arg_flag, &detach_from_console,
       "detach from console", NULL },
-    { "daemon-child",       0 ,      arg_integer, &daemon_child,
+    { "daemon-child", 0, arg_integer, &daemon_child,
       "private argument, do not use", NULL },
+    { "pidfile-basename", 0, arg_string, &pidfile_basename,
+      "basename of pidfile; private argument for testing", "NAME" },
     { "hostname", 0, arg_string, rk_UNCONST(&master_hostname),
       "hostname of master (if not same as hostname)", "hostname" },
     { "verbose", 0, arg_flag, &verbose, NULL, NULL },
@@ -1573,7 +1580,7 @@ main(int argc, char **argv)
 
     if (detach_from_console && daemon_child == -1)
         daemon_child = roken_detach_prep(argc, argv, "--daemon-child");
-    rk_pidfile(NULL);
+    rk_pidfile(pidfile_basename);
 
     ret = krb5_init_context(&context);
     if (ret)

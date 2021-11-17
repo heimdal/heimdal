@@ -159,7 +159,7 @@ krb5_rd_safe(krb5_context context,
 
 	if (safe.safe_body.timestamp == NULL ||
 	    safe.safe_body.usec      == NULL ||
-	    labs(*safe.safe_body.timestamp - sec) > context->max_skew) {
+	    krb5_time_abs(*safe.safe_body.timestamp, sec) > context->max_skew) {
 	    ret = KRB5KRB_AP_ERR_SKEW;
 	    krb5_clear_error_message (context);
 	    goto failure;

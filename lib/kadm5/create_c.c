@@ -54,11 +54,17 @@ kadm5_c_create_principal(void *server_handle,
      * We should get around to implementing this...  At the moment, the
      * the server side API is implemented but the wire protocol has not
      * been updated.
+     *
+     * Well, we have the etypes extension, which the kadmin ank command now
+     * adds, but that doesn't include salt types.  We could, perhaps, make it
+     * so if the password is "" or NULL, we send the etypes but not the salt
+     * type, and then have the server side create random keys of just the
+     * etypes.
      */
     if (n_ks_tuple > 0)
 	return KADM5_KS_TUPLE_NOSUPP;
 
-    ret = _kadm5_connect(server_handle);
+    ret = _kadm5_connect(server_handle, 1 /* want_write */);
     if (ret)
 	return ret;
 

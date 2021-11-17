@@ -42,6 +42,7 @@
 #include <getarg.h>
 
 typedef struct pk_client_params pk_client_params;
+typedef struct gss_client_params gss_client_params;
 struct DigestREQ;
 struct Kx509Request;
 

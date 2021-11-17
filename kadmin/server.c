@@ -40,7 +40,7 @@ static kadm5_ret_t check_aliases(kadm5_server_context *,
 
 static kadm5_ret_t
 kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
-		 krb5_data *in, krb5_data *out)
+		 krb5_data *in, krb5_data *out, int readonly)
 {
     kadm5_ret_t ret;
     int32_t cmd, mask, kvno, tmp;
@@ -139,8 +139,12 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
     }
     case kadm_delete:{
 	op = "DELETE";
+	if (readonly) {
+            ret = KADM5_READ_ONLY;
+            goto fail;
+        }
 	ret = krb5_ret_principal(sp, &princ);
-	if(ret)
+	if (ret)
 	    goto fail;
 	krb5_unparse_name_fixed(contextp->context, princ, name, sizeof(name));
 	krb5_warnx(contextp->context, "%s: %s %s", client, op, name);
@@ -165,6 +169,10 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
     }
     case kadm_create:{
 	op = "CREATE";
+	if (readonly) {
+            ret = KADM5_READ_ONLY;
+            goto fail;
+        }
 	ret = kadm5_ret_principal_ent(sp, &ent);
 	if(ret)
 	    goto fail;
@@ -212,6 +220,10 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
     }
     case kadm_modify:{
 	op = "MODIFY";
+	if (readonly) {
+            ret = KADM5_READ_ONLY;
+            goto fail;
+        }
 	ret = kadm5_ret_principal_ent(sp, &ent);
 	if(ret)
 	    goto fail;
@@ -261,6 +273,10 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
     }
     case kadm_prune:{
         op = "PRUNE";
+	if (readonly) {
+            ret = KADM5_READ_ONLY;
+            goto fail;
+        }
         ret = krb5_ret_principal(sp, &princ);
         if (ret)
             goto fail;
@@ -288,6 +304,10 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
     }
     case kadm_rename:{
 	op = "RENAME";
+	if (readonly) {
+            ret = KADM5_READ_ONLY;
+            goto fail;
+        }
 	ret = krb5_ret_principal(sp, &princ);
 	if(ret)
 	    goto fail;
@@ -335,6 +355,10 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
 	krb5_boolean is_self_cpw, allow_self_cpw;
 
 	op = "CHPASS";
+	if (readonly) {
+            ret = KADM5_READ_ONLY;
+            goto fail;
+        }
 	ret = krb5_ret_principal(sp, &princ);
 	if (ret)
 	    goto fail;
@@ -382,6 +406,10 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
 	int n_key_data;
 
 	op = "CHPASS_WITH_KEY";
+	if (readonly) {
+            ret = KADM5_READ_ONLY;
+            goto fail;
+        }
 	ret = krb5_ret_principal(sp, &princ);
 	if(ret)
 	    goto fail;
@@ -453,6 +481,10 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
         size_t i;
 
 	op = "RANDKEY";
+	if (readonly) {
+            ret = KADM5_READ_ONLY;
+            goto fail;
+        }
 	ret = krb5_ret_principal(sp, &princ);
 	if (ret)
 	    goto fail;
@@ -758,7 +790,8 @@ v5_loop (krb5_context contextp,
 	 krb5_auth_context ac,
 	 krb5_boolean initial,
 	 void *kadm_handlep,
-	 krb5_socket_t fd)
+	 krb5_socket_t fd,
+         int readonly)
 {
     krb5_error_code ret;
     krb5_data in, out;
@@ -773,7 +806,7 @@ v5_loop (krb5_context contextp,
 	if(ret)
 	    krb5_err(contextp, 1, ret, "krb5_read_priv_message");
 	doing_useful_work = 1;
-	ret = kadmind_dispatch(kadm_handlep, initial, &in, &out);
+	ret = kadmind_dispatch(kadm_handlep, initial, &in, &out, readonly);
 	if (ret)
 	    krb5_err(contextp, 1, ret, "kadmind_dispatch");
 	krb5_data_free(&in);
@@ -798,7 +831,8 @@ match_appl_version(const void *data, const char *appl_version)
 static void
 handle_v5(krb5_context contextp,
 	  krb5_keytab keytab,
-	  krb5_socket_t fd)
+	  krb5_socket_t fd,
+          int readonly)
 {
     krb5_error_code ret;
     krb5_ticket *ticket;
@@ -853,13 +887,14 @@ handle_v5(krb5_context contextp,
 					 &kadm_handlep);
     if(ret)
 	krb5_err (contextp, 1, ret, "kadm5_init_with_password_ctx");
-    v5_loop (contextp, ac, initial, kadm_handlep, fd);
+    v5_loop (contextp, ac, initial, kadm_handlep, fd, readonly);
 }
 
 krb5_error_code
 kadmind_loop(krb5_context contextp,
 	     krb5_keytab keytab,
-	     krb5_socket_t sock)
+	     krb5_socket_t sock,
+             int readonly)
 {
     u_char buf[sizeof(KRB5_SENDAUTH_VERSION) + 4];
     ssize_t n;
@@ -881,14 +916,14 @@ kadmind_loop(krb5_context contextp,
 	    krb5_errx (contextp, 1, "EOF reading sendauth version");
 
 	if(memcmp(buf + 4, KRB5_SENDAUTH_VERSION, len) == 0) {
-	    handle_v5(contextp, keytab, sock);
+	    handle_v5(contextp, keytab, sock, readonly);
 	    return 0;
 	}
 	len += 4;
     } else
 	len = 4;
 
-    handle_mit(contextp, buf, len, sock);
+    handle_mit(contextp, buf, len, sock, readonly);
 
     return 0;
 }

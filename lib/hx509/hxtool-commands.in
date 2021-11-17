@@ -317,6 +317,11 @@ command = {
 		help = "print the content of the certificates"
 	}
 	option = {
+		long = "raw-json"
+		type = "flag"
+		help = "print the DER content of the certificates as JSON"
+	}
+	option = {
 		long = "never-fail"
 		type = "flag"
 		help = "never fail with an error code"
@@ -742,6 +747,11 @@ command = {
 		help = "DNS names this certificate is allowed to serve"
 	}
 	option = {
+		long = "dnssrv"
+		type = "strings"
+		help = "DNS SRV names this certificate is allowed to serve"
+	}
+	option = {
 		long = "email"
 		type = "strings"
 		help = "email addresses assigned to this certificate"
@@ -760,6 +770,31 @@ command = {
 		long = "jid"
 		type = "string"
 		help = "XMPP jabber id (for SAN)"
+	}
+	option = {
+		long = "permanent-id"
+		type = "string"
+		help = "PermanentIdentifier ([oid]:[serial])"
+	}
+	option = {
+		long = "hardware-module-name"
+		type = "string"
+		help = "HardwareModuleName (oid:serial)"
+	}
+	option = {
+		long = "policy"
+		type = "strings"
+		help = "Certificate Policy OID and optional URI and/or notice (OID:URI<space>notice_text)"
+	}
+	option = {
+		long = "policy-mapping"
+		type = "strings"
+		help = "Certificate Policy mapping (OID:OID)"
+	}
+	option = {
+		long = "pkinit-max-life"
+		type = "string"
+		help = "maximum Kerberos ticket lifetime extension for PKINIT"
 	}
 	option = {
 		long = "req"

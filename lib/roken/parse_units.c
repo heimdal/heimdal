@@ -190,9 +190,10 @@ parse_flags (const char *s, const struct units *units,
  */
 
 static int
-unparse_something (int num, const struct units *units, char *s, size_t len,
-		   int (*print) (char *, size_t, int, const char *, int),
-		   int (*update) (int, unsigned),
+unparse_something (int64_t num, const struct units *units, char *s, size_t len,
+		   long long (*get_divisor) (long long, unsigned long long),
+		   int (*print) (char *, size_t, long long, const char *, int),
+		   int (*update) (long long, unsigned long long),
 		   const char *zero_string)
 {
     const struct units *u;
@@ -202,9 +203,8 @@ unparse_something (int num, const struct units *units, char *s, size_t len,
 	return snprintf (s, len, "%s", zero_string);
 
     for (u = units; num > 0 && u->name; ++u) {
-	int divisor;
+	long long divisor = get_divisor(num, u->mult);
 
-	divisor = num / u->mult;
 	if (divisor) {
 	    num = (*update) (num, u->mult);
 	    tmp = (*print) (s, len, divisor, u->name, num);
@@ -224,22 +224,28 @@ unparse_something (int num, const struct units *units, char *s, size_t len,
 }
 
 static int
-print_unit (char *s, size_t len, int divisor, const char *name, int rem)
+print_unit(char *s, size_t len, long long divisor, const char *name, int rem)
 {
-    return snprintf (s, len, "%u %s%s%s",
+    return snprintf (s, len, "%lld %s%s%s",
 		     divisor, name,
 		     divisor == 1 ? "" : "s",
 		     rem > 0 ? " " : "");
 }
 
+static long long
+get_divisor_unit(long long in, unsigned long long mult)
+{
+    return in / mult;
+}
+
 static int
-update_unit (int in, unsigned mult)
+update_unit(long long in, unsigned long long mult)
 {
     return in % mult;
 }
 
 static int
-update_unit_approx (int in, unsigned mult)
+update_unit_approx (long long in, unsigned long long mult)
 {
     if (in / mult > 0)
 	return 0;
@@ -251,6 +257,7 @@ ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 unparse_units (int num, const struct units *units, char *s, size_t len)
 {
     return unparse_something (num, units, s, len,
+                              get_divisor_unit,
 			      print_unit,
 			      update_unit,
 			      "0");
@@ -260,6 +267,7 @@ ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 unparse_units_approx (int num, const struct units *units, char *s, size_t len)
 {
     return unparse_something (num, units, s, len,
+                              get_divisor_unit,
 			      print_unit,
 			      update_unit_approx,
 			      "0");
@@ -298,22 +306,29 @@ print_units_table (const struct units *units, FILE *f)
     }
 }
 
+static long long
+get_divisor_flag(long long in, unsigned long long mult)
+{
+    return in & mult;
+}
+
 static int
-print_flag (char *s, size_t len, int divisor, const char *name, int rem)
+print_flag (char *s, size_t len, long long divisor, const char *name, int rem)
 {
     return snprintf (s, len, "%s%s", name, rem > 0 ? ", " : "");
 }
 
 static int
-update_flag (int in, unsigned mult)
+update_flag (long long in, unsigned long long mult)
 {
-    return in - mult;
+    return in & ~mult;
 }
 
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 unparse_flags (int num, const struct units *units, char *s, size_t len)
 {
     return unparse_something (num, units, s, len,
+                              get_divisor_flag,
 			      print_flag,
 			      update_flag,
 			      "");

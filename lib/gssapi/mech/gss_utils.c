@@ -60,11 +60,11 @@ _gss_free_oid(OM_uint32 *minor_status, gss_OID oid)
 }
 
 struct _gss_interned_oid {
-    HEIM_SLIST_ENTRY(_gss_interned_oid) gio_link;
+    HEIM_SLIST_ATOMIC_ENTRY(_gss_interned_oid) gio_link;
     gss_OID_desc gio_oid;
 };
 
-static HEIM_SLIST_HEAD(_gss_interned_oid_list, _gss_interned_oid) interned_oids =
+static HEIM_SLIST_ATOMIC_HEAD(_gss_interned_oid_list, _gss_interned_oid) interned_oids =
 HEIM_SLIST_HEAD_INITIALIZER(interned_oids);
 
 extern gss_OID _gss_ot_internal[];
@@ -235,4 +235,90 @@ _gss_mg_decode_be_uint16(const void *ptr, uint16_t *n)
 {
     const uint8_t *p = ptr;
     *n = (p[0] << 24) | (p[1] << 16);
+}
+
+OM_uint32
+_gss_mg_ret_oid(OM_uint32 *minor,
+		krb5_storage *sp,
+		gss_OID *oidp)
+{
+    krb5_data data;
+    gss_OID_desc oid;
+    OM_uint32 major;
+
+    *minor = 0;
+    *oidp = GSS_C_NO_OID;
+
+    *minor = krb5_ret_data(sp, &data);
+    if (*minor)
+        return GSS_S_FAILURE;
+
+    if (data.length) {
+        oid.length = data.length;
+        oid.elements = data.data;
+
+        major = _gss_intern_oid(minor, &oid, oidp);
+    } else
+        major = GSS_S_COMPLETE;
+
+    krb5_data_free(&data);
+
+    return major;
+}
+
+OM_uint32
+_gss_mg_store_oid(OM_uint32 *minor,
+		  krb5_storage *sp,
+		  gss_const_OID oid)
+{
+    krb5_data data;
+
+    if (oid) {
+        data.length = oid->length;
+        data.data = oid->elements;
+    } else
+	krb5_data_zero(&data);
+
+    *minor = krb5_store_data(sp, data);
+
+    return *minor ? GSS_S_FAILURE : GSS_S_COMPLETE;
+}
+
+OM_uint32
+_gss_mg_ret_buffer(OM_uint32 *minor,
+		   krb5_storage *sp,
+		   gss_buffer_t buffer)
+{
+    krb5_data data;
+
+    _mg_buffer_zero(buffer);
+
+    *minor = krb5_ret_data(sp, &data);
+    if (*minor == 0) {
+	if (data.length) {
+	    buffer->length = data.length;
+	    buffer->value = data.data;
+	} else
+	    krb5_data_free(&data);
+    }
+
+    return *minor ? GSS_S_FAILURE : GSS_S_COMPLETE;
+}
+
+OM_uint32
+_gss_mg_store_buffer(OM_uint32 *minor,
+		     krb5_storage *sp,
+		     gss_const_buffer_t buffer)
+{
+    krb5_data data;
+
+    if (buffer) {
+        data.length = buffer->length;
+        data.data = buffer->value;
+    } else
+	krb5_data_zero(&data);
+
+    *minor =  krb5_store_data(sp, data);
+
+    return *minor ? GSS_S_FAILURE : GSS_S_COMPLETE;
 }

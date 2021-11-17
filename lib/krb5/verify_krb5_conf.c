@@ -37,10 +37,6 @@
 #include <err.h>
 
 /* verify krb5.conf */
-
-#define krb5_config_string  heim_config_string
-#define krb5_config_list    heim_config_list
-
 static int dumpconfig_flag = 0;
 static int version_flag = 0;
 static int help_flag	= 0;

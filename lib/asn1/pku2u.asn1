@@ -2,10 +2,8 @@
 
 PKU2U DEFINITIONS ::= BEGIN
 
-IMPORTS heim_any_set FROM heim
-	Checksum FROM krb5
-	GeneralName FROM rfc2459
-	;
+IMPORTS Checksum FROM krb5
+	GeneralName FROM rfc2459;
 
 GSS_KRB5_FINISHED ::= SEQUENCE {
 	gss-mic [1] Checksum,

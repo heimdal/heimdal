@@ -203,16 +203,17 @@ gss_mg_set_error_string(gss_OID mech,
     char *str = NULL;
     OM_uint32 junk;
     va_list ap;
+    int vasprintf_ret;
 
     mg = _gss_mechglue_thread();
     if (mg == NULL)
 	return maj;
 
     va_start(ap, fmt);
-    (void) vasprintf(&str, fmt, ap);
+    vasprintf_ret = vasprintf(&str, fmt, ap);
     va_end(ap);
 
-    if (str) {
+    if (vasprintf_ret >= 0 && str) {
 	gss_release_buffer(&junk, &mg->min_error);
 
 	mg->mech = mech;
@@ -231,7 +232,7 @@ gss_mg_set_error_string(gss_OID mech,
 static void *log_ctx = NULL;
 static void (*log_func)(void *ctx, int level, const char *fmt, va_list) = NULL;
 
-void
+void GSSAPI_LIB_CALL
 gss_set_log_function(void *ctx, void (*func)(void * ctx, int level, const char *fmt, va_list))
 {
     if (log_func == NULL) {
@@ -303,6 +304,7 @@ _gss_mg_log_name(int level,
     if (_gss_find_mn(&junk, name, mech_type, &mn) == GSS_S_COMPLETE) {
 	OM_uint32 maj_stat = GSS_S_COMPLETE;
 	gss_buffer_desc namebuf;
+	int ret;
 
 	if (mn == NULL) {
 	    namebuf.value = "no name";
@@ -316,10 +318,10 @@ _gss_mg_log_name(int level,
 	    va_list ap;
 
 	    va_start(ap, fmt);
-	    (void) vasprintf(&str, fmt, ap);
+	    ret = vasprintf(&str, fmt, ap);
 	    va_end(ap);
 
-	    if (str)
+	    if (ret >= 0 && str)
 	        _gss_mg_log(level, "%s %.*s", str,
 			    (int)namebuf.length, (char *)namebuf.value);
 	    free(str);
@@ -338,15 +340,16 @@ _gss_mg_log_cred(int level,
     struct _gss_mechanism_cred *mc;
     char *str;
     va_list ap;
+    int ret;
 
     if (!_gss_mg_log_level(level))
         return;
 
     va_start(ap, fmt);
-    (void) vasprintf(&str, fmt, ap);
+    ret = vasprintf(&str, fmt, ap);
     va_end(ap);
 
-    if (cred) {
+    if (ret >=0 && cred) {
 	HEIM_TAILQ_FOREACH(mc, &cred->gc_mc, gmc_link) {
 	    _gss_mg_log(1, "%s: %s", str, mc->gmc_mech->gm_name);
 	}

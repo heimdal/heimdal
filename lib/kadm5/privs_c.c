@@ -47,7 +47,7 @@ kadm5_c_get_privs(void *server_handle, uint32_t *privs)
 
     *privs = 0;
 
-    ret = _kadm5_connect(server_handle);
+    ret = _kadm5_connect(server_handle, 0 /* want_write */);
     if (ret)
 	return ret;
 

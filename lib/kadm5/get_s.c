@@ -123,6 +123,10 @@ kadm5_s_get_principal(void *server_handle,
     kadm5_server_context *context = server_handle;
     kadm5_ret_t ret;
     hdb_entry_ex ent;
+    unsigned int flags = HDB_F_GET_ANY | HDB_F_ADMIN_DATA;
+
+    if ((mask & KADM5_KEY_DATA) || (mask & KADM5_KVNO))
+        flags |= HDB_F_ALL_KVNOS | HDB_F_DECRYPT;
 
     memset(&ent, 0, sizeof(ent));
     memset(out, 0, sizeof(*out));
@@ -144,9 +148,8 @@ kadm5_s_get_principal(void *server_handle,
      * For now we won't attempt to recover the log.
      */
 
-    ret = context->db->hdb_fetch_kvno(context->context, context->db, princ,
-				      HDB_F_DECRYPT|HDB_F_ALL_KVNOS|
-				      HDB_F_GET_ANY|HDB_F_ADMIN_DATA, 0, &ent);
+    ret = hdb_fetch_kvno(context->context, context->db, princ, flags,
+                         0 /*timestamp*/, 0/*etype*/, 0/*kvno*/, &ent);
 
     if (!context->keep_open)
 	context->db->hdb_close(context->context, context->db);
@@ -173,12 +176,15 @@ kadm5_s_get_principal(void *server_handle,
 	out->attributes |= ent.entry.flags.invalid ? KRB5_KDB_DISALLOW_ALL_TIX : 0;
 	out->attributes |= ent.entry.flags.require_preauth ? KRB5_KDB_REQUIRES_PRE_AUTH : 0;
 	out->attributes |= ent.entry.flags.require_pwchange ? KRB5_KDB_REQUIRES_PWCHANGE : 0;
+	out->attributes |= ent.entry.flags.client ? 0 : KRB5_KDB_DISALLOW_CLIENT;
 	out->attributes |= ent.entry.flags.server ? 0 : KRB5_KDB_DISALLOW_SVR;
 	out->attributes |= ent.entry.flags.change_pw ? KRB5_KDB_PWCHANGE_SERVICE : 0;
 	out->attributes |= ent.entry.flags.ok_as_delegate ? KRB5_KDB_OK_AS_DELEGATE : 0;
 	out->attributes |= ent.entry.flags.trusted_for_delegation ? KRB5_KDB_TRUSTED_FOR_DELEGATION : 0;
 	out->attributes |= ent.entry.flags.allow_kerberos4 ? KRB5_KDB_ALLOW_KERBEROS4 : 0;
 	out->attributes |= ent.entry.flags.allow_digest ? KRB5_KDB_ALLOW_DIGEST : 0;
+	out->attributes |= ent.entry.flags.virtual_keys ? KRB5_KDB_VIRTUAL_KEYS : 0;
+	out->attributes |= ent.entry.flags.virtual ? KRB5_KDB_VIRTUAL : 0;
     }
     if(mask & KADM5_MAX_LIFE) {
 	if(ent.entry.max_life)
@@ -295,6 +301,22 @@ kadm5_s_get_principal(void *server_handle,
 	time_t last_pw_expire;
 	const HDB_Ext_PKINIT_acl *acl;
 	const HDB_Ext_Aliases *aliases;
+        const HDB_Ext_KeyRotation *kr;
+        heim_octet_string krb5_config;
+
+        if (ent.entry.etypes) {
+            krb5_data buf;
+            size_t len;
+
+            ASN1_MALLOC_ENCODE(HDB_EncTypeList, buf.data, buf.length,
+                               ent.entry.etypes, &len, ret);
+            if (ret == 0) {
+                ret = add_tl_data(out, KRB5_TL_ETYPES, buf.data, buf.length);
+                free(buf.data);
+            }
+            if (ret)
+                goto out;
+        }
 
 	ret = hdb_entry_get_pw_change_time(&ent.entry, &last_pw_expire);
 	if (ret == 0 && last_pw_expire) {
@@ -302,6 +324,12 @@ kadm5_s_get_principal(void *server_handle,
 	    _krb5_put_int(buf, last_pw_expire, sizeof(buf));
 	    ret = add_tl_data(out, KRB5_TL_LAST_PWD_CHANGE, buf, sizeof(buf));
 	}
+        if (ret == 0)
+            ret = hdb_entry_get_krb5_config(&ent.entry, &krb5_config);
+        if (ret == 0 && krb5_config.length) {
+            ret = add_tl_data(out, KRB5_TL_KRB5_CONFIG, krb5_config.data,
+                              krb5_config.length);
+        }
 	if (ret)
 	    goto out;
 	/*
@@ -311,6 +339,7 @@ kadm5_s_get_principal(void *server_handle,
 	if (mask & KADM5_KEY_DATA) {
 	    heim_utf8_string pw;
 
+            /* XXX But not if the client doesn't have ext-keys */
 	    ret = hdb_entry_get_password(context->context,
 					 context->db, &ent.entry, &pw);
 	    if (ret == 0) {
@@ -353,6 +382,26 @@ kadm5_s_get_principal(void *server_handle,
 		krb5_abortx(context->context,
 			    "internal ASN.1 encoder error");
 	    ret = add_tl_data(out, KRB5_TL_ALIASES, buf.data, buf.length);
+	    free(buf.data);
+	    if (ret)
+		goto out;
+	}
+	if (ret)
+	    goto out;
+
+        ret = hdb_entry_get_key_rotation(context->context, &ent.entry, &kr);
+	if (ret == 0 && kr) {
+	    krb5_data buf;
+	    size_t len;
+
+	    ASN1_MALLOC_ENCODE(HDB_Ext_KeyRotation, buf.data, buf.length,
+			       kr, &len, ret);
+	    if (ret)
+		goto out;
+	    if (len != buf.length)
+		krb5_abortx(context->context,
+			    "internal ASN.1 encoder error");
+	    ret = add_tl_data(out, KRB5_TL_KEY_ROTATION, buf.data, buf.length);
 	    free(buf.data);
 	    if (ret)
 		goto out;

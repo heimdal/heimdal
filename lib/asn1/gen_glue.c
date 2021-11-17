@@ -37,6 +37,14 @@
 
 RCSID("$Id$");
 
+static FILE *
+get_code_file(void)
+{
+    if (!one_code_file && template_flag && templatefile)
+        return templatefile;
+    return codefile;
+}
+
 static void
 generate_2int (const Type *t, const char *gen_name)
 {
@@ -46,17 +54,17 @@ generate_2int (const Type *t, const char *gen_name)
 	     "uint64_t %s2int(%s);\n",
 	     gen_name, gen_name);
 
-    fprintf (codefile,
+    fprintf (get_code_file(),
 	     "uint64_t %s2int(%s f)\n"
 	     "{\n"
 	     "uint64_t r = 0;\n",
 	     gen_name, gen_name);
 
     HEIM_TAILQ_FOREACH(m, t->members, members) {
-	fprintf (codefile, "if(f.%s) r |= (1LU << %d);\n",
+	fprintf (get_code_file(), "if(f.%s) r |= (1ULL << %d);\n",
 		 m->gen_name, m->val);
     }
-    fprintf (codefile, "return r;\n"
+    fprintf (get_code_file(), "return r;\n"
 	     "}\n\n");
 }
 
@@ -69,7 +77,7 @@ generate_int2 (const Type *t, const char *gen_name)
 	     "%s int2%s(uint64_t);\n",
 	     gen_name, gen_name);
 
-    fprintf (codefile,
+    fprintf (get_code_file(),
 	     "%s int2%s(uint64_t n)\n"
 	     "{\n"
 	     "\t%s flags;\n\n"
@@ -78,11 +86,11 @@ generate_int2 (const Type *t, const char *gen_name)
 
     if(t->members) {
 	HEIM_TAILQ_FOREACH(m, t->members, members) {
-	    fprintf (codefile, "\tflags.%s = (n >> %d) & 1;\n",
+	    fprintf (get_code_file(), "\tflags.%s = (n >> %d) & 1;\n",
 		     m->gen_name, m->val);
 	}
     }
-    fprintf (codefile, "\treturn flags;\n"
+    fprintf (get_code_file(), "\treturn flags;\n"
 	     "}\n\n");
 }
 
@@ -95,43 +103,30 @@ generate_units (const Type *t, const char *gen_name)
 {
     Member *m;
 
-    if (template_flag) {
-	fprintf (headerfile,
-		 "extern const struct units *asn1_%s_table_units;\n",
-		 gen_name);
-	fprintf (headerfile, "#define asn1_%s_units() (asn1_%s_table_units)\n",
-		 gen_name, gen_name);
-    } else {
-	fprintf (headerfile,
-		 "const struct units * asn1_%s_units(void);\n",
-		 gen_name);
-    }
+    fprintf (headerfile,
+             "const struct units * asn1_%s_units(void);\n",
+             gen_name);
 
-    fprintf (codefile,
+    fprintf (get_code_file(),
 	     "static struct units %s_units[] = {\n",
 	     gen_name);
 
     if(t->members) {
 	HEIM_TAILQ_FOREACH_REVERSE(m, t->members, memhead, members) {
-	    fprintf (codefile,
-		     "\t{\"%s\",\t1LU << %d},\n", m->name, m->val);
+	    fprintf (get_code_file(),
+		     "\t{\"%s\",\t1ULL << %d},\n", m->name, m->val);
 	}
     }
 
-    fprintf (codefile,
+    fprintf (get_code_file(),
 	     "\t{NULL,\t0}\n"
 	     "};\n\n");
 
-    if (template_flag)
-	fprintf (codefile,
-		 "const struct units * asn1_%s_table_units = %s_units;\n",
-		 gen_name, gen_name);
-    else
-	fprintf (codefile,
-		 "const struct units * asn1_%s_units(void){\n"
-		 "return %s_units;\n"
-		 "}\n\n",
-		 gen_name, gen_name);
+    fprintf (get_code_file(),
+             "const struct units * asn1_%s_units(void){\n"
+             "return %s_units;\n"
+             "}\n\n",
+             gen_name, gen_name);
 
 
 }

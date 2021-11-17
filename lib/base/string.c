@@ -182,7 +182,7 @@ heim_string_create_with_format(const char *fmt, ...)
     if (ret < 0 || str == NULL)
 	return NULL;
 
-    s = heim_string_ref_create(str, string_dealloc);
+    s = heim_string_ref_create(str, free);
     if (s == NULL)
 	free(str);
     return s;

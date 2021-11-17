@@ -144,7 +144,7 @@ len_oid (const heim_oid *oid)
     return ret;
 }
 
-size_t
+size_t ASN1CALL
 der_length_len (size_t len)
 {
     if (len < 128)
@@ -159,7 +159,7 @@ der_length_len (size_t len)
     }
 }
 
-size_t
+size_t ASN1CALL
 der_length_tag(unsigned int tag)
 {
     size_t len = 0;
@@ -173,85 +173,85 @@ der_length_tag(unsigned int tag)
     return len + 1;
 }
 
-size_t
+size_t ASN1CALL
 der_length_integer (const int *data)
 {
     return _heim_len_int (*data);
 }
 
-size_t
+size_t ASN1CALL
 der_length_integer64 (const int64_t *data)
 {
     return _heim_len_int64 (*data);
 }
 
-size_t
+size_t ASN1CALL
 der_length_unsigned (const unsigned *data)
 {
     return _heim_len_unsigned(*data);
 }
 
-size_t
+size_t ASN1CALL
 der_length_unsigned64 (const uint64_t *data)
 {
     return _heim_len_unsigned64(*data);
 }
 
-size_t
+size_t ASN1CALL
 der_length_enumerated (const unsigned *data)
 {
   return _heim_len_int (*data);
 }
 
-size_t
+size_t ASN1CALL
 der_length_general_string (const heim_general_string *data)
 {
     return strlen(*data);
 }
 
-size_t
+size_t ASN1CALL
 der_length_utf8string (const heim_utf8_string *data)
 {
     return strlen(*data);
 }
 
-size_t
+size_t ASN1CALL
 der_length_printable_string (const heim_printable_string *data)
 {
     return data->length;
 }
 
-size_t
+size_t ASN1CALL
 der_length_ia5_string (const heim_ia5_string *data)
 {
     return data->length;
 }
 
-size_t
+size_t ASN1CALL
 der_length_bmp_string (const heim_bmp_string *data)
 {
     return data->length * 2;
 }
 
-size_t
+size_t ASN1CALL
 der_length_universal_string (const heim_universal_string *data)
 {
     return data->length * 4;
 }
 
-size_t
+size_t ASN1CALL
 der_length_visible_string (const heim_visible_string *data)
 {
     return strlen(*data);
 }
 
-size_t
+size_t ASN1CALL
 der_length_octet_string (const heim_octet_string *k)
 {
     return k->length;
 }
 
-size_t
+size_t ASN1CALL
 der_length_heim_integer (const heim_integer *k)
 {
     if (k->length == 0)
@@ -262,13 +262,13 @@ der_length_heim_integer (const heim_integer *k)
 	return k->length + ((((unsigned char *)k->data)[0] & 0x80) ? 1 : 0);
 }
 
-size_t
+size_t ASN1CALL
 der_length_oid (const heim_oid *k)
 {
     return len_oid (k);
 }
 
-size_t
+size_t ASN1CALL
 der_length_generalized_time (const time_t *t)
 {
     heim_octet_string k;
@@ -280,7 +280,7 @@ der_length_generalized_time (const time_t *t)
     return ret;
 }
 
-size_t
+size_t ASN1CALL
 der_length_utctime (const time_t *t)
 {
     heim_octet_string k;
@@ -292,13 +292,13 @@ der_length_utctime (const time_t *t)
     return ret;
 }
 
-size_t
+size_t ASN1CALL
 der_length_boolean (const int *k)
 {
     return 1;
 }
 
-size_t
+size_t ASN1CALL
 der_length_bit_string (const heim_bit_string *k)
 {
     return (k->length + 7) / 8 + 1;

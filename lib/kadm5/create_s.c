@@ -207,7 +207,12 @@ kadm5_s_create_principal_with_key(void *server_handle,
     if (ret)
 	goto out2;
 
-    /* This logs the change for iprop and writes to the HDB */
+    /*
+     * This logs the change for iprop and writes to the HDB.
+     *
+     * Creation of would-be virtual principals w/o the materialize flag will be
+     * rejected in kadm5_log_create().
+     */
     ret = kadm5_log_create(context, &ent.entry);
 
     (void) create_principal_hook(context, KADM5_HOOK_STAGE_POSTCOMMIT,
@@ -238,8 +243,31 @@ kadm5_s_create_principal(void *server_handle,
     kadm5_ret_t ret;
     hdb_entry_ex ent;
     kadm5_server_context *context = server_handle;
+    int use_pw = 1;
 
-    if (_kadm5_enforce_pwqual_on_admin_set_p(context)) {
+    if ((mask & KADM5_ATTRIBUTES) &&
+        (princ->attributes & (KRB5_KDB_VIRTUAL_KEYS | KRB5_KDB_VIRTUAL)) &&
+        !(princ->attributes & KRB5_KDB_MATERIALIZE)) {
+        ret = KADM5_DUP; /* XXX */
+        goto out;
+    }
+    if ((mask & KADM5_ATTRIBUTES) &&
+        (princ->attributes & KRB5_KDB_VIRTUAL_KEYS) &&
+        (princ->attributes & KRB5_KDB_VIRTUAL)) {
+        ret = KADM5_DUP; /* XXX */
+        goto out;
+    }
+
+    if ((mask & KADM5_ATTRIBUTES) &&
+        (princ->attributes & KRB5_KDB_VIRTUAL) &&
+        (princ->attributes & KRB5_KDB_MATERIALIZE))
+        princ->attributes &= ~(KRB5_KDB_MATERIALIZE | KRB5_KDB_VIRTUAL);
+
+    if (password[0] == '\0' && (mask & KADM5_KEY_DATA) && princ->n_key_data && 
+        !kadm5_all_keys_are_bogus(princ->n_key_data, princ->key_data))
+        use_pw = 0;
+
+    if (use_pw && _kadm5_enforce_pwqual_on_admin_set_p(context)) {
 	krb5_data pwd_data;
 	const char *pwd_reason;
 
@@ -265,13 +293,22 @@ kadm5_s_create_principal(void *server_handle,
     if (ret)
 	return ret;
 
-    ret = create_principal(context, princ, mask, &ent,
-			   KADM5_PRINCIPAL,
-			   KADM5_LAST_PWD_CHANGE | KADM5_MOD_TIME
-			   | KADM5_MOD_NAME | KADM5_MKVNO
-			   | KADM5_AUX_ATTRIBUTES | KADM5_KEY_DATA
-			   | KADM5_POLICY_CLR | KADM5_LAST_SUCCESS
-			   | KADM5_LAST_FAILED | KADM5_FAIL_AUTH_COUNT);
+    if (use_pw)
+        ret = create_principal(context, princ, mask, &ent,
+                               KADM5_PRINCIPAL,
+                               KADM5_LAST_PWD_CHANGE | KADM5_MOD_TIME
+                               | KADM5_MOD_NAME | KADM5_MKVNO
+                               | KADM5_AUX_ATTRIBUTES | KADM5_KEY_DATA
+                               | KADM5_POLICY_CLR | KADM5_LAST_SUCCESS
+                               | KADM5_LAST_FAILED | KADM5_FAIL_AUTH_COUNT);
+    else
+        ret = create_principal(context, princ, mask, &ent,
+                               KADM5_PRINCIPAL | KADM5_KEY_DATA,
+                               KADM5_LAST_PWD_CHANGE | KADM5_MOD_TIME
+                               | KADM5_MOD_NAME | KADM5_MKVNO
+                               | KADM5_AUX_ATTRIBUTES
+                               | KADM5_POLICY_CLR | KADM5_LAST_SUCCESS
+                               | KADM5_LAST_FAILED | KADM5_FAIL_AUTH_COUNT);
     if (ret)
         return ret;
 
@@ -287,12 +324,13 @@ kadm5_s_create_principal(void *server_handle,
     if (ret)
         goto out;
 
-    ent.entry.keys.len = 0;
-    ent.entry.keys.val = NULL;
+    free_Keys(&ent.entry.keys);
 
-    ret = _kadm5_set_keys(context, &ent.entry, n_ks_tuple, ks_tuple, password);
-    if (ret)
-	goto out2;
+    if (use_pw) {
+        ret = _kadm5_set_keys(context, &ent.entry, n_ks_tuple, ks_tuple, password);
+        if (ret)
+            goto out2;
+    }
 
     ret = hdb_seal_keys(context->context, context->db, &ent.entry);
     if (ret)

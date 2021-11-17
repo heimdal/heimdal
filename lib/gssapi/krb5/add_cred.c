@@ -138,6 +138,7 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_add_cred_from (
 	handle->usage = cred_usage;
 	handle->endtime = cred->endtime;
 	handle->principal = NULL;
+	handle->destination_realm = NULL;
 	handle->keytab = NULL;
 	handle->ccache = NULL;
 	handle->mechanisms = NULL;

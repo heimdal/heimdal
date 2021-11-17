@@ -7,3 +7,6 @@
 --sequence=GeneralNames
 --sequence=RDNSequence
 --sequence=Certificates
+--sequence=CertificatePolicies
+--sequence=PolicyQualifierInfos
+--sequence=PolicyMappings

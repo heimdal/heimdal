@@ -33,7 +33,7 @@
 
 #include "gsskrb5_locl.h"
 
-char *last_out_name;
+static heim_base_atomic(char *) last_out_name; /* XXX should be thread-specific */
 
 OM_uint32
 _gsskrb5_krb5_ccache_name(OM_uint32 *minor_status,
@@ -48,24 +48,25 @@ _gsskrb5_krb5_ccache_name(OM_uint32 *minor_status,
     GSSAPI_KRB5_INIT(&context);
 
     if (out_name) {
-	const char *n;
+	const char *def_name;
 
-	if (last_out_name) {
-	    free(last_out_name);
-	    last_out_name = NULL;
+	*out_name = NULL;
+
+	def_name = krb5_cc_default_name(context);
+	if (def_name) {
+	    char *s = strdup(def_name);
+	    if (s) {
+		s = heim_base_exchange_pointer(&last_out_name, s);
+		free(s);
+
+		*out_name = last_out_name;
+	    }
 	}
 
-	n = krb5_cc_default_name(context);
-	if (n == NULL) {
+	if (*out_name == NULL) {
 	    *minor_status = ENOMEM;
 	    return GSS_S_FAILURE;
 	}
-	last_out_name = strdup(n);
-	if (last_out_name == NULL) {
-	    *minor_status = ENOMEM;
-	    return GSS_S_FAILURE;
-	}
-	*out_name = last_out_name;
     }
 
     kret = krb5_cc_set_default_name(context, name);

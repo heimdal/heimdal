@@ -37,7 +37,6 @@ struct _gss_mech_switch_list _gss_mechs = { NULL, NULL } ;
 gss_OID_set _gss_mech_oids;
 static HEIMDAL_MUTEX _gss_mech_mutex = HEIMDAL_MUTEX_INITIALIZER;
 
-#ifdef HAVE_DLOPEN
 /*
  * Convert a string containing an OID in 'dot' form
  * (e.g. 1.2.840.113554.1.2.2) to a gss_OID.
@@ -160,7 +159,6 @@ _gss_string_to_oid(const char* s, gss_OID *oidp)
 
 	return (0);
 }
-#endif
 
 #define SYM(name)							\
 do {									\
@@ -397,6 +395,7 @@ _gss_load_mech(void)
 		OPTSYM(export_cred);
 		OPTSYM(import_cred);
 		OPTSYM(acquire_cred_from);
+		OPTSYM(acquire_cred_impersonate_name);
 #if 0
 		OPTSYM(iter_creds);
 		OPTSYM(destroy_cred);
@@ -453,13 +452,15 @@ _gss_load_mech(void)
 			free((char *)m->gm_mech.gm_name);
 			free(m);
 		}
-		dlclose(so);
+		if (so != NULL)
+			dlclose(so);
 		continue;
 	}
 	fclose(fp);
-#endif
 
 out:
+
+#endif
 	add_builtin(__gss_sanon_initialize());
 	HEIMDAL_MUTEX_unlock(&_gss_mech_mutex);
 }
@@ -488,4 +489,92 @@ _gss_mg_support_mechanism(gss_const_OID mech)
 			return m->gm_mech_oid;
 	}
 	return NULL;
+}
+
+enum mech_name_match {
+	MATCH_NONE = 0,
+	MATCH_COMPLETE,
+	MATCH_PARTIAL
+};
+
+static enum mech_name_match
+match_mech_name(const char *gm_mech_name,
+		const char *name,
+		size_t namelen)
+{
+	if (gm_mech_name == NULL)
+		return MATCH_NONE;
+	else if (strcasecmp(gm_mech_name, name) == 0)
+		return MATCH_COMPLETE;
+	else if (strncasecmp(gm_mech_name, name, namelen) == 0)
+		return MATCH_PARTIAL;
+	else
+		return MATCH_NONE;
+}
+
+/*
+ * Return an OID for a built-in or dynamically loaded mechanism. For
+ * API compatibility with previous versions, we treat "Kerberos 5"
+ * as an alias for "krb5". Unique partial matches are supported.
+ */
+GSSAPI_LIB_FUNCTION gss_OID GSSAPI_CALLCONV
+gss_name_to_oid(const char *name)
+{
+	struct _gss_mech_switch *m, *partial = NULL;
+	gss_OID oid = GSS_C_NO_OID;
+	size_t namelen = strlen(name);
+
+	if (isdigit(name[0]) && _gss_string_to_oid(name, &oid) == 0)
+		return oid;
+
+	_gss_load_mech();
+	HEIM_TAILQ_FOREACH(m, &_gss_mechs, gm_link) {
+		enum mech_name_match match;
+
+		match = match_mech_name(m->gm_mech.gm_name, name, namelen);
+		if (match == MATCH_NONE &&
+		    gss_oid_equal(m->gm_mech_oid, GSS_KRB5_MECHANISM))
+			match = match_mech_name("Kerberos 5", name, namelen);
+
+		if (match == MATCH_COMPLETE)
+			return m->gm_mech_oid;
+		else if (match == MATCH_PARTIAL) {
+			if (partial)
+				return NULL;
+			else
+				partial = m;
+		}
+	}
+
+	if (partial)
+		return partial->gm_mech_oid;
+
+	return NULL;
+}
+
+GSSAPI_LIB_FUNCTION const char * GSSAPI_LIB_CALL
+gss_oid_to_name(gss_const_OID oid)
+{
+	struct _gss_mech_switch *m;
+
+	_gss_load_mech();
+	HEIM_TAILQ_FOREACH(m, &_gss_mechs, gm_link) {
+		if (gss_oid_equal(m->gm_mech_oid, oid))
+			return m->gm_mech.gm_name;
+	}
+
+	return NULL;
+}
+
+GSSAPI_LIB_FUNCTION uintptr_t GSSAPI_CALLCONV
+gss_get_instance(const char *libname)
+{
+    static const char *instance = "libgssapi";
+
+    if (strcmp(libname, "gssapi") == 0)
+	return (uintptr_t)instance;
+    else if (strcmp(libname, "krb5") == 0)
+	return krb5_get_instance(libname);
+
+    return 0;
 }

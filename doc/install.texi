@@ -4,9 +4,5 @@
 
 Build and install instructions are located here:
 
-@url{http://www.h5l.org/compile.html}
-
-Prebuilt packages is located here:
-
-@url{http://www.h5l.org/binaries.html}
+@url{https://github.com/heimdal/heimdal/wiki}
 

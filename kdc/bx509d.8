@@ -113,6 +113,150 @@ Uses a thread per-client instead of as many threads as there are CPUs.
 .Xc
 verbose
 .El
+.Sh ONLINE CERTIFICATION AUTHORITY HTTP API
+This service provides an HTTP-based Certification Authority (CA).
+CA credentials and configuration are specified in the
+.Va [bx509]
+section of
+.Xr krb5.conf 5 .
+.Pp
+The protocol consists of a
+.Ar GET
+of
+.Ar /get-cert
+with the base-63 encoding of a DER encoding of a PKCS#10
+.Ar CertificationRequest
+(Certificate Signing Request, or CSR) in a
+.Ar csr
+required query parameter.
+In a successful query, the response body will contain a PEM
+encoded end entity certificate and certification chain.
+.Pp
+Or
+.Ar GET
+of
+.Ar /bx509 ,
+as this used to be called.
+.Pp
+Authentication is required.
+Unauthenticated requests will elicit a 401 response.
+.Pp
+Authorization is required.
+Unauthorized requests will elicit a 403 response.
+.Pp
+Subject Alternative Names (SANs) and Extended Key Usage values
+may be requested, both in-band in the CSR as a requested
+extensions attribute, and/or via optional query parameters.
+.Pp
+Supported query parameters (separated by ampersands)
+.Bl -tag -width Ds -offset indent
+.It Li csr = Va base64-encoded-DER-encoded-CSR
+.It Li dNSName = Va hostname
+.It Li rfc822Name = Va email-address
+.It Li xMPPName = Va XMPP-address
+.It Li krb5PrincipalName = Va Kerberos-principal-name
+.It Li ms-upn = Va UPN
+.It Li eku = Va OID
+.It Li lifetime = Va lifetime
+.El
+.Pp
+More than one name or EKU may be requested.
+.Pp
+Certificate lifetimes are expressed as a decimal number and
+an optional unit (which defaults to
+.Dq day
+).
+.Sh NEGOTIATE TOKEN HTTP API
+This service provides an HTTP-based Negotiate token service.
+This service requires a certification authority (CA) issuer
+credential as it impersonates client principals to the KDC using
+PKINIT client certificates it issues itself.
+.Pp
+The protocol consists of a
+.Ar GET
+of
+.Ar /get-negotiate-token
+with a
+.Ar target = Ar service@host
+query parameter.
+.Pp
+In a successful query, the response body will contain a Negotiate
+token for the authenticated client principal to the requested
+target.
+.Pp
+Authentication is required.
+Unauthenticated requests will elicit a 401 response.
+.Pp
+Subject Alternative Names (SANs) and Extended Key Usage values
+may be requested, both in-band in the CSR as a requested
+extensions attribute, and/or via optional query parameters.
+.Pp
+Supported query parameters (separated by ampersands)
+.Bl -tag -width Ds -offset indent
+.It Li target = Va service@hostname
+.It Li redirect = Va URI
+.El
+.Pp
+If a redirect URI is given and a matching
+.Va Referer
+header is included in the request, then the response will be a
+redirect to that URI with the Negotiate token in an
+.Va Authorization
+header that the user-agent should copy to the redirected request.
+.Pp
+The certification authority configuration is the same as for the
+.Va /get-cert
+end-point, but as configured in the
+.Va [get-tgt]
+section of
+.Xr krb5.conf 5 .
+.Sh TGT HTTP API
+This service provides an HTTP-based "kinit" service.
+This service requires a certification authority (CA) issuer
+credential as it impersonates client principals to the KDC using
+PKINIT client certificates it issues itself.
+.Pp
+The protocol consists of a
+.Ar GET
+of
+.Ar /get-tgt .
+.Pp
+Supported query parameters (separated by ampersands)
+.Bl -tag -width Ds -offset indent
+.It Li cname = Va principal-name
+.It Li address = Va IP-address
+.El
+.Pp
+In a successful query, the response body will contain a TGT and
+its session key encoded as a "ccache" file contents.
+.Pp
+Authentication is required.
+Unauthenticated requests will elicit a 401 response.
+.Pp
+Authorization is required, where the authorization check is the
+same as for
+.Va /get-cert
+by the authenticated client principal to get a certificate with
+a PKINIT SAN for itself or the requested principal if a
+.Va cname
+query parameter was included.
+.Pp
+Unauthorized requests will elicit a 403 response.
+.Pp
+Requested IP addresses will be added to the issued TGT if allowed.
+The IP address of the client will be included if address-less TGTs
+are not allowed.
+See the
+.Va [get-tgt]
+section of
+.Xr krb5.conf 5 .
+.Pp
+The certification authority configuration is the same as for the
+.Va /get-cert
+end-point, but as configured in the
+.Va [get-tgt]
+section of
+.Xr krb5.conf 5 .
 .Sh ENVIRONMENT
 .Bl -tag -width Ds
 .It Ev KRB5_CONFIG
@@ -122,6 +266,8 @@ the default being
 .Pa /etc/krb5.conf .
 .El
 .Sh FILES
+Configuration parameters are specified in
+.Ar /etc/krb5.conf .
 .Bl -tag -width Ds
 .It Pa /etc/krb5.conf
 .El

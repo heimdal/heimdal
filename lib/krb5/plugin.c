@@ -170,13 +170,39 @@ _krb5_plugin_run_f(krb5_context context,
  * @ingroup	krb5_support
  */
 
+#ifdef WIN32
+static uintptr_t
+djb2(uintptr_t hash, unsigned char *str)
+{
+    int c;
+
+    while (c = *str++)
+	hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
+
+    return hash;
+}
+#endif
+
 KRB5_LIB_FUNCTION uintptr_t KRB5_LIB_CALL
 krb5_get_instance(const char *libname)
 {
+#ifdef WIN32
+    char *version;
+    char *name;
+    uintptr_t instance;
+
+    if (win32_getLibraryVersion("heimdal", &name, &version))
+	return 0;
+    instance = djb2(5381, name);
+    instance = djb2(instance, version);
+    free(name);
+    free(version);
+    return instance;
+#else
     static const char *instance = "libkrb5";
 
     if (strcmp(libname, "krb5") == 0)
 	return (uintptr_t)instance;
-
     return 0;
+#endif
 }

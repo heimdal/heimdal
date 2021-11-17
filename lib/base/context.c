@@ -44,6 +44,7 @@ heim_context_init(void)
     if ((context = calloc(1, sizeof(*context))) == NULL)
         return NULL;
 
+    context->homedir_access = !issuid();
     context->log_utc = 1;
     context->error_string = NULL;
     context->debug_dest = NULL;
@@ -176,7 +177,9 @@ heim_set_debug_dest(heim_context context, heim_log_facility *fac)
     return 0;
 }
 
-#define PATH_SEP ":"
+#ifndef PATH_SEP
+# define PATH_SEP ":"
+#endif
 
 static heim_error_code
 add_file(char ***pfilenames, int *len, char *file)
@@ -206,16 +209,22 @@ add_file(char ***pfilenames, int *len, char *file)
 
 #ifdef WIN32
 static char *
-get_default_config_config_files_from_registry(void)
+get_default_config_config_files_from_registry(const char *envvar)
 {
     static const char *KeyName = "Software\\Heimdal"; /* XXX #define this */
+    const char *ValueName;
     char *config_file = NULL;
     LONG rcode;
     HKEY key;
 
+    if (stricmp(envvar, "KRB5_CONFIG") == 0)
+	ValueName = "config";
+    else
+	ValueName = envvar;
+
     rcode = RegOpenKeyEx(HKEY_CURRENT_USER, KeyName, 0, KEY_READ, &key);
     if (rcode == ERROR_SUCCESS) {
-        config_file = heim_parse_reg_value_as_multi_string(NULL, key, "config",
+	config_file = heim_parse_reg_value_as_multi_string(NULL, key, ValueName,
                                                            REG_NONE, 0, PATH_SEP);
         RegCloseKey(key);
     }
@@ -225,7 +234,7 @@ get_default_config_config_files_from_registry(void)
 
     rcode = RegOpenKeyEx(HKEY_LOCAL_MACHINE, KeyName, 0, KEY_READ, &key);
     if (rcode == ERROR_SUCCESS) {
-        config_file = heim_parse_reg_value_as_multi_string(NULL, key, "config",
+	config_file = heim_parse_reg_value_as_multi_string(NULL, key, ValueName,
                                                            REG_NONE, 0, PATH_SEP);
         RegCloseKey(key);
     }
@@ -323,7 +332,7 @@ heim_get_default_config_files(const char *def,
 #ifdef _WIN32
     if (files == NULL) {
         char * reg_files;
-        reg_files = get_default_config_config_files_from_registry();
+	reg_files = get_default_config_config_files_from_registry(envvar);
         if (reg_files != NULL) {
             heim_error_code code;
 

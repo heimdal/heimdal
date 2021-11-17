@@ -586,9 +586,9 @@ _kdc_do_digest(krb5_context context,
 	if (ret)
 	    goto out;
 
-	ret = krb5_verify_checksum(context, crypto,
+	ret = _kdc_verify_checksum(context, crypto,
 				   KRB5_KU_DIGEST_OPAQUE,
-				   buf.data, buf.length, &res);
+				   &buf, &res);
 	free_Checksum(&res);
 	krb5_data_free(&buf);
 	krb5_crypto_destroy(context, crypto);

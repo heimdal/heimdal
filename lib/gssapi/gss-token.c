@@ -31,7 +31,7 @@
 #include <errno.h>
 #ifdef __APPLE__
 #include <malloc/malloc.h>
-#else
+#elif HAVE_MALLOC_H
 #include <malloc.h>
 #endif
 #include <stdio.h>
@@ -89,7 +89,9 @@
  * global variables
  */
 
+int	Sflag = 0;
 int	nflag = 0;
+gss_OID	global_mech = GSS_C_NO_OID;
 
 static char *
 gss_mk_err(OM_uint32 maj_stat, OM_uint32 min_stat, const char *preamble)
@@ -164,8 +166,150 @@ gss_mk_err(OM_uint32 maj_stat, OM_uint32 min_stat, const char *preamble)
 	return str;
 }
 
+static char *
+read_buffer(FILE *fp)
+{
+	char	 buf[65536];
+	char	*p;
+	char	*ret = NULL;
+	size_t	 buflen;
+	size_t	 retlen = 0;
+
+	while (fgets(buf, sizeof(buf), fp) != NULL) {
+		if ((p = strchr(buf, '\n')) == NULL) {
+			fprintf(stderr, "Long line, exiting.\n");
+			exit(1);
+		}
+		*p = '\0';
+		buflen = strlen(buf);
+		if (buflen == 0)
+			break;
+
+		ret = realloc(ret, retlen + buflen + 1);
+		if (!ret) {
+			perror("realloc");
+			exit(1);
+		}
+		memcpy(ret + retlen, buf, buflen);
+		ret[retlen + buflen] = '\0';
+		retlen += buflen;
+	}
+
+	if (ferror(stdin)) {
+		perror("fgets");
+		exit(1);
+	}
+
+	return ret;
+}
+
 static int
-write_one_token(gss_name_t service, int delegate, int negotiate)
+write_and_free_token(gss_buffer_t out, int negotiate)
+{
+	OM_uint32	 min;
+	char		*outstr = NULL;
+	char		*p = out->value;
+	size_t		 len = out->length;
+	size_t		 inc;
+	int		 ret = 0;
+	int		 first = 1;
+
+	if (nflag)
+		goto bail;
+
+	/*
+	 * According to RFC 2744 page 25, we simply don't output
+	 * zero length output tokens.
+	 */
+	if (len == 0)
+		goto bail;
+
+	inc = len;
+	if (Sflag)
+		inc = Sflag;
+
+	do {
+		if (first)
+			first = 0;
+		else
+			printf("\n");
+		if (len < inc)
+			inc = len;
+		ret = rk_base64_encode(p, inc, &outstr);
+		if (ret < 0) {
+			fprintf(stderr, "Out of memory.\n");
+			ret = 1;
+			goto bail;
+		}
+		printf("%s%s\n", negotiate?"Negotiate ":"", outstr);
+		free(outstr);
+		p   += inc;
+		len -= inc;
+	} while (len > 0);
+
+bail:
+	gss_release_buffer(&min, out);
+	return 0;
+}
+
+static int
+read_token(gss_buffer_t in, int negotiate)
+{
+	char	*inbuf = NULL;
+	char	*tmp;
+	size_t	 len;
+	int	 ret = 0;
+
+	/* We must flush before we block wanting input */
+	fflush(stdout);
+
+	*in = (gss_buffer_desc)GSS_C_EMPTY_BUFFER;
+	inbuf = read_buffer(stdin);
+	if (!inbuf)
+		/* Just a couple of \n's in a row or EOF, no error. */
+		return 0;
+
+	tmp = inbuf;
+	if (negotiate) {
+		if (strncasecmp("Negotiate ", inbuf, 10)) {
+			fprintf(stderr, "Token doesn't begin with "
+			    "\"Negotiate \"\n");
+			ret = -1;
+			goto bail;
+		}
+
+		tmp += 10;
+	}
+
+	len = strlen(tmp);
+	in->value = malloc(len + 1);
+	if (!in->value) {
+		fprintf(stderr, "Out of memory.\n");
+		ret = -1;
+		goto bail;
+	}
+	ret = rk_base64_decode(tmp, in->value);
+	if (ret < 0) {
+		free(in->value);
+		in->value = NULL;
+		if (errno == EOVERFLOW)
+			fprintf(stderr, "Token is too big\n");
+		else
+			fprintf(stderr, "Token encoding is not valid "
+			    "base64\n");
+		goto bail;
+	} else {
+		in->length = ret;
+	}
+	ret = 0;
+
+bail:
+	free(inbuf);
+	return ret;
+}
+
+static int
+initiate_one(gss_name_t service, int delegate, int negotiate)
 {
 	gss_ctx_id_t	 ctx = GSS_C_NO_CONTEXT;
 	gss_buffer_desc	 in;
@@ -173,36 +317,42 @@ write_one_token(gss_name_t service, int delegate, int negotiate)
 	OM_uint32	 maj;
 	OM_uint32	 min;
 	OM_uint32	 flags = 0;
+	int		 first = 1;
 	int		 ret = 0;
-	char		*base64_output = NULL;
-
-	in.length  = 0;
-	in.value   = 0;
-	out.length = 0;
-	out.value  = 0;
 
 	if (delegate)
 		flags |= GSS_C_DELEG_FLAG;
 
-        maj = gss_init_sec_context(&min, GSS_C_NO_CREDENTIAL, &ctx, service,
-	    GSS_C_NO_OID, flags, 0, GSS_C_NO_CHANNEL_BINDINGS, &in, NULL, &out,
-	    NULL, NULL);
+	do {
+		out.length = 0;
+		out.value  = 0;
 
-	GBAIL("gss_init_sec_context", maj, min);
+		if (first) {
+			in.length  = 0;
+			in.value   = 0;
+			first      = 0;
+		} else {
+			printf("\n");
+			ret = read_token(&in, negotiate);
+			if (ret)
+				return ret;
+			if (feof(stdin))
+				return -1;
+		}
 
-	if (rk_base64_encode(out.value, out.length, &base64_output) < 0) {
-		fprintf(stderr, "Out of memory.\n");
-		ret = 1;
-		goto bail;
-	}
+		maj = gss_init_sec_context(&min, GSS_C_NO_CREDENTIAL, &ctx,
+		    service, global_mech, flags, 0,
+		    GSS_C_NO_CHANNEL_BINDINGS, &in, NULL, &out,
+		    NULL, NULL);
 
-	if (!nflag)
-		printf("%s%s\n", negotiate?"Negotiate ":"", base64_output);
+		ret = write_and_free_token(&out, negotiate);
+		if (ret)
+			return ret;
+
+		GBAIL("gss_init_sec_context", maj, min);
+	} while (maj & GSS_S_CONTINUE_NEEDED);
 
 bail:
-	if (out.value)
-		gss_release_buffer(&min, &out);
-
 	if (ctx != GSS_C_NO_CONTEXT) {
 		/*
 		 * XXXrcd: here we ignore the fact that we might have an
@@ -211,8 +361,6 @@ bail:
 		 */
 		gss_delete_sec_context(&min, &ctx, NULL);
 	}
-
-	free(base64_output);
 
 	return ret;
 }
@@ -250,8 +398,8 @@ copy_cache(krb5_context kctx, krb5_ccache from, krb5_ccache to)
 }
 
 static int
-write_token(gss_name_t service, int delegate, int negotiate, int memcache,
-	    size_t count)
+initiate_many(gss_name_t service, int delegate, int negotiate, int memcache,
+	      size_t count)
 {
 	krb5_error_code	kret;
 	krb5_context	kctx = NULL;
@@ -269,7 +417,7 @@ write_token(gss_name_t service, int delegate, int negotiate, int memcache,
 	for (i=0; i < count; i++) {
 		if (memcache)
 			K5BAIL(copy_cache(kctx, def_cache, mem_cache));
-		kret = write_one_token(service, delegate, negotiate);
+		kret = initiate_one(service, delegate, negotiate);
 
 		if (!nflag && i < count - 1)
 			printf("\n");
@@ -285,44 +433,8 @@ write_token(gss_name_t service, int delegate, int negotiate, int memcache,
 	return kret;
 }
 
-static char *
-read_buffer(FILE *fp)
-{
-	char	 buf[65536];
-	char	*p;
-	char	*ret = NULL;
-	size_t	 buflen;
-	size_t	 retlen = 0;
-
-	while (fgets(buf, sizeof(buf), fp) != NULL) {
-		if ((p = strchr(buf, '\n')) == NULL) {
-			fprintf(stderr, "Long line, exiting.\n");
-			exit(1);
-		}
-
-		*p = '\0';
-
-		buflen = strlen(buf);
-
-		if (buflen == 0)
-			break;
-
-		ret = realloc(ret, retlen + buflen + 1);
-
-		memcpy(ret + retlen, buf, buflen);
-		ret[retlen + buflen] = '\0';
-	}
-
-	if (ferror(stdin)) {
-		perror("fgets");
-		exit(1);
-	}
-
-	return ret;
-}
-
 static int
-read_one_token(gss_name_t service, const char *ccname, int negotiate)
+accept_one(gss_name_t service, const char *ccname, int negotiate)
 {
 	gss_cred_id_t	 cred = NULL;
 	gss_cred_id_t	 deleg_creds = NULL;
@@ -335,9 +447,6 @@ read_one_token(gss_name_t service, const char *ccname, int negotiate)
 	krb5_ccache	 ccache = NULL;
 	krb5_error_code	 kret;
         OM_uint32        maj, min;
-	size_t		 len;
-	char		*inbuf = NULL;
-	char		*tmp;
 	int		 ret = 0;
 
 	if (service) {
@@ -346,48 +455,25 @@ read_one_token(gss_name_t service, const char *ccname, int negotiate)
 		GBAIL("gss_acquire_cred", maj, min);
 	}
 
-	inbuf = read_buffer(stdin);
-	if (!inbuf)
-		/* Just a couple of \n's in a row or EOF, not an error. */
-		return 0;
-
-	tmp = inbuf;
-	if (negotiate) {
-		if (strncasecmp("Negotiate ", inbuf, 10)) {
-			fprintf(stderr, "Token doesn't begin with "
-			    "\"Negotiate \"\n");
+	do {
+		if (feof(stdin))
 			return -1;
-		}
+		ret = read_token(&in, negotiate);
+		if (ret)
+			return ret;
 
-		tmp += 10;
-	}
+		out.length = 0;
+		out.value  = 0;
 
-	len = strlen(tmp);
-	in.value = malloc(len + 1);
-	if (!in.value) {
-		fprintf(stderr, "Out of memory.\n");
-		return -1;
-	}
-	ret = rk_base64_decode(tmp, in.value);
-	if (ret < 0) {
-		free(in.value);
-		if (errno == EOVERFLOW)
-			fprintf(stderr, "Token is too big\n");
-		else
-			fprintf(stderr, "Token encoding is not valid base64\n");
-		return -1;
-	}
-        in.length = ret;
-        ret = 0;
+		maj = gss_accept_sec_context(&min, &ctx, cred, &in,
+		    GSS_C_NO_CHANNEL_BINDINGS, &client, &mech_oid, &out,
+		    NULL, NULL, &deleg_creds);
 
-	out.length = 0;
-	out.value  = 0;
- 
-        maj = gss_accept_sec_context(&min, &ctx, cred, &in,
-	    GSS_C_NO_CHANNEL_BINDINGS, &client, &mech_oid, &out,
-	    NULL, NULL, &deleg_creds);
-
-	GBAIL("gss_accept_sec_context", maj, min);
+		ret = write_and_free_token(&out, negotiate);
+		if (ret)
+			return ret;
+		GBAIL("gss_accept_sec_context", maj, min);
+	} while (maj & GSS_S_CONTINUE_NEEDED);
 
 	/*
 	 * XXXrcd: not bothering to clean up because we're about to exit.
@@ -438,20 +524,6 @@ bail:
 		gss_release_cred(&min, &deleg_creds);
 
 	free(in.value);
-	free(inbuf);
-
-	return ret;
-}
-
-static int
-read_token(gss_name_t service, const char *ccname, int negotiate, size_t count)
-{
-	size_t	i;
-	int	ret;
-
-	for (i=0; i < count; i++) {
-		ret = read_one_token(service, ccname, negotiate);
-	}
 
 	return ret;
 }
@@ -476,6 +548,26 @@ bail:
 	if (ret)
 		exit(1);
 	return svc;
+}
+
+static void
+print_all_mechs(void)
+{
+	OM_uint32	maj, min;
+	gss_OID_set	mech_set;
+	size_t		i;
+	int		ret = 0;
+
+	maj = gss_indicate_mechs(&min, &mech_set);
+	GBAIL("gss_indicate_mechs", maj, min);
+
+	for (i=0; i < mech_set->count; i++)
+		printf("%s\n", gss_oid_to_name(&mech_set->elements[i]));
+
+	maj = gss_release_oid_set(&min, &mech_set);
+
+bail:
+	exit(ret);
 }
 
 static void
@@ -504,6 +596,7 @@ main(int argc, char **argv)
 	int		 ret = 0;
 	int		 optidx = 0;
 	char		*ccname = NULL;
+	char		*mech = NULL;
 	struct getargs	 args[] = {
 	    { "help", 'h', arg_flag, &hflag, NULL, NULL },
 	    { "version", 0, arg_flag, &version_flag, NULL, NULL },
@@ -511,8 +604,12 @@ main(int argc, char **argv)
 	    { NULL, 'D', arg_flag, &Dflag, NULL, NULL },
 	    { NULL, 'M', arg_flag, &Mflag, NULL, NULL },
 	    { NULL, 'N', arg_flag, &Nflag, NULL, NULL },
-	    { NULL, 'r', arg_flag, &rflag, NULL, NULL },
+	    { NULL, 'S', arg_integer, &Sflag, NULL, NULL },
+	    { NULL, 'c', arg_integer, &count, NULL, NULL },
 	    { NULL, 'l', arg_flag, &lflag, NULL, NULL },
+	    { NULL, 'm', arg_string, &mech, NULL, NULL },
+	    { NULL, 'n', arg_flag, &nflag, NULL, NULL },
+	    { NULL, 'r', arg_flag, &rflag, NULL, NULL },
 	};
 
 	setprogname(argv[0]);
@@ -529,6 +626,18 @@ main(int argc, char **argv)
 	argc -= optidx;
 	argv += optidx;
 
+	if (mech) {
+		if (mech[0] == '?' && mech[1] == '\0') {
+			print_all_mechs();
+			exit(0);
+		}
+		global_mech = gss_name_to_oid(mech);
+		if (!global_mech) {
+			fprintf(stderr, "Invalid mech \"%s\".\n", mech);
+			usage(1);
+		}
+	}
+
 	if (argc > 0)
 		service = import_service(*argv);
 
@@ -543,7 +652,7 @@ main(int argc, char **argv)
 			    "make sense without -r.\n");
 			usage(1);
 		}
-		ret = write_token(service, Dflag, Nflag, Mflag, count);
+		ret = initiate_many(service, Dflag, Nflag, Mflag, count);
 		goto done;
 	}
 
@@ -554,7 +663,7 @@ main(int argc, char **argv)
 	}
 
 	do {
-		ret = read_token(service, ccname, Nflag, count);
+		ret = accept_one(service, ccname, Nflag);
 	} while (lflag && !ret && !feof(stdin));
 
 done:

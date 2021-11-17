@@ -42,6 +42,7 @@ static char *keytab_str = sHDB;
 static int help_flag;
 static int version_flag;
 static int debug_flag;
+static int readonly_flag;
 static char *port_str;
 char *realm;
 
@@ -81,6 +82,8 @@ static struct getargs args[] = {
     },
     {	"ports",	'p',	arg_string, &port_str,
 	"ports to listen to", "port" },
+    {	"read-only",	0,	arg_flag,   &readonly_flag,
+	"read-only operations", NULL },
     {	"help",		'h',	arg_flag,   &help_flag, NULL, NULL },
     {	"version",	'v',	arg_flag,   &version_flag, NULL, NULL }
 };
@@ -204,12 +207,14 @@ main(int argc, char **argv)
 	}
 #endif /* _WIN32 */
 	sfd = STDIN_FILENO;
+
+	socket_set_keepalive(sfd, 1);
     }
 
     if(realm)
 	krb5_set_default_realm(context, realm); /* XXX */
 
-    kadmind_loop(context, keytab, sfd);
+    kadmind_loop(context, keytab, sfd, readonly_flag);
 
     return 0;
 }

@@ -51,8 +51,8 @@ assembly=..\packages\windows\assembly
 !endif
 
 SUBDIRS = roken vers com_err base sl wind asn1 sqlite \
-	hcrypto hx509 krb5 heimdal ntlm kafs gssapi hdb \
-	kadm5 $(dir_otp) $(dir_dce) $(plugin) $(assembly)
+	hcrypto hx509 krb5 heimdal ntlm kafs gssapi gss_preauth \
+	hdb kadm5 $(dir_otp) $(dir_dce) $(plugin) $(assembly)
 
 !include ../windows/NTMakefile.w32
 

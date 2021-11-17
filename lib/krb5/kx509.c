@@ -519,7 +519,7 @@ store_kx509_disabled(krb5_context context, const char *realm, krb5_ccache cc)
     krb5_cc_set_config(context, cc, NULL, "kx509_service_status", &data);
 }
 
-static int
+static int KRB5_CALLCONV
 certs_export_func(hx509_context context, void *d, hx509_cert c)
 {
     heim_octet_string os;
@@ -721,7 +721,7 @@ mk_kx509_req_body(krb5_context context,
 static krb5_error_code
 get_start_realm(krb5_context context,
                 krb5_ccache cc,
-                krb5_principal princ,
+                krb5_const_principal princ,
                 char **out)
 {
     krb5_error_code ret;
@@ -731,8 +731,16 @@ get_start_realm(krb5_context context,
     if (ret == 0) {
         *out = strndup(d.data, d.length);
         krb5_data_free(&d);
-    } else {
+    } else if (princ) {
         *out = strdup(krb5_principal_get_realm(context, princ));
+    } else {
+        krb5_principal ccprinc = NULL;
+
+        ret = krb5_cc_get_principal(context, cc, &ccprinc);
+        if (ret)
+            return ret;
+        *out = strdup(krb5_principal_get_realm(context, ccprinc));
+        krb5_free_principal(context, ccprinc);
     }
     return (*out) ? 0 : krb5_enomem(context);
 }
@@ -1181,20 +1189,11 @@ krb5_kx509_ext(krb5_context context,
         incc = def_cc;
     }
 
-    if (kx509_ctx->realm == NULL) {
-        krb5_data data;
-
-        ret = krb5_cc_get_config(context, incc, NULL, "start_realm", &data);
-        if (ret == 0) {
-            if ((kx509_ctx->realm = strndup(data.data, data.length)) == NULL)
-                ret = krb5_enomem(context);
-            krb5_data_free(&data);
-        }
-        if (ret) {
-            if (def_cc)
-                krb5_cc_close(context, def_cc);
-            return ret;
-        }
+    if (kx509_ctx->realm == NULL &&
+        (ret = get_start_realm(context, incc, NULL, &kx509_ctx->realm))) {
+        if (def_cc)
+            krb5_cc_close(context, def_cc);
+        return ret;
     }
 
     if (kx509_ctx->priv_key || kx509_ctx->given_csr.data) {

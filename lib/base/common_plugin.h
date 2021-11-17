@@ -37,23 +37,33 @@
 #define HEIMDAL_BASE_COMMON_PLUGIN_H
 
 #ifdef _WIN32
-#ifndef HEIM_CALLCONV
-#define HEIM_CALLCONV __stdcall
-#endif
-#ifndef HEIM_LIB_CALL
-#define HEIM_LIB_CALL __stdcall
-#endif
+# ifndef HEIM_CALLCONV
+#  define HEIM_CALLCONV __stdcall
+# endif
+# ifndef HEIM_LIB_CALL
+#  define HEIM_LIB_CALL __stdcall
+# endif
 #else
-#ifndef HEIM_CALLCONV
-#define HEIM_CALLCONV
+# ifndef HEIM_CALLCONV
+#  define HEIM_CALLCONV
+# endif
+# ifndef HEIM_LIB_CALL
+#  define HEIM_LIB_CALL
+# endif
 #endif
-#ifndef HEIM_LIB_CALL
-#define HEIM_LIB_CALL
+#ifndef KRB5_CALLCONV
+# define KRB5_CALLCONV HEIM_CALLCONV
 #endif
+#ifndef KRB5_LIB_CALL
+# define KRB5_LIB_CALL HEIM_LIB_CALL
 #endif
 
 /* For krb5 plugins, this is a krb5_context */
 typedef struct heim_pcontext_s *heim_pcontext;
+
+typedef uintptr_t
+(HEIM_LIB_CALL *heim_get_instance_func_t)(const char *);
+typedef heim_get_instance_func_t krb5_get_instance_t;
 
 /*
  * All plugin function tables extend the following structure.

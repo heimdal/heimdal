@@ -2,12 +2,15 @@
 
 static int authorized_flag;
 static int help_flag;
+static char *lifetime_string;
 static const char *app_string = "kdc";
 static int version_flag;
 
 struct getargs args[] = {
     {   "authorized",   'A',    arg_flag,   &authorized_flag,
         "Assume CSR is authorized", NULL },
+    {   "lifetime",     'l',    arg_string, &lifetime_string,
+        "Certificate lifetime desired", "TIME" },
     {   "help",         'h',    arg_flag,   &help_flag,
         "Print usage message", NULL },
     {   "app",          'a',    arg_string, &app_string,
@@ -34,10 +37,41 @@ usage(int e)
     return e;
 }
 
+static const char *sysplugin_dirs[] =  {
+#ifdef _WIN32
+    "$ORIGIN",
+#else
+    "$ORIGIN/../lib/plugin/kdc",
+#endif
+#ifdef __APPLE__
+    LIBDIR "/plugin/kdc",
+#endif
+    NULL
+};
+
+static void
+load_plugins(krb5_context context)
+{
+    const char * const *dirs = sysplugin_dirs;
+#ifndef _WIN32
+    char **cfdirs;
+
+    cfdirs = krb5_config_get_strings(context, NULL, "kdc", "plugin_dir", NULL);
+    if (cfdirs)
+        dirs = (const char * const *)cfdirs;
+#endif
+
+    _krb5_load_plugins(context, "kdc", (const char **)dirs);
+
+#ifndef _WIN32
+    krb5_config_free_strings(cfdirs);
+#endif
+}
+
 int
 main(int argc, char **argv)
 {
-    krb5_kdc_configuration *config;
+    krb5_log_facility *logf = NULL;
     krb5_error_code ret;
     krb5_principal p = NULL;
     krb5_context context;
@@ -47,6 +81,7 @@ main(int argc, char **argv)
     hx509_certs certs = NULL;
     const char *argv0 = argv[0];
     const char *out = "MEMORY:junk-it";
+    time_t req_life = 0;
     int optidx = 0;
 
     setprogname(argv[0]);
@@ -67,16 +102,10 @@ main(int argc, char **argv)
 
     if ((errno = krb5_init_context(&context)))
         err(1, "Could not initialize krb5_context");
-    if ((ret = krb5_kdc_get_config(context, &config)))
-        krb5_err(context, 1, ret, "Could not get KDC configuration");
-    config->app = app_string;
-    if ((ret = krb5_initlog(context, argv0, &config->logf)) ||
-        (ret = krb5_addlog_dest(context, config->logf, "0-5/STDERR")))
+    if ((ret = krb5_initlog(context, argv0, &logf)) ||
+        (ret = krb5_addlog_dest(context, logf, "0-5/STDERR")))
         krb5_err(context, 1, ret, "Could not set up logging to stderr");
-#if 0
-    if ((ret = krb5_kdc_set_dbinfo(context, config)))
-        krb5_err(context, 1, ret, "Could not get KDC configuration (HDB)");
-#endif
+    load_plugins(context);
     if ((ret = krb5_parse_name(context, argv[0], &p)))
         krb5_err(context, 1, ret, "Could not parse principal %s", argv[0]);
     if ((ret = hx509_request_parse(context->hx509ctx, argv[1], &req)))
@@ -110,7 +139,7 @@ main(int argc, char **argv)
         }
         if (ret == HX509_NO_ITEM)
             ret = 0;
-    } else if ((ret = kdc_authorize_csr(context, config, req, p))) {
+    } else if ((ret = kdc_authorize_csr(context, app_string, req, p))) {
         krb5_err(context, 1, ret,
                  "Requested certificate extensions rejected by policy");
     }
@@ -118,8 +147,9 @@ main(int argc, char **argv)
     memset(&t, 0, sizeof(t));
     t.starttime = time(NULL);
     t.endtime = t.starttime + 3600;
-    if ((ret = kdc_issue_certificate(context, config, req, p, &t, 1,
-                                     &certs)))
+    req_life = lifetime_string ? parse_time(lifetime_string, "day") : 0;
+    if ((ret = kdc_issue_certificate(context, app_string, logf, req, p, &t,
+                                     req_life, 1, &certs)))
         krb5_err(context, 1, ret, "Certificate issuance failed");
 
     if (argv[2])
@@ -143,6 +173,5 @@ main(int argc, char **argv)
     hx509_request_free(&req);
     hx509_certs_free(&store);
     hx509_certs_free(&certs);
-    /* FIXME There's no free function for config yet */
     return 0;
 }

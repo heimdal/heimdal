@@ -123,12 +123,17 @@ HEIMDAL_ROKEN_2.0 {
 		rk_socket_set_any;
 		rk_socket_set_debug;
 		rk_socket_set_ipv6only;
+		rk_socket_set_keepalive;
 		rk_socket_set_nonblocking;
 		rk_socket_set_port;
 		rk_socket_set_portrange;
 		rk_socket_set_reuseaddr;
 		rk_socket_set_tos;
 		rk_socket_sockaddr_size;
+		rk_strasvis;
+		rk_strasvisx;
+		rk_stravis;
+		rk_stravisx;
 		rk_strcollect;
 		rk_strerror;
 		rk_strerror_r;
@@ -142,6 +147,8 @@ HEIMDAL_ROKEN_2.0 {
 		rk_strpoolfree;
 		rk_strpoolprintf;
 		rk_strptime;
+		rk_strrasvis;
+		rk_strrasvisx;
 		rk_strsep_copy;
 		rk_strsvis;
 		rk_strsvisx;

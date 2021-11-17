@@ -16,6 +16,7 @@ HEIMDAL_GSS_2.0 {
 		gss_accept_sec_context;
 		gss_acquire_cred;
 		gss_acquire_cred_from;
+		gss_acquire_cred_impersonate_name;
 		gss_acquire_cred_with_password;
 		gss_add_buffer_set_member;
 		gss_add_cred;
@@ -43,6 +44,7 @@ HEIMDAL_GSS_2.0 {
 		gss_export_name;
 		gss_export_name_composite;
 		gss_export_sec_context;
+		gss_get_instance;
 		gss_get_mic;
 		gss_get_neg_mechs;
 		gss_get_name_attribute;

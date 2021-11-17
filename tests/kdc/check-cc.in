@@ -139,8 +139,8 @@ export KRB5_CONFIG
 unset KRB5CCNAME
 rm -rf ${objdir}/kt ${objdir}/cc_dir
 mkdir ${objdir}/cc_dir || { ec=1 ; eval "${testfailed}"; }
-${kinit} foo@${R} || { ec=1 ; eval "${testfailed}"; }
-${kinit} --no-change-default bar@${R} || { ec=1 ; eval "${testfailed}"; }
+${kinit} --default-for-principal foo@${R} || { ec=1 ; eval "${testfailed}"; }
+${kinit} --default-for-principal --no-change-default bar@${R} || { ec=1 ; eval "${testfailed}"; }
 primary=`cat ${objdir}/cc_dir/primary`
 [ "x$primary" = xtkt.foo@${R} ] || { ec=1 ; eval "${testfailed}"; }
 ${klist} -l |

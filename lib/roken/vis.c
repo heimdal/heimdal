@@ -71,6 +71,7 @@
 #ifdef TEST
 #include <err.h>
 #endif
+#include <errno.h>
 #include <limits.h>
 #include <stdio.h>
 #include <string.h>
@@ -390,6 +391,67 @@ rk_strsvisx(char *dst, const char *csrc, size_t len, int flag, const char *extra
 }
 #endif
 
+/*
+ * Heimdal innovations: functions that allocate or reallocate a destination
+ * buffer as needed.  Based on OpenBSD's stravis().
+ */
+
+#include <vis-extras.h>
+
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
+rk_strasvis(char **out, const char *csrc, int flag, const char *extra)
+{
+	return rk_strasvisx(out, csrc, strlen(csrc), flag, extra);
+}
+
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
+rk_strrasvis(char **out, size_t *outsz, const char *csrc, int flag, const char *extra)
+{
+	return rk_strrasvisx(out, outsz, csrc, strlen(csrc), flag, extra);
+}
+
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
+rk_strasvisx(char **out, const char *csrc, size_t len, int flag, const char *extra)
+{
+	size_t sz = 0;
+
+	*out = NULL;
+	return rk_strrasvisx(out, &sz, csrc, strlen(csrc), flag, extra);
+}
+
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
+rk_strrasvisx(char **out,
+	      size_t *outsz,
+	      const char *csrc,
+	      size_t len,
+	      int flag,
+	      const char *extra)
+{
+	size_t want = 4 * len + 4;
+	size_t have = *outsz;
+	char *s = *out;
+	int r;
+
+	_DIAGASSERT(dst != NULL);
+	_DIAGASSERT(src != NULL);
+	_DIAGASSERT(extra != NULL);
+	if (want < len || want > INT_MAX) {
+		errno = EOVERFLOW;
+		return -1;
+	}
+	if (have < want) {
+		if ((s = realloc(*out, want)) == NULL)
+			return -1;
+		*outsz = want;
+		*out = s;
+	}
+	**out = '\0'; /* Makes source debugging nicer, that's all */
+	if ((r = strsvisx(*out, csrc, len, flag, extra)) < 0)
+		return r;
+	errno = *out ? errno : EINVAL;
+	return *out ? r : -1;
+}
+
 #if !HAVE_VIS
 /*
  * vis - visually encode characters
@@ -536,17 +598,8 @@ main(int argc, char **argv)
         err(1, "Out of memory");
 
     while (argc) {
-        size_t len = strlen(argv[0]);
-
-        if (len > sz) {
-            char *tmp;
-
-            if ((tmp = realloc(s, 4 * len + 1)) == NULL)
-                err(2, "Out of memory");
-            s = tmp;
-            sz = 4 * len + 1;
-        }
-        strsvis(s, argv[0], flags, nextra);
+	if (rk_strrasvis(&s, &sz, argv[0], flags, nextra) < 0)
+		err(2, "Out of memory");
         printf("%s\n", s);
         argc--;
     }
@@ -557,24 +610,16 @@ main(int argc, char **argv)
 
         while (!feof(stdin) &&
                (nbytes = getline(&line, &linesz, stdin)) > 0) {
-            int nl = 0;
+            const char *nl = "";
 
-            if (4 * (size_t)nbytes + 2 > sz) {
-                char *tmp;
-
-                if ((tmp = realloc(s, 4 * nbytes + 2)) == NULL)
-                    err(2, "Out of memory");
-                s = tmp;
-                sz = 4 * nbytes + 2;
-            }
             if (line[nbytes - 1] == '\n') {
-                line[nbytes - 1] = '\0';
-                nl = 1;
-            } else {
-                nl = 0;
+                line[--nbytes] = '\0';
+                nl = "\n";
             }
-            strsvis(s, line, flags, nextra);
-            printf("%s%s", s, nl ? "\n" : "");
+
+	    if (rk_strrasvisx(&s, &sz, line, nbytes, flags, nextra) < 0)
+		err(2, "Out of memory");
+            printf("%s%s", s, nl);
         }
         fflush(stdout);
         if (ferror(stdin))

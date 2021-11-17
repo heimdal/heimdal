@@ -135,6 +135,18 @@ ${context} \
     --mech-type=spnego \
     --ret-mech-type=krb5 \
     --name-type=hostbased-service \
+    --export-import-context \
+    host@host.test.h5l.se || \
+    { exitcode=1 ; echo test failed; }
+
+echo "spnego (split tokens)"
+${context} \
+    --token-split=128 \
+    --client-ccache="${cache}" \
+    --mech-type=spnego \
+    --ret-mech-type=krb5 \
+    --name-type=hostbased-service \
+    --export-import-context \
     host@host.test.h5l.se || \
     { exitcode=1 ; echo test failed; }
 

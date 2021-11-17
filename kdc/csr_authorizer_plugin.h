@@ -54,7 +54,7 @@
  *
  * -# plug_ctx, the context value output by the plugin's init function
  * -# context, a krb5_context
- * -# config, a krb5_kdc_configuration *
+ * -# app, the name of the application
  * -# csr, a hx509_request
  * -# client, a krb5_const_principal
  * -# authorization_result, a pointer to a krb5_boolean
@@ -66,8 +66,8 @@ typedef struct krb5plugin_csr_authorizer_ftable_desc {
     krb5_error_code	(KRB5_LIB_CALL *init)(krb5_context, void **);
     void		(KRB5_LIB_CALL *fini)(void *);
     krb5_error_code	(KRB5_LIB_CALL *authorize)(void *,              /*plug_ctx*/
-                                                   krb5_context,
-                                                   krb5_kdc_configuration *,
+                                                   krb5_context,        /*context*/
+                                                   const char *,        /*app*/
                                                    hx509_request,       /*CSR*/
                                                    krb5_const_principal,/*client*/
                                                    krb5_boolean *);     /*authorized*/

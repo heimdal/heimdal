@@ -265,6 +265,7 @@ test_ber(void)
     if (ret)
 	return 1;
 
+    free_ContentInfo(&ci);
     return 0;
 }
 

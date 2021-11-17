@@ -46,6 +46,7 @@
 #include "pkcs9_asn1.h"
 #include "pkinit_asn1.h"
 #include "rfc2459_asn1.h"
+#include "rfc4108_asn1.h"
 
 
 struct sym_oid {
@@ -70,6 +71,7 @@ static const struct sym_oid sym_oids[] = {
 #include "pkcs9_asn1_oids.x"
 #include "pkinit_asn1_oids.x"
 #include "rfc2459_asn1_oids.x"
+#include "rfc4108_asn1_oids.x"
 };
 
 static size_t num_sym_oids = sizeof(sym_oids) / sizeof(sym_oids[0]);
@@ -178,16 +180,37 @@ sort_sym_oids(int (*cmp)(const void *, const void *))
     return tmp;
 }
 
-int
+static int
+fix_oid_name(const char **namep, char **freeme)
+{
+    char *dash = strchr(*namep, '-');
+
+    *freeme = NULL;
+    if (dash == NULL)
+        return 0;
+    if ((*freeme = strdup(*namep)) == NULL)
+        return ENOMEM;
+    *namep = *freeme;
+    for (dash = strchr(*namep, '-'); dash; dash = strchr(dash, '-'))
+        *dash = '_';
+    return 0;
+}
+
+int ASN1CALL
 der_find_heim_oid_by_name(const char *str, const heim_oid **oid)
 {
     size_t right = num_sym_oids - 1;
     size_t left = 0;
+    char *s = NULL;
+    int ret;
 
     *oid = NULL;
     if (sym_oids_sorted_by_name == NULL &&
         (sym_oids_sorted_by_name = sort_sym_oids(sym_cmp_name)) == NULL)
         return ENOMEM;
+
+    if ((ret = fix_oid_name(&str, &s)))
+        return ret;
 
     while (left <= right) {
         size_t mid = left + (right - left) / 2;
@@ -196,31 +219,35 @@ der_find_heim_oid_by_name(const char *str, const heim_oid **oid)
         cmp = strcmp(str, sym_oids_sorted_by_name[mid].sym);
         if (cmp == 0) {
             *oid = sym_oids_sorted_by_name[mid].oid;
+            free(s);
             return 0;
         }
-        if (cmp < 0 && mid > 0) /* avoid underflow */
+        if (cmp < 0 && mid > 0) {/* avoid underflow */
             right = mid - 1;
-        else if (cmp < 0)
+        } else if (cmp < 0) {
+            free(s);
             return -1;
-        else
+        } else {
             left = mid + 1;
+        }
     }
+    free(s);
     return -1;
 }
 
-int
+int ASN1CALL
 der_find_or_parse_heim_oid(const char *str, const char *sep, heim_oid *oid)
 {
     const heim_oid *found = NULL;
 
     switch (der_find_heim_oid_by_name(str, &found)) {
     case 0: return der_copy_oid(found, oid);
-    case -1: return der_parse_heim_oid (str, sep, oid);
+    case -1: return der_parse_heim_oid(str, sep, oid);
     default: return ENOMEM;
     }
 }
 
-int
+int ASN1CALL
 der_find_heim_oid_by_oid(const heim_oid *oid, const char **name)
 {
     size_t right = num_sym_oids;
@@ -232,7 +259,7 @@ der_find_heim_oid_by_oid(const heim_oid *oid, const char **name)
         return ENOMEM;
 
     while (left <= right) {
-        size_t mid = left + (right - left) / 2;
+        size_t mid = (left + right) >> 1;
         int cmp;
 
         cmp = der_heim_oid_cmp(oid, sym_oids_sorted_by_oid[mid].oid);
@@ -240,7 +267,7 @@ der_find_heim_oid_by_oid(const heim_oid *oid, const char **name)
             *name = sym_oids_sorted_by_oid[mid].sym;
             return 0;
         }
-        if (cmp < 0 && right)
+        if (cmp < 0 && mid)
             right = mid - 1;
         else if (cmp < 0)
             return -1;
@@ -252,10 +279,15 @@ der_find_heim_oid_by_oid(const heim_oid *oid, const char **name)
     return -1;
 }
 
-int
+int ASN1CALL
 der_match_heim_oid_by_name(const char *str, int *c, const heim_oid **oid)
 {
     size_t i;
+    char *s = NULL;
+    int ret;
+
+    if ((ret = fix_oid_name(&str, &s)))
+        return ret;
 
     if (*c < 0)
         *c = 0;
@@ -268,23 +300,26 @@ der_match_heim_oid_by_name(const char *str, int *c, const heim_oid **oid)
          */
         if (strstr(sym_oids[i].sym, str)) {
             *oid = sym_oids[i].oid;
+            free(s);
             if (i >= INT_MAX)
                 return -1;
             *c = i + 1; /* num_sym_oids is much less than INT_MAX */
             return 0;
         }
     }
+    free(s);
     return -1;
 }
 
 /* Warning: der_print_heim_oid_sym() will not round-trip */
 
-int
+int ASN1CALL
 der_print_heim_oid_sym(const heim_oid *oid, char delim, char **strp)
 {
     const char *sym;
     char *s1 = NULL;
     char *s2 = NULL;
+    char *p;
     int ret;
 
     if (der_find_heim_oid_by_oid(oid, &sym))
@@ -295,6 +330,11 @@ der_print_heim_oid_sym(const heim_oid *oid, char delim, char **strp)
     if (asprintf(&s2, "%s (%s)", s1, sym) == -1 || s2 == NULL) {
         *strp = s1;
         return 0;
+    }
+    p = s2 + strlen(s1) + 1;
+    for (p = s2 + strlen(s1) + 1; *p; p++) {
+        if (*p == '_')
+            *p = '-';
     }
     *strp = s2;
     free(s1);

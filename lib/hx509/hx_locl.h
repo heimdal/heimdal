@@ -59,6 +59,7 @@
 #include <krb5-types.h>
 
 #include <rfc2459_asn1.h>
+#include <rfc4108_asn1.h>
 #include <cms_asn1.h>
 #include <pkcs8_asn1.h>
 #include <pkcs9_asn1.h>

@@ -1882,6 +1882,7 @@ LDAP_destroy(krb5_context context, HDB * db)
 	free(HDB2CREATE(db));
     if (HDB2URL(db))
 	free(HDB2URL(db));
+    krb5_config_free_strings(db->virtual_hostbased_princ_svcs);
     if (db->hdb_name)
 	free(db->hdb_name);
     free(db->hdb_db);
@@ -2091,6 +2092,7 @@ fini(void *ctx)
 
 struct hdb_method hdb_ldap_interface = {
     HDB_INTERFACE_VERSION,
+    0 /*is_file_based*/, 0 /*can_taste*/,
     init,
     fini,
     "ldap",

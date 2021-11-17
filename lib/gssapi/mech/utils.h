@@ -53,3 +53,30 @@ _gss_mg_import_rfc4121_context(OM_uint32 *minor,
 			       int32_t rfc3961_enctype,
 			       gss_const_buffer_t session_key,
 			       gss_ctx_id_t *rfc4121_context_handle);
+
+#include <krb5.h>
+
+/*
+ * Note: functions below support zero-length OIDs and buffers and will
+ * return NULL values. Callers should handle accordingly.
+ */
+
+OM_uint32
+_gss_mg_ret_oid(OM_uint32 *minor,
+		krb5_storage *sp,
+		gss_OID *oidp);
+
+OM_uint32
+_gss_mg_store_oid(OM_uint32 *minor,
+		  krb5_storage *sp,
+		  gss_const_OID oid);
+
+OM_uint32
+_gss_mg_ret_buffer(OM_uint32 *minor,
+		   krb5_storage *sp,
+		   gss_buffer_t buffer);
+
+OM_uint32
+_gss_mg_store_buffer(OM_uint32 *minor,
+		     krb5_storage *sp,
+		     gss_const_buffer_t buffer);

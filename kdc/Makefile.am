@@ -10,6 +10,10 @@ lib_LTLIBRARIES = simple_csr_authorizer.la  ipc_csr_authorizer.la \
 if HAVE_CJWT
 lib_LTLIBRARIES += cjwt_token_validator.la
 endif
+if OPENLDAP
+lib_LTLIBRARIES += altsecid_gss_preauth_authorizer.la
+endif
+
 
 bin_PROGRAMS = string2key
 
@@ -20,7 +24,7 @@ libexec_PROGRAMS = hprop hpropd kdc digest-service \
 
 noinst_PROGRAMS = kdc-replay kdc-tester
 
-man_MANS = kdc.8 kstash.8 hprop.8 hpropd.8 string2key.8
+man_MANS = bx509d.8 httpkadmind.8 kdc.8 kstash.8 hprop.8 hpropd.8 string2key.8
 
 hprop_SOURCES = hprop.c mit_dump.c hprop.h
 hpropd_SOURCES = hpropd.c hprop.h
@@ -33,6 +37,7 @@ if HAVE_MICROHTTPD
 bx509d_SOURCES = bx509d.c
 bx509d_AM_CPPFLAGS = $(AM_CPPFLAGS) $(MICROHTTPD_CFLAGS)
 bx509d_LDADD =	-ldl \
+                 $(top_builddir)/lib/hdb/libhdb.la \
 		 libkdc.la \
 		 $(MICROHTTPD_LIBS) \
 		 $(LIB_roken) \
@@ -43,6 +48,24 @@ bx509d_LDADD =	-ldl \
 		 $(top_builddir)/lib/hx509/libhx509.la \
 		 $(top_builddir)/lib/gssapi/libgssapi.la
 libexec_PROGRAMS += bx509d
+
+httpkadmind_SOURCES = httpkadmind.c
+httpkadmind_AM_CPPFLAGS = $(AM_CPPFLAGS) $(MICROHTTPD_CFLAGS)
+httpkadmind_LDADD =	-ldl \
+		 $(top_builddir)/lib/hdb/libhdb.la \
+		 $(top_builddir)/lib/kadm5/libkadm5clnt.la \
+		 $(top_builddir)/lib/kadm5/libkadm5srv.la \
+		 libkdc.la \
+		 $(MICROHTTPD_LIBS) \
+		 $(LIB_roken) \
+		 $(LIB_heimbase) \
+		 $(LIB_hcrypto) \
+		 $(top_builddir)/lib/sl/libsl.la \
+		 $(top_builddir)/lib/asn1/libasn1.la \
+		 $(top_builddir)/lib/krb5/libkrb5.la \
+		 $(top_builddir)/lib/hx509/libhx509.la \
+		 $(top_builddir)/lib/gssapi/libgssapi.la
+libexec_PROGRAMS += httpkadmind
 endif
 
 digest_service_SOURCES = \
@@ -80,6 +103,15 @@ ipc_csr_authorizer_la_LDFLAGS = -module	\
 				$(top_builddir)/lib/ipc/libheim-ipcc.la \
 				$(top_builddir)/lib/roken/libroken.la
 
+# GSS-API authorization plugins
+if OPENLDAP
+altsecid_gss_preauth_authorizer_la_SOURCES = altsecid_gss_preauth_authorizer.c
+altsecid_gss_preauth_authorizer_la_LDFLAGS = -module \
+					     $(top_builddir)/lib/gssapi/libgssapi.la \
+					     $(top_builddir)/lib/krb5/libkrb5.la \
+					     $(LIB_openldap)
+endif
+
 libkdc_la_SOURCES = 		\
 	default_config.c 	\
 	ca.c			\
@@ -98,6 +130,7 @@ libkdc_la_SOURCES = 		\
 	csr_authorizer.c	\
 	process.c		\
 	windc.c			\
+	gss_preauth.c		\
 	rx.h
 
 KDC_PROTOS = $(srcdir)/kdc-protos.h $(srcdir)/kdc-private.h
@@ -115,6 +148,7 @@ ALL_OBJECTS += $(hprop_OBJECTS)
 ALL_OBJECTS += $(hpropd_OBJECTS)
 ALL_OBJECTS += $(digest_service_OBJECTS)
 ALL_OBJECTS += $(bx509d_OBJECTS)
+ALL_OBJECTS += $(httpkadmind_OBJECTS)
 ALL_OBJECTS += $(cjwt_token_validator_la_OBJECTS)
 ALL_OBJECTS += $(simple_csr_authorizer_la_OBJECTS)
 ALL_OBJECTS += $(test_token_validator_OBJECTS)
@@ -130,6 +164,7 @@ libkdc_la_LDFLAGS = -version-info 2:0:0
 if versionscript
 libkdc_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(srcdir)/version-script.map
 endif
+
 $(libkdc_la_OBJECTS): $(srcdir)/version-script.map
 
 $(srcdir)/kdc-protos.h: $(libkdc_la_SOURCES)
@@ -165,6 +200,8 @@ libkdc_la_LIBADD = \
 	$(LIB_pkinit) \
 	$(top_builddir)/lib/hdb/libhdb.la \
 	$(top_builddir)/lib/krb5/libkrb5.la \
+	$(top_builddir)/lib/gssapi/libgssapi.la \
+	$(top_builddir)/lib/gss_preauth/libgss_preauth.la \
 	$(LIB_kdb)  \
 	$(top_builddir)/lib/ntlm/libheimntlm.la \
 	$(LIB_hcrypto) \

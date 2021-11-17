@@ -88,6 +88,7 @@ static krb5_error_code
 init_ccapi(krb5_context context)
 {
     const char *lib = NULL;
+    char *explib = NULL;
 
     HEIMDAL_MUTEX_lock(&acc_mutex);
     if (init_func) {
@@ -104,26 +105,19 @@ init_ccapi(krb5_context context)
     if (lib == NULL) {
 #ifdef __APPLE__
 	lib = "/System/Library/Frameworks/Kerberos.framework/Kerberos";
-#elif defined(KRB5_USE_PATH_TOKENS) && defined(_WIN32)
+#elif defined(_WIN32)
 	lib = "%{LIBDIR}/libkrb5_cc.dll";
 #else
-	lib = "/usr/lib/libkrb5_cc.so";
+	lib = "%{LIBDIR}/libkrb5_cc.so";
 #endif
     }
 
 #ifdef HAVE_DLOPEN
 
-#ifdef KRB5_USE_PATH_TOKENS
-    {
-      char * explib = NULL;
-      if (_krb5_expand_path_tokens(context, lib, 0, &explib) == 0) {
-	cc_handle = dlopen(explib, RTLD_LAZY|RTLD_LOCAL|RTLD_GROUP);
-	free(explib);
-      }
+    if (_krb5_expand_path_tokens(context, lib, 0, &explib) == 0) {
+        cc_handle = dlopen(explib, RTLD_LAZY|RTLD_LOCAL|RTLD_GROUP);
+        free(explib);
     }
-#else
-    cc_handle = dlopen(lib, RTLD_LAZY|RTLD_LOCAL|RTLD_GROUP);
-#endif
 
     if (cc_handle == NULL) {
 	HEIMDAL_MUTEX_unlock(&acc_mutex);
@@ -444,11 +438,11 @@ get_cc_name(krb5_acc *a)
 
 
 static krb5_error_code KRB5_CALLCONV
-acc_get_name(krb5_context context,
-	     krb5_ccache id,
-             const char **name,
-             const char **colname,
-             const char **subsidiary)
+acc_get_name_2(krb5_context context,
+	       krb5_ccache id,
+	       const char **name,
+	       const char **colname,
+	       const char **subsidiary)
 {
     krb5_error_code ret = 0;
     krb5_acc *a = ACACHE(id);
@@ -523,7 +517,7 @@ acc_alloc(krb5_context context, krb5_ccache *id)
 }
 
 static krb5_error_code KRB5_CALLCONV
-acc_resolve(krb5_context context, krb5_ccache *id, const char *res, const char *sub)
+acc_resolve_2(krb5_context context, krb5_ccache *id, const char *res, const char *sub)
 {
     krb5_error_code ret;
     cc_time_t offset;
@@ -563,6 +557,12 @@ acc_resolve(krb5_context context, krb5_ccache *id, const char *res, const char *
     }
 
     error = (*a->context->func->open_ccache)(a->context, res, &a->ccache);
+    if (error == ccErrCCacheNotFound) {
+        a->ccache = NULL;
+        a->cache_name = NULL;
+	free(s);
+	return 0;
+    }
     if (error == ccNoError)
         error = get_cc_name(a);
     if (error != ccNoError) {
@@ -1095,10 +1095,10 @@ acc_lastchange(krb5_context context, krb5_ccache id, krb5_timestamp *mtime)
  */
 
 KRB5_LIB_VARIABLE const krb5_cc_ops krb5_acc_ops = {
-    KRB5_CC_OPS_VERSION,
+    KRB5_CC_OPS_VERSION_5,
     "API",
-    acc_get_name,
-    acc_resolve,
+    NULL,
+    NULL,
     acc_gen_new,
     acc_initialize,
     acc_destroy,
@@ -1121,6 +1121,8 @@ KRB5_LIB_VARIABLE const krb5_cc_ops krb5_acc_ops = {
     acc_lastchange,
     NULL,
     NULL,
+    acc_get_name_2,
+    acc_resolve_2
 };
 
 #endif

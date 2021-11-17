@@ -49,185 +49,78 @@ name_type_ok(krb5_context context,
     return 0;
 }
 
-static void
-log_princ(krb5_context context, krb5_kdc_configuration *config, int lvl,
-	  const char *fmt, krb5_const_principal princ)
-{
-    krb5_error_code ret;
-    char *princstr;
-
-    ret = krb5_unparse_name(context, princ, &princstr);
-    if (ret) {
-	kdc_log(context, config, 1, "log_princ: ENOMEM");
-	return;
-    }
-    kdc_log(context, config, lvl, fmt, princstr);
-    free(princstr);
-}
+struct timeval _kdc_now;
 
 static krb5_error_code
-_derive_the_keys(krb5_context context, krb5_kdc_configuration *config,
-		 krb5_const_principal princ, krb5uint32 kvno, hdb_entry_ex *h)
+synthesize_hdb_close(krb5_context context, struct HDB *db)
 {
-    krb5_error_code ret;
-    krb5_crypto crypto = NULL;
-    krb5_data in;
-    size_t i;
-    char *princstr = NULL;
-    const char *errmsg = NULL;
-
-    ret = krb5_unparse_name(context, princ, &princstr);
-    if (ret) {
-	errmsg = "krb5_unparse_name failed";
-	goto bail;
-    }
-
-    in.data   = princstr;
-    in.length = strlen(in.data);
-
-    for (i = 0; i < h->entry.keys.len; i++) {
-	krb5_enctype etype = h->entry.keys.val[i].key.keytype;
-	krb5_keyblock *keyptr = &h->entry.keys.val[i].key;
-	krb5_data rnd;
-	size_t len;
-
-	kdc_log(context, config, 8, "        etype=%d", etype);
-
-        errmsg = "Failed to init crypto";
-	ret = krb5_crypto_init(context, keyptr, 0, &crypto);
-	if (ret)
-	    goto bail;
-
-	errmsg = "Failed to determine keysize";
-	ret = krb5_enctype_keysize(context, etype, &len);
-	if (ret)
-	    goto bail;
-
-	errmsg = "krb5_crypto_prfplus() failed";
-	ret = krb5_crypto_prfplus(context, crypto, &in, len, &rnd);
-	krb5_crypto_destroy(context, crypto);
-	crypto = NULL;
-	if (ret)
-	    goto bail;
-
-	errmsg = "krb5_random_to_key() failed";
-	krb5_free_keyblock_contents(context, keyptr);
-	ret = krb5_random_to_key(context, etype, rnd.data, rnd.length, keyptr);
-	krb5_data_free(&rnd);
-	if (ret)
-	    goto bail;
-    }
-
-bail:
-    if (ret) {
-	const char *msg = krb5_get_error_message(context, ret);
-	kdc_log(context, config, 1, "%s: %s", errmsg, msg);
-	krb5_free_error_message(context, msg);
-    }
-    if (crypto)
-	krb5_crypto_destroy(context, crypto);
-    free(princstr);
-
+    (void) context;
+    (void) db;
     return 0;
 }
 
+/*
+ * Synthesize an HDB entry suitable for PKINIT and only PKINIT.
+ */
 static krb5_error_code
-_fetch_it(krb5_context context, krb5_kdc_configuration *config, HDB *db,
-	  krb5_const_principal princ, unsigned flags, krb5uint32 kvno,
-	  hdb_entry_ex *ent)
+synthesize_client(krb5_context context,
+                  krb5_kdc_configuration *config,
+                  krb5_const_principal princ,
+                  HDB **db,
+                  hdb_entry_ex **h)
 {
-    krb5_principal tmpprinc;
+    static HDB null_db;
     krb5_error_code ret;
-    char *host = NULL;
-    char *tmp;
-    const char *realm = NULL;
-    int is_derived_key = 0;
-    size_t hdots;
-    size_t ndots = 0;
-    size_t maxdots = -1;
+    hdb_entry_ex *e;
 
-    flags |= HDB_F_DECRYPT;
+    /* Hope this works! */
+    null_db.hdb_destroy = synthesize_hdb_close;
+    null_db.hdb_close = synthesize_hdb_close;
+    if (db)
+        *db = &null_db;
 
-    if (config->enable_derived_keys) {
-	if (krb5_principal_get_num_comp(context, princ) == 2) {
-	    realm = krb5_principal_get_realm(context, princ);
-	    host = strdup(krb5_principal_get_comp_string(context, princ, 1));
-	    if (!host)
-		return krb5_enomem(context);
-
-	    /* Strip the :port */
-	    tmp = strchr(host, ':');
-	    if (tmp) {
-		*tmp++ = '\0';
-		if (strchr(tmp, ':')) {
-		    kdc_log(context, config, 7, "Strange host instance, "
-			"port %s contains a colon (``:'')", tmp);
-		    free(host);
-		    host = NULL;
-		}
-	    }
-
-	    ndots = config->derived_keys_ndots;
-	    maxdots = config->derived_keys_maxdots;
-
-	    for (hdots = 0, tmp = host; tmp && *tmp; tmp++)
-		if (*tmp == '.')
-		    hdots++;
-	}
+    ret = (e = calloc(1, sizeof(*e))) ? 0 : krb5_enomem(context);
+    if (ret == 0) {
+        e->entry.flags.client = 1;
+        e->entry.flags.immutable = 1;
+        e->entry.flags.virtual = 1;
+        e->entry.flags.synthetic = 1;
+        e->entry.flags.do_not_store = 1;
+        e->entry.kvno = 1;
+        e->entry.keys.len = 0;
+        e->entry.keys.val = NULL;
+        e->entry.created_by.time = time(NULL);
+        e->entry.modified_by = NULL;
+        e->entry.valid_start = NULL;
+        e->entry.valid_end = NULL;
+        e->entry.pw_end = NULL;
+        e->entry.etypes = NULL;
+        e->entry.generation = NULL;
+        e->entry.extensions = NULL;
     }
-
-    /*
-     * XXXrcd: should we exclude certain principals from this
-     * muckery?  E.g. host? krbtgt?
-     */
-
-    krb5_copy_principal(context, princ, &tmpprinc);
-
-    tmp = host;
-    for (;;) {
-	log_princ(context, config, 7, "Looking up %s", tmpprinc);
-	ret = db->hdb_fetch_kvno(context, db, tmpprinc, flags, kvno, ent);
-
-	if (ret != HDB_ERR_NOENTRY)
-	    break;
-
-	if (!tmp || !*tmp || hdots < ndots)
-	    break;
-
-	while (maxdots > 0 && hdots > maxdots) {
-		tmp = strchr(tmp, '.');
-		/* tmp != NULL because maxdots > 0 */
-		tmp++;
-		hdots--;
-	}
-
-	is_derived_key = 1;
-	krb5_free_principal(context, tmpprinc);
-	krb5_build_principal(context, &tmpprinc, strlen(realm), realm,
-	    "WELLKNOWN", "DERIVED-KEY", "KRB5-CRYPTO-PRFPLUS", tmp, NULL);
-
-	tmp = strchr(tmp, '.');
-	if (!tmp)
-	    break;
-	tmp++;
-	hdots--;
+    if (ret == 0)
+        ret = (e->entry.max_renew = calloc(1, sizeof(*e->entry.max_renew))) ?
+            0 : krb5_enomem(context);
+    if (ret == 0)
+        ret = (e->entry.max_life = calloc(1, sizeof(*e->entry.max_life))) ?
+            0 : krb5_enomem(context);
+    if (ret == 0)
+        ret = krb5_copy_principal(context, princ, &e->entry.principal);
+    if (ret == 0)
+        ret = krb5_copy_principal(context, princ, &e->entry.created_by.principal);
+    if (ret == 0) {
+        /*
+         * We can't check OCSP in the TGS path, so we can't let tickets for
+         * synthetic principals live very long.
+         */
+        *(e->entry.max_renew) = config->synthetic_clients_max_renew;
+        *(e->entry.max_life) = config->synthetic_clients_max_life;
+        *h = e;
+    } else {
+        hdb_free_entry(context, e);
     }
-
-    if (ret == 0 && is_derived_key) {
-	kdc_log(context,   config, 7, "Deriving keys:");
-	log_princ(context, config, 7, "    for %s", princ);
-	log_princ(context, config, 7, "    from %s", tmpprinc);
-	_derive_the_keys(context, config, princ, kvno, ent);
-	/* the next function frees the target */
-	copy_Principal(princ, ent->entry.principal);
-    }
-
-    free(host);
-    krb5_free_principal(context, tmpprinc);
     return ret;
 }
-
-struct timeval _kdc_now;
 
 krb5_error_code
 _kdc_db_fetch(krb5_context context,
@@ -248,8 +141,9 @@ _kdc_db_fetch(krb5_context context,
     *h = NULL;
 
     if (!name_type_ok(context, config, principal))
-        goto out2;
+        return HDB_ERR_NOENTRY;
 
+    flags |= HDB_F_DECRYPT;
     if (kvno_ptr != NULL && *kvno_ptr != 0) {
 	kvno = *kvno_ptr;
 	flags |= HDB_F_KVNO_SPECIFIED;
@@ -279,6 +173,9 @@ _kdc_db_fetch(krb5_context context,
     for (i = 0; i < config->num_db; i++) {
 	HDB *curdb = config->db[i];
 
+        if (db)
+            *db = curdb;
+
 	ret = curdb->hdb_open(context, curdb, O_RDONLY, 0);
 	if (ret) {
 	    const char *msg = krb5_get_error_message(context, ret);
@@ -291,44 +188,57 @@ _kdc_db_fetch(krb5_context context,
         if (!(curdb->hdb_capability_flags & HDB_CAP_F_HANDLE_ENTERPRISE_PRINCIPAL) && enterprise_principal)
             princ = enterprise_principal;
 
-	ret = _fetch_it(context, config, curdb, princ, flags, kvno, ent);
+        ret = hdb_fetch_kvno(context, curdb, princ, flags, 0, 0, kvno, ent);
 	curdb->hdb_close(context, curdb);
 
-	switch (ret) {
-	case HDB_ERR_WRONG_REALM:
-	    /*
-	     * the ent->entry.principal just contains hints for the client
-	     * to retry. This is important for enterprise principal routing
-	     * between trusts.
-	     */
-	    /* fall through */
-	case 0:
-	    if (db)
-		*db = curdb;
-	    *h = ent;
-            ent = NULL;
-            goto out;
+        if (ret == HDB_ERR_NOENTRY)
+            continue; /* Check the other databases */
 
-	case HDB_ERR_NOENTRY:
-	    /* Check the other databases */
-	    continue;
-
-	default:
-	    /* 
-	     * This is really important, because errors like
-	     * HDB_ERR_NOT_FOUND_HERE (used to indicate to Samba that
-	     * the RODC on which this code is running does not have
-	     * the key we need, and so a proxy to the KDC is required)
-	     * have specific meaning, and need to be propogated up.
-	     */
-	    goto out;
-	}
+        /*
+         * This is really important, because errors like
+         * HDB_ERR_NOT_FOUND_HERE (used to indicate to Samba that
+         * the RODC on which this code is running does not have
+         * the key we need, and so a proxy to the KDC is required)
+         * have specific meaning, and need to be propogated up.
+         */
+        break;
     }
 
-out2:
-    if (ret == HDB_ERR_NOENTRY) {
-	krb5_set_error_message(context, ret, "no such entry found in hdb");
+    switch (ret) {
+    case HDB_ERR_WRONG_REALM:
+    case 0:
+        /*
+         * the ent->entry.principal just contains hints for the client
+         * to retry. This is important for enterprise principal routing
+         * between trusts.
+         */
+        *h = ent;
+        ent = NULL;
+        break;
+
+    case HDB_ERR_NOENTRY:
+        if (db)
+            *db = NULL;
+        if ((flags & HDB_F_GET_CLIENT) && (flags & HDB_F_SYNTHETIC_OK) &&
+            config->synthetic_clients) {
+            ret = synthesize_client(context, config, principal, db, h);
+            if (ret) {
+                krb5_set_error_message(context, ret, "could not synthesize "
+                                       "HDB client principal entry");
+                ret = HDB_ERR_NOENTRY;
+                krb5_prepend_error_message(context, ret, "no such entry found in hdb");
+            }
+        } else {
+            krb5_set_error_message(context, ret, "no such entry found in hdb");
+        }
+        break;
+
+    default:
+        if (db)
+            *db = NULL;
+        break;
     }
+
 out:
     krb5_free_principal(context, enterprise_principal);
     free(ent);
@@ -394,3 +304,20 @@ _kdc_get_preferred_key(krb5_context context,
     return EINVAL; /* XXX */
 }
 
+krb5_error_code
+_kdc_verify_checksum(krb5_context context,
+		     krb5_crypto crypto,
+		     krb5_key_usage usage,
+		     const krb5_data *data,
+		     Checksum *cksum)
+{
+    krb5_error_code ret;
+
+    ret = krb5_verify_checksum(context, crypto, usage,
+			       data->data, data->length,
+			       cksum);
+    if (ret == KRB5_PROG_SUMTYPE_NOSUPP)
+	ret = KRB5KDC_ERR_SUMTYPE_NOSUPP;
+
+    return ret;
+}

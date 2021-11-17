@@ -328,7 +328,7 @@ static gss_mo_desc krb5_mo[] = {
 
 static gssapi_mech_interface_desc krb5_mech = {
     GMI_VERSION,
-    "kerberos 5",
+    "krb5",
     {9, rk_UNCONST("\x2a\x86\x48\x86\xf7\x12\x01\x02\x02") },
     0,
     NULL, /* gm_acquire_cred */
@@ -372,6 +372,7 @@ static gssapi_mech_interface_desc krb5_mech = {
     _gsskrb5_export_cred,
     _gsskrb5_import_cred,
     _gsskrb5_acquire_cred_from,
+    NULL, /* gm_acquire_cred_impersonate_name */
     NULL,
     NULL,
     NULL,

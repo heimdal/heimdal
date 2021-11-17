@@ -205,6 +205,7 @@ EXPORTS
 	krb5_data_free
 	krb5_data_realloc
 	krb5_data_zero
+	krb5_debug
 	krb5_decode_Authenticator
 	krb5_decode_ETYPE_INFO2
 	krb5_decode_ETYPE_INFO
@@ -378,6 +379,7 @@ EXPORTS
 	krb5_get_krb524hst
 	krb5_get_krb_admin_hst
 	krb5_get_krb_changepw_hst
+	krb5_get_krb_readonly_admin_hst
 	krb5_get_krbhst
 	krb5_get_max_time_skew
 	krb5_get_pw_salt
@@ -392,6 +394,7 @@ EXPORTS
 	krb5_h_addr2sockaddr
 	krb5_h_errno_to_heim_errno
 	krb5_have_error_string
+	krb5_have_debug
 	krb5_hmac
 	krb5_init_context
 	krb5_init_ets
@@ -501,6 +504,7 @@ EXPORTS
 	krb5_pac_parse
 	krb5_pac_verify
 	krb5_padata_add
+	_krb5_parse_address_no_lookup
 	krb5_parse_address
 	krb5_parse_name
 	krb5_parse_name_flags
@@ -521,7 +525,9 @@ EXPORTS
 	krb5_principal_get_realm
 	krb5_principal_get_type
 	krb5_principal_is_anonymous
+	krb5_principal_is_federated
 	krb5_principal_is_krbtgt
+	krb5_principal_is_root_krbtgt
 	krb5_principal_match
 	krb5_principal_set_comp_string
 	krb5_principal_set_realm
@@ -614,6 +620,7 @@ EXPORTS
 	krb5_set_home_dir_access
 	krb5_set_ignore_addresses
 	krb5_set_kdc_sec_offset
+	krb5_set_log_dest
 	krb5_set_max_time_skew
 	krb5_set_password
 	krb5_set_password_using_ccache
@@ -652,9 +659,11 @@ EXPORTS
 	krb5_store_address
 	krb5_store_addrs
 	krb5_store_authdata
+	krb5_store_bytes
 	krb5_store_creds
 	krb5_store_creds_tag
 	krb5_store_data
+	krb5_store_datalen
 	krb5_store_int16
 	krb5_store_int32
 	krb5_store_int64
@@ -783,6 +792,16 @@ EXPORTS
 	_krb5_kt_client_default_name
 	_krb5_have_debug
 	_krb5_SP800_108_HMAC_KDF
+	_krb5_get_ad
+
+	; Shared with GSSAPI preauth wrapper
+	_krb5_init_creds_set_gss_mechanism
+	_krb5_init_creds_get_gss_mechanism
+	_krb5_init_creds_set_gss_cred
+	_krb5_init_creds_get_gss_cred
+	_krb5_init_creds_set_gss_context
+	_krb5_init_creds_get_gss_context
+	_krb5_init_creds_init_gss
 
 	; Shared with libkadm5
 	_krb5_load_plugins
@@ -796,6 +815,11 @@ EXPORTS
 	_krb5_get_int
         _krb5_get_int64
 	_krb5_pac_sign
+	_krb5_kdc_pac_sign_ticket
+	_krb5_kdc_pac_ticket_parse
+	_krb5_pac_get_kdc_checksum_info
+	_kdc_tkt_insert_pac
+	_kdc_tkt_add_if_relevant_ad
 	_krb5_parse_moduli
 	_krb5_pk_kdf
 	_krb5_pk_load_id
@@ -808,6 +832,7 @@ EXPORTS
 	_krb5_put_int
 	_krb5_s4u2self_to_checksumdata
 	_krb5_HMAC_MD5_checksum
+	_krb5_crypto_set_flags
 	_krb5_expand_path_tokens	;!
 
         ; kinit helper
@@ -820,15 +845,18 @@ EXPORTS
 	krb5_init_creds_get_creds
 	krb5_init_creds_get_error
 	krb5_init_creds_init
+	krb5_init_creds_set_fast_anon_pkinit
 	krb5_init_creds_set_fast_ccache
 	krb5_init_creds_set_keytab
 	krb5_init_creds_set_password
 	krb5_init_creds_set_service
+	krb5_init_creds_step
 	krb5_init_creds_store
 	krb5_process_last_request
 
 	; testing
 ;!	_krb5_aes_cts_encrypt
+	krb5_time_abs;
 	_krb5_n_fold
 	_krb5_expand_default_cc_name
 

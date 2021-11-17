@@ -13,7 +13,9 @@ noinst_DATA = \
 	krb5-weak.conf \
 	krb5-pkinit.conf \
 	krb5-bx509.conf \
+	krb5-httpkadmind.conf \
 	krb5-pkinit-win.conf \
+	krb5-master2.conf \
 	krb5-slave2.conf \
 	krb5-slave.conf
 
@@ -35,6 +37,7 @@ SCRIPT_TESTS = \
 	check-kpasswdd \
 	check-pkinit \
 	check-bx509 \
+	check-httpkadmind \
 	check-iprop \
 	check-referral \
 	check-tester \
@@ -44,9 +47,13 @@ TESTS = $(SCRIPT_TESTS)
 
 port = 49188
 admport = 49189
-pwport = 49190
-bx509port = 49191
-ipropport = 49192
+admport2 = 49190
+pwport = 49191
+restport = 49192
+restport2 = 49193
+ipropport = 49194
+ipropport2 = 49195
+pkinit_ticket_max_life_from_cert = 0
 
 if HAVE_DLOPEN
 do_dlopen = -e 's,[@]DLOPEN[@],true,g'
@@ -60,12 +67,17 @@ do_subst = $(heim_verbose)sed $(do_dlopen) \
 	-e 's,[@]srcdir[@],$(srcdir),g' \
 	-e 's,[@]port[@],$(port),g' \
 	-e 's,[@]admport[@],$(admport),g' \
-	-e 's,[@]bx509port[@],$(bx509port),g' \
+	-e 's,[@]admport2[@],$(admport2),g' \
+	-e 's,[@]bx509port[@],$(restport),g' \
+	-e 's,[@]restport[@],$(restport),g' \
+	-e 's,[@]restport2[@],$(restport2),g' \
 	-e 's,[@]pwport[@],$(pwport),g' \
 	-e 's,[@]ipropport[@],$(ipropport),g' \
+	-e 's,[@]ipropport2[@],$(ipropport2),g' \
 	-e 's,[@]objdir[@],$(top_builddir)/tests/kdc,g' \
 	-e 's,[@]top_builddir[@],$(top_builddir),g' \
 	-e 's,[@]db_type[@],$(db_type),g' \
+	-e 's,[@]max_life_from_cert[@],$(pkinit_ticket_max_life_from_cert),g' \
         -e 's,[@]ENABLE_AFS_STRING_TO_KEY[@],$(ENABLE_AFS_STRING_TO_KEY),' \
 	-e 's,[@]EGREP[@],$(EGREP),g' 
 
@@ -143,7 +155,7 @@ check-uu: check-uu.in Makefile
 	$(chmod) +x check-uu.tmp && \
 	mv check-uu.tmp check-uu
 
-check-pkinit: check-pkinit.in Makefile krb5-pkinit.conf
+check-pkinit: check-pkinit.in Makefile krb5-pkinit.conf krb5-pkinit2.conf
 	$(do_subst) < $(srcdir)/check-pkinit.in > check-pkinit.tmp && \
 	$(chmod) +x check-pkinit.tmp && \
 	mv check-pkinit.tmp check-pkinit
@@ -153,7 +165,12 @@ check-bx509: check-bx509.in Makefile krb5-bx509.conf
 	$(chmod) +x check-bx509.tmp && \
 	mv check-bx509.tmp check-bx509
 
-check-iprop: check-iprop.in Makefile krb5.conf krb5-slave.conf krb5-slave2.conf
+check-httpkadmind: check-httpkadmind.in Makefile krb5-httpkadmind.conf
+	$(do_subst) < $(srcdir)/check-httpkadmind.in > check-httpkadmind.tmp && \
+	$(chmod) +x check-httpkadmind.tmp && \
+	mv check-httpkadmind.tmp check-httpkadmind
+
+check-iprop: check-iprop.in Makefile krb5.conf krb5-master2.conf krb5-slave.conf krb5-slave2.conf
 	$(do_subst) < $(srcdir)/check-iprop.in > check-iprop.tmp && \
 	$(chmod) +x check-iprop.tmp && \
 	mv check-iprop.tmp check-iprop
@@ -181,6 +198,9 @@ krb5.conf: krb5.conf.in Makefile
 	$(do_subst) \
 	   -e 's,[@]WEAK[@],false,g' \
 	   -e 's,[@]dk[@],,g' \
+	   -e 's,[@]messages[@],messages,g' \
+	   -e 's,[@]ipropstats[@],iprop-stats,g' \
+	   -e 's,[@]signalsocket[@],signal,g' \
 	   -e 's,[@]kdc[@],,g' < $(srcdir)/krb5.conf.in > krb5.conf.tmp && \
 	mv krb5.conf.tmp krb5.conf
 
@@ -224,6 +244,9 @@ krb5-weak.conf: krb5.conf.in Makefile
 	$(do_subst) \
 	   -e 's,[@]WEAK[@],true,g' \
 	   -e 's,[@]dk[@],default_keys = aes256-cts-hmac-sha1-96:pw-salt arcfour-hmac-md5:pw-salt des3-cbc-sha1:pw-salt des:pw-salt,g' \
+	   -e 's,[@]messages[@],messages,g' \
+	   -e 's,[@]signalsocket[@],signal,g' \
+	   -e 's,[@]ipropstats[@],iprop-stats,g' \
 	   -e 's,[@]kdc[@],,g' < $(srcdir)/krb5.conf.in > krb5-weak.conf.tmp && \
 	mv krb5-weak.conf.tmp krb5-weak.conf
 
@@ -231,13 +254,29 @@ krb5-slave.conf: krb5.conf.in Makefile
 	$(do_subst) \
 	   -e 's,[@]WEAK[@],true,g' \
 	   -e 's,[@]dk[@],,g' \
+	   -e 's,[@]messages[@],messages,g' \
+	   -e 's,[@]signalsocket[@],signal2,g' \
+	   -e 's,[@]ipropstats[@],iprop-stats,g' \
 	   -e 's,[@]kdc[@],.slave,g' < $(srcdir)/krb5.conf.in > krb5-slave.conf.tmp && \
 	mv krb5-slave.conf.tmp krb5-slave.conf
+
+krb5-master2.conf: krb5.conf.in Makefile
+	$(do_subst) \
+	   -e 's,[@]WEAK[@],true,g' \
+	   -e 's,[@]dk[@],,g' \
+	   -e 's,[@]messages[@],messages2,g' \
+	   -e 's,[@]signalsocket[@],signal2,g' \
+	   -e 's,[@]ipropstats[@],iprop-stats2,g' \
+	   -e 's,[@]kdc[@],.slave,g' < $(srcdir)/krb5.conf.in > krb5-master2.conf.tmp && \
+	mv krb5-master2.conf.tmp krb5-master2.conf
 
 krb5-slave2.conf: krb5.conf.in Makefile
 	$(do_subst) \
 	   -e 's,[@]WEAK[@],true,g' \
 	   -e 's,[@]dk[@],,g' \
+	   -e 's,[@]messages[@],messages2,g' \
+	   -e 's,[@]signalsocket[@],signal3,g' \
+	   -e 's,[@]ipropstats[@],iprop-stats2,g' \
 	   -e 's,[@]kdc[@],.slave2,g' < $(srcdir)/krb5.conf.in > krb5-slave2.conf.tmp && \
 	mv krb5-slave2.conf.tmp krb5-slave2.conf
 
@@ -245,13 +284,26 @@ krb5-pkinit.conf: krb5-pkinit.conf.in Makefile
 	$(do_subst) -e 's,[@]w2k[@],no,g' < $(srcdir)/krb5-pkinit.conf.in > krb5-pkinit.conf.tmp && \
 	mv krb5-pkinit.conf.tmp krb5-pkinit.conf
 
+krb5-pkinit2.conf : pkinit_ticket_max_life_from_cert = 30d
+
+krb5-pkinit2.conf: krb5-pkinit.conf.in Makefile
+	$(do_subst) -e 's,[@]w2k[@],no,g' < $(srcdir)/krb5-pkinit.conf.in > krb5-pkinit2.conf.tmp && \
+	mv krb5-pkinit2.conf.tmp krb5-pkinit2.conf
+
 krb5-bx509.conf: krb5-bx509.conf.in Makefile
 	$(do_subst) -e 's,[@]w2k[@],no,g' < $(srcdir)/krb5-bx509.conf.in > krb5-bx509.conf.tmp && \
 	mv krb5-bx509.conf.tmp krb5-bx509.conf
 
+krb5-httpkadmind.conf: krb5-httpkadmind.conf.in Makefile
+	$(do_subst) -e 's,[@]w2k[@],no,g' < $(srcdir)/krb5-httpkadmind.conf.in > krb5-httpkadmind.conf.tmp && \
+	mv krb5-httpkadmind.conf.tmp krb5-httpkadmind.conf
+
 krb5-pkinit-win.conf: krb5-pkinit.conf.in Makefile
 	$(do_subst) -e 's,[@]w2k[@],yes,g' < $(srcdir)/krb5-pkinit.conf.in > krb5-pkinit-win.conf.tmp && \
 	mv krb5-pkinit-win.conf.tmp krb5-pkinit-win.conf
+
+clean: clean-am
+	rm -rf cc_dir simple_csr_authz
 
 CLEANFILES= \
 	$(TESTS) \
@@ -265,13 +317,19 @@ CLEANFILES= \
 	barpassword \
 	ca.crt \
 	cache.krb5 \
+	cache2.krb5 \
 	cdigest-reply \
 	client-cache \
+	curlheaders \
 	current-db* \
+	current.log* \
 	digest-reply \
+	extracted_config \
+	extracted_keytab* \
 	foopassword \
 	foopassword.rkpty \
 	iprop-stats \
+	iprop-stats2 \
 	iprop.keytab \
 	ipropd.dumpfile \
 	kdc-tester4.json \
@@ -280,32 +338,45 @@ CLEANFILES= \
 	krb5-canon.conf \
 	krb5-canon2.conf \
 	krb5-cc.conf \
+	krb5-cccol.conf \
 	krb5-hdb-mitdb.conf \
+	krb5-master2.conf \
 	krb5-pkinit-win.conf \
 	krb5-pkinit.conf \
+	krb5-pkinit2.conf \
 	krb5-bx509.conf \
+	krb5-httpkadmind.conf \
 	krb5-slave2.conf \
 	krb5-slave.conf \
 	krb5-weak.conf \
 	krb5.conf \
 	krb5.conf.keys \
+	kt \
 	leaks-log \
 	localname \
 	malloc-log \
 	malloc-log-master \
 	malloc-log-slave \
+	messages.log2 \
+	negotiate-token \
 	notfoopassword \
 	o2cache.krb5 \
 	o2digest-reply \
 	ocache.krb5 \
 	out-log \
+	req \
+	response-headers \
 	s2digest-reply \
+	sdb \
 	sdigest-init \
 	sdigest-reply \
 	server.keytab \
 	signal \
+	signal2 \
+	signal3 \
 	tempfile \
 	test-rc-file.rc \
+	ukt \
 	uuserver.log
 
 EXTRA_DIST = \
@@ -328,6 +399,7 @@ EXTRA_DIST = \
 	check-kpasswdd.in \
 	check-pkinit.in \
 	check-bx509.in \
+	check-httpkadmind.in \
 	check-referral.in \
 	check-tester.in \
 	check-uu.in \
@@ -343,6 +415,7 @@ EXTRA_DIST = \
 	kdc-tester4.json.in \
 	krb5-pkinit.conf.in \
 	krb5-bx509.conf.in \
+	krb5-httpkadmind.conf.in \
 	krb5.conf.in \
 	krb5-authz.conf.in \
 	krb5-authz2.conf.in \

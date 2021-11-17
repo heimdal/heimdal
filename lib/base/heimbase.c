@@ -36,11 +36,11 @@
 #include "baselocl.h"
 #include <syslog.h>
 
-static heim_base_atomic_type tidglobal = HEIM_TID_USER;
+static heim_base_atomic_integer_type tidglobal = HEIM_TID_USER;
 
 struct heim_base {
     heim_type_t isa;
-    heim_base_atomic_type ref_cnt;
+    heim_base_atomic_integer_type ref_cnt;
     HEIM_TAILQ_ENTRY(heim_base) autorel;
     heim_auto_release_t autorelpool;
     uintptr_t isaextra[3];
@@ -49,7 +49,7 @@ struct heim_base {
 /* specialized version of base */
 struct heim_base_mem {
     heim_type_t isa;
-    heim_base_atomic_type ref_cnt;
+    heim_base_atomic_integer_type ref_cnt;
     HEIM_TAILQ_ENTRY(heim_base) autorel;
     heim_auto_release_t autorelpool;
     const char *name;
@@ -91,7 +91,7 @@ heim_retain(void *ptr)
     if (ptr == NULL || heim_base_is_tagged(ptr))
 	return ptr;
 
-    if (p->ref_cnt == heim_base_atomic_max)
+    if (heim_base_atomic_load(&p->ref_cnt) == heim_base_atomic_integer_max)
 	return ptr;
 
     if ((heim_base_atomic_inc(&p->ref_cnt) - 1) == 0)
@@ -108,13 +108,13 @@ heim_retain(void *ptr)
 void
 heim_release(void *ptr)
 {
-    heim_base_atomic_type old;
+    heim_base_atomic_integer_type old;
     struct heim_base *p = PTR2BASE(ptr);
 
     if (ptr == NULL || heim_base_is_tagged(ptr))
 	return;
 
-    if (p->ref_cnt == heim_base_atomic_max)
+    if (heim_base_atomic_load(&p->ref_cnt) == heim_base_atomic_integer_max)
 	return;
 
     old = heim_base_atomic_dec(&p->ref_cnt) + 1;
@@ -156,7 +156,7 @@ void
 _heim_make_permanent(heim_object_t ptr)
 {
     struct heim_base *p = PTR2BASE(ptr);
-    p->ref_cnt = heim_base_atomic_max;
+    heim_base_atomic_store(&p->ref_cnt, heim_base_atomic_integer_max);
 }
 
 

@@ -13,6 +13,10 @@
 	TEST.H5L.SE = {
 		kdc = localhost:@port@
 	}
+	TEST2.H5L.SE = {
+		kdc = localhost:@port@
+		disable_pac = true
+	}
 
 [kdc]
 	database = {

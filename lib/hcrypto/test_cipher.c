@@ -295,8 +295,11 @@ test_cipher(int i, const EVP_CIPHER *c, struct tests *t)
 	hex_encode(d, t->datasize, &s);
 	errx(1, "%s: %d decrypt not the same: %s", t->name, i, s);
     }
+
+#if 0 /* TODO */
     if (t->outiv)
 	/* XXXX check  */;
+#endif
 
     EVP_CIPHER_CTX_cleanup(&ectx);
     EVP_CIPHER_CTX_cleanup(&dctx);

@@ -117,8 +117,10 @@ kadm5_s_randkey_principal(void *server_handle,
     if (ret)
         goto out;
 
+    /* NOTE: We do not use hdb_fetch_kvno() here (maybe we should) */
     ret = context->db->hdb_fetch_kvno(context->context, context->db, princ,
-				      HDB_F_GET_ANY|HDB_F_ADMIN_DATA, 0, &ent);
+                                      HDB_F_DECRYPT|HDB_F_GET_ANY|HDB_F_ADMIN_DATA,
+                                      0, &ent);
     if(ret)
 	goto out2;
 

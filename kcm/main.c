@@ -36,6 +36,7 @@
 RCSID("$Id$");
 
 krb5_context kcm_context = NULL;
+extern const char *socket_path;
 
 const char *service_name = "org.h5l.kcm";
 
@@ -90,17 +91,26 @@ main(int argc, char **argv)
         daemon_child = roken_detach_prep(argc, argv, "--daemon-child");
     rk_pidfile(NULL);
 
+    if (socket_path)
+        setenv("HEIM_IPC_DIR", socket_path, 1);
+
     if (launchd_flag) {
 	heim_sipc mach;
-	heim_sipc_launchd_mach_init(service_name, kcm_service, NULL, &mach);
+	ret = heim_sipc_launchd_mach_init(service_name, kcm_service, NULL, &mach);
+        if (ret)
+            krb5_err(kcm_context, 1, ret, "Could not setup launchd service");
     } else {
 	heim_sipc un;
-	heim_sipc_service_unix(service_name, kcm_service, NULL, &un);
+	ret = heim_sipc_service_unix(service_name, kcm_service, NULL, &un);
+        if (ret)
+            krb5_err(kcm_context, 1, ret, "Could not setup Unix domain socket service");
     }
 #ifdef HAVE_DOOR_CREATE
     {
 	heim_sipc door;
-	heim_sipc_service_door(service_name, kcm_service, NULL, &door);
+	ret = heim_sipc_service_door(service_name, kcm_service, NULL, &door);
+        if (ret)
+            krb5_err(kcm_context, 1, ret, "Could not setup door service");
     }
 #endif
 

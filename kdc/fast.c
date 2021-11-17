@@ -53,7 +53,7 @@ get_fastuser_crypto(astgs_request_t r, krb5_enctype enctype,
 	goto out;
 
     ret = _kdc_db_fetch(r->context, r->config, fast_princ,
-			HDB_F_GET_CLIENT, NULL, NULL, &fast_user);
+			HDB_F_GET_FAST_COOKIE, NULL, NULL, &fast_user);
     krb5_free_principal(r->context, fast_princ);
     if (ret)
 	goto out;
@@ -257,6 +257,20 @@ _kdc_fast_mk_error(astgs_request_t r,
 
     krb5_data_zero(&e_data);
 
+    if (armor_crypto || (r && r->fast.fast_state.len)) {
+	if (r)
+	    ret = fast_add_cookie(r, error_method);
+	else
+	    ret = krb5_padata_add(context, error_method,
+				  KRB5_PADATA_FX_COOKIE,
+				  NULL, 0);
+	if (ret) {
+	    kdc_log(r->context, r->config, 1, "failed to add fast cookie with: %d", ret);
+	    free_METHOD_DATA(error_method);
+	    return ret;
+	}
+    }
+
     if (armor_crypto) {
 	PA_FX_FAST_REPLY fxfastrep;
 	KrbFastResponse fastrep;
@@ -292,18 +306,6 @@ _kdc_fast_mk_error(astgs_request_t r,
         error_server = NULL;
         e_text = NULL;
 
-	if (r)
-	    ret = fast_add_cookie(r, error_method);
-	else
-	    ret = krb5_padata_add(context, error_method,
-				  KRB5_PADATA_FX_COOKIE,
-				  NULL, 0);
-	if (ret) {
-	    kdc_log(r->context, r->config, 1, "failed to add fast cookie with: %d", ret);
-	    free_METHOD_DATA(error_method);
-	    return ret;
-	}
-	
 	ret = _kdc_fast_mk_response(context, armor_crypto,
 				    error_method, NULL, NULL, 
 				    req_body->nonce, &e_data);
@@ -342,8 +344,8 @@ _kdc_fast_mk_error(astgs_request_t r,
     return ret;
 }
 
-krb5_error_code
-_kdc_fast_unwrap_request(astgs_request_t r)
+static krb5_error_code
+fast_unwrap_request(astgs_request_t r)
 {
     krb5_principal armor_server = NULL;
     hdb_entry_ex *armor_user = NULL;
@@ -355,24 +357,12 @@ _kdc_fast_unwrap_request(astgs_request_t r)
     krb5_keyblock armorkey;
     krb5_error_code ret;
     krb5_ap_req ap_req;
-    unsigned char *buf = NULL;
     KrbFastReq fastreq;
     size_t len, size;
     krb5_data data;
     const PA_DATA *pa;
     int i = 0;
 
-    /*
-     * First look for FX_COOKIE and and process it
-     */
-    pa = _kdc_find_padata(&r->req, &i, KRB5_PADATA_FX_COOKIE);
-    if (pa) {
-	ret = fast_parse_cookie(r, pa);
-	if (ret)
-	    goto out;
-    }
-			  
-    i = 0;
     pa = _kdc_find_padata(&r->req, &i, KRB5_PADATA_FX_FAST);
     if (pa == NULL)
 	return 0;
@@ -429,7 +419,9 @@ _kdc_fast_unwrap_request(astgs_request_t r)
     }
 
     ret = _kdc_db_fetch(r->context, r->config, armor_server,
-			HDB_F_GET_SERVER, NULL, NULL, &armor_user);
+			HDB_F_GET_KRBTGT
+			| HDB_F_DELAY_NEW_KEYS,
+			NULL, NULL, &armor_user);
     if(ret == HDB_ERR_NOT_FOUND_HERE) {
 	kdc_log(r->context, r->config, 5,
 		"armor key does not have secrets at this KDC, "
@@ -483,18 +475,9 @@ _kdc_fast_unwrap_request(astgs_request_t r)
     krb5_free_keyblock_contents(r->context, &armorkey);
 
     /* verify req-checksum of the outer body */
-
-    ASN1_MALLOC_ENCODE(KDC_REQ_BODY, buf, len, &r->req.req_body, &size, ret);
-    if (ret)
-	goto out;
-    if (size != len) {
-	ret = KRB5KDC_ERR_PREAUTH_FAILED;
-	goto out;
-    }
-
-    ret = krb5_verify_checksum(r->context, r->armor_crypto,
+    ret = _kdc_verify_checksum(r->context, r->armor_crypto,
 			       KRB5_KU_FAST_REQ_CHKSUM,
-			       buf, len, 
+			       &r->req.req_body._save,
 			       &fxreq.u.armored_data.req_checksum);
     if (ret) {
 	kdc_log(r->context, r->config, 2,
@@ -557,4 +540,43 @@ _kdc_fast_unwrap_request(astgs_request_t r)
 	_kdc_free_ent(r->context, armor_user);
 
     return ret;
+}
+
+krb5_error_code
+_kdc_fast_unwrap_request(astgs_request_t r)
+{
+    krb5_error_code ret;
+    const PA_DATA *pa;
+    int i = 0;
+
+    ret = fast_unwrap_request(r);
+    if (ret)
+	return ret;
+
+    /*
+     * Non-FAST mechanisms may use FX-COOKIE to manage state.
+     */
+    pa = _kdc_find_padata(&r->req, &i, KRB5_PADATA_FX_COOKIE);
+    if (pa) {
+	ret = fast_parse_cookie(r, pa);
+	if (ret)
+	    return ret;
+    }
+
+    return 0;
+}
+
+void
+_kdc_free_fast_state(KDCFastState *state)
+{
+    size_t i;
+
+    for (i = 0; i < state->fast_state.len; i++) {
+	PA_DATA *pa = &state->fast_state.val[i];
+
+	if (pa->padata_value.data)
+	    memset_s(pa->padata_value.data, 0,
+		     pa->padata_value.length, pa->padata_value.length);
+    }
+    free_KDCFastState(state);
 }

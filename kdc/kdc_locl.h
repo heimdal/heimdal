@@ -41,6 +41,7 @@
 #include "headers.h"
 
 typedef struct pk_client_params pk_client_params;
+typedef struct gss_client_params gss_client_params;
 
 #include <kdc-private.h>
 
@@ -89,6 +90,8 @@ struct astgs_request_desc {
 
     krb5_principal server_princ;
     hdb_entry_ex *server;
+    krb5_timestamp pa_endtime;
+    krb5_timestamp pa_max_life;
 
     krb5_crypto armor_crypto;
 

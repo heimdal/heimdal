@@ -137,6 +137,29 @@ ${kgetcred} ${server}@${R} || { exit 1; }
 ${kdestroy}
 
 #
+# Test GSS-API pre-authentication using SAnon. It will only succeed where there
+# is FAST armor to authenticate the KDC, otherwise it will fail as SAnon does
+# not provide mutual authentication (GSS_C_MUTUAL_FLAG).
+#
+
+for mech in sanon-x25519 spnego ; do
+    echo "Trying ${mech} pre-authentication with FAST armor"; > messages.log
+    ${kinit} --fast-armor-cache=${acache} \
+	--anonymous --gss-mech=${mech} @$R 2>/dev/null || \
+	{ ec=1 ; eval "${testfailed}"; }
+
+    echo "Trying ${mech} pre-authentication with anonymous FAST armor"; > messages.log
+    ${kinit} --pk-anon-fast-armor \
+	--anonymous --gss-mech=${mech} @$R 2>/dev/null || \
+	{ ec=1 ; eval "${testfailed}"; }
+
+    echo "Trying ${mech} pre-authentication with no FAST armor"; > messages.log
+    ${kinit} \
+	--anonymous --gss-mech=${mech} @$R 2>/dev/null && \
+	{ ec=1 ; eval "${testfailed}"; }
+done
+
+#
 # Use MIT client tools
 #
 

@@ -48,6 +48,8 @@
 #include <k5e1_err.h>
 
 #include <krb5_asn1.h>
+typedef Krb5Int32 krb5int32;
+typedef Krb5UInt32 krb5uint32;
 
 /* name confusion with MIT */
 #ifndef KRB5KDC_ERR_KEY_EXP
@@ -363,15 +365,7 @@ typedef AP_REQ krb5_ap_req;
 
 struct krb5_cc_ops;
 
-#ifdef _WIN32
-#define KRB5_USE_PATH_TOKENS 1
-#endif
-
-#ifdef KRB5_USE_PATH_TOKENS
 #define KRB5_DEFAULT_CCFILE_ROOT "%{TEMP}/krb5cc_"
-#else
-#define KRB5_DEFAULT_CCFILE_ROOT "/tmp/krb5cc_"
-#endif
 
 #define KRB5_DEFAULT_CCROOT "FILE:" KRB5_DEFAULT_CCFILE_ROOT
 
@@ -445,6 +439,7 @@ typedef union {
 /* flags for krb5_verify_ap_req */
 
 #define KRB5_VERIFY_AP_REQ_IGNORE_INVALID	(1 << 0)
+#define KRB5_VERIFY_AP_REQ_IGNORE_ADDRS		(1 << 1)
 
 #define KRB5_GC_CACHED			(1U << 0)
 #define KRB5_GC_USER_USER		(1U << 1)
@@ -491,16 +486,19 @@ typedef struct krb5_creds {
 
 typedef struct krb5_cc_cache_cursor_data *krb5_cc_cache_cursor;
 
-#define KRB5_CC_OPS_VERSION 4
+#define KRB5_CC_OPS_VERSION_0	0
+#define KRB5_CC_OPS_VERSION_1	1
+#define KRB5_CC_OPS_VERSION_2	2
+#define KRB5_CC_OPS_VERSION_3	3
+#define KRB5_CC_OPS_VERSION_5	5
 
+/* Only extend the structure. Do not change signatures. */
 typedef struct krb5_cc_ops {
+    /* Version 0 */
     int version;
     const char *prefix;
-    krb5_error_code (KRB5_CALLCONV * get_name)(krb5_context, krb5_ccache,
-                                               const char **, const char **,
-                                               const char **);
-    krb5_error_code (KRB5_CALLCONV * resolve)(krb5_context, krb5_ccache *, const char *,
-                                              const char *);
+    const char* (KRB5_CALLCONV * get_name)(krb5_context, krb5_ccache);
+    krb5_error_code (KRB5_CALLCONV * resolve)(krb5_context, krb5_ccache *, const char *);
     krb5_error_code (KRB5_CALLCONV * gen_new)(krb5_context, krb5_ccache *);
     krb5_error_code (KRB5_CALLCONV * init)(krb5_context, krb5_ccache, krb5_principal);
     krb5_error_code (KRB5_CALLCONV * destroy)(krb5_context, krb5_ccache);
@@ -523,13 +521,43 @@ typedef struct krb5_cc_ops {
     krb5_error_code (KRB5_CALLCONV * end_cache_get)(krb5_context, krb5_cc_cursor);
     krb5_error_code (KRB5_CALLCONV * move)(krb5_context, krb5_ccache, krb5_ccache);
     krb5_error_code (KRB5_CALLCONV * get_default_name)(krb5_context, char **);
+    /* Version 1 */
     krb5_error_code (KRB5_CALLCONV * set_default)(krb5_context, krb5_ccache);
+    /* Version 2 */
     krb5_error_code (KRB5_CALLCONV * lastchange)(krb5_context, krb5_ccache, krb5_timestamp *);
+    /* Version 3 */
     krb5_error_code (KRB5_CALLCONV * set_kdc_offset)(krb5_context, krb5_ccache, krb5_deltat);
     krb5_error_code (KRB5_CALLCONV * get_kdc_offset)(krb5_context, krb5_ccache, krb5_deltat *);
+    /* Version 5 */
+    krb5_error_code (KRB5_CALLCONV * get_name_2)(krb5_context, krb5_ccache,
+						 const char **id, const char **res,
+						 const char **sub);
+    krb5_error_code (KRB5_CALLCONV * resolve_2)(krb5_context, krb5_ccache *id, const char *res,
+						const char *sub);
+    /* Add new functions here for versions 6 and above */
 } krb5_cc_ops;
 
-typedef struct heim_config_binding krb5_config_binding;
+/*
+ * krb5_config_binding is identical to struct heim_config_binding
+ * within heimbase.h.  Its format is public and used by callers of
+ * krb5_config_get_list() and krb5_config_vget_list().
+ */
+enum krb5_config_type {
+    krb5_config_string,
+    krb5_config_list,
+};
+struct krb5_config_binding {
+    enum krb5_config_type type;
+    char *name;
+    struct krb5_config_binding *next;
+    union {
+        char *string;
+        struct krb5_config_binding *list;
+        void *generic;
+    } u;
+};
+
+typedef struct krb5_config_binding krb5_config_binding;
 typedef krb5_config_binding krb5_config_section;
 
 typedef struct krb5_ticket {
@@ -550,8 +578,9 @@ typedef Authenticator krb5_donot_replay;
 #define KRB5_STORAGE_PRINCIPAL_WRONG_NUM_COMPONENTS	0x02
 #define KRB5_STORAGE_PRINCIPAL_NO_NAME_TYPE		0x04
 #define KRB5_STORAGE_KEYBLOCK_KEYTYPE_TWICE		0x08
-#define KRB5_STORAGE_BYTEORDER_MASK			0x60
+#define KRB5_STORAGE_BYTEORDER_MASK			0x70
 #define KRB5_STORAGE_BYTEORDER_BE			0x00 /* default */
+#define KRB5_STORAGE_BYTEORDER_PACKED			0x10
 #define KRB5_STORAGE_BYTEORDER_LE			0x20
 #define KRB5_STORAGE_BYTEORDER_HOST			0x40
 #define KRB5_STORAGE_CREDS_FLAGS_WRONG_BITORDER		0x80
@@ -686,9 +715,10 @@ typedef EncAPRepPart krb5_ap_rep_enc_part;
 #define KRB5_WELLKNOWN_NAME ("WELLKNOWN")
 #define KRB5_ANON_NAME ("ANONYMOUS")
 #define KRB5_ANON_REALM ("WELLKNOWN:ANONYMOUS")
+#define KRB5_FEDERATED_NAME ("FEDERATED")
+#define KRB5_FEDERATED_REALM ("WELLKNOWN:FEDERATED")
 #define KRB5_WELLKNOWN_ORG_H5L_REALM ("WELLKNOWN:ORG.H5L")
 #define KRB5_DIGEST_NAME ("digest")
-
 
 #define KRB5_PKU2U_REALM_NAME ("WELLKNOWN:PKU2U")
 #define KRB5_LKDC_REALM_NAME ("WELLKNOWN:COM.APPLE.LKDC")
@@ -808,11 +838,13 @@ typedef struct krb5_verify_opt {
 struct krb5_krbhst_data;
 typedef struct krb5_krbhst_data *krb5_krbhst_handle;
 
-#define KRB5_KRBHST_KDC		1
-#define KRB5_KRBHST_ADMIN	2
-#define KRB5_KRBHST_CHANGEPW	3
-#define KRB5_KRBHST_KRB524	4
-#define KRB5_KRBHST_KCA		5
+#define KRB5_KRBHST_KDC			1
+#define KRB5_KRBHST_ADMIN		2
+#define KRB5_KRBHST_CHANGEPW		3
+#define KRB5_KRBHST_KRB524		4
+#define KRB5_KRBHST_KCA			5
+#define KRB5_KRBHST_READONLY_ADMIN	6
+#define KRB5_KRBHST_TKTBRIDGEAP		7
 
 typedef struct krb5_krbhst_info {
     enum { KRB5_KRBHST_UDP,

@@ -167,22 +167,44 @@ _key_schedule(krb5_context context,
  ************************************************************/
 
 static krb5_error_code
-SHA1_checksum(krb5_context context,
-	      krb5_crypto crypto,
-	      struct _krb5_key_data *key,
-	      unsigned usage,
-	      const struct krb5_crypto_iov *iov,
-	      int niov,
-	      Checksum *C)
+EVP_unkeyed_checksum(krb5_context context,
+		     krb5_crypto crypto,
+		     struct _krb5_key_data *key,
+		     unsigned usage,
+		     const struct krb5_crypto_iov *iov,
+		     int niov,
+		     Checksum *C,
+		     const EVP_MD *md)
 {
     if (_krb5_evp_digest_iov(crypto,
 			     iov, niov,
 			     C->checksum.data, NULL,
-			     EVP_sha1(), NULL) != 1)
-	krb5_abortx(context, "sha1 checksum failed");
+			     md, NULL) != 1)
+	krb5_abortx(context, "unkeyed checksum failed");
 
     return 0;
 }
+
+#define EVP_SHA_CHECKSUM(name)				    \
+							    \
+    static krb5_error_code				    \
+    SHA ## name ##_checksum(krb5_context context,	    \
+		       krb5_crypto crypto,		    \
+		       struct _krb5_key_data *key,	    \
+		       unsigned usage,			    \
+		       const struct krb5_crypto_iov *iov,   \
+		       int niov,			    \
+		       Checksum *C)			    \
+    {							    \
+	return EVP_unkeyed_checksum(context, crypto, key,   \
+				    usage, iov, niov,	    \
+				    C, EVP_sha##name());    \
+    }
+
+EVP_SHA_CHECKSUM(1)
+EVP_SHA_CHECKSUM(256)
+EVP_SHA_CHECKSUM(384)
+EVP_SHA_CHECKSUM(512)
 
 /* HMAC according to RFC2104 */
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
@@ -369,15 +391,21 @@ _krb5_SP_HMAC_SHA1_verify(krb5_context context,
     return 0;
 }
 
-struct _krb5_checksum_type _krb5_checksum_sha1 = {
-    CKSUMTYPE_SHA1,
-    "sha1",
-    64,
-    20,
-    F_CPROOF,
-    SHA1_checksum,
-    NULL
-};
+#define SHA_CHECKSUM(name, blocksize, outputsize)	    \
+    struct _krb5_checksum_type _krb5_checksum_sha##name = { \
+	CKSUMTYPE_SHA##name,				    \
+	"sha" #name,					    \
+	blocksize,					    \
+	outputsize,					    \
+	F_CPROOF,					    \
+	SHA##name##_checksum,				    \
+	NULL						    \
+    };
+
+SHA_CHECKSUM(1,   64,  20);
+SHA_CHECKSUM(256, 64,  32);
+SHA_CHECKSUM(384, 128, 48);
+SHA_CHECKSUM(512, 128, 64);
 
 KRB5_LIB_FUNCTION struct _krb5_checksum_type * KRB5_LIB_CALL
 _krb5_find_checksum(krb5_cksumtype type)
@@ -444,6 +472,7 @@ create_checksum_iov(krb5_context context,
 		    unsigned usage,
 		    struct krb5_crypto_iov *iov,
 		    int niov,
+		    krb5_flags flags,
 		    Checksum *result)
 {
     krb5_error_code ret;
@@ -457,6 +486,8 @@ create_checksum_iov(krb5_context context,
 	ret = get_checksum_key(context, crypto, usage, ct, &dkey);
 	if (ret)
 	    return ret;
+    } else if ((flags & KRB5_CRYPTO_FLAG_ALLOW_UNKEYED_CHECKSUM) == 0) {
+	return EINVAL;
     } else
 	dkey = NULL;
 
@@ -472,6 +503,7 @@ create_checksum (krb5_context context,
 		 unsigned usage,
 		 void *data,
 		 size_t len,
+		 krb5_flags flags,
 		 Checksum *result)
 {
     int ret;
@@ -485,7 +517,7 @@ create_checksum (krb5_context context,
     iov[0].data.length = len;
     iov[0].flags = KRB5_CRYPTO_TYPE_DATA;
 
-    return create_checksum_iov(context, ct, crypto, usage, iov, 1, result);
+    return create_checksum_iov(context, ct, crypto, usage, iov, 1, flags, result);
 }
 
 static int
@@ -493,6 +525,16 @@ arcfour_checksum_p(struct _krb5_checksum_type *ct, krb5_crypto crypto)
 {
     return (ct->type == CKSUMTYPE_HMAC_MD5) &&
 	(crypto->key.key->keytype == KEYTYPE_ARCFOUR);
+}
+
+static inline krb5_flags
+crypto_flags(krb5_crypto crypto)
+{
+    /* If caller didn't specify a key, unkeyed checksums are the only option */
+    if (crypto == NULL)
+	return KRB5_CRYPTO_FLAG_ALLOW_UNKEYED_CHECKSUM;
+    else
+	return crypto->flags;
 }
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
@@ -529,8 +571,8 @@ krb5_create_checksum(krb5_context context,
     } else
 	keyusage = CHECKSUM_USAGE(usage);
 
-    return create_checksum(context, ct, crypto, keyusage,
-			   data, len, result);
+    return create_checksum(context, ct, crypto, keyusage, data, len,
+			   crypto_flags(crypto), result);
 }
 
 static krb5_error_code
@@ -539,6 +581,7 @@ verify_checksum_iov(krb5_context context,
 		    unsigned usage, /* not krb5_key_usage */
 		    struct krb5_crypto_iov *iov,
 		    int niov,
+		    krb5_flags flags,
 		    Checksum *cksum)
 {
     krb5_error_code ret;
@@ -567,6 +610,13 @@ verify_checksum_iov(krb5_context context,
 	ret = get_checksum_key(context, crypto, usage, ct, &dkey);
 	if (ret)
 	    return ret;
+    } else if ((flags & KRB5_CRYPTO_FLAG_ALLOW_UNKEYED_CHECKSUM) == 0) {
+	krb5_clear_error_message (context);
+	krb5_set_error_message(context, KRB5KRB_AP_ERR_BAD_INTEGRITY,
+			       N_("Unkeyed checksum type %s provided where keyed "
+				  "checksum was expected", ""), ct->name);
+
+	return KRB5KRB_AP_ERR_INAPP_CKSUM;
     } else
 	dkey = NULL;
 
@@ -614,6 +664,7 @@ verify_checksum(krb5_context context,
 		unsigned usage, /* not krb5_key_usage */
 		void *data,
 		size_t len,
+		krb5_flags flags,
 		Checksum *cksum)
 {
     struct krb5_crypto_iov iov[1];
@@ -622,7 +673,7 @@ verify_checksum(krb5_context context,
     iov[0].data.length = len;
     iov[0].flags = KRB5_CRYPTO_TYPE_DATA;
 
-    return verify_checksum_iov(context, crypto, usage, iov, 1, cksum);
+    return verify_checksum_iov(context, crypto, usage, iov, 1, flags, cksum);
 }
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
@@ -651,7 +702,7 @@ krb5_verify_checksum(krb5_context context,
 	keyusage = CHECKSUM_USAGE(usage);
 
     return verify_checksum(context, crypto, keyusage,
-			   data, len, cksum);
+			   data, len, crypto_flags(crypto), cksum);
 }
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
@@ -945,6 +996,7 @@ encrypt_internal_derived(krb5_context context,
 			  INTEGRITY_USAGE(usage),
 			  p,
 			  block_sz,
+			  0,
 			  &cksum);
     if(ret == 0 && cksum.checksum.length != checksum_sz) {
 	free_Checksum (&cksum);
@@ -1032,6 +1084,7 @@ encrypt_internal_enc_then_cksum(krb5_context context,
 			  INTEGRITY_USAGE(usage),
 			  ivc,
 			  et->blocksize + block_sz,
+			  0,
 			  &cksum);
     if(ret == 0 && cksum.checksum.length != checksum_sz) {
 	free_Checksum (&cksum);
@@ -1088,6 +1141,7 @@ encrypt_internal(krb5_context context,
 			  0,
 			  p,
 			  block_sz,
+			  KRB5_CRYPTO_FLAG_ALLOW_UNKEYED_CHECKSUM,
 			  &cksum);
     if(ret == 0 && cksum.checksum.length != checksum_sz) {
 	krb5_clear_error_message (context);
@@ -1213,6 +1267,7 @@ decrypt_internal_derived(krb5_context context,
 			  INTEGRITY_USAGE(usage),
 			  p,
 			  len,
+			  0,
 			  &cksum);
     if(ret) {
 	free(p);
@@ -1280,6 +1335,7 @@ decrypt_internal_enc_then_cksum(krb5_context context,
 			  INTEGRITY_USAGE(usage),
 			  p,
 			  et->blocksize + len,
+			  0,
 			  &cksum);
     if(ret) {
 	free(p);
@@ -1361,7 +1417,8 @@ decrypt_internal(krb5_context context,
     }
     memset(p + et->confoundersize, 0, checksum_sz);
     cksum.cksumtype = CHECKSUMTYPE(et->checksum);
-    ret = verify_checksum(context, NULL, 0, p, len, &cksum);
+    ret = verify_checksum(context, NULL, 0, p, len,
+			  KRB5_CRYPTO_FLAG_ALLOW_UNKEYED_CHECKSUM, &cksum);
     free_Checksum(&cksum);
     if(ret) {
 	free(p);
@@ -1711,6 +1768,7 @@ krb5_encrypt_iov_ivec(krb5_context context,
                               INTEGRITY_USAGE(usage),
                               sign_data.data,
                               sign_data.length,
+                              0,
                               &cksum);
 
         if(ret == 0 && cksum.checksum.length != trailersz) {
@@ -1733,6 +1791,7 @@ krb5_encrypt_iov_ivec(krb5_context context,
                               INTEGRITY_USAGE(usage),
                               data,
                               num_data,
+                              0,
                               &cksum);
         if (ret)
             goto cleanup;
@@ -1874,7 +1933,7 @@ krb5_decrypt_iov_ivec(krb5_context context,
 	cksum.cksumtype       = CHECKSUMTYPE(et->keyed_checksum);
 
 	ret = verify_checksum_iov(context, crypto, INTEGRITY_USAGE(usage),
-	                          data, num_data, &cksum);
+	                          data, num_data, 0, &cksum);
 	if(ret)
 	    goto cleanup;
     } else {
@@ -1900,6 +1959,7 @@ krb5_decrypt_iov_ivec(krb5_context context,
 			      INTEGRITY_USAGE(usage),
 			      sign_data.data,
 			      sign_data.length,
+			      0,
 			      &cksum);
 	if(ret)
 	    goto cleanup;
@@ -1994,7 +2054,7 @@ krb5_create_checksum_iov(krb5_context context,
 
     cksum.checksum = civ->data;
     ret = create_checksum_iov(context, ct, crypto, keyusage,
-			      data, num_data, &cksum);
+			      data, num_data, crypto_flags(crypto), &cksum);
 
     if (ret == 0 && type)
 	*type = cksum.cksumtype;
@@ -2053,7 +2113,8 @@ krb5_verify_checksum_iov(krb5_context context,
     } else
 	keyusage = CHECKSUM_USAGE(usage);
 
-    ret = verify_checksum_iov(context, crypto, keyusage, data, num_data, &cksum);
+    ret = verify_checksum_iov(context, crypto, keyusage, data, num_data,
+			      crypto_flags(crypto), &cksum);
 
     if (ret == 0 && type)
 	*type = cksum.cksumtype;
@@ -2535,6 +2596,7 @@ krb5_crypto_init(krb5_context context,
     (*crypto)->key.schedule = NULL;
     (*crypto)->num_key_usage = 0;
     (*crypto)->key_usage = NULL;
+    (*crypto)->flags = 0;
     return 0;
 }
 
@@ -3104,7 +3166,13 @@ krb5_crypto_fx_cf2(krb5_context context,
     return ret;
 }
 
-
+KRB5_LIB_FUNCTION void KRB5_LIB_CALL
+_krb5_crypto_set_flags(krb5_context context,
+		       krb5_crypto crypto,
+		       krb5_flags flags)
+{
+    crypto->flags |= flags;
+}
 
 #ifndef HEIMDAL_SMALLER
 

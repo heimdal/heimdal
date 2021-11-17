@@ -40,6 +40,14 @@
 #include <gssapi_ntlm.h>
 #include "test_common.h"
 
+#ifdef NOTYET
+/*
+ * export/import of sec contexts on the initiator side
+ * don't work properly, yet.
+ */
+#define DO_IMPORT_EXPORT_OF_CLIENT_CONTEXT 1
+#endif
+
 static char *type_string;
 static char *mech_string;
 static char *mechs_string;
@@ -69,57 +77,31 @@ static int client_time_offset = 0;
 static int server_time_offset = 0;
 static int max_loops = 0;
 static char *limit_enctype_string = NULL;
+static int token_split  = 0;
 static int version_flag = 0;
 static int verbose_flag = 0;
 static int help_flag	= 0;
-static char *channel_bindings = NULL;
+static char *i_channel_bindings = NULL;
+static char *a_channel_bindings = NULL;
 
 static krb5_context context;
 static krb5_enctype limit_enctype = 0;
 
-static gss_OID_desc test_negoex_1_mech = { 6, "\x69\x85\xa2\xc0\xac\x66" };
-static gss_OID_desc test_negoex_2_mech = { 6, "\x69\x84\xb0\xd1\xa8\x2c" };
-
-static struct {
-    const char *name;
-    gss_OID oid;
-} o2n[] = {
-    { "krb5", NULL /* GSS_KRB5_MECHANISM */ },
-    { "spnego", NULL /* GSS_SPNEGO_MECHANISM */ },
-    { "ntlm", NULL /* GSS_NTLM_MECHANISM */ },
-    { "sasl-digest-md5", NULL /* GSS_SASL_DIGEST_MD5_MECHANISM */ },
-    { "sanon-x25519", NULL /* GSS_SASL_SANON_X25519_MECHANISM */ },
-    { "test_negoex_1", NULL },
-    { "test_negoex_2", NULL },
-};
-
-static void
-init_o2n(void)
-{
-    o2n[0].oid = GSS_KRB5_MECHANISM;
-    o2n[1].oid = GSS_SPNEGO_MECHANISM;
-    o2n[2].oid = GSS_NTLM_MECHANISM;
-    o2n[3].oid = GSS_SASL_DIGEST_MD5_MECHANISM;
-    o2n[4].oid = GSS_SANON_X25519_MECHANISM;
-    o2n[5].oid = &test_negoex_1_mech;
-    o2n[6].oid = &test_negoex_2_mech;
-}
-
 static gss_OID
 string_to_oid(const char *name)
 {
-    size_t i;
-    for (i = 0; i < sizeof(o2n)/sizeof(o2n[0]); i++)
-	if (strcasecmp(name, o2n[i].name) == 0)
-	    return o2n[i].oid;
-    errx(1, "name '%s' not known", name);
+    gss_OID oid = gss_name_to_oid(name);
+
+    if (oid == GSS_C_NO_OID)
+	errx(1, "name '%s' not known", name);
+
+    return oid;
 }
 
 static void
-string_to_oids(gss_OID_set *oidsetp, gss_OID_set oidset,
-               gss_OID_desc *oidarray, size_t oidarray_len,
-               char *names)
+string_to_oids(gss_OID_set *oidsetp, char *names)
 {
+    OM_uint32 maj_stat, min_stat;
     char *name;
     char *s;
 
@@ -128,32 +110,28 @@ string_to_oids(gss_OID_set *oidsetp, gss_OID_set oidset,
         return;
     }
 
-    oidset->elements = &oidarray[0];
     if (strcasecmp(names, "all") == 0) {
-        if (sizeof(o2n)/sizeof(o2n[0]) > oidarray_len)
-            errx(1, "internal error: oidarray must be enlarged");
-        for (oidset->count = 0; oidset->count < oidarray_len; oidset->count++)
-            oidset->elements[oidset->count] = *o2n[oidset->count].oid;
+	maj_stat = gss_indicate_mechs(&min_stat, oidsetp);
+	if (GSS_ERROR(maj_stat))
+	    errx(1, "gss_indicate_mechs: %s",
+		 gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));
     } else {
-        for (oidset->count = 0, name = strtok_r(names, ", ", &s);
+	maj_stat = gss_create_empty_oid_set(&min_stat, oidsetp);
+	if (GSS_ERROR(maj_stat))
+	    errx(1, "gss_create_empty_oid_set: %s",
+		 gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));
+
+        for (name = strtok_r(names, ", ", &s);
              name != NULL;
-             oidset->count++, name = strtok_r(NULL, ", ", &s)) {
-            if (oidset->count >= oidarray_len)
-                errx(1, "too many mech names given");
-            oidset->elements[oidset->count] = *string_to_oid(name);
+             name = strtok_r(NULL, ", ", &s)) {
+	    gss_OID oid = string_to_oid(name);
+
+	    maj_stat = gss_add_oid_set_member(&min_stat, oid, oidsetp);
+	    if (GSS_ERROR(maj_stat))
+		errx(1, "gss_add_oid_set_member: %s",
+		    gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));
         }
     }
-    *oidsetp = oidset;
-}
-
-static const char *
-oid_to_string(const gss_OID oid)
-{
-    size_t i;
-    for (i = 0; i < sizeof(o2n)/sizeof(o2n[0]); i++)
-	if (gss_oid_equal(oid, o2n[i].oid))
-	    return o2n[i].name;
-    return "unknown oid";
 }
 
 static void
@@ -167,13 +145,21 @@ loop(gss_OID mechoid,
     int server_done = 0, client_done = 0;
     int num_loops = 0;
     OM_uint32 maj_stat, min_stat;
-    gss_name_t gss_target_name, src_name;
-    gss_buffer_desc input_token, output_token;
-    OM_uint32 flags = 0, ret_cflags, ret_sflags;
-    gss_OID actual_mech_client;
-    gss_OID actual_mech_server;
-    struct gss_channel_bindings_struct channel_bindings_data;
-    gss_channel_bindings_t channel_bindings_p = GSS_C_NO_CHANNEL_BINDINGS;
+    gss_name_t gss_target_name, src_name = GSS_C_NO_NAME;
+    gss_buffer_desc input_token = GSS_C_EMPTY_BUFFER;
+    gss_buffer_desc output_token = GSS_C_EMPTY_BUFFER;
+#ifdef DO_IMPORT_EXPORT_OF_CLIENT_CONTEXT
+    gss_buffer_desc cctx_tok = GSS_C_EMPTY_BUFFER;
+#endif
+    gss_buffer_desc sctx_tok = GSS_C_EMPTY_BUFFER;
+    OM_uint32 flags = 0, ret_cflags = 0, ret_sflags = 0;
+    gss_OID actual_mech_client = GSS_C_NO_OID;
+    gss_OID actual_mech_server = GSS_C_NO_OID;
+    struct gss_channel_bindings_struct i_channel_bindings_data = {0};
+    struct gss_channel_bindings_struct a_channel_bindings_data = {0};
+    gss_channel_bindings_t i_channel_bindings_p = GSS_C_NO_CHANNEL_BINDINGS;
+    gss_channel_bindings_t a_channel_bindings_p = GSS_C_NO_CHANNEL_BINDINGS;
+    size_t offset = 0;
 
     *actual_mech = GSS_C_NO_OID;
 
@@ -205,72 +191,146 @@ loop(gss_OID mechoid,
     input_token.length = 0;
     input_token.value = NULL;
 
-    if (channel_bindings) {
-	channel_bindings_data.application_data.length = strlen(channel_bindings);
-	channel_bindings_data.application_data.value = channel_bindings;
-	channel_bindings_p = &channel_bindings_data;
+    if (i_channel_bindings) {
+	i_channel_bindings_data.application_data.length = strlen(i_channel_bindings);
+	i_channel_bindings_data.application_data.value = i_channel_bindings;
+	i_channel_bindings_p = &i_channel_bindings_data;
     }
+    if (a_channel_bindings) {
+	a_channel_bindings_data.application_data.length = strlen(a_channel_bindings);
+	a_channel_bindings_data.application_data.value = a_channel_bindings;
+	a_channel_bindings_p = &a_channel_bindings_data;
+    }
+
+    /*
+     * This loop simulates both the initiator and acceptor sides of
+     * a GSS conversation.  We also simulate tokens that are broken
+     * into pieces before handed to gss_accept_sec_context().  Each
+     * iteration of the loop optionally calls gss_init_sec_context()
+     * then optionally calls gss_accept_sec_context().
+     */
 
     while (!server_done || !client_done) {
 	num_loops++;
+        if (verbose_flag)
+            printf("loop #%d: input_token.length=%zu client_done=%d\n",
+                num_loops, input_token.length, client_done);
 
-	gsskrb5_set_time_offset(client_time_offset);
+        /*
+         * First, we need to call gss_import_sec_context() if we are
+         * running through the loop the first time, or if we have been
+         * given a token (input_token) by gss_accept_sec_context().
+         * We aren't going to be called every time because when we are
+         * using split tokens, we may need to call gss_accept_sec_context()
+         * multiple times because it receives an entire token.
+         */
+        if ((num_loops == 1 || input_token.length > 0) && !client_done) {
+            gsskrb5_set_time_offset(client_time_offset);
+#ifdef DO_IMPORT_EXPORT_OF_CLIENT_CONTEXT
+            if (ei_ctx_flag && cctx_tok.length > 0) {
+                maj_stat = gss_import_sec_context(&min_stat, &cctx_tok, cctx);
+                if (maj_stat != GSS_S_COMPLETE)
+                    errx(1, "import client context failed: %s",
+                         gssapi_err(maj_stat, min_stat, NULL));
+                gss_release_buffer(&min_stat, &cctx_tok);
+            }
+#endif
 
-	maj_stat = gss_init_sec_context(&min_stat,
-					init_cred,
-					cctx,
-					gss_target_name,
-					mechoid,
-					flags,
-					0,
-					channel_bindings_p,
-					&input_token,
-					&actual_mech_client,
-					&output_token,
-					&ret_cflags,
-					NULL);
-	if (GSS_ERROR(maj_stat))
-	    errx(1, "init_sec_context: %s",
-		 gssapi_err(maj_stat, min_stat, mechoid));
-	if (maj_stat & GSS_S_CONTINUE_NEEDED)
-	    ;
-	else
-	    client_done = 1;
+            maj_stat = gss_init_sec_context(&min_stat, init_cred, cctx,
+                                            gss_target_name, mechoid,
+                                            flags, 0, i_channel_bindings_p,
+                                            &input_token, &actual_mech_client,
+                                            &output_token, &ret_cflags, NULL);
+            if (GSS_ERROR(maj_stat))
+                errx(1, "init_sec_context: %s",
+                     gssapi_err(maj_stat, min_stat, mechoid));
+            client_done = !(maj_stat & GSS_S_CONTINUE_NEEDED);
 
-	gsskrb5_get_time_offset(&client_time_offset);
-
-	if (client_done && server_done)
-	    break;
-
-	if (input_token.length != 0)
 	    gss_release_buffer(&min_stat, &input_token);
+            input_token.length = 0;
+            input_token.value  = NULL;
 
-	gsskrb5_set_time_offset(server_time_offset);
+#if DO_IMPORT_EXPORT_OF_CLIENT_CONTEXT
+            if (!client_done && ei_ctx_flag) {
+                maj_stat = gss_export_sec_context(&min_stat, cctx, &cctx_tok);
+                if (maj_stat != GSS_S_COMPLETE)
+                    errx(1, "export server context failed: %s",
+                         gssapi_err(maj_stat, min_stat, NULL));
+                if (*cctx != GSS_C_NO_CONTEXT)
+                    errx(1, "export client context did not release it");
+            }
+#endif
 
-	maj_stat = gss_accept_sec_context(&min_stat,
-					  sctx,
-					  GSS_C_NO_CREDENTIAL,
-					  &output_token,
-					  channel_bindings_p,
-					  &src_name,
-					  &actual_mech_server,
-					  &input_token,
-					  &ret_sflags,
-					  NULL,
-					  deleg_cred);
-	if (GSS_ERROR(maj_stat))
-		errx(1, "accept_sec_context: %s",
-		     gssapi_err(maj_stat, min_stat, actual_mech_server));
+            if (verbose_flag)
+                printf("loop #%d: output_token.length=%zu\n", num_loops,
+                    output_token.length);
 
-	gsskrb5_get_time_offset(&server_time_offset);
+            offset = 0;
+        }
 
-	if (output_token.length != 0)
-	    gss_release_buffer(&min_stat, &output_token);
+        /*
+         * We now call gss_accept_sec_context().  To support split
+         * tokens, we keep track of the offset into the token that
+         * we have used and keep handing in chunks until we're done.
+         */
 
-	if (maj_stat & GSS_S_CONTINUE_NEEDED)
-	    gss_release_name(&min_stat, &src_name);
-	else
-	    server_done = 1;
+        if (offset < output_token.length && !server_done) {
+            gss_buffer_desc tmp;
+
+            gsskrb5_get_time_offset(&client_time_offset);
+            gsskrb5_set_time_offset(server_time_offset);
+
+	    if (output_token.length && ((uint8_t *)output_token.value)[0] == 0x60) {
+		tmp.length = output_token.length - offset;
+		if (token_split && tmp.length > token_split)
+		    tmp.length = token_split;
+		tmp.value  = (char *)output_token.value + offset;
+	    } else
+		tmp = output_token;
+
+            if (verbose_flag)
+                printf("loop #%d: accept offset=%zu len=%zu\n", num_loops,
+                    offset, tmp.length);
+
+            if (ei_ctx_flag && sctx_tok.length > 0) {
+                maj_stat = gss_import_sec_context(&min_stat, &sctx_tok, sctx);
+                if (maj_stat != GSS_S_COMPLETE)
+                    errx(1, "import server context failed: %s",
+                         gssapi_err(maj_stat, min_stat, NULL));
+                gss_release_buffer(&min_stat, &sctx_tok);
+            }
+
+            maj_stat = gss_accept_sec_context(&min_stat, sctx,
+                                              GSS_C_NO_CREDENTIAL, &tmp,
+                                              a_channel_bindings_p, &src_name,
+                                              &actual_mech_server,
+                                              &input_token, &ret_sflags,
+                                              NULL, deleg_cred);
+            if (GSS_ERROR(maj_stat))
+                errx(1, "accept_sec_context: %s",
+                     gssapi_err(maj_stat, min_stat, actual_mech_server));
+            offset += tmp.length;
+            if (maj_stat & GSS_S_CONTINUE_NEEDED)
+                gss_release_name(&min_stat, &src_name);
+            else
+                server_done = 1;
+
+            if (ei_ctx_flag && !server_done) {
+                maj_stat = gss_export_sec_context(&min_stat, sctx, &sctx_tok);
+                if (maj_stat != GSS_S_COMPLETE)
+                    errx(1, "export server context failed: %s",
+                         gssapi_err(maj_stat, min_stat, NULL));
+                if (*sctx != GSS_C_NO_CONTEXT)
+                    errx(1, "export server context did not release it");
+            }
+
+            gsskrb5_get_time_offset(&server_time_offset);
+
+            if (output_token.length == offset)
+                gss_release_buffer(&min_stat, &output_token);
+        }
+        if (verbose_flag)
+            printf("loop #%d: end\n", num_loops);
     }
     if (output_token.length != 0)
 	gss_release_buffer(&min_stat, &output_token);
@@ -326,11 +386,13 @@ loop(gss_OID mechoid,
         gss_buffer_desc iname;
 
         maj_stat = gss_display_name(&min_stat, src_name, &iname, NULL);
-        if (maj_stat != GSS_S_COMPLETE)
-            errx(1, "display_name: %s",
+        if (maj_stat == GSS_S_COMPLETE) {
+            printf("client name: %.*s\n", (int)iname.length,
+                (char *)iname.value);
+            gss_release_buffer(&min_stat, &iname);
+        } else
+            warnx("display_name: %s",
                  gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));
-        printf("client name: %.*s\n", (int)iname.length, (char *)iname.value);
-        gss_release_buffer(&min_stat, &iname);
     }
     gss_release_name(&min_stat, &src_name);
 
@@ -342,7 +404,7 @@ loop(gss_OID mechoid,
 	printf("server time offset: %d\n", server_time_offset);
 	printf("client time offset: %d\n", client_time_offset);
 	printf("num loops %d\n", num_loops);
-	printf("flags: ");
+	printf("cflags: ");
 	if (ret_cflags & GSS_C_DELEG_FLAG)
 	    printf("deleg ");
 	if (ret_cflags & GSS_C_MUTUAL_FLAG)
@@ -369,6 +431,10 @@ loop(gss_OID mechoid,
 	    printf("extended-error " );
 	if (ret_cflags & GSS_C_DELEG_POLICY_FLAG)
 	    printf("deleg-policy " );
+	printf("\n");
+	printf("sflags: ");
+	if (ret_sflags & GSS_C_CHANNEL_BOUND_FLAG)
+	    printf("channel-bound " );
 	printf("\n");
     }
 }
@@ -451,7 +517,7 @@ wrapunwrap_iov(gss_ctx_id_t cctx, gss_ctx_id_t sctx, int flags, gss_OID mechoid)
 
     memset(iov, 0, sizeof(iov));
 
-    iov[0].type = GSS_IOV_BUFFER_TYPE_HEADER | GSS_IOV_BUFFER_TYPE_FLAG_ALLOCATE;
+    iov[0].type = GSS_IOV_BUFFER_TYPE_HEADER | GSS_IOV_BUFFER_FLAG_ALLOCATE;
 
     if (header.length != 0) {
 	iov[1].type = GSS_IOV_BUFFER_TYPE_SIGN_ONLY;
@@ -481,7 +547,7 @@ wrapunwrap_iov(gss_ctx_id_t cctx, gss_ctx_id_t sctx, int flags, gss_OID mechoid)
     if (dce_style_flag) {
 	iov[4].type = GSS_IOV_BUFFER_TYPE_EMPTY;
     } else {
-	iov[4].type = GSS_IOV_BUFFER_TYPE_PADDING | GSS_IOV_BUFFER_TYPE_FLAG_ALLOCATE;
+	iov[4].type = GSS_IOV_BUFFER_TYPE_PADDING | GSS_IOV_BUFFER_FLAG_ALLOCATE;
     }
     iov[4].buffer.length = 0;
     iov[4].buffer.value = 0;
@@ -490,7 +556,7 @@ wrapunwrap_iov(gss_ctx_id_t cctx, gss_ctx_id_t sctx, int flags, gss_OID mechoid)
     } else if (flags & USE_HEADER_ONLY) {
 	iov[5].type = GSS_IOV_BUFFER_TYPE_EMPTY;
     } else {
-	iov[5].type = GSS_IOV_BUFFER_TYPE_TRAILER | GSS_IOV_BUFFER_TYPE_FLAG_ALLOCATE;
+	iov[5].type = GSS_IOV_BUFFER_TYPE_TRAILER | GSS_IOV_BUFFER_FLAG_ALLOCATE;
     }
     iov[5].buffer.length = 0;
     iov[5].buffer.value = 0;
@@ -668,7 +734,8 @@ static struct getargs args[] = {
     {"client-name", 0,  arg_string,     &client_name, "client name", NULL },
     {"client-password", 0,  arg_string, &client_password, "client password", NULL },
     {"anonymous", 0,	arg_flag,	&anon_flag, "anonymous auth", NULL },
-    {"channel-bindings", 0, arg_string,	&channel_bindings, "channel binding data", NULL },
+    {"i-channel-bindings", 0, arg_string, &i_channel_bindings, "initiator channel binding data", NULL },
+    {"a-channel-bindings", 0, arg_string, &a_channel_bindings, "acceptor channel binding data", NULL },
     {"limit-enctype",0,	arg_string,	&limit_enctype_string, "enctype", NULL },
     {"dce-style",0,	arg_flag,	&dce_style_flag, "dce-style", NULL },
     {"wrapunwrap",0,	arg_flag,	&wrapunwrap_flag, "wrap/unwrap", NULL },
@@ -688,6 +755,7 @@ static struct getargs args[] = {
     {"client-time-offset",	0, arg_integer,	&client_time_offset, "time", NULL },
     {"server-time-offset",	0, arg_integer,	&server_time_offset, "time", NULL },
     {"max-loops",	0, arg_integer,	&max_loops, "time", NULL },
+    {"token-split",	0, arg_integer, &token_split, "bytes", NULL },
     {"version",	0,	arg_flag,	&version_flag, "print version", NULL },
     {"verbose",	'v',	arg_flag,	&verbose_flag, "verbose", NULL },
     {"help",	0,	arg_flag,	&help_flag,  NULL, NULL }
@@ -720,8 +788,6 @@ main(int argc, char **argv)
     gss_OID_set actual_mechs = GSS_C_NO_OID_SET;
 
     setprogname(argv[0]);
-
-    init_o2n();
 
     if (krb5_init_context(&context))
 	errx(1, "krb5_init_context");
@@ -789,8 +855,7 @@ main(int argc, char **argv)
         mechoid_descs.count = 1;
         mechoids = &mechoid_descs;
     } else {
-        string_to_oids(&mechoids, &mechoid_descs,
-                       oids, sizeof(oids)/sizeof(oids[0]), mechs_string);
+        string_to_oids(&mechoids, mechs_string);
     }
 
     if (gsskrb5_acceptor_identity) {
@@ -880,7 +945,7 @@ main(int argc, char **argv)
 
 	printf("cred mechs:");
 	for (i = 0; i < actual_mechs->count; i++)
-	    printf(" %s", oid_to_string(&actual_mechs->elements[i]));
+	    printf(" %s", gss_oid_to_name(&actual_mechs->elements[i]));
 	printf("\n");
     }
 
@@ -940,7 +1005,7 @@ main(int argc, char **argv)
 	 &sctx, &cctx, &actual_mech, &deleg_cred);
 
     if (verbose_flag)
-	printf("resulting mech: %s\n", oid_to_string(actual_mech));
+	printf("resulting mech: %s\n", gss_oid_to_name(actual_mech));
 
     if (ret_mech_string) {
 	gss_OID retoid;
@@ -1297,7 +1362,7 @@ main(int argc, char **argv)
 
 	if (verbose_flag)
 	    printf("checking actual mech (%s) on delegated cred\n",
-		   oid_to_string(actual_mech));
+		   gss_oid_to_name(actual_mech));
 	loop(actual_mech, nameoid, argv[0], deleg_cred, &sctx, &cctx, &actual_mech2, &cred2);
 
 	gss_delete_sec_context(&min_stat, &cctx, NULL);
@@ -1342,7 +1407,7 @@ main(int argc, char **argv)
 
 	    if (verbose_flag)
 		printf("checking actual mech (%s) on export/imported cred\n",
-		       oid_to_string(actual_mech));
+		       gss_oid_to_name(actual_mech));
 	    loop(actual_mech, nameoid, argv[0], cred2, &sctx, &cctx,
 		 &actual_mech2, &deleg_cred);
 
@@ -1375,6 +1440,8 @@ main(int argc, char **argv)
 
     gss_release_cred(&min_stat, &client_cred);
     gss_release_oid_set(&min_stat, &actual_mechs);
+    if (mechoids != GSS_C_NO_OID_SET && mechoids != &mechoid_descs)
+	gss_release_oid_set(&min_stat, &mechoids);
     empty_release();
 
     krb5_free_context(context);

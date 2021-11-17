@@ -7,8 +7,7 @@
 
 KX509 DEFINITIONS ::= BEGIN
 IMPORTS Extensions FROM rfc2459
-        KerberosTime FROM krb5
-        KRB5PrincipalName FROM pkinit;
+        KerberosTime FROM krb5;
 
 KX509-ERROR-CODE ::= INTEGER {
 	KX509-STATUS-GOOD(0),

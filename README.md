@@ -11,13 +11,21 @@ Heimdal is an implementation of:
  - PKIX, and
  - Kerberos.
 
-For information how to install see [here](http://www.h5l.org/compile.html).
+For information how to install see [here](https://github.com/heimdal/heimdal/wiki/Building-and-installing).
 
 There are man pages for most of the commands.
 
-Bug reports and bugs are appreciated.  Use GitHub issues.
+Bug reports and bugs are appreciated.  Use [GitHub issues](https://www.heimdal.software/heimdal/issues).
 
-For more information see the project homepage [https://heimdal.software/heimdal/](https://heimdal.software/heimdal/).
+For more information see the project homepage [https://heimdal.software/heimdal/](https://heimdal.software/heimdal/) or the mailing lists:
+
+  heimdal-announce@heimdal.software	low-volume announcement
+  heimdal-discuss@heimdal.software	high-volume discussion
+
+send mail to [heimdal-announce-subscribe@heimdal.software](mailto:heimdal-announce-subscribe@heimdal.software) and
+[heimdal-discuss-subscribe@heimdal.software](mailto:heimdal-discuss-subscribe@heimdal.software)
+respectively to subscribe.
+
 
 Build Status
 ============

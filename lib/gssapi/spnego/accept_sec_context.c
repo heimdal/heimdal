@@ -35,7 +35,7 @@
 
 static OM_uint32
 send_reject (OM_uint32 *minor_status,
-	     gss_buffer_t mech_token,
+	     gss_const_buffer_t mech_token,
 	     gss_buffer_t output_token)
 {
     NegotiationToken nt;
@@ -64,6 +64,7 @@ send_reject (OM_uint32 *minor_status,
     ASN1_MALLOC_ENCODE(NegotiationToken,
 		       output_token->value, output_token->length, &nt,
 		       &size, *minor_status);
+    nt.u.negTokenResp.responseToken = NULL; /* allocated on stack */
     free_NegotiationToken(&nt);
     if (*minor_status != 0)
 	return GSS_S_FAILURE;
@@ -455,11 +456,10 @@ select_mech(OM_uint32 *minor_status,
 	ret = acceptor_approved(minor_status, ctx, name, cred, selected_mech);
 
 	gss_release_name(&junk, &name);
-    }
-
-    /* Stash optimistic mech for use by _gss_spnego_require_mechlist_mic() */
-    if (ret == GSS_S_COMPLETE && !verify_p)
+    } else {
+        /* Stash optimistic mech for use by _gss_spnego_require_mechlist_mic() */
 	ret = gss_duplicate_oid(minor_status, &oid, &ctx->preferred_mech_type);
+    }
 
     if (ret == GSS_S_COMPLETE) {
 	*minor_status = 0;
@@ -753,7 +753,7 @@ acceptor_start
      * If opportunistic token failed, lets try the other mechs.
      */
 
-    if (!first_ok && ni->mechToken != NULL) {
+    if (!first_ok) {
 	size_t j;
 
 	/* Call glue layer to find first mech we support */
@@ -766,28 +766,26 @@ acceptor_start
 			      1, /* not optimistic token */
 			      &advertised_mech);
 	    if (ret == GSS_S_COMPLETE) {
-		_gss_spnego_log_mech("acceptor selected non-opportunistic mech", ctx->selected_mech_type);
+		_gss_spnego_log_mech("acceptor selected non-opportunistic mech",
+                                     ctx->selected_mech_type);
 		break;
 	    }
 	}
-	if (ctx->selected_mech_type == GSS_C_NO_OID) {
-	    heim_assert(ret != GSS_S_COMPLETE, "no oid and no error code?");
-	    *minor_status = junk;
-	    goto out;
-	}
+    }
+    if (ctx->selected_mech_type == GSS_C_NO_OID) {
+        heim_assert(ret != GSS_S_COMPLETE, "no oid and no error code?");
+        *minor_status = junk;
+        goto out;
     }
 
-    /*
-     * The initial token always have a response
-     */
-
-    ret = send_accept (minor_status,
-		       ctx,
-		       first_ok,
-		       &mech_output_token,
-		       advertised_mech,
-		       get_mic ? &ctx->NegTokenInit_mech_types : NULL,
-		       output_token);
+    /* The initial token always has a response */
+    ret = send_accept(minor_status,
+		      ctx,
+		      first_ok,
+		      &mech_output_token,
+		      advertised_mech,
+		      get_mic ? &ctx->NegTokenInit_mech_types : NULL,
+		      output_token);
     if (ret)
 	goto out;
 

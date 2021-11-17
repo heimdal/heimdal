@@ -665,7 +665,8 @@ check_authz(krb5_context context,
      */
     if (!reqctx->have_csr)
         return 0;
-    ret = kdc_authorize_csr(context, reqctx->config, reqctx->csr, cprincipal);
+    ret = kdc_authorize_csr(context, reqctx->config->app, reqctx->csr,
+                            cprincipal);
     if (ret == 0) {
         _kdc_audit_addkv((kdc_request_t)reqctx, 0, "authorized", "true");
 
@@ -1003,8 +1004,9 @@ _kdc_do_kx509(kx509_req_context r)
     krb5_data_zero(rep.hash);
     krb5_data_zero(rep.certificate);
     krb5_ticket_get_times(r->context, ticket, &r->ticket_times);
-    ret = kdc_issue_certificate(r->context, r->config, r->csr, cprincipal,
-                                &r->ticket_times, r->send_chain, &certs);
+    ret = kdc_issue_certificate(r->context, r->config->app, r->logf, r->csr,
+                                cprincipal, &r->ticket_times, 0 /*req_life*/,
+                                r->send_chain, &certs);
     if (ret) {
         int level = 1;
 	const char *msg = krb5_get_error_message(r->context, ret);

@@ -117,7 +117,8 @@ _gss_sanon_accept_sec_context(OM_uint32 *minor,
     req_flags &= SANON_PROTOCOL_FLAG_MASK;
 
     req_flags |= GSS_C_REPLAY_FLAG | GSS_C_SEQUENCE_FLAG | GSS_C_CONF_FLAG |
-		 GSS_C_INTEG_FLAG | GSS_C_ANON_FLAG | GSS_C_TRANS_FLAG;
+		 GSS_C_INTEG_FLAG | GSS_C_ANON_FLAG | GSS_C_TRANS_FLAG |
+		 GSS_C_CHANNEL_BOUND_FLAG; /* CB part of KDF, so always validated */
 
     major = _gss_sanon_import_rfc4121_context(minor, sc, req_flags, &session_key);
     if (major != GSS_S_COMPLETE)

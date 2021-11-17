@@ -59,6 +59,8 @@ struct pk_client_params {
 	} ecdh;
     } u;
     hx509_cert cert;
+    krb5_timestamp endtime;
+    krb5_timestamp max_life;
     unsigned nonce;
     EncryptionKey reply_key;
     char *dh_group_name;
@@ -111,10 +113,7 @@ pk_check_pkauthenticator(krb5_context context,
 			 PKAuthenticator *a,
 			 const KDC_REQ *req)
 {
-    u_char *buf = NULL;
-    size_t buf_size;
     krb5_error_code ret;
-    size_t len = 0;
     krb5_timestamp now;
     Checksum checksum;
 
@@ -126,22 +125,13 @@ pk_check_pkauthenticator(krb5_context context,
 	return KRB5KRB_AP_ERR_SKEW;
     }
 
-    ASN1_MALLOC_ENCODE(KDC_REQ_BODY, buf, buf_size, &req->req_body, &len, ret);
-    if (ret) {
-	krb5_clear_error_message(context);
-	return ret;
-    }
-    if (buf_size != len)
-	krb5_abortx(context, "Internal error in ASN.1 encoder");
-
     ret = krb5_create_checksum(context,
 			       NULL,
 			       0,
 			       CKSUMTYPE_SHA1,
-			       buf,
-			       len,
+			       req->req_body._save.data,
+			       req->req_body._save.length,
 			       &checksum);
-    free(buf);
     if (ret) {
 	krb5_clear_error_message(context);
 	return ret;
@@ -414,7 +404,7 @@ _kdc_pk_rd_padata(astgs_request_t priv,
     *ret_params = NULL;
 
     if (!config->enable_pkinit) {
-	kdc_log(context, config, 0, "PK-INIT request but PK-INIT not enabled");
+	kdc_log(context, config, 0, "PKINIT request but PKINIT not enabled");
 	krb5_clear_error_message(context);
 	return 0;
     }
@@ -482,7 +472,7 @@ _kdc_pk_rd_padata(astgs_request_t priv,
 	if (_kdc_is_anonymous(context, client->entry.principal)) {
 	    ret = KRB5_KDC_ERR_PUBLIC_KEY_ENCRYPTION_NOT_SUPPORTED;
 	    krb5_set_error_message(context, ret,
-				   "Anon not supported in RSA mode");
+		"Anonymous client not supported in RSA mode");
 	    goto out;
 	}
 
@@ -661,7 +651,7 @@ _kdc_pk_rd_padata(astgs_request_t priv,
 	der_heim_oid_cmp(&eContentType, &asn1_oid_id_pkauthdata) != 0)
     {
 	ret = KRB5_BADMSGTYPE;
-	krb5_set_error_message(context, ret, "got wrong oid for pkauthdata");
+	krb5_set_error_message(context, ret, "got wrong oid for PK AuthData");
 	goto out;
     }
 
@@ -692,7 +682,7 @@ _kdc_pk_rd_padata(astgs_request_t priv,
 	if (ap.clientPublicValue) {
 	    ret = KRB5KRB_ERR_GENERIC;
 	    krb5_set_error_message(context, ret,
-				   "DH not supported for windows");
+				   "DH not supported for Win2k");
 	    goto out;
 	}
 	free_AuthPack_Win2k(&ap);
@@ -716,7 +706,7 @@ _kdc_pk_rd_padata(astgs_request_t priv,
 	    free_AuthPack(&ap);
 	    ret = KRB5_KDC_ERR_PUBLIC_KEY_ENCRYPTION_NOT_SUPPORTED;
 	    krb5_set_error_message(context, ret,
-				   "Anon not supported in RSA mode");
+		"Anonymous client not supported in RSA mode");
 	    goto out;
 	}
 
@@ -743,7 +733,8 @@ _kdc_pk_rd_padata(astgs_request_t priv,
                                           &cp->u.ecdh.public_key);
 	    } else {
 		ret = KRB5_BADMSGTYPE;
-		krb5_set_error_message(context, ret, "PKINIT unknown DH mechanism");
+		krb5_set_error_message(context, ret,
+		    "PKINIT unknown DH mechanism");
 	    }
 	    if (ret) {
 		free_AuthPack(&ap);
@@ -781,7 +772,7 @@ _kdc_pk_rd_padata(astgs_request_t priv,
     } else
 	krb5_abortx(context, "internal pkinit error");
 
-    kdc_log(context, config, 0, "PK-INIT request of type %s", type);
+    kdc_log(context, config, 0, "PKINIT request of type %s", type);
 
 out:
     if (ret)
@@ -797,6 +788,18 @@ out:
     } else
 	*ret_params = cp;
     return ret;
+}
+
+krb5_timestamp
+_kdc_pk_endtime(pk_client_params *pkp)
+{
+    return pkp->endtime;
+}
+
+krb5_timestamp
+_kdc_pk_max_life(pk_client_params *pkp)
+{
+    return pkp->max_life;
 }
 
 /*
@@ -1325,7 +1328,8 @@ _kdc_pk_mk_pa_reply(astgs_request_t r, pk_client_params *cp)
 				   &kx, &size, ret);
 		free_EncryptedData(&kx);
 		if (ret) {
-		    krb5_set_error_message(context, ret, "encoding of PKINIT-KX failed %d", ret);
+		    krb5_set_error_message(context, ret,
+				"encoding of PKINIT-KX failed %d", ret);
 		    free_PA_PK_AS_REP(&rep);
 		    goto out;
 		}
@@ -1367,7 +1371,7 @@ _kdc_pk_mk_pa_reply(astgs_request_t r, pk_client_params *cp)
 	if (len != size)
 	    krb5_abortx(context, "Internal ASN.1 encoder error");
 
-	kdc_log(context, config, 0, "PK-INIT using %s %s", type, other);
+	kdc_log(context, config, 0, "PKINIT using %s %s", type, other);
 
     } else if (cp->type == PKINIT_WIN2K) {
 	PA_PK_AS_REP_Win2k rep;
@@ -1376,7 +1380,7 @@ _kdc_pk_mk_pa_reply(astgs_request_t r, pk_client_params *cp)
 	if (cp->keyex != USE_RSA) {
 	    ret = KRB5KRB_ERR_GENERIC;
 	    krb5_set_error_message(context, ret,
-				   "Windows PK-INIT doesn't support DH");
+				   "Win2k PKINIT doesn't support DH");
 	    goto out;
 	}
 
@@ -1434,7 +1438,7 @@ _kdc_pk_mk_pa_reply(astgs_request_t r, pk_client_params *cp)
 	}
 
     } else
-	krb5_abortx(context, "PK-INIT internal error");
+	krb5_abortx(context, "PKINIT internal error");
 
 
     ret = krb5_padata_add(context, md, pa_type, buf, len);
@@ -1459,7 +1463,7 @@ _kdc_pk_mk_pa_reply(astgs_request_t r, pk_client_params *cp)
 	    fd = open(config->pkinit_kdc_ocsp_file, O_RDONLY);
 	    if (fd < 0) {
 		kdc_log(context, config, 0,
-			"PK-INIT failed to open ocsp data file %d", errno);
+			"PKINIT failed to open ocsp data file %d", errno);
 		goto out_ocsp;
 	    }
 	    ret = fstat(fd, &sb);
@@ -1467,7 +1471,7 @@ _kdc_pk_mk_pa_reply(astgs_request_t r, pk_client_params *cp)
 		ret = errno;
 		close(fd);
 		kdc_log(context, config, 0,
-			"PK-INIT failed to stat ocsp data %d", ret);
+			"PKINIT failed to stat ocsp data %d", ret);
 		goto out_ocsp;
 	    }
 
@@ -1475,7 +1479,7 @@ _kdc_pk_mk_pa_reply(astgs_request_t r, pk_client_params *cp)
 	    if (ret) {
 		close(fd);
 		kdc_log(context, config, 0,
-			"PK-INIT failed to stat ocsp data %d", ret);
+			"PKINIT failed to stat ocsp data %d", ret);
 		goto out_ocsp;
 	    }
 	    ocsp.data.length = sb.st_size;
@@ -1483,7 +1487,7 @@ _kdc_pk_mk_pa_reply(astgs_request_t r, pk_client_params *cp)
 	    close(fd);
 	    if (ret != sb.st_size) {
 		kdc_log(context, config, 0,
-			"PK-INIT failed to read ocsp data %d", errno);
+			"PKINIT failed to read ocsp data %d", errno);
 		goto out_ocsp;
 	    }
 
@@ -1495,7 +1499,7 @@ _kdc_pk_mk_pa_reply(astgs_request_t r, pk_client_params *cp)
 				    &ocsp.expire);
 	    if (ret) {
 		kdc_log(context, config, 0,
-			"PK-INIT failed to verify ocsp data %d", ret);
+			"PKINIT failed to verify ocsp data %d", ret);
 		krb5_data_free(&ocsp.data);
 		ocsp.expire = 0;
 	    } else if (ocsp.expire > 180) {
@@ -1561,13 +1565,13 @@ match_rfc_san(krb5_context context,
 	if (ret) {
 	    const char *msg = krb5_get_error_message(context, ret);
 	    kdc_log(context, config, 0,
-		    "Decoding kerberos name in certificate failed: %s", msg);
+		    "Decoding Kerberos principal name in certificate failed: %s", msg);
 	    krb5_free_error_message(context, msg);
 	    break;
 	}
 	if (size != list.val[i].length) {
 	    kdc_log(context, config, 0,
-		    "Decoding kerberos name have extra bits on the end");
+		    "Decoded Kerberos principal name did not have expected length");
 	    return KRB5_KDC_ERR_CLIENT_NAME_MISMATCH;
 	}
 
@@ -1616,7 +1620,7 @@ match_ms_upn_san(krb5_context context,
 
     if (list.len != 1) {
 	kdc_log(context, config, 0,
-		"More then one PK-INIT MS UPN SAN");
+		"More than one PKINIT MS UPN SAN");
 	ret = KRB5_KDC_ERR_CLIENT_NAME_MISMATCH;
 	goto out;
     }
@@ -1689,6 +1693,18 @@ _kdc_pk_check_client(astgs_request_t r,
 	return 0;
     }
 
+    cp->endtime = hx509_cert_get_notAfter(cp->cert);
+    cp->max_life = 0;
+    if (config->pkinit_max_life_from_cert_extension)
+        cp->max_life =
+            hx509_cert_get_pkinit_max_life(context->hx509ctx, cp->cert,
+                                           config->pkinit_max_life_bound);
+    if (cp->max_life == 0 && config->pkinit_max_life_from_cert > 0) {
+        cp->max_life = cp->endtime - hx509_cert_get_notBefore(cp->cert);
+        if (cp->max_life > config->pkinit_max_life_from_cert)
+            cp->max_life = config->pkinit_max_life_from_cert;
+    }
+
     ret = hx509_cert_get_base_subject(context->hx509ctx,
 				      cp->cert,
 				      &name);
@@ -1701,7 +1717,7 @@ _kdc_pk_check_client(astgs_request_t r,
 	return ret;
 
     kdc_log(context, config, 0,
-	    "Trying to authorize PK-INIT subject DN %s",
+	    "Trying to authorize PKINIT subject DN %s",
 	    *subject_name);
 
     ret = hdb_entry_get_pkinit_cert(&client->entry, &pc);
@@ -1720,7 +1736,7 @@ _kdc_pk_check_client(astgs_request_t r,
 	    hx509_cert_free(cert);
 	    if (ret == 0) {
 		kdc_log(context, config, 5,
-			"Found matching PK-INIT cert in hdb");
+			"Found matching PKINIT cert in hdb");
 		return 0;
 	    }
 	}
@@ -1734,7 +1750,7 @@ _kdc_pk_check_client(astgs_request_t r,
 			    client->entry.principal);
 	if (ret == 0) {
 	    kdc_log(context, config, 5,
-		    "Found matching PK-INIT SAN in certificate");
+		    "Found matching PKINIT SAN in certificate");
 	    return 0;
 	}
 	ret = match_ms_upn_san(context, config,
@@ -1766,7 +1782,7 @@ _kdc_pk_check_client(astgs_request_t r,
 		continue;
 
 	    kdc_log(context, config, 5,
-		    "Found matching PK-INIT database ACL");
+		    "Found matching PKINIT database ACL");
 	    return 0;
 	}
     }
@@ -1782,7 +1798,7 @@ _kdc_pk_check_client(astgs_request_t r,
 	if (strcmp(principal_mappings.val[i].subject, *subject_name) != 0)
 	    continue;
 	kdc_log(context, config, 5,
-		"Found matching PK-INIT FILE ACL");
+		"Found matching PKINIT FILE ACL");
 	return 0;
     }
 
@@ -1929,7 +1945,7 @@ krb5_kdc_pk_initialize(krb5_context context,
 
     ret = _krb5_parse_moduli(context, file, &moduli);
     if (ret)
-	krb5_err(context, 1, ret, "PKINIT: failed to load modidi file");
+	krb5_err(context, 1, ret, "PKINIT: failed to load moduli file");
 
     principal_mappings.len = 0;
     principal_mappings.val = NULL;
@@ -1977,7 +1993,7 @@ krb5_kdc_pk_initialize(krb5_context context,
 		if (ret == 0) {
 		    hx509_name_to_string(name, &str);
 		    krb5_warnx(context, "WARNING Found KDC certificate (%s)"
-			       "is missing the PK-INIT KDC EKU, this is bad for "
+			       "is missing the PKINIT KDC EKU, this is bad for "
 			       "interoperability.", str);
 		    hx509_name_free(&name);
 		    free(str);
@@ -1986,7 +2002,7 @@ krb5_kdc_pk_initialize(krb5_context context,
 	    hx509_cert_free(cert);
 	} else
 	    krb5_warnx(context, "PKINIT: failed to find a signing "
-		       "certifiate with a public key");
+		       "certificate with a public key");
     }
 
     if (krb5_config_get_bool_default(context,

@@ -15,12 +15,16 @@
 .Fl r
 .Op Fl MNln
 .Op Fl C Ar ccache
+.Op Fl S Ar maxsize
 .Op Fl c count
+.Op Fl m mech
 .Op Ar service@host
 .Sh DESCRIPTION
 .Nm
 generates and consumes base64 encoded GSS tokens.
-It is mostly useful for testing.
+By default, it runs as an initiator and with the
+.Fl r
+flag it becomes an acceptor.
 .Pp
 .Nm
 supports the following options:
@@ -50,26 +54,55 @@ This can be used to load test the KDC.
 prepend
 .Dq Negotiate\ 
 to generated tokens and expect it on consumed tokens.
+.It Fl S Ar maxsize
+split each token that is generated into components of maximum
+size
+.Ar maxsize .
+Each token is base64 encoded and output separately.
 .It Fl c Ar count
 repeat the operation
 .Ar count
 times.
+This flag only changes the behaviour when operating in initiator mode.
 This is good for very basic benchmarking.
 .It Fl l
-loop infinitely in read mode.
-This is to support a multiple round trip GSS mechanism.
+loop indefinitely in acceptor mode.
+.It Fl m Ar mech
+specifies the GSS mechanism that will be used in initiator mode.
+If a mechanism name of
+.Do ? Dc
+is specified, a list of supported mechanisms will be output and
+.Nm
+will exit.
 .It Fl n
-do not output the generated token.
+do not output the generated tokens.
 .It Fl r
-read a token rather than generate a token.
+run in acceptor mode.
 .El
 .Pp
 .Nm
 takes one argument, a
 .Ar host@service
 specifier.
-The argument is required when generating a token but is optional if
-consuming (reading) a token.
+The argument is required when running as an initiator but is optional as
+an acceptor.
+.Pp
+.Nm
+will try to read a token whenever the GSS mechanism expects one
+and will output a token whenever the GSS mechanism provides one.
+Tokens are base64 encoded and terminated by either two successive
+newlines or one newline and EOF.
+The base64 encoding may be broken up by single newlines which will
+be ignored when read.  No extra whitespace will be ignored.
+.Sh EXAMPLES
+To test a simple GSS mechanism which doesn't require a round trip,
+a single
+.Pa /bin/sh
+pipeline will suffice:
+.Bd -literal -offset indent
+$ export KRB5_KTNAME=/path/to/keytab
+$ gss-token HTTP@$(hostname) | gss-token -r
+.Ed
 .Sh SEE ALSO
 .Xr gssapi 3 ,
 .Xr kerberos 8 .

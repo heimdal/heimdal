@@ -125,7 +125,9 @@ hx509_get_instance(const char *libname)
     return 0;
 }
 
-#define PATH_SEP ":"
+#ifndef PATH_SEP
+# define PATH_SEP ":"
+#endif
 static const char *hx509_config_file =
 "~/.hx509/config" PATH_SEP
 SYSCONFDIR "/hx509.conf" PATH_SEP
@@ -215,6 +217,24 @@ hx509_context_init(hx509_context *contextp)
     return 0;
 }
 
+HX509_LIB_FUNCTION int HX509_LIB_CALL
+hx509_set_log_dest(hx509_context context, heim_log_facility *fac)
+{
+    return heim_set_log_dest(context->hcontext, fac);
+}
+
+HX509_LIB_FUNCTION int HX509_LIB_CALL
+hx509_set_debug_dest(hx509_context context, heim_log_facility *fac)
+{
+    return heim_set_debug_dest(context->hcontext, fac);
+}
+
+HX509_LIB_FUNCTION int HX509_LIB_CALL
+hx509_set_warn_dest(hx509_context context, heim_log_facility *fac)
+{
+    return heim_set_warn_dest(context->hcontext, fac);
+}
+
 /**
  * Selects if the hx509_revoke_verify() function is going to require
  * the existans of a revokation method (OCSP, CRL) or not. Note that
@@ -260,6 +280,8 @@ hx509_context_free(hx509_context *context)
     free_error_table ((*context)->et_list);
     if ((*context)->querystat)
 	free((*context)->querystat);
+    hx509_certs_free(&(*context)->default_trust_anchors);
+    heim_config_file_free((*context)->hcontext, (*context)->cf);
     heim_context_free(&(*context)->hcontext);
     memset(*context, 0, sizeof(**context));
     free(*context);
@@ -959,7 +981,7 @@ check_key_usage(hx509_context context, const Certificate *cert,
 	if (req_present) {
 	    hx509_set_error_string(context, 0, HX509_KU_CERT_MISSING,
 				   "Required extension key "
-				   "usage missing from certifiate");
+				   "usage missing from certificate");
 	    return HX509_KU_CERT_MISSING;
 	}
 	return 0;
@@ -977,7 +999,7 @@ check_key_usage(hx509_context context, const Certificate *cert,
 	_hx509_unparse_Name(&cert->tbsCertificate.subject, &name);
 	hx509_set_error_string(context, 0, HX509_KU_CERT_MISSING,
 			       "Key usage %s required but missing "
-			       "from certifiate %s", buf,
+			       "from certificate %s", buf,
                                name ? name : "<unknown>");
 	free(name);
 	return HX509_KU_CERT_MISSING;
@@ -1039,14 +1061,14 @@ check_basic_constraints(hx509_context context, const Certificate *cert,
 	return ret;
     switch(type) {
     case PROXY_CERT:
-	if (bc.cA != NULL && *bc.cA)
+	if (bc.cA)
 	    ret = HX509_PARENT_IS_CA;
 	break;
     case EE_CERT:
 	ret = 0;
 	break;
     case CA_CERT:
-	if (bc.cA == NULL || !*bc.cA)
+	if (!bc.cA)
 	    ret = HX509_PARENT_NOT_CA;
 	else if (bc.pathLenConstraint)
 	    if (depth - 1 > *bc.pathLenConstraint)
@@ -1556,8 +1578,8 @@ hx509_cert_get_base_subject(hx509_context context, hx509_cert c,
     if (is_proxy_cert(context, c->data, NULL) == 0) {
 	int ret = HX509_PROXY_CERTIFICATE_NOT_CANONICALIZED;
 	hx509_set_error_string(context, 0, ret,
-			       "Proxy certificate have not been "
-			       "canonicalize yet, no base name");
+			       "Proxy certificate has not been "
+			       "canonicalized yet: no base name");
 	return ret;
     }
     return _hx509_name_from_Name(&c->data->tbsCertificate.subject, name);
@@ -1610,6 +1632,63 @@ HX509_LIB_FUNCTION time_t HX509_LIB_CALL
 hx509_cert_get_notAfter(hx509_cert p)
 {
     return _hx509_Time2time_t(&p->data->tbsCertificate.validity.notAfter);
+}
+
+/**
+ * Get a maximum Kerberos credential lifetime from a Heimdal certificate
+ * extension.
+ *
+ * @param context hx509 context.
+ * @param cert Certificate.
+ * @param bound If larger than zero, return no more than this.
+ *
+ * @return maximum ticket lifetime.
+ */
+HX509_LIB_FUNCTION time_t HX509_LIB_CALL
+hx509_cert_get_pkinit_max_life(hx509_context context,
+                               hx509_cert cert,
+                               time_t bound)
+{
+    HeimPkinitPrincMaxLifeSecs r = 0;
+    size_t sz, i;
+    time_t b, e;
+    int ret;
+
+    for (i = 0; i < cert->data->tbsCertificate.extensions->len; i++) {
+        Extension *ext = &cert->data->tbsCertificate.extensions->val[i];
+
+        if (ext->_ioschoice_extnValue.element !=
+            choice_Extension_iosnumunknown &&
+            ext->_ioschoice_extnValue.element !=
+            choice_Extension_iosnum_id_heim_ce_pkinit_princ_max_life)
+            continue;
+        if (ext->_ioschoice_extnValue.element == choice_Extension_iosnumunknown &&
+            der_heim_oid_cmp(&asn1_oid_id_heim_ce_pkinit_princ_max_life, &ext->extnID))
+            continue;
+        if (ext->_ioschoice_extnValue.u.ext_HeimPkinitPrincMaxLife) {
+            r = *ext->_ioschoice_extnValue.u.ext_HeimPkinitPrincMaxLife;
+        } else {
+            ret = decode_HeimPkinitPrincMaxLifeSecs(ext->extnValue.data,
+                                                    ext->extnValue.length,
+                                                    &r, &sz);
+            /* No need to free_HeimPkinitPrincMaxLifeSecs(); it's an int */
+            if (ret || r < 1)
+                return 0;
+        }
+        if (bound > 0 && r > bound)
+            return bound;
+        return r;
+    }
+    if (hx509_cert_check_eku(context, cert,
+                             &asn1_oid_id_heim_eku_pkinit_certlife_is_max_life, 0))
+        return 0;
+    b = hx509_cert_get_notBefore(cert);
+    e = hx509_cert_get_notAfter(cert);
+    if (e > b)
+        r = e - b;
+    if (bound > 0 && r > bound)
+        return bound;
+    return r;
 }
 
 /**
@@ -1673,7 +1752,7 @@ get_x_unique_id(hx509_context context, const char *name,
 
     if (cert == NULL) {
 	ret = HX509_EXTENSION_NOT_FOUND;
-	hx509_set_error_string(context, 0, ret, "%s unique id doesn't exists", name);
+	hx509_set_error_string(context, 0, ret, "%s unique id doesn't exist", name);
 	return ret;
     }
     ret = der_copy_bit_string(cert, subject);
@@ -2053,7 +2132,7 @@ match_tree(const GeneralSubtrees *t, const Certificate *c, int *match)
 
 	    memset(&certname, 0, sizeof(certname));
 	    certname.element = choice_GeneralName_directoryName;
-	    certname.u.directoryName.element = (enum GeneralName_directoryName_enum)
+	    certname.u.directoryName.element = (enum Name_enum)
 		c->tbsCertificate.subject.element;
 	    certname.u.directoryName.u.rdnSequence =
 		c->tbsCertificate.subject.u.rdnSequence;
@@ -2094,7 +2173,7 @@ check_name_constraints(hx509_context context,
 	    /* allow null subjectNames, they wont matches anything */
 	    if (match == 0 && !subject_null_p(c)) {
 		hx509_set_error_string(context, 0, HX509_VERIFY_CONSTRAINTS,
-				       "Error verify constraints, "
+				       "Error verifying constraints: "
 				       "certificate didn't match any "
 				       "permitted subtree");
 		return HX509_VERIFY_CONSTRAINTS;
@@ -2109,7 +2188,7 @@ check_name_constraints(hx509_context context,
 	    }
 	    if (match) {
 		hx509_set_error_string(context, 0, HX509_VERIFY_CONSTRAINTS,
-				       "Error verify constraints, "
+				       "Error verifying constraints: "
 				       "certificate included in excluded "
 				       "subtree");
 		return HX509_VERIFY_CONSTRAINTS;
@@ -2166,7 +2245,7 @@ hx509_verify_path(hx509_context context,
 	ret = HX509_PROXY_CERT_INVALID;
 	hx509_set_error_string(context, 0, ret,
 			       "Proxy certificate is not allowed as an EE "
-			       "certificae if proxy certificate is disabled");
+			       "certificate if proxy certificate is disabled");
 	return ret;
     }
 
@@ -2267,7 +2346,7 @@ hx509_verify_path(hx509_context context,
 		    ret = HX509_PATH_TOO_LONG;
 		    hx509_set_error_string(context, 0, ret,
 					   "Proxy certificate chain "
-					   "longer then allowed");
+					   "longer than allowed");
 		    goto out;
 		}
 		/* XXX MUST check info.proxyPolicy */
@@ -2277,7 +2356,7 @@ hx509_verify_path(hx509_context context,
 		if (find_extension(c, &asn1_oid_id_x509_ce_subjectAltName, &j)) {
 		    ret = HX509_PROXY_CERT_INVALID;
 		    hx509_set_error_string(context, 0, ret,
-					   "Proxy certificate have explicitly "
+					   "Proxy certificate has explicitly "
 					   "forbidden subjectAltName");
 		    goto out;
 		}
@@ -2286,7 +2365,7 @@ hx509_verify_path(hx509_context context,
 		if (find_extension(c, &asn1_oid_id_x509_ce_issuerAltName, &j)) {
 		    ret = HX509_PROXY_CERT_INVALID;
 		    hx509_set_error_string(context, 0, ret,
-					   "Proxy certificate have explicitly "
+					   "Proxy certificate has explicitly "
 					   "forbidden issuerAltName");
 		    goto out;
 		}
@@ -2357,9 +2436,10 @@ hx509_verify_path(hx509_context context,
 		 * EE checking below.
 		 */
 		type = EE_CERT;
-		/* FALLTHOUGH */
+                /* FALLTHROUGH */
 	    }
 	}
+        /* FALLTHROUGH */
 	case EE_CERT:
 	    /*
 	     * If there where any proxy certificates in the chain
@@ -3373,7 +3453,7 @@ hx509_query_unparse_stats(hx509_context context, int printtype, FILE *out)
 	return;
     f = fopen(context->querystat, "r");
     if (f == NULL) {
-	fprintf(out, "No statistic file %s: %s.\n",
+	fprintf(out, "No statistics file %s: %s.\n",
 		context->querystat, strerror(errno));
 	return;
     }
@@ -3468,12 +3548,11 @@ hx509_cert_check_eku(hx509_context context, hx509_cert cert,
 	    return 0;
 	}
 	if (allow_any_eku) {
-#if 0
-	    if (der_heim_oid_cmp(id_any_eku, &e.val[i]) == 0) {
+	    if (der_heim_oid_cmp(&asn1_oid_id_x509_ce_anyExtendedKeyUsage,
+                                 &e.val[i]) == 0) {
 		free_ExtKeyUsage(&e);
 		return 0;
 	    }
-#endif
 	}
     }
     free_ExtKeyUsage(&e);

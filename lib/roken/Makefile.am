@@ -20,7 +20,8 @@ if HAVE_DBHEADER
 AM_CPPFLAGS += -I$(DBHEADER)
 endif
 
-noinst_PROGRAMS = snprintf-test resolve-test rkpty test-detach test-auxval rkvis rkbase32 rkbase64
+bin_PROGRAMS = rkvis rkbase32 rkbase64
+noinst_PROGRAMS = snprintf-test resolve-test rkpty test-detach test-auxval rtbl
 
 CHECK_LOCAL = snprintf-test resolve-test rkpty make-roken
 
@@ -58,7 +59,37 @@ test_auxval_SOURCES = test-auxval.c
 test_getuserinfo_SOURCES = test-getuserinfo.c
 test_getuserinfo_LDADD = libtest.la $(LDADD)
 
-rkvis_SOURCES = vis.c
+if have_err_h
+err_h =
+else
+err_h = err.h
+endif
+
+if have_fnmatch_h
+fnmatch_h =
+else
+fnmatch_h = fnmatch.h
+endif
+
+if have_ifaddrs_h
+ifaddrs_h =
+else
+ifaddrs_h = ifaddrs.h
+endif
+
+if have_search_h
+search_h = 
+else
+search_h = search.h
+endif
+
+if have_vis_h
+vis_h = 
+else
+vis_h = vis.h
+endif
+
+rkvis_SOURCES = vis.c $(vis_h) vis-extras.h
 rkvis_CPPFLAGS = -DTEST
 
 rkbase32_SOURCES = base32.c
@@ -66,6 +97,9 @@ rkbase32_CPPFLAGS = -DTEST
 
 rkbase64_SOURCES = base64.c
 rkbase64_CPPFLAGS = -DTEST
+
+rtbl_SOURCES = rtbl.c
+rtbl_CPPFLAGS = -DTEST
 
 test_detach_SOURCES = test-detach.c
 
@@ -144,6 +178,8 @@ libroken_la_SOURCES =		\
 	tm2time.c		\
 	unvis.c			\
 	vis.c			\
+	$(vis_h)		\
+	vis-extras.h		\
 	warnerr.c		\
 	write_pid.c		\
 	xfree.c			\
@@ -160,37 +196,7 @@ libroken_la_LIBADD = @LTLIBOBJS@ $(LIB_crypt) $(LIB_pidfile)
 
 $(LTLIBOBJS) $(libroken_la_OBJECTS): roken.h $(XHEADERS)
 
-BUILT_SOURCES = roken.h
-
-if have_err_h
-err_h =
-else
-err_h = err.h
-endif
-
-if have_fnmatch_h
-fnmatch_h =
-else
-fnmatch_h = fnmatch.h
-endif
-
-if have_ifaddrs_h
-ifaddrs_h =
-else
-ifaddrs_h = ifaddrs.h
-endif
-
-if have_search_h
-search_h = 
-else
-search_h = search.h
-endif
-
-if have_vis_h
-vis_h = 
-else
-vis_h = vis.h
-endif
+BUILT_SOURCES = roken.h $(err_h) $(fnmatch_h) $(ifadds_h) $(search_h) $(vis_h)
 
 ## these are controlled by configure
 XHEADERS = $(err_h) $(fnmatch_h) $(ifaddrs_h) $(search_h) $(vis_h)

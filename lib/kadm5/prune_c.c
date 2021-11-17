@@ -44,7 +44,7 @@ kadm5_c_prune_principal(void *server_handle, krb5_principal princ, int kvno)
     krb5_data reply;
 
     krb5_data_zero(&reply);
-    ret = _kadm5_connect(server_handle);
+    ret = _kadm5_connect(server_handle, 1 /* want_write */);
     if (ret == 0 && (sp = krb5_storage_from_mem(buf, sizeof(buf))) == NULL)
         ret = krb5_enomem(context->context);
     if (ret == 0)

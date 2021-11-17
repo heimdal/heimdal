@@ -1,4 +1,29 @@
-# /* contact Love Hörnquist Åstrand <lha@h5l.org> for new oid arcs */
+# /*
+#  * Contact Love Hörnquist Åstrand <lha at h5l.org> for new oid arcs */
+#  */
+# /*
+#  * 1.2.752.43 is SU's arc.  SU's registry has arcs 13, 14, and 16
+#  * below that registered for Heimdal to use.  The Heimdal source tree
+#  * is the authoritative registry for Heimdal's three arcs off of SU's arc.
+#  * This file is the authoritative registry for 1.2.752.43.13 and 1.2.752.14.
+#  * ASN.1 modules in lib/asn1/ are authoritative for 1.2.752.43.16.
+#  *
+#  * Confirmed by SU's erstwhile registrar, Leif Johansson <leifj at sunet.se>,
+#  * as well as by SU's current registrar (through Leif), as:
+#  *
+#  *  1.2.752.43.13 Namn Heimdal GSS-API extentions
+#  *  Beskrivning OIDar för användning av Heimdal projektet
+#  *  1.2.752.43.14 Namn Heimdal GSS-API mechs
+#  *  Beskrivning OIDar för användning av Heimdal projektet
+#  *  1.2.752.43.16 Namn Heimdal Internal crypto ops
+#  *  Beskrivning OIDar för användning av Heimdal projektet
+#  *
+#  * 1.2.752.43.16 is now also used in Heimdal for PKIX-related things.
+#  * See lib/asn1/ and lib/hx509/.
+#  *
+#  * Contact the SU registrar for new oid arcs if any are needed, or carve
+#  * out an arc of one of the above, preferably off 1.2.752.43.16.
+#  */
 
 # /*
 #  * 1.2.752.43.13 Heimdal GSS-API Extensions

@@ -187,11 +187,13 @@
 #error only 32-bit key serial numbers supported by this version of keyring ccache
 #endif
 
+typedef heim_base_atomic(key_serial_t) atomic_key_serial_t;
+
 typedef union _krb5_krcache_and_princ_id {
-    uint64_t krcu_cache_and_princ_id;
+    heim_base_atomic(uint64_t) krcu_cache_and_princ_id;
     struct {
-	key_serial_t cache_id;		/* keyring ID representing ccache */
-	key_serial_t princ_id;		/* key ID holding principal info */
+	atomic_key_serial_t cache_id;	/* keyring ID representing ccache */
+	atomic_key_serial_t princ_id;	/* key ID holding principal info */
     } krcu_id;
     #define krcu_cache_id		krcu_id.cache_id
     #define krcu_princ_id		krcu_id.princ_id
@@ -209,7 +211,7 @@ typedef struct _krb5_krcache {
     char *krc_name;			/* Name for this credentials cache */
     char *krc_collection;
     char *krc_subsidiary;
-    krb5_timestamp krc_changetime;	/* update time, does not decrease (mutable) */
+    heim_base_atomic(krb5_timestamp) krc_changetime;	/* update time, does not decrease (mutable) */
     krb5_krcache_and_princ_id krc_id;	/* cache and principal IDs (mutable) */
     #define krc_cache_and_principal_id	krc_id.krcu_cache_and_princ_id
     #define krc_cache_id		krc_id.krcu_id.cache_id
@@ -238,7 +240,7 @@ static krb5_error_code KRB5_CALLCONV
 krcc_end_cache_get(krb5_context context, krb5_cc_cursor cursor);
 
 static krb5_error_code
-clear_cache_keyring(krb5_context context, key_serial_t *pcache_id);
+clear_cache_keyring(krb5_context context, atomic_key_serial_t *pcache_id);
 
 static krb5_error_code
 alloc_cache(krb5_context context,
@@ -253,7 +255,7 @@ static krb5_error_code
 save_principal(krb5_context context,
 	       key_serial_t cache_id,
 	       krb5_const_principal princ,
-	       key_serial_t *pprinc_id);
+	       atomic_key_serial_t *pprinc_id);
 
 static krb5_error_code
 save_time_offsets(krb5_context context,
@@ -323,11 +325,9 @@ static krb5_error_code
 find_or_create_keyring(key_serial_t parent,
 		       key_serial_t possess,
 		       const char *name,
-		       key_serial_t *pkey)
+		       atomic_key_serial_t *pkey)
 {
     key_serial_t key;
-
-    *pkey = -1;
 
     key = keyctl_search(parent, KRCC_KEY_TYPE_KEYRING, name, possess);
     if (key == -1) {
@@ -342,7 +342,7 @@ find_or_create_keyring(key_serial_t parent,
 	}
     }
 
-    *pkey = key;
+    heim_base_atomic_store(pkey, key);
 
     return 0;
 }
@@ -489,14 +489,14 @@ static krb5_error_code
 get_collection(krb5_context context,
 	       const char *anchor_name,
 	       const char *collection_name,
-	       key_serial_t *pcollection_id)
+	       atomic_key_serial_t *pcollection_id)
 {
     krb5_error_code ret;
     key_serial_t persistent_id, anchor_id, possess_id = 0;
     char *ckname, *cnend;
     uid_t uidnum;
 
-    *pcollection_id = 0;
+    heim_base_atomic_init(pcollection_id, 0);
 
     if (strcmp(anchor_name, KRCC_PERSISTENT_ANCHOR) == 0) {
 	/*
@@ -864,7 +864,7 @@ initialize_internal(krb5_context context,
 	return krb5_einval(context, 2);
 
     memset(&ids, 0, sizeof(ids));
-    heim_base_exchange_64(&ids.krcu_cache_and_princ_id, data->krc_cache_and_principal_id);
+    ids.krcu_cache_and_princ_id = heim_base_atomic_load(&data->krc_cache_and_principal_id);
 
     ret = clear_cache_keyring(context, &ids.krcu_cache_id);
     if (ret)
@@ -910,7 +910,7 @@ initialize_internal(krb5_context context,
     }
 
     /* update cache and principal IDs atomically */
-    heim_base_exchange_64(&data->krc_cache_and_principal_id, ids.krcu_cache_and_princ_id);
+    heim_base_atomic_store(&data->krc_cache_and_principal_id, ids.krcu_cache_and_princ_id);
 
     return 0;
 }
@@ -956,21 +956,22 @@ krcc_close(krb5_context context, krb5_ccache id)
  */
 static krb5_error_code
 clear_cache_keyring(krb5_context context,
-		    key_serial_t *pcache_id)
+		    atomic_key_serial_t *pcache_id)
 {
     int res;
+    key_serial_t cache_id = heim_base_atomic_load(pcache_id);
 
-    _krb5_debug(context, 10, "clear_cache_keyring: cache_id %d\n", *pcache_id);
+    _krb5_debug(context, 10, "clear_cache_keyring: cache_id %d\n", cache_id);
 
-    if (*pcache_id != 0) {
-	res = keyctl_clear(*pcache_id);
+    if (cache_id != 0) {
+	res = keyctl_clear(cache_id);
 	if (res == -1 && (errno == EACCES || errno == ENOKEY)) {
 	    /*
 	     * Possibly the keyring was destroyed between krcc_resolve() and now;
 	     * if we really don't have permission, we will fail later.
 	     */
 	    res = 0;
-	    *pcache_id = 0;
+	    heim_base_atomic_store(pcache_id, 0);
 	}
 	if (res == -1)
 	    return errno;
@@ -1005,7 +1006,7 @@ krcc_destroy(krb5_context context, krb5_ccache id)
 	    (void) keyctl_unlink(data->krc_cache_id, session_write_anchor());
     }
 
-    data->krc_princ_id = 0;
+    heim_base_atomic_store(&data->krc_princ_id, 0);
 
     /* krcc_close is called by libkrb5, do not double-free */
     return ret;
@@ -1054,13 +1055,14 @@ make_cache(krb5_context context,
 
 /* Create a keyring ccache handle for the given residual string. */
 static krb5_error_code KRB5_CALLCONV
-krcc_resolve(krb5_context context,
-             krb5_ccache *id,
-             const char *residual,
-             const char *sub)
+krcc_resolve_2(krb5_context context,
+	       krb5_ccache *id,
+	       const char *residual,
+	       const char *sub)
 {
     krb5_error_code ret;
-    key_serial_t collection_id, cache_id;
+    atomic_key_serial_t collection_id;
+    key_serial_t cache_id;
     char *anchor_name = NULL, *collection_name = NULL, *subsidiary_name = NULL;
 
     ret = parse_residual(context, residual, &anchor_name, &collection_name,
@@ -1129,8 +1131,7 @@ krcc_get_first(krb5_context context,
     if (data == NULL)
 	return krb5_einval(context, 2);
 
-    heim_base_exchange_32(&cache_id, data->krc_cache_id);
-
+    cache_id = heim_base_atomic_load(&data->krc_cache_id);
     if (cache_id == 0)
 	return KRB5_FCC_NOFILE;
 
@@ -1147,7 +1148,7 @@ krcc_get_first(krb5_context context,
 	return KRB5_CC_NOMEM;
     }
 
-    heim_base_exchange_32(&krcursor->princ_id, data->krc_princ_id);
+    krcursor->princ_id = heim_base_atomic_load(&data->krc_princ_id);
     krcursor->offsets_id = keyctl_search(cache_id, KRCC_KEY_TYPE_USER,
 					 KRCC_TIME_OFFSETS, 0);
     krcursor->numkeys = size / sizeof(key_serial_t);
@@ -1272,8 +1273,8 @@ alloc_cache(krb5_context context,
 	return ret;
     }
 
-    data->krc_princ_id = 0;
-    data->krc_cache_id = cache_id;
+    heim_base_atomic_init(&data->krc_princ_id, 0);
+    heim_base_atomic_init(&data->krc_cache_id, cache_id);
     data->krc_coll_id = collection_id;
     data->krc_changetime = 0;
     data->krc_is_legacy = (strcmp(anchor_name, KRCC_LEGACY_ANCHOR) == 0);
@@ -1293,7 +1294,7 @@ krcc_gen_new(krb5_context context, krb5_ccache *id)
     char *anchor_name, *collection_name, *subsidiary_name;
     char *new_subsidiary_name = NULL, *new_residual = NULL;
     krb5_krcache *data;
-    key_serial_t collection_id;
+    atomic_key_serial_t collection_id;
     key_serial_t cache_id = 0;
 
     /* Determine the collection in which we will create the cache.*/
@@ -1346,11 +1347,11 @@ cleanup:
 
 /* Return an alias to the residual string of the cache. */
 static krb5_error_code KRB5_CALLCONV
-krcc_get_name(krb5_context context,
-              krb5_ccache id,
-              const char **name,
-              const char **collection_name,
-              const char **subsidiary_name)
+krcc_get_name_2(krb5_context context,
+		krb5_ccache id,
+		const char **name,
+		const char **collection_name,
+		const char **subsidiary_name)
 {
     krb5_krcache *data = KRCACHE(id);
 
@@ -1385,8 +1386,7 @@ krcc_get_principal(krb5_context context,
 	return krb5_einval(context, 2);
 
     memset(&ids, 0, sizeof(ids));
-    heim_base_exchange_64(&ids.krcu_cache_and_princ_id, data->krc_cache_and_principal_id);
-
+    ids.krcu_cache_and_princ_id = heim_base_atomic_load(&data->krc_cache_and_principal_id);
     if (ids.krcu_cache_id == 0 || ids.krcu_princ_id == 0) {
 	ret = KRB5_FCC_NOFILE;
 	krb5_set_error_message(context, ret,
@@ -1438,7 +1438,7 @@ krcc_remove_cred(krb5_context context, krb5_ccache id,
 	return ret;
 
     memset(&ids, 0, sizeof(ids));
-    heim_base_exchange_64(&ids.krcu_cache_and_princ_id, data->krc_cache_and_principal_id);
+    ids.krcu_cache_and_princ_id = heim_base_atomic_load(&data->krc_cache_and_principal_id);
 
     while ((ret = krcc_get_next(context, id, &cursor, &found_cred)) == 0) {
 	struct krcc_cursor *krcursor = cursor;
@@ -1494,8 +1494,7 @@ krcc_store(krb5_context context, krb5_ccache id, krb5_creds *creds)
     if (data == NULL)
 	return krb5_einval(context, 2);
 
-    heim_base_exchange_32(&cache_id, data->krc_cache_id);
-
+    cache_id = heim_base_atomic_load(&data->krc_cache_id);
     if (cache_id == 0)
 	return KRB5_FCC_NOFILE;
 
@@ -1560,7 +1559,7 @@ krcc_lastchange(krb5_context context,
     if (data == NULL)
 	return krb5_einval(context, 2);
 
-    heim_base_exchange_time_t(change_time, data->krc_changetime);
+    *change_time = heim_base_atomic_load(&data->krc_changetime);
 
     return 0;
 }
@@ -1569,7 +1568,7 @@ static krb5_error_code
 save_principal(krb5_context context,
 	       key_serial_t cache_id,
 	       krb5_const_principal princ,
-	       key_serial_t *pprinc_id)
+	       atomic_key_serial_t *pprinc_id)
 {
     krb5_error_code ret;
     krb5_storage *sp;
@@ -1618,7 +1617,7 @@ save_principal(krb5_context context,
 	_krb5_debug(context, 10, "Error adding principal key: %s\n", strerror(ret));
     } else {
 	ret = 0;
-	*pprinc_id = newkey;
+	heim_base_atomic_store(pprinc_id, newkey);
     }
 
     krb5_data_free(&payload);
@@ -1683,7 +1682,7 @@ krcc_set_kdc_offset(krb5_context context, krb5_ccache id, krb5_deltat offset)
     if (data == NULL)
 	return krb5_einval(context, 2);
 
-    heim_base_exchange_32(&cache_id, data->krc_cache_id);
+    cache_id = heim_base_atomic_load(&data->krc_cache_id);
  
     ret = save_time_offsets(context, cache_id, (int32_t)offset, 0);
     if (ret == 0)
@@ -1709,8 +1708,8 @@ krcc_get_kdc_offset(krb5_context context,
 	return krb5_einval(context, 2);
 
     krb5_data_zero(&payload);
-    heim_base_exchange_32(&cache_id, data->krc_cache_id);
 
+    cache_id = heim_base_atomic_load(&data->krc_cache_id);
     if (cache_id == 0) {
 	ret = KRB5_FCC_NOFILE;
 	goto cleanup;
@@ -1755,7 +1754,7 @@ cleanup:
 }
 
 struct krcc_iter {
-    key_serial_t collection_id;
+    atomic_key_serial_t collection_id;
     char *anchor_name;
     char *collection_name;
     char *subsidiary_name;
@@ -1928,7 +1927,7 @@ krcc_set_default(krb5_context context, krb5_ccache id)
     krb5_krcache *data = KRCACHE(id);
     krb5_error_code ret;
     char *anchor_name, *collection_name, *subsidiary_name;
-    key_serial_t collection_id;
+    atomic_key_serial_t collection_id;
 
     if (data == NULL)
 	return krb5_einval(context, 2);
@@ -1968,7 +1967,7 @@ update_change_time(krb5_context context, krb5_timestamp now, krb5_krcache *data)
 
     old = heim_base_exchange_time_t(&data->krc_changetime, now);
     if (old > now) /* don't go backwards */
-	heim_base_exchange_time_t(&data->krc_changetime, old + 1);
+	heim_base_atomic_store(&data->krc_changetime, old + 1);
 }
 
 static int
@@ -2004,7 +2003,7 @@ krcc_move(krb5_context context, krb5_ccache from, krb5_ccache to)
 	return ret;
 
     krb5_timeofday(context, &now);
-    heim_base_exchange_32(&to_cache_id, krto->krc_cache_id);
+    to_cache_id = heim_base_atomic_load(&krto->krc_cache_id);
 
     if (krfrom->krc_cache_id != 0) {
 	ret = recursive_key_scan(krfrom->krc_cache_id,
@@ -2040,10 +2039,10 @@ krcc_get_default_name(krb5_context context, char **str)
  * be stored at the process or thread level respectively.
  */
 KRB5_LIB_VARIABLE const krb5_cc_ops krb5_krcc_ops = {
-    KRB5_CC_OPS_VERSION,
+    KRB5_CC_OPS_VERSION_5,
     "KEYRING",
-    krcc_get_name,
-    krcc_resolve,
+    NULL,
+    NULL,
     krcc_gen_new,
     krcc_initialize,
     krcc_destroy,
@@ -2066,6 +2065,8 @@ KRB5_LIB_VARIABLE const krb5_cc_ops krb5_krcc_ops = {
     krcc_lastchange,
     krcc_set_kdc_offset,
     krcc_get_kdc_offset,
+    krcc_get_name_2,
+    krcc_resolve_2
 };
 
 #endif /* HAVE_KEYUTILS_H */

@@ -19,6 +19,7 @@ AC_PROG_CC
 AM_PROG_CC_C_O
 AC_PROG_CPP
 AM_PATH_PYTHON
+AC_CHECK_PROG(CLANG_FORMAT, clang-format, [clang-format], [no])
 
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
@@ -129,6 +130,7 @@ rk_TEST_PACKAGE(openldap,
 [#include <lber.h>
 #include <ldap.h>],
 [-lldap -llber],,,OPENLDAP)
+AM_CONDITIONAL(OPENLDAP, test "$with_openldap" != "no")
 
 AC_ARG_ENABLE(hdb-openldap-module, 
 	AS_HELP_STRING([--enable-hdb-openldap-module],
@@ -137,6 +139,11 @@ if test "$enable_hdb_openldap_module" = yes -a "$with_openldap" = yes; then
     AC_DEFINE(OPENLDAP_MODULE, 1, [Define if you want support for hdb ldap module])
 fi
 AM_CONDITIONAL(OPENLDAP_MODULE, test "$enable_hdb_openldap_module" = yes -a "$with_openldap" = yes)
+
+AC_ARG_ENABLE(asn1-templating, 
+	AS_HELP_STRING([--disable-asn1-templating],
+		[if you want disable to use of the ASN.1 templating compiler]))
+AM_CONDITIONAL(ASN1_TEMPLATING, test "x$enable_asn1_templating" != xno)
 
 dnl
 dnl Optional modules, pk-init, digest, kx509
@@ -413,6 +420,7 @@ AC_CHECK_HEADERS([\
 	signal.h				\
 	strings.h				\
 	stropts.h				\
+	stdatomic.h				\
 	sys/bitypes.h				\
 	sys/category.h				\
 	sys/file.h				\
@@ -703,6 +711,7 @@ AC_CONFIG_FILES(Makefile 		\
 	lib/sqlite/Makefile		\
 	lib/vers/Makefile		\
 	lib/wind/Makefile		\
+	lib/gss_preauth/Makefile	\
 	po/Makefile			\
 	kuser/Makefile			\
 	kpasswd/Makefile		\

@@ -393,19 +393,21 @@ _kadm5_set_keys_randomly (kadm5_server_context *context,
 out:
    if(ret) {
 	for (i = 0; i < num_keys; ++i)
-	    krb5_free_keyblock_contents (context->context, &kblock[i]);
+	    krb5_free_keyblock_contents(context->context, &kblock[i]);
 	free(kblock);
-	_kadm5_free_keys (context->context, num_keys, keys);
+	_kadm5_free_keys(context->context, num_keys, keys);
 	return ret;
    }
 
-   _kadm5_free_keys (context->context, ent->keys.len, ent->keys.val);
+   _kadm5_free_keys(context->context, ent->keys.len, ent->keys.val);
    ent->keys.val = keys;
    ent->keys.len = num_keys;
    if (n_keys && new_keys) {
        *new_keys     = kblock;
        *n_keys       = num_keys;
    } else {
+	for (i = 0; i < num_keys; ++i)
+	    krb5_free_keyblock_contents(context->context, &kblock[i]);
         free(kblock);
    }
 

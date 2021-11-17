@@ -156,7 +156,7 @@ roken_get_homedir(char *home, size_t homesz)
     }
 
 #ifdef HAVE_GETPWNAM_R
-    {
+    if (username) {
         struct passwd pwd;
         struct passwd *pwdp;
         char buf[buflen];

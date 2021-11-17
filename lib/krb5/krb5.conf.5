@@ -105,8 +105,8 @@ Example: 1 month 2 days 30 min.
 If no unit is given, seconds is assumed.
 .It etypes
 valid encryption types are: des-cbc-crc, des-cbc-md4, des-cbc-md5,
-des3-cbc-sha1, arcfour-hmac-md5, aes128-cts-hmac-sha1-96, and
-aes256-cts-hmac-sha1-96 .
+des3-cbc-sha1, arcfour-hmac-md5, aes128-cts-hmac-sha1-96, aes256-cts-hmac-sha1-96,
+aes128-cts-hmac-sha256-128, and aes256-cts-hmac-sha384-192.
 .It address
 an address can be either a IPv4 or a IPv6 address.
 .El
@@ -387,6 +387,18 @@ be allowed to run.
 .It Li fcache_strict_checking
 strict checking in FILE credential caches that owner, no symlink and
 permissions is correct.
+.It Li moduli = Va FILE
+Names a file that contains acceptable modular Diffie-Hellman
+groups for PKINIT.
+The given file should contain lines with whitespace-separated
+fields in this order:
+.Va name, nbits, p, g, q .
+Lines starting with a
+.Va #
+are comments.
+.It Li pkinit_dh_min_bits = Va NUMBER
+PKINIT client's minimum acceptable modular Diffie-Hellman public
+key size in bits.
 .It Li enable-kx509 = Va boolean
 Enable use of kx509 so that every TGT that can has a corresponding
 PKIX certificate.  Default: false.
@@ -501,9 +513,29 @@ Defaults to true.
 Note, absent an explicit setting, hierarchical capaths are always used by
 the KDC when generating a referral to a destination with which is no direct
 trust.
+.It Li client_aware_channel_bindings = Va boolean
+If this flag is true, then all application protocol authentication
+requests will be flagged to indicate that the application supports
+channel bindings when operating over a secure channel.
+The default value is false.
 .El
 .It Li [domain_realm]
 This is a list of mappings from DNS domain to Kerberos realm.
+.Pp
+It is used by the client and the TGS both to determine the realm
+of host-based service principal names based on the principal's
+hostname component.
+.Pp
+The client may try DNS to determine a host's realm; see the
+`dns_lookup_realm' parameter, and see below.
+.Pp
+The TGS will issue a referral when a host-based service does not
+exist in the requested realm but can be mapped with these rules
+to a different realm.
+The TGS will also issue a referral when a host-based service
+exists in the requested realm as an alias of a service in another
+realm.
+.Pp
 Each binding in this section looks like:
 .Pp
 .Dl domain = realm
@@ -619,6 +651,39 @@ No additional principal to username mapping is done. Note that
 and any preceding
 .Va auth_to_local
 rules have precedence.
+.It Li pkinit_require_eku = BOOL
+If
+.Va true
+then the KDC PKINIT Extended Key Usage (EKU) OID (1.3.6.5.2.3.5)
+must be present in KDCs' PKINIT certificates.
+Defaults to
+.Va true .
+.It Li pkinit_require_krbtgt_otherName = BOOL
+If
+.Va true
+then the PKINIT Subject Alternative Name (SAN) for the TGS must
+be present in KDCs' PKINIT certificates, and must match their
+realm.
+Defaults to
+.Va true .
+.It Li pkinit_require_hostname_match = BOOL
+If
+.Va true
+then KDCs' PKINIT certificates must match their hostnames.
+Defaults to
+.Va false .
+.It Li pkinit_trustedCertifiers = BOOL
+If
+.Va true
+then PKINIT client will tell KDCs which trust anchors it trusts.
+Defaults to
+.Va true .
+.It Li disable_pac = BOOL
+If
+.Va true
+then the KDC will not sign tickets with PAC, which disables S4U2Proxy support.
+Defaults to
+.Va false .
 .El
 .It Li }
 .El
@@ -734,11 +799,154 @@ target service principal's hdb entry's current keyset.  Defaults to TRUE.
 .It Li check-ticket-addresses = Va BOOL
 Verify the addresses in the tickets used in tgs requests.
 .\" XXX
+.It Li warn_ticket_addresses = Va BOOL
+Warn about, but allow, usage of tickets from hosts that don't match the
+addresses in the tickets.
 .It Li allow-null-ticket-addresses = Va BOOL
 Allow address-less tickets.
 .\" XXX
 .It Li allow-anonymous = Va BOOL
 If the kdc is allowed to hand out anonymous tickets.
+.It Li synthetic_clients = Va BOOL
+If enabled then the KDC will issue tickets for clients that don't
+exist in the HDB provided that they use PKINIT, that PKINIT is
+enabled, and that the client's have certificates with PKINIT
+subject alternative names (SANs).
+.It Li synthetic_clients_max_life = Va TIME
+Maximum ticket lifetime for synthetic clients.
+Default: 5 minutes.
+.It Li synthetic_clients_max_renew = Va TIME
+Maximum ticket renewable lifetime for synthetic clients.
+Default: 5 minutes.
+.It Li pkinit_identity = Va HX509-STORE
+This is an HX509 store containing the KDC's PKINIT credential
+(private key and end-entity certificate).
+This is single valued, though multiple stores can be specified by
+separating them with commas.
+An
+.Va HX509-STORE
+is of the form
+.Va TYPE:name
+where
+.Va TYPE
+is one of
+.Va FILE, Va PEM-FILE, Va DER-FILE, Va PKCS12, Va PKCS11,
+or on OX X,
+.Va KEYCHAIN .
+The form of the
+.Va name
+depends on the
+.Va TYPE .
+For
+.Va FILE, Va PEM-FILE, Va DER-FILE,
+and
+.Va PKCS12
+the
+.Va name
+is a file path.
+See the Heimdal hx509 documentation for more information.
+.It Li pkinit_pool = Va HX509-STORE
+This is a multi-valued parameter naming one or more stores of
+intermediate certification authority (CA) certificates for the
+KDC's end entity certificate.
+.It Li pkinit_anchors = Va HX509-STORE
+This is a multi-valued parameter naming one or more stores of
+anchors for PKINIT client certificates.
+Note that the
+.Va DIR
+type of
+.Va HX509-STORE
+is also supported here.
+.Va DIR
+type stores are OpenSSL-style CA certificate hash directories.
+.It Li pkinit_kdc_ocsp = Va PATH
+This names a file whose contents is the DER encoding of an
+OCSPResponse for the KDC's end entity certificate.
+.It Li pkinit_kdc_friendly_name = Va NAME
+This is an optional friendly name of the KDC's end entity
+certificate.
+This is only helpful when the
+.Li pkinit_identity
+store contains many credentials.
+.It Li pkinit_principal_in_certificate = Va BOOL
+If set to
+.Va true
+then the KDC will match AS-REQ client principal names to the
+PKINIT
+.Va subjectAlternativeName
+values from the clients' certificates.
+Defaults to
+.Va true .
+.It Li pkinit_dh_min_bits = Va NUMBER
+Minimum acceptable modular Diffie-Hellman public key size in
+bits.
+.It Li pkinit_max_life_from_cert_extension = Va BOOL
+If set to
+.Va true
+then the KDC will override the
+.Va max_life
+attribute of the client principal's HDB record with a maximum
+ticket life taken from a certificate extension with OID
+.Va { iso(1) member-body(2) se(752) su(43) heim-pkix(16) 4 }
+and the DER encoding of an
+.Va INTEGER
+number of seconds.
+Alternatively, if the extended key usage OID
+.Va { iso(1) member-body(2) se(752) su(43) heim-pkix(16) 3 }
+is included in the client's certificate, then the
+.Va notAfter
+minus the current time will be used.
+.It Li pkinit_max_life_bound = Va TIME
+If set, this will be a hard bound on the maximum ticket lifetime
+taken from the client's certificate.
+As usual,
+.Va TIME
+can be given as a number followed by a unit, such as
+.Dq 2d
+for
+.Dq two days .
+.It Li pkinit_max_life_from_cert = Va TIME
+If set, this will override the
+.Va max_life
+attribute of the client principal's HDB record with the
+.Va notAfter
+of the client's certificate minus the current time, bounded to
+the given relative
+.Va TIME
+unless the
+.Li pkinit_max_life_from_cert_extension
+parameter is set and the client's certificate has that extension.
+As usual,
+.Va TIME
+can be given as a number followed by a unit, such as
+.Dq 2d
+for
+.Dq two days .
+.It Li enable_gss_preauth = Va boolean
+Enables pre-authentication using a GSS-API mechanism supported by the client and KDC.
+The GSS-API initiator and AS request client names must match, unless the
+.Li WELLKNOWN/FEDERATED
+name was used in the AS request, in which case the AS reply will contain the
+GSS-API initiator name. Authorization and mapping behavior may be customized
+by plugins. If synthetic clients are enabled, then the GSS-API initiator need
+not exist in the local database. GSS-API pre-authentication is disabled by
+default.
+.It Li enable_gss_auth_data = Va boolean
+When using GSS-API pre-authentication, includes a Kerberos authorization data
+element containing naming attributes associated with the GSS-API initiator. This
+is disabled by default as it may significantly increase the size of returned
+tickets.
+.It Li gss_mechanisms_allowed = Va mechs ...
+A list of GSS-API mechanisms that may be used for GSS-API pre-authentication.
+.It Li gss_cross_realm_mechanisms_allowed = Va mechs ...
+A list of GSS-API mechanisms that, when using the default authorization
+mechanism, will be permitted to map Kerberos principals in foreign realms. The
+list is empty by default. Initiator names from mechanisms not on this list will
+be mapped to an enterprise principal in the AS-REQ realm. This option is
+intended to avoid conflating GSS-API pre-authentication and Kerberos
+cross-realm authentication. The behavior is provided by the default
+authorization mechanism and will be overridden by an authorization plugin.
+Mechanisms may be identified by dot-separated OID or a short name.
 .It Li historical_anon_realm = Va boolean
 Enables pre-7.0 non-RFC-comformant KDC behavior.
 With this option set to
@@ -827,9 +1035,30 @@ for non-default client and server certificates.
 and where the parameters are as follows:
 .Bl -tag -width "xxx" -offset indent
 .It Li ca = Va file
-Specifies the PEM credentials for the kx509 certification
-authority.  If not specified for any specific use-case, then that
-use-case will be disabled.
+Specifies the PEM credentials for the kx509 / bx509d certification
+authority.
+If not specified for any specific use-case, then that use-case
+will be disabled.
+.It Li max_cert_lifetime = Va NUMunit
+Specifies the maximum certificate lifetime as a decimal number
+and an optional unit (the default unit is
+.Dq day
+).
+.It Li force_cert_lifetime = Va NUMunit
+Specifies a minimum certificate lifetime as a decimal number and
+an optional unit (the default unit is
+.Dq day
+).
+.It Li allow_extra_lifetime = Va boolean
+Indicates whether a client may request longer lifetimes than
+their authentication credentials.
+Defaults to false.
+If a
+.Li force_cert_lifetime
+is specified, then
+.Li allow_extra_lifetime
+is implicitly forced to
+.Va true .
 .It Li require_initial_kca_tickets = Va boolean
 Specified whether to require that tickets for the
 .Li kca_service
@@ -901,30 +1130,130 @@ SANs are configured, then no certificate will be issued.
 Otherwise if a template and subject name are not specified, then
 subject of the certificate will be empty.
 .El
-.It Li enable_derived_keys = Va boolean
-Enable the use of derived key namespaces.
-When enabled, principals of the form
-.Pp
-.Ar WELLKNOWN/DERIVED-KEY/<alg>/<namespace>@REALM
-.Pp
-match any request of the form:
-.Ar */*.<namespace>@REALM .
-The keys are derived from the keys in the database and
-the name of the requested principal via the algorithm
-specified by
-.Ar <alg> .
-Currently, only
-.Ar KRB5-CRYPTO-PRFPLUS
-which is implemented by the function
-.Fn krb5_crypto_prfplus .
-.It Li derived_keys_ndots = Va Integer
-The minimum number of dots in a name matched via
-derived key namespaces.
-.It Li derived_keys_maxdots = Va Integer
-The maximim number of dots in a name matched via
-derived key namespaces.
 .El
 .Pp
+.It Li [hdb]
+.Bl -tag -width "xxx" -offset indent
+.It Li db-dir = Va path
+This parameter defines a directory that can contain:
+.Bl -tag -width "xxx" -offset indent
+.It Va kdc.conf
+A configuration file with the same format as krb5.conf that will
+be included.
+.It Va m-key
+The master key file.
+.It Va kdc.log
+The default logfile for the KDC when a logfile is not specified in
+.Li [logging]
+.It Va kadm5.acl
+The access controls for
+.Nm kadmind .
+.It Va log
+The (binary) log of transactions used for
+.Nm HDB
+replication via the
+.Nm iprop
+protocol.
+See
+.Nm iprop-log(1)
+for more detail.
+.It Va pki-mapping
+The default PKINIT mapping file if one is not specified in
+.Va [kdc] pkinit_mappings_file .
+.El
+and other files related to
+.Nm iprop
+operation.
+.It Li new_service_key_delay = Va time
+Sets a bias such that new keys are not taken into service until
+after the given time has passed since they were set.
+This is useful for key rotation on concrete principals shared by
+multiple instances of an application: set this time to twice or
+more the keytab fetch period used by applications.
+.It Li enable_virtual_hostbased_princs = Va boolean
+Heimdal supports a notion of virtual host-based service
+principals whose keys are derived from those of a base namespace
+principal of the form
+.Nm WELLKNOWN/HOSTBASED-NAMESPACE/svc/hostname .
+The service name can be wild-carded as
+.Va _ .
+Non-wildcarded services have to be listed in the
+.Li virtual_hostbased_princ_svcs
+parameter (see below).
+This parameter enables this feature, which is disabled by
+default.
+.It Li virtual_hostbased_princ_ndots = Va Integer
+Minimum number of label-separating periods in virtual host-based
+service principals' hostname component.
+.It Li virtual_hostbased_princ_maxdots = Va Integer
+Maximum number of label-separating periods in namespaces'
+hostname component.
+.It Li virtual_hostbased_princ_svcs = Va service-name
+This multi-valued parameter lists service names not to wildcard
+when searching for a namespace for a virtual host-based service
+principal.
+Other service names will have keys derived from a matching
+namespace with a wild-carded service name.
+This allows one to have different attributes for different
+services.
+For example, the
+.Nm "host"
+service can be configured to have the ok-as-delegate flag while
+all others do not.
+.El
+.Pp
+.It Li [bx509]
+This section contains online certification authority configuration, much
+like
+.Li kx509
+in the
+.Li [kdc]
+section, but with the
+.Li kx509
+layer removed.
+.Bd -literal -offset indent
+[kdc]
+    realm = {
+        <REALM> = {
+            ...
+        }
+    }
+.Ed
+.It Li [get-tgt]
+.Bl -tag -width "xxx" -offset indent
+.It Li no_addresses = Va BOOL
+If set to
+.Va true
+then the
+.Va /get-tgt
+end-point of the
+.Xr bx509d 8
+service will issue address-less TGTs.
+If set to
+.Va false
+then the
+.Va /get-tgt
+end-point of the
+.Xr bx509d 8
+service will include the client's IP address in the TGT it issues
+it.
+Defaults to
+.Va true .
+.It Li allow_addresses = Va BOOL
+If set to
+.Va true
+then the
+.Va /get-tgt
+end-point of the
+.Xr bx509d 8
+service will add arbitrary addresses requested by clients to the
+TGTs it issues them.
+Defaults to
+.Va false .
+.El
+.Pp
+Certification authority related parameters are as for
+.Va bx509 .
 .It Li [kadmin]
 .Bl -tag -width "xxx" -offset indent
 .It Li password_lifetime = Va time

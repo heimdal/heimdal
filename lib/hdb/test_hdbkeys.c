@@ -104,7 +104,7 @@ main(int argc, char **argv)
 
     krb5_free_principal (context, principal);
 
-    ASN1_MALLOC_ENCODE(hdb_keyset, data, length, &keyset, &len, ret);
+    ASN1_MALLOC_ENCODE(HDB_keyset, data, length, &keyset, &len, ret);
     if (ret)
 	krb5_errx(context, 1, "encode keyset");
     if (len != length)

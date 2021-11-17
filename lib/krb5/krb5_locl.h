@@ -122,6 +122,8 @@ struct mbuf;
 
 
 #include <krb5_asn1.h>
+typedef Krb5Int32 krb5int32;
+typedef Krb5UInt32 krb5uint32;
 #include <pkinit_asn1.h>
 
 struct send_to_kdc;
@@ -138,6 +140,13 @@ struct krb5_dh_moduli;
 /* v4 glue */
 struct _krb5_krb_auth_data;
 
+struct krb5_gss_init_ctx_data;
+typedef struct krb5_gss_init_ctx_data *krb5_gss_init_ctx;
+
+struct gss_ctx_id_t_desc_struct;
+struct gss_cred_id_t_desc_struct;
+struct gss_OID_desc_struct;
+
 #include <der.h>
 
 #include <krb5.h>
@@ -149,6 +158,34 @@ struct _krb5_krb_auth_data;
 #endif
 
 #include "crypto.h"
+
+typedef krb5_error_code (KRB5_LIB_CALL *krb5_gssic_step)(
+    krb5_context,
+    krb5_gss_init_ctx,
+    const krb5_creds *,
+    KDCOptions options,
+    krb5_data *,
+    krb5_data *,
+    krb5_data *);
+
+typedef krb5_error_code (KRB5_LIB_CALL *krb5_gssic_finish)(
+    krb5_context,
+    krb5_gss_init_ctx,
+    const krb5_creds *,
+    krb5int32,
+    krb5_enctype,
+    krb5_principal *,
+    krb5_keyblock **);
+
+typedef void (KRB5_LIB_CALL *krb5_gssic_release_cred)(
+    krb5_context,
+    krb5_gss_init_ctx,
+    struct gss_cred_id_t_desc_struct *);
+
+typedef void (KRB5_LIB_CALL *krb5_gssic_delete_sec_context)(
+    krb5_context,
+    krb5_gss_init_ctx,
+    struct gss_ctx_id_t_desc_struct *);
 
 #include <krb5-private.h>
 
@@ -292,13 +329,8 @@ typedef struct krb5_context_data {
     krb5_boolean no_ticket_store;       /* Don't store service tickets */
 } krb5_context_data;
 
-#ifndef KRB5_USE_PATH_TOKENS
-#define KRB5_DEFAULT_CCNAME_FILE "FILE:/tmp/krb5cc_%{uid}"
-#define KRB5_DEFAULT_CCNAME_DIR "DIR:/tmp/krb5cc_%{uid}_dir/"
-#else
 #define KRB5_DEFAULT_CCNAME_FILE "FILE:%{TEMP}/krb5cc_%{uid}"
 #define KRB5_DEFAULT_CCNAME_DIR "DIR:%{TEMP}/krb5cc_%{uid}_dir/"
-#endif
 #define KRB5_DEFAULT_CCNAME_API "API:"
 #define KRB5_DEFAULT_CCNAME_KCM_KCM "KCM:%{uid}"
 #define KRB5_DEFAULT_CCNAME_KCM_API "API:%{uid}"
@@ -357,6 +389,7 @@ struct krb5_pk_identity {
     hx509_revoke_ctx revokectx;
     int flags;
 #define PKINIT_BTMM 1
+#define PKINIT_NO_KDC_ANCHOR 2
 };
 
 enum krb5_pk_type {
@@ -383,6 +416,7 @@ struct krb5_pk_init_ctx_data {
     unsigned int require_hostname_match:1;
     unsigned int trustedCertifiers:1;
     unsigned int anonymous:1;
+    unsigned int kdc_verified:1;
 };
 
 #endif /* PKINIT */
@@ -393,5 +427,8 @@ struct krb5_pk_init_ctx_data {
 #else
 # define ISPATHSEP(x) (x == '/')
 #endif
+
+/* Flag in KRB5_AUTHDATA_AP_OPTIONS */
+#define KERB_AP_OPTIONS_CBT 0x00004000
 
 #endif /* __KRB5_LOCL_H__ */

@@ -45,17 +45,60 @@ krb5_initlog(krb5_context context,
     return heim_initlog(context->hcontext, program, fac);
 }
 
+struct krb5_addlog_func_wrapper {
+    krb5_context context;
+    krb5_log_log_func_t log_func;
+    krb5_log_close_func_t close_func;
+    void *data;
+};
+
+static void HEIM_CALLCONV
+krb5_addlog_func_wrapper_log(heim_context hcontext,
+			     const char *prefix,
+			     const char *msg,
+			     void *data)
+{
+    struct krb5_addlog_func_wrapper *w = data;
+
+    w->log_func(w->context,
+                prefix,
+                msg,
+                w->data);
+}
+
+static void HEIM_CALLCONV
+krb5_addlog_func_wrapper_close(void *data)
+{
+    struct krb5_addlog_func_wrapper *w = data;
+
+    w->close_func(w->data);
+    free(w);
+}
+
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_addlog_func(krb5_context context,
-		 krb5_log_facility *fac,
-		 int min,
-		 int max,
-		 krb5_log_log_func_t log_func,
-		 krb5_log_close_func_t close_func,
-		 void *data)
-    KRB5_DEPRECATED_FUNCTION("Use X instead")
+                 krb5_log_facility *fac,
+                 int min,
+                 int max,
+                 krb5_log_log_func_t log_func,
+                 krb5_log_close_func_t close_func,
+                 void *data)
 {
-    return ENOTSUP;
+    struct krb5_addlog_func_wrapper *w = NULL;
+
+    w = calloc(1, sizeof(*w));
+    if (w == NULL)
+	return krb5_enomem(context);
+
+    w->context = context;
+    w->log_func = log_func;
+    w->close_func = close_func;
+    w->data = data;
+
+    return heim_addlog_func(context->hcontext, fac, min, max,
+                            krb5_addlog_func_wrapper_log,
+                            krb5_addlog_func_wrapper_close,
+                            w);
 }
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
@@ -166,6 +209,21 @@ _krb5_debug(krb5_context context,
     va_end(ap);
 }
 
+void KRB5_LIB_FUNCTION
+krb5_debug(krb5_context context,
+	    int level,
+	    const char *fmt,
+	    ...)
+    __attribute__ ((__format__ (__printf__, 3, 4)))
+{
+    va_list ap;
+
+    va_start(ap, fmt);
+    if (context && context->hcontext)
+        heim_vdebug(context->hcontext, level, fmt, ap);
+    va_end(ap);
+}
+
 KRB5_LIB_FUNCTION krb5_boolean KRB5_LIB_CALL
 _krb5_have_debug(krb5_context context, int level)
 {
@@ -174,9 +232,21 @@ _krb5_have_debug(krb5_context context, int level)
     return heim_have_debug(context->hcontext, level);
 }
 
+KRB5_LIB_FUNCTION krb5_boolean KRB5_LIB_CALL
+krb5_have_debug(krb5_context context, int level)
+{
+    return _krb5_have_debug(context, level);
+}
+
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_set_debug_dest(krb5_context context, const char *program,
                     const char *log_spec)
 {
     return heim_add_debug_dest(context->hcontext, program, log_spec);
+}
+
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+krb5_set_log_dest(krb5_context context, krb5_log_facility *fac)
+{
+    return heim_set_log_dest(context->hcontext, fac);
 }

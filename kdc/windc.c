@@ -91,17 +91,32 @@ _kdc_pac_generate(krb5_context context,
 		  hdb_entry_ex *client,
 		  krb5_pac *pac)
 {
+    krb5_error_code ret = 0;
     struct generate_uc uc;
 
-    if (!have_plugin)
+    *pac = NULL;
+
+    if (krb5_config_get_bool_default(context, NULL, FALSE, "realms",
+				     client->entry.principal->realm,
+				     "disable_pac", NULL))
 	return 0;
 
-    uc.client = client;
-    uc.pac = pac;
+    if (have_plugin) {
 
-    (void)_krb5_plugin_run_f(context, &windc_plugin_data,
-			     0, &uc, generate);
-    return 0;
+	uc.client = client;
+	uc.pac = pac;
+
+	ret = _krb5_plugin_run_f(context, &windc_plugin_data,
+				 0, &uc, generate);
+	if (ret != KRB5_PLUGIN_NO_HANDLE)
+	    return ret;
+	ret = 0;
+    }
+
+    if (*pac == NULL)
+	ret = krb5_pac_init(context, pac);
+
+    return ret;
 }
 
 struct verify_uc {
@@ -111,26 +126,23 @@ struct verify_uc {
     hdb_entry_ex *server;
     hdb_entry_ex *krbtgt;
     krb5_pac *pac;
-    int *verified;
 };
 
 static krb5_error_code KRB5_LIB_CALL
 verify(krb5_context context, const void *plug, void *plugctx, void *userctx)
 {
     krb5plugin_windc_ftable *ft = (krb5plugin_windc_ftable *)plug;
-    struct verify_uc *uc = (struct verify_uc *)userctx;    
+    struct verify_uc *uc = (struct verify_uc *)userctx;
     krb5_error_code ret;
 
     if (ft->pac_verify == NULL)
 	return KRB5_PLUGIN_NO_HANDLE;
+
     ret = ft->pac_verify((void *)plug, context,
 			 uc->client_principal,
 			 uc->delegated_proxy_principal,
 			 uc->client, uc->server, uc->krbtgt, uc->pac);
-    if (ret == 0)
-	(*uc->verified) = 1;
-
-    return 0;
+    return ret;
 }
 
 krb5_error_code
@@ -140,13 +152,12 @@ _kdc_pac_verify(krb5_context context,
 		hdb_entry_ex *client,
 		hdb_entry_ex *server,
 		hdb_entry_ex *krbtgt,
-		krb5_pac *pac,
-		int *verified)
+		krb5_pac *pac)
 {
     struct verify_uc uc;
 
     if (!have_plugin)
-	return 0;
+	return KRB5_PLUGIN_NO_HANDLE;
 
     uc.client_principal = client_principal;
     uc.delegated_proxy_principal = delegated_proxy_principal;
@@ -154,11 +165,9 @@ _kdc_pac_verify(krb5_context context,
     uc.server = server;
     uc.krbtgt = krbtgt;
     uc.pac = pac;
-    uc.verified = verified;
 
-    (void)_krb5_plugin_run_f(context, &windc_plugin_data,
+    return _krb5_plugin_run_f(context, &windc_plugin_data,
 			     0, &uc, verify);
-    return 0;
 }
 
 struct check_uc {
@@ -190,20 +199,15 @@ krb5_error_code
 _kdc_check_access(astgs_request_t r, KDC_REQ *req, METHOD_DATA *method_data)
 {
     krb5_context context = r->context;
-    krb5_kdc_configuration *config = r->config;
-    hdb_entry_ex *client_ex = r->client;
-    const char *client_name = r->cname;
-    hdb_entry_ex *server_ex = r->server;
-    const char *server_name = r->sname;
     krb5_error_code ret = KRB5_PLUGIN_NO_HANDLE;
     struct check_uc uc;
 
     if (have_plugin) {
-        uc.config = config;
-        uc.client_ex = client_ex;
-        uc.client_name = client_name;
-        uc.server_ex = server_ex;
-        uc.server_name = server_name;
+        uc.config = r->config;
+        uc.client_ex = r->client;
+        uc.client_name = r->cname;
+        uc.server_ex = r->server;
+        uc.server_name = r->sname;
         uc.req = req;
         uc.method_data = method_data;
 
@@ -212,7 +216,8 @@ _kdc_check_access(astgs_request_t r, KDC_REQ *req, METHOD_DATA *method_data)
     }
 
     if (ret == KRB5_PLUGIN_NO_HANDLE)
-	return kdc_check_flags(r, req->msg_type == krb_as_req);
+        return kdc_check_flags(r, req->msg_type == krb_as_req,
+                               r->client, r->server);
     return ret;
 }
 
@@ -227,6 +232,8 @@ kdc_get_instance(const char *libname)
 	return hdb_get_instance(libname);
     else if (strcmp(libname, "krb5") == 0)
         return krb5_get_instance(libname);
+    else if (strcmp(libname, "gssapi") == 0)
+        return gss_get_instance(libname);
 
     return 0;
 }

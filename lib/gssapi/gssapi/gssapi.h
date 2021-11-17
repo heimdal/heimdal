@@ -37,6 +37,7 @@
 /*
  * First, include stddef.h to get size_t defined.
  */
+#include <stdarg.h>
 #include <stddef.h>
 
 #include <krb5-types.h>
@@ -173,6 +174,7 @@ typedef OM_uint32 gss_qop_t;
 #define GSS_C_PROT_READY_FLAG 128
 #define GSS_C_TRANS_FLAG 256
 
+#define GSS_C_CHANNEL_BOUND_FLAG 2048
 #define GSS_C_DCE_STYLE 4096
 #define GSS_C_IDENTIFY_FLAG 8192
 #define GSS_C_EXTENDED_ERROR_FLAG 16384
@@ -1142,9 +1144,12 @@ GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL gss_duplicate_cred (
             gss_const_cred_id_t /*input_cred_handle*/,
             gss_cred_id_t * /*output_cred_handle*/
            );
+
+/* Return a mechanism short name from an OID */
 GSSAPI_LIB_FUNCTION const char * GSSAPI_LIB_CALL
 gss_oid_to_name(gss_const_OID oid);
 
+/* Return a mechanism OID from a short name or dotted OID */
 GSSAPI_LIB_FUNCTION gss_OID GSSAPI_LIB_CALL
 gss_name_to_oid(const char *name);
 
@@ -1234,6 +1239,26 @@ gss_set_log_function(void *ctx, void (*func)(void * ctx, int level, const char *
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_destroy_cred(OM_uint32 *minor_status,
 		 gss_cred_id_t *cred_handle);
+
+GSSAPI_LIB_FUNCTION uintptr_t GSSAPI_CALLCONV
+gss_get_instance(const char *libname);
+
+/*
+ * S4UProxy and S4USelf extensions.
+ */
+
+GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_CALLCONV
+gss_acquire_cred_impersonate_name(
+    OM_uint32 * /* minor_status */,
+    gss_const_cred_id_t /* icred */,
+    gss_const_name_t /* desired_name */,
+    OM_uint32 /* time_req */,
+    gss_OID_set /* desired_mechs */,
+    gss_cred_usage_t /* cred_usage */,
+    gss_cred_id_t * /* output_cred */,
+    gss_OID_set * /* actual_mechs */,
+    OM_uint32 * /* time_rec */
+    );
 
 GSSAPI_CPP_END
 

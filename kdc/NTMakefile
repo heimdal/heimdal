@@ -33,6 +33,8 @@ RELDIR=kdc
 
 !include ../windows/NTMakefile.w32 
 
+intcflags=-I$(OBJ) -I$(SRC)\lib\gssapi -I$(OBJDIR)\lib\gssapi -I$(OBJDIR)\lib\gss_preauth
+
 BINPROGRAMS=$(BINDIR)\string2key.exe
 
 SBINPROGRAMS=$(SBINDIR)\kstash.exe
@@ -107,10 +109,13 @@ LIBKDC_OBJS=\
 	$(OBJ)\token_validator.obj	\
 	$(OBJ)\csr_authorizer.obj	\
 	$(OBJ)\process.obj		\
-	$(OBJ)\windc.obj
+	$(OBJ)\windc.obj		\
+	$(OBJ)\gss_preauth.obj
 
 LIBKDC_LIBS=\
 	$(LIBHDB)		\
+	$(LIBGSS_PREAUTH)	\
+	$(LIBGSSAPI)		\
 	$(LIBHEIMBASE)		\
 	$(LIBHEIMDAL)		\
 	$(LIBHEIMNTLM)		\
@@ -146,6 +151,7 @@ libkdc_la_SOURCES = 		\
 	csr_authorizer.c	\
 	process.c		\
 	windc.c			\
+	gss_preauth.c		\
 	rx.h
 
 $(OBJ)\kdc-protos.h: $(libkdc_la_SOURCES)

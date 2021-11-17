@@ -150,6 +150,10 @@ WITH			{ return kw_WITH; }
 [-,;{}()|]		{ return *yytext; }
 "["			{ return *yytext; }
 "]"			{ return *yytext; }
+"&"			{ return *yytext; }
+"."			{ return *yytext; }
+":"			{ return *yytext; }
+"@"			{ return *yytext; }
 ::=			{ return EEQUAL; }
 --			{
 			    int c, start_lineno = lineno;
@@ -250,7 +254,6 @@ WITH			{ return kw_WITH; }
 			    if(c == EOF)
 				unterminated("string", start_lineno);
 			    *p++ = '\0';
-			    fprintf(stderr, "string -- %s\n", buf);
 			    yylval.name = estrdup(buf);
 			    return STRING;
 			}
@@ -263,9 +266,17 @@ WITH			{ return kw_WITH; }
 			  else
 			    return NUMBER;
 			}
-[A-Za-z][-A-Za-z0-9_]*	{
+[_][-A-Z0-9]*		{
 			  yylval.name =  estrdup ((const char *)yytext);
-			  return IDENTIFIER;
+			  return CLASS_IDENTIFIER;
+			}
+[A-Z][-A-Za-z0-9_]*	{
+			  yylval.name =  estrdup ((const char *)yytext);
+			  return TYPE_IDENTIFIER;
+			}
+[a-z][-A-Za-z0-9_]*	{
+			  yylval.name =  estrdup ((const char *)yytext);
+			  return VALUE_IDENTIFIER;
 			}
 [ \t]			;
 \n			{ ++lineno; }

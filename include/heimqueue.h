@@ -100,16 +100,25 @@ struct {								\
  */
 #include "heimbase.h"
 
+#define	HEIM_SLIST_ATOMIC_HEAD(name, type)				\
+struct name {								\
+	heim_base_atomic(struct type *) slh_first; /* first element */	\
+}
+
+#define	HEIM_SLIST_ATOMIC_ENTRY(type)					\
+struct {								\
+	heim_base_atomic(struct type *) sle_next; /* next element */	\
+}
+
 #define HEIM_SLIST_ATOMIC_INSERT_HEAD(head, elm, field) do {		\
 	(elm)->field.sle_next =						\
 	    heim_base_exchange_pointer(&(head)->slh_first, (elm));	\
 } while (/*CONSTCOND*/0)
 
-#define HEIM_SLIST_ATOMIC_FOREACH(var, head, field)			        \
-	for ((void)heim_base_exchange_pointer(&(var), (head)->slh_first);	\
-	     (var) != NULL;						        \
-	     (void)heim_base_exchange_pointer(&(var), (var)->field.sle_next))
-
+#define HEIM_SLIST_ATOMIC_FOREACH(var, head, field)			\
+	for ((var) = heim_base_atomic_load(&(head)->slh_first);		\
+	     (var) != NULL;						\
+	     (var) = heim_base_atomic_load(&(var)->field.sle_next))
 /*
  * Tail queue definitions.
  */

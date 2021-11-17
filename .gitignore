@@ -206,6 +206,8 @@ tags
 /lib/gssapi/test_names
 /lib/gssapi/test_ntlm
 /lib/gssapi/test_oid
+/lib/gss_preauth/gss-preauth-protos.h
+/lib/gss_preauth/gss-preauth-private.h
 /lib/hcrypto/crypto-test
 /lib/hcrypto/crypto-test2
 /lib/hcrypto/destest
@@ -241,7 +243,7 @@ tags
 /lib/hdb/hdb-private.h
 /lib/hdb/test_dbinfo
 /lib/hdb/test_hdbkeys
-/lib/hdb/test_hdbplugin
+/lib/hdb/test_namespace
 /lib/hdb/test_mkey
 /lib/hx509/PKITS_data/
 /lib/hx509/cert-ca.der

@@ -682,6 +682,40 @@ kadm5_log_init(kadm5_server_context *server_context)
     return log_init(server_context, LOCK_EX);
 }
 
+/* Upgrade log lock to exclusive */
+kadm5_ret_t
+kadm5_log_exclusivelock(kadm5_server_context *server_context)
+{
+    kadm5_log_context *log_context = &server_context->log_context;
+
+    if (log_context->lock_mode == LOCK_EX)
+        return 0;
+    if (log_context->log_fd == -1)
+        return EINVAL;
+    if (flock(log_context->log_fd, LOCK_EX) < 0)
+        return errno;
+    log_context->read_only = 0;
+    log_context->lock_mode = LOCK_EX;
+    return 0;
+}
+
+/* Downgrade log lock to shared */
+kadm5_ret_t
+kadm5_log_sharedlock(kadm5_server_context *server_context)
+{
+    kadm5_log_context *log_context = &server_context->log_context;
+
+    if (log_context->lock_mode == LOCK_SH)
+        return 0;
+    if (log_context->log_fd == -1)
+        return EINVAL;
+    if (flock(log_context->log_fd, LOCK_SH) < 0)
+        return errno;
+    log_context->read_only = 1;
+    log_context->lock_mode = LOCK_SH;
+    return 0;
+}
+
 /* Open the log with an exclusive non-blocking lock */
 kadm5_ret_t
 kadm5_log_init_nb(kadm5_server_context *server_context)
@@ -940,13 +974,31 @@ kadm5_log_create(kadm5_server_context *context, hdb_entry *entry)
     krb5_ssize_t bytes;
     kadm5_ret_t ret;
     krb5_data value;
-    hdb_entry_ex ent;
+    hdb_entry_ex ent, existing;
     kadm5_log_context *log_context = &context->log_context;
 
+    memset(&existing, 0, sizeof(existing));
     memset(&ent, 0, sizeof(ent));
     ent.ctx = 0;
     ent.free_entry = 0;
     ent.entry = *entry;
+
+    /*
+     * Do not allow creation of concrete entries within namespaces unless
+     * explicitly requested.
+     */
+    ret = hdb_fetch_kvno(context->context, context->db, entry->principal, 0,
+                         0, 0, 0, &existing);
+    if (ret != 0 && ret != HDB_ERR_NOENTRY)
+        return ret;
+    if (ret == 0 && !ent.entry.flags.materialize &&
+        (existing.entry.flags.virtual || existing.entry.flags.virtual_keys)) {
+        hdb_free_entry(context->context, &existing);
+        return HDB_ERR_EXISTS;
+    }
+    if (ret == 0)
+        hdb_free_entry(context->context, &existing);
+    ent.entry.flags.materialize = 0; /* Clear in stored entry */
 
     /*
      * If we're not logging then we can't recover-to-perform, so just
@@ -1406,6 +1458,7 @@ kadm5_log_replay_modify(kadm5_server_context *context,
 	return ret;
 
     memset(&ent, 0, sizeof(ent));
+    /* NOTE: We do not use hdb_fetch_kvno() here */
     ret = context->db->hdb_fetch_kvno(context->context, context->db,
 				      log_ent.entry.principal,
 				      HDB_F_DECRYPT|HDB_F_ALL_KVNOS|
@@ -1547,24 +1600,42 @@ kadm5_log_replay_modify(kadm5_server_context *context,
 	    }
 	}
     }
+    if ((mask & KADM5_TL_DATA) && log_ent.entry.etypes) {
+        if (ent.entry.etypes)
+            free_HDB_EncTypeList(ent.entry.etypes);
+        free(ent.entry.etypes);
+        ent.entry.etypes = calloc(1, sizeof(*ent.entry.etypes));
+        if (ent.entry.etypes == NULL)
+            ret = ENOMEM;
+        if (ret == 0)
+            ret = copy_HDB_EncTypeList(log_ent.entry.etypes, ent.entry.etypes);
+        if (ret) {
+            ret = krb5_enomem(context->context);
+            free(ent.entry.etypes);
+            ent.entry.etypes = NULL;
+            goto out;
+        }
+    }
+
     if ((mask & KADM5_TL_DATA) && log_ent.entry.extensions) {
-	HDB_extensions *es = ent.entry.extensions;
+	if (ent.entry.extensions) {
+	    free_HDB_extensions(ent.entry.extensions);
+	    free(ent.entry.extensions);
+            ent.entry.extensions = NULL;
+	}
 
 	ent.entry.extensions = calloc(1, sizeof(*ent.entry.extensions));
 	if (ent.entry.extensions == NULL)
-	    goto out;
+	    ret = ENOMEM;
 
-	ret = copy_HDB_extensions(log_ent.entry.extensions,
-				  ent.entry.extensions);
+        if (ret == 0)
+            ret = copy_HDB_extensions(log_ent.entry.extensions,
+                                      ent.entry.extensions);
 	if (ret) {
-	    krb5_set_error_message(context->context, ret, "out of memory");
+	    ret = krb5_enomem(context->context);
 	    free(ent.entry.extensions);
-	    ent.entry.extensions = es;
+	    ent.entry.extensions = NULL;
 	    goto out;
-	}
-	if (es) {
-	    free_HDB_extensions(es);
-	    free(es);
 	}
     }
     ret = context->db->hdb_store(context->context, context->db,

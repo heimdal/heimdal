@@ -306,6 +306,9 @@ _krb5_get_krbtgt(krb5_context context,
     if (ret)
 	return ret;
 
+    if (realm == NULL)
+	realm = tmp_cred.client->realm;
+
     ret = krb5_make_principal(context,
 			      &tmp_cred.server,
 			      realm,
@@ -685,14 +688,16 @@ not_found(krb5_context context, krb5_const_principal p, krb5_error_code code)
 {
     krb5_error_code ret;
     char *str;
+    const char *err;
 
     ret = krb5_unparse_name(context, p, &str);
     if(ret) {
 	krb5_clear_error_message(context);
 	return code;
     }
-    krb5_set_error_message(context, code,
-			   N_("Matching credential (%s) not found", ""), str);
+    err = krb5_get_error_message(context, code);
+    krb5_set_error_message(context, code, N_("%s (%s)", ""), err, str);
+    krb5_free_error_message(context, err);
     free(str);
     return code;
 }
@@ -1062,7 +1067,7 @@ get_cred_kdc_referral(krb5_context context,
 	char *referral_realm;
 
 	/* Use cache if we are not doing impersonation or contrained deleg */
-	if (impersonate_principal == NULL || flags.b.cname_in_addl_tkt) {
+	if (impersonate_principal == NULL && !flags.b.cname_in_addl_tkt) {
 	    krb5_cc_clear_mcred(&mcreds);
 	    mcreds.server = referral.server;
 	    krb5_timeofday(context, &mcreds.times.endtime);
@@ -1616,13 +1621,15 @@ next_rule:
 	goto out;
     }
 
-    ret = check_cc(context, options, ccache, &in_creds, res_creds);
-    if (ret == 0) {
-	*out_creds = res_creds;
-        res_creds = NULL;
-	goto out;
-    } else if (ret != KRB5_CC_END) {
-	goto out;
+    if ((options & KRB5_GC_CONSTRAINED_DELEGATION) == 0) {
+	ret = check_cc(context, options, ccache, &in_creds, res_creds);
+	if (ret == 0) {
+	    *out_creds = res_creds;
+	    res_creds = NULL;
+	    goto out;
+	} else if (ret != KRB5_CC_END) {
+	    goto out;
+	}
     }
     if (options & KRB5_GC_CACHED)
 	goto next_rule;

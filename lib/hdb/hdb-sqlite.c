@@ -41,6 +41,7 @@ typedef struct hdb_sqlite_db {
     sqlite3 *db;
     char *db_file;
 
+    sqlite3_stmt *connect;
     sqlite3_stmt *get_version;
     sqlite3_stmt *fetch;
     sqlite3_stmt *get_ids;
@@ -82,6 +83,8 @@ typedef struct hdb_sqlite_db {
                  "  DELETE FROM Principal" \
                  "  WHERE entry = OLD.id;" \
                  " END"
+#define HDBSQLITE_CONNECT \
+                 " PRAGMA journal_mode = WAL"
 #define HDBSQLITE_GET_VERSION \
                  " SELECT number FROM Version"
 #define HDBSQLITE_FETCH \
@@ -156,6 +159,11 @@ prep_stmts(krb5_context context, hdb_sqlite_db *hsdb)
     int ret;
 
     ret = hdb_sqlite_prepare_stmt(context, hsdb->db,
+                                  &hsdb->connect,
+                                  HDBSQLITE_CONNECT);
+    if (ret)
+        return ret;
+    ret = hdb_sqlite_prepare_stmt(context, hsdb->db,
                                   &hsdb->get_version,
                                   HDBSQLITE_GET_VERSION);
     if (ret)
@@ -209,6 +217,10 @@ prep_stmts(krb5_context context, hdb_sqlite_db *hsdb)
 static void
 finalize_stmts(krb5_context context, hdb_sqlite_db *hsdb)
 {
+    if (hsdb->connect != NULL)
+        sqlite3_finalize(hsdb->connect);
+    hsdb->connect = NULL;
+
     if (hsdb->get_version != NULL)
         sqlite3_finalize(hsdb->get_version);
     hsdb->get_version = NULL;
@@ -316,6 +328,8 @@ bind_principal(krb5_context context, krb5_const_principal principal, sqlite3_stm
     return 0;
 }
 
+static int hdb_sqlite_step(krb5_context, sqlite3 *, sqlite3_stmt *);
+
 /**
  * Opens an sqlite3 database handle to a file, may create the
  * database file depending on flags.
@@ -346,7 +360,6 @@ hdb_sqlite_open_database(krb5_context context, HDB *db, int flags)
 	    ret = krb5_enomem(context);
         return ret;
     }
-
     return 0;
 }
 
@@ -435,6 +448,10 @@ hdb_sqlite_make_database(krb5_context context, HDB *db, const char *filename)
 
     ret = prep_stmts(context, hsdb);
     if (ret) goto out;
+
+    sqlite3_reset(hsdb->connect);
+    (void) hdb_sqlite_step(context, hsdb->db, hsdb->connect);
+    sqlite3_reset(hsdb->connect);
 
     ret = hdb_sqlite_step(context, hsdb->db, hsdb->get_version);
     if(ret == SQLITE_ROW) {
@@ -800,7 +817,9 @@ hdb_sqlite_destroy(krb5_context context, HDB *db)
 
     hsdb = (hdb_sqlite_db*)(db->hdb_db);
 
+    krb5_config_free_strings(db->virtual_hostbased_princ_svcs);
     free(hsdb->db_file);
+    free(db->hdb_name);
     free(db->hdb_db);
     free(db);
 
@@ -1024,7 +1043,7 @@ hdb_sqlite_create(krb5_context context, HDB **db, const char *filename)
     if (ret) {
         free((*db)->hdb_db);
         free(*db);
-
+        *db = NULL;
         return ret;
     }
 

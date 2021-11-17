@@ -80,17 +80,16 @@ length_type (const char *name, const Type *t,
 	    fprintf(codefile, "}\n");
 	} else if (t->range == NULL) {
 	    length_primitive ("heim_integer", name, variable);
-	} else if (t->range->min < INT_MIN && t->range->max <= INT64_MAX) {
+	} else if (t->range->min < 0 &&
+                   (t->range->min < INT_MIN || t->range->max > INT_MAX)) {
 	    length_primitive ("integer64", name, variable);
-	} else if (t->range->min >= 0 && t->range->max > UINT_MAX) {
-	    length_primitive ("unsigned64", name, variable);
-	} else if (t->range->min >= INT_MIN && t->range->max <= INT_MAX) {
+	} else if (t->range->min < 0) {
 	    length_primitive ("integer", name, variable);
-	} else if (t->range->min >= 0 && t->range->max <= UINT_MAX) {
+	} else if (t->range->max > UINT_MAX) {
+	    length_primitive ("unsigned64", name, variable);
+	} else {
 	    length_primitive ("unsigned", name, variable);
-	} else
-	    errx(1, "%s: unsupported range %lld -> %lld",
-		 name, (long long)t->range->min, (long long)t->range->max);
+	}
 	break;
     case TBoolean:
 	fprintf (codefile, "%s += 1;\n", variable);
@@ -248,11 +247,40 @@ length_type (const char *name, const Type *t,
 	break;
     case TTag:{
     	char *tname = NULL;
+        int replace_tag = 0;
+        int prim = !(t->tag.tagclass != ASN1_C_UNIV &&
+                     t->tag.tagenv == TE_EXPLICIT) &&
+            is_primitive_type(t->subtype);
+
 	if (asprintf(&tname, "%s_tag", tmpstr) < 0 || tname == NULL)
 	    errx(1, "malloc");
 	length_type (name, t->subtype, variable, tname);
-	fprintf (codefile, "ret += %lu + der_length_len (ret);\n",
-		 (unsigned long)length_tag(t->tag.tagvalue));
+        /* See the comments in encode_type() about IMPLICIT tags */
+        if (t->tag.tagenv == TE_IMPLICIT && !prim &&
+            t->subtype->type != TSequenceOf && t->subtype->type != TSetOf &&
+            t->subtype->type != TChoice) {
+            if (t->subtype->symbol &&
+                (t->subtype->type == TSequence ||
+                 t->subtype->type == TSet))
+                replace_tag = 1;
+            else if (t->subtype->symbol && strcmp(t->subtype->symbol->name, "heim_any"))
+                replace_tag = 1;
+        } else if (t->tag.tagenv == TE_IMPLICIT && prim && t->subtype->symbol)
+            replace_tag = is_tagged_type(t->subtype->symbol->type);
+        if (replace_tag)
+            /*
+             * We're replacing the tag of the underlying type.  If that type is
+             * imported, then we don't know its tag, so we rely on the
+             * asn1_tag_tag_<TypeName> enum value we generated for it, and we
+             * use the asn1_tag_length_<TypeName> enum value to avoid having to
+             * call der_length_tag() at run-time.
+             */
+            fprintf(codefile, "ret += %lu - asn1_tag_length_%s;\n",
+                    (unsigned long)length_tag(t->tag.tagvalue),
+                    t->subtype->symbol->gen_name);
+        else
+            fprintf(codefile, "ret += %lu + der_length_len (ret);\n",
+                    (unsigned long)length_tag(t->tag.tagvalue));
 	free(tname);
 	break;
     }

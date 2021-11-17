@@ -76,9 +76,13 @@ ${kadmin} \
     --realm-max-renewable-life=1month \
     ${R} || exit 1
 
-${kadmin} add -p p1 --use-defaults host/n1.test.h5l.se@${R} || exit 1
-${kadmin} add -p p2 --use-defaults host/n2.test.h5l.se@${R} || exit 1
-${kadmin} add -p p3 --use-defaults host/n3.test.h5l.se@${R} || exit 1
+# Test virtual principals, why not
+${kadmin} add_ns --key-rotation-epoch=now       \
+                 --key-rotation-period=15m      \
+                 --max-ticket-life=10d          \
+                 --max-renewable-life=20d       \
+                 --attributes=                  \
+                 "_/test.h5l.se@${R}" || exit 1
 ${kadmin} ext -k ${keytab} host/n1.test.h5l.se@${R} || exit 1
 ${kadmin} ext -k ${keytab} host/n2.test.h5l.se@${R} || exit 1
 ${kadmin} ext -k ${keytab} host/n3.test.h5l.se@${R} || exit 1

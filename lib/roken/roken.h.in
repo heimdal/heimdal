@@ -132,7 +132,10 @@ typedef int rk_socket_t;
 #define rk_SOCK_ERRNO errno
 #define rk_INVALID_SOCKET (-1)
 
-#define rk_SOCK_INIT() 0
+static inline ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL rk_SOCK_INIT(void) {
+	return 0;
+}
+
 #define rk_SOCK_EXIT() do { } while(0)
 
 #endif  /* WinSock */
@@ -1321,6 +1324,10 @@ int ROKEN_LIB_FUNCTION rk_socket(int, int, int);
 #define EWOULDBLOCK             140
 #endif
 
+#ifdef WIN32
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
+win32_getLibraryVersion(const char *libname, char **outname, char **outversion);
+#endif
 
 #ifdef SOCKET_WRAPPER_REPLACE
 #include <socket_wrapper.h>

@@ -44,6 +44,9 @@
 
 #include <heim_asn1.h>
 #include <hdb_asn1.h>
+typedef HDB_keyset hdb_keyset;
+typedef HDB_entry hdb_entry;
+typedef HDB_entry_alias hdb_entry_alias;
 
 struct hdb_dbinfo;
 
@@ -66,6 +69,9 @@ enum hdb_lockop{ HDB_RLOCK, HDB_WLOCK };
 #define HDB_F_FOR_AS_REQ	4096	/* fetch is for a AS REQ */
 #define HDB_F_FOR_TGS_REQ	8192	/* fetch is for a TGS REQ */
 #define HDB_F_PRECHECK		16384	/* check that the operation would succeed */
+#define HDB_F_DELAY_NEW_KEYS	32768	/* apply [hdb] new_service_key_delay */
+#define HDB_F_SYNTHETIC_OK	65536	/* synthetic principal for PKINIT or GSS preauth OK */
+#define HDB_F_GET_FAST_COOKIE  131072	/* fetch the FX-COOKIE key (not a normal principal) */
 
 /* hdb_capability_flags */
 #define HDB_CAP_F_HANDLE_ENTERPRISE_PRINCIPAL 1
@@ -80,6 +86,12 @@ enum hdb_lockop{ HDB_RLOCK, HDB_WLOCK };
 
 /* key usage for master key */
 #define HDB_KU_MKEY	0x484442
+
+/*
+ * Second component of WELLKNOWN namespace principals, the third component is
+ * the common DNS suffix of the implied virtual hosts.
+ */
+#define HDB_WK_NAMESPACE "HOSTBASED-NAMESPACE"
 
 typedef struct hdb_master_key_data *hdb_master_key;
 
@@ -107,6 +119,7 @@ typedef struct hdb_entry_ex {
 typedef struct HDB {
     void *hdb_db;
     void *hdb_dbc; /** don't use, only for DB3 */
+    const char *hdb_method_name;
     char *hdb_name;
     int hdb_master_key_set;
     hdb_master_key hdb_master_key;
@@ -114,6 +127,17 @@ typedef struct HDB {
     int hdb_capability_flags;
     int lock_count;
     int lock_type;
+    /*
+     * These fields cache config values.
+     *
+     * XXX Move these into a structure that we point to so that we
+     * don't need to break the ABI every time we add a field.
+     */
+    int enable_virtual_hostbased_princs;
+    size_t virtual_hostbased_princ_ndots;   /* Min. # of .s in hostname */
+    size_t virtual_hostbased_princ_maxdots; /* Max. # of .s in namespace */
+    char **virtual_hostbased_princ_svcs;    /* Which svcs are not wildcarded */
+    time_t new_service_key_delay;           /* Delay for new keys */
     /**
      * Open (or create) the a Kerberos database.
      *
@@ -281,10 +305,12 @@ typedef struct HDB {
     krb5_error_code (*hdb_set_sync)(krb5_context, struct HDB *, int);
 }HDB;
 
-#define HDB_INTERFACE_VERSION	10
+#define HDB_INTERFACE_VERSION	11
 
 struct hdb_method {
     int			version;
+    unsigned int	is_file_based:1;
+    unsigned int	can_taste:1;
     krb5_error_code	(*init)(krb5_context, void **);
     void		(*fini)(void *);
     const char *prefix;

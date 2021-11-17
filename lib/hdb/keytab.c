@@ -159,8 +159,9 @@ find_db (krb5_context context,
 	}
     }
     hdb_free_dbinfo(context, &head);
-    if (*dbname == NULL)
-	*dbname = strdup(HDB_DEFAULT_DB);
+    if (*dbname == NULL &&
+        (*dbname = strdup(hdb_default_db(context))) == NULL)
+        return krb5_enomem(context);
     return 0;
 }
 
@@ -211,10 +212,10 @@ hdb_get_entry(krb5_context context,
 	goto out2;
     }
 
-    ret = (*db->hdb_fetch_kvno)(context, db, principal,
-				HDB_F_DECRYPT|HDB_F_KVNO_SPECIFIED|
-				HDB_F_GET_CLIENT|HDB_F_GET_SERVER|HDB_F_GET_KRBTGT,
-				kvno, &ent);
+    ret = hdb_fetch_kvno(context, db, principal,
+                         HDB_F_DECRYPT|HDB_F_KVNO_SPECIFIED|
+                         HDB_F_GET_CLIENT|HDB_F_GET_SERVER|HDB_F_GET_KRBTGT,
+                         0, 0, kvno, &ent);
 
     if(ret == HDB_ERR_NOENTRY) {
 	ret = KRB5_KT_NOTFOUND;

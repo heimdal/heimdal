@@ -31,7 +31,7 @@
 
 RELDIR=kuser
 
-intcflags=-I$(OBJ)
+intcflags=-I$(OBJ) -I$(SRC)\lib\gssapi -I$(OBJDIR)\lib\gssapi -I$(OBJDIR)\lib\gss_preauth
 
 !include ../windows/NTMakefile.w32 
 
@@ -55,6 +55,8 @@ NOINSTPROGRAMS=\
 
 
 BINLIBS=\
+	$(LIBGSS_PREAUTH) \
+	$(LIBGSSAPI)	\
 	$(LIBHEIMDAL)	\
 	$(LIBHEIMNTLM)	\
 	$(LIBHX509)	\

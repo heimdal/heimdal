@@ -44,6 +44,65 @@ struct getargs args[] = {
 
 static int num_args = sizeof(args) / sizeof(args[0]);
 
+/*
+ * Prove that HDB_EntryOrAlias being a CHOICE of hdb_entry or hdb_entry_alias
+ * adds nothing to the encoding of those types.
+ */
+static
+void
+check_HDB_EntryOrAlias(krb5_context context)
+{
+    HDB_EntryOrAlias eoa;
+    hdb_entry entry;
+    hdb_entry_alias alias;
+    krb5_data v;
+    size_t len;
+    int ret;
+
+    memset(&entry, 0, sizeof(entry));
+    memset(&alias, 0, sizeof(alias));
+    memset(&eoa, 0, sizeof(eoa));
+    krb5_data_zero(&v);
+
+    ret = krb5_make_principal(context, &alias.principal, "KTH.SE", "foo",
+                              NULL);
+    if (ret)
+        krb5_err(context, 1, ret, "krb5_make_principal");
+    ASN1_MALLOC_ENCODE(HDB_entry_alias, v.data, v.length, &alias, &len, ret);
+    if (ret)
+        krb5_err(context, 1, ret, "encode_HDB_EntryOrAlias");
+    if (v.length != len)
+        abort();
+    ret = decode_HDB_EntryOrAlias(v.data, v.length, &eoa, &len);
+    if (ret)
+        krb5_err(context, 1, ret, "decode_HDB_EntryOrAlias");
+    if (v.length != len)
+        abort();
+    free_HDB_EntryOrAlias(&eoa);
+    free_HDB_entry_alias(&alias);
+    krb5_data_free(&v);
+
+    ret = krb5_make_principal(context, &entry.principal, "KTH.SE", "foo",
+                              NULL);
+    if (ret)
+        krb5_err(context, 1, ret, "krb5_make_principal");
+    entry.kvno = 5;
+    entry.flags.initial = 1;
+    ASN1_MALLOC_ENCODE(HDB_entry, v.data, v.length, &entry, &len, ret);
+    if (ret)
+        krb5_err(context, 1, ret, "encode_HDB_EntryOrAlias");
+    if (v.length != len)
+        abort();
+    ret = decode_HDB_EntryOrAlias(v.data, v.length, &eoa, &len);
+    if (ret)
+        krb5_err(context, 1, ret, "decode_HDB_EntryOrAlias");
+    if (v.length != len)
+        abort();
+    free_HDB_EntryOrAlias(&eoa);
+    free_HDB_entry(&entry);
+    krb5_data_free(&v);
+}
+
 int
 main(int argc, char **argv)
 {
@@ -67,6 +126,8 @@ main(int argc, char **argv)
     ret = krb5_init_context(&context);
     if (ret)
 	errx (1, "krb5_init_context failed: %d", ret);
+
+    check_HDB_EntryOrAlias(context);
 
     ret = hdb_get_dbinfo(context, &info);
     if (ret)

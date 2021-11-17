@@ -82,6 +82,11 @@
 
 	enable-http = true
 
+        synthetic_clients = true
+
+	enable_gss_preauth = true
+	gss_mechanisms_allowed = sanon-x25519
+
 	enable-pkinit = true
 	pkinit_identity = FILE:@srcdir@/../../lib/hx509/data/kdc.crt,@srcdir@/../../lib/hx509/data/kdc.key
 	pkinit_anchors = FILE:@srcdir@/../../lib/hx509/data/ca.crt
@@ -114,8 +119,8 @@
 		}
 	}
 
-	signal_socket = @objdir@/signal
-	iprop-stats = @objdir@/iprop-stats
+	signal_socket = @objdir@/@signalsocket@
+	iprop-stats = @objdir@/@ipropstats@
 	iprop-acl = @srcdir@/iprop-acl
         log-max-size = 40000
 
@@ -123,14 +128,14 @@
 	db-dir = @objdir@
 
 [logging]
-	kdc = 0-/FILE:@objdir@/messages.log
-	krb5 = 0-/FILE:@objdir@/messages.log
-	default = 0-/FILE:@objdir@/messages.log
+	kdc = 0-/FILE:@objdir@/@messages@.log
+	krb5 = 0-/FILE:@objdir@/@messages@.log
+	default = 0-/FILE:@objdir@/@messages@.log
 
 # If you are doing preformance measurements on OSX you want to change
 # the kdc LOG line from = to - below to keep the FILE open and avoid
 # open/write/close which is blocking (rdar:// ) on OSX.
-#	kdc = 0-/FILE=@objdir@/messages.log
+#	kdc = 0-/FILE=@objdir@/@messages@.log
 
 [kadmin]
 	save-password = true

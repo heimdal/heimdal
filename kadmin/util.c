@@ -47,6 +47,10 @@ get_response(const char *prompt, const char *def, char *buf, size_t len);
  */
 
 struct units kdb_attrs[] = {
+    { "disallow-client",	KRB5_KDB_DISALLOW_CLIENT },
+    { "virtual",		KRB5_KDB_VIRTUAL },
+    { "virtual-keys",		KRB5_KDB_VIRTUAL_KEYS },
+    { "materialize",		KRB5_KDB_MATERIALIZE },
     { "allow-digest",		KRB5_KDB_ALLOW_DIGEST },
     { "allow-kerberos4",	KRB5_KDB_ALLOW_KERBEROS4 },
     { "trusted-for-delegation",	KRB5_KDB_TRUSTED_FOR_DELEGATION },
@@ -246,6 +250,14 @@ str2time_t (const char *str, time_t *t)
 	if (*t < 0)
 	    return -1;
 	*t += time(NULL);
+	return 0;
+    }
+    if (str[0] == '-') {
+	str++;
+	*t = parse_time(str, "month");
+	if (*t < 0)
+	    return -1;
+	*t = time(NULL) - *t;
 	return 0;
     }
 
@@ -623,8 +635,8 @@ foreach_principal(const char *exp_str,
 	}
 	ret = (*func)(princ_ent, data);
 	if(ret) {
-	    krb5_clear_error_message(context);
 	    krb5_warn(context, ret, "%s %s", funcname, princs[i]);
+	    krb5_clear_error_message(context);
 	    if (saved_ret == 0)
 		saved_ret = ret;
 	}

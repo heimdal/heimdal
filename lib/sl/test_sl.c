@@ -58,6 +58,9 @@ struct {
     { 1, "\"foo bar baz\"", 1, { "foo bar baz" }},
     { 1, "\\\"foo bar baz", 3, { "\"foo", "bar", "baz" }},
     { 1, "\\ foo bar baz", 3, { " foo", "bar", "baz" }},
+    { 1, "foo\\\\\\\"barbaz", 1, { "foo\\\"barbaz" }},
+    { 1, "foobar\\\" baz", 2, { "foobar\"", "baz" }},
+    { 1, "foobar\\ \\ baz", 1, { "foobar  baz" }},
     { 0, "\\", 0, { "" }},
     { 0, "\"", 0, { "" }}
 };

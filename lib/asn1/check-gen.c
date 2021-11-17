@@ -45,6 +45,7 @@
 #include <krb5_asn1.h>
 #include <heim_asn1.h>
 #include <rfc2459_asn1.h>
+#include <x690sample_asn1.h>
 #include <test_asn1.h>
 #include <cms_asn1.h>
 
@@ -1015,7 +1016,6 @@ test_choice (void)
     return ret;
 }
 
-#ifdef IMPLICIT_TAGGING_WORKS
 static int
 cmp_TESTImplicit (void *a, void *b)
 {
@@ -1027,31 +1027,111 @@ cmp_TESTImplicit (void *a, void *b)
     COMPARE_INTEGER(aa,ab,ti3);
     return 0;
 }
-#endif
 
-/*
-UNIV CONS Sequence 14
-  CONTEXT PRIM 0 1 00
-  CONTEXT CONS 1 6
-    CONTEXT CONS 127 3
-      UNIV PRIM Integer 1 02
-  CONTEXT PRIM 2 1 03
-*/
+static int
+cmp_TESTImplicit2 (void *a, void *b)
+{
+    TESTImplicit2 *aa = a;
+    TESTImplicit2 *ab = b;
+
+    COMPARE_INTEGER(aa,ab,ti1);
+    COMPARE_INTEGER(aa,ab,ti3);
+    IF_OPT_COMPARE(aa,ab,ti4) {
+	COMPARE_INTEGER(aa,ab,ti4[0]);
+    }
+    return 0;
+}
+
+static int
+cmp_TESTImplicit3 (void *a, void *b)
+{
+    TESTImplicit3 *aa = a;
+    TESTImplicit3 *ab = b;
+
+    COMPARE_INTEGER(aa,ab,element);
+    if (aa->element == choice_TESTImplicit3_ti1) {
+        COMPARE_INTEGER(aa,ab,u.ti1);
+    } else {
+        COMPARE_INTEGER(aa,ab,u.ti2.element);
+        COMPARE_INTEGER(aa,ab,u.ti2.u.i1);
+    }
+    return 0;
+}
+
+static int
+cmp_TESTImplicit4 (void *a, void *b)
+{
+    TESTImplicit4 *aa = a;
+    TESTImplicit4 *ab = b;
+
+    COMPARE_INTEGER(aa,ab,element);
+    if (aa->element == choice_TESTImplicit4_ti1) {
+        COMPARE_INTEGER(aa,ab,u.ti1);
+    } else {
+        COMPARE_INTEGER(aa,ab,u.ti2.element);
+        COMPARE_INTEGER(aa,ab,u.ti2.u.i1);
+    }
+    return 0;
+}
 
 static int
 test_implicit (void)
 {
     int ret = 0;
-#ifdef IMPLICIT_TAGGING_WORKS
+    /*
+     * UNIV CONS Sequence = 14 bytes {
+     *   CONTEXT PRIM tag 0 = 1 bytes [0] IMPLICIT content
+     *   CONTEXT CONS tag 1 = 6 bytes [1]
+     *     CONTEXT CONS tag 127 = 3 bytes [127]
+     *       UNIV PRIM Integer = integer 2
+     *   CONTEXT PRIM tag 2 = 1 bytes [2] IMPLICIT content
+     * }
+     */
     struct test_case tests[] = {
-	{ NULL,  18,
-	  "\x30\x10\x80\x01\x00\xa1\x06\xbf"
-	  "\x7f\x03\x02\x01\x02\xa2\x03\x84\x01\x03",
+	{ NULL,  16,
+          "\x30\x0e\x80\x01\x00\xa1\x06\xbf\x7f\x03\x02\x01\x02\x82\x01\x03",
 	  "implicit 1" }
     };
+    /*
+     * UNIV CONS Sequence = 10 bytes {
+     *   CONTEXT PRIM tag 0 = 1 bytes [0] IMPLICIT content
+     *   CONTEXT PRIM tag 2 = 1 bytes [2] IMPLICIT content
+     *   CONTEXT PRIM tag 51 = 1 bytes [51] IMPLICIT content
+     * }
+     */
+    struct test_case tests2[] = {
+	{ NULL,  12,
+          "\x30\x0a\x80\x01\x01\x82\x01\x03\x9f\x33\x01\x04",
+	  "implicit 2" }
+    };
+    /*
+     * CONTEXT CONS tag 5 = 5 bytes [5]
+     *   CONTEXT CONS tag 1 = 3 bytes [1]
+     *     UNIV PRIM Integer = integer 5
+     */
+    struct test_case tests3[] = {
+	{ NULL,  7,
+          "\xa5\x05\xa1\x03\x02\x01\x05",
+	  "implicit 3" }
+    };
+    /*
+     * Notice: same as tests3[].bytes.
+     *
+     * CONTEXT CONS tag 5 = 5 bytes [5]
+     *   CONTEXT CONS tag 1 = 3 bytes [1]
+     *     UNIV PRIM Integer = integer 5
+     */
+    struct test_case tests4[] = {
+	{ NULL,  7,
+          "\xa5\x05\xa1\x03\x02\x01\x05",
+	  "implicit 4" }
+    };
 
-    int ntests = sizeof(tests) / sizeof(*tests);
     TESTImplicit c0;
+    TESTImplicit2 c1;
+    TESTImplicit3 c2;
+    TESTImplicit4 c3;
+    int ti4 = 4;
 
     memset(&c0, 0, sizeof(c0));
     c0.ti1 = 0;
@@ -1059,23 +1139,64 @@ test_implicit (void)
     c0.ti3 = 3;
     tests[0].val = &c0;
 
-    ret += generic_test (tests, ntests, sizeof(TESTImplicit),
-			 (generic_encode)encode_TESTImplicit,
-			 (generic_length)length_TESTImplicit,
-			 (generic_decode)decode_TESTImplicit,
-			 (generic_free)free_TESTImplicit,
-			 cmp_TESTImplicit,
-			 (generic_copy)copy_TESTImplicit);
+    memset(&c1, 0, sizeof(c1));
+    c1.ti1 = 1;
+    c1.ti3 = 3;
+    c1.ti4 = &ti4;
+    tests2[0].val = &c1;
 
-    ret += generic_test (tests, ntests, sizeof(TESTImplicit2),
-			 (generic_encode)encode_TESTImplicit2,
-			 (generic_length)length_TESTImplicit2,
-			 (generic_decode)decode_TESTImplicit2,
-			 (generic_free)free_TESTImplicit2,
-			 cmp_TESTImplicit,
-			 NULL);
+    memset(&c2, 0, sizeof(c2));
+    c2.element = choice_TESTImplicit3_ti2;
+    c2.u.ti2.element = choice_TESTImplicit3_ti2_i1;
+    c2.u.ti2.u.i1 = 5;
+    tests3[0].val = &c2;
 
-#endif /* IMPLICIT_TAGGING_WORKS */
+    memset(&c3, 0, sizeof(c3));
+    c3.element = choice_TESTImplicit4_ti2;
+    c3.u.ti2.element = choice_TESTChoice2_i1;
+    c3.u.ti2.u.i1 = 5;
+    tests4[0].val = &c3;
+
+    ret += generic_test(tests,
+                        sizeof(tests) / sizeof(*tests),
+                        sizeof(TESTImplicit),
+                        (generic_encode)encode_TESTImplicit,
+                        (generic_length)length_TESTImplicit,
+                        (generic_decode)decode_TESTImplicit,
+                        (generic_free)free_TESTImplicit,
+                        cmp_TESTImplicit,
+                        (generic_copy)copy_TESTImplicit);
+
+    ret += generic_test(tests2,
+                        sizeof(tests2) / sizeof(*tests2),
+                        sizeof(TESTImplicit2),
+                        (generic_encode)encode_TESTImplicit2,
+                        (generic_length)length_TESTImplicit2,
+                        (generic_decode)decode_TESTImplicit2,
+                        (generic_free)free_TESTImplicit2,
+                        cmp_TESTImplicit2,
+                        NULL);
+
+    ret += generic_test(tests3,
+                        sizeof(tests3) / sizeof(*tests3),
+                        sizeof(TESTImplicit3),
+                        (generic_encode)encode_TESTImplicit3,
+                        (generic_length)length_TESTImplicit3,
+                        (generic_decode)decode_TESTImplicit3,
+                        (generic_free)free_TESTImplicit3,
+                        cmp_TESTImplicit3,
+                        NULL);
+
+    ret += generic_test(tests4,
+                        sizeof(tests4) / sizeof(*tests4),
+                        sizeof(TESTImplicit4),
+                        (generic_encode)encode_TESTImplicit4,
+                        (generic_length)length_TESTImplicit4,
+                        (generic_decode)decode_TESTImplicit4,
+                        (generic_free)free_TESTImplicit4,
+                        cmp_TESTImplicit4,
+                        NULL);
+
     return ret;
 }
 
@@ -1497,10 +1618,10 @@ check_TESTMechTypeList(void)
 	errx(1, "TESTMechTypeList: %d", ret);
     if (len != size)
 	abort();
+    free(ptr);
     return 0;
 }
 
-#ifdef IMPLICIT_TAGGING_WORKS
 static int
 cmp_TESTSeqOf4(void *a, void *b)
 {
@@ -1543,13 +1664,11 @@ cmp_TESTSeqOf4(void *a, void *b)
     }
     return 0;
 }
-#endif  /* IMPLICIT_TAGGING_WORKS */
 
 static int
 test_seq4 (void)
 {
     int ret = 0;
-#ifdef IMPLICIT_TAGGING_WORKS
     struct test_case tests[] = {
 	{ NULL,  2,
 	  "\x30\x00",
@@ -1672,7 +1791,6 @@ test_seq4 (void)
 			 (generic_free)free_TESTSeqOf4,
 			 cmp_TESTSeqOf4,
 			 (generic_copy)copy_TESTSeqOf4);
-#endif  /* IMPLICIT_TAGGING_WORKS */
     return ret;
 }
 
@@ -1770,43 +1888,614 @@ test_seqof5(void)
     return ret;
 }
 
+static int
+cmp_default(void *a, void *b)
+{
+    TESTDefault *aa = a;
+    TESTDefault *ab = b;
+
+    COMPARE_STRING(aa,ab,name);
+    COMPARE_INTEGER(aa,ab,version);
+    COMPARE_INTEGER(aa,ab,maxint);
+    COMPARE_INTEGER(aa,ab,works);
+    return 0;
+}
+
+static int
+test_default(void)
+{
+    struct test_case tests[] = {
+	{ NULL, 2, "\x30\x00", NULL },
+	{ NULL, 25,
+          "\x30\x17\x0c\x07\x68\x65\x69\x6d\x64\x61"
+          "\x6c\xa0\x03\x02\x01\x07\x02\x04\x7f\xff"
+          "\xff\xff\x01\x01\x00",
+	  NULL
+	},
+	{ NULL, 10,
+          "\x30\x08\xa0\x03\x02\x01\x07\x01\x01\x00",
+	  NULL
+	},
+	{ NULL, 17,
+          "\x30\x0f\x0c\x07\x68\x65\x69\x6d\x64\x61\x6c\x02\x04"
+          "\x7f\xff\xff\xff",
+	  NULL
+	}
+    };
+
+    TESTDefault values[] = {
+	{ "Heimdal", 8, 9223372036854775807, 1 },
+	{ "heimdal", 7, 2147483647, 0 },
+	{ "Heimdal", 7, 9223372036854775807, 0 },
+	{ "heimdal", 8, 2147483647, 1 },
+    };
+    int i, ret;
+    int ntests = sizeof(tests) / sizeof(*tests);
+
+    for (i = 0; i < ntests; ++i) {
+	tests[i].val = &values[i];
+	if (asprintf (&tests[i].name, "TESTDefault %d", i) < 0)
+	    errx(1, "malloc");
+	if (tests[i].name == NULL)
+	    errx(1, "malloc");
+    }
+
+    ret = generic_test (tests, ntests, sizeof(TESTDefault),
+			(generic_encode)encode_TESTDefault,
+			(generic_length)length_TESTDefault,
+			(generic_decode)decode_TESTDefault,
+			(generic_free)free_TESTDefault,
+			cmp_default,
+			(generic_copy)copy_TESTDefault);
+    for (i = 0; i < ntests; ++i)
+	free(tests[i].name);
+
+    return ret;
+}
+
+static int
+test_x690sample(void)
+{
+    /*
+     * Taken from X.690, Appendix A, though sadly it's not specified whether
+     * it's in BER, DER, or CER, but it is clearly BER and neither DER nor CER
+     * because the tags of the members of the X690SamplePersonnelRecord type
+     * are not canonically sorted in the given sample.
+     *
+     * Our compiler does NOT canonically sort the members of SET { ... } types
+     * so it produces the same encoding after decoding this test vector.  That
+     * is clearly a bug given that we aim to output DER.
+     *
+     * The template compiler doesn't even decode SET { ... } values properly
+     * when their members are not in the same order as defined (but the regular
+     * compiler does).
+     */
+    X690SamplePersonnelRecord r;
+    heim_octet_string os;
+    unsigned char encoded_sample[] = {
+      0x60, 0x81, 0x85, 0x61, 0x10, 0x1a, 0x04, 0x4a, 0x6f, 0x68, 0x6e, 0x1a,
+      0x01, 0x50, 0x1a, 0x05, 0x53, 0x6d, 0x69, 0x74, 0x68, 0xa0, 0x0a, 0x1a,
+      0x08, 0x44, 0x69, 0x72, 0x65, 0x63, 0x74, 0x6f, 0x72, 0x42, 0x01, 0x33,
+      0xa1, 0x0a, 0x43, 0x08, 0x31, 0x39, 0x37, 0x31, 0x30, 0x39, 0x31, 0x37,
+      0xa2, 0x12, 0x61, 0x10, 0x1a, 0x04, 0x4d, 0x61, 0x72, 0x79, 0x1a, 0x01,
+      0x54, 0x1a, 0x05, 0x53, 0x6d, 0x69, 0x74, 0x68, 0xa3, 0x42, 0x31, 0x1f,
+      0x61, 0x11, 0x1a, 0x05, 0x52, 0x61, 0x6c, 0x70, 0x68, 0x1a, 0x01, 0x54,
+      0x1a, 0x05, 0x53, 0x6d, 0x69, 0x74, 0x68, 0xa0, 0x0a, 0x43, 0x08, 0x31,
+      0x39, 0x35, 0x37, 0x31, 0x31, 0x31, 0x31, 0x31, 0x1f, 0x61, 0x11, 0x1a,
+      0x05, 0x53, 0x75, 0x73, 0x61, 0x6e, 0x1a, 0x01, 0x42, 0x1a, 0x05, 0x53,
+      0x6d, 0x69, 0x74, 0x68, 0xa0, 0x0a, 0x43, 0x08, 0x31, 0x39, 0x35, 0x39,
+      0x30, 0x37, 0x31, 0x37
+    };
+    size_t sz = 0;
+    int ret;
+
+    memset(&r, 0, sizeof(r));
+    if (decode_X690SamplePersonnelRecord(encoded_sample, sizeof(encoded_sample), &r, &sz))
+        return 1;
+    if (sz != sizeof(encoded_sample))
+        return 1;
+    free_X690SamplePersonnelRecord(&r);
+    memset(&r, 0, sizeof(r));
+
+    /* We re-construct the record manually to double-check the spec */
+    r.name.givenName = strdup("John");
+    r.name.initial = strdup("P");
+    r.name.familyName = strdup("Smith");
+    r.title = strdup("Director");
+    r.dateOfHire = strdup("19710917");
+    r.number = 51;
+    r.nameOfSpouse.givenName = strdup("Mary");
+    r.nameOfSpouse.initial = strdup("T");
+    r.nameOfSpouse.familyName = strdup("Smith");
+    r.children.val = calloc(2, sizeof(r.children.val[0]));
+    r.children.len = 2;
+    r.children.val[0].name.givenName = strdup("Ralph");
+    r.children.val[0].name.initial = strdup("T");
+    r.children.val[0].name.familyName = strdup("Smith");
+    r.children.val[0].dateOfBirth = strdup("19571111");
+    r.children.val[1].name.givenName = strdup("Susan");
+    r.children.val[1].name.initial = strdup("B");
+    r.children.val[1].name.familyName = strdup("Smith");
+    r.children.val[1].dateOfBirth = strdup("19590717");
+    os.length = 0;
+    os.data = 0;
+    ASN1_MALLOC_ENCODE(X690SamplePersonnelRecord, os.data, os.length, &r, &sz,
+                       ret);
+    if (ret || sz != sizeof(encoded_sample) || sz != os.length ||
+        memcmp(encoded_sample, os.data, sz) != 0)
+        return 1;
+    free_X690SamplePersonnelRecord(&r);
+    free(os.data);
+    return 0;
+}
+
+#if ASN1_IOS_SUPPORTED
+static int
+test_ios(void)
+{
+    unsigned char encoded_sample[] = {
+      0x30, 0x82, 0x04, 0x8e, 0x30, 0x82, 0x03, 0x76,
+      0xa0, 0x03, 0x02, 0x01, 0x02, 0x02, 0x14, 0x6a,
+      0x05, 0x97, 0xba, 0x71, 0xd7, 0xe6, 0xd3, 0xac,
+      0x0e, 0xdc, 0x9e, 0xdc, 0x95, 0xa1, 0x5b, 0x99,
+      0x8d, 0xe4, 0x0a, 0x30, 0x0d, 0x06, 0x09, 0x2a,
+      0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x01, 0x0b,
+      0x05, 0x00, 0x30, 0x55, 0x31, 0x0b, 0x30, 0x09,
+      0x06, 0x03, 0x55, 0x04, 0x06, 0x13, 0x02, 0x43,
+      0x48, 0x31, 0x1e, 0x30, 0x1c, 0x06, 0x03, 0x55,
+      0x04, 0x0a, 0x13, 0x15, 0x53, 0x54, 0x4d, 0x69,
+      0x63, 0x72, 0x6f, 0x65, 0x6c, 0x65, 0x63, 0x74,
+      0x72, 0x6f, 0x6e, 0x69, 0x63, 0x73, 0x20, 0x4e,
+      0x56, 0x31, 0x26, 0x30, 0x24, 0x06, 0x03, 0x55,
+      0x04, 0x03, 0x13, 0x1d, 0x53, 0x54, 0x4d, 0x20,
+      0x54, 0x50, 0x4d, 0x20, 0x45, 0x4b, 0x20, 0x49,
+      0x6e, 0x74, 0x65, 0x72, 0x6d, 0x65, 0x64, 0x69,
+      0x61, 0x74, 0x65, 0x20, 0x43, 0x41, 0x20, 0x30,
+      0x35, 0x30, 0x1e, 0x17, 0x0d, 0x31, 0x38, 0x31,
+      0x32, 0x31, 0x34, 0x30, 0x30, 0x30, 0x30, 0x30,
+      0x30, 0x5a, 0x17, 0x0d, 0x32, 0x38, 0x31, 0x32,
+      0x31, 0x34, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30,
+      0x5a, 0x30, 0x00, 0x30, 0x82, 0x01, 0x22, 0x30,
+      0x0d, 0x06, 0x09, 0x2a, 0x86, 0x48, 0x86, 0xf7,
+      0x0d, 0x01, 0x01, 0x01, 0x05, 0x00, 0x03, 0x82,
+      0x01, 0x0f, 0x00, 0x30, 0x82, 0x01, 0x0a, 0x02,
+      0x82, 0x01, 0x01, 0x00, 0xcc, 0x14, 0xeb, 0x27,
+      0xa7, 0x8c, 0xeb, 0x0e, 0xa4, 0x86, 0xfa, 0x2d,
+      0xf7, 0x83, 0x5f, 0x5f, 0xa8, 0xe9, 0x05, 0xb0,
+      0x97, 0x01, 0x2b, 0x5b, 0xde, 0x50, 0x38, 0x0c,
+      0x35, 0x5b, 0x1a, 0x2a, 0x72, 0x1b, 0xbc, 0x3d,
+      0x08, 0xdd, 0x21, 0x79, 0x6c, 0xdb, 0x23, 0x9f,
+      0xa9, 0x53, 0x10, 0x65, 0x1b, 0x1b, 0x56, 0xfd,
+      0x2c, 0xfe, 0x53, 0xc8, 0x73, 0x52, 0xeb, 0xd9,
+      0x96, 0xe3, 0x32, 0x56, 0x16, 0x04, 0x04, 0xce,
+      0x93, 0x02, 0xa0, 0x80, 0x66, 0x80, 0x1e, 0x78,
+      0x6a, 0x2f, 0x86, 0xe1, 0x81, 0xf9, 0x49, 0x96,
+      0x6f, 0x49, 0x2a, 0x85, 0xb5, 0x8e, 0xaa, 0x4a,
+      0x6a, 0x8c, 0xb3, 0x69, 0x75, 0x51, 0xbb, 0x23,
+      0x6e, 0x87, 0xcc, 0x7b, 0xf8, 0xec, 0x13, 0x47,
+      0x87, 0x1c, 0x91, 0xe1, 0x54, 0x37, 0xe8, 0xf2,
+      0x66, 0xbf, 0x1e, 0xa5, 0xeb, 0x27, 0x1f, 0xdc,
+      0xf3, 0x74, 0xd8, 0xb4, 0x7d, 0xf8, 0xbc, 0xe8,
+      0x9e, 0x1f, 0xad, 0x61, 0xc2, 0xa0, 0x88, 0xcb,
+      0x40, 0x36, 0xb3, 0x59, 0xcb, 0x72, 0xa2, 0x94,
+      0x97, 0x3f, 0xed, 0xcc, 0xf0, 0xc3, 0x40, 0xaf,
+      0xfd, 0x14, 0xb6, 0x4f, 0x04, 0x11, 0x65, 0x58,
+      0x1a, 0xca, 0x34, 0x14, 0x7c, 0x1c, 0x75, 0x61,
+      0x70, 0x47, 0x05, 0x8f, 0x7e, 0xd7, 0xd6, 0x03,
+      0xe0, 0x32, 0x50, 0x80, 0x94, 0xfa, 0x73, 0xe8,
+      0xb9, 0x15, 0x3d, 0xa3, 0xbf, 0x25, 0x5d, 0x2c,
+      0xbb, 0xc5, 0xdf, 0x30, 0x1b, 0xa8, 0xf7, 0x4d,
+      0x19, 0x8b, 0xeb, 0xce, 0x86, 0x04, 0x0f, 0xc1,
+      0xd2, 0x92, 0x7c, 0x76, 0x57, 0x41, 0x44, 0x90,
+      0xd8, 0x02, 0xf4, 0x82, 0xf3, 0xeb, 0xf2, 0xde,
+      0x35, 0xee, 0x14, 0x9a, 0x1a, 0x6d, 0xe8, 0xd1,
+      0x68, 0x91, 0xfb, 0xfb, 0xa0, 0x2a, 0x18, 0xaf,
+      0xe5, 0x9f, 0x9d, 0x6f, 0x14, 0x97, 0x44, 0xe5,
+      0xf0, 0xd5, 0x59, 0xb1, 0x02, 0x03, 0x01, 0x00,
+      0x01, 0xa3, 0x82, 0x01, 0xa9, 0x30, 0x82, 0x01,
+      0xa5, 0x30, 0x1f, 0x06, 0x03, 0x55, 0x1d, 0x23,
+      0x04, 0x18, 0x30, 0x16, 0x80, 0x14, 0x1a, 0xdb,
+      0x99, 0x4a, 0xb5, 0x8b, 0xe5, 0x7a, 0x0c, 0xc9,
+      0xb9, 0x00, 0xe7, 0x85, 0x1e, 0x1a, 0x43, 0xc0,
+      0x86, 0x60, 0x30, 0x42, 0x06, 0x03, 0x55, 0x1d,
+      0x20, 0x04, 0x3b, 0x30, 0x39, 0x30, 0x37, 0x06,
+      0x04, 0x55, 0x1d, 0x20, 0x00, 0x30, 0x2f, 0x30,
+      0x2d, 0x06, 0x08, 0x2b, 0x06, 0x01, 0x05, 0x05,
+      0x07, 0x02, 0x01, 0x16, 0x21, 0x68, 0x74, 0x74,
+      0x70, 0x3a, 0x2f, 0x2f, 0x77, 0x77, 0x77, 0x2e,
+      0x73, 0x74, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x54,
+      0x50, 0x4d, 0x2f, 0x72, 0x65, 0x70, 0x6f, 0x73,
+      0x69, 0x74, 0x6f, 0x72, 0x79, 0x2f, 0x30, 0x59,
+      0x06, 0x03, 0x55, 0x1d, 0x11, 0x01, 0x01, 0xff,
+      0x04, 0x4f, 0x30, 0x4d, 0xa4, 0x4b, 0x30, 0x49,
+      0x31, 0x16, 0x30, 0x14, 0x06, 0x05, 0x67, 0x81,
+      0x05, 0x02, 0x01, 0x0c, 0x0b, 0x69, 0x64, 0x3a,
+      0x35, 0x33, 0x35, 0x34, 0x34, 0x44, 0x32, 0x30,
+      0x31, 0x17, 0x30, 0x15, 0x06, 0x05, 0x67, 0x81,
+      0x05, 0x02, 0x02, 0x0c, 0x0c, 0x53, 0x54, 0x33,
+      0x33, 0x48, 0x54, 0x50, 0x48, 0x41, 0x48, 0x43,
+      0x30, 0x31, 0x16, 0x30, 0x14, 0x06, 0x05, 0x67,
+      0x81, 0x05, 0x02, 0x03, 0x0c, 0x0b, 0x69, 0x64,
+      0x3a, 0x30, 0x30, 0x34, 0x39, 0x30, 0x30, 0x30,
+      0x38, 0x30, 0x67, 0x06, 0x03, 0x55, 0x1d, 0x09,
+      0x04, 0x60, 0x30, 0x5e, 0x30, 0x17, 0x06, 0x05,
+      0x67, 0x81, 0x05, 0x02, 0x10, 0x31, 0x0e, 0x30,
+      0x0c, 0x0c, 0x03, 0x32, 0x2e, 0x30, 0x02, 0x01,
+      0x00, 0x02, 0x02, 0x00, 0x8a, 0x30, 0x43, 0x06,
+      0x05, 0x67, 0x81, 0x05, 0x02, 0x12, 0x31, 0x3a,
+      0x30, 0x38, 0x02, 0x01, 0x00, 0x01, 0x01, 0xff,
+      0xa0, 0x03, 0x0a, 0x01, 0x01, 0xa1, 0x03, 0x0a,
+      0x01, 0x00, 0xa2, 0x03, 0x0a, 0x01, 0x00, 0xa3,
+      0x10, 0x30, 0x0e, 0x16, 0x03, 0x33, 0x2e, 0x31,
+      0x0a, 0x01, 0x04, 0x0a, 0x01, 0x02, 0x01, 0x01,
+      0xff, 0xa4, 0x0f, 0x30, 0x0d, 0x16, 0x05, 0x31,
+      0x34, 0x30, 0x2d, 0x32, 0x0a, 0x01, 0x02, 0x01,
+      0x01, 0x00, 0x30, 0x0e, 0x06, 0x03, 0x55, 0x1d,
+      0x0f, 0x01, 0x01, 0xff, 0x04, 0x04, 0x03, 0x02,
+      0x05, 0x20, 0x30, 0x0c, 0x06, 0x03, 0x55, 0x1d,
+      0x13, 0x01, 0x01, 0xff, 0x04, 0x02, 0x30, 0x00,
+      0x30, 0x10, 0x06, 0x03, 0x55, 0x1d, 0x25, 0x04,
+      0x09, 0x30, 0x07, 0x06, 0x05, 0x67, 0x81, 0x05,
+      0x08, 0x01, 0x30, 0x4a, 0x06, 0x08, 0x2b, 0x06,
+      0x01, 0x05, 0x05, 0x07, 0x01, 0x01, 0x04, 0x3e,
+      0x30, 0x3c, 0x30, 0x3a, 0x06, 0x08, 0x2b, 0x06,
+      0x01, 0x05, 0x05, 0x07, 0x30, 0x02, 0x86, 0x2e,
+      0x68, 0x74, 0x74, 0x70, 0x3a, 0x2f, 0x2f, 0x73,
+      0x65, 0x63, 0x75, 0x72, 0x65, 0x2e, 0x67, 0x6c,
+      0x6f, 0x62, 0x61, 0x6c, 0x73, 0x69, 0x67, 0x6e,
+      0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x73, 0x74, 0x6d,
+      0x74, 0x70, 0x6d, 0x65, 0x6b, 0x69, 0x6e, 0x74,
+      0x30, 0x35, 0x2e, 0x63, 0x72, 0x74, 0x30, 0x0d,
+      0x06, 0x09, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d,
+      0x01, 0x01, 0x0b, 0x05, 0x00, 0x03, 0x82, 0x01,
+      0x01, 0x00, 0x3d, 0x4c, 0x38, 0x1e, 0x5b, 0x4f,
+      0x1b, 0xcb, 0xe0, 0x9c, 0x63, 0xd5, 0x2f, 0x1f,
+      0x04, 0x57, 0x0c, 0xae, 0xa1, 0x42, 0xfd, 0x9c,
+      0xd9, 0x42, 0x04, 0x3b, 0x11, 0xf8, 0xe3, 0xbd,
+      0xcf, 0x50, 0x00, 0x7a, 0xe1, 0x6c, 0xf8, 0x86,
+      0x90, 0x13, 0x04, 0x1e, 0x92, 0xcd, 0xd3, 0x28,
+      0x0b, 0xa4, 0xb5, 0x1f, 0xbb, 0xd4, 0x05, 0x82,
+      0xed, 0x75, 0x02, 0x19, 0xe2, 0x61, 0xa6, 0x95,
+      0x09, 0x56, 0x74, 0x85, 0x5a, 0xac, 0xeb, 0x52,
+      0x0a, 0xda, 0xff, 0x9e, 0x7e, 0x90, 0x84, 0x80,
+      0xa3, 0x9c, 0xdc, 0xf9, 0x00, 0x46, 0x2d, 0x91,
+      0x71, 0x96, 0x0f, 0xfe, 0x55, 0xd3, 0xac, 0x49,
+      0xe8, 0xc9, 0x81, 0x34, 0x1b, 0xbd, 0x2e, 0xfb,
+      0xcc, 0x25, 0x2a, 0x4c, 0x18, 0xa4, 0xf3, 0xb7,
+      0xc8, 0x4c, 0xce, 0x42, 0xce, 0x70, 0xa2, 0x08,
+      0xc8, 0x4d, 0x26, 0x30, 0xa7, 0xab, 0xfb, 0xe7,
+      0x2d, 0x62, 0x71, 0xe7, 0x5b, 0x9f, 0xf1, 0xc9,
+      0x71, 0xd2, 0x0e, 0xb3, 0xdb, 0xd7, 0x63, 0xf1,
+      0xe0, 0x4d, 0x83, 0x4e, 0xaa, 0x69, 0x2d, 0x2e,
+      0x40, 0x01, 0xbb, 0xf4, 0x73, 0x0a, 0x3e, 0x3f,
+      0xda, 0x97, 0x11, 0xae, 0x38, 0x65, 0x24, 0xd9,
+      0x1c, 0x63, 0xbe, 0x0e, 0x51, 0x6d, 0x00, 0xd5,
+      0xc6, 0x14, 0x1f, 0xcc, 0xf6, 0xc5, 0x39, 0xf3,
+      0x51, 0x8e, 0x18, 0x00, 0x49, 0x86, 0x5b, 0xe1,
+      0x6b, 0x69, 0xca, 0xe1, 0xf8, 0xcb, 0x7f, 0xdc,
+      0x47, 0x4b, 0x38, 0xf7, 0xee, 0x56, 0xcb, 0xe7,
+      0xd8, 0xa8, 0x9d, 0x9b, 0xa9, 0x9b, 0x65, 0xd5,
+      0x26, 0x5a, 0xef, 0x32, 0xaa, 0x62, 0x42, 0x6b,
+      0x10, 0xe6, 0xd7, 0x5b, 0xb8, 0x67, 0x7e, 0xc4,
+      0x4f, 0x75, 0x5b, 0xbc, 0x28, 0x06, 0xfd, 0x2b,
+      0x4e, 0x04, 0xbd, 0xf5, 0xd4, 0x42, 0x59, 0xdb,
+      0xea, 0xa4, 0x2b, 0x6f, 0x56, 0x3d, 0xf7, 0xaa,
+      0x75, 0x06,
+    };
+    char cert_json[] = {
+	"{\"_type\":\"Certificate\",\"tbsCertificate\":{\"_type\":\"TBSCertificate"
+	"\",\"_save\":\"30820376A00302010202146A0597BA71D7E6D3AC0EDC9EDC95A15"
+	"B998DE40A300D06092A864886F70D01010B05003055310B30090603550406130"
+	"24348311E301C060355040A131553544D6963726F656C656374726F6E6963732"
+	"04E56312630240603550403131D53544D2054504D20454B20496E7465726D656"
+	"469617465204341203035301E170D3138313231343030303030305A170D32383"
+	"13231343030303030305A300030820122300D06092A864886F70D01010105000"
+	"382010F003082010A0282010100CC14EB27A78CEB0EA486FA2DF7835F5FA8E90"
+	"5B097012B5BDE50380C355B1A2A721BBC3D08DD21796CDB239FA95310651B1B5"
+	"6FD2CFE53C87352EBD996E33256160404CE9302A08066801E786A2F86E181F94"
+	"9966F492A85B58EAA4A6A8CB3697551BB236E87CC7BF8EC1347871C91E15437E"
+	"8F266BF1EA5EB271FDCF374D8B47DF8BCE89E1FAD61C2A088CB4036B359CB72A"
+	"294973FEDCCF0C340AFFD14B64F041165581ACA34147C1C75617047058F7ED7D"
+	"603E032508094FA73E8B9153DA3BF255D2CBBC5DF301BA8F74D198BEBCE86040"
+	"FC1D2927C7657414490D802F482F3EBF2DE35EE149A1A6DE8D16891FBFBA02A1"
+	"8AFE59F9D6F149744E5F0D559B10203010001A38201A9308201A5301F0603551"
+	"D230418301680141ADB994AB58BE57A0CC9B900E7851E1A43C08660304206035"
+	"51D20043B303930370604551D2000302F302D06082B060105050702011621687"
+	"474703A2F2F7777772E73742E636F6D2F54504D2F7265706F7369746F72792F3"
+	"0590603551D110101FF044F304DA44B304931163014060567810502010C0B696"
+	"43A353335343444323031173015060567810502020C0C5354333348545048414"
+	"8433031163014060567810502030C0B69643A303034393030303830670603551"
+	"D090460305E301706056781050210310E300C0C03322E300201000202008A304"
+	"306056781050212313A30380201000101FFA0030A0101A1030A0100A2030A010"
+	"0A310300E1603332E310A01040A01020101FFA40F300D16053134302D320A010"
+	"2010100300E0603551D0F0101FF040403020520300C0603551D130101FF04023"
+	"00030100603551D250409300706056781050801304A06082B060105050701010"
+	"43E303C303A06082B06010505073002862E687474703A2F2F7365637572652E6"
+	"76C6F62616C7369676E2E636F6D2F73746D74706D656B696E7430352E637274\""
+	",\"version\":\"rfc3280_version_3\",\"serialNumber\":\"6A0597BA71D7E6D3A"
+	"C0EDC9EDC95A15B998DE40A\",\"signature\":{\"_type\":\"AlgorithmIdentifi"
+	"er\",\"algorithm\":{\"_type\":\"OBJECT IDENTIFIER\",\"oid\":\"1.2.840.1135"
+	"49.1.1.11\",\"components\":[1,2,840,113549,1,1,11],\"name\":\"id-pkcs1"
+	"-sha256WithRSAEncryption\"},\"parameters\":\"0500\"},\"issuer\":{\"_choi"
+	"ce\":\"rdnSequence\",\"value\":[[{\"_type\":\"AttributeTypeAndValue\",\"ty"
+	"pe\":{\"_type\":\"OBJECT IDENTIFIER\",\"oid\":\"2.5.4.6\",\"components\":[2"
+	",5,4,6],\"name\":\"id-at-countryName\"},\"value\":{\"_choice\":\"printabl"
+	"eString\",\"value\":\"CH\"}}],[{\"_type\":\"AttributeTypeAndValue\",\"type"
+	"\":{\"_type\":\"OBJECT IDENTIFIER\",\"oid\":\"2.5.4.10\",\"components\":[2,"
+	"5,4,10],\"name\":\"id-at-organizationName\"},\"value\":{\"_choice\":\"pri"
+	"ntableString\",\"value\":\"STMicroelectronics NV\"}}],[{\"_type\":\"Attr"
+	"ibuteTypeAndValue\",\"type\":{\"_type\":\"OBJECT IDENTIFIER\",\"oid\":\"2."
+	"5.4.3\",\"components\":[2,5,4,3],\"name\":\"id-at-commonName\"},\"value\""
+	":{\"_choice\":\"printableString\",\"value\":\"STM TPM EK Intermediate C"
+	"A 05\"}}]]},\"validity\":{\"_type\":\"Validity\",\"notBefore\":{\"_choice\""
+	":\"utcTime\",\"value\":\"2018-12-14T00:00:00Z\"},\"notAfter\":{\"_choice\""
+	":\"utcTime\",\"value\":\"2028-12-14T00:00:00Z\"}},\"subject\":{\"_choice\""
+	":\"rdnSequence\",\"value\":[]},\"subjectPublicKeyInfo\":{\"_type\":\"Subj"
+	"ectPublicKeyInfo\",\"algorithm\":{\"_type\":\"AlgorithmIdentifier\",\"al"
+	"gorithm\":{\"_type\":\"OBJECT IDENTIFIER\",\"oid\":\"1.2.840.113549.1.1."
+	"1\",\"components\":[1,2,840,113549,1,1,1],\"name\":\"id-pkcs1-rsaEncry"
+	"ption\"},\"parameters\":\"0500\"},\"subjectPublicKey\":\"2160:3082010A02"
+	"82010100CC14EB27A78CEB0EA486FA2DF7835F5FA8E905B097012B5BDE50380C"
+	"355B1A2A721BBC3D08DD21796CDB239FA95310651B1B56FD2CFE53C87352EBD9"
+	"96E33256160404CE9302A08066801E786A2F86E181F949966F492A85B58EAA4A"
+	"6A8CB3697551BB236E87CC7BF8EC1347871C91E15437E8F266BF1EA5EB271FDC"
+	"F374D8B47DF8BCE89E1FAD61C2A088CB4036B359CB72A294973FEDCCF0C340AF"
+	"FD14B64F041165581ACA34147C1C75617047058F7ED7D603E032508094FA73E8"
+	"B9153DA3BF255D2CBBC5DF301BA8F74D198BEBCE86040FC1D2927C7657414490"
+	"D802F482F3EBF2DE35EE149A1A6DE8D16891FBFBA02A18AFE59F9D6F149744E5"
+	"F0D559B10203010001\"},\"issuerUniqueID\":null,\"subjectUniqueID\":nul"
+	"l,\"extensions\":[{\"_type\":\"Extension\",\"extnID\":{\"_type\":\"OBJECT I"
+	"DENTIFIER\",\"oid\":\"2.5.29.35\",\"components\":[2,5,29,35],\"name\":\"id"
+	"-x509-ce-authorityKeyIdentifier\"},\"critical\":false,\"extnValue\":\""
+	"301680141ADB994AB58BE57A0CC9B900E7851E1A43C08660\",\"_extnValue_ch"
+	"oice\":\"ext-AuthorityKeyIdentifier\",\"_extnValue\":{\"_type\":\"Author"
+	"ityKeyIdentifier\",\"keyIdentifier\":\"1ADB994AB58BE57A0CC9B900E7851"
+	"E1A43C08660\",\"authorityCertIssuer\":null,\"authorityCertSerialNumb"
+	"er\":null}},{\"_type\":\"Extension\",\"extnID\":{\"_type\":\"OBJECT IDENTI"
+	"FIER\",\"oid\":\"2.5.29.32\",\"components\":[2,5,29,32],\"name\":\"id-x509"
+	"-ce-certificatePolicies\"},\"critical\":false,\"extnValue\":\"30393037"
+	"0604551D2000302F302D06082B060105050702011621687474703A2F2F777777"
+	"2E73742E636F6D2F54504D2F7265706F7369746F72792F\",\"_extnValue_choi"
+	"ce\":\"ext-CertificatePolicies\",\"_extnValue\":[{\"_type\":\"PolicyInfo"
+	"rmation\",\"policyIdentifier\":{\"_type\":\"OBJECT IDENTIFIER\",\"oid\":\""
+	"2.5.29.32.0\",\"components\":[2,5,29,32,0],\"name\":\"id-x509-ce-certi"
+	"ficatePolicies-anyPolicy\"},\"policyQualifiers\":[{\"_type\":\"PolicyQ"
+	"ualifierInfo\",\"policyQualifierId\":{\"_type\":\"OBJECT IDENTIFIER\",\""
+	"oid\":\"1.3.6.1.5.5.7.2.1\",\"components\":[1,3,6,1,5,5,7,2,1],\"name\""
+	":\"id-pkix-qt-cps\"},\"qualifier\":\"1621687474703A2F2F7777772E73742E"
+	"636F6D2F54504D2F7265706F7369746F72792F\",\"_qualifier_choice\":\"pq-"
+	"CPS\"}]}]},{\"_type\":\"Extension\",\"extnID\":{\"_type\":\"OBJECT IDENTIF"
+	"IER\",\"oid\":\"2.5.29.17\",\"components\":[2,5,29,17],\"name\":\"id-x509-"
+	"ce-subjectAltName\"},\"critical\":true,\"extnValue\":\"304DA44B3049311"
+	"63014060567810502010C0B69643A35333534344432303117301506056781050"
+	"2020C0C53543333485450484148433031163014060567810502030C0B69643A3"
+	"030343930303038\",\"_extnValue_choice\":\"ext-SubjectAltName\",\"_extn"
+	"Value\":[{\"_choice\":\"directoryName\",\"value\":{\"_choice\":\"rdnSequen"
+	"ce\",\"value\":[[{\"_type\":\"AttributeTypeAndValue\",\"type\":{\"_type\":\""
+	"OBJECT IDENTIFIER\",\"oid\":\"2.23.133.2.1\",\"components\":[2,23,133,2"
+	",1],\"name\":\"tcg-at-tpmManufacturer\"},\"value\":{\"_choice\":\"utf8Str"
+	"ing\",\"value\":\"id:53544D20\"}}],[{\"_type\":\"AttributeTypeAndValue\","
+	"\"type\":{\"_type\":\"OBJECT IDENTIFIER\",\"oid\":\"2.23.133.2.2\",\"compon"
+	"ents\":[2,23,133,2,2],\"name\":\"tcg-at-tpmModel\"},\"value\":{\"_choice"
+	"\":\"utf8String\",\"value\":\"ST33HTPHAHC0\"}}],[{\"_type\":\"AttributeTyp"
+	"eAndValue\",\"type\":{\"_type\":\"OBJECT IDENTIFIER\",\"oid\":\"2.23.133.2"
+	".3\",\"components\":[2,23,133,2,3],\"name\":\"tcg-at-tpmVersion\"},\"val"
+	"ue\":{\"_choice\":\"utf8String\",\"value\":\"id:00490008\"}}]]}}]},{\"_typ"
+	"e\":\"Extension\",\"extnID\":{\"_type\":\"OBJECT IDENTIFIER\",\"oid\":\"2.5."
+	"29.9\",\"components\":[2,5,29,9],\"name\":\"id-x509-ce-subjectDirector"
+	"yAttributes\"},\"critical\":false,\"extnValue\":\"305E3017060567810502"
+	"10310E300C0C03322E300201000202008A304306056781050212313A30380201"
+	"000101FFA0030A0101A1030A0100A2030A0100A310300E1603332E310A01040A"
+	"01020101FFA40F300D16053134302D320A0102010100\",\"_extnValue_choice"
+	"\":\"ext-SubjectDirectoryAttributes\",\"_extnValue\":[{\"_type\":\"Attri"
+	"buteSet\",\"type\":{\"_type\":\"OBJECT IDENTIFIER\",\"oid\":\"2.23.133.2.1"
+	"6\",\"components\":[2,23,133,2,16],\"name\":\"tcg-at-tpmSpecification\""
+	"},\"values\":[\"300C0C03322E300201000202008A\"],\"_values_choice\":\"at"
+	"-TPMSpecification\",\"_values\":[{\"_type\":\"TPMSpecification\",\"famil"
+	"y\":\"2.0\",\"level\":0,\"revision\":138}]},{\"_type\":\"AttributeSet\",\"ty"
+	"pe\":{\"_type\":\"OBJECT IDENTIFIER\",\"oid\":\"2.23.133.2.18\",\"componen"
+	"ts\":[2,23,133,2,18],\"name\":\"tcg-at-tpmSecurityAssertions\"},\"valu"
+	"es\":[\"30380201000101FFA0030A0101A1030A0100A2030A0100A310300E1603"
+	"332E310A01040A01020101FFA40F300D16053134302D320A0102010100\"],\"_v"
+	"alues_choice\":\"at-TPMSecurityAssertions\",\"_values\":[{\"_type\":\"TP"
+	"MSecurityAssertions\",\"version\":0,\"fieldUpgradable\":true,\"ekGener"
+	"ationType\":\"ekgt-injected\",\"ekGenerationLocation\":\"tpmManufactur"
+	"er\",\"ekCertificateGenerationLocation\":\"tpmManufacturer\",\"ccInfo\""
+	":{\"_type\":\"CommonCriteriaMeasures\",\"version\":\"3.1\",\"assurancelev"
+	"el\":\"ealevel4\",\"evaluationStatus\":\"evaluationCompleted\",\"plus\":t"
+	"rue,\"strengthOfFunction\":null,\"profileOid\":null,\"profileUri\":nul"
+	"l,\"targetOid\":null,\"targetUri\":null},\"fipsLevel\":{\"_type\":\"FIPSL"
+	"evel\",\"version\":\"140-2\",\"level\":\"sllevel2\",\"plus\":false},\"iso900"
+	"0Certified\":false,\"iso9000Uri\":null}]}]},{\"_type\":\"Extension\",\"e"
+	"xtnID\":{\"_type\":\"OBJECT IDENTIFIER\",\"oid\":\"2.5.29.15\",\"component"
+	"s\":[2,5,29,15],\"name\":\"id-x509-ce-keyUsage\"},\"critical\":true,\"ex"
+	"tnValue\":\"03020520\",\"_extnValue_choice\":\"ext-KeyUsage\",\"_extnVal"
+	"ue\":[\"keyEncipherment\"]},{\"_type\":\"Extension\",\"extnID\":{\"_type\":"
+	"\"OBJECT IDENTIFIER\",\"oid\":\"2.5.29.19\",\"components\":[2,5,29,19],\""
+	"name\":\"id-x509-ce-basicConstraints\"},\"critical\":true,\"extnValue\""
+	":\"3000\",\"_extnValue_choice\":\"ext-BasicConstraints\",\"_extnValue\":"
+	"{\"_type\":\"BasicConstraints\",\"cA\":false,\"pathLenConstraint\":null}"
+	"},{\"_type\":\"Extension\",\"extnID\":{\"_type\":\"OBJECT IDENTIFIER\",\"oi"
+	"d\":\"2.5.29.37\",\"components\":[2,5,29,37],\"name\":\"id-x509-ce-extKe"
+	"yUsage\"},\"critical\":false,\"extnValue\":\"300706056781050801\",\"_ext"
+	"nValue_choice\":\"ext-ExtKeyUsage\",\"_extnValue\":[{\"_type\":\"OBJECT "
+	"IDENTIFIER\",\"oid\":\"2.23.133.8.1\",\"components\":[2,23,133,8,1],\"na"
+	"me\":\"tcg-kp-EKCertificate\"}]},{\"_type\":\"Extension\",\"extnID\":{\"_t"
+	"ype\":\"OBJECT IDENTIFIER\",\"oid\":\"1.3.6.1.5.5.7.1.1\",\"components\":"
+	"[1,3,6,1,5,5,7,1,1],\"name\":\"id-pkix-pe-authorityInfoAccess\"},\"cr"
+	"itical\":false,\"extnValue\":\"303C303A06082B06010505073002862E68747"
+	"4703A2F2F7365637572652E676C6F62616C7369676E2E636F6D2F73746D74706"
+	"D656B696E7430352E637274\",\"_extnValue_choice\":\"ext-AuthorityInfoA"
+	"ccess\",\"_extnValue\":[{\"_type\":\"AccessDescription\",\"accessMethod\""
+	":{\"_type\":\"OBJECT IDENTIFIER\",\"oid\":\"1.3.6.1.5.5.7.48.2\",\"compon"
+	"ents\":[1,3,6,1,5,5,7,48,2],\"name\":\"id-pkix-ad-caIssuers\"},\"acces"
+	"sLocation\":{\"_choice\":\"uniformResourceIdentifier\",\"value\":\"http:"
+	"//secure.globalsign.com/stmtpmekint05.crt\"}}]}]},\"signatureAlgor"
+	"ithm\":{\"_type\":\"AlgorithmIdentifier\",\"algorithm\":{\"_type\":\"OBJEC"
+	"T IDENTIFIER\",\"oid\":\"1.2.840.113549.1.1.11\",\"components\":[1,2,84"
+	"0,113549,1,1,11],\"name\":\"id-pkcs1-sha256WithRSAEncryption\"},\"par"
+	"ameters\":\"0500\"},\"signatureValue\":\"2048:3D4C381E5B4F1BCBE09C63D5"
+	"2F1F04570CAEA142FD9CD942043B11F8E3BDCF50007AE16CF8869013041E92CD"
+	"D3280BA4B51FBBD40582ED750219E261A695095674855AACEB520ADAFF9E7E90"
+	"8480A39CDCF900462D9171960FFE55D3AC49E8C981341BBD2EFBCC252A4C18A4"
+	"F3B7C84CCE42CE70A208C84D2630A7ABFBE72D6271E75B9FF1C971D20EB3DBD7"
+	"63F1E04D834EAA692D2E4001BBF4730A3E3FDA9711AE386524D91C63BE0E516D"
+	"00D5C6141FCCF6C539F3518E180049865BE16B69CAE1F8CB7FDC474B38F7EE56"
+	"CBE7D8A89D9BA99B65D5265AEF32AA62426B10E6D75BB8677EC44F755BBC2806"
+	"FD2B4E04BDF5D44259DBEAA42B6F563DF7AA7506\""
+	"}"
+            };
+    heim_octet_string os;
+    Certificate c0, c1;
+    size_t i, nknown, size;
+    char *s;
+    int ret;
+
+    /*
+     * Test automatic decoding of open types.
+     *
+     * Decode a value that has plenty of open types with values of known
+     * alternatives in them, then check that we got what we wanted.
+     */
+    ret = decode_Certificate(encoded_sample, sizeof(encoded_sample),
+                             &c0, &size);
+    if (ret)
+        return 1;
+    if (size != sizeof(encoded_sample))
+        return 1;
+
+    s = print_Certificate(&c0, 0);
+    if (!s)
+        return 1;
+    if (strcmp(s, cert_json))
+        return 1;
+    free(s);
+
+    ret = copy_Certificate(&c0, &c1);
+    if (ret)
+        return 1;
+
+    if (!c0.tbsCertificate.extensions || !c1.tbsCertificate.extensions)
+        return 1;
+    if (!c0.tbsCertificate.extensions->len ||
+        c0.tbsCertificate.extensions->len != c1.tbsCertificate.extensions->len)
+        return 1;
+    for (i = nknown = 0; i < c0.tbsCertificate.extensions->len; i++) {
+        if (c0.tbsCertificate.extensions->val[i]._ioschoice_extnValue.element !=
+            c1.tbsCertificate.extensions->val[i]._ioschoice_extnValue.element)
+            return 1;
+        if (c0.tbsCertificate.extensions->val[i]._ioschoice_extnValue.element) {
+#if 0
+            fprintf(stderr, "extension %llu known %u\n",
+                    (unsigned long long)i,
+                    c0.tbsCertificate.extensions->val[i]._ioschoice_extnValue._element);
+#endif
+            nknown++;
+        }
+    }
+    if (!nknown)
+        return 1;
+
+
+    /*
+     * Check that this round trips.  But note that this attempt to encode will
+     * ignore the automatically decoded open type values from above because
+     * their encodings are still present.
+     */
+    ASN1_MALLOC_ENCODE(Certificate, os.data, os.length, &c1, &size, ret);
+    if (ret)
+        return 1;
+    if (os.length != size || size != sizeof(encoded_sample))
+        return 1;
+    if (memcmp(os.data, encoded_sample, os.length))
+        return 1;
+    der_free_octet_string(&os);
+
+    /*
+     * Test automatic encoding of open types by clearing the encoding of one
+     * such open type value, forcing the encoder to encode the value from
+     * before.
+     */
+    der_free_octet_string(&c0.tbsCertificate.extensions->val[0].extnValue);
+    der_free_oid(&c0.tbsCertificate.extensions->val[0].extnID);
+
+    ASN1_MALLOC_ENCODE(Certificate, os.data, os.length, &c0, &size, ret);
+    if (ret)
+        return 1;
+    if (os.length != size || size != sizeof(encoded_sample))
+        return 1;
+    if (memcmp(os.data, encoded_sample, os.length))
+        return 1;
+    der_free_octet_string(&os);
+
+    /*
+     * Repeat, but with the copy, as this will test that copying data
+     * structures with decoded open types in them also copies those.
+     */
+    der_free_octet_string(&c1.tbsCertificate.extensions->val[0].extnValue);
+    der_free_oid(&c1.tbsCertificate.extensions->val[0].extnID);
+
+    ASN1_MALLOC_ENCODE(Certificate, os.data, os.length, &c1, &size, ret);
+    if (ret)
+        return 1;
+    if (os.length != size || size != sizeof(encoded_sample))
+        return 1;
+    if (memcmp(os.data, encoded_sample, os.length))
+        return 1;
+    der_free_octet_string(&os);
+
+    free_Certificate(&c0);
+    free_Certificate(&c1);
+    return 0;
+}
+#endif
+
 int
 main(int argc, char **argv)
 {
     int ret = 0;
 
-    ret += test_principal ();
-    ret += test_authenticator();
-    ret += test_krb_error();
-    ret += test_Name();
-    ret += test_bit_string();
-    ret += test_bit_string_rfc1510();
-    ret += test_time();
-    ret += test_cert();
+#define DO_ONE(t) if (t()) { fprintf(stderr, "%s() failed!\n", #t); ret++; }
+    DO_ONE(test_principal);
+    DO_ONE(test_authenticator);
+    DO_ONE(test_krb_error);
+    DO_ONE(test_Name);
+    DO_ONE(test_bit_string);
+    DO_ONE(test_bit_string_rfc1510);
+    DO_ONE(test_time);
+    DO_ONE(test_cert);
 
-    ret += check_tag_length();
-    ret += check_tag_length64();
-    ret += check_tag_length64s();
-    ret += test_large_tag();
-    ret += test_choice();
+    DO_ONE(check_tag_length);
+    DO_ONE(check_tag_length64);
+    DO_ONE(check_tag_length64s);
+    DO_ONE(test_large_tag);
+    DO_ONE(test_choice);
 
-    ret += test_implicit();
+    DO_ONE(test_implicit);
 
-    ret += test_taglessalloc();
-    ret += test_optional();
+    DO_ONE(test_taglessalloc);
+    DO_ONE(test_optional);
 
-    ret += check_fail_largetag();
-    ret += check_fail_sequence();
-    ret += check_fail_choice();
-    ret += check_fail_Ticket();
+    DO_ONE(check_fail_largetag);
+    DO_ONE(check_fail_sequence);
+    DO_ONE(check_fail_choice);
+    DO_ONE(check_fail_Ticket);
 
-    ret += check_seq();
-    ret += check_seq_of_size();
-    ret += test_SignedData();
+    DO_ONE(check_seq);
+    DO_ONE(check_seq_of_size);
+    DO_ONE(test_SignedData);
 
-    ret += check_TESTMechTypeList();
-    ret += test_seq4();
-    ret += test_seqof5();
+    DO_ONE(check_TESTMechTypeList);
+    DO_ONE(test_seq4);
+    DO_ONE(test_seqof5);
+
+    DO_ONE(test_x690sample);
+
+    DO_ONE(test_default);
+
+#if ASN1_IOS_SUPPORTED
+    DO_ONE(test_ios);
+#endif
 
     return ret;
 }

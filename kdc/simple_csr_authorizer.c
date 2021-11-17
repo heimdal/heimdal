@@ -160,7 +160,7 @@ string_encode(const char *in)
 static KRB5_LIB_CALL krb5_error_code
 authorize(void *ctx,
           krb5_context context,
-          krb5_kdc_configuration *config,
+          const char *app,
           hx509_request csr,
           krb5_const_principal client,
           krb5_boolean *result)
@@ -173,7 +173,7 @@ authorize(void *ctx,
     char *princ = NULL;
     char *s = NULL;
 
-    if ((d = krb5_config_get_string(context, NULL, "kdc",
+    if ((d = krb5_config_get_string(context, NULL, app ? app : "kdc",
                                     "simple_csr_authorizer_directory",
                                     NULL)) == NULL)
         return KRB5_PLUGIN_NO_HANDLE;

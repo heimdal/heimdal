@@ -55,7 +55,10 @@ struct _krb5_checksum_type *_krb5_checksum_types[] = {
     &_krb5_checksum_hmac_sha1_aes256,
     &_krb5_checksum_hmac_sha256_128_aes128,
     &_krb5_checksum_hmac_sha384_192_aes256,
-    &_krb5_checksum_hmac_md5
+    &_krb5_checksum_hmac_md5,
+    &_krb5_checksum_sha256,
+    &_krb5_checksum_sha384,
+    &_krb5_checksum_sha512
 };
 
 int _krb5_num_checksums

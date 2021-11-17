@@ -662,7 +662,7 @@ out:
     if (ret == HEIM_ERR_EOF)
 	/* Better error code than "end of file" */
 	ret = HEIM_ERR_BAD_HDBENT_ENCODING;
-    free_hdb_entry(entry);
+    free_HDB_entry(entry);
     free_Key(&k);
     return ret;
 }
@@ -697,7 +697,8 @@ mdb_destroy(krb5_context context, HDB *db)
 {
     krb5_error_code ret;
 
-    ret = hdb_clear_master_key (context, db);
+    ret = hdb_clear_master_key(context, db);
+    krb5_config_free_strings(db->virtual_hostbased_princ_svcs);
     free(db->hdb_name);
     free(db);
     return ret;

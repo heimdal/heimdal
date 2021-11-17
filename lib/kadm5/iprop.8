@@ -64,19 +64,15 @@
 .Op Fl Fl version
 .Op Fl Fl help
 .Nm ipropd-slave
-.Oo Fl c Ar string \*(Ba Xo
-.Fl Fl config-file= Ns Ar string
-.Xc
-.Oc
-.Oo Fl r Ar string \*(Ba Xo
-.Fl Fl realm= Ns Ar string
-.Xc
-.Oc
-.Oo Fl k Ar kspec \*(Ba Xo
-.Fl Fl keytab= Ns Ar kspec
-.Xc
-.Oc
+.Oo Fl c Ar string \*(Ba Xo Fl Fl config-file= Ns Ar string Xc Oc
+.Oo Fl r Ar string \*(Ba Xo Fl Fl realm= Ns Ar string Xc Oc
+.Oo Fl d Ar file \*(Ba Xo Fl Fl database= Ns Ar file Xc Oc
+.Oo Fl k Ar kspec \*(Ba Xo Fl Fl keytab= Ns Ar kspec Xc Oc
+.Op Fl Fl statusfile= Ns Ar file
+.Op Fl Fl hostname= Ns Ar hostname
+.Op Fl Fl port= Ns Ar port
 .Op Fl Fl time-lost= Ns Ar time
+.Op Fl Fl async-hdb
 .Op Fl Fl detach
 .Op Fl Fl version
 .Op Fl Fl help
@@ -139,23 +135,31 @@ There is a keep-alive feature logged in the master's
 file (e.g.\&
 .Pa /var/heimdal/slave-stats ) .
 .Pp
+Note that hierarchical replication is supported by running
+an
+.Nm ipropd-master
+on the same KDC as an
+.Nm ipropd-slave .
+.Pp
 Supported options for
 .Nm ipropd-master :
 .Bl -tag -width Ds
 .It Fl c Ar string , Fl Fl config-file= Ns Ar string
 .It Fl r Ar string , Fl Fl realm= Ns Ar string
 .It Fl k Ar kspec , Fl Fl keytab= Ns Ar kspec
-keytab to get authentication from
+Keytab for authenticating
+.Nm ipropd-slave
+clients.
 .It Fl d Ar file , Fl Fl database= Ns Ar file
 Database (default per KDC)
 .It Fl Fl slave-stats-file= Ns Ar file
-file for slave status information
+File for slave status information.
 .It Fl Fl time-missing= Ns Ar time
-time before slave is polled for presence (default 2 min)
+Time before slave is polled for presence (default 2 min).
 .It Fl Fl time-gone= Ns Ar time
-time of inactivity after which a slave is considered gone (default 5 min)
+Time of inactivity after which a slave is considered gone (default 5 min).
 .It Fl Fl detach
-detach from console
+Detach from console.
 .It Fl Fl version
 .It Fl Fl help
 .El
@@ -165,12 +169,23 @@ Supported options for
 .Bl -tag -width Ds
 .It Fl c Ar string , Fl Fl config-file= Ns Ar string
 .It Fl r Ar string , Fl Fl realm= Ns Ar string
+.It Fl d Ar file , Fl Fl database= Ns Ar file
+Database (default per KDC)
 .It Fl k Ar kspec , Fl Fl keytab= Ns Ar kspec
-keytab to get authentication from
+Keytab with client credentials for authenticating to
+.Nm ipropd-master .
+.It Fl Fl status-file= Ns Ar file
+.It Fl Fl hostname= Ns Ar hostname
+Hostname for client principal if different from actual hostname.
+.It Fl Fl port= Ns Ar port
 .It Fl Fl time-lost= Ns Ar time
 time before server is considered lost (default 5 min)
+.It Fl Fl async-hdb
+Use asynchronous writes.
+This is very useful for very busy sites or sites with very large
+HDBs.
 .It Fl Fl detach
-detach from console
+Detach from console.
 .It Fl Fl version
 .It Fl Fl help
 .El

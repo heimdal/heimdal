@@ -69,10 +69,30 @@
 #define KRB5_KDB_PWCHANGE_SERVICE	0x00002000
 #define KRB5_KDB_SUPPORT_DESMD5		0x00004000
 #define KRB5_KDB_NEW_PRINC		0x00008000
-#define KRB5_KDB_OK_AS_DELEGATE		0x00010000
-#define KRB5_KDB_TRUSTED_FOR_DELEGATION	0x00020000
-#define KRB5_KDB_ALLOW_KERBEROS4	0x00040000
-#define KRB5_KDB_ALLOW_DIGEST		0x00080000
+#define KRB5_KDB_OK_AS_DELEGATE		0x00010000 /* 0x00100000 in MIT */
+#define KRB5_KDB_TRUSTED_FOR_DELEGATION	0x00020000 /* MIT has as 0x00200000 */
+#define KRB5_KDB_ALLOW_KERBEROS4	0x00040000 /* MIT doesn't have this; XXX remove */
+#define KRB5_KDB_ALLOW_DIGEST		0x00080000 /* MIT doesn't have this */
+#define KRB5_KDB_MATERIALIZE            0x00100000 /* MIT doesn't have this */
+#define KRB5_KDB_VIRTUAL_KEYS           0x00200000 /* MIT doesn't have this */
+#define KRB5_KDB_VIRTUAL                0x00400000 /* MIT doesn't have this */
+#define KRB5_KDB_DISALLOW_CLIENT        0x00800000 /* MIT doesn't have this */
+
+/*
+ * MIT has:
+ *
+ *  - Same as our KRB5_KDB_TRUSTED_FOR_DELEGATION:
+ *
+ *    #define KRB5_KDB_OK_TO_AUTH_AS_DELEGATE 0x00200000 // S4U2Self OK
+ *
+ *  - Misc:
+ *
+ *    #define KRB5_KDB_NO_AUTH_DATA_REQUIRED  0x00400000 // Don't lookup / add
+ *                                                       // authz data
+ *    #define KRB5_KDB_LOCKDOWN_KEYS          0x00800000 // Don't allow
+ *                                                       // deletion of princ
+ */
+
 
 #define KADM5_PRINCIPAL		0x000001U
 #define KADM5_PRINC_EXPIRE_TIME	0x000002U
@@ -141,6 +161,9 @@ typedef struct _krb5_tl_data {
 #define KRB5_TL_ALIASES           	0x000a
 #define KRB5_TL_HIST_KVNO_DIFF_CLNT	0x000b
 #define KRB5_TL_HIST_KVNO_DIFF_SVC	0x000c
+#define KRB5_TL_ETYPES			0x000d
+#define KRB5_TL_KEY_ROTATION		0x000e
+#define KRB5_TL_KRB5_CONFIG		0x000f
 
 typedef struct _kadm5_principal_ent_t {
     krb5_principal principal;
@@ -198,6 +221,8 @@ typedef struct _kadm5_policy_ent_t {
 #define KADM5_CONFIG_EXPIRATION			(1 << 16)
 #define KADM5_CONFIG_FLAGS			(1 << 17)
 #define KADM5_CONFIG_ENCTYPES			(1 << 18)
+#define KADM5_CONFIG_READONLY_ADMIN_SERVER	(1 << 19)
+#define KADM5_CONFIG_READONLY_KADMIN_PORT	(1 << 20)
 
 #define KADM5_PRIV_GET		(1 << 0)
 #define KADM5_PRIV_ADD 		(1 << 1)
@@ -212,6 +237,10 @@ typedef struct _kadm5_policy_ent_t {
 
 #define KADM5_BOGUS_KEY_DATA    "\xe5\xe5\xe5\xe5"
 
+/*
+ * ABI NOTE: We can add fields at the end of this provided that we define new
+ * mask bits that must be set in the mask field when setting the new fields.
+ */
 typedef struct _kadm5_config_params {
     uint32_t mask;
 
@@ -228,6 +257,10 @@ typedef struct _kadm5_config_params {
 
     /* server library (database) fields */
     char *stash_file;
+
+    /* read-only kadmin server */
+    char *readonly_admin_server;
+    int readonly_kadmind_port;
 } kadm5_config_params;
 
 typedef krb5_error_code kadm5_ret_t;

@@ -1,4 +1,5 @@
 foo/admin@TEST.H5L.SE all
+httpkadmind/admin@TEST.H5L.SE all,get-keys
 bar@TEST.H5L.SE all
 baz@TEST.H5L.SE get,add *
 bez@TEST.H5L.SE get,add *@TEST.H5L.SE

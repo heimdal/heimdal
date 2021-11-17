@@ -84,11 +84,13 @@ setup_int(const char *proxy_host, short proxy_port,
     return 0;
 }
 
-static void
+static int
 split_spec(const char *spec, char **host, int *port, char **path, int def_port)
 {
     char *p;
     *host = strdup(spec);
+    if (*host == NULL)
+	return -1;
     p = strchr(*host, ':');
     if(p) {
 	*p++ = '\0';
@@ -98,12 +100,19 @@ split_spec(const char *spec, char **host, int *port, char **path, int def_port)
 	*port = def_port;
     p = strchr(p ? p : *host, '/');
     if(p) {
-	if(path)
+	if(path) {
 	    *path = strdup(p);
+	    if (*path == NULL) {
+		free(*host);
+		*host = NULL;
+		return -1;
+	    }
+	}
 	*p = '\0';
     }else
 	if(path)
 	    *path = NULL;
+    return 0;
 }
 
 
@@ -112,17 +121,22 @@ roken_gethostby_setup(const char *proxy_spec, const char *dns_spec)
 {
     char *proxy_host = NULL;
     int proxy_port = 0;
-    char *dns_host, *dns_path;
+    char *dns_host = NULL, *dns_path = NULL;
     int dns_port;
+    int ret;
 
-    int ret = -1;
-
-    split_spec(dns_spec, &dns_host, &dns_port, &dns_path, 80);
-    if(dns_path == NULL)
+    ret = split_spec(dns_spec, &dns_host, &dns_port, &dns_path, 80);
+    if(ret)
 	goto out;
-    if(proxy_spec)
-	split_spec(proxy_spec, &proxy_host, &proxy_port, NULL, 80);
+    if(proxy_spec) {
+	ret = split_spec(proxy_spec, &proxy_host, &proxy_port, NULL, 80);
+	if (ret)
+	    goto out;
+    }
     ret = setup_int(proxy_host, proxy_port, dns_host, dns_port, dns_path);
+    if (ret)
+	goto out;
+
 out:
     free(proxy_host);
     free(dns_host);

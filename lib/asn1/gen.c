@@ -35,15 +35,34 @@
 
 #include "gen_locl.h"
 
+extern const char *enum_prefix;
+extern int prefix_enum;
+
 RCSID("$Id$");
 
 FILE *privheaderfile, *headerfile, *oidsfile, *codefile, *logfile, *templatefile;
+FILE *symsfile;
 
 #define STEM "asn1"
 
 static const char *orig_filename;
 static char *privheader, *header, *template;
 static const char *headerbase = STEM;
+
+/* XXX same as der_length_tag */
+static size_t
+length_tag(unsigned int tag)
+{
+    size_t len = 0;
+
+    if(tag <= 30)
+        return 1;
+    while(tag) {
+        tag /= 128;
+        len++;
+    }
+    return len + 1;
+}
 
 /*
  * list of all IMPORTs
@@ -158,8 +177,9 @@ init_generate (const char *filename, const char *base)
 	     "#ifndef __%s_h__\n"
 	     "#define __%s_h__\n\n", headerbase, headerbase);
     fprintf (headerfile,
-	     "#include <stddef.h>\n"
-	     "#include <time.h>\n\n");
+	     "#include <config.h>\n"
+	     "#include <roken.h>\n"
+	     "#include <stddef.h>\n");
     fprintf (headerfile,
 	     "#ifndef __asn1_common_definitions__\n"
 	     "#define __asn1_common_definitions__\n\n");
@@ -215,12 +235,20 @@ init_generate (const char *filename, const char *base)
 	     "} heim_bit_string;\n\n");
     fprintf (headerfile,
 	     "typedef struct heim_base_data heim_any;\n"
-	     "typedef struct heim_base_data heim_any_set;\n\n");
+	     "typedef struct heim_base_data heim_any_set;\n"
+	     "typedef struct heim_base_data HEIM_ANY;\n"
+	     "typedef struct heim_base_data HEIM_ANY_SET;\n\n");
+
+    fprintf (headerfile,
+             "enum asn1_print_flags {\n"
+             "   ASN1_PRINT_INDENT = 1,\n"
+             "};\n\n");
     fputs("#define ASN1_MALLOC_ENCODE(T, B, BL, S, L, R)                  \\\n"
 	  "  do {                                                         \\\n"
 	  "    (BL) = length_##T((S));                                    \\\n"
 	  "    (B) = malloc((BL));                                        \\\n"
 	  "    if((B) == NULL) {                                          \\\n"
+	  "      *(L) = 0;                                                \\\n"
 	  "      (R) = ENOMEM;                                            \\\n"
 	  "    } else {                                                   \\\n"
 	  "      (R) = encode_##T(((unsigned char*)(B)) + (BL) - 1, (BL), \\\n"
@@ -228,6 +256,7 @@ init_generate (const char *filename, const char *base)
 	  "      if((R) != 0) {                                           \\\n"
 	  "        free((B));                                             \\\n"
 	  "        (B) = NULL;                                            \\\n"
+	  "        *(L) = 0;                                              \\\n"
 	  "      }                                                        \\\n"
 	  "    }                                                          \\\n"
 	  "  } while (0)\n\n",
@@ -259,6 +288,11 @@ init_generate (const char *filename, const char *base)
     oidsfile = fopen(fn, "w");
     if (oidsfile == NULL)
 	err (1, "open %s", fn);
+    if (asprintf(&fn, "%s_syms.x", base) < 0 || fn == NULL)
+	errx(1, "malloc");
+    symsfile = fopen(fn, "w");
+    if (symsfile == NULL)
+	err (1, "open %s", fn);
     free(fn);
     fn = NULL;
 
@@ -273,12 +307,9 @@ init_generate (const char *filename, const char *base)
     fprintf (templatefile,
 	     "/* Generated from %s */\n"
 	     "/* Do not edit */\n\n"
-	     "#include <stdio.h>\n"
-	     "#include <stdlib.h>\n"
-	     "#include <time.h>\n"
-	     "#include <string.h>\n"
-	     "#include <errno.h>\n"
-	     "#include <limits.h>\n"
+	     "#include <config.h>\n"
+	     "#include <roken.h>\n"
+	     "#include <asn1_err.h>\n"
 	     "#include <%s>\n",
 	     filename,
 	     type_file_string);
@@ -324,9 +355,9 @@ gen_assign_defval(const char *var, struct value *val)
 	break;
     case booleanvalue:
 	if(val->u.booleanvalue)
-	    fprintf(codefile, "%s = TRUE;\n", var);
+	    fprintf(codefile, "%s = 1;\n", var);
 	else
-	    fprintf(codefile, "%s = FALSE;\n", var);
+	    fprintf(codefile, "%s = 0;\n", var);
 	break;
     default:
 	abort();
@@ -376,12 +407,8 @@ generate_header_of_codefile(const char *name)
 	     "/* Generated from %s */\n"
 	     "/* Do not edit */\n\n"
 	     "#define  ASN1_LIB\n\n"
-	     "#include <stdio.h>\n"
-	     "#include <stdlib.h>\n"
-	     "#include <time.h>\n"
-	     "#include <string.h>\n"
-	     "#include <errno.h>\n"
-	     "#include <limits.h>\n"
+	     "#include <config.h>\n"
+	     "#include <roken.h>\n"
 	     "#include <%s>\n",
 	     orig_filename,
 	     type_file_string);
@@ -435,6 +462,10 @@ generate_constant (const Symbol *s)
                 "enum { %s = %lld };\n\n",
                 s->gen_name, s->gen_name, s->gen_name,
                 (long long)s->value->u.integervalue);
+        if (is_export(s->name))
+            fprintf(symsfile, "ASN1_SYM_INTVAL(\"%s\", \"%s\", %s, %lld)\n",
+                    s->name, s->gen_name, s->gen_name,
+                    (long long)s->value->u.integervalue);
 	break;
     case nullvalue:
 	break;
@@ -481,6 +512,9 @@ generate_constant (const Symbol *s)
 		 s->gen_name, (unsigned long)len, s->gen_name);
 
         fprintf(oidsfile, "DEFINE_OID_WITH_NAME(%s)\n", s->gen_name);
+        if (is_export(s->name))
+            fprintf(symsfile, "ASN1_SYM_OID(\"%s\", \"%s\", %s)\n",
+                    s->name, s->gen_name, s->gen_name);
 
 	free(list);
 
@@ -512,9 +546,93 @@ generate_constant (const Symbol *s)
 }
 
 int
-is_primitive_type(int type)
+is_tagged_type(const Type *t)
 {
-    switch(type) {
+    /*
+     * Start by chasing aliasings like this:
+     *
+     * Type0 ::= ...
+     * Type1 ::= Type0
+     * ..
+     * TypeN ::= TypeN-1
+     *
+     * to <Type0>, then check if <Type0> is tagged.
+     */
+    while (t->type == TType) {
+        if (t->subtype)
+            t = t->subtype;
+        else if (t->symbol && t->symbol->type)
+            t = t->symbol->type;
+        else
+            abort();
+
+    }
+    if (t->type == TTag && t->tag.tagenv == TE_EXPLICIT)
+        return 1;
+    if (t->type == TTag) {
+        if (t->subtype)
+            return is_tagged_type(t->subtype);
+        if (t->symbol && t->symbol->type)
+            return is_tagged_type(t->symbol->type);
+        /* This is the tag */
+        return 1;
+    }
+    return 0;
+}
+
+int
+is_primitive_type(const Type *t)
+{
+    /*
+     * Start by chasing aliasings like this:
+     *
+     * Type0 ::= ...
+     * Type1 ::= Type0
+     * ..
+     * TypeN ::= TypeN-1
+     *
+     * to <Type0>, then check if <Type0> is primitive.
+     */
+    while (t->type == TType &&
+           t->symbol &&
+           t->symbol->type) {
+        if (t->symbol->type->type == TType)
+            t = t->symbol->type; /* Alias */
+        else if (t->symbol->type->type == TTag &&
+                 t->symbol->type->tag.tagenv == TE_IMPLICIT)
+            /*
+             * IMPLICIT-tagged alias, something like:
+             *
+             * Type0 ::= [0] IMPLICIT ...
+             *
+             * Just recurse.
+             */
+            return is_primitive_type(t->symbol->type);
+        else
+            break;
+
+    }
+    /* EXPLICIT non-UNIVERSAL tags are always constructed */
+    if (t->type == TTag && t->tag.tagclass != ASN1_C_UNIV &&
+        t->tag.tagenv == TE_EXPLICIT)
+        return 0;
+    if (t->symbol && t->symbol->type) {
+        /* EXPLICIT non-UNIVERSAL tags are constructed */
+        if (t->symbol->type->type == TTag &&
+            t->symbol->type->tag.tagclass != ASN1_C_UNIV &&
+            t->symbol->type->tag.tagenv == TE_EXPLICIT)
+            return 0;
+        /* EXPLICIT UNIVERSAL tags are constructed if they are SEQUENCE/SET */
+        if (t->symbol->type->type == TTag &&
+            t->symbol->type->tag.tagclass == ASN1_C_UNIV) {
+            switch (t->symbol->type->tag.tagvalue) {
+            case UT_Sequence: return 0;
+            case UT_Set: return 0;
+            default: return 1;
+            }
+        }
+    }
+    switch(t->type) {
     case TInteger:
     case TBoolean:
     case TOctetString:
@@ -533,6 +651,8 @@ is_primitive_type(int type)
     case TVisibleString:
     case TNull:
 	return 1;
+    case TTag:
+        return is_primitive_type(t->subtype);
     default:
 	return 0;
     }
@@ -572,7 +692,12 @@ define_asn1 (int level, Type *t)
 {
     switch (t->type) {
     case TType:
-	fprintf (headerfile, "%s", t->symbol->name);
+        if (!t->symbol && t->typeref.iosclass) {
+            fprintf(headerfile, "%s.&%s",
+                    t->typeref.iosclass->symbol->name,
+                    t->typeref.field->name);
+        } else
+            fprintf(headerfile, "%s", t->symbol->name);
 	break;
     case TInteger:
 	if(t->members == NULL) {
@@ -599,7 +724,7 @@ define_asn1 (int level, Type *t)
     case TOctetString:
 	fprintf (headerfile, "OCTET STRING");
 	break;
-    case TEnumerated :
+    case TEnumerated:
     case TBitString: {
 	Member *m;
 
@@ -739,40 +864,260 @@ getnewbasename(char **newbasename, int typedefp, const char *basename, const cha
 	err(1, "malloc");
 }
 
-static void
-define_type (int level, const char *name, const char *basename, Type *t, int typedefp, int preservep)
+static void define_type(int, const char *, const char *, Type *, Type *, int, int);
+
+/*
+ * Get the SET/SEQUENCE member pair and CLASS field pair defining an open type.
+ *
+ * There are three cases:
+ *
+ *  - open types embedded in OCTET STRING, with the open type object class
+ *    relation declared via a constraint
+ *
+ *  - open types not embedded in OCTET STRING, which are really more like ANY
+ *    DEFINED BY types, so, HEIM_ANY
+ *
+ *  - open types in a nested structure member where the type ID field is in a
+ *    member of the ancestor structure (this happens in PKIX's `AttributeSet',
+ *    where the open type is essentially a SET OF HEIM_ANY).
+ *
+ * In a type like PKIX's SingleAttribute the type ID member would be the one
+ * named "type" and the open type member would be the one named "value", and
+ * the corresponding fields of the ATTRIBUTE class would be named "id" and
+ * "Type".
+ *
+ * NOTE: We assume a single open type member pair in any SET/SEQUENCE.  In
+ *       principle there could be more pairs and we could iterate them, or
+ *       better yet, we could be given the name of an open type member and then
+ *       just find its related type ID member and fields, then our caller would
+ *       iterate the SET/SEQUENCE type's members looking for open type members
+ *       and would call this function for each one found.
+ */
+void
+get_open_type_defn_fields(const Type *t,
+                          Member **typeidmember,
+                          Member **opentypemember,
+                          Field **typeidfield,
+                          Field **opentypefield,
+                          int *is_array_of)
 {
+    Member *m;
+    Field *junk1, *junk2;
+    char *idmembername = NULL;
+
+    if (!typeidfield) typeidfield = &junk1;
+    if (!opentypefield) opentypefield = &junk2;
+
+    *typeidfield = *opentypefield = NULL;
+    *typeidmember = *opentypemember = NULL;
+    *is_array_of = 0;
+
+    /* Look for the open type member */
+    HEIM_TAILQ_FOREACH(m, t->members, members) {
+        Type *subtype = m->type;
+        Type *sOfType = NULL;
+
+        while (subtype->type == TTag ||
+               subtype->type == TSetOf ||
+               subtype->type == TSequenceOf) {
+            if (subtype->type == TTag && subtype->subtype) {
+                if (subtype->subtype->type == TOctetString ||
+                    subtype->subtype->type == TBitString)
+                    break;
+                subtype = subtype->subtype;
+            } else if (subtype->type == TSetOf || subtype->type == TSequenceOf) {
+                sOfType = subtype;
+                if (sOfType->symbol)
+                    break;
+                if (subtype->subtype)
+                    subtype = subtype->subtype;
+            } else
+                break;
+        }
+        /*
+         * If we traversed through a non-inlined SET OF or SEQUENCE OF type,
+         * then this cannot be an open type field.
+         */
+        if (sOfType && sOfType->symbol)
+            continue;
+        /*
+         * The type of the field we're interested in has to have an information
+         * object constraint.
+         */
+        if (!subtype->constraint)
+            continue;
+        if (subtype->type != TType && subtype->type != TTag)
+            continue;
+        /*
+         * Check if it's an ANY-like member or like an OCTET STRING CONTAINING
+         * member.  Those are the only two possibilities.
+         */
+        if ((subtype->type == TTag || subtype->type == TType) &&
+            subtype->subtype &&
+            subtype->constraint->ctype == CT_CONTENTS &&
+            subtype->constraint->u.content.type &&
+            subtype->constraint->u.content.type->type == TType &&
+            !subtype->constraint->u.content.type->subtype &&
+            subtype->constraint->u.content.type->constraint &&
+            subtype->constraint->u.content.type->constraint->ctype == CT_TABLE_CONSTRAINT) {
+            /* Type like OCTET STRING or BIT STRING CONTAINING open type */
+            *opentypemember = m;
+            *opentypefield = subtype->constraint->u.content.type->typeref.field;
+            *is_array_of = sOfType != NULL;
+            idmembername = subtype->constraint->u.content.type->constraint->u.content.crel.membername;
+            break;
+        } else if (subtype->symbol && strcmp(subtype->symbol->name, "HEIM_ANY") == 0) {
+            /* Open type, but NOT embedded in OCTET STRING or BIT STRING */
+            *opentypemember = m;
+            *opentypefield = subtype->typeref.field;
+            *is_array_of = sOfType != NULL;
+            idmembername = subtype->constraint->u.content.crel.membername;
+            break;
+        }
+    }
+    /* Look for the type ID member identified in the previous loop */
+    HEIM_TAILQ_FOREACH(m, t->members, members) {
+        if (!m->type->subtype || strcmp(m->name, idmembername))
+            continue;
+        if (m->type->constraint &&
+            m->type->constraint->ctype == CT_TABLE_CONSTRAINT)
+            *typeidfield = m->type->typeref.field;
+        else if (m->type->subtype->constraint &&
+                 m->type->subtype->constraint->ctype == CT_TABLE_CONSTRAINT)
+            *typeidfield = m->type->subtype->typeref.field;
+        else
+            continue;
+        /* This is the type ID field (because there _is_ a subtype) */
+        *typeidmember = m;
+        break;
+    }
+}
+
+/*
+ * Generate CHOICE-like struct fields for open types declared via
+ * X.681/682/683 syntax.
+ *
+ * We could support multiple open type members in a SET/SEQUENCE, but for now
+ * we support only one.
+ */
+static void
+define_open_type(int level, const char *newbasename, const char *name, const char *basename, Type *pt, Type *t)
+{
+    Member *opentypemember, *typeidmember;
+    Field *opentypefield, *typeidfield;
+    ObjectField *of;
+    IOSObjectSet *os = pt->actual_parameter;
+    IOSObject **objects;
+    size_t nobjs, i;
+    int is_array_of_open_type;
+
+    get_open_type_defn_fields(pt, &typeidmember, &opentypemember,
+                              &typeidfield, &opentypefield,
+                              &is_array_of_open_type);
+    if (!opentypemember || !typeidmember ||
+        !opentypefield  || !typeidfield)
+        errx(1, "Open type specification in %s is incomplete", name);
+
+    sort_object_set(os, typeidfield, &objects, &nobjs);
+
+    fprintf(headerfile, "struct {\n");
+
+    /* Iterate objects in the object set, gen enum labels */
+    fprintf(headerfile, "enum { choice_%s_iosnumunknown = 0,\n",
+            newbasename);
+    for (i = 0; i < nobjs; i++) {
+        HEIM_TAILQ_FOREACH(of, objects[i]->objfields, objfields) {
+            if (strcmp(of->name, typeidfield->name))
+                continue;
+            if (!of->value || !of->value->s)
+                errx(1, "Unknown value in value field %s of object %s",
+                     of->name, objects[i]->symbol->name);
+            fprintf(headerfile, "choice_%s_iosnum_%s,\n",
+                    newbasename, of->value->s->gen_name);
+        }
+    }
+    fprintf(headerfile, "} element;\n");
+
+    if (is_array_of_open_type)
+        fprintf(headerfile, "unsigned int len;\n");
+
+    /* Iterate objects in the object set, gen union arms */
+    fprintf(headerfile, "union {\nvoid *_any;\n");
+    for (i = 0; i < nobjs; i++) {
+        HEIM_TAILQ_FOREACH(of, objects[i]->objfields, objfields) {
+            char *n = NULL;
+
+            if (strcmp(of->name, opentypefield->name))
+                continue;
+            if (!of->type || (!of->type->symbol && of->type->type != TTag) ||
+                of->type->tag.tagclass != ASN1_C_UNIV) {
+                warnx("Ignoring unknown or unset type field %s of object %s",
+                      of->name, objects[i]->symbol->name);
+                continue;
+            }
+
+            if (asprintf(&n, "*%s", objects[i]->symbol->gen_name) < 0 || n == NULL)
+                err(1, "malloc");
+            define_type(level + 2, n, newbasename, NULL, of->type, FALSE, FALSE);
+            free(n);
+        }
+    }
+    if (is_array_of_open_type) {
+        fprintf(headerfile, "} *val;\n} _ioschoice_%s;\n", opentypemember->gen_name);
+    } else {
+        fprintf(headerfile, "} u;\n");
+        fprintf(headerfile, "} _ioschoice_%s;\n", opentypemember->gen_name);
+    }
+    free(objects);
+}
+
+static void
+define_type(int level, const char *name, const char *basename, Type *pt, Type *t, int typedefp, int preservep)
+{
+    const char *label_prefix = NULL;
+    const char *label_prefix_sep = NULL;
     char *newbasename = NULL;
 
     switch (t->type) {
     case TType:
 	space(level);
-	fprintf (headerfile, "%s %s;\n", t->symbol->gen_name, name);
+        if (!t->symbol && t->actual_parameter)
+            define_open_type(level, newbasename, name, basename, t, t);
+        else if (!t->symbol && pt->actual_parameter)
+            define_open_type(level, newbasename, name, basename, pt, t);
+        else
+            fprintf(headerfile, "%s %s;\n", t->symbol->gen_name, name);
 	break;
     case TInteger:
+        if (t->symbol && t->symbol->emitted_definition)
+            break;
+
 	space(level);
 	if(t->members) {
             Member *m;
+
+            label_prefix = prefix_enum ? name : (enum_prefix ? enum_prefix : "");
+            label_prefix_sep = prefix_enum ? "_" : "";
             fprintf (headerfile, "enum %s {\n", typedefp ? name : "");
 	    HEIM_TAILQ_FOREACH(m, t->members, members) {
                 space (level + 1);
-                fprintf(headerfile, "%s = %d%s\n", m->gen_name, m->val,
-                        last_member_p(m));
+                fprintf(headerfile, "%s%s%s = %d%s\n",
+                        label_prefix, label_prefix_sep,
+                        m->gen_name, m->val, last_member_p(m));
             }
-            fprintf (headerfile, "} %s;\n", name);
+            fprintf(headerfile, "} %s;\n", name);
 	} else if (t->range == NULL) {
-	    fprintf (headerfile, "heim_integer %s;\n", name);
-	} else if (t->range->min < INT_MIN && t->range->max <= INT64_MAX) {
-	    fprintf (headerfile, "int64_t %s;\n", name);
-	} else if (t->range->min >= 0 && t->range->max > UINT_MAX) {
-	    fprintf (headerfile, "uint64_t %s;\n", name);
-	} else if (t->range->min >= INT_MIN && t->range->max <= INT_MAX) {
+            fprintf(headerfile, "heim_integer %s;\n", name);
+	} else if (t->range->min < 0 &&
+                   (t->range->min < INT_MIN || t->range->max > INT_MAX)) {
+            fprintf(headerfile, "int64_t %s;\n", name);
+	} else if (t->range->min < 0) {
 	    fprintf (headerfile, "int %s;\n", name);
-	} else if (t->range->min >= 0 && t->range->max <= UINT_MAX) {
+	} else if (t->range->max > UINT_MAX) {
+	    fprintf (headerfile, "uint64_t %s;\n", name);
+	} else {
 	    fprintf (headerfile, "unsigned int %s;\n", name);
-	} else
-	    errx(1, "%s: unsupported range %lld -> %lld",
-		 name, (long long)t->range->min, (long long)t->range->max);
+	}
 	break;
     case TBoolean:
 	space(level);
@@ -788,6 +1133,10 @@ define_type (int level, const char *name, const char *basename, Type *t, int typ
 	struct range range = { 0, UINT_MAX };
         size_t max_memno = 0;
         size_t bitset_size;
+
+        if (t->symbol && t->symbol->emitted_definition)
+            break;
+        memset(&i, 0, sizeof(i));
 
         /*
          * range.max implies the size of the base unsigned integer used for the
@@ -806,7 +1155,7 @@ define_type (int level, const char *name, const char *basename, Type *t, int typ
         if (max_memno > 63)
             range.max = INT64_MAX;
         else
-            range.max = 1LU << max_memno;
+            range.max = 1ULL << max_memno;
 
 	i.type = TInteger;
 	i.range = &range;
@@ -818,7 +1167,7 @@ define_type (int level, const char *name, const char *basename, Type *t, int typ
 	    fprintf (headerfile, "heim_bit_string %s;\n", name);
 	else {
 	    int pos = 0;
-	    getnewbasename(&newbasename, typedefp, basename, name);
+	    getnewbasename(&newbasename, typedefp || level == 0, basename, name);
 
 	    fprintf (headerfile, "struct %s {\n", newbasename);
 	    HEIM_TAILQ_FOREACH(m, t->members, members) {
@@ -831,7 +1180,7 @@ define_type (int level, const char *name, const char *basename, Type *t, int typ
 		while (pos < m->val) {
 		    if (asprintf (&n, "_unused%d:1", pos) < 0 || n == NULL)
 			err(1, "malloc");
-		    define_type (level + 1, n, newbasename, &i, FALSE, FALSE);
+		    define_type(level + 1, n, newbasename, NULL, &i, FALSE, FALSE);
 		    free(n);
 		    pos++;
 		}
@@ -839,7 +1188,7 @@ define_type (int level, const char *name, const char *basename, Type *t, int typ
 		n = NULL;
 		if (asprintf (&n, "%s:1", m->gen_name) < 0 || n == NULL)
 		    errx(1, "malloc");
-		define_type (level + 1, n, newbasename, &i, FALSE, FALSE);
+		define_type(level + 1, n, newbasename, NULL, &i, FALSE, FALSE);
 		free (n);
 		n = NULL;
 		pos++;
@@ -854,7 +1203,7 @@ define_type (int level, const char *name, const char *basename, Type *t, int typ
 		char *n = NULL;
 		if (asprintf (&n, "_unused%d:1", pos) < 0 || n == NULL)
 		    errx(1, "malloc");
-		define_type (level + 1, n, newbasename, &i, FALSE, FALSE);
+		define_type(level + 1, n, newbasename, NULL, &i, FALSE, FALSE);
 		free(n);
 		pos++;
 	    }
@@ -867,6 +1216,11 @@ define_type (int level, const char *name, const char *basename, Type *t, int typ
     case TEnumerated: {
 	Member *m;
 
+        if (t->symbol && t->symbol->emitted_definition)
+            break;
+
+        label_prefix = prefix_enum ? name : (enum_prefix ? enum_prefix : "");
+        label_prefix_sep = prefix_enum ? "_" : "";
 	space(level);
 	fprintf (headerfile, "enum %s {\n", typedefp ? name : "");
 	HEIM_TAILQ_FOREACH(m, t->members, members) {
@@ -874,8 +1228,9 @@ define_type (int level, const char *name, const char *basename, Type *t, int typ
 	    if (m->ellipsis)
 		fprintf (headerfile, "/* ... */\n");
 	    else
-		fprintf (headerfile, "%s = %d%s\n", m->gen_name, m->val,
-			 last_member_p(m));
+		fprintf(headerfile, "%s%s%s = %d%s\n",
+                        label_prefix, label_prefix_sep,
+                        m->gen_name, m->val, last_member_p(m));
 	}
 	space(level);
 	fprintf (headerfile, "} %s;\n\n", name);
@@ -885,7 +1240,7 @@ define_type (int level, const char *name, const char *basename, Type *t, int typ
     case TSequence: {
 	Member *m;
 
-	getnewbasename(&newbasename, typedefp, basename, name);
+	getnewbasename(&newbasename, typedefp || level == 0, basename, name);
 
 	space(level);
 	fprintf (headerfile, "struct %s {\n", newbasename);
@@ -899,13 +1254,15 @@ define_type (int level, const char *name, const char *basename, Type *t, int typ
 	    } else if (m->optional) {
 		char *n = NULL;
 
-		if (asprintf (&n, "*%s", m->gen_name) < 0 || n == NULL)
+		if (asprintf(&n, "*%s", m->gen_name) < 0 || n == NULL)
 		    errx(1, "malloc");
-		define_type (level + 1, n, newbasename, m->type, FALSE, FALSE);
+		define_type(level + 1, n, newbasename, t, m->type, FALSE, FALSE);
 		free (n);
 	    } else
-		define_type (level + 1, m->gen_name, newbasename, m->type, FALSE, FALSE);
+		define_type(level + 1, m->gen_name, newbasename, t, m->type, FALSE, FALSE);
 	}
+        if (t->actual_parameter && t->actual_parameter->objects)
+            define_open_type(level, newbasename, name, basename, t, t);
 	space(level);
 	fprintf (headerfile, "} %s;\n", name);
 	break;
@@ -915,17 +1272,16 @@ define_type (int level, const char *name, const char *basename, Type *t, int typ
 	Type i;
 	struct range range = { 0, UINT_MAX };
 
-	getnewbasename(&newbasename, typedefp, basename, name);
+	getnewbasename(&newbasename, typedefp || level == 0, basename, name);
 
+        memset(&i, 0, sizeof(i));
 	i.type = TInteger;
 	i.range = &range;
-	i.members = NULL;
-	i.constraint = NULL;
 
 	space(level);
 	fprintf (headerfile, "struct %s {\n", newbasename);
-	define_type (level + 1, "len", newbasename, &i, FALSE, FALSE);
-	define_type (level + 1, "*val", newbasename, t->subtype, FALSE, FALSE);
+	define_type(level + 1, "len", newbasename, t, &i, FALSE, FALSE);
+	define_type(level + 1, "*val", newbasename, t, t->subtype, FALSE, FALSE);
 	space(level);
 	fprintf (headerfile, "} %s;\n", name);
 	break;
@@ -943,13 +1299,13 @@ define_type (int level, const char *name, const char *basename, Type *t, int typ
 	fprintf (headerfile, "heim_general_string %s;\n", name);
 	break;
     case TTag:
-	define_type (level, name, basename, t->subtype, typedefp, preservep);
+        define_type(level, name, basename, t, t->subtype, typedefp, preservep);
 	break;
     case TChoice: {
 	int first = 1;
 	Member *m;
 
-	getnewbasename(&newbasename, typedefp, basename, name);
+	getnewbasename(&newbasename, typedefp || level == 0, basename, name);
 
 	space(level);
 	fprintf (headerfile, "struct %s {\n", newbasename);
@@ -988,10 +1344,10 @@ define_type (int level, const char *name, const char *basename, Type *t, int typ
 
 		if (asprintf (&n, "*%s", m->gen_name) < 0 || n == NULL)
 		    errx(1, "malloc");
-		define_type (level + 2, n, newbasename, m->type, FALSE, FALSE);
+		define_type(level + 2, n, newbasename, t, m->type, FALSE, FALSE);
 		free (n);
 	    } else
-		define_type (level + 2, m->gen_name, newbasename, m->type, FALSE, FALSE);
+		define_type(level + 2, m->gen_name, newbasename, t, m->type, FALSE, FALSE);
 	}
 	space(level + 1);
 	fprintf (headerfile, "} u;\n");
@@ -1038,24 +1394,277 @@ define_type (int level, const char *name, const char *basename, Type *t, int typ
     default:
 	abort ();
     }
-    if (newbasename)
-	free(newbasename);
+    free(newbasename);
+}
+
+static void
+declare_type(const Symbol *s, Type *t, int typedefp)
+{
+    char *newbasename = NULL;
+
+    if (typedefp)
+        fprintf(headerfile, "typedef ");
+
+    switch (t->type) {
+    case TType:
+        define_type(0, s->gen_name, s->gen_name, NULL, s->type, TRUE, TRUE);
+        if (template_flag)
+            generate_template_type_forward(s->gen_name);
+        emitted_declaration(s);
+        return;
+    case TInteger:
+    case TBoolean:
+    case TOctetString:
+    case TBitString: 
+    case TEnumerated: 
+    case TGeneralizedTime:
+    case TGeneralString:
+    case TTeletexString:
+    case TUTCTime:
+    case TUTF8String:
+    case TPrintableString:
+    case TIA5String:
+    case TBMPString:
+    case TUniversalString:
+    case TVisibleString:
+    case TOID :
+    case TNull:
+        define_type(0, s->gen_name, s->gen_name, NULL, s->type, TRUE, TRUE);
+        if (template_flag)
+            generate_template_type_forward(s->gen_name);
+        emitted_declaration(s);
+        emitted_definition(s);
+        return;
+    case TTag:
+	declare_type(s, t->subtype, FALSE);
+        emitted_declaration(s);
+	return;
+    default:
+        break;
+    }
+
+    switch (t->type) {
+    case TSet:
+    case TSequence:
+	getnewbasename(&newbasename, TRUE, s->gen_name, s->gen_name);
+	fprintf(headerfile, "struct %s %s;\n", newbasename, s->gen_name);
+	break;
+    case TSetOf:
+    case TSequenceOf:
+	getnewbasename(&newbasename, TRUE, s->gen_name, s->gen_name);
+	fprintf(headerfile, "struct %s %s;\n", newbasename, s->gen_name);
+	break;
+    case TChoice:
+	getnewbasename(&newbasename, TRUE, s->gen_name, s->gen_name);
+	fprintf(headerfile, "struct %s %s;\n", newbasename, s->gen_name);
+	break;
+    default:
+	abort ();
+    }
+    free(newbasename);
+    emitted_declaration(s);
+}
+
+static void generate_subtypes_header_helper(const Member *m);
+static void generate_type_header(const Symbol *);
+
+static void
+generate_subtypes_header_helper(const Member *m)
+{
+    Member *sm;
+    Symbol *s;
+
+    if (m->ellipsis)
+        return;
+    if (m->type->symbol && (s = getsym(m->type->symbol->name)) &&
+        !s->emitted_definition) {
+        /* A field of some named type; recurse */
+        if (!m->optional && !m->defval)
+            generate_type_header(s);
+        return;
+    }
+    if (!m->type->subtype && !m->type->members)
+        return;
+    if (m->type->type == TTag &&
+        m->type->subtype && m->type->subtype->symbol &&
+        (s = getsym(m->type->subtype->symbol->name))) {
+        if (!m->optional && !m->defval)
+            generate_type_header(s);
+        return;
+    }
+    if (m->type->subtype) {
+        switch (m->type->subtype->type) {
+        case TSet:
+        case TSequence:
+        case TChoice:
+            break;
+        default:
+            return;
+        }
+        /* A field of some anonymous (inlined) structured type */
+        HEIM_TAILQ_FOREACH(sm, m->type->subtype->members, members) {
+            generate_subtypes_header_helper(sm);
+        }
+    }
+    if (m->type->members) {
+        HEIM_TAILQ_FOREACH(sm, m->type->members, members) {
+            generate_subtypes_header_helper(sm);
+        }
+    }
+}
+
+static void
+generate_subtypes_header(const Symbol *s)
+{
+    Type *t = s->type;
+    Member *m;
+
+    /*
+     * Recurse down structured types to make sure top-level types get
+     * defined before they are referenced.
+     *
+     * We'll take care to skip OPTIONAL member fields of constructed types so
+     * that we can have circular types like:
+     *
+     *  Foo ::= SEQUENCE {
+     *    bar Bar OPTIONAL
+     *  }
+     *
+     *  Bar ::= SEQUENCE {
+     *    foo Foo OPTIONAL
+     *  }
+     *
+     * not unlike XDR, which uses `*' to mean "optional", except in XDR it's
+     * called a "pointer".  With some care we should be able to eventually
+     * support the silly XDR linked list example:
+     *
+     *  ListOfFoo ::= SEQUENCE {
+     *    someField SomeType,
+     *    next ListOfFoo OPTIONAL
+     *  }
+     *
+     * Not that anyone needs it -- just use a SEQUENCE OF and be done.
+     */
+
+    while (t->type == TTag && t->subtype) {
+        switch (t->subtype->type) {
+        case TTag:
+        case TSet:
+        case TSequence:
+        case TChoice:
+            t = t->subtype;
+            continue;
+        default:
+            break;
+        }
+        break;
+    }
+
+    switch (t->type) {
+    default: return;
+    case TType: {
+        Symbol *s2;
+        if (t->symbol && (s2 = getsym(t->symbol->name)) != s)
+            generate_type_header(s2);
+        return;
+    }
+    case TSet:
+    case TSequence:
+    case TChoice:
+        break;
+    }
+
+    HEIM_TAILQ_FOREACH(m, t->members, members) {
+        generate_subtypes_header_helper(m);
+    }
 }
 
 static void
 generate_type_header (const Symbol *s)
 {
-    int preservep = preserve_type(s->name) ? TRUE : FALSE;
+    Type *t = s->type;
+    if (!s->type)
+        return;
 
-    fprintf (headerfile, "/*\n");
-    fprintf (headerfile, "%s ::= ", s->name);
+    /*
+     * Recurse down the types of member fields of `s' to make sure that
+     * referenced types have had their definitions emitted already if the
+     * member fields are not OPTIONAL/DEFAULTed.
+     */
+    generate_subtypes_header(s);
+    fprintf(headerfile, "/*\n");
+    fprintf(headerfile, "%s ::= ", s->name);
     define_asn1 (0, s->type);
-    fprintf (headerfile, "\n*/\n\n");
+    fprintf(headerfile, "\n*/\n\n");
 
-    fprintf (headerfile, "typedef ");
-    define_type (0, s->gen_name, s->gen_name, s->type, TRUE, preservep);
+    /*
+     * Emit enums for the outermost tag of this type.  These are needed for
+     * dealing with IMPLICIT tags so we know what to rewrite the tag to when
+     * decoding.
+     *
+     * See gen_encode.c and gen_decode.c for a complete explanation.  Short
+     * version: we need to change the prototypes of the length/encode/decode
+     * functions to take an optional IMPLICIT tag to use instead of the type's
+     * outermost tag, but for now we hack it, and to do that we need to know
+     * the type's outermost tag outside the context of the bodies of the codec
+     * functions we generate for it.  Using an enum means no extra space is
+     * needed in stripped objects.
+     */
+    if (!s->emitted_tag_enums) {
+        while (t->type == TType && s->type->symbol && s->type->symbol->type) {
+            if (t->subtype)
+                t = t->subtype;
+            else
+                t = s->type->symbol->type;
+        }
 
-    fprintf (headerfile, "\n");
+        if (t->type == TType && t->symbol && strcmp(t->symbol->name, "HEIM_ANY")) {
+            /*
+             * This type is ultimately an alias of an imported type, so we don't
+             * know its outermost tag here.
+             */
+            fprintf(headerfile,
+                    "enum { asn1_tag_length_%s = asn1_tag_length_%s,\n"
+                    "       asn1_tag_class_%s = asn1_tag_class_%s,\n"
+                    "       asn1_tag_tag_%s = asn1_tag_tag_%s };\n",
+                    s->gen_name, s->type->symbol->gen_name,
+                    s->gen_name, s->type->symbol->gen_name,
+                    s->gen_name, s->type->symbol->gen_name);
+            emitted_tag_enums(s);
+        } else if (t->type != TType) {
+            /* This type's outermost tag is known here */
+            fprintf(headerfile,
+                    "enum { asn1_tag_length_%s = %lu,\n"
+                    "       asn1_tag_class_%s = %d,\n"
+                    "       asn1_tag_tag_%s = %d };\n",
+                    s->gen_name, (unsigned long)length_tag(s->type->tag.tagvalue),
+                    s->gen_name, s->type->tag.tagclass,
+                    s->gen_name, s->type->tag.tagvalue);
+            emitted_tag_enums(s);
+        }
+    }
+
+    if (s->emitted_definition)
+        return;
+
+    if (is_export(s->name))
+        fprintf(symsfile, "ASN1_SYM_TYPE(\"%s\", \"%s\", %s)\n",
+                s->name, s->gen_name, s->gen_name);
+    fprintf(headerfile, "typedef ");
+    define_type(0, s->gen_name, s->gen_name, NULL, s->type, TRUE,
+                preserve_type(s->name) ? TRUE : FALSE);
+    fprintf(headerfile, "\n");
+
+    emitted_definition(s);
+}
+
+void
+generate_type_header_forwards(const Symbol *s)
+{
+    declare_type(s, s->type, TRUE);
+    fprintf(headerfile, "\n");
+    if (template_flag)
+        generate_template_type_forward(s->gen_name);
 }
 
 void
@@ -1067,7 +1676,7 @@ generate_type (const Symbol *s)
     if (!one_code_file)
 	generate_header_of_codefile(s->gen_name);
 
-    generate_type_header (s);
+    generate_type_header(s);
 
     if (template_flag)
 	generate_template(s);
@@ -1078,6 +1687,7 @@ generate_type (const Symbol *s)
 	generate_type_free (s);
 	generate_type_length (s);
 	generate_type_copy (s);
+        generate_type_print_stub(s);
     }
     generate_type_seq (s);
     generate_glue (s->type, s->gen_name);
@@ -1115,10 +1725,15 @@ generate_type (const Symbol *s)
 	     exp,
 	     s->gen_name, s->gen_name);
 
+    fprintf(h,
+            "%schar * ASN1CALL print_%s (const %s *, int);\n",
+            exp,
+            s->gen_name, s->gen_name);
+
     fprintf(h, "\n\n");
 
     if (!one_code_file) {
 	fprintf(codefile, "\n\n");
 	close_codefile();
-	}
+    }
 }

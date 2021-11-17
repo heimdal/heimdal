@@ -164,7 +164,7 @@ cdefines=$(cdefines) -DHAVE_CONFIG_H
 # Windows CNG provider
 cdefines=$(cdefines) -DHCRYPTO_DEF_PROVIDER=w32crypto
 cdebug=$(cdebug) /Zi
-ldebug=$(ldebug) /RELEASE
+ldebug=$(ldebug) /DEBUG
 localcflags=$(localcflags) /Oy-
 
 # Disable warnings:
@@ -517,7 +517,7 @@ SIGNTOOL_T_SHA256=http://timestamp.digicert.com
 !endif
 
 _CODESIGN=( $(SIGNTOOL) sign /fd sha1 $(SIGNTOOL_O) /t $(SIGNTOOL_T) $(SIGNTOOL_C) /v $@ )
-_CODESIGN_SHA256=( $(SIGNTOOL) sign /as /fd sha256 $(SIGNTOOL_O) /tr $(SIGNTOOL_T_SHA256) $(SIGNTOOL_C) /v $@ )
+_CODESIGN_SHA256=( $(SIGNTOOL) sign /as /fd sha256 /td sha256 $(SIGNTOOL_O) /tr $(SIGNTOOL_T_SHA256) $(SIGNTOOL_C) /v $@ )
 !else
 _CODESIGN=( echo Skipping code sign )
 _CODESIGN_SHA256=( echo Skipping sha256 code sign )
@@ -577,6 +577,7 @@ LIBASN1	    =$(LIBDIR)\libasn1.lib
 LIBCOMERR   =$(LIBDIR)\libcom_err.lib
 LIBEDITLINE =$(LIBDIR)\libeditline.lib
 LIBGSSAPI   =$(LIBDIR)\libgssapi.lib
+LIBGSS_PREAUTH=$(LIBDIR)\libgss_preauth.lib
 LIBHCRYPTO  =$(LIBDIR)\libhcrypto.lib
 LIBHDB	    =$(LIBDIR)\libhdb.lib
 LIBHEIMBASE =$(LIBDIR)\libheimbase.lib

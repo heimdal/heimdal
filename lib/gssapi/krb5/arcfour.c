@@ -880,7 +880,8 @@ _gssapi_wrap_iov_length_arcfour(OM_uint32 *minor_status,
 	}
     }
 
-    major_status = _gk_verify_buffers(minor_status, ctx, header, padding, trailer);
+    major_status = _gk_verify_buffers(minor_status, ctx, header,
+				      padding, trailer, FALSE);
     if (major_status != GSS_S_COMPLETE) {
 	    return major_status;
     }
@@ -937,7 +938,8 @@ _gssapi_wrap_iov_arcfour(OM_uint32 *minor_status,
     padding = _gk_find_buffer(iov, iov_count, GSS_IOV_BUFFER_TYPE_PADDING);
     trailer = _gk_find_buffer(iov, iov_count, GSS_IOV_BUFFER_TYPE_TRAILER);
 
-    major_status = _gk_verify_buffers(minor_status, ctx, header, padding, trailer);
+    major_status = _gk_verify_buffers(minor_status, ctx, header,
+				      padding, trailer, FALSE);
     if (major_status != GSS_S_COMPLETE) {
 	return major_status;
     }
@@ -974,7 +976,7 @@ _gssapi_wrap_iov_arcfour(OM_uint32 *minor_status,
 	header_len -= data_len;
     }
 
-    if (GSS_IOV_BUFFER_FLAGS(header->type) & GSS_IOV_BUFFER_TYPE_FLAG_ALLOCATE) {
+    if (GSS_IOV_BUFFER_FLAGS(header->type) & GSS_IOV_BUFFER_FLAG_ALLOCATE) {
 	major_status = _gk_allocate_buffer(minor_status, header,
 					   header_len);
 	if (major_status != GSS_S_COMPLETE)
@@ -988,7 +990,7 @@ _gssapi_wrap_iov_arcfour(OM_uint32 *minor_status,
     }
 
     if (padding) {
-	if (GSS_IOV_BUFFER_FLAGS(padding->type) & GSS_IOV_BUFFER_TYPE_FLAG_ALLOCATE) {
+	if (GSS_IOV_BUFFER_FLAGS(padding->type) & GSS_IOV_BUFFER_FLAG_ALLOCATE) {
 	    major_status = _gk_allocate_buffer(minor_status, padding, 1);
 	    if (major_status != GSS_S_COMPLETE)
 		goto failure;
@@ -1181,10 +1183,11 @@ _gssapi_unwrap_iov_arcfour(OM_uint32 *minor_status,
 
     /* Check if the packet is correct */
     major_status = _gk_verify_buffers(minor_status,
-				  ctx,
-				  header,
-				  padding,
-				  trailer);
+				      ctx,
+				      header,
+				      padding,
+				      trailer,
+				      FALSE); /* behaves as stream cipher */
     if (major_status != GSS_S_COMPLETE) {
 	return major_status;
     }
@@ -1194,15 +1197,19 @@ _gssapi_unwrap_iov_arcfour(OM_uint32 *minor_status,
 	return GSS_S_FAILURE;
     }
 
-    if (IS_DCE_STYLE(context)) {
-	verify_len = GSS_ARCFOUR_WRAP_TOKEN_SIZE +
-		     GSS_ARCFOUR_WRAP_TOKEN_DCE_DER_HEADER_SIZE;
-	if (header->buffer.length > verify_len) {
-	    return GSS_S_BAD_MECH;
+    verify_len = header->buffer.length;
+
+    if (!IS_DCE_STYLE(ctx)) {
+	for (i = 0; i < iov_count; i++) {
+	    /* length in header also includes data and padding */
+	    if (GSS_IOV_BUFFER_TYPE(iov[i].type) == GSS_IOV_BUFFER_TYPE_DATA)
+		verify_len += iov[i].buffer.length;
 	}
-    } else {
-	verify_len = header->buffer.length;
+
+	if (padding)
+	    verify_len += padding->buffer.length;
     }
+
     _p = header->buffer.value;
 
     ret = _gssapi_verify_mech_header(&_p,

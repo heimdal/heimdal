@@ -269,7 +269,7 @@ mark_authorized(hx509_request csr)
 static KRB5_LIB_CALL krb5_error_code
 authorize(void *ctx,
           krb5_context context,
-          krb5_kdc_configuration *config,
+          const char *app,
           hx509_request csr,
           krb5_const_principal client,
           krb5_boolean *result)
@@ -285,10 +285,9 @@ authorize(void *ctx,
     char *s = NULL;
     int do_check = 0;
 
-    if ((svc = krb5_config_get_string(context, NULL,
-                                      config->app ? config->app : "kdc",
-                                      "ipc_csr_authorizer", "service",
-                                      NULL)) == NULL)
+    if ((svc = krb5_config_get_string(context, NULL, app ? app : "kdc",
+                                      "ipc_csr_authorizer", "service", NULL))
+        == NULL)
         return KRB5_PLUGIN_NO_HANDLE;
 
     if ((ret = heim_ipc_init_context(svc, &ipc))) {

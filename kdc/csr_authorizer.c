@@ -35,7 +35,7 @@
 #include "csr_authorizer_plugin.h"
 
 struct plctx {
-    krb5_kdc_configuration  *config;
+    const char              *app;
     hx509_request           csr;
     krb5_const_principal    client;
     krb5_boolean            result;
@@ -47,7 +47,7 @@ plcallback(krb5_context context, const void *plug, void *plugctx, void *userctx)
     const krb5plugin_csr_authorizer_ftable *authorizer = plug;
     struct plctx *plctx = userctx;
 
-    return authorizer->authorize(plugctx, context, plctx->config, plctx->csr,
+    return authorizer->authorize(plugctx, context, plctx->app, plctx->csr,
                                  plctx->client, &plctx->result);
 }
 
@@ -67,14 +67,14 @@ static struct heim_plugin_data csr_authorizer_data = {
  */
 krb5_error_code
 kdc_authorize_csr(krb5_context context,
-                  krb5_kdc_configuration *config,
+                  const char *app,
                   hx509_request csr,
                   krb5_const_principal client)
 {
     krb5_error_code ret;
     struct plctx ctx;
 
-    ctx.config = config;
+    ctx.app = app;
     ctx.csr = csr;
     ctx.client = client;
     ctx.result = FALSE;

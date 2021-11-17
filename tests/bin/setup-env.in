@@ -19,6 +19,7 @@ NO_AFS="@NO_AFS@"
 
 # regular apps
 bx509d="${TESTS_ENVIRONMENT} ${top_builddir}/kdc/bx509d"
+httpkadmind="${TESTS_ENVIRONMENT} ${top_builddir}/kdc/httpkadmind"
 hxtool="${TESTS_ENVIRONMENT} ${top_builddir}/lib/hx509/hxtool"
 iprop_log="${TESTS_ENVIRONMENT} ${top_builddir}/lib/kadm5/iprop-log"
 ipropd_master="${TESTS_ENVIRONMENT} ${top_builddir}/lib/kadm5/ipropd-master"
@@ -57,6 +58,7 @@ rkvis="${TESTS_ENVIRONMENT} ${top_builddir}/lib/roken/rkvis"
 test_set_kvno0="${TESTS_ENVIRONMENT} ${top_builddir}/lib/krb5/test_set_kvno0"
 test_alname="${TESTS_ENVIRONMENT} ${top_builddir}/lib/krb5/test_alname"
 test_kuserok="${TESTS_ENVIRONMENT} ${top_builddir}/lib/krb5/test_kuserok"
+test_mkforwardable="${TESTS_ENVIRONMENT} ${top_builddir}/lib/krb5/test_mkforwardable"
 
 # misc apps
 have_db="${top_builddir}/tests/db/have-db"

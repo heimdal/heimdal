@@ -137,6 +137,10 @@ typedef struct kadm5_client_context {
     const char *keytab;
     krb5_ccache ccache;
     kadm5_config_params *realm_params;
+    char *readonly_admin_server;
+    int readonly_kadmind_port;
+    unsigned int want_write:1;
+    unsigned int connected_to_writable:1;
 } kadm5_client_context;
 
 typedef struct kadm5_ad_context {

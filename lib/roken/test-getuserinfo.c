@@ -36,6 +36,12 @@
 #endif
 #include "roken.h"
 
+static void
+print1(const char *name, const char *tabs, const char *s2)
+{
+    (void) printf("%s:%s%s\n", name, tabs, s2 ? s2 : "<NULL>");
+}
+
 int
 main(void)
 {
@@ -44,20 +50,38 @@ main(void)
     char buf2[MAX_PATH * 2];
     int ret = 0;
     if (!issuid() && getuid() != 0) {
+        const char *s, *s2;
+
         if (getenv("USER") != NULL && strlen(getenv("USER")) != 0 &&
-            strcmp(getenv("USER"),
-                   roken_get_username(buf, sizeof(buf))) != 0) {
+            (s = roken_get_username(buf, sizeof(buf))) == NULL) {
+            warnx("roken_get_username() returned NULL but $USER is set");
+            ret++;
+        }
+        if (getenv("USER") != NULL && strlen(getenv("USER")) != 0 && s &&
+            strcmp(getenv("USER"), s) != 0) {
             warnx("roken_get_username() != getenv(\"USER\")");
             ret++;
         }
+
         if (getenv("HOME") != NULL && strlen(getenv("HOME")) != 0 &&
-            strcmp(getenv("HOME"), roken_get_homedir(buf, sizeof(buf))) != 0) {
+            (s = roken_get_homedir(buf, sizeof(buf))) == NULL) {
+            warnx("roken_get_homedir() returned NULL but $HOME is set");
+            ret++;
+        }
+        if (getenv("HOME") != NULL && strlen(getenv("HOME")) != 0 && s &&
+            strcmp(getenv("HOME"), s) != 0) {
             warnx("roken_get_homedir() != getenv(\"HOME\")");
             ret++;
         }
+
+        if (getenv("HOME") != NULL && strlen(getenv("HOME")) != 0 && s &&
+            (s2 = roken_get_appdatadir(buf, sizeof(buf))) == NULL) {
+            warnx("roken_get_appdatadir() returned NULL but $HOME is set "
+                  "and roken_get_homedir() returned not-NULL");
+            ret++;
+        }
         if (getenv("HOME") != NULL && strlen(getenv("HOME")) != 0 &&
-            strcmp(roken_get_appdatadir(buf, sizeof(buf)),
-                   roken_get_homedir(buf2, sizeof(buf2))) != 0) {
+            s && s2 && strcmp(s, s2) != 0) {
             warnx("roken_get_homedir() != roken_get_appdatadir()");
             ret++;
         }
@@ -68,37 +92,40 @@ main(void)
         }
     }
 #endif
-    printf("Username:\t%s\n", roken_get_username(buf, sizeof(buf)));
-    printf("Loginname:\t%s\n", roken_get_loginname(buf, sizeof(buf)));
-    printf("Home:\t\t%s\n", roken_get_homedir(buf, sizeof(buf)));
-    printf("Appdatadir:\t%s\n", roken_get_appdatadir(buf, sizeof(buf)));
-    printf("Shell:\t\t%s\n", roken_get_shell(buf, sizeof(buf)));
+
+    print1("Username",      "\t",   roken_get_username(buf, sizeof(buf)));
+    print1("Loginname",     "\t",   roken_get_loginname(buf, sizeof(buf)));
+    print1("Home",          "\t\t", roken_get_homedir(buf, sizeof(buf)));
+    print1("Appdatadir",    "\t",   roken_get_appdatadir(buf, sizeof(buf)));
+    print1("Shell",         "\t\t", roken_get_shell(buf, sizeof(buf)));
 
 #ifndef WIN32
     if (!issuid() && getuid() != 0) {
+        const char *s, *s2;
+
         putenv("USER=h5lfoouser");
         putenv("HOME=/no/such/dir/h5lfoouser");
         putenv("SHELL=/no/such/shell");
-        if (strcmp("h5lfoouser", roken_get_username(buf, sizeof(buf))) != 0) {
-            warnx("roken_get_username() (%s) did not honor $USER",
-                  roken_get_username(buf, sizeof(buf)));
+        if ((s = roken_get_username(buf, sizeof(buf))) == NULL ||
+            strcmp("h5lfoouser", s) != 0) {
+            warnx("roken_get_username() (%s) did not honor $USER", s);
             ret++;
         }
-        if (strcmp("/no/such/dir/h5lfoouser",
-                   roken_get_homedir(buf, sizeof(buf))) != 0) {
-            warnx("roken_get_homedir() (%s) did not honor $HOME",
-                  roken_get_homedir(buf, sizeof(buf)));
+        if ((s = roken_get_homedir(buf, sizeof(buf))) == NULL ||
+            strcmp("/no/such/dir/h5lfoouser", s) != 0) {
+            warnx("roken_get_homedir() (%s) did not honor $HOME", s);
             ret++;
         }
-        if (strcmp(roken_get_appdatadir(buf, sizeof(buf)),
-                   roken_get_homedir(buf2, sizeof(buf2))) != 0) {
+        s = roken_get_homedir(buf, sizeof(buf));
+        s2 = roken_get_appdatadir(buf2, sizeof(buf2));
+        if (strcmp(s, s2) != 0) {
             warnx("roken_get_homedir() != roken_get_appdatadir() (%s)",
                   roken_get_appdatadir(buf, sizeof(buf)));
             ret++;
         }
-        if (strcmp("/no/such/shell", roken_get_shell(buf, sizeof(buf))) != 0) {
-            warnx("roken_get_shell() (%s) did not honor $SHELL",
-                  roken_get_shell(buf, sizeof(buf)));
+        if ((s = roken_get_shell(buf, sizeof(buf))) == NULL ||
+            strcmp("/no/such/shell", s) != 0) {
+            warnx("roken_get_shell() (%s) did not honor $SHELL", s);
             ret++;
         }
     }

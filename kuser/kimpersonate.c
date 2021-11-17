@@ -89,7 +89,7 @@ encode_ticket(krb5_context context,
 	krb5_data empty_string;
 
 	krb5_data_zero(&empty_string);
-	et.transited.tr_type = DOMAIN_X500_COMPRESS;
+	et.transited.tr_type = domain_X500_Compress;
 	et.transited.contents = empty_string;
     }
     et.authtime = cred->times.authtime;
@@ -214,7 +214,7 @@ create_krb5_tickets(krb5_context context, krb5_keytab kt)
     }
 
     if (add_to_ccache) {
-        krb5_principal def_princ;
+        krb5_principal def_princ = NULL;
 
         /*
          * Force fcache to read the ccache header, otherwise the store

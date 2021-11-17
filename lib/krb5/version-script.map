@@ -865,6 +865,7 @@ HEIMDAL_KRB5_2.0 {
 		# FAST
 		_krb5_fast_cf2;
 		_krb5_fast_armor_key;
+		_krb5_fast_explicit_armor_key;
 
                 # TGS
                 _krb5_find_capath;

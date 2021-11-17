@@ -96,6 +96,22 @@ _krb5_fast_armor_key(krb5_context context,
 			  armor_crypto);
 }
 
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+_krb5_fast_explicit_armor_key(krb5_context context,
+			      krb5_keyblock *armorkey,
+			      krb5_keyblock *subkey,
+			      krb5_keyblock *explicit_armorkey,
+			      krb5_crypto *explicit_armor_crypto)
+{
+    return _krb5_fast_cf2(context,
+			  armorkey,
+			  "explicitarmor",
+			  subkey,
+			  "tgsarmor",
+			  explicit_armorkey,
+			  explicit_armor_crypto);
+}
+
 static krb5_error_code
 check_fast(krb5_context context, struct krb5_fast_state *state)
 {

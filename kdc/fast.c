@@ -442,6 +442,8 @@ fast_unwrap_request(astgs_request_t r,
     krb5_flags ap_req_options;
     Key *armor_key = NULL;
     krb5_keyblock armorkey;
+    krb5_keyblock explicit_armorkey;
+    krb5_boolean explicit_armor;
     krb5_error_code ret;
     krb5_ap_req ap_req;
     KrbFastReq fastreq;
@@ -492,10 +494,12 @@ fast_unwrap_request(astgs_request_t r,
 	goto out;
     }
 
+    explicit_armor = fxreq.u.armored_data.armor != NULL && tgs_ac != NULL;
+
     /*
      *
      */
-    if (tgs_ac == NULL) {
+    if (fxreq.u.armored_data.armor != NULL) {
 	if (fxreq.u.armored_data.armor->armor_type != 1) {
 	    kdc_log(r->context, r->config, 4,
 		    "Incorrect AS-REQ armor type");
@@ -577,9 +581,21 @@ fast_unwrap_request(astgs_request_t r,
 			       ac->remote_subkey,
 			       &ticket->ticket.key,
 			       &armorkey,
-			       &r->armor_crypto);
+			       explicit_armor ? NULL : &r->armor_crypto);
     if (ret)
 	goto out;
+
+    if (explicit_armor) {
+	ret = _krb5_fast_explicit_armor_key(r->context,
+					    &armorkey,
+					    tgs_ac->remote_subkey,
+					    &explicit_armorkey,
+					    &r->armor_crypto);
+	if (ret)
+	    goto out;
+
+	krb5_free_keyblock_contents(r->context, &explicit_armorkey);
+    }
 
     krb5_free_keyblock_contents(r->context, &armorkey);
 

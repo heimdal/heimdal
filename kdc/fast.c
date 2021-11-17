@@ -435,7 +435,9 @@ fast_unwrap_request(astgs_request_t r,
 		    krb5_auth_context tgs_ac)
 {
     krb5_principal armor_server = NULL;
+    krb5_principal armor_client_principal = NULL;
     hdb_entry_ex *armor_user = NULL;
+    hdb_entry_ex *armor_client = NULL;
     PA_FX_FAST_REQUEST fxreq;
     krb5_auth_context ac = NULL;
     krb5_ticket *ticket = NULL;
@@ -657,6 +659,100 @@ fast_unwrap_request(astgs_request_t r,
 	}
     }
 
+    if (fxreq.u.armored_data.armor) {
+	char *armor_server_principal_name = NULL;
+	int flags;
+	krb5_boolean ad_kdc_issued = FALSE;
+	krb5_pac mspac = NULL;
+
+	ret = krb5_unparse_name(r->context, armor_server,
+				&armor_server_principal_name);
+	if (ret)
+	    goto out;
+
+	ret = _kdc_verify_flags(r->context, r->config,
+				&ticket->ticket,
+				armor_server_principal_name);
+	free(armor_server_principal_name);
+	if (ret) {
+	    _kdc_audit_addreason((kdc_request_t)r,
+				 "Armor TGT expired or invalid");
+	    goto out;
+	}
+
+	if (tgs_ticket)
+	    flags = HDB_F_FOR_TGS_REQ;
+	else
+	    flags = HDB_F_FOR_AS_REQ;
+	if (fastreq.req_body.kdc_options.canonicalize)
+	    flags |= HDB_F_CANON;
+
+	ret = _krb5_principalname2krb5_principal(r->context,
+						 &armor_client_principal,
+						 ticket->ticket.cname,
+						 ticket->ticket.crealm);
+	if (ret)
+	    goto out;
+
+	ret = _kdc_db_fetch(r->context, r->config, armor_client_principal,
+			    HDB_F_GET_CLIENT | HDB_F_SYNTHETIC_OK | flags,
+			    NULL, NULL, &armor_client);
+	if (ret) {
+	    ret = KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN;
+	    goto out;
+	}
+
+	ret = kdc_check_flags(r,
+			      tgs_ac == NULL,
+			      armor_client,
+			      NULL);
+	if (ret) {
+	    goto out;
+	}
+
+	ret = _kdc_check_pac(r->context, r->config, armor_client_principal, NULL,
+			     armor_client, armor_user,
+			     armor_user, armor_user,
+			     &armor_key->key, &armor_key->key,
+			     &ticket->ticket, &ad_kdc_issued, &mspac);
+	if (ret) {
+	    const char *msg = krb5_get_error_message(r->context, ret);
+	    char *cname = NULL;
+	    char *sname = NULL;
+
+	    krb5_unparse_name(r->context, armor_client_principal, &cname);
+
+	    if (fastreq.req_body.sname) {
+		krb5_principal server_princ = NULL;
+		if (!_krb5_principalname2krb5_principal(r->context,
+							&server_princ,
+							*fastreq.req_body.sname,
+							fastreq.req_body.realm)) {
+		    krb5_unparse_name(r->context, server_princ, &sname);
+		    krb5_free_principal(r->context, server_princ);
+		}
+	    }
+
+	    kdc_log(r->context, r->config, 4,
+		    "Verify PAC of armor ticket failed for %s (%s) from %s with %s",
+		    sname ? sname : "<unknown>",
+		    cname ? cname : "<unknown>",
+		    r->from, msg);
+	    free(sname);
+	    free(cname);
+	    krb5_free_error_message(r->context, msg);
+	    goto out;
+	}
+	if ((r->config->require_pac && !mspac) || (mspac && !ad_kdc_issued)) {
+	    ret = KRB5KDC_ERR_BADOPTION;
+	    kdc_log(r->context, r->config, 0,
+		    "Armor ticket not signed with PAC; FAST failed (%s).",
+		    mspac || !r->config->require_pac ? "Ticket unsigned" : "No PAC");
+	    goto out;
+	}
+	krb5_pac_free(r->context, mspac);
+    }
+
     /*
      * check for unsupported mandatory options
      */
@@ -695,10 +791,12 @@ fast_unwrap_request(astgs_request_t r,
     if (ticket && ticket != tgs_ticket)
 	krb5_free_ticket(r->context, ticket);
 
-    if (armor_server)
-	krb5_free_principal(r->context, armor_server);
+    krb5_free_principal(r->context, armor_server);
+    krb5_free_principal(r->context, armor_client_principal);
     if(armor_user)
 	_kdc_free_ent(r->context, armor_user);
+    if (armor_client)
+	_kdc_free_ent(r->context, armor_client);
 
     return ret;
 }

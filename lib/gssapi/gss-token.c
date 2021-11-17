@@ -241,6 +241,7 @@ write_and_free_token(gss_buffer_t out, int negotiate)
 			ret = 1;
 			goto bail;
 		}
+                ret = 0;
 		printf("%s%s\n", negotiate?"Negotiate ":"", outstr);
 		free(outstr);
 		p   += inc;

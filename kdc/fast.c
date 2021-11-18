@@ -525,6 +525,7 @@ fast_unwrap_request(astgs_request_t r,
 			    HDB_F_GET_KRBTGT | HDB_F_DELAY_NEW_KEYS,
 			    NULL, NULL, &armor_user);
 	if(ret == HDB_ERR_NOT_FOUND_HERE) {
+	    free_AP_REQ(&ap_req);
 	    kdc_log(r->context, r->config, 5,
 		    "Armor key does not have secrets at this KDC, "
 		    "need to proxy");

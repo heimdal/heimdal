@@ -929,6 +929,7 @@ struct kdc_patypes {
 #define PA_ANNOUNCE	1
 #define PA_REQ_FAST	2 /* only use inside fast */
 #define PA_SYNTHETIC_OK	4
+#define PA_NOT_IN_FAST	8 /* only use outside fast */
     krb5_error_code (*validate)(astgs_request_t, const PA_DATA *pa);
 };
 
@@ -955,7 +956,7 @@ static const struct kdc_patypes pat[] = {
     { KRB5_PADATA_PA_PK_OCSP_RESPONSE , "OCSP", 0, NULL },
     { 
 	KRB5_PADATA_ENC_TIMESTAMP , "ENC-TS",
-	PA_ANNOUNCE,
+	PA_ANNOUNCE | PA_NOT_IN_FAST,
 	pa_enc_ts_validate
     },
     {
@@ -2203,6 +2204,14 @@ _kdc_as_rep(astgs_request_t r)
 	for (n = 0; n < sizeof(pat) / sizeof(pat[0]); n++) {
 	    if ((pat[n].flags & PA_ANNOUNCE) == 0)
 		continue;
+
+	    if (r->armor_crypto == NULL) {
+		if (pat[n].flags & PA_REQ_FAST)
+		    continue;
+	    } else if (pat[n].flags & PA_NOT_IN_FAST)
+		continue;
+	    }
+
 	    ret = krb5_padata_add(context, &error_method,
 				  pat[n].type, NULL, 0);
 	    if (ret)

@@ -53,7 +53,8 @@ enum locate_service_type {
 };
 
 typedef krb5_error_code
-(*krb5plugin_service_locate_lookup) (void *, unsigned long, enum locate_service_type,
+(KRB5_CALLCONV *krb5plugin_service_locate_lookup)
+                                    (void *, unsigned long, enum locate_service_type,
 				     const char *, int, int,
 				     int (*)(void *,int,struct sockaddr *),
 				     void *);
@@ -61,7 +62,8 @@ typedef krb5_error_code
 #define KRB5_PLF_ALLOW_HOMEDIR	    1
 
 typedef krb5_error_code
-(*krb5plugin_service_locate_lookup_old) (void *, enum locate_service_type,
+(KRB5_CALLCONV *krb5plugin_service_locate_lookup_old)
+                                    (void *, enum locate_service_type,
 				     const char *, int, int,
 				     int (*)(void *,int,struct sockaddr *),
 				     void *);
@@ -69,8 +71,8 @@ typedef krb5_error_code
 
 typedef struct krb5plugin_service_locate_ftable {
     int			minor_version;
-    krb5_error_code	(*init)(krb5_context, void **);
-    void		(*fini)(void *);
+    krb5_error_code	(KRB5_CALLCONV *init)(krb5_context, void **);
+    void		(KRB5_CALLCONV *fini)(void *);
     krb5plugin_service_locate_lookup_old old_lookup;
     krb5plugin_service_locate_lookup lookup; /* version 2 */
 } krb5plugin_service_locate_ftable;

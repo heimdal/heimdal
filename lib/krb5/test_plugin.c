@@ -34,19 +34,19 @@
 #include <krb5_locl.h>
 #include "locate_plugin.h"
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 resolve_init(krb5_context context, void **ctx)
 {
     *ctx = NULL;
     return 0;
 }
 
-static void
+static void KRB5_CALLCONV
 resolve_fini(void *ctx)
 {
 }
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 resolve_lookup(void *ctx,
 	       enum locate_service_type service,
 	       const char *realm,

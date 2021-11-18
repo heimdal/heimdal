@@ -51,20 +51,20 @@ get_krbtgt_realm(const PrincipalName *p)
  *
  */
 
-static krb5_error_code
-check_PAC(krb5_context context,
-	  krb5_kdc_configuration *config,
-	  const krb5_principal client_principal,
-	  const krb5_principal delegated_proxy_principal,
-	  hdb_entry_ex *client,
-	  hdb_entry_ex *server,
-	  hdb_entry_ex *krbtgt,
-	  hdb_entry_ex *ticket_server,
-	  const EncryptionKey *server_check_key,
-	  const EncryptionKey *krbtgt_check_key,
-	  EncTicketPart *tkt,
-	  krb5_boolean *kdc_issued,
-	  krb5_pac *ppac)
+krb5_error_code
+_kdc_check_pac(krb5_context context,
+	       krb5_kdc_configuration *config,
+	       const krb5_principal client_principal,
+	       const krb5_principal delegated_proxy_principal,
+	       hdb_entry_ex *client,
+	       hdb_entry_ex *server,
+	       hdb_entry_ex *krbtgt,
+	       hdb_entry_ex *ticket_server,
+	       const EncryptionKey *server_check_key,
+	       const EncryptionKey *krbtgt_check_key,
+	       EncTicketPart *tkt,
+	       krb5_boolean *kdc_issued,
+	       krb5_pac *ppac)
 {
     krb5_pac pac = NULL;
     krb5_error_code ret;
@@ -374,11 +374,11 @@ check_s4u2self(krb5_context context,
  *
  */
 
-static krb5_error_code
-verify_flags (krb5_context context,
-	      krb5_kdc_configuration *config,
-	      const EncTicketPart *et,
-	      const char *pstr)
+krb5_error_code
+_kdc_verify_flags(krb5_context context,
+		  krb5_kdc_configuration *config,
+		  const EncTicketPart *et,
+		  const char *pstr)
 {
     if(et->endtime < kdc_time){
 	kdc_log(context, config, 4, "Ticket expired (%s)", pstr);
@@ -1475,7 +1475,7 @@ tgs_build_reply(astgs_request_t priv,
 	    goto out;
         }
 
-	ret = verify_flags(context, config, &adtkt, tpn);
+	ret = _kdc_verify_flags(context, config, &adtkt, tpn);
 	if (ret) {
             _kdc_audit_addreason((kdc_request_t)priv,
                                  "User-to-user TGT expired or invalid");
@@ -1814,8 +1814,8 @@ server_lookup:
     flags &= ~HDB_F_SYNTHETIC_OK;
     priv->client = client;
 
-    ret = check_PAC(context, config, cp, NULL, client, server, krbtgt, krbtgt,
-		    &priv->ticket_key->key, &priv->ticket_key->key, tgt, &kdc_issued, &mspac);
+    ret = _kdc_check_pac(context, config, cp, NULL, client, server, krbtgt, krbtgt,
+			 &priv->ticket_key->key, &priv->ticket_key->key, tgt, &kdc_issued, &mspac);
     if (ret) {
 	const char *msg = krb5_get_error_message(context, ret);
         _kdc_audit_addreason((kdc_request_t)priv, "PAC check failed");
@@ -2112,7 +2112,7 @@ server_lookup:
 	    goto out;
 	}
 
-	ret = verify_flags(context, config, &adtkt, tpn);
+	ret = _kdc_verify_flags(context, config, &adtkt, tpn);
 	if (ret) {
             _kdc_audit_addreason((kdc_request_t)priv,
                                  "Constrained delegation ticket expired or invalid");
@@ -2137,8 +2137,8 @@ server_lookup:
 	 * TODO: pass in t->sname and t->realm and build
 	 * a S4U_DELEGATION_INFO blob to the PAC.
 	 */
-	ret = check_PAC(context, config, tp, dp, adclient, server, krbtgt, client,
-			&clientkey->key, &priv->ticket_key->key, &adtkt, &ad_kdc_issued, &mspac);
+	ret = _kdc_check_pac(context, config, tp, dp, adclient, server, krbtgt, client,
+			     &clientkey->key, &priv->ticket_key->key, &adtkt, &ad_kdc_issued, &mspac);
 	if (adclient)
 	    _kdc_free_ent(context, adclient);
 	if (ret) {

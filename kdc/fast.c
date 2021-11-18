@@ -523,7 +523,8 @@ fast_unwrap_request(astgs_request_t r,
 
 	ret = _kdc_db_fetch(r->context, r->config, armor_server,
 			    HDB_F_GET_KRBTGT | HDB_F_DELAY_NEW_KEYS,
-			    NULL, NULL, &armor_user);
+			    (krb5uint32 *)ap_req.ticket.enc_part.kvno,
+			    NULL, &armor_user);
 	if(ret == HDB_ERR_NOT_FOUND_HERE) {
 	    free_AP_REQ(&ap_req);
 	    kdc_log(r->context, r->config, 5,

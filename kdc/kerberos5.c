@@ -2179,6 +2179,16 @@ _kdc_as_rep(astgs_request_t r)
 	for (n = 0; n < sizeof(pat) / sizeof(pat[0]); n++) {
 	    if ((pat[n].flags & PA_ANNOUNCE) == 0)
 		continue;
+
+	    if (!r->armor_crypto && (pat[n].flags & PA_REQ_FAST))
+		continue;
+	    if (pat[n].type == KRB5_PADATA_ENC_TIMESTAMP) {
+		if (r->armor_crypto && !r->config->enable_armored_pa_enc_timestamp)
+		    continue;
+		if (!r->armor_crypto && !r->config->enable_unarmored_pa_enc_timestamp)
+		    continue;
+	    }
+
 	    ret = krb5_padata_add(r->context, &r->outpadata,
 				  pat[n].type, NULL, 0);
 	    if (ret)

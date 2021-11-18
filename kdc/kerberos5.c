@@ -177,15 +177,21 @@ get_pa_etype_info2(krb5_context context,
     return 0;
 }
 
-static void
+static krb5_error_code
 set_salt_padata(METHOD_DATA *md, Salt *salt)
 {
     if (salt) {
-       realloc_method_data(md);
+       krb5_error_code ret = realloc_method_data(md);
+       if (ret)
+           return ret;
+       ret = der_copy_octet_string(&salt->salt,
+                                   &md->val[md->len - 1].padata_value);
+       if (ret)
+           return ret;
        md->val[md->len - 1].padata_type = salt->type;
-       der_copy_octet_string(&salt->salt,
-                             &md->val[md->len - 1].padata_value);
     }
+
+    return 0;
 }
 
 const PA_DATA*
@@ -813,7 +819,9 @@ pa_enc_chal_validate(astgs_request_t r, const PA_DATA *pa)
 	if (ret)
 	    goto out;
 					    
-	set_salt_padata(&r->outpadata, k->salt);
+	ret = set_salt_padata(&r->outpadata, k->salt);
+	if (ret)
+	    goto out;
 
        /*
 	* Success
@@ -984,7 +992,9 @@ pa_enc_ts_validate(astgs_request_t r, const PA_DATA *pa)
     }
     free_PA_ENC_TS_ENC(&p);
 
-    set_salt_padata(&r->outpadata, pa_key->salt);
+    ret = set_salt_padata(&r->outpadata, pa_key->salt);
+    if (ret)
+	return ret;
 
     ret = krb5_copy_keyblock_contents(r->context, &pa_key->key, &r->reply_key);
     if (ret)

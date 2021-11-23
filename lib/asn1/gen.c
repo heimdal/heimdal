@@ -177,9 +177,9 @@ init_generate (const char *filename, const char *base)
 	     "#ifndef __%s_h__\n"
 	     "#define __%s_h__\n\n", headerbase, headerbase);
     fprintf (headerfile,
-	     "#include <config.h>\n"
-	     "#include <roken.h>\n"
-	     "#include <stddef.h>\n");
+	     "#include <stddef.h>\n"
+	     "#include <stdint.h>\n"
+	     "#include <time.h>\n\n");
     fprintf (headerfile,
 	     "#ifndef __asn1_common_definitions__\n"
 	     "#define __asn1_common_definitions__\n\n");
@@ -307,8 +307,12 @@ init_generate (const char *filename, const char *base)
     fprintf (templatefile,
 	     "/* Generated from %s */\n"
 	     "/* Do not edit */\n\n"
-	     "#include <config.h>\n"
-	     "#include <roken.h>\n"
+	     "#include <stdio.h>\n"
+	     "#include <stdlib.h>\n"
+	     "#include <time.h>\n"
+	     "#include <string.h>\n"
+	     "#include <errno.h>\n"
+	     "#include <limits.h>\n"
 	     "#include <asn1_err.h>\n"
 	     "#include <%s>\n",
 	     filename,
@@ -407,8 +411,12 @@ generate_header_of_codefile(const char *name)
 	     "/* Generated from %s */\n"
 	     "/* Do not edit */\n\n"
 	     "#define  ASN1_LIB\n\n"
-	     "#include <config.h>\n"
-	     "#include <roken.h>\n"
+	     "#include <stdio.h>\n"
+	     "#include <stdlib.h>\n"
+	     "#include <time.h>\n"
+	     "#include <string.h>\n"
+	     "#include <errno.h>\n"
+	     "#include <limits.h>\n"
 	     "#include <%s>\n",
 	     orig_filename,
 	     type_file_string);

@@ -387,7 +387,7 @@ _gssapi_verify_mic_arcfour(OM_uint32 * minor_status,
     if (context_handle->more_flags & LOCAL)
 	cmp = memcmp(&SND_SEQ[4], "\xff\xff\xff\xff", 4);
     else
-	cmp = memcmp(&SND_SEQ[4], "\x00\x00\x00\x00", 4);
+	cmp = (memcmp(&SND_SEQ[4], "\x00\x00\x00\x00", 4) != 0);
 
     memset_s(SND_SEQ, sizeof(SND_SEQ), 0, sizeof(SND_SEQ));
     if (cmp != 0) {
@@ -658,7 +658,7 @@ OM_uint32 _gssapi_unwrap_arcfour(OM_uint32 *minor_status,
     if (context_handle->more_flags & LOCAL)
 	cmp = memcmp(&SND_SEQ[4], "\xff\xff\xff\xff", 4);
     else
-	cmp = memcmp(&SND_SEQ[4], "\x00\x00\x00\x00", 4);
+	cmp = (memcmp(&SND_SEQ[4], "\x00\x00\x00\x00", 4) != 0);
 
     if (cmp != 0) {
 	*minor_status = 0;
@@ -1269,7 +1269,7 @@ _gssapi_unwrap_iov_arcfour(OM_uint32 *minor_status,
     if (ctx->more_flags & LOCAL) {
 	cmp = memcmp(&snd_seq[4], "\xff\xff\xff\xff", 4);
     } else {
-	cmp = memcmp(&snd_seq[4], "\x00\x00\x00\x00", 4);
+	cmp = (memcmp(&snd_seq[4], "\x00\x00\x00\x00", 4) != 0);
     }
     if (cmp != 0) {
 	*minor_status = 0;

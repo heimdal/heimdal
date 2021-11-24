@@ -38,6 +38,11 @@
 #include <vis.h>
 #include <vis-extras.h>
 
+#ifndef ENOTSUP
+/* Very old MSVC CRTs don't have ENOTSUP */
+#define ENOTSUP EINVAL
+#endif
+
 struct asn1_type_func asn1_template_prim[A1T_NUM_ENTRY] = {
 #define el(name, type) {				\
 	(asn1_type_encode)der_put_##name,		\

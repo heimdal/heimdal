@@ -273,6 +273,11 @@ init_generate (const char *filename, const char *base)
 	  "#define ASN1CALL\n"
 	  "#endif\n",
 	  headerfile);
+    fputs("#ifndef ENOTSUP\n"
+	  "/* Very old MSVC CRTs lack ENOTSUP */\n"
+	  "#define ENOTSUP EINVAL\n"
+	  "#endif\n",
+	  headerfile);
     fprintf (headerfile, "struct units;\n\n");
     fprintf (headerfile, "#endif\n\n");
     if (asprintf(&fn, "%s_files", base) < 0 || fn == NULL)

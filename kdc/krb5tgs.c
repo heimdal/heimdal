@@ -2297,7 +2297,7 @@ _kdc_tgs_rep(astgs_request_t r)
     krb5_error_code ret;
     int i = 0;
     const PA_DATA *tgs_req;
-    Key *header_key;
+    Key *header_key = NULL;
 
     hdb_entry_ex *krbtgt = NULL;
     krb5_ticket *ticket = NULL;

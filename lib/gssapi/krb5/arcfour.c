@@ -1283,16 +1283,6 @@ _gssapi_unwrap_iov_arcfour(OM_uint32 *minor_status,
 	return GSS_S_BAD_MIC;
     }
 
-    if (ctx->more_flags & LOCAL) {
-	cmp = memcmp(&snd_seq[4], "\xff\xff\xff\xff", 4);
-    } else {
-	cmp = memcmp(&snd_seq[4], "\x00\x00\x00\x00", 4);
-    }
-    if (cmp != 0) {
-	*minor_status = 0;
-	return GSS_S_BAD_MIC;
-    }
-
     /* keyblock */
     Klocal.keytype = key->keytype;
     Klocal.keyvalue.data = Klocaldata;

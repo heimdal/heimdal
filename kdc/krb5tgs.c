@@ -147,7 +147,6 @@ check_tgs_flags(astgs_request_t r, KDC_REQ_BODY *b,
 		krb5_const_principal tgt_name,
 		const EncTicketPart *tgt, EncTicketPart *et)
 {
-    krb5_context context = r->context;
     KDCOptions f = b->kdc_options;
 
     if(f.validate){
@@ -227,7 +226,7 @@ check_tgs_flags(astgs_request_t r, KDC_REQ_BODY *b,
 	    *et->starttime = *b->from;
 	et->flags.postdated = 1;
 	et->flags.invalid = 1;
-    } else if (b->from && *b->from > kdc_time + context->max_skew) {
+    } else if (b->from && *b->from > kdc_time + r->context->max_skew) {
 	_kdc_audit_addreason((kdc_request_t)r,
                              "Ticket cannot be postdated");
 	return KRB5KDC_ERR_CANNOT_POSTDATE;
@@ -266,7 +265,7 @@ check_tgs_flags(astgs_request_t r, KDC_REQ_BODY *b,
      * the anonymous principal and the anonymous ticket flag.
      */
     if (tgt->flags.anonymous &&
-	!_kdc_is_anonymous(context, tgt_name)) {
+	!_kdc_is_anonymous(r->context, tgt_name)) {
 	_kdc_audit_addreason((kdc_request_t)r,
                              "Anonymous ticket flag set without "
 			 "anonymous principal");
@@ -922,7 +921,6 @@ tgs_parse_request(astgs_request_t r,
 		  int **cusec,
 		  AuthorizationData **auth_data)
 {
-    krb5_context context = r->context;
     krb5_kdc_configuration *config = r->config;
     KDC_REQ_BODY *b = &r->req.req_body;
     static char failed[] = "<unparse_name failed>";
@@ -946,38 +944,38 @@ tgs_parse_request(astgs_request_t r,
     *cusec = NULL;
 
     memset(&ap_req, 0, sizeof(ap_req));
-    ret = krb5_decode_ap_req(context, &tgs_req->padata_value, &ap_req);
+    ret = krb5_decode_ap_req(r->context, &tgs_req->padata_value, &ap_req);
     if(ret){
-	const char *msg = krb5_get_error_message(context, ret);
-	kdc_log(context, config, 4, "Failed to decode AP-REQ: %s", msg);
-	krb5_free_error_message(context, msg);
+	const char *msg = krb5_get_error_message(r->context, ret);
+	kdc_log(r->context, config, 4, "Failed to decode AP-REQ: %s", msg);
+	krb5_free_error_message(r->context, msg);
 	goto out;
     }
 
     if(!get_krbtgt_realm(&ap_req.ticket.sname)){
 	/* XXX check for ticket.sname == req.sname */
-	kdc_log(context, config, 4, "PA-DATA is not a ticket-granting ticket");
+	kdc_log(r->context, config, 4, "PA-DATA is not a ticket-granting ticket");
 	ret = KRB5KDC_ERR_POLICY; /* ? */
 	goto out;
     }
 
-    _krb5_principalname2krb5_principal(context,
+    _krb5_principalname2krb5_principal(r->context,
 				       &princ,
 				       ap_req.ticket.sname,
 				       ap_req.ticket.realm);
 
     krbtgt_kvno = ap_req.ticket.enc_part.kvno ? *ap_req.ticket.enc_part.kvno : 0;
-    ret = _kdc_db_fetch(context, config, princ, HDB_F_GET_KRBTGT,
+    ret = _kdc_db_fetch(r->context, config, princ, HDB_F_GET_KRBTGT,
 			&krbtgt_kvno, NULL, krbtgt);
 
     if (ret == HDB_ERR_NOT_FOUND_HERE) {
 	/* XXX Factor out this unparsing of the same princ all over */
 	char *p;
-	ret = krb5_unparse_name(context, princ, &p);
+	ret = krb5_unparse_name(r->context, princ, &p);
 	if (ret != 0)
 	    p = failed;
-	krb5_free_principal(context, princ);
-	kdc_log(context, config, 5,
+	krb5_free_principal(r->context, princ);
+	kdc_log(r->context, config, 5,
 		"Ticket-granting ticket account %s does not have secrets at "
 		"this KDC, need to proxy", p);
 	if (ret == 0)
@@ -986,11 +984,11 @@ tgs_parse_request(astgs_request_t r,
 	goto out;
     } else if (ret == HDB_ERR_KVNO_NOT_FOUND) {
 	char *p;
-	ret = krb5_unparse_name(context, princ, &p);
+	ret = krb5_unparse_name(r->context, princ, &p);
 	if (ret != 0)
 	    p = failed;
-	krb5_free_principal(context, princ);
-	kdc_log(context, config, 5,
+	krb5_free_principal(r->context, princ);
+	kdc_log(r->context, config, 5,
 		"Ticket-granting ticket account %s does not have keys for "
 		"kvno %d at this KDC", p, krbtgt_kvno);
 	if (ret == 0)
@@ -999,11 +997,11 @@ tgs_parse_request(astgs_request_t r,
 	goto out;
     } else if (ret == HDB_ERR_NO_MKEY) {
 	char *p;
-	ret = krb5_unparse_name(context, princ, &p);
+	ret = krb5_unparse_name(r->context, princ, &p);
 	if (ret != 0)
 	    p = failed;
-	krb5_free_principal(context, princ);
-	kdc_log(context, config, 5,
+	krb5_free_principal(r->context, princ);
+	kdc_log(r->context, config, 5,
 		"Missing master key for decrypting keys for ticket-granting "
 		"ticket account %s with kvno %d at this KDC", p, krbtgt_kvno);
 	if (ret == 0)
@@ -1011,15 +1009,15 @@ tgs_parse_request(astgs_request_t r,
 	ret = HDB_ERR_KVNO_NOT_FOUND;
 	goto out;
     } else if (ret) {
-	const char *msg = krb5_get_error_message(context, ret);
+	const char *msg = krb5_get_error_message(r->context, ret);
 	char *p;
-	ret = krb5_unparse_name(context, princ, &p);
+	ret = krb5_unparse_name(r->context, princ, &p);
 	if (ret != 0)
 	    p = failed;
-	kdc_log(context, config, 4,
+	kdc_log(r->context, config, 4,
 		"Ticket-granting ticket %s not found in database: %s", p, msg);
-	krb5_free_principal(context, princ);
-	krb5_free_error_message(context, msg);
+	krb5_free_principal(r->context, princ);
+	krb5_free_error_message(r->context, msg);
 	if (ret == 0)
 	    free(p);
 	ret = KRB5KRB_AP_ERR_NOT_US;
@@ -1030,8 +1028,8 @@ tgs_parse_request(astgs_request_t r,
     *krbtgt_etype = ap_req.ticket.enc_part.etype;
 
 next_kvno:
-    krbtgt_keys = hdb_kvno2keys(context, &(*krbtgt)->entry, krbtgt_kvno_try);
-    ret = hdb_enctype2key(context, &(*krbtgt)->entry, krbtgt_keys,
+    krbtgt_keys = hdb_kvno2keys(r->context, &(*krbtgt)->entry, krbtgt_kvno_try);
+    ret = hdb_enctype2key(r->context, &(*krbtgt)->entry, krbtgt_keys,
 			  ap_req.ticket.enc_part.etype, &tkey);
     if (ret && krbtgt_kvno == 0 && kvno_search_tries > 0) {
 	kvno_search_tries--;
@@ -1040,9 +1038,9 @@ next_kvno:
     } else if (ret) {
 	char *str = NULL, *p = NULL;
 
-	krb5_enctype_to_string(context, ap_req.ticket.enc_part.etype, &str);
-	krb5_unparse_name(context, princ, &p);
-	kdc_log(context, config, 4,
+	krb5_enctype_to_string(r->context, ap_req.ticket.enc_part.etype, &str);
+	krb5_unparse_name(r->context, princ, &p);
+	kdc_log(r->context, config, 4,
 		"No server key with enctype %s found for %s",
 		str ? str : "<unknown enctype>",
 		p ? p : "<unparse_name failed>");
@@ -1058,7 +1056,7 @@ next_kvno:
     if (r->config->warn_ticket_addresses)
         verify_ap_req_flags |= KRB5_VERIFY_AP_REQ_IGNORE_ADDRS;
 
-    ret = krb5_verify_ap_req2(context,
+    ret = krb5_verify_ap_req2(r->context,
 			      &ac,
 			      &ap_req,
 			      princ,
@@ -1080,11 +1078,11 @@ next_kvno:
 	goto next_kvno;
     }
 
-    krb5_free_principal(context, princ);
+    krb5_free_principal(r->context, princ);
     if(ret) {
-	const char *msg = krb5_get_error_message(context, ret);
-	kdc_log(context, config, 4, "Failed to verify AP-REQ: %s", msg);
-	krb5_free_error_message(context, msg);
+	const char *msg = krb5_get_error_message(r->context, ret);
+	kdc_log(r->context, config, 4, "Failed to verify AP-REQ: %s", msg);
+	krb5_free_error_message(r->context, msg);
 	goto out;
     }
 
@@ -1093,64 +1091,64 @@ next_kvno:
     {
 	krb5_authenticator auth;
 
-	ret = krb5_auth_con_getauthenticator(context, ac, &auth);
+	ret = krb5_auth_con_getauthenticator(r->context, ac, &auth);
 	if (ret == 0) {
 	    *csec   = malloc(sizeof(**csec));
 	    if (*csec == NULL) {
-		krb5_free_authenticator(context, &auth);
-		kdc_log(context, config, 4, "malloc failed");
+		krb5_free_authenticator(r->context, &auth);
+		kdc_log(r->context, config, 4, "malloc failed");
 		goto out;
 	    }
 	    **csec  = auth->ctime;
 	    *cusec  = malloc(sizeof(**cusec));
 	    if (*cusec == NULL) {
-		krb5_free_authenticator(context, &auth);
-		kdc_log(context, config, 4, "malloc failed");
+		krb5_free_authenticator(r->context, &auth);
+		kdc_log(r->context, config, 4, "malloc failed");
 		goto out;
 	    }
 	    **cusec  = auth->cusec;
 
 	    ret = validate_fast_ad(r, auth->authorization_data);
-	    krb5_free_authenticator(context, &auth);
+	    krb5_free_authenticator(r->context, &auth);
 	    if (ret)
 		goto out;
 	}
     }
 
-    ret = tgs_check_authenticator(context, config,
+    ret = tgs_check_authenticator(r->context, config,
 				  ac, b, e_text, &(*ticket)->ticket.key);
     if (ret) {
-	krb5_auth_con_free(context, ac);
+	krb5_auth_con_free(r->context, ac);
 	goto out;
     }
 
     usage = KRB5_KU_TGS_REQ_AUTH_DAT_SUBKEY;
     r->rk_is_subkey = 1;
 
-    ret = krb5_auth_con_getremotesubkey(context, ac, &subkey);
+    ret = krb5_auth_con_getremotesubkey(r->context, ac, &subkey);
     if(ret){
-	const char *msg = krb5_get_error_message(context, ret);
-	krb5_auth_con_free(context, ac);
-	kdc_log(context, config, 4, "Failed to get remote subkey: %s", msg);
-	krb5_free_error_message(context, msg);
+	const char *msg = krb5_get_error_message(r->context, ret);
+	krb5_auth_con_free(r->context, ac);
+	kdc_log(r->context, config, 4, "Failed to get remote subkey: %s", msg);
+	krb5_free_error_message(r->context, msg);
 	goto out;
     }
     if(subkey == NULL){
 	usage = KRB5_KU_TGS_REQ_AUTH_DAT_SESSION;
 	r->rk_is_subkey = 0;
 
-	ret = krb5_auth_con_getkey(context, ac, &subkey);
+	ret = krb5_auth_con_getkey(r->context, ac, &subkey);
 	if(ret) {
-	    const char *msg = krb5_get_error_message(context, ret);
-	    krb5_auth_con_free(context, ac);
-	    kdc_log(context, config, 4, "Failed to get session key: %s", msg);
-	    krb5_free_error_message(context, msg);
+	    const char *msg = krb5_get_error_message(r->context, ret);
+	    krb5_auth_con_free(r->context, ac);
+	    kdc_log(r->context, config, 4, "Failed to get session key: %s", msg);
+	    krb5_free_error_message(r->context, msg);
 	    goto out;
 	}
     }
     if(subkey == NULL){
-	krb5_auth_con_free(context, ac);
-	kdc_log(context, config, 4,
+	krb5_auth_con_free(r->context, ac);
+	kdc_log(r->context, config, 4,
 		"Failed to get key for enc-authorization-data");
 	ret = KRB5KRB_AP_ERR_BAD_INTEGRITY; /* ? */
 	goto out;
@@ -1165,39 +1163,39 @@ next_kvno:
     if (b->enc_authorization_data) {
 	krb5_data ad;
 
-	ret = krb5_crypto_init(context, &r->reply_key, 0, &crypto);
+	ret = krb5_crypto_init(r->context, &r->reply_key, 0, &crypto);
 	if (ret) {
-	    const char *msg = krb5_get_error_message(context, ret);
-	    krb5_auth_con_free(context, ac);
-	    kdc_log(context, config, 4, "krb5_crypto_init failed: %s", msg);
-	    krb5_free_error_message(context, msg);
+	    const char *msg = krb5_get_error_message(r->context, ret);
+	    krb5_auth_con_free(r->context, ac);
+	    kdc_log(r->context, config, 4, "krb5_crypto_init failed: %s", msg);
+	    krb5_free_error_message(r->context, msg);
 	    goto out;
 	}
-	ret = krb5_decrypt_EncryptedData (context,
+	ret = krb5_decrypt_EncryptedData (r->context,
 					  crypto,
 					  usage,
 					  b->enc_authorization_data,
 					  &ad);
-	krb5_crypto_destroy(context, crypto);
+	krb5_crypto_destroy(r->context, crypto);
 	if(ret){
-	    krb5_auth_con_free(context, ac);
-	    kdc_log(context, config, 4,
+	    krb5_auth_con_free(r->context, ac);
+	    kdc_log(r->context, config, 4,
 		    "Failed to decrypt enc-authorization-data");
 	    ret = KRB5KRB_AP_ERR_BAD_INTEGRITY; /* ? */
 	    goto out;
 	}
 	ALLOC(*auth_data);
 	if (*auth_data == NULL) {
-	    krb5_auth_con_free(context, ac);
+	    krb5_auth_con_free(r->context, ac);
 	    ret = KRB5KRB_AP_ERR_BAD_INTEGRITY; /* ? */
 	    goto out;
 	}
 	ret = decode_AuthorizationData(ad.data, ad.length, *auth_data, NULL);
 	if(ret){
-	    krb5_auth_con_free(context, ac);
+	    krb5_auth_con_free(r->context, ac);
 	    free(*auth_data);
 	    *auth_data = NULL;
-	    kdc_log(context, config, 4, "Failed to decode authorization data");
+	    kdc_log(r->context, config, 4, "Failed to decode authorization data");
 	    ret = KRB5KRB_AP_ERR_BAD_INTEGRITY; /* ? */
 	    goto out;
 	}
@@ -1216,7 +1214,7 @@ next_kvno:
     if (ret)
 	goto out;
 
-    krb5_auth_con_free(context, ac);
+    krb5_auth_con_free(r->context, ac);
 
 out:
     free_AP_REQ(&ap_req);
@@ -2321,7 +2319,6 @@ out:
 krb5_error_code
 _kdc_tgs_rep(astgs_request_t r)
 {
-    krb5_context context = r->context;
     krb5_kdc_configuration *config = r->config;
     KDC_REQ *req = &r->req;
     krb5_data *data = r->reply;
@@ -2343,7 +2340,7 @@ _kdc_tgs_rep(astgs_request_t r)
 
     if(req->padata == NULL){
 	ret = KRB5KDC_ERR_PREAUTH_REQUIRED; /* XXX ??? */
-	kdc_log(context, config, 4,
+	kdc_log(r->context, config, 4,
 		"TGS-REQ from %s without PA-DATA", from);
 	goto out;
     }
@@ -2361,7 +2358,7 @@ _kdc_tgs_rep(astgs_request_t r)
     if(tgs_req == NULL){
 	ret = KRB5KDC_ERR_PADATA_TYPE_NOSUPP;
 
-	kdc_log(context, config, 4,
+	kdc_log(r->context, config, 4,
 		"TGS-REQ from %s without PA-TGS-REQ", from);
 	goto out;
     }
@@ -2378,7 +2375,7 @@ _kdc_tgs_rep(astgs_request_t r)
 	goto out;
     }
     if (ret) {
-	kdc_log(context, config, 4,
+	kdc_log(r->context, config, 4,
 		"Failed parsing TGS-REQ from %s", from);
 	goto out;
     }
@@ -2395,7 +2392,7 @@ _kdc_tgs_rep(astgs_request_t r)
 			  &auth_data,
 			  from_addr);
     if (ret) {
-	kdc_log(context, config, 4,
+	kdc_log(r->context, config, 4,
 		"Failed building TGS-REP to %s", from);
 	goto out;
     }
@@ -2411,7 +2408,7 @@ out:
     if(ret && ret != HDB_ERR_NOT_FOUND_HERE && data->data == NULL){
 	METHOD_DATA error_method = { 0, NULL };
 
-	kdc_log(context, config, 5, "tgs-req: sending error: %d to client", ret);
+	kdc_log(r->context, config, 5, "tgs-req: sending error: %d to client", ret);
 	ret = _kdc_fast_mk_error(r,
 				 &error_method,
 				 r->armor_crypto,
@@ -2430,9 +2427,9 @@ out:
     krb5_free_keyblock_contents(r->context, &r->strengthen_key);
 
     if (ticket)
-	krb5_free_ticket(context, ticket);
+	krb5_free_ticket(r->context, ticket);
     if(krbtgt)
-	_kdc_free_ent(context, krbtgt);
+	_kdc_free_ent(r->context, krbtgt);
 
     _kdc_free_fast_state(&r->fast);
 

@@ -334,7 +334,6 @@ _kdc_fast_mk_error(astgs_request_t r,
 		   time_t *csec, int *cusec,
 		   krb5_data *error_msg)
 {
-    krb5_context context = r->context;
     krb5_error_code ret;
     krb5_data e_data;
     size_t size;
@@ -365,7 +364,7 @@ _kdc_fast_mk_error(astgs_request_t r,
 
 	/* first add the KRB-ERROR to the fast errors */
 
-	ret = krb5_mk_error(context,
+	ret = krb5_mk_error(r->context,
 			    outer_error,
 			    e_text,
 			    NULL,
@@ -377,7 +376,7 @@ _kdc_fast_mk_error(astgs_request_t r,
 	if (ret)
 	    return ret;
 
-	ret = krb5_padata_add(context, error_method,
+	ret = krb5_padata_add(r->context, error_method,
 			      KRB5_PADATA_FX_ERROR,
 			      e_data.data, e_data.length);
 	if (ret) {
@@ -394,14 +393,14 @@ _kdc_fast_mk_error(astgs_request_t r,
 	csec = 0;
 	cusec = 0;
 
-	ret = _kdc_fast_mk_response(context, armor_crypto,
+	ret = _kdc_fast_mk_response(r->context, armor_crypto,
 				    error_method, NULL, NULL,
 				    req_body->nonce, &e_data);
 	free_METHOD_DATA(error_method);
 	if (ret)
 	    return ret;
 
-	ret = krb5_padata_add(context, error_method,
+	ret = krb5_padata_add(r->context, error_method,
 			      KRB5_PADATA_FX_FAST,
 			      e_data.data, e_data.length);
 	if (ret)
@@ -416,7 +415,7 @@ _kdc_fast_mk_error(astgs_request_t r,
 	heim_assert(size == e_data.length, "internal asn.1 encoder error");
     }
 
-    ret = krb5_mk_error(context,
+    ret = krb5_mk_error(r->context,
 			outer_error,
 			e_text,
 			(e_data.length ? &e_data : NULL),

@@ -123,7 +123,18 @@ open_pty(void)
 #ifdef HAVE_UNLOCKPT
 		unlockpt(master);
 #endif
-		strlcpy(line, ptsname(master), sizeof(line));
+#ifdef HAVE_PTSNAME_R
+                if (ptsname_r(master, line, sizeof(line)) == -1)
+                    err("Failed to open the pty master %s", *q);
+#else
+                {
+                    char *s = ptsname(master);
+
+                    if (s == NULL)
+                        err("Failed to open the pty master %s", *q);
+                    strlcpy(line, s, sizeof(line));
+                }
+#endif
 		slave = open(line, O_RDWR);
 		if (slave < 0)
 		    errx(1, "failed to open slave when using %s", *q);

@@ -198,7 +198,6 @@ check(krb5_context context, const void *plug, void *plugctx, void *userctx)
 krb5_error_code
 _kdc_check_access(astgs_request_t r, KDC_REQ *req, METHOD_DATA *method_data)
 {
-    krb5_context context = r->context;
     krb5_error_code ret = KRB5_PLUGIN_NO_HANDLE;
     struct check_uc uc;
 
@@ -211,7 +210,7 @@ _kdc_check_access(astgs_request_t r, KDC_REQ *req, METHOD_DATA *method_data)
         uc.req = req;
         uc.method_data = method_data;
 
-        ret = _krb5_plugin_run_f(context, &windc_plugin_data,
+        ret = _krb5_plugin_run_f(r->context, &windc_plugin_data,
                                  0, &uc, check);
     }
 

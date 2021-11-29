@@ -694,9 +694,6 @@ static const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* This option is added by the NTMakefile if we have a <pthread.h>. */
 /* #define HAVE_PTHREAD_H 1 */
 
-/* Define to 1 if you have the `ptsname' function. */
-/* #define HAVE_PTSNAME 1 */
-
 /* Define to 1 if you have the <pty.h> header file. */
 /* #define HAVE_PTY_H 1 */
 

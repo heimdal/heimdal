@@ -529,7 +529,7 @@ AC_CHECK_FUNCS([				\
 	getresgid				\
 	getresuid				\
 	grantpt					\
-	ptsname					\
+	ptsname_r				\
 	rand					\
 	setitimer				\
 	setregid				\

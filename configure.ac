@@ -499,16 +499,6 @@ rk_WIN32_EXPORT(BUILD_GSSAPI_LIB, GSSAPI_LIB)
 
 dnl Checks for libraries.
 
-AC_FIND_FUNC_NO_LIBS(logwtmp, util,[
-#ifdef HAVE_UTIL_H
-#include <util.h>
-#endif
-],[0,0,0])
-AC_FIND_FUNC_NO_LIBS(logout, util,[
-#ifdef HAVE_UTIL_H
-#include <util.h>
-#endif
-],[0])
 AC_FIND_FUNC_NO_LIBS(openpty, util,[
 #ifdef HAVE_UTIL_H
 #include <util.h>
@@ -527,7 +517,6 @@ AC_FIND_FUNC_NO_LIBS(tgetent, termcap ncurses curses tinfo,[
 dnl Checks for library functions.
 
 AC_CHECK_FUNCS([				\
-	_getpty					\
 	_scrsize				\
 	arc4random				\
 	backtrace				\
@@ -540,31 +529,18 @@ AC_CHECK_FUNCS([				\
 	getresgid				\
 	getresuid				\
 	grantpt					\
-	kill					\
-	mktime					\
 	ptsname					\
 	rand					\
-	revoke					\
-	select					\
 	setitimer				\
-	setpcred				\
-	setpgid					\
-	setproctitle				\
 	setregid				\
 	setresgid				\
 	setresuid				\
 	setreuid				\
 	setsid					\
-	setutent				\
 	sigaction				\
-	strstr					\
-	ttyname					\
-	ttyslot					\
 	umask					\
 	unlockpt				\
-	vhangup					\
 	waitpid					\
-	yp_get_default_domain			\
 ])
 
 AC_MSG_CHECKING([checking for __sync_add_and_fetch])
@@ -578,7 +554,6 @@ AC_MSG_RESULT($ac_rk_have___sync_add_and_fetch)
 
 AC_FUNC_MMAP
 
-KRB_CAPABILITIES
 rk_DLADDR
 
 AC_CHECK_GETPWNAM_R_POSIX
@@ -629,11 +604,6 @@ if test -n "$LIB_add_key"; then
 fi
 
 AC_CHECK_SIZEOF([time_t])
-
-dnl Cray stuff
-AC_CHECK_FUNCS(getudbnam setlim)
-
-dnl AC_KRB_FUNC_GETCWD_BROKEN
 
 AC_CHECK_TYPES([int8_t, int16_t, int32_t, int64_t, 
 	u_int8_t, u_int16_t, u_int32_t, u_int64_t,

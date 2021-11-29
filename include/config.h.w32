@@ -433,9 +433,6 @@ static const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* Define if you have the function `getgid'. */
 /* #define HAVE_GETGID 1 */
 
-/* Define to 1 if you have the `gethostbyname' function. */
-#define HAVE_GETHOSTBYNAME 1
-
 /* Define to 1 if you have the `gethostbyname2' function. */
 /* #undef HAVE_GETHOSTBYNAME2 */
 
@@ -600,12 +597,6 @@ static const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* Define to 1 if you have the <locale.h> header file. */
 #define HAVE_LOCALE_H 1
 
-/* Define to 1 if you have the `logout' function. */
-/* #define HAVE_LOGOUT 1 */
-
-/* Define to 1 if you have the `logwtmp' function. */
-/* #define HAVE_LOGWTMP 1 */
-
 /* Define to 1 if the system has the type `long long'. */
 #define HAVE_LONG_LONG 1
 
@@ -623,9 +614,6 @@ static const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 
 /* Define if you have the function `mkstemp'. */
 /* #define HAVE_MKSTEMP 1 */
-
-/* Define to 1 if you have the `mktime' function. */
-#define HAVE_MKTIME 1
 
 /* Define to 1 if you have a working `mmap' system call. */
 /* #undef HAVE_MMAP */
@@ -748,9 +736,6 @@ static const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* Define to 1 if you have the `res_search' function. */
 /* #undef HAVE_RES_SEARCH */
 
-/* Define to 1 if you have the `revoke' function. */
-/* #define HAVE_REVOKE 1 */
-
 /* Define to 1 if you have the <rpcsvc/ypclnt.h> header file. */
 /* #undef HAVE_RPCSVC_YPCLNT_H */
 
@@ -787,15 +772,6 @@ static const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* Define to 1 if you have the `setlogin' function. */
 /* #undef HAVE_SETLOGIN */
 
-/* Define to 1 if you have the `setpcred' function. */
-/* #undef HAVE_SETPCRED */
-
-/* Define to 1 if you have the `setpgid' function. */
-/* #define HAVE_SETPGID 1 */
-
-/* Define to 1 if you have the `setproctitle' function. */
-/* #undef HAVE_SETPROCTITLE */
-
 /* Define to 1 if you have the `setprogname' function. */
 /* #define HAVE_SETPROGNAME 1 */
 
@@ -820,9 +796,6 @@ static const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* Define to 1 if you have the `setstate' function. */
 /* #define HAVE_SETSTATE 1 */
 
-/* Define to 1 if you have the `setutent' function. */
-/* #define HAVE_SETUTENT 1 */
-
 /* Define to 1 if you have the `sgi_getcapabilitybyname' function. */
 /* #undef HAVE_SGI_GETCAPABILITYBYNAME */
 
@@ -845,9 +818,6 @@ static const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* snprintf() and vsnprintf() do exist.  But the implementations are
    not C99 compliant. */
 /* #define HAVE_SNPRINTF 1 */
-
-/* Define to 1 if you have the `socket' function. */
-#define HAVE_SOCKET 1
 
 /* Define to 1 if the system has the type `socklen_t'. */
 #define HAVE_SOCKLEN_T 1
@@ -914,9 +884,6 @@ static const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* Define if you have the function `strsep_copy'. */
 /* #undef HAVE_STRSEP_COPY */
 
-/* Define to 1 if you have the `strstr' function. */
-#define HAVE_STRSTR 1
-
 /* Define to 1 if you have the `strsvis' function. */
 /* #undef HAVE_STRSVIS */
 
@@ -981,9 +948,6 @@ static const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* #undef HAVE_SYSCTL */
 
 /* syslog is provided for _win32 in lib/roken */
-
-/* Define to 1 if you have the `syslog' function. */
-#define HAVE_SYSLOG 1
 
 /* Define to 1 if you have the <syslog.h> header file. */
 #define HAVE_SYSLOG_H 1
@@ -1123,12 +1087,6 @@ static const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* Define to 1 if you have the <tmpdir.h> header file. */
 /* #undef HAVE_TMPDIR_H */
 
-/* Define to 1 if you have the `ttyname' function. */
-/* #define HAVE_TTYNAME 1 */
-
-/* Define to 1 if you have the `ttyslot' function. */
-/* #define HAVE_TTYSLOT 1 */
-
 /* Define to 1 if you have the <udb.h> header file. */
 /* #undef HAVE_UDB_H */
 
@@ -1198,9 +1156,6 @@ static const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* Define if you have the function `verrx'. */
 /* #define HAVE_VERRX 1 */
 
-/* Define to 1 if you have the `vhangup' function. */
-/* #define HAVE_VHANGUP 1 */
-
 /* Define to 1 if you have the `vis' function. */
 /* #undef HAVE_VIS */
 
@@ -1241,12 +1196,6 @@ static const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 
 /* define if struct winsize has ws_ypixel */
 /* #define HAVE_WS_YPIXEL 1 */
-
-/* Define to 1 if you have the `yp_get_default_domain' function. */
-/* #undef HAVE_YP_GET_DEFAULT_DOMAIN */
-
-/* Define to 1 if you have the `_getpty' function. */
-/* #undef HAVE__GETPTY */
 
 /* Define if you have the `_res' variable. */
 /* #undef HAVE__RES */

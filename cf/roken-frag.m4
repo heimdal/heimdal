@@ -170,10 +170,6 @@ AM_CONDITIONAL(have_vis_h, test "$ac_cv_header_vis_h" = yes)
 
 dnl Check for functions and libraries
 
-AC_FIND_FUNC(socket, socket)
-AC_FIND_FUNC(gethostbyname, nsl)
-AC_FIND_FUNC(syslog, syslog)
-
 AC_KRB_IPV6
 
 AC_FIND_FUNC(gethostbyname2, inet6 ip6)
@@ -192,7 +188,6 @@ AC_CHECK_FUNCS([				\
 	getconfattr				\
 	getprogname				\
 	getrlimit				\
-	getspnam				\
 	issetugid				\
 	memmem					\
 	mkdtemp					\
@@ -536,8 +531,6 @@ inet_aton)
 AC_FIND_FUNC_NO_LIBS(crypt, crypt)dnl
 
 AC_REQUIRE([rk_BROKEN_REALLOC])dnl
-
-dnl AC_KRB_FUNC_GETCWD_BROKEN
 
 dnl strerror_r is great fun, on linux it exists before sus catched up,
 dnl so the return type is diffrent, lets check for both

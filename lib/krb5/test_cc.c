@@ -46,26 +46,116 @@
 #include <getarg.h>
 #include <err.h>
 
+static const char *unlink_this;
+static const char *unlink_this2;
+static char *tmpdir;
 static int debug_flag	= 0;
 static int version_flag = 0;
 static int help_flag	= 0;
 
-#define TEST_CC_NAME "%{TEMP}/krb5-cc-test-foo"
-#define EXP_TEST_CC_NAME "/tmp/krb5-cc-test-foo"
+#define TEST_CC_TEMPLATE "%{TEMP}/krb5-cc-test-XXXXXX"
+
+static void
+cleanup(void)
+{
+    char *s = NULL;
+
+    if (asprintf(&s, "%s/cc", tmpdir) > -1 && s != NULL)
+        unlink(s);
+    free(s);
+
+    if (asprintf(&s, "%s/scc", tmpdir) > -1 && s != NULL)
+        unlink(s);
+    free(s);
+
+    if (asprintf(&s, "%s/cccol/foobar+lha@H5L.SE", tmpdir) > -1 && s != NULL)
+        unlink(s);
+    free(s);
+
+    if (asprintf(&s, "%s/cccol/foobar+lha@SU.SE", tmpdir) > -1 && s != NULL)
+        unlink(s);
+    free(s);
+
+    if (asprintf(&s, "%s/cccol/foobar", tmpdir) > -1 && s != NULL)
+        unlink(s);
+    free(s);
+
+    if (asprintf(&s, "%s/cccol", tmpdir) > -1 && s != NULL)
+        rmdir(s);
+    free(s);
+
+    if (asprintf(&s, "%s/dcc/tkt.lha@H5L.SE", tmpdir) > -1 && s != NULL)
+        unlink(s);
+    free(s);
+
+    if (asprintf(&s, "%s/dcc/tkt.lha@SU.SE", tmpdir) > -1 && s != NULL)
+        unlink(s);
+    free(s);
+
+    if (asprintf(&s, "%s/dcc/tkt", tmpdir) > -1 && s != NULL)
+        unlink(s);
+    free(s);
+
+    if (asprintf(&s, "%s/dcc/primary", tmpdir) > -1 && s != NULL)
+        unlink(s);
+    free(s);
+
+    if (asprintf(&s, "%s/dcc", tmpdir) > -1 && s != NULL)
+        rmdir(s);
+    free(s);
+
+    if (unlink_this)
+        unlink(unlink_this);
+    unlink_this = NULL;
+    if (unlink_this2)
+        unlink(unlink_this2);
+    unlink_this2 = NULL;
+
+    rmdir(tmpdir);
+    free(tmpdir);
+    tmpdir = NULL;
+}
+
+static void
+make_dir(krb5_context context)
+{
+    krb5_error_code ret;
+    char *template = NULL;
+    char *dcc = NULL;
+
+    ret = _krb5_expand_path_tokens(context, TEST_CC_TEMPLATE, 1, &template);
+    if (ret)
+        krb5_err(context, 1, ret, "_krb5_expand_path_tokens(%s) failed",
+                 TEST_CC_TEMPLATE);
+    if ((tmpdir = mkdtemp(template)) == NULL)
+        krb5_err(context, 1, errno, "mkdtemp(%s) failed", template);
+    if (asprintf(&dcc, "%s/dcc", tmpdir) == -1 || dcc == NULL)
+        krb5_err(context, 1, errno, "asprintf failed");
+    free(dcc);
+    atexit(cleanup);
+}
 
 static void
 test_default_name(krb5_context context)
 {
     krb5_error_code ret;
-    const char *p, *test_cc_name = TEST_CC_NAME;
-    char *p1, *p2, *p3;
+    const char *p;
+    char *test_cc_name = NULL;
+    const char *p3;
+    char *p1, *p2;
     char *exp_test_cc_name;
 
+    if (asprintf(&test_cc_name, "%s/cc", tmpdir) == -1 || test_cc_name == NULL)
+        krb5_err(context, 1, errno, "out of memory");
+
+    /* Convert slashes to backslashes */
     ret = _krb5_expand_path_tokens(context, test_cc_name, 1,
                                    &exp_test_cc_name);
     if (ret)
         krb5_err(context, 1, ret, "_krb5_expand_path_tokens(%s) failed",
                  test_cc_name);
+    free(test_cc_name);
+    test_cc_name = NULL;
 
     p = krb5_cc_default_name(context);
     if (p == NULL)
@@ -74,7 +164,7 @@ test_default_name(krb5_context context)
 
     ret = krb5_cc_set_default_name(context, NULL);
     if (ret)
-	krb5_errx (context, 1, "krb5_cc_set_default_name failed");
+	krb5_err(context, 1, ret, "krb5_cc_set_default_name(NULL) failed");
 
     p = krb5_cc_default_name(context);
     if (p == NULL)
@@ -84,24 +174,35 @@ test_default_name(krb5_context context)
     if (strcmp(p1, p2) != 0)
 	krb5_errx (context, 1, "krb5_cc_default_name no longer same");
 
-    ret = krb5_cc_set_default_name(context, test_cc_name);
+    ret = krb5_cc_set_default_name(context, exp_test_cc_name);
     if (ret)
-	krb5_errx (context, 1, "krb5_cc_set_default_name 1 failed");
+        krb5_err(context, 1, ret, "krb5_cc_set_default_name(%s) failed",
+                 exp_test_cc_name);
 
     p = krb5_cc_default_name(context);
     if (p == NULL)
 	krb5_errx (context, 1, "krb5_cc_default_name 2 failed");
-    p3 = estrdup(p);
 
-#ifndef WIN32
-    if (strcmp(exp_test_cc_name, EXP_TEST_CC_NAME) != 0)
-	krb5_errx (context, 1, "krb5_cc_set_default_name 1 failed");
+    if (strncmp(p, "FILE:", sizeof("FILE:") - 1) == 0)
+        p3 = p + sizeof("FILE:") - 1;
+    else
+        p3 = p;
+
+    if (strcmp(exp_test_cc_name, p3) != 0) {
+#ifdef WIN32
+	krb5_warnx(context, 1,
+                   "krb5_cc_default_name() returned %s; expected %s",
+                   p, exp_test_cc_name);
+#else
+	krb5_errx(context, 1,
+                  "krb5_cc_default_name() returned %s; expected %s",
+                  p, exp_test_cc_name);
 #endif
+    }
 
     free(exp_test_cc_name);
     free(p1);
     free(p2);
-    free(p3);
 }
 
 /*
@@ -195,6 +296,8 @@ test_init_vs_destroy(krb5_context context, const char *type)
 		 krb5_cc_get_name(context, id)) < 0 || n == NULL)
 	errx(1, "malloc");
 
+    if (strcmp(krb5_cc_get_type(context, id), "FILE") == 0)
+        unlink_this = krb5_cc_get_name(context, id);
 
     ret = krb5_cc_resolve(context, n, &id2);
     free(n);
@@ -212,6 +315,7 @@ test_init_vs_destroy(krb5_context context, const char *type)
 	krb5_err(context, 1, ret, "krb5_cc_get_principal");
 
     krb5_cc_destroy(context, id2);
+    unlink_this = NULL;
     krb5_free_principal(context, p);
     krb5_free_principal(context, p2);
 }
@@ -231,6 +335,9 @@ test_cache_remove(krb5_context context, const char *type)
     ret = krb5_cc_new_unique(context, type, NULL, &id);
     if (ret)
 	krb5_err(context, 1, ret, "krb5_cc_gen_new: %s", type);
+
+    if (strcmp(krb5_cc_get_type(context, id), "FILE") == 0)
+        unlink_this = krb5_cc_get_name(context, id);
 
     ret = krb5_cc_initialize(context, id, p);
     if (ret)
@@ -263,6 +370,7 @@ test_cache_remove(krb5_context context, const char *type)
     ret = krb5_cc_destroy(context, id);
     if (ret)
 	krb5_err(context, 1, ret, "krb5_cc_destroy");
+    unlink_this = NULL;
 
     krb5_free_principal(context, p);
     krb5_free_principal(context, cred.server);
@@ -484,6 +592,9 @@ test_copy(krb5_context context, const char *from, const char *to)
     if (ret)
 	krb5_err(context, 1, ret, "krb5_cc_new_unique: %s", from);
 
+    if (strcmp(krb5_cc_get_type(context, fromid), "FILE") == 0)
+        unlink_this = krb5_cc_get_name(context, fromid);
+
     ret = krb5_cc_initialize(context, fromid, p);
     if (ret)
 	krb5_err(context, 1, ret, "krb5_cc_initialize");
@@ -491,6 +602,9 @@ test_copy(krb5_context context, const char *from, const char *to)
     ret = krb5_cc_new_unique(context, to, NULL, &toid);
     if (ret)
 	krb5_err(context, 1, ret, "krb5_cc_gen_new: %s", to);
+
+    if (strcmp(krb5_cc_get_type(context, toid), "FILE") == 0)
+        unlink_this2 = krb5_cc_get_name(context, toid);
 
     ret = krb5_cc_copy_cache(context, fromid, toid);
     if (ret)
@@ -508,6 +622,7 @@ test_copy(krb5_context context, const char *from, const char *to)
 
     krb5_cc_destroy(context, fromid);
     krb5_cc_destroy(context, toid);
+    unlink_this = unlink_this2 = NULL;
 }
 
 static void
@@ -776,7 +891,8 @@ test_cccol(krb5_context context, const char *def_cccol, const char **what)
     (void) krb5_cc_cache_end_seq_get(context, cursor);
 
     *what = "cccol iteration inconsistency";
-    if (match1 != 1 || match2 != 1) return EINVAL;
+    if (match1 != 1 || match2 != 1)
+        return EINVAL;
 
     krb5_cc_close(context, id1);
     krb5_cc_close(context, id2);
@@ -791,35 +907,14 @@ static void
 test_cccol_dcache(krb5_context context)
 {
     krb5_error_code ret;
-    char template[sizeof("DIR:dcache-XXXXXX")];
-    char *s;
+    char *dcc = NULL;
     const char *what;
 
-    memcpy(template, "DIR:dcache-XXXXXX", sizeof("DIR:dcache-XXXXXX"));
-    if (mkdtemp(template + sizeof("DIR:") - 1) == NULL)
-        krb5_err(context, 1, errno, "mkdtemp");
+    if (asprintf(&dcc, "DIR:%s/dcc", tmpdir) == -1 || dcc == NULL)
+        krb5_err(context, 1, errno, "asprintf");
 
-    ret = test_cccol(context, template, &what);
-
-    if (asprintf(&s, "%s/primary", template + sizeof("DIR:") - 1) > 0) {
-        (void) unlink(s);
-        free(s);
-    }
-    if (asprintf(&s, "%s/tkt", template + sizeof("DIR:") - 1) > 0) {
-        (void) unlink(s);
-        free(s);
-    }
-    if (asprintf(&s, "%s/tkt.lha@H5L.SE", template + sizeof("DIR:") - 1) > 0) {
-        (void) unlink(s);
-        free(s);
-    }
-    if (asprintf(&s, "%s/tkt.lha@SU.SE", template + sizeof("DIR:") - 1) > 0) {
-        (void) unlink(s);
-        free(s);
-    }
-    if (rmdir(template + sizeof("DIR:") - 1))
-        krb5_warn(context, errno, "Could not rmdir(%s) (DIR)",
-                  template + sizeof("DIR:") - 1);
+    ret = test_cccol(context, dcc, &what);
+    free(dcc);
     if (ret)
         krb5_err(context, 1, errno, "%s", what);
 }
@@ -828,17 +923,19 @@ static void
 test_cccol_scache(krb5_context context)
 {
     krb5_error_code ret;
-    char template[sizeof("SCC:scache-XXXXXX")];
+    char *scache = NULL;
     const char *what;
     int fd;
 
-    memcpy(template, "SCC:scache-XXXXXX", sizeof("SCC:scache-XXXXXX"));
-    if ((fd = mkstemp(template + sizeof("SCC:") - 1)) == -1)
-        krb5_err(context, 1, errno, "mkstemp");
+    if (asprintf(&scache, "SCC:%s/scache", tmpdir) == -1 || scache == NULL)
+        krb5_err(context, 1, errno, "asprintf");
+    if ((fd = open(scache + sizeof("SCC:") - 1, O_CREAT | O_RDWR, 0600)) == -1)
+        krb5_err(context, 1, errno, "open(%s)", scache + sizeof("SCC:") - 1);
     (void) close(fd);
 
-    ret = test_cccol(context, template, &what);
-    (void) unlink(template + sizeof("SCC:") - 1);
+    ret = test_cccol(context, scache, &what);
+    (void) unlink(scache + sizeof("SCC:") - 1);
+    free(scache);
     if (ret)
         krb5_err(context, 1, ret, "%s", what);
 }
@@ -887,6 +984,8 @@ main(int argc, char **argv)
     ret = krb5_init_context(&context);
     if (ret)
 	errx (1, "krb5_init_context failed: %d", ret);
+
+    make_dir(context);
 
     test_cache_remove(context, krb5_cc_type_file);
     test_cache_remove(context, krb5_cc_type_memory);
@@ -1064,20 +1163,21 @@ main(int argc, char **argv)
 
     {
         const char *what;
-        char *config;
-        char *fname;
-        char *d;
+        char *config = NULL;
+        char *fname = NULL;
+        char *d = NULL;
 
-        if ((d = strdup("FILE:filesXXXXXX")) == NULL ||
-            mkdtemp(d + sizeof("FILE:") - 1) == NULL ||
-            asprintf(&fname, "%s/foobar", d) == -1 ||
-            fname == NULL ||
+        if (asprintf(&d, "%s/cccol", tmpdir) == -1 || d == NULL)
+            krb5_err(context, 1, errno, "asprintf");
+        if (mkdir(d, 0700) == -1)
+            krb5_err(context, 1, errno, "mkdir(%s)", d);
+        if (asprintf(&fname, "%s/foobar", d) == -1 || fname == NULL ||
             asprintf(&config,
                      "[libdefaults]\n"
-                     "\tdefault_file_cache_collections = %1$s/foobar\n"
+                     "\tdefault_file_cache_collections = FILE:%1$s/cccol/foobar\n"
                      "\tenable_file_cache_iteration = true\n",
-                     d) == -1 || config == NULL)
-            krb5_err(context, 1, errno, "Could not make temp dir");
+                     tmpdir) == -1 || config == NULL)
+            krb5_err(context, 1, errno, "asprintf");
         ret = krb5_set_config(context, config);
         if (ret)
             krb5_err(context, 1, ret,
@@ -1085,15 +1185,6 @@ main(int argc, char **argv)
         ret = test_cccol(context, fname, &what);
         if (ret)
             krb5_err(context, 1, ret, "%s", what);
-        if (chdir(d + sizeof("FILE:") - 1) == 0) {
-            unlink("foobar");
-            unlink("foobar+lha@H5L.SE");
-            unlink("foobar+lha@SU.SE");
-            chdir("..");
-        }
-        if (rmdir(d + sizeof("FILE:") - 1))
-            krb5_warn(context, errno, "Could not rmdir(%s) (FILE)",
-                      d + sizeof("FILE:") - 1);
     }
 
     krb5_free_context(context);
@@ -1104,12 +1195,3 @@ main(int argc, char **argv)
 
     return 0;
 }
-
-#else
-int
-main(int argc, char **argv)
-{
-
-    return 0;
-}
-#endif

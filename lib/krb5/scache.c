@@ -61,8 +61,18 @@ typedef struct krb5_scache {
 
 #define	SCACHE(X)	((krb5_scache *)(X)->data.data)
 
+/*
+ * Because we can't control what permissions SQLite3 (if not in-tree) will use,
+ * and we're a library and can't set the umask.  We can't even determine the
+ * current umask in a thread-safe way (not easily), and we can't tell if some
+ * other thread might change it.  So what we'll do is put the SQLite3-based
+ * ccache file in its own directory so we can create that directory with
+ * mkdir(2) and the correct permissions.
+ */
+
 #define SCACHE_DEF_NAME		"Default-cache"
-#define KRB5_SCACHE_DB		"%{TEMP}/krb5scc_%{uid}"
+#define KRB5_SCACHE_DIR		"%{TEMP}/krb5scc_%{uid}"
+#define KRB5_SCACHE_DB		KRB5_SCACHE_DIR "scc"
 #define KRB5_SCACHE_NAME	"SCC:"   KRB5_SCACHE_DB ":" SCACHE_DEF_NAME
 
 #define SCACHE_INVALID_CID	((sqlite_uint64)-1)
@@ -226,6 +236,43 @@ exec_stmt(krb5_context context, sqlite3 *db, const char *str,
     return 0;
 }
 
+/* See block comment at the top of this file */
+static krb5_error_code
+make_dir(krb5_context context, const char *name)
+{
+    krb5_error_code ret = 0;
+    char *s, *p;
+
+    /* We really need a dirname() in roken; lib/krb5/fcache.c has one */
+    if ((s = strdup(name)) == NULL)
+        return krb5_enomem(context);
+    for (p = s + strlen(s); p > s; p--) {
+#ifdef WIN32
+        if (*p != '/' && *p != '\\')
+            continue;
+#else
+        if (*p != '/')
+            continue;
+#endif
+        *p = '\0';
+        break;
+    }
+
+    /* If p == s then DB in current directory -- nothing we can do */
+    if (p > s && mkdir(s, 0700) == -1)
+        ret = errno;
+    free(s);
+
+    /* If we created it, we're good, else there's nothing we can do */
+    if (ret == EEXIST)
+        return 0;
+    if (ret)
+        krb5_set_error_message(context, ret,
+                               N_("Error making directory for scache file %s", ""),
+                               name);
+    return ret;
+}
+
 static krb5_error_code
 default_db(krb5_context context, const char *name, sqlite3 **db, char **file)
 {
@@ -258,16 +305,32 @@ default_db(krb5_context context, const char *name, sqlite3 **db, char **file)
     }
     free(s);
 
+    /* Strip off any residue from default name */
+#ifdef WIN32
+    if (f[0] && f[1] == ':' && (s = strrchr(f, ':')) != &f[1])
+        *s = '\0';
+#else
     if ((s = strrchr(f, ':')))
         *s = '\0';
+#endif
 
-    ret = sqlite3_open_v2(f, db, SQLITE_OPEN_READWRITE, NULL);
+    ret = make_dir(context, f);
+    if (ret == 0)
+        ret = sqlite3_open_v2(f, db, SQLITE_OPEN_READWRITE, NULL);
     if (ret != SQLITE_OK) {
         sqlite3_close(*db);
 	krb5_clear_error_message(context);
         free(f);
 	return ENOENT;
     }
+
+#ifndef WIN32
+    /*
+     * Just in case we're using an out-of-tree SQLite3.  See block comment at
+     * the top of this file, near KRB5_SCACHE_DIR's definition.
+     */
+    (void) chmod(f, 0600);
+#endif
 
     if (file)
         *file = f;
@@ -424,6 +487,9 @@ open_database(krb5_context context, krb5_scache *s, int flags)
     if (!(flags & SQLITE_OPEN_CREATE) && stat(s->file, &st) == 0 &&
         st.st_size == 0)
         return ENOENT;
+
+    ret = make_dir(context, s->file);
+    if (ret == 0)
     ret = sqlite3_open_v2(s->file, &s->db, SQLITE_OPEN_READWRITE|flags, NULL);
     if (ret) {
 	if (s->db) {
@@ -518,6 +584,14 @@ make_database(krb5_context context, krb5_scache *s)
     if (ret) goto out;
     ret = prepare_stmt(context, s->db, &s->umaster, SQL_UMASTER);
     if (ret) goto out;
+
+#ifndef WIN32
+    /*
+     * Just in case we're using an out-of-tree SQLite3.  See block comment at
+     * the top of this file, near KRB5_SCACHE_DIR's definition.
+     */
+    (void) chmod(s->file, 0600);
+#endif
 
     return 0;
 

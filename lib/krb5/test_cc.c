@@ -100,8 +100,6 @@ cleanup(void)
     unlink_this2 = NULL;
 
     rmdir(tmpdir);
-    free(tmpdir);
-    tmpdir = NULL;
 }
 
 static void
@@ -996,7 +994,25 @@ main(int argc, char **argv)
 #if 0
     test_init_vs_destroy(context, krb5_cc_type_api);
 #endif
+    /*
+     * Cleanup so we can check that the permissions on the directory created by
+     * scc are correct.
+     */
+    cleanup();
     test_init_vs_destroy(context, krb5_cc_type_scc);
+
+#if defined(S_IRWXG) && defined(S_IRWXO)
+    {
+        struct stat st;
+
+        if (stat(tmpdir, &st) == 0) {
+            if ((st.st_mode & S_IRWXG) ||
+                (st.st_mode & S_IRWXO))
+                krb5_errx(context, 1,
+                          "SQLite3 ccache dir perms wrong: %d", st.st_mode);
+        }
+    }
+#endif
     test_init_vs_destroy(context, krb5_cc_type_dcc);
 #ifdef HAVE_KEYUTILS_H
     test_init_vs_destroy(context, krb5_cc_type_keyring);

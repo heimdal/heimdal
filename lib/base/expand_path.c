@@ -533,6 +533,8 @@ expand_token(heim_context context,
  *
  * @context   A heim_context
  * @path_in   The path to expand tokens from
+ * @filepath  True if this is a filesystem path (converts slashes to
+ *            backslashes on Windows)
  * @ppath_out The expanded path
  * @...       Variable number of pairs of strings, the first of each
  *            being a token (e.g., "luser") and the second a string to
@@ -572,6 +574,8 @@ free_extra_tokens(char **extra_tokens)
  *
  * @context   A heim_context
  * @path_in   The path to expand tokens from
+ * @filepath  True if this is a filesystem path (converts slashes to
+ *            backslashes on Windows)
  * @ppath_out The expanded path
  * @ap        A NULL-terminated va_list of pairs of strings, the first of each
  *            being a token (e.g., "luser") and the second a string to replace

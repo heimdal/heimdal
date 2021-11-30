@@ -420,7 +420,7 @@ get_cred_kdc(krb5_context context,
     TGS_REQ req;
     krb5_data enc;
     krb5_data resp;
-    krb5_kdc_rep rep;
+    krb5_kdc_rep rep = {0};
     KRB_ERROR error;
     krb5_error_code ret;
     unsigned nonce;
@@ -540,7 +540,6 @@ get_cred_kdc(krb5_context context,
     if(ret)
 	goto out;
 
-    memset(&rep, 0, sizeof(rep));
     if(decode_TGS_REP(resp.data, resp.length, &rep.kdc_rep, &len) == 0) {
 	unsigned eflags = 0;
 

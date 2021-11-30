@@ -1102,9 +1102,6 @@ static const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* Define to 1 if the system has the type `uintptr_t'. */
 #define HAVE_UINTPTR_T 1
 
-/* Define to 1 if you have the `umask' function. */
-/* #define HAVE_UMASK 1 */
-
 /* Define to 1 if you have the `uname' function. */
 /* #define HAVE_UNAME 1 */
 

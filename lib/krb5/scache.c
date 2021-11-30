@@ -472,9 +472,7 @@ make_database(krb5_context context, krb5_scache *s)
 
     ret = open_database(context, s, 0);
     if (ret) {
-	mode_t oldumask = umask(077);
 	ret = open_database(context, s, SQLITE_OPEN_CREATE);
-	umask(oldumask);
 	if (ret) goto out;
 
 	created_file = 1;

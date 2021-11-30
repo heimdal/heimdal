@@ -538,7 +538,6 @@ AC_CHECK_FUNCS([				\
 	setreuid				\
 	setsid					\
 	sigaction				\
-	umask					\
 	unlockpt				\
 	waitpid					\
 ])

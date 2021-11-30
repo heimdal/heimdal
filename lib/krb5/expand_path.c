@@ -41,6 +41,9 @@
  *
  * @context   A krb5_context
  * @path_in   The path to expand tokens from
+ * @filepath  True if the value is a filesystem path (converts slashes to
+ *            backslashes on Windows)
+ * @ppath_out The expanded path
  * 
  * Outputs:
  *
@@ -63,6 +66,8 @@ _krb5_expand_path_tokens(krb5_context context,
  *
  * @context   A krb5_context
  * @path_in   The path to expand tokens from
+ * @filepath  True if the value is a filesystem path (converts slashes to
+ *            backslashes on Windows)
  * @ppath_out The expanded path
  * @...       Variable number of pairs of strings, the first of each
  *            being a token (e.g., "luser") and the second a string to

@@ -54,7 +54,11 @@ struct hdb_entry_ex;
 
 typedef krb5_error_code
 (KRB5_CALLCONV *krb5plugin_windc_pac_generate)(void *, krb5_context,
-				 struct hdb_entry_ex *, krb5_pac *);
+					       struct hdb_entry_ex *, /* client */
+					       struct hdb_entry_ex *, /* server */
+					       const krb5_keyblock *, /* pk_replykey */
+					       const krb5_boolean *, /* pac_request */
+					       krb5_pac *);
 
 typedef krb5_error_code
 (KRB5_CALLCONV *krb5plugin_windc_pac_verify)(void *, krb5_context,
@@ -74,7 +78,7 @@ typedef krb5_error_code
 	KDC_REQ *, METHOD_DATA *);
 
 
-#define KRB5_WINDC_PLUGIN_MINOR			6
+#define KRB5_WINDC_PLUGIN_MINOR			7
 #define KRB5_WINDC_PLUGING_MINOR KRB5_WINDC_PLUGIN_MINOR
 
 typedef struct krb5plugin_windc_ftable {

@@ -1787,28 +1787,28 @@ _kdc_check_anon_policy(astgs_request_t r)
  */
 
 static krb5_boolean
-send_pac_p(krb5_context context, KDC_REQ *req)
+check_pa_pac_request(krb5_context context, KDC_REQ *req, krb5_boolean *include_pac)
 {
     krb5_error_code ret;
     PA_PAC_REQUEST pacreq;
     const PA_DATA *pa;
     int i = 0;
 
+    *include_pac = TRUE;
+
     pa = _kdc_find_padata(req, &i, KRB5_PADATA_PA_PAC_REQUEST);
     if (pa == NULL)
-	return TRUE;
+	return KRB5KDC_ERR_PADATA_TYPE_NOSUPP;
 
     ret = decode_PA_PAC_REQUEST(pa->padata_value.data,
 				pa->padata_value.length,
 				&pacreq,
 				NULL);
     if (ret)
-	return TRUE;
-    i = pacreq.include_pac;
+	return KRB5KDC_ERR_PADATA_TYPE_NOSUPP;
+    *include_pac = pacreq.include_pac;
     free_PA_PAC_REQUEST(&pacreq);
-    if (i == 0)
-	return FALSE;
-    return TRUE;
+    return 0;
 }
 
 /*
@@ -1819,12 +1819,31 @@ static krb5_error_code
 generate_pac(astgs_request_t r, const Key *skey, const Key *tkey)
 {
     krb5_error_code ret;
+    const krb5_keyblock *pk_reply_key = NULL;
     krb5_pac p = NULL;
     krb5_data data;
     uint16_t rodc_id;
     krb5_principal client;
+    krb5_boolean sent_pac_request;
+    krb5_boolean pac_request;
 
-    ret = _kdc_pac_generate(r->context, r->client, &p);
+    ret = check_pa_pac_request(r->context, &r->req, &pac_request);
+
+    sent_pac_request = (ret == 0);
+
+    switch (r->validated_pa_type) {
+    case KRB5_PADATA_PK_AS_REQ:
+    case KRB5_PADATA_PK_AS_REQ_WIN:
+	pk_reply_key = &r->reply_key;
+	break;
+    }
+
+    ret = _kdc_pac_generate(r->context,
+			    r->client,
+			    r->server,
+			    pk_reply_key,
+			    sent_pac_request ? &pac_request : NULL,
+			    &p);
     if (ret) {
 	_kdc_r_log(r, 4, "PAC generation failed for -- %s",
 		   r->cname);
@@ -1986,7 +2005,6 @@ _kdc_as_rep(astgs_request_t r)
     krb5_enctype setype;
     krb5_error_code ret = 0;
     Key *skey;
-    int found_pa = 0;
     int i, flags = HDB_F_FOR_AS_REQ;
     METHOD_DATA error_method;
     const PA_DATA *pa;
@@ -2141,7 +2159,7 @@ _kdc_as_rep(astgs_request_t r)
 
 	/* Check if preauth matching */
 
-	for (n = 0; !found_pa && n < sizeof(pat) / sizeof(pat[0]); n++) {
+	for (n = 0; r->validated_pa_type == KRB5_PADATA_NONE && n < sizeof(pat) / sizeof(pat[0]); n++) {
 	    if (pat[n].validate == NULL)
 		continue;
 	    if (r->armor_crypto == NULL && (pat[n].flags & PA_REQ_FAST))
@@ -2183,13 +2201,13 @@ _kdc_as_rep(astgs_request_t r)
 		kdc_log(context, config, 4,
 			"%s pre-authentication succeeded -- %s",
 			pat[n].name, r->cname);
-		found_pa = 1;
 		r->et.flags.pre_authent = 1;
+		r->validated_pa_type = pat[n].type;
 	    }
 	}
     }
 
-    if (found_pa == 0) {
+    if (r->validated_pa_type == KRB5_PADATA_NONE) {
 	Key *ckey = NULL;
 	size_t n;
 	krb5_boolean default_salt;
@@ -2561,7 +2579,7 @@ _kdc_as_rep(astgs_request_t r)
     }
 
     /* Add the PAC */
-    if (send_pac_p(context, req) && !r->et.flags.anonymous) {
+    if (!r->et.flags.anonymous) {
 	generate_pac(r, skey, krbtgt_key);
     }
 

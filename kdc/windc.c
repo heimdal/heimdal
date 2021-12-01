@@ -71,7 +71,10 @@ krb5_kdc_windc_init(krb5_context context)
 
 struct generate_uc {
     hdb_entry_ex *client;
+    hdb_entry_ex *server;
+    const krb5_keyblock *pk_reply_key;
     krb5_pac *pac;
+    const krb5_boolean *pac_request;
 };
 
 static krb5_error_code KRB5_LIB_CALL
@@ -82,13 +85,22 @@ generate(krb5_context context, const void *plug, void *plugctx, void *userctx)
 
     if (ft->pac_generate == NULL)
 	return KRB5_PLUGIN_NO_HANDLE;
-    return ft->pac_generate((void *)plug, context, uc->client, uc->pac);
+
+    return ft->pac_generate((void *)plug, context,
+			    uc->client,
+			    uc->server,
+			    uc->pk_reply_key,
+			    uc->pac_request,
+			    uc->pac);
 }
 
 
 krb5_error_code
 _kdc_pac_generate(krb5_context context,
 		  hdb_entry_ex *client,
+		  hdb_entry_ex *server,
+		  const krb5_keyblock *pk_reply_key,
+		  const krb5_boolean *pac_request,
 		  krb5_pac *pac)
 {
     krb5_error_code ret = 0;
@@ -104,7 +116,10 @@ _kdc_pac_generate(krb5_context context,
     if (have_plugin) {
 
 	uc.client = client;
+	uc.server = server;
+	uc.pk_reply_key = pk_reply_key;
 	uc.pac = pac;
+	uc.pac_request = pac_request;
 
 	ret = _krb5_plugin_run_f(context, &windc_plugin_data,
 				 0, &uc, generate);

@@ -534,8 +534,6 @@ ltm_rsa_generate_key(RSA *rsa, int bits, BIGNUM *e, BN_GENCB *cb)
 
     bitsp = (bits + 1) / 2;
 
-    ret = -1;
-
     FIRST(mp_init_multi(&el, &p, &q, &n, &d,
                         &dmp1, &dmq1, &iqmp,
                         &t1, &t2, &t3, NULL));

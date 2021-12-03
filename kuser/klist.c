@@ -362,7 +362,6 @@ print_tickets(krb5_context context,
     if (ret)
 	krb5_err(context, 1, ret, "krb5_cc_end_seq_get");
 
-    print_comma = 0;
     if(!do_verbose) {
 	rtbl_format(ct, stdout);
 	rtbl_destroy(ct);

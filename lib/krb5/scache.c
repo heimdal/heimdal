@@ -276,9 +276,9 @@ make_dir(krb5_context context, const char *name)
 static krb5_error_code
 default_db(krb5_context context, const char *name, sqlite3 **db, char **file)
 {
+    krb5_error_code ret = 0;
     char *s = NULL;
     char *f = NULL;
-    int ret;
 
     if (file)
         *file = NULL;
@@ -315,13 +315,24 @@ default_db(krb5_context context, const char *name, sqlite3 **db, char **file)
 #endif
 
     ret = make_dir(context, f);
-    if (ret == 0)
-        ret = sqlite3_open_v2(f, db, SQLITE_OPEN_READWRITE, NULL);
-    if (ret != SQLITE_OK) {
-        sqlite3_close(*db);
-	krb5_clear_error_message(context);
-        free(f);
-	return ENOENT;
+    if (ret == 0) {
+        int sret;
+
+        sret = sqlite3_open_v2(f, db, SQLITE_OPEN_READWRITE, NULL);
+        if (sret != SQLITE_OK) {
+            if (*db) {
+                krb5_set_error_message(context, ENOENT,
+                                       N_("Error opening scache file %s: %s (%d)", ""),
+                                       f, sqlite3_errmsg(*db), sret);
+                sqlite3_close(*db);
+                *db = NULL;
+            } else
+                krb5_set_error_message(context, ENOENT,
+                                       N_("Error opening scache file %s: %s (%d)", ""),
+                                       f, sqlite3_errstr(sret), sret);
+            free(f);
+            return ENOENT;
+        }
     }
 
 #ifndef WIN32
@@ -341,7 +352,7 @@ default_db(krb5_context context, const char *name, sqlite3 **db, char **file)
     sqlite3_trace(*db, trace, NULL);
 #endif
 
-    return 0;
+    return ret;
 }
 
 static krb5_error_code
@@ -480,8 +491,9 @@ scc_alloc(krb5_context context,
 static krb5_error_code
 open_database(krb5_context context, krb5_scache *s, int flags)
 {
+    krb5_error_code ret;
     struct stat st;
-    int ret;
+    int sret;
 
 
     if (!(flags & SQLITE_OPEN_CREATE) && stat(s->file, &st) == 0 &&
@@ -489,18 +501,20 @@ open_database(krb5_context context, krb5_scache *s, int flags)
         return ENOENT;
 
     ret = make_dir(context, s->file);
-    if (ret == 0)
-    ret = sqlite3_open_v2(s->file, &s->db, SQLITE_OPEN_READWRITE|flags, NULL);
-    if (ret) {
+    if (ret)
+        return ret;
+    sret = sqlite3_open_v2(s->file, &s->db, SQLITE_OPEN_READWRITE|flags, NULL);
+    if (sret != SQLITE_OK) {
 	if (s->db) {
 	    krb5_set_error_message(context, ENOENT,
-				   N_("Error opening scache file %s: %s", ""),
-				   s->file, sqlite3_errmsg(s->db));
+				   N_("Error opening scache file %s: %s (%d)", ""),
+				   s->file, sqlite3_errmsg(s->db), sret);
 	    sqlite3_close(s->db);
 	    s->db = NULL;
 	} else
 	    krb5_set_error_message(context, ENOENT,
-				   N_("malloc: out of memory", ""));
+				   N_("Error opening scache file %s: %s (%d)", ""),
+                                   s->file, sqlite3_errstr(sret), sret);
 	return ENOENT;
     }
     return 0;

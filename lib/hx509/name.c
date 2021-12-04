@@ -937,9 +937,6 @@ hx509_name_expand(hx509_context context,
 		    return ENOMEM;
 		}
 	    }
-            free(s);
-            sval = NULL;
-            s = NULL;
 
 	    while (p != NULL) {
 		/* expand variables */
@@ -948,6 +945,7 @@ hx509_name_expand(hx509_context context,
 		if (p2 == NULL) {
 		    hx509_set_error_string(context, 0, EINVAL, "missing }");
 		    rk_strpoolfree(strpool);
+                    free(s);
 		    return EINVAL;
 		}
 		p += 2;
@@ -957,11 +955,13 @@ hx509_name_expand(hx509_context context,
 					   "variable %.*s missing",
 					   (int)(p2 - p), p);
 		    rk_strpoolfree(strpool);
+                    free(s);
 		    return EINVAL;
 		}
 		strpool = rk_strpoolprintf(strpool, "%s", value);
 		if (strpool == NULL) {
 		    hx509_set_error_string(context, 0, ENOMEM, "out of memory");
+                    free(s);
 		    return ENOMEM;
 		}
 		p2++;
@@ -974,9 +974,14 @@ hx509_name_expand(hx509_context context,
 		    strpool = rk_strpoolprintf(strpool, "%s", p2);
 		if (strpool == NULL) {
 		    hx509_set_error_string(context, 0, ENOMEM, "out of memory");
+                    free(s);
 		    return ENOMEM;
 		}
 	    }
+
+            free(s);
+            s = NULL;
+
 	    if (strpool) {
                 size_t max_bytes;
 

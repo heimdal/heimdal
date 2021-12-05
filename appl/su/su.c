@@ -378,7 +378,7 @@ main(int argc, char **argv)
     if (su_info == NULL)
 	errx (1, "malloc: out of memory");
 
-	pwd = getpwuid(getuid());
+    pwd = getpwuid(getuid());
     if(pwd == NULL)
 	errx(1, "who are you?");
     login_info = dup_info(pwd);

@@ -53,8 +53,8 @@ static int
 error_cmp(void *a, void *b)
 {
     struct heim_error *ap = a, *bp = b;
-    if (ap->error_code == ap->error_code)
-	return ap->error_code - ap->error_code;
+    if (ap->error_code == bp->error_code)
+	return 0;
     return heim_cmp(ap->msg, bp->msg);
 }
 

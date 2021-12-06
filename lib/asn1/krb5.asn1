@@ -774,6 +774,20 @@ PA-ServerReferralData ::= SEQUENCE {
 FastOptions ::= BIT STRING {
 	    reserved(0),
 	    hide-client-names(1),
+	    critical2(2),
+	    critical3(3),
+	    critical4(4),
+	    critical5(5),
+	    critical6(6),
+	    critical7(7),
+	    critical8(8),
+	    critical9(9),
+	    critical10(10),
+	    critical11(11),
+	    critical12(12),
+	    critical13(13),
+	    critical14(14),
+	    critical15(15),
 	    kdc-follow-referrals(16)
 }
 

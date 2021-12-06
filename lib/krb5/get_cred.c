@@ -1283,6 +1283,33 @@ check_cc(krb5_context context, krb5_flags options, krb5_ccache ccache,
     if (options & KRB5_GC_ANONYMOUS)
 	krb5_free_principal(context, mcreds.client);
 
+    if (ret == 0 && out_creds->server->realm &&
+        out_creds->server->realm[0] == '\0') {
+        Ticket ticket;
+
+        /*
+         * We only write tickets to the ccache that have been validated, as in,
+         * the sname/srealm from the KDC-REP enc-part have been checked to
+         * match the sname/realm from the Ticket from the KDC-REP.
+         *
+         * Our caller needs the canonical realm of the service in order to be
+         * able to get forwarded credentials for it when destination-TGT
+         * forwarding is enabled.
+         *
+         * As well, gss_init_sec_context() ought to arrange for
+         * gss_inquire_context() to output the canonical acceptor name on the
+         * initiator side.
+         */
+        ret = decode_Ticket(out_creds->ticket.data, out_creds->ticket.length,
+                            &ticket, NULL);
+        if (ret == 0) {
+            ret = krb5_principal_set_realm(context, out_creds->server,
+                                           ticket.realm);
+            free_Ticket(&ticket);
+        } else {
+            krb5_free_cred_contents(context, out_creds);
+        }
+    }
     return ret;
 }
 

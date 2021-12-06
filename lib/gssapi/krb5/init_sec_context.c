@@ -254,6 +254,13 @@ gsskrb5_get_creds(
 	return GSS_S_FAILURE;
     }
 
+    krb5_free_principal(context, ctx->target);
+    kret = krb5_copy_principal(context, ctx->kcred->server, &ctx->target);
+    if (kret) {
+	*minor_status = kret;
+	return GSS_S_FAILURE;
+    }
+
     ctx->endtime = ctx->kcred->times.endtime;
 
     ret = _gsskrb5_lifetime_left(minor_status, context,

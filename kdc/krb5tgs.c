@@ -788,7 +788,7 @@ out:
     }
     free_LastReq(&ek.last_req);
     if (et.key.keyvalue.data != NULL) {
-	memset(et.key.keyvalue.data, 0, et.key.keyvalue.length);
+	memset_s(et.key.keyvalue.data, 0, et.key.keyvalue.length);
     }
     free_EncryptionKey(&et.key);
     return ret;

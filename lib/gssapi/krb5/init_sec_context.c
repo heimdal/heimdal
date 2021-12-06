@@ -314,7 +314,6 @@ do_delegation (krb5_context context,
 	       krb5_auth_context ac,
 	       krb5_ccache ccache,
 	       krb5_creds *cred,
-	       krb5_const_principal server,
 	       krb5_data *fwd_data,
 	       uint32_t flagmask,
 	       uint32_t *flags)
@@ -330,12 +329,12 @@ do_delegation (krb5_context context,
 	goto out;
 
     /* We can't generally enforce server.name_type == KRB5_NT_SRV_HST */
-    if (server->name.name_string.len < 2)
+    if (cred->server->name.name_string.len < 2)
 	goto out;
-    host = krb5_principal_get_comp_string(context, server, 1);
+    host = krb5_principal_get_comp_string(context, cred->server, 1);
 
 #define FWDABLE 1
-    kret = krb5_fwd_tgt_creds(context, ac, host, client, server, ccache,
+    kret = krb5_fwd_tgt_creds(context, ac, host, client, cred->server, ccache,
 			      FWDABLE, fwd_data);
 
  out:
@@ -531,7 +530,7 @@ init_auth_restart
     if (flagmask & GSS_C_DELEG_FLAG) {
 	do_delegation (context,
 		       ctx->deleg_auth_context,
-		       ctx->ccache, ctx->kcred, ctx->target,
+		       ctx->ccache, ctx->kcred,
 		       &fwd_data, flagmask, &flags);
     }
 

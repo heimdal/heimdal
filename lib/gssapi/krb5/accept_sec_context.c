@@ -596,6 +596,7 @@ gsskrb5_acceptor_start(OM_uint32 * minor_status,
 		 * GSSAPI checksum here
 		 */
 
+		_krb5_crypto_set_flags(context, crypto, KRB5_CRYPTO_FLAG_ALLOW_UNKEYED_CHECKSUM);
 		kret = krb5_verify_checksum(context,
 					    crypto, KRB5_KU_AP_REQ_AUTH_CKSUM, NULL, 0,
 					    authenticator->cksum);

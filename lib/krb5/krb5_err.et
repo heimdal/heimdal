@@ -109,6 +109,9 @@ error_code PUBLIC_KEY_ENCRYPTION_NOT_SUPPORTED, "Public key encryption not suppo
 index 91
 error_code MORE_PREAUTH_DATA_REQUIRED, "More pre-authentication data required"
 
+index 93
+error_code UNKNOWN_CRITICAL_FAST_OPTIONS, "Unknown critical FAST options"
+
 index 94
 error_code INVALID_HASH_ALG, "Invalid OTP digest algorithm"
 error_code INVALID_ITERATION_COUNT, "Invalid OTP iteration count"

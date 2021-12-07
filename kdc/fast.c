@@ -516,7 +516,7 @@ fast_unwrap_request(astgs_request_t r)
     if (FastOptions2int(fastreq.fast_options) & 0xfffc) {
 	kdc_log(r->context, r->config, 2,
 		"FAST unsupported mandatory option set");
-	ret = KRB5KDC_ERR_PREAUTH_FAILED;
+	ret = KRB5_KDC_ERR_UNKNOWN_CRITICAL_FAST_OPTIONS;
 	goto out;
     }
 

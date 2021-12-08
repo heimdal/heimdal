@@ -1268,6 +1268,4 @@ start_kdc(krb5_context context,
     loop(context, config, d, ndescr, -1);
     kdc_log(context, config, 0, "KDC exiting", pid);
 #endif
-
-    free(d);
 }

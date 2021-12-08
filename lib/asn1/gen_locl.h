@@ -87,6 +87,7 @@ typedef struct asn1_module {
     /* Basename of module: */
     const char *headerbase;
     /* Open stdio file handles for output: */
+    FILE *jsonfile;
     FILE *privheaderfile;
     FILE *headerfile;
     FILE *oidsfile;
@@ -158,8 +159,9 @@ void generate_template_type_forward(const char *);
 void generate_template_objectset_forwards(const Symbol *);
 void gen_template_import(const Symbol *);
 
+struct objid **objid2list(struct objid *);
 
-extern FILE *privheaderfile, *headerfile, *codefile, *logfile, *templatefile;
+extern FILE *jsonfile, *privheaderfile, *headerfile, *codefile, *logfile, *templatefile;
 extern const char *fuzzer_string;
 extern int support_ber;
 extern int template_flag;

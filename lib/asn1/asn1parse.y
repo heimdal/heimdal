@@ -348,6 +348,21 @@ Identifier	: TYPE_IDENTIFIER { $$ = $1; }
 ModuleDefinition: Identifier objid_opt kw_DEFINITIONS TagDefault ExtensionDefault
 			EEQUAL kw_BEGIN ModuleBody kw_END
 		{
+                    struct objid **o = objid2list($2);
+                    size_t i;
+
+                    fprintf(jsonfile,
+                            "{\"module\":\"%s\",\"tagging\":\"%s\",\"objid\":[", $1,
+                            default_tag_env == TE_EXPLICIT ? "explicit" : "implicit");
+
+                    for (i = 0; o && o[i]; i++) {
+                        fprintf(jsonfile, "%s{\"value\":%d", i ? "," : "", o[i]->value);
+                        if (o[i]->label)
+                            fprintf(jsonfile, ",\"label\":\"%s\"", o[i]->label);
+                        fprintf(jsonfile, "}");
+                    }
+                    fprintf(jsonfile, "]}\n");
+                    free(o);
 		}
 		| CLASS_IDENTIFIER objid_opt kw_DEFINITIONS TagDefault ExtensionDefault
 			EEQUAL kw_BEGIN ModuleBody kw_END

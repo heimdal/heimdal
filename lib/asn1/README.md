@@ -800,6 +800,15 @@ In recent times the following features have been added:
    JER this will have the side-effect of printing the wrong type names in some
    cases because two or more types have the same templates and get deduped.)
 
+ - There is an _experimental_ ASN.1 -> JSON feature in the compiler.  It
+   currently dumps type and value definitions, but not class, or object set
+   definitions.  Even for types, it is not complete, and the JSON schema used
+   is subject to change *WITHOUT NOTICE*.
+
+   Perhaps eventually we can re-write the compiler as a C-coded ASN.1 -> JSON
+   stage followed by a jq-coded code and template generator state, which would
+   make it much easier to extend the compiler.
+
 ...
 
 ## Limitations

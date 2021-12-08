@@ -33,8 +33,8 @@
 
 /* $Id$ */
 
-#ifndef HEIMDAL_KRB5_PAC_PLUGIN_H
-#define HEIMDAL_KRB5_PAC_PLUGIN_H 1
+#ifndef HEIMDAL_KDC_WINDC_PLUGIN_H
+#define HEIMDAL_KDC_WINDC_PLUGIN_H 1
 
 #include <krb5.h>
 
@@ -86,5 +86,4 @@ typedef struct krb5plugin_windc_ftable {
     krb5plugin_windc_client_access	client_access;
 } krb5plugin_windc_ftable;
 
-#endif /* HEIMDAL_KRB5_PAC_PLUGIN_H */
-
+#endif /* HEIMDAL_KDC_WINDC_PLUGIN_H */

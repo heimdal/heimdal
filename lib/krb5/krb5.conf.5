@@ -805,6 +805,17 @@ addresses in the tickets.
 .It Li allow-null-ticket-addresses = Va BOOL
 Allow address-less tickets.
 .\" XXX
+.It Li enable_armored_pa_enc_timestamp = Va BOOL
+Enable armored encrypted timestamp pre-authentication with key
+strengthening.
+RFC 6113 says not to use PA-ENC-TIMESTAMP in FAST armored tunnels
+as there is a newer replacement, PA-ENC-CHALLENGE, but for
+interoperability with earlier versions of Heimdal, this is
+enabled by default for now.
+.It Li enable_unarmored_pa_enc_timestamp = Va BOOL
+Enable unarmored encrypted timestamp pre-authentication.
+Enabled by default for now, but in a future release will be
+disabled.
 .It Li allow-anonymous = Va BOOL
 If the kdc is allowed to hand out anonymous tickets.
 .It Li synthetic_clients = Va BOOL

@@ -78,7 +78,7 @@ int pk_enterprise_flag = 0;
 struct hx509_certs_data *ent_user_id = NULL;
 char *pk_x509_anchors	= NULL;
 int pk_use_enckey	= 0;
-int pk_anon_fast_armor	= 0;
+int pk_anon_fast_armor	= -1;
 char *gss_preauth_mech	= NULL;
 char *gss_preauth_name	= NULL;
 char *kdc_hostname	= NULL;
@@ -517,8 +517,11 @@ renew_validate(krb5_context context,
     else if (out)
 	flags.b.proxiable 	  = out->flags.b.proxiable;
 
-    if (anonymous_flag)
+    if (anonymous_flag) {
 	flags.b.request_anonymous = anonymous_flag;
+        if (pk_anon_fast_armor == -1)
+            pk_anon_fast_armor = 0;
+    }
     if (life)
 	in.times.endtime = time(NULL) + life;
 
@@ -828,6 +831,8 @@ get_new_tickets(krb5_context context,
     if (pk_enterprise_flag || enterprise_flag || canonicalize_flag || windows_flag)
 	krb5_get_init_creds_opt_set_win2k(context, opt, TRUE);
     if (pk_user_id || ent_user_id || anonymous_pkinit) {
+        if (pk_anon_fast_armor == -1)
+            pk_anon_fast_armor = 0;
 	ret = krb5_get_init_creds_opt_set_pkinit(context, opt,
 						 principal,
 						 pk_user_id,
@@ -939,10 +944,13 @@ get_new_tickets(krb5_context context,
     if (fast_armor_cache_string) {
 	krb5_ccache fastid = NULL;
 
+	if (pk_anon_fast_armor == -1)
+            pk_anon_fast_armor = 0;
 	if (pk_anon_fast_armor)
-	    krb5_errx(context, 1,
-		N_("cannot specify FAST armor cache with FAST "
-		     "anonymous PKINIT option", ""));
+	    krb5_warnx(context,
+		N_("Ignoring --pk-anon-fast-armor option because "
+                   "FAST armor ccache given", ""));
+        pk_anon_fast_armor = 0;
 
 	ret = krb5_cc_resolve(context, fast_armor_cache_string, &fastid);
 	if (ret) {
@@ -1830,8 +1838,45 @@ main(int argc, char **argv)
 	exit(ret != 0);
     }
 
+    if (pk_anon_fast_armor == -1 && fast_armor_cache_string == NULL) {
+        krb5_data fast_avail;
+
+        /*
+         * If none of --pk-anon-fast-armor, --no-pk-anon-fast-armor, nor
+         * --fast-armor-cache=CACHE were given, but if we had FAST available
+         * before, then insist on it now using anonymous PKINIT.
+         *
+         * XXX This will break if we a) had used a --fast-armor-cache=CACHE
+         *     before, and b) anon PKINIT is disabled or trust anchors not
+         *     configured.  The "fast_avail" cc config entry does not record
+         *     what kind of armor we used...
+         *
+         * XXX We could optimize by avoiding FAST if we're using not-a-
+         *     password, though if we're using a keytab, say, we'd not know
+         *     whether the relevant key is derived from a weak password.
+         *
+         *     Anyways, with FAST we get some privacy protection as well.
+         */
+        krb5_data_zero(&fast_avail);
+        ret = krb5_cc_get_config(context, ccache, NULL, "fast_avail",
+                                 &fast_avail);
+        if (ret == 0 && fast_avail.length == sizeof("yes") - 1 &&
+            memcmp(fast_avail.data, "yes", sizeof("yes") - 1))
+            pk_anon_fast_armor = 1;
+        krb5_data_free(&fast_avail);
+    }
+
+    /*
+     * Note: krb5_init_creds_store() (called from get_new_tickets()) writes
+     * fast_avail ccconfig so we don't have to.
+     */
     ret = get_new_tickets(context, principal, ccache, ticket_life,
 			  1, anonymous_pkinit);
+    if (ret && pk_anon_fast_armor == -1) {
+        pk_anon_fast_armor = 0;
+        ret = get_new_tickets(context, principal, ccache, ticket_life,
+                              1, anonymous_pkinit);
+    }
     if (ret) {
 	if (unique_ccache)
 	    krb5_cc_destroy(context, ccache);

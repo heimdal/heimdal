@@ -154,7 +154,7 @@ for mech in sanon-x25519 spnego ; do
 	{ ec=1 ; eval "${testfailed}"; }
 
     echo "Trying ${mech} pre-authentication with no FAST armor"; > messages.log
-    ${kinit} \
+    ${kinit} --no-pk-anon-fast-armor\
 	--anonymous --gss-mech=${mech} @$R 2>/dev/null && \
 	{ ec=1 ; eval "${testfailed}"; }
 done

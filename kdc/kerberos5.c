@@ -726,7 +726,19 @@ pa_enc_ts_validate(astgs_request_t r, const PA_DATA *pa)
     size_t len;
     Key *pa_key;
     char *str;
-	
+
+    if (r->armor_crypto && !r->config->enable_armored_pa_enc_timestamp) {
+       ret = KRB5KDC_ERR_POLICY;
+       kdc_log(r->context, r->config, 0,
+               "Armored encrypted timestamp pre-authentication is disabled");
+       return ret;
+    } else if (!r->armor_crypto && !r->config->enable_unarmored_pa_enc_timestamp) {
+       ret = KRB5KDC_ERR_POLICY;
+       kdc_log(r->context, r->config, 0,
+               "Unarmored encrypted timestamp pre-authentication is disabled");
+       return ret;
+    }
+
     if (r->client->entry.flags.locked_out) {
        ret = KRB5KDC_ERR_CLIENT_REVOKED;
        kdc_log(r->context, r->config, 0,

@@ -1478,7 +1478,22 @@ hdb_fetch_kvno(krb5_context context,
     ret = fetch_it(context, db, principal, flags, t, etype, kvno, h);
     if (ret == HDB_ERR_NOENTRY)
 	krb5_set_error_message(context, ret, "no such entry found in hdb");
+
+    /*
+     * This supports aliases in HDB.
+     *
+     * The check for force_canonicalize is to support Samba.
+     *
+     * Samba will return a different realm (the canonical realm) for a
+     * lookup if the client presents a NetBIOS name.  In this case so
+     * krb5_realm_compare() would return false even for full entries
+     * in our own realm.
+     *
+     * Aliasing support is still available in this mode, the HDB
+     * module will need to return HDB_ERR_WRONG_REALM itself.
+     */
     if (ret == 0 && !(flags & HDB_F_ADMIN_DATA) &&
+        !h->entry.flags.force_canonicalize &&
         !krb5_realm_compare(context, principal, h->entry.principal))
             ret = HDB_ERR_WRONG_REALM;
     return ret;

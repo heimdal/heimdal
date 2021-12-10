@@ -7,6 +7,7 @@ WFLAGS += $(WFLAGS_ENUM_CONV)
 AUTOMAKE_OPTIONS = subdir-objects
 
 AM_CPPFLAGS += \
+	-I$(top_srcdir)/lib \
 	-I$(srcdir)/../krb5 \
 	-I$(srcdir) \
 	-I$(srcdir)/gssapi \
@@ -252,6 +253,7 @@ sanonsrc = \
 	sanon/process_context_token.c \
 	sanon/release_cred.c \
 	sanon/release_name.c \
+	sanon/sanon_locl.h \
 	sanon/sanon-private.h
 
 dist_libgssapi_la_SOURCES  = \

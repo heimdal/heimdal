@@ -6,7 +6,7 @@ WFLAGS += $(WFLAGS_ENUM_CONV)
 
 YFLAGS = -d -t
 
-AM_CPPFLAGS += $(ROKEN_RENAME)
+AM_CPPFLAGS += $(ROKEN_RENAME) -I$(top_builddir)/include -I$(top_srcdir)/lib/base
 
 man_MANS = asn1_print.1 asn1_compile.1
 
@@ -543,35 +543,43 @@ test_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/test.asn1
 		$(CLANG_FORMAT) -style='{BasedOnStyle: Mozilla, AlwaysBreakAfterReturnType: TopLevelDefinitions, IndentWidth: 4, SortIncludes: false}' -i asn1_test_asn1.c
 
 
-EXTRA_DIST =		\
-	NTMakefile	\
-	README.template \
-	asn1_compile-version.rc \
-	libasn1-exports.def \
-	cms.asn1	\
-	cms.opt		\
-	crmf.asn1	\
-	crmf.opt	\
-	asn1_err.et	\
-	canthandle.asn1	\
-	digest.asn1	\
-	krb5.asn1	\
-	krb5.opt	\
-	kx509.asn1	\
-	ocsp.asn1	\
-	pkcs12.asn1	\
-	pkcs8.asn1	\
-	pkcs9.asn1	\
-	pkcs10.asn1	\
-	pkinit.asn1	\
-	rfc2459.asn1	\
-	rfc4108.asn1	\
-	tcg.asn1	\
-	setchgpw2.asn1	\
-	x690sample.asn1	\
-	test.asn1	\
-	test.opt	\
-	test.gen	\
+EXTRA_DIST =			\
+	NTMakefile		\
+	README-template.md	\
+	asn1_compile-version.rc	\
+	libasn1-exports.def	\
+	canthandle.asn1		\
+	cms.asn1		\
+	cms.opt			\
+	crmf.asn1		\
+	crmf.opt		\
+	digest.asn1		\
+	krb5.asn1		\
+	krb5.opt		\
+	kx509.asn1		\
+	ocsp.asn1		\
+	ocsp.opt		\
+	pkcs10.asn1		\
+	pkcs10.opt		\
+	pkcs12.asn1		\
+	pkcs8.asn1		\
+	pkcs9.asn1		\
+	pkinit.asn1		\
+	pku2u.asn1		\
+	rfc2459.asn1		\
+	rfc2459.opt		\
+	rfc4108.asn1		\
+	setchgpw2.asn1		\
+	tcg.asn1		\
+	test.asn1		\
+	test.opt		\
+	x690sample.asn1		\
+	test.gen		\
+	asn1_err.et		\
+	asn1_err.c		\
+	asn1_err.h		\
+	asn1_print.1		\
+	asn1_compile.1		\
 	version-script.map
 
 DER_PROTOS = $(srcdir)/der-protos.h $(srcdir)/der-private.h

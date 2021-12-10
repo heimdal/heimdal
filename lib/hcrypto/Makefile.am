@@ -61,8 +61,7 @@ hcryptoinclude_HEADERS =	\
 	rsa.h			\
 	sha.h			\
 	ui.h			\
-	undef.h			\
-	x25519_ref10.h
+	undef.h
 
 install-build-headers:: $(hcryptoinclude_HEADERS) $(x25519include_HEADERS)
 	@foo='$(hcryptoinclude_HEADERS)'; \
@@ -103,6 +102,22 @@ SCRIPT_TESTS = \
 	test_crypto
 
 noinst_PROGRAMS = test_rand
+
+noinst_HEADERS = \
+	x25519/ed25519_ref10_fe_51.h	\
+	x25519/ed25519_ref10_fe_25_5.h	\
+	x25519/ed25519_ref10.h	\
+	x25519/fe_25_5/base.h	\
+	x25519/fe_25_5/base2.h	\
+	x25519/fe_25_5/constants.h  \
+	x25519/fe_25_5/fe.h \
+	x25519/fe_51/base.h \
+	x25519/fe_51/base2.h	\
+	x25519/fe_51/constants.h    \
+	x25519/fe_51/fe.h   \
+	x25519/align.h	\
+	x25519_ref10.h
+
 
 check_PROGRAMS = $(PROGRAM_TESTS) test_rsa test_dh example_evp_cipher
 check_SCRIPTS = $(SCRIPT_TESTS)
@@ -336,7 +351,12 @@ ltmsources = \
 	libtommath/bn_s_mp_sqr_fast.c \
 	libtommath/bn_s_mp_sub.c \
 	libtommath/bn_s_mp_toom_mul.c \
-	libtommath/bn_s_mp_toom_sqr.c
+	libtommath/bn_s_mp_toom_sqr.c \
+	libtommath/tommath_private.h \
+	libtommath/tommath_cutoffs.h \
+	libtommath/tommath_superclass.h \
+	libtommath/tommath_class.h \
+	libtommath/tommath.h
 
 x25519sources = \
 	x25519/ed25519_ref10.c \

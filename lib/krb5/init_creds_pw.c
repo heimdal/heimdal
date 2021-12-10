@@ -213,7 +213,8 @@ free_init_creds_ctx(krb5_context context, krb5_init_creds_context ctx)
 	krb5_free_keyblock(context, ctx->fast_state.strengthen_key);
     krb5_data_free(&ctx->fast_state.cookie);
     krb5_free_keyblock_contents(context, &ctx->fast_state.armor_key);
-    if (ctx->fast_state.flags & KRB5_FAST_ANON_PKINIT_ARMOR)
+    if ((ctx->fast_state.flags & KRB5_FAST_ANON_PKINIT_ARMOR) &&
+        ctx->fast_state.armor_ccache)
 	krb5_cc_destroy(context, ctx->fast_state.armor_ccache);
     if (ctx->fast_state.anon_pkinit_ctx)
 	free_init_creds_ctx(context, ctx->fast_state.anon_pkinit_ctx);

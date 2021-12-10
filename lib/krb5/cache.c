@@ -1795,6 +1795,8 @@ out:
  * NULL, global for the whole cache.
  * @param name name under which the configuraion is stored.
  * @param data data to fetched, free with krb5_data_free()
+ * @return 0 on success, KRB5_CC_NOTFOUND or KRB5_CC_END if not found,
+ *           or other system error.
  *
  * @ingroup krb5_ccache
  */

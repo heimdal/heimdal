@@ -231,7 +231,7 @@ struct cc_context_t {
 typedef cc_int32
 (*cc_initialize_func)(cc_context_t*, cc_int32, cc_int32 *, char const **);
 
-#ifdef __APPLE__
+#if defined(__APPLE__) && (defined(__ppc__) || defined(__ppc64__) || defined(__i386__) || defined(__x86_64__))
 #pragma pack(pop)
 #endif
 

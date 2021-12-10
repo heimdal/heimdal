@@ -49,7 +49,8 @@
 enum krb5_kdc_trpolicy {
     TRPOLICY_ALWAYS_CHECK,
     TRPOLICY_ALLOW_PER_PRINCIPAL,
-    TRPOLICY_ALWAYS_HONOUR_REQUEST
+    TRPOLICY_ALWAYS_HONOUR_REQUEST,
+    TRPOLICY_ALWAYS_DISABLED
 };
 
 typedef struct krb5_kdc_configuration {

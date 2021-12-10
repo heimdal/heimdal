@@ -16,8 +16,18 @@ include @srcdirabs@/include-krb5.conf
                         user1 = mapped_user1
                 }
 	}
+	TEST2.H5L.SE = {
+		kdc = localhost:@port@
+	}
+	TEST3.H5L.SE = {
+		kdc = localhost:@port@
+	}
+	TEST4.H5L.SE = {
+		kdc = localhost:@port@
+	}
 
 [kdc]
+	transited-policy = always-disabled
 	database = {
 		dbname = @objdir@/current-db
 		realm = TEST.H5L.SE

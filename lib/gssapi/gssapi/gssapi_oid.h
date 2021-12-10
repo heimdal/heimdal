@@ -2,7 +2,32 @@
 #ifndef GSSAPI_GSSAPI_OID
 #define GSSAPI_GSSAPI_OID 1
 
- /* contact Love Hörnquist Åstrand <lha@h5l.org> for new oid arcs */
+ /*
+  * Contact Love Hörnquist Åstrand <lha at h5l.org> for new oid arcs
+  */
+ /*
+  * 1.2.752.43 is SU's arc.  SU's registry has arcs 13, 14, and 16
+  * below that registered for Heimdal to use.  The Heimdal source tree
+  * is the authoritative registry for Heimdal's three arcs off of SU's arc.
+  * This file is the authoritative registry for 1.2.752.43.13 and 1.2.752.14.
+  * ASN.1 modules in lib/asn1/ are authoritative for 1.2.752.43.16.
+  *
+  * Confirmed by SU's erstwhile registrar, Leif Johansson <leifj at sunet.se>,
+  * as well as by SU's current registrar (through Leif), as:
+  *
+  *  1.2.752.43.13 Namn Heimdal GSS-API extentions
+  *  Beskrivning OIDar för användning av Heimdal projektet
+  *  1.2.752.43.14 Namn Heimdal GSS-API mechs
+  *  Beskrivning OIDar för användning av Heimdal projektet
+  *  1.2.752.43.16 Namn Heimdal Internal crypto ops
+  *  Beskrivning OIDar för användning av Heimdal projektet
+  *
+  * 1.2.752.43.16 is now also used in Heimdal for PKIX-related things.
+  * See lib/asn1/ and lib/hx509/.
+  *
+  * Contact the SU registrar for new oid arcs if any are needed, or carve
+  * out an arc of one of the above, preferably off 1.2.752.43.16.
+  */
  /*
   * 1.2.752.43.13 Heimdal GSS-API Extensions
   */
@@ -168,6 +193,15 @@ extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_negoex_mechanism_oid_desc;
 
 extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_sanon_x25519_mechanism_oid_desc;
 #define GSS_SANON_X25519_MECHANISM (&__gss_sanon_x25519_mechanism_oid_desc)
+
+/*
+ * From Samba
+ */
+extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_krb5_cred_skip_transit_check_x_oid_desc;
+#define GSS_KRB5_CRED_SKIP_TRANSIT_CHECK_X (&__gss_krb5_cred_skip_transit_check_x_oid_desc)
+
+extern GSSAPI_LIB_VARIABLE gss_OID_desc __gss_krb5_cred_iterate_acceptor_keytab_x_oid_desc;
+#define GSS_KRB5_CRED_ITERATE_ACCEPTOR_KEYTAB_X (&__gss_krb5_cred_iterate_acceptor_keytab_x_oid_desc)
 
 /*
  * OID mappings with name and short description and and slightly longer description

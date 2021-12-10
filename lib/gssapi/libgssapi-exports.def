@@ -161,7 +161,9 @@ EXPORTS
 	__gss_c_ntlm_v2_oid_desc	DATA
 	__gss_c_ntlm_session_key_oid_desc	DATA
 	__gss_c_ntlm_force_v1_oid_desc	DATA
+	__gss_krb5_cred_iterate_acceptor_keytab_x_oid_desc	DATA
 	__gss_krb5_cred_no_ci_flags_x_oid_desc	DATA
+	__gss_krb5_cred_skip_transit_check_x_oid_desc	DATA
 	__gss_krb5_import_cred_x_oid_desc	DATA
 	__gss_c_ma_sasl_mech_name_oid_desc	DATA
 	__gss_c_ma_mech_name_oid_desc	DATA

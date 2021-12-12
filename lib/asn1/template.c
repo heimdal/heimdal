@@ -566,7 +566,7 @@ _asn1_decode_open_type(const struct asn1_template *t,
         const void *vp = DPO(data, ttypeid->offset);
         int c = -1;
 
-        while (left <= right) {
+        while (left < right) {
             size_t mid = (left + right) >> 1;
 
             if ((tos[3 + mid * 3].tt & A1_OP_MASK) != A1_OP_OPENTYPE_ID)
@@ -577,10 +577,7 @@ _asn1_decode_open_type(const struct asn1_template *t,
             else if (typeid_is_oid)
                 c = der_heim_oid_cmp(vp, tos[3 + mid * 3].ptr);
             if (c < 0) {
-                if (mid)
-                    right = mid - 1;
-                else
-                    break;
+                right = mid;
             } else if (c > 0) {
                 left = mid + 1;
             } else {

@@ -828,6 +828,8 @@ ${kgetcred_imp} --impersonate=bar@${R} ${ps} || \
 ${test_ap_req} ${ps} ${keytab} ${ocache} || \
 	{ ec=1 ; eval "${testfailed}"; }
 echo "  negative check"
+${kgetcred_imp} --impersonate=${ps} ${ps} 2>/dev/null && \
+	{ ec=1 ; eval "${testfailed}"; }
 ${kgetcred_imp} --impersonate=bar@${R} foo@${R} 2>/dev/null && \
 	{ ec=1 ; eval "${testfailed}"; }
 

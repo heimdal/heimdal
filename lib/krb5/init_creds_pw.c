@@ -430,11 +430,12 @@ krb5_init_creds_warn_user(krb5_context context,
 						    "suppress_weak_enctype", NULL);
 	if (!suppress) {
 	    char *str = NULL, *p = NULL;
+	    int aret;
 	    krb5_enctype_to_string(context, weak_enctype, &str);
 
-	    (void)asprintf(&p, "Encryption type %s(%d) used for authentication is weak and will be deprecated",
-			   str ? str : "unknown", weak_enctype);
-	    if (p) {
+	    aret = asprintf(&p, "Encryption type %s(%d) used for authentication is weak and will be deprecated",
+			    str ? str : "unknown", weak_enctype);
+	    if (aret >= 0 && p) {
 		(*ctx->prompter)(context, ctx->prompter_data, NULL, p, 0, NULL);
 		free(p);
 	    }

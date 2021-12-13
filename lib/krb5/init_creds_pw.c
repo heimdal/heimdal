@@ -1336,8 +1336,22 @@ pa_data_to_md_gss(krb5_context context,
 	(ctx->fast_state.flags & KRB5_FAST_EXPECTED) &&
 	(ctx->fast_state.flags & KRB5_FAST_KDC_VERIFIED))
 	ret = 0;
-    if (ret == 0)
+    if (ret == 0) {
+	/*
+	 * Always require a strengthen key if FAST was used, to avoid a MITM
+	 * attack that could result in unintended privilege escalation should
+	 * the KDC add positive authorization data from the armor ticket.
+	 */
+	if ((ctx->fast_state.flags & KRB5_FAST_EXPECTED) &&
+	    ctx->fast_state.strengthen_key == NULL) {
+	    krb5_set_error_message(context, HEIM_ERR_PA_CANT_CONTINUE,
+				   "FAST GSS pre-authentication without strengthen key");
+	    ret = KRB5_KDCREP_MODIFIED;
+	    goto out;
+	}
+
 	pa_gss_ctx->open = 1;
+    }
 
     if (output_token.length) {
 	ret = krb5_padata_add(context, out_md, KRB5_PADATA_GSS,

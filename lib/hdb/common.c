@@ -1478,7 +1478,14 @@ hdb_fetch_kvno(krb5_context context,
     ret = fetch_it(context, db, principal, flags, t, etype, kvno, h);
     if (ret == HDB_ERR_NOENTRY)
 	krb5_set_error_message(context, ret, "no such entry found in hdb");
+
+    /*
+     * This check is to support aliases in HDB; the force_canonicalize
+     * check is to allow HDB backends to support realm name canon
+     * independently of principal aliases (used by Samba).
+     */
     if (ret == 0 && !(flags & HDB_F_ADMIN_DATA) &&
+        !h->entry.flags.force_canonicalize &&
         !krb5_realm_compare(context, principal, h->entry.principal))
             ret = HDB_ERR_WRONG_REALM;
     return ret;

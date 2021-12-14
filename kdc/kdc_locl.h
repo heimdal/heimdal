@@ -99,6 +99,7 @@ struct astgs_request_desc {
     /* only valid for tgs-req */
     unsigned int rk_is_subkey : 1;
     unsigned int fast_asserted : 1;
+    unsigned int replaced_reply_key : 1;
 
     krb5_crypto armor_crypto;
 

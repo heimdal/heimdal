@@ -880,6 +880,7 @@ struct kdc_patypes {
 #define PA_ANNOUNCE	1
 #define PA_REQ_FAST	2 /* only use inside fast */
 #define PA_SYNTHETIC_OK	4
+#define PA_REPLACE_REPLY_KEY	8
     krb5_error_code (*validate)(astgs_request_t, const PA_DATA *pa);
 };
 
@@ -887,11 +888,11 @@ static const struct kdc_patypes pat[] = {
 #ifdef PKINIT
     {
 	KRB5_PADATA_PK_AS_REQ, "PK-INIT(ietf)",
-        PA_ANNOUNCE | PA_SYNTHETIC_OK,
+        PA_ANNOUNCE | PA_SYNTHETIC_OK | PA_REPLACE_REPLY_KEY,
 	pa_pkinit_validate
     },
     {
-	KRB5_PADATA_PK_AS_REQ_WIN, "PK-INIT(win2k)", PA_ANNOUNCE,
+	KRB5_PADATA_PK_AS_REQ_WIN, "PK-INIT(win2k)", PA_ANNOUNCE | PA_REPLACE_REPLY_KEY,
 	pa_pkinit_validate
     },
     {
@@ -920,7 +921,7 @@ static const struct kdc_patypes pat[] = {
     { KRB5_PADATA_FX_COOKIE, "FX-COOKIE", 0, NULL },
     {
 	KRB5_PADATA_GSS , "GSS",
-	PA_ANNOUNCE | PA_SYNTHETIC_OK,
+	PA_ANNOUNCE | PA_SYNTHETIC_OK | PA_REPLACE_REPLY_KEY,
 	pa_gss_validate
     },
 };
@@ -1731,29 +1732,31 @@ _kdc_check_anon_policy(astgs_request_t r)
  *
  */
 
-static krb5_boolean
-send_pac_p(krb5_context context, KDC_REQ *req)
+static krb5_error_code
+check_pa_pac_request(krb5_context context,
+		     KDC_REQ *req,
+		     krb5_boolean *include_pac)
 {
     krb5_error_code ret;
     PA_PAC_REQUEST pacreq;
     const PA_DATA *pa;
     int i = 0;
 
+    *include_pac = TRUE;
+
     pa = _kdc_find_padata(req, &i, KRB5_PADATA_PA_PAC_REQUEST);
     if (pa == NULL)
-	return TRUE;
+	return KRB5KDC_ERR_PADATA_TYPE_NOSUPP;
 
     ret = decode_PA_PAC_REQUEST(pa->padata_value.data,
 				pa->padata_value.length,
 				&pacreq,
 				NULL);
     if (ret)
-	return TRUE;
-    i = pacreq.include_pac;
+	return KRB5KDC_ERR_PADATA_TYPE_NOSUPP;
+    *include_pac = pacreq.include_pac;
     free_PA_PAC_REQUEST(&pacreq);
-    if (i == 0)
-	return FALSE;
-    return TRUE;
+    return 0;
 }
 
 /*
@@ -1768,8 +1771,23 @@ generate_pac(astgs_request_t r, const Key *skey, const Key *tkey)
     krb5_data data;
     uint16_t rodc_id;
     krb5_principal client;
+    krb5_boolean client_sent_pac_req, pac_request;
 
-    ret = _kdc_pac_generate(r->context, r->client, &p);
+    client_sent_pac_req =
+	(check_pa_pac_request(r->context, &r->req, &pac_request) == 0);
+
+    /*
+     * When a PA mech replaces the reply key, the PAC may include the
+     * client's long term key (encrypted in the reply key) for use by
+     * other shared secret authentication protocols, e.g. NTLM.
+     */
+
+    ret = _kdc_pac_generate(r->context,
+			    r->client,
+			    r->server,
+			    r->replaced_reply_key ? &r->reply_key : NULL,
+			    client_sent_pac_req ? &pac_request : NULL,
+			    &p);
     if (ret) {
 	_kdc_r_log(r, 4, "PAC generation failed for -- %s",
 		   r->cname);
@@ -2125,6 +2143,7 @@ _kdc_as_rep(astgs_request_t r)
 			"%s pre-authentication succeeded -- %s",
 			pat[n].name, r->cname);
 		found_pa = 1;
+		r->replaced_reply_key = (pat[n].flags & PA_REPLACE_REPLY_KEY) != 0;
 		r->et.flags.pre_authent = 1;
 	    }
 	}
@@ -2502,7 +2521,7 @@ _kdc_as_rep(astgs_request_t r)
     }
 
     /* Add the PAC */
-    if (send_pac_p(r->context, req) && !r->et.flags.anonymous) {
+    if (!r->et.flags.anonymous) {
 	generate_pac(r, skey, krbtgt_key);
     }
 

@@ -20,10 +20,19 @@ windc_fini(void *ctx)
 
 static krb5_error_code KRB5_CALLCONV
 pac_generate(void *ctx, krb5_context context,
-	     struct hdb_entry_ex *client, krb5_pac *pac)
+	     struct hdb_entry_ex *client,
+	     struct hdb_entry_ex *server,
+	     const krb5_keyblock *pk_replykey,
+	     const krb5_boolean *pac_request,
+	     krb5_pac *pac)
 {
     krb5_error_code ret;
     krb5_data data;
+
+    if (pac_request != NULL && *pac_request == FALSE) {
+	*pac = NULL;
+	return 0;
+    }
 
     krb5_warnx(context, "pac generate");
 

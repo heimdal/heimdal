@@ -178,18 +178,12 @@ get_pa_etype_info2(krb5_context context,
 }
 
 static krb5_error_code
-set_salt_padata(METHOD_DATA *md, Salt *salt)
+set_salt_padata(krb5_context context,
+                krb5_kdc_configuration *config,
+                METHOD_DATA *md, Key *key)
 {
-    if (salt) {
-       krb5_error_code ret = realloc_method_data(md);
-       if (ret)
-           return ret;
-       ret = der_copy_octet_string(&salt->salt,
-                                   &md->val[md->len - 1].padata_value);
-       if (ret)
-           return ret;
-       md->val[md->len - 1].padata_type = salt->type;
-    }
+    if (key->salt)
+       return get_pa_etype_info2(context, config, md, key, TRUE);
 
     return 0;
 }
@@ -819,7 +813,8 @@ pa_enc_chal_validate(astgs_request_t r, const PA_DATA *pa)
 	if (ret)
 	    goto out;
 					    
-	ret = set_salt_padata(&r->outpadata, k->salt);
+	ret = set_salt_padata(r->context, r->config,
+			      &r->outpadata, k);
 	if (ret)
 	    goto out;
 
@@ -992,7 +987,8 @@ pa_enc_ts_validate(astgs_request_t r, const PA_DATA *pa)
     }
     free_PA_ENC_TS_ENC(&p);
 
-    ret = set_salt_padata(&r->outpadata, pa_key->salt);
+    ret = set_salt_padata(r->context, r->config,
+			  &r->outpadata, pa_key);
     if (ret)
 	return ret;
 

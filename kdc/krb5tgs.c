@@ -1668,7 +1668,7 @@ tgs_build_reply(krb5_context context,
 	r = adtkt.crealm;
     } else if (s == NULL) {
 	ret = KRB5KDC_ERR_S_PRINCIPAL_UNKNOWN;
-	_kdc_set_e_text(priv, "No server in request");
+	kdc_log(context, config, 0, "No server in request");
 	goto out;
     }
 

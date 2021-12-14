@@ -5,7 +5,7 @@
 #include <kdc.h>
 #include <windc_plugin.h>
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 windc_init(krb5_context context, void **ctx)
 {
     krb5_warnx(context, "windc init");
@@ -13,12 +13,12 @@ windc_init(krb5_context context, void **ctx)
     return 0;
 }
 
-static void
+static void KRB5_CALLCONV
 windc_fini(void *ctx)
 {
 }
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 pac_generate(void *ctx, krb5_context context,
 	     struct hdb_entry_ex *client, krb5_pac *pac)
 {
@@ -41,7 +41,7 @@ pac_generate(void *ctx, krb5_context context,
     return 0;
 }
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 pac_verify(void *ctx, krb5_context context,
 	   const krb5_principal new_ticket_client,
 	   const krb5_principal delegation_proxy,
@@ -84,7 +84,7 @@ pac_verify(void *ctx, krb5_context context,
     return krb5_pac_verify(context, *pac, 0, NULL, NULL, &key->key);
 }
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 client_access(void *ctx,
 	      krb5_context context,
 	      krb5_kdc_configuration *config,
@@ -110,13 +110,13 @@ static const krb5plugin_windc_ftable *const windc_plugins[] = {
     &windc
 };
 
-krb5_error_code
+krb5_error_code KRB5_CALLCONV
 windc_plugin_load(krb5_context context,
 		       krb5_get_instance_func_t *get_instance,
 		       size_t *num_plugins,
 		       const krb5plugin_windc_ftable *const **plugins);
 
-static uintptr_t
+static uintptr_t KRB5_CALLCONV
 windc_get_instance(const char *libname)
 {
     if (strcmp(libname, "hdb") == 0)
@@ -127,7 +127,7 @@ windc_get_instance(const char *libname)
     return 0;
 }
 
-krb5_error_code
+krb5_error_code KRB5_CALLCONV
 windc_plugin_load(krb5_context context,
 		  krb5_get_instance_func_t *get_instance,
 		  size_t *num_plugins,

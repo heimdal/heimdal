@@ -131,8 +131,8 @@ change(void *server_handle,
 	pwd_reason = kadm5_check_password_quality(context->context,
 						  princ, &pwd_data);
 	if (pwd_reason != NULL) {
-	    krb5_set_error_message(context->context, KADM5_PASS_Q_DICT, "%s", pwd_reason);
-	    return KADM5_PASS_Q_DICT;
+	    krb5_set_error_message(context->context, KADM5_PASS_Q_GENERIC, "%s", pwd_reason);
+	    return KADM5_PASS_Q_GENERIC;
 	}
     }
 

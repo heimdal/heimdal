@@ -234,10 +234,10 @@ krb5_parse_name_flags(krb5_context context,
     *principal = NULL;
 
     if (no_realm && require_realm) {
-	krb5_set_error_message(context, KRB5_ERR_NO_SERVICE,
+	krb5_set_error_message(context, EINVAL,
 			       N_("Can't require both realm and "
 				  "no realm at the same time", ""));
-	return KRB5_ERR_NO_SERVICE;
+	return EINVAL;
     }
 
     /* count number of component,

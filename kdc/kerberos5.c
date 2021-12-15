@@ -753,10 +753,12 @@ pa_enc_chal_validate(astgs_request_t r,
 	goto out;
     }
 
-    ret = KRB5KDC_ERR_PREAUTH_FAILED;
-
-    if (invalidPassword)
+    if (invalidPassword) {
 	auth_status->auth_status = HDB_AUTH_WRONG_PASSWORD;
+	ret = KRB5KDC_ERR_PREAUTH_FAILED;
+    } else {
+	ret = KRB5KDC_ERR_ETYPE_NOSUPP;
+    }
  out:
     free_EncryptedData(&enc_data);
 

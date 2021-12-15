@@ -601,6 +601,7 @@ if test -n "$LIB_add_key"; then
     AC_CHECK_FUNCS(keyctl_get_persistent)
     LIBS="$saved_LIBS"
 fi
+AM_CONDITIONAL(HAVE_KEYUTILS, test "$ac_cv_func_keyctl_get_persistent" = yes)
 
 AC_CHECK_SIZEOF([time_t])
 

@@ -59,6 +59,10 @@ LDADD = libkrb5.la \
 	$(top_builddir)/lib/wind/libwind.la \
 	$(LIB_heimbase) $(LIB_roken)
 
+if HAVE_KEYUTILS
+test_cc_LDADD = $(LDADD) -lkeyutils
+endif
+
 if PKINIT
 LIB_pkinit = ../hx509/libhx509.la
 endif

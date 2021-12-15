@@ -30,9 +30,23 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
+/*
+ * If this test fails with
+ *
+ *      krb5_cc_gen_new: KEYRING: Key has been revoked
+ *
+ * then run
+ *
+ *      keyctl new_session
+ */
+
 #include "krb5_locl.h"
 #include <getarg.h>
 #include <err.h>
+
+#ifdef HAVE_KEYUTILS_H
+#include <keyutils.h>
+#endif
 
 static const char *unlink_this;
 static const char *unlink_this2;
@@ -979,7 +993,7 @@ main(int argc, char **argv)
     test_cache_remove(context, krb5_cc_type_scc);
 #endif
 #ifdef HAVE_KEYUTILS_H
-    system("keyctl new_session >/dev/null");
+    keyctl_join_session_keyring(NULL);
     test_cache_remove(context, krb5_cc_type_keyring);
 #endif
 

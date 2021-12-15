@@ -72,3 +72,43 @@ error_code SERVER_HOOK_NOT_FOUND,   "Cannot find KADM5 server hook"
 error_code OLD_SERVER_HOOK_VERSION, "KADM5 server hook is too old for this version of Heimdal"
 error_code NEW_SERVER_HOOK_VERSION, "KADM5 server hook is too new for this version of Heimdal"
 error_code READ_ONLY,           "Database is read-only; try primary server"
+error_code PASS_Q_GENERIC,      "Unspecified password quality failure"
+
+
+# MIT has:
+#
+# - GSS_ERROR sandwiched by AUTH_CHANGEPW and BAD_TL_TYPE
+#   error_code GSS_ERROR, "GSS-API (or Kerberos) error"
+
+# - AUTH_SETKEY, SETKEY_DUP_ENCTYPES, and SETV4KEY_INVAL_ENCTYPE, sandwiched by
+#   BAD_SERVER_NAME and SETKEY3_ETYPE_MISMATCH
+#   error_code AUTH_SETKEY, "Operation requires ``set-key'' privilege"
+#   error_code SETKEY_DUP_ENCTYPES, "Multiple values for single or folded enctype"
+#   error_code SETV4KEY_INVAL_ENCTYPE, "Invalid enctype for setv4key"
+
+# - all of the following after SETKEY3_ETYPE_MISMATCH
+#   error_code MISSING_KRB5_CONF_PARAMS, "Missing parameters in krb5.conf required for kadmin client"
+#   error_code XDR_FAILURE,		"XDR encoding error"
+#   error_code CANT_RESOLVE, "Cannot resolve network address for admin server in requested realm"
+#   error_code BAD_KEYSALTS, "Invalid key/salt tuples"
+#   error_code SETKEY_BAD_KVNO, "Invalid multiple or duplicate kvnos in setkey operation"
+#   error_code AUTH_EXTRACT, "Operation requires ``extract-keys'' privilege"
+#   error_code PROTECT_KEYS, "Principal keys are locked down"
+#   error_code AUTH_INITIAL, "Operation requires initial ticket"
+
+# AUTH_EXTRACT is the same as our AUTH_GET_KEYS
+# MISSING_KRB5_CONF_PARAMS is the same as our MISSING_CONF_PARAMS
+
+# We have a number of errors not in MIT:
+#  - KS_TUPLE_NOSUPP            (no longer relevant)
+#  - DECRYPT_USAGE_NOSUPP       (could be replaced with some other, no?)
+#  - POLICY_OP_NOSUPP           (could be made irrelevant)
+#  - ALREADY_LOCKED             (in MIT KDB locks are recursive)
+#  - NOT_LOCKED                 (KRB5_KDB_NOTLOCKED in MIT)
+#  - LOG_CORRUPT                (unique to Heimdal)
+#  - LOG_NEEDS_UPGRADE          (unique to Heimdal)
+#  - BAD_SERVER_HOOK            (unique to Heimdal, not used in-tree)
+#  - SERVER_HOOK_NOT_FOUND      (unique to Heimdal, not used in-tree)
+#  - OLD_SERVER_HOOK_VERSION    (unique to Heimdal, not used in-tree)
+#  - NEW_SERVER_HOOK_VERSION    (unique to Heimdal, not used in-tree)
+#  - READ_ONLY                  (should not be unique to Heimdal, but is)

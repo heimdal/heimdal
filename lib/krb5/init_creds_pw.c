@@ -701,8 +701,7 @@ change_password (krb5_context context,
 	strlcpy (newpw, buf1, newpw_sz);
 	ret = 0;
     } else {
-	ret = ENOTTY;
-	krb5_set_error_message(context, ret,
+	krb5_set_error_message(context, ret = KRB5_CHPW_FAIL,
 			       N_("failed changing password: %s", ""), p);
     }
     free (p);
@@ -2954,6 +2953,19 @@ krb5_init_creds_set_fast_anon_pkinit(krb5_context context,
     return 0;
 }
 
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+_krb5_init_creds_set_fast_anon_pkinit_optimistic(krb5_context context,
+                                                 krb5_init_creds_context ctx)
+{
+    if (ctx->fast_state.armor_ccache)
+	return EINVAL;
+
+    ctx->fast_state.flags |= KRB5_FAST_REQUIRED;
+    ctx->fast_state.flags |= KRB5_FAST_ANON_PKINIT_ARMOR;
+    ctx->fast_state.flags |= KRB5_FAST_OPTIMISTIC;
+    return 0;
+}
+
 static size_t
 available_padata_count(METHOD_DATA *md)
 {
@@ -3350,16 +3362,6 @@ init_creds_step(krb5_context context,
 		    goto out;
 		}
 
-		if ((ctx->fast_state.flags & KRB5_FAST_OPTIMISTIC) == 0) {
-		    _krb5_debug(context, 10, "Preauth failed");
-		    goto out;
-		}
-
-		_krb5_debug(context, 10, "preauth failed with optimistic FAST, trying w/o FAST");
-
-		ctx->fast_state.flags &= ~KRB5_FAST_OPTIMISTIC;
-		ctx->fast_state.flags |= KRB5_FAST_DISABLED;
-
 	    retry:
 		pa_restart(context, ctx);
 
@@ -3368,6 +3370,8 @@ init_creds_step(krb5_context context,
 			    "Some other error %d failed with optimistic FAST, trying w/o FAST", ret);
 
 		ctx->fast_state.flags &= ~KRB5_FAST_OPTIMISTIC;
+                ctx->fast_state.flags &= ~KRB5_FAST_REQUIRED;
+                ctx->fast_state.flags &= ~KRB5_FAST_ANON_PKINIT_ARMOR;
 		ctx->fast_state.flags |= KRB5_FAST_DISABLED;
 		pa_restart(context, ctx);
 	    } else {
@@ -3483,9 +3487,15 @@ krb5_init_creds_step(krb5_context context,
 	ctx->fast_state.armor_ccache == NULL) {
 	ret = _krb5_fast_anon_pkinit_step(context, ctx, &ctx->fast_state,
 					  in, out, hostinfo, flags);
-	if (ret ||
-	    ((*flags & KRB5_INIT_CREDS_STEP_FLAG_CONTINUE) == 0) ||
-	    out->length)
+        if (ret && (ctx->fast_state.flags & KRB5_FAST_OPTIMISTIC)) {
+            _krb5_debug(context, 5, "Preauth failed with optimistic "
+                        "FAST, trying w/o FAST");
+            ctx->fast_state.flags &= ~KRB5_FAST_OPTIMISTIC;
+            ctx->fast_state.flags &= ~KRB5_FAST_REQUIRED;
+            ctx->fast_state.flags &= ~KRB5_FAST_ANON_PKINIT_ARMOR;
+        } else if (ret ||
+                   ((*flags & KRB5_INIT_CREDS_STEP_FLAG_CONTINUE) == 0) ||
+                   out->length)
 	    return ret;
 
 	in = &empty;

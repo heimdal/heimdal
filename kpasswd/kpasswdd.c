@@ -398,11 +398,15 @@ change (krb5_auth_context auth_context,
     if (ret) {
 	const char *str = krb5_get_error_message(context, ret);
 
-	if (ret == KADM5_PASS_Q_DICT) {
+        switch (ret) {
+        case KADM5_PASS_Q_TOOSHORT:
+        case KADM5_PASS_Q_CLASS:
+        case KADM5_PASS_Q_DICT:
+        case KADM5_PASS_Q_GENERIC:
 	    krb5_warnx(context,
 		       "%s didn't pass password quality check with error: %s",
 		       client, str);
-	} else {
+        default:
 	    krb5_warnx(context, "kadm5_s_chpass_principal_cond: %s", str);
 	}
 	reply_priv (auth_context, s, sa, sa_size, KRB5_KPASSWD_SOFTERROR,

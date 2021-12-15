@@ -224,6 +224,7 @@ audit_trail(kadmin_request_desc r, krb5_error_code ret)
     CASE(KADM5_PASS_Q_TOOSHORT);
     CASE(KADM5_PASS_Q_CLASS);
     CASE(KADM5_PASS_Q_DICT);
+    CASE(KADM5_PASS_Q_GENERIC);
     CASE(KADM5_PASS_REUSE);
     CASE(KADM5_PASS_TOOSOON);
     CASE(KADM5_POLICY_REF);

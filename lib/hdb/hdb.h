@@ -80,17 +80,74 @@ enum hdb_lockop{ HDB_RLOCK, HDB_WLOCK };
 #define HDB_CAP_F_SHARED_DIRECTORY      8
 
 /* auth status values */
+
+/*
+ * A ticket was issued after authorization was successfully completed
+ * (eg flags on the entry and expiry times were checked)
+ */
 #define HDB_AUTHZ_SUCCESS		0
+
+/*
+ * The user supplied the wrong password to a password-based
+ * authentication mechanism (eg ENC-TS, ENC-CHAL)
+ *
+ * The HDB backend might increment a bad password count.
+ */
 #define HDB_AUTH_WRONG_PASSWORD		1
+
+/*
+ * Unused, was added in 5c104ef172e974a7eec47c65dd76d6b030bed2a1 but
+ * never set
+ */
 #define HDB_AUTH_INVALID_SIGNATURE	2
+
+/*
+ * The user supplied a correct password to a password-based
+ * authentication mechanism (eg ENC-TS, ENC-CHAL)
+ *
+ * The HDB backend might reset a bad password count.
+ */
 #define HDB_AUTH_CORRECT_PASSWORD	3
+
+/*
+ * Attempted authenticaton with an unknown user
+ */
 #define HDB_AUTH_CLIENT_UNKNOWN	4
+
+/*
+ * Attempted authenticaton with an known user that is already locked
+ * out.
+ */
 #define HDB_AUTH_CLIENT_LOCKED_OUT	5
+
+/*
+ * Successful authentication with a pre-authentication mechanism
+ */
 #define HDB_AUTH_GENERIC_SUCCESS	6
+
+/*
+ * Failed authentication with a pre-authentication mechanism
+ */
 #define HDB_AUTH_GENERIC_FAILURE	7
+
+/*
+ * Successful pre-authentication with PKINIT (smart card login etc)
+ */
 #define HDB_AUTH_PKINIT_SUCCESS	8
+
+/*
+ * Failed pre-authentication with PKINIT (smart card login etc)
+ */
 #define HDB_AUTH_PKINIT_FAILURE	9
+
+/*
+ * Successful pre-authentication with GSS pre-authentication
+ */
 #define HDB_AUTH_GSS_SUCCESS		10
+
+/*
+ * Failed pre-authentication with GSS pre-authentication
+ */
 #define HDB_AUTH_GSS_FAILURE		11
 
 /* key usage for master key */

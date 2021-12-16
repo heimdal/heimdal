@@ -60,15 +60,132 @@ realloc_method_data(METHOD_DATA *md)
     return 0;
 }
 
-static void
-set_salt_padata(METHOD_DATA *md, Salt *salt)
+extern int _krb5_AES_SHA1_string_to_default_iterator;
+extern int _krb5_AES_SHA2_string_to_default_iterator;
+
+static krb5_error_code
+make_s2kparams(int value, size_t len, krb5_data **ps2kparams)
 {
-    if (salt) {
-       realloc_method_data(md);
-       md->val[md->len - 1].padata_type = salt->type;
-       der_copy_octet_string(&salt->salt,
-                             &md->val[md->len - 1].padata_value);
+    krb5_data *s2kparams;
+    krb5_error_code ret;
+
+    ALLOC(s2kparams);
+    if (s2kparams == NULL)
+	return ENOMEM;
+    ret = krb5_data_alloc(s2kparams, len);
+    if (ret) {
+	free(s2kparams);
+	return ret;
     }
+    _krb5_put_int(s2kparams->data, value, len);
+    *ps2kparams = s2kparams;
+    return 0;
+}
+
+static krb5_error_code
+make_etype_info2_entry(ETYPE_INFO2_ENTRY *ent,
+		       Key *key,
+		       krb5_boolean include_salt)
+{
+    krb5_error_code ret;
+
+    ent->etype = key->key.keytype;
+    if (key->salt && include_salt) {
+	ALLOC(ent->salt);
+	if (ent->salt == NULL)
+	    return ENOMEM;
+	*ent->salt = malloc(key->salt->salt.length + 1);
+	if (*ent->salt == NULL) {
+	    free(ent->salt);
+	    ent->salt = NULL;
+	    return ENOMEM;
+	}
+	memcpy(*ent->salt, key->salt->salt.data, key->salt->salt.length);
+	(*ent->salt)[key->salt->salt.length] = '\0';
+    } else
+	ent->salt = NULL;
+
+    ent->s2kparams = NULL;
+
+    switch (key->key.keytype) {
+    case ETYPE_AES128_CTS_HMAC_SHA1_96:
+    case ETYPE_AES256_CTS_HMAC_SHA1_96:
+	ret = make_s2kparams(_krb5_AES_SHA1_string_to_default_iterator,
+			     4, &ent->s2kparams);
+	break;
+    case KRB5_ENCTYPE_AES128_CTS_HMAC_SHA256_128:
+    case KRB5_ENCTYPE_AES256_CTS_HMAC_SHA384_192:
+	ret = make_s2kparams(_krb5_AES_SHA2_string_to_default_iterator,
+			     4, &ent->s2kparams);
+	break;
+    case ETYPE_DES_CBC_CRC:
+    case ETYPE_DES_CBC_MD4:
+    case ETYPE_DES_CBC_MD5:
+	/* Check if this was a AFS3 salted key */
+	if(key->salt && key->salt->type == hdb_afs3_salt)
+	    ret = make_s2kparams(1, 1, &ent->s2kparams);
+	else
+	    ret = 0;
+	break;
+    default:
+	ret = 0;
+	break;
+    }
+    return ret;
+}
+
+/*
+ * Return an ETYPE-INFO2. Enctypes are storted the same way as in the
+ * database (client supported enctypes first, then the unsupported
+ * enctypes).
+ */
+
+static krb5_error_code
+get_pa_etype_info2(krb5_context context,
+		   krb5_kdc_configuration *config,
+		   METHOD_DATA *md, Key *ckey,
+		   krb5_boolean include_salt)
+{
+    krb5_error_code ret = 0;
+    ETYPE_INFO2 pa;
+    unsigned char *buf;
+    size_t len;
+
+    pa.len = 1;
+    pa.val = calloc(1, sizeof(pa.val[0]));
+    if(pa.val == NULL)
+	return ENOMEM;
+
+    ret = make_etype_info2_entry(&pa.val[0], ckey, include_salt);
+    if (ret) {
+	free_ETYPE_INFO2(&pa);
+	return ret;
+    }
+
+    ASN1_MALLOC_ENCODE(ETYPE_INFO2, buf, len, &pa, &len, ret);
+    free_ETYPE_INFO2(&pa);
+    if(ret)
+	return ret;
+    ret = realloc_method_data(md);
+    if(ret) {
+	free(buf);
+	return ret;
+    }
+    md->val[md->len - 1].padata_type = KRB5_PADATA_ETYPE_INFO2;
+    md->val[md->len - 1].padata_value.length = len;
+    md->val[md->len - 1].padata_value.data = buf;
+    return 0;
+}
+
+static krb5_error_code
+set_salt_padata(krb5_context context,
+                krb5_kdc_configuration *config,
+                METHOD_DATA *md, Key *key)
+{
+    if (key->salt)
+       return get_pa_etype_info2(context, config, md, key, TRUE);
+
+    return 0;
 }
 
 const PA_DATA*
@@ -696,7 +813,10 @@ pa_enc_chal_validate(astgs_request_t r, const PA_DATA *pa)
 	if (ret)
 	    goto out;
 					    
-	set_salt_padata(&r->outpadata, k->salt);
+	ret = set_salt_padata(r->context, r->config,
+			      &r->outpadata, k);
+	if (ret)
+	    goto out;
 
        /*
 	* Success
@@ -867,7 +987,10 @@ pa_enc_ts_validate(astgs_request_t r, const PA_DATA *pa)
     }
     free_PA_ENC_TS_ENC(&p);
 
-    set_salt_padata(&r->outpadata, pa_key->salt);
+    ret = set_salt_padata(r->context, r->config,
+			  &r->outpadata, pa_key);
+    if (ret)
+	return ret;
 
     ret = krb5_copy_keyblock_contents(r->context, &pa_key->key, &r->reply_key);
     if (ret)
@@ -1289,123 +1412,6 @@ get_pa_etype_info(krb5_context context,
 /*
  *
  */
-
-extern int _krb5_AES_SHA1_string_to_default_iterator;
-extern int _krb5_AES_SHA2_string_to_default_iterator;
-
-static krb5_error_code
-make_s2kparams(int value, size_t len, krb5_data **ps2kparams)
-{
-    krb5_data *s2kparams;
-    krb5_error_code ret;
-
-    ALLOC(s2kparams);
-    if (s2kparams == NULL)
-	return ENOMEM;
-    ret = krb5_data_alloc(s2kparams, len);
-    if (ret) {
-	free(s2kparams);
-	return ret;
-    }
-    _krb5_put_int(s2kparams->data, value, len);
-    *ps2kparams = s2kparams;
-    return 0;
-}
-
-static krb5_error_code
-make_etype_info2_entry(ETYPE_INFO2_ENTRY *ent,
-		       Key *key,
-		       krb5_boolean include_salt)
-{
-    krb5_error_code ret;
-
-    ent->etype = key->key.keytype;
-    if (key->salt && include_salt) {
-	ALLOC(ent->salt);
-	if (ent->salt == NULL)
-	    return ENOMEM;
-	*ent->salt = malloc(key->salt->salt.length + 1);
-	if (*ent->salt == NULL) {
-	    free(ent->salt);
-	    ent->salt = NULL;
-	    return ENOMEM;
-	}
-	memcpy(*ent->salt, key->salt->salt.data, key->salt->salt.length);
-	(*ent->salt)[key->salt->salt.length] = '\0';
-    } else
-	ent->salt = NULL;
-
-    ent->s2kparams = NULL;
-
-    switch (key->key.keytype) {
-    case ETYPE_AES128_CTS_HMAC_SHA1_96:
-    case ETYPE_AES256_CTS_HMAC_SHA1_96:
-	ret = make_s2kparams(_krb5_AES_SHA1_string_to_default_iterator,
-			     4, &ent->s2kparams);
-	break;
-    case KRB5_ENCTYPE_AES128_CTS_HMAC_SHA256_128:
-    case KRB5_ENCTYPE_AES256_CTS_HMAC_SHA384_192:
-	ret = make_s2kparams(_krb5_AES_SHA2_string_to_default_iterator,
-			     4, &ent->s2kparams);
-	break;
-    case ETYPE_DES_CBC_CRC:
-    case ETYPE_DES_CBC_MD4:
-    case ETYPE_DES_CBC_MD5:
-	/* Check if this was a AFS3 salted key */
-	if(key->salt && key->salt->type == hdb_afs3_salt)
-	    ret = make_s2kparams(1, 1, &ent->s2kparams);
-	else
-	    ret = 0;
-	break;
-    default:
-	ret = 0;
-	break;
-    }
-    return ret;
-}
-
-/*
- * Return an ETYPE-INFO2. Enctypes are storted the same way as in the
- * database (client supported enctypes first, then the unsupported
- * enctypes).
- */
-
-static krb5_error_code
-get_pa_etype_info2(krb5_context context,
-		   krb5_kdc_configuration *config,
-		   METHOD_DATA *md, Key *ckey,
-		   krb5_boolean include_salt)
-{
-    krb5_error_code ret = 0;
-    ETYPE_INFO2 pa;
-    unsigned char *buf;
-    size_t len;
-
-    pa.len = 1;
-    pa.val = calloc(1, sizeof(pa.val[0]));
-    if(pa.val == NULL)
-	return ENOMEM;
-
-    ret = make_etype_info2_entry(&pa.val[0], ckey, include_salt);
-    if (ret) {
-	free_ETYPE_INFO2(&pa);
-	return ret;
-    }
-
-    ASN1_MALLOC_ENCODE(ETYPE_INFO2, buf, len, &pa, &len, ret);
-    free_ETYPE_INFO2(&pa);
-    if(ret)
-	return ret;
-    ret = realloc_method_data(md);
-    if(ret) {
-	free(buf);
-	return ret;
-    }
-    md->val[md->len - 1].padata_type = KRB5_PADATA_ETYPE_INFO2;
-    md->val[md->len - 1].padata_value.length = len;
-    md->val[md->len - 1].padata_value.data = buf;
-    return 0;
-}
 
 static int
 newer_enctype_present(struct KDC_REQ_BODY_etype *etype_list)

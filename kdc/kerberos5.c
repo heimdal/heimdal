@@ -881,7 +881,7 @@ pa_enc_ts_validate(astgs_request_t r,
     }
     free_EncryptedData(&enc_data);
     free(auth_status->free_ptr);
-    auth_status->auth_status = -1;
+    auth_status->auth_status = HDB_AUTHSTATUS_INVALID;
     auth_status->auth_details = NULL;
     auth_status->free_ptr = NULL;
     ret = decode_PA_ENC_TS_ENC(ts_data.data,
@@ -2167,7 +2167,7 @@ _kdc_as_rep(astgs_request_t r)
 	    i = 0;
 	    pa = _kdc_find_padata(req, &i, pat[n].type);
 	    if (pa) {
-		struct kdc_pa_auth_status auth_status = {-1, NULL, NULL};
+		struct kdc_pa_auth_status auth_status = {HDB_AUTHSTATUS_INVALID, NULL, NULL};
 
                 if (r->client->entry.flags.synthetic &&
                     !(pat[n].flags & PA_SYNTHETIC_OK)) {
@@ -2183,7 +2183,7 @@ _kdc_as_rep(astgs_request_t r)
 		    Key *ckey = NULL;
 		    krb5_boolean default_salt;
 
-		    if (auth_status.auth_status == -1)
+		    if (auth_status.auth_status == HDB_AUTHSTATUS_INVALID)
 			auth_status.auth_status = HDB_AUTHSTATUS_GENERIC_FAILURE;
 		    _kdc_audit_auth_status(r,
 					   &auth_status,
@@ -2211,7 +2211,7 @@ _kdc_as_rep(astgs_request_t r)
 
 		r->replaced_reply_key = (pat[n].flags & PA_REPLACE_REPLY_KEY) != 0;
 
-		if (auth_status.auth_status == -1)
+		if (auth_status.auth_status == HDB_AUTHSTATUS_INVALID)
 			auth_status.auth_status = HDB_AUTHSTATUS_GENERIC_SUCCESS;
 
 		_kdc_audit_auth_status(r,

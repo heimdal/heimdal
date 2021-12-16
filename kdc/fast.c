@@ -695,7 +695,7 @@ fast_unwrap_request(astgs_request_t r,
 	    goto out;
 
 	ret = _kdc_db_fetch(r->context, r->config, armor_client_principal,
-			    HDB_F_GET_CLIENT | HDB_F_SYNTHETIC_OK | flags,
+			    HDB_F_GET_CLIENT | flags,
 			    NULL, NULL, &armor_client);
 	if (ret) {
 	    ret = KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN;

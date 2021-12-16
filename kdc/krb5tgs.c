@@ -1797,7 +1797,9 @@ server_lookup:
 		goto out;
 	    }
 
-	    if (user2user_pac == NULL || !user2user_kdc_issued) {
+	    if ((config->require_pac && !user2user_pac)
+		|| (user2user_pac && !user2user_kdc_issued))
+	    {
 		ret = KRB5KDC_ERR_BADOPTION;
 		kdc_log(context, config, 0,
 			"Ticket not signed with PAC; user-to-user failed (%s).",

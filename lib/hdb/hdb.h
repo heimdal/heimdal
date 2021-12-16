@@ -82,10 +82,18 @@ enum hdb_lockop{ HDB_RLOCK, HDB_WLOCK };
 /* auth status values */
 
 /*
+ * Un-initialised value, not permitted, used to indicate that a value
+ * wasn't set for the benifit of logic in the caller, must not be
+ * passed to hdb_auth_status()
+ */
+
+#define HDB_AUTHSTATUS_INVALID                  0
+
+/*
  * A ticket was issued after authorization was successfully completed
  * (eg flags on the entry and expiry times were checked)
  */
-#define HDB_AUTHZ_SUCCESS		0
+#define HDB_AUTHSTATUS_AUTHORIZATION_SUCCESS	1
 
 /*
  * The user supplied the wrong password to a password-based
@@ -93,13 +101,7 @@ enum hdb_lockop{ HDB_RLOCK, HDB_WLOCK };
  *
  * The HDB backend might increment a bad password count.
  */
-#define HDB_AUTH_WRONG_PASSWORD		1
-
-/*
- * Unused, was added in 5c104ef172e974a7eec47c65dd76d6b030bed2a1 but
- * never set
- */
-#define HDB_AUTH_INVALID_SIGNATURE	2
+#define HDB_AUTHSTATUS_WRONG_PASSWORD		2
 
 /*
  * The user supplied a correct password to a password-based
@@ -107,48 +109,48 @@ enum hdb_lockop{ HDB_RLOCK, HDB_WLOCK };
  *
  * The HDB backend might reset a bad password count.
  */
-#define HDB_AUTH_CORRECT_PASSWORD	3
+#define HDB_AUTHSTATUS_CORRECT_PASSWORD	        3
 
 /*
  * Attempted authenticaton with an unknown user
  */
-#define HDB_AUTH_CLIENT_UNKNOWN	4
+#define HDB_AUTHSTATUS_CLIENT_UNKNOWN	        4
 
 /*
  * Attempted authenticaton with an known user that is already locked
  * out.
  */
-#define HDB_AUTH_CLIENT_LOCKED_OUT	5
+#define HDB_AUTHSTATUS_CLIENT_LOCKED_OUT	5
 
 /*
  * Successful authentication with a pre-authentication mechanism
  */
-#define HDB_AUTH_GENERIC_SUCCESS	6
+#define HDB_AUTHSTATUS_GENERIC_SUCCESS	        6
 
 /*
  * Failed authentication with a pre-authentication mechanism
  */
-#define HDB_AUTH_GENERIC_FAILURE	7
+#define HDB_AUTHSTATUS_GENERIC_FAILURE	        7
 
 /*
  * Successful pre-authentication with PKINIT (smart card login etc)
  */
-#define HDB_AUTH_PKINIT_SUCCESS	8
+#define HDB_AUTHSTATUS_PKINIT_SUCCESS	        8
 
 /*
  * Failed pre-authentication with PKINIT (smart card login etc)
  */
-#define HDB_AUTH_PKINIT_FAILURE	9
+#define HDB_AUTHSTATUS_PKINIT_FAILURE	        9
 
 /*
  * Successful pre-authentication with GSS pre-authentication
  */
-#define HDB_AUTH_GSS_SUCCESS		10
+#define HDB_AUTHSTATUS_GSS_SUCCESS		10
 
 /*
  * Failed pre-authentication with GSS pre-authentication
  */
-#define HDB_AUTH_GSS_FAILURE		11
+#define HDB_AUTHSTATUS_GSS_FAILURE		11
 
 /* key usage for master key */
 #define HDB_KU_MKEY	0x484442

@@ -61,6 +61,8 @@ LDADD = libkrb5.la \
 
 if HAVE_KEYUTILS
 test_cc_LDADD = $(LDADD) -lkeyutils
+else
+test_cc_LDADD = $(LDADD)
 endif
 
 if PKINIT

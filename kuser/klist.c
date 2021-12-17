@@ -227,10 +227,12 @@ print_cred_verbose(krb5_context context, krb5_creds *cred, int do_json)
                    printable_time_long(cred->times.renew_till));
         {
             char flags[1024];
-            unparse_flags(TicketFlags2int(cred->flags.b),
-                          asn1_TicketFlags_units(),
-                          flags, sizeof(flags));
-            printf(N_("Ticket flags: %s\n", ""), flags);
+            int result = unparse_flags(TicketFlags2int(cred->flags.b),
+                                       asn1_TicketFlags_units(),
+                                       flags, sizeof(flags));
+            if (result > 0) {
+                printf(N_("Ticket flags: %s\n", ""), flags);
+            }
         }
         printf(N_("Addresses: ", ""));
         if (cred->addresses.len != 0) {

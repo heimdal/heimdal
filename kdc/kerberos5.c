@@ -681,7 +681,7 @@ pa_enc_chal_validate(astgs_request_t r,
 					      r->cname);
 	krb5_crypto_destroy(r->context, challengecrypto);
 	if (ret) {
-	    const char *msg = krb5_get_error_message(r->context, ret);
+	    const char *msg;
 	    krb5_error_code ret2;
 	    char *str = NULL;
 
@@ -695,6 +695,7 @@ pa_enc_chal_validate(astgs_request_t r,
 	    ret2 = krb5_enctype_to_string(r->context, k->key.keytype, &str);
 	    if (ret2)
 		str = NULL;
+	    msg = krb5_get_error_message(r->context, ret);
 	    _kdc_r_log(r, 2, "Failed to decrypt ENC-CHAL -- %s "
 		       "(enctype %s) error %s",
 		       r->cname, str ? str : "unknown enctype", msg);

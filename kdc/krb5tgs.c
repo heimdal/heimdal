@@ -1432,6 +1432,8 @@ tgs_build_reply(astgs_request_t priv,
     Key *tkey_sign;
     int flags = HDB_F_FOR_TGS_REQ;
 
+    int result;
+
     memset(&sessionkey, 0, sizeof(sessionkey));
     memset(&adtkt, 0, sizeof(adtkt));
     memset(&enc_pa_data, 0, sizeof(enc_pa_data));
@@ -1464,10 +1466,10 @@ tgs_build_reply(astgs_request_t priv,
     if (ret)
 	goto out;
     cpn = priv->cname;
-    unparse_flags (KDCOptions2int(b->kdc_options),
-		   asn1_KDCOptions_units(),
-		   opt_str, sizeof(opt_str));
-    if(*opt_str)
+    result = unparse_flags(KDCOptions2int(b->kdc_options),
+			   asn1_KDCOptions_units(),
+			   opt_str, sizeof(opt_str));
+    if (result > 0)
 	kdc_log(context, config, 4,
 		"TGS-REQ %s from %s for %s [%s]",
 		cpn, from, spn, opt_str);

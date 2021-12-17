@@ -1581,10 +1581,11 @@ _log_astgs_req(astgs_request_t r, krb5_enctype setype)
 
     {
 	char fixedstr[128];
+	int result;
 
-	unparse_flags(KDCOptions2int(b->kdc_options), asn1_KDCOptions_units(),
-		      fixedstr, sizeof(fixedstr));
-	if (*fixedstr) {
+	result = unparse_flags(KDCOptions2int(b->kdc_options), asn1_KDCOptions_units(),
+			       fixedstr, sizeof(fixedstr));
+	if (result > 0) {
 	    _kdc_r_log(r, 4, "Requested flags: %s", fixedstr);
 	    _kdc_audit_addkv((kdc_request_t)r, KDC_AUDIT_EATWHITE,
 			     "flags", "%s", fixedstr);

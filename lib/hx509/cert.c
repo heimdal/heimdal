@@ -971,7 +971,7 @@ check_key_usage(hx509_context context, const Certificate *cert,
     size_t size;
     int ret;
     size_t i = 0;
-    unsigned ku_flags;
+    uint64_t ku_flags;
 
     if (_hx509_cert_get_version(cert) < 3)
 	return 0;
@@ -992,14 +992,16 @@ check_key_usage(hx509_context context, const Certificate *cert,
 	return ret;
     ku_flags = KeyUsage2int(ku);
     if ((ku_flags & flags) != flags) {
-	unsigned missing = (~ku_flags) & flags;
+	uint64_t missing = (~ku_flags) & flags;
 	char buf[256], *name;
 
-	unparse_flags(missing, asn1_KeyUsage_units(), buf, sizeof(buf));
+	int result = unparse_flags(missing, asn1_KeyUsage_units(),
+				   buf, sizeof(buf));
 	_hx509_unparse_Name(&cert->tbsCertificate.subject, &name);
 	hx509_set_error_string(context, 0, HX509_KU_CERT_MISSING,
 			       "Key usage %s required but missing "
-			       "from certificate %s", buf,
+			       "from certificate %s",
+			       (result > 0) ? buf : "<unknown>",
                                name ? name : "<unknown>");
 	free(name);
 	return HX509_KU_CERT_MISSING;

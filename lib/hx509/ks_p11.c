@@ -38,7 +38,7 @@
 #include "ref/pkcs11.h"
 
 struct p11_slot {
-    int flags;
+    uint64_t flags;
 #define P11_SESSION		1
 #define P11_SESSION_IN_USE	2
 #define P11_LOGIN_REQ		4

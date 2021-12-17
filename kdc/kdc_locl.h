@@ -102,6 +102,9 @@ struct astgs_request_desc {
     unsigned int replaced_reply_key : 1;
 
     krb5_crypto armor_crypto;
+    hdb_entry_ex *armor_server;
+    krb5_ticket *armor_ticket;
+    Key *armor_key;
 
     KDCFastState fast;
 };

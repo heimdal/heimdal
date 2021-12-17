@@ -1607,7 +1607,8 @@ int
 random_data(void *opt, int argc, char **argv)
 {
     void *ptr;
-    int len, ret;
+    ssize_t len;
+    int ret;
 
     len = parse_bytes(argv[0], "byte");
     if (len <= 0) {

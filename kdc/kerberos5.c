@@ -1949,6 +1949,7 @@ _kdc_as_rep(astgs_request_t r)
     const char *msg;
     hdb_entry_ex *krbtgt = NULL;
     Key *krbtgt_key;
+    int client_reply_kvno;
 
     memset(&rep, 0, sizeof(rep));
 
@@ -2567,14 +2568,20 @@ _kdc_as_rep(astgs_request_t r)
     }
 
     /*
-     *
+     * We need to avoid sending a client KVNO if PKINIT or GSS was
+     * used, as they are not related to a long-term key.
      */
+
+    if (r->replaced_reply_key)
+	client_reply_kvno = 0;
+    else
+	client_reply_kvno = r->client->entry.kvno;
 
     ret = _kdc_encode_reply(r->context, config,
 			    r, req->req_body.nonce,
 			    &rep, &r->et, &r->ek, setype,
 			    r->server->entry.kvno, &skey->key,
-			    r->client->entry.kvno,
+			    client_reply_kvno,
 			    0, &r->e_text, r->reply);
     if (ret)
 	goto out;

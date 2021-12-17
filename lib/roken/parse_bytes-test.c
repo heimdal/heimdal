@@ -38,7 +38,7 @@
 
 static struct testcase {
     int canonicalp;
-    int val;
+    ssize_t val;
     const char *def_unit;
     const char *str;
 } tests[] = {
@@ -52,6 +52,7 @@ static struct testcase {
     {1, 1024 * 1024, NULL, "1 megabyte"},
     {0, 1025, NULL, "1 kilobyte 1"},
     {1, 1025, NULL, "1 kilobyte 1 byte"},
+    {1, 1024UL * 1024 * 1024 * 1024, NULL, "1 terabyte"},
 };
 
 int
@@ -62,20 +63,20 @@ main(int argc, char **argv)
 
     for (i = 0; i < sizeof(tests)/sizeof(tests[0]); ++i) {
 	char buf[256];
-	int val = parse_bytes (tests[i].str, tests[i].def_unit);
+	ssize_t val = parse_bytes (tests[i].str, tests[i].def_unit);
 
 	if (val != tests[i].val) {
-	    printf ("parse_bytes (%s, %s) = %d != %d\n",
+	    printf ("parse_bytes (%s, %s) = %lld != %lld\n",
 		    tests[i].str,
 		    tests[i].def_unit ? tests[i].def_unit : "none",
-		    val, tests[i].val);
+		    (long long)val, (long long)tests[i].val);
 	    ++ret;
 	}
 	if (tests[i].canonicalp) {
 	    (void) unparse_bytes (tests[i].val, buf, sizeof(buf));
 	    if (strcmp (tests[i].str, buf) != 0) {
-		printf ("unparse_bytes (%d) = \"%s\" != \"%s\"\n",
-			tests[i].val, buf, tests[i].str);
+		printf ("unparse_bytes (%lld) = \"%s\" != \"%s\"\n",
+			(long long)tests[i].val, buf, tests[i].str);
 		++ret;
 	    }
 	}

@@ -2651,14 +2651,15 @@ _kdc_as_rep(astgs_request_t r)
     }
 
     /*
-     *
+     * Don't send kvno from client entry if the pre-authentication
+     * mechanism replaced the reply key.
      */
 
     ret = _kdc_encode_reply(r->context, config,
 			    r, req->req_body.nonce,
 			    &rep, &r->et, &r->ek, setype,
 			    r->server->entry.kvno, &skey->key,
-			    r->client->entry.kvno,
+			    r->replaced_reply_key ? 0 : r->client->entry.kvno,
 			    0, &r->e_text, r->reply);
     if (ret)
 	goto out;

@@ -46,14 +46,14 @@
 #endif
 #endif
 
-ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
+ROKEN_LIB_FUNCTION int64_t ROKEN_LIB_CALL
 parse_time (const char *s, const char *def_unit);
 
 ROKEN_LIB_FUNCTION size_t ROKEN_LIB_CALL
-unparse_time (int t, char *s, size_t len);
+unparse_time(int64_t t, char *s, size_t len);
 
 ROKEN_LIB_FUNCTION size_t ROKEN_LIB_CALL
-unparse_time_approx (int t, char *s, size_t len);
+unparse_time_approx(int64_t t, char *s, size_t len);
 
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
 print_time_table (FILE *f);
@@ -65,14 +65,14 @@ print_time_table (FILE *f);
 #define unparse_time_approx rk_unparse_time_approx
 #define print_time_table rk_print_time_table
 
-ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
+ROKEN_LIB_FUNCTION int64_t ROKEN_LIB_CALL
 parse_time (const char *s, const char *def_unit);
 
 ROKEN_LIB_FUNCTION size_t ROKEN_LIB_CALL
-unparse_time (int t, char *s, size_t len);
+unparse_time(int64_t t, char *s, size_t len);
 
 ROKEN_LIB_FUNCTION size_t ROKEN_LIB_CALL
-unparse_time_approx (int t, char *s, size_t len);
+unparse_time_approx(int64_t t, char *s, size_t len);
 
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
 print_time_table (FILE *f);

@@ -46,13 +46,13 @@
 #endif
 #endif
 
-ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
-parse_bytes (const char *s, const char *def_unit);
+ROKEN_LIB_FUNCTION ssize_t ROKEN_LIB_CALL
+parse_bytes(const char *s, const char *def_unit);
 
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
-unparse_bytes (int t, char *s, size_t len);
+unparse_bytes(ssize_t t, char *s, size_t len);
 
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
-unparse_bytes_short (int t, char *s, size_t len);
+unparse_bytes_short(ssize_t t, char *s, size_t len);
 
 #endif /* __PARSE_BYTES_H__ */

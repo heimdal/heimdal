@@ -1348,15 +1348,15 @@ eout:
  * This function is intended to be used when failure to find the client is
  * acceptable.
  */
-static krb5_error_code
-db_fetch_client(krb5_context context,
-		krb5_kdc_configuration *config,
-		int flags,
-		krb5_principal cp,
-		const char *cpn,
-		const char *krbtgt_realm,
-		HDB **clientdb,
-		hdb_entry_ex **client_out)
+krb5_error_code
+_kdc_db_fetch_client(krb5_context context,
+		     krb5_kdc_configuration *config,
+		     int flags,
+		     krb5_principal cp,
+		     const char *cpn,
+		     const char *krbtgt_realm,
+		     HDB **clientdb,
+		     hdb_entry_ex **client_out)
 {
     krb5_error_code ret;
     hdb_entry_ex *client = NULL;
@@ -1929,8 +1929,8 @@ server_lookup:
     if (_kdc_synthetic_princ_used_p(context, ticket))
 	flags |= HDB_F_SYNTHETIC_OK;
 
-    ret = db_fetch_client(context, config, flags, cp, cpn, our_realm,
-			  &clientdb, &client);
+    ret = _kdc_db_fetch_client(context, config, flags, cp, cpn, our_realm,
+			       &clientdb, &client);
     if (ret)
 	goto out;
     flags &= ~HDB_F_SYNTHETIC_OK;
@@ -2247,8 +2247,8 @@ server_lookup:
 	}
 
 	/* Try lookup the delegated client in DB */
-	ret = db_fetch_client(context, config, flags, tp, tpn, our_realm,
-			      NULL, &adclient);
+	ret = _kdc_db_fetch_client(context, config, flags, tp, tpn, our_realm,
+				   NULL, &adclient);
 	if (ret)
 	    goto out;
 
@@ -2377,8 +2377,17 @@ server_lookup:
      */
 
     if (kdc_issued &&
-	!krb5_principal_is_krbtgt(context, server->entry.principal))
+	!krb5_principal_is_krbtgt(context, server->entry.principal)) {
+
+	/* Validate armor TGT before potentially including device claims */
+	if (priv->armor_ticket) {
+	    ret = _kdc_fast_check_armor_pac(priv);
+	    if (ret)
+		goto out;
+	}
+
 	add_ticket_sig = TRUE;
+    }
 
     /*
      * Active-Directory implementations use the high part of the kvno as the
@@ -2562,6 +2571,10 @@ out:
 	krb5_crypto_destroy(r->context, r->armor_crypto);
 	r->armor_crypto = NULL;
     }
+    if (r->armor_ticket)
+	krb5_free_ticket(r->context, r->armor_ticket);
+    if (r->armor_server)
+	_kdc_free_ent(r->context, r->armor_server);
     krb5_free_keyblock_contents(r->context, &r->reply_key);
     krb5_free_keyblock_contents(r->context, &r->strengthen_key);
 

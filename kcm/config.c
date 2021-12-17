@@ -119,6 +119,10 @@ static struct getargs args[] = {
     	"renewable lifetime of system tickets", "time"
     },
     {
+	"max-request",	'r', arg_integer, &max_request_str,
+	"max request size", "bytes"
+    },
+    {
 	"socket-path",		's', arg_string, &socket_path,
     	"path to kcm domain socket", "path"
     },
@@ -350,8 +354,15 @@ kcm_configure(int argc, char **argv)
 	    krb5_err(kcm_context, 1, ret, "reading configuration files");
     }
 
-    if(max_request_str)
-	max_request = parse_bytes(max_request_str, NULL);
+    if (max_request_str) {
+        ssize_t bytes;
+
+        if ((bytes = parse_bytes(max_request_str, NULL)) < 0)
+            krb5_errx(kcm_context, 1,
+                      "--max-request size must be non-negative");
+
+	max_request = bytes;
+    }
 
     if(max_request == 0){
 	p = krb5_config_get_string (kcm_context,
@@ -359,8 +370,14 @@ kcm_configure(int argc, char **argv)
 				    "kcm",
 				    "max-request",
 				    NULL);
-	if(p)
-	    max_request = parse_bytes(p, NULL);
+        if (p) {
+            ssize_t bytes;
+
+            if ((bytes = parse_bytes(max_request_str, NULL)) < 0)
+                krb5_errx(kcm_context, 1,
+                          "[kcm] max-request size must be non-negative");
+            max_request = bytes;
+        }
     }
 
     if (system_principal == NULL) {

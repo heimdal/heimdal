@@ -221,8 +221,13 @@ configure(krb5_context context, int argc, char **argv, int *optidx)
     if (ret)
 	krb5_err(context, 1, ret, "krb5_kdc_set_dbinfo");
 
-    if(max_request_str)
-	max_request_tcp = max_request_udp = parse_bytes(max_request_str, NULL);
+    if (max_request_str) {
+        ssize_t bytes;
+
+        if ((bytes = parse_bytes(max_request_str, NULL)) < 0)
+            krb5_errx(context, 1, "--max-request must be non-negative");
+	max_request_tcp = max_request_udp = bytes;
+    }
 
     if(max_request_tcp == 0){
 	p = krb5_config_get_string (context,
@@ -230,8 +235,13 @@ configure(krb5_context context, int argc, char **argv, int *optidx)
 				    "kdc",
 				    "max-request",
 				    NULL);
-	if(p)
-	    max_request_tcp = max_request_udp = parse_bytes(p, NULL);
+        if (p) {
+            ssize_t bytes;
+
+            if ((bytes = parse_bytes(max_request_str, NULL)) < 0)
+                krb5_errx(context, 1, "[kdc] max-request must be non-negative");
+            max_request_tcp = max_request_udp = bytes;
+        }
     }
 
     if(require_preauth != -1)

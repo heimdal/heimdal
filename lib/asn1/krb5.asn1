@@ -215,6 +215,7 @@ AUTHDATA-TYPE ::= INTEGER {
 	KRB5-AUTHDATA-SIGNTICKET-OLDER(-17),
 	KRB5-AUTHDATA-SIGNTICKET-OLD(142),
 	KRB5-AUTHDATA-SIGNTICKET(512),
+	KRB5-AUTHDATA-SYNTHETIC-PRINC-USED(513), -- principal was synthetised
 	KRB5-AUTHDATA-AP-OPTIONS(143),
         -- N.B. these assignments have not been confirmed yet.
         --

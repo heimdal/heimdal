@@ -1959,6 +1959,23 @@ add_enc_pa_rep(astgs_request_t r)
 			   KRB5_PADATA_FX_FAST, NULL, 0);
 }
 
+/*
+ * Add an authorization data element indicating that a synthetic
+ * principal was used, so that the TGS does not accidentally
+ * synthesize a non-synthetic principal that has since been deleted.
+ */
+static krb5_error_code
+add_synthetic_princ_ad(astgs_request_t r)
+{
+    krb5_data data;
+
+    krb5_data_zero(&data);
+
+    return _kdc_tkt_add_if_relevant_ad(r->context, &r->et,
+				       KRB5_AUTHDATA_SYNTHETIC_PRINC_USED,
+				       &data);
+}
+
 static krb5_error_code
 get_local_tgs(krb5_context context,
 	      krb5_kdc_configuration *config,
@@ -2613,6 +2630,12 @@ _kdc_as_rep(astgs_request_t r)
     /* Add the PAC */
     if (!r->et.flags.anonymous) {
 	generate_pac(r, skey, krbtgt_key);
+    }
+
+    if (r->client->entry.flags.synthetic) {
+	ret = add_synthetic_princ_ad(r);
+	if (ret)
+	    goto out;
     }
 
     _kdc_log_timestamp(r, "AS-REQ", r->et.authtime,

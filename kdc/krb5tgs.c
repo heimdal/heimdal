@@ -48,6 +48,30 @@ get_krbtgt_realm(const PrincipalName *p)
 }
 
 /*
+ * return TRUE if client was a synthetic principal, as indicated by
+ * authorization data
+ */
+krb5_boolean
+_kdc_synthetic_princ_used_p(krb5_context context, krb5_ticket *ticket)
+{
+    krb5_data synthetic_princ_used;
+    krb5_error_code ret;
+
+    ret = krb5_ticket_get_authorization_data_type(context, ticket,
+                                                  KRB5_AUTHDATA_SYNTHETIC_PRINC_USED,
+                                                  &synthetic_princ_used);
+    if (ret == ENOENT)
+	ret = krb5_ticket_get_authorization_data_type(context, ticket,
+						      KRB5_AUTHDATA_INITIAL_VERIFIED_CAS,
+						      &synthetic_princ_used);
+
+    if (ret == 0)
+	krb5_data_free(&synthetic_princ_used);
+
+    return ret == 0;
+}
+
+/*
  *
  */
 
@@ -1902,25 +1926,9 @@ server_lookup:
 	goto out;
     }
 
-    {
-        krb5_data verified_cas;
+    if (_kdc_synthetic_princ_used_p(context, ticket))
+	flags |= HDB_F_SYNTHETIC_OK;
 
-        /*
-         * If the client doesn't exist in the HDB but has a TGT and it's
-         * obtained with PKINIT then we assume it's a synthetic client -- that
-         * is, a client whose name was vouched for by a CA using a PKINIT SAN,
-         * but which doesn't exist in the HDB proper.  We'll allow such a
-         * client to do TGT requests even though normally we'd reject all
-         * clients that don't exist in the HDB.
-         */
-        ret = krb5_ticket_get_authorization_data_type(context, ticket,
-                                                      KRB5_AUTHDATA_INITIAL_VERIFIED_CAS,
-                                                      &verified_cas);
-        if (ret == 0) {
-            krb5_data_free(&verified_cas);
-            flags |= HDB_F_SYNTHETIC_OK;
-        }
-    }
     ret = db_fetch_client(context, config, flags, cp, cpn, our_realm,
 			  &clientdb, &client);
     if (ret)

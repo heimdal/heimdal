@@ -148,10 +148,18 @@ for mech in sanon-x25519 spnego ; do
 	--anonymous --gss-mech=${mech} @$R 2>/dev/null || \
 	{ ec=1 ; eval "${testfailed}"; }
 
+    echo "Getting service ticket"
+    ${kgetcred} ${server}@${R} || { exit 1; }
+    ${kdestroy}
+
     echo "Trying ${mech} pre-authentication with anonymous FAST armor"; > messages.log
     ${kinit} --pk-anon-fast-armor \
 	--anonymous --gss-mech=${mech} @$R 2>/dev/null || \
 	{ ec=1 ; eval "${testfailed}"; }
+
+    echo "Getting service ticket"
+    ${kgetcred} ${server}@${R} || { exit 1; }
+    ${kdestroy}
 
     echo "Trying ${mech} pre-authentication with no FAST armor"; > messages.log
     ${kinit} \

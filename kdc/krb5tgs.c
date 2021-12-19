@@ -88,7 +88,8 @@ _kdc_check_pac(krb5_context context,
 	       const EncryptionKey *krbtgt_check_key,
 	       EncTicketPart *tkt,
 	       krb5_boolean *kdc_issued,
-	       krb5_pac *ppac)
+	       krb5_pac *ppac,
+	       krb5_principal *pac_canon_name)
 {
     krb5_pac pac = NULL;
     krb5_error_code ret;
@@ -96,6 +97,8 @@ _kdc_check_pac(krb5_context context,
 
     *kdc_issued = FALSE;
     *ppac = NULL;
+    if (pac_canon_name)
+	*pac_canon_name = NULL;
 
     ret = _krb5_kdc_pac_ticket_parse(context, tkt, &signedticket, &pac);
     if (ret)
@@ -118,7 +121,15 @@ _kdc_check_pac(krb5_context context,
     /* Verify the KDC signatures. */
     ret = _kdc_pac_verify(context, client_principal, delegated_proxy_principal,
 			  client, server, krbtgt, &pac);
-    if (ret == KRB5_PLUGIN_NO_HANDLE) {
+    if (ret == 0) {
+	if (pac_canon_name) {
+	    ret = _krb5_pac_get_canon_principal(context, pac, pac_canon_name);
+	    if (ret && ret != ENOENT) {
+		krb5_pac_free(context, pac);
+		return ret;
+	    }
+	}
+    } else if (ret == KRB5_PLUGIN_NO_HANDLE) {
 	/*
 	 * We can't verify the KDC signatures if the ticket was issued by
 	 * another realm's KDC.
@@ -132,12 +143,21 @@ _kdc_check_pac(krb5_context context,
 		return ret;
 	    }
 	}
+
+	if (pac_canon_name) {
+	    ret = _krb5_pac_get_canon_principal(context, pac, pac_canon_name);
+	    if (ret && ret != ENOENT) {
+		krb5_pac_free(context, pac);
+		return ret;
+	    }
+	}
+
 	/* Discard the PAC if the plugin didn't handle it */
 	krb5_pac_free(context, pac);
 	ret = krb5_pac_init(context, &pac);
 	if (ret)
 	    return ret;
-    } else if (ret) {
+    } else {
 	krb5_pac_free(context, pac);
 	return ret;
     }
@@ -787,10 +807,19 @@ tgs_make_reply(astgs_request_t r,
      * is implementation dependent.
      */
     if (mspac && !et.flags.anonymous) {
+	if (r->client_princ) {
+	    char *cpn;
+
+	    krb5_unparse_name(r->context, r->client_princ, &cpn);
+	    _kdc_audit_addkv((kdc_request_t)r, 0, "canon_client_name", "%s",
+			     cpn ? cpn : "<unknown>");
+	    krb5_xfree(cpn);
+	}
 
 	/* The PAC should be the last change to the ticket. */
 	ret = _krb5_kdc_pac_sign_ticket(r->context, mspac, tgt_name, serverkey,
-					krbtgtkey, rodc_id, add_ticket_sig, &et);
+					krbtgtkey, rodc_id, add_ticket_sig, &et,
+					NULL, r->client_princ);
 	if (ret)
 	    goto out;
     }
@@ -1812,7 +1841,8 @@ server_lookup:
 	    /* Verify the PAC of the TGT. */
 	    ret = _kdc_check_pac(context, config, user2user_princ, NULL,
 				 user2user_client, user2user_krbtgt, user2user_krbtgt, user2user_krbtgt,
-				 &uukey->key, &priv->ticket_key->key, &adtkt, &user2user_kdc_issued, &user2user_pac);
+				 &uukey->key, &priv->ticket_key->key, &adtkt,
+				 &user2user_kdc_issued, &user2user_pac, NULL);
 	    _kdc_free_ent(context, user2user_client);
 	    if (ret) {
 		const char *msg = krb5_get_error_message(context, ret);
@@ -1936,8 +1966,11 @@ server_lookup:
     flags &= ~HDB_F_SYNTHETIC_OK;
     priv->client = client;
 
+    heim_assert(priv->client_princ == NULL, "client_princ should be NULL for TGS");
+
     ret = _kdc_check_pac(context, config, cp, NULL, client, server, krbtgt, krbtgt,
-			 &priv->ticket_key->key, &priv->ticket_key->key, tgt, &kdc_issued, &mspac);
+			 &priv->ticket_key->key, &priv->ticket_key->key, tgt,
+			 &kdc_issued, &mspac, &priv->client_princ);
     if (ret) {
 	const char *msg = krb5_get_error_message(context, ret);
         _kdc_audit_addreason((kdc_request_t)priv, "PAC check failed");
@@ -2171,6 +2204,9 @@ server_lookup:
 	krb5_pac_free(context, mspac);
 	mspac = NULL;
 
+	krb5_free_principal(context, priv->client_princ);
+	priv->client_princ = NULL;
+
 	t = &b->additional_tickets->val[0];
 
 	ret = hdb_enctype2key(context, &client->entry,
@@ -2265,7 +2301,8 @@ server_lookup:
 	 * a S4U_DELEGATION_INFO blob to the PAC.
 	 */
 	ret = _kdc_check_pac(context, config, tp, dp, adclient, server, krbtgt, client,
-			     &clientkey->key, &priv->ticket_key->key, &adtkt, &ad_kdc_issued, &mspac);
+			     &clientkey->key, &priv->ticket_key->key, &adtkt,
+			     &ad_kdc_issued, &mspac, &priv->client_princ);
 	if (adclient)
 	    _kdc_free_ent(context, adclient);
 	if (ret) {
@@ -2567,6 +2604,10 @@ out:
     free(csec);
     free(cusec);
 
+    if (r->client_princ) {
+	krb5_free_principal(r->context, r->client_princ);
+	r->client_princ = NULL;
+    }
     if (r->armor_crypto) {
 	krb5_crypto_destroy(r->context, r->armor_crypto);
 	r->armor_crypto = NULL;

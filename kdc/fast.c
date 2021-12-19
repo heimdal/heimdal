@@ -848,7 +848,7 @@ _kdc_fast_check_armor_pac(astgs_request_t r)
 			 armor_client, r->armor_server,
 			 r->armor_server, r->armor_server,
 			 &r->armor_key->key, &r->armor_key->key,
-			 &r->armor_ticket->ticket, &ad_kdc_issued, &mspac);
+			 &r->armor_ticket->ticket, &ad_kdc_issued, &mspac, NULL);
     if (ret) {
 	const char *msg = krb5_get_error_message(r->context, ret);
 

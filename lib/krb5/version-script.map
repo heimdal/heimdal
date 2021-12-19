@@ -833,6 +833,7 @@ HEIMDAL_KRB5_2.0 {
 		_krb5_crypto_set_flags;
 		_krb5_make_pa_enc_challenge;
 		_krb5_validate_pa_enc_challenge;
+		_krb5_store_utf8_as_ucs2le_at_offset;
 
 		# kinit helper
 		krb5_get_init_creds_opt_set_pkinit_user_certs;

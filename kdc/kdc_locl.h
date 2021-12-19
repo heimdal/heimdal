@@ -84,8 +84,10 @@ struct astgs_request_desc {
     krb5_keyblock session_key;
 
     /* state */
-    krb5_principal client_princ;
-    hdb_entry_ex *client;
+    krb5_principal client_princ; /* AS: principal requested by client
+				  * TGS: opt. canon principal from TGT PAC */
+    hdb_entry_ex *client;	 /* AS: client entry
+				  * TGS: opt. client entry, if local to KDC */
     HDB *clientdb;
 
     krb5_principal server_princ;

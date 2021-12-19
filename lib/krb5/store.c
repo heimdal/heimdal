@@ -1864,7 +1864,7 @@ cleanup:
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_ret_utf8_from_ucs2le_at_offset(krb5_storage *sp,
-				     size_t offset,
+				     off_t offset,
 				     size_t length,
 				     char **utf8)
 {
@@ -1916,6 +1916,112 @@ out:
     }
     free(ucs2);
     krb5_data_free(&data);
+
+    return ret;
+}
+
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+_krb5_store_data_at_offset(krb5_storage *sp,
+			   size_t offset,
+			   const krb5_data *data)
+{
+    krb5_error_code ret;
+    krb5_ssize_t nbytes;
+    off_t pos;
+
+    if (offset == (off_t)-1) {
+	if (data == NULL || data->data == NULL) {
+	    offset = 0;
+	} else {
+	    pos = sp->seek(sp, 0, SEEK_CUR);
+	    offset = sp->seek(sp, 0, SEEK_END);
+	    sp->seek(sp, pos, SEEK_SET);
+
+	    if (offset == (off_t)-1)
+		return HEIM_ERR_NOT_SEEKABLE;
+	}
+    }
+
+    if (offset > 0xFFFF)
+	return ERANGE;
+    else if ((offset != 0) != (data && data->data))
+	return EINVAL;
+    else if (data && data->length > 0xFFFF)
+	return ERANGE;
+
+    ret = krb5_store_uint16(sp, data ? (uint16_t)data->length : 0);
+    if (ret == 0)
+	ret = krb5_store_uint16(sp, (uint16_t)offset);
+    if (ret == 0 && offset) {
+	pos = sp->seek(sp, 0, SEEK_CUR);
+	sp->seek(sp, offset, SEEK_SET);
+	nbytes = krb5_storage_write(sp, data->data, data->length);
+	if ((size_t)nbytes != data->length)
+	    ret = sp->eof_code;
+	sp->seek(sp, pos, SEEK_SET);
+    }
+
+    return ret;
+}
+
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+_krb5_store_utf8_as_ucs2le_at_offset(krb5_storage *sp,
+				     off_t offset,
+				     const char *utf8)
+{
+    krb5_error_code ret;
+    size_t ucs2_len, ucs2le_size;
+    uint16_t *ucs2, *ucs2le;
+    unsigned int flags;
+
+    if (utf8) {
+	ret = wind_utf8ucs2_length(utf8, &ucs2_len);
+	if (ret)
+	    return ret;
+
+	ucs2 = malloc(sizeof(ucs2[0]) * ucs2_len);
+	if (ucs2 == NULL)
+	    return ENOMEM;
+
+	ret = wind_utf8ucs2(utf8, ucs2, &ucs2_len);
+	if (ret) {
+	    free(ucs2);
+	    return ret;
+	}
+
+	ucs2le_size = (ucs2_len + 1) * 2;
+	ucs2le = malloc(ucs2le_size);
+	    if (ucs2le == NULL) {
+		free(ucs2);
+		return ENOMEM;
+	}
+
+	flags = WIND_RW_LE;
+	ret = wind_ucs2write(ucs2, ucs2_len, &flags, ucs2le, &ucs2le_size);
+	free(ucs2);
+	if (ret) {
+	    free(ucs2le);
+	    return ret;
+	}
+
+	ucs2le_size = ucs2_len * 2;
+    } else {
+	ucs2le = NULL;
+	ucs2le_size = 0;
+	offset = 0;
+	ret = 0;
+    }
+
+    {
+	krb5_data data;
+
+	data.data = ucs2le;
+	data.length = ucs2le_size;
+
+	ret = _krb5_store_data_at_offset(sp, offset, &data);
+    }
+
+    free(ucs2le);
 
     return ret;
 }

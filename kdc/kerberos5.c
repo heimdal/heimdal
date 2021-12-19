@@ -1826,6 +1826,7 @@ generate_pac(astgs_request_t r, const Key *skey, const Key *tkey)
     uint16_t rodc_id;
     krb5_principal client;
     krb5_boolean client_sent_pac_req, pac_request;
+    krb5_const_principal canon_princ = NULL;
 
     client_sent_pac_req =
 	(check_pa_pac_request(r->context, &r->req, &pac_request) == 0);
@@ -1860,11 +1861,30 @@ generate_pac(astgs_request_t r, const Key *skey, const Key *tkey)
 	return ret;
     }
 
+    /*
+     * Include the canonical name of the principal in the authorization
+     * data, if the realms match (if they don't, then the KDC could
+     * impersonate any realm. Windows always canonicalizes the realm,
+     * but Heimdal permits aliases between realms.)
+     */
+    if (krb5_realm_compare(r->context, client, r->client->entry.principal)) {
+	char *cpn = NULL;
+
+	canon_princ = r->client->entry.principal;
+
+	krb5_unparse_name(r->context, canon_princ, &cpn);
+	_kdc_audit_addkv((kdc_request_t)r, 0, "canon_client_name", "%s",
+			     cpn ? cpn : "<unknown>");
+	krb5_xfree(cpn);
+    }
+
     ret = _krb5_pac_sign(r->context, p, r->et.authtime,
 			 client,
 			 &skey->key, /* Server key */
 			 &tkey->key, /* TGS key */
 			 rodc_id,
+			 NULL, /* UPN */
+			 canon_princ,
 			 &data);
     krb5_free_principal(r->context, client);
     krb5_pac_free(r->context, p);

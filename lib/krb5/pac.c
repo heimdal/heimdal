@@ -671,18 +671,23 @@ parse_upn_dns_info(krb5_context context,
 	CHECK(ret, krb5_ret_uint16(sp, &sam_name_offset), out);
 	CHECK(ret, krb5_ret_uint16(sp, &sid_length), out);
 	CHECK(ret, krb5_ret_uint16(sp, &sid_offset), out);
+    } else {
+	sam_name_offset = 0;
+	sid_offset = 0;
     }
 
-    CHECK(ret, _krb5_ret_utf8_from_ucs2le_at_offset(sp, upn_offset,
-						    upn_length, &upn), out);
+    if (upn_offset) {
+	CHECK(ret, _krb5_ret_utf8_from_ucs2le_at_offset(sp, upn_offset,
+							upn_length, &upn), out);
+    }
     CHECK(ret, _krb5_ret_utf8_from_ucs2le_at_offset(sp, dns_domain_name_offset,
 						    dns_domain_name_length, &dns_domain_name), out);
-    if (*flags & PAC_EXTRA_LOGON_INFO_FLAGS_HAS_SAM_NAME_AND_SID) {
+    if ((*flags & PAC_EXTRA_LOGON_INFO_FLAGS_HAS_SAM_NAME_AND_SID) && sam_name_offset) {
 	CHECK(ret, _krb5_ret_utf8_from_ucs2le_at_offset(sp, sam_name_offset,
 							sam_name_length, &sam_name), out);
     }
 
-    if (upn_length) {
+    if (upn_offset) {
 	ret = krb5_parse_name_flags(context,
 				    upn,
 				    KRB5_PRINCIPAL_PARSE_ENTERPRISE |
@@ -696,7 +701,7 @@ parse_upn_dns_info(krb5_context context,
 	    goto out;
     }
 
-    if (*flags & PAC_EXTRA_LOGON_INFO_FLAGS_HAS_SAM_NAME_AND_SID) {
+    if (sam_name_offset) {
 	ret = krb5_parse_name_flags(context,
 				    sam_name,
 				    KRB5_PRINCIPAL_PARSE_NO_REALM |
@@ -708,9 +713,10 @@ parse_upn_dns_info(krb5_context context,
 	ret = krb5_principal_set_realm(context, *sam_name_princ, dns_domain_name);
 	if (ret)
 	    goto out;
-
-	CHECK(ret, _krb5_ret_data_at_offset(sp, sid_offset, sid_length, sid), out);
     }
+
+    if (sid_offset)
+	CHECK(ret, _krb5_ret_data_at_offset(sp, sid_offset, sid_length, sid), out);
 
 out:
     free(upn);
@@ -718,6 +724,7 @@ out:
     free(sam_name);
 
     krb5_storage_free(sp);
+
     return ret;
 }
 
@@ -762,8 +769,7 @@ build_upn_dns_info(krb5_context context,
 
     if (canon_princ) {
 	ret = krb5_unparse_name_flags(context, canon_princ,
-				      KRB5_PRINCIPAL_UNPARSE_NO_REALM |
-				      KRB5_PRINCIPAL_UNPARSE_DISPLAY,
+				      KRB5_PRINCIPAL_UNPARSE_NO_REALM,
 				      &canon_princ_name);
 	if (ret)
 	    goto out;
@@ -805,6 +811,7 @@ out:
 
     krb5_xfree(canon_princ_name);
     krb5_xfree(upn_princ_name);
+    krb5_storage_free(sp);
 
     return ret;
 }

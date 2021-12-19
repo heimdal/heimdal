@@ -1049,7 +1049,7 @@ hdb_sqlite_create(krb5_context context, HDB **db, const char *filename)
 
     (*db)->hdb_master_key_set = 0;
     (*db)->hdb_openp = 0;
-    (*db)->hdb_capability_flags = 0;
+    (*db)->hdb_capability_flags = HDB_CAP_F_HANDLE_ENTERPRISE_PRINCIPAL;
 
     (*db)->hdb_open = hdb_sqlite_open;
     (*db)->hdb_close = hdb_sqlite_close;

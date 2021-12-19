@@ -435,6 +435,7 @@ fast_unwrap_request(astgs_request_t r,
 		    krb5_auth_context tgs_ac)
 {
     krb5_principal armor_server_principal = NULL;
+    char *armor_client_principal_name = NULL;
     char *armor_server_principal_name = NULL;
     PA_FX_FAST_REQUEST fxreq = {0};
     krb5_auth_context ac = NULL;
@@ -581,6 +582,10 @@ fast_unwrap_request(astgs_request_t r,
 	ticket = tgs_ticket;
     }
 
+    krb5_unparse_name(r->context, ticket->client, &armor_client_principal_name);
+    _kdc_audit_addkv((kdc_request_t)r, 0, "armor_client_name", "%s",
+		      armor_client_principal_name ? armor_client_principal_name : "<unknown>");
+
     if (ac->remote_subkey == NULL) {
 	krb5_auth_con_free(r->context, ac);
 	kdc_log(r->context, r->config, 2,
@@ -706,6 +711,7 @@ fast_unwrap_request(astgs_request_t r,
 	krb5_auth_con_free(r->context, ac);
 
     krb5_free_principal(r->context, armor_server_principal);
+    krb5_xfree(armor_client_principal_name);
     krb5_xfree(armor_server_principal_name);
 
     free_KrbFastReq(&fastreq);

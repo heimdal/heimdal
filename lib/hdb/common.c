@@ -714,7 +714,7 @@ derive_keyset(krb5_context context,
 {
     dks->kvno = kvno;
     dks->keys.val = 0;
-    dks->set_time = malloc(sizeof(dks->set_time));
+    dks->set_time = malloc(sizeof(*dks->set_time));
     if (dks->set_time == NULL)
         return krb5_enomem(context);
     *dks->set_time = set_time;

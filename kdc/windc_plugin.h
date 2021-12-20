@@ -57,7 +57,7 @@ typedef krb5_error_code
 					       struct hdb_entry_ex *, /* client */
 					       struct hdb_entry_ex *, /* server */
 					       const krb5_keyblock *, /* pk_replykey */
-					       const krb5_boolean *, /* pac_request */
+					       uint64_t,	      /* pac_attributes */
 					       krb5_pac *);
 
 typedef krb5_error_code

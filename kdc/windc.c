@@ -73,8 +73,8 @@ struct generate_uc {
     hdb_entry_ex *client;
     hdb_entry_ex *server;
     const krb5_keyblock *reply_key;
+    uint64_t pac_attributes;
     krb5_pac *pac;
-    const krb5_boolean *pac_request;
 };
 
 static krb5_error_code KRB5_LIB_CALL
@@ -90,7 +90,7 @@ generate(krb5_context context, const void *plug, void *plugctx, void *userctx)
 			    uc->client,
 			    uc->server,
 			    uc->reply_key,
-			    uc->pac_request,
+			    uc->pac_attributes,
 			    uc->pac);
 }
 
@@ -100,7 +100,7 @@ _kdc_pac_generate(krb5_context context,
 		  hdb_entry_ex *client,
 		  hdb_entry_ex *server,
 		  const krb5_keyblock *reply_key,
-		  const krb5_boolean *pac_request,
+		  uint64_t pac_attributes,
 		  krb5_pac *pac)
 {
     krb5_error_code ret = 0;
@@ -118,7 +118,7 @@ _kdc_pac_generate(krb5_context context,
 	uc.server = server;
 	uc.reply_key = reply_key;
 	uc.pac = pac;
-	uc.pac_request = pac_request;
+	uc.pac_attributes = pac_attributes;
 
 	ret = _krb5_plugin_run_f(context, &windc_plugin_data,
 				 0, &uc, generate);

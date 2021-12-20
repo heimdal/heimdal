@@ -109,6 +109,8 @@ struct astgs_request_desc {
     Key *armor_key;
 
     KDCFastState fast;
+
+    uint64_t pac_attributes;
 };
 
 typedef struct kx509_req_context_desc {

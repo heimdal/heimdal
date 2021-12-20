@@ -822,6 +822,7 @@ EXPORTS
 	_krb5_get_int
         _krb5_get_int64
 	_krb5_pac_sign
+	_krb5_pac_get_attributes_info
 	_krb5_pac_get_canon_principal
 	_krb5_kdc_pac_sign_ticket
 	_krb5_kdc_pac_ticket_parse
@@ -843,7 +844,6 @@ EXPORTS
 	_krb5_expand_path_tokens	;!
 	_krb5_make_pa_enc_challenge
 	_krb5_validate_pa_enc_challenge
-	_krb5_store_utf8_as_ucs2le_at_offset
 
         ; kinit helper
 	krb5_get_init_creds_opt_set_pkinit_user_certs

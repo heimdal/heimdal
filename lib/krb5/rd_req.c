@@ -351,11 +351,6 @@ krb5_verify_ap_req2(krb5_context context,
 					     ap_req->ticket.sname,
 					     ap_req->ticket.realm);
     if (ret) goto out;
-    ret = _krb5_principalname2krb5_principal(context,
-					     &t->client,
-					     t->ticket.cname,
-					     t->ticket.crealm);
-    if (ret) goto out;
 
     ret = decrypt_authenticator (context,
 				 &t->ticket.key,
@@ -386,6 +381,27 @@ krb5_verify_ap_req2(krb5_context context,
 	    goto out;
 	}
     }
+
+    /*
+     * The ticket authenticates the client, and conveys naming attributes that
+     * we want to expose in GSS using RFC6680 APIs.
+     *
+     * So we same the ticket enc-part in the client's krb5_principal object
+     * (note though that the session key will be absent in that copy of the
+     * ticket enc-part).
+     */
+    ret = _krb5_ticket2krb5_principal(context, &t->client, &t->ticket,
+                                      ac->authenticator->authorization_data);
+    if (ret) goto out;
+
+    t->client->nameattrs->peer_realm =
+        calloc(1, sizeof(t->client->nameattrs->peer_realm[0]));
+    if (t->client->nameattrs->peer_realm == NULL) {
+        ret = krb5_enomem(context);
+        goto out;
+    }
+    ret = copy_Realm(&ap_req->ticket.realm, t->client->nameattrs->peer_realm);
+    if (ret) goto out;
 
     /* check addresses */
 
@@ -1042,6 +1058,8 @@ krb5_rd_req_ctx(krb5_context context,
 				  o->ticket->client,
 				  o->keyblock,
 				  NULL);
+            if (ret == 0)
+                o->ticket->client->nameattrs->pac_verified = 1;
 	    if (ret == 0 && (context->flags & KRB5_CTX_F_REPORT_CANONICAL_CLIENT_NAME)) {
 		krb5_error_code ret2;
 		krb5_principal canon_name;

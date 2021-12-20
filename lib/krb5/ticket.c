@@ -752,9 +752,9 @@ _krb5_extract_ticket(krb5_context context,
 
     /* compare client and save */
     ret = _krb5_principalname2krb5_principal(context,
-					     &tmp_principal,
-					     rep->kdc_rep.cname,
-					     rep->kdc_rep.crealm);
+                                             &tmp_principal,
+                                             rep->kdc_rep.cname,
+                                             rep->kdc_rep.crealm);
     if (ret)
 	goto out;
 
@@ -785,12 +785,19 @@ _krb5_extract_ticket(krb5_context context,
     creds->client = tmp_principal;
 
     /* check server referral and save principal */
-    ret = _krb5_principalname2krb5_principal (context,
-					      &tmp_principal,
-					      rep->enc_part.sname,
-					      rep->enc_part.srealm);
+    ret = _krb5_kdcrep2krb5_principal(context, &tmp_principal, &rep->enc_part);
     if (ret)
 	goto out;
+
+    tmp_principal->nameattrs->peer_realm =
+        calloc(1, sizeof(tmp_principal->nameattrs->peer_realm[0]));
+    if (tmp_principal->nameattrs->peer_realm == NULL) {
+        ret = krb5_enomem(context);
+        goto out;
+    }
+    ret = copy_Realm(&creds->client->realm, tmp_principal->nameattrs->peer_realm);
+    if (ret) goto out;
+
     if((flags & EXTRACT_TICKET_ALLOW_SERVER_MISMATCH) == 0){
 	ret = check_server_referral(context,
 				    rep,

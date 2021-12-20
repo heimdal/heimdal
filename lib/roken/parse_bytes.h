@@ -36,15 +36,7 @@
 #ifndef __PARSE_BYTES_H__
 #define __PARSE_BYTES_H__
 
-#ifndef ROKEN_LIB_FUNCTION
-#ifdef _WIN32
-#define ROKEN_LIB_FUNCTION
-#define ROKEN_LIB_CALL     __cdecl
-#else
-#define ROKEN_LIB_FUNCTION
-#define ROKEN_LIB_CALL
-#endif
-#endif
+#include <roken.h>
 
 ROKEN_LIB_FUNCTION ssize_t ROKEN_LIB_CALL
 parse_bytes(const char *s, const char *def_unit);

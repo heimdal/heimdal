@@ -98,7 +98,7 @@ krb5_mk_ncred(krb5_context context, krb5_auth_context auth_context,
          * MIT allocates the return structure for no good reason. We do
          * likewise as, in this case, incompatibility is the greater evil.
          */
-        *ppdata = calloc(1, sizeof (*ppdata));
+        *ppdata = calloc(1, sizeof(**ppdata));
         if (*ppdata) {
             **ppdata = out_data;
         } else {

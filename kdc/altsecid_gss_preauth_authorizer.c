@@ -70,6 +70,10 @@
 
 #include "gss_preauth_authorizer_plugin.h"
 
+#ifndef PAC_REQUESTOR_SID
+#define PAC_REQUESTOR_SID               18
+#endif
+
 struct ad_server_tuple {
     HEIM_TAILQ_ENTRY(ad_server_tuple) link;
     char *realm;
@@ -267,7 +271,8 @@ ad_lookup(krb5_context context,
           struct ad_server_tuple *server,
           gss_const_name_t initiator_name,
           gss_const_OID mech_type,
-          krb5_principal *canon_principal)
+          krb5_principal *canon_principal,
+          krb5_data *requestor_sid)
 {
     krb5_error_code ret;
     OM_uint32 minor;
@@ -277,10 +282,11 @@ ad_lookup(krb5_context context,
     LDAPMessage *m = NULL, *m0;
     char *basedn = NULL;
     int lret;
-    char *attrs[] = { "sAMAccountName", NULL };
+    char *attrs[] = { "sAMAccountName", "objectSid", NULL };
     struct berval **values = NULL;
 
     *canon_principal = NULL;
+    krb5_data_zero(requestor_sid);
 
     mech_type_str = gss_oid_to_name(mech_type);
     if (mech_type_str == NULL) {
@@ -329,6 +335,16 @@ ad_lookup(krb5_context context,
     if (m0 == NULL)
         goto out;
 
+    values = ldap_get_values_len(server->ld, m0, "objectSid");
+    if (values == NULL ||
+	ldap_count_values_len(values) == 0)
+	goto out;
+
+    if (krb5_data_copy(requestor_sid, values[0]->bv_val, values[0]->bv_len) != 0)
+	goto enomem;
+
+    ldap_value_free_len(values);
+
     values = ldap_get_values_len(server->ld, m0, "sAMAccountName");
     if (values == NULL ||
         ldap_count_values_len(values) == 0)
@@ -336,9 +352,6 @@ ad_lookup(krb5_context context,
 
     ret = krb5_make_principal(context, canon_principal, realm,
                               values[0]->bv_val, NULL);
-    if (ret)
-        goto out;
-
     goto out;
 
 enomem:
@@ -365,7 +378,8 @@ authorize(void *ctx,
           gss_const_OID mech_type,
           OM_uint32 ret_flags,
           krb5_boolean *authorized,
-          krb5_principal *mapped_name)
+          krb5_principal *mapped_name,
+	  krb5_data *requestor_sid)
 {
     struct altsecid_gss_preauth_authorizer_context *c = ctx;
     struct ad_server_tuple *server = NULL;
@@ -375,6 +389,7 @@ authorize(void *ctx,
 
     *authorized = FALSE;
     *mapped_name = NULL;
+    krb5_data_zero(requestor_sid);
 
     if (!krb5_principal_is_federated(context, client->entry.principal) ||
         (ret_flags & GSS_C_ANON_FLAG))
@@ -408,7 +423,7 @@ authorize(void *ctx,
 
         ret = ad_lookup(context, realm, server,
                         initiator_name, mech_type,
-                        mapped_name);
+                        mapped_name, requestor_sid);
         if (ret == KRB5KDC_ERR_SVC_UNAVAILABLE) {
             ldap_unbind_ext_s(server->ld, NULL, NULL);
             server->ld = NULL;
@@ -424,7 +439,17 @@ authorize(void *ctx,
 }
 
 static KRB5_LIB_CALL krb5_error_code
-altsecid_gss_preauth_authorizer_init(krb5_context context, void **contextp)
+finalize_pac(void *ctx,
+	     krb5_context context,
+	     krb5_pac mspac,
+	     krb5_data *requestor_sid)
+{
+    return krb5_pac_add_buffer(context, mspac,
+			       PAC_REQUESTOR_SID, requestor_sid);
+}
+
+static KRB5_LIB_CALL krb5_error_code
+init(krb5_context context, void **contextp)
 {
     struct altsecid_gss_preauth_authorizer_context *c;
 
@@ -439,7 +464,7 @@ altsecid_gss_preauth_authorizer_init(krb5_context context, void **contextp)
 }
 
 static KRB5_LIB_CALL void
-altsecid_gss_preauth_authorizer_fini(void *context)
+fini(void *context)
 {
     struct altsecid_gss_preauth_authorizer_context *c = context;
     struct ad_server_tuple *server, *next;
@@ -456,7 +481,7 @@ altsecid_gss_preauth_authorizer_fini(void *context)
 }
 
 static krb5plugin_gss_preauth_authorizer_ftable plug_desc =
-    { 1, altsecid_gss_preauth_authorizer_init, altsecid_gss_preauth_authorizer_fini, authorize };
+    { 1, init, fini, authorize, finalize_pac };
 
 static krb5plugin_gss_preauth_authorizer_ftable *plugs[] = { &plug_desc };
 

@@ -392,6 +392,7 @@ crmf_template_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/crmf.asn1 $(srcdir)/cr
 krb5_template_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/krb5.asn1 $(srcdir)/krb5.opt
 	$(ASN1_COMPILE) --one-code-file --template			\
 			--option-file=$(srcdir)/krb5.opt		\
+			--decorate='Principal:PrincipalNameAttrs:nameattrs?'	\
 			$(srcdir)/krb5.asn1 krb5_template_asn1 || (rm -f krb5_template_asn1_files ; exit 1)
 
 ocsp_template_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/ocsp.asn1
@@ -433,6 +434,7 @@ crmf_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/crmf.asn1 $(srcdir)/crmf.opt
 krb5_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/krb5.asn1 $(srcdir)/krb5.opt
 	$(ASN1_COMPILE) --one-code-file $(TEMPLATE_OPTION)		\
 			--option-file=$(srcdir)/krb5.opt		\
+			--decorate='Principal:PrincipalNameAttrs:nameattrs?'	\
 			$(srcdir)/krb5.asn1 krb5_asn1 || (rm -f krb5_asn1_files ; exit 1)
 
 ocsp_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/ocsp.asn1

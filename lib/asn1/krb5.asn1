@@ -305,14 +305,6 @@ PrincipalName ::= SEQUENCE {
 	name-string[1]		SEQUENCE OF GeneralString
 }
 
--- this is not part of RFC1510
-Principal ::= SEQUENCE {
-	name[0]			PrincipalName,
-	realm[1]		Realm
-}
-
-Principals ::= SEQUENCE OF Principal
-
 HostAddress ::= SEQUENCE  {
 	addr-type[0]		Krb5Int32,
 	address[1]		OCTET STRING
@@ -441,6 +433,49 @@ Checksum ::= SEQUENCE {
 	cksumtype[0]		CKSUMTYPE,
 	checksum[1]		OCTET STRING
 }
+
+-- For GSS name attributes [RFC6680] we'll decorate Principal (which is not an
+-- RFC4120 type, but which we use a) in HDB, b) in the API as that which
+-- krb5_principal points to) with PrincipalNameAttrs.
+--
+-- Attributes have three possible sources in Heimdal Kerberos at this time:
+--
+--  - the EncKDCRepPart
+--  - the EncTicketPart
+--  - the Authenticator's AuthorizationData (if any)
+--
+-- In principle there can be more:
+--
+--  - locally-set (asserted) attributes
+--  - locally-looked-up attributes (e.g., in LDAP)
+--  - locally-transformed attributes (e.g., local groups, filtered SIDs from a
+--    PAC, etc.)
+--
+-- We could also cache "cooked" attributes as reported by the RFC6680 API given
+-- the sources we have.
+--
+-- For now we'll only support authenticated attributes where those come from
+-- the KDC, and attributes asserted in Authenticator authz-data.
+PrincipalNameAttrSrc ::= CHOICE {
+        enc-kdc-rep-part    [0] EncKDCRepPart,  -- minus session key
+        enc-ticket-part     [1] EncTicketPart   -- minus session key
+}
+PrincipalNameAttrs ::= SEQUENCE {
+        authenticated       [0]     BOOLEAN,
+        -- These are compiled from the Ticket and Authenticator:
+        source              [1]     PrincipalNameAttrSrc OPTIONAL,
+        authenticator-ad    [2]     AuthorizationData OPTIONAL
+}
+
+-- this is not part of RFC1510
+Principal ::= SEQUENCE {
+	name[0]			PrincipalName,
+	realm[1]		Realm
+        -- This will be decorated with a name-attrs field of
+        -- PrincipalNameAttrs type that doesn't get encoded
+}
+
+Principals ::= SEQUENCE OF Principal
 
 Authenticator ::= [APPLICATION 2] SEQUENCE    {
 	authenticator-vno[0]	Krb5Int32,

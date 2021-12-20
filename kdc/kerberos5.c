@@ -957,6 +957,8 @@ struct kdc_patypes {
     krb5_error_code (*validate)(astgs_request_t,
 				const PA_DATA *pa,
 				struct kdc_pa_auth_status *auth_status);
+    krb5_error_code (*finalize_pac)(astgs_request_t r, krb5_pac mspac);
+    void (*cleanup)(astgs_request_t r);
 };
 
 static const struct kdc_patypes pat[] = {
@@ -964,40 +966,40 @@ static const struct kdc_patypes pat[] = {
     {
 	KRB5_PADATA_PK_AS_REQ, "PK-INIT(ietf)",
         PA_ANNOUNCE | PA_SYNTHETIC_OK | PA_REPLACE_REPLY_KEY,
-	pa_pkinit_validate
+	pa_pkinit_validate, NULL, NULL
     },
     {
 	KRB5_PADATA_PK_AS_REQ_WIN, "PK-INIT(win2k)", PA_ANNOUNCE | PA_REPLACE_REPLY_KEY,
-	pa_pkinit_validate
+	pa_pkinit_validate, NULL, NULL
     },
     {
 	KRB5_PADATA_PKINIT_KX, "Anonymous PK-INIT", PA_ANNOUNCE,
-	NULL
+	NULL, NULL, NULL
     },
 #else
-    { KRB5_PADATA_PK_AS_REQ, "PK-INIT(ietf)", 0, NULL },
-    { KRB5_PADATA_PK_AS_REQ_WIN, "PK-INIT(win2k)", 0, NULL },
-    { KRB5_PADATA_PKINIT_KX, "Anonymous PK-INIT", 0, NULL },
+    { KRB5_PADATA_PK_AS_REQ, "PK-INIT(ietf)", 0, NULL , NULL, NULL },
+    { KRB5_PADATA_PK_AS_REQ_WIN, "PK-INIT(win2k)", 0, NULL, NULL, NULL },
+    { KRB5_PADATA_PKINIT_KX, "Anonymous PK-INIT", 0, NULL, NULL, NULL },
 #endif
-    { KRB5_PADATA_PA_PK_OCSP_RESPONSE , "OCSP", 0, NULL },
+    { KRB5_PADATA_PA_PK_OCSP_RESPONSE , "OCSP", 0, NULL, NULL, NULL },
     { 
 	KRB5_PADATA_ENC_TIMESTAMP , "ENC-TS",
 	PA_ANNOUNCE,
-	pa_enc_ts_validate
+	pa_enc_ts_validate, NULL, NULL
     },
     {
 	KRB5_PADATA_ENCRYPTED_CHALLENGE , "ENC-CHAL",
 	PA_ANNOUNCE | PA_REQ_FAST,
-	pa_enc_chal_validate
+	pa_enc_chal_validate, NULL, NULL
     },
-    { KRB5_PADATA_REQ_ENC_PA_REP , "REQ-ENC-PA-REP", 0, NULL },
-    { KRB5_PADATA_FX_FAST, "FX-FAST", PA_ANNOUNCE, NULL },
-    { KRB5_PADATA_FX_ERROR, "FX-ERROR", 0, NULL },
-    { KRB5_PADATA_FX_COOKIE, "FX-COOKIE", 0, NULL },
+    { KRB5_PADATA_REQ_ENC_PA_REP , "REQ-ENC-PA-REP", 0, NULL, NULL, NULL },
+    { KRB5_PADATA_FX_FAST, "FX-FAST", PA_ANNOUNCE, NULL, NULL, NULL },
+    { KRB5_PADATA_FX_ERROR, "FX-ERROR", 0, NULL, NULL, NULL },
+    { KRB5_PADATA_FX_COOKIE, "FX-COOKIE", 0, NULL, NULL, NULL },
     {
 	KRB5_PADATA_GSS , "GSS",
 	PA_ANNOUNCE | PA_SYNTHETIC_OK | PA_REPLACE_REPLY_KEY,
-	pa_gss_validate
+	pa_gss_validate, NULL, NULL
     },
 };
 
@@ -1033,6 +1035,51 @@ log_patypes(astgs_request_t r, METHOD_DATA *padata)
     _kdc_audit_addkv((kdc_request_t)r, KDC_AUDIT_EATWHITE,
 		     "client-pa", "%s", str);
     free(str);
+}
+
+static krb5_boolean
+pa_replaced_reply_key_p(astgs_request_t r)
+{
+    size_t n;
+
+    for (n = 0; n < sizeof(pat) / sizeof(pat[0]); n++) {
+	if (pat[n].type == r->pa_used &&
+	    (pat[n].flags & PA_REPLACE_REPLY_KEY))
+	    return TRUE;
+    }
+
+    return FALSE;
+}
+
+static krb5_error_code
+pa_finalize_pac(astgs_request_t r, krb5_pac mspac)
+{
+    krb5_error_code ret = 0;
+    size_t n;
+
+    for (n = 0; n < sizeof(pat) / sizeof(pat[0]); n++) {
+	if (pat[n].type == r->pa_used) {
+	    if (pat[n].finalize_pac)
+		ret = pat[n].finalize_pac(r, mspac);
+	    break;
+	}
+    }
+
+    return ret;
+}
+
+static void
+pa_cleanup(astgs_request_t r)
+{
+    size_t n;
+
+    for (n = 0; n < sizeof(pat) / sizeof(pat[0]); n++) {
+	if (pat[n].type == r->pa_used) {
+	    if (pat[n].cleanup)
+		pat[n].cleanup(r);
+	    break;
+	}
+    }
 }
 
 /*
@@ -1837,7 +1884,7 @@ generate_pac(astgs_request_t r, const Key *skey, const Key *tkey)
     ret = _kdc_pac_generate(r->context,
 			    r->client,
 			    r->server,
-			    r->replaced_reply_key ? &r->reply_key : NULL,
+			    pa_replaced_reply_key_p(r) ? &r->reply_key : NULL,
 			    r->pac_attributes,
 			    &p);
     if (ret) {
@@ -1873,6 +1920,12 @@ generate_pac(astgs_request_t r, const Key *skey, const Key *tkey)
 	_kdc_audit_addkv((kdc_request_t)r, 0, "canon_client_name", "%s",
 			     cpn ? cpn : "<unknown>");
 	krb5_xfree(cpn);
+    }
+
+    ret = pa_finalize_pac(r, p);
+    if (ret) {
+	krb5_pac_free(r->context, p);
+	return ret;
     }
 
     ret = _krb5_pac_sign(r->context, p, r->et.authtime,
@@ -2246,7 +2299,7 @@ _kdc_as_rep(astgs_request_t r)
 			pat[n].name, r->cname);
 		found_pa = 1;
 
-		r->replaced_reply_key = (pat[n].flags & PA_REPLACE_REPLY_KEY) != 0;
+		r->pa_used = pat[n].type;
 
 		if (auth_status.auth_status == HDB_AUTHSTATUS_INVALID)
 			auth_status.auth_status = HDB_AUTHSTATUS_GENERIC_SUCCESS;
@@ -2702,7 +2755,7 @@ _kdc_as_rep(astgs_request_t r)
 			    r, req->req_body.nonce,
 			    &rep, &r->et, &r->ek, setype,
 			    r->server->entry.kvno, &skey->key,
-			    r->replaced_reply_key ? 0 : r->client->entry.kvno,
+			    pa_replaced_reply_key_p(r) ? 0 : r->client->entry.kvno,
 			    0, &r->e_text, r->reply);
     if (ret)
 	goto out;
@@ -2732,6 +2785,8 @@ out:
 			         r->server_princ,
 			         NULL, NULL,
 			         r->reply);
+
+    pa_cleanup(r);
 
     free_EncTicketPart(&r->et);
     free_EncKDCRepPart(&r->ek);

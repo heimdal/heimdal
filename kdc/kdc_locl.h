@@ -64,6 +64,8 @@ struct kdc_request_desc {
     HEIM_SVC_REQUEST_DESC_COMMON_ELEMENTS;
 };
 
+struct as_request_pa_state;
+
 struct astgs_request_desc {
     HEIM_SVC_REQUEST_DESC_COMMON_ELEMENTS;
 
@@ -73,7 +75,9 @@ struct astgs_request_desc {
     /* Only AS */
     METHOD_DATA *padata;
     METHOD_DATA outpadata;
-    
+    krb5_preauthtype pa_used;
+    struct as_request_pa_state *pa_state;
+
     KDC_REP rep;
     EncTicketPart et;
     EncKDCRepPart ek;
@@ -101,7 +105,6 @@ struct astgs_request_desc {
     /* only valid for tgs-req */
     unsigned int rk_is_subkey : 1;
     unsigned int fast_asserted : 1;
-    unsigned int replaced_reply_key : 1;
 
     krb5_crypto armor_crypto;
     hdb_entry_ex *armor_server;

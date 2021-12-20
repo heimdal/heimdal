@@ -125,6 +125,7 @@ libroken_la_SOURCES =		\
 	bswap.c			\
 	concat.c		\
 	cloexec.c		\
+	clz.c			\
 	ct.c			\
 	detach.c		\
 	doxygen.c		\

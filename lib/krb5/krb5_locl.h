@@ -480,4 +480,8 @@ struct krb5_decrypt_tkt_with_subkey_state {
 /* Flag in KRB5_AUTHDATA_AP_OPTIONS */
 #define KERB_AP_OPTIONS_CBT 0x00004000
 
+/* Flag in PAC_ATTRIBUTES_INFO */
+#define KRB5_PAC_WAS_REQUESTED		0x1
+#define KRB5_PAC_WAS_GIVEN_IMPLICITLY	0x2
+
 #endif /* __KRB5_LOCL_H__ */

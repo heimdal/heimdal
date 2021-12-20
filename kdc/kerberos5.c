@@ -1783,34 +1783,33 @@ _kdc_check_anon_policy(astgs_request_t r)
 }
 
 /*
- *
+ * Determine whether the client requested a PAC be included
+ * or excluded explictly, or whether it doesn't care.
  */
 
-static krb5_error_code
-check_pa_pac_request(krb5_context context,
-		     KDC_REQ *req,
-		     krb5_boolean *include_pac)
+static uint64_t
+get_pac_attributes(krb5_context context, KDC_REQ *req)
 {
     krb5_error_code ret;
     PA_PAC_REQUEST pacreq;
     const PA_DATA *pa;
     int i = 0;
-
-    *include_pac = TRUE;
+    uint32_t pac_attributes;
 
     pa = _kdc_find_padata(req, &i, KRB5_PADATA_PA_PAC_REQUEST);
     if (pa == NULL)
-	return KRB5KDC_ERR_PADATA_TYPE_NOSUPP;
+	return KRB5_PAC_WAS_GIVEN_IMPLICITLY;
 
     ret = decode_PA_PAC_REQUEST(pa->padata_value.data,
 				pa->padata_value.length,
 				&pacreq,
 				NULL);
     if (ret)
-	return KRB5KDC_ERR_PADATA_TYPE_NOSUPP;
-    *include_pac = pacreq.include_pac;
+	return KRB5_PAC_WAS_GIVEN_IMPLICITLY;
+
+    pac_attributes = pacreq.include_pac ? KRB5_PAC_WAS_REQUESTED : 0;
     free_PA_PAC_REQUEST(&pacreq);
-    return 0;
+    return pac_attributes;
 }
 
 /*
@@ -1825,11 +1824,9 @@ generate_pac(astgs_request_t r, const Key *skey, const Key *tkey)
     krb5_data data;
     uint16_t rodc_id;
     krb5_principal client;
-    krb5_boolean client_sent_pac_req, pac_request;
     krb5_const_principal canon_princ = NULL;
 
-    client_sent_pac_req =
-	(check_pa_pac_request(r->context, &r->req, &pac_request) == 0);
+    r->pac_attributes = get_pac_attributes(r->context, &r->req);
 
     /*
      * When a PA mech replaces the reply key, the PAC may include the
@@ -1841,7 +1838,7 @@ generate_pac(astgs_request_t r, const Key *skey, const Key *tkey)
 			    r->client,
 			    r->server,
 			    r->replaced_reply_key ? &r->reply_key : NULL,
-			    client_sent_pac_req ? &pac_request : NULL,
+			    r->pac_attributes,
 			    &p);
     if (ret) {
 	_kdc_r_log(r, 4, "PAC generation failed for -- %s",
@@ -1885,6 +1882,7 @@ generate_pac(astgs_request_t r, const Key *skey, const Key *tkey)
 			 rodc_id,
 			 NULL, /* UPN */
 			 canon_princ,
+			 &r->pac_attributes,
 			 &data);
     krb5_free_principal(r->context, client);
     krb5_pac_free(r->context, p);

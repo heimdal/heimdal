@@ -89,7 +89,8 @@ _kdc_check_pac(krb5_context context,
 	       EncTicketPart *tkt,
 	       krb5_boolean *kdc_issued,
 	       krb5_pac *ppac,
-	       krb5_principal *pac_canon_name)
+	       krb5_principal *pac_canon_name,
+	       uint64_t *pac_attributes)
 {
     krb5_pac pac = NULL;
     krb5_error_code ret;
@@ -129,6 +130,8 @@ _kdc_check_pac(krb5_context context,
 		return ret;
 	    }
 	}
+	if (pac_attributes)
+	    _krb5_pac_get_attributes_info(context, pac, pac_attributes);
     } else if (ret == KRB5_PLUGIN_NO_HANDLE) {
 	/*
 	 * We can't verify the KDC signatures if the ticket was issued by
@@ -150,6 +153,8 @@ _kdc_check_pac(krb5_context context,
 		krb5_pac_free(context, pac);
 		return ret;
 	    }
+	    if (pac_attributes)
+		_krb5_pac_get_attributes_info(context, pac, pac_attributes);
 	}
 
 	/* Discard the PAC if the plugin didn't handle it */
@@ -818,8 +823,8 @@ tgs_make_reply(astgs_request_t r,
 
 	/* The PAC should be the last change to the ticket. */
 	ret = _krb5_kdc_pac_sign_ticket(r->context, mspac, tgt_name, serverkey,
-					krbtgtkey, rodc_id, add_ticket_sig, &et,
-					NULL, r->client_princ);
+					krbtgtkey, rodc_id, NULL, r->client_princ,
+					add_ticket_sig, &et, &r->pac_attributes);
 	if (ret)
 	    goto out;
     }
@@ -1842,7 +1847,7 @@ server_lookup:
 	    ret = _kdc_check_pac(context, config, user2user_princ, NULL,
 				 user2user_client, user2user_krbtgt, user2user_krbtgt, user2user_krbtgt,
 				 &uukey->key, &priv->ticket_key->key, &adtkt,
-				 &user2user_kdc_issued, &user2user_pac, NULL);
+				 &user2user_kdc_issued, &user2user_pac, NULL, NULL);
 	    _kdc_free_ent(context, user2user_client);
 	    if (ret) {
 		const char *msg = krb5_get_error_message(context, ret);
@@ -1970,7 +1975,7 @@ server_lookup:
 
     ret = _kdc_check_pac(context, config, cp, NULL, client, server, krbtgt, krbtgt,
 			 &priv->ticket_key->key, &priv->ticket_key->key, tgt,
-			 &kdc_issued, &mspac, &priv->client_princ);
+			 &kdc_issued, &mspac, &priv->client_princ, &priv->pac_attributes);
     if (ret) {
 	const char *msg = krb5_get_error_message(context, ret);
         _kdc_audit_addreason((kdc_request_t)priv, "PAC check failed");
@@ -2131,7 +2136,7 @@ server_lookup:
 				    s4u2self_impersonated_client,
 				    server,
 				    NULL,
-				    NULL,
+				    KRB5_PAC_WAS_GIVEN_IMPLICITLY,
 				    &mspac);
 	    if (ret) {
 		kdc_log(context, config, 4, "PAC generation failed for -- %s", tpn);
@@ -2302,7 +2307,7 @@ server_lookup:
 	 */
 	ret = _kdc_check_pac(context, config, tp, dp, adclient, server, krbtgt, client,
 			     &clientkey->key, &priv->ticket_key->key, &adtkt,
-			     &ad_kdc_issued, &mspac, &priv->client_princ);
+			     &ad_kdc_issued, &mspac, &priv->client_princ, &priv->pac_attributes);
 	if (adclient)
 	    _kdc_free_ent(context, adclient);
 	if (ret) {

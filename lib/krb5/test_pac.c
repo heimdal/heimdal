@@ -897,7 +897,8 @@ check_ticket_signature(krb5_context context,
 	t_err(context, tkt->name, "remove_AuthorizationData", ret);
 
     ret = _krb5_kdc_pac_sign_ticket(context, pac, client, tkt->key,
-				    tkt->kdc_key, tkt->rodc_id, signedticket, &et);
+				    tkt->kdc_key, tkt->rodc_id,
+				    NULL, NULL, signedticket, &et, NULL);
     if (ret)
 	t_err(context, tkt->name, "_krb5_kdc_pac_sign_ticket", ret);
 
@@ -915,7 +916,8 @@ check_ticket_signature(krb5_context context,
 	t_err(context, tkt->name, "remove_AuthorizationData 2", ret);
 
     ret = _krb5_kdc_pac_sign_ticket(context, pac, client, tkt->key,
-				    tkt->kdc_key, tkt->rodc_id, signedticket, &et);
+				    tkt->kdc_key, tkt->rodc_id,
+				    NULL, NULL, signedticket, &et, NULL);
     if (ret)
 	t_err(context, tkt->name, "_krb5_kdcsignedticketsign_ticket 2", ret);
 
@@ -978,7 +980,8 @@ main(int argc, char **argv)
 	krb5_err(context, 1, ret, "krb5_pac_verify");
 
     ret = _krb5_pac_sign(context, pac, authtime, p,
-			 &member_keyblock, &kdc_keyblock, 0, &data);
+			 &member_keyblock, &kdc_keyblock, 0, NULL, NULL,
+			 NULL, &data);
     if (ret)
 	krb5_err(context, 1, ret, "_krb5_pac_sign");
 
@@ -1034,7 +1037,8 @@ main(int argc, char **argv)
 	free(list);
 
 	ret = _krb5_pac_sign(context, pac2, authtime, p,
-			     &member_keyblock, &kdc_keyblock, 0, &data);
+			     &member_keyblock, &kdc_keyblock, 0,
+			     NULL, NULL, NULL, &data);
 	if (ret)
 	    krb5_err(context, 1, ret, "_krb5_pac_sign 4");
 
@@ -1075,34 +1079,6 @@ main(int argc, char **argv)
 
     krb5_pac_free(context, pac);
     krb5_free_principal(context, p2);
-
-    /*
-     * check extra logon info PAC
-     */
-    ret = krb5_pac_parse(context, extra_logon_info,
-			 sizeof(extra_logon_info) - 1, &pac);
-    if (ret)
-	krb5_err(context, 1, ret, "krb5_pac_parse");
-
-    {
-	krb5_principal upn = NULL;
-	uint32_t flags = 0;
-	krb5_principal sam_name = NULL;
-	krb5_data sid;
-
-	krb5_data_zero(&sid);
-
-	ret = _krb5_pac_get_upn_dns_info(context, pac, &upn,
-					 &flags, &sam_name, &sid);
-	if (ret)
-	    krb5_err(context, 1, ret, "_krb5_pac_get_upn_dns_info");
-
-	krb5_free_principal(context, upn);
-	krb5_free_principal(context, sam_name);
-	krb5_data_free(&sid);
-    }
-
-    krb5_pac_free(context, pac);
 
     /*
      * Test empty free
@@ -1161,7 +1137,8 @@ main(int argc, char **argv)
     }
 
     ret = _krb5_pac_sign(context, pac, authtime, p,
-			 &member_keyblock, &kdc_keyblock, 0, &data);
+			 &member_keyblock, &kdc_keyblock, 0,
+			 NULL, NULL, NULL, &data);
     if (ret)
 	krb5_err(context, 1, ret, "_krb5_pac_sign");
 
@@ -1192,6 +1169,33 @@ main(int argc, char **argv)
 
     krb5_pac_free(context, pac);
     krb5_free_principal(context, p);
+
+    /*
+     * check extra logon info PAC
+     */
+    ret = krb5_pac_parse(context, extra_logon_info,
+			 sizeof(extra_logon_info) - 1, &pac);
+    if (ret)
+	krb5_err(context, 1, ret, "krb5_pac_parse");
+
+    ret = krb5_pac_verify(context, pac, 0, NULL, NULL, NULL);
+    if (ret)
+	krb5_err(context, 1, ret, "krb5_pac_verify");
+
+    ret = krb5_parse_name(context, "c9d801a8_0@EXAMPLE.COM", &p);
+    if (ret)
+	krb5_err(context, 1, ret, "_krb5_pac_get_canon_principal");
+
+    ret = _krb5_pac_get_canon_principal(context, pac, &p2);
+    if (ret)
+	krb5_err(context, 1, ret, "_krb5_pac_get_canon_principal");
+
+    if (!krb5_principal_compare(context, p, p2))
+	krb5_errx(context, 1, "canon principal doesn't match");
+
+    krb5_pac_free(context, pac);
+    krb5_free_principal(context, p);
+    krb5_free_principal(context, p2);
 
     /* Test PAC ticket-signature */
     {

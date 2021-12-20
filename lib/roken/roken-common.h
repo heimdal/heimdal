@@ -552,6 +552,9 @@ rk_random_init(void);
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 rk_mkdir(const char *, mode_t);
 
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
+rk_clzll(uint64_t);
+
 ROKEN_CPP_END
 
 #endif /* __ROKEN_COMMON_H__ */

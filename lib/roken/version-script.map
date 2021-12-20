@@ -47,6 +47,7 @@ HEIMDAL_ROKEN_2.0 {
 		rk_cloexec_file;
 		rk_cloexec_socket;
 		rk_closefrom;
+		rk_clzll;
 		rk_copyhostent;
 		rk_dns_free_data;
 		rk_dns_lookup;

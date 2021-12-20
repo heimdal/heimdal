@@ -39,6 +39,7 @@ libroken_la_OBJS =			\
 	$(OBJ)\bswap.obj		\
 	$(OBJ)\concat.obj		\
 	$(OBJ)\cloexec.obj		\
+	$(OBJ)\clz.obj			\
 	$(OBJ)\ct.obj			\
 	$(OBJ)\detach.obj		\
 	$(OBJ)\dirent.obj		\

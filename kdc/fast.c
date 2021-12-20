@@ -859,9 +859,6 @@ _kdc_fast_check_armor_pac(astgs_request_t r)
 
 	krb5_free_error_message(r->context, msg);
 
-	if (ad_kdc_issued == FALSE || mspac == NULL)
-	    ret = KRB5KDC_ERR_BADOPTION;
-
 	goto out;
     }
 

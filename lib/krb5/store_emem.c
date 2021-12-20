@@ -178,7 +178,7 @@ krb5_storage_emem(void)
     sp->flags = 0;
     sp->eof_code = HEIM_ERR_EOF;
     s->size = 1024;
-    s->base = malloc(s->size);
+    s->base = calloc(1, s->size);
     if (s->base == NULL) {
 	free(sp);
 	free(s);

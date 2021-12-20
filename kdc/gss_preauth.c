@@ -51,6 +51,7 @@ struct gss_client_params {
     OM_uint32 flags;
     OM_uint32 lifetime;
     krb5_checksum req_body_checksum;
+    krb5_data pac_data;
 };
 
 static void
@@ -492,11 +493,12 @@ _kdc_gss_endtime(astgs_request_t r,
     return endtime;
 }
 
-struct pa_gss_plugin_ctx {
+struct pa_gss_authorize_plugin_ctx {
     astgs_request_t r;
     struct gss_client_params *gcp;
     krb5_boolean authorized;
     krb5_principal initiator_princ;
+    krb5_data pac_data;
 };
 
 static krb5_error_code KRB5_LIB_CALL
@@ -506,17 +508,18 @@ pa_gss_authorize_cb(krb5_context context,
                     void *userctx)
 {
     const krb5plugin_gss_preauth_authorizer_ftable *authorizer = plug;
-    struct pa_gss_plugin_ctx *pa_gss_plugin_ctx = userctx;
+    struct pa_gss_authorize_plugin_ctx *pa_gss_authorize_plugin_ctx = userctx;
 
     return authorizer->authorize(plugctx, context,
-                                 &pa_gss_plugin_ctx->r->req,
-                                 pa_gss_plugin_ctx->r->client_princ,
-                                 pa_gss_plugin_ctx->r->client,
-                                 pa_gss_plugin_ctx->gcp->initiator_name,
-                                 pa_gss_plugin_ctx->gcp->mech_type,
-                                 pa_gss_plugin_ctx->gcp->flags,
-                                 &pa_gss_plugin_ctx->authorized,
-                                 &pa_gss_plugin_ctx->initiator_princ);
+                                 &pa_gss_authorize_plugin_ctx->r->req,
+                                 pa_gss_authorize_plugin_ctx->r->client_princ,
+                                 pa_gss_authorize_plugin_ctx->r->client,
+                                 pa_gss_authorize_plugin_ctx->gcp->initiator_name,
+                                 pa_gss_authorize_plugin_ctx->gcp->mech_type,
+                                 pa_gss_authorize_plugin_ctx->gcp->flags,
+                                 &pa_gss_authorize_plugin_ctx->authorized,
+                                 &pa_gss_authorize_plugin_ctx->initiator_princ,
+				 &pa_gss_authorize_plugin_ctx->pac_data);
 }
 
 static const char *plugin_deps[] = {
@@ -531,7 +534,7 @@ static struct heim_plugin_data
 gss_preauth_authorizer_data = {
     "kdc",
     KDC_GSS_PREAUTH_AUTHORIZER,
-    KDC_GSS_PREAUTH_AUTHORIZER_VERSION_0,
+    KDC_GSS_PREAUTH_AUTHORIZER_VERSION_1,
     plugin_deps,
     kdc_get_instance
 };
@@ -541,15 +544,17 @@ pa_gss_authorize_plugin(astgs_request_t r,
                         struct gss_client_params *gcp,
                         gss_const_buffer_t display_name,
                         krb5_boolean *authorized,
-                        krb5_principal *initiator_princ)
+                        krb5_principal *initiator_princ,
+			krb5_data *pac_data)
 {
     krb5_error_code ret;
-    struct pa_gss_plugin_ctx ctx;
+    struct pa_gss_authorize_plugin_ctx ctx;
 
     ctx.r = r;
     ctx.gcp = gcp;
     ctx.authorized = 0;
     ctx.initiator_princ = NULL;
+    krb5_data_zero(&ctx.pac_data);
 
     krb5_clear_error_message(r->context);
     ret = _krb5_plugin_run_f(r->context, &gss_preauth_authorizer_data,
@@ -570,6 +575,7 @@ pa_gss_authorize_plugin(astgs_request_t r,
 
     *authorized = ctx.authorized;
     *initiator_princ = ctx.initiator_princ;
+    *pac_data = ctx.pac_data;
 
     return ret;
 }
@@ -579,7 +585,8 @@ pa_gss_authorize_default(astgs_request_t r,
                          struct gss_client_params *gcp,
                          gss_const_buffer_t display_name,
                          krb5_boolean *authorized,
-                         krb5_principal *initiator_princ)
+                         krb5_principal *initiator_princ,
+			 krb5_data *pac_data)
 {
     krb5_error_code ret;
     krb5_principal principal;
@@ -681,12 +688,14 @@ _kdc_gss_check_client(astgs_request_t r,
     krb5_principal initiator_princ = NULL;
     hdb_entry_ex *initiator = NULL;
     krb5_boolean authorized = FALSE;
+    krb5_data pac_data;
 
     OM_uint32 minor;
     gss_buffer_desc display_name = GSS_C_EMPTY_BUFFER;
     gss_const_buffer_t display_name_p;
 
     *client_name = NULL;
+    krb5_data_zero(&pac_data);
 
     pa_gss_display_name(gcp->initiator_name, &display_name, &display_name_p);
 
@@ -695,10 +704,10 @@ _kdc_gss_check_client(astgs_request_t r,
      * are authorized as the directly corresponding Kerberos principal.
      */
     ret = pa_gss_authorize_plugin(r, gcp, display_name_p,
-                                  &authorized, &initiator_princ);
+                                  &authorized, &initiator_princ, &pac_data);
     if (ret == KRB5_PLUGIN_NO_HANDLE)
         ret = pa_gss_authorize_default(r, gcp, display_name_p,
-                                       &authorized, &initiator_princ);
+                                       &authorized, &initiator_princ, &pac_data);
     if (ret == 0 && !authorized)
         ret = KRB5_KDC_ERR_CLIENT_NAME_MISMATCH;
     if (ret)
@@ -756,10 +765,14 @@ _kdc_gss_check_client(astgs_request_t r,
         goto out;
     }
 
+    gcp->pac_data = pac_data;
+    krb5_data_zero(&pac_data);
+
 out:
     krb5_free_principal(r->context, initiator_princ);
     if (initiator)
         _kdc_free_ent(r->context, initiator);
+    krb5_data_free(&pac_data);
     gss_release_buffer(&minor, &display_name);
 
     return ret;
@@ -866,6 +879,7 @@ _kdc_gss_free_client_param(astgs_request_t r,
     gss_release_name(&minor, &gcp->initiator_name);
     gss_release_buffer(&minor, &gcp->output_token);
     free_Checksum(&gcp->req_body_checksum);
+    krb5_data_free(&gcp->pac_data);
     memset(gcp, 0, sizeof(*gcp));
     free(gcp);
 }
@@ -999,4 +1013,46 @@ pa_gss_display_name(gss_name_t name,
         *namebuf_p = &gss_pa_unknown_display_name;
     else
         *namebuf_p = namebuf;
+}
+
+struct pa_gss_finalize_pac_plugin_ctx {
+    astgs_request_t r;
+    krb5_pac mspac;
+    krb5_data *pac_data;
+};
+
+static krb5_error_code KRB5_LIB_CALL
+pa_gss_finalize_pac_cb(krb5_context context,
+		        const void *plug,
+		        void *plugctx,
+		        void *userctx)
+{
+    const krb5plugin_gss_preauth_authorizer_ftable *authorizer = plug;
+    struct pa_gss_finalize_pac_plugin_ctx *pa_gss_finalize_pac_ctx = userctx;
+
+    return authorizer->finalize_pac(plugctx, context,
+				    pa_gss_finalize_pac_ctx->mspac,
+				    pa_gss_finalize_pac_ctx->pac_data);
+}
+
+
+krb5_error_code
+_kdc_gss_finalize_pac(astgs_request_t r,
+		      gss_client_params *gcp,
+		      krb5_pac mspac)
+{
+    krb5_error_code ret;
+    struct pa_gss_finalize_pac_plugin_ctx ctx;
+
+    ctx.mspac = mspac;
+    ctx.pac_data = &gcp->pac_data;
+
+    krb5_clear_error_message(r->context);
+    ret = _krb5_plugin_run_f(r->context, &gss_preauth_authorizer_data,
+                             0, &ctx, pa_gss_finalize_pac_cb);
+
+    if (ret == KRB5_PLUGIN_NO_HANDLE)
+	ret = 0;
+
+    return ret;
 }

@@ -584,18 +584,45 @@ pa_gss_validate(astgs_request_t r,
     }
 
     ret = _kdc_gss_mk_pa_reply(r, gcp);
-    if (ret &&
-	ret != KRB5_KDC_ERR_MORE_PREAUTH_DATA_REQUIRED) {
-	_kdc_set_e_text(r, "Failed to build GSS pre-authentication reply");
+    if (ret) {
+	if (ret != KRB5_KDC_ERR_MORE_PREAUTH_DATA_REQUIRED)
+	    _kdc_set_e_text(r, "Failed to build GSS pre-authentication reply");
+
 	goto out;
     }
 
     auth_status->auth_status = HDB_AUTHSTATUS_GSS_SUCCESS;
- out:
+
+    heim_assert(r->pa_state == NULL, "already have PA state, should be NULL");
+    r->pa_state = (struct as_request_pa_state *)gcp;
+    gcp = NULL;
+
+out:
     if (gcp)
 	_kdc_gss_free_client_param(r, gcp);
 
     return ret;
+}
+
+static krb5_error_code
+pa_gss_finalize_pac(astgs_request_t r, krb5_pac mspac)
+{
+    gss_client_params *gcp = (gss_client_params *)r->pa_state;
+
+    heim_assert(gcp != NULL, "invalid GSS-API client params");
+
+    return _kdc_gss_finalize_pac(r, gcp, mspac);
+}
+
+static void
+pa_gss_cleanup(astgs_request_t r)
+{
+    gss_client_params *gcp = (gss_client_params *)r->pa_state;
+
+    if (gcp) {
+	_kdc_gss_free_client_param(r, gcp);
+	r->pa_state = NULL;
+    }
 }
 
 static krb5_error_code
@@ -999,7 +1026,7 @@ static const struct kdc_patypes pat[] = {
     {
 	KRB5_PADATA_GSS , "GSS",
 	PA_ANNOUNCE | PA_SYNTHETIC_OK | PA_REPLACE_REPLY_KEY,
-	pa_gss_validate, NULL, NULL
+	pa_gss_validate, pa_gss_finalize_pac, pa_gss_cleanup
     },
 };
 
@@ -2298,11 +2325,10 @@ _kdc_as_rep(astgs_request_t r)
 			"%s pre-authentication succeeded -- %s",
 			pat[n].name, r->cname);
 		found_pa = 1;
-
 		r->pa_used = pat[n].type;
 
 		if (auth_status.auth_status == HDB_AUTHSTATUS_INVALID)
-			auth_status.auth_status = HDB_AUTHSTATUS_GENERIC_SUCCESS;
+		    auth_status.auth_status = HDB_AUTHSTATUS_GENERIC_SUCCESS;
 
 		_kdc_audit_auth_status(r,
 				       &auth_status,

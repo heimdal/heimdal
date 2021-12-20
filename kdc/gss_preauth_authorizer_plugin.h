@@ -35,14 +35,14 @@
 #define HEIMDAL_KDC_GSS_PREAUTH_AUTHORIZER_PLUGIN_H 1
 
 #define KDC_GSS_PREAUTH_AUTHORIZER "kdc_gss_preauth_authorizer"
-#define KDC_GSS_PREAUTH_AUTHORIZER_VERSION_0 0
+#define KDC_GSS_PREAUTH_AUTHORIZER_VERSION_1 1
 
 #include <krb5.h>
 #include <gssapi/gssapi.h>
 
 /*
  * @param init          Plugin initialization function (see krb5-plugin(7))
- * @param minor_version The plugin minor version number (0)
+ * @param minor_version The plugin minor version number (1)
  * @param fini          Plugin finalization function
  * @param authorize     Plugin name authorization function
  *
@@ -69,10 +69,15 @@ typedef struct krb5plugin_gss_preauth_authorizer_ftable_desc {
                                                    krb5_const_principal,/*client_name*/
                                                    hdb_entry_ex *,      /*client*/
                                                    gss_const_name_t,    /*initiator_name*/
-                                                   gss_const_OID,	/*mech_type*/
+                                                   gss_const_OID,       /*mech_type*/
                                                    OM_uint32,           /*ret_flags*/
                                                    krb5_boolean *,      /*authorized*/
-                                                   krb5_principal *);   /*mapped_name*/
+                                                   krb5_principal *,    /*mapped_name*/
+                                                   krb5_data *);        /*pac_data*/
+    krb5_error_code     (KRB5_LIB_CALL *finalize_pac)(void *,           /*plug_ctx*/
+                                                      krb5_context,     /*context*/
+                                                      krb5_pac,         /*pac*/
+                                                      krb5_data *);     /*pac_data*/
 } krb5plugin_gss_preauth_authorizer_ftable;
 
 #endif /* HEIMDAL_KDC_GSS_PREAUTH_AUTHORIZER_PLUGIN_H */

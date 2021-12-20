@@ -851,21 +851,12 @@ _kdc_fast_check_armor_pac(astgs_request_t r)
 			 &r->armor_ticket->ticket, &ad_kdc_issued, &mspac);
     if (ret) {
 	const char *msg = krb5_get_error_message(r->context, ret);
-	char *client_princ_name = NULL;
-	char *server_princ_name = NULL;
-
-	krb5_unparse_name(r->context, r->client_princ, &client_princ_name);
-	krb5_unparse_name(r->context, r->server_princ, &server_princ_name);
 
 	kdc_log(r->context, r->config, 4,
 		"Verify armor PAC (%s) failed for %s (%s) from %s with %s (%s)",
-		armor_client_principal_name,
-		server_princ_name ? server_princ_name : "<unknown>",
-		client_princ_name ? client_princ_name : "<unknown>",
+		armor_client_principal_name, r->cname, r->sname,
 		r->from, msg, mspac ? "Ticket unsigned" : "No PAC");
 
-	krb5_xfree(server_princ_name);
-	krb5_xfree(client_princ_name);
 	krb5_free_error_message(r->context, msg);
 
 	if (ad_kdc_issued == FALSE || mspac == NULL)

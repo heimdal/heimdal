@@ -100,9 +100,9 @@ test_principal (void)
 
 
     Principal values[] = {
-	{ { KRB5_NT_PRINCIPAL, { 1, lha_principal } },  "SU.SE" },
-	{ { KRB5_NT_PRINCIPAL, { 2, lharoot_princ } },  "SU.SE" },
-	{ { KRB5_NT_SRV_HST, { 2, datan_princ } },  "E.KTH.SE" }
+	{ { KRB5_NT_PRINCIPAL, { 1, lha_principal } },  "SU.SE", NULL },
+	{ { KRB5_NT_PRINCIPAL, { 2, lharoot_princ } },  "SU.SE", NULL },
+	{ { KRB5_NT_SRV_HST, { 2, datan_princ } },  "E.KTH.SE", NULL }
     };
     int i, ret;
     int ntests = sizeof(tests) / sizeof(*tests);
@@ -1015,6 +1015,50 @@ test_choice (void)
 
     return ret;
 }
+
+/* Test --decorate=TYPE:FIELD-TYPE:field-name[?] */
+static int
+test_decorated(void)
+{
+    TESTNotDecorated tnd;
+    TESTDecorated td;
+    size_t len, size;
+    void *ptr;
+    int ret;
+
+    memset(&td, 0, sizeof(td));
+    memset(&tnd, 0, sizeof(tnd));
+
+    td.version = 3;
+    if ((td.version2 = malloc(sizeof(*td.version2))) == NULL)
+        errx(1, "out of memory");
+    *td.version2 = 5;
+    ASN1_MALLOC_ENCODE(TESTDecorated, ptr, len, &td, &size, ret);
+    if (ret) {
+        warnx("could not encode a TESTDecorated struct");
+        return 1;
+    }
+    ret = decode_TESTNotDecorated(ptr, len, &tnd, &size);
+    if (ret) {
+        warnx("could not decode a TESTDecorated struct as TESTNotDecorated");
+        return 1;
+    }
+    if (size != len) {
+        warnx("TESTDecorated encoded size mismatch");
+        return 1;
+    }
+    if (td.version != tnd.version) {
+        warnx("TESTDecorated did not decode as a TESTNotDecorated correctly");
+        return 1;
+    }
+    free_TESTDecorated(&td);
+    if (td.version2) {
+        warnx("free_TESTDecorated() did not work correctly");
+        return 1;
+    }
+    return 0;
+}
+
 
 static int
 cmp_TESTImplicit (void *a, void *b)
@@ -2492,6 +2536,8 @@ main(int argc, char **argv)
     DO_ONE(test_x690sample);
 
     DO_ONE(test_default);
+
+    DO_ONE(test_decorated);
 
 #if ASN1_IOS_SUPPORTED
     DO_ONE(test_ios);

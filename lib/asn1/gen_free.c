@@ -119,7 +119,7 @@ free_type (const char *name, const Type *t, int preserve)
 			have_ellipsis->label,
 			name, have_ellipsis->gen_name);
 	    fprintf(codefile, "}\n");
-	}
+        }
 	break;
     }
     case TSetOf:
@@ -179,6 +179,8 @@ void
 generate_type_free (const Symbol *s)
 {
     int preserve = preserve_type(s->name) ? TRUE : FALSE;
+    int deco_opt;
+    char *ft, *fn;
 
     fprintf (codefile, "void ASN1CALL\n"
 	     "free_%s(%s *data)\n"
@@ -186,6 +188,19 @@ generate_type_free (const Symbol *s)
 	     s->gen_name, s->gen_name);
 
     free_type ("data", s->type, preserve);
+    if (decorate_type(s->gen_name, &ft, &fn, &deco_opt)) {
+        if (deco_opt) {
+            fprintf(codefile, "if ((data)->%s) {\n", fn);
+            fprintf(codefile, "free_%s((data)->%s);\n", ft, fn);
+            fprintf(codefile, "free((data)->%s);\n", fn);
+            fprintf(codefile, "(data)->%s = NULL;\n", fn);
+            fprintf(codefile, "}\n");
+        } else {
+            fprintf(codefile, "free_%s(&(data)->%s);\n", ft, fn);
+        }
+        free(ft);
+        free(fn);
+    }
     fprintf (codefile, "}\n\n");
 }
 

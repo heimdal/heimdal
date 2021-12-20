@@ -144,6 +144,7 @@ int is_tagged_type(const Type *);
 
 int preserve_type(const char *);
 int seq_type(const char *);
+int decorate_type(const char *, char **, char **, int *);
 
 void generate_header_of_codefile(const char *);
 void close_codefile(void);

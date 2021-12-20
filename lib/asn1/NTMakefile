@@ -202,6 +202,7 @@ $(gen_files_krb5) $(OBJ)\krb5_asn1.hx: $(BINDIR)\asn1_compile.exe krb5.asn1 krb5
 	$(BINDIR)\asn1_compile.exe \
 		--template	\
 		--one-code-file	\
+		--decorate="Principal:PrincipalNameAttrs:nameattrs?" \
 		--option-file=$(SRCDIR)\krb5.opt \
 		$(SRCDIR)\krb5.asn1 krb5_asn1 \
 	|| ($(RM) $(OBJ)\krb5_asn1.h ; exit /b 1)
@@ -315,6 +316,7 @@ $(gen_files_test) $(OBJ)\test_asn1.hx: $(BINDIR)\asn1_compile.exe test.asn1
 	cd $(OBJ)
 	$(BINDIR)\asn1_compile.exe \
 		--template	\
+		--decorate='TESTDecorated:TESTuint32:version2?'	\
 		--one-code-file --sequence=TESTSeqOf \
 		$(SRCDIR)\test.asn1 test_asn1 \
 	|| ($(RM) $(OBJ)\test_asn1.h ; exit /b 1)
@@ -324,7 +326,8 @@ $(gen_files_test_template) $(OBJ)\test_template_asn1.hx: $(BINDIR)\asn1_compile.
 	cd $(OBJ)
 	$(BINDIR)\asn1_compile.exe \
 		--template	\
-		--one-code-file --template \
+		--decorate='TESTDecorated:TESTuint32:version2?'	\
+		--one-code-file \
 		--sequence=TESTSeqOf \
 		$(SRCDIR)\test.asn1 test_template_asn1 \
 	|| ($(RM) $(OBJ)\test_template_asn1.h ; exit /b 1)

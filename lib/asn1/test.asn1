@@ -286,4 +286,14 @@ TESTExtensible ::= SEQUENCE {
   extensions  SEQUENCE OF TESTExtension
 }
 
+TESTDecorated ::= SEQUENCE {
+  version     TESTuint32
+  -- gets decorated
+}
+
+TESTNotDecorated ::= SEQUENCE {
+  version     TESTuint32
+  -- should have the same encoding as TESTDecorated
+}
+
 END

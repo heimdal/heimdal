@@ -774,6 +774,7 @@ _asn1_decode(const struct asn1_template *t, unsigned flags,
                 return ret;
             break;
         }
+	case A1_OP_TYPE_DECORATE: break;
         case A1_OP_NAME: break;
 	case A1_OP_DEFVAL:
             tdefval = t;
@@ -1417,6 +1418,7 @@ _asn1_encode(const struct asn1_template *t, unsigned char *p, size_t len, const 
         }
         case A1_OP_NAME: break;
 	case A1_OP_DEFVAL: break;
+	case A1_OP_TYPE_DECORATE: break;
 	case A1_OP_TYPE:
 	case A1_OP_TYPE_EXTERN: {
 	    size_t newsize;
@@ -1992,6 +1994,7 @@ _asn1_length(const struct asn1_template *t, const void *data)
         }
         case A1_OP_NAME: break;
 	case A1_OP_DEFVAL: break;
+	case A1_OP_TYPE_DECORATE: break;
 	case A1_OP_TYPE:
 	case A1_OP_TYPE_EXTERN: {
 	    const void *el = DPOC(data, t->offset);
@@ -2253,6 +2256,7 @@ _asn1_free(const struct asn1_template *t, void *data)
         }
         case A1_OP_NAME: break;
 	case A1_OP_DEFVAL: break;
+	case A1_OP_TYPE_DECORATE:
 	case A1_OP_TYPE:
 	case A1_OP_TYPE_EXTERN: {
 	    void *el = DPO(data, t->offset);
@@ -2264,7 +2268,7 @@ _asn1_free(const struct asn1_template *t, void *data)
 		el = *pel;
 	    }
 
-	    if ((t->tt & A1_OP_MASK) == A1_OP_TYPE) {
+	    if ((t->tt & A1_OP_MASK) == A1_OP_TYPE || (t->tt & A1_OP_MASK) == A1_OP_TYPE_DECORATE) {
 		_asn1_free(t->ptr, el);
 	    } else {
 		const struct asn1_type_func *f = t->ptr;
@@ -2541,6 +2545,7 @@ _asn1_print(const struct asn1_template *t,
             break;
         case A1_OP_NAME: break;
 	case A1_OP_DEFVAL: break;
+	case A1_OP_TYPE_DECORATE: break; /* We could probably print this though */
 	case A1_OP_TYPE:
 	case A1_OP_TYPE_EXTERN: {
 	    const void *el = DPOC(data, t->offset);
@@ -2858,6 +2863,7 @@ _asn1_copy(const struct asn1_template *t, const void *from, void *to)
         }
         case A1_OP_NAME: break;
 	case A1_OP_DEFVAL: break;
+	case A1_OP_TYPE_DECORATE:
 	case A1_OP_TYPE:
 	case A1_OP_TYPE_EXTERN: {
 	    const void *fel = DPOC(from, t->offset);

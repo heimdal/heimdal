@@ -1063,6 +1063,8 @@ template_members(struct templatehead *temp,
 	Member *m;
         size_t i = 0, typeididx = 0, opentypeidx = 0;
         int is_array_of_open_type = 0;
+        int deco_opt;
+        char *ft, *fn;
 
         if (isstruct && t->actual_parameter)
             get_open_type_defn_fields(t, &typeidmember, &opentypemember,
@@ -1102,6 +1104,17 @@ template_members(struct templatehead *temp,
                                typeidfield, opentypefield, opentypemember,
                                is_array_of_open_type);
 
+        if (decorate_type(basetype, &ft, &fn, &deco_opt)) {
+            char *poffset2;
+
+            poffset2 = partial_offset(basetype, fn, 1, isstruct);
+	    add_line_pointer(temp, ft, poffset2, "A1_OP_TYPE_DECORATE %s",
+			     deco_opt ? "|A1_FLAG_OPTIONAL" : "");
+            free(poffset2);
+            free(ft);
+            free(fn);
+        }
+
         if (isstruct)
             template_names(temp, basetype, t);
 	break;
@@ -1114,6 +1127,8 @@ template_members(struct templatehead *temp,
 	Member *m;
         size_t i = 0, typeididx = 0, opentypeidx = 0;
         int is_array_of_open_type = 0;
+        int deco_opt;
+        char *ft, *fn;
 
         if (isstruct && t->actual_parameter)
             get_open_type_defn_fields(t, &typeidmember, &opentypemember,
@@ -1152,6 +1167,17 @@ template_members(struct templatehead *temp,
             template_open_type(temp, basetype, t, typeididx, opentypeidx,
                                typeidfield, opentypefield, opentypemember,
                                is_array_of_open_type);
+
+        if (decorate_type(basetype, &ft, &fn, &deco_opt)) {
+            char *poffset2;
+
+            poffset2 = partial_offset(basetype, fn, 1, isstruct);
+	    add_line_pointer(temp, ft, poffset2, "A1_OP_TYPE_DECORATE %s",
+			     deco_opt ? "|A1_FLAG_OPTIONAL" : "");
+            free(poffset2);
+            free(ft);
+            free(fn);
+        }
 
         if (isstruct)
             template_names(temp, basetype, t);

@@ -1355,6 +1355,8 @@ define_type(int level, const char *name, const char *basename, Type *pt, Type *t
     case TSet:
     case TSequence: {
 	Member *m;
+        char *ft, *fn;
+        int deco_opt;
 
 	getnewbasename(&newbasename, typedefp || level == 0, basename, name);
 
@@ -1394,6 +1396,13 @@ define_type(int level, const char *name, const char *basename, Type *pt, Type *t
         if (t->actual_parameter && t->actual_parameter->objects) {
             fprintf(jsonfile, ",\"opentype\":");
             define_open_type(level, newbasename, name, basename, t, t);
+        }
+        if (decorate_type(newbasename, &ft, &fn, &deco_opt)) {
+	    space(level + 1);
+            fprintf(headerfile, "%s %s%s;\n", ft, deco_opt ? "*" : "", fn);
+            fprintf(jsonfile, ",\"decorate\":{\"type\":\"%s\",\"name\":\"%s\", \"optional\":%s}", ft, fn, deco_opt ? "true" : "false");
+            free(ft);
+            free(fn);
         }
 	space(level);
 	fprintf (headerfile, "} %s;\n", name);

@@ -48,6 +48,7 @@
 .Op Fl Fl support-ber
 .Op Fl Fl preserve-binary=TYPE-NAME
 .Op Fl Fl sequence=TYPE-NAME
+.Op Fl Fl decorate=TYPE-NAME:FIELD-TYPE:field-name[?]
 .Op Fl Fl one-code-file
 .Op Fl Fl gen-name=NAME
 .Op Fl Fl option-file=FILE
@@ -109,6 +110,21 @@ Generate add/remove functions for
 and
 .Sq SEQUENCE OF
 types.
+.It Fl Fl decorate=TYPE-NAME:FIELD-TYPE:field-name[?]
+Add to the
+.Va TYPE-NAME
+SET or SEQUENCE type a field of the given
+.Va FIELD-TYPE
+and
+.Va field-name ,
+but do not encode or decode this field.
+If the
+.Va field-name
+ends in a question mark, then treat the field as OPTIONAL for
+the purposes of copy/free function stubs.
+This is useful for adding fields to existing types that can be used
+for internal bookkeeping but which do not affect interoperability
+because they are not encoded.
 .It Fl Fl one-code-file
 Generate a single source code file.
 Otherwise a separate code file will be generated for every type.

@@ -229,6 +229,9 @@ void
 generate_type_copy (const Symbol *s)
 {
   int preserve = preserve_type(s->name) ? TRUE : FALSE;
+  int save_used_fail = used_fail;
+  int deco_opt;
+  char *ft, *fn;
 
   used_fail = 0;
 
@@ -238,6 +241,19 @@ generate_type_copy (const Symbol *s)
 	   "memset(to, 0, sizeof(*to));\n",
 	   s->gen_name, s->gen_name, s->gen_name);
   copy_type ("from", "to", s->type, preserve);
+  if (decorate_type(s->gen_name, &ft, &fn, &deco_opt)) {
+      if (deco_opt) {
+          fprintf(codefile, "if (from->%s) {\n", fn);
+          fprintf(codefile, "(to)->%s = malloc(sizeof(*(to)->%s));\n", fn, fn);
+          fprintf(codefile, "if (copy_%s((from)->%s, (to)->%s)) goto fail;\n", ft, fn, fn);
+          fprintf(codefile, "}\n");
+      } else {
+          fprintf(codefile, "if (copy_%s(&(from)->%s, &(to)->%s)) goto fail;\n", ft, fn, fn);
+      }
+      used_fail++;
+      free(ft);
+      free(fn);
+  }
   fprintf (codefile, "return 0;\n");
 
   if (used_fail)
@@ -248,5 +264,6 @@ generate_type_copy (const Symbol *s)
 
   fprintf(codefile,
 	  "}\n\n");
+  used_fail = save_used_fail;
 }
 

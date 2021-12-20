@@ -390,7 +390,10 @@ crmf_template_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/crmf.asn1 $(srcdir)/cr
 	$(ASN1_COMPILE) --one-code-file --template --option-file=$(srcdir)/crmf.opt $(srcdir)/crmf.asn1 crmf_template_asn1 || (rm -f crmf_template_asn1_files ; exit 1)
 
 krb5_template_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/krb5.asn1 $(srcdir)/krb5.opt
-	$(ASN1_COMPILE) --one-code-file --template --option-file=$(srcdir)/krb5.opt $(srcdir)/krb5.asn1 krb5_template_asn1 || (rm -f krb5_template_asn1_files ; exit 1)
+	$(ASN1_COMPILE) --one-code-file --template			\
+			--option-file=$(srcdir)/krb5.opt		\
+			--decorate='Principal:PrincipalNameAttrs:nameattrs?'	\
+			$(srcdir)/krb5.asn1 krb5_template_asn1 || (rm -f krb5_template_asn1_files ; exit 1)
 
 ocsp_template_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/ocsp.asn1
 	$(ASN1_COMPILE) --one-code-file --template --option-file=$(srcdir)/ocsp.opt $(srcdir)/ocsp.asn1 ocsp_template_asn1 || (rm -f ocsp_template_asn1_files ; exit 1)
@@ -429,7 +432,10 @@ crmf_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/crmf.asn1 $(srcdir)/crmf.opt
 	$(ASN1_COMPILE) --one-code-file $(TEMPLATE_OPTION) --option-file=$(srcdir)/crmf.opt $(srcdir)/crmf.asn1 crmf_asn1 || (rm -f crmf_asn1_files ; exit 1)
 
 krb5_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/krb5.asn1 $(srcdir)/krb5.opt
-	$(ASN1_COMPILE) --one-code-file $(TEMPLATE_OPTION) --option-file=$(srcdir)/krb5.opt $(srcdir)/krb5.asn1 krb5_asn1 || (rm -f krb5_asn1_files ; exit 1)
+	$(ASN1_COMPILE) --one-code-file $(TEMPLATE_OPTION)		\
+			--option-file=$(srcdir)/krb5.opt		\
+			--decorate='Principal:PrincipalNameAttrs:nameattrs?'	\
+			$(srcdir)/krb5.asn1 krb5_asn1 || (rm -f krb5_asn1_files ; exit 1)
 
 ocsp_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/ocsp.asn1
 	$(ASN1_COMPILE) --one-code-file $(TEMPLATE_OPTION) --option-file=$(srcdir)/ocsp.opt $(srcdir)/ocsp.asn1 ocsp_asn1 || (rm -f ocsp_asn1_files ; exit 1)
@@ -462,10 +468,17 @@ x690sample_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/x690sample.asn1
 	$(ASN1_COMPILE) --one-code-file $(srcdir)/x690sample.asn1 x690sample_asn1 || (rm -f x690sample_asn1_files ; exit 1)
 
 test_template_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/test.asn1
-	$(ASN1_COMPILE) --one-code-file --template --sequence=TESTSeqOf $(srcdir)/test.asn1 test_template_asn1 || (rm -f test_template_asn1_files ; exit 1)
+	$(ASN1_COMPILE) --one-code-file					\
+			--template					\
+			--sequence=TESTSeqOf				\
+			--decorate='TESTDecorated:TESTuint32:version2?'	\
+			$(srcdir)/test.asn1 test_template_asn1 || (rm -f test_template_asn1_files ; exit 1)
 
 test_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/test.asn1
-	$(ASN1_COMPILE) --one-code-file --sequence=TESTSeqOf $(srcdir)/test.asn1 test_asn1 || (rm -f test_asn1_files ; exit 1)
+	$(ASN1_COMPILE) --one-code-file					\
+			--decorate='TESTDecorated:TESTuint32:version2?'	\
+			--sequence=TESTSeqOf				\
+			$(srcdir)/test.asn1 test_asn1 || (rm -f test_asn1_files ; exit 1)
 
 
 EXTRA_DIST =		\

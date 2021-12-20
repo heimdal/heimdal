@@ -843,7 +843,23 @@ In recent times the following features have been added:
 
 ## Compiler Usage
 
-First, see the manual page `asn1_compile.1`:
+The various options for the Heimdal ASN.1 compiler are described in its manual
+page, which is included below.
+
+The `--option-file=FILE` option is particularly useful, as it allows additional
+compiler options to be read from a file.
+
+The `--preserve-binary=TYPE-NAME` option is critical for signature validation
+as it causes the decoder to save the encoding of the given type so that
+signature validation code can easily find the original encoding and thus avoid
+having to re-encode or resort to other hacks.  E.g., we use this for preserving
+the original encoding of the `tbsCertificate` field of `Certificate`.
+
+The `--sequence=TYPE-NAME` causes the compiler to generate additional utility
+functions for adding or removing items from the named type when it is a
+`SEQUENCE OF` or `SET OF` type.
+
+See the manual page `asn1_compile.1`:
 
 ```
 ASN1_COMPILE(1)       HEIMDAL General Commands Manual          ASN1_COMPILE(1)
@@ -856,6 +872,7 @@ SYNOPSIS
                   [--encode-rfc1510-bit-string] [--decode-dce-ber]
                   [--support-ber] [--preserve-binary=TYPE-NAME]
                   [--sequence=TYPE-NAME] [--one-code-file] [--gen-name=NAME]
+                  [--decorate=TYPE-NAME:FIELD-TYPE:field-name[?]]
                   [--option-file=FILE] [--original-order] [--no-parse-units]
                   [--type-file=C-HEADER-FILE] [--version] [--help]
                   [FILE.asn1 [NAME]]
@@ -870,7 +887,7 @@ DESCRIPTION
              Use the “template” backend instead of the “codegen” backend
              (which is the default backend).  The template backend generates
              “templates” which are akin to bytecode, and which are interpreted
-             at run-time.  The codegen backend generates C code for all func‐
+             at run-time.  The codegen backend generates C code for all func-
              tions directly, with no template interpretation.  The template
              backend scales better than the codegen backend because as we add
              support for more encoding rules the templates stay mostly the
@@ -897,12 +914,21 @@ DESCRIPTION
      --preserve-binary=TYPE-NAME
              Generate ‘_save’ fields in structs to preserve the original
              encoding of some sub-value.  This is useful for cryptographic
-             applications to avoid having to re-encode values to check signa‐
+             applications to avoid having to re-encode values to check signa-
              tures, etc.
 
      --sequence=TYPE-NAME
              Generate add/remove functions for ‘SET OF’ and ‘SEQUENCE OF’
              types.
+
+     --decorate=TYPE-NAME:FIELD-TYPE:field-name[?]
+             Add to the TYPE-NAME SET or SEQUENCE type a field of the given
+             FIELD-TYPE and field-name, but do not encode or decode this
+             field.  If the field-name ends in a question mark, then treat the
+             field as OPTIONAL for the purposes of copy/free function stubs.
+             This is useful for adding fields to existing types that can be
+             used for internal bookkeeping but which do not affect interoper-
+             ability because they are not encoded.
 
      --one-code-file
              Generate a single source code file.  Otherwise a separate code
@@ -916,7 +942,7 @@ DESCRIPTION
 
      --original-order
              Attempt to preserve the original order of type definition in the
-             ASN.1 module.  By default the compiler generates types in a topo‐
+             ASN.1 module.  By default the compiler generates types in a topo-
              logical sort order.
 
      --no-parse-units
@@ -1065,9 +1091,9 @@ SYNOPSIS
 		[-l -v | --version] [-l -h | --help] [FILE [TypeName...]]
 
 DESCRIPTION
-     asn1_print Dumps ASN.1 DER-encoded values.  If one or more TypeName argu‐
-     ments are given, then asn1_print will print the value in a JSON-like for‐
-     mat using its knowledge of the ASN.1 modules defining those types, stop‐
+     asn1_print Dumps ASN.1 DER-encoded values.  If one or more TypeName argu-
+     ments are given, then asn1_print will print the value in a JSON-like for-
+     mat using its knowledge of the ASN.1 modules defining those types, stop-
      ping at the first type for which it can successfully decode the value.
      If TypeNames are given, they must be the names of ASN.1 types exported by
      an ASN.1 modules that are compiled into asn1_print.  Use the

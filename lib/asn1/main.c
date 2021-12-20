@@ -39,6 +39,7 @@ extern FILE *yyin;
 
 static getarg_strings preserve;
 static getarg_strings seq;
+static getarg_strings decorate;
 
 int
 preserve_type(const char *p)
@@ -53,10 +54,46 @@ preserve_type(const char *p)
 int
 seq_type(const char *p)
 {
-    int i;
+    size_t i;
+
     for (i = 0; i < seq.num_strings; i++)
 	if (strcmp(seq.strings[i], p) == 0)
 	    return 1;
+    return 0;
+}
+
+int
+decorate_type(const char *p, char **field_type, char **field_name, int *opt)
+{
+    size_t plen = strlen(p);
+    size_t i;
+
+    *field_type = NULL;
+    *field_name = NULL;
+    *opt = 0;
+
+    for (i = 0; i < decorate.num_strings; i++) {
+        const char *r;
+        char *q;
+
+	if (strncmp(decorate.strings[i], p, plen) != 0)
+            continue;
+	if (decorate.strings[i][plen] != ':')
+            errx(1, "--decorate argument missing field type");
+
+        p = &decorate.strings[i][plen + 1];
+        if ((r = strchr(p, ':')) == NULL)
+            errx(1, "--decorate argument missing field name");
+        r++;
+        *field_type = estrdup(p);
+        *(strchr(*field_type, ':')) = '\0';
+        *field_name = estrdup(r);
+        if ((q = strchr(*field_name, '?'))) {
+            *q = '\0';
+            *opt = 1;
+        }
+        return 1;
+    }
     return 0;
 }
 
@@ -113,6 +150,8 @@ struct getargs args[] = {
             "verification)", "TYPE-NAME" },
     { "sequence", 0, arg_strings, &seq,
         "Generate add/remove functions for SEQUENCE OF types", "TYPE-NAME" },
+    { "decorate", 0, arg_strings, &decorate,
+        "Generate private field for SEQUENCE/SET type", "TYPE-NAME:FIELD_TYPE:field_name[?]" },
     { "one-code-file", 0, arg_flag, &one_code_file, NULL, NULL },
     { "gen-name", 0, arg_string, &name,
         "Name of generated module", "NAME" },

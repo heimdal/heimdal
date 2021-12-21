@@ -2032,6 +2032,59 @@ add_enc_pa_rep(astgs_request_t r)
 			   KRB5_PADATA_FX_FAST, NULL, 0);
 }
 
+static krb5_error_code
+add_supported_enctypes(astgs_request_t r)
+{
+    krb5_error_code ret;
+    uint32_t *supported_enctypes = NULL;
+    uint32_t bit = 1;
+    Key *key = NULL;
+
+    static const krb5_enctype enctypes[] = {
+	ETYPE_DES_CBC_CRC,
+	ETYPE_DES_CBC_MD5,
+	ETYPE_ARCFOUR_HMAC_MD5,
+	ETYPE_AES128_CTS_HMAC_SHA1_96,
+	ETYPE_AES256_CTS_HMAC_SHA1_96,
+	ETYPE_NULL
+    };
+    const krb5_enctype *p = enctypes;
+
+    if (!r->ek.encrypted_pa_data) {
+	ALLOC(r->ek.encrypted_pa_data);
+	if (!r->ek.encrypted_pa_data)
+	    return ENOMEM;
+    }
+
+    supported_enctypes = malloc(sizeof *supported_enctypes);
+    if (!supported_enctypes)
+	return ENOMEM;
+
+    /* Indicate support for FAST */
+    *supported_enctypes = 0x00010000;
+
+    for (; *p != (krb5_enctype)ETYPE_NULL; ++p, bit <<= 1) {
+	if (krb5_enctype_valid(r->context, *p) != 0 &&
+	    !_kdc_is_weak_exception(r->server->entry.principal, *p))
+	    continue;
+
+	/*
+	 * If the encryption type is enabled and we have a key for it, indicate
+	 * that we support it by setting the respective bit.
+	 */
+	if (hdb_enctype2key(r->context,
+			    &r->server->entry,
+			    NULL,
+			    *p,
+			    &key) == 0)
+	    *supported_enctypes |= bit;
+    }
+
+    return krb5_padata_add(r->context, r->ek.encrypted_pa_data,
+			   KRB5_PADATA_SUPPORTED_ETYPES,
+			   supported_enctypes, sizeof *supported_enctypes);
+}
+
 /*
  * Add an authorization data element indicating that a synthetic
  * principal was used, so that the TGS does not accidentally
@@ -2740,6 +2793,22 @@ _kdc_as_rep(astgs_request_t r)
 	if (ret) {
 	    msg = krb5_get_error_message(r->context, ret);
 	    _kdc_r_log(r, 4, "add_enc_pa_rep failed: %s: %d", msg, ret);
+	    krb5_free_error_message(r->context, msg);
+	    goto out;
+	}
+    }
+
+    /*
+     * Add SUPPORTED_ENCTYPES if the canonicalize bit is set. Until
+     * support is added for KerbSupportedEncryptionTypes and we can
+     * indicate what encryption types a given principal supports, we
+     * do this only for an AS-REQ exchange with the TGS.
+     */
+    if (f.canonicalize && is_tgs) {
+	ret = add_supported_enctypes(r);
+	if (ret) {
+	    msg = krb5_get_error_message(r->context, ret);
+	    _kdc_r_log(r, 4, "add_supported_enctypes failed: %s: %d", msg, ret);
 	    krb5_free_error_message(r->context, msg);
 	    goto out;
 	}

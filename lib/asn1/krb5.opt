@@ -5,3 +5,4 @@
 --sequence=ETYPE-INFO
 --sequence=ETYPE-INFO2
 --preserve-binary=KDC-REQ-BODY
+--decorate=Principal:PrincipalNameAttrs:nameattrs?

@@ -202,7 +202,6 @@ $(gen_files_krb5) $(OBJ)\krb5_asn1.hx: $(BINDIR)\asn1_compile.exe krb5.asn1 krb5
 	$(BINDIR)\asn1_compile.exe \
 		--template	\
 		--one-code-file	\
-		--decorate="Principal:PrincipalNameAttrs:nameattrs?" \
 		--option-file=$(SRCDIR)\krb5.opt \
 		$(SRCDIR)\krb5.asn1 krb5_asn1 \
 	|| ($(RM) $(OBJ)\krb5_asn1.h ; exit /b 1)

@@ -747,6 +747,7 @@ out:
 static krb5_error_code
 build_upn_dns_info(krb5_context context,
 		   krb5_const_principal upn_princ,
+		   krb5_boolean upn_defaulted,
 		   krb5_const_principal canon_princ,
 		   const krb5_data *sid,
 		   krb5_data *upn_dns_info)
@@ -804,7 +805,7 @@ build_upn_dns_info(krb5_context context,
 	goto out;
 
     flags = 0;
-    if (upn_princ)
+    if (upn_princ && upn_defaulted)
 	flags |= PAC_EXTRA_LOGON_INFO_FLAGS_UPN_DEFAULTED;
     if (canon_princ || sid)
 	flags |= PAC_EXTRA_LOGON_INFO_FLAGS_HAS_SAM_NAME_AND_SID;
@@ -1498,8 +1499,13 @@ _krb5_pac_sign(krb5_context context,
     if (ret == 0)
         ret = pac_checksum(context, priv_key, &priv_cksumtype, &priv_size);
 
-    if (ret == 0 && (upn_princ || canon_princ))
-	ret = build_upn_dns_info(context, upn_princ, canon_princ, NULL, &upn_dns_info);
+    if (ret == 0 && (upn_princ || canon_princ)) {
+	krb5_boolean upn_defaulted =
+	    upn_princ && krb5_principal_compare(context, principal, upn_princ);
+
+	ret = build_upn_dns_info(context, upn_princ, upn_defaulted,
+				 canon_princ, NULL, &upn_dns_info);
+    }
 
     if (ret == 0 && pac_attributes)
 	ret = build_attributes_info(context, *pac_attributes, &attributes_info);

@@ -812,6 +812,9 @@ tgs_make_reply(astgs_request_t r,
      * is implementation dependent.
      */
     if (mspac && !et.flags.anonymous) {
+	krb5_boolean is_tgs =
+	    krb5_principal_is_krbtgt(r->context, server->entry.principal);
+
 	if (r->client_princ) {
 	    char *cpn;
 
@@ -821,10 +824,14 @@ tgs_make_reply(astgs_request_t r,
 	    krb5_xfree(cpn);
 	}
 
-	/* The PAC should be the last change to the ticket. */
+	/*
+	 * The PAC should be the last change to the ticket. PAC attributes
+	 * are not included for service tickets.
+	 */
 	ret = _krb5_kdc_pac_sign_ticket(r->context, mspac, tgt_name, serverkey,
 					krbtgtkey, rodc_id, NULL, r->client_princ,
-					add_ticket_sig, &et, &r->pac_attributes);
+					add_ticket_sig, &et,
+					is_tgs ? &r->pac_attributes : NULL);
 	if (ret)
 	    goto out;
     }

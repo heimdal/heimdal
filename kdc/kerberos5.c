@@ -1891,7 +1891,8 @@ get_pac_attributes(krb5_context context, KDC_REQ *req)
  */
 
 static krb5_error_code
-generate_pac(astgs_request_t r, const Key *skey, const Key *tkey)
+generate_pac(astgs_request_t r, const Key *skey, const Key *tkey,
+	     krb5_boolean is_tgs)
 {
     krb5_error_code ret;
     krb5_pac p = NULL;
@@ -1962,7 +1963,7 @@ generate_pac(astgs_request_t r, const Key *skey, const Key *tkey)
 			 rodc_id,
 			 NULL, /* UPN */
 			 canon_princ,
-			 &r->pac_attributes,
+			 is_tgs ? &r->pac_attributes : NULL,
 			 &data);
     krb5_free_principal(r->context, client);
     krb5_pac_free(r->context, p);
@@ -2726,7 +2727,7 @@ _kdc_as_rep(astgs_request_t r)
 
     /* Add the PAC */
     if (!r->et.flags.anonymous) {
-	generate_pac(r, skey, krbtgt_key);
+	generate_pac(r, skey, krbtgt_key, is_tgs);
     }
 
     if (r->client->entry.flags.synthetic) {

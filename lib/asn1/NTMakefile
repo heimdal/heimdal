@@ -316,7 +316,7 @@ $(gen_files_test) $(OBJ)\test_asn1.hx: $(BINDIR)\asn1_compile.exe test.asn1
 	cd $(OBJ)
 	$(BINDIR)\asn1_compile.exe \
 		--template	\
-		--decorate='TESTDecorated:TESTuint32:version2?'	\
+		--decorate="TESTDecorated:TESTuint32:version2?"	\
 		--one-code-file --sequence=TESTSeqOf \
 		$(SRCDIR)\test.asn1 test_asn1 \
 	|| ($(RM) $(OBJ)\test_asn1.h ; exit /b 1)
@@ -326,7 +326,7 @@ $(gen_files_test_template) $(OBJ)\test_template_asn1.hx: $(BINDIR)\asn1_compile.
 	cd $(OBJ)
 	$(BINDIR)\asn1_compile.exe \
 		--template	\
-		--decorate='TESTDecorated:TESTuint32:version2?'	\
+		--decorate="TESTDecorated:TESTuint32:version2?"	\
 		--one-code-file \
 		--sequence=TESTSeqOf \
 		$(SRCDIR)\test.asn1 test_template_asn1 \

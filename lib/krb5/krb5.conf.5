@@ -518,9 +518,17 @@ If this flag is true, then all application protocol authentication
 requests will be flagged to indicate that the application supports
 channel bindings when operating over a secure channel.
 The default value is false.
+.It Li check_pac = Va boolean
+If this flag is true and a Windows Privilege Attribute Certificate (PAC)
+is present in the ticket authorization data, then
+.Xr krb5_rd_req 3
+will validate the PAC before returning success. The default value is true.
 .It Li report_canonical_client_name = Va boolean
 If this flag is true, then the canonical client name from the PAC will
 be used instead of the client name in the ticket. The default value is false.
+Note that setting it to true implicitly sets
+.Va check_pac
+to true.
 .El
 .It Li [domain_realm]
 This is a list of mappings from DNS domain to Kerberos realm.

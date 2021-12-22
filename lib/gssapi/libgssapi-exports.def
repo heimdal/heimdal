@@ -1,5 +1,6 @@
 EXPORTS
 	__gss_c_nt_anonymous_oid_desc	DATA
+	__gss_c_nt_composite_export_oid_desc	DATA
 	__gss_c_nt_export_name_oid_desc	DATA
 	__gss_c_nt_hostbased_service_oid_desc	DATA
 	__gss_c_nt_hostbased_service_x_oid_desc	DATA

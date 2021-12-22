@@ -59,6 +59,7 @@ krb5src = \
 	krb5/inquire_mechs_for_name.c \
 	krb5/inquire_names_for_mech.c \
 	krb5/inquire_sec_context_by_oid.c \
+	krb5/name_attrs.c \
 	krb5/pname_to_uid.c \
 	krb5/process_context_token.c \
 	krb5/prf.c \
@@ -380,6 +381,8 @@ test_ntlm_LDADD = \
 LDADD = libgssapi.la \
 	$(top_builddir)/lib/krb5/libkrb5.la \
 	$(LIB_roken)
+
+test_names_LDADD = $(LDADD) $(top_builddir)/lib/asn1/libasn1.la
 
 # gss
 

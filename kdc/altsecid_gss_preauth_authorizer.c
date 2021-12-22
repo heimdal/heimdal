@@ -335,15 +335,17 @@ ad_lookup(krb5_context context,
     if (m0 == NULL)
         goto out;
 
-    values = ldap_get_values_len(server->ld, m0, "objectSid");
-    if (values == NULL ||
-	ldap_count_values_len(values) == 0)
-	goto out;
+    if (requestor_sid) {
+	values = ldap_get_values_len(server->ld, m0, "objectSid");
+	if (values == NULL ||
+	    ldap_count_values_len(values) == 0)
+	    goto out;
 
-    if (krb5_data_copy(requestor_sid, values[0]->bv_val, values[0]->bv_len) != 0)
-	goto enomem;
+	if (krb5_data_copy(requestor_sid, values[0]->bv_val, values[0]->bv_len) != 0)
+	    goto enomem;
 
-    ldap_value_free_len(values);
+	ldap_value_free_len(values);
+    }
 
     values = ldap_get_values_len(server->ld, m0, "sAMAccountName");
     if (values == NULL ||
@@ -381,11 +383,14 @@ authorize(void *ctx,
           krb5_principal *mapped_name,
 	  krb5_data *requestor_sid)
 {
+    const KDC_REQ_BODY *b = &req->req_body;
     struct altsecid_gss_preauth_authorizer_context *c = ctx;
     struct ad_server_tuple *server = NULL;
     krb5_error_code ret;
     krb5_const_realm realm = krb5_principal_get_realm(context, client->entry.principal);
     krb5_boolean reconnect_p = FALSE;
+    krb5_principal server_princ;
+    krb5_boolean is_tgs;
 
     *authorized = FALSE;
     *mapped_name = NULL;
@@ -394,6 +399,14 @@ authorize(void *ctx,
     if (!krb5_principal_is_federated(context, client->entry.principal) ||
         (ret_flags & GSS_C_ANON_FLAG))
         return KRB5_PLUGIN_NO_HANDLE;
+
+    ret = _krb5_principalname2krb5_principal(context, &server_princ,
+					     *b->sname, b->realm);
+    if (ret)
+	return ret;
+
+    is_tgs = krb5_principal_is_krbtgt(context, server_princ);
+    krb5_free_principal(context, server_princ);
 
     HEIM_TAILQ_FOREACH(server, &c->servers, link) {
         if (strcmp(realm, server->realm) == 0)
@@ -423,7 +436,7 @@ authorize(void *ctx,
 
         ret = ad_lookup(context, realm, server,
                         initiator_name, mech_type,
-                        mapped_name, requestor_sid);
+                        mapped_name, is_tgs ? requestor_sid : NULL);
         if (ret == KRB5KDC_ERR_SVC_UNAVAILABLE) {
             ldap_unbind_ext_s(server->ld, NULL, NULL);
             server->ld = NULL;
@@ -444,6 +457,9 @@ finalize_pac(void *ctx,
 	     krb5_pac mspac,
 	     krb5_data *requestor_sid)
 {
+    if (requestor_sid->length == 0)
+	return 0;
+
     return krb5_pac_add_buffer(context, mspac,
 			       PAC_REQUESTOR_SID, requestor_sid);
 }

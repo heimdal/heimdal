@@ -1902,6 +1902,8 @@ generate_pac(astgs_request_t r, const Key *skey, const Key *tkey,
     krb5_const_principal canon_princ = NULL;
 
     r->pac_attributes = get_pac_attributes(r->context, &r->req);
+    _kdc_audit_addkv((kdc_request_t)r, 0, "pac_attributes", "%lx",
+		     (long)r->pac_attributes);
 
     /*
      * When a PA mech replaces the reply key, the PAC may include the

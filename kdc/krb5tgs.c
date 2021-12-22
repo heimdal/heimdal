@@ -90,6 +90,7 @@ _kdc_check_pac(krb5_context context,
 	       krb5_boolean *kdc_issued,
 	       krb5_pac *ppac,
 	       krb5_principal *pac_canon_name,
+	       krb5_boolean *pac_attributes_present,
 	       uint64_t *pac_attributes)
 {
     krb5_pac pac = NULL;
@@ -100,6 +101,10 @@ _kdc_check_pac(krb5_context context,
     *ppac = NULL;
     if (pac_canon_name)
 	*pac_canon_name = NULL;
+    if (pac_attributes) {
+	*pac_attributes_present = FALSE;
+	*pac_attributes = 0;
+    }
 
     ret = _krb5_kdc_pac_ticket_parse(context, tkt, &signedticket, &pac);
     if (ret)
@@ -130,8 +135,10 @@ _kdc_check_pac(krb5_context context,
 		return ret;
 	    }
 	}
-	if (pac_attributes)
-	    _krb5_pac_get_attributes_info(context, pac, pac_attributes);
+	if (pac_attributes) {
+	    *pac_attributes_present =
+		(_krb5_pac_get_attributes_info(context, pac, pac_attributes) == 0);
+	}
     } else if (ret == KRB5_PLUGIN_NO_HANDLE) {
 	/*
 	 * We can't verify the KDC signatures if the ticket was issued by
@@ -153,8 +160,10 @@ _kdc_check_pac(krb5_context context,
 		krb5_pac_free(context, pac);
 		return ret;
 	    }
-	    if (pac_attributes)
-		_krb5_pac_get_attributes_info(context, pac, pac_attributes);
+	    if (pac_attributes) {
+		*pac_attributes_present =
+		    (_krb5_pac_get_attributes_info(context, pac, pac_attributes) == 0);
+	    }
 	}
 
 	/* Discard the PAC if the plugin didn't handle it */
@@ -805,6 +814,15 @@ tgs_make_reply(astgs_request_t r,
 	is_weak = 1;
     }
 
+    if (r->client_princ) {
+	char *cpn;
+
+	krb5_unparse_name(r->context, r->client_princ, &cpn);
+	_kdc_audit_addkv((kdc_request_t)r, 0, "canon_client_name", "%s",
+			 cpn ? cpn : "<unknown>");
+	krb5_xfree(cpn);
+    }
+
     /*
      * For anonymous tickets, we should filter out positive authorization data
      * that could reveal the client's identity, and return a policy error for
@@ -815,25 +833,25 @@ tgs_make_reply(astgs_request_t r,
 	krb5_boolean is_tgs =
 	    krb5_principal_is_krbtgt(r->context, server->entry.principal);
 
-	if (r->client_princ) {
-	    char *cpn;
-
-	    krb5_unparse_name(r->context, r->client_princ, &cpn);
-	    _kdc_audit_addkv((kdc_request_t)r, 0, "canon_client_name", "%s",
-			     cpn ? cpn : "<unknown>");
-	    krb5_xfree(cpn);
-	}
+	if (r->pac_attributes_present)
+	    _kdc_audit_addkv((kdc_request_t)r, 0, "pac_attributes", "%lx",
+		(long)r->pac_attributes);
 
 	/*
-	 * The PAC should be the last change to the ticket. PAC attributes
-	 * are not included for service tickets.
+	 * PACs are included when issuing TGTs, if there is no PAC_ATTRIBUTES
+	 * buffer (legacy behavior) or if the attributes buffer indicates the
+	 * AS client requested one.
 	 */
-	ret = _krb5_kdc_pac_sign_ticket(r->context, mspac, tgt_name, serverkey,
-					krbtgtkey, rodc_id, NULL, r->client_princ,
-					add_ticket_sig, &et,
-					is_tgs ? &r->pac_attributes : NULL);
-	if (ret)
-	    goto out;
+	if (is_tgs ||
+	    !r->pac_attributes_present ||
+	    (r->pac_attributes & (KRB5_PAC_WAS_REQUESTED | KRB5_PAC_WAS_GIVEN_IMPLICITLY))) {
+	    ret = _krb5_kdc_pac_sign_ticket(r->context, mspac, tgt_name, serverkey,
+					    krbtgtkey, rodc_id, NULL, r->client_princ,
+					    add_ticket_sig, &et,
+					    is_tgs ? &r->pac_attributes : NULL);
+	    if (ret)
+		goto out;
+	}
     }
 
     /* It is somewhat unclear where the etype in the following
@@ -1471,6 +1489,7 @@ tgs_build_reply(astgs_request_t priv,
     krb5_kvno kvno;
     krb5_pac mspac = NULL;
     krb5_pac user2user_pac = NULL;
+    krb5_boolean pac_attributes_present = FALSE;
     uint16_t rodc_id;
     krb5_boolean add_ticket_sig = FALSE;
     const char *tgt_realm = /* Realm of TGT issuer */
@@ -1854,7 +1873,8 @@ server_lookup:
 	    ret = _kdc_check_pac(context, config, user2user_princ, NULL,
 				 user2user_client, user2user_krbtgt, user2user_krbtgt, user2user_krbtgt,
 				 &uukey->key, &priv->ticket_key->key, &adtkt,
-				 &user2user_kdc_issued, &user2user_pac, NULL, NULL);
+				 &user2user_kdc_issued, &user2user_pac,
+				 NULL, NULL, NULL);
 	    _kdc_free_ent(context, user2user_client);
 	    if (ret) {
 		const char *msg = krb5_get_error_message(context, ret);
@@ -1982,7 +2002,8 @@ server_lookup:
 
     ret = _kdc_check_pac(context, config, cp, NULL, client, server, krbtgt, krbtgt,
 			 &priv->ticket_key->key, &priv->ticket_key->key, tgt,
-			 &kdc_issued, &mspac, &priv->client_princ, &priv->pac_attributes);
+			 &kdc_issued, &mspac, &priv->client_princ,
+			 &pac_attributes_present, &priv->pac_attributes);
     if (ret) {
 	const char *msg = krb5_get_error_message(context, ret);
         _kdc_audit_addreason((kdc_request_t)priv, "PAC check failed");
@@ -1992,6 +2013,7 @@ server_lookup:
 	krb5_free_error_message(context, msg);
 	goto out;
     }
+    priv->pac_attributes_present = pac_attributes_present;
 
     /*
      * Process request
@@ -2314,7 +2336,8 @@ server_lookup:
 	 */
 	ret = _kdc_check_pac(context, config, tp, dp, adclient, server, krbtgt, client,
 			     &clientkey->key, &priv->ticket_key->key, &adtkt,
-			     &ad_kdc_issued, &mspac, &priv->client_princ, &priv->pac_attributes);
+			     &ad_kdc_issued, &mspac, &priv->client_princ,
+			     &pac_attributes_present, &priv->pac_attributes);
 	if (adclient)
 	    _kdc_free_ent(context, adclient);
 	if (ret) {
@@ -2339,6 +2362,7 @@ server_lookup:
                                  "Constrained delegation ticket not signed");
 	    goto out;
 	}
+	priv->pac_attributes_present = pac_attributes_present;
 
 	kdc_log(context, config, 4, "constrained delegation for %s "
 		"from %s (%s) to %s", tpn, cpn, dpn, spn);

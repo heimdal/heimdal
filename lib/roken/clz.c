@@ -30,10 +30,15 @@
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 rk_clzll(uint64_t x)
 {
+#if defined(_MSC_VER)
+    unsigned long r = 0;
+#elif !(defined(__GNUC__) && __GNUC__ >= 4)
+    int r = 0;
+#endif
+
     assert(x != 0);
 
 #if defined(_MSC_VER)
-    unsigned long r = 0;
 # if defined(_WIN64)
     _BitScanReverse64(&r, x);
 # else
@@ -46,7 +51,6 @@ rk_clzll(uint64_t x)
 #elif (defined(__GNUC__) && __GNUC__ >= 4)
     return __builtin_clzll(x);
 #else
-    int r = 0;
     while (!(x & ((uint64_t)1 << 63))) {
         x <<= 1;
         ++r;

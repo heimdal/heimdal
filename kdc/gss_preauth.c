@@ -816,12 +816,12 @@ _kdc_gss_mk_pa_reply(astgs_request_t r,
 
     /* only return padata in error case if we have an error token */
     if (!GSS_ERROR(gcp->major) || gcp->output_token.length) {
-        ret = krb5_padata_add(r->context, &r->outpadata, KRB5_PADATA_GSS,
+        ret = krb5_padata_add(r->context, r->rep.padata, KRB5_PADATA_GSS,
                               gcp->output_token.value, gcp->output_token.length);
         if (ret)
             return ret;
 
-        /* token is now owned by outpadata */
+        /* token is now owned by r->rep.padata */
         gcp->output_token.length = 0;
         gcp->output_token.value = NULL;
     }

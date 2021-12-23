@@ -767,12 +767,12 @@ pa_enc_chal_validate(astgs_request_t r,
 
 	ret = _krb5_make_pa_enc_challenge(r->context, challengecrypto,
 					  KRB5_KU_ENC_CHALLENGE_KDC,
-					  &r->outpadata);
+					  r->rep.padata);
 	krb5_crypto_destroy(r->context, challengecrypto);
 	if (ret)
 	    goto out;
 					    
-	set_salt_padata(&r->outpadata, k->salt);
+	set_salt_padata(r->rep.padata, k->salt);
 
 	/*
 	 * Success
@@ -949,7 +949,7 @@ pa_enc_ts_validate(astgs_request_t r,
     }
     free_PA_ENC_TS_ENC(&p);
 
-    set_salt_padata(&r->outpadata, pa_key->salt);
+    set_salt_padata(r->rep.padata, pa_key->salt);
 
     ret = krb5_copy_keyblock_contents(r->context, &pa_key->key, &r->reply_key);
     if (ret)
@@ -1098,6 +1098,8 @@ _kdc_encode_reply(krb5_context context,
     EncTicketPart *et = &r->et;
     EncKDCRepPart *ek = &r->ek;
 
+    heim_assert(rep->padata != NULL, "reply padata uninitialized");
+
     ASN1_MALLOC_ENCODE(EncTicketPart, buf, buf_size, et, &len, ret);
     if(ret) {
 	const char *msg = krb5_get_error_message(context, ret);
@@ -1169,8 +1171,7 @@ _kdc_encode_reply(krb5_context context,
 	if (ret)
 	    return ret;
 
-	free_METHOD_DATA(&r->outpadata);
-	rep->padata = &r->outpadata;
+	free_METHOD_DATA(r->rep.padata);
 
 	ret = krb5_padata_add(context, rep->padata,
 			      KRB5_PADATA_FX_FAST,
@@ -1193,6 +1194,12 @@ _kdc_encode_reply(krb5_context context,
 	    if (ret)
 		return ret;
 	}
+    }
+
+    if (rep->padata->len == 0) {
+	free_METHOD_DATA(rep->padata);
+	free(rep->padata);
+	rep->padata = NULL;
     }
 
     if(rep->msg_type == krb_as_rep && !config->encode_as_rep_as_tgs_rep)
@@ -2095,7 +2102,12 @@ _kdc_as_rep(astgs_request_t r)
 
     memset(rep, 0, sizeof(*rep));
 
-    rep->padata = &r->outpadata; /* so we don't need to make this public */
+    ALLOC(rep->padata);
+    if (rep->padata == NULL) {
+	ret = ENOMEM;
+	krb5_set_error_message(r->context, ret, N_("malloc: out of memory", ""));
+	goto out;
+    }
 
     /*
      * Look for FAST armor and unwrap
@@ -2179,7 +2191,7 @@ _kdc_as_rep(astgs_request_t r)
 		r->cname, fixed_client_name);
 	free(fixed_client_name);
 
-	ret = _kdc_fast_mk_error(r, &r->outpadata, r->armor_crypto,
+	ret = _kdc_fast_mk_error(r, r->rep.padata, r->armor_crypto,
 				 &req->req_body, KRB5_KDC_ERR_WRONG_REALM,
 				 NULL,
 				 r->client->entry.principal, r->server_princ,
@@ -2285,7 +2297,7 @@ _kdc_as_rep(astgs_request_t r)
 					   NULL, &ckey, &default_salt);
 		    if (ret2 == 0) {
 			ret2 = get_pa_etype_info_both(r->context, config, &b->etype,
-						      &r->outpadata, ckey, !default_salt);
+						      r->rep.padata, ckey, !default_salt);
 			if (ret2 != 0)
 			    ret = ret2;
 		    }
@@ -2331,7 +2343,7 @@ _kdc_as_rep(astgs_request_t r)
 		    continue;
 	    }
 
-	    ret = krb5_padata_add(r->context, &r->outpadata,
+	    ret = krb5_padata_add(r->context, r->rep.padata,
 				  pat[n].type, NULL, 0);
 	    if (ret)
 		goto out;
@@ -2345,7 +2357,7 @@ _kdc_as_rep(astgs_request_t r)
 			      NULL, &ckey, &default_salt);
 	if (ret == 0) {
 	    ret = get_pa_etype_info_both(r->context, config, &b->etype,
-					 &r->outpadata, ckey, !default_salt);
+					 r->rep.padata, ckey, !default_salt);
 	    if (ret)
 		goto out;
 	}
@@ -2435,7 +2447,6 @@ _kdc_as_rep(astgs_request_t r)
     /*
      * Build reply
      */
-
     rep->pvno = 5;
     rep->msg_type = krb_as_rep;
 
@@ -2680,9 +2691,6 @@ _kdc_as_rep(astgs_request_t r)
     if (ret)
 	goto out;
 
-    if (r->outpadata.len == 0)
-	rep->padata = NULL;
-
     /* Add the PAC */
     if (!r->et.flags.anonymous) {
 	generate_pac(r, skey, krbtgt_key, is_tgs);
@@ -2761,15 +2769,12 @@ _kdc_as_rep(astgs_request_t r)
     }
 
 out:
-    r->rep.padata = NULL; /* may point to outpadata */
-    free_AS_REP(&r->rep);
-
     /*
      * In case of a non proxy error, build an error message.
      */
     if (ret != 0 && ret != HDB_ERR_NOT_FOUND_HERE && r->reply->length == 0)
 	ret = _kdc_fast_mk_error(r,
-				 &r->outpadata,
+				 r->rep.padata,
 			         r->armor_crypto,
 			         &req->req_body,
 			         ret, r->e_text,
@@ -2781,12 +2786,11 @@ out:
     if (r->pa_used && r->pa_used->cleanup)
 	r->pa_used->cleanup(r);
 
+    free_AS_REP(&r->rep);
     free_EncTicketPart(&r->et);
     free_EncKDCRepPart(&r->ek);
     _kdc_free_fast_state(&r->fast);
 
-    if (r->outpadata.len)
-	free_METHOD_DATA(&r->outpadata);
     if (r->client_princ) {
 	krb5_free_principal(r->context, r->client_princ);
 	r->client_princ = NULL;

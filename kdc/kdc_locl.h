@@ -70,8 +70,6 @@ struct kdc_patypes;
 struct astgs_request_desc {
     ASTGS_REQUEST_DESC_COMMON_ELEMENTS;
 
-    METHOD_DATA outpadata;
-
     /* Only AS */
     const struct kdc_patypes *pa_used;
     struct as_request_pa_state *pa_state;

@@ -785,8 +785,6 @@ tgs_make_reply(astgs_request_t r,
     _kdc_log_timestamp(r, "TGS-REQ", et->authtime, et->starttime,
 		       et->endtime, et->renew_till);
 
-    rep->padata = r->outpadata.len ? &r->outpadata : NULL;
-
     if (krb5_enctype_valid(r->context, serverkey->keytype) != 0
 	&& _kdc_is_weak_exception(server->entry.principal, serverkey->keytype))
     {
@@ -2389,7 +2387,7 @@ server_lookup:
 	}
 	pa.padata_type = KRB5_PADATA_SERVER_REFERRAL;
 
-	ret = add_METHOD_DATA(&priv->outpadata, &pa);
+	ret = add_METHOD_DATA(priv->rep.padata, &pa);
 	krb5_data_free(&pa.padata_value);
 	if (ret) {
 	    kdc_log(context, config, 4,
@@ -2554,6 +2552,13 @@ _kdc_tgs_rep(astgs_request_t r)
     if (ret)
 	goto out;
 
+    ALLOC(r->rep.padata);
+    if (r->rep.padata == NULL) {
+	ret = ENOMEM;
+	krb5_set_error_message(r->context, ret, N_("malloc: out of memory", ""));
+	goto out;
+    }
+
     ret = tgs_build_reply(r,
 			  krbtgt,
 			  krbtgt_etype,
@@ -2593,7 +2598,6 @@ out:
     free(csec);
     free(cusec);
 
-    r->rep.padata = NULL; /* may point to outpadata */
     free_TGS_REP(&r->rep);
     free_TransitedEncoding(&r->et.transited);
     free(r->et.starttime);
@@ -2631,9 +2635,6 @@ out:
 
     _kdc_free_fast_state(&r->fast);
     krb5_pac_free(r->context, r->pac);
-
-    if (r->outpadata.len)
-	free_METHOD_DATA(&r->outpadata);
 
     if (auth_data) {
 	free_AuthorizationData(auth_data);

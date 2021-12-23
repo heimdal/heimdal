@@ -599,7 +599,6 @@ tgs_make_reply(astgs_request_t r,
 	       hdb_entry_ex *client,
 	       krb5_principal client_principal,
 	       const char *tgt_realm,
-	       krb5_pac mspac,
 	       uint16_t rodc_id,
 	       krb5_boolean add_ticket_sig,
 	       const METHOD_DATA *enc_pa_data)
@@ -824,7 +823,7 @@ tgs_make_reply(astgs_request_t r,
      * restrictive authorization data. Policy for unknown authorization types
      * is implementation dependent.
      */
-    if (mspac && !et.flags.anonymous) {
+    if (r->pac && !et.flags.anonymous) {
 	_kdc_audit_addkv((kdc_request_t)r, 0, "pac_attributes", "%lx",
 			 (long)r->pac_attributes);
 
@@ -837,7 +836,7 @@ tgs_make_reply(astgs_request_t r,
 	    krb5_boolean is_tgs =
 		krb5_principal_is_krbtgt(r->context, server->entry.principal);
 
-	    ret = _krb5_kdc_pac_sign_ticket(r->context, mspac, tgt_name, serverkey,
+	    ret = _krb5_kdc_pac_sign_ticket(r->context, r->pac, tgt_name, serverkey,
 					    krbtgtkey, rodc_id, NULL, r->client_princ,
 					    add_ticket_sig, &et,
 					    is_tgs ? &r->pac_attributes : NULL);
@@ -1479,7 +1478,6 @@ tgs_build_reply(astgs_request_t priv,
     const EncryptionKey *ekey;
     krb5_keyblock sessionkey;
     krb5_kvno kvno;
-    krb5_pac mspac = NULL;
     krb5_pac user2user_pac = NULL;
     uint16_t rodc_id;
     krb5_boolean add_ticket_sig = FALSE;
@@ -1992,7 +1990,7 @@ server_lookup:
 
     ret = _kdc_check_pac(context, config, cp, NULL, client, server, krbtgt, krbtgt,
 			 &priv->ticket_key->key, &priv->ticket_key->key, tgt,
-			 &kdc_issued, &mspac, &priv->client_princ, &priv->pac_attributes);
+			 &kdc_issued, &priv->pac, &priv->client_princ, &priv->pac_attributes);
     if (ret) {
 	const char *msg = krb5_get_error_message(context, ret);
         _kdc_audit_addreason((kdc_request_t)priv, "PAC check failed");
@@ -2146,15 +2144,15 @@ server_lookup:
 		goto out; /* kdc_check_flags() calls _kdc_audit_addreason() */
 
 	    /* If we were about to put a PAC into the ticket, we better fix it to be the right PAC */
-	    krb5_pac_free(context, mspac);
-	    mspac = NULL;
+	    krb5_pac_free(context, priv->pac);
+	    priv->pac = NULL;
 
 	    ret = _kdc_pac_generate(context,
 				    s4u2self_impersonated_client,
 				    server,
 				    NULL,
 				    KRB5_PAC_WAS_GIVEN_IMPLICITLY,
-				    &mspac);
+				    &priv->pac);
 	    if (ret) {
 		kdc_log(context, config, 4, "PAC generation failed for -- %s", tpn);
 		goto out;
@@ -2214,7 +2212,7 @@ server_lookup:
 	/*
 	 * We require that the service's krbtgt has a PAC.
 	 */
-	if (mspac == NULL) {
+	if (priv->pac == NULL) {
 	    ret = KRB5KDC_ERR_BADOPTION;
 	    _kdc_audit_addreason((kdc_request_t)priv, "Missing PAC");
 	    kdc_log(context, config, 4,
@@ -2223,8 +2221,8 @@ server_lookup:
 	    goto out;
 	}
 
-	krb5_pac_free(context, mspac);
-	mspac = NULL;
+	krb5_pac_free(context, priv->pac);
+	priv->pac = NULL;
 
 	krb5_free_principal(context, priv->client_princ);
 	priv->client_princ = NULL;
@@ -2324,7 +2322,7 @@ server_lookup:
 	 */
 	ret = _kdc_check_pac(context, config, tp, dp, adclient, server, krbtgt, client,
 			     &clientkey->key, &priv->ticket_key->key, &adtkt,
-			     &ad_kdc_issued, &mspac, &priv->client_princ, &priv->pac_attributes);
+			     &ad_kdc_issued, &priv->pac, &priv->client_princ, &priv->pac_attributes);
 	if (adclient)
 	    _kdc_free_ent(context, adclient);
 	if (ret) {
@@ -2339,12 +2337,12 @@ server_lookup:
 	    goto out;
 	}
 
-	if (mspac == NULL || !ad_kdc_issued) {
+	if (priv->pac == NULL || !ad_kdc_issued) {
 	    ret = KRB5KDC_ERR_BADOPTION;
 	    kdc_log(context, config, 4,
 		    "Ticket not signed with PAC; service %s failed for "
 		    "for delegation to %s for client %s (%s) from %s; (%s).",
-		    spn, tpn, dpn, cpn, from, mspac ? "Ticket unsigned" : "No PAC");
+		    spn, tpn, dpn, cpn, from, priv->pac ? "Ticket unsigned" : "No PAC");
             _kdc_audit_addreason((kdc_request_t)priv,
                                  "Constrained delegation ticket not signed");
 	    goto out;
@@ -2472,7 +2470,6 @@ server_lookup:
 			 client,
 			 cp,
                          tgt_realm,
-			 mspac,
 			 rodc_id,
 			 add_ticket_sig,
 			 &enc_pa_data);
@@ -2509,7 +2506,6 @@ out:
 
     free_EncTicketPart(&adtkt);
 
-    krb5_pac_free(context, mspac);
     krb5_pac_free(context, user2user_pac);
 
     return ret;
@@ -2647,6 +2643,7 @@ out:
 	_kdc_free_ent(r->context, krbtgt);
 
     _kdc_free_fast_state(&r->fast);
+    krb5_pac_free(r->context, r->pac);
 
     if (auth_data) {
 	free_AuthorizationData(auth_data);

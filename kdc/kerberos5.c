@@ -605,13 +605,13 @@ out:
 }
 
 static krb5_error_code
-pa_gss_finalize_pac(astgs_request_t r, krb5_pac mspac)
+pa_gss_finalize_pac(astgs_request_t r)
 {
     gss_client_params *gcp = (gss_client_params *)r->pa_state;
 
     heim_assert(gcp != NULL, "invalid GSS-API client params");
 
-    return _kdc_gss_finalize_pac(r, gcp, mspac);
+    return _kdc_gss_finalize_pac(r, gcp, r->pac);
 }
 
 static void
@@ -985,7 +985,7 @@ struct kdc_patypes {
     krb5_error_code (*validate)(astgs_request_t,
 				const PA_DATA *pa,
 				struct kdc_pa_auth_status *auth_status);
-    krb5_error_code (*finalize_pac)(astgs_request_t r, krb5_pac mspac);
+    krb5_error_code (*finalize_pac)(astgs_request_t r);
     void (*cleanup)(astgs_request_t r);
 };
 
@@ -1860,7 +1860,6 @@ generate_pac(astgs_request_t r, const Key *skey, const Key *tkey,
 	     krb5_boolean is_tgs)
 {
     krb5_error_code ret;
-    krb5_pac p = NULL;
     krb5_data data;
     uint16_t rodc_id;
     krb5_principal client;
@@ -1886,13 +1885,13 @@ generate_pac(astgs_request_t r, const Key *skey, const Key *tkey,
 			    r->pa_used && !pa_used_flag_isset(r, PA_USES_LONG_TERM_KEY)
 				? &r->reply_key : NULL,
 			    r->pac_attributes,
-			    &p);
+			    &r->pac);
     if (ret) {
 	_kdc_r_log(r, 4, "PAC generation failed for -- %s",
 		   r->cname);
 	return ret;
     }
-    if (p == NULL)
+    if (r->pac == NULL)
 	return 0;
 
     rodc_id = r->server->entry.kvno >> 16;
@@ -1900,10 +1899,8 @@ generate_pac(astgs_request_t r, const Key *skey, const Key *tkey,
     /* libkrb5 expects ticket and PAC client names to match */
     ret = _krb5_principalname2krb5_principal(r->context, &client,
 					     r->et.cname, r->et.crealm);
-    if (ret) {
-	krb5_pac_free(r->context, p);
+    if (ret)
 	return ret;
-    }
 
     /*
      * Include the canonical name of the principal in the authorization
@@ -1923,14 +1920,14 @@ generate_pac(astgs_request_t r, const Key *skey, const Key *tkey,
     }
 
     if (r->pa_used && r->pa_used->finalize_pac) {
-	ret = r->pa_used->finalize_pac(r, p);
-	if (ret) {
-	    krb5_pac_free(r->context, p);
+	ret = r->pa_used->finalize_pac(r);
+	if (ret)
 	    return ret;
-	}
     }
 
-    ret = _krb5_pac_sign(r->context, p, r->et.authtime,
+    ret = _krb5_pac_sign(r->context,
+			 r->pac,
+			 r->et.authtime,
 			 client,
 			 &skey->key, /* Server key */
 			 &tkey->key, /* TGS key */
@@ -1940,7 +1937,8 @@ generate_pac(astgs_request_t r, const Key *skey, const Key *tkey,
 			 is_tgs ? &r->pac_attributes : NULL,
 			 &data);
     krb5_free_principal(r->context, client);
-    krb5_pac_free(r->context, p);
+    krb5_pac_free(r->context, r->pac);
+    r->pac = NULL;
     if (ret) {
 	_kdc_r_log(r, 4, "PAC signing failed for -- %s",
 		   r->cname);
@@ -2819,6 +2817,7 @@ out:
     krb5_free_keyblock_contents(r->context, &r->reply_key);
     krb5_free_keyblock_contents(r->context, &r->session_key);
     krb5_free_keyblock_contents(r->context, &r->strengthen_key);
+    krb5_pac_free(r->context, r->pac);
 
     return ret;
 }

@@ -67,11 +67,30 @@ struct kdc_request_desc {
 struct as_request_pa_state;
 struct kdc_patypes;
 
-struct astgs_request_desc {
-    HEIM_SVC_REQUEST_DESC_COMMON_ELEMENTS;
+#define ASTGS_REQUEST_DESC_COMMON_ELEMENTS			\
+    HEIM_SVC_REQUEST_DESC_COMMON_ELEMENTS;			\
+								\
+    KDC_REQ req;						\
+								\
+    KDC_REP rep;						\
+    EncTicketPart et;						\
+    EncKDCRepPart ek;						\
+								\
+    /* princ requested by client (AS) or canon princ (TGT) */	\
+    krb5_principal client_princ;				\
+    hdb_entry_ex *client;					\
+    HDB *clientdb;						\
+								\
+    krb5_principal server_princ;				\
+    hdb_entry_ex *server;					\
+								\
+    krb5_keyblock reply_key;					\
+								\
+    krb5_pac pac;						\
+    uint64_t pac_attributes;
 
-    /* Both AS and TGS */
-    KDC_REQ req;
+struct astgs_request_desc {
+    ASTGS_REQUEST_DESC_COMMON_ELEMENTS;
 
     /* Only AS */
     METHOD_DATA *padata;
@@ -79,24 +98,10 @@ struct astgs_request_desc {
     const struct kdc_patypes *pa_used;
     struct as_request_pa_state *pa_state;
 
-    KDC_REP rep;
-    EncTicketPart et;
-    EncKDCRepPart ek;
-
     /* PA methods can affect both the reply key and the session key (pkinit) */
     krb5_enctype sessionetype;
-    krb5_keyblock reply_key;
     krb5_keyblock session_key;
 
-    /* state */
-    krb5_principal client_princ; /* AS: principal requested by client
-				  * TGS: opt. canon principal from TGT PAC */
-    hdb_entry_ex *client;	 /* AS: client entry
-				  * TGS: opt. client entry, if local to KDC */
-    HDB *clientdb;
-
-    krb5_principal server_princ;
-    hdb_entry_ex *server;
     krb5_timestamp pa_endtime;
     krb5_timestamp pa_max_life;
 
@@ -113,8 +118,6 @@ struct astgs_request_desc {
     Key *armor_key;
 
     KDCFastState fast;
-
-    uint64_t pac_attributes;
 };
 
 typedef struct kx509_req_context_desc {

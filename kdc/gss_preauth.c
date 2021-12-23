@@ -1017,7 +1017,7 @@ pa_gss_display_name(gss_name_t name,
 
 struct pa_gss_finalize_pac_plugin_ctx {
     astgs_request_t r;
-    krb5_pac mspac;
+    krb5_pac pac;
     krb5_data *pac_data;
 };
 
@@ -1031,7 +1031,7 @@ pa_gss_finalize_pac_cb(krb5_context context,
     struct pa_gss_finalize_pac_plugin_ctx *pa_gss_finalize_pac_ctx = userctx;
 
     return authorizer->finalize_pac(plugctx, context,
-				    pa_gss_finalize_pac_ctx->mspac,
+				    pa_gss_finalize_pac_ctx->pac,
 				    pa_gss_finalize_pac_ctx->pac_data);
 }
 
@@ -1039,12 +1039,12 @@ pa_gss_finalize_pac_cb(krb5_context context,
 krb5_error_code
 _kdc_gss_finalize_pac(astgs_request_t r,
 		      gss_client_params *gcp,
-		      krb5_pac mspac)
+		      krb5_pac pac)
 {
     krb5_error_code ret;
     struct pa_gss_finalize_pac_plugin_ctx ctx;
 
-    ctx.mspac = mspac;
+    ctx.pac = pac;
     ctx.pac_data = &gcp->pac_data;
 
     krb5_clear_error_message(r->context);

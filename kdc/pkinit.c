@@ -1137,7 +1137,7 @@ _kdc_pk_mk_pa_reply(astgs_request_t r, pk_client_params *cp)
     const krb5_data *req_buffer = &r->request;
     krb5_keyblock *reply_key = &r->reply_key;
     krb5_keyblock *sessionkey = &r->session_key;
-    METHOD_DATA *md = &r->outpadata;
+    METHOD_DATA *md = r->rep.padata;
     krb5_error_code ret;
     void *buf = NULL;
     size_t len = 0, size = 0;

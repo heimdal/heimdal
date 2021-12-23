@@ -611,7 +611,7 @@ pa_gss_finalize_pac(astgs_request_t r)
 
     heim_assert(gcp != NULL, "invalid GSS-API client params");
 
-    return _kdc_gss_finalize_pac(r, gcp, r->pac);
+    return _kdc_gss_finalize_pac(r, gcp);
 }
 
 static void

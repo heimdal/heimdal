@@ -64,10 +64,7 @@ typedef struct krb5plugin_gss_preauth_authorizer_ftable_desc {
     krb5_error_code     (KRB5_LIB_CALL *init)(krb5_context, void **);
     void                (KRB5_LIB_CALL *fini)(void *);
     krb5_error_code     (KRB5_LIB_CALL *authorize)(void *,              /*plug_ctx*/
-                                                   krb5_context,        /*context*/
-                                                   KDC_REQ *,           /*req*/
-                                                   krb5_const_principal,/*client_name*/
-                                                   hdb_entry_ex *,      /*client*/
+                                                   astgs_request_t,	/*r*/
                                                    gss_const_name_t,    /*initiator_name*/
                                                    gss_const_OID,       /*mech_type*/
                                                    OM_uint32,           /*ret_flags*/
@@ -75,8 +72,7 @@ typedef struct krb5plugin_gss_preauth_authorizer_ftable_desc {
                                                    krb5_principal *,    /*mapped_name*/
                                                    krb5_data *);        /*pac_data*/
     krb5_error_code     (KRB5_LIB_CALL *finalize_pac)(void *,           /*plug_ctx*/
-                                                      krb5_context,     /*context*/
-                                                      krb5_pac,         /*pac*/
+                                                      astgs_request_t,  /*r*/
                                                       krb5_data *);     /*pac_data*/
 } krb5plugin_gss_preauth_authorizer_ftable;
 

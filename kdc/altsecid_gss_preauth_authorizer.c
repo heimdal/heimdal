@@ -372,10 +372,7 @@ out:
 
 static KRB5_LIB_CALL krb5_error_code
 authorize(void *ctx,
-          krb5_context context,
-          KDC_REQ *req,
-          krb5_const_principal client_name,
-          hdb_entry_ex *client,
+          astgs_request_t r,
           gss_const_name_t initiator_name,
           gss_const_OID mech_type,
           OM_uint32 ret_flags,
@@ -383,30 +380,22 @@ authorize(void *ctx,
           krb5_principal *mapped_name,
 	  krb5_data *requestor_sid)
 {
-    const KDC_REQ_BODY *b = &req->req_body;
     struct altsecid_gss_preauth_authorizer_context *c = ctx;
     struct ad_server_tuple *server = NULL;
     krb5_error_code ret;
-    krb5_const_realm realm = krb5_principal_get_realm(context, client->entry.principal);
+    krb5_const_realm realm = krb5_principal_get_realm(r->context, r->client->entry.principal);
     krb5_boolean reconnect_p = FALSE;
-    krb5_principal server_princ;
     krb5_boolean is_tgs;
 
     *authorized = FALSE;
     *mapped_name = NULL;
     krb5_data_zero(requestor_sid);
 
-    if (!krb5_principal_is_federated(context, client->entry.principal) ||
+    if (!krb5_principal_is_federated(r->context, r->client->entry.principal) ||
         (ret_flags & GSS_C_ANON_FLAG))
         return KRB5_PLUGIN_NO_HANDLE;
 
-    ret = _krb5_principalname2krb5_principal(context, &server_princ,
-					     *b->sname, b->realm);
-    if (ret)
-	return ret;
-
-    is_tgs = krb5_principal_is_krbtgt(context, server_princ);
-    krb5_free_principal(context, server_princ);
+    is_tgs = krb5_principal_is_krbtgt(r->context, r->server_princ);
 
     HEIM_TAILQ_FOREACH(server, &c->servers, link) {
         if (strcmp(realm, server->realm) == 0)
@@ -416,12 +405,12 @@ authorize(void *ctx,
     if (server == NULL) {
         server = calloc(1, sizeof(*server));
         if (server == NULL)
-            return krb5_enomem(context);
+            return krb5_enomem(r->context);
 
         server->realm = strdup(realm);
         if (server->realm == NULL) {
             free(server);
-            return krb5_enomem(context);
+            return krb5_enomem(r->context);
         }
 
         HEIM_TAILQ_INSERT_HEAD(&c->servers, server, link);
@@ -429,12 +418,12 @@ authorize(void *ctx,
 
     do {
         if (server->ld == NULL) {
-            ret = ad_connect(context, realm, server);
+            ret = ad_connect(r->context, realm, server);
             if (ret)
                 return ret;
         }
 
-        ret = ad_lookup(context, realm, server,
+        ret = ad_lookup(r->context, realm, server,
                         initiator_name, mech_type,
                         mapped_name, is_tgs ? requestor_sid : NULL);
         if (ret == KRB5KDC_ERR_SVC_UNAVAILABLE) {
@@ -452,15 +441,12 @@ authorize(void *ctx,
 }
 
 static KRB5_LIB_CALL krb5_error_code
-finalize_pac(void *ctx,
-	     krb5_context context,
-	     krb5_pac mspac,
-	     krb5_data *requestor_sid)
+finalize_pac(void *ctx, astgs_request_t r, krb5_data *requestor_sid)
 {
     if (requestor_sid->length == 0)
 	return 0;
 
-    return krb5_pac_add_buffer(context, mspac,
+    return krb5_pac_add_buffer(r->context, r->pac,
 			       PAC_REQUESTOR_SID, requestor_sid);
 }
 

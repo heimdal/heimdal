@@ -2381,7 +2381,7 @@ _kdc_as_rep(astgs_request_t r)
      * with in a preauth mech.
      */
 
-    ret = _kdc_check_access(r, req, &r->outpadata);
+    ret = _kdc_check_access(r, &r->outpadata);
     if(ret)
 	goto out;
 

@@ -1065,48 +1065,12 @@ log_patypes(astgs_request_t r, METHOD_DATA *padata)
 }
 
 static krb5_boolean
-pa_replaced_reply_key_p(astgs_request_t r)
+pa_used_flag_isset(astgs_request_t r, unsigned int flag)
 {
-    size_t n;
+    if (r->pa_used == NULL)
+	return FALSE;
 
-    for (n = 0; n < sizeof(pat) / sizeof(pat[0]); n++) {
-	if (pat[n].type == r->pa_used &&
-	    (pat[n].flags & PA_REPLACE_REPLY_KEY))
-	    return TRUE;
-    }
-
-    return FALSE;
-}
-
-static krb5_error_code
-pa_finalize_pac(astgs_request_t r, krb5_pac mspac)
-{
-    krb5_error_code ret = 0;
-    size_t n;
-
-    for (n = 0; n < sizeof(pat) / sizeof(pat[0]); n++) {
-	if (pat[n].type == r->pa_used) {
-	    if (pat[n].finalize_pac)
-		ret = pat[n].finalize_pac(r, mspac);
-	    break;
-	}
-    }
-
-    return ret;
-}
-
-static void
-pa_cleanup(astgs_request_t r)
-{
-    size_t n;
-
-    for (n = 0; n < sizeof(pat) / sizeof(pat[0]); n++) {
-	if (pat[n].type == r->pa_used) {
-	    if (pat[n].cleanup)
-		pat[n].cleanup(r);
-	    break;
-	}
-    }
+    return (r->pa_used->flags & flag) == flag;
 }
 
 /*
@@ -1914,7 +1878,7 @@ generate_pac(astgs_request_t r, const Key *skey, const Key *tkey,
     ret = _kdc_pac_generate(r->context,
 			    r->client,
 			    r->server,
-			    pa_replaced_reply_key_p(r) ? &r->reply_key : NULL,
+			    pa_used_flag_isset(r, PA_REPLACE_REPLY_KEY) ? &r->reply_key : NULL,
 			    r->pac_attributes,
 			    &p);
     if (ret) {
@@ -1952,10 +1916,12 @@ generate_pac(astgs_request_t r, const Key *skey, const Key *tkey,
 	krb5_xfree(cpn);
     }
 
-    ret = pa_finalize_pac(r, p);
-    if (ret) {
-	krb5_pac_free(r->context, p);
-	return ret;
+    if (r->pa_used && r->pa_used->finalize_pac) {
+	ret = r->pa_used->finalize_pac(r, p);
+	if (ret) {
+	    krb5_pac_free(r->context, p);
+	    return ret;
+	}
     }
 
     ret = _krb5_pac_sign(r->context, p, r->et.authtime,
@@ -2328,14 +2294,12 @@ _kdc_as_rep(astgs_request_t r)
 			"%s pre-authentication succeeded -- %s",
 			pat[n].name, r->cname);
 		found_pa = 1;
-		r->pa_used = pat[n].type;
+		r->pa_used = &pat[n];
 
 		if (auth_status.auth_status == HDB_AUTHSTATUS_INVALID)
 		    auth_status.auth_status = HDB_AUTHSTATUS_GENERIC_SUCCESS;
 
-		_kdc_audit_auth_status(r,
-				       &auth_status,
-				       pat[n].name);
+		_kdc_audit_auth_status(r, &auth_status, r->pa_used->name);
 		free(auth_status.free_ptr);
 		r->et.flags.pre_authent = 1;
 	    }
@@ -2784,7 +2748,7 @@ _kdc_as_rep(astgs_request_t r)
 			    r, req->req_body.nonce,
 			    &rep, &r->et, &r->ek, setype,
 			    r->server->entry.kvno, &skey->key,
-			    pa_replaced_reply_key_p(r) ? 0 : r->client->entry.kvno,
+			    pa_used_flag_isset(r, PA_REPLACE_REPLY_KEY) ? 0 : r->client->entry.kvno,
 			    0, &r->e_text, r->reply);
     if (ret)
 	goto out;
@@ -2815,7 +2779,8 @@ out:
 			         NULL, NULL,
 			         r->reply);
 
-    pa_cleanup(r);
+    if (r->pa_used && r->pa_used->cleanup)
+	r->pa_used->cleanup(r);
 
     free_EncTicketPart(&r->et);
     free_EncKDCRepPart(&r->ek);

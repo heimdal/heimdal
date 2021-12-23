@@ -65,6 +65,7 @@ struct kdc_request_desc {
 };
 
 struct as_request_pa_state;
+struct kdc_patypes;
 
 struct astgs_request_desc {
     HEIM_SVC_REQUEST_DESC_COMMON_ELEMENTS;
@@ -75,7 +76,7 @@ struct astgs_request_desc {
     /* Only AS */
     METHOD_DATA *padata;
     METHOD_DATA outpadata;
-    krb5_preauthtype pa_used;
+    const struct kdc_patypes *pa_used;
     struct as_request_pa_state *pa_state;
 
     KDC_REP rep;

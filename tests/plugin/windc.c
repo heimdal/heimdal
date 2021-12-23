@@ -94,17 +94,36 @@ pac_verify(void *ctx, krb5_context context,
     return krb5_pac_verify(context, *pac, 0, NULL, NULL, &key->key);
 }
 
+static void logit(const char *what, astgs_request_t r)
+{
+    char *client_princ_name = NULL;
+    char *server_princ_name = NULL;
+
+    if (r->client_princ)
+	krb5_unparse_name(r->context, r->client_princ, &client_princ_name);
+    if (r->server_princ)
+	krb5_unparse_name(r->context, r->server_princ, &server_princ_name);
+
+    krb5_warnx(r->context, "%s: client %s server %s",
+	       what,
+	       client_princ_name ? client_princ_name : "<unknown>",
+	       server_princ_name ? server_princ_name : "<unknown>");
+
+    krb5_xfree(server_princ_name);
+    krb5_xfree(client_princ_name);
+}
+
 static krb5_error_code KRB5_CALLCONV
 client_access(void *ctx, astgs_request_t r)
 {
-    krb5_warnx(r->context, "client_access");
+    logit("client_access", r);
     return 0;
 }
 
 static krb5_error_code KRB5_CALLCONV
 finalize_reply(void *ctx, astgs_request_t r)
 {
-    krb5_warnx(r->context, "finalize_reply");
+    logit("finalize_reply", r);
     return 0;
 }
 

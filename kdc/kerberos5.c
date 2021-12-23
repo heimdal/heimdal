@@ -980,8 +980,7 @@ struct kdc_patypes {
 #define PA_ANNOUNCE	1
 #define PA_REQ_FAST	2 /* only use inside fast */
 #define PA_SYNTHETIC_OK	4
-#define PA_REPLACE_REPLY_KEY	8   /* PA mech replaces reply key */
-#define PA_USES_LONG_TERM_KEY	16  /* PA mech uses client's long-term key */
+#define PA_REPLACE_REPLY_KEY	8
     krb5_error_code (*validate)(astgs_request_t,
 				const PA_DATA *pa,
 				struct kdc_pa_auth_status *auth_status);
@@ -1012,12 +1011,12 @@ static const struct kdc_patypes pat[] = {
     { KRB5_PADATA_PA_PK_OCSP_RESPONSE , "OCSP", 0, NULL, NULL, NULL },
     { 
 	KRB5_PADATA_ENC_TIMESTAMP , "ENC-TS",
-	PA_ANNOUNCE | PA_USES_LONG_TERM_KEY,
+	PA_ANNOUNCE,
 	pa_enc_ts_validate, NULL, NULL
     },
     {
 	KRB5_PADATA_ENCRYPTED_CHALLENGE , "ENC-CHAL",
-	PA_ANNOUNCE | PA_USES_LONG_TERM_KEY | PA_REQ_FAST,
+	PA_ANNOUNCE | PA_REQ_FAST,
 	pa_enc_chal_validate, NULL, NULL
     },
     { KRB5_PADATA_REQ_ENC_PA_REP , "REQ-ENC-PA-REP", 0, NULL, NULL, NULL },
@@ -1871,17 +1870,15 @@ generate_pac(astgs_request_t r, const Key *skey, const Key *tkey,
 		     (long)r->pac_attributes);
 
     /*
-     * When a PA mech does not use the client's long-term key, the PAC
-     * may include the client's long-term key (encrypted in the reply key)
-     * for use by other shared secret authentication protocols, e.g. NTLM.
-     * Validate a PA mech was actually used before doing this.
+     * When a PA mech replaces the reply key, the PAC may include the
+     * client's long term key (encrypted in the reply key) for use by
+     * other shared secret authentication protocols, e.g. NTLM.
      */
 
     ret = _kdc_pac_generate(r->context,
 			    r->client,
 			    r->server,
-			    r->pa_used && !pa_used_flag_isset(r, PA_USES_LONG_TERM_KEY)
-				&r->reply_key : NULL,
+			    pa_used_flag_isset(r, PA_REPLACE_REPLY_KEY) ? &r->reply_key : NULL,
 			    r->pac_attributes,
 			    &p);
     if (ret) {

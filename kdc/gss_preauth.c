@@ -510,10 +510,8 @@ pa_gss_authorize_cb(krb5_context context,
     const krb5plugin_gss_preauth_authorizer_ftable *authorizer = plug;
     struct pa_gss_authorize_plugin_ctx *pa_gss_authorize_plugin_ctx = userctx;
 
-    return authorizer->authorize(plugctx, context,
-                                 &pa_gss_authorize_plugin_ctx->r->req,
-                                 pa_gss_authorize_plugin_ctx->r->client_princ,
-                                 pa_gss_authorize_plugin_ctx->r->client,
+    return authorizer->authorize(plugctx,
+                                 pa_gss_authorize_plugin_ctx->r,
                                  pa_gss_authorize_plugin_ctx->gcp->initiator_name,
                                  pa_gss_authorize_plugin_ctx->gcp->mech_type,
                                  pa_gss_authorize_plugin_ctx->gcp->flags,
@@ -1017,7 +1015,6 @@ pa_gss_display_name(gss_name_t name,
 
 struct pa_gss_finalize_pac_plugin_ctx {
     astgs_request_t r;
-    krb5_pac pac;
     krb5_data *pac_data;
 };
 
@@ -1030,21 +1027,20 @@ pa_gss_finalize_pac_cb(krb5_context context,
     const krb5plugin_gss_preauth_authorizer_ftable *authorizer = plug;
     struct pa_gss_finalize_pac_plugin_ctx *pa_gss_finalize_pac_ctx = userctx;
 
-    return authorizer->finalize_pac(plugctx, context,
-				    pa_gss_finalize_pac_ctx->pac,
+    return authorizer->finalize_pac(plugctx,
+				    pa_gss_finalize_pac_ctx->r,
 				    pa_gss_finalize_pac_ctx->pac_data);
 }
 
 
 krb5_error_code
 _kdc_gss_finalize_pac(astgs_request_t r,
-		      gss_client_params *gcp,
-		      krb5_pac pac)
+		      gss_client_params *gcp)
 {
     krb5_error_code ret;
     struct pa_gss_finalize_pac_plugin_ctx ctx;
 
-    ctx.pac = pac;
+    ctx.r = r;
     ctx.pac_data = &gcp->pac_data;
 
     krb5_clear_error_message(r->context);

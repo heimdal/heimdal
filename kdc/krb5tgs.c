@@ -603,7 +603,6 @@ tgs_make_reply(astgs_request_t r,
 	       krb5_boolean add_ticket_sig)
 {
     KDC_REQ_BODY *b = &r->req.req_body;
-    const char **e_text = &r->e_text;
     krb5_data *reply = r->reply;
     KDC_REP *rep = &r->rep;
     EncTicketPart *et = &r->et;
@@ -845,8 +844,7 @@ tgs_make_reply(astgs_request_t r,
        DES3? */
     ret = _kdc_encode_reply(r->context, r->config, r, b->nonce,
 			    serverkey->keytype, kvno,
-			    serverkey, 0, r->rk_is_subkey,
-			    e_text, reply);
+			    serverkey, 0, r->rk_is_subkey, reply);
     if (is_weak)
 	krb5_enctype_disable(r->context, serverkey->keytype);
 

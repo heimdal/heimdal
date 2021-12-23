@@ -1086,7 +1086,6 @@ _kdc_encode_reply(krb5_context context,
 		  int skvno, const EncryptionKey *skey,
 		  int ckvno,
 		  int rk_is_subkey,
-		  const char **e_text,
 		  krb5_data *reply)
 {
     unsigned char *buf;
@@ -1215,7 +1214,7 @@ _kdc_encode_reply(krb5_context context,
     if(buf_size != len) {
 	free(buf);
 	kdc_log(context, config, 4, "Internal error in ASN.1 encoder");
-	*e_text = "KDC internal error";
+	_kdc_set_e_text(r, "KDC internal error");
 	return KRB5KRB_ERR_GENERIC;
     }
     ret = krb5_crypto_init(context, &r->reply_key, 0, &crypto);
@@ -1257,7 +1256,7 @@ _kdc_encode_reply(krb5_context context,
     if(buf_size != len) {
 	free(buf);
 	kdc_log(context, config, 4, "Internal error in ASN.1 encoder");
-	*e_text = "KDC internal error";
+	_kdc_set_e_text(r, "KDC internal error");
 	return KRB5KRB_ERR_GENERIC;
     }
     reply->data = buf;
@@ -2755,7 +2754,7 @@ _kdc_as_rep(astgs_request_t r)
 			    r, req->req_body.nonce, setype,
 			    r->server->entry.kvno, &skey->key,
 			    pa_used_flag_isset(r, PA_REPLACE_REPLY_KEY) ? 0 : r->client->entry.kvno,
-			    0, &r->e_text, r->reply);
+			    0, r->reply);
     if (ret)
 	goto out;
 

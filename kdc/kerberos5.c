@@ -1870,6 +1870,9 @@ generate_pac(astgs_request_t r, const Key *skey, const Key *tkey,
     _kdc_audit_addkv((kdc_request_t)r, 0, "pac_attributes", "%lx",
 		     (long)r->pac_attributes);
 
+    if (!_kdc_include_pac_p(r))
+	return 0;
+
     /*
      * When a PA mech does not use the client's long-term key, the PAC
      * may include the client's long-term key (encrypted in the reply key)

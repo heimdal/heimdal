@@ -321,3 +321,23 @@ _kdc_verify_checksum(krb5_context context,
 
     return ret;
 }
+
+/*
+ * Returns TRUE if a PAC should be included in ticket authorization data.
+ *
+ * Per [MS-KILE] 3.3.5.3, PACs are always included for TGTs; for service
+ * tickets, policy is governed by whether the client explicitly requested
+ * a PAC be omitted when requesting a TGT, or if the no-auth-data-reqd
+ * flag is set on the service principal entry.
+ */
+
+krb5_boolean
+_kdc_include_pac_p(astgs_request_t r)
+{
+    if (krb5_principal_is_krbtgt(r->context, r->server->entry.principal))
+	return TRUE;
+    else if (r->server->entry.flags.no_auth_data_reqd)
+	return FALSE;
+
+    return !!(r->pac_attributes & (KRB5_PAC_WAS_REQUESTED | KRB5_PAC_WAS_GIVEN_IMPLICITLY));
+}

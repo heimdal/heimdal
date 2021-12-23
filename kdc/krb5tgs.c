@@ -825,9 +825,6 @@ tgs_make_reply(astgs_request_t r,
      * is implementation dependent.
      */
     if (mspac && !et.flags.anonymous) {
-	krb5_boolean is_tgs =
-	    krb5_principal_is_krbtgt(r->context, server->entry.principal);
-
 	_kdc_audit_addkv((kdc_request_t)r, 0, "pac_attributes", "%lx",
 			 (long)r->pac_attributes);
 
@@ -836,8 +833,10 @@ tgs_make_reply(astgs_request_t r,
 	 * buffer (legacy behavior) or if the attributes buffer indicates the
 	 * AS client requested one.
 	 */
-	if (is_tgs ||
-	    (r->pac_attributes & (KRB5_PAC_WAS_REQUESTED | KRB5_PAC_WAS_GIVEN_IMPLICITLY))) {
+	if (_kdc_include_pac_p(r)) {
+	    krb5_boolean is_tgs =
+		krb5_principal_is_krbtgt(r->context, server->entry.principal);
+
 	    ret = _krb5_kdc_pac_sign_ticket(r->context, mspac, tgt_name, serverkey,
 					    krbtgtkey, rodc_id, NULL, r->client_princ,
 					    add_ticket_sig, &et,

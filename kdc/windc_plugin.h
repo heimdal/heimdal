@@ -37,6 +37,7 @@
 #define HEIMDAL_KDC_WINDC_PLUGIN_H 1
 
 #include <krb5.h>
+#include <kdc.h>
 
 /*
  * The PAC generate function should allocate a krb5_pac using
@@ -77,8 +78,10 @@ typedef krb5_error_code
 	hdb_entry_ex *, const char *, 
 	KDC_REQ *, METHOD_DATA *);
 
+typedef krb5_error_code
+(KRB5_CALLCONV *krb5plugin_windc_finalize_reply)(void *, astgs_request_t r);
 
-#define KRB5_WINDC_PLUGIN_MINOR			7
+#define KRB5_WINDC_PLUGIN_MINOR			8
 #define KRB5_WINDC_PLUGING_MINOR KRB5_WINDC_PLUGIN_MINOR
 
 typedef struct krb5plugin_windc_ftable {
@@ -88,6 +91,7 @@ typedef struct krb5plugin_windc_ftable {
     krb5plugin_windc_pac_generate	pac_generate;
     krb5plugin_windc_pac_verify		pac_verify;
     krb5plugin_windc_client_access	client_access;
+    krb5plugin_windc_finalize_reply	finalize_reply;
 } krb5plugin_windc_ftable;
 
 #endif /* HEIMDAL_KDC_WINDC_PLUGIN_H */

@@ -234,6 +234,30 @@ _kdc_check_access(astgs_request_t r, METHOD_DATA *method_data)
     return ret;
 }
 
+static krb5_error_code KRB5_LIB_CALL
+finalize(krb5_context context, const void *plug, void *plugctx, void *userctx)
+{
+    krb5plugin_windc_ftable *ft = (krb5plugin_windc_ftable *)plug;
+
+    if (ft->finalize_reply == NULL)
+	return KRB5_PLUGIN_NO_HANDLE;
+    return ft->finalize_reply((void *)plug, (astgs_request_t)userctx);
+}
+
+krb5_error_code
+_kdc_finalize_reply(astgs_request_t r)
+{
+    krb5_error_code ret = KRB5_PLUGIN_NO_HANDLE;
+
+    if (have_plugin)
+        ret = _krb5_plugin_run_f(r->context, &windc_plugin_data, 0, r, finalize);
+
+    if (ret == KRB5_PLUGIN_NO_HANDLE)
+        ret = 0;
+
+    return ret;
+}
+
 uintptr_t KRB5_CALLCONV
 kdc_get_instance(const char *libname)
 {

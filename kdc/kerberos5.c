@@ -2746,6 +2746,13 @@ _kdc_as_rep(astgs_request_t r)
     }
 
     /*
+     * Last chance for plugins to update reply
+     */
+    ret = _kdc_finalize_reply(r);
+    if (ret)
+	goto out;
+
+    /*
      * Don't send kvno from client entry if the pre-authentication
      * mechanism replaced the reply key.
      */

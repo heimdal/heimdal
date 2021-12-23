@@ -600,8 +600,7 @@ tgs_make_reply(astgs_request_t r,
 	       krb5_principal client_principal,
 	       const char *tgt_realm,
 	       uint16_t rodc_id,
-	       krb5_boolean add_ticket_sig,
-	       const METHOD_DATA *enc_pa_data)
+	       krb5_boolean add_ticket_sig)
 {
     KDC_REQ_BODY *b = &r->req.req_body;
     const char **e_text = &r->e_text;
@@ -786,16 +785,7 @@ tgs_make_reply(astgs_request_t r,
     _kdc_log_timestamp(r, "TGS-REQ", et->authtime, et->starttime,
 		       et->endtime, et->renew_till);
 
-    if (enc_pa_data->len) {
-	rep->padata = calloc(1, sizeof(*rep->padata));
-	if (rep->padata == NULL) {
-	    ret = ENOMEM;
-	    goto out;
-	}
-	ret = copy_METHOD_DATA(enc_pa_data, rep->padata);
-	if (ret)
-	    goto out;
-    }
+    rep->padata = r->outpadata.len ? &r->outpadata : NULL;
 
     if (krb5_enctype_valid(r->context, serverkey->keytype) != 0
 	&& _kdc_is_weak_exception(server->entry.principal, serverkey->keytype))
@@ -1476,8 +1466,6 @@ tgs_build_reply(astgs_request_t priv,
 
     hdb_entry_ex *krbtgt_out = NULL;
 
-    METHOD_DATA enc_pa_data;
-
     PrincipalName *s;
     Realm r;
     EncTicketPart adtkt;
@@ -1491,7 +1479,6 @@ tgs_build_reply(astgs_request_t priv,
 
     memset(&sessionkey, 0, sizeof(sessionkey));
     memset(&adtkt, 0, sizeof(adtkt));
-    memset(&enc_pa_data, 0, sizeof(enc_pa_data));
 
     s = b->sname;
     r = b->realm;
@@ -2402,7 +2389,7 @@ server_lookup:
 	}
 	pa.padata_type = KRB5_PADATA_SERVER_REFERRAL;
 
-	ret = add_METHOD_DATA(&enc_pa_data, &pa);
+	ret = add_METHOD_DATA(&priv->outpadata, &pa);
 	krb5_data_free(&pa.padata_value);
 	if (ret) {
 	    kdc_log(context, config, 4,
@@ -2457,8 +2444,7 @@ server_lookup:
 			 cp,
                          tgt_realm,
 			 rodc_id,
-			 add_ticket_sig,
-			 &enc_pa_data);
+			 add_ticket_sig);
 
 out:
     free(user2user_name);
@@ -2488,7 +2474,6 @@ out:
     krb5_free_principal(context, sp);
     krb5_free_principal(context, krbtgt_out_principal);
     free(ref_realm);
-    free_METHOD_DATA(&enc_pa_data);
 
     free_EncTicketPart(&adtkt);
 
@@ -2608,6 +2593,7 @@ out:
     free(csec);
     free(cusec);
 
+    r->rep.padata = NULL; /* may point to outpadata */
     free_TGS_REP(&r->rep);
     free_TransitedEncoding(&r->et.transited);
     free(r->et.starttime);
@@ -2645,6 +2631,9 @@ out:
 
     _kdc_free_fast_state(&r->fast);
     krb5_pac_free(r->context, r->pac);
+
+    if (r->outpadata.len)
+	free_METHOD_DATA(&r->outpadata);
 
     if (auth_data) {
 	free_AuthorizationData(auth_data);

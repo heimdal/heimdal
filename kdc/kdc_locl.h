@@ -67,28 +67,6 @@ struct kdc_request_desc {
 struct as_request_pa_state;
 struct kdc_patypes;
 
-#define ASTGS_REQUEST_DESC_COMMON_ELEMENTS			\
-    HEIM_SVC_REQUEST_DESC_COMMON_ELEMENTS;			\
-								\
-    KDC_REQ req;						\
-								\
-    KDC_REP rep;						\
-    EncTicketPart et;						\
-    EncKDCRepPart ek;						\
-								\
-    /* princ requested by client (AS) or canon princ (TGT) */	\
-    krb5_principal client_princ;				\
-    hdb_entry_ex *client;					\
-    HDB *clientdb;						\
-								\
-    krb5_principal server_princ;				\
-    hdb_entry_ex *server;					\
-								\
-    krb5_keyblock reply_key;					\
-								\
-    krb5_pac pac;						\
-    uint64_t pac_attributes;
-
 struct astgs_request_desc {
     ASTGS_REQUEST_DESC_COMMON_ELEMENTS;
 

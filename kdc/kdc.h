@@ -46,6 +46,10 @@
 #include <kx509_asn1.h>
 #include <gssapi/gssapi.h>
 
+#define heim_pcontext krb5_context
+#define heim_pconfig krb5_kdc_configuration *
+#include <heimbase-svc.h>
+
 enum krb5_kdc_trpolicy {
     TRPOLICY_ALWAYS_CHECK,
     TRPOLICY_ALLOW_PER_PRINCIPAL,
@@ -124,6 +128,34 @@ typedef struct krb5_kdc_configuration {
     const char *app;
 } krb5_kdc_configuration;
 
+#define ASTGS_REQUEST_DESC_COMMON_ELEMENTS			\
+    HEIM_SVC_REQUEST_DESC_COMMON_ELEMENTS;			\
+								\
+    KDC_REQ req;						\
+								\
+    KDC_REP rep;						\
+    EncTicketPart et;						\
+    EncKDCRepPart ek;						\
+								\
+    /* princ requested by client (AS) or canon princ (TGT) */	\
+    krb5_principal client_princ;				\
+    hdb_entry_ex *client;					\
+    HDB *clientdb;						\
+								\
+    krb5_principal server_princ;				\
+    hdb_entry_ex *server;					\
+								\
+    krb5_keyblock reply_key;					\
+								\
+    krb5_pac pac;						\
+    uint64_t pac_attributes;
+
+#ifndef __KDC_LOCL_H__
+struct astgs_request_desc {
+    ASTGS_REQUEST_DESC_COMMON_ELEMENTS
+};
+#endif
+
 typedef struct kdc_request_desc *kdc_request_t;
 typedef struct astgs_request_desc *astgs_request_t;
 typedef struct kx509_req_context_desc *kx509_req_context;
@@ -137,5 +169,8 @@ struct krb5_kdc_service {
 };
 
 #include <kdc-protos.h>
+
+#undef heim_pcontext
+#undef heim_pconfig
 
 #endif

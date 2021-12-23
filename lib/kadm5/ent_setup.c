@@ -63,6 +63,7 @@ attr_to_flags(unsigned attr, HDBFlags *flags)
     flags->materialize =       !!(attr & KRB5_KDB_MATERIALIZE);
     flags->virtual_keys =      !!(attr & KRB5_KDB_VIRTUAL_KEYS);
     flags->virtual =           !!(attr & KRB5_KDB_VIRTUAL);
+    flags->no_auth_data_reqd = !!(attr & KRB5_KDB_NO_AUTH_DATA_REQUIRED);
 }
 
 /*

@@ -54,6 +54,7 @@ HDBFlags ::= BIT STRING {
 	virtual-keys(20),		-- entry     stored; keys mostly derived
 	virtual(21),			-- entry not stored; keys always derived
 	synthetic(22),			-- entry not stored; for PKINIT
+	no-auth-data-reqd(23),		-- omit PAC from service tickets
 
 	force-canonicalize(30),		-- force the KDC to return the canonical
 					-- principal irrespective of the setting

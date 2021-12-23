@@ -185,6 +185,7 @@ kadm5_s_get_principal(void *server_handle,
 	out->attributes |= ent.entry.flags.allow_digest ? KRB5_KDB_ALLOW_DIGEST : 0;
 	out->attributes |= ent.entry.flags.virtual_keys ? KRB5_KDB_VIRTUAL_KEYS : 0;
 	out->attributes |= ent.entry.flags.virtual ? KRB5_KDB_VIRTUAL : 0;
+	out->attributes |= ent.entry.flags.no_auth_data_reqd ? KRB5_KDB_NO_AUTH_DATA_REQUIRED : 0;
     }
     if(mask & KADM5_MAX_LIFE) {
 	if(ent.entry.max_life)

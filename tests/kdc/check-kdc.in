@@ -77,6 +77,7 @@ kpasswdd="${kpasswdd} --addresses=localhost -p $pwport"
 server=host/datan.test.h5l.se
 server2=host/computer.example.com
 server3=host/refer-me-out.test.h5l.se
+server4=host/no-auth-data-reqd.test.h5l.se
 serverip=host/10.11.12.13
 serveripname=host/ip.test.h5l.org
 serveripname2=host/10.11.12.14
@@ -245,6 +246,10 @@ ${kadmin} add -p kaka --use-defaults ${serveripname}@${R} || exit 1
 ${kadmin} ext -k ${keytab} ${serveripname}@${R} || exit 1
 ${kadmin} modify --alias=${serveripname2}@${R} ${serveripname}@${R}
 ${kadmin} add -p foo --use-defaults remove2@${R2} || exit 1
+
+${kadmin} add -p nopac --use-defaults ${server4}@${R2} || exit 1
+${kadmin} modify --attributes=+no-auth-data-reqd ${server4}@${R2} || exit 1
+${kadmin} ext -k ${keytab} ${server4}@${R2} || exit 1
 
 ${kadmin} add -p kaka --use-defaults ${alias1}@${R} || exit 1
 ${kadmin} ext -k ${keytab} ${alias1}@${R} || exit 1
@@ -522,6 +527,20 @@ for a in $enctypes; do
 	${test_ap_req} --no-verify-pac ${server}@${R} ${keytab} ${cache} || \
 		{ ec=1 ; eval "${testfailed}"; }
 	${kdestroy} --credential=${server}@${R}
+done
+${kdestroy}
+
+echo "Getting client initial tickets with PAC"; > messages.log
+${kinit} --request-pac --password-file=${objdir}/foopassword foo@$R || \
+	{ ec=1 ; eval "${testfailed}"; }
+for a in $enctypes; do
+	echo "Getting tickets for PAC-less service principal ($a)"; > messages.log
+	${kgetcred} -e $a ${server4}@${R2} || { ec=1 ; eval "${testfailed}"; }
+	${test_ap_req} --verify-pac ${server4}@${R2} ${keytab} ${cache} && \
+		{ ec=1 ; eval "${testfailed}"; }
+	${test_ap_req} --no-verify-pac ${server4}@${R2} ${keytab} ${cache} || \
+		{ ec=1 ; eval "${testfailed}"; }
+	${kdestroy} --credential=${server4}@${R2}
 done
 ${kdestroy}
 

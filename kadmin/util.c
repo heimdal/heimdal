@@ -69,6 +69,7 @@ struct units kdb_attrs[] = {
     { "disallow-tgt-based",	KRB5_KDB_DISALLOW_TGT_BASED },
     { "disallow-forwardable",	KRB5_KDB_DISALLOW_FORWARDABLE },
     { "disallow-postdated",	KRB5_KDB_DISALLOW_POSTDATED },
+    { "no-auth-data-reqd",	KRB5_KDB_NO_AUTH_DATA_REQUIRED },
     { NULL, 0 }
 };
 

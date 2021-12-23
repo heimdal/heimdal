@@ -846,6 +846,10 @@ tgs_make_reply(astgs_request_t r,
 	}
     }
 
+    ret = _kdc_finalize_reply(r, &rep, &et, &ek);
+    if (ret)
+	goto out;
+
     /* It is somewhat unclear where the etype in the following
        encryption should come from. What we have is a session
        key in the passed tgt, and a list of preferred etypes

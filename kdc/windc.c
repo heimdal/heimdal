@@ -234,6 +234,54 @@ _kdc_check_access(astgs_request_t r, KDC_REQ *req, METHOD_DATA *method_data)
     return ret;
 }
 
+struct finalize_uc {
+    krb5_kdc_configuration *config;
+    hdb_entry_ex *client_ex;
+    hdb_entry_ex *server_ex;
+    KDC_REP *rep;
+    EncTicketPart *et;
+    EncKDCRepPart *ek;
+};
+
+static krb5_error_code KRB5_LIB_CALL
+finalize(krb5_context context, const void *plug, void *plugctx, void *userctx)
+{
+    krb5plugin_windc_ftable *ft = (krb5plugin_windc_ftable *)plug;
+    struct finalize_uc *uc = (struct finalize_uc *)userctx;
+
+    if (ft->finalize_reply == NULL)
+	return KRB5_PLUGIN_NO_HANDLE;
+    return ft->finalize_reply((void *)plug, context, uc->config,
+			      uc->client_ex, uc->server_ex,
+			      uc->rep, uc->et, uc->ek);
+}
+
+
+krb5_error_code
+_kdc_finalize_reply(astgs_request_t r, KDC_REP *rep,
+		    EncTicketPart *et, EncKDCRepPart *ek)
+{
+    krb5_error_code ret = KRB5_PLUGIN_NO_HANDLE;
+    struct finalize_uc uc;
+
+    if (have_plugin) {
+        uc.config = r->config;
+        uc.client_ex = r->client;
+        uc.server_ex = r->server;
+        uc.rep = rep;
+        uc.et = et;
+        uc.ek = ek;
+
+        ret = _krb5_plugin_run_f(r->context, &windc_plugin_data,
+                                 0, &uc, finalize);
+    }
+
+    if (ret == KRB5_PLUGIN_NO_HANDLE)
+        ret = 0;
+
+    return ret;
+}
+
 uintptr_t KRB5_CALLCONV
 kdc_get_instance(const char *libname)
 {

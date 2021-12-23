@@ -107,13 +107,21 @@ client_access(void *ctx,
     return 0;
 }
 
+static krb5_error_code KRB5_CALLCONV
+finalize_reply(void *ctx, astgs_request_t r)
+{
+    krb5_warnx(r->context, "finalize_reply");
+    return 0;
+}
+
 static krb5plugin_windc_ftable windc = {
     KRB5_WINDC_PLUGING_MINOR,
     windc_init,
     windc_fini,
     pac_generate,
     pac_verify,
-    client_access
+    client_access,
+    finalize_reply
 };
 
 static const krb5plugin_windc_ftable *const windc_plugins[] = {

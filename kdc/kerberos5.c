@@ -1169,15 +1169,8 @@ _kdc_encode_reply(krb5_context context,
 	if (ret)
 	    return ret;
 
-	if (rep->padata) {
-	    free_METHOD_DATA(rep->padata);
-	} else {
-	    rep->padata = calloc(1, sizeof(*(rep->padata)));
-	    if (rep->padata == NULL) {
-		krb5_data_free(&data);
-		return ENOMEM;
-	    }
-	}
+	free_METHOD_DATA(&r->outpadata);
+	rep->padata = &r->outpadata;
 
 	ret = krb5_padata_add(context, rep->padata,
 			      KRB5_PADATA_FX_FAST,
@@ -2102,6 +2095,8 @@ _kdc_as_rep(astgs_request_t r)
 
     memset(rep, 0, sizeof(*rep));
 
+    rep->padata = &r->outpadata; /* so we don't need to make this public */
+
     /*
      * Look for FAST armor and unwrap
      */
@@ -2381,7 +2376,7 @@ _kdc_as_rep(astgs_request_t r)
      * with in a preauth mech.
      */
 
-    ret = _kdc_check_access(r, &r->outpadata);
+    ret = _kdc_check_access(r);
     if(ret)
 	goto out;
 
@@ -2685,17 +2680,8 @@ _kdc_as_rep(astgs_request_t r)
     if (ret)
 	goto out;
 
-    if (r->outpadata.len) {
-
-	ALLOC(rep->padata);
-	if (rep->padata == NULL) {
-	    ret = ENOMEM;
-	    goto out;
-	}
-	ret = copy_METHOD_DATA(&r->outpadata, rep->padata);
-	if (ret)
-	    goto out;
-    }
+    if (r->outpadata.len == 0)
+	rep->padata = NULL;
 
     /* Add the PAC */
     if (!r->et.flags.anonymous) {
@@ -2775,6 +2761,7 @@ _kdc_as_rep(astgs_request_t r)
     }
 
 out:
+    r->rep.padata = NULL; /* may point to outpadata */
     free_AS_REP(&r->rep);
 
     /*

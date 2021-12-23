@@ -95,15 +95,9 @@ pac_verify(void *ctx, krb5_context context,
 }
 
 static krb5_error_code KRB5_CALLCONV
-client_access(void *ctx,
-	      krb5_context context,
-	      krb5_kdc_configuration *config,
-	      hdb_entry_ex *client, const char *client_name,
-	      hdb_entry_ex *server, const char *server_name,
-	      KDC_REQ *req,
-	      METHOD_DATA *data)
+client_access(void *ctx, astgs_request_t r)
 {
-    krb5_warnx(context, "client_access");
+    krb5_warnx(r->context, "client_access");
     return 0;
 }
 

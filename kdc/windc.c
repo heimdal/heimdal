@@ -184,48 +184,24 @@ _kdc_pac_verify(krb5_context context,
 			     0, &uc, verify);
 }
 
-struct check_uc {
-    krb5_kdc_configuration *config;
-    hdb_entry_ex *client_ex;
-    const char *client_name;
-    hdb_entry_ex *server_ex;
-    const char *server_name;
-    KDC_REQ *req;
-    METHOD_DATA *method_data;
-};
-
 static krb5_error_code KRB5_LIB_CALL
 check(krb5_context context, const void *plug, void *plugctx, void *userctx)
 {
     krb5plugin_windc_ftable *ft = (krb5plugin_windc_ftable *)plug;
-    struct check_uc *uc = (struct check_uc *)userctx;    
 
     if (ft->client_access == NULL)
 	return KRB5_PLUGIN_NO_HANDLE;
-    return ft->client_access((void *)plug, context, uc->config, 
-			     uc->client_ex, uc->client_name, 
-			     uc->server_ex, uc->server_name, 
-			     uc->req, uc->method_data);
+    return ft->client_access((void *)plug, userctx);
 }
 
-
 krb5_error_code
-_kdc_check_access(astgs_request_t r, METHOD_DATA *method_data)
+_kdc_check_access(astgs_request_t r)
 {
     krb5_error_code ret = KRB5_PLUGIN_NO_HANDLE;
-    struct check_uc uc;
 
     if (have_plugin) {
-        uc.config = r->config;
-        uc.client_ex = r->client;
-        uc.client_name = r->cname;
-        uc.server_ex = r->server;
-        uc.server_name = r->sname;
-        uc.req = &r->req;
-        uc.method_data = method_data;
-
         ret = _krb5_plugin_run_f(r->context, &windc_plugin_data,
-                                 0, &uc, check);
+                                 0, r, check);
     }
 
     if (ret == KRB5_PLUGIN_NO_HANDLE)

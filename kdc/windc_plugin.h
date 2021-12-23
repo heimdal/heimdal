@@ -71,12 +71,7 @@ typedef krb5_error_code
 			       krb5_pac *);
 
 typedef krb5_error_code
-(KRB5_CALLCONV *krb5plugin_windc_client_access)(
-	void *, krb5_context,
-	krb5_kdc_configuration *config,
-	hdb_entry_ex *, const char *, 
-	hdb_entry_ex *, const char *, 
-	KDC_REQ *, METHOD_DATA *);
+(KRB5_CALLCONV *krb5plugin_windc_client_access)(void *, astgs_request_t);
 
 typedef krb5_error_code
 (KRB5_CALLCONV *krb5plugin_windc_finalize_reply)(void *, astgs_request_t r);

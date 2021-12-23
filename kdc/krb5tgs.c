@@ -606,27 +606,23 @@ tgs_make_reply(astgs_request_t r,
     KDC_REQ_BODY *b = &r->req.req_body;
     const char **e_text = &r->e_text;
     krb5_data *reply = r->reply;
-    KDC_REP rep;
-    EncKDCRepPart ek;
-    EncTicketPart et;
+    KDC_REP *rep = &r->rep;
+    EncTicketPart *et = &r->et;
+    EncKDCRepPart *ek = &r->ek;
     KDCOptions f = b->kdc_options;
     krb5_error_code ret;
     int is_weak = 0;
 
-    memset(&rep, 0, sizeof(rep));
-    memset(&et, 0, sizeof(et));
-    memset(&ek, 0, sizeof(ek));
+    rep->pvno = 5;
+    rep->msg_type = krb_tgs_rep;
 
-    rep.pvno = 5;
-    rep.msg_type = krb_tgs_rep;
-
-    et.authtime = tgt->authtime;
+    et->authtime = tgt->authtime;
     _kdc_fix_time(&b->till);
-    et.endtime = min(tgt->endtime, *b->till);
-    ALLOC(et.starttime);
-    *et.starttime = kdc_time;
+    et->endtime = min(tgt->endtime, *b->till);
+    ALLOC(et->starttime);
+    *et->starttime = kdc_time;
 
-    ret = check_tgs_flags(r, b, tgt_name, tgt, &et);
+    ret = check_tgs_flags(r, b, tgt_name, tgt, et);
     if(ret)
 	goto out;
 
@@ -656,18 +652,18 @@ tgs_make_reply(astgs_request_t r,
 				 !((GLOBAL_ALLOW_PER_PRINCIPAL &&
 				    PRINCIPAL_ALLOW_DISABLE_TRANSITED_CHECK(server)) ||
 				   GLOBAL_ALLOW_DISABLE_TRANSITED_CHECK),
-				 &tgt->transited, &et,
+				 &tgt->transited, et,
 				 krb5_principal_get_realm(r->context, client_principal),
 				 krb5_principal_get_realm(r->context, server->entry.principal),
 				 tgt_realm);
     if(ret)
 	goto out;
 
-    ret = copy_Realm(&server_principal->realm, &rep.ticket.realm);
+    ret = copy_Realm(&server_principal->realm, &rep->ticket.realm);
     if (ret)
 	goto out;
-    _krb5_principal2principalname(&rep.ticket.sname, server_principal);
-    ret = copy_Realm(&tgt_name->realm, &rep.crealm);
+    _krb5_principal2principalname(&rep->ticket.sname, server_principal);
+    ret = copy_Realm(&tgt_name->realm, &rep->crealm);
     if (ret)
 	goto out;
 
@@ -677,86 +673,86 @@ tgs_make_reply(astgs_request_t r,
      * whilst the TGT flag check below is superfluous, it is included in
      * order to follow the specification to its letter.
      */
-    if (et.flags.anonymous && !tgt->flags.anonymous)
-	_kdc_make_anonymous_principalname(&rep.cname);
+    if (et->flags.anonymous && !tgt->flags.anonymous)
+	_kdc_make_anonymous_principalname(&rep->cname);
     else
-	ret = copy_PrincipalName(&tgt_name->name, &rep.cname);
+	ret = copy_PrincipalName(&tgt_name->name, &rep->cname);
     if (ret)
 	goto out;
-    rep.ticket.tkt_vno = 5;
+    rep->ticket.tkt_vno = 5;
 
-    ek.caddr = et.caddr;
+    ek->caddr = et->caddr;
 
     {
 	time_t life;
-	life = et.endtime - *et.starttime;
+	life = et->endtime - *et->starttime;
 	if(client && client->entry.max_life)
 	    life = min(life, *client->entry.max_life);
 	if(server->entry.max_life)
 	    life = min(life, *server->entry.max_life);
-	et.endtime = *et.starttime + life;
+	et->endtime = *et->starttime + life;
     }
     if(f.renewable_ok && tgt->flags.renewable &&
-       et.renew_till == NULL && et.endtime < *b->till &&
+       et->renew_till == NULL && et->endtime < *b->till &&
        tgt->renew_till != NULL)
     {
-	et.flags.renewable = 1;
-	ALLOC(et.renew_till);
-	*et.renew_till = *b->till;
+	et->flags.renewable = 1;
+	ALLOC(et->renew_till);
+	*et->renew_till = *b->till;
     }
-    if(et.renew_till){
+    if(et->renew_till){
 	time_t renew;
-	renew = *et.renew_till - *et.starttime;
+	renew = *et->renew_till - *et->starttime;
 	if(client && client->entry.max_renew)
 	    renew = min(renew, *client->entry.max_renew);
 	if(server->entry.max_renew)
 	    renew = min(renew, *server->entry.max_renew);
-	*et.renew_till = *et.starttime + renew;
+	*et->renew_till = *et->starttime + renew;
     }
 
-    if(et.renew_till){
-	*et.renew_till = min(*et.renew_till, *tgt->renew_till);
-	*et.starttime = min(*et.starttime, *et.renew_till);
-	et.endtime = min(et.endtime, *et.renew_till);
+    if(et->renew_till){
+	*et->renew_till = min(*et->renew_till, *tgt->renew_till);
+	*et->starttime = min(*et->starttime, *et->renew_till);
+	et->endtime = min(et->endtime, *et->renew_till);
     }
 
-    *et.starttime = min(*et.starttime, et.endtime);
+    *et->starttime = min(*et->starttime, et->endtime);
 
-    if(*et.starttime == et.endtime){
+    if(*et->starttime == et->endtime){
 	ret = KRB5KDC_ERR_NEVER_VALID;
 	goto out;
     }
-    if(et.renew_till && et.endtime == *et.renew_till){
-	free(et.renew_till);
-	et.renew_till = NULL;
-	et.flags.renewable = 0;
+    if(et->renew_till && et->endtime == *et->renew_till){
+	free(et->renew_till);
+	et->renew_till = NULL;
+	et->flags.renewable = 0;
     }
 
-    et.flags.pre_authent = tgt->flags.pre_authent;
-    et.flags.hw_authent  = tgt->flags.hw_authent;
-    et.flags.ok_as_delegate = server->entry.flags.ok_as_delegate;
+    et->flags.pre_authent = tgt->flags.pre_authent;
+    et->flags.hw_authent  = tgt->flags.hw_authent;
+    et->flags.ok_as_delegate = server->entry.flags.ok_as_delegate;
 
     /* See MS-KILE 3.3.5.1 */
     if (!server->entry.flags.forwardable)
-	et.flags.forwardable = 0;
+	et->flags.forwardable = 0;
     if (!server->entry.flags.proxiable)
-	et.flags.proxiable = 0;
+	et->flags.proxiable = 0;
 
     if (auth_data) {
 	unsigned int i = 0;
 
 	/* XXX check authdata */
 
-	if (et.authorization_data == NULL) {
-	    et.authorization_data = calloc(1, sizeof(*et.authorization_data));
-	    if (et.authorization_data == NULL) {
+	if (et->authorization_data == NULL) {
+	    et->authorization_data = calloc(1, sizeof(*et->authorization_data));
+	    if (et->authorization_data == NULL) {
 		ret = ENOMEM;
 		krb5_set_error_message(r->context, ret, "malloc: out of memory");
 		goto out;
 	    }
 	}
 	for(i = 0; i < auth_data->len ; i++) {
-	    ret = add_AuthorizationData(et.authorization_data, &auth_data->val[i]);
+	    ret = add_AuthorizationData(et->authorization_data, &auth_data->val[i]);
 	    if (ret) {
 		krb5_set_error_message(r->context, ret, "malloc: out of memory");
 		goto out;
@@ -764,39 +760,39 @@ tgs_make_reply(astgs_request_t r,
 	}
     }
 
-    ret = krb5_copy_keyblock_contents(r->context, sessionkey, &et.key);
+    ret = krb5_copy_keyblock_contents(r->context, sessionkey, &et->key);
     if (ret)
 	goto out;
-    et.crealm = rep.crealm;
-    et.cname = rep.cname;
+    et->crealm = rep->crealm;
+    et->cname = rep->cname;
 
-    ek.key = et.key;
+    ek->key = et->key;
     /* MIT must have at least one last_req */
-    ek.last_req.val = calloc(1, sizeof(*ek.last_req.val));
-    if (ek.last_req.val == NULL) {
+    ek->last_req.val = calloc(1, sizeof(*ek->last_req.val));
+    if (ek->last_req.val == NULL) {
 	ret = ENOMEM;
 	goto out;
     }
-    ek.last_req.len = 1; /* set after alloc to avoid null deref on cleanup */
-    ek.nonce = b->nonce;
-    ek.flags = et.flags;
-    ek.authtime = et.authtime;
-    ek.starttime = et.starttime;
-    ek.endtime = et.endtime;
-    ek.renew_till = et.renew_till;
-    ek.srealm = rep.ticket.realm;
-    ek.sname = rep.ticket.sname;
+    ek->last_req.len = 1; /* set after alloc to avoid null deref on cleanup */
+    ek->nonce = b->nonce;
+    ek->flags = et->flags;
+    ek->authtime = et->authtime;
+    ek->starttime = et->starttime;
+    ek->endtime = et->endtime;
+    ek->renew_till = et->renew_till;
+    ek->srealm = rep->ticket.realm;
+    ek->sname = rep->ticket.sname;
 
-    _kdc_log_timestamp(r, "TGS-REQ", et.authtime, et.starttime,
-		       et.endtime, et.renew_till);
+    _kdc_log_timestamp(r, "TGS-REQ", et->authtime, et->starttime,
+		       et->endtime, et->renew_till);
 
     if (enc_pa_data->len) {
-	rep.padata = calloc(1, sizeof(*rep.padata));
-	if (rep.padata == NULL) {
+	rep->padata = calloc(1, sizeof(*rep->padata));
+	if (rep->padata == NULL) {
 	    ret = ENOMEM;
 	    goto out;
 	}
-	ret = copy_METHOD_DATA(enc_pa_data, rep.padata);
+	ret = copy_METHOD_DATA(enc_pa_data, rep->padata);
 	if (ret)
 	    goto out;
     }
@@ -823,7 +819,7 @@ tgs_make_reply(astgs_request_t r,
      * restrictive authorization data. Policy for unknown authorization types
      * is implementation dependent.
      */
-    if (r->pac && !et.flags.anonymous) {
+    if (r->pac && !et->flags.anonymous) {
 	_kdc_audit_addkv((kdc_request_t)r, 0, "pac_attributes", "%lx",
 			 (long)r->pac_attributes);
 
@@ -838,7 +834,7 @@ tgs_make_reply(astgs_request_t r,
 
 	    ret = _krb5_kdc_pac_sign_ticket(r->context, r->pac, tgt_name, serverkey,
 					    krbtgtkey, rodc_id, NULL, r->client_princ,
-					    add_ticket_sig, &et,
+					    add_ticket_sig, et,
 					    is_tgs ? &r->pac_attributes : NULL);
 	    if (ret)
 		goto out;
@@ -856,8 +852,7 @@ tgs_make_reply(astgs_request_t r,
        etype list, even if we don't want a session key with
        DES3? */
     ret = _kdc_encode_reply(r->context, r->config, r, b->nonce,
-			    &rep, &et, &ek, serverkey->keytype,
-			    kvno,
+			    serverkey->keytype, kvno,
 			    serverkey, 0, r->rk_is_subkey,
 			    e_text, reply);
     if (is_weak)
@@ -866,19 +861,6 @@ tgs_make_reply(astgs_request_t r,
     _log_astgs_req(r, serverkey->keytype);
 
 out:
-    free_TGS_REP(&rep);
-    free_TransitedEncoding(&et.transited);
-    if(et.starttime)
-	free(et.starttime);
-    if(et.renew_till)
-	free(et.renew_till);
-    if(et.authorization_data) {
-	free_AuthorizationData(et.authorization_data);
-	free(et.authorization_data);
-    }
-    free_LastReq(&ek.last_req);
-    memset(et.key.keyvalue.data, 0, et.key.keyvalue.length);
-    free_EncryptionKey(&et.key);
     return ret;
 }
 
@@ -2621,6 +2603,21 @@ out:
     }
     free(csec);
     free(cusec);
+
+    free_TGS_REP(&r->rep);
+    free_TransitedEncoding(&r->et.transited);
+    free(r->et.starttime);
+    free(r->et.renew_till);
+    if(r->et.authorization_data) {
+	free_AuthorizationData(r->et.authorization_data);
+	free(r->et.authorization_data);
+    }
+    free_LastReq(&r->ek.last_req);
+    if (r->et.key.keyvalue.data) {
+	memset_s(r->et.key.keyvalue.data, 0, r->et.key.keyvalue.length,
+		 r->et.key.keyvalue.length);
+    }
+    free_EncryptionKey(&r->et.key);
 
     if (r->client_princ) {
 	krb5_free_principal(r->context, r->client_princ);

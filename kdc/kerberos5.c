@@ -1082,7 +1082,6 @@ krb5_error_code
 _kdc_encode_reply(krb5_context context,
 		  krb5_kdc_configuration *config,
 		  astgs_request_t r, uint32_t nonce,
-		  KDC_REP *rep, EncTicketPart *et, EncKDCRepPart *ek,
 		  krb5_enctype etype,
 		  int skvno, const EncryptionKey *skey,
 		  int ckvno,
@@ -1095,6 +1094,9 @@ _kdc_encode_reply(krb5_context context,
     size_t len = 0;
     krb5_error_code ret;
     krb5_crypto crypto;
+    KDC_REP *rep = &r->rep;
+    EncTicketPart *et = &r->et;
+    EncKDCRepPart *ek = &r->ek;
 
     ASN1_MALLOC_ENCODE(EncTicketPart, buf, buf_size, et, &len, ret);
     if(ret) {
@@ -2085,7 +2087,7 @@ _kdc_as_rep(astgs_request_t r)
     KDC_REQ *req = &r->req;
     const char *from = r->from;
     KDC_REQ_BODY *b = NULL;
-    AS_REP rep;
+    KDC_REP *rep = &r->rep;
     KDCOptions f;
     krb5_enctype setype;
     krb5_error_code ret = 0;
@@ -2098,7 +2100,7 @@ _kdc_as_rep(astgs_request_t r)
     hdb_entry_ex *krbtgt = NULL;
     Key *krbtgt_key;
 
-    memset(&rep, 0, sizeof(rep));
+    memset(rep, 0, sizeof(*rep));
 
     /*
      * Look for FAST armor and unwrap
@@ -2439,46 +2441,46 @@ _kdc_as_rep(astgs_request_t r)
      * Build reply
      */
 
-    rep.pvno = 5;
-    rep.msg_type = krb_as_rep;
+    rep->pvno = 5;
+    rep->msg_type = krb_as_rep;
 
     if (!config->historical_anon_realm &&
         _kdc_is_anonymous(r->context, r->client_princ)) {
 	Realm anon_realm = KRB5_ANON_REALM;
-	ret = copy_Realm(&anon_realm, &rep.crealm);
+	ret = copy_Realm(&anon_realm, &rep->crealm);
     } else if (f.canonicalize || r->client->entry.flags.force_canonicalize)
-	ret = copy_Realm(&r->client->entry.principal->realm, &rep.crealm);
+	ret = copy_Realm(&r->client->entry.principal->realm, &rep->crealm);
     else
-	ret = copy_Realm(&r->client_princ->realm, &rep.crealm);
+	ret = copy_Realm(&r->client_princ->realm, &rep->crealm);
     if (ret)
 	goto out;
     if (r->et.flags.anonymous)
-	ret = _kdc_make_anonymous_principalname(&rep.cname);
+	ret = _kdc_make_anonymous_principalname(&rep->cname);
     else if (f.canonicalize || r->client->entry.flags.force_canonicalize)
-	ret = _krb5_principal2principalname(&rep.cname, r->client->entry.principal);
+	ret = _krb5_principal2principalname(&rep->cname, r->client->entry.principal);
     else
-	ret = _krb5_principal2principalname(&rep.cname, r->client_princ);
+	ret = _krb5_principal2principalname(&rep->cname, r->client_princ);
     if (ret)
 	goto out;
 
-    rep.ticket.tkt_vno = 5;
+    rep->ticket.tkt_vno = 5;
     if (f.canonicalize || r->server->entry.flags.force_canonicalize)
-	ret = copy_Realm(&r->server->entry.principal->realm, &rep.ticket.realm);
+	ret = copy_Realm(&r->server->entry.principal->realm, &rep->ticket.realm);
     else
-	ret = copy_Realm(&r->server_princ->realm, &rep.ticket.realm);
+	ret = copy_Realm(&r->server_princ->realm, &rep->ticket.realm);
     if (ret)
 	goto out;
     if (f.canonicalize || r->server->entry.flags.force_canonicalize)
-	_krb5_principal2principalname(&rep.ticket.sname,
+	_krb5_principal2principalname(&rep->ticket.sname,
 				      r->server->entry.principal);
     else
-	_krb5_principal2principalname(&rep.ticket.sname,
+	_krb5_principal2principalname(&rep->ticket.sname,
 				      r->server_princ);
     /* java 1.6 expects the name to be the same type, lets allow that
      * uncomplicated name-types. */
 #define CNT(sp,t) (((sp)->sname->name_type) == KRB5_NT_##t)
     if (CNT(b, UNKNOWN) || CNT(b, PRINCIPAL) || CNT(b, SRV_INST) || CNT(b, SRV_HST) || CNT(b, SRV_XHST))
-	rep.ticket.sname.name_type = b->sname->name_type;
+	rep->ticket.sname.name_type = b->sname->name_type;
 #undef CNT
 
     r->et.flags.initial = 1;
@@ -2513,10 +2515,10 @@ _kdc_as_rep(astgs_request_t r)
         }
     }
 
-    ret = copy_PrincipalName(&rep.cname, &r->et.cname);
+    ret = copy_PrincipalName(&rep->cname, &r->et.cname);
     if (ret)
 	goto out;
-    ret = copy_Realm(&rep.crealm, &r->et.crealm);
+    ret = copy_Realm(&rep->crealm, &r->et.crealm);
     if (ret)
 	goto out;
 
@@ -2648,10 +2650,10 @@ _kdc_as_rep(astgs_request_t r)
 	ALLOC(r->ek.renew_till);
 	*r->ek.renew_till = *r->et.renew_till;
     }
-    ret = copy_Realm(&rep.ticket.realm, &r->ek.srealm);
+    ret = copy_Realm(&rep->ticket.realm, &r->ek.srealm);
     if (ret)
 	goto out;
-    ret = copy_PrincipalName(&rep.ticket.sname, &r->ek.sname);
+    ret = copy_PrincipalName(&rep->ticket.sname, &r->ek.sname);
     if (ret)
 	goto out;
     if(r->et.caddr){
@@ -2685,12 +2687,12 @@ _kdc_as_rep(astgs_request_t r)
 
     if (r->outpadata.len) {
 
-	ALLOC(rep.padata);
-	if (rep.padata == NULL) {
+	ALLOC(rep->padata);
+	if (rep->padata == NULL) {
 	    ret = ENOMEM;
 	    goto out;
 	}
-	ret = copy_METHOD_DATA(&r->outpadata, rep.padata);
+	ret = copy_METHOD_DATA(&r->outpadata, rep->padata);
 	if (ret)
 	    goto out;
     }
@@ -2749,8 +2751,7 @@ _kdc_as_rep(astgs_request_t r)
      */
 
     ret = _kdc_encode_reply(r->context, config,
-			    r, req->req_body.nonce,
-			    &rep, &r->et, &r->ek, setype,
+			    r, req->req_body.nonce, setype,
 			    r->server->entry.kvno, &skey->key,
 			    pa_used_flag_isset(r, PA_REPLACE_REPLY_KEY) ? 0 : r->client->entry.kvno,
 			    0, &r->e_text, r->reply);
@@ -2767,7 +2768,7 @@ _kdc_as_rep(astgs_request_t r)
     }
 
 out:
-    free_AS_REP(&rep);
+    free_AS_REP(&r->rep);
 
     /*
      * In case of a non proxy error, build an error message.

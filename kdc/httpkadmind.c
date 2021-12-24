@@ -119,7 +119,6 @@ typedef struct kadmin_request_desc {
     HEIM_SVC_REQUEST_DESC_COMMON_ELEMENTS;
 
     struct MHD_Connection *connection;
-    krb5_error_code ret;
     krb5_times token_times;
     /*
      * FIXME

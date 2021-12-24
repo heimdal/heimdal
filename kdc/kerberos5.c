@@ -419,6 +419,21 @@ _kdc_r_log(astgs_request_t r, int level, const char *fmt, ...)
 }
 
 void
+_kdc_set_const_e_text(astgs_request_t r, const char *e_text)
+{
+    /* We should never see this */
+    if (r->e_text) {
+	kdc_log(r->context, r->config, 1,
+                "trying to replace e-text \"%s\" with \"%s\"\n",
+		r->e_text, e_text);
+	return;
+    }
+
+    r->e_text = e_text;
+    kdc_log(r->context, r->config, 4, "%s", e_text);
+}
+
+void
 _kdc_set_e_text(astgs_request_t r, const char *fmt, ...)
 	__attribute__ ((__format__ (__printf__, 2, 3)))
 {
@@ -430,9 +445,12 @@ _kdc_set_e_text(astgs_request_t r, const char *fmt, ...)
     vasprintf_ret = vasprintf(&e_text, fmt, ap);
     va_end(ap);
 
-    if (vasprintf_ret < 0 || !e_text)
+    if (vasprintf_ret < 0 || !e_text) {
 	/* not much else to do... */
+        kdc_log(r->context, r->config, 1,
+                "Could not set e_text: %s (out of memory)", fmt);
 	return;
+    }
 
     /* We should never see this */
     if (r->e_text) {
@@ -2190,9 +2208,10 @@ _kdc_as_rep(astgs_request_t r)
 		r->cname, fixed_client_name);
 	free(fixed_client_name);
 
+        r->e_text = NULL;
 	ret = _kdc_fast_mk_error(r, r->rep.padata, r->armor_crypto,
-				 &req->req_body, KRB5_KDC_ERR_WRONG_REALM,
-				 NULL,
+				 &req->req_body,
+                                 r->ret = KRB5_KDC_ERR_WRONG_REALM,
 				 r->client->entry.principal, r->server_princ,
 				 NULL, NULL, r->reply);
 	goto out;
@@ -2776,7 +2795,7 @@ out:
 				 r->rep.padata,
 			         r->armor_crypto,
 			         &req->req_body,
-			         ret, r->e_text,
+			         r->ret = ret,
 			         r->client_princ,
 			         r->server_princ,
 			         NULL, NULL,

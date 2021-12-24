@@ -820,7 +820,7 @@ heim_audit_trail(heim_svc_req_desc r, heim_error_code ret, const char *retname)
 #define CASE(x)	case x : retval = #x; break
     if (retname) {
         retval = retname;
-    } else switch (ret) {
+    } else switch (ret ? ret : r->ret) {
     CASE(ENOMEM);
     CASE(ENOENT);
     CASE(EACCES);

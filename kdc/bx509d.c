@@ -126,7 +126,6 @@ typedef struct bx509_request_desc {
     char *ccname;
     char *freeme1;
     krb5_addresses tgt_addresses; /* For /get-tgt */
-    krb5_error_code ret;
     char frombuf[128];
 } *bx509_request_desc;
 

@@ -859,7 +859,6 @@ tgs_check_authenticator(krb5_context context,
 			krb5_kdc_configuration *config,
 	                krb5_auth_context ac,
 			KDC_REQ_BODY *b,
-			const char **e_text,
 			krb5_keyblock *key)
 {
     krb5_authenticator auth;
@@ -982,7 +981,6 @@ tgs_parse_request(astgs_request_t r,
 		  hdb_entry_ex **krbtgt,
 		  krb5_enctype *krbtgt_etype,
 		  krb5_ticket **ticket,
-		  const char **e_text,
 		  const char *from,
 		  const struct sockaddr *from_addr,
 		  time_t **csec,
@@ -1183,8 +1181,8 @@ next_kvno:
 	}
     }
 
-    ret = tgs_check_authenticator(r->context, config,
-				  ac, b, e_text, &(*ticket)->ticket.key);
+    ret = tgs_check_authenticator(r->context, config, ac, b,
+                                  &(*ticket)->ticket.key);
     if (ret) {
 	krb5_auth_con_free(r->context, ac);
 	goto out;
@@ -1426,7 +1424,6 @@ tgs_build_reply(astgs_request_t priv,
 		hdb_entry_ex *krbtgt,
 		krb5_enctype krbtgt_etype,
 		krb5_ticket *ticket,
-		const char **e_text,
 		AuthorizationData **auth_data,
 		const struct sockaddr *from_addr)
 {
@@ -1490,7 +1487,7 @@ tgs_build_reply(astgs_request_t priv,
 
     if (s == NULL) {
 	ret = KRB5KDC_ERR_S_PRINCIPAL_UNKNOWN;
-	_kdc_set_e_text(priv, "No server in request");
+        _kdc_set_const_e_text(priv, "No server in request");
 	goto out;
     }
 
@@ -2498,11 +2495,12 @@ _kdc_tgs_rep(astgs_request_t r)
 
     hdb_entry_ex *krbtgt = NULL;
     krb5_ticket *ticket = NULL;
-    const char *e_text = NULL;
     krb5_enctype krbtgt_etype = ETYPE_NULL;
 
     time_t *csec = NULL;
     int *cusec = NULL;
+
+    r->e_text = NULL;
 
     if(req->padata == NULL){
 	ret = KRB5KDC_ERR_PREAUTH_REQUIRED; /* XXX ??? */
@@ -2532,7 +2530,6 @@ _kdc_tgs_rep(astgs_request_t r)
 			    &krbtgt,
 			    &krbtgt_etype,
 			    &ticket,
-			    &e_text,
 			    from, from_addr,
 			    &csec, &cusec,
 			    &auth_data);
@@ -2561,7 +2558,6 @@ _kdc_tgs_rep(astgs_request_t r)
 			  krbtgt,
 			  krbtgt_etype,
 			  ticket,
-			  &e_text,
 			  &auth_data,
 			  from_addr);
     if (ret) {
@@ -2574,7 +2570,7 @@ _kdc_tgs_rep(astgs_request_t r)
     if (datagram_reply && data->length > config->max_datagram_reply_length) {
 	krb5_data_free(data);
 	ret = KRB5KRB_ERR_RESPONSE_TOO_BIG;
-	e_text = "Reply packet too large";
+        _kdc_set_const_e_text(r, "Reply packet too large");
     }
 
 out:
@@ -2586,7 +2582,7 @@ out:
 				 &error_method,
 				 r->armor_crypto,
 				 &req->req_body,
-				 ret, r->e_text,
+				 r->ret = ret,
 				 ticket != NULL ? ticket->client : NULL,
 				 ticket != NULL ? ticket->server : NULL,
 				 csec, cusec,

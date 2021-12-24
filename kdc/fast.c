@@ -328,7 +328,6 @@ _kdc_fast_mk_error(astgs_request_t r,
 		   krb5_crypto armor_crypto,
 		   const KDC_REQ_BODY *req_body,
 		   krb5_error_code outer_error,
-		   const char *e_text,
 		   krb5_principal error_client,
 		   krb5_principal error_server,
 		   time_t *csec, int *cusec,
@@ -369,7 +368,7 @@ _kdc_fast_mk_error(astgs_request_t r,
 
 	ret = krb5_mk_error(r->context,
 			    outer_error,
-			    e_text,
+			    r->e_text,
 			    NULL,
 			    error_client,
 			    error_server,
@@ -393,7 +392,7 @@ _kdc_fast_mk_error(astgs_request_t r,
 	}
 
 	outer_error = KRB5_KDC_ERR_MORE_PREAUTH_DATA_REQUIRED;
-	e_text = NULL;
+	r->e_text = NULL;
 	if (r->fast.flags.requested_hidden_names) {
 	    error_client = NULL;
 	    error_server = NULL;
@@ -435,7 +434,7 @@ _kdc_fast_mk_error(astgs_request_t r,
 
     ret = krb5_mk_error(r->context,
 			outer_error,
-			e_text,
+			r->e_text,
 			(e_data.length ? &e_data : NULL),
 			error_client,
 			error_server,

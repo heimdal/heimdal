@@ -125,6 +125,7 @@ libkdc_la_SOURCES = 		\
 	krb5tgs.c		\
 	pkinit.c		\
 	pkinit-ec.c		\
+	mssfu.c			\
 	log.c			\
 	misc.c			\
 	kx509.c			\

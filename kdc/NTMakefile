@@ -103,6 +103,7 @@ LIBKDC_OBJS=\
 	$(OBJ)\krb5tgs.obj		\
 	$(OBJ)\pkinit.obj		\
 	$(OBJ)\pkinit-ec.obj		\
+	$(OBJ)\mssfu.obj			\
 	$(OBJ)\log.obj			\
 	$(OBJ)\misc.obj			\
 	$(OBJ)\kx509.obj		\
@@ -144,6 +145,7 @@ libkdc_la_SOURCES = 		\
 	krb5tgs.c		\
 	pkinit.c		\
 	pkinit-ec.c		\
+	mssfu.c			\
 	log.c			\
 	misc.c			\
 	kx509.c			\

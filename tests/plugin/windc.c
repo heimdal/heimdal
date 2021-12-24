@@ -96,21 +96,10 @@ pac_verify(void *ctx, krb5_context context,
 
 static void logit(const char *what, astgs_request_t r)
 {
-    char *client_princ_name = NULL;
-    char *server_princ_name = NULL;
-
-    if (r->client_princ)
-	krb5_unparse_name(r->context, r->client_princ, &client_princ_name);
-    if (r->server_princ)
-	krb5_unparse_name(r->context, r->server_princ, &server_princ_name);
-
     krb5_warnx(r->context, "%s: client %s server %s",
 	       what,
-	       client_princ_name ? client_princ_name : "<unknown>",
-	       server_princ_name ? server_princ_name : "<unknown>");
-
-    krb5_xfree(server_princ_name);
-    krb5_xfree(client_princ_name);
+	       r->cname ? r->cname : "<unknown>",
+	       r->sname ? r->sname : "<unknown>");
 }
 
 static krb5_error_code KRB5_CALLCONV

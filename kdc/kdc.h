@@ -131,19 +131,28 @@ typedef struct krb5_kdc_configuration {
 #define ASTGS_REQUEST_DESC_COMMON_ELEMENTS			\
     HEIM_SVC_REQUEST_DESC_COMMON_ELEMENTS;			\
 								\
+    /* AS-REQ or TGS-REQ */					\
     KDC_REQ req;						\
 								\
+    /* AS-REP or TGS-REP */					\
     KDC_REP rep;						\
     EncTicketPart et;						\
     EncKDCRepPart ek;						\
 								\
-    /* princ requested by client (AS) or canon princ (TGT) */	\
+    /* client principal (AS) or TGT/S4U principal (TGS) */	\
     krb5_principal client_princ;				\
     hdb_entry_ex *client;					\
     HDB *clientdb;						\
+    krb5_principal canon_client_princ;				\
 								\
+    /* server principal */					\
     krb5_principal server_princ;				\
     hdb_entry_ex *server;					\
+								\
+    /* presented ticket in TGS-REQ (unused by AS) */		\
+    krb5_principal *krbtgt_princ;				\
+    hdb_entry_ex *krbtgt;					\
+    krb5_ticket *ticket;					\
 								\
     krb5_keyblock reply_key;					\
 								\

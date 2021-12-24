@@ -2343,6 +2343,8 @@ _kdc_as_rep(astgs_request_t r)
 	    goto out;
     }
 
+    r->canon_client_princ = r->client->entry.principal;
+
     /*
      * Verify flags after the user been required to prove its identity
      * with in a preauth mech.

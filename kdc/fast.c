@@ -346,6 +346,7 @@ _kdc_fast_mk_error(astgs_request_t r,
      * FX-COOKIE can be used outside of FAST, e.g. SRP or GSS.
      */
     if (armor_crypto || r->fast.fast_state.len) {
+        kdc_log(r->context, r->config, 5, "Adding FAST cookie for KRB-ERROR");
 	ret = fast_add_cookie(r, error_client, error_method);
 	if (ret) {
 	    kdc_log(r->context, r->config, 1,
@@ -362,6 +363,8 @@ _kdc_fast_mk_error(astgs_request_t r,
 	memset(&fxfastrep, 0, sizeof(fxfastrep));
 	memset(&fastrep, 0, sizeof(fastrep));
 
+        kdc_log(r->context, r->config, 5, "Making FAST inner KRB-ERROR");
+
 	/* first add the KRB-ERROR to the fast errors */
 
 	ret = krb5_mk_error(r->context,
@@ -373,13 +376,18 @@ _kdc_fast_mk_error(astgs_request_t r,
 			    NULL,
 			    NULL,
 			    &e_data);
-	if (ret)
+	if (ret) {
+	    kdc_log(r->context, r->config, 1,
+		    "Failed to make inner KRB-ERROR: %d", ret);
 	    return ret;
+        }
 
 	ret = krb5_padata_add(r->context, error_method,
 			      KRB5_PADATA_FX_ERROR,
 			      e_data.data, e_data.length);
 	if (ret) {
+	    kdc_log(r->context, r->config, 1,
+		    "Failed to make add FAST PADATA to inner KRB-ERROR: %d", ret);
 	    krb5_data_free(&e_data);
 	    return ret;
 	}
@@ -397,21 +405,31 @@ _kdc_fast_mk_error(astgs_request_t r,
 				    error_method, NULL, NULL,
 				    req_body->nonce, &e_data);
 	free_METHOD_DATA(error_method);
-	if (ret)
+	if (ret) {
+	    kdc_log(r->context, r->config, 1,
+		    "Failed to make outer KRB-ERROR: %d", ret);
 	    return ret;
+        }
 
 	ret = krb5_padata_add(r->context, error_method,
 			      KRB5_PADATA_FX_FAST,
 			      e_data.data, e_data.length);
-	if (ret)
+	if (ret) {
+	    kdc_log(r->context, r->config, 1,
+		    "Failed to make add FAST PADATA to outer KRB-ERROR: %d", ret);
 	    return ret;
-    }
+        }
+    } else
+        kdc_log(r->context, r->config, 5, "Making non-FAST KRB-ERROR");
 
     if (error_method && error_method->len) {
 	ASN1_MALLOC_ENCODE(METHOD_DATA, e_data.data, e_data.length,
 			   error_method, &size, ret);
-	if (ret)
+	if (ret) {
+	    kdc_log(r->context, r->config, 1,
+		    "Failed to make encode METHOD-DATA: %d", ret);
 	    return ret;
+        }
 	heim_assert(size == e_data.length, "internal asn.1 encoder error");
     }
 
@@ -425,6 +443,10 @@ _kdc_fast_mk_error(astgs_request_t r,
 			cusec,
 			error_msg);
     krb5_data_free(&e_data);
+
+    if (ret)
+        kdc_log(r->context, r->config, 1,
+                "Failed to make encode KRB-ERROR: %d", ret);
 
     return ret;
 }

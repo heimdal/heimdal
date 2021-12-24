@@ -2889,7 +2889,8 @@ _asn1_copy(const struct asn1_template *t, const void *from, void *to)
 		    return ENOMEM;
 	    }
 
-	    if ((t->tt & A1_OP_MASK) == A1_OP_TYPE) {
+	    if ((t->tt & A1_OP_MASK) == A1_OP_TYPE ||
+                (t->tt & A1_OP_MASK) == A1_OP_TYPE_DECORATE) {
 		ret = _asn1_copy(t->ptr, fel, tel);
 	    } else {
 		const struct asn1_type_func *f = t->ptr;

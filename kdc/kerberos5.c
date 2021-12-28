@@ -1876,10 +1876,10 @@ generate_pac(astgs_request_t r, const Key *skey, const Key *tkey,
      * impersonate any realm. Windows always canonicalizes the realm,
      * but Heimdal permits aliases between realms.)
      */
-    if (krb5_realm_compare(r->context, client, r->client->entry.principal)) {
+    if (krb5_realm_compare(r->context, client, r->canon_client_princ)) {
 	char *cpn = NULL;
 
-	canon_princ = r->client->entry.principal;
+	canon_princ = r->canon_client_princ;
 
 	krb5_unparse_name(r->context, canon_princ, &cpn);
 	_kdc_audit_addkv((kdc_request_t)r, 0, "canon_client_name", "%s",
@@ -2411,7 +2411,7 @@ _kdc_as_rep(astgs_request_t r)
 	Realm anon_realm = KRB5_ANON_REALM;
 	ret = copy_Realm(&anon_realm, &rep->crealm);
     } else if (f.canonicalize || r->client->entry.flags.force_canonicalize)
-	ret = copy_Realm(&r->client->entry.principal->realm, &rep->crealm);
+	ret = copy_Realm(&r->canon_client_princ->realm, &rep->crealm);
     else
 	ret = copy_Realm(&r->client_princ->realm, &rep->crealm);
     if (ret)
@@ -2419,7 +2419,7 @@ _kdc_as_rep(astgs_request_t r)
     if (r->et.flags.anonymous)
 	ret = _kdc_make_anonymous_principalname(&rep->cname);
     else if (f.canonicalize || r->client->entry.flags.force_canonicalize)
-	ret = _krb5_principal2principalname(&rep->cname, r->client->entry.principal);
+	ret = _krb5_principal2principalname(&rep->cname, r->canon_client_princ);
     else
 	ret = _krb5_principal2principalname(&rep->cname, r->client_princ);
     if (ret)

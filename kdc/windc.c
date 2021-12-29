@@ -217,7 +217,7 @@ finalize(krb5_context context, const void *plug, void *plugctx, void *userctx)
 
     if (ft->finalize_reply == NULL)
 	return KRB5_PLUGIN_NO_HANDLE;
-    return ft->finalize_reply((void *)plug, (astgs_request_t)userctx);
+    return ft->finalize_reply((void *)plug, userctx);
 }
 
 krb5_error_code

@@ -66,6 +66,9 @@ pa_gss_display_name(gss_name_t name,
                     gss_buffer_t namebuf,
                     gss_const_buffer_t *namebuf_p);
 
+static void
+pa_gss_dealloc_client_params(void *ptr);
+
 /*
  * Create a checksum over KDC-REQ-BODY (without the nonce), used to
  * assert the request is invariant within the preauth conversation.
@@ -421,7 +424,7 @@ _kdc_gss_rd_padata(astgs_request_t r,
         goto out;
     }
 
-    gcp = calloc(1, sizeof(*gcp));
+    gcp = heim_alloc(sizeof(*gcp), "pa-gss-client-params", pa_gss_dealloc_client_params);
     if (gcp == NULL) {
         ret = krb5_enomem(r->context);
         goto out;
@@ -471,7 +474,7 @@ out:
     if (gcp && gcp->major != GSS_S_NO_CONTEXT)
         *pgcp = gcp;
     else
-        _kdc_gss_free_client_param(r, gcp);
+        heim_release(gcp);
 
     return ret;
 }
@@ -864,10 +867,10 @@ _kdc_gss_mk_composite_name_ad(astgs_request_t r,
     return ret;
 }
 
-void
-_kdc_gss_free_client_param(astgs_request_t r,
-                           gss_client_params *gcp)
+static void
+pa_gss_dealloc_client_params(void *ptr)
 {
+    gss_client_params *gcp = ptr;
     OM_uint32 minor;
 
     if (gcp == NULL)
@@ -879,7 +882,6 @@ _kdc_gss_free_client_param(astgs_request_t r,
     free_Checksum(&gcp->req_body_checksum);
     krb5_data_free(&gcp->pac_data);
     memset(gcp, 0, sizeof(*gcp));
-    free(gcp);
 }
 
 krb5_error_code

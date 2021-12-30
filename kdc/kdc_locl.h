@@ -64,7 +64,6 @@ struct kdc_request_desc {
     HEIM_SVC_REQUEST_DESC_COMMON_ELEMENTS;
 };
 
-struct as_request_pa_state;
 struct kdc_patypes;
 
 struct astgs_request_desc {
@@ -72,7 +71,6 @@ struct astgs_request_desc {
 
     /* Only AS */
     const struct kdc_patypes *pa_used;
-    struct as_request_pa_state *pa_state;
 
     /* PA methods can affect both the reply key and the session key (pkinit) */
     krb5_enctype sessionetype;

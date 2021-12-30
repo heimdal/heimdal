@@ -1529,6 +1529,7 @@ set_req_desc(struct MHD_Connection *connection,
     r->cname = NULL;
     r->addr = NULL;
     r->kv = heim_dict_create(10);
+    r->attributes = heim_dict_create(1);
     /* Our fields */
     r->connection = connection;
     r->kadm_handle = NULL;

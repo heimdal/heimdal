@@ -106,20 +106,48 @@ static krb5_error_code KRB5_CALLCONV
 client_access(void *ctx, astgs_request_t r)
 {
     logit("client_access", r);
+
     return 0;
 }
 
 static krb5_error_code KRB5_CALLCONV
 finalize_reply(void *ctx, astgs_request_t r)
 {
+    heim_number_t n;
+    krb5_error_code ret;
+
     logit("finalize_reply", r);
-    return 0;
+
+    n = heim_number_create(1234);
+    if (n == NULL)
+	return ENOMEM;
+
+    ret = krb5_kdc_request_set_attribute((kdc_request_t)r,
+					 HSTR("org.h5l.tests.kdc-plugin"), n);
+    heim_release(n);
+
+    return ret;
 }
 
 static krb5_error_code KRB5_CALLCONV
 audit(void *ctx, astgs_request_t r)
 {
+    heim_number_t n;
+
     logit("audit", r);
+
+    if (r->ret)
+	return 0; /* finalize_reply only called in success */
+
+    n = krb5_kdc_request_get_attribute((kdc_request_t)r,
+				       HSTR("org.h5l.tests.kdc-plugin"));
+
+    heim_assert(n && heim_number_get_int(n) == 1234,
+		"attribute not passed from finalize_reply");
+
+    if (n == NULL || heim_number_get_int(n) != 1234)
+	return EINVAL; /* return value is ignored, but for completeness */
+
     return 0;
 }
 

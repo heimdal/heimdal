@@ -583,13 +583,13 @@ pa_gss_validate(astgs_request_t r, const PA_DATA *pa)
 	goto out;
     }
 
-    heim_assert(r->pa_state == NULL, "already have PA state, should be NULL");
-    r->pa_state = (struct as_request_pa_state *)gcp;
-    gcp = NULL;
+    ret = krb5_kdc_request_set_attribute((kdc_request_t)r,
+					 HSTR("org.h5l.pa-gss-client-params"), gcp);
+    if (ret)
+	goto out;
 
 out:
-    if (gcp)
-	_kdc_gss_free_client_param(r, gcp);
+    heim_release(gcp);
     free(client_name);
 
     return ret;
@@ -598,22 +598,13 @@ out:
 static krb5_error_code
 pa_gss_finalize_pac(astgs_request_t r)
 {
-    gss_client_params *gcp = (gss_client_params *)r->pa_state;
+    gss_client_params *gcp;
+
+    gcp = krb5_kdc_request_get_attribute((kdc_request_t)r, HSTR("org.h5l.pa-gss-client-params"));
 
     heim_assert(gcp != NULL, "invalid GSS-API client params");
 
     return _kdc_gss_finalize_pac(r, gcp);
-}
-
-static void
-pa_gss_cleanup(astgs_request_t r)
-{
-    gss_client_params *gcp = (gss_client_params *)r->pa_state;
-
-    if (gcp) {
-	_kdc_gss_free_client_param(r, gcp);
-	r->pa_state = NULL;
-    }
 }
 
 static krb5_error_code
@@ -1009,7 +1000,7 @@ static const struct kdc_patypes pat[] = {
     {
 	KRB5_PADATA_GSS , "GSS",
 	PA_ANNOUNCE | PA_SYNTHETIC_OK | PA_REPLACE_REPLY_KEY,
-	pa_gss_validate, pa_gss_finalize_pac, pa_gss_cleanup
+	pa_gss_validate, pa_gss_finalize_pac, NULL
     },
 };
 

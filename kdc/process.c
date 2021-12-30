@@ -359,7 +359,10 @@ process_request(krb5_context context,
     r->datagram_reply = datagram_reply;
     r->reply = reply;
     r->kv = heim_dict_create(10);
-    if (!r->kv) {
+    r->attributes = heim_dict_create(1);
+    if (r->kv == NULL || r->attributes == NULL) {
+	heim_release(r->kv);
+	heim_release(r->attributes);
 	free(r);
 	return krb5_enomem(context);
     }
@@ -385,6 +388,7 @@ process_request(krb5_context context,
 
             heim_release(r->reason);
             heim_release(r->kv);
+	    heim_release(r->attributes);
             free(r);
 	    return ret;
 	}
@@ -392,6 +396,7 @@ process_request(krb5_context context,
 
     heim_release(r->reason);
     heim_release(r->kv);
+    heim_release(r->attributes);
     free(r);
     return -1;
 }
@@ -504,4 +509,28 @@ out:
     krb5_storage_free(sp);
 
     return 0;
+}
+
+krb5_error_code
+krb5_kdc_request_set_attribute(kdc_request_t r, heim_object_t key, heim_object_t value)
+{
+    return heim_dict_set_value(r->attributes, key, value);
+}
+
+heim_object_t
+krb5_kdc_request_get_attribute(kdc_request_t r, heim_object_t key)
+{
+    return heim_dict_get_value(r->attributes, key);
+}
+
+heim_object_t
+krb5_kdc_request_copy_attribute(kdc_request_t r, heim_object_t key)
+{
+    return heim_dict_copy_value(r->attributes, key);
+}
+
+void
+krb5_kdc_request_delete_attribute(kdc_request_t r, heim_object_t key)
+{
+    heim_dict_delete_key(r->attributes, key);
 }

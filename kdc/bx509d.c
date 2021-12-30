@@ -882,6 +882,7 @@ set_req_desc(struct MHD_Connection *connection,
     r->req_life = 0;
     r->ret = 0;
     r->kv = heim_dict_create(10);
+    r->attributes = heim_dict_create(1);
     ci = MHD_get_connection_info(connection,
                                  MHD_CONNECTION_INFO_CLIENT_ADDRESS);
     if (ci) {

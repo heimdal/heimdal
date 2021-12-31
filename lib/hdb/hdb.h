@@ -42,8 +42,10 @@
 
 #include <hdb_err.h>
 
+#include <heimbase-svc.h>
 #include <heim_asn1.h>
 #include <hdb_asn1.h>
+
 typedef HDB_keyset hdb_keyset;
 typedef HDB_entry hdb_entry;
 typedef HDB_entry_alias hdb_entry_alias;
@@ -79,78 +81,41 @@ enum hdb_lockop{ HDB_RLOCK, HDB_WLOCK };
 #define HDB_CAP_F_PASSWORD_UPDATE_KEYS	4
 #define HDB_CAP_F_SHARED_DIRECTORY      8
 
-/* auth status values */
-
 /*
- * Un-initialised value, not permitted, used to indicate that a value
- * wasn't set for the benifit of logic in the caller, must not be
- * passed to hdb_auth_status()
+ * HDB auditing
  */
 
-#define HDB_AUTHSTATUS_INVALID                  0
+/* auth event type enumeration, currently for AS only */
+#define HDB_AUTH_EVENT_INVALID			0   /* no event logged */
+#define HDB_AUTH_EVENT_CLIENT_AUTHORIZED	1   /* all authn/authz checks passed */
+#define HDB_AUTH_EVENT_CLIENT_UNKNOWN	        2   /* client unknown */
+#define HDB_AUTH_EVENT_CLIENT_LOCKED_OUT	3   /* client locked out */
+#define HDB_AUTH_EVENT_CLIENT_TIME_SKEW		4   /* client time skew */
+#define HDB_AUTH_EVENT_LTK_PREAUTH_FAILED	5   /* long term key preauth failed */
+#define HDB_AUTH_EVENT_LTK_PREAUTH_SUCCEEDED	6   /* long term key preauth succeeded */
+#define HDB_AUTH_EVENT_PKINIT_SUCCEEDED	        7   /* PKINIT preauth succeeded */
+#define HDB_AUTH_EVENT_PKINIT_FAILED	        8   /* PKINIT preauth succeeded */
+#define HDB_AUTH_EVENT_GSS_PA_SUCCEEDED		9   /* GSS preauth succeeded */
+#define HDB_AUTH_EVENT_GSS_PA_FAILED		10  /* GSS preauth failed */
+#define HDB_AUTH_EVENT_OTHER_PREAUTH_FAILED   	11  /* unknown preauth failed */
+#define HDB_AUTH_EVENT_OTHER_PREAUTH_SUCCEEDED	12  /* unknown preauth succeeded */
 
-/*
- * A ticket was issued after authorization was successfully completed
- * (eg flags on the entry and expiry times were checked)
- */
-#define HDB_AUTHSTATUS_AUTHORIZATION_SUCCESS	1
+/* auth event keys, query request with heim_audit_getkv() */
+#define HDB_REQUEST_KV_AUTH_EVENT_TYPE		"#auth_event_type"	/* heim_number_t */
+#define HDB_REQUEST_KV_AUTH_EVENT_DETAILS	"#auth_event_details"	/* heim_string_t */
+#define HDB_REQUEST_KV_PA_NAME			"pa"			/* heim_string_t */
 
-/*
- * The user supplied the wrong password to a password-based
- * authentication mechanism (eg ENC-TS, ENC-CHAL)
- *
- * The HDB backend might increment a bad password count.
- */
-#define HDB_AUTHSTATUS_WRONG_PASSWORD		2
+#define heim_pcontext krb5_context
+#define heim_pconfig struct krb5_kdc_configuration *
 
-/*
- * The user supplied a correct password to a password-based
- * authentication mechanism (eg ENC-TS, ENC-CHAL)
- *
- * The HDB backend might reset a bad password count.
- */
-#define HDB_AUTHSTATUS_CORRECT_PASSWORD	        3
+struct krb5_kdc_configuration;
 
-/*
- * Attempted authenticaton with an unknown user
- */
-#define HDB_AUTHSTATUS_CLIENT_UNKNOWN	        4
+typedef struct hdb_request_desc {
+    HEIM_SVC_REQUEST_DESC_COMMON_ELEMENTS;
+} *hdb_request_t;
 
-/*
- * Attempted authenticaton with an known user that is already locked
- * out.
- */
-#define HDB_AUTHSTATUS_CLIENT_LOCKED_OUT	5
-
-/*
- * Successful authentication with a pre-authentication mechanism
- */
-#define HDB_AUTHSTATUS_GENERIC_SUCCESS	        6
-
-/*
- * Failed authentication with a pre-authentication mechanism
- */
-#define HDB_AUTHSTATUS_GENERIC_FAILURE	        7
-
-/*
- * Successful pre-authentication with PKINIT (smart card login etc)
- */
-#define HDB_AUTHSTATUS_PKINIT_SUCCESS	        8
-
-/*
- * Failed pre-authentication with PKINIT (smart card login etc)
- */
-#define HDB_AUTHSTATUS_PKINIT_FAILURE	        9
-
-/*
- * Successful pre-authentication with GSS pre-authentication
- */
-#define HDB_AUTHSTATUS_GSS_SUCCESS		10
-
-/*
- * Failed pre-authentication with GSS pre-authentication
- */
-#define HDB_AUTHSTATUS_GSS_FAILURE		11
+#undef heim_pcontext
+#undef heim_pconfig
 
 /* key usage for master key */
 #define HDB_KU_MKEY	0x484442
@@ -340,23 +305,16 @@ typedef struct HDB {
     krb5_error_code (*hdb_password)(krb5_context, struct HDB*, hdb_entry_ex*, const char *, int);
 
     /**
-     * Auth feedback
+     * Authentication auditing
      *
-     * This is a feedback call that allows backends that provides
-     * lockout functionality to register failure and/or successes.
+     * Event details are available by querying the request using
+     * heim_audit_getkv(HDB_REQUEST_KV_...).
      *
      * In case the entry is locked out, the backend should set the
      * hdb_entry.flags.locked-out flag.
      */
-    krb5_error_code (*hdb_auth_status)(krb5_context,
-				       struct HDB *,
-				       hdb_entry_ex *,
-				       const struct timeval *start_time,
-				       const struct sockaddr *from_addr,
-				       const char *original_client_name,
-				       int auth_type,
-				       const char *auth_details,
-				       const char *pa_type);
+    krb5_error_code (*hdb_audit)(krb5_context, struct HDB *, hdb_entry_ex *, hdb_request_t);
+
     /**
      * Check if delegation is allowed.
      */

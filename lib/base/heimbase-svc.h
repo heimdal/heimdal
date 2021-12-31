@@ -70,7 +70,8 @@
     const char *e_text;                                         \
     char *e_text_buf;                                           \
     heim_string_t reason;                                       \
-    heim_array_t kv;                                            \
+    /* auditing key/value store */                              \
+    heim_dict_t kv;                                             \
     int32_t ret
 
 #endif /* HEIMBASE_SVC_H */

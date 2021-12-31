@@ -21,6 +21,9 @@ HEIMDAL_KDC_1.0 {
 		krb5_kdc_update_time;
 		krb5_kdc_pk_initialize;
 		_kdc_audit_addkv;
+		_kdc_audit_addkv_object;
+		_kdc_audit_delkv;
+		_kdc_audit_getkv;
 		_kdc_audit_addreason;
 		_kdc_audit_vaddkv;
 		_kdc_audit_vaddreason;

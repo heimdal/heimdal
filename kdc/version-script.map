@@ -24,7 +24,6 @@ HEIMDAL_KDC_1.0 {
 		_kdc_audit_addkv_bool;
 		_kdc_audit_addkv_number;
 		_kdc_audit_addkv_object;
-		_kdc_audit_delkv;
 		_kdc_audit_getkv;
 		_kdc_audit_addreason;
 		_kdc_audit_vaddkv;

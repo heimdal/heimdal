@@ -112,12 +112,6 @@ _kdc_audit_addkv_object(kdc_request_t r, const char *k, heim_object_t obj)
     heim_audit_addkv_object((heim_svc_req_desc)r, k, obj);
 }
 
-void
-_kdc_audit_delkv(kdc_request_t r, const char *k)
-{
-    heim_audit_delkv((heim_svc_req_desc)r, k);
-}
-
 heim_object_t
 _kdc_audit_getkv(kdc_request_t r, const char *k)
 {

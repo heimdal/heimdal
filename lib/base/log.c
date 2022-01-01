@@ -870,20 +870,6 @@ heim_audit_addkv_object(heim_svc_req_desc r, const char *k, heim_object_t value)
     heim_release(descr);
 }
 
-void
-heim_audit_delkv(heim_svc_req_desc r, const char *k)
-{
-    heim_string_t key = heim_string_create(k);
-
-    if (key == NULL)
-	return;
-
-    heim_log(r->hcontext, r->logf, 7, "heim_audit_delkv(): "
-	     "deleting kv pair %s", k);
-    heim_dict_delete_key(r->kv, key);
-    heim_release(key);
-}
-
 heim_object_t
 heim_audit_getkv(heim_svc_req_desc r, const char *k)
 {

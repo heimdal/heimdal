@@ -198,12 +198,6 @@ gss_import_name(OM_uint32 *minor_status,
 	_gss_load_mech();
 
 	/*
-	 * Use GSS_NT_USER_NAME as default name type.
-	 */
-	if (name_type == GSS_C_NO_OID)
-		name_type = GSS_C_NT_USER_NAME;
-
-	/*
 	 * If this is an exported name, we need to parse it to find
 	 * the mechanism and then import it as an MN. See RFC 2743
 	 * section 3.2 for a description of the format.
@@ -221,13 +215,16 @@ gss_import_name(OM_uint32 *minor_status,
 		return (GSS_S_FAILURE);
 	}
 
-	major_status = _gss_intern_oid(minor_status,
-	    name_type, &name->gn_type);
-	if (major_status) {
-		rname = (gss_name_t)name;
-		gss_release_name(&ms, (gss_name_t *)&rname);
-		return (GSS_S_FAILURE);
-	}
+	if (name_type != GSS_C_NO_OID) {
+		major_status = _gss_intern_oid(minor_status,
+					       name_type, &name->gn_type);
+		if (major_status) {
+			rname = (gss_name_t)name;
+			gss_release_name(&ms, (gss_name_t *)&rname);
+			return (GSS_S_FAILURE);
+		}
+	} else
+		name->gn_type = GSS_C_NO_OID;
 
 	major_status = _gss_copy_buffer(minor_status,
 	    input_name_buffer, &name->gn_value);
@@ -245,11 +242,13 @@ gss_import_name(OM_uint32 *minor_status,
                 if ((m->gm_mech.gm_flags & GM_USE_MG_NAME))
                     continue;
 
-		major_status = gss_test_oid_set_member(minor_status,
-		    name_type, m->gm_name_types, &present);
+		if (name_type != GSS_C_NO_OID) {
+			    major_status = gss_test_oid_set_member(minor_status,
+				    name_type, m->gm_name_types, &present);
 
-		if (major_status || present == 0)
-			continue;
+			    if (GSS_ERROR(major_status) || present == 0)
+					continue;
+		}
 
 		mn = malloc(sizeof(struct _gss_mechanism_name));
 		if (!mn) {

@@ -511,7 +511,7 @@ bad_reqv(struct bx509_request_desc *r,
         msg = formatted;
         formatted = NULL;
     }
-    heim_audit_addreason((heim_svc_req_desc)r, "%s", formatted);
+    heim_audit_addreason((heim_svc_req_desc)r, "%s", msg);
     audit_trail(r, code);
     krb5_free_error_message(context, k5msg);
 

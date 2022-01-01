@@ -341,3 +341,20 @@ _kdc_include_pac_p(astgs_request_t r)
 
     return !!(r->pac_attributes & (KRB5_PAC_WAS_REQUESTED | KRB5_PAC_WAS_GIVEN_IMPLICITLY));
 }
+
+/*
+ * Notify the HDB backend of the audited event.
+ */
+
+krb5_error_code
+_kdc_hdb_audit(astgs_request_t r)
+{
+    struct HDB *hdb;
+
+    hdb = r->clientdb ? r->clientdb : r->config->db[0];
+
+    if (hdb && hdb->hdb_audit)
+	return hdb->hdb_audit(r->context, hdb, r->client, (hdb_request_t)r);
+
+    return 0;
+}

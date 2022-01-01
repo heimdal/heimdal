@@ -2769,6 +2769,7 @@ _kdc_as_rep(astgs_request_t r)
     }
 
 out:
+    r->ret = ret;
     notify_hdb_audit(r);
 
     /*
@@ -2779,7 +2780,7 @@ out:
 				 r->rep.padata,
 			         r->armor_crypto,
 			         &req->req_body,
-			         r->ret = ret,
+			         r->ret,
 			         r->client_princ,
 			         r->server_princ,
 			         NULL, NULL,

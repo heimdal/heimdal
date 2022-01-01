@@ -501,7 +501,7 @@ pa_pkinit_validate(astgs_request_t r, const PA_DATA *pa)
 	_kdc_set_e_text(r, "PKINIT certificate not allowed to "
 			"impersonate principal");
 	_kdc_audit_addkv_number((kdc_request_t)r, HDB_REQUEST_KV_AUTH_EVENT,
-				HDB_AUTH_EVENT_PKINIT_FAILED);
+				HDB_AUTH_EVENT_PKINIT_NOT_AUTHORIZED);
 	goto out;
     }
 
@@ -554,7 +554,7 @@ pa_gss_validate(astgs_request_t r, const PA_DATA *pa)
 	    _kdc_set_e_text(r, "GSS-API client not allowed to "
 			    "impersonate principal");
 	    _kdc_audit_addkv_number((kdc_request_t)r, HDB_REQUEST_KV_AUTH_EVENT,
-				    HDB_AUTH_EVENT_GSS_PA_FAILED);
+				    HDB_AUTH_EVENT_GSS_PA_NOT_AUTHORIZED);
 	    goto out;
 	}
 
@@ -562,6 +562,8 @@ pa_gss_validate(astgs_request_t r, const PA_DATA *pa)
 
 	_kdc_r_log(r, 4, "GSS pre-authentication succeeded -- %s using %s",
 		   r->cname, client_name);
+	_kdc_audit_addkv_number((kdc_request_t)r, HDB_REQUEST_KV_AUTH_EVENT,
+				HDB_AUTH_EVENT_GSS_PA_SUCCEEDED);
 
 	ret = _kdc_gss_mk_composite_name_ad(r, gcp);
 	if (ret) {
@@ -572,14 +574,14 @@ pa_gss_validate(astgs_request_t r, const PA_DATA *pa)
 
     ret = _kdc_gss_mk_pa_reply(r, gcp);
     if (ret) {
-	if (ret != KRB5_KDC_ERR_MORE_PREAUTH_DATA_REQUIRED)
+	if (ret != KRB5_KDC_ERR_MORE_PREAUTH_DATA_REQUIRED) {
 	    _kdc_set_e_text(r, "Failed to build GSS pre-authentication reply");
+	    _kdc_audit_addkv_number((kdc_request_t)r, HDB_REQUEST_KV_AUTH_EVENT,
+				    HDB_AUTH_EVENT_GSS_PA_FAILED);
+	}
 
 	goto out;
     }
-
-    _kdc_audit_addkv_number((kdc_request_t)r, HDB_REQUEST_KV_AUTH_EVENT,
-			    HDB_AUTH_EVENT_GSS_PA_SUCCEEDED);
 
     heim_assert(r->pa_state == NULL, "already have PA state, should be NULL");
     r->pa_state = (struct as_request_pa_state *)gcp;

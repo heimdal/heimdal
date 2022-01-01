@@ -36,6 +36,8 @@
 #ifndef HEIMBASE_SVC_H
 #define HEIMBASE_SVC_H 1
 
+#include <heimbase.h>
+
 /*
  * This file is meant to be included in services, which can
  *

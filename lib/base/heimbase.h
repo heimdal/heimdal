@@ -436,9 +436,10 @@ void    heim_db_iterate(heim_db_t, heim_string_t,
 
 typedef struct heim_number_data *heim_number_t;
 
-heim_number_t heim_number_create(int);
+heim_number_t heim_number_create(int64_t);
 heim_tid_t heim_number_get_type_id(void);
 int heim_number_get_int(heim_number_t);
+int64_t heim_number_get_long(heim_number_t);
 
 /*
  *

@@ -807,8 +807,8 @@ tgs_make_reply(astgs_request_t r,
      * is implementation dependent.
      */
     if (r->pac && !et->flags.anonymous) {
-	_kdc_audit_addkv((kdc_request_t)r, 0, "pac_attributes", "%lx",
-			 (long)r->pac_attributes);
+	_kdc_audit_addkv_number((kdc_request_t)r, "pac_attributes",
+			        r->pac_attributes);
 
 	/*
 	 * PACs are included when issuing TGTs, if there is no PAC_ATTRIBUTES

@@ -86,16 +86,16 @@ struct heim_type_data _heim_number_object = {
  */
 
 heim_number_t
-heim_number_create(int number)
+heim_number_create(int64_t number)
 {
     heim_number_t n;
 
     if (number < 0xffffff && number >= 0)
 	return heim_base_make_tagged_object(number, HEIM_TID_NUMBER);
 
-    n = _heim_alloc_object(&_heim_number_object, sizeof(int));
+    n = _heim_alloc_object(&_heim_number_object, sizeof(int64_t));
     if (n)
-	*((int *)n) = number;
+	*((int64_t *)n) = number;
     return n;
 }
 
@@ -124,5 +124,13 @@ heim_number_get_int(heim_number_t number)
 {
     if (heim_base_is_tagged_object(number))
 	return heim_base_tagged_object_value(number);
-    return *(int *)number;
+    return (int)(*(int64_t *)number);
+}
+
+int64_t
+heim_number_get_long(heim_number_t number)
+{
+    if (heim_base_is_tagged_object(number))
+	return heim_base_tagged_object_value(number);
+    return *(int64_t *)number;
 }

@@ -498,15 +498,13 @@ _kdc_log_timestamp(astgs_request_t r, const char *type,
 	endtime_str[100], renewtime_str[100];
 
     if (authtime)
-	_kdc_audit_addkv((kdc_request_t)r, 0, "auth", "%ld", (long)authtime);
+	_kdc_audit_addkv_number((kdc_request_t)r, "auth", authtime);
     if (starttime && *starttime)
-	_kdc_audit_addkv((kdc_request_t)r, 0, "start", "%ld",
-			 (long)*starttime);
+	_kdc_audit_addkv_number((kdc_request_t)r, "start", *starttime);
     if (endtime)
-	_kdc_audit_addkv((kdc_request_t)r, 0, "end", "%ld", (long)endtime);
+	_kdc_audit_addkv_number((kdc_request_t)r, "end", endtime);
     if (renew_till && *renew_till)
-	_kdc_audit_addkv((kdc_request_t)r, 0, "renew", "%ld",
-			 (long)*renew_till);
+	_kdc_audit_addkv_number((kdc_request_t)r, "renew", *renew_till);
 
     krb5_format_time(r->context, authtime,
 		     authtime_str, sizeof(authtime_str), TRUE);
@@ -984,8 +982,7 @@ pa_enc_ts_validate(astgs_request_t r, const PA_DATA *pa)
 	str = NULL;
     _kdc_r_log(r, 4, "ENC-TS Pre-authentication succeeded -- %s using %s",
 	       r->cname, str ? str : "unknown enctype");
-    _kdc_audit_addkv((kdc_request_t)r, 0, "pa-etype", "%d",
-		     (int)pa_key->key.keytype);
+    _kdc_audit_addkv_number((kdc_request_t)r, "pa-etype", (int64_t)pa_key->key.keytype);
     audit_auth_event(r, HDB_AUTH_EVENT_LTK_PREAUTH_SUCCEEDED,
 		     str ? str : "unknown enctype");
 
@@ -1888,8 +1885,8 @@ generate_pac(astgs_request_t r, const Key *skey, const Key *tkey,
     krb5_const_principal canon_princ = NULL;
 
     r->pac_attributes = get_pac_attributes(r->context, &r->req);
-    _kdc_audit_addkv((kdc_request_t)r, 0, "pac_attributes", "%lx",
-		     (long)r->pac_attributes);
+    _kdc_audit_addkv_number((kdc_request_t)r, "pac_attributes",
+			    r->pac_attributes);
 
     if (!_kdc_include_pac_p(r))
 	return 0;

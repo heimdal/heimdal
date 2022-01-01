@@ -668,7 +668,7 @@ check_authz(krb5_context context,
     ret = kdc_authorize_csr(context, reqctx->config->app, reqctx->csr,
                             cprincipal);
     if (ret == 0) {
-        _kdc_audit_addkv((kdc_request_t)reqctx, 0, "authorized", "true");
+        _kdc_audit_addkv_bool((kdc_request_t)reqctx, "authorized", TRUE);
 
         ret = hx509_request_get_san(reqctx->csr, 0, &san_type, &s);
         if (ret == 0) {
@@ -785,7 +785,7 @@ check_authz(krb5_context context,
     if (KeyUsage2int(ku) != (KeyUsage2int(ku) & KeyUsage2int(ku_allowed)))
         goto eacces;
 
-    _kdc_audit_addkv((kdc_request_t)reqctx, 0, "authorized", "true");
+    _kdc_audit_addkv_bool((kdc_request_t)reqctx, "authorized", TRUE);
     return 0;
 
 eacces:
@@ -1046,9 +1046,9 @@ _kdc_do_kx509(kx509_req_context r)
 out:
     hx509_certs_free(&certs);
     if (ret == 0 && !is_probe)
-        _kdc_audit_addkv((kdc_request_t)r, 0, "cert_issued", "true");
+        _kdc_audit_addkv_bool((kdc_request_t)r, "cert_issued", TRUE);
     else
-        _kdc_audit_addkv((kdc_request_t)r, 0, "cert_issued", "false");
+        _kdc_audit_addkv_bool((kdc_request_t)r, "cert_issued", FALSE);
     if (r->ac)
         krb5_auth_con_free(r->context, r->ac);
     if (ticket)

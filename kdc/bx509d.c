@@ -1638,8 +1638,7 @@ bnegotiate(struct bx509_request_desc *r)
     if (ret == 0) {
         heim_audit_addkv((heim_svc_req_desc)r, KDC_AUDIT_VIS, "target", "%s",
                          r->target ? r->target : "<unknown>");
-        heim_audit_addkv((heim_svc_req_desc)r, 0, "redir", "%s",
-                         r->redir ? "yes" : "no");
+        heim_audit_addkv_bool((heim_svc_req_desc)r, "redir", !!r->redir);
         ret = validate_token(r);
     }
     /* bnegotiate_get_target() and validate_token() call bad_req() */

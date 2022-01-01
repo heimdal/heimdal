@@ -2479,7 +2479,7 @@ _kdc_as_rep(astgs_request_t r)
     /* check for valid set of addresses */
     if (!_kdc_check_addresses(r, b->addresses, r->addr)) {
         if (r->config->warn_ticket_addresses) {
-            _kdc_audit_addkv((kdc_request_t)r, 0, "wrongaddr", "yes");
+            _kdc_audit_addkv_bool((kdc_request_t)r, "wrongaddr", TRUE);
         } else {
             _kdc_set_e_text(r, "Request from wrong address");
             ret = KRB5KRB_AP_ERR_BADADDR;

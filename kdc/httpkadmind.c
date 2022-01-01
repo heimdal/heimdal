@@ -700,8 +700,8 @@ bad_reqv(kadmin_request_desc r,
     if (r && r->context)
         context = r->context;
     if (r && r->hcontext && r->kv)
-        heim_audit_addkv((heim_svc_req_desc)r, 0, "http-status-code", "%d",
-                         http_status_code);
+        heim_audit_addkv_number((heim_svc_req_desc)r, "http-status-code",
+				http_status_code);
     (void) gettimeofday(&r->tv_end, NULL);
     if (code == ENOMEM) {
         if (context)
@@ -1046,7 +1046,7 @@ param_cb(void *d,
 #endif
     } else {
         /* Produce error for unknown params */
-        heim_audit_addkv((heim_svc_req_desc)r, 0, "requested_unknown", "true");
+        heim_audit_addkv_bool((heim_svc_req_desc)r, "requested_unknown", TRUE);
         krb5_set_error_message(r->context, ret = ENOTSUP,
                                "Query parameter %s not supported", key);
     }

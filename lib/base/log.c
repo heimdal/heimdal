@@ -817,21 +817,57 @@ heim_audit_addkv_timediff(heim_svc_req_desc r, const char *k,
 }
 
 void
-heim_audit_addkv_object(heim_svc_req_desc r, const char *k, heim_object_t obj)
+heim_audit_addkv_bool(heim_svc_req_desc r, const char *k, int v)
 {
     heim_string_t key = heim_string_create(k);
-    heim_string_t value;
+    heim_number_t value;
 
     if (key == NULL)
 	return;
 
-    value = heim_json_copy_serialize(obj, 0, NULL);
-    heim_log(r->hcontext, r->logf, 7, "heim_audit_addkv_object(): "
-	     "adding kv pair %s=%s",
-	     k, value ? heim_string_get_utf8(value) : "<unprintable>");
-    heim_dict_set_value(r->kv, key, obj);
+    heim_log(r->hcontext, r->logf, 7, "heim_audit_addkv_bool(): "
+	     "adding kv pair %s=%s", k, v ? "true" : "false");
+
+    value = heim_bool_create(v);
+    heim_dict_set_value(r->kv, key, value);
     heim_release(key);
     heim_release(value);
+}
+
+void
+heim_audit_addkv_number(heim_svc_req_desc r, const char *k, intptr_t v)
+{
+    heim_string_t key = heim_string_create(k);
+    heim_number_t value;
+
+    if (key == NULL)
+	return;
+
+    heim_log(r->hcontext, r->logf, 7, "heim_audit_addkv_number(): "
+	     "adding kv pair %s=%ld", k, v);
+
+    value = heim_number_create(v);
+    heim_dict_set_value(r->kv, key, value);
+    heim_release(key);
+    heim_release(value);
+}
+
+void
+heim_audit_addkv_object(heim_svc_req_desc r, const char *k, heim_object_t value)
+{
+    heim_string_t key = heim_string_create(k);
+    heim_string_t descr;
+
+    if (key == NULL)
+	return;
+
+    descr = heim_json_copy_serialize(value, 0, NULL);
+    heim_log(r->hcontext, r->logf, 7, "heim_audit_addkv_object(): "
+	     "adding kv pair %s=%s",
+	     k, descr ? heim_string_get_utf8(descr) : "<unprintable>");
+    heim_dict_set_value(r->kv, key, value);
+    heim_release(key);
+    heim_release(descr);
 }
 
 void
@@ -883,7 +919,7 @@ audit_trail_iterator(heim_object_t key, heim_object_t value, void *arg)
 	v = heim_string_get_utf8(value);
 	break;
     case HEIM_TID_NUMBER:
-	snprintf(num, sizeof(num), "%d", heim_number_get_int(value));
+	snprintf(num, sizeof(num), "%lld", (long long)heim_number_get_long(value));
 	v = num;
 	break;
     case HEIM_TID_NULL:

@@ -95,6 +95,18 @@ _kdc_audit_addkv_timediff(kdc_request_t r, const char *k,
 }
 
 void
+_kdc_audit_addkv_bool(kdc_request_t r, const char *k, krb5_boolean v)
+{
+    heim_audit_addkv_number((heim_svc_req_desc)r, k, (int)v);
+}
+
+void
+_kdc_audit_addkv_number(kdc_request_t r, const char *k, int64_t v)
+{
+    heim_audit_addkv_number((heim_svc_req_desc)r, k, v);
+}
+
+void
 _kdc_audit_addkv_object(kdc_request_t r, const char *k, heim_object_t obj)
 {
     heim_audit_addkv_object((heim_svc_req_desc)r, k, obj);

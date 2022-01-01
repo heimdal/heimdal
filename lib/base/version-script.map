@@ -34,7 +34,6 @@ HEIMDAL_BASE_1.0 {
 		heim_audit_addkv_object;
 		heim_audit_addkv_timediff;
 		heim_audit_addreason;
-		heim_audit_delkv;
 		heim_audit_getkv;
 		heim_audit_trail;
 		heim_audit_vaddkv;

@@ -100,10 +100,17 @@ enum hdb_lockop{ HDB_RLOCK, HDB_WLOCK };
 #define HDB_AUTH_EVENT_OTHER_PREAUTH_FAILED   	11  /* unknown preauth failed */
 #define HDB_AUTH_EVENT_OTHER_PREAUTH_SUCCEEDED	12  /* unknown preauth succeeded */
 
-/* auth event keys, query request with heim_audit_getkv() */
-#define HDB_REQUEST_KV_AUTH_EVENT_TYPE		"#auth_event_type"	/* heim_number_t */
-#define HDB_REQUEST_KV_AUTH_EVENT_DETAILS	"#auth_event_details"	/* heim_string_t */
+/*
+ * Audit keys to be queried using heim_audit_getkv(). There are other keys
+ * intended for logging that are not defined below; the constants below are
+ * there to ease migration from the older auth_status HDB API.
+ */
+
+#define HDB_REQUEST_KV_AUTH_EVENT		"#auth_event"		/* heim_number_t */
 #define HDB_REQUEST_KV_PA_NAME			"pa"			/* heim_string_t */
+#define HDB_REQUEST_KV_PA_ETYPE			"pa-etype"		/* heim_number_t */
+#define HDB_REQUEST_KV_GSS_INITIATOR		"gss_initiator"		/* heim_string_t */
+#define HDB_REQUEST_KV_PKINIT_CLIENT_CERT	"pkinit_client_cert"	/* heim_string_t */
 
 #define heim_pcontext krb5_context
 #define heim_pconfig struct krb5_kdc_configuration *
@@ -307,7 +314,7 @@ typedef struct HDB {
     /**
      * Authentication auditing. Note that this function is called by
      * both the AS and TGS, but currently only the AS sets the auth
-     * event type and details. This may change in a future version.
+     * event type. This may change in a future version.
      *
      * Event details are available by querying the request using
      * heim_audit_getkv(HDB_REQUEST_KV_...).

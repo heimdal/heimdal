@@ -38,45 +38,6 @@
 #undef __attribute__
 #define __attribute__(X)
 
-/*
- * Audit a HDB auth "event", generally indicating pre-authentication success or
- * failure, or client authorization success.
- */
-
-static void
-audit_auth_event(astgs_request_t r, int event_type, const char *event_details)
-{
-    heim_number_t hevent_type = NULL;
-    heim_string_t hevent_details = NULL;
-
-    hevent_type = heim_number_create(event_type);
-    if (event_details)
-	hevent_details = heim_string_create(event_details);
-    /* else, clear existing details */
-
-    _kdc_audit_addkv_object((kdc_request_t)r, HDB_REQUEST_KV_AUTH_EVENT_TYPE,
-			    hevent_type);
-    if (hevent_details)
-	_kdc_audit_addkv_object((kdc_request_t)r, HDB_REQUEST_KV_AUTH_EVENT_DETAILS,
-				hevent_details);
-    else
-	_kdc_audit_delkv((kdc_request_t)r, HDB_REQUEST_KV_AUTH_EVENT_DETAILS);
-
-    heim_release(hevent_type);
-    heim_release(hevent_details);
-}
-
-/*
- * Returns TRUE is an auth event has already been audited; used to catch-all
- * unknown pre-authentication mechanisms.
- */
-
-static krb5_boolean
-audited_auth_event_p(astgs_request_t r)
-{
-    return !!_kdc_audit_getkv((kdc_request_t)r, HDB_REQUEST_KV_AUTH_EVENT_TYPE);
-}
-
 void
 _kdc_fix_time(time_t **t)
 {
@@ -527,15 +488,20 @@ pa_pkinit_validate(astgs_request_t r, const PA_DATA *pa)
 	ret = KRB5KRB_AP_ERR_BAD_INTEGRITY;
 	_kdc_r_log(r, 4, "Failed to decode PKINIT PA-DATA -- %s",
 		   r->cname);
-	audit_auth_event(r, HDB_AUTH_EVENT_PKINIT_FAILED, NULL);
+	_kdc_audit_addkv_number((kdc_request_t)r, HDB_REQUEST_KV_AUTH_EVENT,
+				HDB_AUTH_EVENT_PKINIT_FAILED);
 	goto out;
     }
 
     ret = _kdc_pk_check_client(r, pkp, &client_cert);
+    if (client_cert)
+	_kdc_audit_addkv((kdc_request_t)r, 0, HDB_REQUEST_KV_PKINIT_CLIENT_CERT,
+			 "%s", client_cert);
     if (ret) {
 	_kdc_set_e_text(r, "PKINIT certificate not allowed to "
 			"impersonate principal");
-	audit_auth_event(r, HDB_AUTH_EVENT_PKINIT_FAILED, client_cert);
+	_kdc_audit_addkv_number((kdc_request_t)r, HDB_REQUEST_KV_AUTH_EVENT,
+				HDB_AUTH_EVENT_PKINIT_FAILED);
 	goto out;
     }
 
@@ -554,7 +520,8 @@ pa_pkinit_validate(astgs_request_t r, const PA_DATA *pa)
     ret = _kdc_add_initial_verified_cas(r->context, r->config,
 					pkp, &r->et);
 
-    audit_auth_event(r, HDB_AUTH_EVENT_PKINIT_SUCCEEDED, client_cert);
+    _kdc_audit_addkv_number((kdc_request_t)r, HDB_REQUEST_KV_AUTH_EVENT,
+			    HDB_AUTH_EVENT_PKINIT_SUCCEEDED);
 
  out:
     if (pkp)
@@ -580,10 +547,14 @@ pa_gss_validate(astgs_request_t r, const PA_DATA *pa)
 
     if (open) {
 	ret = _kdc_gss_check_client(r, gcp, &client_name);
+	if (client_name)
+	    _kdc_audit_addkv((kdc_request_t)r, 0, HDB_REQUEST_KV_GSS_INITIATOR,
+			     "%s", client_name);
 	if (ret) {
 	    _kdc_set_e_text(r, "GSS-API client not allowed to "
 			    "impersonate principal");
-	    audit_auth_event(r, HDB_AUTH_EVENT_GSS_PA_FAILED, client_name);
+	    _kdc_audit_addkv_number((kdc_request_t)r, HDB_REQUEST_KV_AUTH_EVENT,
+				    HDB_AUTH_EVENT_GSS_PA_FAILED);
 	    goto out;
 	}
 
@@ -607,7 +578,8 @@ pa_gss_validate(astgs_request_t r, const PA_DATA *pa)
 	goto out;
     }
 
-    audit_auth_event(r, HDB_AUTH_EVENT_GSS_PA_SUCCEEDED, client_name);
+    _kdc_audit_addkv_number((kdc_request_t)r, HDB_REQUEST_KV_AUTH_EVENT,
+			    HDB_AUTH_EVENT_GSS_PA_SUCCEEDED);
 
     heim_assert(r->pa_state == NULL, "already have PA state, should be NULL");
     r->pa_state = (struct as_request_pa_state *)gcp;
@@ -666,7 +638,8 @@ pa_enc_chal_validate(astgs_request_t r, const PA_DATA *pa)
        ret = KRB5KDC_ERR_CLIENT_REVOKED;
        kdc_log(r->context, r->config, 0,
                "Client (%s) is locked out", r->cname);
-       audit_auth_event(r, HDB_AUTH_EVENT_CLIENT_LOCKED_OUT, NULL);
+       _kdc_audit_addkv_number((kdc_request_t)r, HDB_REQUEST_KV_AUTH_EVENT,
+			       HDB_AUTH_EVENT_CLIENT_LOCKED_OUT);
        return ret;
     }
 
@@ -792,12 +765,14 @@ pa_enc_chal_validate(astgs_request_t r, const PA_DATA *pa)
 	/*
 	 * Success
 	 */
-	audit_auth_event(r, HDB_AUTH_EVENT_LTK_PREAUTH_SUCCEEDED, NULL);
+	_kdc_audit_addkv_number((kdc_request_t)r, HDB_REQUEST_KV_AUTH_EVENT,
+				HDB_AUTH_EVENT_LTK_PREAUTH_SUCCEEDED);
 	goto out;
     }
 
     if (invalidPassword) {
-	audit_auth_event(r, HDB_AUTH_EVENT_LTK_PREAUTH_FAILED, NULL);
+	_kdc_audit_addkv_number((kdc_request_t)r, HDB_REQUEST_KV_AUTH_EVENT,
+				HDB_AUTH_EVENT_LTK_PREAUTH_FAILED);
 	ret = KRB5KDC_ERR_PREAUTH_FAILED;
     } else {
 	ret = KRB5KDC_ERR_ETYPE_NOSUPP;
@@ -836,7 +811,8 @@ pa_enc_ts_validate(astgs_request_t r, const PA_DATA *pa)
        ret = KRB5KDC_ERR_CLIENT_REVOKED;
        kdc_log(r->context, r->config, 0,
                "Client (%s) is locked out", r->cname);
-       audit_auth_event(r, HDB_AUTH_EVENT_CLIENT_LOCKED_OUT, NULL);
+       _kdc_audit_addkv_number((kdc_request_t)r, HDB_REQUEST_KV_AUTH_EVENT,
+			       HDB_AUTH_EVENT_CLIENT_LOCKED_OUT);
        return ret;
     }
 
@@ -904,9 +880,10 @@ pa_enc_ts_validate(astgs_request_t r, const PA_DATA *pa)
 	_kdc_r_log(r, 2, "Failed to decrypt PA-DATA -- %s "
 		   "(enctype %s) error %s",
 		   r->cname, str ? str : "unknown enctype", msg);
-	krb5_free_error_message(r->context, msg);
-	audit_auth_event(r, HDB_AUTH_EVENT_LTK_PREAUTH_FAILED,
-			 str ? str : "unknown enctype");
+	_kdc_audit_addkv_number((kdc_request_t)r, HDB_REQUEST_KV_PA_ETYPE,
+				pa_key->key.keytype);
+	_kdc_audit_addkv_number((kdc_request_t)r, HDB_REQUEST_KV_AUTH_EVENT,
+				HDB_AUTH_EVENT_LTK_PREAUTH_FAILED);
 	if(hdb_next_enctype2key(r->context, &r->client->entry, NULL,
 				enc_data.etype, &pa_key) == 0)
 	    goto try_next_key;
@@ -941,7 +918,8 @@ pa_enc_ts_validate(astgs_request_t r, const PA_DATA *pa)
 		   (unsigned)labs(kdc_time - p.patimestamp),
 		   r->context->max_skew,
 		   r->cname);
-	audit_auth_event(r, HDB_AUTH_EVENT_CLIENT_TIME_SKEW, NULL);
+	_kdc_audit_addkv_number((kdc_request_t)r, HDB_REQUEST_KV_AUTH_EVENT,
+				HDB_AUTH_EVENT_CLIENT_TIME_SKEW);
 
 	/*
 	 * The following is needed to make windows clients to
@@ -965,9 +943,10 @@ pa_enc_ts_validate(astgs_request_t r, const PA_DATA *pa)
 	str = NULL;
     _kdc_r_log(r, 4, "ENC-TS Pre-authentication succeeded -- %s using %s",
 	       r->cname, str ? str : "unknown enctype");
-    _kdc_audit_addkv_number((kdc_request_t)r, "pa-etype", (int64_t)pa_key->key.keytype);
-    audit_auth_event(r, HDB_AUTH_EVENT_LTK_PREAUTH_SUCCEEDED,
-		     str ? str : "unknown enctype");
+    _kdc_audit_addkv_number((kdc_request_t)r, HDB_REQUEST_KV_PA_ETYPE,
+			    pa_key->key.keytype);
+    _kdc_audit_addkv_number((kdc_request_t)r, HDB_REQUEST_KV_AUTH_EVENT,
+			    HDB_AUTH_EVENT_LTK_PREAUTH_SUCCEEDED);
 
     ret = 0;
 
@@ -2205,7 +2184,8 @@ _kdc_as_rep(astgs_request_t r)
 	kdc_log(r->context, config, 4, "UNKNOWN -- %s: %s", r->cname, msg);
 	krb5_free_error_message(r->context, msg);
 	ret = KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN;
-	audit_auth_event(r, HDB_AUTH_EVENT_CLIENT_UNKNOWN, NULL);
+	_kdc_audit_addkv_number((kdc_request_t)r, HDB_REQUEST_KV_AUTH_EVENT,
+				HDB_AUTH_EVENT_CLIENT_UNKNOWN);
 	goto out;
     }
     }
@@ -2280,8 +2260,9 @@ _kdc_as_rep(astgs_request_t r)
 		    Key *ckey = NULL;
 		    krb5_boolean default_salt;
 
-		    if (!audited_auth_event_p(r))
-			audit_auth_event(r, HDB_AUTH_EVENT_OTHER_PREAUTH_FAILED, NULL);
+		    if (!_kdc_audit_getkv((kdc_request_t)r, HDB_REQUEST_KV_AUTH_EVENT))
+			_kdc_audit_addkv_number((kdc_request_t)r, HDB_REQUEST_KV_AUTH_EVENT,
+						HDB_AUTH_EVENT_OTHER_PREAUTH_FAILED);
 
 		    /*
 		     * If there is a client key, send ETYPE_INFO{,2}
@@ -2297,8 +2278,9 @@ _kdc_as_rep(astgs_request_t r)
 		    }
 		    goto out;
 		}
-		if (!audited_auth_event_p(r))
-		    audit_auth_event(r, HDB_AUTH_EVENT_OTHER_PREAUTH_SUCCEEDED, NULL);
+		if (!_kdc_audit_getkv((kdc_request_t)r, HDB_REQUEST_KV_AUTH_EVENT))
+		    _kdc_audit_addkv_number((kdc_request_t)r, HDB_REQUEST_KV_AUTH_EVENT,
+					    HDB_AUTH_EVENT_OTHER_PREAUTH_SUCCEEDED);
 		kdc_log(r->context, config, 4,
 			"%s pre-authentication succeeded -- %s",
 			pat[n].name, r->cname);
@@ -2392,7 +2374,8 @@ _kdc_as_rep(astgs_request_t r)
 	r->et.flags.anonymous = 1;
     }
 
-    audit_auth_event(r, HDB_AUTH_EVENT_CLIENT_AUTHORIZED, NULL);
+    _kdc_audit_addkv_number((kdc_request_t)r, HDB_REQUEST_KV_AUTH_EVENT,
+			    HDB_AUTH_EVENT_CLIENT_AUTHORIZED);
 
     /*
      * Select the best encryption type for the KDC with out regard to

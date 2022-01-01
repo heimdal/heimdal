@@ -2289,7 +2289,7 @@ _kdc_as_rep(astgs_request_t r)
                 if (r->client->entry.flags.synthetic &&
                     !(pat[n].flags & PA_SYNTHETIC_OK)) {
                     kdc_log(r->context, config, 4, "UNKNOWN -- %s", r->cname);
-                    ret = HDB_ERR_NOENTRY;
+                    ret = KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN;
                     goto out;
                 }
                 _kdc_audit_addkv((kdc_request_t)r, KDC_AUDIT_VIS, "pa", "%s",
@@ -2344,7 +2344,7 @@ _kdc_as_rep(astgs_request_t r)
 
         if (r->client->entry.flags.synthetic) {
             kdc_log(r->context, config, 4, "UNKNOWN -- %s", r->cname);
-            ret = HDB_ERR_NOENTRY;
+            ret = KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN;
             goto out;
         }
 

@@ -2574,6 +2574,8 @@ _kdc_tgs_rep(astgs_request_t r)
     }
 
 out:
+    r->ret = ret;
+
     if(ret && ret != HDB_ERR_NOT_FOUND_HERE && data->data == NULL){
 	METHOD_DATA error_method = { 0, NULL };
 
@@ -2582,7 +2584,7 @@ out:
 				 &error_method,
 				 r->armor_crypto,
 				 &req->req_body,
-				 r->ret = ret,
+				 r->ret,
 				 ticket != NULL ? ticket->client : NULL,
 				 ticket != NULL ? ticket->server : NULL,
 				 csec, cusec,

@@ -305,7 +305,9 @@ typedef struct HDB {
     krb5_error_code (*hdb_password)(krb5_context, struct HDB*, hdb_entry_ex*, const char *, int);
 
     /**
-     * Authentication auditing
+     * Authentication auditing. Note that this function is called by
+     * both the AS and TGS, but currently only the AS sets the auth
+     * event type and details. This may change in a future version.
      *
      * Event details are available by querying the request using
      * heim_audit_getkv(HDB_REQUEST_KV_...).

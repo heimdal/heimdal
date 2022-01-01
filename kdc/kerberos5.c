@@ -77,23 +77,6 @@ audited_auth_event_p(astgs_request_t r)
     return !!_kdc_audit_getkv((kdc_request_t)r, HDB_REQUEST_KV_AUTH_EVENT_TYPE);
 }
 
-/*
- * Notify the HDB backend of the audited event.
- */
-
-static krb5_error_code
-notify_hdb_audit(astgs_request_t r)
-{
-    struct HDB *hdb;
-
-    hdb = r->clientdb ? r->clientdb : r->config->db[0];
-
-    if (hdb && hdb->hdb_audit && audited_auth_event_p(r))
-	return hdb->hdb_audit(r->context, hdb, r->client, (hdb_request_t)r);
-
-    return 0;
-}
-
 void
 _kdc_fix_time(time_t **t)
 {
@@ -2770,7 +2753,7 @@ _kdc_as_rep(astgs_request_t r)
 
 out:
     r->ret = ret;
-    notify_hdb_audit(r);
+    _kdc_hdb_audit(r);
 
     /*
      * In case of a non proxy error, build an error message.

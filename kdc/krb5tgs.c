@@ -2578,7 +2578,7 @@ _kdc_tgs_rep(astgs_request_t r)
 
 out:
     r->ret = ret;
-    _kdc_hdb_audit(r);
+    _kdc_audit_request(r);
 
     if(ret && ret != HDB_ERR_NOT_FOUND_HERE && data->data == NULL){
 	METHOD_DATA error_method = { 0, NULL };

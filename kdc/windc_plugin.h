@@ -39,19 +39,12 @@
 #include <krb5.h>
 #include <kdc.h>
 
-/*
- * The PAC generate function should allocate a krb5_pac using
- * krb5_pac_init and fill in the PAC structure for the principal using
- * krb5_pac_add_buffer.
- *
- * The PAC verify function should verify the PAC KDC signatures by fetching
- * the right KDC key and calling krb5_pac_verify() with that KDC key.
- * Optionally, update the PAC buffers upon success.
- *
- * Check client access function check if the client is authorized.
- */
-
 struct hdb_entry_ex;
+
+/*
+ * Allocate a PAC for the given client with krb5_pac_init(),
+ * and fill its contents in with krb5_pac_add_buffer().
+ */
 
 typedef krb5_error_code
 (KRB5_CALLCONV *krb5plugin_windc_pac_generate)(void *, krb5_context,
@@ -60,6 +53,12 @@ typedef krb5_error_code
 					       const krb5_keyblock *, /* pk_replykey */
 					       uint64_t,	      /* pac_attributes */
 					       krb5_pac *);
+
+/*
+ * Verify the PAC KDC signatures by fetching the appropriate TGS key
+ * and calling krb5_pac_verify() with that key. Optionally update the
+ * PAC buffers on success.
+ */
 
 typedef krb5_error_code
 (KRB5_CALLCONV *krb5plugin_windc_pac_verify)(void *, krb5_context,
@@ -70,8 +69,17 @@ typedef krb5_error_code
 			       struct hdb_entry_ex *,/* krbtgt */
 			       krb5_pac *);
 
+/*
+ * Authorize the client principal's access to the Authentication Service (AS).
+ * This function is called after any pre-authentication has completed.
+ */
+
 typedef krb5_error_code
 (KRB5_CALLCONV *krb5plugin_windc_client_access)(void *, astgs_request_t);
+
+/*
+ * Update the AS or TGS reply immediately prior to encoding.
+ */
 
 typedef krb5_error_code
 (KRB5_CALLCONV *krb5plugin_windc_finalize_reply)(void *, astgs_request_t r);

@@ -73,6 +73,8 @@ struct krb5_pac_data {
 #define PACTYPE_SIZE			8
 #define PAC_INFO_BUFFER_SIZE		16
 
+#define PAC_LOGON_INFO			1
+#define PAC_CREDENTIALS_INFO		2
 #define PAC_SERVER_CHECKSUM		6
 #define PAC_PRIVSVR_CHECKSUM		7
 #define PAC_LOGON_NAME			10
@@ -432,15 +434,57 @@ krb5_pac_get_buffer(krb5_context context, krb5_pac p,
 	if (p->pac->buffers[i].type != type)
 	    continue;
 
-	ret = krb5_data_copy(data, (unsigned char *)p->data.data + offset, len);
-	if (ret) {
-	    krb5_set_error_message(context, ret, N_("malloc: out of memory", ""));
-	    return ret;
+	if (data) {
+	    ret = krb5_data_copy(data, (unsigned char *)p->data.data + offset, len);
+	    if (ret) {
+		krb5_set_error_message(context, ret, N_("malloc: out of memory", ""));
+		return ret;
+	    }
 	}
+
 	return 0;
     }
     krb5_set_error_message(context, ENOENT, "No PAC buffer of type %lu was found",
 			   (unsigned long)type);
+    return ENOENT;
+}
+
+static struct {
+    uint32_t type;
+    krb5_data name;
+} pac_buffer_name_map[] = {
+#define PAC_MAP_ENTRY(type, name) { PAC_##type, { sizeof(name) - 1, name } }
+    PAC_MAP_ENTRY(LOGON_INFO,		    "logon-info"	),
+    PAC_MAP_ENTRY(CREDENTIALS_INFO,	    "credentials-info"  ),
+    PAC_MAP_ENTRY(SERVER_CHECKSUM,	    "server-checksum"   ),
+    PAC_MAP_ENTRY(PRIVSVR_CHECKSUM,	    "privsvr-checksum"  ),
+    PAC_MAP_ENTRY(LOGON_NAME,		    "client-info"	),
+    PAC_MAP_ENTRY(CONSTRAINED_DELEGATION,   "delegation-info"   ),
+    PAC_MAP_ENTRY(UPN_DNS_INFO,		    "upn-dns-info"	),
+    PAC_MAP_ENTRY(TICKET_CHECKSUM,	    "ticket-checksum"   ),
+    PAC_MAP_ENTRY(ATTRIBUTES_INFO,	    "attributes-info"   ),
+    PAC_MAP_ENTRY(REQUESTOR_SID,	    "requestor-sid"	)
+};
+
+/*
+ *
+ */
+
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+_krb5_pac_get_buffer_by_name(krb5_context context, krb5_pac p,
+			     const krb5_data *name, krb5_data *data)
+{
+    size_t i;
+
+    for (i = 0;
+	 i < sizeof(pac_buffer_name_map) / sizeof(pac_buffer_name_map[0]);
+	 i++) {
+	if (krb5_data_cmp(name, &pac_buffer_name_map[i].name) == 0)
+	    return krb5_pac_get_buffer(context, p, pac_buffer_name_map[i].type, data);
+    }
+
+    krb5_set_error_message(context, ENOENT, "No PAC buffer with name %.*s was found",
+			   (int)name->length, (char *)name->data);
     return ENOENT;
 }
 

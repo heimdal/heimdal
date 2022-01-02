@@ -297,9 +297,27 @@ _gsskrb5_get_name_attribute(OM_uint32 *minor_status,
                                                       kdcrep->sname,
                                                       kdcrep->srealm);
         } else if (ticket) {
-            kret = _krb5_principalname2krb5_principal(context, &p,
-                                                      ticket->cname,
-                                                      ticket->crealm);
+	    krb5_data data;
+	    krb5_pac pac = NULL;
+
+	    krb5_data_zero(&data);
+
+	    /* Use canonical name from PAC if available */
+	    kret = _krb5_get_ad(context, ticket->authorization_data,
+				NULL, KRB5_AUTHDATA_WIN2K_PAC, &data);
+	    if (kret == 0)
+		kret = krb5_pac_parse(context, data.data, data.length, &pac);
+	    if (kret == 0)
+		kret = _krb5_pac_get_canon_principal(context, pac, &p);
+	    if (kret == 0 && authenticated)
+		*authenticated = nameattrs->pac_verified;
+	    else if (kret == ENOENT)
+		kret = _krb5_principalname2krb5_principal(context, &p,
+							  ticket->cname,
+							  ticket->crealm);
+
+	    krb5_data_free(&data);
+	    krb5_pac_free(context, pac);
         } else
             return GSS_S_UNAVAILABLE;
         if (kret == 0 && value) {

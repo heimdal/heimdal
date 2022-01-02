@@ -123,6 +123,7 @@ static krb5plugin_windc_ftable windc = {
     pac_generate,
     pac_verify,
     client_access,
+    NULL, /* referral_policy */
     finalize_reply
 };
 

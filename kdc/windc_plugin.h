@@ -84,6 +84,20 @@ typedef krb5_error_code
 typedef krb5_error_code
 (KRB5_CALLCONV *krb5plugin_windc_finalize_reply)(void *, astgs_request_t r);
 
+/*
+ * A referral policy plugin can either rewrite the server principal
+ * by resetting priv->server_princ, or it can disable referral
+ * processing entirely by returning an error.
+ *
+ * The error code from the previous server lookup is available as r->ret.
+ *
+ * If the function returns KRB5_PLUGIN_NO_HANDLE, the TGS will continue
+ * with its default referral handling.
+ */
+
+typedef krb5_error_code
+(KRB5_CALLCONV *krb5plugin_windc_referral_policy)(void *, astgs_request_t r);
+
 #define KRB5_WINDC_PLUGIN_MINOR			8
 #define KRB5_WINDC_PLUGING_MINOR KRB5_WINDC_PLUGIN_MINOR
 
@@ -94,6 +108,7 @@ typedef struct krb5plugin_windc_ftable {
     krb5plugin_windc_pac_generate	pac_generate;
     krb5plugin_windc_pac_verify		pac_verify;
     krb5plugin_windc_client_access	client_access;
+    krb5plugin_windc_referral_policy	referral_policy;
     krb5plugin_windc_finalize_reply	finalize_reply;
 } krb5plugin_windc_ftable;
 

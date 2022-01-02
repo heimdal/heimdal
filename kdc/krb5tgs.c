@@ -1518,6 +1518,7 @@ tgs_build_reply(astgs_request_t priv,
 
 server_lookup:
     priv->server = NULL;
+    priv->server_princ = sp;
     if (server)
         _kdc_free_ent(context, server);
     server = NULL;
@@ -1560,7 +1561,25 @@ server_lookup:
 	Realm req_rlm;
 	krb5_realm *realms;
 
-	if ((req_rlm = get_krbtgt_realm(&sp->name)) != NULL) {
+	priv->ret = ret; /* advise policy plugin of failure reason */
+	ret2 = _kdc_referral_policy(priv);
+	if (ret2 == 0) {
+	    heim_assert(priv->server_princ != sp,
+			"Referral policy plugin must update server principal");
+
+	    krb5_free_principal(context, sp);
+	    sp = priv->server_princ;
+
+	    krb5_xfree(priv->sname);
+	    priv->sname = NULL;
+	    ret = krb5_unparse_name(context, sp, &priv->sname);
+	    if (ret)
+		goto out;
+	    spn = priv->sname;
+	    goto server_lookup;
+	} else if (ret2 != KRB5_PLUGIN_NO_HANDLE) {
+	    ret = ret2;
+	} else if ((req_rlm = get_krbtgt_realm(&sp->name)) != NULL) {
             if (capath == NULL) {
                 /* With referalls, hierarchical capaths are always enabled */
                 ret2 = _krb5_find_capath(context, tgt->crealm, our_realm,

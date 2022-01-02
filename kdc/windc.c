@@ -234,6 +234,27 @@ _kdc_finalize_reply(astgs_request_t r)
     return ret;
 }
 
+static krb5_error_code KRB5_LIB_CALL
+referral_policy(krb5_context context, const void *plug, void *plugctx, void *userctx)
+{
+    krb5plugin_windc_ftable *ft = (krb5plugin_windc_ftable *)plug;
+
+    if (ft->referral_policy == NULL)
+	return KRB5_PLUGIN_NO_HANDLE;
+    return ft->referral_policy((void *)plug, userctx);
+}
+
+krb5_error_code
+_kdc_referral_policy(astgs_request_t r)
+{
+    krb5_error_code ret = KRB5_PLUGIN_NO_HANDLE;
+
+    if (have_plugin)
+        ret = _krb5_plugin_run_f(r->context, &windc_plugin_data, 0, r, referral_policy);
+
+    return ret;
+}
+
 uintptr_t KRB5_CALLCONV
 kdc_get_instance(const char *libname)
 {

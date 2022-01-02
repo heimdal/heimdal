@@ -116,6 +116,12 @@ finalize_reply(void *ctx, astgs_request_t r)
     return 0;
 }
 
+static void KRB5_CALLCONV
+audit(void *ctx, astgs_request_t r)
+{
+    logit("audit", r);
+}
+
 static krb5plugin_windc_ftable windc = {
     KRB5_WINDC_PLUGING_MINOR,
     windc_init,
@@ -123,7 +129,8 @@ static krb5plugin_windc_ftable windc = {
     pac_generate,
     pac_verify,
     client_access,
-    finalize_reply
+    finalize_reply,
+    audit
 };
 
 static const krb5plugin_windc_ftable *const windc_plugins[] = {

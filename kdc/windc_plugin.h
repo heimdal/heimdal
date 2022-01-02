@@ -84,6 +84,17 @@ typedef krb5_error_code
 typedef krb5_error_code
 (KRB5_CALLCONV *krb5plugin_windc_finalize_reply)(void *, astgs_request_t r);
 
+/*
+ * Audit an AS or TGS request. This function is called after encoding the
+ * reply (on success), or before encoding the error message. If a HDB audit
+ * function is also present, it is called after this one.
+ *
+ * The request should not be modified by the plugin.
+ */
+
+typedef void
+(KRB5_CALLCONV *krb5plugin_windc_audit)(void *, astgs_request_t r);
+
 #define KRB5_WINDC_PLUGIN_MINOR			8
 #define KRB5_WINDC_PLUGING_MINOR KRB5_WINDC_PLUGIN_MINOR
 
@@ -95,6 +106,7 @@ typedef struct krb5plugin_windc_ftable {
     krb5plugin_windc_pac_verify		pac_verify;
     krb5plugin_windc_client_access	client_access;
     krb5plugin_windc_finalize_reply	finalize_reply;
+    krb5plugin_windc_audit		audit;
 } krb5plugin_windc_ftable;
 
 #endif /* HEIMDAL_KDC_WINDC_PLUGIN_H */

@@ -234,6 +234,24 @@ _kdc_finalize_reply(astgs_request_t r)
     return ret;
 }
 
+static krb5_error_code KRB5_LIB_CALL
+audit(krb5_context context, const void *plug, void *plugctx, void *userctx)
+{
+    krb5plugin_windc_ftable *ft = (krb5plugin_windc_ftable *)plug;
+
+    if (ft->audit)
+	ft->audit((void *)plug, userctx);
+
+    return 0;
+}
+
+void
+_kdc_windc_audit(astgs_request_t r)
+{
+    if (have_plugin)
+        _krb5_plugin_run_f(r->context, &windc_plugin_data, 0, r, audit);
+}
+
 uintptr_t KRB5_CALLCONV
 kdc_get_instance(const char *libname)
 {

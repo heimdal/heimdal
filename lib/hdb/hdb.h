@@ -324,7 +324,7 @@ typedef struct HDB {
      * In case the entry is locked out, the backend should set the
      * hdb_entry.flags.locked-out flag.
      */
-    krb5_error_code (*hdb_audit)(krb5_context, struct HDB *, hdb_entry_ex *, hdb_request_t);
+    void (*hdb_audit)(krb5_context, struct HDB *, hdb_entry_ex *, hdb_request_t);
 
     /**
      * Check if delegation is allowed.

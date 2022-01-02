@@ -2738,7 +2738,7 @@ _kdc_as_rep(astgs_request_t r)
 
 out:
     r->ret = ret;
-    _kdc_hdb_audit(r);
+    _kdc_audit_request(r);
 
     /*
      * In case of a non proxy error, build an error message.

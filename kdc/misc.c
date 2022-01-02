@@ -343,18 +343,17 @@ _kdc_include_pac_p(astgs_request_t r)
 }
 
 /*
- * Notify the HDB backend of the audited event.
+ * Notify the HDB backend and windc plugin of the audited event.
  */
 
-krb5_error_code
-_kdc_hdb_audit(astgs_request_t r)
+void
+_kdc_audit_request(astgs_request_t r)
 {
     struct HDB *hdb;
 
+    _kdc_windc_audit(r);
+
     hdb = r->clientdb ? r->clientdb : r->config->db[0];
-
     if (hdb && hdb->hdb_audit)
-	return hdb->hdb_audit(r->context, hdb, r->client, (hdb_request_t)r);
-
-    return 0;
+	hdb->hdb_audit(r->context, hdb, r->client, (hdb_request_t)r);
 }

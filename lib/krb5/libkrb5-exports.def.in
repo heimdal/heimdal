@@ -500,6 +500,7 @@ EXPORTS
 	krb5_pac_add_buffer
 	krb5_pac_free
 	krb5_pac_get_buffer
+	_krb5_pac_get_buffer_by_name
 	krb5_pac_get_kdc_checksum_info
 	krb5_pac_get_types
 	krb5_pac_init

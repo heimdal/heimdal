@@ -383,6 +383,7 @@ LDADD = libgssapi.la \
 	$(LIB_roken)
 
 test_names_LDADD = $(LDADD) $(top_builddir)/lib/asn1/libasn1.la
+test_context_LDADD = $(LDADD) $(top_builddir)/lib/wind/libwind.la
 
 # gss
 

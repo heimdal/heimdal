@@ -135,6 +135,87 @@ string_to_oids(gss_OID_set *oidsetp, char *names)
 }
 
 static void
+show_pac_client_info(gss_name_t n)
+{
+    gss_buffer_desc dv = GSS_C_EMPTY_BUFFER;
+    gss_buffer_desc v = GSS_C_EMPTY_BUFFER;
+    gss_buffer_desc a;
+    OM_uint32 maj, min;
+    int authenticated, complete, more;
+
+    krb5_error_code ret;
+    krb5_storage *sp = NULL;
+    uint16_t len = 0, *s;
+    uint64_t tmp;
+    char *logon_string = NULL;
+
+    a.value = "urn:mspac:client-info";
+    a.length = strlen((char *)a.value);
+    more = 0;
+    maj = gss_get_name_attribute(&min, n, &a, &authenticated, &complete, &v,
+                                 &dv, &more);
+    if (maj != GSS_S_COMPLETE)
+	errx(1, "gss_get_name_attribute: %s",
+	     gssapi_err(maj, min, GSS_KRB5_MECHANISM));
+
+
+    sp = krb5_storage_from_readonly_mem(v.value, v.length);
+    if (sp == NULL)
+	errx(1, "show_pac_client_info: out of memory");
+
+    krb5_storage_set_flags(sp, KRB5_STORAGE_BYTEORDER_LE);
+
+    ret = krb5_ret_uint64(sp, &tmp); /* skip over time */
+    if (ret == 0)
+	ret = krb5_ret_uint16(sp, &len);
+    if (ret || len == 0)
+	errx(1, "show_pac_client_info: invalid PAC logon info length");
+
+    s = malloc(len);
+    ret = krb5_storage_read(sp, s, len);
+    if (ret != len)
+	errx(1, "show_pac_client_info:, failed to read PAC logon name");
+
+    krb5_storage_free(sp);
+
+    {
+	size_t ucs2len = len / 2;
+	uint16_t *ucs2;
+	size_t u8len;
+	unsigned int flags = WIND_RW_LE;
+
+	ucs2 = malloc(sizeof(ucs2[0]) * ucs2len);
+	if (ucs2 == NULL)
+	    errx(1, "show_pac_client_info: out of memory");
+
+	ret = wind_ucs2read(s, len, &flags, ucs2, &ucs2len);
+	free(s);
+	if (ret)
+	    errx(1, "failed to convert string to UCS-2");
+
+	ret = wind_ucs2utf8_length(ucs2, ucs2len, &u8len);
+	if (ret)
+	    errx(1, "failed to count length of UCS-2 string");
+
+	u8len += 1; /* Add space for NUL */
+	logon_string = malloc(u8len);
+	if (logon_string == NULL)
+	    errx(1, "show_pac_client_info: out of memory");
+
+	ret = wind_ucs2utf8(ucs2, ucs2len, logon_string, &u8len);
+	free(ucs2);
+	if (ret)
+	    errx(1, "failed to convert to UTF-8");
+    }
+
+    printf("logon name: %s\n", logon_string);
+    free(logon_string);
+
+    gss_release_buffer(&min, &dv);
+    gss_release_buffer(&min, &v);
+}
+
+static void
 loop(gss_OID mechoid,
      gss_OID nameoid, const char *target,
      gss_cred_id_t init_cred,
@@ -393,6 +474,8 @@ loop(gss_OID mechoid,
         } else
             warnx("display_name: %s",
                  gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));
+	if (gss_oid_equal(actual_mech_server, GSS_KRB5_MECHANISM))
+	    show_pac_client_info(src_name);
     }
     gss_release_name(&min_stat, &src_name);
 

@@ -71,7 +71,7 @@
  *
  * Compatibility with MIT:
  *
- *  - "urn:mspac:"                  -> the PAC
+ *  - "urn:mspac:"                  -> the PAC and its individual info buffers
  *
  * TODO:
  *
@@ -80,25 +80,25 @@
  *    alternative raw and/or display value encodings (JSON?)
  *  - Add support for attributes for accessing other parts of the Ticket / KDC
  *    reply enc-parts, like auth times
- *  - Add support for getting specific PAC buffers
- *  - Add support for getting PAC login fields, including SIDs (one at a time)
+ *  - Add support for getting PAC logon fields, including SIDs (one at a time)
  *  - Add support for CAMMAC?
  */
 
 static int
-attr_eq(gss_buffer_t attr, const char *aname, size_t aname_len)
+attr_eq(gss_buffer_t attr, const char *aname, size_t aname_len,
+	int prefix_check)
 {
-    const char *s;
-
     if (attr->length < aname_len)
         return 0;
-    /* Note: `s' is not NUL-terminated */
-    s = ((const char *)attr->value) + attr->length - aname_len;
-    return strncmp(s, aname, aname_len) == 0 &&
-        (attr->length == aname_len || s[aname_len] == '#');
+
+    if (strncmp((char *)attr->value, aname, aname_len) != 0)
+	return 0;
+
+    return prefix_check || attr->length == aname_len;
 }
 
-#define ATTR_EQ(a, an) (attr_eq(a, an, sizeof(an) - 1))
+#define ATTR_EQ(a, an) (attr_eq(a, an, sizeof(an) - 1, FALSE))
+#define ATTR_EQ_PREFIX(a, an) (attr_eq(a, an, sizeof(an) - 1, TRUE))
 
 /* Split attribute into prefix, suffix, and fragment.  See RFC6680. */
 static void
@@ -394,17 +394,25 @@ _gsskrb5_get_name_attribute(OM_uint32 *minor_status,
         if (kret == ENOENT)
             return GSS_S_UNAVAILABLE;
         return kret == 0 ? GSS_S_COMPLETE : GSS_S_FAILURE;
-    } else if ((ATTR_EQ(&attr, GSS_KRB5_NAME_ATTRIBUTE_BASE_URN
-                        "ticket-authz-data#pac") ||
-                ATTR_EQ(&attr, "urn:mspac:")) &&
-               ticket && ticket->authorization_data) {
+    } else if (ticket && ticket->authorization_data &&
+	       (ATTR_EQ_PREFIX(&attr, "urn:mspac:") ||
+		(ATTR_EQ(&attr, GSS_KRB5_NAME_ATTRIBUTE_BASE_URN "ticket-authz-data") &&
+		 (ATTR_EQ(&frag, "pac") || ATTR_EQ_PREFIX(&frag, "pac-"))))) {
         krb5_context context;
-        krb5_data data;
+        krb5_data data, pac_data, *datap;
+        krb5_data suffix;
+
+	if (ATTR_EQ_PREFIX(&attr, "urn:mspac:")) {
+	    suffix.length = attr.length - (sizeof("urn:mspac:") - 1);
+	    suffix.data = (char *)attr.value + sizeof("urn:mspac:") - 1;
+	} else if (ATTR_EQ_PREFIX(&frag, "pac-")) {
+	    suffix.length = frag.length - sizeof("pac-") - 1;
+	    suffix.data = (char *)frag.value + sizeof("pac-") - 1;
+	} else
+	    krb5_data_zero(&suffix); /* ticket-authz-data#pac */
 
         /*
          * In MIT the attribute for the whole PAC is "urn:mspac:".
-         *
-         * TBD: Add support for attributes for specific PAC buffers, like MIT.
          */
 
         GSSAPI_KRB5_INIT(&context);
@@ -414,22 +422,39 @@ _gsskrb5_get_name_attribute(OM_uint32 *minor_status,
         if (complete)
             *complete = 1;
 
+	if (suffix.length)
+	    datap = &pac_data;
+	else if (value)
+	    datap = &data;
+	else
+	    datap = NULL;
+
         kret = _krb5_get_ad(context, ticket->authorization_data,
-                            NULL, KRB5_AUTHDATA_WIN2K_PAC,
-                            value ? &data : NULL);
+                            NULL, KRB5_AUTHDATA_WIN2K_PAC, datap);
+	if (kret == 0 && suffix.length) {
+	    krb5_pac pac;
+
+	    kret = krb5_pac_parse(context, pac_data.data, pac_data.length, &pac);
+	    if (kret == 0) {
+		kret = _krb5_pac_get_buffer_by_name(context, pac, &suffix,
+						    value ? &data : NULL);
+		krb5_pac_free(context, pac);
+	    }
+	    krb5_data_free(&pac_data);
+	}
 
         if (value) {
             value->length = data.length;
             value->value = data.data;
         }
+
         *minor_status = kret;
         if (kret == ENOENT)
             return GSS_S_UNAVAILABLE;
         return kret == 0 ? GSS_S_COMPLETE : GSS_S_FAILURE;
-    } else if (ATTR_EQ(&attr, GSS_KRB5_NAME_ATTRIBUTE_BASE_URN
-                       "ticket-authz-data#kdc-issued") &&
-               ticket &&
-               ticket->authorization_data) {
+    } else if (ticket && ticket->authorization_data &&
+	       ATTR_EQ(&attr, GSS_KRB5_NAME_ATTRIBUTE_BASE_URN "ticket-authz-data") &&
+	       ATTR_EQ(&frag, "kdc-issued")) {
         krb5_context context;
         krb5_data data;
 
@@ -583,7 +608,25 @@ _gsskrb5_inquire_name(OM_uint32 *minor_status,
     ADD_URN("name-ncomp#9");
     ADD_URN("peer-realm");
     ADD_URN("ticket-authz-data#pac");
+    ADD_URN("ticket-authz-data#pac-logon-info");
+    ADD_URN("ticket-authz-data#pac-credentials-info");
+    ADD_URN("ticket-authz-data#pac-server-checksum");
+    ADD_URN("ticket-authz-data#pac-privsvr-checksum");
+    ADD_URN("ticket-authz-data#pac-client-info");
+    ADD_URN("ticket-authz-data#pac-delegation-info");
+    ADD_URN("ticket-authz-data#pac-upn-dns-info");
+    ADD_URN("ticket-authz-data#pac-attributes-info");
+    ADD_URN("ticket-authz-data#pac-requestor-sid");
     ADD_URN("urn:mspac:");
+    ADD_URN("urn:mspac:logon-info");
+    ADD_URN("urn:mspac:credentials-info");
+    ADD_URN("urn:mspac:server-checksum");
+    ADD_URN("urn:mspac:privsvr-checksum");
+    ADD_URN("urn:mspac:client-info");
+    ADD_URN("urn:mspac:delegation-info");
+    ADD_URN("urn:mspac:upn-dns-info");
+    ADD_URN("urn:mspac:attributes-info");
+    ADD_URN("urn:mspac:requestor-sid");
     ADD_URN("authenticator-authz-data"); /* XXX Add fragments? */
     ADD_URN("ticket-authz-data"); /* XXX Add fragments? */
     ADD_URN("authz-data");

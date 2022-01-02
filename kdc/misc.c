@@ -60,7 +60,7 @@ synthesize_hdb_close(krb5_context context, struct HDB *db)
 }
 
 /*
- * Synthesize an HDB entry suitable for PKINIT and only PKINIT.
+ * Synthesize an HDB entry suitable for PKINIT and GSS preauth.
  */
 static krb5_error_code
 synthesize_client(krb5_context context,

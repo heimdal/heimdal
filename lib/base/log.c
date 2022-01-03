@@ -699,7 +699,10 @@ fmtkv(int flags, const char *k, const char *fmt, va_list ap)
     } else
 	value_vis = value;
 
-    kv.key = heim_string_create(k);
+    if (k)
+	kv.key = heim_string_create(k);
+    else
+	kv.key = NULL;
     kv.value = heim_string_ref_create(value_vis, free);
 
     return kv;
@@ -711,8 +714,8 @@ heim_audit_vaddreason(heim_svc_req_desc r, const char *fmt, va_list ap)
 {
     struct heim_audit_kv_tuple kv;
 
-    kv = fmtkv(HEIM_SVC_AUDIT_VISLAST, "reason", fmt, ap);
-    if (kv.key == NULL || kv.value == NULL) {
+    kv = fmtkv(HEIM_SVC_AUDIT_VISLAST, NULL, fmt, ap);
+    if (kv.value == NULL) {
         heim_log(r->hcontext, r->logf, 1, "heim_audit_vaddreason: "
                  "failed to add reason (out of memory)");
         return;
@@ -733,7 +736,6 @@ heim_audit_vaddreason(heim_svc_req_desc r, const char *fmt, va_list ap)
     }
     heim_release(r->reason);
     r->reason = kv.value;
-    heim_release(kv.key);
 }
 
 void

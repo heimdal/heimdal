@@ -849,7 +849,7 @@ heim_audit_addkv_timediff(heim_svc_req_desc r, const char *k,
 }
 
 void
-heim_audit_addkv_bool(heim_svc_req_desc r, const char *k, int v)
+heim_audit_setkv_bool(heim_svc_req_desc r, const char *k, int v)
 {
     heim_string_t key = heim_string_create(k);
     heim_number_t value;
@@ -857,8 +857,8 @@ heim_audit_addkv_bool(heim_svc_req_desc r, const char *k, int v)
     if (key == NULL)
 	return;
 
-    heim_log(r->hcontext, r->logf, 7, "heim_audit_addkv_bool(): "
-	     "adding kv pair %s=%s", k, v ? "true" : "false");
+    heim_log(r->hcontext, r->logf, 7, "heim_audit_setkv_bool(): "
+	     "setting kv pair %s=%s", k, v ? "true" : "false");
 
     value = heim_bool_create(v);
     heim_dict_set_value(r->kv, key, value);
@@ -867,7 +867,7 @@ heim_audit_addkv_bool(heim_svc_req_desc r, const char *k, int v)
 }
 
 void
-heim_audit_addkv_number(heim_svc_req_desc r, const char *k, intptr_t v)
+heim_audit_setkv_number(heim_svc_req_desc r, const char *k, intptr_t v)
 {
     heim_string_t key = heim_string_create(k);
     heim_number_t value;
@@ -875,8 +875,8 @@ heim_audit_addkv_number(heim_svc_req_desc r, const char *k, intptr_t v)
     if (key == NULL)
 	return;
 
-    heim_log(r->hcontext, r->logf, 7, "heim_audit_addkv_number(): "
-	     "adding kv pair %s=%ld", k, v);
+    heim_log(r->hcontext, r->logf, 7, "heim_audit_setkv_number(): "
+	     "setting kv pair %s=%ld", k, v);
 
     value = heim_number_create(v);
     heim_dict_set_value(r->kv, key, value);
@@ -885,7 +885,7 @@ heim_audit_addkv_number(heim_svc_req_desc r, const char *k, intptr_t v)
 }
 
 void
-heim_audit_addkv_object(heim_svc_req_desc r, const char *k, heim_object_t value)
+heim_audit_setkv_object(heim_svc_req_desc r, const char *k, heim_object_t value)
 {
     heim_string_t key = heim_string_create(k);
     heim_string_t descr;
@@ -894,8 +894,8 @@ heim_audit_addkv_object(heim_svc_req_desc r, const char *k, heim_object_t value)
 	return;
 
     descr = heim_json_copy_serialize(value, 0, NULL);
-    heim_log(r->hcontext, r->logf, 7, "heim_audit_addkv_object(): "
-	     "adding kv pair %s=%s",
+    heim_log(r->hcontext, r->logf, 7, "heim_audit_setkv_object(): "
+	     "setting kv pair %s=%s",
 	     k, descr ? heim_string_get_utf8(descr) : "<unprintable>");
     heim_dict_set_value(r->kv, key, value);
     heim_release(key);

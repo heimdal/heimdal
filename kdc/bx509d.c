@@ -485,7 +485,7 @@ bad_reqv(struct bx509_request_desc *r,
     char *formatted = NULL;
     char *msg = NULL;
 
-    heim_audit_addkv_number((heim_svc_req_desc)r, "http-status-code",
+    heim_audit_setkv_number((heim_svc_req_desc)r, "http-status-code",
 			    http_status_code);
     (void) gettimeofday(&r->tv_end, NULL);
     if (code == ENOMEM) {
@@ -669,13 +669,13 @@ bx509_param_cb(void *d,
                                                   &oid);
         der_free_oid(&oid);
     } else if (strcmp(key, "csr") == 0 && val) {
-        heim_audit_addkv_bool((heim_svc_req_desc)r, "requested_csr", TRUE);
+        heim_audit_setkv_bool((heim_svc_req_desc)r, "requested_csr", TRUE);
         r->ret = 0; /* Handled upstairs */
     } else if (strcmp(key, "lifetime") == 0 && val) {
         r->req_life = parse_time(val, "day");
     } else {
         /* Produce error for unknown params */
-        heim_audit_addkv_bool((heim_svc_req_desc)r, "requested_unknown", TRUE);
+        heim_audit_setkv_bool((heim_svc_req_desc)r, "requested_unknown", TRUE);
         krb5_set_error_message(r->context, r->ret = ENOTSUP,
                                "Query parameter %s not supported", key);
     }
@@ -1638,7 +1638,7 @@ bnegotiate(struct bx509_request_desc *r)
     if (ret == 0) {
         heim_audit_addkv((heim_svc_req_desc)r, KDC_AUDIT_VIS, "target", "%s",
                          r->target ? r->target : "<unknown>");
-        heim_audit_addkv_bool((heim_svc_req_desc)r, "redir", !!r->redir);
+        heim_audit_setkv_bool((heim_svc_req_desc)r, "redir", !!r->redir);
         ret = validate_token(r);
     }
     /* bnegotiate_get_target() and validate_token() call bad_req() */
@@ -1737,7 +1737,7 @@ get_tgt_param_cb(void *d,
         r->req_life = parse_time(val, "day");
     } else {
         /* Produce error for unknown params */
-        heim_audit_addkv_bool((heim_svc_req_desc)r, "requested_unknown", TRUE);
+        heim_audit_setkv_bool((heim_svc_req_desc)r, "requested_unknown", TRUE);
         krb5_set_error_message(r->context, r->ret = ENOTSUP,
                                "Query parameter %s not supported", key);
     }

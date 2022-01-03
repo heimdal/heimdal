@@ -807,7 +807,7 @@ tgs_make_reply(astgs_request_t r,
      * is implementation dependent.
      */
     if (r->pac && !et->flags.anonymous) {
-	_kdc_audit_addkv_number((kdc_request_t)r, "pac_attributes",
+	_kdc_audit_setkv_number((kdc_request_t)r, "pac_attributes",
 			        r->pac_attributes);
 
 	/*
@@ -1119,7 +1119,7 @@ next_kvno:
         _kdc_audit_addaddrs((kdc_request_t)r, (*ticket)->ticket.caddr, "tixaddrs");
     if (r->config->warn_ticket_addresses && ret == KRB5KRB_AP_ERR_BADADDR &&
         *ticket != NULL) {
-        _kdc_audit_addkv_bool((kdc_request_t)r, "wrongaddr", TRUE);
+        _kdc_audit_setkv_bool((kdc_request_t)r, "wrongaddr", TRUE);
         ret = 0;
     }
     if (ret == KRB5KRB_AP_ERR_BAD_INTEGRITY && kvno_search_tries > 0) {
@@ -2343,12 +2343,12 @@ server_lookup:
     if (!_kdc_check_addresses(priv, tgt->caddr, from_addr)) {
         if (config->check_ticket_addresses) {
             ret = KRB5KRB_AP_ERR_BADADDR;
-            _kdc_audit_addkv_bool((kdc_request_t)priv, "wrongaddr", TRUE);
+            _kdc_audit_setkv_bool((kdc_request_t)priv, "wrongaddr", TRUE);
             kdc_log(context, config, 4, "Request from wrong address");
             _kdc_audit_addreason((kdc_request_t)priv, "Request from wrong address");
             goto out;
         } else if (config->warn_ticket_addresses) {
-            _kdc_audit_addkv_bool((kdc_request_t)priv, "wrongaddr", TRUE);
+            _kdc_audit_setkv_bool((kdc_request_t)priv, "wrongaddr", TRUE);
         }
     }
 

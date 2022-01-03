@@ -442,13 +442,13 @@ _kdc_log_timestamp(astgs_request_t r, const char *type,
 	endtime_str[100], renewtime_str[100];
 
     if (authtime)
-	_kdc_audit_addkv_number((kdc_request_t)r, "auth", authtime);
+	_kdc_audit_setkv_number((kdc_request_t)r, "auth", authtime);
     if (starttime && *starttime)
-	_kdc_audit_addkv_number((kdc_request_t)r, "start", *starttime);
+	_kdc_audit_setkv_number((kdc_request_t)r, "start", *starttime);
     if (endtime)
-	_kdc_audit_addkv_number((kdc_request_t)r, "end", endtime);
+	_kdc_audit_setkv_number((kdc_request_t)r, "end", endtime);
     if (renew_till && *renew_till)
-	_kdc_audit_addkv_number((kdc_request_t)r, "renew", *renew_till);
+	_kdc_audit_setkv_number((kdc_request_t)r, "renew", *renew_till);
 
     krb5_format_time(r->context, authtime,
 		     authtime_str, sizeof(authtime_str), TRUE);
@@ -488,7 +488,7 @@ pa_pkinit_validate(astgs_request_t r, const PA_DATA *pa)
 	ret = KRB5KRB_AP_ERR_BAD_INTEGRITY;
 	_kdc_r_log(r, 4, "Failed to decode PKINIT PA-DATA -- %s",
 		   r->cname);
-	_kdc_audit_addkv_number((kdc_request_t)r, HDB_REQUEST_KV_AUTH_EVENT,
+	_kdc_audit_setkv_number((kdc_request_t)r, HDB_REQUEST_KV_AUTH_EVENT,
 				HDB_AUTH_EVENT_PKINIT_FAILED);
 	goto out;
     }
@@ -500,7 +500,7 @@ pa_pkinit_validate(astgs_request_t r, const PA_DATA *pa)
     if (ret) {
 	_kdc_set_e_text(r, "PKINIT certificate not allowed to "
 			"impersonate principal");
-	_kdc_audit_addkv_number((kdc_request_t)r, HDB_REQUEST_KV_AUTH_EVENT,
+	_kdc_audit_setkv_number((kdc_request_t)r, HDB_REQUEST_KV_AUTH_EVENT,
 				HDB_AUTH_EVENT_PKINIT_NOT_AUTHORIZED);
 	goto out;
     }
@@ -520,7 +520,7 @@ pa_pkinit_validate(astgs_request_t r, const PA_DATA *pa)
     ret = _kdc_add_initial_verified_cas(r->context, r->config,
 					pkp, &r->et);
 
-    _kdc_audit_addkv_number((kdc_request_t)r, HDB_REQUEST_KV_AUTH_EVENT,
+    _kdc_audit_setkv_number((kdc_request_t)r, HDB_REQUEST_KV_AUTH_EVENT,
 			    HDB_AUTH_EVENT_PKINIT_SUCCEEDED);
 
  out:
@@ -553,7 +553,7 @@ pa_gss_validate(astgs_request_t r, const PA_DATA *pa)
 	if (ret) {
 	    _kdc_set_e_text(r, "GSS-API client not allowed to "
 			    "impersonate principal");
-	    _kdc_audit_addkv_number((kdc_request_t)r, HDB_REQUEST_KV_AUTH_EVENT,
+	    _kdc_audit_setkv_number((kdc_request_t)r, HDB_REQUEST_KV_AUTH_EVENT,
 				    HDB_AUTH_EVENT_GSS_PA_NOT_AUTHORIZED);
 	    goto out;
 	}
@@ -562,7 +562,7 @@ pa_gss_validate(astgs_request_t r, const PA_DATA *pa)
 
 	_kdc_r_log(r, 4, "GSS pre-authentication succeeded -- %s using %s",
 		   r->cname, client_name);
-	_kdc_audit_addkv_number((kdc_request_t)r, HDB_REQUEST_KV_AUTH_EVENT,
+	_kdc_audit_setkv_number((kdc_request_t)r, HDB_REQUEST_KV_AUTH_EVENT,
 				HDB_AUTH_EVENT_GSS_PA_SUCCEEDED);
 
 	ret = _kdc_gss_mk_composite_name_ad(r, gcp);
@@ -576,7 +576,7 @@ pa_gss_validate(astgs_request_t r, const PA_DATA *pa)
     if (ret) {
 	if (ret != KRB5_KDC_ERR_MORE_PREAUTH_DATA_REQUIRED) {
 	    _kdc_set_e_text(r, "Failed to build GSS pre-authentication reply");
-	    _kdc_audit_addkv_number((kdc_request_t)r, HDB_REQUEST_KV_AUTH_EVENT,
+	    _kdc_audit_setkv_number((kdc_request_t)r, HDB_REQUEST_KV_AUTH_EVENT,
 				    HDB_AUTH_EVENT_GSS_PA_FAILED);
 	}
 
@@ -640,7 +640,7 @@ pa_enc_chal_validate(astgs_request_t r, const PA_DATA *pa)
        ret = KRB5KDC_ERR_CLIENT_REVOKED;
        kdc_log(r->context, r->config, 0,
                "Client (%s) is locked out", r->cname);
-       _kdc_audit_addkv_number((kdc_request_t)r, HDB_REQUEST_KV_AUTH_EVENT,
+       _kdc_audit_setkv_number((kdc_request_t)r, HDB_REQUEST_KV_AUTH_EVENT,
 			       HDB_AUTH_EVENT_CLIENT_LOCKED_OUT);
        return ret;
     }
@@ -767,13 +767,13 @@ pa_enc_chal_validate(astgs_request_t r, const PA_DATA *pa)
 	/*
 	 * Success
 	 */
-	_kdc_audit_addkv_number((kdc_request_t)r, HDB_REQUEST_KV_AUTH_EVENT,
+	_kdc_audit_setkv_number((kdc_request_t)r, HDB_REQUEST_KV_AUTH_EVENT,
 				HDB_AUTH_EVENT_LTK_PREAUTH_SUCCEEDED);
 	goto out;
     }
 
     if (invalidPassword) {
-	_kdc_audit_addkv_number((kdc_request_t)r, HDB_REQUEST_KV_AUTH_EVENT,
+	_kdc_audit_setkv_number((kdc_request_t)r, HDB_REQUEST_KV_AUTH_EVENT,
 				HDB_AUTH_EVENT_LTK_PREAUTH_FAILED);
 	ret = KRB5KDC_ERR_PREAUTH_FAILED;
     } else {
@@ -813,7 +813,7 @@ pa_enc_ts_validate(astgs_request_t r, const PA_DATA *pa)
        ret = KRB5KDC_ERR_CLIENT_REVOKED;
        kdc_log(r->context, r->config, 0,
                "Client (%s) is locked out", r->cname);
-       _kdc_audit_addkv_number((kdc_request_t)r, HDB_REQUEST_KV_AUTH_EVENT,
+       _kdc_audit_setkv_number((kdc_request_t)r, HDB_REQUEST_KV_AUTH_EVENT,
 			       HDB_AUTH_EVENT_CLIENT_LOCKED_OUT);
        return ret;
     }
@@ -882,9 +882,9 @@ pa_enc_ts_validate(astgs_request_t r, const PA_DATA *pa)
 	_kdc_r_log(r, 2, "Failed to decrypt PA-DATA -- %s "
 		   "(enctype %s) error %s",
 		   r->cname, str ? str : "unknown enctype", msg);
-	_kdc_audit_addkv_number((kdc_request_t)r, HDB_REQUEST_KV_PA_ETYPE,
+	_kdc_audit_setkv_number((kdc_request_t)r, HDB_REQUEST_KV_PA_ETYPE,
 				pa_key->key.keytype);
-	_kdc_audit_addkv_number((kdc_request_t)r, HDB_REQUEST_KV_AUTH_EVENT,
+	_kdc_audit_setkv_number((kdc_request_t)r, HDB_REQUEST_KV_AUTH_EVENT,
 				HDB_AUTH_EVENT_LTK_PREAUTH_FAILED);
 	if(hdb_next_enctype2key(r->context, &r->client->entry, NULL,
 				enc_data.etype, &pa_key) == 0)
@@ -920,7 +920,7 @@ pa_enc_ts_validate(astgs_request_t r, const PA_DATA *pa)
 		   (unsigned)labs(kdc_time - p.patimestamp),
 		   r->context->max_skew,
 		   r->cname);
-	_kdc_audit_addkv_number((kdc_request_t)r, HDB_REQUEST_KV_AUTH_EVENT,
+	_kdc_audit_setkv_number((kdc_request_t)r, HDB_REQUEST_KV_AUTH_EVENT,
 				HDB_AUTH_EVENT_CLIENT_TIME_SKEW);
 
 	/*
@@ -945,9 +945,9 @@ pa_enc_ts_validate(astgs_request_t r, const PA_DATA *pa)
 	str = NULL;
     _kdc_r_log(r, 4, "ENC-TS Pre-authentication succeeded -- %s using %s",
 	       r->cname, str ? str : "unknown enctype");
-    _kdc_audit_addkv_number((kdc_request_t)r, HDB_REQUEST_KV_PA_ETYPE,
+    _kdc_audit_setkv_number((kdc_request_t)r, HDB_REQUEST_KV_PA_ETYPE,
 			    pa_key->key.keytype);
-    _kdc_audit_addkv_number((kdc_request_t)r, HDB_REQUEST_KV_AUTH_EVENT,
+    _kdc_audit_setkv_number((kdc_request_t)r, HDB_REQUEST_KV_AUTH_EVENT,
 			    HDB_AUTH_EVENT_LTK_PREAUTH_SUCCEEDED);
 
     ret = 0;
@@ -1849,7 +1849,7 @@ generate_pac(astgs_request_t r, const Key *skey, const Key *tkey,
     krb5_const_principal canon_princ = NULL;
 
     r->pac_attributes = get_pac_attributes(r->context, &r->req);
-    _kdc_audit_addkv_number((kdc_request_t)r, "pac_attributes",
+    _kdc_audit_setkv_number((kdc_request_t)r, "pac_attributes",
 			    r->pac_attributes);
 
     if (!_kdc_include_pac_p(r))
@@ -2186,7 +2186,7 @@ _kdc_as_rep(astgs_request_t r)
 	kdc_log(r->context, config, 4, "UNKNOWN -- %s: %s", r->cname, msg);
 	krb5_free_error_message(r->context, msg);
 	ret = KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN;
-	_kdc_audit_addkv_number((kdc_request_t)r, HDB_REQUEST_KV_AUTH_EVENT,
+	_kdc_audit_setkv_number((kdc_request_t)r, HDB_REQUEST_KV_AUTH_EVENT,
 				HDB_AUTH_EVENT_CLIENT_UNKNOWN);
 	goto out;
     }
@@ -2263,7 +2263,7 @@ _kdc_as_rep(astgs_request_t r)
 		    krb5_boolean default_salt;
 
 		    if (!_kdc_audit_getkv((kdc_request_t)r, HDB_REQUEST_KV_AUTH_EVENT))
-			_kdc_audit_addkv_number((kdc_request_t)r, HDB_REQUEST_KV_AUTH_EVENT,
+			_kdc_audit_setkv_number((kdc_request_t)r, HDB_REQUEST_KV_AUTH_EVENT,
 						HDB_AUTH_EVENT_OTHER_PREAUTH_FAILED);
 
 		    /*
@@ -2281,7 +2281,7 @@ _kdc_as_rep(astgs_request_t r)
 		    goto out;
 		}
 		if (!_kdc_audit_getkv((kdc_request_t)r, HDB_REQUEST_KV_AUTH_EVENT))
-		    _kdc_audit_addkv_number((kdc_request_t)r, HDB_REQUEST_KV_AUTH_EVENT,
+		    _kdc_audit_setkv_number((kdc_request_t)r, HDB_REQUEST_KV_AUTH_EVENT,
 					    HDB_AUTH_EVENT_OTHER_PREAUTH_SUCCEEDED);
 		kdc_log(r->context, config, 4,
 			"%s pre-authentication succeeded -- %s",
@@ -2376,7 +2376,7 @@ _kdc_as_rep(astgs_request_t r)
 	r->et.flags.anonymous = 1;
     }
 
-    _kdc_audit_addkv_number((kdc_request_t)r, HDB_REQUEST_KV_AUTH_EVENT,
+    _kdc_audit_setkv_number((kdc_request_t)r, HDB_REQUEST_KV_AUTH_EVENT,
 			    HDB_AUTH_EVENT_CLIENT_AUTHORIZED);
 
     /*
@@ -2481,7 +2481,7 @@ _kdc_as_rep(astgs_request_t r)
     /* check for valid set of addresses */
     if (!_kdc_check_addresses(r, b->addresses, r->addr)) {
         if (r->config->warn_ticket_addresses) {
-            _kdc_audit_addkv_bool((kdc_request_t)r, "wrongaddr", TRUE);
+            _kdc_audit_setkv_bool((kdc_request_t)r, "wrongaddr", TRUE);
         } else {
             _kdc_set_e_text(r, "Request from wrong address");
             ret = KRB5KRB_AP_ERR_BADADDR;

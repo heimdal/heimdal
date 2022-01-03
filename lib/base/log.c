@@ -749,6 +749,34 @@ heim_audit_addreason(heim_svc_req_desc r, const char *fmt, ...)
     va_end(ap);
 }
 
+size_t
+addkv(heim_svc_req_desc r, heim_object_t key, heim_object_t value)
+{
+    size_t index;
+    heim_object_t obj;
+
+    obj = heim_dict_get_value(r->kv, key);
+    if (obj) {
+	if (heim_get_tid(obj) == HEIM_TID_ARRAY) {
+	    index = heim_array_get_length(obj);
+	    heim_array_append_value(obj, value);
+	} else {
+	    heim_array_t array = heim_array_create();
+
+	    index = 1;
+	    heim_array_append_value(array, obj);
+	    heim_array_append_value(array, value);
+	    heim_dict_set_value(r->kv, key, array);
+	    heim_release(array); /* retained by r->kv */
+	}
+    } else {
+	index = 0;
+	heim_dict_set_value(r->kv, key, value);
+    }
+
+    return index;
+}
+
 /*
  * add a key-value token. if the key already exists, the value is
  * promoted to an array of values.
@@ -760,7 +788,6 @@ heim_audit_vaddkv(heim_svc_req_desc r, int flags, const char *k,
 	__attribute__ ((__format__ (__printf__, 4, 0)))
 {
     struct heim_audit_kv_tuple kv;
-    heim_object_t obj;
     size_t index;
 
     kv = fmtkv(flags, k, fmt, ap);
@@ -772,24 +799,7 @@ heim_audit_vaddkv(heim_svc_req_desc r, int flags, const char *k,
         return;
     }
 
-    obj = heim_dict_get_value(r->kv, kv.key);
-    if (obj) {
-	if (heim_get_tid(obj) == HEIM_TID_ARRAY) {
-	    index = heim_array_get_length(obj);
-	    heim_array_append_value(obj, kv.value);
-	} else {
-	    heim_array_t array = heim_array_create();
-
-	    index = 1;
-	    heim_array_append_value(array, obj);
-	    heim_array_append_value(array, kv.value);
-	    heim_dict_set_value(r->kv, kv.key, array);
-	    heim_release(array); /* retained by r->kv */
-	}
-    } else {
-	index = 0;
-	heim_dict_set_value(r->kv, kv.key, kv.value);
-    }
+    index = addkv(r, kv.key, kv.value);
 
     heim_log(r->hcontext, r->logf, 7, "heim_audit_vaddkv(): "
              "kv pair[%zu] %s=%s", index,

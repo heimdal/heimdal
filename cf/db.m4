@@ -59,7 +59,7 @@ AS_IF([test "x$with_berkeley_db" != xno],
 
 dnl db_create is used by db3 and db4 and db5
 
-  AC_FIND_FUNC_NO_LIBS(db_create, [$dbheader] db-5 db5 db4 db3 db, [
+  AC_FIND_FUNC_NO_LIBS(db_create, [$dbheader] db-5 db4 db3 db, [
   #include <stdio.h>
   #ifdef HAVE_DBHEADER
   #include <$dbheader/db.h>

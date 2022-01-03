@@ -406,6 +406,7 @@ change (krb5_auth_context auth_context,
 	    krb5_warnx(context,
 		       "%s didn't pass password quality check with error: %s",
 		       client, str);
+            break;
         default:
 	    krb5_warnx(context, "kadm5_s_chpass_principal_cond: %s", str);
 	}

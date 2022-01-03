@@ -621,7 +621,7 @@ good_bx509(struct bx509_request_desc *r)
     return ret;
 }
 
-static int
+static enum MHD_Result
 bx509_param_cb(void *d,
                enum MHD_ValueKind kind,
                const char *key,
@@ -1706,7 +1706,7 @@ authorize_TGT_REQ(struct bx509_request_desc *r)
     return ret;
 }
 
-static int
+static enum MHD_Result
 get_tgt_param_cb(void *d,
                  enum MHD_ValueKind kind,
                  const char *key,
@@ -1810,7 +1810,7 @@ health(const char *method, struct bx509_request_desc *r)
 }
 
 /* Implements the entirety of this REST service */
-static int
+static enum MHD_Result
 route(void *cls,
       struct MHD_Connection *connection,
       const char *url,

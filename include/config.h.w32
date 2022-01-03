@@ -217,9 +217,6 @@ static const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* Define to 1 if you have the `cap_set_proc' function. */
 /* #undef HAVE_CAP_SET_PROC */
 
-/* Define to 1 if you have the `cgetent' function. */
-/* #undef HAVE_CGETENT */
-
 /* Define if the system defines 'CHAR' type */
 #define HAVE_CHAR 1
 
@@ -810,9 +807,6 @@ static const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 
 /* Define to 1 if you have the `setstate' function. */
 /* #define HAVE_SETSTATE 1 */
-
-/* Define to 1 if you have the `sgi_getcapabilitybyname' function. */
-/* #undef HAVE_SGI_GETCAPABILITYBYNAME */
 
 /* Define to 1 if you have the <sgtty.h> header file. */
 /* #undef HAVE_SGTTY_H */

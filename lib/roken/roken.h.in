@@ -721,13 +721,6 @@ ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL mkostemp(char *, int);
 ROKEN_LIB_FUNCTION char * ROKEN_LIB_CALL mkdtemp(char *);
 #endif
 
-#ifndef HAVE_CGETENT
-#define cgetent rk_cgetent
-#define cgetstr rk_cgetstr
-ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL cgetent(char **, char **, const char *);
-ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL cgetstr(char *, const char *, char **);
-#endif
-
 #ifndef HAVE_INITGROUPS
 #define initgroups rk_initgroups
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL initgroups(const char *, gid_t);

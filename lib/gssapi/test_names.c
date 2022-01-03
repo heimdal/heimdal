@@ -64,7 +64,7 @@ gss_print_errors(OM_uint32 stat, gss_OID mech)
     if (mech) {
         junk = gss_oid_to_str(&junk, mech, &buf);
         if (junk == GSS_S_COMPLETE)
-            fprintf(stderr, "mech = %.*s\n", (int)buf.length, buf.value);
+            fprintf(stderr, "mech = %.*s\n", (int)buf.length, (char *)buf.value);
         gss_release_buffer(&junk, &buf);
     }
     do {

@@ -750,9 +750,8 @@ heim_audit_addreason(heim_svc_req_desc r, const char *fmt, ...)
 }
 
 /*
- * append_token adds a token which is optionally a kv-pair and it
- * also optionally eats the whitespace.  If k == NULL, then it's
- * not a kv-pair.
+ * add a key-value token. if the key already exists, the value is
+ * promoted to an array of values.
  */
 
 void
@@ -761,6 +760,8 @@ heim_audit_vaddkv(heim_svc_req_desc r, int flags, const char *k,
 	__attribute__ ((__format__ (__printf__, 4, 0)))
 {
     struct heim_audit_kv_tuple kv;
+    heim_object_t obj;
+    size_t index;
 
     kv = fmtkv(flags, k, fmt, ap);
     if (kv.key == NULL || kv.value == NULL) {
@@ -771,10 +772,29 @@ heim_audit_vaddkv(heim_svc_req_desc r, int flags, const char *k,
         return;
     }
 
+    obj = heim_dict_get_value(r->kv, kv.key);
+    if (obj) {
+	if (heim_get_tid(obj) == HEIM_TID_ARRAY) {
+	    index = heim_array_get_length(obj);
+	    heim_array_append_value(obj, kv.value);
+	} else {
+	    heim_array_t array = heim_array_create();
+
+	    index = 1;
+	    heim_array_append_value(array, obj);
+	    heim_array_append_value(array, kv.value);
+	    heim_dict_set_value(r->kv, kv.key, array);
+	    heim_release(array); /* retained by r->kv */
+	}
+    } else {
+	index = 0;
+	heim_dict_set_value(r->kv, kv.key, kv.value);
+    }
+
     heim_log(r->hcontext, r->logf, 7, "heim_audit_vaddkv(): "
-             "adding kv pair %s=%s",
+             "kv pair[%zu] %s=%s", index,
 	     heim_string_get_utf8(kv.key), heim_string_get_utf8(kv.value));
-    heim_dict_set_value(r->kv, kv.key, kv.value);
+
     heim_release(kv.key);
     heim_release(kv.value);
 }
@@ -890,16 +910,28 @@ heim_audit_getkv(heim_svc_req_desc r, const char *k)
 struct heim_audit_kv_buf {
     char buf[1024];
     size_t pos;
+    heim_object_t iter;
 };
+
+static void
+audit_trail_iterator(heim_object_t key, heim_object_t value, void *arg);
+
+static void
+audit_trail_iterator_array(heim_object_t value, void *arg, int *stop)
+{
+    struct heim_audit_kv_buf *kvb = arg;
+
+    audit_trail_iterator(kvb->iter, value, kvb);
+}
 
 static void
 audit_trail_iterator(heim_object_t key, heim_object_t value, void *arg)
 {
     struct heim_audit_kv_buf *kvb = arg;
     char num[32];
-    const char *k = heim_string_get_utf8(key), *v;
+    const char *k = heim_string_get_utf8(key), *v = NULL;
 
-    if (k == NULL || *k == '#')
+    if (k == NULL || *k == '#') /* # keys are hidden */
 	return;
 
     switch (heim_get_tid(value)) {
@@ -916,8 +948,15 @@ audit_trail_iterator(heim_object_t key, heim_object_t value, void *arg)
     case HEIM_TID_BOOL:
 	v = heim_bool_val(value) ? "true" : "false";
 	break;
+    case HEIM_TID_ARRAY:
+	if (kvb->iter)
+	    break; /* arrays cannot be nested */
+
+	kvb->iter = key;
+	heim_array_iterate_f(value, kvb, audit_trail_iterator_array);
+	kvb->iter = NULL;
+	break;
     default:
-	v = NULL;
 	break;
     }
 
@@ -938,7 +977,7 @@ void
 heim_audit_trail(heim_svc_req_desc r, heim_error_code ret, const char *retname)
 {
     const char *retval;
-    struct heim_audit_kv_buf kvb;
+    struct heim_audit_kv_buf kvb = {0};
     char retvalbuf[30]; /* Enough for UNKNOWN-%d */
 
 #define CASE(x)	case x : retval = #x; break

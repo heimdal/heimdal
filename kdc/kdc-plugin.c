@@ -80,7 +80,7 @@ struct generate_uc {
 static krb5_error_code KRB5_LIB_CALL
 generate(krb5_context context, const void *plug, void *plugctx, void *userctx)
 {
-    krb5plugin_kdc_ftable *ft = (krb5plugin_kdc_ftable *)plug;
+    const krb5plugin_kdc_ftable *ft = (const krb5plugin_kdc_ftable *)plug;
     struct generate_uc *uc = (struct generate_uc *)userctx;    
 
     if (ft->pac_generate == NULL)
@@ -145,7 +145,7 @@ struct verify_uc {
 static krb5_error_code KRB5_LIB_CALL
 verify(krb5_context context, const void *plug, void *plugctx, void *userctx)
 {
-    krb5plugin_kdc_ftable *ft = (krb5plugin_kdc_ftable *)plug;
+    const krb5plugin_kdc_ftable *ft = (const krb5plugin_kdc_ftable *)plug;
     struct verify_uc *uc = (struct verify_uc *)userctx;
     krb5_error_code ret;
 
@@ -187,7 +187,7 @@ _kdc_pac_verify(krb5_context context,
 static krb5_error_code KRB5_LIB_CALL
 check(krb5_context context, const void *plug, void *plugctx, void *userctx)
 {
-    krb5plugin_kdc_ftable *ft = (krb5plugin_kdc_ftable *)plug;
+    const krb5plugin_kdc_ftable *ft = (const krb5plugin_kdc_ftable *)plug;
 
     if (ft->client_access == NULL)
 	return KRB5_PLUGIN_NO_HANDLE;
@@ -213,7 +213,7 @@ _kdc_check_access(astgs_request_t r)
 static krb5_error_code KRB5_LIB_CALL
 referral_policy(krb5_context context, const void *plug, void *plugctx, void *userctx)
 {
-    krb5plugin_kdc_ftable *ft = (krb5plugin_kdc_ftable *)plug;
+    const krb5plugin_kdc_ftable *ft = (const krb5plugin_kdc_ftable *)plug;
 
     if (ft->referral_policy == NULL)
 	return KRB5_PLUGIN_NO_HANDLE;
@@ -234,7 +234,7 @@ _kdc_referral_policy(astgs_request_t r)
 static krb5_error_code KRB5_LIB_CALL
 finalize_reply(krb5_context context, const void *plug, void *plugctx, void *userctx)
 {
-    krb5plugin_kdc_ftable *ft = (krb5plugin_kdc_ftable *)plug;
+    const krb5plugin_kdc_ftable *ft = (const krb5plugin_kdc_ftable *)plug;
 
     if (ft->finalize_reply == NULL)
 	return KRB5_PLUGIN_NO_HANDLE;
@@ -258,7 +258,7 @@ _kdc_finalize_reply(astgs_request_t r)
 static krb5_error_code KRB5_LIB_CALL
 audit(krb5_context context, const void *plug, void *plugctx, void *userctx)
 {
-    krb5plugin_kdc_ftable *ft = (krb5plugin_kdc_ftable *)plug;
+    const krb5plugin_kdc_ftable *ft = (const krb5plugin_kdc_ftable *)plug;
 
     if (ft->audit == NULL)
 	return KRB5_PLUGIN_NO_HANDLE;

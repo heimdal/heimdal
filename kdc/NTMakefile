@@ -151,8 +151,7 @@ libkdc_la_SOURCES = 		\
 	csr_authorizer.c	\
 	process.c		\
 	windc.c			\
-	gss_preauth.c		\
-	rx.h
+	gss_preauth.c
 
 $(OBJ)\kdc-protos.h: $(libkdc_la_SOURCES)
 	$(PERL) ..\cf\make-proto.pl -q -P remove -o $@ $(libkdc_la_SOURCES) \

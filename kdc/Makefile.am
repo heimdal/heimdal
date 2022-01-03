@@ -130,8 +130,7 @@ libkdc_la_SOURCES = 		\
 	csr_authorizer.c	\
 	process.c		\
 	windc.c			\
-	gss_preauth.c		\
-	rx.h
+	gss_preauth.c
 
 KDC_PROTOS = $(srcdir)/kdc-protos.h $(srcdir)/kdc-private.h
 

@@ -58,7 +58,7 @@ array_dealloc(heim_object_t ptr)
 
 struct heim_type_data array_object = {
     HEIM_TID_ARRAY,
-    "dict-object",
+    "array-object",
     NULL,
     array_dealloc,
     NULL,

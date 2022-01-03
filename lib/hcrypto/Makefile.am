@@ -16,6 +16,7 @@ AM_CPPFLAGS += -I$(top_srcdir)/lib/hx509 \
 WFLAGS += $(WFLAGS_LITE) -Wno-error=unused-function
 # XXX: Make these not necessary:
 WFLAGS += -Wno-error=unused-result -Wno-error=deprecated-declarations
+WFLAGS += -Wno-unused-but-set-variable
 
 lib_LTLIBRARIES = libhcrypto.la
 check_LTLIBRARIES = libhctest.la

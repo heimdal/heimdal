@@ -2,6 +2,8 @@
 
 include $(top_srcdir)/Makefile.am.common
 
+WFLAGS += -Wno-error=enum-conversion
+
 YFLAGS = -d -t
 
 AM_CPPFLAGS += $(ROKEN_RENAME)

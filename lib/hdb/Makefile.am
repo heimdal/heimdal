@@ -2,6 +2,8 @@
 
 include $(top_srcdir)/Makefile.am.common
 
+WFLAGS += -Wno-error=enum-conversion
+
 AM_CPPFLAGS += -I../asn1 -I$(srcdir)/../asn1
 AM_CPPFLAGS += $(INCLUDE_openldap) -DHDB_DB_DIR=\"$(DIR_hdbdir)\"
 AM_CPPFLAGS += -I$(srcdir)/../krb5

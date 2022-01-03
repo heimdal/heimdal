@@ -2,6 +2,8 @@
 
 include $(top_srcdir)/Makefile.am.common
 
+WFLAGS += -Wno-error=enum-conversion
+
 AM_CPPFLAGS += $(INCLUDE_libintl) $(INCLUDE_openssl_crypto) -I$(srcdir)/../lib/krb5
 
 lib_LTLIBRARIES = simple_csr_authorizer.la  ipc_csr_authorizer.la \

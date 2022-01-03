@@ -2,6 +2,8 @@
 
 include $(top_srcdir)/Makefile.am.common
 
+WFLAGS += -Wno-error=enum-conversion
+
 AUTOMAKE_OPTIONS = subdir-objects
 
 AM_CPPFLAGS += \

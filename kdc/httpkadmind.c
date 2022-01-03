@@ -565,7 +565,7 @@ redirect_uri_appends(struct redirect_uri *redirect,
         redirect->len += len;
 }
 
-static int
+static enum MHD_Result
 make_redirect_uri_param_cb(void *d,
                            enum MHD_ValueKind kind,
                            const char *key,
@@ -881,7 +881,7 @@ check_service_name(kadmin_request_desc r, const char *name)
     return EACCES;
 }
 
-static int
+static enum MHD_Result
 param_cb(void *d,
          enum MHD_ValueKind kind,
          const char *key,
@@ -1874,7 +1874,7 @@ health(const char *method, kadmin_request_desc r)
 }
 
 /* Implements the entirety of this REST service */
-static int
+static enum MHD_Result
 route(void *cls,
       struct MHD_Connection *connection,
       const char *url,

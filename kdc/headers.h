@@ -104,7 +104,7 @@
 #include <heimntlm.h>
 #endif
 #include <kdc.h>
-#include <windc_plugin.h>
+#include <kdc-plugin.h>
 
 #include <heimbase.h>
 

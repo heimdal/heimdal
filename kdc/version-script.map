@@ -11,7 +11,7 @@ HEIMDAL_KDC_1.0 {
 		kdc_openlog;
 		kdc_check_flags;
 		kdc_validate_token;
-		krb5_kdc_windc_init;
+		krb5_kdc_plugin_init;
 		krb5_kdc_get_config;
 		krb5_kdc_pkinit_config;
 		krb5_kdc_set_dbinfo;

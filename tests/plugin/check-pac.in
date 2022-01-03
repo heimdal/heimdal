@@ -115,8 +115,8 @@ trap "kill ${kdcpid}; echo signal killing kdc; exit 1;" EXIT
 
 ec=0
 
-echo "Check that WINDC module was loaded "
-grep "windc init" messages.log >/dev/null || \
+echo "Check that KDC plugin module was loaded "
+grep "kdc plugin init" messages.log >/dev/null || \
 	{ ec=1 ; eval "${testfailed}"; }
 
 echo "Getting client initial tickets"; > messages.log

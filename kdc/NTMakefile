@@ -51,7 +51,7 @@ INCFILES=\
 	$(INCDIR)\kdc.h		\
 	$(INCDIR)\kdc-protos.h	\
 	$(INCDIR)\kdc-private.h	\
-	$(INCDIR)\krb5\windc_plugin.h
+	$(INCDIR)\krb5\kdc-plugin.h
 
 all:: $(INCFILES) $(LIBKDC) $(BINPROGRAMS) $(SBINPROGRAMS) $(LIBEXECPROGRAMS)
 
@@ -109,7 +109,7 @@ LIBKDC_OBJS=\
 	$(OBJ)\token_validator.obj	\
 	$(OBJ)\csr_authorizer.obj	\
 	$(OBJ)\process.obj		\
-	$(OBJ)\windc.obj		\
+	$(OBJ)\kdc-plugin.obj		\
 	$(OBJ)\gss_preauth.obj
 
 LIBKDC_LIBS=\
@@ -150,7 +150,7 @@ libkdc_la_SOURCES = 		\
 	token_validator.c	\
 	csr_authorizer.c	\
 	process.c		\
-	windc.c			\
+	kdc-plugin.c		\
 	gss_preauth.c
 
 $(OBJ)\kdc-protos.h: $(libkdc_la_SOURCES)

@@ -111,7 +111,7 @@ CLEANFILES =			\
 	vis.h			\
 	wind.h			\
 	wind_err.h		\
-	windc_plugin.h		\
+	kdc-plugin.h		\
 	xdbm.h
 
 DISTCLEANFILES = 	\

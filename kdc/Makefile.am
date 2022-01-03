@@ -129,7 +129,7 @@ libkdc_la_SOURCES = 		\
 	token_validator.c	\
 	csr_authorizer.c	\
 	process.c		\
-	windc.c			\
+	kdc-plugin.c		\
 	gss_preauth.c
 
 KDC_PROTOS = $(srcdir)/kdc-protos.h $(srcdir)/kdc-private.h
@@ -239,7 +239,7 @@ include_HEADERS = kdc.h $(srcdir)/kdc-protos.h
 noinst_HEADERS = $(srcdir)/kdc-private.h
 
 krb5dir = $(includedir)/krb5
-krb5_HEADERS = windc_plugin.h token_validator_plugin.h csr_authorizer_plugin.h
+krb5_HEADERS = kdc-plugin.h token_validator_plugin.h csr_authorizer_plugin.h
 
 build_HEADERZ = $(krb5_HEADERS) # XXX
 

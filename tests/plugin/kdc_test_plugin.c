@@ -3,18 +3,18 @@
 #include <hdb.h>
 #include <hx509.h>
 #include <kdc.h>
-#include <windc_plugin.h>
+#include <kdc-plugin.h>
 
 static krb5_error_code KRB5_CALLCONV
-windc_init(krb5_context context, void **ctx)
+init(krb5_context context, void **ctx)
 {
-    krb5_warnx(context, "windc init");
+    krb5_warnx(context, "kdc plugin init");
     *ctx = NULL;
     return 0;
 }
 
 static void KRB5_CALLCONV
-windc_fini(void *ctx)
+fini(void *ctx)
 {
 }
 
@@ -123,10 +123,10 @@ audit(void *ctx, astgs_request_t r)
     return 0;
 }
 
-static krb5plugin_windc_ftable windc = {
-    KRB5_WINDC_PLUGING_MINOR,
-    windc_init,
-    windc_fini,
+static krb5plugin_kdc_ftable kdc_plugin = {
+    KRB5_KDC_PLUGING_MINOR,
+    init,
+    fini,
     pac_generate,
     pac_verify,
     client_access,
@@ -135,18 +135,18 @@ static krb5plugin_windc_ftable windc = {
     audit
 };
 
-static const krb5plugin_windc_ftable *const windc_plugins[] = {
-    &windc
+static const krb5plugin_kdc_ftable *const kdc_plugins[] = {
+    &kdc_plugin
 };
 
 krb5_error_code KRB5_CALLCONV
-windc_plugin_load(krb5_context context,
-		       krb5_get_instance_func_t *get_instance,
-		       size_t *num_plugins,
-		       const krb5plugin_windc_ftable *const **plugins);
+kdc_plugin_load(krb5_context context,
+	        krb5_get_instance_func_t *get_instance,
+	        size_t *num_plugins,
+		const krb5plugin_kdc_ftable *const **plugins);
 
 static uintptr_t KRB5_CALLCONV
-windc_get_instance(const char *libname)
+kdc_plugin_get_instance(const char *libname)
 {
     if (strcmp(libname, "hdb") == 0)
 	return hdb_get_instance(libname);
@@ -157,14 +157,14 @@ windc_get_instance(const char *libname)
 }
 
 krb5_error_code KRB5_CALLCONV
-windc_plugin_load(krb5_context context,
-		  krb5_get_instance_func_t *get_instance,
-		  size_t *num_plugins,
-		  const krb5plugin_windc_ftable *const **plugins)
+kdc_plugin_load(krb5_context context,
+		krb5_get_instance_func_t *get_instance,
+		size_t *num_plugins,
+		const krb5plugin_kdc_ftable *const **plugins)
 {
-    *get_instance = windc_get_instance;
-    *num_plugins = sizeof(windc_plugins) / sizeof(windc_plugins[0]);
-    *plugins = windc_plugins;
+    *get_instance = kdc_plugin_get_instance;
+    *num_plugins = sizeof(kdc_plugins) / sizeof(kdc_plugins[0]);
+    *plugins = kdc_plugins;
 
     return 0;
 }

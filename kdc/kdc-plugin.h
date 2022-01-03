@@ -33,8 +33,8 @@
 
 /* $Id$ */
 
-#ifndef HEIMDAL_KDC_WINDC_PLUGIN_H
-#define HEIMDAL_KDC_WINDC_PLUGIN_H 1
+#ifndef HEIMDAL_KDC_KDC_PLUGIN_H
+#define HEIMDAL_KDC_KDC_PLUGIN_H 1
 
 #include <krb5.h>
 #include <kdc.h>
@@ -47,12 +47,12 @@ struct hdb_entry_ex;
  */
 
 typedef krb5_error_code
-(KRB5_CALLCONV *krb5plugin_windc_pac_generate)(void *, krb5_context,
-					       struct hdb_entry_ex *, /* client */
-					       struct hdb_entry_ex *, /* server */
-					       const krb5_keyblock *, /* pk_replykey */
-					       uint64_t,	      /* pac_attributes */
-					       krb5_pac *);
+(KRB5_CALLCONV *krb5plugin_kdc_pac_generate)(void *, krb5_context,
+					     struct hdb_entry_ex *, /* client */
+					     struct hdb_entry_ex *, /* server */
+					     const krb5_keyblock *, /* pk_replykey */
+					     uint64_t,	      /* pac_attributes */
+					     krb5_pac *);
 
 /*
  * Verify the PAC KDC signatures by fetching the appropriate TGS key
@@ -61,13 +61,13 @@ typedef krb5_error_code
  */
 
 typedef krb5_error_code
-(KRB5_CALLCONV *krb5plugin_windc_pac_verify)(void *, krb5_context,
-			       const krb5_principal, /* new ticket client */
-			       const krb5_principal, /* delegation proxy */
-			       struct hdb_entry_ex *,/* client */
-			       struct hdb_entry_ex *,/* server */
-			       struct hdb_entry_ex *,/* krbtgt */
-			       krb5_pac *);
+(KRB5_CALLCONV *krb5plugin_kdc_pac_verify)(void *, krb5_context,
+					   const krb5_principal, /* new ticket client */
+					   const krb5_principal, /* delegation proxy */
+					   struct hdb_entry_ex *,/* client */
+					   struct hdb_entry_ex *,/* server */
+					   struct hdb_entry_ex *,/* krbtgt */
+					   krb5_pac *);
 
 /*
  * Authorize the client principal's access to the Authentication Service (AS).
@@ -75,7 +75,7 @@ typedef krb5_error_code
  */
 
 typedef krb5_error_code
-(KRB5_CALLCONV *krb5plugin_windc_client_access)(void *, astgs_request_t);
+(KRB5_CALLCONV *krb5plugin_kdc_client_access)(void *, astgs_request_t);
 
 /*
  * A referral policy plugin can either rewrite the server principal
@@ -89,14 +89,14 @@ typedef krb5_error_code
  */
 
 typedef krb5_error_code
-(KRB5_CALLCONV *krb5plugin_windc_referral_policy)(void *, astgs_request_t r);
+(KRB5_CALLCONV *krb5plugin_kdc_referral_policy)(void *, astgs_request_t);
 
 /*
  * Update the AS or TGS reply immediately prior to encoding.
  */
 
 typedef krb5_error_code
-(KRB5_CALLCONV *krb5plugin_windc_finalize_reply)(void *, astgs_request_t r);
+(KRB5_CALLCONV *krb5plugin_kdc_finalize_reply)(void *, astgs_request_t);
 
 /*
  * Audit an AS or TGS request. This function is called after encoding the
@@ -107,21 +107,21 @@ typedef krb5_error_code
  */
 
 typedef krb5_error_code
-(KRB5_CALLCONV *krb5plugin_windc_audit)(void *, astgs_request_t r);
+(KRB5_CALLCONV *krb5plugin_kdc_audit)(void *, astgs_request_t);
 
-#define KRB5_WINDC_PLUGIN_MINOR			8
-#define KRB5_WINDC_PLUGING_MINOR KRB5_WINDC_PLUGIN_MINOR
+#define KRB5_KDC_PLUGIN_MINOR		8
+#define KRB5_KDC_PLUGING_MINOR		KRB5_KDC_PLUGIN_MINOR
 
-typedef struct krb5plugin_windc_ftable {
+typedef struct krb5plugin_kdc_ftable {
     int			minor_version;
     krb5_error_code	(KRB5_CALLCONV *init)(krb5_context, void **);
     void		(KRB5_CALLCONV *fini)(void *);
-    krb5plugin_windc_pac_generate	pac_generate;
-    krb5plugin_windc_pac_verify		pac_verify;
-    krb5plugin_windc_client_access	client_access;
-    krb5plugin_windc_referral_policy	referral_policy;
-    krb5plugin_windc_finalize_reply	finalize_reply;
-    krb5plugin_windc_audit		audit;
-} krb5plugin_windc_ftable;
+    krb5plugin_kdc_pac_generate		pac_generate;
+    krb5plugin_kdc_pac_verify		pac_verify;
+    krb5plugin_kdc_client_access	client_access;
+    krb5plugin_kdc_referral_policy	referral_policy;
+    krb5plugin_kdc_finalize_reply	finalize_reply;
+    krb5plugin_kdc_audit		audit;
+} krb5plugin_kdc_ftable;
 
-#endif /* HEIMDAL_KDC_WINDC_PLUGIN_H */
+#endif /* HEIMDAL_KDC_KDC_PLUGIN_H */

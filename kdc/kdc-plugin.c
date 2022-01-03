@@ -36,21 +36,21 @@
 static int have_plugin = 0;
 
 /*
- * Pick the first WINDC module that we find.
+ * Pick the first KDC plugin module that we find.
  */
 
-static const char *windc_plugin_deps[] = {
+static const char *kdc_plugin_deps[] = {
     "kdc",
     "krb5",
     "hdb",
     NULL
 };
 
-static struct heim_plugin_data windc_plugin_data = {
+static struct heim_plugin_data kdc_plugin_data = {
     "krb5",
-    "windc",
-    KRB5_WINDC_PLUGIN_MINOR,
-    windc_plugin_deps,
+    "kdc",
+    KRB5_KDC_PLUGIN_MINOR,
+    kdc_plugin_deps,
     kdc_get_instance
 };
 
@@ -62,9 +62,9 @@ load(krb5_context context, const void *plug, void *plugctx, void *userctx)
 }
 
 krb5_error_code
-krb5_kdc_windc_init(krb5_context context)
+krb5_kdc_plugin_init(krb5_context context)
 {
-    (void)_krb5_plugin_run_f(context, &windc_plugin_data, 0, NULL, load);
+    (void)_krb5_plugin_run_f(context, &kdc_plugin_data, 0, NULL, load);
 
     return 0;
 }
@@ -80,7 +80,7 @@ struct generate_uc {
 static krb5_error_code KRB5_LIB_CALL
 generate(krb5_context context, const void *plug, void *plugctx, void *userctx)
 {
-    krb5plugin_windc_ftable *ft = (krb5plugin_windc_ftable *)plug;
+    krb5plugin_kdc_ftable *ft = (krb5plugin_kdc_ftable *)plug;
     struct generate_uc *uc = (struct generate_uc *)userctx;    
 
     if (ft->pac_generate == NULL)
@@ -120,7 +120,7 @@ _kdc_pac_generate(krb5_context context,
 	uc.pac = pac;
 	uc.pac_attributes = pac_attributes;
 
-	ret = _krb5_plugin_run_f(context, &windc_plugin_data,
+	ret = _krb5_plugin_run_f(context, &kdc_plugin_data,
 				 0, &uc, generate);
 	if (ret != KRB5_PLUGIN_NO_HANDLE)
 	    return ret;
@@ -145,7 +145,7 @@ struct verify_uc {
 static krb5_error_code KRB5_LIB_CALL
 verify(krb5_context context, const void *plug, void *plugctx, void *userctx)
 {
-    krb5plugin_windc_ftable *ft = (krb5plugin_windc_ftable *)plug;
+    krb5plugin_kdc_ftable *ft = (krb5plugin_kdc_ftable *)plug;
     struct verify_uc *uc = (struct verify_uc *)userctx;
     krb5_error_code ret;
 
@@ -180,14 +180,14 @@ _kdc_pac_verify(krb5_context context,
     uc.krbtgt = krbtgt;
     uc.pac = pac;
 
-    return _krb5_plugin_run_f(context, &windc_plugin_data,
+    return _krb5_plugin_run_f(context, &kdc_plugin_data,
 			     0, &uc, verify);
 }
 
 static krb5_error_code KRB5_LIB_CALL
 check(krb5_context context, const void *plug, void *plugctx, void *userctx)
 {
-    krb5plugin_windc_ftable *ft = (krb5plugin_windc_ftable *)plug;
+    krb5plugin_kdc_ftable *ft = (krb5plugin_kdc_ftable *)plug;
 
     if (ft->client_access == NULL)
 	return KRB5_PLUGIN_NO_HANDLE;
@@ -200,7 +200,7 @@ _kdc_check_access(astgs_request_t r)
     krb5_error_code ret = KRB5_PLUGIN_NO_HANDLE;
 
     if (have_plugin) {
-        ret = _krb5_plugin_run_f(r->context, &windc_plugin_data,
+        ret = _krb5_plugin_run_f(r->context, &kdc_plugin_data,
                                  0, r, check);
     }
 
@@ -213,7 +213,7 @@ _kdc_check_access(astgs_request_t r)
 static krb5_error_code KRB5_LIB_CALL
 referral_policy(krb5_context context, const void *plug, void *plugctx, void *userctx)
 {
-    krb5plugin_windc_ftable *ft = (krb5plugin_windc_ftable *)plug;
+    krb5plugin_kdc_ftable *ft = (krb5plugin_kdc_ftable *)plug;
 
     if (ft->referral_policy == NULL)
 	return KRB5_PLUGIN_NO_HANDLE;
@@ -226,7 +226,7 @@ _kdc_referral_policy(astgs_request_t r)
     krb5_error_code ret = KRB5_PLUGIN_NO_HANDLE;
 
     if (have_plugin)
-        ret = _krb5_plugin_run_f(r->context, &windc_plugin_data, 0, r, referral_policy);
+        ret = _krb5_plugin_run_f(r->context, &kdc_plugin_data, 0, r, referral_policy);
 
     return ret;
 }
@@ -234,7 +234,7 @@ _kdc_referral_policy(astgs_request_t r)
 static krb5_error_code KRB5_LIB_CALL
 finalize_reply(krb5_context context, const void *plug, void *plugctx, void *userctx)
 {
-    krb5plugin_windc_ftable *ft = (krb5plugin_windc_ftable *)plug;
+    krb5plugin_kdc_ftable *ft = (krb5plugin_kdc_ftable *)plug;
 
     if (ft->finalize_reply == NULL)
 	return KRB5_PLUGIN_NO_HANDLE;
@@ -247,7 +247,7 @@ _kdc_finalize_reply(astgs_request_t r)
     krb5_error_code ret = KRB5_PLUGIN_NO_HANDLE;
 
     if (have_plugin)
-        ret = _krb5_plugin_run_f(r->context, &windc_plugin_data, 0, r, finalize_reply);
+        ret = _krb5_plugin_run_f(r->context, &kdc_plugin_data, 0, r, finalize_reply);
 
     if (ret == KRB5_PLUGIN_NO_HANDLE)
         ret = 0;
@@ -258,7 +258,7 @@ _kdc_finalize_reply(astgs_request_t r)
 static krb5_error_code KRB5_LIB_CALL
 audit(krb5_context context, const void *plug, void *plugctx, void *userctx)
 {
-    krb5plugin_windc_ftable *ft = (krb5plugin_windc_ftable *)plug;
+    krb5plugin_kdc_ftable *ft = (krb5plugin_kdc_ftable *)plug;
 
     if (ft->audit == NULL)
 	return KRB5_PLUGIN_NO_HANDLE;
@@ -266,12 +266,12 @@ audit(krb5_context context, const void *plug, void *plugctx, void *userctx)
 }
 
 krb5_error_code
-_kdc_windc_audit(astgs_request_t r)
+_kdc_plugin_audit(astgs_request_t r)
 {
     krb5_error_code ret = KRB5_PLUGIN_NO_HANDLE;
 
     if (have_plugin)
-        ret = _krb5_plugin_run_f(r->context, &windc_plugin_data, 0, r, audit);
+        ret = _krb5_plugin_run_f(r->context, &kdc_plugin_data, 0, r, audit);
 
     if (ret == KRB5_PLUGIN_NO_HANDLE)
         ret = 0;

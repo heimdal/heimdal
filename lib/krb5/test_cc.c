@@ -1117,9 +1117,6 @@ main(int argc, char **argv)
 
     test_move(context, krb5_cc_type_file);
     test_move(context, krb5_cc_type_memory);
-#ifdef HAVE_KCM
-    test_move(context, krb5_cc_type_kcm);
-#endif
     test_move(context, krb5_cc_type_scc);
 #if 0
     test_move(context, krb5_cc_type_dcc);

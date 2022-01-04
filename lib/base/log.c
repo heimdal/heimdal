@@ -876,7 +876,7 @@ heim_audit_addkv_number(heim_svc_req_desc r, const char *k, int64_t v)
 	return;
 
     heim_log(r->hcontext, r->logf, 7, "heim_audit_addkv_number(): "
-	     "adding kv pair %s=%ld", k, v);
+	     "adding kv pair %s=%lld", k, (long long)v);
 
     value = heim_number_create(v);
     addkv(r, key, value);
@@ -894,7 +894,7 @@ heim_audit_setkv_number(heim_svc_req_desc r, const char *k, int64_t v)
 	return;
 
     heim_log(r->hcontext, r->logf, 7, "heim_audit_setkv_number(): "
-	     "setting kv pair %s=%ld", k, v);
+	     "setting kv pair %s=%lld", k, (long long)v);
 
     value = heim_number_create(v);
     heim_dict_set_value(r->kv, key, value);

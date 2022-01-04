@@ -2253,7 +2253,8 @@ _kdc_as_rep(astgs_request_t r)
 		    Key *ckey = NULL;
 		    krb5_boolean default_salt;
 
-		    if (!_kdc_audit_getkv((kdc_request_t)r, HDB_REQUEST_KV_AUTH_EVENT))
+		    if (ret != KRB5_KDC_ERR_MORE_PREAUTH_DATA_REQUIRED &&
+			!_kdc_audit_getkv((kdc_request_t)r, HDB_REQUEST_KV_AUTH_EVENT))
 			_kdc_audit_setkv_number((kdc_request_t)r, HDB_REQUEST_KV_AUTH_EVENT,
 						HDB_AUTH_EVENT_OTHER_PREAUTH_FAILED);
 

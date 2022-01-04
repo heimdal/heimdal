@@ -29,6 +29,8 @@ HEIMDAL_BASE_1.0 {
 		heim_array_iterate_reverse_f;
 		heim_array_set_value;
 		heim_audit_addkv;
+		heim_audit_addkv_number;
+		heim_audit_addkv_object;
 		heim_audit_addkv_timediff;
 		heim_audit_setkv_bool;
 		heim_audit_setkv_number;

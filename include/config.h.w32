@@ -122,6 +122,24 @@ static const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 #endif
 #endif
 
+
+#ifdef BUILD_KDC_LIB
+#ifndef KDC_LIB
+#ifdef _WIN32
+#define KDC_LIB_FUNCTION
+#define KDC_LIB_NORETURN_FUNCTION __declspec(noreturn)
+#define KDC_LIB_CALL     __stdcall
+#define KDC_LIB_VARIABLE
+#else
+#define KDC_LIB_FUNCTION
+#define KDC_LIB_NORETURN_FUNCTION
+#define KDC_LIB_CALL
+#define KDC_LIB_VARIABLE
+#endif
+#endif
+#endif
+
+
 /* Feature macros */
 
 @FEATURE_DEFS@

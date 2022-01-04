@@ -1926,7 +1926,7 @@ load_mappings(krb5_context context, const char *fn)
  *
  */
 
-krb5_error_code
+KDC_LIB_FUNCTION krb5_error_code KDC_LIB_CALL
 krb5_kdc_pk_initialize(krb5_context context,
 		       krb5_kdc_configuration *config,
 		       const char *user_id,

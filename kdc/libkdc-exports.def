@@ -6,6 +6,7 @@ EXPORTS
 	kdc_log_msg
 	kdc_log_msg_va
 	kdc_openlog
+	kdc_check_flags
 	kdc_validate_token
 	krb5_kdc_plugin_init
 	krb5_kdc_get_config
@@ -22,11 +23,16 @@ EXPORTS
 	krb5_kdc_request_delete_attribute
 	_kdc_audit_addkv
 	_kdc_audit_addkv_timediff
+	_kdc_audit_addaddrs
+	_kdc_audit_addreason
 	_kdc_audit_getkv
 	_kdc_audit_setkv_bool
 	_kdc_audit_setkv_number
 	_kdc_audit_setkv_object
-	_kdc_audit_addreason
+	_kdc_audit_trail
 	_kdc_audit_vaddkv
 	_kdc_audit_vaddreason
-	_kdc_audit_trail
+
+	; needed for digest-service
+	_kdc_db_fetch
+	_kdc_free_ent

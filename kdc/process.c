@@ -42,14 +42,14 @@
 #undef  __attribute__
 #define __attribute__(x)
 
-void
+KDC_LIB_FUNCTION void KDC_LIB_CALL
 _kdc_audit_vaddreason(kdc_request_t r, const char *fmt, va_list ap)
 	__attribute__ ((__format__ (__printf__, 2, 0)))
 {
     heim_audit_vaddreason((heim_svc_req_desc)r, fmt, ap);
 }
 
-void
+KDC_LIB_FUNCTION void KDC_LIB_CALL
 _kdc_audit_addreason(kdc_request_t r, const char *fmt, ...)
 	__attribute__ ((__format__ (__printf__, 2, 3)))
 {
@@ -66,7 +66,7 @@ _kdc_audit_addreason(kdc_request_t r, const char *fmt, ...)
  * not a kv-pair.
  */
 
-void
+KDC_LIB_FUNCTION void KDC_LIB_CALL
 _kdc_audit_vaddkv(kdc_request_t r, int flags, const char *k,
 		  const char *fmt, va_list ap)
 	__attribute__ ((__format__ (__printf__, 4, 0)))
@@ -74,7 +74,7 @@ _kdc_audit_vaddkv(kdc_request_t r, int flags, const char *k,
     heim_audit_vaddkv((heim_svc_req_desc)r, flags, k, fmt, ap);
 }
 
-void
+KDC_LIB_FUNCTION void KDC_LIB_CALL
 _kdc_audit_addkv(kdc_request_t r, int flags, const char *k,
 		 const char *fmt, ...)
 	__attribute__ ((__format__ (__printf__, 4, 5)))
@@ -86,7 +86,7 @@ _kdc_audit_addkv(kdc_request_t r, int flags, const char *k,
     va_end(ap);
 }
 
-void
+KDC_LIB_FUNCTION void KDC_LIB_CALL
 _kdc_audit_addkv_timediff(kdc_request_t r, const char *k,
 			  const struct timeval *start,
 			  const struct timeval *end)
@@ -94,25 +94,25 @@ _kdc_audit_addkv_timediff(kdc_request_t r, const char *k,
     heim_audit_addkv_timediff((heim_svc_req_desc)r,k, start, end);
 }
 
-void
+KDC_LIB_FUNCTION void KDC_LIB_CALL
 _kdc_audit_setkv_bool(kdc_request_t r, const char *k, krb5_boolean v)
 {
     heim_audit_setkv_bool((heim_svc_req_desc)r, k, (int)v);
 }
 
-void
+KDC_LIB_FUNCTION void KDC_LIB_CALL
 _kdc_audit_setkv_number(kdc_request_t r, const char *k, int64_t v)
 {
     heim_audit_setkv_number((heim_svc_req_desc)r, k, v);
 }
 
-void
+KDC_LIB_FUNCTION void KDC_LIB_CALL
 _kdc_audit_setkv_object(kdc_request_t r, const char *k, heim_object_t obj)
 {
     heim_audit_setkv_object((heim_svc_req_desc)r, k, obj);
 }
 
-heim_object_t
+KDC_LIB_FUNCTION heim_object_t KDC_LIB_CALL
 _kdc_audit_getkv(kdc_request_t r, const char *k)
 {
     return heim_audit_getkv((heim_svc_req_desc)r, k);
@@ -122,7 +122,7 @@ _kdc_audit_getkv(kdc_request_t r, const char *k)
  * Add up to 3 key value pairs to record HostAddresses from request body or
  * PA-TGS ticket or whatever.
  */
-void
+KDC_LIB_FUNCTION void KDC_LIB_CALL
 _kdc_audit_addaddrs(kdc_request_t r, HostAddresses *a, const char *key)
 {
     size_t i;
@@ -142,7 +142,7 @@ _kdc_audit_addaddrs(kdc_request_t r, HostAddresses *a, const char *key)
     }
 }
 
-void
+KDC_LIB_FUNCTION void KDC_LIB_CALL
 _kdc_audit_trail(kdc_request_t r, krb5_error_code ret)
 {
     const char *retname = NULL;
@@ -195,7 +195,7 @@ _kdc_audit_trail(kdc_request_t r, krb5_error_code ret)
     heim_audit_trail((heim_svc_req_desc)r, ret, retname);
 }
 
-void
+KDC_LIB_FUNCTION void KDC_LIB_CALL
 krb5_kdc_update_time(struct timeval *tv)
 {
     if (tv == NULL)
@@ -406,7 +406,7 @@ process_request(krb5_context context,
  * sending a reply in `reply'.
  */
 
-int
+KDC_LIB_FUNCTION int KDC_LIB_CALL
 krb5_kdc_process_request(krb5_context context,
 			 krb5_kdc_configuration *config,
 			 unsigned char *buf,
@@ -428,7 +428,7 @@ krb5_kdc_process_request(krb5_context context,
  * This only processes krb5 requests
  */
 
-int
+KDC_LIB_FUNCTION int KDC_LIB_CALL
 krb5_kdc_process_krb5_request(krb5_context context,
 			      krb5_kdc_configuration *config,
 			      unsigned char *buf,
@@ -447,7 +447,7 @@ krb5_kdc_process_krb5_request(krb5_context context,
  *
  */
 
-int
+KDC_LIB_FUNCTION int KDC_LIB_CALL
 krb5_kdc_save_request(krb5_context context,
 		      const char *fn,
 		      const unsigned char *buf,
@@ -511,25 +511,25 @@ out:
     return 0;
 }
 
-krb5_error_code
+KDC_LIB_FUNCTION krb5_error_code KDC_LIB_CALL
 krb5_kdc_request_set_attribute(kdc_request_t r, heim_object_t key, heim_object_t value)
 {
     return heim_dict_set_value(r->attributes, key, value);
 }
 
-heim_object_t
+KDC_LIB_FUNCTION heim_object_t KDC_LIB_CALL
 krb5_kdc_request_get_attribute(kdc_request_t r, heim_object_t key)
 {
     return heim_dict_get_value(r->attributes, key);
 }
 
-heim_object_t
+KDC_LIB_FUNCTION heim_object_t KDC_LIB_CALL
 krb5_kdc_request_copy_attribute(kdc_request_t r, heim_object_t key)
 {
     return heim_dict_copy_value(r->attributes, key);
 }
 
-void
+KDC_LIB_FUNCTION void KDC_LIB_CALL
 krb5_kdc_request_delete_attribute(kdc_request_t r, heim_object_t key)
 {
     heim_dict_delete_key(r->attributes, key);

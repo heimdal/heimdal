@@ -33,7 +33,7 @@ RELDIR=kdc
 
 !include ../windows/NTMakefile.w32 
 
-intcflags=-I$(OBJ) -I$(SRC)\lib\gssapi -I$(OBJDIR)\lib\gssapi -I$(OBJDIR)\lib\gss_preauth
+intcflags=-I$(OBJ) -I$(SRC)\lib\gssapi -I$(OBJDIR)\lib\gssapi -I$(OBJDIR)\lib\gss_preauth -DBUILD_KDC_LIB
 
 BINPROGRAMS=$(BINDIR)\string2key.exe
 

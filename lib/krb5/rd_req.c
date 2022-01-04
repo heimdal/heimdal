@@ -1072,8 +1072,12 @@ krb5_rd_req_ctx(krb5_context context,
 
 		ret2 = _krb5_pac_get_canon_principal(context, pac, &canon_name);
 		if (ret2 == 0) {
-		    krb5_free_principal(context, o->ticket->client);
-		    o->ticket->client = canon_name;
+                    free_Realm(&o->ticket->client->realm);
+                    free_PrincipalName(&o->ticket->client->name);
+                    ret = copy_Realm(&canon_name->realm, &o->ticket->client->realm);
+                    if (ret == 0)
+                        ret = copy_PrincipalName(&canon_name->name, &o->ticket->client->name);
+                    krb5_free_principal(context, canon_name);
 		} else if (ret2 != ENOENT)
 		    ret = ret2;
 	    }

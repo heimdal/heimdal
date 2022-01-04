@@ -169,7 +169,7 @@ endif
 $(libkdc_la_OBJECTS): $(srcdir)/version-script.map
 
 $(srcdir)/kdc-protos.h: $(libkdc_la_SOURCES)
-	cd $(srcdir) && perl ../cf/make-proto.pl -q -P comment -o kdc-protos.h $(libkdc_la_SOURCES) || rm -f kdc-protos.h
+	cd $(srcdir) && perl ../cf/make-proto.pl -E KDC_LIB -q -P comment -o kdc-protos.h $(libkdc_la_SOURCES) || rm -f kdc-protos.h
 
 $(srcdir)/kdc-private.h: $(libkdc_la_SOURCES)
 	cd $(srcdir) && perl ../cf/make-proto.pl -q -P comment -p kdc-private.h $(libkdc_la_SOURCES) || rm -f kdc-private.h

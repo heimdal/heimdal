@@ -91,16 +91,11 @@ enum hdb_lockop{ HDB_RLOCK, HDB_WLOCK };
 #define HDB_AUTH_EVENT_CLIENT_UNKNOWN	        2   /* client unknown */
 #define HDB_AUTH_EVENT_CLIENT_LOCKED_OUT	3   /* client locked out */
 #define HDB_AUTH_EVENT_CLIENT_TIME_SKEW		4   /* client time skew */
-#define HDB_AUTH_EVENT_LTK_PREAUTH_FAILED	5   /* long term key preauth failed */
-#define HDB_AUTH_EVENT_LTK_PREAUTH_SUCCEEDED	6   /* long term key preauth succeeded */
-#define HDB_AUTH_EVENT_PKINIT_SUCCEEDED	        7   /* PKINIT preauth succeeded */
-#define HDB_AUTH_EVENT_PKINIT_NOT_AUTHORIZED	8   /* PKINIT cert not authorized */
-#define HDB_AUTH_EVENT_PKINIT_FAILED	        9   /* PKINIT preauth succeeded */
-#define HDB_AUTH_EVENT_GSS_PA_SUCCEEDED		10  /* GSS preauth succeeded */
-#define HDB_AUTH_EVENT_GSS_PA_NOT_AUTHORIZED	11  /* GSS preauth mapping failed */
-#define HDB_AUTH_EVENT_GSS_PA_FAILED		12  /* GSS preauth failed */
-#define HDB_AUTH_EVENT_OTHER_PREAUTH_FAILED   	13  /* unknown preauth failed */
-#define HDB_AUTH_EVENT_OTHER_PREAUTH_SUCCEEDED	14  /* unknown preauth succeeded */
+#define HDB_AUTH_EVENT_WRONG_LONG_TERM_KEY	5   /* PA failed to validate long term key */
+#define HDB_AUTH_EVENT_VALIDATED_LONG_TERM_KEY	6   /* PA validated long term key */
+#define HDB_AUTH_EVENT_CLIENT_NAME_UNAUTHORIZED	7   /* couldn't map GSS/PKINIT name to principal */
+#define HDB_AUTH_EVENT_PREAUTH_FAILED		8   /* generic PA failure */
+#define HDB_AUTH_EVENT_PREAUTH_SUCCEEDED	9   /* generic (non-long term key) PA success */
 
 /*
  * Audit keys to be queried using heim_audit_getkv(). There are other keys

@@ -717,7 +717,7 @@ $(OBJ)\test_oid.exe: $(OBJ)\test_oid.obj $(LIBGSSAPI) $(LIBROKEN)
 	$(EXECONLINK)
 	$(EXEPREP_NODIST)
 
-$(OBJ)\test_names.exe: $(OBJ)\test_names.obj $(LIBGSSAPI) $(LIBROKEN) $(LIBVERS)
+$(OBJ)\test_names.exe: $(OBJ)\test_names.obj $(LIBGSSAPI) $(LIBHEIMDAL) $(LIBROKEN) $(LIBVERS)
 	$(EXECONLINK)
 	$(EXEPREP_NODIST)
 

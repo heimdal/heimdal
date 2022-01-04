@@ -39,7 +39,7 @@ prep::
 
 all:: prep
 
-!include "NTMakefile.sdk"
+!include <Win32.Mak>
 
 !ifdef NODEBUG
 BUILD=rel

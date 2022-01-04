@@ -99,10 +99,9 @@
       <Merge Id='Heimdal.Policy.32' Language='0'
              SourceFile='$(var.InstDir32)\Heimdal.Policy.msm' />
 
-      <?if "$(var.RuntimeModule32)" != "" ?>
-        <Merge Id='Runtime.32' Language='0'
-               SourceFile='$(var.RuntimeModule32)' />
-      <?endif?>
+      <Merge Id='Runtime.32' Language='0'
+             SourceFile='$(var.RuntimeModule32)' />
+
     </DirectoryRef>
     <?endif?>
 
@@ -128,10 +127,9 @@
       <Merge Id='Heimdal.Policy.64' Language='0'
              SourceFile='$(var.InstDir64)\Heimdal.Policy.msm' />
 
-      <?if "$(var.RuntimeModule64)" != "" ?>
-        <Merge Id='Runtime.64' Language='0'
-               SourceFile='$(var.RuntimeModule64)' />
-      <?endif?>
+      <Merge Id='Runtime.64' Language='0'
+             SourceFile='$(var.RuntimeModule64)' />
+
     </DirectoryRef>
     <?endif?>
 
@@ -372,12 +370,12 @@
       <MergeRef Id='Heimdal.Assemblies.64' />
       <MergeRef Id='Heimdal.GSS.64' />
       <MergeRef Id='Heimdal.Policy.64' />
-      <?if "$(var.RuntimeModule64)" != "" ?><MergeRef Id='Runtime.64' /><?endif?>
+      <MergeRef Id='Runtime.64' />
       <?else?>
       <MergeRef Id='Heimdal.Assemblies.32' />
       <MergeRef Id='Heimdal.GSS.32' />
       <MergeRef Id='Heimdal.Policy.32' />
-      <?if "$(var.RuntimeModule32)" != "" ?><MergeRef Id='Runtime.32' /><?endif?>
+      <MergeRef Id='Runtime.32' />
       <?endif?>
 
       <?ifdef Target32?>
@@ -395,7 +393,7 @@
         <MergeRef Id='Heimdal.Assemblies.32' />
 	<MergeRef Id='Heimdal.GSS.32' />
         <MergeRef Id='Heimdal.Policy.32' />
-        <?if "$(var.RuntimeModule32)" != "" ?><MergeRef Id='Runtime.32' /><?endif?>
+        <MergeRef Id='Runtime.32' />
       </Feature>
       <?endif?>
       <?endif?>

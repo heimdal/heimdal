@@ -38,8 +38,6 @@
 
 #include "roken.h"
 
-#ifndef HAVE_STRTOLL
-
 /* #include <sys/cdefs.h> */
 
 #include <limits.h>
@@ -152,4 +150,3 @@ noconv:
 	*endptr = (char *)(any ? s - 1 : nptr);
     return ret;
 }
-#endif /* !HAVE_STRTOLL */

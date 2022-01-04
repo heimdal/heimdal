@@ -40,6 +40,7 @@
 #include <assert.h>
 #include <stdarg.h>
 #include <vis.h>
+#include <base64.h>
 
 struct heim_log_facility_internal {
     int min;
@@ -976,6 +977,7 @@ audit_trail_iterator(heim_object_t key, heim_object_t value, void *arg)
     struct heim_audit_kv_buf *kvb = arg;
     char num[32];
     const char *k = heim_string_get_utf8(key), *v = NULL;
+    char *b64 = NULL;
 
     if (k == NULL || *k == '#') /* # keys are hidden */
 	return;
@@ -1002,6 +1004,12 @@ audit_trail_iterator(heim_object_t key, heim_object_t value, void *arg)
 	heim_array_iterate_f(value, kvb, audit_trail_iterator_array);
 	kvb->iter = NULL;
 	break;
+    case HEIM_TID_DATA: {
+	const heim_octet_string *data = heim_data_get_data(value);
+	if (rk_base64_encode(data->data, data->length, &b64) >= 0)
+	    v = b64;
+	break;
+    }
     default:
 	break;
     }
@@ -1017,6 +1025,8 @@ audit_trail_iterator(heim_object_t key, heim_object_t value, void *arg)
 	kvb->buf[kvb->pos++] = '=';
     for (; *v && kvb->pos < sizeof(kvb->buf) - 1; kvb->pos++)
 	kvb->buf[kvb->pos] = *v++;
+
+    free(b64);
 }
 
 void

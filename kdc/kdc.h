@@ -158,11 +158,11 @@ typedef struct krb5_kdc_configuration {
     krb5_keyblock reply_key;					\
 								\
     krb5_pac pac;						\
-    uint64_t pac_attributes;
+    uint64_t pac_attributes
 
 #ifndef __KDC_LOCL_H__
 struct astgs_request_desc {
-    ASTGS_REQUEST_DESC_COMMON_ELEMENTS
+    ASTGS_REQUEST_DESC_COMMON_ELEMENTS;
 };
 #endif
 

@@ -101,9 +101,21 @@ _kdc_audit_setkv_bool(kdc_request_t r, const char *k, krb5_boolean v)
 }
 
 KDC_LIB_FUNCTION void KDC_LIB_CALL
+_kdc_audit_addkv_number(kdc_request_t r, const char *k, int64_t v)
+{
+    heim_audit_addkv_number((heim_svc_req_desc)r, k, v);
+}
+
+KDC_LIB_FUNCTION void KDC_LIB_CALL
 _kdc_audit_setkv_number(kdc_request_t r, const char *k, int64_t v)
 {
     heim_audit_setkv_number((heim_svc_req_desc)r, k, v);
+}
+
+KDC_LIB_FUNCTION void KDC_LIB_CALL
+_kdc_audit_addkv_object(kdc_request_t r, const char *k, heim_object_t obj)
+{
+    heim_audit_addkv_object((heim_svc_req_desc)r, k, obj);
 }
 
 KDC_LIB_FUNCTION void KDC_LIB_CALL

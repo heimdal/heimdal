@@ -112,6 +112,8 @@ altsecid_gss_preauth_authorizer_la_LDFLAGS = -module \
 					     $(LIB_openldap)
 endif
 
+libkdc_la_CPPFLAGS = -DBUILD_KDC_LIB $(AM_CPPFLAGS)
+
 libkdc_la_SOURCES = 		\
 	default_config.c 	\
 	ca.c			\

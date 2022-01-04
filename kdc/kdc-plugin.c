@@ -61,7 +61,7 @@ load(krb5_context context, const void *plug, void *plugctx, void *userctx)
     return KRB5_PLUGIN_NO_HANDLE;
 }
 
-krb5_error_code
+KDC_LIB_FUNCTION krb5_error_code KDC_LIB_CALL
 krb5_kdc_plugin_init(krb5_context context)
 {
     (void)_krb5_plugin_run_f(context, &kdc_plugin_data, 0, NULL, load);
@@ -279,7 +279,7 @@ _kdc_plugin_audit(astgs_request_t r)
     return ret;
 }
 
-uintptr_t KRB5_CALLCONV
+KDC_LIB_FUNCTION uintptr_t KDC_LIB_CALL
 kdc_get_instance(const char *libname)
 {
     static const char *instance = "libkdc";

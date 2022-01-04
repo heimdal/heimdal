@@ -1612,7 +1612,7 @@ _log_astgs_req(astgs_request_t r, krb5_enctype setype)
  * and error code otherwise.
  */
 
-krb5_error_code
+KDC_LIB_FUNCTION krb5_error_code KDC_LIB_CALL
 kdc_check_flags(astgs_request_t r,
                 krb5_boolean is_as_req,
                 hdb_entry_ex *client_ex,

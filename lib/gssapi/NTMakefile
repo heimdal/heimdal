@@ -77,6 +77,7 @@ krb5src = \
 	krb5/inquire_mechs_for_name.c \
 	krb5/inquire_names_for_mech.c \
 	krb5/inquire_sec_context_by_oid.c \
+        krb5/name_attrs.c \
         krb5/pname_to_uid.c \
 	krb5/process_context_token.c \
 	krb5/prf.c \
@@ -368,6 +369,7 @@ libgssapi_OBJs = \
 	$(OBJ)\krb5/inquire_mechs_for_name.obj \
 	$(OBJ)\krb5/inquire_names_for_mech.obj \
 	$(OBJ)\krb5/inquire_sec_context_by_oid.obj \
+        $(OBJ)\krb5/name_attrs.obj \
         $(OBJ)\krb5/pname_to_uid.obj \
 	$(OBJ)\krb5/process_context_token.obj \
 	$(OBJ)\krb5/prf.obj \

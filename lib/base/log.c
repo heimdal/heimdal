@@ -867,7 +867,7 @@ heim_audit_setkv_bool(heim_svc_req_desc r, const char *k, int v)
 }
 
 void
-heim_audit_addkv_number(heim_svc_req_desc r, const char *k, intptr_t v)
+heim_audit_addkv_number(heim_svc_req_desc r, const char *k, int64_t v)
 {
     heim_string_t key = heim_string_create(k);
     heim_number_t value;
@@ -885,7 +885,7 @@ heim_audit_addkv_number(heim_svc_req_desc r, const char *k, intptr_t v)
 }
 
 void
-heim_audit_setkv_number(heim_svc_req_desc r, const char *k, intptr_t v)
+heim_audit_setkv_number(heim_svc_req_desc r, const char *k, int64_t v)
 {
     heim_string_t key = heim_string_create(k);
     heim_number_t value;

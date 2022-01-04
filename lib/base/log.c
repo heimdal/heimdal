@@ -867,6 +867,24 @@ heim_audit_setkv_bool(heim_svc_req_desc r, const char *k, int v)
 }
 
 void
+heim_audit_addkv_number(heim_svc_req_desc r, const char *k, intptr_t v)
+{
+    heim_string_t key = heim_string_create(k);
+    heim_number_t value;
+
+    if (key == NULL)
+	return;
+
+    heim_log(r->hcontext, r->logf, 7, "heim_audit_addkv_number(): "
+	     "adding kv pair %s=%ld", k, v);
+
+    value = heim_number_create(v);
+    addkv(r, key, value);
+    heim_release(key);
+    heim_release(value);
+}
+
+void
 heim_audit_setkv_number(heim_svc_req_desc r, const char *k, intptr_t v)
 {
     heim_string_t key = heim_string_create(k);
@@ -882,6 +900,24 @@ heim_audit_setkv_number(heim_svc_req_desc r, const char *k, intptr_t v)
     heim_dict_set_value(r->kv, key, value);
     heim_release(key);
     heim_release(value);
+}
+
+void
+heim_audit_addkv_object(heim_svc_req_desc r, const char *k, heim_object_t value)
+{
+    heim_string_t key = heim_string_create(k);
+    heim_string_t descr;
+
+    if (key == NULL)
+	return;
+
+    descr = heim_json_copy_serialize(value, 0, NULL);
+    heim_log(r->hcontext, r->logf, 7, "heim_audit_addkv_object(): "
+	     "adding kv pair %s=%s",
+	     k, descr ? heim_string_get_utf8(descr) : "<unprintable>");
+    addkv(r, key, value);
+    heim_release(key);
+    heim_release(descr);
 }
 
 void

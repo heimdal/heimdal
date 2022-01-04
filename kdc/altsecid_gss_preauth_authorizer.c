@@ -453,7 +453,7 @@ authorize(void *ctx,
 
     if (requestor_sid) {
 	krb5_kdc_request_set_attribute((kdc_request_t)r,
-				       HSTR("org.h5l.pac-requestor-sid"), requestor_sid);
+				       HSTR("org.h5l.gss-pa-requestor-sid"), requestor_sid);
 	heim_release(requestor_sid);
     }
 
@@ -466,9 +466,11 @@ finalize_pac(void *ctx, astgs_request_t r)
     heim_data_t requestor_sid;
 
     requestor_sid = krb5_kdc_request_get_attribute((kdc_request_t)r,
-						   HSTR("org.h5l.pac-requestor-sid"));
+						   HSTR("org.h5l.gss-pa-requestor-sid"));
     if (requestor_sid == NULL)
 	return 0;
+
+    _kdc_audit_setkv_object((kdc_request_t)r, "gss_requestor_sid", requestor_sid);
 
     return krb5_pac_add_buffer(r->context, r->pac, PAC_REQUESTOR_SID,
 			       heim_data_get_data(requestor_sid));

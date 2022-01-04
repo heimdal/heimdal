@@ -154,7 +154,8 @@ libkdc_la_SOURCES = 		\
 	gss_preauth.c
 
 $(OBJ)\kdc-protos.h: $(libkdc_la_SOURCES)
-	$(PERL) ..\cf\make-proto.pl -q -P remove -o $@ $(libkdc_la_SOURCES) \
+	cd $(SRCDIR)
+	$(PERL) ..\cf\make-proto.pl -E KDC_LIB -q -P remove -o $@ $(libkdc_la_SOURCES) \
 	|| $(RM) $@
 
 $(OBJ)\kdc-private.h: $(libkdc_la_SOURCES)

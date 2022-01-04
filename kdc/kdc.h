@@ -46,16 +46,6 @@
 #include <kx509_asn1.h>
 #include <gssapi/gssapi.h>
 
-#if !defined(BUILD_KDC_LIB) && defined(_WIN32)
-# define KDC_LIB_FUNCTION __declspec(dllimport)
-# define KDC_LIB_CALL     __stdcall
-# define KDC_LIB_VARIABLE __declspec(dllimport)
-#else
-# define KDC_LIB_FUNCTION
-# define KDC_LIB_CALL
-# define KDC_LIB_VARIABLE
-#endif
-
 #define heim_pcontext krb5_context
 #define heim_pconfig krb5_kdc_configuration *
 #include <heimbase-svc.h>

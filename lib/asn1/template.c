@@ -2871,7 +2871,8 @@ _asn1_copy(const struct asn1_template *t, const void *from, void *to)
 	    void **ptel = (void **)tel;
 	    size_t size;
 
-	    if ((t->tt & A1_OP_MASK) == A1_OP_TYPE) {
+	    if ((t->tt & A1_OP_MASK) == A1_OP_TYPE ||
+                (t->tt & A1_OP_MASK) == A1_OP_TYPE_DECORATE) {
 		size = _asn1_sizeofType(t->ptr);
 	    } else {
 		const struct asn1_type_func *f = t->ptr;

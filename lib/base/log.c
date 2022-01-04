@@ -930,7 +930,7 @@ heim_audit_setkv_object(heim_svc_req_desc r, const char *k, heim_object_t value)
     if (key == NULL)
 	return;
 
-    descr = heim_json_copy_serialize(value, 0, NULL);
+    descr = heim_json_copy_serialize(value, HEIM_JSON_F_NO_DATA_DICT, NULL);
     heim_log(r->hcontext, r->logf, 7, "heim_audit_setkv_object(): "
 	     "setting kv pair %s=%s",
 	     k, descr ? heim_string_get_utf8(descr) : "<unprintable>");

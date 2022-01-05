@@ -303,19 +303,19 @@ nobase_include_HEADERS = \
 gssapidir = $(includedir)/gssapi
 nodist_gssapi_HEADERS = gkrb5_err.h negoex_err.h
 
-gssapi_files = asn1_GSSAPIContextToken.x
+gssapi_files = asn1_GSSAPIContextToken.c
 
 spnego_files =					\
-	asn1_ContextFlags.x			\
-	asn1_MechType.x				\
-	asn1_MechTypeList.x			\
-	asn1_NegotiationToken.x			\
-	asn1_NegotiationToken2.x		\
-	asn1_NegHints.x				\
-	asn1_NegTokenInit.x			\
-	asn1_NegTokenInit2.x			\
-	asn1_NegTokenResp.x			\
-	asn1_NegStateEnum.x
+	asn1_ContextFlags.c			\
+	asn1_MechType.c				\
+	asn1_MechTypeList.c			\
+	asn1_NegotiationToken.c			\
+	asn1_NegotiationToken2.c		\
+	asn1_NegHints.c				\
+	asn1_NegTokenInit.c			\
+	asn1_NegTokenInit2.c			\
+	asn1_NegTokenResp.c			\
+	asn1_NegStateEnum.c
 
 BUILTHEADERS = \
 	$(srcdir)/krb5/gsskrb5-private.h \
@@ -328,7 +328,7 @@ $(test_context_OBJECTS): $(BUILTHEADERS)
 
 $(libgssapi_la_OBJECTS): $(srcdir)/version-script.map
 
-BUILT_SOURCES = $(spnego_files:.x=.c) $(gssapi_files:.x=.c)
+BUILT_SOURCES = $(spnego_files) $(gssapi_files)
 
 $(libgssapi_la_OBJECTS): gkrb5_err.h negoex_err.h
 gkrb5_err.h: $(srcdir)/krb5/gkrb5_err.et
@@ -338,10 +338,12 @@ CLEANFILES = $(BUILT_SOURCES) \
 	gkrb5_err.[ch] negoex_err.[ch] \
 	$(spnego_files) spnego_asn1*.h* spnego_asn1_files spnego_asn1-template.[cx] \
 	$(gssapi_files) gssapi_asn1*.h* gssapi_asn1_files gssapi_asn1-template.[cx] \
-	gss-commands.h gss-commands.c
+	gss-commands.h gss-commands.c \
+	gssapi_asn1.json gssapi_asn1_oids.c gssapi_asn1_syms.c \
+	spnego_asn1.json spnego_asn1_oids.c spnego_asn1_syms.c
 
-$(spnego_files) spnego_asn1.hx spnego_asn1-priv.hx: spnego_asn1_files
-$(gssapi_files) gssapi_asn1.hx gssapi_asn1-priv.hx: gssapi_asn1_files
+$(spnego_files) spnego_asn1.h spnego_asn1-priv.h: spnego_asn1_files
+$(gssapi_files) gssapi_asn1.h gssapi_asn1-priv.h: gssapi_asn1_files
 
 spnego_asn1_files: $(ASN1_COMPILE_DEP) $(srcdir)/spnego/spnego.asn1 $(srcdir)/spnego/spnego.opt
 	$(ASN1_COMPILE) --option-file=$(srcdir)/spnego/spnego.opt $(srcdir)/spnego/spnego.asn1 spnego_asn1
@@ -445,7 +447,7 @@ $(srcdir)/gssapi/gssapi_oid.h $(srcdir)/mech/gss_oid.c:
 # NegoEx test mechanism, uses decode_GSSAPIContextToken
 #
 
-test_negoex_mech_la_SOURCES = test_negoex_mech.c $(gssapi_files:.x=.c)
+test_negoex_mech_la_SOURCES = test_negoex_mech.c $(gssapi_files)
 test_negoex_mech_la_LDFLAGS = -module
 test_negoex_mech_la_LIBADD = \
 	$(top_builddir)/lib/asn1/libasn1.la \

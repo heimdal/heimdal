@@ -114,22 +114,22 @@ const struct types {
         (releaser)free_ ## gns,         \
     },
 #endif
-#include "cms_asn1_syms.x"
-#include "digest_asn1_syms.x"
-#include "krb5_asn1_syms.x"
-#include "kx509_asn1_syms.x"
-#include "ocsp_asn1_syms.x"
-#include "pkcs10_asn1_syms.x"
-#include "pkcs12_asn1_syms.x"
-#include "pkcs8_asn1_syms.x"
-#include "pkcs9_asn1_syms.x"
-#include "pkinit_asn1_syms.x"
-#include "rfc2459_asn1_syms.x"
-#include "rfc4108_asn1_syms.x"
+#include "cms_asn1_syms.c"
+#include "digest_asn1_syms.c"
+#include "krb5_asn1_syms.c"
+#include "kx509_asn1_syms.c"
+#include "ocsp_asn1_syms.c"
+#include "pkcs10_asn1_syms.c"
+#include "pkcs12_asn1_syms.c"
+#include "pkcs8_asn1_syms.c"
+#include "pkcs9_asn1_syms.c"
+#include "pkinit_asn1_syms.c"
+#include "rfc2459_asn1_syms.c"
+#include "rfc4108_asn1_syms.c"
 #ifdef ASN1_PRINT_SUPPORTED
-#include "x690sample_template_asn1_syms.x"
+#include "x690sample_template_asn1_syms.c"
 #else
-#include "x690sample_asn1_syms.x"
+#include "x690sample_asn1_syms.c"
 #endif
 };
 

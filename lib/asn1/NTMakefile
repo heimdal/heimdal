@@ -35,38 +35,6 @@ intcflags=-I$(SRCDIR) -I$(OBJ) -DROKEN_RENAME -DASN1_IOS_SUPPORTED -DASN1_LIB
 
 !include ../../windows/NTMakefile.w32
 
-gen_files_krb5		= $(OBJ)\asn1_krb5_asn1.x
-
-gen_files_cms		= $(OBJ)\asn1_cms_asn1.x
-
-gen_files_crmf		= $(OBJ)\asn1_crmf_asn1.x
-
-gen_files_rfc2459	= $(OBJ)\asn1_rfc2459_asn1.x
-
-gen_files_rfc4108	= $(OBJ)\asn1_rfc4108_asn1.x
-
-gen_files_ocsp		= $(OBJ)\asn1_ocsp_asn1.x
-
-gen_files_pkinit	= $(OBJ)\asn1_pkinit_asn1.x
-
-gen_files_pkcs12	= $(OBJ)\asn1_pkcs12_asn1.x
-
-gen_files_pkcs8		= $(OBJ)\asn1_pkcs8_asn1.x
-
-gen_files_pkcs9		= $(OBJ)\asn1_pkcs9_asn1.x
-
-gen_files_pkcs10	= $(OBJ)\asn1_pkcs10_asn1.x
-
-gen_files_test		= $(OBJ)\asn1_test_asn1.x
-
-gen_files_test_template	= $(OBJ)\asn1_test_template_asn1.x
-
-gen_files_digest	= $(OBJ)\asn1_digest_asn1.x
-
-gen_files_kx509		= $(OBJ)\asn1_kx509_asn1.x
-
-gen_files_x690sample	= $(OBJ)\asn1_x690sample_asn1.x
-
 ASN1_BINARIES =						    \
 	$(LIBEXECDIR)\asn1_compile.exe
 
@@ -113,19 +81,19 @@ $(BINDIR)\asn1_gen.exe: $(OBJ)\asn1_gen.obj $(LIBHEIMDAL)
 	$(EXEPREP)
 
 LIBASN1_X= \
-	$(gen_files_rfc2459)		\
-	$(gen_files_rfc4108)		\
-	$(gen_files_cms)		\
-	$(gen_files_krb5)		\
-	$(gen_files_ocsp)		\
-	$(gen_files_pkinit)		\
-	$(gen_files_pkcs8)		\
-	$(gen_files_pkcs9)		\
-	$(gen_files_pkcs10)		\
-	$(gen_files_pkcs12)		\
-	$(gen_files_digest)		\
-	$(gen_files_kx509)		\
-	$(gen_files_x690sample)
+	$(OBJ)\asn1_rfc2459_asn1.c		\
+	$(OBJ)\asn1_rfc4108_asn1.c		\
+	$(OBJ)\asn1_cms_asn1.c			\
+	$(OBJ)\asn1_krb5_asn1.c			\
+	$(OBJ)\asn1_ocsp_asn1.c			\
+	$(OBJ)\asn1_pkinit_asn1.c		\
+	$(OBJ)\asn1_pkcs8_asn1.c		\
+	$(OBJ)\asn1_pkcs9_asn1.c		\
+	$(OBJ)\asn1_pkcs10_asn1.c		\
+	$(OBJ)\asn1_pkcs12_asn1.c		\
+	$(OBJ)\asn1_digest_asn1.c		\
+	$(OBJ)\asn1_kx509_asn1.c		\
+	$(OBJ)\asn1_x690sample_asn1.c
 
 LIBASN1_OBJS=	\
 	$(OBJ)\der.obj				\
@@ -141,19 +109,19 @@ LIBASN1_OBJS=	\
 	$(OBJ)\extra.obj			\
 	$(OBJ)\oid_resolution.obj		\
 	$(OBJ)\timegm.obj			\
-	$(gen_files_rfc2459:.x=.obj)		\
-	$(gen_files_rfc4108:.x=.obj)		\
-	$(gen_files_cms:.x=.obj)		\
-	$(gen_files_krb5:.x=.obj)		\
-	$(gen_files_ocsp:.x=.obj)		\
-	$(gen_files_pkinit:.x=.obj)		\
-	$(gen_files_pkcs8:.x=.obj)		\
-	$(gen_files_pkcs9:.x=.obj)		\
-	$(gen_files_pkcs10:.x=.obj)		\
-	$(gen_files_pkcs12:.x=.obj)		\
-	$(gen_files_digest:.x=.obj)		\
-	$(gen_files_kx509:.x=.obj)		\
-	$(gen_files_x690sample:.x=.obj)		\
+	$(OBJ)\asn1_rfc2459_asn1.obj		\
+	$(OBJ)\asn1_rfc4108_asn1.obj		\
+	$(OBJ)\asn1_cms_asn1.obj		\
+	$(OBJ)\asn1_krb5_asn1.obj		\
+	$(OBJ)\asn1_ocsp_asn1.obj		\
+	$(OBJ)\asn1_pkinit_asn1.obj		\
+	$(OBJ)\asn1_pkcs8_asn1.obj		\
+	$(OBJ)\asn1_pkcs9_asn1.obj		\
+	$(OBJ)\asn1_pkcs10_asn1.obj		\
+	$(OBJ)\asn1_pkcs12_asn1.obj		\
+	$(OBJ)\asn1_digest_asn1.obj		\
+	$(OBJ)\asn1_kx509_asn1.obj		\
+	$(OBJ)\asn1_x690sample_asn1.obj		\
 	$(OBJ)\asn1_err.obj
 
 $(OBJ)\oid_resolution.obj: $(LIBASN1_X)
@@ -186,19 +154,19 @@ LIBASN1_S_OBJS=	\
 	$(OBJ)\extra.s.obj			\
 	$(OBJ)\oid_resolution.s.obj		\
 	$(OBJ)\timegm.s.obj			\
-	$(gen_files_rfc2459:.x=.s.obj)		\
-	$(gen_files_rfc4108:.x=.s.obj)		\
-	$(gen_files_cms:.x=.s.obj)		\
-	$(gen_files_krb5:.x=.s.obj)		\
-	$(gen_files_ocsp:.x=.s.obj)		\
-	$(gen_files_pkinit:.x=.s.obj)		\
-	$(gen_files_pkcs8:.x=.s.obj)		\
-	$(gen_files_pkcs9:.x=.s.obj)		\
-	$(gen_files_pkcs10:.x=.s.obj)		\
-	$(gen_files_pkcs12:.x=.s.obj)		\
-	$(gen_files_digest:.x=.s.obj)		\
-	$(gen_files_kx509:.x=.s.obj)		\
-	$(gen_files_x690sample:.x=.s.obj)	\
+	$(OBJ)\asn1_rfc2459_asn1.s.obj		\
+	$(OBJ)\asn1_rfc4108_asn1.s.obj		\
+	$(OBJ)\asn1_cms_asn1.s.obj		\
+	$(OBJ)\asn1_krb5_asn1.s.obj		\
+	$(OBJ)\asn1_ocsp_asn1.s.obj		\
+	$(OBJ)\asn1_pkinit_asn1.s.obj		\
+	$(OBJ)\asn1_pkcs8_asn1.s.obj		\
+	$(OBJ)\asn1_pkcs9_asn1.s.obj		\
+	$(OBJ)\asn1_pkcs10_asn1.s.obj		\
+	$(OBJ)\asn1_pkcs12_asn1.s.obj		\
+	$(OBJ)\asn1_digest_asn1.s.obj		\
+	$(OBJ)\asn1_kx509_asn1.s.obj		\
+	$(OBJ)\asn1_x690sample_asn1.s.obj	\
 	$(OBJ)\asn1_err.s.obj
 
 $(OBJ)\oid_resolution.s.obj: oid_resolution.c $(LIBASN1_X)
@@ -240,43 +208,49 @@ $(OBJ)\extra.s.obj: extra.c
 $(OBJ)\timegm.s.obj: timegm.c
 	$(C2OBJ_C_MT) -Fo$@ -Fd$(@D)\ $**
 
-$(gen_files_rfc2459:.x=.s.obj): $(gen_files_rfc2459:.x=.c)
+$(OBJ)\asn1_rfc2459_asn1.s.obj: $(OBJ)\asn1_rfc2459_asn1.c
 	$(C2OBJ_C_MT) -Fo$@ -Fd$(@D)\ $**
 
-$(gen_files_rfc4108:.x=.s.obj): $(gen_files_rfc4108:.x=.c)
+$(OBJ)\asn1_rfc4108_asn1.s.obj: $(OBJ)\asn1_rfc4108_asn1.c
 	$(C2OBJ_C_MT) -Fo$@ -Fd$(@D)\ $**
 
-$(gen_files_cms:.x=.s.obj): $(gen_files_cms:.x=.c)
+$(OBJ)\asn1_cms_asn1.s.obj: $(OBJ)\asn1_cms_asn1.c
 	$(C2OBJ_C_MT) -Fo$@ -Fd$(@D)\ $**
 
-$(gen_files_krb5:.x=.s.obj): $(gen_files_krb5:.x=.c)
+$(OBJ)\asn1_krb5_asn1.s.obj: $(OBJ)\asn1_krb5_asn1.c
 	$(C2OBJ_C_MT) -Fo$@ -Fd$(@D)\ $**
 
-$(gen_files_ocsp:.x=.s.obj): $(gen_files_ocsp:.x=.c)
+$(OBJ)\asn1_ocsp_asn1.s.obj: $(OBJ)\asn1_ocsp_asn1.c
 	$(C2OBJ_C_MT) -Fo$@ -Fd$(@D)\ $**
 
-$(gen_files_pkinit:.x=.s.obj): $(gen_files_pkinit:.x=.c)
+$(OBJ)\asn1_pkinit_asn1.s.obj: $(OBJ)\asn1_pkinit_asn1.c
 	$(C2OBJ_C_MT) -Fo$@ -Fd$(@D)\ $**
 
-$(gen_files_pkcs8:.x=.s.obj): $(gen_files_pkcs8:.x=.c)
+$(OBJ)\asn1_pkcs8_asn1.s.obj: $(OBJ)\asn1_pkcs8_asn1.c
 	$(C2OBJ_C_MT) -Fo$@ -Fd$(@D)\ $**
 
-$(gen_files_pkcs9:.x=.s.obj): $(gen_files_pkcs9:.x=.c)
+$(OBJ)\asn1_pkcs9_asn1.s.obj: $(OBJ)\asn1_pkcs9_asn1.c
 	$(C2OBJ_C_MT) -Fo$@ -Fd$(@D)\ $**
 
-$(gen_files_pkcs10:.x=.s.obj): $(gen_files_pkcs10:.x=.c)
+$(OBJ)\asn1_pkcs10_asn1.s.obj: $(OBJ)\asn1_pkcs10_asn1.c
 	$(C2OBJ_C_MT) -Fo$@ -Fd$(@D)\ $**
 
-$(gen_files_pkcs12:.x=.s.obj): $(gen_files_pkcs12:.x=.c)
+$(OBJ)\asn1_pkcs12_asn1.s.obj: $(OBJ)\asn1_pkcs12_asn1.c
 	$(C2OBJ_C_MT) -Fo$@ -Fd$(@D)\ $**
 
-$(gen_files_digest:.x=.s.obj): $(gen_files_digest:.x=.c)
+$(OBJ)\asn1_digest_asn1.s.obj: $(OBJ)\asn1_digest_asn1.c
 	$(C2OBJ_C_MT) -Fo$@ -Fd$(@D)\ $**
 
-$(gen_files_kx509:.x=.s.obj): $(gen_files_kx509:.x=.c)
+$(OBJ)\asn1_kx509_asn1.s.obj: $(OBJ)\asn1_kx509_asn1.c
 	$(C2OBJ_C_MT) -Fo$@ -Fd$(@D)\ $**
 
-$(gen_files_x690sample:.x=.s.obj): $(gen_files_x690sample:.x=.c)
+$(OBJ)\asn1_x690sample_asn1.s.obj: $(OBJ)\asn1_x690sample_asn1.c
+	$(C2OBJ_C_MT) -Fo$@ -Fd$(@D)\ $**
+
+$(OBJ)\asn1_test_asn1.s.obj: $(OBJ)\asn1_test_asn1.c
+	$(C2OBJ_C_MT) -Fo$@ -Fd$(@D)\ $**
+
+$(OBJ)\asn1_test_template_asn1.s.obj: $(OBJ)\asn1_test_template_asn1.c
 	$(C2OBJ_C_MT) -Fo$@ -Fd$(@D)\ $**
 
 $(OBJ)\asn1_err.s.obj: $(OBJ)\asn1_err.c
@@ -304,39 +278,7 @@ $(**: =
 )
 <<
 
-$(gen_files_krb5:.x=.c)	    : $$(@R).x
-
-$(gen_files_ocsp:.x=.c)   : $$(@R).x
-
-$(gen_files_pkinit:.x=.c)   : $$(@R).x
-
-$(gen_files_pkcs8:.x=.c)    : $$(@R).x
-
-$(gen_files_pkcs9:.x=.c)    : $$(@R).x
-
-$(gen_files_pkcs10:.x=.c)   : $$(@R).x
-
-$(gen_files_pkcs12:.x=.c)   : $$(@R).x
-
-$(gen_files_digest:.x=.c)   : $$(@R).x
-
-$(gen_files_kx509:.x=.c)    : $$(@R).x
-
-$(gen_files_rfc2459:.x=.c)  : $$(@R).x
-
-$(gen_files_rfc4108:.x=.c)  : $$(@R).x
-
-$(gen_files_cms:.x=.c)	    : $$(@R).x
-
-$(gen_files_crmf:.x=.c)	    : $$(@R).x
-
-$(gen_files_x690sample:.x=.c)	    : $$(@R).x
-
-$(gen_files_test:.x=.c)	    : $$(@R).x
-
-$(gen_files_test_template:.x=.c)	    : $$(@R).x
-
-$(gen_files_krb5) $(OBJ)\krb5_asn1.hx: $(BINDIR)\asn1_compile.exe krb5.asn1 krb5.opt
+$(OBJ)\asn1_krb5_asn1.c $(OBJ)\krb5_asn1.h: $(BINDIR)\asn1_compile.exe krb5.asn1 krb5.opt
 	cd $(OBJ)
 	$(BINDIR)\asn1_compile.exe \
 		--template	\
@@ -346,7 +288,7 @@ $(gen_files_krb5) $(OBJ)\krb5_asn1.hx: $(BINDIR)\asn1_compile.exe krb5.asn1 krb5
 	|| ($(RM) $(OBJ)\krb5_asn1.h ; exit /b 1)
 	cd $(SRCDIR)
 
-$(gen_files_ocsp) $(OBJ)\ocsp_asn1.hx: $(BINDIR)\asn1_compile.exe ocsp.asn1
+$(OBJ)\asn1_ocsp_asn1.c $(OBJ)\ocsp_asn1.h: $(BINDIR)\asn1_compile.exe ocsp.asn1
 	cd $(OBJ)
 	$(BINDIR)\asn1_compile.exe \
 		--template	\
@@ -357,25 +299,25 @@ $(gen_files_ocsp) $(OBJ)\ocsp_asn1.hx: $(BINDIR)\asn1_compile.exe ocsp.asn1
 	|| ($(RM) $(OBJ)\ocsp_asn1.h ; exit /b 1)
 	cd $(SRCDIR)
 
-$(gen_files_pkinit) $(OBJ)\pkinit_asn1.hx: $(BINDIR)\asn1_compile.exe pkinit.asn1
+$(OBJ)\asn1_pkinit_asn1.c $(OBJ)\pkinit_asn1.h: $(BINDIR)\asn1_compile.exe pkinit.asn1
 	cd $(OBJ)
 	$(BINDIR)\asn1_compile.exe --template --one-code-file $(SRCDIR)\pkinit.asn1 pkinit_asn1 \
 	|| ($(RM) $(OBJ)\pkinit_asn1.h ; exit /b 1)
 	cd $(SRCDIR)
 
-$(gen_files_pkcs8) $(OBJ)\pkcs8_asn1.hx: $(BINDIR)\asn1_compile.exe pkcs8.asn1
+$(OBJ)\asn1_pkcs8_asn1.c $(OBJ)\pkcs8_asn1.h: $(BINDIR)\asn1_compile.exe pkcs8.asn1
 	cd $(OBJ)
 	$(BINDIR)\asn1_compile.exe --template --one-code-file $(SRCDIR)\pkcs8.asn1 pkcs8_asn1 \
 	|| ($(RM) $(OBJ)\pkcs8_asn1.h ; exit /b 1)
 	cd $(SRCDIR)
 
-$(gen_files_pkcs9) $(OBJ)\pkcs9_asn1.hx: $(BINDIR)\asn1_compile.exe pkcs9.asn1
+$(OBJ)\asn1_pkcs9_asn1.c $(OBJ)\pkcs9_asn1.h: $(BINDIR)\asn1_compile.exe pkcs9.asn1
 	cd $(OBJ)
 	$(BINDIR)\asn1_compile.exe --template --one-code-file $(SRCDIR)\pkcs9.asn1 pkcs9_asn1 \
 	|| ($(RM) $(OBJ)\pkcs9_asn1.h ; exit /b 1)
 	cd $(SRCDIR)
 
-$(gen_files_pkcs10) $(OBJ)\pkcs10_asn1.hx: $(BINDIR)\asn1_compile.exe pkcs10.asn1
+$(OBJ)\asn1_pkcs10_asn1.c $(OBJ)\pkcs10_asn1.h: $(BINDIR)\asn1_compile.exe pkcs10.asn1
 	cd $(OBJ)
 	$(BINDIR)\asn1_compile.exe \
 		--template	\
@@ -386,25 +328,25 @@ $(gen_files_pkcs10) $(OBJ)\pkcs10_asn1.hx: $(BINDIR)\asn1_compile.exe pkcs10.asn
 	|| ($(RM) $(OBJ)\pkcs10_asn1.h ; exit /b 1)
 	cd $(SRCDIR)
 
-$(gen_files_pkcs12) $(OBJ)\pkcs12_asn1.hx: $(BINDIR)\asn1_compile.exe pkcs12.asn1
+$(OBJ)\asn1_pkcs12_asn1.c $(OBJ)\pkcs12_asn1.h: $(BINDIR)\asn1_compile.exe pkcs12.asn1
 	cd $(OBJ)
 	$(BINDIR)\asn1_compile.exe --template --one-code-file $(SRCDIR)\pkcs12.asn1 pkcs12_asn1 \
 	|| ($(RM) $(OBJ)\pkcs12_asn1.h ; exit /b 1)
 	cd $(SRCDIR)
 
-$(gen_files_digest) $(OBJ)\digest_asn1.hx: $(BINDIR)\asn1_compile.exe digest.asn1
+$(OBJ)\asn1_digest_asn1.c $(OBJ)\digest_asn1.h: $(BINDIR)\asn1_compile.exe digest.asn1
 	cd $(OBJ)
 	$(BINDIR)\asn1_compile.exe --template --one-code-file $(SRCDIR)\digest.asn1 digest_asn1 \
 	|| ($(RM) $(OBJ)\digest_asn1.h ; exit /b 1)
 	cd $(SRCDIR)
 
-$(gen_files_kx509) $(OBJ)\kx509_asn1.hx: $(BINDIR)\asn1_compile.exe kx509.asn1
+$(OBJ)\asn1_kx509_asn1.c $(OBJ)\kx509_asn1.h: $(BINDIR)\asn1_compile.exe kx509.asn1
 	cd $(OBJ)
 	$(BINDIR)\asn1_compile.exe --template --one-code-file $(SRCDIR)\kx509.asn1 kx509_asn1 \
 	|| ($(RM) $(OBJ)\kx509_asn1.h ; exit /b 1)
 	cd $(SRCDIR)
 
-$(gen_files_rfc2459) $(OBJ)\rfc2459_asn1.hx: $(BINDIR)\asn1_compile.exe rfc2459.asn1
+$(OBJ)\asn1_rfc2459_asn1.c $(OBJ)\rfc2459_asn1.h: $(BINDIR)\asn1_compile.exe rfc2459.asn1
 	cd $(OBJ)
 	$(BINDIR)\asn1_compile.exe \
 		--template	\
@@ -414,7 +356,7 @@ $(gen_files_rfc2459) $(OBJ)\rfc2459_asn1.hx: $(BINDIR)\asn1_compile.exe rfc2459.
 	|| ($(RM) $(OBJ)\rfc2459_asn1.h ; exit /b 1)
 	cd $(SRCDIR)
 
-$(gen_files_rfc4108) $(OBJ)\rfc4108_asn1.hx: $(BINDIR)\asn1_compile.exe rfc4108.asn1
+$(OBJ)\asn1_rfc4108_asn1.c $(OBJ)\rfc4108_asn1.h: $(BINDIR)\asn1_compile.exe rfc4108.asn1
 	cd $(OBJ)
 	$(BINDIR)\asn1_compile.exe \
 		--template	\
@@ -423,7 +365,7 @@ $(gen_files_rfc4108) $(OBJ)\rfc4108_asn1.hx: $(BINDIR)\asn1_compile.exe rfc4108.
 	|| ($(RM) $(OBJ)\rfc4108_asn1.h ; exit /b 1)
 	cd $(SRCDIR)
 
-$(gen_files_cms) $(OBJ)\cms_asn1.hx: $(BINDIR)\asn1_compile.exe cms.asn1 cms.opt
+$(OBJ)\asn1_cms_asn1.c $(OBJ)\cms_asn1.h: $(BINDIR)\asn1_compile.exe cms.asn1 cms.opt
 	cd $(OBJ)
 	$(BINDIR)\asn1_compile.exe \
 		--template	\
@@ -432,7 +374,7 @@ $(gen_files_cms) $(OBJ)\cms_asn1.hx: $(BINDIR)\asn1_compile.exe cms.asn1 cms.opt
 	|| ($(RM) $(OBJ)\cms_asn1.h ; exit /b 1)
 	cd $(SRCDIR)
 
-$(gen_files_crmf) $(OBJ)\crmf_asn1.hx: $(BINDIR)\asn1_compile.exe crmf.asn1 crmf.opt
+$(gen_files_crmf) $(OBJ)\crmf_asn1.h: $(BINDIR)\asn1_compile.exe crmf.asn1 crmf.opt
 	cd $(OBJ)
 	$(BINDIR)\asn1_compile.exe \
 		--template	\
@@ -441,7 +383,7 @@ $(gen_files_crmf) $(OBJ)\crmf_asn1.hx: $(BINDIR)\asn1_compile.exe crmf.asn1 crmf
 	|| ($(RM) $(OBJ)\crmf_asn1.h ; exit /b 1)
 	cd $(SRCDIR)
 
-$(gen_files_x690sample) $(OBJ)\x690sample_asn1.hx: $(BINDIR)\asn1_compile.exe x690sample.asn1
+$(OBJ)\asn1_x690sample_asn1.c $(OBJ)\x690sample_asn1.h: $(BINDIR)\asn1_compile.exe x690sample.asn1
 	cd $(OBJ)
 	$(BINDIR)\asn1_compile.exe \
 		--template	\
@@ -450,7 +392,7 @@ $(gen_files_x690sample) $(OBJ)\x690sample_asn1.hx: $(BINDIR)\asn1_compile.exe x6
 	|| ($(RM) $(OBJ)\x690sample_asn1.h ; exit /b 1)
 	cd $(SRCDIR)
 
-$(gen_files_test) $(OBJ)\test_asn1.hx: $(BINDIR)\asn1_compile.exe test.asn1
+$(OBJ)\asn1_test_asn1.c $(OBJ)\test_asn1.h: $(BINDIR)\asn1_compile.exe test.asn1
 	cd $(OBJ)
 	$(BINDIR)\asn1_compile.exe \
 		--template	\
@@ -460,7 +402,7 @@ $(gen_files_test) $(OBJ)\test_asn1.hx: $(BINDIR)\asn1_compile.exe test.asn1
 	|| ($(RM) $(OBJ)\test_asn1.h ; exit /b 1)
 	cd $(SRCDIR)
 
-$(gen_files_test_template) $(OBJ)\test_template_asn1.hx: $(BINDIR)\asn1_compile.exe test.asn1
+$(OBJ)\asn1_test_template_asn1.c $(OBJ)\test_template_asn1.h: $(BINDIR)\asn1_compile.exe test.asn1
 	cd $(OBJ)
 	$(BINDIR)\asn1_compile.exe \
 		--template	\
@@ -592,7 +534,7 @@ $(OBJ)\check-der.exe: $(OBJ)\check-der.obj $(OBJ)\check-common.obj \
 	$(EXEPREP_NODIST)
 
 $(OBJ)\check-gen-template.exe: $(OBJ)\check-gen.obj $(OBJ)\check-common.obj \
-		$(LIBHEIMDAL) $(LIBROKEN) $(gen_files_test_template:.x=.obj)
+		$(LIBHEIMDAL) $(LIBROKEN) $(OBJ)\asn1_test_template_asn1.obj
 	$(EXECONLINK)
 	$(EXEPREP_NODIST)
 
@@ -602,6 +544,6 @@ $(OBJ)\check-timegm.exe: $(OBJ)\check-timegm.obj \
 	$(EXEPREP_NODIST)
 
 $(OBJ)\check-template.exe: $(OBJ)\check-template.obj $(OBJ)\check-common.obj \
-		$(LIBHEIMDAL) $(LIBROKEN) $(gen_files_test:.x=.obj)
+		$(LIBHEIMDAL) $(LIBROKEN) $(OBJ)\asn1_test_asn1.obj
 	$(EXECONLINK)
 	$(EXEPREP_NODIST)

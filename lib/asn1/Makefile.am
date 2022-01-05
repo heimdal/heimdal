@@ -30,64 +30,64 @@ libasn1template_la_LIBADD = \
 	@LIB_com_err@ \
 	$(LIBADD_roken)
 
-BUILT_SOURCES =				\
-	$(gen_files_rfc2459:.x=.c)	\
-	$(gen_files_rfc4108:.x=.c)	\
-	$(gen_files_cms:.x=.c)		\
-	$(gen_files_krb5:.x=.c)		\
-	$(gen_files_ocsp:.x=.c)	        \
-	$(gen_files_pkinit:.x=.c)	\
-	$(gen_files_pkcs8:.x=.c)	\
-	$(gen_files_pkcs9:.x=.c)	\
-	$(gen_files_pkcs10:.x=.c)	\
-	$(gen_files_pkcs12:.x=.c)	\
-	$(gen_files_digest:.x=.c)	\
-	$(gen_files_kx509:.x=.c)
+BUILT_SOURCES =			\
+	$(gen_files_rfc2459)	\
+	$(gen_files_rfc4108)	\
+	$(gen_files_cms)	\
+	$(gen_files_krb5)	\
+	$(gen_files_ocsp)	\
+	$(gen_files_pkinit)	\
+	$(gen_files_pkcs8)	\
+	$(gen_files_pkcs9)	\
+	$(gen_files_pkcs10)	\
+	$(gen_files_pkcs12)	\
+	$(gen_files_digest)	\
+	$(gen_files_kx509)
 
-BUILT_TEMPLATE_SOURCES =			\
-	$(gen_files_rfc2459_template:.x=.c)	\
-	$(gen_files_rfc4108_template:.x=.c)	\
-	$(gen_files_cms_template:.x=.c)		\
-	$(gen_files_krb5_template:.x=.c)	\
-	$(gen_files_ocsp_template:.x=.c)	\
-	$(gen_files_pkinit_template:.x=.c)	\
-	$(gen_files_pkcs8_template:.x=.c)	\
-	$(gen_files_pkcs9_template:.x=.c)	\
-	$(gen_files_pkcs10_template:.x=.c)	\
-	$(gen_files_pkcs12_template:.x=.c)	\
-	$(gen_files_digest_template:.x=.c)	\
-	$(gen_files_kx509_template:.x=.c)
+BUILT_TEMPLATE_SOURCES =		\
+	$(gen_files_rfc2459_template)	\
+	$(gen_files_rfc4108_template)	\
+	$(gen_files_cms_template)	\
+	$(gen_files_krb5_template)	\
+	$(gen_files_ocsp_template)	\
+	$(gen_files_pkinit_template)	\
+	$(gen_files_pkcs8_template)	\
+	$(gen_files_pkcs9_template)	\
+	$(gen_files_pkcs10_template)	\
+	$(gen_files_pkcs12_template)	\
+	$(gen_files_digest_template)	\
+	$(gen_files_kx509_template)
 
-gen_files_krb5 = asn1_krb5_asn1.x
-gen_files_krb5_template = asn1_krb5_template_asn1.x
-gen_files_cms = asn1_cms_asn1.x
-gen_files_cms_template = asn1_cms_template_asn1.x
-gen_files_crmf = asn1_crmf_asn1.x
-gen_files_crmf_template = asn1_crmf_template_asn1.x
-gen_files_rfc2459 = asn1_rfc2459_asn1.x
-gen_files_rfc2459_template = asn1_rfc2459_template_asn1.x
-gen_files_rfc4108 = asn1_rfc4108_asn1.x
-gen_files_rfc4108_template = asn1_rfc4108_template_asn1.x
-gen_files_ocsp = asn1_ocsp_asn1.x
-gen_files_ocsp_template = asn1_ocsp_template_asn1.x
-gen_files_pkinit = asn1_pkinit_asn1.x
-gen_files_pkinit_template = asn1_pkinit_template_asn1.x
-gen_files_pkcs10 = asn1_pkcs10_asn1.x
-gen_files_pkcs10_template = asn1_pkcs10_template_asn1.x
-gen_files_pkcs12 = asn1_pkcs12_asn1.x
-gen_files_pkcs12_template = asn1_pkcs12_template_asn1.x
-gen_files_pkcs8 = asn1_pkcs8_asn1.x
-gen_files_pkcs8_template = asn1_pkcs8_template_asn1.x
-gen_files_pkcs9 = asn1_pkcs9_asn1.x
-gen_files_pkcs9_template = asn1_pkcs9_template_asn1.x
-gen_files_test = asn1_test_asn1.x
-gen_files_test_template = asn1_test_template_asn1.x
-gen_files_digest = asn1_digest_asn1.x
-gen_files_digest_template = asn1_digest_template_asn1.x
-gen_files_kx509 = asn1_kx509_asn1.x
-gen_files_kx509_template = asn1_kx509_template_asn1.x
-gen_files_x690sample = asn1_x690sample_asn1.x
-gen_files_x690sample_template = asn1_x690sample_template_asn1.x
+gen_files_krb5 = asn1_krb5_asn1.c
+gen_files_krb5_template = asn1_krb5_template_asn1.c
+gen_files_cms = asn1_cms_asn1.c
+gen_files_cms_template = asn1_cms_template_asn1.c
+gen_files_crmf = asn1_crmf_asn1.c
+gen_files_crmf_template = asn1_crmf_template_asn1.c
+gen_files_rfc2459 = asn1_rfc2459_asn1.c
+gen_files_rfc2459_template = asn1_rfc2459_template_asn1.c
+gen_files_rfc4108 = asn1_rfc4108_asn1.c
+gen_files_rfc4108_template = asn1_rfc4108_template_asn1.c
+gen_files_ocsp = asn1_ocsp_asn1.c
+gen_files_ocsp_template = asn1_ocsp_template_asn1.c
+gen_files_pkinit = asn1_pkinit_asn1.c
+gen_files_pkinit_template = asn1_pkinit_template_asn1.c
+gen_files_pkcs10 = asn1_pkcs10_asn1.c
+gen_files_pkcs10_template = asn1_pkcs10_template_asn1.c
+gen_files_pkcs12 = asn1_pkcs12_asn1.c
+gen_files_pkcs12_template = asn1_pkcs12_template_asn1.c
+gen_files_pkcs8 = asn1_pkcs8_asn1.c
+gen_files_pkcs8_template = asn1_pkcs8_template_asn1.c
+gen_files_pkcs9 = asn1_pkcs9_asn1.c
+gen_files_pkcs9_template = asn1_pkcs9_template_asn1.c
+gen_files_test = asn1_test_asn1.c
+gen_files_test_template = asn1_test_template_asn1.c
+gen_files_digest = asn1_digest_asn1.c
+gen_files_digest_template = asn1_digest_template_asn1.c
+gen_files_kx509 = asn1_kx509_asn1.c
+gen_files_kx509_template = asn1_kx509_template_asn1.c
+gen_files_x690sample = asn1_x690sample_asn1.c
+gen_files_x690sample_template = asn1_x690sample_template_asn1.c
 
 oid_resolution.lo: $(BUILT_SOURCES)
 
@@ -100,20 +100,20 @@ check_PROGRAMS = $(TESTS)
 
 asn1_gen_SOURCES = asn1_gen.c
 asn1_print_SOURCES = asn1_print.c
-asn1_print_SOURCES += $(gen_files_x690sample_template:.x=.c)
+asn1_print_SOURCES += $(gen_files_x690sample_template)
 asn1_print_CPPFLAGS = -DASN1_PRINT_SUPPORTED
 check_der_SOURCES = check-der.c check-common.c check-common.h
 
 check_template_SOURCES = check-template.c check-common.c check-common.h
-nodist_check_template_SOURCES = $(gen_files_test_template:.x=.c)
+nodist_check_template_SOURCES = $(gen_files_test_template)
 
 check_gen_template_CPPFLAGS = -DASN1_IOS_SUPPORTED
 dist_check_gen_template_SOURCES = check-gen.c check-common.c check-common.h
-nodist_check_gen_template_SOURCES =	$(gen_files_test_template:.x=.c) \
-					$(gen_files_x690sample_template:.x=.c)
+nodist_check_gen_template_SOURCES =	$(gen_files_test_template) \
+					$(gen_files_x690sample_template)
 
 dist_check_gen_SOURCES = check-gen.c check-common.c check-common.h
-nodist_check_gen_SOURCES = $(gen_files_test:.x=.c) $(gen_files_x690sample:.x=.c)
+nodist_check_gen_SOURCES = $(gen_files_test) $(gen_files_x690sample)
 
 build_HEADERZ = asn1-template.h
 
@@ -229,37 +229,37 @@ CLEANFILES = \
 	$(nodist_check_gen_SOURCES) \
 	asn1parse.c asn1parse.h lex.c \
 	asn1_err.c asn1_err.h \
-	rfc2459_asn1_files rfc2459_asn1*.h* rfc2459_asn1*.x \
-	rfc2459_template_asn1_files rfc2459_template_asn1*.h* rfc2459_template_asn1*.x \
-	rfc4108_asn1_files rfc4108_asn1*.h* rfc4108_asn1*.x \
-	rfc4108_template_asn1_files rfc4108_template_asn1*.h* rfc4108_template_asn1*.x \
-	cms_asn1_files cms_asn1*.h* cms_asn1*.x \
-	cms_template_asn1_files cms_template_asn1*.h* cms_template_asn1*.x \
-	crmf_asn1_files crmf_asn1*.h* crmf_asn1*.x \
-	crmf_template_asn1_files crmf_template_asn1*.h* crmf_template_asn1*.x \
-	krb5_asn1_files krb5_asn1*.h* krb5_asn1*.x \
-	krb5_template_asn1_files krb5_template_asn1*.h* krb5_template_asn1*.x \
-	ocsp_asn1_files ocsp_asn1*.h* ocsp_asn1*.x \
-	ocsp_template_asn1_files ocsp_template_asn1*.h* ocsp_template_asn1*.x \
-	pkinit_asn1_files pkinit_asn1*.h* pkinit_asn1*.x \
-	pkinit_template_asn1_files pkinit_template_asn1*.h* pkinit_template_asn1*.x \
-	pkcs8_asn1_files pkcs8_asn1*.h* pkcs8_asn1*.x* \
-	pkcs8_template_asn1_files pkcs8_template_asn1*.h* pkcs8_template_asn1*.x* \
-	pkcs9_asn1_files pkcs9_asn1*.h* pkcs9_asn1*.x \
-	pkcs9_template_asn1_files pkcs9_template_asn1*.h* pkcs9_template_asn1*.x \
-	pkcs10_asn1_files pkcs10_asn1*.h* pkcs10_asn1*.x \
-	pkcs10_template_asn1_files pkcs10_template_asn1*.h* pkcs10_template_asn1*.x \
-	pkcs12_asn1_files pkcs12_asn1*.h* pkcs12_asn1*.x \
-	pkcs12_template_asn1_files pkcs12_template_asn1*.h* pkcs12_template_asn1*.x \
-	digest_asn1_files digest_asn1*.h* digest_asn1*.x \
-	digest_template_asn1_files digest_template_asn1*.h* digest_template_asn1*.x \
-	kx509_asn1_files kx509_asn1*.h* kx509_asn1*.x \
-	kx509_template_asn1_files kx509_template_asn1*.h* kx509_template_asn1*.x \
-	x690sample_asn1_files x690sample_asn1*.h* x690sample_asn1*.x \
-	x690sample_template_asn1_files x690sample_template_asn1*.h* x690sample_template_asn1*.x \
-	test_asn1_files test_asn1*.h* test_asn1*.x \
-	test_template_asn1_files test_template_asn1*.h* test_template_asn1*.x \
-	asn1_*.tmp.c asn1_*.x asn1_*.json 
+	rfc2459_asn1_files rfc2459_asn1*.h \
+	rfc2459_template_asn1_files rfc2459_template_asn1*.h \
+	rfc4108_asn1_files rfc4108_asn1*.h \
+	rfc4108_template_asn1_files rfc4108_template_asn1*.h \
+	cms_asn1_files cms_asn1*.h \
+	cms_template_asn1_files cms_template_asn1* \
+	crmf_asn1_files crmf_asn1* \
+	crmf_template_asn1_files crmf_template_asn1* \
+	krb5_asn1_files krb5_asn1* \
+	krb5_template_asn1_files krb5_template_asn1* \
+	ocsp_asn1_files ocsp_asn1* \
+	ocsp_template_asn1_files ocsp_template_asn1* \
+	pkinit_asn1_files pkinit_asn1* \
+	pkinit_template_asn1_files pkinit_template_asn1* \
+	pkcs8_asn1_files pkcs8_asn1* \
+	pkcs8_template_asn1_files pkcs8_template_asn1* \
+	pkcs9_asn1_files pkcs9_asn1* \
+	pkcs9_template_asn1_files pkcs9_template_asn1* \
+	pkcs10_asn1_files pkcs10_asn1* \
+	pkcs10_template_asn1_files pkcs10_template_asn1* \
+	pkcs12_asn1_files pkcs12_asn1* \
+	pkcs12_template_asn1_files pkcs12_template_asn1* \
+	digest_asn1_files digest_asn1* \
+	digest_template_asn1_files digest_template_asn1* \
+	kx509_asn1_files kx509_asn1* \
+	kx509_template_asn1_files kx509_template_asn1* \
+	x690sample_asn1_files x690sample_asn1* \
+	x690sample_template_asn1_files x690sample_template_asn1* \
+	test_asn1_files test_asn1* \
+	test_template_asn1_files test_template_asn1* \
+	asn1_*.c *_asn1.json *_asn1_syms.c *_asn1_oids.c
 
 dist_include_HEADERS = der.h heim_asn1.h
 dist_include_HEADERS += $(srcdir)/der-protos.h $(srcdir)/der-private.h
@@ -338,36 +338,36 @@ $(asn1_print_OBJECTS): $(nodist_include_HEADERS) $(priv_headers)
 
 asn1parse.h: asn1parse.c
 
-$(gen_files_krb5) krb5_asn1.hx krb5_asn1-priv.hx: krb5_asn1_files
-$(gen_files_krb5_template) krb5_template_asn1.hx krb5_template_asn1-priv.hx: krb5_template_asn1_files
-$(gen_files_ocsp) ocsp_asn1.hx ocsp_asn1-priv.hx: ocsp_asn1_files
-$(gen_files_ocsp_template) ocsp_template_asn1.hx ocsp_template_asn1-priv.hx: ocsp_template_asn1_files
-$(gen_files_pkinit) pkinit_asn1.hx pkinit_asn1-priv.hx: pkinit_asn1_files
-$(gen_files_pkinit_template) pkinit_template_asn1.hx pkinit_template_asn1-priv.hx: pkinit_template_asn1_files
-$(gen_files_pkcs8) pkcs8_asn1.hx pkcs8_asn1-priv.hx: pkcs8_asn1_files
-$(gen_files_pkcs8_template) pkcs8_template_asn1.hx pkcs8_template_asn1-priv.hx: pkcs8_template_asn1_files
-$(gen_files_pkcs9) pkcs9_asn1.hx pkcs9_asn1-priv.hx: pkcs9_asn1_files
-$(gen_files_pkcs9_template) pkcs9_template_asn1.hx pkcs9_template_asn1-priv.hx: pkcs9_template_asn1_files
-$(gen_files_pkcs10) pkcs10_asn1.hx pkcs10_asn1-priv.hx: pkcs10_asn1_files
-$(gen_files_pkcs10_template) pkcs10_template_asn1.hx pkcs10_template_asn1-priv.hx: pkcs10_template_asn1_files
-$(gen_files_pkcs12) pkcs12_asn1.hx pkcs12_asn1-priv.hx: pkcs12_asn1_files
-$(gen_files_pkcs12_template) pkcs12_template_asn1.hx pkcs12_template_asn1-priv.hx: pkcs12_template_asn1_files
-$(gen_files_digest) digest_asn1.hx digest_asn1-priv.hx: digest_asn1_files
-$(gen_files_digest_template) digest_template_asn1.hx digest_template_asn1-priv.hx: digest_template_asn1_files
-$(gen_files_kx509) kx509_asn1.hx kx509_asn1-priv.hx: kx509_asn1_files
-$(gen_files_kx509_template) kx509_template_asn1.hx kx509_template_asn1-priv.hx: kx509_template_asn1_files
-$(gen_files_rfc2459) rfc2459_asn1.hx rfc2459_asn1-priv.hx: rfc2459_asn1_files
-$(gen_files_rfc2459_template) rfc2459_template_asn1.hx rfc2459_template_asn1-priv.hx: rfc2459_template_asn1_files
-$(gen_files_rfc4108) rfc4108_asn1.hx rfc4108_asn1-priv.hx: rfc4108_asn1_files
-$(gen_files_rfc4108_template) rfc4108_template_asn1.hx rfc4108_template_asn1-priv.hx: rfc4108_template_asn1_files
-$(gen_files_cms) cms_asn1.hx cms_asn1-priv.hx: cms_asn1_files
-$(gen_files_cms_template) cms_template_asn1.hx cms_template_asn1-priv.hx: cms_template_asn1_files
-$(gen_files_crmf) crmf_asn1.hx crmf_asn1-priv.hx: crmf_asn1_files
-$(gen_files_crmf_template) crmf_template_asn1.hx crmf_template_asn1-priv.hx: crmf_template_asn1_files
-$(gen_files_x690sample) x690sample_asn1.hx x690sample_asn1-priv.hx: x690sample_asn1_files
-$(gen_files_x690sample_template) x690sample_template_asn1.hx x690sample_template_asn1-priv.hx: x690sample_template_asn1_files
-$(gen_files_test) test_asn1.hx test_asn1-priv.hx: test_asn1_files
-$(gen_files_test_template) test_template_asn1.hx test_template_asn1-priv.hx: test_template_asn1_files
+$(gen_files_krb5) krb5_asn1.h krb5_asn1-priv.h: krb5_asn1_files
+$(gen_files_krb5_template) krb5_template_asn1.h krb5_template_asn1-priv.h: krb5_template_asn1_files
+$(gen_files_ocsp) ocsp_asn1.h ocsp_asn1-priv.h: ocsp_asn1_files
+$(gen_files_ocsp_template) ocsp_template_asn1.h ocsp_template_asn1-priv.h: ocsp_template_asn1_files
+$(gen_files_pkinit) pkinit_asn1.h pkinit_asn1-priv.h: pkinit_asn1_files
+$(gen_files_pkinit_template) pkinit_template_asn1.h pkinit_template_asn1-priv.h: pkinit_template_asn1_files
+$(gen_files_pkcs8) pkcs8_asn1.h pkcs8_asn1-priv.h: pkcs8_asn1_files
+$(gen_files_pkcs8_template) pkcs8_template_asn1.h pkcs8_template_asn1-priv.h: pkcs8_template_asn1_files
+$(gen_files_pkcs9) pkcs9_asn1.h pkcs9_asn1-priv.h: pkcs9_asn1_files
+$(gen_files_pkcs9_template) pkcs9_template_asn1.h pkcs9_template_asn1-priv.h: pkcs9_template_asn1_files
+$(gen_files_pkcs10) pkcs10_asn1.h pkcs10_asn1-priv.h: pkcs10_asn1_files
+$(gen_files_pkcs10_template) pkcs10_template_asn1.h pkcs10_template_asn1-priv.h: pkcs10_template_asn1_files
+$(gen_files_pkcs12) pkcs12_asn1.h pkcs12_asn1-priv.h: pkcs12_asn1_files
+$(gen_files_pkcs12_template) pkcs12_template_asn1.h pkcs12_template_asn1-priv.h: pkcs12_template_asn1_files
+$(gen_files_digest) digest_asn1.h digest_asn1-priv.h: digest_asn1_files
+$(gen_files_digest_template) digest_template_asn1.h digest_template_asn1-priv.h: digest_template_asn1_files
+$(gen_files_kx509) kx509_asn1.h kx509_asn1-priv.h: kx509_asn1_files
+$(gen_files_kx509_template) kx509_template_asn1.h kx509_template_asn1-priv.h: kx509_template_asn1_files
+$(gen_files_rfc2459) rfc2459_asn1.h rfc2459_asn1-priv.h: rfc2459_asn1_files
+$(gen_files_rfc2459_template) rfc2459_template_asn1.h rfc2459_template_asn1-priv.h: rfc2459_template_asn1_files
+$(gen_files_rfc4108) rfc4108_asn1.h rfc4108_asn1-priv.h: rfc4108_asn1_files
+$(gen_files_rfc4108_template) rfc4108_template_asn1.h rfc4108_template_asn1-priv.h: rfc4108_template_asn1_files
+$(gen_files_cms) cms_asn1.h cms_asn1-priv.h: cms_asn1_files
+$(gen_files_cms_template) cms_template_asn1.h cms_template_asn1-priv.h: cms_template_asn1_files
+$(gen_files_crmf) crmf_asn1.h crmf_asn1-priv.h: crmf_asn1_files
+$(gen_files_crmf_template) crmf_template_asn1.h crmf_template_asn1-priv.h: crmf_template_asn1_files
+$(gen_files_x690sample) x690sample_asn1.h x690sample_asn1-priv.h: x690sample_asn1_files
+$(gen_files_x690sample_template) x690sample_template_asn1.h x690sample_template_asn1-priv.h: x690sample_template_asn1_files
+$(gen_files_test) test_asn1.h test_asn1-priv.h: test_asn1_files
+$(gen_files_test_template) test_template_asn1.h test_template_asn1-priv.h: test_template_asn1_files
 
 if ASN1_TEMPLATING
 TEMPLATE_OPTION=--template

@@ -442,7 +442,7 @@ clean::
 	-$(RM) $(OBJ)\*.*
 !endif
 
-.SUFFIXES: .c .cpp .hin .h .x .hx
+.SUFFIXES: .c .cpp .hin .h .hx
 
 #----------------------------------------------------------------------
 # Manifest handling

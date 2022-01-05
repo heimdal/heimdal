@@ -159,7 +159,7 @@ init_generate (const char *filename, const char *base)
     /* public header file */
     if (asprintf(&header, "%s.h", headerbase) < 0 || header == NULL)
 	errx(1, "malloc");
-    if (asprintf(&fn, "%s.hx", headerbase) < 0 || fn == NULL)
+    if (asprintf(&fn, "%s.h", headerbase) < 0 || fn == NULL)
 	errx(1, "malloc");
     headerfile = fopen (fn, "w");
     if (headerfile == NULL)
@@ -170,7 +170,7 @@ init_generate (const char *filename, const char *base)
     /* private header file */
     if (asprintf(&privheader, "%s-priv.h", headerbase) < 0 || privheader == NULL)
 	errx(1, "malloc");
-    if (asprintf(&fn, "%s-priv.hx", headerbase) < 0 || fn == NULL)
+    if (asprintf(&fn, "%s-priv.h", headerbase) < 0 || fn == NULL)
 	errx(1, "malloc");
     privheaderfile = fopen (fn, "w");
     if (privheaderfile == NULL)
@@ -179,7 +179,7 @@ init_generate (const char *filename, const char *base)
     fn = NULL;
 
     /* template file */
-    if (asprintf(&template, "%s-template.x", headerbase) < 0 || template == NULL)
+    if (asprintf(&template, "%s-template.c", headerbase) < 0 || template == NULL)
 	errx(1, "malloc");
     fprintf (headerfile,
 	     "/* Generated from %s */\n"
@@ -300,12 +300,12 @@ init_generate (const char *filename, const char *base)
     free(fn);
     fn = NULL;
 
-    if (asprintf(&fn, "%s_oids.x", base) < 0 || fn == NULL)
+    if (asprintf(&fn, "%s_oids.c", base) < 0 || fn == NULL)
 	errx(1, "malloc");
     oidsfile = fopen(fn, "w");
     if (oidsfile == NULL)
 	err (1, "open %s", fn);
-    if (asprintf(&fn, "%s_syms.x", base) < 0 || fn == NULL)
+    if (asprintf(&fn, "%s_syms.c", base) < 0 || fn == NULL)
 	errx(1, "malloc");
     symsfile = fopen(fn, "w");
     if (symsfile == NULL)
@@ -415,7 +415,7 @@ generate_header_of_codefile(const char *name)
     if (codefile != NULL)
 	abort();
 
-    if (asprintf (&filename, "%s_%s.x", STEM, name) < 0 || filename == NULL)
+    if (asprintf (&filename, "%s_%s.c", STEM, name) < 0 || filename == NULL)
 	errx(1, "malloc");
     codefile = fopen (filename, "w");
     if (codefile == NULL)

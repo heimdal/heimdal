@@ -112,6 +112,21 @@ $(BINDIR)\asn1_gen.exe: $(OBJ)\asn1_gen.obj $(LIBHEIMDAL)
 	$(EXECONLINK) $(LIBVERS) $(LIBROKEN)
 	$(EXEPREP)
 
+LIBASN1_X= \
+	$(gen_files_rfc2459)		\
+	$(gen_files_rfc4108)		\
+	$(gen_files_cms)		\
+	$(gen_files_krb5)		\
+	$(gen_files_ocsp)		\
+	$(gen_files_pkinit)		\
+	$(gen_files_pkcs8)		\
+	$(gen_files_pkcs9)		\
+	$(gen_files_pkcs10)		\
+	$(gen_files_pkcs12)		\
+	$(gen_files_digest)		\
+	$(gen_files_kx509)		\
+	$(gen_files_x690sample)
+
 LIBASN1_OBJS=	\
 	$(OBJ)\der.obj				\
 	$(OBJ)\der_get.obj			\
@@ -124,6 +139,7 @@ LIBASN1_OBJS=	\
 	$(OBJ)\der_format.obj			\
 	$(OBJ)\template.obj			\
 	$(OBJ)\extra.obj			\
+	$(OBJ)\oid_resolution.obj		\
 	$(OBJ)\timegm.obj			\
 	$(gen_files_rfc2459:.x=.obj)		\
 	$(gen_files_rfc4108:.x=.obj)		\
@@ -140,11 +156,9 @@ LIBASN1_OBJS=	\
 	$(gen_files_x690sample:.x=.obj)		\
 	$(OBJ)\asn1_err.obj
 
-$(OBJ)\oid_resolution.obj: $(LIBASN1_OBJS)
+$(OBJ)\oid_resolution.obj: $(LIBASN1_X)
 
-LIBASN1_OBJS2=	$(LIBASN1_OBJS) $(OBJ)\oid_resolution.obj
-
-$(LIBASN1): $(LIBASN1_OBJS2)
+$(LIBASN1): $(LIBASN1_OBJS)
 	$(LIBCON_C) -out:$@ @<<
 $(**: =
 )

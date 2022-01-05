@@ -1828,7 +1828,7 @@ _asn1_length_open_type_id(const struct asn1_template *t,
                           const void *data)
 {
     struct asn1_template pretend[2] = {
-        { 0, 0, ((void*)1) },
+	{ 0, 0, ((void*)(uintptr_t)1) },
     };
     pretend[1] = *t;
     while ((t->tt & A1_OP_MASK) == A1_OP_TAG)

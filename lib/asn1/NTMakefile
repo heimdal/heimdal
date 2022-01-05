@@ -1,6 +1,6 @@
 ########################################################################
 #
-# Copyright (c) 2009, Secure Endpoints Inc.
+# Copyright (c) 2009-2022, Secure Endpoints Inc.
 # All rights reserved.
 # 
 # Redistribution and use in source and binary forms, with or without
@@ -166,6 +166,131 @@ $(**: =
 
 clean::
 	-$(RM) $(LIBASN1)
+
+#
+# The static runtime version LIBASN1_S is for use by thirdparty
+# components.  It is not used in the construction of the Heimdal
+# DLLs.
+
+LIBASN1_S_OBJS=	\
+	$(OBJ)\der.s.obj			\
+	$(OBJ)\der_get.s.obj			\
+	$(OBJ)\der_put.s.obj			\
+	$(OBJ)\der_free.s.obj			\
+	$(OBJ)\der_print.s.obj			\
+	$(OBJ)\der_length.s.obj			\
+	$(OBJ)\der_copy.s.obj			\
+	$(OBJ)\der_cmp.s.obj			\
+	$(OBJ)\der_format.s.obj			\
+	$(OBJ)\template.s.obj			\
+	$(OBJ)\extra.s.obj			\
+	$(OBJ)\oid_resolution.s.obj		\
+	$(OBJ)\timegm.s.obj			\
+	$(gen_files_rfc2459:.x=.s.obj)		\
+	$(gen_files_rfc4108:.x=.s.obj)		\
+	$(gen_files_cms:.x=.s.obj)		\
+	$(gen_files_krb5:.x=.s.obj)		\
+	$(gen_files_ocsp:.x=.s.obj)		\
+	$(gen_files_pkinit:.x=.s.obj)		\
+	$(gen_files_pkcs8:.x=.s.obj)		\
+	$(gen_files_pkcs9:.x=.s.obj)		\
+	$(gen_files_pkcs10:.x=.s.obj)		\
+	$(gen_files_pkcs12:.x=.s.obj)		\
+	$(gen_files_digest:.x=.s.obj)		\
+	$(gen_files_kx509:.x=.s.obj)		\
+	$(gen_files_x690sample:.x=.s.obj)	\
+	$(OBJ)\asn1_err.s.obj
+
+$(OBJ)\oid_resolution.s.obj: oid_resolution.c $(LIBASN1_X)
+	$(C2OBJ_C_MT) -Fo$@ -Fd$(@D)\ oid_resolution.c
+
+$(OBJ)\der.s.obj: der.c
+	$(C2OBJ_C_MT) -Fo$@ -Fd$(@D)\ $**
+
+$(OBJ)\der_get.s.obj: der_get.c
+	$(C2OBJ_C_MT) -Fo$@ -Fd$(@D)\ $**
+
+$(OBJ)\der_put.s.obj: der_put.c
+	$(C2OBJ_C_MT) -Fo$@ -Fd$(@D)\ $**
+
+$(OBJ)\der_free.s.obj: der_free.c
+	$(C2OBJ_C_MT) -Fo$@ -Fd$(@D)\ $**
+
+$(OBJ)\der_print.s.obj: der_print.c
+	$(C2OBJ_C_MT) -Fo$@ -Fd$(@D)\ $**
+
+$(OBJ)\der_length.s.obj: der_length.c
+	$(C2OBJ_C_MT) -Fo$@ -Fd$(@D)\ $**
+
+$(OBJ)\der_copy.s.obj: der_copy.c
+	$(C2OBJ_C_MT) -Fo$@ -Fd$(@D)\ $**
+
+$(OBJ)\der_cmp.s.obj: der_cmp.c
+	$(C2OBJ_C_MT) -Fo$@ -Fd$(@D)\ $**
+
+$(OBJ)\der_format.s.obj: der_format.c
+	$(C2OBJ_C_MT) -Fo$@ -Fd$(@D)\ $**
+
+$(OBJ)\template.s.obj: template.c
+	$(C2OBJ_C_MT) -Fo$@ -Fd$(@D)\ $**
+
+$(OBJ)\extra.s.obj: extra.c
+	$(C2OBJ_C_MT) -Fo$@ -Fd$(@D)\ $**
+
+$(OBJ)\timegm.s.obj: timegm.c
+	$(C2OBJ_C_MT) -Fo$@ -Fd$(@D)\ $**
+
+$(gen_files_rfc2459:.x=.s.obj): $(gen_files_rfc2459:.x=.c)
+	$(C2OBJ_C_MT) -Fo$@ -Fd$(@D)\ $**
+
+$(gen_files_rfc4108:.x=.s.obj): $(gen_files_rfc4108:.x=.c)
+	$(C2OBJ_C_MT) -Fo$@ -Fd$(@D)\ $**
+
+$(gen_files_cms:.x=.s.obj): $(gen_files_cms:.x=.c)
+	$(C2OBJ_C_MT) -Fo$@ -Fd$(@D)\ $**
+
+$(gen_files_krb5:.x=.s.obj): $(gen_files_krb5:.x=.c)
+	$(C2OBJ_C_MT) -Fo$@ -Fd$(@D)\ $**
+
+$(gen_files_ocsp:.x=.s.obj): $(gen_files_ocsp:.x=.c)
+	$(C2OBJ_C_MT) -Fo$@ -Fd$(@D)\ $**
+
+$(gen_files_pkinit:.x=.s.obj): $(gen_files_pkinit:.x=.c)
+	$(C2OBJ_C_MT) -Fo$@ -Fd$(@D)\ $**
+
+$(gen_files_pkcs8:.x=.s.obj): $(gen_files_pkcs8:.x=.c)
+	$(C2OBJ_C_MT) -Fo$@ -Fd$(@D)\ $**
+
+$(gen_files_pkcs9:.x=.s.obj): $(gen_files_pkcs9:.x=.c)
+	$(C2OBJ_C_MT) -Fo$@ -Fd$(@D)\ $**
+
+$(gen_files_pkcs10:.x=.s.obj): $(gen_files_pkcs10:.x=.c)
+	$(C2OBJ_C_MT) -Fo$@ -Fd$(@D)\ $**
+
+$(gen_files_pkcs12:.x=.s.obj): $(gen_files_pkcs12:.x=.c)
+	$(C2OBJ_C_MT) -Fo$@ -Fd$(@D)\ $**
+
+$(gen_files_digest:.x=.s.obj): $(gen_files_digest:.x=.c)
+	$(C2OBJ_C_MT) -Fo$@ -Fd$(@D)\ $**
+
+$(gen_files_kx509:.x=.s.obj): $(gen_files_kx509:.x=.c)
+	$(C2OBJ_C_MT) -Fo$@ -Fd$(@D)\ $**
+
+$(gen_files_x690sample:.x=.s.obj): $(gen_files_x690sample:.x=.c)
+	$(C2OBJ_C_MT) -Fo$@ -Fd$(@D)\ $**
+
+$(OBJ)\asn1_err.s.obj: $(OBJ)\asn1_err.c
+	$(C2OBJ_C_MT) -Fo$@ -Fd$(@D)\ $**
+
+$(LIBASN1_S): $(LIBASN1_S_OBJS)
+	$(LIBCON_C) -out:$@ @<<
+$(**: =
+)
+<<
+
+clean::
+	-$(RM) $(LIBASN1_S)
+
 
 #
 # Generate list of exports
@@ -421,7 +546,7 @@ $(OBJ)\der-private.h: $(libasn1_SOURCES)
 clean::
 	-$(RM) $(INCDIR)\der-protos.h
 
-all:: $(INCFILES) $(GENINCFILES) $(ASN1_BINARIES) $(LIBASN1)
+all:: $(INCFILES) $(GENINCFILES) $(ASN1_BINARIES) $(LIBASN1) $(LIBASN1_S)
 
 all-tools:: $(LIBEXECDIR)\asn1_print.exe $(BINDIR)\asn1_gen.exe
 

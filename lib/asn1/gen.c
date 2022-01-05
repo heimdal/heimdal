@@ -427,7 +427,9 @@ generate_header_of_codefile(const char *name)
     fprintf (codefile,
 	     "/* Generated from %s */\n"
 	     "/* Do not edit */\n\n"
-	     "#define  ASN1_LIB\n\n"
+	     "#if defined(_WIN32) && !defined(ASN1_LIB)\n"
+	     "# error \"ASN1_LIB must be defined\"\n"
+	     "#endif\n"
 	     "#include <stdio.h>\n"
 	     "#include <stdlib.h>\n"
 	     "#include <time.h>\n"

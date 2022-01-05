@@ -31,7 +31,7 @@
 
 RELDIR=lib\asn1
 
-intcflags=-I$(SRCDIR) -I$(OBJ) -DROKEN_RENAME -DASN1_IOS_SUPPORTED
+intcflags=-I$(SRCDIR) -I$(OBJ) -DROKEN_RENAME -DASN1_IOS_SUPPORTED -DASN1_LIB
 
 !include ../../windows/NTMakefile.w32
 

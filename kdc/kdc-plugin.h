@@ -86,6 +86,11 @@ typedef krb5_error_code
  *
  * If the function returns KRB5_PLUGIN_NO_HANDLE, the TGS will continue
  * with its default referral handling.
+ *
+ * Note well: the current API contract requires the plugin to NOT free
+ * priv->server_princ if replacing; the KDC will do this. This may change
+ * in a future release, be sure to consult this file whenever the plugin
+ * version changes.
  */
 
 typedef krb5_error_code
@@ -109,8 +114,11 @@ typedef krb5_error_code
 typedef krb5_error_code
 (KRB5_CALLCONV *krb5plugin_kdc_audit)(void *, astgs_request_t);
 
-#define KRB5_KDC_PLUGIN_MINOR		8
-#define KRB5_KDC_PLUGING_MINOR		KRB5_KDC_PLUGIN_MINOR
+/*
+ * Plugins should carefully check API contract notes for changes
+ * between plugin API versions.
+ */
+#define KRB5_PLUGIN_KDC_VERSION_8	8
 
 typedef struct krb5plugin_kdc_ftable {
     int			minor_version;

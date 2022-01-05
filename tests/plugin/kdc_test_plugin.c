@@ -152,7 +152,7 @@ audit(void *ctx, astgs_request_t r)
 }
 
 static krb5plugin_kdc_ftable kdc_plugin = {
-    KRB5_KDC_PLUGING_MINOR,
+    KRB5_PLUGIN_KDC_VERSION_8,
     init,
     fini,
     pac_generate,

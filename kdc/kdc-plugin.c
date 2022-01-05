@@ -49,7 +49,7 @@ static const char *kdc_plugin_deps[] = {
 static struct heim_plugin_data kdc_plugin_data = {
     "krb5",
     "kdc",
-    KRB5_KDC_PLUGIN_MINOR,
+    KRB5_PLUGIN_KDC_VERSION_8,
     kdc_plugin_deps,
     kdc_get_instance
 };

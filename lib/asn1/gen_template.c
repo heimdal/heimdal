@@ -549,11 +549,11 @@ defval(struct templatehead *temp, Member *m)
 {
     switch (m->defval->type) {
     case booleanvalue:
-        add_line(temp, "{ A1_OP_DEFVAL|A1_DV_BOOLEAN, ~0, (void *)%u }",
+	add_line(temp, "{ A1_OP_DEFVAL|A1_DV_BOOLEAN, ~0, (void *)(uintptr_t)%u }",
                  m->defval->u.booleanvalue);
         break;
     case nullvalue:
-        add_line(temp, "{ A1_OP_DEFVAL|A1_DV_NULL, ~0, (void *)0 }");
+	add_line(temp, "{ A1_OP_DEFVAL|A1_DV_NULL, ~0, (void *)(uintptr_t)0 }");
         break;
     case integervalue: {
         const char *dv = "A1_DV_INTEGER";
@@ -585,7 +585,7 @@ defval(struct templatehead *temp, Member *m)
             dv = "A1_DV_INTEGER64";
         else
             dv = "A1_DV_INTEGER32";
-        add_line(temp, "{ A1_OP_DEFVAL|%s, ~0, (void *)%llu }",
+	add_line(temp, "{ A1_OP_DEFVAL|%s, ~0, (void *)(uintptr_t)%llu }",
                  dv, (long long)m->defval->u.integervalue);
         break;
     }
@@ -595,7 +595,7 @@ defval(struct templatehead *temp, Member *m)
         if (rk_strasvis(&quoted, m->defval->u.stringvalue,
                         VIS_CSTYLE | VIS_NL, "\"") < 0)
             err(1, "Could not quote a string");
-        add_line(temp, "{ A1_OP_DEFVAL|A1_DV_UTF8STRING, ~0, (void *)\"%s\" }",
+	add_line(temp, "{ A1_OP_DEFVAL|A1_DV_UTF8STRING, ~0, (void *)(uintptr_t)\"%s\" }",
                  quoted);
         free(quoted);
         break;
@@ -628,7 +628,7 @@ defval(struct templatehead *temp, Member *m)
         sz -= len;
         p += len;
 
-        add_line(temp, "{ A1_OP_DEFVAL|A1_DV_INTEGER, ~0, (void *)\"%s\" }", s);
+	add_line(temp, "{ A1_OP_DEFVAL|A1_DV_INTEGER, ~0, (void *)(uintptr_t)\"%s\" }", s);
         free(s);
         break;
     }
@@ -794,7 +794,7 @@ template_object_set(IOSObjectSet *os, Field *typeidfield, Field *opentypefield)
         switch (typeidobjf->value->type) {
         case integervalue:
             add_line(&tl->template,
-                     "{ A1_OP_OPENTYPE_ID | A1_OTI_IS_INTEGER, 0, (void *)%lld }",
+		     "{ A1_OP_OPENTYPE_ID | A1_OTI_IS_INTEGER, 0, (void *)(uintptr_t)%lld }",
                      (long long)typeidobjf->value->u.integervalue);
             break;
         case objectidentifiervalue:
@@ -820,7 +820,7 @@ template_object_set(IOSObjectSet *os, Field *typeidfield, Field *opentypefield)
     }
     free(objects);
 
-    tlist_header(tl, "{ 0, 0, ((void *)%lu) }", nobjs);
+    tlist_header(tl, "{ 0, 0, ((void *)(uintptr_t)%lu) }", nobjs);
     tlist_print(tl);
     tlist_add(tl);
     os->symbol->emitted_template = 1;
@@ -957,7 +957,7 @@ template_members(struct templatehead *temp,
                          "{ A1_OP_NAME, %d, \"%s\" }", m->val, m->name);
                 nmemb++;
             }
-            tlist_header(tl, "{ 0, 0, ((void *)%lu) }", nmemb);
+	    tlist_header(tl, "{ 0, 0, ((void *)(uintptr_t)%lu) }", nmemb);
             /* XXX Accidentally O(N^2)? */
             if (!tlist_find_dup(tl)) {
                 tlist_print(tl);
@@ -1039,7 +1039,7 @@ template_members(struct templatehead *temp,
 	}
 
 	fprintf(f, "static const struct asn1_template asn1_%s_%s[] = {\n", basetype, bname);
-	fprintf(f, "/* 0 */ { 0%s, sizeof(%s), ((void *)%lu) },\n",
+	fprintf(f, "/* 0 */ { 0%s, sizeof(%s), ((void *)(uintptr_t)%lu) },\n",
 		rfc1510_bitstring ? "|A1_HBF_RFC1510" : "",
 		basetype, (unsigned long)count);
 	i = 1;
@@ -1343,7 +1343,7 @@ template_members(struct templatehead *temp,
 	}
 
 	fprintf(f, "static const struct asn1_template %s[] = {\n", tname);
-	fprintf(f, "/* 0 */ { %s, offsetof(%s%s, element), ((void *)%lu) },\n",
+	fprintf(f, "/* 0 */ { %s, offsetof(%s%s, element), ((void *)(uintptr_t)%lu) },\n",
 		e ? e : "0", isstruct ? "struct " : "", basetype, (unsigned long)count);
 	i = 1;
 	HEIM_TAILQ_FOREACH(q, &template, members) {
@@ -1464,7 +1464,7 @@ generate_template_type(const char *varname,
 
     fprintf(get_code_file(), "/* generate_template_type: %s */\n", tl->name);
 
-    tlist_header(tl, "{ 0%s%s, sizeof(%s), ((void *)%lu) }",
+    tlist_header(tl, "{ 0%s%s, sizeof(%s), ((void *)(uintptr_t)%lu) }",
 		 (symname && preserve_type(symname)) ? "|A1_HF_PRESERVE" : "",
 		 have_ellipsis ? "|A1_HF_ELLIPSIS" : "", szt, tlist_count(tl));
 

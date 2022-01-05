@@ -210,30 +210,39 @@ _kdc_check_access(astgs_request_t r)
     return ret;
 }
 
+struct rewrite_uc {
+    astgs_request_t request;
+    unsigned int flags;
+};
+
 static krb5_error_code KRB5_LIB_CALL
 rewrite_request(krb5_context context, const void *plug, void *plugctx, void *userctx)
 {
     const krb5plugin_kdc_ftable *ft = (const krb5plugin_kdc_ftable *)plug;
+    struct rewrite_uc *uc = (struct rewrite_uc *)userctx;
 
     if (ft->rewrite_request == NULL)
 	return KRB5_PLUGIN_NO_HANDLE;
-    return ft->rewrite_request((void *)plug, userctx);
+    return ft->rewrite_request((void *)plug, uc->request, uc->flags);
 }
 
 krb5_error_code
-_kdc_rewrite_request(astgs_request_t r)
+_kdc_rewrite_request(astgs_request_t r, unsigned int flags)
 {
     krb5_error_code ret = KRB5_PLUGIN_NO_HANDLE;
+    struct rewrite_uc uc;
+
+    uc.request = r;
+    uc.flags = flags;
 
     if (have_plugin)
-        ret = _krb5_plugin_run_f(r->context, &kdc_plugin_data, 0, r, rewrite_request);
+        ret = _krb5_plugin_run_f(r->context, &kdc_plugin_data, 0, &uc, rewrite_request);
 
     if (ret == KRB5_PLUGIN_NO_HANDLE)
         ret = 0;
 
     return ret;
 }
-
 
 static krb5_error_code KRB5_LIB_CALL
 referral_policy(krb5_context context, const void *plug, void *plugctx, void *userctx)

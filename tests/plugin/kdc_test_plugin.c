@@ -111,7 +111,7 @@ client_access(void *ctx, astgs_request_t r)
 }
 
 static krb5_error_code KRB5_CALLCONV
-rewrite_request(void *ctx, astgs_request_t r)
+rewrite_request(void *ctx, astgs_request_t r, unsigned int flags)
 {
     logit("rewrite_request", r);
 

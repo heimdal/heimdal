@@ -78,12 +78,16 @@ typedef krb5_error_code
 (KRB5_CALLCONV *krb5plugin_kdc_client_access)(void *, astgs_request_t);
 
 /*
- * Called immediately after FAST unwrapping (but after parsing the
- * TGS-REQ padata in the TGS case).
+ * Allows the plugin to rewrite the request; called twice, once immediately
+ * after parsing, and once after FAST unwrapping (in the TGS case, the latter
+ * is also after parsing the TGS-REQ padata).
  */
 
+#define KDC_PLUGIN_FLAG_PRE_FAST_UNWRAP	    0x1
+#define KDC_PLUGIN_FLAG_POST_FAST_UNWRAP    0x2
+
 typedef krb5_error_code
-(KRB5_CALLCONV *krb5plugin_kdc_rewrite_request)(void *, astgs_request_t);
+(KRB5_CALLCONV *krb5plugin_kdc_rewrite_request)(void *, astgs_request_t, unsigned int);
 
 /*
  * A referral policy plugin can either rewrite the server principal

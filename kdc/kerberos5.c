@@ -2075,6 +2075,11 @@ _kdc_as_rep(astgs_request_t r)
 	goto out;
     }
 
+    ret = _kdc_rewrite_request(r, KDC_PLUGIN_FLAG_PRE_FAST_UNWRAP);
+    if (ret)
+	goto out;
+
+
     /*
      * Look for FAST armor and unwrap
      */
@@ -2084,10 +2089,7 @@ _kdc_as_rep(astgs_request_t r)
 	goto out;
     }
 
-    /*
-     * Allow a plugin to rewrite the request before we parse it.
-     */
-    ret = _kdc_rewrite_request(r);
+    ret = _kdc_rewrite_request(r, KDC_PLUGIN_FLAG_POST_FAST_UNWRAP);
     if (ret)
 	goto out;
 

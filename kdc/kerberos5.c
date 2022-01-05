@@ -2084,6 +2084,13 @@ _kdc_as_rep(astgs_request_t r)
 	goto out;
     }
 
+    /*
+     * Allow a plugin to rewrite the request before we parse it.
+     */
+    ret = _kdc_rewrite_request(r);
+    if (ret)
+	goto out;
+
     b = &req->req_body;
     f = b->kdc_options;
 

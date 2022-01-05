@@ -111,6 +111,14 @@ client_access(void *ctx, astgs_request_t r)
 }
 
 static krb5_error_code KRB5_CALLCONV
+rewrite_request(void *ctx, astgs_request_t r)
+{
+    logit("rewrite_request", r);
+
+    return 0;
+}
+
+static krb5_error_code KRB5_CALLCONV
 finalize_reply(void *ctx, astgs_request_t r)
 {
     heim_number_t n;
@@ -158,6 +166,7 @@ static krb5plugin_kdc_ftable kdc_plugin = {
     pac_generate,
     pac_verify,
     client_access,
+    rewrite_request,
     NULL, /* referral_policy */
     finalize_reply,
     audit

@@ -78,6 +78,14 @@ typedef krb5_error_code
 (KRB5_CALLCONV *krb5plugin_kdc_client_access)(void *, astgs_request_t);
 
 /*
+ * Called immediately after FAST unwrapping (but after parsing the
+ * TGS-REQ padata in the TGS case).
+ */
+
+typedef krb5_error_code
+(KRB5_CALLCONV *krb5plugin_kdc_rewrite_request)(void *, astgs_request_t);
+
+/*
  * A referral policy plugin can either rewrite the server principal
  * by resetting priv->server_princ, or it can disable referral
  * processing entirely by returning an error.
@@ -127,6 +135,7 @@ typedef struct krb5plugin_kdc_ftable {
     krb5plugin_kdc_pac_generate		pac_generate;
     krb5plugin_kdc_pac_verify		pac_verify;
     krb5plugin_kdc_client_access	client_access;
+    krb5plugin_kdc_rewrite_request	rewrite_request;
     krb5plugin_kdc_referral_policy	referral_policy;
     krb5plugin_kdc_finalize_reply	finalize_reply;
     krb5plugin_kdc_audit		audit;

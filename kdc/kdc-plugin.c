@@ -211,6 +211,31 @@ _kdc_check_access(astgs_request_t r)
 }
 
 static krb5_error_code KRB5_LIB_CALL
+rewrite_request(krb5_context context, const void *plug, void *plugctx, void *userctx)
+{
+    const krb5plugin_kdc_ftable *ft = (const krb5plugin_kdc_ftable *)plug;
+
+    if (ft->rewrite_request == NULL)
+	return KRB5_PLUGIN_NO_HANDLE;
+    return ft->rewrite_request((void *)plug, userctx);
+}
+
+krb5_error_code
+_kdc_rewrite_request(astgs_request_t r)
+{
+    krb5_error_code ret = KRB5_PLUGIN_NO_HANDLE;
+
+    if (have_plugin)
+        ret = _krb5_plugin_run_f(r->context, &kdc_plugin_data, 0, r, rewrite_request);
+
+    if (ret == KRB5_PLUGIN_NO_HANDLE)
+        ret = 0;
+
+    return ret;
+}
+
+
+static krb5_error_code KRB5_LIB_CALL
 referral_policy(krb5_context context, const void *plug, void *plugctx, void *userctx)
 {
     const krb5plugin_kdc_ftable *ft = (const krb5plugin_kdc_ftable *)plug;

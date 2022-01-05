@@ -1205,6 +1205,13 @@ next_kvno:
     if (ret)
 	goto out;
 
+    /*
+     * Allow a plugin to rewrite the request before we parse it.
+     */
+    ret = _kdc_rewrite_request(r);
+    if (ret)
+	goto out;
+
     krb5_auth_con_free(r->context, ac);
 
 out:

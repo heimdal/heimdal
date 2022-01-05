@@ -316,12 +316,12 @@ main(int argc, char **argv)
 	exit(1);
     if (!original_order)
         generate_types();
-    close_generate ();
     if (argc != optidx)
 	fclose(yyin);
 
     if (one_code_file)
 	close_codefile();
+    close_generate();
 
     if (arg) {
 	for (i = 1; i < len; i++)

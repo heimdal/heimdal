@@ -356,11 +356,19 @@ close_generate (void)
         err(1, "writes to private header file failed");
     if (templatefile && fclose(templatefile) == EOF)
         err(1, "writes to template file failed");
-    if (logfile) {
-        fprintf(logfile, "\n");
-        if (fclose(logfile) == EOF)
-            err(1, "writes to log file failed");
-    }
+    if (!jsonfile) abort();
+    if (fclose(jsonfile) == EOF)
+        err(1, "writes to JSON file failed");
+    if (!oidsfile) abort();
+    if (fclose(oidsfile) == EOF)
+        err(1, "writes to OIDs file failed");
+    if (!symsfile) abort();
+    if (fclose(symsfile) == EOF)
+        err(1, "writes to symbols file failed");
+    if (!logfile) abort();
+    fprintf(logfile, "\n");
+    if (fclose(logfile) == EOF)
+        err(1, "writes to log file failed");
 }
 
 void

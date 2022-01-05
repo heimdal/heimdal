@@ -33,6 +33,8 @@
 
 RELDIR=lib\gssapi 
 
+intcflags=-DASN1_LIB
+
 !include ../../windows/NTMakefile.w32 
 
 krb5src = \

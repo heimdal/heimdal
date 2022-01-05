@@ -31,6 +31,8 @@
 
 RELDIR=lib\hdb
 
+intcflags=-DASN1_LIB
+
 !include ../../windows/NTMakefile.w32 
 
 gen_files_hdb = $(OBJ)\asn1_hdb_asn1.x

@@ -51,6 +51,24 @@
 
 #include "check-common.h"
 
+static int my_copy_vers_called;
+static int my_free_vers_called;
+
+int
+my_copy_vers(const my_vers *from, my_vers *to)
+{
+    my_copy_vers_called++;
+    *to = *from;
+    return 0;
+}
+
+void
+my_free_vers(my_vers *v)
+{
+    my_free_vers_called++;
+    v->v = -1;
+}
+
 static char *lha_principal[] = { "lha" };
 static char *lharoot_princ[] = { "lha", "root" };
 static char *datan_princ[] = { "host", "nutcracker.e.kth.se" };
@@ -1021,12 +1039,15 @@ static int
 test_decorated(void)
 {
     TESTNotDecorated tnd;
-    TESTDecorated td;
+    TESTDecorated3 td3, td3_copy;
+    TESTDecorated2 td2, td2_copy;
+    TESTDecorated td, td_copy;
     size_t len, size;
     void *ptr;
     int ret;
 
     memset(&td, 0, sizeof(td));
+    memset(&td2, 0, sizeof(td2));
     memset(&tnd, 0, sizeof(tnd));
 
     td.version = 3;
@@ -1043,6 +1064,7 @@ test_decorated(void)
         warnx("could not decode a TESTDecorated struct as TESTNotDecorated");
         return 1;
     }
+    free(ptr);
     if (size != len) {
         warnx("TESTDecorated encoded size mismatch");
         return 1;
@@ -1051,9 +1073,102 @@ test_decorated(void)
         warnx("TESTDecorated did not decode as a TESTNotDecorated correctly");
         return 1;
     }
+    if (copy_TESTDecorated(&td, &td_copy)) {
+        warnx("copy_TESTDecorated() failed");
+        return 1;
+    }
+    if (td.version != td_copy.version) {
+        warnx("copy_TESTDecorated() did not work correctly (1)");
+        return 1;
+    }
+    if (td_copy.version2 == NULL || *td.version2 != *td_copy.version2) {
+        warnx("copy_TESTDecorated() did not work correctly (2)");
+        return 1;
+    }
+    free_TESTDecorated(&td_copy);
     free_TESTDecorated(&td);
     if (td.version2) {
         warnx("free_TESTDecorated() did not work correctly");
+        return 1;
+    }
+
+    td2.version = 3;
+    td2.version2.v = 5;
+    ASN1_MALLOC_ENCODE(TESTDecorated2, ptr, len, &td2, &size, ret);
+    if (ret) {
+        warnx("could not encode a TESTDecorated2 struct");
+        return 1;
+    }
+    ret = decode_TESTNotDecorated(ptr, len, &tnd, &size);
+    if (ret) {
+        warnx("could not decode a TESTDecorated2 struct as TESTNotDecorated2");
+        return 1;
+    }
+    free(ptr);
+    if (size != len) {
+        warnx("TESTDecorated2 encoded size mismatch");
+        return 1;
+    }
+    if (td2.version != tnd.version) {
+        warnx("TESTDecorated2 did not decode as a TESTNotDecorated correctly");
+        return 1;
+    }
+    if (copy_TESTDecorated2(&td2, &td2_copy)) {
+        warnx("copy_TESTDecorated2() failed");
+        return 1;
+    }
+    if (td2.version != td2_copy.version || !my_copy_vers_called) {
+        warnx("copy_TESTDecorated2() did not work correctly (1)");
+        return 1;
+    }
+    if (td2.version2.v != td2_copy.version2.v) {
+        warnx("copy_TESTDecorated2() did not work correctly (2)");
+        return 1;
+    }
+    free_TESTDecorated2(&td2_copy);
+    free_TESTDecorated2(&td2);
+    if (td2.version2.v != 0 || my_free_vers_called != 2) {
+        warnx("free_TESTDecorated2() did not work correctly");
+        return 1;
+    }
+
+    td3.version = 3;
+    td3.privthing = &td;
+    ASN1_MALLOC_ENCODE(TESTDecorated3, ptr, len, &td3, &size, ret);
+    if (ret) {
+        warnx("could not encode a TESTDecorated3 struct");
+        return 1;
+    }
+    ret = decode_TESTNotDecorated(ptr, len, &tnd, &size);
+    if (ret) {
+        warnx("could not decode a TESTDecorated3 struct as TESTNotDecorated3");
+        return 1;
+    }
+    free(ptr);
+    if (size != len) {
+        warnx("TESTDecorated3 encoded size mismatch");
+        return 1;
+    }
+    if (td3.version != tnd.version) {
+        warnx("TESTDecorated3 did not decode as a TESTNotDecorated correctly");
+        return 1;
+    }
+    if (copy_TESTDecorated3(&td3, &td3_copy)) {
+        warnx("copy_TESTDecorated3() failed");
+        return 1;
+    }
+    if (td3.version != td3_copy.version) {
+        warnx("copy_TESTDecorated3() did not work correctly (1)");
+        return 1;
+    }
+    if (td3_copy.privthing != 0) {
+        warnx("copy_TESTDecorated3() did not work correctly (2)");
+        return 1;
+    }
+    free_TESTDecorated3(&td3_copy);
+    free_TESTDecorated3(&td3);
+    if (td3.privthing != 0) {
+        warnx("free_TESTDecorated3() did not work correctly");
         return 1;
     }
     return 0;
@@ -1521,7 +1636,7 @@ static int
 check_seq(void)
 {
     TESTSeqOf seq;
-    TESTInteger i;
+    TESTInteger i = 0;
     int ret;
 
     seq.val = NULL;

@@ -288,12 +288,23 @@ TESTExtensible ::= SEQUENCE {
 
 TESTDecorated ::= SEQUENCE {
   version     TESTuint32
-  -- gets decorated
+  -- gets decorated with an ASN.1 type (see test.opt)
+}
+
+TESTDecorated2 ::= SEQUENCE {
+  version     TESTuint32
+  -- gets decorated with a C type (see test.opt)
+}
+
+TESTDecorated3 ::= SEQUENCE {
+  version     TESTuint32
+  -- gets decorated with a void * field (see test.opt)
 }
 
 TESTNotDecorated ::= SEQUENCE {
   version     TESTuint32
-  -- should have the same encoding as TESTDecorated
+  -- should have the same encoding as TESTDecorated, TESTDecorated2, and
+  -- TESTDecorated3
 }
 
 END

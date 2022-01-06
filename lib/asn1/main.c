@@ -41,60 +41,134 @@ static getarg_strings preserve;
 static getarg_strings seq;
 static getarg_strings decorate;
 
+static int
+strcmp4qsort(const void *ap, const void *bp)
+{
+    return strcmp(*(const char **)ap, *(const char **)bp);
+}
+
+static ssize_t
+bsearch_strings(struct getarg_strings *strs, const char *s,
+                size_t prefix_len, char sep)
+{
+    ssize_t right = (ssize_t)strs->num_strings - 1;
+    ssize_t left = 0;
+
+    if (strs->num_strings == 0)
+        return -1;
+
+    while (left <= right) {
+        ssize_t mid = left + (right - left) / 2;
+        int cmp;
+
+        if (prefix_len) {
+            cmp = strncmp(s, strs->strings[mid], prefix_len);
+            if (cmp == 0 && sep) {
+                if (strs->strings[mid][prefix_len] == sep)
+                    return mid;
+                cmp = strncmp(&sep, &strs->strings[mid][prefix_len], 1);
+            }
+        } else
+            cmp = strcmp(s, strs->strings[mid]);
+        if (cmp == 0)
+            return mid;
+        if (cmp < 0)
+            right = mid - 1; /* -1 if `s' is smaller than smallest in strs */
+        else
+            left = mid + 1;
+    }
+    return -1;
+}
+
 int
 preserve_type(const char *p)
 {
-    int i;
-    for (i = 0; i < preserve.num_strings; i++)
-	if (strcmp(preserve.strings[i], p) == 0)
-	    return 1;
-    return 0;
+    return bsearch_strings(&preserve, p, 0, '\0') > -1;
 }
 
 int
 seq_type(const char *p)
 {
-    size_t i;
-
-    for (i = 0; i < seq.num_strings; i++)
-	if (strcmp(seq.strings[i], p) == 0)
-	    return 1;
-    return 0;
+    return bsearch_strings(&seq, p, 0, '\0') > -1;
 }
 
-int
-decorate_type(const char *p, char **field_type, char **field_name, int *opt)
+/*
+ * Split `s' on `sep' and fill fs[] with pointers to the substrings.
+ *
+ * Only the first substring is to be freed -- the rest share the same
+ * allocation.
+ *
+ * The last element may contain `sep' chars if there are more fields in `s'
+ * than output locations in `fs[]'.
+ */
+static void
+split_str(const char *s, char sep, char ***fs)
 {
-    size_t plen = strlen(p);
     size_t i;
 
-    *field_type = NULL;
-    *field_name = NULL;
-    *opt = 0;
-
-    for (i = 0; i < decorate.num_strings; i++) {
-        const char *r;
+    fs[0][0] = estrdup(s);
+    for (i = 1; fs[i]; i++) {
         char *q;
 
-	if (strncmp(decorate.strings[i], p, plen) != 0)
-            continue;
-	if (decorate.strings[i][plen] != ':')
-            errx(1, "--decorate argument missing field type");
-
-        p = &decorate.strings[i][plen + 1];
-        if ((r = strchr(p, ':')) == NULL)
-            errx(1, "--decorate argument missing field name");
-        r++;
-        *field_type = estrdup(p);
-        *(strchr(*field_type, ':')) = '\0';
-        *field_name = estrdup(r);
-        if ((q = strchr(*field_name, '?'))) {
-            *q = '\0';
-            *opt = 1;
-        }
-        return 1;
+        if ((q = strchr(fs[i-1][0], sep)) == NULL)
+            break;
+        *(q++) = '\0';
+        fs[i][0] = q;
     }
-    return 0;
+    for (; fs[i]; i++)
+        fs[i][0] = NULL;
+}
+
+/*
+ * If `p' is "decorated" with a not-to-be-encoded-or-decoded field,
+ * output the field's typename and fieldname, whether it's optional, whether
+ * it's an ASN.1 type or an "external" type, and if external the names of
+ * functions to copy and free values of that type.
+ */
+int
+decorate_type(const char *p,
+              struct decoration *deco)
+{
+    ssize_t i;
+    size_t plen = strlen(p);
+    char **s[7];
+    char *junk = NULL;
+    char *cp;
+
+    deco->decorated = 0;
+    deco->field_type = NULL;
+    if ((i = bsearch_strings(&decorate, p, plen, ':')) == -1)
+        return 0;
+
+    deco->decorated = 1;
+    deco->opt = 0;
+    deco->ext = 0;
+    deco->field_name = deco->copy_function_name = deco->free_function_name =
+        deco->header_name = NULL;
+
+    s[0] = &deco->field_type;
+    s[1] = &deco->field_name;
+    s[2] = &deco->copy_function_name;
+    s[3] = &deco->free_function_name;
+    s[4] = &deco->header_name;
+    s[5] = &junk;
+    s[6] = NULL;
+    split_str(decorate.strings[i] + plen + 1, ':', s);
+
+    if (junk || deco->field_type[0] == '\0' || !deco->field_name ||
+        deco->field_name[0] == '\0' || deco->field_name[0] == '?') {
+        errx(1, "Invalidate type decoration specification: --decorate=\"%s\"",
+              decorate.strings[i]);
+    }
+    if ((cp = strchr(deco->field_name, '?'))) {
+        deco->opt = 1;
+        *cp = '\0';
+    }
+    if (deco->copy_function_name)
+        deco->ext = 1;
+    if (deco->ext && strcmp(deco->field_type, "void") == 0)
+        deco->opt = deco->void_star = 1;
+    return 1;
 }
 
 static const char *
@@ -147,11 +221,11 @@ struct getargs args[] = {
     { "preserve-binary", 0, arg_strings, &preserve,
         "Names of types for which to generate _save fields, saving original "
             "encoding, in containing structures (useful for signature "
-            "verification)", "TYPE-NAME" },
+            "verification)", "TYPE" },
     { "sequence", 0, arg_strings, &seq,
-        "Generate add/remove functions for SEQUENCE OF types", "TYPE-NAME" },
+        "Generate add/remove functions for SEQUENCE OF types", "TYPE" },
     { "decorate", 0, arg_strings, &decorate,
-        "Generate private field for SEQUENCE/SET type", "TYPE-NAME:FIELD_TYPE:field_name[?]" },
+        "Generate private field for SEQUENCE/SET type", "DECORATION" },
     { "one-code-file", 0, arg_flag, &one_code_file, NULL, NULL },
     { "gen-name", 0, arg_string, &name,
         "Name of generated module", "NAME" },
@@ -166,7 +240,7 @@ struct getargs args[] = {
         "Do not generate roken-style units", NULL },
     { "type-file", 0, arg_string, &type_file_string,
         "Name of a C header file to generate includes of for base types",
-        "C-HEADER-FILE" },
+        "FILE" },
     { "version", 0, arg_flag, &version_flag, NULL, NULL },
     { "help", 0, arg_flag, &help_flag, NULL, NULL }
 };
@@ -175,7 +249,17 @@ int num_args = sizeof(args) / sizeof(args[0]);
 static void
 usage(int code)
 {
+    if (code)
+        dup2(STDERR_FILENO, STDOUT_FILENO);
+    else
+        dup2(STDOUT_FILENO, STDERR_FILENO);
     arg_printusage(args, num_args, NULL, "[asn1-file [name]]");
+    fprintf(stderr,
+            "\nA DECORATION is one of:\n\n"
+            "\tTYPE:FTYPE:fname[?]\n"
+            "\tTYPE:FTYPE:fname[?]:[copy_function]:[free_function]:header\n"
+            "\tTYPE:void:fname:::\n"
+            "\nSee the manual page.\n");
     exit(code);
 }
 
@@ -304,6 +388,15 @@ main(int argc, char **argv)
 #endif
     }
 
+    if (preserve.num_strings)
+        qsort(preserve.strings, preserve.num_strings, sizeof(preserve.strings[0]),
+              (int (*)(const void *, const void *))strcmp4qsort);
+    if (seq.num_strings)
+        qsort(seq.strings, seq.num_strings, sizeof(seq.strings),
+              (int (*)(const void *, const void *))strcmp4qsort);
+    if (decorate.num_strings)
+        qsort(decorate.strings, decorate.num_strings, sizeof(decorate.strings[0]),
+              (int (*)(const void *, const void *))strcmp4qsort);
 
     init_generate(file, name);
 

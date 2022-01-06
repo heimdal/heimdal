@@ -396,8 +396,8 @@ $(OBJ)\asn1_test_asn1.c $(OBJ)\test_asn1.h: $(BINDIR)\asn1_compile.exe test.asn1
 	cd $(OBJ)
 	$(BINDIR)\asn1_compile.exe \
 		--template	\
-		--decorate="TESTDecorated:TESTuint32:version2?"	\
-		--one-code-file --sequence=TESTSeqOf \
+		--option-file=$(SRCDIR)/test.opt		\
+		--one-code-file \
 		$(SRCDIR)\test.asn1 test_asn1 \
 	|| ($(RM) $(OBJ)\test_asn1.h ; exit /b 1)
 	cd $(SRCDIR)
@@ -406,9 +406,8 @@ $(OBJ)\asn1_test_template_asn1.c $(OBJ)\test_template_asn1.h: $(BINDIR)\asn1_com
 	cd $(OBJ)
 	$(BINDIR)\asn1_compile.exe \
 		--template	\
-		--decorate="TESTDecorated:TESTuint32:version2?"	\
+		--option-file=$(SRCDIR)/test.opt		\
 		--one-code-file \
-		--sequence=TESTSeqOf \
 		$(SRCDIR)\test.asn1 test_template_asn1 \
 	|| ($(RM) $(OBJ)\test_template_asn1.h ; exit /b 1)
 	cd $(SRCDIR)

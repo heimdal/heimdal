@@ -774,6 +774,7 @@ _asn1_decode(const struct asn1_template *t, unsigned flags,
                 return ret;
             break;
         }
+	case A1_OP_TYPE_DECORATE_EXTERN: break;
 	case A1_OP_TYPE_DECORATE: break;
         case A1_OP_NAME: break;
 	case A1_OP_DEFVAL:
@@ -1418,6 +1419,7 @@ _asn1_encode(const struct asn1_template *t, unsigned char *p, size_t len, const 
         }
         case A1_OP_NAME: break;
 	case A1_OP_DEFVAL: break;
+	case A1_OP_TYPE_DECORATE_EXTERN: break;
 	case A1_OP_TYPE_DECORATE: break;
 	case A1_OP_TYPE:
 	case A1_OP_TYPE_EXTERN: {
@@ -1994,6 +1996,7 @@ _asn1_length(const struct asn1_template *t, const void *data)
         }
         case A1_OP_NAME: break;
 	case A1_OP_DEFVAL: break;
+	case A1_OP_TYPE_DECORATE_EXTERN: break;
 	case A1_OP_TYPE_DECORATE: break;
 	case A1_OP_TYPE:
 	case A1_OP_TYPE_EXTERN: {
@@ -2256,6 +2259,7 @@ _asn1_free(const struct asn1_template *t, void *data)
         }
         case A1_OP_NAME: break;
 	case A1_OP_DEFVAL: break;
+	case A1_OP_TYPE_DECORATE_EXTERN:
 	case A1_OP_TYPE_DECORATE:
 	case A1_OP_TYPE:
 	case A1_OP_TYPE_EXTERN: {
@@ -2270,9 +2274,15 @@ _asn1_free(const struct asn1_template *t, void *data)
 
 	    if ((t->tt & A1_OP_MASK) == A1_OP_TYPE || (t->tt & A1_OP_MASK) == A1_OP_TYPE_DECORATE) {
 		_asn1_free(t->ptr, el);
-	    } else {
+	    } else if ((t->tt & A1_OP_MASK) == A1_OP_TYPE_EXTERN) {
 		const struct asn1_type_func *f = t->ptr;
 		(f->release)(el);
+	    } else {
+		const struct asn1_type_func *f = t->ptr;
+                if (f->release)
+                    (f->release)(el);
+                else
+                    memset(el, 0, f->size);
 	    }
 	    if (t->tt & A1_FLAG_OPTIONAL) {
 		free(el);
@@ -2545,6 +2555,7 @@ _asn1_print(const struct asn1_template *t,
             break;
         case A1_OP_NAME: break;
 	case A1_OP_DEFVAL: break;
+	case A1_OP_TYPE_DECORATE_EXTERN: break;
 	case A1_OP_TYPE_DECORATE: break; /* We could probably print this though */
 	case A1_OP_TYPE:
 	case A1_OP_TYPE_EXTERN: {
@@ -2863,6 +2874,7 @@ _asn1_copy(const struct asn1_template *t, const void *from, void *to)
         }
         case A1_OP_NAME: break;
 	case A1_OP_DEFVAL: break;
+	case A1_OP_TYPE_DECORATE_EXTERN:
 	case A1_OP_TYPE_DECORATE:
 	case A1_OP_TYPE:
 	case A1_OP_TYPE_EXTERN: {
@@ -2893,9 +2905,15 @@ _asn1_copy(const struct asn1_template *t, const void *from, void *to)
 	    if ((t->tt & A1_OP_MASK) == A1_OP_TYPE ||
                 (t->tt & A1_OP_MASK) == A1_OP_TYPE_DECORATE) {
 		ret = _asn1_copy(t->ptr, fel, tel);
+	    } else if ((t->tt & A1_OP_MASK) == A1_OP_TYPE_EXTERN) {
+		const struct asn1_type_func *f = t->ptr;
+                ret = (f->copy)(fel, tel);
 	    } else {
 		const struct asn1_type_func *f = t->ptr;
-		ret = (f->copy)(fel, tel);
+                if (f->copy)
+                    ret = (f->copy)(fel, tel);
+                else
+                    memset(tel, 0, f->size);
 	    }
 
 	    if (ret) {

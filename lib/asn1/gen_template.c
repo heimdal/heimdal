@@ -449,7 +449,10 @@ add_line_pointer(struct templatehead *t,
 	errx(1, "malloc");
     va_end(ap);
 
-    q = add_line(t, "{ %s, %s, asn1_%s }", tt, offset, ptr);
+    if (ptr[0] == '&')
+        q = add_line(t, "{ %s, %s, %s }", tt, offset, ptr);
+    else
+        q = add_line(t, "{ %s, %s, asn1_%s }", tt, offset, ptr);
     q->tt = tt;
     q->offset = strdup(offset);
     q->ptr = strdup(ptr);
@@ -1061,10 +1064,9 @@ template_members(struct templatehead *temp,
         Field *opentypefield = NULL;
         Field *typeidfield = NULL;
 	Member *m;
+        struct decoration deco;
         size_t i = 0, typeididx = 0, opentypeidx = 0;
         int is_array_of_open_type = 0;
-        int deco_opt;
-        char *ft, *fn;
 
         if (isstruct && t->actual_parameter)
             get_open_type_defn_fields(t, &typeidmember, &opentypemember,
@@ -1104,15 +1106,29 @@ template_members(struct templatehead *temp,
                                typeidfield, opentypefield, opentypemember,
                                is_array_of_open_type);
 
-        if (decorate_type(basetype, &ft, &fn, &deco_opt)) {
+        if (decorate_type(basetype, &deco)) {
             char *poffset2;
 
-            poffset2 = partial_offset(basetype, fn, 1, isstruct);
-	    add_line_pointer(temp, ft, poffset2, "A1_OP_TYPE_DECORATE %s",
-			     deco_opt ? "|A1_FLAG_OPTIONAL" : "");
+            poffset2 = partial_offset(basetype, deco.field_name, 1, isstruct);
+
+            if (deco.ext) {
+                char *ptr = NULL;
+
+                /* Decorated with external C type */
+                if (asprintf(&ptr, "&asn1_extern_%s_%s",
+                             basetype, deco.field_type) == -1 || ptr == NULL)
+                    err(1, "out of memory");
+                add_line_pointer(temp, ptr, poffset2,
+                                 "A1_OP_TYPE_DECORATE_EXTERN %s",
+                                 deco.opt && !deco.void_star ? "|A1_FLAG_OPTIONAL" : "");
+                free(ptr);
+            } else
+                /* Decorated with a templated ASN.1 type */
+                add_line_pointer(temp, deco.field_type, poffset2,
+                                 "A1_OP_TYPE_DECORATE %s",
+                                 deco.opt ? "|A1_FLAG_OPTIONAL" : "");
             free(poffset2);
-            free(ft);
-            free(fn);
+            free(deco.field_type);
         }
 
         if (isstruct)
@@ -1125,10 +1141,9 @@ template_members(struct templatehead *temp,
         Field *opentypefield = NULL;
         Field *typeidfield = NULL;
 	Member *m;
+        struct decoration deco;
         size_t i = 0, typeididx = 0, opentypeidx = 0;
         int is_array_of_open_type = 0;
-        int deco_opt;
-        char *ft, *fn;
 
         if (isstruct && t->actual_parameter)
             get_open_type_defn_fields(t, &typeidmember, &opentypemember,
@@ -1168,15 +1183,29 @@ template_members(struct templatehead *temp,
                                typeidfield, opentypefield, opentypemember,
                                is_array_of_open_type);
 
-        if (decorate_type(basetype, &ft, &fn, &deco_opt)) {
+        if (decorate_type(basetype, &deco)) {
             char *poffset2;
 
-            poffset2 = partial_offset(basetype, fn, 1, isstruct);
-	    add_line_pointer(temp, ft, poffset2, "A1_OP_TYPE_DECORATE %s",
-			     deco_opt ? "|A1_FLAG_OPTIONAL" : "");
+            poffset2 = partial_offset(basetype, deco.field_name, 1, isstruct);
+
+            if (deco.ext) {
+                char *ptr = NULL;
+
+                /* Decorated with external C type */
+                if (asprintf(&ptr, "&asn1_extern_%s_%s",
+                             basetype, deco.field_type) == -1 || ptr == NULL)
+                    err(1, "out of memory");
+                add_line_pointer(temp, ptr, poffset2,
+                                 "A1_OP_TYPE_DECORATE_EXTERN %s",
+                                 deco.opt && !deco.void_star ? "|A1_FLAG_OPTIONAL" : "");
+                free(ptr);
+            } else
+                /* Decorated with a templated ASN.1 type */
+                add_line_pointer(temp, deco.field_type, poffset2,
+                                 "A1_OP_TYPE_DECORATE %s",
+                                 deco.opt ? "|A1_FLAG_OPTIONAL" : "");
             free(poffset2);
-            free(ft);
-            free(fn);
+            free(deco.field_type);
         }
 
         if (isstruct)
@@ -1491,10 +1520,28 @@ generate_template(const Symbol *s)
 {
     FILE *f = get_code_file();
     const char *dupname;
+    struct decoration deco;
 
     if (use_extern(s)) {
 	gen_extern_stubs(f, s->gen_name);
 	return;
+    }
+
+    if (decorate_type(s->gen_name, &deco) && deco.ext) {
+        fprintf(f,
+                "static const struct asn1_type_func asn1_extern_%s_%s = {\n"
+                "\t(asn1_type_encode)0,\n"
+                "\t(asn1_type_decode)0,\n"
+                "\t(asn1_type_length)0,\n"
+                "\t(asn1_type_copy)%s,\n"
+                "\t(asn1_type_release)%s,\n"
+                "\t(asn1_type_print)0,\n"
+                "\tsizeof(%s)\n"
+                "};\n", s->gen_name, deco.field_type,
+                deco.copy_function_name && deco.copy_function_name[0] ? deco.copy_function_name : "0",
+                deco.free_function_name && deco.free_function_name[0] ? deco.free_function_name : "0",
+                deco.void_star ? "void *" : deco.field_type);
+        free(deco.field_type);
     }
 
     generate_template_type(s->gen_name, &dupname, s->name, s->gen_name, NULL, s->type, 0, 0, 1);

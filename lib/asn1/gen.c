@@ -1365,12 +1365,13 @@ define_type(int level, const char *name, const char *basename, Type *pt, Type *t
     case TSet:
     case TSequence: {
 	Member *m;
-        char *ft, *fn;
-        int deco_opt;
+        struct decoration deco;
 
 	getnewbasename(&newbasename, typedefp || level == 0, basename, name);
 
 	space(level);
+
+        (void) decorate_type(newbasename, &deco);
 	fprintf (headerfile, "struct %s {\n", newbasename);
         fprintf(jsonfile, "\"ttype\":\"%s\",\"extensible\":%s,"
                 "\"ctype\":\"struct %s\"",
@@ -1407,15 +1408,22 @@ define_type(int level, const char *name, const char *basename, Type *pt, Type *t
             fprintf(jsonfile, ",\"opentype\":");
             define_open_type(level, newbasename, name, basename, t, t);
         }
-        if (decorate_type(newbasename, &ft, &fn, &deco_opt)) {
+        if (deco.decorated) {
 	    space(level + 1);
-            fprintf(headerfile, "%s %s%s;\n", ft, deco_opt ? "*" : "", fn);
-            fprintf(jsonfile, ",\"decorate\":{\"type\":\"%s\",\"name\":\"%s\", \"optional\":%s}", ft, fn, deco_opt ? "true" : "false");
-            free(ft);
-            free(fn);
+            fprintf(headerfile, "%s %s%s;\n", deco.field_type,
+                    deco.opt ? "*" : "", deco.field_name);
+            fprintf(jsonfile, ",\"decorate\":{"
+                    "\"type\":\"%s\",\"name\":\"%s\",\"optional\":%s,"
+                    "\"external\":%s,\"copy_function\":\"%s\","
+                    "\"free_function\":\"%s\",\"header_name\":\"%s\"}",
+                    deco.field_type, deco.field_name,
+                    deco.opt ? "true" : "false", deco.ext ? "true" : "false",
+                    deco.copy_function_name, deco.free_function_name,
+                    deco.header_name);
         }
 	space(level);
 	fprintf (headerfile, "} %s;\n", name);
+        free(deco.field_type);
 	break;
     }
     case TSetOf:
@@ -1627,10 +1635,18 @@ declare_type(const Symbol *s, Type *t, int typedefp)
 
     switch (t->type) {
     case TSet:
-    case TSequence:
+    case TSequence: {
+        struct decoration deco;
+
 	getnewbasename(&newbasename, TRUE, s->gen_name, s->gen_name);
 	fprintf(headerfile, "struct %s %s;\n", newbasename, s->gen_name);
+        if (decorate_type(newbasename, &deco) && deco.header_name
+            && deco.header_name[0]) {
+            fprintf(headerfile, "#include %s\n", deco.header_name);
+            free(deco.field_type);
+        }
 	break;
+    }
     case TSetOf:
     case TSequenceOf:
 	getnewbasename(&newbasename, TRUE, s->gen_name, s->gen_name);

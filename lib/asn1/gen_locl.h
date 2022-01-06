@@ -144,7 +144,19 @@ int is_tagged_type(const Type *);
 
 int preserve_type(const char *);
 int seq_type(const char *);
-int decorate_type(const char *, char **, char **, int *);
+
+struct decoration {
+    char *field_type;           /* C type name */
+    char *field_name;           /* C struct field name */
+    char *copy_function_name;   /* copy constructor function name */
+    char *free_function_name;   /* destructor function name */
+    char *header_name;          /* header name */
+    unsigned int decorated:1;
+    unsigned int opt:1;         /* optional */
+    unsigned int ext:1;         /* external */
+    unsigned int void_star:1;   /* external, void * */
+};
+int decorate_type(const char *, struct decoration *);
 
 void generate_header_of_codefile(const char *);
 void close_codefile(void);

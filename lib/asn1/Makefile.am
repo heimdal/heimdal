@@ -468,14 +468,12 @@ x690sample_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/x690sample.asn1
 test_template_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/test.asn1
 	$(ASN1_COMPILE) --one-code-file					\
 			--template					\
-			--sequence=TESTSeqOf				\
-			--decorate='TESTDecorated:TESTuint32:version2?'	\
+			--option-file=$(srcdir)/test.opt		\
 			$(srcdir)/test.asn1 test_template_asn1 || (rm -f test_template_asn1_files ; exit 1)
 
 test_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/test.asn1
 	$(ASN1_COMPILE) --one-code-file					\
-			--decorate='TESTDecorated:TESTuint32:version2?'	\
-			--sequence=TESTSeqOf				\
+			--option-file=$(srcdir)/test.opt		\
 			$(srcdir)/test.asn1 test_asn1 || (rm -f test_asn1_files ; exit 1)
 
 
@@ -506,6 +504,7 @@ EXTRA_DIST =		\
 	setchgpw2.asn1	\
 	x690sample.asn1	\
 	test.asn1	\
+	test.opt	\
 	test.gen	\
 	version-script.map
 

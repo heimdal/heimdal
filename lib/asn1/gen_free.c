@@ -178,9 +178,8 @@ free_type (const char *name, const Type *t, int preserve)
 void
 generate_type_free (const Symbol *s)
 {
+    struct decoration deco;
     int preserve = preserve_type(s->name) ? TRUE : FALSE;
-    int deco_opt;
-    char *ft, *fn;
 
     fprintf (codefile, "void ASN1CALL\n"
 	     "free_%s(%s *data)\n"
@@ -188,18 +187,46 @@ generate_type_free (const Symbol *s)
 	     s->gen_name, s->gen_name);
 
     free_type ("data", s->type, preserve);
-    if (decorate_type(s->gen_name, &ft, &fn, &deco_opt)) {
-        if (deco_opt) {
-            fprintf(codefile, "if ((data)->%s) {\n", fn);
-            fprintf(codefile, "free_%s((data)->%s);\n", ft, fn);
-            fprintf(codefile, "free((data)->%s);\n", fn);
-            fprintf(codefile, "(data)->%s = NULL;\n", fn);
+    if (decorate_type(s->gen_name, &deco)) {
+        if (deco.ext &&
+            (deco.free_function_name == NULL ||
+             deco.free_function_name[0] == '\0')) {
+            /* Decorated with field of external type but no free function */
+            if (deco.opt || deco.void_star)
+                fprintf(codefile, "(data)->%s = 0;\n", deco.field_name);
+            else
+                fprintf(codefile,
+                        "memset(&(data)->%s, 0, sizeof((data)->%s));\n",
+                        deco.field_name, deco.field_name);
+        } else if (deco.ext) {
+            /* Decorated with field of external type w/ free function */
+            if (deco.opt) {
+                fprintf(codefile, "if ((data)->%s) {\n", deco.field_name);
+                fprintf(codefile, "%s((data)->%s);\n",
+                        deco.free_function_name, deco.field_name);
+                fprintf(codefile, "(data)->%s = 0;\n", deco.field_name);
+                fprintf(codefile, "}\n");
+            } else {
+                fprintf(codefile, "%s(&(data)->%s);\n",
+                        deco.free_function_name, deco.field_name);
+                fprintf(codefile,
+                        "memset(&(data)->%s, 0, sizeof((data)->%s));\n",
+                        deco.field_name, deco.field_name);
+            }
+        } else if (deco.opt) {
+            /* Decorated with optional field of ASN.1 type */
+            fprintf(codefile, "if ((data)->%s) {\n", deco.field_name);
+            fprintf(codefile, "free_%s((data)->%s);\n",
+                    deco.field_type, deco.field_name);
+            fprintf(codefile, "free((data)->%s);\n", deco.field_name);
+            fprintf(codefile, "(data)->%s = NULL;\n", deco.field_name);
             fprintf(codefile, "}\n");
         } else {
-            fprintf(codefile, "free_%s(&(data)->%s);\n", ft, fn);
+            /* Decorated with required field of ASN.1 type */
+            fprintf(codefile, "free_%s(&(data)->%s);\n",
+                    deco.field_type, deco.field_name);
         }
-        free(ft);
-        free(fn);
+        free(deco.field_type);
     }
     fprintf (codefile, "}\n\n");
 }

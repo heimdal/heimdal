@@ -861,104 +861,237 @@ functions for adding or removing items from the named type when it is a
 
 See the manual page `asn1_compile.1`:
 
-```
-ASN1_COMPILE(1)       HEIMDAL General Commands Manual          ASN1_COMPILE(1)
+```text
+ASN1_COMPILE(1)		  BSD General Commands Manual	       ASN1_COMPILE(1)
 
 NAME
      asn1_compile — compile ASN.1 modules
 
 SYNOPSIS
      asn1_compile [--template] [--prefix-enum] [--enum-prefix=PREFIX]
-                  [--encode-rfc1510-bit-string] [--decode-dce-ber]
-                  [--support-ber] [--preserve-binary=TYPE-NAME]
-                  [--sequence=TYPE-NAME] [--one-code-file] [--gen-name=NAME]
-                  [--decorate=TYPE-NAME:FIELD-TYPE:field-name[?]]
-                  [--option-file=FILE] [--original-order] [--no-parse-units]
-                  [--type-file=C-HEADER-FILE] [--version] [--help]
-                  [FILE.asn1 [NAME]]
+		  [--encode-rfc1510-bit-string] [--decode-dce-ber]
+		  [--support-ber] [--preserve-binary=TYPE] [--sequence=TYPE]
+		  [--decorate=TYPE:FTYPE:fname[?]]
+		  [--decorate=TYPE:void:fname:::]
+		  [--decorate=TYPE:FTYPE:fname[?]:[copyfn]:[freefn]:header]
+		  [--one-code-file] [--gen-name=NAME] [--option-file=FILE]
+		  [--original-order] [--no-parse-units]
+		  [--type-file=C-HEADER-FILE] [--version] [--help]
+		  [FILE.asn1 [NAME]]
 
 DESCRIPTION
-     asn1_compile Compiles an ASN.1 module into C source code and header
+     asn1_compile compiles an ASN.1 module into C source code and header
      files.
+
+     A fairly large subset of ASN.1 as specified in X.680, and the ASN.1 In‐
+     formation Object System as specified in X.681, X.682, and X.683 is sup‐
+     ported, with support for the Distinguished Encoding Rules (DER), partial
+     Basic Encoding Rules (BER) support, and experimental JSON support (encod‐
+     ing only at this time).
+
+     See the compiler's README files for details about the C code and inter‐
+     faces it generates.
+
+     The Information Object System support includes automatic codec support
+     for encoding and decoding through “open types” which are also known as
+     “typed holes”.  See RFC 5912 for examples of how to use the ASN.1 Infor‐
+     mation Object System via X.681/X.682/X.683 annotations.  See the com‐
+     piler's README files for more information on ASN.1 Information Object
+     System support.
+
+     Extensions specific to Heimdal are generally not syntactic in nature but
+     rather command-line options to this program.  For example, one can use
+     command-line options to:
+	   •	   enable decoding of BER-encoded values;
+	   •	   enable RFC1510-style handling of ‘BIT STRING’ types;
+	   •	   enable saving of as-received encodings of specific types
+		   for the purpose of signature validation;
+	   •	   generate add/remove utility functions for array types;
+	   •	   decorate generated ‘struct’ types with fields that are nei‐
+		   ther encoded nor decoded;
+     etc.
+
+     ASN.1 x.680 features supported:
+	   •	   most primitive types (except BMPString and REAL);
+	   •	   all constructed types, including SET and SET OF;
+	   •	   explicit and implicit tagging.
+
+     Size and range constraints on the ‘INTEGER’ type cause the compiler to
+     generate appropriate C types such as ‘int’, ‘unsigned int’, ‘int64_t’,
+     ‘uint64_t’.  Unconstrained ‘INTEGER’ is treated as ‘heim_integer’, which
+     represents an integer of arbitrary size.
+
+     Caveats and ASN.1 x.680 features not supported:
+	   •	   JSON encoding support is not quite X.697 (JER) compatible.
+		   Its JSON schema is subject to change without notice.
+	   •	   Control over C types generated is very limited, mainly only
+		   for integer types.
+	   •	   When using the template backend, `SET { .. }` types are
+		   currently not sorted by tag as they should be, but if the
+		   module author sorts them by hand then correct DER will be
+		   produced.
+	   •	   ‘AUTOMATIC TAGS’ is not supported.
+	   •	   The REAL type is not supported.
+	   •	   The EmbeddedPDV type is not supported.
+	   •	   The BMPString type is not supported.
+	   •	   The IA5String is not properly supported, as it's essen‐
+		   tially treated as a UTF8String with a different tag.
+	   •	   All supported non-octet strings are treated as like the
+		   UTF8String type.
+	   •	   Only types can be imported into ASN.1 modules at this time.
+	   •	   Only simple value syntax is supported.  Constructed value
+		   syntax (i.e., values of SET, SEQUENCE, SET OF, and SEQUENCE
+		   OF types), is not supported.	 Values of `CHOICE` types are
+		   also not supported.
 
      Options supported:
 
      --template
-             Use the “template” backend instead of the “codegen” backend
-             (which is the default backend).  The template backend generates
-             “templates” which are akin to bytecode, and which are interpreted
-             at run-time.  The codegen backend generates C code for all func-
-             tions directly, with no template interpretation.  The template
-             backend scales better than the codegen backend because as we add
-             support for more encoding rules the templates stay mostly the
-             same, thus scaling linearly with size of module.  Whereas the
-             codegen backend scales linear with the product of module size and
-             number of encoding rules supported.  More importantly, currently
-             only the template backend supports automatic decoding of open
-             types via X.681/X.682/X.683 annotations.
+	     Use the “template” backend instead of the “codegen” backend
+	     (which is the default backend).
+
+	     The template backend generates “templates” which are akin to
+	     bytecode, and which are interpreted at run-time.
+
+	     The codegen backend generates C code for all functions directly,
+	     with no template interpretation.
+
+	     The template backend scales better than the codegen backend be‐
+	     cause as we add support for more encoding rules and more opera‐
+	     tions (we may add value comparators) the templates stay mostly
+	     the same, thus scaling linearly with size of module.  Whereas the
+	     codegen backend scales linear with the product of module size and
+	     number of encoding rules supported.
 
      --prefix-enum
-             This option should be removed because ENUMERATED types should
-             always have their labels prefixed.
+	     This option should be removed because ENUMERATED types should al‐
+	     ways have their labels prefixed.
 
      --enum-prefix=PREFIX
-             This option should be removed because ENUMERATED types should
-             always have their labels prefixed.
+	     This option should be removed because ENUMERATED types should al‐
+	     ways have their labels prefixed.
 
      --encode-rfc1510-bit-string
-             Use RFC1510, non-standard handling of “BIT STRING” types.
+	     Use RFC1510, non-standard handling of “BIT STRING” types.
 
      --decode-dce-ber
+
      --support-ber
 
-     --preserve-binary=TYPE-NAME
-             Generate ‘_save’ fields in structs to preserve the original
-             encoding of some sub-value.  This is useful for cryptographic
-             applications to avoid having to re-encode values to check signa-
-             tures, etc.
+     --preserve-binary=TYPE
+	     Generate a field named ‘_save’ in the C struct generated for the
+	     named TYPE.  This field is used to preserve the original encoding
+	     of the value of the TYPE.
 
-     --sequence=TYPE-NAME
-             Generate add/remove functions for ‘SET OF’ and ‘SEQUENCE OF’
-             types.
+	     This is useful for cryptographic applications so that they can
+	     check signatures of encoded values as-received without having to
+	     re-encode those values.
 
-     --decorate=TYPE-NAME:FIELD-TYPE:field-name[?]
-             Add to the TYPE-NAME SET or SEQUENCE type a field of the given
-             FIELD-TYPE and field-name, but do not encode or decode this
-             field.  If the field-name ends in a question mark, then treat the
-             field as OPTIONAL for the purposes of copy/free function stubs.
-             This is useful for adding fields to existing types that can be
-             used for internal bookkeeping but which do not affect interoper-
-             ability because they are not encoded.
+	     For example, the TBSCertificate type should have values preserved
+	     so that Certificate validation can check the signatureValue over
+	     the tbsCertificate's value as-received.
+
+	     The alternative of encoding a value to check a signature of it is
+	     brittle.  For types where non-canonical encodings (such as BER)
+	     are allowed, this alternative is bound to fail.  Thus the point
+	     of this option.
+
+     --sequence=TYPE
+	     Generate add/remove functions for the named ASN.1 TYPE which must
+	     be a ‘SET OF’ or ‘SEQUENCE OF’ type.
+
+     --decorate=TYPE:FTYPE:fname[?]
+	     Add to the C struct generated for the given ASN.1 type named TYPE
+	     a “hidden” field named fname of the given ASN.1 type FTYPE, but
+	     do not encode or decode it.  The TYPE must be a SET or SEQUENCE
+	     type.  If the fname ends in a question mark, then treat the field
+	     as OPTIONAL.
+
+	     This is useful for adding fields to existing types that can be
+	     used for internal bookkeeping but which do not affect interoper‐
+	     ability because they are neither encoded nor decoded.  For exam‐
+	     ple, one might decorate a request type with state needed during
+	     processing of the request.
+
+     --decorate=TYPE:void:fname:::
+	     Add to the C struct generated for the given ASN.1 type named TYPE
+	     a “hidden” field named fname of type ‘void *’ (but do not encode
+	     or decode it.
+
+	     The destructor and copy constructor functions generated by this
+	     compiler for TYPE will set this field to the ‘NULL’ pointer.
+
+	     This is useful for adding fields to existing types that can be
+	     used for internal bookkeeping but which do not affect interoper‐
+	     ability because they are neither encoded nor decoded.  For exam‐
+	     ple, one might decorate a request type with state needed during
+	     processing of the request.
+
+     --decorate=TYPE:FTYPE:fname[?]:copyfn:freefn:header
+	     Add to the C struct generated for the given ASN.1 type named TYPE
+	     a “hidden” field named fname of the given external C type FTYPE,
+	     declared in the given header but do not encode or decode this
+	     field.  The TYPE must be a SET or SEQUENCE type.  If the fname
+	     ends in a question mark, then treat the field as OPTIONAL.
+
+	     This is useful for adding fields to existing types that can be
+	     used for internal bookkeeping but which do not affect interoper‐
+	     ability because they are neither encoded nor decoded.  For exam‐
+	     ple, one might decorate a request type with state needed during
+	     processing of the request.
+
+	     The header must include double quotes or angle brackets.  The
+	     copyfn must be the name of a copy constructor function that takes
+	     a pointer to a source value of the type, and a pointer to a des‐
+	     tination value of the type, in that order, and which returns zero
+	     on success or else a system error code on failure.	 The freefn
+	     must be the name of a destructor function that takes a pointer to
+	     a value of the type and which releases resources referenced by
+	     that value, but does not free the value itself (the run-time al‐
+	     locates this value as needed from the C heap).  The freefn should
+	     also reset the value to a pristine state (such as all zeros).
+
+	     If the copyfn and freefn are empty strings, then the decoration
+	     field will neither be copied nor freed by the functions generated
+	     for the TYPE.
+
+	     NOTE: At this time only one decoration may be specified per type.
 
      --one-code-file
-             Generate a single source code file.  Otherwise a separate code
-             file will be generated for every type.
+	     Generate a single source code file.  Otherwise a separate code
+	     file will be generated for every type.
 
      --gen-name=NAME
-             Use NAME to form the names of the files generated.
+	     Use NAME to form the names of the files generated.
 
      --option-file=FILE
-             Take additional command-line options from FILE.
+	     Take additional command-line options from FILE.
 
      --original-order
-             Attempt to preserve the original order of type definition in the
-             ASN.1 module.  By default the compiler generates types in a topo-
-             logical sort order.
+	     Attempt to preserve the original order of type definition in the
+	     ASN.1 module.  By default the compiler generates types in a topo‐
+	     logical sort order.
 
      --no-parse-units
-             Do not generate to-int / from-int functions for enumeration
-             types.
+	     Do not generate to-int / from-int functions for enumeration
+	     types.
 
      --type-file=C-HEADER-FILE
-             Generate an include of the named header file that might be needed
-             for common type defintions.
+	     Generate an include of the named header file that might be needed
+	     for common type defintions.
 
      --version
 
      --help
 
-HEIMDAL                        February 22, 2021                       HEIMDAL
+NOTES
+     Note that only one decoration per-SET/SEQUENCE type may be specified.
 
+     Currently only the template backend supports automatic encoding and de‐
+     coding of open types via the ASN.1 Information Object System and
+     X.681/X.682/X.683 annotations.
+
+HEIMDAL			       February 22, 2021		       HEIMDAL
 ```
 
 ## APIs Generated by the Compiler
@@ -1076,9 +1209,9 @@ absence and non-NULL indicating presence.
 
 And so on.
 
-## asn1_print Usage
+## `asn1_print` Usage
 
-```
+```text
 ASN1_PRINT(1)		  BSD General Commands Manual		 ASN1_PRINT(1)
 
 NAME

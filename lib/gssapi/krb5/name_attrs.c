@@ -361,6 +361,7 @@ _gsskrb5_get_name_attribute(OM_uint32 *minor_status,
         int64_t n;
 
         /* Output a specific AD element from the ticket or authenticator */
+        krb5_data_zero(&data);
         if ((s = strndup(frag.value, frag.length)) == NULL) {
             *minor_status = ENOMEM;
             return GSS_S_FAILURE;
@@ -385,7 +386,7 @@ _gsskrb5_get_name_attribute(OM_uint32 *minor_status,
         GSSAPI_KRB5_INIT(&context);
 
         kret = ENOENT;
-        if (ticket->authorization_data) {
+        if (ticket && ticket->authorization_data) {
             kret = _krb5_get_ad(context, ticket->authorization_data,
                                 NULL, n, value ? &data : NULL);
 
@@ -400,7 +401,7 @@ _gsskrb5_get_name_attribute(OM_uint32 *minor_status,
         if (kret == ENOENT && nameattrs->authenticator_ad &&
             n != KRB5_AUTHDATA_KDC_ISSUED &&
             n != KRB5_AUTHDATA_WIN2K_PAC) {
-            kret = _krb5_get_ad(context, ticket->authorization_data,
+            kret = _krb5_get_ad(context, nameattrs->authenticator_ad,
                                 NULL, n, value ? &data : NULL);
         }
 

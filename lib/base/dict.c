@@ -149,7 +149,7 @@ heim_dict_get_type_id(void)
 static struct hashentry *
 _search(heim_dict_t dict, heim_object_t ptr)
 {
-    unsigned long v = heim_get_hash(ptr);
+    uintptr_t v = heim_get_hash(ptr);
     struct hashentry *p;
 
     for (p = dict->tab[v % dict->size]; p != NULL; p = p->next)
@@ -219,7 +219,7 @@ heim_dict_set_value(heim_dict_t dict, heim_object_t key, heim_object_t value)
 	heim_release(h->value);
 	h->value = heim_retain(value);
     } else {
-	unsigned long v;
+	uintptr_t v;
 
 	h = malloc(sizeof(*h));
 	if (h == NULL)

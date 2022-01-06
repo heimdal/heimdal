@@ -184,7 +184,7 @@ heim_get_tid(heim_object_t object);
 int
 heim_cmp(heim_object_t a, heim_object_t b);
 
-unsigned long
+uintptr_t
 heim_get_hash(heim_object_t ptr);
 
 void

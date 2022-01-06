@@ -58,7 +58,7 @@ error_cmp(void *a, void *b)
     return heim_cmp(ap->msg, bp->msg);
 }
 
-static unsigned long
+static uintptr_t
 error_hash(void *ptr)
 {
     struct heim_error *p = ptr;

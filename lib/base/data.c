@@ -61,7 +61,7 @@ data_cmp(void *a, void *b)
     return memcmp(osa->data, osb->data, osa->length);
 }
 
-static unsigned long
+static uintptr_t
 data_hash(void *ptr)
 {
     heim_octet_string *os = ptr;

@@ -58,12 +58,12 @@ number_cmp(void *a, void *b)
     return na - nb;
 }
 
-static unsigned long
+static uintptr_t
 number_hash(void *ptr)
 {
     if (heim_base_is_tagged_object(ptr))
 	return heim_base_tagged_object_value(ptr);
-    return (unsigned long)*(int *)ptr;
+    return (uintptr_t)*(int64_t *)ptr;
 }
 
 struct heim_type_data _heim_number_object = {

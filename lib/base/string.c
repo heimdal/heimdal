@@ -73,11 +73,11 @@ string_cmp(void *a, void *b)
     return strcmp(a, b);
 }
 
-static unsigned long
+static uintptr_t
 string_hash(void *ptr)
 {
     const char *s = ptr;
-    unsigned long n;
+    uintptr_t n;
 
     for (n = 0; *s; ++s)
 	n += *s;

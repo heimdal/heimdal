@@ -210,13 +210,13 @@ heim_get_tid(heim_object_t ptr)
  * @return a hash value
  */
 
-unsigned long
+uintptr_t
 heim_get_hash(heim_object_t ptr)
 {
     heim_type_t isa = _heim_get_isa(ptr);
     if (isa->hash)
 	return isa->hash(ptr);
-    return (unsigned long)ptr;
+    return (uintptr_t)ptr;
 }
 
 /**
@@ -609,10 +609,10 @@ autorel_cmp(void *a, void *b)
     return (a == b);
 }
 
-static unsigned long
+static uintptr_t
 autorel_hash(void *ptr)
 {
-    return (unsigned long)ptr;
+    return (uintptr_t)ptr;
 }
 
 

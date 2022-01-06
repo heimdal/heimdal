@@ -160,7 +160,7 @@ pthreadinc= -I$(PTHREAD_INC)
 # Build options
 
 cincdirs=$(cincdirs) -I$(INCDIR) -I$(INCDIR)\krb5 $(pthreadinc)
-cdefines=$(cdefines) -DHAVE_CONFIG_H -Drestrict=
+cdefines=$(cdefines) -DHAVE_CONFIG_H
 # Windows CNG provider
 cdefines=$(cdefines) -DHCRYPTO_DEF_PROVIDER=w32crypto
 cdebug=$(cdebug) /Zi

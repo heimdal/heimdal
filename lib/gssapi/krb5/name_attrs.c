@@ -102,10 +102,10 @@ attr_eq(gss_buffer_t attr, const char *aname, size_t aname_len,
 
 /* Split attribute into prefix, suffix, and fragment.  See RFC6680. */
 static void
-split_attr(restrict gss_const_buffer_t orig,
-           restrict gss_buffer_t prefix,
-           restrict gss_buffer_t attr,
-           restrict gss_buffer_t frag,
+split_attr(gss_const_buffer_t orig,
+           gss_buffer_t prefix,
+           gss_buffer_t attr,
+           gss_buffer_t frag,
            int *is_urn)
 {
     char *last = NULL;

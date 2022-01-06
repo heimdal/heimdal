@@ -171,7 +171,8 @@ import_export_name (OM_uint32 *minor_status,
 {
     CompositePrincipal *composite;
     unsigned char *p;
-    size_t length, sz;
+    uint32_t length;
+    size_t sz;
     OM_uint32 ret;
     int is_composite;
     char *name;

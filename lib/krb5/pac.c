@@ -1564,10 +1564,8 @@ _krb5_pac_sign(krb5_context context,
     if (ret == 0) {
         krb5_storage_set_flags(sp, KRB5_STORAGE_BYTEORDER_LE);
         spdata = krb5_storage_emem();
-        if (spdata == NULL) {
-            krb5_storage_free(sp);
+        if (spdata == NULL)
             ret = krb5_enomem(context);
-        }
     }
 
     if (ret)

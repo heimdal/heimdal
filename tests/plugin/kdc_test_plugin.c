@@ -19,9 +19,11 @@ fini(void *ctx)
 }
 
 static krb5_error_code KRB5_CALLCONV
-pac_generate(void *ctx, krb5_context context,
-	     struct hdb_entry_ex *client,
-	     struct hdb_entry_ex *server,
+pac_generate(void *ctx,
+	     krb5_context context,
+	     krb5_kdc_configuration *config,
+	     hdb_entry *client,
+	     hdb_entry *server,
 	     const krb5_keyblock *pk_replykey,
 	     uint64_t pac_attributes,
 	     krb5_pac *pac)
@@ -52,12 +54,14 @@ pac_generate(void *ctx, krb5_context context,
 }
 
 static krb5_error_code KRB5_CALLCONV
-pac_verify(void *ctx, krb5_context context,
+pac_verify(void *ctx,
+	   krb5_context context,
+	   krb5_kdc_configuration *config,
 	   const krb5_principal new_ticket_client,
 	   const krb5_principal delegation_proxy,
-	   struct hdb_entry_ex * client,
-	   struct hdb_entry_ex * server,
-	   struct hdb_entry_ex * krbtgt,
+	   hdb_entry * client,
+	   hdb_entry * server,
+	   hdb_entry * krbtgt,
 	   krb5_pac *pac)
 {
     krb5_error_code ret;
@@ -78,7 +82,7 @@ pac_verify(void *ctx, krb5_context context,
     if (ret)
 	return ret;
 
-    if (rodc_id == 0 || rodc_id != krbtgt->entry.kvno >> 16) {
+    if (rodc_id == 0 || rodc_id != krbtgt->kvno >> 16) {
 	krb5_warnx(context, "Wrong RODCIdentifier");
 	return EINVAL;
     }
@@ -87,7 +91,7 @@ pac_verify(void *ctx, krb5_context context,
     if (ret)
 	return ret;
 
-    ret = hdb_enctype2key(context, &krbtgt->entry, NULL, etype, &key);
+    ret = hdb_enctype2key(context, krbtgt, NULL, etype, &key);
     if (ret)
 	return ret;
 
@@ -152,7 +156,7 @@ audit(void *ctx, astgs_request_t r)
 }
 
 static krb5plugin_kdc_ftable kdc_plugin = {
-    KRB5_PLUGIN_KDC_VERSION_9,
+    KRB5_PLUGIN_KDC_VERSION_10,
     init,
     fini,
     pac_generate,

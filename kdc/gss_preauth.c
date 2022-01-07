@@ -584,7 +584,7 @@ pa_gss_authorize_default(astgs_request_t r,
 {
     krb5_error_code ret;
     krb5_principal principal;
-    krb5_const_realm realm = r->server->entry.principal->realm;
+    krb5_const_realm realm = r->server->principal->realm;
     int flags = 0, cross_realm_allowed = 0, unauth_anon;
 
     /*
@@ -680,7 +680,7 @@ _kdc_gss_check_client(astgs_request_t r,
 {
     krb5_error_code ret;
     krb5_principal initiator_princ = NULL;
-    hdb_entry_ex *initiator = NULL;
+    hdb_entry *initiator = NULL;
     krb5_boolean authorized = FALSE;
     HDB *clientdb = r->clientdb;
 
@@ -740,15 +740,15 @@ _kdc_gss_check_client(astgs_request_t r,
      * two principals must match, noting that GSS pre-authentication is
      * for authentication, not general purpose impersonation.
      */
-    if (krb5_principal_is_federated(r->context, r->client->entry.principal)) {
-        initiator->entry.flags.force_canonicalize = 1;
+    if (krb5_principal_is_federated(r->context, r->client->principal)) {
+        initiator->flags.force_canonicalize = 1;
 
         _kdc_free_ent(r->context, clientdb, r->client);
         r->client = initiator;
         initiator = NULL;
     } else if (!krb5_principal_compare(r->context,
-                                       r->client->entry.principal,
-                                       initiator->entry.principal)) {
+                                       r->client->principal,
+                                       initiator->principal)) {
         kdc_log(r->context, r->config, 2,
                 "GSS %s initiator %.*s does not match principal %s",
                 gss_oid_to_name(gcp->mech_type),

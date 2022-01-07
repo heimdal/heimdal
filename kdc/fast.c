@@ -109,7 +109,7 @@ get_fastuser_crypto(astgs_request_t r,
 {
     krb5_principal fast_princ;
     HDB *fast_db;
-    hdb_entry_ex *fast_user = NULL;
+    hdb_entry *fast_user = NULL;
     Key *cookie_key = NULL;
     krb5_crypto fast_crypto = NULL;
     krb5_error_code ret;
@@ -131,7 +131,7 @@ get_fastuser_crypto(astgs_request_t r,
 	ret = _kdc_get_preferred_key(r->context, r->config, fast_user,
 				     "fast-cookie", &enctype, &cookie_key);
     else
-	ret = hdb_enctype2key(r->context, &fast_user->entry, NULL,
+	ret = hdb_enctype2key(r->context, fast_user, NULL,
 			      enctype, &cookie_key);
     if (ret)
 	goto out;
@@ -563,7 +563,7 @@ fast_unwrap_request(astgs_request_t r,
 	    goto out;
 	}
 
-	ret = hdb_enctype2key(r->context, &r->armor_server->entry, NULL,
+	ret = hdb_enctype2key(r->context, r->armor_server, NULL,
 			      ap_req.ticket.enc_part.etype,
 			      &r->armor_key);
 	if (ret) {
@@ -836,7 +836,7 @@ _kdc_fast_check_armor_pac(astgs_request_t r)
     krb5_pac mspac = NULL;
     krb5_principal armor_client_principal = NULL;
     HDB *armor_db;
-    hdb_entry_ex *armor_client = NULL;
+    hdb_entry *armor_client = NULL;
     char *armor_client_principal_name = NULL;
 
     flags = HDB_F_FOR_TGS_REQ;

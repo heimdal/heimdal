@@ -397,7 +397,7 @@ authorize(void *ctx,
     struct altsecid_gss_preauth_authorizer_context *c = ctx;
     struct ad_server_tuple *server = NULL;
     krb5_error_code ret;
-    krb5_const_realm realm = krb5_principal_get_realm(r->context, r->client->entry.principal);
+    krb5_const_realm realm = krb5_principal_get_realm(r->context, r->client->principal);
     krb5_boolean reconnect_p = FALSE;
     krb5_boolean is_tgs;
     heim_data_t requestor_sid = NULL;
@@ -405,7 +405,7 @@ authorize(void *ctx,
     *authorized = FALSE;
     *mapped_name = NULL;
 
-    if (!krb5_principal_is_federated(r->context, r->client->entry.principal) ||
+    if (!krb5_principal_is_federated(r->context, r->client->principal) ||
         (ret_flags & GSS_C_ANON_FLAG))
         return KRB5_PLUGIN_NO_HANDLE;
 

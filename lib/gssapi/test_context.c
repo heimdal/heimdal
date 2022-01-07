@@ -499,7 +499,8 @@ loop(gss_OID mechoid,
         } else
             warnx("display_name: %s",
                  gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));
-	if (gss_oid_equal(actual_mech_server, GSS_KRB5_MECHANISM))
+	if (!anon_flag &&
+	    gss_oid_equal(actual_mech_server, GSS_KRB5_MECHANISM))
 	    show_pac_client_info(src_name);
     }
     gss_release_name(&min_stat, &src_name);

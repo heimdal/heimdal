@@ -476,10 +476,11 @@ PrincipalNameAttrs ::= SEQUENCE {
         -- True if the PAC was verified
         pac-verified        [5]     BOOLEAN,
         -- True if any AD-KDC-ISSUEDs in the Ticket were validated
-        kdc-issued-verified [6]     BOOLEAN
+        kdc-issued-verified [6]     BOOLEAN,
         -- TODO: Add requested attributes, for gss_set_name_attribute(), which
         --       should cause corresponding authz-data elements to be added to
         --       any TGS-REQ or to the AP-REQ's Authenticator as appropriate.
+        want-ad             [7]     AuthorizationData OPTIONAL
 }
 -- This is our type for exported composite name tokens for GSS [RFC6680].
 -- It's the same as Principal (below) as decorated with (see krb5.opt file and

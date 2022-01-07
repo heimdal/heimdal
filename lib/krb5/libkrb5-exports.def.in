@@ -23,6 +23,8 @@ EXPORTS
 	krb5_appdefault_time
 	krb5_append_addresses
 	krb5_auth_con_addflags
+	krb5_auth_con_add_AuthorizationData
+	krb5_auth_con_add_AuthorizationDataIfRelevant
 	krb5_auth_con_free
 	krb5_auth_con_genaddrs
 	krb5_auth_con_generatelocalsubkey

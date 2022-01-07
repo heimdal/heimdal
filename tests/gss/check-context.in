@@ -245,6 +245,14 @@ for mech in krb5 krb5iov spnego spnegoiov; do
 		{ eval "$testfailed"; }
 done
 
+echo "======test authz-data (krb5)"
+${context} --mech-type=krb5 \
+    --mutual \
+    --wrapunwrap \
+    --on-behalf-of=foo@BAR.TEST.H5L.SE \
+    --name-type=hostbased-service host@lucid.test.h5l.se ||
+    { eval "$testfailed"; }
+
 echo "======dce-style"
 for mech in krb5 krb5iov spnego; do
 	iov=""

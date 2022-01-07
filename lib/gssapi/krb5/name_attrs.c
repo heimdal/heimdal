@@ -85,7 +85,7 @@
  */
 
 static int
-attr_eq(gss_buffer_t attr, const char *aname, size_t aname_len,
+attr_eq(gss_const_buffer_t attr, const char *aname, size_t aname_len, \
 	int prefix_check)
 {
     if (attr->length < aname_len)
@@ -137,9 +137,87 @@ split_attr(gss_const_buffer_t orig,
     }
 }
 
+typedef OM_uint32 get_name_attr_f(OM_uint32 *,
+                                  const CompositePrincipal *,
+                                  gss_const_buffer_t,
+                                  gss_const_buffer_t,
+                                  gss_const_buffer_t,
+                                  int *,
+                                  int *,
+                                  gss_buffer_t,
+                                  gss_buffer_t,
+                                  int *);
+
+typedef OM_uint32 set_name_attr_f(OM_uint32 *,
+                                  CompositePrincipal *,
+                                  gss_const_buffer_t,
+                                  gss_const_buffer_t,
+                                  gss_const_buffer_t,
+                                  int,
+                                  gss_buffer_t);
+
+typedef OM_uint32 del_name_attr_f(OM_uint32 *,
+                                  CompositePrincipal *,
+                                  gss_const_buffer_t,
+                                  gss_const_buffer_t,
+                                  gss_const_buffer_t);
+typedef get_name_attr_f *get_name_attr_fp;
+typedef set_name_attr_f *set_name_attr_fp;
+typedef del_name_attr_f *del_name_attr_fp;
+
+static get_name_attr_f get_realm;
+static get_name_attr_f get_ncomps;
+static get_name_attr_f get_peer_realm;
+static get_name_attr_f get_pac;
+static get_name_attr_f get_authz_data;
+static get_name_attr_f get_ticket_authz_data;
+static get_name_attr_f get_authenticator_authz_data;
+static get_name_attr_f get_transited;
+static get_name_attr_f get_canonical_name;
+
+#define NB(n) GSS_KRB5_NAME_ATTRIBUTE_BASE_URN n, n, sizeof(n) - 1
+#define NU(n) n, n, sizeof(n) - 1
+
+static struct krb5_name_attrs {
+    const char *fullname;
+    const char *name;
+    size_t namelen;
+    get_name_attr_fp getter;
+    set_name_attr_fp setter;
+    del_name_attr_fp deleter;
+    unsigned int indicate:1;
+    unsigned int is_krb5_name_attr_urn:1;
+} name_attrs[] = {
+    /* XXX We should sort these so we can binary search them */
+    { NB("realm"),           get_realm,      NULL, NULL, 1, 1 },
+    { NB("name-ncomp"),      get_ncomps,     NULL, NULL, 1, 1 },
+    { NB("name-ncomp#0"),    get_ncomps,     NULL, NULL, 1, 1 },
+    { NB("name-ncomp#1"),    get_ncomps,     NULL, NULL, 1, 1 },
+    { NB("name-ncomp#2"),    get_ncomps,     NULL, NULL, 1, 1 },
+    { NB("name-ncomp#3"),    get_ncomps,     NULL, NULL, 1, 1 },
+    { NB("name-ncomp#4"),    get_ncomps,     NULL, NULL, 1, 1 },
+    { NB("name-ncomp#5"),    get_ncomps,     NULL, NULL, 1, 1 },
+    { NB("name-ncomp#6"),    get_ncomps,     NULL, NULL, 1, 1 },
+    { NB("name-ncomp#7"),    get_ncomps,     NULL, NULL, 1, 1 },
+    { NB("name-ncomp#8"),    get_ncomps,     NULL, NULL, 1, 1 },
+    { NB("name-ncomp#9"),    get_ncomps,     NULL, NULL, 1, 1 },
+    { NB("peer-realm"),      get_peer_realm, NULL, NULL, 1, 1 },
+    { NB("ticket-authz-data#pac"), get_pac,  NULL, NULL, 1, 1 },
+    { NU("urn:mspac:"),            get_pac,  NULL, NULL, 1, 0 },
+    { NB("ticket-authz-data#kdc-issued"),
+         get_ticket_authz_data, NULL, NULL, 1, 1 },
+    { NB("ticket-authz-data"),
+         get_ticket_authz_data, NULL, NULL, 1, 1 },
+    { NB("authenticator-authz-data"),
+         get_authenticator_authz_data, NULL, NULL, 1, 1 },
+    { NB("authz-data"),     get_authz_data,  NULL, NULL, 1, 1 },
+    { NB("transit-path"),   get_transited,   NULL, NULL, 1, 1 },
+    { NB("canonical-name"), get_canonical_name, NULL, NULL, 1, 1 },
+};
+
 OM_uint32 GSSAPI_CALLCONV
 _gsskrb5_get_name_attribute(OM_uint32 *minor_status,
-                            gss_name_t gname,
+                            gss_name_t name,
                             gss_buffer_t original_attr,
                             int *authenticated,
                             int *complete,
@@ -147,25 +225,10 @@ _gsskrb5_get_name_attribute(OM_uint32 *minor_status,
                             gss_buffer_t display_value,
                             int *more)
 {
-    krb5_const_principal name = (krb5_const_principal)gname;
-    krb5_error_code kret = 0;
-    gss_buffer_desc prefix, attr, frag;
-    PrincipalNameAttrs *nameattrs = name->nameattrs;
-    PrincipalNameAttrSrc *src = nameattrs ? nameattrs->source : NULL;
-    EncTicketPart *ticket = NULL;
-    EncKDCRepPart *kdcrep = NULL;
-    int is_urn;
-
-    if (src) switch (src->element) {
-    case choice_PrincipalNameAttrSrc_enc_kdc_rep_part:
-        kdcrep = &src->u.enc_kdc_rep_part;
-        break;
-    case choice_PrincipalNameAttrSrc_enc_ticket_part:
-        ticket = &src->u.enc_ticket_part;
-        break;
-    default:
-        break;
-    }
+    gss_buffer_desc prefix, attr, suffix, frag;
+    size_t i;
+    int is_krb5_name_attr_urn = 0;
+    int is_urn = 0;
 
     *minor_status = 0;
     if (authenticated)
@@ -183,411 +246,135 @@ _gsskrb5_get_name_attribute(OM_uint32 *minor_status,
         display_value->value = NULL;
     }
 
+    suffix.value = NULL;
+    suffix.length = 0;
+
     split_attr(original_attr, &prefix, &attr, &frag, &is_urn);
+
     if (prefix.length || !is_urn)
         return GSS_S_UNAVAILABLE;
 
-    if (ATTR_EQ(&attr, GSS_KRB5_NAME_ATTRIBUTE_BASE_URN "realm")) {
-        /*
-         * Output the principal's realm.  The value and display value are the
-         * same in this case.
-         */
-        if (authenticated && nameattrs && nameattrs->authenticated)
-            *authenticated = 1;
-        if (complete)
-            *complete = 1;
-        if (value) {
-            if ((value->value = strdup(name->realm)) == NULL)
-                goto enomem;
-            value->length = strlen(value->value);
-        }
-        if (display_value) {
-            if ((display_value->value = strdup(name->realm)) == NULL)
-                goto enomem;
-            display_value->length = strlen(display_value->value);
-        }
-        return GSS_S_COMPLETE;
-    } else if (ATTR_EQ(&attr, GSS_KRB5_NAME_ATTRIBUTE_BASE_URN "peer-realm") &&
-        nameattrs && nameattrs->peer_realm) {
-        /*
-         * Output the peer's realm.  The value and display value are the
-         * same in this case.
-         */
-        if (authenticated)
-            *authenticated = 1;
-        if (complete)
-            *complete = 1;
-        if (value) {
-            if ((value->value = strdup(nameattrs->peer_realm[0])) == NULL)
-                goto enomem;
-            value->length = strlen(value->value);
-        }
-        if (display_value) {
-            if ((display_value->value =
-                 strdup(nameattrs->peer_realm[0])) == NULL)
-                goto enomem;
-            display_value->length = strlen(display_value->value);
-        }
-        return GSS_S_COMPLETE;
-    } else if (ATTR_EQ(&attr, GSS_KRB5_NAME_ATTRIBUTE_BASE_URN "name-ncomp")) {
-        unsigned char n;
+    is_krb5_name_attr_urn =
+        ATTR_EQ_PREFIX(&attr, GSS_KRB5_NAME_ATTRIBUTE_BASE_URN);
+    if (is_krb5_name_attr_urn) {
+        suffix.value =
+            (char *)attr.value + sizeof(GSS_KRB5_NAME_ATTRIBUTE_BASE_URN) - 1;
+        suffix.length = attr.length - (sizeof(GSS_KRB5_NAME_ATTRIBUTE_BASE_URN) - 1);
+    }
 
-        if (authenticated && nameattrs && nameattrs->authenticated)
-            *authenticated = 1;
-        if (complete)
-            *complete = 1;
-        if (frag.length == 0) {
-            if (value) {
-                if ((value->value = malloc(sizeof(size_t))) == NULL)
-                    goto enomem;
-                *((size_t *)value->value) = name->name.name_string.len;
-                value->length = sizeof(size_t);
-            }
-            if (display_value) {
-                char *s = NULL;
-
-                if (asprintf(&s, "%u",
-                             (unsigned int)name->name.name_string.len) == -1 ||
-                    s == NULL)
-                    goto enomem;
-                display_value->value = s;
-                display_value->length = strlen(display_value->value);
-            }
-            return GSS_S_COMPLETE;
-        } /* else caller wants a component */
-        if (frag.length != 1 ||
-            ((const char *)frag.value)[0] < '0' ||
-            ((const char *)frag.value)[0] > '9') {
-            *minor_status = EINVAL;
-            return GSS_S_UNAVAILABLE;
-        }
-        n = ((const char *)frag.value)[0] - '0';
-        if (n >= name->name.name_string.len) {
-            *minor_status = EINVAL;
-            return GSS_S_UNAVAILABLE;
-        }
-        /* The value and the display value are the same in this case */
-        if (value) {
-            if ((value->value = strdup(name->name.name_string.val[n])) == NULL)
-                goto enomem;
-            value->length = strlen(name->name.name_string.val[n]);
-        }
-        if (display_value) {
-            if ((display_value->value =
-                     strdup(name->name.name_string.val[n])) == NULL)
-                goto enomem;
-            if (display_value)
-                display_value->length = strlen(name->name.name_string.val[n]);
-        }
-        return GSS_S_COMPLETE;
-    } else if (ATTR_EQ(&attr, GSS_KRB5_NAME_ATTRIBUTE_BASE_URN
-                       "canonical-name") && src) {
-        krb5_principal p = NULL;
-        krb5_context context;
-
-        GSSAPI_KRB5_INIT(&context);
-
-        if (authenticated)
-            *authenticated = 1;
-        if (complete)
-            *complete = 1;
-
-        if (kdcrep) {
-            kret = _krb5_principalname2krb5_principal(context, &p,
-                                                      kdcrep->sname,
-                                                      kdcrep->srealm);
-        } else if (ticket) {
-	    krb5_data data;
-	    krb5_pac pac = NULL;
-
-	    krb5_data_zero(&data);
-
-	    /* Use canonical name from PAC if available */
-	    kret = _krb5_get_ad(context, ticket->authorization_data,
-				NULL, KRB5_AUTHDATA_WIN2K_PAC, &data);
-	    if (kret == 0)
-		kret = krb5_pac_parse(context, data.data, data.length, &pac);
-	    if (kret == 0)
-		kret = _krb5_pac_get_canon_principal(context, pac, &p);
-	    if (kret == 0 && authenticated)
-		*authenticated = nameattrs->pac_verified;
-	    else if (kret == ENOENT)
-		kret = _krb5_principalname2krb5_principal(context, &p,
-							  ticket->cname,
-							  ticket->crealm);
-
-	    krb5_data_free(&data);
-	    krb5_pac_free(context, pac);
+    for (i = 0; i < sizeof(name_attrs)/sizeof(name_attrs[0]); i++) {
+        if (!name_attrs[i].getter)
+            continue;
+        if (name_attrs[i].is_krb5_name_attr_urn && is_krb5_name_attr_urn) {
+            if (!attr_eq(&suffix, name_attrs[i].name, name_attrs[i].namelen, 0))
+                continue;
+        } else if (!name_attrs[i].is_krb5_name_attr_urn && !is_krb5_name_attr_urn) {
+            if (!attr_eq(&attr, name_attrs[i].name, name_attrs[i].namelen, 0))
+                continue;
         } else
-            return GSS_S_UNAVAILABLE;
-        if (kret == 0 && value) {
-            OM_uint32 major;
-            /*
-             * Value is exported name token (exported composite name token
-             * should also work).
-             */
-            major = _gsskrb5_export_name(minor_status, (gss_name_t)p, value);
-            if (major != GSS_S_COMPLETE) {
-                krb5_free_principal(context, p);
-                return major;
-            }
-        }
-        if (kret == 0 && display_value) {
-            /* Display value is principal name display form */
-            kret = krb5_unparse_name(context, p,
-                                     (char **)&display_value->value);
-            if (kret == 0)
-                display_value->length = strlen(display_value->value);
-        }
+            continue;
 
-        krb5_free_principal(context, p);
-        if (kret) {
-            if (value) {
-                free(value->value);
-                value->length = 0;
-                value->value = NULL;
-            }
-            *minor_status = kret;
-            return GSS_S_UNAVAILABLE;
-        }
-        return GSS_S_COMPLETE;
-    } else if (ATTR_EQ(&attr, GSS_KRB5_NAME_ATTRIBUTE_BASE_URN "authz-data") &&
-               frag.length &&
-               ((nameattrs && nameattrs->authenticator_ad) ||
-                (ticket && ticket->authorization_data))) {
-        krb5_context context;
-        krb5_data data;
-        char *s, *end;
-        int64_t n;
-
-        /* Output a specific AD element from the ticket or authenticator */
-        krb5_data_zero(&data);
-        if ((s = strndup(frag.value, frag.length)) == NULL) {
-            *minor_status = ENOMEM;
-            return GSS_S_FAILURE;
-        }
-        errno = 0;
-        n = strtoll(s, &end, 10);
-        free(s);
-        if (end[0] == '\0' && (errno || n > INT_MAX || n < INT_MIN)) {
-            *minor_status = ERANGE;
-            return GSS_S_FAILURE;
-        }
-        if (end[0] != '\0') {
-            *minor_status = EINVAL;
-            return GSS_S_FAILURE;
-        }
-
-        if (authenticated)
-            *authenticated = 0;
-        if (complete)
-            *complete = 1;
-
-        GSSAPI_KRB5_INIT(&context);
-
-        kret = ENOENT;
-        if (ticket && ticket->authorization_data) {
-            kret = _krb5_get_ad(context, ticket->authorization_data,
-                                NULL, n, value ? &data : NULL);
-
-            /* If it's from the ticket, it may be authenticated: */
-            if (kret == 0 && authenticated) {
-                if (n == KRB5_AUTHDATA_KDC_ISSUED)
-                    *authenticated = nameattrs->kdc_issued_verified;
-                else if (n == KRB5_AUTHDATA_WIN2K_PAC)
-                    *authenticated = nameattrs->pac_verified;
-            }
-        }
-        if (kret == ENOENT && nameattrs->authenticator_ad &&
-            n != KRB5_AUTHDATA_KDC_ISSUED &&
-            n != KRB5_AUTHDATA_WIN2K_PAC) {
-            kret = _krb5_get_ad(context, nameattrs->authenticator_ad,
-                                NULL, n, value ? &data : NULL);
-        }
-
-        if (value) {
-            value->length = data.length;
-            value->value = data.data;
-        }
-        *minor_status = kret;
-        if (kret == ENOENT)
-            return GSS_S_UNAVAILABLE;
-        return kret == 0 ? GSS_S_COMPLETE : GSS_S_FAILURE;
-    } else if (ticket && ticket->authorization_data &&
-	       (ATTR_EQ_PREFIX(&attr, "urn:mspac:") ||
-		(ATTR_EQ(&attr, GSS_KRB5_NAME_ATTRIBUTE_BASE_URN "ticket-authz-data") &&
-		 (ATTR_EQ(&frag, "pac") || ATTR_EQ_PREFIX(&frag, "pac-"))))) {
-        krb5_context context;
-        krb5_data data, pac_data, *datap;
-        krb5_data suffix;
-
-	if (ATTR_EQ_PREFIX(&attr, "urn:mspac:")) {
-	    suffix.length = attr.length - (sizeof("urn:mspac:") - 1);
-	    suffix.data = (char *)attr.value + sizeof("urn:mspac:") - 1;
-	} else if (ATTR_EQ_PREFIX(&frag, "pac-")) {
-	    suffix.length = frag.length - sizeof("pac-") - 1;
-	    suffix.data = (char *)frag.value + sizeof("pac-") - 1;
-	} else
-	    krb5_data_zero(&suffix); /* ticket-authz-data#pac */
-
-        /*
-         * In MIT the attribute for the whole PAC is "urn:mspac:".
-         */
-
-        GSSAPI_KRB5_INIT(&context);
-
-        if (authenticated)
-            *authenticated = nameattrs->pac_verified;
-        if (complete)
-            *complete = 1;
-
-	if (suffix.length)
-	    datap = &pac_data;
-	else if (value)
-	    datap = &data;
-	else
-	    datap = NULL;
-
-        kret = _krb5_get_ad(context, ticket->authorization_data,
-                            NULL, KRB5_AUTHDATA_WIN2K_PAC, datap);
-	if (kret == 0 && suffix.length) {
-	    krb5_pac pac;
-
-	    kret = krb5_pac_parse(context, pac_data.data, pac_data.length, &pac);
-	    if (kret == 0) {
-		kret = _krb5_pac_get_buffer_by_name(context, pac, &suffix,
-						    value ? &data : NULL);
-		krb5_pac_free(context, pac);
-	    }
-	    krb5_data_free(&pac_data);
-	}
-
-        if (value) {
-            value->length = data.length;
-            value->value = data.data;
-        }
-
-        *minor_status = kret;
-        if (kret == ENOENT)
-            return GSS_S_UNAVAILABLE;
-        return kret == 0 ? GSS_S_COMPLETE : GSS_S_FAILURE;
-    } else if (ticket && ticket->authorization_data &&
-	       ATTR_EQ(&attr, GSS_KRB5_NAME_ATTRIBUTE_BASE_URN "ticket-authz-data") &&
-	       ATTR_EQ(&frag, "kdc-issued")) {
-        krb5_context context;
-        krb5_data data;
-
-        GSSAPI_KRB5_INIT(&context);
-
-        if (authenticated)
-            *authenticated = nameattrs->kdc_issued_verified;
-        if (complete)
-            *complete = 1;
-
-        kret = _krb5_get_ad(context, ticket->authorization_data,
-                            NULL, KRB5_AUTHDATA_KDC_ISSUED,
-                            value ? &data : NULL);
-        if (value) {
-            value->length = data.length;
-            value->value = data.data;
-        }
-        *minor_status = kret;
-        if (kret == ENOENT)
-            return GSS_S_UNAVAILABLE;
-        return kret == 0 ? GSS_S_COMPLETE : GSS_S_FAILURE;
-    } else if (ATTR_EQ(&attr, GSS_KRB5_NAME_ATTRIBUTE_BASE_URN
-                       "ticket-authz-data") &&
-               frag.length == 0 && ticket && ticket->authorization_data) {
-        size_t sz;
-
-        /* Just because it's in the Ticket doesn't make it authenticated */
-        if (authenticated)
-            *authenticated = 0;
-        if (complete)
-            *complete = 1;
-
-        if (value) {
-            ASN1_MALLOC_ENCODE(AuthorizationData, value->value, value->length,
-                               ticket->authorization_data, &sz, kret);
-            *minor_status = kret;
-        }
-        return kret == 0 ? GSS_S_COMPLETE : GSS_S_FAILURE;
-    } else if (ATTR_EQ(&attr, GSS_KRB5_NAME_ATTRIBUTE_BASE_URN
-                       "authenticator-authz-data") &&
-               nameattrs && nameattrs->authenticator_ad) {
-        size_t sz;
-
-        if (authenticated)
-            *authenticated = 0;
-        if (complete)
-            *complete = 1;
-
-        if (value) {
-            ASN1_MALLOC_ENCODE(AuthorizationData, value->value, value->length,
-                               nameattrs->authenticator_ad, &sz, kret);
-            *minor_status = kret;
-        }
-        return kret == 0 ? GSS_S_COMPLETE : GSS_S_FAILURE;
-    } else if (ATTR_EQ(&attr, GSS_KRB5_NAME_ATTRIBUTE_BASE_URN
-                       "transit-path") &&
-               (ticket || (nameattrs && nameattrs->transited))) {
-        size_t sz;
-
-        if (authenticated)
-            *authenticated = 1;
-        if (complete)
-            *complete = 1;
-
-        if (value && ticket)
-            ASN1_MALLOC_ENCODE(TransitedEncoding, value->value, value->length,
-                               &ticket->transited, &sz, kret);
-        else if (value && nameattrs->transited)
-            ASN1_MALLOC_ENCODE(TransitedEncoding, value->value, value->length,
-                               nameattrs->transited, &sz, kret);
-        *minor_status = kret;
-        return kret == 0 ? GSS_S_COMPLETE : GSS_S_FAILURE;
+        return name_attrs[i].getter(minor_status,
+                                    (const CompositePrincipal *)name,
+                                    &prefix, &attr, &frag, authenticated,
+                                    complete, value, display_value, more);
     }
-
     return GSS_S_UNAVAILABLE;
-
-enomem:
-    if (value)
-        gss_release_buffer(minor_status, value);
-    *minor_status = ENOMEM;
-    return GSS_S_FAILURE;
 }
 
-static OM_uint32
-add_urn(OM_uint32 *minor_status,
-        gss_name_t name,
-        gss_buffer_t urn,
-        gss_buffer_set_t *attrs)
+OM_uint32 GSSAPI_CALLCONV
+_gsskrb5_set_name_attribute(OM_uint32 *minor_status,
+                            gss_name_t name,
+                            int complete,
+                            gss_buffer_t original_attr,
+                            gss_buffer_t value)
 {
-    OM_uint32 major;
+    gss_buffer_desc prefix, attr, suffix, frag;
+    size_t i;
+    int is_krb5_name_attr_urn = 0;
+    int is_urn = 0;
 
-    major = _gsskrb5_get_name_attribute(minor_status, name, urn,
-                                        0, 0, 0, 0, 0);
-    if (major == GSS_S_COMPLETE) {
-        major = gss_add_buffer_set_member(minor_status, urn, attrs);
-        if (major)
-            return major;
+    *minor_status = 0;
+
+    suffix.value = NULL;
+    suffix.length = 0;
+
+    split_attr(original_attr, &prefix, &attr, &frag, &is_urn);
+
+    if (prefix.length || !is_urn)
+        return GSS_S_UNAVAILABLE;
+
+    is_krb5_name_attr_urn =
+        ATTR_EQ_PREFIX(&attr, GSS_KRB5_NAME_ATTRIBUTE_BASE_URN);
+    if (is_krb5_name_attr_urn) {
+        suffix.value =
+            (char *)attr.value + sizeof(GSS_KRB5_NAME_ATTRIBUTE_BASE_URN) - 1;
+        suffix.length = attr.length - (sizeof(GSS_KRB5_NAME_ATTRIBUTE_BASE_URN) - 1);
     }
-    if (major == GSS_S_UNAVAILABLE)
-        return GSS_S_COMPLETE;
-    return major;
+
+    for (i = 0; i < sizeof(name_attrs)/sizeof(name_attrs[0]); i++) {
+        if (!name_attrs[i].setter)
+            continue;
+        if (name_attrs[i].is_krb5_name_attr_urn && is_krb5_name_attr_urn) {
+            if (!attr_eq(&suffix, name_attrs[i].name, name_attrs[i].namelen, 0))
+                continue;
+        } else if (!name_attrs[i].is_krb5_name_attr_urn && !is_krb5_name_attr_urn) {
+            if (!attr_eq(&attr, name_attrs[i].name, name_attrs[i].namelen, 0))
+                continue;
+        } else
+            continue;
+
+        return name_attrs[i].setter(minor_status, (CompositePrincipal *)name,
+                                    &prefix, &attr, &frag, complete, value);
+    }
+    return GSS_S_UNAVAILABLE;
 }
 
-#define ADD_URN(l)                                                      \
-    do if (major == GSS_S_COMPLETE) {                                   \
-        if (strncmp(l, "urn:", sizeof("urn:") - 1) == 0) {              \
-            urn.value = l;                                              \
-            urn.length = sizeof(l) - 1;                                 \
-        } else {                                                        \
-            urn.value = GSS_KRB5_NAME_ATTRIBUTE_BASE_URN l;             \
-            urn.length = sizeof(GSS_KRB5_NAME_ATTRIBUTE_BASE_URN l) - 1;\
-        }                                                               \
-        major = add_urn(minor_status, name, &urn, attrs);               \
-    } while (0)
+OM_uint32 GSSAPI_CALLCONV
+_gsskrb5_delete_name_attribute(OM_uint32 *minor_status,
+                               gss_name_t name,
+                               gss_buffer_t original_attr)
+{
+    gss_buffer_desc prefix, attr, suffix, frag;
+    size_t i;
+    int is_krb5_name_attr_urn = 0;
+    int is_urn = 0;
+
+    *minor_status = 0;
+
+    suffix.value = NULL;
+    suffix.length = 0;
+
+    split_attr(original_attr, &prefix, &attr, &frag, &is_urn);
+
+    if (prefix.length || !is_urn)
+        return GSS_S_UNAVAILABLE;
+
+    is_krb5_name_attr_urn =
+        ATTR_EQ_PREFIX(&attr, GSS_KRB5_NAME_ATTRIBUTE_BASE_URN);
+    if (is_krb5_name_attr_urn) {
+        suffix.value =
+            (char *)attr.value + sizeof(GSS_KRB5_NAME_ATTRIBUTE_BASE_URN) - 1;
+        suffix.length = attr.length - (sizeof(GSS_KRB5_NAME_ATTRIBUTE_BASE_URN) - 1);
+    }
+
+    for (i = 0; i < sizeof(name_attrs)/sizeof(name_attrs[0]); i++) {
+        if (!name_attrs[i].deleter)
+            continue;
+        if (name_attrs[i].is_krb5_name_attr_urn && is_krb5_name_attr_urn) {
+            if (!attr_eq(&suffix, name_attrs[i].name, name_attrs[i].namelen, 0))
+                continue;
+        } else if (!name_attrs[i].is_krb5_name_attr_urn && !is_krb5_name_attr_urn) {
+            if (!attr_eq(&attr, name_attrs[i].name, name_attrs[i].namelen, 0))
+                continue;
+        } else
+            continue;
+
+        return name_attrs[i].deleter(minor_status, (CompositePrincipal *)name,
+                                    &prefix, &attr, &frag);
+    }
+    return GSS_S_UNAVAILABLE;
+}
 
 OM_uint32 GSSAPI_CALLCONV
 _gsskrb5_inquire_name(OM_uint32 *minor_status,
@@ -596,13 +383,10 @@ _gsskrb5_inquire_name(OM_uint32 *minor_status,
                       gss_OID *MN_mech,
                       gss_buffer_set_t *attrs)
 {
-    OM_uint32 major = GSS_S_COMPLETE;
-    gss_buffer_desc urn;
-    krb5_error_code ret;
-    krb5_context context;
-    char lname[32];
-
-    GSSAPI_KRB5_INIT(&context);
+    gss_buffer_desc prefix, attr, frag, a;
+    OM_uint32 major;
+    size_t i;
+    int is_urn;
 
     *minor_status = 0;
     if (name_is_MN)
@@ -613,51 +397,25 @@ _gsskrb5_inquire_name(OM_uint32 *minor_status,
         return GSS_S_CALL_INACCESSIBLE_READ;
     if (attrs == NULL)
         return GSS_S_CALL_INACCESSIBLE_WRITE;
-    ADD_URN("realm");
-    ADD_URN("name-ncomp");
-    ADD_URN("name-ncomp#0");
-    ADD_URN("name-ncomp#1");
-    ADD_URN("name-ncomp#2");
-    ADD_URN("name-ncomp#3");
-    ADD_URN("name-ncomp#4");
-    ADD_URN("name-ncomp#5");
-    ADD_URN("name-ncomp#6");
-    ADD_URN("name-ncomp#7");
-    ADD_URN("name-ncomp#8");
-    ADD_URN("name-ncomp#9");
-    ADD_URN("peer-realm");
-    ADD_URN("ticket-authz-data#pac");
-    ADD_URN("ticket-authz-data#pac-logon-info");
-    ADD_URN("ticket-authz-data#pac-credentials-info");
-    ADD_URN("ticket-authz-data#pac-server-checksum");
-    ADD_URN("ticket-authz-data#pac-privsvr-checksum");
-    ADD_URN("ticket-authz-data#pac-client-info");
-    ADD_URN("ticket-authz-data#pac-delegation-info");
-    ADD_URN("ticket-authz-data#pac-upn-dns-info");
-    ADD_URN("ticket-authz-data#pac-attributes-info");
-    ADD_URN("ticket-authz-data#pac-requestor-sid");
-    ADD_URN("urn:mspac:");
-    ADD_URN("urn:mspac:logon-info");
-    ADD_URN("urn:mspac:credentials-info");
-    ADD_URN("urn:mspac:server-checksum");
-    ADD_URN("urn:mspac:privsvr-checksum");
-    ADD_URN("urn:mspac:client-info");
-    ADD_URN("urn:mspac:delegation-info");
-    ADD_URN("urn:mspac:upn-dns-info");
-    ADD_URN("urn:mspac:attributes-info");
-    ADD_URN("urn:mspac:requestor-sid");
-    ADD_URN("authenticator-authz-data"); /* XXX Add fragments? */
-    ADD_URN("ticket-authz-data"); /* XXX Add fragments? */
-    ADD_URN("authz-data");
-    ADD_URN("transit-path");
-    ADD_URN("canonical-name");
-    major = GSS_S_COMPLETE;
-    lname[0] = '\0';
-    ret = krb5_aname_to_localname(context, (void *)name,
-                                  sizeof(lname) - 1, lname);
-    if (ret == 0 && lname[0] != '\0')
-        major = gss_add_buffer_set_member(minor_status,
-                                          GSS_C_ATTR_LOCAL_LOGIN_USER, attrs); 
+
+    for (i = 0; i < sizeof(name_attrs)/sizeof(name_attrs[0]); i++) {
+        if (!name_attrs[i].indicate)
+            continue;
+        a.value = (void *)(uintptr_t)name_attrs[i].fullname;
+        a.length = strlen(name_attrs[i].fullname);
+        split_attr(&a, &prefix, &attr, &frag, &is_urn);
+        major = name_attrs[i].getter(minor_status,
+                                     (const CompositePrincipal *)name,
+                                     &prefix, &attr, &frag, NULL,
+                                     NULL, NULL, NULL, NULL);
+        if (major == GSS_S_UNAVAILABLE)
+            continue;
+        if (major != GSS_S_COMPLETE)
+            break;
+        major = gss_add_buffer_set_member(minor_status, &a, attrs);
+    }
+    if (major == GSS_S_UNAVAILABLE)
+        major = GSS_S_COMPLETE;
     return major;
 }
 
@@ -750,5 +508,561 @@ _gsskrb5_export_name_composite(OM_uint32 *minor_status,
     free(inner.value);
 
     *minor_status = 0;
+    return GSS_S_COMPLETE;
+}
+
+#define CHECK_ENOMEM(v, dv) \
+    do { \
+        if (((v) && !(v)->value) || ((dv) && !(dv)->value)) { \
+            if ((v) && (v)->value) { \
+                free((v)->value); \
+                (v)->length = 0; \
+                (v)->value = NULL; \
+            } \
+            *minor_status = ENOMEM; \
+            return GSS_S_FAILURE; \
+        } \
+    } while (0)
+
+static OM_uint32
+get_realm(OM_uint32 *minor_status,
+          const CompositePrincipal *name,
+          gss_const_buffer_t prefix,
+          gss_const_buffer_t attr,
+          gss_const_buffer_t frag,
+          int *authenticated,
+          int *complete,
+          gss_buffer_t value,
+          gss_buffer_t display_value,
+          int *more)
+{
+    PrincipalNameAttrs *nameattrs = name->nameattrs;
+
+    if (prefix->length || frag->length || !name->realm)
+        return GSS_S_UNAVAILABLE;
+    if (authenticated && nameattrs && nameattrs->authenticated)
+        *authenticated = 1;
+    if (complete)
+        *complete = 1;
+    if (value && (value->value = strdup(name->realm)))
+        value->length = strlen(name->realm);
+    if (display_value && (display_value->value = strdup(name->realm)))
+        display_value->length = strlen(name->realm);
+    CHECK_ENOMEM(value, display_value);
+    return GSS_S_COMPLETE;
+}
+
+static OM_uint32
+get_ncomps(OM_uint32 *minor_status,
+           const CompositePrincipal *name,
+           gss_const_buffer_t prefix,
+           gss_const_buffer_t attr,
+           gss_const_buffer_t frag,
+           int *authenticated,
+           int *complete,
+           gss_buffer_t value,
+           gss_buffer_t display_value,
+           int *more)
+{
+    PrincipalNameAttrs *nameattrs = name->nameattrs;
+    int n = -1;
+
+    if (authenticated && nameattrs && nameattrs->authenticated)
+        *authenticated = 1;
+    if (complete)
+        *complete = 1;
+
+    if (frag->length == 1 &&
+        ((const char *)frag->value)[0] >= '0' &&
+        ((const char *)frag->value)[0] <= '9') {
+        n = ((const char *)frag->value)[0] - '0';
+    } else if (frag->length == sizeof("all") - 1 &&
+               strncmp(frag->value, "all", sizeof("all") - 1) == 0) {
+        if (!more || *more < -1 || *more == 0 || *more > CHAR_MAX ||
+            *more > (int)name->name.name_string.len) {
+            *minor_status = EINVAL;
+            return GSS_S_UNAVAILABLE;
+        }
+        if (*more == -1) {
+            *more = name->name.name_string.len - 1;
+            n = 0;
+        } else {
+            n = name->name.name_string.len - *more;
+            (*more)--;
+        }
+    }
+
+    if (frag->length == 0) {
+        char *s = NULL;
+
+        /* Outut count of components */
+        if (value && (value->value = malloc(sizeof(size_t)))) {
+            *((size_t *)value->value) = name->name.name_string.len;
+            value->length = sizeof(size_t);
+        }
+        if (display_value &&
+            asprintf(&s, "%u", (unsigned int)name->name.name_string.len) > 0) {
+            display_value->value = s;
+            display_value->length = strlen(display_value->value);
+        }
+    } else {
+        /*
+         * Output a component.  The value and the display value are the same in
+         * this case.
+         */
+        if (n < 0 || n >= name->name.name_string.len) {
+            *minor_status = EINVAL;
+            return GSS_S_UNAVAILABLE;
+        }
+        if (value && (value->value = strdup(name->name.name_string.val[n])))
+            value->length = strlen(name->name.name_string.val[n]);
+        if (display_value &&
+            (display_value->value = strdup(name->name.name_string.val[n])))
+            display_value->length = strlen(name->name.name_string.val[n]);
+    }
+
+    CHECK_ENOMEM(value, display_value);
+    return GSS_S_COMPLETE;
+}
+
+static OM_uint32
+get_peer_realm(OM_uint32 *minor_status,
+               const CompositePrincipal *name,
+               gss_const_buffer_t prefix,
+               gss_const_buffer_t attr,
+               gss_const_buffer_t frag,
+               int *authenticated,
+               int *complete,
+               gss_buffer_t value,
+               gss_buffer_t display_value,
+               int *more)
+{
+    PrincipalNameAttrs *nameattrs = name->nameattrs;
+
+    if (prefix->length || frag->length || !nameattrs || !nameattrs->peer_realm)
+        return GSS_S_UNAVAILABLE;
+    if (authenticated)
+        *authenticated = 1;
+    if (complete)
+        *complete = 1;
+    if (value && (value->value = strdup(nameattrs->peer_realm[0])))
+        value->length = strlen(value->value);
+    if (display_value &&
+        (display_value->value = strdup(nameattrs->peer_realm[0])))
+        display_value->length = strlen(display_value->value);
+
+    CHECK_ENOMEM(value, display_value);
+    return GSS_S_COMPLETE;
+}
+
+static OM_uint32
+get_pac(OM_uint32 *minor_status,
+        const CompositePrincipal *name,
+        gss_const_buffer_t prefix,
+        gss_const_buffer_t attr,
+        gss_const_buffer_t frag,
+        int *authenticated,
+        int *complete,
+        gss_buffer_t value,
+        gss_buffer_t display_value,
+        int *more)
+{
+    krb5_error_code kret;
+    krb5_context context;
+    krb5_data data, pac_data;
+    krb5_data suffix;
+    PrincipalNameAttrs *nameattrs = name->nameattrs;
+    PrincipalNameAttrSrc *src = nameattrs ? nameattrs->source : NULL;
+    EncTicketPart *ticket = NULL;
+
+    krb5_data_zero(&data);
+    krb5_data_zero(&pac_data);
+
+    if (src) switch (src->element) {
+    case choice_PrincipalNameAttrSrc_enc_ticket_part:
+        ticket = &src->u.enc_ticket_part;
+        break;
+    case choice_PrincipalNameAttrSrc_enc_kdc_rep_part:
+    default:
+        return GSS_S_UNAVAILABLE;
+    }
+
+    if (prefix->length || !authenticated || !ticket)
+        return GSS_S_UNAVAILABLE;
+
+    GSSAPI_KRB5_INIT(&context);
+
+    if (ATTR_EQ_PREFIX(attr, "urn:mspac:")) {
+        suffix.length = attr->length - (sizeof("urn:mspac:") - 1);
+        suffix.data = (char *)attr->value + sizeof("urn:mspac:") - 1;
+    } else if (ATTR_EQ_PREFIX(frag, "pac-")) {
+        suffix.length = frag->length - sizeof("pac-") - 1;
+        suffix.data = (char *)frag->value + sizeof("pac-") - 1;
+    } else
+        krb5_data_zero(&suffix); /* ticket-authz-data#pac */
+
+    *authenticated = nameattrs->pac_verified;
+    if (complete)
+        *complete = 1;
+
+    kret = _krb5_get_ad(context, ticket->authorization_data,
+                        NULL, KRB5_AUTHDATA_WIN2K_PAC, &pac_data);
+    if (kret == 0 && suffix.length) {
+        krb5_pac pac;
+
+        kret = krb5_pac_parse(context, pac_data.data, pac_data.length, &pac);
+        if (kret == 0) {
+            kret = _krb5_pac_get_buffer_by_name(context, pac, &suffix,
+                                                value ? &data : NULL);
+            krb5_pac_free(context, pac);
+        }
+
+        if (value) {
+            value->length = data.length;
+            value->value = data.data;
+            krb5_data_zero(&data);
+        }
+    } else if (kret == 0 && value) {
+        value->length = pac_data.length;
+        value->value = pac_data.data;
+        krb5_data_zero(&pac_data);
+    }
+
+    krb5_data_free(&pac_data);
+    krb5_data_free(&data);
+    *minor_status = kret;
+    if (kret == ENOENT)
+        return GSS_S_UNAVAILABLE;
+    return kret == 0 ? GSS_S_COMPLETE : GSS_S_FAILURE;
+}
+
+static OM_uint32
+get_authz_data(OM_uint32 *minor_status,
+               const CompositePrincipal *name,
+               gss_const_buffer_t prefix,
+               gss_const_buffer_t attr,
+               gss_const_buffer_t frag,
+               int *authenticated,
+               int *complete,
+               gss_buffer_t value,
+               gss_buffer_t display_value,
+               int *more)
+{
+    krb5_error_code kret = 0;
+    PrincipalNameAttrs *nameattrs = name->nameattrs;
+    PrincipalNameAttrSrc *src = nameattrs ? nameattrs->source : NULL;
+    EncTicketPart *ticket = NULL;
+    krb5_context context;
+    krb5_data data;
+    char s[22];
+    char *end;
+    int64_t n;
+
+    if (src) switch (src->element) {
+    case choice_PrincipalNameAttrSrc_enc_ticket_part:
+        ticket = &src->u.enc_ticket_part;
+        break;
+    case choice_PrincipalNameAttrSrc_enc_kdc_rep_part:
+    default:
+        return GSS_S_UNAVAILABLE;
+    }
+
+    if (!nameattrs || !frag->length || frag->length > sizeof(s) - 1)
+        return GSS_S_UNAVAILABLE;
+
+    /* Output a specific AD element from the ticket or authenticator */
+    krb5_data_zero(&data);
+    memcpy(s, frag->value, frag->length);
+    s[frag->length] = '\0';
+    errno = 0;
+    n = strtoll(s, &end, 10);
+    if (end[0] == '\0' && (errno || n > INT_MAX || n < INT_MIN)) {
+        *minor_status = ERANGE;
+        return GSS_S_UNAVAILABLE;
+    }
+    if (end[0] != '\0') {
+        *minor_status = EINVAL;
+        return GSS_S_UNAVAILABLE;
+    }
+
+    if (authenticated)
+        *authenticated = 0;
+    if (complete)
+        *complete = 1;
+
+    GSSAPI_KRB5_INIT(&context);
+
+    kret = ENOENT;
+    if (ticket && ticket->authorization_data) {
+        kret = _krb5_get_ad(context, ticket->authorization_data,
+                            NULL, n, value ? &data : NULL);
+
+        /* If it's from the ticket, it _may_ be authenticated: */
+        if (kret == 0 && authenticated) {
+            if (n == KRB5_AUTHDATA_KDC_ISSUED)
+                *authenticated = nameattrs->kdc_issued_verified;
+            else if (n == KRB5_AUTHDATA_WIN2K_PAC)
+                *authenticated = nameattrs->pac_verified;
+        }
+    }
+    if (kret == ENOENT && nameattrs->authenticator_ad &&
+        n != KRB5_AUTHDATA_KDC_ISSUED &&
+        n != KRB5_AUTHDATA_WIN2K_PAC) {
+        kret = _krb5_get_ad(context, nameattrs->authenticator_ad,
+                            NULL, n, value ? &data : NULL);
+    }
+
+    if (value) {
+        value->length = data.length;
+        value->value = data.data;
+    }
+    *minor_status = kret;
+    if (kret == ENOENT)
+        return GSS_S_UNAVAILABLE;
+    return kret == 0 ? GSS_S_COMPLETE : GSS_S_FAILURE;
+}
+
+static OM_uint32
+get_ticket_authz_data(OM_uint32 *minor_status,
+                      const CompositePrincipal *name,
+                      gss_const_buffer_t prefix,
+                      gss_const_buffer_t attr,
+                      gss_const_buffer_t frag,
+                      int *authenticated,
+                      int *complete,
+                      gss_buffer_t value,
+                      gss_buffer_t display_value,
+                      int *more)
+{
+    krb5_error_code kret = 0;
+    PrincipalNameAttrs *nameattrs = name->nameattrs;
+    PrincipalNameAttrSrc *src = nameattrs ? nameattrs->source : NULL;
+    EncTicketPart *ticket = NULL;
+    size_t sz;
+
+    if (src) switch (src->element) {
+    case choice_PrincipalNameAttrSrc_enc_ticket_part:
+        ticket = &src->u.enc_ticket_part;
+        break;
+    case choice_PrincipalNameAttrSrc_enc_kdc_rep_part:
+    default:
+        return GSS_S_UNAVAILABLE;
+    }
+
+    if (!ticket)
+        return GSS_S_UNAVAILABLE;
+
+    if (complete)
+        *complete = 1;
+
+    if (frag->length == sizeof("kdc-issued") - 1 &&
+        strncmp(frag->value, "kdc-issued", sizeof("kdc-issued") - 1) == 0) {
+        krb5_context context;
+        krb5_data data;
+
+        GSSAPI_KRB5_INIT(&context);
+        if (authenticated)
+            *authenticated = nameattrs->kdc_issued_verified;
+
+        kret = _krb5_get_ad(context, ticket->authorization_data,
+                            NULL, KRB5_AUTHDATA_KDC_ISSUED,
+                            value ? &data : NULL);
+        if (value) {
+            value->length = data.length;
+            value->value = data.data;
+        }
+        if (kret == ENOENT)
+            return GSS_S_UNAVAILABLE;
+        *minor_status = kret;
+        return kret == 0 ? GSS_S_COMPLETE : GSS_S_FAILURE;
+    } else if (frag->length) {
+        return GSS_S_UNAVAILABLE;
+    }
+
+    /* Just because it's in the Ticket doesn't make it authenticated */
+    if (authenticated)
+        *authenticated = 0;
+
+    if (value) {
+        ASN1_MALLOC_ENCODE(AuthorizationData, value->value, value->length,
+                           ticket->authorization_data, &sz, kret);
+        *minor_status = kret;
+    }
+    return kret == 0 ? GSS_S_COMPLETE : GSS_S_FAILURE;
+}
+
+static OM_uint32
+get_authenticator_authz_data(OM_uint32 *minor_status,
+                             const CompositePrincipal *name,
+                             gss_const_buffer_t prefix,
+                             gss_const_buffer_t attr,
+                             gss_const_buffer_t frag,
+                             int *authenticated,
+                             int *complete,
+                             gss_buffer_t value,
+                             gss_buffer_t display_value,
+                             int *more)
+{
+    krb5_error_code kret = 0;
+    PrincipalNameAttrs *nameattrs = name->nameattrs;
+    size_t sz;
+
+    if (!nameattrs || !nameattrs->authenticator_ad)
+        return GSS_S_UNAVAILABLE;
+    if (authenticated)
+        *authenticated = 0;
+    if (complete)
+        *complete = 1;
+
+    if (value) {
+        ASN1_MALLOC_ENCODE(AuthorizationData, value->value, value->length,
+                           nameattrs->authenticator_ad, &sz, kret);
+        *minor_status = kret;
+    }
+    return kret == 0 ? GSS_S_COMPLETE : GSS_S_FAILURE;
+}
+
+static OM_uint32
+get_transited(OM_uint32 *minor_status,
+              const CompositePrincipal *name,
+              gss_const_buffer_t prefix,
+              gss_const_buffer_t attr,
+              gss_const_buffer_t frag,
+              int *authenticated,
+              int *complete,
+              gss_buffer_t value,
+              gss_buffer_t display_value,
+              int *more)
+{
+    krb5_error_code kret = 0;
+    PrincipalNameAttrs *nameattrs = name->nameattrs;
+    PrincipalNameAttrSrc *src = nameattrs ? nameattrs->source : NULL;
+    EncTicketPart *ticket = NULL;
+    size_t sz;
+
+    if (src) switch (src->element) {
+    case choice_PrincipalNameAttrSrc_enc_kdc_rep_part:
+        break;
+    case choice_PrincipalNameAttrSrc_enc_ticket_part:
+        ticket = &src->u.enc_ticket_part;
+        break;
+    default:
+        return GSS_S_UNAVAILABLE;
+    }
+
+    if (!nameattrs || !ticket)
+        return GSS_S_UNAVAILABLE;
+
+    if (authenticated)
+        *authenticated = 1;
+    if (complete)
+        *complete = 1;
+
+    if (value && ticket)
+        ASN1_MALLOC_ENCODE(TransitedEncoding, value->value, value->length,
+                           &ticket->transited, &sz, kret);
+    else if (value && nameattrs->transited)
+        ASN1_MALLOC_ENCODE(TransitedEncoding, value->value, value->length,
+                           nameattrs->transited, &sz, kret);
+    *minor_status = kret;
+    return kret == 0 ? GSS_S_COMPLETE : GSS_S_FAILURE;
+}
+
+static OM_uint32
+get_canonical_name(OM_uint32 *minor_status,
+                   const CompositePrincipal *name,
+                   gss_const_buffer_t prefix,
+                   gss_const_buffer_t attr,
+                   gss_const_buffer_t frag,
+                   int *authenticated,
+                   int *complete,
+                   gss_buffer_t value,
+                   gss_buffer_t display_value,
+                   int *more)
+{
+    krb5_error_code kret = 0;
+    PrincipalNameAttrs *nameattrs = name->nameattrs;
+    PrincipalNameAttrSrc *src = nameattrs ? nameattrs->source : NULL;
+    krb5_principal p = NULL;
+    krb5_context context;
+    EncTicketPart *ticket = NULL;
+    EncKDCRepPart *kdcrep = NULL;
+
+    if (src) switch (src->element) {
+    case choice_PrincipalNameAttrSrc_enc_kdc_rep_part:
+        kdcrep = &src->u.enc_kdc_rep_part;
+        break;
+    case choice_PrincipalNameAttrSrc_enc_ticket_part:
+        ticket = &src->u.enc_ticket_part;
+        break;
+    default:
+        return GSS_S_UNAVAILABLE;
+    }
+
+    GSSAPI_KRB5_INIT(&context);
+
+    if (authenticated)
+        *authenticated = 1;
+    if (complete)
+        *complete = 1;
+
+    if (kdcrep) {
+        kret = _krb5_principalname2krb5_principal(context, &p,
+                                                  kdcrep->sname,
+                                                  kdcrep->srealm);
+    } else if (ticket) {
+        krb5_data data;
+        krb5_pac pac = NULL;
+
+        krb5_data_zero(&data);
+
+        /* Use canonical name from PAC if available */
+        kret = _krb5_get_ad(context, ticket->authorization_data,
+                            NULL, KRB5_AUTHDATA_WIN2K_PAC, &data);
+        if (kret == 0)
+            kret = krb5_pac_parse(context, data.data, data.length, &pac);
+        if (kret == 0)
+            kret = _krb5_pac_get_canon_principal(context, pac, &p);
+        if (kret == 0 && authenticated)
+            *authenticated = nameattrs->pac_verified;
+        else if (kret == ENOENT)
+            kret = _krb5_principalname2krb5_principal(context, &p,
+                                                      ticket->cname,
+                                                      ticket->crealm);
+
+        krb5_data_free(&data);
+        krb5_pac_free(context, pac);
+    } else
+        return GSS_S_UNAVAILABLE;
+    if (kret == 0 && value) {
+        OM_uint32 major;
+        /*
+         * Value is exported name token (exported composite name token
+         * should also work).
+         */
+        major = _gsskrb5_export_name(minor_status, (gss_name_t)p, value);
+        if (major != GSS_S_COMPLETE) {
+            krb5_free_principal(context, p);
+            return major;
+        }
+    }
+    if (kret == 0 && display_value) {
+        /* Display value is principal name display form */
+        kret = krb5_unparse_name(context, p,
+                                 (char **)&display_value->value);
+        if (kret == 0)
+            display_value->length = strlen(display_value->value);
+    }
+
+    krb5_free_principal(context, p);
+    if (kret) {
+        if (value) {
+            free(value->value);
+            value->length = 0;
+            value->value = NULL;
+        }
+        *minor_status = kret;
+        return GSS_S_UNAVAILABLE;
+    }
     return GSS_S_COMPLETE;
 }

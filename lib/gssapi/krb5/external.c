@@ -393,8 +393,8 @@ static gssapi_mech_interface_desc krb5_mech = {
     _gsskrb5_display_name_ext,
     _gsskrb5_inquire_name,
     _gsskrb5_get_name_attribute,
-    NULL, /* gm_set_name_attribute */
-    NULL, /* gm_delete_name_attribute */
+    _gsskrb5_set_name_attribute,
+    _gsskrb5_delete_name_attribute,
     _gsskrb5_export_name_composite,
     _gsskrb5_duplicate_cred,
     _gsskrb5_add_cred_from,

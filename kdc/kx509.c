@@ -254,7 +254,7 @@ is_local_realm(krb5_context context,
     krb5_error_code ret;
     krb5_principal tgs;
     HDB *db;
-    hdb_entry_ex *ent = NULL;
+    hdb_entry *ent = NULL;
 
     ret = krb5_make_principal(context, &tgs, realm, KRB5_TGS_NAME, realm,
                               NULL);

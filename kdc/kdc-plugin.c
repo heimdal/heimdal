@@ -49,7 +49,7 @@ static const char *kdc_plugin_deps[] = {
 static struct heim_plugin_data kdc_plugin_data = {
     "krb5",
     "kdc",
-    KRB5_PLUGIN_KDC_VERSION_9,
+    KRB5_PLUGIN_KDC_VERSION_10,
     kdc_plugin_deps,
     kdc_get_instance
 };
@@ -70,8 +70,9 @@ krb5_kdc_plugin_init(krb5_context context)
 }
 
 struct generate_uc {
-    hdb_entry_ex *client;
-    hdb_entry_ex *server;
+    krb5_kdc_configuration *config;
+    hdb_entry *client;
+    hdb_entry *server;
     const krb5_keyblock *reply_key;
     uint64_t pac_attributes;
     krb5_pac *pac;
@@ -86,7 +87,9 @@ generate(krb5_context context, const void *plug, void *plugctx, void *userctx)
     if (ft->pac_generate == NULL)
 	return KRB5_PLUGIN_NO_HANDLE;
 
-    return ft->pac_generate((void *)plug, context,
+    return ft->pac_generate((void *)plug,
+			    context,
+			    uc->config,
 			    uc->client,
 			    uc->server,
 			    uc->reply_key,
@@ -97,8 +100,9 @@ generate(krb5_context context, const void *plug, void *plugctx, void *userctx)
 
 krb5_error_code
 _kdc_pac_generate(krb5_context context,
-		  hdb_entry_ex *client,
-		  hdb_entry_ex *server,
+		  krb5_kdc_configuration *config,
+		  hdb_entry *client,
+		  hdb_entry *server,
 		  const krb5_keyblock *reply_key,
 		  uint64_t pac_attributes,
 		  krb5_pac *pac)
@@ -109,11 +113,12 @@ _kdc_pac_generate(krb5_context context,
     *pac = NULL;
 
     if (krb5_config_get_bool_default(context, NULL, FALSE, "realms",
-				     client->entry.principal->realm,
+				     client->principal->realm,
 				     "disable_pac", NULL))
 	return 0;
 
     if (have_plugin) {
+	uc.config = config;
 	uc.client = client;
 	uc.server = server;
 	uc.reply_key = reply_key;
@@ -134,11 +139,12 @@ _kdc_pac_generate(krb5_context context,
 }
 
 struct verify_uc {
+    krb5_kdc_configuration *config;
     krb5_principal client_principal;
     krb5_principal delegated_proxy_principal;
-    hdb_entry_ex *client;
-    hdb_entry_ex *server;
-    hdb_entry_ex *krbtgt;
+    hdb_entry *client;
+    hdb_entry *server;
+    hdb_entry *krbtgt;
     krb5_pac *pac;
 };
 
@@ -152,7 +158,9 @@ verify(krb5_context context, const void *plug, void *plugctx, void *userctx)
     if (ft->pac_verify == NULL)
 	return KRB5_PLUGIN_NO_HANDLE;
 
-    ret = ft->pac_verify((void *)plug, context,
+    ret = ft->pac_verify((void *)plug,
+			 context,
+			 uc->config,
 			 uc->client_principal,
 			 uc->delegated_proxy_principal,
 			 uc->client, uc->server, uc->krbtgt, uc->pac);
@@ -161,11 +169,12 @@ verify(krb5_context context, const void *plug, void *plugctx, void *userctx)
 
 krb5_error_code
 _kdc_pac_verify(krb5_context context,
+		krb5_kdc_configuration *config,
 		const krb5_principal client_principal,
 		const krb5_principal delegated_proxy_principal,
-		hdb_entry_ex *client,
-		hdb_entry_ex *server,
-		hdb_entry_ex *krbtgt,
+		hdb_entry *client,
+		hdb_entry *server,
+		hdb_entry *krbtgt,
 		krb5_pac *pac)
 {
     struct verify_uc uc;
@@ -173,6 +182,7 @@ _kdc_pac_verify(krb5_context context,
     if (!have_plugin)
 	return KRB5_PLUGIN_NO_HANDLE;
 
+    uc.config = config;
     uc.client_principal = client_principal;
     uc.delegated_proxy_principal = delegated_proxy_principal;
     uc.client = client;

@@ -60,7 +60,7 @@ ntlm_service(void *ctx, const heim_idata *req,
     unsigned char sessionkey[16];
     heim_idata rep = { 0, NULL };
     krb5_context context = ctx;
-    hdb_entry_ex *user = NULL;
+    hdb_entry *user = NULL;
     HDB *db = NULL;
     Key *key = NULL;
     NTLMReply ntp;
@@ -119,7 +119,7 @@ ntlm_service(void *ctx, const heim_idata *req,
 	if (ret)
 	    goto failed;
 
-	ret = hdb_enctype2key(context, &user->entry, NULL,
+	ret = hdb_enctype2key(context, user, NULL,
 			      ETYPE_ARCFOUR_HMAC_MD5, &key);
 	if (ret) {
 	    krb5_set_error_message(context, ret, "NTLM missing arcfour key");

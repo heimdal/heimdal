@@ -765,7 +765,7 @@ mdb_unlock(krb5_context context, HDB *db)
 
 static krb5_error_code
 mdb_seq(krb5_context context, HDB *db,
-       unsigned flags, hdb_entry_ex *entry, int flag)
+       unsigned flags, hdb_entry *entry, int flag)
 {
     DB *d = (DB*)db->hdb_db;
     DBT key, value;
@@ -796,11 +796,11 @@ mdb_seq(krb5_context context, HDB *db,
     data.length = value.size;
     memset(entry, 0, sizeof(*entry));
 
-    if (_hdb_mdb_value2entry(context, &data, 0, &entry->entry))
+    if (_hdb_mdb_value2entry(context, &data, 0, entry))
 	return mdb_seq(context, db, flags, entry, R_NEXT);
 
     if (db->hdb_master_key_set && (flags & HDB_F_DECRYPT)) {
-	code = hdb_unseal_keys (context, db, &entry->entry);
+	code = hdb_unseal_keys (context, db, entry);
 	if (code)
 	    hdb_free_entry (context, db, entry);
     }
@@ -810,14 +810,14 @@ mdb_seq(krb5_context context, HDB *db,
 
 
 static krb5_error_code
-mdb_firstkey(krb5_context context, HDB *db, unsigned flags, hdb_entry_ex *entry)
+mdb_firstkey(krb5_context context, HDB *db, unsigned flags, hdb_entry *entry)
 {
     return mdb_seq(context, db, flags, entry, R_FIRST);
 }
 
 
 static krb5_error_code
-mdb_nextkey(krb5_context context, HDB *db, unsigned flags, hdb_entry_ex *entry)
+mdb_nextkey(krb5_context context, HDB *db, unsigned flags, hdb_entry *entry)
 {
     return mdb_seq(context, db, flags, entry, R_NEXT);
 }
@@ -941,7 +941,7 @@ mdb__del(krb5_context context, HDB *db, krb5_data key)
 
 static krb5_error_code
 mdb_fetch_kvno(krb5_context context, HDB *db, krb5_const_principal principal,
-	       unsigned flags, krb5_kvno kvno, hdb_entry_ex *entry)
+	       unsigned flags, krb5_kvno kvno, hdb_entry *entry)
 {
     krb5_data key, value;
     krb5_error_code ret;
@@ -953,13 +953,13 @@ mdb_fetch_kvno(krb5_context context, HDB *db, krb5_const_principal principal,
     krb5_data_free(&key);
     if(ret)
 	return ret;
-    ret = _hdb_mdb_value2entry(context, &value, kvno, &entry->entry);
+    ret = _hdb_mdb_value2entry(context, &value, kvno, entry);
     krb5_data_free(&value);
     if (ret)
 	return ret;
 
     if (db->hdb_master_key_set && (flags & HDB_F_DECRYPT)) {
-	ret = hdb_unseal_keys (context, db, &entry->entry);
+	ret = hdb_unseal_keys (context, db, entry);
 	if (ret) {
 	    hdb_free_entry(context, db, entry);
             return ret;
@@ -970,7 +970,7 @@ mdb_fetch_kvno(krb5_context context, HDB *db, krb5_const_principal principal,
 }
 
 static krb5_error_code
-mdb_store(krb5_context context, HDB *db, unsigned flags, hdb_entry_ex *entry)
+mdb_store(krb5_context context, HDB *db, unsigned flags, hdb_entry *entry)
 {
     krb5_error_code ret;
     krb5_storage *sp = NULL;
@@ -985,7 +985,7 @@ mdb_store(krb5_context context, HDB *db, unsigned flags, hdb_entry_ex *entry)
         return 0;
 
     if ((flags & HDB_F_PRECHECK)) {
-        ret = mdb_principal2key(context, entry->entry.principal, &key);
+        ret = mdb_principal2key(context, entry->principal, &key);
         if (ret) return ret;
         ret = db->hdb__get(context, db, key, &value);
         krb5_data_free(&key);
@@ -999,9 +999,9 @@ mdb_store(krb5_context context, HDB *db, unsigned flags, hdb_entry_ex *entry)
     sp = krb5_storage_emem();
     if (!sp) return ENOMEM;
     ret = _hdb_set_master_key_usage(context, db, 0); /* MIT KDB uses KU 0 */
-    ret = hdb_seal_keys(context, db, &entry->entry);
+    ret = hdb_seal_keys(context, db, entry);
     if (ret) return ret;
-    ret = entry2mit_string_int(context, sp, &entry->entry);
+    ret = entry2mit_string_int(context, sp, entry);
     if (ret) goto out;
     sz = krb5_storage_write(sp, "\n", 2); /* NUL-terminate */
     ret = ENOMEM;
@@ -1016,7 +1016,7 @@ mdb_store(krb5_context context, HDB *db, unsigned flags, hdb_entry_ex *entry)
     if (ret) goto out;
     ret = krb5_storage_to_data(spent, &kdb_ent);
     if (ret) goto out;
-    ret = mdb_principal2key(context, entry->entry.principal, &key);
+    ret = mdb_principal2key(context, entry->principal, &key);
     if (ret) goto out;
     ret = mdb__put(context, db, 1, key, kdb_ent);
 

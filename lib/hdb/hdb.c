@@ -397,7 +397,7 @@ hdb_unlock(int fd)
 }
 
 void
-hdb_free_entry(krb5_context context, HDB *db, hdb_entry_ex *ent)
+hdb_free_entry(krb5_context context, HDB *db, hdb_entry *ent)
 {
     Key *k;
     size_t i;
@@ -405,15 +405,15 @@ hdb_free_entry(krb5_context context, HDB *db, hdb_entry_ex *ent)
     if (db && db->hdb_free_entry_context)
 	db->hdb_free_entry_context(context, db, ent);
 
-    for(i = 0; i < ent->entry.keys.len; i++) {
-	k = &ent->entry.keys.val[i];
+    for(i = 0; i < ent->keys.len; i++) {
+	k = &ent->keys.val[i];
 
 	memset_s(k->key.keyvalue.data,
 		 k->key.keyvalue.length,
 		 0,
 		 k->key.keyvalue.length);
     }
-    free_HDB_entry(&ent->entry);
+    free_HDB_entry(ent);
 }
 
 krb5_error_code
@@ -424,7 +424,7 @@ hdb_foreach(krb5_context context,
 	    void *data)
 {
     krb5_error_code ret;
-    hdb_entry_ex entry;
+    hdb_entry entry;
     ret = db->hdb_firstkey(context, db, flags, &entry);
     if (ret == 0)
 	krb5_clear_error_message(context);
@@ -665,22 +665,22 @@ hdb_list_builtin(krb5_context context, char **list)
 krb5_error_code
 _hdb_keytab2hdb_entry(krb5_context context,
 		      const krb5_keytab_entry *ktentry,
-		      hdb_entry_ex *entry)
+		      hdb_entry *entry)
 {
-    entry->entry.kvno = ktentry->vno;
-    entry->entry.created_by.time = ktentry->timestamp;
+    entry->kvno = ktentry->vno;
+    entry->created_by.time = ktentry->timestamp;
 
-    entry->entry.keys.val = calloc(1, sizeof(entry->entry.keys.val[0]));
-    if (entry->entry.keys.val == NULL)
+    entry->keys.val = calloc(1, sizeof(entry->keys.val[0]));
+    if (entry->keys.val == NULL)
 	return ENOMEM;
-    entry->entry.keys.len = 1;
+    entry->keys.len = 1;
 
-    entry->entry.keys.val[0].mkvno = NULL;
-    entry->entry.keys.val[0].salt = NULL;
+    entry->keys.val[0].mkvno = NULL;
+    entry->keys.val[0].salt = NULL;
 
     return krb5_copy_keyblock_contents(context,
 				       &ktentry->keyblock,
-				       &entry->entry.keys.val[0].key);
+				       &entry->keys.val[0].key);
 }
 
 static krb5_error_code

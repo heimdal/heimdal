@@ -87,7 +87,7 @@ struct astgs_request_desc {
     unsigned int fast_asserted : 1;
 
     krb5_crypto armor_crypto;
-    hdb_entry_ex *armor_server;
+    hdb_entry *armor_server;
     HDB *armor_serverdb;
     krb5_ticket *armor_ticket;
     Key *armor_key;

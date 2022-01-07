@@ -392,14 +392,14 @@ error:
 }
 
 static int
-dump_one (krb5_context context, HDB *db, hdb_entry_ex *entry, void *v)
+dump_one (krb5_context context, HDB *db, hdb_entry *entry, void *v)
 {
     krb5_error_code ret;
     krb5_storage *dump = (krb5_storage *)v;
     krb5_storage *sp;
     krb5_data data;
 
-    ret = hdb_entry2value (context, &entry->entry, &data);
+    ret = hdb_entry2value (context, entry, &data);
     if (ret)
 	return ret;
     ret = krb5_data_realloc (&data, data.length + 4);

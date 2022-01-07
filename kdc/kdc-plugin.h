@@ -38,8 +38,7 @@
 
 #include <krb5.h>
 #include <kdc.h>
-
-struct hdb_entry_ex;
+#include <hdb.h>
 
 /*
  * Allocate a PAC for the given client with krb5_pac_init(),
@@ -47,9 +46,11 @@ struct hdb_entry_ex;
  */
 
 typedef krb5_error_code
-(KRB5_CALLCONV *krb5plugin_kdc_pac_generate)(void *, krb5_context,
-					     struct hdb_entry_ex *, /* client */
-					     struct hdb_entry_ex *, /* server */
+(KRB5_CALLCONV *krb5plugin_kdc_pac_generate)(void *,
+					     krb5_context, /* context */
+					     krb5_kdc_configuration *, /* configuration */
+					     hdb_entry *, /* client */
+					     hdb_entry *, /* server */
 					     const krb5_keyblock *, /* pk_replykey */
 					     uint64_t,	      /* pac_attributes */
 					     krb5_pac *);
@@ -61,12 +62,14 @@ typedef krb5_error_code
  */
 
 typedef krb5_error_code
-(KRB5_CALLCONV *krb5plugin_kdc_pac_verify)(void *, krb5_context,
+(KRB5_CALLCONV *krb5plugin_kdc_pac_verify)(void *,
+					   krb5_context, /* context */
+					   krb5_kdc_configuration *, /* configuration */
 					   const krb5_principal, /* new ticket client */
 					   const krb5_principal, /* delegation proxy */
-					   struct hdb_entry_ex *,/* client */
-					   struct hdb_entry_ex *,/* server */
-					   struct hdb_entry_ex *,/* krbtgt */
+					   hdb_entry *,/* client */
+					   hdb_entry *,/* server */
+					   hdb_entry *,/* krbtgt */
 					   krb5_pac *);
 
 /*
@@ -115,7 +118,7 @@ typedef krb5_error_code
  * Plugins should carefully check API contract notes for changes
  * between plugin API versions.
  */
-#define KRB5_PLUGIN_KDC_VERSION_9	9
+#define KRB5_PLUGIN_KDC_VERSION_10	10
 
 typedef struct krb5plugin_kdc_ftable {
     int			minor_version;

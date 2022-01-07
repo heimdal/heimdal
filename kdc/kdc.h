@@ -141,18 +141,18 @@ typedef struct krb5_kdc_configuration {
 								\
     /* client principal (AS) or TGT/S4U principal (TGS) */	\
     krb5_principal client_princ;				\
-    hdb_entry_ex *client;					\
+    hdb_entry *client;						\
     HDB *clientdb;						\
     krb5_principal canon_client_princ;				\
 								\
     /* server principal */					\
     krb5_principal server_princ;				\
-    hdb_entry_ex *server;					\
+    hdb_entry *server;						\
     HDB *serverdb;						\
 								\
     /* presented ticket in TGS-REQ (unused by AS) */		\
     krb5_principal *krbtgt_princ;				\
-    hdb_entry_ex *krbtgt;					\
+    hdb_entry *krbtgt;						\
     HDB *krbtgtdb;						\
     krb5_ticket *ticket;					\
 								\

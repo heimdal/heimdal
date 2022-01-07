@@ -87,28 +87,28 @@ open_socket(krb5_context context, const char *hostname, const char *port)
 }
 
 krb5_error_code
-v5_prop(krb5_context context, HDB *db, hdb_entry_ex *entry, void *appdata)
+v5_prop(krb5_context context, HDB *db, hdb_entry *entry, void *appdata)
 {
     krb5_error_code ret;
     struct prop_data *pd = appdata;
     krb5_data data;
 
     if(encrypt_flag) {
-	ret = hdb_seal_keys_mkey(context, &entry->entry, mkey5);
+	ret = hdb_seal_keys_mkey(context, entry, mkey5);
 	if (ret) {
 	    krb5_warn(context, ret, "hdb_seal_keys_mkey");
 	    return ret;
 	}
     }
     if(decrypt_flag) {
-	ret = hdb_unseal_keys_mkey(context, &entry->entry, mkey5);
+	ret = hdb_unseal_keys_mkey(context, entry, mkey5);
 	if (ret) {
 	    krb5_warn(context, ret, "hdb_unseal_keys_mkey");
 	    return ret;
 	}
     }
 
-    ret = hdb_entry2value(context, &entry->entry, &data);
+    ret = hdb_entry2value(context, entry, &data);
     if(ret) {
 	krb5_warn(context, ret, "hdb_entry2value");
 	return ret;

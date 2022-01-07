@@ -161,7 +161,7 @@ _kdc_find_etype(astgs_request_t r, uint32_t flags,
     krb5_boolean use_strongest_session_key;
     krb5_boolean is_preauth = flags & KFE_IS_PREAUTH;
     krb5_boolean is_tgs = flags & KFE_IS_TGS;
-    hdb_entry_ex *princ;
+    hdb_entry *princ;
     krb5_principal request_princ;
     krb5_error_code ret;
     krb5_salt def_salt;
@@ -171,15 +171,15 @@ _kdc_find_etype(astgs_request_t r, uint32_t flags,
     size_t i, k, m;
 
     if (is_preauth && (flags & KFE_USE_CLIENT) &&
-        r->client->entry.flags.synthetic)
+        r->client->flags.synthetic)
         return KRB5KDC_ERR_ETYPE_NOSUPP;
 
-    if ((flags & KFE_USE_CLIENT) && !r->client->entry.flags.synthetic) {
+    if ((flags & KFE_USE_CLIENT) && !r->client->flags.synthetic) {
 	princ = r->client;
 	request_princ = r->client_princ;
     } else {
 	princ = r->server;
-	request_princ = r->server->entry.principal;
+	request_princ = r->server->principal;
     }
 
     use_strongest_session_key =
@@ -227,7 +227,7 @@ _kdc_find_etype(astgs_request_t r, uint32_t flags,
 	    p[i] != (krb5_enctype)ETYPE_NULL && enctype == (krb5_enctype)ETYPE_NULL;
 	    i++) {
 	    if (krb5_enctype_valid(r->context, p[i]) != 0 &&
-                !_kdc_is_weak_exception(princ->entry.principal, p[i]))
+                !_kdc_is_weak_exception(princ->principal, p[i]))
 		continue;
 
 	    /* check that the client supports it too */
@@ -248,15 +248,15 @@ _kdc_find_etype(astgs_request_t r, uint32_t flags,
 
                 /* check target princ support */
 		key = NULL;
-                if (!(flags & KFE_USE_CLIENT) && princ->entry.etypes) {
+                if (!(flags & KFE_USE_CLIENT) && princ->etypes) {
                     /*
                      * Use the etypes list from the server's HDB entry instead
                      * of deriving it from its long-term keys.  This allows an
                      * entry to have just one long-term key but record support
                      * for multiple enctypes.
                      */
-                    for (m = 0; m < princ->entry.etypes->len; m++) {
-                        if (p[i] == princ->entry.etypes->val[m]) {
+                    for (m = 0; m < princ->etypes->len; m++) {
+                        if (p[i] == princ->etypes->val[m]) {
                             ret = 0;
                             break;
                         }
@@ -268,7 +268,7 @@ _kdc_find_etype(astgs_request_t r, uint32_t flags,
                      * PA-ETYPE-INFO* or because we're selecting a session key
                      * enctype.
                      */
-                    while (hdb_next_enctype2key(r->context, &princ->entry, NULL,
+                    while (hdb_next_enctype2key(r->context, princ, NULL,
                                                  p[i], &key) == 0) {
                         if (key->key.keyvalue.length == 0) {
                             ret = KRB5KDC_ERR_NULL_KEY;
@@ -296,12 +296,12 @@ _kdc_find_etype(astgs_request_t r, uint32_t flags,
 	for(i = 0; ret != 0 && i < len; i++) {
 
 	    if (krb5_enctype_valid(r->context, etypes[i]) != 0 &&
-		!_kdc_is_weak_exception(princ->entry.principal, etypes[i]))
+		!_kdc_is_weak_exception(princ->principal, etypes[i]))
 		continue;
 
 	    key = NULL;
 	    while (ret != 0 &&
-                   hdb_next_enctype2key(r->context, &princ->entry, NULL,
+                   hdb_next_enctype2key(r->context, princ, NULL,
 					etypes[i], &key) == 0) {
 		if (key->key.keyvalue.length == 0) {
 		    ret = KRB5KDC_ERR_NULL_KEY;
@@ -323,7 +323,7 @@ _kdc_find_etype(astgs_request_t r, uint32_t flags,
          * the service key list, provide a DES-CBC-CRC key.
          */
 	if (ret_key == NULL &&
-	    _kdc_is_weak_exception(princ->entry.principal, ETYPE_DES_CBC_CRC)) {
+	    _kdc_is_weak_exception(princ->principal, ETYPE_DES_CBC_CRC)) {
             ret = 0;
             enctype = ETYPE_DES_CBC_CRC;
         } else {
@@ -504,7 +504,7 @@ pa_pkinit_validate(astgs_request_t r, const PA_DATA *pa)
     }
 
     r->pa_endtime = _kdc_pk_endtime(pkp);
-    if (!r->client->entry.flags.synthetic)
+    if (!r->client->flags.synthetic)
         r->pa_max_life = _kdc_pk_max_life(pkp);
 
     _kdc_r_log(r, 4, "PKINIT pre-authentication succeeded -- %s using %s",
@@ -621,7 +621,7 @@ pa_enc_chal_validate(astgs_request_t r, const PA_DATA *pa)
 	return ret;
     }
 
-    if (r->client->entry.flags.locked_out) {
+    if (r->client->flags.locked_out) {
        ret = KRB5KDC_ERR_CLIENT_REVOKED;
        kdc_log(r->context, r->config, 0,
                "Client (%s) is locked out", r->cname);
@@ -650,11 +650,11 @@ pa_enc_chal_validate(astgs_request_t r, const PA_DATA *pa)
 
     kdc_log(r->context, r->config, 5, "FAST armor enctype is: %d", (int)aenctype);
 
-    for (i = 0; i < r->client->entry.keys.len; i++) {
+    for (i = 0; i < r->client->keys.len; i++) {
 	krb5_crypto challengecrypto, longtermcrypto;
 	krb5_keyblock challengekey;
 
-	k = &r->client->entry.keys.val[i];
+	k = &r->client->keys.val[i];
 	
 	ret = krb5_crypto_init(r->context, &k->key, 0, &longtermcrypto);
 	if (ret)
@@ -794,7 +794,7 @@ pa_enc_ts_validate(astgs_request_t r, const PA_DATA *pa)
        return ret;
     }
 
-    if (r->client->entry.flags.locked_out) {
+    if (r->client->flags.locked_out) {
        ret = KRB5KDC_ERR_CLIENT_REVOKED;
        kdc_log(r->context, r->config, 0,
                "Client (%s) is locked out", r->cname);
@@ -814,7 +814,7 @@ pa_enc_ts_validate(astgs_request_t r, const PA_DATA *pa)
 	goto out;
     }
 	
-    ret = hdb_enctype2key(r->context, &r->client->entry, NULL,
+    ret = hdb_enctype2key(r->context, r->client, NULL,
 			  enc_data.etype, &pa_key);
     if(ret){
 	char *estr;
@@ -873,7 +873,7 @@ pa_enc_ts_validate(astgs_request_t r, const PA_DATA *pa)
 				pa_key->key.keytype);
 	_kdc_audit_setkv_number((kdc_request_t)r, KDC_REQUEST_KV_AUTH_EVENT,
 				KDC_AUTH_EVENT_WRONG_LONG_TERM_KEY);
-	if(hdb_next_enctype2key(r->context, &r->client->entry, NULL,
+	if(hdb_next_enctype2key(r->context, r->client, NULL,
 				enc_data.etype, &pa_key) == 0)
 	    goto try_next_key;
 
@@ -1612,12 +1612,10 @@ _log_astgs_req(astgs_request_t r, krb5_enctype setype)
 KDC_LIB_FUNCTION krb5_error_code KDC_LIB_CALL
 kdc_check_flags(astgs_request_t r,
                 krb5_boolean is_as_req,
-                hdb_entry_ex *client_ex,
-                hdb_entry_ex *server_ex)
+                hdb_entry *client,
+                hdb_entry *server)
 {
-    if (client_ex != NULL) {
-	hdb_entry *client = &client_ex->entry;
-
+    if (client != NULL) {
 	/* check client */
 	if (client->flags.locked_out) {
 	    _kdc_audit_addreason((kdc_request_t)r, "Client is locked out");
@@ -1655,11 +1653,11 @@ kdc_check_flags(astgs_request_t r,
 	}
 
 	if (client->flags.require_pwchange &&
-	    (server_ex == NULL || !server_ex->entry.flags.change_pw))
+	    (server == NULL || !server->flags.change_pw))
 	    return KRB5KDC_ERR_KEY_EXPIRED;
 
 	if (client->pw_end && *client->pw_end < kdc_time
-	    && (server_ex == NULL || !server_ex->entry.flags.change_pw)) {
+	    && (server == NULL || !server->flags.change_pw)) {
 	    char pwend_str[100];
 	    krb5_format_time(r->context, *client->pw_end,
 			     pwend_str, sizeof(pwend_str), TRUE);
@@ -1671,9 +1669,7 @@ kdc_check_flags(astgs_request_t r,
 
     /* check server */
 
-    if (server_ex != NULL) {
-	hdb_entry *server = &server_ex->entry;
-
+    if (server != NULL) {
 	if (server->flags.locked_out) {
 	    _kdc_audit_addreason((kdc_request_t)r, "Server locked out");
 	    return KRB5KDC_ERR_SERVICE_REVOKED;
@@ -1851,6 +1847,7 @@ generate_pac(astgs_request_t r, const Key *skey, const Key *tkey,
      */
 
     ret = _kdc_pac_generate(r->context,
+			    r->config,
 			    r->client,
 			    r->server,
 			    r->pa_used && !pa_used_flag_isset(r, PA_USES_LONG_TERM_KEY)
@@ -1865,7 +1862,7 @@ generate_pac(astgs_request_t r, const Key *skey, const Key *tkey,
     if (r->pac == NULL)
 	return 0;
 
-    rodc_id = r->server->entry.kvno >> 16;
+    rodc_id = r->server->kvno >> 16;
 
     /* libkrb5 expects ticket and PAC client names to match */
     ret = _krb5_principalname2krb5_principal(r->context, &client,
@@ -1950,8 +1947,8 @@ static int
 require_preauth_p(astgs_request_t r)
 {
     return r->config->require_preauth
-	|| r->client->entry.flags.require_preauth
-	|| r->server->entry.flags.require_preauth;
+	|| r->client->flags.require_preauth
+	|| r->server->flags.require_preauth;
 }
 
 
@@ -2023,7 +2020,7 @@ get_local_tgs(krb5_context context,
 	      krb5_kdc_configuration *config,
 	      krb5_const_realm realm,
 	      HDB **krbtgtdb,
-	      hdb_entry_ex **krbtgt)
+	      hdb_entry **krbtgt)
 {
     krb5_error_code ret;
     krb5_principal tgs_name;
@@ -2151,7 +2148,7 @@ _kdc_as_rep(astgs_request_t r)
     case HDB_ERR_WRONG_REALM: {
 	char *fixed_client_name = NULL;
 
-	ret = krb5_unparse_name(r->context, r->client->entry.principal,
+	ret = krb5_unparse_name(r->context, r->client->principal,
 				&fixed_client_name);
 	if (ret) {
 	    goto out;
@@ -2165,7 +2162,7 @@ _kdc_as_rep(astgs_request_t r)
 	ret = _kdc_fast_mk_error(r, r->rep.padata, r->armor_crypto,
 				 &req->req_body,
                                  r->ret = KRB5_KDC_ERR_WRONG_REALM,
-				 r->client->entry.principal, r->server_princ,
+				 r->client->principal, r->server_princ,
 				 NULL, NULL, r->reply);
 	goto out;
     }
@@ -2237,7 +2234,7 @@ _kdc_as_rep(astgs_request_t r)
 	    i = 0;
 	    pa = _kdc_find_padata(req, &i, pat[n].type);
 	    if (pa) {
-                if (r->client->entry.flags.synthetic &&
+                if (r->client->flags.synthetic &&
                     !(pat[n].flags & PA_SYNTHETIC_OK)) {
                     kdc_log(r->context, config, 4, "UNKNOWN -- %s", r->cname);
                     ret = KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN;
@@ -2288,7 +2285,7 @@ _kdc_as_rep(astgs_request_t r)
 	size_t n;
 	krb5_boolean default_salt;
 
-        if (r->client->entry.flags.synthetic) {
+        if (r->client->flags.synthetic) {
             kdc_log(r->context, config, 4, "UNKNOWN -- %s", r->cname);
             ret = KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN;
             goto out;
@@ -2347,7 +2344,7 @@ _kdc_as_rep(astgs_request_t r)
 	    goto out;
     }
 
-    r->canon_client_princ = r->client->entry.principal;
+    r->canon_client_princ = r->client->principal;
 
     /*
      * Verify flags after the user been required to prove its identity
@@ -2414,7 +2411,7 @@ _kdc_as_rep(astgs_request_t r)
         _kdc_is_anonymous(r->context, r->client_princ)) {
 	Realm anon_realm = KRB5_ANON_REALM;
 	ret = copy_Realm(&anon_realm, &rep->crealm);
-    } else if (f.canonicalize || r->client->entry.flags.force_canonicalize)
+    } else if (f.canonicalize || r->client->flags.force_canonicalize)
 	ret = copy_Realm(&r->canon_client_princ->realm, &rep->crealm);
     else
 	ret = copy_Realm(&r->client_princ->realm, &rep->crealm);
@@ -2422,7 +2419,7 @@ _kdc_as_rep(astgs_request_t r)
 	goto out;
     if (r->et.flags.anonymous)
 	ret = _kdc_make_anonymous_principalname(&rep->cname);
-    else if (f.canonicalize || r->client->entry.flags.force_canonicalize)
+    else if (f.canonicalize || r->client->flags.force_canonicalize)
 	ret = _krb5_principal2principalname(&rep->cname, r->canon_client_princ);
     else
 	ret = _krb5_principal2principalname(&rep->cname, r->client_princ);
@@ -2430,15 +2427,15 @@ _kdc_as_rep(astgs_request_t r)
 	goto out;
 
     rep->ticket.tkt_vno = 5;
-    if (f.canonicalize || r->server->entry.flags.force_canonicalize)
-	ret = copy_Realm(&r->server->entry.principal->realm, &rep->ticket.realm);
+    if (f.canonicalize || r->server->flags.force_canonicalize)
+	ret = copy_Realm(&r->server->principal->realm, &rep->ticket.realm);
     else
 	ret = copy_Realm(&r->server_princ->realm, &rep->ticket.realm);
     if (ret)
 	goto out;
-    if (f.canonicalize || r->server->entry.flags.force_canonicalize)
+    if (f.canonicalize || r->server->flags.force_canonicalize)
 	_krb5_principal2principalname(&rep->ticket.sname,
-				      r->server->entry.principal);
+				      r->server->principal);
     else
 	_krb5_principal2principalname(&rep->ticket.sname,
 				      r->server_princ);
@@ -2450,16 +2447,16 @@ _kdc_as_rep(astgs_request_t r)
 #undef CNT
 
     r->et.flags.initial = 1;
-    if(r->client->entry.flags.forwardable && r->server->entry.flags.forwardable)
+    if(r->client->flags.forwardable && r->server->flags.forwardable)
 	r->et.flags.forwardable = f.forwardable;
-    if(r->client->entry.flags.proxiable && r->server->entry.flags.proxiable)
+    if(r->client->flags.proxiable && r->server->flags.proxiable)
 	r->et.flags.proxiable = f.proxiable;
     else if (f.proxiable) {
 	_kdc_set_e_text(r, "Ticket may not be proxiable");
 	ret = KRB5KDC_ERR_POLICY;
 	goto out;
     }
-    if(r->client->entry.flags.postdate && r->server->entry.flags.postdate)
+    if(r->client->flags.postdate && r->server->flags.postdate)
 	r->et.flags.may_postdate = f.allow_postdate;
     else if (f.allow_postdate){
 	_kdc_set_e_text(r, "Ticket may not be postdate");
@@ -2506,18 +2503,18 @@ _kdc_as_rep(astgs_request_t r)
 	/* be careful not overflowing */
 
         /*
-         * Pre-auth can override r->client->entry.max_life if configured.
+         * Pre-auth can override r->client->max_life if configured.
          *
          * See pre-auth methods, specifically PKINIT, which can get or derive
          * this from the client's certificate.
          */
         if (r->pa_max_life > 0)
             t = start + min(t - start, r->pa_max_life);
-        else if (r->client->entry.max_life)
-	    t = start + min(t - start, *r->client->entry.max_life);
+        else if (r->client->max_life)
+	    t = start + min(t - start, *r->client->max_life);
 
-	if (r->server->entry.max_life)
-	    t = start + min(t - start, *r->server->entry.max_life);
+	if (r->server->max_life)
+	    t = start + min(t - start, *r->server->max_life);
 
         /* Pre-auth can bound endtime as well */
         if (r->pa_endtime > 0)
@@ -2539,10 +2536,10 @@ _kdc_as_rep(astgs_request_t r)
 	    t = *b->rtime;
 	    if(t == 0)
 		t = MAX_TIME;
-	    if(r->client->entry.max_renew)
-		t = start + min(t - start, *r->client->entry.max_renew);
-	    if(r->server->entry.max_renew)
-		t = start + min(t - start, *r->server->entry.max_renew);
+	    if(r->client->max_renew)
+		t = start + min(t - start, *r->client->max_renew);
+	    if(r->server->max_renew)
+		t = start + min(t - start, *r->server->max_renew);
 #if 0
 	    t = min(t, start + realm->max_renew);
 #endif
@@ -2575,16 +2572,16 @@ _kdc_as_rep(astgs_request_t r)
 	goto out;
     }
     r->ek.last_req.len = 0;
-    if (r->client->entry.pw_end
+    if (r->client->pw_end
 	&& (config->kdc_warn_pwexpire == 0
-	    || kdc_time + config->kdc_warn_pwexpire >= *r->client->entry.pw_end)) {
+	    || kdc_time + config->kdc_warn_pwexpire >= *r->client->pw_end)) {
 	r->ek.last_req.val[r->ek.last_req.len].lr_type  = LR_PW_EXPTIME;
-	r->ek.last_req.val[r->ek.last_req.len].lr_value = *r->client->entry.pw_end;
+	r->ek.last_req.val[r->ek.last_req.len].lr_value = *r->client->pw_end;
 	++r->ek.last_req.len;
     }
-    if (r->client->entry.valid_end) {
+    if (r->client->valid_end) {
 	r->ek.last_req.val[r->ek.last_req.len].lr_type  = LR_ACCT_EXPTIME;
-	r->ek.last_req.val[r->ek.last_req.len].lr_value = *r->client->entry.valid_end;
+	r->ek.last_req.val[r->ek.last_req.len].lr_value = *r->client->valid_end;
 	++r->ek.last_req.len;
     }
     if (r->ek.last_req.len == 0) {
@@ -2593,16 +2590,16 @@ _kdc_as_rep(astgs_request_t r)
 	++r->ek.last_req.len;
     }
     r->ek.nonce = b->nonce;
-    if (r->client->entry.valid_end || r->client->entry.pw_end) {
+    if (r->client->valid_end || r->client->pw_end) {
 	ALLOC(r->ek.key_expiration);
-	if (r->client->entry.valid_end) {
-	    if (r->client->entry.pw_end)
-		*r->ek.key_expiration = min(*r->client->entry.valid_end,
-					 *r->client->entry.pw_end);
+	if (r->client->valid_end) {
+	    if (r->client->pw_end)
+		*r->ek.key_expiration = min(*r->client->valid_end,
+					 *r->client->pw_end);
 	    else
-		*r->ek.key_expiration = *r->client->entry.valid_end;
+		*r->ek.key_expiration = *r->client->valid_end;
 	} else
-	    *r->ek.key_expiration = *r->client->entry.pw_end;
+	    *r->ek.key_expiration = *r->client->pw_end;
     } else
 	r->ek.key_expiration = NULL;
     r->ek.flags = r->et.flags;
@@ -2656,7 +2653,7 @@ _kdc_as_rep(astgs_request_t r)
 	generate_pac(r, skey, krbtgt_key, is_tgs);
     }
 
-    if (r->client->entry.flags.synthetic) {
+    if (r->client->flags.synthetic) {
 	ret = add_synthetic_princ_ad(r);
 	if (ret)
 	    goto out;
@@ -2713,8 +2710,8 @@ _kdc_as_rep(astgs_request_t r)
 
     ret = _kdc_encode_reply(r->context, config,
 			    r, req->req_body.nonce, setype,
-			    r->server->entry.kvno, &skey->key,
-			    pa_used_flag_isset(r, PA_REPLACE_REPLY_KEY) ? 0 : r->client->entry.kvno,
+			    r->server->kvno, &skey->key,
+			    pa_used_flag_isset(r, PA_REPLACE_REPLY_KEY) ? 0 : r->client->kvno,
 			    0, r->reply);
     if (ret)
 	goto out;

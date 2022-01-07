@@ -556,7 +556,7 @@ hdb_entry2string(krb5_context context, hdb_entry *ent, char **str)
 /* print a hdb_entry to (FILE*)data; suitable for hdb_foreach */
 
 krb5_error_code
-hdb_print_entry(krb5_context context, HDB *db, hdb_entry_ex *entry,
+hdb_print_entry(krb5_context context, HDB *db, hdb_entry *entry,
                 void *data)
 {
     struct hdb_print_entry_arg *parg = data;
@@ -572,10 +572,10 @@ hdb_print_entry(krb5_context context, HDB *db, hdb_entry_ex *entry,
 
     switch (parg->fmt) {
     case HDB_DUMP_HEIMDAL:
-        ret = entry2string_int(context, sp, &entry->entry);
+        ret = entry2string_int(context, sp, entry);
         break;
     case HDB_DUMP_MIT:
-        ret = entry2mit_string_int(context, sp, &entry->entry);
+        ret = entry2mit_string_int(context, sp, entry);
         break;
     default:
         heim_abort("Only two dump formats supported: Heimdal and MIT");

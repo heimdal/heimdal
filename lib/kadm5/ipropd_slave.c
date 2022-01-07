@@ -571,7 +571,7 @@ receive_everything(krb5_context context, int fd,
 	krb5_ret_uint32(sp, &opcode);
 	if (opcode == ONE_PRINC) {
 	    krb5_data fake_data;
-	    hdb_entry_ex entry;
+	    hdb_entry entry;
 
 	    krb5_storage_free(sp);
 
@@ -580,7 +580,7 @@ receive_everything(krb5_context context, int fd,
 
 	    memset(&entry, 0, sizeof(entry));
 
-	    ret = hdb_value2entry(context, &fake_data, &entry.entry);
+	    ret = hdb_value2entry(context, &fake_data, &entry);
 	    if (ret)
 		krb5_err(context, IPROPD_RESTART, ret, "hdb_value2entry");
 	    ret = mydb->hdb_store(server_context->context,

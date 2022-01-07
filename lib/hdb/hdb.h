@@ -103,18 +103,6 @@ typedef struct hdb_request_desc {
 typedef struct hdb_master_key_data *hdb_master_key;
 
 /**
- * hdb_entry_ex is a wrapper structure around the hdb_entry structure
- * that allows backends to keep a pointer to the backing store, ie in
- * ->hdb_fetch_kvno(), so that we the kadmin/kpasswd backend gets around to
- * ->hdb_store(), the backend doesn't need to lookup the entry again.
- */
-
-typedef struct hdb_entry_ex {
-    hdb_entry entry;
-} hdb_entry_ex;
-
-
-/**
  * HDB backend function pointer structure
  *
  * The HDB structure is what the KDC and kadmind framework uses to
@@ -165,7 +153,7 @@ typedef struct HDB {
     /**
      * Free backend-specific entry context.
      */
-    void	    (*hdb_free_entry_context)(krb5_context, struct HDB*, hdb_entry_ex*);
+    void	    (*hdb_free_entry_context)(krb5_context, struct HDB*, hdb_entry*);
     /**
      * Fetch an entry from the backend
      *
@@ -175,12 +163,12 @@ typedef struct HDB {
      */
     krb5_error_code (*hdb_fetch_kvno)(krb5_context, struct HDB*,
 				      krb5_const_principal, unsigned, krb5_kvno,
-				      hdb_entry_ex*);
+				      hdb_entry*);
     /**
      * Store an entry to database
      */
     krb5_error_code (*hdb_store)(krb5_context, struct HDB*,
-				 unsigned, hdb_entry_ex*);
+				 unsigned, hdb_entry*);
     /**
      * Remove an entry from the database.
      */
@@ -190,12 +178,12 @@ typedef struct HDB {
      * As part of iteration, fetch one entry
      */
     krb5_error_code (*hdb_firstkey)(krb5_context, struct HDB*,
-				    unsigned, hdb_entry_ex*);
+				    unsigned, hdb_entry*);
     /**
      * As part of iteration, fetch next entry
      */
     krb5_error_code (*hdb_nextkey)(krb5_context, struct HDB*,
-				   unsigned, hdb_entry_ex*);
+				   unsigned, hdb_entry*);
     /**
      * Lock database
      *
@@ -274,7 +262,7 @@ typedef struct HDB {
      * The backend needs to call _kadm5_set_keys() and perform password
      * quality checks.
      */
-    krb5_error_code (*hdb_password)(krb5_context, struct HDB*, hdb_entry_ex*, const char *, int);
+    krb5_error_code (*hdb_password)(krb5_context, struct HDB*, hdb_entry*, const char *, int);
 
     /**
      * Authentication auditing. Note that this function is called by
@@ -287,22 +275,22 @@ typedef struct HDB {
      * In case the entry is locked out, the backend should set the
      * hdb_entry.flags.locked-out flag.
      */
-    krb5_error_code (*hdb_audit)(krb5_context, struct HDB *, hdb_entry_ex *, hdb_request_t);
+    krb5_error_code (*hdb_audit)(krb5_context, struct HDB *, hdb_entry *, hdb_request_t);
 
     /**
      * Check if delegation is allowed.
      */
-    krb5_error_code (*hdb_check_constrained_delegation)(krb5_context, struct HDB *, hdb_entry_ex *, krb5_const_principal);
+    krb5_error_code (*hdb_check_constrained_delegation)(krb5_context, struct HDB *, hdb_entry *, krb5_const_principal);
 
     /**
      * Check if this name is an alias for the supplied client for PKINIT userPrinicpalName logins
      */
-    krb5_error_code (*hdb_check_pkinit_ms_upn_match)(krb5_context, struct HDB *, hdb_entry_ex *, krb5_const_principal);
+    krb5_error_code (*hdb_check_pkinit_ms_upn_match)(krb5_context, struct HDB *, hdb_entry *, krb5_const_principal);
 
     /**
      * Check if s4u2self is allowed from this client to this server or the SPN is a valid SPN of this client (for user2user)
      */
-    krb5_error_code (*hdb_check_client_matches_target_service)(krb5_context, struct HDB *, hdb_entry_ex *, hdb_entry_ex *);
+    krb5_error_code (*hdb_check_client_matches_target_service)(krb5_context, struct HDB *, hdb_entry *, hdb_entry *);
 
     /**
      * Enable/disable synchronous updates
@@ -337,7 +325,7 @@ struct hdb_print_entry_arg {
 };
 
 typedef krb5_error_code (*hdb_foreach_func_t)(krb5_context, HDB*,
-					      hdb_entry_ex*, void*);
+					      hdb_entry*, void*);
 extern krb5_kt_ops hdb_kt_ops;
 extern krb5_kt_ops hdb_get_kt_ops;
 

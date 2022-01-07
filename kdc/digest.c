@@ -190,7 +190,7 @@ get_password_entry(krb5_context context,
 	}
 	memset(user, 0, sizeof(*user));
     }
-    _kdc_free_ent (context, user);
+    _kdc_free_ent (context, db, user);
     return ret;
 }
 
@@ -217,7 +217,9 @@ _kdc_do_digest(krb5_context context,
     size_t size;
     krb5_storage *sp = NULL;
     Checksum res;
+    HDB *serverdb, *userdb;
     hdb_entry_ex *server = NULL, *user = NULL;
+    HDB *clientdb;
     hdb_entry_ex *client = NULL;
     char *client_name = NULL, *password = NULL;
     krb5_data serverNonce;
@@ -292,7 +294,7 @@ _kdc_do_digest(krb5_context context,
 	krb5_clear_error_message(context);
 
 	ret = _kdc_db_fetch(context, config, principal,
-			    HDB_F_GET_SERVER, NULL, NULL, &server);
+			    HDB_F_GET_SERVER, NULL, &serverdb, &server);
 	if (ret)
 	    goto out;
 
@@ -314,7 +316,7 @@ _kdc_do_digest(krb5_context context,
 	}
 
 	ret = _kdc_db_fetch(context, config, principal,
-			    HDB_F_GET_CLIENT, NULL, NULL, &client);
+			    HDB_F_GET_CLIENT, NULL, &clientdb, &client);
 	krb5_free_principal(context, principal);
 	if (ret)
 	    goto out;
@@ -877,7 +879,7 @@ _kdc_do_digest(krb5_context context,
 		goto failed;
 
 	    ret = _kdc_db_fetch(context, config, clientprincipal,
-				HDB_F_GET_CLIENT, NULL, NULL, &user);
+				HDB_F_GET_CLIENT, NULL, &userdb, &user);
 	    krb5_free_principal(context, clientprincipal);
 	    if (ret) {
 		krb5_set_error_message(context, ret,
@@ -1163,7 +1165,7 @@ _kdc_do_digest(krb5_context context,
 	    goto failed;
 
 	ret = _kdc_db_fetch(context, config, clientprincipal,
-			    HDB_F_GET_CLIENT, NULL, NULL, &user);
+			    HDB_F_GET_CLIENT, NULL, &userdb, &user);
 	krb5_free_principal(context, clientprincipal);
 	if (ret) {
 	    krb5_set_error_message(context, ret, "NTLM user %s not in database",
@@ -1494,11 +1496,11 @@ _kdc_do_digest(krb5_context context,
     if (sp)
 	krb5_storage_free(sp);
     if (user)
-	_kdc_free_ent (context, user);
+	_kdc_free_ent (context, userdb, user);
     if (server)
-	_kdc_free_ent (context, server);
+	_kdc_free_ent (context, serverdb, server);
     if (client)
-	_kdc_free_ent (context, client);
+	_kdc_free_ent (context, clientdb, client);
     if (password) {
 	memset(password, 0, strlen(password));
 	free (password);

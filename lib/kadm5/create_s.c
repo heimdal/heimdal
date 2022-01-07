@@ -194,7 +194,7 @@ kadm5_s_create_principal_with_key(void *server_handle,
     if (!context->keep_open) {
         ret = context->db->hdb_open(context->context, context->db, O_RDWR, 0);
         if (ret) {
-            hdb_free_entry(context->context, &ent);
+            hdb_free_entry(context->context, context->db, &ent);
             return ret;
         }
     }
@@ -227,7 +227,7 @@ kadm5_s_create_principal_with_key(void *server_handle,
         if (ret == 0 && ret2 != 0)
             ret = ret2;
     }
-    hdb_free_entry(context->context, &ent);
+    hdb_free_entry(context->context, context->db, &ent);
     return _kadm5_error_code(ret);
 }
 
@@ -315,7 +315,7 @@ kadm5_s_create_principal(void *server_handle,
     if (!context->keep_open) {
         ret = context->db->hdb_open(context->context, context->db, O_RDWR, 0);
         if (ret) {
-            hdb_free_entry(context->context, &ent);
+            hdb_free_entry(context->context, context->db, &ent);
             return ret;
         }
     }
@@ -351,7 +351,7 @@ kadm5_s_create_principal(void *server_handle,
         if (ret == 0 && ret2 != 0)
             ret = ret2;
     }
-    hdb_free_entry(context->context, &ent);
+    hdb_free_entry(context->context, context->db, &ent);
     return _kadm5_error_code(ret);
 }
 

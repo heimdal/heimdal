@@ -589,7 +589,7 @@ receive_everything(krb5_context context, int fd,
 	    if (ret)
 		krb5_err(context, IPROPD_RESTART_SLOW, ret, "hdb_store");
 
-	    hdb_free_entry(context, &entry);
+	    hdb_free_entry(context, mydb, &entry);
 	    krb5_data_free(&data);
 	} else if (opcode == NOW_YOU_HAVE)
 	    ;

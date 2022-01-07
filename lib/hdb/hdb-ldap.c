@@ -767,7 +767,7 @@ LDAP_entry2mods(krb5_context context, HDB * db, hdb_entry_ex * ent,
     }
 
     if (msg)
-	hdb_free_entry(context, &orig);
+	hdb_free_entry(context, db, &orig);
 
     return ret;
 }
@@ -1467,7 +1467,7 @@ out:
     free(ntPasswordIN);
 
     if (ret)
-	hdb_free_entry(context, ent);
+	hdb_free_entry(context, db, ent);
 
     return ret;
 }
@@ -1552,7 +1552,7 @@ LDAP_seq(krb5_context context, HDB * db, unsigned flags, hdb_entry_ex * entry)
 	if (db->hdb_master_key_set && (flags & HDB_F_DECRYPT)) {
 	    ret = hdb_unseal_keys(context, db, &entry->entry);
 	    if (ret)
-		hdb_free_entry(context, entry);
+		hdb_free_entry(context, db, entry);
 	}
     }
 
@@ -1712,7 +1712,7 @@ LDAP_fetch_kvno(krb5_context context, HDB * db, krb5_const_principal principal,
 	if (db->hdb_master_key_set && (flags & HDB_F_DECRYPT)) {
 	    ret = hdb_unseal_keys(context, db, &entry->entry);
 	    if (ret)
-		hdb_free_entry(context, entry);
+		hdb_free_entry(context, db, entry);
 	}
     }
 

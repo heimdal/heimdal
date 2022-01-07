@@ -110,9 +110,7 @@ typedef struct hdb_master_key_data *hdb_master_key;
  */
 
 typedef struct hdb_entry_ex {
-    void *ctx;
     hdb_entry entry;
-    void (*free_entry)(krb5_context, struct hdb_entry_ex *);
 } hdb_entry_ex;
 
 
@@ -165,9 +163,9 @@ typedef struct HDB {
      */
     krb5_error_code (*hdb_close)(krb5_context, struct HDB*);
     /**
-     * Free an entry after use.
+     * Free backend-specific entry context.
      */
-    void	    (*hdb_free)(krb5_context, struct HDB*, hdb_entry_ex*);
+    void	    (*hdb_free_entry_context)(krb5_context, struct HDB*, hdb_entry_ex*);
     /**
      * Fetch an entry from the backend
      *

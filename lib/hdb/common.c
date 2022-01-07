@@ -233,13 +233,13 @@ _hdb_fetch_kvno(krb5_context context, HDB *db, krb5_const_principal principal,
 	/* Decrypt the current keys */
 	ret = hdb_unseal_keys(context, db, &entry->entry);
 	if (ret) {
-	    hdb_free_entry(context, entry);
+	    hdb_free_entry(context, db, entry);
 	    return ret;
 	}
 	/* Decrypt the key history too */
 	ret = hdb_unseal_keys_kvno(context, db, 0, flags, &entry->entry);
 	if (ret) {
-	    hdb_free_entry(context, entry);
+	    hdb_free_entry(context, db, entry);
 	    return ret;
 	}
     } else if ((flags & HDB_F_DECRYPT)) {
@@ -247,7 +247,7 @@ _hdb_fetch_kvno(krb5_context context, HDB *db, krb5_const_principal principal,
 	    /* Decrypt the current keys */
 	    ret = hdb_unseal_keys(context, db, &entry->entry);
 	    if (ret) {
-		hdb_free_entry(context, entry);
+		hdb_free_entry(context, db, entry);
 		return ret;
 	    }
 	} else {
@@ -259,7 +259,7 @@ _hdb_fetch_kvno(krb5_context context, HDB *db, krb5_const_principal principal,
 	     */
 	    ret = hdb_unseal_keys_kvno(context, db, kvno, flags, &entry->entry);
 	    if (ret) {
-		hdb_free_entry(context, entry);
+		hdb_free_entry(context, db, entry);
 		return ret;
 	    }
 	}
@@ -273,7 +273,7 @@ _hdb_fetch_kvno(krb5_context context, HDB *db, krb5_const_principal principal,
 	 */
 	ret = add_default_salts(context, db, &entry->entry);
 	if (ret) {
-	    hdb_free_entry(context, entry);
+	    hdb_free_entry(context, db, entry);
 	    return ret;
 	}
     }
@@ -1567,7 +1567,7 @@ fetch_it(krb5_context context,
             ret = pick_kvno(context, db, flags, t, kvno, ent);
     }
     if (ret)
-        hdb_free_entry(context, ent);
+        hdb_free_entry(context, db, ent);
     krb5_free_principal(context, nsprinc);
     free(host);
     return ret;

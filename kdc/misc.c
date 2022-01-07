@@ -117,7 +117,7 @@ synthesize_client(krb5_context context,
         *(e->entry.max_life) = config->synthetic_clients_max_life;
         *h = e;
     } else {
-        hdb_free_entry(context, e);
+        hdb_free_entry(context, &null_db, e);
     }
     return ret;
 }
@@ -246,9 +246,9 @@ out:
 }
 
 KDC_LIB_FUNCTION void KDC_LIB_CALL
-_kdc_free_ent(krb5_context context, hdb_entry_ex *ent)
+_kdc_free_ent(krb5_context context, HDB *db, hdb_entry_ex *ent)
 {
-    hdb_free_entry (context, ent);
+    hdb_free_entry (context, db, ent);
     free (ent);
 }
 

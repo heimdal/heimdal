@@ -2022,11 +2022,13 @@ static krb5_error_code
 get_local_tgs(krb5_context context,
 	      krb5_kdc_configuration *config,
 	      krb5_const_realm realm,
+	      HDB **krbtgtdb,
 	      hdb_entry_ex **krbtgt)
 {
     krb5_error_code ret;
     krb5_principal tgs_name;
 
+    *krbtgtdb = NULL;
     *krbtgt = NULL;
 
     ret = krb5_make_principal(context,
@@ -2039,7 +2041,7 @@ get_local_tgs(krb5_context context,
 	return ret;
 
     ret = _kdc_db_fetch(context, config, tgs_name,
-			HDB_F_GET_KRBTGT, NULL, NULL, krbtgt);
+			HDB_F_GET_KRBTGT, NULL, krbtgtdb, krbtgt);
     krb5_free_principal(context, tgs_name);
 
     return ret;
@@ -2066,7 +2068,6 @@ _kdc_as_rep(astgs_request_t r)
     const PA_DATA *pa;
     krb5_boolean is_tgs;
     const char *msg;
-    hdb_entry_ex *krbtgt = NULL;
     Key *krbtgt_key;
 
     memset(rep, 0, sizeof(*rep));
@@ -2182,7 +2183,7 @@ _kdc_as_rep(astgs_request_t r)
     ret = _kdc_db_fetch(r->context, config, r->server_princ,
 			HDB_F_GET_SERVER | HDB_F_DELAY_NEW_KEYS |
 			flags | (is_tgs ? HDB_F_GET_KRBTGT : 0),
-			NULL, NULL, &r->server);
+			NULL, &r->serverdb, &r->server);
     switch (ret) {
     case 0:	/* Success */
 	break;
@@ -2386,11 +2387,11 @@ _kdc_as_rep(astgs_request_t r)
 	krbtgt_key = skey;
     } else {
 	ret = get_local_tgs(r->context, config, r->server_princ->realm,
-			    &krbtgt);
+			    &r->krbtgtdb, &r->krbtgt);
 	if (ret)
 	    goto out;
 
-	ret = _kdc_get_preferred_key(r->context, config, krbtgt,
+	ret = _kdc_get_preferred_key(r->context, config, r->krbtgt,
 				      r->server_princ->realm,
 				      NULL, &krbtgt_key);
 	if (ret)
@@ -2762,11 +2763,11 @@ out:
 	r->server_princ = NULL;
     }
     if (r->client)
-	_kdc_free_ent(r->context, r->client);
+	_kdc_free_ent(r->context, r->clientdb, r->client);
     if (r->server)
-	_kdc_free_ent(r->context, r->server);
-    if (krbtgt)
-	_kdc_free_ent(r->context, krbtgt);
+	_kdc_free_ent(r->context, r->serverdb, r->server);
+    if (r->krbtgt)
+	_kdc_free_ent(r->context, r->krbtgtdb, r->krbtgt);
     if (r->armor_crypto) {
 	krb5_crypto_destroy(r->context, r->armor_crypto);
 	r->armor_crypto = NULL;
@@ -2774,7 +2775,7 @@ out:
     if (r->armor_ticket)
 	krb5_free_ticket(r->context, r->armor_ticket);
     if (r->armor_server)
-	_kdc_free_ent(r->context, r->armor_server);
+	_kdc_free_ent(r->context, r->armor_serverdb, r->armor_server);
     krb5_free_keyblock_contents(r->context, &r->reply_key);
     krb5_free_keyblock_contents(r->context, &r->session_key);
     krb5_free_keyblock_contents(r->context, &r->strengthen_key);

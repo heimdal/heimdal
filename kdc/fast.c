@@ -108,6 +108,7 @@ get_fastuser_crypto(astgs_request_t r,
 		    krb5_crypto *crypto)
 {
     krb5_principal fast_princ;
+    HDB *fast_db;
     hdb_entry_ex *fast_user = NULL;
     Key *cookie_key = NULL;
     krb5_crypto fast_crypto = NULL;
@@ -122,7 +123,7 @@ get_fastuser_crypto(astgs_request_t r,
 	goto out;
 
     ret = _kdc_db_fetch(r->context, r->config, fast_princ,
-			HDB_F_GET_FAST_COOKIE, NULL, NULL, &fast_user);
+			HDB_F_GET_FAST_COOKIE, NULL, &fast_db, &fast_user);
     if (ret)
 	goto out;
 
@@ -148,7 +149,7 @@ get_fastuser_crypto(astgs_request_t r,
 
  out:
     if (fast_user)
-	_kdc_free_ent(r->context, fast_user);
+	_kdc_free_ent(r->context, fast_db, fast_user);
     if (fast_crypto)
 	krb5_crypto_destroy(r->context, fast_crypto);
     krb5_free_principal(r->context, fast_princ);
@@ -549,7 +550,7 @@ fast_unwrap_request(astgs_request_t r,
 	ret = _kdc_db_fetch(r->context, r->config, armor_server_principal,
 			    HDB_F_GET_KRBTGT | HDB_F_DELAY_NEW_KEYS,
 			    (krb5uint32 *)ap_req.ticket.enc_part.kvno,
-			    NULL, &r->armor_server);
+			    &r->armor_serverdb, &r->armor_server);
 	if(ret == HDB_ERR_NOT_FOUND_HERE) {
 	    free_AP_REQ(&ap_req);
 	    kdc_log(r->context, r->config, 5,
@@ -834,6 +835,7 @@ _kdc_fast_check_armor_pac(astgs_request_t r)
     krb5_boolean ad_kdc_issued = FALSE;
     krb5_pac mspac = NULL;
     krb5_principal armor_client_principal = NULL;
+    HDB *armor_db;
     hdb_entry_ex *armor_client = NULL;
     char *armor_client_principal_name = NULL;
 
@@ -857,7 +859,7 @@ _kdc_fast_check_armor_pac(astgs_request_t r)
 
     ret = _kdc_db_fetch_client(r->context, r->config, flags,
 			       armor_client_principal, armor_client_principal_name,
-			       r->req.req_body.realm, NULL, &armor_client);
+			       r->req.req_body.realm, &armor_db, &armor_client);
     if (ret)
 	goto out;
 
@@ -886,7 +888,7 @@ _kdc_fast_check_armor_pac(astgs_request_t r)
 out:
     krb5_xfree(armor_client_principal_name);
     if (armor_client)
-	_kdc_free_ent(r->context, armor_client);
+	_kdc_free_ent(r->context, armor_db, armor_client);
     krb5_free_principal(r->context, armor_client_principal);
     krb5_pac_free(r->context, mspac);
 

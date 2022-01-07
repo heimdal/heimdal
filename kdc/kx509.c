@@ -253,6 +253,7 @@ is_local_realm(krb5_context context,
 {
     krb5_error_code ret;
     krb5_principal tgs;
+    HDB *db;
     hdb_entry_ex *ent = NULL;
 
     ret = krb5_make_principal(context, &tgs, realm, KRB5_TGS_NAME, realm,
@@ -261,9 +262,9 @@ is_local_realm(krb5_context context,
         return ret;
     if (ret == 0)
         ret = _kdc_db_fetch(context, reqctx->config, tgs, HDB_F_GET_KRBTGT,
-                            NULL, NULL, &ent);
+                            NULL, &db, &ent);
     if (ent)
-        _kdc_free_ent(context, ent);
+        _kdc_free_ent(context, db, ent);
     krb5_free_principal(context, tgs);
     if (ret == HDB_ERR_NOENTRY || ret == HDB_ERR_NOT_FOUND_HERE)
         return KRB5KRB_AP_ERR_NOT_US;

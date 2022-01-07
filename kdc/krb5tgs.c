@@ -958,7 +958,7 @@ tgs_parse_request(astgs_request_t r,
 
     krbtgt_kvno = ap_req.ticket.enc_part.kvno ? *ap_req.ticket.enc_part.kvno : 0;
     ret = _kdc_db_fetch(r->context, config, princ, HDB_F_GET_KRBTGT,
-			&krbtgt_kvno, NULL, &r->krbtgt);
+			&krbtgt_kvno, &r->krbtgtdb, &r->krbtgt);
 
     if (ret == HDB_ERR_NOT_FOUND_HERE) {
 	/* XXX Factor out this unparsing of the same princ all over */
@@ -1335,7 +1335,7 @@ _kdc_db_fetch_client(krb5_context context,
 	krb5_free_error_message(context, msg);
     } else if (client->entry.flags.invalid || !client->entry.flags.client) {
         kdc_log(context, config, 4, "Client has invalid bit set");
-	_kdc_free_ent(context, client);
+	_kdc_free_ent(context, *clientdb, client);
         return KRB5KDC_ERR_POLICY;
     }
 
@@ -1361,6 +1361,7 @@ tgs_build_reply(astgs_request_t priv,
     char *spn = NULL, *cpn = NULL, *krbtgt_out_n = NULL;
     char *user2user_name = NULL;
     hdb_entry_ex *server = NULL, *client = NULL;
+    HDB *user2user_krbtgtdb;
     hdb_entry_ex *user2user_krbtgt = NULL;
     HDB *clientdb;
     HDB *serverdb = NULL;
@@ -1379,6 +1380,7 @@ tgs_build_reply(astgs_request_t priv,
     char **capath = NULL;
     size_t num_capath = 0;
 
+    HDB *krbtgt_outdb;
     hdb_entry_ex *krbtgt_out = NULL;
 
     PrincipalName *s;
@@ -1442,12 +1444,13 @@ tgs_build_reply(astgs_request_t priv,
 server_lookup:
     priv->server = NULL;
     if (server)
-        _kdc_free_ent(context, server);
+        _kdc_free_ent(context, serverdb, server);
     server = NULL;
     ret = _kdc_db_fetch(context, config, priv->server_princ,
                         HDB_F_GET_SERVER | HDB_F_DELAY_NEW_KEYS | flags,
 			NULL, &serverdb, &server);
     priv->server = server;
+    priv->serverdb = serverdb;
     if (ret == HDB_ERR_NOT_FOUND_HERE) {
 	kdc_log(context, config, 5, "target %s does not have secrets at this KDC, need to proxy", spn);
         _kdc_audit_addreason((kdc_request_t)priv, "Target not found here");
@@ -1608,7 +1611,7 @@ server_lookup:
     }
 
     ret = _kdc_db_fetch(context, config, krbtgt_out_principal,
-			HDB_F_GET_KRBTGT, NULL, NULL, &krbtgt_out);
+			HDB_F_GET_KRBTGT, NULL, &krbtgt_outdb, &krbtgt_out);
     if (ret) {
 	char *ktpn = NULL;
 	ret = krb5_unparse_name(context, priv->krbtgt->entry.principal, &ktpn);
@@ -1635,6 +1638,7 @@ server_lookup:
 	    krb5uint32 second_kvno = 0;
 	    krb5uint32 *kvno_ptr = NULL;
 	    size_t i;
+	    HDB *user2user_db;
 	    hdb_entry_ex *user2user_client = NULL;
 	    krb5_boolean user2user_kdc_issued = FALSE;
 	    char *tpn;
@@ -1670,7 +1674,7 @@ server_lookup:
 	    }
 	    ret = _kdc_db_fetch(context, config, p,
 				HDB_F_GET_KRBTGT, kvno_ptr,
-				NULL, &user2user_krbtgt);
+				&user2user_krbtgtdb, &user2user_krbtgt);
 	    krb5_free_principal(context, p);
 	    if(ret){
 		if (ret == HDB_ERR_NOENTRY)
@@ -1724,7 +1728,7 @@ server_lookup:
 	     */
 	    ret = _kdc_db_fetch(context, config, user2user_princ,
 				HDB_F_GET_CLIENT | flags,
-				NULL, NULL, &user2user_client);
+				NULL, &user2user_db, &user2user_client);
 	    if (ret == HDB_ERR_NOENTRY)
 		ret = KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN;
 	    if (ret)
@@ -1745,7 +1749,7 @@ server_lookup:
 				  user2user_client,
 				  NULL);
 	    if (ret) {
-		_kdc_free_ent(context, user2user_client);
+		_kdc_free_ent(context, user2user_db, user2user_client);
 		goto out;
 	    }
 
@@ -1760,7 +1764,7 @@ server_lookup:
 							   user2user_client,
 							   user2user_princ);
 	    if (ret) {
-		_kdc_free_ent(context, user2user_client);
+		_kdc_free_ent(context, user2user_db, user2user_client);
 		goto out;
 	    }
 
@@ -1769,7 +1773,7 @@ server_lookup:
 				 user2user_client, user2user_krbtgt, user2user_krbtgt, user2user_krbtgt,
 				 &uukey->key, &priv->ticket_key->key, &adtkt,
 				 &user2user_kdc_issued, &user2user_pac, NULL, NULL);
-	    _kdc_free_ent(context, user2user_client);
+	    _kdc_free_ent(context, user2user_db, user2user_client);
 	    if (ret) {
 		const char *msg = krb5_get_error_message(context, ret);
 		kdc_log(context, config, 0,
@@ -2048,9 +2052,9 @@ out:
 
     krb5_free_keyblock_contents(context, &sessionkey);
     if(krbtgt_out)
-	_kdc_free_ent(context, krbtgt_out);
+	_kdc_free_ent(context, krbtgt_outdb, krbtgt_out);
     if(user2user_krbtgt)
-	_kdc_free_ent(context, user2user_krbtgt);
+	_kdc_free_ent(context, user2user_krbtgtdb, user2user_krbtgt);
 
     krb5_free_principal(context, user2user_princ);
     krb5_free_principal(context, krbtgt_out_principal);
@@ -2202,20 +2206,20 @@ out:
     if (r->armor_ticket)
 	krb5_free_ticket(r->context, r->armor_ticket);
     if (r->armor_server)
-	_kdc_free_ent(r->context, r->armor_server);
+	_kdc_free_ent(r->context, r->armor_serverdb, r->armor_server);
     krb5_free_keyblock_contents(r->context, &r->reply_key);
     krb5_free_keyblock_contents(r->context, &r->strengthen_key);
 
     if (r->ticket)
 	krb5_free_ticket(r->context, r->ticket);
     if (r->krbtgt)
-	_kdc_free_ent(r->context, r->krbtgt);
+	_kdc_free_ent(r->context, r->krbtgtdb, r->krbtgt);
 
     if (r->client)
-	_kdc_free_ent(r->context, r->client);
+	_kdc_free_ent(r->context, r->clientdb, r->client);
     krb5_free_principal(r->context, r->client_princ);
     if (r->server)
-	_kdc_free_ent(r->context, r->server);
+	_kdc_free_ent(r->context, r->serverdb, r->server);
     krb5_free_principal(r->context, r->server_princ);
     _kdc_free_fast_state(&r->fast);
     krb5_pac_free(r->context, r->pac);

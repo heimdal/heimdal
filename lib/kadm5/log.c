@@ -979,8 +979,6 @@ kadm5_log_create(kadm5_server_context *context, hdb_entry *entry)
 
     memset(&existing, 0, sizeof(existing));
     memset(&ent, 0, sizeof(ent));
-    ent.ctx = 0;
-    ent.free_entry = 0;
     ent.entry = *entry;
 
     /*
@@ -993,11 +991,11 @@ kadm5_log_create(kadm5_server_context *context, hdb_entry *entry)
         return ret;
     if (ret == 0 && !ent.entry.flags.materialize &&
         (existing.entry.flags.virtual || existing.entry.flags.virtual_keys)) {
-        hdb_free_entry(context->context, &existing);
+        hdb_free_entry(context->context, context->db, &existing);
         return HDB_ERR_EXISTS;
     }
     if (ret == 0)
-        hdb_free_entry(context->context, &existing);
+        hdb_free_entry(context->context, context->db, &existing);
     ent.entry.flags.materialize = 0; /* Clear in stored entry */
 
     /*
@@ -1076,7 +1074,7 @@ kadm5_log_replay_create(kadm5_server_context *context,
 	return ret;
     }
     ret = context->db->hdb_store(context->context, context->db, 0, &ent);
-    hdb_free_entry(context->context, &ent);
+    hdb_free_entry(context->context, context->db, &ent);
     return ret;
 }
 
@@ -1202,8 +1200,6 @@ kadm5_log_rename(kadm5_server_context *context,
     kadm5_log_context *log_context = &context->log_context;
 
     memset(&ent, 0, sizeof(ent));
-    ent.ctx = 0;
-    ent.free_entry = 0;
     ent.entry = *entry;
 
     if (strcmp(log_context->log_file, "/dev/null") == 0) {
@@ -1340,7 +1336,7 @@ kadm5_log_replay_rename(kadm5_server_context *context,
     }
     ret = context->db->hdb_store(context->context, context->db,
 				 0, &target_ent);
-    hdb_free_entry(context->context, &target_ent);
+    hdb_free_entry(context->context, context->db, &target_ent);
     if (ret) {
 	krb5_free_principal(context->context, source);
 	return ret;
@@ -1368,8 +1364,6 @@ kadm5_log_modify(kadm5_server_context *context,
     kadm5_log_context *log_context = &context->log_context;
 
     memset(&ent, 0, sizeof(ent));
-    ent.ctx = 0;
-    ent.free_entry = 0;
     ent.entry = *entry;
 
     if (strcmp(log_context->log_file, "/dev/null") == 0)
@@ -1641,8 +1635,8 @@ kadm5_log_replay_modify(kadm5_server_context *context,
     ret = context->db->hdb_store(context->context, context->db,
 				 HDB_F_REPLACE, &ent);
  out:
-    hdb_free_entry(context->context, &ent);
-    hdb_free_entry(context->context, &log_ent);
+    hdb_free_entry(context->context, context->db, &ent);
+    hdb_free_entry(context->context, context->db, &log_ent);
     return ret;
 }
 

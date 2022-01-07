@@ -279,7 +279,7 @@ main(int argc, char **argv)
 	    else
 		nprincs++;
 	}
-	hdb_free_entry(context, &entry);
+	hdb_free_entry(context, db, &entry);
     }
     if (!print_dump)
 	krb5_log(context, fac, 0, "Received %d principals", nprincs);

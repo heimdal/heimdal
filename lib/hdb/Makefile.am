@@ -146,10 +146,7 @@ $(srcdir)/hdb-private.h: $(dist_libhdb_la_SOURCES)
 $(gen_files_hdb) hdb_asn1.h hdb_asn1-priv.h: hdb_asn1_files
 
 hdb_asn1_files: $(ASN1_COMPILE_DEP) $(srcdir)/hdb.asn1
-	$(ASN1_COMPILE) --sequence=HDB-extensions	\
-			--sequence=HDB-Ext-KeyRotation	\
-			--sequence=HDB-Ext-KeySet	\
-			--sequence=Keys $(srcdir)/hdb.asn1 hdb_asn1
+	$(ASN1_COMPILE) --option-file=$(srcdir)/hdb.opt $(srcdir)/hdb.asn1 hdb_asn1
 
 # to help stupid solaris make
 

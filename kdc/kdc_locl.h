@@ -88,6 +88,7 @@ struct astgs_request_desc {
 
     krb5_crypto armor_crypto;
     hdb_entry_ex *armor_server;
+    HDB *armor_serverdb;
     krb5_ticket *armor_ticket;
     Key *armor_key;
 

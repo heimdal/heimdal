@@ -188,7 +188,7 @@ modify_principal(void *server_handle,
 				 ret, princ, mask);
 
  out3:
-    hdb_free_entry(context->context, &ent);
+    hdb_free_entry(context->context, context->db, &ent);
  out2:
     (void) kadm5_log_end(context);
  out:

@@ -100,6 +100,7 @@ static void
 update_client_names(astgs_request_t r,
 		    char **s4ucname,
 		    krb5_principal *s4u_client_name,
+		    HDB **s4u_clientdb,
 		    hdb_entry_ex **s4u_client,
 		    krb5_principal *s4u_canon_client_name,
 		    krb5_pac *s4u_pac)
@@ -111,9 +112,11 @@ update_client_names(astgs_request_t r,
     r->client_princ = *s4u_client_name;
     *s4u_client_name = NULL;
 
-    _kdc_free_ent(r->context, r->client);
+    _kdc_free_ent(r->context, r->clientdb, r->client);
     r->client = *s4u_client;
     *s4u_client = NULL;
+    r->clientdb = *s4u_clientdb;
+    *s4u_clientdb = NULL;
 
     krb5_free_principal(r->context, r->canon_client_princ);
     r->canon_client_princ = *s4u_canon_client_name;
@@ -334,12 +337,13 @@ validate_protocol_transition(astgs_request_t r)
      * impersonated client. (The audit entry containing the original
      * client name will have been created before this point.)
      */
-    update_client_names(r, &s4ucname, &s4u_client_name, &s4u_client,
+    update_client_names(r, &s4ucname, &s4u_client_name,
+			&s4u_clientdb, &s4u_client,
 			&s4u_canon_client_name, &s4u_pac);
 
 out:
     if (s4u_client)
-	_kdc_free_ent(r->context, s4u_client);
+	_kdc_free_ent(r->context, s4u_clientdb, s4u_client);
     krb5_free_principal(r->context, s4u_client_name);
     krb5_xfree(s4ucname);
     krb5_free_principal(r->context, s4u_canon_client_name);
@@ -368,6 +372,7 @@ validate_constrained_delegation(astgs_request_t r)
     uint64_t s4u_pac_attributes;
     char *s4ucname = NULL, *s4usname = NULL;
     EncTicketPart evidence_tkt;
+    HDB *s4u_clientdb;
     hdb_entry_ex *s4u_client = NULL;
     krb5_boolean ad_kdc_issued = FALSE;
     Key *clientkey;
@@ -476,7 +481,7 @@ validate_constrained_delegation(astgs_request_t r)
     /* Try lookup the delegated client in DB */
     ret = _kdc_db_fetch_client(r->context, r->config, flags,
 			       s4u_client_name, s4ucname, local_realm,
-			       NULL, &s4u_client);
+			       &s4u_clientdb, &s4u_client);
     if (ret)
 	goto out;
 
@@ -539,13 +544,14 @@ validate_constrained_delegation(astgs_request_t r)
      * impersonated client. (The audit entry containing the original
      * client name will have been created before this point.)
      */
-    update_client_names(r, &s4ucname, &s4u_client_name, &s4u_client,
+    update_client_names(r, &s4ucname, &s4u_client_name,
+			&s4u_clientdb, &s4u_client,
 			&s4u_canon_client_name, &s4u_pac);
     r->pac_attributes = s4u_pac_attributes;
 
 out:
     if (s4u_client)
-	_kdc_free_ent(r->context, s4u_client);
+	_kdc_free_ent(r->context, s4u_clientdb, s4u_client);
     krb5_free_principal(r->context, s4u_client_name);
     krb5_xfree(s4ucname);
     krb5_free_principal(r->context, s4u_server_name);

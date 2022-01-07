@@ -397,13 +397,13 @@ hdb_unlock(int fd)
 }
 
 void
-hdb_free_entry(krb5_context context, hdb_entry_ex *ent)
+hdb_free_entry(krb5_context context, HDB *db, hdb_entry_ex *ent)
 {
     Key *k;
     size_t i;
 
-    if (ent->free_entry)
-	(*ent->free_entry)(context, ent);
+    if (db && db->hdb_free_entry_context)
+	db->hdb_free_entry_context(context, db, ent);
 
     for(i = 0; i < ent->entry.keys.len; i++) {
 	k = &ent->entry.keys.val[i];
@@ -430,7 +430,7 @@ hdb_foreach(krb5_context context,
 	krb5_clear_error_message(context);
     while(ret == 0){
 	ret = (*func)(context, db, &entry, data);
-	hdb_free_entry(context, &entry);
+	hdb_free_entry(context, db, &entry);
 	if(ret == 0)
 	    ret = db->hdb_nextkey(context, db, flags, &entry);
     }

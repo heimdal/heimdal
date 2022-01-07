@@ -249,7 +249,7 @@ change(void *server_handle,
 				 n_ks_tuple, ks_tuple, password);
 
  out3:
-    hdb_free_entry(context->context, &ent);
+    hdb_free_entry(context->context, context->db, &ent);
  out2:
     (void) kadm5_log_end(context);
  out:
@@ -437,7 +437,7 @@ kadm5_s_chpass_principal_with_key(void *server_handle,
 					  n_key_data, key_data);
 
  out3:
-    hdb_free_entry(context->context, &ent);
+    hdb_free_entry(context->context, context->db, &ent);
  out2:
     (void) kadm5_log_end(context);
  out:

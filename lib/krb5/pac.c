@@ -1998,3 +1998,41 @@ _krb5_kdc_pac_sign_ticket(krb5_context context,
     krb5_data_free(&rspac);
     return ret;
 }
+
+/*
+ * Helper function for krb5_copy_principal(), because the krb5_pac
+ * in nameattrs lacks a copy constructor (not being an ASN.1 type)
+ */
+
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+_krb5_pac_copy(krb5_context context, krb5_pac in, krb5_pac *out)
+{
+    krb5_error_code ret;
+    krb5_pac p;
+
+    *out = NULL;
+
+    ret = krb5_pac_parse(context, in->data.data, in->data.length, &p);
+    if (ret == 0 && in->ticket_sign_data.data)
+	ret = krb5_data_copy(&p->ticket_sign_data, in->ticket_sign_data.data,
+			     in->ticket_sign_data.length);
+
+    if (ret == 0 && in->upn_princ)
+	ret = krb5_copy_principal(context, in->upn_princ, &p->upn_princ);
+    p->upn_flags = in->upn_flags;
+    if (ret == 0 && in->canon_princ)
+	ret = krb5_copy_principal(context, in->canon_princ, &p->canon_princ);
+    if (ret == 0 && in->sid.data)
+	ret = krb5_data_copy(&p->sid, in->sid.data, in->sid.length);
+
+    p->pac_attributes = in->pac_attributes;
+
+    if (ret) {
+	krb5_pac_free(context, p);
+	return ret;
+    }
+
+    *out = p;
+
+    return 0;
+}

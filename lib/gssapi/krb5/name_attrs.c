@@ -169,6 +169,7 @@ static get_name_attr_f get_realm;
 static get_name_attr_f get_ncomps;
 static get_name_attr_f get_peer_realm;
 static get_name_attr_f get_pac;
+static get_name_attr_f get_pac_buffer;
 static get_name_attr_f get_authz_data;
 static get_name_attr_f get_ticket_authz_data;
 static get_name_attr_f get_authenticator_authz_data;
@@ -210,16 +211,16 @@ static struct krb5_name_attrs {
     { NB("peer-realm"),     get_peer_realm, NULL, NULL, 1, 1 },
     { NB("ticket-authz-data#pac"), get_pac, NULL, NULL, 1, 1 },
     { NM(""),                   get_pac,    NULL, NULL, 1, 0 },
-    { NM("logon-info"),         get_pac,    NULL, NULL, 1, 0 },
-    { NM("credentials-info"),   get_pac,    NULL, NULL, 1, 0 },
-    { NM("server-checksum"),    get_pac,    NULL, NULL, 1, 0 },
-    { NM("privsvr-checksum"),   get_pac,    NULL, NULL, 1, 0 },
-    { NM("client-info"),        get_pac,    NULL, NULL, 1, 0 },
-    { NM("delegation-info"),    get_pac,    NULL, NULL, 1, 0 },
-    { NM("upn-dns-info"),       get_pac,    NULL, NULL, 1, 0 },
-    { NM("ticket-checksum"),    get_pac,    NULL, NULL, 1, 0 },
-    { NM("attributes-info"),    get_pac,    NULL, NULL, 1, 0 },
-    { NM("requestor-sid"),      get_pac,    NULL, NULL, 1, 0 },
+    { NM("logon-info"),         get_pac_buffer,    NULL, NULL, 1, 0 },
+    { NM("credentials-info"),   get_pac_buffer,    NULL, NULL, 1, 0 },
+    { NM("server-checksum"),    get_pac_buffer,    NULL, NULL, 1, 0 },
+    { NM("privsvr-checksum"),   get_pac_buffer,    NULL, NULL, 1, 0 },
+    { NM("client-info"),        get_pac_buffer,    NULL, NULL, 1, 0 },
+    { NM("delegation-info"),    get_pac_buffer,    NULL, NULL, 1, 0 },
+    { NM("upn-dns-info"),       get_pac_buffer,    NULL, NULL, 1, 0 },
+    { NM("ticket-checksum"),    get_pac_buffer,    NULL, NULL, 1, 0 },
+    { NM("attributes-info"),    get_pac_buffer,    NULL, NULL, 1, 0 },
+    { NM("requestor-sid"),      get_pac_buffer,    NULL, NULL, 1, 0 },
     { NB("ticket-authz-data#kdc-issued"),
          get_ticket_authz_data, NULL, NULL, 1, 1 },
     { NB("ticket-authz-data"),
@@ -686,25 +687,65 @@ get_pac(OM_uint32 *minor_status,
 {
     krb5_error_code kret;
     krb5_context context;
-    krb5_data data, pac_data;
-    krb5_data suffix;
+    krb5_data data;
     PrincipalNameAttrs *nameattrs = name->nameattrs;
     PrincipalNameAttrSrc *src = nameattrs ? nameattrs->source : NULL;
     EncTicketPart *ticket = NULL;
 
     krb5_data_zero(&data);
-    krb5_data_zero(&pac_data);
 
-    if (src) switch (src->element) {
-    case choice_PrincipalNameAttrSrc_enc_ticket_part:
-        ticket = &src->u.enc_ticket_part;
-        break;
-    case choice_PrincipalNameAttrSrc_enc_kdc_rep_part:
-    default:
-        return GSS_S_UNAVAILABLE;
-    }
+    if (src == NULL ||
+	src->element != choice_PrincipalNameAttrSrc_enc_ticket_part)
+	return GSS_S_UNAVAILABLE;
+
+    ticket = &src->u.enc_ticket_part;
 
     if (prefix->length || !authenticated || !ticket)
+        return GSS_S_UNAVAILABLE;
+
+    GSSAPI_KRB5_INIT(&context);
+
+    *authenticated = nameattrs->pac_verified;
+    if (complete)
+        *complete = 1;
+
+    kret = _krb5_get_ad(context, ticket->authorization_data,
+                        NULL, KRB5_AUTHDATA_WIN2K_PAC,
+                        value ? &data : NULL);
+
+    if (value) {
+	value->length = data.length;
+	value->value = data.data;
+    }
+
+    *minor_status = kret;
+    if (kret == ENOENT)
+        return GSS_S_UNAVAILABLE;
+    return kret == 0 ? GSS_S_COMPLETE : GSS_S_FAILURE;
+}
+
+static OM_uint32
+get_pac_buffer(OM_uint32 *minor_status,
+	       const CompositePrincipal *name,
+	       gss_const_buffer_t prefix,
+	       gss_const_buffer_t attr,
+	       gss_const_buffer_t frag,
+	       int *authenticated,
+	       int *complete,
+	       gss_buffer_t value,
+	       gss_buffer_t display_value,
+	       int *more)
+{
+    krb5_error_code kret;
+    krb5_context context;
+    krb5_data data;
+    PrincipalNameAttrs *nameattrs = name->nameattrs;
+    krb5_data suffix;
+
+    krb5_data_zero(&data);
+
+    if (prefix->length || !authenticated ||
+	!nameattrs || !nameattrs->pac)
         return GSS_S_UNAVAILABLE;
 
     GSSAPI_KRB5_INIT(&context);
@@ -716,37 +757,20 @@ get_pac(OM_uint32 *minor_status,
         suffix.length = frag->length - sizeof("pac-") - 1;
         suffix.data = (char *)frag->value + sizeof("pac-") - 1;
     } else
-        krb5_data_zero(&suffix); /* ticket-authz-data#pac */
+        return GSS_S_UNAVAILABLE; /* should not be reached */
 
     *authenticated = nameattrs->pac_verified;
     if (complete)
         *complete = 1;
 
-    kret = _krb5_get_ad(context, ticket->authorization_data,
-                        NULL, KRB5_AUTHDATA_WIN2K_PAC, &pac_data);
-    if (kret == 0 && suffix.length) {
-        krb5_pac pac;
+    kret = _krb5_pac_get_buffer_by_name(context, nameattrs->pac, &suffix,
+					value ? &data : NULL);
 
-        kret = krb5_pac_parse(context, pac_data.data, pac_data.length, &pac);
-        if (kret == 0) {
-            kret = _krb5_pac_get_buffer_by_name(context, pac, &suffix,
-                                                value ? &data : NULL);
-            krb5_pac_free(context, pac);
-        }
-
-        if (value) {
-            value->length = data.length;
-            value->value = data.data;
-            krb5_data_zero(&data);
-        }
-    } else if (kret == 0 && value) {
-        value->length = pac_data.length;
-        value->value = pac_data.data;
-        krb5_data_zero(&pac_data);
+    if (value) {
+	value->length = data.length;
+	value->value = data.data;
     }
 
-    krb5_data_free(&pac_data);
-    krb5_data_free(&data);
     *minor_status = kret;
     if (kret == ENOENT)
         return GSS_S_UNAVAILABLE;
@@ -1083,6 +1107,10 @@ get_canonical_name(OM_uint32 *minor_status,
         kret = _krb5_principalname2krb5_principal(context, &p,
                                                   kdcrep->sname,
                                                   kdcrep->srealm);
+    } else if (nameattrs && nameattrs->pac &&
+	(_krb5_pac_get_canon_principal(context, nameattrs->pac, &p)) == 0) {
+	if (authenticated)
+	    *authenticated = nameattrs->pac_verified;
     } else if (ticket) {
         krb5_data data;
         krb5_pac pac = NULL;

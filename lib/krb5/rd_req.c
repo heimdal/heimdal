@@ -1080,9 +1080,11 @@ krb5_rd_req_ctx(krb5_context context,
 		} else if (ret2 != ENOENT)
 		    ret = ret2;
 	    }
-	    krb5_pac_free(context, pac);
-	    if (ret)
+	    if (ret) {
+		krb5_pac_free(context, pac);
 		goto out;
+	    }
+	    o->ticket->client->nameattrs->pac = pac;
 	} else
 	  ret = 0;
     }

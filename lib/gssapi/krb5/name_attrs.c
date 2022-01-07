@@ -172,6 +172,7 @@ static get_name_attr_f get_pac;
 static get_name_attr_f get_authz_data;
 static get_name_attr_f get_ticket_authz_data;
 static get_name_attr_f get_authenticator_authz_data;
+static set_name_attr_f set_authenticator_authz_data;
 static get_name_attr_f get_transited;
 static get_name_attr_f get_canonical_name;
 
@@ -209,7 +210,8 @@ static struct krb5_name_attrs {
     { NB("ticket-authz-data"),
          get_ticket_authz_data, NULL, NULL, 1, 1 },
     { NB("authenticator-authz-data"),
-         get_authenticator_authz_data, NULL, NULL, 1, 1 },
+         get_authenticator_authz_data,
+         set_authenticator_authz_data, NULL, 1, 1 },
     { NB("authz-data"),     get_authz_data,  NULL, NULL, 1, 1 },
     { NB("transit-path"),   get_transited,   NULL, NULL, 1, 1 },
     { NB("canonical-name"), get_canonical_name, NULL, NULL, 1, 1 },
@@ -919,6 +921,62 @@ get_authenticator_authz_data(OM_uint32 *minor_status,
                            nameattrs->authenticator_ad, &sz, kret);
         *minor_status = kret;
     }
+    return kret == 0 ? GSS_S_COMPLETE : GSS_S_FAILURE;
+}
+
+static OM_uint32
+set_authenticator_authz_data(OM_uint32 *minor_status,
+                             CompositePrincipal *name,
+                             gss_const_buffer_t prefix,
+                             gss_const_buffer_t attr,
+                             gss_const_buffer_t frag,
+                             int complete,
+                             gss_buffer_t value)
+{
+    AuthorizationDataElement e;
+    krb5_error_code kret;
+    size_t sz;
+
+    if (!value)
+        return GSS_S_CALL_INACCESSIBLE_READ;
+    if (frag->length &&
+        !ATTR_EQ(frag, "if-relevant"))
+        return GSS_S_UNAVAILABLE;
+
+    if ((name->nameattrs == NULL &&
+        (name->nameattrs = calloc(1, sizeof(*name->nameattrs))) == NULL) ||
+        (name->nameattrs->want_ad == NULL &&
+         (name->nameattrs->want_ad =
+          calloc(1, sizeof(*name->nameattrs->want_ad))) == NULL)) {
+        *minor_status = ENOMEM;
+        return GSS_S_FAILURE;
+    }
+
+    memset(&e, 0, sizeof(e));
+    kret = decode_AuthorizationDataElement(value->value, value->length, &e,
+                                           &sz);
+    if (kret == 0) {
+        if (frag->length) {
+            AuthorizationData ir;
+
+            ir.len = 0;
+            ir.val = NULL;
+            kret = add_AuthorizationData(&ir, &e);
+            free_AuthorizationDataElement(&e);
+            if (kret == 0) {
+                e.ad_type = KRB5_AUTHDATA_IF_RELEVANT;
+                ASN1_MALLOC_ENCODE(AuthorizationData, e.ad_data.data,
+                                   e.ad_data.length, &ir, &sz, kret);
+                kret = add_AuthorizationData(name->nameattrs->want_ad, &e);
+            }
+            free_AuthorizationData(&ir);
+        } else {
+            kret = add_AuthorizationData(name->nameattrs->want_ad, &e);
+            free_AuthorizationDataElement(&e);
+        }
+    }
+
+    *minor_status = kret;
     return kret == 0 ? GSS_S_COMPLETE : GSS_S_FAILURE;
 }
 

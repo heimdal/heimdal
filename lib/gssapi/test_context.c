@@ -56,6 +56,7 @@ static char *localname_string;
 static char *client_name;
 static char *client_password;
 static char *localname_string;
+static char *on_behalf_of_string;
 static int dns_canon_flag = -1;
 static int mutual_auth_flag = 0;
 static int dce_style_flag = 0;
@@ -294,6 +295,31 @@ loop(gss_OID mechoid,
     if (GSS_ERROR(maj_stat))
 	err(1, "import name creds failed with: %d", maj_stat);
 
+    if (on_behalf_of_string) {
+        AuthorizationDataElement e;
+        gss_buffer_desc attr, value;
+        int32_t kret;
+        size_t sz;
+
+        memset(&e, 0, sizeof(e));
+        e.ad_type = KRB5_AUTHDATA_ON_BEHALF_OF;
+        e.ad_data.length = strlen(on_behalf_of_string);
+        e.ad_data.data = on_behalf_of_string;
+        ASN1_MALLOC_ENCODE(AuthorizationDataElement, value.value, value.length,
+                           &e, &sz, kret);
+        if (kret)
+            errx(1, "Could not encode AD-ON-BEHALF-OF AuthorizationDataElement");
+        attr.value =
+            GSS_KRB5_NAME_ATTRIBUTE_BASE_URN "authenticator-authz-data";
+        attr.length =
+            sizeof(GSS_KRB5_NAME_ATTRIBUTE_BASE_URN "authenticator-authz-data") - 1;
+        maj_stat = gss_set_name_attribute(&min_stat, gss_target_name, 1, &attr,
+                                          &value);
+        if (maj_stat != GSS_S_COMPLETE)
+            errx(1, "gss_set_name_attribute() failed with: %s",
+                 gssapi_err(maj_stat, min_stat, GSS_KRB5_MECHANISM));
+    }
+
     input_token.length = 0;
     input_token.value = NULL;
 
@@ -457,6 +483,24 @@ loop(gss_OID mechoid,
 	errx(1, "mech mismatch");
     *actual_mech = actual_mech_server;
 
+    if (on_behalf_of_string) {
+        gss_buffer_desc attr, value;
+
+        attr.value =
+            GSS_KRB5_NAME_ATTRIBUTE_BASE_URN "authz-data#580";
+        attr.length =
+            sizeof(GSS_KRB5_NAME_ATTRIBUTE_BASE_URN "authz-data#580") - 1;
+        maj_stat = gss_get_name_attribute(&min_stat, src_name, &attr, NULL,
+                                          NULL, &value, NULL, NULL);
+        if (maj_stat != GSS_S_COMPLETE)
+            errx(1, "gss_get_name_attribute(authz-data#580) failed with %s",
+                 gssapi_err(maj_stat, min_stat, GSS_KRB5_MECHANISM));
+
+        if (value.length != strlen(on_behalf_of_string) ||
+            strncmp(value.value, on_behalf_of_string,
+                    strlen(on_behalf_of_string)) != 0)
+            errx(1, "AD-ON-BEHALF-OF did not match");
+    }
     if (localname_string) {
         gss_buffer_desc lname;
 
@@ -865,6 +909,8 @@ static struct getargs args[] = {
     {"server-time-offset",	0, arg_integer,	&server_time_offset, "time", NULL },
     {"max-loops",	0, arg_integer,	&max_loops, "time", NULL },
     {"token-split",	0, arg_integer, &token_split, "bytes", NULL },
+    {"on-behalf-of",	0, arg_string, &on_behalf_of_string, "principal",
+        "send authenticator authz-data AD-ON-BEHALF-OF" },
     {"version",	0,	arg_flag,	&version_flag, "print version", NULL },
     {"verbose",	'v',	arg_flag,	&verbose_flag, "verbose", NULL },
     {"help",	0,	arg_flag,	&help_flag,  NULL, NULL }

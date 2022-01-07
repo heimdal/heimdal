@@ -359,9 +359,10 @@ hdb_enctype2key(krb5_context context,
 void
 hdb_free_key(Key *key)
 {
-    memset(key->key.keyvalue.data,
-	   0,
-	   key->key.keyvalue.length);
+    memset_s(key->key.keyvalue.data,
+	     key->key.keyvalue.length,
+	     0,
+	     key->key.keyvalue.length);
     free_Key(key);
     free(key);
 }
@@ -407,7 +408,10 @@ hdb_free_entry(krb5_context context, hdb_entry_ex *ent)
     for(i = 0; i < ent->entry.keys.len; i++) {
 	k = &ent->entry.keys.val[i];
 
-	memset (k->key.keyvalue.data, 0, k->key.keyvalue.length);
+	memset_s(k->key.keyvalue.data,
+		 k->key.keyvalue.length,
+		 0,
+		 k->key.keyvalue.length);
     }
     free_HDB_entry(&ent->entry);
 }

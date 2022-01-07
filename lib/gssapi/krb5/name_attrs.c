@@ -176,12 +176,17 @@ static set_name_attr_f set_authenticator_authz_data;
 static get_name_attr_f get_transited;
 static get_name_attr_f get_canonical_name;
 
-#define NB(n) GSS_KRB5_NAME_ATTRIBUTE_BASE_URN n, n, sizeof(n) - 1
-#define NU(n) n, n, sizeof(n) - 1
+#define NB(n) \
+    GSS_KRB5_NAME_ATTRIBUTE_BASE_URN n, n, \
+    sizeof(GSS_KRB5_NAME_ATTRIBUTE_BASE_URN n) - 1, \
+    sizeof(n) - 1
+#define NM(n) \
+    "urn:mspac:" n, n, sizeof("urn:mspac:" n) - 1, sizeof(n) - 1
 
 static struct krb5_name_attrs {
     const char *fullname;
     const char *name;
+    size_t fullnamelen;
     size_t namelen;
     get_name_attr_fp getter;
     set_name_attr_fp setter;
@@ -190,21 +195,31 @@ static struct krb5_name_attrs {
     unsigned int is_krb5_name_attr_urn:1;
 } name_attrs[] = {
     /* XXX We should sort these so we can binary search them */
-    { NB("realm"),           get_realm,      NULL, NULL, 1, 1 },
-    { NB("name-ncomp"),      get_ncomps,     NULL, NULL, 1, 1 },
-    { NB("name-ncomp#0"),    get_ncomps,     NULL, NULL, 1, 1 },
-    { NB("name-ncomp#1"),    get_ncomps,     NULL, NULL, 1, 1 },
-    { NB("name-ncomp#2"),    get_ncomps,     NULL, NULL, 1, 1 },
-    { NB("name-ncomp#3"),    get_ncomps,     NULL, NULL, 1, 1 },
-    { NB("name-ncomp#4"),    get_ncomps,     NULL, NULL, 1, 1 },
-    { NB("name-ncomp#5"),    get_ncomps,     NULL, NULL, 1, 1 },
-    { NB("name-ncomp#6"),    get_ncomps,     NULL, NULL, 1, 1 },
-    { NB("name-ncomp#7"),    get_ncomps,     NULL, NULL, 1, 1 },
-    { NB("name-ncomp#8"),    get_ncomps,     NULL, NULL, 1, 1 },
-    { NB("name-ncomp#9"),    get_ncomps,     NULL, NULL, 1, 1 },
-    { NB("peer-realm"),      get_peer_realm, NULL, NULL, 1, 1 },
-    { NB("ticket-authz-data#pac"), get_pac,  NULL, NULL, 1, 1 },
-    { NU("urn:mspac:"),            get_pac,  NULL, NULL, 1, 0 },
+    { NB("realm"),          get_realm,      NULL, NULL, 1, 1 },
+    { NB("name-ncomp"),     get_ncomps,     NULL, NULL, 1, 1 },
+    { NB("name-ncomp#0"),   get_ncomps,     NULL, NULL, 1, 1 },
+    { NB("name-ncomp#1"),   get_ncomps,     NULL, NULL, 1, 1 },
+    { NB("name-ncomp#2"),   get_ncomps,     NULL, NULL, 1, 1 },
+    { NB("name-ncomp#3"),   get_ncomps,     NULL, NULL, 1, 1 },
+    { NB("name-ncomp#4"),   get_ncomps,     NULL, NULL, 1, 1 },
+    { NB("name-ncomp#5"),   get_ncomps,     NULL, NULL, 1, 1 },
+    { NB("name-ncomp#6"),   get_ncomps,     NULL, NULL, 1, 1 },
+    { NB("name-ncomp#7"),   get_ncomps,     NULL, NULL, 1, 1 },
+    { NB("name-ncomp#8"),   get_ncomps,     NULL, NULL, 1, 1 },
+    { NB("name-ncomp#9"),   get_ncomps,     NULL, NULL, 1, 1 },
+    { NB("peer-realm"),     get_peer_realm, NULL, NULL, 1, 1 },
+    { NB("ticket-authz-data#pac"), get_pac, NULL, NULL, 1, 1 },
+    { NM(""),                   get_pac,    NULL, NULL, 1, 0 },
+    { NM("logon-info"),         get_pac,    NULL, NULL, 1, 0 },
+    { NM("credentials-info"),   get_pac,    NULL, NULL, 1, 0 },
+    { NM("server-checksum"),    get_pac,    NULL, NULL, 1, 0 },
+    { NM("privsvr-checksum"),   get_pac,    NULL, NULL, 1, 0 },
+    { NM("client-info"),        get_pac,    NULL, NULL, 1, 0 },
+    { NM("delegation-info"),    get_pac,    NULL, NULL, 1, 0 },
+    { NM("upn-dns-info"),       get_pac,    NULL, NULL, 1, 0 },
+    { NM("ticket-checksum"),    get_pac,    NULL, NULL, 1, 0 },
+    { NM("attributes-info"),    get_pac,    NULL, NULL, 1, 0 },
+    { NM("requestor-sid"),      get_pac,    NULL, NULL, 1, 0 },
     { NB("ticket-authz-data#kdc-issued"),
          get_ticket_authz_data, NULL, NULL, 1, 1 },
     { NB("ticket-authz-data"),
@@ -271,7 +286,7 @@ _gsskrb5_get_name_attribute(OM_uint32 *minor_status,
             if (!attr_eq(&suffix, name_attrs[i].name, name_attrs[i].namelen, 0))
                 continue;
         } else if (!name_attrs[i].is_krb5_name_attr_urn && !is_krb5_name_attr_urn) {
-            if (!attr_eq(&attr, name_attrs[i].name, name_attrs[i].namelen, 0))
+            if (!attr_eq(&attr, name_attrs[i].fullname, name_attrs[i].fullnamelen, 0))
                 continue;
         } else
             continue;
@@ -367,7 +382,7 @@ _gsskrb5_delete_name_attribute(OM_uint32 *minor_status,
             if (!attr_eq(&suffix, name_attrs[i].name, name_attrs[i].namelen, 0))
                 continue;
         } else if (!name_attrs[i].is_krb5_name_attr_urn && !is_krb5_name_attr_urn) {
-            if (!attr_eq(&attr, name_attrs[i].name, name_attrs[i].namelen, 0))
+            if (!attr_eq(&attr, name_attrs[i].fullname, name_attrs[i].fullnamelen, 0))
                 continue;
         } else
             continue;
@@ -388,7 +403,7 @@ _gsskrb5_inquire_name(OM_uint32 *minor_status,
     gss_buffer_desc prefix, attr, frag, a;
     OM_uint32 major;
     size_t i;
-    int is_urn;
+    int authenticated, is_urn;
 
     *minor_status = 0;
     if (name_is_MN)
@@ -404,11 +419,11 @@ _gsskrb5_inquire_name(OM_uint32 *minor_status,
         if (!name_attrs[i].indicate)
             continue;
         a.value = (void *)(uintptr_t)name_attrs[i].fullname;
-        a.length = strlen(name_attrs[i].fullname);
+        a.length = name_attrs[i].fullnamelen;
         split_attr(&a, &prefix, &attr, &frag, &is_urn);
         major = name_attrs[i].getter(minor_status,
                                      (const CompositePrincipal *)name,
-                                     &prefix, &attr, &frag, NULL,
+                                     &prefix, &attr, &frag, &authenticated,
                                      NULL, NULL, NULL, NULL);
         if (major == GSS_S_UNAVAILABLE)
             continue;

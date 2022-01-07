@@ -131,7 +131,7 @@ kadm5_s_delete_principal(void *server_handle, krb5_principal princ)
     (void) delete_principal_hook(context, KADM5_HOOK_STAGE_POSTCOMMIT, ret, princ);
 
  out3:
-    hdb_free_entry(context->context, &ent);
+    hdb_free_entry(context->context, context->db, &ent);
  out2:
     (void) kadm5_log_end(context);
  out:

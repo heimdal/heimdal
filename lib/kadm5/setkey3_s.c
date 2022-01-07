@@ -212,7 +212,7 @@ kadm5_s_setkey_principal_3(void *server_handle,
 				 princ, keepold, n_ks_tuple, ks_tuple,
 				 n_keys, keyblocks);
 
-    hdb_free_entry(context->context, &ent);
+    hdb_free_entry(context->context, context->db, &ent);
     (void) kadm5_log_end(context);
     if (!context->keep_open)
 	context->db->hdb_close(context->context, context->db);

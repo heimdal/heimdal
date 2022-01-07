@@ -209,7 +209,7 @@ mit_prop_dump(void *arg, const char *file)
             continue;
         }
 	ret = v5_prop(pd->context, NULL, &ent, arg);
-        hdb_free_entry(pd->context, &ent);
+        hdb_free_entry(pd->context, NULL, &ent); /* XXX */
         if (ret) break;
     }
 

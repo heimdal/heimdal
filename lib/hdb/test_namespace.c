@@ -346,8 +346,6 @@ make_namespace(krb5_context context, HDB *db, const char *name)
 
     /* Setup the HDB entry */
     memset(&e, 0, sizeof(e));
-    e.ctx = 0;
-    e.free_entry = 0;
     e.entry.created_by.time = krs[0].epoch;
     e.entry.valid_start = e.entry.valid_end = e.entry.pw_end = 0;
     e.entry.generation = 0;
@@ -424,7 +422,7 @@ make_namespace(krb5_context context, HDB *db, const char *name)
     if (ret)
         krb5_err(context, 1, ret, "failed to setup a namespace principal");
     free_Key(&k);
-    hdb_free_entry(context, &e);
+    hdb_free_entry(context, db, &e);
 }
 
 #define WK_PREFIX "WELLKNOWN/" HDB_WK_NAMESPACE "/"
@@ -936,7 +934,7 @@ main(int argc, char **argv)
 
     /* Cleanup */
     for (i = 0; ret == 0 && i < sizeof(e) / sizeof(e[0]); i++)
-        hdb_free_entry(context, &e[i]);
+        hdb_free_entry(context, db, &e[i]);
     db->hdb_destroy(context, db);
     krb5_free_context(context);
     return 0;

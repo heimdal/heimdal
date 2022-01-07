@@ -161,12 +161,12 @@ DB_seq(krb5_context context, HDB *db,
     if (db->hdb_master_key_set && (flags & HDB_F_DECRYPT)) {
 	code = hdb_unseal_keys (context, db, &entry->entry);
 	if (code)
-	    hdb_free_entry (context, entry);
+	    hdb_free_entry (context, db, entry);
     }
     if (entry->entry.principal == NULL) {
 	entry->entry.principal = malloc(sizeof(*entry->entry.principal));
 	if (entry->entry.principal == NULL) {
-	    hdb_free_entry (context, entry);
+	    hdb_free_entry (context, db, entry);
 	    krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
 	    return ENOMEM;
 	} else {

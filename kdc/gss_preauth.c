@@ -682,6 +682,7 @@ _kdc_gss_check_client(astgs_request_t r,
     krb5_principal initiator_princ = NULL;
     hdb_entry_ex *initiator = NULL;
     krb5_boolean authorized = FALSE;
+    HDB *clientdb = r->clientdb;
 
     OM_uint32 minor;
     gss_buffer_desc display_name = GSS_C_EMPTY_BUFFER;
@@ -742,7 +743,7 @@ _kdc_gss_check_client(astgs_request_t r,
     if (krb5_principal_is_federated(r->context, r->client->entry.principal)) {
         initiator->entry.flags.force_canonicalize = 1;
 
-        _kdc_free_ent(r->context, r->client);
+        _kdc_free_ent(r->context, clientdb, r->client);
         r->client = initiator;
         initiator = NULL;
     } else if (!krb5_principal_compare(r->context,
@@ -760,7 +761,7 @@ _kdc_gss_check_client(astgs_request_t r,
 out:
     krb5_free_principal(r->context, initiator_princ);
     if (initiator)
-        _kdc_free_ent(r->context, initiator);
+        _kdc_free_ent(r->context, r->clientdb, initiator);
     gss_release_buffer(&minor, &display_name);
 
     return ret;

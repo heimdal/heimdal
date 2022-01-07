@@ -37,7 +37,7 @@ intcflags=-DASN1_LIB
 
 $(OBJ)\asn1_hdb_asn1.c $(OBJ)\hdb_asn1.h $(OBJ)\hdb_asn1-priv.h: $(BINDIR)\asn1_compile.exe hdb.asn1
 	cd $(OBJ)
-	$(BINDIR)\asn1_compile.exe --sequence=HDB-extensions --sequence=HDB-Ext-KeyRotation --sequence=HDB-Ext-KeySet --sequence=Keys --one-code-file $(SRCDIR)\hdb.asn1 hdb_asn1
+	$(BINDIR)\asn1_compile.exe --one-code-file --option-file=$(SRCDIR)\hdb.opt $(SRCDIR)\hdb.asn1 hdb_asn1
 	cd $(SRCDIR)
 
 !ifdef OPENLDAP_MODULE

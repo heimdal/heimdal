@@ -148,10 +148,12 @@ typedef struct krb5_kdc_configuration {
     /* server principal */					\
     krb5_principal server_princ;				\
     hdb_entry_ex *server;					\
+    HDB *serverdb;						\
 								\
     /* presented ticket in TGS-REQ (unused by AS) */		\
     krb5_principal *krbtgt_princ;				\
     hdb_entry_ex *krbtgt;					\
+    HDB *krbtgtdb;						\
     krb5_ticket *ticket;					\
 								\
     krb5_keyblock reply_key;					\

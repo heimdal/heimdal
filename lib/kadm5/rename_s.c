@@ -170,7 +170,7 @@ kadm5_s_rename_principal(void *server_handle,
 
  out3:
     ent.entry.principal = oldname; /* Unborrow target */
-    hdb_free_entry(context->context, &ent);
+    hdb_free_entry(context->context, context->db, &ent);
 
  out2:
     (void) kadm5_log_end(context);

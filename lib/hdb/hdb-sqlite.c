@@ -548,7 +548,7 @@ hdb_sqlite_fetch_kvno(krb5_context context, HDB *db, krb5_const_principal princi
     if (db->hdb_master_key_set && (flags & HDB_F_DECRYPT)) {
         ret = hdb_unseal_keys(context, db, &entry->entry);
         if(ret) {
-           hdb_free_entry(context, entry);
+           hdb_free_entry(context, db, entry);
            goto out;
         }
     }

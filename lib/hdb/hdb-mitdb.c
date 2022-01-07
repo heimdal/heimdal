@@ -802,7 +802,7 @@ mdb_seq(krb5_context context, HDB *db,
     if (db->hdb_master_key_set && (flags & HDB_F_DECRYPT)) {
 	code = hdb_unseal_keys (context, db, &entry->entry);
 	if (code)
-	    hdb_free_entry (context, entry);
+	    hdb_free_entry (context, db, entry);
     }
 
     return code;
@@ -961,7 +961,7 @@ mdb_fetch_kvno(krb5_context context, HDB *db, krb5_const_principal principal,
     if (db->hdb_master_key_set && (flags & HDB_F_DECRYPT)) {
 	ret = hdb_unseal_keys (context, db, &entry->entry);
 	if (ret) {
-	    hdb_free_entry(context, entry);
+	    hdb_free_entry(context, db, entry);
             return ret;
         }
     }

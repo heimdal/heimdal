@@ -404,7 +404,7 @@ kadm5_s_get_principal(void *server_handle,
  out:
     if (ret)
         kadm5_free_principal_ent(context, out);
-    hdb_free_entry(context->context, &ent);
+    hdb_free_entry(context->context, context->db, &ent);
 
     return _kadm5_error_code(ret);
 }

@@ -141,7 +141,10 @@ show_pac_client_info(gss_name_t n)
     gss_buffer_desc v = GSS_C_EMPTY_BUFFER;
     gss_buffer_desc a;
     OM_uint32 maj, min;
-    int authenticated, complete, more;
+    int authenticated, complete, more, name_is_MN, found;
+    gss_OID MN_mech;
+    gss_buffer_set_t attrs = GSS_C_NO_BUFFER_SET;
+    size_t i;
 
     krb5_error_code ret;
     krb5_storage *sp = NULL;
@@ -149,8 +152,30 @@ show_pac_client_info(gss_name_t n)
     uint64_t tmp;
     char *logon_string = NULL;
 
+    maj = gss_inquire_name(&min, n, &name_is_MN, &MN_mech, &attrs);
+    if (maj != GSS_S_COMPLETE)
+	errx(1, "gss_inquire_name: %s",
+	     gssapi_err(maj, min, GSS_KRB5_MECHANISM));
+
     a.value = "urn:mspac:client-info";
-    a.length = strlen((char *)a.value);
+    a.length = sizeof("urn:mspac:client-info") - 1;
+
+    for (found = 0, i = 0; i < attrs->count; i++) {
+	gss_buffer_t attr = &attrs->elements[i];
+
+	if (attr->length == a.length &&
+	    memcmp(attr->value, a.value, a.length) == 0) {
+	    found++;
+	    break;
+	}
+    }
+
+    gss_release_buffer_set(&min, &attrs);
+
+    if (!found)
+	errx(1, "gss_inquire_name: attribute %.*s not enumerated",
+	     (int)a.length, (char *)a.value);
+
     more = 0;
     maj = gss_get_name_attribute(&min, n, &a, &authenticated, &complete, &v,
                                  &dv, &more);

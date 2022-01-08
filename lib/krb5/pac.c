@@ -32,6 +32,8 @@
  */
 
 #include "krb5_locl.h"
+
+#include <heimbasepriv.h>
 #include <wind.h>
 
 struct PAC_INFO_BUFFER {
@@ -98,6 +100,38 @@ struct krb5_pac_data {
 
 static const char zeros[PAC_ALIGNMENT] = { 0 };
 
+static void
+pac_dealloc(void *ctx)
+{
+    krb5_pac pac = (krb5_pac)ctx;
+
+    krb5_data_free(&pac->data);
+    krb5_data_free(&pac->ticket_sign_data);
+
+    if (pac->upn_princ) {
+	free_Principal(pac->upn_princ);
+	free(pac->upn_princ);
+    }
+    if (pac->canon_princ) {
+	free_Principal(pac->canon_princ);
+	free(pac->canon_princ);
+    }
+    krb5_data_free(&pac->sid);
+
+    free(pac->pac);
+}
+
+struct heim_type_data pac_object = {
+    HEIM_TID_PAC,
+    "heim-pac",
+    NULL,
+    pac_dealloc,
+    NULL,
+    NULL,
+    NULL,
+    NULL
+};
+
 /*
  * HMAC-MD5 checksum over any key (needed for the PAC routines)
  */
@@ -154,7 +188,7 @@ krb5_pac_parse(krb5_context context, const void *ptr, size_t len,
     krb5_storage *sp = NULL;
     uint32_t i, tmp, tmp2, header_end;
 
-    p = calloc(1, sizeof(*p));
+    p = _heim_alloc_object(&pac_object, sizeof(*p));
     if (p == NULL) {
 	ret = krb5_enomem(context);
 	goto out;
@@ -304,7 +338,7 @@ out:
     if (p) {
 	if (p->pac)
 	    free(p->pac);
-	free(p);
+	krb5_pac_free(context, p);
     }
     *pac = NULL;
 
@@ -317,21 +351,21 @@ krb5_pac_init(krb5_context context, krb5_pac *pac)
     krb5_error_code ret;
     krb5_pac p;
 
-    p = calloc(1, sizeof(*p));
+    p = _heim_alloc_object(&pac_object, sizeof(*p));
     if (p == NULL) {
 	return krb5_enomem(context);
     }
 
     p->pac = calloc(1, sizeof(*p->pac));
     if (p->pac == NULL) {
-	free(p);
+	krb5_pac_free(context, p);
 	return krb5_enomem(context);
     }
 
     ret = krb5_data_alloc(&p->data, PACTYPE_SIZE);
     if (ret) {
 	free (p->pac);
-	free(p);
+	krb5_pac_free(context, p);
 	return krb5_enomem(context);
     }
 
@@ -519,17 +553,7 @@ krb5_pac_get_types(krb5_context context,
 KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 krb5_pac_free(krb5_context context, krb5_pac pac)
 {
-    if (pac == NULL)
-	return;
-    krb5_data_free(&pac->data);
-    krb5_data_free(&pac->ticket_sign_data);
-
-    krb5_free_principal(context, pac->upn_princ);
-    krb5_free_principal(context, pac->canon_princ);
-    krb5_data_free(&pac->sid);
-
-    free(pac->pac);
-    free(pac);
+    heim_release(pac);
 }
 
 /*
@@ -1997,42 +2021,4 @@ _krb5_kdc_pac_sign_ticket(krb5_context context,
         ret = _kdc_tkt_insert_pac(context, tkt, &rspac);
     krb5_data_free(&rspac);
     return ret;
-}
-
-/*
- * Helper function for krb5_copy_principal(), because the krb5_pac
- * in nameattrs lacks a copy constructor (not being an ASN.1 type)
- */
-
-KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
-_krb5_pac_copy(krb5_context context, krb5_pac in, krb5_pac *out)
-{
-    krb5_error_code ret;
-    krb5_pac p;
-
-    *out = NULL;
-
-    ret = krb5_pac_parse(context, in->data.data, in->data.length, &p);
-    if (ret == 0 && in->ticket_sign_data.data)
-	ret = krb5_data_copy(&p->ticket_sign_data, in->ticket_sign_data.data,
-			     in->ticket_sign_data.length);
-
-    if (ret == 0 && in->upn_princ)
-	ret = krb5_copy_principal(context, in->upn_princ, &p->upn_princ);
-    p->upn_flags = in->upn_flags;
-    if (ret == 0 && in->canon_princ)
-	ret = krb5_copy_principal(context, in->canon_princ, &p->canon_princ);
-    if (ret == 0 && in->sid.data)
-	ret = krb5_data_copy(&p->sid, in->sid.data, in->sid.length);
-
-    p->pac_attributes = in->pac_attributes;
-
-    if (ret) {
-	krb5_pac_free(context, p);
-	return ret;
-    }
-
-    *out = p;
-
-    return 0;
 }

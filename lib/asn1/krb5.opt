@@ -5,5 +5,5 @@
 --sequence=ETYPE-INFO
 --sequence=ETYPE-INFO2
 --preserve-binary=KDC-REQ-BODY
---decorate=PrincipalNameAttrs:void:pac?:::
+--decorate=PrincipalNameAttrs:heim_object_t:pac
 --decorate=Principal:PrincipalNameAttrs:nameattrs?

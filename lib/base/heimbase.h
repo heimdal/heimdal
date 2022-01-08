@@ -168,7 +168,7 @@ typedef long heim_base_once_t; /* XXX arch dependant */
 #endif
 
 
-void *	heim_retain(heim_object_t);
+heim_object_t	heim_retain(heim_object_t);
 void	heim_release(heim_object_t);
 
 void	heim_show(heim_object_t);

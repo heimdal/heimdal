@@ -83,8 +83,8 @@ struct heim_auto_release {
  * @return the same object as passed in
  */
 
-void *
-heim_retain(void *ptr)
+heim_object_t
+heim_retain(heim_object_t ptr)
 {
     struct heim_base *p = PTR2BASE(ptr);
 

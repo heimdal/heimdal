@@ -867,6 +867,8 @@ pa_enc_ts_validate(astgs_request_t r, const PA_DATA *pa)
 	_kdc_r_log(r, 2, "Failed to decrypt PA-DATA -- %s "
 		   "(enctype %s) error %s",
 		   r->cname, str ? str : "unknown enctype", msg);
+	krb5_xfree(str);
+	krb5_free_error_message(context, msg);
 	_kdc_audit_setkv_number((kdc_request_t)r, HDB_REQUEST_KV_PA_ETYPE,
 				pa_key->key.keytype);
 	_kdc_audit_setkv_number((kdc_request_t)r, HDB_REQUEST_KV_AUTH_EVENT,
@@ -930,6 +932,7 @@ pa_enc_ts_validate(astgs_request_t r, const PA_DATA *pa)
 	str = NULL;
     _kdc_r_log(r, 4, "ENC-TS Pre-authentication succeeded -- %s using %s",
 	       r->cname, str ? str : "unknown enctype");
+    krb5_xfree(str);
     _kdc_audit_setkv_number((kdc_request_t)r, HDB_REQUEST_KV_PA_ETYPE,
 			    pa_key->key.keytype);
     _kdc_audit_setkv_number((kdc_request_t)r, HDB_REQUEST_KV_AUTH_EVENT,

@@ -259,7 +259,7 @@ CLEANFILES = \
 	x690sample_template_asn1_files x690sample_template_asn1* \
 	test_asn1_files test_asn1* \
 	test_template_asn1_files test_template_asn1* \
-	asn1_*.c *_asn1.json *_asn1_syms.c *_asn1_oids.c
+	asn1_*_asn1.c *_asn1.json *_asn1_syms.c *_asn1_oids.c
 
 dist_include_HEADERS = der.h heim_asn1.h
 dist_include_HEADERS += $(srcdir)/der-protos.h $(srcdir)/der-private.h

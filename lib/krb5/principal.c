@@ -102,13 +102,10 @@ KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 krb5_free_principal(krb5_context context,
 		    krb5_principal p)
 {
-    if (p == NULL)
-	return;
-
-    if (p->nameattrs)
-	krb5_pac_free(context, p->nameattrs->pac);
-    free_Principal(p);
-    free(p);
+    if(p){
+	free_Principal(p);
+	free(p);
+    }
 }
 
 /**
@@ -929,24 +926,11 @@ krb5_copy_principal(krb5_context context,
 		    krb5_principal *outprinc)
 {
     krb5_principal p = malloc(sizeof(*p));
-    krb5_error_code ret;
-
     if (p == NULL)
 	return krb5_enomem(context);
     if(copy_Principal(inprinc, p)) {
 	free(p);
 	return krb5_enomem(context);
-    }
-    if (inprinc->nameattrs && inprinc->nameattrs->pac) {
-	krb5_pac pac;
-
-	ret = _krb5_pac_copy(context, inprinc->nameattrs->pac, &pac);
-	if (ret) {
-	    krb5_free_principal(context, p);
-	    return ret;
-	}
-	heim_assert(p->nameattrs, "nameattrs uninitialized");
-	p->nameattrs->pac = pac;
     }
     *outprinc = p;
     return 0;

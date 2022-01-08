@@ -478,6 +478,10 @@ gsskrb5_acceptor_start(OM_uint32 * minor_status,
 	     * lets only send the error token on clock skew, that
 	     * limit when send error token for non-MUTUAL.
 	     */
+            krb5_auth_con_free(context, ctx->auth_context);
+            krb5_auth_con_free(context, ctx->deleg_auth_context);
+            ctx->deleg_auth_context = NULL;
+            ctx->auth_context = NULL;
 	    return send_error_token(minor_status, context, kret,
 				    server, &indata, output_token);
 	} else if (kret) {

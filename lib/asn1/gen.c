@@ -1641,6 +1641,7 @@ declare_type(const Symbol *s, Type *t, int typedefp)
 	getnewbasename(&newbasename, TRUE, s->gen_name, s->gen_name);
 	fprintf(headerfile, "struct %s %s;\n", newbasename, s->gen_name);
         if (decorate_type(newbasename, &deco) && deco.header_name
+	    && !deco.void_star
             && deco.header_name[0]) {
             fprintf(headerfile, "#include %s\n", deco.header_name);
             free(deco.field_type);

@@ -1528,6 +1528,8 @@ generate_template(const Symbol *s)
     }
 
     if (decorate_type(s->gen_name, &deco) && deco.ext) {
+	if (deco.void_star && deco.header_name[0])
+	    fprintf(f, "#include %s\n", deco.header_name);
         fprintf(f,
                 "static const struct asn1_type_func asn1_extern_%s_%s = {\n"
                 "\t(asn1_type_encode)0,\n"

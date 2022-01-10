@@ -1355,7 +1355,7 @@ tgs_build_reply(astgs_request_t priv,
     KDC_REQ_BODY *b = &priv->req.req_body;
     const char *from = priv->from;
     krb5_error_code ret, ret2;
-    krb5_principal cp = NULL, sp = NULL, rsp = NULL;
+    krb5_principal rsp = NULL;
     krb5_principal krbtgt_out_principal = NULL;
     krb5_principal user2user_princ = NULL;
     char *spn = NULL, *cpn = NULL, *krbtgt_out_n = NULL;
@@ -1413,13 +1413,14 @@ tgs_build_reply(astgs_request_t priv,
 	goto out;
     }
 
-    _krb5_principalname2krb5_principal(context, &sp, *s, r);
-    ret = krb5_unparse_name(context, sp, &priv->sname);
+    _krb5_principalname2krb5_principal(context, &priv->server_princ, *s, r);
+    ret = krb5_unparse_name(context, priv->server_princ, &priv->sname);
     if (ret)
 	goto out;
     spn = priv->sname;
-    _krb5_principalname2krb5_principal(context, &cp, tgt->cname, tgt->crealm);
-    ret = krb5_unparse_name(context, cp, &priv->cname);
+    _krb5_principalname2krb5_principal(context, &priv->client_princ,
+				       tgt->cname, tgt->crealm);
+    ret = krb5_unparse_name(context, priv->client_princ, &priv->cname);
     if (ret)
 	goto out;
     cpn = priv->cname;
@@ -1440,11 +1441,10 @@ tgs_build_reply(astgs_request_t priv,
 
 server_lookup:
     priv->server = NULL;
-    priv->server_princ = sp;
     if (server)
         _kdc_free_ent(context, server);
     server = NULL;
-    ret = _kdc_db_fetch(context, config, sp,
+    ret = _kdc_db_fetch(context, config, priv->server_princ,
                         HDB_F_GET_SERVER | HDB_F_DELAY_NEW_KEYS | flags,
 			NULL, &serverdb, &server);
     priv->server = server;
@@ -1464,15 +1464,15 @@ server_lookup:
 		"Returning a referral to realm %s for "
 		"server %s.",
 		ref_realm, spn);
-	krb5_free_principal(context, sp);
-	sp = NULL;
-	ret = krb5_make_principal(context, &sp, r, KRB5_TGS_NAME,
+	krb5_free_principal(context, priv->server_princ);
+	priv->server_princ = NULL;
+	ret = krb5_make_principal(context, &priv->server_princ, r, KRB5_TGS_NAME,
 				  ref_realm, NULL);
 	if (ret)
 	    goto out;
 	free(priv->sname);
         priv->sname = NULL;
-	ret = krb5_unparse_name(context, sp, &priv->sname);
+	ret = krb5_unparse_name(context, priv->server_princ, &priv->sname);
 	if (ret)
 	    goto out;
 	spn = priv->sname;
@@ -1486,22 +1486,15 @@ server_lookup:
 	priv->ret = ret; /* advise policy plugin of failure reason */
 	ret2 = _kdc_referral_policy(priv);
 	if (ret2 == 0) {
-	    heim_assert(priv->server_princ != sp,
-			"Referral policy plugin must update server principal");
-
-	    krb5_free_principal(context, sp);
-	    sp = priv->server_princ;
-
 	    krb5_xfree(priv->sname);
 	    priv->sname = NULL;
-	    ret = krb5_unparse_name(context, sp, &priv->sname);
+	    ret = krb5_unparse_name(context, priv->server_princ, &priv->sname);
 	    if (ret)
 		goto out;
-	    spn = priv->sname;
 	    goto server_lookup;
 	} else if (ret2 != KRB5_PLUGIN_NO_HANDLE) {
 	    ret = ret2;
-	} else if ((req_rlm = get_krbtgt_realm(&sp->name)) != NULL) {
+	} else if ((req_rlm = get_krbtgt_realm(&priv->server_princ->name)) != NULL) {
             if (capath == NULL) {
                 /* With referalls, hierarchical capaths are always enabled */
                 ret2 = _krb5_find_capath(context, tgt->crealm, our_realm,
@@ -1526,31 +1519,31 @@ server_lookup:
                     goto out;
                 }
 
-                krb5_free_principal(context, sp);
-                sp = NULL;
-                krb5_make_principal(context, &sp, r,
+                krb5_free_principal(context, priv->server_princ);
+                priv->server_princ = NULL;
+                krb5_make_principal(context, &priv->server_princ, r,
                                     KRB5_TGS_NAME, ref_realm, NULL);
                 free(priv->sname);
                 priv->sname = NULL;
-                ret = krb5_unparse_name(context, sp, &priv->sname);
+                ret = krb5_unparse_name(context, priv->server_princ, &priv->sname);
                 if (ret)
                     goto out;
                 spn = priv->sname;
                 goto server_lookup;
             }
-	} else if (need_referral(context, config, &b->kdc_options, sp, &realms)) {
-	    if (strcmp(realms[0], sp->realm) != 0) {
+	} else if (need_referral(context, config, &b->kdc_options, priv->server_princ, &realms)) {
+	    if (strcmp(realms[0], priv->server_princ->realm) != 0) {
 		kdc_log(context, config, 4,
 			"Returning a referral to realm %s for "
 			"server %s that was not found",
 			realms[0], spn);
-		krb5_free_principal(context, sp);
-                sp = NULL;
-		krb5_make_principal(context, &sp, r, KRB5_TGS_NAME,
+		krb5_free_principal(context, priv->server_princ);
+                priv->server_princ = NULL;
+		krb5_make_principal(context, &priv->server_princ, r, KRB5_TGS_NAME,
 				    realms[0], NULL);
 		free(priv->sname);
                 priv->sname = NULL;
-		ret = krb5_unparse_name(context, sp, &priv->sname);
+		ret = krb5_unparse_name(context, priv->server_princ, &priv->sname);
 		if (ret) {
 		    krb5_free_host_realm(context, realms);
 		    goto out;
@@ -1586,9 +1579,7 @@ server_lookup:
     if (server->entry.flags.force_canonicalize)
 	rsp = server->entry.principal;
     else
-	rsp = sp;
-
-    priv->server_princ = sp;
+	rsp = priv->server_princ;
 
     /*
      * Now refetch the primary krbtgt, and get the current kvno (the
@@ -1816,7 +1807,7 @@ server_lookup:
 	} else {
 	    Key *skey;
 
-	    ret = _kdc_find_etype(priv, krb5_principal_is_krbtgt(context, sp)
+	    ret = _kdc_find_etype(priv, krb5_principal_is_krbtgt(context, priv->server_princ)
 							     ? KFE_IS_TGS : 0,
 				  b->etype.val, b->etype.len, &etype, NULL,
 				  NULL);
@@ -1894,15 +1885,15 @@ server_lookup:
     if (_kdc_synthetic_princ_used_p(context, priv->ticket))
 	flags |= HDB_F_SYNTHETIC_OK;
 
-    ret = _kdc_db_fetch_client(context, config, flags, cp, cpn, our_realm,
-			       &clientdb, &client);
+    ret = _kdc_db_fetch_client(context, config, flags, priv->client_princ,
+			       cpn, our_realm, &clientdb, &client);
     if (ret)
 	goto out;
     flags &= ~HDB_F_SYNTHETIC_OK;
     priv->client = client;
     priv->clientdb = clientdb;
 
-    ret = _kdc_check_pac(context, config, cp, NULL,
+    ret = _kdc_check_pac(context, config, priv->client_princ, NULL,
 			 priv->client, priv->server,
 			 priv->krbtgt, priv->krbtgt,
 			 &priv->ticket_key->key, &priv->ticket_key->key, tgt,
@@ -1921,9 +1912,6 @@ server_lookup:
     /*
      * Process request
      */
-
-    /* by default the tgt principal matches the client principal */
-    priv->client_princ = cp;
 
     /*
      * Services for User: protocol transition and constrained delegation
@@ -2048,7 +2036,7 @@ server_lookup:
 			 server,
 			 rsp,
 			 client,
-			 cp,
+			 priv->client_princ,
                          tgt_realm,
 			 rodc_id,
 			 add_ticket_sig);
@@ -2065,9 +2053,6 @@ out:
 	_kdc_free_ent(context, user2user_krbtgt);
 
     krb5_free_principal(context, user2user_princ);
-    if (priv->client_princ != cp)
-	krb5_free_principal(context, cp); /* else caller frees */
-    krb5_free_principal(context, sp);
     krb5_free_principal(context, krbtgt_out_principal);
     free(ref_realm);
 
@@ -2231,7 +2216,7 @@ out:
     krb5_free_principal(r->context, r->client_princ);
     if (r->server)
 	_kdc_free_ent(r->context, r->server);
-
+    krb5_free_principal(r->context, r->server_princ);
     _kdc_free_fast_state(&r->fast);
     krb5_pac_free(r->context, r->pac);
 

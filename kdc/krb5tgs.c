@@ -2167,8 +2167,8 @@ out:
 				 r->armor_crypto,
 				 &req->req_body,
 				 r->ret,
-				 r->ticket != NULL ? r->ticket->client : NULL,
-				 r->ticket != NULL ? r->ticket->server : NULL,
+				 r->client_princ,
+				 r->server_princ,
 				 csec, cusec,
 				 data);
 	free_METHOD_DATA(&error_method);

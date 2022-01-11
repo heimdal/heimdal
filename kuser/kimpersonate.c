@@ -82,9 +82,7 @@ encode_ticket(krb5_context context,
     et.flags = cred->flags.b;
     et.key = cred->session;
     et.crealm = cred->client->realm;
-    ret = copy_PrincipalName(&cred->client->name, &et.cname);
-    if (ret)
-	krb5_err(context, 1, ret, "copy_PrincipalName");
+    et.cname = cred->client->name;
     {
 	krb5_data empty_string;
 
@@ -129,16 +127,11 @@ encode_ticket(krb5_context context,
 
     ticket.tkt_vno = 5;
     ticket.realm = cred->server->realm;
-    ret = copy_PrincipalName(&cred->server->name, &ticket.sname);
-    if (ret)
-	krb5_err(context, 1, ret, "copy_PrincipalName");
-
-    ASN1_MALLOC_ENCODE(Ticket, buf, len, &ticket, &size, ret);
+    ticket.sname = cred->server->name;
+    ASN1_MALLOC_ENCODE(Ticket, cred->ticket.data, cred->ticket.length, &ticket, &size, ret);
+    free_EncryptedData(&ticket.enc_part);
     if(ret)
 	krb5_err(context, 1, ret, "encode_Ticket");
-
-    krb5_data_copy(&cred->ticket, buf, len);
-    free(buf);
 }
 
 /*
@@ -395,6 +388,7 @@ main(int argc, char **argv)
 	create_krb5_tickets(context, kt);
 
     krb5_kt_close(context, kt);
+    krb5_free_context(context);
 
     return 0;
 }

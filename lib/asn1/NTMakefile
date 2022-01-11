@@ -73,7 +73,7 @@ $(OBJ)\asn1_err.c $(OBJ)\asn1_err.h: asn1_err.et
 	cd $(SRCDIR)
 
 $(BINDIR)\asn1_print.exe: $(OBJ)\asn1_print.obj $(LIBHEIMDAL)
-	$(EXECONLINK) $(LIBVERS) $(LIBROKEN) $(LIBCOMERR)
+	$(EXECONLINK) $(LIBVERS) $(LIBROKEN) $(LIBCOMERR) $(LIBHEIMBASE)
 	$(EXEPREP)
 
 $(BINDIR)\asn1_gen.exe: $(OBJ)\asn1_gen.obj $(LIBHEIMDAL)
@@ -523,26 +523,26 @@ clean::
 	-$(RM) $(TEST_BINARIES:.exe=*)
 
 $(OBJ)\check-ber.exe: $(OBJ)\check-ber.obj \
-		$(LIBHEIMDAL) $(LIBROKEN)
+		$(LIBHEIMDAL) $(LIBROKEN) $(LIBHEIMBASE)
 	$(EXECONLINK)
 	$(EXEPREP_NODIST)
 
 $(OBJ)\check-der.exe: $(OBJ)\check-der.obj $(OBJ)\check-common.obj \
-		$(LIBHEIMDAL) $(LIBROKEN)
+		$(LIBHEIMDAL) $(LIBROKEN) $(LIBHEIMBASE)
 	$(EXECONLINK)
 	$(EXEPREP_NODIST)
 
 $(OBJ)\check-gen-template.exe: $(OBJ)\check-gen.obj $(OBJ)\check-common.obj \
-		$(LIBHEIMDAL) $(LIBROKEN) $(OBJ)\asn1_test_template_asn1.obj
+		$(LIBHEIMDAL) $(LIBROKEN) $(LIBHEIMBASE) $(OBJ)\asn1_test_template_asn1.obj
 	$(EXECONLINK)
 	$(EXEPREP_NODIST)
 
 $(OBJ)\check-timegm.exe: $(OBJ)\check-timegm.obj \
-		$(LIBHEIMDAL) $(LIBROKEN)
+		$(LIBHEIMDAL) $(LIBROKEN) $(LIBHEIMBASE)
 	$(EXECONLINK)
 	$(EXEPREP_NODIST)
 
 $(OBJ)\check-template.exe: $(OBJ)\check-template.obj $(OBJ)\check-common.obj \
-		$(LIBHEIMDAL) $(LIBROKEN) $(OBJ)\asn1_test_asn1.obj
+		$(LIBHEIMDAL) $(LIBROKEN) $(LIBHEIMBASE) $(OBJ)\asn1_test_asn1.obj
 	$(EXECONLINK)
 	$(EXEPREP_NODIST)

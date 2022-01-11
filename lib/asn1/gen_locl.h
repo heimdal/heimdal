@@ -152,11 +152,15 @@ struct decoration {
     char *free_function_name;   /* destructor function name */
     char *header_name;          /* header name */
     unsigned int decorated:1;
+    unsigned int first:1;       /* optional */
     unsigned int opt:1;         /* optional */
     unsigned int ext:1;         /* external */
+    unsigned int ptr:1;         /* external, pointer */
     unsigned int void_star:1;   /* external, void * */
+    unsigned int struct_star:1; /* external, struct foo * */
+    unsigned int heim_object:1; /* external, heim_object_t */
 };
-int decorate_type(const char *, struct decoration *);
+int decorate_type(const char *, struct decoration *, ssize_t *);
 
 void generate_header_of_codefile(const char *);
 void close_codefile(void);

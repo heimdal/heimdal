@@ -150,6 +150,7 @@
 #define A1_FLAG_OPTIONAL	(0x01000000)
 #define A1_FLAG_IMPLICIT	(0x02000000)
 #define A1_FLAG_DEFAULT		(0x04000000)
+#define A1_FLAG_HEIM_OBJ	(0x08000000)
 
 #define A1_TAG_T(CLASS,TYPE,TAG)	((A1_OP_TAG) | (((CLASS) << 22) | ((TYPE) << 21) | (TAG)))
 #define A1_TAG_CLASS(x)		(((x) >> 22) & 0x3)

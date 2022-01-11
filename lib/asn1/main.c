@@ -42,38 +42,86 @@ static getarg_strings seq;
 static getarg_strings decorate;
 
 static int
-strcmp4qsort(const void *ap, const void *bp)
+strcmp4mergesort_r(const void *ap, const void *bp, void *d)
 {
-    return strcmp(*(const char **)ap, *(const char **)bp);
+    const char *a = *(const char **)ap;
+    const char *b = *(const char **)bp;
+    char sep = *(const char *)d;
+    int cmp;
+
+    if (sep) {
+        const char *sepa = strchr(a, sep);
+        const char *sepb = strchr(b, sep);
+        size_t alen, blen;
+
+        if (sepa == NULL) sepa = a + strlen(a);
+        if (sepb == NULL) sepb = b + strlen(b);
+        alen = sepa - a;
+        blen = sepb - b;
+        cmp = strncmp(a, b, alen > blen ? alen : blen);
+        if (cmp == 0)
+            cmp = alen - blen;
+    } else
+        cmp = strcmp(a, b);
+    if (cmp == 0)
+        return (uintptr_t)ap - (uintptr_t)bp; /* stable sort */
+    return cmp;
+}
+
+static int
+prefix_check(const char *s, const char *p, size_t plen, char sep, int *cmp)
+{
+    if ((*cmp = strncmp(p, s, plen)) == 0 && s[plen] == sep)
+        return 1;
+    if (*cmp == 0)
+        *cmp = 1;
+    return 0;
 }
 
 static ssize_t
-bsearch_strings(struct getarg_strings *strs, const char *s,
-                size_t prefix_len, char sep)
+bsearch_strings(struct getarg_strings *strs, const char *p,
+                char sep, ssize_t *more)
 {
     ssize_t right = (ssize_t)strs->num_strings - 1;
     ssize_t left = 0;
+    ssize_t plen = 0;
+    int cmp;
+
+    if (sep)
+        plen = strlen(p);
 
     if (strs->num_strings == 0)
         return -1;
 
+    if (sep && more && *more > -1) {
+        /* If *more > -1 we're continuing an iteration */
+        if (*more > right)
+            return -1;
+        if (prefix_check(strs->strings[*more], p, plen, sep, &cmp))
+            return (*more)++;
+        (*more)++;
+        return -1;
+    }
+
     while (left <= right) {
         ssize_t mid = left + (right - left) / 2;
-        int cmp;
 
-        if (prefix_len) {
-            cmp = strncmp(s, strs->strings[mid], prefix_len);
-            if (cmp == 0 && sep) {
-                if (strs->strings[mid][prefix_len] == sep)
-                    return mid;
-                cmp = strncmp(&sep, &strs->strings[mid][prefix_len], 1);
-            }
+        if (sep) {
+            int cmp2;
+
+            while (prefix_check(strs->strings[mid], p, plen, sep, &cmp) &&
+                   mid > 0 &&
+                   prefix_check(strs->strings[mid - 1], p, plen, sep, &cmp2))
+                mid--;
         } else
-            cmp = strcmp(s, strs->strings[mid]);
-        if (cmp == 0)
+            cmp = strcmp(p, strs->strings[mid]);
+        if (cmp == 0) {
+            if (more)
+                *more = mid + 1;
             return mid;
+        }
         if (cmp < 0)
-            right = mid - 1; /* -1 if `s' is smaller than smallest in strs */
+            right = mid - 1; /* -1 if `p' is smaller than smallest in strs */
         else
             left = mid + 1;
     }
@@ -83,13 +131,13 @@ bsearch_strings(struct getarg_strings *strs, const char *s,
 int
 preserve_type(const char *p)
 {
-    return bsearch_strings(&preserve, p, 0, '\0') > -1;
+    return bsearch_strings(&preserve, p, '\0', 0) > -1;
 }
 
 int
 seq_type(const char *p)
 {
-    return bsearch_strings(&seq, p, 0, '\0') > -1;
+    return bsearch_strings(&seq, p, '\0', 0) > -1;
 }
 
 /*
@@ -126,23 +174,22 @@ split_str(const char *s, char sep, char ***fs)
  * functions to copy and free values of that type.
  */
 int
-decorate_type(const char *p,
-              struct decoration *deco)
+decorate_type(const char *p, struct decoration *deco, ssize_t *more)
 {
     ssize_t i;
-    size_t plen = strlen(p);
     char **s[7];
     char *junk = NULL;
     char *cp;
 
+    deco->first = *more == -1;
     deco->decorated = 0;
     deco->field_type = NULL;
-    if ((i = bsearch_strings(&decorate, p, plen, ':')) == -1)
+    if ((i = bsearch_strings(&decorate, p, ':', more)) == -1)
         return 0;
 
     deco->decorated = 1;
-    deco->opt = 0;
-    deco->ext = 0;
+    deco->opt = deco->ext = deco->ptr = 0;
+    deco->void_star = deco->struct_star = deco->heim_object = 0;
     deco->field_name = deco->copy_function_name = deco->free_function_name =
         deco->header_name = NULL;
 
@@ -153,7 +200,7 @@ decorate_type(const char *p,
     s[4] = &deco->header_name;
     s[5] = &junk;
     s[6] = NULL;
-    split_str(decorate.strings[i] + plen + 1, ':', s);
+    split_str(decorate.strings[i] + strlen(p) + 1, ':', s);
 
     if (junk || deco->field_type[0] == '\0' || !deco->field_name ||
         deco->field_name[0] == '\0' || deco->field_name[0] == '?') {
@@ -164,10 +211,27 @@ decorate_type(const char *p,
         deco->opt = 1;
         *cp = '\0';
     }
-    if (deco->copy_function_name)
+    if (strcmp(deco->field_type, "void*") == 0 ||
+        strcmp(deco->field_type, "void *") == 0) {
+        deco->ext = deco->ptr = deco->void_star = 1;
+        deco->opt = 1;
+        deco->header_name = NULL;
+    } else if (strcmp(deco->field_type, "heim_object_t") == 0) {
+        deco->ptr = deco->heim_object = 1;
+        deco->header_name = "<heimbase.h>";
+    } else if (strncmp(deco->field_type, "struct ", sizeof("struct ") - 1) == 0 &&
+             deco->field_type[strlen(deco->field_type) - 1] == '*')
+        deco->ptr = deco->struct_star = 1;
+    if (deco->ptr || deco->copy_function_name)
         deco->ext = 1;
-    if (deco->ext && strcmp(deco->field_type, "void") == 0)
-        deco->opt = deco->void_star = 1;
+    if (deco->ext && deco->copy_function_name && !deco->copy_function_name[0])
+        deco->copy_function_name = NULL;
+    if (deco->ext && deco->free_function_name && !deco->free_function_name[0])
+        deco->free_function_name = NULL;
+    if (deco->header_name && !deco->header_name[0])
+        deco->header_name = NULL;
+    if (deco->ptr)
+        deco->opt = 0;
     return 1;
 }
 
@@ -389,14 +453,14 @@ main(int argc, char **argv)
     }
 
     if (preserve.num_strings)
-        qsort(preserve.strings, preserve.num_strings, sizeof(preserve.strings[0]),
-              (int (*)(const void *, const void *))strcmp4qsort);
+        mergesort_r(preserve.strings, preserve.num_strings,
+                    sizeof(preserve.strings[0]), strcmp4mergesort_r, "");
     if (seq.num_strings)
-        qsort(seq.strings, seq.num_strings, sizeof(seq.strings),
-              (int (*)(const void *, const void *))strcmp4qsort);
+        mergesort_r(seq.strings, seq.num_strings, sizeof(seq.strings),
+                    strcmp4mergesort_r, "");
     if (decorate.num_strings)
-        qsort(decorate.strings, decorate.num_strings, sizeof(decorate.strings[0]),
-              (int (*)(const void *, const void *))strcmp4qsort);
+        mergesort_r(decorate.strings, decorate.num_strings,
+                    sizeof(decorate.strings[0]), strcmp4mergesort_r, ":");
 
     init_generate(file, name);
 

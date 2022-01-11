@@ -229,6 +229,7 @@ void
 generate_type_copy (const Symbol *s)
 {
   struct decoration deco;
+  ssize_t more_deco = -1;
   int preserve = preserve_type(s->name) ? TRUE : FALSE;
   int save_used_fail = used_fail;
 
@@ -240,19 +241,20 @@ generate_type_copy (const Symbol *s)
 	   "memset(to, 0, sizeof(*to));\n",
 	   s->gen_name, s->gen_name, s->gen_name);
   copy_type ("from", "to", s->type, preserve);
-  if (decorate_type(s->gen_name, &deco)) {
-      if (deco.ext &&
-          (deco.copy_function_name == NULL ||
-           deco.copy_function_name[0] == '\0')) {
+  while (decorate_type(s->gen_name, &deco, &more_deco)) {
+      if (deco.heim_object) {
+          fprintf(codefile, "(to)->%s = heim_retain((from)->%s);\n",
+                  deco.field_name, deco.field_name);
+      } else if (deco.ext && deco.copy_function_name == NULL) {
           /* Decorated with field of external type but no copy function */
-          if (deco.opt || deco.void_star)
+          if (deco.ptr)
               fprintf(codefile, "(to)->%s = 0;\n", deco.field_name);
           else
               fprintf(codefile, "memset(&(to)->%s, 0, sizeof((to)->%s));\n",
                       deco.field_name, deco.field_name);
       } else if (deco.ext) {
           /* Decorated with field of external type w/ copy function */
-          if (deco.opt) {
+          if (deco.ptr) {
               fprintf(codefile, "if (from->%s) {\n", deco.field_name);
               fprintf(codefile, "(to)->%s = malloc(sizeof(*(to)->%s));\n",
                       deco.field_name, deco.field_name);

@@ -179,6 +179,7 @@ void
 generate_type_free (const Symbol *s)
 {
     struct decoration deco;
+    ssize_t more_deco = -1;
     int preserve = preserve_type(s->name) ? TRUE : FALSE;
 
     fprintf (codefile, "void ASN1CALL\n"
@@ -187,12 +188,13 @@ generate_type_free (const Symbol *s)
 	     s->gen_name, s->gen_name);
 
     free_type ("data", s->type, preserve);
-    if (decorate_type(s->gen_name, &deco)) {
-        if (deco.ext &&
-            (deco.free_function_name == NULL ||
-             deco.free_function_name[0] == '\0')) {
+    while (decorate_type(s->gen_name, &deco, &more_deco)) {
+        if (deco.heim_object) {
+            fprintf(codefile, "heim_retain((data)->%s);\n", deco.field_name);
+            fprintf(codefile, "(data)->%s = 0;\n", deco.field_name);
+        } else if (deco.ext && deco.free_function_name == NULL) {
             /* Decorated with field of external type but no free function */
-            if (deco.opt || deco.void_star)
+            if (deco.ptr)
                 fprintf(codefile, "(data)->%s = 0;\n", deco.field_name);
             else
                 fprintf(codefile,
@@ -200,7 +202,7 @@ generate_type_free (const Symbol *s)
                         deco.field_name, deco.field_name);
         } else if (deco.ext) {
             /* Decorated with field of external type w/ free function */
-            if (deco.opt) {
+            if (deco.ptr) {
                 fprintf(codefile, "if ((data)->%s) {\n", deco.field_name);
                 fprintf(codefile, "%s((data)->%s);\n",
                         deco.free_function_name, deco.field_name);

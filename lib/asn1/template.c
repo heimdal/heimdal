@@ -37,6 +37,7 @@
 #include <com_err.h>
 #include <vis.h>
 #include <vis-extras.h>
+#include <heimbase.h>
 
 #ifndef ENOTSUP
 /* Very old MSVC CRTs don't have ENOTSUP */
@@ -2278,8 +2279,13 @@ _asn1_free(const struct asn1_template *t, void *data)
 		const struct asn1_type_func *f = t->ptr;
 		(f->release)(el);
 	    } else {
+                /* A1_OP_TYPE_DECORATE_EXTERN */
 		const struct asn1_type_func *f = t->ptr;
-                if (f->release)
+
+                if (t->tt & A1_FLAG_HEIM_OBJ) {
+                    heim_release(*(void **)el);
+                    *(void **)el = 0;
+                } else if (f && f->release)
                     (f->release)(el);
                 else
                     memset(el, 0, f->size);
@@ -2910,7 +2916,11 @@ _asn1_copy(const struct asn1_template *t, const void *from, void *to)
                 ret = (f->copy)(fel, tel);
 	    } else {
 		const struct asn1_type_func *f = t->ptr;
-                if (f->copy)
+
+                /* A1_OP_TYPE_DECORATE_EXTERN */
+                if (t->tt & A1_FLAG_HEIM_OBJ)
+                    *(heim_object_t *)tel = heim_retain(*(void **)fel);
+                else if (f->copy)
                     ret = (f->copy)(fel, tel);
                 else
                     memset(tel, 0, f->size);

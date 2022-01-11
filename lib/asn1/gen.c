@@ -1366,12 +1366,13 @@ define_type(int level, const char *name, const char *basename, Type *pt, Type *t
     case TSequence: {
 	Member *m;
         struct decoration deco;
+        ssize_t more_deco = -1;
+        int decorated = 0;
 
 	getnewbasename(&newbasename, typedefp || level == 0, basename, name);
 
 	space(level);
 
-        (void) decorate_type(newbasename, &deco);
 	fprintf (headerfile, "struct %s {\n", newbasename);
         fprintf(jsonfile, "\"ttype\":\"%s\",\"extensible\":%s,"
                 "\"ctype\":\"struct %s\"",
@@ -1408,19 +1409,34 @@ define_type(int level, const char *name, const char *basename, Type *pt, Type *t
             fprintf(jsonfile, ",\"opentype\":");
             define_open_type(level, newbasename, name, basename, t, t);
         }
-        if (deco.decorated) {
+        while (decorate_type(newbasename, &deco, &more_deco)) {
+            decorated++;
 	    space(level + 1);
             fprintf(headerfile, "%s %s%s;\n", deco.field_type,
                     deco.opt ? "*" : "", deco.field_name);
-            fprintf(jsonfile, ",\"decorate\":{"
+            if (deco.first)
+                fprintf(jsonfile, ",\"decorate\":[");
+            fprintf(jsonfile, "%s{"
                     "\"type\":\"%s\",\"name\":\"%s\",\"optional\":%s,"
-                    "\"external\":%s,\"copy_function\":\"%s\","
-                    "\"free_function\":\"%s\",\"header_name\":\"%s\"}",
+                    "\"external\":%s,\"pointer\":%s,\"void_star\":%s,"
+                    "\"struct_star\":%s,\"heim_object\":%s,"
+                    "\"copy_function\":\"%s\","
+                    "\"free_function\":\"%s\",\"header_name\":%s%s%s"
+                    "}",
+                    deco.first ? "" : ",",
                     deco.field_type, deco.field_name,
                     deco.opt ? "true" : "false", deco.ext ? "true" : "false",
-                    deco.copy_function_name, deco.free_function_name,
-                    deco.header_name);
+                    deco.ptr ? "true" : "false", deco.void_star ? "true" : "false",
+                    deco.struct_star ? "true" : "false", deco.heim_object ? "true" : "false",
+                    deco.copy_function_name ? deco.copy_function_name : "",
+                    deco.free_function_name ? deco.free_function_name : "",
+                    deco.header_name && deco.header_name[0] == '"' ? "" : "\"",
+                    deco.header_name ? deco.header_name : "",
+                    deco.header_name && deco.header_name[0] == '"' ? "" : "\""
+                    );
         }
+        if (decorated)
+            fprintf(jsonfile, "]");
 	space(level);
 	fprintf (headerfile, "} %s;\n", name);
         free(deco.field_type);
@@ -1637,13 +1653,13 @@ declare_type(const Symbol *s, Type *t, int typedefp)
     case TSet:
     case TSequence: {
         struct decoration deco;
+        ssize_t more_deco = -1;
 
 	getnewbasename(&newbasename, TRUE, s->gen_name, s->gen_name);
 	fprintf(headerfile, "struct %s %s;\n", newbasename, s->gen_name);
-        if (decorate_type(newbasename, &deco) && deco.header_name
-	    && !deco.void_star
-            && deco.header_name[0]) {
-            fprintf(headerfile, "#include %s\n", deco.header_name);
+        while (decorate_type(newbasename, &deco, &more_deco)) {
+            if (deco.header_name)
+                fprintf(headerfile, "#include %s\n", deco.header_name);
             free(deco.field_type);
         }
 	break;
@@ -1782,6 +1798,7 @@ static void
 generate_type_header (const Symbol *s)
 {
     Type *t = s->type;
+
     if (!s->type)
         return;
 
@@ -1850,6 +1867,7 @@ generate_type_header (const Symbol *s)
     if (is_export(s->name))
         fprintf(symsfile, "ASN1_SYM_TYPE(\"%s\", \"%s\", %s)\n",
                 s->name, s->gen_name, s->gen_name);
+
     fprintf(headerfile, "typedef ");
     define_type(0, s->gen_name, s->gen_name, NULL, s->type, TRUE,
                 preserve_type(s->name) ? TRUE : FALSE);

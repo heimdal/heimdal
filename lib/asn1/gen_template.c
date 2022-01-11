@@ -459,7 +459,7 @@ add_line_pointer(struct templatehead *t,
 }
 
 /*
- * Add an entry to a template where the pointer firled is a string literal.
+ * Add an entry to a template where the pointer field is a string literal.
  */
 static void
 add_line_string(struct templatehead *t,
@@ -1065,6 +1065,7 @@ template_members(struct templatehead *temp,
         Field *typeidfield = NULL;
 	Member *m;
         struct decoration deco;
+        ssize_t more_deco = -1;
         size_t i = 0, typeididx = 0, opentypeidx = 0;
         int is_array_of_open_type = 0;
 
@@ -1106,21 +1107,24 @@ template_members(struct templatehead *temp,
                                typeidfield, opentypefield, opentypemember,
                                is_array_of_open_type);
 
-        if (decorate_type(basetype, &deco)) {
+        while (decorate_type(basetype, &deco, &more_deco)) {
             char *poffset2;
 
             poffset2 = partial_offset(basetype, deco.field_name, 1, isstruct);
 
-            if (deco.ext) {
+            if (deco.ext && deco.heim_object) {
+                add_line_string(temp, "0", poffset2,
+                                "A1_OP_TYPE_DECORATE_EXTERN |A1_FLAG_HEIM_OBJ");
+            } else if (deco.ext) {
                 char *ptr = NULL;
 
                 /* Decorated with external C type */
                 if (asprintf(&ptr, "&asn1_extern_%s_%s",
-                             basetype, deco.field_type) == -1 || ptr == NULL)
+                             basetype, deco.field_name) == -1 || ptr == NULL)
                     err(1, "out of memory");
                 add_line_pointer(temp, ptr, poffset2,
                                  "A1_OP_TYPE_DECORATE_EXTERN %s",
-                                 deco.opt && !deco.void_star ? "|A1_FLAG_OPTIONAL" : "");
+                                 deco.opt ? "|A1_FLAG_OPTIONAL" : "");
                 free(ptr);
             } else
                 /* Decorated with a templated ASN.1 type */
@@ -1142,6 +1146,7 @@ template_members(struct templatehead *temp,
         Field *typeidfield = NULL;
 	Member *m;
         struct decoration deco;
+        ssize_t more_deco = -1;
         size_t i = 0, typeididx = 0, opentypeidx = 0;
         int is_array_of_open_type = 0;
 
@@ -1183,21 +1188,24 @@ template_members(struct templatehead *temp,
                                typeidfield, opentypefield, opentypemember,
                                is_array_of_open_type);
 
-        if (decorate_type(basetype, &deco)) {
+        while (decorate_type(basetype, &deco, &more_deco)) {
             char *poffset2;
 
             poffset2 = partial_offset(basetype, deco.field_name, 1, isstruct);
 
-            if (deco.ext) {
+            if (deco.ext && deco.heim_object) {
+                add_line_string(temp, "0", poffset2,
+                                "A1_OP_TYPE_DECORATE_EXTERN |A1_FLAG_HEIM_OBJ");
+            } else if (deco.ext) {
                 char *ptr = NULL;
 
                 /* Decorated with external C type */
                 if (asprintf(&ptr, "&asn1_extern_%s_%s",
-                             basetype, deco.field_type) == -1 || ptr == NULL)
+                             basetype, deco.field_name) == -1 || ptr == NULL)
                     err(1, "out of memory");
                 add_line_pointer(temp, ptr, poffset2,
                                  "A1_OP_TYPE_DECORATE_EXTERN %s",
-                                 deco.opt && !deco.void_star ? "|A1_FLAG_OPTIONAL" : "");
+                                 deco.opt ? "|A1_FLAG_OPTIONAL" : "");
                 free(ptr);
             } else
                 /* Decorated with a templated ASN.1 type */
@@ -1521,28 +1529,36 @@ generate_template(const Symbol *s)
     FILE *f = get_code_file();
     const char *dupname;
     struct decoration deco;
+    ssize_t more_deco = -1;
 
     if (use_extern(s)) {
 	gen_extern_stubs(f, s->gen_name);
 	return;
     }
 
-    if (decorate_type(s->gen_name, &deco) && deco.ext) {
-	if (deco.void_star && deco.header_name[0])
+    while (decorate_type(s->gen_name, &deco, &more_deco)) {
+        if (!deco.ext)
+            continue;
+        if (deco.heim_object)
+            fprintf(f, "#include <heimbase.h>\n");
+        else if (deco.void_star && deco.header_name)
 	    fprintf(f, "#include %s\n", deco.header_name);
-        fprintf(f,
-                "static const struct asn1_type_func asn1_extern_%s_%s = {\n"
-                "\t(asn1_type_encode)0,\n"
-                "\t(asn1_type_decode)0,\n"
-                "\t(asn1_type_length)0,\n"
-                "\t(asn1_type_copy)%s,\n"
-                "\t(asn1_type_release)%s,\n"
-                "\t(asn1_type_print)0,\n"
-                "\tsizeof(%s)\n"
-                "};\n", s->gen_name, deco.field_type,
-                deco.copy_function_name && deco.copy_function_name[0] ? deco.copy_function_name : "0",
-                deco.free_function_name && deco.free_function_name[0] ? deco.free_function_name : "0",
-                deco.void_star ? "void *" : deco.field_type);
+        if (!deco.heim_object)
+            fprintf(f,
+                    "static const struct asn1_type_func asn1_extern_%s_%s = {\n"
+                    "\t(asn1_type_encode)0,\n"
+                    "\t(asn1_type_decode)0,\n"
+                    "\t(asn1_type_length)0,\n"
+                    "\t(asn1_type_copy)%s,\n"
+                    "\t(asn1_type_release)%s,\n"
+                    "\t(asn1_type_print)0,\n"
+                    "\tsizeof(%s)\n"
+                    "};\n", s->gen_name, deco.field_name,
+                    deco.copy_function_name && deco.copy_function_name[0] ?
+                        deco.copy_function_name : "0",
+                    deco.free_function_name && deco.free_function_name[0] ?
+                        deco.free_function_name : "0",
+                    deco.void_star ? "void *" : deco.field_type);
         free(deco.field_type);
     }
 

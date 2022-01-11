@@ -443,7 +443,8 @@ accept_one(gss_name_t service, const char *ccname, int negotiate)
         gss_OID          mech_oid;
         gss_ctx_id_t     ctx = GSS_C_NO_CONTEXT;
         gss_buffer_desc  in = GSS_C_EMPTY_BUFFER;
-        gss_buffer_desc  out, dname;
+        gss_buffer_desc  out;
+        gss_buffer_desc  dname = GSS_C_EMPTY_BUFFER;
 	krb5_context	 kctx = NULL;
 	krb5_ccache	 ccache = NULL;
 	krb5_error_code	 kret;
@@ -488,6 +489,7 @@ accept_one(gss_name_t service, const char *ccname, int negotiate)
 	if (!nflag)
 		printf("Authenticated: %.*s\n", (int)dname.length,
 		    (char *)dname.value);
+	(void) gss_release_buffer(&min, &dname);
 
 	if (ccname) {
 #ifdef HAVE_GSS_STORE_CRED_INTO

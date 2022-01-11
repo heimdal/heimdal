@@ -23,6 +23,7 @@ endif
 libasn1_la_LIBADD = \
 	libasn1base.la \
 	@LIB_com_err@ \
+	$(LIB_heimbase) \
 	$(LIBADD_roken)
 
 libasn1template_la_LIBADD = \

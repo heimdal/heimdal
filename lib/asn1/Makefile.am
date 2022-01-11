@@ -385,102 +385,162 @@ endif
 # templated anyways.
 rfc2459_template_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/rfc2459.asn1
 	$(ASN1_COMPILE) --one-code-file --template --option-file=$(srcdir)/rfc2459.opt $(srcdir)/rfc2459.asn1 rfc2459_template_asn1 || (rm -f rfc2459_template_asn1_files ; exit 1)
+	test "$(CLANG_FORMAT)" = no || \
+		$(CLANG_FORMAT) -style='{BasedOnStyle: Mozilla, AlwaysBreakAfterReturnType: TopLevelDefinitions, IndentWidth: 4, SortIncludes: false}' -i asn1_rfc2459_template_asn1.c
 
 rfc4108_template_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/rfc4108.asn1
 	$(ASN1_COMPILE) --one-code-file --template $(srcdir)/rfc4108.asn1 rfc4108_template_asn1 || (rm -f rfc4108_template_asn1_files ; exit 1)
+	test "$(CLANG_FORMAT)" = no || \
+		$(CLANG_FORMAT) -style='{BasedOnStyle: Mozilla, AlwaysBreakAfterReturnType: TopLevelDefinitions, IndentWidth: 4, SortIncludes: false}' -i asn1_rfc4108_template_asn1.c
 
 cms_template_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/cms.asn1 $(srcdir)/cms.opt
 	$(ASN1_COMPILE) --one-code-file --template --option-file=$(srcdir)/cms.opt $(srcdir)/cms.asn1 cms_template_asn1 || (rm -f cms_template_asn1_files ; exit 1)
+	test "$(CLANG_FORMAT)" = no || \
+		$(CLANG_FORMAT) -style='{BasedOnStyle: Mozilla, AlwaysBreakAfterReturnType: TopLevelDefinitions, IndentWidth: 4, SortIncludes: false}' -i asn1_cms_template_asn1.c
 
 crmf_template_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/crmf.asn1 $(srcdir)/crmf.opt
 	$(ASN1_COMPILE) --one-code-file --template --option-file=$(srcdir)/crmf.opt $(srcdir)/crmf.asn1 crmf_template_asn1 || (rm -f crmf_template_asn1_files ; exit 1)
+	test "$(CLANG_FORMAT)" = no || \
+		$(CLANG_FORMAT) -style='{BasedOnStyle: Mozilla, AlwaysBreakAfterReturnType: TopLevelDefinitions, IndentWidth: 4, SortIncludes: false}' -i asn1_crmf_template_asn1.c
 
 krb5_template_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/krb5.asn1 $(srcdir)/krb5.opt
 	$(ASN1_COMPILE) --one-code-file --template			\
 			--option-file=$(srcdir)/krb5.opt		\
 			$(srcdir)/krb5.asn1 krb5_template_asn1 || (rm -f krb5_template_asn1_files ; exit 1)
+	test "$(CLANG_FORMAT)" = no || \
+		$(CLANG_FORMAT) -style='{BasedOnStyle: Mozilla, AlwaysBreakAfterReturnType: TopLevelDefinitions, IndentWidth: 4, SortIncludes: false}' -i asn1_krb5_template_asn1.c
 
 ocsp_template_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/ocsp.asn1
 	$(ASN1_COMPILE) --one-code-file --template --option-file=$(srcdir)/ocsp.opt $(srcdir)/ocsp.asn1 ocsp_template_asn1 || (rm -f ocsp_template_asn1_files ; exit 1)
+	test "$(CLANG_FORMAT)" = no || \
+		$(CLANG_FORMAT) -style='{BasedOnStyle: Mozilla, AlwaysBreakAfterReturnType: TopLevelDefinitions, IndentWidth: 4, SortIncludes: false}' -i asn1_ocsp_template_asn1.c
 
 pkinit_template_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/pkinit.asn1
 	$(ASN1_COMPILE) --one-code-file --template $(srcdir)/pkinit.asn1 pkinit_template_asn1 || (rm -f pkinit_template_asn1_files ; exit 1)
+	test "$(CLANG_FORMAT)" = no || \
+		$(CLANG_FORMAT) -style='{BasedOnStyle: Mozilla, AlwaysBreakAfterReturnType: TopLevelDefinitions, IndentWidth: 4, SortIncludes: false}' -i asn1_pkinit_template_asn1.c
 
 pkcs8_template_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/pkcs8.asn1
 	$(ASN1_COMPILE) --one-code-file --template $(srcdir)/pkcs8.asn1 pkcs8_template_asn1 || (rm -f pkcs8_template_asn1_files ; exit 1)
+	test "$(CLANG_FORMAT)" = no || \
+		$(CLANG_FORMAT) -style='{BasedOnStyle: Mozilla, AlwaysBreakAfterReturnType: TopLevelDefinitions, IndentWidth: 4, SortIncludes: false}' -i asn1_pkcs8_template_asn1.c
 
 pkcs9_template_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/pkcs9.asn1
 	$(ASN1_COMPILE) --one-code-file --template $(srcdir)/pkcs9.asn1 pkcs9_template_asn1 || (rm -f pkcs9_template_asn1_files ; exit 1)
+	test "$(CLANG_FORMAT)" = no || \
+		$(CLANG_FORMAT) -style='{BasedOnStyle: Mozilla, AlwaysBreakAfterReturnType: TopLevelDefinitions, IndentWidth: 4, SortIncludes: false}' -i asn1_pkcs9_template_asn1.c
 
 pkcs10_template_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/pkcs10.asn1
 	$(ASN1_COMPILE) --one-code-file --template --option-file=$(srcdir)/pkcs10.opt $(srcdir)/pkcs10.asn1 pkcs10_template_asn1 || (rm -f pkcs10_template_asn1_files ; exit 1)
+	test "$(CLANG_FORMAT)" = no || \
+		$(CLANG_FORMAT) -style='{BasedOnStyle: Mozilla, AlwaysBreakAfterReturnType: TopLevelDefinitions, IndentWidth: 4, SortIncludes: false}' -i asn1_pkcs10_template_asn1.c
 
 pkcs12_template_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/pkcs12.asn1
 	$(ASN1_COMPILE) --one-code-file --template $(srcdir)/pkcs12.asn1 pkcs12_template_asn1 || (rm -f pkcs12_template_asn1_files ; exit 1)
+	test "$(CLANG_FORMAT)" = no || \
+		$(CLANG_FORMAT) -style='{BasedOnStyle: Mozilla, AlwaysBreakAfterReturnType: TopLevelDefinitions, IndentWidth: 4, SortIncludes: false}' -i asn1_pkcs12_template_asn1.c
 
 digest_template_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/digest.asn1
 	$(ASN1_COMPILE) --one-code-file --template $(srcdir)/digest.asn1 digest_template_asn1 || (rm -f digest_template_asn1_files ; exit 1)
+	test "$(CLANG_FORMAT)" = no || \
+		$(CLANG_FORMAT) -style='{BasedOnStyle: Mozilla, AlwaysBreakAfterReturnType: TopLevelDefinitions, IndentWidth: 4, SortIncludes: false}' -i asn1_digest_template_asn1.c
 
 kx509_template_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/kx509.asn1
 	$(ASN1_COMPILE) --one-code-file --template $(srcdir)/kx509.asn1 kx509_template_asn1 || (rm -f kx509_template_asn1_files ; exit 1)
+	test "$(CLANG_FORMAT)" = no || \
+		$(CLANG_FORMAT) -style='{BasedOnStyle: Mozilla, AlwaysBreakAfterReturnType: TopLevelDefinitions, IndentWidth: 4, SortIncludes: false}' -i asn1_kx509_template_asn1.c
 
 rfc2459_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/rfc2459.asn1
 	$(ASN1_COMPILE) --one-code-file $(TEMPLATE_OPTION) --option-file=$(srcdir)/rfc2459.opt $(srcdir)/rfc2459.asn1 rfc2459_asn1 || (rm -f rfc2459_asn1_files ; exit 1)
+	test "$(CLANG_FORMAT)" = no || \
+		$(CLANG_FORMAT) -style='{BasedOnStyle: Mozilla, AlwaysBreakAfterReturnType: TopLevelDefinitions, IndentWidth: 4, SortIncludes: false}' -i asn1_rfc2459_asn1.c
 
 rfc4108_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/rfc4108.asn1
 	$(ASN1_COMPILE) --one-code-file $(TEMPLATE_OPTION) $(srcdir)/rfc4108.asn1 rfc4108_asn1 || (rm -f rfc4108_asn1_files ; exit 1)
+	test "$(CLANG_FORMAT)" = no || \
+		$(CLANG_FORMAT) -style='{BasedOnStyle: Mozilla, AlwaysBreakAfterReturnType: TopLevelDefinitions, IndentWidth: 4, SortIncludes: false}' -i asn1_rfc4108_asn1.c
 
 cms_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/cms.asn1 $(srcdir)/cms.opt
 	$(ASN1_COMPILE) --one-code-file $(TEMPLATE_OPTION) --option-file=$(srcdir)/cms.opt $(srcdir)/cms.asn1 cms_asn1 || (rm -f cms_asn1_files ; exit 1)
+	test "$(CLANG_FORMAT)" = no || \
+		$(CLANG_FORMAT) -style='{BasedOnStyle: Mozilla, AlwaysBreakAfterReturnType: TopLevelDefinitions, IndentWidth: 4, SortIncludes: false}' -i asn1_cms_asn1.c
 
 crmf_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/crmf.asn1 $(srcdir)/crmf.opt
 	$(ASN1_COMPILE) --one-code-file $(TEMPLATE_OPTION) --option-file=$(srcdir)/crmf.opt $(srcdir)/crmf.asn1 crmf_asn1 || (rm -f crmf_asn1_files ; exit 1)
+	test "$(CLANG_FORMAT)" = no || \
+		$(CLANG_FORMAT) -style='{BasedOnStyle: Mozilla, AlwaysBreakAfterReturnType: TopLevelDefinitions, IndentWidth: 4, SortIncludes: false}' -i asn1_crmf_asn1.c
 
 krb5_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/krb5.asn1 $(srcdir)/krb5.opt
 	$(ASN1_COMPILE) --one-code-file $(TEMPLATE_OPTION)		\
 			--option-file=$(srcdir)/krb5.opt		\
 			$(srcdir)/krb5.asn1 krb5_asn1 || (rm -f krb5_asn1_files ; exit 1)
+	test "$(CLANG_FORMAT)" = no || \
+		$(CLANG_FORMAT) -style='{BasedOnStyle: Mozilla, AlwaysBreakAfterReturnType: TopLevelDefinitions, IndentWidth: 4, SortIncludes: false}' -i asn1_krb5_asn1.c
 
 ocsp_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/ocsp.asn1
 	$(ASN1_COMPILE) --one-code-file $(TEMPLATE_OPTION) --option-file=$(srcdir)/ocsp.opt $(srcdir)/ocsp.asn1 ocsp_asn1 || (rm -f ocsp_asn1_files ; exit 1)
+	test "$(CLANG_FORMAT)" = no || \
+		$(CLANG_FORMAT) -style='{BasedOnStyle: Mozilla, AlwaysBreakAfterReturnType: TopLevelDefinitions, IndentWidth: 4, SortIncludes: false}' -i asn1_ocsp_asn1.c
 
 pkinit_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/pkinit.asn1
 	$(ASN1_COMPILE) --one-code-file $(TEMPLATE_OPTION) $(srcdir)/pkinit.asn1 pkinit_asn1 || (rm -f pkinit_asn1_files ; exit 1)
+	test "$(CLANG_FORMAT)" = no || \
+		$(CLANG_FORMAT) -style='{BasedOnStyle: Mozilla, AlwaysBreakAfterReturnType: TopLevelDefinitions, IndentWidth: 4, SortIncludes: false}' -i asn1_pkinit_asn1.c
 
 pkcs8_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/pkcs8.asn1
 	$(ASN1_COMPILE) --one-code-file $(TEMPLATE_OPTION) $(srcdir)/pkcs8.asn1 pkcs8_asn1 || (rm -f pkcs8_asn1_files ; exit 1)
+	test "$(CLANG_FORMAT)" = no || \
+		$(CLANG_FORMAT) -style='{BasedOnStyle: Mozilla, AlwaysBreakAfterReturnType: TopLevelDefinitions, IndentWidth: 4, SortIncludes: false}' -i asn1_pkcs8_asn1.c
 
 pkcs9_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/pkcs9.asn1
 	$(ASN1_COMPILE) --one-code-file $(TEMPLATE_OPTION) $(srcdir)/pkcs9.asn1 pkcs9_asn1 || (rm -f pkcs9_asn1_files ; exit 1)
+	test "$(CLANG_FORMAT)" = no || \
+		$(CLANG_FORMAT) -style='{BasedOnStyle: Mozilla, AlwaysBreakAfterReturnType: TopLevelDefinitions, IndentWidth: 4, SortIncludes: false}' -i asn1_pkcs9_asn1.c
 
 pkcs10_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/pkcs10.asn1
 	$(ASN1_COMPILE) --one-code-file $(TEMPLATE_OPTION) --option-file=$(srcdir)/pkcs10.opt $(srcdir)/pkcs10.asn1 pkcs10_asn1 || (rm -f pkcs10_asn1_files ; exit 1)
+	test "$(CLANG_FORMAT)" = no || \
+		$(CLANG_FORMAT) -style='{BasedOnStyle: Mozilla, AlwaysBreakAfterReturnType: TopLevelDefinitions, IndentWidth: 4, SortIncludes: false}' -i asn1_pkcs10_asn1.c
 
 pkcs12_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/pkcs12.asn1
 	$(ASN1_COMPILE) --one-code-file $(TEMPLATE_OPTION) $(srcdir)/pkcs12.asn1 pkcs12_asn1 || (rm -f pkcs12_asn1_files ; exit 1)
+	test "$(CLANG_FORMAT)" = no || \
+		$(CLANG_FORMAT) -style='{BasedOnStyle: Mozilla, AlwaysBreakAfterReturnType: TopLevelDefinitions, IndentWidth: 4, SortIncludes: false}' -i asn1_pkcs12_asn1.c
 
 digest_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/digest.asn1
 	$(ASN1_COMPILE) --one-code-file $(TEMPLATE_OPTION) $(srcdir)/digest.asn1 digest_asn1 || (rm -f digest_asn1_files ; exit 1)
+	test "$(CLANG_FORMAT)" = no || \
+		$(CLANG_FORMAT) -style='{BasedOnStyle: Mozilla, AlwaysBreakAfterReturnType: TopLevelDefinitions, IndentWidth: 4, SortIncludes: false}' -i asn1_digest_asn1.c
 
 kx509_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/kx509.asn1
 	$(ASN1_COMPILE) --one-code-file $(TEMPLATE_OPTION) $(srcdir)/kx509.asn1 kx509_asn1 || (rm -f kx509_asn1_files ; exit 1)
+	test "$(CLANG_FORMAT)" = no || \
+		$(CLANG_FORMAT) -style='{BasedOnStyle: Mozilla, AlwaysBreakAfterReturnType: TopLevelDefinitions, IndentWidth: 4, SortIncludes: false}' -i asn1_kx509_asn1.c
 
 x690sample_template_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/x690sample.asn1
 	$(ASN1_COMPILE) --one-code-file --template $(srcdir)/x690sample.asn1 x690sample_template_asn1 || (rm -f x690sample_template_asn1_files ; exit 1)
+	test "$(CLANG_FORMAT)" = no || \
+		$(CLANG_FORMAT) -style='{BasedOnStyle: Mozilla, AlwaysBreakAfterReturnType: TopLevelDefinitions, IndentWidth: 4, SortIncludes: false}' -i asn1_x690sample_template_asn1.c
 
 x690sample_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/x690sample.asn1
 	$(ASN1_COMPILE) --one-code-file $(srcdir)/x690sample.asn1 x690sample_asn1 || (rm -f x690sample_asn1_files ; exit 1)
+	test "$(CLANG_FORMAT)" = no || \
+		$(CLANG_FORMAT) -style='{BasedOnStyle: Mozilla, AlwaysBreakAfterReturnType: TopLevelDefinitions, IndentWidth: 4, SortIncludes: false}' -i asn1_x690sample_asn1.c
 
 test_template_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/test.asn1
 	$(ASN1_COMPILE) --one-code-file					\
 			--template					\
 			--option-file=$(srcdir)/test.opt		\
 			$(srcdir)/test.asn1 test_template_asn1 || (rm -f test_template_asn1_files ; exit 1)
+	test "$(CLANG_FORMAT)" = no || \
+		$(CLANG_FORMAT) -style='{BasedOnStyle: Mozilla, AlwaysBreakAfterReturnType: TopLevelDefinitions, IndentWidth: 4, SortIncludes: false}' -i asn1_test_template_asn1.c
 
 test_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/test.asn1
 	$(ASN1_COMPILE) --one-code-file					\
 			--option-file=$(srcdir)/test.opt		\
 			$(srcdir)/test.asn1 test_asn1 || (rm -f test_asn1_files ; exit 1)
+	test "$(CLANG_FORMAT)" = no || \
+		$(CLANG_FORMAT) -style='{BasedOnStyle: Mozilla, AlwaysBreakAfterReturnType: TopLevelDefinitions, IndentWidth: 4, SortIncludes: false}' -i asn1_test_asn1.c
 
 
 EXTRA_DIST =		\

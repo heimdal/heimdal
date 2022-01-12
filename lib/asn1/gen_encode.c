@@ -313,7 +313,7 @@ encode_type (const char *name, const Type *t, const char *tmpstr)
 		name);
 
 	fprintf(codefile,
-		"val = malloc(sizeof(val[0]) * (%s)->len);\n"
+		"val = calloc(1, sizeof(val[0]) * (%s)->len);\n"
 		"if (val == NULL && (%s)->len != 0) return ENOMEM;\n",
 		name, name);
 
@@ -465,7 +465,7 @@ encode_type (const char *name, const Type *t, const char *tmpstr)
                     "size_t l2_%s, lensave_%s = len;\n"
                     "len = length_%s(%s);\n"
                     /* Allocate a temp buffer for the encoder */
-                    "if ((p = pfree_%s = malloc(len)) == NULL) return ENOMEM;\n"
+                    "if ((p = pfree_%s = calloc(1, len)) == NULL) return ENOMEM;\n"
                     /* Make p point to the last byte of the allocated buf */
                     "p += len - 1;\n",
                     tmpstr, tmpstr, tmpstr, tmpstr,

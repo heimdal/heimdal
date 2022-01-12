@@ -258,7 +258,7 @@ init_generate (const char *filename, const char *base)
     fputs("#define ASN1_MALLOC_ENCODE(T, B, BL, S, L, R)                  \\\n"
 	  "  do {                                                         \\\n"
 	  "    (BL) = length_##T((S));                                    \\\n"
-	  "    (B) = malloc((BL));                                        \\\n"
+	  "    (B) = calloc(1, (BL));                                     \\\n"
 	  "    if((B) == NULL) {                                          \\\n"
 	  "      *(L) = 0;                                                \\\n"
 	  "      (R) = ENOMEM;                                            \\\n"

@@ -125,7 +125,7 @@ copy_type (const char *from, const char *to, const Type *t, int preserve)
 		errx(1, "malloc");
 	    if(m->optional){
 		fprintf(codefile, "if(%s) {\n", fs);
-		fprintf(codefile, "%s = malloc(sizeof(*%s));\n", ts, ts);
+		fprintf(codefile, "%s = calloc(1, sizeof(*%s));\n", ts, ts);
 		fprintf(codefile, "if(%s == NULL) goto fail;\n", ts);
 		used_fail++;
 	    }
@@ -161,7 +161,7 @@ copy_type (const char *from, const char *to, const Type *t, int preserve)
 	char *f = NULL, *T = NULL;
 
 	fprintf (codefile, "if(((%s)->val = "
-		 "malloc((%s)->len * sizeof(*(%s)->val))) == NULL && (%s)->len != 0)\n",
+		 "calloc(1, (%s)->len * sizeof(*(%s)->val))) == NULL && (%s)->len != 0)\n",
 		 to, from, to, from);
 	fprintf (codefile, "goto fail;\n");
 	used_fail++;
@@ -256,7 +256,7 @@ generate_type_copy (const Symbol *s)
           /* Decorated with field of external type w/ copy function */
           if (deco.ptr) {
               fprintf(codefile, "if (from->%s) {\n", deco.field_name);
-              fprintf(codefile, "(to)->%s = malloc(sizeof(*(to)->%s));\n",
+              fprintf(codefile, "(to)->%s = calloc(1, sizeof(*(to)->%s));\n",
                       deco.field_name, deco.field_name);
               fprintf(codefile, "if (%s((from)->%s, (to)->%s)) goto fail;\n",
                       deco.copy_function_name, deco.field_name, deco.field_name);
@@ -268,7 +268,7 @@ generate_type_copy (const Symbol *s)
       } else if (deco.opt) {
           /* Decorated with optional field of ASN.1 type */
           fprintf(codefile, "if (from->%s) {\n", deco.field_name);
-          fprintf(codefile, "(to)->%s = malloc(sizeof(*(to)->%s));\n", deco.field_name, deco.field_name);
+          fprintf(codefile, "(to)->%s = calloc(1, sizeof(*(to)->%s));\n", deco.field_name, deco.field_name);
           fprintf(codefile, "if (copy_%s((from)->%s, (to)->%s)) goto fail;\n", deco.field_type, deco.field_name, deco.field_name);
           fprintf(codefile, "}\n");
       } else {

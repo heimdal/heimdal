@@ -2,7 +2,7 @@
 
 include $(top_srcdir)/Makefile.am.common
 
-WFLAGS += -Wno-error=enum-conversion
+WFLAGS += $(WFLAGS_ENUM_CONV)
 
 AM_CPPFLAGS += -I../com_err -I$(srcdir)/../com_err $(INCLUDE_sqlite3) $(INCLUDE_libintl) $(INCLUDE_openssl_crypto)
 

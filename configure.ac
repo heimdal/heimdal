@@ -87,8 +87,6 @@ dnl
 dnl Helper bits for cross compiling
 dnl
 
-
-
 AM_CONDITIONAL(CROSS_COMPILE, test "${cross_compiling}" = yes)
 
 AC_ARG_WITH(cross-tools,
@@ -117,6 +115,14 @@ else
 
 fi
 
+AX_CHECK_COMPILE_FLAG([-Werror=enum-conversion],
+                      [WFLAGS_ENUM_CONV=-Werror=enum-conversion],
+                      [WFLAGS_ENUM_CONV=], [-Werror])
+AX_CHECK_COMPILE_FLAG([-Wno-unused-but-set-variable],
+                      [WFLAGS_UNUSED_BUT_SET_VAR=-Wno-unused-but-set-variable],
+                      [WFLAGS_UNUSED_BUT_SET_VAR=], [-Werror])
+
+AC_SUBST([WFLAGS_ENUM_CONV])
 AC_SUBST([ASN1_COMPILE])
 AC_SUBST([ASN1_COMPILE_DEP])
 AC_SUBST([SLC])

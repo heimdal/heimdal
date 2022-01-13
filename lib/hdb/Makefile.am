@@ -2,7 +2,7 @@
 
 include $(top_srcdir)/Makefile.am.common
 
-WFLAGS += -Wno-error=enum-conversion
+WFLAGS += $(WFLAGS_ENUM_CONV)
 
 AM_CPPFLAGS += -I../asn1 -I$(srcdir)/../asn1
 AM_CPPFLAGS += $(INCLUDE_openldap) -DHDB_DB_DIR=\"$(DIR_hdbdir)\"

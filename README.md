@@ -1,3 +1,4 @@
+[![GitHub Build Workflow](https://github.com/heimdal/heimdal/actions/workflows/build.yml/badge.svg)](https://github.com/heimdal/heimdal/actions?query=workflow%3Abuild)
 [![Appveyor-CI build (Windows)](https://ci.appveyor.com/api/projects/status/6j0k0m7kd6jjj4tw/branch/master?svg=true)](https://ci.appveyor.com/project/heimdal/heimdal/branch/master)
 [![Coverage Status](https://coveralls.io/repos/github/heimdal/heimdal/badge.svg?branch=master)](https://coveralls.io/github/heimdal/heimdal?branch=master)
 

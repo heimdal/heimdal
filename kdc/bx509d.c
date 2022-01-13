@@ -112,6 +112,20 @@
 #define heim_pconfig krb5_context
 #include <heimbase-svc.h>
 
+#if MHD_VERSION < 0x00097002 || defined(MHD_YES)
+/* libmicrohttpd changed these from int valued macros to an enum in 0.9.71 */
+#ifdef MHD_YES
+#undef MHD_YES
+#undef MHD_NO
+#endif
+enum MHD_Result { MHD_NO = 0, MHD_YES = 1 };
+#define MHD_YES 1
+#define MHD_NO 0
+typedef int heim_mhd_result;
+#else
+typedef enum MHD_Result heim_mhd_result;
+#endif
+
 typedef struct bx509_request_desc {
     HEIM_SVC_REQUEST_DESC_COMMON_ELEMENTS;
 
@@ -621,7 +635,7 @@ good_bx509(struct bx509_request_desc *r)
     return ret;
 }
 
-static enum MHD_Result
+static heim_mhd_result
 bx509_param_cb(void *d,
                enum MHD_ValueKind kind,
                const char *key,
@@ -1707,7 +1721,7 @@ authorize_TGT_REQ(struct bx509_request_desc *r)
     return ret;
 }
 
-static enum MHD_Result
+static heim_mhd_result
 get_tgt_param_cb(void *d,
                  enum MHD_ValueKind kind,
                  const char *key,
@@ -1811,7 +1825,7 @@ health(const char *method, struct bx509_request_desc *r)
 }
 
 /* Implements the entirety of this REST service */
-static enum MHD_Result
+static heim_mhd_result
 route(void *cls,
       struct MHD_Connection *connection,
       const char *url,

@@ -53,6 +53,8 @@ NMAKE_WINVER=0x0600
 NMAKE_WINVER=0x0601
 !elseif "$(APPVER)" == "10.0"
 NMAKE_WINVER=0x0A00
+!else
+!error Unknown value for APPVER
 !endif
 
 cc          = cl

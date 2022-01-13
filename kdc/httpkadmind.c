@@ -80,6 +80,20 @@
 #define heim_pconfig krb5_context
 #include <heimbase-svc.h>
 
+#if MHD_VERSION < 0x00097002 || defined(MHD_YES)
+/* libmicrohttpd changed these from int valued macros to an enum in 0.9.71 */
+#ifdef MHD_YES
+#undef MHD_YES
+#undef MHD_NO
+#endif
+enum MHD_Result { MHD_NO = 0, MHD_YES = 1 };
+#define MHD_YES 1
+#define MHD_NO 0
+typedef int heim_mhd_result;
+#else
+typedef enum MHD_Result heim_mhd_result;
+#endif
+
 #define BODYLEN_IS_STRLEN (~0)
 
 /*
@@ -565,7 +579,7 @@ redirect_uri_appends(struct redirect_uri *redirect,
         redirect->len += len;
 }
 
-static enum MHD_Result
+static heim_mhd_result
 make_redirect_uri_param_cb(void *d,
                            enum MHD_ValueKind kind,
                            const char *key,
@@ -881,7 +895,7 @@ check_service_name(kadmin_request_desc r, const char *name)
     return EACCES;
 }
 
-static enum MHD_Result
+static heim_mhd_result
 param_cb(void *d,
          enum MHD_ValueKind kind,
          const char *key,
@@ -1875,7 +1889,7 @@ health(const char *method, kadmin_request_desc r)
 }
 
 /* Implements the entirety of this REST service */
-static enum MHD_Result
+static heim_mhd_result
 route(void *cls,
       struct MHD_Connection *connection,
       const char *url,

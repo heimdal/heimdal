@@ -81,38 +81,8 @@ enum hdb_lockop{ HDB_RLOCK, HDB_WLOCK };
 #define HDB_CAP_F_PASSWORD_UPDATE_KEYS	4
 #define HDB_CAP_F_SHARED_DIRECTORY      8
 
-/*
- * HDB auditing
- */
-
-/* auth event type enumeration, currently for AS only */
-#define HDB_AUTH_EVENT_INVALID			0   /* no event logged */
-#define HDB_AUTH_EVENT_CLIENT_AUTHORIZED	1   /* all authn/authz checks passed */
-#define HDB_AUTH_EVENT_CLIENT_UNKNOWN	        2   /* client unknown */
-#define HDB_AUTH_EVENT_CLIENT_LOCKED_OUT	3   /* client locked out */
-#define HDB_AUTH_EVENT_CLIENT_TIME_SKEW		4   /* client time skew */
-#define HDB_AUTH_EVENT_WRONG_LONG_TERM_KEY	5   /* PA failed to validate long term key */
-#define HDB_AUTH_EVENT_VALIDATED_LONG_TERM_KEY	6   /* PA validated long term key */
-#define HDB_AUTH_EVENT_CLIENT_NAME_UNAUTHORIZED	7   /* couldn't map GSS/PKINIT name to principal */
-#define HDB_AUTH_EVENT_PREAUTH_FAILED		8   /* generic PA failure */
-#define HDB_AUTH_EVENT_PREAUTH_SUCCEEDED	9   /* generic (non-long term key) PA success */
-
-/*
- * Audit keys to be queried using heim_audit_getkv(). There are other keys
- * intended for logging that are not defined below; the constants below are
- * there to ease migration from the older auth_status HDB API.
- */
-
-#define HDB_REQUEST_KV_AUTH_EVENT		"#auth_event"		/* heim_number_t */
-#define HDB_REQUEST_KV_PA_NAME			"pa"			/* heim_string_t */
-#define HDB_REQUEST_KV_PA_ETYPE			"pa-etype"		/* heim_number_t */
-#define HDB_REQUEST_KV_GSS_INITIATOR		"gss_initiator"		/* heim_string_t */
-#define HDB_REQUEST_KV_PKINIT_CLIENT_CERT	"pkinit_client_cert"	/* heim_string_t */
-
 #define heim_pcontext krb5_context
-#define heim_pconfig struct krb5_kdc_configuration *
-
-struct krb5_kdc_configuration;
+#define heim_pconfig void *
 
 typedef struct hdb_request_desc {
     HEIM_SVC_REQUEST_DESC_COMMON_ELEMENTS;

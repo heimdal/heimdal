@@ -40,7 +40,7 @@
 #include <dns_sd.h>
 #include <err.h>
 
-static krb5_kdc_configuration *announce_config;
+static krb5_kdc_configuration_t announce_config;
 static krb5_context announce_context;
 
 struct entry {
@@ -528,7 +528,7 @@ register_notification(void)
 #endif
 
 void
-bonjour_announce(krb5_context context, krb5_kdc_configuration *config)
+bonjour_announce(krb5_context context, krb5_kdc_configuration_t config)
 {
 #if defined(__APPLE__) && defined(HAVE_GCD)
     g_queue = dispatch_queue_create("com.apple.kdc_announce", NULL);

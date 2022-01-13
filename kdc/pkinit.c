@@ -284,7 +284,7 @@ integer_to_BN(krb5_context context, const char *field, heim_integer *f)
 
 static krb5_error_code
 get_dh_param(krb5_context context,
-	     krb5_kdc_configuration *config,
+	     krb5_kdc_configuration_t config,
 	     SubjectPublicKeyInfo *dh_key_info,
 	     pk_client_params *client_params)
 {
@@ -388,7 +388,7 @@ _kdc_pk_rd_padata(astgs_request_t priv,
 {
     /* XXXrcd: we use priv vs r due to a conflict */
     krb5_context context = priv->context;
-    krb5_kdc_configuration *config = priv->config;
+    krb5_kdc_configuration_t config = priv->config;
     const KDC_REQ *req = &priv->req;
     hdb_entry_ex *client = priv->client;
     pk_client_params *cp;
@@ -822,7 +822,7 @@ BN_to_integer(krb5_context context, BIGNUM *bn, heim_integer *integer)
 
 static krb5_error_code
 pk_mk_pa_reply_enckey(krb5_context context,
-		      krb5_kdc_configuration *config,
+		      krb5_kdc_configuration_t config,
 		      pk_client_params *cp,
 		      const KDC_REQ *req,
 		      const krb5_data *req_buffer,
@@ -1002,7 +1002,7 @@ out:
 
 static krb5_error_code
 pk_mk_pa_reply_dh(krb5_context context,
-		  krb5_kdc_configuration *config,
+		  krb5_kdc_configuration_t config,
       		  pk_client_params *cp,
 		  ContentInfo *content_info,
 		  hx509_cert *kdc_cert)
@@ -1131,7 +1131,7 @@ pk_mk_pa_reply_dh(krb5_context context,
 krb5_error_code
 _kdc_pk_mk_pa_reply(astgs_request_t r, pk_client_params *cp)
 {
-    krb5_kdc_configuration *config = r->config;
+    krb5_kdc_configuration_t config = r->config;
     krb5_enctype sessionetype = r->sessionetype;
     const KDC_REQ *req = &r->req;
     const krb5_data *req_buffer = &r->request;
@@ -1535,7 +1535,7 @@ out:
 
 static int
 match_rfc_san(krb5_context context,
-	      krb5_kdc_configuration *config,
+	      krb5_kdc_configuration_t config,
 	      hx509_context hx509ctx,
 	      hx509_cert client_cert,
 	      krb5_const_principal match)
@@ -1596,7 +1596,7 @@ out:
 
 static int
 match_ms_upn_san(krb5_context context,
-		 krb5_kdc_configuration *config,
+		 krb5_kdc_configuration_t config,
 		 hx509_context hx509ctx,
 		 hx509_cert client_cert,
 		 HDB *clientdb,
@@ -1671,7 +1671,7 @@ _kdc_pk_check_client(astgs_request_t r,
 		     pk_client_params *cp,
 		     char **subject_name)
 {
-    krb5_kdc_configuration *config = r->config;
+    krb5_kdc_configuration_t config = r->config;
     HDB *clientdb = r->clientdb;
     hdb_entry_ex *client = r->client;
     const HDB_Ext_PKINIT_acl *acl;
@@ -1848,7 +1848,7 @@ add_principal_mapping(krb5_context context,
 
 krb5_error_code
 _kdc_add_initial_verified_cas(krb5_context context,
-			      krb5_kdc_configuration *config,
+			      krb5_kdc_configuration_t config,
 			      pk_client_params *cp,
 			      EncTicketPart *tkt)
 {
@@ -1928,7 +1928,7 @@ load_mappings(krb5_context context, const char *fn)
 
 KDC_LIB_FUNCTION krb5_error_code KDC_LIB_CALL
 krb5_kdc_pk_initialize(krb5_context context,
-		       krb5_kdc_configuration *config,
+		       krb5_kdc_configuration_t config,
 		       const char *user_id,
 		       const char *anchors,
 		       char **pool,

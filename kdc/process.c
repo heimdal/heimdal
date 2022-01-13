@@ -341,7 +341,7 @@ static struct krb5_kdc_service services[] =  {
 
 static int
 process_request(krb5_context context,
-		krb5_kdc_configuration *config,
+		krb5_kdc_configuration_t config,
 		unsigned int krb5_only,
 		unsigned char *buf,
 		size_t len,
@@ -420,7 +420,7 @@ process_request(krb5_context context,
 
 KDC_LIB_FUNCTION int KDC_LIB_CALL
 krb5_kdc_process_request(krb5_context context,
-			 krb5_kdc_configuration *config,
+			 krb5_kdc_configuration_t config,
 			 unsigned char *buf,
 			 size_t len,
 			 krb5_data *reply,
@@ -442,7 +442,7 @@ krb5_kdc_process_request(krb5_context context,
 
 KDC_LIB_FUNCTION int KDC_LIB_CALL
 krb5_kdc_process_krb5_request(krb5_context context,
-			      krb5_kdc_configuration *config,
+			      krb5_kdc_configuration_t config,
 			      unsigned char *buf,
 			      size_t len,
 			      krb5_data *reply,

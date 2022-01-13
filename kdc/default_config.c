@@ -70,10 +70,10 @@ load_kdc_plugins_once(void *ctx)
 }
 
 KDC_LIB_FUNCTION krb5_error_code KDC_LIB_CALL
-krb5_kdc_get_config(krb5_context context, krb5_kdc_configuration **config)
+krb5_kdc_get_config(krb5_context context, krb5_kdc_configuration_t *config)
 {
     static heim_base_once_t load_kdc_plugins = HEIM_BASE_ONCE_INIT;
-    krb5_kdc_configuration *c;
+    krb5_kdc_configuration_t c;
     krb5_error_code ret;
 
     heim_base_once_f(&load_kdc_plugins, context, load_kdc_plugins_once);
@@ -392,7 +392,7 @@ krb5_kdc_get_config(krb5_context context, krb5_kdc_configuration **config)
 }
 
 KDC_LIB_FUNCTION krb5_error_code KDC_LIB_CALL
-krb5_kdc_pkinit_config(krb5_context context, krb5_kdc_configuration *config)
+krb5_kdc_pkinit_config(krb5_context context, krb5_kdc_configuration_t config)
 {
 #ifdef PKINIT
 #ifdef __APPLE__

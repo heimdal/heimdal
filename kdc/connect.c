@@ -126,7 +126,7 @@ add_port_string (krb5_context context,
 
 static void
 add_standard_ports (krb5_context context,
-		    krb5_kdc_configuration *config,
+		    krb5_kdc_configuration_t config,
 		    int family)
 {
     add_port_service(context, family, "kerberos", 88, "udp");
@@ -150,7 +150,7 @@ add_standard_ports (krb5_context context,
 
 static void
 parse_ports(krb5_context context,
-	    krb5_kdc_configuration *config,
+	    krb5_kdc_configuration_t config,
 	    const char *str)
 {
     char *pos = NULL;
@@ -232,7 +232,7 @@ reinit_descrs (struct descr *d, int n)
 
 static void
 init_socket(krb5_context context,
-	    krb5_kdc_configuration *config,
+	    krb5_kdc_configuration_t config,
 	    struct descr *d, krb5_address *a, int family, int type, int port)
 {
     krb5_error_code ret;
@@ -301,7 +301,7 @@ init_socket(krb5_context context,
 
 static int
 init_sockets(krb5_context context,
-	     krb5_kdc_configuration *config,
+	     krb5_kdc_configuration_t config,
 	     struct descr **desc)
 {
     krb5_error_code ret;
@@ -388,7 +388,7 @@ addr_to_string(krb5_context context,
 
 static void
 send_reply(krb5_context context,
-	   krb5_kdc_configuration *config,
+	   krb5_kdc_configuration_t config,
 	   krb5_boolean prependlength,
 	   struct descr *d,
 	   krb5_data *reply)
@@ -422,7 +422,7 @@ send_reply(krb5_context context,
 
 static void
 do_request(krb5_context context,
-	   krb5_kdc_configuration *config,
+	   krb5_kdc_configuration_t config,
 	   void *buf, size_t len, krb5_boolean prependlength,
 	   struct descr *d)
 {
@@ -455,7 +455,7 @@ do_request(krb5_context context,
 
 static void
 handle_udp(krb5_context context,
-	   krb5_kdc_configuration *config,
+	   krb5_kdc_configuration_t config,
 	   struct descr *d)
 {
     unsigned char *buf;
@@ -544,7 +544,7 @@ de_http(char *buf)
 
 static void
 add_new_tcp (krb5_context context,
-	     krb5_kdc_configuration *config,
+	     krb5_kdc_configuration_t config,
 	     struct descr *d, int parent, int child)
 {
     krb5_socket_t s;
@@ -583,7 +583,7 @@ add_new_tcp (krb5_context context,
 
 static int
 grow_descr (krb5_context context,
-	    krb5_kdc_configuration *config,
+	    krb5_kdc_configuration_t config,
 	    struct descr *d, size_t n)
 {
     if (d->size - d->len < n) {
@@ -617,7 +617,7 @@ grow_descr (krb5_context context,
 
 static int
 handle_vanilla_tcp (krb5_context context,
-		    krb5_kdc_configuration *config,
+		    krb5_kdc_configuration_t config,
 		    struct descr *d)
 {
     krb5_storage *sp;
@@ -645,7 +645,7 @@ handle_vanilla_tcp (krb5_context context,
 
 static int
 handle_http_tcp (krb5_context context,
-		 krb5_kdc_configuration *config,
+		 krb5_kdc_configuration_t config,
 		 struct descr *d)
 {
     char *s, *p, *t;
@@ -790,7 +790,7 @@ http1_request_is_complete(const unsigned char *req, size_t len)
 
 static void
 handle_tcp(krb5_context context,
-	   krb5_kdc_configuration *config,
+	   krb5_kdc_configuration_t config,
 	   struct descr *d, int idx, int min_free)
 {
     unsigned char buf[1024];
@@ -931,7 +931,7 @@ next_min_free(krb5_context context, struct descr **d, unsigned int *ndescr)
 }
 
 static void
-loop(krb5_context context, krb5_kdc_configuration *config,
+loop(krb5_context context, krb5_kdc_configuration_t config,
      struct descr **dp, unsigned int *ndescrp, int islive)
 {
     struct descr *d = *dp;
@@ -1021,7 +1021,7 @@ loop(krb5_context context, krb5_kdc_configuration *config,
 
 #ifdef __APPLE__
 static void
-bonjour_kid(krb5_context context, krb5_kdc_configuration *config, const char *argv0, int *islive)
+bonjour_kid(krb5_context context, krb5_kdc_configuration_t config, const char *argv0, int *islive)
 {
     char buf;
 
@@ -1060,7 +1060,7 @@ kill_kids(pid_t *pids, int max_kids, int sig)
 }
 
 static int
-reap_kid(krb5_context context, krb5_kdc_configuration *config,
+reap_kid(krb5_context context, krb5_kdc_configuration_t config,
 	 pid_t *pids, int max_kids, int options)
 {
     pid_t pid;
@@ -1113,7 +1113,7 @@ reap_kid(krb5_context context, krb5_kdc_configuration *config,
 }
 
 static int
-reap_kids(krb5_context context, krb5_kdc_configuration *config,
+reap_kids(krb5_context context, krb5_kdc_configuration_t config,
 	  pid_t *pids, int max_kids)
 {
     int reaped = 0;
@@ -1140,7 +1140,7 @@ select_sleep(int microseconds)
 
 void
 start_kdc(krb5_context context,
-	  krb5_kdc_configuration *config, const char *argv0)
+	  krb5_kdc_configuration_t config, const char *argv0)
 {
     struct timeval tv1;
     struct timeval tv2;

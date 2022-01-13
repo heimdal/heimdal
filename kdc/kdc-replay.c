@@ -55,7 +55,7 @@ main(int argc, char **argv)
 {
     krb5_error_code ret;
     krb5_context context;
-    krb5_kdc_configuration *config;
+    krb5_kdc_configuration_t config;
     krb5_storage *sp;
     int fd, optidx = 0;
 

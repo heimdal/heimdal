@@ -47,7 +47,7 @@
 #include <gssapi/gssapi.h>
 
 #define heim_pcontext krb5_context
-#define heim_pconfig krb5_kdc_configuration *
+#define heim_pconfig krb5_kdc_configuration_t
 #include <heimbase-svc.h>
 
 enum krb5_kdc_trpolicy {
@@ -63,14 +63,14 @@ enum krb5_kdc_trpolicy {
     const char *app
 
 #ifndef __KDC_LOCL_H__
-struct krb5_kdc_configuration {
+struct krb5_kdc_configuration_desc {
     KRB5_KDC_CONFIGURATION_COMMON_ELEMENTS;
 };
 #else
-struct krb5_kdc_configuration;
+struct krb5_kdc_configuration_desc;
 #endif
 
-typedef struct krb5_kdc_configuration krb5_kdc_configuration;
+typedef struct krb5_kdc_configuration_desc *krb5_kdc_configuration_t;
 
 #define ASTGS_REQUEST_DESC_COMMON_ELEMENTS			\
     HEIM_SVC_REQUEST_DESC_COMMON_ELEMENTS;			\

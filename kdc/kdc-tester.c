@@ -48,7 +48,7 @@ int detach_from_console = -1;
 int daemon_child = -1;
 int do_bonjour = -1;
 
-static krb5_kdc_configuration *kdc_config;
+static krb5_kdc_configuration_t kdc_config;
 static krb5_context kdc_context;
 
 static struct sockaddr_storage sa;

@@ -151,10 +151,10 @@ add_one_address (krb5_context context, const char *str, int first)
     krb5_free_addresses (context, &tmp);
 }
 
-krb5_kdc_configuration *
+krb5_kdc_configuration_t 
 configure(krb5_context context, int argc, char **argv, int *optidx)
 {
-    krb5_kdc_configuration *config;
+    krb5_kdc_configuration_t config;
     krb5_error_code ret;
     
     const char *p;

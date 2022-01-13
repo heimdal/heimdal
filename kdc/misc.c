@@ -35,7 +35,7 @@
 
 static int
 name_type_ok(krb5_context context,
-             krb5_kdc_configuration *config,
+             krb5_kdc_configuration_t config,
              krb5_const_principal principal)
 {
     int nt = krb5_principal_get_type(context, principal);
@@ -64,7 +64,7 @@ synthesize_hdb_close(krb5_context context, struct HDB *db)
  */
 static krb5_error_code
 synthesize_client(krb5_context context,
-                  krb5_kdc_configuration *config,
+                  krb5_kdc_configuration_t config,
                   krb5_const_principal princ,
                   HDB **db,
                   hdb_entry_ex **h)
@@ -124,7 +124,7 @@ synthesize_client(krb5_context context,
 
 KDC_LIB_FUNCTION krb5_error_code KDC_LIB_CALL
 _kdc_db_fetch(krb5_context context,
-	      krb5_kdc_configuration *config,
+	      krb5_kdc_configuration_t config,
 	      krb5_const_principal principal,
 	      unsigned flags,
 	      krb5uint32 *kvno_ptr,
@@ -259,7 +259,7 @@ _kdc_free_ent(krb5_context context, hdb_entry_ex *ent)
 
 krb5_error_code
 _kdc_get_preferred_key(krb5_context context,
-		       krb5_kdc_configuration *config,
+		       krb5_kdc_configuration_t config,
 		       hdb_entry_ex *h,
 		       const char *name,
 		       krb5_enctype *enctype,

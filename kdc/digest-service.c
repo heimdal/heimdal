@@ -48,7 +48,7 @@ struct Kx509Request;
 
 #include <kdc-private.h>
 
-krb5_kdc_configuration *config;
+krb5_kdc_configuration_t config;
 
 static void
 ntlm_service(void *ctx, const heim_idata *req,

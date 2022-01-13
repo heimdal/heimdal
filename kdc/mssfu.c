@@ -45,7 +45,7 @@
 
 static krb5_error_code
 check_constrained_delegation(krb5_context context,
-			     krb5_kdc_configuration *config,
+			     krb5_kdc_configuration_t config,
 			     HDB *clientdb,
 			     hdb_entry_ex *client,
 			     hdb_entry_ex *server,

@@ -56,7 +56,7 @@ const struct units _kdc_digestunits[] = {
 
 static krb5_error_code
 get_digest_key(krb5_context context,
-	       krb5_kdc_configuration *config,
+	       krb5_kdc_configuration_t config,
 	       hdb_entry_ex *server,
 	       krb5_crypto *crypto)
 {
@@ -162,7 +162,7 @@ static const unsigned char ms_rfc3079_magic1[27] = {
 
 static krb5_error_code
 get_password_entry(krb5_context context,
-		   krb5_kdc_configuration *config,
+		   krb5_kdc_configuration_t config,
 		   const char *username,
 		   char **password)
 {
@@ -200,7 +200,7 @@ get_password_entry(krb5_context context,
 
 krb5_error_code
 _kdc_do_digest(krb5_context context,
-	       krb5_kdc_configuration *config,
+	       krb5_kdc_configuration_t config,
 	       const struct DigestREQ *req, krb5_data *reply,
 	       const char *from, struct sockaddr *addr)
 {

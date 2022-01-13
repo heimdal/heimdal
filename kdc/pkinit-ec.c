@@ -186,7 +186,7 @@ _kdc_generate_ecdh_keyblock(krb5_context context,
 #ifdef HAVE_HCRYPTO_W_OPENSSL
 static krb5_error_code
 get_ecdh_param(krb5_context context,
-               krb5_kdc_configuration *config,
+               krb5_kdc_configuration_t config,
                SubjectPublicKeyInfo *dh_key_info,
                EC_KEY **out)
 {
@@ -248,7 +248,7 @@ get_ecdh_param(krb5_context context,
 
 krb5_error_code
 _kdc_get_ecdh_param(krb5_context context,
-                    krb5_kdc_configuration *config,
+                    krb5_kdc_configuration_t config,
                     SubjectPublicKeyInfo *dh_key_info,
                     void **out)
 {

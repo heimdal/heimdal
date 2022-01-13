@@ -36,7 +36,7 @@
 #include "kdc_locl.h"
 
 static krb5_error_code
-add_db(krb5_context context, struct krb5_kdc_configuration *c,
+add_db(krb5_context context, krb5_kdc_configuration_t c,
        const char *conf, const char *master_key)
 {
     krb5_error_code ret;
@@ -65,7 +65,7 @@ add_db(krb5_context context, struct krb5_kdc_configuration *c,
 }
 
 KDC_LIB_FUNCTION krb5_error_code KDC_LIB_CALL
-krb5_kdc_set_dbinfo(krb5_context context, struct krb5_kdc_configuration *c)
+krb5_kdc_set_dbinfo(krb5_context context, krb5_kdc_configuration_t c)
 {
     struct hdb_dbinfo *info, *d;
     krb5_error_code ret;

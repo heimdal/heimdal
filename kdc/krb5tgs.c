@@ -77,7 +77,7 @@ _kdc_synthetic_princ_used_p(krb5_context context, krb5_ticket *ticket)
 
 krb5_error_code
 _kdc_check_pac(krb5_context context,
-	       krb5_kdc_configuration *config,
+	       krb5_kdc_configuration_t config,
 	       const krb5_principal client_principal,
 	       const krb5_principal delegated_proxy_principal,
 	       hdb_entry_ex *client,
@@ -357,7 +357,7 @@ check_tgs_flags(astgs_request_t r, KDC_REQ_BODY *b,
 
 krb5_error_code
 _kdc_check_client_matches_target_service(krb5_context context,
-					 krb5_kdc_configuration *config,
+					 krb5_kdc_configuration_t config,
 					 HDB *clientdb,
 					 hdb_entry_ex *client,
 					 hdb_entry_ex *target_server,
@@ -394,7 +394,7 @@ _kdc_check_client_matches_target_service(krb5_context context,
 
 krb5_error_code
 _kdc_verify_flags(krb5_context context,
-		  krb5_kdc_configuration *config,
+		  krb5_kdc_configuration_t config,
 		  const EncTicketPart *et,
 		  const char *pstr)
 {
@@ -415,7 +415,7 @@ _kdc_verify_flags(krb5_context context,
 
 static krb5_error_code
 fix_transited_encoding(krb5_context context,
-		       krb5_kdc_configuration *config,
+		       krb5_kdc_configuration_t config,
 		       krb5_boolean check_policy,
 		       const TransitedEncoding *tr,
 		       EncTicketPart *et,
@@ -800,7 +800,7 @@ out:
 
 static krb5_error_code
 tgs_check_authenticator(krb5_context context,
-			krb5_kdc_configuration *config,
+			krb5_kdc_configuration_t config,
 	                krb5_auth_context ac,
 			KDC_REQ_BODY *b,
 			krb5_keyblock *key)
@@ -855,7 +855,7 @@ out:
 }
 
 static krb5_boolean
-need_referral(krb5_context context, krb5_kdc_configuration *config,
+need_referral(krb5_context context, krb5_kdc_configuration_t config,
 	      const KDCOptions * const options, krb5_principal server,
 	      krb5_realm **realms)
 {
@@ -913,7 +913,7 @@ tgs_parse_request(astgs_request_t r,
 		  int **cusec,
 		  AuthorizationData **auth_data)
 {
-    krb5_kdc_configuration *config = r->config;
+    krb5_kdc_configuration_t config = r->config;
     KDC_REQ_BODY *b = &r->req.req_body;
     static char failed[] = "<unparse_name failed>";
     krb5_ap_req ap_req;
@@ -1215,7 +1215,7 @@ out:
 
 static krb5_error_code
 build_server_referral(krb5_context context,
-		      krb5_kdc_configuration *config,
+		      krb5_kdc_configuration_t config,
 		      krb5_crypto session,
 		      krb5_const_realm referred_realm,
 		      const PrincipalName *true_principal_name,
@@ -1295,7 +1295,7 @@ eout:
  */
 krb5_error_code
 _kdc_db_fetch_client(krb5_context context,
-		     krb5_kdc_configuration *config,
+		     krb5_kdc_configuration_t config,
 		     int flags,
 		     krb5_principal cp,
 		     const char *cpn,
@@ -1351,7 +1351,7 @@ tgs_build_reply(astgs_request_t priv,
 		const struct sockaddr *from_addr)
 {
     krb5_context context = priv->context;
-    krb5_kdc_configuration *config = priv->config;
+    krb5_kdc_configuration_t config = priv->config;
     KDC_REQ_BODY *b = &priv->req.req_body;
     const char *from = priv->from;
     krb5_error_code ret, ret2;
@@ -2070,7 +2070,7 @@ out:
 krb5_error_code
 _kdc_tgs_rep(astgs_request_t r)
 {
-    krb5_kdc_configuration *config = r->config;
+    krb5_kdc_configuration_t config = r->config;
     KDC_REQ *req = &r->req;
     krb5_data *data = r->reply;
     const char *from = r->from;

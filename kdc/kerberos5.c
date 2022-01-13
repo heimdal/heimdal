@@ -437,7 +437,7 @@ _kdc_log_timestamp(astgs_request_t r, const char *type,
 		   KerberosTime authtime, KerberosTime *starttime,
 		   KerberosTime endtime, KerberosTime *renew_till)
 {
-    krb5_kdc_configuration *config = r->config;
+    krb5_kdc_configuration_t config = r->config;
     char authtime_str[100], starttime_str[100],
 	endtime_str[100], renewtime_str[100];
 
@@ -1004,7 +1004,7 @@ static const struct kdc_patypes pat[] = {
 static void
 log_patypes(astgs_request_t r, METHOD_DATA *padata)
 {
-    krb5_kdc_configuration *config = r->config;
+    krb5_kdc_configuration_t config = r->config;
     struct rk_strpool *p = NULL;
     char *str;
     size_t n, m;
@@ -1050,7 +1050,7 @@ pa_used_flag_isset(astgs_request_t r, unsigned int flag)
 
 krb5_error_code
 _kdc_encode_reply(krb5_context context,
-		  krb5_kdc_configuration *config,
+		  krb5_kdc_configuration_t config,
 		  astgs_request_t r, uint32_t nonce,
 		  krb5_enctype etype,
 		  int skvno, const EncryptionKey *skey,
@@ -1291,7 +1291,7 @@ make_etype_info_entry(krb5_context context,
 
 static krb5_error_code
 get_pa_etype_info(krb5_context context,
-		  krb5_kdc_configuration *config,
+		  krb5_kdc_configuration_t config,
 		  METHOD_DATA *md, Key *ckey,
 		  krb5_boolean include_salt)
 {
@@ -1413,7 +1413,7 @@ make_etype_info2_entry(ETYPE_INFO2_ENTRY *ent,
 
 static krb5_error_code
 get_pa_etype_info2(krb5_context context,
-		   krb5_kdc_configuration *config,
+		   krb5_kdc_configuration_t config,
 		   METHOD_DATA *md, Key *ckey,
 		   krb5_boolean include_salt)
 {
@@ -1468,7 +1468,7 @@ newer_enctype_present(krb5_context context,
 
 static krb5_error_code
 get_pa_etype_info_both(krb5_context context,
-		       krb5_kdc_configuration *config,
+		       krb5_kdc_configuration_t config,
 		       struct KDC_REQ_BODY_etype *etype_list,
 		       METHOD_DATA *md, Key *ckey,
 		       krb5_boolean include_salt)
@@ -1735,7 +1735,7 @@ krb5_boolean
 _kdc_check_addresses(astgs_request_t r, HostAddresses *addresses,
 		     const struct sockaddr *from)
 {
-    krb5_kdc_configuration *config = r->config;
+    krb5_kdc_configuration_t config = r->config;
     krb5_error_code ret;
     krb5_address addr;
     krb5_boolean result;
@@ -2020,7 +2020,7 @@ add_synthetic_princ_ad(astgs_request_t r)
 
 static krb5_error_code
 get_local_tgs(krb5_context context,
-	      krb5_kdc_configuration *config,
+	      krb5_kdc_configuration_t config,
 	      krb5_const_realm realm,
 	      hdb_entry_ex **krbtgt)
 {
@@ -2052,7 +2052,7 @@ get_local_tgs(krb5_context context,
 krb5_error_code
 _kdc_as_rep(astgs_request_t r)
 {
-    krb5_kdc_configuration *config = r->config;
+    krb5_kdc_configuration_t config = r->config;
     KDC_REQ *req = &r->req;
     const char *from = r->from;
     KDC_REQ_BODY *b = NULL;

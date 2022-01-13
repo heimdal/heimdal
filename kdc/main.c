@@ -115,7 +115,7 @@ main(int argc, char **argv)
 {
     krb5_error_code ret;
     krb5_context context;
-    krb5_kdc_configuration *config;
+    krb5_kdc_configuration_t config;
     int optidx = 0;
 
     setprogname(argv[0]);

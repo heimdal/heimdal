@@ -38,7 +38,7 @@
 KDC_LIB_FUNCTION void KDC_LIB_CALL
 kdc_openlog(krb5_context context,
 	    const char *service,
-	    krb5_kdc_configuration *config)
+	    krb5_kdc_configuration_t config)
 {
     char **s = NULL, **p;
     krb5_initlog(context, "kdc", &config->logf);
@@ -65,7 +65,7 @@ kdc_openlog(krb5_context context,
 
 KDC_LIB_FUNCTION char * KDC_LIB_CALL
 kdc_log_msg_va(krb5_context context,
-	       krb5_kdc_configuration *config,
+	       krb5_kdc_configuration_t config,
 	       int level, const char *fmt, va_list ap)
     __attribute__ ((__format__ (__printf__, 4, 0)))
 {
@@ -76,7 +76,7 @@ kdc_log_msg_va(krb5_context context,
 
 KDC_LIB_FUNCTION char * KDC_LIB_CALL
 kdc_log_msg(krb5_context context,
-	    krb5_kdc_configuration *config,
+	    krb5_kdc_configuration_t config,
 	    int level, const char *fmt, ...)
     __attribute__ ((__format__ (__printf__, 4, 5)))
 {
@@ -90,7 +90,7 @@ kdc_log_msg(krb5_context context,
 
 KDC_LIB_FUNCTION void KDC_LIB_CALL
 kdc_vlog(krb5_context context,
-         krb5_kdc_configuration *config,
+         krb5_kdc_configuration_t config,
          int level, const char *fmt, va_list ap)
     __attribute__ ((__format__ (__printf__, 4, 0)))
 {
@@ -99,7 +99,7 @@ kdc_vlog(krb5_context context,
 
 KDC_LIB_FUNCTION void KDC_LIB_CALL
 kdc_log(krb5_context context,
-	krb5_kdc_configuration *config,
+	krb5_kdc_configuration_t config,
 	int level, const char *fmt, ...)
     __attribute__ ((__format__ (__printf__, 4, 5)))
 {

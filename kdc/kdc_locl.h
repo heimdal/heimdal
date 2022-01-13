@@ -53,20 +53,14 @@ typedef struct gss_client_params gss_client_params;
 #define KFE_USE_CLIENT	0x4
 
 #define heim_pcontext krb5_context
-#define heim_pconfig krb5_kdc_configuration *
+#define heim_pconfig krb5_kdc_configuration_t 
 #include <heimbase-svc.h>
 
 #define KDC_AUDIT_EATWHITE      HEIM_SVC_AUDIT_EATWHITE
 #define KDC_AUDIT_VIS           HEIM_SVC_AUDIT_VIS
 #define KDC_AUDIT_VISLAST       HEIM_SVC_AUDIT_VISLAST
 
-struct kdc_request_desc {
-    HEIM_SVC_REQUEST_DESC_COMMON_ELEMENTS;
-};
-
-struct kdc_patypes;
-
-struct krb5_kdc_configuration {
+struct krb5_kdc_configuration_desc {
     KRB5_KDC_CONFIGURATION_COMMON_ELEMENTS;
 
     time_t kdc_warn_pwexpire; /* time before expiration to print a warning */
@@ -131,6 +125,12 @@ struct krb5_kdc_configuration {
 
     size_t max_datagram_reply_length;
 };
+
+struct kdc_request_desc {
+    HEIM_SVC_REQUEST_DESC_COMMON_ELEMENTS;
+};
+
+struct kdc_patypes;
 
 struct astgs_request_desc {
     ASTGS_REQUEST_DESC_COMMON_ELEMENTS;
@@ -203,13 +203,13 @@ extern char *runas_string;
 extern char *chroot_string;
 
 void
-start_kdc(krb5_context context, krb5_kdc_configuration *config, const char *argv0);
+start_kdc(krb5_context context, krb5_kdc_configuration_t config, const char *argv0);
 
-krb5_kdc_configuration *
+krb5_kdc_configuration_t 
 configure(krb5_context context, int argc, char **argv, int *optidx);
 
 #ifdef __APPLE__
-void bonjour_announce(krb5_context, krb5_kdc_configuration *);
+void bonjour_announce(krb5_context, krb5_kdc_configuration_t );
 #endif
 
 #endif /* __KDC_LOCL_H__ */

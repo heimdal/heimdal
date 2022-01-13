@@ -848,21 +848,28 @@ mk_kx509_req(krb5_context context,
 
     /* Add the the key and HMAC to the message */
     HMAC_CTX_init(&ctx);
-    HMAC_Init_ex(&ctx, kx509_ctx->hmac_key->keyvalue.data,
-                 kx509_ctx->hmac_key->keyvalue.length, EVP_sha1(), NULL);
-    HMAC_Update(&ctx, version_2_0, sizeof(version_2_0));
-    if (private_key || kx509_ctx->given_csr.data) {
-        HMAC_Update(&ctx, kx509_req.pk_key.data, kx509_req.pk_key.length);
+    if (HMAC_Init_ex(&ctx, kx509_ctx->hmac_key->keyvalue.data,
+                     kx509_ctx->hmac_key->keyvalue.length,
+                     EVP_sha1(), NULL) == 0) {
+        HMAC_CTX_cleanup(&ctx);
+        ret = krb5_enomem(context);
     } else {
-        /* Probe */
-        HMAC_Update(&ctx, kx509_req.authenticator.data, kx509_req.authenticator.length);
+        HMAC_Update(&ctx, version_2_0, sizeof(version_2_0));
+        if (private_key || kx509_ctx->given_csr.data) {
+            HMAC_Update(&ctx, kx509_req.pk_key.data, kx509_req.pk_key.length);
+        } else {
+            /* Probe */
+            HMAC_Update(&ctx, kx509_req.authenticator.data, kx509_req.authenticator.length);
+        }
+        HMAC_Final(&ctx, kx509_req.pk_hash.data, 0);
+        HMAC_CTX_cleanup(&ctx);
     }
-    HMAC_Final(&ctx, kx509_req.pk_hash.data, 0);
-    HMAC_CTX_cleanup(&ctx);
 
     /* Encode the message, prefix `version_2_0', output the result */
-    ASN1_MALLOC_ENCODE(Kx509Request, pre_req.data, pre_req.length, &kx509_req, &len, ret);
-    ret = krb5_data_alloc(req, pre_req.length + sizeof(version_2_0));
+    if (ret == 0)
+        ASN1_MALLOC_ENCODE(Kx509Request, pre_req.data, pre_req.length, &kx509_req, &len, ret);
+    if (ret == 0)
+        ret = krb5_data_alloc(req, pre_req.length + sizeof(version_2_0));
     if (ret == 0) {
         memcpy(req->data, version_2_0, sizeof(version_2_0));
         memcpy(((unsigned char *)req->data) + sizeof(version_2_0),
@@ -984,8 +991,13 @@ rd_kx509_resp(krb5_context context,
     }
 
     HMAC_CTX_init(&ctx);
-    HMAC_Init_ex(&ctx, kx509_ctx->hmac_key->keyvalue.data,
-                 kx509_ctx->hmac_key->keyvalue.length, EVP_sha1(), NULL);
+    if (HMAC_Init_ex(&ctx, kx509_ctx->hmac_key->keyvalue.data,
+                     kx509_ctx->hmac_key->keyvalue.length, EVP_sha1(), NULL) == 0) {
+        free_Kx509Response(&r);
+        HMAC_CTX_cleanup(&ctx);
+        return krb5_enomem(context);
+    }
+
     HMAC_Update(&ctx, version_2_0, sizeof(version_2_0));
 
     {

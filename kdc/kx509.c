@@ -157,9 +157,11 @@ verify_req_hash(krb5_context context,
     }
 
     HMAC_CTX_init(&ctx);
-    HMAC_Init_ex(&ctx,
-                 key->keyvalue.data, key->keyvalue.length,
-                 EVP_sha1(), NULL);
+    if (HMAC_Init_ex(&ctx, key->keyvalue.data, key->keyvalue.length,
+                     EVP_sha1(), NULL) == 0) {
+        HMAC_CTX_cleanup(&ctx);
+        return krb5_enomem(context);
+    }
     if (sizeof(digest) != HMAC_size(&ctx))
         krb5_abortx(context, "runtime error, hmac buffer wrong size in kx509");
     HMAC_Update(&ctx, version_2_0, sizeof(version_2_0));
@@ -186,14 +188,17 @@ calculate_reply_hash(krb5_context context,
                      krb5_keyblock *key,
                      Kx509Response *rep)
 {
-    krb5_error_code ret;
+    krb5_error_code ret = 0;
     HMAC_CTX ctx;
 
     HMAC_CTX_init(&ctx);
 
-    HMAC_Init_ex(&ctx, key->keyvalue.data, key->keyvalue.length,
-                 EVP_sha1(), NULL);
-    ret = krb5_data_alloc(rep->hash, HMAC_size(&ctx));
+    if (HMAC_Init_ex(&ctx, key->keyvalue.data, key->keyvalue.length,
+                     EVP_sha1(), NULL) == 0)
+        ret = krb5_enomem(context);
+
+    if (ret == 0)
+        ret = krb5_data_alloc(rep->hash, HMAC_size(&ctx));
     if (ret) {
         HMAC_CTX_cleanup(&ctx);
         return krb5_enomem(context);

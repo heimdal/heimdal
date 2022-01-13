@@ -167,7 +167,10 @@ HMAC(const EVP_MD *md,
     HMAC_CTX ctx;
 
     HMAC_CTX_init(&ctx);
-    HMAC_Init_ex(&ctx, key, key_size, md, NULL);
+    if (HMAC_Init_ex(&ctx, key, key_size, md, NULL) == 0) {
+        HMAC_CTX_cleanup(&ctx);
+        return NULL;
+    }
     HMAC_Update(&ctx, data, data_size);
     HMAC_Final(&ctx, hash, hash_len);
     HMAC_CTX_cleanup(&ctx);

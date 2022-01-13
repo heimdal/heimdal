@@ -1740,15 +1740,22 @@ mac_csrf_token(kadmin_request_desc r, krb5_storage *sp)
             ret = krb5_enomem(r->context);
     /* HMAC the token body and the client principal name */
     if (ret == 0) {
-        HMAC_Init_ex(ctx, princ.key_data[i].key_data_contents[0], princ.key_data[i].key_data_length[0], EVP_sha256(), NULL);
-        HMAC_Update(ctx, data.data, data.length);
-        HMAC_Update(ctx, r->cname, strlen(r->cname));
-        HMAC_Final(ctx, mac, &maclen);
-        krb5_data_free(&data);
-        data.length = maclen;
-        data.data = mac;
-        if (krb5_storage_write(sp, mac, maclen) != maclen)
+        if (HMAC_Init_ex(ctx, princ.key_data[i].key_data_contents[0],
+                         princ.key_data[i].key_data_length[0], EVP_sha256(),
+                         NULL) == 0) {
+            HMAC_CTX_cleanup(ctx);
             ret = krb5_enomem(r->context);
+        } else {
+            HMAC_Update(ctx, data.data, data.length);
+            HMAC_Update(ctx, r->cname, strlen(r->cname));
+            HMAC_Final(ctx, mac, &maclen);
+            HMAC_CTX_cleanup(ctx);
+            krb5_data_free(&data);
+            data.length = maclen;
+            data.data = mac;
+            if (krb5_storage_write(sp, mac, maclen) != maclen)
+                ret = krb5_enomem(r->context);
+        }
     }
     krb5_free_principal(r->context, p);
     if (freeit)

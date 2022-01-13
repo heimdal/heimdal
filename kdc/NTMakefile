@@ -51,6 +51,7 @@ INCFILES=\
 	$(INCDIR)\kdc.h		\
 	$(INCDIR)\kdc-protos.h	\
 	$(INCDIR)\kdc-private.h	\
+	$(INCDIR)\krb5\kdc-audit.h \
 	$(INCDIR)\krb5\kdc-plugin.h
 
 all:: $(INCFILES) $(LIBKDC) $(BINPROGRAMS) $(SBINPROGRAMS) $(LIBEXECPROGRAMS)

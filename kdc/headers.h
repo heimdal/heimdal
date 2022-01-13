@@ -105,6 +105,7 @@
 #endif
 #include <kdc.h>
 #include <kdc-plugin.h>
+#include <kdc-audit.h>
 
 #include <heimbase.h>
 

@@ -100,10 +100,20 @@ pac_verify(void *ctx,
 
 static void logit(const char *what, astgs_request_t r)
 {
-    krb5_warnx(r->context, "%s: client %s server %s",
+    kdc_request_prop_variant context, cname, sname;
+
+    kdc_request_get_property((kdc_request_t)r, KDC_REQUEST_PROP_KRB5_CONTEXT, &context);
+
+    kdc_request_copy_property((kdc_request_t)r, KDC_REQUEST_PROP_CLIENT_NAME, &cname);
+    kdc_request_copy_property((kdc_request_t)r, KDC_REQUEST_PROP_SERVER_NAME, &sname);
+
+    krb5_warnx(context.context, "%s: client %s server %s",
 	       what,
-	       r->cname ? r->cname : "<unknown>",
-	       r->sname ? r->sname : "<unknown>");
+	       cname.str ? cname.str : "<unknown>",
+	       sname.str ? sname.str : "<unknown>");
+
+    krb5_xfree(cname.str);
+    krb5_xfree(sname.str);
 }
 
 static krb5_error_code KRB5_CALLCONV
@@ -137,10 +147,12 @@ static krb5_error_code KRB5_CALLCONV
 audit(void *ctx, astgs_request_t r)
 {
     heim_number_t n;
+    kdc_request_prop_variant ret;
 
     logit("audit", r);
 
-    if (r->ret)
+    kdc_request_copy_property((kdc_request_t)r, KDC_REQUEST_PROP_ERROR_CODE, &ret);
+    if (ret.error)
 	return 0; /* finalize_reply only called in success */
 
     n = kdc_request_get_attribute((kdc_request_t)r,

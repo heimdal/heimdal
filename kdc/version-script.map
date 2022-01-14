@@ -24,6 +24,12 @@ HEIMDAL_KDC_1.0 {
 		kdc_request_get_attribute;
 		kdc_request_copy_attribute;
 		kdc_request_delete_attribute;
+		kdc_request_copy_property;
+		kdc_request_get_property;
+		kdc_request_set_property;
+		kdc_configuration_copy_property;
+		kdc_configuration_get_property;
+		kdc_configuration_set_property;
 		kdc_audit_addkv;
 		kdc_audit_addkv_number;
 		kdc_audit_addkv_object;

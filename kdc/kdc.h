@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-2003 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997-2022 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  *
  * Copyright (c) 2005 Andrew Bartlett <abartlet@samba.org>
@@ -46,129 +46,22 @@
 #include <kx509_asn1.h>
 #include <gssapi/gssapi.h>
 
-#define heim_pcontext krb5_context
-#define heim_pconfig krb5_kdc_configuration *
-#include <heimbase-svc.h>
-
 enum krb5_kdc_trpolicy {
     TRPOLICY_ALWAYS_CHECK,
     TRPOLICY_ALLOW_PER_PRINCIPAL,
     TRPOLICY_ALWAYS_HONOUR_REQUEST
 };
 
-typedef struct krb5_kdc_configuration {
-    krb5_boolean require_preauth; /* require preauth for all principals */
-    time_t kdc_warn_pwexpire; /* time before expiration to print a warning */
+struct krb5_kdc_configuration;
+typedef struct krb5_kdc_configuration krb5_kdc_configuration;
 
-    struct HDB **db;
-    int num_db;
-
-    int num_kdc_processes;
-
-    krb5_boolean encode_as_rep_as_tgs_rep; /* bug compatibility */
-
-    /*
-     * Windows 2019 (and earlier versions) always sends the salt
-     * and Samba has testsuites that check this behaviour, so a
-     * Samba AD DC will set this flag to match the AS-REP packet
-     * exactly.
-     */
-    krb5_boolean force_include_pa_etype_salt;
-
-    krb5_boolean tgt_use_strongest_session_key;
-    krb5_boolean preauth_use_strongest_session_key;
-    krb5_boolean svc_use_strongest_session_key;
-    krb5_boolean use_strongest_server_key;
-
-    krb5_boolean check_ticket_addresses;
-    krb5_boolean warn_ticket_addresses;
-    krb5_boolean allow_null_ticket_addresses;
-    krb5_boolean allow_anonymous;
-    krb5_boolean historical_anon_realm;
-    krb5_boolean strict_nametypes;
-    enum krb5_kdc_trpolicy trpolicy;
-
-    krb5_boolean require_pac;
-    krb5_boolean enable_armored_pa_enc_timestamp;
-    krb5_boolean enable_unarmored_pa_enc_timestamp;
-
-    krb5_boolean enable_pkinit;
-    krb5_boolean pkinit_princ_in_cert;
-    const char *pkinit_kdc_identity;
-    const char *pkinit_kdc_anchors;
-    const char *pkinit_kdc_friendly_name;
-    const char *pkinit_kdc_ocsp_file;
-    char **pkinit_kdc_cert_pool;
-    char **pkinit_kdc_revoke;
-    int pkinit_dh_min_bits;
-    /* XXX Turn these into bit-fields */
-    int pkinit_require_binding;
-    int pkinit_allow_proxy_certs;
-    int synthetic_clients;
-    int pkinit_max_life_from_cert_extension;
-    krb5_timestamp pkinit_max_life_from_cert;
-    krb5_timestamp pkinit_max_life_bound;
-    krb5_timestamp synthetic_clients_max_life;
-    krb5_timestamp synthetic_clients_max_renew;
-
-    krb5_log_facility *logf;
-
-    int enable_digest;
-    int digests_allowed;
-
-    int enable_gss_preauth;
-    int enable_gss_auth_data;
-    gss_OID_set gss_mechanisms_allowed;
-    gss_OID_set gss_cross_realm_mechanisms_allowed;
-
-    size_t max_datagram_reply_length;
-
-    int enable_kx509;
-
-    const char *app;
-} krb5_kdc_configuration;
-
-#define ASTGS_REQUEST_DESC_COMMON_ELEMENTS			\
-    HEIM_SVC_REQUEST_DESC_COMMON_ELEMENTS;			\
-								\
-    /* AS-REQ or TGS-REQ */					\
-    KDC_REQ req;						\
-								\
-    /* AS-REP or TGS-REP */					\
-    KDC_REP rep;						\
-    EncTicketPart et;						\
-    EncKDCRepPart ek;						\
-								\
-    /* client principal (AS) or TGT/S4U principal (TGS) */	\
-    krb5_principal client_princ;				\
-    hdb_entry *client;						\
-    HDB *clientdb;						\
-    krb5_principal canon_client_princ;				\
-								\
-    /* server principal */					\
-    krb5_principal server_princ;				\
-    hdb_entry *server;						\
-    HDB *serverdb;						\
-								\
-    /* presented ticket in TGS-REQ (unused by AS) */		\
-    krb5_principal *krbtgt_princ;				\
-    hdb_entry *krbtgt;						\
-    HDB *krbtgtdb;						\
-    krb5_ticket *ticket;					\
-								\
-    krb5_keyblock reply_key;					\
-								\
-    krb5_pac pac;						\
-    uint64_t pac_attributes
-
-#ifndef __KDC_LOCL_H__
-struct astgs_request_desc {
-    ASTGS_REQUEST_DESC_COMMON_ELEMENTS;
-};
-#endif
-
+struct kdc_request_desc;
 typedef struct kdc_request_desc *kdc_request_t;
+
+struct astgs_request_desc;
 typedef struct astgs_request_desc *astgs_request_t;
+
+struct kx509_req_context_desc;
 typedef struct kx509_req_context_desc *kx509_req_context;
 
 struct krb5_kdc_service {
@@ -179,9 +72,63 @@ struct krb5_kdc_service {
     krb5_error_code (*process)(kdc_request_t *, int *claim);
 };
 
+typedef union kdc_request_prop_variant {
+    uint8_t ui8;
+    uint16_t ui16;
+    uint32_t ui32;
+    uint64_t ui64;
+    uintptr_t uiptr;
+    krb5_boolean b;
+    time_t t;
+    const char *cstr;
+    char *str;
+    void *ptr;
+    krb5_context context;
+    krb5_kdc_configuration *config;
+    heim_context hcontext;
+    heim_log_facility *logf;
+    struct sockaddr_storage addr;
+    krb5_data data;
+    struct timeval tv;
+    krb5_error_code error;
+    KDC_REQ kdc_req;
+    KDC_REP kdc_rep;
+    EncTicketPart et;
+    EncKDCRepPart ek;
+    struct {
+	HDB *db;
+	hdb_entry entry;
+    } entry;
+    krb5_principal princ;
+    krb5_ticket *ticket;
+    krb5_keyblock key;
+    krb5_pac pac;
+    METHOD_DATA md;
+    PA_DATA padata;
+    struct {
+	uint32_t pactype;
+	krb5_data data;
+    } add_pac_buffer;
+} kdc_request_prop_variant, *kdc_request_prop_t;
+
+typedef union kdc_configuration_prop_variant {
+    uint8_t ui8;
+    uint16_t ui16;
+    uint32_t ui32;
+    uint64_t ui64;
+    uintptr_t uiptr;
+    krb5_boolean b;
+    time_t t;
+    const char *cstr;
+    char *str;
+    void *ptr;
+    heim_log_facility *logf;
+    struct {
+	size_t len;
+	HDB **val;
+    } db;
+} kdc_configuration_prop_variant, *kdc_configuration_prop_t;
+
 #include <kdc-protos.h>
 
-#undef heim_pcontext
-#undef heim_pconfig
-
-#endif
+#endif /* __KDC_H__ */

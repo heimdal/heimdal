@@ -57,7 +57,12 @@
  * Heimdal that supports keytab credentials.
  */
 
-#include "kdc_locl.h"
+#include <stdlib.h>
+
+#include "krb5_locl.h"
+
+#include <kdc.h>
+#include <kdc-plugin.h>
 
 #include <resolve.h>
 #include <common_plugin.h>
@@ -396,20 +401,46 @@ authorize(void *ctx,
 {
     struct altsecid_gss_preauth_authorizer_context *c = ctx;
     struct ad_server_tuple *server = NULL;
+    kdc_request_prop_variant krb;
+    kdc_request_prop_variant client;
+    kdc_request_prop_variant server_princ;
     krb5_error_code ret;
-    krb5_const_realm realm = krb5_principal_get_realm(r->context, r->client->principal);
+    krb5_const_realm realm;
     krb5_boolean reconnect_p = FALSE;
     krb5_boolean is_tgs;
     heim_data_t requestor_sid = NULL;
 
+    memset(&krb, 0, sizeof(krb));
+    memset(&client, 0, sizeof(client));
+    memset(&server_princ, 0, sizeof(server_princ));
+
     *authorized = FALSE;
     *mapped_name = NULL;
 
-    if (!krb5_principal_is_federated(r->context, r->client->principal) ||
-        (ret_flags & GSS_C_ANON_FLAG))
-        return KRB5_PLUGIN_NO_HANDLE;
+    ret = kdc_request_get_property((kdc_request_t)r,
+				   KDC_REQUEST_PROP_KRB5_CONTEXT, &krb);
+    if (ret)
+	goto out;
 
-    is_tgs = krb5_principal_is_krbtgt(r->context, r->server_princ);
+    ret = kdc_request_copy_property((kdc_request_t)r,
+				    KDC_REQUEST_PROP_CLIENT_ENTRY, &client);
+    if (ret)
+	goto out;
+
+    ret = kdc_request_copy_property((kdc_request_t)r,
+				    KDC_REQUEST_PROP_SERVER_PRINC, &server_princ);
+    if (ret)
+	goto out;
+
+    realm = krb5_principal_get_realm(krb.context, client.entry.entry.principal);
+
+    if (!krb5_principal_is_federated(krb.context, client.entry.entry.principal) ||
+        (ret_flags & GSS_C_ANON_FLAG)) {
+        ret = KRB5_PLUGIN_NO_HANDLE;
+	goto out;
+    }
+
+    is_tgs = krb5_principal_is_krbtgt(krb.context, server_princ.princ);
 
     HEIM_TAILQ_FOREACH(server, &c->servers, link) {
         if (strcmp(realm, server->realm) == 0)
@@ -418,13 +449,16 @@ authorize(void *ctx,
 
     if (server == NULL) {
         server = calloc(1, sizeof(*server));
-        if (server == NULL)
-            return krb5_enomem(r->context);
+        if (server == NULL) {
+            ret = krb5_enomem(krb.context);
+	    goto out;
+	}
 
         server->realm = strdup(realm);
         if (server->realm == NULL) {
             free(server);
-            return krb5_enomem(r->context);
+            ret = krb5_enomem(krb.context);
+	    goto out;
         }
 
         HEIM_TAILQ_INSERT_HEAD(&c->servers, server, link);
@@ -432,12 +466,12 @@ authorize(void *ctx,
 
     do {
         if (server->ld == NULL) {
-            ret = ad_connect(r->context, realm, server);
+            ret = ad_connect(krb.context, realm, server);
             if (ret)
-                return ret;
+                goto out;
         }
 
-        ret = ad_lookup(r->context, realm, server,
+        ret = ad_lookup(krb.context, realm, server,
                         initiator_name, mech_type,
                         mapped_name, is_tgs ? &requestor_sid : NULL);
         if (ret == KRB5KDC_ERR_SVC_UNAVAILABLE) {
@@ -457,12 +491,17 @@ authorize(void *ctx,
 	heim_release(requestor_sid);
     }
 
+out:
+    krb5_free_principal(krb.context, server_princ.princ);
+    hdb_free_entry(krb.context, client.entry.db, &client.entry.entry);
+
     return ret;
 }
 
 static KRB5_LIB_CALL krb5_error_code
 finalize_pac(void *ctx, astgs_request_t r)
 {
+    kdc_request_prop_variant prop;
     heim_data_t requestor_sid;
 
     requestor_sid = kdc_request_get_attribute((kdc_request_t)r,
@@ -472,8 +511,12 @@ finalize_pac(void *ctx, astgs_request_t r)
 
     kdc_audit_setkv_object((kdc_request_t)r, "gss_requestor_sid", requestor_sid);
 
-    return krb5_pac_add_buffer(r->context, r->pac, PAC_REQUESTOR_SID,
-			       heim_data_get_data(requestor_sid));
+    memset(&prop, 0, sizeof(prop));
+    prop.add_pac_buffer.pactype = PAC_REQUESTOR_SID;
+    prop.add_pac_buffer.data = *heim_data_get_data(requestor_sid);
+
+    return kdc_request_set_property((kdc_request_t)r,
+				    KDC_REQUEST_PROP_ADD_PAC_BUFFER, &prop);
 }
 
 static KRB5_LIB_CALL krb5_error_code

@@ -230,8 +230,8 @@ hx509_pem_read(hx509_context context,
 		where = INDATA;
 		goto indata;
 	    }
-            fallthrough
 	    /* FALLTHROUGH */
+            fallthrough
 	case INHEADER:
 	    if (buf[0] == '\0') {
 		where = INDATA;

@@ -424,8 +424,8 @@ int main(int argc, char **argv)
             break;
          case 'h':
             s_exit_code = EXIT_SUCCESS;
-            fallthrough
             /* FALLTHROUGH */
+            fallthrough
          default:
             s_usage(argv[0]);
          }

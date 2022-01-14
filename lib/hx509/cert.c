@@ -2438,12 +2438,12 @@ hx509_verify_path(hx509_context context,
 		 * EE checking below.
 		 */
 		type = EE_CERT;
-                fallthrough
                 /* FALLTHROUGH */
+                fallthrough
 	    }
-            fallthrough
 	}
         /* FALLTHROUGH */
+        fallthrough
 	case EE_CERT:
 	    /*
 	     * If there where any proxy certificates in the chain

@@ -325,17 +325,19 @@ kadm5_s_get_principal(void *server_handle,
 	    _krb5_put_int(buf, last_pw_expire, sizeof(buf));
 	    ret = add_tl_data(out, KRB5_TL_LAST_PWD_CHANGE, buf, sizeof(buf));
 	}
-        if (ret == 0)
-            ret = hdb_entry_get_krb5_config(&ent.entry, &krb5_config);
+
+        ret = hdb_entry_get_krb5_config(&ent.entry, &krb5_config);
         if (ret == 0 && krb5_config.length) {
             ret = add_tl_data(out, KRB5_TL_KRB5_CONFIG, krb5_config.data,
                               krb5_config.length);
+            if (ret)
+                goto out;
         }
 	/*
 	 * If the client was allowed to get key data, let it have the
 	 * password too.
 	 */
-	if (ret == 0 && (mask & KADM5_KEY_DATA)) {
+	if (mask & KADM5_KEY_DATA) {
 	    heim_utf8_string pw;
 
             /* XXX But not if the client doesn't have ext-keys */
@@ -344,12 +346,13 @@ kadm5_s_get_principal(void *server_handle,
 	    if (ret == 0) {
 		ret = add_tl_data(out, KRB5_TL_PASSWORD, pw, strlen(pw) + 1);
 		free(pw);
+                if (ret)
+                    goto out;
 	    }
 	    krb5_clear_error_message(context->context);
 	}
 
-        if (ret == 0)
-            ret = hdb_entry_get_pkinit_acl(&ent.entry, &acl);
+        ret = hdb_entry_get_pkinit_acl(&ent.entry, &acl);
 	if (ret == 0 && acl) {
 	    krb5_data buf;
 	    size_t len;
@@ -367,8 +370,7 @@ kadm5_s_get_principal(void *server_handle,
 		goto out;
 	}
 
-        if (ret == 0)
-            ret = hdb_entry_get_aliases(&ent.entry, &aliases);
+        ret = hdb_entry_get_aliases(&ent.entry, &aliases);
 	if (ret == 0 && aliases) {
 	    krb5_data buf;
 	    size_t len;
@@ -386,8 +388,7 @@ kadm5_s_get_principal(void *server_handle,
 		goto out;
 	}
 
-        if (ret == 0)
-            ret = hdb_entry_get_key_rotation(context->context, &ent.entry, &kr);
+        ret = hdb_entry_get_key_rotation(context->context, &ent.entry, &kr);
 	if (ret == 0 && kr) {
 	    krb5_data buf;
 	    size_t len;

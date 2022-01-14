@@ -1,8 +1,51 @@
 name: Build
 
 on:
-    push: {paths: [src/**, .github/workflows/build.yml]}
-    pull_request: {paths: [src/**, .github/workflows/build.yml]}
+    push:
+      paths:
+         - '!docs/**'
+         - '!**.md'
+         - '!**.[1-9]'
+         - '**.[chly]'
+         - '**.hin'
+         - '**.in'
+         - '**.am'
+         - '**.m4'
+         - '**.ac'
+         - '**.pl'
+         - '**.py'
+         - '**.asn1'
+         - '**.opt'
+         - '**/NTMakefile'
+         - '**/COPYING'
+         - '**/INSTALL'
+         - '**/README*'
+         - '.github/workflows/build.yml'
+         - '!appveyor.yml'
+         - '!.travis.yml'
+
+    pull_request:
+      paths:
+         - '!docs/**'
+         - '!**.md'
+         - '!**.[1-9]'
+         - '**.[chly]'
+         - '**.hin'
+         - '**.in'
+         - '**.am'
+         - '**.m4'
+         - '**.ac'
+         - '**.pl'
+         - '**.py'
+         - '**.asn1'
+         - '**.opt'
+         - '**/NTMakefile'
+         - '**/COPYING'
+         - '**/INSTALL'
+         - '**/README*'
+         - '.github/workflows/build.yml'
+         - '!appveyor.yml'
+         - '!.travis.yml'
 
 jobs:
 

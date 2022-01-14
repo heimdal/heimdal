@@ -46,6 +46,7 @@ RCSID("$Id$");
 #include <ws2tcpip.h>
 #endif
 
+#ifdef HAVE_SNPRINTF
 #define BITSIZE(TYPE)							\
 {									\
     int b = 0; TYPE x = 1, zero = 0; const char *pre = "u";		\
@@ -62,7 +63,25 @@ RCSID("$Id$");
         return;                                                 	\
     }									\
 }
-
+#else
+#define BITSIZE(TYPE)                                          \
+{                                                              \
+    int b = 0; TYPE x = 1, zero = 0; const char *pre = "u";    \
+    char tmp[128], tmp2[128];                                  \
+    while(x){ x <<= 1; b++; if(x < zero) pre=""; }             \
+    if(b >= len){                                              \
+        size_t tabs;                                           \
+        sprintf(tmp, "%sint%d_t" , pre, len);                  \
+        sprintf(tmp2, "typedef %s %s;", #TYPE, tmp);           \
+        tabs = 5 - strlen(tmp2) / 8;                           \
+        fprintf(f, "%s", tmp2);                                \
+	while(tabs-- > 0)                                      \
+	    fprintf(f, "\t");                                  \
+        fprintf(f, "/* %2d bits */\n", b);                     \
+        return;                                                \
+    }							       \
+}
+#endif
 #ifndef HAVE___ATTRIBUTE__
 #define __attribute__(x)
 #endif

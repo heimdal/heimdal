@@ -2439,7 +2439,6 @@ hx509_verify_path(hx509_context context,
 		 */
 		type = EE_CERT;
                 /* FALLTHROUGH */
-                fallthrough
 	    }
 	}
         /* FALLTHROUGH */

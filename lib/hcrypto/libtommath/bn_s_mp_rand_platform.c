@@ -56,16 +56,16 @@ static mp_err s_read_wincsp(void *p, size_t n)
 
 static mp_err s_read_getrandom(void *p, size_t n)
 {
-   char *q = (char *)p;
+   char *r = (char *)p;
    while (n > 0u) {
-      ssize_t ret = getrandom(q, n, 0);
+      ssize_t ret = getrandom(r, n, 0);
       if (ret < 0) {
          if (errno == EINTR) {
             continue;
          }
          return MP_ERR;
       }
-      q += ret;
+      r += ret;
       n -= (size_t)ret;
    }
    return MP_OKAY;
@@ -88,7 +88,7 @@ static mp_err s_read_getrandom(void *p, size_t n)
 static mp_err s_read_urandom(void *p, size_t n)
 {
    int fd;
-   char *q = (char *)p;
+   char *r = (char *)p;
 
    do {
       fd = open(MP_DEV_URANDOM, O_RDONLY);
@@ -96,7 +96,7 @@ static mp_err s_read_urandom(void *p, size_t n)
    if (fd == -1) return MP_ERR;
 
    while (n > 0u) {
-      ssize_t ret = read(fd, p, n);
+      ssize_t ret = read(fd, r, n);
       if (ret < 0) {
          if (errno == EINTR) {
             continue;
@@ -104,7 +104,7 @@ static mp_err s_read_urandom(void *p, size_t n)
          close(fd);
          return MP_ERR;
       }
-      q += ret;
+      r += ret;
       n -= (size_t)ret;
    }
 

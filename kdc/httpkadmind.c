@@ -716,7 +716,8 @@ bad_reqv(kadmin_request_desc r,
     if (r && r->hcontext && r->kv)
         heim_audit_setkv_number((heim_svc_req_desc)r, "http-status-code",
 				http_status_code);
-    (void) gettimeofday(&r->tv_end, NULL);
+    if (r)
+        (void) gettimeofday(&r->tv_end, NULL);
     if (code == ENOMEM) {
         if (context)
             krb5_log_msg(context, logfac, 1, NULL, "Out of memory");
@@ -1203,7 +1204,7 @@ make_kstuple(krb5_context context,
 
     if (p->n_key_data < 1)
         return 0;
-    *kstuple = calloc(p->n_key_data, sizeof (*kstuple));
+    *kstuple = calloc(p->n_key_data, sizeof (**kstuple));
     for (i = 0; *kstuple && i < p->n_key_data; i++) {
         if (p->key_data[i].key_data_kvno == p->kvno) {
             (*kstuple)[i].ks_enctype = p->key_data[i].key_data_type[0];
@@ -1431,6 +1432,8 @@ get_keysN(kadmin_request_desc r, const char *method)
             ret = heim_array_append_value(r->service_names, s);
         heim_release(s);
         nsvcs = 1;
+        if (ret)
+            return bad_503(r, ret, "Out of memory");
     }
 
     /* FIXME: Make this configurable */
@@ -1658,6 +1661,8 @@ get_config(kadmin_request_desc r)
 
     ret = get_kadm_handle(r->context, r->realm ? r->realm : realm,
                           0 /* want_write */, &r->kadm_handle);
+    if (ret)
+        return bad_503(r, ret, "Could not access KDC database");
 
     memset(&princ, 0, sizeof(princ));
     princ.key_data = NULL;
@@ -2122,6 +2127,8 @@ main(int argc, char **argv)
 
     argc -= optidx;
     argv += optidx;
+    if (argc != 0)
+        usage(1);
 
     if ((errno = pthread_key_create(&k5ctx, k5_free_context)))
         err(1, "Could not create thread-specific storage");

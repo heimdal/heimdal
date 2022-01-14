@@ -168,15 +168,15 @@ validate_protocol_transition(astgs_request_t r)
 			     sdata->padata_value.length,
 			     &self, NULL);
     if (ret) {
-	_kdc_audit_addreason((kdc_request_t)r,
-			     "Failed to decode PA-S4U2Self");
+	kdc_audit_addreason((kdc_request_t)r,
+			    "Failed to decode PA-S4U2Self");
 	kdc_log(r->context, r->config, 4, "Failed to decode PA-S4U2Self");
 	goto out;
     }
 
     if (!krb5_checksum_is_keyed(r->context, self.cksum.cksumtype)) {
-	_kdc_audit_addreason((kdc_request_t)r,
-			     "PA-S4U2Self with unkeyed checksum");
+	kdc_audit_addreason((kdc_request_t)r,
+			    "PA-S4U2Self with unkeyed checksum");
 	kdc_log(r->context, r->config, 4, "Reject PA-S4U2Self with unkeyed checksum");
 	ret = KRB5KRB_AP_ERR_INAPP_CKSUM;
 	goto out;
@@ -225,8 +225,8 @@ validate_protocol_transition(astgs_request_t r)
     krb5_crypto_destroy(r->context, crypto);
     if (ret) {
 	const char *msg = krb5_get_error_message(r->context, ret);
-	_kdc_audit_addreason((kdc_request_t)r,
-			     "S4U2Self checksum failed");
+	kdc_audit_addreason((kdc_request_t)r,
+			    "S4U2Self checksum failed");
 	kdc_log(r->context, r->config, 4,
 		"krb5_verify_checksum failed for S4U2Self: %s", msg);
 	krb5_free_error_message(r->context, msg);
@@ -262,8 +262,8 @@ validate_protocol_transition(astgs_request_t r)
 	if (ret == HDB_ERR_NOENTRY)
 	    ret = KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN;
 	msg = krb5_get_error_message(r->context, ret);
-	_kdc_audit_addreason((kdc_request_t)r,
-			     "S4U2Self principal to impersonate not found");
+	kdc_audit_addreason((kdc_request_t)r,
+			    "S4U2Self principal to impersonate not found");
 	kdc_log(r->context, r->config, 2,
 		"S4U2Self principal to impersonate %s not found in database: %s",
 		s4ucname, msg);
@@ -281,7 +281,7 @@ validate_protocol_transition(astgs_request_t r)
 
     ret = kdc_check_flags(r, FALSE, s4u_client, r->server);
     if (ret)
-	goto out; /* kdc_check_flags() calls _kdc_audit_addreason() */
+	goto out; /* kdc_check_flags() calls kdc_audit_addreason() */
 
     ret = _kdc_pac_generate(r->context,
 			    r->config,
@@ -397,7 +397,7 @@ validate_constrained_delegation(astgs_request_t r)
      */
     if (r->pac == NULL) {
 	ret = KRB5KDC_ERR_BADOPTION;
-	_kdc_audit_addreason((kdc_request_t)r, "Missing PAC");
+	kdc_audit_addreason((kdc_request_t)r, "Missing PAC");
 	kdc_log(r->context, r->config, 4,
 		"Constrained delegation without PAC, %s/%s",
 		r->cname, r->sname);
@@ -417,8 +417,8 @@ validate_constrained_delegation(astgs_request_t r)
 
     ret = krb5_decrypt_ticket(r->context, t, &clientkey->key, &evidence_tkt, 0);
     if (ret) {
-	_kdc_audit_addreason((kdc_request_t)r,
-			     "Failed to decrypt constrained delegation ticket");
+	kdc_audit_addreason((kdc_request_t)r,
+			    "Failed to decrypt constrained delegation ticket");
 	kdc_log(r->context, r->config, 4,
 		"failed to decrypt ticket for "
 		"constrained delegation from %s to %s ", r->cname, r->sname);
@@ -436,7 +436,7 @@ validate_constrained_delegation(astgs_request_t r)
     if (ret)
 	goto out;
 
-    _kdc_audit_addkv((kdc_request_t)r, 0, "impersonatee", "%s", s4ucname);
+    kdc_audit_addkv((kdc_request_t)r, 0, "impersonatee", "%s", s4ucname);
 
     ret = _krb5_principalname2krb5_principal(r->context,
 					     &s4u_server_name,
@@ -451,8 +451,8 @@ validate_constrained_delegation(astgs_request_t r)
 
 	/* check that ticket is valid */
     if (evidence_tkt.flags.forwardable == 0) {
-	_kdc_audit_addreason((kdc_request_t)r,
-			     "Missing forwardable flag on ticket for constrained delegation");
+	kdc_audit_addreason((kdc_request_t)r,
+			    "Missing forwardable flag on ticket for constrained delegation");
 	kdc_log(r->context, r->config, 4,
 		"Missing forwardable flag on ticket for "
 		"constrained delegation from %s (%s) as %s to %s ",
@@ -464,8 +464,8 @@ validate_constrained_delegation(astgs_request_t r)
     ret = check_constrained_delegation(r->context, r->config, r->clientdb,
 				       r->client, r->server, r->server_princ);
     if (ret) {
-	_kdc_audit_addreason((kdc_request_t)r,
-			     "Constrained delegation not allowed");
+	kdc_audit_addreason((kdc_request_t)r,
+			    "Constrained delegation not allowed");
 	kdc_log(r->context, r->config, 4,
 		"constrained delegation from %s (%s) as %s to %s not allowed",
 		r->cname, s4usname, s4ucname, r->sname);
@@ -474,8 +474,8 @@ validate_constrained_delegation(astgs_request_t r)
 
     ret = _kdc_verify_flags(r->context, r->config, &evidence_tkt, s4ucname);
     if (ret) {
-	_kdc_audit_addreason((kdc_request_t)r,
-			     "Constrained delegation ticket expired or invalid");
+	kdc_audit_addreason((kdc_request_t)r,
+			    "Constrained delegation ticket expired or invalid");
 	goto out;
     }
 
@@ -503,8 +503,8 @@ validate_constrained_delegation(astgs_request_t r)
 			 &s4u_canon_client_name, &s4u_pac_attributes);
     if (ret) {
 	const char *msg = krb5_get_error_message(r->context, ret);
-        _kdc_audit_addreason((kdc_request_t)r,
-                                 "Constrained delegation ticket PAC check failed");
+        kdc_audit_addreason((kdc_request_t)r,
+			    "Constrained delegation ticket PAC check failed");
 	kdc_log(r->context, r->config, 4,
 		"Verify delegated PAC failed to %s for client"
 		"%s (%s) as %s from %s with %s",
@@ -520,8 +520,8 @@ validate_constrained_delegation(astgs_request_t r)
 		"for delegation to %s for client %s (%s) from %s; (%s).",
 		r->sname, s4ucname, s4usname, r->cname, r->from,
 		s4u_pac ? "Ticket unsigned" : "No PAC");
-	_kdc_audit_addreason((kdc_request_t)r,
-			     "Constrained delegation ticket not signed");
+	kdc_audit_addreason((kdc_request_t)r,
+			    "Constrained delegation ticket not signed");
 	goto out;
     }
 

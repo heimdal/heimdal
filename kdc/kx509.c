@@ -305,8 +305,8 @@ kdc_kx509_verify_service_principal(krb5_context context,
                KRB5_TGS_NAME) == 0) {
         const char *r = krb5_principal_get_comp_string(context, sprincipal, 1);
         if ((ret = is_local_realm(context, reqctx, r)))
-            _kdc_audit_addreason((kdc_request_t)reqctx,
-                                 "Client used wrong krbtgt for kx509");
+            kdc_audit_addreason((kdc_request_t)reqctx,
+                                "Client used wrong krbtgt for kx509");
         goto out;
     }
 
@@ -315,8 +315,8 @@ kdc_kx509_verify_service_principal(krb5_context context,
     if (ret != 0) {
         ret = errno;
         kdc_log(context, reqctx->config, 0, "Failed to get local hostname");
-        _kdc_audit_addreason((kdc_request_t)reqctx,
-                             "Failed to get local hostname");
+        kdc_audit_addreason((kdc_request_t)reqctx,
+                            "Failed to get local hostname");
         return ret;
     }
     localhost[sizeof(localhost) - 1] = '\0';
@@ -335,8 +335,8 @@ err:
         goto out;
 
     ret = KRB5KDC_ERR_SERVER_NOMATCH;
-    _kdc_audit_addreason((kdc_request_t)reqctx, "Client used wrong kx509 "
-                         "service principal (expected %s)", expected);
+    kdc_audit_addreason((kdc_request_t)reqctx, "Client used wrong kx509 "
+                        "service principal (expected %s)", expected);
 
 out:
     krb5_xfree(expected);
@@ -400,7 +400,7 @@ mk_error_response(krb5_context context,
         }
 
         va_start(ap, fmt);
-        _kdc_audit_vaddreason((kdc_request_t)reqctx, fmt, ap);
+        kdc_audit_vaddreason((kdc_request_t)reqctx, fmt, ap);
         va_end(ap);
     }
 
@@ -545,9 +545,9 @@ update_csr(krb5_context context, kx509_req_context reqctx, Extensions *exts)
 	const char *emsg = krb5_get_error_message(context, ret);
         kdc_log(context, reqctx->config, 1,
                 "Error handling requested extensions: %s", emsg);
-        _kdc_audit_addreason((kdc_request_t)reqctx,
-                             "Error handling requested extensions: %s",
-                             emsg);
+        kdc_audit_addreason((kdc_request_t)reqctx,
+                            "Error handling requested extensions: %s",
+                            emsg);
 	krb5_free_error_message(context, emsg);
     }
     return ret;
@@ -581,7 +581,7 @@ get_csr(krb5_context context, kx509_req_context reqctx)
          */
         if (ret == 0)
             return update_csr(context, reqctx, reqctx->csr_plus.exts);
-        _kdc_audit_addreason((kdc_request_t)reqctx, "Invalid CSR");
+        kdc_audit_addreason((kdc_request_t)reqctx, "Invalid CSR");
         return ret;
     }
     reqctx->send_chain = 0;
@@ -589,8 +589,8 @@ get_csr(krb5_context context, kx509_req_context reqctx)
 
     /* Check if proof of possession is required by configuration */
     if (!get_bool_param(context, FALSE, reqctx->realm, "require_csr")) {
-        _kdc_audit_addreason((kdc_request_t)reqctx,
-                             "CSRs required but client did not send one");
+        kdc_audit_addreason((kdc_request_t)reqctx,
+                            "CSRs required but client did not send one");
         krb5_set_error_message(context, KX509_STATUS_CLIENT_USE_CSR,
                                "CSRs required but kx509 client did not send "
                                "one");
@@ -608,14 +608,14 @@ get_csr(krb5_context context, kx509_req_context reqctx)
     /* Not an RSAPublicKey or garbage follows it */
     if (ret == 0) {
         ret = KRB5KDC_ERR_NULL_KEY;
-        _kdc_audit_addreason((kdc_request_t)reqctx,
-                             "Request has garbage after key");
+        kdc_audit_addreason((kdc_request_t)reqctx,
+                            "Request has garbage after key");
         krb5_set_error_message(context, ret, "Request has garbage after key");
         return ret;
     }
 
-    _kdc_audit_addreason((kdc_request_t)reqctx,
-                         "Could not decode CSR or RSA subject public key");
+    kdc_audit_addreason((kdc_request_t)reqctx,
+                        "Could not decode CSR or RSA subject public key");
     krb5_set_error_message(context, ret,
                            "Could not decode CSR or RSA subject public key");
     return ret;
@@ -675,7 +675,7 @@ check_authz(krb5_context context,
     ret = kdc_authorize_csr(context, reqctx->config->app, reqctx->csr,
                             cprincipal);
     if (ret == 0) {
-        _kdc_audit_setkv_bool((kdc_request_t)reqctx, "authorized", TRUE);
+        kdc_audit_setkv_bool((kdc_request_t)reqctx, "authorized", TRUE);
 
         ret = hx509_request_get_san(reqctx->csr, 0, &san_type, &s);
         if (ret == 0) {
@@ -692,19 +692,19 @@ check_authz(krb5_context context,
             case HX509_SAN_TYPE_MS_UPN: san_type_s = "ms-UPN"; break;
             default: san_type_s = "unknown"; break;
             }
-            _kdc_audit_addkv((kdc_request_t)reqctx, 0, "san0_type", "%s",
-                             san_type_s);
-            _kdc_audit_addkv((kdc_request_t)reqctx, 0, "san0", "%s", s);
+            kdc_audit_addkv((kdc_request_t)reqctx, 0, "san0_type", "%s",
+                            san_type_s);
+            kdc_audit_addkv((kdc_request_t)reqctx, 0, "san0", "%s", s);
         }
 	frees(&s);
         ret = hx509_request_get_eku(reqctx->csr, 0, &s);
         if (ret == 0)
-            _kdc_audit_addkv((kdc_request_t)reqctx, 0, "eku0", "%s", s);
+            kdc_audit_addkv((kdc_request_t)reqctx, 0, "eku0", "%s", s);
 	free(s);
         return 0;
     }
     if (ret != KRB5_PLUGIN_NO_HANDLE) {
-        _kdc_audit_addreason((kdc_request_t)reqctx,
+        kdc_audit_addreason((kdc_request_t)reqctx,
                              "Requested extensions rejected by plugin");
         return ret;
     }
@@ -724,27 +724,27 @@ check_authz(krb5_context context,
             if (ncomp != 2 || strcasecmp(comp1, s) != 0 ||
                 strchr(s, '.') == NULL ||
                 !check_authz_svc_ok(context, comp0)) {
-                _kdc_audit_addreason((kdc_request_t)reqctx,
-                                     "Requested extensions rejected by "
-                                     "default policy (dNSName SAN "
-                                     "does not match client)");
+                kdc_audit_addreason((kdc_request_t)reqctx,
+                                    "Requested extensions rejected by "
+                                    "default policy (dNSName SAN "
+                                    "does not match client)");
                 goto eacces;
             }
             break;
         case HX509_SAN_TYPE_PKINIT:
             if (strcmp(cprinc, s) != 0) {
-                _kdc_audit_addreason((kdc_request_t)reqctx,
-                                     "Requested extensions rejected by "
-                                     "default policy (PKINIT SAN "
-                                     "does not match client)");
+                kdc_audit_addreason((kdc_request_t)reqctx,
+                                    "Requested extensions rejected by "
+                                    "default policy (PKINIT SAN "
+                                    "does not match client)");
                 goto eacces;
             }
             break;
         default:
-            _kdc_audit_addreason((kdc_request_t)reqctx,
-                                 "Requested extensions rejected by "
-                                 "default policy (non-default SAN "
-                                 "requested)");
+            kdc_audit_addreason((kdc_request_t)reqctx,
+                                "Requested extensions rejected by "
+                                "default policy (non-default SAN "
+                                "requested)");
             goto eacces;
         }
     }
@@ -772,8 +772,8 @@ check_authz(krb5_context context,
         }
         der_free_oid(&oid);
         if (k == sizeof(eku_whitelist)/sizeof(eku_whitelist[0])) {
-            _kdc_audit_addreason((kdc_request_t)reqctx,
-                                 "Requested EKU rejected by default policy");
+            kdc_audit_addreason((kdc_request_t)reqctx,
+                                "Requested EKU rejected by default policy");
             goto eacces;
         }
     }
@@ -791,7 +791,7 @@ check_authz(krb5_context context,
     if (KeyUsage2int(ku) != (KeyUsage2int(ku) & KeyUsage2int(ku_allowed)))
         goto eacces;
 
-    _kdc_audit_setkv_bool((kdc_request_t)reqctx, "authorized", TRUE);
+    kdc_audit_setkv_bool((kdc_request_t)reqctx, "authorized", TRUE);
     free(cprinc);
     return 0;
 
@@ -801,7 +801,7 @@ eacces:
 
 out:
     /* XXX Display error code */
-    _kdc_audit_addreason((kdc_request_t)reqctx,
+    kdc_audit_addreason((kdc_request_t)reqctx,
                          "Error handling requested extensions");
 out2:
     free(cprinc);
@@ -891,7 +891,7 @@ _kdc_do_kx509(kx509_req_context r)
          * possibly change the error code and message.
          */
         is_probe = 1;
-        _kdc_audit_addkv((kdc_request_t)r, 0, "probe", "unauthenticated");
+        kdc_audit_addkv((kdc_request_t)r, 0, "probe", "unauthenticated");
         ret = mk_error_response(r->context, r, 4, 0,
                                 "kx509 service is available");
         goto out;
@@ -974,7 +974,7 @@ _kdc_do_kx509(kx509_req_context r)
          * possibly change the error code and message.
          */
         is_probe = 1;
-        _kdc_audit_addkv((kdc_request_t)r, 0, "probe", "authenticated");
+        kdc_audit_addkv((kdc_request_t)r, 0, "probe", "authenticated");
         ret = mk_error_response(r->context, r, 4, 0,
                                 "kx509 authenticated probe request");
         goto out;
@@ -1049,14 +1049,14 @@ _kdc_do_kx509(kx509_req_context r)
     ret = encode_reply(r->context, r, &rep);
     if (ret)
         /* Can't send an error message either in this case, surely */
-        _kdc_audit_addreason((kdc_request_t)r, "Could not encode response");
+        kdc_audit_addreason((kdc_request_t)r, "Could not encode response");
 
 out:
     hx509_certs_free(&certs);
     if (ret == 0 && !is_probe)
-        _kdc_audit_setkv_bool((kdc_request_t)r, "cert_issued", TRUE);
+        kdc_audit_setkv_bool((kdc_request_t)r, "cert_issued", TRUE);
     else
-        _kdc_audit_setkv_bool((kdc_request_t)r, "cert_issued", FALSE);
+        kdc_audit_setkv_bool((kdc_request_t)r, "cert_issued", FALSE);
     if (r->ac)
         krb5_auth_con_free(r->context, r->ac);
     if (ticket)

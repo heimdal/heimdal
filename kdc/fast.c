@@ -596,8 +596,8 @@ fast_unwrap_request(astgs_request_t r,
 				&r->armor_ticket->ticket,
 				armor_server_principal_name);
 	if (ret) {
-	    _kdc_audit_addreason((kdc_request_t)r,
-				 "Armor TGT expired or invalid");
+	    kdc_audit_addreason((kdc_request_t)r,
+				"Armor TGT expired or invalid");
 	    goto out;
 	}
 	ticket = r->armor_ticket;
@@ -608,8 +608,8 @@ fast_unwrap_request(astgs_request_t r,
     }
 
     krb5_unparse_name(r->context, ticket->client, &armor_client_principal_name);
-    _kdc_audit_addkv((kdc_request_t)r, 0, "armor_client_name", "%s",
-		      armor_client_principal_name ? armor_client_principal_name : "<unknown>");
+    kdc_audit_addkv((kdc_request_t)r, 0, "armor_client_name", "%s",
+		    armor_client_principal_name ? armor_client_principal_name : "<unknown>");
 
     if (ac->remote_subkey == NULL) {
 	krb5_auth_con_free(r->context, ac);

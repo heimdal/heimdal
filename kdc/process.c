@@ -43,14 +43,14 @@
 #define __attribute__(x)
 
 KDC_LIB_FUNCTION void KDC_LIB_CALL
-_kdc_audit_vaddreason(kdc_request_t r, const char *fmt, va_list ap)
+kdc_audit_vaddreason(kdc_request_t r, const char *fmt, va_list ap)
 	__attribute__ ((__format__ (__printf__, 2, 0)))
 {
     heim_audit_vaddreason((heim_svc_req_desc)r, fmt, ap);
 }
 
 KDC_LIB_FUNCTION void KDC_LIB_CALL
-_kdc_audit_addreason(kdc_request_t r, const char *fmt, ...)
+kdc_audit_addreason(kdc_request_t r, const char *fmt, ...)
 	__attribute__ ((__format__ (__printf__, 2, 3)))
 {
     va_list ap;
@@ -67,7 +67,7 @@ _kdc_audit_addreason(kdc_request_t r, const char *fmt, ...)
  */
 
 KDC_LIB_FUNCTION void KDC_LIB_CALL
-_kdc_audit_vaddkv(kdc_request_t r, int flags, const char *k,
+kdc_audit_vaddkv(kdc_request_t r, int flags, const char *k,
 		  const char *fmt, va_list ap)
 	__attribute__ ((__format__ (__printf__, 4, 0)))
 {
@@ -75,7 +75,7 @@ _kdc_audit_vaddkv(kdc_request_t r, int flags, const char *k,
 }
 
 KDC_LIB_FUNCTION void KDC_LIB_CALL
-_kdc_audit_addkv(kdc_request_t r, int flags, const char *k,
+kdc_audit_addkv(kdc_request_t r, int flags, const char *k,
 		 const char *fmt, ...)
 	__attribute__ ((__format__ (__printf__, 4, 5)))
 {
@@ -87,7 +87,7 @@ _kdc_audit_addkv(kdc_request_t r, int flags, const char *k,
 }
 
 KDC_LIB_FUNCTION void KDC_LIB_CALL
-_kdc_audit_addkv_timediff(kdc_request_t r, const char *k,
+kdc_audit_addkv_timediff(kdc_request_t r, const char *k,
 			  const struct timeval *start,
 			  const struct timeval *end)
 {
@@ -95,37 +95,37 @@ _kdc_audit_addkv_timediff(kdc_request_t r, const char *k,
 }
 
 KDC_LIB_FUNCTION void KDC_LIB_CALL
-_kdc_audit_setkv_bool(kdc_request_t r, const char *k, krb5_boolean v)
+kdc_audit_setkv_bool(kdc_request_t r, const char *k, krb5_boolean v)
 {
     heim_audit_setkv_bool((heim_svc_req_desc)r, k, (int)v);
 }
 
 KDC_LIB_FUNCTION void KDC_LIB_CALL
-_kdc_audit_addkv_number(kdc_request_t r, const char *k, int64_t v)
+kdc_audit_addkv_number(kdc_request_t r, const char *k, int64_t v)
 {
     heim_audit_addkv_number((heim_svc_req_desc)r, k, v);
 }
 
 KDC_LIB_FUNCTION void KDC_LIB_CALL
-_kdc_audit_setkv_number(kdc_request_t r, const char *k, int64_t v)
+kdc_audit_setkv_number(kdc_request_t r, const char *k, int64_t v)
 {
     heim_audit_setkv_number((heim_svc_req_desc)r, k, v);
 }
 
 KDC_LIB_FUNCTION void KDC_LIB_CALL
-_kdc_audit_addkv_object(kdc_request_t r, const char *k, heim_object_t obj)
+kdc_audit_addkv_object(kdc_request_t r, const char *k, heim_object_t obj)
 {
     heim_audit_addkv_object((heim_svc_req_desc)r, k, obj);
 }
 
 KDC_LIB_FUNCTION void KDC_LIB_CALL
-_kdc_audit_setkv_object(kdc_request_t r, const char *k, heim_object_t obj)
+kdc_audit_setkv_object(kdc_request_t r, const char *k, heim_object_t obj)
 {
     heim_audit_setkv_object((heim_svc_req_desc)r, k, obj);
 }
 
 KDC_LIB_FUNCTION heim_object_t KDC_LIB_CALL
-_kdc_audit_getkv(kdc_request_t r, const char *k)
+kdc_audit_getkv(kdc_request_t r, const char *k)
 {
     return heim_audit_getkv((heim_svc_req_desc)r, k);
 }
@@ -135,7 +135,7 @@ _kdc_audit_getkv(kdc_request_t r, const char *k)
  * PA-TGS ticket or whatever.
  */
 KDC_LIB_FUNCTION void KDC_LIB_CALL
-_kdc_audit_addaddrs(kdc_request_t r, HostAddresses *a, const char *key)
+kdc_audit_addaddrs(kdc_request_t r, HostAddresses *a, const char *key)
 {
     size_t i;
     char buf[128];
@@ -145,12 +145,12 @@ _kdc_audit_addaddrs(kdc_request_t r, HostAddresses *a, const char *key)
 
         if (snprintf(numkey, sizeof(numkey), "num%s", key) >= sizeof(numkey))
             numkey[31] = '\0';
-        _kdc_audit_addkv(r, 0, numkey, "%llu", (unsigned long long)a->len);
+        kdc_audit_addkv(r, 0, numkey, "%llu", (unsigned long long)a->len);
     }
 
     for (i = 0; i < 3 && i < a->len; i++) {
         if (krb5_print_address(&a->val[i], buf, sizeof(buf), NULL) == 0)
-            _kdc_audit_addkv(r, 0, key, "%s", buf);
+            kdc_audit_addkv(r, 0, key, "%s", buf);
     }
 }
 

@@ -211,35 +211,35 @@ check_tgs_flags(astgs_request_t r, KDC_REQ_BODY *b,
 
     if(f.validate){
 	if (!tgt->flags.invalid || tgt->starttime == NULL) {
-	    _kdc_audit_addreason((kdc_request_t)r,
-                                 "Bad request to validate ticket");
+	    kdc_audit_addreason((kdc_request_t)r,
+                                "Bad request to validate ticket");
 	    return KRB5KDC_ERR_BADOPTION;
 	}
 	if(*tgt->starttime > kdc_time){
-	    _kdc_audit_addreason((kdc_request_t)r,
-                                 "Early request to validate ticket");
+	    kdc_audit_addreason((kdc_request_t)r,
+                                "Early request to validate ticket");
 	    return KRB5KRB_AP_ERR_TKT_NYV;
 	}
 	/* XXX  tkt = tgt */
 	et->flags.invalid = 0;
     } else if (tgt->flags.invalid) {
-	_kdc_audit_addreason((kdc_request_t)r,
-                             "Ticket-granting ticket has INVALID flag set");
+	kdc_audit_addreason((kdc_request_t)r,
+                            "Ticket-granting ticket has INVALID flag set");
 	return KRB5KRB_AP_ERR_TKT_INVALID;
     }
 
     if(f.forwardable){
 	if (!tgt->flags.forwardable) {
-	    _kdc_audit_addreason((kdc_request_t)r,
-                                 "Bad request for forwardable ticket");
+	    kdc_audit_addreason((kdc_request_t)r,
+                                "Bad request for forwardable ticket");
 	    return KRB5KDC_ERR_BADOPTION;
 	}
 	et->flags.forwardable = 1;
     }
     if(f.forwarded){
 	if (!tgt->flags.forwardable) {
-	    _kdc_audit_addreason((kdc_request_t)r,
-                                 "Request to forward non-forwardable ticket");
+	    kdc_audit_addreason((kdc_request_t)r,
+                                "Request to forward non-forwardable ticket");
 	    return KRB5KDC_ERR_BADOPTION;
 	}
 	et->flags.forwarded = 1;
@@ -250,16 +250,16 @@ check_tgs_flags(astgs_request_t r, KDC_REQ_BODY *b,
 
     if(f.proxiable){
 	if (!tgt->flags.proxiable) {
-	    _kdc_audit_addreason((kdc_request_t)r,
-                                 "Bad request for proxiable ticket");
+	    kdc_audit_addreason((kdc_request_t)r,
+                                "Bad request for proxiable ticket");
 	    return KRB5KDC_ERR_BADOPTION;
 	}
 	et->flags.proxiable = 1;
     }
     if(f.proxy){
 	if (!tgt->flags.proxiable) {
-	    _kdc_audit_addreason((kdc_request_t)r,
-                                 "Request to proxy non-proxiable ticket");
+	    kdc_audit_addreason((kdc_request_t)r,
+                                "Request to proxy non-proxiable ticket");
 	    return KRB5KDC_ERR_BADOPTION;
 	}
 	et->flags.proxy = 1;
@@ -270,16 +270,16 @@ check_tgs_flags(astgs_request_t r, KDC_REQ_BODY *b,
 
     if(f.allow_postdate){
 	if (!tgt->flags.may_postdate) {
-	    _kdc_audit_addreason((kdc_request_t)r,
-                                 "Bad request for post-datable ticket");
+	    kdc_audit_addreason((kdc_request_t)r,
+                                "Bad request for post-datable ticket");
 	    return KRB5KDC_ERR_BADOPTION;
 	}
 	et->flags.may_postdate = 1;
     }
     if(f.postdated){
 	if (!tgt->flags.may_postdate) {
-	    _kdc_audit_addreason((kdc_request_t)r,
-                                 "Bad request for postdated ticket");
+	    kdc_audit_addreason((kdc_request_t)r,
+                                "Bad request for postdated ticket");
 	    return KRB5KDC_ERR_BADOPTION;
 	}
 	if(b->from)
@@ -287,15 +287,15 @@ check_tgs_flags(astgs_request_t r, KDC_REQ_BODY *b,
 	et->flags.postdated = 1;
 	et->flags.invalid = 1;
     } else if (b->from && *b->from > kdc_time + r->context->max_skew) {
-	_kdc_audit_addreason((kdc_request_t)r,
-                             "Ticket cannot be postdated");
+	kdc_audit_addreason((kdc_request_t)r,
+                            "Ticket cannot be postdated");
 	return KRB5KDC_ERR_CANNOT_POSTDATE;
     }
 
     if(f.renewable){
 	if (!tgt->flags.renewable || tgt->renew_till == NULL) {
-	    _kdc_audit_addreason((kdc_request_t)r,
-                                 "Bad request for renewable ticket");
+	    kdc_audit_addreason((kdc_request_t)r,
+                                "Bad request for renewable ticket");
 	    return KRB5KDC_ERR_BADOPTION;
 	}
 	et->flags.renewable = 1;
@@ -306,8 +306,8 @@ check_tgs_flags(astgs_request_t r, KDC_REQ_BODY *b,
     if(f.renew){
 	time_t old_life;
 	if (!tgt->flags.renewable || tgt->renew_till == NULL) {
-	    _kdc_audit_addreason((kdc_request_t)r,
-                                 "Request to renew non-renewable ticket");
+	    kdc_audit_addreason((kdc_request_t)r,
+                                "Request to renew non-renewable ticket");
 	    return KRB5KDC_ERR_BADOPTION;
 	}
 	old_life = tgt->endtime;
@@ -326,8 +326,8 @@ check_tgs_flags(astgs_request_t r, KDC_REQ_BODY *b,
      */
     if (tgt->flags.anonymous &&
 	!_kdc_is_anonymous(r->context, tgt_name)) {
-	_kdc_audit_addreason((kdc_request_t)r,
-                             "Anonymous ticket flag set without "
+	kdc_audit_addreason((kdc_request_t)r,
+                            "Anonymous ticket flag set without "
 			 "anonymous principal");
 	return KRB5KDC_ERR_BADOPTION;
     }
@@ -740,8 +740,8 @@ tgs_make_reply(astgs_request_t r,
 	char *cpn;
 
 	(void) krb5_unparse_name(r->context, r->canon_client_princ, &cpn);
-	_kdc_audit_addkv((kdc_request_t)r, 0, "canon_client_name", "%s",
-			 cpn ? cpn : "<unknown>");
+	kdc_audit_addkv((kdc_request_t)r, 0, "canon_client_name", "%s",
+			cpn ? cpn : "<unknown>");
 	krb5_xfree(cpn);
     }
 
@@ -752,8 +752,8 @@ tgs_make_reply(astgs_request_t r,
      * is implementation dependent.
      */
     if (r->pac && !et->flags.anonymous) {
-	_kdc_audit_setkv_number((kdc_request_t)r, "pac_attributes",
-			        r->pac_attributes);
+	kdc_audit_setkv_number((kdc_request_t)r, "pac_attributes",
+			       r->pac_attributes);
 
 	/*
 	 * PACs are included when issuing TGTs, if there is no PAC_ATTRIBUTES
@@ -1059,10 +1059,10 @@ next_kvno:
 			      &r->ticket,
 			      KRB5_KU_TGS_REQ_AUTH);
     if (r->ticket && r->ticket->ticket.caddr)
-        _kdc_audit_addaddrs((kdc_request_t)r, r->ticket->ticket.caddr, "tixaddrs");
+        kdc_audit_addaddrs((kdc_request_t)r, r->ticket->ticket.caddr, "tixaddrs");
     if (r->config->warn_ticket_addresses && ret == KRB5KRB_AP_ERR_BADADDR &&
         r->ticket != NULL) {
-        _kdc_audit_setkv_bool((kdc_request_t)r, "wrongaddr", TRUE);
+        kdc_audit_setkv_bool((kdc_request_t)r, "wrongaddr", TRUE);
         ret = 0;
     }
     if (ret == KRB5KRB_AP_ERR_BAD_INTEGRITY && kvno_search_tries > 0) {
@@ -1454,7 +1454,7 @@ server_lookup:
     priv->serverdb = serverdb;
     if (ret == HDB_ERR_NOT_FOUND_HERE) {
 	kdc_log(context, config, 5, "target %s does not have secrets at this KDC, need to proxy", spn);
-        _kdc_audit_addreason((kdc_request_t)priv, "Target not found here");
+        kdc_audit_addreason((kdc_request_t)priv, "Target not found here");
 	goto out;
     } else if (ret == HDB_ERR_WRONG_REALM) {
         free(ref_realm);
@@ -1505,8 +1505,8 @@ server_lookup:
                                          req_rlm, TRUE, &capath, &num_capath);
                 if (ret2) {
                     ret = ret2;
-                    _kdc_audit_addreason((kdc_request_t)priv,
-                                         "No trusted path from client realm to ours");
+                    kdc_audit_addreason((kdc_request_t)priv,
+                                        "No trusted path from client realm to ours");
                     goto out;
                 }
             }
@@ -1568,8 +1568,8 @@ server_lookup:
 	krb5_free_error_message(context, msg);
 	if (ret == HDB_ERR_NOENTRY)
 	    ret = KRB5KDC_ERR_S_PRINCIPAL_UNKNOWN;
-        _kdc_audit_addreason((kdc_request_t)priv,
-                             "Service principal unknown");
+        kdc_audit_addreason((kdc_request_t)priv,
+                            "Service principal unknown");
 	goto out;
     }
 
@@ -1649,16 +1649,16 @@ server_lookup:
 		ret = KRB5KDC_ERR_BADOPTION; /* ? */
 		kdc_log(context, config, 4,
 			"No second ticket present in user-to-user request");
-		_kdc_audit_addreason((kdc_request_t)priv,
-				     "No second ticket present in user-to-user request");
+		kdc_audit_addreason((kdc_request_t)priv,
+				    "No second ticket present in user-to-user request");
 		goto out;
 	    }
 	    t = &b->additional_tickets->val[0];
 	    if(!get_krbtgt_realm(&t->sname)){
 		kdc_log(context, config, 4,
 			"Additional ticket is not a ticket-granting ticket");
-		_kdc_audit_addreason((kdc_request_t)priv,
-				     "Additional ticket is not a ticket-granting ticket");
+		kdc_audit_addreason((kdc_request_t)priv,
+				    "Additional ticket is not a ticket-granting ticket");
 		ret = KRB5KDC_ERR_POLICY;
 		goto out;
 	    }
@@ -1680,8 +1680,8 @@ server_lookup:
 	    if(ret){
 		if (ret == HDB_ERR_NOENTRY)
 		    ret = KRB5KDC_ERR_S_PRINCIPAL_UNKNOWN;
-		_kdc_audit_addreason((kdc_request_t)priv,
-				     "User-to-user service principal (TGS) unknown");
+		kdc_audit_addreason((kdc_request_t)priv,
+				    "User-to-user service principal (TGS) unknown");
 		krb5_xfree(tpn);
 		goto out;
 	    }
@@ -1689,23 +1689,23 @@ server_lookup:
 				  t->enc_part.etype, &uukey);
 	    if(ret){
 		ret = KRB5KDC_ERR_ETYPE_NOSUPP; /* XXX */
-		_kdc_audit_addreason((kdc_request_t)priv,
-				     "User-to-user enctype not supported");
+		kdc_audit_addreason((kdc_request_t)priv,
+				    "User-to-user enctype not supported");
 		krb5_xfree(tpn);
 		goto out;
 	    }
 	    ret = krb5_decrypt_ticket(context, t, &uukey->key, &adtkt, 0);
 	    if(ret) {
-		_kdc_audit_addreason((kdc_request_t)priv,
-				     "User-to-user TGT decrypt failure");
+		kdc_audit_addreason((kdc_request_t)priv,
+				    "User-to-user TGT decrypt failure");
 		krb5_xfree(tpn);
 		goto out;
 	    }
 
 	    ret = _kdc_verify_flags(context, config, &adtkt, tpn);
 	    if (ret) {
-		_kdc_audit_addreason((kdc_request_t)priv,
-				     "User-to-user TGT expired or invalid");
+		kdc_audit_addreason((kdc_request_t)priv,
+				    "User-to-user TGT expired or invalid");
 		krb5_xfree(tpn);
 		goto out;
 	    }
@@ -1803,8 +1803,8 @@ server_lookup:
 			"Addition ticket have not matching etypes");
 		krb5_clear_error_message(context);
 		ret = KRB5KDC_ERR_ETYPE_NOSUPP;
-                _kdc_audit_addreason((kdc_request_t)priv,
-                                     "No matching enctypes for 2nd ticket");
+                kdc_audit_addreason((kdc_request_t)priv,
+                                    "No matching enctypes for 2nd ticket");
 		goto out;
 	    }
 	    etype = b->etype.val[i];
@@ -1819,8 +1819,8 @@ server_lookup:
 	    if(ret) {
 		kdc_log(context, config, 4,
 			"Server (%s) has no support for etypes", spn);
-                _kdc_audit_addreason((kdc_request_t)priv,
-                                     "Enctype not supported");
+                kdc_audit_addreason((kdc_request_t)priv,
+                                    "Enctype not supported");
 		goto out;
 	    }
 	    ret = _kdc_get_preferred_key(context, config, server, spn,
@@ -1828,8 +1828,8 @@ server_lookup:
 	    if(ret) {
 		kdc_log(context, config, 4,
 			"Server (%s) has no supported etypes", spn);
-                _kdc_audit_addreason((kdc_request_t)priv,
-                                     "Enctype not supported");
+                kdc_audit_addreason((kdc_request_t)priv,
+                                    "Enctype not supported");
 		goto out;
 	    }
 	    ekey = &skey->key;
@@ -1864,7 +1864,7 @@ server_lookup:
 	if(ret == 0)
 	    free(ktpn);
 	ret = KRB5KRB_AP_ERR_NOT_US;
-        _kdc_audit_addreason((kdc_request_t)priv, "Request with wrong TGT");
+        kdc_audit_addreason((kdc_request_t)priv, "Request with wrong TGT");
 	goto out;
     }
 
@@ -1873,8 +1873,8 @@ server_lookup:
     if (ret) {
 	kdc_log(context, config, 4,
 		    "Failed to find key for krbtgt PAC signature");
-        _kdc_audit_addreason((kdc_request_t)priv,
-                             "Failed to find key for krbtgt PAC signature");
+        kdc_audit_addreason((kdc_request_t)priv,
+                            "Failed to find key for krbtgt PAC signature");
 	goto out;
     }
     ret = hdb_enctype2key(context, krbtgt_out, NULL,
@@ -1882,8 +1882,8 @@ server_lookup:
     if(ret) {
 	kdc_log(context, config, 4,
 		    "Failed to find key for krbtgt PAC signature");
-        _kdc_audit_addreason((kdc_request_t)priv,
-                             "Failed to find key for krbtgt PAC signature");
+        kdc_audit_addreason((kdc_request_t)priv,
+                            "Failed to find key for krbtgt PAC signature");
 	goto out;
     }
 
@@ -1906,7 +1906,7 @@ server_lookup:
 			 &priv->pac_attributes);
     if (ret) {
 	const char *msg = krb5_get_error_message(context, ret);
-        _kdc_audit_addreason((kdc_request_t)priv, "PAC check failed");
+        kdc_audit_addreason((kdc_request_t)priv, "PAC check failed");
 	kdc_log(context, config, 4,
 		"Verify PAC failed for %s (%s) from %s with %s",
 		spn, cpn, from, msg);
@@ -1938,7 +1938,7 @@ server_lookup:
        !krb5_principal_compare(context,
 			       priv->krbtgt->principal,
 			       priv->server->principal)){
-        _kdc_audit_addreason((kdc_request_t)priv, "Inconsistent request");
+        kdc_audit_addreason((kdc_request_t)priv, "Inconsistent request");
 	kdc_log(context, config, 4, "Inconsistent request.");
 	ret = KRB5KDC_ERR_SERVER_NOMATCH;
 	goto out;
@@ -1948,12 +1948,12 @@ server_lookup:
     if (!_kdc_check_addresses(priv, tgt->caddr, from_addr)) {
         if (config->check_ticket_addresses) {
             ret = KRB5KRB_AP_ERR_BADADDR;
-            _kdc_audit_setkv_bool((kdc_request_t)priv, "wrongaddr", TRUE);
+            kdc_audit_setkv_bool((kdc_request_t)priv, "wrongaddr", TRUE);
             kdc_log(context, config, 4, "Request from wrong address");
-            _kdc_audit_addreason((kdc_request_t)priv, "Request from wrong address");
+            kdc_audit_addreason((kdc_request_t)priv, "Request from wrong address");
             goto out;
         } else if (config->warn_ticket_addresses) {
-            _kdc_audit_setkv_bool((kdc_request_t)priv, "wrongaddr", TRUE);
+            kdc_audit_setkv_bool((kdc_request_t)priv, "wrongaddr", TRUE);
         }
     }
 
@@ -1983,7 +1983,7 @@ server_lookup:
 				    NULL, s, &pa.padata_value);
 	krb5_crypto_destroy(context, crypto);
 	if (ret) {
-            _kdc_audit_addreason((kdc_request_t)priv, "Referral build failed");
+            kdc_audit_addreason((kdc_request_t)priv, "Referral build failed");
 	    kdc_log(context, config, 4,
 		    "Failed building server referral");
 	    goto out;

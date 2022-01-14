@@ -21,19 +21,19 @@ EXPORTS
 	kdc_request_get_attribute
 	kdc_request_copy_attribute
 	kdc_request_delete_attribute
-	_kdc_audit_addkv
-	_kdc_audit_addkv_number
-	_kdc_audit_addkv_object
-	_kdc_audit_addkv_timediff
-	_kdc_audit_addaddrs
-	_kdc_audit_addreason
-	_kdc_audit_getkv
-	_kdc_audit_setkv_bool
-	_kdc_audit_setkv_number
-	_kdc_audit_setkv_object
+	kdc_audit_addkv
+	kdc_audit_addkv_number
+	kdc_audit_addkv_object
+	kdc_audit_addkv_timediff
+	kdc_audit_addaddrs
+	kdc_audit_addreason
+	kdc_audit_getkv
+	kdc_audit_setkv_bool
+	kdc_audit_setkv_number
+	kdc_audit_setkv_object
+	kdc_audit_vaddkv
+	kdc_audit_vaddreason
 	_kdc_audit_trail
-	_kdc_audit_vaddkv
-	_kdc_audit_vaddreason
 
 	; needed for digest-service
 	_kdc_db_fetch

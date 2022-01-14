@@ -459,13 +459,13 @@ _kdc_log_timestamp(astgs_request_t r, const char *type,
 	endtime_str[100], renewtime_str[100];
 
     if (authtime)
-	_kdc_audit_setkv_number((kdc_request_t)r, "auth", authtime);
+	kdc_audit_setkv_number((kdc_request_t)r, "auth", authtime);
     if (starttime && *starttime)
-	_kdc_audit_setkv_number((kdc_request_t)r, "start", *starttime);
+	kdc_audit_setkv_number((kdc_request_t)r, "start", *starttime);
     if (endtime)
-	_kdc_audit_setkv_number((kdc_request_t)r, "end", endtime);
+	kdc_audit_setkv_number((kdc_request_t)r, "end", endtime);
     if (renew_till && *renew_till)
-	_kdc_audit_setkv_number((kdc_request_t)r, "renew", *renew_till);
+	kdc_audit_setkv_number((kdc_request_t)r, "renew", *renew_till);
 
     krb5_format_time(r->context, authtime,
 		     authtime_str, sizeof(authtime_str), TRUE);
@@ -510,13 +510,13 @@ pa_pkinit_validate(astgs_request_t r, const PA_DATA *pa)
 
     ret = _kdc_pk_check_client(r, pkp, &client_cert);
     if (client_cert)
-	_kdc_audit_addkv((kdc_request_t)r, 0, KDC_REQUEST_KV_PKINIT_CLIENT_CERT,
-			 "%s", client_cert);
+	kdc_audit_addkv((kdc_request_t)r, 0, KDC_REQUEST_KV_PKINIT_CLIENT_CERT,
+			"%s", client_cert);
     if (ret) {
 	_kdc_set_e_text(r, "PKINIT certificate not allowed to "
 			"impersonate principal");
-	_kdc_audit_setkv_number((kdc_request_t)r, KDC_REQUEST_KV_AUTH_EVENT,
-				KDC_AUTH_EVENT_CLIENT_NAME_UNAUTHORIZED);
+	kdc_audit_setkv_number((kdc_request_t)r, KDC_REQUEST_KV_AUTH_EVENT,
+			       KDC_AUTH_EVENT_CLIENT_NAME_UNAUTHORIZED);
 	goto out;
     }
 
@@ -535,8 +535,8 @@ pa_pkinit_validate(astgs_request_t r, const PA_DATA *pa)
     ret = _kdc_add_initial_verified_cas(r->context, r->config,
 					pkp, &r->et);
 
-    _kdc_audit_setkv_number((kdc_request_t)r, KDC_REQUEST_KV_AUTH_EVENT,
-			    KDC_AUTH_EVENT_PREAUTH_SUCCEEDED);
+    kdc_audit_setkv_number((kdc_request_t)r, KDC_REQUEST_KV_AUTH_EVENT,
+			   KDC_AUTH_EVENT_PREAUTH_SUCCEEDED);
 
  out:
     if (pkp)
@@ -563,13 +563,13 @@ pa_gss_validate(astgs_request_t r, const PA_DATA *pa)
     if (open) {
 	ret = _kdc_gss_check_client(r, gcp, &client_name);
 	if (client_name)
-	    _kdc_audit_addkv((kdc_request_t)r, 0, KDC_REQUEST_KV_GSS_INITIATOR,
-			     "%s", client_name);
+	    kdc_audit_addkv((kdc_request_t)r, 0, KDC_REQUEST_KV_GSS_INITIATOR,
+			    "%s", client_name);
 	if (ret) {
 	    _kdc_set_e_text(r, "GSS-API client not allowed to "
 			    "impersonate principal");
-	    _kdc_audit_setkv_number((kdc_request_t)r, KDC_REQUEST_KV_AUTH_EVENT,
-				    KDC_AUTH_EVENT_CLIENT_NAME_UNAUTHORIZED);
+	    kdc_audit_setkv_number((kdc_request_t)r, KDC_REQUEST_KV_AUTH_EVENT,
+				   KDC_AUTH_EVENT_CLIENT_NAME_UNAUTHORIZED);
 	    goto out;
 	}
 
@@ -577,8 +577,8 @@ pa_gss_validate(astgs_request_t r, const PA_DATA *pa)
 
 	_kdc_r_log(r, 4, "GSS pre-authentication succeeded -- %s using %s",
 		   r->cname, client_name);
-	_kdc_audit_setkv_number((kdc_request_t)r, KDC_REQUEST_KV_AUTH_EVENT,
-				KDC_AUTH_EVENT_PREAUTH_SUCCEEDED);
+	kdc_audit_setkv_number((kdc_request_t)r, KDC_REQUEST_KV_AUTH_EVENT,
+			       KDC_AUTH_EVENT_PREAUTH_SUCCEEDED);
 
 	ret = _kdc_gss_mk_composite_name_ad(r, gcp);
 	if (ret) {
@@ -642,8 +642,8 @@ pa_enc_chal_validate(astgs_request_t r, const PA_DATA *pa)
        ret = KRB5KDC_ERR_CLIENT_REVOKED;
        kdc_log(r->context, r->config, 0,
                "Client (%s) is locked out", r->cname);
-       _kdc_audit_setkv_number((kdc_request_t)r, KDC_REQUEST_KV_AUTH_EVENT,
-			       KDC_AUTH_EVENT_CLIENT_LOCKED_OUT);
+       kdc_audit_setkv_number((kdc_request_t)r, KDC_REQUEST_KV_AUTH_EVENT,
+			      KDC_AUTH_EVENT_CLIENT_LOCKED_OUT);
        return ret;
     }
 
@@ -769,14 +769,14 @@ pa_enc_chal_validate(astgs_request_t r, const PA_DATA *pa)
 	/*
 	 * Success
 	 */
-	_kdc_audit_setkv_number((kdc_request_t)r, KDC_REQUEST_KV_AUTH_EVENT,
-				KDC_AUTH_EVENT_VALIDATED_LONG_TERM_KEY);
+	kdc_audit_setkv_number((kdc_request_t)r, KDC_REQUEST_KV_AUTH_EVENT,
+			       KDC_AUTH_EVENT_VALIDATED_LONG_TERM_KEY);
 	goto out;
     }
 
     if (invalidPassword) {
-	_kdc_audit_setkv_number((kdc_request_t)r, KDC_REQUEST_KV_AUTH_EVENT,
-				KDC_AUTH_EVENT_WRONG_LONG_TERM_KEY);
+	kdc_audit_setkv_number((kdc_request_t)r, KDC_REQUEST_KV_AUTH_EVENT,
+			       KDC_AUTH_EVENT_WRONG_LONG_TERM_KEY);
 	ret = KRB5KDC_ERR_PREAUTH_FAILED;
     } else {
 	ret = KRB5KDC_ERR_ETYPE_NOSUPP;
@@ -815,8 +815,8 @@ pa_enc_ts_validate(astgs_request_t r, const PA_DATA *pa)
        ret = KRB5KDC_ERR_CLIENT_REVOKED;
        kdc_log(r->context, r->config, 0,
                "Client (%s) is locked out", r->cname);
-       _kdc_audit_setkv_number((kdc_request_t)r, KDC_REQUEST_KV_AUTH_EVENT,
-			       KDC_AUTH_EVENT_CLIENT_LOCKED_OUT);
+       kdc_audit_setkv_number((kdc_request_t)r, KDC_REQUEST_KV_AUTH_EVENT,
+			      KDC_AUTH_EVENT_CLIENT_LOCKED_OUT);
        return ret;
     }
 
@@ -886,10 +886,10 @@ pa_enc_ts_validate(astgs_request_t r, const PA_DATA *pa)
 		   r->cname, str ? str : "unknown enctype", msg);
 	krb5_xfree(str);
 	krb5_free_error_message(r->context, msg);
-	_kdc_audit_setkv_number((kdc_request_t)r, KDC_REQUEST_KV_PA_ETYPE,
-				pa_key->key.keytype);
-	_kdc_audit_setkv_number((kdc_request_t)r, KDC_REQUEST_KV_AUTH_EVENT,
-				KDC_AUTH_EVENT_WRONG_LONG_TERM_KEY);
+	kdc_audit_setkv_number((kdc_request_t)r, KDC_REQUEST_KV_PA_ETYPE,
+			       pa_key->key.keytype);
+	kdc_audit_setkv_number((kdc_request_t)r, KDC_REQUEST_KV_AUTH_EVENT,
+			       KDC_AUTH_EVENT_WRONG_LONG_TERM_KEY);
 	if(hdb_next_enctype2key(r->context, r->client, NULL,
 				enc_data.etype, &pa_key) == 0)
 	    goto try_next_key;
@@ -924,8 +924,8 @@ pa_enc_ts_validate(astgs_request_t r, const PA_DATA *pa)
 		   (unsigned)labs(kdc_time - p.patimestamp),
 		   r->context->max_skew,
 		   r->cname);
-	_kdc_audit_setkv_number((kdc_request_t)r, KDC_REQUEST_KV_AUTH_EVENT,
-				KDC_AUTH_EVENT_CLIENT_TIME_SKEW);
+	kdc_audit_setkv_number((kdc_request_t)r, KDC_REQUEST_KV_AUTH_EVENT,
+			       KDC_AUTH_EVENT_CLIENT_TIME_SKEW);
 
 	/*
 	 * The following is needed to make windows clients to
@@ -950,10 +950,10 @@ pa_enc_ts_validate(astgs_request_t r, const PA_DATA *pa)
     _kdc_r_log(r, 4, "ENC-TS Pre-authentication succeeded -- %s using %s",
 	       r->cname, str ? str : "unknown enctype");
     krb5_xfree(str);
-    _kdc_audit_setkv_number((kdc_request_t)r, KDC_REQUEST_KV_PA_ETYPE,
-			    pa_key->key.keytype);
-    _kdc_audit_setkv_number((kdc_request_t)r, KDC_REQUEST_KV_AUTH_EVENT,
-			    KDC_AUTH_EVENT_VALIDATED_LONG_TERM_KEY);
+    kdc_audit_setkv_number((kdc_request_t)r, KDC_REQUEST_KV_PA_ETYPE,
+			   pa_key->key.keytype);
+    kdc_audit_setkv_number((kdc_request_t)r, KDC_REQUEST_KV_AUTH_EVENT,
+			   KDC_AUTH_EVENT_VALIDATED_LONG_TERM_KEY);
 
     ret = 0;
 
@@ -1047,8 +1047,8 @@ log_patypes(astgs_request_t r, METHOD_DATA *padata)
 
     str = rk_strpoolcollect(p);
     kdc_log(r->context, config, 4, "Client sent patypes: %s", str);
-    _kdc_audit_addkv((kdc_request_t)r, KDC_AUDIT_EATWHITE,
-		     "client-pa", "%s", str);
+    kdc_audit_addkv((kdc_request_t)r, KDC_AUDIT_EATWHITE,
+		    "client-pa", "%s", str);
     free(str);
 }
 
@@ -1586,8 +1586,8 @@ _log_astgs_req(astgs_request_t r, krb5_enctype setype)
 
     str = rk_strpoolcollect(s);
     if (str)
-        _kdc_audit_addkv((kdc_request_t)r, KDC_AUDIT_EATWHITE, "etypes", "%s",
-                         str);
+        kdc_audit_addkv((kdc_request_t)r, KDC_AUDIT_EATWHITE, "etypes", "%s",
+                        str);
     free(str);
 
     ret = krb5_enctype_to_string(r->context, cetype, &cet);
@@ -1608,7 +1608,7 @@ _log_astgs_req(astgs_request_t r, krb5_enctype setype)
 	_kdc_r_log(r, 4, "%s", str);
     free(str);
 
-    _kdc_audit_addkv((kdc_request_t)r, 0, "etype", "%d/%d", cetype, setype);
+    kdc_audit_addkv((kdc_request_t)r, 0, "etype", "%d/%d", cetype, setype);
 
     {
 	char fixedstr[128];
@@ -1618,8 +1618,8 @@ _log_astgs_req(astgs_request_t r, krb5_enctype setype)
 			       fixedstr, sizeof(fixedstr));
 	if (result > 0) {
 	    _kdc_r_log(r, 4, "Requested flags: %s", fixedstr);
-	    _kdc_audit_addkv((kdc_request_t)r, KDC_AUDIT_EATWHITE,
-			     "flags", "%s", fixedstr);
+	    kdc_audit_addkv((kdc_request_t)r, KDC_AUDIT_EATWHITE,
+			    "flags", "%s", fixedstr);
 	}
     }
 }
@@ -1639,19 +1639,19 @@ kdc_check_flags(astgs_request_t r,
     if (client != NULL) {
 	/* check client */
 	if (client->flags.locked_out) {
-	    _kdc_audit_addreason((kdc_request_t)r, "Client is locked out");
+	    kdc_audit_addreason((kdc_request_t)r, "Client is locked out");
 	    return KRB5KDC_ERR_CLIENT_REVOKED;
 	}
 
 	if (client->flags.invalid) {
-	    _kdc_audit_addreason((kdc_request_t)r,
-                                 "Client has invalid bit set");
+	    kdc_audit_addreason((kdc_request_t)r,
+                                "Client has invalid bit set");
 	    return KRB5KDC_ERR_POLICY;
 	}
 
 	if (!client->flags.client) {
-	    _kdc_audit_addreason((kdc_request_t)r,
-                                 "Principal may not act as client");
+	    kdc_audit_addreason((kdc_request_t)r,
+                                "Principal may not act as client");
 	    return KRB5KDC_ERR_POLICY;
 	}
 
@@ -1659,8 +1659,8 @@ kdc_check_flags(astgs_request_t r,
 	    char starttime_str[100];
 	    krb5_format_time(r->context, *client->valid_start,
 			     starttime_str, sizeof(starttime_str), TRUE);
-	    _kdc_audit_addreason((kdc_request_t)r, "Client not yet valid "
-                                 "until %s", starttime_str);
+	    kdc_audit_addreason((kdc_request_t)r, "Client not yet valid "
+                                "until %s", starttime_str);
 	    return KRB5KDC_ERR_CLIENT_NOTYET;
 	}
 
@@ -1668,8 +1668,8 @@ kdc_check_flags(astgs_request_t r,
 	    char endtime_str[100];
 	    krb5_format_time(r->context, *client->valid_end,
 			     endtime_str, sizeof(endtime_str), TRUE);
-	    _kdc_audit_addreason((kdc_request_t)r, "Client expired at %s",
-                                 endtime_str);
+	    kdc_audit_addreason((kdc_request_t)r, "Client expired at %s",
+                                endtime_str);
 	    return  KRB5KDC_ERR_NAME_EXP;
 	}
 
@@ -1682,8 +1682,8 @@ kdc_check_flags(astgs_request_t r,
 	    char pwend_str[100];
 	    krb5_format_time(r->context, *client->pw_end,
 			     pwend_str, sizeof(pwend_str), TRUE);
-	    _kdc_audit_addreason((kdc_request_t)r, "Client's key has expired "
-                                 "at %s", pwend_str);
+	    kdc_audit_addreason((kdc_request_t)r, "Client's key has expired "
+                                "at %s", pwend_str);
 	    return KRB5KDC_ERR_KEY_EXPIRED;
 	}
     }
@@ -1692,23 +1692,23 @@ kdc_check_flags(astgs_request_t r,
 
     if (server != NULL) {
 	if (server->flags.locked_out) {
-	    _kdc_audit_addreason((kdc_request_t)r, "Server locked out");
+	    kdc_audit_addreason((kdc_request_t)r, "Server locked out");
 	    return KRB5KDC_ERR_SERVICE_REVOKED;
 	}
 	if (server->flags.invalid) {
-	    _kdc_audit_addreason((kdc_request_t)r,
-                                 "Server has invalid flag set");
+	    kdc_audit_addreason((kdc_request_t)r,
+				"Server has invalid flag set");
 	    return KRB5KDC_ERR_POLICY;
 	}
 	if (!server->flags.server) {
-	    _kdc_audit_addreason((kdc_request_t)r,
-                                 "Principal may not act as server");
+	    kdc_audit_addreason((kdc_request_t)r,
+                                "Principal may not act as server");
 	    return KRB5KDC_ERR_POLICY;
 	}
 
 	if (!is_as_req && server->flags.initial) {
-	    _kdc_audit_addreason((kdc_request_t)r,
-                                 "AS-REQ is required for server");
+	    kdc_audit_addreason((kdc_request_t)r,
+                                "AS-REQ is required for server");
 	    return KRB5KDC_ERR_POLICY;
 	}
 
@@ -1716,8 +1716,8 @@ kdc_check_flags(astgs_request_t r,
 	    char starttime_str[100];
 	    krb5_format_time(r->context, *server->valid_start,
 			     starttime_str, sizeof(starttime_str), TRUE);
-	    _kdc_audit_addreason((kdc_request_t)r, "Server not yet valid "
-                                 "until %s", starttime_str);
+	    kdc_audit_addreason((kdc_request_t)r, "Server not yet valid "
+                                "until %s", starttime_str);
 	    return KRB5KDC_ERR_SERVICE_NOTYET;
 	}
 
@@ -1725,8 +1725,8 @@ kdc_check_flags(astgs_request_t r,
 	    char endtime_str[100];
 	    krb5_format_time(r->context, *server->valid_end,
 			     endtime_str, sizeof(endtime_str), TRUE);
-	    _kdc_audit_addreason((kdc_request_t)r, "Server expired at %s",
-                                 endtime_str);
+	    kdc_audit_addreason((kdc_request_t)r, "Server expired at %s",
+                                endtime_str);
 	    return KRB5KDC_ERR_SERVICE_EXP;
 	}
 
@@ -1734,8 +1734,8 @@ kdc_check_flags(astgs_request_t r,
 	    char pwend_str[100];
 	    krb5_format_time(r->context, *server->pw_end,
 			     pwend_str, sizeof(pwend_str), TRUE);
-	    _kdc_audit_addreason((kdc_request_t)r, "Server's key has expired "
-                                 "at %s", pwend_str);
+	    kdc_audit_addreason((kdc_request_t)r, "Server's key has expired "
+                                "at %s", pwend_str);
 	    return KRB5KDC_ERR_KEY_EXPIRED;
 	}
     }
@@ -1801,8 +1801,8 @@ krb5_error_code
 _kdc_check_anon_policy(astgs_request_t r)
 {
     if (!r->config->allow_anonymous) {
-	_kdc_audit_addreason((kdc_request_t)r,
-                             "Anonymous tickets denied by local policy");
+	kdc_audit_addreason((kdc_request_t)r,
+                            "Anonymous tickets denied by local policy");
 	return KRB5KDC_ERR_POLICY;
     }
 
@@ -1854,8 +1854,8 @@ generate_pac(astgs_request_t r, const Key *skey, const Key *tkey,
     krb5_const_principal canon_princ = NULL;
 
     r->pac_attributes = get_pac_attributes(r->context, &r->req);
-    _kdc_audit_setkv_number((kdc_request_t)r, "pac_attributes",
-			    r->pac_attributes);
+    kdc_audit_setkv_number((kdc_request_t)r, "pac_attributes",
+			   r->pac_attributes);
 
     if (!_kdc_include_pac_p(r))
 	return 0;
@@ -1903,8 +1903,8 @@ generate_pac(astgs_request_t r, const Key *skey, const Key *tkey,
 	canon_princ = r->canon_client_princ;
 
 	(void) krb5_unparse_name(r->context, canon_princ, &cpn);
-	_kdc_audit_addkv((kdc_request_t)r, 0, "canon_client_name", "%s",
-			     cpn ? cpn : "<unknown>");
+	kdc_audit_addkv((kdc_request_t)r, 0, "canon_client_name", "%s",
+			cpn ? cpn : "<unknown>");
 	krb5_xfree(cpn);
     }
 
@@ -2193,8 +2193,8 @@ _kdc_as_rep(astgs_request_t r)
 	kdc_log(r->context, config, 4, "UNKNOWN -- %s: %s", r->cname, msg);
 	krb5_free_error_message(r->context, msg);
 	ret = KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN;
-	_kdc_audit_setkv_number((kdc_request_t)r, KDC_REQUEST_KV_AUTH_EVENT,
-				KDC_AUTH_EVENT_CLIENT_UNKNOWN);
+	kdc_audit_setkv_number((kdc_request_t)r, KDC_REQUEST_KV_AUTH_EVENT,
+			       KDC_AUTH_EVENT_CLIENT_UNKNOWN);
 	goto out;
     }
     }
@@ -2261,8 +2261,8 @@ _kdc_as_rep(astgs_request_t r)
                     ret = KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN;
                     goto out;
                 }
-		_kdc_audit_addkv((kdc_request_t)r, KDC_AUDIT_VIS, "pa", "%s",
-				 pat[n].name);
+		kdc_audit_addkv((kdc_request_t)r, KDC_AUDIT_VIS, "pa", "%s",
+				pat[n].name);
 		ret = pat[n].validate(r, pa);
 		if (ret != 0) {
 		    krb5_error_code  ret2;
@@ -2270,9 +2270,9 @@ _kdc_as_rep(astgs_request_t r)
 		    krb5_boolean default_salt;
 
 		    if (ret != KRB5_KDC_ERR_MORE_PREAUTH_DATA_REQUIRED &&
-			!_kdc_audit_getkv((kdc_request_t)r, KDC_REQUEST_KV_AUTH_EVENT))
-			_kdc_audit_setkv_number((kdc_request_t)r, KDC_REQUEST_KV_AUTH_EVENT,
-						KDC_AUTH_EVENT_PREAUTH_FAILED);
+			!kdc_audit_getkv((kdc_request_t)r, KDC_REQUEST_KV_AUTH_EVENT))
+			kdc_audit_setkv_number((kdc_request_t)r, KDC_REQUEST_KV_AUTH_EVENT,
+					       KDC_AUTH_EVENT_PREAUTH_FAILED);
 
 		    /*
 		     * If there is a client key, send ETYPE_INFO{,2}
@@ -2288,9 +2288,9 @@ _kdc_as_rep(astgs_request_t r)
 		    }
 		    goto out;
 		}
-		if (!_kdc_audit_getkv((kdc_request_t)r, KDC_REQUEST_KV_AUTH_EVENT))
-		    _kdc_audit_setkv_number((kdc_request_t)r, KDC_REQUEST_KV_AUTH_EVENT,
-					    KDC_AUTH_EVENT_PREAUTH_SUCCEEDED);
+		if (!kdc_audit_getkv((kdc_request_t)r, KDC_REQUEST_KV_AUTH_EVENT))
+		    kdc_audit_setkv_number((kdc_request_t)r, KDC_REQUEST_KV_AUTH_EVENT,
+					   KDC_AUTH_EVENT_PREAUTH_SUCCEEDED);
 		kdc_log(r->context, config, 4,
 			"%s pre-authentication succeeded -- %s",
 			pat[n].name, r->cname);
@@ -2386,8 +2386,8 @@ _kdc_as_rep(astgs_request_t r)
 	r->et.flags.anonymous = 1;
     }
 
-    _kdc_audit_setkv_number((kdc_request_t)r, KDC_REQUEST_KV_AUTH_EVENT,
-			    KDC_AUTH_EVENT_CLIENT_AUTHORIZED);
+    kdc_audit_setkv_number((kdc_request_t)r, KDC_REQUEST_KV_AUTH_EVENT,
+			   KDC_AUTH_EVENT_CLIENT_AUTHORIZED);
 
     /*
      * Select the best encryption type for the KDC with out regard to
@@ -2486,12 +2486,12 @@ _kdc_as_rep(astgs_request_t r)
     }
 
     if (b->addresses)
-        _kdc_audit_addaddrs((kdc_request_t)r, b->addresses, "reqaddrs");
+        kdc_audit_addaddrs((kdc_request_t)r, b->addresses, "reqaddrs");
 
     /* check for valid set of addresses */
     if (!_kdc_check_addresses(r, b->addresses, r->addr)) {
         if (r->config->warn_ticket_addresses) {
-            _kdc_audit_setkv_bool((kdc_request_t)r, "wrongaddr", TRUE);
+            kdc_audit_setkv_bool((kdc_request_t)r, "wrongaddr", TRUE);
         } else {
             _kdc_set_e_text(r, "Request from wrong address");
             ret = KRB5KRB_AP_ERR_BADADDR;

@@ -1064,7 +1064,7 @@ reap_kid(krb5_context context, krb5_kdc_configuration *config,
 	 pid_t *pids, int max_kids, int options)
 {
     pid_t pid;
-    char *what;
+    char *what = "untracked";
     int status;
     int i = 0; /* quiet warnings */
     int ret = 0;
@@ -1090,7 +1090,6 @@ reap_kid(krb5_context context, krb5_kdc_configuration *config,
 
         if (i == max_kids) {
             /* should not happen */
-            what = "untracked";
             sev = "warning: ";
             level = 2;
         }

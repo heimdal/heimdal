@@ -115,7 +115,7 @@ else
 
 fi
 
-AX_CHECK_COMPILE_FLAG([-Werror=enum-conversion],
+AX_CHECK_COMPILE_FLAG([-Wno-error=enum-conversion],
                       [WFLAGS_ENUM_CONV=-Werror=enum-conversion],
                       [WFLAGS_ENUM_CONV=], [-Werror])
 AX_CHECK_COMPILE_FLAG([-Wno-unused-but-set-variable],

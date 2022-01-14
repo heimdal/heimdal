@@ -356,10 +356,6 @@ ROKEN_CPP_START
 
 #define fsync   _commit
 
-#define timezone    _timezone
-
-#define tzname  _tzname
-
 #define _PIPE_BUFFER_SZ 8192
 #define pipe(fds) _pipe((fds), _PIPE_BUFFER_SZ, O_BINARY);
 

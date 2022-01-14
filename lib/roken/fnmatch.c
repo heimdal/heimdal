@@ -129,6 +129,7 @@ rk_fnmatch(const char *pattern, const char *string, int flags)
 					--pattern;
 				}
 			}
+                        fallthrough
 			/* FALLTHROUGH */
 		default:
 			if (c != *string++)

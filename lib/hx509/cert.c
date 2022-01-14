@@ -2438,8 +2438,10 @@ hx509_verify_path(hx509_context context,
 		 * EE checking below.
 		 */
 		type = EE_CERT;
+                fallthrough
                 /* FALLTHROUGH */
 	    }
+            fallthrough
 	}
         /* FALLTHROUGH */
 	case EE_CERT:

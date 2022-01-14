@@ -972,7 +972,8 @@ process_stream(krb5_context contextp,
 	    INSIST(gctx.ctx == NULL);
 
 	    gctx.inprogress = 1;
-	    /* FALLTHROUGH */
+	    fallthrough
+            /* FALLTHROUGH */
 	case RPG_CONTINUE_INIT: {
 	    gss_name_t src_name = GSS_C_NO_NAME;
 	    krb5_data in;

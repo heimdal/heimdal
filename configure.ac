@@ -504,6 +504,19 @@ rk_WIN32_EXPORT(BUILD_ROKEN_LIB, ROKEN_LIB)
 rk_WIN32_EXPORT(BUILD_GSSAPI_LIB, GSSAPI_LIB)
 rk_WIN32_EXPORT(BUILD_KDC_LIB, KDC_LIB)
 
+dnl Deal with switch FALLTHROUGH
+AH_TOP([
+#if defined(__GNUC__)
+#if __GNUC__ >= 7
+# define fallthrough __attribute__((fallthrough));
+#else
+# define fallthrough
+#endif
+#else
+# define fallthrough
+#endif
+])
+
 dnl Checks for libraries.
 
 AC_FIND_FUNC_NO_LIBS(openpty, util,[

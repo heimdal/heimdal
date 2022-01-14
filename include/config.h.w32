@@ -32,6 +32,8 @@
 #ifndef __CONFIG_H__
 #define __CONFIG_H__
 
+#define fallthrough
+
 #ifndef RCSID
 #define RCSID(msg) \
 static const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }

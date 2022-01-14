@@ -1192,6 +1192,7 @@ krb5_sendto_context(krb5_context context,
 		break;
 	    }
 	    action = KRB5_SENDTO_KRBHST;
+            fallthrough
 	    /* FALLTHROUGH */
 	case KRB5_SENDTO_KRBHST:
 	    if (ctx->krbhst == NULL) {
@@ -1214,6 +1215,7 @@ krb5_sendto_context(krb5_context context,
 		handle = heim_retain(ctx->krbhst);
 	    }
 	    action = KRB5_SENDTO_TIMEOUT;
+            fallthrough
 	    /* FALLTHROUGH */
 	case KRB5_SENDTO_TIMEOUT:
 

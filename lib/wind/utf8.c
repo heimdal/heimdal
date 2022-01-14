@@ -205,17 +205,21 @@ wind_ucs4utf8(const uint32_t *in, size_t in_len, char *out, size_t *out_len)
 	    case 4:
 		out[3] = (ch | 0x80) & 0xbf;
 		ch = ch >> 6;
+                fallthrough
                 /* FALLTHROUGH */
 	    case 3:
 		out[2] = (ch | 0x80) & 0xbf;
 		ch = ch >> 6;
+                fallthrough
                 /* FALLTHROUGH */
 	    case 2:
 		out[1] = (ch | 0x80) & 0xbf;
 		ch = ch >> 6;
+                fallthrough
                 /* FALLTHROUGH */
 	    case 1:
 		out[0] = ch | first_char[len - 1];
+                fallthrough
                 /* FALLTHROUGH */
 	    }
 	}
@@ -484,13 +488,16 @@ wind_ucs2utf8(const uint16_t *in, size_t in_len, char *out, size_t *out_len)
 	    case 3:
 		out[2] = (ch | 0x80) & 0xbf;
 		ch = ch >> 6;
+                fallthrough
                 /* FALLTHROUGH */
 	    case 2:
 		out[1] = (ch | 0x80) & 0xbf;
 		ch = ch >> 6;
+                fallthrough
                 /* FALLTHROUGH */
 	    case 1:
 		out[0] = ch | first_char[len - 1];
+                fallthrough
                 /* FALLTHROUGH */
 	    }
 	    out += len;

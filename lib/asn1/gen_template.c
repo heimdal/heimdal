@@ -716,6 +716,8 @@ sort_object_set(IOSObjectSet *os,       /* Object set to sort fields of */
     IOSObject *o;
     size_t i, nobjs = 0;
 
+    *objectsp = NULL;
+
     HEIM_TAILQ_FOREACH(o, os->objects, objects) {
         ObjectField *typeidobjf = NULL;
         ObjectField *of;

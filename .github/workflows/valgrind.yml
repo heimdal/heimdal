@@ -1,52 +1,15 @@
-name: Linux Build
+name: Linux Valgrind Tests Build
 
 on:
     push:
+      # Pushes to the valgrind branch get the valgrind treatment
       branches:
-         - 'master'
-         - 'heimdal-7-1-branch'
-      paths:
-         - '!docs/**'
-         - '!**.md'
-         - '!**.[1-9]'
-         - '**.[chly]'
-         - '**.hin'
-         - '**.in'
-         - '**.am'
-         - '**.m4'
-         - '**.ac'
-         - '**.pl'
-         - '**.py'
-         - '**.asn1'
-         - '**.opt'
-         - '**/COPYING'
-         - '**/INSTALL'
-         - '**/README*'
-         - '.github/workflows/linux.yml'
-         - '!appveyor.yml'
-         - '!.travis.yml'
+         - 'valgrind'
 
     pull_request:
+      # Changing this build also gets it to run
       paths:
-         - '!docs/**'
-         - '!**.md'
-         - '!**.[1-9]'
-         - '**.[chly]'
-         - '**.hin'
-         - '**.in'
-         - '**.am'
-         - '**.m4'
-         - '**.ac'
-         - '**.pl'
-         - '**.py'
-         - '**.asn1'
-         - '**.opt'
-         - '**/COPYING'
-         - '**/INSTALL'
-         - '**/README*'
-         - '.github/workflows/linux.yml'
-         - '!appveyor.yml'
-         - '!.travis.yml'
+         - '.github/workflows/valgrind.yml'
 
 jobs:
     unix:
@@ -85,8 +48,10 @@ jobs:
                 ../configure --srcdir=`dirname "$PWD"` --enable-maintainer-mode --enable-developer --with-ldap $CONFIGURE_OPTS --prefix=$HOME/inst CFLAGS="-Wno-error=shadow -Wno-error=bad-function-cast -Wno-error=unused-function -Wno-error=unused-result -Wno-error=deprecated-declarations"
                 ulimit -c unlimited
                 make -j4
-                make check
-                make install
+                make check-valgrind
+            - name: Valgrind output
+              run: |
+                find . -name \*.log -print0|xargs -0 grep '^==[0-9]*== ' || true
             - name: Core dump stacks
               run: |
                 echo "thread apply all bt" > /tmp/x
@@ -96,11 +61,3 @@ jobs:
               if: ${{ failure() }}
               run: |
                 find build -name \*.trs|xargs grep -lw FAIL|sed -e 's/trs$/log/'|xargs cat
-            - name: distclean
-              run: |
-                cd build
-                make distclean
-                if [ "$(git ls-files -o|grep -v ^build/ | wc -l)" -ne 0 ]; then
-                  echo "Files not removed by make distclean:"
-                  git ls-files -o|grep -v ^build/
-                fi

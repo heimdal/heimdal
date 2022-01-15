@@ -2,6 +2,9 @@ name: Windows Build
 
 on:
     push:
+      branches:
+         - 'master'
+         - 'heimdal-7-1-branch'
       paths:
          - '!docs/**'
          - '!**.md'
@@ -18,7 +21,7 @@ on:
          - '**/COPYING'
          - '**/INSTALL'
          - '**/README*'
-         - '.github/workflows/build.yml'
+         - '.github/workflows/windows.yml'
          - '!appveyor.yml'
          - '!.travis.yml'
 
@@ -39,7 +42,7 @@ on:
          - '**/COPYING'
          - '**/INSTALL'
          - '**/README*'
-         - '.github/workflows/build.yml'
+         - '.github/workflows/windows.yml'
          - '!appveyor.yml'
          - '!.travis.yml'
 

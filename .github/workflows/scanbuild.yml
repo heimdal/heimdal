@@ -4,7 +4,7 @@ on:
     push:
       # Pushes to this branch get the scan-build treatment
       branches:
-         - 'scan-build'
+         - 'scan-build*'
 
     pull_request:
       # Changing this build gets it to run

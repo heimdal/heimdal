@@ -4,7 +4,7 @@ on:
     push:
       # Pushes to the valgrind branch get the valgrind treatment
       branches:
-         - 'valgrind'
+         - 'valgrind*'
 
     pull_request:
       # Changing this build also gets it to run

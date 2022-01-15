@@ -530,6 +530,7 @@ kadm_connect(kadm5_client_context *ctx)
 	if (connect(s, a->ai_addr, a->ai_addrlen) < 0) {
 	    krb5_warn(context, errno, "connect(%s)", hostname);
 	    rk_closesocket(s);
+	    s = rk_INVALID_SOCKET;
 	    continue;
 	}
 	break;

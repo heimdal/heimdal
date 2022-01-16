@@ -456,7 +456,7 @@ main(int argc, char **argv)
         mergesort_r(preserve.strings, preserve.num_strings,
                     sizeof(preserve.strings[0]), strcmp4mergesort_r, "");
     if (seq.num_strings)
-        mergesort_r(seq.strings, seq.num_strings, sizeof(seq.strings),
+        mergesort_r(seq.strings, seq.num_strings, sizeof(seq.strings[0]),
                     strcmp4mergesort_r, "");
     if (decorate.num_strings)
         mergesort_r(decorate.strings, decorate.num_strings,

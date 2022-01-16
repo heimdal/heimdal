@@ -287,6 +287,9 @@ BN_set_word(BIGNUM *bn, unsigned long num)
     unsigned long num2;
     int i, len;
 
+    if (bn == NULL)
+	return 0;
+
     for (num2 = num, i = 0; num2 > 0; i++)
 	num2 = num2 >> 8;
 

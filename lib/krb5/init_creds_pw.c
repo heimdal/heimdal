@@ -1087,7 +1087,7 @@ add_enc_ts_padata(krb5_context context,
     if (!enctypes) {
 	enctypes = context->etypes;
 	netypes = 0;
-	for (ep = enctypes; *ep != (krb5_enctype)ETYPE_NULL; ep++)
+	for (ep = enctypes; *ep != ETYPE_NULL; ep++)
 	    netypes++;
     }
 

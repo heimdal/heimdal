@@ -95,9 +95,9 @@ _kdc_is_weak_exception(krb5_principal principal, krb5_enctype etype)
 {
     if (principal->name.name_string.len > 0 &&
 	strcmp(principal->name.name_string.val[0], "afs") == 0 &&
-	(etype == (krb5_enctype)ETYPE_DES_CBC_CRC
-	 || etype == (krb5_enctype)ETYPE_DES_CBC_MD4
-	 || etype == (krb5_enctype)ETYPE_DES_CBC_MD5))
+	(etype == ETYPE_DES_CBC_CRC
+	 || etype == ETYPE_DES_CBC_MD4
+	 || etype == ETYPE_DES_CBC_MD5))
 	return TRUE;
     return FALSE;
 }
@@ -165,7 +165,7 @@ _kdc_find_etype(astgs_request_t r, uint32_t flags,
     krb5_principal request_princ;
     krb5_error_code ret;
     krb5_salt def_salt;
-    krb5_enctype enctype = (krb5_enctype)ETYPE_NULL;
+    krb5_enctype enctype = ETYPE_NULL;
     const krb5_enctype *p;
     Key *key = NULL;
     size_t i, k, m;
@@ -224,14 +224,14 @@ _kdc_find_etype(astgs_request_t r, uint32_t flags,
 	/* drive the search with local supported enctypes list */
 	p = krb5_kerberos_enctypes(r->context);
 	for (i = 0;
-	    p[i] != (krb5_enctype)ETYPE_NULL && enctype == (krb5_enctype)ETYPE_NULL;
+	    p[i] != ETYPE_NULL && enctype == ETYPE_NULL;
 	    i++) {
 	    if (krb5_enctype_valid(r->context, p[i]) != 0 &&
                 !_kdc_is_weak_exception(princ->principal, p[i]))
 		continue;
 
 	    /* check that the client supports it too */
-	    for (k = 0; k < len && enctype == (krb5_enctype)ETYPE_NULL; k++) {
+	    for (k = 0; k < len && enctype == ETYPE_NULL; k++) {
 
 		if (p[i] != etypes[k])
 		    continue;
@@ -316,7 +316,7 @@ _kdc_find_etype(astgs_request_t r, uint32_t flags,
 	}
     }
 
-    if (enctype == (krb5_enctype)ETYPE_NULL) {
+    if (enctype == ETYPE_NULL) {
         /*
          * if the service principal is one for which there is a known 1DES
          * exception and no other enctype matches both the client request and

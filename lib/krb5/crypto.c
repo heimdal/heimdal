@@ -2575,7 +2575,7 @@ krb5_crypto_init(krb5_context context,
     ALLOC(*crypto, 1);
     if (*crypto == NULL)
 	return krb5_enomem(context);
-    if(etype == (krb5_enctype)ETYPE_NULL)
+    if(etype == ETYPE_NULL)
 	etype = key->keytype;
     (*crypto)->et = _krb5_find_enctype(etype);
     if((*crypto)->et == NULL || ((*crypto)->et->flags & F_DISABLED)) {

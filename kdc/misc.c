@@ -271,7 +271,7 @@ _kdc_get_preferred_key(krb5_context context,
     if (config->use_strongest_server_key) {
 	const krb5_enctype *p = krb5_kerberos_enctypes(context);
 
-	for (i = 0; p[i] != (krb5_enctype)ETYPE_NULL; i++) {
+	for (i = 0; p[i] != ETYPE_NULL; i++) {
 	    if (krb5_enctype_valid(context, p[i]) != 0 &&
 		!_kdc_is_weak_exception(h->principal, p[i]))
 		continue;

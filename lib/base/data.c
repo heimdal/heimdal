@@ -69,8 +69,9 @@ data_hash(void *ptr)
 
     if (os->length < 4)
 	return os->length;
-    return s[0] | (s[1] << 8) |
-	(s[os->length - 2] << 16) | (s[os->length - 1] << 24);
+
+    return ((unsigned long)s[os->length - 1] << 24)
+	| (s[os->length - 2] << 16) | (s[1] << 8) | s[0];
 }
 
 struct heim_type_data _heim_data_object = {

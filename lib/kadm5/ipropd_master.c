@@ -1253,7 +1253,8 @@ fill_input(krb5_context context, slave *s)
             return EWOULDBLOCK;
 
         buf = s->input.header_buf;
-        len = (buf[0] << 24) | (buf[1] << 16) | (buf[2] << 8) | buf[3];
+        len = ((unsigned long)buf[0] << 24) | (buf[1] << 16)
+	    | (buf[2] << 8) | buf[3];
         if (len > SLAVE_MSG_MAX)
             return EINVAL;
         ret = krb5_data_alloc(&s->input.packet, len);

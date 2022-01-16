@@ -572,7 +572,7 @@ gsskrb5_extract_authtime_from_sec_context(OM_uint32 *minor_status,
 
     {
 	unsigned char *buf = data_set->elements[0].value;
-	*authtime = (buf[3] <<24) | (buf[2] << 16) |
+	*authtime = ((unsigned long)buf[3] <<24) | (buf[2] << 16) |
 	    (buf[1] << 8) | (buf[0] << 0);
     }
 

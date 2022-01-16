@@ -459,7 +459,7 @@ fast_unwrap_request(astgs_request_t r,
     krb5_principal armor_server_principal = NULL;
     char *armor_client_principal_name = NULL;
     char *armor_server_principal_name = NULL;
-    PA_FX_FAST_REQUEST fxreq = {0};
+    PA_FX_FAST_REQUEST fxreq;
     krb5_auth_context ac = NULL;
     krb5_ticket *ticket = NULL;
     krb5_flags ap_req_options;
@@ -474,6 +474,7 @@ fast_unwrap_request(astgs_request_t r,
     size_t len;
     int i = 0;
 
+    memset(&fxreq, 0, sizeof(fxreq));
     memset(&fastreq, 0, sizeof(fastreq));
 
     pa = _kdc_find_padata(&r->req, &i, KRB5_PADATA_FX_FAST);

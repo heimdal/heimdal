@@ -798,7 +798,7 @@ fkt_remove_entry(krb5_context context,
         krb5_set_error_message(context, ret,
                                N_("Could not remove keytab entry from %s: %s", ""),
                                fkt->filename,
-                               krb5_get_error_message(context, ret));
+                               emsg);
         krb5_free_error_message(context, emsg);
     } else if (!found) {
 	krb5_clear_error_message(context);

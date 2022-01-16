@@ -1036,7 +1036,7 @@ void
 heim_audit_trail(heim_svc_req_desc r, heim_error_code ret, const char *retname)
 {
     const char *retval;
-    struct heim_audit_kv_buf kvb = {0};
+    struct heim_audit_kv_buf kvb;
     char retvalbuf[30]; /* Enough for UNKNOWN-%d */
 
 #define CASE(x)	case x : retval = #x; break
@@ -1060,7 +1060,7 @@ heim_audit_trail(heim_svc_req_desc r, heim_error_code ret, const char *retname)
     if (r->e_text && r->kv)
 	heim_audit_addkv(r, HEIM_SVC_AUDIT_VIS, "e-text", "%s", r->e_text);
 
-    kvb.pos = 0;
+    memset(&kvb, 0, sizeof(kvb));
     heim_dict_iterate_f(r->kv, &kvb, audit_trail_iterator);
     kvb.buf[kvb.pos] = '\0';
 

@@ -446,10 +446,13 @@ gen_priv_key(krb5_context context,
     if (ret == 0)
         ret = _hx509_generate_private_key(context->hx509ctx, key_gen_ctx, key);
     _hx509_generate_private_key_free(&key_gen_ctx);
-    if (ret)
+    if (ret) {
+	const char *emsg = hx509_get_error_string(context->hx509ctx, ret);
+
         krb5_set_error_message(context, ret,
-                               "Could not generate a private key: %s",
-                               hx509_get_error_string(context->hx509ctx, ret));
+                               "Could not generate a private key: %s", emsg);
+	hx509_free_error_string(context->hx509ctx, emsg);
+    }
     return ret;
 }
 

@@ -20,10 +20,10 @@ HEIMDAL_KDC_1.0 {
 		krb5_kdc_save_request;
 		krb5_kdc_update_time;
 		krb5_kdc_pk_initialize;
-		krb5_kdc_request_set_attribute;
-		krb5_kdc_request_get_attribute;
-		krb5_kdc_request_copy_attribute;
-		krb5_kdc_request_delete_attribute;
+		kdc_request_set_attribute;
+		kdc_request_get_attribute;
+		kdc_request_copy_attribute;
+		kdc_request_delete_attribute;
 		_kdc_audit_addkv;
 		_kdc_audit_addkv_number;
 		_kdc_audit_addkv_object;

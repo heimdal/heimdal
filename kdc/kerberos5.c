@@ -577,8 +577,8 @@ pa_gss_validate(astgs_request_t r, const PA_DATA *pa)
 	goto out;
     }
 
-    ret = krb5_kdc_request_set_attribute((kdc_request_t)r,
-					 HSTR("org.h5l.pa-gss-client-params"), gcp);
+    ret = kdc_request_set_attribute((kdc_request_t)r,
+				    HSTR("org.h5l.pa-gss-client-params"), gcp);
     if (ret)
 	goto out;
 
@@ -594,7 +594,7 @@ pa_gss_finalize_pac(astgs_request_t r)
 {
     gss_client_params *gcp;
 
-    gcp = krb5_kdc_request_get_attribute((kdc_request_t)r, HSTR("org.h5l.pa-gss-client-params"));
+    gcp = kdc_request_get_attribute((kdc_request_t)r, HSTR("org.h5l.pa-gss-client-params"));
 
     heim_assert(gcp != NULL, "invalid GSS-API client params");
 

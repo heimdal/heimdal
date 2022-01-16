@@ -296,4 +296,14 @@ TESTNotDecorated ::= SEQUENCE {
   -- should have the same encoding as TESTDecorated
 }
 
+TESTDecoratedChoice ::= CHOICE {
+  version     TESTuint32
+  -- gets decorated with varius fields (see test.opt)
+}
+
+TESTNotDecoratedChoice ::= CHOICE {
+  version     TESTuint32
+  -- should have the same encoding as TESTDecoratedChoice
+}
+
 END

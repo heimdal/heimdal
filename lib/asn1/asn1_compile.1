@@ -239,8 +239,8 @@ or
 .Sq SEQUENCE OF
 type.
 .It Fl Fl decorate=ASN1-TYPE:FIELD-ASN1-TYPE:fname[?]
-Add to the C struct generated for the given ASN.1 SET or SEQUENCE type
-named
+Add to the C struct generated for the given ASN.1 SET, SEQUENCE, or
+CHOICE type named
 .Ar ASN1-TYPE
 a
 .Dq hidden
@@ -274,8 +274,8 @@ and
 .Sq heim_release()
 respectively.
 .It Fl Fl decorate=ASN1-TYPE:void*:fname
-Add to the C struct generated for the given ASN.1 SET or SEQUENCE type
-named
+Add to the C struct generated for the given ASN.1 SET, SEQUENCE, or
+CHOICE type named
 .Ar ASN1-TYPE
 a
 .Dq hidden
@@ -292,8 +292,8 @@ will set this field to the
 .Sq NULL
 pointer.
 .It Fl Fl decorate=ASN1-TYPE:FIELD-C-TYPE:fname[?]:[copyfn]:[freefn]:header
-Add to the C struct generated for the given ASN.1 SET or SEQUENCE type
-named
+Add to the C struct generated for the given ASN.1 SET, SEQUENCE, or
+CHOICE type named
 .Ar ASN1-TYPE
 a
 .Dq hidden
@@ -335,8 +335,6 @@ and
 are empty strings, then the decoration field will neither be
 copied nor freed by the functions generated for the
 .Ar TYPE .
-.Pp
-NOTE: At this time only one decoration may be specified per type.
 .It Fl Fl one-code-file
 Generate a single source code file.
 Otherwise a separate code file will be generated for every type.

@@ -1317,6 +1317,8 @@ template_members(struct templatehead *temp,
 	break;
     }
     case TChoice: {
+        struct decoration deco;
+        ssize_t more_deco = -1;
 	struct templatehead template;
 	struct template *q;
 	size_t count = 0, i;
@@ -1397,6 +1399,34 @@ template_members(struct templatehead *temp,
 	fprintf(f, "};\n");
 
 	add_line(temp, "{ A1_OP_CHOICE, %s, %s }", poffset, tname);
+
+        while (decorate_type(basetype, &deco, &more_deco)) {
+            char *poffset2;
+
+            poffset2 = partial_offset(basetype, deco.field_name, 1, isstruct);
+
+            if (deco.ext && deco.heim_object) {
+                add_line_string(temp, "0", poffset2,
+                                "A1_OP_TYPE_DECORATE_EXTERN |A1_FLAG_HEIM_OBJ");
+            } else if (deco.ext) {
+                char *ptr = NULL;
+
+                /* Decorated with external C type */
+                if (asprintf(&ptr, "&asn1_extern_%s_%s",
+                             basetype, deco.field_name) == -1 || ptr == NULL)
+                    err(1, "out of memory");
+                add_line_pointer(temp, ptr, poffset2,
+                                 "A1_OP_TYPE_DECORATE_EXTERN %s",
+                                 deco.opt ? "|A1_FLAG_OPTIONAL" : "");
+                free(ptr);
+            } else
+                /* Decorated with a templated ASN.1 type */
+                add_line_pointer(temp, deco.field_type, poffset2,
+                                 "A1_OP_TYPE_DECORATE %s",
+                                 deco.opt ? "|A1_FLAG_OPTIONAL" : "");
+            free(poffset2);
+            free(deco.field_type);
+        }
 
 	free(e);
 	free(tname);

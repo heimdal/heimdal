@@ -1488,6 +1488,9 @@ define_type(int level, const char *name, const char *basename, Type *pt, Type *t
         define_type(level, name, basename, t, t->subtype, typedefp, preservep);
 	break;
     case TChoice: {
+        struct decoration deco;
+        ssize_t more_deco = -1;
+        int decorated = 0;
 	int first = 1;
 	Member *m;
 
@@ -1546,9 +1549,39 @@ define_type(int level, const char *name, const char *basename, Type *pt, Type *t
 	}
 	space(level + 1);
 	fprintf (headerfile, "} u;\n");
+        fprintf(jsonfile, "]");
+
+        while (decorate_type(newbasename, &deco, &more_deco)) {
+            decorated++;
+	    space(level + 1);
+            fprintf(headerfile, "%s %s%s;\n", deco.field_type,
+                    deco.opt ? "*" : "", deco.field_name);
+            if (deco.first)
+                fprintf(jsonfile, ",\"decorate\":[");
+            fprintf(jsonfile, "%s{"
+                    "\"type\":\"%s\",\"name\":\"%s\",\"optional\":%s,"
+                    "\"external\":%s,\"pointer\":%s,\"void_star\":%s,"
+                    "\"struct_star\":%s,\"heim_object\":%s,"
+                    "\"copy_function\":\"%s\","
+                    "\"free_function\":\"%s\",\"header_name\":%s%s%s"
+                    "}",
+                    deco.first ? "" : ",",
+                    deco.field_type, deco.field_name,
+                    deco.opt ? "true" : "false", deco.ext ? "true" : "false",
+                    deco.ptr ? "true" : "false", deco.void_star ? "true" : "false",
+                    deco.struct_star ? "true" : "false", deco.heim_object ? "true" : "false",
+                    deco.copy_function_name ? deco.copy_function_name : "",
+                    deco.free_function_name ? deco.free_function_name : "",
+                    deco.header_name && deco.header_name[0] == '"' ? "" : "\"",
+                    deco.header_name ? deco.header_name : "",
+                    deco.header_name && deco.header_name[0] == '"' ? "" : "\""
+                    );
+        }
+        if (decorated)
+            fprintf(jsonfile, "]");
+
 	space(level);
 	fprintf (headerfile, "} %s;\n", name);
-        fprintf(jsonfile, "]");
 	break;
     }
     case TUTCTime:
@@ -1669,10 +1702,19 @@ declare_type(const Symbol *s, Type *t, int typedefp)
 	getnewbasename(&newbasename, TRUE, s->gen_name, s->gen_name);
 	fprintf(headerfile, "struct %s %s;\n", newbasename, s->gen_name);
 	break;
-    case TChoice:
+    case TChoice: {
+        struct decoration deco;
+        ssize_t more_deco = -1;
+
 	getnewbasename(&newbasename, TRUE, s->gen_name, s->gen_name);
 	fprintf(headerfile, "struct %s %s;\n", newbasename, s->gen_name);
+        while (decorate_type(newbasename, &deco, &more_deco)) {
+            if (deco.header_name)
+                fprintf(headerfile, "#include %s\n", deco.header_name);
+            free(deco.field_type);
+        }
 	break;
+    }
     default:
 	abort ();
     }

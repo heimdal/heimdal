@@ -402,7 +402,7 @@ _gsskrb5_inquire_name(OM_uint32 *minor_status,
                       gss_buffer_set_t *attrs)
 {
     gss_buffer_desc prefix, attr, frag, a;
-    OM_uint32 major;
+    OM_uint32 major = GSS_S_UNAVAILABLE;
     size_t i;
     int authenticated, is_urn;
 

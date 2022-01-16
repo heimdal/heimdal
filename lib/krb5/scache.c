@@ -446,10 +446,8 @@ scc_alloc(krb5_context context,
             name += sizeof("SCC:") - 1;
 
         if ((s->file = strdup(name)) == NULL) {
-            (void) krb5_enomem(context);
-            scc_free(s);
-            free(freeme);
-            return NULL;
+            ret = krb5_enomem(context);
+	    goto out;
         }
 
         if ((subsidiary = strrchr(s->file, ':'))) {
@@ -480,11 +478,14 @@ scc_alloc(krb5_context context,
     if (ret == 0 && s->file && s->sub &&
         (asprintf(&s->name, "%s:%s", s->file, s->sub) < 0 || s->name == NULL))
         ret = krb5_enomem(context);
+
+ out:
     if (ret || s->file == NULL || s->sub == NULL || s->name == NULL) {
 	scc_free(s);
-        free(freeme);
-	return NULL;
+	s = NULL;
     }
+
+    free(freeme);
     return s;
 }
 

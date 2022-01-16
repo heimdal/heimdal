@@ -69,7 +69,12 @@ jobs:
               if: startsWith(matrix.os, 'ubuntu')
               run: |
                 sudo apt-get update -qq
-                sudo apt-get install -y bison comerr-dev flex libcap-ng-dev libdb-dev libedit-dev libjson-perl libldap2-dev libncurses5-dev libperl4-corelibs-perl libsqlite3-dev libkeyutils-dev pkg-config python ss-dev texinfo unzip netbase keyutils ldap-utils gdb apport curl libmicrohttpd-dev jq valgrind
+                sudo apt-get install -y bison comerr-dev flex doxygen
+                sudo apt-get install -y libcap-ng-dev libdb-dev libedit-dev libjson-perl
+                sudo apt-get install -y libldap2-dev libncurses5-dev libperl4-corelibs-perl
+                sudo apt-get install -y libsqlite3-dev libkeyutils-dev pkg-config python
+                sudo apt-get install -y ss-dev texinfo unzip netbase keyutils ldap-utils
+                sudo apt-get install -y gdb apport curl libmicrohttpd-dev jq valgrind
                 # Temporary workaround for:
                 # https://github.com/actions/virtual-environments/issues/3185
                 sudo hostname localhost
@@ -110,15 +115,15 @@ jobs:
               run: |
                 find build -depth -cpio -name \*.trs | xargs grep -lw FAIL | sed -e 's/trs$/log/' | tar -czf $HOME/logs.tgz --verbatim-files-from --files-from -
                 find build -name \*.trs | xargs grep -lw FAIL | sed -e 's/trs$/log/' | xargs cat
-            - name: distclean
+            - name: Make Dist
               run: |
                 cd build
+                make dist
                 make distclean
                 if [ "$(git ls-files -o|grep -v ^build/ | wc -l)" -ne 0 ]; then
                   echo "Files not removed by make distclean:"
                   git ls-files -o|grep -v ^build/
                 fi
-                make dist
             - name: Upload Install Tarball
               uses: actions/upload-artifact@v2
               with:

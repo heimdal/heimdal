@@ -99,25 +99,11 @@ jobs:
               run: |
                 find build -depth -cpio -name \*.trs|xargs grep -lw FAIL|sed -e 's/trs$/log/' | cpio -o > $HOME/logs.cpio
                 find build -name \*.trs|xargs grep -lw FAIL|sed -e 's/trs$/log/'|xargs cat
-            - name: distclean
-              run: |
-                cd build
-                make distclean
-                if [ "$(git ls-files -o|grep -v ^build/ | wc -l)" -ne 0 ]; then
-                  echo "Files not removed by make distclean:"
-                  git ls-files -o|grep -v ^build/
-                fi
-                make dist
             - name: Upload Install Tarball
               uses: actions/upload-artifact@v2
               with:
                 name: Install Tarball
                 path: '~/heimdal-install.tgz'
-            - name: Upload Dist Tarball
-              uses: actions/upload-artifact@v2
-              with:
-                name: Dist Tarball
-                path: '~/build/*.tar.gz'
             - name: Upload Artifacts
               uses: actions/upload-artifact@v2
               with:

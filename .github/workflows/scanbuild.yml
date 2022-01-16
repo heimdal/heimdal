@@ -48,6 +48,13 @@ jobs:
                 (cd lib/libedit && make -j4)
                 (cd lib/sqlite && make -j4)
                 scan-build --keep-going make -j4
+            - name: Test
+              env:
+                CC: ${{ matrix.compiler }}
+                MAKEVARS: ${{ matrix.makevars }}
+              run: |
+                cd build
+                ulimit -c unlimited
                 scan-build --keep-going make check
             - name: Upload Artifacts
               uses: actions/upload-artifact@v2

@@ -87,6 +87,7 @@ jobs:
                 MAKEVARS: ${{ matrix.makevars }}
                 CONFIGURE_OPTS:  ${{ matrix.configureopts }}
               run: |
+                cd build
                 make check
             - name: Install
               run: |

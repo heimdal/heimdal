@@ -524,25 +524,25 @@ out:
 }
 
 KDC_LIB_FUNCTION krb5_error_code KDC_LIB_CALL
-krb5_kdc_request_set_attribute(kdc_request_t r, heim_object_t key, heim_object_t value)
+kdc_request_set_attribute(kdc_request_t r, heim_object_t key, heim_object_t value)
 {
     return heim_dict_set_value(r->attributes, key, value);
 }
 
 KDC_LIB_FUNCTION heim_object_t KDC_LIB_CALL
-krb5_kdc_request_get_attribute(kdc_request_t r, heim_object_t key)
+kdc_request_get_attribute(kdc_request_t r, heim_object_t key)
 {
     return heim_dict_get_value(r->attributes, key);
 }
 
 KDC_LIB_FUNCTION heim_object_t KDC_LIB_CALL
-krb5_kdc_request_copy_attribute(kdc_request_t r, heim_object_t key)
+kdc_request_copy_attribute(kdc_request_t r, heim_object_t key)
 {
     return heim_dict_copy_value(r->attributes, key);
 }
 
 KDC_LIB_FUNCTION void KDC_LIB_CALL
-krb5_kdc_request_delete_attribute(kdc_request_t r, heim_object_t key)
+kdc_request_delete_attribute(kdc_request_t r, heim_object_t key)
 {
     heim_dict_delete_key(r->attributes, key);
 }

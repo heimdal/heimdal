@@ -126,8 +126,8 @@ finalize_reply(void *ctx, astgs_request_t r)
     if (n == NULL)
 	return ENOMEM;
 
-    ret = krb5_kdc_request_set_attribute((kdc_request_t)r,
-					 HSTR("org.h5l.tests.kdc-plugin"), n);
+    ret = kdc_request_set_attribute((kdc_request_t)r,
+				    HSTR("org.h5l.tests.kdc-plugin"), n);
     heim_release(n);
 
     return ret;
@@ -143,8 +143,8 @@ audit(void *ctx, astgs_request_t r)
     if (r->ret)
 	return 0; /* finalize_reply only called in success */
 
-    n = krb5_kdc_request_get_attribute((kdc_request_t)r,
-				       HSTR("org.h5l.tests.kdc-plugin"));
+    n = kdc_request_get_attribute((kdc_request_t)r,
+				  HSTR("org.h5l.tests.kdc-plugin"));
 
     heim_assert(n && heim_number_get_int(n) == 1234,
 		"attribute not passed from finalize_reply");

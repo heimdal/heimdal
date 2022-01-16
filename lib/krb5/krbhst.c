@@ -113,6 +113,7 @@ srv_find_realm(krb5_context context, krb5_krbhst_info ***res, int *count,
     if (num_srv == 0) {
 	_krb5_debug(context, 0,
 		    "DNS SRV RR lookup domain nodata: %s", domain);
+	rk_dns_free_data(r);
 	return KRB5_KDC_UNREACH;
     }
 

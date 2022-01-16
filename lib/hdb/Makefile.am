@@ -147,7 +147,7 @@ $(gen_files_hdb) hdb_asn1.h hdb_asn1-priv.h: hdb_asn1_files
 
 hdb_asn1_files: $(ASN1_COMPILE_DEP) $(srcdir)/hdb.asn1
 	$(ASN1_COMPILE) --option-file=$(srcdir)/hdb.opt $(srcdir)/hdb.asn1 hdb_asn1
-	$(CLANG_FORMAT) -style='{BasedOnStyle: Mozilla, AlwaysBreakAfterReturnType: TopLevelDefinitions, IndentWidth: 4, SortIncludes: false}' -i $$(cat hdb_asn1_files)
+	@$(CLANG_FORMAT) -style=$(CLANG_FORMAT_STYLE) -i $$(cat hdb_asn1_files)
 
 # to help stupid solaris make
 

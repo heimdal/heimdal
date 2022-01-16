@@ -12,6 +12,8 @@ endif
 
 AM_CFLAGS = $(WFLAGS)
 
+CLANG_FORMAT_STYLE = '{BasedOnStyle: Mozilla, AlwaysBreakAfterReturnType: TopLevelDefinitions, IndentWidth: 4, SortIncludes: false}'
+
 CP	= cp
 
 ## set build_HEADERZ to headers that should just be installed in build tree

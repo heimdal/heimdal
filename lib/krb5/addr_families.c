@@ -1208,7 +1208,7 @@ krb5_parse_address(krb5_context context,
     if (error) {
 	krb5_error_code ret2;
 	save_errno = errno;
-	ret2 = krb5_eai_to_heim_errno(error, save_errno);
+	ret2 = krb5_eai_to_heim_errno(save_errno, error);
 	krb5_set_error_message (context, ret2, "%s: %s",
 				string, gai_strerror(error));
 	return ret2;

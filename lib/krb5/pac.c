@@ -98,7 +98,7 @@ struct krb5_pac_data {
 		}						\
 	} while(0)
 
-static const char zeros[PAC_ALIGNMENT] = { 0 };
+static const char zeros[PAC_ALIGNMENT];
 
 static void
 pac_dealloc(void *ctx)

@@ -20,6 +20,7 @@ AM_PROG_CC_C_O
 AC_PROG_CPP
 AM_PATH_PYTHON
 AC_CHECK_PROG(CLANG_FORMAT, clang-format, [clang-format], [no])
+test "$CLANG_FORMAT" = no && CLANG_FORMAT=true
 
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 

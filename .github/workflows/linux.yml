@@ -114,6 +114,10 @@ jobs:
               run: |
                 find build -depth -cpio -name \*.trs | xargs grep -lw FAIL | sed -e 's/trs$/log/' | tar -czf $HOME/logs-linux-${{ matrix.compiler }}.tgz --verbatim-files-from --files-from -
                 find build -name \*.trs | xargs grep -lw FAIL | sed -e 's/trs$/log/' | xargs cat
+            - name: Failed Test logs
+              if: ${{ failure() }}
+              run: |
+                find build -name \*.trs | xargs grep -lw FAIL | sed -e 's/trs$/log/' | xargs cat
             - name: Make Dist
               run: |
                 cd build

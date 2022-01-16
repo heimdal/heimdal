@@ -56,6 +56,10 @@ jobs:
                 cd build
                 ulimit -c unlimited
                 scan-build --keep-going make check
+            - name: Failed Test logs
+              if: ${{ failure() }}
+              run: |
+                find build -name \*.trs|xargs grep -lw FAIL|sed -e 's/trs$/log/'|xargs cat
             - name: Upload Artifacts
               uses: actions/upload-artifact@v2
               with:

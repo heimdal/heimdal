@@ -119,12 +119,18 @@ jobs:
                   git ls-files -o|grep -v ^build/
                 fi
                 make dist
-            - name: Upload Artifacts
+            - name: Upload Install Tarball
               uses: actions/upload-artifact@v2
               with:
                 name: Install Tarball
-                  path: '~/heimdal-install.tgz'
+                path: '~/heimdal-install.tgz'
+            - name: Upload Dist Tarball
+              uses: actions/upload-artifact@v2
+              with:
                 name: Dist Tarball
-                  path: 'build/*.tar.gz'
+                path: 'build/*.tar.gz'
+            - name: Upload Logs Tarball
+              uses: actions/upload-artifact@v2
+              with:
                 name: Test Logs
-                  path: '~/logs.tgz'
+                path: '~/logs.tgz'

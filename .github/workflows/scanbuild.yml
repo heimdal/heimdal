@@ -53,4 +53,4 @@ jobs:
               uses: actions/upload-artifact@v2
               with:
                 name: Scan-Build Reports
-                  path: '/tmp/scan-build*/'
+                path: '/tmp/scan-build*/'

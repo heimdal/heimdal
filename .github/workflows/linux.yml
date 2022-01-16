@@ -123,8 +123,8 @@ jobs:
               uses: actions/upload-artifact@v2
               with:
                 name: Install Tarball
-                  path: $HOME/heimdal-install.tgz
+                  path: '~/heimdal-install.tgz'
                 name: Dist Tarball
-                  path: build/*.tar.gz
+                  path: 'build/*.tar.gz'
                 name: Test Logs
-                  path: $HOME/logs.tgz
+                  path: '~/logs.tgz'

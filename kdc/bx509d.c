@@ -1340,7 +1340,7 @@ k5_do_CA(struct bx509_request_desc *r)
     if (ret == 0)
         ret = krb5_parse_name(r->context, cname, &p);
     if (ret == 0)
-        hx509_private_key2SPKI(r->context->hx509ctx, key, &spki);
+        ret = hx509_private_key2SPKI(r->context->hx509ctx, key, &spki);
     if (ret == 0)
         hx509_request_set_SubjectPublicKeyInfo(r->context->hx509ctx, req,
                                                &spki);

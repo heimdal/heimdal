@@ -376,10 +376,13 @@ load_priv_key(krb5_context context,
         ret = ENOENT;
     if (ret == 0)
         kx509_ctx->priv_key = _hx509_private_key_ref(keys[0]);
-    if (ret)
+    if (ret) {
+	const char *emsg = hx509_get_error_string(context->hx509ctx, ret);
+
         krb5_set_error_message(context, ret, "Could not load private key "
-                               "from %s for kx509: %s", fn,
-                               hx509_get_error_string(context->hx509ctx, ret));
+                               "from %s for kx509: %s", fn, emsg);
+	hx509_free_error_string(context->hx509ctx, emsg);
+    }
     hx509_certs_free(&certs);
     return ret;
 }

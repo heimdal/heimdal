@@ -343,12 +343,14 @@ _hx509_erase_file(hx509_context context, const char *fn)
     if (ret == -1 && errno == ENOENT)
         return 0;
     if (ret == -1) {
-        hx509_set_error_string(context, 0, ret, "hx509_certs_destroy: "
-                               "stat of \"%s\": %s", fn, strerror(ret));
+        hx509_set_error_string(context, 0, errno, "hx509_certs_destroy: "
+                               "stat of \"%s\": %s", fn, strerror(errno));
         return errno;
     }
 
     fd = open(fn, O_RDWR | O_BINARY | O_CLOEXEC | O_NOFOLLOW);
+    if (fd < 0)
+	return errno;
     rk_cloexec(fd);
     if (ret == -1 && errno == ENOENT)
         return 0;

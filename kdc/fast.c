@@ -468,11 +468,13 @@ fast_unwrap_request(astgs_request_t r,
     krb5_boolean explicit_armor;
     krb5_error_code ret;
     krb5_ap_req ap_req;
-    KrbFastReq fastreq = {0};
+    KrbFastReq fastreq;
     const PA_DATA *pa;
     krb5_data data;
     size_t len;
     int i = 0;
+
+    memset(&fastreq, 0, sizeof(fastreq));
 
     pa = _kdc_find_padata(&r->req, &i, KRB5_PADATA_FX_FAST);
     if (pa == NULL) {

@@ -453,7 +453,8 @@ entry2mit_string_int(krb5_context context, krb5_storage *sp, hdb_entry *ent)
         unsigned char *ptr;
         
         ptr = (unsigned char *)&last_pw_chg;
-        val = ptr[0] | (ptr[1] << 8) | (ptr[2] << 16) | (ptr[3] << 24);
+        val = ((unsigned long)ptr[3] << 24) | (ptr[2] << 16)
+	    | (ptr[1] << 8) | ptr[0];
         d.data = &val;
         d.length = sizeof (last_pw_chg);
         sz = append_string(context, sp, "\t%u\t%u\t",

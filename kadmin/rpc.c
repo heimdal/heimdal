@@ -142,7 +142,7 @@ parse_name(const unsigned char *p, size_t len,
     /* MECHNAME_LEN */
     if (len < 4)
 	return 1;
-    l = p[0] << 24 | p[1] << 16 | p[2] << 8 | p[3];
+    l = (unsigned long)p[0] << 24 | p[1] << 16 | p[2] << 8 | p[3];
     len -= 4;
     p += 4;
 

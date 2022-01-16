@@ -1055,11 +1055,15 @@ heim_sipc_stream_listener(int fd, int type,
 			  heim_ipc_callback callback,
 			  void *user, heim_sipc *ctx)
 {
-    heim_sipc ct = calloc(1, sizeof(*ct));
+    heim_sipc ct;
     struct client *c;
 
     if ((type & HEIM_SIPC_TYPE_IPC) && (type & (HEIM_SIPC_TYPE_UINT32|HEIM_SIPC_TYPE_HTTP)))
 	return EINVAL;
+
+    ct = calloc(1, sizeof(*ct));
+    if (ct == NULL)
+	return ENOMEM;
 
     switch (type) {
     case HEIM_SIPC_TYPE_IPC:

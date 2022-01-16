@@ -351,9 +351,11 @@ $(gssapi_files) gssapi_asn1.h gssapi_asn1-priv.h: gssapi_asn1_files
 
 spnego_asn1_files: $(ASN1_COMPILE_DEP) $(srcdir)/spnego/spnego.asn1 $(srcdir)/spnego/spnego.opt
 	$(ASN1_COMPILE) --option-file=$(srcdir)/spnego/spnego.opt $(srcdir)/spnego/spnego.asn1 spnego_asn1
+	@$(CLANG_FORMAT) -style='{BasedOnStyle: Mozilla, AlwaysBreakAfterReturnType: TopLevelDefinitions, IndentWidth: 4, SortIncludes: false}' -i $$(cat spnego_asn1_files)
 
 gssapi_asn1_files: $(ASN1_COMPILE_DEP) $(srcdir)/mech/gssapi.asn1
 	$(ASN1_COMPILE) $(srcdir)/mech/gssapi.asn1 gssapi_asn1
+	@$(CLANG_FORMAT) -style='{BasedOnStyle: Mozilla, AlwaysBreakAfterReturnType: TopLevelDefinitions, IndentWidth: 4, SortIncludes: false}' -i $$(cat gssapi_asn1_files)
 
 $(srcdir)/krb5/gsskrb5-private.h:
 	cd $(srcdir) && perl ../../cf/make-proto.pl -q -P comment -p krb5/gsskrb5-private.h $(krb5src) || rm -f krb5/gsskrb5-private.h

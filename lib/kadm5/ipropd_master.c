@@ -1119,7 +1119,7 @@ send_diffs(kadm5_server_context *server_context, slave *s, int log_fd,
     krb5_storage *sp;
     uint32_t initial_version;
     uint32_t initial_tstamp;
-    uint32_t ver;
+    uint32_t ver = 0;
     off_t left = 0;
     off_t right = 0;
     krb5_ssize_t bytes;

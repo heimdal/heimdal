@@ -60,10 +60,10 @@ jobs:
                 find . -name \*.log -print0|xargs -0 grep '^==[0-9]*== ' || true
             - name: Test logs
               run: |
-                find build -depth -cpio -name \*.log | sed -e 's/trs$/log/' | tar -czf $HOME/logs.tgz --verbatim-files-from --files-from -
+                find build -depth -cpio -name \*.log | sed -e 's/trs$/log/' | tar -czf $HOME/logs-linux-valgrind.tgz --verbatim-files-from --files-from -
                 find build -name \*.trs|xargs grep -lw FAIL | sed -e 's/trs$/log/' | xargs cat
             - name: Upload Artifacts
               uses: actions/upload-artifact@v2
               with:
                 name: Test Logs
-                path: '~/logs.tgz'
+                path: '~/logs-linux-valgrind.tgz'

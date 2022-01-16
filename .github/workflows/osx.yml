@@ -95,17 +95,16 @@ jobs:
                 cd /tmp/h5l
                 tar czf $HOME/heimdal-install.tgz .
             - name: Test logs
-              if: ${{ failure() }}
               run: |
-                find build -depth -cpio -name \*.trs|xargs grep -lw FAIL|sed -e 's/trs$/log/' | cpio -o > $HOME/logs.cpio
+                find build -depth -cpio -name \*.trs|xargs grep -lw FAIL|sed -e 's/trs$/log/' | cpio -o > $HOME/logs-osx.cpio
                 find build -name \*.trs|xargs grep -lw FAIL|sed -e 's/trs$/log/'|xargs cat
             - name: Upload Install Tarball
               uses: actions/upload-artifact@v2
               with:
                 name: Install Tarball
-                path: '~/heimdal-install.tgz'
+                path: '~/heimdal-install-osx.tgz'
             - name: Upload Artifacts
               uses: actions/upload-artifact@v2
               with:
                 name: Upload Test Logs
-                path: '~/logs.cpio'
+                path: '~/logs-osx.cpio'

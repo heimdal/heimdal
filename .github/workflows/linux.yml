@@ -104,16 +104,15 @@ jobs:
                 cd build || true
                 make DESTDIR=/tmp/h5l install
                 cd /tmp/h5l
-                tar czf $HOME/heimdal-install.tgz .
+                tar czf $HOME/heimdal-install-linux-${{ matrix.compiler }}.tgz .
             - name: Core dump stacks
               run: |
                 echo "thread apply all bt" > /tmp/x
                 find . -name core -print | while read core; do gdb -batch -x x `file "$core"|sed -e "s/^[^']*'//" -e "s/[ '].*$//"` "$core"; done
                 if [ "$(find . -name core -print | wc -l)" -gt 0 ]; then false; fi
             - name: Test logs
-              if: ${{ failure() }}
               run: |
-                find build -depth -cpio -name \*.trs | xargs grep -lw FAIL | sed -e 's/trs$/log/' | tar -czf $HOME/logs.tgz --verbatim-files-from --files-from -
+                find build -depth -cpio -name \*.trs | xargs grep -lw FAIL | sed -e 's/trs$/log/' | tar -czf $HOME/logs-linux-${{ matrix.compiler }}.tgz --verbatim-files-from --files-from -
                 find build -name \*.trs | xargs grep -lw FAIL | sed -e 's/trs$/log/' | xargs cat
             - name: Make Dist
               run: |
@@ -128,14 +127,14 @@ jobs:
               uses: actions/upload-artifact@v2
               with:
                 name: Install Tarball
-                path: '~/heimdal-install.tgz'
+                path: '~/heimdal-install-linux-${{ matrix.compiler }}.tgz'
             - name: Upload Dist Tarball
               uses: actions/upload-artifact@v2
               with:
                 name: Dist Tarball
-                path: 'build/*.tar.gz'
+                path: 'build/heimdal-*.tar.gz'
             - name: Upload Logs Tarball
               uses: actions/upload-artifact@v2
               with:
                 name: Test Logs
-                path: '~/logs.tgz'
+                path: '~/logs-linux-${{ matrix.compiler }}.tgz'

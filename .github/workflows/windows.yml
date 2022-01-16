@@ -62,7 +62,7 @@ jobs:
               uses: ilammy/msvc-dev-cmd@v1
               with:
                 arch: amd64
-            - name: Build
+            - name: Build and Test
               shell: cmd
               run: |
                 set PATH=%PATH%;C:\msys64\usr\bin;C:\Program Files (x86)\HTML Help Workshop;C:\program files (x86)\windows installer xml v3.5\bin;C:\cygwin\bin
@@ -85,3 +85,8 @@ jobs:
                 echo PATH=%PATH%
                 nmake /f NTMakefile APPVEYOR=1 MAKEINFO=makeinfo NO_INSTALLERS=1
                 nmake /f NTMakefile APPVEYOR=1 MAKEINFO=makeinfo NO_INSTALLERS=1 test
+            - name: Upload Artifacts
+              uses: actions/upload-artifact@v2
+              with:
+                name: Objects
+                path: 'D:/a/heimdal/heimdal/out/'

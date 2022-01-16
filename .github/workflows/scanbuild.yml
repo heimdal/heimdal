@@ -49,3 +49,8 @@ jobs:
                 (cd lib/sqlite && make -j4)
                 scan-build --keep-going make -j4
                 scan-build --keep-going make check
+            - name: Upload Artifacts
+              uses: actions/upload-artifact@v2
+              with:
+                name: Scan-Build Reports
+                  path: '/tmp/scan-build*/'

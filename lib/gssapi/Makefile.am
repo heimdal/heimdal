@@ -307,19 +307,20 @@ nobase_include_HEADERS = \
 gssapidir = $(includedir)/gssapi
 nodist_gssapi_HEADERS = gkrb5_err.h negoex_err.h
 
-gssapi_files = asn1_GSSAPIContextToken.c
+gssapi_files = 					\
+	asn1_GSSAPIContextToken.c
 
 spnego_files =					\
 	asn1_ContextFlags.c			\
 	asn1_MechType.c				\
 	asn1_MechTypeList.c			\
-	asn1_NegotiationToken.c			\
-	asn1_NegotiationToken2.c		\
 	asn1_NegHints.c				\
+	asn1_NegStateEnum.c			\
 	asn1_NegTokenInit.c			\
 	asn1_NegTokenInit2.c			\
 	asn1_NegTokenResp.c			\
-	asn1_NegStateEnum.c
+	asn1_NegotiationToken.c			\
+	asn1_NegotiationToken2.c
 
 BUILTHEADERS = \
 	$(srcdir)/krb5/gsskrb5-private.h \
@@ -347,7 +348,14 @@ CLEANFILES = $(BUILT_SOURCES) \
 	spnego_asn1.json spnego_asn1_oids.c spnego_asn1_syms.c
 
 $(spnego_files) spnego_asn1.h spnego_asn1-priv.h: spnego_asn1_files
+	for genfile in '$(spnego_files)'; do \
+		$(CLANG_FORMAT) -style=$(CLANG_FORMAT_STYLE) -i $${genfile}; \
+	done
+
 $(gssapi_files) gssapi_asn1.h gssapi_asn1-priv.h: gssapi_asn1_files
+	for genfile in '$(gssapi_files)'; do \
+		$(CLANG_FORMAT) -style=$(CLANG_FORMAT_STYLE) -i $${genfile}; \
+	done
 
 spnego_asn1_files: $(ASN1_COMPILE_DEP) $(srcdir)/spnego/spnego.asn1 $(srcdir)/spnego/spnego.opt
 	$(ASN1_COMPILE) --option-file=$(srcdir)/spnego/spnego.opt $(srcdir)/spnego/spnego.asn1 spnego_asn1
@@ -367,7 +375,7 @@ $(srcdir)/sanon/sanon-private.h:
 	cd $(srcdir) && perl ../../cf/make-proto.pl -q -P comment -p sanon/sanon-private.h $(sanonsrc) || rm -f sanon/sanon-private.h
 
 TESTS = test_oid test_names test_cfx
-# test_sequence 
+# test_sequence
 
 test_cfx_SOURCES = krb5/test_cfx.c
 
@@ -458,4 +466,3 @@ test_negoex_mech_la_LDFLAGS = -module
 test_negoex_mech_la_LIBADD = \
 	$(top_builddir)/lib/asn1/libasn1.la \
 	libgssapi.la
-

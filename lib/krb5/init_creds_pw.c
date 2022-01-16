@@ -1425,12 +1425,13 @@ pa_gss_step(krb5_context context,
 	char *from = NULL;
 	char *to = NULL;
 
-	if (krb5_unparse_name(context, ctx->cred.client, &from) == 0 &&
-	    krb5_unparse_name(context, cname, &to) == 0) {
-	    _krb5_debug(context, 1, "pa_gss_step: %s as %s",
-			from, to);
+	if (krb5_unparse_name(context, ctx->cred.client, &from) == 0) {
+	    if (krb5_unparse_name(context, cname, &to) == 0) {
+		_krb5_debug(context, 1, "pa_gss_step: %s as %s",
+			    from, to);
+		krb5_xfree(to);
+	    }
 	    krb5_xfree(from);
-	    krb5_xfree(to);
 	}
     }
 

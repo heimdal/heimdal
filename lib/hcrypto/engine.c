@@ -349,12 +349,12 @@ ENGINE_by_dso(const char *path, const char *id)
 	    return NULL;
 	}
     }
+    dlclose(handle);
 
     ENGINE_up_ref(engine);
 
     ret = add_engine(engine);
     if (ret != 1) {
-	dlclose(handle);
 	ENGINE_finish(engine);
 	return NULL;
     }

@@ -516,7 +516,7 @@ get_cred_kdc(krb5_context context,
     TGS_REQ req;
     krb5_data enc;
     krb5_data resp;
-    krb5_kdc_rep rep = {0};
+    krb5_kdc_rep rep;
     krb5_error_code ret;
     unsigned nonce;
     krb5_keyblock *subkey = NULL;
@@ -524,6 +524,7 @@ get_cred_kdc(krb5_context context,
     Ticket second_ticket_data;
     METHOD_DATA padata;
 
+    memset(&rep, 0, sizeof(rep));
     krb5_data_zero(&resp);
     krb5_data_zero(&enc);
     padata.val = NULL;

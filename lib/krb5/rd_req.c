@@ -474,7 +474,7 @@ krb5_verify_ap_req2(krb5_context context,
 
     if (ap_req_options) {
 	*ap_req_options = 0;
-	if (ac->keytype != (krb5_enctype)ETYPE_NULL)
+	if (ac->keytype != ETYPE_NULL)
 	    *ap_req_options |= AP_OPTS_USE_SUBKEY;
 	if (ap_req->ap_options.use_session_key)
 	    *ap_req_options |= AP_OPTS_USE_SESSION_KEY;

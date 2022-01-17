@@ -739,7 +739,7 @@ tgs_make_reply(astgs_request_t r,
     if (r->canon_client_princ) {
 	char *cpn;
 
-	krb5_unparse_name(r->context, r->canon_client_princ, &cpn);
+	(void) krb5_unparse_name(r->context, r->canon_client_princ, &cpn);
 	_kdc_audit_addkv((kdc_request_t)r, 0, "canon_client_name", "%s",
 			 cpn ? cpn : "<unknown>");
 	krb5_xfree(cpn);

@@ -120,7 +120,7 @@ split_attr(gss_const_buffer_t orig,
     /* FIXME We don't have a memrchr() in lib/roken */
     for (p = memchr(p, ' ', orig->length);
          p;
-         p = p ? memchr(p + 1, ' ', orig->length) : NULL) {
+         p = memchr(p + 1, ' ', orig->length)) {
         last = p;
         prefix->length = last - (const char *)orig->value;
         attr->value = last + 1;

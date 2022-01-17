@@ -1061,7 +1061,8 @@ heim_audit_trail(heim_svc_req_desc r, heim_error_code ret, const char *retname)
 	heim_audit_addkv(r, HEIM_SVC_AUDIT_VIS, "e-text", "%s", r->e_text);
 
     memset(&kvb, 0, sizeof(kvb));
-    heim_dict_iterate_f(r->kv, &kvb, audit_trail_iterator);
+    if (r->kv)
+        heim_dict_iterate_f(r->kv, &kvb, audit_trail_iterator);
     kvb.buf[kvb.pos] = '\0';
 
     heim_log(r->hcontext, r->logf, 3, "%s %s %s %s %s%s%s%s",

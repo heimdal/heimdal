@@ -2353,7 +2353,6 @@ count_sans(hx509_request req, size_t *n)
     for (i = 0; ret == 0; i++) {
         hx509_san_type san_type;
 
-        frees(&s);
         ret = hx509_request_get_san(req, i, &san_type, &s);
         if (ret)
             break;
@@ -2370,6 +2369,7 @@ count_sans(hx509_request req, size_t *n)
         }
         frees(&s);
     }
+    free(s);
     return ret == HX509_NO_ITEM ? 0 : ret;
 }
 

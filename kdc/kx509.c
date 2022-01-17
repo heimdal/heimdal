@@ -694,13 +694,12 @@ check_authz(krb5_context context,
             _kdc_audit_addkv((kdc_request_t)reqctx, 0, "san0_type", "%s",
                              san_type_s);
             _kdc_audit_addkv((kdc_request_t)reqctx, 0, "san0", "%s", s);
-            free(s);
         }
+	frees(&s);
         ret = hx509_request_get_eku(reqctx->csr, 0, &s);
-        if (ret == 0) {
+        if (ret == 0)
             _kdc_audit_addkv((kdc_request_t)reqctx, 0, "eku0", "%s", s);
-            free(s);
-        }
+	free(s);
         return 0;
     }
     if (ret != KRB5_PLUGIN_NO_HANDLE) {

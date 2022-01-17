@@ -1047,7 +1047,9 @@ get_transited(OM_uint32 *minor_status,
         return GSS_S_UNAVAILABLE;
     }
 
-    if (!nameattrs || !ticket)
+    if (!nameattrs && !ticket)
+        return GSS_S_UNAVAILABLE;
+    if (nameattrs && !nameattrs->transited && !ticket)
         return GSS_S_UNAVAILABLE;
 
     if (authenticated)

@@ -537,7 +537,7 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
             ret = EOVERFLOW;
             goto fail;
         }
-
+	free(ks_tuple);
         if ((ks_tuple = calloc(n_ks_tuple, sizeof (*ks_tuple))) == NULL) {
             ret = errno;
             goto fail;

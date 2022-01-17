@@ -349,6 +349,7 @@ format_field(struct get_entry_data *data,
                     if (i)
                         strlcat(buf, ",", buf_len);
                     strlcat(buf, str, buf_len);
+		    krb5_xfree(str);
                 }
             }
             free_HDB_EncTypeList(&etypes);

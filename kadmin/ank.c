@@ -354,7 +354,6 @@ add_one_namespace(const char *name,
 {
     krb5_error_code ret;
     kadm5_principal_ent_rec princ;
-    kadm5_principal_ent_rec *default_ent = NULL;
     krb5_principal princ_ent = NULL;
     int mask = 0;
     int default_mask = 0;
@@ -458,7 +457,7 @@ add_one_namespace(const char *name,
                         "never", "never", attributes, NSPOLICY);
     }
     if (ret == 0)
-        ret = edit_entry(&princ, &mask, default_ent, default_mask);
+        ret = edit_entry(&princ, &mask, NULL, default_mask);
 
     if (ret == 0)
         ret = kstuple2etypes(&princ, &mask, nkstuple, kstuple);
@@ -473,8 +472,6 @@ add_one_namespace(const char *name,
     }
 
     kadm5_free_principal_ent(kadm_handle, &princ); /* frees princ_ent */
-    if (default_ent)
-	kadm5_free_principal_ent(kadm_handle, default_ent);
     memset(pwbuf, 0, sizeof(pwbuf));
     return ret;
 }

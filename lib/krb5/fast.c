@@ -225,6 +225,8 @@ make_fast_ap_fxarmor(krb5_context context,
     KrbFastArmor *fxarmor = NULL;
     krb5_error_code ret;
 
+    *armor = NULL;
+
     ALLOC(fxarmor, 1);
     if (fxarmor == NULL) {
 	ret = ENOMEM;
@@ -429,6 +431,7 @@ _krb5_fast_create_armor(krb5_context context,
 	    if (state->armor_data) {
 		free_KrbFastArmor(state->armor_data);
 		free(state->armor_data);
+                state->armor_data = NULL;
 	    }
 	    ret = make_fast_ap_fxarmor(context, state, realm,
 				       &state->armor_data);

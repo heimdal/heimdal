@@ -756,6 +756,7 @@ print_em(krb5_context context)
             hex_encode(hist_keys->val[p].keys.val[0].key.keyvalue.data,
                        hist_keys->val[p].keys.val[0].key.keyvalue.length, &x);
             printf("%s %u %s\n", x, hist_keys->val[p].kvno, name);
+	    free(x);
         }
     }
 }

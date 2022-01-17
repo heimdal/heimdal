@@ -432,8 +432,8 @@ krb5_init_creds_warn_user(krb5_context context,
 	if (!suppress) {
 	    char *str = NULL, *p = NULL;
 	    int aret;
-	    krb5_enctype_to_string(context, weak_enctype, &str);
 
+	    (void) krb5_enctype_to_string(context, weak_enctype, &str);
 	    aret = asprintf(&p, "Encryption type %s(%d) used for authentication is weak and will be deprecated",
 			    str ? str : "unknown", weak_enctype);
 	    if (aret >= 0 && p) {

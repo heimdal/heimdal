@@ -1377,7 +1377,7 @@ hx509_request_get_san(hx509_request req,
                                                &san->u.otherName.value);
         if ((*out = rk_strpoolcollect(pool)) == NULL)
             return hx509_enomem(req->context);
-        return 0;
+        return ret;
     }
     default:
         *type = HX509_SAN_TYPE_UNSUPPORTED;

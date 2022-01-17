@@ -1054,7 +1054,7 @@ build_logon_name(krb5_context context,
     krb5_error_code ret;
     krb5_storage *sp;
     uint64_t t;
-    char *s, *s2;
+    char *s, *s2 = NULL;
     size_t s2_len;
 
     t = unix2nttime(authtime);
@@ -1130,18 +1130,14 @@ build_logon_name(krb5_context context,
     CHECK(ret, krb5_store_uint16(sp, s2_len), out);
 
     ret = krb5_storage_write(sp, s2, s2_len);
-    free(s2);
     if (ret != (int)s2_len) {
 	ret = krb5_enomem(context);
 	goto out;
     }
     ret = krb5_storage_to_data(sp, logon);
-    if (ret)
-	goto out;
-    krb5_storage_free(sp);
 
-    return 0;
-out:
+ out:
+    free(s2);
     krb5_storage_free(sp);
     return ret;
 }

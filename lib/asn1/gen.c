@@ -767,8 +767,10 @@ define_asn1 (int level, Type *t)
             fprintf(headerfile, "%s.&%s",
                     t->typeref.iosclass->symbol->name,
                     t->typeref.field->name);
-        } else
+        } else if (t->symbol)
             fprintf(headerfile, "%s", t->symbol->name);
+        else
+            abort();
 	break;
     case TInteger:
 	if(t->members == NULL) {
@@ -1032,6 +1034,10 @@ get_open_type_defn_fields(const Type *t,
             subtype->constraint->u.content.type->constraint &&
             subtype->constraint->u.content.type->constraint->ctype == CT_TABLE_CONSTRAINT) {
             /* Type like OCTET STRING or BIT STRING CONTAINING open type */
+            if (*opentypemember)
+                errx(1, "Multiple open type members %s and %s for the same "
+                     "field %s?", (*opentypemember)->name, m->name,
+                     (*opentypefield)->name);
             *opentypemember = m;
             *opentypefield = subtype->constraint->u.content.type->typeref.field;
             *is_array_of = sOfType != NULL;
@@ -1039,6 +1045,10 @@ get_open_type_defn_fields(const Type *t,
             break;
         } else if (subtype->symbol && strcmp(subtype->symbol->name, "HEIM_ANY") == 0) {
             /* Open type, but NOT embedded in OCTET STRING or BIT STRING */
+            if (*opentypemember)
+                errx(1, "Multiple open type members %s and %s for the same "
+                     "field %s?", (*opentypemember)->name, m->name,
+                     (*opentypefield)->name);
             *opentypemember = m;
             *opentypefield = subtype->typeref.field;
             *is_array_of = sOfType != NULL;
@@ -1046,6 +1056,10 @@ get_open_type_defn_fields(const Type *t,
             break;
         }
     }
+
+    if (!idmembername)
+        errx(1, "Missing open type id member in %s",
+             t->symbol ? t->symbol->name : "<unknown type>");
     /* Look for the type ID member identified in the previous loop */
     HEIM_TAILQ_FOREACH(m, t->members, members) {
         if (!m->type->subtype || strcmp(m->name, idmembername) != 0)
@@ -1179,11 +1193,12 @@ define_type(int level, const char *name, const char *basename, Type *pt, Type *t
             define_open_type(level, newbasename, name, basename, t, t);
         } else if (!t->symbol && pt->actual_parameter) {
             define_open_type(level, newbasename, name, basename, pt, t);
-        } else {
+        } else if (t->symbol) {
             fprintf(headerfile, "%s %s;\n", t->symbol->gen_name, name);
             fprintf(jsonfile, "\"ttype\":\"%s\","
                     "\"alias\":true\n", t->symbol->gen_name);
-        }
+        } else
+            abort();
 	break;
     case TInteger:
         if (t->symbol && t->symbol->emitted_definition)

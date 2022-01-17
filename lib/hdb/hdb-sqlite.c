@@ -684,8 +684,10 @@ hdb_sqlite_store(krb5_context context, HDB *db, unsigned flags,
 
     } else if(ret == SQLITE_ROW) { /* Found a principal */
 
-        if(! (flags & HDB_F_REPLACE)) /* Not allowed to replace it */
+        if(!(flags & HDB_F_REPLACE)) {
+            ret = HDB_ERR_EXISTS;
             goto rollback;
+        }
 
         entry_id = sqlite3_column_int64(get_ids, 1);
 

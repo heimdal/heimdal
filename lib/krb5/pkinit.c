@@ -1841,7 +1841,7 @@ _krb5_pk_set_user_id(krb5_context context,
 	ret = der_print_hex_heim_integer(&i, &sn);
 	der_free_heim_integer(&i);
 	if (ret) {
-	    free(name);
+	    free(str);
 	    goto out;
 	}
 

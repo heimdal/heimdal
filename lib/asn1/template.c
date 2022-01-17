@@ -1901,8 +1901,6 @@ _asn1_length_open_type(const struct asn1_template *tbase,
         break;
     default: return 0;
     }
-    if (!typeid_is_int && !typeid_is_oid)
-        return 0;
     if (!(t->tt & A1_OS_OT_IS_ARRAY)) {
         struct heim_base_data *os = DPO(data, topentype->offset);
 
@@ -2469,8 +2467,7 @@ _asn1_print_open_type(const struct asn1_template *t, /* object set template */
                          opentype_name);
     free(indents);
     indents = getindent(flags, indent + 1);
-    if (indents)
-        r = rk_strpoolprintf(r, "%s", indents ? indents : "");
+    r = rk_strpoolprintf(r, "%s", indents ? indents : "");
     for (i = 0; r && i < len; i++) {
         struct rk_strpool *r2 = NULL;
         char *s = NULL;;

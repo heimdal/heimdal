@@ -542,8 +542,6 @@ _krb5_fast_wrap_req(krb5_context context,
     if (state->type == choice_PA_FX_FAST_REQUEST_armored_data) {
 	fxreq.u.armored_data.armor = state->armor_data;
 	state->armor_data = NULL;
-	if (ret)
-	    goto out;
 
 	heim_assert(state->armor_crypto != NULL,
 		    "FAST armor key missing when FAST started");

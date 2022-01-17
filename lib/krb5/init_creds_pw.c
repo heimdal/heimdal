@@ -1660,11 +1660,6 @@ enc_chal_step(krb5_context context, krb5_init_creds_context ctx, void *pa_ctx, P
 	EncryptedData enc_data;
 	size_t size;
 
-	if (ret) {
-	    _krb5_debug(context, 5, "enc-chal: failed to create reply key");
-	    return ret;
-	}
-
 	_krb5_debug(context, 5, "ENC_CHAL rep key");
 
 	if (ctx->fast_state.strengthen_key == NULL) {

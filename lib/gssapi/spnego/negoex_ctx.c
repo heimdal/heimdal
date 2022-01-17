@@ -1025,7 +1025,7 @@ cleanup:
     if (GSS_ERROR(major)) {
 	if (!mech_error) {
 	    krb5_context context = _gss_mg_krb5_context();
-	    char *emsg = krb5_get_error_message(context, *minor);
+	    const char *emsg = krb5_get_error_message(context, *minor);
 
 	    gss_mg_set_error_string(GSS_SPNEGO_MECHANISM,
 				    major, *minor,

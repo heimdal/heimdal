@@ -1718,7 +1718,8 @@ _krb5_pac_sign(krb5_context context,
 	krb5_storage *rs = krb5_storage_emem();
 	if (rs == NULL)
 	    ret = krb5_enomem(context);
-	krb5_storage_set_flags(rs, KRB5_STORAGE_BYTEORDER_LE);
+        else
+            krb5_storage_set_flags(rs, KRB5_STORAGE_BYTEORDER_LE);
         if (ret == 0)
             ret = krb5_store_uint16(rs, rodc_id);
         if (ret == 0)

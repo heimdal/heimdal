@@ -61,17 +61,20 @@ from_file(const char *fn, const char *target_domain,
 	if (d && target_domain != NULL && strcasecmp(target_domain, d) != 0)
 	    continue;
         *domainp = strdup(d);
-        if (*domainp == NULL)
+        if (*domainp == NULL) {
+	    fclose(f);
             return ENOMEM;
+	}
 	u = strtok_r(NULL, ":", &str);
 	p = strtok_r(NULL, ":", &str);
 	if (u == NULL || p == NULL)
 	    continue;
 
 	*usernamep = strdup(u);
-        if (*usernamep == NULL)
+        if (*usernamep == NULL) {
+	    fclose(f);
             return ENOMEM;
-
+	}
 	heim_ntlm_nt_key(p, key);
 
 	memset_s(buf, sizeof(buf), 0, sizeof(buf));

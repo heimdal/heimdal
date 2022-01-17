@@ -438,7 +438,7 @@ krb5_krbhst_get_addrinfo(krb5_context context, krb5_krbhst_info *host,
 static krb5_boolean
 get_next(struct krb5_krbhst_data *kd, krb5_krbhst_info **host)
 {
-    struct krb5_krbhst_info *hi = *kd->index;
+    struct krb5_krbhst_info *hi = kd ? *kd->index : NULL;
     if(hi != NULL) {
 	*host = hi;
 	kd->index = &(*kd->index)->next;

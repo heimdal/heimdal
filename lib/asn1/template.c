@@ -2451,9 +2451,9 @@ _asn1_print_open_type(const struct asn1_template *t, /* object set template */
             if (s)
                 r = rk_strpoolprintf(r, ",%s\"_%s\":%s",
                                      indents ? indents : "", opentype_name, s);
-            free(indents);
             free(s);
         }
+	free(indents);
         return r;
     }
 

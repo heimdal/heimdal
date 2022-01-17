@@ -577,7 +577,7 @@ heim_db_commit(heim_db_t db, heim_error_t *error)
 	goto done;
     }
 
-    if (db->options == NULL)
+    if (db->options)
 	journal_fname = heim_dict_get_value(db->options, HSTR("journal-filename"));
 
     if (journal_fname != NULL) {
@@ -1144,21 +1144,15 @@ enomem:
 static
 heim_data_t from_base64(heim_string_t s, heim_error_t *error)
 {
+    ssize_t len = -1;
     void *buf;
-    size_t len;
     heim_data_t d;
 
     buf = malloc(strlen(heim_string_get_utf8(s)));
-    if (buf == NULL)
-	goto enomem;
-
-    len = rk_base64_decode(heim_string_get_utf8(s), buf);
-    d = heim_data_ref_create(buf, len, free);
-    if (d == NULL)
-	goto enomem;
-    return d;
-
-enomem:
+    if (buf)
+        len = rk_base64_decode(heim_string_get_utf8(s), buf);
+    if (len > -1 && (d = heim_data_ref_create(buf, len, free)))
+        return d;
     free(buf);
     if (error)
 	*error = heim_error_create_enomem();

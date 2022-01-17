@@ -756,9 +756,10 @@ heim_path_vget2(heim_object_t ptr, heim_object_t *parent, heim_object_t *key,
 	    next_node = heim_dict_get_value(node, path_element);
 	} else if (node_type == HEIM_TID_DB) {
 	    next_node = _heim_db_get_value(node, NULL, path_element, NULL);
-	} else if (node_type == HEIM_TID_ARRAY) {
+	} else {
 	    int idx = -1;
 
+            /* node_type == HEIM_TID_ARRAY */
 	    if (heim_get_tid(path_element) == HEIM_TID_NUMBER)
 		idx = heim_number_get_int(path_element);
 	    if (idx < 0) {
@@ -770,12 +771,6 @@ heim_path_vget2(heim_object_t ptr, heim_object_t *parent, heim_object_t *key,
 		return NULL;
 	    }
 	    next_node = heim_array_get_value(node, idx);
-	} else {
-	    if (error)
-		*error = heim_error_create(EINVAL,
-					   "heim_path_get() node in path "
-					   "not a container type");
-	    return NULL;
 	}
 	node = next_node;
     }

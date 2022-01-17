@@ -354,7 +354,7 @@ ret_string(krb5_storage *sp, int ucs2, size_t len, char **s)
 	utf8len += 1;
 	
 	*s = malloc(utf8len);
-	if (s == NULL) {
+	if (*s == NULL) {
 	    ret = ENOMEM;
 	    goto out;
 	}

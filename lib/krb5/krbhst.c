@@ -562,6 +562,7 @@ fallback_get_hosts(krb5_context context, struct krb5_krbhst_data *kd,
 			   "Realm %s needs immediate attention "
 			   "see https://icann.org/namecollision",
 			   kd->realm);
+		freeaddrinfo(ai);
 		return KRB5_KDC_UNREACH;
 	    }
 	}
@@ -570,6 +571,7 @@ fallback_get_hosts(krb5_context context, struct krb5_krbhst_data *kd,
 	hi = calloc(1, sizeof(*hi) + hostlen);
 	if(hi == NULL) {
 	    free(host);
+	    freeaddrinfo(ai);
 	    return krb5_enomem(context);
 	}
 

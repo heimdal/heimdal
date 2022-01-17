@@ -50,7 +50,7 @@ get_cred_kdc_capath(krb5_context, krb5_kdc_flags,
 
 static krb5_error_code
 make_pa_tgs_req(krb5_context context,
-		krb5_auth_context ac,
+		krb5_auth_context *ac,
 		KDC_REQ_BODY *body,
 		krb5_ccache ccache,
 		krb5_creds *creds,
@@ -71,7 +71,7 @@ make_pa_tgs_req(krb5_context context,
 
     in_data.length = len;
     in_data.data   = buf;
-    ret = _krb5_mk_req_internal(context, &ac, 0, &in_data,
+    ret = _krb5_mk_req_internal(context, ac, 0, &in_data,
 				creds, tgs_req,
 				KRB5_KU_TGS_REQ_AUTH_CKSUM,
 				KRB5_KU_TGS_REQ_AUTH);
@@ -286,7 +286,7 @@ init_tgs_req (krb5_context context,
     }
 
     ret = make_pa_tgs_req(context,
-			  ac,
+			  &ac,
 			  &t->req_body,
 			  ccache,
 			  krbtgt,

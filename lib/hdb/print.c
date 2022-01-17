@@ -475,12 +475,16 @@ entry2mit_string_int(krb5_context context, krb5_storage *sp, hdb_entry *ent)
         d.data = &val;
         d.length = sizeof (ent->modified_by->time);
         ret = krb5_unparse_name(context, ent->modified_by->principal, &modby_p);
-        if (ret) return ret;
+        if (ret)
+	    return ret;
         plen = strlen(modby_p);
         sz = append_string(context, sp, "\t%u\t%u\t",
                            mit_KRB5_TL_MOD_PRINC,
                            d.length + plen + 1 /* NULL counted */);
-        if (sz == -1) return ENOMEM;
+        if (sz == -1) {
+	    free(modby_p);
+	    return ENOMEM;
+	}
         sz = append_hex(context, sp, 1, 1, &d);
         if (sz == -1) {
             free(modby_p);
@@ -490,7 +494,8 @@ entry2mit_string_int(krb5_context context, krb5_storage *sp, hdb_entry *ent)
         d.length = plen + 1;
         sz = append_hex(context, sp, 1, 1, &d);
         free(modby_p);
-        if (sz == -1) return ENOMEM;
+        if (sz == -1)
+	    return ENOMEM;
     }
     /*
      * Dump keys (remembering to not include any with kvno higher than

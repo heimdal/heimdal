@@ -962,9 +962,12 @@ template_members(struct templatehead *temp,
              */
             HEIM_TAILQ_FOREACH(m, t->members, members) {
                 if (m->val > UINT32_MAX)
-                    continue; /* Wouldn't fit in the offset field */
+                    errx(1, "Cannot handle %s type %s with named bit %s "
+                         "larger than 63",
+                         t->type == TEnumerated ? "ENUMERATED" : "INTEGER",
+                         name, m->gen_name);
                 add_line(&tl->template,
-                         "{ A1_OP_NAME, %d, \"%s\" }", m->val, m->name);
+                         "{ A1_OP_NAME, %d, \"%s\" }", (int)m->val, m->name);
                 nmemb++;
             }
 	    tlist_header(tl, "{ 0, 0, ((void *)(uintptr_t)%lu) }", nmemb);
@@ -1041,7 +1044,10 @@ template_members(struct templatehead *temp,
 	output_name(bname);
 
 	HEIM_TAILQ_FOREACH(m, t->members, members) {
-	    add_line(&template, "{ 0, %d, \"%s\" }", m->val, m->gen_name);
+            if (m->val > UINT32_MAX)
+                errx(1, "Cannot handle BIT STRING type %s with named bit %s "
+                     "larger than 63", name, m->gen_name);
+	    add_line(&template, "{ 0, %d, \"%s\" }", (int)m->val, m->gen_name);
 	}
 
 	HEIM_TAILQ_FOREACH(q, &template, members) {

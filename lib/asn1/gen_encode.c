@@ -226,7 +226,7 @@ encode_type (const char *name, const Type *t, const char *tmpstr)
 	    fprintf (codefile,
 		     "if((%s)->%s) {\n"
 		     "c |= 1<<%d;\n",
-		     name, m->gen_name, 7 - m->val % 8);
+		     name, m->gen_name, (int)(7 - m->val % 8));
 	    fprintf (codefile,
 		     "}\n");
 	}

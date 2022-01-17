@@ -782,8 +782,8 @@ define_asn1 (int level, Type *t)
             fprintf (headerfile, "INTEGER {\n");
 	    HEIM_TAILQ_FOREACH(m, t->members, members) {
                 space (level + 1);
-		fprintf(headerfile, "%s(%d)%s\n", m->gen_name, m->val,
-			last_member_p(m));
+		fprintf(headerfile, "%s(%lld)%s\n", m->gen_name,
+                        (long long)m->val, last_member_p(m));
             }
 	    space(level);
             fprintf (headerfile, "}");
@@ -806,8 +806,8 @@ define_asn1 (int level, Type *t)
 	    fprintf (headerfile, "ENUMERATED {\n");
 	HEIM_TAILQ_FOREACH(m, t->members, members) {
 	    space(level + 1);
-	    fprintf (headerfile, "%s(%d)%s\n", m->name, m->val,
-		     last_member_p(m));
+	    fprintf(headerfile, "%s(%lld)%s\n", m->name,
+                    (long long)m->val, last_member_p(m));
 	}
 	space(level);
 	fprintf (headerfile, "}");
@@ -1200,12 +1200,12 @@ define_type(int level, const char *name, const char *basename, Type *pt, Type *t
                     "\"members\":[\n");
 	    HEIM_TAILQ_FOREACH(m, t->members, members) {
                 space (level + 1);
-                fprintf(headerfile, "%s%s%s = %d%s\n",
+                fprintf(headerfile, "%s%s%s = %lld%s\n",
                         label_prefix, label_prefix_sep,
-                        m->gen_name, m->val, last_member_p(m));
-                fprintf(jsonfile, "{\"%s%s%s\":%d}%s\n",
+                        m->gen_name, (long long)m->val, last_member_p(m));
+                fprintf(jsonfile, "{\"%s%s%s\":%lld}%s\n",
                         label_prefix, label_prefix_sep,
-                        m->gen_name, m->val, last_member_p(m));
+                        m->gen_name, (long long)m->val, last_member_p(m));
             }
             fprintf(headerfile, "} %s;\n", name);
             fprintf(jsonfile, "]");
@@ -1278,7 +1278,7 @@ define_type(int level, const char *name, const char *basename, Type *pt, Type *t
 	    fprintf (headerfile, "heim_bit_string %s;\n", name);
             fprintf(jsonfile, "\"ctype\":\"heim_bit_string\"");
         } else {
-	    int pos = 0;
+	    int64_t pos = 0;
 	    getnewbasename(&newbasename, typedefp || level == 0, basename, name);
 
 	    fprintf (headerfile, "struct %s {\n", newbasename);
@@ -1291,7 +1291,8 @@ define_type(int level, const char *name, const char *basename, Type *pt, Type *t
                  * forces the compiler to give us an obvious layout)
                  */
 		while (pos < m->val) {
-		    if (asprintf (&n, "_unused%d:1", pos) < 0 || n == NULL)
+		    if (asprintf (&n, "_unused%lld:1", (long long)pos) < 0 ||
+                        n == NULL)
 			err(1, "malloc");
 		    define_type(level + 1, n, newbasename, NULL, &i, FALSE, FALSE);
                     fprintf(jsonfile, ",");
@@ -1318,7 +1319,8 @@ define_type(int level, const char *name, const char *basename, Type *pt, Type *t
                 fprintf(jsonfile, ",");
 	    while (pos < bitset_size) {
 		char *n = NULL;
-		if (asprintf (&n, "_unused%d:1", pos) < 0 || n == NULL)
+		if (asprintf (&n, "_unused%lld:1", (long long)pos) < 0 ||
+                    n == NULL)
 		    errx(1, "malloc");
 		define_type(level + 1, n, newbasename, NULL, &i, FALSE, FALSE);
                 fprintf(jsonfile, "%s", (pos + 1) < bitset_size ? "," : "");
@@ -1349,12 +1351,12 @@ define_type(int level, const char *name, const char *basename, Type *pt, Type *t
 	    if (m->ellipsis) {
 		fprintf (headerfile, "/* ... */\n");
             } else {
-		fprintf(headerfile, "%s%s%s = %d%s\n",
+		fprintf(headerfile, "%s%s%s = %lld%s\n",
                         label_prefix, label_prefix_sep,
-                        m->gen_name, m->val, last_member_p(m));
-                fprintf(jsonfile, "{\"%s%s%s\":%d%s}\n",
+                        m->gen_name, (long long)m->val, last_member_p(m));
+                fprintf(jsonfile, "{\"%s%s%s\":%lld%s}\n",
                         label_prefix, label_prefix_sep,
-                        m->gen_name, m->val, last_member_p(m));
+                        m->gen_name, (long long)m->val, last_member_p(m));
             }
 	}
 	space(level);

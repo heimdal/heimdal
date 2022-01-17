@@ -91,7 +91,7 @@ struct member {
     char *name;
     char *gen_name;
     char *label;
-    int val;
+    int64_t val;
     int optional;
     int ellipsis;
     struct type *type;

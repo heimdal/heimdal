@@ -2424,6 +2424,7 @@ test_crypto(struct test_crypto_options *opt, int argc, char ** argv)
 	hx509_err(context, 1, ret, "hx509_cert_iter");
 
     hx509_certs_free(&certs);
+    hx509_verify_destroy_ctx(vctx);
 
     return 0;
 }

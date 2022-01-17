@@ -1366,8 +1366,7 @@ hx509_request_get_san(hx509_request req,
 
         ret = _hx509_unparse_utf8_string_name(req->context, &pool,
                                               &san->u.otherName.value);
-        if (ret == 0 &&
-            (*out = rk_strpoolcollect(pool)) == NULL)
+        if ((*out = rk_strpoolcollect(pool)) == NULL)
             return hx509_enomem(req->context);
         return ret;
     }
@@ -1376,8 +1375,7 @@ hx509_request_get_san(hx509_request req,
 
         ret = _hx509_unparse_KRB5PrincipalName(req->context, &pool,
                                                &san->u.otherName.value);
-        if (ret == 0 &&
-            (*out = rk_strpoolcollect(pool)) == NULL)
+        if ((*out = rk_strpoolcollect(pool)) == NULL)
             return hx509_enomem(req->context);
         return 0;
     }

@@ -2565,9 +2565,9 @@ get_cf(hx509_context context,
     }
 
     *out = heim_config_get_list(context->hcontext, cf, label, svc, NULL);
-    if (*out)
+    if (*out) {
         ret = 0;
-    if (ret) {
+    } else {
         heim_log_msg(context->hcontext, logf, 3, NULL,
                      "No configuration for %s %s certificate's realm "
                      "-> %s -> kx509 -> %s%s%s", def, label, realm, label,

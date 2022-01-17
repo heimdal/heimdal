@@ -2785,9 +2785,12 @@ acert1_kus(struct acert_options *opt,
     size_t unwanted = 0;
     size_t wanted = opt->has_ku_strings.num_strings;
     size_t i, k, sz;
+    int ret;
 
     memset(&ku, 0, sizeof(ku));
-    decode_KeyUsage(e->extnValue.data, e->extnValue.length, &ku, &sz);
+    ret = decode_KeyUsage(e->extnValue.data, e->extnValue.length, &ku, &sz);
+    if (ret)
+        return ret;
     ku_num = KeyUsage2int(ku);
 
     /* Validate requested key usage values */

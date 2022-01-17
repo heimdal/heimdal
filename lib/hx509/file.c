@@ -350,12 +350,8 @@ _hx509_erase_file(hx509_context context, const char *fn)
 
     fd = open(fn, O_RDWR | O_BINARY | O_CLOEXEC | O_NOFOLLOW);
     if (fd < 0)
-	return errno;
+	return errno == ENOENT ? 0 : errno;
     rk_cloexec(fd);
-    if (ret == -1 && errno == ENOENT)
-        return 0;
-    if (ret == -1)
-        return errno;
 
     if (unlink(fn) < 0) {
 	ret = errno;

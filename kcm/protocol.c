@@ -1537,13 +1537,6 @@ kcm_op_do_ntlm(krb5_context context,
 	}
 
 	free(tmpsesskey.data);
-	if (ret) {
-	    if (type3.lm.data)
-		free(type3.lm.data);
-	    if (type3.ntlm.data)
-		free(type3.ntlm.data);
-	    goto error;
-	}
 	flags |= NTLM_FLAG_SESSIONKEY;
 #if 0
     } else {

@@ -1196,25 +1196,29 @@ _kdc_encode_reply(krb5_context context,
 	return ret;
     }
     if(rep->msg_type == krb_as_rep) {
-	krb5_encrypt_EncryptedData(context,
-				   crypto,
-				   KRB5_KU_AS_REP_ENC_PART,
-				   buf,
-				   len,
-				   ckvno,
-				   &rep->enc_part);
-	free(buf);
-	ASN1_MALLOC_ENCODE(AS_REP, buf, buf_size, rep, &len, ret);
+        ret = krb5_encrypt_EncryptedData(context,
+                                         crypto,
+                                         KRB5_KU_AS_REP_ENC_PART,
+                                         buf,
+                                         len,
+                                         ckvno,
+                                         &rep->enc_part);
+        free(buf);
+        if (ret == 0)
+            ASN1_MALLOC_ENCODE(AS_REP, buf, buf_size, rep, &len, ret);
     } else {
-	krb5_encrypt_EncryptedData(context,
-				   crypto,
-				   rk_is_subkey ? KRB5_KU_TGS_REP_ENC_PART_SUB_KEY : KRB5_KU_TGS_REP_ENC_PART_SESSION,
-				   buf,
-				   len,
-				   ckvno,
-				   &rep->enc_part);
-	free(buf);
-	ASN1_MALLOC_ENCODE(TGS_REP, buf, buf_size, rep, &len, ret);
+        ret = krb5_encrypt_EncryptedData(context,
+                                         crypto,
+                                         rk_is_subkey ?
+                                             KRB5_KU_TGS_REP_ENC_PART_SUB_KEY :
+                                             KRB5_KU_TGS_REP_ENC_PART_SESSION,
+                                         buf,
+                                         len,
+                                         ckvno,
+                                         &rep->enc_part);
+        free(buf);
+        if (ret == 0)
+            ASN1_MALLOC_ENCODE(TGS_REP, buf, buf_size, rep, &len, ret);
     }
     krb5_crypto_destroy(context, crypto);
     if(ret) {

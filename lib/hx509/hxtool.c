@@ -1267,7 +1267,7 @@ revoke_print(struct revoke_print_options *opt, int argc, char **argv)
     if (ret)
 	warnx("hx509_revoke_print: %d", ret);
 
-    hx509_revoke_free(revoke_ctx);
+    hx509_revoke_free(&revoke_ctx);
     return ret;
 }
 

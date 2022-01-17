@@ -377,12 +377,12 @@ rk_strsvisx(char *dst, const char *csrc, size_t len, int flag, const char *extra
 	if (flag & VIS_HTTPSTYLE) {
 		for (start = dst; len > 0; len--) {
 			c = *src++;
-			dst = do_hvis(dst, c, flag, len ? *src : '\0', nextra);
+			dst = do_hvis(dst, c, flag, *src, nextra);
 		}
 	} else {
 		for (start = dst; len > 0; len--) {
 			c = *src++;
-			dst = do_svis(dst, c, flag, len ? *src : '\0', nextra);
+			dst = do_svis(dst, c, flag, *src, nextra);
 		}
 	}
 	free(nextra);

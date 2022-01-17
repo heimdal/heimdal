@@ -791,6 +791,7 @@ check_authz(krb5_context context,
         goto eacces;
 
     _kdc_audit_setkv_bool((kdc_request_t)reqctx, "authorized", TRUE);
+    free(cprinc);
     return 0;
 
 eacces:

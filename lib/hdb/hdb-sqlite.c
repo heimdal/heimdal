@@ -952,11 +952,12 @@ hdb_sqlite_remove(krb5_context context, HDB *db,
     sqlite3_stmt *get_ids = hsdb->get_ids;
     sqlite3_stmt *rm = hsdb->remove;
 
-    bind_principal(context, principal, rm, 1);
+    ret = bind_principal(context, principal, rm, 1);
 
-    ret = hdb_sqlite_exec_stmt(context, hsdb,
-                               "BEGIN IMMEDIATE TRANSACTION",
-                               HDB_ERR_UK_SERROR);
+    if (ret == 0)
+        ret = hdb_sqlite_exec_stmt(context, hsdb,
+                                   "BEGIN IMMEDIATE TRANSACTION",
+                                   HDB_ERR_UK_SERROR);
     if (ret != SQLITE_OK) {
 	ret = HDB_ERR_UK_SERROR;
         (void) hdb_sqlite_exec_stmt(context, hsdb, "ROLLBACK", 0);

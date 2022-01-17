@@ -793,7 +793,7 @@ hdb_create(krb5_context context, HDB **db, const char *filename)
             return ret;
         }
         for (cb_ctx.h = methods; cb_ctx.h->prefix != NULL; cb_ctx.h++) {
-            if (cb_ctx.h->is_file_based && !pathish)
+            if (cb_ctx.h->is_file_based)
                 continue;
             if (!cb_ctx.h->can_taste)
                 continue;
@@ -819,12 +819,14 @@ hdb_create(krb5_context context, HDB **db, const char *filename)
         for (cb_ctx.h = methods; cb_ctx.h->prefix != NULL; cb_ctx.h++)
             if (strcmp(cb_ctx.h->prefix, HDB_DEFAULT_DB_TYPE) == 0)
                 break;
+        if (cb_ctx.h->prefix == NULL)
+            cb_ctx.h = NULL;
     }
 #endif
     if (cb_ctx.h == NULL || cb_ctx.h->prefix == NULL)
         /* Last resort default */
         cb_ctx.h = &default_dbmethod;
-    if (cb_ctx.h == NULL || cb_ctx.h->prefix == NULL) {
+    if (cb_ctx.h->prefix == NULL) {
         krb5_set_error_message(context, ENOTSUP,
                                "Could not determine default DB backend for %s",
                                filename);

@@ -1253,17 +1253,16 @@ getdata(char **p, unsigned char *buf, size_t len, const char *what)
 }
 
 static int
-getint(char **p, const char *what)
+getint(char **p, const char *what, int *val)
 {
-    int val;
     char *q = nexttoken(p, 0, what);
     if (!q) {
         warnx("Failed to find a signed integer (%s) in dump", what);
-        return -1;
+        return 1;
     }
-    if (sscanf(q, "%d", &val) != 1)
-        return -1;
-    return val;
+    if (sscanf(q, "%d", val) != 1)
+        return 1;
+    return 0;
 }
 
 static unsigned int
@@ -1327,7 +1326,7 @@ _hdb_mit_dump2mitdb_entry(krb5_context context, char *line, krb5_storage *sp)
               "'policy', nor 'princ'");
         return -1;
     }
-    if (getint(&p, "constant '38'") != 38) {
+    if (getint(&p, "constant '38'", &tmp) || tmp != 38) {
         warnx("Dump entry does not start with '38<TAB>'");
         return EINVAL;
     }
@@ -1343,7 +1342,7 @@ _hdb_mit_dump2mitdb_entry(krb5_context context, char *line, krb5_storage *sp)
     }
     num_tl_data = getuint(&p, "number of TL data");
     num_key_data = getuint(&p, "number of key data");
-    getint(&p, "5th field, length of 'extra data'");
+    (void) getint(&p, "5th field, length of 'extra data'", &tmp);
     princ = nexttoken(&p, (int)princ_len, "principal name");
     if (princ == NULL) {
         warnx("Failed to read principal name (expected length %llu)",
@@ -1355,38 +1354,31 @@ _hdb_mit_dump2mitdb_entry(krb5_context context, char *line, krb5_storage *sp)
     ret = krb5_store_uint32(sp, attributes);
     if (ret) return ret;
 
-    tmp = getint(&p, "max life");
-    CHECK_UINT(tmp);
+    if (getint(&p, "max life", &tmp)) return EINVAL;
     ret = krb5_store_uint32(sp, tmp);
     if (ret) return ret;
 
-    tmp = getint(&p, "max renewable life");
-    CHECK_UINT(tmp);
+    if (getint(&p, "max renewable life", &tmp)) return EINVAL;
     ret = krb5_store_uint32(sp, tmp);
     if (ret) return ret;
 
-    tmp = getint(&p, "expiration");
-    CHECK_UINT(tmp);
+    if (getint(&p, "expiration", &tmp)) return EINVAL;
     ret = krb5_store_uint32(sp, tmp);
     if (ret) return ret;
 
-    tmp = getint(&p, "pw expiration");
-    CHECK_UINT(tmp);
+    if (getint(&p, "pw expiration", &tmp)) return EINVAL;
     ret = krb5_store_uint32(sp, tmp);
     if (ret) return ret;
 
-    tmp = getint(&p, "last auth");
-    CHECK_UINT(tmp);
+    if (getint(&p, "last auth", &tmp)) return EINVAL;
     ret = krb5_store_uint32(sp, tmp);
     if (ret) return ret;
 
-    tmp = getint(&p, "last failed auth");
-    CHECK_UINT(tmp);
+    if (getint(&p, "last failed auth", &tmp)) return EINVAL;
     ret = krb5_store_uint32(sp, tmp);
     if (ret) return ret;
 
-    tmp = getint(&p,"fail auth count");
-    CHECK_UINT(tmp);
+    if (getint(&p,"fail auth count", &tmp)) return EINVAL;
     ret = krb5_store_uint32(sp, tmp);
     if (ret) return ret;
 
@@ -1414,8 +1406,9 @@ _hdb_mit_dump2mitdb_entry(krb5_context context, char *line, krb5_storage *sp)
         int tl_type, tl_length;
         unsigned char *buf;
 
-        tl_type = getint(&p, "TL data type");
-        tl_length = getint(&p, "data length");
+        if (getint(&p, "TL data type", &tl_type) ||
+            getint(&p, "data length", &tl_length))
+            return EINVAL;
 
         if (asprintf(&reading_what, "TL data type %d (length %d)",
                      tl_type, tl_length) < 0)
@@ -1456,23 +1449,23 @@ _hdb_mit_dump2mitdb_entry(krb5_context context, char *line, krb5_storage *sp)
         int keylen;
         size_t k;
 
-        key_versions = getint(&p, "key data 'version'");
+        if (getint(&p, "key data 'version'", &key_versions)) return EINVAL;
         CHECK_UINT16(key_versions);
         ret = krb5_store_int16(sp, key_versions);
         if (ret) return ret;
 
-        kvno = getint(&p, "kvno");
+        if (getint(&p, "kvno", &kvno)) return EINVAL;
         CHECK_UINT16(kvno);
         ret = krb5_store_int16(sp, kvno);
         if (ret) return ret;
 
         for (k = 0; k < key_versions; k++) {
-            keytype = getint(&p, "enctype");
+            if (getint(&p, "enctype", &keytype)) return EINVAL;
             CHECK_UINT16(keytype);
             ret = krb5_store_int16(sp, keytype);
             if (ret) return ret;
 
-            keylen = getint(&p, "encrypted key length");
+            if (getint(&p, "encrypted key length", &keylen)) return EINVAL;
             CHECK_UINT16(keylen);
             ret = krb5_store_int16(sp, keylen);
             if (ret) return ret;

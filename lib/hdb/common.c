@@ -520,8 +520,9 @@ _hdb_store(krb5_context context, HDB *db, unsigned flags, hdb_entry *entry)
 	krb5_data_free(&key);
 	return code;
     }
-    hdb_entry2value(context, entry, &value);
-    code = db->hdb__put(context, db, flags & HDB_F_REPLACE, key, value);
+    code = hdb_entry2value(context, entry, &value);
+    if (code == 0)
+        code = db->hdb__put(context, db, flags & HDB_F_REPLACE, key, value);
     krb5_data_free(&value);
     krb5_data_free(&key);
     if (code)
@@ -1459,6 +1460,8 @@ fetch_it(krb5_context context,
     char *host = NULL;
     int do_search = 0;
 
+    if (!db->enable_virtual_hostbased_princs)
+        maxdots = mindots = 0;
     if (db->enable_virtual_hostbased_princs && comp1 &&
         strcmp("krbtgt", comp0) != 0 && strcmp(KRB5_WELLKNOWN_NAME, comp0) != 0) {
         char *htmp;
@@ -1527,7 +1530,11 @@ fetch_it(krb5_context context,
          */
         while (maxdots && hdots > maxdots && tmp) {
             tmp = strchr(tmp, '.');
-            /* tmp != NULL because maxdots > 0 */
+            /* tmp != NULL because maxdots > 0; we check to quiet linters */
+            if (tmp == NULL) {
+                ret = HDB_ERR_NOENTRY;
+                goto out;
+            }
             tmp++;
             hdots--;
         }
@@ -1566,6 +1573,8 @@ fetch_it(krb5_context context,
         if (ret == 0)
             ret = pick_kvno(context, db, flags, t, kvno, ent);
     }
+
+out:
     if (ret)
         hdb_free_entry(context, db, ent);
     krb5_free_principal(context, nsprinc);

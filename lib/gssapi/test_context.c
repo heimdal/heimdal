@@ -262,11 +262,14 @@ loop(gss_OID mechoid,
     OM_uint32 flags = 0, ret_cflags = 0, ret_sflags = 0;
     gss_OID actual_mech_client = GSS_C_NO_OID;
     gss_OID actual_mech_server = GSS_C_NO_OID;
-    struct gss_channel_bindings_struct i_channel_bindings_data = {0};
-    struct gss_channel_bindings_struct a_channel_bindings_data = {0};
+    struct gss_channel_bindings_struct i_channel_bindings_data;
+    struct gss_channel_bindings_struct a_channel_bindings_data;
     gss_channel_bindings_t i_channel_bindings_p = GSS_C_NO_CHANNEL_BINDINGS;
     gss_channel_bindings_t a_channel_bindings_p = GSS_C_NO_CHANNEL_BINDINGS;
     size_t offset = 0;
+
+    memset(&i_channel_bindings_data, 0, sizeof(i_channel_bindings_data));
+    memset(&a_channel_bindings_data, 0, sizeof(a_channel_bindings_data));
 
     *actual_mech = GSS_C_NO_OID;
 

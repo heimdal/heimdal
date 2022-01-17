@@ -1885,7 +1885,7 @@ generate_pac(astgs_request_t r, const Key *skey, const Key *tkey,
 
 	canon_princ = r->canon_client_princ;
 
-	krb5_unparse_name(r->context, canon_princ, &cpn);
+	(void) krb5_unparse_name(r->context, canon_princ, &cpn);
 	_kdc_audit_addkv((kdc_request_t)r, 0, "canon_client_name", "%s",
 			     cpn ? cpn : "<unknown>");
 	krb5_xfree(cpn);

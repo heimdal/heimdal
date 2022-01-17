@@ -2133,24 +2133,26 @@ process_pa_info(krb5_context context,
     return p;
 }
 
-static void
+static krb5_error_code
 pa_announce(krb5_context context,
 	    int types,
 	    krb5_init_creds_context ctx,
 	    METHOD_DATA *in_md,
 	    METHOD_DATA *out_md)
 {
+    krb5_error_code ret = 0;
     size_t n;
 
-    for (n = 0; n < sizeof(patypes)/sizeof(patypes[0]); n++) {
+    for (n = 0; ret == 0 && n < sizeof(patypes)/sizeof(patypes[0]); n++) {
 	if ((patypes[n].flags & types) == 0)
 	    continue;
 
 	if (patypes[n].step)
 	    patypes[n].step(context, ctx, NULL, NULL, NULL, NULL, NULL, in_md, out_md);
 	else
-	    krb5_padata_add(context, out_md, patypes[n].type, NULL, 0);
+	    ret = krb5_padata_add(context, out_md, patypes[n].type, NULL, 0);
     }
+    return ret;
 }
 
 
@@ -2400,8 +2402,7 @@ process_pa_data_to_md(krb5_context context,
      * Send announcement (what we support) and configuration (user
      * introduced behavior change)
      */
-
-    pa_announce(context, PA_F_ANNOUNCE|PA_F_CONFIG, ctx, in_md, *out_md);
+    ret = pa_announce(context, PA_F_ANNOUNCE|PA_F_CONFIG, ctx, in_md, *out_md);
 
     /*
      *
@@ -2412,7 +2413,7 @@ process_pa_data_to_md(krb5_context context,
 	*out_md = NULL;
     }
 
-    return 0;
+    return ret;
 }
 
 static krb5_error_code

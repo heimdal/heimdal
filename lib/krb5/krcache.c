@@ -1891,7 +1891,7 @@ krcc_get_cache_next(krb5_context context,
 
 	/* Don't repeat the primary cache. */
 	if (iter->primary_name &&
-            strcmp(subsidiary_name ? subsidiary_name : "tkt", iter->primary_name) == 0)
+            strcmp(subsidiary_name, iter->primary_name) == 0)
 	    continue;
 
 	/* We found a valid key */

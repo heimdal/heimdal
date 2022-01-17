@@ -116,7 +116,7 @@ synthesize_client(krb5_context context,
         *(e->max_renew) = config->synthetic_clients_max_renew;
         *(e->max_life) = config->synthetic_clients_max_life;
         *h = e;
-    } else {
+    } else if (e) {
         hdb_free_entry(context, &null_db, e);
     }
     return ret;

@@ -391,6 +391,8 @@ add_one_namespace(const char *name,
         ret = krb5_parse_name(context, name, &princ_ent);
         if (ret)
             krb5_warn(context, ret, "krb5_parse_name");
+	else
+	    princ.principal = princ_ent;
     }
     if (ret != 0)
 	return ret;
@@ -449,7 +451,6 @@ add_one_namespace(const char *name,
     }
 
     if (ret == 0) {
-        princ.principal = princ_ent;
         mask |= KADM5_PRINCIPAL | KADM5_KVNO;
 
         ret = set_entry(context, &princ, &mask,

@@ -114,7 +114,7 @@ is_default_salt_p(const krb5_salt *default_salt, const Key *key)
 	return TRUE;
     if (default_salt->salttype != key->salt->type)
 	return FALSE;
-    if (krb5_data_cmp(&default_salt->saltvalue, &key->salt->salt))
+    if (krb5_data_cmp(&default_salt->saltvalue, &key->salt->salt) != 0)
 	return FALSE;
     return TRUE;
 }

@@ -542,12 +542,13 @@ update_csr(krb5_context context, kx509_req_context reqctx, Extensions *exts)
         }
     }
     if (ret) {
+	char *emsg = krb5_get_error_message(context, ret);
         kdc_log(context, reqctx->config, 1,
-                "Error handling requested extensions: %s",
-                krb5_get_error_message(context, ret));
+                "Error handling requested extensions: %s", emsg);
         _kdc_audit_addreason((kdc_request_t)reqctx,
                              "Error handling requested extensions: %s",
-                             krb5_get_error_message(context, ret));
+                             emsg);
+	krb5_free_error_message(context, emsg);
     }
     return ret;
 }

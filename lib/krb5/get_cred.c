@@ -114,19 +114,20 @@ set_auth_data (krb5_context context,
 	    req_body->enc_authorization_data = NULL;
 	    return ret;
 	}
-	krb5_encrypt_EncryptedData(context,
-				   crypto,
-				   KRB5_KU_TGS_REQ_AUTH_DAT_SUBKEY,
-				   buf,
-				   len,
-				   0,
-				   req_body->enc_authorization_data);
+        ret = krb5_encrypt_EncryptedData(context,
+                                         crypto,
+                                         KRB5_KU_TGS_REQ_AUTH_DAT_SUBKEY,
+                                         buf,
+                                         len,
+                                         0,
+                                         req_body->enc_authorization_data);
 	free (buf);
 	krb5_crypto_destroy(context, crypto);
+        return ret;
     } else {
 	req_body->enc_authorization_data = NULL;
+        return 0;
     }
-    return 0;
 }
 
 /*

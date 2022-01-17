@@ -3706,13 +3706,12 @@ _hx509_cert_to_env(hx509_context context, hx509_cert cert, hx509_env *env)
 	goto out;
 
     ret = hx509_name_to_string(name, &buf);
-    if (ret) {
-	hx509_name_free(&name);
+    hx509_name_free(&name);
+    if (ret)
 	goto out;
-    }
 
     ret = hx509_env_add(context, &envcert, "subject", buf);
-    hx509_name_free(&name);
+    hx509_xfree(buf);
     if (ret)
 	goto out;
 

@@ -96,7 +96,7 @@ jobs:
                 tar czf $HOME/heimdal-install.tgz .
             - name: Test logs
               run: |
-                find build -depth -cpio -name \*.trs|xargs grep -lw FAIL|sed -e 's/trs$/log/' | cpio -o > $HOME/logs-osx.cpio
+                find build -depth -name \*.trs|xargs grep -lw FAIL|sed -e 's/trs$/log/' | cpio -o > $HOME/logs-osx.cpio
                 find build -name \*.trs|xargs grep -lw FAIL|sed -e 's/trs$/log/'|xargs cat
             - name: Failed Test logs
               if: ${{ failure() }}

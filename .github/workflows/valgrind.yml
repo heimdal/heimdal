@@ -60,7 +60,7 @@ jobs:
                 find . -name \*.log -print0|xargs -0 grep '^==[0-9]*== ' || true
             - name: Test logs
               run: |
-                find build -depth -cpio -name \*.log | sed -e 's/trs$/log/' | tar -czf $HOME/logs-linux-valgrind.tgz --verbatim-files-from --files-from -
+                find build -depth -name \*.log | sed -e 's/trs$/log/' | tar -czf $HOME/logs-linux-valgrind.tgz --verbatim-files-from --files-from -
                 find build -name \*.trs|xargs grep -lw FAIL | sed -e 's/trs$/log/' | xargs cat
             - name: Failed Test logs
               if: ${{ failure() }}

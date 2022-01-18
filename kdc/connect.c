@@ -263,7 +263,8 @@ init_socket(krb5_context context,
 #if defined(HAVE_SETSOCKOPT) && defined(SOL_SOCKET) && defined(SO_REUSEADDR)
     {
 	int one = 1;
-	setsockopt(d->s, SOL_SOCKET, SO_REUSEADDR, (void *)&one, sizeof(one));
+        (void) setsockopt(d->s, SOL_SOCKET, SO_REUSEADDR, (void *)&one,
+                          sizeof(one));
     }
 #endif
     d->type = type;

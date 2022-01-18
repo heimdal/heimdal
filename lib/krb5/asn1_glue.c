@@ -38,8 +38,8 @@
 #include "krb5_locl.h"
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
-_krb5_principal2principalname (PrincipalName *p,
-			       const krb5_principal from)
+_krb5_principal2principalname(PrincipalName *p,
+			      krb5_const_principal from)
 {
     return copy_PrincipalName(&from->name, p);
 }

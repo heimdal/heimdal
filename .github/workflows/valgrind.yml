@@ -22,9 +22,6 @@ jobs:
                     - name: linux-clang
                       os: ubuntu-18.04
                       compiler: clang
-                    - name: linux-gcc
-                      os: ubuntu-18.04
-                      compiler: gcc
         steps:
             - name: Clone repository
               uses: actions/checkout@v1

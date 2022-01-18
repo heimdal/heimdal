@@ -60,15 +60,16 @@ realloc_method_data(METHOD_DATA *md)
     return 0;
 }
 
-static void
+static krb5_error_code
 set_salt_padata(METHOD_DATA *md, Salt *salt)
 {
-    if (salt) {
-       realloc_method_data(md);
-       md->val[md->len - 1].padata_type = salt->type;
-       der_copy_octet_string(&salt->salt,
-                             &md->val[md->len - 1].padata_value);
-    }
+    PA_DATA pa; /* do not free */
+
+    if (!salt)
+        return 0;
+    pa.padata_type = salt->type;
+    pa.padata_value = salt->salt;
+    return add_METHOD_DATA(md, &pa);
 }
 
 const PA_DATA*
@@ -764,7 +765,8 @@ pa_enc_chal_validate(astgs_request_t r, const PA_DATA *pa)
 	if (ret)
 	    goto out;
 					    
-	set_salt_padata(r->rep.padata, k->salt);
+        if (ret == 0)
+            ret = set_salt_padata(r->rep.padata, k->salt);
 
 	/*
 	 * Success
@@ -938,9 +940,9 @@ pa_enc_ts_validate(astgs_request_t r, const PA_DATA *pa)
     }
     free_PA_ENC_TS_ENC(&p);
 
-    set_salt_padata(r->rep.padata, pa_key->salt);
-
-    ret = krb5_copy_keyblock_contents(r->context, &pa_key->key, &r->reply_key);
+    ret = set_salt_padata(r->rep.padata, pa_key->salt);
+    if (ret == 0)
+        ret = krb5_copy_keyblock_contents(r->context, &pa_key->key, &r->reply_key);
     if (ret)
 	return ret;
 
@@ -1260,92 +1262,57 @@ _kdc_encode_reply(krb5_context context,
  */
 
 static krb5_error_code
-make_etype_info_entry(krb5_context context,
-		      ETYPE_INFO_ENTRY *ent,
-		      Key *key,
-		      krb5_boolean include_salt)
-{
-    ent->etype = key->key.keytype;
-    if (key->salt && include_salt){
-#if 0
-	ALLOC(ent->salttype);
-
-	if(key->salt->type == hdb_pw_salt)
-	    *ent->salttype = 0; /* or 1? or NULL? */
-	else if(key->salt->type == hdb_afs3_salt)
-	    *ent->salttype = 2;
-	else {
-	    kdc_log(context, config, 4, "unknown salt-type: %d",
-		    key->salt->type);
-	    return KRB5KRB_ERR_GENERIC;
-	}
-	/* according to `the specs', we can't send a salt if
-	   we have AFS3 salted key, but that requires that you
-	   *know* what cell you are using (e.g by assuming
-	   that the cell is the same as the realm in lower
-	   case) */
-#elif 0
-	ALLOC(ent->salttype);
-	*ent->salttype = key->salt->type;
-#else
-	/*
-	 * We shouldn't sent salttype since it is incompatible with the
-	 * specification and it breaks windows clients.  The afs
-	 * salting problem is solved by using KRB5-PADATA-AFS3-SALT
-	 * implemented in Heimdal 0.7 and later.
-	 */
-	ent->salttype = NULL;
-#endif
-	krb5_copy_data(context, &key->salt->salt,
-		       &ent->salt);
-    } else {
-	/* we return no salt type at all, as that should indicate
-	 * the default salt type and make everybody happy.  some
-	 * systems (like w2k) dislike being told the salt type
-	 * here. */
-
-	ent->salttype = NULL;
-	ent->salt = NULL;
-    }
-    return 0;
-}
-
-static krb5_error_code
 get_pa_etype_info(krb5_context context,
 		  krb5_kdc_configuration *config,
 		  METHOD_DATA *md, Key *ckey,
 		  krb5_boolean include_salt)
 {
     krb5_error_code ret = 0;
-    ETYPE_INFO pa;
-    unsigned char *buf;
+    ETYPE_INFO_ENTRY eie; /* do not free this one */
+    ETYPE_INFO ei;
+    PA_DATA pa;
     size_t len;
 
+    /*
+     * Code moved here from what used to be make_etype_info_entry() because
+     * using the ASN.1 compiler-generated SEQUENCE OF add functions makes that
+     * old function's body and this one's small and clean.
+     *
+     * The following comment blocks were there:
+     *
+     *  According to `the specs', we can't send a salt if we have AFS3 salted
+     *  key, but that requires that you *know* what cell you are using (e.g by
+     *  assuming that the cell is the same as the realm in lower case)
+     *
+     *  We shouldn't sent salttype since it is incompatible with the
+     *  specification and it breaks windows clients.  The afs salting problem
+     *  is solved by using KRB5-PADATA-AFS3-SALT implemented in Heimdal 0.7 and
+     *  later.
+     *
+     *  We return no salt type at all, as that should indicate the default salt
+     *  type and make everybody happy.  some systems (like w2k) dislike being
+     *  told the salt type here.
+     */
 
-    pa.len = 1;
-    pa.val = calloc(1, sizeof(pa.val[0]));
-    if(pa.val == NULL)
-	return ENOMEM;
-
-    ret = make_etype_info_entry(context, &pa.val[0], ckey, include_salt);
-    if (ret) {
-	free_ETYPE_INFO(&pa);
-	return ret;
-    }
-
-    ASN1_MALLOC_ENCODE(ETYPE_INFO, buf, len, &pa, &len, ret);
-    free_ETYPE_INFO(&pa);
-    if(ret)
-	return ret;
-    ret = realloc_method_data(md);
-    if(ret) {
-	free(buf);
-	return ret;
-    }
-    md->val[md->len - 1].padata_type = KRB5_PADATA_ETYPE_INFO;
-    md->val[md->len - 1].padata_value.length = len;
-    md->val[md->len - 1].padata_value.data = buf;
-    return 0;
+    pa.padata_type = KRB5_PADATA_ETYPE_INFO;
+    pa.padata_value.data = NULL;
+    pa.padata_value.length = 0;
+    ei.len = 0;
+    ei.val = NULL;
+    eie.etype = ckey->key.keytype;
+    eie.salttype = NULL;
+    eie.salt = NULL;
+    if (include_salt && ckey->salt)
+        eie.salt = &ckey->salt->salt;
+    ret = add_ETYPE_INFO(&ei, &eie);
+    if (ret == 0)
+        ASN1_MALLOC_ENCODE(ETYPE_INFO, pa.padata_value.data, pa.padata_value.length,
+                           &ei, &len, ret);
+    if (ret == 0)
+        add_METHOD_DATA(md, &pa);
+    free_ETYPE_INFO(&ei);
+    free_PA_DATA(&pa);
+    return ret;
 }
 
 /*

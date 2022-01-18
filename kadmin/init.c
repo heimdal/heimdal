@@ -73,7 +73,20 @@ create_random_entry(krb5_principal princ,
     ent.attributes |= attributes | KRB5_KDB_DISALLOW_ALL_TIX;
     mask |= KADM5_ATTRIBUTES | KADM5_KEY_DATA;
 
-    /* Create the entry with no keys or password */
+    /*
+     * Create the entry with no keys or password.
+     *
+     * XXX Note that using kadm5_s_*() here means that `kadmin init` must
+     *     always be local (`kadmin -l init`).  This might seem like a very
+     *     obvious thing, but since our KDC daemons support multiple realms
+     *     there is no reason that `init SOME.REALM.EXAMPLE` couldn't be
+     *     remoted.
+     *
+     *     Granted, one might want all such operations to be local anyways --
+     *     perhaps for authorization reasons, since we don't really have that
+     *     great a story for authorization in kadmind at this time, especially
+     *     for realm creation.
+     */
     ret = kadm5_s_create_principal_with_key(kadm_handle, &ent, mask);
     if(ret) {
 	if (ret == KADM5_DUP && (flags & CRE_DUP_OK))
@@ -207,14 +220,14 @@ init(struct init_options *opt, int argc, char **argv)
 	 * forwardable here.
 	 */
         if (ret == 0)
-            create_random_entry(princ, 5*60, 5*60,
-                                KRB5_KDB_DISALLOW_TGT_BASED|
-                                KRB5_KDB_PWCHANGE_SERVICE|
-                                KRB5_KDB_DISALLOW_POSTDATED|
-                                KRB5_KDB_DISALLOW_RENEWABLE|
-                                KRB5_KDB_DISALLOW_PROXIABLE|
-                                KRB5_KDB_REQUIRES_PRE_AUTH,
-                                0);
+            ret = create_random_entry(princ, 5*60, 5*60,
+                                      KRB5_KDB_DISALLOW_TGT_BASED|
+                                      KRB5_KDB_PWCHANGE_SERVICE|
+                                      KRB5_KDB_DISALLOW_POSTDATED|
+                                      KRB5_KDB_DISALLOW_RENEWABLE|
+                                      KRB5_KDB_DISALLOW_PROXIABLE|
+                                      KRB5_KDB_REQUIRES_PRE_AUTH,
+                                      0);
 	krb5_free_principal(context, princ);
         if (ret) {
             krb5_warn(context, ret, "Failed to create kadmin/changepw@%s",

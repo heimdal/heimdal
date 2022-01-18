@@ -272,7 +272,10 @@ RSA_check_key(const RSA *key)
      * and then decrypt/verify.
      */
 
-    if ((rsa->d == NULL || rsa->n == NULL) &&
+    if (rsa->n == NULL)
+	return 0;
+
+    if (rsa->d == NULL &&
 	(rsa->p == NULL || rsa->q || rsa->dmp1 == NULL || rsa->dmq1 == NULL || rsa->iqmp == NULL))
 	return 0;
 

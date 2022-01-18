@@ -621,6 +621,7 @@ handle_vanilla_tcp (krb5_context context,
 		    krb5_kdc_configuration *config,
 		    struct descr *d)
 {
+    krb5_error_code ret;
     krb5_storage *sp;
     uint32_t len;
 
@@ -629,7 +630,13 @@ handle_vanilla_tcp (krb5_context context,
 	kdc_log (context, config, 1, "krb5_storage_from_mem failed");
 	return -1;
     }
-    krb5_ret_uint32(sp, &len);
+    if (d->len < 4)
+        return 0;
+    ret = krb5_ret_uint32(sp, &len);
+    if (ret) {
+	kdc_log(context, config, 4, "failed to read request length");
+	return -1;
+    }
     krb5_storage_free(sp);
     if(d->len - 4 >= len) {
 	memmove(d->buf, d->buf + 4, d->len - 4);

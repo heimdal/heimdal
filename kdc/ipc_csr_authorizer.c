@@ -179,7 +179,9 @@ cmd_append(struct rk_strpool **cmd, const char *s0, ...)
         char *s;
 
         if ((s = string_encode(arg)) == NULL) {
-            ret = rk_strpoolfree(*cmd), *cmd = NULL, ENOMEM;
+            rk_strpoolfree(*cmd);
+	    *cmd = NULL;
+	    ret = ENOMEM;
 	    goto out;
 	}
         *cmd = rk_strpoolprintf(*cmd, "%s", s);

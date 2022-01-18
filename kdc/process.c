@@ -469,58 +469,87 @@ krb5_kdc_save_request(krb5_context context,
 {
     krb5_storage *sp;
     krb5_address a;
-    int fd, ret;
+    int fd = -1;
+    int ret = 0;
     uint32_t t;
     krb5_data d;
 
     memset(&a, 0, sizeof(a));
 
-    d.data = rk_UNCONST(buf);
+    d.data = rk_UNCONST(buf); /* do not free here */
     d.length = len;
     t = _kdc_now.tv_sec;
 
-    fd = open(fn, O_WRONLY|O_CREAT|O_APPEND, 0600);
-    if (fd < 0) {
-	int saved_errno = errno;
-	krb5_set_error_message(context, saved_errno, "Failed to open: %s", fn);
-	return saved_errno;
-    }
+    sp = krb5_storage_emem();
+    if (sp == NULL)
+        ret = krb5_enomem(context);
 
-    sp = krb5_storage_from_fd(fd);
-    close(fd);
-    if (sp == NULL) {
-	krb5_set_error_message(context, ENOMEM, "Storage failed to open fd");
-	return ENOMEM;
-    }
-
-    ret = krb5_sockaddr2address(context, sa, &a);
-    if (ret)
-	goto out;
-
-    krb5_store_uint32(sp, 1);
-    krb5_store_uint32(sp, t);
-    krb5_store_address(sp, a);
-    krb5_store_data(sp, d);
-    {
+    if (ret == 0)
+        ret = krb5_sockaddr2address(context, sa, &a);
+    if (ret == 0)
+        ret = krb5_store_uint32(sp, 1);
+    if (ret == 0)
+        ret = krb5_store_uint32(sp, t);
+    if (ret == 0)
+        ret = krb5_store_address(sp, a);
+    if (ret == 0)
+        ret = krb5_store_data(sp, d);
+    d.length = 0;
+    d.data = NULL;
+    if (ret == 0) {
 	Der_class cl;
 	Der_type ty;
 	unsigned int tag;
 	ret = der_get_tag (reply->data, reply->length,
 			   &cl, &ty, &tag, NULL);
 	if (ret) {
-	    krb5_store_uint32(sp, 0xffffffff);
-	    krb5_store_uint32(sp, 0xffffffff);
-	} else {
-	    krb5_store_uint32(sp, MAKE_TAG(cl, ty, 0));
-	    krb5_store_uint32(sp, tag);
+            ret = krb5_store_uint32(sp, 0xffffffff);
+            if (ret == 0)
+                ret = krb5_store_uint32(sp, 0xffffffff);
+        } else {
+            ret = krb5_store_uint32(sp, MAKE_TAG(cl, ty, 0));
+            if (ret == 0)
+                ret = krb5_store_uint32(sp, tag);
 	}
     }
 
-    krb5_free_address(context, &a);
-out:
+    if (ret == 0)
+        ret = krb5_storage_to_data(sp, &d);
     krb5_storage_free(sp);
+    sp = NULL;
 
-    return 0;
+    /*
+     * We've got KDC concurrency, so we're going to try to do a single O_APPEND
+     * write(2).  Hopefully we manage to write enough of the header that one
+     * can skip this request if it fails to write completely.
+     */
+    if (ret == 0)
+        fd = open(fn, O_WRONLY|O_CREAT|O_APPEND, 0600);
+    if (fd < 0)
+	krb5_set_error_message(context, ret = errno, "Failed to open: %s", fn);
+    if (ret == 0) {
+        sp = krb5_storage_from_fd(fd);
+        if (sp == NULL)
+            krb5_set_error_message(context, ret = ENOMEM,
+                                   "Storage failed to open fd");
+    }
+    (void) close(fd);
+    if (ret == 0)
+        ret = krb5_store_data(sp, d);
+    krb5_free_address(context, &a);
+    /*
+     * krb5_storage_free() currently always returns 0, but for FDs it sets
+     * errno to whatever close() set it to if it failed.
+     */
+    errno = 0;
+    if (ret == 0)
+        ret = krb5_storage_free(sp);
+    else
+        (void) krb5_storage_free(sp);
+    if (ret == 0 && errno)
+        ret = errno;
+
+    return ret;
 }
 
 KDC_LIB_FUNCTION krb5_error_code KDC_LIB_CALL

@@ -67,7 +67,7 @@ mpz2BN(mp_int *s)
 
     size = mp_ubin_size(s);
     p = malloc(size);
-    if (p == NULL && size != 0)
+    if (p == NULL)
 	return NULL;
     if (mp_to_ubin(s, p, SIZE_MAX, NULL) != MP_OKAY) {
 	free(p);

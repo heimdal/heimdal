@@ -537,10 +537,6 @@ tgs_make_reply(astgs_request_t r,
 	       const krb5_keyblock *sessionkey,
 	       krb5_kvno kvno,
 	       AuthorizationData *auth_data,
-	       hdb_entry *server,
-	       krb5_principal server_principal,
-	       hdb_entry *client,
-	       krb5_principal client_principal,
 	       const char *tgt_realm,
 	       uint16_t rodc_id,
 	       krb5_boolean add_ticket_sig)
@@ -591,24 +587,39 @@ tgs_make_reply(astgs_request_t r,
     ret = fix_transited_encoding(r->context, r->config,
 				 !f.disable_transited_check ||
 				 GLOBAL_FORCE_TRANSITED_CHECK ||
-				 PRINCIPAL_FORCE_TRANSITED_CHECK(server) ||
+				 PRINCIPAL_FORCE_TRANSITED_CHECK(r->server) ||
 				 !((GLOBAL_ALLOW_PER_PRINCIPAL &&
-				    PRINCIPAL_ALLOW_DISABLE_TRANSITED_CHECK(server)) ||
+				    PRINCIPAL_ALLOW_DISABLE_TRANSITED_CHECK(r->server)) ||
 				   GLOBAL_ALLOW_DISABLE_TRANSITED_CHECK),
 				 &tgt->transited, et,
-				 krb5_principal_get_realm(r->context, client_principal),
-				 krb5_principal_get_realm(r->context, server->principal),
+				 krb5_principal_get_realm(r->context, r->client_princ),
+				 krb5_principal_get_realm(r->context, r->server->principal),
 				 tgt_realm);
-    if(ret)
-	goto out;
 
-    ret = copy_Realm(&server_principal->realm, &rep->ticket.realm);
+    {
+        /*
+         * RFC 6806 notes that names MUST NOT be changed in the response to a
+         * TGS request. Hence we ignore the setting of the canonicalize KDC
+         * option. However, for legacy interoperability we do allow the backend
+         * to override this by setting the force-canonicalize HDB flag in the
+         * server entry.
+         */
+        krb5_const_principal rsp;
+
+        if (r->server->flags.force_canonicalize)
+            rsp = r->server->principal;
+        else
+            rsp = r->server_princ;
+        if (ret == 0)
+            ret = copy_Realm(&rsp->realm, &rep->ticket.realm);
+        if (ret == 0)
+            ret = _krb5_principal2principalname(&rep->ticket.sname, rsp);
+    }
+
+    if (ret == 0)
+        ret = copy_Realm(&r->client_princ->realm, &rep->crealm);
     if (ret)
-	goto out;
-    _krb5_principal2principalname(&rep->ticket.sname, server_principal);
-    ret = copy_Realm(&r->client_princ->realm, &rep->crealm);
-    if (ret)
-	goto out;
+        goto out;
 
     /*
      * RFC 8062 states "if the ticket in the TGS request is an anonymous
@@ -629,10 +640,10 @@ tgs_make_reply(astgs_request_t r,
     {
 	time_t life;
 	life = et->endtime - *et->starttime;
-	if(client && client->max_life)
-	    life = min(life, *client->max_life);
-	if(server->max_life)
-	    life = min(life, *server->max_life);
+	if(r->client && r->client->max_life)
+	    life = min(life, *r->client->max_life);
+	if(r->server->max_life)
+	    life = min(life, *r->server->max_life);
 	et->endtime = *et->starttime + life;
     }
     if(f.renewable_ok && tgt->flags.renewable &&
@@ -646,10 +657,10 @@ tgs_make_reply(astgs_request_t r,
     if(et->renew_till){
 	time_t renew;
 	renew = *et->renew_till - *et->starttime;
-	if(client && client->max_renew)
-	    renew = min(renew, *client->max_renew);
-	if(server->max_renew)
-	    renew = min(renew, *server->max_renew);
+	if(r->client && r->client->max_renew)
+	    renew = min(renew, *r->client->max_renew);
+	if(r->server->max_renew)
+	    renew = min(renew, *r->server->max_renew);
 	*et->renew_till = *et->starttime + renew;
     }
 
@@ -673,12 +684,12 @@ tgs_make_reply(astgs_request_t r,
 
     et->flags.pre_authent = tgt->flags.pre_authent;
     et->flags.hw_authent  = tgt->flags.hw_authent;
-    et->flags.ok_as_delegate = server->flags.ok_as_delegate;
+    et->flags.ok_as_delegate = r->server->flags.ok_as_delegate;
 
     /* See MS-KILE 3.3.5.1 */
-    if (!server->flags.forwardable)
+    if (!r->server->flags.forwardable)
 	et->flags.forwardable = 0;
-    if (!server->flags.proxiable)
+    if (!r->server->flags.proxiable)
 	et->flags.proxiable = 0;
 
     if (auth_data) {
@@ -730,7 +741,7 @@ tgs_make_reply(astgs_request_t r,
 		       et->endtime, et->renew_till);
 
     if (krb5_enctype_valid(r->context, serverkey->keytype) != 0
-	&& _kdc_is_weak_exception(server->principal, serverkey->keytype))
+	&& _kdc_is_weak_exception(r->server->principal, serverkey->keytype))
     {
 	krb5_enctype_enable(r->context, serverkey->keytype);
 	is_weak = 1;
@@ -762,7 +773,7 @@ tgs_make_reply(astgs_request_t r,
 	 */
 	if (_kdc_include_pac_p(r)) {
 	    krb5_boolean is_tgs =
-		krb5_principal_is_krbtgt(r->context, server->principal);
+		krb5_principal_is_krbtgt(r->context, r->server->principal);
 
 	    ret = _krb5_kdc_pac_sign_ticket(r->context, r->pac, r->client_princ, serverkey,
 					    krbtgtkey, rodc_id, NULL, r->canon_client_princ,
@@ -1361,12 +1372,10 @@ tgs_build_reply(astgs_request_t priv,
     KDC_REQ_BODY *b = &priv->req.req_body;
     const char *from = priv->from;
     krb5_error_code ret, ret2;
-    krb5_principal rsp = NULL;
     krb5_principal krbtgt_out_principal = NULL;
     krb5_principal user2user_princ = NULL;
     char *spn = NULL, *cpn = NULL, *krbtgt_out_n = NULL;
     char *user2user_name = NULL;
-    hdb_entry *server = NULL, *client = NULL;
     HDB *user2user_krbtgtdb;
     hdb_entry *user2user_krbtgt = NULL;
     HDB *clientdb;
@@ -1448,14 +1457,12 @@ tgs_build_reply(astgs_request_t priv,
      */
 
 server_lookup:
+    if (priv->server)
+        _kdc_free_ent(context, serverdb, priv->server);
     priv->server = NULL;
-    if (server)
-        _kdc_free_ent(context, serverdb, server);
-    server = NULL;
     ret = _kdc_db_fetch(context, config, priv->server_princ,
                         HDB_F_GET_SERVER | HDB_F_DELAY_NEW_KEYS | flags,
-			NULL, &serverdb, &server);
-    priv->server = server;
+			NULL, &serverdb, &priv->server);
     priv->serverdb = serverdb;
     if (ret == HDB_ERR_NOT_FOUND_HERE) {
 	kdc_log(context, config, 5, "target %s does not have secrets at this KDC, need to proxy", spn);
@@ -1463,7 +1470,7 @@ server_lookup:
 	goto out;
     } else if (ret == HDB_ERR_WRONG_REALM) {
         free(ref_realm);
-	ref_realm = strdup(server->principal->realm);
+	ref_realm = strdup(priv->server->principal->realm);
 	if (ref_realm == NULL) {
             ret = krb5_enomem(context);
 	    goto out;
@@ -1577,18 +1584,6 @@ server_lookup:
                             "Service principal unknown");
 	goto out;
     }
-
-    /*
-     * RFC 6806 notes that names MUST NOT be changed in the response to
-     * a TGS request. Hence we ignore the setting of the canonicalize
-     * KDC option. However, for legacy interoperability we do allow the
-     * backend to override this by setting the force-canonicalize HDB
-     * flag in the server entry.
-     */
-    if (server->flags.force_canonicalize)
-	rsp = server->principal;
-    else
-	rsp = priv->server_princ;
 
     /*
      * Now refetch the primary krbtgt, and get the current kvno (the
@@ -1766,7 +1761,7 @@ server_lookup:
 	    ret = _kdc_check_client_matches_target_service(context,
 							   config,
 							   serverdb,
-							   server,
+							   priv->server,
 							   user2user_client,
 							   user2user_princ);
 	    if (ret) {
@@ -1828,7 +1823,7 @@ server_lookup:
                                     "Enctype not supported");
 		goto out;
 	    }
-	    ret = _kdc_get_preferred_key(context, config, server, spn,
+	    ret = _kdc_get_preferred_key(context, config, priv->server, spn,
 					 NULL, &skey);
 	    if(ret) {
 		kdc_log(context, config, 4,
@@ -1838,7 +1833,7 @@ server_lookup:
 		goto out;
 	    }
 	    ekey = &skey->key;
-	    kvno = server->kvno;
+	    kvno = priv->server->kvno;
 	}
 
 	ret = krb5_generate_random_keyblock(context, etype, &sessionkey);
@@ -1859,7 +1854,7 @@ server_lookup:
      * the DB to possibly correct the case of the realm (Samba4 does
      * this) before the strcmp() 
      */
-    if (strcmp(krb5_principal_get_realm(context, server->principal),
+    if (strcmp(krb5_principal_get_realm(context, priv->server->principal),
 	       krb5_principal_get_realm(context, krbtgt_out->principal)) != 0) {
 	char *ktpn;
 	ret = krb5_unparse_name(context, krbtgt_out->principal, &ktpn);
@@ -1896,11 +1891,10 @@ server_lookup:
 	flags |= HDB_F_SYNTHETIC_OK;
 
     ret = _kdc_db_fetch_client(context, config, flags, priv->client_princ,
-			       cpn, our_realm, &clientdb, &client);
+			       cpn, our_realm, &clientdb, &priv->client);
     if (ret)
 	goto out;
     flags &= ~HDB_F_SYNTHETIC_OK;
-    priv->client = client;
     priv->clientdb = clientdb;
 
     ret = _kdc_check_pac(context, config, priv->client_princ, NULL,
@@ -2013,7 +2007,7 @@ server_lookup:
      */
 
     if (kdc_issued &&
-	!krb5_principal_is_krbtgt(context, server->principal)) {
+	!krb5_principal_is_krbtgt(context, priv->server->principal)) {
 
 	/* Validate armor TGT before potentially including device claims */
 	if (priv->armor_ticket) {
@@ -2043,10 +2037,6 @@ server_lookup:
 			 &sessionkey,
 			 kvno,
 			 *auth_data,
-			 server,
-			 rsp,
-			 client,
-			 priv->client_princ,
                          tgt_realm,
 			 rodc_id,
 			 add_ticket_sig);

@@ -940,7 +940,8 @@ _kdc_do_kx509(kx509_req_context r)
         goto out;
     }
 
-    ret = krb5_unparse_name(r->context, cprincipal, &r->cname);
+    if (ret == 0)
+	ret = krb5_unparse_name(r->context, cprincipal, &r->cname);
 
     /* Check that the service name is a valid kx509 service name */
     if (ret == 0)

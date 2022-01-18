@@ -1180,7 +1180,7 @@ krb5_sendto_context(krb5_context context,
 
     action = KRB5_SENDTO_INITIAL;
 
-    while (action != KRB5_SENDTO_DONE && action != KRB5_SENDTO_FAILED) {
+    while (1) {
 	krb5_krbhst_info *hi;
 
 	switch (action) {
@@ -1310,10 +1310,10 @@ krb5_sendto_context(krb5_context context,
 	    break;
 	case KRB5_SENDTO_FAILED:
 	    ret = KRB5_KDC_UNREACH;
-	    break;
+	    goto out;
 	case KRB5_SENDTO_DONE:
 	    ret = 0;
-	    break;
+	    goto out;
 	default:
 	    heim_abort("invalid krb5_sendto_context state");
 	}

@@ -129,5 +129,5 @@ kdc_issue_certificate(krb5_context context,
                                           out);
     if (ret == EACCES)
         ret = KRB5KDC_ERR_POLICY;
-    return (ret == EACCES) ? KRB5KDC_ERR_POLICY : ret;
+    return ret;
 }

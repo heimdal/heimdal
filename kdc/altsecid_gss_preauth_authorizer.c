@@ -470,7 +470,7 @@ finalize_pac(void *ctx, astgs_request_t r)
     if (requestor_sid == NULL)
 	return 0;
 
-    _kdc_audit_setkv_object((kdc_request_t)r, "gss_requestor_sid", requestor_sid);
+    kdc_audit_setkv_object((kdc_request_t)r, "gss_requestor_sid", requestor_sid);
 
     return krb5_pac_add_buffer(r->context, r->pac, PAC_REQUESTOR_SID,
 			       heim_data_get_data(requestor_sid));

@@ -730,7 +730,7 @@ gsskrb5_extract_key(OM_uint32 *minor_status,
     }
 
     *keyblock = calloc(1, sizeof(**keyblock));
-    if (keyblock == NULL) {
+    if (*keyblock == NULL) {
 	ret = ENOMEM;
 	goto out;
     }

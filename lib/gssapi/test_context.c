@@ -503,6 +503,7 @@ loop(gss_OID mechoid,
             strncmp(value.value, on_behalf_of_string,
                     strlen(on_behalf_of_string)) != 0)
             errx(1, "AD-ON-BEHALF-OF did not match");
+        (void) gss_release_buffer(&min_stat, &value);
     }
     if (localname_string) {
         gss_buffer_desc lname;

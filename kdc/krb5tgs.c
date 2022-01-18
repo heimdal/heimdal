@@ -810,7 +810,12 @@ tgs_check_authenticator(krb5_context context,
     krb5_error_code ret;
     krb5_crypto crypto;
 
-    krb5_auth_con_getauthenticator(context, ac, &auth);
+    ret = krb5_auth_con_getauthenticator(context, ac, &auth);
+    if (ret) {
+	kdc_log(context, config, 2,
+                "Out of memory checking PA-TGS Authenticator");
+        goto out;
+    }
     if(auth->cksum == NULL){
 	kdc_log(context, config, 4, "No authenticator in request");
 	ret = KRB5KRB_AP_ERR_INAPP_CKSUM;

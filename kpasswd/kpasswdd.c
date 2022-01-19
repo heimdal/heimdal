@@ -773,6 +773,7 @@ doit(krb5_keytab keytab, int port)
     free(sockets);
 
     krb5_free_addresses(context, &addrs);
+    krb5_kt_close(context, keytab);
     krb5_free_context(context);
     return 0;
 }

@@ -321,6 +321,7 @@ loop(gss_OID mechoid,
         if (maj_stat != GSS_S_COMPLETE)
             errx(1, "gss_set_name_attribute() failed with: %s",
                  gssapi_err(maj_stat, min_stat, GSS_KRB5_MECHANISM));
+        free(value.value);
     }
 
     input_token.length = 0;

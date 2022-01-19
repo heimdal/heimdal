@@ -100,10 +100,14 @@ pac_verify(void *ctx,
 
 static void logit(const char *what, astgs_request_t r)
 {
-    krb5_warnx(r->context, "%s: client %s server %s",
+    krb5_context context = kdc_request_get_context((kdc_request_t)r);
+    const char *cname = kdc_request_get_cname((kdc_request_t)r);
+    const char *sname = kdc_request_get_sname((kdc_request_t)r);
+
+    krb5_warnx(context, "%s: client %s server %s",
 	       what,
-	       r->cname ? r->cname : "<unknown>",
-	       r->sname ? r->sname : "<unknown>");
+	       cname ? cname : "<unknown>",
+	       sname ? sname : "<unknown>");
 }
 
 static krb5_error_code KRB5_CALLCONV
@@ -136,11 +140,12 @@ finalize_reply(void *ctx, astgs_request_t r)
 static krb5_error_code KRB5_CALLCONV
 audit(void *ctx, astgs_request_t r)
 {
+    krb5_error_code ret = kdc_request_get_error_code((kdc_request_t)r);
     heim_number_t n;
 
     logit("audit", r);
 
-    if (r->ret)
+    if (ret)
 	return 0; /* finalize_reply only called in success */
 
     n = kdc_request_get_attribute((kdc_request_t)r,

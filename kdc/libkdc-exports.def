@@ -21,6 +21,45 @@ EXPORTS
 	kdc_request_get_attribute
 	kdc_request_copy_attribute
 	kdc_request_delete_attribute
+	kdc_request_add_pac_buffer
+	kdc_request_add_reply_padata
+	kdc_request_get_addr
+	kdc_request_get_canon_client_princ
+	kdc_request_get_client
+	kdc_request_get_clientdb
+	kdc_request_get_client_princ
+	kdc_request_get_context
+	kdc_request_get_config
+	kdc_request_get_cname
+	kdc_request_get_error_code
+	kdc_request_get_from
+	kdc_request_get_krbtgt
+	kdc_request_get_krbtgtdb
+	kdc_request_get_krbtgt_princ
+	kdc_request_get_pac
+	kdc_request_get_pac_attributes
+	kdc_request_get_rep
+	kdc_request_get_reply_key
+	kdc_request_get_req
+	kdc_request_get_request
+	kdc_request_get_server
+	kdc_request_get_serverdb
+	kdc_request_get_server_princ
+	kdc_request_get_sname
+	kdc_request_get_ticket
+	kdc_request_get_tv_end
+	kdc_request_get_tv_start
+	kdc_request_set_canon_client_princ
+	kdc_request_set_client_princ
+	kdc_request_set_cname
+	kdc_request_set_error_code
+	kdc_request_set_krbtgt_princ
+	kdc_request_set_pac
+	kdc_request_set_pac_attributes
+	kdc_request_set_rep
+	kdc_request_set_reply_key
+	kdc_request_set_server_princ
+	kdc_request_set_sname
 	kdc_audit_addkv
 	kdc_audit_addkv_number
 	kdc_audit_addkv_object

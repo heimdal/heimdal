@@ -95,6 +95,7 @@ typedef struct krb5_ntlm_data *krb5_ntlm;
 
 struct krb5_pac_data;
 typedef struct krb5_pac_data *krb5_pac;
+typedef const struct krb5_pac_data *krb5_const_pac;
 
 typedef struct krb5_rd_req_in_ctx_data *krb5_rd_req_in_ctx;
 typedef struct krb5_rd_req_out_ctx_data *krb5_rd_req_out_ctx;

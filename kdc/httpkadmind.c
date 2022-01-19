@@ -1065,8 +1065,8 @@ param_cb(void *d,
         krb5_set_error_message(r->context, ret = ENOTSUP,
                                "Query parameter %s not supported", key);
     }
-    if (ret && !r->ret)
-        r->ret = ret;
+    if (ret && !r->error_code)
+        r->error_code = ret;
     heim_release(s);
     return ret ? MHD_NO /* Stop iterating */ : MHD_YES;
 }
@@ -1082,7 +1082,7 @@ authorize_req(kadmin_request_desc r)
         return bad_enomem(r, ret);
     (void) MHD_get_connection_values(r->connection, MHD_GET_ARGUMENT_KIND,
                                      param_cb, r);
-    ret = r->ret;
+    ret = r->error_code;
     if (ret == EACCES)
         return bad_403(r, ret, "Not authorized to requested principal(s)");
     if (ret)
@@ -1588,7 +1588,7 @@ set_req_desc(struct MHD_Connection *connection,
 
     if (ret == 0 && r->kv == NULL) {
         krb5_log_msg(r->context, logfac, 1, NULL, "Out of memory");
-        ret = r->ret = ENOMEM;
+        ret = r->error_code = ENOMEM;
     }
     return ret;
 }
@@ -1685,7 +1685,7 @@ get_config(kadmin_request_desc r)
                 break;
             }
         } else {
-            r->ret = ret;
+            r->error_code = ret;
             return bad_404(r, "/get-config");
         }
     }

@@ -73,6 +73,6 @@
     /* auditing key/value store */                              \
     heim_dict_t kv;                                             \
     heim_dict_t attributes;                                     \
-    int32_t ret
+    int32_t error_code
 
 #endif /* HEIMBASE_SVC_H */

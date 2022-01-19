@@ -2149,7 +2149,7 @@ _kdc_as_rep(astgs_request_t r)
         r->e_text = NULL;
 	ret = _kdc_fast_mk_error(r, r->rep.padata, r->armor_crypto,
 				 &req->req_body,
-                                 r->ret = KRB5_KDC_ERR_WRONG_REALM,
+                                 r->error_code = KRB5_KDC_ERR_WRONG_REALM,
 				 r->client->principal, r->server_princ,
 				 NULL, NULL, r->reply);
 	goto out;
@@ -2714,7 +2714,7 @@ _kdc_as_rep(astgs_request_t r)
     }
 
 out:
-    r->ret = ret;
+    r->error_code = ret;
     _kdc_audit_request(r);
 
     /*
@@ -2725,7 +2725,7 @@ out:
 				 r->rep.padata,
 			         r->armor_crypto,
 			         &req->req_body,
-			         r->ret,
+			         r->error_code,
 			         r->client_princ,
 			         r->server_princ,
 			         NULL, NULL,

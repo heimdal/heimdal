@@ -625,13 +625,13 @@ handle_vanilla_tcp (krb5_context context,
     krb5_storage *sp;
     uint32_t len;
 
+    if (d->len < 4)
+        return 0;
     sp = krb5_storage_from_mem(d->buf, d->len);
     if (sp == NULL) {
 	kdc_log (context, config, 1, "krb5_storage_from_mem failed");
 	return -1;
     }
-    if (d->len < 4)
-        return 0;
     ret = krb5_ret_uint32(sp, &len);
     if (ret) {
 	kdc_log(context, config, 4, "failed to read request length");

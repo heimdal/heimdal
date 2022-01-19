@@ -1435,11 +1435,13 @@ write_master_down(krb5_context context)
         fp = fopen(slave_stats_temp_file, "w");
     if (fp == NULL)
 	return;
-    krb5_format_time(context, t, str, sizeof(str), TRUE);
-    fprintf(fp, "master down at %s\n", str);
+    if (krb5_format_time(context, t, str, sizeof(str), TRUE) == 0)
+        fprintf(fp, "master down at %s\n", str);
+    else
+        fprintf(fp, "master down\n");
 
     if (fclose(fp) != EOF)
-        rk_rename(slave_stats_temp_file, slave_stats_file);
+        (void) rk_rename(slave_stats_temp_file, slave_stats_file);
 }
 
 static void
@@ -1455,7 +1457,8 @@ write_stats(krb5_context context, slave *slaves, uint32_t current_version)
     if (fp == NULL)
 	return;
 
-    krb5_format_time(context, t, str, sizeof(str), TRUE);
+    if (krb5_format_time(context, t, str, sizeof(str), TRUE))
+        snprintf(str, sizeof(str), "<unknown-time>");
     fprintf(fp, "Status for slaves, last updated: %s\n\n", str);
 
     fprintf(fp, "Master version: %lu\n\n", (unsigned long)current_version);
@@ -1509,7 +1512,7 @@ write_stats(krb5_context context, slave *slaves, uint32_t current_version)
     rtbl_destroy(tbl);
 
     if (fclose(fp) != EOF)
-        rk_rename(slave_stats_temp_file, slave_stats_file);
+        (void) rk_rename(slave_stats_temp_file, slave_stats_file);
 }
 
 

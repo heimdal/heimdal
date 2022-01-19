@@ -184,6 +184,8 @@ ihave(krb5_context context, krb5_auth_context auth_context,
     krb5_data data;
 
     sp = krb5_storage_from_mem(buf, 8);
+    if (sp == NULL)
+        krb5_err(context, IPROPD_RESTART_SLOW, ENOMEM, "Out of memory");
     ret = krb5_store_uint32(sp, I_HAVE);
     if (ret == 0)
         ret = krb5_store_uint32(sp, version);

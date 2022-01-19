@@ -490,6 +490,7 @@ accept_one(gss_name_t service, const char *ccname, int negotiate)
 		printf("Authenticated: %.*s\n", (int)dname.length,
 		    (char *)dname.value);
 	(void) gss_release_buffer(&min, &dname);
+	(void) gss_release_name(&min, &client);
 
 	if (ccname) {
 #ifdef HAVE_GSS_STORE_CRED_INTO

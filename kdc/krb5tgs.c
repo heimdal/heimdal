@@ -1499,7 +1499,7 @@ server_lookup:
 	Realm req_rlm;
 	krb5_realm *realms;
 
-	priv->ret = ret; /* advise policy plugin of failure reason */
+	priv->error_code = ret; /* advise policy plugin of failure reason */
 	ret2 = _kdc_referral_policy(priv);
 	if (ret2 == 0) {
 	    krb5_xfree(priv->sname);
@@ -2155,7 +2155,7 @@ _kdc_tgs_rep(astgs_request_t r)
     }
 
 out:
-    r->ret = ret;
+    r->error_code = ret;
     _kdc_audit_request(r);
 
     if(ret && ret != HDB_ERR_NOT_FOUND_HERE && data->data == NULL){
@@ -2166,7 +2166,7 @@ out:
 				 &error_method,
 				 r->armor_crypto,
 				 &req->req_body,
-				 r->ret,
+				 r->error_code,
 				 r->client_princ,
 				 r->server_princ,
 				 csec, cusec,

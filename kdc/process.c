@@ -161,7 +161,7 @@ _kdc_audit_trail(kdc_request_t r, krb5_error_code ret)
 
     /* Get a symbolic name for some error codes */
 #define CASE(x)	case x : retname = #x; break
-    switch (ret ? ret : r->ret) {
+    switch (ret ? ret : r->error_code) {
     CASE(ENOMEM);
     CASE(EACCES);
     CASE(HDB_ERR_NOT_FOUND_HERE);

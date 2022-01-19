@@ -38,6 +38,7 @@
 
 #include <krb5.h>
 #include <kdc.h>
+#include <kdc-accessors.h>
 #include <hdb.h>
 
 /*

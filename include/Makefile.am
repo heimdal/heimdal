@@ -133,6 +133,7 @@ CLEANFILES =			\
 	wind.h			\
 	wind_err.h		\
 	kdc-plugin.h		\
+	kdc-accessors.h		\
 	kdc-audit.h		\
 	csr_authorizer_plugin.h	\
 	gss_preauth_authorizer_plugin.h	\

@@ -3,6 +3,8 @@
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
+ * Portions (c) 2021, 2022 PADL Software Pty Ltd.
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -305,3 +307,189 @@ kdc_get_instance(const char *libname)
 
     return 0;
 }
+
+/*
+ * Plugin accessors
+ */
+
+krb5_error_code
+kdc_request_add_reply_padata(astgs_request_t r, PA_DATA *md)
+{
+    heim_assert(r->rep.padata != NULL, "reply padata not allocated");
+    return add_METHOD_DATA(r->rep.padata, md);
+}
+
+krb5_error_code
+kdc_request_add_pac_buffer(astgs_request_t r, int32_t pactype, const krb5_data *d)
+{
+    krb5_error_code ret;
+    krb5_pac pac;
+
+    if (r->pac == NULL) {
+	ret = krb5_pac_init(r->context, &pac);
+	if (ret)
+	    return ret;
+    } else
+	pac = heim_retain(r->pac);
+
+    ret = krb5_pac_add_buffer(r->context, pac, pactype, d);
+    if (ret == 0 && r->pac == NULL)
+	r->pac = pac;
+    else
+	heim_release(pac);
+
+    return ret;
+}
+
+#undef _KDC_REQUEST_GET_ACCESSOR
+#define _KDC_REQUEST_GET_ACCESSOR(R, T, f)		    \
+    T							    \
+    kdc_request_get_ ## f(R r)				    \
+    {							    \
+	return r->f;					    \
+    }
+
+#undef _KDC_REQUEST_SET_ACCESSOR
+#define _KDC_REQUEST_SET_ACCESSOR(R, T, f)		    \
+    void						    \
+    kdc_request_set_ ## f(R r, T v)			    \
+    {							    \
+	r->f = v;					    \
+    }
+
+#undef _KDC_REQUEST_GET_ACCESSOR_PTR
+#define _KDC_REQUEST_GET_ACCESSOR_PTR(R, T,  f)	    \
+    const T 						    \
+    kdc_request_get_ ## f(R r)				    \
+    {							    \
+	return r->f;					    \
+    }
+
+#undef _KDC_REQUEST_SET_ACCESSOR_PTR
+#define _KDC_REQUEST_SET_ACCESSOR_PTR(R, T, t, f)	    \
+    krb5_error_code					    \
+    kdc_request_set_ ## f(R r, const T v)		    \
+    {							    \
+	krb5_error_code ret;				    \
+	T tmp;						    \
+							    \
+	if (v == r->f)					    \
+	    return 0;					    \
+	else if (v) {					    \
+	    ret = copy_##t(v, &tmp);			    \
+	    if (ret)					    \
+		return ret;				    \
+	} else						    \
+	    tmp = NULL;					    \
+							    \
+	free_##t(r->f);					    \
+	r->f = tmp;					    \
+							    \
+	return 0;					    \
+    }
+
+#undef _KDC_REQUEST_GET_ACCESSOR_STRUCT
+#define _KDC_REQUEST_GET_ACCESSOR_STRUCT(R, T, f)	    \
+    const T *						    \
+    kdc_request_get_ ## f(R r)				    \
+    {							    \
+	return &r->f;					    \
+    }
+
+#undef _KDC_REQUEST_SET_ACCESSOR_STRUCT
+#define _KDC_REQUEST_SET_ACCESSOR_STRUCT(R, T, t, f)	    \
+    krb5_error_code					    \
+    kdc_request_set_ ## f(R r, const T *v)		    \
+    {							    \
+	krb5_error_code ret;				    \
+	T tmp;						    \
+							    \
+	if (v == NULL)					    \
+	    return EINVAL;				    \
+	else if (v == &r->f)				    \
+	    return 0;					    \
+							    \
+	ret = copy_##t(v, &tmp);			    \
+	if (ret)					    \
+	    return ret;					    \
+							    \
+	free_##t(&r->f);				    \
+	r->f = tmp;					    \
+							    \
+	return 0;					    \
+    }
+
+static krb5_error_code
+copy_string_ptr(const char *src, char **dst)
+{
+    *dst = strdup(src);
+    if (*dst == NULL)
+	return ENOMEM;
+
+    return 0;
+}
+
+static void
+free_string_ptr(char *s)
+{
+    free(s);
+}
+
+static krb5_error_code
+copy_Principal_ptr(krb5_const_principal src, krb5_principal *dst)
+{
+    krb5_error_code ret;
+    krb5_principal p;
+
+    *dst = NULL;
+
+    p = calloc(1, sizeof(*p));
+    if (*dst == NULL)
+	return ENOMEM;
+
+    ret = copy_Principal(src, p);
+    if (ret == 0)
+	*dst = p;
+    else
+	free(p);
+
+    return ret;
+}
+
+static void
+free_Principal_ptr(krb5_principal p)
+{
+    if (p) {
+	free_Principal(p);
+	free(p);
+    }
+}
+
+static krb5_error_code
+copy_pac(const struct krb5_pac_data *src, struct krb5_pac_data **dst)
+{
+    /* FIXME use heim_copy() when it exists */
+    *dst = (krb5_pac)heim_retain((heim_object_t)src);
+    return 0;
+}
+
+static void
+free_pac(struct krb5_pac_data *o)
+{
+    heim_release(o);
+}
+
+static krb5_error_code
+copy_keyblock(const EncryptionKey *src, EncryptionKey *dst)
+{
+    return copy_EncryptionKey(src, dst);
+}
+
+static void
+free_keyblock(EncryptionKey *key)
+{
+    krb5_free_keyblock_contents(NULL, key);
+}
+
+#undef HEIMDAL_KDC_KDC_ACCESSORS_H
+#include "kdc-accessors.h"

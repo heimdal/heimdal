@@ -66,8 +66,105 @@ struct kdc_request_desc {
 
 struct kdc_patypes;
 
+struct krb5_kdc_configuration {
+    KRB5_KDC_CONFIGURATION_COMMON_ELEMENTS;
+
+    int num_kdc_processes;
+
+    size_t max_datagram_reply_length;
+
+    time_t kdc_warn_pwexpire; /* time before expiration to print a warning */
+
+    unsigned int require_preauth : 1; /* require preauth for all principals */
+    unsigned int encode_as_rep_as_tgs_rep : 1; /* bug compatibility */
+
+    /*
+     * Windows 2019 (and earlier versions) always sends the salt
+     * and Samba has testsuites that check this behaviour, so a
+     * Samba AD DC will set this flag to match the AS-REP packet
+     * exactly.
+     */
+    unsigned int force_include_pa_etype_salt : 1;
+
+    unsigned int tgt_use_strongest_session_key : 1;
+    unsigned int preauth_use_strongest_session_key : 1;
+    unsigned int svc_use_strongest_session_key : 1;
+    unsigned int use_strongest_server_key : 1;
+
+    unsigned int check_ticket_addresses : 1;
+    unsigned int warn_ticket_addresses : 1;
+    unsigned int allow_null_ticket_addresses : 1;
+    unsigned int allow_anonymous : 1;
+    unsigned int historical_anon_realm : 1;
+    unsigned int strict_nametypes : 1;
+    enum krb5_kdc_trpolicy trpolicy;
+
+    unsigned int require_pac : 1;
+    unsigned int enable_armored_pa_enc_timestamp : 1;
+    unsigned int enable_unarmored_pa_enc_timestamp : 1;
+
+    unsigned int enable_pkinit : 1;
+    unsigned int pkinit_princ_in_cert : 1;
+    const char *pkinit_kdc_identity;
+    const char *pkinit_kdc_anchors;
+    const char *pkinit_kdc_friendly_name;
+    const char *pkinit_kdc_ocsp_file;
+    char **pkinit_kdc_cert_pool;
+    char **pkinit_kdc_revoke;
+    int pkinit_dh_min_bits;
+    unsigned int pkinit_require_binding : 1;
+    unsigned int pkinit_allow_proxy_certs : 1;
+    unsigned int synthetic_clients : 1;
+    unsigned int pkinit_max_life_from_cert_extension : 1;
+    krb5_timestamp pkinit_max_life_from_cert;
+    krb5_timestamp pkinit_max_life_bound;
+    krb5_timestamp synthetic_clients_max_life;
+    krb5_timestamp synthetic_clients_max_renew;
+
+    int digests_allowed;
+    unsigned int enable_digest : 1;
+
+    unsigned int enable_kx509 : 1;
+
+    unsigned int enable_gss_preauth : 1;
+    unsigned int enable_gss_auth_data : 1;
+    gss_OID_set gss_mechanisms_allowed;
+    gss_OID_set gss_cross_realm_mechanisms_allowed;
+
+};
+
 struct astgs_request_desc {
-    ASTGS_REQUEST_DESC_COMMON_ELEMENTS;
+    HEIM_SVC_REQUEST_DESC_COMMON_ELEMENTS;
+
+    /* AS-REQ or TGS-REQ */
+    KDC_REQ req;
+
+    /* AS-REP or TGS-REP */
+    KDC_REP rep;
+    EncTicketPart et;
+    EncKDCRepPart ek;
+
+    /* client principal (AS) or TGT/S4U principal (TGS) */
+    krb5_principal client_princ;
+    hdb_entry *client;
+    HDB *clientdb;
+    krb5_principal canon_client_princ;
+
+    /* server principal */
+    krb5_principal server_princ;
+    HDB *serverdb;
+    hdb_entry *server;
+
+    /* presented ticket in TGS-REQ (unused by AS) */
+    krb5_principal krbtgt_princ;
+    hdb_entry *krbtgt;
+    HDB *krbtgtdb;
+    krb5_ticket *ticket;
+
+    krb5_keyblock reply_key;
+
+    krb5_pac pac;
+    uint64_t pac_attributes;
 
     /* Only AS */
     const struct kdc_patypes *pa_used;

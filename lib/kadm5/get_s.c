@@ -296,8 +296,7 @@ kadm5_s_get_principal(void *server_handle,
 	krb5_free_salt(context->context, salt);
 	assert( out->n_key_data == n_keys );
     }
-    if (ret)
-	goto out;
+    assert(ret == 0);
     if(mask & KADM5_TL_DATA) {
 	time_t last_pw_expire;
 	const HDB_Ext_PKINIT_acl *acl;
@@ -324,6 +323,8 @@ kadm5_s_get_principal(void *server_handle,
 	    unsigned char buf[4];
 	    _krb5_put_int(buf, last_pw_expire, sizeof(buf));
 	    ret = add_tl_data(out, KRB5_TL_LAST_PWD_CHANGE, buf, sizeof(buf));
+            if (ret)
+                goto out;
 	}
 
         ret = hdb_entry_get_krb5_config(&ent, &krb5_config);

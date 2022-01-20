@@ -457,6 +457,9 @@ unparse_name_fixed(krb5_context context,
     int no_realm = (flags & KRB5_PRINCIPAL_UNPARSE_NO_REALM) != 0;
     int display = (flags & KRB5_PRINCIPAL_UNPARSE_DISPLAY) != 0;
 
+    if (name && len)
+        name[0] = '\0';
+
     if (!no_realm && princ_realm(principal) == NULL) {
 	krb5_set_error_message(context, ERANGE,
 			       N_("Realm missing from principal, "
@@ -1964,10 +1967,12 @@ apply_name_canon_rule(krb5_context context, krb5_name_canon_rule rules,
         new_hostname = hostname_with_port;
     }
 
-    if (new_realm != NULL)
-        krb5_principal_set_realm(context, *out_princ, new_realm);
-    if (new_hostname != NULL)
-        krb5_principal_set_comp_string(context, *out_princ, 1, new_hostname);
+    if (new_realm != NULL &&
+        (ret = krb5_principal_set_realm(context, *out_princ, new_realm)))
+        goto out;
+    if (new_hostname != NULL &&
+        (ret = krb5_principal_set_comp_string(context, *out_princ, 1, new_hostname)))
+        goto out;
     if (princ_type(*out_princ) == KRB5_NT_SRV_HST_NEEDS_CANON)
         princ_type(*out_princ) = KRB5_NT_SRV_HST;
 

@@ -468,7 +468,9 @@ get_init_creds_common(krb5_context context,
     if (options == NULL) {
 	const char *realm = krb5_principal_get_realm(context, client);
 
-        krb5_get_init_creds_opt_alloc (context, &default_opt);
+        ret = krb5_get_init_creds_opt_alloc(context, &default_opt);
+        if (ret)
+            return ret;
 	options = default_opt;
 	krb5_get_init_creds_opt_set_default_flags(context, NULL, realm, options);
     }
@@ -500,11 +502,8 @@ get_init_creds_common(krb5_context context,
     ctx->pre_auth_types = NULL;
 
     ret = init_cred(context, &ctx->cred, client, start_time, options);
-    if (ret) {
-	if (default_opt)
-	    krb5_get_init_creds_opt_free(context, default_opt);
-	return ret;
-    }
+    if (ret)
+        goto out;
 
     ret = krb5_init_creds_set_service(context, ctx, NULL);
     if (ret)
@@ -577,10 +576,6 @@ get_init_creds_common(krb5_context context,
 	ctx->runflags.change_password_prompt = 0;
     else
 	ctx->runflags.change_password_prompt = ctx->prompter != NULL;
-
-    if (default_opt)
-        krb5_get_init_creds_opt_free(context, default_opt);
-    return 0;
 
  out:
     if (default_opt)

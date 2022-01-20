@@ -855,7 +855,8 @@ krb5_rd_req_ctx(krb5_context context,
     krb5_keytab id = NULL, keytab = NULL;
     krb5_principal service = NULL;
 
-    *outctx = NULL;
+    if (outctx)
+        *outctx = NULL;
 
     o = calloc(1, sizeof(*o));
     if (o == NULL)
@@ -1090,9 +1091,9 @@ krb5_rd_req_ctx(krb5_context context,
     }
 out:
 
-    if (ret || outctx == NULL) {
+    if (ret || outctx == NULL)
 	krb5_rd_req_out_ctx_free(context, o);
-    } else
+    else
 	*outctx = o;
 
     free_AP_REQ(&ap_req);

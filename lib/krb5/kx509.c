@@ -1108,7 +1108,7 @@ rd_kx509_resp(krb5_context context,
             ret = errno;
     }
     free_Kx509Response(&r);
-    if (cert) {
+    if (*cert) {
         heim_release(herr);
         return 0;
     }

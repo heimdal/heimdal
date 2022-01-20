@@ -1285,24 +1285,22 @@ scc_remove_cred(krb5_context context,
 
     sqlite3_finalize(stmt);
 
-    if (id) {
-	ret = prepare_stmt(context, s->db, &stmt,
-			   "DELETE FROM credentials WHERE oid=?");
-	if (ret)
-	    return ret;
-	sqlite3_bind_int(stmt, 1, credid);
+    ret = prepare_stmt(context, s->db, &stmt,
+                       "DELETE FROM credentials WHERE oid=?");
+    if (ret)
+        return ret;
+    sqlite3_bind_int(stmt, 1, credid);
 
-	do {
-	    ret = sqlite3_step(stmt);
-	} while (ret == SQLITE_ROW);
-	sqlite3_finalize(stmt);
-	if (ret != SQLITE_DONE) {
-	    ret = KRB5_CC_IO;
-	    krb5_set_error_message(context, ret,
-				   N_("failed to delete scache credental", ""));
-	} else
-	    ret = 0;
-    }
+    do {
+        ret = sqlite3_step(stmt);
+    } while (ret == SQLITE_ROW);
+    sqlite3_finalize(stmt);
+    if (ret != SQLITE_DONE) {
+        ret = KRB5_CC_IO;
+        krb5_set_error_message(context, ret,
+                               N_("failed to delete scache credental", ""));
+    } else
+        ret = 0;
 
     return ret;
 }

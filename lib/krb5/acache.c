@@ -121,10 +121,9 @@ init_ccapi(krb5_context context)
 
     if (cc_handle == NULL) {
 	HEIMDAL_MUTEX_unlock(&acc_mutex);
-	if (context)
-	    krb5_set_error_message(context, KRB5_CC_NOSUPP,
-				   N_("Failed to load API cache module %s", "file"),
-				   lib);
+        krb5_set_error_message(context, KRB5_CC_NOSUPP,
+                               N_("Failed to load API cache module %s", "file"),
+                               lib);
 	return KRB5_CC_NOSUPP;
     }
 
@@ -135,10 +134,9 @@ init_ccapi(krb5_context context)
 	dlsym(cc_handle, "krb5_ipc_client_clear_target");
     HEIMDAL_MUTEX_unlock(&acc_mutex);
     if (init_func == NULL) {
-	if (context)
-	    krb5_set_error_message(context, KRB5_CC_NOSUPP,
-				   N_("Failed to find cc_initialize"
-				      "in %s: %s", "file, error"), lib, dlerror());
+        krb5_set_error_message(context, KRB5_CC_NOSUPP,
+                               N_("Failed to find cc_initialize"
+                                  "in %s: %s", "file, error"), lib, dlerror());
 	dlclose(cc_handle);
 	return KRB5_CC_NOSUPP;
     }
@@ -146,9 +144,8 @@ init_ccapi(krb5_context context)
     return 0;
 #else
     HEIMDAL_MUTEX_unlock(&acc_mutex);
-    if (context)
-	krb5_set_error_message(context, KRB5_CC_NOSUPP,
-			       N_("no support for shared object", ""));
+    krb5_set_error_message(context, KRB5_CC_NOSUPP,
+                           N_("no support for shared object", ""));
     return KRB5_CC_NOSUPP;
 #endif
 }

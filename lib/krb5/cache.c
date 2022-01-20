@@ -1606,8 +1606,7 @@ krb5_cc_cache_match (krb5_context context,
     } else if (cache == NULL) {
 	char *str;
 
-	krb5_unparse_name(context, client, &str);
-
+	(void) krb5_unparse_name(context, client, &str);
 	krb5_set_error_message(context, KRB5_CC_NOTFOUND,
 			       N_("Principal %s not found in any "
 				  "credential cache", ""),

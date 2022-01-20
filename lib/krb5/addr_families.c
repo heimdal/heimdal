@@ -543,7 +543,13 @@ arange_parse_addr (krb5_context context,
 	    return ret;
     }
 
-    krb5_data_alloc(&addr->address, sizeof(*a));
+    ret = krb5_data_alloc(&addr->address, sizeof(*a));
+    if (ret) {
+	krb5_free_address(context, &low0);
+	krb5_free_address(context, &high0);
+        return ret;
+    }
+
     addr->addr_type = KRB5_ADDRESS_ARANGE;
     a = addr->address.data;
 
@@ -1377,12 +1383,7 @@ KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_free_addresses(krb5_context context,
 		    krb5_addresses *addresses)
 {
-    size_t i;
-    for(i = 0; i < addresses->len; i++)
-	krb5_free_address(context, &addresses->val[i]);
-    free(addresses->val);
-    addresses->len = 0;
-    addresses->val = NULL;
+    free_HostAddresses(addresses);
     return 0;
 }
 

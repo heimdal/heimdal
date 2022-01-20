@@ -582,29 +582,31 @@ _krb5_kt_principal_not_found(krb5_context context,
 			     krb5_enctype enctype,
 			     int kvno)
 {
-    char princ[256], kvno_str[25], *kt_name;
+    char kvno_str[25];
     char *enctype_str = NULL;
+    char *kt_name = NULL;
+    char *princ = NULL;
 
-    krb5_unparse_name_fixed (context, principal, princ, sizeof(princ));
-    krb5_kt_get_full_name (context, id, &kt_name);
+    (void) krb5_unparse_name(context, principal, &princ);
+    (void) krb5_kt_get_full_name(context, id, &kt_name);
     if (enctype)
-	krb5_enctype_to_string(context, enctype, &enctype_str);
+	(void) krb5_enctype_to_string(context, enctype, &enctype_str);
 
     if (kvno)
 	snprintf(kvno_str, sizeof(kvno_str), "(kvno %d)", kvno);
     else
 	kvno_str[0] = '\0';
 
-    krb5_set_error_message (context, ret,
-			    N_("Failed to find %s%s in keytab %s (%s)",
-			       "principal, kvno, keytab file, enctype"),
-			    princ,
-			    kvno_str,
-			    kt_name ? kt_name : "unknown keytab",
-			    enctype_str ? enctype_str : "unknown enctype");
+    krb5_set_error_message(context, ret,
+			   N_("Failed to find %s%s in keytab %s (%s)",
+			      "principal, kvno, keytab file, enctype"),
+			   princ ? princ : "<unknown>",
+			   kvno_str,
+			   kt_name ? kt_name : "unknown keytab",
+			   enctype_str ? enctype_str : "unknown enctype");
+    free(princ);
     free(kt_name);
-    if (enctype_str)
-	free(enctype_str);
+    free(enctype_str);
     return ret;
 }
 
@@ -687,7 +689,8 @@ krb5_kt_get_entry(krb5_context context,
     krb5_name_canon_iterator name_canon_iter;
 
     if (!principal)
-	return krb5_kt_get_entry_wrapped(context, id, principal, kvno, enctype,
+        /* Use `NULL' instead of `principal' to quiet static analizers */
+	return krb5_kt_get_entry_wrapped(context, id, NULL, kvno, enctype,
 					 entry);
 
     ret = krb5_name_canon_iterator_start(context, principal, &name_canon_iter);

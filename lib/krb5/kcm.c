@@ -1009,7 +1009,7 @@ kcm_get_default_name(krb5_context context, const krb5_cc_ops *ops,
 
     aret = asprintf(str, "%s:%s", ops->prefix, name);
     free(name);
-    if (aret == -1 || str == NULL)
+    if (aret == -1 || *str == NULL)
 	return ENOMEM;
 
     return 0;

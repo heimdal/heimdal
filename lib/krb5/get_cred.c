@@ -779,7 +779,9 @@ get_cred_kdc_address(krb5_context context,
 				"no-addresses", FALSE, &noaddr);
 
 	if (!noaddr) {
-	    krb5_get_all_client_addrs(context, &addresses);
+	    ret = krb5_get_all_client_addrs(context, &addresses);
+            if (ret)
+                return ret;
 	    /* XXX this sucks. */
 	    addrs = &addresses;
 	    if(addresses.len == 0)

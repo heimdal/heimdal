@@ -452,7 +452,7 @@ dcc_resolve_2(krb5_context context,
     /* Strip off extra slashes on the end */
     for (len = strlen(dc->dir);
          len && ISPATHSEP(dc->dir[len - 1]);
-         len -= len ? 1 : 0)
+         len--)
         dc->dir[len - 1] = '\0';
 
     /* If we got here then `dc->dir' and `dc->sub' must both be set */
@@ -676,7 +676,7 @@ dcc_get_cache_first(krb5_context context, krb5_cc_cursor *cursor)
     /* Strip off extra slashes on the end */
     for (len = strlen(iter->dc->dir);
          len && ISPATHSEP(iter->dc->dir[len - 1]);
-         len -= len ? 1 : 0) {
+         len--) {
         iter->dc->dir[len - 1] = '\0';
     }
 

@@ -1747,6 +1747,7 @@ kcm_dispatch(krb5_context context,
     krb5_storage *resp_sp = NULL;
     uint16_t opcode;
 
+    krb5_data_zero(resp_data);
     resp_sp = krb5_storage_emem();
     if (resp_sp == NULL) {
 	return ENOMEM;
@@ -1796,11 +1797,17 @@ out:
 	krb5_storage_free(req_sp);
     }
 
-    krb5_storage_seek(resp_sp, 0, SEEK_SET);
-    krb5_store_int32(resp_sp, ret);
+    if (resp_sp) {
+        krb5_error_code ret2;
 
-    ret = krb5_storage_to_data(resp_sp, resp_data);
-    krb5_storage_free(resp_sp);
+        krb5_storage_seek(resp_sp, 0, SEEK_SET);
+        ret2 = krb5_store_int32(resp_sp, ret);
+        if (ret2 == 0)
+            ret2 = krb5_storage_to_data(resp_sp, resp_data);
+        krb5_storage_free(resp_sp);
+        if (ret2)
+            ret = ret2;
+    }
 
     return ret;
 }

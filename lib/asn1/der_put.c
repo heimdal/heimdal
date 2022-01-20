@@ -49,6 +49,8 @@ der_put_unsigned (unsigned char *p, size_t len, const unsigned *v, size_t *size)
     unsigned char *base = p;
     unsigned val = *v;
 
+    *size = 0;
+
     if (val) {
 	while (len > 0 && val) {
 	    *p-- = val % 256;
@@ -81,6 +83,8 @@ der_put_unsigned64 (unsigned char *p, size_t len, const uint64_t *v, size_t *siz
     unsigned char *base = p;
     uint64_t val = *v;
 
+    *size = 0;
+
     if (val) {
        while (len > 0 && val) {
            *p-- = val % 256;
@@ -112,6 +116,8 @@ der_put_integer (unsigned char *p, size_t len, const int *v, size_t *size)
 {
     unsigned char *base = p;
     int val = *v;
+
+    *size = 0;
 
     if(val >= 0) {
 	do {
@@ -153,6 +159,8 @@ der_put_integer64 (unsigned char *p, size_t len, const int64_t *v, size_t *size)
     unsigned char *base = p;
     int64_t val = *v;
 
+    *size = 0;
+
     if(val >= 0) {
        do {
            if(len < 1)
@@ -191,6 +199,8 @@ der_put_integer64 (unsigned char *p, size_t len, const int64_t *v, size_t *size)
 int ASN1CALL
 der_put_length (unsigned char *p, size_t len, size_t val, size_t *size)
 {
+    *size = 0;
+
     if (len < 1)
 	return ASN1_OVERFLOW;
 
@@ -218,6 +228,8 @@ der_put_length (unsigned char *p, size_t len, size_t val, size_t *size)
 int ASN1CALL
 der_put_boolean(unsigned char *p, size_t len, const int *data, size_t *size)
 {
+    *size = 0;
+
     if(len < 1)
 	return ASN1_OVERFLOW;
     if(*data != 0)
@@ -234,6 +246,7 @@ der_put_general_string (unsigned char *p, size_t len,
 {
     size_t slen = strlen(*str);
 
+    *size = 0;
     if (len < slen)
 	return ASN1_OVERFLOW;
     p -= slen;
@@ -268,6 +281,10 @@ der_put_bmp_string (unsigned char *p, size_t len,
 		    const heim_bmp_string *data, size_t *size)
 {
     size_t i;
+
+    if (size)
+	*size = 0;
+
     if (len / 2 < data->length)
 	return ASN1_OVERFLOW;
     p -= data->length * 2;
@@ -285,6 +302,10 @@ der_put_universal_string (unsigned char *p, size_t len,
 			  const heim_universal_string *data, size_t *size)
 {
     size_t i;
+
+    if (size)
+	*size = 0;
+
     if (len / 4 < data->length)
 	return ASN1_OVERFLOW;
     p -= data->length * 4;
@@ -310,6 +331,7 @@ int ASN1CALL
 der_put_octet_string (unsigned char *p, size_t len,
 		      const heim_octet_string *data, size_t *size)
 {
+    *size = 0;
     if (len < data->length)
 	return ASN1_OVERFLOW;
     p -= data->length;
@@ -324,6 +346,9 @@ der_put_heim_integer (unsigned char *p, size_t len,
 {
     unsigned char *buf = data->data;
     int hibitset = 0;
+
+    if (size)
+	*size = 0;
 
     if (data->length == 0) {
 	if (len < 1)
@@ -629,6 +654,8 @@ der_put_bit_string (unsigned char *p, size_t len,
 		    const heim_bit_string *data, size_t *size)
 {
     size_t data_size = (data->length + 7) / 8;
+
+    *size = 0;
     if (len < data_size + 1)
 	return ASN1_OVERFLOW;
     p -= data_size + 1;

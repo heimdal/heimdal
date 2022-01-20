@@ -35,6 +35,7 @@
 
 #include <heimbasepriv.h>
 #include <wind.h>
+#include <assert.h>
 
 struct PAC_INFO_BUFFER {
     uint32_t type;
@@ -381,6 +382,8 @@ krb5_pac_add_buffer(krb5_context context, krb5_pac p,
     void *ptr;
     size_t len, offset, header_end, old_end;
     uint32_t i;
+
+    assert(data->length > 0 && data->data != NULL);
 
     len = p->pac->numbuffers;
 
@@ -1101,7 +1104,7 @@ build_logon_name(krb5_context context,
 	    krb5_set_error_message(context, ret, "Principal %s is not valid UTF-8", s);
 	    free(s);
 	    return ret;
-	} else 
+	} else
 	    free(s);
 
 	s2_len = (ucs2_len + 1) * 2;

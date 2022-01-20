@@ -246,9 +246,11 @@ int ASN1CALL
 der_put_general_string (unsigned char *p, size_t len,
 			const heim_general_string *str, size_t *size)
 {
-    size_t slen = strlen(*str);
+    size_t slen;
 
+    assert(p != NULL && str != NULL && *str != NULL && size != NULL);
     *size = 0;
+    slen = strlen(*str);
     if (len < slen)
 	return ASN1_OVERFLOW;
     p -= slen;
@@ -283,6 +285,8 @@ der_put_bmp_string (unsigned char *p, size_t len,
 		    const heim_bmp_string *data, size_t *size)
 {
     size_t i;
+
+    assert(p != NULL && data != NULL);
 
     if (size)
 	*size = 0;
@@ -333,6 +337,8 @@ int ASN1CALL
 der_put_octet_string (unsigned char *p, size_t len,
 		      const heim_octet_string *data, size_t *size)
 {
+    assert(p != NULL && data != NULL && size != NULL);
+
     *size = 0;
     if (len < data->length)
 	return ASN1_OVERFLOW;
@@ -346,8 +352,10 @@ int ASN1CALL
 der_put_heim_integer (unsigned char *p, size_t len,
 		     const heim_integer *data, size_t *size)
 {
-    unsigned char *buf = data->data;
+    unsigned char *buf;
     int hibitset = 0;
+
+    assert(p != NULL);
 
     if (size)
 	*size = 0;
@@ -363,6 +371,8 @@ der_put_heim_integer (unsigned char *p, size_t len,
     if (len < data->length)
 	return ASN1_OVERFLOW;
 
+    assert(data->data != NULL);
+    buf = data->data;
     len -= data->length;
 
     if (data->negative) {
@@ -486,6 +496,8 @@ der_replace_tag(const unsigned char *p, size_t len,
     size_t payload_len, l, tag_len, len_len;
     int e;
 
+    assert(p != NULL && out != NULL && outlen != NULL);
+
     e = der_get_tag(p, len, &found_class, &found_type, &found_tag, &l);
     if (e)
         return e;
@@ -530,6 +542,8 @@ der_encode_implicit(unsigned char *p, size_t len,
     size_t l;
     unsigned char *p2;
     int e;
+
+    assert(p != NULL && size != NULL);
 
     /* Attempt to encode in place */
     e = encoder(p, len, obj, size);
@@ -655,9 +669,12 @@ int ASN1CALL
 der_put_bit_string (unsigned char *p, size_t len,
 		    const heim_bit_string *data, size_t *size)
 {
-    size_t data_size = (data->length + 7) / 8;
+    size_t data_size;
+
+    assert(p != NULL && data != NULL && size != NULL);
 
     *size = 0;
+    data_size = (data->length + 7) / 8;
     if (len < data_size + 1)
 	return ASN1_OVERFLOW;
     p -= data_size + 1;
@@ -674,9 +691,12 @@ der_put_bit_string (unsigned char *p, size_t len,
 int
 _heim_der_set_sort(const void *a1, const void *a2)
 {
-    const heim_octet_string *s1 = a1, *s2 = a2;
+    const heim_octet_string *s1, *s2;
     int ret;
 
+    assert(a1 != NULL && a2 != NULL);
+    s1 = a1;
+    s2 = a2;
     ret = memcmp(s1->data, s2->data,
 		 s1->length < s2->length ? s1->length : s2->length);
     if (ret != 0)

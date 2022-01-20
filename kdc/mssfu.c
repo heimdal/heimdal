@@ -96,37 +96,6 @@ check_constrained_delegation(krb5_context context,
     return ret;
 }
 
-static void
-update_client_names(astgs_request_t r,
-		    char **s4ucname,
-		    krb5_principal *s4u_client_name,
-		    HDB **s4u_clientdb,
-		    hdb_entry **s4u_client,
-		    krb5_principal *s4u_canon_client_name,
-		    krb5_pac *s4u_pac)
-{
-    krb5_xfree(r->cname);
-    r->cname = *s4ucname;
-    *s4ucname = NULL;
-
-    r->client_princ = *s4u_client_name;
-    *s4u_client_name = NULL;
-
-    _kdc_free_ent(r->context, r->clientdb, r->client);
-    r->client = *s4u_client;
-    *s4u_client = NULL;
-    r->clientdb = *s4u_clientdb;
-    *s4u_clientdb = NULL;
-
-    krb5_free_principal(r->context, r->canon_client_princ);
-    r->canon_client_princ = *s4u_canon_client_name;
-    *s4u_canon_client_name = NULL;
-
-    krb5_pac_free(r->context, r->pac);
-    r->pac = *s4u_pac;
-    *s4u_pac = NULL;
-}
-
 /*
  * Validate a protocol transition (S4U2Self) request. If present and
  * successfully validated then the client in the request structure
@@ -338,9 +307,17 @@ validate_protocol_transition(astgs_request_t r)
      * impersonated client. (The audit entry containing the original
      * client name will have been created before this point.)
      */
-    update_client_names(r, &s4ucname, &s4u_client_name,
-			&s4u_clientdb, &s4u_client,
-			&s4u_canon_client_name, &s4u_pac);
+    _kdc_request_set_cname_nocopy((kdc_request_t)r, &s4ucname);
+    _kdc_request_set_client_princ_nocopy(r, &s4u_client_name);
+
+    _kdc_free_ent(r->context, r->clientdb, r->client);
+    r->client = s4u_client;
+    s4u_client = NULL;
+    r->clientdb = s4u_clientdb;
+    s4u_clientdb = NULL;
+
+    _kdc_request_set_canon_client_princ_nocopy(r, &s4u_canon_client_name);
+    _kdc_request_set_pac_nocopy(r, &s4u_pac);
 
 out:
     if (s4u_client)
@@ -545,9 +522,18 @@ validate_constrained_delegation(astgs_request_t r)
      * impersonated client. (The audit entry containing the original
      * client name will have been created before this point.)
      */
-    update_client_names(r, &s4ucname, &s4u_client_name,
-			&s4u_clientdb, &s4u_client,
-			&s4u_canon_client_name, &s4u_pac);
+    _kdc_request_set_cname_nocopy((kdc_request_t)r, &s4ucname);
+    _kdc_request_set_client_princ_nocopy(r, &s4u_client_name);
+
+    _kdc_free_ent(r->context, r->clientdb, r->client);
+    r->client = s4u_client;
+    s4u_client = NULL;
+    r->clientdb = s4u_clientdb;
+    s4u_clientdb = NULL;
+
+    _kdc_request_set_canon_client_princ_nocopy(r, &s4u_canon_client_name);
+    _kdc_request_set_pac_nocopy(r, &s4u_pac);
+
     r->pac_attributes = s4u_pac_attributes;
 
 out:

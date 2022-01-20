@@ -244,4 +244,24 @@ configure(krb5_context context, int argc, char **argv, int *optidx);
 void bonjour_announce(krb5_context, krb5_kdc_configuration *);
 #endif
 
+/* no-copy setters */
+
+#undef _KDC_REQUEST_GET_ACCESSOR
+#undef _KDC_REQUEST_SET_ACCESSOR
+
+#undef _KDC_REQUEST_GET_ACCESSOR_PTR
+#undef _KDC_REQUEST_SET_ACCESSOR_PTR
+#define _KDC_REQUEST_SET_ACCESSOR_PTR(R, T, t, f)	    \
+    void						    \
+    _kdc_request_set_ ## f ## _nocopy(R r, T *v);
+
+#undef _KDC_REQUEST_GET_ACCESSOR_STRUCT
+#undef _KDC_REQUEST_SET_ACCESSOR_STRUCT
+#define _KDC_REQUEST_SET_ACCESSOR_STRUCT(R, T, t, f)	    \
+    void						    \
+    _kdc_request_set_ ## f ## _nocopy(R r, T *v);
+
+#undef HEIMDAL_KDC_KDC_ACCESSORS_H
+#include "kdc-accessors.h"
+
 #endif /* __KDC_LOCL_H__ */

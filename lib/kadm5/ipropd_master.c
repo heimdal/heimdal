@@ -95,7 +95,7 @@ make_listen_socket (krb5_context context, const char *port_str)
     fd = socket (AF_INET, SOCK_STREAM, 0);
     if (rk_IS_BAD_SOCKET(fd))
 	krb5_err (context, 1, rk_SOCK_ERRNO, "socket AF_INET");
-    setsockopt (fd, SOL_SOCKET, SO_REUSEADDR, (void *)&one, sizeof(one));
+    (void) setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (void *)&one, sizeof(one));
     memset (&addr, 0, sizeof(addr));
     addr.sin_family = AF_INET;
 

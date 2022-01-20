@@ -1176,7 +1176,7 @@ fcc_remove_cred(krb5_context context,
 	krb5_free_cred_contents(context, &found_cred);
     }
     ret2 = krb5_cc_end_seq_get(context, id, &cursor);
-    if (ret == 0)
+    if (ret2)	/* not expected to fail */
 	return ret2;
     if (ret == KRB5_CC_END)
 	return 0;

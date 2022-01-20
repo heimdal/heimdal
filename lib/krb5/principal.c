@@ -457,11 +457,18 @@ unparse_name_fixed(krb5_context context,
     int no_realm = (flags & KRB5_PRINCIPAL_UNPARSE_NO_REALM) != 0;
     int display = (flags & KRB5_PRINCIPAL_UNPARSE_DISPLAY) != 0;
 
-    if (name == NULL || len == 0) {
+    if (name == NULL) {
 	krb5_set_error_message(context, EINVAL,
-			       N_("Invalid name buffer or length, "
+			       N_("Invalid name buffer, "
 				  "can't unparse", ""));
 	return EINVAL;
+    }
+
+    if (len == 0) {
+	krb5_set_error_message(context, ERANGE,
+			       N_("Invalid name buffer length, "
+				  "can't unparse", ""));
+	return ERANGE;
     }
 
     name[0] = '\0';

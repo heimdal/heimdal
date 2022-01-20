@@ -2624,7 +2624,11 @@ krb5_init_creds_set_service(krb5_context context,
 	ret = krb5_parse_name (context, service, &principal);
 	if (ret)
 	    return ret;
-	krb5_principal_set_realm (context, principal, client_realm);
+	ret = krb5_principal_set_realm (context, principal, client_realm);
+	if (ret) {
+	    krb5_free_principal(context, principal);
+	    return ret;
+	}
     } else {
 	ret = krb5_make_principal(context, &principal,
 				  client_realm, KRB5_TGS_NAME, client_realm,

@@ -999,7 +999,7 @@ derive_keys(krb5_context context,
     base_keys.val = 0;
     base_keys.len = 0;
     if (ret == 0)
-        ret = hdb_remove_base_keys(context, h, &base_keys);
+        ret = _hdb_remove_base_keys(context, h, &base_keys, &kr);
 
     /* Make sure we have h->etypes */
     if (ret == 0 && !h->etypes)

@@ -232,38 +232,25 @@ hdb_remove_keys(krb5_context context,
  * @param context Context
  * @param e The HDB entry
  * @param ks A pointer to a variable of type HDB_Ext_KeySet
+ * @param ckr A pointer to stable (copied) HDB_Ext_KeyRotation
  *
  * @return Zero on success, an error code otherwise.
  */
 krb5_error_code
-hdb_remove_base_keys(krb5_context context,
-                     hdb_entry *e,
-                     HDB_Ext_KeySet *base_keys)
+_hdb_remove_base_keys(krb5_context context,
+                      hdb_entry *e,
+                      HDB_Ext_KeySet *base_keys,
+                      const HDB_Ext_KeyRotation *ckr)
 {
-    krb5_error_code ret;
-    const HDB_Ext_KeyRotation *ckr;
-    HDB_Ext_KeyRotation kr;
+    krb5_error_code ret = 0;
     size_t i, k;
 
-    ret = hdb_entry_get_key_rotation(context, e, &ckr);
-    if (!ckr)
-        return 0;
-
-    if (ret == 0) {
-        /*
-         * Changing the entry's extensions invalidates extensions obtained
-         * before the change.
-         */
-        ret = copy_HDB_Ext_KeyRotation(ckr, &kr);
-        ckr = NULL;
-    }
     base_keys->len = 0;
-    if (ret == 0 &&
-        (base_keys->val = calloc(kr.len, sizeof(base_keys->val[0]))) == NULL)
+    if ((base_keys->val = calloc(ckr->len, sizeof(base_keys->val[0]))) == NULL)
         ret = krb5_enomem(context);
 
-    for (k = i = 0; ret == 0 && i < kr.len; i++) {
-        const KeyRotation *krp = &kr.val[i];
+    for (k = i = 0; ret == 0 && i < ckr->len; i++) {
+        const KeyRotation *krp = &ckr->val[i];
 
         /*
          * WARNING: O(N * M) where M is number of keysets and N is the number
@@ -284,7 +271,6 @@ hdb_remove_base_keys(krb5_context context,
         base_keys->len = k;
     else
         free_HDB_Ext_KeySet(base_keys);
-    free_HDB_Ext_KeyRotation(&kr);
     return 0;
 }
 

@@ -36,13 +36,13 @@
 /* read-only accessor */
 #ifndef _KDC_REQUEST_GET_ACCESSOR
 #define _KDC_REQUEST_GET_ACCESSOR(R, T, f)		    \
-    T							    \
+    KDC_LIB_FUNCTION T KDC_LIB_CALL			    \
     kdc_request_get_ ## f(R);
 #endif
 
 #ifndef _KDC_REQUEST_SET_ACCESSOR
 #define _KDC_REQUEST_SET_ACCESSOR(R, T, f)		    \
-    void						    \
+    KDC_LIB_FUNCTION void KDC_LIB_CALL			    \
     kdc_request_set_ ## f(R, T);
 #endif
 
@@ -69,13 +69,13 @@
 /* get/set accessor for pointer type */
 #ifndef _KDC_REQUEST_GET_ACCESSOR_PTR
 #define _KDC_REQUEST_GET_ACCESSOR_PTR(R, T, f)		    \
-    const T 						    \
+    KDC_LIB_FUNCTION const T KDC_LIB_CALL		    \
     kdc_request_get_ ## f(R);
 #endif
 
 #ifndef _KDC_REQUEST_SET_ACCESSOR_PTR
 #define _KDC_REQUEST_SET_ACCESSOR_PTR(R, T, t, f)	    \
-    krb5_error_code					    \
+    KDC_LIB_FUNCTION krb5_error_code KDC_LIB_CALL	    \
     kdc_request_set_ ## f(R, const T);
 #endif
 
@@ -102,13 +102,13 @@
 /* get/set accessor for struct type */
 #ifndef _KDC_REQUEST_GET_ACCESSOR_STRUCT
 #define _KDC_REQUEST_GET_ACCESSOR_STRUCT(R, T, f)	    \
-    const T *						    \
+    KDC_LIB_FUNCTION const T * KDC_LIB_CALL		    \
     kdc_request_get_ ## f(R);
 #endif
 
 #ifndef _KDC_REQUEST_SET_ACCESSOR_STRUCT
 #define _KDC_REQUEST_SET_ACCESSOR_STRUCT(R, T, t, f)	    \
-    krb5_error_code					    \
+    KDC_LIB_FUNCTION krb5_error_code KDC_LIB_CALL	    \
     kdc_request_set_ ## f(R, const T *);
 #endif
 

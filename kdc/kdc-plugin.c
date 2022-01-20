@@ -312,14 +312,14 @@ kdc_get_instance(const char *libname)
  * Plugin accessors
  */
 
-krb5_error_code
+KDC_LIB_FUNCTION krb5_error_code KDC_LIB_CALL
 kdc_request_add_reply_padata(astgs_request_t r, PA_DATA *md)
 {
     heim_assert(r->rep.padata != NULL, "reply padata not allocated");
     return add_METHOD_DATA(r->rep.padata, md);
 }
 
-krb5_error_code
+KDC_LIB_FUNCTION krb5_error_code KDC_LIB_CALL
 kdc_request_add_pac_buffer(astgs_request_t r, int32_t pactype, const krb5_data *d)
 {
     krb5_error_code ret;
@@ -343,7 +343,7 @@ kdc_request_add_pac_buffer(astgs_request_t r, int32_t pactype, const krb5_data *
 
 #undef _KDC_REQUEST_GET_ACCESSOR
 #define _KDC_REQUEST_GET_ACCESSOR(R, T, f)		    \
-    T							    \
+    KDC_LIB_FUNCTION T KDC_LIB_CALL			    \
     kdc_request_get_ ## f(R r)				    \
     {							    \
 	return r->f;					    \
@@ -351,15 +351,15 @@ kdc_request_add_pac_buffer(astgs_request_t r, int32_t pactype, const krb5_data *
 
 #undef _KDC_REQUEST_SET_ACCESSOR
 #define _KDC_REQUEST_SET_ACCESSOR(R, T, f)		    \
-    void						    \
+    KDC_LIB_FUNCTION void KDC_LIB_CALL			    \
     kdc_request_set_ ## f(R r, T v)			    \
     {							    \
 	r->f = v;					    \
     }
 
 #undef _KDC_REQUEST_GET_ACCESSOR_PTR
-#define _KDC_REQUEST_GET_ACCESSOR_PTR(R, T,  f)	    \
-    const T 						    \
+#define _KDC_REQUEST_GET_ACCESSOR_PTR(R, T,  f)		    \
+    KDC_LIB_FUNCTION const T KDC_LIB_CALL		    \
     kdc_request_get_ ## f(R r)				    \
     {							    \
 	return r->f;					    \
@@ -367,7 +367,7 @@ kdc_request_add_pac_buffer(astgs_request_t r, int32_t pactype, const krb5_data *
 
 #undef _KDC_REQUEST_SET_ACCESSOR_PTR
 #define _KDC_REQUEST_SET_ACCESSOR_PTR(R, T, t, f)	    \
-    krb5_error_code					    \
+    KDC_LIB_FUNCTION krb5_error_code KDC_LIB_CALL	    \
     kdc_request_set_ ## f(R r, const T v)		    \
     {							    \
 	krb5_error_code ret;				    \
@@ -390,7 +390,7 @@ kdc_request_add_pac_buffer(astgs_request_t r, int32_t pactype, const krb5_data *
 
 #undef _KDC_REQUEST_GET_ACCESSOR_STRUCT
 #define _KDC_REQUEST_GET_ACCESSOR_STRUCT(R, T, f)	    \
-    const T *						    \
+    KDC_LIB_FUNCTION const T * KDC_LIB_CALL		    \
     kdc_request_get_ ## f(R r)				    \
     {							    \
 	return &r->f;					    \
@@ -398,7 +398,7 @@ kdc_request_add_pac_buffer(astgs_request_t r, int32_t pactype, const krb5_data *
 
 #undef _KDC_REQUEST_SET_ACCESSOR_STRUCT
 #define _KDC_REQUEST_SET_ACCESSOR_STRUCT(R, T, t, f)	    \
-    krb5_error_code					    \
+    KDC_LIB_FUNCTION krb5_error_code KDC_LIB_CALL	    \
     kdc_request_set_ ## f(R r, const T *v)		    \
     {							    \
 	krb5_error_code ret;				    \

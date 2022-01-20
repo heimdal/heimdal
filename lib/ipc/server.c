@@ -1115,7 +1115,7 @@ heim_sipc_service_unix(const char *service,
 #ifdef LOCAL_CREDS
     {
 	int one = 1;
-	setsockopt(fd, 0, LOCAL_CREDS, (void *)&one, sizeof(one));
+	(void) setsockopt(fd, 0, LOCAL_CREDS, (void *)&one, sizeof(one));
     }
 #endif
 

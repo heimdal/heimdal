@@ -87,6 +87,8 @@ jobs:
                 MAKEVARS: ${{ matrix.makevars }}
                 CONFIGURE_OPTS:  ${{ matrix.configureopts }}
               run: |
+                set -vx
+                sudo lsof -nP -i:49188 || true
                 cd build
                 make check
             - name: Install

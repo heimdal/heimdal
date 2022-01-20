@@ -190,6 +190,9 @@ hdb_get_entry(krb5_context context,
     HDB *db;
     size_t i;
 
+    if (!principal)
+        return KRB5_KT_NOTFOUND;
+
     memset(&ent, 0, sizeof(ent));
 
     if (dbname == NULL) {

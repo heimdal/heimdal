@@ -1705,7 +1705,7 @@ krcc_get_kdc_offset(krb5_context context,
     key_serial_t key, cache_id;
     krb5_storage *sp = NULL;
     krb5_data payload;
-    int32_t sec_offset, usec_offset;
+    int32_t sec_offset = 0;
 
     if (data == NULL)
 	return krb5_einval(context, 2);
@@ -1733,26 +1733,22 @@ krcc_get_kdc_offset(krb5_context context,
 
     sp = krb5_storage_from_data(&payload);
     if (sp == NULL) {
-	ret = KRB5_CC_IO;
+	ret = krb5_enomem(context);;
 	goto cleanup;
     }
 
     krb5_storage_set_byteorder(sp, KRB5_STORAGE_BYTEORDER_BE);
 
     ret = krb5_ret_int32(sp, &sec_offset);
-    if (ret == 0)
-	krb5_ret_int32(sp, &usec_offset);
-    if (ret) {
-	ret = KRB5_CC_END;
-	goto cleanup;
-    }
-
-    *offset = sec_offset;
+    /*
+     * We can't output nor use the usec_offset here, so we don't bother to read
+     * it, though we do write it.
+     */
 
 cleanup:
+    *offset = sec_offset;
     krb5_storage_free(sp);
     krb5_data_free(&payload);
-
     return ret;
 }
 

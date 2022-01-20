@@ -428,7 +428,7 @@ ${kadmin} add -r --use-defaults HTTP/${otherserver}@${R} || exit 1
 ${kadmin} ext_keytab -r -k $ukeytab foo@${R} || exit 1
 
 echo "Starting kdc";
-${kdc} --detach --testing || { echo "kdc failed to start"; exit 1; }
+${kdc} --detach --testing || { echo "kdc failed to start"; cat messages.log; exit 1; }
 kdcpid=`getpid kdc`
 trap "kill -9 ${kdcpid} ${bx509pid}; echo signal killing kdc and bx509d; exit 1;" EXIT
 

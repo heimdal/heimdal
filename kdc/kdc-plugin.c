@@ -444,7 +444,7 @@ copy_Principal_ptr(krb5_const_principal src, krb5_principal *dst)
     *dst = NULL;
 
     p = calloc(1, sizeof(*p));
-    if (*dst == NULL)
+    if (p == NULL)
 	return ENOMEM;
 
     ret = copy_Principal(src, p);

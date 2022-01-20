@@ -98,11 +98,13 @@ krb5_vset_error_message(krb5_context context, krb5_error_code ret,
     if (context) {
         const char *msg;
 
-        heim_vset_error_message(context->hcontext, ret, fmt, args);
-        msg = heim_get_error_message(context->hcontext, ret);
+        heim_vset_error_message(context ? context->hcontext : NULL, ret, fmt,
+                                args);
+        msg = heim_get_error_message(context ? context->hcontext : NULL, ret);
         if (msg) {
-            _krb5_debug(context, 100, "error message: %s: %d", msg, ret);
-            heim_free_error_message(context->hcontext, msg);
+            if (context)
+                _krb5_debug(context, 100, "error message: %s: %d", msg, ret);
+            heim_free_error_message(context ? context->hcontext : NULL, msg);
         }
     }
 }

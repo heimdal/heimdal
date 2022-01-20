@@ -55,7 +55,8 @@ heim_set_error_message(heim_context context, heim_error_code ret,
     va_list ap;
 
     va_start(ap, fmt);
-    heim_vset_error_message(context, ret, fmt, ap);
+    if (context)
+        heim_vset_error_message(context, ret, fmt, ap);
     va_end(ap);
 }
 

@@ -138,6 +138,12 @@ make_local_fast_ap_fxarmor(krb5_context context,
     krb5_data empty;
     krb5_const_realm tgs_realm;
 
+    if (armor_ccache == NULL) {
+	krb5_set_error_message(context, EINVAL,
+			       "Armor credential cache required");
+	return EINVAL;
+    }
+
     krb5_data_zero(&empty);
     memset(&cred, 0, sizeof(cred));
 

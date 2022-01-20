@@ -166,12 +166,13 @@ create_krb5_tickets(krb5_context context, krb5_keytab kt)
 
 
     ret = krb5_copy_principal(context, client_principal, &cred.client);
+    if (ret == 0)
+        ret = krb5_copy_principal(context, server_principal, &cred.server);
     if (ret)
 	krb5_err(context, 1, ret, "krb5_copy_principal");
-    ret = krb5_copy_principal(context, server_principal, &cred.server);
+    ret = krb5_generate_random_keyblock(context, session_etype, &cred.session);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_copy_principal");
-    krb5_generate_random_keyblock(context, session_etype, &cred.session);
+	krb5_err(context, 1, ret, "krb5_generate_random_keyblock");
 
     cred.times.authtime = time(NULL);
     cred.times.starttime = time(NULL);

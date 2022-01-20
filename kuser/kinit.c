@@ -502,7 +502,7 @@ renew_validate(krb5_context context,
 	 * no need to check the error here, it's only to be
 	 * friendly to the user
 	 */
-	krb5_get_credentials(context, KRB5_GC_CACHED, cache, &in, &out);
+	(void) krb5_get_credentials(context, KRB5_GC_CACHED, cache, &in, &out);
     }
 
     flags.i = 0;

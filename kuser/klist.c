@@ -553,7 +553,7 @@ list_caches(krb5_context context, struct klist_options *opt)
     if (opt->json_flag)
 	rtbl_set_flags(ct, RTBL_JSON);
 
-    while (krb5_cccol_cursor_next(context, cursor, &id) == 0) {
+    while (krb5_cccol_cursor_next(context, cursor, &id) == 0 && id != NULL) {
 	int expired = 0;
 	char *name;
 	time_t t;

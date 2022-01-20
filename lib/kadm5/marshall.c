@@ -387,9 +387,14 @@ ret_principal_ent(krb5_storage *sp,
                 ret = ENOMEM;
                 goto out;
             }
-	    CHECK(kadm5_ret_tl_data(sp, tp));
-	    tp->tl_data_next = princ->tl_data;
-	    princ->tl_data = tp;
+	    ret = kadm5_ret_tl_data(sp, tp);
+            if (ret == 0) {
+                tp->tl_data_next = princ->tl_data;
+                princ->tl_data = tp;
+            } else {
+                free(tp);
+                goto out;
+            }
 	}
     }
 

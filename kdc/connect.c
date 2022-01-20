@@ -1163,7 +1163,7 @@ start_kdc(krb5_context context,
 #endif
 
 #ifdef __APPLE__
-    if (do_bonjour > 0)
+    if (!testing_flag && do_bonjour > 0)
         bonjour_kid(context, config, argv0, NULL);
 #endif
 
@@ -1198,7 +1198,7 @@ start_kdc(krb5_context context,
 #ifdef HAVE_FORK
 
 # ifdef __APPLE__
-    if (do_bonjour < 0)
+    if (!testing_flag && do_bonjour < 0)
         bonjour_kid(context, config, argv0, islive);
 # endif
 

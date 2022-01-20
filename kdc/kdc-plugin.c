@@ -493,3 +493,35 @@ free_keyblock(EncryptionKey *key)
 
 #undef HEIMDAL_KDC_KDC_ACCESSORS_H
 #include "kdc-accessors.h"
+
+#undef _KDC_REQUEST_GET_ACCESSOR
+#undef _KDC_REQUEST_SET_ACCESSOR
+
+#undef _KDC_REQUEST_GET_ACCESSOR_PTR
+#undef _KDC_REQUEST_SET_ACCESSOR_PTR
+#define _KDC_REQUEST_SET_ACCESSOR_PTR(R, T, t, f)	    \
+    void						    \
+    _kdc_request_set_ ## f ## _nocopy(R r, T *v)	    \
+    {							    \
+	if (*v != r->f) {				    \
+	    free_##t(r->f);				    \
+	    r->f = *v;					    \
+	}						    \
+	*v = NULL;					    \
+    }
+
+#undef _KDC_REQUEST_GET_ACCESSOR_STRUCT
+#undef _KDC_REQUEST_SET_ACCESSOR_STRUCT
+#define _KDC_REQUEST_SET_ACCESSOR_STRUCT(R, T, t, f)	    \
+    void						    \
+    _kdc_request_set_ ## f ## _nocopy(R r, T *v)	    \
+    {							    \
+	if (v != &r->f) {				    \
+	    free_##t(&r->f);				    \
+	    r->f = *v;					    \
+	}						    \
+	memset(v, 0, sizeof(*v));			    \
+    }
+
+#undef HEIMDAL_KDC_KDC_ACCESSORS_H
+#include "kdc-accessors.h"

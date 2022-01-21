@@ -89,12 +89,21 @@ add_one_principal(const char *name,
     int mask = 0;
     int default_mask = 0;
     char pwbuf[1024];
+    char *princ_name = NULL;
 
     memset(&princ, 0, sizeof(princ));
     ret = krb5_parse_name(context, name, &princ_ent);
     if (ret) {
 	krb5_warn(context, ret, "krb5_parse_name");
 	return ret;
+    }
+
+    if (rand_password) {
+	ret = krb5_unparse_name(context, princ_ent, &princ_name);
+	if (ret) {
+	    krb5_warn(context, ret, "krb5_parse_name");
+	    goto out;
+	}
     }
     princ.principal = princ_ent;
     mask |= KADM5_PRINCIPAL;
@@ -205,18 +214,17 @@ add_one_principal(const char *name,
 	kadm5_modify_principal(kadm_handle, &princ,
 			       KADM5_PW_EXPIRATION | KADM5_ATTRIBUTES);
     } else if (rand_password) {
-	char *princ_name;
-
-	krb5_unparse_name(context, princ_ent, &princ_name);
 	printf ("added %s with password \"%s\"\n", princ_name, password);
-	free (princ_name);
     }
 out:
+    free(princ_name);
     kadm5_free_principal_ent(kadm_handle, &princ); /* frees princ_ent */
     if(default_ent)
 	kadm5_free_principal_ent (kadm_handle, default_ent);
-    if (password != NULL)
-	memset (password, 0, strlen(password));
+    if (password != NULL) {
+	size_t len = strlen(password);
+	memset_s(password, len, 0, len);
+    }
     return ret;
 }
 

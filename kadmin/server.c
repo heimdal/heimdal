@@ -380,11 +380,12 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
         }
 	ret = krb5_ret_principal(sp, &princ);
         if (ret == 0)
-	ret = krb5_ret_int32(sp, &n_key_data);
-        if (ret == 0)
-	ret = krb5_ret_int32(sp, &keepold);
-        if (ret == HEIM_ERR_EOF)
-            ret = 0;
+	    ret = krb5_ret_int32(sp, &n_key_data);
+        if (ret == 0) {
+	    ret = krb5_ret_int32(sp, &keepold);
+	    if (ret == HEIM_ERR_EOF)
+		ret = 0;
+	}
 	if (ret)
 	    goto fail;
 

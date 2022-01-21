@@ -799,10 +799,63 @@ krb5_checksum_disable(krb5_context context,
 KRB5_LIB_FUNCTION struct _krb5_encryption_type * KRB5_LIB_CALL
 _krb5_find_enctype(krb5_enctype type)
 {
-    int i;
-    for(i = 0; i < _krb5_num_etypes; i++)
-	if(_krb5_etypes[i]->type == type)
-	    return _krb5_etypes[i];
+    size_t i;
+
+    /*
+     * Fast table lookup for enctypes in the range 0..23.
+     *
+     * For all others we use a linear search.
+     */
+    switch (type) {
+    case KRB5_ENCTYPE_NULL:
+        return &_krb5_enctype_null;
+    case KRB5_ENCTYPE_DES_CBC_CRC:
+#ifdef HEIM_WEAK_CRYPTO
+        return &_krb5_enctype_des_cbc_crc;
+#else
+        return NULL;
+#endif
+    case KRB5_ENCTYPE_DES_CBC_MD4:
+#ifdef HEIM_WEAK_CRYPTO
+        return &_krb5_enctype_des_cbc_md4;
+#else
+        return NULL;
+#endif
+    case KRB5_ENCTYPE_DES_CBC_MD5:
+#ifdef HEIM_WEAK_CRYPTO
+        return &_krb5_enctype_des_cbc_md5;
+#else
+        return NULL;
+#endif
+    case KRB5_ENCTYPE_DES3_CBC_MD5:
+#ifdef DES3_OLD_ENCTYPE
+        return &_krb5_enctype_des3_cbc_md5;
+#else
+        return NULL;
+#endif
+    case KRB5_ENCTYPE_OLD_DES3_CBC_SHA1:
+#ifdef DES3_OLD_ENCTYPE
+        return &_krb5_enctype_old_des3_cbc_sha1;
+#else
+        return NULL;
+#endif
+    case KRB5_ENCTYPE_DES3_CBC_SHA1:
+        return &_krb5_enctype_des3_cbc_sha1;
+    case KRB5_ENCTYPE_AES128_CTS_HMAC_SHA1_96:
+        return &_krb5_enctype_aes128_cts_hmac_sha1;
+    case KRB5_ENCTYPE_AES256_CTS_HMAC_SHA1_96:
+        return &_krb5_enctype_aes256_cts_hmac_sha1;
+    case KRB5_ENCTYPE_AES128_CTS_HMAC_SHA256_128:
+        return &_krb5_enctype_aes128_cts_hmac_sha256_128;
+    case KRB5_ENCTYPE_AES256_CTS_HMAC_SHA384_192:
+        return &_krb5_enctype_aes256_cts_hmac_sha384_192;
+    case KRB5_ENCTYPE_ARCFOUR_HMAC_MD5:
+        return &_krb5_enctype_arcfour_hmac_md5;
+    default:
+        for (i = 0; i < _krb5_num_etypes; i++)
+            if (_krb5_etypes[i]->type == type)
+                return _krb5_etypes[i];
+    }
     return NULL;
 }
 

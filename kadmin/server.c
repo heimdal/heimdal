@@ -78,6 +78,7 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
     }
 
     ret = krb5_unparse_name_fixed(contextp->context, contextp->caller,
+				  client, sizeof(client));
     if (ret == 0)
         ret = krb5_ret_int32(sp, &cmd);
     if (ret)

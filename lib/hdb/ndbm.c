@@ -140,8 +140,7 @@ open_lock_file(krb5_context context, const char *db_name, int *fd)
     int ret = 0;
 
     /* lock old and new databases */
-    asprintf(&lock_file, "%s.lock", db_name);
-    if(lock_file == NULL) {
+    if (asprintf(&lock_file, "%s.lock", db_name) == -1) {
 	krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
 	return ENOMEM;
     }
@@ -161,7 +160,8 @@ static krb5_error_code
 NDBM_rename(krb5_context context, HDB *db, const char *new_name)
 {
     int ret;
-    char *old_dir, *old_pag, *new_dir, *new_pag;
+    char *old_dir = NULL, *old_pag = NULL;
+    char *new_dir = NULL, *new_pag = NULL;
     int old_lock_fd, new_lock_fd;
 
     /* lock old and new databases */
@@ -190,10 +190,26 @@ NDBM_rename(krb5_context context, HDB *db, const char *new_name)
 	return ret;
     }
 
-    asprintf(&old_dir, "%s.dir", db->hdb_name);
-    asprintf(&old_pag, "%s.pag", db->hdb_name);
-    asprintf(&new_dir, "%s.dir", new_name);
-    asprintf(&new_pag, "%s.pag", new_name);
+    if (asprintf(&old_dir, "%s.dir", db->hdb_name) == -1) {
+	old_dir = NULL;
+	ret = ENOMEM;
+	goto out;
+    }
+    if (asprintf(&old_pag, "%s.pag", db->hdb_name) == -1) {
+	old_pag = NULL;
+	ret = ENOMEM;
+	goto out;
+    }
+    if (asprintf(&new_dir, "%s.dir", new_name) == -1) {
+	new_dir = NULL;
+	ret = ENOMEM;
+	goto out;
+    }
+    if (asprintf(&new_pag, "%s.pag", new_name) == -1) {
+	new_pag = NULL;
+	ret = ENOMEM;
+	goto out;
+    }
 
     ret = rename(old_dir, new_dir) || rename(old_pag, new_pag);
     if (ret) {
@@ -203,6 +219,7 @@ NDBM_rename(krb5_context context, HDB *db, const char *new_name)
 	krb5_set_error_message(context, ret, "rename: %s", strerror(ret));
     }
 
+ out:
     free(old_dir);
     free(old_pag);
     free(new_dir);

@@ -138,7 +138,6 @@ add_one_principal(const char *name,
 	random_password (pwbuf, sizeof(pwbuf));
 	password = pwbuf;
     } else if(password == NULL) {
-	char *princ_name;
 	char *prompt;
 	int aret;
 
@@ -146,7 +145,6 @@ add_one_principal(const char *name,
 	if (ret)
 	    goto out;
 	aret = asprintf (&prompt, "%s's Password: ", princ_name);
-	free (princ_name);
 	if (aret == -1) {
 	    ret = ENOMEM;
 	    krb5_set_error_message(context, ret, "out of memory");

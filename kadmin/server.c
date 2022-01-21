@@ -585,8 +585,7 @@ fail:
 	memset_s(password, len, 0, len);
 	free(password);
     }
-    if (ret == 0)
-	krb5_storage_to_data(rsp, out);
+    krb5_storage_to_data(rsp, out);
     krb5_storage_free(rsp);
     krb5_storage_free(sp);
     krb5_free_principal(contextp->context, princ);

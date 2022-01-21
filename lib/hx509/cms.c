@@ -182,8 +182,7 @@ fill_CMSIdentifier(const hx509_cert cert,
 						   &id->u.subjectKeyIdentifier);
 	if (ret == 0)
 	    break;
-	/* FALLTHROUGH */
-        fallthrough
+        fallthrough;
     case CMS_ID_NAME: {
 	hx509_name name;
 

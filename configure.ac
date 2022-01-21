@@ -509,12 +509,12 @@ dnl Deal with switch FALLTHROUGH
 AH_TOP([
 #if defined(__GNUC__)
 #if __GNUC__ >= 7
-# define fallthrough __attribute__((fallthrough));
+# define fallthrough __attribute__((fallthrough))
 #else
-# define fallthrough
+# define fallthrough do {} while (0) /* fallthrough */
 #endif
 #else
-# define fallthrough
+# define fallthrough  do {} while (0) /* fallthrough */
 #endif
 ])
 

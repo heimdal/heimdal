@@ -107,6 +107,10 @@ ${kadmin} add -p p1 --use-defaults host/no-aes.test.h5l.se@${R} || exit 1
 ${kadmin} get host/no-aes.test.h5l.se@${R} > tempfile || exit 1
 ${kadmin} del_enctype host/no-aes.test.h5l.se@${R} \
     aes256-cts-hmac-sha1-96 aes128-cts-hmac-sha1-96 || exit 1
+# Deleting its non-AES keys is insufficient because the HDB entry will have
+# recorded the principal's initial keyset's enctypes as the principal's
+# supported enctypes for enctype negotiation.
+${kadmin} mod -e des3-cbc-sha1 host/no-aes.test.h5l.se@${R} || exit 1
 ${kadmin} ext -k ${keytab} host/no-aes.test.h5l.se@${R} || exit 1
 
 echo "Doing database check"

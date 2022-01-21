@@ -59,22 +59,25 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
     char **princs;
     int n_princs;
     int keys_ok = 0;
-    krb5_storage *rsp = NULL; /* response goes here */
-    krb5_storage *sp = NULL;
+    krb5_storage *rsp; /* response goes here */
+    krb5_storage *sp;
     int len;
 
     memset(&ent, 0, sizeof(ent));
     memset(&ent_prev, 0, sizeof(ent_prev));
     krb5_data_zero(out);
 
-    ret = krb5_unparse_name_fixed(contextp->context, contextp->caller,
-                                  client, sizeof(client));
-    if (ret == 0) {
-        rsp = krb5_storage_emem();
-        sp = krb5_storage_from_data(in);
-        if (rsp == NULL || sp == NULL)
-            ret = krb5_enomem(contextp->context);
+    rsp = krb5_storage_emem();
+    if (rsp == NULL)
+	return krb5_enomem(contextp->context);
+
+    sp = krb5_storage_from_data(in);
+    if (sp == NULL) {
+	krb5_storage_free(rsp);
+	return krb5_enomem(contextp->context);
     }
+
+    ret = krb5_unparse_name_fixed(contextp->context, contextp->caller,
     if (ret == 0)
         ret = krb5_ret_int32(sp, &cmd);
     if (ret)

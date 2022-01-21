@@ -377,8 +377,7 @@ strftime (char *buf, size_t maxsize, const char *format,
 		break;
 	    case '\0' :
 		--format;
-		/* FALLTHROUGH */
-                fallthrough
+                fallthrough;
 	    case '%' :
 		ret = snprintf (buf, maxsize - n,
 				"%%");

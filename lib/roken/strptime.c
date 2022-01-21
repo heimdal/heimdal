@@ -424,8 +424,7 @@ strptime (const char *buf, const char *format, struct tm *timeptr)
 		abort ();
 	    case '\0' :
 		--format;
-		/* FALLTHROUGH */
-                fallthrough
+                fallthrough;
 	    case '%' :
 		if (*buf == '%')
 		    ++buf;

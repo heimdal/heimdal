@@ -932,8 +932,7 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_init_sec_context
 			time_rec);
 	if (ret != GSS_S_COMPLETE)
 	    break;
-	/* FALLTHROUGH */
-        fallthrough
+        fallthrough;
     case INITIATOR_RESTART:
 	ret = init_auth_restart(minor_status,
 				cred,

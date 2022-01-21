@@ -1192,8 +1192,7 @@ krb5_sendto_context(krb5_context context,
 		break;
 	    }
 	    action = KRB5_SENDTO_KRBHST;
-	    /* FALLTHROUGH */
-            fallthrough
+            fallthrough;
 	case KRB5_SENDTO_KRBHST:
 	    if (ctx->krbhst == NULL) {
 		ret = krb5_krbhst_init_flags(context, realm, type,
@@ -1215,8 +1214,7 @@ krb5_sendto_context(krb5_context context,
 		handle = heim_retain(ctx->krbhst);
 	    }
 	    action = KRB5_SENDTO_TIMEOUT;
-	    /* FALLTHROUGH */
-            fallthrough
+            fallthrough;
 	case KRB5_SENDTO_TIMEOUT:
 
 	    /*

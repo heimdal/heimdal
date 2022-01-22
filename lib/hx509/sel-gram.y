@@ -78,7 +78,7 @@
 %token <string> STRING
 %token <string> IDENTIFIER
 
-%precedence '!'
+%left '!'
 %left kw_AND
 %left kw_OR
 

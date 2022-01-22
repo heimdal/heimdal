@@ -305,6 +305,9 @@ static unsigned long idcounter;
  * We have sinned by allowing types to have names that start with lower-case,
  * and values that have names that start with upper-case.
  *
+ * UPDATE: We sin no more.  However, parts of this block comment are still
+ * relevant.
+ *
  * That worked when we only supported basic X.680 because the rules for
  * TypeAssignment and ValueAssignment are clearly unambiguous in spite of the
  * case issue.
@@ -313,35 +316,41 @@ static unsigned long idcounter;
  * have to help us distinguish certain rules is the form of an identifier: the
  * case of its first letter.
  *
- * We have begun to undo our sin by not allowing wrong-case identifiers in
- * certain situations.
+ * We have cleansed our sin by not allowing wrong-case identifiers any more.
  *
  * Some historical instances of this sin in-tree:
  *
- *  - DOMAIN-X500-COMPRESS (value (enum) but name starts with upper-case)
- *  - krb5int32		   (type         but name starts with lower-case)
- *  - krb5uint32	   (type         but name starts with lower-case)
- *  - hdb_keyset	   (type         but name starts with lower-case)
- *  - hdb_entry		   (type         but name starts with lower-case)
- *  - hdb_entry_alias      (type         but name starts with lower-case)
+ *  - DOMAIN-X500-COMPRESS  (value (enum) but name starts with upper-case)
+ *  - krb5int32		    (type         but name starts with lower-case)
+ *  - krb5uint32	    (type         but name starts with lower-case)
+ *  - hdb_keyset	    (type         but name starts with lower-case)
+ *  - hdb_entry		    (type         but name starts with lower-case)
+ *  - hdb_entry_alias       (type         but name starts with lower-case)
+ *  - HDB_DB_FORMAT INTEGER (value (int)  but name starts with upper-case)
  *
- * We have fixed most of these, in some cases leaving behind aliases in header
- * files as needed.
+ * We have fixed all of these and others, in some cases leaving behind aliases
+ * in header files as needed.
  *
- * This issue is probably also the source of remaining shift/reduce conflicts.
+ * We have one shift/reduce conflict (shift ObjectClassAssignment, reduce
+ * TypeAssignment) and one reduce/reduce conflict (ObjectAssignment vs
+ * ValueAssignment) that we avoid by requiring CLASS names to start with an
+ * underscore.
  *
- * In the FieldSetting rule in particular, we get a reduce/reduce conflict if
- * we use `Identifier' instead of `TYPE_IDENTIFIER' for type field settings and
+ * In the FieldSetting rule, also, we get a reduce/reduce conflict if we use
+ * `Identifier' instead of `TYPE_IDENTIFIER' for type field settings and
  * `VALUE_IDENTIFIER' for value field settings, and then we can't make
  * progress.
  *
  * Looking forward, we may not (will not) be able to distinguish ValueSet and
- * ObjectSet field settings from each other either even without committing this
- * leading-identifier-character-case sin, and we may not (will not) be able
- * distinguish Object and Value field settings from each other as well.  To
- * deal with those we will have to run-time type-tag/pun the C structures for
- * valueset/objectset and value/object, and have one rule for each of those
- * that inspects the type of the item to decide what kind of setting it is.
+ * ObjectSet field settings from each other either, and we may not (will not)
+ * be able distinguish Object and Value field settings from each other as well.
+ * To deal with those we will have to run-time type-tag and type-pun the C
+ * structures for valueset/objectset and value/object, and have one rule for
+ * each of those that inspects the type of the item to decide what kind of
+ * setting it is.
+ *
+ * Sadly, the extended syntax for ASN.1 (x.680 + x.681/2/3) appears to have
+ * ambiguities that cannot be resolved with bison/yacc.
  */
 Identifier	: TYPE_IDENTIFIER { $$ = $1; }
 		| VALUE_IDENTIFIER { $$ = $1; };

@@ -46,6 +46,8 @@
 #include <heim_asn1.h>
 #include <hdb_asn1.h>
 
+#define HDB_DB_FORMAT hdb_db_format
+
 typedef HDB_keyset hdb_keyset;
 typedef HDB_entry hdb_entry;
 typedef HDB_entry_alias hdb_entry_alias;

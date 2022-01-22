@@ -297,7 +297,6 @@ static unsigned long idcounter;
 %type <constraint_spec> ComponentRelationConstraint
 
 
-%expect 1
 %start ModuleDefinition
 
 %%
@@ -914,9 +913,20 @@ ParamGovernor   : DefinedObjectClass
 	     /* | Type */
 		;
 
-UnconstrainedType : BuiltinType | ReferencedType;
+UnconstrainedType : BitStringType
+                  | BooleanType
+                  | CharacterStringType
+                  | ChoiceType
+                  | EnumeratedType
+                  | IntegerType
+                  | NullType
+                  | ObjectIdentifierType
+                  | OctetStringType
+                  | SequenceType
+                  | SetType
+                  | ObjectClassFieldType; /* X.681 */
 
-Type		: UnconstrainedType | ConstrainedType ;
+Type		: BuiltinType | ReferencedType | ConstrainedType ;
 
 BuiltinType	: BitStringType
 		| BooleanType

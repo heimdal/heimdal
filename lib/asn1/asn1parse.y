@@ -242,6 +242,7 @@ static unsigned long idcounter;
 %type <type> BooleanType
 %type <type> ChoiceType
 %type <type> ConstrainedType
+%type <type> UnconstrainedType
 %type <type> EnumeratedType
 %type <type> IntegerType
 %type <type> NullType
@@ -288,6 +289,7 @@ static unsigned long idcounter;
 
 %type <constraint_spec> Constraint
 %type <constraint_spec> ConstraintSpec
+%type <constraint_spec> SubtypeConstraint
 %type <constraint_spec> GeneralConstraint
 %type <constraint_spec> ContentsConstraint
 %type <constraint_spec> UserDefinedConstraint
@@ -295,7 +297,7 @@ static unsigned long idcounter;
 %type <constraint_spec> ComponentRelationConstraint
 
 
-
+%expect 1
 %start ModuleDefinition
 
 %%
@@ -364,8 +366,6 @@ ModuleDefinition: Identifier objid_opt kw_DEFINITIONS TagDefault ExtensionDefaul
                     fprintf(jsonfile, "]}\n");
                     free(o);
 		}
-		| CLASS_IDENTIFIER objid_opt kw_DEFINITIONS TagDefault ExtensionDefault
-			EEQUAL kw_BEGIN ModuleBody kw_END
 		;
 
 TagDefault	: kw_EXPLICIT kw_TAGS
@@ -914,10 +914,9 @@ ParamGovernor   : DefinedObjectClass
 	     /* | Type */
 		;
 
-Type		: BuiltinType
-		| ReferencedType
-		| ConstrainedType
-		;
+UnconstrainedType : BuiltinType | ReferencedType;
+
+Type		: UnconstrainedType | ConstrainedType ;
 
 BuiltinType	: BitStringType
 		| BooleanType
@@ -948,39 +947,49 @@ BooleanType	: kw_BOOLEAN
 		}
 		;
 
-range		: '(' Value RANGE Value ')'
+             /*
+              * The spec says the values in a ValueRange are Values, but a) all
+              * the various value ranges do not involve OBJECT IDENTIFIER, b)
+              * we only support integer value ranges at this time (as opposed
+              * to, e.g., time ranges, and we don't even support time values at
+              * this time), c) allowing OBJECT IDENTIFIER here causes a
+              * shift-reduce conflict, so we limit ourselves to integer values
+              * in ranges.  We could always define IntegerValueRange,
+              * TimeValueRange, etc. when we add support for more value types.
+              */
+range		: IntegerValue RANGE IntegerValue
 		{
-		    if($2->type != integervalue)
+		    if($1->type != integervalue)
 			lex_error_message("Non-integer used in first part of range");
-		    if($2->type != integervalue)
+		    if($1->type != integervalue)
 			lex_error_message("Non-integer in second part of range");
 		    $$ = ecalloc(1, sizeof(*$$));
-		    $$->min = $2->u.integervalue;
-		    $$->max = $4->u.integervalue;
+		    $$->min = $1->u.integervalue;
+		    $$->max = $3->u.integervalue;
 		}
-		| '(' Value RANGE kw_MAX ')'
+		| IntegerValue RANGE kw_MAX
 		{
-		    if($2->type != integervalue)
+		    if($1->type != integervalue)
 			lex_error_message("Non-integer in first part of range");
 		    $$ = ecalloc(1, sizeof(*$$));
-		    $$->min = $2->u.integervalue;
+		    $$->min = $1->u.integervalue;
 		    $$->max = INT_MAX;
 		}
-		| '(' kw_MIN RANGE Value ')'
+		| kw_MIN RANGE IntegerValue
 		{
-		    if($4->type != integervalue)
+		    if($3->type != integervalue)
 			lex_error_message("Non-integer in second part of range");
 		    $$ = ecalloc(1, sizeof(*$$));
 		    $$->min = INT_MIN;
-		    $$->max = $4->u.integervalue;
+		    $$->max = $3->u.integervalue;
 		}
-		| '(' Value ')'
+		| IntegerValue
 		{
-		    if($2->type != integervalue)
+		    if($1->type != integervalue)
 			lex_error_message("Non-integer used in limit");
 		    $$ = ecalloc(1, sizeof(*$$));
-		    $$->min = $2->u.integervalue;
-		    $$->max = $2->u.integervalue;
+		    $$->min = $1->u.integervalue;
+		    $$->max = $1->u.integervalue;
 		}
 		;
 
@@ -989,12 +998,6 @@ IntegerType	: kw_INTEGER
 		{
 			$$ = new_tag(ASN1_C_UNIV, UT_Integer,
 				     TE_EXPLICIT, new_type(TInteger));
-		}
-		| kw_INTEGER range
-		{
-			$$ = new_type(TInteger);
-			$$->range = $2;
-			$$ = new_tag(ASN1_C_UNIV, UT_Integer, TE_EXPLICIT, $$);
 		}
 		| kw_INTEGER '{' NamedNumberList '}'
 		{
@@ -1101,8 +1104,8 @@ NullType	: kw_NULL
 
 size		:
 		{ $$ = NULL; }
-		| kw_SIZE range
-		{ $$ = $2; }
+		| kw_SIZE '(' range ')'
+		{ $$ = $3; }
 		;
 
 
@@ -1250,10 +1253,17 @@ UsefulType	: kw_GeneralizedTime
 		}
 		;
 
-ConstrainedType	: Type Constraint
+ConstrainedType	: UnconstrainedType Constraint
 		{
 		    $$ = $1;
-		    $$->constraint = $2;
+                    if ($2->ctype == CT_RANGE) {
+                        if ($1->type != TTag || $1->subtype->type != TInteger)
+                            lex_error_message("RANGE constraints apply only to INTEGER types");
+                        $$->subtype->range = $2->u.range;
+                        free($2);
+                    } else {
+                        $$->constraint = $2;
+                    }
 		    /* if (Constraint.type == contentConstraint) {
 		       assert(Constraint.u.constraint.type == octetstring|bitstring-w/o-NamedBitList); // remember to check type reference too
 		       if (Constraint.u.constraint.type) {
@@ -1274,8 +1284,14 @@ Constraint	: '(' ConstraintSpec ')'
 		}
 		;
 
-ConstraintSpec	: GeneralConstraint
+ConstraintSpec	: SubtypeConstraint | GeneralConstraint
 		;
+
+SubtypeConstraint: range
+		{
+                        $$ = new_constraint_spec(CT_RANGE);
+                        $$->u.range = $1;
+		}
 
 GeneralConstraint: ContentsConstraint
 		| UserDefinedConstraint
@@ -1452,7 +1468,7 @@ tagenv		: /* */
 		;
 
 
-ValueAssignment	: Identifier Type EEQUAL Value
+ValueAssignment	: VALUE_IDENTIFIER Type EEQUAL Value
 		{
 			Symbol *s;
 			s = addsym ($1);

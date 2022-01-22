@@ -78,6 +78,10 @@
 %token <string> STRING
 %token <string> IDENTIFIER
 
+%precedence '!'
+%left kw_AND
+%left kw_OR
+
 %start start
 
 %%

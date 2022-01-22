@@ -320,7 +320,9 @@ kdc_request_add_reply_padata(astgs_request_t r, PA_DATA *md)
 }
 
 KDC_LIB_FUNCTION krb5_error_code KDC_LIB_CALL
-kdc_request_add_pac_buffer(astgs_request_t r, int32_t pactype, const krb5_data *d)
+kdc_request_add_pac_buffer(astgs_request_t r,
+			   uint32_t pactype,
+			   const krb5_data *d)
 {
     krb5_error_code ret;
     krb5_pac pac;

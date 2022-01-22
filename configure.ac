@@ -59,8 +59,8 @@ if ! test -f "$srcdir/lib/asn1/der-protos.h" ||
     AC_KRB_PERL_MOD(JSON)
 fi
 
-dnl AC_KRB_PROG_YACC
-AC_PROG_YACC
+AC_KRB_PROG_YACC
+dnl AC_PROG_YACC
 AM_PROG_LEX
 AS_IF([$LEX --nounput -V > /dev/null 2>&1 && test $? -eq 0],
       [AC_SUBST([FLEXNOUNPUTARGS], ["--nounput"])],

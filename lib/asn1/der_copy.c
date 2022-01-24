@@ -124,7 +124,7 @@ der_copy_bmp_string (const heim_bmp_string *from, heim_bmp_string *to)
 {
     assert(from->length == 0 || (from->length > 0 && from->data != NULL));
     if (from->length == 0)
-	to->data = calloc(1, 1);
+	to->data = calloc(1, sizeof(from->data[0]));
     else
 	to->data = malloc(from->length * sizeof(from->data[0]));
     if (to->data == NULL) {
@@ -143,7 +143,7 @@ der_copy_universal_string (const heim_universal_string *from,
 {
     assert(from->length == 0 || (from->length > 0 && from->data != NULL));
     if (from->length == 0)
-	to->data = calloc(1, 1);
+	to->data = calloc(1, sizeof(from->data[0]));
     else
 	to->data = malloc(from->length * sizeof(from->data[0]));
     if (to->data == NULL) {

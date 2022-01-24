@@ -199,14 +199,16 @@ der_put_integer64 (unsigned char *p, size_t len, const int64_t *v, size_t *size)
 int ASN1CALL
 der_put_length (unsigned char *p, size_t len, size_t val, size_t *size)
 {
-    *size = 0;
+    if (size)
+	*size = 0;
 
     if (len < 1)
 	return ASN1_OVERFLOW;
 
     if (val < 128) {
 	*p = val;
-	*size = 1;
+	if (size)
+	    *size = 1;
     } else {
 	size_t l = 0;
 

@@ -367,6 +367,9 @@ parse_residual(krb5_context context,
     *pcollection_name = NULL;
     *psubsidiary_name = NULL;
 
+    if (residual == NULL)
+        residual = "";
+
     /* Parse out the anchor name.  Use the legacy anchor if not present. */
     sep = strchr(residual, ':');
     if (sep == NULL) {

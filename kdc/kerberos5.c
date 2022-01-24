@@ -266,7 +266,7 @@ _kdc_find_etype(astgs_request_t r, uint32_t flags,
 
                 /* check target princ support */
 		key = NULL;
-                if (!(flags & KFE_USE_CLIENT) && princ->etypes) {
+                if (!is_preauth && !(flags & KFE_USE_CLIENT) && princ->etypes) {
                     /*
                      * Use the etypes list from the server's HDB entry instead
                      * of deriving it from its long-term keys.  This allows an

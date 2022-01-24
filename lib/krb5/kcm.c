@@ -149,16 +149,16 @@ kcm_alloc(krb5_context context,
 	return KRB5_CC_NOMEM;
     }
 
-    if (name != NULL) {
-	k->name = strdup(name);
-	if (k->name == NULL) {
-	    free(k);
-	    krb5_set_error_message(context, KRB5_CC_NOMEM,
-				   N_("malloc: out of memory", ""));
-	    return KRB5_CC_NOMEM;
-	}
-    } else
-	k->name = NULL;
+    if (name == NULL)
+        name = "";
+
+    k->name = strdup(name);
+    if (k->name == NULL) {
+        free(k);
+        krb5_set_error_message(context, KRB5_CC_NOMEM,
+                               N_("malloc: out of memory", ""));
+        return KRB5_CC_NOMEM;
+    }
 
     (*id)->data.data = k;
     (*id)->data.length = sizeof(*k);

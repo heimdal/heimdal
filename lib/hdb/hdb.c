@@ -795,9 +795,11 @@ hdb_create(krb5_context context, HDB **db, const char *filename)
                 (*db)->hdb_destroy(context, *db);
             *db = NULL;
         }
+	if (cb_ctx.h->prefix == NULL)
+            cb_ctx.h = NULL;
     }
 #ifdef HDB_DEFAULT_DB_TYPE
-    if (cb_ctx.h == NULL || cb_ctx.h->prefix == NULL) {
+    if (cb_ctx.h == NULL) {
         /*
          * If still we've not picked a backend, use a build configuration time
          * default.
@@ -809,7 +811,7 @@ hdb_create(krb5_context context, HDB **db, const char *filename)
             cb_ctx.h = NULL;
     }
 #endif
-    if (cb_ctx.h == NULL || cb_ctx.h->prefix == NULL)
+    if (cb_ctx.h == NULL)
         /* Last resort default */
         cb_ctx.h = &default_dbmethod;
     if (cb_ctx.h->prefix == NULL) {

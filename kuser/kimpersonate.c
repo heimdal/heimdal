@@ -277,13 +277,13 @@ setup_env(krb5_context context, krb5_keytab *kt)
 	krb5_errx(context, 1, "missing client principal");
     ret = krb5_parse_name(context, client_principal_str, &client_principal);
     if (ret)
-	krb5_err(context, 1, ret, "resolvning client name");
+	krb5_err(context, 1, ret, "resolving client name");
 
     if (server_principal_str == NULL)
 	krb5_errx(context, 1, "missing server principal");
     ret = krb5_parse_name(context, server_principal_str, &server_principal);
     if (ret)
-	krb5_err(context, 1, ret, "resolvning server name");
+	krb5_err(context, 1, ret, "resolving server name");
 
     /* If no session-enc-type specified on command line and this is an afs */
     /* service ticket, change default of session_enc_type to DES.       */

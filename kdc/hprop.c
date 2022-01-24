@@ -324,6 +324,7 @@ propagate_database (krb5_context context, int type,
 	    if (ret) {
 		failed++;
 		krb5_warn(context, ret, "unable to obtain default or set realm");
+		krb5_free_principal(context, server);
 		close(fd);
 		continue;
 	    }

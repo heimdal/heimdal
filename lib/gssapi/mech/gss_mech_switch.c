@@ -232,8 +232,10 @@ add_builtin(gssapi_mech_interface mech)
     }
 
     if (gss_add_oid_set_member(&minor_status, &m->gm_mech.gm_mech_oid,
-                               &_gss_mech_oids) != GSS_S_COMPLETE)
-        return ENOMEM;
+			       &_gss_mech_oids) != GSS_S_COMPLETE) {
+	free(m);
+	return ENOMEM;
+    }
 
     /* pick up the oid sets of names */
 
@@ -244,7 +246,8 @@ add_builtin(gssapi_mech_interface mech)
     if (m->gm_name_types == NULL &&
 	gss_create_empty_oid_set(&minor_status,
                                  &m->gm_name_types) != GSS_S_COMPLETE) {
-        return ENOMEM;
+	free(m);
+	return ENOMEM;
     }
 
     HEIM_TAILQ_INSERT_TAIL(&_gss_mechs, m, gm_link);

@@ -316,9 +316,17 @@ propagate_database (krb5_context context, int type,
 
         if (local_realm) {
             krb5_realm my_realm;
-            krb5_get_default_realm(context,&my_realm);
-            krb5_principal_set_realm(context,server,my_realm);
-	    krb5_xfree(my_realm);
+            ret = krb5_get_default_realm(context,&my_realm);
+	    if (ret == 0) {
+		ret = krb5_principal_set_realm(context,server,my_realm);
+		krb5_xfree(my_realm);
+	    }
+	    if (ret) {
+		failed++;
+		krb5_warn(context, ret, "unable to obtain default or set realm");
+		close(fd);
+		continue;
+	    }
         }
 
 	auth_context = NULL;

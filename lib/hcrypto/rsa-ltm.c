@@ -456,8 +456,11 @@ mpz2BN(mp_int *s)
     void *p;
 
     size = mp_ubin_size(s);
+    if (size == 0)
+	return NULL;
+
     p = malloc(size);
-    if (p == NULL && size != 0)
+    if (p == NULL)
 	return NULL;
 
     ret = mp_to_ubin(s, p, SIZE_MAX, NULL);

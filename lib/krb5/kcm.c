@@ -353,8 +353,7 @@ kcm_free(krb5_context context, krb5_ccache *id)
     krb5_kcmcache *k = KCMCACHE(*id);
 
     if (k != NULL) {
-	if (k->name != NULL)
-	    free(k->name);
+        free(k->name);
 	memset_s(k, sizeof(*k), 0, sizeof(*k));
 	krb5_data_free(&(*id)->data);
     }
@@ -446,6 +445,8 @@ kcm_gen_new(krb5_context context, const krb5_cc_ops *ops, krb5_ccache *id)
 	return ret;
     }
 
+    free(k->name);
+    k->name = NULL;
     ret = krb5_ret_stringz(response, &k->name);
     if (ret)
 	ret = KRB5_CC_IO;

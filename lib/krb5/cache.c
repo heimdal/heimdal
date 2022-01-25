@@ -1651,7 +1651,7 @@ krb5_cc_move(krb5_context context, krb5_ccache from, krb5_ccache to)
         ret = (*to->ops->move)(context, from, to);
         if (ret == 0)
             return 0;
-        if (ret != EXDEV && ret != ENOTSUP)
+        if (ret != EXDEV && ret != ENOTSUP && ret != KRB5_CC_NOSUPP)
             return ret;
         /* Fallback to high-level copy */
     }   /* Else        high-level copy */
@@ -1764,7 +1764,7 @@ krb5_cc_set_config(krb5_context context, krb5_ccache id,
 
     /* Remove old configuration */
     ret = krb5_cc_remove_cred(context, id, 0, &cred);
-    if (ret && ret != KRB5_CC_NOTFOUND)
+    if (ret && ret != KRB5_CC_NOTFOUND && ret != KRB5_CC_NOSUPP)
         goto out;
 
     if (data) {

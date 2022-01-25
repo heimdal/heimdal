@@ -84,8 +84,7 @@ kcm_send_request(krb5_context context,
 
     ret = krb5_storage_to_data(request, &request_data);
     if (ret) {
-	krb5_clear_error_message(context);
-	return KRB5_CC_NOMEM;
+	return krb5_enomem(context);
     }
 
     ret = heim_ipc_call(kcm_ipc, &request_data, response_data, NULL);
@@ -104,10 +103,8 @@ krb5_kcm_storage_request(krb5_context context,
     *storage_p = NULL;
 
     sp = krb5_storage_emem();
-    if (sp == NULL) {
-	krb5_set_error_message(context, KRB5_CC_NOMEM, N_("malloc: out of memory", ""));
-	return KRB5_CC_NOMEM;
-    }
+    if (sp == NULL)
+	return krb5_enomem(context);
 
     /* Send MAJOR | VERSION | OPCODE */
     ret  = krb5_store_int8(sp, KCM_PROTOCOL_VERSION_MAJOR);
@@ -697,8 +694,7 @@ kcm_get_next (krb5_context context,
     c->offset++;
     if (sret != sizeof(c->uuids[c->offset])) {
 	krb5_storage_free(request);
-	krb5_clear_error_message(context);
-	return ENOMEM;
+	return krb5_enomem(context);
     }
 
     ret = krb5_kcm_call(context, request, &response, &response_data);
@@ -926,8 +922,7 @@ kcm_get_cache_next(krb5_context context, krb5_cc_cursor cursor, const krb5_cc_op
     c->offset++;
     if (sret != sizeof(c->uuids[c->offset])) {
 	krb5_storage_free(request);
-	krb5_clear_error_message(context);
-	return ENOMEM;
+	return krb5_enomem(context);
     }
 
     ret = krb5_kcm_call(context, request, &response, &response_data);
@@ -1041,7 +1036,7 @@ kcm_get_default_name(krb5_context context, const krb5_cc_ops *ops,
     aret = asprintf(str, "%s:%s", ops->prefix, name);
     free(name);
     if (aret == -1 || *str == NULL)
-	return ENOMEM;
+	return krb5_enomem(context);
 
     return 0;
 }

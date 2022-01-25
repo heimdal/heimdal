@@ -1547,8 +1547,10 @@ static krb5_error_code KRB5_CALLCONV
 fcc_move(krb5_context context, krb5_ccache from, krb5_ccache to)
 {
     krb5_error_code ret = 0;
+    krb5_fcache *f = FCACHE(from);
+    krb5_fcache *t = FCACHE(to);
 
-    if (TMPFILENAME(from)) {
+    if (f->tmpfn) {
         /*
          * If `from' has a temp file and we haven't renamed it into place yet,
          * then we should rename TMPFILENAME(from) to FILENAME(to).
@@ -1556,13 +1558,13 @@ fcc_move(krb5_context context, krb5_ccache from, krb5_ccache to)
          * This can only happen if we're moving a ccache where only cc config
          * entries, or no entries, have been written.  That's not likely.
          */
-        if (rk_rename(TMPFILENAME(from), FILENAME(to))) {
+        if (rk_rename(f->tmpfn, t->filename)) {
             ret = errno;
         } else {
-            free(TMPFILENAME(from));
-            TMPFILENAME(from) = NULL;
+            free(f->tmpfn);
+            f->tmpfn = NULL;
         }
-    } else if ((ret = rk_rename(FILENAME(from), FILENAME(to)))) {
+    } else if (rk_rename(f->filename, t->filename)) {
         ret = errno;
     }
     /*

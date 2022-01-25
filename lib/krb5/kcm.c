@@ -128,14 +128,20 @@ krb5_kcm_storage_request(krb5_context context,
     return ret;
 }
 
+static krb5_error_code kcm_get_default_name_kcm(krb5_context, char **);
+static krb5_error_code kcm_get_default_name_api(krb5_context, char **);
+
 static krb5_error_code
 kcm_alloc(krb5_context context,
+          const krb5_cc_ops *ops,
           const char *residual,
           const char *sub,
           krb5_ccache *id)
 {
+    krb5_error_code ret;
     krb5_kcmcache *k;
     size_t plen = 0;
+    char *def_name = NULL;
     int aret;
 
     k = calloc(1, sizeof(*k));
@@ -147,6 +153,16 @@ kcm_alloc(krb5_context context,
         residual = NULL;
     if (sub && sub[0] == '\0')
         sub = NULL;
+
+    if (residual == NULL && sub == NULL) {
+        if (ops == &krb5_kcm_ops)
+            ret = kcm_get_default_name_kcm(context, &def_name);
+        else
+            ret = kcm_get_default_name_api(context, &def_name);
+        if (ret == 0) {
+            residual = def_name + strlen(ops->prefix) + 1;
+        }
+    }
 
     if (residual) {
         /* KCM cache names must start with {UID} or {UID}: */
@@ -183,10 +199,12 @@ kcm_alloc(krb5_context context,
                         residual, sub);
     }
     if (aret == -1 || k->name == NULL) {
+        free(def_name);
         free(k);
         return krb5_enomem(context);
     }
 
+    free(def_name);
     (*id)->data.data = k;
     (*id)->data.length = sizeof(*k);
 
@@ -283,10 +301,10 @@ kcm_get_name_2(krb5_context context,
 }
 
 static krb5_error_code
-kcm_resolve_2(krb5_context context,
-	      krb5_ccache *id,
-	      const char *res,
-	      const char *sub)
+kcm_resolve_2_kcm(krb5_context context,
+                  krb5_ccache *id,
+                  const char *res,
+                  const char *sub)
 {
     /*
      * For now, for KCM the `res' is the `sub'.
@@ -294,7 +312,22 @@ kcm_resolve_2(krb5_context context,
      * TODO: We should use `res' as the IPC name instead of the one currently
      *       hard-coded in `kcm_ipc_name'.
      */
-    return kcm_alloc(context, res, sub, id);
+    return kcm_alloc(context, &krb5_kcm_ops, res, sub, id);
+}
+
+static krb5_error_code
+kcm_resolve_2_api(krb5_context context,
+                  krb5_ccache *id,
+                  const char *res,
+                  const char *sub)
+{
+    /*
+     * For now, for KCM the `res' is the `sub'.
+     *
+     * TODO: We should use `res' as the IPC name instead of the one currently
+     *       hard-coded in `kcm_ipc_name'.
+     */
+    return kcm_alloc(context, &krb5_akcm_ops, res, sub, id);
 }
 
 /*
@@ -304,14 +337,14 @@ kcm_resolve_2(krb5_context context,
  *      NameZ
  */
 static krb5_error_code
-kcm_gen_new(krb5_context context, krb5_ccache *id)
+kcm_gen_new(krb5_context context, const krb5_cc_ops *ops, krb5_ccache *id)
 {
     krb5_kcmcache *k;
     krb5_error_code ret;
     krb5_storage *request, *response;
     krb5_data response_data;
 
-    ret = kcm_alloc(context, NULL, NULL, id);
+    ret = kcm_alloc(context, ops, NULL, NULL, id);
     if (ret)
 	return ret;
 
@@ -342,6 +375,18 @@ kcm_gen_new(krb5_context context, krb5_ccache *id)
 	kcm_free(context, id);
 
     return ret;
+}
+
+static krb5_error_code
+kcm_gen_new_kcm(krb5_context context, krb5_ccache *id)
+{
+    return kcm_gen_new(context, &krb5_kcm_ops, id);
+}
+
+static krb5_error_code
+kcm_gen_new_api(krb5_context context, krb5_ccache *id)
+{
+    return kcm_gen_new(context, &krb5_akcm_ops, id);
 }
 
 /*
@@ -939,7 +984,7 @@ kcm_get_cache_next(krb5_context context, krb5_cc_cursor cursor, const krb5_cc_op
     if (ret == 0) {
 	ret = _krb5_cc_allocate(context, ops, id);
 	if (ret == 0)
-	    ret = kcm_alloc(context, name, NULL, id);
+	    ret = kcm_alloc(context, ops, name, NULL, id);
 	krb5_xfree(name);
     }
 
@@ -1159,7 +1204,7 @@ KRB5_LIB_VARIABLE const krb5_cc_ops krb5_kcm_ops = {
     "KCM",
     NULL,
     NULL,
-    kcm_gen_new,
+    kcm_gen_new_kcm,
     kcm_initialize,
     kcm_destroy,
     kcm_close,
@@ -1182,7 +1227,7 @@ KRB5_LIB_VARIABLE const krb5_cc_ops krb5_kcm_ops = {
     kcm_set_kdc_offset,
     kcm_get_kdc_offset,
     kcm_get_name_2,
-    kcm_resolve_2
+    kcm_resolve_2_kcm
 };
 
 KRB5_LIB_VARIABLE const krb5_cc_ops krb5_akcm_ops = {
@@ -1190,7 +1235,7 @@ KRB5_LIB_VARIABLE const krb5_cc_ops krb5_akcm_ops = {
     "API",
     NULL,
     NULL,
-    kcm_gen_new,
+    kcm_gen_new_api,
     kcm_initialize,
     kcm_destroy,
     kcm_close,
@@ -1213,9 +1258,8 @@ KRB5_LIB_VARIABLE const krb5_cc_ops krb5_akcm_ops = {
     NULL,
     NULL,
     kcm_get_name_2,
-    kcm_resolve_2
+    kcm_resolve_2_api
 };
-
 
 KRB5_LIB_FUNCTION krb5_boolean KRB5_LIB_CALL
 _krb5_kcm_is_running(krb5_context context)
@@ -1225,7 +1269,7 @@ _krb5_kcm_is_running(krb5_context context)
     krb5_ccache id = &ccdata;
     krb5_boolean running;
 
-    ret = kcm_alloc(context, NULL, NULL, &id);
+    ret = kcm_alloc(context, NULL, NULL, NULL, &id);
     if (ret)
 	return 0;
 

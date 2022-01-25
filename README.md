@@ -13,6 +13,21 @@ Heimdal is an implementation of:
  - PKIX, and
  - Kerberos.
 
+Various tools and services are included:
+
+ - Command-line PKIX tool (`hxtool`)
+ - Online CA (`bx509d`)
+ - Kerberos services
+    - `kdc`
+    - `hpropd` and `ipropd`
+    - `kadmind`
+    - `httpkadmind`
+ - Kerberos libraries and command-line tools (`kinit`, `klist`, etc.)
+ - Kerberos administration tools (`kadmin`, `ktutil`)
+ - GSS-API implementation and tools (`gss-token`)
+ - ASN.1 compiler (`asn1_compile`) and libraries
+ - ASN.1 DER pretty-printer (`asn1_print`)
+
 For information how to install see [here](https://github.com/heimdal/heimdal/wiki/Building-and-installing).
 
 There are man pages for most of the commands.

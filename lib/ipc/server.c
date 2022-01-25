@@ -1014,15 +1014,12 @@ process_loop(void)
 	for (n = 0 ; n < num_fds; n++) {
 	    if (clients[n] == NULL)
 		continue;
-	    if (fds[n].revents & POLLERR) {
-		clients[n]->flags |= WAITING_CLOSE;
-		continue;
-	    }
-
 	    if (fds[n].revents & POLLIN)
 		handle_read(clients[n]);
 	    if (fds[n].revents & POLLOUT)
 		handle_write(clients[n]);
+	    if (fds[n].revents & POLLERR)
+		clients[n]->flags |= WAITING_CLOSE;
 	}
 
 	n = 0;

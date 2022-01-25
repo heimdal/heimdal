@@ -73,6 +73,8 @@ kcm_send_request(krb5_context context,
     krb5_error_code ret = 0;
     krb5_data request_data;
 
+    krb5_data_zero(response_data);
+
     HEIMDAL_MUTEX_lock(&kcm_mutex);
     if (kcm_ipc == NULL)
 	ret = heim_ipc_init_context(kcm_ipc_name, &kcm_ipc);
@@ -88,12 +90,6 @@ kcm_send_request(krb5_context context,
 
     ret = heim_ipc_call(kcm_ipc, &request_data, response_data, NULL);
     krb5_data_free(&request_data);
-
-    if (ret) {
-	krb5_clear_error_message(context);
-	ret = KRB5_CC_NOSUPP;
-    }
-
     return ret;
 }
 
@@ -181,10 +177,11 @@ krb5_kcm_call(krb5_context context,
 	*response_p = NULL;
 
     krb5_data_zero(&response_data);
-
     ret = kcm_send_request(context, request, &response_data);
-    if (ret)
-	return ret;
+    if (ret) {
+        krb5_data_free(&response_data);
+        return ret;
+    }
 
     response = krb5_storage_from_data(&response_data);
     if (response == NULL) {

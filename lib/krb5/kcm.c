@@ -128,8 +128,34 @@ krb5_kcm_storage_request(krb5_context context,
     return ret;
 }
 
+/*
+ * A sort of a state() for caches -- we use this to see if the local default
+ * cache name for KCM happens to exist.  See kcm_alloc() below.
+ */
+static krb5_error_code
+kcm_stat(krb5_context context, const char *name)
+{
+    krb5_error_code ret;
+    krb5_storage *request = NULL;
+    krb5_data response_data;
+
+    krb5_data_zero(&response_data);
+
+    ret = krb5_kcm_storage_request(context, KCM_OP_GET_PRINCIPAL, &request);
+    if (ret == 0)
+        ret = krb5_store_stringz(request, name);
+    if (ret == 0)
+        ret = krb5_kcm_call(context, request, NULL, &response_data);
+    krb5_storage_free(request);
+    krb5_data_free(&response_data);
+    return ret;
+}
+
 static krb5_error_code kcm_get_default_name_kcm(krb5_context, char **);
 static krb5_error_code kcm_get_default_name_api(krb5_context, char **);
+static krb5_error_code kcm_get_default_name(krb5_context,
+                                            const krb5_cc_ops *,
+                                            const char *, char **);
 
 static krb5_error_code
 kcm_alloc(krb5_context context,
@@ -138,16 +164,69 @@ kcm_alloc(krb5_context context,
           const char *sub,
           krb5_ccache *id)
 {
-    krb5_error_code ret;
     krb5_kcmcache *k;
+    size_t ops_prefix_len = strlen(ops->prefix);
     size_t plen = 0;
+    size_t local_def_name_len;
+    const char *local_def_name = "";
     char *def_name = NULL;
+    int default_cc_name_is_ours;
     int aret;
 
-    k = calloc(1, sizeof(*k));
-    if (k == NULL)
-	return krb5_enomem(context);
-    k->name = NULL;
+    if (!context->default_cc_name)
+        (void) krb5_cc_default_name(context);
+
+    default_cc_name_is_ours =
+        context->default_cc_name &&
+        strncmp(context->default_cc_name, ops->prefix, ops_prefix_len) == 0 &&
+        context->default_cc_name[ops_prefix_len] == ':';
+
+    if (default_cc_name_is_ours) {
+        local_def_name = context->default_cc_name + ops_prefix_len + 1;
+        local_def_name_len = strlen(local_def_name);
+    }
+
+    /* Get the default ccache name from KCM if possible */
+    (void) kcm_get_default_name(context, ops, NULL, &def_name);
+
+    /*
+     * We have a sticky situation in that applications that call
+     * krb5_cc_default() will be getting the locally configured or compiled-in
+     * default KCM cache name, which may not exist in the user's KCM session,
+     * and which the KCM daemon may not be able to alias to the actual default
+     * for the user's session.
+     *
+     * To deal with this we heuristically detect when an application uses the
+     * default KCM ccache name.
+     *
+     * If the residual happens to be the local default KCM name we may end up
+     * using whatever the default KCM cache name is instead of the local
+     * default.
+     *
+     * Note that here `residual' may be any of:
+     *
+     *  - %{UID}
+     *  - %{UID}:
+     *  - %{UID}:<subsidiary>
+     *  - <something not starting with %{UID}:>
+     *  - <empty string>
+     *  - <NULL>
+     *
+     * Only the first two count as "maybe I mean the default KCM cache".
+     */
+    if (residual && !sub && local_def_name &&
+        strncmp(residual, local_def_name, local_def_name_len) == 0) {
+        if (residual[local_def_name_len] == '\0' ||
+            (residual[local_def_name_len] == ':' &&
+             residual[local_def_name_len + 1] == '\0')) {
+            /*
+             * If we got a default cache name from KCM and the requested default
+             * cache does not exist, use the former.
+             */
+            if (def_name && kcm_stat(context, residual))
+                residual = def_name + ops_prefix_len + 1;
+        }
+    }
 
     if (residual && residual[0] == '\0')
         residual = NULL;
@@ -155,13 +234,11 @@ kcm_alloc(krb5_context context,
         sub = NULL;
 
     if (residual == NULL && sub == NULL) {
-        if (ops == &krb5_kcm_ops)
-            ret = kcm_get_default_name_kcm(context, &def_name);
-        else
-            ret = kcm_get_default_name_api(context, &def_name);
-        if (ret == 0) {
-            residual = def_name + strlen(ops->prefix) + 1;
-        }
+        /* Use the default cache name, either from KCM or local default */
+        if (def_name)
+            residual = def_name + ops_prefix_len + 1;
+        else if (default_cc_name_is_ours)
+            residual = local_def_name;
     }
 
     if (residual) {
@@ -176,8 +253,16 @@ kcm_alloc(krb5_context context,
          */
     }
 
+    k = calloc(1, sizeof(*k));
+    if (k == NULL) {
+        free(def_name);
+	return krb5_enomem(context);
+    }
+    k->name = NULL;
+
     if (residual == NULL && sub == NULL) {
-        aret = asprintf(&k->name, "%llu:", (unsigned long long)getuid());
+        /* One more way to get a default */
+        aret = asprintf(&k->name, "%llu", (unsigned long long)getuid());
     } else if (residual == NULL) {
         /*
          * Treat the subsidiary as the residual (maybe this will turn out to be
@@ -1069,8 +1154,11 @@ kcm_get_default_name(krb5_context context, const krb5_cc_ops *ops,
 
     ret = krb5_kcm_call(context, request, &response, &response_data);
     krb5_storage_free(request);
-    if (ret)
-	return _krb5_expand_default_cc_name(context, defstr, str);
+    if (ret) {
+        if (defstr)
+            return _krb5_expand_default_cc_name(context, defstr, str);
+        return ret;
+    }
 
     ret = krb5_ret_stringz(response, &name);
     krb5_storage_free(response);

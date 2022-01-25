@@ -133,27 +133,61 @@ krb5_kcm_storage_request(krb5_context context,
 
 static krb5_error_code
 kcm_alloc(krb5_context context,
-          const char *name,
+          const char *residual,
+          const char *sub,
           krb5_ccache *id)
 {
     krb5_kcmcache *k;
+    size_t plen = 0;
+    int aret;
 
-    k = malloc(sizeof(*k));
-    if (k == NULL) {
-	krb5_set_error_message(context, KRB5_CC_NOMEM,
-			       N_("malloc: out of memory", ""));
-	return KRB5_CC_NOMEM;
+    k = calloc(1, sizeof(*k));
+    if (k == NULL)
+	return krb5_enomem(context);
+    k->name = NULL;
+
+    if (residual && residual[0] == '\0')
+        residual = NULL;
+    if (sub && sub[0] == '\0')
+        sub = NULL;
+
+    if (residual) {
+        /* KCM cache names must start with {UID} or {UID}: */
+        if (residual[0] != '0')
+            plen = strspn(residual, "0123456789");
+        if (plen && residual[plen] != ':' && residual[plen] != '\0')
+            plen = 0;
+        /*
+         * If `plen', then residual is such a residual, else we'll want to
+         * prefix the {UID}:.
+         */
     }
 
-    if (name == NULL)
-        name = "";
-
-    k->name = strdup(name);
-    if (k->name == NULL) {
+    if (residual == NULL && sub == NULL) {
+        aret = asprintf(&k->name, "%llu:", (unsigned long long)getuid());
+    } else if (residual == NULL) {
+        /*
+         * Treat the subsidiary as the residual (maybe this will turn out to be
+         * wrong).
+         */
+        aret = asprintf(&k->name, "%llu:%s", (unsigned long long)getuid(),
+                        sub);
+    } else if (plen) {
+        /* The residual is a UID */
+        aret = asprintf(&k->name, "%s%s%s", residual,
+                        sub ? ":" : "", sub ? sub : "");
+    } else if (sub == NULL) {
+        /* The residual is NOT a UID */
+        aret = asprintf(&k->name, "%llu:%s", (unsigned long long)getuid(),
+                        residual);
+    } else {
+        /* Ditto, plus we have a subsidiary.  `residual && sub && !plen' */
+        aret = asprintf(&k->name, "%llu:%s:%s", (unsigned long long)getuid(),
+                        residual, sub);
+    }
+    if (aret == -1 || k->name == NULL) {
         free(k);
-        krb5_set_error_message(context, KRB5_CC_NOMEM,
-                               N_("malloc: out of memory", ""));
-        return KRB5_CC_NOMEM;
+        return krb5_enomem(context);
     }
 
     (*id)->data.data = k;
@@ -263,7 +297,7 @@ kcm_resolve_2(krb5_context context,
      * TODO: We should use `res' as the IPC name instead of the one currently
      *       hard-coded in `kcm_ipc_name'.
      */
-    return kcm_alloc(context, sub && *sub ? sub : res, id);
+    return kcm_alloc(context, res, sub, id);
 }
 
 /*
@@ -280,7 +314,7 @@ kcm_gen_new(krb5_context context, krb5_ccache *id)
     krb5_storage *request, *response;
     krb5_data response_data;
 
-    ret = kcm_alloc(context, NULL, id);
+    ret = kcm_alloc(context, NULL, NULL, id);
     if (ret)
 	return ret;
 
@@ -910,7 +944,7 @@ kcm_get_cache_next(krb5_context context, krb5_cc_cursor cursor, const krb5_cc_op
     if (ret == 0) {
 	ret = _krb5_cc_allocate(context, ops, id);
 	if (ret == 0)
-	    ret = kcm_alloc(context, name, id);
+	    ret = kcm_alloc(context, name, NULL, id);
 	krb5_xfree(name);
     }
 
@@ -1196,7 +1230,7 @@ _krb5_kcm_is_running(krb5_context context)
     krb5_ccache id = &ccdata;
     krb5_boolean running;
 
-    ret = kcm_alloc(context, NULL, &id);
+    ret = kcm_alloc(context, NULL, NULL, &id);
     if (ret)
 	return 0;
 

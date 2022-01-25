@@ -151,8 +151,6 @@ kcm_stat(krb5_context context, const char *name)
     return ret;
 }
 
-static krb5_error_code kcm_get_default_name_kcm(krb5_context, char **);
-static krb5_error_code kcm_get_default_name_api(krb5_context, char **);
 static krb5_error_code kcm_get_default_name(krb5_context,
                                             const krb5_cc_ops *,
                                             const char *, char **);
@@ -164,30 +162,26 @@ kcm_alloc(krb5_context context,
           const char *sub,
           krb5_ccache *id)
 {
+    krb5_error_code ret;
     krb5_kcmcache *k;
     size_t ops_prefix_len = strlen(ops->prefix);
     size_t plen = 0;
     size_t local_def_name_len;
-    const char *local_def_name = "";
-    char *def_name = NULL;
-    int default_cc_name_is_ours;
+    char *local_def_name = NULL; /* Our idea of default KCM cache name */
+    char *kcm_def_name = NULL; /* KCM's knowledge of default cache name */
     int aret;
 
-    if (!context->default_cc_name)
-        (void) krb5_cc_default_name(context);
-
-    default_cc_name_is_ours =
-        context->default_cc_name &&
-        strncmp(context->default_cc_name, ops->prefix, ops_prefix_len) == 0 &&
-        context->default_cc_name[ops_prefix_len] == ':';
-
-    if (default_cc_name_is_ours) {
-        local_def_name = context->default_cc_name + ops_prefix_len + 1;
-        local_def_name_len = strlen(local_def_name);
-    }
+    /* Get the KCM:%{UID} default */
+    if (ops == &krb5_kcm_ops)
+        ret = _krb5_expand_default_cc_name(context, KRB5_DEFAULT_CCNAME_KCM_KCM, &local_def_name);
+    else
+        ret = _krb5_expand_default_cc_name(context, KRB5_DEFAULT_CCNAME_KCM_API, &local_def_name);
+    if (ret)
+        return ret;
+    local_def_name_len = strlen(local_def_name);
 
     /* Get the default ccache name from KCM if possible */
-    (void) kcm_get_default_name(context, ops, NULL, &def_name);
+    (void) kcm_get_default_name(context, ops, NULL, &kcm_def_name);
 
     /*
      * We have a sticky situation in that applications that call
@@ -214,17 +208,18 @@ kcm_alloc(krb5_context context,
      *
      * Only the first two count as "maybe I mean the default KCM cache".
      */
-    if (residual && !sub && local_def_name &&
-        strncmp(residual, local_def_name, local_def_name_len) == 0) {
-        if (residual[local_def_name_len] == '\0' ||
-            (residual[local_def_name_len] == ':' &&
-             residual[local_def_name_len + 1] == '\0')) {
+    if (residual && !sub &&
+        strncmp(residual, local_def_name + ops_prefix_len + 1,
+                local_def_name_len - (ops_prefix_len + 1)) == 0) {
+        if (residual[local_def_name_len - (ops_prefix_len + 1)] == '\0' ||
+            (residual[local_def_name_len - (ops_prefix_len + 1)] == ':' &&
+             residual[local_def_name_len - ops_prefix_len] == '\0')) {
             /*
              * If we got a default cache name from KCM and the requested default
              * cache does not exist, use the former.
              */
-            if (def_name && kcm_stat(context, residual))
-                residual = def_name + ops_prefix_len + 1;
+            if (kcm_def_name && kcm_stat(context, residual))
+                residual = kcm_def_name + ops_prefix_len + 1;
         }
     }
 
@@ -235,10 +230,10 @@ kcm_alloc(krb5_context context,
 
     if (residual == NULL && sub == NULL) {
         /* Use the default cache name, either from KCM or local default */
-        if (def_name)
-            residual = def_name + ops_prefix_len + 1;
-        else if (default_cc_name_is_ours)
-            residual = local_def_name;
+        if (kcm_def_name)
+            residual = kcm_def_name + ops_prefix_len + 1;
+        else
+            residual = local_def_name + ops_prefix_len + 1;
     }
 
     if (residual) {
@@ -255,7 +250,8 @@ kcm_alloc(krb5_context context,
 
     k = calloc(1, sizeof(*k));
     if (k == NULL) {
-        free(def_name);
+        free(local_def_name);
+        free(kcm_def_name);
 	return krb5_enomem(context);
     }
     k->name = NULL;
@@ -284,12 +280,14 @@ kcm_alloc(krb5_context context,
                         residual, sub);
     }
     if (aret == -1 || k->name == NULL) {
-        free(def_name);
+        free(local_def_name);
+        free(kcm_def_name);
         free(k);
         return krb5_enomem(context);
     }
 
-    free(def_name);
+    free(local_def_name);
+    free(kcm_def_name);
     (*id)->data.data = k;
     (*id)->data.length = sizeof(*k);
 

@@ -4,6 +4,7 @@ noinst_DATA = \
 	an2ln-db.txt \
 	kdc-tester4.json \
 	krb5.conf \
+	krb5-kcm.conf \
 	krb5-cccol.conf \
 	krb5-authz.conf \
 	krb5-authz2.conf \
@@ -203,6 +204,13 @@ krb5.conf: krb5.conf.in Makefile
 	   -e 's,[@]signalsocket[@],signal,g' \
 	   -e 's,[@]kdc[@],,g' < $(srcdir)/krb5.conf.in > krb5.conf.tmp && \
 	mv krb5.conf.tmp krb5.conf
+
+krb5-kcm.conf: krb5-kcm.conf.in Makefile
+	$(do_subst) \
+	   -e 's,[@]WEAK[@],false,g' \
+	   -e 's,[@]dk[@],,g' \
+	   -e 's,[@]kdc[@],,g' < $(srcdir)/krb5-kcm.conf.in > krb5-kcm.conf.tmp && \
+	mv krb5-kcm.conf.tmp krb5-kcm.conf
 
 krb5-cccol.conf: krb5-cccol.conf.in Makefile
 	$(do_subst) \

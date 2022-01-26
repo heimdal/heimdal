@@ -522,16 +522,16 @@ static int
 list_caches(krb5_context context, struct klist_options *opt)
 {
     krb5_cccol_cursor cursor;
-    const char *cdef_name;
+    const char *cdef_name = krb5_cc_default_name(context);
     char *def_name;
     krb5_error_code ret;
     krb5_ccache id;
     rtbl_t ct;
 
-    cdef_name = krb5_cc_default_name(context);
-    if (cdef_name == NULL)
-	krb5_errx(context, 1, "krb5_cc_default_name");
-    def_name = strdup(cdef_name);
+    if ((def_name = krb5_cccol_get_default_ccname(context)) == NULL)
+        cdef_name = krb5_cc_default_name(context);
+    if (!def_name && cdef_name && (def_name = strdup(cdef_name)) == NULL)
+        krb5_err(context, 1, ENOMEM, "Out of memory");
 
     ret = krb5_cccol_cursor_new(context, &cursor);
     if (ret == KRB5_CC_NOSUPP) {
@@ -581,7 +581,7 @@ list_caches(krb5_context context, struct klist_options *opt)
 	    rtbl_add_column_entry(ct, COL_CACHENAME, fname);
 	    if (opt->json_flag)
 		;
-	    else if (strcmp(fname, def_name) == 0)
+	    else if (def_name && strcmp(fname, def_name) == 0)
 		rtbl_add_column_entry(ct, COL_DEFCACHE, "*");
 	    else
 		rtbl_add_column_entry(ct, COL_DEFCACHE, "");

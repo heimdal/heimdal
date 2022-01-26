@@ -742,6 +742,7 @@ HEIMDAL_KRB5_2.0 {
 		krb5_cccol_cursor_new;
 		krb5_cccol_cursor_next;
 		krb5_cccol_cursor_free;
+		krb5_cccol_get_default_ccname;
 
 		# com_err error tables
 		initialize_krb5_error_table_r;

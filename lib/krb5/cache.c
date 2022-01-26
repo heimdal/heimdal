@@ -822,6 +822,17 @@ krb5_cc_configured_default_name(krb5_context context)
     return context->configured_default_cc_name = expanded;
 }
 
+KRB5_LIB_FUNCTION char * KRB5_LIB_CALL
+krb5_cccol_get_default_ccname(krb5_context context)
+{
+    const char *cfg = get_default_cc_type(context, 1);
+    char *cccol_default_ccname;
+    const krb5_cc_ops *ops = krb5_cc_get_prefix_ops(context, cfg);
+
+    (void) (*ops->get_default_name)(context, &cccol_default_ccname);
+    return cccol_default_ccname;
+}
+
 /**
  * Open the default ccache in `id'.
  *
@@ -1651,7 +1662,8 @@ krb5_cc_move(krb5_context context, krb5_ccache from, krb5_ccache to)
         ret = (*to->ops->move)(context, from, to);
         if (ret == 0)
             return 0;
-        if (ret != EXDEV && ret != ENOTSUP && ret != KRB5_CC_NOSUPP)
+        if (ret != EXDEV && ret != ENOTSUP && ret != KRB5_CC_NOSUPP &&
+            ret != KRB5_FCC_INTERNAL)
             return ret;
         /* Fallback to high-level copy */
     }   /* Else        high-level copy */
@@ -1764,7 +1776,8 @@ krb5_cc_set_config(krb5_context context, krb5_ccache id,
 
     /* Remove old configuration */
     ret = krb5_cc_remove_cred(context, id, 0, &cred);
-    if (ret && ret != KRB5_CC_NOTFOUND && ret != KRB5_CC_NOSUPP)
+    if (ret && ret != KRB5_CC_NOTFOUND && ret != KRB5_CC_NOSUPP &&
+        ret != KRB5_FCC_INTERNAL)
         goto out;
 
     if (data) {

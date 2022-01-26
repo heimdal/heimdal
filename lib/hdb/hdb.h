@@ -57,24 +57,26 @@ struct hdb_dbinfo;
 enum hdb_lockop{ HDB_RLOCK, HDB_WLOCK };
 
 /* flags for various functions */
-#define HDB_F_DECRYPT		1	/* decrypt keys */
-#define HDB_F_REPLACE		2	/* replace entry */
-#define HDB_F_GET_CLIENT	4	/* fetch client */
-#define HDB_F_GET_SERVER	8	/* fetch server */
-#define HDB_F_GET_KRBTGT	16	/* fetch krbtgt */
-#define HDB_F_GET_ANY		28	/* fetch any of client,server,krbtgt */
-#define HDB_F_CANON		32	/* want canonicalition */
-#define HDB_F_ADMIN_DATA	64	/* want data that kdc don't use  */
-#define HDB_F_KVNO_SPECIFIED	128	/* we want a particular KVNO */
-#define HDB_F_LIVE_CLNT_KVNOS	512	/* we want all live keys for pre-auth */
-#define HDB_F_LIVE_SVC_KVNOS	1024	/* we want all live keys for tix */
-#define HDB_F_ALL_KVNOS		2048	/* we want all the keys, live or not */
-#define HDB_F_FOR_AS_REQ	4096	/* fetch is for a AS REQ */
-#define HDB_F_FOR_TGS_REQ	8192	/* fetch is for a TGS REQ */
-#define HDB_F_PRECHECK		16384	/* check that the operation would succeed */
-#define HDB_F_DELAY_NEW_KEYS	32768	/* apply [hdb] new_service_key_delay */
-#define HDB_F_SYNTHETIC_OK	65536	/* synthetic principal for PKINIT or GSS preauth OK */
-#define HDB_F_GET_FAST_COOKIE  131072	/* fetch the FX-COOKIE key (not a normal principal) */
+#define HDB_F_DECRYPT		0x00001	/* decrypt keys */
+#define HDB_F_REPLACE		0x00002	/* replace entry */
+#define HDB_F_GET_CLIENT	0x00004	/* fetch client */
+#define HDB_F_GET_SERVER	0x00008	/* fetch server */
+#define HDB_F_GET_KRBTGT	0x00010	/* fetch krbtgt */
+#define HDB_F_GET_ANY		( HDB_F_GET_CLIENT | \
+				  HDB_F_GET_SERVER | \
+				  HDB_F_GET_KRBTGT ) /* fetch any of client,server,krbtgt */
+#define HDB_F_CANON		0x00020	/* want canonicalition */
+#define HDB_F_ADMIN_DATA	0x00040	/* want data that kdc don't use  */
+#define HDB_F_KVNO_SPECIFIED	0x00080	/* we want a particular KVNO */
+#define HDB_F_LIVE_CLNT_KVNOS	0x00200	/* we want all live keys for pre-auth */
+#define HDB_F_LIVE_SVC_KVNOS	0x00400	/* we want all live keys for tix */
+#define HDB_F_ALL_KVNOS		0x00800	/* we want all the keys, live or not */
+#define HDB_F_FOR_AS_REQ	0x01000	/* fetch is for a AS REQ */
+#define HDB_F_FOR_TGS_REQ	0x02000	/* fetch is for a TGS REQ */
+#define HDB_F_PRECHECK		0x04000	/* check that the operation would succeed */
+#define HDB_F_DELAY_NEW_KEYS	0x08000	/* apply [hdb] new_service_key_delay */
+#define HDB_F_SYNTHETIC_OK	0x10000	/* synthetic principal for PKINIT or GSS preauth OK */
+#define HDB_F_GET_FAST_COOKIE	0x20000	/* fetch the FX-COOKIE key (not a normal principal) */
 
 /* hdb_capability_flags */
 #define HDB_CAP_F_HANDLE_ENTERPRISE_PRINCIPAL 1

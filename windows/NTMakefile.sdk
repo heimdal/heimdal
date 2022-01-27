@@ -94,11 +94,11 @@ cdebug      = -Zi -Od -DDEBUG
 cvarsmt     = -D_MT
 cvarsdll    = -D_MT -D_DLL
 !ifdef NODEBUG
-cvarsmt     = $(cvarsmt) -MTd
-cvarsdll    = $(cvarsdll) -MDd
-!else
 cvarsmt     = $(cvarsmt) -MT
 cvarsdll    = $(cvarsdll) -MD
+!else
+cvarsmt     = $(cvarsmt) -MTd
+cvarsdll    = $(cvarsdll) -MDd
 !endif
 cvars       = $(cvarsmt)
 

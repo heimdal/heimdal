@@ -275,6 +275,7 @@ _kdc_find_etype(astgs_request_t r, uint32_t flags,
                      * enctype in its KDC-REQ-BODY's etype list, which is what
                      * `etypes' is here.
                      */
+                    enctype = p[i];
                     ret = 0;
                     break;
                 }
@@ -290,6 +291,7 @@ _kdc_find_etype(astgs_request_t r, uint32_t flags,
                      */
                     for (m = 0; m < princ->etypes->len; m++) {
                         if (p[i] == princ->etypes->val[m]) {
+                            enctype = p[i];
                             ret = 0;
                             break;
                         }

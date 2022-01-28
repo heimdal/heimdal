@@ -272,7 +272,7 @@ ad_lookup(krb5_context context,
           gss_const_name_t initiator_name,
           gss_const_OID mech_type,
           krb5_principal *canon_principal,
-          heim_data_t *requestor_sid)
+          kdc_data_t *requestor_sid)
 {
     krb5_error_code ret;
     OM_uint32 minor;
@@ -354,7 +354,7 @@ ad_lookup(krb5_context context,
 	    ldap_count_values_len(values) == 0)
 	    goto out;
 
-	*requestor_sid = heim_data_create(values[0]->bv_val, values[0]->bv_len);
+	*requestor_sid = kdc_data_create(values[0]->bv_val, values[0]->bv_len);
 	if (*requestor_sid == NULL)
 	    goto enomem;
     }
@@ -371,7 +371,7 @@ out:
 	*canon_principal = NULL;
 
 	if (requestor_sid) {
-	    heim_release(*requestor_sid);
+	    kdc_object_release(*requestor_sid);
 	    *requestor_sid = NULL;
 	}
     }
@@ -403,7 +403,7 @@ authorize(void *ctx,
     krb5_const_realm realm = krb5_principal_get_realm(context, client->principal);
     krb5_boolean reconnect_p = FALSE;
     krb5_boolean is_tgs;
-    heim_data_t requestor_sid = NULL;
+    kdc_data_t requestor_sid = NULL;
 
     *authorized = FALSE;
     *mapped_name = NULL;
@@ -457,7 +457,7 @@ authorize(void *ctx,
     if (requestor_sid) {
 	kdc_request_set_attribute((kdc_request_t)r,
 				  HSTR("org.h5l.gss-pa-requestor-sid"), requestor_sid);
-	heim_release(requestor_sid);
+	kdc_object_release(requestor_sid);
     }
 
     return ret;
@@ -466,7 +466,7 @@ authorize(void *ctx,
 static KRB5_LIB_CALL krb5_error_code
 finalize_pac(void *ctx, astgs_request_t r)
 {
-    heim_data_t requestor_sid;
+    kdc_data_t requestor_sid;
 
     requestor_sid = kdc_request_get_attribute((kdc_request_t)r,
 					      HSTR("org.h5l.gss-pa-requestor-sid"));
@@ -476,7 +476,7 @@ finalize_pac(void *ctx, astgs_request_t r)
     kdc_audit_setkv_object((kdc_request_t)r, "gss_requestor_sid", requestor_sid);
 
     return kdc_request_add_pac_buffer(r, PAC_REQUESTOR_SID,
-				      heim_data_get_data(requestor_sid));
+				      kdc_data_get_data(requestor_sid));
 }
 
 static KRB5_LIB_CALL krb5_error_code

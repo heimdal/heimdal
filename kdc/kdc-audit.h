@@ -36,8 +36,6 @@
 #ifndef HEIMDAL_KDC_KDC_AUDIT_H
 #define HEIMDAL_KDC_KDC_AUDIT_H 1
 
-#include <heimbase.h>
-
 /*
  * KDC auditing
  */
@@ -55,7 +53,7 @@
 #define KDC_AUTH_EVENT_PREAUTH_SUCCEEDED	9   /* generic (non-long term key) PA success */
 
 /*
- * Audit keys to be queried using heim_audit_getkv(). There are other keys
+ * Audit keys to be queried using kdc_audit_getkv(). There are other keys
  * intended for logging that are not defined below; the constants below are
  * there to ease migration from the older auth_status HDB API.
  */

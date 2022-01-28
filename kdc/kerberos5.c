@@ -601,7 +601,7 @@ pa_gss_validate(astgs_request_t r, const PA_DATA *pa)
 	goto out;
 
 out:
-    heim_release(gcp);
+    kdc_object_release(gcp);
     free(client_name);
 
     return ret;

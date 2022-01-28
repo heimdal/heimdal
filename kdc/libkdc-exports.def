@@ -74,6 +74,22 @@ EXPORTS
 	kdc_audit_vaddreason
 	_kdc_audit_trail
 
+	kdc_object_alloc
+	kdc_object_retain
+	kdc_object_release
+	kdc_bool_create
+	kdc_bool_get_value
+	kdc_array_iterate
+	kdc_array_get_length
+	kdc_array_get_value
+	kdc_array_copy_value
+	kdc_string_create
+	kdc_string_get_utf8
+	kdc_data_create
+	kdc_data_get_data
+	kdc_number_create
+	kdc_number_get_value
+
 	; needed for digest-service
 	_kdc_db_fetch
 	_kdc_free_ent

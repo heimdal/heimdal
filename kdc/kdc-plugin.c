@@ -309,6 +309,124 @@ kdc_get_instance(const char *libname)
 }
 
 /*
+ * Minimum API surface wrapper for libheimbase object types so it
+ * may remain a private interface, yet plugins can interact with
+ * objects.
+ */
+
+KDC_LIB_FUNCTION kdc_object_t KDC_LIB_CALL
+kdc_object_alloc(size_t size, const char *name, kdc_type_dealloc dealloc)
+{
+    return heim_alloc(size, name, dealloc);
+}
+
+KDC_LIB_FUNCTION kdc_object_t KDC_LIB_CALL
+kdc_object_retain(kdc_object_t o)
+{
+    return heim_retain(o);
+}
+
+KDC_LIB_FUNCTION void KDC_LIB_CALL
+kdc_object_release(kdc_object_t o)
+{
+    heim_release(o);
+}
+
+KDC_LIB_FUNCTION kdc_object_t KDC_LIB_CALL
+kdc_bool_create(krb5_boolean v)
+{
+    return heim_bool_create(v);
+}
+
+KDC_LIB_FUNCTION krb5_boolean KDC_LIB_CALL
+kdc_bool_get_value(kdc_object_t o)
+{
+    return heim_bool_val(o);
+}
+
+struct kdc_array_iterator_trampoline_data {
+    kdc_array_iterator_t iter;
+    void *data;
+};
+
+/*
+ * Calling convention shim to avoid needing to update all internal
+ * consumers of heim_array_iterate_f()
+ */
+static void
+_kdc_array_iterator_trampoline(kdc_object_t o, void *data, int *stop)
+{
+    struct kdc_array_iterator_trampoline_data *t = data;
+
+    t->iter(o, t->data, stop);
+}
+
+KDC_LIB_FUNCTION void KDC_LIB_CALL
+kdc_array_iterate(kdc_array_t a, void *d, kdc_array_iterator_t iter)
+{
+    struct kdc_array_iterator_trampoline_data t;
+
+    t.iter = iter;
+    t.data = d;
+
+    return heim_array_iterate_f((heim_array_t)a, &t, _kdc_array_iterator_trampoline);
+}
+
+KDC_LIB_FUNCTION size_t KDC_LIB_CALL
+kdc_array_get_length(kdc_array_t a)
+{
+    return heim_array_get_length((heim_array_t)a);
+}
+
+KDC_LIB_FUNCTION kdc_object_t KDC_LIB_CALL
+kdc_array_get_value(heim_array_t a, size_t i)
+{
+    return heim_array_get_value((heim_array_t)a, i);
+}
+
+KDC_LIB_FUNCTION kdc_object_t KDC_LIB_CALL
+kdc_array_copy_value(heim_array_t a, size_t i)
+{
+    return heim_array_copy_value((heim_array_t)a, i);
+}
+
+KDC_LIB_FUNCTION kdc_string_t KDC_LIB_CALL
+kdc_string_create(const char *s)
+{
+    return (kdc_string_t)heim_string_create(s);
+}
+
+KDC_LIB_FUNCTION const char * KDC_LIB_CALL
+kdc_string_get_utf8(kdc_string_t s)
+{
+    return heim_string_get_utf8((heim_string_t)s);
+}
+
+KDC_LIB_FUNCTION kdc_data_t
+kdc_data_create(const void *d, size_t len)
+{
+    return (kdc_data_t)heim_data_create(d, len);
+}
+
+KDC_LIB_FUNCTION const krb5_data * KDC_LIB_CALL
+kdc_data_get_data(kdc_data_t d)
+{
+    return heim_data_get_data((heim_data_t)d);
+}
+
+KDC_LIB_FUNCTION kdc_number_t KDC_LIB_CALL
+kdc_number_create(int64_t v)
+{
+    return (kdc_number_t)heim_number_create(v);
+}
+
+KDC_LIB_FUNCTION int64_t KDC_LIB_CALL
+kdc_number_get_value(kdc_number_t n)
+{
+    return heim_number_get_long((heim_number_t)n);
+}
+
+/*
  * Plugin accessors
  */
 

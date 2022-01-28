@@ -423,7 +423,7 @@ _kdc_gss_rd_padata(astgs_request_t r,
         goto out;
     }
 
-    gcp = heim_alloc(sizeof(*gcp), "pa-gss-client-params", pa_gss_dealloc_client_params);
+    gcp = kdc_object_alloc(sizeof(*gcp), "pa-gss-client-params", pa_gss_dealloc_client_params);
     if (gcp == NULL) {
         ret = krb5_enomem(r->context);
         goto out;
@@ -473,7 +473,7 @@ out:
     if (gcp && gcp->major != GSS_S_NO_CONTEXT)
         *pgcp = gcp;
     else
-        heim_release(gcp);
+        kdc_object_release(gcp);
 
     return ret;
 }

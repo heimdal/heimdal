@@ -134,6 +134,7 @@ pa_gss_decode_context_state(astgs_request_t r,
     krb5_storage *sp;
     size_t cksumsize;
     krb5_data data;
+    int32_t cksumtype;
 
     memset(req_body_checksum, 0, sizeof(*req_body_checksum));
     sec_context_token->length = 0;
@@ -154,9 +155,11 @@ pa_gss_decode_context_state(astgs_request_t r,
     if (ret)
         goto out;
 
-    ret = krb5_ret_int32(sp, &req_body_checksum->cksumtype);
+    ret = krb5_ret_int32(sp, &cksumtype);
     if (ret)
         goto out;
+
+    req_body_checksum->cksumtype = (CKSUMTYPE)cksumtype;
 
     if (req_body_checksum->cksumtype == CKSUMTYPE_NONE ||
 	krb5_checksum_is_keyed(r->context, req_body_checksum->cksumtype)) {
@@ -273,7 +276,7 @@ pa_gss_encode_context_state(astgs_request_t r,
     if (ret)
         goto out;
 
-    ret = krb5_store_int32(sp, req_body_checksum->cksumtype);
+    ret = krb5_store_int32(sp, (int32_t)req_body_checksum->cksumtype);
     if (ret)
         goto out;
 

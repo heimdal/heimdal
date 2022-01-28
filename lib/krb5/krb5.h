@@ -169,7 +169,7 @@ typedef struct krb5_enc_data {
 #define ETYPE_DES_PCBC_NONE	KRB5_ENCTYPE_DES_PCBC_NONE
 #define ETYPE_DIGEST_MD5_NONE	KRB5_ENCTYPE_DIGEST_MD5_NONE
 #define ETYPE_CRAM_MD5_NONE	KRB5_ENCTYPE_CRAM_MD5_NONE
-#define DOMAIN_X500_COMPRESS	domain_X500_compress
+#define DOMAIN_X500_COMPRESS	domain_X500_Compress
 
 /* PDU types */
 typedef enum krb5_pdu {

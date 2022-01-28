@@ -2283,10 +2283,7 @@ _asn1_free(const struct asn1_template *t, void *data)
                 /* A1_OP_TYPE_DECORATE_EXTERN */
 		const struct asn1_type_func *f = t->ptr;
 
-                if (t->tt & A1_FLAG_HEIM_OBJ) {
-                    heim_release(*(void **)el);
-                    *(void **)el = 0;
-                } else if (f && f->release)
+                if (f && f->release)
                     (f->release)(el);
                 else if (f)
                     memset(el, 0, f->size);
@@ -2920,9 +2917,7 @@ _asn1_copy(const struct asn1_template *t, const void *from, void *to)
 		const struct asn1_type_func *f = t->ptr;
 
                 /* A1_OP_TYPE_DECORATE_EXTERN */
-                if (t->tt & A1_FLAG_HEIM_OBJ)
-                    *(heim_object_t *)tel = heim_retain(*(void **)fel);
-                else if (f && f->copy)
+                if (f && f->copy)
                     ret = (f->copy)(fel, tel);
                 else if (f)
                     memset(tel, 0, f->size);

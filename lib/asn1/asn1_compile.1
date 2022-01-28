@@ -258,21 +258,6 @@ used for internal bookkeeping but which do not affect
 interoperability because they are neither encoded nor decoded.
 For example, one might decorate a request type with state needed
 during processing of the request.
-.It Fl Fl decorate=ASN1-TYPE:heim_object_t:fname
-Add to the C struct generated for the given ASN.1 SET or SEQUENCE type
-named
-.Ar ASN1-TYPE
-a
-.Dq hidden
-field named
-.Ar fname
-of C type
-.Sq heim_object_t
-values of which will be copied and released with
-.Sq heim_retain()
-and
-.Sq heim_release()
-respectively.
 .It Fl Fl decorate=ASN1-TYPE:void*:fname
 Add to the C struct generated for the given ASN.1 SET, SEQUENCE, or
 CHOICE type named

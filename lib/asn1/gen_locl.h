@@ -158,7 +158,6 @@ struct decoration {
     unsigned int ptr:1;         /* external, pointer */
     unsigned int void_star:1;   /* external, void * */
     unsigned int struct_star:1; /* external, struct foo * */
-    unsigned int heim_object:1; /* external, heim_object_t */
 };
 int decorate_type(const char *, struct decoration *, ssize_t *);
 

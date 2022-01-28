@@ -25,13 +25,11 @@ endif
 libasn1_la_LIBADD = \
 	libasn1base.la \
 	@LIB_com_err@ \
-	$(LIB_heimbase) \
 	$(LIBADD_roken)
 
 libasn1template_la_LIBADD = \
 	libasn1base.la \
 	@LIB_com_err@ \
-	$(LIB_heimbase) \
 	$(LIBADD_roken)
 
 BUILT_SOURCES =			\
@@ -192,12 +190,10 @@ check_timegm_LDADD = $(check_der_LDADD)
 
 check_gen_template_LDADD = \
 	libasn1template.la \
-	$(LIB_heimbase) \
 	$(LIB_roken)
 
 check_gen_LDADD = \
 	libasn1template.la \
-	$(LIB_heimbase) \
 	$(LIB_roken)
 
 check_ber_LDADD = $(check_gen_LDADD)

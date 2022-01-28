@@ -98,6 +98,17 @@ struct krb5_kdc_configuration {
 };
 #endif
 
+typedef void *kdc_object_t;
+typedef struct kdc_array_data *kdc_array_t;
+typedef struct kdc_dict_data *kdc_dict_t;
+typedef struct kdc_string_data *kdc_string_t;
+typedef struct kdc_data_data *kdc_data_t;
+typedef struct kdc_number_data *kdc_number_t;
+
+typedef void (KRB5_CALLCONV *kdc_array_iterator_t)(kdc_object_t, void *, int *);
+
+typedef void (KRB5_CALLCONV *kdc_type_dealloc)(kdc_object_t);
+
 #include <kdc-protos.h>
 
 #endif /* __KDC_H__ */

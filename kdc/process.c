@@ -113,18 +113,18 @@ kdc_audit_setkv_number(kdc_request_t r, const char *k, int64_t v)
 }
 
 KDC_LIB_FUNCTION void KDC_LIB_CALL
-kdc_audit_addkv_object(kdc_request_t r, const char *k, heim_object_t obj)
+kdc_audit_addkv_object(kdc_request_t r, const char *k, kdc_object_t obj)
 {
     heim_audit_addkv_object((heim_svc_req_desc)r, k, obj);
 }
 
 KDC_LIB_FUNCTION void KDC_LIB_CALL
-kdc_audit_setkv_object(kdc_request_t r, const char *k, heim_object_t obj)
+kdc_audit_setkv_object(kdc_request_t r, const char *k, kdc_object_t obj)
 {
     heim_audit_setkv_object((heim_svc_req_desc)r, k, obj);
 }
 
-KDC_LIB_FUNCTION heim_object_t KDC_LIB_CALL
+KDC_LIB_FUNCTION kdc_object_t KDC_LIB_CALL
 kdc_audit_getkv(kdc_request_t r, const char *k)
 {
     return heim_audit_getkv((heim_svc_req_desc)r, k);
@@ -553,25 +553,25 @@ krb5_kdc_save_request(krb5_context context,
 }
 
 KDC_LIB_FUNCTION krb5_error_code KDC_LIB_CALL
-kdc_request_set_attribute(kdc_request_t r, heim_object_t key, heim_object_t value)
+kdc_request_set_attribute(kdc_request_t r, kdc_object_t key, kdc_object_t value)
 {
     return heim_dict_set_value(r->attributes, key, value);
 }
 
-KDC_LIB_FUNCTION heim_object_t KDC_LIB_CALL
-kdc_request_get_attribute(kdc_request_t r, heim_object_t key)
+KDC_LIB_FUNCTION kdc_object_t KDC_LIB_CALL
+kdc_request_get_attribute(kdc_request_t r, kdc_object_t key)
 {
     return heim_dict_get_value(r->attributes, key);
 }
 
-KDC_LIB_FUNCTION heim_object_t KDC_LIB_CALL
-kdc_request_copy_attribute(kdc_request_t r, heim_object_t key)
+KDC_LIB_FUNCTION kdc_object_t KDC_LIB_CALL
+kdc_request_copy_attribute(kdc_request_t r, kdc_object_t key)
 {
     return heim_dict_copy_value(r->attributes, key);
 }
 
 KDC_LIB_FUNCTION void KDC_LIB_CALL
-kdc_request_delete_attribute(kdc_request_t r, heim_object_t key)
+kdc_request_delete_attribute(kdc_request_t r, kdc_object_t key)
 {
     heim_dict_delete_key(r->attributes, key);
 }

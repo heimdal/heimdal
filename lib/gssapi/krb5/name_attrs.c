@@ -736,19 +736,37 @@ get_pac_buffer(OM_uint32 *minor_status,
 	       gss_buffer_t display_value,
 	       int *more)
 {
-    krb5_error_code kret;
+    krb5_error_code kret = 0;
     krb5_context context;
     krb5_data data;
     PrincipalNameAttrs *nameattrs = name->nameattrs;
+    PrincipalNameAttrSrc *src = nameattrs ? nameattrs->source : NULL;
+    EncTicketPart *ticket =
+        src && src->element == choice_PrincipalNameAttrSrc_enc_ticket_part ?
+            &src->u.enc_ticket_part : NULL;
     krb5_data suffix;
+    krb5_pac pac = nameattrs ? nameattrs->pac : NULL;
+    krb5_pac freeme = NULL;
+
+    if (!authenticated)
+        return GSS_S_CALL_INACCESSIBLE_WRITE;
+    if (prefix->length || !nameattrs || (!nameattrs->pac && !ticket))
+        return GSS_S_UNAVAILABLE;
 
     krb5_data_zero(&data);
 
-    if (prefix->length || !authenticated ||
-	!nameattrs || !nameattrs->pac)
-        return GSS_S_UNAVAILABLE;
-
     GSSAPI_KRB5_INIT(&context);
+
+    if (!pac) {
+        kret = _krb5_get_ad(context, ticket->authorization_data,
+                            NULL, KRB5_AUTHDATA_WIN2K_PAC, &data);
+        if (kret == 0)
+            kret = krb5_pac_parse(context, data.data, data.length, &freeme);
+        if (kret == 0)
+            pac = freeme;
+        if (kret)
+            goto out;
+    }
 
     if (ATTR_EQ_PREFIX(attr, "urn:mspac:")) {
         suffix.length = attr->length - (sizeof("urn:mspac:") - 1);
@@ -759,18 +777,22 @@ get_pac_buffer(OM_uint32 *minor_status,
     } else
         return GSS_S_UNAVAILABLE; /* should not be reached */
 
-    *authenticated = nameattrs->pac_verified;
-    if (complete)
-        *complete = 1;
-
-    kret = _krb5_pac_get_buffer_by_name(context, nameattrs->pac, &suffix,
+    kret = _krb5_pac_get_buffer_by_name(context, pac, &suffix,
 					value ? &data : NULL);
+    if (kret)
+        goto out;
 
     if (value) {
 	value->length = data.length;
 	value->value = data.data;
     }
 
+    *authenticated = nameattrs->pac_verified;
+    if (complete)
+        *complete = 1;
+
+out:
+    krb5_pac_free(context, freeme);
     *minor_status = kret;
     if (kret == ENOENT)
         return GSS_S_UNAVAILABLE;

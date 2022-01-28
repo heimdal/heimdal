@@ -31,8 +31,6 @@
 
 RELDIR=lib\krb5
 
-intcflags=-I$(SRCDIR) -I$(SRCDIR)\..\com_err -I$(SRCDIR)\..\base
-
 !include ../../windows/NTMakefile.w32
 
 libkrb5_OBJS =			\

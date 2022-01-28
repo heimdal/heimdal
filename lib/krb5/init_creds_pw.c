@@ -35,8 +35,7 @@
  */
 
 #include "krb5_locl.h"
-
-#include <heimbasepriv.h>
+#include "../base/heimbasepriv.h" /* XXX */
 
 struct pa_info_data {
     krb5_enctype etype;

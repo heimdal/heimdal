@@ -150,7 +150,7 @@ db_init_plugins_once(void *arg)
     db_plugins = heim_retain(arg);
 }
 
-static void
+static void HEIM_CALLCONV
 plugin_dealloc(void *arg)
 {
     db_plugin plug = arg;

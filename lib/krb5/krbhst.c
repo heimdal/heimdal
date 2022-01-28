@@ -929,7 +929,7 @@ kpasswd_get_next(krb5_context context,
     return KRB5_KDC_UNREACH;
 }
 
-static void
+static void KRB5_CALLCONV
 krbhost_dealloc(void *ptr)
 {
     struct krb5_krbhst_data *handle = (struct krb5_krbhst_data *)ptr;

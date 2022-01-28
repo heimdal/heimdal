@@ -64,7 +64,7 @@
 
 #include "baselocl.h"
 
-static void
+static void HEIM_CALLCONV
 memory_free(heim_object_t obj)
 {
 }

@@ -112,7 +112,7 @@ struct heim_dso {
     void *dsohandle;
 };
 
-static void
+static void HEIM_CALLCONV
 dso_dealloc(void *ptr)
 {
     struct heim_dso *p = ptr;

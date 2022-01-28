@@ -176,7 +176,7 @@ struct krb5_sendto_ctx_data {
     unsigned int stid;
 };
 
-static void
+static void KRB5_CALLCONV
 dealloc_sendto_ctx(void *ptr)
 {
     krb5_sendto_ctx ctx = (krb5_sendto_ctx)ptr;

@@ -2,8 +2,6 @@
 --decorate=TESTDecorated:TESTuint32:version2?
 --decorate=TESTDecorated:my_vers:version3:my_copy_vers:my_free_vers:"check-gen.h"
 --decorate=TESTDecorated:void *:privthing
---decorate=TESTDecorated:heim_object_t:privobj
 --decorate=TESTDecoratedChoice:TESTuint32:version2?
 --decorate=TESTDecoratedChoice:my_vers:version3:my_copy_vers:my_free_vers:"check-gen.h"
 --decorate=TESTDecoratedChoice:void *:privthing
---decorate=TESTDecoratedChoice:heim_object_t:privobj

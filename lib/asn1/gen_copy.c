@@ -242,10 +242,7 @@ generate_type_copy (const Symbol *s)
 	   s->gen_name, s->gen_name, s->gen_name);
   copy_type ("from", "to", s->type, preserve);
   while (decorate_type(s->gen_name, &deco, &more_deco)) {
-      if (deco.heim_object) {
-          fprintf(codefile, "(to)->%s = heim_retain((from)->%s);\n",
-                  deco.field_name, deco.field_name);
-      } else if (deco.ext && deco.copy_function_name == NULL) {
+      if (deco.ext && deco.copy_function_name == NULL) {
           /* Decorated with field of external type but no copy function */
           if (deco.ptr)
               fprintf(codefile, "(to)->%s = 0;\n", deco.field_name);

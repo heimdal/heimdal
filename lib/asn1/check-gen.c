@@ -1053,7 +1053,6 @@ test_decorated(void)
     td.version = 3;
     td.version3.v = 5;
     td.privthing = &td;
-    td.privobj = heim_string_create("foo");
     if ((td.version2 = malloc(sizeof(*td.version2))) == NULL)
         errx(1, "out of memory");
     *td.version2 = 5;
@@ -1097,10 +1096,6 @@ test_decorated(void)
         warnx("copy_TESTDecorated() did not work correctly (4)");
         return 1;
     }
-    if (td_copy.privobj != td.privobj) {
-        warnx("copy_TESTDecorated() did not work correctly (5)");
-        return 1;
-    }
 
     free_TESTDecorated(&td_copy);
     free_TESTDecorated(&td);
@@ -1114,10 +1109,6 @@ test_decorated(void)
     }
     if (td.privthing != 0) {
         warnx("free_TESTDecorated() did not work correctly (3)");
-        return 1;
-    }
-    if (td.privobj != 0) {
-        warnx("free_TESTDecorated() did not work correctly (4)");
         return 1;
     }
     return 0;
@@ -1142,7 +1133,6 @@ test_decorated_choice(void)
     tdc.u.version = 3;
     tdc.version3.v = 5;
     tdc.privthing = &tdc;
-    tdc.privobj = heim_string_create("foo");
     if ((tdc.version2 = malloc(sizeof(*tdc.version2))) == NULL)
         errx(1, "out of memory");
     *tdc.version2 = 5;
@@ -1188,10 +1178,6 @@ test_decorated_choice(void)
         warnx("copy_TESTDecoratedChoice() did not work correctly (4)");
         return 1;
     }
-    if (tdc_copy.privobj != tdc.privobj) {
-        warnx("copy_TESTDecoratedChoice() did not work correctly (5)");
-        return 1;
-    }
 
     free_TESTDecoratedChoice(&tdc_copy);
     free_TESTDecoratedChoice(&tdc);
@@ -1205,10 +1191,6 @@ test_decorated_choice(void)
     }
     if (tdc.privthing != 0) {
         warnx("free_TESTDecoratedChoice() did not work correctly (3)");
-        return 1;
-    }
-    if (tdc.privobj != 0) {
-        warnx("free_TESTDecoratedChoice() did not work correctly (4)");
         return 1;
     }
     return 0;

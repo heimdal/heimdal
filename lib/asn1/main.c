@@ -189,7 +189,7 @@ decorate_type(const char *p, struct decoration *deco, ssize_t *more)
 
     deco->decorated = 1;
     deco->opt = deco->ext = deco->ptr = 0;
-    deco->void_star = deco->struct_star = deco->heim_object = 0;
+    deco->void_star = deco->struct_star = 0;
     deco->field_name = deco->copy_function_name = deco->free_function_name =
         deco->header_name = NULL;
 
@@ -216,9 +216,6 @@ decorate_type(const char *p, struct decoration *deco, ssize_t *more)
         deco->ext = deco->ptr = deco->void_star = 1;
         deco->opt = 1;
         deco->header_name = NULL;
-    } else if (strcmp(deco->field_type, "heim_object_t") == 0) {
-        deco->ptr = deco->heim_object = 1;
-        deco->header_name = "<heimbase.h>";
     } else if (strncmp(deco->field_type, "struct ", sizeof("struct ") - 1) == 0 &&
              deco->field_type[strlen(deco->field_type) - 1] == '*')
         deco->ptr = deco->struct_star = 1;

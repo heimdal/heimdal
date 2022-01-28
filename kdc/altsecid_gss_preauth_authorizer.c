@@ -523,8 +523,6 @@ altsecid_gss_preauth_authorizer_get_instance(const char *libname)
         return krb5_get_instance(libname);
     if (strcmp(libname, "kdc") == 0)
         return kdc_get_instance(libname);
-    if (strcmp(libname, "gssapi") == 0)
-        return gss_get_instance(libname);
     return 0;
 }
 

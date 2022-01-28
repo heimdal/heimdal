@@ -583,16 +583,3 @@ gss_oid_to_name(gss_const_OID oid)
 
 	return NULL;
 }
-
-GSSAPI_LIB_FUNCTION uintptr_t GSSAPI_CALLCONV
-gss_get_instance(const char *libname)
-{
-    static const char *instance = "libgssapi";
-
-    if (strcmp(libname, "gssapi") == 0)
-	return (uintptr_t)instance;
-    else if (strcmp(libname, "krb5") == 0)
-	return krb5_get_instance(libname);
-
-    return 0;
-}

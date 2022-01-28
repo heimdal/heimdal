@@ -369,7 +369,7 @@ kdc_array_iterate(kdc_array_t a, void *d, kdc_array_iterator_t iter)
     t.iter = iter;
     t.data = d;
 
-    return heim_array_iterate_f((heim_array_t)a, &t, _kdc_array_iterator_trampoline);
+    heim_array_iterate_f((heim_array_t)a, &t, _kdc_array_iterator_trampoline);
 }
 
 KDC_LIB_FUNCTION size_t KDC_LIB_CALL

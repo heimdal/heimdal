@@ -103,6 +103,8 @@ krb5_free_principal(krb5_context context,
 		    krb5_principal p)
 {
     if(p){
+	if (p->nameattrs && p->nameattrs->pac)
+	    heim_release(p->nameattrs->pac);
 	free_Principal(p);
 	free(p);
     }
@@ -948,6 +950,9 @@ krb5_copy_principal(krb5_context context,
 	free(p);
 	return krb5_enomem(context);
     }
+    if (inprinc->nameattrs && inprinc->nameattrs->pac)
+	p->nameattrs->pac = heim_retain(inprinc->nameattrs->pac);
+
     *outprinc = p;
     return 0;
 }

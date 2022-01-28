@@ -173,7 +173,7 @@ void	heim_release(heim_object_t);
 
 void	heim_show(heim_object_t);
 
-typedef void (*heim_type_dealloc)(void *);
+typedef void (HEIM_CALLCONV *heim_type_dealloc)(void *);
 
 void *
 heim_alloc(size_t size, const char *name, heim_type_dealloc dealloc);

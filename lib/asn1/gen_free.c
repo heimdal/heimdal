@@ -190,10 +190,7 @@ generate_type_free (const Symbol *s)
 
     free_type ("data", s->type, preserve);
     while (decorate_type(s->gen_name, &deco, &more_deco)) {
-        if (deco.heim_object) {
-            fprintf(codefile, "heim_release((data)->%s);\n", deco.field_name);
-            fprintf(codefile, "(data)->%s = 0;\n", deco.field_name);
-        } else if (deco.ext && deco.free_function_name == NULL) {
+        if (deco.ext && deco.free_function_name == NULL) {
             /* Decorated with field of external type but no free function */
             if (deco.ptr)
                 fprintf(codefile, "(data)->%s = 0;\n", deco.field_name);

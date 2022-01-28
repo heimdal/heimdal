@@ -1436,7 +1436,7 @@ define_type(int level, const char *name, const char *basename, Type *pt, Type *t
             fprintf(jsonfile, "%s{"
                     "\"type\":\"%s\",\"name\":\"%s\",\"optional\":%s,"
                     "\"external\":%s,\"pointer\":%s,\"void_star\":%s,"
-                    "\"struct_star\":%s,\"heim_object\":%s,"
+                    "\"struct_star\":%s,"
                     "\"copy_function\":\"%s\","
                     "\"free_function\":\"%s\",\"header_name\":%s%s%s"
                     "}",
@@ -1444,7 +1444,7 @@ define_type(int level, const char *name, const char *basename, Type *pt, Type *t
                     deco.field_type, deco.field_name,
                     deco.opt ? "true" : "false", deco.ext ? "true" : "false",
                     deco.ptr ? "true" : "false", deco.void_star ? "true" : "false",
-                    deco.struct_star ? "true" : "false", deco.heim_object ? "true" : "false",
+                    deco.struct_star ? "true" : "false",
                     deco.copy_function_name ? deco.copy_function_name : "",
                     deco.free_function_name ? deco.free_function_name : "",
                     deco.header_name && deco.header_name[0] == '"' ? "" : "\"",
@@ -1578,7 +1578,7 @@ define_type(int level, const char *name, const char *basename, Type *pt, Type *t
             fprintf(jsonfile, "%s{"
                     "\"type\":\"%s\",\"name\":\"%s\",\"optional\":%s,"
                     "\"external\":%s,\"pointer\":%s,\"void_star\":%s,"
-                    "\"struct_star\":%s,\"heim_object\":%s,"
+                    "\"struct_star\":%s,"
                     "\"copy_function\":\"%s\","
                     "\"free_function\":\"%s\",\"header_name\":%s%s%s"
                     "}",
@@ -1586,7 +1586,7 @@ define_type(int level, const char *name, const char *basename, Type *pt, Type *t
                     deco.field_type, deco.field_name,
                     deco.opt ? "true" : "false", deco.ext ? "true" : "false",
                     deco.ptr ? "true" : "false", deco.void_star ? "true" : "false",
-                    deco.struct_star ? "true" : "false", deco.heim_object ? "true" : "false",
+                    deco.struct_star ? "true" : "false",
                     deco.copy_function_name ? deco.copy_function_name : "",
                     deco.free_function_name ? deco.free_function_name : "",
                     deco.header_name && deco.header_name[0] == '"' ? "" : "\"",

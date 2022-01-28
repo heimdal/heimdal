@@ -1125,10 +1125,7 @@ template_members(struct templatehead *temp,
 
             poffset2 = partial_offset(basetype, deco.field_name, 1, isstruct);
 
-            if (deco.ext && deco.heim_object) {
-                add_line_string(temp, "0", poffset2,
-                                "A1_OP_TYPE_DECORATE_EXTERN |A1_FLAG_HEIM_OBJ");
-            } else if (deco.ext) {
+            if (deco.ext) {
                 char *ptr = NULL;
 
                 /* Decorated with external C type */
@@ -1206,10 +1203,7 @@ template_members(struct templatehead *temp,
 
             poffset2 = partial_offset(basetype, deco.field_name, 1, isstruct);
 
-            if (deco.ext && deco.heim_object) {
-                add_line_string(temp, "0", poffset2,
-                                "A1_OP_TYPE_DECORATE_EXTERN |A1_FLAG_HEIM_OBJ");
-            } else if (deco.ext) {
+            if (deco.ext) {
                 char *ptr = NULL;
 
                 /* Decorated with external C type */
@@ -1411,10 +1405,7 @@ template_members(struct templatehead *temp,
 
             poffset2 = partial_offset(basetype, deco.field_name, 1, isstruct);
 
-            if (deco.ext && deco.heim_object) {
-                add_line_string(temp, "0", poffset2,
-                                "A1_OP_TYPE_DECORATE_EXTERN |A1_FLAG_HEIM_OBJ");
-            } else if (deco.ext) {
+            if (deco.ext) {
                 char *ptr = NULL;
 
                 /* Decorated with external C type */
@@ -1582,26 +1573,23 @@ generate_template(const Symbol *s)
     while (decorate_type(s->gen_name, &deco, &more_deco)) {
         if (!deco.ext)
             continue;
-        if (deco.heim_object)
-            fprintf(f, "#include <heimbase.h>\n");
-        else if (deco.void_star && deco.header_name)
+        if (deco.void_star && deco.header_name)
 	    fprintf(f, "#include %s\n", deco.header_name);
-        if (!deco.heim_object)
-            fprintf(f,
-                    "static const struct asn1_type_func asn1_extern_%s_%s = {\n"
-                    "\t(asn1_type_encode)0,\n"
-                    "\t(asn1_type_decode)0,\n"
-                    "\t(asn1_type_length)0,\n"
-                    "\t(asn1_type_copy)%s,\n"
-                    "\t(asn1_type_release)%s,\n"
-                    "\t(asn1_type_print)0,\n"
-                    "\tsizeof(%s)\n"
-                    "};\n", s->gen_name, deco.field_name,
-                    deco.copy_function_name && deco.copy_function_name[0] ?
-                        deco.copy_function_name : "0",
-                    deco.free_function_name && deco.free_function_name[0] ?
-                        deco.free_function_name : "0",
-                    deco.void_star ? "void *" : deco.field_type);
+        fprintf(f,
+                "static const struct asn1_type_func asn1_extern_%s_%s = {\n"
+                "\t(asn1_type_encode)0,\n"
+                "\t(asn1_type_decode)0,\n"
+                "\t(asn1_type_length)0,\n"
+                "\t(asn1_type_copy)%s,\n"
+                "\t(asn1_type_release)%s,\n"
+                "\t(asn1_type_print)0,\n"
+                "\tsizeof(%s)\n"
+                "};\n", s->gen_name, deco.field_name,
+                deco.copy_function_name && deco.copy_function_name[0] ?
+                deco.copy_function_name : "0",
+                deco.free_function_name && deco.free_function_name[0] ?
+                deco.free_function_name : "0",
+                deco.void_star ? "void *" : deco.field_type);
         free(deco.field_type);
     }
 

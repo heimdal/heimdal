@@ -1028,12 +1028,6 @@ DESCRIPTION
 	     ple, one might decorate a request type with state needed during
 	     processing of the request.
 
-     --decorate=ASN1-TYPE:heim_object_t:fname
-	     Add to the C struct generated for the given ASN.1 SET or SEQUENCE
-	     type named ASN1-TYPE a “hidden” field named fname of C type
-	     ‘heim_object_t’ values of which will be copied and released with
-	     ‘heim_retain()’ and ‘heim_release()’ respectively.
-
      --decorate=ASN1-TYPE:void*:fname
 	     Add to the C struct generated for the given ASN.1 SET, SEQUENCE,
 	     or CHOICE type named ASN1-TYPE a “hidden” field named fname of

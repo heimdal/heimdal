@@ -918,7 +918,7 @@ test_cccol_dcache(krb5_context context)
     ret = test_cccol(context, dcc, &what);
     free(dcc);
     if (ret)
-        krb5_err(context, 1, errno, "%s", what);
+        krb5_err(context, 1, ret, "%s", what);
 }
 
 static void

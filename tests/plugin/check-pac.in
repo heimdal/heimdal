@@ -60,7 +60,7 @@ keytabfile=${objdir}/server.keytab
 keytab="FILE:${keytabfile}"
 rodc_kvno="3058761729"
 
-kinit="${TESTS_ENVIRONMENT} ../../kuser/kinit -c $cache ${afs_no_afslog}"
+kinit="${TESTS_ENVIRONMENT} ../../kuser/kinit --overwrite -c $cache ${afs_no_afslog}"
 klist="${TESTS_ENVIRONMENT} ../../kuser/klist -c $cache"
 kgetcred="${TESTS_ENVIRONMENT} ../../kuser/kgetcred -c $cache"
 kdestroy="${TESTS_ENVIRONMENT} ../../kuser/kdestroy -c $cache ${afs_no_unlog}"

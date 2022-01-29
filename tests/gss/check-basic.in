@@ -102,7 +102,7 @@ trap "kill -9 ${kdcpid}; echo signal killing kdc; cat messages.log; exit 1;" EXI
 exitcode=0
 
 echo "initial ticket"
-${kinit} -c ${cache} --password-file=${objdir}/foopassword user@${R} || exitcode=1
+${kinit} --overwrite -c ${cache} --password-file=${objdir}/foopassword user@${R} || exitcode=1
 
 echo "copy ccache with gss_store_cred"
 # Note we test that the ccache used for storing is token-expanded

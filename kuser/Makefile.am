@@ -33,6 +33,7 @@ kinit_LDADD = \
 	$(top_builddir)/lib/gss_preauth/libgss_preauth.la \
 	$(top_builddir)/lib/ntlm/libheimntlm.la \
 	$(LIB_hcrypto) \
+	$(LIB_heimbase) \
 	$(top_builddir)/lib/asn1/libasn1.la \
 	$(LIB_libintl) \
 	$(LIB_roken)

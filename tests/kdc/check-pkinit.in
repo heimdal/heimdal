@@ -54,7 +54,7 @@ cache="FILE:${objdir}/cache.krb5"
 keyfile="${hx509_data}/key.der"
 keyfile2="${hx509_data}/key2.der"
 
-kinit="${kinit} -c $cache ${afs_no_afslog}"
+kinit="${kinit} --overwrite -c $cache ${afs_no_afslog}"
 klistjson="${klist} --json -c $cache"
 klistplain="${klist} -c $cache"
 klist="${klist} --hidden -v -c $cache"

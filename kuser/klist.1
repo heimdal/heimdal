@@ -46,29 +46,63 @@
 .Oc
 .Op Fl s | Fl t | Fl Fl test
 .Op Fl T | Fl Fl tokens
-.Op Fl 5 | Fl Fl v5
 .Op Fl v | Fl Fl verbose
 .Op Fl l | Fl Fl list-caches
+.Op Fl Fl default-for= Ns Ar principal
+.Op Fl Fl search-for= Ns Ar principal
+.Op Fl C
 .Op Fl f
 .Op Fl Fl version
 .Op Fl Fl help
 .Ek
 .Sh DESCRIPTION
 .Nm
-reads and displays the current tickets in the credential cache (also
-known as the ticket file).
+reads and displays the current tickets in a credential cache or
+credentials cache collection.
+.Pp
+A credentials cache collection is a collection of related
+credentials caches for the same user, each possibly containing
+credentials for different principals.
+.Pp
+By default
+.Nm
+will list just the given credentials cache or the default one if
+one is not given.  However,
+.Nm
+may also list all credentials caches in the collection, or a
+credentials cache in that collection for a given principal.
 .Pp
 Options supported:
 .Bl -tag -width Ds
 .It Fl c Ar cache , Fl Fl cache= Ns Ar cache
-credential cache to list
+Identify a credentials cache to list or crendetials cache whose
+containing crendetials cache collection will be listed.
+.It Fl Fl default-for= Ns Ar principal
+Use the cache in the named credentials cache collection where
+credentials would be stored for the given
+.Ar principal .
+.It Fl Fl search-for= Ns Ar principal
+Look for a cache in the named credentials cache collection where
+credentials can be found for the given
+.Ar principal .
+.It Fl C
+Print just the full name of the credential cache.
+This is useful in conjunction with
+.Fl Fl default-for= Ns Ar principal
+and/or
+.Fl Fl search-for= Ns Ar principal .
+For example, one might set
+.Ev KRB5CCNAME
+to the output of
+.Nm
+.Fl C
+.Fl Fl default-for= Ns Ar some-principal
+to execute commands with that principal's credentials.
 .It Fl s , Fl t , Fl Fl test
 Test for there being an active and valid TGT for the local realm of
 the user in the credential cache.
 .It Fl T , Fl Fl tokens
 display AFS tokens
-.It Fl 5 , Fl Fl v5
-display v5 cred cache (this is the default)
 .It Fl f
 Include ticket flags in short form, each character stands for a
 specific flag, as follows:
@@ -130,6 +164,47 @@ List the credential caches for the current users, not all cache types
 supports listing multiple caches.
 .Pp
 .El
+.Sh NOTES
+All built-in credentials cache types in Heimdal are collection
+types.
+A credentials cache collection is just that: a collection of
+credentials caches, all for the same user.
+The names of the caches in the collection are "subsidiary" to the
+collection.
+.Pp
+Generally, the name of a credentials cache is of the form
+.Ar TYPE:collection-name[:subsidiary-name] ,
+such as
+.Dq KCM:1000:some-name-here .
+Both, the
+.Ar FILE
+and
+.Ar DIR
+credentials cache types use an alternative credentials cache name
+form of
+.Ar TYPE:collection-name[+subsidiary-name] ,
+such as
+.Dq FILE:/tmp/krb5cc_1000+some-name-here .
+.Pp
+The
+.Ar FILE
+credentials cache type must be enabled by setting
+.Ar [libdefaults] Ar enable_file_cache_iteration = yes
+in the
+.Ar krb5.conf
+file.
+This is disabled by default to avoid potentially listing the
+user's temporary file directory, which is where the
+.Ar FILE
+credentials cache type normally stores its caches.
+When this is disabled, then
+.Nm
+.Fl l
+will not list more than the default credentials cache when using
+the
+.Ar FILE
+credentials cache type.
 .Sh SEE ALSO
 .Xr kdestroy 1 ,
-.Xr kinit 1
+.Xr kinit 1 ,
+.Xr kswitch 1

@@ -42,6 +42,22 @@ command = {
 		help = "credential cache to list"
 	}
 	option = {
+		long = "default-for"
+		type = "string"
+		help = "principal name"
+	}
+	option = {
+		long = "search-for"
+		type = "string"
+		help = "principal name"
+	}
+	option = {
+		name = "C"
+		short = "C"
+		type = "flag"
+		help = "just show the ccache name"
+	}
+	option = {
 		name = "flags"
 		short = "f"
 		type = "flag"
@@ -161,6 +177,8 @@ command = {
 		type = "flag"
 		help = "interactive selection"
 	}
+	min_args = "0"
+        argument = "[command [arguments]]"
 };
 command = {
 	name = "kvno"

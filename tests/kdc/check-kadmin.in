@@ -55,7 +55,7 @@ kadmind="${kadmind} -p $admport"
 
 server=host/datan.test.h5l.se
 
-kinit="${kinit} -c $cache ${afs_no_afslog}"
+kinit="${kinit} --overwrite -c $cache ${afs_no_afslog}"
 kgetcred="${kgetcred} -c $cache"
 kdestroy="${kdestroy} -c $cache ${afs_no_unlog}"
 

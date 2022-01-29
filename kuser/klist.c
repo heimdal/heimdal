@@ -611,7 +611,9 @@ int
 klist(struct klist_options *opt, int argc, char **argv)
 {
     krb5_error_code ret;
+    krb5_ccache id = NULL;
     int exit_status = 0;
+    char *fullname = NULL;
 
     int do_verbose =
 	opt->verbose_flag ||
@@ -626,14 +628,72 @@ klist(struct klist_options *opt, int argc, char **argv)
 	exit(0);
     }
 
+    if (opt->default_for_string || opt->search_for_string) {
+        krb5_principal princ = NULL;
+        const char *cctype;
+
+        /*
+         * Look for a credentials cache for the given principal in the
+         * collection identified by `opt->cache_name' (or KRB5CCNAME, or the
+         * configured or built-in default), then set `opt->cache_name' to that
+         * cache's full name, then continue.
+         */
+        if (opt->default_for_string && opt->search_for_string)
+            krb5_errx(heimtools_context, 1,
+                      "--default-for and --search-for are mutually exclusive");
+
+        ret = krb5_parse_name(heimtools_context,
+                              opt->default_for_string ?
+                                  opt->default_for_string :
+                                  opt->search_for_string,
+                              &princ);
+
+        if (opt->cache_string) {
+            ret = krb5_cc_resolve(heimtools_context, opt->cache_string, &id);
+            if (ret)
+                krb5_err(heimtools_context, 1, ret,
+                          "Could not resolve the given collection name");
+        } else {
+            ret = krb5_cc_default(heimtools_context, &id);
+            if (ret)
+                krb5_err(heimtools_context, 1, ret,
+                          "Could not resolve the default collection name");
+        }
+        cctype = krb5_cc_get_type(heimtools_context, id);
+        krb5_cc_close(heimtools_context, id);
+        id = NULL;
+
+        if (opt->default_for_string) {
+            ret = krb5_cc_resolve_for(heimtools_context, cctype,
+                                      opt->cache_string ?
+                                          opt->cache_string :
+                                          krb5_cc_default_name(heimtools_context),
+                                      princ, &id);
+            if (ret)
+                krb5_err(heimtools_context, 1, ret,
+                         "Could not resolve a cache for: %s",
+                         opt->default_for_string);
+        } else {
+            ret = krb5_cc_cache_match(heimtools_context, princ, &id);
+            if (ret)
+                krb5_err(heimtools_context, 1, ret,
+                         "Could not find a cache for: %s",
+                         opt->search_for_string);
+        }
+
+        ret = krb5_cc_get_full_name(heimtools_context, id, &fullname);
+        krb5_cc_close(heimtools_context, id);
+        id = NULL;
+        opt->cache_string = fullname;
+        krb5_free_principal(heimtools_context, princ);
+    }
+
     if (opt->list_all_flag) {
 	exit_status = list_caches(heimtools_context, opt);
 	return exit_status;
     }
 
     if (opt->v5_flag) {
-	krb5_ccache id;
-
 	if (opt->all_content_flag) {
 	    krb5_cc_cache_cursor cursor;
 	    int first = 1;
@@ -686,5 +746,6 @@ klist(struct klist_options *opt, int argc, char **argv)
 #endif
     }
 
+    free(fullname);
     return exit_status;
 }

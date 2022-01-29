@@ -96,7 +96,8 @@ ps="proxy-service@${R}"
 rps="restricted-proxy-service@${R}"
 aesenctype="aes256-cts-hmac-sha1-96"
 
-kinit="${kinit} -c $cache ${afs_no_afslog}"
+kinit="${kinit} --overwrite -c $cache ${afs_no_afslog}"
+klist3="${klist}"
 klist2="${klist} -c $o2cache"
 klist="${klist} -c $cache"
 kgetcred="${kgetcred} -c $cache"
@@ -695,6 +696,9 @@ ${kdestroy}
 echo "Getting key for key that are a subset in keytab compared to kdb"
 ${kinit} --keytab=${keytab} kt-des3@${R}
 ${klist} | grep "Principal: kt-des3" > /dev/null || \
+	{ ec=1 ; eval "${testfailed}"; }
+${kdestroy}
+${kinit} --keytab=${keytab} kt-des3@${R} ${klist3} | grep "Principal: kt-des3" > /dev/null || \
 	{ ec=1 ; eval "${testfailed}"; }
 ${kdestroy}
 

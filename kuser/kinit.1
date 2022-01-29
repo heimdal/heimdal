@@ -41,6 +41,9 @@
 .Nm kinit
 .Op Fl Fl no-change-default
 .Op Fl Fl default-for-principal
+.Op Fl Fl search
+.Op Fl Fl new-unique
+.Op Fl Fl overwrite
 .Op Fl Fl afslog
 .Oo Fl c Ar cachename \*(Ba Xo
 .Fl Fl cache= Ns Ar cachename
@@ -97,16 +100,62 @@ or if none is given, a system generated default (typically your login
 name at the default realm), and acquire a ticket granting ticket that
 can later be used to obtain tickets for other services.
 .Pp
+Alternatively,
+.Nm
+can be used to renew existing credentials.
+.Pp
+By default
+.Nm
+will write to the given credentials cache, or to credentials cache
+named by the
+.Ev KRB5CCNAME
+environment variable, or to the configured or built-in default
+credentials cache for the user running it.
+Various options can be used to specify alternative credentials
+caches to write to (see below).
+.Pp
+Note that when writing to the given or default credentials cache,
+.Nm
+will by default refuse to write to it if it exists and contains
+credentials for a different principal.
+.Pp
+A credentials cache is an object, such as a file, storing one or
+more tickets for one client principal, and optional configuration
+entries.
+These can be listed with
+.Xr klist 1 .
+.Pp
+A credentials cache collection is a set of credentials caches
+with a shared storage location.  A credentials cache collection
+has a default credentials cache such that applications which do
+not specify a specific cache to use (for example, using the
+.Ev KRB5CCNAME
+environment variable) will use that default.
+.Pp
+Note that
+.Nm
+by default changes the default credentials cache for the
+collection containing the cache it writes to to be that cache.
+.Pp
 Supported options:
 .Bl -tag -width Ds
 .It Fl c Ar cachename | Fl Fl cache= Ns Ar cachename
-The credentials cache to put the acquired ticket in, if other than
-default.
+Identifies a credentials cache to write to if none of
+.Fl Fl default-for-principal ,
+.Fl Fl search ,
+nor
+.Fl Fl new-unique
+are given.
+Otherwise this option identifies a credentials cache collection
+in which to create a credentials cache and/or search for an
+appropriate credentials cache.
 .It Fl Fl no-change-default
-By default the principal's credentials will be stored in the default
-credential cache.  This option will cause them to instead be stored
-only in a cache whose name is derived from the principal's name.  Note
-that
+By default, the credentials cache written to will be made its
+containing credentials cache
+collection's default cache.
+This option causes the collection's current default cache to be
+left as it was.
+Note that
 .Xr klist 1
 with the
 .Fl l
@@ -141,6 +190,24 @@ is given.  Caches for the user can be listed with the
 .Fl l
 option to
 .Xr klist 1 .
+.It Fl Fl search
+If this option is given, then a credential cache for the given
+principal will be searched for in the given or default credential
+cache collection.
+If none is found, then a cache will be created as if
+.Fl Fl default-for
+had been used unless
+.Fl Fl new-unique
+was used.
+.It Fl Fl new-unique
+Use a new, unique credential cache in the given or default
+credential cache collection.
+.It Fl Fl overwrite
+If the default or given credential cache ends up being used and
+contains credentials for a principal other then the one given,
+then
+.Nm kinit
+will refuse to overwrite those unless this flag is given.
 .It Fl f Fl Fl forwardable
 Obtain a ticket than can be forwarded to another host.
 .It Fl F Fl Fl no-forwardable
@@ -273,6 +340,30 @@ is given,
 will set up new credentials caches, and AFS PAG, and then run the given
 command.
 When it finishes the credentials will be removed.
+.Sh CREDENTIALS CACHE TYPES
+Heimdal supports a variety of credentials cache types, all of
+which are credentials cache collection types:
+.Bl -tag -width Ds
+.It FILE
+A file-based credentials cache store.
+.It DIR
+A directory of file-based credentials cache stores.
+.It KCM
+Stores credentials in a system daemon
+.Xr kcm 8
+that manages per-user credentials caches and performs
+authentication using IPC and authorization (users can only see
+their own caches).
+.It SCC
+Stores credentials caches in a SQLite3 file.
+.It KEYRING
+Stores credentials in a Linux kernel keyring.
+.It API
+This is a CCAPI credentials type, meaning that a CCAPI shared
+object will be loaded that implements the standard CCAPI
+interface.
+.It MEMORY
+.El
 .Sh ENVIRONMENT
 .Bl -tag -width Ds
 .It Ev KRB5CCNAME
@@ -290,6 +381,7 @@ the default being
 .Xr kdestroy 1 ,
 .Xr klist 1 ,
 .Xr kswitch 1 ,
+.Xr kcm 8 ,
 .Xr krb5_appdefault 3 ,
 .Xr krb5.conf 5
 .\".Sh STANDARDS

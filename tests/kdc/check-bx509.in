@@ -432,7 +432,7 @@ ${kdc} --detach --testing || { echo "kdc failed to start"; cat messages.log; exi
 kdcpid=`getpid kdc`
 trap "kill -9 ${kdcpid} ${bx509pid}; echo signal killing kdc and bx509d; exit 1;" EXIT
 
-${kinit} -kt $ukeytab foo@${R} || exit 1
+${kinit} --overwrite -kt $ukeytab foo@${R} || exit 1
 $klist || { echo "failed to setup kimpersonate credentials"; exit 2; }
 
 echo "Fetch TGT (not granted for other)"
@@ -582,7 +582,7 @@ $test_kdc_ca -a bx509 -A foo@${R} PKCS10:${objdir}/req       \
              PEM-FILE:${objdir}/pkinit-test.pem ||
     { echo "Trivial offline CA test failed (CA)"; exit 2; }
 cat ${objdir}/k.pem >> ${objdir}/pkinit-test.pem
-${kinit} -C PEM-FILE:${objdir}/pkinit-test.pem foo@${R} ||
+${kinit} --overwrite -C PEM-FILE:${objdir}/pkinit-test.pem foo@${R} ||
     { echo "Trivial offline CA test failed (PKINIT)"; exit 2; }
 ${kgetcred} -H HTTP/${server}@${R} ||
     { echo "Trivial offline CA test failed (TGS)"; exit 2; }

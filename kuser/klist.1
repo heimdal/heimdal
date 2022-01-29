@@ -46,7 +46,6 @@
 .Oc
 .Op Fl s | Fl t | Fl Fl test
 .Op Fl T | Fl Fl tokens
-.Op Fl 5 | Fl Fl v5
 .Op Fl v | Fl Fl verbose
 .Op Fl l | Fl Fl list-caches
 .Op Fl f
@@ -55,20 +54,39 @@
 .Ek
 .Sh DESCRIPTION
 .Nm
-reads and displays the current tickets in the credential cache (also
-known as the ticket file).
+reads and displays the current tickets in a credential cache or
+credentials cache collection.
+.Pp
+A credentials cache collection is a collection of related
+credentials caches for the same user, each possibly containing
+credentials for different principals.
+.Pp
+By default
+.Nm
+will list just the given credentials cache or the default one if
+one is not given.  However,
+.Nm
+may also list all credentials caches in the collection, or a
+credentials cache in that collection for a given principal.
 .Pp
 Options supported:
 .Bl -tag -width Ds
 .It Fl c Ar cache , Fl Fl cache= Ns Ar cache
-credential cache to list
+Identify a credentials cache to list or crendetials cache whose
+containing crendetials cache collection will be listed.
+.It Fl Fl default-for= Ns Ar principal
+Use the cache in the named credentials cache collection where
+credentials would be stored for the given
+.Ar principal .
+.It Fl Fl search-for= Ns Ar principal
+Look for a cache in the named credentials cache collection where
+credentials can be found for the given
+.Ar principal .
 .It Fl s , Fl t , Fl Fl test
 Test for there being an active and valid TGT for the local realm of
 the user in the credential cache.
 .It Fl T , Fl Fl tokens
 display AFS tokens
-.It Fl 5 , Fl Fl v5
-display v5 cred cache (this is the default)
 .It Fl f
 Include ticket flags in short form, each character stands for a
 specific flag, as follows:

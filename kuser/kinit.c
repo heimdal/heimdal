@@ -64,9 +64,9 @@ char *lifetime 		= NULL;
 char *renew_life	= NULL;
 char *server_str	= NULL;
 static krb5_principal tgs_service;
-char *cred_cache	= NULL;
+const char *cred_cache	= NULL;
 char *start_str		= NULL;
-static int default_for = 0;
+static int default_for_flag = -1;
 static int switch_cache_flags = -1;
 struct getarg_strings etype_str;
 int use_keytab		= 0;
@@ -90,9 +90,13 @@ static int ok_as_delegate_flag = 0;
 static char *fast_armor_cache_string = NULL;
 static int use_referrals_flag = 0;
 static int windows_flag = 0;
+static int verbose_flag = 0;
 #ifndef NO_NTLM
 static char *ntlm_domain;
 #endif
+static int overwrite_flag = 0;
+static int search_flag = 0;
+static int new_unique_flag = 0;
 
 
 static struct getargs args[] = {
@@ -211,8 +215,17 @@ static struct getargs args[] = {
     { "change-default",  0,  arg_negative_flag, &switch_cache_flags,
       NP_("switch the default cache to the new credentials cache", ""), NULL },
 
-    { "default-for-principal",  0,  arg_flag, &default_for,
+    { "default-for-principal",  0,  arg_flag, &default_for_flag,
       NP_("Use a default cache appropriate for the client principal", ""), NULL },
+
+    { "overwrite",  0,  arg_flag, &overwrite_flag,
+      NP_("Overwrite credential cache even if it has credentials for a different principal", ""), NULL },
+
+    { "search",  0,  arg_flag, &search_flag,
+      NP_("Search for a ccache for the principal and use it", ""), NULL },
+
+    { "new-unique",  0,  arg_flag, &search_flag,
+      NP_("Create a new, unique ccache", ""), NULL },
 
     { "ok-as-delegate",	0,  arg_flag, &ok_as_delegate_flag,
       NP_("honor ok-as-delegate on tickets", ""), NULL },
@@ -221,6 +234,9 @@ static struct getargs args[] = {
       NP_("use this credential cache as FAST armor cache", ""), "cache" },
 
     { "use-referrals",	0,  arg_flag, &use_referrals_flag,
+      NP_("only use referrals, no dns canalisation", ""), NULL },
+
+    { "verbose",	0,  arg_flag, &verbose_flag,
       NP_("only use referrals, no dns canalisation", ""), NULL },
 
     { "windows",	0,  arg_flag, &windows_flag,
@@ -1434,13 +1450,15 @@ static void
 get_princ(krb5_context context,
           krb5_principal *principal,
           const char *ccname,
-          const char *name)
+          const char *name,
+          int *default_ccache_exists)
 {
     krb5_error_code ret = 0;
     krb5_principal tmp;
     int parseflags = 0;
     char *user_realm;
 
+    *default_ccache_exists = 0;
     if (name == NULL) {
 	krb5_ccache ccache = NULL;
 
@@ -1452,8 +1470,11 @@ get_princ(krb5_context context,
 	if (ret  == 0)
 	    ret = krb5_cc_get_principal(context, ccache, principal);
         krb5_cc_close(context, ccache);
-        if (ret == 0)
+        if (ret == 0) {
+            if (!ccname)
+                *default_ccache_exists = 1;
             return;
+        }
     }
 
     user_realm = get_user_realm(context);
@@ -1487,7 +1508,7 @@ get_princ_kt(krb5_context context,
 	     char *name)
 {
     krb5_error_code ret;
-    krb5_principal tmp;
+    krb5_principal tmp = NULL;
     krb5_ccache ccache;
     krb5_kt_cursor cursor;
     krb5_keytab_entry entry;
@@ -1559,59 +1580,6 @@ get_princ_kt(krb5_context context,
     free(def_realm);
 }
 
-static krb5_error_code
-get_switched_ccache(krb5_context context,
-		    const char * type,
-		    krb5_principal principal,
-		    krb5_ccache *ccache)
-{
-    krb5_error_code ret;
-
-#ifdef _WIN32
-    if (strcmp(type, "API") == 0) {
-	/*
-	 * Windows stores the default ccache name in the
-	 * registry which is shared across multiple logon
-	 * sessions for the same user.  The API credential
-	 * cache provides a unique name space per logon
-	 * session.  Therefore there is no need to generate
-	 * a unique ccache name.  Instead use the principal
-	 * name.  This provides a friendlier user experience.
-	 */
-	char * unparsed_name;
-	char * cred_cache;
-
-	ret = krb5_unparse_name(context, principal,
-				&unparsed_name);
-	if (ret)
-	    krb5_err(context, 1, ret,
-		     N_("unparsing principal name", ""));
-
-	ret = asprintf(&cred_cache, "API:%s", unparsed_name);
-	krb5_free_unparsed_name(context, unparsed_name);
-	if (ret == -1 || cred_cache == NULL)
-	    krb5_err(context, 1, ret,
-		      N_("building credential cache name", ""));
-
-	ret = krb5_cc_resolve(context, cred_cache, ccache);
-	free(cred_cache);
-    } else if (strcmp(type, "MSLSA") == 0) {
-	/*
-	 * The Windows MSLSA cache when it is writeable
-	 * stores tickets for multiple client principals
-	 * in a single credential cache.
-	 */
-	ret = krb5_cc_resolve(context, "MSLSA:", ccache);
-    } else {
-	ret = krb5_cc_new_unique(context, type, NULL, ccache);
-    }
-#else /* !_WIN32 */
-    ret = krb5_cc_new_unique(context, type, NULL, ccache);
-#endif /* _WIN32 */
-
-    return ret;
-}
-
 int
 main(int argc, char **argv)
 {
@@ -1619,14 +1587,18 @@ main(int argc, char **argv)
     krb5_context context;
     krb5_ccache  ccache;
     krb5_principal principal = NULL;
+    char *principal_str = NULL;
     int optidx = 0;
     krb5_deltat ticket_life = 0;
+    const krb5_cc_ops *ccops = NULL;
 #ifdef HAVE_SIGACTION
     struct sigaction sa;
 #endif
     krb5_boolean unique_ccache = FALSE;
     krb5_boolean historical_anon_pkinit = FALSE;
+    char *ccname = NULL;
     int anonymous_pkinit = FALSE;
+    int default_ccache_exists = 0;
 
     setprogname(argv[0]);
 
@@ -1654,6 +1626,12 @@ main(int argc, char **argv)
     argc -= optidx;
     argv += optidx;
 
+    if (default_for_flag > 0 && new_unique_flag > 0) {
+        krb5_warnx(context, "--default-for and --new-unique are mutually "
+                   "exclusive; ignoring --new-unique");
+        new_unique_flag = 0;
+    }
+
     krb5_appdefault_boolean(context, "kinit", NULL, "historical_anon_pkinit",
                             FALSE, &historical_anon_pkinit);
 
@@ -1670,6 +1648,9 @@ main(int argc, char **argv)
 	    krb5_err(context, 1, ret, "resolving keytab");
     }
 
+    /*
+     * Figure out what principal name to get credentials for.
+     */
     if (pk_enterprise_flag) {
 	ret = krb5_pk_enterprise_cert(context, pk_user_id,
 				      argv[0], &principal,
@@ -1723,8 +1704,39 @@ main(int argc, char **argv)
 	if (ret)
 	    krb5_err(context, 1, ret, "make_wellknown_name");
     } else {
-	get_princ(context, &principal, cred_cache, argv[0]);
+        get_princ(context, &principal, cred_cache, argv[0],
+                  &default_ccache_exists);
     }
+
+    heim_assert(principal, "internal error -- must have worked out what "
+                "principal to get credentials for by this point");
+
+    /*
+     * User intent.  We don't care how you specified what ccache to use.
+     *
+     * If you said --default-for, we'll use whatever ccache just to identify a
+     * collection, then we'll use the cache in that collection that corresponds
+     * to whatever principal we'll be using.
+     *
+     * If you did not use --default-for but used --search, we'll search the
+     * collection for a cache for the given principal, and we'll use that if we
+     * find it.
+     *
+     * If you did not use --default-for, we'll use whatever ccache we
+     * identified, and we'll refuse to change what principal's credentials we
+     * store in it unless you used --overwrite.
+     */
+    if (cred_cache == NULL)
+        cred_cache = krb5_cc_default_name(context);
+    heim_assert(cred_cache, "internal error -- must have worked out what "
+                "credential cache type and collection to use by this point");
+
+    ret = krb5_unparse_name(context, principal, &principal_str);
+    if (ret)
+        krb5_err(context, 1, ret, "Could not format principal name");
+
+    if (verbose_flag)
+        fprintf(stderr, "Using principal: %s", principal_str);
 
     if (fcache_version)
 	krb5_set_fcache_version(context, fcache_version);
@@ -1739,76 +1751,133 @@ main(int argc, char **argv)
 				krb5_principal_get_realm(context, principal),
 				"afslog", TRUE, &do_afslog);
 
+    ccops = krb5_cc_get_prefix_ops(context, cred_cache);
+    ccops = ccops ? ccops : krb5_cc_get_prefix_ops(context, NULL);
+
     /*
-     * Cases:
-     *
-     *  - use the given ccache
-     *  - use a new unique ccache for running a command with (in this case we
-     *    get to set KRB5CCNAME, so a new unique ccache makes sense)
-     *  - use the default ccache for the given principal as requested and do
-     *    not later switch the collection's default/primary to it
-     *  - use the default cache, possibly a new unique one that later gets
-     *    switched to it
-     *
-     * The important thing is that, except for the case where we're running a
-     * command, we _can't set KRB5CCNAME_, and we can't expect the user to read
-     * our output and figure out to set it (we could have an output-for-shell-
-     * eval mode, like ssh-agent and such, but we don't).  Therefore, in all
-     * cases where we can't set KRB5CCNAME we must do something that makes
-     * sense to the user, and that is to either initialize a given ccache, use
-     * the default, or use a subsidiary ccache named after the principal whose
-     * creds we're initializing.
+     * XXX We should have an #idef WIN32 here to force default_for_flag = 1
+     * when the ccops->type is API, or if the ccops->type is MSLSA then force
+     * the use of "MSLSA:".  The we can delete get_switched_ccache().
      */
-    if (cred_cache) {
-        /* Use the given ccache */
-	ret = krb5_cc_resolve(context, cred_cache, &ccache);
-    } else if (argc > 1) {
-        char s[1024];
+    if (strcmp(ccops->prefix, "MSLSA") == 0) {
+        cred_cache = "MSLSA:";
+        default_for_flag = 0;
+        new_unique_flag = 0;
+        overwrite_flag = 1;
+        search_flag = 0;
+    }
+#ifdef WIN32
+    /*
+     * On WIN32, when using API, force --default-for-principal, essentially.
+     *
+     * FIXME: We could just set default_for_flag = 1 and let the code below
+     *        handle it.
+     *
+     * Note that in the argc > 1 case we end up using krb5_cc_new_unique()
+     * anyways.
+     */
+    if (strcmp(ccops->prefix, "API") == 0) {
+        if (asprintf(&ccname, "API:%s", principal_str) == -1 ||
+            ccname == NULL)
+            krb5_err(context, 1, enomem, "Failed to format API:%s cache name",
+                     ccname);
+        default_for_flag = 0;
+        new_unique_flag = 0;
+        overwrite_flag = 1;
+        search_flag = 0;
+    }
+#endif
+
+    if (argc > 1) {
+        char *s = NULL;
 
         /*
          * A command was given, so use a new unique ccache (and destroy it
-         * later).
+         * later), and we set KRB5CCNAME for the process we spawn.
+         *
+         * We'll ignore the `-c` argument in this case, yes.
          */
         ret = krb5_cc_new_unique(context, NULL, NULL, &ccache);
         if (ret)
             krb5_err(context, 1, ret, "creating cred cache");
-        snprintf(s, sizeof(s), "%s:%s",
-                 krb5_cc_get_type(context, ccache),
-                 krb5_cc_get_name(context, ccache));
+        ret = krb5_cc_get_full_name(context, ccache, &s);
+        if (ret)
+            krb5_err(context, 1, ret, "getting the name of a new unique cred cache");
         setenv("KRB5CCNAME", s, 1);
+        free(s);
         unique_ccache = TRUE;
         switch_cache_flags = 0;
-    } else if (default_for) {
-        ret = krb5_cc_default_for(context, principal, &ccache);
-        if (switch_cache_flags == -1)
-            switch_cache_flags = 0;
-    } else {
+        overwrite_flag = 1;
+        default_for_flag = 0;
+        search_flag = 0;
+    } else if (search_flag > 0) {
+        /*
+         * We used to do this as the default behavior.
+         */
         ret = krb5_cc_cache_match(context, principal, &ccache);
         if (ret) {
-            const char *type;
-            ret = krb5_cc_default(context, &ccache);
-            if (ret)
-                krb5_err(context, 1, ret,
-                         N_("resolving credentials cache", ""));
-
-            /*
-             * Check if the type support switching, and we do,
-             * then do that instead over overwriting the current
-             * default credential
-             */
-            type = krb5_cc_get_type(context, ccache);
-            if (krb5_cc_support_switch(context, type) &&
-                strcmp(type, "FILE")) {
-                krb5_cc_close(context, ccache);
-                ret = get_switched_ccache(context, type, principal,
-                                          &ccache);
-                if (ret == 0)
-                    unique_ccache = TRUE;
+            if (!new_unique_flag || strcmp(ccops->prefix, "FILE") == 0) {
+                /* Fallback on --default-for */
+                ret = krb5_cc_resolve_for(context, ccops->prefix, cred_cache,
+                                          principal, &ccache);
+            } else {
+                ret = krb5_cc_new_unique(context, ccops->prefix, NULL, &ccache);
+                unique_ccache = TRUE;
             }
         }
+    } else if (default_for_flag > 0) {
+        /*
+         * Resolve a cache for the given (or found) principal in the given (or
+         * found) cache's collection.
+         */
+        ret = krb5_cc_resolve_for(context, ccops->prefix, cred_cache,
+                                  principal, &ccache);
+        if (ret)
+            krb5_err(context, 1, ret,
+                     "Could not resolve cache for principal %s",
+                     principal_str);
+    } else if (new_unique_flag) {
+	ret = krb5_cc_new_unique(context, ccops->prefix, NULL, &ccache);
+    } else {
+        /*
+         * Note that we've made sure cred_cache is set; this could be the
+         * equivalent of krb5_cc_default() if `-c` was not given.
+         */
+        ret = krb5_cc_resolve(context, cred_cache, &ccache);
+        if (ret)
+            krb5_err(context, 1, ret,
+                     "Could not open given credential cache %s",
+                     cred_cache);
     }
+
     if (ret)
 	krb5_err(context, 1, ret, N_("resolving credentials cache", ""));
+
+    ret = krb5_cc_get_full_name(context, ccache, &ccname);
+    if (ret)
+        krb5_err(context, 1, ret,
+                 "Could not get name of new, unique cache");
+    if (verbose_flag || new_unique_flag || strcmp(cred_cache, ccname) != 0)
+        fprintf(stderr, "Using cache: %s\n", ccname);
+
+    if (!overwrite_flag && !new_unique_flag && !unique_ccache) {
+        krb5_principal principal_in_chosen_cache = NULL;
+        char *pstr = NULL;
+
+        ret = krb5_cc_get_principal(context, ccache,
+                                    &principal_in_chosen_cache);
+        if (ret == 0) {
+            ret = krb5_unparse_name(context, principal_in_chosen_cache, &pstr);
+            if (ret)
+                krb5_err(context, 1, ret, "Could not format principal");
+        }
+        if (ret == 0 &&
+            !krb5_principal_compare(context, principal,
+                                    principal_in_chosen_cache))
+            krb5_errx(context, 1,
+                      "Refusing to overwrite credentials for %s in %s",
+                      pstr, ccname);
+    }
 
 #ifndef NO_AFS
     if (argc > 1 && k_hasafs())
@@ -1845,7 +1914,7 @@ main(int argc, char **argv)
     if (renew_flag || validate_flag) {
 	ret = renew_validate(context, renew_flag, validate_flag,
                              &ccache, principal,
-                             default_for ? TRUE : FALSE, server_str,
+                             default_for_flag ? TRUE : FALSE, server_str,
                              ticket_life);
 
 #ifndef NO_AFS

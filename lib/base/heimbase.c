@@ -53,7 +53,7 @@ struct heim_base_mem {
     HEIM_TAILQ_ENTRY(heim_base) autorel;
     heim_auto_release_t autorelpool;
     const char *name;
-    void (*dealloc)(void *);
+    void (HEIM_CALLCONV *dealloc)(void *);
     uintptr_t isaextra[1];
 };
 
@@ -257,7 +257,7 @@ heim_cmp(heim_object_t a, heim_object_t b)
  * Private - allocates an memory object
  */
 
-static void
+static void HEIM_CALLCONV
 memory_dealloc(void *ptr)
 {
     struct heim_base_mem *p = (struct heim_base_mem *)PTR2BASE(ptr);
@@ -585,7 +585,7 @@ autorel_tls(void)
 
 }
 
-static void
+static void HEIM_CALLCONV
 autorel_dealloc(void *ptr)
 {
     heim_auto_release_t ar = ptr;

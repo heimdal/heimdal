@@ -46,7 +46,7 @@ struct heim_array_data {
     heim_object_t *allocated;
 };
 
-static void
+static void HEIM_CALLCONV
 array_dealloc(heim_object_t ptr)
 {
     heim_array_t array = ptr;

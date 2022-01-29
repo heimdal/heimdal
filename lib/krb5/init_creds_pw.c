@@ -2151,7 +2151,7 @@ pa_announce(krb5_context context,
 }
 
 
-static void
+static void HEIM_CALLCONV
 mech_dealloc(void *ctx)
 {
     struct pa_auth_mech *pa_mech = ctx;

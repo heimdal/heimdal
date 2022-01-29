@@ -84,7 +84,7 @@ static int open_file(const char *, int , int, int *, heim_error_t *);
 static int read_json(const char *, heim_object_t *, heim_error_t *);
 static struct heim_db_type json_dbt;
 
-static void db_dealloc(void *ptr);
+static void HEIM_CALLCONV db_dealloc(void *ptr);
 
 struct heim_type_data db_object = {
     HEIM_TID_DB,
@@ -242,7 +242,7 @@ heim_db_register(const char *dbtype,
     return ret;
 }
 
-static void
+static void HEIM_CALLCONV
 db_dealloc(void *arg)
 {
     heim_db_t db = arg;

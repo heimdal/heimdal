@@ -65,7 +65,7 @@ pa_gss_display_name(gss_name_t name,
                     gss_buffer_t namebuf,
                     gss_const_buffer_t *namebuf_p);
 
-static void
+static void HEIM_CALLCONV
 pa_gss_dealloc_client_params(void *ptr);
 
 /*
@@ -858,7 +858,7 @@ _kdc_gss_mk_composite_name_ad(astgs_request_t r,
     return ret;
 }
 
-static void
+static void HEIM_CALLCONV
 pa_gss_dealloc_client_params(void *ptr)
 {
     gss_client_params *gcp = ptr;

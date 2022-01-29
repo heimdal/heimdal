@@ -386,7 +386,7 @@ debug_host(krb5_context context, int level, struct host *host, const char *fmt, 
 }
 
 
-static void
+static void HEIM_CALLCONV
 deallocate_host(void *ptr)
 {
     struct host *host = ptr;

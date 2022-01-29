@@ -101,7 +101,7 @@ struct krb5_pac_data {
 
 static const char zeros[PAC_ALIGNMENT];
 
-static void
+static void HEIM_CALLCONV
 pac_dealloc(void *ctx)
 {
     krb5_pac pac = (krb5_pac)ctx;

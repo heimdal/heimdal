@@ -47,7 +47,7 @@ struct heim_dict_data {
     struct hashentry **tab;
 };
 
-static void
+static void HEIM_CALLCONV
 dict_dealloc(void *ptr)
 {
     heim_dict_t dict = ptr;

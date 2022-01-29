@@ -36,7 +36,7 @@
 #include "baselocl.h"
 #include <string.h>
 
-static void
+static void HEIM_CALLCONV
 string_dealloc(void *ptr)
 {
     heim_string_t s = ptr;

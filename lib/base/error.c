@@ -41,7 +41,7 @@ struct heim_error {
     struct heim_error *next;
 };
 
-static void
+static void HEIM_CALLCONV
 error_dealloc(void *ptr)
 {
     struct heim_error *p = ptr;

@@ -156,7 +156,7 @@ struct heim_plugin {
     void *ctx;
 };
 
-static void
+static void HEIM_CALLCONV
 plugin_free(void *ptr)
 {
     struct heim_plugin *pl = ptr;

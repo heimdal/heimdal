@@ -34,7 +34,7 @@
 #include "baselocl.h"
 #include <string.h>
 
-static void
+static void HEIM_CALLCONV
 data_dealloc(void *ptr)
 {
     heim_data_t d = ptr;

@@ -35,7 +35,7 @@
 
 #include "baselocl.h"
 
-static void
+static void HEIM_CALLCONV
 number_dealloc(void *ptr)
 {
 }

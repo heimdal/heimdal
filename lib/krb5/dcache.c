@@ -53,7 +53,7 @@ static krb5_error_code KRB5_CALLCONV dcc_set_default(krb5_context, krb5_ccache);
 /*
  * Make subsidiary filesystem safe by mapping / and : to -.  If the subsidiary
  * is longer than 128 bytes, then truncate.
- * In all cases, "tkt." is prefixed to be compatible with the DIR requirement
+ * In all cases, "tkt" is prefixed to be compatible with the DIR requirement
  * that subsidiary ccache files be named tkt*.
  *
  * Thus host/foo.bar.baz@BAR.BAZ -> tkt.host-foo.bar.baz@BAR.BAZ.
@@ -71,9 +71,9 @@ fs_encode_subsidiary(krb5_context context,
     size_t i;
 
     *res = NULL;
-    if (asprintf(res, "tkt.%s", subsidiary) == -1 || *res == NULL)
+    if (asprintf(res, "tkt%s", subsidiary) == -1 || *res == NULL)
         return krb5_enomem(context);
-    for (i = sizeof("tkt.") - 1; i < len; i++) {
+    for (i = sizeof("tkt") - 1; i < len; i++) {
         switch ((*res)[i]) {
 #ifdef WIN32
         case '\\':  (*res)[0] = '-'; break;
@@ -85,7 +85,7 @@ fs_encode_subsidiary(krb5_context context,
     }
 
     /* Hopefully this will work on all filesystems */
-    if (len > 128 - sizeof("tkt.") - 1)
+    if (len > 128 - sizeof("tkt") - 1)
         (*res)[127] = '\0';
     return 0;
 }
@@ -328,134 +328,143 @@ get_default_dir(krb5_context context, char **res)
     return ret;
 }
 
+/*
+ * In a DIR cache there should be a file named "primary" that names a ccache in
+ * the directory that is the current default cache for the collection.
+ * Alternatively, if there's no "primary", then a ccache named "tkt" will be
+ * it.
+ *
+ * The filenames of all ccaches in the collection must match the "tkt*" glob.
+ * Essentially, the text matched by "*" will be the "subsidiary" name.
+ *
+ * MIT's conventions for DIR cache naming:
+ *
+ *  - DIR:                  ---> FILE:/tmp/krb5cc_${uid}_dir/$(cat primary)
+ *  - DIR:/somedir          ---> FILE:/somedir/$(cat primary)
+ *  - DIR::/somedir/tktblah ---> FILE:/somedir/tktblah
+ *
+ * Heimdal's additional conventions for DIR cache naming:
+ *
+ *  - DIR:/somedir:NAME     ---> FILE:/somedir/tktNAME
+ *  - DIR::NAME             ---> FILE:/tmp/krb5cc_${uid}_dir/tktNAME
+ *
+ */
 static krb5_error_code KRB5_CALLCONV
 dcc_resolve_2(krb5_context context,
 	      krb5_ccache *id,
 	      const char *res,
 	      const char *sub)
 {
-    krb5_error_code ret;
+    krb5_error_code ret = 0;
     krb5_dcache *dc = NULL;
     char *filename = NULL;
+    char *freeme = NULL;
     size_t len;
-    int has_pathsep = 0;
+    int sub_has_path_sep = 0;
 
+    if ((dc = calloc(1, sizeof(*dc))) == NULL)
+        return krb5_enomem(context);
+    dc->fcache = NULL;
+    dc->name = NULL;
+    dc->dir = NULL;
+    dc->sub = NULL;
+
+    /* Normalize `res' and `sub' */
+    if (res && res[0] == ':' && res[1]) {
+        /* The residual has no path but has a subsidiary; split them */
+        sub = &res[1];
+        res = NULL;
+    }
+    if (res && !sub && (sub = strchr(res, ':')) != NULL) {
+        /* The residual has a path and the subsidiary; split them */
+        if ((freeme = strdup(res)) == NULL) {
+            dcc_release(context, dc);
+            return krb5_enomem(context);
+        }
+        freeme[sub - res] = '\0';
+        sub++;
+        res = freeme;
+    }
+    /* Normalize empty strings to NULL */
+    if (res && res[0] == '\0')
+        res = NULL;
+    if (sub && sub[0] == '\0')
+        sub = NULL;
+
+    /* Check if the `sub' has a directory component */
     if (sub) {
-        /*
-         * Here `res' has the directory name (or, if NULL, refers to the
-         * default DIR cccol), and `sub' has the "subsidiary" name, to which
-         * we'll prefix "tkt." (though we will insist only on "tkt" later).
-         */
-        if ((dc = calloc(1, sizeof(*dc))) == NULL ||
-            asprintf(&dc->sub, "tkt.%s", sub) == -1 || dc->sub == NULL) {
-            free(dc);
-            return krb5_enomem(context);
-        }
-        if (res && res[0] && (dc->dir = strdup(res)) == NULL) {
-            free(dc->sub);
-            free(dc);
-            return krb5_enomem(context);
-        } else if ((!res || !res[0]) && (ret = get_default_dir(context, &dc->dir))) {
-            free(dc->sub);
-            free(dc);
-            return ret;
-        }
-    } else {
-        const char *p;
-        int is_drive_letter_colon = 0;
-
-        /*
-         * Here `res' has whatever string followed "DIR:", and we need to parse
-         * it into `dc->dir' and `dc->sub'.
-         *
-         * Conventions we support for DIR cache naming:
-         *
-         *  - DIR:path:NAME     ---> FILE:path/tktNAME
-         *  - DIR::path/tktNAME ---> FILE:path/tktNAME
-         *  - DIR::NAME         ---> FILE:${default_DIR_cccol_path}/tktNAME
-         *                       \-> FILE:/tmp/krb5cc_${uid}_dir/tktNAME
-         *  - DIR:path          ---> FILE:path/$(cat primary) or FILE:path/tkt
-         *
-         */
-
-        if (*res == '\0' || (res[0] == ':' && res[1] == '\0')) {
-            /* XXX Why not? */
-            krb5_set_error_message(context, KRB5_CC_FORMAT,
-                                   N_("\"DIR:\" is not a valid ccache name", ""));
-            return KRB5_CC_FORMAT;
-        }
+        size_t non_pathsep_chars;
 
 #ifdef WIN32
-        has_pathsep = strchr(res, '\\') != NULL;
+        non_pathsep_chars = strcspn(sub, "\\/");
+#else
+        non_pathsep_chars = strcspn(sub, "/");
 #endif
-        has_pathsep |= strchr(res, '/') != NULL;
-
-        if ((dc = calloc(1, sizeof(*dc))) == NULL)
-            return krb5_enomem(context);
-
-        p = strrchr(res, ':');
-#ifdef WIN32
-        is_drive_letter_colon =
-            p && ((res[0] == ':' && res[1] != ':' && p - res == 2) ||
-                  (res[0] != ':' && p - res == 1));
-#endif
-
-        if (res[0] != ':' && p && !is_drive_letter_colon) {
-            /* DIR:path:NAME */
-            if ((dc->dir = strndup(res, (p - res))) == NULL ||
-                asprintf(&dc->sub, "tkt.%s", p + 1) < 0 || dc->sub == NULL) {
-                dcc_release(context, dc);
-                return krb5_enomem(context);
-            }
-        } else if (res[0] == ':' && has_pathsep) {
-            char *q;
-
-            /* DIR::path/tktNAME (the "tkt" must be there; we'll check) */
-            if ((dc->dir = strdup(&res[1])) == NULL) {
-                dcc_release(context, dc);
-                return krb5_enomem(context);
-            }
-#ifdef _WIN32
-            q = strrchr(dc->dir, '\\');
-            if (q == NULL || ((p = strrchr(dc->dir, '/')) && q < p))
-#endif
-                q = strrchr(dc->dir, '/');
-            *q++ = '\0';
-            if ((dc->sub = strdup(q)) == NULL) {
-                dcc_release(context, dc);
-                return krb5_enomem(context);
-            }
-        } else if (res[0] == ':') {
-            /* DIR::NAME -- no path component separators in NAME */
-            if ((ret = get_default_dir(context, &dc->dir))) {
-                dcc_release(context, dc);
-                return ret;
-            }
-            if (asprintf(&dc->sub, "tkt.%s", res + 1) < 0 || dc->sub == NULL) {
-                dcc_release(context, dc);
-                return krb5_enomem(context);
-            }
-        } else {
-            /* DIR:path */
-            if ((dc->dir = strdup(res)) == NULL) {
-                dcc_release(context, dc);
-                return krb5_enomem(context);
-            }
-
-            if ((ret = get_default_cache(context, dc, NULL, &dc->sub))) {
-                dcc_release(context, dc);
-                return ret;
-            }
-        }
+        sub_has_path_sep =
+            sub[non_pathsep_chars] != 0 && sub[non_pathsep_chars + 1] != 0;
     }
 
-    /* Strip off extra slashes on the end */
+    /* With normalized `res' and `sub' it's now easy to check all our cases */
+    if (res && sub) {
+        /* DIR:path:NAME, and NAME means tktNAME */
+        if ((dc->dir = strdup(res)) == NULL ||
+            asprintf(&dc->sub, "tkt%s", sub) == -1 || dc->sub == NULL)
+            ret = krb5_enomem(context);
+    } else if (sub && !sub_has_path_sep) {
+        /* DIR::NAME, and NAME means tktNAME in the default dir */
+        if ((ret = get_default_dir(context, &dc->dir)) ||
+            asprintf(&dc->sub, "tkt%s", sub) == -1 || dc->sub == NULL)
+            ret = ret ? ret : krb5_enomem(context);
+    } else if (sub) {
+        /* DIR::path/tktNAME -- split */
+        if ((dc->dir = strdup(sub)) == NULL)
+            ret = krb5_enomem(context);
+        if (ret == 0) {
+            char *p = strrchr(dc->dir, '/');
+#ifdef WIN32
+            char *p2 = strrchr(dc->dir, '\\');
+
+            if (p == NULL || p2 > p)
+                p = p2;
+#endif
+            if (p && p[1] == '\0') {
+                /* Well, it was DIR::path/, so use the default cache */
+                ret = get_default_cache(context, dc, NULL, &dc->sub);
+            } else if (p) {
+                /* DIR::path/tktNAME for realzies */
+                p[0] = '\0';
+                if ((dc->sub = strdup(p + 1)) == NULL)
+                    ret = krb5_enomem(context);
+            }
+        }
+    } else if (res) {
+        /* DIR:path -- default cache in path */
+        if ((dc->dir = strdup(res)) == NULL)
+            ret = krb5_enomem(context);
+        if (ret == 0)
+            ret = get_default_cache(context, dc, NULL, &dc->sub);
+    } else {
+        /* DIR: Default cache in default dir */
+        ret = get_default_dir(context, &dc->dir);
+        if (ret == 0)
+            ret = get_default_cache(context, dc, NULL, &dc->sub);
+    }
+    if (ret) {
+        dcc_release(context, dc);
+        free(freeme);
+        return ret;
+    }
+
+    /*
+     * If we got here then `dc->dir' and `dc->sub' must both be set.  Now we
+     * validate them.
+     */
+
+    /* Strip off extra slashes on the end of dir*/
     for (len = strlen(dc->dir);
          len && ISPATHSEP(dc->dir[len - 1]);
          len--)
         dc->dir[len - 1] = '\0';
-
-    /* If we got here then `dc->dir' and `dc->sub' must both be set */
 
     if ((ret = verify_directory(context, dc->dir))) {
         dcc_release(context, dc);
@@ -468,13 +477,19 @@ dcc_resolve_2(krb5_context context,
         dcc_release(context, dc);
         return KRB5_CC_FORMAT;
     }
+    /*
+     * We'll report the name of this cache as DIR::path/tktNAME so that we can
+     * interop with MIT.
+     */
     if (asprintf(&dc->name, ":%s/%s", dc->dir, dc->sub) == -1 ||
         dc->name == NULL ||
+        /* And we'll resolve FILE:path/tktNAME */
         asprintf(&filename, "FILE%s", dc->name) == -1 || filename == NULL) {
         dcc_release(context, dc);
         return krb5_enomem(context);
     }
 
+    /* Finally ready to resolve a FILE cache */
     ret = krb5_cc_resolve(context, filename, &dc->fcache);
     free(filename);
     if (ret) {

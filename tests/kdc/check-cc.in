@@ -184,12 +184,12 @@ mkdir ${objdir}/cc_dir || { ec=1 ; eval "${testfailed}"; }
 ${kinit} --default-for-principal foo@${R} || { ec=1 ; eval "${testfailed}"; }
 ${kinit} --default-for-principal --no-change-default bar@${R} || { ec=1 ; eval "${testfailed}"; }
 primary=`cat ${objdir}/cc_dir/primary`
-[ "x$primary" = xtkt.foo@${R} ] || { ec=1 ; eval "${testfailed}"; }
+[ "x$primary" = xtktfoo@${R} ] || { ec=1 ; eval "${testfailed}"; }
 ${klist} -l |
-    grep "foo@TEST.H5L.SE.*FILE:${objdir}/cc_dir/tkt.foo@TEST.H5L.SE" > /dev/null ||
+    grep "foo@TEST.H5L.SE.*FILE:${objdir}/cc_dir/tktfoo@TEST.H5L.SE" > /dev/null ||
     { ec=1 ; eval "${testfailed}"; }
 ${klist} -l |
-    grep "bar@TEST.H5L.SE.*FILE:${objdir}/cc_dir/tkt.bar@TEST.H5L.SE" > /dev/null ||
+    grep "bar@TEST.H5L.SE.*FILE:${objdir}/cc_dir/tktbar@TEST.H5L.SE" > /dev/null ||
     { ec=1 ; eval "${testfailed}"; }
 
 echo "killing kcm (${kcmpid})"

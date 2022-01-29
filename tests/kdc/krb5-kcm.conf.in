@@ -1,6 +1,7 @@
 [libdefaults]
 	default_realm = TEST.H5L.SE TEST2.H5L.SE
         default_ccache_name = KCM:%{uid}
+        default_cc_type = KCM
 	no-addresses = TRUE
 	allow_weak_crypto = @WEAK@
 	dns_lookup_kdc = no

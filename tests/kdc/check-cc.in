@@ -96,7 +96,7 @@ kcmpid=`getpid kcm`
 HEIM_IPC_DIR=${objdir}
 export HEIM_IPC_DIR
 
-trap "kill -9 ${kdcpid}; echo signal killing kdc; exit 1;" EXIT
+trap "kill -9 ${kdcpid} ${kcmpid}; echo signal killing kdc and kcm; exit 1;" EXIT
 
 ec=0
 
@@ -144,9 +144,16 @@ echo "getting tickets (KCM)"; > messages.log
 KRB5_CONFIG="${objdir}/krb5-kcm.conf"
 export KRB5_CONFIG
 unset KRB5CCNAME
-${kinit} --default-for-principal foo@${R}
-${kinit} --default-for-principal bar@${R}
-${kinit} bar@${R}
+${kinit} --default-for-principal foo@${R} || { ec=1 ; eval "${testfailed}"; }
+${kinit} --unique bar@${R} 2>&1 | grep '^Using cache: KCM:[0-9][0-9]*:[0-9]' || { ec=1 ; eval "${testfailed}"; }
+${klist} | grep bar@${R} > /dev/null || { ec=1 ; eval "${testfailed}"; }
+${kdestroy} -A
+${kinit} --unique foo@${R} || { ec=1 ; eval "${testfailed}"; }
+${kinit} --search --verbose foo@${R} 2>&1 | grep '^Using cache: KCM:[0-9][0-9]*:[0-9]' || { ec=1 ; eval "${testfailed}"; }
+${kdestroy} -A
+${kinit} --default-for-principal foo@${R} || { ec=1 ; eval "${testfailed}"; }
+${kinit} --default-for-principal bar@${R} || { ec=1 ; eval "${testfailed}"; }
+${kinit} bar@${R} || { ec=1 ; eval "${testfailed}"; }
 ${klist} > /dev/null || { ec=1 ; eval "${testfailed}"; }
 ${klist} | grep bar@${R} > /dev/null || { ec=1 ; eval "${testfailed}"; }
 ${klist} | grep foo@${R} > /dev/null && { ec=1 ; eval "${testfailed}"; }
@@ -154,12 +161,13 @@ ${klist} -l | grep bar@${R} > /dev/null || { ec=1 ; eval "${testfailed}"; }
 ${klist} -l | grep foo@${R} > /dev/null || { ec=1 ; eval "${testfailed}"; }
 ${klist} -c KCM: | grep bar@${R} > /dev/null || { ec=1 ; eval "${testfailed}"; }
 KRB5CCNAME=KCM: ${klist} | grep bar@${R} > /dev/null || { ec=1 ; eval "${testfailed}"; }
-if [ -n "$BASH_VERSION" ]; then
-    ${klist} -c KCM:${UID} | grep bar@${R} > /dev/null || { ec=1 ; eval "${testfailed}"; }
-    ${klist} -c KCM:${UID}: | grep bar@${R} > /dev/null || { ec=1 ; eval "${testfailed}"; }
-    KRB5CCNAME=KCM:${UID} ${klist} | grep bar@${R} > /dev/null || { ec=1 ; eval "${testfailed}"; }
-    KRB5CCNAME=KCM:${UID}: ${klist} | grep bar@${R} > /dev/null || { ec=1 ; eval "${testfailed}"; }
+uid=$(id -u)
+if [ -n "$uid" ]; then
+    ${klist} -c KCM:${uid} | grep bar@${R} > /dev/null || { ec=1 ; eval "${testfailed}"; }
+    KRB5CCNAME=KCM:${uid} ${klist} | grep bar@${R} > /dev/null || { ec=1 ; eval "${testfailed}"; }
 fi
+${kdestroy} -A
+${kinit} bar@${R} ${klist} | grep bar@${R} > /dev/null || { ec=1 ; eval "${testfailed}"; }
 ${kdestroy} -A
 ${klist} 2>/dev/null && { ec=1 ; eval "${testfailed}"; }
 ${klist} -l | grep bar@${R} > /dev/null && { ec=1 ; eval "${testfailed}"; }
@@ -167,13 +175,33 @@ ${klist} -l | grep foo@${R} > /dev/null && { ec=1 ; eval "${testfailed}"; }
 ${kinit} bar@${R}
 ${kinit} --default-for-principal foo@${R}
 ${klist} > /dev/null || { ec=1 ; eval "${testfailed}"; }
-${klist} | grep bar@${R} > /dev/null || { ec=1 ; eval "${testfailed}"; }
-${klist} | grep foo@${R} > /dev/null && { ec=1 ; eval "${testfailed}"; }
+${klist} | grep bar@${R} > /dev/null && { ec=1 ; eval "${testfailed}"; }
+${klist} | grep foo@${R} > /dev/null || { ec=1 ; eval "${testfailed}"; }
 ${klist} -l | grep bar@${R} > /dev/null || { ec=1 ; eval "${testfailed}"; }
 ${klist} -l | grep foo@${R} > /dev/null || { ec=1 ; eval "${testfailed}"; }
-${klist} -c KCM: | grep bar@${R} > /dev/null || { ec=1 ; eval "${testfailed}"; }
-KRB5CCNAME=KCM: ${klist} | grep bar@${R} > /dev/null || { ec=1 ; eval "${testfailed}"; }
+${klist} -c KCM: | grep foo@${R} > /dev/null || { ec=1 ; eval "${testfailed}"; }
+KRB5CCNAME=KCM: ${klist} | grep foo@${R} > /dev/null || { ec=1 ; eval "${testfailed}"; }
 ${kdestroy} -A
+if [ -n "$uid" ]; then
+    ${kinit} -c KCM:${uid}:foobar --no-change-default foo@${R}
+    ${kinit} -c KCM:${uid}:foobar --no-change-default bar@${R} && { ec=1 ; eval "${testfailed}"; }
+    ${kinit} -c KCM:${uid}:foobar --overwrite --no-change-default bar@${R} || { ec=1 ; eval "${testfailed}"; }
+    ${kinit} -c KCM:${uid}:foobar --overwrite --no-change-default foo@${R} || { ec=1 ; eval "${testfailed}"; }
+    KRB5CCNAME=KCM:${uid}:foobar ${kinit} --no-change-default foo@${R}
+    KRB5CCNAME=KCM:${uid}:barfoo ${kinit} --no-change-default bar@${R}
+    KRB5CCNAME=KCM:${uid}:barfoo ${klist} > /dev/null || { ec=1 ; eval "${testfailed}"; }
+    KRB5CCNAME=KCM:${uid}:barfoo ${klist} | grep bar@${R} > /dev/null || { ec=1 ; eval "${testfailed}"; }
+    KRB5CCNAME=KCM:${uid}:barfoo ${klist} | grep barfoo > /dev/null || { ec=1 ; eval "${testfailed}"; }
+    KRB5CCNAME=KCM:${uid}:barfoo ${klist} | grep foo@${R} > /dev/null && { ec=1 ; eval "${testfailed}"; }
+    KRB5CCNAME=KCM:${uid}:barfoo ${klist} | grep foobar > /dev/null && { ec=1 ; eval "${testfailed}"; }
+    KRB5CCNAME=KCM:${uid}:barfoo ${klist} -l | grep bar@${R} > /dev/null || { ec=1 ; eval "${testfailed}"; }
+    KRB5CCNAME=KCM:${uid}:barfoo ${klist} -l | grep barfoo > /dev/null || { ec=1 ; eval "${testfailed}"; }
+    KRB5CCNAME=KCM:${uid}:barfoo ${klist} -l | grep foo@${R} > /dev/null || { ec=1 ; eval "${testfailed}"; }
+    KRB5CCNAME=KCM:${uid}:barfoo ${klist} -l | grep foobar > /dev/null || { ec=1 ; eval "${testfailed}"; }
+    KRB5CCNAME=KCM:${uid}:barfoo ${klist} -c KCM: | grep bar@${R} > /dev/null || { ec=1 ; eval "${testfailed}"; }
+    KRB5CCNAME=KCM: ${klist} | grep bar@${R} > /dev/null || { ec=1 ; eval "${testfailed}"; }
+    KRB5CCNAME=KCM:${uid}:barfoo ${kdestroy} -A
+fi
 
 echo "getting tickets (DIR)"; > messages.log
 KRB5_CONFIG="${objdir}/krb5-cccol.conf"
@@ -193,7 +221,7 @@ ${klist} -l |
     { ec=1 ; eval "${testfailed}"; }
 
 echo "killing kcm (${kcmpid})"
-sh ${leaks_kill} kcm $kcmpid || exit 1
+sh ${leaks_kill} kcm $kcmpid || { kill -9 ${kdcpid}; exit 1; }
 
 echo "killing kdc (${kdcpid})"
 sh ${leaks_kill} kdc $kdcpid || exit 1

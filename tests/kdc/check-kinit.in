@@ -51,7 +51,7 @@ R=TEST.H5L.SE
 port=@port@
 pwport=@pwport@
 
-kinit="${kinit} --password-file=${objdir}/foopassword ${afs_no_afslog} -c ${objdir}/foocc"
+kinit="${kinit} --overwrite --password-file=${objdir}/foopassword ${afs_no_afslog} -c ${objdir}/foocc"
 klist="${klist} -c ${objdir}/foocc"
 kgetcred="${kgetcred} -c ${objdir}/foocc"
 kdestroy="${kdestroy} ${afs_no_unlog}"

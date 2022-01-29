@@ -347,6 +347,7 @@ CLEANFILES= \
 	krb5-canon2.conf \
 	krb5-cc.conf \
 	krb5-cccol.conf \
+	krb5-kcm.conf \
 	krb5-hdb-mitdb.conf \
 	krb5-master2.conf \
 	krb5-pkinit-win.conf \

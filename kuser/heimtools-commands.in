@@ -42,6 +42,16 @@ command = {
 		help = "credential cache to list"
 	}
 	option = {
+		long = "default-for"
+		type = "string"
+		help = "principal name"
+	}
+	option = {
+		long = "search-for"
+		type = "string"
+		help = "principal name"
+	}
+	option = {
 		name = "flags"
 		short = "f"
 		type = "flag"

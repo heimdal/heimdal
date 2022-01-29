@@ -222,26 +222,46 @@ fcc_resolve_2(krb5_context context,
     krb5_fcache *f;
     char *freeme = NULL;
 
-    if (res == NULL && sub == NULL)
-        return krb5_einval(context, 3);
+    if (res && !*res)
+        res = NULL;
+    if (sub && !*sub)
+        sub = NULL;
     if (res == NULL) {
         krb5_error_code ret;
 
+        /* If we have a `sub' but no `res', we don't interpret the `sub' */
         if ((ret = fcc_get_default_name(context, &freeme)))
             return ret;
         res = freeme + sizeof("FILE:") - 1;
     } else if (!sub && (sub = strchr(res, FILESUBSEPCHR))) {
+        /*
+         * If we have a `res' and not a `sub' we check if the `res' as a
+         * subsidiary component in it.
+         */
         if (sub[1] == '\0') {
+            /*
+             * It does not; we'll ignore the FILESUBSEPCHR, though maybe we
+             * should replace it with NUL.
+             */
             sub = NULL;
         } else {
-            /* `res' has a subsidiary component, so split on it */
+            /*
+             * `res' does have a subsidiary component, so split on it and now
+             * we have both, a `res' and a `sub'.
+             */
             if ((freeme = strndup(res, sub - res)) == NULL)
                 return krb5_enomem(context);
             res = freeme;
             sub++;
         }
+    } else {
+        /*
+         * We have a `res', and we maybe have a `sub' and we need not interpret
+         * them further.  Instead, if we have both, we'll join them below.
+         */
     }
 
+    /* The actual filename will be `res' or `res' + FILESUBSEP + `sub' */
     if ((f = calloc(1, sizeof(*f))) == NULL ||
         (f->res = strdup(res)) == NULL ||
         (f->sub = sub ? strdup(sub) : NULL) == (sub ? NULL : "") ||

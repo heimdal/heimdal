@@ -345,24 +345,44 @@ krb5_cc_resolve_sub(krb5_context context,
                     const char *subsidiary,
                     krb5_ccache *id)
 {
+    krb5_error_code ret;
+    krb5_ccache cccol_cache = NULL;
     const krb5_cc_ops *ops = NULL;
+    const char *col = NULL;
 
     *id = NULL;
 
-    /* Get the cctype from the collection, maybe */
-    if (cctype == NULL && collection)
+    /* Split the collection into a residual, and get its cctype's ops */
+    if (collection)
 	ops = cc_get_prefix_ops(context, collection, &collection);
 
-    if (ops == NULL)
-	ops = cc_get_prefix_ops(context, get_default_cc_type(context, 0), NULL);
-
-    if (ops == NULL) {
+    if (!ops && cctype) {
+	ops = cc_get_prefix_ops(context, cctype, NULL);
 	krb5_set_error_message(context, KRB5_CC_UNKNOWN_TYPE,
 			       N_("unknown ccache type %s", ""), cctype);
 	return KRB5_CC_UNKNOWN_TYPE;
     }
 
-    return allocate_ccache(context, ops, collection, subsidiary, id);
+    if (!ops)
+	ops = cc_get_prefix_ops(context, get_default_cc_type(context, 0), NULL);
+
+    if (!ops) {
+	krb5_set_error_message(context, KRB5_CC_UNKNOWN_TYPE,
+			       "No default credentials cache configured/found");
+	return KRB5_CC_UNKNOWN_TYPE;
+    }
+
+    if (ops && collection && subsidiary) {
+        ret = allocate_ccache(context, ops, collection, NULL, &cccol_cache);
+        if (ret == 0)
+            (void) cccol_cache->ops->get_name_2(context, cccol_cache, NULL, &col, NULL);
+        if (col)
+            collection = col;
+    }
+
+    ret = allocate_ccache(context, ops, collection, subsidiary, id);
+    krb5_cc_close(context, cccol_cache);
+    return ret;
 }
 
 

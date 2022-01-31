@@ -788,6 +788,34 @@ krb5_cc_default_name(krb5_context context)
     return context->default_cc_name;
 }
 
+/*
+ * Use this instead of calling `(*ops->get_default_name)(...)' directly.
+ *
+ * Plugins exist (lib/krb5/pcache.c) that don't return the default cache name
+ * with the cctype prefix.
+ */
+static krb5_error_code
+wrap_get_default_name(krb5_context context, const krb5_cc_ops *ops, char **n)
+{
+    krb5_error_code ret;
+    char *s = NULL;
+
+    *n = NULL;
+    ret = (*ops->get_default_name)(context, &s);
+    if (ret == 0) {
+        size_t plen = strlen(ops->prefix);
+
+        if (strncmp(s, ops->prefix, plen) == 0 && s[plen] == ':') {
+            *n = s;
+            s = NULL;
+        } else if (asprintf(n, "%s:%s", ops->prefix, s) == -1 || *n == NULL) {
+            ret = krb5_enomem(context);
+        }
+    }
+    free(s);
+    return ret;
+}
+
 static krb5_error_code
 resolve_cfg_default_name(krb5_context context, const char *n, char **an)
 {
@@ -796,7 +824,7 @@ resolve_cfg_default_name(krb5_context context, const char *n, char **an)
     ops = krb5_cc_get_prefix_ops(context, n);
     if (!ops)
         return KRB5_CC_NOTFOUND;
-    return (*ops->get_default_name)(context, an);
+    return wrap_get_default_name(context, ops, an);
 }
 
 KRB5_LIB_FUNCTION const char * KRB5_LIB_CALL
@@ -852,7 +880,7 @@ krb5_cc_configured_default_name(krb5_context context)
     }
 
     /* The get_default_name() method expands any tokens */
-    ret = (*ops->get_default_name)(context, &expanded);
+    ret = wrap_get_default_name(context, ops, &expanded);
     if (ret) {
 	krb5_set_error_message(context, ret, "failed to find a default "
 			       "ccache for default ccache type %s", cfg);
@@ -868,7 +896,7 @@ krb5_cccol_get_default_ccname(krb5_context context)
     char *cccol_default_ccname;
     const krb5_cc_ops *ops = krb5_cc_get_prefix_ops(context, cfg);
 
-    (void) (*ops->get_default_name)(context, &cccol_default_ccname);
+    (void) wrap_get_default_name(context, ops, &cccol_default_ccname);
     return cccol_default_ccname;
 }
 

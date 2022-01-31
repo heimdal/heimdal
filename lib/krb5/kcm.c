@@ -175,6 +175,11 @@ kcm_alloc(krb5_context context,
     char *kcm_def_name = NULL; /* KCM's knowledge of default cache name */
     int aret;
 
+    if (residual && residual[0] == '\0')
+        residual = NULL;
+    if (sub && sub[0] == '\0')
+        sub = NULL;
+
     *kp = NULL;
     k = calloc(1, sizeof(*k));
     if (k == NULL)
@@ -229,22 +234,13 @@ kcm_alloc(krb5_context context,
     if (residual && !sub &&
         strncmp(residual, k->collection + ops_prefix_len + 1,
                 collection_len - (ops_prefix_len + 1)) == 0) {
-        if (residual[collection_len - (ops_prefix_len + 1)] == '\0' ||
-            (residual[collection_len - (ops_prefix_len + 1)] == ':' &&
-             residual[collection_len - ops_prefix_len] == '\0')) {
-            /*
-             * If we got a default cache name from KCM and the requested default
-             * cache does not exist, use the former.
-             */
-            if (kcm_def_name && kcm_stat(context, residual))
-                residual = kcm_def_name + ops_prefix_len + 1;
-        }
+        /*
+         * If we got a default cache name from KCM and the requested default
+         * cache does not exist, use the former.
+         */
+        if (kcm_def_name && kcm_stat(context, residual))
+            residual = kcm_def_name + ops_prefix_len + 1;
     }
-
-    if (residual && residual[0] == '\0')
-        residual = NULL;
-    if (sub && sub[0] == '\0')
-        sub = NULL;
 
     if (residual == NULL && sub == NULL) {
         /* Use the default cache name, either from KCM or local default */

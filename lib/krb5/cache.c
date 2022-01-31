@@ -788,13 +788,21 @@ krb5_cc_default_name(krb5_context context)
     return context->default_cc_name;
 }
 
+static krb5_error_code
+resolve_cfg_default_name(krb5_context context, const char *n, char **an)
+{
+    const krb5_cc_ops *ops;
+
+    ops = krb5_cc_get_prefix_ops(context, n);
+    if (!ops)
+        return KRB5_CC_NOTFOUND;
+    return (*ops->get_default_name)(context, an);
+}
+
 KRB5_LIB_FUNCTION const char * KRB5_LIB_CALL
 krb5_cc_configured_default_name(krb5_context context)
 {
     krb5_error_code ret = 0;
-#ifdef _WIN32
-    krb5_ccache id;
-#endif
     const char *cfg;
     char *expanded;
     const krb5_cc_ops *ops;
@@ -803,8 +811,14 @@ krb5_cc_configured_default_name(krb5_context context)
         return context->configured_default_cc_name;
 
 #ifdef _WIN32
-    if ((expanded = _krb5_get_default_cc_name_from_registry(context)))
-        return context->configured_default_cc_name = expanded;
+    if ((expanded = _krb5_get_default_cc_name_from_registry(context))) {
+        ret = resolve_cfg_default_name(context, expanded,
+                                       &context->configured_default_cc_name);
+        if (ret == 0) {
+            free(expanded);
+            return context->configured_default_cc_name;
+        }
+    }
 #endif
 
     /* If there's a configured default, expand the tokens and use it */
@@ -820,7 +834,12 @@ krb5_cc_configured_default_name(krb5_context context)
                                    "token expansion failed for %s", cfg);
             return NULL;
         }
-        return context->configured_default_cc_name = expanded;
+        ret = resolve_cfg_default_name(context, expanded,
+                                       &context->configured_default_cc_name);
+        if (ret == 0) {
+            free(expanded);
+            return context->configured_default_cc_name;
+        }
     }
 
     /* Else try a configured default ccache type's default */

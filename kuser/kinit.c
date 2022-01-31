@@ -1779,7 +1779,7 @@ main(int argc, char **argv)
     if (strcmp(ccops->prefix, "API") == 0) {
         if (asprintf(&ccname, "API:%s", principal_str) == -1 ||
             ccname == NULL)
-            krb5_err(context, 1, enomem, "Failed to format API:%s cache name",
+            krb5_err(context, 1, ENOMEM, "Failed to format API:%s cache name",
                      ccname);
         default_for_flag = 0;
         unique_flag = 0;

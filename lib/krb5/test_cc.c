@@ -1203,6 +1203,9 @@ main(int argc, char **argv)
         ret = test_cccol(context, fname, &what);
         if (ret)
             krb5_err(context, 1, ret, "%s", what);
+        free(config);
+        free(fname);
+        free(d);
     }
 
     krb5_free_context(context);

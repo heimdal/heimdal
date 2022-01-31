@@ -170,7 +170,6 @@ kcm_alloc(krb5_context context,
     krb5_kcmcache *k;
     size_t ops_prefix_len = strlen(ops->prefix);
     size_t plen = 0;
-    size_t collection_len;
     char *collection = NULL;
     char *kcm_def_name = NULL; /* KCM's knowledge of default cache name */
     int aret;
@@ -201,7 +200,6 @@ kcm_alloc(krb5_context context,
         kcm_free(k);
         return krb5_enomem(context);
     }
-    collection_len = strlen(k->collection);
 
     /* Get the default ccache name from KCM if possible */
     (void) kcm_get_default_name(context, ops, NULL, &kcm_def_name);
@@ -232,8 +230,7 @@ kcm_alloc(krb5_context context,
      * Only the first two count as "maybe I mean the default KCM cache".
      */
     if (residual && !sub &&
-        strncmp(residual, k->collection + ops_prefix_len + 1,
-                collection_len - (ops_prefix_len + 1)) == 0) {
+        strcmp(residual, k->collection + ops_prefix_len + 1) == 0) {
         /*
          * If we got a default cache name from KCM and the requested default
          * cache does not exist, use the former.

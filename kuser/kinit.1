@@ -42,7 +42,7 @@
 .Op Fl Fl no-change-default
 .Op Fl Fl default-for-principal
 .Op Fl Fl search
-.Op Fl Fl new-unique
+.Op Fl Fl unique
 .Op Fl Fl overwrite
 .Op Fl Fl afslog
 .Oo Fl c Ar cachename \*(Ba Xo
@@ -144,7 +144,7 @@ Identifies a credentials cache to write to if none of
 .Fl Fl default-for-principal ,
 .Fl Fl search ,
 nor
-.Fl Fl new-unique
+.Fl Fl unique
 are given.
 Otherwise this option identifies a credentials cache collection
 in which to create a credentials cache and/or search for an
@@ -197,9 +197,9 @@ cache collection.
 If none is found, then a cache will be created as if
 .Fl Fl default-for
 had been used unless
-.Fl Fl new-unique
+.Fl Fl unique
 was used.
-.It Fl Fl new-unique
+.It Fl Fl unique
 Use a new, unique credential cache in the given or default
 credential cache collection.
 .It Fl Fl overwrite

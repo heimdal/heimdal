@@ -96,7 +96,7 @@ static char *ntlm_domain;
 #endif
 static int overwrite_flag = 0;
 static int search_flag = 0;
-static int new_unique_flag = 0;
+static int unique_flag = 0;
 
 
 static struct getargs args[] = {
@@ -224,7 +224,7 @@ static struct getargs args[] = {
     { "search",  0,  arg_flag, &search_flag,
       NP_("Search for a ccache for the principal and use it", ""), NULL },
 
-    { "new-unique",  0,  arg_flag, &search_flag,
+    { "unique",  0,  arg_flag, &unique_flag,
       NP_("Create a new, unique ccache", ""), NULL },
 
     { "ok-as-delegate",	0,  arg_flag, &ok_as_delegate_flag,
@@ -236,7 +236,7 @@ static struct getargs args[] = {
     { "use-referrals",	0,  arg_flag, &use_referrals_flag,
       NP_("only use referrals, no dns canalisation", ""), NULL },
 
-    { "verbose",	0,  arg_flag, &verbose_flag,
+    { "verbose",	'V',  arg_flag, &verbose_flag,
       NP_("only use referrals, no dns canalisation", ""), NULL },
 
     { "windows",	0,  arg_flag, &windows_flag,
@@ -1626,10 +1626,10 @@ main(int argc, char **argv)
     argc -= optidx;
     argv += optidx;
 
-    if (default_for_flag > 0 && new_unique_flag > 0) {
-        krb5_warnx(context, "--default-for and --new-unique are mutually "
-                   "exclusive; ignoring --new-unique");
-        new_unique_flag = 0;
+    if (default_for_flag > 0 && unique_flag > 0) {
+        krb5_warnx(context, "--default-for-principal and --unique are "
+                   "mutually exclusive; ignoring --unique");
+        unique_flag = 0;
     }
 
     krb5_appdefault_boolean(context, "kinit", NULL, "historical_anon_pkinit",
@@ -1714,15 +1714,15 @@ main(int argc, char **argv)
     /*
      * User intent.  We don't care how you specified what ccache to use.
      *
-     * If you said --default-for, we'll use whatever ccache just to identify a
-     * collection, then we'll use the cache in that collection that corresponds
-     * to whatever principal we'll be using.
+     * If you said --default-for-principal, we'll use whatever ccache just to
+     * identify a collection, then we'll use the cache in that collection that
+     * corresponds to whatever principal we'll be using.
      *
-     * If you did not use --default-for but used --search, we'll search the
-     * collection for a cache for the given principal, and we'll use that if we
-     * find it.
+     * If you did not use --default-for-principal but used --search, we'll
+     * search the collection for a cache for the given principal, and we'll use
+     * that if we find it.
      *
-     * If you did not use --default-for, we'll use whatever ccache we
+     * If you did not use --default-for-principal, we'll use whatever ccache we
      * identified, and we'll refuse to change what principal's credentials we
      * store in it unless you used --overwrite.
      */
@@ -1736,7 +1736,7 @@ main(int argc, char **argv)
         krb5_err(context, 1, ret, "Could not format principal name");
 
     if (verbose_flag)
-        fprintf(stderr, "Using principal: %s", principal_str);
+        fprintf(stderr, "Using principal: %s\n", principal_str);
 
     if (fcache_version)
 	krb5_set_fcache_version(context, fcache_version);
@@ -1762,7 +1762,7 @@ main(int argc, char **argv)
     if (strcmp(ccops->prefix, "MSLSA") == 0) {
         cred_cache = "MSLSA:";
         default_for_flag = 0;
-        new_unique_flag = 0;
+        unique_flag = 0;
         overwrite_flag = 1;
         search_flag = 0;
     }
@@ -1782,7 +1782,7 @@ main(int argc, char **argv)
             krb5_err(context, 1, enomem, "Failed to format API:%s cache name",
                      ccname);
         default_for_flag = 0;
-        new_unique_flag = 0;
+        unique_flag = 0;
         overwrite_flag = 1;
         search_flag = 0;
     }
@@ -1816,8 +1816,8 @@ main(int argc, char **argv)
          */
         ret = krb5_cc_cache_match(context, principal, &ccache);
         if (ret) {
-            if (!new_unique_flag || strcmp(ccops->prefix, "FILE") == 0) {
-                /* Fallback on --default-for */
+            if (!unique_flag || strcmp(ccops->prefix, "FILE") == 0) {
+                /* Fallback on --default-for-principal */
                 ret = krb5_cc_resolve_for(context, ccops->prefix, cred_cache,
                                           principal, &ccache);
             } else {
@@ -1836,7 +1836,7 @@ main(int argc, char **argv)
             krb5_err(context, 1, ret,
                      "Could not resolve cache for principal %s",
                      principal_str);
-    } else if (new_unique_flag) {
+    } else if (unique_flag) {
 	ret = krb5_cc_new_unique(context, ccops->prefix, NULL, &ccache);
     } else {
         /*
@@ -1857,10 +1857,10 @@ main(int argc, char **argv)
     if (ret)
         krb5_err(context, 1, ret,
                  "Could not get name of new, unique cache");
-    if (verbose_flag || new_unique_flag || strcmp(cred_cache, ccname) != 0)
+    if (verbose_flag || unique_flag || strcmp(cred_cache, ccname) != 0)
         fprintf(stderr, "Using cache: %s\n", ccname);
 
-    if (!overwrite_flag && !new_unique_flag && !unique_ccache) {
+    if (!overwrite_flag && !unique_flag && !unique_ccache) {
         krb5_principal principal_in_chosen_cache = NULL;
         char *pstr = NULL;
 

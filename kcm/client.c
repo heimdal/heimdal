@@ -46,7 +46,7 @@ kcm_ccache_resolve_client(krb5_context context,
     const char *estr;
 
     ret = kcm_ccache_resolve(context, name, ccache);
-    if (ret) {
+    if (ret && opcode != KCM_OP_MOVE_CACHE) {
         char *uid = NULL;
 
         /*

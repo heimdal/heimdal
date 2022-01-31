@@ -145,11 +145,11 @@ KRB5_CONFIG="${objdir}/krb5-kcm.conf"
 export KRB5_CONFIG
 unset KRB5CCNAME
 ${kinit} --default-for-principal foo@${R} || { ec=1 ; eval "${testfailed}"; }
-${kinit} --unique bar@${R} 2>&1 | grep '^Using cache: KCM:1000:[0-9]' || { ec=1 ; eval "${testfailed}"; }
+${kinit} --unique bar@${R} 2>&1 | grep '^Using cache: KCM:[0-9][0-9]*:[0-9]' || { ec=1 ; eval "${testfailed}"; }
 ${klist} | grep bar@${R} > /dev/null || { ec=1 ; eval "${testfailed}"; }
 ${kdestroy} -A
 ${kinit} --unique foo@${R} || { ec=1 ; eval "${testfailed}"; }
-${kinit} --search --verbose foo@${R} 2>&1 | grep '^Using cache: KCM:1000:[0-9]' || { ec=1 ; eval "${testfailed}"; }
+${kinit} --search --verbose foo@${R} 2>&1 | grep '^Using cache: KCM:[0-9][0-9]*:[0-9]' || { ec=1 ; eval "${testfailed}"; }
 ${kdestroy} -A
 ${kinit} --default-for-principal foo@${R} || { ec=1 ; eval "${testfailed}"; }
 ${kinit} --default-for-principal bar@${R} || { ec=1 ; eval "${testfailed}"; }

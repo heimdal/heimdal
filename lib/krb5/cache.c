@@ -809,6 +809,7 @@ wrap_get_default_name(krb5_context context, const krb5_cc_ops *ops, char **n)
             *n = s;
             s = NULL;
         } else if (asprintf(n, "%s:%s", ops->prefix, s) == -1 || *n == NULL) {
+            *n = NULL;
             ret = krb5_enomem(context);
         }
     }
@@ -2124,9 +2125,10 @@ krb5_cc_get_friendly_name(krb5_context context,
     } else {
 	ret = asprintf(name, "%.*s", (int)data.length, (char *)data.data);
 	krb5_data_free(&data);
-	if (ret <= 0)
+	if (ret == -1) {
+            *name = NULL;
 	    ret = krb5_enomem(context);
-	else
+        } else
 	    ret = 0;
     }
 

@@ -2860,25 +2860,9 @@ krb5_init_creds_set_fast_ccache(krb5_context context,
 				krb5_init_creds_context ctx,
 				krb5_ccache fast_ccache)
 {
-    krb5_creds *cred = NULL;
-    krb5_error_code ret;
-    krb5_data data;
-
-    ret = _krb5_get_krbtgt(context, fast_ccache, NULL, &cred);
-    if (ret)
-	return ret;
-
-    ret = krb5_cc_get_config(context, fast_ccache, cred->server,
-			     "fast_avail", &data);
-    krb5_free_creds(context, cred);
-    if (ret == 0) {
-	ctx->fast_state.armor_ccache = fast_ccache;
-	ctx->fast_state.flags |= KRB5_FAST_REQUIRED;
-	ctx->fast_state.flags |= KRB5_FAST_KDC_VERIFIED;
-    } else {
-	krb5_set_error_message(context, EINVAL, N_("FAST not available for the KDC in the armor ccache", ""));
-	return EINVAL;
-    }
+    ctx->fast_state.armor_ccache = fast_ccache;
+    ctx->fast_state.flags |= KRB5_FAST_REQUIRED;
+    ctx->fast_state.flags |= KRB5_FAST_KDC_VERIFIED;
     return 0;
 }
 
@@ -3650,7 +3634,7 @@ krb5_init_creds_store(krb5_context context,
 	krb5_data data = { 3, rk_UNCONST("yes") };
 	ret = krb5_cc_set_config(context, id, ctx->cred.server,
 				 "fast_avail", &data);
-	if (ret)
+	if (ret && ret != KRB5_CC_NOSUPP)
 	    return ret;
     }
 

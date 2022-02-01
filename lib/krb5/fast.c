@@ -860,7 +860,7 @@ _krb5_fast_anon_pkinit_step(krb5_context context,
 
     ret = krb5_cc_set_config(context, ccache, cred.server,
 			     "fast_avail", &data);
-    if (ret)
+    if (ret && ret != KRB5_CC_NOSUPP)
 	return ret;
 
     if (_krb5_pk_is_kdc_verified(context, state->anon_pkinit_opt))

@@ -1769,9 +1769,9 @@ main(int argc, char **argv)
     ccops = ccops ? ccops : krb5_cc_get_prefix_ops(context, NULL);
 
     /*
-     * XXX We should have an #idef WIN32 here to force default_for_flag = 1
-     * when the ccops->type is API, or if the ccops->type is MSLSA then force
-     * the use of "MSLSA:".  The we can delete get_switched_ccache().
+     * We could have an #idef WIN32 here to force default_for_flag = 1 when the
+     * ccops->type is API, or if the ccops->type is MSLSA then force the use of
+     * "MSLSA:".
      */
     if (strcmp(ccops->prefix, "MSLSA") == 0) {
         cred_cache = "MSLSA:";
@@ -1814,9 +1814,13 @@ main(int argc, char **argv)
          * We'll ignore the `-c` argument in this case, yes.
          */
         if (use_mslsa)
-            ret = krb5_cc_resolve(context, "MSLSA:", &ccache);
-        else
-            ret = krb5_cc_new_unique(context, NULL, NULL, &ccache);
+            krb5_errx(context, 1, "kinit with a command and MSLSA caches is "
+                      "not supported; use -c to specify a cache type other "
+                      "than MSLSA");
+        if (default_for_flag || search_flag)
+            krb5_errx(context, 1, "--default-for-principal and --search are "
+                      "incompatible with kinit with a command");
+        ret = krb5_cc_new_unique(context, NULL, NULL, &ccache);
         if (ret)
             krb5_err(context, 1, ret, "creating cred cache");
         ret = krb5_cc_get_full_name(context, ccache, &s);
@@ -1827,8 +1831,6 @@ main(int argc, char **argv)
         unique_ccache = TRUE;
         switch_cache_flags = 0;
         overwrite_flag = 1;
-        default_for_flag = 0;
-        search_flag = 0;
     } else if (search_flag) {
         /*
          * We used to do this as the default behavior.

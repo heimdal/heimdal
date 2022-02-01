@@ -66,8 +66,8 @@ char *server_str	= NULL;
 static krb5_principal tgs_service;
 const char *cred_cache	= NULL;
 char *start_str		= NULL;
-static int default_for_flag = -1;
-static int switch_cache_flags = -1;
+static int default_for_flag = 0;
+static int switch_cache_flags = 1;
 struct getarg_strings etype_str;
 int use_keytab		= 0;
 char *keytab_str	= NULL;
@@ -213,6 +213,9 @@ static struct getargs args[] = {
 #endif
 
     { "change-default",  0,  arg_negative_flag, &switch_cache_flags,
+      NP_("switch the default cache to the new credentials cache", ""), NULL },
+
+    { "kswitch",  0,  arg_negative_flag, &switch_cache_flags,
       NP_("switch the default cache to the new credentials cache", ""), NULL },
 
     { "default-for-principal",  0,  arg_flag, &default_for_flag,
@@ -1626,7 +1629,7 @@ main(int argc, char **argv)
     argc -= optidx;
     argv += optidx;
 
-    if (default_for_flag > 0 && unique_flag > 0) {
+    if (default_for_flag && unique_flag > 0) {
         krb5_warnx(context, "--default-for-principal and --unique are "
                    "mutually exclusive; ignoring --unique");
         unique_flag = 0;
@@ -1810,7 +1813,7 @@ main(int argc, char **argv)
         overwrite_flag = 1;
         default_for_flag = 0;
         search_flag = 0;
-    } else if (search_flag > 0) {
+    } else if (search_flag) {
         /*
          * We used to do this as the default behavior.
          */
@@ -1825,7 +1828,7 @@ main(int argc, char **argv)
                 unique_ccache = TRUE;
             }
         }
-    } else if (default_for_flag > 0) {
+    } else if (default_for_flag) {
         /*
          * Resolve a cache for the given (or found) principal in the given (or
          * found) cache's collection.

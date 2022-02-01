@@ -39,7 +39,7 @@
 .Nd acquire initial tickets
 .Sh SYNOPSIS
 .Nm kinit
-.Op Fl Fl no-change-default
+.Op Fl Fl no-change-default | Fl Fl no-kswitch
 .Op Fl Fl default-for-principal
 .Op Fl Fl search
 .Op Fl Fl unique
@@ -149,7 +149,7 @@ are given.
 Otherwise this option identifies a credentials cache collection
 in which to create a credentials cache and/or search for an
 appropriate credentials cache.
-.It Fl Fl no-change-default
+.It Fl Fl no-change-default | Fl Fl no-kswitch
 By default, the credentials cache written to will be made its
 containing credentials cache
 collection's default cache.
@@ -182,11 +182,7 @@ that it is of the form
 .Ar ${USER}@${user_realm}
 or
 .Ar ${USER}@${default_realm} .
-This option implies
-.Fl Fl no-change-default
-unless
-.Fl Fl change-default
-is given.  Caches for the user can be listed with the
+Caches for the user can be listed with the
 .Fl l
 option to
 .Xr klist 1 .

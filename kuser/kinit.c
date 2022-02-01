@@ -561,20 +561,22 @@ renew_validate(krb5_context context,
 	goto out;
     }
 
-    ret = krb5_cc_new_unique(context, krb5_cc_get_type(context, cache),
-			     NULL, &tempccache);
-    if (ret) {
-	krb5_warn(context, ret, "krb5_cc_new_unique");
-	goto out;
+    if (strcmp("MSLSA", krb5_cc_get_type(context, cache)) != 0) {
+        ret = krb5_cc_new_unique(context, krb5_cc_get_type(context, cache),
+                                 NULL, &tempccache);
+        if (ret) {
+            krb5_warn(context, ret, "krb5_cc_new_unique");
+            goto out;
+        }
+
+        ret = krb5_cc_initialize(context, tempccache, in.client);
+        if (ret) {
+            krb5_warn(context, ret, "krb5_cc_initialize");
+            goto out;
+        }
     }
 
-    ret = krb5_cc_initialize(context, tempccache, in.client);
-    if (ret) {
-	krb5_warn(context, ret, "krb5_cc_initialize");
-	goto out;
-    }
-
-    ret = krb5_cc_store_cred(context, tempccache, out);
+    ret = krb5_cc_store_cred(context, tempccache ? tempccache : cache, out);
     if (ret) {
 	krb5_warn(context, ret, "krb5_cc_store_cred");
 	goto out;
@@ -584,16 +586,18 @@ renew_validate(krb5_context context,
      * We want to preserve cc configs as some are security-relevant, and
      * anyways it's the friendly thing to do.
      */
-    ret = copy_configs(context, tempccache, cache, out->server);
-    if (ret)
-	goto out;
+    if (tempccache) {
+        ret = copy_configs(context, tempccache, cache, out->server);
+        if (ret)
+            goto out;
 
-    ret = krb5_cc_move(context, tempccache, cache);
-    if (ret) {
-	krb5_warn(context, ret, "krb5_cc_move");
-	goto out;
+        ret = krb5_cc_move(context, tempccache, cache);
+        if (ret) {
+            krb5_warn(context, ret, "krb5_cc_move");
+            goto out;
+        }
+        tempccache = NULL;
     }
-    tempccache = NULL;
 
 out:
     if (tempccache)
@@ -1114,20 +1118,24 @@ get_new_tickets(krb5_context context,
     }
     krb5_free_cred_contents(context, &cred);
 
-    ret = krb5_cc_new_unique(context, krb5_cc_get_type(context, ccache),
-			     NULL, &tempccache);
-    if (ret) {
-	krb5_warn(context, ret, "krb5_cc_new_unique");
-	goto out;
+    if (strcmp("MSLSA", krb5_cc_get_type(context, ccache)) != 0) {
+        ret = krb5_cc_new_unique(context, krb5_cc_get_type(context, ccache),
+                                 NULL, &tempccache);
+        if (ret) {
+            krb5_warn(context, ret, "krb5_cc_new_unique");
+            goto out;
+        }
     }
 
-    ret = krb5_init_creds_store(context, ctx, tempccache);
+    ret = krb5_init_creds_store(context, ctx,
+                                tempccache ? tempccache : ccache);
     if (ret) {
 	krb5_warn(context, ret, "krb5_init_creds_store");
 	goto out;
     }
 
-    ret = krb5_init_creds_store_config(context, ctx, tempccache);
+    ret = krb5_init_creds_store_config(context, ctx,
+                                       tempccache ? tempccache : ccache);
     if (ret) {
 	krb5_warn(context, ret, "krb5_init_creds_store_config");
 	goto out;
@@ -1142,12 +1150,14 @@ get_new_tickets(krb5_context context,
     krb5_init_creds_free(context, ctx);
     ctx = NULL;
 
-    ret = krb5_cc_move(context, tempccache, ccache);
-    if (ret) {
-	krb5_warn(context, ret, "krb5_cc_move");
-	goto out;
+    if (tempccache) {
+        ret = krb5_cc_move(context, tempccache, ccache);
+        if (ret) {
+            krb5_warn(context, ret, "krb5_cc_move");
+            goto out;
+        }
+        tempccache = NULL;
     }
-    tempccache = NULL;
 
     if (switch_cache_flags)
 	krb5_cc_switch(context, ccache);
@@ -1602,6 +1612,7 @@ main(int argc, char **argv)
     char *ccname = NULL;
     int anonymous_pkinit = FALSE;
     int default_ccache_exists = 0;
+    int use_mslsa = 0;
 
     setprogname(argv[0]);
 
@@ -1764,10 +1775,12 @@ main(int argc, char **argv)
      */
     if (strcmp(ccops->prefix, "MSLSA") == 0) {
         cred_cache = "MSLSA:";
+        switch_cache_flags = 0;
         default_for_flag = 0;
         unique_flag = 0;
         overwrite_flag = 1;
         search_flag = 0;
+        use_mslsa = 1;
     }
 #ifdef WIN32
     /*
@@ -1800,7 +1813,10 @@ main(int argc, char **argv)
          *
          * We'll ignore the `-c` argument in this case, yes.
          */
-        ret = krb5_cc_new_unique(context, NULL, NULL, &ccache);
+        if (use_mslsa)
+            ret = krb5_cc_resolve(context, "MSLSA:", &ccache);
+        else
+            ret = krb5_cc_new_unique(context, NULL, NULL, &ccache);
         if (ret)
             krb5_err(context, 1, ret, "creating cred cache");
         ret = krb5_cc_get_full_name(context, ccache, &s);

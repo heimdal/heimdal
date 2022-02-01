@@ -38,6 +38,7 @@ jobs:
                 CC: ${{ matrix.compiler }}
                 MAKEVARS: ${{ matrix.makevars }}
                 CONFIGURE_OPTS:  ${{ matrix.configureopts }}
+                CHECK_TESTER_NO_VALGRIND:  'no-valgrind'
               run: |
                 /bin/sh ./autogen.sh
                 mkdir build

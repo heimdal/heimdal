@@ -51,6 +51,7 @@
 #define KDC_AUTH_EVENT_CLIENT_NAME_UNAUTHORIZED	7   /* couldn't map GSS/PKINIT name to principal */
 #define KDC_AUTH_EVENT_PREAUTH_FAILED		8   /* generic PA failure */
 #define KDC_AUTH_EVENT_PREAUTH_SUCCEEDED	9   /* generic (non-long term key) PA success */
+#define KDC_AUTH_EVENT_HISTORIC_LONG_TERM_KEY	10  /* PA failed to validate current long term key, but historic */
 
 /*
  * Audit keys to be queried using kdc_audit_getkv(). There are other keys

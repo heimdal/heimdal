@@ -3,6 +3,7 @@
 	no-addresses = TRUE
 	allow_weak_crypto = TRUE
         enable_kx509 = true
+        ccapi_library = /no/such/file
 
 [appdefaults]
 	pkinit_anchors = FILE:@objdir@/ca.crt

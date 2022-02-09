@@ -3,3 +3,4 @@ include @objdirabs@/krb5.conf
 [libdefaults]
 	client_aware_channel_bindings = true
 	report_canonical_client_name = true
+        ccapi_library = /no/such/file

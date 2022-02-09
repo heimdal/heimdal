@@ -152,6 +152,12 @@ pipe_execv(FILE **stdin_fd, FILE **stdout_fd, FILE **stderr_fd,
     char **argv;
     int ret = 0;
 
+    va_start(ap, file);
+    argv = vstrcollect(&ap);
+    va_end(ap);
+    if(argv == NULL)
+        return SE_E_UNSPECIFIED;
+
     if(stdin_fd != NULL)
 	ret = pipe(in_fd);
     if(ret != -1 && stdout_fd != NULL)
@@ -172,11 +178,6 @@ pipe_execv(FILE **stdin_fd, FILE **stdout_fd, FILE **stderr_fd,
     pid = fork();
     switch(pid) {
     case 0:
-	va_start(ap, file);
-	argv = vstrcollect(&ap);
-	va_end(ap);
-	if(argv == NULL)
-	    exit(-1);
 
 	/* close pipes we're not interested in */
 	if(stdin_fd != NULL)
@@ -193,6 +194,9 @@ pipe_execv(FILE **stdin_fd, FILE **stdout_fd, FILE **stderr_fd,
 	    out_fd[1] = open(_PATH_DEVNULL, O_WRONLY);
 	if(stderr_fd == NULL)
 	    err_fd[1] = open(_PATH_DEVNULL, O_WRONLY);
+
+        if (in_fd[0] == -1 || out_fd[1]== -1 || err_fd[1] == -1)
+            _exit(EX_NOEXEC);
 
 	/* move to proper descriptors */
 	if(in_fd[0] != STDIN_FILENO) {
@@ -211,7 +215,7 @@ pipe_execv(FILE **stdin_fd, FILE **stdout_fd, FILE **stderr_fd,
 	closefrom(3);
 
 	execv(file, argv);
-	exit((errno == ENOENT) ? EX_NOTFOUND : EX_NOEXEC);
+	_exit((errno == ENOENT) ? EX_NOTFOUND : EX_NOEXEC);
     case -1:
 	if(stdin_fd != NULL) {
 	    close(in_fd[0]);
@@ -253,7 +257,7 @@ simple_execvp_timed(const char *file, char *const args[],
 	return SE_E_FORKFAILED;
     case 0:
 	execvp(file, args);
-	exit((errno == ENOENT) ? EX_NOTFOUND : EX_NOEXEC);
+	_exit((errno == ENOENT) ? EX_NOTFOUND : EX_NOEXEC);
     default:
 	return wait_for_process_timed(pid, func, ptr, timeout);
     }
@@ -276,7 +280,7 @@ simple_execve_timed(const char *file, char *const args[], char *const envp[],
 	return SE_E_FORKFAILED;
     case 0:
 	execve(file, args, envp);
-	exit((errno == ENOENT) ? EX_NOTFOUND : EX_NOEXEC);
+	_exit((errno == ENOENT) ? EX_NOTFOUND : EX_NOEXEC);
     default:
 	return wait_for_process_timed(pid, func, ptr, timeout);
     }

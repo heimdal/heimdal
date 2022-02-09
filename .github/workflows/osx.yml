@@ -82,6 +82,10 @@ jobs:
                 ../configure --srcdir=`dirname "$PWD"` --disable-afs-support --enable-maintainer-mode --enable-developer $CONFIGURE_OPTS --prefix=$HOME/inst CFLAGS="-Wno-error=shadow -Wno-error=bad-function-cast -Wno-error=unused-function -Wno-error=unused-result -Wno-error=deprecated-declarations" CFLAGS="-O0 -g -ggdb3"
                 ulimit -c unlimited
                 make -j4
+            #- name: Setup upterm session
+            #  uses: lhotari/action-upterm@v1
+            #  with:
+            #      limit-access-to-actor: true
             - name: Test
               env:
                 CC: ${{ matrix.compiler }}

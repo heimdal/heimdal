@@ -4,6 +4,7 @@ on:
     push:
       branches:
          - 'master'
+         - 'osx-build'
          - 'heimdal-7-1-branch'
       paths:
          - '!docs/**'

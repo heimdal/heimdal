@@ -175,7 +175,11 @@ pipe_execv(FILE **stdin_fd, FILE **stdout_fd, FILE **stderr_fd,
 	return SE_E_UNSPECIFIED;
     }
 
+#ifdef HAVE_VFORK
+    pid = vfork();
+#else
     pid = fork();
+#endif
     switch(pid) {
     case 0:
 
@@ -251,7 +255,13 @@ ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 simple_execvp_timed(const char *file, char *const args[],
 		    time_t (*func)(void *), void *ptr, time_t timeout)
 {
-    pid_t pid = fork();
+    pid_t pid;
+
+#ifdef HAVE_VFORK
+    pid = vfork();
+#else
+    pid = fork();
+#endif
     switch(pid){
     case -1:
 	return SE_E_FORKFAILED;
@@ -274,7 +284,13 @@ ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 simple_execve_timed(const char *file, char *const args[], char *const envp[],
 		    time_t (*func)(void *), void *ptr, time_t timeout)
 {
-    pid_t pid = fork();
+    pid_t pid;
+
+#ifdef HAVE_VFORK
+    pid = vfork();
+#else
+    pid = fork();
+#endif
     switch(pid){
     case -1:
 	return SE_E_FORKFAILED;

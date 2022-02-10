@@ -378,6 +378,10 @@ ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 wait_for_process_timed(pid_t, time_t (*)(void *),
 		       void *, time_t);
 
+#define pipe_exec rk_pipe_exec
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
+pipe_exec(FILE **, FILE **, FILE **, const char *, char **);
+
 #define pipe_execv rk_pipe_execv
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 pipe_execv(FILE**, FILE**, FILE**, const char*, ...);

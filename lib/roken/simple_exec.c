@@ -141,22 +141,20 @@ wait_for_process(pid_t pid)
 }
 
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
-pipe_execv(FILE **stdin_fd, FILE **stdout_fd, FILE **stderr_fd,
-	   const char *file, ...)
+pipe_exec(FILE **stdin_fd, FILE **stdout_fd, FILE **stderr_fd,
+	  const char *file, char **argv)
 {
     int in_fd[2] = {-1, -1};
     int out_fd[2] = {-1, -1};
     int err_fd[2] = {-1, -1};
     pid_t pid;
-    va_list ap;
-    char **argv;
     int ret = 0;
 
-    va_start(ap, file);
-    argv = vstrcollect(&ap);
-    va_end(ap);
     if(argv == NULL)
         return SE_E_UNSPECIFIED;
+
+    if (file== NULL)
+        file = argv[0];
 
     if(stdin_fd != NULL)
 	ret = pipe(in_fd);
@@ -248,6 +246,24 @@ pipe_execv(FILE **stdin_fd, FILE **stdout_fd, FILE **stderr_fd,
 	    *stderr_fd = fdopen(err_fd[0], "r");
 	}
     }
+    return pid;
+}
+
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
+pipe_execv(FILE **stdin_fd, FILE **stdout_fd, FILE **stderr_fd,
+	   const char *file, ...)
+{
+    va_list ap;
+    char **argv;
+    pid_t pid = 0;
+
+    va_start(ap, file);
+    argv = vstrcollect(&ap);
+    va_end(ap);
+    if(argv == NULL)
+        return SE_E_UNSPECIFIED;
+    pid = pipe_exec(stdin_fd, stdout_fd, stderr_fd, file, argv);
+    free(argv);
     return pid;
 }
 

@@ -72,6 +72,8 @@ rm -f messages.log
 
 > messages.log
 
+> ${top_builddir}/kadm5_exec_hook.log
+
 echo Creating database
 ${kadmin} -l \
     init \
@@ -92,6 +94,10 @@ ${kadmin} -l cpw --keepold --random-key prune@${R} || exit 1
 ${kadmin} -l cpw --keepold --random-key prune@${R} || exit 1
 ${kadmin} -l add -p "$foopassword" --use-defaults pruneall@${R} || exit 1
 ${kadmin} -l cpw --pruneall --random-key pruneall@${R} || exit 1
+
+# We only use krb5-exec_hook.conf for a few commands to avoid making
+# check-valgrind prohibitive.
+KRB5_CONFIG="${objdir}/krb5-exec_hook.conf" \
 ${kadmin} -l cpw --pruneall --random-key pruneall@${R} || exit 1
 
 echo "$foopassword" > ${objdir}/foopassword
@@ -406,6 +412,11 @@ cat kadmin.tmp | ${EGREP} Keytypes: | cut -d: -f2 | tr ' ' '
 
 echo "killing kdc (${kdcpid} ${kadmpid})"
 sh ${leaks_kill} kdc $kdcpid || exit 1
+
+if [ `wc -l < ${top_builddir}/kadm5_exec_hook.log` -eq 0 ]; then
+    echo "exec_hook failed" 1>&2
+    ec=1
+fi
 
 trap "" EXIT
 

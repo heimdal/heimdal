@@ -60,6 +60,8 @@ EXTRA_DIST = \
 	cf/w32-list-externs-from-objs.pl \
 	cf/vararray.m4
 
+CLEANFILES = kadm5_exec_hook.log
+
 print-distdir:
 	@echo $(distdir)
 

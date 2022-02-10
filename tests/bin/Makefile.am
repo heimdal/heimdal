@@ -19,12 +19,17 @@ do_subst = \
 	-e "s,[@]top_builddir[@],$${top_builddir},g" \
 	-e "s,[@]NO_AFS[@],$(NO_AFS),g"
 
-setup-env: setup-env.in Makefile
+setup-env: setup-env.in kadm5_exec_hook Makefile
 	$(do_subst) < $(srcdir)/setup-env.in > setup-env.tmp
 	chmod +x setup-env.tmp
 	mv setup-env.tmp setup-env
 
-EXTRA_DIST = setup-env.in
+kadm5_exec_hook: kadm5_exec_hook.in Makefile
+	$(do_subst) < $(srcdir)/kadm5_exec_hook.in > kadm5_exec_hook.tmp
+	chmod +x kadm5_exec_hook.tmp
+	mv kadm5_exec_hook.tmp kadm5_exec_hook
 
-CLEANFILES = setup-env setup-env.tmp
+EXTRA_DIST = setup-env.in kadm5_exec_hook.in
+
+CLEANFILES = setup-env setup-env.tmp kadm5_exec_hook.tmp kadm5_exec_hook
 

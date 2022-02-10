@@ -98,9 +98,10 @@ jobs:
                 make check
             - name: Install
               run: |
+                cd build || true
                 make DESTDIR=/tmp/h5l install
                 cd /tmp/h5l
-                tar czf $HOME/heimdal-install.tgz .
+                tar czf $HOME/heimdal-install-osx.tgz .
             - name: Test logs
               run: |
                 find build -depth -name \*.trs|xargs grep -lw FAIL|sed -e 's/trs$/log/' | cpio -o > $HOME/logs-osx.cpio

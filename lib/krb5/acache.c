@@ -985,6 +985,7 @@ acc_end_cache_get(krb5_context context, krb5_cc_cursor cursor)
 static krb5_error_code KRB5_CALLCONV
 acc_move(krb5_context context, krb5_ccache from, krb5_ccache to)
 {
+    krb5_error_code ret;
     krb5_acc *afrom = ACACHE(from);
     krb5_acc *ato = ACACHE(to);
     int32_t error;
@@ -1008,9 +1009,10 @@ acc_move(krb5_context context, krb5_ccache from, krb5_ccache to)
     }
 
     error = (*ato->ccache->func->move)(afrom->ccache, ato->ccache);
-
-    krb5_cc_destroy(context, from);
-    return translate_cc_error(context, error);
+    ret = translate_cc_error(context, error);
+    if (ret == 0)
+        krb5_cc_destroy(context, from);
+    return ret;
 }
 
 static krb5_error_code KRB5_CALLCONV

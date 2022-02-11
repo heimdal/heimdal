@@ -8,7 +8,6 @@ include @srcdirabs@/include-krb5.conf
 	kuserok = SYSTEM-K5LOGIN:@srcdir@/../kdc/k5login
 	kuserok = USER-K5LOGIN
 	kuserok = SIMPLE
-        ccapi_library = /no/such/file
 
 [realms]
 	TEST.H5L.SE = {

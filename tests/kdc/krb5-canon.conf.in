@@ -9,7 +9,6 @@
 	name_canon_rules = qualify:domain=test1.h5l.se:realm=TEST2.H5L.SE
 	name_canon_rules = qualify:domain=test2.h5l.se:realm=TEST2.H5L.SE
 	name_canon_rules = qualify:domain=test3.h5l.se:realm=TEST3.H5L.SE
-        ccapi_library = /no/such/file
 
 [appdefaults]
 	pkinit_anchors = FILE:@srcdir@/../../lib/hx509/data/ca.crt

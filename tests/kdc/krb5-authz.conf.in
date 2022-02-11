@@ -4,7 +4,6 @@
 	kuserok = SYSTEM-K5LOGIN:@srcdir@/k5login
 	kuserok = USER-K5LOGIN
 	kuserok = SIMPLE
-        ccapi_library = /no/such/file
 
 [appdefaults]
 

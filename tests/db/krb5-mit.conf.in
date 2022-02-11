@@ -1,6 +1,5 @@
 [libdefaults]
 	default_realm = EXAMPLE.ORG
-        ccapi_library = /no/such/file
 
 [kdc]
 	database = {

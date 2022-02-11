@@ -5,7 +5,6 @@
 	allow_weak_crypto = @WEAK@
 	dns_lookup_kdc = no
 	dns_lookup_realm = no
-        ccapi_library = /no/such/file
 
 
 [appdefaults]

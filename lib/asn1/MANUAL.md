@@ -73,7 +73,7 @@ As well, ASN.1 has [high-quality, freely-available specifications](https://www.i
 ## ASN.1 Example
 
 For example, this is a `Certificate` as used in TLS and other protocols, taken
-from [RFC5280]:
+from [RFC5280](https://datatracker.ietf.org/doc/html/rfc5280):
 
    ```ASN.1
    Certificate  ::=  SEQUENCE  {
@@ -96,7 +96,9 @@ from [RFC5280]:
    }
    ```
 
-and a more modern version from {RFC5912], using newer features of ASN.1:
+and the same `Certificate` taken from a more modern version -from
+[RFC5912](https://datatracker.ietf.org/doc/html/rfc5912)- using newer features
+of ASN.1:
 
    ```ASN.1
    Certificate  ::=  SIGNED{TBSCertificate}
@@ -130,16 +132,19 @@ identifiers" for the issuer and subject entities, and "extensions".
 To understand more we'd have to look at the types of those fields of
 `TBSCertificate`, but for now we won't do that.  The point here is to show that
 ASN.1 allows us to describe "types" of data in a way that resembles
-"structures", "records", and "classes" in various programming languages.
+"structures", "records", or "classes" in various programming languages.
 
 To be sure, there are some "noisy" artifacts in the definition of
 `TBSCertificate` which mostly have to do with the original encoding rules for
 ASN.1.  The original encoding rules for ASN.1 were tag-length-value (TLV)
 binary encodings, meaning that for every type, the encoding of a value of that
-type consisted of a tag, a length of the value's encoding, and the value's
-encoding.  Over time other encoding rules were added that do not require tags,
-such as the octet encoding rules (OER), but also JSON encoding rules (JER), XML
-encoding rules (XER), and others.
+type consisted of a _tag_, a _length_ of the value's encoding, and the _actual
+value's encoding_.  Over time other encoding rules were added that do not
+require tags, such as the octet encoding rules (OER), but also JSON encoding
+rules (JER), XML encoding rules (XER), and others.  There is almost no need for
+tagging directives like `[1] IMPLICIT` when using OER.  But in existing
+protocols like PKIX and Kerberos that date back to the days when DER was king,
+tagging directives are unfortunately commonplace.
 
 ## ASN.1 Crash Course
 
@@ -246,17 +251,20 @@ In modern ASN.1 it is possible to specify that a module uses `AUTOMATIC`
 tagging so that one need never specify tags explicitly in order to fix
 ambiguities.
 
-Also, tehre are two types of tags: `IMPLICIT` and `EXPLICIT`.  Implicit tags
-replace the tags that the taggged type would have otherwise.  Explicit tags
+Also, there are two types of tags: `IMPLICIT` and `EXPLICIT`.  Implicit tags
+replace the tags that the tagged type would have otherwise.  Explicit tags
 treat the encoding of a type's value (including its tag and length) as the
-value of the tagged type, thus yielding a tag-length-tag-length-value encoding.
-Thus explicit tagging is unnecessarily redundant and wasteful.  But implicit
-tagging loses metadata that is useful for tools that can decode TLV encodings
-without reference to the schema (module) corresponding to the types of values
-encoded.
+value of the tagged type, thus yielding a tag-length-tag-length-value encoding
+-- a TLTLV encoding!
 
-TLV encodings were probably never needed, but they exist, and becuase they are
-widely used, cannot be removed.
+Thus explicit tagging is more redundant and wasteful than implicit tagging.
+But implicit tagging loses metadata that is useful for tools that can decode
+TLV encodings without reference to the schema (module) corresponding to the
+types of values encoded.
+
+TLV encodings were probably never justified except by lack of tooling and
+belief that codecs for TLV ERs can be hand-coded.  But TLV RTs exist, and
+because they are widely used, cannot be removed.
 
 ## Other Encoding Rules
 
@@ -320,7 +328,7 @@ alternative tags for disambiguation.
 
  - The Generic String Encoding Rules are specified by IETF RFCs
    [RFC3641](https://datatracker.ietf.org/doc/html/rfc3641),
-   [RFC3641](https://datatracker.ietf.org/doc/html/rfc3642),
+   [RFC3642](https://datatracker.ietf.org/doc/html/rfc3642),
    [RFC4792](https://datatracker.ietf.org/doc/html/rfc4792).
 
 Additional ERs can be added.
@@ -335,21 +343,65 @@ varying arrays), though with some extensions it could.
 
 ## Commentary
 
-The text in this section is opinion.
+The text in this section is the personal opinion of the author(s).
 
  - ASN.1 gets a bad rap because BER/DER/CER are terrible encoding rules, as are
    all TLV encoding rules.
 
- - ASN.1 also gets a bad rap because its full syntax is not context-free, and
-   so parsing it requires context.
+   The BER family of encoding rules is a disaster, yes, but ASN.1 itself is
+   not.  On the contrary, ASN.1 is quite rich in features and semantics -as
+   rich as any competitor- while also being very easy to write and understand
+   _as a syntax_.
 
-   The Heimdal ASN.1 compiler uses LALR(1) `yacc`/`bison`/`byacc`
+ - ASN.1 also gets a bad rap because its full syntax is not context-free, and
+   so parsing it can be tricky.
+
+   And yet the Heimdal ASN.1 compiler manages, using LALR(1) `yacc`/`bison`/`byacc`
    parser-generators.  For the subset of ASN.1 that this compiler handles,
    there are no ambiguities.  However, we understand that eventually we will
-   need to resort to C type punning and run-time typing to disambiguate parses.
+   need run into ambiguities.
+
+   For example, `ValueSet` and `ObjectSet` are ambiguous.  X.680 says:
+
+   ```
+   ValueSet ::= "{" ElementSetSpecs "}"
+   ```
+
+   while X.681 says:
+
+   ```
+   ObjectSet ::= "{" ObjectSetSpec "}"
+   ```
+
+   and the set members can be just the symbolic names of members, in which case
+   there's no grammatical difference between those two productions.  These then
+   cause a conflict in the `FieldSetting` production, which is used in the
+   `ObjectDefn` production, which is used in defining an object (which is to be
+   referenced from some `ObjectSet` or `FieldSetting`).
+
+   This particular conflict can be resolved by one of:
+
+    - limiting the power of object sets by disallowing recursion (object sets
+      containing objects that have field settings that are object sets ...),
+
+    - or by introducing additional required and disambiguating syntactic
+      elements that preclude full compliance with ASN.1,
+
+    - or by simply using the same production and type internally to handle
+      both, the `ValueSet` and `ObjectSet` productions and then internally
+      resolving the actual type as late as possible by either inspecting the
+      types of the set members or by inspecting the expected kind of field that
+      the `ValueSet`-or-`ObjectSet` is setting.
+
+   Clearly, only the last of these is satisfying, but it is more work for the
+   compiler developer.
 
  - TLV encodings are bad because they yield unnecessary redundance in
-   encodings.
+   encodings.  This is space-inefficient, but also a source of bugs in
+   hand-coded codecs for TLV encodings.
+
+   EXPLICIT tagging makes this worse by making the encoding a TLTLV encoding
+   (tag length tag length value).  (The inner TLV is the V for the outer TL.)
 
  - TLV encodings are often described as "self-describing" because one can
    usually write a `dumpasn1` style of tool that attempts to decode a TLV
@@ -376,9 +428,16 @@ The text in this section is opinion.
    Flat Buffers, or most encodings, though it can be done with some encodings,
    such as BER and NDR (NDR has "pipes" for this).
 
+   Some clues are needed in order to produce an codec that can handle such
+   on-line behavior.  In IDL/NDR that clue comes from the "pipe" type.  In
+   ASN.1 there is no such clue and it would have to be provided separately to
+   the ASN.1 compiler (e.g., as a command-line option).
+
  - Protocol Buffers is a TLV encoding.  There was no need to make it a TLV
-   encoding.  Public opinion tends to prefer Flat Buffers now, which is not a
-   TLV encoding and which is comparable to XDR/NDR/PER/OER.
+   encoding.
+
+   Public opinion seems to prefer Flat Buffers now, which is not a TLV encoding
+   and which is more comparable to XDR/NDR/PER/OER.
 
 # Heimdal ASN.1 Compiler
 
@@ -391,6 +450,13 @@ The compiler currently emits:
  - C types corresponding to ASN.1 modules' types
  - C functions for DER (and some BER) codecs for ASN.1 modules' types
 
+We vaguely hope to eventually move to using the JSON representation of ASN.1
+modules to do code generation in a programming language like `jq` rather than
+in C.  The idea there is to make it much easier to target other programming
+languages than C, especially Rust, so that we can start moving Heimdal to Rust
+(first after this would be `lib/hx509`, then `lib/krb5`, then `lib/hdb`, then
+`lib/gssapi`, then `kdc/`).
+
 The compiler has two "backends":
 
  - C code generation
@@ -402,6 +468,11 @@ Supported encoding rules:
 
  - DER
  - BER decoding (but not encoding)
+
+As well, the Heimdal ASN.1 compiler can render values as JSON using an ad-hoc
+metaschema that is not quite JER-compliant.  A sample rendering of a complex
+PKIX `Certificate` with all typed holes automatically decoded is shown in
+[README.md#features](README.md#features).
 
 The Heimdal ASN.1 compiler supports open types via X.681/X.682/X.683 syntax.
 Specifically: (when using the template backend) the generated codecs can
@@ -419,13 +490,13 @@ language (e.g., English) meant only for humans to understand.  Documenting open
 types with formal syntax allows compilers to support them specially.
 
 See the the [`asn1_compile(1)` manual page](#Manual-Page-for-asn1_compile)
-below, and the `README` files, for more details on limitations.  Excerpt from
-the manual page:
+below and [README.md#features](README.md#features), for more details on
+limitations.  Excerpt from the manual page:
 
 ```
 The Information Object System support includes automatic codec support
 for encoding and decoding through “open types” which are also known as
-“typed holes”.  See RFC 5912 for examples of how to use the ASN.1 Infor-
+“typed holes”.  See RFC5912 for examples of how to use the ASN.1 Infor-
 mation Object System via X.681/X.682/X.683 annotations.  See the com-
 piler's README files for more information on ASN.1 Information Object
 System support.
@@ -476,7 +547,7 @@ Caveats and ASN.1 x.680 features not supported:
               also not supported.
 ```
 
-### Easy-to-Use C Types
+## Easy-to-Use C Types
 
 The Heimdal ASN.1 compiler generates easy-to-use C types for ASN.1 types.
 
@@ -573,7 +644,7 @@ code-generators do, of course, so it's not surprising.  But you can see that
  - in C we use `typedef`s to make the type names usable without having to add
    `struct`
 
-### Generated APIs For Any Given Type T
+## Generated APIs For Any Given Type T
 
 The C functions generated for ASN.1 types are all of the same form, for any
 type `T`:
@@ -611,7 +682,8 @@ memory resources will be released.  Note that the C object _itself_ is not
 freed, only its _content_.
 
 The `print_T()` functions encode the value of a C object of type `T` in JSON
-(though not in JER-compliant JSON).
+(though not in JER-compliant JSON).  A sample printing of a complex PKIX
+`Certificate` can be seen in [README.md#features](README.md#features).
 
 These functions are all recursive.
 
@@ -620,7 +692,7 @@ These functions are all recursive.
 > `LIBASN1.LIB` to avoid possibly freeing memory allocated by a different
 > allocator.
 
-### Error Handling
+## Error Handling
 
 All codec functions that return errors return them as `int`.
 
@@ -671,7 +743,7 @@ You can use the `com_err` library to display these errors as strings:
     }
 ```
 
-### Using the Generated APIs
+## Using the Generated APIs
 
 Value construction is as usual in C.  Use the standard C allocator for
 allocating values of `OPTIONAL` fields.
@@ -769,6 +841,11 @@ or, the same code w/o the `ASN1_MALLOC_ENCODE()` macro:
     /* Free the memory allocated by `ASN1_MALLOC_ENCODE()` */
     free(bytes);
 ```
+
+## Open Types
+
+The handling of X.681/X.682/X.683 syntax for open types is described at length
+in [README-X681.md](README-X681.md).
 
 ## Command-line Usage
 
@@ -882,7 +959,7 @@ ASN.1 usage conventions:
 See the [manual page for `asn1_compile(1)`](#Manual-Page-for-asn1_compile) for
 a full listing of command-line options.
 
-## Manual Page for `asn1_compile(1)`
+### Manual Page for `asn1_compile(1)`
 
 ```
 ASN1_COMPILE(1)		  BSD General Commands Manual	       ASN1_COMPILE(1)
@@ -1097,3 +1174,30 @@ NOTES
 
 HEIMDAL			       February 22, 2021		       HEIMDAL
 ```
+
+# Future Directions
+
+The Heimdal ASN.1 compiler is focused on PKIX and Kerberos, and is almost
+feature-complete for dealing with those.  It could use additional support for
+X.681/X.682/X.683 elements that would allow the compiler to implement
+`Certificate ::= SIGNED{TBSCertificate}`, particularly the ability to
+automatically validate cryptographic algorithm parameters.  However, this is
+not that important.
+
+Another feature that might be nice is the ability of callers to specify smaller
+information object sets when decoding values of types like `Certificate`,
+mainly to avoid decoding types in typed holes that are not of interest to the
+application.
+
+For testing, a JSON reader to go with the JSON printer might be nice, and
+anyways, would make for a generally useful tool.
+
+Another feature that would be nice would to automatically generate SQL and LDAP
+code for HDB based on `lib/hdb/hdb.asn1` (with certain usage conventions and/or
+compiler command-line options to make it possible to map schemas usefully).
+
+For the `hxtool` command, it would be nice if the user could input arbitrary
+certificate extensions and `subjectAlternativeName` (SAN) values in JSON + an
+ASN.1 module and type reference that `hxtool` could then parse and encode using
+the ASN.1 compiler and library.  Currently the `hx509` library and its `hxtool`
+command must be taught about every SAN type.

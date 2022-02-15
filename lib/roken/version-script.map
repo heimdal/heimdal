@@ -161,6 +161,8 @@ HEIMDAL_ROKEN_2.0 {
 		rk_tdelete;
 		rk_tfind;
 		rk_timegm;
+		rk_time_add;
+		rk_time_sub;
 		rk_timevaladd;
 		rk_timevalfix;
 		rk_timevalsub;

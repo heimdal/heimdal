@@ -39,6 +39,99 @@
 
 #include "roken.h"
 
+ROKEN_LIB_FUNCTION time_t ROKEN_LIB_CALL
+rk_time_add(time_t t, time_t delta)
+{
+    if (delta == 0)
+        return t;
+
+#ifdef TIME_T_SIGNED
+    /* Signed overflow is UB in C */
+#if SIZEOF_TIME_T == 4
+    if (t >= 0 && delta > 0 && INT32_MAX - t < delta)
+        /* Time left to hit INT32_MAX is less than what we want to add */
+        return INT32_MAX;
+    else if (t < 0 && delta == INT32_MIN)
+        /* Avoid computing -delta when t == INT32_MIN! */
+        return INT32_MIN;
+    else if (t == INT32_MIN && delta < 0)
+        /* Avoid computing -t when t == INT32_MIN! */
+        return INT32_MIN;
+    else if (t < 0 && delta < 0 && INT32_MIN + (-t) < (-delta))
+        /* Time left to hit INT32_MIN is less than what we want to subtract */
+        return INT32_MIN;
+    else
+        return t + delta;
+#elif SIZEOF_TIME_T == 8
+    if (t >= 0 && delta > 0 && INT64_MAX - t < delta)
+        return INT64_MAX;
+    else if (t < 0 && delta == INT64_MIN)
+        /* Avoid computing -delta when t == INT64_MIN! */
+        return INT64_MIN;
+    else if (t == INT64_MIN && delta < 0)
+        /* Avoid computing -t when t == INT64_MIN! */
+        return INT64_MIN;
+    else if (t < 0 && delta < 0 && INT64_MIN + (-t) < (-delta))
+        return INT64_MIN;
+    else
+        return t + delta;
+#else
+#error "Unexpected sizeof(time_t)"
+#endif
+#else
+
+    /* Unsigned overflow is defined in C */
+#if SIZEOF_TIME_T == 4
+    if (t + delta < t)
+        return UINT32_MAX;
+#elif SIZEOF_TIME_T == 8
+    if (t + delta < t)
+        return UINT64_MAX;
+#else
+#error "Unexpected sizeof(time_t)"
+#endif
+#endif
+    return t + delta;
+}
+
+ROKEN_LIB_FUNCTION time_t ROKEN_LIB_CALL
+rk_time_sub(time_t t, time_t delta)
+{
+    if (delta == 0)
+        return t;
+#ifdef TIME_T_SIGNED
+    if (delta > 0)
+        return time_add(t, -delta);
+#if SIZEOF_TIME_T == 4
+    if (delta == INT32_MIN) {
+        if (t < 0) {
+            t = t + INT32_MAX;
+            return t + 1;
+        }
+        return INT32_MAX;
+    }
+    /* Safe to compute -delta, so use time_add() to add -delta */
+    return time_add(t, -delta);
+#elif SIZEOF_TIME_T == 8
+    if (delta == INT64_MIN) {
+        if (t < 0) {
+            t = t + INT64_MAX;
+            return t + 1;
+        }
+        return INT64_MAX;
+    }
+    return time_add(t, -delta);
+#else
+#error "Unexpected sizeof(time_t)"
+#endif
+#else
+    /* Both t and delta are non-negative. */
+    if (delta > t)
+        return 0;
+#endif
+    return t - delta;
+}
+
 /*
  * Make `t1' consistent.
  */

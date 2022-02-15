@@ -126,6 +126,8 @@ typedef int heim_mhd_result;
 typedef enum MHD_Result heim_mhd_result;
 #endif
 
+enum k5_creds_kind { K5_CREDS_EPHEMERAL, K5_CREDS_CACHED };
+
 typedef struct bx509_request_desc {
     HEIM_SVC_REQUEST_DESC_COMMON_ELEMENTS;
 
@@ -136,6 +138,7 @@ typedef struct bx509_request_desc {
     const char *for_cname;
     const char *target;
     const char *redir;
+    enum k5_creds_kind cckind;
     char *pkix_store;
     char *ccname;
     char *freeme1;
@@ -954,6 +957,13 @@ clean_req_desc(struct bx509_request_desc *r)
     hx509_request_free(&r->req);
     heim_release(r->reason);
     heim_release(r->kv);
+    if (r->ccname && r->cckind == K5_CREDS_EPHEMERAL) {
+        const char *fn = r->ccname;
+
+        if (strncmp(fn, "FILE:", sizeof("FILE:") - 1) == 0)
+            fn += sizeof("FILE:") - 1;
+        (void) unlink(fn);
+    }
     free(r->pkix_store);
     free(r->freeme1);
     free(r->ccname);
@@ -997,6 +1007,8 @@ bx509(struct bx509_request_desc *r)
  * '~' and '.' also get encoded, and '@' does not.
  *
  * A corresponding decoder is not needed.
+ *
+ * XXX Maybe use krb5_cc_default_for()!
  */
 static size_t
 princ_fs_encode_sz(const char *in)
@@ -1099,8 +1111,6 @@ find_ccache(krb5_context context, const char *princ, char **ccname)
         krb5_cc_close(context, cc);
     return ret ? ret : ENOENT;
 }
-
-enum k5_creds_kind { K5_CREDS_EPHEMERAL, K5_CREDS_CACHED };
 
 static krb5_error_code
 get_ccache(struct bx509_request_desc *r, krb5_ccache *cc, int *won)
@@ -1402,6 +1412,7 @@ k5_get_creds(struct bx509_request_desc *r, enum k5_creds_kind kind)
     const char *cname = r->for_cname ? r->for_cname : r->cname;
 
     /* If we have a live ccache for `cprinc', we're done */
+    r->cckind = kind;
     if (kind == K5_CREDS_CACHED &&
         (ret = find_ccache(r->context, cname, &r->ccname)) == 0)
         return ret; /* Success */
@@ -1823,10 +1834,8 @@ get_tgt(struct bx509_request_desc *r)
     if (fn == NULL)
         return bad_500(r, ret, "Impossible error");
     fn++;
-    if ((errno = rk_undumpdata(fn, &body, &bodylen))) {
-        (void) unlink(fn);
+    if ((errno = rk_undumpdata(fn, &body, &bodylen)))
         return bad_503(r, ret, "Could not get TGT");
-    }
 
     ret = resp(r, MHD_HTTP_OK, MHD_RESPMEM_MUST_COPY,
                "application/x-krb5-ccache", body, bodylen, NULL);

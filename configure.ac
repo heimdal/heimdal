@@ -626,6 +626,15 @@ AM_CONDITIONAL(HAVE_KEYUTILS, test "$ac_cv_func_keyctl_get_persistent" = yes)
 
 AC_CHECK_SIZEOF([time_t])
 
+AX_CHECK_SIGN([time_t],
+  [ AC_DEFINE(TIME_T_SIGNED, 1, [Define if time_t is signed]) ],
+  [ AC_DEFINE(TIME_T_UNSIGNED, 1, [Define if time_t is unsigned]) ], [
+#ifdef HAVE_TIME_H
+#include <time.h>
+#endif
+])
+
+
 AC_CHECK_TYPES([int8_t, int16_t, int32_t, int64_t, 
 	u_int8_t, u_int16_t, u_int32_t, u_int64_t,
 	uint8_t, uint16_t, uint32_t, uint64_t],,,[

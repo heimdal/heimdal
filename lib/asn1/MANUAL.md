@@ -577,17 +577,22 @@ values mean "absent", while non-`NULL` values mean "present").
 
 Tags are of no consequence to the C types generated.
 
+Types definitions to be topographically sorted because of the need to have
+forward declarations.
+
+Forward `typedef` declarations are emmitted.
+
+Circular type dependencies are allowed provided that `OPTIONAL` members are
+used for enough circular references so as to avoid creating types whose values
+have infinite size!  (Circular type dependencies can be used to build linked
+lists, though that is a bit of a silly trick when one can use arrays instead,
+though in principle this could be used to do on-line encoding and decoding of
+arbitrarily large streams of objects.  See the [commentary](#Commentary)
+section.)
+
 Thus `Certificate` becomes:
 
 ```C
-typedef struct TBSCertificate TBSCertificate;
-
-typedef struct Certificate {
-  TBSCertificate tbsCertificate;
-  AlgorithmIdentifier signatureAlgorithm;
-  heim_bit_string signatureValue;
-} Certificate;
-
 typedef struct TBSCertificate {
   heim_octet_string _save; /* see below! */
   Version *version;
@@ -601,6 +606,12 @@ typedef struct TBSCertificate {
   heim_bit_string *subjectUniqueID;
   Extensions *extensions;
 } TBSCertificate;
+
+typedef struct Certificate {
+  TBSCertificate tbsCertificate;
+  AlgorithmIdentifier signatureAlgorithm;
+  heim_bit_string signatureValue;
+} Certificate;
 ```
 
 The `_save` field in `TBSCertificate` is generated when the compiler is invoked
@@ -644,6 +655,75 @@ code-generators do, of course, so it's not surprising.  But you can see that
  - in C we use `typedef`s to make the type names usable without having to add
    `struct`
 
+## Circular Type Dependencies
+
+As noted above, circular type dependencies are supported.
+
+Here's a toy example from [XDR](https://datatracker.ietf.org/doc/html/rfc4506)
+-- a linked list:
+
+```XDR
+struct stringentry {
+   string item<>;
+   stringentry *next;
+};
+
+typedef stringentry *stringlist;
+```
+
+Here is the same example in ASN.1:
+
+```ASN.1
+Stringentry ::= SEQUENCE {
+    item UTF8String,
+    next Stringentry OPTIONAL
+}
+```
+
+which compiles to:
+
+```C
+typedef struct Stringentry Stringentry;
+struct Stringentry {
+    char *item;
+    Stringentry *next;
+};
+```
+
+This illustrates that `OPTIONAL` members in ASN.1 are like pointers in XDR.
+
+Making the `next` member not `OPTIONAL` would cause `Stringentry` to be
+infinitely large, and there is no way to declare the equivalent in C anyways
+(`struct foo { int a; struct foo b; };` will not compile in C).
+
+Mutual circular references are allowed too.  In the following example `A`
+refers to `B` and `B` refers to `A`, but as long as one (or both) of those
+references is `OPTIONAL`, then it will be allowed:
+
+```ASN1
+A ::= SEQUENCE { name UTF8String, b B }
+B ::= SEQUENCE { name UTF8String, a A OPTIONAL }
+```
+
+```ASN1
+A ::= SEQUENCE { name UTF8String, b B OPTIONAL }
+B ::= SEQUENCE { name UTF8String, a A }
+```
+
+```ASN1
+A ::= SEQUENCE { name UTF8String, b B OPTIONAL }
+B ::= SEQUENCE { name UTF8String, a A OPTIONAL }
+```
+
+In the above example values of types `A` and `B` together form a linked list.
+
+Whereas this is broken and will not compile:
+
+```ASN1
+A ::= SEQUENCE { name UTF8String, b B }
+B ::= SEQUENCE { name UTF8String, a A } -- infinite size!
+```
+
 ## Generated APIs For Any Given Type T
 
 The C functions generated for ASN.1 types are all of the same form, for any
@@ -674,16 +754,20 @@ written.
 > last byte in the buffer into which the encoder will encode the value.  This
 > is because the encoder encodes from the end towards the beginning.
 
+The `print_T()` functions encode the value of a C object of type `T` in JSON
+(though not in JER-compliant JSON).  A sample printing of a complex PKIX
+`Certificate` can be seen in [README.md#features](README.md#features).
+
 The `copy_T()` functions take a pointer to a source C object of type `T` whose
-value they then copy to the destination C object of the same type.
+value they then copy to the destination C object of the same type.  The copy
+constructor is equivalent to encoding the source value and decoding it onto the
+destination.
 
 The `free_T()` functions take a pointer to a C object of type `T` whose value's
 memory resources will be released.  Note that the C object _itself_ is not
 freed, only its _content_.
 
-The `print_T()` functions encode the value of a C object of type `T` in JSON
-(though not in JER-compliant JSON).  A sample printing of a complex PKIX
-`Certificate` can be seen in [README.md#features](README.md#features).
+See [sample usage](#Using-the-Generated-APIs).
 
 These functions are all recursive.
 
@@ -1179,18 +1263,18 @@ HEIMDAL			       February 22, 2021		       HEIMDAL
 
 The Heimdal ASN.1 compiler is focused on PKIX and Kerberos, and is almost
 feature-complete for dealing with those.  It could use additional support for
-X.681/X.682/X.683 elements that would allow the compiler to implement
+X.681/X.682/X.683 elements that would allow the compiler to understand
 `Certificate ::= SIGNED{TBSCertificate}`, particularly the ability to
 automatically validate cryptographic algorithm parameters.  However, this is
 not that important.
 
 Another feature that might be nice is the ability of callers to specify smaller
 information object sets when decoding values of types like `Certificate`,
-mainly to avoid decoding types in typed holes that are not of interest to the
-application.
+mainly to avoid spending CPU cycles and memory allocations on decoding types in
+typed holes that are not of interest to the application.
 
-For testing, a JSON reader to go with the JSON printer might be nice, and
-anyways, would make for a generally useful tool.
+For testing purposes, a JSON reader to go with the JSON printer might be nice,
+and anyways, would make for a generally useful tool.
 
 Another feature that would be nice would to automatically generate SQL and LDAP
 code for HDB based on `lib/hdb/hdb.asn1` (with certain usage conventions and/or

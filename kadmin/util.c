@@ -353,7 +353,14 @@ edit_timet (const char *prompt, krb5_timestamp *value, int *mask, int bit)
 void
 deltat2str(unsigned t, char *str, size_t len)
 {
-    if(t == 0 || t == INT_MAX)
+    /*
+     * A time delta in kadmin context is a positive number, and there's no
+     * point to it being possibly as large as 2^64 -1, so we use unsigned
+     * instead of a more generally appropriate type for time deltas (which
+     * conceptually can be negative, which in kadmin context there's no need
+     * for).
+     */
+    if (t == 0 || t > INT_MAX)
 	snprintf(str, len, "unlimited");
     else
 	unparse_time(t, str, len);
@@ -370,6 +377,15 @@ str2deltat(const char *str, krb5_deltat *delta)
     int res;
 
     if(strcasecmp(str, "unlimited") == 0) {
+        /*
+         * Using zero to mean "unlimited" is unfortunate.  We should use
+         * `UINT_MAX'.  However, we've had this assumption that zero means
+         * unlimited, so there are HDB entries with present-but-zero max-life
+         * and max-renew-life.
+         *
+         * We could switch to using `UINT_MAX' or `UINT64_MAX' for "unlimited",
+         * but we'd have to continue to treat `0' as special for some time.
+         */
 	*delta = 0;
 	return 0;
     }

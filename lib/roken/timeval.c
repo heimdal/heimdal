@@ -101,7 +101,7 @@ rk_time_sub(time_t t, time_t delta)
         return t;
 #ifdef TIME_T_SIGNED
     if (delta > 0)
-        return time_add(t, -delta);
+        return rk_time_add(t, -delta);
 #if SIZEOF_TIME_T == 4
     if (delta == INT32_MIN) {
         if (t < 0) {
@@ -110,8 +110,8 @@ rk_time_sub(time_t t, time_t delta)
         }
         return INT32_MAX;
     }
-    /* Safe to compute -delta, so use time_add() to add -delta */
-    return time_add(t, -delta);
+    /* Safe to compute -delta, so use rk_time_add() to add -delta */
+    return rk_time_add(t, -delta);
 #elif SIZEOF_TIME_T == 8
     if (delta == INT64_MIN) {
         if (t < 0) {
@@ -120,7 +120,7 @@ rk_time_sub(time_t t, time_t delta)
         }
         return INT64_MAX;
     }
-    return time_add(t, -delta);
+    return rk_time_add(t, -delta);
 #else
 #error "Unexpected sizeof(time_t)"
 #endif
@@ -140,11 +140,11 @@ ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
 timevalfix(struct timeval *t1)
 {
     if (t1->tv_usec < 0) {
-        t1->tv_sec--;
-        t1->tv_usec += 1000000;
+        t1->tv_sec = rk_time_sub(t1->tv_sec, 1);
+        t1->tv_usec = 1000000;
     }
     if (t1->tv_usec >= 1000000) {
-        t1->tv_sec++;
+        t1->tv_sec = rk_time_add(t1->tv_sec, 1);
         t1->tv_usec -= 1000000;
     }
 }
@@ -156,7 +156,7 @@ timevalfix(struct timeval *t1)
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
 timevaladd(struct timeval *t1, const struct timeval *t2)
 {
-    t1->tv_sec  += t2->tv_sec;
+    t1->tv_sec   = rk_time_add(t1->tv_sec, t2->tv_sec);
     t1->tv_usec += t2->tv_usec;
     timevalfix(t1);
 }
@@ -168,7 +168,7 @@ timevaladd(struct timeval *t1, const struct timeval *t2)
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
 timevalsub(struct timeval *t1, const struct timeval *t2)
 {
-    t1->tv_sec  -= t2->tv_sec;
+    t1->tv_sec   = rk_time_sub(t1->tv_sec, t2->tv_sec);
     t1->tv_usec -= t2->tv_usec;
     timevalfix(t1);
 }

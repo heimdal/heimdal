@@ -110,7 +110,7 @@ validate_protocol_transition(astgs_request_t r)
     EncTicketPart *ticket = &r->ticket->ticket;
     hdb_entry *s4u_client = NULL;
     HDB *s4u_clientdb;
-    int flags = HDB_F_FOR_TGS_REQ;
+    int flags = HDB_F_FOR_TGS_REQ | HDB_F_FOR_S4U2SELF;
     krb5_principal s4u_client_name = NULL, s4u_canon_client_name = NULL;
     krb5_pac s4u_pac = NULL;
     const PA_DATA *sdata;

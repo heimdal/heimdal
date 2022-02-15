@@ -807,11 +807,72 @@ pa_enc_chal_validate(astgs_request_t r, const PA_DATA *pa)
 }
 
 static krb5_error_code
-pa_enc_ts_validate(astgs_request_t r, const PA_DATA *pa)
+pa_enc_ts_decrypt_kvno(astgs_request_t r,
+		       krb5_kvno kvno,
+		       const EncryptedData *enc_data,
+		       krb5_data *ts_data,
+		       Key **_pa_key)
 {
-    EncryptedData enc_data;
     krb5_error_code ret;
     krb5_crypto crypto;
+    Key *pa_key = NULL;
+    const Keys *keys = NULL;
+
+    if (_pa_key)
+	*_pa_key = NULL;
+
+    krb5_data_zero(ts_data);
+
+    keys = hdb_kvno2keys(r->context, r->client, kvno);
+    if (keys == NULL) {
+	return KRB5KDC_ERR_ETYPE_NOSUPP;
+    }
+    ret = hdb_enctype2key(r->context, r->client, keys,
+			  enc_data->etype, &pa_key);
+    if(ret){
+	return KRB5KDC_ERR_ETYPE_NOSUPP;
+    }
+
+ try_next_key:
+    ret = krb5_crypto_init(r->context, &pa_key->key, 0, &crypto);
+    if (ret) {
+	const char *msg = krb5_get_error_message(r->context, ret);
+	_kdc_r_log(r, 4, "krb5_crypto_init failed: %s", msg);
+	krb5_free_error_message(r->context, msg);
+	return ret;
+    }
+
+    ret = krb5_decrypt_EncryptedData(r->context,
+				     crypto,
+				     KRB5_KU_PA_ENC_TIMESTAMP,
+				     enc_data,
+				     ts_data);
+    krb5_crypto_destroy(r->context, crypto);
+    /*
+     * Since the user might have several keys with the same
+     * enctype but with diffrent salting, we need to try all
+     * the keys with the same enctype.
+     */
+    if (ret) {
+	ret = hdb_next_enctype2key(r->context, r->client, keys,
+				   enc_data->etype, &pa_key);
+	if (ret == 0)
+	    goto try_next_key;
+
+	return KRB5KDC_ERR_PREAUTH_FAILED;
+    }
+
+    if (_pa_key)
+	*_pa_key = pa_key;
+    return 0;
+}
+
+static krb5_error_code
+pa_enc_ts_validate(astgs_request_t r, const PA_DATA *pa)
+{
+    krb5_kvno kvno = r->client->kvno;
+    EncryptedData enc_data;
+    krb5_error_code ret;
     krb5_data ts_data;
     PA_ENC_TS_ENC p;
     size_t len;
@@ -850,12 +911,10 @@ pa_enc_ts_validate(astgs_request_t r, const PA_DATA *pa)
 	goto out;
     }
 	
-    ret = hdb_enctype2key(r->context, r->client, NULL,
-			  enc_data.etype, &pa_key);
-    if(ret){
+    ret = pa_enc_ts_decrypt_kvno(r, kvno, &enc_data, &ts_data, &pa_key);
+    if (ret == KRB5KDC_ERR_ETYPE_NOSUPP) {
 	char *estr;
 	_kdc_set_e_text(r, "No key matching entype");
-	ret = KRB5KDC_ERR_ETYPE_NOSUPP;
 	if(krb5_enctype_to_string(r->context, enc_data.etype, &estr))
 	    estr = NULL;
 	if(estr == NULL)
@@ -870,34 +929,11 @@ pa_enc_ts_validate(astgs_request_t r, const PA_DATA *pa)
 	free_EncryptedData(&enc_data);
 	goto out;
     }
-
- try_next_key:
-    ret = krb5_crypto_init(r->context, &pa_key->key, 0, &crypto);
-    if (ret) {
-	const char *msg = krb5_get_error_message(r->context, ret);
-	_kdc_r_log(r, 4, "krb5_crypto_init failed: %s", msg);
-	krb5_free_error_message(r->context, msg);
-	free_EncryptedData(&enc_data);
-	goto out;
-    }
-
-    ret = krb5_decrypt_EncryptedData (r->context,
-				      crypto,
-				      KRB5_KU_PA_ENC_TIMESTAMP,
-				      &enc_data,
-				      &ts_data);
-    krb5_crypto_destroy(r->context, crypto);
-    /*
-     * Since the user might have several keys with the same
-     * enctype but with diffrent salting, we need to try all
-     * the keys with the same enctype.
-     */
-    if(ret){
+    if (ret == KRB5KDC_ERR_PREAUTH_FAILED) {
 	krb5_error_code ret2;
 	const char *msg = krb5_get_error_message(r->context, ret);
 
-	ret2 = krb5_enctype_to_string(r->context,
-				      pa_key->key.keytype, &str);
+	ret2 = krb5_enctype_to_string(r->context, enc_data.etype, &str);
 	if (ret2)
 	    str = NULL;
 	_kdc_r_log(r, 2, "Failed to decrypt PA-DATA -- %s "
@@ -906,12 +942,9 @@ pa_enc_ts_validate(astgs_request_t r, const PA_DATA *pa)
 	krb5_xfree(str);
 	krb5_free_error_message(r->context, msg);
 	kdc_audit_setkv_number((kdc_request_t)r, KDC_REQUEST_KV_PA_ETYPE,
-			       pa_key->key.keytype);
+			       enc_data.etype);
 	kdc_audit_setkv_number((kdc_request_t)r, KDC_REQUEST_KV_AUTH_EVENT,
 			       KDC_AUTH_EVENT_WRONG_LONG_TERM_KEY);
-	if(hdb_next_enctype2key(r->context, r->client, NULL,
-				enc_data.etype, &pa_key) == 0)
-	    goto try_next_key;
 
 	free_EncryptedData(&enc_data);
 

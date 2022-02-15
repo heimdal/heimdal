@@ -850,14 +850,51 @@ pa_enc_chal_validate(astgs_request_t r, const PA_DATA *pa)
 	return ret;
     }
     if (ret == KRB5KDC_ERR_PREAUTH_FAILED) {
+	krb5_error_code hret = ret;
+	int hi;
+
 	/*
 	 * Logging happens inside of
 	 * via pa_enc_chal_decrypt_kvno()
 	 */
+
+	/*
+	 * Check if old and older keys are
+	 * able to decrypt.
+	 */
+	for (hi = 1; hi < 3; hi++) {
+	    krb5_kvno hkvno;
+
+	    if (hi >= kvno) {
+		break;
+	    }
+
+	    hkvno = kvno - hi;
+	    hret = pa_enc_chal_decrypt_kvno(r, aenctype,
+					    &pepper1client,
+					    NULL, /* pepper1kdc */
+					    &pepper2,
+					    hkvno,
+					    &enc_data,
+					    NULL, /* KDCchallengekey */
+					    NULL); /* used_key */
+	    if (hret == 0) {
+		break;
+	    }
+	    if (hret == KRB5KDC_ERR_ETYPE_NOSUPP) {
+		break;
+	    }
+	}
+
 	free_EncryptedData(&enc_data);
 
-	kdc_audit_setkv_number((kdc_request_t)r, KDC_REQUEST_KV_AUTH_EVENT,
-			       KDC_AUTH_EVENT_WRONG_LONG_TERM_KEY);
+	if (hret == 0)
+	    kdc_audit_setkv_number((kdc_request_t)r, KDC_REQUEST_KV_AUTH_EVENT,
+				   KDC_AUTH_EVENT_HISTORIC_LONG_TERM_KEY);
+	else
+	    kdc_audit_setkv_number((kdc_request_t)r, KDC_REQUEST_KV_AUTH_EVENT,
+				   KDC_AUTH_EVENT_WRONG_LONG_TERM_KEY);
+
 	return ret;
     }
     free_EncryptedData(&enc_data);

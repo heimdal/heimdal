@@ -33,7 +33,22 @@
 
 #include "kdc_locl.h"
 
-#define MAX_TIME ((time_t)((1U << 31) - 1))
+#ifdef TIME_T_SIGNED
+#if SIZEOF_TIME_T == 4
+#define MAX_TIME ((time_t)INT32_MAX)
+#elif SIZEOF_TIME_T == 8
+#define MAX_TIME ((time_t)INT64_MAX)
+#else
+#error "Unexpected sizeof(time_t)"
+#endif
+#else
+
+#if SIZEOF_TIME_T == 4
+#define MAX_TIME ((time_t)UINT32_MAX)
+#else
+#define MAX_TIME ((time_t)UINT64_MAX)
+#endif
+#endif
 
 #undef __attribute__
 #define __attribute__(X)
@@ -2497,18 +2512,20 @@ _kdc_as_rep(astgs_request_t r)
          * this from the client's certificate.
          */
         if (r->pa_max_life > 0)
-            t = start + min(t - start, r->pa_max_life);
+            t = rk_time_add(start, min(rk_time_sub(t, start), r->pa_max_life));
         else if (r->client->max_life && *r->client->max_life)
-	    t = start + min(t - start, *r->client->max_life);
+	    t = rk_time_add(start, min(rk_time_sub(t, start),
+                                       *r->client->max_life));
 
 	if (r->server->max_life && *r->server->max_life)
-	    t = start + min(t - start, *r->server->max_life);
+	    t = rk_time_add(start, min(rk_time_sub(t, start),
+                                       *r->server->max_life));
 
         /* Pre-auth can bound endtime as well */
         if (r->pa_endtime > 0)
-            t = start + min(t - start, r->pa_endtime);
+            t = rk_time_add(start, min(rk_time_sub(t, start), r->pa_endtime));
 #if 0
-	t = min(t, start + realm->max_life);
+	t = min(t, rk_time_add(start, realm->max_life));
 #endif
 	r->et.endtime = t;
 	if(f.renewable_ok && r->et.endtime < *b->till){
@@ -2525,11 +2542,13 @@ _kdc_as_rep(astgs_request_t r)
 	    if(t == 0)
 		t = MAX_TIME;
 	    if(r->client->max_renew && *r->client->max_renew)
-		t = start + min(t - start, *r->client->max_renew);
+		t = rk_time_add(start, min(rk_time_sub(t, start),
+                                           *r->client->max_renew));
 	    if(r->server->max_renew && *r->server->max_renew)
-		t = start + min(t - start, *r->server->max_renew);
+		t = rk_time_add(start, min(rk_time_sub(t, start),
+                                           *r->server->max_renew));
 #if 0
-	    t = min(t, start + realm->max_renew);
+	    t = min(t, rk_time_add(start, realm->max_renew));
 #endif
 	    ALLOC(r->et.renew_till);
 	    *r->et.renew_till = t;

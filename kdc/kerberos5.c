@@ -1038,6 +1038,33 @@ pa_enc_ts_validate(astgs_request_t r, const PA_DATA *pa)
     if (ret == KRB5KDC_ERR_PREAUTH_FAILED) {
 	krb5_error_code ret2;
 	const char *msg = krb5_get_error_message(r->context, ret);
+	krb5_error_code hret = ret;
+	int hi;
+
+	/*
+	 * Check if old and older keys are
+	 * able to decrypt.
+	 */
+	for (hi = 1; hi < 3; hi++) {
+	    krb5_kvno hkvno;
+
+	    if (hi >= kvno) {
+		break;
+	    }
+
+	    hkvno = kvno - hi;
+	    hret = pa_enc_ts_decrypt_kvno(r, hkvno,
+					  &enc_data,
+					  &ts_data,
+					  NULL); /* pa_key */
+	    if (hret == 0) {
+		krb5_data_free(&ts_data);
+		break;
+	    }
+	    if (hret == KRB5KDC_ERR_ETYPE_NOSUPP) {
+		break;
+	    }
+	}
 
 	ret2 = krb5_enctype_to_string(r->context, enc_data.etype, &str);
 	if (ret2)
@@ -1049,8 +1076,12 @@ pa_enc_ts_validate(astgs_request_t r, const PA_DATA *pa)
 	krb5_free_error_message(r->context, msg);
 	kdc_audit_setkv_number((kdc_request_t)r, KDC_REQUEST_KV_PA_ETYPE,
 			       enc_data.etype);
-	kdc_audit_setkv_number((kdc_request_t)r, KDC_REQUEST_KV_AUTH_EVENT,
-			       KDC_AUTH_EVENT_WRONG_LONG_TERM_KEY);
+	if (hret == 0)
+	    kdc_audit_setkv_number((kdc_request_t)r, KDC_REQUEST_KV_AUTH_EVENT,
+				   KDC_AUTH_EVENT_HISTORIC_LONG_TERM_KEY);
+	else
+	    kdc_audit_setkv_number((kdc_request_t)r, KDC_REQUEST_KV_AUTH_EVENT,
+				   KDC_AUTH_EVENT_WRONG_LONG_TERM_KEY);
 
 	free_EncryptedData(&enc_data);
 

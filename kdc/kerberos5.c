@@ -637,22 +637,140 @@ pa_gss_finalize_pac(astgs_request_t r)
 }
 
 static krb5_error_code
+pa_enc_chal_decrypt_kvno(astgs_request_t r,
+			 krb5_enctype aenctype,
+			 krb5_data *pepper1client,
+			 krb5_data *pepper1kdc,
+			 krb5_data *pepper2,
+			 krb5_kvno kvno,
+			 EncryptedData *enc_data,
+			 krb5_keyblock *KDCchallengekey,
+			 struct Key **used_key)
+{
+    unsigned int invalidKeys = 0;
+    krb5_error_code ret;
+    const Keys *keys = NULL;
+    unsigned int i;
+
+    if (KDCchallengekey)
+	krb5_keyblock_zero(KDCchallengekey);
+    if (used_key)
+	*used_key = NULL;
+
+    keys = hdb_kvno2keys(r->context, r->client, kvno);
+    if (keys == NULL) {
+	return KRB5KDC_ERR_ETYPE_NOSUPP;
+    }
+
+    for (i = 0; i < keys->len; i++) {
+	struct Key *k = &keys->val[i];
+	krb5_crypto challengecrypto, longtermcrypto;
+	krb5_keyblock client_challengekey;
+
+	ret = krb5_crypto_init(r->context, &k->key, 0, &longtermcrypto);
+	if (ret)
+	    continue;
+
+	ret = krb5_crypto_fx_cf2(r->context, r->armor_crypto, longtermcrypto,
+				 pepper1client, pepper2, aenctype,
+				 &client_challengekey);
+	if (ret) {
+	    krb5_crypto_destroy(r->context, longtermcrypto);
+	    continue;
+	}
+
+	ret = krb5_crypto_init(r->context, &client_challengekey, 0,
+			       &challengecrypto);
+	krb5_free_keyblock_contents(r->context, &client_challengekey);
+	if (ret) {
+	    krb5_crypto_destroy(r->context, longtermcrypto);
+	    continue;
+	}
+
+	ret = _krb5_validate_pa_enc_challenge(r->context,
+					      challengecrypto,
+					      KRB5_KU_ENC_CHALLENGE_CLIENT,
+					      enc_data,
+					      r->cname);
+	krb5_crypto_destroy(r->context, challengecrypto);
+	if (ret) {
+	    const char *msg;
+	    krb5_error_code ret2;
+	    char *str = NULL;
+
+	    krb5_crypto_destroy(r->context, longtermcrypto);
+
+	    if (ret != KRB5KRB_AP_ERR_BAD_INTEGRITY)
+		return ret;
+
+	    invalidKeys += 1;
+
+	    if (pepper1kdc == NULL)
+		/* The caller is not interessted in details */
+		continue;
+
+	    ret2 = krb5_enctype_to_string(r->context, k->key.keytype, &str);
+	    if (ret2)
+		str = NULL;
+	    msg = krb5_get_error_message(r->context, ret);
+	    _kdc_r_log(r, 2, "Failed to decrypt ENC-CHAL -- %s "
+		       "(enctype %s) error %s",
+		       r->cname, str ? str : "unknown enctype", msg);
+	    krb5_free_error_message(r->context, msg);
+	    free(str);
+
+	    continue;
+	}
+
+	if (pepper1kdc == NULL) {
+	    /* The caller is not interessted in details */
+	    return 0;
+	}
+
+	heim_assert(KDCchallengekey != NULL,
+		    "KDCchallengekey pointer required with pepper1kdc");
+	heim_assert(used_key != NULL,
+		    "used_key pointer required with pepper1kdc");
+
+	/*
+	 * Provide KDC authentication to the client, uses a different
+	 * challenge key (different pepper).
+	 */
+
+	ret = krb5_crypto_fx_cf2(r->context, r->armor_crypto, longtermcrypto,
+				 pepper1kdc, pepper2, aenctype,
+				 KDCchallengekey);
+	krb5_crypto_destroy(r->context, longtermcrypto);
+	if (ret)
+	    return ret;
+
+	*used_key = k;
+	return 0;
+    }
+
+    if (invalidKeys == 0)
+	return KRB5KDC_ERR_ETYPE_NOSUPP;
+
+    return KRB5KDC_ERR_PREAUTH_FAILED;
+}
+
+static krb5_error_code
 pa_enc_chal_validate(astgs_request_t r, const PA_DATA *pa)
 {
-    krb5_data pepper1, pepper2;
-    int invalidPassword = 0;
+    krb5_kvno kvno = r->client->kvno;
+    krb5_data pepper1client, pepper1kdc, pepper2;
     EncryptedData enc_data;
     krb5_enctype aenctype;
     krb5_error_code ret;
-    struct Key *k;
+    krb5_keyblock KDCchallengekey;
+    struct Key *k = NULL;
     size_t size;
-    int i;
 
     heim_assert(r->armor_crypto != NULL, "ENC-CHAL called for non FAST");
-    
+
     if (_kdc_is_anon_request(&r->req)) {
 	ret = KRB5KRB_AP_ERR_BAD_INTEGRITY;
-	kdc_log(r->context, r->config, 4, "ENC-CHALL doesn't support anon");
+	kdc_log(r->context, r->config, 4, "ENC-CHAL doesn't support anon");
 	return ret;
     }
 
@@ -676,8 +794,10 @@ pa_enc_chal_validate(astgs_request_t r, const PA_DATA *pa)
 	return ret;
     }
 
-    pepper1.data = "clientchallengearmor";
-    pepper1.length = strlen(pepper1.data);
+    pepper1client.data = "clientchallengearmor";
+    pepper1client.length = strlen(pepper1client.data);
+    pepper1kdc.data = "kdcchallengearmor";
+    pepper1kdc.length = strlen(pepper1kdc.data);
     pepper2.data = "challengelongterm";
     pepper2.length = strlen(pepper2.data);
 
@@ -685,123 +805,94 @@ pa_enc_chal_validate(astgs_request_t r, const PA_DATA *pa)
 
     kdc_log(r->context, r->config, 5, "FAST armor enctype is: %d", (int)aenctype);
 
-    for (i = 0; i < r->client->keys.len; i++) {
-	krb5_crypto challengecrypto, longtermcrypto;
-	krb5_keyblock challengekey;
-
-	k = &r->client->keys.val[i];
-	
-	ret = krb5_crypto_init(r->context, &k->key, 0, &longtermcrypto);
-	if (ret)
-	    continue;
-	
-	ret = krb5_crypto_fx_cf2(r->context, r->armor_crypto, longtermcrypto,
-				 &pepper1, &pepper2, aenctype,
-				 &challengekey);
-	if (ret) {
-	    krb5_crypto_destroy(r->context, longtermcrypto);
-	    continue;
-	}
-	
-	ret = krb5_crypto_init(r->context, &challengekey, 0,
-			       &challengecrypto);
-	krb5_free_keyblock_contents(r->context, &challengekey);
-	if (ret) {
-	    krb5_crypto_destroy(r->context, longtermcrypto);
-	    continue;
-	}
-
-	ret = _krb5_validate_pa_enc_challenge(r->context,
-					      challengecrypto,
-					      KRB5_KU_ENC_CHALLENGE_CLIENT,
-					      &enc_data,
-					      r->cname);
-	krb5_crypto_destroy(r->context, challengecrypto);
-	if (ret) {
-	    const char *msg;
-	    krb5_error_code ret2;
-	    char *str = NULL;
-
-	    krb5_crypto_destroy(r->context, longtermcrypto);
-
-	    invalidPassword = (ret == KRB5KRB_AP_ERR_BAD_INTEGRITY);
-	    if (!invalidPassword) {
-		goto out;
-	    }
-
-	    ret2 = krb5_enctype_to_string(r->context, k->key.keytype, &str);
-	    if (ret2)
-		str = NULL;
-	    msg = krb5_get_error_message(r->context, ret);
-	    _kdc_r_log(r, 2, "Failed to decrypt ENC-CHAL -- %s "
-		       "(enctype %s) error %s",
-		       r->cname, str ? str : "unknown enctype", msg);
-	    krb5_free_error_message(r->context, msg);
-	    free(str);
-
-	    continue;
-	}
-    
+    ret = pa_enc_chal_decrypt_kvno(r, aenctype,
+				   &pepper1client,
+				   &pepper1kdc,
+				   &pepper2,
+				   kvno,
+				   &enc_data,
+				   &KDCchallengekey,
+				   &k);
+    if (ret == KRB5KDC_ERR_ETYPE_NOSUPP) {
+	char *estr;
+	_kdc_set_e_text(r, "No key matching entype");
+	if(krb5_enctype_to_string(r->context, enc_data.etype, &estr))
+	    estr = NULL;
+	if(estr == NULL)
+	    _kdc_r_log(r, 4,
+		       "No client key matching ENC-CHAL (%d) -- %s",
+		       enc_data.etype, r->cname);
+	else
+	    _kdc_r_log(r, 4,
+		       "No client key matching ENC-CHAL (%s) -- %s",
+		       estr, r->cname);
+	free(estr);
+	free_EncryptedData(&enc_data);
+	return ret;
+    }
+    if (ret == KRB5KRB_AP_ERR_SKEW) {
 	/*
-	 * Found a key that the client used, lets pick that as the reply key
+	 * Logging happens inside of
+	 * _krb5_validate_pa_enc_challenge()
+	 * via pa_enc_chal_decrypt_kvno()
 	 */
 
-	krb5_free_keyblock_contents(r->context, &r->reply_key);
-	ret = krb5_copy_keyblock_contents(r->context, &k->key, &r->reply_key);
-	if (ret) {
-	    krb5_crypto_destroy(r->context, longtermcrypto);
-	    goto out;
-	}
-
-	krb5_free_keyblock_contents(r->context, &challengekey);
+	free_EncryptedData(&enc_data);
+	kdc_audit_setkv_number((kdc_request_t)r, KDC_REQUEST_KV_AUTH_EVENT,
+			       KDC_AUTH_EVENT_CLIENT_TIME_SKEW);
 
 	/*
-	 * Provide KDC authentication to the client, uses a different
-	 * challenge key (different pepper).
+	 * The following is needed to make windows clients to
+	 * retry using the timestamp in the error message, if
+	 * there is a e_text, they become unhappy.
 	 */
+	r->e_text = NULL;
+	return ret;
+    }
+    if (ret == KRB5KDC_ERR_PREAUTH_FAILED) {
+	/*
+	 * Logging happens inside of
+	 * via pa_enc_chal_decrypt_kvno()
+	 */
+	free_EncryptedData(&enc_data);
 
-	pepper1.data = "kdcchallengearmor";
-	pepper1.length = strlen(pepper1.data);
+	kdc_audit_setkv_number((kdc_request_t)r, KDC_REQUEST_KV_AUTH_EVENT,
+			       KDC_AUTH_EVENT_WRONG_LONG_TERM_KEY);
+	return ret;
+    }
+    free_EncryptedData(&enc_data);
+    if (ret == 0) {
+	krb5_crypto challengecrypto;
 
-	ret = krb5_crypto_fx_cf2(r->context, r->armor_crypto, longtermcrypto,
-				 &pepper1, &pepper2, aenctype,
-				 &challengekey);
-	krb5_crypto_destroy(r->context, longtermcrypto);
+	ret = krb5_crypto_init(r->context, &KDCchallengekey, 0, &challengecrypto);
+	krb5_free_keyblock_contents(r->context, &KDCchallengekey);
 	if (ret)
-	    goto out;
-
-	ret = krb5_crypto_init(r->context, &challengekey, 0, &challengecrypto);
-	krb5_free_keyblock_contents(r->context, &challengekey);
-	if (ret)
-	    goto out;
+	    return ret;
 
 	ret = _krb5_make_pa_enc_challenge(r->context, challengecrypto,
 					  KRB5_KU_ENC_CHALLENGE_KDC,
 					  r->rep.padata);
 	krb5_crypto_destroy(r->context, challengecrypto);
 	if (ret)
-	    goto out;
-					    
-        if (ret == 0)
-            ret = set_salt_padata(r->rep.padata, k->salt);
+	    return ret;
+
+	ret = set_salt_padata(r->rep.padata, k->salt);
+	if (ret)
+	    return ret;
 
 	/*
-	 * Success
+	 * Found a key that the client used, lets pick that as the reply key
 	 */
+
+	krb5_free_keyblock_contents(r->context, &r->reply_key);
+	ret = krb5_copy_keyblock_contents(r->context, &k->key, &r->reply_key);
+	if (ret)
+	    return ret;
+
 	kdc_audit_setkv_number((kdc_request_t)r, KDC_REQUEST_KV_AUTH_EVENT,
 			       KDC_AUTH_EVENT_VALIDATED_LONG_TERM_KEY);
-	goto out;
+	return 0;
     }
-
-    if (invalidPassword) {
-	kdc_audit_setkv_number((kdc_request_t)r, KDC_REQUEST_KV_AUTH_EVENT,
-			       KDC_AUTH_EVENT_WRONG_LONG_TERM_KEY);
-	ret = KRB5KDC_ERR_PREAUTH_FAILED;
-    } else {
-	ret = KRB5KDC_ERR_ETYPE_NOSUPP;
-    }
- out:
-    free_EncryptedData(&enc_data);
 
     return ret;
 }

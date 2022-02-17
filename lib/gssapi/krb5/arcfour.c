@@ -1359,7 +1359,7 @@ _gssapi_unwrap_iov_arcfour(OM_uint32 *minor_status,
 	return GSS_S_FAILURE;
     }
 
-    cmp = (memcmp(cksum_data, p0 + 16, 8) != 0); /* SGN_CKSUM */
+    cmp = (ct_memcmp(cksum_data, p0 + 16, 8) != 0); /* SGN_CKSUM */
     if (cmp) {
 	*minor_status = 0;
 	return GSS_S_BAD_MIC;

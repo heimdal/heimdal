@@ -426,7 +426,7 @@ RSA_verify(int type, const unsigned char *from, unsigned int flen,
 	    return -4;
 	}
 
-	if (flen != di.digest.length || memcmp(di.digest.data, from, flen) != 0) {
+	if (flen != di.digest.length || ct_memcmp(di.digest.data, from, flen) != 0) {
 	    free_DigestInfo(&di);
 	    return -5;
 	}

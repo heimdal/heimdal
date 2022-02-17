@@ -160,7 +160,7 @@ RSA_free(RSA *rsa)
     free_if(rsa->iqmp);
 #undef free_if
 
-    memset(rsa, 0, sizeof(*rsa));
+    memset_s(rsa, sizeof(*rsa), 0, sizeof(*rsa));
     free(rsa);
 }
 

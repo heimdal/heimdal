@@ -51,8 +51,7 @@ static krb5_error_code KRB5_CALLCONV dcc_get_default_name(krb5_context, char **)
 static krb5_error_code KRB5_CALLCONV dcc_set_default(krb5_context, krb5_ccache);
 
 /*
- * Make subsidiary filesystem safe by mapping / and : to -.  If the subsidiary
- * is longer than 128 bytes, then truncate.
+ * Make subsidiary filesystem safe by mapping / and : to -.
  * In all cases, "tkt" is prefixed to be compatible with the DIR requirement
  * that subsidiary ccache files be named tkt*.
  *
@@ -63,7 +62,6 @@ static krb5_error_code KRB5_CALLCONV dcc_set_default(krb5_context, krb5_ccache);
  */
 static krb5_error_code
 fs_encode_subsidiary(krb5_context context,
-                     krb5_dcache *dc,
                      const char *subsidiary,
                      char **res)
 {
@@ -80,13 +78,10 @@ fs_encode_subsidiary(krb5_context context,
 #endif
         case '/':   (*res)[0] = '-'; break;
         case ':':   (*res)[0] = '-'; break;
+        case '+':   (*res)[0] = '-'; break;
         default:                     break;
         }
     }
-
-    /* Hopefully this will work on all filesystems */
-    if (len > 128 - sizeof("tkt") - 1)
-        (*res)[127] = '\0';
     return 0;
 }
 
@@ -193,7 +188,7 @@ get_default_cache(krb5_context context, krb5_dcache *dc,
 
     *residual = NULL;
     if (subsidiary)
-        return fs_encode_subsidiary(context, dc, subsidiary, residual);
+        return fs_encode_subsidiary(context, subsidiary, residual);
 
     primary = primary_create(dc);
     if (primary == NULL)

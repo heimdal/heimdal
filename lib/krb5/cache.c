@@ -418,29 +418,13 @@ krb5_cc_resolve_for(krb5_context context,
                     krb5_ccache *id)
 {
     krb5_error_code ret;
-    char *p, *s;
+    char *p;
 
     *id = NULL;
 
     ret = krb5_unparse_name(context, principal, &p);
     if (ret)
         return ret;
-    /*
-     * Subsidiary components cannot have various chars in them that are used as
-     * separators.  ':' is used for subsidiary separators in all ccache types
-     * except FILE, where '+' is used instead because we can't use ':' in file
-     * paths on Windows and because ':' is not in the POSIX safe set.
-     */
-    for (s = p; *s; s++) {
-        switch (s[0]) {
-        case ':':
-        case '+':
-        case '/':
-        case '\\':
-            s[0] = '-';
-        default: break;
-        }
-    }
     ret = krb5_cc_resolve_sub(context, cctype, name, p, id);
     free(p);
     return ret;

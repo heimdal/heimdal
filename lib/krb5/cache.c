@@ -374,10 +374,16 @@ krb5_cc_resolve_sub(krb5_context context,
 
     if (ops && collection && subsidiary) {
         ret = allocate_ccache(context, ops, collection, NULL, &cccol_cache);
-        if (ret == 0)
-            (void) cccol_cache->ops->get_name_2(context, cccol_cache, NULL, &col, NULL);
-        if (col)
-            collection = col;
+        if (ret == 0 && cccol_cache->ops->version >= KRB5_CC_OPS_VERSION_5 &&
+            cccol_cache->ops->get_name_2) {
+            /*
+             * This would be a plugin cache, possibly an MSLSA: cache on
+             * Windows.
+             */
+            cccol_cache->ops->get_name_2(context, cccol_cache, NULL, &col, NULL);
+            if (col)
+                collection = col;
+        }
     }
 
     ret = allocate_ccache(context, ops, collection, subsidiary, id);

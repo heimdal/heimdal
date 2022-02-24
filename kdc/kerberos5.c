@@ -1849,8 +1849,7 @@ generate_pac(astgs_request_t r, const Key *skey, const Key *tkey,
      * Validate a PA mech was actually used before doing this.
      */
 
-    ret = _kdc_pac_generate(r->context,
-			    r->config,
+    ret = _kdc_pac_generate(r,
 			    r->client,
 			    r->server,
 			    r->pa_used && !pa_used_flag_isset(r, PA_USES_LONG_TERM_KEY)

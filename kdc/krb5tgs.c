@@ -2081,7 +2081,7 @@ _kdc_tgs_rep(astgs_request_t r)
     int i = 0;
     const PA_DATA *tgs_req, *pa;
     krb5_enctype krbtgt_etype = ETYPE_NULL;
-
+    krb5_error_code audit_ret;
     time_t *csec = NULL;
     int *cusec = NULL;
 
@@ -2156,7 +2156,14 @@ _kdc_tgs_rep(astgs_request_t r)
 
 out:
     r->error_code = ret;
-    _kdc_audit_request(r);
+    audit_ret = _kdc_audit_request(r);
+    if (audit_ret != 0) {
+	krb5_data_free(r->reply);
+	kdc_audit_addreason((kdc_request_t)r,
+		"tgs-req: _kdc_audit_request(error_code=%d) => %d",
+		r->error_code, audit_ret);
+	ret = audit_ret;
+    }
 
     if(ret && ret != HDB_ERR_NOT_FOUND_HERE && data->data == NULL){
 	METHOD_DATA error_method = { 0, NULL };

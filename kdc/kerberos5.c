@@ -2069,6 +2069,7 @@ _kdc_as_rep(astgs_request_t r)
     krb5_boolean is_tgs;
     const char *msg;
     Key *krbtgt_key;
+    krb5_error_code audit_ret;
 
     memset(rep, 0, sizeof(*rep));
 
@@ -2734,7 +2735,14 @@ _kdc_as_rep(astgs_request_t r)
 
 out:
     r->error_code = ret;
-    _kdc_audit_request(r);
+    audit_ret = _kdc_audit_request(r);
+    if (audit_ret != 0) {
+	krb5_data_free(r->reply);
+	kdc_audit_addreason((kdc_request_t)r,
+		"as-req: _kdc_audit_request(error_code=%d) => %d",
+		r->error_code, audit_ret);
+	ret = audit_ret;
+    }
 
     /*
      * In case of a non proxy error, build an error message.

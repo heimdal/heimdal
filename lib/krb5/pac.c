@@ -383,7 +383,7 @@ krb5_pac_add_buffer(krb5_context context, krb5_pac p,
     size_t len, offset, header_end, old_end;
     uint32_t i;
 
-    assert(data->length > 0 && data->data != NULL);
+    assert(data->length == 0 || (data->length > 0 && data->data != NULL));
 
     len = p->pac->numbuffers;
 
@@ -433,8 +433,9 @@ krb5_pac_add_buffer(krb5_context context, krb5_pac p,
      * copy in new data part
      */
 
-    memcpy((unsigned char *)p->data.data + offset,
-	   data->data, data->length);
+    if (data->length != 0)
+	memcpy((unsigned char *)p->data.data + offset,
+	       data->data, data->length);
     memset((unsigned char *)p->data.data + offset + data->length,
 	   0, p->data.length - offset - data->length);
 

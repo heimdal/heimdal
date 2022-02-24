@@ -2203,6 +2203,12 @@ out:
 	krb5_free_ticket(r->context, r->armor_ticket);
     if (r->armor_server)
 	_kdc_free_ent(r->context, r->armor_serverdb, r->armor_server);
+    if (r->explicit_armor_client)
+	_kdc_free_ent(r->context,
+		      r->explicit_armor_clientdb,
+		      r->explicit_armor_client);
+    if (r->explicit_armor_pac)
+	krb5_pac_free(r->context, r->explicit_armor_pac);
     krb5_free_keyblock_contents(r->context, &r->reply_key);
     krb5_free_keyblock_contents(r->context, &r->strengthen_key);
 

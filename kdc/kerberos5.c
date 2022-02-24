@@ -2739,7 +2739,8 @@ out:
     /*
      * In case of a non proxy error, build an error message.
      */
-    if (ret != 0 && ret != HDB_ERR_NOT_FOUND_HERE && r->reply->length == 0)
+    if (ret != 0 && ret != HDB_ERR_NOT_FOUND_HERE && r->reply->length == 0) {
+	kdc_log(r->context, config, 5, "as-req: sending error: %d to client", ret);
 	ret = _kdc_fast_mk_error(r,
 				 r->rep.padata,
 			         r->armor_crypto,
@@ -2749,6 +2750,7 @@ out:
 			         r->server_princ,
 			         NULL, NULL,
 			         r->reply);
+    }
 
     if (r->pa_used && r->pa_used->cleanup)
 	r->pa_used->cleanup(r);

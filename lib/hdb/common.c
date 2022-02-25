@@ -1575,7 +1575,7 @@ fetch_it(krb5_context context,
     }
 
 out:
-    if (ret)
+    if (ret != 0 && ret != HDB_ERR_WRONG_REALM)
         hdb_free_entry(context, db, ent);
     krb5_free_principal(context, nsprinc);
     free(host);

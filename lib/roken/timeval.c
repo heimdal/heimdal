@@ -51,13 +51,10 @@ rk_time_add(time_t t, time_t delta)
     if (t >= 0 && delta > 0 && INT32_MAX - t < delta)
         /* Time left to hit INT32_MAX is less than what we want to add */
         return INT32_MAX;
-    else if (t < 0 && delta == INT32_MIN)
-        /* Avoid computing -delta when t == INT32_MIN! */
-        return INT32_MIN;
     else if (t == INT32_MIN && delta < 0)
         /* Avoid computing -t when t == INT32_MIN! */
         return INT32_MIN;
-    else if (t < 0 && delta < 0 && INT32_MIN + (-t) < (-delta))
+    else if (t < 0 && delta < 0 && INT32_MIN + (-t) > delta)
         /* Time left to hit INT32_MIN is less than what we want to subtract */
         return INT32_MIN;
     else
@@ -65,13 +62,10 @@ rk_time_add(time_t t, time_t delta)
 #elif SIZEOF_TIME_T == 8
     if (t >= 0 && delta > 0 && INT64_MAX - t < delta)
         return INT64_MAX;
-    else if (t < 0 && delta == INT64_MIN)
-        /* Avoid computing -delta when t == INT64_MIN! */
-        return INT64_MIN;
     else if (t == INT64_MIN && delta < 0)
         /* Avoid computing -t when t == INT64_MIN! */
         return INT64_MIN;
-    else if (t < 0 && delta < 0 && INT64_MIN + (-t) < (-delta))
+    else if (t < 0 && delta < 0 && INT64_MIN + (-t) > delta)
         return INT64_MIN;
     else
         return t + delta;

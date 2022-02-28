@@ -432,6 +432,19 @@ kdc_request_add_reply_padata(astgs_request_t r, PA_DATA *md)
 }
 
 KDC_LIB_FUNCTION krb5_error_code KDC_LIB_CALL
+kdc_request_add_encrypted_padata(astgs_request_t r, PA_DATA *md)
+{
+    if (r->ek.encrypted_pa_data == NULL) {
+	r->ek.encrypted_pa_data = calloc(1, sizeof *(r->ek.encrypted_pa_data));
+	if (r->ek.encrypted_pa_data == NULL) {
+	    return ENOMEM;
+	}
+    }
+
+    return add_METHOD_DATA(r->ek.encrypted_pa_data, md);
+}
+
+KDC_LIB_FUNCTION krb5_error_code KDC_LIB_CALL
 kdc_request_add_pac_buffer(astgs_request_t r,
 			   uint32_t pactype,
 			   const krb5_data *d)

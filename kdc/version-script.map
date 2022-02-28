@@ -24,6 +24,7 @@ HEIMDAL_KDC_1.0 {
 		kdc_request_get_attribute;
 		kdc_request_copy_attribute;
 		kdc_request_delete_attribute;
+		kdc_request_add_encrypted_padata;
 		kdc_request_add_pac_buffer;
 		kdc_request_add_reply_padata;
 		kdc_request_get_addr;

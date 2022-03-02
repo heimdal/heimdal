@@ -2733,7 +2733,13 @@ _kdc_as_rep(astgs_request_t r)
 
 out:
     r->error_code = ret;
-    _kdc_audit_request(r);
+    {
+	krb5_error_code ret2 = _kdc_audit_request(r);
+	if (ret2) {
+	    krb5_data_free(r->reply);
+	    ret = ret2;
+	}
+    }
 
     /*
      * In case of a non proxy error, build an error message.

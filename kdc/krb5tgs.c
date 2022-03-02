@@ -2157,7 +2157,13 @@ _kdc_tgs_rep(astgs_request_t r)
 
 out:
     r->error_code = ret;
-    _kdc_audit_request(r);
+    {
+	krb5_error_code ret2 = _kdc_audit_request(r);
+	if (ret2) {
+	    krb5_data_free(data);
+	    ret = ret2;
+	}
+    }
 
     if(ret && ret != HDB_ERR_NOT_FOUND_HERE && data->data == NULL){
 	METHOD_DATA error_method = { 0, NULL };

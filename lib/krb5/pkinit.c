@@ -1567,7 +1567,6 @@ _krb5_pk_rd_pa_reply(krb5_context context,
 		     const char *realm,
 		     void *c,
 		     krb5_enctype etype,
-		     const krb5_krbhst_info *hi,
 		     unsigned nonce,
 		     const krb5_data *req_buffer,
 		     PA_DATA *pa,
@@ -1658,14 +1657,14 @@ _krb5_pk_rd_pa_reply(krb5_context context,
 
 	switch (rep.element) {
 	case choice_PA_PK_AS_REP_dhInfo:
-	    ret = pk_rd_pa_reply_dh(context, &data, &oid, realm, ctx, etype, hi,
+	    ret = pk_rd_pa_reply_dh(context, &data, &oid, realm, ctx, etype, NULL,
 				    ctx->clientDHNonce,
 				    rep.u.dhInfo.serverDHNonce,
 				    nonce, pa, key);
 	    break;
 	case choice_PA_PK_AS_REP_encKeyPack:
 	    ret = pk_rd_pa_reply_enckey(context, PKINIT_27, &data, &oid, realm,
-					ctx, etype, hi, nonce, req_buffer, pa, key);
+					ctx, etype, NULL, nonce, req_buffer, pa, key);
 	    break;
 	default:
 	    krb5_abortx(context, "pk-init as-rep case not possible to happen");
@@ -1717,7 +1716,7 @@ _krb5_pk_rd_pa_reply(krb5_context context,
 	    }
 
 	    ret = pk_rd_pa_reply_enckey(context, PKINIT_WIN2K, &data, &oid, realm,
-					ctx, etype, hi, nonce, req_buffer, pa, key);
+					ctx, etype, NULL, nonce, req_buffer, pa, key);
 	    der_free_octet_string(&data);
 	    der_free_oid(&oid);
 

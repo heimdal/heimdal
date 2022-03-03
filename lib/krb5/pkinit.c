@@ -1014,10 +1014,10 @@ get_reply_key(krb5_context context,
 static krb5_error_code
 pk_verify_host(krb5_context context,
 	       const char *realm,
-	       const krb5_krbhst_info *hi,
 	       struct krb5_pk_init_ctx_data *ctx,
 	       struct krb5_pk_cert *host)
 {
+    const krb5_krbhst_info *hi = NULL;
     krb5_error_code ret = 0;
 
     if (ctx->require_eku) {
@@ -1218,7 +1218,7 @@ pk_rd_pa_reply_enckey(krb5_context context,
 
     if (host) {
 	/* make sure that it is the kdc's certificate */
-	ret = pk_verify_host(context, realm, NULL, ctx, host);
+	ret = pk_verify_host(context, realm, ctx, host);
 	if (ret)
 	    goto out;
 
@@ -1405,7 +1405,7 @@ pk_rd_pa_reply_dh(krb5_context context,
 
     if (host) {
 	/* make sure that it is the kdc's certificate */
-	ret = pk_verify_host(context, realm, NULL, ctx, host);
+	ret = pk_verify_host(context, realm, ctx, host);
 	if (ret)
 	    goto out;
 

@@ -3469,8 +3469,7 @@ krb5_init_creds_step(krb5_context context,
             ctx->fast_state.flags &= ~KRB5_FAST_REQUIRED;
             ctx->fast_state.flags &= ~KRB5_FAST_ANON_PKINIT_ARMOR;
         } else if (ret ||
-                   ((*flags & KRB5_INIT_CREDS_STEP_FLAG_CONTINUE) == 0) ||
-                   out->length)
+                   (*flags & KRB5_INIT_CREDS_STEP_FLAG_CONTINUE))
 	    return ret;
 
 	in = &empty;

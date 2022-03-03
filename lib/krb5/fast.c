@@ -953,8 +953,6 @@ _krb5_fast_anon_pkinit_step(krb5_context context,
     krb5_get_init_creds_opt_free(context, state->anon_pkinit_opt);
     state->anon_pkinit_opt = NULL;
 
-    *flags |= KRB5_INIT_CREDS_STEP_FLAG_CONTINUE;
-
 out:
     krb5_free_principal(context, principal);
     krb5_free_cred_contents(context, &cred);

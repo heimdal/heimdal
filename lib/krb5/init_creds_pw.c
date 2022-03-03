@@ -2256,7 +2256,6 @@ pa_step(krb5_context context,
 	krb5_init_creds_context ctx,
 	const AS_REQ *a,
 	const AS_REP *rep,
-	const krb5_krbhst_info *hi,
 	METHOD_DATA *in_md,
 	METHOD_DATA *out_md)
 {
@@ -2308,7 +2307,7 @@ pa_step(krb5_context context,
 
     _krb5_debug(context, 5, "Stepping pa-mech: %s", ctx->pa_mech->patype->name);
 
-    ret = ctx->pa_mech->patype->step(context, ctx, (void *)&ctx->pa_mech->pactx[0], pa, a, rep, hi, in_md, out_md);
+    ret = ctx->pa_mech->patype->step(context, ctx, (void *)&ctx->pa_mech->pactx[0], pa, a, rep, NULL, in_md, out_md);
     _krb5_debug(context, 10, "PA type %s returned %d", ctx->pa_mech->patype->name, ret);
     if (ret == 0) {
 	struct pa_auth_mech *next_pa = ctx->pa_mech->next;
@@ -2384,7 +2383,7 @@ process_pa_data_to_md(krb5_context context,
 
     log_kdc_pa_types(context, in_md);
 
-    ret = pa_step(context, ctx, a, NULL, NULL, in_md, *out_md);
+    ret = pa_step(context, ctx, a, NULL, in_md, *out_md);
     if (ret == HEIM_ERR_PA_CONTINUE_NEEDED) {
 	_krb5_debug(context, 0, "pamech need more stepping");
     } else if (ret == 0) {
@@ -2443,7 +2442,7 @@ process_pa_data_to_key(krb5_context context,
 	}
     }
 
-    ret = pa_step(context, ctx, a, rep, NULL, rep->padata, NULL);
+    ret = pa_step(context, ctx, a, rep, rep->padata, NULL);
     if (ret == HEIM_ERR_PA_CONTINUE_NEEDED) {
 	_krb5_debug(context, 0, "In final stretch and pa require more stepping ?");
 	return ret;

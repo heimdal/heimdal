@@ -1017,7 +1017,6 @@ pk_verify_host(krb5_context context,
 	       struct krb5_pk_init_ctx_data *ctx,
 	       struct krb5_pk_cert *host)
 {
-    const krb5_krbhst_info *hi = NULL;
     krb5_error_code ret = 0;
 
     if (ctx->require_eku) {
@@ -1092,18 +1091,6 @@ pk_verify_host(krb5_context context,
     if (ret)
 	return ret;
 
-    if (hi) {
-	ret = hx509_verify_hostname(context->hx509ctx, host->cert,
-				    ctx->require_hostname_match,
-				    HX509_HN_HOSTNAME,
-				    hi->hostname,
-				    hi->ai->ai_addr, hi->ai->ai_addrlen);
-
-	if (ret)
-	    krb5_set_error_message(context, ret,
-				   N_("Address mismatch in "
-				      "the KDC certificate", ""));
-    }
     return ret;
 }
 

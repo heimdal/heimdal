@@ -1115,7 +1115,6 @@ pk_rd_pa_reply_enckey(krb5_context context,
 		      const char *realm,
 		      krb5_pk_init_ctx ctx,
 		      krb5_enctype etype,
-		      const krb5_krbhst_info *hi,
 	       	      unsigned nonce,
 		      const krb5_data *req_buffer,
 	       	      PA_DATA *pa,
@@ -1219,7 +1218,7 @@ pk_rd_pa_reply_enckey(krb5_context context,
 
     if (host) {
 	/* make sure that it is the kdc's certificate */
-	ret = pk_verify_host(context, realm, hi, ctx, host);
+	ret = pk_verify_host(context, realm, NULL, ctx, host);
 	if (ret)
 	    goto out;
 
@@ -1663,7 +1662,7 @@ _krb5_pk_rd_pa_reply(krb5_context context,
 	    break;
 	case choice_PA_PK_AS_REP_encKeyPack:
 	    ret = pk_rd_pa_reply_enckey(context, PKINIT_27, &data, &oid, realm,
-					ctx, etype, NULL, nonce, req_buffer, pa, key);
+					ctx, etype, nonce, req_buffer, pa, key);
 	    break;
 	default:
 	    krb5_abortx(context, "pk-init as-rep case not possible to happen");
@@ -1715,7 +1714,7 @@ _krb5_pk_rd_pa_reply(krb5_context context,
 	    }
 
 	    ret = pk_rd_pa_reply_enckey(context, PKINIT_WIN2K, &data, &oid, realm,
-					ctx, etype, NULL, nonce, req_buffer, pa, key);
+					ctx, etype, nonce, req_buffer, pa, key);
 	    der_free_octet_string(&data);
 	    der_free_oid(&oid);
 

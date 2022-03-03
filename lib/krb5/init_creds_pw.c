@@ -2966,7 +2966,7 @@ init_creds_step(krb5_context context,
 		krb5_init_creds_context ctx,
 		krb5_data *in,
 		krb5_data *out,
-		krb5_krbhst_info *hostinfo,
+		const void *_unused,
 		unsigned int *flags)
 {
     struct timeval start_time, end_time;
@@ -3053,7 +3053,7 @@ init_creds_step(krb5_context context,
 
 	    ret = process_pa_data_to_key(context, ctx, &ctx->cred,
 					 &ctx->as_req, &rep.kdc_rep,
-					 hostinfo, &ctx->fast_state.reply_key);
+					 NULL, &ctx->fast_state.reply_key);
 	    if (ret) {
 		free_AS_REP(&rep.kdc_rep);
 		goto out;
@@ -3436,7 +3436,6 @@ init_creds_step(krb5_context context,
  * @param ctx ctx krb5_init_creds_context context.
  * @param in input data from KDC, first round it should be reset by krb5_data_zer().
  * @param out reply to KDC.
- * @param hostinfo KDC address info, first round it can be NULL.
  * @param flags status of the round, if
  *        KRB5_INIT_CREDS_STEP_FLAG_CONTINUE is set, continue one more round.
  *
@@ -3451,7 +3450,7 @@ krb5_init_creds_step(krb5_context context,
 		     krb5_init_creds_context ctx,
 		     krb5_data *in,
 		     krb5_data *out,
-		     krb5_krbhst_info *hostinfo,
+		     const void *_unused,
 		     unsigned int *flags)
 {
     krb5_error_code ret;
@@ -3462,7 +3461,7 @@ krb5_init_creds_step(krb5_context context,
     if ((ctx->fast_state.flags & KRB5_FAST_ANON_PKINIT_ARMOR) &&
 	ctx->fast_state.armor_ccache == NULL) {
 	ret = _krb5_fast_anon_pkinit_step(context, ctx, &ctx->fast_state,
-					  in, out, hostinfo, flags);
+					  in, out, NULL, flags);
         if (ret && (ctx->fast_state.flags & KRB5_FAST_OPTIMISTIC)) {
             _krb5_debug(context, 5, "Preauth failed with optimistic "
                         "FAST, trying w/o FAST");
@@ -3477,7 +3476,7 @@ krb5_init_creds_step(krb5_context context,
 	in = &empty;
     }
 
-    return init_creds_step(context, ctx, in, out, hostinfo, flags);
+    return init_creds_step(context, ctx, in, out, NULL, flags);
 }
 
 /**
@@ -3670,7 +3669,6 @@ KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_init_creds_get(krb5_context context, krb5_init_creds_context ctx)
 {
     krb5_sendto_ctx stctx = NULL;
-    krb5_krbhst_info *hostinfo = NULL;
     krb5_error_code ret;
     krb5_data in, out;
     unsigned int flags = 0;
@@ -3692,7 +3690,7 @@ krb5_init_creds_get(krb5_context context, krb5_init_creds_context ctx)
 	struct timeval nstart, nend;
 
 	flags = 0;
-	ret = krb5_init_creds_step(context, ctx, &in, &out, hostinfo, &flags);
+	ret = krb5_init_creds_step(context, ctx, &in, &out, NULL, &flags);
 	krb5_data_free(&in);
 	if (ret)
 	    goto out;

@@ -856,7 +856,7 @@ _krb5_fast_anon_pkinit_step(krb5_context context,
 			    struct krb5_fast_state *state,
 			    krb5_data *in,
 			    krb5_data *out,
-			    krb5_krbhst_info *hostinfo,
+			    const void *_unused,
 			    unsigned int *flags)
 {
     krb5_error_code ret;
@@ -902,7 +902,7 @@ _krb5_fast_anon_pkinit_step(krb5_context context,
 
     anon_pk_ctx = state->anon_pkinit_ctx;
 
-    ret = krb5_init_creds_step(context, anon_pk_ctx, in, out, hostinfo, flags);
+    ret = krb5_init_creds_step(context, anon_pk_ctx, in, out, NULL, flags);
     if (ret ||
 	(*flags & KRB5_INIT_CREDS_STEP_FLAG_CONTINUE))
 	goto out;

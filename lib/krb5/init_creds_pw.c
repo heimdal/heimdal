@@ -1219,7 +1219,7 @@ pkinit_configure_win(krb5_context context, krb5_init_creds_context ctx, void *pa
 
 static krb5_error_code
 pkinit_step(krb5_context context, krb5_init_creds_context ctx, void *pa_ctx, PA_DATA *pa, const AS_REQ *a,
-	    const AS_REP *rep, const krb5_krbhst_info *hi, METHOD_DATA *in_md, METHOD_DATA *out_md)
+	    const AS_REP *rep, METHOD_DATA *in_md, METHOD_DATA *out_md)
 {
     krb5_error_code ret = HEIM_ERR_PA_CANT_CONTINUE;
     struct pkinit_context *pkinit_ctx = pa_ctx;
@@ -1243,7 +1243,7 @@ pkinit_step(krb5_context context, krb5_init_creds_context ctx, void *pa_ctx, PA_
 				   a->req_body.realm,
 				   ctx->pk_init_ctx,
 				   rep->enc_part.etype,
-				   hi,
+				   NULL,
 				   ctx->pk_nonce,
 				   &ctx->req_buffer,
 				   pa,
@@ -1372,7 +1372,6 @@ pa_gss_step(krb5_context context,
 	    PA_DATA *pa,
 	    const AS_REQ *a,
 	    const AS_REP *rep,
-	    const krb5_krbhst_info *hi,
 	    METHOD_DATA *in_md,
 	    METHOD_DATA *out_md)
 {
@@ -1586,7 +1585,7 @@ process_pa_info(krb5_context, const krb5_principal, const AS_REQ *, struct pa_in
 
 static krb5_error_code
 enc_chal_step(krb5_context context, krb5_init_creds_context ctx, void *pa_ctx, PA_DATA *pa, const AS_REQ *a,
-	      const AS_REP *rep, const krb5_krbhst_info *hi, METHOD_DATA *in_md, METHOD_DATA *out_md)
+	      const AS_REP *rep, METHOD_DATA *in_md, METHOD_DATA *out_md)
 {
     struct pa_info_data paid, *ppaid;
     krb5_keyblock challengekey;
@@ -1725,7 +1724,6 @@ static krb5_error_code
 enc_ts_step(krb5_context context, krb5_init_creds_context ctx, void *pa_ctx, PA_DATA *pa,
 	    const AS_REQ *a,
 	    const AS_REP *rep,
-	    const krb5_krbhst_info *hi,
 	    METHOD_DATA *in_md, METHOD_DATA *out_md)
 {
     struct enc_ts_context *pactx = (struct enc_ts_context *)pa_ctx;
@@ -1853,8 +1851,7 @@ enc_ts_release(void *pa_ctx)
 
 static krb5_error_code
 pa_pac_step(krb5_context context, krb5_init_creds_context ctx, void *pa_ctx, PA_DATA *pa, const AS_REQ *a,
-	    const AS_REP *rep, const krb5_krbhst_info *hi,
-	    METHOD_DATA *in_md, METHOD_DATA *out_md)
+	    const AS_REP *rep, METHOD_DATA *in_md, METHOD_DATA *out_md)
 {
     size_t len = 0, length;
     krb5_error_code ret;
@@ -1886,8 +1883,7 @@ pa_pac_step(krb5_context context, krb5_init_creds_context ctx, void *pa_ctx, PA_
 
 static krb5_error_code
 pa_enc_pa_rep_step(krb5_context context, krb5_init_creds_context ctx, void *pa_ctx, PA_DATA *pa, const AS_REQ *a,
-		   const AS_REP *rep, const krb5_krbhst_info *hi,
-		   METHOD_DATA *in_md, METHOD_DATA *out_md)
+		   const AS_REP *rep, METHOD_DATA *in_md, METHOD_DATA *out_md)
 {
     if (ctx->runflags.allow_enc_pa_rep)
 	return krb5_padata_add(context, out_md, KRB5_PADATA_REQ_ENC_PA_REP, NULL, 0);
@@ -1902,7 +1898,6 @@ pa_fx_cookie_step(krb5_context context,
 		  PA_DATA *pa,
 		  const AS_REQ *a,
 		  const AS_REP *rep,
-		  const krb5_krbhst_info *hi,
 		  METHOD_DATA *in_md,
 		  METHOD_DATA *out_md)
 {
@@ -1942,7 +1937,7 @@ pa_fx_cookie_step(krb5_context context,
 typedef struct pa_info_data *(*pa_salt_info_f)(krb5_context, const krb5_principal, const AS_REQ *, struct pa_info_data *, heim_octet_string *);
 typedef krb5_error_code (*pa_configure_f)(krb5_context, krb5_init_creds_context, void *);
 typedef krb5_error_code (*pa_restart_f)(krb5_context, krb5_init_creds_context, void *);
-typedef krb5_error_code (*pa_step_f)(krb5_context, krb5_init_creds_context, void *, PA_DATA *, const AS_REQ *, const AS_REP *, const krb5_krbhst_info *, METHOD_DATA *, METHOD_DATA *);
+typedef krb5_error_code (*pa_step_f)(krb5_context, krb5_init_creds_context, void *, PA_DATA *, const AS_REQ *, const AS_REP *, METHOD_DATA *, METHOD_DATA *);
 typedef void            (*pa_release_f)(void *);
 
 struct patype {
@@ -2143,7 +2138,7 @@ pa_announce(krb5_context context,
 	    continue;
 
 	if (patypes[n].step)
-	    patypes[n].step(context, ctx, NULL, NULL, NULL, NULL, NULL, in_md, out_md);
+	    patypes[n].step(context, ctx, NULL, NULL, NULL, NULL, in_md, out_md);
 	else
 	    ret = krb5_padata_add(context, out_md, patypes[n].type, NULL, 0);
     }
@@ -2307,7 +2302,7 @@ pa_step(krb5_context context,
 
     _krb5_debug(context, 5, "Stepping pa-mech: %s", ctx->pa_mech->patype->name);
 
-    ret = ctx->pa_mech->patype->step(context, ctx, (void *)&ctx->pa_mech->pactx[0], pa, a, rep, NULL, in_md, out_md);
+    ret = ctx->pa_mech->patype->step(context, ctx, (void *)&ctx->pa_mech->pactx[0], pa, a, rep, in_md, out_md);
     _krb5_debug(context, 10, "PA type %s returned %d", ctx->pa_mech->patype->name, ret);
     if (ret == 0) {
 	struct pa_auth_mech *next_pa = ctx->pa_mech->next;

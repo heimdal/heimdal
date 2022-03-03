@@ -3412,8 +3412,11 @@ init_creds_step(krb5_context context,
     if(len != ctx->req_buffer.length)
 	krb5_abortx(context, "internal error in ASN.1 encoder");
 
-    out->data = ctx->req_buffer.data;
-    out->length = ctx->req_buffer.length;
+    ret = krb5_data_copy(out,
+			 ctx->req_buffer.data,
+			 ctx->req_buffer.length);
+    if (ret)
+	goto out;
 
     *flags = KRB5_INIT_CREDS_STEP_FLAG_CONTINUE;
 
@@ -3435,8 +3438,8 @@ init_creds_step(krb5_context context,
  *
  * @param context a Kerberos 5 context.
  * @param ctx ctx krb5_init_creds_context context.
- * @param in input data from KDC, first round it should be reset by krb5_data_zer().
- * @param out reply to KDC.
+ * @param in input data from KDC, first round it should be reset by krb5_data_zero().
+ * @param out reply to KDC. The caller needs to call krb5_data_free()
  * @param flags status of the round, if
  *        KRB5_INIT_CREDS_STEP_FLAG_CONTINUE is set, continue one more round.
  *
@@ -3702,6 +3705,7 @@ krb5_init_creds_get(krb5_context context, krb5_init_creds_context ctx)
 
 	ret = krb5_sendto_context (context, stctx, &out,
 				   ctx->cred.client->realm, &in);
+	krb5_data_free(&out);
     	if (ret)
 	    goto out;
 

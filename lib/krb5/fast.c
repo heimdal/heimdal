@@ -778,7 +778,7 @@ krb5_error_code
 _krb5_fast_anon_pkinit_step(krb5_context context,
 			    krb5_init_creds_context ctx,
 			    struct krb5_fast_state *state,
-			    krb5_data *in,
+			    const krb5_data *in,
 			    krb5_data *out,
 			    krb5_realm *out_realm,
 			    unsigned int *flags)

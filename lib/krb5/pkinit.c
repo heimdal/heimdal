@@ -1365,7 +1365,6 @@ pk_rd_pa_reply_dh(krb5_context context,
 		  const char *realm,
 		  krb5_pk_init_ctx ctx,
 		  krb5_enctype etype,
-		  const krb5_krbhst_info *hi,
 		  const DHNonce *c_n,
 		  const DHNonce *k_n,
                   unsigned nonce,
@@ -1407,7 +1406,7 @@ pk_rd_pa_reply_dh(krb5_context context,
 
     if (host) {
 	/* make sure that it is the kdc's certificate */
-	ret = pk_verify_host(context, realm, hi, ctx, host);
+	ret = pk_verify_host(context, realm, NULL, ctx, host);
 	if (ret)
 	    goto out;
 
@@ -1657,7 +1656,7 @@ _krb5_pk_rd_pa_reply(krb5_context context,
 
 	switch (rep.element) {
 	case choice_PA_PK_AS_REP_dhInfo:
-	    ret = pk_rd_pa_reply_dh(context, &data, &oid, realm, ctx, etype, NULL,
+	    ret = pk_rd_pa_reply_dh(context, &data, &oid, realm, ctx, etype,
 				    ctx->clientDHNonce,
 				    rep.u.dhInfo.serverDHNonce,
 				    nonce, pa, key);

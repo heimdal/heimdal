@@ -2417,7 +2417,6 @@ process_pa_data_to_key(krb5_context context,
 		       krb5_creds *creds,
 		       AS_REQ *a,
 		       AS_REP *rep,
-		       const krb5_krbhst_info *hi,
 		       krb5_keyblock **key)
 {
     struct pa_info_data paid, *ppaid = NULL;
@@ -2444,7 +2443,7 @@ process_pa_data_to_key(krb5_context context,
 	}
     }
 
-    ret = pa_step(context, ctx, a, rep, hi, rep->padata, NULL);
+    ret = pa_step(context, ctx, a, rep, NULL, rep->padata, NULL);
     if (ret == HEIM_ERR_PA_CONTINUE_NEEDED) {
 	_krb5_debug(context, 0, "In final stretch and pa require more stepping ?");
 	return ret;
@@ -3054,7 +3053,7 @@ init_creds_step(krb5_context context,
 
 	    ret = process_pa_data_to_key(context, ctx, &ctx->cred,
 					 &ctx->as_req, &rep.kdc_rep,
-					 NULL, &ctx->fast_state.reply_key);
+					 &ctx->fast_state.reply_key);
 	    if (ret) {
 		free_AS_REP(&rep.kdc_rep);
 		goto out;

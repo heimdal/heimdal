@@ -2966,7 +2966,7 @@ init_creds_step(krb5_context context,
 		krb5_init_creds_context ctx,
 		krb5_data *in,
 		krb5_data *out,
-		const void *_unused,
+		krb5_realm *out_realm,
 		unsigned int *flags)
 {
     struct timeval start_time, end_time;
@@ -2979,6 +2979,7 @@ init_creds_step(krb5_context context,
     gettimeofday(&start_time, NULL);
 
     krb5_data_zero(out);
+    *out_realm = NULL;
     krb5_data_zero(&checksum_data);
 
     if (ctx->as_req.req_body.cname == NULL) {
@@ -3418,6 +3419,13 @@ init_creds_step(krb5_context context,
     if (ret)
 	goto out;
 
+    *out_realm = strdup(ctx->cred.client->realm);
+    if (*out_realm == NULL) {
+	krb5_data_free(out);
+	ret = ENOMEM;
+	goto out;
+    }
+
     *flags = KRB5_INIT_CREDS_STEP_FLAG_CONTINUE;
 
     gettimeofday(&end_time, NULL);
@@ -3440,6 +3448,7 @@ init_creds_step(krb5_context context,
  * @param ctx ctx krb5_init_creds_context context.
  * @param in input data from KDC, first round it should be reset by krb5_data_zero().
  * @param out reply to KDC. The caller needs to call krb5_data_free()
+ * @param out_realm the destination realm for 'out', free with krb5_xfree()
  * @param flags status of the round, if
  *        KRB5_INIT_CREDS_STEP_FLAG_CONTINUE is set, continue one more round.
  *
@@ -3454,18 +3463,20 @@ krb5_init_creds_step(krb5_context context,
 		     krb5_init_creds_context ctx,
 		     krb5_data *in,
 		     krb5_data *out,
-		     const void *_unused,
+		     krb5_realm *out_realm,
 		     unsigned int *flags)
 {
     krb5_error_code ret;
     krb5_data empty;
 
     krb5_data_zero(&empty);
+    krb5_data_zero(out);
+    *out_realm = NULL;
 
     if ((ctx->fast_state.flags & KRB5_FAST_ANON_PKINIT_ARMOR) &&
 	ctx->fast_state.armor_ccache == NULL) {
 	ret = _krb5_fast_anon_pkinit_step(context, ctx, &ctx->fast_state,
-					  in, out, NULL, flags);
+					  in, out, out_realm, flags);
         if (ret && (ctx->fast_state.flags & KRB5_FAST_OPTIMISTIC)) {
             _krb5_debug(context, 5, "Preauth failed with optimistic "
                         "FAST, trying w/o FAST");
@@ -3479,7 +3490,7 @@ krb5_init_creds_step(krb5_context context,
 	in = &empty;
     }
 
-    return init_creds_step(context, ctx, in, out, NULL, flags);
+    return init_creds_step(context, ctx, in, out, out_realm, flags);
 }
 
 /**
@@ -3691,9 +3702,10 @@ krb5_init_creds_get(krb5_context context, krb5_init_creds_context ctx)
 
     while (1) {
 	struct timeval nstart, nend;
+	krb5_realm realm = NULL;
 
 	flags = 0;
-	ret = krb5_init_creds_step(context, ctx, &in, &out, NULL, &flags);
+	ret = krb5_init_creds_step(context, ctx, &in, &out, &realm, &flags);
 	krb5_data_free(&in);
 	if (ret)
 	    goto out;
@@ -3703,9 +3715,9 @@ krb5_init_creds_get(krb5_context context, krb5_init_creds_context ctx)
 
 	gettimeofday(&nstart, NULL);
 
-	ret = krb5_sendto_context (context, stctx, &out,
-				   ctx->cred.client->realm, &in);
+	ret = krb5_sendto_context (context, stctx, &out, realm, &in);
 	krb5_data_free(&out);
+	free(realm);
     	if (ret)
 	    goto out;
 

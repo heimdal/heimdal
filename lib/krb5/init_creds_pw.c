@@ -1243,7 +1243,6 @@ pkinit_step(krb5_context context, krb5_init_creds_context ctx, void *pa_ctx, PA_
 				   a->req_body.realm,
 				   ctx->pk_init_ctx,
 				   rep->enc_part.etype,
-				   NULL,
 				   ctx->pk_nonce,
 				   &ctx->req_buffer,
 				   pa,

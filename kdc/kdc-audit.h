@@ -62,7 +62,10 @@
 #define KDC_REQUEST_KV_AUTH_EVENT		"#auth_event"		/* heim_number_t */
 #define KDC_REQUEST_KV_PA_NAME			"pa"			/* heim_string_t */
 #define KDC_REQUEST_KV_PA_ETYPE			"pa-etype"		/* heim_number_t */
+#define KDC_REQUEST_KV_PA_SUCCEEDED_KVNO	"pa-succeeded-kvno"	/* heim_number_t */
+#define KDC_REQUEST_KV_PA_FAILED_KVNO		"pa-failed-kvno"	/* heim_number_t */
 #define KDC_REQUEST_KV_GSS_INITIATOR		"gss_initiator"		/* heim_string_t */
 #define KDC_REQUEST_KV_PKINIT_CLIENT_CERT	"pkinit_client_cert"	/* heim_string_t */
+#define KDC_REQUEST_KV_PA_HISTORIC_KVNO		"pa-historic-kvno"	/* heim_number_t */
 
 #endif /* HEIMDAL_KDC_KDC_AUDIT_H */

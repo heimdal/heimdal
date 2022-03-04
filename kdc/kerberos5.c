@@ -828,6 +828,9 @@ pa_enc_chal_validate(astgs_request_t r, const PA_DATA *pa)
 		       estr, r->cname);
 	free(estr);
 	free_EncryptedData(&enc_data);
+	kdc_audit_setkv_number((kdc_request_t)r,
+			       KDC_REQUEST_KV_PA_FAILED_KVNO,
+			       kvno);
 	return ret;
     }
     if (ret == KRB5KRB_AP_ERR_SKEW) {
@@ -858,6 +861,10 @@ pa_enc_chal_validate(astgs_request_t r, const PA_DATA *pa)
 	 * via pa_enc_chal_decrypt_kvno()
 	 */
 
+	kdc_audit_setkv_number((kdc_request_t)r,
+			       KDC_REQUEST_KV_PA_FAILED_KVNO,
+			       kvno);
+
 	/*
 	 * Check if old and older keys are
 	 * able to decrypt.
@@ -879,6 +886,9 @@ pa_enc_chal_validate(astgs_request_t r, const PA_DATA *pa)
 					    NULL, /* KDCchallengekey */
 					    NULL); /* used_key */
 	    if (hret == 0) {
+		kdc_audit_setkv_number((kdc_request_t)r,
+				       KDC_REQUEST_KV_PA_HISTORIC_KVNO,
+				       hkvno);
 		break;
 	    }
 	    if (hret == KRB5KDC_ERR_ETYPE_NOSUPP) {
@@ -943,6 +953,9 @@ pa_enc_chal_validate(astgs_request_t r, const PA_DATA *pa)
 		   kstr ? kstr : "unknown enctype");
 	kdc_audit_setkv_number((kdc_request_t)r, KDC_REQUEST_KV_AUTH_EVENT,
 			       KDC_AUTH_EVENT_VALIDATED_LONG_TERM_KEY);
+	kdc_audit_setkv_number((kdc_request_t)r,
+			       KDC_REQUEST_KV_PA_SUCCEEDED_KVNO,
+			       kvno);
 	return 0;
     }
 
@@ -1070,6 +1083,9 @@ pa_enc_ts_validate(astgs_request_t r, const PA_DATA *pa)
 		       estr, r->cname);
 	free(estr);
 	free_EncryptedData(&enc_data);
+	kdc_audit_setkv_number((kdc_request_t)r,
+			       KDC_REQUEST_KV_PA_FAILED_KVNO,
+			       kvno);
 	goto out;
     }
     if (ret == KRB5KDC_ERR_PREAUTH_FAILED) {
@@ -1077,6 +1093,10 @@ pa_enc_ts_validate(astgs_request_t r, const PA_DATA *pa)
 	const char *msg = krb5_get_error_message(r->context, ret);
 	krb5_error_code hret = ret;
 	int hi;
+
+	kdc_audit_setkv_number((kdc_request_t)r,
+			       KDC_REQUEST_KV_PA_FAILED_KVNO,
+			       kvno);
 
 	/*
 	 * Check if old and older keys are
@@ -1096,6 +1116,9 @@ pa_enc_ts_validate(astgs_request_t r, const PA_DATA *pa)
 					  NULL); /* pa_key */
 	    if (hret == 0) {
 		krb5_data_free(&ts_data);
+		kdc_audit_setkv_number((kdc_request_t)r,
+				       KDC_REQUEST_KV_PA_HISTORIC_KVNO,
+				       hkvno);
 		break;
 	    }
 	    if (hret == KRB5KDC_ERR_ETYPE_NOSUPP) {
@@ -1180,6 +1203,9 @@ pa_enc_ts_validate(astgs_request_t r, const PA_DATA *pa)
 			   pa_key->key.keytype);
     kdc_audit_setkv_number((kdc_request_t)r, KDC_REQUEST_KV_AUTH_EVENT,
 			   KDC_AUTH_EVENT_VALIDATED_LONG_TERM_KEY);
+    kdc_audit_setkv_number((kdc_request_t)r,
+			   KDC_REQUEST_KV_PA_SUCCEEDED_KVNO,
+			   kvno);
 
     ret = 0;
 

@@ -863,6 +863,9 @@ pa_enc_chal_validate(astgs_request_t r, const PA_DATA *pa)
     free_EncryptedData(&enc_data);
     if (ret == 0) {
 	krb5_crypto challengecrypto;
+	char *estr = NULL;
+	char *astr = NULL;
+	char *kstr = NULL;
 
 	ret = krb5_crypto_init(r->context, &KDCchallengekey, 0, &challengecrypto);
 	krb5_free_keyblock_contents(r->context, &KDCchallengekey);
@@ -889,6 +892,18 @@ pa_enc_chal_validate(astgs_request_t r, const PA_DATA *pa)
 	if (ret)
 	    return ret;
 
+	if (krb5_enctype_to_string(r->context, (int)aenctype, &astr))
+	    astr = NULL;
+	if (krb5_enctype_to_string(r->context, enc_data.etype, &estr))
+	    estr = NULL;
+	if (krb5_enctype_to_string(r->context, k->key.keytype, &kstr))
+	    kstr = NULL;
+	_kdc_r_log(r, 4, "ENC-CHAL Pre-authentication succeeded -- %s "
+		   "using armor=%s enc=%s key=%s",
+		   r->cname,
+		   astr ? astr : "unknown enctype",
+		   estr ? estr : "unknown enctype",
+		   kstr ? kstr : "unknown enctype");
 	kdc_audit_setkv_number((kdc_request_t)r, KDC_REQUEST_KV_AUTH_EVENT,
 			       KDC_AUTH_EVENT_VALIDATED_LONG_TERM_KEY);
 	return 0;

@@ -826,7 +826,7 @@ _krb5_fast_anon_pkinit_step(krb5_context context,
 
     anon_pk_ctx = state->anon_pkinit_ctx;
 
-    ret = krb5_init_creds_step(context, anon_pk_ctx, in, out, hostinfo, flags);
+    ret = _krb5_init_creds_step(context, anon_pk_ctx, in, out, hostinfo, flags);
     if (ret ||
 	(*flags & KRB5_INIT_CREDS_STEP_FLAG_CONTINUE))
 	goto out;

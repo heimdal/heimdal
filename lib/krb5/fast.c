@@ -413,8 +413,14 @@ _krb5_fast_create_armor(krb5_context context,
     }
 
     if (state->type == choice_PA_FX_FAST_REQUEST_armored_data) {
-	if (state->armor_crypto)
+	if (state->armor_crypto) {
 	    krb5_crypto_destroy(context, state->armor_crypto);
+	    state->armor_crypto = NULL;
+	}
+	if (state->strengthen_key) {
+	    krb5_free_keyblock(context, state->strengthen_key);
+	    state->strengthen_key = NULL;
+	}
 	krb5_free_keyblock_contents(context, &state->armor_key);
 
 	/*

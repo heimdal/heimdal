@@ -181,6 +181,7 @@ fetch_entry_or_alias(krb5_context context,
         ret = decode_HDB_EntryOrAlias(value.data, value.length, &eoa, NULL);
     if (ret == 0 && eoa.element == choice_HDB_EntryOrAlias_entry) {
         *entry = eoa.u.entry;
+        entry->aliased = 0;
     } else if (ret == 0 && eoa.element == choice_HDB_EntryOrAlias_alias) {
         krb5_data_free(&key);
 	ret = hdb_principal2key(context, eoa.u.alias.principal, &key);
@@ -192,6 +193,7 @@ fetch_entry_or_alias(krb5_context context,
             /* No alias chaining */
             ret = hdb_value2entry(context, &value, entry);
 	krb5_free_principal(context, eoa.u.alias.principal);
+        entry->aliased = 1;
     } else if (ret == 0)
         ret = ENOTSUP;
     if (ret == 0 && enterprise_principal) {
@@ -203,6 +205,7 @@ fetch_entry_or_alias(krb5_context context,
 	entry->flags.force_canonicalize = 1;
     }
 
+#if 0
     /* HDB_F_GET_ANY indicates request originated from KDC (not kadmin) */
     if (ret == 0 && eoa.element == choice_HDB_EntryOrAlias_alias &&
         (flags & (HDB_F_CANON|HDB_F_GET_ANY)) == 0) {
@@ -211,6 +214,7 @@ fetch_entry_or_alias(krb5_context context,
         free_HDB_entry(entry);
         ret = HDB_ERR_NOENTRY;
     }
+#endif
 
     krb5_free_principal(context, enterprise_principal);
     krb5_data_free(&value);
@@ -219,11 +223,58 @@ fetch_entry_or_alias(krb5_context context,
     return ret;
 }
 
+/*
+ * We have only one type of aliases in our HDB entries, but we really need two:
+ * hard and soft.
+ *
+ * Hard aliases should be treated as if they were distinct principals with the
+ * same keys.
+ *
+ * Soft aliases should be treated as configuration to issue referrals, and they
+ * can only result in referrals to other realms.
+ *
+ * Rather than add a type of aliases, we'll use a convention where the form of
+ * the target of the alias indicates whether the alias is hard or soft.
+ *
+ * TODO We could also use an attribute of the aliased entry.
+ */
+static int
+is_soft_alias_p(krb5_context context,
+                krb5_const_principal principal,
+                unsigned int flags,
+                hdb_entry *h)
+{
+    /* Target is a WELLKNOWN/REFERRALS/TARGET/... -> soft alias */
+    if (krb5_principal_get_num_comp(context, h->principal) >= 3 &&
+        strcmp(krb5_principal_get_comp_string(context, h->principal, 0),
+               KRB5_WELLKNOWN_NAME) == 0 &&
+        strcmp(krb5_principal_get_comp_string(context, h->principal, 1),
+               "REFERRALS") == 0 &&
+        strcmp(krb5_principal_get_comp_string(context, h->principal, 2),
+               "TARGET") == 0)
+        return 1;
+
+    /*
+     * Pre-8.0 we had only soft aliases for a while, and one site used aliases
+     * of referrals-targetNN@TARGET-REALM.
+     */
+    if (krb5_principal_get_num_comp(context, h->principal) == 1 &&
+        strncmp("referrals-target",
+                krb5_principal_get_comp_string(context, h->principal, 0),
+                sizeof("referrals-target") - 1) == 0)
+        return 1;
+
+    /* All other cases are hard aliases */
+    return 0;
+}
+
 krb5_error_code
 _hdb_fetch_kvno(krb5_context context, HDB *db, krb5_const_principal principal,
 		unsigned flags, krb5_kvno kvno, hdb_entry *entry)
 {
     krb5_error_code ret;
+    int soft_aliased = 0;
+    int same_realm;
 
     ret = fetch_entry_or_alias(context, db, principal, flags, entry);
     if (ret)
@@ -278,7 +329,54 @@ _hdb_fetch_kvno(krb5_context context, HDB *db, krb5_const_principal principal,
 	}
     }
 
-    return 0;
+    if (!entry->aliased)
+        return 0;
+
+    soft_aliased = is_soft_alias_p(context, principal, flags, entry);
+
+    /* Never return HDB_ERR_WRONG_REALM to kadm5 or other non-KDC callers */
+    if ((flags & HDB_F_ADMIN_DATA))
+        return 0;
+
+    same_realm = krb5_realm_compare(context, principal, entry->principal);
+
+    if (entry->aliased && !soft_aliased) {
+        /*
+         * This is a hard alias.  We'll make the entry's name be the same as
+         * the alias.
+         *
+         * Except, we allow for disabling this for same-realm aliases, mainly
+         * for our tests.
+         */
+        if (same_realm &&
+            krb5_config_get_bool_default(context, NULL, FALSE, "hdb",
+                                         "same_realm_aliases_are_soft", NULL))
+            return 0;
+
+        /* EPNs are always soft */
+        if (principal->name.name_type != KRB5_NT_ENTERPRISE_PRINCIPAL) {
+            krb5_free_principal(context, entry->principal);
+            ret = krb5_copy_principal(context, principal, &entry->principal);
+            if (ret) {
+                hdb_free_entry(context, db, entry);
+                return ret;
+            }
+        }
+        return 0;
+    }
+
+    /* Same realm -> not a referral, therefore this is a hard alias */
+    if (same_realm) {
+        if (soft_aliased) {
+            /* Soft alias to the same realm?!  No. */
+            hdb_free_entry(context, db, entry);
+            return HDB_ERR_NOENTRY;
+        }
+        return 0;
+    }
+
+    /* Not same realm && not hard alias */
+    return HDB_ERR_WRONG_REALM;
 }
 
 static krb5_error_code
@@ -1561,7 +1659,9 @@ fetch_it(krb5_context context,
      * If unencrypted keys were requested, derive them.  There may not be any
      * key derivation to do, but that's decided in derive_keys().
      */
-    if (ret == 0) {
+    if (ret == 0 || ret == HDB_ERR_WRONG_REALM) {
+        krb5_error_code save_ret = ret;
+
         /* Fix the principal name if namespaced */
         ret = fix_princ_name(context, princ, nsprinc, ent);
 
@@ -1572,6 +1672,8 @@ fetch_it(krb5_context context,
         /* Pick the best kvno for this principal at the given time */
         if (ret == 0)
             ret = pick_kvno(context, db, flags, t, kvno, ent);
+        if (ret == 0)
+            ret = save_ret;
     }
 
 out:
@@ -1603,7 +1705,7 @@ out:
  * @param kvno Key version number (use zero to mean "current")
  * @param h Output HDB entry
  *
- * @return Zero on success, an error code otherwise.
+ * @return Zero or HDB_ERR_WRONG_REALM on success, an error code otherwise.
  */
 krb5_error_code
 hdb_fetch_kvno(krb5_context context,
@@ -1615,7 +1717,7 @@ hdb_fetch_kvno(krb5_context context,
                krb5uint32 kvno,
                hdb_entry *h)
 {
-    krb5_error_code ret = HDB_ERR_NOENTRY;
+    krb5_error_code ret;
 
     flags |= kvno ? HDB_F_KVNO_SPECIFIED : 0; /* XXX is this needed */
     if (t == 0)
@@ -1623,16 +1725,6 @@ hdb_fetch_kvno(krb5_context context,
     ret = fetch_it(context, db, principal, flags, t, etype, kvno, h);
     if (ret == HDB_ERR_NOENTRY)
 	krb5_set_error_message(context, ret, "no such entry found in hdb");
-
-    /*
-     * This check is to support aliases in HDB; the force_canonicalize
-     * check is to allow HDB backends to support realm name canon
-     * independently of principal aliases (used by Samba).
-     */
-    if (ret == 0 && !(flags & HDB_F_ADMIN_DATA) &&
-        !h->flags.force_canonicalize &&
-        !krb5_realm_compare(context, principal, h->principal))
-            ret = HDB_ERR_WRONG_REALM;
     return ret;
 }
 

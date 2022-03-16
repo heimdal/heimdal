@@ -119,7 +119,6 @@ heimdal_TEXINFOS = \
 	heimdal.texi \
 	install.texi \
 	intro.texi \
-	kerberos4.texi \
 	migration.texi \
 	misc.texi \
 	programming.texi \

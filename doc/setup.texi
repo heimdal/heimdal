@@ -17,6 +17,8 @@ doing so.  It will make life easier for you and everyone else.
 * Creating the database::
 * Modifying the database::
 * Using namespaces and synthetic principals to keep the database small::
+* Using hard aliases for realm migration::
+* Using soft aliases for configuring referrals::
 * Checking the setup::
 * keytabs::
 * Remote administration::
@@ -344,6 +346,60 @@ details.
 Using these features one can end up with a database that contains just
 @code{krbtgt} principals, principals for locked users, and principals
 that are neither @code{krbtgt}, user, nor host-based services.
+
+@node Using hard aliases for realm migration, Using soft aliases for configuring referrals, Using namespaces and synthetic principals to keep the database small, Setting up a realm
+@section Using hard aliases for realm migration
+
+The Heimdal @command{kadmin} command can be used to add aliases to
+principal entries in the Heimdal database.  Aliases of principals of
+the form @samp{WELLKNOWN/REFERRALS/TARGET} or
+@samp{WELLKNOWN/REFERRALS/TARGET/anything} are "soft" aliases.
+Aliases of principals of other forms are "hard" aliases.
+
+When a client makes a request for a principal's alias, and it does not
+use the KDC request "canonicalize" option flag, the Heimdal KDC will
+treat the alias as a distinct principal that happens to share
+attributes and long-term symmetric keys and salts with the principal
+it is an alias of.
+
+This is useful for, for example, ensuring that host-based principals
+can be referred to by any aliases.
+
+This can also be very useful for renaming realms: add new
+@code{krbtgt} principals for the new realms, then add aliases to
+existing principals in their new realms. For example, a user with a
+principal @code{joe@@A} can be given an alias of
+@code{joes@@B}, and
+then they can @code{kinit joes@@B} and get Kerberos tickets for
+@code{joes@@B}. Similarly, a service principal such as
+@code{HTTP/foo.bar.baz.example@@BAZ.EXAMPLE} can be given an alias such as
+@code{HTTP/foo.bar.baz.example@@BAR.BAZ.EXAMPLE}, or even
+@code{HTTP/foobar.new-domain.example@@NEW-DOMAIN.EXAMPLE}, and
+requesting tickets with those aliases as the service names will work.
+
+@node Using soft aliases for configuring referrals, Checking the setup, Using hard aliases for realm migration, Setting up a realm
+@section Using soft aliases for configuring referrals
+
+Soft aliases, which are aliases of principals of the form
+@code{WELLKNOWN/REFERRALS/TARGET} or
+@code{WELLKNOWN/REFERRALS/TARGET/anything}, are used to generate
+referrals to other realms. Specifically, the realm of a soft alias'
+canonical name is the realm to issue referrals to.
+
+Soft aliases can be used to configure individual referrals, but also
+of entire namespaces of hostnames. To configure the issuance of
+referrals for entire namespaces, make a soft alias of the form
+@code{WELLKNOWN/HOSTBASED-NAMESPACE/service/namespace-fqdn@@REALM} to
+have the TGS for that @samp{REALM} issue referrals for all principals
+of the form @code{service/hostname@@REALM} where the hostname component
+is a sub-domain of the namespace component of the alias name.
+
+For example, a soft alias name
+@code{WELLKNOWN/HOSTBASED-NAMESPACE/host/cloud.bar.example@@BAR.EXAMPLE}
+to a realm @samp{B} will cause the KDC to issue referrals to @samp{B}
+for any principals such as
+@samp{host/foo.cloud.bar.example@@BAR.EXAMPLE}, and
+@samp{host/baz.cloud.bar.example@@BAR.EXAMPLE}, and so on.
 
 @node Checking the setup, keytabs, Using namespaces and synthetic principals to keep the database small, Setting up a realm
 @section Checking the setup

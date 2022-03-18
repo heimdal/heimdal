@@ -39,17 +39,27 @@ struct foreach_data {
     const char *exp;
     char *exp2;
     char **princs;
-    int count;
+    size_t nalloced;
+    size_t count;
 };
 
 static krb5_error_code
 add_princ(krb5_context context, struct foreach_data *d, char *princ)
 {
-    char **tmp;
-    tmp = realloc(d->princs, (d->count + 1) * sizeof(*tmp));
-    if (tmp == NULL)
-	return krb5_enomem(context);
-    d->princs = tmp;
+
+    if (d->count == INT_MAX)
+        return ERANGE;
+    if (d->nalloced == d->count) {
+        size_t n = d->nalloced + (d->nalloced >> 1) + 128; /* No O(N^2) pls */
+        char **tmp;
+
+        if (SIZE_MAX / sizeof(*tmp) <= n)
+            return ERANGE;
+        if ((tmp = realloc(d->princs, n * sizeof(*tmp))) == NULL)
+            return krb5_enomem(context);
+        d->princs = tmp;
+        d->nalloced = n;
+    }
     d->princs[d->count++] = princ;
     return 0;
 }
@@ -109,16 +119,20 @@ kadm5_s_get_principals(void *server_handle,
 	}
     }
     d.princs = NULL;
+    d.nalloced = 0;
     d.count = 0;
     ret = hdb_foreach(context->context, context->db, HDB_F_ADMIN_DATA, foreach, &d);
 
     if (ret == 0)
 	ret = add_princ(context->context, &d, NULL);
-    if (ret == 0){
+    if (d.count >= INT_MAX)
+        *count = INT_MAX;
+    else
+        *count = d.count - 1;
+    if (ret == 0)
 	*princs = d.princs;
-	*count = d.count - 1;
-    } else
-	kadm5_free_name_list(context, d.princs, &d.count);
+    else
+	kadm5_free_name_list(context, d.princs, count);
     free(d.exp2);
  out:
     if (!context->keep_open)

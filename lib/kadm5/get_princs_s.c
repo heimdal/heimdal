@@ -94,7 +94,7 @@ kadm5_s_get_principals(void *server_handle,
 {
     struct foreach_data d;
     kadm5_server_context *context = server_handle;
-    kadm5_ret_t ret;
+    kadm5_ret_t ret = 0;
 
     if (!context->keep_open) {
 	ret = context->db->hdb_open(context->context, context->db, O_RDONLY, 0);
@@ -104,24 +104,25 @@ kadm5_s_get_principals(void *server_handle,
 	}
     }
     d.exp = expression;
-    {
+    d.exp2 = NULL;
+    if (expression) {
 	krb5_realm r;
 	int aret;
 
 	ret = krb5_get_default_realm(context->context, &r);
-        if (ret)
-            goto out;
-	aret = asprintf(&d.exp2, "%s@%s", expression, r);
-	free(r);
-	if (aret == -1 || d.exp2 == NULL) {
-	    ret = krb5_enomem(context->context);
-            goto out;
-	}
+        if (ret == 0) {
+            aret = asprintf(&d.exp2, "%s@%s", expression, r);
+            free(r);
+            if (aret == -1 || d.exp2 == NULL)
+                ret = krb5_enomem(context->context);
+        }
     }
     d.princs = NULL;
     d.nalloced = 0;
     d.count = 0;
-    ret = hdb_foreach(context->context, context->db, HDB_F_ADMIN_DATA, foreach, &d);
+    if (ret == 0)
+        ret = hdb_foreach(context->context, context->db, HDB_F_ADMIN_DATA,
+                          foreach, &d);
 
     if (ret == 0)
 	ret = add_princ(context->context, &d, NULL);
@@ -134,7 +135,72 @@ kadm5_s_get_principals(void *server_handle,
     else
 	kadm5_free_name_list(context, d.princs, count);
     free(d.exp2);
- out:
+    if (!context->keep_open)
+	context->db->hdb_close(context->context, context->db);
+    return _kadm5_error_code(ret);
+}
+
+struct foreach_online_data {
+    const char *exp;
+    char *exp2;
+    int (*cb)(void *, const char *);
+    void *cbdata;
+};
+
+static krb5_error_code
+foreach_online(krb5_context context, HDB *db, hdb_entry *ent, void *data)
+{
+    struct foreach_online_data *d = data;
+    krb5_error_code ret;
+    char *princ = NULL;
+
+    ret = krb5_unparse_name(context, ent->principal, &princ);
+    if (ret == 0) {
+        if (!d->exp ||
+            fnmatch(d->exp, princ, 0) == 0 || fnmatch(d->exp2, princ, 0) == 0)
+            ret = d->cb(d->cbdata, princ);
+        free(princ);
+    }
+    return ret;
+}
+
+kadm5_ret_t
+kadm5_s_iter_principals(void *server_handle,
+			const char *expression,
+			int (*cb)(void *, const char *),
+			void *cbdata)
+{
+    struct foreach_online_data d;
+    kadm5_server_context *context = server_handle;
+    kadm5_ret_t ret = 0;
+
+    if (!context->keep_open) {
+	ret = context->db->hdb_open(context->context, context->db, O_RDONLY, 0);
+	if (ret) {
+	    krb5_warn(context->context, ret, "opening database");
+	    return ret;
+	}
+    }
+    d.exp = expression;
+    d.exp2 = NULL;
+    d.cb = cb;
+    d.cbdata = cbdata;
+    if (expression) {
+	krb5_realm r;
+	int aret;
+
+	ret = krb5_get_default_realm(context->context, &r);
+        if (ret == 0) {
+            aret = asprintf(&d.exp2, "%s@%s", expression, r);
+            free(r);
+            if (aret == -1 || d.exp2 == NULL)
+                ret = krb5_enomem(context->context);
+        }
+    }
+    if (ret == 0)
+        ret = hdb_foreach(context->context, context->db, HDB_F_ADMIN_DATA,
+                          foreach_online, &d);
+    free(d.exp2);
     if (!context->keep_open)
 	context->db->hdb_close(context->context, context->db);
     return _kadm5_error_code(ret);

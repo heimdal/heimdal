@@ -221,10 +221,6 @@ ${kadmin} -p foo/admin@${R} add -p abc --use-defaults kaka@${R} &&
 	{ echo "kadmin succeeded $?"; cat messages.log ; exit 1; }
 
 #----------------------------------
-${kadmind} -d &
-kadmpid=$!
-sleep 1
-
 echo "kadmin get doesnotexists"
 env KRB5CCNAME=${cache} \
 ${kadmin} -p foo/admin@${R} get -s doesnotexists@${R} \
@@ -316,6 +312,103 @@ cat kadmin.tmp | ${EGREP} Keytypes: | cut -d: -f2 | tr ' ' '
 ' | sed 's/^.*[[]\(.*\)[]].*$/\1/' | grep '[0-9]' | sort -nu | tr -d '
 ' | ${EGREP} '^3$' > /dev/null || \
         { echo "kadmin pruneall failed $?"; cat messages.log ; exit 1; }
+
+env KRB5CCNAME=${cache} \
+    ${kadmin} -p foo/admin@${R} list --upto=3 '*' > kadmin.tmp
+[ `wc -l < kadmin.tmp` -eq 3 ] ||
+        { echo "kadmin list --upto 3 produced `wc -l < kadmin.tmp` results!"; exit 1; }
+
+#----------------------------------
+# We have 20 principals in the DB.  Test two chunks of 1 (since that's how we
+# started kadmind above.
+> messages.log
+echo "kadmin list all (chunk size 1)"
+# Check that list produces the same output locally and remote.
+env KRB5CCNAME=${cache} \
+    ${kadmin} -p foo/admin@${R} list '*' | sort > kadmin.tmp ||
+        { echo "failed to list principals"; cat messages.log ; exit 1; }
+${kadmin} -l list '*' | sort > kadmin.tmp2
+diff kadmin.tmp kadmin.tmp2 ||
+        { echo "failed to list all principals"; cat messages.log ; exit 1; }
+# kadmin dump does not use kadm5_iter_principals, so this is a good way to
+# double check the above results.  This time we drop the realm part because
+# kadmin doesn't show us the realm for principals in the default realm.
+${kadmin} -l list '*' | cut -d'@' -f1 | sort > kadmin.tmp
+${kadmin} -l dump | cut -d'@' -f1 | sort > kadmin.tmp2
+diff kadmin.tmp kadmin.tmp2 ||
+        { echo "failed to list all principals (dump)"; cat messages.log ; exit 1; }
+
+#----------------------------------
+# We have 20 principals in the DB.  Test two chunks of 10.
+sh ${leaks_kill} kadmind $kadmpid || exit 1
+${kadmind} --list-chunk-size=10 -d &
+kadmpid=$!
+sleep 1
+
+> messages.log
+echo "kadmin list all (chunk size 10)"
+# Check that list produces the same output locally and remote.
+env KRB5CCNAME=${cache} \
+    ${kadmin} -p foo/admin@${R} list '*' | sort > kadmin.tmp ||
+        { echo "failed to list principals"; cat messages.log ; exit 1; }
+${kadmin} -l list '*' | sort > kadmin.tmp2
+diff kadmin.tmp kadmin.tmp2 ||
+        { echo "failed to list all principals"; cat messages.log ; exit 1; }
+# kadmin dump does not use kadm5_iter_principals, so this is a good way to
+# double check the above results.  This time we drop the realm part because
+# kadmin doesn't show us the realm for principals in the default realm.
+${kadmin} -l list '*' | cut -d'@' -f1 | sort > kadmin.tmp
+${kadmin} -l dump | cut -d'@' -f1 | sort > kadmin.tmp2
+diff kadmin.tmp kadmin.tmp2 ||
+        { echo "failed to list all principals (dump)"; cat messages.log ; exit 1; }
+
+#----------------------------------
+# We have 20 principals in the DB.  Test one chunk of 50.
+wait $kadmipid
+${kadmind} --list-chunk-size=50 -d &
+kadmpid=$!
+sleep 1
+
+> messages.log
+echo "kadmin list all (chunk size 50)"
+# Check that list produces the same output locally and remote.
+env KRB5CCNAME=${cache} \
+    ${kadmin} -p foo/admin@${R} list '*' | sort > kadmin.tmp ||
+        { echo "failed to list principals"; cat messages.log ; exit 1; }
+${kadmin} -l list '*' | sort > kadmin.tmp2
+diff kadmin.tmp kadmin.tmp2 ||
+        { echo "failed to list all principals"; cat messages.log ; exit 1; }
+# kadmin dump does not use kadm5_iter_principals, so this is a good way to
+# double check the above results.  This time we drop the realm part because
+# kadmin doesn't show us the realm for principals in the default realm.
+${kadmin} -l list '*' | cut -d'@' -f1 | sort > kadmin.tmp
+${kadmin} -l dump | cut -d'@' -f1 | sort > kadmin.tmp2
+diff kadmin.tmp kadmin.tmp2 ||
+        { echo "failed to list all principals (dump)"; cat messages.log ; exit 1; }
+
+#----------------------------------
+# We have 20 principals in the DB.  Test 3 chunks of up to 7.
+wait $kadmipid
+${kadmind} --list-chunk-size=7 -d &
+kadmpid=$!
+sleep 1
+
+> messages.log
+echo "kadmin list all (chunk size 7)"
+# Check that list produces the same output locally and remote.
+env KRB5CCNAME=${cache} \
+    ${kadmin} -p foo/admin@${R} list '*' | sort > kadmin.tmp ||
+        { echo "failed to list principals"; cat messages.log ; exit 1; }
+${kadmin} -l list '*' | sort > kadmin.tmp2
+diff kadmin.tmp kadmin.tmp2 ||
+        { echo "failed to list all principals"; cat messages.log ; exit 1; }
+# kadmin dump does not use kadm5_iter_principals, so this is a good way to
+# double check the above results.  This time we drop the realm part because
+# kadmin doesn't show us the realm for principals in the default realm.
+${kadmin} -l list '*' | cut -d'@' -f1 | sort > kadmin.tmp
+${kadmin} -l dump | cut -d'@' -f1 | sort > kadmin.tmp2
+diff kadmin.tmp kadmin.tmp2 ||
+        { echo "failed to list all principals (dump)"; cat messages.log ; exit 1; }
 
 #----------------------------------
 

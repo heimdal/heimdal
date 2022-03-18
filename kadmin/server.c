@@ -38,9 +38,148 @@ static kadm5_ret_t check_aliases(kadm5_server_context *,
                                  kadm5_principal_ent_rec *,
                                  kadm5_principal_ent_rec *);
 
+/*
+ * All the iter_cb stuff is about online listing of principals via
+ * kadm5_iter_principals().  Search for "LIST" to see more commentary.
+ */
+struct iter_cb_data {
+    krb5_context context;
+    krb5_auth_context ac;
+    krb5_storage *rsp;
+    kadm5_ret_t ret;
+    size_t n;
+    size_t i;
+    int fd;
+    unsigned int initial:1;
+    unsigned int stop:1;
+};
+
+/*
+ * This function sends the current chunk of principal listing and checks if the
+ * client requested that the listing stop.
+ */
+static int
+iter_cb_send_now(struct iter_cb_data *d)
+{
+    struct timeval tv;
+    krb5_data out;
+
+    krb5_data_zero(&out);
+
+    if (!d->stop) {
+        fd_set fds;
+        int nfds;
+
+        /*
+         * The client can send us one message to interrupt the iteration.
+         *
+         * TODO: Maybe we should have the client send a message every N chunks
+         *       so we can clock the listing and have a chance to receive any
+         *       interrupt message from the client?
+         */
+        FD_ZERO(&fds);
+        FD_SET(d->fd, &fds);
+        tv.tv_sec = 0;
+        tv.tv_usec = 0;
+        nfds = select(d->fd + 1, &fds, NULL, NULL, &tv);
+        if (nfds == -1) {
+            d->ret = errno;
+        } else if (nfds > 0) {
+            /*
+             * And it did.  We'll throw this message away.  It should be a NOP
+             * call, which we'd throw away anyways.  If the client's stop
+             * message arrives after we're done anyways, well, it will be
+             * processed as a NOP and thrown away.
+             */
+            d->stop = 1;
+            d->ret = krb5_read_priv_message(d->context, d->ac, &d->fd, &out);
+            krb5_data_free(&out);
+            if (d->ret == HEIM_ERR_EOF)
+                exit(0);
+        }
+    }
+    d->i = 0;
+    d->ret = krb5_storage_to_data(d->rsp, &out);
+    if (d->ret == 0)
+        d->ret = krb5_write_priv_message(d->context, d->ac, &d->fd, &out);
+    krb5_data_free(&out);
+    krb5_storage_free(d->rsp);
+    if ((d->rsp = krb5_storage_emem()) == NULL)
+        return krb5_enomem(d->context);
+    return d->ret;
+}
+
+static int
+iter_cb(void *cbdata, const char *p)
+{
+    struct iter_cb_data *d = cbdata;
+    krb5_error_code ret = 0;
+    size_t n = d->n;
+
+    /* Convince the compiler that `-(int)d->n' is defined */
+    if (n == 0 || n > INT_MAX)
+        return ERANGE;
+    if (d->rsp == NULL && (d->rsp = krb5_storage_emem()) == NULL)
+        return krb5_enomem(d->context);
+    if (d->i == 0) {
+        /* Every chunk starts with a result code */
+        ret = krb5_store_int32(d->rsp, d->ret);
+        if (ret)
+            return ret;
+        if (d->ret)
+            return ret;
+    }
+    if (d->initial) {
+        /*
+         * We'll send up to `d->n' entries per-write.  We send a negative
+         * number to indicate we accepted the client's proposal that we speak
+         * the online LIST protocol.
+         *
+         * Note that if we're here then we've already placed a result code in
+         * this reply (see above).
+         */
+        d->initial = 0;
+        ret = krb5_store_int32(d->rsp, -(int)n);    /* Princs per-chunk */
+        if (ret == 0)
+            ret = iter_cb_send_now(d);
+        if (ret)
+            return ret;
+        /*
+         * Now that we've sent the acceptance reply, put a result code as the
+         * first thing in the next reply, which will have the first chunk of
+         * the listing.
+         */
+        ret = krb5_store_int32(d->rsp, d->ret);
+        if (ret)
+            return ret;
+        if (d->ret)
+            return ret;
+    }
+
+    if (p) {
+        ret = krb5_store_string(d->rsp, p);
+        d->i++;
+    } else {
+        /*
+         * We get called with `p == NULL' when the listing is done.  This
+         * forces us to iter_cb_send_now(d) below, but also forces us to have a
+         * properly formed reply (i.e., that we have a result code as the first
+         * item), even if the chunk is otherwise empty (`d->i == 0').
+         */
+        d->i = n;
+    }
+
+    if (ret == 0 && d->i == n)
+        ret = iter_cb_send_now(d); /* Chunk finished; send it */
+    if (d->stop)
+        return EINTR;
+    return ret;
+}
+
 static kadm5_ret_t
 kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
-		 krb5_data *in, krb5_data *out, int readonly)
+		 krb5_data *in, krb5_auth_context ac, int fd,
+                 krb5_data *out, int readonly)
 {
     kadm5_ret_t ret = 0;
     kadm5_ret_t ret_sp = 0;
@@ -612,32 +751,108 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
     case kadm_get_princs:{
 	op = "LIST";
 	ret = krb5_ret_int32(sp, &tmp);
-	if(ret)
+	if (ret) {
+            ret_sp = krb5_store_int32(rsp, KADM5_FAILURE);
 	    goto fail;
-	if(tmp){
+        }
+        /* See kadm5_c_iter_principals() */
+	if (tmp == 0x55555555) {
+            /* Want online iteration */
 	    ret = krb5_ret_string(sp, &expression);
-	    if(ret)
+	    if (ret) {
+                ret_sp = krb5_store_int32(rsp, KADM5_FAILURE);
+                goto fail;
+            }
+            if (expression[0] == '\0') {
+                free(expression);
+                expression = NULL;
+            }
+        } else if (tmp) {
+	    ret = krb5_ret_string(sp, &expression);
+	    if (ret) {
+                ret_sp = krb5_store_int32(rsp, KADM5_FAILURE);
 		goto fail;
+            }
 	}else
 	    expression = NULL;
 	krb5_warnx(contextp->context, "%s: %s %s", client, op,
 		   expression ? expression : "*");
 	ret = _kadm5_acl_check_permission(contextp, KADM5_PRIV_LIST, NULL);
 	if(ret){
+            ret_sp = krb5_store_int32(rsp, ret);
 	    free(expression);
 	    goto fail;
 	}
-	ret = kadm5_get_principals(kadm_handlep, expression, &princs, &n_princs);
-	free(expression);
-	ret_sp = krb5_store_int32(rsp, ret);
-	if (ret == 0 && ret_sp == 0) {
-	    int i;
+        if (fd > -1 && tmp == 0x55555555) {
+            struct iter_cb_data iter_cbdata;
+            int n;
 
-	    ret_sp = krb5_store_int32(rsp, n_princs);
-	    for (i = 0; ret_sp == 0 && i < n_princs; i++)
-		ret_sp = krb5_store_string(rsp, princs[i]);
-	    kadm5_free_name_list(kadm_handlep, princs, &n_princs);
-	}
+            /*
+             * The client proposes that we speak the online variation of LIST
+             * by sending a magic value in the int32 that is meant to be a
+             * boolean for "an expression follows".  The client must send an
+             * expression in this case because the server might be an old one,
+             * so even if the caller to kadm5_get/iter_principals() passed NULL
+             * for the expression, the client must send something ("*").
+             *
+             * The list of principals will be streamed in multiple replies.
+             *
+             * The first reply will have just a return code and a negative
+             * count of maximum number of names per-subsequent reply.  See
+             * `iter_cb()'.
+             *
+             * The second reply, third, .., nth replies will have a return code
+             * followed by 50 names, except the last reply must have fewer than
+             * 50 names -zero if need be- so the client can deterministically
+             * notice the end of the stream.
+             */
+
+            n = list_chunk_size;
+            if (n < 0)
+                n = krb5_config_get_int_default(contextp->context, NULL, -1,
+                                                "kadmin", "list_chunk_size", NULL);
+            if (n < 0)
+                n = 50;
+            if (n > 500)
+                n = 500;
+            if ((iter_cbdata.rsp = krb5_storage_emem()) == NULL) {
+                ret_sp = krb5_store_int32(rsp, KADM5_FAILURE);
+                ret = krb5_enomem(contextp->context);
+                goto fail;
+            }
+            iter_cbdata.context = contextp->context;
+            iter_cbdata.initial = 1;
+            iter_cbdata.stop = 0;
+            iter_cbdata.ret = 0;
+            iter_cbdata.ac = ac;
+            iter_cbdata.fd = fd;
+            iter_cbdata.n = n;
+            iter_cbdata.i = 0;
+
+            /*
+             * All sending of replies will happen in iter_cb, except for the
+             * final chunk with the final result code.
+             */
+            iter_cbdata.ret = kadm5_iter_principals(kadm_handlep, expression,
+                                                     iter_cb, &iter_cbdata);
+            /* Send terminating chunk */
+            iter_cb(&iter_cbdata, NULL);
+            /* Final result */
+            ret = krb5_store_int32(rsp, iter_cbdata.ret);
+            krb5_storage_free(iter_cbdata.rsp);
+        } else {
+            ret = kadm5_get_principals(kadm_handlep, expression, &princs, &n_princs);
+            ret_sp = krb5_store_int32(rsp, ret);
+            if (ret == 0 && ret_sp == 0) {
+                int i;
+
+                ret_sp = krb5_store_int32(rsp, n_princs);
+                for (i = 0; ret_sp == 0 && i < n_princs; i++)
+                    ret_sp = krb5_store_string(rsp, princs[i]);
+                kadm5_free_name_list(kadm_handlep, princs, &n_princs);
+            }
+        }
+        free(expression);
 	break;
     }
     default:
@@ -807,7 +1022,8 @@ v5_loop (krb5_context contextp,
 	if(ret)
 	    krb5_err(contextp, 1, ret, "krb5_read_priv_message");
 	doing_useful_work = 1;
-	ret = kadmind_dispatch(kadm_handlep, initial, &in, &out, readonly);
+        ret = kadmind_dispatch(kadm_handlep, initial, &in, ac, fd, &out,
+                               readonly);
 	if (ret)
 	    krb5_err(contextp, 1, ret, "kadmind_dispatch");
 	krb5_data_free(&in);

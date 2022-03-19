@@ -81,18 +81,39 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
 				  client, sizeof(client));
     if (ret == 0)
         ret = krb5_ret_int32(sp, &cmd);
-    if (ret)
+    if (ret) {
+        ret_sp = krb5_store_int32(rsp, KADM5_FAILURE);
         goto fail;
+    }
 
     switch(cmd){
+    case kadm_nop:{
+        /*
+         * In the future we could use this for versioning.
+         *
+         * We used to respond to NOPs with KADM5_FAILURE.  Now we respond with
+         * zero.  In the future we could send back a protocol version number
+         * and use NOPs for protocol version negotiation.
+         *
+         * In the meantime, this gets called only if a client wants to
+         * interrupt a long-running LIST operation.
+         */
+	op = "NOP";
+	ret_sp = krb5_store_int32(rsp, ret = 0);
+        break;
+    }
     case kadm_get:{
 	op = "GET";
 	ret = krb5_ret_principal(sp, &princ);
-	if(ret)
+	if (ret) {
+            ret_sp = krb5_store_int32(rsp, KADM5_UNK_PRINC);
 	    goto fail;
+        }
 	ret = krb5_ret_int32(sp, &mask);
-	if (ret)
+	if (ret) {
+            ret_sp = krb5_store_int32(rsp, KADM5_FAILURE);
 	    goto fail;
+        }
 
 	mask |= KADM5_PRINCIPAL;
 	krb5_unparse_name_fixed(contextp->context, princ, name, sizeof(name));
@@ -100,8 +121,10 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
 
         /* If the caller doesn't have KADM5_PRIV_GET, we're done. */
 	ret = _kadm5_acl_check_permission(contextp, KADM5_PRIV_GET, princ);
-        if (ret)
+        if (ret) {
+            ret_sp = krb5_store_int32(rsp, ret);
 	    goto fail;
+        }
 
         /* Then check to see if it is ok to return keys */
         if ((mask & KADM5_KEY_DATA) != 0) {
@@ -129,6 +152,7 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
                  * modes request other things too, so in all likelihood this
                  * heuristic will not hurt any kadmin get uses.
                  */
+                ret_sp = krb5_store_int32(rsp, ret);
                 goto fail;
             }
         }
@@ -147,7 +171,7 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
     case kadm_delete:{
 	op = "DELETE";
 	if (readonly) {
-            ret = KADM5_READ_ONLY;
+            ret_sp = krb5_store_int32(rsp, ret = KADM5_READ_ONLY);
             goto fail;
         }
 	ret = krb5_ret_principal(sp, &princ);
@@ -171,19 +195,23 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
     case kadm_create:{
 	op = "CREATE";
 	if (readonly) {
-            ret = KADM5_READ_ONLY;
+            ret_sp = krb5_store_int32(rsp, ret = KADM5_READ_ONLY);
             goto fail;
         }
 	ret = kadm5_ret_principal_ent(sp, &ent);
-	if(ret)
+	if(ret) {
+            ret_sp = krb5_store_int32(rsp, ret);
 	    goto fail;
+        }
 	ret = krb5_ret_int32(sp, &mask);
 	if(ret){
+            ret_sp = krb5_store_int32(rsp, KADM5_FAILURE);
 	    kadm5_free_principal_ent(kadm_handlep, &ent);
 	    goto fail;
 	}
 	ret = krb5_ret_string(sp, &password);
 	if(ret){
+            ret_sp = krb5_store_int32(rsp, KADM5_FAILURE);
 	    kadm5_free_principal_ent(kadm_handlep, &ent);
 	    goto fail;
 	}
@@ -193,6 +221,7 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
 	ret = _kadm5_acl_check_permission(contextp, KADM5_PRIV_ADD,
 					  ent.principal);
 	if(ret){
+            ret_sp = krb5_store_int32(rsp, ret);
 	    kadm5_free_principal_ent(kadm_handlep, &ent);
 	    goto fail;
 	}
@@ -203,6 +232,7 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
              */
             ret = check_aliases(contextp, &ent, NULL);
             if (ret) {
+                ret_sp = krb5_store_int32(rsp, KADM5_BAD_PRINCIPAL);
                 kadm5_free_principal_ent(kadm_handlep, &ent);
                 goto fail;
             }
@@ -216,14 +246,17 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
     case kadm_modify:{
 	op = "MODIFY";
 	if (readonly) {
-            ret = KADM5_READ_ONLY;
+            ret_sp = krb5_store_int32(rsp, ret = KADM5_READ_ONLY);
             goto fail;
         }
 	ret = kadm5_ret_principal_ent(sp, &ent);
-	if(ret)
+	if(ret) {
+            ret_sp = krb5_store_int32(rsp, KADM5_FAILURE);
 	    goto fail;
+        }
 	ret = krb5_ret_int32(sp, &mask);
 	if(ret){
+            ret_sp = krb5_store_int32(rsp, KADM5_FAILURE);
 	    kadm5_free_principal_ent(contextp, &ent);
 	    goto fail;
 	}
@@ -233,6 +266,7 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
 	ret = _kadm5_acl_check_permission(contextp, KADM5_PRIV_MODIFY,
 					  ent.principal);
 	if(ret){
+            ret_sp = krb5_store_int32(rsp, ret);
 	    kadm5_free_principal_ent(contextp, &ent);
 	    goto fail;
 	}
@@ -245,12 +279,14 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
              */
             ret = kadm5_get_principal(kadm_handlep, ent.principal, &ent_prev, mask);
             if (ret) {
+                ret_sp = krb5_store_int32(rsp, ret);
                 kadm5_free_principal_ent(contextp, &ent);
                 goto fail;
             }
             ret = check_aliases(contextp, &ent, &ent_prev);
             kadm5_free_principal_ent(contextp, &ent_prev);
             if (ret) {
+                ret_sp = krb5_store_int32(rsp, KADM5_BAD_PRINCIPAL);
                 kadm5_free_principal_ent(contextp, &ent);
                 goto fail;
             }
@@ -263,23 +299,25 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
     case kadm_prune:{
         op = "PRUNE";
 	if (readonly) {
-            ret = KADM5_READ_ONLY;
+            ret_sp = krb5_store_int32(rsp, ret = KADM5_READ_ONLY);
             goto fail;
         }
         ret = krb5_ret_principal(sp, &princ);
-        if (ret)
-            goto fail;
-        ret = krb5_ret_int32(sp, &kvno);
+        if (ret == 0)
+            ret = krb5_ret_int32(sp, &kvno);
         if (ret == HEIM_ERR_EOF) {
             kvno = 0;
         } else if (ret) {
+            ret_sp = krb5_store_int32(rsp, KADM5_FAILURE);
             goto fail;
         }
         krb5_unparse_name_fixed(contextp->context, princ, name, sizeof(name));
         krb5_warnx(contextp->context, "%s: %s %s", client, op, name);
         ret = _kadm5_acl_check_permission(contextp, KADM5_PRIV_CPW, princ);
-        if (ret)
+        if (ret) {
+            ret_sp = krb5_store_int32(rsp, ret);
             goto fail;
+        }
 
         ret = kadm5_prune_principal(kadm_handlep, princ, kvno);
         ret_sp = krb5_store_int32(rsp, ret);
@@ -288,15 +326,16 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
     case kadm_rename:{
 	op = "RENAME";
 	if (readonly) {
-            ret = KADM5_READ_ONLY;
+            ret_sp = krb5_store_int32(rsp, ret = KADM5_READ_ONLY);
             goto fail;
         }
 	ret = krb5_ret_principal(sp, &princ);
-	if(ret)
+        if (ret == 0)
+            ret = krb5_ret_principal(sp, &princ2);
+	if (ret) {
+            ret_sp = krb5_store_int32(rsp, KADM5_FAILURE);
 	    goto fail;
-	ret = krb5_ret_principal(sp, &princ2);
-	if (ret)
-	    goto fail;
+        }
 
 	krb5_unparse_name_fixed(contextp->context, princ, name, sizeof(name));
 	krb5_unparse_name_fixed(contextp->context, princ2,
@@ -321,8 +360,10 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
                                                   princ);
             }
         }
-	if (ret)
+	if (ret) {
+            ret_sp = krb5_store_int32(rsp, ret);
 	    goto fail;
+        }
 
 	ret = kadm5_rename_principal(kadm_handlep, princ, princ2);
 	ret_sp = krb5_store_int32(rsp, ret);
@@ -333,7 +374,7 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
 
 	op = "CHPASS";
 	if (readonly) {
-            ret = KADM5_READ_ONLY;
+            ret_sp = krb5_store_int32(rsp, ret = KADM5_READ_ONLY);
             goto fail;
         }
 	ret = krb5_ret_principal(sp, &princ);
@@ -348,8 +389,10 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
             if (ret == 0)
                 krb5_warnx(contextp->context, "%s: %s %s", client, op, name);
         }
-	if (ret)
+	if (ret) {
+            ret_sp = krb5_store_int32(rsp, KADM5_FAILURE);
 	    goto fail;
+        }
 
 	/*
 	 * Change password requests are subject to ACLs unless the principal is
@@ -363,8 +406,10 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
 					 "kadmin", "allow_self_change_password", NULL);
 	if (!(is_self_cpw && initial && allow_self_cpw)) {
 	    ret = _kadm5_acl_check_permission(contextp, KADM5_PRIV_CPW, princ);
-	    if (ret)
+	    if (ret) {
+                ret_sp = krb5_store_int32(rsp, ret);
 		goto fail;
+            }
 	}
 
 	ret = kadm5_chpass_principal_3(kadm_handlep, princ, keepold, 0, NULL,
@@ -379,7 +424,7 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
 
 	op = "CHPASS_WITH_KEY";
 	if (readonly) {
-            ret = KADM5_READ_ONLY;
+            ret_sp = krb5_store_int32(rsp, ret = KADM5_READ_ONLY);
             goto fail;
         }
 	ret = krb5_ret_principal(sp, &princ);
@@ -390,18 +435,22 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
 	    if (ret == HEIM_ERR_EOF)
 		ret = 0;
 	}
-	if (ret)
+	if (ret) {
+            ret_sp = krb5_store_int32(rsp, KADM5_FAILURE);
 	    goto fail;
+        }
 
 	/* n_key_data will be squeezed into an int16_t below. */
 	if (n_key_data < 0 || n_key_data >= 1 << 16 ||
 	    (size_t)n_key_data > UINT_MAX/sizeof(*key_data)) {
+            ret_sp = krb5_store_int32(rsp, KADM5_FAILURE);
 	    ret = ERANGE;
 	    goto fail;
 	}
 
 	key_data = malloc (n_key_data * sizeof(*key_data));
 	if (key_data == NULL && n_key_data != 0) {
+            ret_sp = krb5_store_int32(rsp, KADM5_FAILURE);
 	    ret = krb5_enomem(contextp->context);
 	    goto fail;
 	}
@@ -413,6 +462,7 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
 
 		kadm5_free_key_data (contextp, &dummy, key_data);
 		free (key_data);
+                ret_sp = krb5_store_int32(rsp, KADM5_FAILURE);
 		goto fail;
 	    }
 	}
@@ -432,6 +482,7 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
 
 	    kadm5_free_key_data (contextp, &dummy, key_data);
 	    free (key_data);
+            ret_sp = krb5_store_int32(rsp, KADM5_FAILURE);
 	    goto fail;
 	}
 	ret = kadm5_chpass_principal_with_key_3(kadm_handlep, princ, keepold,
@@ -449,12 +500,14 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
 
 	op = "RANDKEY";
 	if (readonly) {
-            ret = KADM5_READ_ONLY;
+            ret_sp = krb5_store_int32(rsp, ret = KADM5_READ_ONLY);
             goto fail;
         }
 	ret = krb5_ret_principal(sp, &princ);
-	if (ret)
+	if (ret) {
+            ret_sp = krb5_store_int32(rsp, KADM5_FAILURE);
 	    goto fail;
+        }
 	krb5_unparse_name_fixed(contextp->context, princ, name, sizeof(name));
 	krb5_warnx(contextp->context, "%s: %s %s", client, op, name);
 	/*
@@ -470,16 +523,20 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
 	else
 	    ret = _kadm5_acl_check_permission(contextp, KADM5_PRIV_CPW, princ);
 
-	if (ret)
+	if (ret) {
+            ret_sp = krb5_store_int32(rsp, ret);
 	    goto fail;
+        }
 
 	/*
 	 * See comments in kadm5_c_randkey_principal() regarding the
 	 * protocol.
 	 */
 	ret = krb5_ret_int32(sp, &keepold);
-	if (ret != 0 && ret != HEIM_ERR_EOF)
+	if (ret != 0 && ret != HEIM_ERR_EOF) {
+            ret_sp = krb5_store_int32(rsp, KADM5_FAILURE);
 	    goto fail;
+        }
 
 	ret = krb5_ret_int32(sp, &n_ks_tuple);
 	if (ret == HEIM_ERR_EOF) {
@@ -497,15 +554,19 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
                                            &n, &ks_tuple);
 	    n_ks_tuple = n;
         }
-        if (ret != 0)
+        if (ret != 0) {
+            ret_sp = krb5_store_int32(rsp, KADM5_FAILURE); /* XXX */
 	    goto fail;
+        }
 
         if (n_ks_tuple < 0) {
+            ret_sp = krb5_store_int32(rsp, KADM5_FAILURE); /* XXX */
             ret = EOVERFLOW;
             goto fail;
         }
 	free(ks_tuple);
         if ((ks_tuple = calloc(n_ks_tuple, sizeof (*ks_tuple))) == NULL) {
+            ret_sp = krb5_store_int32(rsp, KADM5_FAILURE);
             ret = errno;
             goto fail;
         }
@@ -513,11 +574,13 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
         for (i = 0; i < n_ks_tuple; i++) {
             ret = krb5_ret_int32(sp, &ks_tuple[i].ks_enctype);
             if (ret != 0) {
+                ret_sp = krb5_store_int32(rsp, KADM5_FAILURE);
                 free(ks_tuple);
                 goto fail;
             }
             ret = krb5_ret_int32(sp, &ks_tuple[i].ks_salttype);
             if (ret != 0) {
+                ret_sp = krb5_store_int32(rsp, KADM5_FAILURE);
                 free(ks_tuple);
                 goto fail;
             }

@@ -325,7 +325,7 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
 	    goto fail;
 
 	ret = kadm5_rename_principal(kadm_handlep, princ, princ2);
-	ret_sp = krb5_store_int32(sp, ret);
+	ret_sp = krb5_store_int32(rsp, ret);
 	break;
     }
     case kadm_chpass:{
@@ -543,7 +543,7 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
 	uint32_t privs;
 	ret = kadm5_get_privs(kadm_handlep, &privs);
 	if (ret == 0)
-	    ret_sp = krb5_store_uint32(sp, privs);
+	    ret_sp = krb5_store_uint32(rsp, privs);
 	break;
     }
     case kadm_get_princs:{
@@ -567,19 +567,19 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
 	ret = kadm5_get_principals(kadm_handlep, expression, &princs, &n_princs);
 	free(expression);
 	ret_sp = krb5_store_int32(rsp, ret);
-	if (ret == 0) {
+	if (ret == 0 && ret_sp == 0) {
 	    int i;
 
-	    ret_sp = krb5_store_int32(sp, n_princs);
+	    ret_sp = krb5_store_int32(rsp, n_princs);
 	    for (i = 0; ret_sp == 0 && i < n_princs; i++)
-		ret_sp = krb5_store_string(sp, princs[i]);
+		ret_sp = krb5_store_string(rsp, princs[i]);
 	    kadm5_free_name_list(kadm_handlep, princs, &n_princs);
 	}
 	break;
     }
     default:
 	krb5_warnx(contextp->context, "%s: UNKNOWN OP %d", client, cmd);
-	ret_sp = krb5_store_int32(sp, KADM5_FAILURE);
+	ret_sp = krb5_store_int32(rsp, KADM5_FAILURE);
 	break;
     }
 

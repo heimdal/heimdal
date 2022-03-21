@@ -700,6 +700,7 @@ maybe_close(struct client *c)
     dispatch_release(c->out);
 #endif
     close(c->fd); /* ref count fd close */
+    free(c->inmsg);
     free(c);
     return 1;
 }

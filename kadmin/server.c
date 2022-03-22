@@ -238,6 +238,15 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
          * interrupt a long-running LIST operation.
          */
 	op = "NOP";
+	ret = krb5_ret_int32(sp, &tmp);
+        if (ret == 0 && tmp == 0) {
+            /*
+             * Reply not wanted.  This would be a LIST interrupt request.
+             */
+            krb5_storage_free(rsp);
+            krb5_storage_free(sp);
+            return 0;
+        }
 	ret_sp = krb5_store_int32(rsp, ret = 0);
         break;
     }
@@ -1027,7 +1036,8 @@ v5_loop (krb5_context contextp,
 	if (ret)
 	    krb5_err(contextp, 1, ret, "kadmind_dispatch");
 	krb5_data_free(&in);
-	ret = krb5_write_priv_message(contextp, ac, &fd, &out);
+        if (out.length)
+            ret = krb5_write_priv_message(contextp, ac, &fd, &out);
 	krb5_data_free(&out);
 	if(ret)
 	    krb5_err(contextp, 1, ret, "krb5_write_priv_message");

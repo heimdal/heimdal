@@ -232,10 +232,18 @@ kadm5_c_iter_principals(void *server_handle,
                 if (!stop) {
                     stop = cb(cbdata, princ);
                     if (stop) {
-                        /* Tell the server to stop */
+                        /*
+                         * Tell the server to stop.
+                         *
+                         * We use a NOP for this, but with a payload that says
+                         * "don't reply to the NOP" just in case the NOP
+                         * arrives and is processed _after_ the LISTing has
+                         * finished.
+                         */
                         krb5_storage_free(sp);
                         if ((sp = krb5_storage_emem()) &&
-                            krb5_store_int32(sp, kadm_nop) == 0)
+                            krb5_store_int32(sp, kadm_nop) == 0 &&
+                            krb5_store_int32(sp, 0))
                             (void) _kadm5_client_send(context, sp);
                     }
                 }

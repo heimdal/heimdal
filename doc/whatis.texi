@@ -29,6 +29,28 @@ services can authenticate each other.
 
 @section Basic mechanism
 
+@ifinfo
+@macro sub{arg}
+<\arg\>
+@end macro
+@end ifinfo
+
+@iftex
+@macro sub{arg}
+@textsubscript{\arg\}
+@end macro
+@end iftex
+
+@ifhtml
+@macro sub{arg}
+
+@html
+<sub>\arg\</sub>
+@end html
+
+@end macro
+@end ifhtml
+
 @c ifdocbook
 @c macro sub{arg}
 @c docbook

@@ -234,6 +234,7 @@ kadm5_c_dup_context(void *vin, void **out)
             ret = krb5_cc_resolve(context, fullname, &ctx->ccache);
         free(fullname);
     }
+    ctx->sock = -1;
     if (ret == 0)
         *out = ctx;
     else

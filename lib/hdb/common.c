@@ -411,6 +411,8 @@ hdb_remove_aliases(krb5_context context, HDB *db, krb5_data *key)
         if (code == 0) {
             code = db->hdb__del(context, db, akey);
             krb5_data_free(&akey);
+            if (code == HDB_ERR_NOENTRY)
+                code = 0;
         }
 	if (code) {
 	    free_HDB_entry(&oldentry);
@@ -446,6 +448,12 @@ hdb_add_aliases(krb5_context context, HDB *db,
         if (code == 0) {
             code = db->hdb__put(context, db, flags, key, value);
             krb5_data_free(&key);
+            if (code == HDB_ERR_EXISTS)
+                /*
+                 * Assuming hdb_check_aliases() was called, this must be a
+                 * duplicate in the alias list.
+                 */
+                code = 0;
         }
 	krb5_data_free(&value);
 	if (code)

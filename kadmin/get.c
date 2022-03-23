@@ -83,6 +83,7 @@ struct get_entry_data {
     uint32_t extra_mask;
     struct field_info *chead, **ctail;
     const char *krb5_config_fname;
+    void *kadm_handle;
     uint32_t n;
     int upto;
 };
@@ -485,12 +486,12 @@ do_get_entry(krb5_principal principal, void *data)
         e->upto--;
 
     memset(&princ, 0, sizeof(princ));
-    ret = kadm5_get_principal(kadm_handle, principal,
+    ret = kadm5_get_principal(e->kadm_handle, principal,
 			      &princ,
 			      e->mask | e->extra_mask);
     if (ret == 0) {
         (e->format)(e, &princ);
-        kadm5_free_principal_ent(kadm_handle, &princ);
+        kadm5_free_principal_ent(e->kadm_handle, &princ);
     }
 
     e->n++;
@@ -591,6 +592,9 @@ getit(struct get_options *opt, const char *name, int argc, char **argv)
     if (opt->terse_flag)
         return listit(name, opt->upto_integer, argc, argv);
 
+    ret = kadm5_dup_context(kadm_handle, &data.kadm_handle);
+    if (ret)
+        krb5_err(context, 1, ret, "Could not duplicate kadmin connection");
     data.table = NULL;
     data.chead = NULL;
     data.ctail = &data.chead;
@@ -622,6 +626,8 @@ getit(struct get_options *opt, const char *name, int argc, char **argv)
 
     for(i = 0; i < argc; i++)
 	ret = foreach_principal(argv[i], do_get_entry, name, &data);
+
+    kadm5_destroy(data.kadm_handle);
 
     if(data.table != NULL) {
 	rtbl_format(data.table, stdout);

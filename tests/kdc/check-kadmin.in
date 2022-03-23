@@ -319,6 +319,17 @@ env KRB5CCNAME=${cache} \
         { echo "kadmin list --upto 3 produced `wc -l < kadmin.tmp` results!"; exit 1; }
 
 #----------------------------------
+echo "kadmin get '*' (re-entrance)"; > messages.log
+${kadmin} -l get '*' > kadmin.tmp ||
+    { echo "failed to list principals"; cat messages.log ; exit 1; }
+> messages.log
+env KRB5CCNAME=${cache} \
+    ${kadmin} -p foo/admin@${R} get '*' > kadmin.tmp2 ||
+        { echo "failed to list principals"; cat messages.log ; exit 1; }
+diff -u kadmin.tmp kadmin.tmp2 ||
+    { echo "local and remote get all differ"; exit 1; }
+
+#----------------------------------
 # We have 20 principals in the DB.  Test two chunks of 1 (since that's how we
 # started kadmind above.
 > messages.log

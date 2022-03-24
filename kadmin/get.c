@@ -592,6 +592,7 @@ getit(struct get_options *opt, const char *name, int argc, char **argv)
     if (opt->terse_flag)
         return listit(name, opt->upto_integer, argc, argv);
 
+    data.kadm_handle = NULL;
     ret = kadm5_dup_context(kadm_handle, &data.kadm_handle);
     if (ret)
         krb5_err(context, 1, ret, "Could not duplicate kadmin connection");

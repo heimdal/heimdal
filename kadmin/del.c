@@ -47,7 +47,7 @@ del_entry(void *opt, int argc, char **argv)
     krb5_error_code ret = 0;
     void *dup_kadm_handle = NULL;
 
-    ret = kadm5_dup_context(kadm_handle, &kadm_handle);
+    ret = kadm5_dup_context(kadm_handle, &dup_kadm_handle);
 
     for (i = 0; ret == 0 && i < argc; i++)
 	ret = foreach_principal(argv[i], do_del_entry, "del", NULL);

@@ -406,6 +406,7 @@ mod_entry(struct modify_options *opt, int argc, char **argv)
     struct mod_data data;
     int i;
 
+    data.kadm_handle = NULL;
     data.opt_ns_kr = NULL;
     data.opt_ns = NULL;
     data.opt = opt;
@@ -413,6 +414,8 @@ mod_entry(struct modify_options *opt, int argc, char **argv)
     ret = kadm5_dup_context(kadm_handle, &data.kadm_handle);
     for (i = 0; ret == 0 && i < argc; i++)
 	ret = foreach_principal(argv[i], do_mod_entry, "mod", &data);
+    if (data.kadm_handle)
+        kadm5_destroy(data.kadm_handle);
     return ret != 0;
 }
 
@@ -469,6 +472,7 @@ modify_namespace(struct modify_namespace_options *opt, int argc, char **argv)
     struct mod_data data;
     int i;
 
+    data.kadm_handle = NULL;
     data.opt_ns_kr = NULL;
     data.opt_ns = opt;
     data.opt = NULL;
@@ -476,6 +480,8 @@ modify_namespace(struct modify_namespace_options *opt, int argc, char **argv)
     ret = kadm5_dup_context(kadm_handle, &data.kadm_handle);
     for (i = 0; ret == 0 && i < argc; i++)
 	ret = foreach_principal(argv[i], do_mod_ns_entry, "mod_ns", &data);
+    if (data.kadm_handle)
+        kadm5_destroy(data.kadm_handle);
     return ret != 0;
 }
 
@@ -690,6 +696,7 @@ modify_ns_kr(struct modify_namespace_key_rotation_options *opt,
     struct mod_data data;
     int i;
 
+    data.kadm_handle = NULL;
     data.opt_ns_kr = opt;
     data.opt_ns = NULL;
     data.opt = NULL;
@@ -697,6 +704,8 @@ modify_ns_kr(struct modify_namespace_key_rotation_options *opt,
     ret = kadm5_dup_context(kadm_handle, &data.kadm_handle);
     for (i = 0; ret == 0 && i < argc; i++)
 	ret = foreach_principal(argv[i], do_mod_ns_kr, "mod_ns", opt);
+    if (data.kadm_handle)
+        kadm5_destroy(data.kadm_handle);
     return ret != 0;
 }
 

@@ -160,6 +160,7 @@ ext_keytab(struct ext_keytab_options *opt, int argc, char **argv)
     const char *enctypes;
     size_t i;
 
+    data.kadm_handle = NULL;
     ret = kadm5_dup_context(kadm_handle, &data.kadm_handle);
     if (ret)
         krb5_err(context, 1, ret, "Could not duplicate kadmin connection");

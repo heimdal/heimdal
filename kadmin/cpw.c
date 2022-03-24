@@ -158,6 +158,7 @@ cpw_entry(struct passwd_options *opt, int argc, char **argv)
     int num;
     krb5_key_data key_data[3];
 
+    data.kadm_handle = NULL;
     ret = kadm5_dup_context(kadm_handle, &data.kadm_handle);
     if (ret)
         krb5_err(context, 1, ret, "Could not duplicate kadmin connection");

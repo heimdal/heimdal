@@ -214,8 +214,10 @@ kadm5_c_dup_context(void *vin, void **out)
     ctx->kadmind_port = in->kadmind_port;
 
     ret = krb5_copy_context(context, &(ctx->context));
-    if (ret == 0)
+    if (ret == 0) {
+        ctx->my_context = TRUE;
         ret = krb5_add_et_list(ctx->context, initialize_kadm5_error_table_r);
+    }
     if (ret == 0 && (ctx->realm = strdup(in->realm)) == NULL)
         ret = krb5_enomem(context);
     if (ret == 0 &&

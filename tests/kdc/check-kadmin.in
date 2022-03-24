@@ -235,7 +235,7 @@ mv kadmin2.tmp kadmin.tmp
 grep -v ': connect' kadmin.tmp > kadmin2.tmp
 mv kadmin2.tmp kadmin.tmp
 
-cmp kadmin.tmp ${srcdir}/donotexists.txt || \
+diff kadmin.tmp ${srcdir}/donotexists.txt || \
     { echo "wrong response"; exit 1;}
 
 #----------------------------------
@@ -281,7 +281,7 @@ fi
 echo "kadmin get -s -o attributes"
 env KRB5CCNAME=${cache} \
 ${kadmin} -p foo/admin@${R} get -s -o attributes bar@${R} \
-        > kadmin.tmp 2>&1 || \
+        > kadmin.tmp || \
 	{ echo "kadmin failed $?"; cat messages.log ; exit 1; }
 if test "`cat kadmin.tmp`" != "Attributes" ; then
    cat kadmin.tmp ; cat messages.log ; exit 1 ;
@@ -348,13 +348,25 @@ ${kadmin} -l list '*' | cut -d'@' -f1 | sort > kadmin.tmp
 ${kadmin} -l dump | cut -d'@' -f1 | sort > kadmin.tmp2
 diff kadmin.tmp kadmin.tmp2 ||
         { echo "failed to list all principals (dump)"; cat messages.log ; exit 1; }
+${kadmin} -l > kadmin.tmp <<"EOF"
+list *
+get foo/admin
+EOF
+grep Attributes kadmin.tmp > /dev/null ||
+        { echo "failed to execute command after list"; cat messages.log ; exit 1; }
+env KRB5CCNAME=${cache} \
+${kadmin} -p foo/admin@${R} > kadmin.tmp <<"EOF"
+list *
+get foo/admin
+EOF
+grep Attributes kadmin.tmp > /dev/null ||
+        { echo "failed to execute command after list"; cat messages.log ; exit 1; }
 
 #----------------------------------
 # We have 20 principals in the DB.  Test two chunks of 10.
 sh ${leaks_kill} kadmind $kadmpid || exit 1
-${kadmind} --list-chunk-size=10 -d &
-kadmpid=$!
-sleep 1
+${kadmind} --list-chunk-size=10 --detach
+kadmpid=`getpid kadmind`
 
 > messages.log
 echo "kadmin list all (chunk size 10)"
@@ -372,13 +384,19 @@ ${kadmin} -l list '*' | cut -d'@' -f1 | sort > kadmin.tmp
 ${kadmin} -l dump | cut -d'@' -f1 | sort > kadmin.tmp2
 diff kadmin.tmp kadmin.tmp2 ||
         { echo "failed to list all principals (dump)"; cat messages.log ; exit 1; }
+env KRB5CCNAME=${cache} \
+${kadmin} -p foo/admin@${R} > kadmin.tmp <<"EOF"
+list *
+get foo/admin
+EOF
+grep Attributes kadmin.tmp > /dev/null ||
+        { echo "failed to execute command after list"; cat messages.log ; exit 1; }
 
 #----------------------------------
 # We have 20 principals in the DB.  Test one chunk of 50.
-wait $kadmipid
-${kadmind} --list-chunk-size=50 -d &
-kadmpid=$!
-sleep 1
+sh ${leaks_kill} kadmind $kadmpid || exit 1
+${kadmind} --list-chunk-size=50 --detach
+kadmpid=`getpid kadmind`
 
 > messages.log
 echo "kadmin list all (chunk size 50)"
@@ -396,13 +414,19 @@ ${kadmin} -l list '*' | cut -d'@' -f1 | sort > kadmin.tmp
 ${kadmin} -l dump | cut -d'@' -f1 | sort > kadmin.tmp2
 diff kadmin.tmp kadmin.tmp2 ||
         { echo "failed to list all principals (dump)"; cat messages.log ; exit 1; }
+env KRB5CCNAME=${cache} \
+${kadmin} -p foo/admin@${R} > kadmin.tmp <<"EOF"
+list *
+get foo/admin
+EOF
+grep Attributes kadmin.tmp > /dev/null ||
+        { echo "failed to execute command after list"; cat messages.log ; exit 1; }
 
 #----------------------------------
 # We have 20 principals in the DB.  Test 3 chunks of up to 7.
-wait $kadmipid
-${kadmind} --list-chunk-size=7 -d &
-kadmpid=$!
-sleep 1
+sh ${leaks_kill} kadmind $kadmpid || exit 1
+${kadmind} --list-chunk-size=7 --detach
+kadmpid=`getpid kadmind`
 
 > messages.log
 echo "kadmin list all (chunk size 7)"
@@ -425,6 +449,7 @@ diff kadmin.tmp kadmin.tmp2 ||
 
 echo "killing kdc (${kdcpid} ${kadmpid})"
 sh ${leaks_kill} kdc $kdcpid || exit 1
+sh ${leaks_kill} kadmind $kadmpid || exit 1
 
 trap "" EXIT
 

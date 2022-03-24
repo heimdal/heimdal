@@ -606,7 +606,6 @@ is_expression(const char *string)
 }
 
 struct foreach_principal_data {
-    krb5_error_code ret;
     const char *funcname;
     int (*func)(krb5_principal, void *);
     void *data;
@@ -623,12 +622,11 @@ foreach_principal_cb(void *data, const char *p)
     if (ret)
         return ret;
 
-    d->ret = d->func(princ, d->data);
+    ret = d->func(princ, d->data);
     krb5_free_principal(context, princ);
-    if (d->ret) {
-        krb5_warn(context, d->ret, "%s %s", d->funcname, p);
+    if (ret) {
+        krb5_warn(context, ret, "%s %s", d->funcname, p);
         krb5_clear_error_message(context);
-        ret = d->ret ? d->ret : ret;
     }
     return ret;
 }
@@ -659,7 +657,6 @@ foreach_principal(const char *exp_str,
     d.funcname = funcname;
     d.func = func;
     d.data = data;
-    d.ret = 0;
 
     if (is_expr && !go_slow) {
 	ret = kadm5_iter_principals(kadm_handle, exp_str,
@@ -668,7 +665,7 @@ foreach_principal(const char *exp_str,
             return 0;
         if (ret != KADM5_AUTH_LIST) {
             krb5_warn(context, ret, "kadm5_iter_principals");
-            return d.ret;
+            return ret;
         }
     } else if (is_expr) {
         char **princs = NULL;
@@ -689,7 +686,7 @@ foreach_principal(const char *exp_str,
         }
         if (ret != KADM5_AUTH_LIST) {
             krb5_warn(context, ret, "kadm5_iter_principals");
-            return d.ret;
+            return ret;
         }
     }
     /* we might be able to perform the requested opreration even

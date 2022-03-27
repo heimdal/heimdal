@@ -69,15 +69,25 @@ dump(struct dump_options *opt, int argc, char **argv)
 
     if (!opt->format_string || strcmp(opt->format_string, "Heimdal") == 0) {
         parg.fmt = HDB_DUMP_HEIMDAL;
+    } else if (opt->format_string && strcmp(opt->format_string, "Heimdal-JSON") == 0) {
+        parg.fmt = HDB_DUMP_HEIMDAL_JSON;
+    } else if (opt->format_string && strcmp(opt->format_string, "Heimdal-JSON-nokeys") == 0) {
+        parg.fmt = HDB_DUMP_HEIMDAL_JSON_NOKEYS;
     } else if (opt->format_string && strcmp(opt->format_string, "MIT") == 0) {
         parg.fmt = HDB_DUMP_MIT;
         fprintf(f, "kdb5_util load_dump version 5\n"); /* 5||6, either way */
     } else {
-        krb5_errx(context, 1, "Supported dump formats: Heimdal and MIT");
+        krb5_errx(context, 1, "Supported dump formats: "
+                  "Heimdal, Heimdal-JSON, Heimdal-JSON-nokeys, and MIT");
     }
     parg.out = f;
-    hdb_foreach(context, db, opt->decrypt_flag ? HDB_F_DECRYPT : 0,
-		hdb_print_entry, &parg);
+    if (parg.fmt == HDB_DUMP_HEIMDAL_JSON ||
+        parg.fmt == HDB_DUMP_HEIMDAL_JSON_NOKEYS)
+        hdb_foreach_eoa(context, db, opt->decrypt_flag ? HDB_F_DECRYPT : 0,
+                        hdb_print_entry_or_alias, &parg);
+    else
+        hdb_foreach(context, db, opt->decrypt_flag ? HDB_F_DECRYPT : 0,
+                    hdb_print_entry, &parg);
 
     db->hdb_close(context, db);
 out:

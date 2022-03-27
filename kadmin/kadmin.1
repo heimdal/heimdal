@@ -579,10 +579,32 @@ Writes the database in
 form to the specified file, or standard out. If the database is
 encrypted, the dump will also have encrypted keys, unless
 .Fl Fl decrypt
-is used.  If
-.Fl Fl format=MIT
-is used then the dump will be in MIT format.  Otherwise it will be in
-Heimdal format.
+is used.
+Formats supported:
+.Bl -tag -width Ds -offset indent
+.It Heimdal
+.It Heimdal-JSON
+.It Heimdal-JSON-nokeys
+.It MIT
+.El
+.Pp
+The default format is
+.Dq Heimdal .
+.Pp
+Note that the
+.Dq Heimdal-JSON
+and
+.Dq Heimdal-JSON-nokeys
+cannot currently be used for backups because there is no support
+for them in the
+.Nm kadmin load
+command, so they are strictly for observability and debugging
+purposes.
+In particular, the
+.Dq Heimdal-JSON-nokeys
+format is safe to use for sharing HDB content with others, as no
+secret keys are included.
+The two JSON formats also include HDB lookup keys.
 .Ed
 .Pp
 .Nm init

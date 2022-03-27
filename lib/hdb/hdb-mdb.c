@@ -382,12 +382,17 @@ DB_unlock(krb5_context context, HDB *db)
 
 
 static krb5_error_code
-DB_seq(krb5_context context, HDB *db,
-       unsigned flags, hdb_entry *entry, int flag)
+DB_seq(krb5_context context,
+       HDB *db,
+       unsigned flags,
+       krb5_principal *key_princ,
+       HDB_EntryOrAlias *eoa,
+       int flag)
 {
     mdb_info *mi = db->hdb_db;
     MDB_val key, value;
     krb5_data key_data, data;
+    Principal princ;
     int code;
 
     /*
@@ -395,6 +400,7 @@ DB_seq(krb5_context context, HDB *db,
      * have snapshot semantics, and any DB growth from other transactions
      * should not affect us.
      */
+    *key_princ = NULL;
     key.mv_size = 0;
     value.mv_size = 0;
     code = mdb_cursor_get(mi->c, &key, &value, flag);
@@ -405,30 +411,33 @@ DB_seq(krb5_context context, HDB *db,
     key_data.length = key.mv_size;
     data.data = value.mv_data;
     data.length = value.mv_size;
-    memset(entry, 0, sizeof(*entry));
-    if (hdb_value2entry(context, &data, entry))
-	return DB_seq(context, db, flags, entry, MDB_NEXT);
-    if (db->hdb_master_key_set && (flags & HDB_F_DECRYPT)) {
-	code = hdb_unseal_keys (context, db, entry);
-	if (code)
-	    hdb_free_entry (context, db, entry);
-    }
-    if (entry->principal == NULL) {
-	entry->principal = malloc(sizeof(*entry->principal));
-	if (entry->principal == NULL) {
-	    hdb_free_entry (context, db, entry);
-	    krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
-	    return ENOMEM;
-	} else {
-	    hdb_key2principal(context, &key_data, entry->principal);
-	}
-    }
+    memset(eoa, 0, sizeof(*eoa));
+    memset(&princ, 0, sizeof(princ));
+    if (hdb_value2EntryOrAlias(context, &data, eoa))
+	return DB_seq(context, db, flags, key_princ, eoa, MDB_NEXT);
+    code = hdb_key2principal(context, &key_data, &princ);
+    if (code == 0)
+        code = krb5_copy_principal(context, &princ, key_princ);
+    if (eoa->element == choice_HDB_EntryOrAlias_entry) {
+        if (code == 0 && db->hdb_master_key_set && (flags & HDB_F_DECRYPT))
+            code = hdb_unseal_keys (context, db, &eoa->u.entry);
+        if (code == 0 && eoa->u.entry.principal == NULL)
+            code = krb5_copy_principal(context, &princ, &eoa->u.entry.principal);
+        if (code)
+            hdb_free_entry(context, db, &eoa->u.entry);
+    } else if (code)
+        free_HDB_EntryOrAlias(eoa);
+    free_Principal(&princ);
     return 0;
 }
 
 
 static krb5_error_code
-DB_firstkey(krb5_context context, HDB *db, unsigned flags, hdb_entry *entry)
+DB_firstkey(krb5_context context,
+            HDB *db,
+            unsigned flags,
+            krb5_principal *key_princ,
+            HDB_EntryOrAlias *eoa)
 {
     krb5_error_code ret = 0;
     mdb_info *mi = db->hdb_db;
@@ -448,7 +457,7 @@ DB_firstkey(krb5_context context, HDB *db, unsigned flags, hdb_entry *entry)
         if (code == 0)
             code = mdb_cursor_open(mi->t, mi->d, &mi->c);
         if (code == 0) {
-            ret = DB_seq(context, db, flags, entry, MDB_FIRST);
+            ret = DB_seq(context, db, flags, key_princ, eoa, MDB_FIRST);
             break;
         }
     } while (code == MDB_MAP_FULL && --tries > 0);
@@ -462,9 +471,13 @@ DB_firstkey(krb5_context context, HDB *db, unsigned flags, hdb_entry *entry)
 
 
 static krb5_error_code
-DB_nextkey(krb5_context context, HDB *db, unsigned flags, hdb_entry *entry)
+DB_nextkey(krb5_context context,
+           HDB *db,
+           unsigned flags,
+           krb5_principal *key_princ,
+           HDB_EntryOrAlias *eoa)
 {
-    return DB_seq(context, db, flags, entry, MDB_NEXT);
+    return DB_seq(context, db, flags, key_princ, eoa, MDB_NEXT);
 }
 
 static krb5_error_code

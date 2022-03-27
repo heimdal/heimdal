@@ -135,16 +135,23 @@ DB_unlock(krb5_context context, HDB *db)
 
 
 static krb5_error_code
-DB_seq(krb5_context context, HDB *db,
-       unsigned flags, hdb_entry *entry, int flag)
+DB_seq(krb5_context context,
+       HDB *db,
+       unsigned flags,
+       krb5_principal *key_princ,
+       HDB_EntryOrAlias *eoa,
+       int flag)
 {
     DBT key, value;
     DBC *dbcp = db->hdb_dbc;
     krb5_data key_data, data;
+    Principal princ;
     int code;
 
+    *key_princ = NULL;
     memset(&key, 0, sizeof(DBT));
     memset(&value, 0, sizeof(DBT));
+    memset(&princ, 0, sizeof(princ));
     code = (*dbcp->c_get)(dbcp, &key, &value, flag);
     if (code == DB_NOTFOUND)
 	return HDB_ERR_NOENTRY;
@@ -155,39 +162,45 @@ DB_seq(krb5_context context, HDB *db,
     key_data.length = key.size;
     data.data = value.data;
     data.length = value.size;
-    memset(entry, 0, sizeof(*entry));
-    if (hdb_value2entry(context, &data, entry))
-	return DB_seq(context, db, flags, entry, DB_NEXT);
-    if (db->hdb_master_key_set && (flags & HDB_F_DECRYPT)) {
-	code = hdb_unseal_keys (context, db, entry);
-	if (code)
-	    hdb_free_entry (context, db, entry);
-    }
-    if (entry->principal == NULL) {
-	entry->principal = malloc(sizeof(*entry->principal));
-	if (entry->principal == NULL) {
-	    hdb_free_entry (context, db, entry);
-	    krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
-	    return ENOMEM;
-	} else {
-	    hdb_key2principal(context, &key_data, entry->principal);
-	}
-    }
+    memset(eoa, 0, sizeof(*eoa));
+    if (hdb_value2EntryOrAlias(context, &data, eoa))
+	return DB_seq(context, db, flags, key_princ, eoa, DB_NEXT);
+    code = hdb_key2principal(context, &key_data, &princ);
+    if (code == 0)
+        code = krb5_copy_principal(context, &princ, key_princ);
+    if (eoa->element == choice_HDB_EntryOrAlias_entry) {
+        if (code == 0 && db->hdb_master_key_set && (flags & HDB_F_DECRYPT))
+            code = hdb_unseal_keys (context, db, &eoa->u.entry);
+        if (code == 0 && eoa->u.entry.principal == NULL)
+            code = krb5_copy_principal(context, &princ, &eoa->u.entry.principal);
+        if (code)
+            hdb_free_entry(context, db, &eoa->u.entry);
+    } else if (code)
+        free_HDB_EntryOrAlias(eoa);
+    free_Principal(&princ);
     return 0;
 }
 
 
 static krb5_error_code
-DB_firstkey(krb5_context context, HDB *db, unsigned flags, hdb_entry *entry)
+DB_firstkey(krb5_context context,
+            HDB *db,
+            unsigned flags,
+            krb5_principal *key_princ,
+            HDB_EntryOrAlias *eoa)
 {
-    return DB_seq(context, db, flags, entry, DB_FIRST);
+    return DB_seq(context, db, flags, key_princ, eoa, DB_FIRST);
 }
 
 
 static krb5_error_code
-DB_nextkey(krb5_context context, HDB *db, unsigned flags, hdb_entry *entry)
+DB_nextkey(krb5_context context,
+           HDB *db,
+           unsigned flags,
+            krb5_principal *key_princ,
+           HDB_EntryOrAlias *eoa)
 {
-    return DB_seq(context, db, flags, entry, DB_NEXT);
+    return DB_seq(context, db, flags, key_princ, eoa, DB_NEXT);
 }
 
 static krb5_error_code

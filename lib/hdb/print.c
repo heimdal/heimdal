@@ -566,7 +566,7 @@ hdb_print_entry(krb5_context context, HDB *db, hdb_entry *entry,
                 void *data)
 {
     struct hdb_print_entry_arg *parg = data;
-    krb5_error_code ret;
+    krb5_error_code ret = 0;
     krb5_storage *sp;
 
     fflush(parg->out);
@@ -583,6 +583,34 @@ hdb_print_entry(krb5_context context, HDB *db, hdb_entry *entry,
     case HDB_DUMP_MIT:
         ret = entry2mit_string_int(context, sp, entry);
         break;
+    case HDB_DUMP_HEIMDAL_JSON: {
+        char *s;
+
+        if ((s = print_HDB_entry(entry, 0)) == NULL) {
+            krb5_set_error_message(context, ret = errno,
+                                   "Could not format HDB_entry as JSON");
+            return ret;
+        }
+        krb5_store_stringz(sp, s);
+        free(s);
+        /* print_HDB_entry() will have included a trailing newline */
+        goto no_output;
+    }
+    case HDB_DUMP_HEIMDAL_JSON_NOKEYS: {
+        char *s;
+
+        ret = hdb_remove_keys(context, entry, -1, NULL);
+        if (ret)
+            break;
+        if ((s = print_HDB_entry(entry, 0)) == NULL) {
+            krb5_set_error_message(context, ret = errno,
+                                   "Could not format HDB_entry as JSON");
+            return ret;
+        }
+        krb5_store_stringz(sp, s);
+        /* print_HDB_entry() will have included a trailing newline */
+        goto no_output;
+    }
     default:
         heim_abort("Only two dump formats supported: Heimdal and MIT");
     }
@@ -592,6 +620,83 @@ hdb_print_entry(krb5_context context, HDB *db, hdb_entry *entry,
     }
 
     krb5_storage_write(sp, "\n", 1);
+
+no_output:
+    krb5_storage_free(sp);
+    return 0;
+}
+
+/* XXX We need the name it was found by! */
+krb5_error_code
+hdb_print_entry_or_alias(krb5_context context,
+                         HDB *db,
+                         krb5_principal key_princ,
+                         HDB_EntryOrAlias *eoa,
+                         void *data)
+{
+    struct hdb_print_entry_arg *parg = data;
+    krb5_error_code ret = 0;
+    krb5_storage *sp;
+
+    fflush(parg->out);
+    sp = krb5_storage_from_fd(fileno(parg->out));
+    if (sp == NULL) {
+	krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
+	return ENOMEM;
+    }
+
+    switch (parg->fmt) {
+    case HDB_DUMP_HEIMDAL:
+        if (eoa->element == choice_HDB_EntryOrAlias_entry)
+            ret = entry2string_int(context, sp, &eoa->u.entry);
+        break;
+    case HDB_DUMP_MIT:
+        if (eoa->element == choice_HDB_EntryOrAlias_entry)
+            ret = entry2mit_string_int(context, sp, &eoa->u.entry);
+        else
+            goto no_output;
+        break;
+    case HDB_DUMP_HEIMDAL_JSON_NOKEYS:
+        if (eoa->element == choice_HDB_EntryOrAlias_entry) {
+            ret = hdb_remove_keys(context, &eoa->u.entry, -1, NULL);
+            if (ret == 0)
+                ret = hdb_entry_clear_password(context, &eoa->u.entry);
+            if (ret)
+                break;
+        }
+        fallthrough;
+    case HDB_DUMP_HEIMDAL_JSON: {
+        HDB_KV kv;
+        char *s;
+
+        memset(&kv, 0, sizeof(kv));
+        kv.key = key_princ;
+        kv.value = *eoa;
+
+        if ((s = print_HDB_KV(&kv, 0)) == NULL)
+            krb5_set_error_message(context, ret = errno,
+                                   "Could not format HDB_entry as JSON");
+        if (ret == 0)
+            ret = krb5_store_bytes(sp, s, strlen(s));
+        free(s);
+        /*
+         * Between print_HDB_EntryOrAlias() and krb5_store_bytes() if
+         * key_princ, we've emitted a newline already.
+         */
+        goto no_output;
+    }
+    default:
+        heim_abort("Only dump formats supported: "
+                   "Heimdal, Heimdal-JSON, Heimdal-JSON-nokeys, and MIT");
+    }
+    if (ret) {
+	krb5_storage_free(sp);
+	return ret;
+    }
+
+    krb5_storage_write(sp, "\n", 1);
+
+no_output:
     krb5_storage_free(sp);
     return 0;
 }

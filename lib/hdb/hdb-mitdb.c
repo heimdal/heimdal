@@ -764,14 +764,19 @@ mdb_unlock(krb5_context context, HDB *db)
 
 
 static krb5_error_code
-mdb_seq(krb5_context context, HDB *db,
-       unsigned flags, hdb_entry *entry, int flag)
+mdb_seq(krb5_context context,
+        HDB *db,
+        unsigned flags,
+        krb5_principal *key_princ,
+        HDB_EntryOrAlias *eoa,
+        int flag)
 {
     DB *d = (DB*)db->hdb_db;
     DBT key, value;
-    krb5_data key_data, data;
+    krb5_data data;
     int code;
 
+    *key_princ = NULL;
     code = db->hdb_lock(context, db, HDB_RLOCK);
     if(code == -1) {
 	krb5_set_error_message(context, HDB_ERR_DB_INUSE, "Database %s in use", db->hdb_name);
@@ -790,36 +795,44 @@ mdb_seq(krb5_context context, HDB *db,
 	return HDB_ERR_NOENTRY;
     }
 
-    key_data.data = key.data;
-    key_data.length = key.size;
     data.data = value.data;
     data.length = value.size;
-    memset(entry, 0, sizeof(*entry));
+    memset(eoa, 0, sizeof(*eoa));
 
-    if (_hdb_mdb_value2entry(context, &data, 0, entry))
-	return mdb_seq(context, db, flags, entry, R_NEXT);
-
+    if (_hdb_mdb_value2entry(context, &data, 0, &eoa->u.entry))
+	return mdb_seq(context, db, flags, key_princ, eoa, R_NEXT);
+    eoa->element = choice_HDB_EntryOrAlias_entry;
     if (db->hdb_master_key_set && (flags & HDB_F_DECRYPT)) {
-	code = hdb_unseal_keys (context, db, entry);
+	code = hdb_unseal_keys (context, db, &eoa->u.entry);
 	if (code)
-	    hdb_free_entry (context, db, entry);
+	    hdb_free_entry(context, db, &eoa->u.entry);
     }
 
+    if (code == 0 && key.data && key.data[key.size] == '\0')
+        return krb5_parse_name(context, key.data, key_princ);
     return code;
 }
 
 
 static krb5_error_code
-mdb_firstkey(krb5_context context, HDB *db, unsigned flags, hdb_entry *entry)
+mdb_firstkey(krb5_context context,
+             HDB *db,
+             unsigned flags,
+             krb5_principal *key_princ,
+             HDB_EntryOrAlias *eoa)
 {
-    return mdb_seq(context, db, flags, entry, R_FIRST);
+    return mdb_seq(context, db, flags, key_princ, eoa, R_FIRST);
 }
 
 
 static krb5_error_code
-mdb_nextkey(krb5_context context, HDB *db, unsigned flags, hdb_entry *entry)
+mdb_nextkey(krb5_context context,
+            HDB *db,
+            unsigned flags,
+            krb5_principal *key_princ,
+            HDB_EntryOrAlias *eoa)
 {
-    return mdb_seq(context, db, flags, entry, R_NEXT);
+    return mdb_seq(context, db, flags, key_princ, eoa, R_NEXT);
 }
 
 static krb5_error_code

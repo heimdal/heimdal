@@ -78,6 +78,12 @@ hdb_value2entry(krb5_context context, krb5_data *value, hdb_entry *ent)
 }
 
 int
+hdb_value2EntryOrAlias(krb5_context context, krb5_data *value, HDB_EntryOrAlias *ent)
+{
+    return decode_HDB_EntryOrAlias(value->data, value->length, ent, NULL);
+}
+
+int
 hdb_entry_alias2value(krb5_context context,
 		      const hdb_entry_alias *alias,
 		      krb5_data *value)

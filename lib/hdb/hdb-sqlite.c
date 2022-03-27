@@ -863,22 +863,37 @@ hdb_sqlite_unlock(krb5_context context, HDB *db)
  * Should get the next entry, to allow iteration over all entries.
  */
 static krb5_error_code
-hdb_sqlite_nextkey(krb5_context context, HDB *db, unsigned flags,
-                   hdb_entry *entry)
+hdb_sqlite_nextkey(krb5_context context,
+                   HDB *db,
+                   unsigned flags,
+                   krb5_principal *key_princ,
+                   HDB_EntryOrAlias *eoa)
 {
     krb5_error_code ret = 0;
     int sqlite_error;
     krb5_data value;
 
+    *key_princ = NULL;
     hdb_sqlite_db *hsdb = (hdb_sqlite_db *) db->hdb_db;
 
+    /*
+     * XXX `hsdb->get_all_entries' should be a join over principal so we can
+     * report the `key_princ' correctly.
+     */
     sqlite_error = hdb_sqlite_step(context, hsdb->db, hsdb->get_all_entries);
     if(sqlite_error == SQLITE_ROW) {
 	/* Found an entry */
         value.length = sqlite3_column_bytes(hsdb->get_all_entries, 0);
         value.data = (void *) sqlite3_column_blob(hsdb->get_all_entries, 0);
-        memset(entry, 0, sizeof(*entry));
-        ret = hdb_value2entry(context, &value, entry);
+        memset(eoa, 0, sizeof(*eoa));
+        ret = hdb_value2EntryOrAlias(context, &value, eoa);
+        /*
+         * Note that eoa->element == choice_HDB_EntryOrAlias_entry -- it has to
+         * be so because we don't store encoded aliases in this backend.
+         */
+        if (ret == 0 && eoa->element == choice_HDB_EntryOrAlias_entry)
+            ret = krb5_copy_principal(context, eoa->u.entry.principal,
+                                      key_princ);
     }
     else if(sqlite_error == SQLITE_DONE) {
 	/* No more entries */
@@ -901,15 +916,18 @@ hdb_sqlite_nextkey(krb5_context context, HDB *db, unsigned flags,
  * What is flags used for?
  */
 static krb5_error_code
-hdb_sqlite_firstkey(krb5_context context, HDB *db, unsigned flags,
-                    hdb_entry *entry)
+hdb_sqlite_firstkey(krb5_context context,
+                    HDB *db,
+                    unsigned flags,
+                    krb5_principal *key_princ,
+                    HDB_EntryOrAlias *eoa)
 {
     hdb_sqlite_db *hsdb = (hdb_sqlite_db *) db->hdb_db;
     krb5_error_code ret;
 
     sqlite3_reset(hsdb->get_all_entries);
 
-    ret = hdb_sqlite_nextkey(context, db, flags, entry);
+    ret = hdb_sqlite_nextkey(context, db, flags, key_princ, eoa);
     if(ret)
         return ret;
 

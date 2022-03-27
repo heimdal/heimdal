@@ -70,7 +70,8 @@ threaded_reader(void *d)
     krb5_error_code ret;
     krb5_context context;
     struct tsync *s = d;
-    hdb_entry entr;
+    HDB_EntryOrAlias eoa;
+    krb5_principal key_princ = NULL;
     HDB *dbr = NULL;
 
     printf("Reader thread opening HDB\n");
@@ -97,11 +98,12 @@ threaded_reader(void *d)
         //(void) unlink(s->fname);
         krb5_err(context, 1, ret, "Could not open HDB %s", s->hdb_name);
     }
-    if ((ret = dbr->hdb_firstkey(context, dbr, 0, &entr))) {
+    if ((ret = dbr->hdb_firstkey(context, dbr, 0, &key_princ, &eoa))) {
         //(void) unlink(s->fname);
         krb5_err(context, 1, ret, "Could not iterate HDB %s", s->hdb_name);
     }
-    free_HDB_entry(&entr);
+    krb5_free_principal(context, key_princ);
+    free_HDB_EntryOrAlias(&eoa);
 
     /* Tell the writer to go ahead and write */
     printf("Reader thread iterated one entry; telling writer to write more\n");
@@ -118,18 +120,21 @@ threaded_reader(void *d)
 
     /* Iterate the rest */
     printf("Reader thread iterating another entry\n");
-    if ((ret = dbr->hdb_nextkey(context, dbr, 0, &entr))) {
+    if ((ret = dbr->hdb_nextkey(context, dbr, 0, &key_princ, &eoa))) {
         //(void) unlink(s->fname);
         krb5_err(context, 1, ret,
                  "Could not iterate while writing to HDB %s", s->hdb_name);
     }
     printf("Reader thread iterated another entry\n");
-    free_HDB_entry(&entr);
-    if ((ret = dbr->hdb_nextkey(context, dbr, 0, &entr)) == 0) {
+    krb5_free_principal(context, key_princ);
+    free_HDB_EntryOrAlias(&eoa);
+    if ((ret = dbr->hdb_nextkey(context, dbr, 0, &key_princ, &eoa)) == 0) {
         //(void) unlink(s->fname);
         krb5_warn(context, ret,
                  "HDB %s sees writes committed since starting iteration",
                  s->hdb_name);
+        krb5_free_principal(context, key_princ);
+        free_HDB_EntryOrAlias(&eoa);
     } else if (ret != HDB_ERR_NOENTRY) {
         //(void) unlink(s->fname);
         krb5_err(context, 1, ret,
@@ -154,7 +159,8 @@ forked_reader(struct tsync *s)
 {
     krb5_error_code ret;
     krb5_context context;
-    hdb_entry entr;
+    HDB_EntryOrAlias eoa;
+    krb5_principal key_princ = NULL;
     ssize_t bytes;
     char b[1];
     HDB *dbr = NULL;
@@ -185,12 +191,13 @@ forked_reader(struct tsync *s)
         //(void) unlink(s->fname);
         krb5_err(context, 1, ret, "Could not open HDB %s", s->hdb_name);
     }
-    if ((ret = dbr->hdb_firstkey(context, dbr, 0, &entr))) {
+    if ((ret = dbr->hdb_firstkey(context, dbr, 0, &key_princ, &eoa))) {
         //(void) unlink(s->fname);
         krb5_err(context, 1, ret, "Could not iterate HDB %s", s->hdb_name);
     }
     printf("Reader process iterated one entry\n");
-    free_HDB_entry(&entr);
+    krb5_free_principal(context, key_princ);
+    free_HDB_EntryOrAlias(&eoa);
 
     /* Tell the writer to go ahead and write */
     printf("Reader process iterated one entry; telling writer to write more\n");
@@ -212,18 +219,22 @@ forked_reader(struct tsync *s)
         errx(1, "Could not read from reader-go pipe (EOF)");
 
     /* Iterate the rest */
-    if ((ret = dbr->hdb_nextkey(context, dbr, 0, &entr))) {
+    if ((ret = dbr->hdb_nextkey(context, dbr, 0, &key_princ, &eoa))) {
         //(void) unlink(s->fname);
         krb5_err(context, 1, ret,
                  "Could not iterate while writing to HDB %s", s->hdb_name);
     }
-    free_HDB_entry(&entr);
+    krb5_free_principal(context, key_princ);
+    free_HDB_EntryOrAlias(&eoa);
     printf("Reader process iterated another entry\n");
-    if ((ret = dbr->hdb_nextkey(context, dbr, 0, &entr)) == 0) {
+    if ((ret = dbr->hdb_nextkey(context, dbr, 0, &key_princ, &eoa)) == 0) {
         //(void) unlink(s->fname);
-        krb5_warn(context, ret,
-                 "HDB %s sees writes committed since starting iteration (%s)",
-                 s->hdb_name, entr.principal->name.name_string.val[0]);
+        if (eoa.element == choice_HDB_EntryOrAlias_entry)
+            krb5_warn(context, ret,
+                     "HDB %s sees writes committed since starting iteration (%s)",
+                     s->hdb_name, eoa.u.entry.principal->name.name_string.val[0]);
+        krb5_free_principal(context, key_princ);
+        free_HDB_EntryOrAlias(&eoa);
     } else if (ret != HDB_ERR_NOENTRY) {
         //(void) unlink(s->fname);
         krb5_err(context, 1, ret,

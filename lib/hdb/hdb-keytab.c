@@ -89,15 +89,21 @@ hkt_unlock(krb5_context context, HDB *db)
 }
 
 static krb5_error_code
-hkt_firstkey(krb5_context context, HDB *db,
-	     unsigned flags, hdb_entry *entry)
+hkt_firstkey(krb5_context context,
+             HDB *db,
+	     unsigned flags,
+             krb5_principal *key_princ,
+             HDB_EntryOrAlias *eoa)
 {
     return HDB_ERR_DB_INUSE;
 }
 
 static krb5_error_code
-hkt_nextkey(krb5_context context, HDB * db, unsigned flags,
-	     hdb_entry * entry)
+hkt_nextkey(krb5_context context,
+            HDB *db,
+            unsigned flags,
+	    krb5_principal *key_princ,
+            HDB_EntryOrAlias *eoa)
 {
     return HDB_ERR_DB_INUSE;
 }

@@ -42,7 +42,7 @@ struct hdb_data {
 
 struct hdb_cursor {
     HDB *db;
-    hdb_entry hdb_entry;
+    HDB_EntryOrAlias eoa;
     int first, next;
     int key_idx;
 };
@@ -324,6 +324,7 @@ hdb_next_entry(krb5_context context,
 {
     struct hdb_cursor *c = cursor->data;
     krb5_error_code ret;
+    krb5_principal key_princ = NULL;
 
     memset(entry, 0, sizeof(*entry));
 
@@ -332,33 +333,49 @@ hdb_next_entry(krb5_context context,
 	ret = (c->db->hdb_firstkey)(context, c->db,
 				    HDB_F_DECRYPT|
 				    HDB_F_GET_CLIENT|HDB_F_GET_SERVER|HDB_F_GET_KRBTGT,
-				    &c->hdb_entry);
+                                    &key_princ,
+				    &c->eoa);
 	if (ret == HDB_ERR_NOENTRY)
 	    return KRB5_KT_END;
 	else if (ret)
 	    return ret;
 
-	if (c->hdb_entry.keys.len == 0)
-	    hdb_free_entry(context, c->db, &c->hdb_entry);
-	else
+        krb5_free_principal(context, key_princ);
+        key_princ = NULL;
+
+        if (c->eoa.element != choice_HDB_EntryOrAlias_entry) {
+            c->next = TRUE;
+        } else if (c->eoa.u.entry.keys.len == 0) {
+            /* No keys -> next! */
+	    hdb_free_entry(context, c->db, &c->eoa.u.entry);
+            c->next = TRUE;
+        } else {
 	    c->next = FALSE;
+        }
     }
 
     while (c->next) {
 	ret = (c->db->hdb_nextkey)(context, c->db,
 				   HDB_F_DECRYPT|
 				   HDB_F_GET_CLIENT|HDB_F_GET_SERVER|HDB_F_GET_KRBTGT,
-				   &c->hdb_entry);
+                                   &key_princ,
+				   &c->eoa);
 	if (ret == HDB_ERR_NOENTRY)
 	    return KRB5_KT_END;
 	else if (ret)
 	    return ret;
 
-	/* If no keys on this entry, try again */
-	if (c->hdb_entry.keys.len == 0)
-	    hdb_free_entry(context, c->db, &c->hdb_entry);
-	else
+        krb5_free_principal(context, key_princ);
+        key_princ = NULL;
+
+        if (c->eoa.element == choice_HDB_EntryOrAlias_entry &&
+            c->eoa.u.entry.keys.len == 0)
+            /* No keys -> next! */
+	    hdb_free_entry(context, c->db, &c->eoa.u.entry);
+        else if (c->eoa.element == choice_HDB_EntryOrAlias_entry)
 	    c->next = FALSE;
+        else
+            free_HDB_EntryOrAlias(&c->eoa);
     }
 
     /*
@@ -367,14 +384,14 @@ hdb_next_entry(krb5_context context,
      */
 
     ret = krb5_copy_principal(context,
-			      c->hdb_entry.principal,
+			      c->eoa.u.entry.principal,
 			      &entry->principal);
     if (ret)
 	return ret;
 
-    entry->vno = c->hdb_entry.kvno;
+    entry->vno = c->eoa.u.entry.kvno;
     ret = krb5_copy_keyblock_contents(context,
-				      &c->hdb_entry.keys.val[c->key_idx].key,
+				      &c->eoa.u.entry.keys.val[c->key_idx].key,
 				      &entry->keyblock);
     if (ret) {
 	krb5_free_principal(context, entry->principal);
@@ -388,8 +405,8 @@ hdb_next_entry(krb5_context context,
      * next entry
      */
 
-    if ((size_t)c->key_idx == c->hdb_entry.keys.len) {
-	hdb_free_entry(context, c->db, &c->hdb_entry);
+    if ((size_t)c->key_idx == c->eoa.u.entry.keys.len) {
+	hdb_free_entry(context, c->db, &c->eoa.u.entry);
 	c->next = TRUE;
 	c->key_idx = 0;
     }
@@ -405,8 +422,12 @@ hdb_end_seq_get(krb5_context context,
 {
     struct hdb_cursor *c = cursor->data;
 
-    if (!c->next)
-	hdb_free_entry(context, c->db, &c->hdb_entry);
+    if (!c->next) {
+        if (c->eoa.element == choice_HDB_EntryOrAlias_entry)
+            hdb_free_entry(context, c->db, &c->eoa.u.entry);
+        else
+            free_HDB_EntryOrAlias(&c->eoa);
+    }
 
     (c->db->hdb_close)(context, c->db);
     (c->db->hdb_destroy)(context, c->db);

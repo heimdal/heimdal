@@ -75,8 +75,12 @@ NDBM_unlock(krb5_context context, HDB *db)
 }
 
 static krb5_error_code
-NDBM_seq(krb5_context context, HDB *db,
-	 unsigned flags, hdb_entry *entry, int first)
+NDBM_seq(krb5_context context,
+         HDB *db,
+	 unsigned flags,
+         krb5_principal *key_princ,
+         HDB_EntryOrAlias *eoa,
+         int first)
 
 {
     struct ndbm_db *d = (struct ndbm_db *)db->hdb_db;
@@ -84,6 +88,7 @@ NDBM_seq(krb5_context context, HDB *db,
     krb5_data key_data, data;
     krb5_error_code ret = 0;
 
+    *key_princ = NULL;
     if(first)
 	key = dbm_firstkey(d->db);
     else
@@ -98,39 +103,46 @@ NDBM_seq(krb5_context context, HDB *db,
     db->hdb_unlock(context, db);
     data.data = value.dptr;
     data.length = value.dsize;
-    memset(entry, 0, sizeof(*entry));
-    if(hdb_value2entry(context, &data, entry))
-	return NDBM_seq(context, db, flags, entry, 0);
-    if (db->hdb_master_key_set && (flags & HDB_F_DECRYPT)) {
-	ret = hdb_unseal_keys (context, db, entry);
-	if (ret)
-	    hdb_free_entry (context, db, entry);
-    }
-    if (ret == 0 && entry->principal == NULL) {
-	entry->principal = malloc (sizeof(*entry->principal));
-	if (entry->principal == NULL) {
-	    hdb_free_entry (context, db, entry);
-	    ret = ENOMEM;
-	    krb5_set_error_message(context, ret, "malloc: out of memory");
-	} else {
-	    hdb_key2principal (context, &key_data, entry->principal);
-	}
-    }
+    memset(eoa, 0, sizeof(*eoa));
+    memset(&princ, 0, sizeof(princ));
+    if (hdb_value2EntryOrAlias(context, &data, eoa))
+	return DB_seq(context, db, flags, key_princ, eoa, R_NEXT);
+    ret = hdb_key2principal(context, &key_data, &princ);
+    if (ret == 0)
+        ret = krb5_copy_principal(context, &princ, key_princ);
+    if (eoa->element == choice_HDB_EntryOrAlias_entry) {
+        if (ret == 0 && db->hdb_master_key_set && (flags & HDB_F_DECRYPT))
+            ret = hdb_unseal_keys (context, db, &eoa->u.entry);
+        if (ret == 0 && eoa->u.entry.principal == NULL)
+            ret = krb5_copy_principal(context, &princ, &eoa->u.entry.principal);
+        if (ret)
+            hdb_free_entry(context, db, &eoa->u.entry);
+    } else if (ret)
+        free_HDB_EntryOrAlias(eoa);
+    free_Principal(&princ);
     return ret;
 }
 
 
 static krb5_error_code
-NDBM_firstkey(krb5_context context, HDB *db,unsigned flags,hdb_entry *entry)
+NDBM_firstkey(krb5_context context,
+              HDB *db,
+              unsigned flags,
+              krb5_principal *key_princ,
+              HDB_EntryOrAlias *eoa)
 {
-    return NDBM_seq(context, db, flags, entry, 1);
+    return NDBM_seq(context, db, flags, key_princ, eoa, 1);
 }
 
 
 static krb5_error_code
-NDBM_nextkey(krb5_context context, HDB *db, unsigned flags,hdb_entry *entry)
+NDBM_nextkey(krb5_context context,
+             HDB *db,
+             unsigned flags,
+             krb5_principal *key_princ,
+             HDB_EntryOrAlias *eoa)
 {
-    return NDBM_seq(context, db, flags, entry, 0);
+    return NDBM_seq(context, db, flags, key_princ, eoa, 0);
 }
 
 static krb5_error_code

@@ -106,7 +106,11 @@ TDB_unlock(krb5_context context, HDB *db)
 }
 
 static krb5_error_code
-TDB_firstkey(krb5_context context, HDB *db, unsigned flags, hdb_entry *entry)
+TDB_firstkey(krb5_context context,
+             HDB *db,
+             unsigned flags,
+             krb5_principal *key_princ,
+             HDB_EntryOrAlias *entry)
 {
     /* XXX Implement */
     /* Tricky thing: heim_dict_iterate_f() is inconvenient here */
@@ -115,7 +119,11 @@ TDB_firstkey(krb5_context context, HDB *db, unsigned flags, hdb_entry *entry)
 }
 
 static krb5_error_code
-TDB_nextkey(krb5_context context, HDB *db, unsigned flags, hdb_entry *entry)
+TDB_nextkey(krb5_context context,
+            HDB *db,
+            unsigned flags,
+            krb5_principal *key_princ,
+            HDB_EntryOrAlias *entry)
 {
     /* XXX Implement */
     /* Tricky thing: heim_dict_iterate_f() is inconvenient here */

@@ -1496,12 +1496,17 @@ LDAP_unlock(krb5_context context, HDB * db)
 }
 
 static krb5_error_code
-LDAP_seq(krb5_context context, HDB * db, unsigned flags, hdb_entry * entry)
+LDAP_seq(krb5_context context,
+         HDB *db,
+         unsigned flags,
+         krb5_principal *key_princ,
+         HDB_EntryOrAlias *eoa)
 {
     int msgid, rc, parserc;
     krb5_error_code ret;
     LDAPMessage *e;
 
+    *key_princ = NULL;
     msgid = HDB2MSGID(db);
     if (msgid < 0)
 	return HDB_ERR_NOENTRY;
@@ -1515,7 +1520,8 @@ LDAP_seq(krb5_context context, HDB * db, unsigned flags, hdb_entry * entry)
 	    break;
 	case LDAP_RES_SEARCH_ENTRY:
 	    /* We have an entry. Parse it. */
-	    ret = LDAP_message2entry(context, db, e, flags, entry);
+            eoa->element = choice_HDB_EntryOrAlias_entry;
+	    ret = LDAP_message2entry(context, db, e, flags, &eoa->u.entry);
 	    ldap_msgfree(e);
 	    break;
 	case LDAP_RES_SEARCH_RESULT:
@@ -1550,18 +1556,24 @@ LDAP_seq(krb5_context context, HDB * db, unsigned flags, hdb_entry * entry)
 
     if (ret == 0) {
 	if (db->hdb_master_key_set && (flags & HDB_F_DECRYPT)) {
-	    ret = hdb_unseal_keys(context, db, entry);
+	    ret = hdb_unseal_keys(context, db, &eoa->u.entry);
 	    if (ret)
-		hdb_free_entry(context, db, entry);
+		hdb_free_entry(context, db, &eoa->u.entry);
 	}
+        if (ret == 0)
+            ret = krb5_copy_principal(context, eoa->u.entry.principal,
+                                      key_princ);
     }
 
     return ret;
 }
 
 static krb5_error_code
-LDAP_firstkey(krb5_context context, HDB *db, unsigned flags,
-	      hdb_entry *entry)
+LDAP_firstkey(krb5_context context,
+              HDB *db,
+              unsigned flags,
+              krb5_principal *key_princ,
+	      HDB_EntryOrAlias *eoa)
 {
     krb5_error_code ret;
     int msgid;
@@ -1584,14 +1596,17 @@ LDAP_firstkey(krb5_context context, HDB *db, unsigned flags,
 
     HDBSETMSGID(db, msgid);
 
-    return LDAP_seq(context, db, flags, entry);
+    return LDAP_seq(context, db, flags, key_princ, eoa);
 }
 
 static krb5_error_code
-LDAP_nextkey(krb5_context context, HDB * db, unsigned flags,
-	     hdb_entry * entry)
+LDAP_nextkey(krb5_context context,
+             HDB *db,
+             unsigned flags,
+             krb5_principal *key_princ,
+	     HDB_EntryOrAlias *entry)
 {
-    return LDAP_seq(context, db, flags, entry);
+    return LDAP_seq(context, db, flags, key_princ, entry);
 }
 
 static krb5_error_code

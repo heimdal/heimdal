@@ -167,7 +167,7 @@ dequeue_HDB_Ext_KeySet(HDB_Ext_KeySet *data, unsigned int element, hdb_keyset *k
  *
  * @param context Context
  * @param e The HDB entry
- * @param kvno The key version number
+ * @param kvno The key version number (if -1 then remove all keys)
  * @param ks A pointer to a variable of type hdb_keyset (may be NULL)
  *
  * @return Zero on success, an error code otherwise.
@@ -182,7 +182,14 @@ hdb_remove_keys(krb5_context context,
     HDB_extension *extp;
     size_t i;
 
-    if (kvno == 0 || e->kvno == kvno) {
+    if (ks) {
+        ks->kvno = 0;
+        ks->keys.len = 0;
+        ks->keys.val = 0;
+        ks->set_time = 0;
+    }
+
+    if (kvno == -1 || kvno == 0 || e->kvno == kvno) {
         if (ks) {
             KerberosTime t;
 
@@ -200,14 +207,8 @@ hdb_remove_keys(krb5_context context,
         } else {
             free_Keys(&e->keys);
         }
-        return 0;
-    }
-
-    if (ks) {
-        ks->kvno = 0;
-        ks->keys.len = 0;
-        ks->keys.val = 0;
-        ks->set_time = 0;
+        if (kvno != -1)
+            return 0;
     }
 
     extp = hdb_find_extension(e, choice_HDB_extension_data_hist_keys);
@@ -216,7 +217,7 @@ hdb_remove_keys(krb5_context context,
 
     hist_keys = &extp->data.u.hist_keys;
     for (i = 0; i < hist_keys->len; i++) {
-	if (hist_keys->val[i].kvno != kvno)
+	if (kvno != -1 && hist_keys->val[i].kvno != kvno)
             continue;
         if (ks)
             return dequeue_HDB_Ext_KeySet(hist_keys, i, ks);
@@ -410,15 +411,53 @@ hdb_foreach(krb5_context context,
 	    void *data)
 {
     krb5_error_code ret;
-    hdb_entry entry;
-    ret = db->hdb_firstkey(context, db, flags, &entry);
+    HDB_EntryOrAlias eoa;
+    krb5_principal key_princ = NULL;
+
+    ret = db->hdb_firstkey(context, db, flags, &key_princ, &eoa);
     if (ret == 0)
 	krb5_clear_error_message(context);
     while(ret == 0){
-	ret = (*func)(context, db, &entry, data);
-	hdb_free_entry(context, db, &entry);
+        if (eoa.element == choice_HDB_EntryOrAlias_entry) {
+            ret = (*func)(context, db, &eoa.u.entry, data);
+            hdb_free_entry(context, db, &eoa.u.entry);
+        } else {
+            free_HDB_EntryOrAlias(&eoa);
+        }
+        krb5_free_principal(context, key_princ);
+        key_princ = NULL;
 	if(ret == 0)
-	    ret = db->hdb_nextkey(context, db, flags, &entry);
+	    ret = db->hdb_nextkey(context, db, flags, &key_princ, &eoa);
+    }
+    if(ret == HDB_ERR_NOENTRY)
+	ret = 0;
+    return ret;
+}
+
+krb5_error_code
+hdb_foreach_eoa(krb5_context context,
+                HDB *db,
+                unsigned flags,
+                hdb_foreach_eoa_func_t func,
+                void *data)
+{
+    krb5_error_code ret;
+    HDB_EntryOrAlias eoa;
+    krb5_principal key_princ = NULL;
+
+    ret = db->hdb_firstkey(context, db, flags, &key_princ, &eoa);
+    if (ret == 0)
+	krb5_clear_error_message(context);
+    while(ret == 0){
+        ret = (*func)(context, db, key_princ, &eoa, data);
+        if (eoa.element == choice_HDB_EntryOrAlias_entry)
+            hdb_free_entry(context, db, &eoa.u.entry);
+        else
+            free_HDB_EntryOrAlias(&eoa);
+        krb5_free_principal(context, key_princ);
+        key_princ = NULL;
+	if(ret == 0)
+	    ret = db->hdb_nextkey(context, db, flags, &key_princ, &eoa);
     }
     if(ret == HDB_ERR_NOENTRY)
 	ret = 0;

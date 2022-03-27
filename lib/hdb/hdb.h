@@ -180,13 +180,13 @@ typedef struct HDB {
     /**
      * As part of iteration, fetch one entry
      */
-    krb5_error_code (*hdb_firstkey)(krb5_context, struct HDB*,
-				    unsigned, hdb_entry*);
+    krb5_error_code (*hdb_firstkey)(krb5_context, struct HDB *, unsigned,
+                                    krb5_principal *, HDB_EntryOrAlias *);
     /**
      * As part of iteration, fetch next entry
      */
-    krb5_error_code (*hdb_nextkey)(krb5_context, struct HDB*,
-				   unsigned, hdb_entry*);
+    krb5_error_code (*hdb_nextkey)(krb5_context, struct HDB *, unsigned,
+				   krb5_principal *, HDB_EntryOrAlias *);
     /**
      * Lock database
      *
@@ -304,7 +304,7 @@ typedef struct HDB {
     krb5_error_code (*hdb_set_sync)(krb5_context, struct HDB *, int);
 }HDB;
 
-#define HDB_INTERFACE_VERSION	11
+#define HDB_INTERFACE_VERSION	12
 
 struct hdb_method {
     int			version;
@@ -319,7 +319,9 @@ struct hdb_method {
 /* dump entry format, for hdb_print_entry() */
 typedef enum hdb_dump_format {
     HDB_DUMP_HEIMDAL = 0,
-    HDB_DUMP_MIT = 1,
+    HDB_DUMP_MIT,
+    HDB_DUMP_HEIMDAL_JSON,
+    HDB_DUMP_HEIMDAL_JSON_NOKEYS,
 } hdb_dump_format_t;
 
 struct hdb_print_entry_arg {
@@ -328,7 +330,12 @@ struct hdb_print_entry_arg {
 };
 
 typedef krb5_error_code (*hdb_foreach_func_t)(krb5_context, HDB*,
-					      hdb_entry*, void*);
+					      hdb_entry *, void *);
+typedef krb5_error_code (*hdb_foreach_eoa_func_t)(krb5_context,
+                                                  HDB *,
+                                                  krb5_principal,
+                                                  HDB_EntryOrAlias *,
+                                                  void *);
 extern krb5_kt_ops hdb_kt_ops;
 extern krb5_kt_ops hdb_get_kt_ops;
 

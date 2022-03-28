@@ -249,4 +249,10 @@ HDB-EntryOrAlias ::= CHOICE {
         alias       HDB_entry_alias
 }
 
+-- For itnernal use only - NOT TO BE USED IN ACTUAL HDBs
+HDB-KV ::= SEQUENCE {
+        key             Principal OPTIONAL,
+        value           HDB-EntryOrAlias
+}
+
 END

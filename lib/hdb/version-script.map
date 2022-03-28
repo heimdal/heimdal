@@ -47,6 +47,7 @@ HEIMDAL_HDB_1.0 {
 		hdb_fetch_kvno;
 		hdb_find_extension;
 		hdb_foreach;
+		hdb_foreach_eoa;
 		hdb_free_dbinfo;
 		hdb_free_entry;
 		hdb_free_key;
@@ -66,6 +67,7 @@ HEIMDAL_HDB_1.0 {
 		hdb_next_enctype2key;
 		hdb_principal2key;
 		hdb_print_entry;
+		hdb_print_entry_or_alias;
 		hdb_process_master_key;
 		hdb_prune_keys;
 		hdb_prune_keys_kvno;

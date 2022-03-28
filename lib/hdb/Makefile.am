@@ -19,31 +19,7 @@ BUILT_SOURCES = \
 	hdb_err.c \
 	hdb_err.h
 
-gen_files_hdb = \
-	asn1_Event.c \
-	asn1_GENERATION.c \
-	asn1_HDB_EncTypeList.c \
-	asn1_HDB_Ext_Aliases.c \
-	asn1_HDB_Ext_Constrained_delegation_acl.c \
-	asn1_HDB_Ext_KeyRotation.c \
-	asn1_HDB_Ext_KeySet.c \
-	asn1_HDB_Ext_Lan_Manager_OWF.c \
-	asn1_HDB_Ext_Password.c \
-	asn1_HDB_Ext_PKINIT_acl.c \
-	asn1_HDB_Ext_PKINIT_cert.c \
-	asn1_HDB_Ext_PKINIT_hash.c \
-	asn1_HDB_EntryOrAlias.c \
-	asn1_HDB_entry_alias.c \
-	asn1_HDB_entry.c \
-	asn1_HDB_extension.c \
-	asn1_HDB_extensions.c \
-	asn1_HDB_keyset.c \
-	asn1_HDBFlags.c \
-	asn1_Key.c \
-	asn1_KeyRotation.c \
-	asn1_KeyRotationFlags.c \
-	asn1_Keys.c \
-	asn1_Salt.c
+gen_files_hdb = asn1_hdb_asn1.c
 
 CLEANFILES = $(BUILT_SOURCES) $(gen_files_hdb) \
 	hdb_asn1{,-priv}.h hdb_asn1_files hdb_asn1-template.c \
@@ -149,7 +125,7 @@ $(gen_files_hdb) hdb_asn1.h hdb_asn1-priv.h: hdb_asn1_files
 	done
 
 hdb_asn1_files: $(ASN1_COMPILE_DEP) $(srcdir)/hdb.asn1
-	$(ASN1_COMPILE) --option-file=$(srcdir)/hdb.opt $(srcdir)/hdb.asn1 hdb_asn1
+	$(ASN1_COMPILE) --template --one-code-file --option-file=$(srcdir)/hdb.opt $(srcdir)/hdb.asn1 hdb_asn1
 	@$(CLANG_FORMAT) -style=$(CLANG_FORMAT_STYLE) -i $$(cat hdb_asn1_files)
 
 # to help stupid solaris make

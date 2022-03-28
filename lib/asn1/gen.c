@@ -729,6 +729,21 @@ is_primitive_type(const Type *t)
     }
 }
 
+int
+is_anonymous_choice_type(const Type *t)
+{
+    switch(t->type) {
+    case TTag:
+        return is_anonymous_choice_type(t->subtype);
+    case TChoice:
+        if (t->symbol)
+            return 0;
+	return 1;
+    default:
+	return 0;
+    }
+}
+
 static void
 space(int level)
 {

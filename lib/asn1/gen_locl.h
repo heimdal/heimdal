@@ -139,6 +139,7 @@ void add_import(const char *);
 void add_export(const char *);
 int is_export(const char *);
 int yyparse(void);
+int is_anonymous_choice_type(const Type *);
 int is_primitive_type(const Type *);
 int is_tagged_type(const Type *);
 

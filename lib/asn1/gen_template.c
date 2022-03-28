@@ -1263,6 +1263,13 @@ template_members(struct templatehead *temp,
 	generate_template_type(elname, &dupname, NULL, sename, name,
 			       t->subtype, 0, subtype_is_struct, 0);
 
+        if (is_anonymous_choice_type(t)) {
+            /*
+             */
+            free(poffset);
+            poffset = estrdup("0");
+        }
+
 	add_line_pointer(temp, dupname, poffset,
 			 "A1_TAG_T(%s,%s,%s)%s%s%s",
 			 classname(t->tag.tagclass),
@@ -1365,10 +1372,10 @@ template_members(struct templatehead *temp,
 				   symbol_name(newbasename, m->type),
 				   NULL, m->type, 0, subtype_is_struct, 1);
 
-	    add_line(&template, "{ %s, offsetof(%s%s, u.%s), asn1_%s }",
-		     m->label, isstruct ? "struct " : "",
-		     basetype, m->gen_name,
-		     dupname);
+	    add_line(&template, "{ %s, offsetof(%s%s, %s%su.%s), asn1_%s }",
+		     m->label, isstruct ? "struct " : "", basetype,
+                     name ? name : "", name ? "." : "",
+                     m->gen_name, dupname);
 
 	    free(elname);
 	    free(newbasename);
@@ -1380,7 +1387,9 @@ template_members(struct templatehead *temp,
 
 	e = NULL;
 	if (ellipsis) {
-	    if (asprintf(&e, "offsetof(%s%s, u.asn1_ellipsis)", isstruct ? "struct " : "", basetype) < 0 || e == NULL)
+	    if (asprintf(&e, "offsetof(%s%s, %s%su.asn1_ellipsis)",
+                         isstruct ? "struct " : "", basetype,
+                         name ? name : "", name ? "." : "") < 0 || e == NULL)
 		errx(1, "malloc");
 	}
 
@@ -1389,8 +1398,9 @@ template_members(struct templatehead *temp,
 	}
 
 	fprintf(f, "static const struct asn1_template %s[] = {\n", tname);
-	fprintf(f, "/* 0 */ { %s, offsetof(%s%s, element), ((void *)(uintptr_t)%lu) },\n",
-		e ? e : "0", isstruct ? "struct " : "", basetype, (unsigned long)count);
+	fprintf(f, "/* 0 */ { %s, offsetof(%s%s, %s%selement), ((void *)(uintptr_t)%lu) },\n",
+		e ? e : "0", isstruct ? "struct " : "", basetype,
+                name ? name : "", name ? "." : "", (unsigned long)count);
 	i = 1;
 	HEIM_TAILQ_FOREACH(q, &template, members) {
 	    int last = (HEIM_TAILQ_LAST(&template, templatehead) == q);
@@ -1432,8 +1442,7 @@ template_members(struct templatehead *temp,
     default:
 	abort ();
     }
-    if (poffset)
-	free(poffset);
+    free(poffset);
 }
 
 static void

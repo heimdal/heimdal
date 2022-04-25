@@ -133,9 +133,11 @@ fi
 
 # HTTP curl-opts
 HTTP() {
-    curl -g --resolve ${server}:${restport2}:127.0.0.1                  \
-            --resolve ${server}:${restport}:127.0.0.1                   \
-         -u: --negotiate $verbose "$@"
+    curl -g --resolve ${server}:${restport2}:127.0.0.1  \
+            --resolve ${server}:${restport}:127.0.0.1   \
+         -u: --negotiate $verbose                       \
+         -D response-headers                            \
+         "$@"
 }
 
 # get_config QPARAMS curl-opts
@@ -143,6 +145,23 @@ get_config() {
     url="http://${server}:${restport}/get-config?$1"
     shift
     HTTP $verbose "$@" "$url"
+}
+
+check_age() {
+    set -- $(grep -i ^Cache-Control: response-headers)
+    if [ $# -eq 0 ]; then
+        return 1
+    fi
+    shift
+    for param in "$@"; do
+        case "$param" in
+        no-store) true;;
+        max-age=0) return 1;;
+        max-age=*) true;;
+        *) return 1;;
+        esac
+    done
+    return 0;
 }
 
 # get_keytab QPARAMS curl-opts
@@ -163,9 +182,9 @@ get_keytab_POST() {
 
     get_keytab "$q" -X POST --data-binary @/dev/null -f "$@" && 
         { echo "POST succeeded w/o CSRF token!"; return 1; }
-    get_keytab "$q" -X POST --data-binary @/dev/null -D response-headers "$@"
+    get_keytab "$q" -X POST --data-binary @/dev/null "$@"
     grep ^X-CSRF-Token: response-headers >/dev/null || return 1
-    get_keytab "$q" -X POST --data-binary @/dev/null -D response-headers \
+    get_keytab "$q" -X POST --data-binary @/dev/null \
         -H "$(sed -e 's/\r//' response-headers | grep ^X-CSRF-Token:)" "$@"
     grep '^HTTP/1.1 200' response-headers >/dev/null || return $?
     return 0
@@ -174,7 +193,7 @@ get_keytab_POST() {
 get_keytab_POST_redir() {
     url="http://${server}:${restport}/get-keys?$1"
     shift
-    HTTP -X POST --data-binary @/dev/null -D response-headers "$@" "$url"
+    HTTP -X POST --data-binary @/dev/null "$@" "$url"
     grep ^X-CSRF-Token: response-headers >/dev/null ||
         { echo "POST w/o CSRF token had response w/o CSRF token!"; return 1; }
     HTTP -X POST --data-binary @/dev/null  -f                           \
@@ -292,6 +311,8 @@ ${ktutil} -k "${objdir}/extracted_keytab" list --keys > extracted_keytab.kadmin 
     { echo "Failed to list keytab for $p"; exit 1; }
 get_keytab "dNSName=${hn}" -sf -o "${objdir}/extracted_keytab" ||
     { echo "Failed to get a keytab for $p with curl"; exit 1; }
+check_age
+grep -i ^Cache-Control response-headers
 ${ktutil} -k "${objdir}/extracted_keytab" list --keys > extracted_keytab.rest ||
     { echo "Failed to list keytab for $p"; exit 1; }
 cmp extracted_keytab.kadmin extracted_keytab.rest ||

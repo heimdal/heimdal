@@ -177,6 +177,7 @@ typedef struct kadmin_request_desc {
     char *freeme1;
     char *enctypes;
     const char *method;
+    krb5_timestamp pw_end;
     unsigned int response_set:1;
     unsigned int materialize:1;
     unsigned int rotate_now:1;
@@ -657,8 +658,36 @@ resp(kadmin_request_desc r,
                                                rmmode);
     if (response == NULL)
         return -1;
-    mret = MHD_add_response_header(response, MHD_HTTP_HEADER_CACHE_CONTROL,
-                                   "no-store, max-age=0");
+    mret = MHD_add_response_header(response, MHD_HTTP_HEADER_AGE, "0");
+    if (mret == MHD_YES && http_status_code == MHD_HTTP_OK) {
+        static HEIMDAL_THREAD_LOCAL char *cache_control = NULL;
+        krb5_timestamp now;
+
+        free(cache_control);
+        cache_control = NULL;
+        krb5_timeofday(r->context, &now);
+        if (r->pw_end && r->pw_end > now) {
+            if (asprintf(&cache_control, "no-store, max-age=%lld",
+                         (long long)r->pw_end - now) == -1 ||
+                cache_control == NULL)
+                /* Soft handling of ENOMEM here */
+                mret = MHD_add_response_header(response,
+                                               MHD_HTTP_HEADER_CACHE_CONTROL,
+                                               "no-store, max-age=3600");
+            else
+                mret = MHD_add_response_header(response,
+                                               MHD_HTTP_HEADER_CACHE_CONTROL,
+                                               cache_control);
+
+        } else
+            mret = MHD_add_response_header(response,
+                                           MHD_HTTP_HEADER_CACHE_CONTROL,
+                                           "no-store, max-age=0");
+    } else {
+        /* Shouldn't happen */
+        mret = MHD_add_response_header(response, MHD_HTTP_HEADER_CACHE_CONTROL,
+                                       "no-store, max-age=0");
+    }
     if (mret == MHD_YES && http_status_code == MHD_HTTP_UNAUTHORIZED) {
         size_t i;
 
@@ -1215,6 +1244,93 @@ make_kstuple(krb5_context context,
     return *kstuple ? 0 :krb5_enomem(context);
 }
 
+/* Copied from kadmin/util.c */
+struct units kdb_attrs[] = {
+    { "no-auth-data-reqd",      KRB5_KDB_NO_AUTH_DATA_REQUIRED },
+    { "disallow-client",        KRB5_KDB_DISALLOW_CLIENT },
+    { "virtual",                KRB5_KDB_VIRTUAL },
+    { "virtual-keys",           KRB5_KDB_VIRTUAL_KEYS },
+    { "allow-digest",           KRB5_KDB_ALLOW_DIGEST },
+    { "allow-kerberos4",        KRB5_KDB_ALLOW_KERBEROS4 },
+    { "trusted-for-delegation", KRB5_KDB_TRUSTED_FOR_DELEGATION },
+    { "ok-as-delegate",         KRB5_KDB_OK_AS_DELEGATE },
+    { "new-princ",              KRB5_KDB_NEW_PRINC },
+    { "support-desmd5",         KRB5_KDB_SUPPORT_DESMD5 },
+    { "pwchange-service",       KRB5_KDB_PWCHANGE_SERVICE },
+    { "disallow-svr",           KRB5_KDB_DISALLOW_SVR },
+    { "requires-pw-change",     KRB5_KDB_REQUIRES_PWCHANGE },
+    { "requires-hw-auth",       KRB5_KDB_REQUIRES_HW_AUTH },
+    { "requires-pre-auth",      KRB5_KDB_REQUIRES_PRE_AUTH },
+    { "disallow-all-tix",       KRB5_KDB_DISALLOW_ALL_TIX },
+    { "disallow-dup-skey",      KRB5_KDB_DISALLOW_DUP_SKEY },
+    { "disallow-proxiable",     KRB5_KDB_DISALLOW_PROXIABLE },
+    { "disallow-renewable",     KRB5_KDB_DISALLOW_RENEWABLE },
+    { "disallow-tgt-based",     KRB5_KDB_DISALLOW_TGT_BASED },
+    { "disallow-forwardable",   KRB5_KDB_DISALLOW_FORWARDABLE },
+    { "disallow-postdated",     KRB5_KDB_DISALLOW_POSTDATED },
+    { NULL, 0 }
+};
+
+/*
+ * Determine the default/allowed attributes for some new principal.
+ */
+static krb5_flags
+create_attributes(kadmin_request_desc r, krb5_const_principal p)
+{
+    krb5_error_code ret;
+    const char *srealm = krb5_principal_get_realm(r->context, p);
+    const char *svc;
+    const char *hn;
+
+    /* Has to be a host-based service principal (for now) */
+    if (krb5_principal_get_num_comp(r->context, p) != 2)
+        return 0;
+
+    hn = krb5_principal_get_comp_string(r->context, p, 1);
+    svc = krb5_principal_get_comp_string(r->context, p, 0);
+
+    while (hn && strchr(hn, '.') != NULL) {
+        kadm5_principal_ent_rec nsprinc;
+        krb5_principal nsp;
+        uint64_t a = 0;
+        const char *as;
+
+        /* Try finding a virtual host-based service principal namespace */
+        memset(&nsprinc, 0, sizeof(nsprinc));
+        ret = krb5_make_principal(r->context, &nsp, srealm,
+                                  KRB5_WELLKNOWN_NAME, HDB_WK_NAMESPACE,
+                                  svc, hn, NULL);
+        if (ret == 0)
+            ret = kadm5_get_principal(r->kadm_handle, nsp, &nsprinc,
+                                      KADM5_PRINCIPAL | KADM5_ATTRIBUTES);
+        krb5_free_principal(r->context, nsp);
+        if (ret == 0) {
+            /* Found one; use it even if disabled, but drop that attribute */
+            a = nsprinc.attributes & ~KRB5_KDB_DISALLOW_ALL_TIX;
+            kadm5_free_principal_ent(r->kadm_handle, &nsprinc);
+            return a;
+        }
+
+        /* Fallback on krb5.conf */
+        as = krb5_config_get_string(r->context, NULL, "ext_keytab",
+                                    "new_hostbased_service_principal_attributes",
+                                    svc, hn, NULL);
+        if (as) {
+            a = parse_flags(as, kdb_attrs, 0);
+            if (a == (uint64_t)-1) {
+                krb5_warnx(r->context, "Invalid value for [ext_keytab] "
+                           "new_hostbased_service_principal_attributes");
+                return 0;
+            }
+            return a;
+        }
+
+        hn = strchr(hn + 1, '.');
+    }
+
+    return 0;
+}
+
 /*
  * Get keys for one principal.
  *
@@ -1229,7 +1345,8 @@ get_keys1(kadmin_request_desc r, const char *pname)
     krb5_principal p = NULL;
     uint32_t mask =
         KADM5_PRINCIPAL | KADM5_KVNO | KADM5_MAX_LIFE | KADM5_MAX_RLIFE |
-        KADM5_ATTRIBUTES | KADM5_KEY_DATA | KADM5_TL_DATA;
+        KADM5_PW_EXPIRATION | KADM5_ATTRIBUTES | KADM5_KEY_DATA |
+        KADM5_TL_DATA;
     uint32_t create_mask = mask & ~(KADM5_KEY_DATA | KADM5_TL_DATA);
     size_t nkstuple = 0;
     int change = 0;
@@ -1270,6 +1387,9 @@ get_keys1(kadmin_request_desc r, const char *pname)
     if (ret == KADM5_UNK_PRINC && r->create) {
         char pw[128];
 
+        memset(&princ, 0, sizeof(princ));
+        princ.attributes = create_attributes(r, p);
+
         if (read_only)
             ret = KADM5_READ_ONLY;
         else
@@ -1281,7 +1401,6 @@ get_keys1(kadmin_request_desc r, const char *pname)
             ret = get_kadm_handle(r->context, r->realm, 1 /* want_write */,
                                   &r->kadm_handle);
         }
-        memset(&princ, 0, sizeof(princ));
         /*
          * Some software is allergic to kvno 1, assuming that kvno 1 implies
          * half-baked service principal.  We've some vague recollection of
@@ -1384,6 +1503,36 @@ get_keys1(kadmin_request_desc r, const char *pname)
 
     if (ret == 0)
         ret = write_keytab(r, &princ, pname);
+
+    if (ret == 0) {
+        /*
+         * We will use the principal's password expiration to work out the
+         * value for the max-age Cache-Control.
+         *
+         * Virtual service principals will have their `pw_expiration' set to a
+         * time when the client should refetch keys.
+         *
+         * Concrete service principals will generally not have a non-zero
+         * `pw_expiration', but if we have a new_service_key_delay, then we'll
+         * use half of it as the max-age Cache-Control.
+         */
+        if (princ.pw_expiration == 0) {
+            krb5_timestamp nskd =
+                krb5_config_get_time_default(r->context, NULL, 0, "hdb",
+                                             "new_service_key_delay", NULL);
+            if (nskd)
+                princ.pw_expiration = time(NULL) + (nskd >> 1);
+        }
+
+        /*
+         * This service can be used to fetch more than one principal's keys, so
+         * the max-age Cache-Control should be derived from the soonest-
+         * "expiring" principal.
+         */
+        if (r->pw_end == 0 ||
+            (princ.pw_expiration < r->pw_end && princ.pw_expiration > time(NULL)))
+            r->pw_end = princ.pw_expiration;
+    }
     if (freeit)
         kadm5_free_principal_ent(r->kadm_handle, &princ);
     krb5_free_principal(r->context, p);

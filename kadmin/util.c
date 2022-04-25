@@ -47,6 +47,7 @@ get_response(const char *prompt, const char *def, char *buf, size_t len);
  */
 
 struct units kdb_attrs[] = {
+    { "no-auth-data-reqd",	KRB5_KDB_NO_AUTH_DATA_REQUIRED },
     { "disallow-client",	KRB5_KDB_DISALLOW_CLIENT },
     { "virtual",		KRB5_KDB_VIRTUAL },
     { "virtual-keys",		KRB5_KDB_VIRTUAL_KEYS },
@@ -69,7 +70,6 @@ struct units kdb_attrs[] = {
     { "disallow-tgt-based",	KRB5_KDB_DISALLOW_TGT_BASED },
     { "disallow-forwardable",	KRB5_KDB_DISALLOW_FORWARDABLE },
     { "disallow-postdated",	KRB5_KDB_DISALLOW_POSTDATED },
-    { "no-auth-data-reqd",	KRB5_KDB_NO_AUTH_DATA_REQUIRED },
     { NULL, 0 }
 };
 

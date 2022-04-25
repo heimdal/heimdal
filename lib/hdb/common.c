@@ -1612,6 +1612,10 @@ fetch_it(krb5_context context,
          * of labels.
          */
 	ret = db->hdb_fetch_kvno(context, db, tmpprinc, flags, kvno, ent);
+        if (ret == 0 && nsprinc && ent->flags.invalid) {
+            free_HDB_entry(ent);
+            ret = HDB_ERR_NOENTRY;
+        }
 	if (ret != HDB_ERR_NOENTRY || hdots == 0 || hdots < mindots || !tmp ||
             !do_search)
             break;

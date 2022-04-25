@@ -1423,9 +1423,6 @@ get_keys1(kadmin_request_desc r, const char *pname)
     } else if (ret == 0 && r->materialize &&
                (princ.attributes & KRB5_KDB_VIRTUAL)) {
 
-#ifndef MATERIALIZE_NOTYET
-        ret = ENOTSUP;
-#else
         if (read_only)
             ret = KADM5_READ_ONLY;
         else
@@ -1454,7 +1451,6 @@ get_keys1(kadmin_request_desc r, const char *pname)
         if (ret == 0)
             ret = kadm5_create_principal(r->kadm_handle, &princ, mask, "");
         refetch = 1;
-#endif
     } /* else create/materialize q-params are superfluous */
 
     /* Handle rotate / revoke options */

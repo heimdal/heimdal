@@ -437,7 +437,6 @@ ${ktutil} -k "${objdir}/extracted_keytab" list --keys > extracted_keytab.kadmin 
 cmp extracted_keytab.kadmin extracted_keytab.rest ||
     { echo "Keytabs for $p don't match!"; exit 1; }
 
-if false; then
 hn=bar.ns.${domain}
 p=HTTP/$hn
 echo "Checking materialization of virtual principal ($p)"
@@ -456,7 +455,6 @@ ${ktutil} -k "${objdir}/extracted_keytab" list --keys > extracted_keytab.kadmin 
     { echo "Failed to list keytab for $p"; exit 1; }
 cmp extracted_keytab.kadmin extracted_keytab.rest ||
     { echo "Keytabs for $p don't match!"; exit 1; }
-fi
 
 echo "Starting secondary httpkadmind to test HTTP redirection"
 ${httpkadmind2} --primary-server-uri=http://localhost:$restport         \

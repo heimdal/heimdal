@@ -70,9 +70,11 @@ Serves the following resources:
 .Pp
 The
 .Ar /get-keys
-end-point allows callers to get keytab content for named
-principals, possibly performing write operations such as creating
-a non-existent principal, or rotating its keys, if requested.
+end-point allows callers to get a principal's keys in
+.Dq keytab
+format for named principals, possibly performing write operations
+such as creating a non-existent principal, or rotating its keys,
+if requested.
 .Pp
 The
 .Ar /get-config
@@ -406,6 +408,17 @@ Configuration parameters specific to
 .It csr_authorizer_handles_svc_names = BOOL
 .It new_hostbased_service_principal_attributes = ...
 .El
+.Pp
+The
+.Nm [ext_keytab]
+.Nm get_keys_max_spns = NUMBER
+parameter can be used to specify a maximum number of principals whose
+keys can be retrieved in one
+.Nm GET
+of the
+.Nm /get-keys
+end-point.
+Defaults to 400.
 .Pp
 The
 .Nm [ext_keytab]

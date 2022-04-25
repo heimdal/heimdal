@@ -1585,8 +1585,9 @@ get_keysN(kadmin_request_desc r, const char *method)
             return bad_503(r, ret, "Out of memory");
     }
 
-    /* FIXME: Make this configurable */
-    if (nspns + nsvcs * nhosts > 40)
+    if (nspns + nsvcs * nhosts >
+        krb5_config_get_int_default(r->context, NULL, 400,
+                                    "ext_keytab", "get_keys_max_spns", NULL))
         return bad_403(r, EINVAL, "Requested keys for too many principals");
 
     ret = make_keytab(r);

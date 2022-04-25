@@ -856,6 +856,10 @@ derive_keys_for_kr(krb5_context context,
      * (t - krp->epoch < 0) is better than (krp->epoch < t), making us more
      * tolerant of signed 32-bit time_t here near 2038.  Of course, we have
      * signed 32-bit time_t dragons elsewhere.
+     *
+     * We don't need to check for n == 0 && rotation_period_offset < 0 because
+     * only derive_keys_for_current_kr() calls us with non-zero rotation period
+     * offsets, and it will never call us in that case.
      */
     if (t - krp->epoch < 0)
         return 0; /* This KR is not relevant yet */
@@ -863,6 +867,37 @@ derive_keys_for_kr(krb5_context context,
     n += rotation_period_offset;
     set_time = krp->epoch + krp->period * n;
     kvno = krp->base_kvno + n;
+
+    /*
+     * Since this principal is virtual, or has virtual keys, we're going to
+     * derive a "password expiration time" for it in order to help httpkadmind
+     * and other tools figure out when to request keys again.
+     *
+     * The kadm5 representation of principals does not include the set_time of
+     * keys/keysets, so we can't have httpkadmind derive a Cache-Control from
+     * that without adding yet another "TL data".  Since adding TL data is a
+     * huge pain, we'll just use the `pw_end' field of `HDB_entry' to
+     * communicate when this principal's keys will change next.
+     */
+    if (h->pw_end[0] == 0) {
+        KerberosTime used = (t - krp->epoch) % krp->period;
+        KerberosTime left = krp->period - used;
+
+        /*
+         * If `h->pw_end[0]' == 0 then this must be the current period of the
+         * current KR we're deriving keys for.  See upstairs.
+         *
+         * If there's more than a quarter of this time period left, then we'll
+         * set `h->pw_end[0]' to one quarter before the end of this time
+         * period.  Else we'll set it to 1/4 after (we'll be including the next
+         * set of derived keys, so there's no harm in waiting that long to
+         * refetch).
+         */
+        if (left > krp->period >> 2)
+            h->pw_end[0] = set_time + krp->period - (krp->period >> 2);
+        else
+            h->pw_end[0] = set_time + krp->period + (krp->period >> 2);
+    }
 
 
     /*
@@ -1198,6 +1233,11 @@ derive_keys(krb5_context context,
                                "because last key rotation period "
                                "marks deletion", p);
 
+    /* See `derive_keys_for_kr()' */
+    if (h->pw_end == NULL &&
+        (h->pw_end = calloc(1, sizeof(h->pw_end[0]))) == NULL)
+        ret = krb5_enomem(context);
+
     /*
      * Derive and set in `h' its current kvno and current keys.
      *
@@ -1245,6 +1285,12 @@ derive_keys(krb5_context context,
         ret = krb5_enomem(context);
     if (ret == 0 && *h->max_life > kr.val[current_kr].period >> 1)
         *h->max_life = kr.val[current_kr].period >> 1;
+
+    if (ret == 0 && h->pw_end[0] == 0)
+        /* Shouldn't happen */
+        h->pw_end[0] = kr.val[current_kr].epoch +
+            kr.val[current_kr].period *
+            (1 + (t - kr.val[current_kr].epoch) / kr.val[current_kr].period);
 
     free_HDB_Ext_KeyRotation(&kr);
     free_HDB_Ext_KeySet(&base_keys);
@@ -1730,11 +1776,22 @@ hdb_fetch_kvno(krb5_context context,
                hdb_entry *h)
 {
     krb5_error_code ret;
+    krb5_timestamp now;
+
+    krb5_timeofday(context, &now);
 
     flags |= kvno ? HDB_F_KVNO_SPECIFIED : 0; /* XXX is this needed */
-    if (t == 0)
-        krb5_timeofday(context, &t);
-    ret = fetch_it(context, db, principal, flags, t, etype, kvno, h);
+    ret = fetch_it(context, db, principal, flags, t ? t : now, etype, kvno, h);
+    if (ret == 0 && t == 0 && h->flags.virtual &&
+        h->pw_end && h->pw_end[0] < now) {
+        /*
+         * This shouldn't happen!
+         *
+         * Do not allow h->pw_end[0] to be in the past for virtual principals
+         * outside testing.  This is just to prevent the AS/TGS from failing.
+         */
+        h->pw_end[0] = now + 3600;
+    }
     if (ret == HDB_ERR_NOENTRY)
 	krb5_set_error_message(context, ret, "no such entry found in hdb");
     return ret;

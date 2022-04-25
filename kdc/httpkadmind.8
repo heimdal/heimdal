@@ -140,6 +140,11 @@ If the named principal(s) is (are) virtual, this will cause it
 .It Ar create=true
 If the named principal(s) does not (do not) exist, this will
 cause it (them) to be created.
+The default attributes for new principals created this way will
+be taken from any containing virtual host-based service principal
+namespace (not including the disabled attribute), or from
+.Nm krb5.conf(5)
+(see the CONFIGURATION section).
 .It Ar rotate=true
 This will cause the keys of concrete principals to be rotated.
 .It Ar revoke=true
@@ -149,6 +154,31 @@ This means that extant service tickets with those principals as
 the target will not be able to be decrypted by the caller as it
 will not have the necessary keys.
 .El
+.Pp
+The HTTP
+.Nm Cache-Control
+header will be set on
+.Nm get-keys
+responses to
+.Dq Nm no-store ,
+and the
+.Nm max-age
+cache control parameter will be set to the least number of
+seconds until before any of the requested principal's keys could
+change.
+For virtual principals this will be either the time left until a
+quarter of the rotation period before the next rotation, or the
+time left until a
+quarter of the rotation period after the next rotation.
+For concrete principals this will be the time left to the first
+such principal's password expiration, or, if none of them have a
+configured password expiration time, then half of the
+.Nm new_service_key_delay
+configured in the
+.Nm [hdb]
+section of the
+.Nm krb5.conf(5)
+file.
 .Pp
 Authorization is handled via the same mechanism as in
 .Nm bx509d(8)
@@ -160,9 +190,10 @@ but using
 .Nm [ext_keytab]
 as the
 .Nm krb5.conf(5) section.
-Clients with host-based principals for the the host service can
-create and extract keys for their own service name, but otherwise
-a number of service names are not denied:
+Clients with host-based principals for the
+.Dq host
+service can create and extract keys for their own service name,
+but otherwise a number of service names are denied:
 .Bl -tag -width Ds -offset indent
 .It Dq host
 .It Dq root
@@ -361,11 +392,58 @@ Authorizer configuration goes in
 in
 .Nm krb5.conf(5).  For example:
 .Pp
+.Bd -literal -offset indent
 [ext_keytab]
   simple_csr_authorizer_directory = /etc/krb5/simple_csr_authz
   ipc_csr_authorizer = {
     service = UNIX:/var/heimdal/csr_authorizer_sock
   }
+.Ed
+.Pp
+Configuration parameters specific to
+.Nm httpkadmind :
+.Bl -tag -width Ds -offset indent
+.It csr_authorizer_handles_svc_names = BOOL
+.It new_hostbased_service_principal_attributes = ...
+.El
+.Pp
+The
+.Nm [ext_keytab]
+.Nm new_hostbased_service_principal_attributes
+parameter may be used instead of virtual host-based service
+namespace principals to specify the attributes of new principals
+created by
+.Nm httpkadmind ,
+and its value is a hive with a service name then a hostname or
+namespace, and whose value is a set of attributes as given in the
+.Nm kadmin(1) modify
+command.
+For example:
+.Bd -literal -offset indent
+[ext_keytab]
+  new_hostbased_service_principal_attributes = {
+    host = {
+        a-particular-hostname.test.h5l.se = ok-as-delegate
+        .prod.test.h5l.se = ok-as-delegate
+    }
+  }
+.Ed
+.Pp
+which means that
+.Dq host/a-particular-hostname.test.h5l.se ,
+if created via
+.Nm httpkadmind ,
+will be allowed to get delegated credentials (ticket forwarding),
+and that hostnames matching the glob pattern
+.Dq host/*.prod.test.h5l.se ,
+if created via
+.Nm httpkadmind ,
+will also allowed to get delegated credentials.
+All host-based service principals created via
+.Nm httpkadmind
+not matchining any
+.Nm new_hostbased_service_principal_attributes
+service namespaces will have the empty attribute set.
 .Sh EXAMPLES
 To start
 .Nm httpkadmind

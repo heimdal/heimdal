@@ -143,8 +143,11 @@ If the named principal(s) is (are) virtual, this will cause it
 If the named principal(s) does not (do not) exist, this will
 cause it (them) to be created.
 The default attributes for new principals created this way will
-be taken from any containing virtual host-based service principal
-namespace (not including the disabled attribute), or from
+be taken (except for the disabled attribute) from any containing
+virtual host-based service principal namespace that include a
+leading
+.Sq .
+in the hostname component, or from
 .Nm krb5.conf(5)
 (see the CONFIGURATION section).
 .It Ar rotate=true

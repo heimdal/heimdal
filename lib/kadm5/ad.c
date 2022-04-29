@@ -1196,7 +1196,7 @@ kadm5_ad_modify_principal(void *server_handle,
 	if (entry->attributes & KRB5_KDB_REQUIRES_HW_AUTH)
 	    i |= UF_SMARTCARD_REQUIRED;
 	else
-	    i &= UF_SMARTCARD_REQUIRED;
+	    i &= ~UF_SMARTCARD_REQUIRED;
 	if (entry->attributes & KRB5_KDB_DISALLOW_SVR)
 	    i &= ~UF_WORKSTATION_TRUST_ACCOUNT;
 	else

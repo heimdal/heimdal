@@ -990,6 +990,7 @@ struct kdc_patypes {
 #define PA_SYNTHETIC_OK	4
 #define PA_REPLACE_REPLY_KEY	8   /* PA mech replaces reply key */
 #define PA_USES_LONG_TERM_KEY	16  /* PA mech uses client's long-term key */
+#define PA_HARDWARE_AUTH	32  /* PA mech uses hardware authentication */
     krb5_error_code (*validate)(astgs_request_t, const PA_DATA *pa);
     krb5_error_code (*finalize_pac)(astgs_request_t r);
     void (*cleanup)(astgs_request_t r);
@@ -999,11 +1000,11 @@ static const struct kdc_patypes pat[] = {
 #ifdef PKINIT
     {
 	KRB5_PADATA_PK_AS_REQ, "PK-INIT(ietf)",
-        PA_ANNOUNCE | PA_SYNTHETIC_OK | PA_REPLACE_REPLY_KEY,
+        PA_ANNOUNCE | PA_SYNTHETIC_OK | PA_REPLACE_REPLY_KEY | PA_HARDWARE_AUTH,
 	pa_pkinit_validate, NULL, NULL
     },
     {
-	KRB5_PADATA_PK_AS_REQ_WIN, "PK-INIT(win2k)", PA_ANNOUNCE | PA_REPLACE_REPLY_KEY,
+	KRB5_PADATA_PK_AS_REQ_WIN, "PK-INIT(win2k)", PA_ANNOUNCE | PA_REPLACE_REPLY_KEY | PA_HARDWARE_AUTH,
 	pa_pkinit_validate, NULL, NULL
     },
     {
@@ -2243,6 +2244,13 @@ _kdc_as_rep(astgs_request_t r)
                     !(pat[n].flags & PA_SYNTHETIC_OK)) {
                     kdc_log(r->context, config, 4, "UNKNOWN -- %s", r->cname);
                     ret = KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN;
+                    goto out;
+                }
+                if (r->client->flags.require_hwauth &&
+                    !(pat[n].flags & PA_HARDWARE_AUTH)) {
+                    kdc_log(r->context, config, 4, "Hardware authentication required for %s", r->cname);
+
+                    ret = KRB5KDC_ERR_POLICY;
                     goto out;
                 }
 		kdc_audit_addkv((kdc_request_t)r, KDC_AUDIT_VIS, "pa", "%s",

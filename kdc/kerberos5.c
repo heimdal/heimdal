@@ -2656,7 +2656,9 @@ _kdc_as_rep(astgs_request_t r)
 
     /* Add the PAC */
     if (!r->et.flags.anonymous) {
-	generate_pac(r, skey, krbtgt_key, is_tgs);
+	ret = generate_pac(r, skey, krbtgt_key, is_tgs);
+	if (ret)
+	    goto out;
     }
 
     if (r->client->flags.synthetic) {

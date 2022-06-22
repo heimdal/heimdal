@@ -507,14 +507,16 @@ rk_WIN32_EXPORT(BUILD_KDC_LIB, KDC_LIB)
 
 dnl Deal with switch FALLTHROUGH
 AH_TOP([
-#if defined(__GNUC__)
-#if __GNUC__ >= 7
-# define fallthrough __attribute__((fallthrough))
+#if defined(DISPATCH_FALLTHROUGH)
+# define HEIM_FALLTHROUGH DISPATCH_FALLTHROUGH
+#elif defined(__GNUC__)
+# if __GNUC__ >= 7
+#  define HEIM_FALLTHROUGH __attribute__((fallthrough))
+# else
+#  define HEIM_FALLTHROUGH do {} while (0) /* fallthrough */
+# endif
 #else
-# define fallthrough do {} while (0) /* fallthrough */
-#endif
-#else
-# define fallthrough  do {} while (0) /* fallthrough */
+# define HEIM_FALLTHROUGH do {} while (0) /* fallthrough */
 #endif
 ])
 

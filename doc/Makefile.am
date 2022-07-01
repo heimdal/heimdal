@@ -10,6 +10,8 @@ TEXI2DVI = true # ARGH, make distcheck can't be disabled to not build dvifiles
 
 info_TEXINFOS = heimdal.texi hx509.texi
 
+BUILT_SOURCES = vars.texi
+
 dxy_subst = sed -e 's,[@]srcdir[@],$(srcdir),g' \
 	-e 's,[@]objdir[@],.,g' \
 	-e 's,[@]PACKAGE_VERSION[@],$(PACKAGE_VERSION),g'

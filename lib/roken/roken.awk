@@ -12,6 +12,7 @@ BEGIN {
 	print "#ifdef HAVE_ERRNO_H"
 	print "#include <errno.h>"
 	print "#endif"
+	print "#include <limits.h>"
 	print ""
 	print "int main(int argc, char **argv)"
 	print "{"

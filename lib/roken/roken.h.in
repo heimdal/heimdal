@@ -1327,4 +1327,20 @@ win32_getLibraryVersion(const char *libname, char **outname, char **outversion);
 #include <socket_wrapper.h>
 #endif
 
+#ifndef LLONG_MAX
+#ifdef LONG_LONG_MAX
+#define LLONG_MAX LONG_LONG_MAX
+#endif
+#endif
+
+#ifndef ULLONG_MAX
+#ifdef ULONG_LONG_MAX
+#define ULLONG_MAX ULONG_LONG_MAX
+#endif
+#endif
+
+#ifndef LLONG_MIN
+#define LLONG_MIN (-LLONG_MAX - 1LL)
+#endif
+
 ROKEN_CPP_END

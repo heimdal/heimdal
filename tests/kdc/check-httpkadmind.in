@@ -697,7 +697,7 @@ ${hxtool} issue-certificate \
           --lifetime=7d \
           --certificate="FILE:pkinit-synthetic.crt" ||
          { echo "Failed to make PKINIT client cert"; exit 1; }
-KRB5CCNAME=$admincache ${kadmin} get -s $p >/dev/null &&
+KRB5CCNAME=$admincache ${kadmin} get -s $p >/dev/null 2>&1 &&
     { echo "Internal error -- $p exists too soon"; exit 1; }
 ${kinit2} -C "FILE:${objdir}/pkinit-synthetic.crt,${keyfile2}" ${p}@${R} || \
     { echo "Failed to kinit with PKINIT client cert"; exit 1; }
@@ -727,7 +727,7 @@ ${hxtool} issue-certificate \
           --lifetime=7d \
           --certificate="FILE:pkinit-synthetic.crt" ||
          { echo "Failed to make PKINIT client cert"; exit 1; }
-KRB5CCNAME=$admincache ${kadmin} get -s $p >/dev/null &&
+KRB5CCNAME=$admincache ${kadmin} get -s $p >/dev/null 2>&1 &&
     { echo "Internal error -- $p exists too soon"; exit 1; }
 ${kinit2} -C "FILE:${objdir}/pkinit-synthetic.crt,${keyfile2}" ${p}@${R} || \
     { echo "Failed to kinit with PKINIT client cert"; exit 1; }
@@ -757,7 +757,7 @@ ${hxtool} issue-certificate \
           --lifetime=7d \
           --certificate="FILE:pkinit-synthetic.crt" ||
          { echo "Failed to make PKINIT client cert"; exit 1; }
-KRB5CCNAME=$admincache ${kadmin} get -s $p >/dev/null &&
+KRB5CCNAME=$admincache ${kadmin} get -s $p >/dev/null 2>&1 &&
     { echo "Internal error -- $p exists too soon"; exit 1; }
 ${kinit2} -C "FILE:${objdir}/pkinit-synthetic.crt,${keyfile2}" ${p}@${R} || \
     { echo "Failed to kinit with PKINIT client cert"; exit 1; }
@@ -787,7 +787,7 @@ ${hxtool} issue-certificate \
           --lifetime=7d \
           --certificate="FILE:pkinit-synthetic.crt" ||
          { echo "Failed to make PKINIT client cert"; exit 1; }
-KRB5CCNAME=$admincache ${kadmin} get -s $p >/dev/null &&
+KRB5CCNAME=$admincache ${kadmin} get -s $p >/dev/null 2>&1 &&
     { echo "Internal error -- $p exists too soon"; exit 1; }
 ${kinit2} -C "FILE:${objdir}/pkinit-synthetic.crt,${keyfile2}" ${p}@${R} || \
     { echo "Failed to kinit with PKINIT client cert"; exit 1; }

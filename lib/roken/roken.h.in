@@ -1236,9 +1236,9 @@ vis(char *, int, int, int);
 
 #if !defined(HAVE_CLOSEFROM)
 #define closefrom rk_closefrom
-ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
-closefrom(int);
 #endif
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
+rk_closefrom(int);
 
 #if !defined(HAVE_TIMEGM)
 #define timegm rk_timegm

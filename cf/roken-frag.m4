@@ -398,6 +398,8 @@ AC_BROKEN([					\
 	writev					\
 ])
 
+rk_LIBOBJ(closefrom)
+
 AM_CONDITIONAL(have_fnmatch_h,
 	test "$ac_cv_header_fnmatch_h" = yes -a "$ac_cv_func_fnmatch" = yes)
 

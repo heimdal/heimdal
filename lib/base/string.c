@@ -153,7 +153,8 @@ heim_string_create_with_bytes(const void *data, size_t len)
 
     s = _heim_alloc_object(&_heim_string_object, len + 1);
     if (s) {
-	memcpy(s, data, len);
+        if (len)
+            memcpy(s, data, len);
 	((char *)s)[len] = '\0';
     }
     return s;

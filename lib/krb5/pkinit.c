@@ -109,7 +109,7 @@ integer_to_BN(krb5_context context, const char *field, const heim_integer *f)
 }
 
 static krb5_error_code
-select_dh_group(krb5_context context, DH *dh, unsigned long bits,
+select_dh_group(krb5_context context, DH *dh, unsigned long min_bits,
 		struct krb5_dh_moduli **moduli)
 {
     const struct krb5_dh_moduli *m;
@@ -118,25 +118,25 @@ select_dh_group(krb5_context context, DH *dh, unsigned long bits,
         krb5_set_error_message(context, EINVAL,
                                N_("Did not find a DH group parameter "
                                   "matching requirement of %lu bits", ""),
-                               bits);
+                               min_bits);
         return EINVAL;
     }
 
-    if (bits == 0) {
+    if (min_bits == 0) {
 	m = moduli[1]; /* XXX */
 	if (m == NULL)
 	    m = moduli[0]; /* XXX */
     } else {
 	int i;
 	for (i = 0; moduli[i] != NULL; i++) {
-	    if (bits < moduli[i]->bits)
+	    if (moduli[i]->bits >= min_bits)
 		break;
 	}
 	if (moduli[i] == NULL) {
 	    krb5_set_error_message(context, EINVAL,
 				   N_("Did not find a DH group parameter "
 				      "matching requirement of %lu bits", ""),
-				   bits);
+				   min_bits);
 	    return EINVAL;
 	}
 	m = moduli[i];

@@ -2441,7 +2441,6 @@ hx509_verify_path(hx509_context context,
 		 * EE checking below.
 		 */
 		type = EE_CERT;
-                HEIM_FALLTHROUGH;
 	    }
 	}
         HEIM_FALLTHROUGH;

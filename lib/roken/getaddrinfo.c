@@ -216,7 +216,7 @@ get_null (const struct addrinfo *hints,
 		       &current, const_v4, &v4_addr, NULL);
     }
     *res = first;
-    return 0;
+    return ret;
 }
 
 static int

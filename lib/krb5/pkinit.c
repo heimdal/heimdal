@@ -2164,7 +2164,7 @@ static const char *default_moduli_rfc3526_MODP_group14 =
     /* name */
     "rfc3526-MODP-group14 "
     /* bits */
-    "1760 "
+    "2048 "
     /* p */
     "FFFFFFFF" "FFFFFFFF" "C90FDAA2" "2168C234" "C4C6628B" "80DC1CD1"
     "29024E08" "8A67CC74" "020BBEA6" "3B139B22" "514A0879" "8E3404DD"

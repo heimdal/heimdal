@@ -697,6 +697,11 @@ hx509_revoke_add_crl(hx509_context context,
 
     if (strncmp(path, "FILE:", 5) == 0) {    
 	path += 5;
+	    
+	for (i = 0; i < ctx->crls.len; i++) {
+		if (strcmp(ctx->crls.val[i].path, path) == 0)
+	    	    return 0
+	}
 	
 	ret = _hx509_revoke_add_crl(context, ctx, path);
 	

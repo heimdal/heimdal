@@ -58,6 +58,7 @@ BINLIBS=\
 	$(LIBGSS_PREAUTH) \
 	$(LIBGSSAPI)	\
 	$(LIBHEIMDAL)	\
+	$(LIBHEIMBASE)	\
 	$(LIBHEIMNTLM)	\
 	$(LIBHX509)	\
 !if !defined(NO_AFS)

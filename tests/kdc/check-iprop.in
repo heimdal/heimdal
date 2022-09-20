@@ -58,7 +58,7 @@ keytab="FILE:${keytabfile}"
 
 kdc="${kdc} --addresses=localhost -P $port"
 kadmin="${kadmin} -r $R"
-kinit="${kinit} -c $cache ${afs_no_afslog}"
+kinit="${kinit} --overwrite -c $cache ${afs_no_afslog}"
 
 # We'll test iprop, and in particular, hierarchical iprop.  This means we'll
 # have a setup like:

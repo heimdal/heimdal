@@ -345,24 +345,50 @@ krb5_cc_resolve_sub(krb5_context context,
                     const char *subsidiary,
                     krb5_ccache *id)
 {
+    krb5_error_code ret;
+    krb5_ccache cccol_cache = NULL;
     const krb5_cc_ops *ops = NULL;
+    const char *col = NULL;
 
     *id = NULL;
 
-    /* Get the cctype from the collection, maybe */
-    if (cctype == NULL && collection)
+    /* Split the collection into a residual, and get its cctype's ops */
+    if (collection)
 	ops = cc_get_prefix_ops(context, collection, &collection);
 
-    if (ops == NULL)
-	ops = cc_get_prefix_ops(context, get_default_cc_type(context, 0), NULL);
-
-    if (ops == NULL) {
+    if (!ops && cctype) {
+	ops = cc_get_prefix_ops(context, cctype, NULL);
 	krb5_set_error_message(context, KRB5_CC_UNKNOWN_TYPE,
 			       N_("unknown ccache type %s", ""), cctype);
 	return KRB5_CC_UNKNOWN_TYPE;
     }
 
-    return allocate_ccache(context, ops, collection, subsidiary, id);
+    if (!ops)
+	ops = cc_get_prefix_ops(context, get_default_cc_type(context, 0), NULL);
+
+    if (!ops) {
+	krb5_set_error_message(context, KRB5_CC_UNKNOWN_TYPE,
+			       "No default credentials cache configured/found");
+	return KRB5_CC_UNKNOWN_TYPE;
+    }
+
+    if (ops && collection && subsidiary) {
+        ret = allocate_ccache(context, ops, collection, NULL, &cccol_cache);
+        if (ret == 0 && cccol_cache->ops->version >= KRB5_CC_OPS_VERSION_5 &&
+            cccol_cache->ops->get_name_2) {
+            /*
+             * This would be a plugin cache, possibly an MSLSA: cache on
+             * Windows.
+             */
+            cccol_cache->ops->get_name_2(context, cccol_cache, NULL, &col, NULL);
+            if (col)
+                collection = col;
+        }
+    }
+
+    ret = allocate_ccache(context, ops, collection, subsidiary, id);
+    krb5_cc_close(context, cccol_cache);
+    return ret;
 }
 
 
@@ -392,29 +418,13 @@ krb5_cc_resolve_for(krb5_context context,
                     krb5_ccache *id)
 {
     krb5_error_code ret;
-    char *p, *s;
+    char *p;
 
     *id = NULL;
 
     ret = krb5_unparse_name(context, principal, &p);
     if (ret)
         return ret;
-    /*
-     * Subsidiary components cannot have various chars in them that are used as
-     * separators.  ':' is used for subsidiary separators in all ccache types
-     * except FILE, where '+' is used instead because we can't use ':' in file
-     * paths on Windows and because ':' is not in the POSIX safe set.
-     */
-    for (s = p; *s; s++) {
-        switch (s[0]) {
-        case ':':
-        case '+':
-        case '/':
-        case '\\':
-            s[0] = '-';
-        default: break;
-        }
-    }
     ret = krb5_cc_resolve_sub(context, cctype, name, p, id);
     free(p);
     return ret;
@@ -768,13 +778,50 @@ krb5_cc_default_name(krb5_context context)
     return context->default_cc_name;
 }
 
+/*
+ * Use this instead of calling `(*ops->get_default_name)(...)' directly.
+ *
+ * Plugins exist (lib/krb5/pcache.c) that don't return the default cache name
+ * with the cctype prefix.
+ */
+static krb5_error_code
+wrap_get_default_name(krb5_context context, const krb5_cc_ops *ops, char **n)
+{
+    krb5_error_code ret;
+    char *s = NULL;
+
+    *n = NULL;
+    ret = (*ops->get_default_name)(context, &s);
+    if (ret == 0) {
+        size_t plen = strlen(ops->prefix);
+
+        if (strncmp(s, ops->prefix, plen) == 0 && s[plen] == ':') {
+            *n = s;
+            s = NULL;
+        } else if (asprintf(n, "%s:%s", ops->prefix, s) == -1 || *n == NULL) {
+            *n = NULL;
+            ret = krb5_enomem(context);
+        }
+    }
+    free(s);
+    return ret;
+}
+
+static krb5_error_code
+resolve_cfg_default_name(krb5_context context, const char *n, char **an)
+{
+    const krb5_cc_ops *ops;
+
+    ops = krb5_cc_get_prefix_ops(context, n);
+    if (!ops)
+        return KRB5_CC_NOTFOUND;
+    return wrap_get_default_name(context, ops, an);
+}
+
 KRB5_LIB_FUNCTION const char * KRB5_LIB_CALL
 krb5_cc_configured_default_name(krb5_context context)
 {
     krb5_error_code ret = 0;
-#ifdef _WIN32
-    krb5_ccache id;
-#endif
     const char *cfg;
     char *expanded;
     const krb5_cc_ops *ops;
@@ -783,8 +830,14 @@ krb5_cc_configured_default_name(krb5_context context)
         return context->configured_default_cc_name;
 
 #ifdef _WIN32
-    if ((expanded = _krb5_get_default_cc_name_from_registry(context)))
-        return context->configured_default_cc_name = expanded;
+    if ((expanded = _krb5_get_default_cc_name_from_registry(context))) {
+        ret = resolve_cfg_default_name(context, expanded,
+                                       &context->configured_default_cc_name);
+        if (ret == 0) {
+            free(expanded);
+            return context->configured_default_cc_name;
+        }
+    }
 #endif
 
     /* If there's a configured default, expand the tokens and use it */
@@ -800,7 +853,12 @@ krb5_cc_configured_default_name(krb5_context context)
                                    "token expansion failed for %s", cfg);
             return NULL;
         }
-        return context->configured_default_cc_name = expanded;
+        ret = resolve_cfg_default_name(context, expanded,
+                                       &context->configured_default_cc_name);
+        if (ret == 0) {
+            free(expanded);
+            return context->configured_default_cc_name;
+        }
     }
 
     /* Else try a configured default ccache type's default */
@@ -813,7 +871,7 @@ krb5_cc_configured_default_name(krb5_context context)
     }
 
     /* The get_default_name() method expands any tokens */
-    ret = (*ops->get_default_name)(context, &expanded);
+    ret = wrap_get_default_name(context, ops, &expanded);
     if (ret) {
 	krb5_set_error_message(context, ret, "failed to find a default "
 			       "ccache for default ccache type %s", cfg);
@@ -829,7 +887,7 @@ krb5_cccol_get_default_ccname(krb5_context context)
     char *cccol_default_ccname;
     const krb5_cc_ops *ops = krb5_cc_get_prefix_ops(context, cfg);
 
-    (void) (*ops->get_default_name)(context, &cccol_default_ccname);
+    (void) wrap_get_default_name(context, ops, &cccol_default_ccname);
     return cccol_default_ccname;
 }
 
@@ -2057,9 +2115,10 @@ krb5_cc_get_friendly_name(krb5_context context,
     } else {
 	ret = asprintf(name, "%.*s", (int)data.length, (char *)data.data);
 	krb5_data_free(&data);
-	if (ret <= 0)
+	if (ret == -1) {
+            *name = NULL;
 	    ret = krb5_enomem(context);
-	else
+        } else
 	    ret = 0;
     }
 

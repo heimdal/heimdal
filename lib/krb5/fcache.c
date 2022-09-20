@@ -206,9 +206,43 @@ static krb5_error_code KRB5_CALLCONV
 fcc_get_default_name(krb5_context, char **);
 
 /*
- * This is the character used to separate the residual from the subsidiary name
- * when both are given.  It's tempting to use ':' just as we do in the ccache
- * names, but we can't on Windows.
+ * Can't have ':'s or path component separators in subsidiary names in the FILE
+ * cache type.  We also can't have '+' (see below).
+ */
+static krb5_error_code
+fs_encode_subsidiary(krb5_context context,
+                     const char *subsidiary,
+                     char **res)
+{
+    size_t len = strlen(subsidiary);
+    size_t i;
+
+    if ((*res = strdup(subsidiary)) == NULL)
+        return krb5_enomem(context);
+    for (i = 0; i < len; i++) {
+        switch ((*res)[i]) {
+#ifdef WIN32
+        case '\\':  (*res)[0] = '-'; break;
+#endif
+        case '/':   (*res)[0] = '-'; break;
+        case ':':   (*res)[0] = '-'; break;
+        case '+':   (*res)[0] = '-'; break;
+        default:                     break;
+        }
+    }
+    return 0;
+}
+
+/*
+ * In most ccache types in Heimdal we use ':' as the separator between
+ * collection name and subsidiary cache name in full ccache names.  I.e.,
+ * TYPE:collection-name:subsidiary-name.  But for FILE we'll use '+' instead
+ * because we can't use ':' in actual filenames.  For one, on Windows it's
+ * forbidden.  On Windows this is the file stream separator, and we'd need to
+ * implement lib/roken openat()/renameat()/linkat()/unlinkat() functions that
+ * would have to work a lot like Illumos'.  For another, ':' is not allows on
+ * OS X.  And in general, ':' is too often used as some sort of token
+ * separator, so it's best avoided.
  */
 #define FILESUBSEP "+"
 #define FILESUBSEPCHR ((FILESUBSEP)[0])
@@ -219,29 +253,63 @@ fcc_resolve_2(krb5_context context,
 	      const char *res,
 	      const char *sub)
 {
+    krb5_error_code ret = 0;
     krb5_fcache *f;
+    char *freeme2 = NULL;
     char *freeme = NULL;
 
-    if (res == NULL && sub == NULL)
-        return krb5_einval(context, 3);
+    if (res && !*res)
+        res = NULL;
+    if (sub && !*sub)
+        sub = NULL;
     if (res == NULL) {
-        krb5_error_code ret;
-
-        if ((ret = fcc_get_default_name(context, &freeme)))
-            return ret;
-        res = freeme + sizeof("FILE:") - 1;
+        /* If we have a `sub' but no `res', we don't interpret the `sub' */
+        ret = fcc_get_default_name(context, &freeme);
+        if (ret == 0)
+            res = freeme + sizeof("FILE:") - 1;
     } else if (!sub && (sub = strchr(res, FILESUBSEPCHR))) {
+        /*
+         * If we have a `res' and not a `sub' we check if the `res' has a
+         * subsidiary component in it.
+         *
+         * This is kindof heuristic.
+         */
         if (sub[1] == '\0') {
+            /*
+             * It does not; we'll ignore the FILESUBSEPCHR, though maybe we
+             * should replace it with NUL.
+             */
             sub = NULL;
         } else {
-            /* `res' has a subsidiary component, so split on it */
+            /*
+             * `res' does have a subsidiary component, so split on it and now
+             * we have both, a `res' and a `sub'.
+             */
             if ((freeme = strndup(res, sub - res)) == NULL)
                 return krb5_enomem(context);
             res = freeme;
             sub++;
         }
+        if (sub) {
+            ret = fs_encode_subsidiary(context, sub, &freeme2);
+            if (ret == 0)
+                sub = freeme2;
+        }
+    } else {
+        /*
+         * We have a `res', and we maybe have a `sub' and we need not interpret
+         * them further.  Instead, if we have both, we'll join them below.
+         */
     }
 
+    if (ret)
+        return ret;
+
+    /*
+     * The actual filename will be `res' or `res' + FILESUBSEP + `sub'.
+     *
+     * The full ccache name reported will be FILE:res or FILE:res+sub.
+     */
     if ((f = calloc(1, sizeof(*f))) == NULL ||
         (f->res = strdup(res)) == NULL ||
         (f->sub = sub ? strdup(sub) : NULL) == (sub ? NULL : "") ||
@@ -252,18 +320,19 @@ fcc_resolve_2(krb5_context context,
             free(f->filename);
             free(f->res);
             free(f->sub);
+            free(f);
         }
-        free(f);
-        free(freeme);
-        return krb5_enomem(context);
+        ret = krb5_enomem(context);
+    } else {
+        f->tmpfn = NULL;
+        f->version = 0;
+        (*id)->data.data = f;
+        (*id)->data.length = sizeof(*f);
     }
-    f->tmpfn = NULL;
-    f->version = 0;
-    (*id)->data.data = f;
-    (*id)->data.length = sizeof(*f);
 
+    free(freeme2);
     free(freeme);
-    return 0;
+    return ret;
 }
 
 /*

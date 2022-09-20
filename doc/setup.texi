@@ -816,13 +816,9 @@ the cell name appended to the password.
 @cindex KCM
 @cindex Credential cache server
 
-When KCM running is easy for users to switch between different
-kerberos principals using @file{kswitch} or built in support in
-application, like OpenSSH's GSSAPIClientIdentity.
+KCM is a credential cache server that implements per-user cache collections.
 
-Other advantages are that there is the long term credentials are not
-written to disk and on reboot the credential is removed when kcm
-process stopps running.
+KCM holds credentials in memory, not disk.
 
 Configure the system startup script to start the kcm process,
 @file{/usr/heimdal/libexec/kcm} and then configure the system to use kcm in @file{krb5.conf}.
@@ -832,21 +828,35 @@ Configure the system startup script to start the kcm process,
 	default_cc_type = KCM
 @end example
 
-Now when you run @command{kinit} it doesn't overwrite your existing
-credentials but rather just add them to the set of
-credentials. @command{klist -l} lists the credentials and the star
-marks the default credential.
+Now when you run @command{kinit} it doesn't overwrite your existing credentials
+but rather just adds them to the set of credentials. @command{klist -l} lists
+the credentials and the star marks the default credential.
 
 @example
 $ kinit lha@@KTH.SE
 lha@@KTH.SE's Password: 
 $ klist -l
   Name         Cache name               Expires         
-lha@@KTH.SE   0                        Nov 22 23:09:40   *
-lha@@SU.SE    Initial default ccache   Nov 22 14:14:24   
+lha@@KTH.SE   KCM:1000:3               Nov 22 23:09:40   *
+lha@@SU.SE    KCM:1000:4               Nov 22 14:14:24   
 @end example
 
-When switching between credentials you can use @command{kswitch}.
+Using the @code{--default-for-principal} option to @command{kinit} causes
+user-friendly cache names to be used:
+
+@example
+$ kinit --default-for-principal lha@@KTH.SE
+lha@@KTH.SE's Password: 
+$ klist -l
+  Name         Cache name               Expires         
+lha@@KTH.SE   KCM:1000:lha@@KTH.SE     Nov 22 23:09:40   *
+lha@@SU.SE    KCM:1000:lha@@SU.SE      Nov 22 14:14:24   
+@end example
+
+By default @command{kinit} switches the collection's default cache.
+You can use the @code{--no-change-default} option to @command{kinit}
+to have it not switch the collection's default, and then you can use
+the@command{kswitch} to switch the default at a later time.
 
 @example
 $ kswitch -i
@@ -861,8 +871,8 @@ After switching, a new set of credentials are used as default.
 @example
 $ klist -l
   Name         Cache name               Expires         
-lha@@SU.SE    Initial default ccache   Nov 22 14:14:24   *
-lha@@KTH.SE   0                        Nov 22 23:09:40   
+lha@@SU.SE    KCM:1000:lha@@SU.SEche   Nov 22 14:14:24   *
+lha@@KTH.SE   KCM:1000:lha@@KTH.SE     Nov 22 23:09:40   
 @end example
 
 Som applications, like openssh with Simon Wilkinsons patch applied,

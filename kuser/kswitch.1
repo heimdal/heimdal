@@ -37,10 +37,6 @@
 .Nd switch between default credential caches
 .Sh SYNOPSIS
 .Nm
-.Oo Fl t Ar type \*(Ba Xo
-.Fl Fl type= Ns Ar type
-.Xc
-.Oc
 .Oo Fl c Ar cache \*(Ba Xo
 .Fl Fl cache= Ns Ar cache
 .Xc
@@ -52,29 +48,46 @@
 .Op Fl i | Fl Fl interactive
 .Op Fl Fl version
 .Op Fl Fl help
+.Op Ar command Op Ar arguments...
 .Sh DESCRIPTION
+Switches the default credential cache for the user's credential
+cache collection.
+This is useful for users who keep credentials for multiple client
+principals.
+.Pp
+When a command is given, the default credential cache for the
+user's credential cache collection will not be changed.
+Instead, the
+given command will be run with the
+.Ev KRB5CCNAME
+environment variable set to the identified credential cache's
+name.
+.Pp
 Supported options:
 .Bl -tag -width Ds
-.It Xo
-.Fl t Ar type ,
-.Fl Fl type= Ns Ar type
-.Xc
-type of credential cache
 .It Xo
 .Fl c Ar cache ,
 .Fl Fl cache= Ns Ar cache
 .Xc
-name of credential cache to switch to
+name of credential cache to use
 .It Xo
 .Fl p Ar principal ,
 .Fl Fl principal= Ns Ar principal
 .Xc
-name of principal to switch to
+search for a credential cache with the given
+.Ar principal 's
+credentials and use that cache
 .It Xo
 .Fl i ,
 .Fl Fl interactive
 .Xc
-interactive switching between credentials.
+interactively select a credentials cache from the set that is
+available in the user's collection
+.It Xo
+.Fl t Ar type ,
+.Fl Fl type= Ns Ar type
+.Xc
+type of credential cache (obsolete option)
 .It Xo
 .Fl Fl version
 .Xc
@@ -83,3 +96,40 @@ print version
 .Fl Fl help
 .Xc
 .El
+.Sh NOTES
+All built-in credentials cache types in Heimdal are collection
+types.
+A credentials cache collection is just that: a collection of
+credentials caches, all for the same user.
+The names of the caches in the collection are "subsidiary" to the
+collection.
+.Pp
+Generally, the name of a credentials cache is of the form
+.Ar TYPE:collection-name[:subsidiary-name] ,
+such as
+.Dq KCM:1000:some-name-here .
+Both, the
+.Ar FILE
+and
+.Ar DIR
+credentials cache types use an alternative credentials cache name
+form of
+.Ar TYPE:collection-name[+subsidiary-name] ,
+such as
+.Dq FILE:/tmp/krb5cc_1000+some-name-here .
+.Pp
+The
+.Ar FILE
+credentials cache type must be enabled by setting
+.Ar [libdefaults] Ar enable_file_cache_iteration = yes
+in the
+.Ar krb5.conf
+file.
+This is disabled by default to avoid potentially listing the
+user's temporary file directory, which is where the
+.Ar FILE
+credentials cache type normally stores its caches.
+.Sh SEE ALSO
+.Xr kdestroy 1 ,
+.Xr kinit 1 ,
+.Xr klist 1

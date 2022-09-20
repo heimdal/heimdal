@@ -56,7 +56,7 @@ server=host/datan.test.h5l.se
 cache="FILE:${objdir}/cache.krb5"
 acache="FILE:${objdir}/acache.krb5"
 
-kinit="${kinit} -c $cache ${afs_no_afslog}"
+kinit="${kinit} --overwrite -c $cache ${afs_no_afslog}"
 akinit="${kinit} -c $acache ${afs_no_afslog}"
 klist="${klist} -c $cache"
 aklist="${klist} -c $acache"

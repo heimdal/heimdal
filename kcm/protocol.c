@@ -1123,6 +1123,7 @@ kcm_op_set_default_cache(krb5_context context,
 {
     struct kcm_default_cache *c;
     krb5_error_code ret;
+    kcm_ccache ccache;
     char *name;
 
     ret = krb5_ret_stringz(request, &name);
@@ -1130,6 +1131,13 @@ kcm_op_set_default_cache(krb5_context context,
 	return ret;
 
     KCM_LOG_REQUEST_NAME(context, client, opcode, name);
+
+    ret = kcm_ccache_resolve_client(context, client, opcode,
+				    name, &ccache);
+    if (ret)
+        return 0;
+    else
+        kcm_release_ccache(context, ccache);
 
     for (c = default_caches; c != NULL; c = c->next) {
 	if (kcm_is_same_session(client, c->uid, c->session))

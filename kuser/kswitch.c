@@ -52,6 +52,9 @@ readline(const char *prompt)
 
 #endif
 
+#define EX_NOEXEC       126
+#define EX_NOTFOUND     127
+
 /*
  *
  */
@@ -139,7 +142,9 @@ kswitch(struct kswitch_options *opt, int argc, char **argv)
 	    krb5_err(heimtools_context, 1, ret, "krb5_parse_name: %s",
 		     opt->principal_string);
 
-	ret = krb5_cc_cache_match(heimtools_context, p, &id);
+        ret = krb5_cc_default_for(heimtools_context, p, &id);
+        if (ret)
+            ret = krb5_cc_cache_match(heimtools_context, p, &id);
 	if (ret)
 	    krb5_err(heimtools_context, 1, ret,
 		     N_("Did not find principal: %s", ""),
@@ -152,13 +157,17 @@ kswitch(struct kswitch_options *opt, int argc, char **argv)
 	char *str;
 	int aret;
 
-	ops = krb5_cc_get_prefix_ops(heimtools_context, opt->type_string);
-	if (ops == NULL)
-	    krb5_err(heimtools_context, 1, 0, "krb5_cc_get_prefix_ops");
+        if (opt->type_string) {
+            ops = krb5_cc_get_prefix_ops(heimtools_context, opt->type_string);
+            if (ops == NULL)
+                krb5_err(heimtools_context, 1, 0, "krb5_cc_get_prefix_ops");
 
-	aret = asprintf(&str, "%s:%s", ops->prefix, opt->cache_string);
-	if (aret == -1)
-	    krb5_errx(heimtools_context, 1, N_("out of memory", ""));
+            aret = asprintf(&str, "%s:%s", ops->prefix, opt->cache_string);
+            if (aret == -1)
+                krb5_errx(heimtools_context, 1, N_("out of memory", ""));
+        } else if ((str = strdup(opt->cache_string)) == NULL) {
+            krb5_errx(heimtools_context, 1, N_("out of memory", ""));
+        }
 
 	ret = krb5_cc_resolve(heimtools_context, str, &id);
 	if (ret)
@@ -169,11 +178,32 @@ kswitch(struct kswitch_options *opt, int argc, char **argv)
 	krb5_errx(heimtools_context, 1, "missing option for kswitch");
     }
 
-    ret = krb5_cc_switch(heimtools_context, id);
-    if (ret)
-	krb5_err(heimtools_context, 1, ret, "krb5_cc_switch");
+    if (argc == 0) {
+        ret = krb5_cc_switch(heimtools_context, id);
+        if (ret)
+            krb5_err(heimtools_context, 1, ret, "krb5_cc_switch");
+    } else {
+        char *idfullname;
+
+        /*
+         * TODO: Use a simple_execvp_timed() with a callback that will renew
+         * the selected ccache's start TGT as needed.
+         */
+        ret = krb5_cc_get_full_name(heimtools_context, id, &idfullname);
+        if (ret)
+            krb5_err(heimtools_context, 1, ret,
+                     "Could not determine the cache's full name");
+        if (setenv("KRB5CCNAME", idfullname, 1) == -1)
+            krb5_err(heimtools_context, 1, errno,
+                     "Could not set KRB5CCNAME in the environment");
+
+        ret = simple_execvp(*argv, argv);
+        if (ret == EX_NOEXEC)
+            errx(1, "Permission denied executing %s", argv[0]);
+        else if (ret == EX_NOTFOUND)
+            errx(1, "Command not found %s", argv[0]);
+    }
 
     krb5_cc_close(heimtools_context, id);
-
-    return 0;
+    return ret;
 }

@@ -54,7 +54,7 @@ afsserver=afs/test.h5l.se
 hostserver=host/server.test.h5l.se
 cache="FILE:${objdir}/cache.krb5"
 
-kinit="${kinit} -c $cache ${afs_no_afslog}"
+kinit="${kinit} --overwrite -c $cache ${afs_no_afslog}"
 klist="${klist} -c $cache"
 kgetcred="${kgetcred} -c $cache"
 kdestroy="${kdestroy} -c $cache ${afs_no_unlog}"

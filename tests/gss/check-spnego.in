@@ -114,9 +114,9 @@ trap "kill -9 ${kdcpid}; echo signal killing kdc; exit 1;" EXIT
 exitcode=0
 
 echo "Getting client initial tickets"
-${kinit} --password-file=${objdir}/foopassword user1@${R} || exitcode=1
+${kinit} --overwrite --password-file=${objdir}/foopassword user1@${R} || exitcode=1
 echo "Getting digestserver initial tickets"
-${kinitds} --password-file=${objdir}/barpassword digestserver@${R} || exitcode=1
+${kinitds} --overwrite --password-file=${objdir}/barpassword digestserver@${R} || exitcode=1
 
 echo "======context building for each mech"
 

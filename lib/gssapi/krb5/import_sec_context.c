@@ -145,7 +145,7 @@ _gsskrb5_import_sec_context (
     if (flags & SC_AUTHENTICATOR) {
         if (krb5_ret_int64(sp, &tmp64))
             goto failure;
-        ac->authenticator->ctime = tmp64;
+        ac->authenticator->cTime = tmp64;
         if (krb5_ret_int32(sp, &tmp))
             goto failure;
         ac->authenticator->cusec = tmp;

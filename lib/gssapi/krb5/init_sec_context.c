@@ -695,7 +695,7 @@ handle_error_packet(krb5_context context,
 	if (kret == KRB5KRB_AP_ERR_SKEW) {
 	    krb5_data timedata;
 	    unsigned char p[4];
-	    int32_t t = error.stime - time(NULL);
+	    int32_t t = error.sTime - time(NULL);
 
 	    p[0] = (t >> 24) & 0xFF;
 	    p[1] = (t >> 16) & 0xFF;

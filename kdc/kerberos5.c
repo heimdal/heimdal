@@ -928,17 +928,17 @@ pa_enc_ts_validate(astgs_request_t r, const PA_DATA *pa)
 		   r->cname);
 	goto out;
     }
-    if (labs(kdc_time - p.patimestamp) > r->context->max_skew) {
+    if (labs(kdc_time - p.paTimestamp) > r->context->max_skew) {
 	char client_time[100];
 		
-	krb5_format_time(r->context, p.patimestamp,
+	krb5_format_time(r->context, p.paTimestamp,
 			 client_time, sizeof(client_time), TRUE);
 
 	ret = KRB5KRB_AP_ERR_SKEW;
 	_kdc_r_log(r, 4, "Too large time skew, "
 		   "client time %s is out by %u > %u seconds -- %s",
 		   client_time,
-		   (unsigned)labs(kdc_time - p.patimestamp),
+		   (unsigned)labs(kdc_time - p.paTimestamp),
 		   r->context->max_skew,
 		   r->cname);
 	kdc_audit_setkv_number((kdc_request_t)r, KDC_REQUEST_KV_AUTH_EVENT,
@@ -1147,7 +1147,7 @@ _kdc_encode_reply(krb5_context context,
 	memset(&finished, 0, sizeof(finished));
 	krb5_data_zero(&data);
 
-	finished.timestamp = kdc_time;
+	finished.timeStamp = kdc_time;
 	finished.usec = 0;
 	finished.crealm = et->crealm;
 	finished.cname = et->cname;
@@ -1897,7 +1897,7 @@ generate_pac(astgs_request_t r, const Key *skey, const Key *tkey,
 
     ret = _krb5_pac_sign(r->context,
 			 r->pac,
-			 r->et.authtime,
+			 r->et.authTime,
 			 client,
 			 &skey->key, /* Server key */
 			 &tkey->key, /* TGS key */
@@ -2491,16 +2491,16 @@ _kdc_as_rep(astgs_request_t r)
 	time_t start;
 	time_t t;
 	
-	start = r->et.authtime = kdc_time;
+	start = r->et.authTime = kdc_time;
 
-	if(f.postdated && req->req_body.from){
-	    ALLOC(r->et.starttime);
-	    start = *r->et.starttime = *req->req_body.from;
+	if(f.postdated && req->req_body.fRom){
+	    ALLOC(r->et.startTime);
+	    start = *r->et.startTime = *req->req_body.fRom;
 	    r->et.flags.invalid = 1;
 	    r->et.flags.postdated = 1; /* XXX ??? */
 	}
-	_kdc_fix_time(&b->till);
-	t = *b->till;
+	_kdc_fix_time(&b->tIll);
+	t = *b->tIll;
 
 	/* be careful not overflowing */
 
@@ -2526,18 +2526,18 @@ _kdc_as_rep(astgs_request_t r)
 #if 0
 	t = min(t, rk_time_add(start, realm->max_life));
 #endif
-	r->et.endtime = t;
-	if(f.renewable_ok && r->et.endtime < *b->till){
+	r->et.endTime = t;
+	if(f.renewable_ok && r->et.endTime < *b->tIll){
 	    f.renewable = 1;
-	    if(b->rtime == NULL){
-		ALLOC(b->rtime);
-		*b->rtime = 0;
+	    if(b->rTime == NULL){
+		ALLOC(b->rTime);
+		*b->rTime = 0;
 	    }
-	    if(*b->rtime < *b->till)
-		*b->rtime = *b->till;
+	    if(*b->rTime < *b->tIll)
+		*b->rTime = *b->tIll;
 	}
-	if(f.renewable && b->rtime){
-	    t = *b->rtime;
+	if(f.renewable && b->rTime){
+	    t = *b->rTime;
 	    if(t == 0)
 		t = MAX_TIME;
 	    if(r->client->max_renew && *r->client->max_renew)
@@ -2549,8 +2549,8 @@ _kdc_as_rep(astgs_request_t r)
 #if 0
 	    t = min(t, rk_time_add(start, realm->max_renew));
 #endif
-	    ALLOC(r->et.renew_till);
-	    *r->et.renew_till = t;
+	    ALLOC(r->et.renew_Till);
+	    *r->et.renew_Till = t;
 	    r->et.flags.renewable = 1;
 	}
     }
@@ -2582,42 +2582,42 @@ _kdc_as_rep(astgs_request_t r)
 	&& (config->kdc_warn_pwexpire == 0
 	    || kdc_time + config->kdc_warn_pwexpire >= *r->client->pw_end)) {
 	r->ek.last_req.val[r->ek.last_req.len].lr_type  = LR_PW_EXPTIME;
-	r->ek.last_req.val[r->ek.last_req.len].lr_value = *r->client->pw_end;
+	r->ek.last_req.val[r->ek.last_req.len].lr_Value = *r->client->pw_end;
 	++r->ek.last_req.len;
     }
     if (r->client->valid_end) {
 	r->ek.last_req.val[r->ek.last_req.len].lr_type  = LR_ACCT_EXPTIME;
-	r->ek.last_req.val[r->ek.last_req.len].lr_value = *r->client->valid_end;
+	r->ek.last_req.val[r->ek.last_req.len].lr_Value = *r->client->valid_end;
 	++r->ek.last_req.len;
     }
     if (r->ek.last_req.len == 0) {
 	r->ek.last_req.val[r->ek.last_req.len].lr_type  = LR_NONE;
-	r->ek.last_req.val[r->ek.last_req.len].lr_value = 0;
+	r->ek.last_req.val[r->ek.last_req.len].lr_Value = 0;
 	++r->ek.last_req.len;
     }
     r->ek.nonce = b->nonce;
     if (r->client->valid_end || r->client->pw_end) {
-	ALLOC(r->ek.key_expiration);
+	ALLOC(r->ek.key_Expiration);
 	if (r->client->valid_end) {
 	    if (r->client->pw_end)
-		*r->ek.key_expiration = min(*r->client->valid_end,
+		*r->ek.key_Expiration = min(*r->client->valid_end,
 					 *r->client->pw_end);
 	    else
-		*r->ek.key_expiration = *r->client->valid_end;
+		*r->ek.key_Expiration = *r->client->valid_end;
 	} else
-	    *r->ek.key_expiration = *r->client->pw_end;
+	    *r->ek.key_Expiration = *r->client->pw_end;
     } else
-	r->ek.key_expiration = NULL;
+	r->ek.key_Expiration = NULL;
     r->ek.flags = r->et.flags;
-    r->ek.authtime = r->et.authtime;
-    if (r->et.starttime) {
-	ALLOC(r->ek.starttime);
-	*r->ek.starttime = *r->et.starttime;
+    r->ek.authTime = r->et.authTime;
+    if (r->et.startTime) {
+	ALLOC(r->ek.startTime);
+	*r->ek.startTime = *r->et.startTime;
     }
-    r->ek.endtime = r->et.endtime;
-    if (r->et.renew_till) {
-	ALLOC(r->ek.renew_till);
-	*r->ek.renew_till = *r->et.renew_till;
+    r->ek.endTime = r->et.endTime;
+    if (r->et.renew_Till) {
+	ALLOC(r->ek.renew_Till);
+	*r->ek.renew_Till = *r->et.renew_Till;
     }
     ret = copy_Realm(&rep->ticket.realm, &r->ek.srealm);
     if (ret)
@@ -2665,9 +2665,9 @@ _kdc_as_rep(astgs_request_t r)
 	    goto out;
     }
 
-    _kdc_log_timestamp(r, "AS-REQ", r->et.authtime,
-		       r->et.starttime, r->et.endtime,
-		       r->et.renew_till);
+    _kdc_log_timestamp(r, "AS-REQ", r->et.authTime,
+		       r->et.startTime, r->et.endTime,
+		       r->et.renew_Till);
 
     _log_astgs_req(r, setype);
 

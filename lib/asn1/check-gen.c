@@ -228,13 +228,13 @@ cmp_KRB_ERROR (void *a, void *b)
     COMPARE_INTEGER(aa,ab,pvno);
     COMPARE_INTEGER(aa,ab,msg_type);
 
-    IF_OPT_COMPARE(aa,ab,ctime) {
-	COMPARE_INTEGER(aa,ab,ctime);
+    IF_OPT_COMPARE(aa,ab,cTime) {
+	COMPARE_INTEGER(aa,ab,cTime);
     }
     IF_OPT_COMPARE(aa,ab,cusec) {
 	COMPARE_INTEGER(aa,ab,cusec);
     }
-    COMPARE_INTEGER(aa,ab,stime);
+    COMPARE_INTEGER(aa,ab,sTime);
     COMPARE_INTEGER(aa,ab,susec);
     COMPARE_INTEGER(aa,ab,error_code);
 
@@ -286,9 +286,9 @@ test_krb_error (void)
 
     e1.pvno = 5;
     e1.msg_type = 30;
-    e1.ctime = NULL;
+    e1.cTime = NULL;
     e1.cusec = NULL;
-    e1.stime = 1069632679;
+    e1.sTime = 1069632679;
     e1.susec = 322981;
     e1.error_code = 31;
     e1.crealm = &realm;

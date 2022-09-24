@@ -202,11 +202,11 @@ krb5_decrypt_ticket(krb5_context context,
 
     {
 	krb5_timestamp now;
-	time_t start = t.authtime;
+	time_t start = t.authTime;
 
 	krb5_timeofday (context, &now);
-	if(t.starttime)
-	    start = *t.starttime;
+	if(t.startTime)
+	    start = *t.startTime;
 	if(start - now > context->max_skew
 	   || (t.flags.invalid
 	       && !(flags & KRB5_VERIFY_AP_REQ_IGNORE_INVALID))) {
@@ -214,7 +214,7 @@ krb5_decrypt_ticket(krb5_context context,
 	    krb5_clear_error_message (context);
 	    return KRB5KRB_AP_ERR_TKT_NYV;
 	}
-	if(now - t.endtime > context->max_skew) {
+	if(now - t.endTime > context->max_skew) {
 	    free_EncTicketPart(&t);
 	    krb5_clear_error_message (context);
 	    return KRB5KRB_AP_ERR_TKT_EXPIRED;
@@ -431,7 +431,7 @@ krb5_verify_ap_req2(krb5_context context,
 
 	krb5_timeofday (context, &now);
 
-	if (krb5_time_abs(ac->authenticator->ctime, now) > context->max_skew) {
+	if (krb5_time_abs(ac->authenticator->cTime, now) > context->max_skew) {
 	    ret = KRB5KRB_AP_ERR_SKEW;
 	    krb5_clear_error_message (context);
 	    goto out;
@@ -1060,7 +1060,7 @@ krb5_rd_req_ctx(krb5_context context,
 
 	    ret = krb5_pac_verify(context,
 				  pac,
-				  o->ticket->ticket.authtime,
+				  o->ticket->ticket.authTime,
 				  o->ticket->client,
 				  o->keyblock,
 				  NULL);

@@ -90,10 +90,10 @@ encode_ticket(krb5_context context,
 	et.transited.tr_type = domain_X500_Compress;
 	et.transited.contents = empty_string;
     }
-    et.authtime = cred->times.authtime;
-    et.starttime = NULL;
-    et.endtime = cred->times.endtime;
-    et.renew_till = NULL;
+    et.authTime = cred->times.authtime;
+    et.startTime = NULL;
+    et.endTime = cred->times.endtime;
+    et.renew_Till = NULL;
     et.caddr = &cred->addresses;
     et.authorization_data = NULL; /* XXX allow random authorization_data */
 

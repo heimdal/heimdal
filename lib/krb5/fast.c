@@ -514,8 +514,8 @@ _krb5_fast_wrap_req(krb5_context context,
 	if (ret)
 	    goto out;
 
-	ALLOC(req->req_body.till, 1);
-	*req->req_body.till = 0;
+	ALLOC(req->req_body.tIll, 1);
+	*req->req_body.tIll = 0;
 
 	heim_assert(checksum_data == NULL, "checksum data not NULL");
 

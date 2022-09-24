@@ -2017,7 +2017,7 @@ _krb5_kdc_pac_sign_ticket(krb5_context context,
 	pac->ticket_sign_data = tkt_data;
     }
 
-    ret = _krb5_pac_sign(context, pac, tkt->authtime, client, server_key,
+    ret = _krb5_pac_sign(context, pac, tkt->authTime, client, server_key,
 			 kdc_key, rodc_id, upn, canon_name,
 			 pac_attributes, &rspac);
     if (ret == 0)

@@ -171,10 +171,10 @@ _krb5_mk_ncred(krb5_context context,
         CHECKED_ALLOC_COPY_PPC2KCI(copy_Realm, prealm, client->realm);
         CHECKED_ALLOC_COPY_PPC2KCI(copy_PrincipalName, pname, client->name);
         CHECKED_ALLOC_ASSIGN_PPC2KCI(flags, flags.b);
-        CHECKED_ALLOC_ASSIGN_PPC2KCI(authtime, times.authtime);
-        CHECKED_ALLOC_ASSIGN_PPC2KCI(starttime, times.starttime);
-        CHECKED_ALLOC_ASSIGN_PPC2KCI(endtime, times.endtime);
-        CHECKED_ALLOC_ASSIGN_PPC2KCI(renew_till, times.renew_till);
+        CHECKED_ALLOC_ASSIGN_PPC2KCI(authTime, times.authtime);
+        CHECKED_ALLOC_ASSIGN_PPC2KCI(startTime, times.starttime);
+        CHECKED_ALLOC_ASSIGN_PPC2KCI(endTime, times.endtime);
+        CHECKED_ALLOC_ASSIGN_PPC2KCI(renew_Till, times.renew_till);
         CHECKED_ALLOC_COPY_PPC2KCI(copy_Realm, srealm, server->realm);
         CHECKED_ALLOC_COPY_PPC2KCI(copy_PrincipalName, sname, server->name);
         CHECKED_ALLOC_COPY_PPC2KCI(copy_HostAddresses, caddr, addresses);
@@ -186,10 +186,10 @@ _krb5_mk_ncred(krb5_context context,
 
         krb5_us_timeofday (context, &sec, &usec);
 
-        CHECKED_ALLOC_ASSIGN(enc_krb_cred_part.timestamp, sec);
+        CHECKED_ALLOC_ASSIGN(enc_krb_cred_part.timeStamp, sec);
         CHECKED_ALLOC_ASSIGN(enc_krb_cred_part.usec, usec);
     } else {
-        enc_krb_cred_part.timestamp = NULL;
+        enc_krb_cred_part.timeStamp = NULL;
         enc_krb_cred_part.usec = NULL;
         /* XXX Er, shouldn't we set the seq nums?? */
     }

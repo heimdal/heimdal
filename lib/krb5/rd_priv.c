@@ -134,9 +134,9 @@ krb5_rd_priv(krb5_context context,
 	krb5_timestamp sec;
 
 	krb5_timeofday (context, &sec);
-	if (part.timestamp == NULL ||
+	if (part.timeStamp == NULL ||
 	    part.usec      == NULL ||
-	    krb5_time_abs(*part.timestamp, sec) > context->max_skew) {
+	    krb5_time_abs(*part.timeStamp, sec) > context->max_skew) {
 	    krb5_clear_error_message (context);
 	    ret = KRB5KRB_AP_ERR_SKEW;
 	    goto failure_part;
@@ -167,8 +167,8 @@ krb5_rd_priv(krb5_context context,
 
     if ((auth_context->flags &
 	 (KRB5_AUTH_CONTEXT_RET_TIME | KRB5_AUTH_CONTEXT_RET_SEQUENCE))) {
-	if(part.timestamp)
-	    outdata->timestamp = *part.timestamp;
+	if(part.timeStamp)
+	    outdata->timestamp = *part.timeStamp;
 	if(part.usec)
 	    outdata->usec = *part.usec;
 	if(part.seq_number)

@@ -51,7 +51,7 @@ make_pa_enc_timestamp(krb5_context context, PA_DATA *pa,
     int usec2;
     krb5_crypto crypto;
 
-    krb5_us_timeofday (context, &p.patimestamp, &usec);
+    krb5_us_timeofday(context, &p.paTimestamp, &usec);
     usec2         = usec;
     p.pausec      = &usec2;
 
@@ -183,24 +183,24 @@ init_as_req (krb5_context context,
 	goto fail;
 
     if(creds->times.starttime) {
-	a->req_body.from = malloc(sizeof(*a->req_body.from));
-	if (a->req_body.from == NULL) {
+	a->req_body.fRom = malloc(sizeof(*a->req_body.fRom));
+	if (a->req_body.fRom == NULL) {
 	    ret = krb5_enomem(context);
 	    goto fail;
 	}
-	*a->req_body.from = creds->times.starttime;
+	*a->req_body.fRom = creds->times.starttime;
     }
     if(creds->times.endtime){
-	ALLOC(a->req_body.till, 1);
-	*a->req_body.till = creds->times.endtime;
+	ALLOC(a->req_body.tIll, 1);
+	*a->req_body.tIll = creds->times.endtime;
     }
     if(creds->times.renew_till){
-	a->req_body.rtime = malloc(sizeof(*a->req_body.rtime));
-	if (a->req_body.rtime == NULL) {
+	a->req_body.rTime = malloc(sizeof(*a->req_body.rTime));
+	if (a->req_body.rTime == NULL) {
 	    ret = krb5_enomem(context);
 	    goto fail;
 	}
-	*a->req_body.rtime = creds->times.renew_till;
+	*a->req_body.rTime = creds->times.renew_till;
     }
     a->req_body.nonce = nonce;
     ret = _krb5_init_etype(context,

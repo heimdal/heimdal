@@ -161,7 +161,7 @@ KRB5_LIB_FUNCTION time_t KRB5_LIB_CALL
 krb5_ticket_get_endtime(krb5_context context,
 			const krb5_ticket *ticket)
 {
-    return ticket->ticket.endtime;
+    return ticket->ticket.endTime;
 }
 
 /**
@@ -179,11 +179,11 @@ krb5_ticket_get_times(krb5_context context,
                       const krb5_ticket *ticket,
                       krb5_times *t)
 {
-    t->authtime   = ticket->ticket.authtime;
-    t->starttime  = ticket->ticket.starttime  ? *ticket->ticket.starttime  :
+    t->authtime   = ticket->ticket.authTime;
+    t->starttime  = ticket->ticket.startTime  ? *ticket->ticket.startTime  :
                                                 t->authtime;
-    t->endtime    = ticket->ticket.endtime;
-    t->renew_till = ticket->ticket.renew_till ? *ticket->ticket.renew_till :
+    t->endtime    = ticket->ticket.endTime;
+    t->renew_till = ticket->ticket.renew_Till ? *ticket->ticket.renew_Till :
                                                 t->endtime;
 }
 
@@ -881,16 +881,16 @@ _krb5_extract_ticket(krb5_context context,
 				 "libdefaults",
 				 "kdc_timesync",
 				 NULL)) {
-	context->kdc_sec_offset = rep->enc_part.authtime - sec_now;
+	context->kdc_sec_offset = rep->enc_part.authTime - sec_now;
 	krb5_timeofday (context, &sec_now);
     }
 
     /* check all times */
 
-    if (rep->enc_part.starttime) {
-	tmp_time = *rep->enc_part.starttime;
+    if (rep->enc_part.startTime) {
+	tmp_time = *rep->enc_part.startTime;
     } else
-	tmp_time = rep->enc_part.authtime;
+	tmp_time = rep->enc_part.authTime;
 
     if (creds->times.starttime == 0
 	&& krb5_time_abs(tmp_time, sec_now) > context->max_skew) {
@@ -911,8 +911,8 @@ _krb5_extract_ticket(krb5_context context,
 
     creds->times.starttime = tmp_time;
 
-    if (rep->enc_part.renew_till) {
-	tmp_time = *rep->enc_part.renew_till;
+    if (rep->enc_part.renew_Till) {
+	tmp_time = *rep->enc_part.renew_Till;
     } else
 	tmp_time = 0;
 
@@ -925,16 +925,16 @@ _krb5_extract_ticket(krb5_context context,
 
     creds->times.renew_till = tmp_time;
 
-    creds->times.authtime = rep->enc_part.authtime;
+    creds->times.authtime = rep->enc_part.authTime;
 
     if (creds->times.endtime != 0
-	&& rep->enc_part.endtime > creds->times.endtime) {
+	&& rep->enc_part.endTime > creds->times.endtime) {
 	krb5_clear_error_message (context);
 	ret = KRB5KRB_AP_ERR_MODIFIED;
 	goto out;
     }
 
-    creds->times.endtime  = rep->enc_part.endtime;
+    creds->times.endtime  = rep->enc_part.endTime;
 
     if(rep->enc_part.caddr)
 	krb5_copy_addresses (context, rep->enc_part.caddr, &creds->addresses);

@@ -511,17 +511,28 @@ generalizedtime2time (const char *s, time_t *t)
     if (sscanf (s, "%04d%02d%02d%02d%02d%02dZ",
 		&tm.tm_year, &tm.tm_mon, &tm.tm_mday, &tm.tm_hour,
 		&tm.tm_min, &tm.tm_sec) != 6) {
+        /* Ok, so not YYYYmmddHHMMSSZ.  Try YYmmddHHMMSSZ. */
 	if (sscanf (s, "%02d%02d%02d%02d%02d%02dZ",
 		    &tm.tm_year, &tm.tm_mon, &tm.tm_mday, &tm.tm_hour,
 		    &tm.tm_min, &tm.tm_sec) != 6)
 	    return ASN1_BAD_TIMEFORMAT;
+
+        /* So YYmmddHHMMSSZ, with 1950 < YY < 2051 */
 	if (tm.tm_year < 50)
 	    tm.tm_year += 2000;
 	else
 	    tm.tm_year += 1900;
     }
+
+    /* Normalize tm_year (which counts from 1900 CE) */
     tm.tm_year -= 1900;
+    /* Normalize tm_mon (which is 0..11) */
     tm.tm_mon -= 1;
+
+    /*
+     * Note:_der_timegm() does clamping for the krb5_timestamp year 2038/2106
+     * problem.
+     */
     *t = _der_timegm (&tm);
     return 0;
 }

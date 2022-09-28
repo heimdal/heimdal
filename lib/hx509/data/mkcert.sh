@@ -2,7 +2,7 @@
 
 set -e
 
-DAYS=182500
+DAYS=5540
 
 key() {
     local key=$1; shift

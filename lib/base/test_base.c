@@ -525,13 +525,6 @@ test_json(void)
                 "wrong data NUL");
     o2 = heim_json_copy_serialize(o, 0, NULL);
     heim_assert(o2 != NULL, "data not serialized");
-    o3 = heim_json_create(heim_string_get_utf8(o2), 10,
-                          HEIM_JSON_F_TRY_DECODE_DATA, NULL);
-    heim_assert(o3 != NULL, "data not accepted");
-    heim_assert(heim_data_get_length(o3) == 1, "wrong data length");
-    heim_assert(((const char *)heim_data_get_ptr(o3))[0] == '\0',
-                "wrong data NUL");
-    heim_release(o3);
     heim_release(o2);
     heim_release(o);
 

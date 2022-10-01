@@ -43,8 +43,6 @@
 
 static heim_base_once_t heim_json_once = HEIM_BASE_ONCE_INIT;
 static heim_string_t heim_tid_data_uuid_key = NULL;
-static const char base64_chars[] =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 static void
 json_init_once(void *arg)
@@ -981,33 +979,6 @@ parse_string(struct parse_ctx *ctx)
     if (binary) {
         o = heim_data_ref_create(p0, (p - 1) - p0, free);
         return o;
-    }
-
-    /* If we can decode as base64, then let's */
-    if (ctx->flags & HEIM_JSON_F_TRY_DECODE_DATA) {
-        void *buf;
-        size_t len = p - p0;
-
-        if (len > 0)
-            len--;
-
-        if (len >= 4 && strspn(p0, base64_chars) >= len - 2) {
-            buf = malloc(len);
-            if (buf == NULL) {
-                ctx->error = heim_error_create_enomem();
-                free(p0);
-                return NULL;
-            }
-            len = rk_base64_decode(p0, buf);
-            if (len > -1) {
-                /* Yes base64, return the decoded data */
-                o = heim_data_ref_create(buf, len, free);
-                free(p0);
-                return o;
-            }
-            /* Not base64, so return what we had */
-            free(buf);
-        }
     }
 
     /* Sadly this will copy `p0' */

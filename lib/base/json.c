@@ -66,7 +66,7 @@ struct heim_strbuf {
 };
 
 static int
-base2json(heim_object_t, struct twojson *);
+base2json(heim_object_t, struct twojson *, int);
 
 static void
 indent(struct twojson *j)
@@ -74,8 +74,18 @@ indent(struct twojson *j)
     size_t i = j->indent;
     if (j->flags & HEIM_JSON_F_ONE_LINE)
 	return;
-    while (i--)
-	j->out(j->ctx, "\t");
+    if (j->flags & HEIM_JSON_F_INDENT2)
+        while (i--)
+            j->out(j->ctx, "  ");
+    else if (j->flags & HEIM_JSON_F_INDENT4)
+        while (i--)
+            j->out(j->ctx, "    ");
+    else if (j->flags & HEIM_JSON_F_INDENT8)
+        while (i--)
+            j->out(j->ctx, "        ");
+    else
+        while (i--)
+            j->out(j->ctx, "\t");
 }
 
 static void
@@ -90,7 +100,7 @@ array2json(heim_object_t value, void *ctx, int *stop)
 	j->out(j->ctx, NULL); /* eat previous '\n' if possible */
 	j->out(j->ctx, ",\n");
     }
-    j->ret = base2json(value, j);
+    j->ret = base2json(value, j, 0);
 }
 
 static void
@@ -105,19 +115,29 @@ dict2json(heim_object_t key, heim_object_t value, void *ctx)
 	j->out(j->ctx, NULL); /* eat previous '\n' if possible */
 	j->out(j->ctx, ",\n");
     }
-    j->ret = base2json(key, j);
+    j->ret = base2json(key, j, 0);
     if (j->ret)
 	return;
-    j->out(j->ctx, " : \n");
-    j->indent++;
-    j->ret = base2json(value, j);
-    if (j->ret)
-	return;
-    j->indent--;
+    switch (heim_get_tid(value)) {
+    case HEIM_TID_ARRAY:
+    case HEIM_TID_DICT:
+    case HEIM_TID_DATA:
+        j->out(j->ctx, ":\n");
+        j->indent++;
+        j->ret = base2json(value, j, 0);
+        if (j->ret)
+            return;
+        j->indent--;
+        break;
+    default:
+        j->out(j->ctx, ": ");
+        j->ret = base2json(value, j, 1);
+        break;
+    }
 }
 
 static int
-base2json(heim_object_t obj, struct twojson *j)
+base2json(heim_object_t obj, struct twojson *j, int skip_indent)
 {
     heim_tid_t type;
     int first = 0;
@@ -174,7 +194,8 @@ base2json(heim_object_t obj, struct twojson *j)
         int good;
         size_t i;
 
-	indent(j);
+        if (!skip_indent)
+            indent(j);
 	j->out(j->ctx, "\"");
         for (p = s; (c = *p); p++) {
             switch (c) {
@@ -383,7 +404,7 @@ base2json(heim_object_t obj, struct twojson *j)
 		heim_release(d);
 		return ENOMEM;
 	    }
-	    ret = base2json(d, j);
+	    ret = base2json(d, j, 0);
 	    heim_release(d);
 	    if (ret)
 		return ret;
@@ -393,17 +414,20 @@ base2json(heim_object_t obj, struct twojson *j)
 
     case HEIM_TID_NUMBER: {
 	char num[32];
-	indent(j);
+        if (!skip_indent)
+            indent(j);
 	snprintf(num, sizeof (num), "%d", heim_number_get_int(obj));
 	j->out(j->ctx, num);
 	break;
     }
     case HEIM_TID_NULL:
-	indent(j);
+        if (!skip_indent)
+            indent(j);
 	j->out(j->ctx, "null");
 	break;
     case HEIM_TID_BOOL:
-	indent(j);
+        if (!skip_indent)
+            indent(j);
 	j->out(j->ctx, heim_bool_val(obj) ? "true" : "false");
 	break;
     default:
@@ -427,7 +451,7 @@ heim_base2json(heim_object_t obj, void *ctx, heim_json_flags_t flags,
     j.ret = 0;
     j.first = 1;
 
-    return base2json(obj, &j);
+    return base2json(obj, &j, 0);
 }
 
 

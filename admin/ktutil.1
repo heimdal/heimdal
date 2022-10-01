@@ -60,7 +60,7 @@ Verbose output.
 .Ar command
 can be one of the following:
 .Bl -tag -width srvconvert
-.It add Oo Fl p Ar principal Oc Oo Fl Fl principal= Ns Ar principal Oc \
+.It Nm add Oo Fl p Ar principal Oc Oo Fl Fl principal= Ns Ar principal Oc \
 Oo Fl V Ar kvno Oc Oo Fl Fl kvno= Ns Ar kvno Oc Oo Fl e Ar enctype Oc \
 Oo Fl Fl keepold | Fl Fl keepallold | Fl Fl pruneall Oc \
 Oo Fl Fl enctype= Ns Ar enctype Oc Oo Fl w Ar password Oc \
@@ -72,7 +72,7 @@ principal to add; if what you really want is to add a new principal to
 the keytab, you should consider the
 .Ar get
 command, which talks to the kadmin server.
-.It change Oo Fl r Ar realm Oc Oo Fl Fl realm= Ns Ar realm Oc \
+.It Nm change Oo Fl r Ar realm Oc Oo Fl Fl realm= Ns Ar realm Oc \
 Oo Fl Fl keepold | Fl Fl keepallold | Fl Fl pruneall Oc \
 Oo Fl Fl enctype= Ns Ar enctype Oc \
 Oo Fl Fl a Ar host Oc Oo Fl Fl admin-server= Ns Ar host Oc \
@@ -82,12 +82,12 @@ server for the realm of a keytab entry.  Otherwise it will use the
 values specified by the options.
 .Pp
 If no principals are given, all the ones in the keytab are updated.
-.It copy Ar keytab-src Ar keytab-dest
+.It Nm copy Ar keytab-src Ar keytab-dest
 Copies all the entries from
 .Ar keytab-src
 to
 .Ar keytab-dest .
-.It get Oo Fl p Ar admin principal Oc \
+.It Nm get Oo Fl p Ar admin principal Oc \
 Oo Fl Fl principal= Ns Ar admin principal Oc Oo Fl e Ar enctype Oc \
 Oo Fl Fl keepold | Fl Fl keepallold | Fl Fl pruneall Oc \
 Oo Fl Fl enctypes= Ns Ar enctype Oc Oo Fl r Ar realm Oc \
@@ -103,9 +103,9 @@ If no
 .Ar realm
 is specified, the realm to operate on is taken from the first
 principal.
-.It list Oo Fl Fl keys Oc Op Fl Fl timestamp
+.It Nm list Oo Fl Fl keys Oc Op Fl Fl timestamp Oo Op Fl Fl json Oc
 List the keys stored in the keytab.
-.It remove Oo Fl p Ar principal Oc Oo Fl Fl principal= Ns Ar principal Oc \
+.It Nm remove Oo Fl p Ar principal Oc Oo Fl Fl principal= Ns Ar principal Oc \
 Oo Fl V kvno Oc Oo Fl Fl kvno= Ns Ar kvno Oc Oo Fl e enctype Oc \
 Oo Fl Fl enctype= Ns Ar enctype Oc
 Removes the specified key or keys. Not specifying a
@@ -113,12 +113,12 @@ Removes the specified key or keys. Not specifying a
 removes keys with any version number. Not specifying an
 .Ar enctype
 removes keys of any type.
-.It rename Ar from-principal Ar to-principal
+.It Nm rename Ar from-principal Ar to-principal
 Renames all entries in the keytab that match the
 .Ar from-principal
 to
 .Ar to-principal .
-.It purge Op Fl Fl age= Ns Ar age
+.It Nm purge Op Fl Fl age= Ns Ar age
 Removes all old versions of a key for which there is a newer version
 that is at least
 .Ar age

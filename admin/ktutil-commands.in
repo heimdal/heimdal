@@ -226,6 +226,11 @@ command = {
 		type = "flag"
 		help = "show timestamps"
 	}
+	option = {
+		long = "json"
+		type = "flag"
+		help = "output JSON representation"
+	}
 	max_args = "0"
 	function = "kt_list"
 	help = "Show contents of keytab."

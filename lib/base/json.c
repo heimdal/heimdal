@@ -37,6 +37,10 @@
 #include <ctype.h>
 #include <base64.h>
 
+#ifndef WIN32
+#include <langinfo.h>
+#endif
+
 static heim_base_once_t heim_json_once = HEIM_BASE_ONCE_INIT;
 static heim_string_t heim_tid_data_uuid_key = NULL;
 static const char base64_chars[] =
@@ -134,6 +138,54 @@ dict2json(heim_object_t key, heim_object_t value, void *ctx)
         j->ret = base2json(value, j, 1);
         break;
     }
+}
+
+#ifndef WIN32
+static void
+init_is_utf8(void *ptr)
+{
+    *(int *)ptr = strcasecmp("utf-8", nl_langinfo(CODESET)) == 0;
+}
+#endif
+
+int
+heim_locale_is_utf8(void)
+{
+#ifdef WIN32
+    return 0; /* XXX Implement */
+#else
+    static int locale_is_utf8 = -1;
+    static heim_base_once_t once = HEIM_BASE_ONCE_INIT;
+
+    heim_base_once_f(&once, &locale_is_utf8, init_is_utf8);
+    return locale_is_utf8;
+#endif
+}
+
+static void
+out_escaped_bmp(struct twojson *j, const unsigned char *p, int nbytes)
+{
+    unsigned char e[sizeof("\\u0000")];
+    unsigned codepoint;
+
+    if (nbytes == 2)
+        codepoint = ((p[0] & 0x1f) << 6) | (p[1] & 0x3f);
+    else if (nbytes == 3)
+        codepoint = ((p[0] & 0x0f) << 12) | ((p[1] & 0x3f) << 6) | (p[2] & 0x3f);
+    else
+        abort();
+    e[0]  = '\\';
+    e[1]  = 'u';
+    e[2]  = codepoint >> 12;
+    e[2] += (e[2] < 10) ? '0' : ('A' - 10);
+    e[3]  = (codepoint >> 8) & 0x0f;
+    e[3] += (e[3] < 10) ? '0' : ('A' - 10);
+    e[4]  = (codepoint >> 4) & 0x0f;
+    e[4] += (e[4] < 10) ? '0' : ('A' - 10);
+    e[5]  =  codepoint       & 0x0f;
+    e[5] += (e[5] < 10) ? '0' : ('A' - 10);
+    e[6]  = '\0';
+    j->out(j->ctx, (char *)e);
 }
 
 static int
@@ -265,6 +317,11 @@ base2json(heim_object_t obj, struct twojson *j, int skip_indent)
                 } else if (!good) {
                     return 1;
                 }
+                if (j->flags & HEIM_JSON_F_ESCAPE_NON_ASCII) {
+                    out_escaped_bmp(j, p, 2);
+                    p += 1;
+                    continue;
+                }
                 e[0] = c;
                 e[1] = p[1];
                 e[2] = '\0';
@@ -288,6 +345,11 @@ base2json(heim_object_t obj, struct twojson *j, int skip_indent)
                     continue;
                 } else if (!good) {
                     return 1;
+                }
+                if (j->flags & HEIM_JSON_F_ESCAPE_NON_ASCII) {
+                    out_escaped_bmp(j, p, 3);
+                    p += 2;
+                    continue;
                 }
                 e[0] = c;
                 e[1] = p[1];
@@ -450,6 +512,10 @@ heim_base2json(heim_object_t obj, void *ctx, heim_json_flags_t flags,
     j.flags = flags;
     j.ret = 0;
     j.first = 1;
+
+    if (!(flags & HEIM_JSON_F_NO_ESCAPE_NON_ASCII) &&
+        !heim_locale_is_utf8())
+        j.flags |= HEIM_JSON_F_ESCAPE_NON_ASCII;
 
     return base2json(obj, &j, 0);
 }

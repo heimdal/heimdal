@@ -53,6 +53,7 @@
 #include <sys/stat.h>
 #ifndef WIN32
 #include <sys/file.h>
+#include <locale.h>
 #endif
 #ifdef HAVE_IO_H
 #include <io.h>
@@ -290,7 +291,9 @@ test_json(void)
         "\xe0\xA0\x81"
         "\xe8\x80\x81"
         "\xf0\x9d\x84\x9e", heim_string_get_utf8(o)) == 0, "wrong string");
-    o2 = heim_json_copy_serialize(o, HEIM_JSON_F_STRICT, NULL);
+    o2 = heim_json_copy_serialize(o,
+                                  HEIM_JSON_F_STRICT |
+                                  HEIM_JSON_F_NO_ESCAPE_NON_ASCII, NULL);
     heim_assert(strcmp("\"\\b\\f\\n\\r\\t\\u001Eá߿ࠁ老\\uD834\\uDD1E\"",
                        heim_string_get_utf8(o2)) == 0,
                 "JSON encoding changed; please check that it is till valid");
@@ -319,8 +322,55 @@ test_json(void)
         "\xe0\xA0\x81"
         "\xe8\x80\x81"
         "\xf0\x9d\x84\x9e", heim_string_get_utf8(o)) == 0, "wrong string");
-    o2 = heim_json_copy_serialize(o, HEIM_JSON_F_STRICT, NULL);
+    o2 = heim_json_copy_serialize(o,
+                                  HEIM_JSON_F_STRICT |
+                                  HEIM_JSON_F_NO_ESCAPE_NON_ASCII, NULL);
     heim_assert(strcmp("\"\\b\\f\\n\\r\\t\\u001Eá߿ࠁ老\\uD834\\uDD1E\"",
+                       heim_string_get_utf8(o2)) == 0,
+                "JSON encoding changed; please check that it is till valid");
+    o3 = heim_json_create(heim_string_get_utf8(o2), 10, HEIM_JSON_F_STRICT, NULL);
+    heim_assert(heim_json_eq(o, o3), "JSON text did not round-trip");
+    heim_release(o3);
+    heim_release(o2);
+    heim_release(o);
+
+    /*
+     * Test HEIM_JSON_F_ESCAPE_NON_ASCII.
+     *
+     * Also test that we get escaped non-ASCII because we're in a not-UTF-8
+     * locale, since we setlocale(LC_ALL, "C"), so we should escape non-ASCII
+     * by default.
+     */
+    o = heim_json_create("\""
+        "\\b\\f\\n\\r\\t"   /* ASCII C-like escapes */
+        "\x1e"              /* ASCII control character w/o C-like escape */
+        "\xc3\xa1"
+        "\xdf\xbf"
+        "\xe0\xa0\x81"
+        "\xE8\x80\x81"
+        "\\uD834\\udd1e"    /* U+1D11E, as shown in RFC 7159 */
+        "\"", 10, 0, NULL);
+    heim_assert(o != NULL, "string");
+    heim_assert(heim_get_tid(o) == heim_string_get_type_id(), "string-tid");
+    heim_assert(strcmp(
+        "\b\f\n\r\t"
+        "\x1e"
+        "\xc3\xa1"
+        "\xdf\xbf"
+        "\xe0\xA0\x81"
+        "\xe8\x80\x81"
+        "\xf0\x9d\x84\x9e", heim_string_get_utf8(o)) == 0, "wrong string");
+    o2 = heim_json_copy_serialize(o,
+                                  HEIM_JSON_F_STRICT |
+                                  HEIM_JSON_F_ESCAPE_NON_ASCII, NULL);
+    heim_assert(strcmp("\"\\b\\f\\n\\r\\t\\u001E\\u00E1\\u07FF\\u0801\\u8001"
+                       "\\uD834\\uDD1E\"",
+                       heim_string_get_utf8(o2)) == 0,
+                "JSON encoding changed; please check that it is till valid");
+    heim_release(o2);
+    o2 = heim_json_copy_serialize(o, HEIM_JSON_F_STRICT, NULL);
+    heim_assert(strcmp("\"\\b\\f\\n\\r\\t\\u001E\\u00E1\\u07FF\\u0801\\u8001"
+                       "\\uD834\\uDD1E\"",
                        heim_string_get_utf8(o2)) == 0,
                 "JSON encoding changed; please check that it is till valid");
     o3 = heim_json_create(heim_string_get_utf8(o2), 10, HEIM_JSON_F_STRICT, NULL);
@@ -339,7 +389,9 @@ test_json(void)
     heim_assert(o != NULL, "string");
     heim_assert(heim_get_tid(o) == heim_string_get_type_id(), "string-tid");
     heim_assert(strcmp("\b\f", heim_string_get_utf8(o)) == 0, "wrong string");
-    o2 = heim_json_copy_serialize(o, HEIM_JSON_F_STRICT, NULL);
+    o2 = heim_json_copy_serialize(o,
+                                  HEIM_JSON_F_STRICT |
+                                  HEIM_JSON_F_NO_ESCAPE_NON_ASCII, NULL);
     heim_assert(strcmp("\"\\b\\f\"", heim_string_get_utf8(o2)) == 0,
                 "JSON encoding changed; please check that it is till valid");
     o3 = heim_json_create(heim_string_get_utf8(o2), 10, HEIM_JSON_F_STRICT, NULL);
@@ -359,7 +411,9 @@ test_json(void)
     heim_assert(o != NULL, "malformed string rejected (not strict)");
     heim_assert(heim_get_tid(o) == heim_string_get_type_id(), "string-tid");
     heim_assert(strcmp(" ", heim_string_get_utf8(o)) == 0, "wrong string");
-    o2 = heim_json_copy_serialize(o, HEIM_JSON_F_STRICT, NULL);
+    o2 = heim_json_copy_serialize(o,
+                                  HEIM_JSON_F_STRICT |
+                                  HEIM_JSON_F_NO_ESCAPE_NON_ASCII, NULL);
     heim_assert(strcmp("\" \"", heim_string_get_utf8(o2)) == 0,
                 "JSON encoding changed; please check that it is till valid");
     o3 = heim_json_create(heim_string_get_utf8(o2), 10, HEIM_JSON_F_STRICT, NULL);
@@ -383,7 +437,9 @@ test_json(void)
     heim_assert(strcmp(
         "\xe8\x80\x81"
         "\\uD834\\udd", heim_string_get_utf8(o)) == 0, "wrong string");
-    o2 = heim_json_copy_serialize(o, HEIM_JSON_F_STRICT, NULL);
+    o2 = heim_json_copy_serialize(o,
+                                  HEIM_JSON_F_STRICT |
+                                  HEIM_JSON_F_NO_ESCAPE_NON_ASCII, NULL);
     heim_assert(strcmp("\"老\\\\uD834\\\\udd\"",
                        heim_string_get_utf8(o2)) == 0,
                 "JSON encoding changed; please check that it is till valid");
@@ -408,7 +464,9 @@ test_json(void)
     heim_assert(strcmp(
         "\xe8\x80\x81"
         "\\uD83", heim_string_get_utf8(o)) == 0, "wrong string");
-    o2 = heim_json_copy_serialize(o, HEIM_JSON_F_STRICT, NULL);
+    o2 = heim_json_copy_serialize(o,
+                                  HEIM_JSON_F_STRICT |
+                                  HEIM_JSON_F_NO_ESCAPE_NON_ASCII, NULL);
     heim_assert(strcmp("\"老\\\\uD83\"",
                        heim_string_get_utf8(o2)) == 0,
                 "JSON encoding changed; please check that it is till valid");
@@ -428,9 +486,11 @@ test_json(void)
     heim_assert(heim_get_tid(o) == heim_string_get_type_id(), "string-tid");
     heim_assert(strcmp("\xe8\x80",
                        heim_string_get_utf8(o)) == 0, "wrong string");
-    o2 = heim_json_copy_serialize(o, HEIM_JSON_F_STRICT, NULL);
+    o2 = heim_json_copy_serialize(o,
+                                  HEIM_JSON_F_STRICT |
+                                  HEIM_JSON_F_NO_ESCAPE_NON_ASCII, NULL);
     heim_assert(o2 == NULL, "malformed string serialized");
-    o2 = heim_json_copy_serialize(o, 0, NULL);
+    o2 = heim_json_copy_serialize(o, HEIM_JSON_F_NO_ESCAPE_NON_ASCII, NULL);
     o3 = heim_json_create(heim_string_get_utf8(o2), 10, HEIM_JSON_F_STRICT, NULL);
     heim_assert(o3 == NULL, "malformed string accepted (not strict)");
     o3 = heim_json_create(heim_string_get_utf8(o2), 10, 0, NULL);
@@ -1224,6 +1284,11 @@ int
 main(int argc, char **argv)
 {
     int res = 0;
+
+#ifndef WIN32
+    setlocale(LC_ALL, "C");
+    heim_assert(!heim_locale_is_utf8(), "setlocale(LC_ALL, \"C\") failed?");
+#endif
 
     res |= test_memory();
     res |= test_mutex();

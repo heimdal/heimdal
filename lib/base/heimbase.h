@@ -464,10 +464,12 @@ typedef enum heim_json_flags {
 	HEIM_JSON_F_CNULL2JSNULL = 32,
 	HEIM_JSON_F_TRY_DECODE_DATA = 64,
 	HEIM_JSON_F_ONE_LINE = 128,
+        HEIM_JSON_F_ESCAPE_NON_ASCII = 256,
+        HEIM_JSON_F_NO_ESCAPE_NON_ASCII = 512,
         /* The default is to indent with one tab */
-	HEIM_JSON_F_INDENT2 = 256,
-	HEIM_JSON_F_INDENT4 = 512,
-	HEIM_JSON_F_INDENT8 = 1024,
+	HEIM_JSON_F_INDENT2 = 1024,
+	HEIM_JSON_F_INDENT4 = 2048,
+	HEIM_JSON_F_INDENT8 = 4096,
 } heim_json_flags_t;
 
 heim_object_t heim_json_create(const char *, size_t, heim_json_flags_t,

@@ -239,7 +239,7 @@ heim_string_t
 __heim_string_constant(const char *_str)
 {
     static HEIMDAL_MUTEX mutex = HEIMDAL_MUTEX_INITIALIZER;
-    static heim_base_once_t once;
+    static heim_base_once_t once = HEIM_BASE_ONCE_INIT;
     static heim_dict_t dict = NULL;
     heim_string_t s, s2;
 

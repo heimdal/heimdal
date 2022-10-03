@@ -80,6 +80,7 @@ kadmin_LDADD = \
 	$(top_builddir)/lib/kadm5/libkadm5srv.la \
 	$(top_builddir)/lib/sl/libsl.la \
 	$(LIB_readline) \
+	$(LIB_heimbase) \
 	$(LDADD_common) \
 	$(LIB_dlopen)
 

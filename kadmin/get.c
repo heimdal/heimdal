@@ -35,6 +35,7 @@
 #include "kadmin-commands.h"
 #include <parse_units.h>
 #include <rtbl.h>
+#include <heimbase.h>
 
 static struct field_name {
     const char *fieldname;
@@ -84,6 +85,8 @@ struct get_entry_data {
     struct field_info *chead, **ctail;
     const char *krb5_config_fname;
     void *kadm_handle;
+    struct get_options *options;
+    heim_json_flags_t json_flags;
     uint32_t n;
     int upto;
 };
@@ -500,6 +503,212 @@ do_get_entry(krb5_principal principal, void *data)
     return ret;
 }
 
+static int
+tl_data2json(kadm5_principal_ent_rec *p, struct get_entry_data *e, heim_dict_t d)
+{
+    krb5_tl_data *tl;
+    heim_object_t o = NULL;
+
+    for (tl = p->tl_data; tl; tl = tl->tl_data_next) {
+        switch (tl->tl_data_type) {
+        case KRB5_TL_PASSWORD:
+            if (e->options->json_with_keys_flag)
+                heim_dict_set_value(d, HSTR("password"),
+                                    o = heim_string_create(tl->tl_data_contents));
+            else
+                heim_dict_set_value(d, HSTR("password"),
+                                    heim_bool_create(1));
+            heim_release(o);
+            continue;
+        default:
+            /* XXX Add more! */
+            continue;
+        }
+    }
+    return 0;
+}
+
+static void
+keys2json(kadm5_principal_ent_rec *p, struct get_entry_data *e, heim_dict_t d)
+{
+    heim_array_t a = heim_array_create();
+    heim_string_t last_enctype_str = NULL;
+    krb5_error_code ret = 0;
+    krb5_enctype last_enctype = -1;
+    size_t i;
+
+    heim_dict_set_value(d, HSTR("keys"), a);
+    if (p->n_key_data < 1) {
+        heim_release(a);
+        return;
+    }
+    for (i = 0; i < (size_t)p->n_key_data; i++) {
+        krb5_enctype et = p->key_data[i].key_data_type[0];
+        heim_dict_t k;
+
+        if (p->key_data[i].key_data_ver != 2) {
+            heim_array_append_value(a, HSTR("<unknown-key-version>"));
+            continue;
+        }
+        k = heim_dict_create(5);
+        heim_array_append_value(a, k);
+        heim_dict_set_value(k, HSTR("kvno"),
+                            heim_number_create(p->key_data[i].key_data_kvno));
+        heim_dict_set_value(k, HSTR("enctype_number"),
+                            heim_number_create(et));
+
+        if (last_enctype != p->key_data[i].key_data_type[0]) {
+            char *str = NULL;
+
+            heim_release(last_enctype_str);
+            last_enctype_str = NULL;
+
+            ret = krb5_enctype_to_string(context, et, &str);
+            if (ret == 0)
+                last_enctype_str = heim_string_create(str);
+            else
+                last_enctype_str = HSTR("<unknown-enctype>");
+            free(str);
+            last_enctype = p->key_data[i].key_data_type[0];
+        }
+        heim_dict_set_value(k, HSTR("enctype"), last_enctype_str);
+
+        if (e->options->json_with_keys_flag) {
+            heim_data_t data;
+
+            data = heim_data_create(p->key_data[i].key_data_contents[0],
+                                    p->key_data[i].key_data_length[0]);
+            heim_dict_set_value(k, HSTR("key"), data);
+            heim_release(data);
+        }
+        if (p->key_data[i].key_data_type[1] == KRB5_PW_SALT) {
+            heim_data_t data;
+
+            heim_dict_set_value(k, HSTR("salt_type"), HSTR("normal"));
+            data = heim_data_create(p->key_data[i].key_data_contents[1],
+                                    p->key_data[i].key_data_length[1]);
+            heim_dict_set_value(k, HSTR("salt"), data);
+            heim_release(data);
+        } else if (p->key_data[i].key_data_type[1] == KRB5_AFS3_SALT) {
+            heim_data_t data;
+
+            heim_dict_set_value(k, HSTR("salt_type"), HSTR("AFS"));
+            data = heim_data_create(p->key_data[i].key_data_contents[1],
+                                    p->key_data[i].key_data_length[1]);
+            heim_dict_set_value(k, HSTR("salt"), data);
+            heim_release(data);
+        }
+        heim_release(k);
+    }
+    heim_release(last_enctype_str);
+    heim_release(a);
+    return;
+}
+
+static int
+do_get_entry_json(krb5_principal principal, void *data)
+{
+    struct get_entry_data *e = data;
+    kadm5_principal_ent_rec p;
+    krb5_error_code ret;
+    heim_object_t o;
+    heim_dict_t d;
+    char *s;
+
+    if (e->upto == 0)
+        return EINTR;
+    if (e->upto > 0)
+        e->upto--;
+
+    memset(&p, 0, sizeof(p));
+    ret = kadm5_get_principal(e->kadm_handle, principal, &p,
+			      e->mask | e->extra_mask);
+    if (ret) {
+        e->n++;
+        return ret;
+    }
+
+    if (e->options->terse_flag) {
+        ret = krb5_unparse_name(context, p.principal, &s);
+        if (ret == 0) {
+            heim_string_t hs = heim_string_create(s);
+
+            o = heim_json_copy_serialize(hs, e->json_flags, NULL);
+            printf("%s\n", heim_string_get_utf8(o));
+            heim_release(hs);
+            heim_release(o);
+            free(s);
+        }
+        return ret;
+    }
+
+    d = heim_dict_create(20);
+    ret = krb5_unparse_name(context, p.principal, &s);
+    if (ret == 0) {
+        heim_dict_set_value(d, HSTR("principal"), o = heim_string_create(s));
+        heim_release(o);
+        free(s);
+    }
+    if (ret == 0) {
+        ret = krb5_unparse_name(context, p.mod_name, &s);
+        heim_dict_set_value(d, HSTR("mod_name"), o = heim_string_create(s));
+        heim_release(o);
+        free(s);
+    }
+    if (ret == 0)
+        ret = tl_data2json(&p, e, d);
+    if (ret == 0)
+        keys2json(&p, e, d);
+    heim_dict_set_value(d, HSTR("princ_expire_time"),
+                        o = heim_number_create(p.princ_expire_time));
+    heim_release(o);
+    heim_dict_set_value(d, HSTR("last_pwd_change"),
+                        o = heim_number_create(p.last_pwd_change));
+    heim_release(o);
+    heim_dict_set_value(d, HSTR("pw_expiration"),
+                        o = heim_number_create(p.pw_expiration));
+    heim_release(o);
+    heim_dict_set_value(d, HSTR("max_life"),
+                        o = heim_number_create(p.max_life));
+    heim_release(o);
+    heim_dict_set_value(d, HSTR("mod_date"),
+                        o = heim_number_create(p.mod_date));
+    heim_release(o);
+    heim_dict_set_value(d, HSTR("attributes"),
+                        o = attributes2json_array(p.attributes));
+    heim_release(o);
+    heim_dict_set_value(d, HSTR("kvno"),
+                        o = heim_number_create(p.kvno));
+    heim_release(o);
+    heim_dict_set_value(d, HSTR("mkvno"),
+                        o = heim_number_create(p.mkvno));
+    heim_release(o);
+    heim_dict_set_value(d, HSTR("policy"), o = heim_string_create(p.policy));
+    heim_release(o);
+    heim_dict_set_value(d, HSTR("aux_attributes"),
+                        o = heim_number_create(p.aux_attributes));
+    heim_release(o);
+    heim_dict_set_value(d, HSTR("max_renewable_life"),
+                        o = heim_number_create(p.max_renewable_life));
+    heim_release(o);
+    heim_dict_set_value(d, HSTR("last_success"),
+                        o = heim_number_create(p.last_success));
+    heim_release(o);
+    heim_dict_set_value(d, HSTR("last_failed"),
+                        o = heim_number_create(p.last_failed));
+    heim_release(o);
+    heim_dict_set_value(d, HSTR("fail_auth_count"),
+                        o = heim_number_create(p.fail_auth_count));
+    heim_release(o);
+
+    kadm5_free_principal_ent(e->kadm_handle, &p);
+    o = heim_json_copy_serialize(d, e->json_flags, NULL);
+    printf("%s\n", heim_string_get_utf8(o));
+    heim_release(d);
+    heim_release(o);
+    return 0;
+}
+
 static void
 free_columns(struct get_entry_data *data)
 {
@@ -590,14 +799,20 @@ getit(struct get_options *opt, const char *name, int argc, char **argv)
 	opt->terse_flag = 0;
     if(opt->long_flag == 0 && opt->short_flag == 0 && opt->terse_flag == 0)
 	opt->short_flag = 1;
+    if (opt->json_flag || opt->json_with_keys_flag) {
+        opt->long_flag = 0;
+	opt->short_flag = 0;
+        opt->json_flag = 1;
+    }
 
-    if (opt->terse_flag)
+    if (opt->terse_flag && !opt->json_flag)
         return listit(name, opt->upto_integer, argc, argv);
 
     data.kadm_handle = NULL;
     ret = kadm5_dup_context(kadm_handle, &data.kadm_handle);
     if (ret)
         krb5_err(context, 1, ret, "Could not duplicate kadmin connection");
+    data.options = opt;
     data.table = NULL;
     data.chead = NULL;
     data.ctail = &data.chead;
@@ -606,29 +821,50 @@ getit(struct get_options *opt, const char *name, int argc, char **argv)
     data.krb5_config_fname = opt->krb5_config_file_string;
     data.upto = opt->upto_integer;
     data.n = 0;
+    data.json_flags =
+        (HEIM_JSON_F_STRICT | HEIM_JSON_F_INDENT2 | HEIM_JSON_F_NO_DATA_DICT) &
+        ~HEIM_JSON_F_NO_DATA;
 
-    if(opt->short_flag) {
-	data.table = rtbl_create();
-	rtbl_set_separator(data.table, "  ");
-	data.format = print_entry_short;
-    } else
-	data.format = print_entry_long;
-    if(opt->column_info_string == NULL) {
-	if(opt->long_flag)
-	    ret = setup_columns(&data, DEFAULT_COLUMNS_LONG);
-	else
-	    ret = setup_columns(&data, DEFAULT_COLUMNS_SHORT);
-    } else
-	ret = setup_columns(&data, opt->column_info_string);
-
-    if(ret != 0) {
-	if(data.table != NULL)
-	    rtbl_destroy(data.table);
-	return 0;
+    if (opt->json_ascii_flag) {
+        opt->json_flag = 1;
+        data.json_flags |= HEIM_JSON_F_ESCAPE_NON_ASCII;
     }
 
-    for(i = 0; i < argc; i++)
-	ret = foreach_principal(argv[i], do_get_entry, name, &data);
+    if (!opt->json_flag) {
+        if (opt->short_flag) {
+            data.table = rtbl_create();
+            rtbl_set_separator(data.table, "  ");
+            data.format = print_entry_short;
+        } else
+            data.format = print_entry_long;
+        if (opt->column_info_string == NULL) {
+            if (opt->long_flag)
+                ret = setup_columns(&data, DEFAULT_COLUMNS_LONG);
+            else
+                ret = setup_columns(&data, DEFAULT_COLUMNS_SHORT);
+        } else
+            ret = setup_columns(&data, opt->column_info_string);
+
+        if(ret != 0) {
+            if(data.table != NULL)
+                rtbl_destroy(data.table);
+            return 0;
+        }
+        for(i = 0; i < argc; i++)
+            ret = foreach_principal(argv[i], do_get_entry, name, &data);
+    } else {
+        data.mask = KADM5_PRINCIPAL;
+        if (!opt->terse_flag)
+            data.mask |=
+                KADM5_PRINC_EXPIRE_TIME | KADM5_PW_EXPIRATION |
+                KADM5_LAST_PWD_CHANGE | KADM5_MAX_LIFE | KADM5_MAX_RLIFE |
+                KADM5_MOD_TIME | KADM5_MOD_NAME | KADM5_ATTRIBUTES | KADM5_KVNO |
+                KADM5_MKVNO | KADM5_LAST_SUCCESS | KADM5_LAST_FAILED |
+                KADM5_FAIL_AUTH_COUNT | KADM5_POLICY | KADM5_KEY_DATA |
+                KADM5_TL_DATA;
+        for(i = 0; i < argc; i++)
+            ret = foreach_principal(argv[i], do_get_entry_json, name, &data);
+    }
 
     kadm5_destroy(data.kadm_handle);
 
@@ -661,5 +897,7 @@ list_princs(struct list_options *opt, int argc, char **argv)
     get_opt.terse_flag = opt->terse_flag;
     get_opt.column_info_string = opt->column_info_string;
     get_opt.upto_integer = opt->upto_integer;
+    get_opt.json_with_keys_flag = opt->json_with_keys_flag;
+    get_opt.json_flag = opt->json_flag;
     return getit(&get_opt, "list", argc, argv);
 }

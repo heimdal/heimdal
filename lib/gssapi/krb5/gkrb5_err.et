@@ -18,7 +18,8 @@ error_code G_WRONG_SIZE, "Buffer is the wrong size"
 error_code G_BAD_USAGE, "Credential usage type is unknown"
 error_code G_UNKNOWN_QOP, "Unknown quality of protection specified"
 error_code G_UNKNOWN_CRED_STORE_ELEMENT, "Credential store contained unknown elements"
-error_code G_BAD_PASSWORD_CRED_STORE, "Credential store cannot contain both a password and a credentials cache or client keytab"
+error_code G_BAD_PASSWORD_CRED_STORE, "Credential store has no password key"
+error_code G_BAD_PKINIT_CRED_STORE, "Credential store lacks pkinit_cert or pkinit_priv_key keys"
 
 index 128
 

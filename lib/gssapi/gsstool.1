@@ -1,0 +1,362 @@
+.\" Copyright (c) 2022 Kungliga Tekniska Högskolan
+.\" (Royal Institute of Technology, Stockholm, Sweden).
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\"
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\"
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" 3. Neither the name of the Institute nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\" $Id$
+.\"
+.Dd October 9, 2022
+.Dt GSSTOOL 1
+.Os HEIMDAL
+.Sh NAME
+.Nm gsstool
+.Nd command-line interface to GSS-API
+.Sh SYNOPSIS
+.Nm
+.Ar command
+.Op Ar args
+.Sh DESCRIPTION
+.Nm
+is a program for using the GSS-API from a shell.
+.Pp
+.Ar command
+can be one of the following:
+.Bl -tag -width srvconvert
+.It Nm mechanisms
+Lists available GSS-API mechanisms.
+.It Nm attributes Oo Fl Fl all Oc
+Lists all the mechanism attributes known to
+.Nm .
+.It Nm attributes Oo Fl Fl mech=MECH Oc
+Lists the attributes of the given
+.Ar MECH .
+.It Nm acquire-cred \
+Oo Fl Fl verbose Oc \
+Oo Fl s \*(Ba Xo Fl Fl shell Xc Oc \
+Oo Fl Fl initiator Oc \
+Oo Fl Fl acceptor Oc \
+Oo Fl Fl mech= Ns Ar MECH Oc \
+Oo Fl Fl name-type= Ns Ar NAME-TYPE Oc \
+Oo Fl Fl name= Ns Ar NAME Oc \
+Oo Fl Fl time-req= Ns Ar SECONDS Oc \
+Oo Fl Fl from= Ns Ar KEY=VALUE Oc \
+Oo Fl Fl from-file=echo-on: Ns Ar KEY=FILE Oc \
+Oo Fl Fl from-prompt= Ns Ar KEY=PROMPT Oc \
+Oo Fl Fl from-prompt= Ns Ar KEY=PROMPT Oc \
+Oo Fl Fl into= Ns Ar KEY=VALUE Oc \
+Oo Fl Fl into-file=echo-on: Ns Ar KEY=FILE Oc \
+Oo Fl Fl into-prompt=echo-on: Ns Ar KEY=PROMPT Oc \
+Oo Fl Fl into-prompt=echo-off: Ns Ar KEY=PROMPT Oc \
+Oo Ar cmd Oo arguments... Oc Oc
+.Pp
+Acquires a credential for each of the
+.Fl Fl mech= Ns Ar MECH
+mechanisms given for the given principal
+.Ar NAME ,
+or the default principal for the invoking user, as specified by
+the
+.Fl Fl from= Ns Ar KEY=VALUE
+options and stores it into the given credential store specified
+by the
+.Fl Fl into= Ns Ar KEY=VALUE
+options, if any are given.
+If no
+.Fl Fl mech= Ns Ar MECH
+is given, then the Kerberos mechanism will be used.
+If no
+.Fl Fl into= Ns Ar KEY=VALUE
+options are given, the credential acquired will not be stored
+anywhere, but the exit status code of
+.Nm
+can be used to test if a credential could be acquired.
+.Pp
+In other words,
+.Nm
+.Nm acquire-cred
+provides the same kind of functionality as
+.Xr kinit 1
+but using pure GSS-API functions rather than
+.Dq krb5
+APIs, though with some limitations, chiefly that the GSS-API
+functions used do not support interaction with the user,
+therefore the user must know a priori all the
+.Ar KEY=VALUE
+pairs needed to successfully acquire a credential.
+Because
+.Nm
+uses pure GSS-API functions, it can work with any mechanism that
+provides functionality similar to the Kerberos mechanism's
+initial credential acquisition functionality.
+.Pp
+If a
+.Ar cmd Oo arguments.. Oc
+is given, then the command will be run, and for as long as it
+runs the credentials will be kept fresh by renewing or
+re-acquiring them.
+Alternatively, if a
+.Ar cmd Oo arguments.. Oc
+is not given, and the
+.Fl Fl shell \*(Ba Xo Fl s Xc
+option is given, then environment variable settings may be
+output.
+.Pp
+Mechanisms may, and the Kerberos GSS-API mechanism does try all
+the strategies that are possible for the given
+.Fl Fl from= Ns Ar KEY=VALUE
+options, and in a reasonable order (such as: from a credentials
+cache, using a keytab, using PKINIT, or using a password).
+.Pp
+As well,
+.Nm
+.Nm acquire-cred
+can prompt for
+.Ar VALUEs
+with echo on and echo off, or even read them from files, so that
+the user experience can be quite like that of
+.Xr kinit 1 .
+.Pp
+Note that the
+.Ar KEY=VALUE
+pairs are specific to the GSS-API mechanisms.
+See
+.Sx CREDENTIAL STORE SPECIFICATION
+for more details.
+.Pp
+By default
+.Nm
+acquires initiator credentials, unless
+.Fl Fl acceptor
+is given.
+If both,
+.Fl Fl initiator
+and
+.Fl Fl acceptor
+are given, then
+.Nm
+acquires credentials for both.
+Note though that currently there is no support for storing
+acquired acceptor credentials.
+.Pp
+.Ar MECH
+values currently accepted:
+.Bl -tag -width Ds -offset indent
+.It Ar all
+(try acquiring credentials for all mechanisms)
+.It Ar krb5
+.It Ar ntlm
+.It Ar spnego
+.It Ar sanon_x25519
+.It any mechanism OID, such as 1.3.6.1.5.5.2.
+.El
+.Pp
+.Ar NAME-TYPE
+values currently accepted:
+.Bl -tag -width Ds -offset indent
+.It Ar anonymous
+.It Ar hostbased-service
+.It Ar machine-uid
+.It Ar string-uid
+.It Ar user
+.It any name-type OID, such as 1.3.6.1.5.5.2.
+.El
+.El
+.Sh CREDENTIAL STORE SPECIFICATION
+.Pp
+Some of the
+.Ar KEYs
+for use in the
+.Fl Fl from= Ns Ar KEY=VALUE
+options for the Kerberos GSS-API mechanism are:
+.Bl -tag -width Ds -offset indent
+.It Nm appname= Ns Ar APP
+Use the given
+.Ar APP
+name for any appdefaults.
+.It Nm only=Ns Ar SOURCE
+Only uses the given
+.Ar SOURCE
+for credentials acquisition.
+Valid
+.Ar SOURCEs
+are:
+.Bl -tag -width Ds -offset indent
+.It Ar cache
+Only look for cached credentials.
+.It Ar renew
+Only look for cached credentials, and renew them.
+Requires the
+.Ar renew KEY
+to be set.
+.It Ar keytab
+Only acquire credentials with a keytab.
+.It Ar pkinit
+Only acquire credentials with PKINIT.
+.It Ar password
+Only acquire credentials with a password.
+.El
+.It Nm ccache= Ns Ar CREDENTIALS-CACHE
+.It Nm renew
+Attempts to renew the credential found in the
+.Ar ccache .
+But note that the renewed credential will not be written to the
+cache.
+Use the
+.Fl Fl into= Ns Ar KEY=VALUE
+command-line options to cause fresh/renewed credentials to be
+stored.
+.It Nm fresh
+Acquire a fresh credential / do not use a cached credential
+without renewing it.
+If
+.Ar fresh
+is given without
+.Ar renew
+then no cached credential will be used.
+.It Nm initial
+Like
+.Ar fresh ,
+no cached credential will be acquired, but also no credential
+will be renewed even if
+.Ar renew
+is set.
+.It Nm service=PRINCIPAL
+Instead of getting the usual TGT for the initiator, get a TGT for
+the given
+.Ar PRINCIPAL .
+.It Nm keytab= Ns Ar KEYTAB
+.It Nm client_keytab= Ns Ar KEYTAB
+.It Nm password= Ns Ar PASSWORD
+.It Nm kdc= Ns Ar HOSTNAME
+Use the given KDC
+.Ar HOSTNAME .
+.It Nm sitename= Ns Ar SITENAME
+Use the given site name
+.Ar SITENAME
+when searching for KDCs.
+.It Nm pkinit_cert= Ns Ar CERT-STORE
+Location of PKINIT client certificate and private key.
+See
+.Xr hxtool 1 .
+.It Nm pkinit_pool= Ns Ar CERT-STORE
+Optional store of certificates used to construct the client
+certificate's chain.
+.It Nm pkinit_anchors= Ns Ar CERT-STORE
+Trust anchors for validating the KDCs' PKINIT certificates.
+.It Nm pkinit_crl= Ns Ar CRL
+CRL for KDC certificate validation.
+.It Nm pkinit_password= Ns Ar PASSWORD
+Optional password for the
+.Nm pkinit_cert= Ns Ar CERT-STORE .
+.It Nm pkinit_use_enckey
+.It Nm pkinit_no_anchors
+.It Nm pkinit_btmm
+.It Nm fast_armor_cache= Ns Ar CREDENTIALS-CACHE
+Use FAST armor, with the credentials in the given
+.Ar CREDENTIALS-CACHE
+.It Nm fast_anon_pkinit
+Use FAST armored with an armor ticket obtained via anonymous
+PKINIT.
+.It Nm optimistic_fast_anon_pkinit
+Try FAST armored with an armor ticket obtained via anonymous
+PKINIT.
+.It Nm renewable
+.It Nm forwardable
+.It Nm validate
+.It Nm request_pac
+.It Nm addressless
+.El
+.Pp
+Some of the
+.Ar KEYs
+for use in the
+.Fl Fl into= Ns Ar KEY=VALUE
+options for the Kerberos mechanism are:
+.Bl -tag -width Ds -offset indent
+.It Nm unique_ccache_type=TYPE
+Create a new, unique credentials cache of the given
+.Ar TYPE .
+E.g.,
+.Dq Ar FILE .
+.It Nm ccache= Ns Ar CREDENTIALS-CACHE
+The specific credentials cache to store into.
+E.g.,
+.Dq Ar FILE:/tmp/some-ccache .
+.It Nm username=USER-NAME
+This is used for selecting the best credentials cache to use.
+.It Nm appname=APP-NAME
+This is used for resolving appdefaults.
+.El
+.Sh EXAMPLES
+Test if there is an unexpired Kerberos credential:
+.Bd -literal -offset indent
+gsstool acquire-cred --from=only=cache
+.Ed
+.Pp
+Test if there is an unexpired Kerberos credential for a specific
+principal in a principal-specific cache in the default cache
+collection:
+.Bd -literal -offset indent
+gsstool acquire-cred --name=some-principal-here \\
+                     --from=only=cache
+.Ed
+.Pp
+Test if there is an unexpired Kerberos credential in a specific
+cache:
+.Bd -literal -offset indent
+gsstool acquire-cred --from=only=cache          \\
+                     --from=ccache=FILE:/tmp/some-ccache
+.Ed
+.Pp
+Test what mechanisms the user has cached credentials for:
+.Bd -literal -offset indent
+gsstool acquire-cred --mech=all --from=only=cache
+.Ed
+.Pp
+Renew a credential:
+.Bd -literal -offset indent
+gsstool acquire-cred --mech=krb5 --from=renew
+.Ed
+.Pp
+Acquire a fresh Kerberos credential with a password, prompting
+for it, then store it in a particular cache:
+.Bd -literal -offset indent
+gsstool acquire-cred --into=ccache=FILE:/tmp/some-ccache    \\
+                     --from-prompt=password="Password: "
+.Ed
+.Pp
+Acquire a fresh Kerberos credential with a password read from a
+file:
+.Bd -literal -offset indent
+gsstool acquire-cred --into=ccache=FILE:/tmp/some-ccache    \\
+                     --from-file=password=/tmp/password
+.Ed
+.Sh SEE ALSO
+.Xr gss-token 1 ,
+.Xr hxtool 1 ,
+.Xr kinit 1 .

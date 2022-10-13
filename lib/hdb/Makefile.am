@@ -41,6 +41,9 @@ gen_files_hdb = \
 	asn1_HDB_extensions.c \
 	asn1_HDB_keyset.c \
 	asn1_HDBFlags.c \
+	asn1_HDB_Ext_IPropInfo.c \
+	asn1_IPropInfo_Seen_KDCs.c \
+	asn1_KDC_Name.c \
 	asn1_Key.c \
 	asn1_KeyRotation.c \
 	asn1_KeyRotationFlags.c \

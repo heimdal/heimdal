@@ -1055,6 +1055,8 @@ match_appl_version(const void *data, const char *appl_version)
     return 1;
 }
 
+extern char *local_kdc_name;
+
 static void
 handle_v5(krb5_context contextp,
 	  krb5_keytab keytab,
@@ -1111,6 +1113,19 @@ handle_v5(krb5_context contextp,
             krb5_free_ticket(contextp, ticket);
             return;
         }
+    }
+
+    if (realm_params.mask & KADM5_CONFIG_LOCAL_KDC_NAME) {
+        free(realm_params.local_kdc_name);
+        realm_params.local_kdc_name = NULL;
+        realm_params.mask &= ~KADM5_CONFIG_LOCAL_KDC_NAME;
+    }
+    if (local_kdc_name) {
+        realm_params.local_kdc_name = strdup(local_kdc_name);
+        if (realm_params.local_kdc_name == NULL)
+            krb5_err(contextp, 1, ret,
+                     "Could not set local KDC name in kadm5 parameters");
+        realm_params.mask |= KADM5_CONFIG_LOCAL_KDC_NAME;
     }
 
     initial = ticket->ticket.flags.initial;

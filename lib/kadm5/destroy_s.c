@@ -48,6 +48,7 @@ destroy_config (kadm5_config_params *c)
     free(c->dbname);
     free(c->acl_file);
     free(c->stash_file);
+    free(c->local_kdc_name);
 }
 
 /*
@@ -89,6 +90,7 @@ kadm5_s_destroy(void *server_handle)
     krb5_free_principal(kcontext, context->caller);
     if (context->my_context)
 	krb5_free_context(kcontext);
+    free(context->local_kdc_name);
     free(context);
 
     return ret;

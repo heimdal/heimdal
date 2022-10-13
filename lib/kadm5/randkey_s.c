@@ -172,12 +172,16 @@ kadm5_s_randkey_principal(void *server_handle,
 	hdb_replace_extension(context->context, &ent, &ext);
     }
 
+    /* We're modifying the entry, so the IPropInfo needs resetting */
+    hdb_clear_extension(context->context, &ent,
+                        choice_HDB_extension_data_iprop_info);
+
     /* This logs the change for iprop and writes to the HDB */
-    ret = kadm5_log_modify(context, &ent,
-                           KADM5_ATTRIBUTES | KADM5_PRINCIPAL |
-                           KADM5_MOD_NAME | KADM5_MOD_TIME |
-                           KADM5_KEY_DATA | KADM5_KVNO |
-                           KADM5_PW_EXPIRATION | KADM5_TL_DATA);
+    ret = kadm5_log_modify_originated(context, &ent,
+                                      KADM5_ATTRIBUTES | KADM5_PRINCIPAL |
+                                      KADM5_MOD_NAME | KADM5_MOD_TIME |
+                                      KADM5_KEY_DATA | KADM5_KVNO |
+                                      KADM5_PW_EXPIRATION | KADM5_TL_DATA);
 
     (void) randkey_principal_hook(context, KADM5_HOOK_STAGE_POSTCOMMIT, ret, princ);
 

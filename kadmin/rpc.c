@@ -764,6 +764,8 @@ struct gctx {
     int inprogress;
 };
 
+extern char *local_kdc_name;
+
 static int
 process_stream(krb5_context contextp,
 	       unsigned char *buf,
@@ -1010,6 +1012,11 @@ process_stream(krb5_context contextp,
 		gctx.done = 1;
 
 		memset(&realm_params, 0, sizeof(realm_params));
+
+                if (local_kdc_name) {
+                    realm_params.mask |= KADM5_CONFIG_LOCAL_KDC_NAME;
+                    realm_params.local_kdc_name = local_kdc_name;
+                }
 
 		maj_stat = gss_export_name(&min_stat, src_name, &bufp);
 		INSIST(maj_stat == GSS_S_COMPLETE);

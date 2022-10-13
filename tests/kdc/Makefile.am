@@ -16,6 +16,9 @@ noinst_DATA = \
 	krb5-bx509.conf \
 	krb5-httpkadmind.conf \
 	krb5-pkinit-win.conf \
+	krb5-kdc1.conf \
+	krb5-kdc2.conf \
+	krb5-kdc3.conf
 	krb5-master2.conf \
 	krb5-slave2.conf \
 	krb5-slave.conf
@@ -40,6 +43,7 @@ SCRIPT_TESTS = \
 	check-bx509 \
 	check-httpkadmind \
 	check-iprop \
+	check-iprop-multi \
 	check-referral \
 	check-tester \
 	check-uu
@@ -54,6 +58,7 @@ restport = 49192
 restport2 = 49193
 ipropport = 49194
 ipropport2 = 49195
+ipropport3 = 49196
 pkinit_ticket_max_life_from_cert = 0
 
 if HAVE_DLOPEN
@@ -75,6 +80,7 @@ do_subst = $(heim_verbose)sed $(do_dlopen) \
 	-e 's,[@]pwport[@],$(pwport),g' \
 	-e 's,[@]ipropport[@],$(ipropport),g' \
 	-e 's,[@]ipropport2[@],$(ipropport2),g' \
+	-e 's,[@]ipropport3[@],$(ipropport3),g' \
 	-e 's,[@]objdir[@],$(top_builddir)/tests/kdc,g' \
 	-e 's,[@]top_builddir[@],$(top_builddir),g' \
 	-e 's,[@]db_type[@],$(db_type),g' \
@@ -178,6 +184,11 @@ check-iprop: check-iprop.in Makefile krb5.conf krb5-master2.conf krb5-slave.conf
 	$(chmod) +x check-iprop.tmp && \
 	mv check-iprop.tmp check-iprop
 
+check-iprop-multi: check-iprop-multi.in Makefile krb5.conf krb5-kdc1.conf krb5-kdc2.conf krb5-kdc3.conf
+	$(do_subst) < $(srcdir)/check-iprop-multi.in > check-iprop-multi.tmp && \
+	$(chmod) +x check-iprop-multi.tmp && \
+	mv check-iprop-multi.tmp check-iprop-multi
+
 check-digest: check-digest.in Makefile
 	$(do_subst) < $(srcdir)/check-digest.in > check-digest.tmp && \
 	$(chmod) +x check-digest.tmp && \
@@ -260,6 +271,10 @@ krb5-weak.conf: krb5.conf.in Makefile
 	   -e 's,[@]kdc[@],,g' < $(srcdir)/krb5.conf.in > krb5-weak.conf.tmp && \
 	mv krb5-weak.conf.tmp krb5-weak.conf
 
+# For iprop we want to allow weak enctypes mainly because we test del_enctype
+# of weak keys.  If we don't allow weak enctypes we have fewer enctypes to play
+# with, but still it should work.
+
 krb5-slave.conf: krb5.conf.in Makefile
 	$(do_subst) \
 	   -e 's,[@]WEAK[@],true,g' \
@@ -289,6 +304,48 @@ krb5-slave2.conf: krb5.conf.in Makefile
 	   -e 's,[@]ipropstats[@],iprop-stats2,g' \
 	   -e 's,[@]kdc[@],.slave2,g' < $(srcdir)/krb5.conf.in > krb5-slave2.conf.tmp && \
 	mv krb5-slave2.conf.tmp krb5-slave2.conf
+
+krb5-kdc1.conf: krb5.conf.in Makefile
+	$(do_subst) \
+	   -e 's,[@]WEAK[@],true,g' \
+	   -e 's,[@]dk[@],,g' \
+	   -e 's,[@]messages[@],messages,g' \
+	   -e 's,[@]signalsocket[@],signal,g' \
+	   -e 's,[@]ipropstats[@],iprop-stats-kdc1,g' \
+	   -e 's,[@]kdc[@],.kdc1,g' < $(srcdir)/krb5.conf.in > krb5-kdc1.conf.tmp && \
+	mv krb5-kdc1.conf.tmp krb5-kdc1.conf
+
+krb5-kdc2.conf: krb5.conf.in Makefile
+	$(do_subst) \
+	   -e 's,[@]WEAK[@],true,g' \
+	   -e 's,[@]dk[@],,g' \
+	   -e 's,[@]messages[@],messages2,g' \
+	   -e 's,[@]signalsocket[@],signal2,g' \
+	   -e 's,[@]ipropstats[@],iprop-stats-kdc2,g' \
+	   -e 's,[@]kdc[@],.kdc2,g' < $(srcdir)/krb5.conf.in > krb5-kdc2.conf.tmp && \
+	mv krb5-kdc2.conf.tmp krb5-kdc2.conf
+
+krb5-kdc3.conf: krb5.conf.in Makefile
+	$(do_subst) \
+	   -e 's,[@]WEAK[@],true,g' \
+	   -e 's,[@]dk[@],,g' \
+	   -e 's,[@]messages[@],messages3,g' \
+	   -e 's,[@]signalsocket[@],signal3,g' \
+	   -e 's,[@]ipropstats[@],iprop-stats-kdc3,g' \
+	   -e 's,[@]kdc[@],.kdc3,g' < $(srcdir)/krb5.conf.in > krb5-kdc3.conf.tmp && \
+	mv krb5-kdc3.conf.tmp krb5-kdc3.conf
+
+# Eventually check-iprop.in and check-iprop-multi.in should just use the same
+# configurations.
+#
+#krb5-slave.conf: krb5-kdc2.conf
+#	$(CP) krb5-kdc2.conf krb5-slave.conf
+#
+#krb5-master2.conf: krb5-kdc2.conf
+#	$(CP) krb5-kdc2.conf krb5-slave.conf
+#
+#krb5-slave2.conf: krb5-kdc3.conf
+#	$(CP) krb5-kdc3.conf krb5-slave2.conf
 
 krb5-pkinit.conf: krb5-pkinit.conf.in Makefile
 	$(do_subst) -e 's,[@]w2k[@],no,g' < $(srcdir)/krb5-pkinit.conf.in > krb5-pkinit.conf.tmp && \
@@ -356,6 +413,9 @@ CLEANFILES= \
 	krb5-pkinit2.conf \
 	krb5-bx509.conf \
 	krb5-httpkadmind.conf \
+	krb5-kdc1.conf \
+	krb5-kdc3.conf \
+	krb5-kdc2.conf \
 	krb5-slave2.conf \
 	krb5-slave.conf \
 	krb5-weak.conf \
@@ -367,7 +427,9 @@ CLEANFILES= \
 	malloc-log \
 	malloc-log-master \
 	malloc-log-slave \
-	messages.log2 \
+	messages3.log \
+	messages2.log \
+	messages.log \
 	negotiate-token \
 	notfoopassword \
 	o2cache.krb5 \
@@ -403,6 +465,7 @@ EXTRA_DIST = \
 	check-hdb-mitdb.in \
 	check-httpkadmind.in \
 	check-iprop.in \
+	check-iprop-multi.in \
 	check-kadmin.in \
 	check-kdc-weak.in \
 	check-kdc.in \

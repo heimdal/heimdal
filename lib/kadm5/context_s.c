@@ -278,6 +278,25 @@ _kadm5_s_init_context(kadm5_server_context **ctx,
         if ((*ctx)->config.stash_file == NULL)
 	    return krb5_enomem(context);
     }
+    if (is_set(LOCAL_KDC_NAME)) {
+	(*ctx)->config.local_kdc_name = strdup(params->local_kdc_name);
+        if ((*ctx)->config.local_kdc_name == NULL)
+	    return krb5_enomem(context);
+        (*ctx)->local_kdc_name = strdup(params->local_kdc_name);
+        if ((*ctx)->local_kdc_name == NULL)
+	    return krb5_enomem(context);
+    }
+
+    if ((*ctx)->local_kdc_name == NULL) {
+        char hostname[MAXHOSTNAMELEN];
+
+        hostname[0] = '\0';
+        if (gethostname(hostname, sizeof(hostname)) == 0) {
+            (*ctx)->local_kdc_name = strdup(hostname);
+            if ((*ctx)->local_kdc_name == NULL)
+                return krb5_enomem(context);
+        }
+    }
 
     ret = find_db_spec(*ctx);
     if (ret == 0)

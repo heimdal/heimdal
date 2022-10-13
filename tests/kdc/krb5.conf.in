@@ -4,6 +4,7 @@
 	allow_weak_crypto = @WEAK@
 	dns_lookup_kdc = no
 	dns_lookup_realm = no
+        dns_canonicalize_hostname = no
 
 
 [appdefaults]

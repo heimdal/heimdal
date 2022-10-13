@@ -121,6 +121,7 @@ typedef struct kadm5_server_context {
     kadm5_log_context log_context;
     size_t num_hooks;
     kadm5_hook_context **hooks;
+    char *local_kdc_name;
 } kadm5_server_context;
 
 typedef struct kadm5_client_context {

@@ -1737,9 +1737,10 @@ main(int argc, char **argv)
 	slave *p;
 	fd_set readset, writeset;
 	int max_fd = 0;
+        int nfds;
 	struct timeval to = {30, 0};
 	uint32_t vers;
-        struct stat st2;;
+        struct stat st2;
 
 #ifndef NO_LIMIT_FD_SETSIZE
 	if (signal_fd >= FD_SETSIZE || listen_fd >= FD_SETSIZE ||
@@ -1767,8 +1768,8 @@ main(int argc, char **argv)
 	    max_fd = max(max_fd, p->fd);
 	}
 
-	ret = select(max_fd + 1, &readset, &writeset, NULL, &to);
-	if (ret < 0) {
+	nfds = select(max_fd + 1, &readset, &writeset, NULL, &to);
+	if (nfds < 0) {
 	    if (errno == EINTR)
 		continue;
 	    else
@@ -1800,7 +1801,7 @@ main(int argc, char **argv)
             flock(log_fd, LOCK_UN);
         }
 
-	if (ret == 0) {
+	if (nfds == 0) {
             /* Recover from failed transactions */
             if (kadm5_log_init_nb(server_context) == 0)
                 kadm5_log_end(server_context);
@@ -1828,12 +1829,12 @@ main(int argc, char **argv)
 	    }
 	}
 
-        if (ret && restarter_fd != -1 && FD_ISSET(restarter_fd, &readset)) {
+        if (nfds && restarter_fd != -1 && FD_ISSET(restarter_fd, &readset)) {
             exit_flag = SIGTERM;
             break;
         }
 
-	if (ret && FD_ISSET(signal_fd, &readset)) {
+	if (nfds && FD_ISSET(signal_fd, &readset)) {
 #ifndef NO_UNIX_SOCKETS
 	    struct sockaddr_un peer_addr;
 #else
@@ -1841,13 +1842,14 @@ main(int argc, char **argv)
 #endif
 	    socklen_t peer_len = sizeof(peer_addr);
 
+	    --nfds;
+	    assert(nfds >= 0);
+
 	    if(recvfrom(signal_fd, (void *)&vers, sizeof(vers), 0,
 			(struct sockaddr *)&peer_addr, &peer_len) < 0) {
 		krb5_warn (context, errno, "recvfrom");
 		continue;
 	    }
-	    --ret;
-	    assert(ret >= 0);
 	    old_version = current_version;
 	    if (flock(log_fd, LOCK_SH) == -1)
                 krb5_err(context, IPROPD_RESTART, errno, "shared flock %s",
@@ -1900,9 +1902,9 @@ main(int argc, char **argv)
 	for(p = slaves; p != NULL; p = p->next) {
 	    if (p->flags & SLAVE_F_DEAD)
 	        continue;
-	    if (ret && FD_ISSET(p->fd, &readset)) {
-		--ret;
-		assert(ret >= 0);
+	    if (nfds && FD_ISSET(p->fd, &readset)) {
+		--nfds;
+		assert(nfds >= 0);
                 ret = process_msg(server_context, p, log_fd, database,
                                   current_version);
                 if (ret && ret != EWOULDBLOCK)
@@ -1913,10 +1915,10 @@ main(int argc, char **argv)
 		send_are_you_there (context, p);
 	}
 
-	if (ret && FD_ISSET(listen_fd, &readset)) {
+	if (nfds && FD_ISSET(listen_fd, &readset)) {
 	    add_slave (context, keytab, &slaves, listen_fd);
-	    --ret;
-	    assert(ret >= 0);
+	    --nfds;
+	    assert(nfds >= 0);
 	}
 	write_stats(context, slaves, current_version);
     }
@@ -1932,6 +1934,10 @@ main(int argc, char **argv)
 		   getprogname(), (long)exit_flag);
 
     write_master_down(context);
+
+    kadm5_destroy(server_context);
+    krb5_kt_close(context, keytab);
+    krb5_free_context(context);
 
     return 0;
 }

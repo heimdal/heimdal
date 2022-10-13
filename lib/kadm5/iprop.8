@@ -38,7 +38,7 @@
 .Nm iprop ,
 .Nm ipropd-master ,
 .Nm ipropd-slave
-.Nd propagate transactions from a Heimdal Kerberos master KDC to slave KDCs
+.Nd incremental propagation of transactions between Heimdal KDCs
 .Sh SYNOPSIS
 .Nm ipropd-master
 .Oo Fl c Ar string \*(Ba Xo
@@ -61,9 +61,11 @@
 .Op Fl Fl time-missing= Ns Ar time
 .Op Fl Fl time-gone= Ns Ar time
 .Op Fl Fl detach
+.Op Fl Fl no-restarter
 .Op Fl Fl version
 .Op Fl Fl help
 .Nm ipropd-slave
+.Oo Fl M \*(Ba Xo Fl Fl multi-master Xc Oc
 .Oo Fl c Ar string \*(Ba Xo Fl Fl config-file= Ns Ar string Xc Oc
 .Oo Fl r Ar string \*(Ba Xo Fl Fl realm= Ns Ar string Xc Oc
 .Oo Fl d Ar file \*(Ba Xo Fl Fl database= Ns Ar file Xc Oc
@@ -76,15 +78,105 @@
 .Op Fl Fl time-lost= Ns Ar time
 .Op Fl Fl async-hdb
 .Op Fl Fl detach
+.Op Fl Fl no-restarter
 .Op Fl Fl version
 .Op Fl Fl help
-.Ar master
+.Ar master-hostname
+.Op Ar connect-to-hostname
 .Sh DESCRIPTION
 .Nm ipropd-master
-is used to propagate changes to a Heimdal Kerberos database from the
-master Kerberos server on which it runs to slave Kerberos servers
-running
+is used to propagate changes to a Heimdal Kerberos database from
+one Kerberos Key Distribution Center (KDC) to other KDCs running
 .Nm ipropd-slave .
+.Nm ipropd-master
+is the iprop server program,
+while
+.Nm ipropd-slave
+is the client program to it.
+.Pp
+Every KDC can be both, a master
+.Em and
+a slave, with all KDCs for a realm arranged in some single-master
+or multi-master replication topology.
+The replication topology is defined by all the instances of
+.Nm ipropd-slave
+services running, and the KDCs on which they run.
+More than one instance of
+.Nm ipropd-slave
+with the
+.Fl Fl multi-master
+option
+may be run on any given KDC, but only a single instance may run
+without that option.
+.Pp
+Each instance of
+.Nm ipropd-slave
+defines a unidirectional
+.Dq iprop link ,
+and the set of links define the replication topology for a realm.
+Instances running with the
+.Fl Fl multi-master
+option can handle writes to the HDB by local programs and
+daemons, such as
+.Xr kadmind 8 .
+.Pp
+In a multi-mastered realm, all KDCs must run
+.Nm ipropd-slave ,
+and at least some must run it with the
+.Fl Fl multi-master
+option.
+In a single-mastered realm, all KDCs but the master KDC must run
+.Nm ipropd-slave ,
+none of them with the
+.Fl Fl multi-master
+option, though all of them may also run
+.Nm ipropd-master
+in order to implement a hierarchical replication topology.
+.Pp
+Users should be mindful that in full mesh replication topologies
+the number of links scales with the square of the number of KDCs,
+while other common topologies such as star topologies scale the
+number of links linearly with the number of KDCs.
+.Pp
+Incremental update records for each transaction will flow from
+the KDC where they occur to all KDCs that can be reached in the
+replication topology.
+Each update includes a record of which KDCs have seen that
+update, and this is used by
+.Nm ipropd-slave
+to drop records that have already been seen, which prevents
+endless cycling of incremental update records.
+.Pp
+Conflict resolution is limited.
+Upon conflict, the HDB entry with the highest
+.Ar kvno
+wins, else the one with the latest-most last-modified time wins.
+The source KDC is the tie-breaker.
+The current keytsets of conflicting HDB entries and updates to
+them that have the same kvno but different keys will be merged,
+with the winner's keyset having priority (i.e., being used by the
+KDC to encrypt tickets).
+.Pp
+In the event of a network outage leading to a
+.Dq split brain
+condition, the multiple masters should each continue to operate,
+and their transactions should continue to flow to reachable KDCs.
+Upon restoration of connectivity, missing updates will flow to
+KDCs that become reachable once more.
+In the event that an iprop log was truncated during a network
+outage, a client may end up having to download a complete dump of
+the HDB from the upstream, which will then be merged into the
+local HDB with the limited conflict resolution described above.
+.Pp
+Due to the limitations of conflict resolution, if a principal
+record is modified concurrently on different KDCs, it may be
+necessary to modify it again after connectivity is restored.
+The
+.Xr kadmin 1
+command has a
+.Nm propagate
+sub-command that causes a principal to be propagated as if it had
+been modified, but with no significant changes.
 .Pp
 Clients of
 .Nm ipropd-master
@@ -125,23 +217,28 @@ specifies the hostname of the master server from which to receive updates.
 In contrast to
 .Xr hprop 8 ,
 which sends the whole database to the slaves regularly,
-.Nm
-normally sends only the changes as they happen on the master.
-The master keeps track of all the changes by assigning a version
-number to every transaction to the database.
-The slaves know which was the latest version they saw, and in this
-way it can be determined if they are in sync or not.
-A log of all the transactions is kept on the master.
-When a slave is at an older version than the oldest one in the log,
-the whole database has to be sent.
+.Nm ipropd-master
+normally sends incremental updates corresponding to local
+transactions, or to transactions that have been replicated onto
+the sender from other KDCs.
+The master keeps track of all the changes by assigning a
+timestamp and a version number to every transaction to the
+database.
+The clients know which was the latest version they saw, and in
+this way it can be determined if they are in sync or not.
+A log of all the transactions is kept on KDCs that run
+.Nm ipropd-master .
+When a client is at an older version than the oldest one in the
+log, the whole database has to be sent.
 .Pp
 The log of transactions is also used to implement a two-phase commit
-(with roll-forward for recovery) method of updating the HDB.
+(with roll-forward for recovery) method of updating the HDB
+regardless of the type of the HDB.
 Transactions are first recorded in the log, then in the HDB, then
 the log is updated to mark the transaction as committed.
 .Pp
-The changes are propagated over a secure channel (on port 2121 by
-default).
+The changes are propagated over a secure channel (on TCP port
+2121 by default).
 This should normally be defined as
 .Dq iprop/tcp
 in
@@ -191,7 +288,13 @@ Note that hierarchical replication is supported by running
 an
 .Nm ipropd-master
 on the same KDC as an
-.Nm ipropd-slave .
+.Nm ipropd-slave
+regardless of whether the
+.Nm ipropd-slave
+is in multi-master mode.
+It is possible to run some KDCs that run
+.Nm ipropd-slave
+in multi-master mode while others run it in single-master mode.
 .Pp
 Supported options for
 .Nm ipropd-master :
@@ -217,6 +320,12 @@ Time before slave is polled for presence (default 2 min).
 Time of inactivity after which a slave is considered gone (default 5 min).
 .It Fl Fl detach
 Detach from console.
+.Op Fl Fl no-restarter
+Normally the iprop daemons will spawn a child process to do the
+work, with the parent restarting the child as needed.
+If this option is given, then the daemon will not spawn a child
+to do its work, and will not restart itself if there is a
+problem.
 .It Fl Fl version
 .It Fl Fl help
 .El
@@ -224,6 +333,7 @@ Detach from console.
 Supported options for
 .Nm ipropd-slave :
 .Bl -tag -width Ds
+.It Fl M , Fl Fl multi-master
 .It Fl c Ar string , Fl Fl config-file= Ns Ar string
 .It Fl r Ar string , Fl Fl realm= Ns Ar string
 .It Fl d Ar file , Fl Fl database= Ns Ar file
@@ -243,12 +353,172 @@ This is very useful for very busy sites or sites with very large
 HDBs.
 .It Fl Fl detach
 Detach from console.
+.Op Fl Fl no-restarter
+Normally the iprop daemons will spawn a child process to do the
+work, with the parent restarting the child as needed.
+If this option is given, then the daemon will not spawn a child
+to do its work, and will not restart itself if there is a
+problem.
 .It Fl Fl version
 .It Fl Fl help
 .El
+.Pp
+The first positional argument to
+.Nm ipropd-slave
+is the hostname of the upstream KDC, which can be a KDC that
+itself runs
+.Nm ipropd-slave .
+That hostname is used for constructing the service principal of
+the upstream KDC, which is a host-based service principal for the
+.Ar iprop
+service.
+The second positional argument to
+.Nm ipropd-slave
+is an alternative hostname to connect to other than the first
+one, which is primarily useful for testing (where it would
+typically be
+.Dq localhost
+).
+.Pp
+Every instance of
+.Nm ipropd-slave
+is a
+.Dq link
+in an iprop topology.
+.Pp
+When run without the
+.Fl M , Fl Fl multi-master
+option,
+.Nm ipropd-slave
+will hold a lock on the iprop log that prevents all HDB local
+transactions except those it performs itself.
+.Pp
+Conversely, when run with the
+.Fl M , Fl Fl multi-master
+option,
+.Nm ipropd-slave
+will not prevent local transactions, and multiple instances
+pulling updates from multiple peer KDCs may be run, as well
+as local
+.Nm kadmin
+commands, and
+.Nm kadmind
+and
+.Nm httpkadmind .
+.Pp
+Note that if
+.Fl Fl multi-master
+is not given, then restarting the daemon to switch upstreams must
+be done together with removing the local log so that there is no
+confusion between the versions of entries in the local log versus
+the upstream log, and a full propagation will be incurred.
+.Pp
 Time arguments for the relevant options above may be specified in forms
 like 5 min, 300 s, or simply a number of seconds.
+.Sh CONFIGURATION OPTIONS
+Configuration options in the
+.Ar krb5.conf
+file:
+.Bd -literal -offset indent
+[kdc]
+    iprop-acl = FILE
+    log-max-size = BYTES-COUNT
+    signal_socket = PATH
+
+.Ed
+.Pp
+The iprop log will be truncated automatically when it exceeds the
+configured maximum log size, which defaults to 50MB.
+When the log is automatically rolled, one quarter of the log will
+be kept.
+The iprop log size should be large enough for the KDCs to operate
+during a network outage that causes a split-brain situation and
+recover by exchanging incremental updates when network
+connectivity is restored.
+.Pp
+If the logs roll during a split-brain event such that recovery
+via incremental update exchange is not possible, then full HDB
+exchanges will occur.
+In multi-master mode full propagations are treated as very large
+incremental updates: all the entries in a full propagation are
+merged as if they had been incremental updates rather than the
+upstream's HDB replacing the downstream's.
+In single-master mode full propagations replace the HDB at
+downstream KDCs.
+.Pp
+The signal socket is used by all programs linked with the
+.Ar libkadm5srv
+library to notify the
+.Nm ipropd-master
+daemon of local transactions so that they may be immediately
+replicated.
+Note that the
+.Nm ipropd-master
+daemon will recover from signals missed while being disabled or
+restarted.
+The iprop log will tell
+.Nm ipropd-master
+what the current version is, and its clients will tell it what
+versions they have.
+.Sh CONFLICT RESOLUTION
+Conflict resolution for multi-master replication is limited.
+On conflict, each KDC will pick a winner from the local and
+upstream entries, then if the current keysets differ, the losing
+entry's keys will be appended to the winning entry's keys.
+All attributes and extensions of an entry other than its current
+keyset are taken from the winning entry.
+.Pp
+Because last-modify times are used in picking a winning
+transaction in the event of conflicts, it is important to have
+good time synchronization on the KDCs.
+Time synchronization has always been a requirement for Kerberos
+KDCs.
+.Pp
+A future release may make it possible to merge concurrent,
+non-conflicting changes to other attributes of a principal.
+In principle we can merge non-conflicting attributes changes.
+For example, if one transaction changes a principal's maximum
+ticket life and another makes the principal trusted for
+credential delegation, those two changes could be merged.
+However, for the time being this functionality is not present,
+and will require recording of more transaction details in the
+future.
+.Pp
+Conflicts should be rare, and when they arise, manual repair
+should be simple where it's necessary.
+Conflicts are not too different from two or more admins racing
+to make a change in an HDB.
+.Pp
+Conflicts can be made rarer by publishing just one primary master
+KDC in a multi-master iprop topology during normal operation will
+avoid all considerations of conflicting changes to the HDB.
+In such a deployment if a network outage arises then secondary
+master KDCs can be published in DNS for the sites that cannot
+reach the primary master KDC.
+.Pp
+.Sh EXIT STATUS
+Exit status codes for the iprop daemons:
+.Bl -tag -width Ds
+.It 0 (no error)
+Normally the iprop daemons do not exit.
+If the restarter will also exit in this case.
+.It 1
+Some recoverable error occurred, but the daemon should be
+possible to restart immediately.
+This should not happen.
+If the restarter will restart the daemon after thirty seconds.
+.It 2
+Some recoverable error occurred, such as the system being out of
+memory, or out of disk space.
+The daemon should be restarted after the error condition is
+cleared.
+If the restarter will restart the daemon after two minutes.
+.It 3
+Some fatal error occurred, such as iprop log corruption.
+If the restarter will also exit in this case.
+.El
 .Sh FILES
+.Pa ${DB}.log ,
 .Pa slaves ,
 .Pa slave-stats
 in the database directory.
@@ -258,6 +528,7 @@ in the database directory, or in the directory named by the
 .Ev HEIM_PIDFILE_DIR
 environment variable.
 .Sh SEE ALSO
+.Xr kadmin 1 ,
 .Xr kinit 1 ,
 .Xr krb5.conf 5 ,
 .Xr hprop 8 ,

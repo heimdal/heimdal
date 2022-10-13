@@ -129,7 +129,11 @@ kadm5_s_prune_principal(void *server_handle,
     if (ret)
         goto out3;
 
-    ret = kadm5_log_modify(context, &ent, KADM5_KEY_DATA);
+    /* We're modifying the entry, so the IPropInfo needs resetting */
+    hdb_clear_extension(context->context, &ent,
+                        choice_HDB_extension_data_iprop_info);
+
+    ret = kadm5_log_modify_originated(context, &ent, KADM5_KEY_DATA);
 
     (void) prune_principal_hook(context, KADM5_HOOK_STAGE_POSTCOMMIT,
 				ret, princ, kvno);

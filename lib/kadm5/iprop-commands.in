@@ -59,6 +59,13 @@ command = {
 		type = "string"
 		help = "realm"
 	}
+	option = {
+		long = "upstream"
+		short = "K"
+		type = "string"
+		help = "use the log for a specific upstream"
+                argument = "Upstream KDC hostname"
+	}
 	function = "iprop_dump"
 	help = "Prints the iprop transaction log in text."
 	max_args = "1"
@@ -157,8 +164,16 @@ command = {
 		type = "string"
 		help = "realm"
 	}
+	option = {
+		long = "upstream"
+		short = "K"
+		type = "string"
+		help = "use the log for a specific upstream"
+                argument = "Upstream KDC hostname"
+	}
 	function = "last_version"
 	help = "Print the last version of the log-file."
+	max_args = "1"
 }
 command = {
 	name = "signal"

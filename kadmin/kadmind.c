@@ -53,6 +53,7 @@ static int version_flag;
 static int debug_flag;
 static int readonly_flag;
 static char *port_str;
+char *local_kdc_name;
 char *realm;
 int list_chunk_size = -1;
 
@@ -97,6 +98,8 @@ static struct getargs args[] = {
 	"ports to listen to", "port" },
     {	"read-only",	0,	arg_flag,   &readonly_flag,
 	"read-only operations", NULL },
+    {   "local-kdc-name", 0,    arg_string, &local_kdc_name,
+        "hostname to use for this KDC in iprop metadata", "HOSTNAME" },
 #ifndef WIN32
     {	"fuzz-file",	0,	arg_string, &fuzz_file,
 	"Kadmin RPC body for fuzzing", "FILE" },

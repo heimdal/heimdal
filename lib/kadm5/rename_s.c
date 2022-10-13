@@ -164,8 +164,12 @@ kadm5_s_rename_principal(void *server_handle,
     if (ret)
 	goto out3;
 
+    /* We're modifying the entry, so the IPropInfo needs resetting */
+    hdb_clear_extension(context->context, &ent,
+                        choice_HDB_extension_data_iprop_info);
+
     /* This logs the change for iprop and writes to the HDB */
-    ret = kadm5_log_rename(context, source, &ent);
+    ret = kadm5_log_rename_originated(context, source, &ent);
 
     (void) rename_principal_hook(context, KADM5_HOOK_STAGE_POSTCOMMIT,
 				 ret, source, target);

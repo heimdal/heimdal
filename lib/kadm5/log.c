@@ -37,6 +37,15 @@
 RCSID("$Id$");
 
 /*
+ * This file implements the Heimdal iprop logging facility for Heimdal KDC
+ * databases.  The logging protocol is a two-phase protocol.  The APIs exposed
+ * by this file are for only for internal use by Heimdal, specifically the
+ * iprop programs.
+ *
+ * The iprop logging facility is orthogonal to the HDB and independent of the
+ * HDB's internals.  This works when writes to the HDB happen only through
+ * Heimdal, but it does not work in the case of, e.g., LDAP.
+ *
  * A log consists of a sequence of records of this form:
  *
  * version number		4 bytes -\
@@ -51,17 +60,26 @@ RCSID("$Id$");
  * of an record's start or end one can traverse the log forwards and
  * backwards.
  *
- * The log always starts with a nop record (uber record) that contains the
- * offset (8 bytes) of the first unconfirmed record (typically EOF), and the
- * version number and timestamp of the preceding last confirmed record:
+ * The log always starts with a nop record that functions as an uber record.
+ * The uber record's payload contains the offset (8 bytes) of the first
+ * unconfirmed record (typically EOF), and the version number and timestamp of
+ * the preceding last confirmed record:
  *
  * offset of next new record    8 bytes
  * last record time             4 bytes
  * last record version number   4 bytes
  *
+ * The two-phase protocol consists in only updating the uber record payload
+ * (in-place!) after records have been appended.
+ *
+ * (Note that entries are identified by the pair of 32-bit numbers, the version
+ * and the timestamp.  In principle we have a roll-over problem for both, but
+ * the timestamp is unsigned, and we could treat these two as one 64-bit
+ * sequence number as long as time is monotonic.)
+ *
  * When an iprop slave receives a complete database, it saves that version as
- * the last confirmed version, without writing any other records to the log.  We
- * use that version as the basis for further updates.
+ * the last confirmed version, without writing any other records to the log.
+ * We use that version as the basis for requesting further updates.
  *
  * kadm5 write operations are done in this order:
  *
@@ -727,6 +745,22 @@ kadm5_log_sharedlock(kadm5_server_context *server_context)
     return 0;
 }
 
+kadm5_ret_t
+kadm5_log_unlock(kadm5_server_context *server_context)
+{
+    kadm5_log_context *log_context = &server_context->log_context;
+
+    if (log_context->lock_mode == LOCK_UN)
+        return 0;
+    if (log_context->log_fd == -1)
+        return EINVAL;
+    if (flock(log_context->log_fd, LOCK_UN) < 0)
+        return errno;
+    log_context->read_only = 1; /* XXX This field seems redundant */
+    log_context->lock_mode = LOCK_UN;
+    return 0;
+}
+
 /* Open the log with an exclusive non-blocking lock */
 kadm5_ret_t
 kadm5_log_init_nb(kadm5_server_context *server_context)
@@ -772,6 +806,7 @@ kadm5_log_reinit(kadm5_server_context *server_context, uint32_t vno)
     }
 
     /* Write uber entry and truncation nop with version `vno` */
+    /* XXX Preserve last_time too, which we'll probably want as an argument */
     log_context->version = vno;
     return kadm5_log_nop(server_context, kadm_nop_plain);
 }
@@ -975,6 +1010,45 @@ kadm5_log_flush(kadm5_server_context *context, krb5_storage *sp)
     return 0;
 }
 
+static kadm5_ret_t
+set_iprop_origin(kadm5_server_context *context, hdb_entry *ent)
+{
+    HDB_extension e;
+    krb5_timestamp t, now;
+    int32_t us;
+
+    (void) krb5_us_timeofday(context->context, &now, &us);
+    t = ent->created_by.time;
+    if (ent->modified_by)
+        t = ent->modified_by->time;
+    if (t == 0)
+        t = now;
+    e.mandatory = 0;
+    e.data.element = choice_HDB_extension_data_iprop_info;
+    e.data.u.iprop_info.last_mod_kdc_time = t;
+    e.data.u.iprop_info.last_mod_kdc_usec = us;
+    e.data.u.iprop_info.last_mod_kdc = context->local_kdc_name;
+    e.data.u.iprop_info.seen_kdcs.val = NULL;
+    e.data.u.iprop_info.seen_kdcs.len = 0;
+
+    return hdb_replace_extension(context->context, ent, &e);
+}
+
+/*
+ * Add a `create' operation originating here to the log and perform the create
+ * against the HDB.
+ */
+kadm5_ret_t
+kadm5_log_create_originated(kadm5_server_context *context, hdb_entry *entry)
+{
+    kadm5_ret_t ret;
+
+    ret = set_iprop_origin(context, entry);
+    if (ret)
+        return ret;
+    return kadm5_log_create(context, entry);
+}
+
 /*
  * Add a `create' operation to the log and perform the create against the HDB.
  */
@@ -1094,12 +1168,58 @@ kadm5_log_replay_create(kadm5_server_context *context,
  * Add a `delete' operation to the log.
  */
 kadm5_ret_t
+kadm5_log_delete_originated(kadm5_server_context *context,
+                            krb5_principal princ)
+{
+    kadm5_ret_t ret;
+    HDB_extension *ext;
+    hdb_entry ent;
+
+    memset(&ent, 0, sizeof(ent));
+    ent.principal = NULL; /* There's already a principal name in the payload */
+    ent.kvno = 0;
+    ent.keys.len = 0;
+    ent.keys.val = NULL;
+    ent.created_by.time = 0;
+    ent.created_by.principal = NULL;
+    ent.modified_by = NULL;
+    ent.valid_start = NULL;
+    ent.valid_end = NULL;
+    ent.pw_end = NULL;
+    ent.max_life = NULL;
+    ent.max_renew = NULL;
+    ent.etypes = NULL;
+    ent.generation = NULL;
+    ent.extensions = NULL;
+    ent.context = NULL;
+    ent.aliased = 0;
+    ent.extensions = NULL;
+
+    ret = set_iprop_origin(context, &ent);
+    if (ret)
+        return ret;
+
+    ext = hdb_find_extension(&ent, choice_HDB_extension_data_iprop_info);
+    if (ext)
+        ent.created_by.time = ext->data.u.iprop_info.last_mod_kdc_time;
+
+    ret = kadm5_log_delete(context, princ, &ent);
+    free_HDB_entry(&ent);
+    return ret;
+}
+
+/*
+ * Add a `delete' operation to the log.
+ */
+kadm5_ret_t
 kadm5_log_delete(kadm5_server_context *context,
-		 krb5_principal princ)
+                 krb5_principal princ,
+                 hdb_entry *ent)
 {
     kadm5_ret_t ret;
     kadm5_log_context *log_context = &context->log_context;
     krb5_storage *sp;
+    krb5_data data;
     uint32_t len = 0;   /* So dumb compilers don't warn */
     off_t end_off = 0;  /* Ditto; this allows de-indentation by two levels */
     off_t off;
@@ -1111,6 +1231,11 @@ kadm5_log_delete(kadm5_server_context *context,
                                   HDB_F_PRECHECK, princ);
     if (ret)
         return ret;
+
+    ret = hdb_entry2value(context->context, ent, &data);
+    if (ret)
+        return ret;
+
     sp = krb5_storage_emem();
     if (sp == NULL)
 	ret = krb5_enomem(context->context);
@@ -1119,12 +1244,16 @@ kadm5_log_delete(kadm5_server_context *context,
                                  log_context->version + 1);
     if (ret) {
         krb5_storage_free(sp);
+        krb5_data_free(&data);
         return ret;
     }
 
     /*
      * Write a 0 length which we overwrite once we know the length of
-     * the principal name payload.
+     * the payload.
+     *
+     * The payload used to be only a principal name, but for multi-master iprop
+     * we add a principal record as well so we can have iprop-info.
      */
     off = krb5_storage_seek(sp, 0, SEEK_CUR);
     if (off == -1)
@@ -1133,6 +1262,15 @@ kadm5_log_delete(kadm5_server_context *context,
         ret = krb5_store_uint32(sp, 0);
     if (ret == 0)
         ret = krb5_store_principal(sp, princ);
+    if (ret == 0) {
+        krb5_ssize_t bytes;
+
+        bytes = krb5_storage_write(sp, data.data, data.length);
+        if (bytes == -1)
+            ret = errno;
+        else if (bytes != data.length)
+            ret = EINVAL;
+    }
     if (ret == 0) {
         end_off = krb5_storage_seek(sp, 0, SEEK_CUR);
         if (end_off == -1)
@@ -1164,6 +1302,7 @@ kadm5_log_delete(kadm5_server_context *context,
     if (ret == 0)
         ret = kadm5_log_recover(context, kadm_recover_commit);
     krb5_storage_free(sp);
+    krb5_data_free(&data);
     return ret;
 }
 
@@ -1197,9 +1336,26 @@ static kadm5_ret_t kadm5_log_replay_rename(kadm5_server_context *,
  * Add a `rename' operation to the log.
  */
 kadm5_ret_t
+kadm5_log_rename_originated(kadm5_server_context *context,
+                            krb5_principal source,
+                            hdb_entry *entry)
+{
+    kadm5_ret_t ret;
+
+    ret = set_iprop_origin(context, entry);
+    if (ret)
+        return ret;
+
+    return kadm5_log_rename(context, source, entry);
+}
+
+/*
+ * Add a `rename' operation to the log.
+ */
+kadm5_ret_t
 kadm5_log_rename(kadm5_server_context *context,
-		 krb5_principal source,
-		 hdb_entry *entry)
+                 krb5_principal source,
+                 hdb_entry *entry)
 {
     krb5_storage *sp;
     krb5_ssize_t bytes;
@@ -1358,14 +1514,29 @@ kadm5_log_replay_rename(kadm5_server_context *context,
 
     return ret;
 }
+/*
+ * Add a `modify' operation to the log.
+ */
+kadm5_ret_t
+kadm5_log_modify_originated(kadm5_server_context *context,
+                            hdb_entry *entry,
+                            uint32_t mask)
+{
+    kadm5_ret_t ret;
+
+    ret = set_iprop_origin(context, entry);
+    if (ret)
+        return ret;
+    return kadm5_log_modify(context, entry, mask);
+}
 
 /*
  * Add a `modify' operation to the log.
  */
 kadm5_ret_t
 kadm5_log_modify(kadm5_server_context *context,
-		 hdb_entry *entry,
-		 uint32_t mask)
+                 hdb_entry *entry,
+                 uint32_t mask)
 {
     krb5_storage *sp;
     krb5_ssize_t bytes;
@@ -1469,6 +1640,26 @@ kadm5_log_replay_modify(kadm5_server_context *context,
 				      log_ent.principal,
 				      HDB_F_DECRYPT|HDB_F_ALL_KVNOS|
 				      HDB_F_GET_ANY|HDB_F_ADMIN_DATA, 0, &ent);
+    /*
+     * Normally a modify can only be of an entry that exists.
+     *
+     * However, in the case of multi-master replication we can hear of a modify
+     * before a create, and we should take it.
+     */
+    if (ret == HDB_ERR_NOENTRY) {
+        ret = context->db->hdb_store(context->context, context->db, 0, &log_ent);
+        hdb_free_entry(context->context, context->db, &log_ent);
+        return ret;
+    } else if (ret == 0 && mask == 0) {
+        /*
+         * A modify with mask == 0 happens via kadmin propagate.  We store the
+         * entry as it appears in the log.
+         */
+        ret = context->db->hdb_store(context->context, context->db,
+                                     HDB_F_REPLACE, &log_ent);
+        hdb_free_entry(context->context, context->db, &log_ent);
+        return ret;
+    }
     if (ret)
 	goto out;
     if (mask & KADM5_PRINC_EXPIRE_TIME) {
@@ -1802,6 +1993,10 @@ kadm5_log_nop(kadm5_server_context *context, enum kadm_nop_type nop_type)
         ret = kadm5_log_flush(context, sp);
 
     if (ret == 0 && off == 0 && nop_type != kadm_nop_plain)
+        /*
+         * Log it again, but now not at offset 0, so this won't recurse
+         * infinitely.
+         */
         ret = kadm5_log_nop(context, nop_type);
 
     if (ret == 0 && off != 0)

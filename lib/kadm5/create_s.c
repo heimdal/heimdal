@@ -221,7 +221,7 @@ kadm5_s_create_principal_with_key(void *server_handle,
      * Creation of would-be virtual principals w/o the materialize flag will be
      * rejected in kadm5_log_create().
      */
-    ret = kadm5_log_create(context, &ent);
+    ret = kadm5_log_create_originated(context, &ent);
 
     (void) create_principal_hook(context, KADM5_HOOK_STAGE_POSTCOMMIT,
 				 ret, princ, mask, NULL);
@@ -343,7 +343,7 @@ kadm5_s_create_principal(void *server_handle,
 	goto out2;
 
     /* This logs the change for iprop and writes to the HDB */
-    ret = kadm5_log_create(context, &ent);
+    ret = kadm5_log_create_originated(context, &ent);
 
     (void) create_principal_hook(context, KADM5_HOOK_STAGE_POSTCOMMIT,
 				 ret, princ, mask, password);

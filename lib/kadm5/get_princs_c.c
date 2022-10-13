@@ -224,7 +224,6 @@ kadm5_c_iter_principals(void *server_handle,
                 if (ret == HEIM_ERR_EOF) {
                     /* This was the last reply */
                     more = 0;
-                    ret = 0;
                     break;
                 }
                 if (ret)

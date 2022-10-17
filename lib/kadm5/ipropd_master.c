@@ -177,7 +177,10 @@ struct slave {
 typedef struct slave slave;
 
 static int
-check_acl (krb5_context context, const char *name)
+check_acl(krb5_context context,
+          krb5_const_principal client,
+          const char *name,
+          const char *server_realm)
 {
     const char *fn;
     FILE *fp;
@@ -195,17 +198,57 @@ check_acl (krb5_context context, const char *name)
 					"kdc",
 					"iprop-acl",
 					NULL);
-
     fp = fopen (fn, "r");
     free(slavefile);
     if (fp == NULL)
 	return 1;
     while (fgets(buf, sizeof(buf), fp) != NULL) {
 	buf[strcspn(buf, "\r\n")] = '\0';
-	if (strcmp (buf, name) == 0) {
+
+	if (strcmp(buf, name) == 0) {
 	    ret = 0;
 	    break;
 	}
+        if (strchr(buf, '*')) {
+            krb5_principal p = NULL;
+
+            /* Wildcard */
+
+            if (strcmp(buf, "*") == 0 &&
+                /* Just a wildcard as the ACL, check the service and realm */
+                strcmp(krb5_principal_get_realm(context, client),
+                       server_realm) == 0 &&
+                krb5_principal_get_num_comp(context, client) == 2 &&
+                strcmp(krb5_principal_get_comp_string(context, client, 0), "iprop")) {
+
+                ret = 0;
+                break;
+            }
+
+            /* A principal with a wildcard as the ACL */
+            if (krb5_parse_name(context, buf, &p) == 0 &&
+                /* Both have to have two components */
+                krb5_principal_get_num_comp(context, p) == 2 &&
+                krb5_principal_get_num_comp(context, client) == 2 &&
+                /* Realm must match */
+                strcmp(krb5_principal_get_realm(context, p),
+                       krb5_principal_get_realm(context, client)) == 0 &&
+                /* Service must match */
+                strcmp(krb5_principal_get_comp_string(context, p, 0),
+                       krb5_principal_get_comp_string(context, client, 0)) == 0 &&
+                /* Hostname component of ACL must be just a wildcard */
+                strcmp(krb5_principal_get_comp_string(context, p, 0), "*") == 0) {
+
+                /*
+                 * A principal name with the hostname wildcarded, and the
+                 * client principal is for the same service and realm.
+                 */
+                ret = 0;
+                krb5_free_principal(context, p);
+                break;
+            }
+            krb5_free_principal(context, p);
+        }
     }
     fclose (fp);
     return ret;
@@ -348,7 +391,8 @@ add_slave (krb5_context context, krb5_keytab keytab, slave **root,
 	krb5_warn (context, ret, "krb5_unparse_name");
 	goto error;
     }
-    if (check_acl (context, s->name)) {
+    if (check_acl(context, ticket->client, s->name,
+                  krb5_principal_get_realm(context, server))) {
 	krb5_warnx (context, "%s not in acl", s->name);
 	goto error;
     }

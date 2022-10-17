@@ -86,11 +86,31 @@ master Kerberos server on which it runs to slave Kerberos servers
 running
 .Nm ipropd-slave .
 .Pp
-The slaves are specified by the contents of the
-.Pa slaves
-file in the KDC's database directory, e.g.\&
+Clients of
+.Nm ipropd-master
+are authenticated using Kerberos, and must have credentials for
+a host-based principal with
+.Nm iprop
+as the service name.
+There is an access control list of allowed clients configured
+via
+.Bd -literal -offset indent
+[kdc]
+    iprop-acl = FILE
+
+.Ed
+which defaults to a file named
+.Nm slaves
+in the
+.Sq var
+directory, such as\&
 .Pa /var/heimdal/slaves .
-This has principals one per-line of the form
+This file can have a single line consisting of an asterisk to
+indicate that any client with host-based service credentials for
+the
+.Nm iprop
+service can connect, or it can list the client principal names of
+allowed clients in the form
 .Dl iprop/ Ns Ar slave Ns @ Ns Ar REALM
 where
 .Ar slave

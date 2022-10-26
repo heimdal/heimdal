@@ -44,7 +44,6 @@ hcryptoinclude_HEADERS =	\
 	evp-openssl.h		\
 	evp-pkcs11.h		\
 	hmac.h			\
-	md2.h			\
 	md4.h			\
 	md5.h			\
 	pkcs12.h		\
@@ -136,8 +135,6 @@ libhcrypto_la_SOURCES =	\
 	hash.h		\
 	hmac.c		\
 	hmac.h		\
-	md2.c		\
-	md2.h		\
 	md4.c		\
 	md4.h		\
 	md5.c		\

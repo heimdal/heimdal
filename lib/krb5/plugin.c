@@ -543,7 +543,7 @@ _krb5_plugin_run_f(krb5_context context,
     struct krb5_plugin *p;
 
     /* Get registered plugins */
-    (void) _krb5_plugin_find(context, SYMBOL, name, &registered_plugins);
+    (void) _krb5_plugin_find(context, PLUGIN_TYPE_DATA, name, &registered_plugins);
 
     HEIMDAL_MUTEX_lock(&plugin_mutex);
 

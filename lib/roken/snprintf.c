@@ -449,13 +449,16 @@ xyzprintf (struct snprintf_state *state, const char *char_format, va_list ap)
 		break;
 	    case 'd' :
 	    case 'i' : {
-		longest arg;
-		u_longest num;
+		int64_t arg;
+		uint64_t num;
 		int minusp = 0;
 
 		PARSE_INT_FORMAT(arg, ap, signed);
 
-		if (arg < 0) {
+                if (arg == INT64_MIN) {
+		    minusp = 1;
+                    num = (uint64_t)INT64_MAX + 1;
+                } else if (arg < 0) {
 		    minusp = 1;
 		    num = -arg;
 		} else

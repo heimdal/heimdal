@@ -581,15 +581,6 @@ OSSL_CIPHER_ALGORITHM(rc4_40,
                       hc_EVP_CIPH_VARIABLE_LENGTH)
 
 /**
- * The MD2 hash algorithm (OpenSSL provider)
- *
- * @return the MD2 EVP_MD pointer.
- *
- * @ingroup hcrypto_evp
- */
-OSSL_MD_ALGORITHM(md2)
-
-/**
  * The MD4 hash algorithm (OpenSSL provider)
  *
  * @return the MD4 EVP_MD pointer.

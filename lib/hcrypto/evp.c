@@ -466,21 +466,6 @@ EVP_md4(void) HC_DEPRECATED_CRYPTO
     return EVP_DEF_OP(HCRYPTO_DEF_PROVIDER, md4);
 }
 
-/**
- * The message digest MD2
- *
- * @return the message digest type.
- *
- * @ingroup hcrypto_evp
- */
-
-const EVP_MD *
-EVP_md2(void) HC_DEPRECATED_CRYPTO
-{
-    hcrypto_validate();
-    return EVP_DEF_OP(HCRYPTO_DEF_PROVIDER, md2);
-}
-
 /*
  *
  */

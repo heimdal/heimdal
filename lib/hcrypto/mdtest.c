@@ -39,7 +39,6 @@
 #ifdef KRB5
 #include <krb5-types.h>
 #endif
-#include <md2.h>
 #include <md4.h>
 #include <md5.h>
 #include <sha.h>
@@ -55,15 +54,7 @@ struct hash_foo {
     int (*update)(void*, const void*, size_t);
     int (*final)(void*, void*);
     const EVP_MD * (*evp)(void);
-} md2 = {
-    "MD2",
-    sizeof(MD2_CTX),
-    16,
-    (void (*)(void*))MD2_Init,
-    (void (*)(void*,const void*, size_t))MD2_Update,
-    (void (*)(void*, void*))MD2_Final,
-    EVP_md2
-}, md4 = {
+} md4 = {
     "MD4",
     sizeof(MD4_CTX),
     16,
@@ -119,24 +110,6 @@ struct hash_foo sha512 = {
 struct test {
     char *str;
     unsigned char hash[64];
-};
-
-struct test md2_tests[] = {
-    {"",
-     "\x83\x50\xe5\xa3\xe2\x4c\x15\x3d\xf2\x27\x5c\x9f\x80\x69\x27\x73" },
-    {"a",
-     "\x32\xec\x01\xec\x4a\x6d\xac\x72\xc0\xab\x96\xfb\x34\xc0\xb5\xd1" },
-    {"abc",
-     "\xda\x85\x3b\x0d\x3f\x88\xd9\x9b\x30\x28\x3a\x69\xe6\xde\xd6\xbb" },
-    {"message digest",
-     "\xab\x4f\x49\x6b\xfb\x2a\x53\x0b\x21\x9f\xf3\x30\x31\xfe\x06\xb0" },
-    {"abcdefghijklmnopqrstuvwxyz",
-     "\x4e\x8d\xdf\xf3\x65\x02\x92\xab\x5a\x41\x08\xc3\xaa\x47\x94\x0b" },
-    {"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789",
-     "\xda\x33\xde\xf2\xa4\x2d\xf1\x39\x75\x35\x28\x46\xc3\x03\x38\xcd" },
-    {"12345678901234567890123456789012345678901234567890123456789012345678901234567890",
-     "\xd5\x97\x6f\x79\xd8\x3d\x3a\x0d\xc9\x80\x6c\x3c\x66\xf3\xef\xd8" },
-    {NULL, { 0 } }
 };
 
 struct test md4_tests[] = {
@@ -338,7 +311,6 @@ int
 main (void)
 {
     return
-	hash_test(&md2, md2_tests) +
 	hash_test(&md4, md4_tests) +
 	hash_test(&md5, md5_tests) +
 	hash_test(&sha1, sha1_tests) +

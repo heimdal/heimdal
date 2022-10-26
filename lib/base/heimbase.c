@@ -86,11 +86,12 @@ struct heim_auto_release {
 void *
 heim_retain(void *ptr)
 {
-    struct heim_base *p = PTR2BASE(ptr);
+    struct heim_base *p;
 
     if (ptr == NULL || heim_base_is_tagged(ptr))
 	return ptr;
 
+    p = PTR2BASE(ptr);
     if (p->ref_cnt == heim_base_atomic_max)
 	return ptr;
 
@@ -670,12 +671,15 @@ heim_auto_release_create(void)
 heim_object_t
 heim_auto_release(heim_object_t ptr)
 {
-    struct heim_base *p = PTR2BASE(ptr);
-    struct ar_tls *tls = autorel_tls();
+    struct heim_base *p;
+    struct ar_tls *tls;
     heim_auto_release_t ar;
 
     if (ptr == NULL || heim_base_is_tagged(ptr))
 	return ptr;
+
+    p = PTR2BASE(ptr);
+    tls = autorel_tls();
 
     /* drop from old pool */
     if ((ar = p->autorelpool) != NULL) {

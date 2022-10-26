@@ -74,8 +74,11 @@ der_heim_bit_string_cmp(const heim_bit_string *p,
     size_t i;
     if (p->length != q->length)
 	return (int)(p->length - q->length);
-    i = memcmp(p->data, q->data, p->length / 8);
-    if (i)
+    if (q->length)
+        i = memcmp(p->data, q->data, p->length / 8);
+    else
+        i = 0;
+    if (i != 0)
 	return (int)i;
     if ((p->length % 8) == 0)
 	return 0;

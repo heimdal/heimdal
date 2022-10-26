@@ -49,7 +49,7 @@ RCSID("$Id$");
 #define BITSIZE(TYPE)						\
 {								\
     int b = 0; TYPE x = 1, zero = 0; const char *pre = "u";	\
-    char tmp[128], tmp2[128];					\
+    char tmp[128], tmp2[192];					\
     while(x){ x <<= 1; b++; if(x < zero) pre=""; }		\
     if(b >= len){						\
         size_t tabs;						\

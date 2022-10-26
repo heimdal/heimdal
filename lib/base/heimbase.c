@@ -109,11 +109,12 @@ void
 heim_release(void *ptr)
 {
     heim_base_atomic_type old;
-    struct heim_base *p = PTR2BASE(ptr);
+    struct heim_base *p;
 
     if (ptr == NULL || heim_base_is_tagged(ptr))
 	return;
 
+    p = PTR2BASE(ptr);
     if (p->ref_cnt == heim_base_atomic_max)
 	return;
 
@@ -256,9 +257,12 @@ heim_cmp(heim_object_t a, heim_object_t b)
 static void
 memory_dealloc(void *ptr)
 {
-    struct heim_base_mem *p = (struct heim_base_mem *)PTR2BASE(ptr);
-    if (p->dealloc)
-	p->dealloc(ptr);
+    if (ptr) {
+        struct heim_base_mem *p = (struct heim_base_mem *)PTR2BASE(ptr);
+
+        if (p->dealloc)
+            p->dealloc(ptr);
+    }
 }
 
 struct heim_type_data memory_object = {

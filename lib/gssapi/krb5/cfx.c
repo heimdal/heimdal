@@ -1623,7 +1623,10 @@ OM_uint32 _gssapi_mic_cfx(OM_uint32 *minor_status,
 	return GSS_S_FAILURE;
     }
 
-    memcpy(buf, message_buffer->value, message_buffer->length);
+    if (message_buffer->length)
+        memcpy(buf, message_buffer->value, message_buffer->length);
+    else
+        memset(buf, 0, len);
 
     token = (gss_cfx_mic_token)(buf + message_buffer->length);
     token->TOK_ID[0] = 0x04;
@@ -1773,7 +1776,8 @@ OM_uint32 _gssapi_verify_mic_cfx(OM_uint32 *minor_status,
 	*minor_status = ENOMEM;
 	return GSS_S_FAILURE;
     }
-    memcpy(buf, message_buffer->value, message_buffer->length);
+    if (message_buffer->length)
+        memcpy(buf, message_buffer->value, message_buffer->length);
     memcpy(buf + message_buffer->length, token, sizeof(*token));
 
     ret = krb5_verify_checksum(context, ctx->crypto,

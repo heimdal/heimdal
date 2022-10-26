@@ -190,7 +190,10 @@ void
 _gss_mg_decode_le_uint32(const void *ptr, uint32_t *n)
 {
     const uint8_t *p = ptr;
-    *n = (p[0] << 0) | (p[1] << 8) | (p[2] << 16) | (p[3] << 24);
+    *n = ((uint32_t)p[0] << 0)
+       | ((uint32_t)p[1] << 8)
+       | ((uint32_t)p[2] << 16)
+       | ((uint32_t)p[3] << 24);
 }
 
 void

@@ -1356,7 +1356,7 @@ static int
 check_seq(void)
 {
     TESTSeqOf seq;
-    TESTInteger i;
+    TESTInteger i = 0;
     int ret;
 
     seq.val = NULL;

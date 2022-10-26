@@ -50,60 +50,60 @@ struct hash_foo {
     const char *name;
     size_t psize;
     size_t hsize;
-    void (*init)(void*);
-    void (*update)(void*, const void*, size_t);
-    void (*final)(void*, void*);
+    int (*init)(void*);
+    int (*update)(void*, const void*, size_t);
+    int (*final)(void*, void*);
     const EVP_MD * (*evp)(void);
 } md4 = {
     "MD4",
     sizeof(MD4_CTX),
     16,
-    (void (*)(void*))MD4_Init,
-    (void (*)(void*,const void*, size_t))MD4_Update,
-    (void (*)(void*, void*))MD4_Final,
+    (int (*)(void*))MD4_Init,
+    (int (*)(void*,const void*, size_t))MD4_Update,
+    (int (*)(void*, void*))MD4_Final,
     EVP_md4
 }, md5 = {
     "MD5",
     sizeof(MD5_CTX),
     16,
-    (void (*)(void*))MD5_Init,
-    (void (*)(void*,const void*, size_t))MD5_Update,
-    (void (*)(void*, void*))MD5_Final,
+    (int (*)(void*))MD5_Init,
+    (int (*)(void*,const void*, size_t))MD5_Update,
+    (int (*)(void*, void*))MD5_Final,
     EVP_md5
 }, sha1 = {
     "SHA-1",
     sizeof(struct sha),
     20,
-    (void (*)(void*))SHA1_Init,
-    (void (*)(void*,const void*, size_t))SHA1_Update,
-    (void (*)(void*, void*))SHA1_Final,
+    (int (*)(void*))SHA1_Init,
+    (int (*)(void*,const void*, size_t))SHA1_Update,
+    (int (*)(void*, void*))SHA1_Final,
     EVP_sha1
 };
 struct hash_foo sha256 = {
     "SHA-256",
     sizeof(SHA256_CTX),
     32,
-    (void (*)(void*))SHA256_Init,
-    (void (*)(void*,const void*, size_t))SHA256_Update,
-    (void (*)(void*, void*))SHA256_Final,
+    (int (*)(void*))SHA256_Init,
+    (int (*)(void*,const void*, size_t))SHA256_Update,
+    (int (*)(void*, void*))SHA256_Final,
     EVP_sha256
 };
 struct hash_foo sha384 = {
     "SHA-384",
     sizeof(SHA384_CTX),
     48,
-    (void (*)(void*))SHA384_Init,
-    (void (*)(void*,const void*, size_t))SHA384_Update,
-    (void (*)(void*, void*))SHA384_Final,
+    (int (*)(void*))SHA384_Init,
+    (int (*)(void*,const void*, size_t))SHA384_Update,
+    (int (*)(void*, void*))SHA384_Final,
     EVP_sha384
 };
 struct hash_foo sha512 = {
     "SHA-512",
     sizeof(SHA512_CTX),
     64,
-    (void (*)(void*))SHA512_Init,
-    (void (*)(void*,const void*, size_t))SHA512_Update,
-    (void (*)(void*, void*))SHA512_Final,
+    (int (*)(void*))SHA512_Init,
+    (int (*)(void*,const void*, size_t))SHA512_Update,
+    (int (*)(void*, void*))SHA512_Final,
     EVP_sha512
 };
 

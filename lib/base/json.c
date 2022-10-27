@@ -715,7 +715,15 @@ parse_string(struct parse_ctx *ctx)
 
         /* Allocate or resize our output buffer if need be */
         if (need || p == pend) {
-            char *tmp = realloc(p0, alloc_len + need + 5 /* slop? */);
+            char *tmp;
+
+            /*
+             * Work out how far p is into p0 to re-esablish p after
+             * the realloc()
+             */
+            size_t p0_to_p_len = (p - p0);
+
+            tmp = realloc(p0, alloc_len + need + 5 /* slop? */);
 
             if (tmp == NULL) {
                 ctx->error = heim_error_create_enomem();
@@ -723,7 +731,12 @@ parse_string(struct parse_ctx *ctx)
                 return NULL;
             }
             alloc_len += need + 5;
-            p = tmp + (p - p0);
+
+            /*
+             * We have two pointers, p and p0, we want to keep them
+             * pointing into the same memory after the realloc()
+             */
+            p = tmp + p0_to_p_len;
             p0 = tmp;
             pend = p0 + alloc_len;
 
@@ -974,8 +987,14 @@ parse_string(struct parse_ctx *ctx)
             free(p0);
             return NULL;
         }
-        p = tmp + (p - p0);
-        pend = tmp + 1 + (pend - p0);
+        /*
+         * We have three pointers, p, pend (which are the same)
+         * and p0, we want to keep them pointing into the same
+         * memory after the realloc()
+         */
+        p = tmp + p0_to_pend_len;
+
+        pend = p + 1;
         p0 = tmp;
     }
     *(p++) = '\0';

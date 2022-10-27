@@ -6,9 +6,9 @@ VER_PACKAGE_BUGREPORT=https://github.com/heimdal/heimdal/issues
 VER_PACKAGE_COPYRIGHT=Copyright (C) 1995-2016 Royal Institute of Technology, Stockholm, Sweden
 VER_PACKAGE_COMPANY=www.h5l.org
 
-VER_PRODUCT_MAJOR=7
-VER_PRODUCT_MINOR=99
-VER_PRODUCT_AUX=1
+VER_PRODUCT_MAJOR=8
+VER_PRODUCT_MINOR=0
+VER_PRODUCT_AUX=0
 VER_PRODUCT_PATCH=0
 
 # ------------------------------------------------------------

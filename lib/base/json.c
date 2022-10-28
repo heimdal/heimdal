@@ -962,7 +962,12 @@ parse_string(struct parse_ctx *ctx)
 
     /* NUL-terminate for rk_base64_decode() and plain paranoia */
     if (p0 != NULL && p == pend) {
-        char *tmp = realloc(p0, 1 + pend - p);
+        /*
+	 * Work out how far p is into p0 to re-esablish p after
+	 * the realloc()
+	 */
+        size_t p0_to_pend_len = (pend - p0);
+        char *tmp = realloc(p0, 1 + p0_to_pend_len);
 
         if (tmp == NULL) {
             ctx->error = heim_error_create_enomem();

@@ -640,10 +640,10 @@ ${kgetcred} -H HTTP/${server}@${R} ||
     { echo "Fetched TGT didn't work"; exit 2; }
 if which jq >/dev/null; then
     if ! ${klistjson} | jq -e '
-            (reduce (.tickets[0]|(.Issued,.Expires)|
-                    strptime("%b %e %H:%M:%S %Y")|mktime) as $t
-                (0; if .==0 then $t else $t - . end) / 86400) | floor |
-            . == 5'; then
+        (.tickets[0].Issued | strptime("%b %e %H:%M:%S %Y")|mktime) as $iat
+      | (.tickets[0].Expires | strptime("%b %e %H:%M:%S %Y")|mktime) as $exp
+      | (($exp - $iat) / 86400) as $life_days
+      | ($life_days > 4 and $life_days < 5)'; then
         echo "Incorrect lifetime"
         exit 2
     fi

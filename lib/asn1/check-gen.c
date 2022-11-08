@@ -2162,9 +2162,9 @@ test_default(void)
     };
 
     TESTDefault values[] = {
-	{ "Heimdal", 8, 9223372036854775807, 1 },
+	{ "Heimdal", 8, 9223372036854775807LL, 1 },
 	{ "heimdal", 7, 2147483647, 0 },
-	{ "Heimdal", 7, 9223372036854775807, 0 },
+	{ "Heimdal", 7, 9223372036854775807LL, 0 },
 	{ "heimdal", 8, 2147483647, 1 },
     };
     int i, ret;

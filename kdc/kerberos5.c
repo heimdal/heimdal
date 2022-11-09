@@ -1927,6 +1927,7 @@ generate_pac(astgs_request_t r, const Key *skey, const Key *tkey,
 			 rodc_id,
 			 NULL, /* UPN */
 			 canon_princ,
+			 FALSE, /* add_full_sig */
 			 is_tgs ? &r->pac_attributes : NULL,
 			 &data);
     krb5_free_principal(r->context, client);

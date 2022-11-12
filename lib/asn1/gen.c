@@ -1118,6 +1118,7 @@ define_open_type(int level, const char *newbasename, const char *name, const cha
     /* Iterate objects in the object set, gen enum labels */
     fprintf(headerfile, "enum { choice_%s_iosnumunknown = 0,\n",
             newbasename);
+    fprintf(jsonfile, "\"opentypeids\":[");
     for (i = 0; i < nobjs; i++) {
         HEIM_TAILQ_FOREACH(of, objects[i]->objfields, objfields) {
             if (strcmp(of->name, typeidfield->name) != 0)
@@ -1127,8 +1128,11 @@ define_open_type(int level, const char *newbasename, const char *name, const cha
                      of->name, objects[i]->symbol->name);
             fprintf(headerfile, "choice_%s_iosnum_%s,\n",
                     newbasename, of->value->s->gen_name);
+            fprintf(jsonfile, "\"%s\"", of->value->s->gen_name);
+            fprintf(jsonfile, "%s", (i + 1) < nobjs ? "," : "");
         }
     }
+    fprintf(jsonfile, "],\n");
     fprintf(headerfile, "} element;\n");
 
     if (is_array_of_open_type)

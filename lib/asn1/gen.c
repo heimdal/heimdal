@@ -1529,6 +1529,9 @@ define_type(int level, const char *name, const char *basename, Type *pt, Type *t
         fprintf(jsonfile, "\"ttype\":\"TeletexString\",\"ctype\":\"heim_general_string\"");
 	break;
     case TTag:
+        if (t->implicit_choice) {
+            fprintf(jsonfile, "\"desired_tagenv\":\"IMPLICIT\",");
+        }
         fprintf(jsonfile, "\"tagclass\":\"%s\",\"tagvalue\":%d,\"tagenv\":\"%s\",\n",
                 tagclassnames[t->tag.tagclass], t->tag.tagvalue,
                 t->tag.tagenv == TE_EXPLICIT ? "EXPLICIT" : "IMPLICIT");

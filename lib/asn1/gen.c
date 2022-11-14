@@ -1408,16 +1408,43 @@ define_type(int level, const char *name, const char *basename, Type *pt, Type *t
 	HEIM_TAILQ_FOREACH(m, t->members, members) {
 	    if (m->ellipsis) {
 		;
-	    } else if (m->optional) {
-		char *n = NULL;
+	    } else if (m->optional || m->defval) {
+		char *n = NULL, *defval = NULL;
+                const char *namep, *defvalp;
 
-		if (asprintf(&n, "*%s", m->gen_name) < 0 || n == NULL)
-		    errx(1, "malloc");
+                if (m->defval) {
+                    switch (m->defval->type) {
+                    case stringvalue:
+                        defvalp = m->defval->u.stringvalue;
+                        break;
+                    case integervalue:
+                        if (asprintf(&defval, "%lld", (long long)m->defval->u.integervalue) < 0 || defval == NULL)
+                            errx(1, "malloc");
+                        defvalp = defval;
+                        break;
+                    case booleanvalue:
+                        defvalp = m->defval->u.booleanvalue ? "true" : "false";
+                        break;
+                    default:
+                        abort();
+                    }
+                } else
+                    defvalp = "null";
+
+                if (m->optional) {
+		    if (asprintf(&n, "*%s", m->gen_name) < 0 || n == NULL)
+		        errx(1, "malloc");
+                    namep = n;
+                } else
+                    namep = m->gen_name;
+
                 fprintf(jsonfile, "{\"name\":\"%s\",\"gen_name\":\"%s\","
-                        "\"optional\":true,\"type\":", m->name, m->gen_name);
-		define_type(level + 1, n, newbasename, t, m->type, FALSE, FALSE);
+                        "\"optional\":%s,\"defval\":%s,\"type\":",
+                        m->name, m->gen_name, m->optional ? "true" : "false", defvalp);
+                define_type(level + 1, namep, newbasename, t, m->type, FALSE, FALSE);
                 fprintf(jsonfile, "}%s", last_member_p(m));
 		free (n);
+		free (defval);
 	    } else {
                 fprintf(jsonfile, "{\"name\":\"%s\",\"gen_name\":\"%s\","
                         "\"optional\":false,\"type\":", m->name, m->gen_name);

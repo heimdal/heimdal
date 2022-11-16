@@ -204,9 +204,8 @@ krb5_pac_parse(krb5_context context, const void *ptr, size_t len,
     }
 
     ret = pac_header_size(context, tmp, &header_end);
-    if (ret) {
-	return ret;
-    }
+    if (ret)
+	goto out;
 
     p->pac = calloc(1, header_end);
     if (p->pac == NULL) {

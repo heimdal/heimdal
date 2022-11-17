@@ -18,7 +18,7 @@ dnl Checks for programs.
 AC_PROG_CC
 AM_PROG_CC_C_O
 AC_PROG_CPP
-AM_PATH_PYTHON
+AM_COND_IF([MAINTAINER_MODE], [AM_PATH_PYTHON])
 AC_CHECK_PROG(CLANG_FORMAT, clang-format, [clang-format], [no])
 test "$CLANG_FORMAT" = no && CLANG_FORMAT=true
 

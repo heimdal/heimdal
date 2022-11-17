@@ -169,56 +169,242 @@ _kdc_is_anon_request(const KDC_REQ *req)
 	   (b->kdc_options.cname_in_addl_tkt && !b->additional_tickets);
 }
 
-/*
- * return the first appropriate key of `princ' in `ret_key'.  Look for
- * all the etypes in (`etypes', `len'), stopping as soon as we find
- * one, but preferring one that has default salt.
- *
- * XXX This function does way way too much.  Split it up!
- *
- * XXX `etypes' and `len' are always `b->etype.val' and `b->etype.len' -- the
- *     etype list from the KDC-REQ-BODY, which is available here as
- *     `r->req->req_body', so we could just stop having it passed in.
- *
- * XXX Picking an enctype(s) for PA-ETYPE-INFO* is rather different than
- *     picking an enctype for a ticket's session key.  The former is what we do
- *     here when `(flags & KFE_IS_PREAUTH)', the latter otherwise.
- */
+static const krb5_enctype *cached_kerberos_enctypes;
+static size_t ncached_kerberos_enctypes;
 
+/*
+ * Pick an enctype for a ticket session key or for a reply key that is in the
+ * intersection of:
+ *
+ *  - permitted_enctypes (local policy)
+ *  - requested enctypes (KDC-REQ-BODY's etype list)
+ *  - the principal's long-term keys' enctypes
+ *    or its configured etype list
+ *
+ * There are two options
+ *
+ *  - use local enctype preference (local policy), which will be "strongest is
+ *    most preferred"
+ *  - use the client's preference
+ *
+ * The first is clearly more secure, but has interop problems for clients that
+ * have multipler Kerberos implementations sharing the same credentials caches
+ * but having different sets of supported enctypes.
+ */
 krb5_error_code
 _kdc_find_etype(astgs_request_t r, uint32_t flags,
-		krb5_enctype *etypes, unsigned len,
-		krb5_enctype *ret_enctype, Key **ret_key,
-		krb5_boolean *ret_default_salt)
+                krb5_enctype *ret_enctype)
 {
-    krb5_boolean use_strongest_session_key;
+    struct _krb5_encryption_type *et;
+    krb5_boolean use_strongest;
     krb5_boolean is_preauth = flags & KFE_IS_PREAUTH;
+    krb5_boolean use_client = flags & KFE_USE_CLIENT;
     krb5_boolean is_tgs = flags & KFE_IS_TGS;
     hdb_entry *princ;
-    krb5_principal request_princ;
-    krb5_error_code ret;
-    krb5_salt def_salt;
-    krb5_enctype enctype = ETYPE_NULL;
-    const krb5_enctype *p;
-    Key *key = NULL;
-    size_t i, k, m;
+    const krb5_enctype *outer;
+    const krb5_enctype *inner;
+    size_t nouter, ninner;
+    int weak_allowed = 0;
+    int weak_offered = 0;
+    size_t o, i, k; /* iterators for outer, inner, keys */
+    size_t limit = 200; /* How hard we'll try */
 
-    if (is_preauth && (flags & KFE_USE_CLIENT) &&
-        r->client->flags.synthetic)
+    /* Synthetic clients have no symmetric keys for PAC-ENC-* pre-auth */
+    if (is_preauth && use_client && r->client->flags.synthetic)
         return KRB5KDC_ERR_ETYPE_NOSUPP;
 
-    if ((flags & KFE_USE_CLIENT) && !r->client->flags.synthetic) {
-	princ = r->client;
-	request_princ = r->client_princ;
-    } else {
-	princ = r->server;
-	request_princ = r->server->principal;
+    if (!cached_kerberos_enctypes) {
+        /*
+         * NOTE: This is either all strong enctypes only, or all enctypes,
+         *       including weak ones, depending on configuration.
+         */
+        cached_kerberos_enctypes = krb5_kerberos_enctypes(r->context);
+        while (cached_kerberos_enctypes[ncached_kerberos_enctypes] != ETYPE_NULL)
+             ncached_kerberos_enctypes++;
     }
 
-    use_strongest_session_key =
-	is_preauth ? r->config->preauth_use_strongest_session_key
-            : (is_tgs ? r->config->tgt_use_strongest_session_key :
-		        r->config->svc_use_strongest_session_key);
+    if (use_client)
+        princ = r->client;
+    else
+	princ = r->server;
+
+    /*
+     * If the client is synthetic and the synthesized entry doesn't list
+     * enctypes, then use the server's entry for figuring out what is
+     * supported.
+     */
+    if (use_client && princ->flags.synthetic &&
+        (!princ->etypes || !princ->etypes->val || !princ->etypes->len))
+        princ = r->server;
+
+    if (is_preauth && r->config->preauth_use_strongest_session_key)
+        use_strongest = TRUE;
+    else if (is_tgs)
+        use_strongest = r->config->tgt_use_strongest_session_key;
+    else
+        use_strongest = r->config->svc_use_strongest_session_key;
+
+    /*
+     * AFS may still be stuck using 1DES -- if the service exists and it's
+     * enabled, we'll allow the use of 1DES.  To disable this, disable or
+     * delete the principal.
+     */
+    if (!use_client &&
+        princ->principal->name.name_string.len > 0 &&
+        strcmp(princ->principal->name.name_string.val[0], "afs") == 0)
+        weak_allowed = 1;
+
+    if (use_strongest) {
+	/*
+         * Pick the strongest key that the KDC, target service, and client all
+         * support, using the local cryptosystem enctype list in
+         * strongest-to-weakest order to drive the search.
+	 *
+         * This is not what RFC4120 says to do, but it encourages adoption of
+         * stronger enctypes.
+         *
+         * NOTE: This does not play well with clients that have multiple
+         *       Kerberos client implementations with different supported
+         *       enctype lists sharing the same ccache.
+	 */
+        nouter = ncached_kerberos_enctypes;
+        outer = cached_kerberos_enctypes;
+        ninner = r->req.req_body.etype.len;
+        inner = r->req.req_body.etype.val;
+    } else {
+        /*
+         * Pick the first key from the client's enctype list that is supported
+         * by the cryptosystem and by the given principal.
+         *
+         * RFC4120 says we SHOULD pick the first _strong_ key from the client's
+         * list... not the first key...  If the admin disallows weak enctypes
+         * in krb5.conf and selects this key selection algorithm, then we get
+         * exactly what RFC4120 says.
+         */
+        ninner = ncached_kerberos_enctypes;
+        inner = cached_kerberos_enctypes;
+        nouter = r->req.req_body.etype.len;
+        outer = r->req.req_body.etype.val;
+    }
+
+    /*
+     * This is an O(N*M) algorithm, so really, O(N^2).  It always was.  Before
+     * we used to have one loop, not two nested loops, but the one loop's body
+     * called krb5_enctype_valid(), which called _krb5_find_enctype(), which
+     * had a loop over what now, here, is cached_kerberos_enctypes.
+     *
+     * We've made _krb5_find_enctype() O(1) for most enctypes, so though we
+     * still call it here, this loop is not O(N^3).  Still, an attacker could
+     * send us a large list of only enctypes for for which _krb5_find_enctype()
+     * is linear.  We should refuse.
+     */
+    for (o = 0; o < nouter; o++) {
+        /* A bit of krb5_enctype_valid(), inlined */
+        if ((et = _krb5_find_enctype(outer[o])) == NULL)
+            continue;
+        if ((et->flags & F_DISABLED) && !weak_allowed)
+            continue;
+
+        if (!use_strongest && outer[o] == ETYPE_DES_CBC_CRC)
+            weak_offered = 1;
+
+        for (i = 0; i < ninner; i++) {
+            if (--limit == 0) {
+
+                kdc_audit_addkv((kdc_request_t)r, 0,
+                                "find_etype_limit", "%llux%llu",
+                                (unsigned long long)ncached_kerberos_enctypes,
+                                (unsigned long long)r->req.req_body.etype.len);
+                kdc_audit_addreason((kdc_request_t)r,
+                                    "Client offered too many enctypes");
+                return KRB5KDC_ERR_ETYPE_NOSUPP;
+            }
+            if (use_strongest && inner[i] == ETYPE_DES_CBC_CRC)
+                weak_offered = 1;
+            if (outer[o] != inner[i])
+                continue;
+
+            if (use_client && !is_preauth) {
+                /*
+                 * This is the AS ticket session key negotiation case, so the
+                 * first enctype found that is acceptable is good enough: the
+                 * client _software_ said so, and the `princ's entry has
+                 * nothing to do with it.
+                 */
+                *ret_enctype = outer[o];
+                return 0;
+            }
+
+            /* Else we need to know that `princ' supports this enctype */
+            if (use_client && princ->keys.val && princ->keys.len) {
+                /*
+                 * Use the client's long-term keys ahead of its listed
+                 * etypes, as the latter may be a distinct set more
+                 * appropriate for enctype negotiation when the entry is a
+                 * server principal.
+                 */
+                for (k = 0; k < princ->keys.len; k++) {
+                    if (outer[o] == princ->keys.val[k].key.keytype) {
+                        *ret_enctype = outer[o];
+                        return 0;
+                    }
+                }
+            }
+            if (princ->etypes && princ->etypes->val) {
+                for (k = 0; k < princ->etypes->len; k++) {
+                    if (outer[o] == princ->etypes->val[k]) {
+                        *ret_enctype = outer[o];
+                        return 0;
+                    }
+                }
+            } else if (!use_client && princ->keys.val && princ->keys.len) {
+                for (k = 0; k < princ->keys.len; k++) {
+                    if (outer[o] == princ->keys.val[k].key.keytype) {
+                        *ret_enctype = outer[o];
+                        return 0;
+                    }
+                }
+            }
+        }
+    }
+    if (weak_offered && weak_allowed) {
+        *ret_enctype = ETYPE_DES_CBC_CRC;
+        return 0;
+    }
+    return KRB5KDC_ERR_ETYPE_NOSUPP;
+}
+
+/*
+ * Find _a_ key for advertising to the client via PA-ETYPE-INFO or
+ * PA-ETYPE-INFO2.  We use _kdc_find_etype(), which means that we'll apply
+ * local policy for enctype strength if that is enabled.
+ *
+ * XXX We will have done some of this work earlier, and could have cached it in
+ *     the astgs_request_t to avoid doing it again.  Like, if in deciding that
+ *     some enctype is to be the ticket's session key enctype
+ *     (`r->sessionetype') we found a key of the client's that's suitable for
+ *     pre-auth, then we could have saved it so we don't have to do that work
+ *     here again.
+ */
+static krb5_error_code
+_kdc_find_key_and_salt(astgs_request_t r,
+                       Key **ret_key,
+                       krb5_boolean *ret_default_salt)
+{
+    hdb_entry *princ = r->client;
+    krb5_principal request_princ = r->client_princ;
+    krb5_error_code ret;
+    krb5_salt def_salt;
+    Key *a_key = NULL;
+    Key *key = NULL;
+    krb5_enctype enctype;
+
+    *ret_key = NULL;
+    *ret_default_salt = FALSE;
+
+    ret = _kdc_find_etype(r, KFE_USE_CLIENT | KFE_IS_PREAUTH, &enctype);
+    if (ret)
+        return ret;
 
     /* We'll want to avoid keys with v4 salted keys in the pre-auth case... */
     ret = krb5_get_pw_salt(r->context, request_princ, &def_salt);
@@ -226,152 +412,28 @@ _kdc_find_etype(astgs_request_t r, uint32_t flags,
 	return ret;
 
     ret = KRB5KDC_ERR_ETYPE_NOSUPP;
-
-    /*
-     * Pick an enctype that is in the intersection of:
-     *
-     *  - permitted_enctypes (local policy)
-     *  - requested enctypes (KDC-REQ-BODY's etype list)
-     *  - the client's long-term keys' enctypes
-     *    OR
-     *    the server's configured etype list
-     *
-     * There are two sub-cases:
-     *
-     *  - use local enctype preference (local policy)
-     *  - use the client's preference list
-     */
-
-    if (use_strongest_session_key) {
-	/*
-	 * Pick the strongest key that the KDC, target service, and
-	 * client all support, using the local cryptosystem enctype
-	 * list in strongest-to-weakest order to drive the search.
-	 *
-	 * This is not what RFC4120 says to do, but it encourages
-	 * adoption of stronger enctypes.  This doesn't play well with
-	 * clients that have multiple Kerberos client implementations
-	 * with different supported enctype lists sharing the same ccache.
-	 */
-
-	/* drive the search with local supported enctypes list */
-	p = krb5_kerberos_enctypes(r->context);
-	for (i = 0;
-	    p[i] != ETYPE_NULL && enctype == ETYPE_NULL;
-	    i++) {
-	    if (krb5_enctype_valid(r->context, p[i]) != 0 &&
-                !_kdc_is_weak_exception(princ->principal, p[i]))
-		continue;
-
-	    /* check that the client supports it too */
-	    for (k = 0; k < len && enctype == ETYPE_NULL; k++) {
-
-		if (p[i] != etypes[k])
-		    continue;
-
-                if (!is_preauth && (flags & KFE_USE_CLIENT)) {
-                    /*
-                     * It suffices that the client says it supports this
-                     * enctype in its KDC-REQ-BODY's etype list, which is what
-                     * `etypes' is here.
-                     */
-                    ret = 0;
-                    break;
-                }
-
-                /* check target princ support */
-		key = NULL;
-                if (!is_preauth && !(flags & KFE_USE_CLIENT) && princ->etypes) {
-                    /*
-                     * Use the etypes list from the server's HDB entry instead
-                     * of deriving it from its long-term keys.  This allows an
-                     * entry to have just one long-term key but record support
-                     * for multiple enctypes.
-                     */
-                    for (m = 0; m < princ->etypes->len; m++) {
-                        if (p[i] == princ->etypes->val[m]) {
-                            ret = 0;
-                            break;
-                        }
-                    }
-                } else {
-                    /*
-                     * Use the entry's long-term keys as the source of its
-                     * supported enctypes, either because we're making
-                     * PA-ETYPE-INFO* or because we're selecting a session key
-                     * enctype.
-                     */
-                    while (hdb_next_enctype2key(r->context, princ, NULL,
-                                                 p[i], &key) == 0) {
-                        if (key->key.keyvalue.length == 0) {
-                            ret = KRB5KDC_ERR_NULL_KEY;
-                            continue;
-                        }
-                        enctype = p[i];
-                        ret = 0;
-                        if (is_preauth && ret_key != NULL &&
-                            !is_good_salt_p(&def_salt, key))
-                            continue;
-                    }
-                }
-	    }
-	}
-    } else {
-	/*
-	 * Pick the first key from the client's enctype list that is
-	 * supported by the cryptosystem and by the given principal.
-	 *
-	 * RFC4120 says we SHOULD pick the first _strong_ key from the
-	 * client's list... not the first key...  If the admin disallows
-	 * weak enctypes in krb5.conf and selects this key selection
-	 * algorithm, then we get exactly what RFC4120 says.
-	 */
-	for(i = 0; ret != 0 && i < len; i++) {
-
-	    if (krb5_enctype_valid(r->context, etypes[i]) != 0 &&
-		!_kdc_is_weak_exception(princ->principal, etypes[i]))
-		continue;
-
-	    key = NULL;
-	    while (ret != 0 &&
-                   hdb_next_enctype2key(r->context, princ, NULL,
-					etypes[i], &key) == 0) {
-		if (key->key.keyvalue.length == 0) {
-		    ret = KRB5KDC_ERR_NULL_KEY;
-		    continue;
-		}
-                enctype = etypes[i];
-		ret = 0;
-		if (is_preauth && ret_key != NULL &&
-		    !is_good_salt_p(&def_salt, key))
-		    continue;
-	    }
-	}
-    }
-
-    if (ret == 0 && enctype == ETYPE_NULL) {
-        /*
-         * if the service principal is one for which there is a known 1DES
-         * exception and no other enctype matches both the client request and
-         * the service key list, provide a DES-CBC-CRC key.
-         */
-	if (ret_key == NULL &&
-	    _kdc_is_weak_exception(princ->principal, ETYPE_DES_CBC_CRC)) {
-            ret = 0;
-            enctype = ETYPE_DES_CBC_CRC;
-        } else {
-            ret = KRB5KDC_ERR_ETYPE_NOSUPP;
+    key = NULL;
+    while (ret != 0 &&
+           hdb_next_enctype2key(r->context, princ, NULL, enctype, &key) == 0) {
+        if (key->key.keyvalue.length == 0) {
+            ret = KRB5KDC_ERR_NULL_KEY;
+            continue;
+        }
+        if (a_key == NULL)
+            a_key = key;
+        if (is_good_salt_p(&def_salt, key)) {
+            *ret_key = key;
+            break;
         }
     }
+    if (a_key || *ret_key)
+        ret = 0;
+    if (!*ret_key)
+        /* Better output _a_ key, even if the salt isn't "good", right? */
+        *ret_key = a_key;
 
-    if (ret == 0) {
-	if (ret_enctype != NULL)
-	    *ret_enctype = enctype;
-	if (ret_key != NULL)
-	    *ret_key = key;
-	if (ret_default_salt != NULL)
-	    *ret_default_salt = is_default_salt_p(&def_salt, key);
-    }
+    if (ret == 0)
+        *ret_default_salt = is_default_salt_p(&def_salt, *ret_key);
 
     krb5_free_salt (r->context, def_salt);
     return ret;
@@ -2203,9 +2265,8 @@ _kdc_as_rep(astgs_request_t r)
      * intersection of the client's requested enctypes and the server's (like a
      * root krbtgt, but not necessarily) etypes from its HDB entry.
      */
-    ret = _kdc_find_etype(r, (is_tgs ?  KFE_IS_TGS:0) | KFE_USE_CLIENT,
-			  b->etype.val, b->etype.len,
-			  &r->sessionetype, NULL, NULL);
+    ret = _kdc_find_etype(r, (is_tgs ? KFE_IS_TGS : 0) | KFE_USE_CLIENT,
+			  &r->sessionetype);
     if (ret) {
 	kdc_log(r->context, config, 4,
 		"Client (%s) from %s has no common enctypes with KDC "
@@ -2258,9 +2319,7 @@ _kdc_as_rep(astgs_request_t r)
 		    /*
 		     * If there is a client key, send ETYPE_INFO{,2}
 		     */
-		    ret2 = _kdc_find_etype(r, KFE_IS_PREAUTH|KFE_USE_CLIENT,
-					   b->etype.val, b->etype.len,
-					   NULL, &ckey, &default_salt);
+                    ret2 = _kdc_find_key_and_salt(r, &ckey, &default_salt);
 		    if (ret2 == 0) {
 			ret2 = get_pa_etype_info_both(r->context, config, &b->etype,
 						      r->rep.padata, ckey, !default_salt);
@@ -2315,9 +2374,7 @@ _kdc_as_rep(astgs_request_t r)
 	/*
 	 * If there is a client key, send ETYPE_INFO{,2}
 	 */
-	ret = _kdc_find_etype(r, KFE_IS_PREAUTH|KFE_USE_CLIENT,
-			      b->etype.val, b->etype.len,
-			      NULL, &ckey, &default_salt);
+        ret = _kdc_find_key_and_salt(r, &ckey, &default_salt);
 	if (ret == 0) {
 	    ret = get_pa_etype_info_both(r->context, config, &b->etype,
 					 r->rep.padata, ckey, !default_salt);

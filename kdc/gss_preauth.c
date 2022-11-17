@@ -785,8 +785,7 @@ _kdc_gss_mk_pa_reply(astgs_request_t r,
         if (krb5_principal_is_krbtgt(r->context, r->server_princ))
             kfe |= KFE_IS_TGS;
 
-        ret = _kdc_find_etype(r, kfe, req->req_body.etype.val,
-                              req->req_body.etype.len, &enctype, NULL, NULL);
+        ret = _kdc_find_etype(r, kfe, &enctype);
         if (ret)
             return ret;
 

@@ -158,7 +158,7 @@ cipher_do_cipher(hc_EVP_CIPHER_CTX *ctx, unsigned char *out,
     struct ossl_cipher_ctx *ossl_ctx = ctx->cipher_data;
 
     assert(ossl_ctx != NULL);
-    return EVP_Cipher(ossl_ctx->ossl_cipher_ctx, out, in, len);
+    return EVP_Cipher(ossl_ctx->ossl_cipher_ctx, out, in, len) == 0 ? 0 : 1;
 }
 
 static int

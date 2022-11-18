@@ -37,13 +37,17 @@
 #define HEIM_EVP_OSSL_H 1
 
 /* symbol renaming */
+#if OPENSSL_VERSION_NUMBER < 0x30000000L
 #define EVP_ossl_md4 hc_EVP_ossl_md4
+#endif
 #define EVP_ossl_md5 hc_EVP_ossl_md5
 #define EVP_ossl_sha1 hc_EVP_ossl_sha1
 #define EVP_ossl_sha256 hc_EVP_ossl_sha256
 #define EVP_ossl_sha384 hc_EVP_ossl_sha384
 #define EVP_ossl_sha512 hc_EVP_ossl_sha512
+#if OPENSSL_VERSION_NUMBER < 0x30000000L
 #define EVP_ossl_des_cbc hc_EVP_ossl_des_cbc
+#endif
 #define EVP_ossl_des_ede3_cbc hc_EVP_ossl_des_ede3_cbc
 #define EVP_ossl_aes_128_cbc hc_EVP_ossl_aes_128_cbc
 #define EVP_ossl_aes_192_cbc hc_EVP_ossl_aes_192_cbc
@@ -51,11 +55,13 @@
 #define EVP_ossl_aes_128_cfb8 hc_EVP_ossl_aes_128_cfb8
 #define EVP_ossl_aes_192_cfb8 hc_EVP_ossl_aes_192_cfb8
 #define EVP_ossl_aes_256_cfb8 hc_EVP_ossl_aes_256_cfb8
+#if OPENSSL_VERSION_NUMBER < 0x30000000L
 #define EVP_ossl_rc4 hc_EVP_ossl_rc4
 #define EVP_ossl_rc4_40 hc_EVP_ossl_rc4_40
 #define EVP_ossl_rc2_40_cbc hc_EVP_ossl_rc2_40_cbc
 #define EVP_ossl_rc2_64_cbc hc_EVP_ossl_rc2_64_cbc
 #define EVP_ossl_rc2_cbc hc_EVP_ossl_rc2_cbc
+#endif
 #define EVP_ossl_camellia_128_cbc hc_EVP_ossl_camellia_128_cbc
 #define EVP_ossl_camellia_192_cbc hc_EVP_ossl_camellia_192_cbc
 #define EVP_ossl_camellia_256_cbc hc_EVP_ossl_camellia_256_cbc
@@ -66,21 +72,27 @@
 
 HC_CPP_BEGIN
 
+#if OPENSSL_VERSION_NUMBER < 0x30000000L
 const hc_EVP_MD * hc_EVP_ossl_md4(void);
+#endif
 const hc_EVP_MD * hc_EVP_ossl_md5(void);
 const hc_EVP_MD * hc_EVP_ossl_sha1(void);
 const hc_EVP_MD * hc_EVP_ossl_sha256(void);
 const hc_EVP_MD * hc_EVP_ossl_sha384(void);
 const hc_EVP_MD * hc_EVP_ossl_sha512(void);
 
+#if OPENSSL_VERSION_NUMBER < 0x30000000L
 const hc_EVP_CIPHER * hc_EVP_ossl_rc2_cbc(void);
 const hc_EVP_CIPHER * hc_EVP_ossl_rc2_40_cbc(void);
 const hc_EVP_CIPHER * hc_EVP_ossl_rc2_64_cbc(void);
 
 const hc_EVP_CIPHER * hc_EVP_ossl_rc4(void);
 const hc_EVP_CIPHER * hc_EVP_ossl_rc4_40(void);
+#endif
 
+#if OPENSSL_VERSION_NUMBER < 0x30000000L
 const hc_EVP_CIPHER * hc_EVP_ossl_des_cbc(void);
+#endif
 const hc_EVP_CIPHER * hc_EVP_ossl_des_ede3_cbc(void);
 
 const hc_EVP_CIPHER * hc_EVP_ossl_aes_128_cbc(void);

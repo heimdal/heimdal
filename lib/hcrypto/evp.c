@@ -59,6 +59,7 @@
 #  define HCRYPTO_DEF_PROVIDER pkcs11_hcrypto
 # elif HAVE_HCRYPTO_W_OPENSSL
 #  define HCRYPTO_DEF_PROVIDER ossl
+#  define HCRYPTO_DEF_PROVIDER_IS_OPENSSL
 # else
 #  define HCRYPTO_DEF_PROVIDER hcrypto
 # endif
@@ -68,6 +69,11 @@
 
 
 #define EVP_DEF_OP(_prov,_op) HC_CONCAT4(EVP_,_prov,_,_op)()
+
+#if defined(HAVE_OPENSSL_FIPS_H) || defined(HAVE_OPENSSL_FIPS_MODE_SET_API)
+extern int _heim_openssl_fips_enabled(void);
+#endif
+
 
 /**
  * @page page_evp EVP - generic crypto interface
@@ -463,6 +469,13 @@ const EVP_MD *
 EVP_md4(void) HC_DEPRECATED_CRYPTO
 {
     hcrypto_validate();
+#if defined(HCRYPTO_DEF_PROVIDER_IS_OPENSSL) && defined(HAVE_OPENSSL_30)
+#if defined(HAVE_OPENSSL_FIPS_H) || defined(HAVE_OPENSSL_FIPS_MODE_SET_API)
+    if (_heim_openssl_fips_enabled())
+        return NULL;
+#endif
+    return EVP_DEF_OP(hcrypto, md4);
+#endif
     return EVP_DEF_OP(HCRYPTO_DEF_PROVIDER, md4);
 }
 
@@ -1049,6 +1062,13 @@ const EVP_CIPHER *
 EVP_rc2_cbc(void)
 {
     hcrypto_validate();
+#if defined(HCRYPTO_DEF_PROVIDER_IS_OPENSSL) && defined(HAVE_OPENSSL_30)
+#if defined(HAVE_OPENSSL_FIPS_H) || defined(HAVE_OPENSSL_FIPS_MODE_SET_API)
+    if (_heim_openssl_fips_enabled())
+        return NULL;
+#endif
+    return EVP_DEF_OP(hcrypto, rc2_cbc);
+#endif
     return EVP_DEF_OP(HCRYPTO_DEF_PROVIDER, rc2_cbc);
 }
 
@@ -1064,6 +1084,13 @@ const EVP_CIPHER *
 EVP_rc2_40_cbc(void)
 {
     hcrypto_validate();
+#if defined(HCRYPTO_DEF_PROVIDER_IS_OPENSSL) && defined(HAVE_OPENSSL_30)
+#if defined(HAVE_OPENSSL_FIPS_H) || defined(HAVE_OPENSSL_FIPS_MODE_SET_API)
+    if (_heim_openssl_fips_enabled())
+        return NULL;
+#endif
+    return EVP_DEF_OP(hcrypto, rc2_40_cbc);
+#endif
     return EVP_DEF_OP(HCRYPTO_DEF_PROVIDER, rc2_40_cbc);
 }
 
@@ -1079,6 +1106,13 @@ const EVP_CIPHER *
 EVP_rc2_64_cbc(void)
 {
     hcrypto_validate();
+#if defined(HCRYPTO_DEF_PROVIDER_IS_OPENSSL) && defined(HAVE_OPENSSL_30)
+#if defined(HAVE_OPENSSL_FIPS_H) || defined(HAVE_OPENSSL_FIPS_MODE_SET_API)
+    if (_heim_openssl_fips_enabled())
+        return NULL;
+#endif
+    return EVP_DEF_OP(hcrypto, rc2_64_cbc);
+#endif
     return EVP_DEF_OP(HCRYPTO_DEF_PROVIDER, rc2_64_cbc);
 }
 
@@ -1094,6 +1128,13 @@ const EVP_CIPHER *
 EVP_rc4(void)
 {
     hcrypto_validate();
+#if defined(HCRYPTO_DEF_PROVIDER_IS_OPENSSL) && defined(HAVE_OPENSSL_30)
+#if defined(HAVE_OPENSSL_FIPS_H) || defined(HAVE_OPENSSL_FIPS_MODE_SET_API)
+    if (_heim_openssl_fips_enabled())
+        return NULL;
+#endif
+    return EVP_DEF_OP(hcrypto, rc4);
+#endif
     return EVP_DEF_OP(HCRYPTO_DEF_PROVIDER, rc4);
 }
 
@@ -1109,6 +1150,13 @@ const EVP_CIPHER *
 EVP_rc4_40(void)
 {
     hcrypto_validate();
+#if defined(HCRYPTO_DEF_PROVIDER_IS_OPENSSL) && defined(HAVE_OPENSSL_30)
+#if defined(HAVE_OPENSSL_FIPS_H) || defined(HAVE_OPENSSL_FIPS_MODE_SET_API)
+    if (_heim_openssl_fips_enabled())
+        return NULL;
+#endif
+    return EVP_DEF_OP(hcrypto, rc4_40);
+#endif
     return EVP_DEF_OP(HCRYPTO_DEF_PROVIDER, rc4_40);
 }
 
@@ -1124,6 +1172,13 @@ const EVP_CIPHER *
 EVP_des_cbc(void)
 {
     hcrypto_validate();
+#if defined(HCRYPTO_DEF_PROVIDER_IS_OPENSSL) && defined(HAVE_OPENSSL_30)
+#if defined(HAVE_OPENSSL_FIPS_H) || defined(HAVE_OPENSSL_FIPS_MODE_SET_API)
+    if (_heim_openssl_fips_enabled())
+        return NULL;
+#endif
+    return EVP_DEF_OP(hcrypto, des_cbc);
+#endif
     return EVP_DEF_OP(HCRYPTO_DEF_PROVIDER, des_cbc);
 }
 

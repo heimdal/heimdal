@@ -21,6 +21,7 @@ HEIMDAL_X509_1.2 {
 		_hx509_make_pkinit_san;
 		_hx509_map_file_os;
 		_hx509_name_from_Name;
+		_hx509_ossl_oid2nid;
 		_hx509_private_key_export;
 		_hx509_private_key_exportable;
 		_hx509_private_key_get_internal;

@@ -134,6 +134,14 @@ if test "$with_openssl" != "no"; then
         LDFLAGS="${saved_LDFLAGS}"
 fi
 
+if test "$openssl" = "yes"; then
+    AC_CHECK_LIB([crypto],
+                 [OSSL_EC_curve_nid2name],
+                 [AC_DEFINE_UNQUOTED([HAVE_OPENSSL_30], 1,
+                                     [whether OpenSSL is 3.0 or higher])]
+                 )
+fi
+
 LIB_hcrypto='$(top_builddir)/lib/hcrypto/libhcrypto.la'
 LIB_hcrypto_a='$(top_builddir)/lib/hcrypto/.libs/libhcrypto.a'
 LIB_hcrypto_so='$(top_builddir)/lib/hcrypto/.libs/libhcrypto.so'

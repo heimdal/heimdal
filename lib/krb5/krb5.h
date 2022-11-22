@@ -995,6 +995,7 @@ typedef struct krb5_name_canon_iterator_data *krb5_name_canon_iterator;
 #define KRB5_GIC_OPT_PKINIT_ANONYMOUS	    4 /* anonymous PKINIT */
 #define KRB5_GIC_OPT_PKINIT_BTMM	    8 /* reserved by Apple */
 #define KRB5_GIC_OPT_PKINIT_NO_KDC_ANCHOR   16 /* do not authenticate KDC */
+#define KRB5_GIC_OPT_PKINIT_USE_ECDH        32 /* use ECDH, not DH */
 
 /*
  * _krb5_principal_is_anonymous() flags 

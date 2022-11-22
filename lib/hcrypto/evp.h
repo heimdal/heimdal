@@ -193,7 +193,7 @@ struct hc_CIPHER_CTX {
     unsigned long flags;
     void *cipher_data;
     int final_used;
-    int block_mask;
+    unsigned block_mask;
     unsigned char final[EVP_MAX_BLOCK_LENGTH];
 };
 

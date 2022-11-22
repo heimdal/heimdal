@@ -113,6 +113,7 @@ struct krb5_kdc_configuration {
     char **pkinit_kdc_cert_pool;
     char **pkinit_kdc_revoke;
     int pkinit_dh_min_bits;
+    char **pkinit_ecdh_curves;
     unsigned int pkinit_require_binding : 1;
     unsigned int pkinit_allow_proxy_certs : 1;
     unsigned int synthetic_clients : 1;

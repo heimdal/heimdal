@@ -331,6 +331,10 @@ krb5_kdc_get_config(krb5_context context, krb5_kdc_configuration **config)
 				    0,
 				    "kdc", "pkinit_dh_min_bits", NULL);
 
+    c->pkinit_ecdh_curves =
+        krb5_config_get_strings(context, NULL,
+                                "kdc", "pkinit_kex_ecdh_curves", NULL);
+
     c->pkinit_max_life_from_cert_extension =
         krb5_config_get_bool_default(context, NULL,
                                      c->pkinit_max_life_from_cert_extension,

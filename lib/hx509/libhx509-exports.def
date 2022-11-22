@@ -14,6 +14,11 @@ EXPORTS
 	_hx509_generate_private_key_is_ca
 	_hx509_map_file_os
 	_hx509_name_from_Name
+	_hx509_private_key_export
+	_hx509_private_key_exportable
+	_hx509_private_key_get_internal
+	_hx509_private_key_oid
+	_hx509_private_key_ref
 	hx509_private_key2SPKI
 	hx509_private_key_free
 	_hx509_private_key_ref

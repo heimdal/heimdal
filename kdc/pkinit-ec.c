@@ -263,6 +263,77 @@ _kdc_generate_ecdh_keyblock(krb5_context context,
 #ifdef HAVE_HCRYPTO_W_OPENSSL
 #ifdef HAVE_OPENSSL_30
 static krb5_error_code
+curve_ok(krb5_context context,
+         krb5_kdc_configuration *config,
+         heim_oid *oid,
+         char **sn)
+{
+    krb5_error_code ret = 0;
+    const char *curve_name = NULL;
+    const char *curve_sn = NULL;
+    char *curve_oid = NULL;
+    int curve_accepted = -1;
+    int nid = NID_undef;
+
+    if (der_find_heim_oid_by_oid(oid, &curve_name) != 0 &&
+        der_print_heim_oid(oid, '.', &curve_oid) == 0)
+            curve_name = curve_oid;
+    if (curve_name == NULL)
+        curve_name = "<unknown>";
+
+    if ((nid = _hx509_ossl_oid2nid(oid)) == NID_undef)
+        krb5_set_error_message(context, ret = KRB5_BADMSGTYPE,
+                               "PKINIT client used an unsupported curve");
+    if (ret == 0 && (curve_sn = OBJ_nid2sn(nid)) == NULL)
+        krb5_set_error_message(context, ret = KRB5_BADMSGTYPE,
+                               "Could not resolve curve NID %d to its short name",
+                               nid);
+
+    switch (nid) {
+    case NID_X9_62_prime256v1:
+    case NID_secp521r1:
+    case NID_secp384r1:
+    case NID_secp160r1:
+    case NID_secp160r2:
+        break;
+    default:
+        curve_accepted = 0;
+        break;
+    }
+
+    if (ret == 0 && curve_accepted == -1) {
+        curve_accepted = 0;
+        if (config->pkinit_ecdh_curves == NULL) {
+            if (der_heim_oid_cmp(oid, &asn1_oid_id_ec_group_secp256r1) == 0)
+                curve_accepted = 1;
+        } else {
+            size_t i;
+
+            for (i = 0; config->pkinit_ecdh_curves[i]; i++) {
+                if (strcmp(config->pkinit_ecdh_curves[i],
+                           curve_name) == 0 ||
+                    strcmp(config->pkinit_ecdh_curves[i],
+                           curve_oid) == 0) {
+                    curve_accepted = 1;
+                    break;
+                }
+            }
+        }
+    }
+    if (ret == 0 && !curve_accepted) {
+        krb5_set_error_message(context, ret = KRB5_BADMSGTYPE,
+                               "PKINIT client used an unsupported curve %s",
+                               curve_name);
+    }
+
+    if (ret == 0 && (*sn = strdup(curve_sn)) == NULL)
+        ret = krb5_enomem(context);
+
+    free(curve_oid);
+    return ret;
+}
+
+static krb5_error_code
 get_ecdh_param_ossl30(krb5_context context,
                       krb5_kdc_configuration *config,
                       SubjectPublicKeyInfo *dh_key_info,
@@ -275,12 +346,10 @@ get_ecdh_param_ossl30(krb5_context context,
     krb5_error_code ret = 0;
     ECParameters ecp;
     const unsigned char *p;
-    const char *curve_sn = NULL;
     size_t len;
-    char *curve_sn_dup = NULL;
-    int groupnid = NID_undef;
+    char *curve_sn = NULL;
 
-    /* XXX Algorithm agility; XXX KRB5_BADMSGTYPE?? */
+    /* XXX KRB5_BADMSGTYPE?? */
 
     /*
      * In order for d2i_PublicKey() to work we need to create a template key
@@ -304,21 +373,8 @@ get_ecdh_param_ossl30(krb5_context context,
     if (ret == 0 && ecp.element != choice_ECParameters_namedCurve)
         krb5_set_error_message(context, ret = KRB5_BADMSGTYPE,
                                "PKINIT client used an unnamed curve");
-    if (ret == 0 &&
-        (groupnid = _hx509_ossl_oid2nid(&ecp.u.namedCurve)) == NID_undef)
-        krb5_set_error_message(context, ret = KRB5_BADMSGTYPE,
-                               "PKINIT client used an unsupported curve");
-    if (ret == 0 && (curve_sn = OBJ_nid2sn(groupnid)) == NULL)
-        krb5_set_error_message(context, ret = KRB5_BADMSGTYPE,
-                               "Could not resolve curve NID %d to its short name",
-                               groupnid);
-    if (ret == 0 && (curve_sn_dup = strdup(curve_sn)) == NULL)
-        ret = krb5_enomem(context);
-    if (ret == 0) {
-        if (der_heim_oid_cmp(&ecp.u.namedCurve, &asn1_oid_id_ec_group_secp256r1) != 0)
-            krb5_set_error_message(context, ret = KRB5_BADMSGTYPE,
-                                   "PKINIT client used an unsupported curve");
-    }
+    if (ret == 0)
+        ret = curve_ok(context, config, &ecp.u.namedCurve, &curve_sn);
     if (ret == 0) {
         /*
          * Apparently there's no error checking to be done here?  Why does
@@ -326,7 +382,7 @@ get_ecdh_param_ossl30(krb5_context context,
          * Is that a bug in OpenSSL?
          */
         params[0] = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME,
-                                                     curve_sn_dup, 0);
+                                                     curve_sn, 0);
         params[1] = OSSL_PARAM_construct_end();
 
         if ((pctx = EVP_PKEY_CTX_new_from_name(NULL, "EC", NULL)) == NULL)
@@ -358,7 +414,7 @@ get_ecdh_param_ossl30(krb5_context context,
     /* FYI the EVP_PKEY_CTX takes ownership of the `template' key */
     EVP_PKEY_CTX_free(pctx);
     free_ECParameters(&ecp);
-    free(curve_sn_dup);
+    free(curve_sn);
     return ret;
 }
 #else

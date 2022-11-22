@@ -90,84 +90,99 @@ _krb5_build_authpack_subjectPK_EC(krb5_context context,
                                   AuthPack *a)
 {
 #ifdef HAVE_HCRYPTO_W_OPENSSL
-    krb5_error_code ret;
+    krb5_error_code ret = 0;
     ECParameters ecp;
-    unsigned char *p;
+    unsigned char *p = NULL;
+    const char *curve_name;
     size_t size;
     int xlen;
 
+    ecp.element = choice_ECParameters_namedCurve;
+    ecp.u.namedCurve.length = 0;
+    ecp.u.namedCurve.components = NULL;
+
+    curve_name = krb5_config_get_string(context, NULL,
+                                        "libdefaults",
+                                        "pkinit_kex_ecdh_curve",
+                                        NULL);
+
+    if (curve_name) {
+        heim_oid curve;
+
+        ret = der_find_or_parse_heim_oid(curve_name, NULL, &curve);
+        if (ret == 0)
+            ecp.u.namedCurve = curve;
+        ret = 0;
+    }
+
     /* copy in public key, XXX find the best curve that the server support or use the clients curve if possible */
 
-    ecp.element = choice_ECParameters_namedCurve;
-    ret = der_copy_oid(&asn1_oid_id_ec_group_secp256r1,
-                       &ecp.u.namedCurve);
-    if (ret)
-        return ret;
-
-    ALLOC(a->clientPublicValue->algorithm.parameters, 1);
-    if (a->clientPublicValue->algorithm.parameters == NULL) {
-        free_ECParameters(&ecp);
-        return krb5_enomem(context);
+    /* Default to P-256 */
+    if (ecp.u.namedCurve.length == 0)
+        ret = der_copy_oid(&asn1_oid_id_ec_group_secp256r1, &ecp.u.namedCurve);
+    if (ret == 0) {
+        ALLOC(a->clientPublicValue->algorithm.parameters, 1);
+        if (a->clientPublicValue->algorithm.parameters == NULL)
+            ret = krb5_enomem(context);
     }
-    ASN1_MALLOC_ENCODE(ECParameters, p, xlen, &ecp, &size, ret);
-    free_ECParameters(&ecp);
-    if (ret)
-        return ret;
-    if ((int)size != xlen)
+    if (ret == 0)
+        ASN1_MALLOC_ENCODE(ECParameters, p, xlen, &ecp, &size, ret);
+    if (ret == 0 && (int)size != xlen)
         krb5_abortx(context, "asn1 internal error");
 
-    a->clientPublicValue->algorithm.parameters->data = p;
-    a->clientPublicValue->algorithm.parameters->length = size;
+    free_ECParameters(&ecp);
 
-    /* copy in public key */
-
-    ret = der_copy_oid(&asn1_oid_id_ecPublicKey,
-                       &a->clientPublicValue->algorithm.algorithm);
-    if (ret)
-        return ret;
+    if (ret == 0) {
+        a->clientPublicValue->algorithm.parameters->data = p;
+        a->clientPublicValue->algorithm.parameters->length = size;
+        ret = der_copy_oid(&asn1_oid_id_ecPublicKey,
+                           &a->clientPublicValue->algorithm.algorithm);
+    }
 
 #ifdef HAVE_OPENSSL_30
-    ctx->u.eckey = EVP_EC_gen(OSSL_EC_curve_nid2name(NID_X9_62_prime256v1));
+    if (ret == 0)
+        ctx->u.eckey = EVP_EC_gen(OSSL_EC_curve_nid2name(NID_X9_62_prime256v1));
 #else
-    ctx->u.eckey = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);
-    if (ctx->u.eckey == NULL)
-        return krb5_enomem(context);
+    if (ret == 0) {
+        ctx->u.eckey = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);
+        if (ctx->u.eckey == NULL)
+            ret = krb5_enomem(context);
+    }
 
-    ret = EC_KEY_generate_key(ctx->u.eckey);
-    if (ret != 1)
-        return EINVAL;
+    if (ret == 0 && EC_KEY_generate_key(ctx->u.eckey != 1))
+        ret = EINVAL;
 #endif
 
 #ifdef HAVE_OPENSSL_30
-    xlen = i2d_PublicKey(ctx->u.eckey, NULL);
+    if (ret == 0)
+        xlen = i2d_PublicKey(ctx->u.eckey, NULL);
 #else
-    xlen = i2o_ECPublicKey(ctx->u.eckey, NULL);
+    if (ret == 0)
+        xlen = i2o_ECPublicKey(ctx->u.eckey, NULL);
 #endif
-    if (xlen <= 0)
-        return EINVAL;
+    if (ret == 0 && xlen <= 0)
+        ret = krb5_enomem(context);
 
-    p = malloc(xlen);
-    if (p == NULL)
-        return krb5_enomem(context);
+    if (ret == 0 && (p = malloc(xlen)) == NULL)
+        ret = krb5_enomem(context);
 
     a->clientPublicValue->subjectPublicKey.data = p;
 
 #ifdef HAVE_OPENSSL_30
-    xlen = i2d_PublicKey(ctx->u.eckey, &p);
+    if (ret == 0)
+        xlen = i2d_PublicKey(ctx->u.eckey, &p);
 #else
-    xlen = i2o_ECPublicKey(ctx->u.eckey, &p);
+    if (ret == 0)
+        xlen = i2o_ECPublicKey(ctx->u.eckey, &p);
 #endif
-    if (xlen <= 0) {
-        a->clientPublicValue->subjectPublicKey.data = NULL;
-        free(p);
-        return EINVAL;
-    }
+    if (ret == 0 && xlen <= 0)
+        ret = krb5_enomem(context);
 
     a->clientPublicValue->subjectPublicKey.length = xlen * 8;
 
-    return 0;
-
     /* XXX verify that this is right with RFC3279 */
+
+    return ret;
 #else
     krb5_set_error_message(context, ENOTSUP,
                            N_("PKINIT: ECDH not supported", ""));

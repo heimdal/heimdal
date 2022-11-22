@@ -41,6 +41,7 @@
 #include <openssl/bn.h>
 #include <openssl/objects.h>
 #ifdef HAVE_OPENSSL_30
+#include <openssl/asn1.h>
 #include <openssl/core_names.h>
 #endif
 #define HEIM_NO_CRYPTO_HDRS

@@ -21,7 +21,7 @@ WFLAGS += $(WFLAGS_UNUSED_BUT_SET_VAR)
 lib_LTLIBRARIES = libhcrypto.la
 check_LTLIBRARIES = libhctest.la
 
-libhcrypto_la_LDFLAGS = -version-info 5:0:1
+libhcrypto_la_LDFLAGS = -version-info 5:0:0
 libhcrypto_la_LIBADD = \
 	$(top_builddir)/lib/asn1/libasn1.la \
 	$(LIB_dlopen) \

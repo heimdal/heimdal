@@ -357,7 +357,7 @@ heim_base_cas_64(heim_base_atomic(uint64_t) *target, uint64_t expected,uint64_t 
 #endif
 
 #ifndef heim_base_atomic_barrier
-#define heim_base_atomic_barrier()
+static inline void heim_base_atomic_barrier(void) { return; }
 #endif
 
 #ifndef heim_base_atomic_load

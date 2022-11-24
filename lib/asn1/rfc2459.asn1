@@ -584,6 +584,13 @@ RSAPrivateKey ::= SEQUENCE {
 	coefficient INTEGER -- (inverse of q) mod p
 }
 
+ECPrivateKey ::= SEQUENCE {
+        version INTEGER (0..4294967295),
+        privateKey OCTET STRING,
+        parameters [0] ECParameters OPTIONAL,
+        publicKey  [1] BIT STRING OPTIONAL
+}
+
 DigestInfo ::= SEQUENCE {
 	digestAlgorithm AlgorithmIdentifier,
 	digest OCTET STRING

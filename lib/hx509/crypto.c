@@ -1614,6 +1614,11 @@ _hx509_private_key_export(hx509_context context,
         size_t size;
         int ret;
 
+        /* Maybe the backend supports PKCS#8 directly */
+        ret = (*key->ops->export)(context, key, format, data);
+        if (ret == 0)
+            return 0;
+
         memset(&ki, 0, sizeof(ki));
         ki.attributes = NULL; /* No localKeyId needed */
         ki.privateKey.data = NULL;

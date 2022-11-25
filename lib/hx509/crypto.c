@@ -1126,15 +1126,6 @@ _hx509_verify_signature(hx509_context context,
 	    hx509_clear_error_string(context);
 	return HX509_CRYPTO_SIGNATURE_WITHOUT_SIGNER;
     }
-    if (md->key_oid && signer) {
-	const SubjectPublicKeyInfo *spi;
-	spi = &signer->tbsCertificate.subjectPublicKeyInfo;
-
-	if (der_heim_oid_cmp(&spi->algorithm.algorithm, md->key_oid) != 0) {
-	    hx509_clear_error_string(context);
-	    return HX509_SIG_ALG_DONT_MATCH_KEY_ALG;
-	}
-    }
     return (*md->verify_signature)(context, md, signer, alg, data, sig);
 }
 

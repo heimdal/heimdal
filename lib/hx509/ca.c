@@ -1638,7 +1638,9 @@ ca_sign(hx509_context context,
 
     sigalg = tbs->sigalg;
     if (sigalg == NULL)
-	sigalg = _hx509_crypto_default_sig_alg;
+        sigalg = hx509_signature_ecdsa(signer->signature_alg);
+    if (sigalg == NULL)
+        sigalg = _hx509_crypto_default_sig_alg;
 
     memset(&c, 0, sizeof(c));
 

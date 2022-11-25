@@ -510,7 +510,9 @@ rsa_private_key_export(hx509_context context,
 		       hx509_key_format_t format,
 		       heim_octet_string *data)
 {
-    int ret;
+    unsigned char *p;
+    int ret = 0;
+    int len;
 
     data->data = NULL;
     data->length = 0;
@@ -518,32 +520,34 @@ rsa_private_key_export(hx509_context context,
     switch (format) {
     case HX509_KEY_FORMAT_DER:
 
-	ret = i2d_RSAPrivateKey(key->private_key.rsa, NULL);
-	if (ret <= 0) {
+	len = i2d_RSAPrivateKey(key->private_key.rsa, NULL);
+	if (len <= 0) {
 	    ret = EINVAL;
 	    hx509_set_error_string(context, 0, ret,
 			       "Private key is not exportable");
 	    return ret;
 	}
 
-	data->data = malloc(ret);
+	p = data->data = malloc(len);
 	if (data->data == NULL) {
-	    ret = ENOMEM;
+	    ret = hx509_enomem(context);
 	    hx509_set_error_string(context, 0, ret, "malloc out of memory");
 	    return ret;
 	}
-	data->length = ret;
+	data->length = len;
 
 	{
-	    unsigned char *p = data->data;
-	    i2d_RSAPrivateKey(key->private_key.rsa, &p);
+	    len = i2d_RSAPrivateKey(key->private_key.rsa, &p);
+            if (len < 0)
+                ret = hx509_enomem(context);
+            else if (data->length != (size_t)len)
+                hx509_set_error_string(context, 0, ret = EINVAL,
+                                       "Private key export failed");
 	}
-	break;
+	return ret;
     default:
 	return HX509_CRYPTO_KEY_FORMAT_UNSUPPORTED;
     }
-
-    return 0;
 }
 
 static BIGNUM *
@@ -1033,12 +1037,18 @@ alg_for_privatekey(const hx509_private_key pk, int type)
  */
 #ifdef HAVE_HCRYPTO_W_OPENSSL
 extern hx509_private_key_ops ecdsa_private_key_ops;
+extern hx509_private_key_ops ecdsa_sha512_private_key_ops;
+extern hx509_private_key_ops ecdsa_sha384_private_key_ops;
+extern hx509_private_key_ops ecdsa_sha256_private_key_ops;
 #endif
 
 static struct hx509_private_key_ops *private_algs[] = {
     &rsa_private_key_ops,
 #ifdef HAVE_HCRYPTO_W_OPENSSL
     &ecdsa_private_key_ops,
+    &ecdsa_sha512_private_key_ops,
+    &ecdsa_sha384_private_key_ops,
+    &ecdsa_sha256_private_key_ops,
 #endif
     NULL
 };
@@ -1339,9 +1349,12 @@ _hx509_generate_private_key_init(hx509_context context,
 {
     *ctx = NULL;
 
-    if (der_heim_oid_cmp(oid, ASN1_OID_ID_PKCS1_RSAENCRYPTION) != 0) {
+    if (der_heim_oid_cmp(oid, ASN1_OID_ID_PKCS1_RSAENCRYPTION) != 0 &&
+        der_heim_oid_cmp(oid, ASN1_OID_ID_ECDSA_WITH_SHA512) != 0 &&
+        der_heim_oid_cmp(oid, ASN1_OID_ID_ECDSA_WITH_SHA384) != 0 &&
+        der_heim_oid_cmp(oid, ASN1_OID_ID_ECDSA_WITH_SHA256) != 0) {
 	hx509_set_error_string(context, 0, EINVAL,
-			       "private key not an RSA key");
+			       "private key algorithm not supported");
 	return EINVAL;
     }
 

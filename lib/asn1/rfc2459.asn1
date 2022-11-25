@@ -148,6 +148,15 @@ id-x9-57 OBJECT IDENTIFIER ::= {
 id-dsa OBJECT IDENTIFIER ::=		{ id-x9-57 1 }
 id-dsa-with-sha1 OBJECT IDENTIFIER ::=		{ id-x9-57 3 }
 
+-- ECX (CFRG curves X25519 and X448 [RFC 8410])
+
+id-thawte OBJECT IDENTIFIER ::= { iso(1) identified-organization(3) thawte(101) }
+
+id-X25519                       OBJECT IDENTIFIER ::= { id-thawte X25519(110) }
+id-X448                         OBJECT IDENTIFIER ::= { id-thawte X448(111) }
+id-Ed25519                      OBJECT IDENTIFIER ::= { id-thawte Ed25519(112) }
+id-Ed448                        OBJECT IDENTIFIER ::= { id-thawte Ed448(113) }
+
 -- x.520 names types
 
 id-x520-at 	OBJECT IDENTIFIER ::= { joint-iso-ccitt(2) ds(5) 4 }

@@ -157,8 +157,10 @@ _hx509_collector_private_key_add(hx509_context context,
 				   "Failed to copy localKeyId");
 	    goto out;
 	}
-    } else
-	memset(&key->localKeyId, 0, sizeof(key->localKeyId));
+    } else {
+        key->localKeyId.data = NULL;
+        key->localKeyId.length = 0;
+    }
 
     c->val.data[c->val.len] = key;
     c->val.len++;

@@ -42,6 +42,7 @@
 #include <openssl/objects.h>
 #ifdef HAVE_OPENSSL_30
 #include <openssl/asn1.h>
+#include <openssl/x509.h>
 #include <openssl/core_names.h>
 #endif
 #define HEIM_NO_CRYPTO_HDRS
@@ -49,10 +50,17 @@
 
 #include "hx_locl.h"
 
+#if 0
+/* Need to add EVP_shake256() to lib/hcrypto */
+extern const AlgorithmIdentifier _hx509_signature_shake256_data;
+#endif
 extern const AlgorithmIdentifier _hx509_signature_sha512_data;
 extern const AlgorithmIdentifier _hx509_signature_sha384_data;
 extern const AlgorithmIdentifier _hx509_signature_sha256_data;
 extern const AlgorithmIdentifier _hx509_signature_sha1_data;
+
+hx509_private_key_ops ed448_private_key_ops;
+hx509_private_key_ops ed25519_private_key_ops;
 
 HX509_LIB_FUNCTION void HX509_LIB_CALL
 _hx509_private_eckey_free(void *eckey)
@@ -66,33 +74,89 @@ _hx509_private_eckey_free(void *eckey)
 #endif
 }
 
-#ifdef HAVE_HCRYPTO_W_OPENSSL
+/*
+ * Associate key type (curve) algorithm OIDs with corresponding signature type
+ * OIDs and also corresponding key type and signature type NIDs.
+ *
+ * Note that the curve_oid for NIST curves happens to also be usable as the key
+ * agreement OID, but that's not so for the EdDSA curves.  We should add a new
+ * field for that.
+ */
 static struct nid2oid_st {
     const heim_oid *sig_alg_oid;
     const heim_oid *curve_oid;
+    const heim_oid *key_agreement_curve_oid;
+    const char *curve_sn;
+    const char *key_agreement_curve_sn;
     int curve_nid;
+    int sig_nid;
+    int key_type;
 } nid2oid[] = {
-    { ASN1_OID_ID_ECDSA_WITH_SHA256, ASN1_OID_ID_EC_GROUP_SECP256R1,
-        NID_X9_62_prime256v1 },
+#ifdef HAVE_HCRYPTO_W_OPENSSL
+#ifdef NID_ED448
+    { ASN1_OID_ID_ED448, ASN1_OID_ID_ED448, ASN1_OID_ID_X448,
+        "ED448", "X448", NID_X448, NID_ED448, EVP_PKEY_ED448 },
+#endif
+#ifdef NID_ED25519
+    { ASN1_OID_ID_ED25519, ASN1_OID_ID_ED25519, ASN1_OID_ID_X25519,
+        "ED25519", "X25519", NID_X25519, NID_ED25519, EVP_PKEY_ED25519 },
+#endif
 #ifdef NID_secp521r1
     { ASN1_OID_ID_ECDSA_WITH_SHA512, ASN1_OID_ID_EC_GROUP_SECP521R1,
-        NID_secp521r1 },
+        ASN1_OID_ID_EC_GROUP_SECP521R1, "P-521", "P-521", NID_secp521r1,
+        NID_ecdsa_with_SHA512, EVP_PKEY_EC },
 #endif
 #ifdef NID_secp384r1
     { ASN1_OID_ID_ECDSA_WITH_SHA384, ASN1_OID_ID_EC_GROUP_SECP384R1,
-        NID_secp384r1 },
+        ASN1_OID_ID_EC_GROUP_SECP384R1, "P-384", "P-384", NID_secp384r1,
+        NID_ecdsa_with_SHA384, EVP_PKEY_EC },
+#endif
+#ifdef NID_X9_62_prime256v1
+    { ASN1_OID_ID_ECDSA_WITH_SHA256, ASN1_OID_ID_EC_GROUP_SECP256R1,
+        ASN1_OID_ID_EC_GROUP_SECP256R1, "P-256", "P-256", NID_X9_62_prime256v1,
+        NID_ecdsa_with_SHA256, EVP_PKEY_EC },
 #endif
 #ifdef NID_ecdsa_with_SHA1
     { ASN1_OID_ID_ECDSA_WITH_SHA1, ASN1_OID_ID_EC_GROUP_SECP160R2,
-        NID_X9_62_id_ecPublicKey },
+        ASN1_OID_ID_EC_GROUP_SECP160R2, "ecdsa-with-SHA1", "secp160r1",
+        NID_X9_62_id_ecPublicKey, NID_ecdsa_with_SHA1, EVP_PKEY_EC },
 #endif
-    /* XXX Add more!  Add X25519! */
+#endif
 };
 
-/* XXX Rename to _hx509_ossl_curve_oid2nid() */
+const char *
+_hx509_list_curves(size_t *cursor)
+{
+    if (*cursor >= sizeof(nid2oid)/sizeof(nid2oid[0]))
+        return NULL;
+    return nid2oid[(*cursor)++].curve_sn;
+}
+
+const heim_oid *
+_hx509_curve_name2oid(const char *curve_name)
+{
+    size_t i;
+
+    for (i = 0; i < sizeof(nid2oid)/sizeof(nid2oid[0]); i++)
+        if (strcasecmp(curve_name, nid2oid[i].curve_sn) == 0)
+            return nid2oid[i].curve_oid;
+    return NULL;
+}
+
+const heim_oid *
+_hx509_curve_name2key_agreement_oid(const char *curve_name)
+{
+    size_t i;
+
+    for (i = 0; i < sizeof(nid2oid)/sizeof(nid2oid[0]); i++)
+        if (strcasecmp(curve_name, nid2oid[i].curve_sn) == 0)
+            return nid2oid[i].key_agreement_curve_oid;
+    return NULL;
+}
+
 /* Map curve OID to OpenSSL NID for the same */
 int
-_hx509_ossl_oid2nid(const heim_oid *curve)
+_hx509_ossl_curve_oid2nid(const heim_oid *curve)
 {
     size_t i;
 
@@ -102,6 +166,7 @@ _hx509_ossl_oid2nid(const heim_oid *curve)
     return NID_undef;
 }
 
+#ifdef HAVE_HCRYPTO_W_OPENSSL
 /* Map OpenSSL curve NID to curve OID */
 static const heim_oid *
 curve_nid2sig_alg_oid(int nid)
@@ -115,8 +180,8 @@ curve_nid2sig_alg_oid(int nid)
 }
 
 /* Map OpenSSL curve NID to curve OID */
-const heim_oid *
-_hx509_curve_oid2sig_alg_oid(const heim_oid *curve)
+static const heim_oid *
+curve_oid2sig_alg_oid(const heim_oid *curve)
 {
     size_t i;
 
@@ -124,6 +189,19 @@ _hx509_curve_oid2sig_alg_oid(const heim_oid *curve)
         if (der_heim_oid_cmp(curve, nid2oid[i].curve_oid) == 0)
             return nid2oid[i].sig_alg_oid;
     return NULL;
+}
+
+static int
+curve_oid2key_type(const heim_oid *curve)
+{
+    size_t i;
+
+    for (i = 0; i < sizeof(nid2oid)/sizeof(nid2oid[0]); i++)
+        if (der_heim_oid_cmp(curve, nid2oid[i].curve_oid) == 0)
+            return nid2oid[i].key_type;
+
+    /* XXX What's a good last resort or undef value anyways? */
+    return EVP_PKEY_EC;
 }
 
 static int
@@ -157,7 +235,7 @@ ECParameters2nid(hx509_context context,
 	return HX509_CRYPTO_SIG_INVALID_FORMAT;
     }
 
-    *nid = _hx509_ossl_oid2nid(&ecparam.u.namedCurve);
+    *nid = _hx509_ossl_curve_oid2nid(&ecparam.u.namedCurve);
     free_ECParameters(&ecparam);
     if (*nid == NID_undef) {
 	hx509_set_error_string(context, 0, ret,
@@ -200,91 +278,74 @@ signature_alg2digest_evp_md(hx509_context context,
 #endif
 
 
+int
+_hx509_match_ec_keys(hx509_cert c, hx509_private_key private_key)
+{
+#ifdef HAVE_OPENSSL_30
+    const SubjectPublicKeyInfo *spi;
+    const Certificate *cert = _hx509_get_cert(c);
+    EVP_PKEY *public;
+    const unsigned char *p;
+    int ret;
+
+    if (private_key->private_key.ecdsa == NULL)
+        return 0;
+
+    spi = &cert->tbsCertificate.subjectPublicKeyInfo;
+    p = spi->_save.data;
+    public = d2i_PUBKEY(NULL, &p, spi->_save.length);
+    if (public == NULL)
+        return 0;
+
+    ret = EVP_PKEY_eq(public, private_key->private_key.ecdsa);
+    EVP_PKEY_free(public);
+    return ret;
+#else
+    return 1; /* XXX */
+#endif
+}
+
 
 /*
  *
  */
 
 static int
-ecdsa_verify_signature(hx509_context context,
-		       const struct signature_alg *sig_alg,
-		       const Certificate *signer,
-		       const AlgorithmIdentifier *alg,
-		       const heim_octet_string *data,
-		       const heim_octet_string *sig)
+ec_verify_signature(hx509_context context,
+                    const struct signature_alg *sig_alg,
+                    const Certificate *signer,
+                    const AlgorithmIdentifier *alg,
+                    const heim_octet_string *data,
+                    const heim_octet_string *sig)
 {
 #ifdef HAVE_OPENSSL_30
     const AlgorithmIdentifier *digest_alg = sig_alg->digest_alg;
-    const EVP_MD *md = signature_alg2digest_evp_md(context, digest_alg);
+    const EVP_MD *md = NULL;
     const SubjectPublicKeyInfo *spi;
-    const char *curve_sn = NULL; /* sn == short name in OpenSSL parlance */
-    OSSL_PARAM params[2];
     EVP_PKEY_CTX *pctx = NULL;
     EVP_MD_CTX *mdctx = NULL;
-    EVP_PKEY *template = NULL;
     EVP_PKEY *public = NULL;
     const unsigned char *p;
     size_t len;
-    char *curve_sn_dup = NULL;
-    int groupnid;
     int ret = 0;
 
+    if (sig_alg->sig_oid != ASN1_OID_ID_ED448 &&
+        sig_alg->sig_oid != ASN1_OID_ID_ED25519)
+        md = signature_alg2digest_evp_md(context, digest_alg);
     spi = &signer->tbsCertificate.subjectPublicKeyInfo;
-    if (der_heim_oid_cmp(&spi->algorithm.algorithm,
-                         ASN1_OID_ID_ECPUBLICKEY) != 0)
-        hx509_set_error_string(context, 0,
-                               ret =  HX509_CRYPTO_SIG_INVALID_FORMAT,
-                               /* XXX Include the OID in the message */
-                               "Unsupported subjectPublicKey algorithm");
-    if (ret == 0)
-        ret = ECParameters2nid(context, spi->algorithm.parameters, &groupnid);
-    if (ret == 0 && (curve_sn = OBJ_nid2sn(groupnid)) == NULL)
-        hx509_set_error_string(context, 0,
-                               ret = HX509_CRYPTO_SIG_INVALID_FORMAT,
-                               "Could not resolve curve NID %d to its short name",
-                               groupnid);
-    if (ret == 0 && (curve_sn_dup = strdup(curve_sn)) == NULL)
-        ret = hx509_enomem(context);
+
     if (ret == 0 && (mdctx = EVP_MD_CTX_new()) == NULL)
         ret = hx509_enomem(context);
 
-    /*
-     * In order for d2i_PublicKey() to work we need to create a template key
-     * that has the curve parameters for the subjectPublicKey.
-     *
-     * Or maybe we could learn to use the OSSL_DECODER(3) API.  But this works,
-     * at least until OpenSSL deprecates d2i_PublicKey() and forces us to use
-     * OSSL_DECODER(3).
-     */
-    if (ret == 0) {
-        /*
-         * Apparently there's no error checking to be done here?  Why does
-         * OSSL_PARAM_construct_utf8_string() want a non-const for the value?
-         * Is that a bug in OpenSSL?
-         */
-        params[0] = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME,
-                                                     curve_sn_dup, 0);
-        params[1] = OSSL_PARAM_construct_end();
-
-        if ((pctx = EVP_PKEY_CTX_new_from_name(NULL, "EC", NULL)) == NULL)
-            ret = hx509_enomem(context);
-    }
-    if (ret == 0 && EVP_PKEY_fromdata_init(pctx) != 1)
-        ret = hx509_enomem(context);
-    if (ret == 0 &&
-        EVP_PKEY_fromdata(pctx, &template,
-                          OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS, params) != 1)
-        hx509_set_error_string(context, 0,
-                               ret = HX509_CRYPTO_SIG_INVALID_FORMAT,
-                               "Could not set up to parse key for curve %s",
-                               curve_sn);
 
     /* Finally we can decode the subjectPublicKey */
-    p = spi->subjectPublicKey.data;
-    len = spi->subjectPublicKey.length / 8;
-    if (ret == 0 &&
-        (public = d2i_PublicKey(EVP_PKEY_EC, &template, &p, len)) == NULL)
-        ret = HX509_CRYPTO_SIG_INVALID_FORMAT;
+    p = spi->_save.data;
+    len = spi->_save.length;
+    if (ret == 0) {
+        public = d2i_PUBKEY(NULL, &p, len);
+        if (public == NULL)
+            ret = HX509_CRYPTO_SIG_INVALID_FORMAT;
+    }
 
     /* EVP_DigestVerifyInit() will allocate a new pctx */
     EVP_PKEY_CTX_free(pctx);
@@ -297,20 +358,14 @@ ecdsa_verify_signature(hx509_context context,
                                "Could not initialize "
                                "OpenSSL signature verification");
     if (ret == 0 &&
-        EVP_DigestVerifyUpdate(mdctx, data->data, data->length) != 1)
-        hx509_set_error_string(context, 0,
-                               ret = HX509_CRYPTO_SIG_INVALID_FORMAT,
-                               "Could not initialize "
-                               "OpenSSL signature verification");
-    if (ret == 0 &&
-        EVP_DigestVerifyFinal(mdctx, sig->data, sig->length) != 1)
+        EVP_DigestVerify(mdctx, sig->data, sig->length,
+                         data->data, data->length) != 1)
         hx509_set_error_string(context, 0,
                                ret = HX509_CRYPTO_SIG_INVALID_FORMAT,
                                "Signature verification failed");
 
     EVP_MD_CTX_free(mdctx);
-    EVP_PKEY_free(template);
-    free(curve_sn_dup);
+    EVP_PKEY_free(public);
     return ret;
 #else
     const AlgorithmIdentifier *digest_alg;
@@ -381,27 +436,30 @@ ecdsa_verify_signature(hx509_context context,
 }
 
 static int
-ecdsa_create_signature(hx509_context context,
-		       const struct signature_alg *sig_alg,
-		       const hx509_private_key signer,
-		       const AlgorithmIdentifier *alg,
-		       const heim_octet_string *data,
-		       AlgorithmIdentifier *signatureAlgorithm,
-		       heim_octet_string *sig)
+ec_create_signature(hx509_context context,
+                    const struct signature_alg *sig_alg,
+                    const hx509_private_key signer,
+                    const AlgorithmIdentifier *alg,
+                    const heim_octet_string *data,
+                    AlgorithmIdentifier *signatureAlgorithm,
+                    heim_octet_string *sig)
 {
 #ifdef HAVE_OPENSSL_30
     const AlgorithmIdentifier *digest_alg = sig_alg->digest_alg;
-    const EVP_MD *md = signature_alg2digest_evp_md(context, digest_alg);
+    const EVP_MD *md = NULL;
     EVP_MD_CTX *mdctx = NULL;
     EVP_PKEY_CTX *pctx = NULL;
     const heim_oid *sig_oid;
     int ret = 0;
 
+    if (sig_alg->sig_oid != ASN1_OID_ID_ED448 &&
+        sig_alg->sig_oid != ASN1_OID_ID_ED25519)
+        md = signature_alg2digest_evp_md(context, digest_alg);
+
     sig->data = NULL;
     sig->length = 0;
 
     sig_oid = sig_alg->sig_oid;
-    digest_alg = sig_alg->digest_alg;
 
     ret = _hx509_set_digest_alg(signatureAlgorithm, sig_oid, NULL, 2);
 
@@ -409,16 +467,28 @@ ecdsa_create_signature(hx509_context context,
         mdctx = EVP_MD_CTX_new();
     if (mdctx == NULL)
         ret = hx509_enomem(context);
+#if 0
+    if (ret == 0) {
+        pctx = EVP_PKEY_CTX_new_from_pkey(NULL, signer->private_key.ecdsa,
+                                          NULL);
+        if (pctx == NULL)
+            ret = hx509_enomem(context);
+    }
+    if (ret == 0)
+        EVP_MD_CTX_set_pkey_ctx(mdctx, pctx);
+#endif
     if (ret == 0 && EVP_DigestSignInit(mdctx, &pctx, md, NULL,
                                        signer->private_key.ecdsa) != 1)
         ret = HX509_CMS_FAILED_CREATE_SIGATURE;
-    if (ret == 0 && EVP_DigestSignUpdate(mdctx, data->data, data->length) != 1)
-        ret = HX509_CMS_FAILED_CREATE_SIGATURE;
-    if (ret == 0 && EVP_DigestSignFinal(mdctx, NULL, &sig->length) != 1)
-        ret = HX509_CMS_FAILED_CREATE_SIGATURE;
+    if (ret == 0) {
+        if (EVP_DigestSign(mdctx, NULL, &sig->length,
+                           data->data, data->length) != 1)
+            ret = HX509_CMS_FAILED_CREATE_SIGATURE;
+    }
     if (ret == 0 && (sig->data = malloc(sig->length)) == NULL)
         ret = hx509_enomem(context);
-    if (ret == 0 && EVP_DigestSignFinal(mdctx, sig->data, &sig->length) != 1)
+    if (ret == 0 && EVP_DigestSign(mdctx, sig->data, &sig->length,
+                                   data->data, data->length) != 1)
         ret = HX509_CMS_FAILED_CREATE_SIGATURE;
 
     if (ret == HX509_CMS_FAILED_CREATE_SIGATURE) {
@@ -501,8 +571,8 @@ error:
 }
 
 static int
-ecdsa_available(const hx509_private_key signer,
-		const AlgorithmIdentifier *sig_alg)
+ec_available(const hx509_private_key signer,
+             const AlgorithmIdentifier *sig_alg)
 {
 #ifdef HAVE_OPENSSL_30
     const struct signature_alg *sig;
@@ -513,12 +583,13 @@ ecdsa_available(const hx509_private_key signer,
     BIGNUM *order = NULL;
     int ret = 0;
 
-    if (der_heim_oid_cmp(signer->ops->key_oid, &asn1_oid_id_ecPublicKey) != 0)
-	_hx509_abort("internal error passing private key to wrong ops");
-
     sig = _hx509_find_sig_alg(&sig_alg->algorithm);
     if (sig == NULL || sig->digest_size == 0)
 	return 0;
+
+    if (sig->key_oid == ASN1_OID_ID_ED448 ||
+        sig->key_oid == ASN1_OID_ID_ED25519)
+        return 1;
 
     if (EVP_PKEY_get_group_name(signer->private_key.ecdsa, group_name_buf,
                                 sizeof(group_name_buf),
@@ -588,15 +659,10 @@ ecdsa_available(const hx509_private_key signer,
 #endif
 }
 
-#ifdef HAVE_OPENSSL_30
-/* This function is documented; it's a bug that it's not in a header */
-extern int i2d_PUBKEY(const EVP_PKEY *, unsigned char **);
-#endif
-
 static int
-ecdsa_private_key2SPKI(hx509_context context,
-		       hx509_private_key private_key,
-		       SubjectPublicKeyInfo *spki)
+ec_private_key2SPKI(hx509_context context,
+                    hx509_private_key private_key,
+                    SubjectPublicKeyInfo *spki)
 {
 #ifdef HAVE_OPENSSL_30
     unsigned char *p = NULL;
@@ -605,14 +671,12 @@ ecdsa_private_key2SPKI(hx509_context context,
 
     memset(spki, 0, sizeof(*spki));
 
-    ret = i2d_PUBKEY(private_key->private_key.ecdsa, &p);
-    if (ret < 0)
+    len = i2d_PUBKEY(private_key->private_key.ecdsa, &p);
+    if (len < 0)
         return hx509_enomem(context);
 
-    len = ret;
     ret = decode_SubjectPublicKeyInfo(p, len, spki, &size);
-
-    if (size != len)
+    if (ret == 0 && size != len)
         hx509_set_error_string(context, 0, ret = EINVAL,
                                "OpenSSL produced a weird SPKI");
 
@@ -624,10 +688,10 @@ ecdsa_private_key2SPKI(hx509_context context,
 }
 
 static int
-ecdsa_private_key_export(hx509_context context,
-			 const hx509_private_key key,
-			 hx509_key_format_t format,
-			 heim_octet_string *data)
+ec_private_key_export(hx509_context context,
+                      const hx509_private_key key,
+                      hx509_key_format_t format,
+                      heim_octet_string *data)
 {
 #ifdef HAVE_OPENSSL_30
     int ret = 0;
@@ -637,46 +701,56 @@ ecdsa_private_key_export(hx509_context context,
     data->length = 0;
 
     switch (format) {
+    case HX509_KEY_FORMAT_PKCS8:
+        if (key->ops != &ed448_private_key_ops &&
+            key->ops != &ed25519_private_key_ops)
+            return HX509_CRYPTO_KEY_FORMAT_UNSUPPORTED;
+        break;
     case HX509_KEY_FORMAT_DER:
-	len = i2d_PrivateKey(key->private_key.ecdsa, NULL);
-	if (len <= 0)
-	    hx509_set_error_string(context, 0, ret = EINVAL,
-                                   "Private key is not exportable");
-
-        if (ret == 0) {
-            data->data = malloc(len);
-            if (data->data == NULL)
-                ret = hx509_enomem(context);
-            else
-                data->length = len;
-        }
-
-        if (ret == 0) {
-	    unsigned char *p = data->data;
-
-	    len = i2d_PrivateKey(key->private_key.ecdsa, &p);
-            if (len <= 0)
-                ret = hx509_enomem(context);
-            if (data->length != (size_t)len)
-                hx509_set_error_string(context, 0, ret = EINVAL,
-                                       "Internal error in i2d_PrivateKey()");
-	}
-	return ret;
+        if (key->ops == &ed448_private_key_ops ||
+            key->ops == &ed25519_private_key_ops)
+            return HX509_CRYPTO_KEY_FORMAT_UNSUPPORTED;
+        break;
     default:
 	return HX509_CRYPTO_KEY_FORMAT_UNSUPPORTED;
     }
+
+    len = i2d_PrivateKey(key->private_key.ecdsa, NULL);
+    if (len <= 0)
+        hx509_set_error_string(context, 0, ret = EINVAL,
+                               "Private key is not exportable");
+
+    if (ret == 0) {
+        data->data = malloc(len);
+        if (data->data == NULL)
+            ret = hx509_enomem(context);
+        else
+            data->length = len;
+    }
+
+    if (ret == 0) {
+        unsigned char *p = data->data;
+
+        len = i2d_PrivateKey(key->private_key.ecdsa, &p);
+        if (len <= 0)
+            ret = hx509_enomem(context);
+        if (data->length != (size_t)len)
+            hx509_set_error_string(context, 0, ret = EINVAL,
+                                   "Internal error in i2d_PrivateKey()");
+    }
+    return ret;
 #else
     return ENOTSUP;
 #endif
 }
 
 static int
-ecdsa_private_key_import(hx509_context context,
-			 const AlgorithmIdentifier *keyai,
-			 const void *data,
-			 size_t len,
-			 hx509_key_format_t format,
-			 hx509_private_key private_key)
+ec_private_key_import(hx509_context context,
+                      const AlgorithmIdentifier *keyai,
+                      const void *data,
+                      size_t len,
+                      hx509_key_format_t format,
+                      hx509_private_key private_key)
 {
 #ifdef HAVE_OPENSSL_30
     PKCS8PrivateKeyInfo p8pki;
@@ -687,12 +761,14 @@ ecdsa_private_key_import(hx509_context context,
     char *key_oid = NULL;
     EVP_PKEY *key = NULL;
     size_t size;
+    int type;
     int ret = 0;
 
     memset(&ecpk, 0, sizeof(ecpk));
     memset(&p8pki, 0, sizeof(p8pki));
     memset(&key_alg, 0, sizeof(key_alg));
 
+    /* Decode */
     switch (format) {
     case HX509_KEY_FORMAT_PKCS8:
         ret = decode_PKCS8PrivateKeyInfo(data, len, &p8pki, &size);
@@ -728,16 +804,15 @@ ecdsa_private_key_import(hx509_context context,
         return ret;
     }
 
-    if (format == HX509_KEY_FORMAT_PKCS8 &&
-        p8pki.privateKeyAlgorithm.parameters) {
-        /* AttributeType ::= OBJECT IDENTIFIER */
-        ret = decode_AttributeType(p8pki.privateKeyAlgorithm.parameters->data,
-                                   p8pki.privateKeyAlgorithm.parameters->length,
-                                   &key_alg, &size);
-        /*
-         * Else well, the ECPrivateKey inside the PKCS#8 PrivateKeyInfo had
-         * better have the parameters.
-         */
+    if (format == HX509_KEY_FORMAT_PKCS8) {
+        if (p8pki.privateKeyAlgorithm.parameters) {
+            /* Convenience: AttributeType ::= OBJECT IDENTIFIER */
+            ret = decode_AttributeType(p8pki.privateKeyAlgorithm.parameters->data,
+                                       p8pki.privateKeyAlgorithm.parameters->length,
+                                       &key_alg, &size);
+        } else {
+            ret = der_copy_oid(&p8pki.privateKeyAlgorithm.algorithm, &key_alg);
+        }
     } else if (format == HX509_KEY_FORMAT_DER) {
         if (ecpk.parameters == NULL ||
             ecpk.parameters->element != choice_ECParameters_namedCurve) {
@@ -752,8 +827,18 @@ ecdsa_private_key_import(hx509_context context,
         }
         ret = der_copy_oid(&ecpk.parameters->u.namedCurve, &key_alg);
     }
+    if (ret) {
+        hx509_set_error_string(context, 0,
+                               ret = HX509_PARSING_KEY_FAILED,
+                               "Could not determine key algorithm while "
+                               "importing a key in %s format",
+                               format == HX509_KEY_FORMAT_PKCS8 ?
+                                   "PKCS#8" :
+                                   "<algorithm-specific>");
+    }
     (void) der_print_heim_oid_sym(&key_alg, '.', &key_oid);
-    sig_alg = _hx509_curve_oid2sig_alg_oid(&key_alg);
+    sig_alg = curve_oid2sig_alg_oid(&key_alg);
+    type = curve_oid2key_type(&key_alg);
     free_PKCS8PrivateKeyInfo(&p8pki);
     free_ECPrivateKey(&ecpk);
     der_free_oid(&key_alg);
@@ -767,7 +852,7 @@ ecdsa_private_key_import(hx509_context context,
     }
     free(key_oid);
 
-    key = d2i_PrivateKey(EVP_PKEY_EC, NULL, &p, len);
+    key = d2i_PrivateKey(type, NULL, &p, len);
     if (key == NULL) {
         hx509_set_error_string(context, 0, HX509_PARSING_KEY_FAILED,
                                "Failed to parse EC private key");
@@ -854,30 +939,43 @@ ecdsa_private_key_import(hx509_context context,
 }
 
 static int
-ecdsa_generate_private_key(hx509_context context,
-			   struct hx509_generate_private_context *ctx,
-			   hx509_private_key private_key)
+ec_generate_private_key(hx509_context context,
+                        struct hx509_generate_private_context *ctx,
+                        hx509_private_key private_key)
 {
 #ifdef HAVE_OPENSSL_30
-    //EVP_PKEY_CTX *pctx = NULL;
-    //EVP_MD_CTX *mdctx = NULL;
     EVP_PKEY *key = NULL;
-    //const EVP_MD *md;
+    const char *name = NULL;
+    char *key_oid = NULL;
     int nid = NID_undef;
 
     /* We ignore `ctx->num_bits' */
-    if (der_heim_oid_cmp(ctx->key_oid, ASN1_OID_ID_ECDSA_WITH_SHA512) == 0)
-        nid = NID_secp521r1;
-    else if (der_heim_oid_cmp(ctx->key_oid, ASN1_OID_ID_ECDSA_WITH_SHA384) == 0)
-      nid = NID_secp384r1;
-    else if (der_heim_oid_cmp(ctx->key_oid, ASN1_OID_ID_ECDSA_WITH_SHA256) == 0)
-      nid = NID_X9_62_prime256v1;
-    else if (der_heim_oid_cmp(ctx->key_oid, ASN1_OID_ID_ECDSA_WITH_SHA1) == 0)
-      nid = NID_ecdsa_with_SHA1;
-    else
+    nid = _hx509_ossl_curve_oid2nid(ctx->key_oid);
+    if (nid == NID_undef)
         return ENOTSUP;
 
-    if ((key = EVP_EC_gen(OSSL_EC_curve_nid2name(nid))) == NULL)
+    switch (nid) {
+    case NID_X448:
+        key = EVP_PKEY_Q_keygen(NULL, NULL, "ED448");
+        break;
+    case NID_X25519:
+        key = EVP_PKEY_Q_keygen(NULL, NULL, "ED25519");
+        break;
+    default:
+        (void) der_print_heim_oid_sym(ctx->key_oid, '.', &key_oid);
+        name = OSSL_EC_curve_nid2name(nid);
+        key = EVP_EC_gen(name);
+        if (name == NULL) {
+            hx509_set_error_string(context, 0, ENOTSUP,
+                                   "Private key type %s not supported",
+                                   key_oid);
+            free(key_oid);
+            return ENOTSUP;
+        }
+        free(key_oid);
+    }
+
+    if (key == NULL)
         return hx509_enomem(context);
 
     private_key->private_key.ecdsa = key;
@@ -889,9 +987,9 @@ ecdsa_generate_private_key(hx509_context context,
 }
 
 static BIGNUM *
-ecdsa_get_internal(hx509_context context,
-		   hx509_private_key key,
-		   const char *type)
+ec_get_internal(hx509_context context,
+                hx509_private_key key,
+                const char *type)
 {
     /*
      * XXX This is needed via add_pubkey_info() in sofpt11.c, except maybe we
@@ -925,15 +1023,25 @@ const AlgorithmIdentifier _hx509_signature_ecdsa_with_sha1_data = {
     { 6, rk_UNCONST(ecdsa_with_sha1_oid) }, NULL
 };
 
+static const unsigned ed_448_oid[] ={ 1, 3, 101, 113 };
+const AlgorithmIdentifier _hx509_signature_ed448_data = {
+    { 4, rk_UNCONST(ed_448_oid) }, NULL
+};
+
+static const unsigned ed_25519_oid[] ={ 1, 3, 101, 112 };
+const AlgorithmIdentifier _hx509_signature_ed25519_data = {
+    { 4, rk_UNCONST(ed_25519_oid) }, NULL
+};
+
 hx509_private_key_ops ecdsa_private_key_ops = {
     "EC PRIVATE KEY",
     ASN1_OID_ID_ECPUBLICKEY,
-    ecdsa_available,
-    ecdsa_private_key2SPKI,
-    ecdsa_private_key_export,
-    ecdsa_private_key_import,
-    ecdsa_generate_private_key,
-    ecdsa_get_internal
+    ec_available,
+    ec_private_key2SPKI,
+    ec_private_key_export,
+    ec_private_key_import,
+    ec_generate_private_key,
+    ec_get_internal
 };
 
 /*
@@ -944,35 +1052,98 @@ hx509_private_key_ops ecdsa_private_key_ops = {
  */
 hx509_private_key_ops ecdsa_sha512_private_key_ops = {
     "EC PRIVATE KEY",
-    ASN1_OID_ID_ECDSA_WITH_SHA512,
-    ecdsa_available,
-    ecdsa_private_key2SPKI,
-    ecdsa_private_key_export,
-    ecdsa_private_key_import,
-    ecdsa_generate_private_key,
-    ecdsa_get_internal
+    ASN1_OID_ID_EC_GROUP_SECP521R1,
+    ec_available,
+    ec_private_key2SPKI,
+    ec_private_key_export,
+    ec_private_key_import,
+    ec_generate_private_key,
+    ec_get_internal
 };
 
 hx509_private_key_ops ecdsa_sha384_private_key_ops = {
     "EC PRIVATE KEY",
-    ASN1_OID_ID_ECDSA_WITH_SHA384,
-    ecdsa_available,
-    ecdsa_private_key2SPKI,
-    ecdsa_private_key_export,
-    ecdsa_private_key_import,
-    ecdsa_generate_private_key,
-    ecdsa_get_internal
+    ASN1_OID_ID_EC_GROUP_SECP384R1,
+    ec_available,
+    ec_private_key2SPKI,
+    ec_private_key_export,
+    ec_private_key_import,
+    ec_generate_private_key,
+    ec_get_internal
 };
 
 hx509_private_key_ops ecdsa_sha256_private_key_ops = {
     "EC PRIVATE KEY",
-    ASN1_OID_ID_ECDSA_WITH_SHA256,
-    ecdsa_available,
-    ecdsa_private_key2SPKI,
-    ecdsa_private_key_export,
-    ecdsa_private_key_import,
-    ecdsa_generate_private_key,
-    ecdsa_get_internal
+    ASN1_OID_ID_EC_GROUP_SECP256R1,
+    ec_available,
+    ec_private_key2SPKI,
+    ec_private_key_export,
+    ec_private_key_import,
+    ec_generate_private_key,
+    ec_get_internal
+};
+
+hx509_private_key_ops ed448_private_key_ops = {
+    "PRIVATE KEY",
+    ASN1_OID_ID_ED448,
+    ec_available,
+    ec_private_key2SPKI,
+    ec_private_key_export,
+    ec_private_key_import,
+    ec_generate_private_key,
+    ec_get_internal
+};
+
+hx509_private_key_ops ed25519_private_key_ops = {
+    "PRIVATE KEY",
+    ASN1_OID_ID_ED25519,
+    ec_available,
+    ec_private_key2SPKI,
+    ec_private_key_export,
+    ec_private_key_import,
+    ec_generate_private_key,
+    ec_get_internal
+};
+
+const struct signature_alg ed448_alg = {
+    "ed448",
+    ASN1_OID_ID_ED448,
+    &_hx509_signature_ed448_data,
+    ASN1_OID_ID_ED448,
+    /*
+     * The `digest_alg' should be the digest associated with ED448, which,
+     * there isn't one, except that there is: for CMS, and it's SHAKE-256.
+     *
+     * Currently we don't have EVP_shake256() in lib/hcrypto.  This means that
+     * while lib/hx509 can handle ED448 signatures in certificates, it can't
+     * handle them in CMS, which further means that Heimdal can't handle ED448
+     * PKINIT client and PKINIT KDC certificates in Kerberos.
+     */
+    NULL, /* Should be: &_hx509_signature_shake256_data */
+    PROVIDE_CONF|REQUIRE_SIGNER|SIG_PUBLIC_SIG|SELF_SIGNED_OK,
+    0,
+    NULL,
+    ec_verify_signature,
+    ec_create_signature,
+    114
+};
+
+const struct signature_alg ed25519_alg = {
+    "ed25519",
+    ASN1_OID_ID_ED25519,
+    &_hx509_signature_ed25519_data,
+    ASN1_OID_ID_ED25519,
+    /*
+     * The `digest_alg' should be the digest associated with ED448, which,
+     * there isn't one, except that there is: for CMS, and it's SHA-512.
+     */
+    &_hx509_signature_sha512_data,
+    PROVIDE_CONF|REQUIRE_SIGNER|SIG_PUBLIC_SIG|SELF_SIGNED_OK,
+    0,
+    NULL,
+    ec_verify_signature,
+    ec_create_signature,
+    64
 };
 
 const struct signature_alg ecdsa_with_sha512_alg = {
@@ -981,12 +1152,11 @@ const struct signature_alg ecdsa_with_sha512_alg = {
     &_hx509_signature_ecdsa_with_sha512_data,
     ASN1_OID_ID_EC_GROUP_SECP521R1,
     &_hx509_signature_sha512_data,
-    PROVIDE_CONF|REQUIRE_SIGNER|RA_RSA_USES_DIGEST_INFO|
-        SIG_PUBLIC_SIG|SELF_SIGNED_OK,
+    PROVIDE_CONF|REQUIRE_SIGNER|SIG_PUBLIC_SIG|SELF_SIGNED_OK,
     0,
     NULL,
-    ecdsa_verify_signature,
-    ecdsa_create_signature,
+    ec_verify_signature,
+    ec_create_signature,
     64
 };
 
@@ -996,12 +1166,11 @@ const struct signature_alg ecdsa_with_sha384_alg = {
     &_hx509_signature_ecdsa_with_sha384_data,
     ASN1_OID_ID_EC_GROUP_SECP384R1,
     &_hx509_signature_sha384_data,
-    PROVIDE_CONF|REQUIRE_SIGNER|RA_RSA_USES_DIGEST_INFO|
-        SIG_PUBLIC_SIG|SELF_SIGNED_OK,
+    PROVIDE_CONF|REQUIRE_SIGNER|SIG_PUBLIC_SIG|SELF_SIGNED_OK,
     0,
     NULL,
-    ecdsa_verify_signature,
-    ecdsa_create_signature,
+    ec_verify_signature,
+    ec_create_signature,
     48
 };
 
@@ -1011,12 +1180,11 @@ const struct signature_alg ecdsa_with_sha256_alg = {
     &_hx509_signature_ecdsa_with_sha256_data,
     ASN1_OID_ID_EC_GROUP_SECP256R1,
     &_hx509_signature_sha256_data,
-    PROVIDE_CONF|REQUIRE_SIGNER|RA_RSA_USES_DIGEST_INFO|
-        SIG_PUBLIC_SIG|SELF_SIGNED_OK,
+    PROVIDE_CONF|REQUIRE_SIGNER|SIG_PUBLIC_SIG|SELF_SIGNED_OK,
     0,
     NULL,
-    ecdsa_verify_signature,
-    ecdsa_create_signature,
+    ec_verify_signature,
+    ec_create_signature,
     32
 };
 
@@ -1026,12 +1194,11 @@ const struct signature_alg ecdsa_with_sha1_alg = {
     &_hx509_signature_ecdsa_with_sha1_data,
     ASN1_OID_ID_ECPUBLICKEY,
     &_hx509_signature_sha1_data,
-    PROVIDE_CONF|REQUIRE_SIGNER|RA_RSA_USES_DIGEST_INFO|
-        SIG_PUBLIC_SIG|SELF_SIGNED_OK,
+    PROVIDE_CONF|REQUIRE_SIGNER|SIG_PUBLIC_SIG|SELF_SIGNED_OK,
     0,
     NULL,
-    ecdsa_verify_signature,
-    ecdsa_create_signature,
+    ec_verify_signature,
+    ec_create_signature,
     20
 };
 
@@ -1078,8 +1245,32 @@ hx509_signature_ecdsa_with_sha512(void)
 }
 
 HX509_LIB_FUNCTION const AlgorithmIdentifier * HX509_LIB_CALL
+hx509_signature_ed448(void)
+{
+#ifdef HAVE_HCRYPTO_W_OPENSSL
+    return &_hx509_signature_ed448_data;
+#else
+    return NULL;
+#endif /* HAVE_HCRYPTO_W_OPENSSL */
+}
+
+HX509_LIB_FUNCTION const AlgorithmIdentifier * HX509_LIB_CALL
+hx509_signature_ed25519(void)
+{
+#ifdef HAVE_HCRYPTO_W_OPENSSL
+    return &_hx509_signature_ed25519_data;
+#else
+    return NULL;
+#endif /* HAVE_HCRYPTO_W_OPENSSL */
+}
+
+HX509_LIB_FUNCTION const AlgorithmIdentifier * HX509_LIB_CALL
 hx509_signature_ecdsa(const heim_oid *sig_alg)
 {
+    if (der_heim_oid_cmp(sig_alg, ASN1_OID_ID_ED448) == 0)
+        return hx509_signature_ed448();
+    if (der_heim_oid_cmp(sig_alg, ASN1_OID_ID_ED25519) == 0)
+        return hx509_signature_ed25519();
     if (der_heim_oid_cmp(sig_alg, ASN1_OID_ID_ECDSA_WITH_SHA512) == 0)
         return hx509_signature_ecdsa_with_sha512();
     if (der_heim_oid_cmp(sig_alg, ASN1_OID_ID_ECDSA_WITH_SHA384) == 0)

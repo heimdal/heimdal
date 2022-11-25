@@ -1379,17 +1379,23 @@ get_key(const char *fn, const char *type, int optbits,
         return;
     }
 
-    if (strcasecmp(type, "rsa") == 0)
+    if (strcasecmp(type, "rsa") == 0) {
         alg = ASN1_OID_ID_PKCS1_RSAENCRYPTION;
-    else if (strcasecmp(type, "p-521") == 0)
-      alg = ASN1_OID_ID_ECDSA_WITH_SHA512;
-    else if (strcasecmp(type, "p-384") == 0)
-      alg = ASN1_OID_ID_ECDSA_WITH_SHA384;
-    else if (strcasecmp(type, "p-256") == 0)
-      alg = ASN1_OID_ID_ECDSA_WITH_SHA256;
-    else
-        errx(1, "only \"rsa\", \"p-521\", \"p-384\", and \"p-256\" "
-             "keys are supported for now");
+    } else {
+        alg = _hx509_curve_name2oid(type);
+    }
+    if (alg == NULL) {
+        size_t cursor = 0;
+        const char *sn;
+
+        fprintf(stderr, "Only the following key algorithms are supported: ");
+        fprintf(stderr, "rsa");
+        while ((sn = _hx509_list_curves(&cursor))) {
+            fprintf(stderr, ", %s", sn);
+        }
+        fprintf(stderr, "\n");
+        errx(1, "Unknown key algorithm %s", type);
+    }
 
     ret = _hx509_generate_private_key_init(context, alg, &gen_ctx);
     if (ret == 0)
@@ -1458,7 +1464,9 @@ request_create(struct request_create_options *opt, int argc, char **argv)
 	    opt->key_bits_integer ? opt->key_bits_integer : 2048,
 	    &signer);
 
-    hx509_request_init(context, &req);
+    ret = hx509_request_init(context, &req);
+    if (ret)
+        hx509_err(context, 1, ret, "Could not initialize CSR");
 
     if (opt->subject_string) {
 	hx509_name name = NULL;
@@ -1602,15 +1610,37 @@ info(void *opt, int argc, char **argv)
 	if (m != NULL)
 	    printf("dh: %s\n", m->name);
     }
-#ifdef HAVE_HCRYPTO_W_OPENSSL
     {
-	printf("ecdsa: ECDSA_METHOD-not-export\n");
+        const char *curve_sn;
+        size_t cursor = 0;
+        int ecdsa = 0;
+        int eddsa = 0;
+
+        while ((curve_sn = _hx509_list_curves(&cursor))) {
+            if (strcmp(curve_sn, "ED448") == 0) {
+                printf("ed448: openssl\n");
+                eddsa = 1;
+            } else if (strcmp(curve_sn, "ED25519") == 0) {
+                printf("ed25519: openssl\n");
+                eddsa = 1;
+            } else if (strcmp(curve_sn, "P-521") == 0) {
+                printf("p-521: openssl\n");
+                ecdsa = 1;
+            } else if (strcmp(curve_sn, "P-384") == 0) {
+                printf("p-384: openssl\n");
+                ecdsa = 1;
+            } else if (strcmp(curve_sn, "P-256") == 0) {
+                printf("p-256: openssl\n");
+                ecdsa = 1;
+            }
+        }
+        if (ecdsa)
+            printf("ecdsa: openssl\n");
+        else
+            printf("ecdsa: hcrypto null\n");
+        if (eddsa)
+            printf("eddsa: openssl\n");
     }
-#else
-    {
-	printf("ecdsa: hcrypto null\n");
-    }
-#endif
     {
 	int ret = RAND_status();
 	printf("rand: %s\n", ret == 1 ? "ok" : "not available");

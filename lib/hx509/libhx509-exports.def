@@ -6,6 +6,8 @@ EXPORTS
 	_hx509_cert_private_key
 	_hx509_certs_keys_free
 	_hx509_certs_keys_get
+	_hx509_curve_name2key_agreement_oid
+	_hx509_curve_name2oid
 	_hx509_expr_eval
 	_hx509_expr_free
 	_hx509_expr_parse
@@ -16,9 +18,12 @@ EXPORTS
 	_hx509_generate_private_key_is_ca
 	_hx509_get_cert
 	_hx509_ks_type
+	_hx509_list_curves
 	_hx509_make_pkinit_san
 	_hx509_map_file_os
 	_hx509_name_from_Name
+	_hx509_ossl_oid2nid
+	_hx509_ossl_curve_oid2nid
 	_hx509_private_key_export
 	_hx509_private_key_exportable
 	_hx509_private_key_get_internal

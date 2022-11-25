@@ -281,7 +281,7 @@ curve_ok(krb5_context context,
     if (curve_name == NULL)
         curve_name = "<unknown>";
 
-    if ((nid = _hx509_ossl_oid2nid(oid)) == NID_undef)
+    if ((nid = _hx509_ossl_curve_oid2nid(oid)) == NID_undef)
         krb5_set_error_message(context, ret = KRB5_BADMSGTYPE,
                                "PKINIT client used an unsupported curve");
     if (ret == 0 && (curve_sn = OBJ_nid2sn(nid)) == NULL)

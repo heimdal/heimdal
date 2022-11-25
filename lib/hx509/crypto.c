@@ -43,6 +43,11 @@
 
 static const heim_octet_string null_entry_oid = { 2, rk_UNCONST("\x05\x00") };
 
+static const unsigned shake256_oid_tree[] = { 2, 16, 840, 1, 101, 3, 4, 2, 12 };
+const AlgorithmIdentifier _hx509_signature_shake256_data = {
+    { 9, rk_UNCONST(shake256_oid_tree) }, rk_UNCONST(&null_entry_oid)
+};
+
 static const unsigned sha512_oid_tree[] = { 2, 16, 840, 1, 101, 3, 4, 2, 3 };
 const AlgorithmIdentifier _hx509_signature_sha512_data = {
     { 9, rk_UNCONST(sha512_oid_tree) }, rk_UNCONST(&null_entry_oid)
@@ -762,6 +767,8 @@ evp_md_verify_signature(hx509_context context,
 }
 
 #ifdef HAVE_HCRYPTO_W_OPENSSL
+extern const struct signature_alg ed448_alg;
+extern const struct signature_alg ed25519_alg;
 extern const struct signature_alg ecdsa_with_sha512_alg;
 extern const struct signature_alg ecdsa_with_sha384_alg;
 extern const struct signature_alg ecdsa_with_sha256_alg;
@@ -894,6 +901,23 @@ static const struct signature_alg dsa_sha1_alg = {
     0
 };
 
+#if 0
+/* Need to add EVP_shake256() to lib/hcrypto */
+static const struct signature_alg shake256_alg = {
+    "shake-512",
+    ASN1_OID_ID_SHAKE256,
+    &_hx509_signature_shake256_data,
+    NULL,
+    NULL,
+    SIG_DIGEST,
+    0,
+    EVP_shake256,
+    evp_md_verify_signature,
+    evp_md_create_signature,
+    0
+};
+#endif
+
 static const struct signature_alg sha512_alg = {
     "sha-512",
     ASN1_OID_ID_SHA512,
@@ -971,6 +995,8 @@ static const struct signature_alg md5_alg = {
 
 static const struct signature_alg *sig_algs[] = {
 #ifdef HAVE_HCRYPTO_W_OPENSSL
+    &ed448_alg,
+    &ed25519_alg,
     &ecdsa_with_sha512_alg,
     &ecdsa_with_sha384_alg,
     &ecdsa_with_sha256_alg,
@@ -985,6 +1011,9 @@ static const struct signature_alg *sig_algs[] = {
     &rsa_with_md5_alg,
     &heim_rsa_pkcs1_x509,
     &dsa_sha1_alg,
+#if 0
+    &shake256_alg,
+#endif
     &sha512_alg,
     &sha384_alg,
     &sha256_alg,
@@ -1040,15 +1069,21 @@ extern hx509_private_key_ops ecdsa_private_key_ops;
 extern hx509_private_key_ops ecdsa_sha512_private_key_ops;
 extern hx509_private_key_ops ecdsa_sha384_private_key_ops;
 extern hx509_private_key_ops ecdsa_sha256_private_key_ops;
+extern hx509_private_key_ops ed448_private_key_ops;
+extern hx509_private_key_ops ed25519_private_key_ops;
 #endif
 
 static struct hx509_private_key_ops *private_algs[] = {
     &rsa_private_key_ops,
 #ifdef HAVE_HCRYPTO_W_OPENSSL
     &ecdsa_private_key_ops,
+#ifdef HAVE_OPENSSL_30
+    &ed448_private_key_ops,
+    &ed25519_private_key_ops,
     &ecdsa_sha512_private_key_ops,
     &ecdsa_sha384_private_key_ops,
     &ecdsa_sha256_private_key_ops,
+#endif
 #endif
     NULL
 };
@@ -1152,7 +1187,7 @@ _hx509_create_signature(hx509_context context,
     md = _hx509_find_sig_alg(&alg->algorithm);
     if (md == NULL) {
 	hx509_set_error_string(context, 0, HX509_SIG_ALG_NO_SUPPORTED,
-	    "algorithm no supported");
+	    "algorithm not supported");
 	return HX509_SIG_ALG_NO_SUPPORTED;
     }
 
@@ -1349,10 +1384,7 @@ _hx509_generate_private_key_init(hx509_context context,
 {
     *ctx = NULL;
 
-    if (der_heim_oid_cmp(oid, ASN1_OID_ID_PKCS1_RSAENCRYPTION) != 0 &&
-        der_heim_oid_cmp(oid, ASN1_OID_ID_ECDSA_WITH_SHA512) != 0 &&
-        der_heim_oid_cmp(oid, ASN1_OID_ID_ECDSA_WITH_SHA384) != 0 &&
-        der_heim_oid_cmp(oid, ASN1_OID_ID_ECDSA_WITH_SHA256) != 0) {
+    if (hx509_find_private_alg(oid) == NULL) {
 	hx509_set_error_string(context, 0, EINVAL,
 			       "private key algorithm not supported");
 	return EINVAL;
@@ -1425,6 +1457,10 @@ _hx509_generate_private_key(hx509_context context,
 /*
  *
  */
+
+const AlgorithmIdentifier *
+hx509_signature_shake256(void)
+{ return &_hx509_signature_shake256_data; }
 
 const AlgorithmIdentifier *
 hx509_signature_sha512(void)
@@ -2574,12 +2610,7 @@ match_keys_rsa(hx509_cert c, hx509_private_key private_key)
     return ret == 1;
 }
 
-static int
-match_keys_ec(hx509_cert c, hx509_private_key private_key)
-{
-    return 1; /* XXX use EC_KEY_check_key */
-}
-
+extern int _hx509_match_ec_keys(hx509_cert, hx509_private_key);
 
 HX509_LIB_FUNCTION int HX509_LIB_CALL
 _hx509_match_keys(hx509_cert c, hx509_private_key key)
@@ -2589,7 +2620,11 @@ _hx509_match_keys(hx509_cert c, hx509_private_key key)
     if (der_heim_oid_cmp(key->ops->key_oid, ASN1_OID_ID_PKCS1_RSAENCRYPTION) == 0)
 	return match_keys_rsa(c, key);
     if (der_heim_oid_cmp(key->ops->key_oid, ASN1_OID_ID_ECPUBLICKEY) == 0)
-	return match_keys_ec(c, key);
+	return _hx509_match_ec_keys(c, key);
+    if (der_heim_oid_cmp(key->ops->key_oid, ASN1_OID_ID_ED448) == 0)
+	return _hx509_match_ec_keys(c, key);
+    if (der_heim_oid_cmp(key->ops->key_oid, ASN1_OID_ID_ED25519) == 0)
+	return _hx509_match_ec_keys(c, key);
     return 0;
 
 }

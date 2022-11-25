@@ -143,23 +143,58 @@ parse_pkcs8_private_key(hx509_context context, const char *fn, int flags,
 			const AlgorithmIdentifier *ai)
 {
     PKCS8PrivateKeyInfo ki;
-    heim_octet_string keydata;
+    hx509_private_key *private_key;
     int ret;
+
+    if ((flags & HX509_CERTS_NO_PRIVATE_KEYS))
+        return 0;
+
+    private_key = calloc(1, sizeof(*private_key));
+    if (private_key == NULL)
+        return hx509_enomem(context);
 
     ret = decode_PKCS8PrivateKeyInfo(data, length, &ki, NULL);
     if (ret)
 	return ret;
 
-    if (!(flags & HX509_CERTS_NO_PRIVATE_KEYS)) {
-        keydata.data = rk_UNCONST(data);
-        keydata.length = length;
-        ret = _hx509_collector_private_key_add(context,
-                                               c,
-                                               &ki.privateKeyAlgorithm,
-                                               NULL,
-                                               &ki.privateKey,
-                                               &keydata);
+    /*
+     * For interop reasons try letting the algorithm-specific import functions
+     * decode the PKCS#8 PrivateKeyInfo.
+     *
+     * The parameters needed to decode the private key can be placed either in
+     * the PKCS#8 PrivateKeyInfo structure, in the algorithm-specific structure
+     * encoded into the privateKey field of the PKCS#8 PrivateKeyInfo, or both.
+     *
+     * OpenSSL, for example, puts the parameters into the outer PKCS#8
+     * PrivateKeyInfo but not in the inner structure, so if we try to let the
+     * backend decode the inner structure, the backend will fail because the
+     * necessary parameters will be absent.
+     */
+    ret = hx509_parse_private_key(context, &ki.privateKeyAlgorithm,
+                                  data, length, HX509_KEY_FORMAT_PKCS8,
+                                  private_key);
+    if (ret == HX509_CRYPTO_KEY_FORMAT_UNSUPPORTED ||
+        ret == HX509_PARSING_KEY_FAILED) {
+        /*
+         * Our backends, however, only support the algorithm specific
+         * encodings, that which many refer to as "the raw DER".  They get the
+         * parameters from the PKCS#8 PrivateKeyInfo structure via the the
+         * `keyai' argument to hx509_parse_private_key().
+         */
+        ret = hx509_parse_private_key(context, &ki.privateKeyAlgorithm,
+                                      ki.privateKey.data, ki.privateKey.length,
+                                      HX509_KEY_FORMAT_DER,
+                                      private_key);
     }
+
+    if (ret == 0)
+        ret = _hx509_collector_private_key_add(context, c,
+                                               &ki.privateKeyAlgorithm,
+                                               *private_key, NULL, NULL);
+    if (ret)
+        hx509_private_key_free(private_key);
+    else
+        free(private_key);
     free_PKCS8PrivateKeyInfo(&ki);
     return ret;
 }

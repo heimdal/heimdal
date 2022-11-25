@@ -55,6 +55,10 @@ ret_negoex_auth_mech(krb5_storage *sp, struct negoex_auth_mech **mechp);
 static krb5_error_code
 store_negoex_auth_mech(krb5_storage *sp, struct negoex_auth_mech *mech);
 
+#ifdef sc_flags
+#undef sc_flags
+#endif
+
 static uint16_t
 spnego_flags_to_int(struct spnego_flags flags);
 static struct spnego_flags

@@ -1415,7 +1415,9 @@ define_type(int level, const char *name, const char *basename, Type *pt, Type *t
                 if (m->defval) {
                     switch (m->defval->type) {
                     case stringvalue:
-                        defvalp = m->defval->u.stringvalue;
+                        if (asprintf(&defval, "\"%s\"", m->defval->u.stringvalue) < 0 || defval == NULL)
+                            errx(1, "malloc");
+                        defvalp = defval;
                         break;
                     case integervalue:
                         if (asprintf(&defval, "%lld", (long long)m->defval->u.integervalue) < 0 || defval == NULL)

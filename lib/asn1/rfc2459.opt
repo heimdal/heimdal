@@ -1,6 +1,7 @@
 --preserve-binary=Name
 --preserve-binary=TBSCertificate
 --preserve-binary=TBSCRLCertList
+--preserve-binary=SubjectPublicKeyInfo
 --sequence=AttributeValues
 --sequence=CRLDistributionPoints
 --sequence=Extensions

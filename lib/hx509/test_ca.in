@@ -477,4 +477,97 @@ ${hxtool} verify --missing-revoke \
 	cert:FILE:cert-ee.pem \
 	anchor:FILE:cert-ca.pem > /dev/null || exit 1
 
+# ECDSA and EdDSA
+
+echo "test ECDSA and EdDSA (if supported)"
+${hxtool} info
+for i in `${hxtool} info | grep :`; do
+    if test "$i" = ed448:; then
+        i=ed448
+    elif test "$i" = ed25519:; then
+        i=ed25519
+    elif test "$i" = p-521:; then
+        i=p-521
+    elif test "$i" = p-384:; then
+        i=p-384
+    elif test "$i" = p-256:; then
+        i=p-256
+    else
+        continue
+    fi
+    echo "test $i"
+    rm -f ${objdir}/ca.pem ${objdir}/ee.pem ${objdir}/key.pem
+    rm -f ${objdir}/csr.der
+    echo "test $i: make root CA"
+    ${hxtool} ca \
+        --issue-ca \
+        --self-signed \
+        --subject="CN=TestCa,DC=test,DC=h5l,DC=SE" \
+        --certificate=PEM-FILE:${objdir}/ca.pem \
+        --generate-key=$i || exit 1
+    echo "test $i: issue EE cert"
+    ${hxtool} ca \
+        --subject="CN=User,DC=test,DC=h5l,DC=SE" \
+        --certificate=PEM-FILE:${objdir}/ee.pem \
+        --ca-certificate=PEM-FILE:${objdir}/ca.pem \
+        --generate-key=$i || exit 1
+    echo "test $i: verify EE cert (hxtool, no CRL)"
+    ${hxtool} verify \
+        --missing-revoke \
+        cert:FILE:${objdir}/ee.pem \
+        anchor:FILE:${objdir}/ca.pem || exit 1
+    echo "test $i: verify EE cert (OpenSSL, no CRL)"
+    ${hxtool} verify \
+        cert:FILE:${objdir}/ee.pem \
+        anchor:FILE:${objdir}/ca.pem && exit 1
+    echo "test $i: sign empty CRL"
+    rm -f crl.crl
+    ${hxtool} crl-sign \
+            --crl-file=crl.crl \
+            --signer=FILE:${objdir}/ca.pem || exit 1
+    echo "test $i: verify EE cert (hxtool, with CRL)"
+    ${hxtool} verify \
+        cert:FILE:${objdir}/ee.pem \
+	crl:FILE:${objdir}/crl.crl \
+        anchor:FILE:${objdir}/ca.pem || exit 1
+    openssl verify -CAfile ${objdir}/ca.pem ${objdir}/ee.pem || exit 1
+    echo "test $i: revoke EE cert"
+    ${hxtool} crl-sign \
+            --crl-file=${objdir}/crl.crl \
+            --signer=FILE:${objdir}/ca.pem \
+            FILE:${objdir}/ee.pem || exit 1
+    echo "test $i: reject EE cert (hxtool, with CRL)"
+    ${hxtool} verify \
+        cert:FILE:${objdir}/ee.pem \
+	crl:FILE:${objdir}/crl.crl \
+        anchor:FILE:${objdir}/ca.pem && exit 1
+    echo "test $i: make CSR"
+    ${hxtool} request-create \
+        --subject="CN=User,DC=test,DC=h5l,DC=SE" \
+        --key=PEM-FILE:$objdir/key.pem \
+        --generate-key=$i \
+        csr.der || exit 1
+    rm -f ${objdir}/ee.pem
+    echo "test $i: issue EE cert given CSR"
+    ${hxtool} ca \
+        --subject="CN=User,DC=test,DC=h5l,DC=SE" \
+        --certificate=PEM-FILE:${objdir}/ee.pem \
+        --ca-certificate=PEM-FILE:${objdir}/ca.pem \
+        --req=PKCS10:${objdir}/csr.der || exit 1
+    echo "test $i: verify 2nd EE cert (hxtool, no CSR)"
+    ${hxtool} verify \
+        --missing-revoke \
+        cert:FILE:${objdir}/ee.pem \
+        anchor:FILE:${objdir}/ca.pem || exit 1
+    echo "test $i: verify 2nd EE cert (openssl, no CSR)"
+    openssl verify -CAfile ${objdir}/ca.pem ${objdir}/ee.pem || exit 1
+    echo "test $i: verify 2nd EE cert (hxtool, with CSR)"
+    ${hxtool} verify \
+        cert:FILE:${objdir}/ee.pem \
+	crl:FILE:${objdir}/crl.crl \
+        anchor:FILE:${objdir}/ca.pem || exit 1
+done
+rm -f ${objdir}/ca.pem ${objdir}/ee.pem ${objdir}/key.pem
+rm -f ${objdir}/csr.der
+
 exit 0

@@ -67,11 +67,15 @@ export KRB5_CONFIG
 
 rsa=yes
 pkinit=no
+ed25519=false
 if ${hxtool} info | grep 'rsa: hx509 null RSA' > /dev/null ; then
     rsa=no
 fi
 if ${hxtool} info | grep 'rand: not available' > /dev/null ; then
     rsa=no
+fi
+if ${hxtool} info | grep 'ed25519:' > /dev/null ; then
+    ed25519=true
 fi
 
 if ${kinit} --help 2>&1 | grep "CA certificates" > /dev/null; then
@@ -137,7 +141,7 @@ ${hxtool} issue-certificate \
 	  --issue-ca \
 	  --ca-private-key=FILE:${keyfile} \
           --subject="CN=CA,DC=test,DC=h5l,DC=se" \
-	  --certificate="FILE:ca.crt" || exit 1
+	  --certificate="PEM-FILE:ca.crt" || exit 1
 
 echo "issue kdc certificate"
 ${hxtool} issue-certificate \
@@ -155,6 +159,15 @@ ${hxtool} issue-certificate \
 	  --req="PKCS10:req-pkinit.der" \
           --lifetime=7d \
 	  --certificate="FILE:pkinit.crt" || exit 1
+
+echo "issue user certificate (pkinit san, ed25519)"
+${hxtool} issue-certificate \
+	  --ca-certificate=FILE:$objdir/ca.crt,${keyfile} \
+	  --type="pkinit-client" \
+          --pk-init-principal="bar@TEST.H5L.SE" \
+          --lifetime=7d \
+          --generate-key=ed25519 \
+	  --certificate="PEM-FILE:pkinit-ed.crt" || exit 1
 
 echo "issue user certificate (pkinit san; synthetic principal)"
 ${hxtool} issue-certificate \
@@ -219,6 +232,14 @@ if jq --version >/dev/null 2>&1 && jq -ne true >/dev/null 2>&1; then
                (floor < 4)' >/dev/null &&
            { ec=1 ; eval "${testfailed}"; }
 fi
+${kdestroy}
+
+echo "Trying pk-init (principal in cert; ed25519)"; > messages.log
+base="${objdir}"
+${kinit} --lifetime=5d -C FILE:${base}/pkinit-ed.crt bar@${R} || \
+	{ ec=1 ; eval "${testfailed}"; }
+${kgetcred} ${server}@${R} || { ec=1 ; eval "${testfailed}"; }
+${klist}
 ${kdestroy}
 
 echo "Trying pk-init (principal in cert; synthetic)"; > messages.log

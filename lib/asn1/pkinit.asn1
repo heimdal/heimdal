@@ -197,4 +197,6 @@ PkinitSuppPubInfo ::= SEQUENCE {
        ...
 }
 
+TD-DH-PARAMETERS ::= SEQUENCE OF AlgorithmIdentifier
+
 END

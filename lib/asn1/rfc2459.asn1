@@ -78,10 +78,18 @@ id-aes-256-cbc OBJECT IDENTIFIER ::=		{ id-nist-aes-algs 42 }
 
 id-nist-sha-algs OBJECT IDENTIFIER ::=		{ id-nistAlgorithm 2 }
 
-id-sha256 OBJECT IDENTIFIER ::=			{ id-nist-sha-algs 1 }
-id-sha224 OBJECT IDENTIFIER ::=			{ id-nist-sha-algs 4 }
-id-sha384 OBJECT IDENTIFIER ::=			{ id-nist-sha-algs 2 }
-id-sha512 OBJECT IDENTIFIER ::=			{ id-nist-sha-algs 3 }
+id-sha256       OBJECT IDENTIFIER ::=		{ id-nist-sha-algs 1 }
+id-sha384       OBJECT IDENTIFIER ::=		{ id-nist-sha-algs 2 }
+id-sha512       OBJECT IDENTIFIER ::=		{ id-nist-sha-algs 3 }
+id-sha224       OBJECT IDENTIFIER ::=		{ id-nist-sha-algs 4 }
+id-sha512-224   OBJECT IDENTIFIER ::=		{ id-nist-sha-algs 5 }
+id-sha512-256   OBJECT IDENTIFIER ::=		{ id-nist-sha-algs 6 }
+id-sha3-224     OBJECT IDENTIFIER ::=		{ id-nist-sha-algs 7 }
+id-sha3-256     OBJECT IDENTIFIER ::=		{ id-nist-sha-algs 8 }
+id-sha3-384     OBJECT IDENTIFIER ::=		{ id-nist-sha-algs 9 }
+id-sha3-512     OBJECT IDENTIFIER ::=		{ id-nist-sha-algs 10 }
+id-shake128     OBJECT IDENTIFIER ::=		{ id-nist-sha-algs 11 }
+id-shake256     OBJECT IDENTIFIER ::=		{ id-nist-sha-algs 12 }
 
 id-dhpublicnumber OBJECT IDENTIFIER ::= {
         iso(1) member-body(2) us(840) ansi-x942(10046)

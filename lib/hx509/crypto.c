@@ -568,6 +568,12 @@ rsa_get_internal(hx509_context context,
 	return NULL;
 }
 
+static void
+rsa_free(hx509_private_key key)
+{
+    if (key->private_key.rsa)
+        RSA_free(key->private_key.rsa);
+}
 
 
 static hx509_private_key_ops rsa_private_key_ops = {
@@ -578,7 +584,8 @@ static hx509_private_key_ops rsa_private_key_ops = {
     rsa_private_key_export,
     rsa_private_key_import,
     rsa_generate_private_key,
-    rsa_get_internal
+    rsa_get_internal,
+    rsa_free
 };
 
 /*
@@ -1579,15 +1586,7 @@ hx509_private_key_free(hx509_private_key *key)
     if (--(*key)->ref > 0)
 	return 0;
 
-    if ((*key)->ops && der_heim_oid_cmp((*key)->ops->key_oid, ASN1_OID_ID_PKCS1_RSAENCRYPTION) == 0) {
-	if ((*key)->private_key.rsa)
-	    RSA_free((*key)->private_key.rsa);
-    } else if ((*key)->ops && der_heim_oid_cmp((*key)->ops->key_oid,
-                                               ASN1_OID_ID_ECPUBLICKEY) == 0 &&
-               (*key)->private_key.ecdsa != NULL) {
-      _hx509_private_eckey_free((*key)->private_key.ecdsa);
-    }
-    (*key)->private_key.rsa = NULL;
+    (*key)->ops->free_key((*key));
     free(*key);
     *key = NULL;
     return 0;

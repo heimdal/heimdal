@@ -998,6 +998,12 @@ ec_get_internal(hx509_context context,
     return NULL;
 }
 
+static void
+ec_free_key(hx509_private_key key)
+{
+    EVP_PKEY_free(key->private_key.ecdsa);
+}
+
 static const unsigned ecPublicKey[] ={ 1, 2, 840, 10045, 2, 1 };
 const AlgorithmIdentifier _hx509_signature_ecPublicKey = {
     { 6, rk_UNCONST(ecPublicKey) }, NULL
@@ -1041,7 +1047,8 @@ hx509_private_key_ops ecdsa_private_key_ops = {
     ec_private_key_export,
     ec_private_key_import,
     ec_generate_private_key,
-    ec_get_internal
+    ec_get_internal,
+    ec_free_key
 };
 
 /*
@@ -1058,7 +1065,8 @@ hx509_private_key_ops ecdsa_sha512_private_key_ops = {
     ec_private_key_export,
     ec_private_key_import,
     ec_generate_private_key,
-    ec_get_internal
+    ec_get_internal,
+    ec_free_key
 };
 
 hx509_private_key_ops ecdsa_sha384_private_key_ops = {
@@ -1069,7 +1077,8 @@ hx509_private_key_ops ecdsa_sha384_private_key_ops = {
     ec_private_key_export,
     ec_private_key_import,
     ec_generate_private_key,
-    ec_get_internal
+    ec_get_internal,
+    ec_free_key
 };
 
 hx509_private_key_ops ecdsa_sha256_private_key_ops = {
@@ -1080,7 +1089,8 @@ hx509_private_key_ops ecdsa_sha256_private_key_ops = {
     ec_private_key_export,
     ec_private_key_import,
     ec_generate_private_key,
-    ec_get_internal
+    ec_get_internal,
+    ec_free_key
 };
 
 hx509_private_key_ops ed448_private_key_ops = {
@@ -1091,7 +1101,8 @@ hx509_private_key_ops ed448_private_key_ops = {
     ec_private_key_export,
     ec_private_key_import,
     ec_generate_private_key,
-    ec_get_internal
+    ec_get_internal,
+    ec_free_key
 };
 
 hx509_private_key_ops ed25519_private_key_ops = {
@@ -1102,7 +1113,8 @@ hx509_private_key_ops ed25519_private_key_ops = {
     ec_private_key_export,
     ec_private_key_import,
     ec_generate_private_key,
-    ec_get_internal
+    ec_get_internal,
+    ec_free_key
 };
 
 const struct signature_alg ed448_alg = {

@@ -109,13 +109,14 @@ integer_to_BN(krb5_context context, const char *field, const heim_integer *f)
 }
 
 static krb5_error_code
-select_dh_group(krb5_context context, DH *dh,
-                const char *group_name,
-                unsigned long min_bits,
-		struct krb5_dh_moduli **moduli)
+select_dh_group(krb5_context context,
+                krb5_pk_init_ctx ctx,
+                unsigned long min_bits)
 {
     const struct krb5_dh_moduli *m = NULL;
-    size_t i;
+    struct krb5_dh_moduli **moduli = ctx->m;
+    DH *dh = ctx->u.dh;
+    size_t i, k;
 
     if (moduli[0] == NULL) {
         krb5_set_error_message(context, EINVAL,
@@ -125,17 +126,30 @@ select_dh_group(krb5_context context, DH *dh,
         return EINVAL;
     }
 
-    if (min_bits == 0 && group_name == NULL)
-        /* XXX We should default to "rfc3526-MODP-group14" or better */
-        group_name = "RFC2412-MODP-group2";
-
-    if (group_name) {
-	for (i = 0; moduli[i] != NULL; i++) {
-            if (strcmp(moduli[i]->name, group_name) == 0)
-		break;
-	}
-        if (moduli[i])
-            m = moduli[i];
+#if 0
+    /*
+     * Modp DH is obsolete, but if it wasn't, we'd want to do something like
+     * this (and implement kdc_dh_param2DH() to extract the DomainParameters of
+     * the first modp group offered into ctx->dh):
+     */
+    if (ctx->kdc_dh_params.len) {
+        for (i = 0; i < ctx->kdc_dh_params.len; i++) {
+            if (der_heim_oid_cmp(&ctx->kdc_dh_params.val[i].algorithm,
+                                 &asn1_oid_id_dhpublicnumber) == 0)
+                return kdc_dh_param2DH(context, ctx, i);
+        }
+    }
+#endif
+    if (ctx->nkex_groups) {
+        /* O(N^2), so limit to 36 -- 6 groups should be plenty */
+	for (i = 0; i < ctx->nkex_groups && i < 6; i++) {
+            for (k = 0; moduli[k] != NULL && k < 6; k++) {
+                if (strcasecmp(ctx->kex_groups[i], moduli[k]->name) == 0) {
+                    m = moduli[k];
+                    goto found;
+                }
+            }
+        }
     }
     if (m == NULL && min_bits) {
 	for (i = 0; moduli[i] != NULL; i++) {
@@ -148,13 +162,12 @@ select_dh_group(krb5_context context, DH *dh,
     if (m == NULL) {
         krb5_set_error_message(context, EINVAL,
                                "Did not find a DH group parameter "
-                               "matching requirement of %lu bits or "
-                               "group name %s",
-                               min_bits,
-                               group_name ? group_name : "<no-group-specified>");
+                               "matching requirement of %lu bits",
+                               min_bits);
         return EINVAL;
     }
 
+found:
     dh->p = integer_to_BN(context, "p", &m->p);
     if (dh->p == NULL)
 	return ENOMEM;
@@ -369,7 +382,6 @@ build_authpack_subjectPK_DH(krb5_context context,
     DomainParameters dp;
     heim_integer dh_pub_key;
     const char *moduli_file;
-    const char *kex_group;
     unsigned long dh_min_bits;
     krb5_error_code ret = 0;
     krb5_data dhbuf;
@@ -389,11 +401,6 @@ build_authpack_subjectPK_DH(krb5_context context,
                                          "moduli",
                                          NULL);
 
-    kex_group = krb5_config_get_string(context, NULL,
-                                       "libdefaults",
-                                       "pkinit_kex_dh_group",
-                                       NULL);
-
     dh_min_bits =
         krb5_config_get_int_default(context, NULL, 0,
                                     "libdefaults",
@@ -409,8 +416,7 @@ build_authpack_subjectPK_DH(krb5_context context,
     }
 
     if (ret == 0)
-        ret = select_dh_group(context, ctx->u.dh, kex_group, dh_min_bits,
-                              ctx->m);
+        ret = select_dh_group(context, ctx, dh_min_bits);
     if (ret == 0 && DH_generate_key(ctx->u.dh) != 1) {
         krb5_set_error_message(context, ENOMEM,
                                N_("pkinit: failed to generate DH key", ""));
@@ -494,6 +500,8 @@ build_authpack_subjectPK_DH(krb5_context context,
     return 0;
 }
 
+static void set_pkinit_kex_groups(krb5_context, krb5_pk_init_ctx,
+                                  size_t, const char **);
 
 static krb5_error_code
 build_auth_pack(krb5_context context,
@@ -504,6 +512,7 @@ build_auth_pack(krb5_context context,
 {
     size_t buf_size, len = 0;
     krb5_error_code ret;
+    char **kex_groups_strings = NULL;
     void *buf;
     krb5_timestamp sec;
     int32_t usec;
@@ -543,6 +552,37 @@ build_auth_pack(krb5_context context,
     free_Checksum(&checksum);
 
     if (ret == 0) {
+        if (ctx->kex_groups == NULL) {
+            /*
+             * FIXME: Check a realm-specific setting first, but we don't know
+             *        the realm here!
+             *
+             * NOTE: We used this for DH group selection and for ECDH curve
+             *       selection.
+             */
+            kex_groups_strings =
+                krb5_config_get_strings(context, NULL,
+                                        "libdefaults",
+                                        "pkinit_kex_groups",
+                                        NULL);
+            set_pkinit_kex_groups(context, ctx, 0,
+                                  (const char **)kex_groups_strings);
+        }
+    }
+
+    if (ret == 0) {
+        if (ctx->kdc_dh_params.len) {
+            /*
+             * We don't implement modp DH group negotiation yet, and might
+             * never (see commentary in build_authpack_subjectPK_DH().  If we
+             * tried modp and the KDC didn't like it and the KDC wants some
+             * other modp group, well, change your local configuration.
+             *
+             * For simplicity we assume that ECDH will work.
+             */
+            if (ctx->keyex == USE_DH)
+                ctx->keyex = USE_ECDH;
+        }
         switch (ctx->keyex) {
         case USE_DH:
             ALLOC(a->clientPublicValue, 1);
@@ -578,6 +618,9 @@ build_auth_pack(krb5_context context,
 				     &a->supportedCMSTypes->val,
 				     &a->supportedCMSTypes->len);
 
+    if (kex_groups_strings)
+        set_pkinit_kex_groups(context, ctx, 0, NULL);
+    krb5_config_free_strings(kex_groups_strings);
     return ret;
 }
 
@@ -2328,6 +2371,7 @@ _krb5_get_init_creds_opt_free_pkinit(krb5_get_init_creds_opt *opt)
     if (opt->opt_private == NULL || opt->opt_private->pk_init_ctx == NULL)
 	return;
     ctx = opt->opt_private->pk_init_ctx;
+    free_TD_DH_PARAMETERS(&ctx->kdc_dh_params);
     switch (ctx->keyex) {
     case USE_DH:
 	if (ctx->u.dh)
@@ -2340,7 +2384,6 @@ _krb5_get_init_creds_opt_free_pkinit(krb5_get_init_creds_opt *opt)
             _krb5_pk_eckey_free(ctx->u.eckey);
 	break;
     }
-    free(ctx->kex_group);
     if (ctx->id) {
 	hx509_verify_destroy_ctx(ctx->id->verify_ctx);
 	hx509_certs_free(&ctx->id->certs);
@@ -2471,14 +2514,25 @@ krb5_get_init_creds_opt_set_pkinit(krb5_context context,
         if ((flags & KRB5_GIC_OPT_PKINIT_USE_ECDH)) {
             opt->opt_private->pk_init_ctx->keyex = USE_ECDH;
         } else if (cert) {
-            /*
-             * If its a ECDSA certs, lets select ECDSA as the keyex algorithm.
-             */
             AlgorithmIdentifier alg;
 
             ret = hx509_cert_get_SPKI_AlgorithmIdentifier(hx509ctx, cert, &alg);
             if (ret == 0) {
-                if (der_heim_oid_cmp(&alg.algorithm, &asn1_oid_id_ecPublicKey) == 0)
+                if (der_heim_oid_cmp(&alg.algorithm, ASN1_OID_ID_ED448) == 0 ||
+                    der_heim_oid_cmp(&alg.algorithm,
+                                     ASN1_OID_ID_ED25519) == 0 ||
+                    der_heim_oid_cmp(&alg.algorithm,
+                                     ASN1_OID_ID_ECPUBLICKEY) == 0 ||
+                    der_heim_oid_cmp(&alg.algorithm,
+                                     ASN1_OID_ID_EC_GROUP_SECP521R1) == 0 ||
+                    der_heim_oid_cmp(&alg.algorithm,
+                                     ASN1_OID_ID_EC_GROUP_SECP384R1) == 0 ||
+                    der_heim_oid_cmp(&alg.algorithm,
+                                     ASN1_OID_ID_EC_GROUP_SECP256R1) == 0)
+                    /*
+                     * If the client certificate's SPKI is an elliptic curve
+                     * type key, then use ECDH.
+                     */
                     opt->opt_private->pk_init_ctx->keyex = USE_ECDH;
                 free_AlgorithmIdentifier(&alg);
             }
@@ -2502,10 +2556,25 @@ krb5_get_init_creds_opt_set_pkinit(krb5_context context,
 #endif
 }
 
+static void
+set_pkinit_kex_groups(krb5_context context,
+                      krb5_pk_init_ctx ctx,
+                      size_t nkex_groups,
+                      const char **kex_groups)
+{
+    if (kex_groups && !nkex_groups) {
+        while (kex_groups[nkex_groups] != NULL)
+            nkex_groups++;
+    }
+    ctx->nkex_groups = nkex_groups;
+    ctx->kex_groups = kex_groups;
+}
+
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
-krb5_get_init_creds_opt_set_pkinit_kex_group(krb5_context context,
-                                             krb5_get_init_creds_opt *opt,
-                                             const char *kex_group)
+krb5_get_init_creds_opt_set_pkinit_kex_groups(krb5_context context,
+                                              krb5_get_init_creds_opt *opt,
+                                              size_t nkex_groups,
+                                              const char **kex_groups)
 {
     if (opt->opt_private->pk_init_ctx == NULL) {
         opt->opt_private->pk_init_ctx =
@@ -2513,14 +2582,8 @@ krb5_get_init_creds_opt_set_pkinit_kex_group(krb5_context context,
         if (opt->opt_private->pk_init_ctx == NULL)
             return krb5_enomem(context);
     }
-    if (kex_group) {
-        opt->opt_private->pk_init_ctx->kex_group = strdup(kex_group);
-        if (opt->opt_private->pk_init_ctx->kex_group == NULL)
-            return krb5_enomem(context);
-    } else {
-        free(opt->opt_private->pk_init_ctx->kex_group);
-        opt->opt_private->pk_init_ctx->kex_group = NULL;
-    }
+    set_pkinit_kex_groups(context, opt->opt_private->pk_init_ctx, nkex_groups,
+                          kex_groups);
     return 0;
 }
 

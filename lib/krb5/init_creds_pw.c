@@ -3257,6 +3257,11 @@ init_creds_step(krb5_context context,
 					      "options send by KDC", ""));
 		    goto out;
 		}
+	    } else if (ret == KRB5_KDC_ERR_DH_KEY_PARAMETERS_NOT_ACCEPTED &&
+                       ctx->pk_init_ctx && !ctx->pk_init_ctx->tried_once) {
+                ctx->pk_init_ctx->tried_once = 1;
+		_krb5_debug(context, 2, "init_creds: KDC rejected key agreement group; trying again");
+                pa_restart(context, ctx);
 	    } else if (ret == KRB5KRB_AP_ERR_SKEW && context->kdc_sec_offset == 0) {
 		/*
 		 * Try adapt to timeskrew when we are using pre-auth, and

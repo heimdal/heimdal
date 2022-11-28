@@ -49,6 +49,7 @@ EXPORTS
 	KrbCredInfo,
 	LR-TYPE,
 	LastReq,
+	TYPED-DATA,
 	METHOD-DATA,
 	NAME-TYPE,
 	PA-ClientCanonicalized,

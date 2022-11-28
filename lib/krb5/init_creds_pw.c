@@ -97,6 +97,7 @@ struct krb5_get_init_creds_ctx {
 
     struct pa_info_data paid;
 
+    TYPED_DATA td;
     METHOD_DATA md;
     KRB_ERROR error;
     EncKDCRepPart enc_part;
@@ -207,6 +208,7 @@ free_init_creds_ctx(krb5_context context, krb5_init_creds_context ctx)
 
     krb5_data_free(&ctx->req_buffer);
     krb5_free_cred_contents(context, &ctx->cred);
+    free_TYPED_DATA(&ctx->td);
     free_METHOD_DATA(&ctx->md);
     free_EncKDCRepPart(&ctx->enc_part);
     free_KRB_ERROR(&ctx->error);
@@ -3121,6 +3123,7 @@ init_creds_step(krb5_context context,
 
 	} else {
 	    /* let's try to parse it as a KRB-ERROR */
+            /* FIXME Time to refactor into smaller functions */
 
 	    _krb5_debug(context, 5, "krb5_get_init_creds: got an KRB-ERROR from KDC");
 
@@ -3134,18 +3137,64 @@ init_creds_step(krb5_context context,
 		goto out;
 	    }
 
+            /*
+             * Unwrap TYPED-DATA, if any.  There are other errors that can come
+             * with TYPED-DATA, but the other two PKINIT errors that come with
+             * TYPED-DATA are uninteresting to us because they're fatal no
+             * matter what, though, reporting (via _krb5_debug()) the KDC's
+             * advertised trust anchors for client certificates would be useful
+             * indeed.
+             *
+             * TODO: Use the X.681/682/683 support in asn1_compile to make this
+             *       automatic!  KRB-ERROR's error-code is a type ID field, and
+             *       KRB-ERROR's e-data is an open type field.
+             */
+            if (ctx->pk_init_ctx &&
+                ctx->error.e_data &&
+                ctx->error.error_code ==
+                    KRB5_KDC_ERR_DH_KEY_PARAMETERS_NOT_ACCEPTED) {
+                size_t i;
+
+                free_TYPED_DATA(&ctx->td);
+                ret = decode_TYPED_DATA(ctx->error.e_data->data,
+                                        ctx->error.e_data->length,
+                                        &ctx->td, &size);
+                if (ret == 0) {
+                    for (i = 0; i < ctx->td.len; i++) {
+                        /*
+                         * TODO: If data_type is 104, trace the advertised
+                         *       trust anchors.
+                         */
+                        if (ctx->td.val[i].data_type == 109 &&
+                            ctx->td.val[i].data_value) {
+                            /* Save the KDC's supported key exchange groups */
+                            free_TD_DH_PARAMETERS(&ctx->pk_init_ctx->kdc_dh_params);
+                            (void) decode_TD_DH_PARAMETERS(ctx->td.val[i].data_value->data,
+                                                           ctx->td.val[i].data_value->length,
+                                                           &ctx->pk_init_ctx->kdc_dh_params,
+                                                           &size);
+                            break;
+                        }
+                    }
+                }
+            }
+
 	    /*
 	     * Unwrap method-data, if there is any,
 	     * fast_unwrap_error() below might replace it with a
 	     * wrapped version if we are using FAST.
 	     */
 
-	    free_METHOD_DATA(&ctx->md);
-	    memset(&ctx->md, 0, sizeof(ctx->md));
-
-	    if (ctx->error.e_data) {
+            /*
+             * TYPED-DATA and METHOD-DATA look very similar, but they're not
+             * the same.  METHOD-DATA is only for KRB5KDC_ERR_PREAUTH_REQUIRED;
+             * TYPED-DATA is for PKINIT errors (and possibly others).
+             */
+	    if (ctx->error.e_data &&
+                ctx->error.error_code == KRB5KDC_ERR_PREAUTH_REQUIRED) {
 		krb5_error_code ret2;
 
+                free_METHOD_DATA(&ctx->md);
 		ret2 = decode_METHOD_DATA(ctx->error.e_data->data,
 					 ctx->error.e_data->length,
 					 &ctx->md,

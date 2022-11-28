@@ -407,7 +407,9 @@ enum keyex_enum { USE_RSA, USE_DH, USE_ECDH };
 
 struct krb5_pk_init_ctx_data {
     struct krb5_pk_identity *id;
-    char *kex_group;
+    TD_DH_PARAMETERS kdc_dh_params;
+    size_t nkex_groups;
+    const char **kex_groups;
     enum keyex_enum keyex;
     union {
 	DH *dh;

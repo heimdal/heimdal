@@ -97,6 +97,7 @@ static struct nid2oid_st {
     int key_type;
 } nid2oid[] = {
 #ifdef HAVE_HCRYPTO_W_OPENSSL
+#ifdef HAVE_OPENSSL_30
 #ifdef NID_ED448
     { ASN1_OID_ID_ED448, ASN1_OID_ID_ED448, ASN1_OID_ID_X448,
         "ED448", "X448", NID_X448, NID_ED448, EVP_PKEY_ED448 },
@@ -119,6 +120,7 @@ static struct nid2oid_st {
     { ASN1_OID_ID_ECDSA_WITH_SHA256, ASN1_OID_ID_EC_GROUP_SECP256R1,
         ASN1_OID_ID_EC_GROUP_SECP256R1, "P-256", "P-256", NID_X9_62_prime256v1,
         NID_ecdsa_with_SHA256, EVP_PKEY_EC },
+#endif
 #endif
 #ifdef NID_ecdsa_with_SHA1
     { ASN1_OID_ID_ECDSA_WITH_SHA1, ASN1_OID_ID_EC_GROUP_SECP160R2,
@@ -173,6 +175,7 @@ _hx509_ossl_curve_oid2nid(const heim_oid *curve)
 
 #ifdef HAVE_HCRYPTO_W_OPENSSL
 /* Map OpenSSL curve NID to curve OID */
+#ifdef HAVE_OPENSSL_30
 static const heim_oid *
 curve_nid2sig_alg_oid(int nid)
 {
@@ -208,6 +211,7 @@ curve_oid2key_type(const heim_oid *curve)
     /* XXX What's a good last resort or undef value anyways? */
     return EVP_PKEY_EC;
 }
+#endif
 
 static int
 ECParameters2nid(hx509_context context,

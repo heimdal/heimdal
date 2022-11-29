@@ -977,7 +977,7 @@ abitstring_check(abitstring a, size_t n, int idx)
     size_t bytes;
 
     if (idx >= n)
-        return EINVAL;
+        return HX509_NO_ITEM;
 
     bytes = (idx + 1) / CHAR_BIT + (((idx + 1) % CHAR_BIT) ? 1 : 0);
     if (a->feat_bytes < bytes)
@@ -996,7 +996,7 @@ abitstring_set(abitstring a, size_t n, int idx)
     size_t bytes;
 
     if (idx >= n)
-        return EINVAL;
+        return HX509_NO_ITEM;
 
     bytes = n / CHAR_BIT + ((n % CHAR_BIT) ? 1 : 0);
     if (a->feat_bytes < bytes) {
@@ -1026,7 +1026,7 @@ abitstring_reset(abitstring a, size_t n, int idx)
     size_t bytes;
 
     if (idx >= n)
-        return EINVAL;
+        return HX509_NO_ITEM;
 
     bytes = (idx + 1) / CHAR_BIT + (((idx + 1) % CHAR_BIT) ? 1 : 0);
     if (a->feat_bytes >= bytes &&

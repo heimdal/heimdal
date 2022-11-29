@@ -1085,6 +1085,9 @@ heim_sipc_service_unix(const char *service,
     const char *d = secure_getenv("HEIM_IPC_DIR");
     int fd, ret;
 
+    if (strncasecmp(service, "UNIX:", sizeof("UNIX:") - 1) == 0)
+        service += sizeof("UNIX:") - 1;
+
     un.sun_family = AF_UNIX;
 
     if (snprintf(un.sun_path, sizeof(un.sun_path),

@@ -185,6 +185,7 @@ typedef struct bx509_request_desc {
     const char *redir;
     const char *method;
     size_t post_data_size;
+    size_t san_idx; /* For /get-tgts */
     enum k5_creds_kind cckind;
     char *pkix_store;
     char *tgts_filename;
@@ -1857,6 +1858,7 @@ authorize_TGT_REQ(struct bx509_request_desc *r)
         ret = kdc_authorize_csr(r->context, "get-tgt", r->req, p);
     krb5_free_principal(r->context, p);
     hx509_request_free(&r->req);
+    r->req = NULL;
     if (ret)
         return bad_403(r, ret, "Not authorized to requested TGT");
     return ret;
@@ -2125,18 +2127,79 @@ get_tgts_param_execute_cb(void *d,
                           const char *val)
 {
     struct bx509_request_desc *r = d;
-    heim_mhd_result res = MHD_YES;
+    hx509_san_type san_type;
     krb5_error_code ret;
+    size_t san_idx = r->san_idx++;
+    const char *save_for_cname = r->for_cname;
+    char *s = NULL;
 
-    if (strcmp(key, "cname") == 0 && val) {
-        /* Handled upstairs */
-        r->for_cname = val;
-        ret = k5_get_creds(r, K5_CREDS_EPHEMERAL);
-        res = get_tgts_accumulate_ccache(r, ret);
-    } else {
-        /* Handled upstairs */
+    /* We expect only cname=principal q-params here */
+    if (strcmp(key, "cname") != 0 || val == NULL)
+        return MHD_YES;
+
+    /*
+     * We expect the `san_idx'th SAN in the `r->req' request checked by
+     * kdc_authorize_csr() to be the same as this cname.  This happens
+     * naturally because we add these SANs to `r->req' in the same order as we
+     * visit them here (unless our HTTP library somehow went crazy).
+     *
+     * Still, we check that it's the same SAN.
+     */
+    ret = hx509_request_get_san(r->req, san_idx, &san_type, &s);
+    if (ret == HX509_NO_ITEM ||
+        san_type != HX509_SAN_TYPE_PKINIT ||
+        strcmp(s, val) != 0) {
+        /*
+         * If the cname and SAN don't match, it's some weird internal error
+         * (can't happen).
+         */
+        krb5_set_error_message(r->context, r->error_code = EACCES,
+                               "PKINIT SAN not granted: %s (internal error)",
+                               val);
+        ret = EACCES;
     }
-    return res;
+
+    /*
+     * We're going to pretend to be this SAN for the purpose of acquring a TGT
+     * for it.  So we "push" `r->for_cname'.
+     */
+    if (ret == 0)
+        r->for_cname = val;
+
+    /*
+     * Our authorizer supports partial authorization where the whole request is
+     * rejected but some features of it are permitted.
+     *
+     * (In most end-points we don't want partial authorization, but in
+     * /get-tgts we very much do.)
+     */
+    if (ret == 0 && !hx509_request_san_authorized_p(r->req, san_idx)) {
+        heim_audit_addkv((heim_svc_req_desc)r, KDC_AUDIT_VIS,
+                         "REJECT_krb5PrincipalName", "%s", val);
+        krb5_set_error_message(r->context, r->error_code = EACCES,
+                               "PKINIT SAN denied: %s", val);
+        ret = EACCES;
+    }
+    if (ret == 0) {
+        heim_audit_addkv((heim_svc_req_desc)r, KDC_AUDIT_VIS,
+                         "ACCEPT_krb5PrincipalName", "%s", val);
+        ret = k5_get_creds(r, K5_CREDS_EPHEMERAL);
+        if (ret == 0)
+            heim_audit_addkv((heim_svc_req_desc)r, KDC_AUDIT_VIS,
+                             "ISSUE_krb5PrincipalName", "%s", val);
+    }
+
+    /*
+     * If ret == 0 this will gather the TGT we acquired, else it will acquire
+     * the error we got.
+     */
+    ret = get_tgts_accumulate_ccache(r, ret);
+
+    /* Now we "pop" `r->for_cname' */
+    r->for_cname = save_for_cname;
+
+    hx509_xfree(s);
+    return MHD_YES;
 }
 
 /*
@@ -2172,7 +2235,10 @@ get_tgts(struct bx509_request_desc *r)
         ret = r->error_code;
     }
     if (ret == 0) {
-        /* Authorize requested client principal names (calls bad_req()) */
+        /*
+         * Check authorization of the authenticated client to the requested
+         * client principal names (calls bad_req()).
+         */
         r->error_code = 0;
         res = MHD_get_connection_values(r->connection, MHD_GET_ARGUMENT_KIND,
                                         get_tgts_param_authorize_cb, r);
@@ -2181,16 +2247,29 @@ get_tgts(struct bx509_request_desc *r)
 
         ret = r->error_code;
         if (ret == 0) {
+            /* Use the same configuration as /get-tgt (or should we?) */
             ret = kdc_authorize_csr(r->context, "get-tgt", r->req, p);
+
+            /*
+             * We tolerate EACCES because we support partial approval.
+             *
+             * (KRB5_PLUGIN_NO_HANDLE means no plugin handled the authorization
+             * check.)
+             */
+            if (ret == EACCES || ret == KRB5_PLUGIN_NO_HANDLE)
+                ret = 0;
             if (ret) {
                 krb5_free_principal(r->context, p);
                 return bad_403(r, ret, "Permission denied");
             }
         }
-        hx509_request_free(&r->req);
     }
     if (ret == 0) {
-        /* get_tgts_param_execute_cb() calls bad_req() */
+        /*
+         * Get the actual TGTs that were authorized.
+         *
+         * get_tgts_param_execute_cb() calls bad_req()
+         */
         r->error_code = 0;
         res = MHD_get_connection_values(r->connection, MHD_GET_ARGUMENT_KIND,
                                         get_tgts_param_execute_cb, r);
@@ -2199,6 +2278,8 @@ get_tgts(struct bx509_request_desc *r)
         ret = r->error_code;
     }
     krb5_free_principal(r->context, p);
+    hx509_request_free(&r->req);
+    r->req = NULL;
 
     /*
      * get_tgts_param_execute_cb() will write its JSON response to the file

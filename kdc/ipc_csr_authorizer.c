@@ -503,12 +503,23 @@ authorize(void *ctx,
     int do_check = 0;
     int piecemeal_check_ok = 1;
 
-    if ((svc = krb5_config_get_string(context, NULL, app ? app : "kdc",
-                                      "ipc_csr_authorizer", "service", NULL))
-        == NULL)
+    if ((svc = krb5_config_get_string_default(context, NULL,
+                                              "ANY:org.h5l.csr_authorizer",
+                                              app ? app : "kdc",
+                                              "ipc_csr_authorizer", "service",
+                                              NULL)) == NULL)
         return KRB5_PLUGIN_NO_HANDLE;
 
     if ((ret = heim_ipc_init_context(svc, &ipc))) {
+        /*
+         * If the IPC authorizer is optional, then fallback on whatever is
+         * next.
+         */
+        if (krb5_config_get_bool_default(context, NULL, FALSE,
+                                         app ? app : "kdc",
+                                         "ipc_csr_authorizer", "optional",
+                                         NULL))
+            return KRB5_PLUGIN_NO_HANDLE;
 	krb5_set_error_message(context, ret, "Could not set up IPC client "
                                "end-point for service %s", svc);
         return ret;

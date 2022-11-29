@@ -311,7 +311,7 @@ krb5-pkinit-win.conf: krb5-pkinit.conf.in Makefile
 	mv krb5-pkinit-win.conf.tmp krb5-pkinit-win.conf
 
 clean: clean-am
-	rm -rf cc_dir simple_csr_authz
+	rm -rf cc_dir authz_dir
 
 CLEANFILES= \
 	$(TESTS) \

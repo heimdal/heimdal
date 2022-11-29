@@ -50,6 +50,10 @@
 
 #include "hx_locl.h"
 
+#ifndef NID_undef
+#define NID_undef 0
+#endif
+
 #if 0
 /* Need to add EVP_shake256() to lib/hcrypto */
 extern const AlgorithmIdentifier _hx509_signature_shake256_data;
@@ -122,12 +126,13 @@ static struct nid2oid_st {
         NID_X9_62_id_ecPublicKey, NID_ecdsa_with_SHA1, EVP_PKEY_EC },
 #endif
 #endif
+    { NULL, NULL, NULL, NULL, NULL, 0, 0, 0 }
 };
 
 const char *
 _hx509_list_curves(size_t *cursor)
 {
-    if (*cursor >= sizeof(nid2oid)/sizeof(nid2oid[0]))
+    if (*cursor >= sizeof(nid2oid)/sizeof(nid2oid[0]) - 1)
         return NULL;
     return nid2oid[(*cursor)++].curve_sn;
 }
@@ -137,7 +142,7 @@ _hx509_curve_name2oid(const char *curve_name)
 {
     size_t i;
 
-    for (i = 0; i < sizeof(nid2oid)/sizeof(nid2oid[0]); i++)
+    for (i = 0; i < sizeof(nid2oid)/sizeof(nid2oid[0]) - 1; i++)
         if (strcasecmp(curve_name, nid2oid[i].curve_sn) == 0)
             return nid2oid[i].curve_oid;
     return NULL;
@@ -148,7 +153,7 @@ _hx509_curve_name2key_agreement_oid(const char *curve_name)
 {
     size_t i;
 
-    for (i = 0; i < sizeof(nid2oid)/sizeof(nid2oid[0]); i++)
+    for (i = 0; i < sizeof(nid2oid)/sizeof(nid2oid[0]) - 1; i++)
         if (strcasecmp(curve_name, nid2oid[i].curve_sn) == 0)
             return nid2oid[i].key_agreement_curve_oid;
     return NULL;
@@ -160,7 +165,7 @@ _hx509_ossl_curve_oid2nid(const heim_oid *curve)
 {
     size_t i;
 
-    for (i = 0; i < sizeof(nid2oid)/sizeof(nid2oid[0]); i++)
+    for (i = 0; i < sizeof(nid2oid)/sizeof(nid2oid[0]) - 1; i++)
         if (der_heim_oid_cmp(curve, nid2oid[i].curve_oid) == 0)
             return nid2oid[i].curve_nid;
     return NID_undef;
@@ -173,7 +178,7 @@ curve_nid2sig_alg_oid(int nid)
 {
     size_t i;
 
-    for (i = 0; i < sizeof(nid2oid)/sizeof(nid2oid[0]); i++)
+    for (i = 0; i < sizeof(nid2oid)/sizeof(nid2oid[0]) - 1; i++)
         if (nid == nid2oid[i].curve_nid)
             return nid2oid[i].sig_alg_oid;
     return NULL;
@@ -185,7 +190,7 @@ curve_oid2sig_alg_oid(const heim_oid *curve)
 {
     size_t i;
 
-    for (i = 0; i < sizeof(nid2oid)/sizeof(nid2oid[0]); i++)
+    for (i = 0; i < sizeof(nid2oid)/sizeof(nid2oid[0]) - 1; i++)
         if (der_heim_oid_cmp(curve, nid2oid[i].curve_oid) == 0)
             return nid2oid[i].sig_alg_oid;
     return NULL;
@@ -196,7 +201,7 @@ curve_oid2key_type(const heim_oid *curve)
 {
     size_t i;
 
-    for (i = 0; i < sizeof(nid2oid)/sizeof(nid2oid[0]); i++)
+    for (i = 0; i < sizeof(nid2oid)/sizeof(nid2oid[0]) - 1; i++)
         if (der_heim_oid_cmp(curve, nid2oid[i].curve_oid) == 0)
             return nid2oid[i].key_type;
 
@@ -276,11 +281,13 @@ signature_alg2digest_evp_md(hx509_context context,
     return NULL;
 }
 #endif
+#endif /* HAVE_HCRYPTO_W_OPENSSL */
 
 
 int
 _hx509_match_ec_keys(hx509_cert c, hx509_private_key private_key)
 {
+#ifdef HAVE_HCRYPTO_W_OPENSSL
 #ifdef HAVE_OPENSSL_30
     const SubjectPublicKeyInfo *spi;
     const Certificate *cert = _hx509_get_cert(c);
@@ -303,6 +310,9 @@ _hx509_match_ec_keys(hx509_cert c, hx509_private_key private_key)
 #else
     return 1; /* XXX */
 #endif
+#else
+    return 0;
+#endif
 }
 
 
@@ -310,6 +320,7 @@ _hx509_match_ec_keys(hx509_cert c, hx509_private_key private_key)
  *
  */
 
+#ifdef HAVE_HCRYPTO_W_OPENSSL
 static int
 ec_verify_signature(hx509_context context,
                     const struct signature_alg *sig_alg,

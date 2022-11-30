@@ -407,6 +407,9 @@ enum keyex_enum { USE_RSA, USE_DH, USE_ECDH };
 
 struct krb5_pk_init_ctx_data {
     struct krb5_pk_identity *id;
+    TD_DH_PARAMETERS kdc_dh_params;
+    size_t nkex_groups;
+    const char **kex_groups;
     enum keyex_enum keyex;
     union {
 	DH *dh;
@@ -423,6 +426,7 @@ struct krb5_pk_init_ctx_data {
     unsigned int trustedCertifiers:1;
     unsigned int anonymous:1;
     unsigned int kdc_verified:1;
+    unsigned int tried_once:1;
 };
 
 #endif /* PKINIT */

@@ -50,13 +50,13 @@ fi
 
 if ${hxtool} info | grep 'ecdsa: hcrypto null' > /dev/null ; then
     echo "not testing ECDSA since hcrypto doesnt support ECDSA"
-else
+elif ${hxtool} info | grep 'ecdsa:'; then
     echo "create signed data (ec)"
     ${hxtool} cms-create-sd \
 	--certificate=FILE:$srcdir/data/secp256r2TestClient.pem \
 	"$srcdir/test_chain.in" \
 	sd.data > /dev/null || exit 1
-    
+
     echo "verify signed data (ec)"
     ${hxtool} cms-verify-sd \
 	--missing-revoke \
@@ -64,7 +64,35 @@ else
 	sd.data sd.data.out > /dev/null || exit 1
     cmp "$srcdir/test_chain.in" sd.data.out || exit 1
 fi
-    
+
+if ${hxtool} info | grep 'ed25519:'; then
+    echo "create signed data (ed25519)"
+    ${hxtool} ca \
+        --issue-ca \
+        --self-signed \
+        --subject="CN=TestCa,DC=test,DC=h5l,DC=SE" \
+        --certificate=PEM-FILE:${objdir}/ca.pem \
+        --generate-key=ed25519 || exit 1
+
+    ${hxtool} ca \
+        --subject="CN=User,DC=test,DC=h5l,DC=SE" \
+        --certificate=PEM-FILE:${objdir}/ee.pem \
+        --ca-certificate=FILE:${objdir}/ca.pem \
+        --generate-key=ed25519 || exit 1
+
+    ${hxtool} cms-create-sd \
+	--certificate=FILE:${objdir}/ee.pem \
+	"$srcdir/test_chain.in" \
+	sd.data > /dev/null || exit 1
+
+    echo "verify signed data (ed25519)"
+    ${hxtool} cms-verify-sd \
+	--missing-revoke \
+	--anchors=FILE:${objdir}/ca.pem \
+	sd.data sd.data.out > /dev/null || exit 1
+    cmp "$srcdir/test_chain.in" sd.data.out || exit 1
+fi
+
 echo "create signed data"
 ${hxtool} cms-create-sd \
 	--certificate=FILE:$srcdir/data/test.crt,$srcdir/data/test.key \

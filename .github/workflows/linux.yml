@@ -108,10 +108,13 @@ jobs:
                 cd /tmp/h5l
                 tar czf $HOME/heimdal-install-linux-${{ matrix.compiler }}.tgz .
             - name: Core dump stacks
+              if: ${{ failure() }}
               run: |
+                set -vx
+                find . -type f | grep core
                 echo "thread apply all bt" > /tmp/x
-                find . -name core -print | while read core; do gdb -batch -x x `file "$core"|sed -e "s/^[^']*'//" -e "s/[ '].*$//"` "$core"; done
-                if [ "$(find . -name core -print | wc -l)" -gt 0 ]; then false; fi
+                find . -name "core.*" -print | while read core; do gdb -batch -x x `file "$core"|sed -e "s/^[^']*'//" -e "s/[ '].*$//"` "$core"; done
+                if [ "$(find . -name core.\* -print | wc -l)" -gt 0 ]; then false; fi
             - name: Test logs
               run: |
                 find build -depth -name \*.trs | xargs grep -lw FAIL | sed -e 's/trs$/log/' | tar -czf $HOME/logs-linux-${{ matrix.compiler }}.tgz --verbatim-files-from --files-from -

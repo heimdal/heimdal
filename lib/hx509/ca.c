@@ -1638,7 +1638,10 @@ ca_sign(hx509_context context,
 
     sigalg = tbs->sigalg;
     if (sigalg == NULL)
-	sigalg = _hx509_crypto_default_sig_alg;
+        sigalg = hx509_signature_ecdsa(signer->signature_alg);
+    if (sigalg == NULL)
+        /* XXX Lame; we should have a utility for this */
+        sigalg = _hx509_crypto_default_sig_alg;
 
     memset(&c, 0, sizeof(c));
 
@@ -1733,7 +1736,20 @@ ca_sign(hx509_context context,
 	    hx509_set_error_string(context, 0, ret, "Out of memory");
 	    goto out;
 	}
-	RAND_bytes(tbsc->serialNumber.data, tbsc->serialNumber.length);
+	if (RAND_bytes(tbsc->serialNumber.data,
+                       tbsc->serialNumber.length) != 1) {
+            hx509_set_error_string(context, 0, ret = EIO, /* XXX */
+                                   "Could not generate random serial number");
+            goto out;
+        }
+        /*
+         * DER requires that the leading 9 bits of an INTEGER not all be zeros
+         * or all ones.  RFC 5280 requires that serial numbers nor be negative.
+         *
+         * Therefore we clear the sign bit (encoded INTEGER values are twos-
+         * complement, so the leading bit is a sign bit) and set one other bit
+         * in the first byte (any bit other than the high bit would do).
+         */
 	((unsigned char *)tbsc->serialNumber.data)[0] &= 0x7f;
 	((unsigned char *)tbsc->serialNumber.data)[0] |= 0x40;
     }

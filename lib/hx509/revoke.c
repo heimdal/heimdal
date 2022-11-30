@@ -1534,7 +1534,7 @@ hx509_crl_sign(hx509_context context,
 	       hx509_crl crl,
 	       heim_octet_string *os)
 {
-    const AlgorithmIdentifier *sigalg = _hx509_crypto_default_sig_alg;
+    const AlgorithmIdentifier *sigalg;
     CRLCertificateList c;
     size_t size;
     int ret;
@@ -1549,6 +1549,10 @@ hx509_crl_sign(hx509_context context,
 			       "Private key missing for CRL signing");
 	return ret;
     }
+
+    sigalg = hx509_signature_ecdsa(signerkey->signature_alg);
+    if (sigalg == NULL)
+        sigalg = _hx509_crypto_default_sig_alg;
 
     c.tbsCertList.version = malloc(sizeof(*c.tbsCertList.version));
     if (c.tbsCertList.version == NULL) {

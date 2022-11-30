@@ -43,6 +43,11 @@
 
 static const heim_octet_string null_entry_oid = { 2, rk_UNCONST("\x05\x00") };
 
+static const unsigned shake256_oid_tree[] = { 2, 16, 840, 1, 101, 3, 4, 2, 12 };
+const AlgorithmIdentifier _hx509_signature_shake256_data = {
+    { 9, rk_UNCONST(shake256_oid_tree) }, rk_UNCONST(&null_entry_oid)
+};
+
 static const unsigned sha512_oid_tree[] = { 2, 16, 840, 1, 101, 3, 4, 2, 3 };
 const AlgorithmIdentifier _hx509_signature_sha512_data = {
     { 9, rk_UNCONST(sha512_oid_tree) }, rk_UNCONST(&null_entry_oid)
@@ -510,7 +515,9 @@ rsa_private_key_export(hx509_context context,
 		       hx509_key_format_t format,
 		       heim_octet_string *data)
 {
-    int ret;
+    unsigned char *p;
+    int ret = 0;
+    int len;
 
     data->data = NULL;
     data->length = 0;
@@ -518,32 +525,34 @@ rsa_private_key_export(hx509_context context,
     switch (format) {
     case HX509_KEY_FORMAT_DER:
 
-	ret = i2d_RSAPrivateKey(key->private_key.rsa, NULL);
-	if (ret <= 0) {
+	len = i2d_RSAPrivateKey(key->private_key.rsa, NULL);
+	if (len <= 0) {
 	    ret = EINVAL;
 	    hx509_set_error_string(context, 0, ret,
 			       "Private key is not exportable");
 	    return ret;
 	}
 
-	data->data = malloc(ret);
+	p = data->data = malloc(len);
 	if (data->data == NULL) {
-	    ret = ENOMEM;
+	    ret = hx509_enomem(context);
 	    hx509_set_error_string(context, 0, ret, "malloc out of memory");
 	    return ret;
 	}
-	data->length = ret;
+	data->length = len;
 
 	{
-	    unsigned char *p = data->data;
-	    i2d_RSAPrivateKey(key->private_key.rsa, &p);
+	    len = i2d_RSAPrivateKey(key->private_key.rsa, &p);
+            if (len < 0)
+                ret = hx509_enomem(context);
+            else if (data->length != (size_t)len)
+                hx509_set_error_string(context, 0, ret = EINVAL,
+                                       "Private key export failed");
 	}
-	break;
+	return ret;
     default:
 	return HX509_CRYPTO_KEY_FORMAT_UNSUPPORTED;
     }
-
-    return 0;
 }
 
 static BIGNUM *
@@ -559,6 +568,12 @@ rsa_get_internal(hx509_context context,
 	return NULL;
 }
 
+static void
+rsa_free(hx509_private_key key)
+{
+    if (key->private_key.rsa)
+        RSA_free(key->private_key.rsa);
+}
 
 
 static hx509_private_key_ops rsa_private_key_ops = {
@@ -569,7 +584,8 @@ static hx509_private_key_ops rsa_private_key_ops = {
     rsa_private_key_export,
     rsa_private_key_import,
     rsa_generate_private_key,
-    rsa_get_internal
+    rsa_get_internal,
+    rsa_free
 };
 
 /*
@@ -758,6 +774,8 @@ evp_md_verify_signature(hx509_context context,
 }
 
 #ifdef HAVE_HCRYPTO_W_OPENSSL
+extern const struct signature_alg ed448_alg;
+extern const struct signature_alg ed25519_alg;
 extern const struct signature_alg ecdsa_with_sha512_alg;
 extern const struct signature_alg ecdsa_with_sha384_alg;
 extern const struct signature_alg ecdsa_with_sha256_alg;
@@ -890,6 +908,23 @@ static const struct signature_alg dsa_sha1_alg = {
     0
 };
 
+#if 0
+/* Need to add EVP_shake256() to lib/hcrypto */
+static const struct signature_alg shake256_alg = {
+    "shake-512",
+    ASN1_OID_ID_SHAKE256,
+    &_hx509_signature_shake256_data,
+    NULL,
+    NULL,
+    SIG_DIGEST,
+    0,
+    EVP_shake256,
+    evp_md_verify_signature,
+    evp_md_create_signature,
+    0
+};
+#endif
+
 static const struct signature_alg sha512_alg = {
     "sha-512",
     ASN1_OID_ID_SHA512,
@@ -967,6 +1002,8 @@ static const struct signature_alg md5_alg = {
 
 static const struct signature_alg *sig_algs[] = {
 #ifdef HAVE_HCRYPTO_W_OPENSSL
+    &ed448_alg,
+    &ed25519_alg,
     &ecdsa_with_sha512_alg,
     &ecdsa_with_sha384_alg,
     &ecdsa_with_sha256_alg,
@@ -981,6 +1018,9 @@ static const struct signature_alg *sig_algs[] = {
     &rsa_with_md5_alg,
     &heim_rsa_pkcs1_x509,
     &dsa_sha1_alg,
+#if 0
+    &shake256_alg,
+#endif
     &sha512_alg,
     &sha384_alg,
     &sha256_alg,
@@ -1033,12 +1073,24 @@ alg_for_privatekey(const hx509_private_key pk, int type)
  */
 #ifdef HAVE_HCRYPTO_W_OPENSSL
 extern hx509_private_key_ops ecdsa_private_key_ops;
+extern hx509_private_key_ops ecdsa_sha512_private_key_ops;
+extern hx509_private_key_ops ecdsa_sha384_private_key_ops;
+extern hx509_private_key_ops ecdsa_sha256_private_key_ops;
+extern hx509_private_key_ops ed448_private_key_ops;
+extern hx509_private_key_ops ed25519_private_key_ops;
 #endif
 
 static struct hx509_private_key_ops *private_algs[] = {
     &rsa_private_key_ops,
 #ifdef HAVE_HCRYPTO_W_OPENSSL
     &ecdsa_private_key_ops,
+#ifdef HAVE_OPENSSL_30
+    &ed448_private_key_ops,
+    &ed25519_private_key_ops,
+    &ecdsa_sha512_private_key_ops,
+    &ecdsa_sha384_private_key_ops,
+    &ecdsa_sha256_private_key_ops,
+#endif
 #endif
     NULL
 };
@@ -1126,15 +1178,6 @@ _hx509_verify_signature(hx509_context context,
 	    hx509_clear_error_string(context);
 	return HX509_CRYPTO_SIGNATURE_WITHOUT_SIGNER;
     }
-    if (md->key_oid && signer) {
-	const SubjectPublicKeyInfo *spi;
-	spi = &signer->tbsCertificate.subjectPublicKeyInfo;
-
-	if (der_heim_oid_cmp(&spi->algorithm.algorithm, md->key_oid) != 0) {
-	    hx509_clear_error_string(context);
-	    return HX509_SIG_ALG_DONT_MATCH_KEY_ALG;
-	}
-    }
     return (*md->verify_signature)(context, md, signer, alg, data, sig);
 }
 
@@ -1151,7 +1194,7 @@ _hx509_create_signature(hx509_context context,
     md = _hx509_find_sig_alg(&alg->algorithm);
     if (md == NULL) {
 	hx509_set_error_string(context, 0, HX509_SIG_ALG_NO_SUPPORTED,
-	    "algorithm no supported");
+	    "algorithm not supported");
 	return HX509_SIG_ALG_NO_SUPPORTED;
     }
 
@@ -1320,30 +1363,6 @@ hx509_parse_private_key(hx509_context context,
     if (ret)
 	hx509_private_key_free(private_key);
 
-    if (ret && format == HX509_KEY_FORMAT_PKCS8) {
-        PKCS8PrivateKeyInfo ki;
-        hx509_private_key key;
-
-        /* Re-enter to try parsing the DER-encoded key from PKCS#8 envelope */
-        ret = decode_PKCS8PrivateKeyInfo(data, len, &ki, NULL);
-        if (ret) {
-	    hx509_set_error_string(context, 0, HX509_PARSING_KEY_FAILED,
-				   "Failed to parse PKCS#8-encoded private "
-                                   "key");
-	    return HX509_PARSING_KEY_FAILED;
-        }
-        ret = hx509_parse_private_key(context, &ki.privateKeyAlgorithm,
-                                      ki.privateKey.data, ki.privateKey.length,
-                                      HX509_KEY_FORMAT_DER, &key);
-        free_PKCS8PrivateKeyInfo(&ki);
-        if (ret) {
-            hx509_set_error_string(context, 0, HX509_PARSING_KEY_FAILED,
-                                   "Failed to parse RSA key from PKCS#8 "
-                                   "envelope");
-            return HX509_PARSING_KEY_FAILED;
-        }
-        *private_key = key;
-    }
     return ret;
 }
 
@@ -1372,9 +1391,9 @@ _hx509_generate_private_key_init(hx509_context context,
 {
     *ctx = NULL;
 
-    if (der_heim_oid_cmp(oid, ASN1_OID_ID_PKCS1_RSAENCRYPTION) != 0) {
+    if (hx509_find_private_alg(oid) == NULL) {
 	hx509_set_error_string(context, 0, EINVAL,
-			       "private key not an RSA key");
+			       "private key algorithm not supported");
 	return EINVAL;
     }
 
@@ -1445,6 +1464,10 @@ _hx509_generate_private_key(hx509_context context,
 /*
  *
  */
+
+const AlgorithmIdentifier *
+hx509_signature_shake256(void)
+{ return &_hx509_signature_shake256_data; }
 
 const AlgorithmIdentifier *
 hx509_signature_sha512(void)
@@ -1563,15 +1586,7 @@ hx509_private_key_free(hx509_private_key *key)
     if (--(*key)->ref > 0)
 	return 0;
 
-    if ((*key)->ops && der_heim_oid_cmp((*key)->ops->key_oid, ASN1_OID_ID_PKCS1_RSAENCRYPTION) == 0) {
-	if ((*key)->private_key.rsa)
-	    RSA_free((*key)->private_key.rsa);
-    } else if ((*key)->ops && der_heim_oid_cmp((*key)->ops->key_oid,
-                                               ASN1_OID_ID_ECPUBLICKEY) == 0 &&
-               (*key)->private_key.ecdsa != NULL) {
-      _hx509_private_eckey_free((*key)->private_key.ecdsa);
-    }
-    (*key)->private_key.rsa = NULL;
+    (*key)->ops->free_key((*key));
     free(*key);
     *key = NULL;
     return 0;
@@ -1633,6 +1648,11 @@ _hx509_private_key_export(hx509_context context,
         PKCS8PrivateKeyInfo ki;
         size_t size;
         int ret;
+
+        /* Maybe the backend supports PKCS#8 directly */
+        ret = (*key->ops->export)(context, key, format, data);
+        if (ret == 0)
+            return 0;
 
         memset(&ki, 0, sizeof(ki));
         ki.attributes = NULL; /* No localKeyId needed */
@@ -2589,12 +2609,7 @@ match_keys_rsa(hx509_cert c, hx509_private_key private_key)
     return ret == 1;
 }
 
-static int
-match_keys_ec(hx509_cert c, hx509_private_key private_key)
-{
-    return 1; /* XXX use EC_KEY_check_key */
-}
-
+extern int _hx509_match_ec_keys(hx509_cert, hx509_private_key);
 
 HX509_LIB_FUNCTION int HX509_LIB_CALL
 _hx509_match_keys(hx509_cert c, hx509_private_key key)
@@ -2604,7 +2619,11 @@ _hx509_match_keys(hx509_cert c, hx509_private_key key)
     if (der_heim_oid_cmp(key->ops->key_oid, ASN1_OID_ID_PKCS1_RSAENCRYPTION) == 0)
 	return match_keys_rsa(c, key);
     if (der_heim_oid_cmp(key->ops->key_oid, ASN1_OID_ID_ECPUBLICKEY) == 0)
-	return match_keys_ec(c, key);
+	return _hx509_match_ec_keys(c, key);
+    if (der_heim_oid_cmp(key->ops->key_oid, ASN1_OID_ID_ED448) == 0)
+	return _hx509_match_ec_keys(c, key);
+    if (der_heim_oid_cmp(key->ops->key_oid, ASN1_OID_ID_ED25519) == 0)
+	return _hx509_match_ec_keys(c, key);
     return 0;
 
 }

@@ -1365,57 +1365,71 @@ static void
 get_key(const char *fn, const char *type, int optbits,
 	hx509_private_key *signer)
 {
+    struct hx509_generate_private_context *gen_ctx = NULL;
+    const heim_oid *alg = NULL;
     int ret = 0;
 
-    if (type) {
-        struct hx509_generate_private_context *gen_ctx = NULL;
-
-	if (strcasecmp(type, "rsa") != 0)
-	    errx(1, "can only handle rsa keys for now");
-
-        ret = _hx509_generate_private_key_init(context,
-                                               ASN1_OID_ID_PKCS1_RSAENCRYPTION,
-                                               &gen_ctx);
-        if (ret == 0)
-            ret = _hx509_generate_private_key_bits(context, gen_ctx, optbits);
-        if (ret == 0)
-            ret = _hx509_generate_private_key(context, gen_ctx, signer);
-        _hx509_generate_private_key_free(&gen_ctx);
-        if (ret)
-            hx509_err(context, 1, ret, "failed to generate private key of type %s", type);
-
-        if (fn) {
-            char *sn = fix_store_name(context, fn, "FILE");
-            hx509_certs certs = NULL;
-            hx509_cert cert = NULL;
-
-            cert = hx509_cert_init_private_key(context, *signer, NULL);
-            if (cert)
-                ret = hx509_certs_init(context, sn,
-                                       HX509_CERTS_CREATE |
-                                       HX509_CERTS_UNPROTECT_ALL,
-                                       NULL, &certs);
-            if (ret == 0)
-                ret = hx509_certs_add(context, certs, cert);
-            if (ret == 0)
-                ret = hx509_certs_store(context, certs, 0, NULL);
-            if (ret)
-                hx509_err(context, 1, ret, "failed to store generated private "
-                          "key in %s", sn);
-
-            if (certs)
-                hx509_certs_free(&certs);
-            if (cert)
-                hx509_cert_free(cert);
-            free(sn);
-        }
-    } else {
+    if (type == NULL) {
         if (fn == NULL)
             err(1, "no private key");
         ret = read_private_key(fn, signer);
         if (ret)
             hx509_err(context, 1, ret, "failed to read private key from %s",
                       fn);
+        return;
+    }
+
+    if (strcasecmp(type, "rsa") == 0) {
+        alg = ASN1_OID_ID_PKCS1_RSAENCRYPTION;
+    } else {
+        alg = _hx509_curve_name2oid(type);
+    }
+    if (alg == NULL) {
+        size_t cursor = 0;
+        const char *sn;
+
+        fprintf(stderr, "Only the following key algorithms are supported: ");
+        fprintf(stderr, "rsa");
+        while ((sn = _hx509_list_curves(&cursor))) {
+            fprintf(stderr, ", %s", sn);
+        }
+        fprintf(stderr, "\n");
+        errx(1, "Unknown key algorithm %s", type);
+    }
+
+    ret = _hx509_generate_private_key_init(context, alg, &gen_ctx);
+    if (ret == 0)
+        ret = _hx509_generate_private_key_bits(context, gen_ctx, optbits);
+    if (ret == 0)
+        ret = _hx509_generate_private_key(context, gen_ctx, signer);
+    _hx509_generate_private_key_free(&gen_ctx);
+    if (ret)
+        hx509_err(context, 1, ret, "failed to generate private key of type %s", type);
+
+    if (fn) {
+        char *sn = fix_store_name(context, fn, "FILE");
+        hx509_certs certs = NULL;
+        hx509_cert cert = NULL;
+
+        cert = hx509_cert_init_private_key(context, *signer, NULL);
+        if (cert)
+            ret = hx509_certs_init(context, sn,
+                                   HX509_CERTS_CREATE |
+                                   HX509_CERTS_UNPROTECT_ALL,
+                                   NULL, &certs);
+        if (ret == 0)
+            ret = hx509_certs_add(context, certs, cert);
+        if (ret == 0)
+            ret = hx509_certs_store(context, certs, 0, NULL);
+        if (ret)
+            hx509_err(context, 1, ret, "failed to store generated private "
+                      "key in %s", sn);
+
+        if (certs)
+            hx509_certs_free(&certs);
+        if (cert)
+            hx509_cert_free(cert);
+        free(sn);
     }
 }
 
@@ -1447,10 +1461,12 @@ request_create(struct request_create_options *opt, int argc, char **argv)
 
     get_key(opt->key_string,
 	    opt->generate_key_string,
-	    opt->key_bits_integer,
+	    opt->key_bits_integer ? opt->key_bits_integer : 2048,
 	    &signer);
 
-    hx509_request_init(context, &req);
+    ret = hx509_request_init(context, &req);
+    if (ret)
+        hx509_err(context, 1, ret, "Could not initialize CSR");
 
     if (opt->subject_string) {
 	hx509_name name = NULL;
@@ -1594,15 +1610,37 @@ info(void *opt, int argc, char **argv)
 	if (m != NULL)
 	    printf("dh: %s\n", m->name);
     }
-#ifdef HAVE_HCRYPTO_W_OPENSSL
     {
-	printf("ecdsa: ECDSA_METHOD-not-export\n");
+        const char *curve_sn;
+        size_t cursor = 0;
+        int ecdsa = 0;
+        int eddsa = 0;
+
+        while ((curve_sn = _hx509_list_curves(&cursor))) {
+            if (strcmp(curve_sn, "ED448") == 0) {
+                printf("ed448: openssl\n");
+                eddsa = 1;
+            } else if (strcmp(curve_sn, "ED25519") == 0) {
+                printf("ed25519: openssl\n");
+                eddsa = 1;
+            } else if (strcmp(curve_sn, "P-521") == 0) {
+                printf("p-521: openssl\n");
+                ecdsa = 1;
+            } else if (strcmp(curve_sn, "P-384") == 0) {
+                printf("p-384: openssl\n");
+                ecdsa = 1;
+            } else if (strcmp(curve_sn, "P-256") == 0) {
+                printf("p-256: openssl\n");
+                ecdsa = 1;
+            }
+        }
+        if (ecdsa)
+            printf("ecdsa: openssl\n");
+        else
+            printf("ecdsa: hcrypto null\n");
+        if (eddsa)
+            printf("eddsa: openssl\n");
     }
-#else
-    {
-	printf("ecdsa: hcrypto null\n");
-    }
-#endif
     {
 	int ret = RAND_status();
 	printf("rand: %s\n", ret == 1 ? "ok" : "not available");
@@ -2083,7 +2121,7 @@ hxtool_ca(struct certificate_sign_options *opt, int argc, char **argv)
          */
         get_key(opt->certificate_private_key_string,
                 opt->generate_key_string,
-                opt->key_bits_integer,
+                opt->key_bits_integer ? opt->key_bits_integer : 2048,
                 &cert_key);
 
 	ret = hx509_private_key2SPKI(context, cert_key, &spki);

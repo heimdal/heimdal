@@ -267,6 +267,7 @@ struct hx509_private_key_ops {
 				struct hx509_generate_private_context *,
 				hx509_private_key);
     BIGNUM *(*get_internal)(hx509_context, hx509_private_key, const char *);
+    void (*free_key)(hx509_private_key);
 };
 
 struct hx509_private_key {

@@ -81,8 +81,149 @@
 #include <pkcs12_asn1.h>
 #include <pkinit_asn1.h>
 #include <asn1_err.h>
+#include "../hx509/hx_locl.h"
 
 #include <der.h>
+
+#ifdef HAVE_HCRYPTO_W_OPENSSL
+/*
+ * Pick a curve from either the KDC's offerings, if any, or local
+ * configuration.
+ *
+ * This is the ECDH equivalent of select_dh_group().
+ */
+static krb5_error_code
+pick_curve(krb5_context context,
+           krb5_pk_init_ctx ctx,
+           const char *def_curve,
+           heim_oid *out)
+{
+    krb5_error_code ret;
+    const char *curve_name;
+    size_t i, n, loops;
+    int skip = ctx->tried_once;
+
+    if (ctx->kdc_dh_params.len) {
+        /*
+         * We tried one DH group or ECDH curve and the KDC rejected it.  Let's
+         * try one of the curves suggested by the KDC.
+         */
+        n = 0;
+        loops = 0;
+        while ((curve_name = _hx509_list_curves(&n))) {
+            const heim_oid *curve =
+                _hx509_curve_name2key_agreement_oid(curve_name);
+
+            if (strcmp(curve_name, "ED448") == 0 ||
+                strcmp(curve_name, "ED25519") == 0)
+                /*
+                 * XXX Note the confusability here of _signature_ and _key
+                 * agreement_ curve names.
+                 */
+                /* We don't support X448 or X25519 yet */
+                continue;
+
+            for (i = 0; i < ctx->kdc_dh_params.len && loops < 36; i++) {
+                loops++;
+                if (der_heim_oid_cmp(&ctx->kdc_dh_params.val[i].algorithm,
+                                     curve) == 0)
+                    return der_copy_oid(&ctx->kdc_dh_params.val[i].algorithm,
+                                        out);
+            }
+        }
+        if (n == 0) {
+            /* No local curves! */
+            krb5_set_error_message(context, ret = ENOTSUP,
+                                   "PKINIT: ECDH not supported");
+            return ret;
+        }
+        krb5_set_error_message(context, ret = ENOTSUP,
+                               "PKINIT: No common curves with KDC");
+        return ret;
+    }
+    /*
+     * If ctx->tried_once then the KDC rejected our first choice but didn't
+     * tell us its preference.  We want to pick the second group in our local
+     * list.
+     */
+    if (ctx->nkex_groups) {
+        n = 0;
+        loops = 0;
+        while ((curve_name = _hx509_list_curves(&n))) {
+            if (strcmp(curve_name, "ED448") == 0 ||
+                strcmp(curve_name, "ED25519") == 0)
+                /*
+                 * XXX Note the confusability here of _signature_ and _key
+                 * agreement_ curve names.
+                 */
+                /* We don't support X448 or X25519 yet */
+                continue;
+
+            for (i = 0; i < ctx->nkex_groups && loops < 36; i++) {
+                const heim_oid *curve_oid =
+                    _hx509_curve_name2key_agreement_oid(curve_name);
+                heim_oid oid;
+
+                loops++;
+                memset(&oid, 0, sizeof(oid));
+
+                /* Allow curve short names like "P-256" */
+                if (strcasecmp(curve_name, ctx->kex_groups[i]) == 0) {
+                    if (skip) {
+                        skip = 0;
+                        continue;
+                    }
+                    return der_copy_oid(curve_oid, out);
+                }
+                /* Allow curve OIDs, symbolic as well as dotted */
+                if (der_find_or_parse_heim_oid(ctx->kex_groups[i], ".",
+                                               &oid) == 0) {
+                    if (der_heim_oid_cmp(&oid, curve_oid) == 0) {
+                        if (skip) {
+                            der_free_oid(&oid);
+                            skip = 0;
+                            continue;
+                        }
+                        *out = oid;
+                        return 0;
+                    }
+                    der_free_oid(&oid);
+                }
+            }
+        }
+        if (n == 0) {
+            /* No local curves! */
+            krb5_set_error_message(context, ret = ENOTSUP,
+                                   "PKINIT: ECDH not supported");
+            return ret;
+        }
+    } else if (def_curve &&
+               _hx509_curve_name2key_agreement_oid(def_curve)) {
+        return der_copy_oid(_hx509_curve_name2key_agreement_oid(def_curve),
+                            out);
+    } else {
+        n = 0;
+        while ((curve_name = _hx509_list_curves(&n))) {
+            if (strcmp(curve_name, "ED448") == 0 ||
+                strcmp(curve_name, "ED25519") == 0)
+                /*
+                 * XXX Note the confusability here of _signature_ and _key
+                 * agreement_ curve names.
+                 */
+                /* We don't support X448 or X25519 yet */
+                continue;
+
+            return der_copy_oid(_hx509_curve_name2key_agreement_oid(curve_name),
+                                out);
+        }
+    }
+
+    krb5_set_error_message(context, ret = ENOTSUP,
+                           "PKINIT: No supported curves listed in "
+                           "[libdefaults] pkinit_kex_groups");
+    return ret;
+}
+#endif
 
 krb5_error_code
 _krb5_build_authpack_subjectPK_EC(krb5_context context,
@@ -90,84 +231,85 @@ _krb5_build_authpack_subjectPK_EC(krb5_context context,
                                   AuthPack *a)
 {
 #ifdef HAVE_HCRYPTO_W_OPENSSL
-    krb5_error_code ret;
+    krb5_error_code ret = 0;
     ECParameters ecp;
-    unsigned char *p;
+    unsigned char *p = NULL;
     size_t size;
     int xlen;
 
+    ecp.element = choice_ECParameters_namedCurve;
+    ecp.u.namedCurve.length = 0;
+    ecp.u.namedCurve.components = NULL;
+
+    ret = pick_curve(context, ctx, "P-256", &ecp.u.namedCurve);
+    if (ret)
+        return ret;
+
     /* copy in public key, XXX find the best curve that the server support or use the clients curve if possible */
 
-    ecp.element = choice_ECParameters_namedCurve;
-    ret = der_copy_oid(&asn1_oid_id_ec_group_secp256r1,
-                       &ecp.u.namedCurve);
-    if (ret)
-        return ret;
-
-    ALLOC(a->clientPublicValue->algorithm.parameters, 1);
-    if (a->clientPublicValue->algorithm.parameters == NULL) {
-        free_ECParameters(&ecp);
-        return krb5_enomem(context);
+    if (ret == 0) {
+        ALLOC(a->clientPublicValue->algorithm.parameters, 1);
+        if (a->clientPublicValue->algorithm.parameters == NULL)
+            ret = krb5_enomem(context);
     }
-    ASN1_MALLOC_ENCODE(ECParameters, p, xlen, &ecp, &size, ret);
-    free_ECParameters(&ecp);
-    if (ret)
-        return ret;
-    if ((int)size != xlen)
+    if (ret == 0)
+        ASN1_MALLOC_ENCODE(ECParameters, p, xlen, &ecp, &size, ret);
+    if (ret == 0 && (int)size != xlen)
         krb5_abortx(context, "asn1 internal error");
 
-    a->clientPublicValue->algorithm.parameters->data = p;
-    a->clientPublicValue->algorithm.parameters->length = size;
+    free_ECParameters(&ecp);
 
-    /* copy in public key */
-
-    ret = der_copy_oid(&asn1_oid_id_ecPublicKey,
-                       &a->clientPublicValue->algorithm.algorithm);
-    if (ret)
-        return ret;
+    if (ret == 0) {
+        a->clientPublicValue->algorithm.parameters->data = p;
+        a->clientPublicValue->algorithm.parameters->length = size;
+        ret = der_copy_oid(&asn1_oid_id_ecPublicKey,
+                           &a->clientPublicValue->algorithm.algorithm);
+    }
 
 #ifdef HAVE_OPENSSL_30
-    ctx->u.eckey = EVP_EC_gen(OSSL_EC_curve_nid2name(NID_X9_62_prime256v1));
+    if (ret == 0)
+        ctx->u.eckey = EVP_EC_gen(OSSL_EC_curve_nid2name(NID_X9_62_prime256v1));
 #else
-    ctx->u.eckey = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);
-    if (ctx->u.eckey == NULL)
-        return krb5_enomem(context);
+    if (ret == 0) {
+        ctx->u.eckey = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);
+        if (ctx->u.eckey == NULL)
+            ret = krb5_enomem(context);
+    }
 
-    ret = EC_KEY_generate_key(ctx->u.eckey);
-    if (ret != 1)
-        return EINVAL;
+    if (ret == 0 && EC_KEY_generate_key(ctx->u.eckey) != 1)
+        ret = EINVAL;
 #endif
 
 #ifdef HAVE_OPENSSL_30
-    xlen = i2d_PublicKey(ctx->u.eckey, NULL);
+    if (ret == 0)
+        xlen = i2d_PublicKey(ctx->u.eckey, NULL);
 #else
-    xlen = i2o_ECPublicKey(ctx->u.eckey, NULL);
+    if (ret == 0)
+        xlen = i2o_ECPublicKey(ctx->u.eckey, NULL);
 #endif
-    if (xlen <= 0)
-        return EINVAL;
+    if (ret == 0 && xlen <= 0)
+        ret = krb5_enomem(context);
 
-    p = malloc(xlen);
-    if (p == NULL)
-        return krb5_enomem(context);
+    if (ret == 0 && (p = malloc(xlen)) == NULL)
+        ret = krb5_enomem(context);
 
     a->clientPublicValue->subjectPublicKey.data = p;
 
 #ifdef HAVE_OPENSSL_30
-    xlen = i2d_PublicKey(ctx->u.eckey, &p);
+    if (ret == 0)
+        xlen = i2d_PublicKey(ctx->u.eckey, &p);
 #else
-    xlen = i2o_ECPublicKey(ctx->u.eckey, &p);
+    if (ret == 0)
+        xlen = i2o_ECPublicKey(ctx->u.eckey, &p);
 #endif
-    if (xlen <= 0) {
-        a->clientPublicValue->subjectPublicKey.data = NULL;
-        free(p);
-        return EINVAL;
-    }
+    if (ret == 0 && xlen <= 0)
+        ret = krb5_enomem(context);
 
     a->clientPublicValue->subjectPublicKey.length = xlen * 8;
 
-    return 0;
-
     /* XXX verify that this is right with RFC3279 */
+
+    return ret;
 #else
     krb5_set_error_message(context, ENOTSUP,
                            N_("PKINIT: ECDH not supported", ""));

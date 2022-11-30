@@ -636,8 +636,13 @@ hx509_request_to_pkcs10(hx509_context context,
     CertificationRequest r;
     Extensions exts;
     heim_octet_string data;
+    const AlgorithmIdentifier *alg;
     size_t size;
     int ret;
+
+    alg = hx509_signature_ecdsa(signer->signature_alg);
+    if (alg == NULL)
+        alg = _hx509_crypto_default_sig_alg;
 
     request->data = NULL;
     request->length = 0;
@@ -701,9 +706,7 @@ hx509_request_to_pkcs10(hx509_context context,
 
     /* Self-sign CSR body */
     if (ret == 0) {
-        ret = _hx509_create_signature_bitstring(context, signer,
-                                                _hx509_crypto_default_sig_alg,
-                                                &data,
+        ret = _hx509_create_signature_bitstring(context, signer, alg, &data,
                                                 &r.signatureAlgorithm,
                                                 &r.signature);
     }

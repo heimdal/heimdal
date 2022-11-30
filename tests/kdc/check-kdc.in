@@ -1081,9 +1081,12 @@ password Foobar11\n
 expect Success: Password changed
 EOF
 
-echo "Checking client pw expire"; > messages.log
-${rkpty} ${kinitpty} ${kinit} pw-expired@${R}|| \
-	{ ec=1 ; eval "${testfailed}"; }
+if [ -z "$TESTS_ENVIRONMENT" ]; then
+    # This times out when using valgrind -- something about rkpty
+    echo "Checking client pw expire"; > messages.log
+    ${rkpty} ${kinitpty} ${kinit} pw-expired@${R}|| \
+            { ec=1 ; eval "${testfailed}"; }
+fi
 
 ${kdestroy}
 

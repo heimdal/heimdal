@@ -143,23 +143,58 @@ parse_pkcs8_private_key(hx509_context context, const char *fn, int flags,
 			const AlgorithmIdentifier *ai)
 {
     PKCS8PrivateKeyInfo ki;
-    heim_octet_string keydata;
+    hx509_private_key *private_key;
     int ret;
+
+    if ((flags & HX509_CERTS_NO_PRIVATE_KEYS))
+        return 0;
+
+    private_key = calloc(1, sizeof(*private_key));
+    if (private_key == NULL)
+        return hx509_enomem(context);
 
     ret = decode_PKCS8PrivateKeyInfo(data, length, &ki, NULL);
     if (ret)
 	return ret;
 
-    if (!(flags & HX509_CERTS_NO_PRIVATE_KEYS)) {
-        keydata.data = rk_UNCONST(data);
-        keydata.length = length;
-        ret = _hx509_collector_private_key_add(context,
-                                               c,
-                                               &ki.privateKeyAlgorithm,
-                                               NULL,
-                                               &ki.privateKey,
-                                               &keydata);
+    /*
+     * For interop reasons try letting the algorithm-specific import functions
+     * decode the PKCS#8 PrivateKeyInfo.
+     *
+     * The parameters needed to decode the private key can be placed either in
+     * the PKCS#8 PrivateKeyInfo structure, in the algorithm-specific structure
+     * encoded into the privateKey field of the PKCS#8 PrivateKeyInfo, or both.
+     *
+     * OpenSSL, for example, puts the parameters into the outer PKCS#8
+     * PrivateKeyInfo but not in the inner structure, so if we try to let the
+     * backend decode the inner structure, the backend will fail because the
+     * necessary parameters will be absent.
+     */
+    ret = hx509_parse_private_key(context, &ki.privateKeyAlgorithm,
+                                  data, length, HX509_KEY_FORMAT_PKCS8,
+                                  private_key);
+    if (ret == HX509_CRYPTO_KEY_FORMAT_UNSUPPORTED ||
+        ret == HX509_PARSING_KEY_FAILED) {
+        /*
+         * Our backends, however, only support the algorithm specific
+         * encodings, that which many refer to as "the raw DER".  They get the
+         * parameters from the PKCS#8 PrivateKeyInfo structure via the the
+         * `keyai' argument to hx509_parse_private_key().
+         */
+        ret = hx509_parse_private_key(context, &ki.privateKeyAlgorithm,
+                                      ki.privateKey.data, ki.privateKey.length,
+                                      HX509_KEY_FORMAT_DER,
+                                      private_key);
     }
+
+    if (ret == 0)
+        ret = _hx509_collector_private_key_add(context, c,
+                                               &ki.privateKeyAlgorithm,
+                                               *private_key, NULL, NULL);
+    if (ret)
+        hx509_private_key_free(private_key);
+    else
+        free(private_key);
     free_PKCS8PrivateKeyInfo(&ki);
     return ret;
 }
@@ -547,57 +582,71 @@ static int HX509_LIB_CALL
 store_func(hx509_context context, void *ctx, hx509_cert c)
 {
     struct store_ctx *sc = ctx;
-    heim_octet_string data;
+    hx509_private_key key = NULL;
+    heim_octet_string cert, priv;
+    uint32_t format = HX509_KEY_FORMAT_DER;
+    const char *pemtype = NULL;
     int ret = 0;
 
-    if (hx509_cert_have_private_key_only(c)) {
-        data.length = 0;
-        data.data = NULL;
-    } else {
-        ret = hx509_cert_binary(context, c, &data);
+    cert.length = 0;
+    cert.data = NULL;
+    priv.length = 0;
+    priv.data = NULL;
+
+    if (!hx509_cert_have_private_key_only(c)) {
+        ret = hx509_cert_binary(context, c, &cert);
         if (ret)
             return ret;
     }
 
+    if (!(sc->store_flags & HX509_CERTS_STORE_NO_PRIVATE_KEYS) &&
+        _hx509_cert_private_key_exportable(c)) {
+        key = _hx509_cert_private_key(c);
+        pemtype = _hx509_private_pem_name(key);
+
+        /*
+         * X25519/X448 don't have allocated PEM private key type names, so
+         * we must use PKCS#8.
+         *
+         * We represent this as the key type having the generic PEM type
+         * "PRIVATE KEY" instead of something like "X25519 PRIVATE KEY" or
+         * similar.
+         */
+        if (strcmp(pemtype, "PRIVATE KEY") == 0)
+            format = HX509_KEY_FORMAT_PKCS8;
+        ret = _hx509_private_key_export(context, key, format, &priv);
+        if (ret) {
+            free(cert.data);
+            return ret;
+        }
+    }
+
     switch (sc->format) {
     case USE_DER:
-        /* Can't store both.  Well, we could, but nothing will support it */
-        if (data.data) {
-            fwrite(data.data, data.length, 1, sc->f);
-        } else if (_hx509_cert_private_key_exportable(c) &&
-                   !(sc->store_flags & HX509_CERTS_STORE_NO_PRIVATE_KEYS)) {
-            hx509_private_key key = _hx509_cert_private_key(c);
-
-            free(data.data);
-            data.length = 0;
-            data.data = NULL;
-            ret = _hx509_private_key_export(context, key,
-                                            HX509_KEY_FORMAT_DER, &data);
-            if (ret == 0 && data.length)
-                fwrite(data.data, data.length, 1, sc->f);
-        }
+        /*
+         * Can't store both, the certificate and the private key.
+         * Well, we could, but nothing will support it.  We'd have to store
+         * them in some order (cert then key or key then cert) and to parse
+         * we'd have to expect them in that order or "taste" the first thing.
+         */
+        if (cert.data)
+            fwrite(cert.data, cert.length, 1, sc->f);
+        else if (priv.length)
+            fwrite(priv.data, priv.length, 1, sc->f);
 	break;
     case USE_PEM:
-	if (_hx509_cert_private_key_exportable(c) &&
-            !(sc->store_flags & HX509_CERTS_STORE_NO_PRIVATE_KEYS)) {
-            heim_octet_string priv_key;
-	    hx509_private_key key = _hx509_cert_private_key(c);
-
-	    ret = _hx509_private_key_export(context, key,
-					    HX509_KEY_FORMAT_DER, &priv_key);
-            if (ret == 0)
-                ret = hx509_pem_write(context, _hx509_private_pem_name(key), NULL,
-                                      sc->f, priv_key.data, priv_key.length);
-	    free(priv_key.data);
-	}
-        if (ret == 0 && data.data) {
+        /* Write the key first */
+	if (priv.length)
+            ret = hx509_pem_write(context, pemtype, NULL, sc->f,
+                                  priv.data, priv.length);
+        if (ret == 0 && cert.length)
             ret = hx509_pem_write(context, "CERTIFICATE", NULL, sc->f,
-                                  data.data, data.length);
-        }
+                                  cert.data, cert.length);
 	break;
     }
 
-    free(data.data);
+    free(cert.data);
+    free(priv.data);
     return ret;
 }
 

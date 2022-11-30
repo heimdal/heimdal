@@ -78,10 +78,18 @@ id-aes-256-cbc OBJECT IDENTIFIER ::=		{ id-nist-aes-algs 42 }
 
 id-nist-sha-algs OBJECT IDENTIFIER ::=		{ id-nistAlgorithm 2 }
 
-id-sha256 OBJECT IDENTIFIER ::=			{ id-nist-sha-algs 1 }
-id-sha224 OBJECT IDENTIFIER ::=			{ id-nist-sha-algs 4 }
-id-sha384 OBJECT IDENTIFIER ::=			{ id-nist-sha-algs 2 }
-id-sha512 OBJECT IDENTIFIER ::=			{ id-nist-sha-algs 3 }
+id-sha256       OBJECT IDENTIFIER ::=		{ id-nist-sha-algs 1 }
+id-sha384       OBJECT IDENTIFIER ::=		{ id-nist-sha-algs 2 }
+id-sha512       OBJECT IDENTIFIER ::=		{ id-nist-sha-algs 3 }
+id-sha224       OBJECT IDENTIFIER ::=		{ id-nist-sha-algs 4 }
+id-sha512-224   OBJECT IDENTIFIER ::=		{ id-nist-sha-algs 5 }
+id-sha512-256   OBJECT IDENTIFIER ::=		{ id-nist-sha-algs 6 }
+id-sha3-224     OBJECT IDENTIFIER ::=		{ id-nist-sha-algs 7 }
+id-sha3-256     OBJECT IDENTIFIER ::=		{ id-nist-sha-algs 8 }
+id-sha3-384     OBJECT IDENTIFIER ::=		{ id-nist-sha-algs 9 }
+id-sha3-512     OBJECT IDENTIFIER ::=		{ id-nist-sha-algs 10 }
+id-shake128     OBJECT IDENTIFIER ::=		{ id-nist-sha-algs 11 }
+id-shake256     OBJECT IDENTIFIER ::=		{ id-nist-sha-algs 12 }
 
 id-dhpublicnumber OBJECT IDENTIFIER ::= {
         iso(1) member-body(2) us(840) ansi-x942(10046)
@@ -147,6 +155,15 @@ id-x9-57 OBJECT IDENTIFIER ::= {
 
 id-dsa OBJECT IDENTIFIER ::=		{ id-x9-57 1 }
 id-dsa-with-sha1 OBJECT IDENTIFIER ::=		{ id-x9-57 3 }
+
+-- ECX (CFRG curves X25519 and X448 [RFC 8410])
+
+id-thawte OBJECT IDENTIFIER ::= { iso(1) identified-organization(3) thawte(101) }
+
+id-X25519                       OBJECT IDENTIFIER ::= { id-thawte X25519(110) }
+id-X448                         OBJECT IDENTIFIER ::= { id-thawte X448(111) }
+id-Ed25519                      OBJECT IDENTIFIER ::= { id-thawte Ed25519(112) }
+id-Ed448                        OBJECT IDENTIFIER ::= { id-thawte Ed448(113) }
 
 -- x.520 names types
 
@@ -582,6 +599,13 @@ RSAPrivateKey ::= SEQUENCE {
 	exponent1 INTEGER, -- d mod (p-1)
 	exponent2 INTEGER, -- d mod (q-1)
 	coefficient INTEGER -- (inverse of q) mod p
+}
+
+ECPrivateKey ::= SEQUENCE {
+        version INTEGER (0..4294967295),
+        privateKey OCTET STRING,
+        parameters [0] ECParameters OPTIONAL,
+        publicKey  [1] BIT STRING OPTIONAL
 }
 
 DigestInfo ::= SEQUENCE {

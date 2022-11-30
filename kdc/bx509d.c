@@ -1991,10 +1991,13 @@ get_tgts_accumulate_ccache_write_json(struct bx509_request_desc *r,
             ret = heim_dict_set_value(o, k, v);
     }
     if (ret == 0 && code != 0) {
+        const char *s = krb5_get_error_message(r->context, code);
+
         heim_release(v);
         heim_release(k);
         k = heim_string_create("error");
-        v = heim_string_create(krb5_get_error_message(r->context, code));
+        v = heim_string_create(s ? s : "Out of memory");
+        krb5_free_error_message(r->context, s);
         if (k && v)
             ret = heim_dict_set_value(o, k, v);
     }

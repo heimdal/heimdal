@@ -3015,7 +3015,7 @@ _asn1_copy(const struct asn1_template *t, const void *from, void *to)
 	    unsigned int i;
 
 	    tel->val = calloc(fel->len, ellen);
-	    if (tel->val == NULL)
+	    if (tel->val == NULL && fel->len > 0)
 		return ENOMEM;
 
 	    tel->len = fel->len;

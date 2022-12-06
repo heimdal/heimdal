@@ -260,6 +260,8 @@ get_krb5_context(krb5_context *contextp)
         return 0;
     if ((ret = krb5_init_context(contextp)))
         return *contextp = NULL, ret;
+    if (logfac)
+        krb5_set_log_dest(*contextp, logfac);
     (void) pthread_setspecific(k5ctx, *contextp);
     return *contextp ? 0 : ENOMEM;
 }
@@ -2819,6 +2821,7 @@ main(int argc, char **argv)
         err(1, "Could not init krb5 context");
 
     bx509_openlog(context, "bx509d", &logfac);
+    krb5_set_log_dest(context, logfac);
     load_plugins(context);
 
     if (allow_GET_flag == -1)

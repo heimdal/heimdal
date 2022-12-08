@@ -156,7 +156,7 @@ heim_log_facility *
 heim_log_ref(heim_log_facility *fac)
 {
     if (fac)
-        heim_base_atomic_inc(&fac->refs);
+        (void) heim_base_atomic_inc(&fac->refs);
     return fac;
 }
 

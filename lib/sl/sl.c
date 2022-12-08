@@ -358,7 +358,7 @@ sl_command_loop(SL_cmd *cmds, const char *prompt, void **data)
 	ret = sl_command(cmds, argc, argv);
 	if(ret == -1) {
 	    sl_did_you_mean(cmds, argv[0]);
-	    ret = 0;
+	    ret = 1;
 	}
     }
     free(buf);

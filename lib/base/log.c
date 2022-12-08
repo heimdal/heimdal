@@ -35,6 +35,7 @@
 
 #include "baselocl.h"
 #include "heim_threads.h"
+#include "heimbase-atomics.h"
 #include "heimbase.h"
 #include "heimbase-svc.h"
 #include <assert.h>

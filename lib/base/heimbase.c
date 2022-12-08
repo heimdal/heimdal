@@ -34,6 +34,7 @@
  */
 
 #include "baselocl.h"
+#include "heimbase-atomics.h"
 #include <syslog.h>
 
 static heim_base_atomic_integer_type tidglobal = HEIM_TID_USER;

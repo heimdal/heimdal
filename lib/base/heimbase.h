@@ -36,8 +36,6 @@
 #ifndef HEIM_BASE_H
 #define HEIM_BASE_H 1
 
-#include "config.h"
-
 #include <sys/types.h>
 #ifndef _WIN32
 #include <sys/socket.h>
@@ -537,7 +535,6 @@ void *heim_w32_getspecific(unsigned long);
 void heim_w32_service_thread_detach(void *);
 
 #include <heim_threads.h>
-#include "heimbase-atomics.h"
 #include <com_err.h>
 
 /*

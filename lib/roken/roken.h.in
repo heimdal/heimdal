@@ -563,6 +563,18 @@ ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
      __attribute__ ((__format__ (__printf__, 3, 0)));
 #endif
 
+#if !defined(HAVE_EVASPRINTF) || defined(NEED_EVASPRINTF_PROTO)
+#define evasprintf  rk_evasprintf
+ROKEN_LIB_FUNCTION char * ROKEN_LIB_CALL
+rk_evasprintf(const char *format, va_list args);
+#endif
+
+#if !defined(HAVE_EASPRINTF) || defined(NEED_EASPRINTF_PROTO)
+#define easprintf   rk_easprintf
+ROKEN_LIB_FUNCTION char * ROKEN_LIB_CALL
+rk_easprintf(const char *format, ...);
+#endif
+
 #ifndef HAVE_STRDUP
 #define strdup rk_strdup
 ROKEN_LIB_FUNCTION char * ROKEN_LIB_CALL strdup(const char *);

@@ -701,3 +701,30 @@ rk_vsnprintf (char *str, size_t sz, const char *format, va_list args)
     return ret;
 }
 #endif
+
+#if !defined(HAVE_EVASPRINTF) || defined(TEST_SNPRINTF)
+ROKEN_LIB_FUNCTION char * ROKEN_LIB_CALL
+rk_evasprintf(const char *format, va_list args)
+{
+    char *s = NULL;
+
+    if (vasprintf(&s, format, args) == -1 || s == NULL)
+        errx(1, "Out of memory");
+    return s;
+}
+#endif
+
+#if !defined(HAVE_EASPRINTF) || defined(TEST_SNPRINTF)
+ROKEN_LIB_FUNCTION char * ROKEN_LIB_CALL
+rk_easprintf(const char *format, ...)
+{
+    va_list args;
+    char *s = NULL;
+
+    va_start(args, format);
+    if (vasprintf(&s, format, args) == -1 || s == NULL)
+        errx(1, "Out of memory");
+    va_end(args);
+    return s;
+}
+#endif

@@ -36,8 +36,6 @@
 #ifndef HEIM_BASE_ATOMICS_H
 #define HEIM_BASE_ATOMICS_H 1
 
-#include "config.h"
-
 /*
  * Atomic operations
  */

@@ -223,7 +223,8 @@ cmp_with_sprintf_float (void)
 static int
 test_null (void)
 {
-    return rk_snprintf (NULL, 0, "foo") != 3;
+    char tmp[256];
+    return rk_snprintf (tmp, sizeof(tmp), "foo") != 3;
 }
 
 static int

@@ -674,7 +674,7 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_acquire_cred_from
 				    NULL, time_rec, NULL, actual_mechs);
     if (ret != GSS_S_COMPLETE) {
 	if (handle->mechanisms != NULL)
-	    gss_release_oid_set(NULL, &handle->mechanisms);
+	    gss_release_oid_set(minor_status, &handle->mechanisms);
 	HEIMDAL_MUTEX_destroy(&handle->cred_id_mutex);
 	krb5_free_principal(context, handle->principal);
 	free(handle);

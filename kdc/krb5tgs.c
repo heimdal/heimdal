@@ -1624,7 +1624,7 @@ server_lookup:
 	ret = krb5_unparse_name(context, priv->krbtgt->principal, &ktpn);
 	kdc_log(context, config, 4,
 		"No such principal %s (needed for authz-data signature keys) "
-		"while processing TGS-REQ for service %s with krbtg %s",
+		"while processing TGS-REQ for service %s with krbtgt %s",
 		krbtgt_out_n, spn, (ret == 0) ? ktpn : "<unknown>");
 	free(ktpn);
 	ret = KRB5KRB_AP_ERR_NOT_US;

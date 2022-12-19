@@ -131,6 +131,9 @@ EXPORTS
 	hx509_cert_init
 	hx509_cert_init_data
 	hx509_cert_init_private_key
+	hx509_cert_is_ca
+	hx509_cert_is_root
+	hx509_cert_is_self_signed
 	hx509_cert_keyusage_print
 	hx509_cert_ref
 	hx509_cert_set_friendly_name

@@ -113,6 +113,9 @@ HEIMDAL_X509_1.2 {
 		hx509_cert_init;
 		hx509_cert_init_data;
 		hx509_cert_init_private_key;
+		hx509_cert_is_ca;
+		hx509_cert_is_root;
+		hx509_cert_is_self_signed;
 		hx509_cert_keyusage_print;
 		hx509_cert_public_encrypt;
 		hx509_cert_ref;

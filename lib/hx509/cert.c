@@ -1213,6 +1213,65 @@ certificate_is_self_signed(hx509_context context,
     return ret;
 }
 
+HX509_LIB_FUNCTION int HX509_LIB_CALL
+hx509_cert_is_self_signed(hx509_context context,
+                          hx509_cert c,
+                          int *self_signed)
+{
+    return certificate_is_self_signed(context, c->data, self_signed);
+}
+
+HX509_LIB_FUNCTION int HX509_LIB_CALL
+hx509_cert_is_ca(hx509_context context,
+                 hx509_cert c,
+                 int *is_ca)
+{
+    BasicConstraints bc;
+    const Extension *e;
+    size_t size;
+    size_t i = 0;
+    int ret = 0;
+
+    *is_ca = 0;
+    if (_hx509_cert_get_version(c->data) < 3)
+        return certificate_is_self_signed(context, c->data, is_ca);
+
+    e = find_extension(c->data, &asn1_oid_id_x509_ce_basicConstraints, &i);
+    if (e == NULL) {
+        *is_ca = 0;
+        return 0;
+    }
+
+    ret = decode_BasicConstraints(e->extnValue.data,
+				  e->extnValue.length, &bc,
+				  &size);
+    if (ret)
+        return ret;
+
+    *is_ca = bc.cA;
+    free_BasicConstraints(&bc);
+    return 0;
+}
+
+HX509_LIB_FUNCTION int HX509_LIB_CALL
+hx509_cert_is_root(hx509_context context,
+                   hx509_cert c,
+                   int *is_root)
+{
+    int ret;
+
+    *is_root = 0;
+    ret = hx509_cert_is_ca(context, c, is_root);
+    if (ret)
+        return ret;
+    if (*is_root == 0)
+        /* Not a CA certificate -> not a root certificate */
+        return 0;
+
+    /* A CA certificate.  If it's self-signed, it's a root certificate. */
+    return hx509_cert_is_self_signed(context, c, is_root);
+}
+
 /*
  * The subjectName is "null" when it's empty set of relative DBs.
  */

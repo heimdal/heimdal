@@ -1207,7 +1207,7 @@ certificate_is_self_signed(hx509_context context,
     if (ret) {
 	hx509_set_error_string(context, 0, ret,
 			       "Failed to check if self signed");
-    } else
+    } else if (diff == 0)
 	ret = _hx509_self_signed_valid(context, &cert->signatureAlgorithm);
 
     return ret;

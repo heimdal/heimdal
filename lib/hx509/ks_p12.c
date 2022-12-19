@@ -525,6 +525,14 @@ store_func(hx509_context context, void *d, hx509_cert c)
     size_t size;
     int ret;
 
+    if ((ctx->store_flags & HX509_CERTS_STORE_NO_ROOTS)) {
+        int is_root = 0;
+
+        ret = hx509_cert_is_root(context, c, &is_root);
+        if (ret || is_root)
+            return ret;
+    }
+
     memset(&os, 0, sizeof(os));
     memset(&cb, 0, sizeof(cb));
 

@@ -71,6 +71,9 @@ rk_undumpdata(const char *filename, void **buf, size_t *size)
 	ret = errno;
 	goto out;
     }
+
+    if (sb.st_size < 0)
+        sb.st_size = 0;
     *buf = malloc(sb.st_size);
     if (*buf == NULL) {
 	ret = ENOMEM;
@@ -78,7 +81,7 @@ rk_undumpdata(const char *filename, void **buf, size_t *size)
     }
     *size = sb.st_size;
 
-    sret = net_read(fd, *buf, *size);
+    sret = read(fd, *buf, *size);
     if (sret < 0)
 	ret = errno;
     else if (sret != (ssize_t)*size)

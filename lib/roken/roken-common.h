@@ -532,6 +532,9 @@ rk_dumpdata (const char *, const void *, size_t);
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 rk_undumpdata (const char *, void **, size_t *);
 
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
+rk_undumptext (const char *, char **, size_t *);
+
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
 rk_xfree (void *);
 

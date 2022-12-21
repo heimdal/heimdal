@@ -171,6 +171,7 @@ HEIMDAL_ROKEN_2.0 {
 		rk_tsearch;
 		rk_twalk;
 		rk_undumpdata;
+		rk_undumptext;
 		rk_unparse_flags;
 		rk_unparse_time;
 		rk_unparse_time_approx;

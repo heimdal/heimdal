@@ -486,7 +486,6 @@ static int in_binary_flag = 0;
 static int out_hex_flag = 0;
 static int out_binary_flag = 0;
 static int must_round_trip_flag = 0;
-static int byteorder_packed_flag = 0;
 static char *byteorder_string_in_string;
 static char *byteorder_string_out_string;
 static struct getargs args[] = {
@@ -508,8 +507,7 @@ static struct getargs args[] = {
     { "byte-order-out", '\0', arg_string, &byteorder_string_out_string,
         "Output byte order", "host, network, be, or le" },
     { "byte-order-in", '\0', arg_string, &byteorder_string_in_string,
-        "Input byte order", "host, network, be, or le" },
-    { "byte-order-packed", '\0', arg_flag, &byteorder_packed_flag, NULL, NULL },
+        "Input byte order", "host, network, packed, be, or le" },
 };
 
 #define DO_TYPE1(t, r, s)               \
@@ -765,7 +763,9 @@ static krb5_flags
 byteorder_flags(const char *s)
 {
     if (s == NULL)
-        return KRB5_STORAGE_BYTEORDER_HOST;
+        return KRB5_STORAGE_BYTEORDER_BE;
+    if (strcasecmp(s, "packed") == 0)
+        return KRB5_STORAGE_BYTEORDER_PACKED;
     if (strcasecmp(s, "host") == 0)
         return KRB5_STORAGE_BYTEORDER_HOST;
     if (strcasecmp(s, "network") == 0)
@@ -839,10 +839,6 @@ main(int argc, char **argv)
         }
     }
 
-    if (byteorder_packed_flag) {
-        spflags_in  |= KRB5_STORAGE_BYTEORDER_PACKED;
-        spflags_out |= KRB5_STORAGE_BYTEORDER_PACKED;
-    }
     spflags_in  |= byteorder_flags(byteorder_string_in_string);
     spflags_out |= byteorder_flags(byteorder_string_out_string);
 
@@ -878,22 +874,53 @@ main(int argc, char **argv)
     if (ret)
         krb5_err(NULL, 1, ret, "Could not check round-tripping");
     if (i.length != o.length || memcmp(i.data, o.data, i.length) != 0) {
-        if (must_round_trip_flag) {
-            char *hexstr = NULL;
+        krb5_storage *insp2;
+        krb5_data i2;
+        char *hexin = NULL;
+        char *hexout = NULL;
 
-            if (hex_encode(inbin, insz, &hexstr) == -1)
-                err(1, "Encoding does not round-trip");
-            if (fprintf(stderr, "%s\n", hexstr) < 0)
-                err(1, "Could not output encoding");
-            free(hexstr);
-            errx(1, "Encoding does not round-trip");
-        } else {
-            warnx("Encoding does not round-trip");
+        /*
+         * kadm5_ret_principal_ent() reverses the TL data list.  So try to
+         * re-encode once more.
+         */
+
+        if (strcmp(argv[0], "kadm5_principal_ent_rec") == 0) {
+            insp2 = krb5_storage_emem();
+            if (insp2 == NULL)
+                errx(1, "Out of memory");
+
+            krb5_storage_set_flags(insp2, spflags_in);
+            ret = reencode(argv[0], outsp, insp2);
+            if (ret == 0)
+                ret = krb5_storage_to_data(insp2, &i2);
+            if (ret)
+                krb5_err(NULL, 1, ret, "Could not decode and re-encode");
+            if (i.length == i2.length && memcmp(i.data, i2.data, i.length) == 0) {
+                krb5_storage_free(insp2);
+                krb5_data_free(&i2);
+                goto good;
+            }
         }
+        if (hex_encode(i.data, i.length, &hexin) < 0)
+            errx(1, "Out of memory");
+        if (hex_encode(o.data, o.length, &hexout) < 0)
+            errx(1, "Out of memory");
+        if (must_round_trip_flag) {
+            errx(1, "Encoding does not round-trip\n(in:  %s)\n(out: %s)", hexin,
+                 hexout);
+        } else {
+            warnx("Encoding does not round-trip\n(in:  %s)\n(out: %s)", hexin,
+                  hexout);
+        }
+        krb5_storage_free(insp2);
+        krb5_data_free(&i2);
+        free(hexin);
+        free(hexout);
     } else if (verbose_flag) {
         fprintf(stderr, "Encoding round-trips!\n");
     }
 
+good:
     if (out_hex_flag) {
         char *hexstr = NULL;
 

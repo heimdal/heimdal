@@ -394,11 +394,15 @@ $hxtool acert --expr="%{certificate.subject} == \"OU=Users,CN=KDC,$DCs\""   \
 
 if ! which curl; then
     echo "curl is not available -- not testing bx509d"
+    sh ${leaks_kill} test_csr_authorizer $test_csr_authorizer_pid || ec=1
+    trap '' EXIT
     exit 77
 fi
 
 if ! test -x ${objdir}/../../kdc/bx509d; then
     echo "Configured w/o libmicrohttpd -- not testing bx509d"
+    sh ${leaks_kill} test_csr_authorizer $test_csr_authorizer_pid || ec=1
+    trap '' EXIT
     exit 77
 fi
 

@@ -103,10 +103,10 @@
 
 #define heim_base_atomic_barrier()	__isync()
 
-#define heim_base_atomic_inc(x)		(fetch_and_add((atomic_p)(x)) + 1)
-#define heim_base_atomic_dec(x)		(fetch_and_add((atomic_p)(x)) - 1)
-#define heim_base_atomic_integer_type	unsigned int
-#define heim_base_atomic_integer_max	UINT_MAX
+#define heim_base_atomic_inc(x)		(fetch_and_add((atomic_p)(x),  1) + 1)
+#define heim_base_atomic_dec(x)		(fetch_and_add((atomic_p)(x), -1) - 1)
+#define heim_base_atomic_integer_type	int
+#define heim_base_atomic_integer_max	INT_MAX
 
 static inline void *
 heim_base_exchange_pointer(void *p, void *newval)

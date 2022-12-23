@@ -38,8 +38,8 @@
 # principal name
 int32 0
 int32 1
-string TEST.H5L.SE
-string foo
+string T
+string f
 # expiration
 int32 2
 # pw expiration
@@ -52,8 +52,8 @@ int32 5
 int32 1
 int32 0
 int32 1
-string TEST.H5L.SE
-string bar
+string T
+string b
 # mod time
 int32 6
 # attrs

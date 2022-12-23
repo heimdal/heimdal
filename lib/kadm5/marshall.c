@@ -798,11 +798,14 @@ main(int argc, char **argv)
 {
     krb5_error_code ret = 0;
     krb5_storage *insp = NULL;
+    krb5_storage *insp2 = NULL;
     krb5_storage *outsp = NULL;
     krb5_flags spflags_in = 0;
     krb5_flags spflags_out = 0;
-    krb5_data i, o;
+    krb5_data i, i2, o;
     size_t insz = 0;
+    char *hexout = NULL;
+    char *hexin = NULL;
     char *intxt = NULL;
     void *inbin = NULL;
     int optidx = 0;
@@ -859,68 +862,10 @@ main(int argc, char **argv)
         errx(1, "Out of memory");
     krb5_storage_set_flags(insp, spflags_in);
 
-    outsp = krb5_storage_emem();
-    if (outsp == NULL)
-        errx(1, "Out of memory");
-    krb5_storage_set_flags(outsp, spflags_out);
-
-    ret = reencode(argv[0], insp, outsp);
-    if (ret)
-        krb5_err(NULL, 1, ret, "Could not decode and re-encode");
-
     ret = krb5_storage_to_data(insp, &i);
-    if (ret == 0)
-        ret = krb5_storage_to_data(outsp, &o);
     if (ret)
         krb5_err(NULL, 1, ret, "Could not check round-tripping");
-    if (i.length != o.length || memcmp(i.data, o.data, i.length) != 0) {
-        krb5_storage *insp2;
-        krb5_data i2;
-        char *hexin = NULL;
-        char *hexout = NULL;
 
-        /*
-         * kadm5_ret_principal_ent() reverses the TL data list.  So try to
-         * re-encode once more.
-         */
-
-        if (strcmp(argv[0], "kadm5_principal_ent_rec") == 0) {
-            insp2 = krb5_storage_emem();
-            if (insp2 == NULL)
-                errx(1, "Out of memory");
-
-            krb5_storage_set_flags(insp2, spflags_in);
-            ret = reencode(argv[0], outsp, insp2);
-            if (ret == 0)
-                ret = krb5_storage_to_data(insp2, &i2);
-            if (ret)
-                krb5_err(NULL, 1, ret, "Could not decode and re-encode");
-            if (i.length == i2.length && memcmp(i.data, i2.data, i.length) == 0) {
-                krb5_storage_free(insp2);
-                krb5_data_free(&i2);
-                goto good;
-            }
-        }
-        if (hex_encode(i.data, i.length, &hexin) < 0)
-            errx(1, "Out of memory");
-        if (hex_encode(o.data, o.length, &hexout) < 0)
-            errx(1, "Out of memory");
-        if (must_round_trip_flag) {
-            errx(1, "Encoding does not round-trip\n(in:  %s)\n(out: %s)", hexin,
-                 hexout);
-        } else {
-            warnx("Encoding does not round-trip\n(in:  %s)\n(out: %s)", hexin,
-                  hexout);
-        }
-        krb5_storage_free(insp2);
-        krb5_data_free(&i2);
-        free(hexin);
-        free(hexout);
-    } else if (verbose_flag) {
-        fprintf(stderr, "Encoding round-trips!\n");
-    }
-
-good:
     if (out_hex_flag) {
         char *hexstr = NULL;
 
@@ -949,10 +894,69 @@ good:
         }
     }
 
+    outsp = krb5_storage_emem();
+    if (outsp == NULL)
+        errx(1, "Out of memory");
+    krb5_storage_set_flags(outsp, spflags_out);
+
+    ret = reencode(argv[0], insp, outsp);
+    if (ret)
+        krb5_err(NULL, 1, ret, "Could not decode and re-encode");
+
+    if (i.length == o.length && memcmp(i.data, o.data, i.length) == 0) {
+        if (verbose_flag)
+            fprintf(stderr, "Encoding round-trips!\n");
+        goto out;
+    }
+
+    ret = krb5_storage_to_data(outsp, &o);
+    if (ret)
+        krb5_err(NULL, 1, ret, "Out of memory");
+
+    /*
+     * The encoding did not round trip.  Sadly kadm5_ret_principal_ent()
+     * reverses the TL data list.  So try to re-encode one more time.
+     */
+
+    if (strcmp(argv[0], "kadm5_principal_ent_rec") == 0) {
+        insp2 = krb5_storage_emem();
+        if (insp2 == NULL)
+            errx(1, "Out of memory");
+
+        krb5_storage_set_flags(insp2, spflags_in);
+        ret = reencode(argv[0], outsp, insp2);
+        if (ret == 0)
+            ret = krb5_storage_to_data(insp2, &i2);
+        if (ret)
+            krb5_err(NULL, 1, ret, "Could not decode and re-encode");
+        if (i.length == i2.length && memcmp(i.data, i2.data, i.length) == 0) {
+            if (verbose_flag)
+                fprintf(stderr, "Encoding round-trips!\n");
+            goto out;
+        }
+    }
+    if (hex_encode(i.data, i.length, &hexin) < 0)
+        errx(1, "Out of memory");
+    if (hex_encode(o.data, o.length, &hexout) < 0)
+        errx(1, "Out of memory");
+    if (must_round_trip_flag) {
+        errx(1, "Encoding does not round-trip\n(in:  %s)\n(out: %s)", hexin,
+             hexout);
+    } else {
+        warnx("Encoding does not round-trip\n(in:  %s)\n(out: %s)", hexin,
+              hexout);
+    }
+
+out:
+
+    free(hexin);
+    free(hexout);
     krb5_data_free(&o);
     krb5_data_free(&i);
+    krb5_data_free(&i2);
     krb5_storage_free(insp);
     krb5_storage_free(outsp);
+    krb5_storage_free(insp2);
     return ret;
 }
 #endif

@@ -2312,6 +2312,8 @@ _kdc_as_rep(astgs_request_t r)
 	    }
 	    if (pat[n].type == KRB5_PADATA_FX_FAST && !r->config->enable_fast)
 		continue;
+	    if (pat[n].type == KRB5_PADATA_GSS && !r->config->enable_gss_preauth)
+		continue;
 
 	    ret = krb5_padata_add(r->context, r->rep.padata,
 				  pat[n].type, NULL, 0);

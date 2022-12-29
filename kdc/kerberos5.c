@@ -2302,6 +2302,8 @@ _kdc_as_rep(astgs_request_t r)
 
 	    if (!r->armor_crypto && (pat[n].flags & PA_REQ_FAST))
 		continue;
+	    if (pat[n].type == KRB5_PADATA_PKINIT_KX && !r->config->allow_anonymous)
+		continue;
 	    if (pat[n].type == KRB5_PADATA_ENC_TIMESTAMP) {
 		if (r->armor_crypto && !r->config->enable_armored_pa_enc_timestamp)
 		    continue;

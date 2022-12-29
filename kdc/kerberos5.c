@@ -1997,7 +1997,10 @@ add_enc_pa_rep(astgs_request_t r)
 			  KRB5_PADATA_REQ_ENC_PA_REP, cdata.data, cdata.length);
     if (ret)
 	return ret;
-    
+
+    if (!r->config->enable_fast)
+	return 0;
+
     return krb5_padata_add(r->context, r->ek.encrypted_pa_data,
 			   KRB5_PADATA_FX_FAST, NULL, 0);
 }
@@ -2305,6 +2308,8 @@ _kdc_as_rep(astgs_request_t r)
 		if (!r->armor_crypto && !r->config->enable_unarmored_pa_enc_timestamp)
 		    continue;
 	    }
+	    if (pat[n].type == KRB5_PADATA_FX_FAST && !r->config->enable_fast)
+		continue;
 
 	    ret = krb5_padata_add(r->context, r->rep.padata,
 				  pat[n].type, NULL, 0);

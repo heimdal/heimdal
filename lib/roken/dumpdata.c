@@ -112,7 +112,7 @@ undump_not_file(int fd, char **out, size_t *size, int nul_terminate)
         return 0;
     }
 
-    tmp = realloc(buf, bufsz + 1);
+    *out = tmp = realloc(buf, bufsz + 1);
     if (tmp == NULL) {
         free(buf);
         return ENOMEM;

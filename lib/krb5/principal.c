@@ -1785,6 +1785,8 @@ _krb5_get_name_canon_rules(krb5_context context, krb5_name_canon_rule *rules)
     krb5_config_free_strings(values);
     if (ret)
 	return ret;
+    if (*rules == NULL)
+        return krb5_enomem(context);
 
     if (krb5_config_get_bool_default(context, NULL, FALSE,
                                      "libdefaults", "safe_name_canon", NULL))

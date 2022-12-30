@@ -2041,7 +2041,6 @@ _krb5_store_utf8_as_ucs2le_at_offset(krb5_storage *sp,
 	ucs2le = NULL;
 	ucs2le_size = 0;
 	offset = 0;
-	ret = 0;
     }
 
     {

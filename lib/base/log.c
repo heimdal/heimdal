@@ -227,6 +227,8 @@ open_syslog(heim_context context,
                            close_syslog, sd);
     if (ret)
         free(sd);
+    else
+        sd = NULL;
     return ret;
 }
 
@@ -348,6 +350,7 @@ open_file(heim_context context, heim_log_facility *fac, int min, int max,
         free(fd);
     } else if (disp & FILEDISP_KEEPOPEN) {
         log_file(context, NULL, NULL, fd);
+        fd = NULL;
     }
     return ret;
 }

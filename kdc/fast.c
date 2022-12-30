@@ -630,6 +630,7 @@ fast_unwrap_request(astgs_request_t r,
 	goto out;
 
     if (r->explicit_armor_present) {
+	heim_assert(tgs_ac != NULL, "compiler error"); /* Quiet scan-build */
 	ret = _krb5_fast_explicit_armor_key(r->context,
 					    &armorkey,
 					    tgs_ac->remote_subkey,

@@ -1546,7 +1546,7 @@ k5_get_creds(struct bx509_request_desc *r, enum k5_creds_kind kind)
 static void
 acc_str(char **acc, char *adds, size_t addslen)
 {
-    char *tmp;
+    char *tmp = NULL;
     int l = addslen <= INT_MAX ? (int)addslen : INT_MAX;
 
     if (asprintf(&tmp, "%s%s%.*s",
@@ -1573,7 +1573,7 @@ fmt_gss_error(OM_uint32 code, gss_OID mech)
             acc_str(&r, (char *)buf.value, buf.length);
         gss_release_buffer(&minor, &buf);
     } while (!GSS_ERROR(major) && more);
-    return r ? r : "Out of memory while formatting GSS-API error";
+    return r;
 }
 
 static char *
@@ -1583,7 +1583,10 @@ fmt_gss_errors(const char *r, OM_uint32 major, OM_uint32 minor, gss_OID mech)
 
     ma = fmt_gss_error(major, GSS_C_NO_OID);
     mi = mech == GSS_C_NO_OID ? NULL : fmt_gss_error(minor, mech);
-    if (asprintf(&s, "%s: %s%s%s", r, ma, mi ? ": " : "", mi ? mi : "") > -1 &&
+    if (asprintf(&s, "%s: %s%s%s", r,
+                 ma ? ma : "Out of memory",
+                 mi ? ": " : "",
+                 mi ? mi : "") > -1 &&
         s) {
         free(ma);
         free(mi);
@@ -1608,8 +1611,13 @@ bad_req_gss(struct bx509_request_desc *r,
     if (major == GSS_S_BAD_NAME || major == GSS_S_BAD_NAMETYPE)
         http_status_code = MHD_HTTP_BAD_REQUEST;
 
-    ret = resp(r, http_status_code, MHD_RESPMEM_MUST_COPY, NULL,
-               msg, strlen(msg), NULL);
+    if (msg)
+        ret = resp(r, http_status_code, MHD_RESPMEM_MUST_COPY, NULL,
+                   msg, strlen(msg), NULL);
+    else
+        ret = resp(r, http_status_code, MHD_RESPMEM_MUST_COPY, NULL,
+                   "Out of memory while formatting GSS error message",
+                   sizeof("Out of memory while formatting GSS error message") - 1, NULL);
     free(msg);
     return ret;
 }
@@ -2132,6 +2140,7 @@ get_tgts_param_execute_cb(void *d,
     size_t san_idx = r->san_idx++;
     const char *save_for_cname = r->for_cname;
     char *s = NULL;
+    int res;
 
     /* We expect only cname=principal q-params here */
     if (strcmp(key, "cname") != 0 || val == NULL)
@@ -2193,13 +2202,13 @@ get_tgts_param_execute_cb(void *d,
      * If ret == 0 this will gather the TGT we acquired, else it will acquire
      * the error we got.
      */
-    ret = get_tgts_accumulate_ccache(r, ret);
+    res = get_tgts_accumulate_ccache(r, ret);
 
     /* Now we "pop" `r->for_cname' */
     r->for_cname = save_for_cname;
 
     hx509_xfree(s);
-    return MHD_YES;
+    return res;
 }
 
 /*
@@ -2408,7 +2417,7 @@ make_csrf_token(struct bx509_request_desc *r,
     if (ret == 0 && data.length > INT_MAX)
         ret = ERANGE;
     if (ret == 0 &&
-        (dlen = rk_base64_encode(data.data, data.length, token)) < 0)
+        rk_base64_encode(data.data, data.length, token) < 0)
         ret = errno;
     krb5_storage_free(sp);
     krb5_data_free(&data);
@@ -2506,6 +2515,7 @@ ip(void *cls,
     if (ftl == NULL || keydup == NULL || valdup == NULL) {
         free(ftl);
         free(keydup);
+        free(valdup);
         return MHD_NO;
     }
     ftl->freeme1 = keydup;

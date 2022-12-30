@@ -69,9 +69,9 @@ lookup(const char *name)
     struct addrinfo *ai;
 
     size_t u_len = strlen(name);
-    uint32_t *u = malloc(u_len * sizeof(uint32_t));
+    uint32_t *u = calloc(u_len, sizeof(uint32_t));
     size_t norm_len = u_len * 2;
-    uint32_t *norm = malloc(norm_len * sizeof(uint32_t));
+    uint32_t *norm = calloc(norm_len, sizeof(uint32_t));
 
     if (u == NULL && u_len != 0)
 	errx(1, "malloc failed");

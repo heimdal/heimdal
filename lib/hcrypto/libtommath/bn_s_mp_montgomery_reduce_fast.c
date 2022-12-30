@@ -31,6 +31,14 @@ mp_err s_mp_montgomery_reduce_fast(mp_int *x, const mp_int *n, mp_digit rho)
       }
    }
 
+   /*
+    * We only have to initialize W[] here because even though we'll initialize
+    * it below, scan-build can fail to notice that we initialized as much of it
+    * as we'll use, and so it emits a spurious warning.  An optimizing compiler
+    * might be as dumb as scan-build... so let's avoid the danger.
+    */
+   MP_ZERO_BUFFER(W, sizeof(W));
+
    /* first we have to get the digits of the input into
     * an array of double precision words W[...]
     */

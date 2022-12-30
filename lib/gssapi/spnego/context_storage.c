@@ -207,7 +207,9 @@ ret_spnego_context(krb5_storage *sp, gssspnego_ctx *ctxp)
             struct negoex_auth_mech *mech;
 
             CHECK(ret, ret_negoex_auth_mech(sp, &mech));
-            HEIM_TAILQ_INSERT_TAIL(&ctx->negoex_mechs, mech, links);
+            /* `mech' will not be NULL here, but quiet scan-build */
+            if (mech)
+                HEIM_TAILQ_INSERT_TAIL(&ctx->negoex_mechs, mech, links);
         }
     }
 

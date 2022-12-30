@@ -742,6 +742,9 @@ repl_mutual
     output_token->length = 0;
     output_token->value = NULL;
 
+    if (input_token == GSS_C_NO_BUFFER)
+        return GSS_S_FAILURE;
+
     if (actual_mech_type)
 	*actual_mech_type = GSS_KRB5_MECHANISM;
 

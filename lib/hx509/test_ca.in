@@ -310,6 +310,29 @@ ${hxtool} verify --missing-revoke \
 	cert:FILE:cert-ee.pem \
 	anchor:FILE:cert-ca.pem > /dev/null || exit 1
 
+rm -rf ${objdir}/anchors
+mkdir ${objdir}/anchors
+cp cert-ca.pem ${objdir}/anchors
+hash=`${hxtool} print --hash FILE:cert-ca.pem | grep issuer.hash | cut -d: -f2`
+(cd ${objdir}/anchors; ln cert-ca.pem ${hash}.0)
+
+echo "verify certificate (ee) (DIR store)"
+${hxtool} verify --missing-revoke \
+	cert:FILE:cert-ee.pem \
+	anchor:DIR:${objdir}/anchors > /dev/null || exit 1
+
+if openssl version > /dev/null; then
+    echo "verify certificate (ee) (DIR store; OpenSSL interoperability)"
+    rm -rf ${objdir}/anchors
+    mkdir ${objdir}/anchors
+    cp cert-ca.pem ${objdir}/anchors
+    openssl rehash ${objdir}/anchors
+
+    ${hxtool} verify --missing-revoke \
+            cert:FILE:cert-ee.pem \
+            anchor:DIR:${objdir}/anchors > /dev/null || exit 1
+fi
+
 echo "verify certificate (sub-ee)"
 ${hxtool} verify --missing-revoke \
 	cert:FILE:cert-sub-ee.pem \

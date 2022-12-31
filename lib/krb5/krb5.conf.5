@@ -182,6 +182,15 @@ client's end entity certificate.
 .It Li pkinit_anchors = Va HX509-STORE ...
 This is a multi-valued parameter naming one or more stores of
 anchors for PKINIT KDC certificates.
+Note that the
+.Va DIR
+and
+.Va HASHDIR
+types of
+.Va HX509-STORE
+are also supported here.
+.Va HASHDIR
+type stores are OpenSSL-style CA certificate hash directories.
 .It Li pkinit_revoke = Va HX509-STORE ...
 This is a multi-valued parameter naming one or more stores of
 of CRLs for the issuers of PKINIT KDC certificates.
@@ -892,10 +901,12 @@ This is a multi-valued parameter naming one or more stores of
 anchors for PKINIT client certificates.
 Note that the
 .Va DIR
-type of
+and
+.Va HASHDIR
+types of
 .Va HX509-STORE
-is also supported here.
-.Va DIR
+are also supported here.
+.Va HASHDIR
 type stores are OpenSSL-style CA certificate hash directories.
 .It Li pkinit_revoke = Va HX509-STORE ...
 This is a multi-valued parameter naming one or more stores of

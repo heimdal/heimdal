@@ -80,7 +80,9 @@ do_subst = $(heim_verbose)sed $(do_dlopen) \
 	-e 's,[@]db_type[@],$(db_type),g' \
 	-e 's,[@]max_life_from_cert[@],$(pkinit_ticket_max_life_from_cert),g' \
         -e 's,[@]ENABLE_AFS_STRING_TO_KEY[@],$(ENABLE_AFS_STRING_TO_KEY),' \
-	-e 's,[@]EGREP[@],$(EGREP),g' 
+        -e 's,[@]ENABLE_AFS_STRING_TO_KEY[@],$(ENABLE_AFS_STRING_TO_KEY),' \
+	-e 's,[@]EGREP[@],$(EGREP),g' \
+	-e 's,[@]MITKRB5[@],$(MITKRB5),g' 
 
 chmod = chmod
 

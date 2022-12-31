@@ -883,7 +883,7 @@ _krb5_fast_anon_pkinit_step(krb5_context context,
 	ret = krb5_make_principal(context, &principal, realm,
 				  KRB5_WELLKNOWN_NAME, KRB5_ANON_NAME, NULL);
 	if (ret)
-	    return ret;
+	    goto out;
 
 	ret = krb5_get_init_creds_opt_set_pkinit(context,
 						 state->anon_pkinit_opt,

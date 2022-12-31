@@ -611,9 +611,10 @@ authorize(void *ctx,
     hx509_request_authorize_ku(csr, ku);
 
     if (do_check) {
-        if ((s = rk_strpoolcollect(cmd)) == NULL)
-            goto enomem;
+        s = rk_strpoolcollect(cmd);
         cmd = NULL;
+        if (s == NULL)
+            goto enomem;
         if ((ret = call_svc(context, ipc, csr, s, piecemeal_check_ok)))
             goto out;
     } /* else there was nothing to check -> permit */

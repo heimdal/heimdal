@@ -109,6 +109,7 @@ parse_enctypes(struct get_options *opt,
             free(s);
             return krb5_enomem(context);
         }
+	free(s);
         s = tmp;
     }
     ret = krb5_string_to_keysalts2(context, s, nks, ks);

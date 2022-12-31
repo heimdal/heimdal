@@ -376,15 +376,15 @@ ret_negoex_auth_mech(krb5_storage *sp, struct negoex_auth_mech **mechp)
     if (snc_flags & SNC_METADATA)
         CHECK(major, _gss_mg_ret_buffer(&minor, sp, &mech->metadata));
 
-    *mechp = mech;
-
 fail:
     if (ret == 0 && GSS_ERROR(major))
         ret = minor ? minor : KRB5_BAD_MSIZE;
     if (ret)
         _gss_negoex_release_auth_mech(context, mech);
-    gss_release_buffer(&minor, &buf);
+    else
+        *mechp = mech;
 
+    gss_release_buffer(&minor, &buf);
     return ret;
 }
 

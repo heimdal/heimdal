@@ -2258,6 +2258,7 @@ _krb5_parse_moduli(krb5_context context, const char *file,
 	n++;
     }
     *moduli = m;
+    (void) fclose(f);
     return 0;
 }
 

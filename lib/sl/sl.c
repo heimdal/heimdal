@@ -321,8 +321,10 @@ sl_command_loop(SL_cmd *cmds, const char *prompt, void **data)
         size_t len;
 
         buf2 = sl_readline(buf == NULL ? prompt : "> ");
-        if (buf2 == NULL)
+        if (buf2 == NULL) {
+	    free(buf);
             return -2;
+	}
 
         if (buf) {
             char *tmp = NULL;

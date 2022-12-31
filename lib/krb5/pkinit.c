@@ -2108,17 +2108,22 @@ _krb5_parse_moduli_line(krb5_context context,
     return ret;
 }
 
+static void
+free_moduli_element(struct krb5_dh_moduli *element)
+{
+    free(element->name);
+    der_free_heim_integer(&element->p);
+    der_free_heim_integer(&element->g);
+    der_free_heim_integer(&element->q);
+    free(element);
+}
+
 KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 _krb5_free_moduli(struct krb5_dh_moduli **moduli)
 {
     int i;
-    for (i = 0; moduli[i] != NULL; i++) {
-	free(moduli[i]->name);
-	der_free_heim_integer(&moduli[i]->p);
-	der_free_heim_integer(&moduli[i]->g);
-	der_free_heim_integer(&moduli[i]->q);
-	free(moduli[i]);
-    }
+    for (i = 0; moduli[i] != NULL; i++)
+	free_moduli_element(moduli[i]);
     free(moduli);
 }
 
@@ -2236,29 +2241,33 @@ _krb5_parse_moduli(krb5_context context, const char *file,
 	buf[strcspn(buf, "\n")] = '\0';
 	lineno++;
 
-	m2 = realloc(m, (n + 2) * sizeof(m[0]));
-	if (m2 == NULL) {
-	    _krb5_free_moduli(m);
-	    return krb5_enomem(context);
-	}
-	m = m2;
-
-	m[n] = NULL;
-
 	ret = _krb5_parse_moduli_line(context, file, lineno, buf,  &element);
-	if (ret) {
-	    _krb5_free_moduli(m);
-	    return ret;
-	}
+	if (ret)
+	    break;
 	if (element == NULL)
 	    continue;
+
+	m2 = realloc(m, (n + 2) * sizeof(m[0]));
+	if (m2 == NULL) {
+	    free_moduli_element(element);
+	    ret = krb5_enomem(context);
+	    break;
+	}
+	m = m2;
 
 	m[n] = element;
 	m[n + 1] = NULL;
 	n++;
     }
+    if (ret) {
+	_krb5_free_moduli(m);
+	m = NULL;
+    }
+
     *moduli = m;
-    return 0;
+
+    (void) fclose(f);
+    return ret;
 }
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL

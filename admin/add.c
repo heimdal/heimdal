@@ -278,6 +278,7 @@ json2keytab_entry(heim_dict_t d, krb5_keytab kt, size_t idx)
                   (unsigned long)idx);
 bad:
     krb5_free_principal(context, e.principal);
+    free(buf);
 }
 
 int

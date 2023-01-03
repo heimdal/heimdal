@@ -343,7 +343,13 @@ append_host_hostinfo(struct krb5_krbhst_data *kd, struct krb5_krbhst_info *host)
 	    _krb5_free_krbhst_info(host);
 	    return;
 	}
-    *kd->end = host;
+    /*
+     * We should always initialize kd->end in common_init(), but static
+     * analyzers may not see that we do, and the compiler might conclude
+     * there's UB here.
+     */
+    if (kd->end)
+        *kd->end = host;
     kd->end = &host->next;
 }
 

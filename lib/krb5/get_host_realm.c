@@ -220,11 +220,20 @@ _krb5_get_host_realm_int(krb5_context context,
 
     /*
      * If 'p' is NULL, we did not find an explicit realm mapping in either the
-     * configuration file or DNS.  Try the hostname suffix as a last resort.
+     * configuration file or DNS.  Try the hostname suffix -upcased- as a realm
+     * as a last resort.
      *
-     * XXX: If we implement a KDC-specific variant of this function just for
-     * referrals, we could check whether we have a cross-realm TGT for the
-     * realm in question, and if not try the parent (loop again).
+     * NOTE: If we implement a KDC-specific variant of this function just for
+     *       referrals, we could check whether we have a cross-realm TGT for the
+     *       realm in question, and if not try the parent (loop again).  Such a
+     *       variant would have to have access to the HDB, naturally.
+     *
+     *       We should start by adding an argument to this function that
+     *       indicates whether this fallback here is desired (the KDC wouldn't
+     *       desire it).  Then when the KDC gets KRB5_ERR_HOST_REALM_UNKNOWN
+     *       from this function, the KDC would search the HDB for cross-realm
+     *       krbtgt principals that denote a hierarchical path to a realm that
+     *       matches the host's domain suffix (or a suffix of it...).
      */
     if (p == NULL) {
         p = strchr(host, '.');

@@ -2034,7 +2034,7 @@ make_csrf_token(kadmin_request_desc r,
     if (ret == 0 && data.length > INT_MAX)
         ret = ERANGE;
     if (ret == 0 &&
-        (dlen = rk_base64_encode(data.data, data.length, token)) < 0)
+        rk_base64_encode(data.data, data.length, token) < 0)
         ret = errno;
     krb5_storage_free(sp);
     krb5_data_free(&data);

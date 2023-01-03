@@ -139,6 +139,7 @@ _kdc_db_fetch(krb5_context context,
     krb5_const_principal princ;
 
     *h = NULL;
+    *db = NULL;
 
     if (!name_type_ok(context, config, principal))
         return HDB_ERR_NOENTRY;

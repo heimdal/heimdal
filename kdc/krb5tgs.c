@@ -1327,6 +1327,7 @@ _kdc_db_fetch_client(krb5_context context,
     krb5_error_code ret;
     hdb_entry *client = NULL;
 
+    *clientdb = NULL;
     *client_out = NULL;
 
     ret = _kdc_db_fetch(context, config, cp, HDB_F_GET_CLIENT | flags,
@@ -1382,7 +1383,7 @@ tgs_build_reply(astgs_request_t priv,
     char *user2user_name = NULL;
     HDB *user2user_krbtgtdb;
     hdb_entry *user2user_krbtgt = NULL;
-    HDB *clientdb;
+    HDB *clientdb = NULL;
     HDB *serverdb = NULL;
     krb5_realm ref_realm = NULL;
     EncTicketPart *tgt = &priv->ticket->ticket;

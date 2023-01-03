@@ -185,20 +185,21 @@ _krb5_get_host_realm_int(krb5_context context,
 {
     const char *p, *q;
     const char *port;
+    char *freeme = NULL;
     krb5_boolean dns_locate_enable;
     krb5_error_code ret = 0;
 
     /* Strip off any trailing ":port" suffix. */
     port = strchr(host, ':');
-    if (port != NULL) {
-        host = strndup(host, port - host);
+    if (port != NULL && port != host && port[1] != '\0') {
+        host = freeme = strndup(host, port - host);
         if (host == NULL)
             return krb5_enomem(context);
     }
 
     dns_locate_enable = krb5_config_get_bool_default(context, NULL, TRUE,
         "libdefaults", "dns_lookup_realm", NULL);
-    for (p = host; p != NULL; p = strchr (p + 1, '.')) {
+    for (p = host; p != NULL && p[0] != '\0'; p = strchr (p + 1, '.')) {
         if (config_find_realm(context, p, realms) == 0) {
             if (strcasecmp(*realms[0], "dns_locate") != 0)
                 break;
@@ -246,9 +247,7 @@ _krb5_get_host_realm_int(krb5_context context,
         }
     }
 
-    /* If 'port' is not NULL, we have a copy of 'host' to free. */
-    if (port)
-        free((void *)host);
+    free(freeme);
     return ret;
 }
 

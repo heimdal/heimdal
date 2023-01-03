@@ -1898,7 +1898,7 @@ server_lookup:
 			       cpn, our_realm, &clientdb, &priv->client);
     if (ret)
 	goto out;
-    flags &= ~HDB_F_SYNTHETIC_OK;
+    /* flags &= ~HDB_F_SYNTHETIC_OK; */ /* `flags' is not used again below */
     priv->clientdb = clientdb;
 
     ret = _kdc_check_pac(priv, priv->client_princ, NULL,

@@ -174,11 +174,11 @@ authorize(const char *subject, const char *thing)
         return ENOMEM;
 
     ret = stat_authz(s, thing);
-    free(s);
     if (ret == ENOENT)
         ret = stat_authz(s, "all");
     if (ret == ENOENT)
         ret = EACCES;
+    free(s);
     return ret;
 }
 
@@ -222,7 +222,7 @@ service(void *ctx,
     }
 
     s = cmd + sizeof("check ") - 1;
-    subject = tok = strtok_r(s, " ", &next);
+    subject = strtok_r(s, " ", &next);
     s = NULL;
 
     while ((tok = strtok_r(s, " ", &next))) {

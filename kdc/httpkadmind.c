@@ -398,9 +398,6 @@ get_kadm_handle(krb5_context context,
     set_conf(conf, realm, want_realm, KADM5_CONFIG_REALM);
     set_conf(conf, dbname, hdb, KADM5_CONFIG_DBNAME);
     set_conf(conf, stash_file, stash_file, KADM5_CONFIG_STASH_FILE);
-    set_conf(conf, admin_server, writable_kadmin_server, KADM5_CONFIG_ADMIN_SERVER);
-    set_conf(conf, readonly_admin_server, kadmin_server,
-             KADM5_CONFIG_READONLY_ADMIN_SERVER);
 
     /*
      * If we have a local HDB we'll use it if we can.  If the local HDB is
@@ -425,6 +422,11 @@ get_kadm_handle(krb5_context context,
      *
      * Note that kadmin_client_keytab can be an HDB: or HDBGET: keytab.
      */
+    if (writable_kadmin_server)
+        set_conf(conf, admin_server, writable_kadmin_server, KADM5_CONFIG_ADMIN_SERVER);
+    if (kadmin_server)
+        set_conf(conf, readonly_admin_server, kadmin_server,
+                 KADM5_CONFIG_READONLY_ADMIN_SERVER);
     ret = kadm5_c_init_with_skey_ctx(context,
                                      kadmin_client_name,
                                      kadmin_client_keytab,
@@ -2512,6 +2514,11 @@ main(int argc, char **argv)
         usage(1);
     if (port < 0)
         errx(1, "Port number must be given");
+
+    if (writable_kadmin_server == NULL && kadmin_server == NULL &&
+        !local_hdb && !local_hdb_read_only)
+        errx(1, "One of --local or --local-read-only must be given, or a "
+             "remote kadmind must be given");
 
     if (audiences.num_strings == 0) {
         char localhost[MAXHOSTNAMELEN];

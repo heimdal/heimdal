@@ -95,8 +95,10 @@ undump_not_file(int fd, char **out, size_t *size, int nul_terminate)
         if (bytes < 0 &&
             (errno == EAGAIN || errno == EWOULDBLOCK))
             continue;
-        if (bytes < 0)
+        if (bytes < 0) {
+            free(buf);
             return errno;
+        }
         sz += bytes;
     } while (sz < lim);
 
@@ -205,8 +207,12 @@ rk_undumptext(const char *filename, char **out, size_t *size)
     *out = NULL;
 
     fd = open(filename, O_RDONLY, 0);
-    if (fd < 0 || fstat(fd, &sb) != 0)
+    if (fd < 0)
+        return errno;
+    if (fstat(fd, &sb) != 0) {
+        (void) close(fd);
 	return errno;
+    }
     if (!S_ISREG(sb.st_mode)) {
         ret = undump_not_file(fd, out, size, 1);
         (void) close(fd);

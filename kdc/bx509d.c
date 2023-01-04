@@ -2600,7 +2600,7 @@ route(void *cls,
          * possibly multiple times.
          */
         if ((ret = set_req_desc(connection, method, url, &r)))
-            return bad_503(r, ret, "Could not initialize request state");
+            return MHD_NO;
         *ctx = r;
 
         /* All requests other than /health require authentication */

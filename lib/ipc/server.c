@@ -606,7 +606,6 @@ add_new_socket(int fd,
 	       void *userctx)
 {
     struct client *c;
-    int fileflags;
 
     c = calloc(1, sizeof(*c));
     if (c == NULL)
@@ -628,8 +627,7 @@ add_new_socket(int fd,
     c->callback = callback;
     c->userctx = userctx;
 
-    fileflags = fcntl(c->fd, F_GETFL, 0);
-    fcntl(c->fd, F_SETFL, fileflags | O_NONBLOCK);
+    socket_set_nonblocking(fd, 1);
 
 #ifdef HAVE_GCD
     init_globals();
@@ -1118,7 +1116,7 @@ heim_sipc_service_unix(const char *service,
 	return errno;
     }
 
-    chmod(un.sun_path, 0666);
+    (void) chmod(un.sun_path, 0666);
 
     ret = heim_sipc_stream_listener(fd, HEIM_SIPC_TYPE_IPC,
 				    callback, user, ctx);
@@ -1287,7 +1285,7 @@ heim_sipc_service_door(const char *service,
         ret = errno;
         goto cleanup;
     }
-    fchmod(dfd, 0666); /* XXX */
+    (void) fchmod(dfd, 0666); /* XXX */
 
     if (fattach(fd, path) < 0) {
         ret = errno;

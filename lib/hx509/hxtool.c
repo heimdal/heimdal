@@ -1493,7 +1493,9 @@ request_create(struct request_create_options *opt, int argc, char **argv)
 	    opt->key_bits_integer,
 	    &signer);
 
-    hx509_request_init(context, &req);
+    ret = hx509_request_init(context, &req);
+    if (ret)
+	hx509_err(context, 1, ret, "Could not initialize CSR context");
 
     if (opt->subject_string) {
 	hx509_name name = NULL;

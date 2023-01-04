@@ -259,6 +259,6 @@ krb5_storage_stdio_from_fd(int fd_in, const char *mode)
     sp->trunc = stdio_trunc;
     sp->fsync = stdio_sync;
     sp->free = stdio_free;
-    sp->max_alloc = UINT_MAX/8;
+    sp->max_alloc = UINT32_MAX/64;
     return sp;
 }

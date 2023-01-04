@@ -155,6 +155,6 @@ krb5_storage_from_socket(krb5_socket_t sock_in)
     sp->trunc = socket_trunc;
     sp->fsync = socket_sync;
     sp->free = socket_free;
-    sp->max_alloc = UINT_MAX/8;
+    sp->max_alloc = UINT32_MAX/64;
     return sp;
 }

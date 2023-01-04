@@ -669,6 +669,8 @@ hx509_request_to_pkcs10(hx509_context context,
         Attribute *a = NULL; /* Quiet VC */
         heim_any extns;
 
+        extns.data = NULL;
+        extns.length = 0;
         r.certificationRequestInfo.attributes =
             calloc(1, sizeof(r.certificationRequestInfo.attributes[0]));
         if (r.certificationRequestInfo.attributes == NULL)

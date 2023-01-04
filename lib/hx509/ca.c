@@ -1179,6 +1179,7 @@ hx509_ca_tbs_add_san_permanentIdentifier_string(hx509_context context,
     char *freeme, *p;
     int ret;
 
+    memset(&oid, 0, sizeof(oid));
     if ((freeme = strdup(str)) == NULL)
         return hx509_enomem(context);
 
@@ -1287,6 +1288,7 @@ hx509_ca_tbs_add_san_hardwareModuleName_string(hx509_context context,
     char *freeme, *p;
     int ret;
 
+    memset(&oid, 0, sizeof(oid));
     if ((freeme = strdup(str)) == NULL)
         return hx509_enomem(context);
 

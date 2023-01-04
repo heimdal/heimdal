@@ -354,7 +354,7 @@ storage_from_memory(OM_uint32 *minor,
 		    krb5_storage **sp)
 {
     *sp = krb5_storage_from_readonly_mem(data, length);
-    if (sp == NULL) {
+    if (*sp == NULL) {
 	*minor = ENOMEM;
 	return GSS_S_FAILURE;
     }

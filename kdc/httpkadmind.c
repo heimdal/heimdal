@@ -2139,6 +2139,7 @@ ip(void *cls,
     if (ftl == NULL || keydup == NULL || valdup == NULL) {
         free(ftl);
         free(keydup);
+        free(valdup);
         return MHD_NO;
     }
     ftl->freeme1 = keydup;

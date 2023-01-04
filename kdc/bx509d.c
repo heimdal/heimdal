@@ -1365,10 +1365,12 @@ do_pkinit(struct bx509_request_desc *r, enum k5_creds_kind kind)
             ret = krb5_append_addresses(r->context, &r->tgt_addresses,
                                         &addr);
     }
-    if (ret == 0 && r->tgt_addresses.len == 0)
-        ret = krb5_get_init_creds_opt_set_addressless(r->context, opt, 1);
-    else
-        krb5_get_init_creds_opt_set_address_list(opt, &r->tgt_addresses);
+    if (ret == 0) {
+        if (r->tgt_addresses.len == 0)
+            ret = krb5_get_init_creds_opt_set_addressless(r->context, opt, 1);
+        else
+            krb5_get_init_creds_opt_set_address_list(opt, &r->tgt_addresses);
+    }
     if (ret == 0)
         ret = krb5_get_init_creds_opt_set_pkinit(r->context, opt, p,
                                                  r->pkix_store,

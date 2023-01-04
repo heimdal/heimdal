@@ -763,13 +763,11 @@ bad_reqv(kadmin_request_desc r,
     char *formatted = NULL;
     char *msg = NULL;
 
-    if (r && r->context)
-        context = r->context;
-    if (r && r->hcontext && r->kv)
+    context = r->context;
+    if (r->hcontext && r->kv)
         heim_audit_setkv_number((heim_svc_req_desc)r, "http-status-code",
 				http_status_code);
-    if (r)
-        (void) gettimeofday(&r->tv_end, NULL);
+    (void) gettimeofday(&r->tv_end, NULL);
     if (code == ENOMEM) {
         if (context)
             krb5_log_msg(context, logfac, 1, NULL, "Out of memory");
@@ -792,7 +790,7 @@ bad_reqv(kadmin_request_desc r,
         msg = formatted;
         formatted = NULL;
     }
-    if (r && r->hcontext)
+    if (r->hcontext)
         heim_audit_addreason((heim_svc_req_desc)r, "%s", formatted);
     krb5_free_error_message(context, k5msg);
 
@@ -2189,11 +2187,8 @@ route(void *cls,
          * handling a POST then we'll also get called with upload_data != NULL,
          * possibly multiple times.
          */
-        if ((ret = set_req_desc(connection, method, url, &r))) {
-            return
-                bad_503(r, ret, "Could not initialize request state") == -1
-                    ? MHD_NO : MHD_YES;
-        }
+        if ((ret = set_req_desc(connection, method, url, &r)))
+            return MHD_NO;
         *ctx = r;
 
         /*

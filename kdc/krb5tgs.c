@@ -1051,8 +1051,9 @@ next_kvno:
     } else if (ret) {
 	char *str = NULL, *p = NULL;
 
-	krb5_enctype_to_string(r->context, ap_req.ticket.enc_part.etype, &str);
-	krb5_unparse_name(r->context, princ, &p);
+	/* We should implement the MIT `trace_format()' concept */
+	(void) krb5_enctype_to_string(r->context, ap_req.ticket.enc_part.etype, &str);
+	(void) krb5_unparse_name(r->context, princ, &p);
 	kdc_log(r->context, config, 4,
 		"No server key with enctype %s found for %s",
 		str ? str : "<unknown enctype>",

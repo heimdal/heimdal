@@ -1195,10 +1195,11 @@ send_diffs(kadm5_server_context *server_context, slave *s, int log_fd,
         krb5_err(context, IPROPD_RESTART_SLOW, ENOMEM, "out of memory");
         return;
     }
-    krb5_store_uint32(sp, FOR_YOU);
+    ret = krb5_store_uint32(sp, FOR_YOU);
     krb5_storage_free(sp);
 
-    ret = mk_priv_tail(context, s, &data);
+    if (ret == 0)
+	ret = mk_priv_tail(context, s, &data);
     krb5_data_free(&data);
     if (ret == 0) {
         /* Save the fast-path continuation */

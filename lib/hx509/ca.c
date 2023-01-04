@@ -2613,7 +2613,6 @@ set_template(hx509_context context,
                                            "template_cert", NULL);
     subj_name = heim_config_get_string(context->hcontext, cf, "subject_name",
                                        NULL);
-    ekus = heim_config_get_strings(context->hcontext, cf, "ekus", NULL);
 
     if (cert_template) {
         hx509_certs certs;
@@ -2669,6 +2668,7 @@ set_template(hx509_context context,
             return ret;
     }
 
+    ekus = heim_config_get_strings(context->hcontext, cf, "ekus", NULL);
     if (ekus) {
         size_t i;
 

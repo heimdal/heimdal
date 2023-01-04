@@ -918,14 +918,14 @@ heim_path_vcreate(heim_object_t ptr, size_t size, heim_object_t leaf,
 	heim_abort("heim_path_vcreate() does not create root nodes");
 
     while (path_element != NULL) {
+	int idx = -1;
+
 	next_path_element = va_arg(ap, heim_object_t);
 	node_type = heim_get_tid(node);
 
 	if (node_type == HEIM_TID_DICT) {
 	    next_node = heim_dict_get_value(node, path_element);
 	} else if (node_type == HEIM_TID_ARRAY) {
-	    int idx = -1;
-
 	    if (heim_get_tid(path_element) == HEIM_TID_NUMBER)
 		idx = heim_number_get_int(path_element);
 	    if (idx < 0) {
@@ -936,10 +936,16 @@ heim_path_vcreate(heim_object_t ptr, size_t size, heim_object_t leaf,
 					       "and positive");
 		return EINVAL;
 	    }
-	    if (idx < heim_array_get_length(node))
+	    if (idx < heim_array_get_length(node)) {
 		next_node = heim_array_get_value(node, idx);
-	    else
+	    } else if (idx == heim_array_get_length(node)) {
 		next_node = NULL;
+	    } else {
+		if (error)
+		    *error = heim_error_create(EINVAL,
+				 "Index for array in path is too large");
+		return EINVAL;
+	    }
 	} else if (node_type == HEIM_TID_DB && next_path_element != NULL) {
 	    if (error)
 		*error = heim_error_create(EINVAL, "Interior node is a DB");
@@ -951,26 +957,33 @@ heim_path_vcreate(heim_object_t ptr, size_t size, heim_object_t leaf,
 
 	/* Create missing interior node */
 	if (next_node == NULL) {
-	    next_node = heim_dict_create(size); /* no arrays or DBs, just dicts */
-	    if (next_node == NULL) {
+	    heim_dict_t new_node;
+
+	    new_node = heim_dict_create(size); /* no arrays or DBs, just dicts */
+	    if (new_node == NULL) {
 		ret = ENOMEM;
 		goto err;
 	    }
 
 	    if (node_type == HEIM_TID_DICT) {
-		ret = heim_dict_set_value(node, path_element, next_node);
+		ret = heim_dict_set_value(node, path_element, new_node);
+		heim_release(new_node);
+
+		next_node = heim_dict_get_value(node, path_element);
 	    } else if (node_type == HEIM_TID_ARRAY &&
 		heim_number_get_int(path_element) <= heim_array_get_length(node)) {
 		ret = heim_array_insert_value(node,
 					      heim_number_get_int(path_element),
-					      next_node);
+					      new_node);
+		heim_release(new_node);
+
+		next_node = heim_array_get_value(node, idx);
 	    } else {
 		ret = EINVAL;
 		if (error)
 		    *error = heim_error_create(ret, "Node in path not a "
 					       "container");
 	    }
-	    heim_release(next_node);
 	    if (ret)
 		goto err;
 	}

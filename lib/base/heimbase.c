@@ -967,16 +967,12 @@ heim_path_vcreate(heim_object_t ptr, size_t size, heim_object_t leaf,
 
 	    if (node_type == HEIM_TID_DICT) {
 		ret = heim_dict_set_value(node, path_element, new_node);
-		heim_release(new_node);
-
 		next_node = heim_dict_get_value(node, path_element);
 	    } else if (node_type == HEIM_TID_ARRAY &&
 		heim_number_get_int(path_element) <= heim_array_get_length(node)) {
 		ret = heim_array_insert_value(node,
 					      heim_number_get_int(path_element),
 					      new_node);
-		heim_release(new_node);
-
 		next_node = heim_array_get_value(node, idx);
 	    } else {
 		ret = EINVAL;
@@ -984,6 +980,8 @@ heim_path_vcreate(heim_object_t ptr, size_t size, heim_object_t leaf,
 		    *error = heim_error_create(ret, "Node in path not a "
 					       "container");
 	    }
+
+	    heim_release(new_node);
 	    if (ret)
 		goto err;
 	}

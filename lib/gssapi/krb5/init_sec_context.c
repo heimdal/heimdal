@@ -802,10 +802,10 @@ repl_mutual
 
     *minor_status = 0;
     if (time_rec)
-        _gsskrb5_lifetime_left(minor_status,
-                               context,
-                               ctx->endtime,
-                               time_rec);
+        (void) _gsskrb5_lifetime_left(minor_status,
+				      context,
+				      ctx->endtime,
+				      time_rec);
     if (ret_flags)
 	*ret_flags = ctx->flags;
 

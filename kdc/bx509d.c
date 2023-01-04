@@ -569,7 +569,6 @@ bad_reqv(struct bx509_request_desc *r,
          va_list ap)
 {
     krb5_error_code ret;
-    krb5_context context = NULL;
     const char *k5msg = NULL;
     const char *emsg = NULL;
     char *formatted = NULL;
@@ -589,8 +588,10 @@ bad_reqv(struct bx509_request_desc *r,
     if (code) {
         if (r->context)
             emsg = k5msg = krb5_get_error_message(r->context, code);
-        else
+        else if (code > -1)
             emsg = strerror(code);
+        else
+            emsg = "Unknown error";
     }
 
     ret = vasprintf(&formatted, fmt, ap);
@@ -603,10 +604,11 @@ bad_reqv(struct bx509_request_desc *r,
     }
     heim_audit_addreason((heim_svc_req_desc)r, "%s", msg);
     audit_trail(r, code);
-    krb5_free_error_message(context, k5msg);
+    if (r->context)
+        krb5_free_error_message(r->context, k5msg);
 
     if (ret == -1 || msg == NULL) {
-        if (context)
+        if (r->context)
             krb5_log_msg(r->context, logfac, 1, NULL, "Out of memory");
         return resp(r, MHD_HTTP_SERVICE_UNAVAILABLE, MHD_RESPMEM_PERSISTENT,
                     NULL, "Out of memory", sizeof("Out of memory") - 1, NULL);
@@ -885,7 +887,7 @@ do_CA(struct bx509_request_desc *r, const char *csr)
     bytes = rk_base64_decode(csr2, d.data);
     free(csr2);
     if (bytes < 0)
-        ret = errno;
+        ret = errno ? errno : EINVAL;
     else
         d.length = bytes;
     if (ret) {
@@ -1850,9 +1852,7 @@ authorize_TGT_REQ(struct bx509_request_desc *r)
     if (for_cname == r->cname || strcmp(r->cname, r->for_cname) == 0)
         return 0;
 
-    ret = krb5_parse_name(r->context, r->cname, &p);
-    if (ret == 0)
-        ret = hx509_request_init(r->context->hx509ctx, &r->req);
+    ret = hx509_request_init(r->context->hx509ctx, &r->req);
     if (ret)
         return bad_500(r, ret, "Out of resources");
     heim_audit_addkv((heim_svc_req_desc)r, KDC_AUDIT_VIS,
@@ -1862,6 +1862,8 @@ authorize_TGT_REQ(struct bx509_request_desc *r)
     if (ret == 0)
         ret = hx509_request_add_pkinit(r->context->hx509ctx, r->req,
                                        for_cname);
+    if (ret == 0)
+        ret = krb5_parse_name(r->context, r->cname, &p);
     if (ret == 0)
         ret = kdc_authorize_csr(r->context, "get-tgt", r->req, p);
     krb5_free_principal(r->context, p);
@@ -1984,7 +1986,7 @@ get_tgts_accumulate_ccache_write_json(struct bx509_request_desc *r,
     if (o && k && v)
         ret = heim_dict_set_value(o, k, v);
     else
-        ret = errno;
+        ret = ENOMEM;
 
     if (ret == 0) {
         heim_release(v);
@@ -2238,8 +2240,10 @@ get_tgts(struct bx509_request_desc *r)
         r->error_code = 0;
         res = MHD_get_connection_values(r->connection, MHD_GET_ARGUMENT_KIND,
                                         get_tgt_param_cb, r);
-        if (r->response || res == MHD_NO)
+        if (r->response || res == MHD_NO) {
+            krb5_free_principal(r->context, p);
             return res;
+        }
 
         ret = r->error_code;
     }
@@ -2251,8 +2255,10 @@ get_tgts(struct bx509_request_desc *r)
         r->error_code = 0;
         res = MHD_get_connection_values(r->connection, MHD_GET_ARGUMENT_KIND,
                                         get_tgts_param_authorize_cb, r);
-        if (r->response || res == MHD_NO)
+        if (r->response || res == MHD_NO) {
+            krb5_free_principal(r->context, p);
             return res;
+        }
 
         ret = r->error_code;
         if (ret == 0) {
@@ -2282,8 +2288,10 @@ get_tgts(struct bx509_request_desc *r)
         r->error_code = 0;
         res = MHD_get_connection_values(r->connection, MHD_GET_ARGUMENT_KIND,
                                         get_tgts_param_execute_cb, r);
-        if (r->response || res == MHD_NO)
+        if (r->response || res == MHD_NO) {
+            krb5_free_principal(r->context, p);
             return res;
+        }
         ret = r->error_code;
     }
     krb5_free_principal(r->context, p);

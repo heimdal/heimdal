@@ -736,6 +736,7 @@ unwrap_cfx_stream(OM_uint32 *minor_status,
     gss_cfx_wrap_token token;
     gss_iov_buffer_t stream, data;
     gss_iov_buffer_t tdata, theader, ttrailer, tpadding;
+    gss_buffer_desc rotated;
     uint16_t ec, rrc, extra_rrc;
     size_t len, i, j;
     u_char *p;
@@ -749,21 +750,29 @@ unwrap_cfx_stream(OM_uint32 *minor_status,
     if (stream->buffer.length < sizeof(*token))
 	return GSS_S_DEFECTIVE_TOKEN;
 
-    p = stream->buffer.value;
+    major_status = _gss_copy_buffer(minor_status, &stream->buffer, &rotated);
+    if (GSS_ERROR(major_status))
+	return major_status;
+
+    p = rotated.value;
     token = (gss_cfx_wrap_token)p;
 
-    if (token->TOK_ID[0] != 0x05 || token->TOK_ID[1] != 0x04)
+    if (token->TOK_ID[0] != 0x05 || token->TOK_ID[1] != 0x04) {
+	gss_release_buffer(&tmp, &rotated);
 	return GSS_S_DEFECTIVE_TOKEN;
+    }
 
-    if (token->Filler != 0xFF)
+    if (token->Filler != 0xFF) {
+	gss_release_buffer(&tmp, &rotated);
 	return GSS_S_DEFECTIVE_TOKEN;
+    }
 
     ec  = (token->EC[0]  << 8) | token->EC[1];
     rrc = (token->RRC[0] << 8) | token->RRC[1];
 
     p += sizeof(*token);
-    len = stream->buffer.length;
-    len -= (p - (u_char *)stream->buffer.value);
+    len = rotated.length;
+    len -= (p - (u_char *)rotated.value);
 
     /* rotating by RRC+EC is for Windows bug workaround */
     if ((token->Flags & CFXSealed) && IS_DCE_STYLE(ctx))
@@ -772,16 +781,18 @@ unwrap_cfx_stream(OM_uint32 *minor_status,
 	extra_rrc = 0;
 
     if (!IS_DCE_STYLE(ctx)) {
-	/* XXX doing this in place is not a good idea */
 	*minor_status = rrc_rotate(p, len, rrc + extra_rrc, TRUE);
-	if (*minor_status != 0)
+	if (*minor_status != 0) {
+	    gss_release_buffer(&tmp, &rotated);
 	    return GSS_S_FAILURE;
+	}
 	token->RRC[0] = token->RRC[1] = 0; /* no longer rotated */
     }
 
     tiov = calloc(iov_count + 2, sizeof(*iov));
     if (tiov == NULL) {
 	*minor_status = ENOMEM;
+	gss_release_buffer(&tmp, &rotated);
 	return GSS_S_FAILURE;
     }
 
@@ -795,6 +806,7 @@ unwrap_cfx_stream(OM_uint32 *minor_status,
 	case GSS_IOV_BUFFER_TYPE_DATA:
 	    if (tdata != NULL) {
 		free(tiov);
+		gss_release_buffer(&tmp, &rotated);
 		return GSS_S_DEFECTIVE_TOKEN;
 	    }
 	    tdata = &tiov[i];
@@ -825,31 +837,35 @@ unwrap_cfx_stream(OM_uint32 *minor_status,
 					       !!(token->Flags & CFXSealed),
 					       GSS_C_QOP_DEFAULT, conf_state,
 					       tiov, i);
-    if (major_status != GSS_S_COMPLETE)
+    if (major_status != GSS_S_COMPLETE) {
+	gss_release_buffer(&tmp, &rotated);
 	return GSS_S_FAILURE;
+    }
 
     heim_assert(tpadding->buffer.length == 0, "wrong padding length");
 
     len = theader->buffer.length + tpadding->buffer.length + ttrailer->buffer.length;
 
-    if (stream->buffer.length < len) {
+    if (rotated.length < len) {
 	gss_release_iov_buffer(&tmp, tiov, i);
+	gss_release_buffer(&tmp, &rotated);
 	return GSS_S_DEFECTIVE_TOKEN;
     }
 
     /* "header" | krb5-header | (for DCE, trailer) */
-    theader->buffer.value = stream->buffer.value;
+    theader->buffer.value = rotated.value;
 
     /* plaintext-data (if present) */
     if (tdata) {
-	uint8_t *datap = (uint8_t *)stream->buffer.value + theader->buffer.length;
+	uint8_t *datap = (uint8_t *)rotated.value + theader->buffer.length;
 
-	tdata->buffer.length = stream->buffer.length - len;
+	tdata->buffer.length = rotated.length - len;
 
 	if (data->type & GSS_IOV_BUFFER_FLAG_ALLOCATE) {
 	    major_status = _gk_allocate_buffer(minor_status, tdata, tdata->buffer.length);
 	    if (major_status != GSS_S_COMPLETE) {
 		free(tiov);
+		gss_release_buffer(&tmp, &rotated);
 		return major_status;
 	    }
 
@@ -858,7 +874,7 @@ unwrap_cfx_stream(OM_uint32 *minor_status,
 	    tdata->buffer.value = datap;
     }
 
-    ttrailer->buffer.value = (uint8_t *)stream->buffer.value + stream->buffer.length -
+    ttrailer->buffer.value = (uint8_t *)rotated.value + rotated.length -
 			     ttrailer->buffer.length;
 
     major_status = _gssapi_unwrap_cfx_iov(minor_status, ctx, context,
@@ -871,6 +887,7 @@ unwrap_cfx_stream(OM_uint32 *minor_status,
     }
 
     free(tiov);
+    gss_release_buffer(&tmp, &rotated);
 
     return major_status;
 }

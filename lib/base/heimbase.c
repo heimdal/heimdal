@@ -37,11 +37,11 @@
 #include "heimbase-atomics.h"
 #include <syslog.h>
 
-static heim_base_atomic_integer_type tidglobal = HEIM_TID_USER;
+static heim_base_atomic(uint32_t) tidglobal = HEIM_TID_USER;
 
 struct heim_base {
     heim_type_t isa;
-    heim_base_atomic_integer_type ref_cnt;
+    heim_base_atomic(uint32_t) ref_cnt;
     HEIM_TAILQ_ENTRY(heim_base) autorel;
     heim_auto_release_t autorelpool;
     uintptr_t isaextra[3];
@@ -50,7 +50,7 @@ struct heim_base {
 /* specialized version of base */
 struct heim_base_mem {
     heim_type_t isa;
-    heim_base_atomic_integer_type ref_cnt;
+    heim_base_atomic(uint32_t) ref_cnt;
     HEIM_TAILQ_ENTRY(heim_base) autorel;
     heim_auto_release_t autorelpool;
     const char *name;
@@ -94,10 +94,10 @@ heim_retain(heim_object_t ptr)
 
     p = PTR2BASE(ptr);
 
-    if (heim_base_atomic_load(&p->ref_cnt) == heim_base_atomic_integer_max)
+    if (heim_base_atomic_load(&p->ref_cnt) == UINT32_MAX)
 	return ptr;
 
-    if ((heim_base_atomic_inc(&p->ref_cnt) - 1) == 0)
+    if ((heim_base_atomic_inc_32(&p->ref_cnt) - 1) == 0)
 	heim_abort("resurection");
     return ptr;
 }
@@ -111,7 +111,7 @@ heim_retain(heim_object_t ptr)
 void
 heim_release(void *ptr)
 {
-    heim_base_atomic_integer_type old;
+    heim_base_atomic(uint32_t) old;
     struct heim_base *p;
 
     if (ptr == NULL || heim_base_is_tagged(ptr))
@@ -119,10 +119,10 @@ heim_release(void *ptr)
 
     p = PTR2BASE(ptr);
 
-    if (heim_base_atomic_load(&p->ref_cnt) == heim_base_atomic_integer_max)
+    if (heim_base_atomic_load(&p->ref_cnt) == UINT32_MAX)
 	return;
 
-    old = heim_base_atomic_dec(&p->ref_cnt) + 1;
+    old = heim_base_atomic_dec_32(&p->ref_cnt) + 1;
 
     if (old > 1)
 	return;
@@ -161,7 +161,7 @@ void
 _heim_make_permanent(heim_object_t ptr)
 {
     struct heim_base *p = PTR2BASE(ptr);
-    heim_base_atomic_store(&p->ref_cnt, heim_base_atomic_integer_max);
+    heim_base_atomic_store(&p->ref_cnt, UINT32_MAX);
 }
 
 
@@ -322,7 +322,7 @@ _heim_create_type(const char *name,
     if (type == NULL)
 	return NULL;
 
-    type->tid = heim_base_atomic_inc(&tidglobal);
+    type->tid = heim_base_atomic_inc_32(&tidglobal);
     type->name = name;
     type->init = init;
     type->dealloc = dealloc;

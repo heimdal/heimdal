@@ -53,7 +53,7 @@ struct heim_log_facility_internal {
 
 struct heim_log_facility_s {
     char *program;
-    volatile heim_base_atomic(size_t) refs;
+    volatile heim_base_atomic(uint32_t) refs;
     size_t len;
     struct heim_log_facility_internal *val;
 };
@@ -157,7 +157,7 @@ heim_log_facility *
 heim_log_ref(heim_log_facility *fac)
 {
     if (fac)
-        (void) heim_base_atomic_inc(&fac->refs);
+        (void) heim_base_atomic_inc_32(&fac->refs);
     return fac;
 }
 
@@ -467,7 +467,7 @@ heim_closelog(heim_context context, heim_log_facility *fac)
 {
     int i;
 
-    if (!fac || heim_base_atomic_dec(&fac->refs))
+    if (!fac || heim_base_atomic_dec_32(&fac->refs))
         return;
     for (i = 0; i < fac->len; i++)
         (*fac->val[i].close_func)(fac->val[i].data);

@@ -36,6 +36,8 @@
 #ifndef HEIM_BASE_ATOMICS_H
 #define HEIM_BASE_ATOMICS_H 1
 
+#include <stdint.h>
+
 /*
  * Atomic operations
  */
@@ -50,10 +52,10 @@
 
 #define heim_base_atomic(T)		_Atomic(T)
 
-#define heim_base_atomic_inc(x)		(atomic_fetch_add((x), 1) + 1)
-#define heim_base_atomic_dec(x)		(atomic_fetch_sub((x), 1) - 1)
-#define heim_base_atomic_integer_type	heim_base_atomic(unsigned int)
-#define heim_base_atomic_integer_max	UINT_MAX
+#define heim_base_atomic_inc_32(x)	(atomic_fetch_add((x), 1) + 1)
+#define heim_base_atomic_dec_32(x)	(atomic_fetch_sub((x), 1) - 1)
+#define heim_base_atomic_inc_64(x)	(atomic_fetch_add((x), 1) + 1)
+#define heim_base_atomic_dec_64(x)	(atomic_fetch_sub((x), 1) - 1)
 
 #define heim_base_exchange_pointer(t,v) atomic_exchange((t), (v))
 #define heim_base_exchange_32(t,v)	atomic_exchange((t), (v))
@@ -63,10 +65,10 @@
 
 #define heim_base_atomic_barrier()	__sync_synchronize()
 
-#define heim_base_atomic_inc(x)		__sync_add_and_fetch((x), 1)
-#define heim_base_atomic_dec(x)		__sync_sub_and_fetch((x), 1)
-#define heim_base_atomic_integer_type	unsigned int
-#define heim_base_atomic_integer_max	UINT_MAX
+#define heim_base_atomic_inc_32(x)	__sync_add_and_fetch((x), 1)
+#define heim_base_atomic_dec_32(x)	__sync_sub_and_fetch((x), 1)
+#define heim_base_atomic_inc_64(x)	__sync_add_and_fetch((x), 1)
+#define heim_base_atomic_dec_64(x)	__sync_sub_and_fetch((x), 1)
 
 #ifndef __has_builtin
 #define __has_builtin(x) 0
@@ -94,14 +96,16 @@ static inline void __heim_base_atomic_barrier(void)
 
 #define heim_base_atomic_barrier()     __heim_base_atomic_barrier()
 
-#define heim_base_atomic_inc(x)		atomic_inc_uint_nv((volatile uint_t *)(x))
-#define heim_base_atomic_dec(x)		atomic_dec_uint_nv((volatile uint_t *)(x))
-#define heim_base_atomic_integer_type	uint_t
-#define heim_base_atomic_integer_max	UINT_MAX
+#define heim_base_atomic(T)		volatile T
 
-#define heim_base_exchange_pointer(t,v) atomic_swap_ptr((volatile void *)(t), (void *)(v))
-#define heim_base_exchange_32(t,v)	atomic_swap_32((volatile uint32_t *)(t), (v))
-#define heim_base_exchange_64(t,v)	atomic_swap_64((volatile uint64_t *)(t), (v))
+#define heim_base_atomic_inc_32(x)	atomic_inc_32_nv((x))
+#define heim_base_atomic_dec_32(x)	atomic_dec_32_nv((x))
+#define heim_base_atomic_inc_64(x)	atomic_inc_64_nv((x))
+#define heim_base_atomic_dec_64(x)	atomic_dec_64_nv((x))
+
+#define heim_base_exchange_pointer(t,v) atomic_swap_ptr((t), (void *)(v))
+#define heim_base_exchange_32(t,v)	atomic_swap_32((t), (v))
+#define heim_base_exchange_64(t,v)	atomic_swap_64((t), (v))
 
 #elif defined(_AIX)
 
@@ -109,10 +113,10 @@ static inline void __heim_base_atomic_barrier(void)
 
 #define heim_base_atomic_barrier()	__isync()
 
-#define heim_base_atomic_inc(x)		(fetch_and_addlp((atomic_l)(x),  1) + 1)
-#define heim_base_atomic_dec(x)		(fetch_and_addlp((atomic_l)(x), -1) - 1)
-#define heim_base_atomic_integer_type	long
-#define heim_base_atomic_integer_max	LONG_MAX
+#define heim_base_atomic_inc_32(x)	(fetch_and_add((atomic_p)(x),  1) + 1)
+#define heim_base_atomic_dec_32(x)	(fetch_and_add((atomic_p)(x), -1) - 1)
+#define heim_base_atomic_inc_64(x)	(fetch_and_addlp((atomic_l)(x),  1) + 1)
+#define heim_base_atomic_dec_64(x)	(fetch_and_addlp((atomic_l)(x), -1) - 1)
 
 static inline void *
 heim_base_exchange_pointer(void *p, void *newval)
@@ -151,10 +155,10 @@ heim_base_exchange_64(uint64_t *p, uint64_t newval)
 
 #define heim_base_atomic_barrier()	MemoryBarrier()
 
-#define heim_base_atomic_inc(x)		InterlockedIncrement(x)
-#define heim_base_atomic_dec(x)		InterlockedDecrement(x)
-#define heim_base_atomic_integer_type	LONG
-#define heim_base_atomic_integer_max	MAXLONG
+#define heim_base_atomic_inc_32(x)	InterlockedIncrement(x)
+#define heim_base_atomic_dec_32(x)	InterlockedDecrement(x)
+#define heim_base_atomic_inc_64(x)	InterlockedIncrement64(x)
+#define heim_base_atomic_dec_64(x)	InterlockedDecrement64(x)
 
 #define heim_base_exchange_pointer(t,v) InterlockedExchangePointer((PVOID volatile *)(t), (PVOID)(v))
 #define heim_base_exchange_32(t,v)	((ULONG)InterlockedExchange((LONG volatile *)(t), (LONG)(v)))
@@ -167,23 +171,40 @@ heim_base_exchange_64(uint64_t *p, uint64_t newval)
 #define HEIM_BASE_NEED_ATOMIC_MUTEX 1
 extern HEIMDAL_MUTEX _heim_base_mutex;
 
-#define heim_base_atomic_integer_type	unsigned int
-#define heim_base_atomic_integer_max	UINT_MAX
-
-static inline heim_base_atomic_integer_type
-heim_base_atomic_inc(heim_base_atomic_integer_type *x)
+static inline uint32_t
+heim_base_atomic_inc_32(uint32_t *x)
 {
-    heim_base_atomic_integer_type t;
+    uint32_t t;
     HEIMDAL_MUTEX_lock(&_heim_base_mutex);
     t = ++(*x);
     HEIMDAL_MUTEX_unlock(&_heim_base_mutex);
     return t;
 }
 
-static inline heim_base_atomic_integer_type
-heim_base_atomic_dec(heim_base_atomic_integer_type *x)
+static inline uint32_t
+heim_base_atomic_dec_32(uint32_t *x)
 {
-    heim_base_atomic_integer_type t;
+    uint32_t t;
+    HEIMDAL_MUTEX_lock(&_heim_base_mutex);
+    t = --(*x);
+    HEIMDAL_MUTEX_unlock(&_heim_base_mutex);
+    return t;
+}
+
+static inline uint64_t
+heim_base_atomic_inc_64(uint64_t *x)
+{
+    uint64_t t;
+    HEIMDAL_MUTEX_lock(&_heim_base_mutex);
+    t = ++(*x);
+    HEIMDAL_MUTEX_unlock(&_heim_base_mutex);
+    return t;
+}
+
+static inline uint64_t
+heim_base_atomic_dec_64(uint64_t *x)
+{
+    uint64_t t;
     HEIMDAL_MUTEX_lock(&_heim_base_mutex);
     t = --(*x);
     HEIMDAL_MUTEX_unlock(&_heim_base_mutex);

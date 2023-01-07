@@ -853,7 +853,7 @@ rk_getifaddrs(struct ifaddrs **ifap)
   return 0;
 }
 
-void ROKEN_LIB_FUNCTION
+ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
 rk_freeifaddrs(struct ifaddrs *ifp)
 {
     /* AF_NETLINK method uses a single allocation for all interfaces */

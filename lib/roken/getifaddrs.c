@@ -53,6 +53,11 @@ struct mbuf;
 
 #include <ifaddrs.h>
 
+#ifdef HAVE_IFADDRS_H
+ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
+rk_freeifaddrs(struct ifaddrs *ifp);
+#endif
+
 #ifdef __hpux
 #define lifconf if_laddrconf
 #define lifc_len iflc_len

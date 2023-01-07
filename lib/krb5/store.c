@@ -1961,7 +1961,7 @@ _krb5_store_data_at_offset(krb5_storage *sp,
     krb5_ssize_t nbytes;
     off_t pos;
 
-    if (offset == (off_t)-1) {
+    if (offset == (size_t)-1) {
 	if (data == NULL || data->data == NULL) {
 	    offset = 0;
 	} else {
@@ -1969,7 +1969,7 @@ _krb5_store_data_at_offset(krb5_storage *sp,
 	    offset = sp->seek(sp, 0, SEEK_END);
 	    sp->seek(sp, pos, SEEK_SET);
 
-	    if (offset == (off_t)-1)
+	    if (offset == (size_t)-1)
 		return HEIM_ERR_NOT_SEEKABLE;
 	}
     }

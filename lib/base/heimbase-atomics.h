@@ -85,8 +85,14 @@
 #elif defined(__sun)
 
 #include <sys/atomic.h>
+#include <mbarrier.h>
 
-#define heim_base_atomic_barrier()	__machine_rw_barrier()
+static inline void __heim_base_atomic_barrier(void)
+{
+    __machine_rw_barrier();
+}
+
+#define heim_base_atomic_barrier()     __heim_base_atomic_barrier()
 
 #define heim_base_atomic_inc(x)		atomic_inc_uint_nv((volatile uint_t *)(x))
 #define heim_base_atomic_dec(x)		atomic_dec_uint_nv((volatile uint_t *)(x))

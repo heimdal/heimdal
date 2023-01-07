@@ -504,6 +504,8 @@ heim_base_once_f(heim_base_once_t *once, void *ctx, void (*func)(void *))
 
 void
 heim_abort(const char *fmt, ...)
+    HEIMDAL_NORETURN_ATTRIBUTE
+    HEIMDAL_PRINTF_ATTRIBUTE((__printf__, 1, 2))
 {
     va_list ap;
     va_start(ap, fmt);
@@ -517,6 +519,8 @@ heim_abort(const char *fmt, ...)
 
 void
 heim_abortv(const char *fmt, va_list ap)
+    HEIMDAL_NORETURN_ATTRIBUTE
+    HEIMDAL_PRINTF_ATTRIBUTE((__printf__, 1, 0))
 {
     static char str[1024];
 

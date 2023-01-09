@@ -83,29 +83,13 @@ stdio_store(krb5_storage * sp, const void *data, size_t size)
     ssize_t count;
     size_t rem = size;
 
-#if __sun || _AIX || __hpux
-    /* On solaris10, an fwrite following an fread causes the last character to be duplicated.
-        Example program to reproduce the issue:
-        #include <stdio.h>
-
-    int main() {
-            FILE *f = fopen("my", "w+");  // create a one byte file, containing 'A'
-            char a = 'A';
-            fwrite(&a, 1, 1, f);
-            fclose(f);
-
-            f = fopen("my", "r+");
-            char v;
-            fread(&v, 1, 1, f);    // Read the 'A' character
-            // fseeko(f, 0, SEEK_CUR); // -> this is a workaround, seek to where we are already
-            char b = 'B';
-            fwrite(&b, 1, 1, f);   // -> the file content becomes "AAB", despite we only write 'B'
-            fclose(f);
-            return 0;
-    }
+    /*
+     * It's possible we just went from reading to writing if the file was open
+     * for both.  Per C99 (N869 final draft) section 7.18.5.3, point 6, when
+     * going from reading to writing [a file opened for both] one must seek.
      */
-    fseeko(F(sp), 0, SEEK_CUR);
-#endif
+    (void) fseeko(F(sp), 0, SEEK_CUR);
+
     /* similar pattern to net_write() to support pipes */
     while (rem > 0) {
 	count = fwrite(cbuf, 1, rem, F(sp));

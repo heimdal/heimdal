@@ -33,6 +33,9 @@
 
 /* $Id$ */
 
+#ifndef MECH_LOCL_H
+#define MECH_LOCL_H
+
 #include <config.h>
 
 #include <roken.h>
@@ -76,3 +79,5 @@
 			(oid_set)->count = 0;		\
 		 }					\
 	} while(0)
+
+#endif /* MECH_LOCL_H */

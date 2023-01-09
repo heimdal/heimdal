@@ -27,6 +27,9 @@
  *	$Id$
  */
 
+#ifndef MECH_UTILS_H
+#define MECH_UTILS_H
+
 OM_uint32 _gss_free_oid(OM_uint32 *, gss_OID);
 OM_uint32 _gss_intern_oid(OM_uint32 *, gss_const_OID, gss_OID *);
 OM_uint32 _gss_copy_buffer(OM_uint32 *minor_status,
@@ -80,3 +83,5 @@ OM_uint32
 _gss_mg_store_buffer(OM_uint32 *minor,
 		     krb5_storage *sp,
 		     gss_const_buffer_t buffer);
+
+#endif /* MECH_UTILS_H */

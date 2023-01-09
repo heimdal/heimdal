@@ -27,6 +27,8 @@
  *	$Id$
  */
 
+#ifndef MECH_NAME_H
+#define MECH_NAME_H
 struct _gss_mechanism_name {
 	HEIM_TAILQ_ENTRY(_gss_mechanism_name) gmn_link;
 	gssapi_mech_interface	gmn_mech;	/* mechanism ops for MN */
@@ -74,4 +76,4 @@ _gss_mech_inquire_names_for_mech(OM_uint32 * minor_status,
 				 struct _gss_name_type *names,
 				 gss_OID_set *name_types);
 
-
+#endif /* MECH_NAME_H */

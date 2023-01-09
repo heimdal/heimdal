@@ -381,7 +381,7 @@ TESTS = test_oid test_names test_cfx
 
 test_cfx_SOURCES = krb5/test_cfx.c
 
-check_PROGRAMS = test_acquire_cred $(TESTS)
+check_PROGRAMS = test_seqnums test_acquire_cred $(TESTS)
 
 bin_PROGRAMS = gsstool gss-token
 noinst_PROGRAMS = test_cred test_kcred test_context test_ntlm test_add_store_cred
@@ -402,6 +402,9 @@ LDADD = libgssapi.la \
 
 test_names_LDADD = $(LDADD) $(top_builddir)/lib/asn1/libasn1.la
 test_context_LDADD = $(LDADD) $(top_builddir)/lib/asn1/libasn1.la $(top_builddir)/lib/wind/libwind.la
+test_seqnums_SOURCES = mech/gss_utils.c
+test_seqnums_CPPFLAGS = $(AM_CPPFLAGS) -DTEST_SEQ_NUMS
+test_seqnums_LDADD = libgssapi.la $(top_builddir)/lib/sl/libsl.la $(LDADD)
 
 # gss
 

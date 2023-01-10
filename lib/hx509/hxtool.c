@@ -777,29 +777,26 @@ print_f(hx509_context hxcontext, void *ctx, hx509_cert cert)
 {
     struct print_s *s = ctx;
 
+    if (s->opt->raw_json_flag) {
+        const Certificate *c = NULL;
+        char *json = NULL;
+
+        c = _hx509_get_cert(cert);
+        if (c)
+            json = print_Certificate(c, ASN1_PRINT_INDENT);
+        if (json)
+            printf("%s\n", json);
+        else
+            hx509_err(context, 1, errno, "Could not format certificate as JSON");
+        free(json);
+        return 0;
+    }
+
     printf("cert: %d\n", s->counter++);
     print_certificate(context, cert, s->opt);
 
     return 0;
 }
-
-static int HX509_LIB_CALL
-print_fjson(hx509_context hxcontext, void *ctx, hx509_cert cert)
-{
-    const Certificate *c = NULL;
-    char *json = NULL;
-
-    c = _hx509_get_cert(cert);
-    if (c)
-        json = print_Certificate(c, ASN1_PRINT_INDENT);
-    if (json)
-        printf("%s\n", json);
-    else
-        hx509_err(context, 1, errno, "Could not format certificate as JSON");
-    free(json);
-    return 0;
-}
-
 
 int
 pcert_print(struct print_options *opt, int argc, char **argv)
@@ -827,13 +824,9 @@ pcert_print(struct print_options *opt, int argc, char **argv)
 	    }
 	    hx509_err(context, 1, ret, "hx509_certs_init");
 	}
-        if (opt->raw_json_flag) {
-            hx509_certs_iter_f(context, certs, print_fjson, &s);
-        } else {
-            if (opt->info_flag)
-                hx509_certs_info(context, certs, NULL, NULL);
-            hx509_certs_iter_f(context, certs, print_f, &s);
-        }
+        if (opt->info_flag)
+            hx509_certs_info(context, certs, NULL, NULL);
+        hx509_certs_iter_f(context, certs, print_f, &s);
 	hx509_certs_free(&certs);
 	argv++;
     }
@@ -1212,8 +1205,16 @@ query(struct query_options *opt, int argc, char **argv)
 	printf("no match found (%d)\n", ret);
     else {
 	printf("match found\n");
-	if (opt->print_flag)
-	    print_certificate(context, c, 0);
+        if (opt->print_flag    || opt->hash_flag ||
+	    opt->raw_json_flag || opt->content_flag) {
+            struct print_options popt;
+
+            memset(&popt, 0, sizeof(popt));
+            popt.content_flag = opt->content_flag;
+            popt.raw_json_flag = opt->raw_json_flag;
+            popt.hash_flag = opt->hash_flag;
+            print_certificate(context, c, &popt);
+        }
     }
 
     hx509_cert_free(c);

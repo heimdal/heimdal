@@ -634,7 +634,7 @@ fast_unwrap_request(astgs_request_t r,
     if (r->explicit_armor_present) {
 	ret = _krb5_fast_explicit_armor_key(r->context,
 					    &armorkey,
-					    ac->remote_subkey,
+					    tgs_ac->remote_subkey,
 					    &explicit_armorkey,
 					    &r->armor_crypto);
 	if (ret)

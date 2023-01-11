@@ -53,7 +53,7 @@ struct heim_log_facility_internal {
 
 struct heim_log_facility_s {
     char *program;
-    volatile heim_base_atomic(uint32_t) refs;
+    heim_base_atomic(uint32_t) refs;
     size_t len;
     struct heim_log_facility_internal *val;
 };

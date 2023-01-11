@@ -61,9 +61,12 @@ struct heim_base_mem {
 #define PTR2BASE(ptr) (((struct heim_base *)ptr) - 1)
 #define BASE2PTR(ptr) ((void *)(((struct heim_base *)ptr) + 1))
 
-#ifdef HEIM_BASE_NEED_ATOMIC_MUTEX
-HEIMDAL_MUTEX _heim_base_mutex = HEIMDAL_MUTEX_INITIALIZER;
-#endif
+HEIMDAL_MUTEX * HEIM_CALLCONV
+heim_base_mutex(void)
+{
+    static HEIMDAL_MUTEX _heim_base_mutex = HEIMDAL_MUTEX_INITIALIZER;
+    return &_heim_base_mutex;
+}
 
 /*
  * Auto release structure

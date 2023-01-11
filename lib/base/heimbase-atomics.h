@@ -40,9 +40,11 @@
 
 /*
  * Atomic operations
+ *
+ * (#define HEIM_BASE_ATOMICS_FALLBACK to test fallbacks.)
  */
 
-#if defined(HAVE_STDATOMIC_H)
+#if !defined(HEIM_BASE_ATOMICS_FALLBACK) && defined(HAVE_STDATOMIC_H)
 
 #include <stdatomic.h>
 
@@ -93,7 +95,7 @@ heim_base_cas_64_(heim_base_atomic(uint64_t)*t, uint64_t e, uint64_t d)
 #define heim_base_cas_32(t,e,d)		heim_base_cas_32_((t), (e), (d))
 #define heim_base_cas_64(t,e,d)		heim_base_cas_64_((t), (e), (d))
 
-#elif defined(__GNUC__) && defined(HAVE___SYNC_ADD_AND_FETCH)
+#elif !defined(HEIM_BASE_ATOMICS_FALLBACK) && defined(__GNUC__) && defined(HAVE___SYNC_ADD_AND_FETCH)
 
 #define heim_base_atomic_barrier()	__sync_synchronize()
 
@@ -120,7 +122,7 @@ heim_base_cas_64_(heim_base_atomic(uint64_t)*t, uint64_t e, uint64_t d)
 #define heim_base_cas_32(t,e,d)		__sync_val_compare_and_swap((t), (e), (d))
 #define heim_base_cas_64(t,e,d)		__sync_val_compare_and_swap((t), (e), (d))
 
-#elif defined(__sun)
+#elif !defined(HEIM_BASE_ATOMICS_FALLBACK) && defined(__sun)
 
 #include <sys/atomic.h>
 #include <mbarrier.h>
@@ -147,7 +149,7 @@ static inline void __heim_base_atomic_barrier(void)
 #define heim_base_cas_32(t,e,d)		atomic_cas_32((t), (e), (d))
 #define heim_base_cas_64(t,e,d)		atomic_cas_64((t), (e), (d))
 
-#elif defined(_AIX)
+#elif !defined(HEIM_BASE_ATOMICS_FALLBACK) && defined(_AIX)
 
 #include <sys/atomic_op.h>
 
@@ -213,7 +215,7 @@ heim_base_cas_64_(heim_base_atomic(uint64_t)*t, uint64_t e, uint64_t d)
 #define heim_base_cas_32(t,e,d)		heim_base_cas_32_((t), (e), (d))
 #define heim_base_cas_64(t,e,d)		heim_base_cas_64_((t), (e), (d))
 
-#elif defined(_WIN32)
+#elif !defined(HEIM_BASE_ATOMICS_FALLBACK) && defined(_WIN32)
 
 #define heim_base_atomic_barrier()	MemoryBarrier()
 
@@ -232,116 +234,119 @@ heim_base_cas_64_(heim_base_atomic(uint64_t)*t, uint64_t e, uint64_t d)
 
 #else
 
+#define heim_base_atomic(T)		volatile T
+#define heim_base_atomic_barrier()
+#define heim_base_atomic_load(x)	(*(x))
+#define heim_base_atomic_init(t, v)	do { (*(t) = (v)); } while (0)
+#define heim_base_atomic_store(t, v)	do { (*(t) = (v)); } while (0)
+
 #include <heim_threads.h>
 
 #define HEIM_BASE_NEED_ATOMIC_MUTEX 1
-extern HEIMDAL_MUTEX _heim_base_mutex;
 
 static inline uint32_t
-heim_base_atomic_inc_32(uint32_t *x)
+heim_base_atomic_inc_32(heim_base_atomic(uint32_t) *x)
 {
     uint32_t t;
-    HEIMDAL_MUTEX_lock(&_heim_base_mutex);
+    HEIMDAL_MUTEX_lock(heim_base_mutex());
     t = ++(*x);
-    HEIMDAL_MUTEX_unlock(&_heim_base_mutex);
+    HEIMDAL_MUTEX_unlock(heim_base_mutex());
     return t;
 }
 
 static inline uint32_t
-heim_base_atomic_dec_32(uint32_t *x)
+heim_base_atomic_dec_32(heim_base_atomic(uint32_t) *x)
 {
     uint32_t t;
-    HEIMDAL_MUTEX_lock(&_heim_base_mutex);
+    HEIMDAL_MUTEX_lock(heim_base_mutex());
     t = --(*x);
-    HEIMDAL_MUTEX_unlock(&_heim_base_mutex);
+    HEIMDAL_MUTEX_unlock(heim_base_mutex());
     return t;
 }
 
 static inline uint64_t
-heim_base_atomic_inc_64(uint64_t *x)
+heim_base_atomic_inc_64(heim_base_atomic(uint64_t) *x)
 {
     uint64_t t;
-    HEIMDAL_MUTEX_lock(&_heim_base_mutex);
+    HEIMDAL_MUTEX_lock(heim_base_mutex());
     t = ++(*x);
-    HEIMDAL_MUTEX_unlock(&_heim_base_mutex);
+    HEIMDAL_MUTEX_unlock(heim_base_mutex());
     return t;
 }
 
 static inline uint64_t
-heim_base_atomic_dec_64(uint64_t *x)
+heim_base_atomic_dec_64(heim_base_atomic(uint64_t) *x)
 {
     uint64_t t;
-    HEIMDAL_MUTEX_lock(&_heim_base_mutex);
+    HEIMDAL_MUTEX_lock(heim_base_mutex());
     t = --(*x);
-    HEIMDAL_MUTEX_unlock(&_heim_base_mutex);
+    HEIMDAL_MUTEX_unlock(heim_base_mutex());
     return t;
 }
 
 static inline void *
-heim_base_exchange_pointer(void *target, void *value)
+heim_base_exchange_pointer(heim_base_atomic(void *)target, void *value)
 {
     void *old;
-    HEIMDAL_MUTEX_lock(&_heim_base_mutex);
+    HEIMDAL_MUTEX_lock(heim_base_mutex());
     old = *(void **)target;
     *(void **)target = value;
-    HEIMDAL_MUTEX_unlock(&_heim_base_mutex);
+    HEIMDAL_MUTEX_unlock(heim_base_mutex());
     return old;
 }
 
 static inline uint32_t
-heim_base_exchange_32(uint32_t *p, uint32_t newval)
+heim_base_exchange_32(heim_base_atomic(uint32_t) *target, uint32_t newval)
 {
     uint32_t old;
-    HEIMDAL_MUTEX_lock(&_heim_base_mutex);
-    old = *p;
-    *p = newval;
-    HEIMDAL_MUTEX_unlock(&_heim_base_mutex);
+    HEIMDAL_MUTEX_lock(heim_base_mutex());
+    old = *target;
+    *target = newval;
+    HEIMDAL_MUTEX_unlock(heim_base_mutex());
     return old;
 }
 
 static inline uint64_t
-heim_base_exchange_64(uint64_t *p, uint64_t newval)
+heim_base_exchange_64(heim_base_atomic(uint64_t) *target, uint64_t newval)
 {
     uint64_t old;
-    HEIMDAL_MUTEX_lock(&_heim_base_mutex);
-    old = *p;
-    *p = newval;
-    HEIMDAL_MUTEX_unlock(&_heim_base_mutex);
+    HEIMDAL_MUTEX_lock(heim_base_mutex());
+    old = *target;
+    *target = newval;
+    HEIMDAL_MUTEX_unlock(heim_base_mutex());
     return old;
 }
 
 static inline void *
-heim_base_cas_pointer(void *target, void *expected, void *desired)
+heim_base_cas_pointer(heim_base_atomic(void *)target, void *expected, void *desired)
 {
     void *old;
-    HEIMDAL_MUTEX_lock(&_heim_base_mutex);
+    HEIMDAL_MUTEX_lock(heim_base_mutex());
     if ((old = *(void **)target) == expected)
         *(void **)target = desired;
-    HEIMDAL_MUTEX_unlock(&_heim_base_mutex);
+    HEIMDAL_MUTEX_unlock(heim_base_mutex());
     return old;
 }
 
 static inline uint32_t
-heim_base_cas_32(uint32_t *p, uint32_t expected,  uint32_t desired)
+heim_base_cas_32(heim_base_atomic(uint32_t) *target, uint32_t expected,  uint32_t desired)
 {
     uint32_t old;
-    HEIMDAL_MUTEX_lock(&_heim_base_mutex);
-    if ((old = *(uint32_t *)p) == expected)
-        old = *p;
-    *p = desired;
-    HEIMDAL_MUTEX_unlock(&_heim_base_mutex);
+    HEIMDAL_MUTEX_lock(heim_base_mutex());
+    if ((old = *(uint32_t *)target) == expected)
+        *target = desired;
+    HEIMDAL_MUTEX_unlock(heim_base_mutex());
     return old;
 }
 
 static inline uint64_t
-heim_base_cas_64(uint64_t *p, uint64_t expected,uint64_t desired)
+heim_base_cas_64(heim_base_atomic(uint64_t) *target, uint64_t expected,uint64_t desired)
 {
     uint64_t old;
-    HEIMDAL_MUTEX_lock(&_heim_base_mutex);
-    if ((old = *(uint64_t *)p) == expected)
-        old = *p;
-    *p = desired;
-    HEIMDAL_MUTEX_unlock(&_heim_base_mutex);
+    HEIMDAL_MUTEX_lock(heim_base_mutex());
+    if ((old = *(uint64_t *)target) == expected)
+        *target = desired;
+    HEIMDAL_MUTEX_unlock(heim_base_mutex());
     return old;
 }
 

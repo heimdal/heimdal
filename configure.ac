@@ -556,6 +556,8 @@ AC_CHECK_FUNCS([				\
 	fork					\
 	fseeko					\
 	ftello					\
+	getdelim				\
+	getline					\
 	getpeereid				\
 	getpeerucred				\
 	getresgid				\

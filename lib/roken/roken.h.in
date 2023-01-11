@@ -940,6 +940,20 @@ ROKEN_LIB_FUNCTION char * ROKEN_LIB_CALL
 #define secure_getenv(e) rk_secure_getenv(e)
 #endif
 
+#ifndef HAVE_GETDELIM
+#undef getdelim
+#define getdelim rk_getdelim
+ROKEN_LIB_FUNCTION ssize_t ROKEN_LIB_CALL
+    rk_getdelim(char **, size_t *, int, FILE *);
+#endif
+
+#ifndef HAVE_GETLINE
+#undef getline
+#define getline rk_getline
+ROKEN_LIB_FUNCTION ssize_t ROKEN_LIB_CALL
+    rk_getline(char **, size_t *, FILE *);
+#endif
+
 #ifndef HAVE_STRUCT_WINSIZE
 struct winsize {
 	unsigned short ws_row, ws_col;

@@ -74,6 +74,7 @@ HEIMDAL_ROKEN_2.0 {
 		rk_getifaddrs;
 		rk_getipnodebyaddr;
 		rk_getipnodebyname;
+		rk_getline;
 		rk_getnameinfo;
 		rk_getprogname;
 		rk_glob;

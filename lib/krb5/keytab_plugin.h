@@ -41,21 +41,24 @@
 
 /** @struct krb5plugin_keytab_ftable_desc
  *
- * @brief Description of the krb5_aname_to_lname(3) plugin facility.
+ * @brief Description of the krb5_kt_resolve(3) plugin facility.
  *
- * The krb5_aname_to_lname(3) function is pluggable.  The plugin is
- * named KRB5_PLUGIN_KEYTAB ("keytab"), with a single minor version,
- * KRB5_PLUGIN_KEYTAB_VERSION_0 (0).
+ * The krb5_kt_resolve(3) function is pluggable.  The plugin is named
+ * KRB5_PLUGIN_KEYTAB (i.e., "keytab"), with currently a single minor version,
+ * KRB5_PLUGIN_KEYTAB_VERSION_0 (i.e., 0).
  *
- * The plugin for krb5_aname_to_lname(3) consists of a data symbol
- * referencing a structure of type krb5plugin_keytab_ftable, with four
- * fields:
+ * The plugin for krb5_kt_resolve(3) consists of a data symbol referencing a
+ * structure of type krb5plugin_keytab_ftable, with three fields:
  *
  * @param minor_version The plugin minor version number (0)
- *
  * @param init          Registers keytab types
- *
  * @param fini          Plugin finalization function
+ *
+ * The `init' method must register the keytab type's `krb5_kt_ops' function
+ * table with the krb5_kt_register() function.
+ *
+ * For example, a keytab type plugin could use a JSON file as a backing store,
+ * or a daemon, it could fetch new keytab entries on a schedule, etc.
  *
  * @ingroup krb5_support
  */

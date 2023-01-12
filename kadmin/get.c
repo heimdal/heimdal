@@ -512,13 +512,16 @@ tl_data2json(kadm5_principal_ent_rec *p, struct get_entry_data *e, heim_dict_t d
     for (tl = p->tl_data; tl; tl = tl->tl_data_next) {
         switch (tl->tl_data_type) {
         case KRB5_TL_PASSWORD:
-            if (e->options->json_with_keys_flag)
+            if (e->options->json_with_keys_flag) {
                 heim_dict_set_value(d, HSTR("password"),
                                     o = heim_string_create(tl->tl_data_contents));
-            else
+		if (o == NULL)
+		    errx(1, "Out of memory");
+		heim_release(o);
+	    } else {
                 heim_dict_set_value(d, HSTR("password"),
                                     heim_bool_create(1));
-            heim_release(o);
+	    }
             continue;
         default:
             /* XXX Add more! */
@@ -531,12 +534,15 @@ tl_data2json(kadm5_principal_ent_rec *p, struct get_entry_data *e, heim_dict_t d
 static void
 keys2json(kadm5_principal_ent_rec *p, struct get_entry_data *e, heim_dict_t d)
 {
-    heim_array_t a = heim_array_create();
+    heim_array_t a;
     heim_string_t last_enctype_str = NULL;
     krb5_error_code ret = 0;
     krb5_enctype last_enctype = -1;
     size_t i;
 
+    a = heim_array_create();
+    if (a == NULL)
+	errx(1, "Out of memory");
     heim_dict_set_value(d, HSTR("keys"), a);
     if (p->n_key_data < 1) {
         heim_release(a);
@@ -551,6 +557,8 @@ keys2json(kadm5_principal_ent_rec *p, struct get_entry_data *e, heim_dict_t d)
             continue;
         }
         k = heim_dict_create(5);
+	if (k == NULL)
+	    errx(1, "Out of memory");
         heim_array_append_value(a, k);
         heim_dict_set_value(k, HSTR("kvno"),
                             heim_number_create(p->key_data[i].key_data_kvno));
@@ -568,6 +576,8 @@ keys2json(kadm5_principal_ent_rec *p, struct get_entry_data *e, heim_dict_t d)
                 last_enctype_str = heim_string_create(str);
             else
                 last_enctype_str = HSTR("<unknown-enctype>");
+	    if (last_enctype_str == NULL)
+		errx(1, "Out of memory");
             free(str);
             last_enctype = p->key_data[i].key_data_type[0];
         }
@@ -578,6 +588,8 @@ keys2json(kadm5_principal_ent_rec *p, struct get_entry_data *e, heim_dict_t d)
 
             data = heim_data_create(p->key_data[i].key_data_contents[0],
                                     p->key_data[i].key_data_length[0]);
+	    if (data == NULL)
+		errx(1, "Out of memory");
             heim_dict_set_value(k, HSTR("key"), data);
             heim_release(data);
         }
@@ -587,6 +599,8 @@ keys2json(kadm5_principal_ent_rec *p, struct get_entry_data *e, heim_dict_t d)
             heim_dict_set_value(k, HSTR("salt_type"), HSTR("normal"));
             data = heim_data_create(p->key_data[i].key_data_contents[1],
                                     p->key_data[i].key_data_length[1]);
+	    if (data == NULL)
+		errx(1, "Out of memory");
             heim_dict_set_value(k, HSTR("salt"), data);
             heim_release(data);
         } else if (p->key_data[i].key_data_type[1] == KRB5_AFS3_SALT) {
@@ -595,6 +609,8 @@ keys2json(kadm5_principal_ent_rec *p, struct get_entry_data *e, heim_dict_t d)
             heim_dict_set_value(k, HSTR("salt_type"), HSTR("AFS"));
             data = heim_data_create(p->key_data[i].key_data_contents[1],
                                     p->key_data[i].key_data_length[1]);
+	    if (data == NULL)
+		errx(1, "Out of memory");
             heim_dict_set_value(k, HSTR("salt"), data);
             heim_release(data);
         }
@@ -633,6 +649,8 @@ do_get_entry_json(krb5_principal principal, void *data)
         if (ret == 0) {
             heim_string_t hs = heim_string_create(s);
 
+	    if (hs == NULL)
+		errx(1, "Out of memory");
             o = heim_json_copy_serialize(hs, e->json_flags, NULL);
             printf("%s\n", heim_string_get_utf8(o));
             heim_release(hs);
@@ -643,15 +661,21 @@ do_get_entry_json(krb5_principal principal, void *data)
     }
 
     d = heim_dict_create(20);
+    if (d == NULL)
+	errx(1, "Out of memory");
     ret = krb5_unparse_name(context, p.principal, &s);
     if (ret == 0) {
         heim_dict_set_value(d, HSTR("principal"), o = heim_string_create(s));
+	if (o == NULL)
+	    errx(1, "Out of memory");
         heim_release(o);
         free(s);
     }
     if (ret == 0) {
         ret = krb5_unparse_name(context, p.mod_name, &s);
         heim_dict_set_value(d, HSTR("mod_name"), o = heim_string_create(s));
+	if (o == NULL)
+	    errx(1, "Out of memory");
         heim_release(o);
         free(s);
     }
@@ -661,44 +685,72 @@ do_get_entry_json(krb5_principal principal, void *data)
         keys2json(&p, e, d);
     heim_dict_set_value(d, HSTR("princ_expire_time"),
                         o = heim_number_create(p.princ_expire_time));
+    if (o == NULL)
+	errx(1, "Out of memory");
     heim_release(o);
     heim_dict_set_value(d, HSTR("last_pwd_change"),
                         o = heim_number_create(p.last_pwd_change));
+    if (o == NULL)
+	errx(1, "Out of memory");
     heim_release(o);
     heim_dict_set_value(d, HSTR("pw_expiration"),
                         o = heim_number_create(p.pw_expiration));
+    if (o == NULL)
+	errx(1, "Out of memory");
     heim_release(o);
     heim_dict_set_value(d, HSTR("max_life"),
                         o = heim_number_create(p.max_life));
+    if (o == NULL)
+	errx(1, "Out of memory");
     heim_release(o);
     heim_dict_set_value(d, HSTR("mod_date"),
                         o = heim_number_create(p.mod_date));
+    if (o == NULL)
+	errx(1, "Out of memory");
     heim_release(o);
     heim_dict_set_value(d, HSTR("attributes"),
                         o = attributes2json_array(p.attributes));
+    if (o == NULL)
+	errx(1, "Out of memory");
     heim_release(o);
     heim_dict_set_value(d, HSTR("kvno"),
                         o = heim_number_create(p.kvno));
+    if (o == NULL)
+	errx(1, "Out of memory");
     heim_release(o);
     heim_dict_set_value(d, HSTR("mkvno"),
                         o = heim_number_create(p.mkvno));
+    if (o == NULL)
+	errx(1, "Out of memory");
     heim_release(o);
     heim_dict_set_value(d, HSTR("policy"), o = heim_string_create(p.policy));
+    if (o == NULL)
+	errx(1, "Out of memory");
     heim_release(o);
     heim_dict_set_value(d, HSTR("aux_attributes"),
                         o = heim_number_create(p.aux_attributes));
+    if (o == NULL)
+	errx(1, "Out of memory");
     heim_release(o);
     heim_dict_set_value(d, HSTR("max_renewable_life"),
                         o = heim_number_create(p.max_renewable_life));
+    if (o == NULL)
+	errx(1, "Out of memory");
     heim_release(o);
     heim_dict_set_value(d, HSTR("last_success"),
                         o = heim_number_create(p.last_success));
+    if (o == NULL)
+	errx(1, "Out of memory");
     heim_release(o);
     heim_dict_set_value(d, HSTR("last_failed"),
                         o = heim_number_create(p.last_failed));
+    if (o == NULL)
+	errx(1, "Out of memory");
     heim_release(o);
     heim_dict_set_value(d, HSTR("fail_auth_count"),
                         o = heim_number_create(p.fail_auth_count));
+    if (o == NULL)
+	errx(1, "Out of memory");
     heim_release(o);
 
     kadm5_free_principal_ent(e->kadm_handle, &p);

@@ -81,7 +81,8 @@ lib_LTLIBRARIES = libhdb.la hdb_keytab_plugin.la $(ldap_so)
 libhdb_la_LDFLAGS = -version-info 11:0:2
 
 hdb_keytab_plugin_la_SOURCES = hdb_keytab_plugin.c
-hdb_keytab_plugin_la_LDFLAGS = -module -avoid-version libhdb.la ../krb5/libkrb5.la
+hdb_keytab_plugin_la_LDFLAGS = -module -avoid-version
+hdb_keytab_plugin_la_LIBADD = libhdb.la ../krb5/libkrb5.la
 
 if versionscript
 libhdb_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(srcdir)/version-script.map

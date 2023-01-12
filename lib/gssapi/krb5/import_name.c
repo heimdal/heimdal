@@ -152,6 +152,8 @@ import_hostbased_name(OM_uint32 *minor_status,
     kerr = krb5_sname_to_principal(context, host, tmp, KRB5_NT_SRV_HST, &princ);
     free (tmp);
     *minor_status = kerr;
+    if (kerr == KRB5_PARSE_ILLCHAR || kerr == KRB5_PARSE_MALFORMED)
+	return GSS_S_BAD_NAME;
     if (kerr)
 	return GSS_S_FAILURE;
 

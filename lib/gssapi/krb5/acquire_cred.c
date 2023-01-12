@@ -33,44 +33,6 @@
 
 #include "gsskrb5_locl.h"
 
-/*
- * Find an element in a cred store. Returns GSS_S_COMPLETE if the cred store
- * is absent or well formed, irrespective of whether the element exists. The
- * caller should check for *value != NULL before using; values are typically
- * optional, hence this behavior. (The caller should validate the return
- * value at least once though, to check it is well-formed.)
- */
-OM_uint32
-__gsskrb5_cred_store_find(OM_uint32 *minor_status,
-			  gss_const_key_value_set_t cred_store,
-			  const char *key,
-			  const char **value)
-{
-    size_t i;
-
-    *value = NULL;
-
-    if (cred_store == GSS_C_NO_CRED_STORE)
-	return GSS_S_COMPLETE;
-    else if (cred_store->count == 0) {
-	*minor_status = GSS_KRB5_S_G_BAD_USAGE;
-	return GSS_S_NO_CRED;
-    }
-
-    for (i = 0; i < cred_store->count; i++) {
-	if (strcmp(key, cred_store->elements[i].key) == 0) {
-	    if (*value) {
-		*value = NULL;
-		*minor_status = GSS_KRB5_S_G_BAD_USAGE;
-		return GSS_S_DUPLICATE_ELEMENT;
-	    }
-	    *value = cred_store->elements[i].value;
-	}
-    }
-
-    return GSS_S_COMPLETE;
-}
-
 static const char *
 store_get(gss_const_key_value_set_t cred_store, const char *key)
 {
@@ -120,10 +82,10 @@ __gsskrb5_ccache_lifetime(OM_uint32 *minor_status,
 }
 
 static krb5_error_code
-store_set_opt_flags(krb5_context context,
-                    gss_const_key_value_set_t cred_store,
-                    OM_uint32 time_req,
-                    krb5_get_init_creds_opt *opt)
+set_init_creds_opts_from_store(krb5_context context,
+                               gss_const_key_value_set_t cred_store,
+                               OM_uint32 time_req,
+                               krb5_get_init_creds_opt *opt)
 {
     krb5_error_code ret = 0;
 
@@ -142,9 +104,9 @@ store_set_opt_flags(krb5_context context,
 }
 
 static krb5_error_code
-store_set_ctx_stuff(krb5_context context,
-                    gss_const_key_value_set_t cred_store,
-                    krb5_init_creds_context ctx)
+set_init_creds_ctx_from_store(krb5_context context,
+                              gss_const_key_value_set_t cred_store,
+                              krb5_init_creds_context ctx)
 {
     krb5_error_code ret = 0;
 
@@ -339,7 +301,8 @@ acquire_initiator_cred_pkinit(OM_uint32 *minor_status,
         ret = krb5_get_init_creds_opt_alloc(context, &opt);
     if (ret == 0) {
         krb5_get_init_creds_opt_set_default_flags(context, app, realm, opt);
-        ret = store_set_opt_flags(context, cred_store, time_req, opt);
+        ret = set_init_creds_opts_from_store(context, cred_store,
+                                             time_req, opt);
     }
     if (ret == 0 && time_req)
         krb5_get_init_creds_opt_set_tkt_life(opt, time_req2deltat(time_req));
@@ -354,7 +317,7 @@ acquire_initiator_cred_pkinit(OM_uint32 *minor_status,
         ret = krb5_init_creds_init(context, handle->principal, NULL, NULL, 0,
                                     opt, &ctx);
     if (ret == 0)
-        ret = store_set_ctx_stuff(context, cred_store, ctx);
+        ret = set_init_creds_ctx_from_store(context, cred_store, ctx);
 
     krb5_timeofday(context, &now);
     if (ret == 0)
@@ -439,7 +402,8 @@ acquire_cred_with_password(OM_uint32 *minor_status,
     kret = krb5_get_init_creds_opt_alloc(context, &opt);
     if (kret == 0) {
         krb5_get_init_creds_opt_set_default_flags(context, app, realm, opt);
-        kret = store_set_opt_flags(context, cred_store, time_req, opt);
+        kret = set_init_creds_opts_from_store(context, cred_store,
+                                              time_req, opt);
     }
     if (kret == 0 && time_req)
         krb5_get_init_creds_opt_set_tkt_life(opt, time_req2deltat(time_req));
@@ -447,7 +411,7 @@ acquire_cred_with_password(OM_uint32 *minor_status,
         kret = krb5_init_creds_init(context, handle->principal, NULL, NULL, 0,
                                     opt, &ctx);
     if (ret == 0)
-        ret = store_set_ctx_stuff(context, cred_store, ctx);
+        ret = set_init_creds_ctx_from_store(context, cred_store, ctx);
     if (kret == 0 && store_get(cred_store, "fast_armor_cache")) {
         kret = krb5_cc_resolve(context,
                                store_get(cred_store, "fast_armor_cache"),
@@ -770,7 +734,8 @@ acquire_initiator_cred_kt(OM_uint32 *minor_status,
     if (ret == 0) {
         realm = krb5_principal_get_realm(context, handle->principal);
         krb5_get_init_creds_opt_set_default_flags(context, app, realm, opt);
-        ret = store_set_opt_flags(context, cred_store, time_req, opt);
+        ret = set_init_creds_opts_from_store(context, cred_store,
+                                             time_req, opt);
     }
     if (ret == 0 && time_req)
         krb5_get_init_creds_opt_set_tkt_life(opt, time_req2deltat(time_req));
@@ -778,7 +743,7 @@ acquire_initiator_cred_kt(OM_uint32 *minor_status,
         ret = krb5_init_creds_init(context, handle->principal, NULL, NULL, 0,
                                    opt, &ctx);
     if (ret == 0)
-        ret = store_set_ctx_stuff(context, cred_store, ctx);
+        ret = set_init_creds_ctx_from_store(context, cred_store, ctx);
     if (ret == 0)
         ret = krb5_init_creds_set_keytab(context, ctx, keytab);
     if (ret == 0 && store_get(cred_store, "fast_armor_cache")) {

@@ -162,6 +162,19 @@ check_destination_tgt_policy(krb5_context context,
     return ret;
 }
 
+static const char *
+store_get(gss_const_key_value_set_t cred_store, const char *key)
+{
+    size_t i;
+
+    if (cred_store == GSS_C_NO_CRED_STORE)
+	return NULL;
+    for (i = 0; i < cred_store->count; i++)
+	if (strcmp(key, cred_store->elements[i].key) == 0)
+	    return cred_store->elements[i].value;
+    return NULL;
+}
+
 OM_uint32 GSSAPI_CALLCONV
 _gsskrb5_store_cred_into2(OM_uint32         *minor_status,
 			  gss_const_cred_id_t input_cred_handle,
@@ -216,25 +229,10 @@ _gsskrb5_store_cred_into2(OM_uint32         *minor_status,
     }
 
     /* Extract the ccache name from the store if given */
-    if (cred_store != GSS_C_NO_CRED_STORE) {
-	major_status = __gsskrb5_cred_store_find(minor_status, cred_store,
-                                                 "unique_ccache_type",
-                                                 &cs_unique_ccache);
-	if (GSS_ERROR(major_status))
-	    return major_status;
-	major_status = __gsskrb5_cred_store_find(minor_status, cred_store,
-						 "ccache", &cs_ccache_name);
-	if (GSS_ERROR(major_status))
-	    return major_status;
-	major_status = __gsskrb5_cred_store_find(minor_status, cred_store,
-						 "username", &cs_user_name);
-	if (GSS_ERROR(major_status))
-	    return major_status;
-	major_status = __gsskrb5_cred_store_find(minor_status, cred_store,
-						 "appname", &cs_app_name);
-	if (GSS_ERROR(major_status))
-	    return major_status;
-    }
+    cs_unique_ccache = store_get(cred_store, "unique_ccache_type");
+    cs_ccache_name = store_get(cred_store, "ccache");
+    cs_user_name = store_get(cred_store, "username");
+    cs_app_name = store_get(cred_store, "appname");
 
     GSSAPI_KRB5_INIT (&context);
     HEIMDAL_MUTEX_lock(&input_cred->cred_id_mutex);

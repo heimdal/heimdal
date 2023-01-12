@@ -1563,6 +1563,7 @@ static char sHDB[] = "HDBGET:";
 static char *realm;
 static int version_flag;
 static int help_flag;
+static int restarter_flag = 1;
 static char *keytab_str = sHDB;
 static char *database;
 static char *config_file;
@@ -1592,6 +1593,7 @@ static struct getargs args[] = {
       "basename of pidfile; private argument for testing", "NAME" },
     { "hostname", 0, arg_string, rk_UNCONST(&master_hostname),
       "hostname of master (if not same as hostname)", "hostname" },
+    { "restarter", 0, arg_negative_flag, &restarter_flag, NULL, NULL },
     { "verbose", 0, arg_flag, &verbose, NULL, NULL },
     { "version", 0, arg_flag, &version_flag, NULL, NULL },
     { "help", 0, arg_flag, &help_flag, NULL, NULL }
@@ -1728,7 +1730,8 @@ main(int argc, char **argv)
 	       (unsigned long)current_version);
 
     roken_detach_finish(NULL, daemon_child);
-    restarter_fd = restarter(context, NULL);
+    if (restarter_flag)
+        restarter_fd = restarter(context, NULL);
 
     while (exit_flag == 0){
 	slave *p;
@@ -1825,7 +1828,7 @@ main(int argc, char **argv)
 	    }
 	}
 
-        if (ret && FD_ISSET(restarter_fd, &readset)) {
+        if (ret && restarter_fd != -1 && FD_ISSET(restarter_fd, &readset)) {
             exit_flag = SIGTERM;
             break;
         }

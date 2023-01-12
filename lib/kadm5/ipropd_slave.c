@@ -715,6 +715,7 @@ static int help_flag;
 static char *port_str;
 static int detach_from_console;
 static int daemon_child = -1;
+static int restarter_flag = 1;
 
 static struct getargs args[] = {
     { "config-file", 'c', arg_string, &config_file, NULL, NULL },
@@ -741,6 +742,7 @@ static struct getargs args[] = {
     { "async-hdb", 'a', arg_flag, &async_hdb, NULL, NULL },
     { "hostname", 0, arg_string, rk_UNCONST(&slave_str),
       "hostname of slave (if not same as hostname)", "hostname" },
+    { "restarter", 0, arg_negative_flag, &restarter_flag, NULL, NULL },
     { "verbose", 0, arg_flag, &verbose, NULL, NULL },
     { "version", 0, arg_flag, &version_flag, NULL, NULL },
     { "help", 0, arg_flag, &help_flag, NULL, NULL }
@@ -904,7 +906,8 @@ main(int argc, char **argv)
     slave_status(context, status_file, "ipropd-slave started");
 
     roken_detach_finish(NULL, daemon_child);
-    restarter_fd = restarter(context, NULL);
+    if (restarter_flag)
+	restarter_fd = restarter(context, NULL);
 
     while (!exit_flag) {
         struct timeval to;

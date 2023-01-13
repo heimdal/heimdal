@@ -83,7 +83,7 @@ CLEANFILES= \
 	krb5.conf-lmdb krb5.conf-lmdb.tmp \
 	krb5-mit.conf krb5-mit.conf.tmp \
 	tempfile \
-	log.current-db* \
+	log log.current-db* \
 	heimdal-db* \
 	messages.log
 

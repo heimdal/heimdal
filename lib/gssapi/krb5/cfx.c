@@ -276,11 +276,7 @@ _gk_verify_buffers(OM_uint32 *minor_status,
 	/*
 	 * In DCE style mode we reject having a padding or trailer buffer
 	 */
-	if (padding) {
-	    *minor_status = EINVAL;
-	    return GSS_S_FAILURE;
-	}
-	if (trailer) {
+	if (padding || trailer) {
 	    *minor_status = EINVAL;
 	    return GSS_S_FAILURE;
 	}

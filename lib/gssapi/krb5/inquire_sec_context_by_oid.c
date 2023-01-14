@@ -90,7 +90,7 @@ static OM_uint32 inquire_sec_context_tkt_flags
     tkt_flags = TicketFlags2int(context_handle->ticket->ticket.flags);
     HEIMDAL_MUTEX_unlock(&context_handle->ctx_id_mutex);
 
-    _gsskrb5_encode_om_uint32(tkt_flags, buf);
+    _gss_mg_encode_le_uint32(tkt_flags, buf);
     value.length = sizeof(buf);
     value.value = buf;
 
@@ -445,7 +445,7 @@ get_authtime(OM_uint32 *minor_status,
 
     HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
 
-    _gsskrb5_encode_om_uint32(authtime, buf);
+    _gss_mg_encode_le_uint32(authtime, buf);
     value.length = sizeof(buf);
     value.value = buf;
 

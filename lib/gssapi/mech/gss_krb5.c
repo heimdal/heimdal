@@ -538,6 +538,7 @@ gsskrb5_extract_authtime_from_sec_context(OM_uint32 *minor_status,
 {
     gss_buffer_set_t data_set = GSS_C_NO_BUFFER_SET;
     OM_uint32 maj_stat;
+    uint32_t tmp;
 
     if (context_handle == GSS_C_NO_CONTEXT) {
 	*minor_status = EINVAL;
@@ -570,12 +571,8 @@ gsskrb5_extract_authtime_from_sec_context(OM_uint32 *minor_status,
 	return GSS_S_FAILURE;
     }
 
-    {
-	unsigned char *buf = data_set->elements[0].value;
-	*authtime = ((unsigned long)buf[3] <<24) | (buf[2] << 16) |
-	    (buf[1] << 8) | (buf[0] << 0);
-    }
-
+    _gss_mg_decode_le_uint32(data_set->elements[0].value, &tmp);
+    *authtime = (time_t)tmp;
     gss_release_buffer_set(minor_status, &data_set);
 
     *minor_status = 0;
@@ -844,10 +841,7 @@ gss_krb5_get_tkt_flags(OM_uint32 *minor_status,
 	return GSS_S_FAILURE;
     }
 
-    {
-	const u_char *p = data_set->elements[0].value;
-	*tkt_flags = (p[0] << 0) | (p[1] << 8) | (p[2] << 16) | (p[3] << 24);
-    }
+    _gss_mg_decode_le_uint32(data_set->elements[0].value, tkt_flags);
 
     gss_release_buffer_set(minor_status, &data_set);
     return GSS_S_COMPLETE;

@@ -505,8 +505,8 @@ _gssapi_wrap_cfx_iov(OM_uint32 *minor_status,
     krb5_auth_con_getlocalseqnumber(context,
 				    ctx->auth_context,
 				    &seq_number);
-    _gsskrb5_encode_be_om_uint32(0,          &token->SND_SEQ[0]);
-    _gsskrb5_encode_be_om_uint32(seq_number, &token->SND_SEQ[4]);
+    _gss_mg_encode_be_uint32(0,          &token->SND_SEQ[0]);
+    _gss_mg_encode_be_uint32(seq_number, &token->SND_SEQ[4]);
     krb5_auth_con_setlocalseqnumber(context,
 				    ctx->auth_context,
 				    ++seq_number);
@@ -817,8 +817,8 @@ _gssapi_unwrap_cfx_iov(OM_uint32 *minor_status,
     /*
      * Check sequence number
      */
-    _gsskrb5_decode_be_om_uint32(&token->SND_SEQ[0], &seq_number_hi);
-    _gsskrb5_decode_be_om_uint32(&token->SND_SEQ[4], &seq_number_lo);
+    _gss_mg_decode_be_uint32(&token->SND_SEQ[0], &seq_number_hi);
+    _gss_mg_decode_be_uint32(&token->SND_SEQ[4], &seq_number_lo);
     if (seq_number_hi) {
 	/* no support for 64-bit sequence numbers */
 	*minor_status = ERANGE;
@@ -1271,8 +1271,8 @@ OM_uint32 _gssapi_wrap_cfx(OM_uint32 *minor_status,
     krb5_auth_con_getlocalseqnumber(context,
 				    ctx->auth_context,
 				    &seq_number);
-    _gsskrb5_encode_be_om_uint32(0,          &token->SND_SEQ[0]);
-    _gsskrb5_encode_be_om_uint32(seq_number, &token->SND_SEQ[4]);
+    _gss_mg_encode_be_uint32(0,          &token->SND_SEQ[0]);
+    _gss_mg_encode_be_uint32(seq_number, &token->SND_SEQ[4]);
     krb5_auth_con_setlocalseqnumber(context,
 				    ctx->auth_context,
 				    ++seq_number);
@@ -1458,8 +1458,8 @@ OM_uint32 _gssapi_unwrap_cfx(OM_uint32 *minor_status,
     /*
      * Check sequence number
      */
-    _gsskrb5_decode_be_om_uint32(&token->SND_SEQ[0], &seq_number_hi);
-    _gsskrb5_decode_be_om_uint32(&token->SND_SEQ[4], &seq_number_lo);
+    _gss_mg_decode_be_uint32(&token->SND_SEQ[0], &seq_number_hi);
+    _gss_mg_decode_be_uint32(&token->SND_SEQ[4], &seq_number_lo);
     if (seq_number_hi) {
 	/* no support for 64-bit sequence numbers */
 	*minor_status = ERANGE;
@@ -1642,8 +1642,8 @@ OM_uint32 _gssapi_mic_cfx(OM_uint32 *minor_status,
     krb5_auth_con_getlocalseqnumber(context,
 				    ctx->auth_context,
 				    &seq_number);
-    _gsskrb5_encode_be_om_uint32(0,          &token->SND_SEQ[0]);
-    _gsskrb5_encode_be_om_uint32(seq_number, &token->SND_SEQ[4]);
+    _gss_mg_encode_be_uint32(0,          &token->SND_SEQ[0]);
+    _gss_mg_encode_be_uint32(seq_number, &token->SND_SEQ[4]);
     krb5_auth_con_setlocalseqnumber(context,
 				    ctx->auth_context,
 				    ++seq_number);
@@ -1736,8 +1736,8 @@ OM_uint32 _gssapi_verify_mic_cfx(OM_uint32 *minor_status,
     /*
      * Check sequence number
      */
-    _gsskrb5_decode_be_om_uint32(&token->SND_SEQ[0], &seq_number_hi);
-    _gsskrb5_decode_be_om_uint32(&token->SND_SEQ[4], &seq_number_lo);
+    _gss_mg_decode_be_uint32(&token->SND_SEQ[0], &seq_number_hi);
+    _gss_mg_decode_be_uint32(&token->SND_SEQ[4], &seq_number_lo);
     if (seq_number_hi) {
 	*minor_status = ERANGE;
 	return GSS_S_UNSEQ_TOKEN;

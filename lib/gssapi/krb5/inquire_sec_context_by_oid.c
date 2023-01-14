@@ -430,8 +430,8 @@ get_authtime(OM_uint32 *minor_status,
 
 {
     gss_buffer_desc value;
-    unsigned char buf[4];
-    OM_uint32 authtime;
+    unsigned char buf[SIZEOF_TIME_T];
+    time_t authtime;
 
     HEIMDAL_MUTEX_lock(&ctx->ctx_id_mutex);
     if (ctx->ticket == NULL) {
@@ -445,7 +445,13 @@ get_authtime(OM_uint32 *minor_status,
 
     HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
 
+#if SIZEOF_TIME_T == 8
+    _gss_mg_encode_le_uint64(authtime, buf);
+#elif SIZEOF_TIME_T == 4
     _gss_mg_encode_le_uint32(authtime, buf);
+#else
+#error set SIZEOF_TIME_T for your platform
+#endif
     value.length = sizeof(buf);
     value.value = buf;
 

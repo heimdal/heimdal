@@ -639,6 +639,8 @@ log_init(kadm5_server_context *server_context, int lock_mode)
 
     fd = log_context->log_fd;
     if (!log_context->read_only) {
+        int db_opened = 0;
+
         if (fstat(fd, &st) == -1)
             ret = errno;
         if (ret == 0 && st.st_size == 0) {
@@ -656,8 +658,17 @@ log_init(kadm5_server_context *server_context, int lock_mode)
             if (ret == KADM5_LOG_NEEDS_UPGRADE)
                 ret = kadm5_log_truncate(server_context, 0, maxbytes / 4);
         }
+        if (ret == 0 && !server_context->db->hdb_openp) {
+            ret = server_context->db->hdb_open(server_context->context,
+                                               server_context->db, O_RDWR, 0);
+            if (ret == 0)
+                db_opened = 1;
+        }
         if (ret == 0)
             ret = kadm5_log_recover(server_context, kadm_recover_replay);
+        if (db_opened)
+            (void) server_context->db->hdb_close(server_context->context,
+                                                 server_context->db);
     }
 
     if (ret == 0) {

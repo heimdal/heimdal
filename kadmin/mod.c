@@ -400,6 +400,24 @@ do_mod_entry(krb5_principal principal, void *data)
     return ret;
 }
 
+static int
+do_prop_entry(krb5_principal principal, void *data)
+{
+    krb5_error_code ret;
+    kadm5_principal_ent_rec princ;
+    struct mod_data *m = data;
+
+    memset (&princ, 0, sizeof(princ));
+    ret = kadm5_get_principal(m->kadm_handle, principal, &princ, ~0);
+    if (ret)
+        return ret;
+    ret = kadm5_modify_principal(m->kadm_handle, &princ, 0);
+    if(ret)
+        krb5_warn(context, ret, "kadm5_modify_principal");
+    kadm5_free_principal_ent(m->kadm_handle, &princ);
+    return ret;
+}
+
 int
 mod_entry(struct modify_options *opt, int argc, char **argv)
 {
@@ -415,6 +433,26 @@ mod_entry(struct modify_options *opt, int argc, char **argv)
     ret = kadm5_dup_context(kadm_handle, &data.kadm_handle);
     for (i = 0; ret == 0 && i < argc; i++)
 	ret = foreach_principal(argv[i], do_mod_entry, "mod", &data);
+    if (data.kadm_handle)
+        kadm5_destroy(data.kadm_handle);
+    return ret != 0;
+}
+
+int
+prop_entry(void *opt, int argc, char **argv)
+{
+    krb5_error_code ret = 0;
+    struct mod_data data;
+    int i;
+
+    data.kadm_handle = NULL;
+    data.opt_ns_kr = NULL;
+    data.opt_ns = NULL;
+    data.opt = NULL;
+
+    ret = kadm5_dup_context(kadm_handle, &data.kadm_handle);
+    for (i = 0; ret == 0 && i < argc; i++)
+	ret = foreach_principal(argv[i], do_prop_entry, "prop", &data);
     if (data.kadm_handle)
         kadm5_destroy(data.kadm_handle);
     return ret != 0;

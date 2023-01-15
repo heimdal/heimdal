@@ -94,8 +94,10 @@ one or more principals as argument
 .Nm get ,
 .Nm list ,
 .Nm modify ,
+.Nm passwd
 and
-.Nm passwd )
+.Nm propagate
+)
 will accept a glob style wildcard, and perform the operation on all
 matching principals.
 .Pp
@@ -559,6 +561,17 @@ behavior is the default if none of these are given.
 This command has the following aliases:
 .Nm cpw ,
 .Nm change_password .
+.Ed
+.Pp
+.Nm propagate
+.Bd -ragged -offset indent
+This command causes the given principal(s) to propagate to
+downstream KDCs by using the principal modify machinery, though
+none of the attributes of the principals are modified other than
+the last-modified-by and last-modify-time metadata.
+This command is useful for resolving conflicts where different
+KDCs kept different versions of the a principal that was modified
+concurrently on different KDCs.
 .Ed
 .Pp
 .Nm verify-password-quality

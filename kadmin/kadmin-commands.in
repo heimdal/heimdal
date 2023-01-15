@@ -631,6 +631,15 @@ command = {
 	help = "Modifies some attributes of the specified principal."
 }
 command = {
+	name = "propagate"
+	name = "prop"
+	function = "prop_entry"
+	argument = "principal"
+	min_args = "1"
+	max_args = "1"
+	help = "Forces a propagation of the specified principal"
+}
+command = {
 	name = "add_alias"
         function = "add_alias"
 	argument = "principal"

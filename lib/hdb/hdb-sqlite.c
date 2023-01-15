@@ -778,6 +778,7 @@ rollback:
 static krb5_error_code
 hdb_sqlite_close(krb5_context context, HDB *db)
 {
+    db->hdb_openp = 0;
     return 0;
 }
 
@@ -796,6 +797,7 @@ hdb_sqlite_close(krb5_context context, HDB *db)
 static krb5_error_code
 hdb_sqlite_open(krb5_context context, HDB *db, int flags, mode_t mode)
 {
+    db->hdb_openp = 1;
     return 0;
 }
 

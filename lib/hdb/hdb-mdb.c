@@ -330,6 +330,7 @@ DB_close(krb5_context context, HDB *db)
 {
     mdb_info *mi = (mdb_info *)db->hdb_db;
 
+    db->hdb_openp = 0;
     mdb_cursor_close(mi->c);
     mdb_txn_abort(mi->t);
     my_mdb_env_close(context, db->hdb_name, &mi->e);
@@ -640,6 +641,7 @@ DB_open(krb5_context context, HDB *db, int oflags, mode_t mode)
         /* hdb_init_db() calls hdb_check_db_format() */
 	ret = hdb_init_db(context, db);
     }
+    db->hdb_openp = 1;
     if (ret) {
 	DB_close(context, db);
 	krb5_set_error_message(context, ret, "hdb_open: failed %s database %s",

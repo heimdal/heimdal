@@ -67,6 +67,7 @@ DB_close(krb5_context context, HDB *db)
 
     heim_assert(d != 0, "Closing already closed HDB");
 
+    db->hdb_openp = 0;
     if (dbcp != NULL)
 	dbcp->c_close(dbcp);
     if (d != NULL)
@@ -421,6 +422,7 @@ DB_open(krb5_context context, HDB *db, int flags, mode_t mode)
 			       db->hdb_name, strerror(ret));
 	return ret;
     }
+    db->hdb_openp = 1;
 
 #ifndef DB_CURSOR_BULK
 # define DB_CURSOR_BULK 0	/* Missing with DB < 4.8 */

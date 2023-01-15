@@ -53,6 +53,7 @@ hkt_close(krb5_context context, HDB *db)
 
     assert(k->keytab);
 
+    db->hdb_openp = 0;
     ret = krb5_kt_close(context, k->keytab);
     k->keytab = NULL;
 
@@ -114,6 +115,7 @@ hkt_open(krb5_context context, HDB * db, int flags, mode_t mode)
     if (ret)
 	return ret;
 
+    db->hdb_openp = 1;
     return 0;
 }
 

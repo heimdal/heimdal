@@ -38,7 +38,7 @@ kadm5_ret_t
 kadm5_c_prune_principal(void *server_handle, krb5_principal princ, int kvno)
 {
     kadm5_client_context *context = server_handle;
-    kadm5_ret_t ret, ret2;
+    kadm5_ret_t ret, ret2 = 0;
     krb5_storage *sp = NULL;
     unsigned char buf[1024];
     krb5_data reply;

@@ -978,6 +978,7 @@ kadm5_log_create(kadm5_server_context *context, hdb_entry *entry)
     kadm5_log_context *log_context = &context->log_context;
 
     memset(&existing, 0, sizeof(existing));
+    memset(&value, 0, sizeof(value));
     memset(&ent, 0, sizeof(ent));
     ent = *entry;
 
@@ -2228,7 +2229,7 @@ kadm5_log_next(krb5_context context,
     uint32_t len = 0;
     uint32_t len2 = 0;
     uint32_t ver = verp ? *verp : 0;
-    uint32_t ver2;
+    uint32_t ver2 = 0;
     uint32_t tstamp = tstampp ? *tstampp : 0;
     enum kadm_ops op = kadm_nop;
     off_t off = krb5_storage_seek(sp, 0, SEEK_CUR);

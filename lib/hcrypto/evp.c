@@ -831,6 +831,7 @@ EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *c, ENGINE *engine,
     case EVP_CIPH_CFB8_MODE:
     case EVP_CIPH_CCM_MODE:
     case EVP_CIPH_GCM_MODE:
+    case EVP_CIPH_OCB_MODE:
 	if (iv)
 	    memcpy(ctx->iv, iv, EVP_CIPHER_CTX_iv_length(ctx));
 	break;
@@ -876,6 +877,7 @@ EVP_CipherUpdate(EVP_CIPHER_CTX *ctx, void *out, int *outlen,
     switch (EVP_CIPHER_CTX_mode(ctx)) {
     case EVP_CIPH_CCM_MODE:
     case EVP_CIPH_GCM_MODE:
+    case EVP_CIPH_OCB_MODE:
 	aead = 1;
 	break;
     default:
@@ -1359,6 +1361,36 @@ EVP_aes_256_gcm(void)
 {
     hcrypto_validate();
     return EVP_DEF_OP(HCRYPTO_DEF_PROVIDER, aes_256_gcm);
+}
+
+/**
+ * The AES-128-OCB cipher type
+ *
+ * @return the AES-128-OCB EVP_CIPHER pointer.
+ *
+ * @ingroup hcrypto_evp
+ */
+
+const EVP_CIPHER *
+EVP_aes_128_ocb(void)
+{
+    hcrypto_validate();
+    return EVP_DEF_OP(HCRYPTO_DEF_PROVIDER, aes_128_ocb);
+}
+
+/**
+ * The AES-256-OCB cipher type
+ *
+ * @return the AES-256-OCB EVP_CIPHER pointer.
+ *
+ * @ingroup hcrypto_evp
+ */
+
+const EVP_CIPHER *
+EVP_aes_256_ocb(void)
+{
+    hcrypto_validate();
+    return EVP_DEF_OP(HCRYPTO_DEF_PROVIDER, aes_256_ocb);
 }
 
 /**

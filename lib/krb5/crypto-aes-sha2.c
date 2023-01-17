@@ -44,9 +44,11 @@ _krb5_aes_sha2_md_for_enctype(krb5_context context,
 {
     switch (enctype) {
     case ETYPE_AES128_CTS_HMAC_SHA256_128:
+    case ETYPE_AES128_OCB_128:
 	*md = EVP_sha256();
 	break;
     case ETYPE_AES256_CTS_HMAC_SHA384_192:
+    case ETYPE_AES256_OCB_128:
 	*md = EVP_sha384();
 	break;
     default:
@@ -134,11 +136,11 @@ struct _krb5_checksum_type _krb5_checksum_hmac_sha384_192_aes256 = {
     NULL
 };
 
-static krb5_error_code
-AES_SHA2_PRF(krb5_context context,
-	     krb5_crypto crypto,
-	     const krb5_data *in,
-	     krb5_data *out)
+krb5_error_code
+_krb5_AES_SHA2_PRF(krb5_context context,
+                   krb5_crypto crypto,
+                   const krb5_data *in,
+                   krb5_data *out)
 {
     krb5_error_code ret;
     krb5_data label;
@@ -178,7 +180,7 @@ struct _krb5_encryption_type _krb5_enctype_aes128_cts_hmac_sha256_128 = {
     _krb5_evp_encrypt_cts,
     NULL,
     16,
-    AES_SHA2_PRF
+    _krb5_AES_SHA2_PRF
 };
 
 struct _krb5_encryption_type _krb5_enctype_aes256_cts_hmac_sha384_192 = {
@@ -195,5 +197,5 @@ struct _krb5_encryption_type _krb5_enctype_aes256_cts_hmac_sha384_192 = {
     _krb5_evp_encrypt_cts,
     NULL,
     16,
-    AES_SHA2_PRF
+    _krb5_AES_SHA2_PRF
 };

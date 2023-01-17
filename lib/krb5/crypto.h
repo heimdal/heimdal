@@ -185,6 +185,8 @@ extern struct _krb5_encryption_type _krb5_enctype_aes256_cts_hmac_sha384_192;
 #ifdef HAVE_HCRYPTO_W_OPENSSL
 extern struct _krb5_encryption_type _krb5_enctype_aes128_gcm_128;
 extern struct _krb5_encryption_type _krb5_enctype_aes256_gcm_128;
+extern struct _krb5_encryption_type _krb5_enctype_aes128_ocb_128;
+extern struct _krb5_encryption_type _krb5_enctype_aes256_ocb_128;
 #endif
 extern struct _krb5_encryption_type _krb5_enctype_des3_cbc_sha1;
 extern struct _krb5_encryption_type _krb5_enctype_des3_cbc_md5;

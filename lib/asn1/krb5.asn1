@@ -290,6 +290,8 @@ ENCTYPE ::= INTEGER {
 	KRB5_ENCTYPE_ARCFOUR_HMAC_MD5_56(24),
 	KRB5_ENCTYPE_AES128_GCM_128(-1478), -- temporary assigment
 	KRB5_ENCTYPE_AES256_GCM_128(-1479), -- temporary assigment
+	KRB5_ENCTYPE_AES128_OCB_128(-1480), -- temporary assigment
+	KRB5_ENCTYPE_AES256_OCB_128(-1481), -- temporary assigment
 	KRB5_ENCTYPE_ENCTYPE_PK_CROSS(48),
 -- some "old" windows types
 	KRB5_ENCTYPE_ARCFOUR_MD4(-128),

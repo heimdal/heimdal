@@ -91,6 +91,8 @@ struct _krb5_encryption_type *_krb5_etypes[] = {
 #ifdef HAVE_HCRYPTO_W_OPENSSL
     &_krb5_enctype_aes128_gcm_128,
     &_krb5_enctype_aes256_gcm_128,
+    &_krb5_enctype_aes128_ocb_128,
+    &_krb5_enctype_aes256_ocb_128,
 #endif
     &_krb5_enctype_null
 };

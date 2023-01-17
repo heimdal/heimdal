@@ -402,7 +402,7 @@ done
 echo "====== gss-api session key check"
 
 # this will break when oneone invents a cooler enctype then aes256-cts-hmac-sha1-96
-coolenctype="aes256-gcm-128"
+coolenctype="aes256-ocb-128"
 limit_enctype="des3-cbc-sha1"
 
 echo "Getting client initial tickets" ; > messages.log

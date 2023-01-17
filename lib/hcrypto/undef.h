@@ -117,6 +117,8 @@
 #undef EVP_aes_256_ccm
 #undef EVP_aes_128_gcm
 #undef EVP_aes_256_gcm
+#undef EVP_aes_128_ocb
+#undef EVP_aes_256_ocb
 #undef EVP_des_cbc
 #undef EVP_des_ede3_cbc
 #undef EVP_enc_null
@@ -156,6 +158,7 @@
 #undef EVP_CIPH_CFB8_MODE
 #undef EVP_CIPH_CCM_MODE
 #undef EVP_CIPH_GCM_MODE
+#undef EVP_CIPH_OCB_MODE
 #undef EVP_CIPH_MODE
 #undef EVP_CIPH_CTRL_INIT
 #undef EVP_CTRL_INIT

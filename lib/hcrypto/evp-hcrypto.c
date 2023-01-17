@@ -286,6 +286,18 @@ EVP_hcrypto_aes_256_gcm(void)
     return NULL;
 }
 
+const EVP_CIPHER *
+EVP_hcrypto_aes_128_ocb(void)
+{
+    return NULL;
+}
+
+const EVP_CIPHER *
+EVP_hcrypto_aes_256_ocb(void)
+{
+    return NULL;
+}
+
 /**
  * The message digest SHA256 - hcrypto
  *

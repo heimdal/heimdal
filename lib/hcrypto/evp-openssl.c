@@ -174,9 +174,14 @@ cipher_do_cipher(hc_EVP_CIPHER_CTX *ctx, unsigned char *out,
                  const unsigned char *in, unsigned int len)
 {
     struct ossl_cipher_ctx *ossl_ctx = ctx->cipher_data;
+    int mode, outlen;
 
     assert(ossl_ctx != NULL);
-    return EVP_Cipher(ossl_ctx->ossl_cipher_ctx, out, in, len) == 0 ? 0 : 1;
+    mode = ctx->cipher->flags & hc_EVP_CIPH_MODE;
+    if (mode == hc_EVP_CIPH_OCB_MODE && out == NULL) /* for AAD only */
+        return EVP_CipherUpdate(ossl_ctx->ossl_cipher_ctx, out, &outlen, in, len);
+    else
+        return EVP_Cipher(ossl_ctx->ossl_cipher_ctx, out, in, len) == 0 ? 0 : 1;
 }
 
 static int
@@ -548,6 +553,24 @@ OSSL_CIPHER_ALGORITHM(aes_128_gcm, hc_EVP_CIPH_GCM_MODE)
  * @ingroup hcrypto_evp
  */
 OSSL_CIPHER_ALGORITHM(aes_256_gcm, hc_EVP_CIPH_GCM_MODE)
+
+/**
+ * The AES-128 OCB type (OpenSSL provider)
+ *
+ * @return the AES-128-OCB EVP_CIPHER pointer.
+ *
+ * @ingroup hcrypto_evp
+ */
+OSSL_CIPHER_ALGORITHM(aes_128_ocb, hc_EVP_CIPH_OCB_MODE)
+
+/**
+ * The AES-256 OCB type (OpenSSL provider)
+ *
+ * @return the AES-256-OCB EVP_CIPHER pointer.
+ *
+ * @ingroup hcrypto_evp
+ */
+OSSL_CIPHER_ALGORITHM(aes_256_ocb, hc_EVP_CIPH_OCB_MODE)
 
 #ifndef HAVE_OPENSSL_30
 /*

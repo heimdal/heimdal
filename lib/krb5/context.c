@@ -822,6 +822,8 @@ KRB5_LIB_FUNCTION const krb5_enctype * KRB5_LIB_CALL
 krb5_kerberos_enctypes(krb5_context context)
 {
     static const krb5_enctype p[] = {
+	ETYPE_AES256_OCB_128,
+	ETYPE_AES128_OCB_128,
 	ETYPE_AES256_GCM_128,
 	ETYPE_AES128_GCM_128,
 	ETYPE_AES256_CTS_HMAC_SHA1_96,
@@ -834,6 +836,8 @@ krb5_kerberos_enctypes(krb5_context context)
     };
 
     static const krb5_enctype weak[] = {
+	ETYPE_AES256_OCB_128,
+	ETYPE_AES128_OCB_128,
 	ETYPE_AES256_GCM_128,
 	ETYPE_AES128_GCM_128,
 	ETYPE_AES256_CTS_HMAC_SHA1_96,

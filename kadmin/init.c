@@ -137,6 +137,7 @@ init(struct init_options *opt, int argc, char **argv)
     int i;
     HDB *db;
     krb5_deltat max_life = 0, max_rlife = 0;
+    time_t now;
 
     if (!local_flag) {
 	krb5_warnx(context, "init is only available in local (-l) mode");
@@ -165,7 +166,8 @@ init(struct init_options *opt, int argc, char **argv)
 	krb5_warn(context, ret, "hdb_open");
 	return 1;
     }
-    ret = kadm5_log_reinit(kadm_handle, 0);
+    (void) krb5_us_timeofday(context, &now, NULL);
+    ret = kadm5_log_reinit(kadm_handle, 0, now);
     if (ret) {
         krb5_warn(context, ret, "Failed iprop log initialization");
         return 1;

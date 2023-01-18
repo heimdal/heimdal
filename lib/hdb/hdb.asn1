@@ -193,6 +193,9 @@ KeyRotation ::= SEQUENCE {
 
 HDB-Ext-KeyRotation ::= SEQUENCE SIZE (1..3) OF KeyRotation
 
+-- If the sorting of SET OF values done by DER were useful to us on decode,
+-- and if we had hundreds of writable KDCs, then we'd want IPropInfo-Seen-KDCs
+-- to be a SET OF KDC-Name rather than a SEQUENCE OF KDC-Name.
 KDC-Name ::= UTF8String
 IPropInfo-Seen-KDCs ::= SEQUENCE OF KDC-Name
 
@@ -209,10 +212,15 @@ IPropInfo-Seen-KDCs ::= SEQUENCE OF KDC-Name
 -- that are superseded by newer ones where the latter were received before
 -- the former.
 HDB-Ext-IPropInfo ::= SEQUENCE {
-    -- We already have a last-modify time in HDB_entry, but we add
-    -- another here for ... no good reason?
+    -- We already have a last-modify time in HDB_entry, in the modified-by
+    -- field, but we add another here because a) modified-by is OPTIONAL,
+    -- b) we want microsecond resolution.
     last-mod-kdc-time   KerberosTime,
     last-mod-kdc-usec   INTEGER (0..999999), -- microseconds
+    -- The txid needs to be unique for any given last-mod-kdc-time and
+    -- last-mod-kdc-usec.  It can be random or monotonic, it doesn't matter.
+    -- The iprop programs can construct a UUID for use in logging.
+    txid                INTEGER(0..18446744073709551615),
 
     -- The last-mod-kdc is the hostname of the KDC where this
     -- an iprop entry bearing this originated.

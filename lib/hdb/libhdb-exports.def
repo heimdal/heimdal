@@ -42,6 +42,8 @@ EXPORTS
 	hdb_entry_set_krb5_config
 	hdb_entry_set_password
 	hdb_entry_set_pw_change_time
+	hdb_entry_get_tx_uuid
+	hdb_entry_get_tx_uuid_string
 	hdb_fetch_kvno
 	hdb_find_extension
 	hdb_foreach

@@ -36,6 +36,7 @@
 #include "krb5.h"
 #include "private.h"
 #include "../roken/vis-extras.h"
+#include <stdint.h>
 
 /*
  * This is the Heimdal Kerberos iprop-slave daemon, part of the Heimdal
@@ -474,7 +475,8 @@ ihave(krb5_context context,
       const char *master,
       krb5_auth_context auth_context,
       int fd,
-      uint32_t version)
+      uint32_t version,
+      uint32_t tstamp)
 {
     int ret;
     u_char buf[8];
@@ -487,11 +489,13 @@ ihave(krb5_context context,
     ret = krb5_store_uint32(sp, I_HAVE);
     if (ret == 0)
         ret = krb5_store_uint32(sp, version);
+    if (ret == 0)
+        ret = krb5_store_uint32(sp, tstamp);
     krb5_storage_free(sp);
     data.length = 8;
     data.data   = buf;
 
-    hook(context, master, "I_HAVE", "%"PRIu32, version);
+    hook(context, master, "I_HAVE", "%"PRIu32" %"PRIu32, version, tstamp);
 
     if (ret == 0) {
         if (verbose)
@@ -557,7 +561,11 @@ drop_entry_p(HDB_Ext_IPropInfo *ipi)
     return 0;
 }
 
-/* Merge two keysets.  See call site. */
+/*
+ * Merge two keysets.  See call site.
+ *
+ * NOTE: We only merge the current keysets.
+ */
 static krb5_error_code
 merge_keysets(krb5_context context,
               HDB_entry *resolved,
@@ -639,6 +647,10 @@ update_iprop_info(krb5_context context,
     if (ep == NULL)
         return EINVAL; /* Doesn't happen */
 
+    /*
+     * XXX We should make sure to insert in order so that we can binary search
+     * this.  If we don't do this before shipping, then we can't really do it.
+     */
     ret = add_IPropInfo_Seen_KDCs(&ep->data.u.iprop_info.seen_kdcs,
                                   &local_KDC_name);
     return ret;
@@ -668,11 +680,23 @@ resolve_conflict(krb5_context context,
     hdb_entry *winner = upstream;
     KerberosTime tupstream; /* Last modify time of upstream entry */
     const char *origin_kdc = upstream_name;
+    struct hdb_uuid_string uuid_e, uuid_u;
     int origin_kdc_cmp = 0;
     int touched = 0;
 
     *drop = 0;
     memset(resolved, 0, sizeof(*resolved));
+    uuid_e.s[0] = uuid_u.s[0] = '\0';
+    if (verbose > 1) {
+        if (existing)
+            uuid_e = hdb_entry_get_tx_uuid_string(existing);
+        else
+            strlcpy(uuid_e.s, "<no-local-entry>", sizeof(uuid_e.s));
+        uuid_u = hdb_entry_get_tx_uuid_string(upstream);
+        krb5_warnx(context,
+                   "Resolving conflict between %s (local) and %s (upstream)",
+                   uuid_e.s, uuid_u.s);
+    }
 
     /*
      * Transaction time preference hierarchy:
@@ -727,22 +751,11 @@ resolve_conflict(krb5_context context,
 
         /* This will be a tie-breaker */
         origin_kdc_cmp = strcmp(last_mod_kdc_existing, origin_kdc);
-
-        /*
-         * Whichever has the highest kvno should win, but! if you look at
-         * kadmin/ank.c you'll see that when kadmin creates a principal, first
-         * it creates it locked, then it randomizes the keys, then it unlocks
-         * the principal _and_ sets the kvno _back_ one!  So we can't just say
-         * that the highest kvno wins.
-         *
-         * Maybe we should revisit what kadmin/ank.c does, but not today as
-         * there are tools that expect kvnos to start at 1.
-         */
-
         if (origin_kdc_cmp == 0 && texisting > tupstream) {
             /*
              * We're hearing of an older entry from the same origin via a peer
-             * KDC that is behind us, so drop it.
+             * KDC that is behind us, so drop it.  We assume monotonic clocks
+             * on each KDC.
              *
              * Thus we can end up missing this particular update entirely, but
              * since we took a later, full HDB entry from the same origin,
@@ -758,20 +771,68 @@ resolve_conflict(krb5_context context,
          *
          * Maybe we should allow for a bit more skew here and treat
          * |texisting - tupstream| < 5s as == and then use tie-breakers.
+         *
+         * Also, whichever has the highest kvno should win, but! if you look at
+         * kadmin/ank.c you'll see that when kadmin creates a principal, first
+         * it creates it locked, then it randomizes the keys, then it unlocks
+         * the principal _and_ sets the kvno _back_ one!  So we can't just say
+         * that the highest kvno wins.
+         *
+         * Maybe we should revisit what kadmin/ank.c does, but not today as
+         * there are tools that expect kvnos to start at 1.
+         *
+         * Still, if either kvno is larger than 2 and one is larger than the
+         * other, then the larger kvno wins.
          */
-        if (texisting > tupstream)
+
+        if ((existing->kvno > 2 || upstream->kvno > 2) &&
+            existing->kvno != upstream->kvno) {
+            if (existing->kvno > upstream->kvno) {
+                winner = existing;
+                if (verbose > 1)
+                    krb5_warnx(context,
+                               "Picking local %s over upstream %s (%s) "
+                               "using kvno", uuid_e.s, uuid_u.s, origin_kdc);
+            } else {
+                winner = upstream;
+                if (verbose > 1)
+                    krb5_warnx(context,
+                               "Picking upstream %s (%s) over local %s "
+                               "using kvno", uuid_u.s, uuid_e.s, origin_kdc);
+            }
+        } else if (texisting > tupstream) {
             winner = existing;
-        else if (texisting == tupstream && origin_kdc_cmp < 0)
+            if (verbose > 1)
+                krb5_warnx(context, "Picking local %s over upstream %s (%s) "
+                           "using, last-modify time", uuid_e.s, uuid_u.s,
+                           origin_kdc);
+        } else if (texisting < tupstream) {
+            winner = upstream;
+            if (verbose > 1)
+                krb5_warnx(context, "Picking upstream %s (%s) over local %s "
+                           "using last-modify time", uuid_u.s, uuid_e.s,
+                           origin_kdc);
+        } else if (origin_kdc_cmp < 0) {
             winner = existing;
-        else if (texisting == tupstream &&
-                 existing->kvno > 2 && existing->kvno > upstream->kvno)
-            winner = existing;
-        /* else winner = upstream;, but it's already so initialized */
+            if (verbose > 1)
+                krb5_warnx(context, "Picking local %s over upstream %s (%s) "
+                           "using origin name as tie breaker",
+                           uuid_e.s, uuid_u.s, origin_kdc);
+        } else {
+            winner = upstream;
+            if (verbose > 1)
+                krb5_warnx(context, "Picking upstream %s (%s) over local %s "
+                           "using origin name as tie breaker",
+                           uuid_u.s, uuid_e.s, origin_kdc);
+        }
     } else {
         /*
          * Else no conflict, and we didn't choose to drop the entry either, so
          * we'll just take it.
          */
+        if (verbose > 1 && op == kadm_delete)
+            krb5_warnx(context, "Picking upstream deletion %s (%s)",
+                       uuid_u.s, origin_kdc);
     }
 
     /*
@@ -811,6 +872,11 @@ resolve_conflict(krb5_context context,
         *drop = 1;
         return 0; /* FYI the caller frees the resolved entry */
     }
+    if (verbose > 1)
+        krb5_warnx(context, "Picked %s (%s) %s merged keysets",
+                   winner == existing ? "local" : "upstream",
+                   winner == existing ? uuid_e.s : uuid_u.s,
+                   touched ? "with" : "without");
 
     /*
      * Whether we took the upstream entry as-is, or merged it with the local
@@ -901,8 +967,6 @@ apply_iprop_entry(krb5_context context,
                   krb5_storage *sp,
                   enum kadm_ops op,
                   off_t start,
-                  uint32_t timestamp,
-                  uint32_t vers,
                   uint32_t len)
 {
     krb5_error_code ret;
@@ -1035,6 +1099,8 @@ apply_iprop_entry(krb5_context context,
                            found_existing ? &existing : NULL,
                            &drop, &resolved);
     if (ret == 0) {
+        struct hdb_uuid_string uuid = hdb_entry_get_tx_uuid_string(&resolved);
+
         /*
          * If (drop) we could write the resolved entry to the HDB, but we should
          * not write it to the local iprop log or we would propagate it more
@@ -1043,72 +1109,69 @@ apply_iprop_entry(krb5_context context,
         switch (op) {
         case kadm_create:
             if (drop) {
-                krb5_warnx(context, "Dropping a create from %s of %s",
-                           master, ps1);
+                krb5_warnx(context, "Dropping a create from %s of %s (%s)",
+                           master, ps1, uuid.s);
                 /* ret = kadm5_log_nop(local_context, kadm_nop_plain); */
             } else {
                 if (verbose)
-                    krb5_warnx(context, "Applying a create from %s of %s",
-                               master, ps1);
+                    krb5_warnx(context, "Applying a create from %s of %s (%s)",
+                               master, ps1, uuid.s);
                 ret = kadm5_log_create(local_context, &resolved);
                 if (ret)
                     krb5_warnx(context,
-                               "Failed to apply a create from %s of %s",
-                               master, ps1);
+                               "Failed to apply a create from %s of %s (%s)",
+                               master, ps1, uuid.s);
             }
             break;
         case kadm_modify:
             if (drop) {
-                krb5_warnx(context, "Dropping a modify from %s of %s",
-                           master, ps1);
+                krb5_warnx(context, "Dropping a modify from %s of %s (%s)",
+                           master, ps1, uuid.s);
             } else {
                 if (verbose)
-                    krb5_warnx(context, "Applying a modify from %s of %s",
-                               master, ps1);
+                    krb5_warnx(context, "Applying a modify from %s of %s (%s)",
+                               master, ps1, uuid.s);
                 ret = kadm5_log_modify(local_context, &resolved, mask);
                 if (ret)
                     krb5_warnx(context,
-                               "Failed to apply a modify from %s of %s",
-                               master, ps1);
+                               "Failed to apply a modify from %s of %s (%s)",
+                               master, ps1, uuid.s);
             }
             break;
         case kadm_rename:
-            /* FIXME: Also log the new name! */
             ps2 = princ_str(context, NULL, &entry);
             if (ps2 == NULL)
                 krb5_errx(context, IPROPD_RESTART_SLOW, "Out of memory");
             if (drop) {
-                krb5_warnx(context, "Dropping a rename from %s of %s to %s",
-                           master, ps1, ps2);
+                krb5_warnx(context,
+                           "Dropping a rename from %s of %s to %s (%s)",
+                           master, ps1, ps2, uuid.s);
             } else {
                 if (verbose)
                     krb5_warnx(context,
-                               "Applying a rename from %s of %s to %s",
-                               master, ps1, ps2);
+                               "Applying a rename from %s of %s to %s (%s)",
+                               master, ps1, ps2, uuid.s);
                 ret = kadm5_log_rename(local_context, p, &resolved);
                 if (ret)
                     krb5_warnx(context,
-                               "Failed to apply a rename from %s of %s to %s",
-                               master, ps1, ps2);
+                               "Failed to apply a rename from %s of %s to %s "
+                               "(%s)", master, ps1, ps2, uuid.s);
             }
             break;
         case kadm_delete:
             if (drop) {
-                krb5_warnx(context, "Dropping a delete from %s of %s",
-                           master, ps1);
+                krb5_warnx(context, "Dropping a delete from %s of %s (%s)",
+                           master, ps1, uuid.s);
             } else {
                 if (verbose)
-                    krb5_warnx(context, "Applying a delete from %s of %s",
-                               master, ps1);
+                    krb5_warnx(context, "Applying a delete from %s of %s (%s)",
+                               master, ps1, uuid.s);
                 ret = kadm5_log_delete(local_context, p, &resolved);
                 if (ret)
                     krb5_warnx(context,
-                               "Failed to apply a delete from %s of %s",
-                               master, ps1);
+                               "Failed to apply a delete from %s of %s (%s)",
+                               master, ps1, uuid.s);
             }
-            if (ret)
-                krb5_warn(context, ret,
-                          "Could not apply principal deletion");
             break;
         default:
             break; /* Already handled above dear compiler */
@@ -1225,7 +1288,8 @@ append_to_log_file(krb5_context context,
              "Failed to write log entries from master to disk");
 }
 
-static void reinit_log(krb5_context, kadm5_server_context *, uint32_t);
+static void reinit_log(krb5_context, kadm5_server_context *,
+                       uint32_t, uint32_t);
 
 static int
 receive_loop_multi(krb5_context context,
@@ -1236,7 +1300,7 @@ receive_loop_multi(krb5_context context,
 {
     int ret;
     off_t off;
-    uint32_t len, vers;
+    uint32_t len, vers, tstamp;
 
     if (verbose)
         krb5_warnx(context, "receiving diffs");
@@ -1278,22 +1342,20 @@ receive_loop_multi(krb5_context context,
 
         /* XXX Also check the time, so we can protect against version rollover */
 	if (vers > server_context->log_context.version) {
-            ret = kadm5_log_get_version(local_context, &local_context->log_context.version);
+            ret = kadm5_log_get_version(local_context,
+                                        &local_context->log_context.version,
+                                        &local_context->log_context.last_time);
             if (ret)
                 /* Warn but try anyways */
                 krb5_warn(context, ret,
                           "failed to determine current version in local log %s",
                           local_context->log_context.log_file);
-            ret = apply_iprop_entry(context, local_context, master, sp, op,
-                                    off, timestamp, vers, len);
+            ret = apply_iprop_entry(context, local_context, master, sp,
+                                    op, off, len);
             if (ret)
                 krb5_warn(context, ret, "failed to apply iprop entry %u (upstream)", vers);
 
-            ret = kadm5_log_recover(server_context, kadm_recover_replay);
-            if (ret)
-                krb5_warn(context, ret, "failed to replay iprop entry %u (upstream)", vers);
-            ret = 0;
-            reinit_log(context, server_context, vers);
+            reinit_log(context, server_context, vers, timestamp);
         }
         if (krb5_storage_seek(sp, off + len + 8, SEEK_SET) != off + len + 8) {
             krb5_warnx(context, "iprop entries from master were truncated");
@@ -1307,9 +1369,9 @@ receive_loop_multi(krb5_context context,
     } while (ret == 0);
 
     if (ret && ret == HEIM_ERR_EOF)
-        return ret;
+        return 0;
 
-    ret = kadm5_log_get_version(server_context, &vers);
+    ret = kadm5_log_get_version(server_context, &vers, &tstamp);
     if (ret) {
         krb5_warn(context, ret,
                   "could not get log version after applying diffs!");
@@ -1335,7 +1397,7 @@ receive_loop(krb5_context context,
 {
     int ret;
     off_t left, right, off;
-    uint32_t len, vers;
+    uint32_t len, vers, tstamp;
 
     if (verbose)
         krb5_warnx(context, "receiving diffs");
@@ -1431,7 +1493,7 @@ receive_loop(krb5_context context,
         return ret;
     }
 
-    ret = kadm5_log_get_version(server_context, &vers);
+    ret = kadm5_log_get_version(server_context, &vers, &tstamp);
     if (ret) {
         krb5_warn(context, ret,
                   "could not get log version after applying diffs!");
@@ -1537,19 +1599,37 @@ send_im_here(krb5_context context, const char *master, int fd,
 static void
 reinit_log(krb5_context context,
 	   kadm5_server_context *server_context,
-	   uint32_t vno)
+	   uint32_t vno,
+           uint32_t tstamp)
 {
     krb5_error_code ret;
 
     if (verbose)
         krb5_warnx(context, "truncating log on slave");
 
-    ret = kadm5_log_reinit(server_context, vno);
+    ret = kadm5_log_reinit(server_context, vno, tstamp);
     if (ret)
         krb5_err(context, IPROPD_RESTART_SLOW, ret, "kadm5_log_reinit");
     (void) kadm5_log_sharedlock(server_context);
     if (verbose)
         krb5_warnx(context, "downgraded iprop log lock to shared");
+}
+
+static void
+update_last_time_seen(hdb_entry *e, uint32_t *last_time_seenp)
+{
+    HDB_Ext_IPropInfo *ipi = get_iprop_info(e);
+    KerberosTime t;
+    uint32_t tu;
+
+    t = e->created_by.time;
+    if (ipi)
+        t = ipi->last_mod_kdc_time;
+    else if (e->modified_by)
+        t = e->modified_by->time;
+    tu = t;
+    if (t > 0 && *last_time_seenp < tu)
+        *last_time_seenp = tu;
 }
 
 /*
@@ -1571,7 +1651,10 @@ merge_everything(krb5_context context, const char *master, int fd,
     int ret;
     krb5_data data;
     uint32_t vno = 0;
+    uint32_t tstamp = 0;
     uint32_t opcode;
+    uint32_t last_time_seen = 0; /* In case the upstream is older and doesn't
+                                  * tell us its last_time */
     krb5_storage *sp;
     HDB *mydb;
 
@@ -1632,6 +1715,8 @@ merge_everything(krb5_context context, const char *master, int fd,
         if (ret)
             krb5_err(context, IPROPD_RESTART, ret, "hdb_value2entry");
 
+        update_last_time_seen(&upstream, &last_time_seen);
+
         ret = hdb_fetch_kvno(context, mydb, upstream.principal,
                              HDB_F_DECRYPT |
                              HDB_F_GET_ANY |
@@ -1664,17 +1749,26 @@ merge_everything(krb5_context context, const char *master, int fd,
     if (ret)
         krb5_errx(context, IPROPD_RESTART_SLOW,
                   "merge_everything: no version number for NOW_YOU_HAVE");
+
+    ret = krb5_ret_uint32(sp, &tstamp);
+    if (ret == HEIM_ERR_EOF || tstamp == 0)
+        tstamp = last_time_seen;
+    else if (ret)
+        krb5_err(context, IPROPD_RESTART_SLOW, ret,
+                 "merge_everything: no timestamp for NOW_YOU_HAVE");
     server_context->log_context.version = vno;
+    server_context->log_context.last_time = tstamp;
     krb5_storage_free(sp);
     krb5_data_free(&data);
 
-    hook(server_context->context, master, "NOW_YOU_HAVE", "%"PRIu32, vno);
+    hook(server_context->context, master, "NOW_YOU_HAVE",
+         "%"PRIu32" %"PRIu32, vno, tstamp);
 
     ret = mydb->hdb_set_sync(context, mydb, !async_hdb);
     if (ret)
         krb5_err(context, IPROPD_RESTART_SLOW, ret, "failed to sync the received HDB");
 
-    reinit_log(server_context->context, server_context, vno);
+    reinit_log(server_context->context, server_context, vno, tstamp);
     (void) kadm5_log_nop(local_context, kadm_nop_plain);
 
     ret = mydb->hdb_close(context, mydb);
@@ -1696,7 +1790,10 @@ receive_everything(krb5_context context, const char *master, int fd,
     int ret;
     krb5_data data;
     uint32_t vno = 0;
+    uint32_t tstamp = 0;
     uint32_t opcode;
+    uint32_t last_time_seen = 0; /* In case the upstream is older and doesn't
+                                  * tell us its last_time */
     krb5_storage *sp;
 
     char *dbname;
@@ -1770,6 +1867,8 @@ receive_everything(krb5_context context, const char *master, int fd,
 	    if (ret)
 		krb5_err(context, IPROPD_RESTART, ret, "hdb_value2entry");
 
+            update_last_time_seen(&entry, &last_time_seen);
+
             ret = mydb->hdb_store(context, mydb, 0, &entry);
 	    if (ret)
 		krb5_err(context, IPROPD_RESTART_SLOW, ret, "hdb_store");
@@ -1790,14 +1889,23 @@ receive_everything(krb5_context context, const char *master, int fd,
     if (ret)
         krb5_errx(context, IPROPD_RESTART_SLOW,
                   "receive_everything: no version number for NOW_YOU_HAVE");
+    ret = krb5_ret_uint32(sp, &tstamp);
+    if (ret == HEIM_ERR_EOF || tstamp == 0)
+        tstamp = last_time_seen;
+    else if (ret)
+        krb5_err(context, IPROPD_RESTART_SLOW, ret,
+                 "receive_everything: no timestamp for NOW_YOU_HAVE");
+    server_context->log_context.version = vno;
+    server_context->log_context.last_time = tstamp;
     krb5_storage_free(sp);
-    hook(server_context->context, master, "NOW_YOU_HAVE", "%"PRIu32, vno);
+    hook(server_context->context, master, "NOW_YOU_HAVE",
+         "%"PRIu32" %"PRIu32, vno, tstamp);
 
     ret = mydb->hdb_set_sync(context, mydb, !async_hdb);
     if (ret)
         krb5_err(context, IPROPD_RESTART_SLOW, ret, "failed to sync the received HDB");
 
-    reinit_log(context, server_context, vno);
+    reinit_log(context, server_context, vno, tstamp);
 
     ret = mydb->hdb_close(context, mydb);
     if (ret)
@@ -1876,6 +1984,16 @@ is_up_to_date(krb5_context context, const char *file,
 		 (unsigned long)server_context->log_context.version, buf);
 }
 
+static int self_pipe[2] = { -1, -1 };
+static void
+sighandler(int sig)
+{
+    unsigned char c = sig;
+
+    while (write(self_pipe[1], &c, 1) == -1 && errno == EINTR)
+        ;
+}
+
 static char *database;
 static char *status_file;
 static char *config_file;
@@ -1914,7 +2032,7 @@ static struct getargs args[] = {
     { "hostname", 0, arg_string, &local_hostname_str,
       "hostname of slave (if not same as hostname)", "hostname" },
     { "restarter", 0, arg_negative_flag, &restarter_flag, NULL, NULL },
-    { "verbose", 0, arg_flag, &verbose, NULL, NULL },
+    { "verbose", 0, arg_counter, &verbose, NULL, NULL },
     { "version", 0, arg_flag, &version_flag, NULL, NULL },
     { "help", 0, arg_flag, &help_flag, NULL, NULL }
 };
@@ -1934,6 +2052,7 @@ main(int argc, char **argv)
     krb5_error_code ret, ret2;
     krb5_context context;
     krb5_auth_context auth_context;
+    struct sigaction sa;
     void *kadm_handle = NULL;
     kadm5_server_context *server_context;
     kadm5_server_context *local_context = NULL;
@@ -1972,6 +2091,18 @@ main(int argc, char **argv)
 	errx (1, "krb5_init_context failed: %d", ret);
 
     setup_signal();
+    /* XXX Move this stuff into setup_signal(), no? */
+    if (pipe(self_pipe) == -1)
+        krb5_err(context, 1, errno, "Could not set up self-pipe");
+    (void) fcntl(self_pipe[0], F_SETFL,
+                 (int)fcntl(self_pipe[0], F_GETFL) | O_NONBLOCK);
+    (void) fcntl(self_pipe[1], F_SETFL,
+                 (int)fcntl(self_pipe[1], F_GETFL) | O_NONBLOCK);
+    memset(&sa, 0, sizeof(sa));
+    sa.sa_handler = sighandler;
+    sigaction(SIGHUP, &sa, NULL);
+    sigaction(SIGUSR1, &sa, NULL);
+    sigaction(SIGUSR2, &sa, NULL);
 
     if (config_file == NULL) {
 	if (asprintf(&config_file, "%s/kdc.conf", hdb_db_dir(context)) == -1
@@ -2156,6 +2287,8 @@ main(int argc, char **argv)
         FD_ZERO(&readset);
         if (restarter_fd > -1)
             FD_SET(restarter_fd, &readset);
+        if (self_pipe[0] > -1)
+            FD_SET(self_pipe[0], &readset);
 
 	now = time(NULL);
 	elapsed = now - before;
@@ -2202,8 +2335,15 @@ main(int argc, char **argv)
 	krb5_warnx(context, "ipropd-slave started at version: %ld",
 		   (long)server_context->log_context.version);
 
+        ret = kadm5_log_get_version(server_context,
+                                    &server_context->log_context.version,
+                                    &server_context->log_context.last_time);
+        if (ret)
+            krb5_errx(context, IPROPD_RESTART,
+                      "could not read upstream version from log file");
 	ret = ihave(context, master_name, auth_context, master_fd,
-		    server_context->log_context.version);
+		    server_context->log_context.version,
+                    server_context->log_context.last_time);
 	if (ret)
 	    goto retry;
 
@@ -2218,33 +2358,36 @@ main(int argc, char **argv)
 	    krb5_data out;
 	    krb5_storage *sp;
 	    uint32_t tmp;
-            int max_fd;
+            int max_fd, nfds;
 
 #ifndef NO_LIMIT_FD_SETSIZE
 	    if (master_fd >= FD_SETSIZE)
                 krb5_errx(context, IPROPD_RESTART, "fd too large");
             if (restarter_fd >= FD_SETSIZE)
                 krb5_errx(context, IPROPD_RESTART, "fd too large");
-            max_fd = max(restarter_fd, master_fd);
+            if (self_pipe[0] >= FD_SETSIZE)
+                krb5_errx(context, IPROPD_RESTART, "fd too large");
+            max_fd = max(max(restarter_fd, master_fd), self_pipe[0]);
 #endif
 
 	    FD_ZERO(&readset);
 	    FD_SET(master_fd, &readset);
+	    FD_SET(self_pipe[0], &readset);
             if (restarter_fd != -1)
                 FD_SET(restarter_fd, &readset);
 
 	    to.tv_sec = time_before_lost;
 	    to.tv_usec = 0;
 
-	    ret = select (max_fd + 1,
+	    nfds = select (max_fd + 1,
 			  &readset, NULL, NULL, &to);
-	    if (ret < 0) {
+	    if (nfds < 0) {
 		if (errno == EINTR)
 		    continue;
 		else
 		    krb5_err (context, 1, errno, "select");
 	    }
-	    if (ret == 0) {
+	    if (nfds == 0) {
 		krb5_warnx(context, "server didn't send a message "
                            "in %d seconds", time_before_lost);
 		connected = FALSE;
@@ -2256,6 +2399,33 @@ main(int argc, char **argv)
                     krb5_warnx(context, "slave restarter exited");
                 exit_flag = SIGTERM;
             }
+
+            if (FD_ISSET(self_pipe[0], &readset)) {
+                unsigned char sig;
+                ssize_t bytes;
+
+                do {
+                    bytes = read(self_pipe[0], &sig, 1);
+                    if (bytes == 1) {
+                        switch (sig) {
+                            case SIGUSR1:
+                                verbose++;
+                                break;
+                            case SIGUSR2:
+                                verbose--;
+                                break;
+                            case SIGHUP:
+                                rk_closesocket(master_fd);
+                                master_fd = rk_INVALID_SOCKET;
+                                connected = false;
+                                break;
+                        }
+                    }
+                } while ((bytes == -1 && errno == EINTR) || bytes == 1);
+            }
+
+            if (!connected)
+                continue;
 
             if (!FD_ISSET(master_fd, &readset))
                 continue;
@@ -2324,7 +2494,8 @@ main(int argc, char **argv)
                     krb5_warn(context, ret2,
                               "receive from ipropd-master had errors");
 		ret = ihave(context, master_name, auth_context, master_fd,
-			    server_context->log_context.version);
+			    server_context->log_context.version,
+                            server_context->log_context.last_time);
 		if (ret || ret2)
 		    connected = FALSE;
 
@@ -2358,7 +2529,8 @@ main(int argc, char **argv)
                 (void) kadm5_log_sharedlock(server_context);
                 if (ret == 0) {
                     ret = ihave(context, master_name, auth_context, master_fd,
-                                server_context->log_context.version);
+                                server_context->log_context.version,
+                                server_context->log_context.last_time);
                 }
                 if (ret)
 		    connected = FALSE;

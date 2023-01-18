@@ -404,7 +404,9 @@ iprop_truncate(struct truncate_options *opt, int argc, char **argv)
 {
     kadm5_server_context *server_context;
     krb5_error_code ret;
+    time_t now;
 
+    (void) krb5_timeofday(context, &now);
     server_context = get_kadmin_context(opt->config_file_string,
 					opt->realm_string);
 
@@ -429,7 +431,7 @@ iprop_truncate(struct truncate_options *opt, int argc, char **argv)
         /* First recover unconfirmed records */
         ret = kadm5_log_init(server_context);
         if (ret == 0)
-            ret = kadm5_log_reinit(server_context, 0);
+            ret = kadm5_log_reinit(server_context, 0, now);
     } else {
         ret = kadm5_log_init(server_context);
         if (ret)
@@ -452,7 +454,7 @@ last_version(struct last_version_options *opt, int argc, char **argv)
     kadm5_server_context *server_context;
     char *alt_argv[2] = { NULL, NULL };
     krb5_error_code ret;
-    uint32_t version;
+    uint32_t version, tstamp;
     size_t i;
 
     server_context = get_kadmin_context(opt->config_file_string,
@@ -489,7 +491,7 @@ last_version(struct last_version_options *opt, int argc, char **argv)
                 krb5_err(context, 1, ret, "kadm5_log_init_sharedlock");
         }
 
-        ret = kadm5_log_get_version (server_context, &version);
+        ret = kadm5_log_get_version (server_context, &version, &tstamp);
         if (ret)
             krb5_err (context, 1, ret, "kadm5_log_get_version");
 
@@ -497,7 +499,8 @@ last_version(struct last_version_options *opt, int argc, char **argv)
         if (ret)
             krb5_warn(context, ret, "kadm5_log_end");
 
-        printf("version: %lu\n", (unsigned long)version);
+        printf("version: %lu (timestamp: %lu)\n", (unsigned long)version,
+	       (unsigned long)tstamp);
     }
 
     kadm5_destroy(server_context);

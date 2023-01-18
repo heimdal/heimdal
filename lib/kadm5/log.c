@@ -555,11 +555,13 @@ kadm5_log_get_version_fd(kadm5_server_context *server_context, int fd,
 
 /* Get the version of the last confirmed entry in the log */
 kadm5_ret_t
-kadm5_log_get_version(kadm5_server_context *server_context, uint32_t *ver)
+kadm5_log_get_version(kadm5_server_context *server_context,
+                      uint32_t *ver,
+                      uint32_t *tstamp)
 {
     return kadm5_log_get_version_fd(server_context,
                                     server_context->log_context.log_fd,
-                                    LOG_VERSION_LAST, ver, NULL);
+                                    LOG_VERSION_LAST, ver, tstamp);
 }
 
 /* Sets the version in the context, but NOT in the log */
@@ -786,7 +788,9 @@ kadm5_log_init_sharedlock(kadm5_server_context *server_context, int lock_flags)
  * Reinitialize the log and open it
  */
 kadm5_ret_t
-kadm5_log_reinit(kadm5_server_context *server_context, uint32_t vno)
+kadm5_log_reinit(kadm5_server_context *server_context,
+                 uint32_t vno,
+                 uint32_t tstamp)
 {
     int ret;
     kadm5_log_context *log_context = &server_context->log_context;
@@ -808,6 +812,7 @@ kadm5_log_reinit(kadm5_server_context *server_context, uint32_t vno)
     /* Write uber entry and truncation nop with version `vno` */
     /* XXX Preserve last_time too, which we'll probably want as an argument */
     log_context->version = vno;
+    log_context->last_time = tstamp;
     return kadm5_log_nop(server_context, kadm_nop_plain);
 }
 
@@ -844,16 +849,21 @@ static kadm5_ret_t
 kadm5_log_preamble(kadm5_server_context *context,
 		   krb5_storage *sp,
 		   enum kadm_ops op,
-		   uint32_t vno)
+		   uint32_t vno,
+                   uint32_t *tstampp)
 {
     kadm5_log_context *log_context = &context->log_context;
-    time_t now = time(NULL);
+    time_t now;
     kadm5_ret_t ret;
 
+    (void) krb5_timeofday(context->context, &now);
     ret = krb5_store_uint32(sp, vno);
     if (ret)
         return ret;
-    ret = krb5_store_uint32(sp, now);
+    if (tstampp)
+        ret = krb5_store_uint32(sp, *tstampp);
+    else
+        ret = krb5_store_uint32(sp, now);
     if (ret)
         return ret;
     log_context->last_time = now;
@@ -1030,6 +1040,7 @@ set_iprop_origin(kadm5_server_context *context, hdb_entry *ent)
     e.data.u.iprop_info.last_mod_kdc = context->local_kdc_name;
     e.data.u.iprop_info.seen_kdcs.val = NULL;
     e.data.u.iprop_info.seen_kdcs.len = 0;
+    RAND_bytes(&e.data.u.iprop_info.txid, sizeof(e.data.u.iprop_info.txid));
 
     return hdb_replace_extension(context->context, ent, &e);
 }
@@ -1107,7 +1118,7 @@ kadm5_log_create(kadm5_server_context *context, hdb_entry *entry)
 	ret = krb5_enomem(context->context);
     if (ret == 0)
         ret = kadm5_log_preamble(context, sp, kadm_create,
-                                 log_context->version + 1);
+                                 log_context->version + 1, NULL);
     if (ret == 0)
         ret = krb5_store_uint32(sp, value.length);
     if (ret == 0) {
@@ -1241,7 +1252,7 @@ kadm5_log_delete(kadm5_server_context *context,
 	ret = krb5_enomem(context->context);
     if (ret == 0)
         ret = kadm5_log_preamble(context, sp, kadm_delete,
-                                 log_context->version + 1);
+                                 log_context->version + 1, NULL);
     if (ret) {
         krb5_storage_free(sp);
         krb5_data_free(&data);
@@ -1401,7 +1412,7 @@ kadm5_log_rename(kadm5_server_context *context,
 	ret = krb5_enomem(context->context);
     if (ret == 0)
         ret = kadm5_log_preamble(context, sp, kadm_rename,
-                                 log_context->version + 1);
+                                 log_context->version + 1, NULL);
     if (ret == 0)
         ret = hdb_entry2value(context->context, entry, &value);
     if (ret) {
@@ -1575,7 +1586,7 @@ kadm5_log_modify(kadm5_server_context *context,
         ret = E2BIG;
     if (ret == 0)
         ret = kadm5_log_preamble(context, sp, kadm_modify,
-                                 log_context->version + 1);
+                                 log_context->version + 1, NULL);
     if (ret == 0)
         ret = krb5_store_uint32(sp, len);
     if (ret == 0)
@@ -1956,7 +1967,12 @@ kadm5_log_nop(kadm5_server_context *context, enum kadm_nop_type nop_type)
     if (sp == NULL)
 	return krb5_enomem(context->context);
 
-    ret = kadm5_log_preamble(context, sp, kadm_nop, off == 0 ? 0 : vno + 1);
+    if (off == 0)
+        ret = kadm5_log_preamble(context, sp, kadm_nop,
+                                 0, &log_context->last_time);
+    else
+        ret = kadm5_log_preamble(context, sp, kadm_nop,
+                                 off == 0 ? 0 : vno + 1, NULL);
     if (ret)
         goto out;
 
@@ -2355,6 +2371,9 @@ kadm5_log_goto_end(kadm5_server_context *server_context, krb5_storage *sp)
     uint32_t ver, len;
     uint32_t tstamp;
     uint64_t off;
+    time_t now;
+
+    (void) krb5_timeofday(server_context->context, &now);
 
     if (krb5_storage_seek(sp, 0, SEEK_SET) == -1)
         return errno;
@@ -2403,7 +2422,7 @@ kadm5_log_goto_end(kadm5_server_context *server_context, krb5_storage *sp)
 truncate:
     /* If we can, truncate */
     if (server_context->log_context.lock_mode == LOCK_EX) {
-        ret = kadm5_log_reinit(server_context, 0);
+        ret = kadm5_log_reinit(server_context, 0, now);
         if (ret == 0) {
             krb5_warn(server_context->context, ret,
                       "Invalid log; truncating to recover");

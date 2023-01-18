@@ -244,7 +244,7 @@ config_client () {
     _cmd="$_cmd --pidfile-basename=ipropd-slave-${_client}"
     _cmd="$_cmd --status-file=iprop-${_client}-${_upstream}-status --port=$_port"
     _cmd="$_cmd --hostname=${_client}.test.h5l.se -k ${keytab}"
-    _cmd="$_cmd --no-restarter --multi-master --verbose --detach"
+    _cmd="$_cmd --no-restarter --multi-master --verbose --verbose --detach"
     _cmd="$_cmd ${_upstream}.test.h5l.se localhost"
     echo "${_cmd}"
 }
@@ -255,7 +255,7 @@ config_server () {
     _cmd=$ipropd_master
     _cmd="$_cmd --hostname=${_name}.test.h5l.se -k ${keytab}"
     _cmd="$_cmd --port=$_port"
-    _cmd="$_cmd --no-restarter --verbose"
+    _cmd="$_cmd --no-restarter --verbose --verbose"
     _cmd="$_cmd --pidfile-basename=ipropd-master-${_name}"
     _cmd="$_cmd --database=${objdir}/current-db.${_name} --detach"
     echo "${_cmd}"
@@ -357,7 +357,7 @@ ${ipropd_slave_kdc1} || { echo "ipropd-slave failed to start"; exit 1; }
 ipds1=`getpid ipropd-slave-kdc1`
 sh ${wait_kdc} ipropd-slave messages.log 'slave status change: up-to-date' || exit 1
 
-#bash -i
+bash -i
 
 wait_for "KDC #3 sees new host" get_iprop_ver kdc3 kdc2 0 || exit 1
 

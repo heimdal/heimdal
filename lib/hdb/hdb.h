@@ -332,6 +332,14 @@ extern krb5_kt_ops hdb_get_kt_ops;
 
 extern const int hdb_interface_version;
 
+struct hdb_uuid {
+    uint8_t bytes[16];
+};
+
+struct hdb_uuid_string {
+    char s[sizeof("017F22E2-79B0-7CC3-98C4-DC0C0C07398F")];
+};
+
 #include <hdb-protos.h>
 
 #endif /* __HDB_H__ */

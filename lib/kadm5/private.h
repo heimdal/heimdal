@@ -99,7 +99,7 @@ typedef struct kadm5_log_context {
     int read_only;
     int lock_mode;
     uint32_t version;
-    time_t last_time;
+    uint32_t last_time;
 #ifndef NO_UNIX_SOCKETS
     struct sockaddr_un socket_name;
 #else

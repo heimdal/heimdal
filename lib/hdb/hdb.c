@@ -846,3 +846,90 @@ hdb_get_instance(const char *libname)
 
     return 0;
 }
+
+/*
+ * Make a UUID version 7 (draft-peabody-dispatch-new-uuid-format-04) from an
+ * entry's IPropInfo.
+ */
+struct hdb_uuid
+hdb_entry_get_tx_uuid(hdb_entry *e)
+{
+    HDB_extension *ep;
+    struct hdb_uuid u;
+    uint64_t txid = 0;
+    uint64_t t64 = 0;
+    uint32_t t32;
+
+    memset(&u, 0, sizeof(u));
+    ep = hdb_find_extension(e, choice_HDB_extension_data_iprop_info);
+    if (ep == NULL) {
+        /* Pre-multi-master HDB entry -- make do */
+        t64 = e->created_by.time;
+        if (e->modified_by)
+            t64 = e->modified_by->time;
+        txid = e->kvno;
+    } else {
+        t64 = ep->data.u.iprop_info.last_mod_kdc_time;
+        txid = ep->data.u.iprop_info.txid;
+    }
+    t32 = t64;
+    if (t64 == t32) {
+        u.bytes[0] = (t32 >> 24) & 0xff;
+        u.bytes[1] = (t32 >> 16) & 0xff;
+        u.bytes[2] = (t32 >> 8)  & 0xff;
+        u.bytes[3] =  t32        & 0xff;
+        t32 = 0;
+        u.bytes[4] = (t32 >> 8)  & 0xff;
+        u.bytes[5] =  t32        & 0xff;
+    } else {
+        u.bytes[0] = (t64 >> 32) & 0xff;
+        u.bytes[1] = (t64 >> 24) & 0xff;
+        u.bytes[2] = (t64 >> 16) & 0xff;
+        u.bytes[3] = (t64 >> 8)  & 0xff;
+        u.bytes[4] =  t64        & 0xff;
+        t32 = ep->data.u.iprop_info.last_mod_kdc_usec >> 10;
+        u.bytes[5] = (t32 >> 8)  & 0xff;
+    }
+
+    /* The top four bits of u.bytes[6] are the UUID version number (v7) */
+    u.bytes[6] = 0x70 | ((txid >> 56) & 0x03);
+    memcpy(&u.bytes[8], &txid, sizeof(txid));
+
+    /* The high 2 bits of u.bytes[8] are the variant for UUIDv7 */
+    u.bytes[8] = (u.bytes[8] & 0x3f) | 0x80;
+    return u;
+}
+
+/*
+ * Make a UUID version 7 (draft-peabody-dispatch-new-uuid-format-04) from an
+ * entry's IPropInfo.
+ */
+struct hdb_uuid_string
+hdb_entry_get_tx_uuid_string(hdb_entry *e)
+{
+    struct hdb_uuid u = hdb_entry_get_tx_uuid(e);
+    struct hdb_uuid_string us;
+    uint32_t old_time_low;
+    uint16_t old_time_mid;
+    uint16_t old_time_hi_and_version;
+    uint8_t old_clock_seq_hi_and_reserved;
+    uint8_t old_clock_seq_low;
+
+    old_time_low =
+          (u.bytes[0] << 24)
+        | (u.bytes[1] << 16)
+        | (u.bytes[2] <<  8)
+        |  u.bytes[3];
+    old_time_mid = (u.bytes[4] << 8) | u.bytes[5];
+    old_time_hi_and_version = (u.bytes[6] << 8) | u.bytes[7];
+    old_clock_seq_hi_and_reserved = u.bytes[8];
+    old_clock_seq_low = u.bytes[9];
+
+    us.s[0] = '\0';
+    snprintf(us.s, sizeof(us.s),
+             "%8.8x-%4.4x-%4.4x-%2.2x%2.2x-%2.2x%2.2x%2.2x%2.2x%2.2x%2.2x",
+             old_time_low, old_time_mid, old_time_hi_and_version,
+             old_clock_seq_hi_and_reserved, old_clock_seq_low, u.bytes[10],
+             u.bytes[11], u.bytes[12], u.bytes[13], u.bytes[14], u.bytes[15]);
+    return us;
+}

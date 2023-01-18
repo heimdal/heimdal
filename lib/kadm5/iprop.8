@@ -474,6 +474,17 @@ good time synchronization on the KDCs.
 Time synchronization has always been a requirement for Kerberos
 KDCs.
 .Pp
+Increase the verbosity level of
+.Nm ipropd-slave
+with
+.Fl Fl verbose
+or with the
+.Ar SIGUSR1
+signal to get more detailed logging of incremental updates
+handling.
+Note that a UUID (version 7) is assigned to all transactions,
+which can help correlate log messages.
+.Pp
 A future release may make it possible to merge concurrent,
 non-conflicting changes to other attributes of a principal.
 In principle we can merge non-conflicting attributes changes.
@@ -496,7 +507,24 @@ In such a deployment if a network outage arises then secondary
 master KDCs can be published in DNS for the sites that cannot
 reach the primary master KDC.
 .Pp
+.Sh SIGNALS
+The
+.Nm ipropd-master
+and
+.Nm ipropd-slave
+daemons can have their verbosity levels increased with
+.Ar SIGUSR1
+and decreased with
+.Ar SIGUSR2 .
+The
+.Nm ipropd-master
+daemon will disconnect all clients when it receives
+.Ar SIGHUP .
 .Sh EXIT STATUS
+The
+.Nm ipropd-slave
+daemon will reconnect to its upstream when it receives
+.Ar SIGHUP .
 Exit status codes for the iprop daemons:
 .Bl -tag -width Ds
 .It 0 (no error)

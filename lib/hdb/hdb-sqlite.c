@@ -932,6 +932,15 @@ hdb_sqlite_rename(krb5_context context, HDB *db, const char *new_name)
 
     ret = hdb_sqlite_close_database(context, db);
 
+    /*
+     * XXX WAL file??  How can we rename both atomically?
+     *
+     * We really need to have a directory and symlink...
+     *
+     * Or maybe for rename into place we should just use different table names
+     * and use ALTER TABLE to rename them into place atomically w/o having to
+     * rename actual database files.
+     */
     if (rename(hsdb->db_file, new_name) == -1)
         return errno;
 

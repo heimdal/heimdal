@@ -48,6 +48,7 @@ static gssapi_mech_interface_desc netlogon_mech = {
     _netlogon_delete_sec_context,
     _netlogon_context_time,
     _netlogon_get_mic,
+    NULL, /* gm_get_mic_iov */
     _netlogon_verify_mic,
     NULL,
     NULL,

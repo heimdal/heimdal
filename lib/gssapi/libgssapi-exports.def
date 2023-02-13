@@ -43,6 +43,7 @@ EXPORTS
 	gss_export_name_composite
 	gss_export_sec_context
 	gss_get_mic
+	gss_get_mic_iov
 	gss_get_neg_mechs
 	gss_get_name_attribute
         gss_import_cred

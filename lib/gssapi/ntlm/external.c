@@ -75,6 +75,7 @@ static gssapi_mech_interface_desc ntlm_mech = {
     _gss_ntlm_get_mic,
     NULL, /* gm_get_mic_iov */
     _gss_ntlm_verify_mic,
+    NULL, /* gm_verify_mic_iov */
     _gss_ntlm_wrap,
     _gss_ntlm_unwrap,
     _gss_ntlm_display_status,

@@ -102,6 +102,7 @@ HEIMDAL_GSS_2.0 {
 		gss_userok;
 		gss_verify;
 		gss_verify_mic;
+		gss_verify_mic_iov;
 		gss_wrap;
 		gss_wrap_aead;
 		gss_wrap_iov;

@@ -108,6 +108,7 @@ EXPORTS
 	gss_userok
 	gss_verify
 	gss_verify_mic
+	gss_verify_mic_iov
 	gss_wrap
 	gss_wrap_aead
 	gss_wrap_iov

@@ -124,6 +124,14 @@ typedef OM_uint32 GSSAPI_CALLCONV _gss_verify_mic_t
 	       gss_qop_t *             /* qop_state */
 	      );
 
+typedef OM_uint32 GSSAPI_CALLCONV _gss_verify_mic_iov_t
+	      (OM_uint32 *minor_status,
+	        gss_const_ctx_id_t context_handle,
+	        gss_iov_buffer_desc *iov, /* message iov */
+	        int iov_count,
+	        const gss_buffer_t token_buffer
+	      );
+
 typedef OM_uint32 GSSAPI_CALLCONV _gss_wrap_t
 	      (OM_uint32 *,            /* minor_status */
 	       gss_const_ctx_id_t,     /* context_handle */
@@ -588,6 +596,7 @@ typedef struct gssapi_mech_interface_desc {
 	_gss_get_mic_t			*gm_get_mic;
 	_gss_get_mic_iov_t		*gm_get_mic_iov;
 	_gss_verify_mic_t		*gm_verify_mic;
+	_gss_verify_mic_iov_t	*gm_verify_mic_iov;
 	_gss_wrap_t			*gm_wrap;
 	_gss_unwrap_t			*gm_unwrap;
 	_gss_display_status_t		*gm_display_status;

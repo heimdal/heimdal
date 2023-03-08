@@ -159,10 +159,10 @@ _kdc_check_pac(astgs_request_t r,
 		krb5_pac_free(context, pac);
 		return ret;
 	    }
-	    if (pac_attributes &&
-		_krb5_pac_get_attributes_info(context, pac, pac_attributes) != 0)
-		*pac_attributes = KRB5_PAC_WAS_GIVEN_IMPLICITLY;
 	}
+	if (pac_attributes &&
+	    _krb5_pac_get_attributes_info(context, pac, pac_attributes) != 0)
+	    *pac_attributes = KRB5_PAC_WAS_GIVEN_IMPLICITLY;
 
 	/* Discard the PAC if the plugin didn't handle it */
 	krb5_pac_free(context, pac);

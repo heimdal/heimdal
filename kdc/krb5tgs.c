@@ -1903,6 +1903,13 @@ server_lookup:
     /* flags &= ~HDB_F_SYNTHETIC_OK; */ /* `flags' is not used again below */
     priv->clientdb = clientdb;
 
+    /* Validate armor TGT before potentially including device claims */
+    if (priv->armor_ticket) {
+	ret = _kdc_fast_check_armor_pac(priv);
+	if (ret)
+	    goto out;
+    }
+
     ret = _kdc_check_pac(priv, priv->client_princ, NULL,
 			 priv->client, priv->server,
 			 priv->krbtgt, priv->krbtgt,
@@ -2014,13 +2021,6 @@ server_lookup:
 
     if (kdc_issued &&
 	!krb5_principal_is_krbtgt(context, priv->server->principal)) {
-
-	/* Validate armor TGT before potentially including device claims */
-	if (priv->armor_ticket) {
-	    ret = _kdc_fast_check_armor_pac(priv);
-	    if (ret)
-		goto out;
-	}
 
 	add_ticket_sig = TRUE;
     }

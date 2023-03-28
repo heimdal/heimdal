@@ -75,6 +75,10 @@ struct krb5_kdc_configuration {
 
     time_t kdc_warn_pwexpire; /* time before expiration to print a warning */
 
+    enum krb5_kdc_trpolicy trpolicy;
+
+    /* Try to keep bitfields contiguous so the compiler packs them better */
+
     unsigned int require_preauth : 1; /* require preauth for all principals */
     unsigned int encode_as_rep_as_tgs_rep : 1; /* bug compatibility */
 
@@ -97,7 +101,6 @@ struct krb5_kdc_configuration {
     unsigned int allow_anonymous : 1;
     unsigned int historical_anon_realm : 1;
     unsigned int strict_nametypes : 1;
-    enum krb5_kdc_trpolicy trpolicy;
 
     unsigned int require_pac : 1;
     unsigned int enable_fast : 1;
@@ -117,18 +120,20 @@ struct krb5_kdc_configuration {
     unsigned int pkinit_allow_proxy_certs : 1;
     unsigned int synthetic_clients : 1;
     unsigned int pkinit_max_life_from_cert_extension : 1;
+
+    unsigned int enable_gss_preauth : 1;
+    unsigned int enable_gss_auth_data : 1;
+
+    unsigned int enable_kx509 : 1;
+
+    unsigned int enable_digest : 1;
+    int digests_allowed;
+
     krb5_timestamp pkinit_max_life_from_cert;
     krb5_timestamp pkinit_max_life_bound;
     krb5_timestamp synthetic_clients_max_life;
     krb5_timestamp synthetic_clients_max_renew;
 
-    int digests_allowed;
-    unsigned int enable_digest : 1;
-
-    unsigned int enable_kx509 : 1;
-
-    unsigned int enable_gss_preauth : 1;
-    unsigned int enable_gss_auth_data : 1;
     gss_OID_set gss_mechanisms_allowed;
     gss_OID_set gss_cross_realm_mechanisms_allowed;
 

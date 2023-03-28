@@ -691,6 +691,11 @@ AH_BOTTOM([#ifdef ROKEN_RENAME
 #include "roken_rename.h"
 #endif])
 
+AC_ARG_ENABLE([emulate-AD-ticket-kvno-test],
+	AS_HELP_STRING([--enable-emulate-AD-ticket-kvno-test],
+		[if you want testing to emulate AD KDCs issuing zero-kvno tickets]))
+AM_CONDITIONAL([EMULATE_AD_TICKET_KVNO_TEST], [test "x$enable_emulate_AD_ticket_kvno_test" = xyes])
+
 AC_ARG_ENABLE(heimdal-documentation,
 	AS_HELP_STRING([--disable-heimdal-documentation],
 		[if you want disable to heimdal documentation]))
@@ -703,7 +708,7 @@ AC_CONFIG_FILES(Makefile 		\
 	include/hcrypto/Makefile	\
 	include/kadm5/Makefile		\
 	lib/Makefile			\
-	lib/base/Makefile			\
+	lib/base/Makefile		\
 	lib/asn1/Makefile		\
 	lib/com_err/Makefile		\
 	lib/hcrypto/Makefile		\

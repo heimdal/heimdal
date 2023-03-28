@@ -95,6 +95,13 @@ struct krb5_kdc_configuration {
     unsigned int svc_use_strongest_session_key : 1;
     unsigned int use_strongest_server_key : 1;
 
+    /*
+     * Emulate AD in issuing tickets with kvno zero/absent in the Ticket
+     * enc-part.
+     */
+    unsigned int write_ticket_kvno_zero : 1;
+    unsigned int write_krbtgt_kvno_zero : 1;
+
     unsigned int check_ticket_addresses : 1;
     unsigned int warn_ticket_addresses : 1;
     unsigned int allow_null_ticket_addresses : 1;

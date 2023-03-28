@@ -93,6 +93,8 @@ krb5_kdc_get_config(krb5_context context, krb5_kdc_configuration **config)
     c->preauth_use_strongest_session_key = FALSE;
     c->svc_use_strongest_session_key = FALSE;
     c->use_strongest_server_key = TRUE;
+    c->write_ticket_kvno_zero = FALSE;
+    c->write_krbtgt_kvno_zero = FALSE;
     c->check_ticket_addresses = TRUE;
     c->warn_ticket_addresses = FALSE;
     c->allow_null_ticket_addresses = TRUE;
@@ -179,6 +181,18 @@ krb5_kdc_get_config(krb5_context context, krb5_kdc_configuration **config)
 				     c->use_strongest_server_key,
 				     "kdc",
 				     "use-strongest-server-key", NULL);
+
+    c->write_ticket_kvno_zero =
+	krb5_config_get_bool_default(context, NULL,
+				     c->write_ticket_kvno_zero,
+				     "kdc",
+				     "write_ticket_kvno_zero", NULL);
+
+    c->write_krbtgt_kvno_zero =
+	krb5_config_get_bool_default(context, NULL,
+				     c->write_krbtgt_kvno_zero,
+				     "kdc",
+				     "write_krbtgt_kvno_zero", NULL);
 
     c->check_ticket_addresses =
 	krb5_config_get_bool_default(context, NULL,

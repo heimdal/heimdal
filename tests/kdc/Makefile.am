@@ -62,6 +62,14 @@ else
 do_dlopen = -e 's,[@]DLOPEN[@],false,g'
 endif
 
+if EMULATE_AD_TICKET_KVNO_TEST
+WRITE_TICKET_KVNO_ZERO = true
+WRITE_KRBTGT_KVNO_ZERO = true
+else
+WRITE_TICKET_KVNO_ZERO = false
+WRITE_KRBTGT_KVNO_ZERO = false
+endif
+
 do_subst = $(heim_verbose)sed $(do_dlopen) \
 	-e 's,[@]env_setup[@],$(top_builddir)/tests/bin/setup-env,g' \
 	-e 's,[@]top_srcdir[@],$(top_srcdir),g' \
@@ -82,7 +90,9 @@ do_subst = $(heim_verbose)sed $(do_dlopen) \
         -e 's,[@]ENABLE_AFS_STRING_TO_KEY[@],$(ENABLE_AFS_STRING_TO_KEY),' \
         -e 's,[@]ENABLE_AFS_STRING_TO_KEY[@],$(ENABLE_AFS_STRING_TO_KEY),' \
 	-e 's,[@]EGREP[@],$(EGREP),g' \
-	-e 's,[@]MITKRB5[@],$(MITKRB5),g' 
+	-e 's,[@]MITKRB5[@],$(MITKRB5),g' \
+	-e 's,[@]WRITE_TICKET_KVNO_ZERO[@],$(WRITE_TICKET_KVNO_ZERO),g' \
+	-e 's,[@]WRITE_KRBTGT_KVNO_ZERO[@],$(WRITE_KRBTGT_KVNO_ZERO),g'
 
 chmod = chmod
 

@@ -1105,6 +1105,16 @@ _kdc_encode_reply(krb5_context context,
 
     heim_assert(rep->padata != NULL, "reply padata uninitialized");
 
+    /* Emulate AD in setting the issued ticket's kvno to zero? */
+    if (r->config->write_krbtgt_kvno_zero &&
+        r->rep.ticket.sname.name_string.len > 0 &&
+        strcmp(r->rep.ticket.sname.name_string.val[0], "krbtgt") == 0)
+        skvno = 0;
+    else if (r->config->write_ticket_kvno_zero &&
+             (r->rep.ticket.sname.name_string.len == 0 ||
+              strcmp(r->rep.ticket.sname.name_string.val[0], "krbtgt") != 0))
+        skvno = 0;
+
     ASN1_MALLOC_ENCODE(EncTicketPart, buf, buf_size, et, &len, ret);
     if(ret) {
 	const char *msg = krb5_get_error_message(context, ret);

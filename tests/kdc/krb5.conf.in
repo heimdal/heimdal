@@ -82,6 +82,8 @@
 	allow-anonymous = true
 	digests_allowed = chap-md5,digest-md5,ntlm-v1,ntlm-v1-session,ntlm-v2,ms-chap-v2
         strict-nametypes = true
+        write_ticket_kvno_zero = @WRITE_TICKET_KVNO_ZERO@
+        write_krbtgt_kvno_zero = @WRITE_KRBTGT_KVNO_ZERO@
 
 	enable-http = true
 

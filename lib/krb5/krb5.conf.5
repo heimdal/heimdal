@@ -1208,6 +1208,13 @@ after the given time has passed since they were set.
 This is useful for key rotation on concrete principals shared by
 multiple instances of an application: set this time to twice or
 more the keytab fetch period used by applications.
+.It Li new_krbtgt_key_delay = Va time
+Like
+.Ar new_service_key_delay
+but for TGTs (including cross-realm TGTs).
+This is useful for preventing the use of new keys on krbtgt
+principals until the new keys have been replicated to all KDCs in
+the realm.
 .It Li enable_virtual_hostbased_princs = Va boolean
 Heimdal supports a notion of virtual host-based service
 principals whose keys are derived from those of a base namespace

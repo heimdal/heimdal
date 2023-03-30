@@ -1301,7 +1301,8 @@ derive_keys(krb5_context context,
 /*
  * Pick a best kvno for the given principal at the given time.
  *
- * Implements the [hdb] new_service_key_delay configuration parameter.
+ * Implements the [hdb] new_service_key_delay and new_krbtgt_key_delay
+ * configuration parameters.
  *
  * In order for disparate keytab provisioning systems such as OSKT and our own
  * kadmin ext_keytab and httpkadmind's get-keys to coexist, we need to be able
@@ -1336,6 +1337,7 @@ pick_kvno(krb5_context context,
     HDB_Ext_KeySet keys;
     time_t current = 0;
     time_t best;
+    time_t new_service_key_delay = db->new_service_key_delay;
     size_t i;
 
     /*
@@ -1344,7 +1346,12 @@ pick_kvno(krb5_context context,
      * fetching for use as a service principal, then we're out.
      */
     if (!(flags & HDB_F_DELAY_NEW_KEYS) || kvno || h->flags.virtual ||
-        h->flags.virtual_keys || db->new_service_key_delay <= 0)
+        h->flags.virtual_keys)
+        return 0;
+    if (h->principal && h->principal->name.name_string.len == 2 &&
+        strcmp(h->principal->name.name_string.val[0], "krbtgt") == 0)
+        new_service_key_delay = db->new_krbtgt_key_delay;
+    if (new_service_key_delay <= 0)
         return 0;
 
     /* No history -> current keyset is the only one and therefore the best */
@@ -1368,7 +1375,7 @@ pick_kvno(krb5_context context,
     for (i = 0; i < keys.len; i++) {
         /* No set_time?  Ignore.  Too new?  Ignore */
         if (!keys.val[i].set_time ||
-            keys.val[i].set_time[0] + db->new_service_key_delay > now)
+            keys.val[i].set_time[0] + new_service_key_delay > now)
             continue;
 
         /*
@@ -1384,7 +1391,7 @@ pick_kvno(krb5_context context,
          * is too new, then don't ignore this one.
          */
         if (keys.val[i].set_time[0] < best &&
-            (best != current || current + db->new_service_key_delay < now))
+            (best != current || current + new_service_key_delay < now))
             continue;
 
         /*

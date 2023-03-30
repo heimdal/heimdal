@@ -134,6 +134,7 @@ typedef struct HDB {
     size_t virtual_hostbased_princ_maxdots; /* Max. # of .s in namespace */
     char **virtual_hostbased_princ_svcs;    /* Which svcs are not wildcarded */
     time_t new_service_key_delay;           /* Delay for new keys */
+    time_t new_krbtgt_key_delay;            /* Delay for new keys for TGTs */
     /**
      * Open (or create) the a Kerberos database.
      *

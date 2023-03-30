@@ -332,6 +332,17 @@ _hdb_fetch_kvno(krb5_context context, HDB *db, krb5_const_principal principal,
     if (!entry->aliased)
         return 0;
 
+    /*
+     * Deal with aliases.  We have two types: hard and soft.
+     *
+     * For hard aliases we alter the HDB_entry's canonical name to match the
+     * alias, then return.
+     *
+     * For soft aliases we either return HDB_ERR_WRONG_REALM so that the KDC
+     * can issue a referral to a different realm, or we return the entry as-is
+     * (enterprise principals) and let the KDC figure out what to do.
+     */
+
     soft_aliased = is_soft_alias_p(context, principal, flags, entry);
 
     /* Never return HDB_ERR_WRONG_REALM to kadm5 or other non-KDC callers */
@@ -340,7 +351,7 @@ _hdb_fetch_kvno(krb5_context context, HDB *db, krb5_const_principal principal,
 
     same_realm = krb5_realm_compare(context, principal, entry->principal);
 
-    if (entry->aliased && !soft_aliased) {
+    if (!soft_aliased) {
         /*
          * This is a hard alias.  We'll make the entry's name be the same as
          * the alias.
@@ -365,17 +376,14 @@ _hdb_fetch_kvno(krb5_context context, HDB *db, krb5_const_principal principal,
         return 0;
     }
 
-    /* Same realm -> not a referral, therefore this is a hard alias */
+    /* Same realm soft alias -> can't issue referral; broken HDB entry */
     if (same_realm) {
-        if (soft_aliased) {
-            /* Soft alias to the same realm?!  No. */
-            hdb_free_entry(context, db, entry);
-            return HDB_ERR_NOENTRY;
-        }
-        return 0;
+        /* Soft alias to the same realm?!   */
+        hdb_free_entry(context, db, entry);
+        return HDB_ERR_NOENTRY;
     }
 
-    /* Not same realm && not hard alias */
+    /* Not same realm && soft alias -> issue referral */
     return HDB_ERR_WRONG_REALM;
 }
 

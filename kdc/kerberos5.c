@@ -2536,6 +2536,13 @@ _kdc_as_rep(astgs_request_t r)
 	t = min(t, rk_time_add(start, realm->max_life));
 #endif
 	r->et.endtime = t;
+
+	if (start > r->et.endtime) {
+	    _kdc_set_e_text(r, "Requested effective lifetime is negative or too short");
+	    ret = KRB5KDC_ERR_NEVER_VALID;
+	    goto out;
+	}
+
 	if(f.renewable_ok && r->et.endtime < *b->till){
 	    f.renewable = 1;
 	    if(b->rtime == NULL){

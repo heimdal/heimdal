@@ -125,7 +125,7 @@ _kdc_check_pac(astgs_request_t r,
     /* Verify the KDC signatures. */
     ret = _kdc_pac_verify(r,
 			  client_principal, delegated_proxy_principal,
-			  client, server, krbtgt, &pac);
+			  client, server, krbtgt, tkt, &pac);
     if (ret == 0) {
 	if (pac_canon_name) {
 	    ret = _krb5_pac_get_canon_principal(context, pac, pac_canon_name);

@@ -293,13 +293,13 @@ validate_protocol_transition(astgs_request_t r)
      */
     if (r->client->flags.trusted_for_delegation &&
 	s4u_client->flags.forwardable) {
-	str = "[forwardable]";
+	str = " [forwardable]";
     } else {
 	b->kdc_options.forwardable = 0;
 	str = "";
     }
     kdc_log(r->context, r->config, 4, "s4u2self %s impersonating %s to "
-	    "service %s %s", r->cname, s4ucname, r->sname, str);
+	    "service %s%s", r->cname, s4ucname, r->sname, str);
 
     /*
      * Replace all client information in the request with the

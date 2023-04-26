@@ -397,7 +397,7 @@ validate_constrained_delegation(astgs_request_t r)
 			    "Failed to decrypt constrained delegation ticket");
 	kdc_log(r->context, r->config, 4,
 		"failed to decrypt ticket for "
-		"constrained delegation from %s to %s ", r->cname, r->sname);
+		"constrained delegation from %s to %s", r->cname, r->sname);
 	goto out;
     }
 

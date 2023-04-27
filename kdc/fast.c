@@ -799,8 +799,10 @@ _kdc_fast_strengthen_reply_key(astgs_request_t r)
 
 	ret = krb5_generate_random_keyblock(r->context, r->reply_key.keytype,
 					    &r->strengthen_key);
-	if (ret)
-	    krb5_abortx(r->context, "random generator fail");
+	if (ret) {
+	    kdc_log(r->context, r->config, 0, "failed to prepare random keyblock");
+	    return ret;
+	}
 
 	ret = _krb5_fast_cf2(r->context,
 			     &r->strengthen_key, "strengthenkey",

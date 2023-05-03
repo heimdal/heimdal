@@ -672,6 +672,35 @@ _hdb_keytab2hdb_entry(krb5_context context,
 static krb5_error_code
 load_config(krb5_context context, HDB *db)
 {
+    db->enable_synthetic_clients =
+        krb5_config_get_bool_default(context, NULL,
+                                     krb5_config_get_bool_default(context, NULL, 300,
+                                                                  "kdc", "synthetic_clients", NULL),
+                                     "hdb", "enable_synthetic_clients", NULL);
+    db->synthetic_clients_forwardable =
+        !!krb5_config_get_bool_default(context, NULL, FALSE, "hdb",
+                                       "synthetic_clients_forwardable", NULL);
+    db->synthetic_clients_renewable =
+        !!krb5_config_get_bool_default(context, NULL, FALSE, "hdb",
+                                       "synthetic_clients_renewable", NULL);
+    db->synthetic_clients_max_life =
+        krb5_config_get_time_default(context, NULL,
+                                     krb5_config_get_time_default(context,
+                                                                  NULL, 300,
+                                                                  "kdc",
+                                                                  "synthetic_clients_max_life",
+                                                                  NULL),
+                                     "hdb", "synthetic_clients_max_life",
+                                     NULL);
+    db->synthetic_clients_max_renew =
+        krb5_config_get_time_default(context, NULL,
+                                     krb5_config_get_time_default(context,
+                                                                  NULL, 300,
+                                                                  "kdc",
+                                                                  "synthetic_clients_max_renew",
+                                                                  NULL),
+                                     "hdb", "synthetic_clients_max_renew",
+                                     NULL);
     db->enable_virtual_hostbased_princs =
         krb5_config_get_bool_default(context, NULL, FALSE, "hdb",
                                      "enable_virtual_hostbased_princs",

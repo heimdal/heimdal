@@ -1605,6 +1605,62 @@ fix_princ_name(krb5_context context,
     return ret;
 }
 
+/*
+ * Synthesize an HDB entry suitable for PKINIT and GSS preauth.
+ */
+static krb5_error_code
+synthesize_client(krb5_context context,
+                  HDB *db,
+                  krb5_const_principal princ,
+                  hdb_entry *e)
+{
+    krb5_error_code ret;
+
+    e->flags.client = 1;
+    e->flags.forwardable = db->synthetic_clients_forwardable;
+    e->flags.renewable = db->synthetic_clients_renewable;
+    e->flags.immutable = 1;
+    e->flags.virtual = 1;
+    e->flags.synthetic = 1;
+    e->flags.do_not_store = 1;
+    e->kvno = 1;
+    e->keys.len = 0;
+    e->keys.val = NULL;
+    e->created_by.time = time(NULL);
+    e->modified_by = NULL;
+    e->valid_start = NULL;
+    e->valid_end = NULL;
+    e->pw_end = NULL;
+    e->etypes = NULL;
+    e->generation = NULL;
+    e->extensions = NULL;
+    ret = (e->max_renew = calloc(1, sizeof(*e->max_renew))) ?
+        0 : krb5_enomem(context);
+    if (ret == 0)
+        ret = (e->max_life = calloc(1, sizeof(*e->max_life))) ?
+            0 : krb5_enomem(context);
+    if (ret == 0)
+        ret = krb5_copy_principal(context, princ, &e->principal);
+    if (ret == 0)
+        ret = krb5_copy_principal(context, princ, &e->created_by.principal);
+    if (ret == 0) {
+        /*
+         * We can't check OCSP in the TGS path, so we can't let tickets for
+         * synthetic principals live very long.
+         */
+        *(e->max_renew) =
+            krb5_config_get_time_default(context, NULL, 300, "hdb",
+                                         "synthetic_clients_max_renew", NULL);
+        *(e->max_life) =
+            krb5_config_get_time_default(context, NULL, 300, "hdb",
+                                         "synthetic_clients_max_life", NULL);
+    } else {
+        hdb_free_entry(context, db, e);
+    }
+    return ret;
+}
+
+
 /* Wrapper around db->hdb_fetch_kvno() that implements virtual princs/keys */
 static krb5_error_code
 fetch_it(krb5_context context,
@@ -1795,9 +1851,16 @@ hdb_fetch_kvno(krb5_context context,
     krb5_timestamp now;
 
     krb5_timeofday(context, &now);
+    krb5_clear_error_message(context);
 
     flags |= kvno ? HDB_F_KVNO_SPECIFIED : 0; /* XXX is this needed */
     ret = fetch_it(context, db, principal, flags, t ? t : now, etype, kvno, h);
+    if (ret == HDB_ERR_NOENTRY && (flags & HDB_F_SYNTHETIC_OK) &&
+        db->enable_synthetic_clients) {
+        ret = synthesize_client(context, db, principal, h);
+        if (ret)
+            krb5_set_error_message(context, ret, "Could not synthesize HDB entry");
+    }
     if (ret == 0 && t == 0 && h->flags.virtual &&
         h->pw_end && h->pw_end[0] < now) {
         /*
@@ -1809,7 +1872,7 @@ hdb_fetch_kvno(krb5_context context,
         h->pw_end[0] = now + 3600;
     }
     if (ret == HDB_ERR_NOENTRY)
-	krb5_set_error_message(context, ret, "no such entry found in hdb");
+        krb5_prepend_error_message(context, ret, "no such entry found in hdb");
     return ret;
 }
 

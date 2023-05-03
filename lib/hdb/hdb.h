@@ -129,6 +129,11 @@ typedef struct HDB {
      * XXX Move these into a structure that we point to so that we
      * don't need to break the ABI every time we add a field.
      */
+    int enable_synthetic_clients;
+    unsigned int synthetic_clients_forwardable:1;
+    unsigned int synthetic_clients_renewable:2;
+    time_t synthetic_clients_max_life;
+    time_t synthetic_clients_max_renew;
     int enable_virtual_hostbased_princs;
     size_t virtual_hostbased_princ_ndots;   /* Min. # of .s in hostname */
     size_t virtual_hostbased_princ_maxdots; /* Max. # of .s in namespace */

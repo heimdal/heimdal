@@ -128,6 +128,9 @@ kadm5_s_get_principal(void *server_handle,
     if ((mask & KADM5_KEY_DATA) || (mask & KADM5_KVNO))
         flags |= HDB_F_ALL_KVNOS | HDB_F_DECRYPT;
 
+    if ((context->config.mask & KADM5_CONFIG_SYNTHESIZE_PRINCIPALS))
+        flags |= HDB_F_SYNTHETIC_OK;
+
     memset(&ent, 0, sizeof(ent));
     memset(out, 0, sizeof(*out));
 

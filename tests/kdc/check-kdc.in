@@ -191,6 +191,11 @@ ${kadmin} \
     --realm-max-renewable-life=1month \
     ${RH} || exit 1
 
+# Detour: test --synthesize-principals:
+${kadmin} get nonexistent@${R} 2>/dev/null && exit 1
+${kadmin} --synthesize-principals get nonexistent@${R} || exit 1
+
+# Back to setting up the HDB
 ${kadmin} cpw -r krbtgt/${R}@${R} || exit 1
 ${kadmin} cpw -r krbtgt/${R}@${R} || exit 1
 ${kadmin} cpw -r krbtgt/${R}@${R} || exit 1

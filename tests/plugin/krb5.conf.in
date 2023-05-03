@@ -23,7 +23,6 @@
 	allow-anonymous = true
 	digests_allowed = chap-md5,digest-md5,ntlm-v1,ntlm-v1-session,ntlm-v2,ms-chap-v2
         strict-nametypes = true
-        synthetic_clients = true
 	enable_gss_preauth = true
 	gss_mechanisms_allowed = sanon-x25519
 	enable-pkinit = true
@@ -43,6 +42,9 @@
 
 [hdb]
 	db-dir = @objdir@
+        enable_synthetic_clients = true
+        synthetic_clients_forwardable = true
+        synthetic_clients_renewable = true
 
 [logging]
 	kdc = 0-/FILE:@objdir@/messages.log

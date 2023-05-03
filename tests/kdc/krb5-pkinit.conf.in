@@ -15,7 +15,6 @@
 
 [kdc]
         strict-nametypes = true
-        synthetic_clients = true
 	enable-pkinit = true
 	pkinit_identity = FILE:@objdir@/kdc.crt,@srcdir@/../../lib/hx509/data/key2.der
 	pkinit_anchors = FILE:@objdir@/ca.crt
@@ -73,6 +72,9 @@
 
 [hdb]
 	db-dir = @objdir@
+        enable_synthetic_clients = true
+        synthetic_clients_forwardable = true
+        synthetic_clients_renewable = true
 
 [logging]
 	kdc = 0-/FILE:@objdir@/messages.log

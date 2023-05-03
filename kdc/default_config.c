@@ -354,7 +354,16 @@ krb5_kdc_get_config(krb5_context context, krb5_kdc_configuration **config)
 
     c->synthetic_clients =
 	krb5_config_get_bool_default(context, NULL,
-				     c->synthetic_clients,
+                                     /*
+                                      * This should always have been in [hdb]
+                                      * only.
+                                      */
+                                     krb5_config_get_bool_default(context,
+                                                                  NULL,
+                                                                  c->synthetic_clients,
+                                                                  "hdb",
+                                                                  "synthetic_clients",
+                                                                  NULL),
 				     "kdc",
 				     "synthetic_clients",
 				     NULL);
@@ -370,13 +379,23 @@ krb5_kdc_get_config(krb5_context context, krb5_kdc_configuration **config)
                                       NULL);
 
     c->synthetic_clients_max_life =
-         krb5_config_get_time_default(context, NULL, 300, "kdc",
-                                      "synthetic_clients_max_life",
+         krb5_config_get_time_default(context, NULL,
+                                      krb5_config_get_time_default(context,
+                                                                   NULL, 300,
+                                                                   "hdb",
+                                                                   "synthetic_clients_max_life",
+                                                                   NULL),
+                                      "kdc", "synthetic_clients_max_life",
                                       NULL);
 
     c->synthetic_clients_max_renew =
-         krb5_config_get_time_default(context, NULL, 300, "kdc",
-                                      "synthetic_clients_max_renew",
+         krb5_config_get_time_default(context, NULL,
+                                      krb5_config_get_time_default(context,
+                                                                   NULL, 300,
+                                                                   "hdb",
+                                                                   "synthetic_clients_max_renew",
+                                                                   NULL),
+                                      "kdc", "synthetic_clients_max_renew",
                                       NULL);
 
     c->enable_gss_preauth =

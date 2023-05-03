@@ -19,7 +19,6 @@
 [kdc]
         num-kdc-processes = 1
         strict-nametypes = true
-        synthetic_clients = true
 	enable-pkinit = true
         pkinit_identity = FILE:@objdir@/kdc.crt,@srcdir@/../../lib/hx509/data/key2.der
         pkinit_anchors = FILE:@objdir@/ca.crt
@@ -75,6 +74,9 @@
 
 [hdb]
 	db-dir = @objdir@
+        enable_synthetic_clients = true
+        synthetic_clients_forwardable = true
+        synthetic_clients_renewable = true
         enable_virtual_hostbased_princs = true
         virtual_hostbased_princ_mindots = 1
         virtual_hostbased_princ_maxdots = 3

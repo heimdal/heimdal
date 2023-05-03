@@ -22,7 +22,6 @@ include @srcdirabs@/include-krb5.conf
 	allow-anonymous = true
 	digests_allowed = chap-md5,digest-md5,ntlm-v1,ntlm-v1-session,ntlm-v2,ms-chap-v2
         strict-nametypes = true
-        synthetic_clients = true
 	enable_gss_preauth = true
 	gss_mechanisms_allowed = sanon-x25519
 	enable-pkinit = true
@@ -42,6 +41,9 @@ include @srcdirabs@/include-krb5.conf
 
 [hdb]
 	db-dir = @objdir@
+        enable_synthetic_clients = true
+        synthetic_clients_forwardable = true
+        synthetic_clients_renewable = true
         enable_virtual_hostbased_princs = true
         virtual_hostbased_princ_mindots = 1
         virtual_hostbased_princ_maxdots = 3

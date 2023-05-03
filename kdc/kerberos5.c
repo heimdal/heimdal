@@ -2017,8 +2017,8 @@ add_enc_pa_rep(astgs_request_t r)
  * principal was used, so that the TGS does not accidentally
  * synthesize a non-synthetic principal that has since been deleted.
  */
-static krb5_error_code
-add_synthetic_princ_ad(astgs_request_t r)
+krb5_error_code
+_kdc_add_synthetic_princ_ad(astgs_request_t r)
 {
     krb5_data data;
 
@@ -2672,7 +2672,7 @@ _kdc_as_rep(astgs_request_t r)
     }
 
     if (r->client->flags.synthetic) {
-	ret = add_synthetic_princ_ad(r);
+	ret = _kdc_add_synthetic_princ_ad(r);
 	if (ret)
 	    goto out;
     }

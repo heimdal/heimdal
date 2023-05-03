@@ -47,6 +47,8 @@ get_krbtgt_realm(const PrincipalName *p)
 	return NULL;
 }
 
+extern krb5_error_code _kdc_add_synthetic_princ_ad(astgs_request_t);
+
 /*
  * return TRUE if client was a synthetic principal, as indicated by
  * authorization data
@@ -714,6 +716,9 @@ tgs_make_reply(astgs_request_t r,
 	    }
 	}
     }
+
+    if (_kdc_synthetic_princ_used_p(r->context, r->ticket))
+	ret = _kdc_add_synthetic_princ_ad(r);
 
     ret = krb5_copy_keyblock_contents(r->context, sessionkey, &et->key);
     if (ret)

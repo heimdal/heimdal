@@ -48,6 +48,7 @@
 .Op Fl a Ar host \*(Ba Fl Fl admin-server= Ns Ar host
 .Op Fl s Ar port number \*(Ba Fl Fl server-port= Ns Ar port number
 .Op Fl l | Fl Fl local
+.Op Fl Fl synthesize-principals
 .Op Fl h | Fl Fl help
 .Op Fl v | Fl Fl version
 .Op Ar command
@@ -81,6 +82,8 @@ server to contact
 port to use
 .It Fl l , Fl Fl local
 local admin mode
+.It Fl Fl synthesize-principals
+enable synthetic principals (get only)
 .El
 .Pp
 If no

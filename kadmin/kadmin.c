@@ -40,6 +40,7 @@ static char *keyfile;
 int local_flag;
 static int ad_flag;
 static int help_flag;
+static int synthesize_princs_flag;
 static int version_flag;
 static char *hdb;
 static char *realm;
@@ -82,6 +83,9 @@ static struct getargs args[] = {
     },
     {	"ad", 		0, arg_flag, &ad_flag, "active directory admin mode",
 	NULL },
+    {   "synthesize-principals",    0, arg_flag, &synthesize_princs_flag,
+        "synthesize non-existing principals if enabled in [hdb] in krb5.conf",
+        NULL },
 #ifdef HAVE_DLOPEN
     { "check-library", 0, arg_string, &check_library,
       "library to load password check function from", "library" },
@@ -228,6 +232,9 @@ main(int argc, char **argv)
 	conf.stash_file = keyfile;
 	conf.mask |= KADM5_CONFIG_STASH_FILE;
     }
+
+    if (synthesize_princs_flag)
+        conf.mask |= KADM5_CONFIG_SYNTHESIZE_PRINCIPALS;
 
     if(local_flag) {
 	int i;

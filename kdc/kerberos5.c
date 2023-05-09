@@ -983,7 +983,7 @@ pa_enc_ts_validate(astgs_request_t r, const PA_DATA *pa)
 
 struct kdc_patypes {
     int type;
-    char *name;
+    const char *name;
     unsigned int flags;
 #define PA_ANNOUNCE	1
 #define PA_REQ_FAST	2 /* only use inside fast */

@@ -845,6 +845,7 @@ _kdc_fast_check_armor_pac(astgs_request_t r, int flags)
     hdb_entry *armor_client = NULL;
     char *armor_client_principal_name = NULL;
 
+    flags |= HDB_F_ARMOR_PRINCIPAL;
     if (_kdc_synthetic_princ_used_p(r->context, r->armor_ticket))
 	flags |= HDB_F_SYNTHETIC_OK;
     if (r->req.req_body.kdc_options.canonicalize)

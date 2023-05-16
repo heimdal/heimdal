@@ -2512,11 +2512,11 @@ _kdc_as_rep(astgs_request_t r)
          */
         if (r->pa_max_life > 0)
             t = rk_time_add(start, min(rk_time_sub(t, start), r->pa_max_life));
-        else if (r->client->max_life && *r->client->max_life)
+        else if (r->client->max_life)
 	    t = rk_time_add(start, min(rk_time_sub(t, start),
                                        *r->client->max_life));
 
-	if (r->server->max_life && *r->server->max_life)
+	if (r->server->max_life)
 	    t = rk_time_add(start, min(rk_time_sub(t, start),
                                        *r->server->max_life));
 
@@ -2540,10 +2540,10 @@ _kdc_as_rep(astgs_request_t r)
 	    t = *b->rtime;
 	    if(t == 0)
 		t = MAX_TIME;
-	    if(r->client->max_renew && *r->client->max_renew)
+	    if(r->client->max_renew)
 		t = rk_time_add(start, min(rk_time_sub(t, start),
                                            *r->client->max_renew));
-	    if(r->server->max_renew && *r->server->max_renew)
+	    if(r->server->max_renew)
 		t = rk_time_add(start, min(rk_time_sub(t, start),
                                            *r->server->max_renew));
 #if 0

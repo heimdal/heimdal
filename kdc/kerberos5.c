@@ -2261,14 +2261,16 @@ _kdc_as_rep(astgs_request_t r)
 		    /*
 		     * If there is a client key, send ETYPE_INFO{,2}
 		     */
-		    ret2 = _kdc_find_etype(r, KFE_IS_PREAUTH|KFE_USE_CLIENT,
-					   b->etype.val, b->etype.len,
-					   NULL, &ckey, &default_salt);
-		    if (ret2 == 0) {
-			ret2 = get_pa_etype_info_both(r->context, config, &b->etype,
-						      r->rep.padata, ckey, !default_salt);
-			if (ret2 != 0)
-			    ret = ret2;
+		    if (!r->client->flags.locked_out) {
+			    ret2 = _kdc_find_etype(r, KFE_IS_PREAUTH|KFE_USE_CLIENT,
+						   b->etype.val, b->etype.len,
+						   NULL, &ckey, &default_salt);
+			    if (ret2 == 0) {
+				ret2 = get_pa_etype_info_both(r->context, config, &b->etype,
+				                              r->rep.padata, ckey, !default_salt);
+				if (ret2 != 0)
+				    ret = ret2;
+			    }
 		    }
 		    goto out;
 		}

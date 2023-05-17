@@ -438,25 +438,32 @@ _kdc_fast_mk_error(astgs_request_t r,
 		   krb5_data *error_msg)
 {
     krb5_error_code ret;
-    krb5_data e_data;
+    krb5_data _e_data;
+    krb5_data *e_data = NULL;
 
-    krb5_data_zero(&e_data);
+    krb5_data_zero(&_e_data);
 
     heim_assert(r != NULL, "invalid request in _kdc_fast_mk_error");
 
-    ret = _kdc_fast_mk_e_data(r,
-			      error_method,
-			      armor_crypto,
-			      req_body,
-			      outer_error,
-			      error_client,
-			      error_server,
-			      csec, cusec,
-			      &e_data);
-    if (ret) {
-	kdc_log(r->context, r->config, 1,
-		"Failed to make FAST e-data: %d", ret);
-	return ret;
+    if (r->e_data.length) {
+	e_data = &r->e_data;
+    } else {
+	ret = _kdc_fast_mk_e_data(r,
+				  error_method,
+				  armor_crypto,
+				  req_body,
+				  outer_error,
+				  error_client,
+				  error_server,
+				  csec, cusec,
+				  &_e_data);
+	if (ret) {
+	    kdc_log(r->context, r->config, 1,
+		    "Failed to make FAST e-data: %d", ret);
+	    return ret;
+	}
+
+	e_data = &_e_data;
     }
 
     if (armor_crypto) {
@@ -471,13 +478,13 @@ _kdc_fast_mk_error(astgs_request_t r,
     ret = krb5_mk_error(r->context,
 			outer_error,
 			r->e_text,
-			(e_data.length ? &e_data : NULL),
+			(e_data->length ? e_data : NULL),
 			error_client,
 			error_server,
 			csec,
 			cusec,
 			error_msg);
-    krb5_data_free(&e_data);
+    krb5_data_free(&_e_data);
 
     if (ret)
         kdc_log(r->context, r->config, 1,

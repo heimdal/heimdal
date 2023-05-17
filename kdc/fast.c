@@ -334,7 +334,7 @@ _kdc_fast_mk_error(astgs_request_t r,
 		   time_t *csec, int *cusec,
 		   krb5_data *error_msg)
 {
-    krb5_error_code ret;
+    krb5_error_code ret = 0;
     krb5_data e_data;
     size_t size;
 

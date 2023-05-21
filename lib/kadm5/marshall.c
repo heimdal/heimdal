@@ -131,6 +131,7 @@ kadm5_ret_key_data(krb5_storage *sp,
     krb5_data c;
     int32_t tmp;
 
+    krb5_data_zero(&c);
     ret = krb5_ret_int32(sp, &tmp);
     if (ret == 0) {
         key->key_data_ver = tmp;
@@ -267,14 +268,14 @@ kadm5_ret_t
 kadm5_store_principal_ent(krb5_storage *sp,
 			  kadm5_principal_ent_t princ)
 {
-    return store_principal_ent (sp, princ, ~0, 1);
+    return store_principal_ent (sp, princ, ~0U, 1);
 }
 
 kadm5_ret_t
 kadm5_store_principal_ent_nokeys(krb5_storage *sp,
 			        kadm5_principal_ent_t princ)
 {
-    return store_principal_ent (sp, princ, ~0, 0);
+    return store_principal_ent (sp, princ, ~0U, 0);
 }
 
 kadm5_ret_t
@@ -407,7 +408,7 @@ kadm5_ret_t
 kadm5_ret_principal_ent(krb5_storage *sp,
 			kadm5_principal_ent_t princ)
 {
-    return ret_principal_ent (sp, princ, ~0);
+    return ret_principal_ent (sp, princ, ~0U);
 }
 
 kadm5_ret_t

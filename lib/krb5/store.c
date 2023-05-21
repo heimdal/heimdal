@@ -878,8 +878,12 @@ KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_store_data(krb5_storage *sp,
 		krb5_data data)
 {
+    uint32_t size = data.length;
     int ret;
-    ret = krb5_store_int32(sp, data.length);
+
+    if (data.length != size)
+	return EOVERFLOW;
+    ret = krb5_store_uint32(sp, size);
     if(ret < 0)
 	return ret;
     ret = sp->store(sp, data.data, data.length);
@@ -951,9 +955,9 @@ krb5_ret_data(krb5_storage *sp,
 	      krb5_data *data)
 {
     krb5_error_code ret;
-    int32_t size;
+    uint32_t size;
 
-    ret = krb5_ret_int32(sp, &size);
+    ret = krb5_ret_uint32(sp, &size);
     if(ret)
 	return ret;
     ret = size_too_large(sp, size);

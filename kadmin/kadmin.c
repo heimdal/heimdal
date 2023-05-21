@@ -49,6 +49,7 @@ static char *client_name;
 static char *keytab;
 static char *check_library  = NULL;
 static char *check_function = NULL;
+static char *local_kdc_hostname = NULL;
 static getarg_strings policy_libraries = { 0, NULL };
 
 static struct getargs args[] = {
@@ -82,6 +83,8 @@ static struct getargs args[] = {
     },
     {	"ad", 		0, arg_flag, &ad_flag, "active directory admin mode",
 	NULL },
+    {   "local-kdc-hostname", 0, arg_string, &local_kdc_hostname,
+        "hostname to use for this KDC in iprop metadata", "HOSTNAME" },
 #ifdef HAVE_DLOPEN
     { "check-library", 0, arg_string, &check_library,
       "library to load password check function from", "library" },
@@ -227,6 +230,11 @@ main(int argc, char **argv)
     if (keyfile) {
 	conf.stash_file = keyfile;
 	conf.mask |= KADM5_CONFIG_STASH_FILE;
+    }
+
+    if (local_kdc_hostname) {
+	conf.local_kdc_name = local_kdc_hostname;
+	conf.mask |= KADM5_CONFIG_LOCAL_KDC_NAME;
     }
 
     if(local_flag) {

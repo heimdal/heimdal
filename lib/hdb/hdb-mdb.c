@@ -330,6 +330,7 @@ DB_close(krb5_context context, HDB *db)
 {
     mdb_info *mi = (mdb_info *)db->hdb_db;
 
+    db->hdb_openp = 0;
     mdb_cursor_close(mi->c);
     mdb_txn_abort(mi->t);
     my_mdb_env_close(context, db->hdb_name, &mi->e);
@@ -473,6 +474,13 @@ DB_rename(krb5_context context, HDB *db, const char *new_name)
     int ret;
     char *old, *new;
 
+    /*
+     * We don't rename over the lock file.  The lock file is only used for byte
+     * range locking and to contain memory mapped mutexes.  The only problem
+     * with not renaming over the lock file _should_ be that some free pages
+     * may take longer to be reclaimed.  Thus we don't have to worry about how
+     * to atomically rename two files here (unlike the SQLite3 HDB backend).
+     */
     if (strncmp(new_name, "mdb:", sizeof("mdb:") - 1) == 0)
         new_name += sizeof("mdb:") - 1;
     else if (strncmp(new_name, "lmdb:", sizeof("lmdb:") - 1) == 0)
@@ -633,6 +641,7 @@ DB_open(krb5_context context, HDB *db, int oflags, mode_t mode)
         /* hdb_init_db() calls hdb_check_db_format() */
 	ret = hdb_init_db(context, db);
     }
+    db->hdb_openp = 1;
     if (ret) {
 	DB_close(context, db);
 	krb5_set_error_message(context, ret, "hdb_open: failed %s database %s",

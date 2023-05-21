@@ -177,7 +177,10 @@ struct slave {
 typedef struct slave slave;
 
 static int
-check_acl (krb5_context context, const char *name)
+check_acl(krb5_context context,
+          krb5_const_principal client,
+          const char *name,
+          const char *server_realm)
 {
     const char *fn;
     FILE *fp;
@@ -195,17 +198,57 @@ check_acl (krb5_context context, const char *name)
 					"kdc",
 					"iprop-acl",
 					NULL);
-
     fp = fopen (fn, "r");
     free(slavefile);
     if (fp == NULL)
 	return 1;
     while (fgets(buf, sizeof(buf), fp) != NULL) {
 	buf[strcspn(buf, "\r\n")] = '\0';
-	if (strcmp (buf, name) == 0) {
+
+	if (strcmp(buf, name) == 0) {
 	    ret = 0;
 	    break;
 	}
+        if (strchr(buf, '*')) {
+            krb5_principal p = NULL;
+
+            /* Wildcard */
+
+            if (strcmp(buf, "*") == 0 &&
+                /* Just a wildcard as the ACL, check the service and realm */
+                strcmp(krb5_principal_get_realm(context, client),
+                       server_realm) == 0 &&
+                krb5_principal_get_num_comp(context, client) == 2 &&
+                strcmp(krb5_principal_get_comp_string(context, client, 0), "iprop")) {
+
+                ret = 0;
+                break;
+            }
+
+            /* A principal with a wildcard as the ACL */
+            if (krb5_parse_name(context, buf, &p) == 0 &&
+                /* Both have to have two components */
+                krb5_principal_get_num_comp(context, p) == 2 &&
+                krb5_principal_get_num_comp(context, client) == 2 &&
+                /* Realm must match */
+                strcmp(krb5_principal_get_realm(context, p),
+                       krb5_principal_get_realm(context, client)) == 0 &&
+                /* Service must match */
+                strcmp(krb5_principal_get_comp_string(context, p, 0),
+                       krb5_principal_get_comp_string(context, client, 0)) == 0 &&
+                /* Hostname component of ACL must be just a wildcard */
+                strcmp(krb5_principal_get_comp_string(context, p, 0), "*") == 0) {
+
+                /*
+                 * A principal name with the hostname wildcarded, and the
+                 * client principal is for the same service and realm.
+                 */
+                ret = 0;
+                krb5_free_principal(context, p);
+                break;
+            }
+            krb5_free_principal(context, p);
+        }
     }
     fclose (fp);
     return ret;
@@ -245,6 +288,19 @@ slave_dead(krb5_context context, slave *s)
     }
     s->flags |= SLAVE_F_DEAD;
     slave_seen(s);
+}
+
+static void
+disconnect_slaves(slave *root)
+{
+    while (root) {
+        if (!rk_IS_BAD_SOCKET(root->fd)) {
+            rk_closesocket(root->fd);
+            root->flags |= SLAVE_F_DEAD;
+            root->fd = rk_INVALID_SOCKET;
+        }
+        root = root->next;
+    }
 }
 
 static void
@@ -348,7 +404,8 @@ add_slave (krb5_context context, krb5_keytab keytab, slave **root,
 	krb5_warn (context, ret, "krb5_unparse_name");
 	goto error;
     }
-    if (check_acl (context, s->name)) {
+    if (check_acl(context, ticket->client, s->name,
+                  krb5_principal_get_realm(context, server))) {
 	krb5_warnx (context, "%s not in acl", s->name);
 	goto error;
     }
@@ -421,8 +478,9 @@ done:
 }
 
 static int
-write_dump (krb5_context context, krb5_storage *dump,
-	    const char *database, uint32_t current_version)
+write_dump(krb5_context context, krb5_storage *dump,
+	   const char *database, uint32_t current_version,
+           uint32_t current_tstamp)
 {
     krb5_error_code ret;
     krb5_storage *sp;
@@ -487,7 +545,9 @@ write_dump (krb5_context context, krb5_storage *dump,
 	krb5_errx (context, IPROPD_RESTART, "krb5_storage_from_mem");
     ret = krb5_store_uint32(sp, NOW_YOU_HAVE);
     if (ret == 0)
-      krb5_store_uint32(sp, current_version);
+        krb5_store_uint32(sp, current_version);
+    if (ret == 0)
+        krb5_store_uint32(sp, current_tstamp);
     krb5_storage_free (sp);
 
     data.length = 8;
@@ -664,8 +724,8 @@ ewouldblock:
 
 static int
 send_complete(krb5_context context, slave *s, const char *database,
-	      uint32_t current_version, uint32_t oldest_version,
-              uint32_t initial_log_tstamp)
+	      uint32_t current_version, uint32_t current_tstamp,
+              uint32_t oldest_version, uint32_t initial_log_tstamp)
 {
     krb5_error_code ret;
     krb5_storage *dump = NULL;
@@ -777,8 +837,9 @@ send_complete(krb5_context context, slave *s, const char *database,
 
 	/* Now, we know that we must write a new dump file.  */
 
-	ret = write_dump(context, dump, database, current_version);
-	if (ret)
+        ret = write_dump(context, dump, database, current_version,
+                         current_tstamp);
+        if (ret)
 	    goto done;
 
 	/*
@@ -1111,7 +1172,8 @@ get_right(krb5_context context, int log_fd, krb5_storage *sp,
 
 static void
 send_diffs(kadm5_server_context *server_context, slave *s, int log_fd,
-           const char *database, uint32_t current_version)
+           const char *database, uint32_t current_version,
+           uint32_t current_tstamp)
 {
     krb5_context context = server_context->context;
     krb5_storage *sp;
@@ -1146,7 +1208,7 @@ send_diffs(kadm5_server_context *server_context, slave *s, int log_fd,
     if (left == 0) {
         /* Slave's version is not in the log, fall back on send_complete() */
         krb5_storage_free(sp);
-        send_complete(context, s, database, current_version,
+        send_complete(context, s, database, current_version, current_tstamp,
                       initial_version, initial_tstamp);
         return;
     }
@@ -1300,13 +1362,14 @@ read_msg(krb5_context context, slave *s, krb5_data *out)
 
 static int
 process_msg(kadm5_server_context *server_context, slave *s, int log_fd,
-	    const char *database, uint32_t current_version)
+	    const char *database, uint32_t current_version,
+            uint32_t current_tstamp)
 {
     krb5_context context = server_context->context;
     int ret = 0;
     krb5_data out;
     krb5_storage *sp;
-    uint32_t tmp;
+    uint32_t tmp, ver, tstamp;
 
     ret = read_msg(context, s, &out);
     if (ret) {
@@ -1328,15 +1391,16 @@ process_msg(kadm5_server_context *server_context, slave *s, int log_fd,
     }
     switch (tmp) {
     case I_HAVE :
-	ret = krb5_ret_uint32(sp, &tmp);
+	ret = krb5_ret_uint32(sp, &ver);
 	if (ret != 0) {
 	    krb5_warnx(context, "process_msg: client send too little I_HAVE data");
 	    break;
 	}
-        /*
-         * XXX Make the slave send the timestamp as well, and try to get it
-         * here, and pass it to send_diffs().
-         */
+        /* Older clients don't tell us the timestamp to go with the version */
+	ret = krb5_ret_uint32(sp, &tstamp);
+	if (ret == HEIM_ERR_EOF)
+	    krb5_warnx(context,
+                       "process_msg: older client did not send timestamp for I_HAVE");
         /*
          * New slave whose version number we've not yet seen.  If the version
          * number is zero, the slave has no data, and we'll send a complete
@@ -1353,12 +1417,14 @@ process_msg(kadm5_server_context *server_context, slave *s, int log_fd,
          * first connects.
          */
 	if (!(s->flags & SLAVE_F_READY)) {
-	    if (current_version < tmp) {
-		krb5_warnx(context, "Slave %s (version %u) has later version "
-			   "than the master (version %u) OUT OF SYNC",
-			   s->name, tmp, current_version);
+	    if (current_version < ver &&
+                (tstamp == 0 || tstamp < current_tstamp)) {
+		krb5_warnx(context, "Slave %s (version %u timestamp %u) has later version "
+			   "than the master (version %u) timestamp %u OUT OF SYNC",
+			   s->name, ver, tstamp, current_version,
+                           current_tstamp);
                 /* Force send_complete() */
-                tmp = 0;
+                ver = 0;
 	    }
             /*
              * Mark the slave as ready for updates based on incoming signals.
@@ -1366,15 +1432,17 @@ process_msg(kadm5_server_context *server_context, slave *s, int log_fd,
              * number, and MUST not send it anything, since we'll needlessly
              * attempt to send the whole database!
              */
-	    s->version = tmp;
+	    s->version = ver;
+	    s->version_tstamp = tstamp;
             s->flags |= SLAVE_F_READY;
             if (verbose)
                 krb5_warnx(context, "slave %s ready for updates from version %u",
-                           s->name, tmp);
+                           s->name, ver);
 	}
-        if ((s->version_ack = tmp) < s->version)
+        if ((s->version_ack = ver) < s->version)
             break;
-        send_diffs(server_context, s, log_fd, database, current_version);
+        send_diffs(server_context, s, log_fd, database, current_version,
+                   current_tstamp);
         break;
     case I_AM_HERE :
         if (verbose)
@@ -1514,11 +1582,22 @@ write_stats(krb5_context context, slave *slaves, uint32_t current_version)
         (void) rk_rename(slave_stats_temp_file, slave_stats_file);
 }
 
+static int self_pipe[2] = { -1, -1 };
+
+static void
+sighandler(int sig)
+{
+    unsigned char c = sig;
+
+    while (write(self_pipe[1], &c, 1) == -1 && errno == EINTR)
+        ;
+}
 
 static char sHDB[] = "HDBGET:";
 static char *realm;
 static int version_flag;
 static int help_flag;
+static int restarter_flag = 1;
 static char *keytab_str = sHDB;
 static char *database;
 static char *config_file;
@@ -1548,7 +1627,8 @@ static struct getargs args[] = {
       "basename of pidfile; private argument for testing", "NAME" },
     { "hostname", 0, arg_string, rk_UNCONST(&master_hostname),
       "hostname of master (if not same as hostname)", "hostname" },
-    { "verbose", 0, arg_flag, &verbose, NULL, NULL },
+    { "restarter", 0, arg_negative_flag, &restarter_flag, NULL, NULL },
+    { "verbose", 0, arg_counter, &verbose, NULL, NULL },
     { "version", 0, arg_flag, &version_flag, NULL, NULL },
     { "help", 0, arg_flag, &help_flag, NULL, NULL }
 };
@@ -1560,12 +1640,14 @@ main(int argc, char **argv)
     krb5_error_code ret;
     krb5_context context;
     void *kadm_handle;
+    struct sigaction sa;
     kadm5_server_context *server_context;
     kadm5_config_params conf;
     krb5_socket_t signal_fd, listen_fd;
     int log_fd;
     slave *slaves = NULL;
     uint32_t current_version = 0, old_version = 0;
+    uint32_t current_tstamp = 0;
     krb5_keytab keytab;
     char **files;
     int aret;
@@ -1608,7 +1690,18 @@ main(int argc, char **argv)
     if (ret)
         errx(1, "krb5_init_context failed: %d", ret);
 
-    setup_signal();
+    setup_signal(); /* TERM and INT */
+    if (pipe(self_pipe) == -1)
+        krb5_err(context, 1, errno, "Could not set up self-pipe");
+    (void) fcntl(self_pipe[0], F_SETFL,
+                 (int)fcntl(self_pipe[0], F_GETFL) | O_NONBLOCK);
+    (void) fcntl(self_pipe[1], F_SETFL,
+                 (int)fcntl(self_pipe[1], F_GETFL) | O_NONBLOCK);
+    memset(&sa, 0, sizeof(sa));
+    sa.sa_handler = sighandler;
+    (void) sigaction(SIGHUP, &sa, NULL);
+    (void) sigaction(SIGUSR1, &sa, NULL);
+    (void) sigaction(SIGUSR2, &sa, NULL);
 
     if (config_file == NULL) {
 	aret = asprintf(&config_file, "%s/kdc.conf", hdb_db_dir(context));
@@ -1674,7 +1767,7 @@ main(int argc, char **argv)
         krb5_err(context, 1, errno, "shared flock %s",
                  server_context->log_context.log_file);
     kadm5_log_get_version_fd(server_context, log_fd, LOG_VERSION_LAST,
-                             &current_version, NULL);
+                             &current_version, &current_tstamp);
     flock(log_fd, LOCK_UN);
 
     signal_fd = make_signal_socket (context);
@@ -1684,15 +1777,17 @@ main(int argc, char **argv)
 	       (unsigned long)current_version);
 
     roken_detach_finish(NULL, daemon_child);
-    restarter_fd = restarter(context, NULL);
+    if (restarter_flag)
+        restarter_fd = restarter(context, NULL);
 
     while (exit_flag == 0){
 	slave *p;
 	fd_set readset, writeset;
 	int max_fd = 0;
+        int nfds;
 	struct timeval to = {30, 0};
 	uint32_t vers;
-        struct stat st2;;
+        struct stat st2;
 
 #ifndef NO_LIMIT_FD_SETSIZE
 	if (signal_fd >= FD_SETSIZE || listen_fd >= FD_SETSIZE ||
@@ -1706,6 +1801,8 @@ main(int argc, char **argv)
 	max_fd = max(max_fd, signal_fd);
 	FD_SET(listen_fd, &readset);
 	max_fd = max(max_fd, listen_fd);
+	FD_SET(self_pipe[0], &readset);
+	max_fd = max(max_fd, self_pipe[0]);
         if (restarter_fd > -1) {
             FD_SET(restarter_fd, &readset);
             max_fd = max(max_fd, restarter_fd);
@@ -1720,8 +1817,8 @@ main(int argc, char **argv)
 	    max_fd = max(max_fd, p->fd);
 	}
 
-	ret = select(max_fd + 1, &readset, &writeset, NULL, &to);
-	if (ret < 0) {
+	nfds = select(max_fd + 1, &readset, &writeset, NULL, &to);
+	if (nfds < 0) {
 	    if (errno == EINTR)
 		continue;
 	    else
@@ -1748,12 +1845,13 @@ main(int argc, char **argv)
             if (flock(log_fd, LOCK_SH) == -1)
                 krb5_err(context, IPROPD_RESTART, errno, "shared flock %s",
                          server_context->log_context.log_file);
-            kadm5_log_get_version_fd(server_context, log_fd, LOG_VERSION_LAST,
-                                     &current_version, NULL);
             flock(log_fd, LOCK_UN);
         }
 
-	if (ret == 0) {
+        kadm5_log_get_version_fd(server_context, log_fd, LOG_VERSION_LAST,
+                                 &current_version, &current_tstamp);
+
+	if (nfds == 0) {
             /* Recover from failed transactions */
             if (kadm5_log_init_nb(server_context) == 0)
                 kadm5_log_end(server_context);
@@ -1762,7 +1860,7 @@ main(int argc, char **argv)
                 krb5_err(context, IPROPD_RESTART, errno,
                          "could not lock log file");
 	    kadm5_log_get_version_fd(server_context, log_fd, LOG_VERSION_LAST,
-                                     &current_version, NULL);
+                                     &current_version, &current_tstamp);
 	    flock(log_fd, LOCK_UN);
 
 	    if (current_version > old_version) {
@@ -1775,18 +1873,43 @@ main(int argc, char **argv)
 		    if (p->flags & SLAVE_F_DEAD)
 			continue;
 		    send_diffs(server_context, p, log_fd, database,
-                               current_version);
+                               current_version, current_tstamp);
 		}
                 old_version = current_version;
 	    }
 	}
 
-        if (ret && FD_ISSET(restarter_fd, &readset)) {
+        if (nfds && restarter_fd != -1 && FD_ISSET(restarter_fd, &readset)) {
             exit_flag = SIGTERM;
             break;
         }
 
-	if (ret && FD_ISSET(signal_fd, &readset)) {
+        if (nfds && FD_ISSET(self_pipe[0], &readset)) {
+            unsigned char sig;
+            ssize_t bytes;
+
+            do {
+                bytes = read(self_pipe[0], &sig, 1);
+                if (bytes == 1) {
+                    switch (sig) {
+                    case SIGUSR1:
+                        verbose++;
+                        break;
+                    case SIGUSR2:
+                        verbose--;
+                        break;
+                    case SIGHUP:
+                        disconnect_slaves(slaves);
+                        break;
+                    default:
+                        break;
+                    }
+                }
+            } while ((bytes == -1 && errno == EINTR) ||
+                     bytes == 1);
+        }
+
+	if (nfds && FD_ISSET(signal_fd, &readset)) {
 #ifndef NO_UNIX_SOCKETS
 	    struct sockaddr_un peer_addr;
 #else
@@ -1794,19 +1917,20 @@ main(int argc, char **argv)
 #endif
 	    socklen_t peer_len = sizeof(peer_addr);
 
+	    --nfds;
+	    assert(nfds >= 0);
+
 	    if(recvfrom(signal_fd, (void *)&vers, sizeof(vers), 0,
 			(struct sockaddr *)&peer_addr, &peer_len) < 0) {
 		krb5_warn (context, errno, "recvfrom");
 		continue;
 	    }
-	    --ret;
-	    assert(ret >= 0);
 	    old_version = current_version;
 	    if (flock(log_fd, LOCK_SH) == -1)
                 krb5_err(context, IPROPD_RESTART, errno, "shared flock %s",
                          server_context->log_context.log_file);
 	    kadm5_log_get_version_fd(server_context, log_fd, LOG_VERSION_LAST,
-                                     &current_version, NULL);
+                                     &current_version, &current_tstamp);
 	    flock(log_fd, LOCK_UN);
 	    if (current_version != old_version) {
                 /*
@@ -1830,7 +1954,7 @@ main(int argc, char **argv)
 		    if (p->flags & SLAVE_F_DEAD)
 			continue;
 		    send_diffs(server_context, p, log_fd, database,
-                               current_version);
+                               current_version, current_tstamp);
 		}
 	    } else {
                 if (verbose)
@@ -1846,18 +1970,18 @@ main(int argc, char **argv)
                 ((have_tail(p) && send_tail(context, p) == 0) ||
                  (!have_tail(p) && more_diffs(p)))) {
                 send_diffs(server_context, p, log_fd, database,
-                           current_version);
+                           current_version, current_tstamp);
             }
         }
 
 	for(p = slaves; p != NULL; p = p->next) {
 	    if (p->flags & SLAVE_F_DEAD)
 	        continue;
-	    if (ret && FD_ISSET(p->fd, &readset)) {
-		--ret;
-		assert(ret >= 0);
+	    if (nfds && FD_ISSET(p->fd, &readset)) {
+		--nfds;
+		assert(nfds >= 0);
                 ret = process_msg(server_context, p, log_fd, database,
-                                  current_version);
+                                  current_version, current_tstamp);
                 if (ret && ret != EWOULDBLOCK)
 		    slave_dead(context, p);
 	    } else if (slave_gone_p (p))
@@ -1866,10 +1990,10 @@ main(int argc, char **argv)
 		send_are_you_there (context, p);
 	}
 
-	if (ret && FD_ISSET(listen_fd, &readset)) {
+	if (nfds && FD_ISSET(listen_fd, &readset)) {
 	    add_slave (context, keytab, &slaves, listen_fd);
-	    --ret;
-	    assert(ret >= 0);
+	    --nfds;
+	    assert(nfds >= 0);
 	}
 	write_stats(context, slaves, current_version);
     }
@@ -1885,6 +2009,10 @@ main(int argc, char **argv)
 		   getprogname(), (long)exit_flag);
 
     write_master_down(context);
+
+    kadm5_destroy(server_context);
+    krb5_kt_close(context, keytab);
+    krb5_free_context(context);
 
     return 0;
 }

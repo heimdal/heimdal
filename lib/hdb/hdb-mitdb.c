@@ -688,6 +688,8 @@ static krb5_error_code
 mdb_close(krb5_context context, HDB *db)
 {
     DB *d = (DB*)db->hdb_db;
+
+    db->hdb_openp = 0;
     (*d->close)(d);
     return 0;
 }
@@ -1105,6 +1107,7 @@ mdb_open(krb5_context context, HDB *db, int flags, mode_t mode)
 	krb5_clear_error_message(context);
 	return 0;
     }
+    db->hdb_openp = 1;
     if (ret) {
 	mdb_close(context, db);
 	krb5_set_error_message(context, ret, "hdb_open: failed %s database %s",

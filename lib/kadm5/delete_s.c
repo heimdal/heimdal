@@ -126,7 +126,7 @@ kadm5_s_delete_principal(void *server_handle, krb5_principal princ)
 	goto out3;
 
     /* This logs the change for iprop and writes to the HDB */
-    ret = kadm5_log_delete(context, princ);
+    ret = kadm5_log_delete_originated(context, princ);
 
     (void) delete_principal_hook(context, KADM5_HOOK_STAGE_POSTCOMMIT, ret, princ);
 

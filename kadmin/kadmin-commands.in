@@ -489,6 +489,21 @@ command = {
 		help = "terse format"
 	}
 	option = {
+		long = "json"
+		type = "flag"
+		help = "JSON output"
+	}
+	option = {
+		long = "json-ascii"
+		type = "flag"
+		help = "JSON output with non-ASCII escaped"
+	}
+	option = {
+		long = "json-with-keys"
+		type = "flag"
+		help = "JSON output with keys"
+	}
+	option = {
 		long = "column-info"
 		short = "o"
 		type = "string"
@@ -616,6 +631,15 @@ command = {
 	help = "Modifies some attributes of the specified principal."
 }
 command = {
+	name = "propagate"
+	name = "prop"
+	function = "prop_entry"
+	argument = "principal"
+	min_args = "1"
+	max_args = "1"
+	help = "Forces a propagation of the specified principal"
+}
+command = {
 	name = "add_alias"
         function = "add_alias"
 	argument = "principal"
@@ -670,6 +694,16 @@ command = {
 		type = "flag"
 		help = "terse format"
 		default = "-1"
+	}
+	option = {
+		long = "json"
+		type = "flag"
+		help = "JSON output"
+	}
+	option = {
+		long = "json-with-keys"
+		type = "flag"
+		help = "JSON output with keys"
 	}
 	option = {
 		long = "column-info"

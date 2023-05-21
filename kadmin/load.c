@@ -417,10 +417,12 @@ doit(const char *filename, int mergep)
     char *p;
     int lineno;
     int flags = O_RDWR;
+    time_t now;
     struct entry e;
     hdb_entry ent;
     HDB *db = _kadm5_s_get_db(kadm_handle);
 
+    (void) krb5_us_timeofday(context, &now, NULL);
     f = fopen(filename, "r");
     if (f == NULL) {
 	krb5_warn(context, errno, "fopen(%s)", filename);
@@ -438,7 +440,7 @@ doit(const char *filename, int mergep)
     if (mergep)
         ret = kadm5_log_init(kadm_handle);
     if (ret == 0)
-        ret = kadm5_log_reinit(kadm_handle, 0);
+        ret = kadm5_log_reinit(kadm_handle, 0, now);
     if (ret) {
 	fclose (f);
 	krb5_warn(context, ret, "kadm5_log_reinit");

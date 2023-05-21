@@ -86,6 +86,10 @@
 .Fl Fl reverse
 .Xc
 .Oc
+.Oo Fl K Ar HOSTNAME\*(Ba Xo
+.Fl Fl upstream=HOSTNAME
+.Xc
+.Oc
 .Op Fl h | Fl Fl help
 .Op Ar log-file
 .Pp
@@ -126,6 +130,10 @@
 .Oc
 .Oo Fl r Ar string \*(Ba Xo
 .Fl Fl realm= Ns Ar string
+.Xc
+.Oc
+.Oo Fl K Ar HOSTNAME\*(Ba Xo
+.Fl Fl upstream=HOSTNAME
 .Xc
 .Oc
 .Op Fl h | Fl Fl help
@@ -198,6 +206,10 @@ realm
 .Fl R Ar string ,
 .Fl Fl reverse
 .Xc
+.It Xo
+.Fl K Ar HOSTNAME ,
+.Fl Fl upstream= Ns Ar HOSTNAME
+.Xc
 .El
 .Pp
 Print out all entries in the given, configured, or default log file to
@@ -207,6 +219,12 @@ option is used then don't lock the iprop log file.  If the
 .Fl R
 option is used, then print the entries in reverse order
 (this can be useful when the log is very large).
+.Pp
+If the
+.Fl K
+option is given then the log that will be dumped is the one for
+the given upstream (which normally exists only in multi-master
+mode).
 .It replay
 .Bl -tag -width Ds
 .It Fl Fl start-version= Ns Ar version-number
@@ -234,10 +252,20 @@ realm
 .Fl n Ar string ,
 .Fl Fl no-lock
 .Xc
+.It Xo
+.Fl K Ar HOSTNAME ,
+.Fl Fl upstream= Ns Ar HOSTNAME
+.Xc
 .El
 .Pp
 prints the version of the last record in each of the given log files, or
 the configured, or the default log file if none is given.
+.Pp
+If the
+.Fl K
+option is given then the log that will be show is the one for
+the given upstream (which normally exists only in multi-master
+mode).
 .It signal
 .Bl -tag -width Ds
 .It Fl c Ar file , Fl Fl config-file= Ns Ar file

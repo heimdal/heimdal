@@ -236,7 +236,7 @@ kadm5_c_dup_context(void *vin, void **out)
             ret = krb5_cc_resolve(context, fullname, &ctx->ccache);
         free(fullname);
     }
-    ctx->sock = -1;
+    ctx->sock = rk_INVALID_SOCKET;
     if (ret == 0)
         *out = ctx;
     else
@@ -728,7 +728,7 @@ kadm5_c_init_with_context(krb5_context context,
     ctx->keytab = keytab;
     ctx->ccache = ccache;
     /* maybe we should copy the params here */
-    ctx->sock = -1;
+    ctx->sock = rk_INVALID_SOCKET;
 
     *server_handle = ctx;
     return 0;

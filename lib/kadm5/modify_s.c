@@ -102,7 +102,7 @@ modify_principal(void *server_handle,
 
     memset(&ent, 0, sizeof(ent));
 
-    if((mask & forbidden_mask))
+    if ((mask & forbidden_mask))
 	return KADM5_BAD_MASK;
     if((mask & KADM5_POLICY) && strcmp(princ->policy, "default") != 0)
 	return KADM5_UNK_POLICY;
@@ -136,12 +136,15 @@ modify_principal(void *server_handle,
      * XXX Make sure that _kadm5_setup_entry() checks that the time of last
      * change in `ent' matches the one in `princ'.
      */
-    ret = _kadm5_setup_entry(context, &ent, mask, princ, mask, NULL, 0);
-    if (ret)
-	goto out3;
-    ret = _kadm5_set_modifier(context, &ent);
-    if (ret)
-	goto out3;
+    if (mask) {
+	ret = _kadm5_setup_entry(context, &ent, mask, princ, mask, NULL, 0);
+	if (ret)
+	    goto out3;
+
+	ret = _kadm5_set_modifier(context, &ent);
+	if (ret)
+	    goto out3;
+    }
 
     /*
      * If any keys are bogus, disallow the modify.  If the keys were
@@ -181,8 +184,10 @@ modify_principal(void *server_handle,
     }
 
     /* This logs the change for iprop and writes to the HDB */
-    ret = kadm5_log_modify(context, &ent,
-                           mask | KADM5_MOD_NAME | KADM5_MOD_TIME);
+    ret = kadm5_log_modify_originated(context, &ent,
+				      mask == 0 ?
+				          mask :
+					  mask | KADM5_MOD_NAME | KADM5_MOD_TIME);
 
     (void) modify_principal_hook(context, KADM5_HOOK_STAGE_POSTCOMMIT,
 				 ret, princ, mask);

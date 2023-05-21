@@ -2732,8 +2732,9 @@ krb5_init_creds_set_keytab(krb5_context context,
     krb5_kt_cursor cursor;
     krb5_enctype *etypes = NULL;
     krb5_error_code ret;
+    const char *realm = krb5_principal_get_realm(context, ctx->cred.client);
     size_t netypes = 0;
-    int kvno = 0, found = 0;
+    int kvno = 0, found = 0, any_realm = realm[0] == '\0';
     unsigned n;
 
     a = malloc(sizeof(*a));
@@ -2761,7 +2762,13 @@ krb5_init_creds_set_keytab(krb5_context context,
     while(krb5_kt_next_entry(context, keytab, &entry, &cursor) == 0){
 	void *ptr;
 
-	if (!krb5_principal_compare(context, entry.principal, ctx->cred.client))
+        if (any_realm &&
+            !krb5_principal_compare_any_realm(context, entry.principal,
+                                              ctx->cred.client))
+            goto next;
+        else if (!any_realm &&
+                 !krb5_principal_compare(context, entry.principal,
+                                         ctx->cred.client))
 	    goto next;
 
 	found = 1;
@@ -3657,7 +3664,8 @@ KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 krb5_init_creds_free(krb5_context context,
 		     krb5_init_creds_context ctx)
 {
-    free_init_creds_ctx(context, ctx);
+    if (ctx)
+        free_init_creds_ctx(context, ctx);
     free(ctx);
 }
 

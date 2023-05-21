@@ -55,6 +55,7 @@ DB_close(krb5_context context, HDB *db)
 
     heim_assert(d != 0, "Closing already closed HDB");
 
+    db->hdb_openp = 0;
     (*d->close)(d);
     db->hdb_db = 0;
 
@@ -335,6 +336,7 @@ DB_open(krb5_context context, HDB *db, int flags, mode_t mode)
 	krb5_clear_error_message(context);
 	return 0;
     }
+    db->hdb_openp = 1;
     if (ret) {
 	DB_close(context, db);
 	krb5_set_error_message(context, ret, "hdb_open: failed %s database %s",

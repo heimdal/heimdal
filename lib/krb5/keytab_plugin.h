@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 2022 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -31,67 +31,41 @@
  * SUCH DAMAGE.
  */
 
-#include "kadm5_locl.h"
+/* $Id$ */
 
-RCSID("$Id$");
+#ifndef HEIMDAL_KRB5_KEYTAB_PLUGIN_H
+#define HEIMDAL_KRB5_KEYTAB_PLUGIN_H 1
 
-/*
- * dealloc a `kadm5_config_params'
+#define KRB5_PLUGIN_KEYTAB "keytab"
+#define KRB5_PLUGIN_KEYTAB_VERSION_0 0
+
+/** @struct krb5plugin_keytab_ftable_desc
+ *
+ * @brief Description of the krb5_kt_resolve(3) plugin facility.
+ *
+ * The krb5_kt_resolve(3) function is pluggable.  The plugin is named
+ * KRB5_PLUGIN_KEYTAB (i.e., "keytab"), with currently a single minor version,
+ * KRB5_PLUGIN_KEYTAB_VERSION_0 (i.e., 0).
+ *
+ * The plugin for krb5_kt_resolve(3) consists of a data symbol referencing a
+ * structure of type krb5plugin_keytab_ftable, with three fields:
+ *
+ * @param minor_version The plugin minor version number (0)
+ * @param init          Registers keytab types
+ * @param fini          Plugin finalization function
+ *
+ * The `init' method must register the keytab type's `krb5_kt_ops' function
+ * table with the krb5_kt_register() function.
+ *
+ * For example, a keytab type plugin could use a JSON file as a backing store,
+ * or a daemon, it could fetch new keytab entries on a schedule, etc.
+ *
+ * @ingroup krb5_support
  */
+typedef struct krb5plugin_keytab_ftable_desc {
+    int			minor_version;
+    krb5_error_code	(KRB5_LIB_CALL *init)(krb5_context, void **);
+    void		(KRB5_LIB_CALL *fini)(void *);
+} krb5plugin_keytab_ftable;
 
-static void
-destroy_config (kadm5_config_params *c)
-{
-    if (!c)
-        return;
-    free(c->realm);
-    free(c->dbname);
-    free(c->acl_file);
-    free(c->stash_file);
-    free(c->local_kdc_name);
-}
-
-/*
- * dealloc a kadm5_log_context
- */
-
-static void
-destroy_kadm5_log_context (kadm5_log_context *c)
-{
-    if (!c)
-        return;
-    free(c->log_file);
-    if (c->socket_fd != rk_INVALID_SOCKET)
-        rk_closesocket(c->socket_fd);
-#ifdef NO_UNIX_SOCKETS
-    if (c->socket_info) {
-	freeaddrinfo(c->socket_info);
-	c->socket_info = NULL;
-    }
-#endif
-}
-
-/*
- * destroy a kadm5 handle
- */
-
-kadm5_ret_t
-kadm5_s_destroy(void *server_handle)
-{
-    kadm5_ret_t ret = 0;
-    kadm5_server_context *context = server_handle;
-    krb5_context kcontext = context->context;
-
-    _kadm5_s_free_hooks(context);
-    if (context->db != NULL)
-        ret = context->db->hdb_destroy(kcontext, context->db);
-    destroy_kadm5_log_context(&context->log_context);
-    destroy_config(&context->config);
-    krb5_free_principal(kcontext, context->caller);
-    if (context->my_context)
-	krb5_free_context(kcontext);
-    free(context->local_kdc_name);
-    free(context);
-
-    return ret;
-}
+#endif /* HEIMDAL_KRB5_KEYTAB_PLUGIN_H */

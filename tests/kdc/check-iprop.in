@@ -222,7 +222,7 @@ rm -f mkey.file*
 rm -f messages.log messages.log
 
 > messages.log
-> messages.log2
+> messages2.log
 
 echo Creating database
 ${kadmin} -l \

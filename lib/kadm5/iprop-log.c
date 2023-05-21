@@ -40,6 +40,29 @@ RCSID("$Id$");
 
 static krb5_context context;
 
+static char *
+get_iprop_log_for_upstream(const char *log_file, const char *upstream)
+{
+    const char *stem;
+    size_t len;
+    char *s = NULL;
+
+    if (upstream == NULL) {
+	if ((s = strdup(log_file)) == NULL)
+	    krb5_errx(context, 1, "Out of memory");
+        return s;
+    }
+
+    len = strlen(log_file);
+    stem = strrchr(log_file, '.');
+    if (stem == NULL || strcmp(stem, ".log") != 0)
+        stem = log_file + len;
+    if (asprintf(&s, "%.*s-%s%s", (int)(stem - log_file), log_file,
+                 upstream, stem[0] == '.' ? stem : "") == -1 || s == NULL)
+        krb5_errx(context, 1, "Out of memory");
+    return s;
+}
+
 static kadm5_server_context *
 get_kadmin_context(const char *config_file, char *realm)
 {
@@ -316,12 +339,22 @@ iprop_dump(struct dump_options *opt, int argc, char **argv)
     server_context = get_kadmin_context(opt->config_file_string,
 					opt->realm_string);
 
-    if (argc > 0) {
-        free(server_context->log_context.log_file);
-        server_context->log_context.log_file = strdup(argv[0]);
-        if (server_context->log_context.log_file == NULL)
-            krb5_err(context, 1, errno, "strdup");
+    {
+	char *log_file;
+
+	if (argc > 0)
+	    log_file = strdup(argv[0]);
+	else
+	    log_file = strdup(server_context->log_context.log_file);
+	if (log_file == NULL)
+	    krb5_err(context, 1, errno, "Could not determine log file path");
+
+	server_context->log_context.log_file =
+	    get_iprop_log_for_upstream(log_file, opt->upstream_string);
+	free(log_file);
     }
+    if (server_context->log_context.log_file == NULL)
+	krb5_err(context, 1, errno, "strdup");
 
     if (opt->reverse_flag) {
         iter_opts_1st = kadm_backward | kadm_unconfirmed;
@@ -371,7 +404,9 @@ iprop_truncate(struct truncate_options *opt, int argc, char **argv)
 {
     kadm5_server_context *server_context;
     krb5_error_code ret;
+    time_t now;
 
+    (void) krb5_timeofday(context, &now);
     server_context = get_kadmin_context(opt->config_file_string,
 					opt->realm_string);
 
@@ -396,7 +431,7 @@ iprop_truncate(struct truncate_options *opt, int argc, char **argv)
         /* First recover unconfirmed records */
         ret = kadm5_log_init(server_context);
         if (ret == 0)
-            ret = kadm5_log_reinit(server_context, 0);
+            ret = kadm5_log_reinit(server_context, 0, now);
     } else {
         ret = kadm5_log_init(server_context);
         if (ret)
@@ -419,7 +454,7 @@ last_version(struct last_version_options *opt, int argc, char **argv)
     kadm5_server_context *server_context;
     char *alt_argv[2] = { NULL, NULL };
     krb5_error_code ret;
-    uint32_t version;
+    uint32_t version, tstamp;
     size_t i;
 
     server_context = get_kadmin_context(opt->config_file_string,
@@ -434,8 +469,9 @@ last_version(struct last_version_options *opt, int argc, char **argv)
     }
 
     for (i = 0; i < argc; i++) {
-        free(server_context->log_context.log_file);
-        server_context->log_context.log_file = strdup(argv[i]);
+	free(server_context->log_context.log_file);
+	server_context->log_context.log_file =
+	    get_iprop_log_for_upstream(argv[i], opt->upstream_string);
         if (server_context->log_context.log_file == NULL)
             krb5_err(context, 1, errno, "strdup");
 
@@ -455,7 +491,7 @@ last_version(struct last_version_options *opt, int argc, char **argv)
                 krb5_err(context, 1, ret, "kadm5_log_init_sharedlock");
         }
 
-        ret = kadm5_log_get_version (server_context, &version);
+        ret = kadm5_log_get_version (server_context, &version, &tstamp);
         if (ret)
             krb5_err (context, 1, ret, "kadm5_log_get_version");
 
@@ -463,7 +499,8 @@ last_version(struct last_version_options *opt, int argc, char **argv)
         if (ret)
             krb5_warn(context, ret, "kadm5_log_end");
 
-        printf("version: %lu\n", (unsigned long)version);
+        printf("version: %lu (timestamp: %lu)\n", (unsigned long)version,
+	       (unsigned long)tstamp);
     }
 
     kadm5_destroy(server_context);

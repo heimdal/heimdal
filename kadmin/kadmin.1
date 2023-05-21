@@ -92,9 +92,12 @@ one or more principals as argument
 .Ns ( Nm delete ,
 .Nm ext_keytab ,
 .Nm get ,
+.Nm list ,
 .Nm modify ,
+.Nm passwd
 and
-.Nm passwd )
+.Nm propagate
+)
 will accept a glob style wildcard, and perform the operation on all
 matching principals.
 .Pp
@@ -353,6 +356,9 @@ behavior is the default if none of these are given.
 .Op Fl l | Fl Fl long
 .Op Fl s | Fl Fl short
 .Op Fl t | Fl Fl terse
+.Op Fl Fl json
+.Op Fl Fl json-ascii
+.Op Fl Fl json-with-keys
 .Op Fl o Ar string | Fl Fl column-info= Ns Ar string
 .Op Fl C Ar path | Fl Fl krb5-config-file= Ns Ar path
 .Ar principal...
@@ -366,6 +372,33 @@ optionally appended with an equal sign
 .Pq Sq =
 and a column header. Which columns are printed by default differ
 slightly between short and long output.
+.Pp
+The JSON options will cause
+.Nm kadmin 
+to output JSON.
+The
+.Fl Fl json-ascii
+option implies
+.Fl Fl json
+and causes all non-ASCII characters in strings to be backslash-u
+escaped.
+If both
+.Fl Fl json
+and
+.Fl Fl terse
+are given, then the output will be JSON strings consisting of
+principal names.
+If
+.Fl Fl json
+is given, then the output will be JSON objects with each object
+being a representation of the principal.
+If the
+.Fl Fl json-with-keys
+option is given, then the output will be as with the
+.Fl Fl json
+option, but will also include real key values if the user has
+permission to get keys, else it may include bogus,
+incorrect-length keys.
 .Pp
 The default terse output format is similar to
 .Fl s o Ar principal= ,
@@ -400,6 +433,24 @@ Possible column names include:
 and
 .Li keytypes .
 .Ed
+.Pp
+.Nm list
+.Op Fl l | Fl Fl long
+.Op Fl s | Fl Fl short
+.Op Fl t | Fl Fl no-terse
+.Op Fl Fl json
+.Op Fl Fl json-ascii
+.Op Fl Fl json-with-keys
+.Op Fl o Ar string | Fl Fl column-info= Ns Ar string
+.Op Fl C Ar path | Fl Fl krb5-config-file= Ns Ar path
+.Ar principal...
+Same as the
+.Nm get
+command, but defaults to terse output.
+The
+.Fl Fl no-terse
+option makes this command behave the same way as the
+.Nm get command.
 .Pp
 .Nm modify
 .Oo Fl a Ar attributes \*(Ba Xo
@@ -510,6 +561,17 @@ behavior is the default if none of these are given.
 This command has the following aliases:
 .Nm cpw ,
 .Nm change_password .
+.Ed
+.Pp
+.Nm propagate
+.Bd -ragged -offset indent
+This command causes the given principal(s) to propagate to
+downstream KDCs by using the principal modify machinery, though
+none of the attributes of the principals are modified other than
+the last-modified-by and last-modify-time metadata.
+This command is useful for resolving conflicts where different
+KDCs kept different versions of the a principal that was modified
+concurrently on different KDCs.
 .Ed
 .Pp
 .Nm verify-password-quality

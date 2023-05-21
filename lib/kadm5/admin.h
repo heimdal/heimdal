@@ -224,6 +224,7 @@ typedef struct _kadm5_policy_ent_t {
 #define KADM5_CONFIG_ENCTYPES			(1 << 18)
 #define KADM5_CONFIG_READONLY_ADMIN_SERVER	(1 << 19)
 #define KADM5_CONFIG_READONLY_KADMIN_PORT	(1 << 20)
+#define KADM5_CONFIG_LOCAL_KDC_NAME		(1 << 21)
 
 #define KADM5_PRIV_GET		(1 << 0)
 #define KADM5_PRIV_ADD 		(1 << 1)
@@ -262,6 +263,9 @@ typedef struct _kadm5_config_params {
     /* read-only kadmin server */
     char *readonly_admin_server;
     int readonly_kadmind_port;
+
+    /* for multi-master iprop we need to know the local KDC's logical name */
+    char *local_kdc_name;
 } kadm5_config_params;
 
 typedef krb5_error_code kadm5_ret_t;

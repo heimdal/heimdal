@@ -20,7 +20,7 @@ jobs:
                 name: [linux-clang]
                 include:
                     - name: linux-clang
-                      os: ubuntu-18.04
+                      os: ubuntu-22.04
                       compiler: clang
         steps:
             - name: Clone repository

@@ -830,6 +830,7 @@ hx509_request_parse_der(hx509_context context,
             continue;
 
         av = a->value.val;
+	free_Extensions(&exts);   /* keep last instance of extension, if multiple included */
         ret = decode_Extensions(av->data, av->length, &exts, NULL);
         if (ret) {
             hx509_set_error_string(context, 0, ret,

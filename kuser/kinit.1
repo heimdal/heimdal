@@ -371,13 +371,11 @@ this is a FILE cache in a file named
 (the default would be
 .Ql /tmp/krb5cc_{UID} )
 .It Ql FILE:/tmp/cc+jane@TEST.H5L.SE
-.It Ql DIR:
+.It Ql DIR:/tmp/ccdir
 this is a FILE cache named by
 .Ql /tmp/krb5cc_{UID}_dir/primary
 which will be of the form
-.Ql /tmp/krb5cc_{UID}_dir/tkt.XXXXXX 
-.It Ql DIR:/tmp/ccdir
-same, but in the givern directory rather than the default
+.Ql /tmp/ccdir/tkt.XXXXXX 
 .It Ql DIR:/tmp/ccdir:jane@TEST.H5L.SE
 this is a FILE ccache named
 .Ql /tmp/ccdir/tkt.jane@TEST.H5L.SE 

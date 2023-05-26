@@ -358,7 +358,7 @@ is_absolute_path(const char *path)
 
     /* A drive letter path might be absolute */
     if (len > 3
-         && isalpha(path[0])
+         && isalpha((unsigned char)path[0])
          && path[1] == ':'
          && ISPATHSEP(path[2]))
         return 1;
@@ -414,9 +414,9 @@ heim_config_parse_debug(struct fileptr *f,
             *err_message = "unmatched }";
             return 2048;
         } else if (strncmp(p, "include", sizeof("include") - 1) == 0 &&
-            isspace(p[sizeof("include") - 1])) {
+            isspace((unsigned char)p[sizeof("include") - 1])) {
             p += sizeof("include");
-            while (isspace(*p))
+            while (isspace((unsigned char)*p))
                 p++;
             if (!is_absolute_path(p)) {
                 heim_set_error_message(f->context, HEIM_ERR_CONFIG_BADFORMAT,
@@ -428,9 +428,9 @@ heim_config_parse_debug(struct fileptr *f,
             if (ret)
                 return ret;
         } else if (strncmp(p, "includedir", sizeof("includedir") - 1) == 0 &&
-            isspace(p[sizeof("includedir") - 1])) {
+            isspace((unsigned char)p[sizeof("includedir") - 1])) {
             p += sizeof("includedir");
-            while (isspace(*p))
+            while (isspace((unsigned char)*p))
                 p++;
             if (!is_absolute_path(p)) {
                 heim_set_error_message(f->context, HEIM_ERR_CONFIG_BADFORMAT,
@@ -508,7 +508,7 @@ heim_config_parse_dir_multi(heim_context context,
              * so we're safe.  Anyone changing this if condition here should
              * be aware.
              */
-            if (!isalnum(*p) && *p != '_' && *p != '-' &&
+            if (!isalnum((unsigned char)*p) && *p != '_' && *p != '-' &&
                 strcmp(p, ".conf") != 0) {
                 is_valid = 0;
                 break;

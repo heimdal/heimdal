@@ -764,16 +764,16 @@ if test -d "$srcdir/.git"; then
 #ifndef VERSION_HIDDEN
 #define VERSION_HIDDEN
 #endif
-VERSION_HIDDEN const char *heimdal_long_version = "@([#])\$Version: $PACKAGE_STRING by @USER@ on @HOST@ @BRANCH@ @TAG@ ($host) @COMMIT@ @DATE@ \$";
-VERSION_HIDDEN const char *heimdal_version = "AC_PACKAGE_STRING";
+VERSION_HIDDEN const char *const heimdal_long_version = "@([#])\$Version: $PACKAGE_STRING by @USER@ on @HOST@ @BRANCH@ @TAG@ ($host) @COMMIT@ @DATE@ \$";
+VERSION_HIDDEN const char *const heimdal_version = "AC_PACKAGE_STRING";
 EOF
 else
     cat > include/newversion.h.in <<EOF
 #ifndef VERSION_HIDDEN
 #define VERSION_HIDDEN
 #endif
-VERSION_HIDDEN const char *heimdal_long_version = "@([#])\$Version: $PACKAGE_STRING by @USER@ on @HOST@ ($host) @DATE@ \$";
-VERSION_HIDDEN const char *heimdal_version = "AC_PACKAGE_STRING";
+VERSION_HIDDEN const char *const heimdal_long_version = "@([#])\$Version: $PACKAGE_STRING by @USER@ on @HOST@ ($host) @DATE@ \$";
+VERSION_HIDDEN const char *const heimdal_version = "AC_PACKAGE_STRING";
 EOF
 fi
 

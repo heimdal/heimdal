@@ -96,9 +96,9 @@ realmcallback(krb5_context context, const void *plug, void *plugctx, void *userc
 				  ctx->send_data, ctx->receive);
 }
 
-static const char *send_to_kdc_plugin_deps[] = { "krb5", NULL };
+static const char *const send_to_kdc_plugin_deps[] = { "krb5", NULL };
 
-static struct heim_plugin_data
+static const struct heim_plugin_data
 send_to_kdc_plugin_data = {
     "krb5",
     KRB5_PLUGIN_SEND_TO_KDC,

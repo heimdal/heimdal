@@ -1336,8 +1336,8 @@ get_pa_etype_info(krb5_context context,
  *
  */
 
-extern int _krb5_AES_SHA1_string_to_default_iterator;
-extern int _krb5_AES_SHA2_string_to_default_iterator;
+extern const int _krb5_AES_SHA1_string_to_default_iterator;
+extern const int _krb5_AES_SHA2_string_to_default_iterator;
 
 static krb5_error_code
 make_s2kparams(int value, size_t len, krb5_data **ps2kparams)

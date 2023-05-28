@@ -724,7 +724,7 @@ out:
     return ret;
 }
 
-static int
+int
 any_to_certs(hx509_context context, const SignedData *sd, hx509_certs certs)
 {
     int ret;

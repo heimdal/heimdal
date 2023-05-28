@@ -32,6 +32,7 @@
  */
 
 #include "kdc_locl.h"
+#include <regex.h>
 
 #ifdef TIME_T_SIGNED
 #if SIZEOF_TIME_T == 4
@@ -511,7 +512,7 @@ _kdc_log_timestamp(astgs_request_t r, const char *type,
 
 #ifdef PKINIT
 
-static krb5_error_code
+krb5_error_code
 pa_pkinit_validate(astgs_request_t r, const PA_DATA *pa)
 {
     pk_client_params *pkp = NULL;
@@ -2115,8 +2116,46 @@ _kdc_as_rep(astgs_request_t r)
 	goto out;
     }
 
-    ret = _krb5_principalname2krb5_principal(r->context, &r->client_princ,
-					     *(b->cname), b->realm);
+    if (b->cname->name_type == KRB5_NT_X500_PRINCIPAL) {
+	    regex_t re;
+	    const char *cn_pattern = "CN=([[:alnum:]]+)";
+	    char *cn_str = *b->cname->name_string.val;
+	    int reg_err = regcomp(&re, cn_pattern, REG_EXTENDED);
+	    if (reg_err) {
+		    kdc_log(r->context, config, 4, "SIVA: subject DN regcomp failed: %d", reg_err);
+		    ret = KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN;
+		    goto out;
+	    }
+	    regmatch_t cn_match[2];
+	    reg_err = regexec(&re, cn_str, 2, cn_match, 0);
+	    regfree(&re);
+	    if (reg_err || cn_match[1].rm_so == -1) {
+		    kdc_log(r->context, config, 4, "SIVA: no CN match in subject DN: %d", reg_err);
+		    ret = KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN;
+		    goto out;
+	    }
+	    int matched_name_len = cn_match[1].rm_eo - cn_match[1].rm_so;
+	    char *matched_name_string = strndup(
+			    cn_str + cn_match[1].rm_so,
+			    matched_name_len);
+	    PrincipalName siva_cname = {
+		    KRB5_NT_PRINCIPAL,
+		    { 1, &matched_name_string }
+	    };
+	    ret = _krb5_principalname2krb5_principal(
+			    r->context,
+			    &r->client_princ,
+			    siva_cname,
+			    b->realm);
+	    free(matched_name_string);
+    } else {
+	    ret = _krb5_principalname2krb5_principal(
+			    r->context,
+			    &r->client_princ,
+			    *(b->cname),
+			    b->realm);
+    }
+
     if (!ret)
 	ret = krb5_unparse_name(r->context, r->client_princ, &r->cname);
     if (ret) {

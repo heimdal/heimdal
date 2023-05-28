@@ -1018,8 +1018,8 @@ typedef struct krb5_kx509_req_ctx_data *krb5_kx509_req_ctx;
 
 /* variables */
 
-extern KRB5_LIB_VARIABLE const char *krb5_config_file;
-extern KRB5_LIB_VARIABLE const char *krb5_defkeyname;
+extern KRB5_LIB_VARIABLE const char *const krb5_config_file;
+extern KRB5_LIB_VARIABLE const char *const krb5_defkeyname;
 
 
 extern KRB5_LIB_VARIABLE const krb5_cc_ops krb5_acc_ops;
@@ -1038,13 +1038,13 @@ extern KRB5_LIB_VARIABLE const krb5_kt_ops krb5_mkt_ops;
 extern KRB5_LIB_VARIABLE const krb5_kt_ops krb5_akf_ops;
 extern KRB5_LIB_VARIABLE const krb5_kt_ops krb5_any_ops;
 
-extern KRB5_LIB_VARIABLE const char *krb5_cc_type_api;
-extern KRB5_LIB_VARIABLE const char *krb5_cc_type_file;
-extern KRB5_LIB_VARIABLE const char *krb5_cc_type_memory;
-extern KRB5_LIB_VARIABLE const char *krb5_cc_type_kcm;
-extern KRB5_LIB_VARIABLE const char *krb5_cc_type_scc;
-extern KRB5_LIB_VARIABLE const char *krb5_cc_type_dcc;
-extern KRB5_LIB_VARIABLE const char *krb5_cc_type_keyring;
+extern KRB5_LIB_VARIABLE const char *const krb5_cc_type_api;
+extern KRB5_LIB_VARIABLE const char *const krb5_cc_type_file;
+extern KRB5_LIB_VARIABLE const char *const krb5_cc_type_memory;
+extern KRB5_LIB_VARIABLE const char *const krb5_cc_type_kcm;
+extern KRB5_LIB_VARIABLE const char *const krb5_cc_type_scc;
+extern KRB5_LIB_VARIABLE const char *const krb5_cc_type_dcc;
+extern KRB5_LIB_VARIABLE const char *const krb5_cc_type_keyring;
 
 /* clang analyzer workarounds */
 

@@ -330,7 +330,7 @@ struct host {
     krb5_krbhst_info *hi;
     struct addrinfo *ai;
     rk_socket_t fd;
-    struct host_fun *fun;
+    const struct host_fun *fun;
     unsigned int tries;
     time_t timeout;
     krb5_data data;
@@ -715,19 +715,19 @@ recv_udp(krb5_context context, struct host *host, krb5_data *data)
     return 0;
 }
 
-static struct host_fun http_fun = {
+static const struct host_fun http_fun = {
     prepare_http,
     send_stream,
     recv_http,
     1
 };
-static struct host_fun tcp_fun = {
+static const struct host_fun tcp_fun = {
     prepare_tcp,
     send_stream,
     recv_tcp,
     1
 };
-static struct host_fun udp_fun = {
+static const struct host_fun udp_fun = {
     prepare_udp,
     send_udp,
     recv_udp,

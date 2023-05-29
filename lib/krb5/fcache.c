@@ -371,12 +371,16 @@ _krb5_erase_file(krb5_context context, const char *filename)
 }
 
 static krb5_error_code KRB5_CALLCONV
-fcc_gen_new(krb5_context context, krb5_ccache *id)
+fcc_gen_new_2(krb5_context context, const char *name, krb5_ccache *id)
 {
     char *file = NULL, *exp_file = NULL;
     krb5_error_code ret;
     krb5_fcache *f;
     int fd;
+
+    if (name == NULL)
+        /* TODO use the first in [libdefaults] default_file_cache_collections */
+        name = KRB5_DEFAULT_CCFILE_ROOT;
 
     f = calloc(1, sizeof(*f));
     if(f == NULL) {
@@ -390,7 +394,7 @@ fcc_gen_new(krb5_context context, krb5_ccache *id)
      * instead so that new unique FILE ccaches can be found in the user's
      * default collection.
      * */
-    ret = asprintf(&file, "%sXXXXXX", KRB5_DEFAULT_CCFILE_ROOT);
+    ret = asprintf(&file, "%sXXXXXX", name);
     if(ret < 0 || file == NULL) {
 	free(f);
 	krb5_set_error_message(context, KRB5_CC_NOMEM,
@@ -1281,7 +1285,7 @@ is_default_collection(krb5_context context, const char *name,
                       const char * const *def_locs, int *res)
 {
     krb5_error_code ret;
-    const char *def_loc[2] = { KRB5_DEFAULT_CCNAME_FILE, NULL };
+    const char *def_loc[2] = { KRB5_DEFAULT_CCNAME_FILE, NULL }; /* XXX */
     const char *sep;
     size_t namelen;
     size_t i;
@@ -1300,7 +1304,8 @@ is_default_collection(krb5_context context, const char *name,
     for (i = 0; !(*res) && def_locs[i]; i++) {
         char *e = NULL;
 
-        if ((ret = _krb5_expand_default_cc_name(context, def_locs[i], &e)))
+        if ((ret = _krb5_expand_default_cc_name(context, &krb5_fcc_ops,
+                                                def_locs[i], &e)))
             return ret;
         *res = strncmp(e, name, namelen) == 0 &&
         (sep == NULL || e[namelen] == FILESUBSEPCHR || e[namelen] == '\0');
@@ -1579,9 +1584,8 @@ fcc_move(krb5_context context, krb5_ccache from, krb5_ccache to)
 static krb5_error_code KRB5_CALLCONV
 fcc_get_default_name(krb5_context context, char **str)
 {
-    return _krb5_expand_default_cc_name(context,
-					KRB5_DEFAULT_CCNAME_FILE,
-					str);
+    return _krb5_default_cc_name(context, &krb5_fcc_ops, NULL,
+                                 KRB5_DEFAULT_CCNAME_FILE, str);
 }
 
 static krb5_error_code KRB5_CALLCONV
@@ -1666,7 +1670,7 @@ KRB5_LIB_VARIABLE const krb5_cc_ops krb5_fcc_ops = {
     "FILE",
     NULL,
     NULL,
-    fcc_gen_new,
+    NULL,
     fcc_initialize,
     fcc_destroy,
     fcc_close,
@@ -1690,7 +1694,7 @@ KRB5_LIB_VARIABLE const krb5_cc_ops krb5_fcc_ops = {
     fcc_get_kdc_offset,
     fcc_get_name_2,
     fcc_resolve_2,
-    NULL,
+    fcc_gen_new_2,
     1,
     '+',
     '\0',

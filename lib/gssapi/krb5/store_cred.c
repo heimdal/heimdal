@@ -240,7 +240,7 @@ _gsskrb5_store_cred_into2(OM_uint32         *minor_status,
     HEIMDAL_MUTEX_lock(&input_cred->cred_id_mutex);
 
     if (cs_ccache_name && strchr(cs_ccache_name, '%')) {
-        ret = _krb5_expand_default_cc_name(context, cs_ccache_name,
+        ret = _krb5_expand_default_cc_name(context, NULL, cs_ccache_name,
                                            &ccache_name);
         if (ret) {
             HEIMDAL_MUTEX_unlock(&input_cred->cred_id_mutex);

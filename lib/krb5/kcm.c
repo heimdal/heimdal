@@ -172,10 +172,11 @@ kcm_alloc(krb5_context context,
     int aret;
 
     /* Get the KCM:%{UID} default */
-    if (ops == &krb5_kcm_ops)
-        ret = _krb5_expand_default_cc_name(context, KRB5_DEFAULT_CCNAME_KCM_KCM, &local_def_name);
-    else
-        ret = _krb5_expand_default_cc_name(context, KRB5_DEFAULT_CCNAME_KCM_API, &local_def_name);
+    ret = _krb5_default_cc_name(context, ops, NULL,
+                                ops == &krb5_kcm_ops ? 
+                                    KRB5_DEFAULT_CCNAME_KCM_KCM :
+                                    KRB5_DEFAULT_CCNAME_KCM_API,
+                                &local_def_name);
     if (ret)
         return ret;
     local_def_name_len = strlen(local_def_name);
@@ -418,14 +419,36 @@ kcm_resolve_2_api(krb5_context context,
  *      NameZ
  */
 static krb5_error_code
-kcm_gen_new(krb5_context context, const krb5_cc_ops *ops, krb5_ccache *id)
+kcm_gen_new_2(krb5_context context,
+              const krb5_cc_ops *ops,
+              const char *name,
+              krb5_ccache *id)
 {
     krb5_kcmcache *k;
     krb5_error_code ret;
     krb5_storage *request, *response;
     krb5_data response_data;
 
-    ret = kcm_alloc(context, ops, NULL, NULL, id);
+    if (name) {
+        char *local_def_name = NULL; /* Our idea of default KCM cache name */
+
+        ret = _krb5_default_cc_name(context, ops, NULL,
+                                    ops == &krb5_kcm_ops ? 
+                                    KRB5_DEFAULT_CCNAME_KCM_KCM :
+                                    KRB5_DEFAULT_CCNAME_KCM_API,
+                                    &local_def_name);
+
+        if (strcmp(name, local_def_name + strlen(ops->prefix) + 1) != 0) {
+            krb5_set_error_message(context, KRB5_CC_NOSUPP,
+                                   "KEYRING cannot create new unique caches "
+                                   "in non-default collection");
+            free(local_def_name);
+            return KRB5_CC_NOSUPP;
+        }
+        free(local_def_name);
+    }
+
+    ret = kcm_alloc(context, ops, name, NULL, id);
     if (ret)
 	return ret;
 
@@ -461,15 +484,15 @@ kcm_gen_new(krb5_context context, const krb5_cc_ops *ops, krb5_ccache *id)
 }
 
 static krb5_error_code
-kcm_gen_new_kcm(krb5_context context, krb5_ccache *id)
+kcm_gen_new_2_kcm(krb5_context context, const char *name, krb5_ccache *id)
 {
-    return kcm_gen_new(context, &krb5_kcm_ops, id);
+    return kcm_gen_new_2(context, &krb5_kcm_ops, name, id);
 }
 
 static krb5_error_code
-kcm_gen_new_api(krb5_context context, krb5_ccache *id)
+kcm_gen_new_2_api(krb5_context context, const char *name, krb5_ccache *id)
 {
-    return kcm_gen_new(context, &krb5_akcm_ops, id);
+    return kcm_gen_new_2(context, &krb5_akcm_ops, name, id);
 }
 
 /*
@@ -1154,7 +1177,7 @@ kcm_get_default_name(krb5_context context, const krb5_cc_ops *ops,
     krb5_storage_free(request);
     if (ret) {
         if (defstr)
-            return _krb5_expand_default_cc_name(context, defstr, str);
+            return _krb5_expand_default_cc_name(context, ops, defstr, str);
         return ret;
     }
 
@@ -1290,7 +1313,7 @@ KRB5_LIB_VARIABLE const krb5_cc_ops krb5_kcm_ops = {
     "KCM",
     NULL,
     NULL,
-    kcm_gen_new_kcm,
+    NULL,
     kcm_initialize,
     kcm_destroy,
     kcm_close,
@@ -1314,7 +1337,7 @@ KRB5_LIB_VARIABLE const krb5_cc_ops krb5_kcm_ops = {
     kcm_get_kdc_offset,
     kcm_get_name_2,
     kcm_resolve_2_kcm,
-    NULL,
+    kcm_gen_new_2_kcm,
     0,
     ':',
     '\0',
@@ -1325,7 +1348,7 @@ KRB5_LIB_VARIABLE const krb5_cc_ops krb5_akcm_ops = {
     "API",
     NULL,
     NULL,
-    kcm_gen_new_api,
+    NULL,
     kcm_initialize,
     kcm_destroy,
     kcm_close,
@@ -1349,7 +1372,7 @@ KRB5_LIB_VARIABLE const krb5_cc_ops krb5_akcm_ops = {
     NULL,
     kcm_get_name_2,
     kcm_resolve_2_api,
-    NULL,
+    kcm_gen_new_2_api,
     0,
     '\0',
     ':',

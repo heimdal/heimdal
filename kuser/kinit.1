@@ -326,8 +326,9 @@ section of
 The general syntax for credentials cache names is
 .Dl TYPE:[collection-name][:subsidiary]
 except that for the FILE type it is
-.Dl FILE:collection-name[+subsidiary]
-and for the KEYRING type it is:
+.Dl FILE:[collection-name][+subsidiary]
+(because colons are not allowed in filenames on Windows) and for
+the KEYRING type it is:
 .Dl KEYRING:[anchor:][collection[:subsidiary]]
 where the collection name is free-form and the anchor is one of
 .Sq process ,
@@ -338,9 +339,20 @@ or
 The collection name is always absent for the
 .Ql MEMORY
 credentials cache type.
+Application developers should note that the
+.Ql MEMORY:anonymous
+cache is always unique.
 .Pp
 When the collection name is absent then the default collection
-for the given credentials cache type is used, which are:
+for the given credentials cache type is used.
+These defaults can be configured in
+.Xr krb5.conf 5
+in the
+.Ql [libdefaults]
+section's
+.Ql default_ccache_name_by_type
+parameter.
+The hard-coded defaults are:
 .Bl -tag -compact
 .It Ql /tmp/krb5cc_{UID}
 for FILE caches, where {UID} is a numeric user ID
@@ -355,22 +367,31 @@ for KCM caches, where {UID} is the user's numeric user ID
 for API (CCAPI) credentials caches
 .El
 .Pp
-The collection name is only optional for:
-.Ql DIR ,
-.Ql SCC ,
-.Ql KCM ,
-.Ql KEYRING
-and
-.Ql API
-credentials cache types.
+NOTE: Currently the collection name is always required for the
+FILE cache type.
+.Pp
 .Sh EXAMPLE CREDENTIALS CACHE NAMES
 .Bl -tag -width Ds
+.It Ql FILE
+this is the default FILE cache, typically
+.Ql /tmp/krb5cc_{UID}
+.It Ql FILE:
+this is the default FILE cache
+.It Ql FILE:+jdoe@TEST.H5L.SE
+this is the cache that should contain credentials for the
+principal
+.Ql jdoe@TEST.H5L.SE
+in the default FILE collection, which ultimately refers to a
+single file such as
+.Ql /tmp/krb5cc_{UID}+jdoe@TEST.H5L.SE
 .It Ql FILE:/tmp/cc
 this is a FILE cache in a file named
 .Ql /tmp/cc
-(the default would be
-.Ql /tmp/krb5cc_{UID} )
 .It Ql FILE:/tmp/cc+jane@TEST.H5L.SE
+this is the FILE cache stored in a file named
+.Ql FILE:/tmp/cc+jane@TEST.H5L.SE
+that is expected to have credentials for the principal
+.Ql jane@TEST.H5L.SE
 .It Ql DIR:/tmp/ccdir
 this is a FILE cache named by
 .Ql /tmp/krb5cc_{UID}_dir/primary
@@ -386,6 +407,11 @@ where {UID} is the user's numeric identifier
 .It Ql SCC:
 this is the current primary cache in the SQLite3 database named
 .Ql /tmp/krb5scc_{UID}
+.It Ql SCC::jane@TEST.H5L.SE
+this is the cache named
+.Dq jane@TEST.H5L.SE
+in the SQLite3 database named
+.Ql /tmp/krb5scc_{UID}
 .It Ql SCC:/tmp/ccdb
 this is the current primary cache in the SQLite3 database named
 .Ql /tmp/ccdb
@@ -395,11 +421,6 @@ this is the cache
 in the SQLite3 database
 named
 .Ql /tmp/ccdb
-.It Ql SCC::jane@TEST.H5L.SE
-this is the cache named
-.Dq jane@TEST.H5L.SE
-in the SQLite3 database named
-.Ql /tmp/krb5scc_{UID}
 .It Ql KEYRING:
 this is the primary cache in the default KEYRING collection for
 the running user

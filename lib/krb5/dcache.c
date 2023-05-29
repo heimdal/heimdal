@@ -488,26 +488,29 @@ dcc_resolve_2(krb5_context context,
 }
 
 static krb5_error_code KRB5_CALLCONV
-dcc_gen_new(krb5_context context, krb5_ccache *id)
+dcc_gen_new_2(krb5_context context, const char *name, krb5_ccache *id)
 {
-    krb5_error_code ret;
+    krb5_error_code ret = 0;
     char *def_dir = NULL;
-    char *name = NULL;
+    char *ccname = NULL;
     int fd = -1;
 
-    ret = get_default_dir(context, &def_dir);
+    if (name == NULL) {
+        ret = get_default_dir(context, &def_dir);
+        name = def_dir;
+    }
     if (ret == 0)
-        ret = verify_directory(context, def_dir);
+        ret = verify_directory(context, name);
     if (ret == 0 &&
-        (asprintf(&name, "DIR::%s/tktXXXXXX", def_dir) == -1 || name == NULL))
+        (asprintf(&ccname, "DIR::%s/tktXXXXXX", name) == -1 || name == NULL))
 	ret = krb5_enomem(context);
-    if (ret == 0 && (fd = mkstemp(name + sizeof("DIR::") - 1)) == -1)
+    if (ret == 0 && (fd = mkstemp(ccname + sizeof("DIR::") - 1)) == -1)
 	ret = errno;
     if (ret == 0)
-	ret = dcc_resolve_2(context, id, name + sizeof("DIR:") - 1, NULL);
+	ret = dcc_resolve_2(context, id, ccname + sizeof("DIR:") - 1, NULL);
 
     free(def_dir);
-    free(name);
+    free(ccname);
     if (fd != -1)
         close(fd);
     return ret;
@@ -773,15 +776,8 @@ dcc_move(krb5_context context, krb5_ccache from, krb5_ccache to)
 static krb5_error_code KRB5_CALLCONV
 dcc_get_default_name(krb5_context context, char **str)
 {
-    const char *def_cc_colname =
-        krb5_config_get_string_default(context, NULL, KRB5_DEFAULT_CCNAME_DIR,
-                                       "libdefaults", "default_cc_collection",
-                                       NULL);
-
-    /* [libdefaults] default_cc_collection is for testing */
-    if (strncmp(def_cc_colname, "DIR:", sizeof("DIR:") - 1) != 0)
-        def_cc_colname = KRB5_DEFAULT_CCNAME_DIR;
-    return _krb5_expand_default_cc_name(context, def_cc_colname, str);
+    return _krb5_default_cc_name(context, &krb5_dcc_ops, NULL,
+                                 KRB5_DEFAULT_CCNAME_DIR, str);
 }
 
 static krb5_error_code KRB5_CALLCONV
@@ -827,7 +823,7 @@ KRB5_LIB_VARIABLE const krb5_cc_ops krb5_dcc_ops = {
     "DIR",
     NULL,
     NULL,
-    dcc_gen_new,
+    NULL,
     dcc_initialize,
     dcc_destroy,
     dcc_close,
@@ -851,7 +847,7 @@ KRB5_LIB_VARIABLE const krb5_cc_ops krb5_dcc_ops = {
     dcc_get_kdc_offset,
     dcc_get_name_2,
     dcc_resolve_2,
-    NULL,
+    dcc_gen_new_2,
     1,
     '\0',
     ':',

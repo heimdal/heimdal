@@ -176,11 +176,12 @@ mcc_resolve_2(krb5_context context,
 
 
 static krb5_error_code KRB5_CALLCONV
-mcc_gen_new(krb5_context context, krb5_ccache *id)
+mcc_gen_new_2(krb5_context context, const char *name, krb5_ccache *id)
 {
     krb5_error_code ret;
     krb5_mcache *m;
 
+    (void) name;
     if ((ret = mcc_alloc(context, NULL, &m)))
         return ret;
 
@@ -614,7 +615,7 @@ KRB5_LIB_VARIABLE const krb5_cc_ops krb5_mcc_ops = {
     "MEMORY",
     NULL,
     NULL,
-    mcc_gen_new,
+    NULL,
     mcc_initialize,
     mcc_destroy,
     mcc_close,
@@ -638,7 +639,7 @@ KRB5_LIB_VARIABLE const krb5_cc_ops krb5_mcc_ops = {
     mcc_get_kdc_offset,
     mcc_get_name_2,
     mcc_resolve_2,
-    NULL,
+    mcc_gen_new_2,
     0,
     '\0',
     '\0',

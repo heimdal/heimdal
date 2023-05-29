@@ -463,7 +463,7 @@ get_default(krb5_context context,
     if (defname == NULL || strncmp(defname, "KEYRING:", 8) != 0)
 	return 0;
 
-    return parse_residual(context, defname + 8,
+    return parse_residual(context, defname + sizeof("KEYRING:") - 1,
 			  panchor_name, pcollection_name, psubsidiary_name);
 }
 
@@ -1294,7 +1294,7 @@ alloc_cache(krb5_context context,
 
 /* Create a new keyring cache with a unique name. */
 static krb5_error_code KRB5_CALLCONV
-krcc_gen_new(krb5_context context, krb5_ccache *id)
+krcc_gen_new_2(krb5_context context, const char *name, krb5_ccache *id)
 {
     krb5_error_code ret;
     char *anchor_name, *collection_name, *subsidiary_name;
@@ -1304,8 +1304,12 @@ krcc_gen_new(krb5_context context, krb5_ccache *id)
     key_serial_t cache_id = 0;
 
     /* Determine the collection in which we will create the cache.*/
-    ret = get_default(context, &anchor_name, &collection_name,
-		      &subsidiary_name);
+    if (name)
+        ret = parse_residual(context, name, &anchor_name, &collection_name,
+                             &subsidiary_name);
+    else
+        ret = get_default(context, &anchor_name, &collection_name,
+                          &subsidiary_name);
     if (ret)
 	return ret;
 
@@ -2046,7 +2050,7 @@ KRB5_LIB_VARIABLE const krb5_cc_ops krb5_krcc_ops = {
     "KEYRING",
     NULL,
     NULL,
-    krcc_gen_new,
+    NULL,
     krcc_initialize,
     krcc_destroy,
     krcc_close,
@@ -2070,7 +2074,7 @@ KRB5_LIB_VARIABLE const krb5_cc_ops krb5_krcc_ops = {
     krcc_get_kdc_offset,
     krcc_get_name_2,
     krcc_resolve_2,
-    NULL,
+    krcc_gen_new_2,
     0,
     '\0',
     ':',

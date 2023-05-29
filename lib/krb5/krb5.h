@@ -494,6 +494,7 @@ typedef struct krb5_cc_cache_cursor_data *krb5_cc_cache_cursor;
 #define KRB5_CC_OPS_VERSION_2	2
 #define KRB5_CC_OPS_VERSION_3	3
 #define KRB5_CC_OPS_VERSION_5	5
+#define KRB5_CC_OPS_VERSION_6	6
 
 /* Only extend the structure. Do not change signatures. */
 typedef struct krb5_cc_ops {
@@ -533,11 +534,16 @@ typedef struct krb5_cc_ops {
     krb5_error_code (KRB5_CALLCONV * get_kdc_offset)(krb5_context, krb5_ccache, krb5_deltat *);
     /* Version 5 */
     krb5_error_code (KRB5_CALLCONV * get_name_2)(krb5_context, krb5_ccache,
-						 const char **id, const char **res,
-						 const char **sub);
-    krb5_error_code (KRB5_CALLCONV * resolve_2)(krb5_context, krb5_ccache *id, const char *res,
-						const char *sub);
-    /* Add new functions here for versions 6 and above */
+						 const char **, const char **,
+						 const char **);
+    krb5_error_code (KRB5_CALLCONV * resolve_2)(krb5_context, krb5_ccache *, const char *,
+						const char *);
+    /* Version 6 */
+    krb5_error_code (KRB5_CALLCONV * gen_new_2)(krb5_context, const char *, const char *, krb5_ccache *);
+    uint32_t filepath:1;    /* Versions later than 6 can add bitfields here */
+    unsigned char subsep;
+    unsigned char subrsep;
+    /* Add new functions here for versions 7 and above */
 } krb5_cc_ops;
 
 /*

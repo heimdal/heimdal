@@ -1121,7 +1121,11 @@ KRB5_LIB_VARIABLE const krb5_cc_ops krb5_acc_ops = {
     NULL,
     NULL,
     acc_get_name_2,
-    acc_resolve_2
+    acc_resolve_2,
+    NULL,
+    0,
+    ':',
+    '\0',
 };
 
 #endif

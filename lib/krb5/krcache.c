@@ -2069,7 +2069,11 @@ KRB5_LIB_VARIABLE const krb5_cc_ops krb5_krcc_ops = {
     krcc_set_kdc_offset,
     krcc_get_kdc_offset,
     krcc_get_name_2,
-    krcc_resolve_2
+    krcc_resolve_2,
+    NULL,
+    0,
+    '\0',
+    ':',
 };
 
 #endif /* HAVE_KEYUTILS_H */

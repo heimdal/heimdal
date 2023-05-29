@@ -17,4 +17,10 @@ libheimsqlite_la_SOURCES = sqlite3.c
 
 libheimsqlite_la_LIBADD = $(PTHREAD_LIBADD)
 
-EXTRA_DIST = NTMakefile
+libheimsqlite_la_DEPENDENCIES =	version-script.map
+
+if versionscript
+libheimsqlite_la_LDFLAGS = $(LDFLAGS_VERSION_SCRIPT)$(srcdir)/version-script.map
+endif
+
+EXTRA_DIST = NTMakefile version-script.map

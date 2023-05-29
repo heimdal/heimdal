@@ -2346,3 +2346,111 @@ _krb5_set_default_cc_name_to_registry(krb5_context context, krb5_ccache id)
     return ret;
 }
 #endif
+
+/**
+ * Utility function for cache type plugins that parses a cache name into its
+ * type and residual, and further split the residual into collection and
+ * subsidiary cache names.
+ *
+ * All the outputs are optional.
+ *
+ * If the ccache type's version is KRB5_CC_OPS_VERSION_6 or newer then the
+ * subsep, subrsep, and filepath arguments are ignored and those values are
+ * taken from the ccache type's registration.
+ *
+ * If both subsep and subrsep are not NUL then subrsep will be used.
+ *
+ * @param context A Kerberos 5 context.
+ * @param ccname A ccache name, possibly just a ccache type.
+ * @param subsep A separator character for separating the subsidiary name from
+ *               the collection name.
+ * @param subrsep Like subsep, but to be searched from the end of the name.
+ * @param filepath Whether the collection name is a file (or directory) path.
+ * @param type The type of the ccache is output here.
+ * @param residual The ccache name without the type is output here.
+ * @param collection The ccache collection's name is output here.
+ * @param subsidiary The name of the ccache in the collection is output here.
+ *
+ * @return Return an error code or 0, see krb5_get_error_message().
+ *
+ * @ingroup krb5_ccache
+ */
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+krb5_cc_parse_name(krb5_context context,
+                   const char *ccname,
+                   unsigned char subsep,
+                   unsigned char subrsep,
+                   int filepath,
+                   const char **type,
+                   char **residual,
+                   char **collection,
+                   char **subsidiary)
+{
+    const krb5_cc_ops *ops;
+    const char *res = NULL;
+    char *freeme = NULL;
+    char *name = NULL;
+    char *sub = NULL;
+    char *p;
+
+    if (type)
+        *type = NULL;
+    if (residual)
+        *residual = NULL;
+    if (collection)
+        *collection = NULL;
+    if (subsidiary)
+        *subsidiary = NULL;
+    ops = cc_get_prefix_ops(context, ccname, &res);
+    if (ops == NULL)
+        return KRB5_CC_UNKNOWN_TYPE;
+    if (type)
+        *type = ops->prefix;
+
+    if (ops->version >= KRB5_CC_OPS_VERSION_6) {
+        filepath = ops->filepath;
+        subrsep = ops->subrsep;
+        subsep = ops->subsep;
+    }
+
+    if (res == NULL || res[0] == '\0')
+        return 0;
+    if (residual && res && (*residual = strdup(res)) == NULL)
+        return krb5_enomem(context);
+
+    if (res && (freeme = strdup(res)) == NULL)
+        goto enomem;
+    p = name = freeme;
+#ifdef WIN32
+    if (filepath && p[0] != '\0' && p[1] == ':')
+        /*
+         * Don't allow subsep/subrsep to match the colon after the drive name.
+         */
+        p += 2;
+#else
+    (void) filepath;
+#endif
+    if (subrsep)
+        p = strrchr(p, subrsep);
+    else
+        p = strchr(p, subsep);
+
+    if (p) {
+        *(p++) = '\0';
+        if (*p)
+            sub = p;
+    }
+    if ((name && collection && (*collection = strdup(name)) == NULL) ||
+        (sub && subsidiary && (*subsidiary = strdup(sub)) == NULL)) {
+        goto enomem;
+    }
+    free(freeme);
+    return 0;
+enomem:
+    free(freeme);
+    if (residual)
+        free(*residual);
+    if (collection)
+        free(*collection);
+    return krb5_enomem(context);
+}

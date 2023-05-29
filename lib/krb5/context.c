@@ -185,7 +185,7 @@ init_context_from_config_file(krb5_context context)
 	       FALSE, "log_utc");
 
     context->no_ticket_store =
-        getenv("KRB5_NO_TICKET_STORE") != NULL;
+        !!(getenv("KRB5_NO_TICKET_STORE") != NULL);
 
     /* init dns-proxy slime */
     tmp = krb5_config_get_string(context, NULL, "libdefaults",

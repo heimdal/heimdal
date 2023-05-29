@@ -1313,7 +1313,11 @@ KRB5_LIB_VARIABLE const krb5_cc_ops krb5_kcm_ops = {
     kcm_set_kdc_offset,
     kcm_get_kdc_offset,
     kcm_get_name_2,
-    kcm_resolve_2_kcm
+    kcm_resolve_2_kcm,
+    NULL,
+    0,
+    ':',
+    '\0',
 };
 
 KRB5_LIB_VARIABLE const krb5_cc_ops krb5_akcm_ops = {
@@ -1344,7 +1348,11 @@ KRB5_LIB_VARIABLE const krb5_cc_ops krb5_akcm_ops = {
     NULL,
     NULL,
     kcm_get_name_2,
-    kcm_resolve_2_api
+    kcm_resolve_2_api,
+    NULL,
+    0,
+    '\0',
+    ':',
 };
 
 KRB5_LIB_FUNCTION krb5_boolean KRB5_LIB_CALL

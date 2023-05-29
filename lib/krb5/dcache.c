@@ -850,5 +850,9 @@ KRB5_LIB_VARIABLE const krb5_cc_ops krb5_dcc_ops = {
     dcc_set_kdc_offset,
     dcc_get_kdc_offset,
     dcc_get_name_2,
-    dcc_resolve_2
+    dcc_resolve_2,
+    NULL,
+    1,
+    '\0',
+    ':',
 };

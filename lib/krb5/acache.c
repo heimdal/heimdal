@@ -579,8 +579,9 @@ acc_resolve_2(krb5_context context, krb5_ccache *id, const char *res, const char
 }
 
 static krb5_error_code KRB5_CALLCONV
-acc_gen_new(krb5_context context, krb5_ccache *id)
+acc_gen_new_2(krb5_context context, const char *name, krb5_ccache *id)
 {
+    (void) name;
     return acc_alloc(context, id);
 }
 
@@ -1098,7 +1099,7 @@ KRB5_LIB_VARIABLE const krb5_cc_ops krb5_acc_ops = {
     "API",
     NULL,
     NULL,
-    acc_gen_new,
+    NULL,
     acc_initialize,
     acc_destroy,
     acc_close,
@@ -1122,7 +1123,7 @@ KRB5_LIB_VARIABLE const krb5_cc_ops krb5_acc_ops = {
     NULL,
     acc_get_name_2,
     acc_resolve_2,
-    NULL,
+    acc_gen_new_2,
     0,
     ':',
     '\0',

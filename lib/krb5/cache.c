@@ -353,6 +353,7 @@ krb5_cc_resolve_sub(krb5_context context,
                     krb5_ccache *id)
 {
     const krb5_cc_ops *ops = NULL;
+    const char *def_ccname = NULL;
 
     *id = NULL;
 
@@ -362,6 +363,12 @@ krb5_cc_resolve_sub(krb5_context context,
 
     if (ops == NULL)
 	ops = cc_get_prefix_ops(context, get_default_cc_type(context, 0), NULL);
+
+    if (collection == NULL) {
+        def_ccname = krb5_cc_default_name(context);
+        if (cc_get_prefix_ops(context, def_ccname, &collection) != ops)
+            collection = NULL;
+    }
 
     if (ops == NULL) {
 	krb5_set_error_message(context, KRB5_CC_UNKNOWN_TYPE,
@@ -453,8 +460,20 @@ krb5_cc_new_unique(krb5_context context, const char *type,
         ops = krb5_cc_get_prefix_ops(context, type);
     } else {
         ops = cc_get_prefix_ops(context, type, &res);
+
+        /*
+         * Try to accomodate older apps that don't pass us any hint or
+         * residual.
+         */
         if (res == NULL && hint == NULL &&
-            strcmp(ops->prefix, def_type) != 0) {
+            context->default_cc_name &&
+            strcmp(ops->prefix, def_type) == 0) {
+            ops = cc_get_prefix_ops(context, context->default_cc_name, &res);
+        }
+        if (res == NULL && hint == NULL &&
+            !context->default_cc_name_defaulted &&
+            strcmp(ops->prefix, def_type) != 0 &&
+            strncmp(type, "MEMORY", sizeof("MEMORY")) != 0) {
             krb5_set_error_message(context, KRB5_CC_NOSUPP,
                                    "Refusing to create a new unique cache in "
                                    "the default collection for cache type %s "
@@ -471,7 +490,7 @@ krb5_cc_new_unique(krb5_context context, const char *type,
 	return KRB5_CC_UNKNOWN_TYPE;
     }
 
-    if ((res || hint) && (*id)->ops->gen_new_2 == NULL) {
+    if ((res || hint) && ops->gen_new_2 == NULL) {
         krb5_set_error_message(context, KRB5_CC_NOSUPP,
                                "Cannot create a new unique cache in %s:%s",
                                type, hint ? hint : res);
@@ -482,7 +501,7 @@ krb5_cc_new_unique(krb5_context context, const char *type,
     if (ret)
 	return ret;
     if ((*id)->ops->gen_new_2)
-        ret = (*id)->ops->gen_new_2(context, type, hint ? hint : res, id);
+        ret = (*id)->ops->gen_new_2(context, hint ? hint : res, id);
     else
         ret = (*id)->ops->gen_new(context, id);
     if (ret) {
@@ -626,15 +645,49 @@ krb5_cc_get_ops(krb5_context context, krb5_ccache id)
  */
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
-_krb5_expand_default_cc_name(krb5_context context, const char *str, char **res)
+_krb5_expand_default_cc_name(krb5_context context, const krb5_cc_ops *ops, const char *str, char **res)
 {
-    int filepath;
+    int filepath = 0;
 
-    filepath = (strncmp("FILE:", str, 5) == 0
-		 || strncmp("DIR:", str, 4) == 0
-		 || strncmp("SCC:", str, 4) == 0);
-
+    if (ops == NULL)
+        ops = cc_get_prefix_ops(context, str, NULL);
+    if (ops)
+        filepath = ops->filepath;
     return _krb5_expand_path_tokens(context, str, filepath, res);
+}
+
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+_krb5_default_cc_name(krb5_context context,
+                      const krb5_cc_ops *ops,
+                      const char *type,
+                      const char *hardcoded_default,
+                      char **res)
+{
+    const char *s;
+
+    if (ops == NULL)
+        ops = cc_get_prefix_ops(context, type, NULL);
+    if (ops == NULL)
+        return _krb5_expand_path_tokens(context, hardcoded_default, 0, res);
+
+    if (type == NULL)
+        type = ops->prefix;
+
+    s = krb5_config_get_string(context, NULL, "libdefaults",
+                               "default_ccache_name_by_type", type, NULL);
+    if (s == NULL)
+        return _krb5_expand_path_tokens(context, hardcoded_default, 0, res);
+
+    if (strncmp(s, type, strlen(type)) != 0 ||
+        s[strlen(type)] != ':') {
+        krb5_set_error_message(context, KRB5_CC_FORMAT,
+                               "Default directory name in [libdefaults] "
+                               "default_ccache_name_by_type for cache type "
+                               "%s (\"%s\") does not start with \"%s:\"",
+                               type, s, type);
+        return KRB5_CC_FORMAT;
+    }
+    return _krb5_expand_path_tokens(context, s, 0, res);
 }
 
 /*
@@ -830,7 +883,7 @@ krb5_cc_configured_default_name(krb5_context context)
         cfg = krb5_config_get_string(context, NULL, "libdefaults",
                                      "default_ccache_name", NULL);
     if (cfg) {
-        ret = _krb5_expand_default_cc_name(context, cfg, &expanded);
+        ret = _krb5_expand_default_cc_name(context, NULL, cfg, &expanded);
         if (ret) {
             krb5_set_error_message(context, ret,
                                    "token expansion failed for %s", cfg);

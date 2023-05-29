@@ -287,6 +287,10 @@ static const krb5_cc_ops krb5_kcmss_ops = {
     NULL,
     kcmss_get_name_2,
     kcmss_resolve_2,
+    NULL,
+    0,
+    '\0',
+    ':'
 };
 
 krb5_error_code

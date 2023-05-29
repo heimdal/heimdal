@@ -882,6 +882,7 @@ EXPORTS
 	krb5_time_abs;
 	_krb5_n_fold
 	_krb5_expand_default_cc_name
+	_krb5_default_cc_name
 
 	; FAST
 	_krb5_fast_cf2
@@ -894,3 +895,4 @@ EXPORTS
 	_krb5_expand_path_tokensv;
         _krb5_find_capath;
         _krb5_free_capath;
+        krb5_cc_parse_name;

@@ -407,6 +407,7 @@ struct entry libdefaults_entries[] = {
     { "default_cc_name", krb5_config_string, NULL, 0 },
     { "default_cc_type", krb5_config_string, NULL, 0 },
     { "default_cc_collection", krb5_config_string, NULL, 0 },
+    { "default_ccache_name_by_type", krb5_config_list, all_strings, 0 },
     { "default_etypes", krb5_config_string, NULL, 0 },
     { "default_etypes_des", krb5_config_string, NULL, 0 },
     { "default_keytab_modify_name", krb5_config_string, NULL, 0 },

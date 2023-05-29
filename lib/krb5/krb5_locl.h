@@ -313,7 +313,6 @@ typedef struct krb5_context_data {
     char *default_cc_name;
     char *default_cc_name_env;
     char *configured_default_cc_name;
-    int default_cc_name_set;
     int large_msg_size;
     int max_msg_size;
     int tgs_negative_timeout;		/* timeout for TGS negative cache */
@@ -333,7 +332,9 @@ typedef struct krb5_context_data {
     unsigned int num_kdc_requests;
     krb5_name_canon_rule name_canon_rules;
     size_t config_include_depth;
-    krb5_boolean no_ticket_store;       /* Don't store service tickets */
+    unsigned char no_ticket_store:1;    /* Don't store service tickets */
+    unsigned char default_cc_name_set:1;
+    unsigned char default_cc_name_defaulted:1;
 } krb5_context_data;
 
 #define KRB5_DEFAULT_CCNAME_FILE "FILE:%{TEMP}/krb5cc_%{uid}"

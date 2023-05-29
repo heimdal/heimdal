@@ -711,6 +711,7 @@ krb5_cc_set_default_name(krb5_context context, const char *name)
              * this from the environment, which might change.
              */
             context->default_cc_name_set = 0;
+            context->default_cc_name_defaulted = 0;
         } else if ((e = krb5_cc_configured_default_name(context))) {
             if ((p = strdup(e)) == NULL)
                 return krb5_enomem(context);
@@ -726,6 +727,8 @@ krb5_cc_set_default_name(krb5_context context, const char *name)
              *     from krb5_cc_configured_default_name() about that!
              */
             context->default_cc_name_set = 1;
+            context->default_cc_name_defaulted = 1;
+            context->default_cc_name_env = NULL;
         }
     } else {
         int filepath = (strncmp("FILE:", name, 5) == 0 ||
@@ -742,6 +745,7 @@ krb5_cc_set_default_name(krb5_context context, const char *name)
          * is reset.
          */
 	context->default_cc_name_set = 1;
+        context->default_cc_name_defaulted = 0;
     }
 
     free(context->default_cc_name);
@@ -1896,16 +1900,28 @@ krb5_cccol_cursor_next(krb5_context context, krb5_cccol_cursor cursor,
 		       krb5_ccache *cache)
 {
     krb5_error_code ret = 0;
+    const char *def_cctype = get_default_cc_type(context, 0);
 
     *cache = NULL;
 
     while (cursor->idx < context->num_cc_ops) {
 
 	if (cursor->cursor == NULL) {
+            if (!context->default_cc_name_defaulted &&
+                strcmp(def_cctype, context->cc_ops[cursor->idx]->prefix) != 0) {
+                /*
+                 * If KRB5CCNAME is set then we don't list collections other
+                 * than that one.  If we ever add an ANY: ccache type then this
+                 * will be more painful.
+                 */
+                cursor->idx++;
+                continue;
+            }
 	    ret = krb5_cc_cache_get_first (context,
 					   context->cc_ops[cursor->idx]->prefix,
 					   &cursor->cursor);
 	    if (ret) {
+                /* No caches in this type's collection -> onto the next type */
 		cursor->idx++;
 		continue;
 	    }

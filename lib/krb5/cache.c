@@ -289,24 +289,31 @@ get_default_cc_type_win32(krb5_context context)
 }
 #endif /* _WIN32 */
 
+/*
+ * Returns either the default cache type as configured, or the cache type of
+ * the default cache.
+ */
 static const char *
-get_default_cc_type(krb5_context context, int simple)
+get_default_cc_type(krb5_context context, int configured_default_only)
 {
     const char *def_ccname;
-    const char *def_cctype =
-        krb5_config_get_string_default(context, NULL,
-                                       secure_getenv("KRB5CCTYPE"),
-                                       "libdefaults", "default_cc_type", NULL);
-    const char *def_cccol =
-        krb5_config_get_string(context, NULL, "libdefaults",
-                               "default_cc_collection", NULL);
+    const char *def_cctype;
+    const char *def_cccol;
     const krb5_cc_ops *ops;
 
-    if (!simple && (def_ccname = krb5_cc_default_name(context))) {
+    if (!configured_default_only &&
+        (def_ccname = krb5_cc_default_name(context))) {
 	ops = cc_get_prefix_ops(context, def_ccname, NULL);
 	if (ops)
 	    return ops->prefix;
     }
+
+    def_cctype = krb5_config_get_string_default(context, NULL,
+                                                secure_getenv("KRB5CCTYPE"),
+                                                "libdefaults",
+                                                "default_cc_type", NULL);
+    def_cccol = krb5_config_get_string(context, NULL, "libdefaults",
+                                       "default_cc_collection", NULL);
     if (!def_cctype && def_cccol) {
 	ops = cc_get_prefix_ops(context, def_cccol, NULL);
 	if (ops)
@@ -438,21 +445,46 @@ krb5_cc_new_unique(krb5_context context, const char *type,
 {
     const krb5_cc_ops *ops;
     krb5_error_code ret;
+    const char *def_type = get_default_cc_type(context, 0);
+    const char *res = NULL;
 
-    if (type == NULL)
-        type = get_default_cc_type(context, 1);
+    if (type == NULL) {
+        type = def_type;
+        ops = krb5_cc_get_prefix_ops(context, type);
+    } else {
+        ops = cc_get_prefix_ops(context, type, &res);
+        if (res == NULL && hint == NULL &&
+            strcmp(ops->prefix, def_type) != 0) {
+            krb5_set_error_message(context, KRB5_CC_NOSUPP,
+                                   "Refusing to create a new unique cache in "
+                                   "the default collection for cache type %s "
+                                   "because it is not the type of the "
+                                   "default cache", type);
+            return KRB5_CC_NOSUPP;
+        }
+        type = ops->prefix;
+    }
 
-    ops = krb5_cc_get_prefix_ops(context, type);
     if (ops == NULL) {
 	krb5_set_error_message(context, KRB5_CC_UNKNOWN_TYPE,
 			      "Credential cache type %s is unknown", type);
 	return KRB5_CC_UNKNOWN_TYPE;
     }
 
+    if ((res || hint) && (*id)->ops->gen_new_2 == NULL) {
+        krb5_set_error_message(context, KRB5_CC_NOSUPP,
+                               "Cannot create a new unique cache in %s:%s",
+                               type, hint ? hint : res);
+        return KRB5_CC_NOSUPP;
+    }
+
     ret = _krb5_cc_allocate(context, ops, id);
     if (ret)
 	return ret;
-    ret = (*id)->ops->gen_new(context, id);
+    if ((*id)->ops->gen_new_2)
+        ret = (*id)->ops->gen_new_2(context, type, hint ? hint : res, id);
+    else
+        ret = (*id)->ops->gen_new(context, id);
     if (ret) {
 	free(*id);
 	*id = NULL;
@@ -829,7 +861,7 @@ krb5_cc_configured_default_name(krb5_context context)
 KRB5_LIB_FUNCTION char * KRB5_LIB_CALL
 krb5_cccol_get_default_ccname(krb5_context context)
 {
-    const char *cfg = get_default_cc_type(context, 1);
+    const char *cfg = get_default_cc_type(context, 0);
     char *cccol_default_ccname;
     const krb5_cc_ops *ops = krb5_cc_get_prefix_ops(context, cfg);
 

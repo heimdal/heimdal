@@ -539,6 +539,7 @@ typedef struct krb5_cc_ops {
     krb5_error_code (KRB5_CALLCONV * resolve_2)(krb5_context, krb5_ccache *, const char *,
 						const char *);
     /* Version 6 */
+    krb5_error_code (KRB5_CALLCONV * get_primary_name)(krb5_context, krb5_ccache *, const char *);
     krb5_error_code (KRB5_CALLCONV * gen_new_2)(krb5_context, const char *, krb5_ccache *);
     uint32_t filepath:1;    /* Versions later than 6 can add bitfields here */
     unsigned char subsep;

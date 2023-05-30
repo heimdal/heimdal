@@ -1694,6 +1694,7 @@ KRB5_LIB_VARIABLE const krb5_cc_ops krb5_fcc_ops = {
     fcc_get_kdc_offset,
     fcc_get_name_2,
     fcc_resolve_2,
+    NULL, /* fcc_get_primary_name */
     fcc_gen_new_2,
     1,
     '+',

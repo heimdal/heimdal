@@ -2067,6 +2067,7 @@ KRB5_LIB_VARIABLE const krb5_cc_ops krb5_krcc_ops = {
     krcc_get_kdc_offset,
     krcc_get_name_2,
     krcc_resolve_2,
+    NULL, /* krcc_get_primary_name */
     krcc_gen_new_2,
     0,
     '\0',

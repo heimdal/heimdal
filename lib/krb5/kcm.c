@@ -1337,6 +1337,7 @@ KRB5_LIB_VARIABLE const krb5_cc_ops krb5_kcm_ops = {
     kcm_get_kdc_offset,
     kcm_get_name_2,
     kcm_resolve_2_kcm,
+    NULL, /* kcm_get_primary_name_kcm */
     kcm_gen_new_2_kcm,
     0,
     ':',
@@ -1372,6 +1373,7 @@ KRB5_LIB_VARIABLE const krb5_cc_ops krb5_akcm_ops = {
     NULL,
     kcm_get_name_2,
     kcm_resolve_2_api,
+    NULL, /* kcm_get_primary_name_api */
     kcm_gen_new_2_api,
     0,
     '\0',

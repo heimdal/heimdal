@@ -1749,6 +1749,7 @@ KRB5_LIB_VARIABLE const krb5_cc_ops krb5_scc_ops = {
     NULL,
     scc_get_name_2,
     scc_resolve_2,
+    NULL, /* scc_get_primary_name */
     scc_gen_new_2,
     1,
     '\0',

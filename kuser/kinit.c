@@ -1662,6 +1662,8 @@ main(int argc, char **argv)
     argc -= optidx;
     argv += optidx;
 
+    if (cred_cache)
+        (void) krb5_cc_set_default_name(context, cred_cache);
     krb5_appdefault_boolean(context, "kinit", NULL, "historical_anon_pkinit",
                             FALSE, &historical_anon_pkinit);
 

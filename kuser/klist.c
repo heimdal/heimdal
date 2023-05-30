@@ -910,6 +910,9 @@ klist(struct klist_options *opt, int argc, char **argv)
 	exit(0);
     }
 
+    if (opt->cache_string)
+        (void) krb5_cc_set_default_name(heimtools_context, opt->cache_string);
+
     if (opt->list_all_flag) {
         if (opt->json_flag)
             exit_status = caches2json(heimtools_context);

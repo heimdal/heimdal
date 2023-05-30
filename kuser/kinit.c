@@ -543,7 +543,8 @@ renew_validate(krb5_context context,
     }
 
     ret = krb5_cc_new_unique(context, krb5_cc_get_type(context, cache),
-			     NULL, &tempccache);
+                             krb5_cc_get_collection(context, cache),
+                             &tempccache);
     if (ret) {
 	krb5_warn(context, ret, "krb5_cc_new_unique");
 	goto out;
@@ -1148,7 +1149,8 @@ get_new_tickets(krb5_context context,
     krb5_free_cred_contents(context, &cred);
 
     ret = krb5_cc_new_unique(context, krb5_cc_get_type(context, ccache),
-			     NULL, &tempccache);
+                             krb5_cc_get_collection(context, ccache),
+                             &tempccache);
     if (ret) {
 	krb5_warn(context, ret, "krb5_cc_new_unique");
 	goto out;
@@ -1804,11 +1806,11 @@ main(int argc, char **argv)
     /*
      * Cases:
      *
-     *  - use the given ccache
      *  - use a new unique ccache for running a command with (in this case we
      *    get to set KRB5CCNAME, so a new unique ccache makes sense)
      *  - use the default ccache for the given principal as requested and do
      *    not later switch the collection's default/primary to it
+     *  - use the given ccache
      *  - use the default cache, possibly a new unique one that later gets
      *    switched to it
      *
@@ -1821,17 +1823,14 @@ main(int argc, char **argv)
      * the default, or use a subsidiary ccache named after the principal whose
      * creds we're initializing.
      */
-    if (cred_cache) {
-        /* Use the given ccache */
-	ret = krb5_cc_resolve(context, cred_cache, &ccache);
-    } else if (argc > 1) {
+    if (argc > 1) {
         char s[1024];
 
         /*
          * A command was given, so use a new unique ccache (and destroy it
          * later).
          */
-        ret = krb5_cc_new_unique(context, NULL, NULL, &ccache);
+        ret = krb5_cc_new_unique(context, cred_cache, NULL, &ccache);
         if (ret)
             krb5_err(context, 1, ret, "creating cred cache");
         snprintf(s, sizeof(s), "%s:%s",
@@ -1844,6 +1843,9 @@ main(int argc, char **argv)
         ret = krb5_cc_default_for(context, principal, &ccache);
         if (switch_cache_flags == -1)
             switch_cache_flags = 0;
+    } else if (cred_cache) {
+        /* Use the given ccache */
+	ret = krb5_cc_resolve(context, cred_cache, &ccache);
     } else {
         ret = krb5_cc_cache_match(context, principal, &ccache);
         if (ret) {

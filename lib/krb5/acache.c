@@ -1123,6 +1123,7 @@ KRB5_LIB_VARIABLE const krb5_cc_ops krb5_acc_ops = {
     NULL,
     acc_get_name_2,
     acc_resolve_2,
+    NULL, /* acc_get_primary_name */
     acc_gen_new_2,
     0,
     ':',

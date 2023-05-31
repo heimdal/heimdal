@@ -95,6 +95,7 @@ EXPORTS
 	krb5_cc_destroy
 	krb5_cc_end_seq_get
 	krb5_cc_gen_new
+	krb5_cc_get_collection
 	krb5_cc_get_config
 	krb5_cc_get_friendly_name
 	krb5_cc_get_full_name

@@ -109,10 +109,6 @@ main(int argc, char **argv)
 
     setprogname(argv[0]);
 
-    ret = krb5_init_context(&context);
-    if (ret)
-	errx(1, "krb5_init_context failed: %d", ret);
-
     if (getarg(args, sizeof(args) / sizeof(args[0]), argc, argv, &optidx))
 	usage(1);
 
@@ -126,6 +122,12 @@ main(int argc, char **argv)
 
     argc -= optidx;
     argv += optidx;
+
+    ret = krb5_init_context(&context);
+    if (ret)
+	errx(1, "krb5_init_context failed: %d", ret);
+
+    (void) krb5_cc_set_default_name(context, cache_str);
 
     if (debug_flag) {
         ret = krb5_set_debug_dest(context, getprogname(), "STDERR");

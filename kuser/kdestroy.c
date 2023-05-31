@@ -98,6 +98,7 @@ main (int argc, char **argv)
     ret = krb5_init_context (&context);
     if (ret)
 	errx (1, "krb5_init_context failed: %d", ret);
+    (void) krb5_cc_set_default_name(context, cache);
 
     if (all_flag) {
 	krb5_cccol_cursor cursor;

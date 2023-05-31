@@ -221,6 +221,14 @@ If you want to change the type only use
 .Li default_cc_type .
 The string can contain variables that are expanded at runtime. See the TOKEN
 EXPANSION section.
+.It default_ccache_name_by_type = {
+.Bl -tag -width "xxx" -offset indent
+.It Va CACHETYPE = CACHENAME
+.It ...
+.It Li }
+.El
+For each listed credentials cache type override the hardcoded
+default cache name.
 .It Li default_file_cache_collections = Va FILE:/path/with/tokens ...
 This multi-valued parameter allows more than one path to be
 configured for the FILE credentials cache type to look in.  The FILE

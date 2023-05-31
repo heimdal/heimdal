@@ -1319,13 +1319,6 @@ krcc_gen_new_2(krb5_context context, const char *name, krb5_ccache *id)
 	if (ret)
 	    return ret;
     }
-    if (subsidiary_name != NULL) {
-	krb5_set_error_message(context, KRB5_DCC_CANNOT_CREATE,
-		N_("Can't create new subsidiary cache because default cache "
-		   "is already a subsidiary", ""));
-	ret = KRB5_DCC_CANNOT_CREATE;
-	goto cleanup;
-    }
 
     /* Make a unique keyring within the chosen collection. */
     ret = get_collection(context, anchor_name, collection_name, &collection_id);

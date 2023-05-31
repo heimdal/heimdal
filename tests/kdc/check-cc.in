@@ -96,11 +96,13 @@ kcmpid=`getpid kcm`
 HEIM_IPC_DIR=${objdir}
 export HEIM_IPC_DIR
 
-trap "kill -9 ${kdcpid}; echo signal killing kdc; exit 1;" EXIT
+trap "kill -9 ${kdcpid} ${kcmpid}; echo signal killing kdc and kcm; exit 1;" EXIT
 
 ec=0
 
-export KRB5CCNAME=SCC:${objdir}/sdb
+KRB5_CONFIG="${objdir}/krb5-cccol.conf"
+scc_cache=SCC:${objdir}/sdb
+export KRB5CCNAME=SCC
 
 ${kswitch} -p foo@${R} 2>/dev/null && ${kdestroy}
 ${kswitch} -p foo@${R} 2>/dev/null && ${kdestroy}
@@ -114,8 +116,8 @@ ${klist} -l | grep foo@ >/dev/null || { ec=1 ; eval "${testfailed}"; }
 ${kdestroy}
 
 echo "getting both tickets"; > messages.log
-${kinit} -c ${KRB5CCNAME}:1 foo@${R} || { ec=1 ; eval "${testfailed}"; }
-${kinit} -c ${KRB5CCNAME}:2 bar@${R} || { ec=1 ; eval "${testfailed}"; }
+${kinit} foo@${R} || { ec=1 ; eval "${testfailed}"; }
+${kinit} bar@${R} || { ec=1 ; eval "${testfailed}"; }
 echo "switch foo"
 ${kswitch} -p foo@${R} || { ec=1 ; eval "${testfailed}"; }
 ${klist} | head -2 | grep foo@ >/dev/null || { ec=1 ; eval "${testfailed}"; }
@@ -144,6 +146,7 @@ echo "getting tickets (KCM)"; > messages.log
 KRB5_CONFIG="${objdir}/krb5-kcm.conf"
 export KRB5_CONFIG
 unset KRB5CCNAME
+export KRB5CCNAME=KCM
 ${kinit} --default-for-principal foo@${R}
 ${kinit} --default-for-principal bar@${R}
 ${kinit} bar@${R}
@@ -178,19 +181,28 @@ ${kdestroy} -A
 echo "getting tickets (DIR)"; > messages.log
 KRB5_CONFIG="${objdir}/krb5-cccol.conf"
 export KRB5_CONFIG
-unset KRB5CCNAME
+export KRB5CCNAME=DIR
 rm -rf ${objdir}/kt ${objdir}/cc_dir
 mkdir ${objdir}/cc_dir || { ec=1 ; eval "${testfailed}"; }
+${kinit} foo@${R} || { ec=1 ; eval "${testfailed}"; }
+${kinit} bar@${R} || { ec=1 ; eval "${testfailed}"; }
 ${kinit} --default-for-principal foo@${R} || { ec=1 ; eval "${testfailed}"; }
-${kinit} --default-for-principal --no-change-default bar@${R} || { ec=1 ; eval "${testfailed}"; }
+${kinit} --default-for-principal bar@${R} || { ec=1 ; eval "${testfailed}"; }
+[ -s ${objdir}/cc_dir/primary ] || { ec=1 ; eval "${testfailed}"; }
 primary=`cat ${objdir}/cc_dir/primary`
-[ "x$primary" = xtkt.foo@${R} ] || { ec=1 ; eval "${testfailed}"; }
+[ -s ${objdir}/cc_dir/$primary ] || { ec=1 ; eval "${testfailed}"; }
 ${klist} -l |
-    grep "foo@TEST.H5L.SE.*FILE:${objdir}/cc_dir/tkt.foo@TEST.H5L.SE" > /dev/null ||
+    grep "foo@TEST.H5L.SE.*DIR::${objdir}/cc_dir/tktfoo@TEST.H5L.SE" > /dev/null ||
     { ec=1 ; eval "${testfailed}"; }
 ${klist} -l |
-    grep "bar@TEST.H5L.SE.*FILE:${objdir}/cc_dir/tkt.bar@TEST.H5L.SE" > /dev/null ||
+    grep "bar@TEST.H5L.SE.*DIR::${objdir}/cc_dir/tktbar@TEST.H5L.SE" > /dev/null ||
     { ec=1 ; eval "${testfailed}"; }
+${kswitch} -p foo@${R} 2>/dev/null || { ec=1 ; eval "${testfailed}"; }
+primary=`cat ${objdir}/cc_dir/primary`
+[ "x$primary" = xtktfoo@${R} ] || { ec=1 ; eval "${testfailed}"; }
+${kswitch} -p bar@${R} 2>/dev/null || { ec=1 ; eval "${testfailed}"; }
+primary=`cat ${objdir}/cc_dir/primary`
+[ "x$primary" = xtktbar@${R} ] || { ec=1 ; eval "${testfailed}"; }
 
 echo "killing kcm (${kcmpid})"
 sh ${leaks_kill} kcm $kcmpid || exit 1

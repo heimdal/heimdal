@@ -133,13 +133,21 @@ kswitch(struct kswitch_options *opt, int argc, char **argv)
 	free(ids);
     } else if (opt->principal_string) {
 	krb5_principal p;
+        time_t ttl;
 
 	ret = krb5_parse_name(heimtools_context, opt->principal_string, &p);
 	if (ret)
 	    krb5_err(heimtools_context, 1, ret, "krb5_parse_name: %s",
 		     opt->principal_string);
 
-	ret = krb5_cc_cache_match(heimtools_context, p, &id);
+	ret = krb5_cc_default_for(heimtools_context, p, &id);
+        if (ret == 0) {
+            ret = krb5_cc_get_lifetime(heimtools_context, id, &ttl);
+            if (ret || ttl < 300)
+                ret = 1;
+        }
+        if (ret)
+            ret = krb5_cc_cache_match(heimtools_context, p, &id);
 	if (ret)
 	    krb5_err(heimtools_context, 1, ret,
 		     N_("Did not find principal: %s", ""),

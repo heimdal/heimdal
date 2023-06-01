@@ -298,7 +298,6 @@ get_default_cc_type(krb5_context context, int configured_default_only)
 {
     const char *def_ccname;
     const char *def_cctype;
-    const char *def_cccol;
     const krb5_cc_ops *ops;
 
     if (!configured_default_only &&
@@ -308,17 +307,9 @@ get_default_cc_type(krb5_context context, int configured_default_only)
 	    return ops->prefix;
     }
 
-    def_cctype = krb5_config_get_string_default(context, NULL,
-                                                secure_getenv("KRB5CCTYPE"),
-                                                "libdefaults",
-                                                "default_cc_type", NULL);
-    def_cccol = krb5_config_get_string(context, NULL, "libdefaults",
-                                       "default_cc_collection", NULL);
-    if (!def_cctype && def_cccol) {
-	ops = cc_get_prefix_ops(context, def_cccol, NULL);
-	if (ops)
-	    return ops->prefix;
-    }
+    def_cctype = krb5_config_get_string(context, NULL,
+                                        "libdefaults",
+                                        "default_cc_type", NULL);
 #ifdef _WIN32
     if (def_cctype == NULL)
 	def_cctype = get_default_cc_type_win32(context);

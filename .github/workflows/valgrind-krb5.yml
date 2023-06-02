@@ -56,6 +56,7 @@ jobs:
                 (cd lib/krb5 && make check-valgrind)
                 (cd tests && make check-valgrind)
             - name: Valgrind output
+              if: true
               run: |
                 find . -name \*.log -print0|xargs -0 grep '^==[0-9]*== ' || true
             - name: Test logs

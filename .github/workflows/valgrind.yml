@@ -17,11 +17,11 @@ jobs:
         strategy:
             fail-fast: false
             matrix:
-                name: [linux-clang]
+                name: [linux-gcc]
                 include:
-                    - name: linux-clang
+                    - name: linux-gcc
                       os: ubuntu-22.04
-                      compiler: clang
+                      compiler: gcc
         steps:
             - name: Clone repository
               uses: actions/checkout@v1

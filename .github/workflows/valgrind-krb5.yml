@@ -1,10 +1,10 @@
-name: Linux Valgrind Tests Build
+name: Linux Valgrind Kerberos Tests Build
 
 on:
     push:
       # Pushes to the valgrind branch get the valgrind treatment
       branches:
-         - 'valgrind-all-*'
+         - 'valgrind-krb5-*'
 
     pull_request:
       # Changing this build also gets it to run
@@ -52,7 +52,9 @@ jobs:
               run: |
                 cd build
                 ulimit -c unlimited
-                make check-valgrind
+                make check
+                (cd lib/krb5 && make check-valgrind)
+                (cd tests && make check-valgrind)
             - name: Valgrind output
               run: |
                 find . -name \*.log -print0|xargs -0 grep '^==[0-9]*== ' || true

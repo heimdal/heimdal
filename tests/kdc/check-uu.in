@@ -89,7 +89,7 @@ echo Starting kdc ; > messages.log
 ${kdc} --detach --testing || { echo "kdc failed to start"; cat messages.log; exit 1; }
 kdcpid=`getpid kdc`
 
-trap "kill -9 ${kdcpid} ${uuspid}; echo signal killing kdc; exit 1;" EXIT
+trap "kill -9 ${kdcpid} ${uuspid}; echo signal killing kdc; exit 1;" EXIT INT TERM HUP
 
 ec=0
 
@@ -126,6 +126,6 @@ echo "killing kdc uu_server (${kdcpid} ${uuspid})"
 sh ${leaks_kill} kdc $kdcpid || exit 1
 
 
-trap "" EXIT
+trap "" EXIT INT TERM HUP
 
 exit $ec

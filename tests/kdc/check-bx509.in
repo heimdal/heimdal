@@ -118,7 +118,7 @@ mkdir -p authz_dir
 kdcpid=
 bx509pid=
 test_csr_authorizer_pid=
-trap 'kill -9 ${kdcpid} ${bx509pid} ${test_csr_authorizer_pid}; echo signal killing kdc, bx509d, and test_csr_authorizer; exit 1;' EXIT
+trap 'kill -9 ${kdcpid} ${bx509pid} ${test_csr_authorizer_pid}; echo signal killing kdc, bx509d, and test_csr_authorizer; exit 1;' EXIT INT TERM HUP
 
 # csr_grant ext-type value grantee_principal
 csr_grant() {
@@ -395,14 +395,14 @@ $hxtool acert --expr="%{certificate.subject} == \"OU=Users,CN=KDC,$DCs\""   \
 if ! which curl; then
     echo "curl is not available -- not testing bx509d"
     sh ${leaks_kill} test_csr_authorizer $test_csr_authorizer_pid || ec=1
-    trap '' EXIT
+    trap '' EXIT INT TERM HUP
     exit 77
 fi
 
 if ! test -x ${objdir}/../../kdc/bx509d; then
     echo "Configured w/o libmicrohttpd -- not testing bx509d"
     sh ${leaks_kill} test_csr_authorizer $test_csr_authorizer_pid || ec=1
-    trap '' EXIT
+    trap '' EXIT INT TERM HUP
     exit 77
 fi
 
@@ -1076,6 +1076,6 @@ sh ${leaks_kill} kdc $kdcpid || ec=1
 sh ${leaks_kill} bx509d $bx509pid || ec=1
 sh ${leaks_kill} test_csr_authorizer $test_csr_authorizer_pid || ec=1
 
-trap "" EXIT
+trap "" EXIT INT TERM HUP
 
 exit $ec

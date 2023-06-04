@@ -378,7 +378,7 @@ env ${HEIM_MALLOC_DEBUG} ${kpasswdd} --detach ||
 kpasswddpid=`getpid kpasswdd`
 
 
-trap "kill -9 ${kdcpid} ${kpasswddpid}; echo signal killing kdc kpasswdd; exit 1;" EXIT
+trap "kill -9 ${kdcpid} ${kpasswddpid}; echo signal killing kdc kpasswdd; exit 1;" EXIT INT TERM HUP
 
 ec=0
 
@@ -1092,6 +1092,6 @@ echo "killing kdc (${kdcpid}) kpasswdd (${kpasswddpid})"
 sh ${leaks_kill} kdc $kdcpid || exit 1
 sh ${leaks_kill} kpasswdd $kpasswddpid || exit 1
 
-trap "" EXIT
+trap "" EXIT INT TERM HUP
 
 exit $ec

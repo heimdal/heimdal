@@ -111,7 +111,7 @@ echo Starting kdc
 ${kdc} --detach --testing || { echo "kdc failed to start"; cat messages.log; exit 1; }
 kdcpid=`getpid kdc`
 
-trap "kill ${kdcpid}; echo signal killing kdc; exit 1;" EXIT
+trap "kill ${kdcpid}; echo signal killing kdc; exit 1;" EXIT INT TERM HUP
 
 ec=0
 
@@ -169,6 +169,6 @@ ${test_apreq} bar@${R2} ${keytab} ${cache} 2> /dev/null && \
 echo "killing kdc (${kdcpid})"
 kill $kdcpid || exit 1
 
-trap "" EXIT
+trap "" EXIT INT TERM HUP
 
 exit $ec

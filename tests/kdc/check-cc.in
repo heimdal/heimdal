@@ -96,7 +96,7 @@ kcmpid=`getpid kcm`
 HEIM_IPC_DIR=${objdir}
 export HEIM_IPC_DIR
 
-trap "kill -9 ${kdcpid} ${kcmpid}; echo signal killing kdc and kcm; exit 1;" EXIT
+trap "kill -9 ${kdcpid} ${kcmpid}; echo signal killing kdc and kcm; exit 1;" EXIT INT TERM HUP
 
 ec=0
 
@@ -210,6 +210,6 @@ sh ${leaks_kill} kcm $kcmpid || exit 1
 echo "killing kdc (${kdcpid})"
 sh ${leaks_kill} kdc $kdcpid || exit 1
 
-trap "" EXIT
+trap "" EXIT INT TERM HUP
 
 exit $ec

@@ -96,7 +96,7 @@ echo Starting kdc
 ${kdc} --detach --testing || { echo "kdc failed to start"; cat messages.log; exit 1; }
 kdcpid=`getpid kdc`
 
-trap "kill -9 ${kdcpid}; echo signal killing kdc; exit 1;" EXIT
+trap "kill -9 ${kdcpid}; echo signal killing kdc; exit 1;" EXIT INT TERM HUP
 
 exitcode=0
 
@@ -115,7 +115,7 @@ echo "Starting client 3"
 ${gssmaskn3} --moniker=n3 &
 n3pid=$!
 
-trap "kill ${kdcpid} ${n1pid} ${n2pid} ${n3pid} 2> /dev/null; echo signal killing kdc and maskar; exit 1;" EXIT
+trap "kill ${kdcpid} ${n1pid} ${n2pid} ${n3pid} 2> /dev/null; echo signal killing kdc and maskar; exit 1;" EXIT INT TERM HUP
 
 sleep 10
 
@@ -127,7 +127,7 @@ ${gssmaestro} \
     --slaves=localhost:8891 \
     --principals=user1@${R}:u1 || exitcode=1
 
-trap "" EXIT
+trap "" EXIT INT TERM HUP
 
 echo "killing kdc and clients (${kdcpid}, ${n1pid}, ${n2pid}, ${n3pid})"
 kill ${kdcpid} ${n1pid} ${n2pid} ${n3pid} 2> /dev/null

@@ -93,7 +93,7 @@ echo Starting kdc
 ${kdc} --detach --testing || { echo "kdc failed to start"; cat messages.log; exit 1; }
 kdcpid=`getpid kdc`
 
-trap "kill -9 ${kdcpid}; echo signal killing kdc; exit 1;" EXIT
+trap "kill -9 ${kdcpid}; echo signal killing kdc; exit 1;" EXIT INT TERM HUP
 
 echo "Run init"
 java \
@@ -121,7 +121,7 @@ if false ; then
     javapid=$!
     sleep 5
     
-    trap "kill -9 ${kdcpid} ${javapid}; echo signal killing kdc java; exit 1;" EXIT
+    trap "kill -9 ${kdcpid} ${javapid}; echo signal killing kdc java; exit 1;" EXIT INT TERM HUP
     
     echo "Getting client initial tickets"; > messages.log
     ${kinit} --password-file=${objdir}/foopassword lha@$R || \
@@ -142,6 +142,6 @@ echo "Done"
 echo "killing kdc (${kdcpid} ${javapid})"
 kill $kdcpid $javapid || exit 1
 
-trap "" EXIT
+trap "" EXIT INT TERM HUP
 
 exit 0

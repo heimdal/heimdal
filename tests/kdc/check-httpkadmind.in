@@ -225,7 +225,7 @@ cleanup() {
     test -n "$kadmind2pid" &&
         { echo signal killing kadmind; kill -9 "$kadmind2pid"; }
 }
-trap cleanup EXIT
+trap cleanup EXIT INT TERM HUP
 
 rm -f extracted_keytab
 
@@ -829,7 +829,7 @@ sh ${leaks_kill} kadmind $kadmind2pid || ec=1
 sh ${leaks_kill} kdc $kdcpid || ec=1
 
 if [ $ec = 0 ]; then
-    trap "" EXIT
+    trap "" EXIT INT TERM HUP
     echo "Success"
 fi
 

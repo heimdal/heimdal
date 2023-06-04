@@ -110,7 +110,7 @@ echo Starting kdc
 ${kdc} --detach --testing || { echo "kdc failed to start"; cat messages.log; exit 1; }
 kdcpid=`getpid kdc`
 
-trap "kill -9 ${kdcpid}; echo signal killing kdc; exit 1;" EXIT
+trap "kill -9 ${kdcpid}; echo signal killing kdc; exit 1;" EXIT INT TERM HUP
 
 exitcode=0
 
@@ -158,7 +158,7 @@ ${context} --mech-type=ntlm \
         host@host.test.h5l.se || \
         { exitcode=1 ; echo "test failed"; }
 
-trap "" EXIT
+trap "" EXIT INT TERM HUP
 
 echo "killing kdc (${kdcpid})"
 kill ${kdcpid} 2> /dev/null

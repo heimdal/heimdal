@@ -97,7 +97,7 @@ echo Starting kdc
 ${kdc} --detach --testing || { echo "kdc failed to start"; cat messages.log; exit 1; }
 kdcpid=`getpid kdc`
 
-trap "kill -9 ${kdcpid}; echo signal killing kdc; cat messages.log; exit 1;" EXIT
+trap "kill -9 ${kdcpid}; echo signal killing kdc; cat messages.log; exit 1;" EXIT INT TERM HUP
 
 exitcode=0
 
@@ -211,7 +211,7 @@ ${acquire_cred} \
     --ccache=${cache} \
     --acquire-name=host@host.test.h5l.se 2>/dev/null || exit 1
 
-trap "" EXIT
+trap "" EXIT INT TERM HUP
 
 echo "killing kdc (${kdcpid})"
 kill ${kdcpid} 2> /dev/null

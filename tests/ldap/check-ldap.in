@@ -91,7 +91,7 @@ done
 
 sh ${objdir}/slapd-init || exit 1
 
-trap "sh ${srcdir}/slapd-stop ; exit 1;" EXIT
+trap "sh ${srcdir}/slapd-stop ; exit 1;" EXIT INT TERM HUP
 
 rm -f current-db*
 
@@ -123,7 +123,7 @@ echo Starting kdc
 ${kdc} --detach --testing || { echo "kdc failed to start"; cat messages.log; exit 1; }
 kdcpid=`getpid kdc`
 
-trap "kill ${kdcpid}; echo signal killing kdc; sh ${srcdir}/slapd-stop ; exit 1;" EXIT
+trap "kill ${kdcpid}; echo signal killing kdc; sh ${srcdir}/slapd-stop ; exit 1;" EXIT INT TERM HUP
 
 ec=0
 
@@ -143,7 +143,7 @@ ${kinit} --password-file=${objdir}/foopassword '*'@$R 2>/dev/null && \
 echo "killing kdc (${kdcpid})"
 kill $kdcpid || exit 1
 
-trap "" EXIT
+trap "" EXIT INT TERM HUP
 
 # kill of old slapd
 sh ${srcdir}/slapd-stop

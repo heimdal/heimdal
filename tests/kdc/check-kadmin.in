@@ -105,7 +105,7 @@ ${kadmind} --detach --list-chunk-size=1 \
     || { echo "kadmind failed to start"; cat messages.log; exit 1; }
 kadmpid=`getpid kadmind`
 
-trap "kill -9 ${kdcpid} ${kadmpid}" EXIT
+trap "kill -9 ${kdcpid} ${kadmpid}" EXIT INT TERM HUP
 
 #----------------------------------
 echo "kinit (no admin); test mod --alias authorization"
@@ -451,6 +451,6 @@ echo "killing kdc (${kdcpid} ${kadmpid})"
 sh ${leaks_kill} kdc $kdcpid || exit 1
 sh ${leaks_kill} kadmind $kadmpid || exit 1
 
-trap "" EXIT
+trap "" EXIT INT TERM HUP
 
 exit $ec

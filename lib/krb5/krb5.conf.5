@@ -828,6 +828,11 @@ addresses in the tickets.
 .It Li allow-null-ticket-addresses = Va BOOL
 Allow address-less tickets.
 .\" XXX
+.It Li disable_pac = Va BOOL
+Do not include a PAC in service tickets.
+However, if a service has the
+.Li auth-data-reqd
+attribute then the KDC will include a PAC anyways.
 .It Li enable_fast = Va BOOL
 Enable RFC 6113 FAST support, this is enabled by default.
 .It Li enable_armored_pa_enc_timestamp = Va BOOL

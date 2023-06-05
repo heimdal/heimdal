@@ -100,6 +100,7 @@ struct krb5_kdc_configuration {
     enum krb5_kdc_trpolicy trpolicy;
 
     unsigned int require_pac : 1;
+    unsigned int disable_pac : 1;
     unsigned int enable_fast : 1;
     unsigned int enable_armored_pa_enc_timestamp : 1;
     unsigned int enable_unarmored_pa_enc_timestamp : 1;

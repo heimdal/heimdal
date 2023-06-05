@@ -101,6 +101,7 @@ krb5_kdc_get_config(krb5_context context, krb5_kdc_configuration **config)
     c->strict_nametypes = FALSE;
     c->trpolicy = TRPOLICY_ALWAYS_CHECK;
     c->require_pac = FALSE;
+    c->disable_pac = FALSE;
     c->enable_fast = TRUE;
     c->enable_armored_pa_enc_timestamp = TRUE;
     c->enable_unarmored_pa_enc_timestamp = TRUE;
@@ -261,6 +262,14 @@ krb5_kdc_get_config(krb5_context context, krb5_kdc_configuration **config)
 				     c->require_pac,
 				     "kdc",
 				     "require_pac",
+				     NULL);
+
+    c->disable_pac =
+	krb5_config_get_bool_default(context,
+				     NULL,
+				     c->disable_pac,
+				     "kdc",
+				     "disable_pac",
 				     NULL);
 
     c->enable_fast =

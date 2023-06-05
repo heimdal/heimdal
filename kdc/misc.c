@@ -348,6 +348,10 @@ _kdc_include_pac_p(astgs_request_t r)
     }
     if (r->server->flags.no_auth_data_reqd)
 	return FALSE;
+    if (r->server->flags.auth_data_reqd)
+	return TRUE;
+    if (r->config->disable_pac)
+        return FALSE;
 
     return !!(r->pac_attributes & (KRB5_PAC_WAS_REQUESTED | KRB5_PAC_WAS_GIVEN_IMPLICITLY));
 }

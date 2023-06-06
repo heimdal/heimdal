@@ -161,6 +161,8 @@ command = {
 		type = "flag"
 		help = "interactive selection"
 	}
+	min_args = "0"
+        argument = "[cmd [args]]"
 };
 command = {
 	name = "kvno"

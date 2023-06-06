@@ -44,6 +44,8 @@ RCSID("$Id$");
 #define KCMCACHE(X)	((kcm_ccache)(X)->data.data)
 #define CACHENAME(X)	(KCMCACHE(X)->name)
 
+/* XXX Need CALLCONV all over if kcm is to build on Windows */
+
 static krb5_error_code
 kcmss_get_name_2(krb5_context context,
 	         krb5_ccache id,
@@ -258,8 +260,14 @@ kcmss_get_version(krb5_context context,
     return 0;
 }
 
+static void
+kcmss_xfree(void *p)
+{
+    free(p);
+}
+
 static const krb5_cc_ops krb5_kcmss_ops = {
-    KRB5_CC_OPS_VERSION_5,
+    KRB5_CC_OPS_VERSION_6,
     "KCM",
     NULL,
     NULL,
@@ -287,11 +295,13 @@ static const krb5_cc_ops krb5_kcmss_ops = {
     NULL,
     kcmss_get_name_2,
     kcmss_resolve_2,
-    NULL,
-    NULL,
-    0,
-    '\0',
-    ':'
+    NULL, /* kcmss_get_primary_name */
+    NULL, /* kcmss_gen_new_2 */
+    NULL, /* kcmss_get_cache_first_2 */
+    kcmss_xfree,
+    ':',  /* subsep */
+    0,    /* filepath */
+    0,    /* use_last_subsep */
 };
 
 krb5_error_code

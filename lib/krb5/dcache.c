@@ -52,10 +52,10 @@ static krb5_error_code KRB5_CALLCONV dcc_get_default_name(krb5_context, char **)
 static krb5_error_code KRB5_CALLCONV dcc_set_default(krb5_context, krb5_ccache);
 
 static char *
-primary_create(krb5_dcache *dc)
+primary_format(const char *dir)
 {
     char *primary = NULL;
-    int asprintf_ret = asprintf(&primary, "%s/primary", dc->dir);
+    int asprintf_ret = asprintf(&primary, "%s/primary", dir);
     if (asprintf_ret == -1 || primary == NULL) {
 	return NULL;
     }
@@ -117,7 +117,7 @@ set_default_cache(krb5_context context, krb5_dcache *dc, const char *sub)
 	goto out;
     }
     
-    primary = primary_create(dc);
+    primary = primary_format(dc->dir);
     if (primary == NULL) {
 	ret = krb5_enomem(context);
 	goto out;
@@ -146,16 +146,19 @@ set_default_cache(krb5_context context, krb5_dcache *dc, const char *sub)
 }
 
 static krb5_error_code
-get_default_cache(krb5_context context, krb5_dcache *dc, char **residual)
+get_default_cache(krb5_context context,
+                  const char *dir,
+                  int include_tkt_prefix,
+                  char **subsidiary)
 {
     krb5_error_code ret;
     char buf[MAXPATHLEN];
     char *primary = NULL;
     FILE *f;
 
-    *residual = NULL;
+    *subsidiary = NULL;
 
-    primary = primary_create(dc);
+    primary = primary_format(dir);
     if (primary == NULL)
 	return krb5_enomem(context);
 
@@ -163,8 +166,8 @@ get_default_cache(krb5_context context, krb5_dcache *dc, char **residual)
     if (f == NULL) {
 	if (errno == ENOENT) {
 	    free(primary);
-	    *residual = strdup("tkt");
-	    if (*residual == NULL)
+	    *subsidiary = strdup(&"tkt"[include_tkt_prefix ? 0 : sizeof("tkt") - 1]);
+	    if (*subsidiary == NULL)
 		return krb5_enomem(context);
 	    return 0;
 	}
@@ -194,8 +197,8 @@ get_default_cache(krb5_context context, krb5_dcache *dc, char **residual)
 
     free(primary);
 
-    *residual = strdup(buf);
-    if (*residual == NULL)
+    *subsidiary = strdup(buf + (include_tkt_prefix ? 0 : sizeof("tkt") - 1));
+    if (*subsidiary == NULL)
 	return krb5_enomem(context);
 
     return 0;
@@ -448,7 +451,7 @@ dcc_resolve_2(krb5_context context,
     } else {
         char *freeme3;
 
-        if ((ret = get_default_cache(context, dc, &freeme3)))
+        if ((ret = get_default_cache(context, dc->dir, 1, &freeme3)))
             goto err;
         if (strncmp(freeme3, "tkt", sizeof("tkt") - 1) == 0)
             dc->sub = strdup(freeme3 + sizeof("tkt") - 1);
@@ -544,7 +547,7 @@ dcc_close(krb5_context context,
      */
     if (dc->default_candidate && D2FCACHE(dc) &&
         krb5_cc_get_principal(context, D2FCACHE(dc), &p) == 0 &&
-        (primary = primary_create(dc)) &&
+        (primary = primary_format(dc->dir)) &&
         (stat(primary, &st) == -1 || !S_ISREG(st.st_mode) || st.st_size == 0))
         dcc_set_default(context, id);
     krb5_free_principal(context, p);
@@ -645,23 +648,28 @@ struct dcache_iter {
 };
 
 static krb5_error_code KRB5_CALLCONV
-dcc_get_cache_first(krb5_context context, krb5_cc_cursor *cursor)
+dcc_get_cache_first_2(krb5_context context,
+                      const char *name,
+                      krb5_cc_cursor *cursor)
 {
     struct dcache_iter *iter = NULL;
     krb5_error_code ret;
-    char *name = NULL;
     size_t len;
+    char *freeme1 = NULL;
     char *p;
 
     *cursor = NULL;
 
-    if ((ret = dcc_get_default_name(context, &name)))
-        return ret;
+    if (name == NULL) {
+        if ((ret = dcc_get_default_name(context, &freeme1)))
+            return ret;
+        name = freeme1;
+    }
 
     if (strncmp(name, "DIR:", sizeof("DIR:") - 1) != 0) {
 	krb5_set_error_message(context, KRB5_CC_FORMAT,
 			       N_("Can't list DIR caches unless its the default type", ""));
-        free(name);
+        free(freeme1);
 	return KRB5_CC_FORMAT;
     }
 
@@ -671,7 +679,7 @@ dcc_get_cache_first(krb5_context context, krb5_cc_cursor *cursor)
         if (iter)
             free(iter->dc);
         free(iter);
-        free(name);
+        free(freeme1);
 	return krb5_enomem(context);
     }
     iter->first = 1;
@@ -697,12 +705,12 @@ dcc_get_cache_first(krb5_context context, krb5_cc_cursor *cursor)
         free(iter->dc->dir);
         free(iter->dc);
         free(iter);
-        free(name);
+        free(freeme1);
 	return KRB5_CC_FORMAT;
     }
 
     *cursor = iter;
-    free(name);
+    free(freeme1);
     return 0;
 }
 
@@ -721,7 +729,7 @@ dcc_get_cache_next(krb5_context context, krb5_cc_cursor cursor, krb5_ccache *id)
 
     /* Emit primary subsidiary first */
     if (iter->first &&
-        get_default_cache(context, iter->dc, &iter->primary) == 0 &&
+        get_default_cache(context, iter->dc->dir, 1, &iter->primary) == 0 &&
         iter->primary && is_filename_cacheish(iter->primary)) {
         iter->first = 0;
         ret = KRB5_CC_END;
@@ -809,6 +817,17 @@ dcc_set_default(krb5_context context, krb5_ccache id)
 }
 
 static krb5_error_code KRB5_CALLCONV
+dcc_get_primary_name(krb5_context context,
+                     const char *collection,
+                     char **primaryp)
+{
+    if (strncmp(collection, "DIR:", sizeof("DIR:") - 1) != 0)
+        return EINVAL; /* XXX */
+    return get_default_cache(context, collection + sizeof("DIR:") - 1,
+                             0, primaryp);
+}
+
+static krb5_error_code KRB5_CALLCONV
 dcc_lastchange(krb5_context context, krb5_ccache id, krb5_timestamp *mtime)
 {
     krb5_dcache *dc = DCACHE(id);
@@ -829,6 +848,12 @@ dcc_get_kdc_offset(krb5_context context, krb5_ccache id, krb5_deltat *kdc_offset
     return krb5_cc_get_kdc_offset(context, D2FCACHE(dc), kdc_offset);
 }
 
+static void KRB5_CALLCONV
+dcc_xfree(void *p)
+{
+    krb5_xfree(p);
+}
+
 
 /**
  * Variable containing the DIR based credential cache implemention.
@@ -837,7 +862,7 @@ dcc_get_kdc_offset(krb5_context context, krb5_ccache id, krb5_deltat *kdc_offset
  */
 
 KRB5_LIB_VARIABLE const krb5_cc_ops krb5_dcc_ops = {
-    KRB5_CC_OPS_VERSION_5,
+    KRB5_CC_OPS_VERSION_6,
     "DIR",
     NULL,
     NULL,
@@ -854,7 +879,7 @@ KRB5_LIB_VARIABLE const krb5_cc_ops krb5_dcc_ops = {
     dcc_remove_cred,
     dcc_set_flags,
     dcc_get_version,
-    dcc_get_cache_first,
+    NULL, /* dcc_get_cache_first */
     dcc_get_cache_next,
     dcc_end_cache_get,
     dcc_move,
@@ -865,9 +890,11 @@ KRB5_LIB_VARIABLE const krb5_cc_ops krb5_dcc_ops = {
     dcc_get_kdc_offset,
     dcc_get_name_2,
     dcc_resolve_2,
-    NULL, /* dcc_get_primary_name */
+    dcc_get_primary_name,
     dcc_gen_new_2,
-    1,
-    '\0',
-    ':',
+    dcc_get_cache_first_2,
+    dcc_xfree,
+    ':',  /* subsep */
+    1,    /* filepath */
+    0,    /* use_last_subsep */
 };

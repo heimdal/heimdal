@@ -38,6 +38,7 @@
 #include <sqlite3.h>
 
 typedef struct krb5_scache {
+    char *fullname; /* SCC:path:cache */
     char *dname;    /* Collection (directory) name */
     char *file;     /* File name (collection + "/scc") */
     char *name;     /* Collection + subsidiary */
@@ -58,6 +59,7 @@ typedef struct krb5_scache {
     sqlite3_stmt *scache;
     sqlite3_stmt *scache_name;
     sqlite3_stmt *umaster;
+    sqlite3_stmt *smaster;
 
 } krb5_scache;
 
@@ -72,10 +74,10 @@ typedef struct krb5_scache {
  * mkdir(2) and the correct permissions.
  */
 
-#define SCACHE_DEF_NAME		"Default-cache"
+#define SCACHE_DEF_NAME		""
 #define KRB5_SCACHE_DIR		"%{TEMP}/krb5scc_%{uid}"
 #define KRB5_SCACHE_DB		KRB5_SCACHE_DIR
-#define KRB5_SCACHE_NAME	("SCC:"   KRB5_SCACHE_DB ":" SCACHE_DEF_NAME)
+#define KRB5_SCACHE_NAME	("SCC:"   KRB5_SCACHE_DB)
 
 #define SCACHE_INVALID_CID	((sqlite_uint64)-1)
 
@@ -112,8 +114,16 @@ typedef struct krb5_scache {
 	"CREATE TABLE IF NOT EXISTS caches ("	                \
 	"principal TEXT, "			                \
 	"name TEXT NOT NULL PRIMARY KEY, "                      \
-        "created_at INTEGER NOT NULL DEFAULT (unixepoch())"     \
+        "created_at INTEGER NOT NULL DEFAULT (unixepoch()), "   \
+        "kdc_offset INTEGER NOT NULL DEFAULT (0)"               \
 	") WITHOUT ROWID"
+
+#define SQL_SMASTER                                     \
+        "SELECT coalesce(defaultcache,"                 \
+                       " (SELECT name FROM caches "     \
+                         "ORDER BY created_at DESC "    \
+                         "LIMIT 1)) "                   \
+        "FROM master WHERE oid = 1"
 
         /*
          * The `cred' BLOB will have a serialized krb5_creds value, so it will
@@ -140,6 +150,7 @@ typedef struct krb5_scache {
                    "ON DELETE CASCADE "                         \
                    "ON UPDATE CASCADE, "                        \
         "service TEXT NOT NULL, "                               \
+        "service_no_realm TEXT NOT NULL, "                      \
 	"kvno INTEGER, "		                        \
 	"ticketetype INTEGER, "	                                \
 	"sessionetype INTEGER, "	                        \
@@ -158,12 +169,13 @@ typedef struct krb5_scache {
         "INSERT OR IGNORE INTO credentials "            \
            "(cache_name, kvno, ticketetype, "           \
             "sessionetype, ticketflags, cred, "         \
-            "service, authtime, starttime, endtime, "   \
-            "renew_till) "                              \
+            "service, service_no_realm, authtime, "     \
+            "starttime, endtime, renew_till)"           \
         "SELECT :cache_name, :kvno, :ticketetype, "     \
                ":sessionetype, :ticketflags, :cred, "   \
-               ":service, :authtime, :starttime, "      \
-               ":endtime, :renew_till"
+               ":service, :service_no_realm, "          \
+               ":authtime, :starttime, :endtime, "      \
+               ":renew_till"
 
 #define SQL_ICACHE "INSERT INTO caches (name) VALUES(?)"
 #define SQL_ICACHE_PRINCIPAL                    \
@@ -194,9 +206,13 @@ typedef struct krb5_scache {
 	"CREATE INDEX IF NOT EXISTS principals "        \
         "ON caches (principal)"
 
-#define SQL_CCREDSBYPRINC ""			        \
-	"CREATE INDEX IF NOT EXISTS credentials_by_service "    \
+#define SQL_CCREDSBYPRINC ""			                \
+	"CREATE INDEX IF NOT EXISTS credentials_by_svc "        \
         "ON credentials (service)"
+
+#define SQL_CCREDSBYPRINC_NO_REALM ""			                \
+	"CREATE INDEX IF NOT EXISTS credentials_by_svc_no_realm "       \
+        "ON credentials (service_no_realm)"
 
 /*
  * sqlite destructors
@@ -227,6 +243,8 @@ scc_free(krb5_scache *s)
 	free(s->name);
     if (s->dname)
 	free(s->dname);
+    if (s->fullname)
+	free(s->fullname);
 
     if (s->icred)
 	sqlite3_finalize(s->icred);
@@ -254,6 +272,8 @@ scc_free(krb5_scache *s)
 	sqlite3_finalize(s->scache_name);
     if (s->umaster)
 	sqlite3_finalize(s->umaster);
+    if (s->smaster)
+	sqlite3_finalize(s->smaster);
 
     if (s->db)
 	sqlite3_close(s->db);
@@ -439,70 +459,29 @@ default_db(krb5_context context,
     return ret;
 }
 
-static krb5_error_code
-get_def_name(krb5_context context, const char *dname, char **str)
-{
-    krb5_error_code ret;
-    sqlite3_stmt *stmt;
-    const char *name = NULL;
-    sqlite3 *db;
-
-    ret = default_db(context, dname, &db, NULL, NULL);
-    if (ret)
-	return ret;
-
-    ret = prepare_stmt(context, db, &stmt, "SELECT defaultcache FROM master");
-    if (ret) {
-	sqlite3_close(db);
-	return ret;
-    }
-
-    ret = sqlite3_step(stmt);
-    if (ret != SQLITE_ROW)
-	goto out;
-
-    if (sqlite3_column_type(stmt, 0) == SQLITE_NULL)
-        name = SCACHE_DEF_NAME;
-    else if (sqlite3_column_type(stmt, 0) == SQLITE_TEXT)
-        name = (const char *)sqlite3_column_text(stmt, 0);
-    else
-	goto out;
-
-    if (name == NULL)
-	goto out;
-
-    *str = strdup(name);
-    if (*str == NULL)
-	goto out;
-
-    sqlite3_finalize(stmt);
-    sqlite3_close(db);
-    return 0;
-out:
-    sqlite3_finalize(stmt);
-    sqlite3_close(db);
-    krb5_clear_error_message(context);
-    return ENOENT;
-}
-
 static krb5_error_code create_unique_cache(krb5_context,
                                            krb5_scache *,
                                            char **);
 
-static krb5_scache * KRB5_CALLCONV
+static krb5_error_code get_def_name(krb5_context, krb5_scache *, char **);
+
+static krb5_error_code
 scc_alloc(krb5_context context,
           const char *name,
           const char *sub,
-          int new_unique)
+          int new_unique,
+          krb5_scache **out)
 {
     krb5_error_code ret = 0;
     krb5_scache *s;
     char *freeme1 = NULL;
     char *freeme2 = NULL;
+    int use_defaults = !!(name == NULL || *name == '\0');
 
+    *out = NULL;
     ALLOC(s, 1);
     if(s == NULL)
-	return NULL;
+	return krb5_enomem(context);
 
     _krb5_debug(context, 5, "scc_alloc(\"%s\",\"%s\"%s)",
                 name ? name : "(not-given)",
@@ -511,71 +490,69 @@ scc_alloc(krb5_context context,
     s->sub = NULL;
     s->file = NULL;
     s->name = NULL;
+    s->dname = NULL;
+    s->fullname = NULL;
+    s->db = NULL;
+    s->icred = NULL;
+    s->icache = NULL;
+    s->icachep = NULL;
+    s->icache_unique = NULL;
+    s->ucachen = NULL;
+    s->ucachep = NULL;
+    s->dcache = NULL;
+    s->dcache_old = NULL;
+    s->dcreds = NULL;
+    s->dcreds_exp = NULL;
+    s->scache = NULL;
+    s->scache_name = NULL;
+    s->umaster = NULL;
+    s->smaster = NULL;
 
-    if (name == NULL || name[0] == '\0') {
-        if (name == NULL) {
-            ret = _krb5_default_cc_name(context, &krb5_scc_ops, NULL,
-                                        KRB5_SCACHE_NAME, &freeme1);
-            if (ret) {
-                free(s);
-                return NULL;
-            }
-            if (strncmp(freeme1, "SCC:", sizeof("SCC:") - 1) != 0) {
-                krb5_set_error_message(context, ENOENT,
-                                       "The default cache is not an "
-                                       "SCC cache: %s", freeme1);
-                free(freeme1);
-                return NULL;
-            }
-            name = freeme1 + sizeof("SCC:") - 1;
-        }
-    }
-    if (!sub && (sub = strchr(name, ':'))) {
-        if ((freeme2 = strndup(name, sub - name)) == NULL) {
-            free(freeme1);
-            return NULL;
-        }
-        sub++;
+    ret = krb5_cc_parse_name(context, name, &krb5_scc_ops, use_defaults,
+                             NULL, NULL, &s->dname,
+                             (new_unique || !sub) ? &s->sub : NULL, &s->fullname);
+    if (ret) {
+        free(s);
+        return ret;
     }
 
-    if ((s->dname = name2dir(name)) == NULL ||
-        (s->file = name2file(name)) == NULL) {
+    if (sub && *sub && !new_unique && (s->sub = strdup(sub)) == NULL) {
         free(s->dname);
         free(s);
-        return NULL;
+        return krb5_enomem(context);
+    }
+
+    if ((s->file = name2file(s->fullname)) == NULL) {
+        free(s->dname);
+        free(s);
+        return ret;
     }
 
     if (new_unique) {
         ret = make_dir(context, s->dname);
         if (ret == 0)
             ret = create_unique_cache(context, s, &s->sub);
-    } else if (sub == NULL || *sub == '\0') {
-        ret = get_def_name(context, s->dname, &s->sub);
-        if (ret) {
-            if ((s->sub = strdup(SCACHE_DEF_NAME)) == NULL)
-                ret = krb5_enomem(context);
-            else
-                ret = 0;
-        }
-    } else if ((s->sub = strdup(sub)) == NULL) {
-        ret = krb5_enomem(context);
+    } else if (s->sub == NULL || *s->sub == '\0') {
+        ret = get_def_name(context, s, &s->sub);
+        if (ret == 0 && s->sub == NULL && (s->sub = strdup("")) == NULL)
+            ret = krb5_enomem(context);
     }
 
     if (ret == 0 &&
-        (asprintf(&s->name, "%s:%s", s->dname, s->sub) < 0 || s->name == NULL))
+        (asprintf(&s->name, "%s%s%s", s->dname,
+                  s->sub ? ":" : "",
+                  s->sub ? s->sub : "") < 0 || s->name == NULL))
         ret = krb5_enomem(context);
 
-    if (ret) {
+    if (ret)
 	scc_free(s);
-	s = NULL;
-    }
-
-    if (s)
+    else
         _krb5_debug(context, 5, "scc_alloc: file: %s, sub: %s", s->file, s->sub);
 
+    *out = s;
     free(freeme2);
     free(freeme1);
-    return s;
+    return ret;
 }
 
 static krb5_error_code
@@ -641,6 +618,8 @@ make_database(krb5_context context, krb5_scache *s)
     if (ret) goto out;
     ret = exec_stmt(context, s->db, SQL_CCREDSBYPRINC, KRB5_CC_IO);
     if (ret) goto out;
+    ret = exec_stmt(context, s->db, SQL_CCREDSBYPRINC_NO_REALM, KRB5_CC_IO);
+    if (ret) goto out;
     ret = exec_stmt(context, s->db, SQL_SETUP_MASTER, KRB5_CC_IO);
     if (ret) goto out;
 
@@ -677,6 +656,8 @@ make_database(krb5_context context, krb5_scache *s)
     ret = prepare_stmt(context, s->db, &s->scache_name, SQL_SCACHE_NAME);
     if (ret) goto out;
     ret = prepare_stmt(context, s->db, &s->umaster, SQL_UMASTER);
+    if (ret) goto out;
+    ret = prepare_stmt(context, s->db, &s->smaster, SQL_SMASTER);
     if (ret) goto out;
 
 #ifndef WIN32
@@ -801,6 +782,32 @@ bind_principal(krb5_context context,
     return 0;
 }
 
+static krb5_error_code
+bind_principal_no_realm(krb5_context context,
+                        sqlite3 *db,
+                        sqlite3_stmt *stmt,
+                        int col,
+                        krb5_const_principal principal)
+{
+    krb5_error_code ret;
+    char *str;
+
+    ret = krb5_unparse_name_flags(context, principal,
+                                  KRB5_PRINCIPAL_UNPARSE_NO_REALM, &str);
+    if (ret)
+	return ret;
+
+    ret = sqlite3_bind_text(stmt, col, str, -1, free_krb5);
+    if (ret != SQLITE_OK) {
+	krb5_xfree(str);
+	krb5_set_error_message(context, ENOMEM,
+			       N_("scache bind principal: %s", ""),
+			       sqlite3_errmsg(db));
+	return ENOMEM;
+    }
+    return 0;
+}
+
 /*
  *
  */
@@ -830,12 +837,9 @@ scc_resolve_2(krb5_context context,
     krb5_error_code ret;
     krb5_scache *s;
 
-    s = scc_alloc(context, res, sub, 0);
-    if (s == NULL) {
-	krb5_set_error_message(context, KRB5_CC_NOMEM,
-			       N_("malloc: out of memory", ""));
-	return KRB5_CC_NOMEM;
-    }
+    ret = scc_alloc(context, res, sub, 0, &s);
+    if (ret)
+	return ret;
 
     ret = make_database(context, s);
     if (ret) {
@@ -851,6 +855,7 @@ scc_resolve_2(krb5_context context,
 static krb5_error_code KRB5_CALLCONV
 scc_gen_new_2(krb5_context context, const char *name, krb5_ccache *id)
 {
+    krb5_error_code ret;
     krb5_scache *s;
     char *def_ccname = NULL;
 
@@ -861,22 +866,17 @@ scc_gen_new_2(krb5_context context, const char *name, krb5_ccache *id)
      * which may or may not be an SCC cache...
      */
     if (name == NULL) {
-        krb5_error_code ret;
-
         ret = scc_get_default_name(context, &def_ccname);
         if (ret)
             return ret;
         name = def_ccname + sizeof("SCC:") - 1;
     }
 
-    s = scc_alloc(context, name, NULL, 1);
+    ret = scc_alloc(context, name, NULL, 1, &s);
     free(def_ccname);
 
-    if (s == NULL) {
-	krb5_set_error_message(context, KRB5_CC_NOMEM,
-			       "malloc: out of memory");
-	return KRB5_CC_NOMEM;
-    }
+    if (ret)
+        return ret;
 
     (*id)->data.data = s;
     (*id)->data.length = sizeof(*s);
@@ -1116,12 +1116,14 @@ scc_store_cred(krb5_context context,
             (param = sqlite3_bind_parameter_name(s->icred, 7)) == NULL ||
             strcmp(param, ":service") != 0 ||
             (param = sqlite3_bind_parameter_name(s->icred, 8)) == NULL ||
-            strcmp(param, ":authtime") != 0 ||
+            strcmp(param, ":service_no_realm") != 0 ||
             (param = sqlite3_bind_parameter_name(s->icred, 9)) == NULL ||
-            strcmp(param, ":starttime") != 0 ||
+            strcmp(param, ":authtime") != 0 ||
             (param = sqlite3_bind_parameter_name(s->icred, 10)) == NULL ||
-            strcmp(param, ":endtime") != 0 ||
+            strcmp(param, ":starttime") != 0 ||
             (param = sqlite3_bind_parameter_name(s->icred, 11)) == NULL ||
+            strcmp(param, ":endtime") != 0 ||
+            (param = sqlite3_bind_parameter_name(s->icred, 12)) == NULL ||
             strcmp(param, ":renew_till") != 0) {
 
             krb5_set_error_message(context, EINVAL,
@@ -1143,10 +1145,11 @@ scc_store_cred(krb5_context context,
 	sqlite3_bind_int(s->icred,  5, creds->flags.i) != SQLITE_OK ||
         sqlite3_bind_blob(s->icred, 6, data.data, data.length, free_data) ||
         (ret = bind_principal(context, s->db, s->icred, 7, creds->server)) ||
-        sqlite3_bind_int(s->icred,  8, creds->times.authtime) != SQLITE_OK ||
-        sqlite3_bind_int(s->icred,  9, creds->times.starttime) != SQLITE_OK ||
-        sqlite3_bind_int(s->icred,  10, creds->times.endtime) != SQLITE_OK ||
-        sqlite3_bind_int(s->icred,  11, creds->times.renew_till) != SQLITE_OK) {
+        (ret = bind_principal_no_realm(context, s->db, s->icred, 8, creds->server)) ||
+        sqlite3_bind_int(s->icred,  9, creds->times.authtime) != SQLITE_OK ||
+        sqlite3_bind_int(s->icred,  10, creds->times.starttime) != SQLITE_OK ||
+        sqlite3_bind_int(s->icred,  11, creds->times.endtime) != SQLITE_OK ||
+        sqlite3_bind_int(s->icred,  12, creds->times.renew_till) != SQLITE_OK) {
         krb5_set_error_message(context, ret,
                                "SCC: Failed to bind query parameters "
                                "for adding a ticket to cache %s", s->name);
@@ -1346,7 +1349,7 @@ scc_remove_cred(krb5_context context,
     krb5_scache *s = SCACHE(id);
     krb5_error_code ret;
     sqlite3_stmt *stmt, *dstmt;
-    sqlite_uint64 credid = 0;
+    sqlite3_value *credid;
     const void *data = NULL;
     const char *name = NULL;
     size_t len = 0;
@@ -1355,6 +1358,12 @@ scc_remove_cred(krb5_context context,
     if (ret)
 	return ret;
 
+    /*
+     * We iterate over all credentials instead of being more selective because
+     * we're not ready to implement the matching algorithm entirely in SQL
+     * because to do so we'd need a bit-wise AND function in SQLite3, and since
+     * SQLite3 doesn't have that we'd have to code it as a UDF.
+     */
     ret = prepare_stmt(context, s->db, &stmt,
 		       "SELECT cred, oid, service FROM credentials "
 		       "WHERE cache_name = ?");
@@ -1364,24 +1373,31 @@ scc_remove_cred(krb5_context context,
     ret = prepare_stmt(context, s->db, &dstmt,
                        "DELETE FROM credentials WHERE oid=?");
     if (ret) {
+        krb5_set_error_message(context, KRB5_CC_IO,
+                               "Could not remove credential from %s: %s",
+                               s->fullname,
+                               sqlite3_errmsg(s->db));
         sqlite3_finalize(stmt);
         return ret;
     }
-
     if (sqlite3_bind_text(stmt, 1, s->sub, -1, SQLITE_STATIC) != SQLITE_OK) {
         krb5_set_error_message(context, KRB5_CC_IO,
-                               N_("scache Database failed: %s", ""),
+                               "Could not remove credential from %s: %s",
+                               s->fullname,
                                sqlite3_errmsg(s->db));
         sqlite3_finalize(dstmt);
         sqlite3_finalize(stmt);
         return KRB5_CC_IO;
     }
 
-    /*
-     * XXX Let's see if this works.  We're not starting a transaction, and
-     * we're doing a select over credentials to then do a delete.  That might
-     * not work?  We'll see.
-     */
+    ret = exec_stmt(context, s->db,
+		    "BEGIN IMMEDIATE TRANSACTION", KRB5_CC_IO);
+    if (ret) {
+        krb5_prepend_error_message(context, ret,
+                                   "Could not remove credential from %s",
+                                   s->fullname);
+        return ret;
+    }
     ret = 0;
     while (ret == 0) {
 	krb5_creds creds;
@@ -1393,39 +1409,38 @@ scc_remove_cred(krb5_context context,
 	} else if (ret != SQLITE_ROW) {
 	    ret = KRB5_CC_IO;
 	    krb5_set_error_message(context, ret,
-				   N_("scache Database failed: %s", ""),
+				   "Failed to iterate credentials for removal "
+                                   "from %s: %s", s->fullname,
 				   sqlite3_errmsg(s->db));
 	    break;
 	}
 
+        credid = sqlite3_column_value(stmt, 1);
 	if (sqlite3_column_type(stmt, 0) != SQLITE_BLOB ||
-            sqlite3_column_type(stmt, 1) != SQLITE_INTEGER ||
             (sqlite3_column_type(stmt, 2) != SQLITE_TEXT &&
              sqlite3_column_type(stmt, 2) != SQLITE_NULL)) {
-	    ret = KRB5_CC_END;
-	    krb5_set_error_message(context, ret,
-				   "Credential of wrong type "
-				   "for SCC:%s",
-				   s->name);
-	    break;
-	}
 
-	data = sqlite3_column_blob(stmt, 0);
-	len = sqlite3_column_bytes(stmt, 0);
-        credid = sqlite3_column_int64(stmt, 1);
-        name = (const char *)sqlite3_column_text(stmt, 2);
+            _krb5_debug(context, 2, "Deleting malformed credential from %s",
+                        s->fullname);
+	} else {
+            data = sqlite3_column_blob(stmt, 0);
+            len = sqlite3_column_bytes(stmt, 0);
+            name = (const char *)sqlite3_column_text(stmt, 2);
 
-	ret = decode_creds(context, name, data, len, &creds);
-	if (ret)
-	    break;
+            ret = decode_creds(context, name, data, len, &creds);
+            if (ret)
+                break;
 
-	ret = krb5_compare_creds(context, which, mcreds, &creds);
-	krb5_free_cred_contents(context, &creds);
-	if (ret == 0)
-	    continue;
+            ret = krb5_compare_creds(context, which, mcreds, &creds);
+            krb5_free_cred_contents(context, &creds);
+            if (ret == 0)
+                continue;
+            _krb5_debug(context, 3, "Deleting a credential from %s",
+                        s->fullname);
+        }
         ret = 0;
 
-        sqlite3_bind_int(dstmt, 1, credid);
+        sqlite3_bind_value(dstmt, 1, credid);
 
         do {
             ret = sqlite3_step(dstmt);
@@ -1433,14 +1448,21 @@ scc_remove_cred(krb5_context context,
         if (ret != SQLITE_DONE) {
             ret = KRB5_CC_IO;
             krb5_set_error_message(context, ret,
-                                   N_("failed to delete scache credental", ""));
+                                   "Could not delete credential in %s",
+                                   s->fullname);
         } else
             ret = 0;
         sqlite3_reset(dstmt);
     }
 
+    if (ret)
+        exec_stmt(context, s->db, "ROLLBACK", KRB5_CC_IO);
+    else
+        ret = exec_stmt(context, s->db, "COMMIT", KRB5_CC_IO);
+
     sqlite3_finalize(dstmt);
     sqlite3_finalize(stmt);
+
     return ret;
 }
 
@@ -1449,7 +1471,7 @@ scc_set_flags(krb5_context context,
 	      krb5_ccache id,
 	      krb5_flags flags)
 {
-    return 0; /* XXX */
+    return 0;
 }
 
 struct cache_iter {
@@ -1459,7 +1481,9 @@ struct cache_iter {
 };
 
 static krb5_error_code KRB5_CALLCONV
-scc_get_cache_first(krb5_context context, krb5_cc_cursor *cursor)
+scc_get_cache_first_2(krb5_context context,
+                      const char *name,
+                      krb5_cc_cursor *cursor)
 {
     struct cache_iter *ctx;
     krb5_error_code ret;
@@ -1470,7 +1494,7 @@ scc_get_cache_first(krb5_context context, krb5_cc_cursor *cursor)
     if (ctx == NULL)
 	return krb5_enomem(context);
 
-    ret = default_db(context, NULL, &ctx->db, &ctx->dname, NULL);
+    ret = default_db(context, name, &ctx->db, &ctx->dname, NULL);
     if (ret) {
 	free(ctx);
 	return ret;
@@ -1667,6 +1691,10 @@ scc_retrieve(krb5_context context,
     const void *data = NULL;
     const char *name = NULL;
     size_t len = 0;
+    int match_server_no_realm = mcreds->server &&
+        (whichfields & (KRB5_TC_DONT_MATCH_REALM | KRB5_TC_MATCH_SRV_NAMEONLY));
+    int match_server = mcreds->server &&
+        !(whichfields & (KRB5_TC_DONT_MATCH_REALM | KRB5_TC_MATCH_SRV_NAMEONLY));
 
     ret = make_database(context, s);
     if (ret)
@@ -1675,10 +1703,14 @@ scc_retrieve(krb5_context context,
     _krb5_debug(context, 5, "SCC: Retrieving credential from %s:%s",
                 s->file, s->sub);
 
-    if (mcreds->server) {
+    if (match_server) {
         ret = prepare_stmt(context, s->db, &stmt,
                            "SELECT cred, service FROM credentials "
                            "WHERE cache_name = ? AND service = ?");
+    } else if (match_server) {
+        ret = prepare_stmt(context, s->db, &stmt,
+                           "SELECT cred, service FROM credentials "
+                           "WHERE cache_name = ? AND service_no_realm = ?");
     } else {
         ret = prepare_stmt(context, s->db, &stmt,
                            "SELECT cred, service FROM credentials "
@@ -1687,13 +1719,23 @@ scc_retrieve(krb5_context context,
     if (ret)
 	return ret;
 
-    if (sqlite3_bind_text(stmt, 1, s->sub, -1, SQLITE_STATIC) != SQLITE_OK ||
-        (mcreds->server && bind_principal(context, s->db, stmt, 2, mcreds->server))) {
+    if (sqlite3_bind_text(stmt, 1, s->sub, -1, SQLITE_STATIC) != SQLITE_OK) {
         krb5_set_error_message(context, KRB5_CC_IO,
                                N_("scache Database failed: %s", ""),
                                sqlite3_errmsg(s->db));
         sqlite3_finalize(stmt);
         return KRB5_CC_IO;
+    }
+    if ((match_server &&
+         (ret = bind_principal(context, s->db, stmt, 2, mcreds->server)))) {
+        sqlite3_finalize(stmt);
+        return ret;
+    }
+    if ((match_server_no_realm &&
+         (ret = bind_principal_no_realm(context, s->db, stmt, 2,
+                                        mcreds->server)))) {
+        sqlite3_finalize(stmt);
+        return ret;
     }
 
     /*
@@ -1756,6 +1798,181 @@ scc_retrieve(krb5_context context,
     return KRB5_CC_END;
 }
 
+static krb5_error_code
+get_def_name(krb5_context context, krb5_scache *s, char **primary)
+{
+    krb5_error_code ret = 0;
+    const char *str = NULL;
+    int sret;
+
+    ret = make_database(context, s);
+    sret = sqlite3_step(s->smaster);
+    if (sret != SQLITE_ROW) {
+        krb5_set_error_message(context, ret = KRB5_CC_IO,
+                               "Could not find default cache in "
+                               "SCC collection in %s", s->file);
+        return ret;
+    }
+    if (sqlite3_column_type(s->smaster, 0) == SQLITE_NULL) {
+        str = "";
+    } else if (sqlite3_column_type(s->smaster, 0) == SQLITE_TEXT) {
+        str = (const char *)sqlite3_column_text(s->smaster, 0);
+    } else {
+        _krb5_debug(context, 2,
+                    "Non-null, non-text value for defaultcache column of "
+                    "master table in %s/sdb", s->dname);
+    }
+    if (str && (*primary = strdup(str)) == NULL)
+        ret = krb5_enomem(context);
+    else
+        ret = 0;
+    sqlite3_reset(s->smaster);
+    return ret;
+}
+
+static krb5_error_code KRB5_CALLCONV
+scc_last_change(krb5_context context, krb5_ccache id, krb5_timestamp *t)
+{
+    krb5_scache *s = SCACHE(id);
+    krb5_error_code ret;
+    sqlite3_stmt *stmt = NULL;
+
+    *t = 0;
+    ret = make_database(context, s);
+    if (ret)
+        return ret;
+    ret = prepare_stmt(context, s->db, &stmt,
+                       "SELECT created_at FROM credentials "
+                       "WHERE cache_name = ? "
+                       "UNION ALL "
+                       "SELECT 0 "
+                       "ORDER BY created_at DESC LIMIT 1");
+    if (ret)
+        return ret;
+    if (sqlite3_bind_text(stmt, 1, s->sub, -1, SQLITE_STATIC) != SQLITE_OK) {
+        krb5_set_error_message(context, ret = KRB5_CC_IO,
+                               "Failed to get last change time for %s: %s",
+                               s->fullname, sqlite3_errmsg(s->db));
+        sqlite3_finalize(stmt);
+        return ret;
+    }
+    do {
+        ret = sqlite3_step(stmt);
+        if (ret == SQLITE_ROW &&
+            sqlite3_column_type(stmt, 0) == SQLITE_INTEGER) {
+            *t = sqlite3_column_int64(stmt, 0);
+            sqlite3_finalize(stmt);
+            return 0;
+        }
+    } while (ret == SQLITE_ROW);
+    sqlite3_finalize(stmt);
+    krb5_set_error_message(context, ret = KRB5_CC_IO,
+                           "Failed to get last change time for %s",
+                           s->fullname);
+    return ret;
+}
+
+static krb5_error_code KRB5_CALLCONV
+scc_set_kdc_offset(krb5_context context, krb5_ccache id, krb5_deltat t)
+{
+    krb5_scache *s = SCACHE(id);
+    krb5_error_code ret;
+    sqlite3_stmt *stmt = NULL;
+
+    ret = make_database(context, s);
+    if (ret)
+        return ret;
+    ret = prepare_stmt(context, s->db, &stmt,
+                       "UPDATE credentials "
+                       "SET kdc_offset = ? "
+                       "WHERE cache_name = ?");
+    if (ret)
+        return ret;
+    if (sqlite3_bind_int64(stmt, 1, t) != SQLITE_OK ||
+        sqlite3_bind_text(stmt, 1, s->sub, -1, SQLITE_STATIC) != SQLITE_OK) {
+        krb5_set_error_message(context, ret = KRB5_CC_IO,
+                               "Failed to set KDC offset in %s: %s",
+                               s->fullname, sqlite3_errmsg(s->db));
+        sqlite3_finalize(stmt);
+        return ret;
+    }
+    do {
+        ret = sqlite3_step(stmt);
+    } while (ret == SQLITE_ROW);
+    sqlite3_finalize(stmt);
+    if (ret == SQLITE_DONE)
+        ret = 0;
+    else
+        krb5_set_error_message(context, ret = KRB5_CC_IO,
+                               "Failed to get last change time for %s",
+                               s->fullname);
+    return ret;
+}
+
+static krb5_error_code KRB5_CALLCONV
+scc_get_kdc_offset(krb5_context context, krb5_ccache id, krb5_deltat *t)
+{
+    krb5_scache *s = SCACHE(id);
+    krb5_error_code ret;
+    sqlite3_stmt *stmt = NULL;
+
+    *t = 0;
+    ret = make_database(context, s);
+    if (ret)
+        return ret;
+    ret = prepare_stmt(context, s->db, &stmt,
+                       "SELECT kdc_offset FROM credentials "
+                       "WHERE cache_name = ?");
+    if (ret)
+        return ret;
+    if (sqlite3_bind_text(stmt, 1, s->sub, -1, SQLITE_STATIC) != SQLITE_OK) {
+        krb5_set_error_message(context, ret = KRB5_CC_IO,
+                               "Failed to get kdc offset for %s: %s",
+                               s->fullname, sqlite3_errmsg(s->db));
+        sqlite3_finalize(stmt);
+        return ret;
+    }
+    do {
+        ret = sqlite3_step(stmt);
+        if (ret == SQLITE_ROW &&
+            sqlite3_column_type(stmt, 0) == SQLITE_INTEGER) {
+            *t = sqlite3_column_int64(stmt, 0);
+            sqlite3_finalize(stmt);
+            return 0;
+        }
+    } while (ret == SQLITE_ROW);
+    sqlite3_finalize(stmt);
+    krb5_set_error_message(context, ret = KRB5_CC_IO,
+                           "Failed to get kdc offset for %s",
+                           s->fullname);
+    return ret;
+}
+
+
+static krb5_error_code KRB5_CALLCONV
+scc_get_primary_name(krb5_context context,
+                     const char *collection,
+                     char **primary)
+{
+    krb5_error_code ret;
+    krb5_scache *s;
+
+    *primary = NULL;
+    ret = scc_alloc(context, collection, NULL, 0, &s);
+    if (ret)
+        return ret;
+
+    ret = get_def_name(context, s, primary);
+    scc_free(s);
+    return ret;
+}
+
+static void KRB5_CALLCONV
+scc_xfree(void *p)
+{
+    krb5_xfree(p);
+}
+
 /**
  * Variable containing the SCC based credential cache implemention.
  *
@@ -1763,11 +1980,11 @@ scc_retrieve(krb5_context context,
  */
 
 KRB5_LIB_VARIABLE const krb5_cc_ops krb5_scc_ops = {
-    KRB5_CC_OPS_VERSION_5,
+    KRB5_CC_OPS_VERSION_6,
     "SCC",
-    NULL,
-    NULL,
-    NULL,
+    NULL, /* get_name -- old */
+    NULL, /* resolve  -- old */
+    NULL, /* gen_new  -- old */
     scc_initialize,
     scc_destroy,
     scc_close,
@@ -1779,23 +1996,25 @@ KRB5_LIB_VARIABLE const krb5_cc_ops krb5_scc_ops = {
     scc_end_get,
     scc_remove_cred,
     scc_set_flags,
-    NULL,
-    scc_get_cache_first,
+    NULL, /* get_version */
+    NULL, /* scc_get_cache_first -- old */
     scc_get_cache_next,
     scc_end_cache_get,
     scc_move,
     scc_get_default_name,
     scc_set_default,
-    NULL,
-    NULL,
-    NULL,
+    scc_last_change,
+    scc_set_kdc_offset,
+    scc_get_kdc_offset,
     scc_get_name_2,
     scc_resolve_2,
-    NULL, /* scc_get_primary_name */
+    scc_get_primary_name,
     scc_gen_new_2,
-    1,
-    '\0',
-    ':',
+    scc_get_cache_first_2,
+    scc_xfree,
+    ':',  /* subsep */
+    1,    /* filepath */
+    0,    /* use_last_subsep */
 };
 
 #endif

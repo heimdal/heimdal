@@ -51,7 +51,7 @@ static void free_key_schedule(krb5_context,
 			      struct _krb5_key_data *,
 			      struct _krb5_encryption_type *);
 
-/* 
+/*
  * Converts etype to a user readable string and sets as a side effect
  * the krb5_error_message containing this string. Returns
  * KRB5_PROG_ETYPE_NOSUPP in not the conversion of the etype failed in
@@ -859,7 +859,7 @@ krb5_enctype_to_keytype(krb5_context context,
     if(e == NULL) {
         return unsupported_enctype (context, etype);
     }
-    *keytype = e->keytype->type; /* XXX */
+    *keytype = (krb5_keytype)e->keytype->type;
     return 0;
 }
 

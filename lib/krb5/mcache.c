@@ -603,6 +603,12 @@ mcc_get_kdc_offset(krb5_context context, krb5_ccache id, krb5_deltat *kdc_offset
     return 0;
 }
 
+static void KRB5_CALLCONV
+mcc_xfree(void *p)
+{
+    krb5_xfree(p);
+}
+
 
 /**
  * Variable containing the MEMORY based credential cache implemention.
@@ -611,7 +617,7 @@ mcc_get_kdc_offset(krb5_context context, krb5_ccache id, krb5_deltat *kdc_offset
  */
 
 KRB5_LIB_VARIABLE const krb5_cc_ops krb5_mcc_ops = {
-    KRB5_CC_OPS_VERSION_5,
+    KRB5_CC_OPS_VERSION_6,
     "MEMORY",
     NULL,
     NULL,
@@ -641,7 +647,8 @@ KRB5_LIB_VARIABLE const krb5_cc_ops krb5_mcc_ops = {
     mcc_resolve_2,
     NULL, /* mcc_get_primary_name */
     mcc_gen_new_2,
+    NULL, /* mcc_get_cache_first_2 */
+    mcc_xfree,
     0,
-    '\0',
     '\0',
 };

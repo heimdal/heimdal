@@ -928,7 +928,7 @@ test_cccol(krb5_context context, const char *def_cccol, const char **what)
     krb5_free_principal(context, p2);
 
     *what = "krb5_cc_cache_get_first";
-    ret = krb5_cc_cache_get_first(context, NULL, &cursor);
+    ret = krb5_cc_cache_get_first(context, def_cccol, &cursor);
     if (ret) return ret;
     *what = "krb5_cc_cache_next";
     while (krb5_cc_cache_next(context, cursor, &id) == 0) {
@@ -992,6 +992,213 @@ test_cccol_scache(krb5_context context)
         krb5_err(context, 1, ret, "%s", what);
 }
 
+static void
+test_krb5_cc_parse_name_helper(krb5_context context,
+                               const char *ccname,
+                               char sep,
+                               const char *expect_type,
+                               const char *stem,
+                               const char *expect_sub)
+{
+    krb5_error_code ret;
+    const char *type;
+    char *res, *col, *sub, *full;
+
+    ret = krb5_cc_parse_name(context, ccname, NULL, 1, &type, &res, &col, &sub,
+                             &full);
+    if (ret)
+        krb5_err(context, 1, ret, "krb5_cc_parse_name(%s) (expecting %s)",
+                 ccname ? ccname : "NULL", expect_type);
+    if (strcmp(type, expect_type) != 0)
+        krb5_errx(context, 1,
+                  "krb5_cc_parse_name(%s): expected %s, got %s",
+                  ccname ? ccname : "NULL", expect_type, type);
+    if (strncmp(col, tmpdir, strlen(tmpdir)) != 0 ||
+        strlen(col) < strlen(tmpdir) ||
+        col[strlen(tmpdir)] != '/' ||
+        strcmp(col + strlen(tmpdir) + 1, stem) != 0)
+        krb5_errx(context, 1,
+                  "krb5_cc_parse_name(%s): "
+                  "expected collection %s/%s, got %s",
+                  ccname ? ccname : "NULL", tmpdir, stem, col);
+    if ((sub && *sub && (!expect_sub || !*expect_sub)) ||
+        (sub && *sub && strcmp(sub, expect_sub) != 0) ||
+        (expect_sub && *expect_sub && (!sub || !*sub)))
+        krb5_errx(context, 1,
+                  "krb5_cc_parse_name(%s): "
+                  "expected subsidiary %s, got %s",
+                  ccname ? ccname : "NULL",
+                  expect_sub ? expect_sub : "(null)",
+                  sub ? sub : "(null)");
+    if (strncmp(full, type, strlen(type)) != 0 ||
+        strlen(full) < strlen(type) ||
+        full[strlen(type)] != ':' ||
+        strncmp(full + strlen(type) + 1, tmpdir, strlen(tmpdir)) != 0 ||
+        strlen(full) < strlen(type) + 1 + strlen(tmpdir) ||
+        full[strlen(type) + 1 + strlen(tmpdir)] != '/' ||
+        strncmp(full + strlen(type) + 1 + strlen(tmpdir) + 1, stem, strlen(stem)) != 0 ||
+        (expect_sub && *expect_sub &&
+         full[strlen(type) + 1 + strlen(tmpdir) + 1 + strlen(stem)] != sep) ||
+        (expect_sub && *expect_sub &&
+         strcmp(full + strlen(type) + 1 + strlen(tmpdir) + 1 + strlen(stem) + 1, sub) != 0))
+        krb5_errx(context, 1,
+                  "krb5_cc_parse_name(%s): "
+                  "expected full name to be %s:%s/%s, got %s",
+                  ccname ? ccname : "NULL", expect_type, tmpdir, stem, full);
+    krb5_xfree(res);
+    krb5_xfree(col);
+    krb5_xfree(sub);
+    krb5_xfree(full);
+}
+
+static void
+test_krb5_cc_parse_name(krb5_context context)
+{
+    krb5_error_code ret;
+    const char *type;
+    char *res, *col, *sub, *full;
+    char *s = NULL;
+
+    /*
+     * We should have a config set with [libdefaults]
+     * default_ccache_name_by_type set.
+     */
+    ret = krb5_cc_set_default_name(context, NULL);
+    if (ret)
+        krb5_err(context, 1, ret, "krb5_cc_set_default_name(NULL)");
+
+    /* Parsing NULL or "" should return FILE:<tmpdir>/fcc */
+    test_krb5_cc_parse_name_helper(context, NULL, '+', "FILE", "fcc", NULL);
+    test_krb5_cc_parse_name_helper(context, "", '+', "FILE", "fcc", NULL);
+    test_krb5_cc_parse_name_helper(context, "FILE", '+', "FILE", "fcc", NULL);
+    test_krb5_cc_parse_name_helper(context, "FILE:", '+', "FILE", "fcc", NULL);
+    if (asprintf(&s, "FILE:%s/fcc", tmpdir) == -1 || s == NULL)
+        krb5_errx(context, 1, "Out of memory");
+    test_krb5_cc_parse_name_helper(context, s, '+', "FILE", "fcc", NULL);
+    free(s);
+    s = NULL;
+
+    test_krb5_cc_parse_name_helper(context, "DIR", ':', "DIR", "dcc", NULL);
+    test_krb5_cc_parse_name_helper(context, "DIR:", ':', "DIR", "dcc", NULL);
+    if (asprintf(&s, "DIR:%s/dcc", tmpdir) == -1 || s == NULL)
+        krb5_errx(context, 1, "Out of memory");
+    test_krb5_cc_parse_name_helper(context, s, ':', "DIR", "dcc", NULL);
+    free(s);
+    s = NULL;
+
+    test_krb5_cc_parse_name_helper(context, "SCC", ':', "SCC", "scc", NULL);
+    test_krb5_cc_parse_name_helper(context, "SCC:", ':', "SCC", "scc", NULL);
+    if (asprintf(&s, "SCC:%s/scc", tmpdir) == -1 || s == NULL)
+        krb5_errx(context, 1, "Out of memory");
+    test_krb5_cc_parse_name_helper(context, s, ':', "SCC", "scc", NULL);
+    free(s);
+    s = NULL;
+
+    ret = krb5_cc_set_default_name(context, "DIR");
+    if (ret)
+        krb5_err(context, 1, ret, "krb5_cc_set_default_name(DIR)");
+    test_krb5_cc_parse_name_helper(context, NULL, ':', "DIR", "dcc", NULL);
+    test_krb5_cc_parse_name_helper(context, "", ':', "DIR", "dcc", NULL);
+
+    ret = krb5_cc_set_default_name(context, "SCC");
+    if (ret)
+        krb5_err(context, 1, ret, "krb5_cc_set_default_name(SCC)");
+    test_krb5_cc_parse_name_helper(context, NULL, ':', "SCC", "scc", NULL);
+    test_krb5_cc_parse_name_helper(context, "", ':', "SCC", "scc", NULL);
+
+    ret = krb5_cc_parse_name(context, "MEMORY", NULL, 1, &type, &res, &col,
+                             &sub, &full);
+    if (ret)
+        krb5_err(context, 1, ret, "krb5_cc_parse_name(MEMORY)");
+    if (res && *res)
+        krb5_errx(context, 1,
+                  "krb5_cc_parse_name(MEMORY): expected no residual");
+    if (col && *col)
+        krb5_errx(context, 1,
+                  "krb5_cc_parse_name(MEMORY): expected no collection");
+    if (sub && *sub)
+        krb5_errx(context, 1,
+                  "krb5_cc_parse_name(MEMORY): expected no subsidiary");
+    if (!full || strcmp(full, "MEMORY:") != 0)
+        krb5_errx(context, 1,
+                  "krb5_cc_parse_name(MEMORY): "
+                  "expected full name to be MEMORY:, got %s", full);
+    krb5_xfree(res);
+    krb5_xfree(col);
+    krb5_xfree(sub);
+    krb5_xfree(full);
+
+    ret = krb5_cc_parse_name(context, "MEMORY:", NULL, 1, &type, &res, &col,
+                             &sub, &full);
+    if (ret)
+        krb5_err(context, 1, ret, "krb5_cc_parse_name(MEMORY:)");
+    if (res && *res)
+        krb5_errx(context, 1,
+                  "krb5_cc_parse_name(MEMORY): expected no residual");
+    if (col && *col)
+        krb5_errx(context, 1,
+                  "krb5_cc_parse_name(MEMORY): expected no collection");
+    if (sub && *sub)
+        krb5_errx(context, 1,
+                  "krb5_cc_parse_name(MEMORY): expected no subsidiary");
+    if (!full || strcmp(full, "MEMORY:") != 0)
+        krb5_errx(context, 1,
+                  "krb5_cc_parse_name(MEMORY): "
+                  "expected full name to be MEMORY:, got %s", full);
+    krb5_xfree(res);
+    krb5_xfree(col);
+    krb5_xfree(sub);
+    krb5_xfree(full);
+
+    ret = krb5_cc_parse_name(context, "MEMORY:foo", NULL, 1, &type, &res, &col,
+                             &sub, &full);
+    if (ret)
+        krb5_err(context, 1, ret, "krb5_cc_parse_name(MEMORY:foo)");
+    if (!res || strcmp(res, "foo") != 0)
+        krb5_errx(context, 1,
+                  "krb5_cc_parse_name(MEMORY:foo): expected residual foo");
+    if (!col || strcmp(col, "foo") != 0)
+        krb5_errx(context, 1,
+                  "krb5_cc_parse_name(MEMORY:foo): expected collection foo");
+    if (sub && *sub)
+        krb5_errx(context, 1,
+                  "krb5_cc_parse_name(MEMORY:foo): expected no subsidiary");
+    if (!full || strcmp(full, "MEMORY:foo") != 0)
+        krb5_errx(context, 1,
+                  "krb5_cc_parse_name(MEMORY:foo): "
+                  "expected full name to be MEMORY:foo, got %s", full);
+    krb5_xfree(res);
+    krb5_xfree(col);
+    krb5_xfree(sub);
+    krb5_xfree(full);
+
+    ret = krb5_cc_parse_name(context, "MEMORY:foo:bar", NULL, 1, &type, &res,
+                             &col, &sub, &full);
+    if (ret)
+        krb5_err(context, 1, ret, "krb5_cc_parse_name(MEMORY:foo)");
+    if (!res || strcmp(res, "foo:bar") != 0)
+        krb5_errx(context, 1,
+                  "krb5_cc_parse_name(MEMORY:foo:bar): expected residual foo:bar");
+    if (!col || strcmp(col, "foo:bar") != 0)
+        krb5_errx(context, 1,
+                  "krb5_cc_parse_name(MEMORY:foo:bar): expected collection foo:bar");
+    if (sub && *sub)
+        krb5_errx(context, 1,
+                  "krb5_cc_parse_name(MEMORY:foo:bar): expected no subsidiary");
+    if (!full || strcmp(full, "MEMORY:foo:bar") != 0)
+        krb5_errx(context, 1,
+                  "krb5_cc_parse_name(MEMORY:foo:bar): "
+                  "expected full name to be MEMORY:foo:bar, got %s", full);
+    krb5_xfree(res);
+    krb5_xfree(col);
+    krb5_xfree(sub);
+    krb5_xfree(full);
+
+    ret = krb5_cc_set_default_name(context, NULL);
+    if (ret)
+        krb5_err(context, 1, ret, "krb5_cc_set_default_name(NULL)");
+}
+
 static struct getargs args[] = {
     {"debug",	'd',	arg_flag,	&debug_flag,
      "turn on debuggin", NULL },
@@ -1037,6 +1244,8 @@ main(int argc, char **argv)
 	errx (1, "krb5_init_context failed: %d", ret);
 
     make_dir(context);
+
+    test_krb5_cc_parse_name(context);
 
     test_cache_remove(context, krb5_cc_type_file);
     test_cache_remove(context, krb5_cc_type_memory);
@@ -1097,8 +1306,10 @@ main(int argc, char **argv)
 	krb5_free_principal(context, p);
     }
 
+    krb5_cc_set_default_name(context, "MEMORY:");
     test_cache_find(context, "lha@SU.SE", 1);
     test_cache_find(context, "hulabundulahotentot@SU.SE", 0);
+    krb5_cc_set_default_name(context, NULL);
 
     /*
      * XXX We should compose and krb5_cc_set_default_name() a default ccache

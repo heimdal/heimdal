@@ -2023,13 +2023,55 @@ krcc_move(krb5_context context, krb5_ccache from, krb5_ccache to)
 }
 
 static krb5_error_code KRB5_CALLCONV
+krcc_get_primary_name(krb5_context context, const char *collection, char **str)
+{
+    krb5_error_code ret;
+    atomic_key_serial_t collection_id;
+    char *anchor_name = NULL, *collection_name = NULL, *subsidiary_name = NULL;
+
+    *str = NULL;
+    ret = parse_residual(context, collection, &anchor_name, &collection_name,
+                         &subsidiary_name);
+    if (ret)
+	goto cleanup;
+
+    ret = get_collection(context, anchor_name, collection_name, &collection_id);
+    if (ret)
+	goto cleanup;
+
+    ret = get_primary_name(context, anchor_name, collection_name,
+                           collection_id, str);
+    if (ret)
+        goto cleanup;
+
+cleanup:
+    free(anchor_name);
+    free(collection_name);
+    free(subsidiary_name);
+    return ret;
+}
+
+static krb5_error_code KRB5_CALLCONV
 krcc_get_default_name(krb5_context context, char **str)
 {
-    *str = strdup("KEYRING:");
-    if (*str == NULL)
-	return krb5_enomem(context);
+    krb5_error_code ret;
+    char *s = NULL;
 
-    return 0;
+    ret = krcc_get_primary_name(context, NULL, &s);
+    if (ret)
+        return ret;
+    if (asprintf(str, "KEYRING:%s%s",
+                 s ? ":" : "", s ? s : "") == -1 || *str == NULL)
+	ret = krb5_enomem(context);
+
+    free(s);
+    return ret;
+}
+
+static void KRB5_CALLCONV
+krcc_xfree(void *p)
+{
+    krb5_xfree(p);
 }
 
 /*
@@ -2039,7 +2081,7 @@ krcc_get_default_name(krb5_context context, char **str)
  * be stored at the process or thread level respectively.
  */
 KRB5_LIB_VARIABLE const krb5_cc_ops krb5_krcc_ops = {
-    KRB5_CC_OPS_VERSION_5,
+    KRB5_CC_OPS_VERSION_6,
     "KEYRING",
     NULL,
     NULL,
@@ -2067,10 +2109,11 @@ KRB5_LIB_VARIABLE const krb5_cc_ops krb5_krcc_ops = {
     krcc_get_kdc_offset,
     krcc_get_name_2,
     krcc_resolve_2,
-    NULL, /* krcc_get_primary_name */
+    krcc_get_primary_name,
     krcc_gen_new_2,
+    NULL, /* krcc_get_cache_first_2 */
+    krcc_xfree,
     0,
-    '\0',
     ':',
 };
 

@@ -1344,7 +1344,9 @@ struct fcache_iter {
 
 /* Initiate FILE collection iteration */
 static krb5_error_code KRB5_CALLCONV
-fcc_get_cache_first(krb5_context context, krb5_cc_cursor *cursor)
+fcc_get_cache_first_2(krb5_context context,
+                      const char *name,
+                      krb5_cc_cursor *cursor)
 {
     struct fcache_iter *iter = NULL;
     krb5_error_code ret;
@@ -1356,28 +1358,35 @@ fcc_get_cache_first(krb5_context context, krb5_cc_cursor *cursor)
     if (ret)
         return ret;
 
-    /*
-     * Note: do not allow krb5_cc_default_name() to recurse via
-     * krb5_cc_cache_match().
-     *
-     * Note that context->default_cc_name will be NULL even though
-     * KRB5CCNAME is set in the environment if neither krb5_cc_default_name()
-     * nor krb5_cc_set_default_name() have been called.
-     */
+    if (name) {
+        is_def_coll = 1;
+    } else {
+        name = def_ccname;
 
-    /*
-     * Figure out if the current default ccache name is a really a default one
-     * so we know whether to search any other default FILE collection
-     * locations.
-     */
-    if ((ret = is_default_collection(context, def_ccname,
-                                     (const char **)def_locs,
-                                     &is_def_coll)))
-        goto out;
+        /*
+         * Note: do not allow krb5_cc_default_name() to recurse via
+         *       krb5_cc_cache_match()!
+         *
+         * Note that context->default_cc_name will be NULL even though
+         * KRB5CCNAME is set in the environment if neither
+         * krb5_cc_default_name() nor krb5_cc_set_default_name() have been
+         * called.
+         */
+
+        /*
+         * Figure out if the current default ccache name is a really a default one
+         * so we know whether to search any other default FILE collection
+         * locations.
+         */
+        if ((ret = is_default_collection(context, name,
+                                         (const char **)def_locs,
+                                         &is_def_coll)))
+            goto out;
+    }
 
     /* Setup the cursor */
     if ((iter = calloc(1, sizeof(*iter))) == NULL ||
-        (def_ccname && (iter->def_ccname = strdup(def_ccname)) == NULL)) {
+        (name && (iter->def_ccname = strdup(name)) == NULL)) {
         ret = krb5_enomem(context);
         goto out;
     }
@@ -1385,7 +1394,7 @@ fcc_get_cache_first(krb5_context context, krb5_cc_cursor *cursor)
     iter->enable_file_cache_iteration =
         !!krb5_config_get_bool_default(context, NULL, FALSE, "libdefaults",
                                        "enable_file_cache_iteration", NULL);
-    if (iter->enable_file_cache_iteration) {
+    if (iter->enable_file_cache_iteration && name != def_ccname) {
         char *p;
 
         def_locs = krb5_config_get_strings(context, NULL, "libdefaults",
@@ -1684,6 +1693,30 @@ fcc_get_kdc_offset(krb5_context context, krb5_ccache id, krb5_deltat *kdc_offset
     return ret;
 }
 
+static krb5_error_code KRB5_CALLCONV
+fcc_get_primary_name(krb5_context context,
+                     const char *collection,
+                     char **primary)
+{
+    /*
+     * We have no easy way of knowing what the primary name is because we copy
+     * the cache in `fcc_set_default_cache()', and we do that because we don't
+     * accept caches with `st_nlink > 1` nor symlinks.  Even if we used
+     * hard-links, we'd have to readdir the directory to find what the other
+     * hard-link might be.  We could maybe use a cc config entry, or an xattr
+     * where supported, but it's getting complicated.  If we have to do this,
+     * we'll use a cc config entry.
+     */
+    *primary = NULL;
+    return 0;
+}
+
+static void KRB5_CALLCONV
+fcc_xfree(void *p)
+{
+    krb5_xfree(p);
+}
+
 
 /**
  * Variable containing the FILE based credential cache implemention.
@@ -1692,7 +1725,7 @@ fcc_get_kdc_offset(krb5_context context, krb5_ccache id, krb5_deltat *kdc_offset
  */
 
 KRB5_LIB_VARIABLE const krb5_cc_ops krb5_fcc_ops = {
-    KRB5_CC_OPS_VERSION_5,
+    KRB5_CC_OPS_VERSION_6,
     "FILE",
     NULL,
     NULL,
@@ -1709,7 +1742,7 @@ KRB5_LIB_VARIABLE const krb5_cc_ops krb5_fcc_ops = {
     fcc_remove_cred,
     fcc_set_flags,
     fcc_get_version,
-    fcc_get_cache_first,
+    NULL, /* fcc_get_cache_first */
     fcc_get_cache_next,
     fcc_end_cache_get,
     fcc_move,
@@ -1720,9 +1753,10 @@ KRB5_LIB_VARIABLE const krb5_cc_ops krb5_fcc_ops = {
     fcc_get_kdc_offset,
     fcc_get_name_2,
     fcc_resolve_2,
-    NULL, /* fcc_get_primary_name */
+    fcc_get_primary_name,
     fcc_gen_new_2,
+    fcc_get_cache_first_2,
+    fcc_xfree,
     1,
     '+',
-    '\0',
 };

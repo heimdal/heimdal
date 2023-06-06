@@ -1088,6 +1088,71 @@ acc_lastchange(krb5_context context, krb5_ccache id, krb5_timestamp *mtime)
     return 0;
 }
 
+static krb5_error_code KRB5_CALLCONV
+acc_get_primary_name(krb5_context context, const char *collection, char **str)
+{
+    krb5_error_code ret;
+    cc_context_t cc;
+    cc_string_t name;
+    int32_t error;
+
+    if (strncmp(collection, "API:", sizeof("API:") - 1) != 0) {
+        krb5_set_error_message(context, ret = EINVAL,
+                               "Not an API cache collection name: %s",
+                               collection);
+        return ret;
+    }
+
+    /*
+     * CCAPI supports just one collection [unless some day we make the
+     * DLL/DYLD/SO the collection name].  Either the collection name is
+     * explicitly empty, or there is no collection/subsidiary separator and we
+     * treat the given name as a subsidiary that we'll ignore.
+     */
+    collection += sizeof("API:") - 1;
+    if (collection[0] != '\0' && collection[0] != ':') {
+        const char *p;
+
+        if (collection[0] != ':') {
+            p = strchr(collection, ':');
+            if (p && *p != '\0') {
+                krb5_set_error_message(context, ret = EINVAL,
+                                       "API caches can have no collection name: %s",
+                                       collection);
+                return ret;
+            }
+        }
+    }
+
+    ret = init_ccapi(context);
+    if (ret)
+	return ret;
+
+    error = (*init_func)(&cc, ccapi_version_3, NULL, NULL);
+    if (error)
+	return translate_cc_error(context, error);
+
+    error = (*cc->func->get_default_ccache_name)(cc, &name);
+    if (error) {
+	(*cc->func->release)(cc);
+	return translate_cc_error(context, error);
+    }
+
+    *str = strdup(name->data);
+    (*name->func->release)(name);
+    (*cc->func->release)(cc);
+
+    if (error < 0 || *str == NULL)
+	return krb5_enomem(context);
+    return 0;
+}
+
+static void KRB5_CALLCONV
+acc_xfree(void *p)
+{
+    krb5_xfree(p);
+}
+
 /**
  * Variable containing the API based credential cache implemention.
  *
@@ -1095,7 +1160,7 @@ acc_lastchange(krb5_context context, krb5_ccache id, krb5_timestamp *mtime)
  */
 
 KRB5_LIB_VARIABLE const krb5_cc_ops krb5_acc_ops = {
-    KRB5_CC_OPS_VERSION_5,
+    KRB5_CC_OPS_VERSION_6,
     "API",
     NULL,
     NULL,
@@ -1123,11 +1188,12 @@ KRB5_LIB_VARIABLE const krb5_cc_ops krb5_acc_ops = {
     NULL,
     acc_get_name_2,
     acc_resolve_2,
-    NULL, /* acc_get_primary_name */
+    acc_get_primary_name,
     acc_gen_new_2,
+    NULL, /* acc_get_cache_first_2 */
+    acc_xfree,
     0,
     ':',
-    '\0',
 };
 
 #endif

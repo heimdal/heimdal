@@ -58,6 +58,7 @@ typedef struct krb5_scache {
     sqlite3_stmt *scache;
     sqlite3_stmt *scache_name;
     sqlite3_stmt *umaster;
+    sqlite3_stmt *smaster;
 
 } krb5_scache;
 
@@ -114,6 +115,9 @@ typedef struct krb5_scache {
 	"name TEXT NOT NULL PRIMARY KEY, "                      \
         "created_at INTEGER NOT NULL DEFAULT (unixepoch())"     \
 	") WITHOUT ROWID"
+
+#define SQL_SMASTER                             \
+        "SELECT defaultcache FROM master WHERE oid = 1"
 
         /*
          * The `cred' BLOB will have a serialized krb5_creds value, so it will
@@ -254,6 +258,8 @@ scc_free(krb5_scache *s)
 	sqlite3_finalize(s->scache_name);
     if (s->umaster)
 	sqlite3_finalize(s->umaster);
+    if (s->smaster)
+	sqlite3_finalize(s->smaster);
 
     if (s->db)
 	sqlite3_close(s->db);
@@ -447,6 +453,7 @@ get_def_name(krb5_context context, const char *dname, char **str)
     const char *name = NULL;
     sqlite3 *db;
 
+    /* XXX Rewrite */
     ret = default_db(context, dname, &db, NULL, NULL);
     if (ret)
 	return ret;
@@ -677,6 +684,8 @@ make_database(krb5_context context, krb5_scache *s)
     ret = prepare_stmt(context, s->db, &s->scache_name, SQL_SCACHE_NAME);
     if (ret) goto out;
     ret = prepare_stmt(context, s->db, &s->umaster, SQL_UMASTER);
+    if (ret) goto out;
+    ret = prepare_stmt(context, s->db, &s->smaster, SQL_SMASTER);
     if (ret) goto out;
 
 #ifndef WIN32
@@ -1459,7 +1468,9 @@ struct cache_iter {
 };
 
 static krb5_error_code KRB5_CALLCONV
-scc_get_cache_first(krb5_context context, krb5_cc_cursor *cursor)
+scc_get_cache_first_2(krb5_context context,
+                      const char *name,
+                      krb5_cc_cursor *cursor)
 {
     struct cache_iter *ctx;
     krb5_error_code ret;
@@ -1470,7 +1481,7 @@ scc_get_cache_first(krb5_context context, krb5_cc_cursor *cursor)
     if (ctx == NULL)
 	return krb5_enomem(context);
 
-    ret = default_db(context, NULL, &ctx->db, &ctx->dname, NULL);
+    ret = default_db(context, name, &ctx->db, &ctx->dname, NULL);
     if (ret) {
 	free(ctx);
 	return ret;
@@ -1756,6 +1767,47 @@ scc_retrieve(krb5_context context,
     return KRB5_CC_END;
 }
 
+static krb5_error_code KRB5_CALLCONV
+scc_get_primary_name(krb5_context context,
+                     const char *collection,
+                     char **primary)
+{
+    krb5_error_code ret;
+    krb5_scache *s;
+    const char *str = NULL;
+
+    *primary = NULL;
+    s = scc_alloc(context, collection, NULL, 0);
+    if (s == NULL)
+        return krb5_enomem(context);
+
+    do {
+        ret = sqlite3_step(s->smaster);
+    } while (ret == SQLITE_ROW);
+    if (sqlite3_column_type(s->smaster, 0) == SQLITE_NULL) {
+        /* Nothing to do */
+    } else if (sqlite3_column_type(s->smaster, 0) == SQLITE_TEXT) {
+        str = (const char *)sqlite3_column_text(s->smaster, 0);
+    } else {
+        _krb5_debug(context, 2,
+                    "Non-null, non-text value for defaultcache column of "
+                    "master table in %s/sdb", collection);
+    }
+    if (str && (*primary = strdup(str)) == NULL)
+        ret = krb5_enomem(context);
+    else
+        ret = 0;
+    sqlite3_reset(s->smaster);
+    scc_free(s);
+    return ret;
+}
+
+static void KRB5_CALLCONV
+scc_xfree(void *p)
+{
+    krb5_xfree(p);
+}
+
 /**
  * Variable containing the SCC based credential cache implemention.
  *
@@ -1763,7 +1815,7 @@ scc_retrieve(krb5_context context,
  */
 
 KRB5_LIB_VARIABLE const krb5_cc_ops krb5_scc_ops = {
-    KRB5_CC_OPS_VERSION_5,
+    KRB5_CC_OPS_VERSION_6,
     "SCC",
     NULL,
     NULL,
@@ -1780,7 +1832,7 @@ KRB5_LIB_VARIABLE const krb5_cc_ops krb5_scc_ops = {
     scc_remove_cred,
     scc_set_flags,
     NULL,
-    scc_get_cache_first,
+    NULL, /* scc_get_cache_first */
     scc_get_cache_next,
     scc_end_cache_get,
     scc_move,
@@ -1791,10 +1843,11 @@ KRB5_LIB_VARIABLE const krb5_cc_ops krb5_scc_ops = {
     NULL,
     scc_get_name_2,
     scc_resolve_2,
-    NULL, /* scc_get_primary_name */
+    scc_get_primary_name,
     scc_gen_new_2,
+    scc_get_cache_first_2,
+    scc_xfree,
     1,
-    '\0',
     ':',
 };
 

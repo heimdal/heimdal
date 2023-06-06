@@ -524,6 +524,17 @@ typedef struct krb5_cc_ops {
 						     krb5_ccache *);
     krb5_error_code (KRB5_CALLCONV * end_cache_get)(krb5_context, krb5_cc_cursor);
     krb5_error_code (KRB5_CALLCONV * move)(krb5_context, krb5_ccache, krb5_ccache);
+    /*
+     * In version 6 the `get_default_name()' method becomes the "get the
+     * default cache collection name", so "FILE:/tmp/krb5cc_{UID}" with the UID
+     * expanded, and so on, whereas before Version 6 this was meant to return
+     * the cache name including the current primary subsidiary cache, so
+     * something like "DIR:/tmp/krb5cc_{UID}_dir:XXXXX" with "XXXXXX" being the
+     * name of the primary sub-cache.  In order to support non-default
+     * collections a method like this would need to get the name of a
+     * collection whose primary cache to output, and in version 6 that is the
+     * purpose of the `get_primary_name()` method.
+     */
     krb5_error_code (KRB5_CALLCONV * get_default_name)(krb5_context, char **);
     /* Version 1 */
     krb5_error_code (KRB5_CALLCONV * set_default)(krb5_context, krb5_ccache);
@@ -539,11 +550,12 @@ typedef struct krb5_cc_ops {
     krb5_error_code (KRB5_CALLCONV * resolve_2)(krb5_context, krb5_ccache *, const char *,
 						const char *);
     /* Version 6 */
-    krb5_error_code (KRB5_CALLCONV * get_primary_name)(krb5_context, krb5_ccache *, const char *);
+    krb5_error_code (KRB5_CALLCONV * get_primary_name)(krb5_context, const char *, char **);
     krb5_error_code (KRB5_CALLCONV * gen_new_2)(krb5_context, const char *, krb5_ccache *);
+    krb5_error_code (KRB5_CALLCONV * get_cache_first_2)(krb5_context, const char *, krb5_cc_cursor *);
+    void (KRB5_CALLCONV * xfree)(void *);
     uint32_t filepath:1;    /* Versions later than 6 can add bitfields here */
     unsigned char subsep;
-    unsigned char subrsep;
     /* Add new functions here for versions 7 and above */
 } krb5_cc_ops;
 

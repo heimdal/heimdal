@@ -1302,6 +1302,38 @@ kcm_get_kdc_offset(krb5_context context, krb5_ccache id, krb5_deltat *kdc_offset
     return 0;
 }
 
+static krb5_error_code
+kcm_get_primary_name(krb5_context context,
+                     const char *collection,
+                     char **primary)
+{
+    krb5_error_code ret;
+    krb5_storage *request, *response;
+    krb5_data response_data;
+
+    *primary = NULL;
+
+    ret = krb5_kcm_storage_request(context, KCM_OP_GET_DEFAULT_CACHE, &request);
+    if (ret)
+	return ret;
+
+    ret = krb5_kcm_call(context, request, &response, &response_data);
+    krb5_storage_free(request);
+    if (ret)
+        return ret;
+
+    ret = krb5_ret_stringz(response, primary);
+    krb5_storage_free(response);
+    krb5_data_free(&response_data);
+    return ret;
+}
+
+static void KRB5_CALLCONV
+kcm_xfree(void *p)
+{
+    krb5_xfree(p);
+}
+
 /**
  * Variable containing the KCM based credential cache implemention.
  *
@@ -1309,7 +1341,7 @@ kcm_get_kdc_offset(krb5_context context, krb5_ccache id, krb5_deltat *kdc_offset
  */
 
 KRB5_LIB_VARIABLE const krb5_cc_ops krb5_kcm_ops = {
-    KRB5_CC_OPS_VERSION_5,
+    KRB5_CC_OPS_VERSION_6,
     "KCM",
     NULL,
     NULL,
@@ -1337,15 +1369,16 @@ KRB5_LIB_VARIABLE const krb5_cc_ops krb5_kcm_ops = {
     kcm_get_kdc_offset,
     kcm_get_name_2,
     kcm_resolve_2_kcm,
-    NULL, /* kcm_get_primary_name_kcm */
+    kcm_get_primary_name,
     kcm_gen_new_2_kcm,
+    NULL, /* kcm_get_cache_first_2_kcm */
+    kcm_xfree,
     0,
     ':',
-    '\0',
 };
 
 KRB5_LIB_VARIABLE const krb5_cc_ops krb5_akcm_ops = {
-    KRB5_CC_OPS_VERSION_5,
+    KRB5_CC_OPS_VERSION_6,
     "API",
     NULL,
     NULL,
@@ -1373,10 +1406,11 @@ KRB5_LIB_VARIABLE const krb5_cc_ops krb5_akcm_ops = {
     NULL,
     kcm_get_name_2,
     kcm_resolve_2_api,
-    NULL, /* kcm_get_primary_name_api */
+    kcm_get_primary_name,
     kcm_gen_new_2_api,
+    NULL, /* kcm_get_cache_first_2_api */
+    kcm_xfree,
     0,
-    '\0',
     ':',
 };
 

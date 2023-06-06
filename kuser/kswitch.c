@@ -81,7 +81,8 @@ kswitch(struct kswitch_options *opt, int argc, char **argv)
         rtbl_add_column_by_id(ct, 2, "Type", 0);
         rtbl_set_column_affix_by_id(ct, 2, "  ", "");
 
-	ret = krb5_cc_cache_get_first(heimtools_context, NULL, &cursor);
+        ret = krb5_cc_cache_get_first(heimtools_context, opt->cache_string,
+                                      &cursor);
 	if (ret)
 	    krb5_err(heimtools_context, 1, ret, "krb5_cc_cache_get_first");
 
@@ -150,7 +151,8 @@ kswitch(struct kswitch_options *opt, int argc, char **argv)
             }
         }
         if (ret)
-            ret = krb5_cc_cache_match(heimtools_context, p, &id);
+            ret = krb5_cc_cache_match2(heimtools_context, opt->cache_string,
+                                       p, &id);
 	if (ret)
 	    krb5_err(heimtools_context, 1, ret,
 		     N_("Did not find principal: %s", ""),

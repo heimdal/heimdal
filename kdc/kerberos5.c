@@ -2760,7 +2760,7 @@ out:
 				 r->rep.padata,
 			         r->armor_crypto,
 			         &req->req_body,
-			         r->error_code,
+			         r->error_code ? r->error_code : ret,
 			         r->client_princ,
 			         r->server_princ,
 			         NULL, NULL,

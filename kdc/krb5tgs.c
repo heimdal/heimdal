@@ -2178,7 +2178,7 @@ out:
 				 &error_method,
 				 r->armor_crypto,
 				 &req->req_body,
-				 r->error_code,
+				 r->error_code ? r->error_code : ret,
 				 r->client_princ,
 				 r->server_princ,
 				 csec, cusec,

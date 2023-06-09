@@ -795,7 +795,9 @@ kdc_get_next(krb5_context context,
 	return KRB5_KDC_UNREACH;
     }
 
-    if(context->srv_lookup) {
+    if (krb5_config_get_bool(context, NULL, "libdefaults", "block_dns",
+	    NULL) &&
+	context->srv_lookup) {
 	if(kd->sitename && (kd->flags & KD_SITE_SRV_TCP) == 0) {
 	    srv_get_hosts(context, kd, kd->sitename, "tcp", "kerberos");
 	    kd->flags |= KD_SITE_SRV_TCP;
@@ -867,7 +869,9 @@ admin_get_next(krb5_context context,
 	return KRB5_KDC_UNREACH;
     }
 
-    if(context->srv_lookup) {
+    if (krb5_config_get_bool(context, NULL, "libdefaults", "block_dns",
+	    NULL) &&
+	context->srv_lookup) {
 	if((kd->flags & KD_SRV_TCP) == 0) {
 	    srv_get_hosts(context, kd, NULL, "tcp", kd->srv_label);
 	    kd->flags |= KD_SRV_TCP;
@@ -921,7 +925,9 @@ kpasswd_get_next(krb5_context context,
 	return KRB5_KDC_UNREACH;
     }
 
-    if(context->srv_lookup) {
+    if (krb5_config_get_bool(context, NULL, "libdefaults", "block_dns",
+	    NULL) &&
+	context->srv_lookup) {
 	if((kd->flags & KD_SRV_UDP) == 0) {
 	    srv_get_hosts(context, kd, NULL, "udp", kd->srv_label);
 	    kd->flags |= KD_SRV_UDP;

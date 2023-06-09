@@ -246,6 +246,11 @@ start_server(krb5_context contextp, const char *port_str)
 	hints.ai_flags    = AI_PASSIVE;
 	hints.ai_socktype = SOCK_STREAM;
 
+	if (krb5_config_get_bool(context, NULL, "libdefaults", "block_dns",
+		NULL)) {
+	    hints.ai_flags &= ~AI_CANONNAME;
+	    hints.ai_flags |= AI_NUMERICHOST|AI_NUMERICSERV;
+	}
 	e = getaddrinfo(NULL, p->port, &hints, &ai);
 	if(e) {
 	    snprintf(portstr, sizeof(portstr), "%u", p->def_port);

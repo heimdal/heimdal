@@ -430,6 +430,11 @@ krb5_krbhst_get_addrinfo(krb5_context context, krb5_krbhst_info *host,
 	snprintf (portstr, sizeof(portstr), "%d", host->port);
 	make_hints(&hints, host->proto);
 
+	if (krb5_config_get_bool(context, NULL, "libdefaults", "block_dns",
+		NULL)) {
+	    hints.ai_flags &= ~AI_CANONNAME;
+	    hints.ai_flags |= AI_NUMERICHOST;
+	}
 	ret = getaddrinfo(host->hostname, portstr, &hints, &host->ai);
 	if (ret) {
 	    ret = krb5_eai_to_heim_errno(ret, errno);
@@ -550,6 +555,11 @@ fallback_get_hosts(krb5_context context, struct krb5_krbhst_data *kd,
 
     make_hints(&hints, proto);
     snprintf(portstr, sizeof(portstr), "%d", port);
+    if (krb5_config_get_bool(context, NULL, "libdefaults", "block_dns",
+	    NULL)) {
+	hints.ai_flags &= ~AI_CANONNAME;
+	hints.ai_flags |= AI_NUMERICHOST;
+    }
     ret = getaddrinfo(host, portstr, &hints, &ai);
     if (ret) {
 	/* no more hosts, so we're done here */
@@ -717,6 +727,13 @@ plugin_get_hosts(krb5_context context,
 		 enum locate_service_type type)
 {
     struct plctx ctx = { type, kd, 0 };
+
+    /*
+     * XXX Need a way to pass this through -- unsure if any of this is
+     * useful without DNS, though.
+     */
+    if (krb5_config_get_bool(context, NULL, "libdefaults", "block_dns", NULL))
+	return;
 
     if (_krb5_homedir_access(context))
 	ctx.flags |= KRB5_PLF_ALLOW_HOMEDIR;

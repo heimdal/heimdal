@@ -70,6 +70,11 @@ connect_to_master (krb5_context context, const char *master,
 	port_str = port;
     }
 
+    if (krb5_config_get_bool(context, NULL, "libdefaults", "block_dns",
+	    NULL)) {
+	hints.ai_flags &= ~AI_CANONNAME;
+	hints.ai_flags |= AI_NUMERICHOST;
+    }
     error = getaddrinfo(master, port_str, &hints, &ai);
     if (error) {
 	krb5_warnx(context, "Failed to get address of to %s: %s",

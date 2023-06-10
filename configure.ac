@@ -56,7 +56,6 @@ if ! test -f "$srcdir/lib/asn1/der-protos.h" ||
     AC_KRB_PROG_PERL
     AC_KRB_PERL_MOD(Getopt::Std)
     AC_KRB_PERL_MOD(File::Compare)
-    AC_KRB_PERL_MOD(JSON)
 fi
 
 AC_KRB_PROG_YACC

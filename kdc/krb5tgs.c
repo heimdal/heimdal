@@ -2161,7 +2161,10 @@ _kdc_tgs_rep(astgs_request_t r)
     }
 
 out:
-    r->error_code = ret;
+    if (ret) {
+	/* Overwrite ‘error_code’ only if we have an actual error. */
+	r->error_code = ret;
+    }
     {
 	krb5_error_code ret2 = _kdc_audit_request(r);
 	if (ret2) {

@@ -96,6 +96,7 @@ _kdc_check_pac(astgs_request_t r,
     krb5_pac pac = NULL;
     krb5_error_code ret;
     krb5_boolean signedticket;
+    krb5_boolean is_trusted = FALSE;
 
     *kdc_issued = FALSE;
     *ppac = NULL;
@@ -125,7 +126,7 @@ _kdc_check_pac(astgs_request_t r,
     /* Verify the KDC signatures. */
     ret = _kdc_pac_verify(r,
 			  client_principal, delegated_proxy_principal,
-			  client, server, krbtgt, &pac);
+			  client, server, krbtgt, pac, &is_trusted);
     if (ret == 0) {
 	if (pac_canon_name) {
 	    ret = _krb5_pac_get_canon_principal(context, pac, pac_canon_name);
@@ -158,10 +159,10 @@ _kdc_check_pac(astgs_request_t r,
 		krb5_pac_free(context, pac);
 		return ret;
 	    }
-	    if (pac_attributes &&
-		_krb5_pac_get_attributes_info(context, pac, pac_attributes) != 0)
-		*pac_attributes = KRB5_PAC_WAS_GIVEN_IMPLICITLY;
 	}
+	if (pac_attributes &&
+	    _krb5_pac_get_attributes_info(context, pac, pac_attributes) != 0)
+	    *pac_attributes = KRB5_PAC_WAS_GIVEN_IMPLICITLY;
 
 	/* Discard the PAC if the plugin didn't handle it */
 	krb5_pac_free(context, pac);
@@ -1903,6 +1904,13 @@ server_lookup:
     /* flags &= ~HDB_F_SYNTHETIC_OK; */ /* `flags' is not used again below */
     priv->clientdb = clientdb;
 
+    /* Validate armor TGT before potentially including device claims */
+    if (priv->armor_ticket) {
+	ret = _kdc_fast_check_armor_pac(priv);
+	if (ret)
+	    goto out;
+    }
+
     ret = _kdc_check_pac(priv, priv->client_princ, NULL,
 			 priv->client, priv->server,
 			 priv->krbtgt, priv->krbtgt,
@@ -1917,6 +1925,29 @@ server_lookup:
 		spn, cpn, from, msg);
 	krb5_free_error_message(context, msg);
 	goto out;
+    }
+
+    if (priv->pac != NULL) {
+	ret = _kdc_pac_update(priv, priv->client_princ, NULL,
+			      priv->client, priv->server, priv->krbtgt,
+			      &priv->pac);
+	if (ret == KRB5_PLUGIN_NO_HANDLE) {
+	    ret = 0;
+	}
+	if (ret) {
+	    const char *msg = krb5_get_error_message(context, ret);
+	    kdc_audit_addreason((kdc_request_t)priv, "PAC update failed");
+	    kdc_log(context, config, 4,
+		    "Update PAC failed for %s (%s) from %s with %s",
+		    spn, cpn, from, msg);
+	    krb5_free_error_message(context, msg);
+	    goto out;
+	}
+
+	if (priv->pac == NULL) {
+	    /* the plugin may indicate no PAC should be generated */
+	    priv->pac_attributes = 0;
+	}
     }
 
     /*
@@ -2014,13 +2045,6 @@ server_lookup:
 
     if (kdc_issued &&
 	!krb5_principal_is_krbtgt(context, priv->server->principal)) {
-
-	/* Validate armor TGT before potentially including device claims */
-	if (priv->armor_ticket) {
-	    ret = _kdc_fast_check_armor_pac(priv);
-	    if (ret)
-		goto out;
-	}
 
 	add_ticket_sig = TRUE;
     }

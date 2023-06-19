@@ -43,10 +43,10 @@ ROKEN_LIB_FUNCTION const char * ROKEN_LIB_CALL
 hostent_find_fqdn (const struct hostent *he)
 {
     const char *ret = he->h_name;
-    const char **h;
+    char **h;
 
     if (strchr (ret, '.') == NULL)
-	for (h = (const char **)he->h_aliases; *h != NULL; ++h) {
+	for (h = he->h_aliases; *h != NULL; ++h) {
 	    if (strchr (*h, '.') != NULL) {
 		ret = *h;
 		break;

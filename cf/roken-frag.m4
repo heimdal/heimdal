@@ -28,7 +28,7 @@ dnl C characteristics
 AC_REQUIRE([AC_C___ATTRIBUTE__])
 AC_REQUIRE([AC_C_INLINE])
 AC_REQUIRE([AC_C_CONST])
-rk_WFLAGS(-Wall -Wextra -Wno-sign-compare -Wno-unused-parameter -Wmissing-prototypes -Wpointer-arith -Wbad-function-cast -Wmissing-declarations -Wnested-externs -Wshadow)
+rk_WFLAGS(-Wall -Wextra -Wno-sign-compare -Wno-unused-parameter -Wmissing-prototypes -Wpointer-arith -Wbad-function-cast -Wmissing-declarations -Wnested-externs -Wshadow -Wdiscarded-qualifiers -Wcast-qual -Wimplicit-fallthrough -Wenum-compare -Wunused-but-set-variable -Wunused-const-variable -Wunused-result -Wold-style-definition -Wwrite-strings)
 
 dnl -Wmissing-prototypes -Wpointer-arith -Wreturn-type -Wstrict-prototypes
 dnl -Wcast-qual -Wswitch -Wformat=2 -Wwrite-strings

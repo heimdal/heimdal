@@ -44,6 +44,16 @@
 #include <unistd.h>
 #endif
 
+static char *
+fillbuf(char *buf, const char *p, size_t bufsz)
+{
+
+    if (strlcpy(buf, p, bufsz) < bufsz)
+	return buf;
+    errno = ERANGE;
+    return NULL;
+}
+
 /**
  * Returns the user's SHELL.
  */
@@ -61,15 +71,11 @@ roken_get_shell(char *shell, size_t shellsz)
 #endif
 
     if (issuid())
-        return "/bin/sh";
+        return fillbuf(shell, "/bin/sh", shellsz);
 
     p = secure_getenv("SHELL");
-    if (p != NULL && p[0] != '\0') {
-        if (strlcpy(shell, p, shellsz) < shellsz)
-            return shell;
-        errno = ERANGE;
-        return NULL;
-    }
+    if (p != NULL && p[0] != '\0')
+	return fillbuf(shell, p, shellsz);
 
 #ifdef HAVE_GETPWNAM_R
     {
@@ -81,25 +87,17 @@ roken_get_shell(char *shell, size_t shellsz)
 
         if (username &&
             getpwnam_r(username, &pwd, buf, buflen, &pwdp) == 0 &&
-            pwdp != NULL && pwdp->pw_shell != NULL) {
-            if (strlcpy(shell, pwdp->pw_shell, shellsz) < shellsz)
-                return shell;
-            errno = ERANGE;
-            return NULL;
-        }
+            pwdp != NULL && pwdp->pw_shell != NULL)
+	    return fillbuf(shell, pwdp->pw_shell, shellsz);
     }
 #endif
     errno = 0;
-    return "/bin/sh";
+    return fillbuf(shell, "/bin/sh", shellsz);
 #else
     /* Windows */
     p = getenv("SHELL");
-    if (p != NULL && p[0] != '\0') {
-        if (strlcpy(shell, p, shellsz) < shellsz)
-            return shell;
-        errno = ERANGE;
-        return NULL;
-    }
+    if (p != NULL && p[0] != '\0')
+	return fillbuf(shell, p, shellsz);
     errno = 0;
     return NULL;
 #endif
@@ -151,12 +149,8 @@ roken_get_homedir(char *home, size_t homesz)
     }
 
     p = secure_getenv("HOME");
-    if (p != NULL && p[0] != '\0') {
-        if (strlcpy(home, p, homesz) < homesz)
-            return home;
-        errno = ERANGE;
-        return NULL;
-    }
+    if (p != NULL && p[0] != '\0')
+	return fillbuf(home, p, homesz);
 
 #ifdef HAVE_GETPWNAM_R
     {
@@ -168,12 +162,8 @@ roken_get_homedir(char *home, size_t homesz)
 
         if (username &&
             getpwnam_r(username, &pwd, buf, buflen, &pwdp) == 0 &&
-            pwdp != NULL && pwdp->pw_dir != NULL) {
-            if (strlcpy(home, pwdp->pw_dir, homesz) < homesz)
-                return home;
-            errno = ERANGE;
-            return NULL;
-        }
+            pwdp != NULL && pwdp->pw_dir != NULL)
+	    return fillbuf(home, pwdp->pw_dir, homesz);
     }
 #endif
 #endif
@@ -204,12 +194,8 @@ roken_get_appdatadir(char *appdata, size_t appdatasz)
                                   SHGFP_TYPE_CURRENT, appdata)))
         return appdata;
 
-    if ((p = getenv("APPDATA")) != NULL && p[0] != '\0') {
-        if (strlcpy(appdata, p, appdatasz) < appdatasz)
-            return appdata;
-        errno = ERANGE;
-        return NULL;
-    }
+    if ((p = getenv("APPDATA")) != NULL && p[0] != '\0')
+	return fillbuf(appdata, p, appdatasz);
 
     errno = 0;
     return NULL;
@@ -271,12 +257,8 @@ roken_get_username(char *user, size_t usersz)
     p = secure_getenv("USER");
     if (p == NULL || p[0] == '\0')
         p = secure_getenv("LOGNAME");
-    if (p != NULL && p[0] != '\0') {
-        if (strlcpy(user, p, usersz) < usersz)
-            return user;
-        errno = ERANGE;
-        return NULL;
-    }
+    if (p != NULL && p[0] != '\0')
+	return fillbuf(user, p, usersz);
 
 #ifdef HAVE_GETPWUID_R
     {
@@ -285,12 +267,8 @@ roken_get_username(char *user, size_t usersz)
         char buf[buflen];
 
         if (getpwuid_r(getuid(), &pwd, buf, buflen, &pwdp) == 0 &&
-            pwdp != NULL && pwdp->pw_name != NULL) {
-            if (strlcpy(user, pwdp->pw_name, usersz) < usersz)
-                return user;
-            errno = ERANGE;
-            return NULL;
-        }
+            pwdp != NULL && pwdp->pw_name != NULL)
+	    return fillbuf(user, pwdp->pw_name, usersz);
     }
 #endif
 #endif
@@ -318,12 +296,8 @@ roken_get_loginname(char *user, size_t usersz)
         return NULL;
 #else
 #ifdef HAVE_GETLOGIN
-    if ((p = getlogin()) != NULL && p[0] != '\0') {
-        if (strlcpy(user, p, usersz) < usersz)
-            return user;
-        errno = ERANGE;
-        return NULL;
-    }
+    if ((p = getlogin()) != NULL && p[0] != '\0')
+	return fillbuf(user, p, usersz);
     if (errno != ENOENT)
         return NULL;
 #endif

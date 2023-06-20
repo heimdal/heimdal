@@ -102,7 +102,8 @@ krb5_plugin_register(krb5_context context,
  * @paths   Array of directory paths where to look
  */
 KRB5_LIB_FUNCTION void KRB5_LIB_CALL
-_krb5_load_plugins(krb5_context context, const char *name, const char **paths)
+_krb5_load_plugins(krb5_context context, const char *name,
+    const char *const *paths)
 {
     heim_load_plugins(context->hcontext, name, paths);
 }

@@ -145,7 +145,7 @@ gss_acquire_cred_from(OM_uint32 *minor_status,
 		      OM_uint32 *time_rec)
 {
     OM_uint32 major_status, minor;
-    struct _gss_name *name = (struct _gss_name *)desired_name;
+    struct _gss_name *name = rk_UNCONST(desired_name);
     gssapi_mech_interface m;
     struct _gss_cred *cred = NULL;
     size_t i;

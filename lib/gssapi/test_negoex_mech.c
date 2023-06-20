@@ -350,7 +350,8 @@ gss_inquire_sec_context_by_oid(OM_uint32 *minor_status,
 			       const gss_OID desired_object,
 			       gss_buffer_set_t *data_set)
 {
-    struct test_context *ctx = (struct test_context *)context_handle;
+    const struct test_context *ctx =
+	(const struct test_context *)context_handle;
     OM_uint32 major;
     uint8_t keybytes[32] = { 0 };
     uint8_t typebytes[4];

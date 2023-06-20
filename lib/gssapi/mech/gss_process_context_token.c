@@ -33,7 +33,8 @@ gss_process_context_token(OM_uint32 *minor_status,
     gss_const_ctx_id_t context_handle,
     const gss_buffer_t token_buffer)
 {
-	struct _gss_context *ctx = (struct _gss_context *) context_handle;
+	const struct _gss_context *ctx =
+	    (const struct _gss_context *)context_handle;
 	gssapi_mech_interface m = ctx->gc_mech;
 
 	return (m->gm_process_context_token(minor_status, ctx->gc_ctx,

@@ -119,7 +119,7 @@ add_mech_cred_internal(OM_uint32 *minor_status,
 
     if (desired_name != GSS_C_NO_NAME) {
 	major_status = _gss_find_mn(minor_status,
-				    (struct _gss_name *)desired_name,
+				    rk_UNCONST(desired_name),
 				    &m->gm_mech_oid, &mn);
 	if (major_status != GSS_S_COMPLETE)
 	    return major_status;

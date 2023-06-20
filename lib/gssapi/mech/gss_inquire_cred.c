@@ -52,7 +52,7 @@ gss_inquire_cred(OM_uint32 *minor_status,
 {
 	OM_uint32 major_status;
 	struct _gss_mech_switch *m;
-	struct _gss_cred *cred = (struct _gss_cred *) cred_handle;
+	const struct _gss_cred *cred = (const struct _gss_cred *)cred_handle;
 	struct _gss_name *name;
 	struct _gss_mechanism_name *mn;
 	OM_uint32 min_lifetime;

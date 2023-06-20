@@ -239,7 +239,8 @@ gss_accept_sec_context(OM_uint32 *minor_status,
 	OM_uint32 major_status, mech_ret_flags, junk;
 	gssapi_mech_interface m = NULL;
 	struct _gss_context *ctx = (struct _gss_context *) *context_handle;
-	struct _gss_cred *cred = (struct _gss_cred *) acceptor_cred_handle;
+	const struct _gss_cred *cred =
+	    (const struct _gss_cred *)acceptor_cred_handle;
 	struct _gss_mechanism_cred *mc;
         gss_buffer_desc defective_token_error;
 	gss_const_cred_id_t acceptor_mc;

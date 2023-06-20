@@ -59,7 +59,8 @@ gss_inquire_cred_by_mech(OM_uint32 *minor_status,
 		return (GSS_S_NO_CRED);
 
 	if (cred_handle != GSS_C_NO_CREDENTIAL) {
-		struct _gss_cred *cred = (struct _gss_cred *) cred_handle;
+		const struct _gss_cred *cred =
+		    (const struct _gss_cred *)cred_handle;
 		HEIM_TAILQ_FOREACH(mcp, &cred->gc_mc, gmc_link)
 			if (mcp->gmc_mech == m)
 				break;

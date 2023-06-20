@@ -36,8 +36,8 @@ gss_compare_name(OM_uint32 *minor_status,
     gss_const_name_t name2_arg,
     int *name_equal)
 {
-	struct _gss_name *name1 = (struct _gss_name *) name1_arg;
-	struct _gss_name *name2 = (struct _gss_name *) name2_arg;
+	struct _gss_name *name1 = rk_UNCONST(name1_arg);
+	struct _gss_name *name2 = rk_UNCONST(name2_arg);
 
 	/*
 	 * First check the implementation-independant name if both

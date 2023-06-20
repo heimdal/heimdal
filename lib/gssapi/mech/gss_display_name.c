@@ -35,7 +35,7 @@ gss_display_name(OM_uint32 *minor_status,
     gss_OID *output_name_type)
 {
 	OM_uint32 major_status;
-	struct _gss_name *name = (struct _gss_name *) input_name;
+	struct _gss_name *name = rk_UNCONST(input_name);
 	struct _gss_mechanism_name *mn;
 
 	_mg_buffer_zero(output_name_buffer);

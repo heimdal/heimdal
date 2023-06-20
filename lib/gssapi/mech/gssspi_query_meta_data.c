@@ -41,9 +41,9 @@ gssspi_query_meta_data(
 {
     OM_uint32 major_status, junk;
     gssapi_mech_interface m;
-    struct _gss_name *name = (struct _gss_name *) target_name;
+    struct _gss_name *name = rk_UNCONST(target_name);
     struct _gss_mechanism_name *mn;
-    struct _gss_context *ctx = (struct _gss_context *) *context_handle;
+    struct _gss_context *ctx = rk_UNCONST(*context_handle);
     gss_cred_id_t cred_handle;
     int allocated_ctx;
     gss_const_OID mech_type = input_mech_type;

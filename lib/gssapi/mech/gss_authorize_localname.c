@@ -85,7 +85,7 @@ attr_authorize_localname(OM_uint32 *minor_status,
 	int authenticated = 0, complete = 0;
 
 	tmpMajor = gss_get_name_attribute(minor_status,
-					  (gss_name_t)name,
+					  rk_UNCONST(name),
 					  GSS_C_ATTR_LOCAL_LOGIN_USER,
 					  &authenticated,
 					  &complete,
@@ -171,7 +171,7 @@ gss_userok(gss_const_name_t name,
     gss_buffer_desc userBuf;
     gss_name_t userName;
 
-    userBuf.value = (void *)user;
+    userBuf.value = rk_UNCONST(user);
     userBuf.length = strlen(user);
 
     major_status = gss_import_name(&minor_status, &userBuf,

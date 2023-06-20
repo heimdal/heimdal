@@ -334,7 +334,7 @@ _gss_mg_log_name(int level,
 
 void
 _gss_mg_log_cred(int level,
-		 struct _gss_cred *cred,
+		 const struct _gss_cred *cred,
 		 const char *fmt, ...)
 {
     struct _gss_mechanism_cred *mc;

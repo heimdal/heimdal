@@ -36,7 +36,8 @@ gss_wrap_size_limit(OM_uint32 *minor_status,
     OM_uint32 req_output_size,
     OM_uint32 *max_input_size)
 {
-	struct _gss_context *ctx = (struct _gss_context *) context_handle;
+	const struct _gss_context *ctx =
+	    (const struct _gss_context *)context_handle;
 	gssapi_mech_interface m;
 
 	*max_input_size = 0;

@@ -88,7 +88,7 @@ gss_store_cred_into2(OM_uint32 *minor_status,
                      gss_cred_usage_t *cred_usage_stored,
                      gss_buffer_set_t *env)
 {
-    struct _gss_cred *cred = (struct _gss_cred *)input_cred_handle;
+    const struct _gss_cred *cred = (const struct _gss_cred *)input_cred_handle;
     struct _gss_mechanism_cred *mc;
     OM_uint32 major_status;
     OM_uint32 minor;

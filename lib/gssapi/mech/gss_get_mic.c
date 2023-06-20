@@ -35,7 +35,8 @@ gss_get_mic(OM_uint32 *minor_status,
     const gss_buffer_t message_buffer,
     gss_buffer_t message_token)
 {
-	struct _gss_context *ctx = (struct _gss_context *) context_handle;
+	const struct _gss_context *ctx =
+	    (const struct _gss_context *)context_handle;
 	gssapi_mech_interface m;
 
 	_mg_buffer_zero(message_token);

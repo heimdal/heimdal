@@ -38,7 +38,7 @@ gss_inquire_cred_by_oid (OM_uint32 *minor_status,
 			 const gss_OID desired_object,
 			 gss_buffer_set_t *data_set)
 {
-	struct _gss_cred *cred = (struct _gss_cred *) cred_handle;
+	const struct _gss_cred *cred = (const struct _gss_cred *)cred_handle;
 	OM_uint32		status = GSS_S_COMPLETE;
 	struct _gss_mechanism_cred *mc;
 	gssapi_mech_interface	m;

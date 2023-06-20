@@ -106,7 +106,7 @@ gss_localname(OM_uint32 *minor_status,
               gss_buffer_t localname)
 {
     OM_uint32 major_status = GSS_S_UNAVAILABLE;
-    struct _gss_name *name = (struct _gss_name *) pname;
+    struct _gss_name *name = rk_UNCONST(pname);
     struct _gss_mechanism_name *mn = NULL;
 
     *minor_status = 0;

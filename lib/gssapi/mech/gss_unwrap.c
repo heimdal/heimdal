@@ -36,7 +36,8 @@ gss_unwrap(OM_uint32 *minor_status,
     int *conf_state,
     gss_qop_t *qop_state)
 {
-	struct _gss_context *ctx = (struct _gss_context *) context_handle;
+	const struct _gss_context *ctx =
+	    (const struct _gss_context *)context_handle;
 	gssapi_mech_interface m;
 
 	if (conf_state)

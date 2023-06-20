@@ -34,7 +34,7 @@ gss_inquire_mechs_for_name(OM_uint32 *minor_status,
     gss_OID_set *mech_types)
 {
 	OM_uint32		major_status;
-	struct _gss_name	*name = (struct _gss_name *) input_name;
+	const struct _gss_name	*name = (const struct _gss_name *)input_name;
 	struct _gss_mech_switch	*m;
 	gss_OID_set		name_types;
 	int			present;

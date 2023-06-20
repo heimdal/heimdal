@@ -37,7 +37,7 @@ gss_get_neg_mechs(OM_uint32 *minor_status,
 		  gss_const_cred_id_t cred_handle,
 		  gss_OID_set *mechs)
 {
-    struct _gss_cred *cred = (struct _gss_cred *)cred_handle;
+    const struct _gss_cred *cred = (const struct _gss_cred *)cred_handle;
 
     if (minor_status == NULL)
 	return GSS_S_CALL_INACCESSIBLE_WRITE;

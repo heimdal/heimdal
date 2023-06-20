@@ -109,7 +109,7 @@ gss_duplicate_cred(OM_uint32 *minor_status,
 {
     struct _gss_mechanism_cred *mc;
     struct _gss_cred *new_cred;
-    struct _gss_cred *cred = (struct _gss_cred *)input_cred_handle;
+    const struct _gss_cred *cred = (const struct _gss_cred *)input_cred_handle;
     OM_uint32 major_status, junk;
 
     if (input_cred_handle == GSS_C_NO_CREDENTIAL) {

@@ -316,6 +316,7 @@ _gss_load_mech(void)
 
 	while (fgets(buf, sizeof(buf), fp)) {
 		_gss_mo_init *mi;
+		char *gm_name = NULL;
 
 		if (*buf == '#')
 			continue;
@@ -358,7 +359,7 @@ _gss_load_mech(void)
 
 		m->gm_so = so;
 		m->gm_mech_oid = mech_oid;
-		m->gm_mech.gm_name = strdup(name);
+		m->gm_mech.gm_name = gm_name = strdup(name);
 		m->gm_mech.gm_mech_oid = *mech_oid;
 		m->gm_mech.gm_flags = 0;
 		m->gm_mech.gm_compat = calloc(1, sizeof(struct gss_mech_compat_desc_struct));
@@ -465,7 +466,7 @@ _gss_load_mech(void)
 		if (m != NULL) {
 			free(m->gm_mech.gm_compat);
 			/* do not free OID, it has been interned */
-			free((char *)m->gm_mech.gm_name);
+			free(gm_name);
 			free(m);
 		}
 		if (so != NULL)

@@ -49,7 +49,7 @@ gss_export_name(OM_uint32 *minor_status,
     gss_const_name_t input_name,
     gss_buffer_t exported_name)
 {
-	struct _gss_name *name = (struct _gss_name *) input_name;
+	const struct _gss_name *name = (const struct _gss_name *)input_name;
 	struct _gss_mechanism_name *mn;
 
 	_mg_buffer_zero(exported_name);

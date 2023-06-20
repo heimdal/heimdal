@@ -34,7 +34,7 @@ gss_duplicate_name(OM_uint32 *minor_status,
     gss_name_t *dest_name)
 {
 	OM_uint32		major_status;
-	struct _gss_name	*name = (struct _gss_name *) src_name;
+	struct _gss_name	*name = rk_UNCONST(src_name);
 	struct _gss_name	*new_name;
 	struct _gss_mechanism_name *mn;
 

@@ -40,7 +40,8 @@ gss_inquire_context(OM_uint32 *minor_status,
     int *xopen)
 {
 	OM_uint32 major_status;
-	struct _gss_context *ctx = (struct _gss_context *) context_handle;
+	const struct _gss_context *ctx =
+	    (const struct _gss_context *)context_handle;
 	gssapi_mech_interface m;
 	struct _gss_name *name;
 	gss_name_t src_mn, targ_mn;

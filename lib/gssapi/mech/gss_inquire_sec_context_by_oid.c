@@ -38,7 +38,8 @@ gss_inquire_sec_context_by_oid (OM_uint32 *minor_status,
 	                        const gss_OID desired_object,
 	                        gss_buffer_set_t *data_set)
 {
-	struct _gss_context	*ctx = (struct _gss_context *) context_handle;
+	const struct _gss_context *ctx =
+	    (const struct _gss_context *)context_handle;
 	OM_uint32		major_status;
 	gssapi_mech_interface	m;
 

@@ -35,7 +35,7 @@ _gss_mg_find_mech_cred(
     gss_const_cred_id_t cred_handle,
     gss_const_OID mech_type)
 {
-	struct _gss_cred *cred = (struct _gss_cred *)cred_handle;
+	const struct _gss_cred *cred = (const struct _gss_cred *)cred_handle;
 	struct _gss_mechanism_cred *mc;
 
 	if (cred == NULL)
@@ -52,7 +52,7 @@ static void
 log_init_sec_context(struct _gss_context *ctx,
 		     struct _gss_name *target,
 		     OM_uint32 req_flags,
-		     struct _gss_cred *cred,
+		     const struct _gss_cred *cred,
 		     gss_OID mech_type,
 		     gss_buffer_t input_token)
 {
@@ -159,7 +159,7 @@ gss_init_sec_context(OM_uint32 * minor_status,
 	OM_uint32 major_status;
 	gssapi_mech_interface m;
         gss_const_name_t mn_inner = GSS_C_NO_NAME;
-	struct _gss_name *name = (struct _gss_name *) target_name;
+	struct _gss_name *name = rk_UNCONST(target_name);
 	struct _gss_mechanism_name *mn;
 	struct _gss_context *ctx = (struct _gss_context *) *context_handle;
 	gss_const_cred_id_t cred_handle;
@@ -183,7 +183,7 @@ gss_init_sec_context(OM_uint32 * minor_status,
 
 	if (_gss_mg_log_level(1))
 	    log_init_sec_context(ctx, name, req_flags,
-				 (struct _gss_cred *)initiator_cred_handle,
+				 (const struct _gss_cred *)initiator_cred_handle,
 				 input_mech_type, input_token);
 
 	/*

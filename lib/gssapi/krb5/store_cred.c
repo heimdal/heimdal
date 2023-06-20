@@ -203,7 +203,7 @@ _gsskrb5_store_cred_into2(OM_uint32         *minor_status,
 	return GSS_S_BAD_MECH;
     if (input_cred_handle == GSS_C_NO_CREDENTIAL)
 	return GSS_S_CALL_INACCESSIBLE_READ;
-    input_cred = (gsskrb5_cred)input_cred_handle;
+    input_cred = rk_UNCONST(input_cred_handle);
 
     /* Sanity check the input_cred */
     if (input_cred->usage != cred_usage && input_cred->usage != GSS_C_BOTH) {

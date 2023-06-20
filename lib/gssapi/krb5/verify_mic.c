@@ -351,7 +351,7 @@ _gsskrb5_verify_mic
 	*qop_state = GSS_C_QOP_DEFAULT;
 
     ret = _gsskrb5_verify_mic_internal(minor_status,
-				       (gsskrb5_ctx)context_handle,
+				       rk_UNCONST(context_handle),
 				       context,
 				       message_buffer, token_buffer,
 				       qop_state, (void *)(intptr_t)"\x01\x01");

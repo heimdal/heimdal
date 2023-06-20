@@ -411,7 +411,7 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_unwrap
   krb5_keyblock *key;
   krb5_context context;
   OM_uint32 ret;
-  gsskrb5_ctx ctx = (gsskrb5_ctx) context_handle;
+  gsskrb5_ctx ctx = rk_UNCONST(context_handle);
 
   output_message_buffer->value = NULL;
   output_message_buffer->length = 0;

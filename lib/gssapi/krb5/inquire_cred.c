@@ -45,7 +45,7 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_inquire_cred
     krb5_context context;
     gss_cred_id_t aqcred_init = GSS_C_NO_CREDENTIAL;
     gss_cred_id_t aqcred_accept = GSS_C_NO_CREDENTIAL;
-    gsskrb5_cred cred = (gsskrb5_cred)cred_handle;
+    gsskrb5_cred cred = rk_UNCONST(cred_handle);
     gss_OID_set amechs = GSS_C_NO_OID_SET;
     gss_OID_set imechs = GSS_C_NO_OID_SET;
     OM_uint32 junk;

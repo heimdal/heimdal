@@ -49,7 +49,7 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_process_context_token (
     GSSAPI_KRB5_INIT (&context);
 
     ret = _gsskrb5_verify_mic_internal(minor_status,
-				       (gsskrb5_ctx)context_handle,
+				       rk_UNCONST(context_handle),
 				       context,
 				       token_buffer, &empty_buffer,
 				       GSS_C_QOP_DEFAULT,

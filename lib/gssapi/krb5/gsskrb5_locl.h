@@ -95,7 +95,7 @@ IS_DCE_STYLE(gsskrb5_ctx ctx)
   return (ctx->flags & GSS_C_DCE_STYLE) != 0;
 }
 
-typedef struct {
+typedef struct gsskrb5_cred {
   krb5_principal principal;
   char *destination_realm;  /* Realm of acceptor service, if delegated */
   int cred_flags;
@@ -109,6 +109,7 @@ typedef struct {
   HEIMDAL_MUTEX cred_id_mutex;
   krb5_enctype *enctypes;
 } *gsskrb5_cred;
+typedef const struct gsskrb5_cred *gsskrb5_const_cred;
 
 typedef struct Principal *gsskrb5_name;
 

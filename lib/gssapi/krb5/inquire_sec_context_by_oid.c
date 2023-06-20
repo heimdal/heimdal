@@ -533,7 +533,7 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_inquire_sec_context_by_oid
             gss_buffer_set_t *data_set)
 {
     krb5_context context;
-    const gsskrb5_ctx ctx = (const gsskrb5_ctx) context_handle;
+    const gsskrb5_ctx ctx = rk_UNCONST(context_handle);
     unsigned suffix;
 
     if (ctx == NULL) {

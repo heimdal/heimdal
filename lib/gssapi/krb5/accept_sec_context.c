@@ -377,7 +377,8 @@ gsskrb5_acceptor_start(OM_uint32 * minor_status,
     krb5_keytab keytab = NULL;
     int is_cfx = 0;
     int close_kt = 0;
-    const gsskrb5_cred acceptor_cred = (gsskrb5_cred)acceptor_cred_handle;
+    gsskrb5_const_cred acceptor_cred =
+	(gsskrb5_const_cred)acceptor_cred_handle;
 
     /*
      * We may, or may not, have an escapsulation.

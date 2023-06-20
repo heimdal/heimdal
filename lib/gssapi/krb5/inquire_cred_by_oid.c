@@ -39,7 +39,7 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_inquire_cred_by_oid
 	    gss_buffer_set_t *data_set)
 {
     krb5_context context;
-    gsskrb5_cred cred = (gsskrb5_cred)cred_handle;
+    gsskrb5_cred cred = rk_UNCONST(cred_handle);
     krb5_error_code ret;
     gss_buffer_desc buffer;
     char *str;

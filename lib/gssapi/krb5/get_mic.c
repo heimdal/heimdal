@@ -282,7 +282,7 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_get_mic
            )
 {
   krb5_context context;
-  const gsskrb5_ctx ctx = (const gsskrb5_ctx) context_handle;
+  const gsskrb5_ctx ctx = rk_UNCONST(context_handle);
   krb5_keyblock *key;
   OM_uint32 ret;
 

@@ -72,7 +72,7 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_context_time
     krb5_context context;
     OM_uint32 endtime;
     OM_uint32 major_status;
-    const gsskrb5_ctx ctx = (const gsskrb5_ctx) context_handle;
+    gsskrb5_ctx ctx = rk_UNCONST(context_handle);
 
     GSSAPI_KRB5_INIT (&context);
 

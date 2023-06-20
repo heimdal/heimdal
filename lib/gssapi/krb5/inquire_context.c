@@ -47,7 +47,7 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_inquire_context (
 {
     krb5_context context;
     OM_uint32 ret;
-    gsskrb5_ctx ctx = (gsskrb5_ctx)context_handle;
+    gsskrb5_ctx ctx = rk_UNCONST(context_handle);
     gss_name_t name;
 
     if (src_name)

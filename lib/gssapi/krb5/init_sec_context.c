@@ -367,7 +367,7 @@ do_delegation (krb5_context context,
 static OM_uint32
 init_auth
 (OM_uint32 * minor_status,
- gsskrb5_cred cred,
+ gsskrb5_const_cred cred,
  gsskrb5_ctx ctx,
  krb5_context context,
  gss_const_name_t name,
@@ -475,7 +475,7 @@ failure:
 static OM_uint32
 init_auth_restart
 (OM_uint32 * minor_status,
- gsskrb5_cred cred,
+ gsskrb5_const_cred cred,
  gsskrb5_ctx ctx,
  krb5_context context,
  OM_uint32 req_flags,
@@ -861,7 +861,7 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_init_sec_context
     )
 {
     krb5_context context;
-    gsskrb5_cred cred = (gsskrb5_cred)cred_handle;
+    gsskrb5_const_cred cred = (gsskrb5_const_cred)cred_handle;
     gsskrb5_ctx ctx;
     OM_uint32 ret;
 

@@ -72,7 +72,7 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_duplicate_cred (
 
     *output_cred_handle = (gss_cred_id_t)dup; /* making sure to release on error */
 
-    cred = (gsskrb5_cred)input_cred_handle;
+    cred = rk_UNCONST(input_cred_handle);
     HEIMDAL_MUTEX_lock(&cred->cred_id_mutex);
 
     dup->destination_realm = NULL;

@@ -147,7 +147,7 @@ _gsskrb5_wrap_size_limit (
   krb5_context context;
   krb5_keyblock *key;
   OM_uint32 ret;
-  const gsskrb5_ctx ctx = (const gsskrb5_ctx) context_handle;
+  const gsskrb5_ctx ctx = rk_UNCONST(context_handle);
 
   GSSAPI_KRB5_INIT (&context);
 
@@ -539,7 +539,7 @@ _gsskrb5_wrap
   krb5_context context;
   krb5_keyblock *key;
   OM_uint32 ret;
-  const gsskrb5_ctx ctx = (const gsskrb5_ctx) context_handle;
+  const gsskrb5_ctx ctx = rk_UNCONST(context_handle);
 
   output_message_buffer->value = NULL;
   output_message_buffer->length = 0;

@@ -37,7 +37,7 @@ _gss_sanon_inquire_sec_context_by_oid(OM_uint32 *minor,
 				      const gss_OID desired_object,
 				      gss_buffer_set_t *data_set)
 {
-    const sanon_ctx sc = (const sanon_ctx)context_handle;
+    sanon_const_ctx sc = (sanon_const_ctx)context_handle;
 
     if (sc == NULL)
 	return GSS_S_NO_CONTEXT;

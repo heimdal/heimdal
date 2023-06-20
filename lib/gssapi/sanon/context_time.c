@@ -38,7 +38,7 @@ _gss_sanon_context_time(OM_uint32 *minor,
 			gss_const_ctx_id_t context_handle,
 			OM_uint32 *time_rec)
 {
-    const sanon_ctx sc = (const sanon_ctx)context_handle;
+    sanon_const_ctx sc = (sanon_const_ctx)context_handle;
 
     *minor = 0;
     *time_rec = GSS_C_INDEFINITE;

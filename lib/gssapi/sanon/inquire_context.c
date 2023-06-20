@@ -42,7 +42,7 @@ _gss_sanon_inquire_context(OM_uint32 *minor,
 			   int *locally_initiated,
 			   int *open_context)
 {
-    const sanon_ctx sc = (const sanon_ctx)context_handle;
+    sanon_const_ctx sc = (sanon_const_ctx)context_handle;
     OM_uint32 major = GSS_S_COMPLETE;
 
     *minor = 0;

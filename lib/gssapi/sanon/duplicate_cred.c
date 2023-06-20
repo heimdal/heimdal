@@ -37,7 +37,7 @@ _gss_sanon_duplicate_cred(OM_uint32 *minor,
 			  gss_cred_id_t *output_cred_handle)
 {
     *minor = 0;
-    *output_cred_handle = (gss_cred_id_t)input_cred_handle;
+    *output_cred_handle = (gss_cred_id_t)rk_UNCONST(input_cred_handle);
 
     return GSS_S_COMPLETE;
 }

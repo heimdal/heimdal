@@ -46,7 +46,7 @@ _gss_sanon_inquire_cred(OM_uint32 *minor,
 
     /* the credential handle is a reference to the cred name */
     if (name_ret)
-        *name_ret = (gss_name_t)cred_handle;
+        *name_ret = (gss_name_t)rk_UNCONST(cred_handle);
     if (lifetime)
         *lifetime = GSS_C_INDEFINITE;
     if (cred_usage)

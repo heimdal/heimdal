@@ -42,7 +42,7 @@ _gss_sanon_canonicalize_name(OM_uint32 *minor,
     if (src_name == GSS_C_NO_NAME)
 	return GSS_S_BAD_NAME;
 
-    *dest_name = (gss_name_t)src_name;
+    *dest_name = (gss_name_t)rk_UNCONST(src_name);
 
     return GSS_S_COMPLETE;
 }

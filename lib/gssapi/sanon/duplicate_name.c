@@ -37,7 +37,7 @@ _gss_sanon_duplicate_name(OM_uint32 *minor,
 			  gss_name_t *dest_name)
 {
     *minor = 0;
-    *dest_name = (gss_name_t)src_name;
+    *dest_name = (gss_name_t)rk_UNCONST(src_name);
 
     return GSS_S_COMPLETE;
 }

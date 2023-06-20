@@ -40,7 +40,7 @@ _gss_sanon_wrap(OM_uint32 *minor,
 		int *conf_state,
 		gss_buffer_t output_message_buffer)
 {
-    const sanon_ctx sc = (const sanon_ctx)context_handle;
+    sanon_const_ctx sc = (sanon_const_ctx)context_handle;
 
     if (sc->rfc4121 == GSS_C_NO_CONTEXT) {
 	*minor = GSS_KRB5_S_KG_CTX_INCOMPLETE;
@@ -61,7 +61,7 @@ _gss_sanon_wrap_size_limit(OM_uint32 *minor,
 			   OM_uint32 req_output_size,
 			   OM_uint32 *max_input_size)
 {
-    const sanon_ctx sc = (const sanon_ctx)context_handle;
+    sanon_const_ctx sc = (sanon_const_ctx)context_handle;
 
     if (sc->rfc4121 == GSS_C_NO_CONTEXT) {
 	*minor = GSS_KRB5_S_KG_CTX_INCOMPLETE;
@@ -82,7 +82,7 @@ _gss_sanon_wrap_iov(OM_uint32 *minor,
 		    gss_iov_buffer_desc *iov,
 		    int iov_count)
 {
-    const sanon_ctx sc = (const sanon_ctx)context_handle;
+    sanon_const_ctx sc = (sanon_const_ctx)context_handle;
 
     if (sc->rfc4121 == GSS_C_NO_CONTEXT) {
 	*minor = GSS_KRB5_S_KG_CTX_INCOMPLETE;
@@ -103,7 +103,7 @@ _gss_sanon_wrap_iov_length(OM_uint32 *minor,
 			   gss_iov_buffer_desc *iov,
 			   int iov_count)
 {
-    const sanon_ctx sc = (const sanon_ctx)context_handle;
+    sanon_const_ctx sc = (sanon_const_ctx)context_handle;
 
     if (sc->rfc4121 == GSS_C_NO_CONTEXT) {
 	*minor = GSS_KRB5_S_KG_CTX_INCOMPLETE;
@@ -123,7 +123,7 @@ _gss_sanon_unwrap(OM_uint32 *minor,
 		  int *conf_state,
 		  gss_qop_t * qop_state)
 {
-    const sanon_ctx sc = (const sanon_ctx)context_handle;
+    sanon_const_ctx sc = (sanon_const_ctx)context_handle;
 
     if (sc->rfc4121 == GSS_C_NO_CONTEXT) {
 	*minor = GSS_KRB5_S_KG_CTX_INCOMPLETE;
@@ -143,7 +143,7 @@ _gss_sanon_unwrap_iov(OM_uint32 *minor,
 		      gss_iov_buffer_desc *iov,
 		      int iov_count)
 {
-    const sanon_ctx sc = (const sanon_ctx)context_handle;
+    sanon_const_ctx sc = (sanon_const_ctx)context_handle;
 
     if (sc->rfc4121 == GSS_C_NO_CONTEXT) {
 	*minor = GSS_KRB5_S_KG_CTX_INCOMPLETE;
@@ -162,7 +162,7 @@ _gss_sanon_get_mic(OM_uint32 *minor,
 		   const gss_buffer_t message_buffer,
 		   gss_buffer_t message_token)
 {
-    const sanon_ctx sc = (const sanon_ctx)context_handle;
+    sanon_const_ctx sc = (sanon_const_ctx)context_handle;
 
     if (sc->rfc4121 == GSS_C_NO_CONTEXT) {
 	*minor = GSS_KRB5_S_KG_CTX_INCOMPLETE;
@@ -181,7 +181,7 @@ _gss_sanon_verify_mic(OM_uint32 *minor,
 		      const gss_buffer_t token_buffer,
 		      gss_qop_t *qop_state)
 {
-    const sanon_ctx sc = (const sanon_ctx)context_handle;
+    sanon_const_ctx sc = (sanon_const_ctx)context_handle;
 
     if (sc->rfc4121 == GSS_C_NO_CONTEXT) {
 	*minor = GSS_KRB5_S_KG_CTX_INCOMPLETE;
@@ -201,7 +201,7 @@ _gss_sanon_pseudo_random(OM_uint32 *minor,
 			 ssize_t desired_output_len,
 			 gss_buffer_t prf_out)
 {
-    const sanon_ctx sc = (const sanon_ctx)context_handle;
+    sanon_const_ctx sc = (sanon_const_ctx)context_handle;
 
     if (sc->rfc4121 == GSS_C_NO_CONTEXT) {
 	*minor = GSS_KRB5_S_KG_CTX_INCOMPLETE;

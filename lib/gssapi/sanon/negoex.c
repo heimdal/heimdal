@@ -50,7 +50,7 @@ _gssspi_sanon_query_mechanism_info(OM_uint32 *minor,
 
 OM_uint32
 _gss_sanon_inquire_negoex_key(OM_uint32 *minor,
-			      const sanon_ctx sc,
+			      sanon_const_ctx sc,
 			      gss_const_OID desired_object,
 			      gss_buffer_set_t *data_set)
 {

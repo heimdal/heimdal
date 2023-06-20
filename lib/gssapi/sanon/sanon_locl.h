@@ -52,6 +52,7 @@ typedef struct sanon_ctx_desc {
     gss_ctx_id_t rfc4121;
     unsigned is_initiator : 1;
 } *sanon_ctx;
+typedef const struct sanon_ctx_desc *sanon_const_ctx;
 
 extern gss_name_t _gss_sanon_anonymous_identity;
 extern gss_name_t _gss_sanon_non_anonymous_identity;

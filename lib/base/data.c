@@ -116,7 +116,7 @@ heim_data_ref_create(const void *data, size_t length,
 
     os = _heim_alloc_object(&_heim_data_object, sizeof(*os) + length);
     if (os) {
-	os->data = (void *)data;
+	os->data = rk_UNCONST(data);
 	os->length = length;
 	deallocp = _heim_get_isaextra(os, 0);
 	*deallocp = dealloc;

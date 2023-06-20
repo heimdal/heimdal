@@ -71,7 +71,8 @@ _kadm5_s_init_hooks(kadm5_server_context *ctx)
     if (dirs == NULL)
 	return 0;
 
-    _krb5_load_plugins(context, "kadm5", (const char **)dirs);
+    /* XXX strict aliasing violation */
+    _krb5_load_plugins(context, "kadm5", (const char *const *)dirs);
     krb5_config_free_strings(dirs);
 
     return 0;

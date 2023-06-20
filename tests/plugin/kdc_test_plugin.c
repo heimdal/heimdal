@@ -39,7 +39,8 @@ pac_generate(void *ctx,
 
     krb5_warnx(context, "pac generate");
 
-    data.data = "\x00\x01";
+    /* used read-only by krb5_pac_add_buffer */
+    data.data = rk_UNCONST("\x00\x01");
     data.length = 2;
 
     ret = krb5_pac_init(context, pac);

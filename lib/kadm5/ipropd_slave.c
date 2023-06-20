@@ -40,8 +40,8 @@ static const char *config_name = "ipropd-slave";
 static int verbose;
 static int async_hdb = 0;
 static int no_keytab_flag;
-static char *ccache_str;
-static char *keytab_str;
+static const char *ccache_str;
+static const char *keytab_str;
 
 static krb5_log_facility *log_facility;
 static char five_min[] = "5 min";

@@ -310,8 +310,8 @@ iprop_dump(struct dump_options *opt, int argc, char **argv)
     krb5_error_code ret;
     enum kadm_iter_opts iter_opts_1st = 0;
     enum kadm_iter_opts iter_opts_2nd = 0;
-    char *desc_1st = "";
-    char *desc_2nd = "";
+    const char *desc_1st = "";
+    const char *desc_2nd = "";
 
     server_context = get_kadmin_context(opt->config_file_string,
 					opt->realm_string);
@@ -349,12 +349,12 @@ iprop_dump(struct dump_options *opt, int argc, char **argv)
     }
 
     ret = kadm5_log_foreach(server_context, iter_opts_1st,
-                            NULL, print_entry, desc_1st);
+                            NULL, print_entry, rk_UNCONST(desc_1st));
     if (ret)
 	krb5_warn(context, ret, "kadm5_log_foreach");
 
     ret = kadm5_log_foreach(server_context, iter_opts_2nd,
-                            NULL, print_entry, desc_2nd);
+                            NULL, print_entry, rk_UNCONST(desc_2nd));
     if (ret)
 	krb5_warn(context, ret, "kadm5_log_foreach");
 

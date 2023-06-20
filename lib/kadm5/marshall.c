@@ -110,7 +110,7 @@ kadm5_store_fake_key_data(krb5_storage *sp,
      * keytab entries that will subsequently fail to be useful.
      */
     c.length = sizeof (KADM5_BOGUS_KEY_DATA) - 1;
-    c.data = KADM5_BOGUS_KEY_DATA;
+    c.data = rk_UNCONST(KADM5_BOGUS_KEY_DATA);
     CHECK(krb5_store_data(sp, c));
 
     /* This is the salt -- no need to send garbage */

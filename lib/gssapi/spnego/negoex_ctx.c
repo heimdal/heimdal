@@ -611,7 +611,7 @@ verify_checksum(OM_uint32 *minor,
     iov[1].data.length = msg->offset_in_token;
 
     iov[2].flags = KRB5_CRYPTO_TYPE_CHECKSUM;
-    iov[2].data.data = (uint8_t *)msg->cksum;
+    iov[2].data.data = rk_UNCONST(msg->cksum);
     iov[2].data.length = msg->cksum_len;
 
     ret = krb5_verify_checksum_iov(context, mech->verify_crypto, usage,

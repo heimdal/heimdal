@@ -284,7 +284,7 @@ parse_exchange_message(OM_uint32 *minor, krb5_storage *sp,
 	*minor = (OM_uint32)NEGOEX_INVALID_MESSAGE_SIZE;
 	return GSS_S_DEFECTIVE_TOKEN;
     }
-    msg->token.value = (void *)p;
+    msg->token.value = rk_UNCONST(p);
     msg->token.length = len;
 
     return GSS_S_COMPLETE;
@@ -923,7 +923,8 @@ _gss_negoex_add_auth_mech(OM_uint32 *minor,
 	return GSS_S_FAILURE;
     }
 
-    major = gss_duplicate_oid(minor, (gss_OID)oid, &mech->oid);
+    /* XXX gss_duplicate_oid should take gss_const_OID */
+    major = gss_duplicate_oid(minor, (gss_OID)rk_UNCONST(oid), &mech->oid);
     if (major != GSS_S_COMPLETE) {
 	free(mech);
 	return major;

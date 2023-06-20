@@ -45,8 +45,8 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_process_context_token
     if (context_handle == GSS_C_NO_CONTEXT)
 	return GSS_S_NO_CONTEXT;
 
-    context = (gss_ctx_id_t)context_handle;
-    ctx = (gssspnego_ctx)context_handle;
+    context = rk_UNCONST(context_handle);
+    ctx = (gssspnego_ctx)context;
 
     HEIMDAL_MUTEX_lock(&ctx->ctx_id_mutex);
 
@@ -91,14 +91,14 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_context_time
             OM_uint32 *time_rec
            )
 {
-    gssspnego_ctx ctx;
+    gssspnego_const_ctx ctx;
     *minor_status = 0;
 
     if (context_handle == GSS_C_NO_CONTEXT) {
 	return GSS_S_NO_CONTEXT;
     }
 
-    ctx = (gssspnego_ctx)context_handle;
+    ctx = (gssspnego_const_ctx)context_handle;
 
     if (ctx->negotiated_ctx_id == GSS_C_NO_CONTEXT) {
 	return GSS_S_NO_CONTEXT;
@@ -117,7 +117,7 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_get_mic
             gss_buffer_t message_token
            )
 {
-    gssspnego_ctx ctx;
+    gssspnego_const_ctx ctx;
 
     *minor_status = 0;
 
@@ -125,7 +125,7 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_get_mic
 	return GSS_S_NO_CONTEXT;
     }
 
-    ctx = (gssspnego_ctx)context_handle;
+    ctx = (gssspnego_const_ctx)context_handle;
 
     if (ctx->negotiated_ctx_id == GSS_C_NO_CONTEXT) {
 	return GSS_S_NO_CONTEXT;
@@ -143,7 +143,7 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_verify_mic
             gss_qop_t * qop_state
            )
 {
-    gssspnego_ctx ctx;
+    gssspnego_const_ctx ctx;
 
     *minor_status = 0;
 
@@ -151,7 +151,7 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_verify_mic
 	return GSS_S_NO_CONTEXT;
     }
 
-    ctx = (gssspnego_ctx)context_handle;
+    ctx = (gssspnego_const_ctx)context_handle;
 
     if (ctx->negotiated_ctx_id == GSS_C_NO_CONTEXT) {
 	return GSS_S_NO_CONTEXT;
@@ -174,7 +174,7 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_wrap
             gss_buffer_t output_message_buffer
            )
 {
-    gssspnego_ctx ctx;
+    gssspnego_const_ctx ctx;
 
     *minor_status = 0;
 
@@ -182,7 +182,7 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_wrap
 	return GSS_S_NO_CONTEXT;
     }
 
-    ctx = (gssspnego_ctx)context_handle;
+    ctx = (gssspnego_const_ctx)context_handle;
 
     if (ctx->negotiated_ctx_id == GSS_C_NO_CONTEXT) {
 	return GSS_S_NO_CONTEXT;
@@ -206,7 +206,7 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_unwrap
             gss_qop_t * qop_state
            )
 {
-    gssspnego_ctx ctx;
+    gssspnego_const_ctx ctx;
 
     *minor_status = 0;
 
@@ -214,7 +214,7 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_unwrap
 	return GSS_S_NO_CONTEXT;
     }
 
-    ctx = (gssspnego_ctx)context_handle;
+    ctx = (gssspnego_const_ctx)context_handle;
 
     if (ctx->negotiated_ctx_id == GSS_C_NO_CONTEXT) {
 	return GSS_S_NO_CONTEXT;
@@ -240,7 +240,7 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_inquire_context (
             int * open_context
            )
 {
-    gssspnego_ctx ctx;
+    gssspnego_const_ctx ctx;
     OM_uint32 maj_stat;
 
     *minor_status = 0;
@@ -248,7 +248,7 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_inquire_context (
     if (context_handle == GSS_C_NO_CONTEXT)
 	return GSS_S_NO_CONTEXT;
 
-    ctx = (gssspnego_ctx)context_handle;
+    ctx = (gssspnego_const_ctx)context_handle;
 
     if (ctx->negotiated_ctx_id == GSS_C_NO_CONTEXT)
 	return GSS_S_NO_CONTEXT;
@@ -278,7 +278,7 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_wrap_size_limit (
             OM_uint32 * max_input_size
            )
 {
-    gssspnego_ctx ctx;
+    gssspnego_const_ctx ctx;
 
     *minor_status = 0;
 
@@ -286,7 +286,7 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_wrap_size_limit (
 	return GSS_S_NO_CONTEXT;
     }
 
-    ctx = (gssspnego_ctx)context_handle;
+    ctx = (gssspnego_const_ctx)context_handle;
 
     if (ctx->negotiated_ctx_id == GSS_C_NO_CONTEXT) {
 	return GSS_S_NO_CONTEXT;
@@ -314,7 +314,7 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_export_sec_context (
     if (context_handle == NULL)
 	return GSS_S_NO_CONTEXT;
 
-    ctx = (gssspnego_ctx)*context_handle;
+    ctx = (gssspnego_ctx)rk_UNCONST(*context_handle);
 
     if (ctx == NULL)
 	return GSS_S_NO_CONTEXT;
@@ -410,7 +410,7 @@ _gss_spnego_wrap_iov(OM_uint32 * minor_status,
 		     gss_iov_buffer_desc *iov,
 		     int iov_count)
 {
-    gssspnego_ctx ctx = (gssspnego_ctx)context_handle;
+    gssspnego_const_ctx ctx = (gssspnego_const_ctx)context_handle;
 
     *minor_status = 0;
 
@@ -430,7 +430,7 @@ _gss_spnego_unwrap_iov(OM_uint32 *minor_status,
 		       gss_iov_buffer_desc *iov,
 		       int iov_count)
 {
-    gssspnego_ctx ctx = (gssspnego_ctx)context_handle;
+    gssspnego_const_ctx ctx = (gssspnego_const_ctx)context_handle;
 
     *minor_status = 0;
 
@@ -452,7 +452,7 @@ _gss_spnego_wrap_iov_length(OM_uint32 * minor_status,
 			    gss_iov_buffer_desc *iov,
 			    int iov_count)
 {
-    gssspnego_ctx ctx = (gssspnego_ctx)context_handle;
+    gssspnego_const_ctx ctx = (gssspnego_const_ctx)context_handle;
 
     *minor_status = 0;
 
@@ -470,7 +470,7 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_complete_auth_token
             gss_const_ctx_id_t context_handle,
 	    gss_buffer_t input_message_buffer)
 {
-    gssspnego_ctx ctx;
+    gssspnego_const_ctx ctx;
 
     *minor_status = 0;
 
@@ -478,7 +478,7 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_complete_auth_token
 	return GSS_S_NO_CONTEXT;
     }
 
-    ctx = (gssspnego_ctx)context_handle;
+    ctx = (gssspnego_const_ctx)context_handle;
 
     if (ctx->negotiated_ctx_id == GSS_C_NO_CONTEXT) {
 	return GSS_S_NO_CONTEXT;
@@ -496,7 +496,7 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_inquire_sec_context_by_oid
             const gss_OID desired_object,
             gss_buffer_set_t *data_set)
 {
-    gssspnego_ctx ctx;
+    gssspnego_const_ctx ctx;
 
     *minor_status = 0;
 
@@ -504,7 +504,7 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_inquire_sec_context_by_oid
 	return GSS_S_NO_CONTEXT;
     }
 
-    ctx = (gssspnego_ctx)context_handle;
+    ctx = (gssspnego_const_ctx)context_handle;
 
     if (ctx->negotiated_ctx_id == GSS_C_NO_CONTEXT) {
 	return GSS_S_NO_CONTEXT;
@@ -536,7 +536,7 @@ OM_uint32 GSSAPI_CALLCONV _gss_spnego_set_sec_context_option
     if (context_handle == NULL || *context_handle == GSS_C_NO_CONTEXT)
 	return GSS_S_UNAVAILABLE;
 
-    ctx = (gssspnego_ctx)*context_handle;
+    ctx = (gssspnego_ctx)rk_UNCONST(*context_handle);
 
     if (ctx->negotiated_ctx_id == GSS_C_NO_CONTEXT) {
 	return GSS_S_NO_CONTEXT;
@@ -557,14 +557,14 @@ _gss_spnego_pseudo_random(OM_uint32 *minor_status,
 			  ssize_t desired_output_len,
 			  gss_buffer_t prf_out)
 {
-    gssspnego_ctx ctx;
+    gssspnego_const_ctx ctx;
 
     *minor_status = 0;
 
     if (context_handle == GSS_C_NO_CONTEXT)
 	return GSS_S_NO_CONTEXT;
 
-    ctx = (gssspnego_ctx)context_handle;
+    ctx = (gssspnego_const_ctx)context_handle;
 
     if (ctx->negotiated_ctx_id == GSS_C_NO_CONTEXT)
 	return GSS_S_NO_CONTEXT;

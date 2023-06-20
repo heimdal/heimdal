@@ -539,8 +539,9 @@ _gss_spnego_log_mech(const char *prefix, gss_const_OID oid)
     if (!_gss_mg_log_level(10))
 	return;
 
+    /* XXX gss_oid_to_str should take gss_const_OID */
     if (oid == GSS_C_NO_OID ||
-	gss_oid_to_str(&junk, (gss_OID)oid, &oidbuf) != GSS_S_COMPLETE) {
+	gss_oid_to_str(&junk, rk_UNCONST(oid), &oidbuf) != GSS_S_COMPLETE) {
 	_gss_mg_log(10, "spnego: %s (null)", prefix);
 	return;
     }

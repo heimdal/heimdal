@@ -82,6 +82,7 @@
 
 struct gssspnego_ctx_desc;
 typedef struct gssspnego_ctx_desc *gssspnego_ctx;
+typedef const struct gssspnego_ctx_desc *gssspnego_const_ctx;
 
 typedef OM_uint32
 (*gssspnego_initiator_state)(OM_uint32 * minor_status,
@@ -150,7 +151,7 @@ struct gssspnego_optimistic_ctx {
 #include "spnego-private.h"
 
 static inline int
-gssspnego_ctx_complete_p(gssspnego_ctx ctx)
+gssspnego_ctx_complete_p(gssspnego_const_ctx ctx)
 {
     return ctx->flags.open &&
 	    (ctx->flags.safe_omit || (ctx->flags.sent_mic && ctx->flags.verified_mic));

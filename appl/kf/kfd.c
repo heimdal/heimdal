@@ -39,10 +39,10 @@ char krb5_tkfile[MAXPATHLEN];
 
 static int help_flag;
 static int version_flag;
-static char *port_str;
-char *service = KF_SERVICE;
+static const char *port_str;
+const char *service = KF_SERVICE;
 int do_inetd = 0;
-static char *regpag_str=NULL;
+static const char *regpag_str = NULL;
 
 static struct getargs args[] = {
     { "port", 'p', arg_string, &port_str, "port to listen to", "port" },
@@ -176,9 +176,12 @@ proto (int sock, const char *svc)
 	krb5_err(context, 1, status, "krb5_unparse_name");
 
     if(protocol_version == 0) {
-	data.data = "old clnt"; /* XXX old clients only had room for
-                                   10 bytes of message, and also
-                                   didn't show it to the user */
+	/*
+	 * XXX old clients only had room for 10 bytes of message, and
+	 * also didn't show it to the user
+	 */
+	/* used read-only by krb5_write_message */
+	data.data = rk_UNCONST("old clnt");
 	data.length = strlen(data.data) + 1;
 	krb5_write_message(context, &sock, &data);
 	sleep(2); /* XXX give client time to finish */

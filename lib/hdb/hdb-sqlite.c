@@ -501,6 +501,7 @@ hdb_sqlite_fetch_kvno(krb5_context context, HDB *db, krb5_const_principal princi
     krb5_error_code ret;
     hdb_sqlite_db *hsdb = (hdb_sqlite_db*)(db->hdb_db);
     sqlite3_stmt *fetch = hsdb->fetch;
+    const void *blob;
     krb5_data value;
     krb5_principal enterprise_principal = NULL;
 
@@ -539,7 +540,8 @@ hdb_sqlite_fetch_kvno(krb5_context context, HDB *db, krb5_const_principal princi
     }
 
     value.length = sqlite3_column_bytes(fetch, 0);
-    value.data = (void *) sqlite3_column_blob(fetch, 0);
+    blob = sqlite3_column_blob(fetch, 0); /* pacify -Wbad-function-cast */
+    value.data = rk_UNCONST(blob);
 
     ret = hdb_value2entry(context, &value, entry);
     if(ret)
@@ -868,15 +870,17 @@ hdb_sqlite_nextkey(krb5_context context, HDB *db, unsigned flags,
 {
     krb5_error_code ret = 0;
     int sqlite_error;
+    const void *blob;
     krb5_data value;
-
     hdb_sqlite_db *hsdb = (hdb_sqlite_db *) db->hdb_db;
 
     sqlite_error = hdb_sqlite_step(context, hsdb->db, hsdb->get_all_entries);
     if(sqlite_error == SQLITE_ROW) {
 	/* Found an entry */
         value.length = sqlite3_column_bytes(hsdb->get_all_entries, 0);
-        value.data = (void *) sqlite3_column_blob(hsdb->get_all_entries, 0);
+	/* pacify -Wbad-function-cast */
+	blob = sqlite3_column_blob(hsdb->get_all_entries, 0);
+	value.data = rk_UNCONST(blob);
         memset(entry, 0, sizeof(*entry));
         ret = hdb_value2entry(context, &value, entry);
     }

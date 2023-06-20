@@ -1226,10 +1226,11 @@ parse_value(struct parse_ctx *ctx)
     } else if (len >= 4 && memcmp(ctx->p, "null", 4) == 0) {
 	ctx->p += 4;
 	return heim_null_create();
-    } else if (len >= 4 && strncasecmp((char *)ctx->p, "true", 4) == 0) {
+    } else if (len >= 4 && strncasecmp((const char *)ctx->p, "true", 4) == 0) {
 	ctx->p += 4;
 	return heim_bool_create(1);
-    } else if (len >= 5 && strncasecmp((char *)ctx->p, "false", 5) == 0) {
+    } else if (len >= 5 &&
+	strncasecmp((const char *)ctx->p, "false", 5) == 0) {
 	ctx->p += 5;
 	return heim_bool_create(0);
     }
@@ -1262,7 +1263,7 @@ heim_json_create_with_bytes(const void *data, size_t length, size_t max_depth,
     ctx.lineno = 1;
     ctx.p = data;
     ctx.pstart = data;
-    ctx.pend = ((uint8_t *)data) + length;
+    ctx.pend = ((const uint8_t *)data) + length;
     ctx.error = NULL;
     ctx.flags = flags;
     ctx.depth = max_depth;

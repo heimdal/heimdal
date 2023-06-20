@@ -443,7 +443,7 @@ heim_addlog_dest(heim_context context, heim_log_facility *f, const char *orig)
 heim_error_code
 heim_openlog(heim_context context,
              const char *program,
-             const char **specs,
+             const char *const *specs,
              heim_log_facility **fac)
 {
     heim_error_code ret;

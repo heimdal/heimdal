@@ -56,7 +56,7 @@ pa_gss_acquire_initiator_cred(krb5_context context,
     mech = _krb5_init_creds_get_gss_mechanism(context, gssic);
 
     mechs.count = 1;
-    mechs.elements = (gss_OID)mech;
+    mechs.elements = (gss_OID)rk_UNCONST(mech);
 
     ret = _krb5_gss_pa_unparse_name(context, kcred->client, &initiator_name);
     if (ret)
@@ -104,7 +104,7 @@ pa_gss_step(krb5_context context,
     if (flags.request_anonymous)
         req_flags |= GSS_C_ANON_FLAG;
 
-    cred = (gss_cred_id_t)_krb5_init_creds_get_gss_cred(context, gssic);
+    cred = (gss_cred_id_t)rk_UNCONST(_krb5_init_creds_get_gss_cred(context, gssic));
 
     if (cred == GSS_C_NO_CREDENTIAL) {
         ret = pa_gss_acquire_initiator_cred(context, gssic, kcred, &cred);
@@ -130,7 +130,7 @@ pa_gss_step(krb5_context context,
                                  cred,
                                  ctx,
                                  target_name,
-                                 (gss_OID)_krb5_init_creds_get_gss_mechanism(context, gssic),
+                                 (gss_OID)rk_UNCONST(_krb5_init_creds_get_gss_mechanism(context, gssic)),
                                  req_flags,
                                  GSS_C_INDEFINITE,
                                  &cb,

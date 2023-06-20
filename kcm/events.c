@@ -39,7 +39,7 @@ static HEIMDAL_MUTEX events_mutex = HEIMDAL_MUTEX_INITIALIZER;
 static kcm_event *events_head = NULL;
 static time_t last_run = 0;
 
-static char *action_strings[] = {
+static const char *const action_strings[] = {
 	"NONE", "ACQUIRE_CREDS", "RENEW_CREDS",
 	"DESTROY_CREDS", "DESTROY_EMPTY_CACHE" };
 
@@ -70,7 +70,7 @@ print_times(time_t t, char buf[64])
 }
 
 static void
-log_event(kcm_event *event, char *msg)
+log_event(kcm_event *event, const char *msg)
 {
     char fire_time[64], expire_time[64];
 

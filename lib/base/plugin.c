@@ -317,14 +317,14 @@ resolve_origin(const char *di, const char *module)
 void
 heim_load_plugins(heim_context context,
                   const char *module,
-                  const char **paths)
+                  const char *const *paths)
 {
 #ifdef HAVE_DLOPEN
     heim_string_t s = heim_string_create(module);
     heim_dict_t mod, modules;
     struct dirent *entry;
     heim_error_code ret;
-    const char **di;
+    const char *const *di;
     char *dirname = NULL;
     DIR *d;
 #ifdef _WIN32

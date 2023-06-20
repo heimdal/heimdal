@@ -1632,9 +1632,10 @@ enc_chal_step(krb5_context context, krb5_init_creds_context ctx, void *pa_ctx, P
 
     krb5_crypto_getenctype(context, ctx->fast_state.armor_crypto, &aenctype);
 
-    pepper1.data = rep ? "kdcchallengearmor" : "clientchallengearmor";
+    pepper1.data =
+	rk_UNCONST(rep ? "kdcchallengearmor" : "clientchallengearmor");
     pepper1.length = strlen(pepper1.data);
-    pepper2.data = "challengelongterm";
+    pepper2.data = rk_UNCONST("challengelongterm");
     pepper2.length = strlen(pepper2.data);
 
     ret = krb5_crypto_fx_cf2(context, ctx->fast_state.armor_crypto, crypto,

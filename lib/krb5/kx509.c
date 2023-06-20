@@ -517,10 +517,10 @@ store_kx509_disabled(krb5_context context, const char *realm, krb5_ccache cc)
     if (!cc)
         return;
 
-    data.data = (void *)(uintptr_t)realm;
+    data.data = rk_UNCONST(realm);
     data.length = strlen(realm);
     krb5_cc_set_config(context, cc, NULL, "kx509_service_realm", &data);
-    data.data = "disabled";
+    data.data = rk_UNCONST("disabled");
     data.length = strlen(data.data);
     krb5_cc_set_config(context, cc, NULL, "kx509_service_status", &data);
 }

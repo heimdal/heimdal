@@ -222,7 +222,7 @@ an2ln_local_names(krb5_context context,
  */
 static krb5_error_code
 an2ln_default(krb5_context context,
-	      char *rule,
+	      const char *rule,
 	      krb5_const_principal aname,
 	      size_t lnsize, char *lname)
 {

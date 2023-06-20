@@ -148,7 +148,7 @@ AES_SHA2_PRF(krb5_context context,
     if (ret)
 	return ret;
 
-    label.data = "prf";
+    label.data = rk_UNCONST("prf");
     label.length = 3;
 
     ret = krb5_data_alloc(out, EVP_MD_size(md));

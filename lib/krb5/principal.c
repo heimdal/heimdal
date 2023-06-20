@@ -1432,7 +1432,8 @@ krb5_sname_to_principal(krb5_context context,
 			int32_t type,
 			krb5_principal *ret_princ)
 {
-    char *realm, *remote_host;
+    const char *realm;
+    char *remote_host;
     krb5_error_code ret;
     register char *cp;
     char localname[MAXHOSTNAMELEN];

@@ -1273,8 +1273,8 @@ _krb5_pk_kx_confirm(krb5_context context,
     krb5_crypto rk_crypto = NULL;
     size_t len;
     krb5_data data;
-    krb5_data p1 = { sizeof("PKINIT") - 1, "PKINIT" };
-    krb5_data p2 = { sizeof("KEYEXCHANGE") - 1, "KEYEXCHANGE" };
+    krb5_data p1 = { sizeof("PKINIT") - 1, rk_UNCONST("PKINIT") };
+    krb5_data p2 = { sizeof("KEYEXCHANGE") - 1, rk_UNCONST("KEYEXCHANGE") };
 
     heim_assert(ctx != NULL, "PKINIT context is non-NULL");
     heim_assert(reply_key != NULL, "reply key is non-NULL");

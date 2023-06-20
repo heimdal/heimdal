@@ -590,7 +590,8 @@ static struct {
     uint32_t type;
     krb5_data name;
 } pac_buffer_name_map[] = {
-#define PAC_MAP_ENTRY(type, name) { PAC_##type, { sizeof(name) - 1, name } }
+#define PAC_MAP_ENTRY(type, name) \
+    { PAC_##type, { sizeof(name) - 1, rk_UNCONST(name) } }
     PAC_MAP_ENTRY(LOGON_INFO,		    "logon-info"	),
     PAC_MAP_ENTRY(CREDENTIALS_INFO,	    "credentials-info"  ),
     PAC_MAP_ENTRY(SERVER_CHECKSUM,	    "server-checksum"   ),

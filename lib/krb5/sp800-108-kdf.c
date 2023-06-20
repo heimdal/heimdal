@@ -81,7 +81,7 @@ _krb5_SP800_108_HMAC_KDF(krb5_context context,
 	_krb5_put_int(tmp, i + 1, 4);
 	HMAC_Update(&c, tmp, 4);
 	HMAC_Update(&c, kdf_label->data, kdf_label->length);
-	HMAC_Update(&c, (unsigned char *)"", 1);
+	HMAC_Update(&c, rk_UNCONST(""), 1);
 	if (kdf_context)
 	    HMAC_Update(&c, kdf_context->data, kdf_context->length);
 	_krb5_put_int(tmp, L * 8, 4);

@@ -109,7 +109,7 @@ set_default_cache(krb5_context context, krb5_dcache *dc, const char *sub)
     iov[0].iov_len = sizeof("tkt") - 1;
     iov[1].iov_base = rk_UNCONST(sub);
     iov[1].iov_len = len;
-    iov[2].iov_base = "\n";
+    iov[2].iov_base = rk_UNCONST("\n");
     iov[2].iov_len = 1;
 
     if (writev(fd, iov, sizeof(iov)/sizeof(iov[0])) != sizeof("tkt") - 1 + len + 1) {

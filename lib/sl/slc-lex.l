@@ -152,7 +152,7 @@ handle_string(void)
 }
 
 int
-yywrap ()
+yywrap (void)
 {
      return 1;
 }

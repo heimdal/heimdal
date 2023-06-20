@@ -125,7 +125,7 @@ handle_string(void)
 #endif
 
 int
-yywrap ()
+yywrap (void)
 {
      return 1;
 }

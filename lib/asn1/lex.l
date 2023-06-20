@@ -286,7 +286,7 @@ WITH			{ return kw_WITH; }
 %%
 
 int
-yywrap ()
+yywrap (void)
 {
      return 1;
 }

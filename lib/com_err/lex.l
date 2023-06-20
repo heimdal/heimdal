@@ -72,7 +72,7 @@ end			{ return END; }
 %%
 
 int
-yywrap ()
+yywrap (void)
 {
      return 1;
 }

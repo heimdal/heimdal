@@ -69,16 +69,16 @@ my_free_vers(my_vers *v)
     v->v = -1;
 }
 
-static char *lha_principal[] = { "lha" };
-static char *lharoot_princ[] = { "lha", "root" };
-static char *datan_princ[] = { "host", "nutcracker.e.kth.se" };
-static char *nada_tgt_principal[] = { "krbtgt", "NADA.KTH.SE" };
+static const char *const lha_principal[] = { "lha" };
+static const char *const lharoot_princ[] = { "lha", "root" };
+static const char *const datan_princ[] = { "host", "nutcracker.e.kth.se" };
+static const char *const nada_tgt_principal[] = { "krbtgt", "NADA.KTH.SE" };
 
 static int
-cmp_principal (void *a, void *b)
+cmp_principal(const void *a, const void *b)
 {
-    Principal *pa = a;
-    Principal *pb = b;
+    const Principal *pa = a;
+    const Principal *pb = b;
     int i;
 
     COMPARE_STRING(pa,pb,realm);
@@ -118,19 +118,24 @@ test_principal (void)
 
 
     Principal values[] = {
-	{ { KRB5_NT_PRINCIPAL, { 1, lha_principal } },  "SU.SE", NULL },
-	{ { KRB5_NT_PRINCIPAL, { 2, lharoot_princ } },  "SU.SE", NULL },
-	{ { KRB5_NT_SRV_HST, { 2, datan_princ } },  "E.KTH.SE", NULL }
+	{ { KRB5_NT_PRINCIPAL, { 1, rk_UNCONST(lha_principal) } },
+	  rk_UNCONST("SU.SE"), NULL },
+	{ { KRB5_NT_PRINCIPAL, { 2, rk_UNCONST(lharoot_princ) } },
+	  rk_UNCONST("SU.SE"), NULL },
+	{ { KRB5_NT_SRV_HST, { 2, rk_UNCONST(datan_princ) } },
+	  rk_UNCONST("E.KTH.SE"), NULL }
     };
     int i, ret;
     int ntests = sizeof(tests) / sizeof(*tests);
 
     for (i = 0; i < ntests; ++i) {
+	char *name;
 	tests[i].val = &values[i];
-	if (asprintf (&tests[i].name, "Principal %d", i) < 0)
+	if (asprintf(&name, "Principal %d", i) < 0)
 	    errx(1, "malloc");
-	if (tests[i].name == NULL)
+	if (name == NULL)
 	    errx(1, "malloc");
+	tests[i].name = name;
     }
 
     ret = generic_test (tests, ntests, sizeof(Principal),
@@ -141,16 +146,16 @@ test_principal (void)
 			cmp_principal,
 			NULL);
     for (i = 0; i < ntests; ++i)
-	free (tests[i].name);
+	free(rk_UNCONST(tests[i].name));
 
     return ret;
 }
 
 static int
-cmp_authenticator (void *a, void *b)
+cmp_authenticator(const void *a, const void *b)
 {
-    Authenticator *aa = a;
-    Authenticator *ab = b;
+    const Authenticator *aa = a;
+    const Authenticator *ab = b;
     int i;
 
     COMPARE_INTEGER(aa,ab,authenticator_vno);
@@ -189,20 +194,24 @@ test_authenticator (void)
     };
 
     Authenticator values[] = {
-	{ 5, "E.KTH.SE", { KRB5_NT_PRINCIPAL, { 1, lha_principal } },
+	{ 5, rk_UNCONST("E.KTH.SE"),
+	  { KRB5_NT_PRINCIPAL, { 1, rk_UNCONST(lha_principal) } },
 	  NULL, 10, 99, NULL, NULL, NULL },
-	{ 5, "SU.SE", { KRB5_NT_PRINCIPAL, { 2, lharoot_princ } },
+	{ 5, rk_UNCONST("SU.SE"),
+	  { KRB5_NT_PRINCIPAL, { 2, rk_UNCONST(lharoot_princ) } },
 	  NULL, 292, 999, NULL, NULL, NULL }
     };
     int i, ret;
     int ntests = sizeof(tests) / sizeof(*tests);
 
     for (i = 0; i < ntests; ++i) {
+	char *name;
 	tests[i].val = &values[i];
-	if (asprintf (&tests[i].name, "Authenticator %d", i) < 0)
+	if (asprintf(&name, "Authenticator %d", i) < 0)
 	    errx(1, "malloc");
-	if (tests[i].name == NULL)
+	if (name == NULL)
 	    errx(1, "malloc");
+	tests[i].name = name;
     }
 
     ret = generic_test (tests, ntests, sizeof(Authenticator),
@@ -213,16 +222,16 @@ test_authenticator (void)
 			cmp_authenticator,
 			(generic_copy)copy_Authenticator);
     for (i = 0; i < ntests; ++i)
-	free(tests[i].name);
+	free(rk_UNCONST(tests[i].name));
 
     return ret;
 }
 
 static int
-cmp_KRB_ERROR (void *a, void *b)
+cmp_KRB_ERROR(const void *a, const void *b)
 {
-    KRB_ERROR *aa = a;
-    KRB_ERROR *ab = b;
+    const KRB_ERROR *aa = a;
+    const KRB_ERROR *ab = b;
     int i;
 
     COMPARE_INTEGER(aa,ab,pvno);
@@ -280,9 +289,10 @@ test_krb_error (void)
     };
     int ntests = sizeof(tests) / sizeof(*tests);
     KRB_ERROR e1;
-    PrincipalName lhaprincipalname = { 1, { 1, lha_principal } };
-    PrincipalName tgtprincipalname = { 1, { 2, nada_tgt_principal } };
-    char *realm = "NADA.KTH.SE";
+    PrincipalName lhaprincipalname = { 1, { 1, rk_UNCONST(lha_principal) } };
+    PrincipalName tgtprincipalname = { 1, { 2, rk_UNCONST(nada_tgt_principal) } };
+    char *realm = strdup("NADA.KTH.SE");
+    int ret;
 
     e1.pvno = 5;
     e1.msg_type = 30;
@@ -293,27 +303,29 @@ test_krb_error (void)
     e1.error_code = 31;
     e1.crealm = &realm;
     e1.cname = &lhaprincipalname;
-    e1.realm = "NADA.KTH.SE";
+    e1.realm = rk_UNCONST("NADA.KTH.SE");
     e1.sname = tgtprincipalname;
     e1.e_text = NULL;
     e1.e_data = NULL;
 
     tests[0].val = &e1;
 
-    return generic_test (tests, ntests, sizeof(KRB_ERROR),
+    ret = generic_test (tests, ntests, sizeof(KRB_ERROR),
 			 (generic_encode)encode_KRB_ERROR,
 			 (generic_length)length_KRB_ERROR,
 			 (generic_decode)decode_KRB_ERROR,
 			 (generic_free)free_KRB_ERROR,
 			 cmp_KRB_ERROR,
 			 (generic_copy)copy_KRB_ERROR);
+    free(realm);
+    return ret;
 }
 
 static int
-cmp_Name (void *a, void *b)
+cmp_Name(const void *a, const void *b)
 {
-    Name *aa = a;
-    Name *ab = b;
+    const Name *aa = a;
+    const Name *ab = b;
 
     COMPARE_INTEGER(aa,ab,element);
 
@@ -357,13 +369,13 @@ test_Name (void)
     atv1[0].type.length = sizeof(cmp_CN)/sizeof(cmp_CN[0]);
     atv1[0].type.components = cmp_CN;
     atv1[0].value.element = choice_DirectoryString_printableString;
-    atv1[0].value.u.printableString.data = "Love";
+    atv1[0].value.u.printableString.data = rk_UNCONST("Love");
     atv1[0].value.u.printableString.length = 4;
 
     atv1[1].type.length = sizeof(cmp_L)/sizeof(cmp_L[0]);
     atv1[1].type.components = cmp_L;
     atv1[1].value.element = choice_DirectoryString_printableString;
-    atv1[1].value.u.printableString.data = "STOCKHOLM";
+    atv1[1].value.u.printableString.data = rk_UNCONST("STOCKHOLM");
     atv1[1].value.u.printableString.length = 9;
 
     /* n2 */
@@ -376,13 +388,13 @@ test_Name (void)
     atv2[0].type.length = sizeof(cmp_L)/sizeof(cmp_L[0]);
     atv2[0].type.components = cmp_L;
     atv2[0].value.element = choice_DirectoryString_printableString;
-    atv2[0].value.u.printableString.data = "STOCKHOLM";
+    atv2[0].value.u.printableString.data = rk_UNCONST("STOCKHOLM");
     atv2[0].value.u.printableString.length = 9;
 
     atv2[1].type.length = sizeof(cmp_CN)/sizeof(cmp_CN[0]);
     atv2[1].type.components = cmp_CN;
     atv2[1].value.element = choice_DirectoryString_printableString;
-    atv2[1].value.u.printableString.data = "Love";
+    atv2[1].value.u.printableString.data = rk_UNCONST("Love");
     atv2[1].value.u.printableString.length = 4;
 
     /* */
@@ -399,10 +411,10 @@ test_Name (void)
 }
 
 static int
-cmp_KeyUsage (void *a, void *b)
+cmp_KeyUsage(const void *a, const void *b)
 {
-    KeyUsage *aa = a;
-    KeyUsage *ab = b;
+    const KeyUsage *aa = a;
+    const KeyUsage *ab = b;
 
     return KeyUsage2int(*aa) != KeyUsage2int(*ab);
 }
@@ -459,10 +471,10 @@ test_bit_string (void)
 }
 
 static int
-cmp_TicketFlags (void *a, void *b)
+cmp_TicketFlags(const void *a, const void *b)
 {
-    TicketFlags *aa = a;
-    TicketFlags *ab = b;
+    const TicketFlags *aa = a;
+    const TicketFlags *ab = b;
 
     return TicketFlags2int(*aa) != TicketFlags2int(*ab);
 }
@@ -519,10 +531,10 @@ test_bit_string_rfc1510 (void)
 }
 
 static int
-cmp_KerberosTime (void *a, void *b)
+cmp_KerberosTime(const void *a, const void *b)
 {
-    KerberosTime *aa = a;
-    KerberosTime *ab = b;
+    const KerberosTime *aa = a;
+    const KerberosTime *ab = b;
 
     return *aa != *ab;
 }
@@ -663,7 +675,7 @@ test_cert(void)
 
     for (i = 0; i < sizeof(certs)/sizeof(certs[0]); i++) {
 
-	ret = decode_Certificate((unsigned char *)certs[i].cert,
+	ret = decode_Certificate((const unsigned char *)certs[i].cert,
 				 certs[i].len, &c, &size);
 	if (ret)
 	    return ret;
@@ -753,7 +765,7 @@ test_SignedData(void)
 
     for (i = 0; i < sizeof(signeddata) / sizeof(signeddata[0]); i++) {
 
-	ret = decode_SignedData((unsigned char *)signeddata[i].sd,
+	ret = decode_SignedData((const unsigned char *)signeddata[i].sd,
 				signeddata[i].len, &sd, &size);
 	if (ret)
 	    return ret;
@@ -766,10 +778,10 @@ test_SignedData(void)
 
 
 static int
-cmp_TESTLargeTag (void *a, void *b)
+cmp_TESTLargeTag(const void *a, const void *b)
 {
-    TESTLargeTag *aa = a;
-    TESTLargeTag *ab = b;
+    const TESTLargeTag *aa = a;
+    const TESTLargeTag *ab = b;
 
     COMPARE_INTEGER(aa,ab,foo);
     COMPARE_INTEGER(aa,ab,bar);
@@ -805,7 +817,7 @@ struct test_data {
     int ok;
     size_t len;
     size_t expected_len;
-    void *data;
+    const void *data;
 };
 
 static int
@@ -987,7 +999,7 @@ check_tag_length64s(void)
 }
 
 static int
-cmp_TESTChoice (void *a, void *b)
+cmp_TESTChoice(const void *a, const void *b)
 {
     return 0;
 }
@@ -1025,7 +1037,7 @@ test_choice (void)
 
     memset(&c2_2, 0, sizeof(c2_2));
     c2_2.element = choice_TESTChoice2_asn1_ellipsis;
-    c2_2.u.asn1_ellipsis.data = "\xa2\x03\x02\x01\x02";
+    c2_2.u.asn1_ellipsis.data = rk_UNCONST("\xa2\x03\x02\x01\x02");
     c2_2.u.asn1_ellipsis.length = 5;
     tests[1].val = &c2_2;
 
@@ -1136,7 +1148,7 @@ test_extensible_choice(void)
     free_PA_FX_FAST_REQUEST(&r2);
 
     r.element = 0;
-    r.u.asn1_ellipsis.data = "hello";
+    r.u.asn1_ellipsis.data = rk_UNCONST("hello");
     r.u.asn1_ellipsis.length = sizeof("hello") - 1;
     ret = copy_PA_FX_FAST_REQUEST(&r, &r2);
     if (ret)
@@ -1255,10 +1267,10 @@ test_decorated_choice(void)
 
 
 static int
-cmp_TESTImplicit (void *a, void *b)
+cmp_TESTImplicit(const void *a, const void *b)
 {
-    TESTImplicit *aa = a;
-    TESTImplicit *ab = b;
+    const TESTImplicit *aa = a;
+    const TESTImplicit *ab = b;
 
     COMPARE_INTEGER(aa,ab,ti1);
     COMPARE_INTEGER(aa,ab,ti2.foo);
@@ -1267,10 +1279,10 @@ cmp_TESTImplicit (void *a, void *b)
 }
 
 static int
-cmp_TESTImplicit2 (void *a, void *b)
+cmp_TESTImplicit2(const void *a, const void *b)
 {
-    TESTImplicit2 *aa = a;
-    TESTImplicit2 *ab = b;
+    const TESTImplicit2 *aa = a;
+    const TESTImplicit2 *ab = b;
 
     COMPARE_INTEGER(aa,ab,ti1);
     COMPARE_INTEGER(aa,ab,ti3);
@@ -1281,10 +1293,10 @@ cmp_TESTImplicit2 (void *a, void *b)
 }
 
 static int
-cmp_TESTImplicit3 (void *a, void *b)
+cmp_TESTImplicit3(const void *a, const void *b)
 {
-    TESTImplicit3 *aa = a;
-    TESTImplicit3 *ab = b;
+    const TESTImplicit3 *aa = a;
+    const TESTImplicit3 *ab = b;
 
     COMPARE_INTEGER(aa,ab,element);
     if (aa->element == choice_TESTImplicit3_ti1) {
@@ -1297,10 +1309,10 @@ cmp_TESTImplicit3 (void *a, void *b)
 }
 
 static int
-cmp_TESTImplicit4 (void *a, void *b)
+cmp_TESTImplicit4(const void *a, const void *b)
 {
-    TESTImplicit4 *aa = a;
-    TESTImplicit4 *ab = b;
+    const TESTImplicit4 *aa = a;
+    const TESTImplicit4 *ab = b;
 
     COMPARE_INTEGER(aa,ab,element);
     if (aa->element == choice_TESTImplicit4_ti1) {
@@ -1439,10 +1451,10 @@ test_implicit (void)
 }
 
 static int
-cmp_TESTAlloc (void *a, void *b)
+cmp_TESTAlloc(const void *a, const void *b)
 {
-    TESTAlloc *aa = a;
-    TESTAlloc *ab = b;
+    const TESTAlloc *aa = a;
+    const TESTAlloc *ab = b;
 
     IF_OPT_COMPARE(aa,ab,tagless) {
 	COMPARE_INTEGER(aa,ab,tagless->ai);
@@ -1510,7 +1522,7 @@ test_taglessalloc (void)
     c3.tagless = NULL;
     c3.three = 4;
     c3.tagless2 = &any3;
-    any3.data = "\x02\x01\x05";
+    any3.data = rk_UNCONST("\x02\x01\x05");
     any3.length = 3;
     tests[2].val = &c3;
 
@@ -1528,10 +1540,10 @@ test_taglessalloc (void)
 }
 
 static int
-cmp_TESTOptional (void *a, void *b)
+cmp_TESTOptional(const void *a, const void *b)
 {
-    TESTOptional *aa = a;
-    TESTOptional *ab = b;
+    const TESTOptional *aa = a;
+    const TESTOptional *ab = b;
 
     IF_OPT_COMPARE(aa,ab,zero) {
 	COMPARE_OPT_INTEGER(aa,ab,zero);
@@ -1861,10 +1873,10 @@ check_TESTMechTypeList(void)
 }
 
 static int
-cmp_TESTSeqOf4(void *a, void *b)
+cmp_TESTSeqOf4(const void *a, const void *b)
 {
-    TESTSeqOf4 *aa = a;
-    TESTSeqOf4 *ab = b;
+    const TESTSeqOf4 *aa = a;
+    const TESTSeqOf4 *ab = b;
     int i;
 
     IF_OPT_COMPARE(aa, ab, b1) {
@@ -1981,33 +1993,33 @@ test_seq4 (void)
     c[2].b3 = NULL;
     tests[2].val = &c[2];
 
-    b1val[3].s1.data = "";
+    b1val[3].s1.data = rk_UNCONST("");
     b1val[3].s1.length = 0;
     b1val[3].u1 = 1LL;
-    b1val[3].s2.data = "\x01\x02";
+    b1val[3].s2.data = rk_UNCONST("\x01\x02");
     b1val[3].s2.length = 2;
     b1val[3].u2 = -1LL;
 
-    b2val[3].s1.data = "";
+    b2val[3].s1.data = rk_UNCONST("");
     b2val[3].s1.length = 0;
     b2val[3].u1 = 1LL;
-    b2val[3].s2.data = "\x01\x02";
+    b2val[3].s2.data = rk_UNCONST("\x01\x02");
     b2val[3].s2.length = 2;
     b2val[3].u2 = -1LL;
-    b2val[3].s3.data = "\x00\x01\x02\x03";
+    b2val[3].s3.data = rk_UNCONST("\x00\x01\x02\x03");
     b2val[3].s3.length = 4;
     b2val[3].u3 = 1LL<<63;
 
-    b3val[3].s1.data = "";
+    b3val[3].s1.data = rk_UNCONST("");
     b3val[3].s1.length = 0;
     b3val[3].u1 = 1LL;
-    b3val[3].s2.data = "\x01\x02";
+    b3val[3].s2.data = rk_UNCONST("\x01\x02");
     b3val[3].s2.length = 2;
     b3val[3].u2 = -1LL;
-    b3val[3].s3.data = "\x00\x01\x02\x03";
+    b3val[3].s3.data = rk_UNCONST("\x00\x01\x02\x03");
     b3val[3].s3.length = 4;
     b3val[3].u3 = 1LL<<63;
-    b3val[3].s4.data = "\x00";
+    b3val[3].s4.data = rk_UNCONST("\x00");
     b3val[3].s4.length = 1;
     b3val[3].u4 = 1LL<<32;
 
@@ -2033,10 +2045,10 @@ test_seq4 (void)
 }
 
 static int
-cmp_test_seqof5 (void *a, void *b)
+cmp_test_seqof5(const void *a, const void *b)
 {
-    TESTSeqOf5 *aval = a;
-    TESTSeqOf5 *bval = b;
+    const TESTSeqOf5 *aval = a;
+    const TESTSeqOf5 *bval = b;
 
     IF_OPT_COMPARE(aval, bval, outer) {
             COMPARE_INTEGER(&aval->outer->inner, &bval->outer->inner, u0);
@@ -2127,10 +2139,10 @@ test_seqof5(void)
 }
 
 static int
-cmp_default(void *a, void *b)
+cmp_default(const void *a, const void *b)
 {
-    TESTDefault *aa = a;
-    TESTDefault *ab = b;
+    const TESTDefault *aa = a;
+    const TESTDefault *ab = b;
 
     COMPARE_STRING(aa,ab,name);
     COMPARE_INTEGER(aa,ab,version);
@@ -2162,20 +2174,22 @@ test_default(void)
     };
 
     TESTDefault values[] = {
-	{ "Heimdal", 8, 9223372036854775807, 1 },
-	{ "heimdal", 7, 2147483647, 0 },
-	{ "Heimdal", 7, 9223372036854775807, 0 },
-	{ "heimdal", 8, 2147483647, 1 },
+	{ rk_UNCONST("Heimdal"), 8, 9223372036854775807, 1 },
+	{ rk_UNCONST("heimdal"), 7, 2147483647, 0 },
+	{ rk_UNCONST("Heimdal"), 7, 9223372036854775807, 0 },
+	{ rk_UNCONST("heimdal"), 8, 2147483647, 1 },
     };
     int i, ret;
     int ntests = sizeof(tests) / sizeof(*tests);
 
     for (i = 0; i < ntests; ++i) {
+	char *name;
 	tests[i].val = &values[i];
-	if (asprintf (&tests[i].name, "TESTDefault %d", i) < 0)
+	if (asprintf(&name, "TESTDefault %d", i) < 0)
 	    errx(1, "malloc");
-	if (tests[i].name == NULL)
+	if (name == NULL)
 	    errx(1, "malloc");
+	tests[i].name = name;
     }
 
     ret = generic_test (tests, ntests, sizeof(TESTDefault),
@@ -2186,7 +2200,7 @@ test_default(void)
 			cmp_default,
 			(generic_copy)copy_TESTDefault);
     for (i = 0; i < ntests; ++i)
-	free(tests[i].name);
+	free(rk_UNCONST(tests[i].name));
 
     return ret;
 }

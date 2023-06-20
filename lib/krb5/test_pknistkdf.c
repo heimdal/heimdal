@@ -40,15 +40,11 @@ static int verbose_flag = 0;
 
 struct testcase {
     const heim_oid *oid;
-    krb5_data Z;
+    struct { size_t length; const void *data; } Z;
     const char *client;
     const char *server;
     krb5_enctype enctype;
-    krb5_data as_req;
-    krb5_data pk_as_rep;
-    krb5_data ticket;
-
-    krb5_data key;
+    struct { size_t length; const void *data; } as_req, pk_as_rep, ticket, key;
 } tests[] = {
     /* 0 */
     {
@@ -76,12 +72,10 @@ struct testcase {
 	"krbtgt/SU.SE@SU.SE", /* server, partyVInfo */
 	ETYPE_AES256_CTS_HMAC_SHA1_96, /* enctype */
 	{ /* as_req */
-	    10,
-	    "\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA"
+	    10, "\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA"
 	},
 	{ /* pk_as_rep */
-	    9,
-	    "\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB"
+	    9, "\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB"
 	},
 	{ /* ticket */
 	    55,
@@ -122,12 +116,10 @@ struct testcase {
 	"krbtgt/SU.SE@SU.SE", /* server, partyVInfo */
 	ETYPE_AES256_CTS_HMAC_SHA1_96, /* enctype */
 	{ /* as_req */
-	    10,
-	    "\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA"
+	    10, "\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA"
 	},
 	{ /* pk_as_rep */
-	    9,
-	    "\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB"
+	    9, "\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB"
 	},
 	{ /* ticket */
 	    55,
@@ -168,12 +160,10 @@ struct testcase {
 	"krbtgt/SU.SE@SU.SE", /* server, partyVInfo */
 	ETYPE_AES256_CTS_HMAC_SHA1_96, /* enctype */
 	{ /* as_req */
-	    10,
-	    "\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA"
+	    10, "\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA\xAA"
 	},
 	{ /* pk_as_rep */
-	    9,
-	    "\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB"
+	    9, "\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB\xBB"
 	},
 	{ /* ticket */
 	    55,
@@ -222,6 +212,10 @@ fooTicket(void)
 static void
 test_dh2key(krb5_context context, int i, struct testcase *c)
 {
+    krb5_data as_req = { c->as_req.length, rk_UNCONST(c->as_req.data) };
+    krb5_data pk_as_rep =
+	{ c->pk_as_rep.length, rk_UNCONST(c->pk_as_rep.data) };
+    krb5_data ticketdata = { c->ticket.length, rk_UNCONST(c->ticket.data) };
     krb5_error_code ret;
     krb5_keyblock key;
     krb5_principal client, server;
@@ -234,7 +228,7 @@ test_dh2key(krb5_context context, int i, struct testcase *c)
     ai.algorithm = *c->oid;
     ai.parameters = NULL;
 
-    ret = decode_Ticket(c->ticket.data, c->ticket.length, &ticket, &size);
+    ret = decode_Ticket(ticketdata.data, ticketdata.length, &ticket, &size);
     if (ret)
 	krb5_errx(context, 1, "decode ticket: %d", ret);
 
@@ -279,8 +273,8 @@ test_dh2key(krb5_context context, int i, struct testcase *c)
 		       client,
 		       server,
 		       c->enctype,
-		       &c->as_req,
-		       &c->pk_as_rep,
+		       &as_req,
+		       &pk_as_rep,
 		       &ticket,
 		       &key);
     krb5_free_principal(context, client);

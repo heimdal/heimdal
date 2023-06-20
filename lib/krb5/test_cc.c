@@ -469,10 +469,10 @@ test_mcc_default(void)
     }
 }
 
-struct {
-    char *str;
+const struct {
+    const char *str;
     int fail;
-    char *res;
+    const char *res;
 } cc_names[] = {
     { "foo", 0, "foo" },
     { "foo%}", 0, "foo%}" },

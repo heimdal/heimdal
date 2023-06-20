@@ -46,10 +46,10 @@
 RCSID("$Id$");
 
 static int
-cmp_integer (void *a, void *b)
+cmp_integer (const void *a, const void *b)
 {
-    int *ia = (int *)a;
-    int *ib = (int *)b;
+    const int *ia = a;
+    const int *ib = b;
 
     return *ib - *ia;
 }
@@ -77,23 +77,25 @@ test_integer (void)
     int ntests = sizeof(tests) / sizeof(*tests);
 
     for (i = 0; i < ntests; ++i) {
+	char *name;
 	tests[i].val = &values[i];
-	if (asprintf (&tests[i].name, "integer %d", values[i]) < 0)
+	if (asprintf(&name, "integer %d", values[i]) < 0)
 	    errx(1, "malloc");
-	if (tests[i].name == NULL)
+	if (name == NULL)
 	    errx(1, "malloc");
+	tests[i].name = name;
     }
 
     ret = generic_test (tests, ntests, sizeof(int),
 			(generic_encode)der_put_integer,
-			(generic_length) der_length_integer,
+			(generic_length)der_length_integer,
 			(generic_decode)der_get_integer,
 			(generic_free)NULL,
 			cmp_integer,
 			NULL);
 
     for (i = 0; i < ntests; ++i)
-	free (tests[i].name);
+	free(rk_UNCONST(tests[i].name));
     return ret;
 }
 
@@ -176,9 +178,9 @@ test_integer_more (void)
 }
 
 static int
-cmp_unsigned (void *a, void *b)
+cmp_unsigned (const void *a, const void *b)
 {
-    return *(unsigned int*)b - *(unsigned int*)a;
+    return *(const unsigned int*)b - *(const unsigned int*)a;
 }
 
 static int
@@ -201,11 +203,13 @@ test_unsigned (void)
     int ntests = sizeof(tests) / sizeof(*tests);
 
     for (i = 0; i < ntests; ++i) {
+	char *name;
 	tests[i].val = &values[i];
-	if (asprintf (&tests[i].name, "unsigned %u", values[i]) < 0)
+	if (asprintf(&name, "unsigned %u", values[i]) < 0)
 	    errx(1, "malloc");
-	if (tests[i].name == NULL)
+	if (name == NULL)
 	    errx(1, "malloc");
+	tests[i].name = name;
     }
 
     ret = generic_test (tests, ntests, sizeof(int),
@@ -216,12 +220,12 @@ test_unsigned (void)
 			cmp_unsigned,
 			NULL);
     for (i = 0; i < ntests; ++i)
-	free (tests[i].name);
+	free(rk_UNCONST(tests[i].name));
     return ret;
 }
 
 static int
-cmp_octet_string (void *a, void *b)
+cmp_octet_string (const void *a, const void *b)
 {
     return der_heim_octet_string_cmp(a, b);
 }
@@ -229,19 +233,13 @@ cmp_octet_string (void *a, void *b)
 static int
 test_octet_string (void)
 {
-    heim_octet_string s1 = {8, "\x01\x23\x45\x67\x89\xab\xcd\xef"};
+    heim_octet_string s1 = {8, rk_UNCONST("\x01\x23\x45\x67\x89\xab\xcd\xef")};
 
     struct test_case tests[] = {
-	{NULL, 8, "\x01\x23\x45\x67\x89\xab\xcd\xef", NULL }
+	{&s1, 8, "\x01\x23\x45\x67\x89\xab\xcd\xef", "a octet string" }
     };
     int ntests = sizeof(tests) / sizeof(*tests);
     int ret;
-
-    tests[0].val = &s1;
-    if (asprintf (&tests[0].name, "a octet string") < 0)
-	errx(1, "malloc");
-    if (tests[0].name == NULL)
-	errx(1, "malloc");
 
     ret = generic_test (tests, ntests, sizeof(heim_octet_string),
 			(generic_encode)der_put_octet_string,
@@ -250,15 +248,14 @@ test_octet_string (void)
 			(generic_free)der_free_octet_string,
 			cmp_octet_string,
 			NULL);
-    free(tests[0].name);
     return ret;
 }
 
 static int
-cmp_bmp_string (void *a, void *b)
+cmp_bmp_string (const void *a, const void *b)
 {
-    heim_bmp_string *oa = (heim_bmp_string *)a;
-    heim_bmp_string *ob = (heim_bmp_string *)b;
+    const heim_bmp_string *oa = a;
+    const heim_bmp_string *ob = b;
 
     return der_heim_bmp_string_cmp(oa, ob);
 }
@@ -273,22 +270,11 @@ test_bmp_string (void)
     heim_bmp_string s2 = { 2, bmp_d2 };
 
     struct test_case tests[] = {
-	{NULL, 2, "\x00\x20", 		NULL },
-	{NULL, 4, "\x00\x20\x00\x20", 	NULL }
+	{&s1, 2, "\x00\x20", 		"a bmp string" },
+	{&s2, 4, "\x00\x20\x00\x20", 	"second bmp string" }
     };
     int ntests = sizeof(tests) / sizeof(*tests);
     int ret;
-
-    tests[0].val = &s1;
-    if (asprintf (&tests[0].name, "a bmp string") < 0)
-	errx(1, "malloc");
-    if (tests[0].name == NULL)
-	errx(1, "malloc");
-    tests[1].val = &s2;
-    if (asprintf (&tests[1].name, "second bmp string") < 0)
-	errx(1, "malloc");
-    if (tests[1].name == NULL)
-	errx(1, "malloc");
 
     ret = generic_test (tests, ntests, sizeof(heim_bmp_string),
 			(generic_encode)der_put_bmp_string,
@@ -297,16 +283,14 @@ test_bmp_string (void)
 			(generic_free)der_free_bmp_string,
 			cmp_bmp_string,
 			NULL);
-    free(tests[0].name);
-    free(tests[1].name);
     return ret;
 }
 
 static int
-cmp_universal_string (void *a, void *b)
+cmp_universal_string (const void *a, const void *b)
 {
-    heim_universal_string *oa = (heim_universal_string *)a;
-    heim_universal_string *ob = (heim_universal_string *)b;
+    const heim_universal_string *oa = a;
+    const heim_universal_string *ob = b;
 
     return der_heim_universal_string_cmp(oa, ob);
 }
@@ -321,22 +305,11 @@ test_universal_string (void)
     heim_universal_string s2 = { 2, universal_d2 };
 
     struct test_case tests[] = {
-	{NULL, 4, "\x00\x00\x00\x20", 			NULL },
-	{NULL, 8, "\x00\x00\x00\x20\x00\x00\x00\x20", 	NULL }
+	{&s1, 4, "\x00\x00\x00\x20", 			"a universal string" },
+	{&s2, 8, "\x00\x00\x00\x20\x00\x00\x00\x20", 	"second universal string" }
     };
     int ntests = sizeof(tests) / sizeof(*tests);
     int ret;
-
-    tests[0].val = &s1;
-    if (asprintf (&tests[0].name, "a universal string") < 0)
-	errx(1, "malloc");
-    if (tests[0].name == NULL)
-	errx(1, "malloc");
-    tests[1].val = &s2;
-    if (asprintf (&tests[1].name, "second universal string") < 0)
-	errx(1, "malloc");
-    if (tests[1].name == NULL)
-	errx(1, "malloc");
 
     ret = generic_test (tests, ntests, sizeof(heim_universal_string),
 			(generic_encode)der_put_universal_string,
@@ -345,16 +318,14 @@ test_universal_string (void)
 			(generic_free)der_free_universal_string,
 			cmp_universal_string,
 			NULL);
-    free(tests[0].name);
-    free(tests[1].name);
     return ret;
 }
 
 static int
-cmp_general_string (void *a, void *b)
+cmp_general_string (const void *a, const void *b)
 {
-    char **sa = (char **)a;
-    char **sb = (char **)b;
+    const char *const *sa = a;
+    const char *const *sb = b;
 
     return strcmp (*sa, *sb);
 }
@@ -362,18 +333,20 @@ cmp_general_string (void *a, void *b)
 static int
 test_general_string (void)
 {
-    char *s1 = "Test User 1";
+    const char *s1 = "Test User 1";
 
     struct test_case tests[] = {
 	{NULL, 11, "\x54\x65\x73\x74\x20\x55\x73\x65\x72\x20\x31", NULL }
     };
+    char *name;
     int ret, ntests = sizeof(tests) / sizeof(*tests);
 
     tests[0].val = &s1;
-    if (asprintf (&tests[0].name, "the string \"%s\"", s1) < 0)
+    if (asprintf(&name, "the string \"%s\"", s1) < 0)
 	errx(1, "malloc");
-    if (tests[0].name == NULL)
+    if (name == NULL)
 	errx(1, "malloc");
+    tests[0].name = name;
 
     ret = generic_test (tests, ntests, sizeof(unsigned char *),
 			(generic_encode)der_put_general_string,
@@ -382,15 +355,15 @@ test_general_string (void)
 			(generic_free)der_free_general_string,
 			cmp_general_string,
 			NULL);
-    free(tests[0].name);
+    free(name);
     return ret;
 }
 
 static int
-cmp_generalized_time (void *a, void *b)
+cmp_generalized_time (const void *a, const void *b)
 {
-    time_t *ta = (time_t *)a;
-    time_t *tb = (time_t *)b;
+    const time_t *ta = a;
+    const time_t *tb = b;
 
     return (int)(*tb - *ta);
 }
@@ -407,11 +380,13 @@ test_generalized_time (void)
     int ntests = sizeof(tests) / sizeof(*tests);
 
     for (i = 0; i < ntests; ++i) {
+	char *name;
 	tests[i].val = &values[i];
-	if (asprintf (&tests[i].name, "time %d", (int)values[i]) < 0)
+	if (asprintf(&name, "time %d", (int)values[i]) < 0)
 	    errx(1, "malloc");
-	if (tests[i].name == NULL)
+	if (name == NULL)
 	    errx(1, "malloc");
+	tests[i].name = name;
     }
 
     ret = generic_test (tests, ntests, sizeof(time_t),
@@ -422,14 +397,16 @@ test_generalized_time (void)
 			cmp_generalized_time,
 			NULL);
     for (i = 0; i < ntests; ++i)
-	free(tests[i].name);
+	free(rk_UNCONST(tests[i].name));
     return ret;
 }
 
 static int
-test_cmp_oid (void *a, void *b)
+test_cmp_oid(const void *a, const void *b)
 {
-    return der_heim_oid_cmp((heim_oid *)a, (heim_oid *)b);
+    const heim_oid *oa = a;
+    const heim_oid *ob = b;
+    return der_heim_oid_cmp(oa, ob);
 }
 
 static unsigned oid_comp1[] = { 1, 1, 1 };
@@ -456,11 +433,13 @@ test_oid (void)
     int ntests = sizeof(tests) / sizeof(*tests);
 
     for (i = 0; i < ntests; ++i) {
+	char *name;
 	tests[i].val = &values[i];
-	if (asprintf (&tests[i].name, "oid %d", i) < 0)
+	if (asprintf(&name, "oid %d", i) < 0)
 	    errx(1, "malloc");
-	if (tests[i].name == NULL)
+	if (name == NULL)
 	    errx(1, "malloc");
+	tests[i].name = name;
     }
 
     ret = generic_test (tests, ntests, sizeof(heim_oid),
@@ -471,14 +450,17 @@ test_oid (void)
 			test_cmp_oid,
 			NULL);
     for (i = 0; i < ntests; ++i)
-	free(tests[i].name);
+	free(rk_UNCONST(tests[i].name));
     return ret;
 }
 
 static int
-test_cmp_bit_string (void *a, void *b)
+test_cmp_bit_string(const void *a, const void *b)
 {
-    return der_heim_bit_string_cmp((heim_bit_string *)a, (heim_bit_string *)b);
+    const heim_bit_string *sa = a;
+    const heim_bit_string *sb = a;
+
+    return der_heim_bit_string_cmp(sa, sb);
 }
 
 static int
@@ -488,17 +470,19 @@ test_bit_string (void)
 	{NULL, 1, "\x00", 		NULL }
     };
     heim_bit_string values[] = {
-	{ 0, "" }
+	{ 0, rk_UNCONST("") }
     };
     int i, ret;
     int ntests = sizeof(tests) / sizeof(*tests);
 
     for (i = 0; i < ntests; ++i) {
+	char *name;
 	tests[i].val = &values[i];
-	if (asprintf (&tests[i].name, "bit_string %d", i) < 0)
+	if (asprintf(&name, "bit_string %d", i) < 0)
 	    errx(1, "malloc");
-	if (tests[i].name == NULL)
+	if (name == NULL)
 	    errx(1, "malloc");
+	tests[i].name = name;
     }
 
     ret = generic_test (tests, ntests, sizeof(heim_bit_string),
@@ -509,14 +493,16 @@ test_bit_string (void)
 			test_cmp_bit_string,
 			NULL);
     for (i = 0; i < ntests; ++i)
-	free(tests[i].name);
+	free(rk_UNCONST(tests[i].name));
     return ret;
 }
 
 static int
-test_cmp_heim_integer (void *a, void *b)
+test_cmp_heim_integer(const void *a, const void *b)
 {
-    return der_heim_integer_cmp((heim_integer *)a, (heim_integer *)b);
+    const heim_integer *ia = a;
+    const heim_integer *ib = b;
+    return der_heim_integer_cmp(ia, ib);
 }
 
 static int
@@ -535,15 +521,15 @@ test_heim_integer (void)
     };
 
     heim_integer values[] = {
-	{ 1, "\x01", 1 },
-	{ 1, "\xff", 1 },
-	{ 2, "\x01\xff", 1 },
-	{ 2, "\x10\xff", 1 },
-	{ 2, "\xff\x01", 1 },
-	{ 2, "\xff\x00", 1 },
-	{ 0, "", 0 },
-	{ 1, "\x01", 0 },
-	{ 1, "\x80", 0 },
+	{ 1, rk_UNCONST("\x01"), 1 },
+	{ 1, rk_UNCONST("\xff"), 1 },
+	{ 2, rk_UNCONST("\x01\xff"), 1 },
+	{ 2, rk_UNCONST("\x10\xff"), 1 },
+	{ 2, rk_UNCONST("\xff\x01"), 1 },
+	{ 2, rk_UNCONST("\xff\x00"), 1 },
+	{ 0, rk_UNCONST(""), 0 },
+	{ 1, rk_UNCONST("\x01"), 0 },
+	{ 1, rk_UNCONST("\x80"), 0 },
     };
     int i, ret;
     int ntests = sizeof(tests) / sizeof(tests[0]);
@@ -551,11 +537,13 @@ test_heim_integer (void)
     heim_integer i2;
 
     for (i = 0; i < ntests; ++i) {
+	char *name;
 	tests[i].val = &values[i];
-	if (asprintf (&tests[i].name, "heim_integer %d", i) < 0)
+	if (asprintf(&name, "heim_integer %d", i) < 0)
 	    errx(1, "malloc");
-	if (tests[i].name == NULL)
+	if (name == NULL)
 	    errx(1, "malloc");
+	tests[i].name = name;
     }
 
     ret = generic_test (tests, ntests, sizeof(heim_integer),
@@ -566,7 +554,7 @@ test_heim_integer (void)
 			test_cmp_heim_integer,
 			NULL);
     for (i = 0; i < ntests; ++i)
-	free (tests[i].name);
+	free(rk_UNCONST(tests[i].name));
     if (ret)
 	return ret;
 
@@ -582,9 +570,9 @@ test_heim_integer (void)
 }
 
 static int
-test_cmp_boolean (void *a, void *b)
+test_cmp_boolean(const void *a, const void *b)
 {
-    return !!*(int *)a != !!*(int *)b;
+    return !!*(const int *)a != !!*(const int *)b;
 }
 
 static int
@@ -602,11 +590,13 @@ test_boolean (void)
     heim_integer i2;
 
     for (i = 0; i < ntests; ++i) {
+	char *name;
 	tests[i].val = &values[i];
-	if (asprintf (&tests[i].name, "heim_boolean %d", i) < 0)
+	if (asprintf(&name, "heim_boolean %d", i) < 0)
 	    errx(1, "malloc");
-	if (tests[i].name == NULL)
+	if (name == NULL)
 	    errx(1, "malloc");
+	tests[i].name = name;
     }
 
     ret = generic_test (tests, ntests, sizeof(int),
@@ -617,7 +607,7 @@ test_boolean (void)
 			test_cmp_boolean,
 			NULL);
     for (i = 0; i < ntests; ++i)
-	free (tests[i].name);
+	free(rk_UNCONST(tests[i].name));
     if (ret)
 	return ret;
 
@@ -822,10 +812,10 @@ check_heim_integer_same(const char *p, const char *norm_p, heim_integer *i)
 static int
 test_heim_int_format(void)
 {
-    heim_integer i = { 1, "\x10", 0 };
-    heim_integer i2 = { 1, "\x10", 1 };
-    heim_integer i3 = { 1, "\01", 0 };
-    char *p =
+    heim_integer i = { 1, rk_UNCONST("\x10"), 0 };
+    heim_integer i2 = { 1, rk_UNCONST("\x10"), 1 };
+    heim_integer i3 = { 1, rk_UNCONST("\01"), 0 };
+    const char *p =
 	"FFFFFFFF" "FFFFFFFF" "C90FDAA2" "2168C234" "C4C6628B" "80DC1CD1"
 	"29024E08" "8A67CC74" "020BBEA6" "3B139B22" "514A0879" "8E3404DD"
 	"EF9519B3" "CD3A431B" "302B0A6D" "F25F1437" "4FE1356D" "6D51C245"
@@ -834,7 +824,7 @@ test_heim_int_format(void)
 	"FFFFFFFF" "FFFFFFFF";
     heim_integer bni = {
 	128,
-	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xC9\x0F\xDA\xA2"
+	rk_UNCONST("\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xC9\x0F\xDA\xA2"
 	"\x21\x68\xC2\x34\xC4\xC6\x62\x8B\x80\xDC\x1C\xD1"
 	"\x29\x02\x4E\x08\x8A\x67\xCC\x74\x02\x0B\xBE\xA6"
 	"\x3B\x13\x9B\x22\x51\x4A\x08\x79\x8E\x34\x04\xDD"
@@ -844,7 +834,7 @@ test_heim_int_format(void)
 	"\xA6\x37\xED\x6B\x0B\xFF\x5C\xB6\xF4\x06\xB7\xED"
 	"\xEE\x38\x6B\xFB\x5A\x89\x9F\xA5\xAE\x9F\x24\x11"
 	"\x7C\x4B\x1F\xE6\x49\x28\x66\x51\xEC\xE6\x53\x81"
-	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF",
+	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"),
 	0
     };
     heim_integer f;
@@ -971,28 +961,32 @@ test_misc_cmp(void)
 
     /* diffrent lengths are diffrent */
     {
-	const heim_octet_string os1 = { 1, "a" } , os2 = { 0, NULL };
+	const heim_octet_string os1 = { 1, rk_UNCONST("a") };
+	const heim_octet_string os2 = { 0, NULL };
 	ret = der_heim_octet_string_cmp(&os1, &os2);
 	if (ret == 0)
 	    return 1;
     }
     /* diffrent data are diffrent */
     {
-	const heim_octet_string os1 = { 1, "a" } , os2 = { 1, "b" };
+	const heim_octet_string os1 = { 1, rk_UNCONST("a") };
+	const heim_octet_string os2 = { 1, rk_UNCONST("b") };
 	ret = der_heim_octet_string_cmp(&os1, &os2);
 	if (ret == 0)
 	    return 1;
     }
     /* diffrent lengths are diffrent */
     {
-	const heim_bit_string bs1 = { 8, "a" } , bs2 = { 7, "a" };
+	const heim_bit_string bs1 = { 8, rk_UNCONST("a") };
+	const heim_bit_string bs2 = { 7, rk_UNCONST("a") };
 	ret = der_heim_bit_string_cmp(&bs1, &bs2);
 	if (ret == 0)
 	    return 1;
     }
     /* diffrent data are diffrent */
     {
-	const heim_bit_string bs1 = { 7, "\x0f" } , bs2 = { 7, "\x02" };
+	const heim_bit_string bs1 = { 7, rk_UNCONST("\x0f") };
+	const heim_bit_string bs2 = { 7, rk_UNCONST("\x02") };
 	ret = der_heim_bit_string_cmp(&bs1, &bs2);
 	if (ret == 0)
 	    return 1;

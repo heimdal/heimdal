@@ -62,7 +62,7 @@ my_free_vers(my_vers *v)
 }
 
 static int
-cmp_dummy (void *a, void *b)
+cmp_dummy(const void *a, const void *b)
 {
     return 0;
 }
@@ -169,8 +169,8 @@ test_seqofseq2(void)
     TESTSeqOfSeq2 c0, c1, c2;
     struct TESTSeqOfSeq2_val i[2];
 
-    i[0].string = "ett";
-    i[1].string = "tvaa";
+    i[0].string = rk_UNCONST("ett");
+    i[1].string = rk_UNCONST("tvaa");
 
     c0.len = 0;
     c0.val = NULL;
@@ -213,8 +213,8 @@ test_seqof2(void)
     TESTSeqOf2 c0, c1, c2;
     heim_general_string i[2];
 
-    i[0] = "foo";
-    i[1] = "bar";
+    i[0] = rk_UNCONST("foo");
+    i[1] = rk_UNCONST("bar");
 
     c0.strings.val = NULL;
     c0.strings.len = 0;
@@ -261,8 +261,8 @@ test_seqof3(void)
     struct TESTSeqOf3_strings s1, s2, s3;
     heim_general_string i[2];
 
-    i[0] = "foo";
-    i[1] = "bar";
+    i[0] = rk_UNCONST("foo");
+    i[1] = rk_UNCONST("bar");
 
     c0.strings = NULL;
     tests[0].val = &c0;
@@ -370,33 +370,33 @@ test_seqof4(void)
     c[2].b3 = NULL;
     tests[2].val = &c[2];
 
-    b1val[3].s1.data = "";
+    b1val[3].s1.data = rk_UNCONST("");
     b1val[3].s1.length = 0;
     b1val[3].u1 = 1LL;
-    b1val[3].s2.data = "\x01\x02";
+    b1val[3].s2.data = rk_UNCONST("\x01\x02");
     b1val[3].s2.length = 2;
     b1val[3].u2 = (TESTuint64)-1LL;
 
-    b2val[3].s1.data = "";
+    b2val[3].s1.data = rk_UNCONST("");
     b2val[3].s1.length = 0;
     b2val[3].u1 = 1LL;
-    b2val[3].s2.data = "\x01\x02";
+    b2val[3].s2.data = rk_UNCONST("\x01\x02");
     b2val[3].s2.length = 2;
     b2val[3].u2 = (TESTuint64)-1LL;
-    b2val[3].s3.data = "\x00\x01\x02\x03";
+    b2val[3].s3.data = rk_UNCONST("\x00\x01\x02\x03");
     b2val[3].s3.length = 4;
     b2val[3].u3 = 1ULL<<63;
 
-    b3val[3].s1.data = "";
+    b3val[3].s1.data = rk_UNCONST("");
     b3val[3].s1.length = 0;
     b3val[3].u1 = 1LL;
-    b3val[3].s2.data = "\x01\x02";
+    b3val[3].s2.data = rk_UNCONST("\x01\x02");
     b3val[3].s2.length = 2;
     b3val[3].u2 = (TESTuint64)-1LL;
-    b3val[3].s3.data = "\x00\x01\x02\x03";
+    b3val[3].s3.data = rk_UNCONST("\x00\x01\x02\x03");
     b3val[3].s3.length = 4;
     b3val[3].u3 = 1ULL<<63;
-    b3val[3].s4.data = "\x00";
+    b3val[3].s4.data = rk_UNCONST("\x00");
     b3val[3].s4.length = 1;
     b3val[3].u4 = 1LL<<32;
 
@@ -422,10 +422,10 @@ test_seqof4(void)
 }
 
 static int
-cmp_test_seqof5 (void *a, void *b)
+cmp_test_seqof5(const void *a, const void *b)
 {
-    TESTSeqOf5 *aval = a;
-    TESTSeqOf5 *bval = b;
+    const TESTSeqOf5 *aval = a;
+    const TESTSeqOf5 *bval = b;
 
     IF_OPT_COMPARE(aval, bval, outer) {
             COMPARE_INTEGER(&aval->outer->inner, &bval->outer->inner, u0);

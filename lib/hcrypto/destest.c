@@ -47,7 +47,7 @@
 #include "des.h"
 
 static void
-ecb_test(char key[8], char in[8], char out[8])
+ecb_test(const char key[8], const char in[8], const char out[8])
 {
     unsigned char k[8], indata[8], outdata[8], outdata2[8], ansdata[8];
     DES_key_schedule s;
@@ -66,7 +66,8 @@ ecb_test(char key[8], char in[8], char out[8])
 }
 
 static void
-ebc3_test(char key1[8], char key2[8], char key3[8], char in[8], char out[8])
+ebc3_test(const char key1[8], const char key2[8], const char key3[8],
+    const char in[8], const char out[8])
 {
     unsigned char k1[8], k2[8], k3[8],
 	indata[8], outdata[8], outdata2[8], ansdata[8];
@@ -92,7 +93,8 @@ ebc3_test(char key1[8], char key2[8], char key3[8], char in[8], char out[8])
 }
 
 static void
-cbc_test(char key1[8], char iv[8], char in[24], char out[24])
+cbc_test(const char key1[8], const char iv[8], const char in[24],
+    const char out[24])
 {
     unsigned char k1[8],
 	indata[24], outdata[24], outdata2[24], ansdata[24];
@@ -114,7 +116,8 @@ cbc_test(char key1[8], char iv[8], char in[24], char out[24])
 }
 
 static void
-cfb64_test(char key1[8], char iv[8], char in[23], char out[23])
+cfb64_test(const char key1[8], const char iv[8], const char in[23],
+    const char out[23])
 {
     unsigned char k1[8],
 	indata[23], outdata[23], outdata2[23], ansdata[23];
@@ -140,8 +143,8 @@ cfb64_test(char key1[8], char iv[8], char in[23], char out[23])
 }
 
 static void
-cbc3_test(char key1[8], char key2[8], char key3[8],
-	  char iv[8], char in[24], char out[24])
+cbc3_test(const char key1[8], const char key2[8], const char key3[8],
+    const char iv[8], const char in[24], const char out[24])
 {
     unsigned char k1[8], k2[8], k3[8],
 	indata[24], outdata[24], outdata2[24], ansdata[24];
@@ -174,7 +177,8 @@ cbc3_test(char key1[8], char key2[8], char key3[8],
 
 
 static void
-pcbc_test(char key1[8], char iv[8], char in[24], char out[24])
+pcbc_test(const char key1[8], const char iv[8], const char in[24],
+    const char out[24])
 {
     unsigned char k1[8],
 	indata[24], outdata[24], outdata2[24], ansdata[24];
@@ -196,8 +200,8 @@ pcbc_test(char key1[8], char iv[8], char in[24], char out[24])
 }
 
 static void
-cbc_cksum(char key1[8], char iv[8], char *in, size_t len,
-	  uint32_t ret, char out[8])
+cbc_cksum(const char key1[8], const char iv[8], const char *in, size_t len,
+    uint32_t ret, const char out[8])
 {
     unsigned char k1[8], indata[24], ansdata[8];
     DES_key_schedule s1;
@@ -218,7 +222,7 @@ cbc_cksum(char key1[8], char iv[8], char *in, size_t len,
 }
 
 static void
-s2k(char *password, const char *salt, char akey[8])
+s2k(const char *password, const char *salt, const char akey[8])
 {
     DES_cblock k;
     size_t l = strlen(password) + strlen(salt);

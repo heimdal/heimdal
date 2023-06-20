@@ -167,8 +167,8 @@ print_bytes (unsigned const char *buf, size_t len)
 #define MAP_FAILED (-1)
 #endif
 
-static char *current_test = "<uninit>";
-static char *current_state = "<uninit>";
+static const char *current_test = "<uninit>";
+static const char *current_state = "<uninit>";
 
 static RETSIGTYPE
 segv_handler(int sig)
@@ -196,11 +196,11 @@ int
 generic_test (const struct test_case *tests,
 	      unsigned ntests,
 	      size_t data_size,
-	      int (ASN1CALL *encode)(unsigned char *, size_t, void *, size_t *),
-	      size_t (ASN1CALL *length)(void *),
+	      int (ASN1CALL *encode)(unsigned char *, size_t, const void *, size_t *),
+	      size_t (ASN1CALL *length)(const void *),
 	      int (ASN1CALL *decode)(unsigned char *, size_t, void *, size_t *),
 	      void (ASN1CALL *free_data)(void *),
-	      int (*cmp)(void *a, void *b),
+	      int (*cmp)(const void *a, const void *b),
 	      int (ASN1CALL *copy)(const void *from, void *to))
 {
     unsigned char *buf, *buf2;
@@ -266,7 +266,8 @@ generic_test (const struct test_case *tests,
 	if (memcmp (buf, tests[i].bytes, tests[i].byte_len) != 0) {
 	    printf ("encoding of %s has bad bytes:\n"
 		    "correct: ", tests[i].name);
-	    print_bytes ((unsigned char *)tests[i].bytes, tests[i].byte_len);
+	    print_bytes ((const unsigned char *)tests[i].bytes,
+		tests[i].byte_len);
 	    printf ("\nactual:  ");
 	    print_bytes (buf, sz);
 	    printf ("\n");

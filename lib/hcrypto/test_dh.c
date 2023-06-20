@@ -50,7 +50,7 @@
  *
  */
 
-static char *id_string;
+static const char *id_string;
 static int verbose;
 static int version_flag;
 static int help_flag;
@@ -229,9 +229,9 @@ static struct getargs args[] = {
     "9558E447 5677E9AA 9E3050E2 765694DF C81F56E8 80B96E71"	\
     "60C980DD 98EDD3DF FFFFFFFF FFFFFFFF"
 
-struct prime {
-    char *name;
-    char *value;
+const struct prime {
+    const char *name;
+    const char *value;
 } primes[] = {
     { "modp768", OAKLEY_PRIME_MODP768 },
     { "modp1024", OAKLEY_PRIME_MODP1024 },
@@ -296,7 +296,7 @@ str2val(const char *str, int base, size_t *len)
     return(dst);
 }
 
-static void set_prime(BIGNUM *p, char *str)
+static void set_prime(BIGNUM *p, const char *str)
 {
     size_t len = 0;
     unsigned char *prime;
@@ -322,7 +322,7 @@ static void print_secret(unsigned char *sec, size_t len)
     printf("\n");
 }
 
-static int check_prime(ENGINE *engine, struct prime *pr)
+static int check_prime(ENGINE *engine, const struct prime *pr)
 {
     DH *dh1, *dh2;
     BIGNUM *p, *g;
@@ -459,7 +459,7 @@ main(int argc, char **argv)
     printf("dh %s\n", ENGINE_get_DH(engine)->name);
 
     {
-	struct prime *p = primes;
+	const struct prime *p = primes;
 
 	for (; p->name; ++p)
 	    if (check_prime(engine, p))

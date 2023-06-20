@@ -52,14 +52,14 @@
 	do { if ((ac)->e.length != (bc)->e.length || memcmp((ac)->e.data, (bc)->e.data, (ac)->e.length) != 0) return 1; } while(0)
 
 struct test_case {
-    void *val;
+    const void *val;
     ssize_t byte_len;
     const char *bytes;
-    char *name;
+    const char *name;
 };
 
-typedef int (ASN1CALL *generic_encode)(unsigned char *, size_t, void *, size_t *);
-typedef size_t (ASN1CALL *generic_length)(void *);
+typedef int (ASN1CALL *generic_encode)(unsigned char *, size_t, const void *, size_t *);
+typedef size_t (ASN1CALL *generic_length)(const void *);
 typedef int (ASN1CALL *generic_decode)(unsigned char *, size_t, void *, size_t *);
 typedef void (ASN1CALL *generic_free)(void *);
 typedef int (ASN1CALL *generic_copy)(const void *, void *);
@@ -68,11 +68,11 @@ int
 generic_test (const struct test_case *tests,
 	      unsigned ntests,
 	      size_t data_size,
-	      int (ASN1CALL *encode)(unsigned char *, size_t, void *, size_t *),
-	      size_t (ASN1CALL *length)(void *),
+	      int (ASN1CALL *encode)(unsigned char *, size_t, const void *, size_t *),
+	      size_t (ASN1CALL *length)(const void *),
 	      int (ASN1CALL *decode)(unsigned char *, size_t, void *, size_t *),
 	      void (ASN1CALL *free_data)(void *),
-	      int (*cmp)(void *a, void *b),
+	      int (*cmp)(const void *a, const void *b),
 	      int (ASN1CALL *copy)(const void *a, void *b));
 
 int

@@ -34,15 +34,15 @@
 #include <err.h>
 #include <getarg.h>
 
-struct {
-    char *p1;
-    char *pepper1;
+const struct {
+    const char *p1;
+    const char *pepper1;
     krb5_enctype e1;
-    char *p2;
-    char *pepper2;
+    const char *p2;
+    const char *pepper2;
     krb5_enctype e2;
     krb5_enctype e3;
-    char *key;
+    const char *key;
     size_t len;
 } cf2[] = {
     {
@@ -125,10 +125,10 @@ test_cf2(krb5_context context)
         krb5_err(context, 1, ret, "krb5_allow_weak_crypto");
 
     for (i = 0; i < sizeof(cf2)/sizeof(cf2[0]); i++) {
-	pw.data = cf2[i].p1;
+	pw.data = rk_UNCONST(cf2[i].p1);
 	pw.length = strlen(cf2[i].p1);
 	salt.salttype = (krb5_salttype)KRB5_PADATA_PW_SALT;
-	salt.saltvalue.data = cf2[i].p1;
+	salt.saltvalue.data = rk_UNCONST(cf2[i].p1);
 	salt.saltvalue.length = strlen(cf2[i].p1);
 
 	ret = krb5_string_to_key_data_salt(context,
@@ -143,9 +143,9 @@ test_cf2(krb5_context context)
 	if (ret)
 	    krb5_err(context, 1, ret, "krb5_crypto_init");
 
-	pw.data = cf2[i].p2;
+	pw.data = rk_UNCONST(cf2[i].p2);
 	pw.length = strlen(cf2[i].p2);
-	salt.saltvalue.data = cf2[i].p2;
+	salt.saltvalue.data = rk_UNCONST(cf2[i].p2);
 	salt.saltvalue.length = strlen(cf2[i].p2);
 
 	ret = krb5_string_to_key_data_salt(context,
@@ -161,10 +161,10 @@ test_cf2(krb5_context context)
 	    krb5_err(context, 1, ret, "krb5_crypto_init");
 
 
-	p1.data = cf2[i].pepper1;
+	p1.data = rk_UNCONST(cf2[i].pepper1);
 	p1.length = strlen(cf2[i].pepper1);
 
-	p2.data = cf2[i].pepper2;
+	p2.data = rk_UNCONST(cf2[i].pepper2);
 	p2.length = strlen(cf2[i].pepper2);
 
 	ret = krb5_crypto_fx_cf2(context, c1, c2, &p1, &p2, cf2[i].e3, &k3);

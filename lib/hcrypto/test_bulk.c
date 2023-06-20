@@ -77,7 +77,7 @@ static int version_flag;
 static int help_flag;
 static int len = 1;
 static int loops = 20;
-static char *provider = "hcrypto";
+static const char *provider = "hcrypto";
 static unsigned char *d;
 
 #ifdef __APPLE__

@@ -36,13 +36,13 @@
 #include "roken.h"
 #include "test-mem.h"
 
-char *s1 = "VAR1=VAL1#comment\n\
+const char *s1 = "VAR1=VAL1#comment\n\
 VAR2=VAL2 VAL2 #comment\n\
 #this another comment\n\
 \n\
 VAR3=FOO";
 
-char *s2 = "VAR1=ENV2\n\
+const char *s2 = "VAR1=ENV2\n\
 ";
 
 static void

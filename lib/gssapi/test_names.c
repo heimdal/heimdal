@@ -102,7 +102,7 @@ gss_err(int exitval,
 
 #define MAKE_URN(tail)                                          \
     { sizeof(GSS_KRB5_NAME_ATTRIBUTE_BASE_URN tail) - 1,        \
-        GSS_KRB5_NAME_ATTRIBUTE_BASE_URN tail }
+        rk_UNCONST(GSS_KRB5_NAME_ATTRIBUTE_BASE_URN tail) }
 
 /*
  * Test RFC6680 name attributes for Kerberos.
@@ -161,7 +161,7 @@ check_name_attrs(void)
 
     /* Test the attributes we expect it to have */
     v.length = sizeof("TEST.H5L.SE") - 1;
-    v.value = "TEST.H5L.SE";
+    v.value = rk_UNCONST("TEST.H5L.SE");
     assert_attr(n, GSS_KRB5_NAME_ATTRIBUTE_BASE_URN "realm", GSS_S_COMPLETE,
                 &v, "TEST.H5L.SE", 0, 1, 0);
 
@@ -172,7 +172,7 @@ check_name_attrs(void)
                 GSS_S_COMPLETE, &v, "1", 0, 1, 0);
 
     v.length = sizeof("someuser") - 1;
-    v.value = "someuser";
+    v.value = rk_UNCONST("someuser");
     assert_attr(n, GSS_KRB5_NAME_ATTRIBUTE_BASE_URN "name-ncomp#0",
                 GSS_S_COMPLETE, &v, "someuser", 0, 1, 0);
 
@@ -216,7 +216,7 @@ check_name_attrs(void)
     make_composite_name(&p, &n);
 
     v.length = sizeof("TEST.H5L.SE") - 1;
-    v.value = "TEST.H5L.SE";
+    v.value = rk_UNCONST("TEST.H5L.SE");
     assert_attr(n, GSS_KRB5_NAME_ATTRIBUTE_BASE_URN "realm", GSS_S_COMPLETE,
                 &v, "TEST.H5L.SE", 1, 1, 0);
 
@@ -227,7 +227,7 @@ check_name_attrs(void)
                 GSS_S_COMPLETE, &v, "1", 1, 1, 0);
 
     v.length = sizeof("someuser") - 1;
-    v.value = "someuser";
+    v.value = rk_UNCONST("someuser");
     assert_attr(n, GSS_KRB5_NAME_ATTRIBUTE_BASE_URN "name-ncomp#0",
                 GSS_S_COMPLETE, &v, "someuser", 1, 1, 0);
 
@@ -240,7 +240,7 @@ check_name_attrs(void)
     make_composite_name(&p, &n);
 
     v.length = sizeof("FOO.TEST.H5L.SE") - 1;
-    v.value = "FOO.TEST.H5L.SE";
+    v.value = rk_UNCONST("FOO.TEST.H5L.SE");
     assert_attr(n, GSS_KRB5_NAME_ATTRIBUTE_BASE_URN "peer-realm",
                 GSS_S_COMPLETE, &v, "FOO.TEST.H5L.SE", 1, 1, 0);
     attr_set.count = 4;
@@ -280,7 +280,7 @@ check_name_attrs(void)
 
     assert_attr(n, GSS_KRB5_NAME_ATTRIBUTE_BASE_URN "ticket-authz-data",
                 GSS_S_COMPLETE, &v, NULL, 0, 1, 0);
-    free(v.value);
+    free(v.value);		/* XXX !!! ??? */
 
     attr_set.count = 7;
     assert_attr_set(n, &attr_set);

@@ -47,15 +47,15 @@ hex_dump_data(const void *data, size_t length)
     free(p);
 }
 
-struct {
-    char *password;
-    char *salt;
+const struct {
+    const char *password;
+    const char *salt;
     int saltlen;
     int iterations;
     krb5_enctype enctype;
     size_t keylen;
-    char *pbkdf2;
-    char *key;
+    const char *pbkdf2;
+    const char *key;
 } keys[] = {
     {
 	"password",
@@ -223,11 +223,11 @@ string_to_key_test(krb5_context context)
 
     for (i = 0; i < sizeof(keys)/sizeof(keys[0]); i++) {
 
-	password.data = keys[i].password;
+	password.data = rk_UNCONST(keys[i].password);
 	password.length = strlen(password.data);
 
 	salt.salttype = KRB5_PW_SALT;
-	salt.saltvalue.data = keys[i].salt;
+	salt.saltvalue.data = rk_UNCONST(keys[i].salt);
 	if (keys[i].saltlen == -1)
 	    salt.saltvalue.length = strlen(salt.saltvalue.data);
 	else
@@ -590,17 +590,17 @@ krb_enc_mit(krb5_context context,
     return 0;
 }
 
-struct {
+const struct {
     krb5_enctype enctype;
     unsigned usage;
     size_t keylen;
-    void *key;
+    const void *key;
     size_t elen;
-    void* edata;
+    const void *edata;
     size_t plen;
-    void *pdata;
+    const void *pdata;
     size_t clen; /* checksum length */
-    void *cdata; /* checksum data */
+    const void *cdata; /* checksum data */
 } krbencs[] =  {
     {
 	ETYPE_AES256_CTS_HMAC_SHA1_96,
@@ -753,7 +753,7 @@ krb_enc_test(krb5_context context)
 
 	kb.keytype = krbencs[i].enctype;
 	kb.keyvalue.length = krbencs[i].keylen;
-	kb.keyvalue.data = krbencs[i].key;
+	kb.keyvalue.data = rk_UNCONST(krbencs[i].key);
 
 	ret = krb5_crypto_init(context, &kb, krbencs[i].enctype, &crypto);
 	if (ret)
@@ -761,9 +761,9 @@ krb_enc_test(krb5_context context)
                      ret, i);
 
 	cipher.length = krbencs[i].elen;
-	cipher.data = krbencs[i].edata;
+	cipher.data = rk_UNCONST(krbencs[i].edata);
 	plain.length = krbencs[i].plen;
-	plain.data = krbencs[i].pdata;
+	plain.data = rk_UNCONST(krbencs[i].pdata);
 
 	ret = krb_enc(context, crypto, krbencs[i].usage, &cipher, &plain);
 
@@ -791,7 +791,7 @@ krb_enc_test(krb5_context context)
 	    krb5_data checksum;
 
 	    checksum.length = krbencs[i].clen;
-	    checksum.data = krbencs[i].cdata;
+	    checksum.data = rk_UNCONST(krbencs[i].cdata);
 
 	    ret = krb_checksum_iov(context, crypto, krbencs[i].usage,
 				   &plain, &checksum);
@@ -837,12 +837,12 @@ iov_test(krb5_context context, krb5_enctype enctype)
     if (ret)
 	krb5_err(context, 1, ret, "krb5_crypto_length");
 
-    signonly.data = "This should be signed";
+    signonly.data = rk_UNCONST("This should be signed");
     signonly.length = strlen(signonly.data);
-    in.data = "inputdata";
+    in.data = rk_UNCONST("inputdata");
     in.length = strlen(in.data);
 
-    in2.data = "INPUTDATA";
+    in2.data = rk_UNCONST("INPUTDATA");
     in2.length = strlen(in2.data);
 
 

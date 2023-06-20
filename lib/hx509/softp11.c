@@ -155,7 +155,7 @@ snprintf_fill(char *str, size_t size, char fillchar, const char *fmt, ...)
     CK_RV xret;						\
     xret = verify_session_handle(s, state);		\
     if (xret != CKR_OK) {				\
-	/* return CKR_OK */;				\
+	return xret;					\
     }							\
 }
 

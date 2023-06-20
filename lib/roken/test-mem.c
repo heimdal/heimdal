@@ -95,7 +95,7 @@ segv_handler(int sig)
 
 ROKEN_LIB_FUNCTION void * ROKEN_LIB_CALL
 rk_test_mem_alloc(enum rk_test_mem_type type, const char *name,
-		  void *buf, size_t size)
+		  const void *buf, size_t size)
 {
 #ifndef HAVE_MMAP
     unsigned char *p;

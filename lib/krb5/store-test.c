@@ -33,7 +33,7 @@
 #include "krb5_locl.h"
 
 static void
-print_data(unsigned char *data, size_t len)
+print_data(const unsigned char *data, size_t len)
 {
     int i;
     for(i = 0; i < len; i++) {
@@ -45,7 +45,7 @@ print_data(unsigned char *data, size_t len)
 }
 
 static int
-compare(const char *name, krb5_storage *sp, void *expected, size_t len)
+compare(const char *name, krb5_storage *sp, const void *expected, size_t len)
 {
     int ret = 0;
     krb5_data data;
@@ -94,7 +94,7 @@ main(int argc, char **argv)
     krb5_store_int32(sp, 0x01020304);
     {
 	int test = 1;
-	void *data;
+	const void *data;
 	if(*(char*)&test)
 	    data = "\x4\x3\x2\x1";
 	else

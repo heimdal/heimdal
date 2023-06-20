@@ -4,7 +4,7 @@
 
 struct foo {
     int val;
-    char *str;
+    const char *str;
 } foo[] = {
     { 0, "FALSE" },
     { 1, "TRUE" },

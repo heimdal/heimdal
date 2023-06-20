@@ -58,7 +58,7 @@ main(int argc, char **argv)
     char *hostname = NULL;
     char *unparsed = NULL;
     char *unparsed_canon = NULL;
-    char *during;
+    const char *during;
     char *cmp_to = NULL;;
     int do_kt = 0;
     int do_get_creds = 0;

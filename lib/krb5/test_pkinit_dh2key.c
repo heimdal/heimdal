@@ -63,10 +63,9 @@ test_dh2key(int i,
 }
 
 
-struct {
+const struct {
     krb5_enctype type;
-    krb5_data X;
-    krb5_data key;
+    struct { size_t length; const void *data; } X, key;
 } tests[] = {
     /* 0 */
     {
@@ -206,8 +205,9 @@ main(int argc, char **argv)
 	errx (1, "krb5_init_context failed: %d", ret);
 
     for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++) {
-	test_dh2key(i, context, &tests[i].X, NULL, NULL,
-		    tests[i].type, &tests[i].key);
+	krb5_data X = { tests[i].X.length, rk_UNCONST(tests[i].X.data) };
+	krb5_data key = { tests[i].key.length, rk_UNCONST(tests[i].key.data) };
+	test_dh2key(i, context, &X, NULL, NULL, tests[i].type, &key);
     }
 
     krb5_free_context(context);

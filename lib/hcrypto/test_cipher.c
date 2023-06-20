@@ -51,16 +51,16 @@
 
 struct tests {
     const char *name;
-    void *key;
+    const void *key;
     size_t keysize;
-    void *iv;
+    const void *iv;
     size_t datasize;
-    void *indata;
-    void *outdata;
-    void *outiv;
+    const void *indata;
+    const void *outdata;
+    const void *outiv;
 };
 
-struct tests aes_tests[] = {
+const struct tests aes_tests[] = {
     { "aes-256",
       "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
       "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00",
@@ -248,7 +248,7 @@ struct tests rc4_tests[] = {
 
 
 static int
-test_cipher(int i, const EVP_CIPHER *c, struct tests *t)
+test_cipher(int i, const EVP_CIPHER *c, const struct tests *t)
 {
     EVP_CIPHER_CTX ectx;
     EVP_CIPHER_CTX dctx;

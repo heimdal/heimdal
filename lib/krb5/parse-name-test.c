@@ -38,9 +38,9 @@ enum { MAX_COMPONENTS = 3 };
 static struct testcase {
     const char *input_string;
     const char *output_string;
-    krb5_realm realm;
+    krb5_const_realm realm;
     unsigned ncomponents;
-    char *comp_val[MAX_COMPONENTS];
+    const char *comp_val[MAX_COMPONENTS];
     int realmp;
 } tests[] = {
     {"", "@", "", 1, {""}, FALSE},

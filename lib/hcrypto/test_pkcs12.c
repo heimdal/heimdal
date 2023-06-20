@@ -40,15 +40,15 @@
 struct tests {
     int id;
     const char *password;
-    void *salt;
+    const void *salt;
     size_t saltsize;
     int iterations;
     size_t keylen;
     const EVP_MD * (*md)(void);
-    void *key;
+    const void *key;
 };
 
-struct tests p12_pbe_tests[] = {
+const struct tests p12_pbe_tests[] = {
     { PKCS12_KEY_ID,
       NULL,
       "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00",
@@ -98,7 +98,7 @@ struct tests p12_pbe_tests[] = {
 };
 
 static int
-test_pkcs12_pbe(struct tests *t)
+test_pkcs12_pbe(const struct tests *t)
 {
     void *key;
     size_t pwlen = 0;

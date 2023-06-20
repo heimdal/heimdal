@@ -177,7 +177,7 @@ test_parse(void)
 
     memset(type2.challenge, 0x7f, sizeof(type2.challenge));
     type2.targetname = rk_UNCONST(target);
-    type2.targetinfo.data = "\x00\x00";
+    type2.targetinfo.data = rk_UNCONST("\x00\x00");
     type2.targetinfo.length = 2;
 
     ret = heim_ntlm_encode_type2(&type2, &data);
@@ -210,13 +210,14 @@ test_keys(void)
     int ret;
 
     infotarget.length = 70;
-    infotarget.data =
+    infotarget.data = rk_UNCONST(
 	"\x02\x00\x0c\x00\x54\x00\x45\x00\x53\x00\x54\x00\x4e\x00\x54\x00"
 	"\x01\x00\x0c\x00\x4d\x00\x45\x00\x4d\x00\x42\x00\x45\x00\x52\x00"
 	"\x03\x00\x1e\x00\x6d\x00\x65\x00\x6d\x00\x62\x00\x65\x00\x72\x00"
 	    "\x2e\x00\x74\x00\x65\x00\x73\x00\x74\x00\x2e\x00\x63\x00\x6f"
 	    "\x00\x6d\x00"
-	"\x00\x00\x00\x00";
+	"\x00\x00\x00\x00"
+    );
 
     answer.length = 0;
     answer.data = NULL;

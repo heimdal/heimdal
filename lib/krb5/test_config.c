@@ -35,7 +35,8 @@
 #include <err.h>
 
 static int
-check_config_file(krb5_context context, char *filelist, char **res, int def)
+check_config_file(krb5_context context, const char *filelist,
+    const char *const *res, int def)
 {
     krb5_error_code ret;
     char **pp;
@@ -83,13 +84,13 @@ check_config_file(krb5_context context, char *filelist, char **res, int def)
     return 0;
 }
 
-char *list0[] =  { "/tmp/foo", NULL };
-char *list1[] =  { "/tmp/foo", "/tmp/foo/bar", NULL };
-char *list2[] =  { "", NULL };
+const char *const list0[] =  { "/tmp/foo", NULL };
+const char *const list1[] =  { "/tmp/foo", "/tmp/foo/bar", NULL };
+const char *const list2[] =  { "", NULL };
 
 struct {
-    char *fl;
-    char **res;
+    const char *fl;
+    const char *const *res;
 } test[] = {
     { "/tmp/foo", NULL },
     { "/tmp/foo" PATH_SEP "/tmp/foo/bar", NULL },
@@ -119,47 +120,47 @@ check_config_files(void)
     krb5_free_context(context);
 }
 
-const char *config_string_result0[] = {
+const char *const config_string_result0[] = {
     "A", "B", "C", "D", NULL
 };
 
-const char *config_string_result1[] = {
+const char *const config_string_result1[] = {
     "A", "B", "C D", NULL
 };
 
-const char *config_string_result2[] = {
+const char *const config_string_result2[] = {
     "A", "B", "", NULL
 };
 
-const char *config_string_result3[] = {
+const char *const config_string_result3[] = {
     "A B;C: D", NULL
 };
 
-const char *config_string_result4[] = {
+const char *const config_string_result4[] = {
     "\"\"", "", "\"\"", NULL
 };
 
-const char *config_string_result5[] = {
+const char *const config_string_result5[] = {
     "A\"BQd", NULL
 };
 
-const char *config_string_result6[] = {
+const char *const config_string_result6[] = {
     "efgh\"", "ABC", NULL
 };
 
-const char *config_string_result7[] = {
+const char *const config_string_result7[] = {
     "SnapeKills\\", "Dumbledore", NULL
 };
 
-const char *config_string_result8[] = {
+const char *const config_string_result8[] = {
     "\"TownOf Sandwich: Massachusetts\"Oldest", "Town", "In", "Cape Cod", NULL
 };
 
-const char *config_string_result9[] = {
+const char *const config_string_result9[] = {
     "\"Begins and\"ends", "In", "One", "String", NULL
 };
 
-const char *config_string_result10[] = {
+const char *const config_string_result10[] = {
     "Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:",
     "1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.",
     "2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.",
@@ -171,7 +172,7 @@ const char *config_string_result10[] = {
 
 const struct {
     const char * name;
-    const char ** expected;
+    const char *const * expected;
 } config_strings_tests[] = {
     { "foo", config_string_result0 },
     { "bar", config_string_result1 },
@@ -204,8 +205,8 @@ check_escaped_strings(void)
 
     for (i=0; i < sizeof(config_strings_tests)/sizeof(config_strings_tests[0]); i++) {
         char **ps;
-        const char **s;
-        const char **e;
+        const char *const *s;
+        const char *const *e;
 
         ps = krb5_config_get_strings(context, c, "escapes", config_strings_tests[i].name,
                                      NULL);
@@ -214,7 +215,8 @@ check_escaped_strings(void)
 
         e = config_strings_tests[i].expected;
 
-        for (s = (const char **)ps; *s && *e; s++, e++) {
+	/* XXX strict aliasing violation */
+        for (s = (const char *const *)ps; *s && *e; s++, e++) {
             if (strcmp(*s, *e))
                 errx(1,
                      "Unexpected configuration string at value [%s].\n"

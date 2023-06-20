@@ -40,8 +40,8 @@
 
 static struct testcase {
     size_t size;
-    int    val;
-    char  *str;
+    int val;
+    const char *str;
 } tests[] = {
     { 8, 1,		"1 second" },
     { 17, 61,		"1 minute 1 second" },

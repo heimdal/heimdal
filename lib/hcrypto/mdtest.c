@@ -108,8 +108,8 @@ struct hash_foo sha512 = {
 };
 
 struct test {
-    char *str;
-    unsigned char hash[64];
+    const char *str;
+    const unsigned char hash[64];
 };
 
 struct test md4_tests[] = {
@@ -262,7 +262,7 @@ hash_test (struct hash_foo *hash, struct test *tests)
 		EVP_DigestUpdate(ectx, buf, sizeof(buf));
 	    }
 	} else {
-	    (*hash->update)(ctx, (unsigned char *)t->str, strlen(t->str));
+	    (*hash->update)(ctx, (const unsigned char *)t->str, strlen(t->str));
 	    EVP_DigestUpdate(ectx, t->str, strlen(t->str));
 	}
 

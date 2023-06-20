@@ -139,7 +139,7 @@ test_BN_bit(void)
 }
 
 struct ietest {
-    char *data;
+    const char *data;
     size_t len;
     unsigned long num;
 } ietests[] = {
@@ -162,7 +162,8 @@ test_BN_import_export(void)
     for (i = 0; i < sizeof(ietests)/sizeof(ietests[0]); i++) {
 	size_t len;
 	unsigned char *p;
-	if (!BN_bin2bn((unsigned char*)ietests[i].data, ietests[i].len, bn))
+	if (!BN_bin2bn((const unsigned char *)ietests[i].data, ietests[i].len,
+		bn))
 	    return 1;
 	if (BN_get_word(bn) != ietests[i].num)
 	    return 1;

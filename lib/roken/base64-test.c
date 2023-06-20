@@ -42,7 +42,7 @@ main(int argc, char **argv)
     int numerr = 0;
     int numtest = 1;
     struct test {
-	void *data;
+	const void *data;
 	size_t len;
 	const char *result;
     } *t, tests[] = {

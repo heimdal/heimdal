@@ -40,14 +40,14 @@ static CK_FUNCTION_LIST_PTR func;
 
 static CK_RV
 find_object(CK_SESSION_HANDLE session,
-	    char *id,
+	    const char *id,
 	    CK_OBJECT_CLASS key_class,
 	    CK_OBJECT_HANDLE_PTR object)
 {
     CK_ULONG object_count;
     CK_RV ret;
     CK_ATTRIBUTE search_data[] = {
-	{CKA_ID, id, 0 },
+	{CKA_ID, rk_UNCONST(id), 0 },
 	{CKA_CLASS, &key_class, sizeof(key_class)}
     };
     CK_ULONG num_search_data = sizeof(search_data)/sizeof(search_data[0]);
@@ -73,7 +73,7 @@ find_object(CK_SESSION_HANDLE session,
     return CKR_OK;
 }
 
-static char *sighash = "hej";
+static const char *sighash = "hej";
 static char signature[1024];
 
 
@@ -130,7 +130,7 @@ main(int argc, char **argv)
 
     if (token_info.flags & CKF_LOGIN_REQUIRED) {
 	ret = (*func->C_Login)(session, CKU_USER,
-			       (unsigned char*)"foobar", 6);
+			       (unsigned char *)rk_UNCONST("foobar"), 6);
 	if (ret != CKR_OK)
 	    errx(1, "C_Login failed: %d", (int)ret);
     }
@@ -161,7 +161,8 @@ main(int argc, char **argv)
 	    return 1;
 
 	ck_sigsize = sizeof(signature);
-	ret = (*func->C_Sign)(session, (CK_BYTE *)sighash, strlen(sighash),
+	ret = (*func->C_Sign)(session,
+			      (CK_BYTE *)rk_UNCONST(sighash), strlen(sighash),
 			      (CK_BYTE *)signature, &ck_sigsize);
 	if (ret != CKR_OK) {
 	    printf("C_Sign failed with: %d\n", (int)ret);
@@ -173,7 +174,7 @@ main(int argc, char **argv)
 	    return 1;
 
 	ret = (*func->C_Verify)(session, (CK_BYTE *)signature, ck_sigsize,
-				(CK_BYTE *)sighash, strlen(sighash));
+				(CK_BYTE *)rk_UNCONST(sighash), strlen(sighash));
 	if (ret != CKR_OK) {
 	    printf("message: %d\n", (int)ret);
 	    return 1;

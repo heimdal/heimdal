@@ -43,7 +43,7 @@ main(int argc, char **argv)
     int numtest = 1;
     struct test {
         int preserve_order;
-	void *data;
+	const void *data;
 	size_t len;
 	const char *result;
     } *t, tests[] = {

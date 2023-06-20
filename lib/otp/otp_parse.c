@@ -56,7 +56,7 @@ cmp(const void *a, const void *b)
 }
 
 static int
-get_stdword (const char *s, void *v)
+get_stdword (const char *s, const void *v)
 {
   struct e e, *r;
 
@@ -85,9 +85,9 @@ compress (OtpKey key, unsigned wn[])
 }
 
 static int
-get_altword (const char *s, void *a)
+get_altword (const char *s, const void *a)
 {
-  OtpAlgorithm *alg = (OtpAlgorithm *)a;
+  const OtpAlgorithm *alg = (const OtpAlgorithm *)a;
   int ret;
   unsigned char *res = malloc(alg->hashsize);
 
@@ -103,8 +103,8 @@ get_altword (const char *s, void *a)
 static int
 parse_words(unsigned wn[],
 	    const char *str,
-	    int (*convert)(const char *, void *),
-	    void *arg)
+	    int (*convert)(const char *, const void *),
+	    const void *arg)
 {
   const unsigned char *w, *wend;
   char *wcopy;
@@ -138,8 +138,8 @@ parse_words(unsigned wn[],
 
 static int
 otp_parse_internal (OtpKey key, const char *str,
-		    OtpAlgorithm *alg,
-		    int (*convert)(const char *, void *))
+		    const OtpAlgorithm *alg,
+		    int (*convert)(const char *, const void *))
 {
   unsigned wn[6];
 
@@ -158,7 +158,7 @@ otp_parse_stddict (OtpKey key, const char *str)
 }
 
 int
-otp_parse_altdict (OtpKey key, const char *str, OtpAlgorithm *alg)
+otp_parse_altdict (OtpKey key, const char *str, const OtpAlgorithm *alg)
 {
   return otp_parse_internal (key, str, alg, get_altword);
 }
@@ -191,7 +191,7 @@ otp_parse_hex (OtpKey key, const char *s)
 }
 
 int
-otp_parse (OtpKey key, const char *s, OtpAlgorithm *alg)
+otp_parse (OtpKey key, const char *s, const OtpAlgorithm *alg)
 {
   int ret;
   int dohex = 1;

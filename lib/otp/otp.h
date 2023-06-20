@@ -58,7 +58,7 @@ typedef enum { OTP_ALG_MD4, OTP_ALG_MD5, OTP_ALG_SHA } OtpAlgID;
 
 typedef struct {
   OtpAlgID id;
-  char *name;
+  const char *name;
   int hashsize;
   int (*hash)(const char *, size_t, unsigned char *);
   int (*init)(OtpKey, const char *, const char *);
@@ -67,29 +67,29 @@ typedef struct {
 
 typedef struct {
   char *user;
-  OtpAlgorithm *alg;
+  const OtpAlgorithm *alg;
   unsigned n;
   char seed[17];
   OtpKey key;
   int challengep;
   time_t lock_time;
-  char *err;
+  const char *err;
 } OtpContext;
 
-OtpAlgorithm *otp_find_alg (char *);
-void otp_print_stddict (OtpKey, char *, size_t);
-void otp_print_hex (OtpKey, char *, size_t);
-void otp_print_stddict_extended (OtpKey, char *, size_t);
-void otp_print_hex_extended (OtpKey, char *, size_t);
-unsigned otp_checksum (OtpKey);
+const OtpAlgorithm *otp_find_alg (const char *);
+void otp_print_stddict (const OtpKey, char *, size_t);
+void otp_print_hex (const OtpKey, char *, size_t);
+void otp_print_stddict_extended (const OtpKey, char *, size_t);
+void otp_print_hex_extended (const OtpKey, char *, size_t);
+unsigned otp_checksum (const OtpKey);
 int otp_parse_hex (OtpKey, const char *);
 int otp_parse_stddict (OtpKey, const char *);
-int otp_parse_altdict (OtpKey, const char *, OtpAlgorithm *);
-int otp_parse (OtpKey, const char *, OtpAlgorithm *);
+int otp_parse_altdict (OtpKey, const char *, const OtpAlgorithm *);
+int otp_parse (OtpKey, const char *, const OtpAlgorithm *);
 int otp_challenge (OtpContext *, char *, char *, size_t);
 int otp_verify_user (OtpContext *, const char *);
 int otp_verify_user_1 (OtpContext *, const char *);
-char *otp_error (OtpContext *);
+const char *otp_error (const OtpContext *);
 
 void *otp_db_open (void);
 void otp_db_close (void *);

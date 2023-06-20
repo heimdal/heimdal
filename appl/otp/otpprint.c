@@ -67,8 +67,8 @@ static int
 print (int argc,
        char **argv,
        int incount,
-       OtpAlgorithm *alg,
-       void (*print_fn)(OtpKey, char *, size_t))
+       const OtpAlgorithm *alg,
+       void (*print_fn)(const OtpKey, char *, size_t))
 {
   char pw[64];
   OtpKey key;
@@ -99,8 +99,8 @@ int
 main (int argc, char **argv)
 {
     int optidx = 0;
-    void (*fn)(OtpKey, char *, size_t);
-    OtpAlgorithm *alg = otp_find_alg (OTP_ALG_DEFAULT);
+    void (*fn)(const OtpKey, char *, size_t);
+    const OtpAlgorithm *alg = otp_find_alg (OTP_ALG_DEFAULT);
 
     setprogname (argv[0]);
     if(getarg(args, num_args, argc, argv, &optidx))

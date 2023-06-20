@@ -73,7 +73,7 @@ usage(int code)
  */
 
 static int
-renew (int argc, char **argv, OtpAlgorithm *alg, char *inuser)
+renew (int argc, char **argv, const OtpAlgorithm *alg, char *inuser)
 {
     OtpContext newctx, *ctx;
     char prompt[128];
@@ -142,7 +142,7 @@ verify_user_otp(char *username)
  */
 
 static int
-set (int argc, char **argv, OtpAlgorithm *alg, char *inuser)
+set (int argc, char **argv, const OtpAlgorithm *alg, char *inuser)
 {
     void *db;
     OtpContext ctx;
@@ -297,7 +297,7 @@ main (int argc, char **argv)
 {
     int defaultp = 0;
     int uid = getuid();
-    OtpAlgorithm *alg = otp_find_alg (OTP_ALG_DEFAULT);
+    const OtpAlgorithm *alg = otp_find_alg (OTP_ALG_DEFAULT);
     int optidx = 0;
     char userbuf[128];
 

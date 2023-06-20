@@ -38,9 +38,9 @@
 #include <otp.h>
 
 static int
-test_one(OtpKey key1, char *name, char *val,
-	 void (*print)(OtpKey,char*, size_t),
-	 OtpAlgorithm *alg)
+test_one(OtpKey key1, const char *name, const char *val,
+	 void (*print)(const OtpKey, char *, size_t),
+	 const OtpAlgorithm *alg)
 {
   char buf[256];
   OtpKey key2;
@@ -66,12 +66,12 @@ static int
 test (void)
 {
   struct test {
-    char *alg;
-    char *passphrase;
-    char *seed;
+    const char *alg;
+    const char *passphrase;
+    const char *seed;
     int count;
-    char *hex;
-    char *word;
+    const char *hex;
+    const char *word;
   } tests[] = {
 
     /* md4 */
@@ -115,7 +115,7 @@ test (void)
 
   for(t = tests; t->alg; ++t) {
     int i;
-    OtpAlgorithm *alg = otp_find_alg (t->alg);
+    const OtpAlgorithm *alg = otp_find_alg (t->alg);
     OtpKey key;
 
     if (alg == NULL) {

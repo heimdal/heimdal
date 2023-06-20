@@ -39,14 +39,14 @@ RCSID("$Id$");
 #include "otp_locl.h"
 #include "otp_md.h"
 
-static OtpAlgorithm algorithms[] = {
+static const OtpAlgorithm algorithms[] = {
   {OTP_ALG_MD4, "md4", 16, otp_md4_hash, otp_md4_init, otp_md4_next},
   {OTP_ALG_MD5, "md5", 16, otp_md5_hash, otp_md5_init, otp_md5_next},
   {OTP_ALG_SHA, "sha", 20, otp_sha_hash, otp_sha_init, otp_sha_next}
 };
 
-OtpAlgorithm *
-otp_find_alg (char *name)
+const OtpAlgorithm *
+otp_find_alg (const char *name)
 {
   int i;
 
@@ -56,8 +56,8 @@ otp_find_alg (char *name)
   return NULL;
 }
 
-char *
-otp_error (OtpContext *o)
+const char *
+otp_error (const OtpContext *o)
 {
   return o->err;
 }

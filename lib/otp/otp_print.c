@@ -41,7 +41,7 @@ RCSID("$Id$");
 extern const char *const std_dict[];
 
 unsigned
-otp_checksum (OtpKey key)
+otp_checksum (const OtpKey key)
 {
   int i;
   unsigned sum = 0;
@@ -56,7 +56,7 @@ otp_checksum (OtpKey key)
 }
 
 void
-otp_print_stddict (OtpKey key, char *str, size_t sz)
+otp_print_stddict (const OtpKey key, char *str, size_t sz)
 {
   unsigned sum;
 
@@ -72,7 +72,7 @@ otp_print_stddict (OtpKey key, char *str, size_t sz)
 }
 
 void
-otp_print_hex (OtpKey key, char *str, size_t sz)
+otp_print_hex (const OtpKey key, char *str, size_t sz)
 {
   snprintf (str, sz,
 	    "%02x%02x%02x%02x%02x%02x%02x%02x",
@@ -81,7 +81,7 @@ otp_print_hex (OtpKey key, char *str, size_t sz)
 }
 
 void
-otp_print_hex_extended (OtpKey key, char *str, size_t sz)
+otp_print_hex_extended (const OtpKey key, char *str, size_t sz)
 {
   strlcpy (str, OTP_HEXPREFIX, sz);
   otp_print_hex (key,
@@ -90,7 +90,7 @@ otp_print_hex_extended (OtpKey key, char *str, size_t sz)
 }
 
 void
-otp_print_stddict_extended (OtpKey key, char *str, size_t sz)
+otp_print_stddict_extended (const OtpKey key, char *str, size_t sz)
 {
   strlcpy (str, OTP_WORDPREFIX, sz);
   otp_print_stddict (key,

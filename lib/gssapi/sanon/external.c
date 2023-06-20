@@ -47,14 +47,14 @@ _gss_sanon_non_anonymous_cred = (gss_cred_id_t)&non_anonymous_identity;
 
 static gss_buffer_desc wellknown_user_name = {
     SANON_WELLKNOWN_USER_NAME_LEN,
-    SANON_WELLKNOWN_USER_NAME
+    rk_UNCONST(SANON_WELLKNOWN_USER_NAME)
 };
 gss_buffer_t
 _gss_sanon_wellknown_user_name = &wellknown_user_name;
 
 static gss_buffer_desc wellknown_service_name = {
     SANON_WELLKNOWN_SERVICE_NAME_LEN,
-    SANON_WELLKNOWN_SERVICE_NAME
+    rk_UNCONST(SANON_WELLKNOWN_SERVICE_NAME)
 };
 gss_buffer_t
 _gss_sanon_wellknown_service_name = &wellknown_service_name;

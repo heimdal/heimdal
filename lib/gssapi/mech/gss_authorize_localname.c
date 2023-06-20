@@ -34,7 +34,7 @@
 
 gss_buffer_desc GSSAPI_LIB_VARIABLE __gss_c_attr_local_login_user =  {
     sizeof("local-login-user") - 1,
-    "local-login-user"
+    rk_UNCONST("local-login-user")
 };
 
 static OM_uint32

@@ -73,10 +73,10 @@ _gss_sanon_inquire_negoex_key(OM_uint32 *minor,
 
     if (initiator_key) {
         salt.length = sizeof("sanon-x25519-initiator-negoex-key") - 1;
-        salt.value  = "sanon-x25519-initiator-negoex-key";
+        salt.value  = rk_UNCONST("sanon-x25519-initiator-negoex-key");
     } else {
         salt.length = sizeof("sanon-x25519-acceptor-negoex-key") - 1;
-        salt.value  = "sanon-x25519-acceptor-negoex-key";
+        salt.value  = rk_UNCONST("sanon-x25519-acceptor-negoex-key");
     }
 
     _gss_mg_encode_le_uint32(KRB5_ENCTYPE_AES128_CTS_HMAC_SHA256_128, typebytes);

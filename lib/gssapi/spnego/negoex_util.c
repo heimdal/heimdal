@@ -152,7 +152,7 @@ _gss_negoex_log_message(int direction,
 			unsigned int msg_len)
 {
     char conv_str[37];
-    char *typestr;
+    const char *typestr;
 
     if (type == INITIATOR_NEGO)
 	typestr = "INITIATOR_NEGO";

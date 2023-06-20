@@ -158,7 +158,7 @@ show_pac_client_info(gss_name_t n)
 	errx(1, "gss_inquire_name: %s",
 	     gssapi_err(maj, min, GSS_KRB5_MECHANISM));
 
-    a.value = "urn:mspac:client-info";
+    a.value = rk_UNCONST("urn:mspac:client-info");
     a.length = sizeof("urn:mspac:client-info") - 1;
 
     for (found = 0, i = 0; i < attrs->count; i++) {
@@ -313,7 +313,7 @@ loop(gss_OID mechoid,
         if (kret)
             errx(1, "Could not encode AD-ON-BEHALF-OF AuthorizationDataElement");
         attr.value =
-            GSS_KRB5_NAME_ATTRIBUTE_BASE_URN "authenticator-authz-data";
+            rk_UNCONST(GSS_KRB5_NAME_ATTRIBUTE_BASE_URN "authenticator-authz-data");
         attr.length =
             sizeof(GSS_KRB5_NAME_ATTRIBUTE_BASE_URN "authenticator-authz-data") - 1;
         maj_stat = gss_set_name_attribute(&min_stat, gss_target_name, 1, &attr,
@@ -491,7 +491,7 @@ loop(gss_OID mechoid,
         gss_buffer_desc attr, value;
 
         attr.value =
-            GSS_KRB5_NAME_ATTRIBUTE_BASE_URN "authz-data#580";
+            rk_UNCONST(GSS_KRB5_NAME_ATTRIBUTE_BASE_URN "authz-data#580");
         attr.length =
             sizeof(GSS_KRB5_NAME_ATTRIBUTE_BASE_URN "authz-data#580") - 1;
         maj_stat = gss_get_name_attribute(&min_stat, src_name, &attr, NULL,
@@ -605,7 +605,7 @@ wrapunwrap(gss_ctx_id_t cctx, gss_ctx_id_t sctx, int flags, gss_OID mechoid)
     gss_qop_t qop_state;
     int conf_state;
 
-    input_token.value = "foo";
+    input_token.value = rk_UNCONST("foo");
     input_token.length = 3;
 
     maj_stat = gss_wrap(&min_stat, cctx, flags, 0, &input_token,
@@ -853,7 +853,7 @@ getverifymic(gss_ctx_id_t cctx, gss_ctx_id_t sctx, gss_OID mechoid)
     OM_uint32 min_stat, maj_stat;
     gss_qop_t qop_state;
 
-    input_token.value = "bar";
+    input_token.value = rk_UNCONST("bar");
     input_token.length = 3;
 
     maj_stat = gss_get_mic(&min_stat, cctx, 0, &input_token,
@@ -1338,7 +1338,7 @@ main(int argc, char **argv)
 	memset(&out1, 0, sizeof(out1));
 	memset(&out2, 0, sizeof(out2));
 
-	in.value = "foo";
+	in.value = rk_UNCONST("foo");
 	in.length = 3;
 
 	gss_pseudo_random(&min_stat, sctx, GSS_C_PRF_KEY_FULL, &in,
@@ -1364,7 +1364,7 @@ main(int argc, char **argv)
 	gss_release_buffer(&min_stat, &out1);
 	gss_release_buffer(&min_stat, &out2);
 
-	in.value = "bar";
+	in.value = rk_UNCONST("bar");
 	in.length = 3;
 
 	gss_pseudo_random(&min_stat, sctx, GSS_C_PRF_KEY_PARTIAL, &in,

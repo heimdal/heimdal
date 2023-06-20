@@ -265,7 +265,7 @@ _gss_sanon_curve25519(OM_uint32 *minor,
     kdf_K1.data = shared;
     kdf_K1.length = sizeof(shared);
 
-    kdf_label.data = "sanon-x25519";
+    kdf_label.data = rk_UNCONST("sanon-x25519");
     kdf_label.length = sizeof("sanon-x25519") - 1;
 
     ret = krb5_data_alloc(&kdf_context,

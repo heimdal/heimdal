@@ -307,8 +307,8 @@ _gss_mg_log_name(int level,
 	int ret;
 
 	if (mn == NULL) {
-	    namebuf.value = "no name";
-	    namebuf.length = strlen((char *)namebuf.value);
+	    namebuf.value = rk_UNCONST("no name");
+	    namebuf.length = strlen(namebuf.value);
 	} else {
 	    maj_stat = m->gm_display_name(&junk, mn->gmn_name,
 					  &namebuf, NULL);

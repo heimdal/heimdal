@@ -654,7 +654,8 @@ krb5_sendto (krb5_context context,
 	return ret;
     _krb5_sendto_ctx_set_krb5hst(context, ctx, handle);
 
-    ret = krb5_sendto_context(context, ctx, send_data, (char *)_krb5_krbhst_get_realm(handle), receive);
+    ret = krb5_sendto_context(context, ctx, send_data,
+	_krb5_krbhst_get_realm(handle), receive);
     krb5_sendto_ctx_free(context, ctx);
     return ret;
 }

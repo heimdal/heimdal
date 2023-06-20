@@ -1292,7 +1292,7 @@ is_default_collection(krb5_context context, const char *name,
                       const char * const *def_locs, int *res)
 {
     krb5_error_code ret;
-    const char *def_loc[2] = { KRB5_DEFAULT_CCNAME_FILE, NULL }; /* XXX */
+    const char *const def_loc[2] = { KRB5_DEFAULT_CCNAME_FILE, NULL }; /* XXX */
     const char *sep;
     size_t namelen;
     size_t i;
@@ -1379,7 +1379,8 @@ fcc_get_cache_first_2(krb5_context context,
          * locations.
          */
         if ((ret = is_default_collection(context, name,
-                                         (const char **)def_locs,
+					 /* XXX strict aliasing violation */
+					 (const char *const *)def_locs,
                                          &is_def_coll)))
             goto out;
     }

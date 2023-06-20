@@ -816,7 +816,7 @@ gss_create_empty_buffer_set
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_add_buffer_set_member
 	   (OM_uint32 * minor_status,
-	    gss_const_buffer_t member_buffer,
+	    const gss_buffer_t member_buffer,
 	    gss_buffer_set_t *buffer_set);
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL

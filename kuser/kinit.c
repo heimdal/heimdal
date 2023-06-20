@@ -1272,7 +1272,7 @@ handler(int sig)
 
         iov[0].iov_base = rk_UNCONST(siginfo_msg);
         iov[0].iov_len = strlen(siginfo_msg);
-        iov[1].iov_base = "\n";
+        iov[1].iov_base = rk_UNCONST("\n");
         iov[1].iov_len = 1;
 
         writev(STDERR_FILENO, iov, sizeof(iov)/sizeof(iov[0]));

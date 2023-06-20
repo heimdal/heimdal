@@ -98,16 +98,16 @@ main(int argc, char **argv)
     {
 	heim_sipc mach;
 	heim_sipc_launchd_mach_init("org.h5l.test-ipc",
-				    test_service, "MACH", &mach);
+				    test_service, rk_UNCONST("MACH"), &mach);
     }
 #endif
     heim_sipc_service_unix("org.h5l.test-ipc",
-			   test_service, "UNIX", &u);
+			   test_service, rk_UNCONST("UNIX"), &u);
 #ifdef HAVE_DOOR_CREATE
     {
         heim_sipc door;
         heim_sipc_service_door("org.h5l.test-ipc",
-			       test_service, "DOOR", &door);
+			       test_service, rk_UNCONST("DOOR"), &door);
     }
 #endif
     heim_ipc_main();

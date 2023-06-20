@@ -908,7 +908,7 @@ krb5_store_datalen(krb5_storage *sp, const void *d, size_t len)
 {
     krb5_data data;
     data.length = len;
-    data.data = (void *)d;
+    data.data = rk_UNCONST(d);
     return krb5_store_data(sp, data);
 }
 

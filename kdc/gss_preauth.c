@@ -988,7 +988,7 @@ pa_gss_display_status(astgs_request_t r,
 static const gss_buffer_desc
 gss_pa_unknown_display_name = {
     sizeof("<unknown name>") - 1,
-    "<unknown name>"
+    rk_UNCONST("<unknown name>")
 };
 
 static void

@@ -214,7 +214,7 @@ service(void *ctx,
         errx(1, "Out of memory");
 
     if (strncmp(cmd, "check ", sizeof("check ") - 1) != 0) {
-        rep.data = "Invalid request command (must be \"check ...\")";
+        rep.data = rk_UNCONST("Invalid request command (must be \"check ...\")");
         rep.length = sizeof("Invalid request command (must be \"check ...\")") - 1;
         (*complete_cb)(complete_cb_data, EINVAL, &rep);
         free(cmd);
@@ -248,7 +248,7 @@ service(void *ctx,
     if (ret == 0 && all_granted) {
         rk_strpoolfree(result);
 
-        rep.data = "granted";
+        rep.data = rk_UNCONST("granted");
         rep.length = sizeof("granted") - 1;
         (*complete_cb)(complete_cb_data, 0, &rep);
         return;
@@ -257,7 +257,7 @@ service(void *ctx,
     if (none_granted && ignore_flag) {
         rk_strpoolfree(result);
 
-        rep.data = "ignore";
+        rep.data = rk_UNCONST("ignore");
         rep.length = sizeof("ignore") - 1;
         (*complete_cb)(complete_cb_data, KRB5_PLUGIN_NO_HANDLE, &rep);
         return;
@@ -265,7 +265,7 @@ service(void *ctx,
 
     s = rk_strpoolcollect(result); /* frees `result' */
     if (s == NULL) {
-        rep.data = "denied out-of-memory";
+        rep.data = rk_UNCONST("denied out-of-memory");
         rep.length = sizeof("denied out-of-memory") - 1;
         (*complete_cb)(complete_cb_data, KRB5_PLUGIN_NO_HANDLE, &rep);
         return;
@@ -284,7 +284,7 @@ service(void *ctx,
     free(s);
 }
 
-static char *
+static const char *
 make_feature_argument(const char *kind,
                       hx509_san_type san_type,
                       const char *value)
@@ -293,6 +293,7 @@ make_feature_argument(const char *kind,
     char *s = NULL;
 
     if (strcmp(kind, "san") != 0) {
+	/* XXX leak */
         if (asprintf(&s, "%s=%s", kind, value) == -1 || s == NULL)
             errx(1, "Out of memory");
         return s;
@@ -326,6 +327,7 @@ make_feature_argument(const char *kind,
         return "";
     }
 
+    /* XXX leak */
     if (asprintf(&s, "san_%s=%s", san_type_str, value) == -1 || s == NULL)
         errx(1, "Out of memory");
     return s;
@@ -426,7 +428,7 @@ main(int argc, char **argv)
          */
         for (i = 0; ret2 == 0; i++) {
             hx509_san_type san_type;
-            char *feature = NULL;
+            const char *feature = NULL;
             char *san = NULL;
             int granted;
 
@@ -454,7 +456,7 @@ main(int argc, char **argv)
 
         /* Check partial approval of EKUs */
         for (i = 0; ret2 == 0; i++) {
-            char *feature = NULL;
+            const char *feature = NULL;
             char *eku = NULL;
             int granted;
 

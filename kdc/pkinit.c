@@ -1265,8 +1265,10 @@ _kdc_pk_mk_pa_reply(astgs_request_t r, pk_client_params *cp)
 		krb5_keyblock kdc_contribution_key;
 		krb5_crypto reply_crypto;
 		krb5_crypto kdccont_crypto;
-		krb5_data p1 = { strlen("PKINIT"), "PKINIT"};
-		krb5_data p2 = { strlen("KEYEXCHANGE"), "KEYEXCHANGE"};
+		/* p1, p2 used read-only by krb5_crypto_fx_cf2 */
+		krb5_data p1 = { strlen("PKINIT"), rk_UNCONST("PKINIT") };
+		krb5_data p2 = { strlen("KEYEXCHANGE"),
+		    rk_UNCONST("KEYEXCHANGE") };
 		void *kckdata;
 		size_t kcklen;
 		EncryptedData kx;

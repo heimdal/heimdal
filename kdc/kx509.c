@@ -478,7 +478,8 @@ make_csr(krb5_context context, kx509_req_context reqctx, krb5_data *key)
     ret = der_copy_oid(&asn1_oid_id_pkcs1_rsaEncryption,
                        &spki.algorithm.algorithm);
 
-    any.data = "\x05\x00";
+    /* copied read-only by hx509_request_set_SubjectPublicKeyInfo */
+    any.data = rk_UNCONST("\x05\x00");
     any.length = 2;
     spki.algorithm.parameters = &any;
 

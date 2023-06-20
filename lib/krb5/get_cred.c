@@ -440,14 +440,14 @@ decrypt_tkt_with_subkey (krb5_context context,
 			 krb5_const_pointer skey,
 			 krb5_kdc_rep *dec_rep)
 {
-    struct krb5_decrypt_tkt_with_subkey_state *state;
+    const struct krb5_decrypt_tkt_with_subkey_state *state;
     krb5_error_code ret = 0;
     krb5_data data;
     size_t size;
     krb5_crypto crypto;
     krb5_keyblock extract_key;
 
-    state = (struct krb5_decrypt_tkt_with_subkey_state *)skey;
+    state = (const struct krb5_decrypt_tkt_with_subkey_state *)skey;
 
     assert(usage == 0);
 
@@ -1552,8 +1552,11 @@ store_cred(krb5_context context, krb5_ccache ccache,
         /*
          * Store the cred with the pre-canon server princ first so it
          * can be found quickly in the future.
+         *
+         * XXX Hope krb5_cc_store_cred doesn't try to write to
+         * creds->server!
          */
-        creds->server = (krb5_principal)server_princ;
+        creds->server = rk_UNCONST(server_princ);
         krb5_cc_store_cred(context, ccache, creds);
         creds->server = tmp_princ;
         /* Then store again with the canonicalized server princ */

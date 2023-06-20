@@ -291,7 +291,7 @@ p11_key_init(EVP_CIPHER_CTX *ctx,
         { CKA_TOKEN,            &bFalse,        sizeof(bFalse)          },
         { CKA_PRIVATE,          &bFalse,        sizeof(bFalse)          },
         { CKA_SENSITIVE,        &bTrue,         sizeof(bTrue)           },
-        { CKA_VALUE,            (void *)key,    ctx->key_len            },
+        { CKA_VALUE,            rk_UNCONST(key),ctx->key_len            },
         { op,                   &bTrue,         sizeof(bTrue)           }
     };
     CK_MECHANISM mechanism = {
@@ -360,9 +360,9 @@ p11_do_cipher(EVP_CIPHER_CTX *ctx,
            (size % ctx->cipher->block_size) == 0);
 
     if (ctx->encrypt)
-        rv = p11_module->C_EncryptUpdate(p11ctx->hSession, (unsigned char *)in, size, out, &ulCipherTextLen);
+        rv = p11_module->C_EncryptUpdate(p11ctx->hSession, rk_UNCONST(in), size, out, &ulCipherTextLen);
     else
-        rv = p11_module->C_DecryptUpdate(p11ctx->hSession, (unsigned char *)in, size, out, &ulCipherTextLen);
+        rv = p11_module->C_DecryptUpdate(p11ctx->hSession, rk_UNCONST(in), size, out, &ulCipherTextLen);
 
     return rv == CKR_OK;
 }
@@ -425,7 +425,7 @@ p11_md_update(EVP_MD_CTX *ctx, const void *data, size_t length)
     assert(data != NULL || length == 0);
 
     rv = p11_module->C_DigestUpdate(p11ctx->hSession,
-                                    data ? (CK_BYTE_PTR)data : (CK_BYTE_PTR)"",
+                                    (CK_BYTE_PTR)rk_UNCONST(data ? data : ""),
                                     length);
 
     return rv == CKR_OK;

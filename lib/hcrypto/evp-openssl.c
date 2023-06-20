@@ -254,7 +254,7 @@ get_EVP_CIPHER_once_cb(void *d)
     hc_evp->ctrl = cipher_ctrl;
 
     /* Our link to the OpenSSL EVP_CIPHER */
-    hc_evp->app_data = (void *)ossl_evp;
+    hc_evp->app_data = rk_UNCONST(ossl_evp);
 
     /* Finally, set the static hc_EVP_CIPHER * to the one we just built */
     *arg->hc_memoizep = hc_evp;

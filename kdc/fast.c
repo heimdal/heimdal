@@ -246,7 +246,7 @@ fast_add_cookie(astgs_request_t r,
 
     krb5_data_free(&data);
 
-    shell.version = "H5L1";
+    shell.version = rk_UNCONST("H5L1");
 
     ASN1_MALLOC_ENCODE(KDCFastCookie, data.data, data.length,
 		       &shell, &size, ret);

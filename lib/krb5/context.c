@@ -392,21 +392,24 @@ static void
 init_context_once(void *ctx)
 {
     krb5_context context = ctx;
-    char **dirs;
+    char **config_dirs = NULL;
+    const char *const *dirs;
 
 #ifdef _WIN32
-    dirs = rk_UNCONST(sysplugin_dirs);
+    dirs = sysplugin_dirs;
 #else
-    dirs = krb5_config_get_strings(context, NULL, "libdefaults",
-				   "plugin_dir", NULL);
-    if (dirs == NULL)
-	dirs = rk_UNCONST(sysplugin_dirs);
+    config_dirs = krb5_config_get_strings(context, NULL, "libdefaults",
+	"plugin_dir", NULL);
+    if (config_dirs != NULL)	/* XXX strict aliasing violation */
+	dirs = (const char *const *)config_dirs;
+    else
+	dirs = sysplugin_dirs;
 #endif
 
-    _krb5_load_plugins(context, "krb5", (const char **)dirs);
+    _krb5_load_plugins(context, "krb5", dirs);
 
-    if (dirs != rk_UNCONST(sysplugin_dirs))
-	krb5_config_free_strings(dirs);
+    if (config_dirs)
+	krb5_config_free_strings(config_dirs);
 
     bindtextdomain(HEIMDAL_TEXTDOMAIN, HEIMDAL_LOCALEDIR);
 }

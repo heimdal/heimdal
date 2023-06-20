@@ -115,11 +115,13 @@ krb5_openlog(krb5_context context,
 {
     krb5_error_code ret;
     char **p;
+    const char *const *pc;
 
     p = krb5_config_get_strings(context, NULL, "logging", program, NULL);
     if (p == NULL)
 	p = krb5_config_get_strings(context, NULL, "logging", "default", NULL);
-    ret = heim_openlog(context->hcontext, program, (const char **)p, fac);
+    pc = (const char *const *)p; /* XXX strict aliasing violation */
+    ret = heim_openlog(context->hcontext, program, pc, fac);
     krb5_config_free_strings(p);
     return ret;
 }

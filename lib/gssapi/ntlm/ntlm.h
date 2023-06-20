@@ -108,7 +108,7 @@ typedef struct ntlm_cred {
 } *ntlm_cred;
 typedef const struct ntlm_cred *ntlm_const_cred;
 
-typedef struct {
+typedef struct ntlm_ctx {
     struct ntlm_server_interface *server;
     void *ictx;
     ntlm_cred client;
@@ -135,11 +135,13 @@ typedef struct {
 	} v2;
     } u;
 } *ntlm_ctx;
+typedef const struct ntlm_ctx *ntlm_const_ctx;
 
-typedef struct {
+typedef struct ntlm_name {
     char *user;
     char *domain;
 } *ntlm_name;
+typedef const struct ntlm_name *ntlm_const_name;
 
 #include <ntlm-private.h>
 

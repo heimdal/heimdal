@@ -44,7 +44,7 @@ _gss_ntlm_acquire_cred_from(OM_uint32            *min_stat,
 			    gss_OID_set          *actual_mechs,
 			    OM_uint32            *time_rec)
 {
-    ntlm_name name = (ntlm_name) desired_name;
+    ntlm_const_name name = (ntlm_const_name)desired_name;
     OM_uint32 maj_stat;
     ntlm_ctx ctx;
 

@@ -46,7 +46,7 @@ _gss_ntlm_inquire_context (
             int * open_context
            )
 {
-    ntlm_ctx ctx = (ntlm_ctx)context_handle;
+    ntlm_const_ctx ctx = (ntlm_const_ctx)context_handle;
 
     *minor_status = 0;
     if (src_name)

@@ -41,7 +41,7 @@ _gss_ntlm_inquire_sec_context_by_oid(OM_uint32 *minor_status,
 				     const gss_OID desired_object,
 				     gss_buffer_set_t *data_set)
 {
-    ntlm_ctx ctx = (ntlm_ctx)context_handle;
+    ntlm_const_ctx ctx = (ntlm_const_ctx)context_handle;
 
     if (ctx == NULL) {
 	*minor_status = 0;
@@ -64,8 +64,9 @@ _gss_ntlm_inquire_sec_context_by_oid(OM_uint32 *minor_status,
 	    return GSS_S_FAILURE;
 	}
 
+	/* XXX gss_add_buffer_set_member should take gss_const_buffer_t */
 	return gss_add_buffer_set_member(minor_status,
-					 &ctx->pac,
+					 (gss_buffer_t)rk_UNCONST(&ctx->pac),
 					 data_set);
 
     } else if (gss_oid_equal(desired_object, GSS_C_NTLM_AVGUEST)) {

@@ -87,7 +87,7 @@ from_file(const char *fn, const char *target_domain,
 }
 
 static int
-get_user_file(const ntlm_name target_name,
+get_user_file(ntlm_const_name target_name,
 	      char **domainp, char **usernamep, struct ntlm_buf *key)
 {
     const char *domain;
@@ -111,7 +111,7 @@ get_user_file(const ntlm_name target_name,
  */
 
 static int
-get_user_ccache(const ntlm_name name, char **domainp, char **usernamep, struct ntlm_buf *key)
+get_user_ccache(ntlm_const_name name, char **domainp, char **usernamep, struct ntlm_buf *key)
 {
     krb5_context context = NULL;
     krb5_principal client;
@@ -195,7 +195,7 @@ get_user_ccache(const ntlm_name name, char **domainp, char **usernamep, struct n
 }
 
 int
-_gss_ntlm_get_user_cred(const ntlm_name target_name,
+_gss_ntlm_get_user_cred(ntlm_const_name target_name,
 			ntlm_cred *rcred)
 {
     ntlm_cred cred;
@@ -222,7 +222,7 @@ _gss_ntlm_get_user_cred(const ntlm_name target_name,
 }
 
 int
-_gss_ntlm_copy_cred(ntlm_cred from, ntlm_cred *to)
+_gss_ntlm_copy_cred(ntlm_const_cred from, ntlm_cred *to)
 {
     *to = calloc(1, sizeof(**to));
     if (*to == NULL)
@@ -270,7 +270,7 @@ _gss_ntlm_init_sec_context
 	   )
 {
     ntlm_ctx ctx;
-    ntlm_name name = (ntlm_name)target_name;
+    ntlm_const_name name = (ntlm_const_name)target_name;
 
     *minor_status = 0;
 
@@ -296,7 +296,7 @@ _gss_ntlm_init_sec_context
 	*context_handle = (gss_ctx_id_t)ctx;
 
 	if (initiator_cred_handle != GSS_C_NO_CREDENTIAL) {
-	    ntlm_cred cred = (ntlm_cred)initiator_cred_handle;
+	    ntlm_const_cred cred = (ntlm_const_cred)initiator_cred_handle;
 	    ret = _gss_ntlm_copy_cred(cred, &ctx->client);
 	} else
 	    ret = _gss_ntlm_get_user_cred(name, &ctx->client);

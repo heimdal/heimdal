@@ -47,7 +47,7 @@ _gss_ntlm_display_name
 	*output_name_type = GSS_NTLM_MECHANISM;
 
     if (output_name_buffer) {
-	ntlm_name n = (ntlm_name)input_name;
+	ntlm_const_name n = (ntlm_const_name)input_name;
 	char *str = NULL;
 	int len;
 

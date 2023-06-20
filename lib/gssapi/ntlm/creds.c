@@ -54,7 +54,7 @@ _gss_ntlm_inquire_cred
 
     if (name) {
 	ntlm_name n = calloc(1, sizeof(*n));
-	ntlm_cred c = (ntlm_cred)cred_handle;
+	ntlm_const_cred c = (ntlm_const_cred)cred_handle;
 	if (n) {
 	    n->user = strdup(c->username);
 	    n->domain = strdup(c->domain);

@@ -294,7 +294,7 @@ _gss_ntlm_get_mic
             gss_buffer_t message_token
            )
 {
-    ntlm_ctx ctx = (ntlm_ctx)context_handle;
+    ntlm_ctx ctx = rk_UNCONST(context_handle);
     OM_uint32 junk;
 
     *minor_status = 0;
@@ -369,7 +369,7 @@ _gss_ntlm_verify_mic
             gss_qop_t * qop_state
 	    )
 {
-    ntlm_ctx ctx = (ntlm_ctx)context_handle;
+    ntlm_ctx ctx = rk_UNCONST(context_handle);
 
     if (qop_state != NULL)
 	*qop_state = GSS_C_QOP_DEFAULT;
@@ -456,7 +456,7 @@ _gss_ntlm_wrap_size_limit (
             OM_uint32 * max_input_size
            )
 {
-    ntlm_ctx ctx = (ntlm_ctx)context_handle;
+    ntlm_ctx ctx = rk_UNCONST(context_handle);
 
     *minor_status = 0;
 
@@ -488,7 +488,7 @@ _gss_ntlm_wrap
  gss_buffer_t output_message_buffer
     )
 {
-    ntlm_ctx ctx = (ntlm_ctx)context_handle;
+    ntlm_ctx ctx = rk_UNCONST(context_handle);
     OM_uint32 ret;
 
     *minor_status = 0;
@@ -558,7 +558,7 @@ _gss_ntlm_unwrap
             gss_qop_t * qop_state
            )
 {
-    ntlm_ctx ctx = (ntlm_ctx)context_handle;
+    ntlm_ctx ctx = rk_UNCONST(context_handle);
     OM_uint32 ret;
 
     *minor_status = 0;

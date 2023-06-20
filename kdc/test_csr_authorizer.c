@@ -149,11 +149,11 @@ load_plugins(krb5_context context)
     char **cfdirs;
 
     cfdirs = krb5_config_get_strings(context, NULL, "kdc", "plugin_dir", NULL);
-    if (cfdirs)
+    if (cfdirs)			/* XXX strict aliasing violation */
         dirs = (const char * const *)cfdirs;
 #endif
 
-    _krb5_load_plugins(context, "kdc", (const char **)dirs);
+    _krb5_load_plugins(context, "kdc", dirs);
 
 #ifndef _WIN32
     krb5_config_free_strings(cfdirs);

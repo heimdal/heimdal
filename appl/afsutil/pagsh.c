@@ -204,8 +204,8 @@ main(int argc, char **argv)
 	    errx (1, "Out of memory copying sh arguments");
 	for (j = 1; j < i; ++j)
 	    sh_args[j + 2] = args[j];
-	sh_args[0] = "sh";
-	sh_args[1] = "-c";
+	sh_args[0] = rk_UNCONST("sh");
+	sh_args[1] = rk_UNCONST("-c");
 	sh_args[2] = path;
 	execv ("/bin/sh", sh_args);
     }

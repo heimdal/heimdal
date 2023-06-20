@@ -41,13 +41,13 @@
 struct tests {
     const EVP_CIPHER *(*cipher)(void);
     const char *name;
-    void *key;
+    const void *key;
     size_t keysize;
-    void *iv;
+    const void *iv;
     size_t datasize;
-    void *indata;
-    void *outdata;
-    void *outiv;
+    const void *indata;
+    const void *outdata;
+    const void *outiv;
 };
 
 static struct tests hc_tests[] = {

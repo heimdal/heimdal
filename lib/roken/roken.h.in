@@ -912,7 +912,7 @@ ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL roken_vconcat (char *, size_t, va_list);
 ROKEN_LIB_FUNCTION size_t ROKEN_LIB_CALL
     roken_vmconcat (char **, size_t, va_list);
 
-ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL roken_detach_prep(int, char **, char *);
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL roken_detach_prep(int, char **, const char *);
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL roken_detach_finish(const char *, int);
 
 ROKEN_LIB_FUNCTION ssize_t ROKEN_LIB_CALL

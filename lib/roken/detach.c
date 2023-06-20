@@ -45,7 +45,7 @@
 static int pipefds[2] = {-1, -1};
 
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
-roken_detach_prep(int argc, char **argv, char *special_arg)
+roken_detach_prep(int argc, char **argv, const char *special_arg)
 {
     ssize_t bytes;
     size_t i;
@@ -84,7 +84,7 @@ roken_detach_prep(int argc, char **argv, char *special_arg)
             pipefds[1]);
 
     new_argv[0] = argv[0];
-    new_argv[1] = special_arg;
+    new_argv[1] = rk_UNCONST(special_arg);
     new_argv[2] = fildes;
     for (i = 1; argv[i] != NULL; i++)
         new_argv[i + 2] = argv[i];

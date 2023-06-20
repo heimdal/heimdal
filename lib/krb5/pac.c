@@ -231,7 +231,7 @@ HMAC_MD5_any_checksum(krb5_context context,
     }
 
     result->cksumtype = CKSUMTYPE_HMAC_MD5;
-    iov.data.data = (void *)data;
+    iov.data.data = rk_UNCONST(data);
     iov.data.length = len;
     iov.flags = KRB5_CRYPTO_TYPE_DATA;
 

@@ -413,7 +413,8 @@ test_mic(struct client *c1, int32_t hc1, struct client *c2, int32_t hc2)
     krb5_data msg, mic;
     int32_t val;
 
-    msg.data = "foo";
+    /* used read-only by get_mic, verify_mic */
+    msg.data = rk_UNCONST("foo");
     msg.length = 3;
 
     krb5_data_zero(&mic);
@@ -435,7 +436,8 @@ test_wrap(struct client *c1, int32_t hc1, struct client *c2, int32_t hc2,
     krb5_data msg, wrapped, out;
     int32_t val;
 
-    msg.data = "foo";
+    /* used read_only by encrypt_token */
+    msg.data = rk_UNCONST("foo");
     msg.length = 3;
 
     krb5_data_zero(&wrapped);
@@ -474,13 +476,16 @@ test_wrap_ext(struct client *c1, int32_t hc1, struct client *c2, int32_t hc2,
     krb5_data header, msg, trailer, wrapped, out;
     int32_t val;
 
-    header.data = "header";
+    /* used read-only by wrap_token_ext, unwrap_token_ext */
+    header.data = rk_UNCONST("header");
     header.length = sizeof("header") - 1;
 
-    msg.data = "0123456789abcdef"; /* padded for most enctypes */
+    /* used read-only by wrap_token_ext */
+    msg.data = rk_UNCONST("0123456789abcdef"); /* padded for most enctypes */
     msg.length = sizeof("0123456789abcdef") - 1;
 
-    trailer.data = "trailer";
+    /* used read-only by wrap_token_ext, unwrap_token_ext */
+    trailer.data = rk_UNCONST("trailer");
     trailer.length = 7;
 
     krb5_data_zero(&wrapped);

@@ -299,7 +299,7 @@ _krb5_internal_hmac(krb5_context context,
 {
     struct krb5_crypto_iov iov[1];
 
-    iov[0].data.data = (void *) data;
+    iov[0].data.data = rk_UNCONST(data);
     iov[0].data.length = len;
     iov[0].flags = KRB5_CRYPTO_TYPE_DATA;
     return _krb5_internal_hmac_iov(context, crypto, cm, usage, iov, 1,
@@ -2408,7 +2408,7 @@ derive_key_sp800_hmac(krb5_context context,
     if (ret)
 	return ret;
 
-    label.data = (void *)constant;
+    label.data = rk_UNCONST(constant);
     label.length = len;
 
     ret = _krb5_SP800_108_HMAC_KDF(context, &key->key->keyvalue,

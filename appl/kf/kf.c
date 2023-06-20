@@ -184,7 +184,7 @@ proto (int sock, const char *hostname, const char *svc,
     if (ccache_name == NULL)
 	ccache_name = "";
 
-    data_send.data   = (void *)remote_name;
+    data_send.data   = rk_UNCONST(remote_name);
     data_send.length = strlen(remote_name) + 1;
     status = krb5_write_priv_message(context, auth_context, &sock, &data_send);
     if (status) {
@@ -192,7 +192,7 @@ proto (int sock, const char *hostname, const char *svc,
 	krb5_warn (context, status, "krb5_write_message");
 	return 1;
     }
-    data_send.data   = (void *)ccache_name;
+    data_send.data   = rk_UNCONST(ccache_name);
     data_send.length = strlen(ccache_name)+1;
     status = krb5_write_priv_message(context, auth_context, &sock, &data_send);
     if (status) {

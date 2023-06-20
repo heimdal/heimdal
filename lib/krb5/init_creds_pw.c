@@ -4000,7 +4000,7 @@ _krb5_init_creds_init_gss(krb5_context context,
 	free_gss_init_ctx(context, ctx->gss_init_ctx);
     ctx->gss_init_ctx = gssic;
 
-    gssic->cred = (struct gss_cred_id_t_desc_struct *)gss_cred;
+    gssic->cred = rk_UNCONST(gss_cred);
     gssic->mech = gss_mech;
     if (flags & KRB5_GSS_IC_FLAG_RELEASE_CRED)
 	gssic->flags.release_cred = 1;

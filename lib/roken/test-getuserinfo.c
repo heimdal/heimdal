@@ -104,9 +104,9 @@ main(void)
     if (!issuid() && getuid() != 0) {
         const char *s, *s2;
 
-        putenv("USER=h5lfoouser");
-        putenv("HOME=/no/such/dir/h5lfoouser");
-        putenv("SHELL=/no/such/shell");
+        putenv(rk_UNCONST("USER=h5lfoouser"));
+        putenv(rk_UNCONST("HOME=/no/such/dir/h5lfoouser"));
+        putenv(rk_UNCONST("SHELL=/no/such/shell"));
         if ((s = roken_get_username(buf, sizeof(buf))) == NULL ||
             strcmp("h5lfoouser", s) != 0) {
             warnx("roken_get_username() (%s) did not honor $USER", s);

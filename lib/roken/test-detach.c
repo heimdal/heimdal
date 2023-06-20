@@ -75,7 +75,7 @@ int main(int argc, char **argv)
     } else {
         if (argc == 2)
             /* Make sure we re-exec on the child-side of fork() (not WIN32) */
-            putenv("ROKEN_DETACH_USE_EXEC=1");
+            putenv(rk_UNCONST("ROKEN_DETACH_USE_EXEC=1"));
 	fd = roken_detach_prep(argc, argv, "--daemon-child");
         if (fd == -1)
             errx(1, "bad");

@@ -412,7 +412,7 @@ initiate_many(gss_name_t service, int delegate, int negotiate, int memcache,
 		K5BAIL(krb5_init_context(&kctx));
 		K5BAIL(krb5_cc_default(kctx, &def_cache));
 		K5BAIL(krb5_cc_resolve(kctx, "MEMORY:mem_cache", &mem_cache));
-		putenv("KRB5CCNAME=MEMORY:mem_cache");
+		putenv(rk_UNCONST("KRB5CCNAME=MEMORY:mem_cache"));
 	}
 
 	for (i=0; i < count; i++) {

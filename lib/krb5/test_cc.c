@@ -1459,7 +1459,7 @@ main(int argc, char **argv)
                      "\tenable_file_cache_iteration = true\n",
                      tmpdir) == -1 || config == NULL)
             krb5_err(context, 1, errno, "asprintf");
-        putenv("KRB5_TRACE=");
+        putenv(rk_UNCONST("KRB5_TRACE="));
         ret = krb5_set_config(context, config);
         if (ret)
             krb5_err(context, 1, ret,

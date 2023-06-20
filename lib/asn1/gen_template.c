@@ -918,7 +918,7 @@ template_members(struct templatehead *temp,
     case TEnumerated:
     case TInteger: {
         char *varname = NULL;
-	char *itype = NULL;
+	const char *itype = NULL;
 
 	if (t->members)
 	    itype = "IMEMBER";

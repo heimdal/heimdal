@@ -44,9 +44,9 @@ static getarg_strings decorate;
 static int
 strcmp4mergesort_r(const void *ap, const void *bp, void *d)
 {
-    const char *a = *(const char **)ap;
-    const char *b = *(const char **)bp;
-    char sep = *(const char *)d;
+    const char *a = *(const char *const *)ap;
+    const char *b = *(const char *const *)bp;
+    char sep = **(const char **)d;
     int cmp;
 
     if (sep) {
@@ -260,7 +260,7 @@ int rfc1510_bitstring;
 int one_code_file;
 char *option_file;
 int parse_units_flag = 1;
-char *type_file_string = "krb5-types.h";
+const char *type_file_string = "krb5-types.h";
 int original_order;
 int version_flag;
 int help_flag;
@@ -457,15 +457,21 @@ main(int argc, char **argv)
 #endif
     }
 
-    if (preserve.num_strings)
+    if (preserve.num_strings) {
+	const char *sep = "";
         mergesort_r(preserve.strings, preserve.num_strings,
-                    sizeof(preserve.strings[0]), strcmp4mergesort_r, "");
-    if (seq.num_strings)
+                    sizeof(preserve.strings[0]), strcmp4mergesort_r, &sep);
+    }
+    if (seq.num_strings) {
+	const char *sep = "";
         mergesort_r(seq.strings, seq.num_strings, sizeof(seq.strings[0]),
-                    strcmp4mergesort_r, "");
-    if (decorate.num_strings)
+                    strcmp4mergesort_r, &sep);
+    }
+    if (decorate.num_strings) {
+	const char *sep = ":";
         mergesort_r(decorate.strings, decorate.num_strings,
-                    sizeof(decorate.strings[0]), strcmp4mergesort_r, ":");
+                    sizeof(decorate.strings[0]), strcmp4mergesort_r, &sep);
+    }
 
     init_generate(file, name);
 

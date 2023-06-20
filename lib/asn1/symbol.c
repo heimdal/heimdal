@@ -74,7 +74,7 @@ output_name(char *s)
 }
 
 Symbol *
-addsym(char *name)
+addsym(const char *name)
 {
     Symbol key, *s;
 
@@ -101,7 +101,7 @@ addsym(char *name)
 }
 
 Symbol *
-getsym(char *name)
+getsym(const char *name)
 {
     Symbol key;
 

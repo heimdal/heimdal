@@ -126,11 +126,11 @@ int
 _asn1_bmember_isset_bit(const void *data, unsigned int bit, size_t size)
 {
 #ifdef WORDS_BIGENDIAN
-    if ((*(unsigned int *)data) & (1u << ((size * 8) - bit - 1)))
+    if ((*(const unsigned int *)data) & (1u << ((size * 8) - bit - 1)))
 	return 1;
     return 0;
 #else
-    if ((*(unsigned int *)data) & (1u << bit))
+    if ((*(const unsigned int *)data) & (1u << bit))
 	return 1;
     return 0;
 #endif
@@ -785,7 +785,7 @@ _asn1_decode(const struct asn1_template *t, unsigned flags,
 	case A1_OP_TYPE_EXTERN: {
 	    size_t newsize, elsize;
 	    void *el = DPO(data, t->offset);
-	    void **pel = (void **)el;
+	    void **pel = el;
 
 	    if ((t->tt & A1_OP_MASK) == A1_OP_TYPE) {
 		elsize = _asn1_sizeofType(t->ptr);
@@ -838,19 +838,19 @@ _asn1_decode(const struct asn1_template *t, unsigned flags,
                      * though we should really look more carefully at `ret'.
                      */
                     if (tdefval->tt & A1_DV_BOOLEAN) {
-                        int *i = (void *)(char *)el;
+                        int *i = el;
 
                         *i = tdefval->ptr ? 1 : 0;
                     } else if (tdefval->tt & A1_DV_INTEGER64) {
-                        int64_t *i = (void *)(char *)el;
+                        int64_t *i = el;
 
                         *i = (int64_t)(intptr_t)tdefval->ptr;
                     } else if (tdefval->tt & A1_DV_INTEGER32) {
-                        int32_t *i = (void *)(char *)el;
+                        int32_t *i = el;
 
                         *i = (int32_t)(intptr_t)tdefval->ptr;
                     } else if (tdefval->tt & A1_DV_INTEGER) {
-                        struct heim_integer *i = (void *)(char *)el;
+                        struct heim_integer *i = el;
 
                         if ((ret = der_copy_heim_integer(tdefval->ptr, i)))
                             return ret;
@@ -879,7 +879,7 @@ _asn1_decode(const struct asn1_template *t, unsigned flags,
 	    int subflags = flags;
             int replace_tag = (t->tt & A1_FLAG_IMPLICIT) && is_tagged(t->ptr);
 	    void *el = data = DPO(data, t->offset);
-	    void **pel = (void **)el;
+	    void **pel = el;
 
             /*
              * XXX If this type (chasing t->ptr through IMPLICIT tags, if this
@@ -906,19 +906,19 @@ _asn1_decode(const struct asn1_template *t, unsigned flags,
                      * though we should really look more carefully at `ret'.
                      */
                     if (tdefval->tt & A1_DV_BOOLEAN) {
-                        int *i = (void *)(char *)data;
+                        int *i = data;
 
                         *i = tdefval->ptr ? 1 : 0;
                     } else if (tdefval->tt & A1_DV_INTEGER64) {
-                        int64_t *i = (void *)(char *)data;
+                        int64_t *i = data;
 
                         *i = (int64_t)(intptr_t)tdefval->ptr;
                     } else if (tdefval->tt & A1_DV_INTEGER32) {
-                        int32_t *i = (void *)(char *)data;
+                        int32_t *i = data;
 
                         *i = (int32_t)(intptr_t)tdefval->ptr;
                     } else if (tdefval->tt & A1_DV_INTEGER) {
-                        struct heim_integer *i = (void *)(char *)data;
+                        struct heim_integer *i = data;
 
                         if ((ret = der_copy_heim_integer(tdefval->ptr, i)))
                             return ret;
@@ -1256,10 +1256,11 @@ typeid_int_copy(void *intp,
 /* See commentary in _asn1_decode_open_type() */
 static int
 _asn1_encode_open_type(const struct asn1_template *t,
-                       const void *data,    /* NOTE: Not really const */
+                       const void *cdata,    /* NOTE: Not really const */
                        const struct asn1_template *ttypeid,
                        const struct asn1_template *topentype)
 {
+    void *data = rk_UNCONST(cdata); /* XXX */
     const struct asn1_template *ttypeid_univ = ttypeid;
     const struct asn1_template *tactual_type;
     const struct asn1_template *tos = t->ptr;
@@ -1324,12 +1325,13 @@ _asn1_encode_open_type(const struct asn1_template *t,
      * values.
      */
     if (!(t->tt & A1_OS_OT_IS_ARRAY)) {
-        struct heim_base_data *os = DPO(data, topentype->offset);
+        const struct heim_base_data *os = DPOC(data, topentype->offset);
 
         if (os->length && os->data)
             return 0;
     } else {
-        struct heim_base_data **os = DPO(data, topentype->offset + sizeof(len));
+        struct heim_base_data **os =
+	    DPO(data, topentype->offset + sizeof(len));
 
         while (sizeof(void *) != sizeof(unsigned int) &&
                ((uintptr_t)os) % sizeof(void *) != 0)
@@ -1371,7 +1373,7 @@ _asn1_encode_open_type(const struct asn1_template *t,
 
         while (sizeof(void *) != sizeof(element) &&
                ((uintptr_t)d) % sizeof(void *) != 0) {
-            d = (void *)(((char *)d) + sizeof(element));
+            d = (const void *)(((const char *)d) + sizeof(element));
         }
 
         os->length = _asn1_length(tactual_type->ptr, *d);
@@ -1439,7 +1441,7 @@ _asn1_encode(const struct asn1_template *t, unsigned char *p, size_t len, const 
 	    const void *el = DPOC(data, t->offset);
 
 	    if (t->tt & A1_FLAG_OPTIONAL) {
-		void **pel = (void **)el;
+		const void *const *pel = el;
 		if (*pel == NULL)
 		    break;
 		el = *pel;
@@ -1447,24 +1449,24 @@ _asn1_encode(const struct asn1_template *t, unsigned char *p, size_t len, const 
                 const struct asn1_template *tdefval = t - 1;
                 /* Compare tdefval to whatever's at `el' */
                 if (tdefval->tt & A1_DV_BOOLEAN) {
-                    const int *i = (void *)(char *)el;
+                    const int *i = el;
 
                     if ((*i && tdefval->ptr) || (!*i && !tdefval->ptr))
                         break;
                 } else if (tdefval->tt & A1_DV_INTEGER64) {
-                    const int64_t *i = (void *)(char *)el;
+                    const int64_t *i = el;
 
                     if (*i == (int64_t)(intptr_t)tdefval->ptr)
                         break;
                 } else if (tdefval->tt & A1_DV_INTEGER32) {
-                    const int32_t *i = (void *)(char *)el;
+                    const int32_t *i = el;
 
                     if ((int64_t)(intptr_t)tdefval->ptr <= INT_MAX &&
                         (int64_t)(intptr_t)tdefval->ptr >= INT_MIN &&
                         *i == (int32_t)(intptr_t)tdefval->ptr)
                         break;
                 } else if (tdefval->tt & A1_DV_INTEGER) {
-                    const struct heim_integer *i = (void *)(char *)el;
+                    const struct heim_integer *i = el;
 
                     if (der_heim_integer_cmp(i, tdefval->ptr) == 0)
                         break;
@@ -1509,7 +1511,7 @@ _asn1_encode(const struct asn1_template *t, unsigned char *p, size_t len, const 
 	    data = DPOC(data, t->offset);
 
 	    if (t->tt & A1_FLAG_OPTIONAL) {
-		void **el = (void **)data;
+		const void *const *el = data;
 		if (*el == NULL) {
 		    data = olddata;
 		    break;
@@ -1521,24 +1523,24 @@ _asn1_encode(const struct asn1_template *t, unsigned char *p, size_t len, const 
 
                 /* Compare tdefval to whatever's at `data' */
                 if (tdefval->tt & A1_DV_BOOLEAN) {
-                    const int *i = (void *)(char *)data;
+                    const int *i = data;
 
                     if ((*i && tdefval->ptr) || (!*i && !tdefval->ptr))
                         exclude = 1;
                 } else if (tdefval->tt & A1_DV_INTEGER64) {
-                    const int64_t *i = (void *)(char *)data;
+                    const int64_t *i = data;
 
                     if (*i == (int64_t)(intptr_t)tdefval->ptr)
                         exclude = 1;
                 } else if (tdefval->tt & A1_DV_INTEGER32) {
-                    const int32_t *i = (void *)(char *)data;
+                    const int32_t *i = data;
 
                     if ((int64_t)(intptr_t)tdefval->ptr <= INT_MAX &&
                         (int64_t)(intptr_t)tdefval->ptr >= INT_MIN &&
                         *i == (int32_t)(intptr_t)tdefval->ptr)
                         exclude = 1;
                 } else if (tdefval->tt & A1_DV_INTEGER) {
-                    const struct heim_integer *i = (void *)(char *)data;
+                    const struct heim_integer *i = data;
 
                     if (der_heim_integer_cmp(i, tdefval->ptr) == 0)
                         break;
@@ -1712,7 +1714,7 @@ _asn1_encode(const struct asn1_template *t, unsigned char *p, size_t len, const 
 
 	}
 	case A1_OP_SEQOF: {
-	    struct template_of *el = DPO(data, t->offset);
+	    const struct template_of *el = DPOC(data, t->offset);
 	    size_t ellen = _asn1_sizeofType(t->ptr);
 	    size_t newsize;
 	    unsigned int i;
@@ -1913,16 +1915,17 @@ _asn1_length_open_type(const struct asn1_template *tbase,
     default: return 0;
     }
     if (!(t->tt & A1_OS_OT_IS_ARRAY)) {
-        struct heim_base_data *os = DPO(data, topentype->offset);
+        const struct heim_base_data *os = DPOC(data, topentype->offset);
 
         if (os->length && os->data)
             return 0;
     } else {
-        struct heim_base_data **os = DPO(data, topentype->offset + sizeof(len));
+        const struct heim_base_data *const *os =
+	    DPOC(data, topentype->offset + sizeof(len));
 
         while (sizeof(void *) != sizeof(unsigned int) &&
                ((uintptr_t)os) % sizeof(void *) != 0)
-            os = (void *)(((char *)os) + sizeof(unsigned int));
+            os = (const void *)(((const char *)os) + sizeof(unsigned int));
 
         lenp = DPOC(data, topentype->offset);
         if (*lenp == len && os[0]->length && os[0]->data)
@@ -1965,7 +1968,7 @@ _asn1_length_open_type(const struct asn1_template *tbase,
 
         while (sizeof(void *) != sizeof(element) &&
                ((uintptr_t)d) % sizeof(void *) != 0)
-            d = (void *)(((char *)d) + sizeof(element));
+            d = (const void *)(((const char *)d) + sizeof(element));
         if (*d)
             sz += _asn1_length(tactual_type->ptr, *d);
     } else {
@@ -2016,7 +2019,7 @@ _asn1_length(const struct asn1_template *t, const void *data)
 	    const void *el = DPOC(data, t->offset);
 
 	    if (t->tt & A1_FLAG_OPTIONAL) {
-		void **pel = (void **)el;
+		void *const *pel = el;
 		if (*pel == NULL)
 		    break;
 		el = *pel;
@@ -2025,24 +2028,24 @@ _asn1_length(const struct asn1_template *t, const void *data)
 
                 /* Compare tdefval to whatever's at `el' */
                 if (tdefval->tt & A1_DV_BOOLEAN) {
-                    const int *i = (void *)(char *)el;
+                    const int *i = el;
 
                     if ((*i && tdefval->ptr) || (!*i && !tdefval->ptr))
                         break;
                 } else if (tdefval->tt & A1_DV_INTEGER64) {
-                    const int64_t *i = (void *)(char *)el;
+                    const int64_t *i = el;
 
                     if (*i == (int64_t)(intptr_t)tdefval->ptr)
                         break;
                 } else if (tdefval->tt & A1_DV_INTEGER32) {
-                    const int32_t *i = (void *)(char *)el;
+                    const int32_t *i = el;
 
                     if ((int64_t)(intptr_t)tdefval->ptr <= INT_MAX &&
                         (int64_t)(intptr_t)tdefval->ptr >= INT_MIN &&
                         *i == (int32_t)(intptr_t)tdefval->ptr)
                         break;
                 } else if (tdefval->tt & A1_DV_INTEGER) {
-                    const struct heim_integer *i = (void *)(char *)el;
+                    const struct heim_integer *i = el;
 
                     if (der_heim_integer_cmp(i, tdefval->ptr) == 0)
                         break;
@@ -2069,10 +2072,10 @@ _asn1_length(const struct asn1_template *t, const void *data)
 	    const void *olddata = data;
             size_t oldtaglen = 0;
 
-	    data = DPO(data, t->offset);
+	    data = DPOC(data, t->offset);
 
 	    if (t->tt & A1_FLAG_OPTIONAL) {
-		void **el = (void **)data;
+		void *const *el = data;
 		if (*el == NULL) {
 		    data = olddata;
 		    break;
@@ -2084,24 +2087,24 @@ _asn1_length(const struct asn1_template *t, const void *data)
 
                 /* Compare tdefval to whatever's at `data' */
                 if (tdefval->tt & A1_DV_BOOLEAN) {
-                    const int *i = (void *)(char *)data;
+                    const int *i = data;
 
                     if ((*i && tdefval->ptr) || (!*i && !tdefval->ptr))
                         exclude = 1;
                 } else if (tdefval->tt & A1_DV_INTEGER64) {
-                    const int64_t *i = (void *)(char *)data;
+                    const int64_t *i = data;
 
                     if (*i == (int64_t)(intptr_t)tdefval->ptr)
                         exclude = 1;
                 } else if (tdefval->tt & A1_DV_INTEGER32) {
-                    const int32_t *i = (void *)(char *)data;
+                    const int32_t *i = data;
 
                     if ((int64_t)(intptr_t)tdefval->ptr <= INT_MAX &&
                         (int64_t)(intptr_t)tdefval->ptr >= INT_MIN &&
                         *i == (int32_t)(intptr_t)tdefval->ptr)
                         exclude = 1;
                 } else if (tdefval->tt & A1_DV_INTEGER) {
-                    const struct heim_integer *i = (void *)(char *)data;
+                    const struct heim_integer *i = data;
 
                     if (der_heim_integer_cmp(i, tdefval->ptr) == 0)
                         exclude = 1;
@@ -2278,7 +2281,7 @@ _asn1_free(const struct asn1_template *t, void *data)
 	case A1_OP_TYPE:
 	case A1_OP_TYPE_EXTERN: {
 	    void *el = DPO(data, t->offset);
-            void **pel = (void **)el;
+            void **pel = el;
 
 	    if (t->tt & A1_FLAG_OPTIONAL) {
 		if (*pel == NULL)
@@ -2322,7 +2325,7 @@ _asn1_free(const struct asn1_template *t, void *data)
 	    void *el = DPO(data, t->offset);
 
 	    if (t->tt & A1_FLAG_OPTIONAL) {
-                void **pel = (void **)el;
+                void **pel = el;
 
 		if (*pel == NULL)
 		    break;
@@ -2451,7 +2454,7 @@ _asn1_print_open_type(const struct asn1_template *t, /* object set template */
         dp = DPOC(data, t->offset + sizeof(*elementp));
         while (sizeof(void *) != sizeof(*elementp) &&
                ((uintptr_t)dp) % sizeof(void *) != 0)
-            dp = (void *)(((char *)dp) + sizeof(*elementp));
+            dp = (const void *)(((const char *)dp) + sizeof(*elementp));
         if (*dp) {
             struct rk_strpool *r2 = NULL;
             char *s = NULL;
@@ -2478,7 +2481,7 @@ _asn1_print_open_type(const struct asn1_template *t, /* object set template */
     dp = DPOC(data, t->offset + sizeof(*elementp) + sizeof(*lenp));
     while (sizeof(void *) != sizeof(*elementp) &&
            ((uintptr_t)dp) % sizeof(void *) != 0)
-        dp = (void *)(((char *)dp) + sizeof(*elementp));
+        dp = (const void *)(((const char *)dp) + sizeof(*elementp));
     val = *dp;
 
     r = rk_strpoolprintf(r, ",%s\"_%s\":[", indents ? indents : "",
@@ -2629,7 +2632,7 @@ _asn1_print(const struct asn1_template *t,
                 size_t left = 0;
                 size_t right = A1_HEADER_LEN(tenum);
                 size_t mid;
-                uint32_t v = *(unsigned int *)el;
+                uint32_t v = *(const unsigned int *)el;
                 int c = -1;
 
                 while (left <= right) {
@@ -2805,7 +2808,7 @@ _asn1_copy_open_type(const struct asn1_template *t, /* object set template */
     void **valto;
     unsigned int *lentop;
     unsigned int len;
-    const int *efromp = DPO(from, t->offset);
+    const int *efromp = DPOC(from, t->offset);
     int *etop = DPO(to, t->offset);
     int ret = 0;
 
@@ -2820,10 +2823,10 @@ _asn1_copy_open_type(const struct asn1_template *t, /* object set template */
     tactual_type = &tos[3*(*efromp - 1) + 4];
 
     if (!(t->tt & A1_OS_OT_IS_ARRAY)) {
-        dfromp = DPO(from, t->offset + sizeof(*efromp));
+        dfromp = DPOC(from, t->offset + sizeof(*efromp));
         while (sizeof(void *) != sizeof(*efromp) &&
                ((uintptr_t)dfromp) % sizeof(void *) != 0)
-            dfromp = (void *)(((char *)dfromp) + sizeof(*efromp));
+            dfromp = (const void *)(((const char *)dfromp) + sizeof(*efromp));
         if (!*dfromp)
             return 0;
 
@@ -2841,8 +2844,8 @@ _asn1_copy_open_type(const struct asn1_template *t, /* object set template */
         return ret;
     }
 
-    lenfromp = DPO(from, t->offset + sizeof(*efromp));
-    dfromp   = DPO(from, t->offset + sizeof(*efromp) + sizeof(*lenfromp));
+    lenfromp = DPOC(from, t->offset + sizeof(*efromp));
+    dfromp   = DPOC(from, t->offset + sizeof(*efromp) + sizeof(*lenfromp));
     valfrom  = *dfromp;
     lentop   = DPO(to,   t->offset + sizeof(*etop));
     dtop     = DPO(to,   t->offset + sizeof(*etop)   + sizeof(*lentop));
@@ -2909,7 +2912,7 @@ _asn1_copy(const struct asn1_template *t, const void *from, void *to)
 	case A1_OP_TYPE_EXTERN: {
 	    const void *fel = DPOC(from, t->offset);
 	    void *tel = DPO(to, t->offset);
-	    void **ptel = (void **)tel;
+	    void **ptel = tel;
 	    size_t size;
 
 	    if ((t->tt & A1_OP_MASK) == A1_OP_TYPE ||
@@ -2921,7 +2924,7 @@ _asn1_copy(const struct asn1_template *t, const void *from, void *to)
 	    }
 
 	    if (t->tt & A1_FLAG_OPTIONAL) {
-		void **pfel = (void **)fel;
+		const void *const *pfel = fel;
 		if (*pfel == NULL)
 		    break;
 		fel = *pfel;
@@ -2979,8 +2982,8 @@ _asn1_copy(const struct asn1_template *t, const void *from, void *to)
 	    to = DPO(to, t->offset);
 
 	    if (t->tt & A1_FLAG_OPTIONAL) {
-		void **fel = (void **)from;
-		tel = (void **)to;
+		const void *const *fel = from;
+		tel = to;
 		if (*fel == NULL) {
 		    from = oldfrom;
 		    to = oldto;

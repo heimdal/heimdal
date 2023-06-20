@@ -762,13 +762,13 @@ GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL gss_duplicate_name (
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL gss_duplicate_oid (
 	    OM_uint32 * /* minor_status */,
-	    gss_OID /* src_oid */,
+	    gss_const_OID /* src_oid */,
 	    gss_OID * /* dest_oid */
            );
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL gss_duplicate_oid_set (
 	    OM_uint32 * /* minor_status */,
-	    gss_OID_set /* src_oid */,
+	    gss_const_OID_set /* src_oid */,
 	    gss_OID_set * /* dest_oid */
            );
 

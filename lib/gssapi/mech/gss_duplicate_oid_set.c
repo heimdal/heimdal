@@ -35,7 +35,7 @@
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_duplicate_oid_set(OM_uint32 *minor_status,
-                      gss_OID_set src_oid_set,
+                      gss_const_OID_set src_oid_set,
                       gss_OID_set *dest_oid_set)
 {
     OM_uint32 major_status, junk;

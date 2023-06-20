@@ -84,12 +84,12 @@ static krb5_error_code KRB5_LIB_CALL
 generate(krb5_context context, const void *plug, void *plugctx, void *userctx)
 {
     const krb5plugin_kdc_ftable *ft = (const krb5plugin_kdc_ftable *)plug;
-    struct generate_uc *uc = (struct generate_uc *)userctx;    
+    struct generate_uc *uc = (struct generate_uc *)userctx;
 
     if (ft->pac_generate == NULL)
 	return KRB5_PLUGIN_NO_HANDLE;
 
-    return ft->pac_generate((void *)plug,
+    return ft->pac_generate(rk_UNCONST(plug),
 			    uc->r,
 			    uc->client,
 			    uc->server,
@@ -158,7 +158,7 @@ verify(krb5_context context, const void *plug, void *plugctx, void *userctx)
     if (ft->pac_verify == NULL)
 	return KRB5_PLUGIN_NO_HANDLE;
 
-    ret = ft->pac_verify((void *)plug,
+    ret = ft->pac_verify(rk_UNCONST(plug),
 			 uc->r,
 			 uc->client_principal,
 			 uc->delegated_proxy_principal,
@@ -199,7 +199,7 @@ check(krb5_context context, const void *plug, void *plugctx, void *userctx)
 
     if (ft->client_access == NULL)
 	return KRB5_PLUGIN_NO_HANDLE;
-    return ft->client_access((void *)plug, userctx);
+    return ft->client_access(rk_UNCONST(plug), userctx);
 }
 
 krb5_error_code
@@ -225,7 +225,7 @@ referral_policy(krb5_context context, const void *plug, void *plugctx, void *use
 
     if (ft->referral_policy == NULL)
 	return KRB5_PLUGIN_NO_HANDLE;
-    return ft->referral_policy((void *)plug, userctx);
+    return ft->referral_policy(rk_UNCONST(plug), userctx);
 }
 
 krb5_error_code
@@ -246,7 +246,7 @@ finalize_reply(krb5_context context, const void *plug, void *plugctx, void *user
 
     if (ft->finalize_reply == NULL)
 	return KRB5_PLUGIN_NO_HANDLE;
-    return ft->finalize_reply((void *)plug, userctx);
+    return ft->finalize_reply(rk_UNCONST(plug), userctx);
 }
 
 krb5_error_code
@@ -270,7 +270,7 @@ audit(krb5_context context, const void *plug, void *plugctx, void *userctx)
 
     if (ft->audit == NULL)
 	return KRB5_PLUGIN_NO_HANDLE;
-    return ft->audit((void *)plug, userctx);
+    return ft->audit(rk_UNCONST(plug), userctx);
 }
 
 krb5_error_code
@@ -596,7 +596,7 @@ static krb5_error_code
 copy_pac(const struct krb5_pac_data *src, struct krb5_pac_data **dst)
 {
     /* FIXME use heim_copy() when it exists */
-    *dst = (krb5_pac)heim_retain((heim_object_t)src);
+    *dst = (krb5_pac)heim_retain((heim_object_t)rk_UNCONST(src));
     return 0;
 }
 

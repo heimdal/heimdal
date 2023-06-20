@@ -50,7 +50,7 @@ do_trans (int sock, gss_ctx_id_t context_hdl)
     /* get_mic */
 
     input_token->length = 3;
-    input_token->value  = strdup("hej");
+    input_token->value  = rk_UNCONST("hej");
 
     maj_stat = gss_get_mic(&min_stat,
 			   context_hdl,
@@ -84,7 +84,7 @@ do_trans (int sock, gss_ctx_id_t context_hdl)
     /* wrap */
 
     input_token->length = 7;
-    input_token->value  = "hemligt";
+    input_token->value  = rk_UNCONST("hemligt");
 
     maj_stat = gss_wrap (&min_stat,
 			 context_hdl,

@@ -80,7 +80,8 @@ proto (int sock, const char *hostname, const char *service)
     if (status)
 	krb5_err (context, 1, status, "krb5_sendauth");
 
-    data.data   = "hej";
+    /* used read-only by krb5_mk_safe */
+    data.data   = rk_UNCONST("hej");
     data.length = 3;
 
     krb5_data_zero (&packet);
@@ -101,7 +102,7 @@ proto (int sock, const char *hostname, const char *service)
     if (krb5_net_write (context, &sock, packet.data, len) != len)
 	err (1, "krb5_net_write");
 
-    data.data   = "hemligt";
+    data.data   = rk_UNCONST("hemligt");
     data.length = 7;
 
     krb5_data_free (&packet);

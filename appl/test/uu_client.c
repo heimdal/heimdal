@@ -148,7 +148,8 @@ proto (int sock, const char *hostname, const char *service)
 	}
     }
 
-    data.data   = "hej";
+    /* used read-only by krb5_mk_safe */
+    data.data   = rk_UNCONST("hej");
     data.length = 3;
 
     krb5_data_zero (&packet);
@@ -165,7 +166,8 @@ proto (int sock, const char *hostname, const char *service)
     if(status)
 	krb5_err(context, 1, status, "krb5_write_message");
 
-    data.data   = "hemligt";
+    /* used read-only by krb5_mk_priv */
+    data.data   = rk_UNCONST("hemligt");
     data.length = 7;
 
     krb5_data_free (&packet);

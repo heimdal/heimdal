@@ -78,9 +78,9 @@
 
 #define PORT "test"
 
-extern char *service;
-extern char *mech;
-extern char *keytab_str;
+extern const char *service;
+extern const char *mech;
+extern const char *keytab_str;
 extern krb5_keytab keytab;
 extern int fork_flag;
 int server_setup(krb5_context*, int, char**);

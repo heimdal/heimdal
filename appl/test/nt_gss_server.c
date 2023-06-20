@@ -50,8 +50,8 @@ RCSID("$Id$");
 static int help_flag;
 static int version_flag;
 static char *port_str;
-char *service = SERVICE;
-static char *auth_file;
+const char *service = SERVICE;
+static const char *auth_file;
 
 static struct getargs args[] = {
     { "port", 'p', arg_string, &port_str, "port to listen to", "port" },

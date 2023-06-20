@@ -36,10 +36,10 @@
 static int help_flag;
 static int version_flag;
 static char *port_str;
-char *keytab_str;
+const char *keytab_str;
 krb5_keytab keytab;
-char *service = SERVICE;
-char *mech = "krb5";
+const char *service = SERVICE;
+const char *mech = "krb5";
 int fork_flag;
 char *password = NULL;
 

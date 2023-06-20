@@ -140,7 +140,8 @@ proto (int sock, const char *hostname, const char *service)
     /* wrap */
 
     input_token->length = 7;
-    input_token->value  = "hemligt";
+    /* used read-only by gss_wrap */
+    input_token->value  = rk_UNCONST("hemligt");
 
 
     maj_stat = gss_wrap (&min_stat,

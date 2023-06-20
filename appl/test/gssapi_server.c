@@ -149,7 +149,8 @@ process_it(int sock,
     gss_release_buffer (&min_stat, input_token);
     gss_release_buffer (&min_stat, output_token);
 
-    input_token->value = "hejhej";
+    /* used read-only by gss_wrap */
+    input_token->value = rk_UNCONST("hejhej");
     input_token->length = 6;
 
     maj_stat = gss_wrap (&min_stat,
@@ -190,7 +191,8 @@ proto (int sock, const char *service)
     u_char init_buf[4];
     u_char acct_buf[4];
     gss_OID mech_oid;
-    char *mech, *p;
+    const char *mech;
+    char *p;
 
     memset(&remote, 0, sizeof(remote));
     local = remote;

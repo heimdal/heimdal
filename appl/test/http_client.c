@@ -113,8 +113,8 @@ static int version_flag;
 static int verbose_flag;
 static int mutual_flag = 1;
 static int delegate_flag;
-static char *port_str = "http";
-static char *gss_service = "HTTP";
+static const char *port_str = "http";
+static const char *gss_service = "HTTP";
 
 static struct getargs http_args[] = {
     { "verbose", 'v', arg_flag, &verbose_flag, "verbose logging", NULL },

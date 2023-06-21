@@ -952,7 +952,7 @@ hx509_cert_find_subjectAltName_otherName(hx509_context context,
 		ret = add_to_list(list, &sa.val[j].u.otherName.value);
 		if (ret) {
 		    hx509_set_error_string(context, 0, ret,
-					   "Error adding an exra SAN to "
+					   "Error adding an extra SAN to "
 					   "return list");
 		    hx509_free_octet_string_list(list);
 		    free_GeneralNames(&sa);

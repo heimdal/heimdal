@@ -412,7 +412,7 @@ hx509_revoke_add_ocsp(hx509_context context,
 
     if (strncmp(path, "FILE:", 5) != 0) {
 	hx509_set_error_string(context, 0, HX509_UNSUPPORTED_OPERATION,
-			       "unsupport type in %s", path);
+			       "unsupported type in %s", path);
 	return HX509_UNSUPPORTED_OPERATION;
     }
 
@@ -926,7 +926,7 @@ add_to_req(hx509_context context, void *ptr, hx509_cert cert)
 	if (hx509_cert_cmp(ctx->parent, parent) != 0) {
 	    ret = HX509_REVOKE_NOT_SAME_PARENT;
 	    hx509_set_error_string(context, 0, ret,
-				   "Not same parent certifate as "
+				   "Not same parent certificate as "
 				   "last certificate in request");
 	    goto out;
 	}

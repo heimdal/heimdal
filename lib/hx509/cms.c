@@ -247,7 +247,7 @@ unparse_CMSIdentifier(hx509_context context,
 	break;
     }
     default:
-	ret = asprintf(str, "certificate have unknown CMSidentifier type");
+	ret = asprintf(str, "certificate has unknown CMSidentifier type");
 	break;
     }
     /*
@@ -936,7 +936,7 @@ hx509_cms_verify_signed_ext(hx509_context context,
 	    ret = HX509_CMS_MISSING_SIGNER_DATA;
 	    hx509_set_error_string(context, 0, ret,
 				   "SignerInfo %zu in SignedData "
-				   "missing sigature", i);
+				   "missing signature", i);
 	    continue;
 	}
 
@@ -974,7 +974,7 @@ hx509_cms_verify_signed_ext(hx509_context context,
 	    if (attr == NULL) {
 		ret = HX509_CRYPTO_SIGNATURE_MISSING;
 		hx509_set_error_string(context, 0, ret,
-				       "SignerInfo have signed attributes "
+				       "SignerInfo has signed attributes "
 				       "but messageDigest (signature) "
 				       "is missing");
 		goto next_sigature;
@@ -982,7 +982,7 @@ hx509_cms_verify_signed_ext(hx509_context context,
 	    if (attr->value.len != 1) {
 		ret = HX509_CRYPTO_SIGNATURE_MISSING;
 		hx509_set_error_string(context, 0, ret,
-				       "SignerInfo have more then one "
+				       "SignerInfo has more than one "
 				       "messageDigest (signature)");
 		goto next_sigature;
 	    }
@@ -1021,7 +1021,7 @@ hx509_cms_verify_signed_ext(hx509_context context,
 		if (attr->value.len != 1) {
 		    ret = HX509_CMS_DATA_OID_MISMATCH;
 		    hx509_set_error_string(context, 0, ret,
-					   "More then one oid in signedAttrs");
+					   "More than one oid in signedAttrs");
 		    goto next_sigature;
 
 		}
@@ -1127,7 +1127,7 @@ hx509_cms_verify_signed_ext(hx509_context context,
 	if (ret == 0) {
 	    ret = HX509_CMS_SIGNER_NOT_FOUND;
 	    hx509_set_error_string(context, 0, ret,
-				   "No signers where found");
+				   "No signers were found");
 	}
 	goto out;
     }

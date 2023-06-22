@@ -645,6 +645,10 @@ if test -n "$LIB_add_key"; then
 fi
 AM_CONDITIONAL(HAVE_KEYUTILS, test "$ac_cv_func_keyctl_get_persistent" = yes)
 
+AX_COMPILE_CHECK_SIZEOF([short])
+AX_COMPILE_CHECK_SIZEOF([int])
+AX_COMPILE_CHECK_SIZEOF([long])
+AX_COMPILE_CHECK_SIZEOF([long long])
 AX_COMPILE_CHECK_SIZEOF([time_t])
 
 AX_CHECK_SIGN([time_t],

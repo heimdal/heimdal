@@ -37,6 +37,7 @@
 
 typedef struct krb5_fcache{
     char *filename;
+    char *collection;
     char *res;
     char *sub;
     char *tmpfn;
@@ -73,15 +74,16 @@ fcc_get_name_2(krb5_context context,
 	       const char **colname,
 	       const char **sub)
 {
-    if (FCACHE(id) == NULL)
-        return KRB5_CC_NOTFOUND;
+    krb5_fcache *f = FCACHE(id);
 
+    if (f == NULL)
+        return KRB5_CC_NOTFOUND;
     if (name)
-        *name = FILENAME(id);
+        *name = f->filename;
     if (colname)
-        *colname = FILENAME(id);
+        *colname = f->collection;
     if (sub)
-        *sub = NULL;
+        *sub = f->sub;
     return 0;
 }
 
@@ -219,49 +221,36 @@ fcc_resolve_2(krb5_context context,
 	      const char *res,
 	      const char *sub)
 {
+    krb5_error_code ret;
     krb5_fcache *f;
-    char *freeme = NULL;
 
-    if (res && sub == NULL && res[0] == FILESUBSEPCHR) {
-        /* Case: FILE:+NAME */
-        sub = res + 1;
-        res = NULL;
-    }
-    if (res == NULL) {
-        /* Case: FILE, FILE:, FILE:+NAME */
-        krb5_error_code ret;
+    if ((f = calloc(1, sizeof(*f))) == NULL)
+        return krb5_enomem(context);
 
-        if ((ret = fcc_get_default_name(context, &freeme)))
-            return ret;
-        res = freeme + sizeof("FILE:") - 1;
-    }
-    if (!sub && (sub = strchr(res, FILESUBSEPCHR))) {
-        if (sub[1] == '\0') {
-            /* Case: FILE:path+ */
-            sub = NULL;
-        } else {
-            /* Case: FILE:path+NAME */
-            /* `res' has a subsidiary component, so split on it */
-            if ((freeme = strndup(res, sub - res)) == NULL)
-                return krb5_enomem(context);
-            res = freeme;
-            sub++;
-        }
+    if (sub && *sub && (f->sub = strdup(sub)) == NULL) {
+        free(f);
+        return krb5_enomem(context);
     }
 
-    if ((f = calloc(1, sizeof(*f))) == NULL ||
-        (f->res = strdup(res)) == NULL ||
-        (f->sub = sub ? strdup(sub) : NULL) == (sub ? NULL : "") ||
-        asprintf(&f->filename, "%s%s%s",
-                 res, sub ? FILESUBSEP : "", sub ? sub : "") == -1 ||
+    ret = krb5_cc_parse_name(context, res, &krb5_fcc_ops, 1, NULL, &f->res,
+                             &f->collection, sub ? NULL : &f->sub, NULL);
+    if (ret) {
+        free(f->sub);
+        free(f);
+        return ret;
+    }
+
+    if (asprintf(&f->filename, "%s%s%s",
+                 f->collection,
+                 f->sub && *f->sub ? FILESUBSEP : "",
+                 f->sub && *f->sub ? f->sub : "") == -1 ||
         f->filename == NULL) {
         if (f) {
-            free(f->filename);
+            free(f->collection);
             free(f->res);
             free(f->sub);
         }
         free(f);
-        free(freeme);
         return krb5_enomem(context);
     }
     f->tmpfn = NULL;
@@ -269,7 +258,6 @@ fcc_resolve_2(krb5_context context,
     (*id)->data.data = f;
     (*id)->data.length = sizeof(*f);
 
-    free(freeme);
     return 0;
 }
 
@@ -707,15 +695,18 @@ static krb5_error_code KRB5_CALLCONV
 fcc_close(krb5_context context,
 	  krb5_ccache id)
 {
-    if (FCACHE(id) == NULL)
+    krb5_fcache *f = FCACHE(id);
+
+    if (f == NULL)
         return krb5_einval(context, 2);
 
-    if (TMPFILENAME(id))
-        (void) unlink(TMPFILENAME(id));
-    free(TMPFILENAME(id));
-    free(RESFILENAME(id));
-    free(SUBFILENAME(id));
-    free(FILENAME(id));
+    if (f->tmpfn)
+        (void) unlink(f->tmpfn);
+    free(f->collection);
+    free(f->filename);
+    free(f->tmpfn);
+    free(f->res);
+    free(f->sub);
     krb5_data_free(&id->data);
     return 0;
 }

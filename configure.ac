@@ -625,7 +625,7 @@ AM_CONDITIONAL(KCM, test "$enable_kcm" = yes)
 
 dnl detect keyring on Linux
 if test "$ac_cv_header_keyutils_h" = yes; then
-    AC_CHECK_SIZEOF([key_serial_t],,[
+    AX_COMPILE_CHECK_SIZEOF([key_serial_t],[
 	#ifdef HAVE_INTTYPES_H
 	#include <inttypes.h>
 	#endif
@@ -645,7 +645,7 @@ if test -n "$LIB_add_key"; then
 fi
 AM_CONDITIONAL(HAVE_KEYUTILS, test "$ac_cv_func_keyctl_get_persistent" = yes)
 
-AC_CHECK_SIZEOF([time_t])
+AX_COMPILE_CHECK_SIZEOF([time_t])
 
 AX_CHECK_SIGN([time_t],
   [ AC_DEFINE(TIME_T_SIGNED, 1, [Define if time_t is signed]) ],
@@ -654,7 +654,6 @@ AX_CHECK_SIGN([time_t],
 #include <time.h>
 #endif
 ])
-
 
 AC_CHECK_TYPES([int8_t, int16_t, int32_t, int64_t, 
 	u_int8_t, u_int16_t, u_int32_t, u_int64_t,

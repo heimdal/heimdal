@@ -1068,8 +1068,11 @@ test_krb5_cc_parse_name(krb5_context context)
         krb5_err(context, 1, ret, "krb5_cc_set_default_name(NULL)");
 
     /* Parsing NULL or "" should return FILE:<tmpdir>/fcc */
+#if !defined(__APPLE__) && !defined(WIN32)
     test_krb5_cc_parse_name_helper(context, NULL, '+', "FILE", "fcc", NULL);
     test_krb5_cc_parse_name_helper(context, "", '+', "FILE", "fcc", NULL);
+#endif
+
     test_krb5_cc_parse_name_helper(context, "FILE", '+', "FILE", "fcc", NULL);
     test_krb5_cc_parse_name_helper(context, "FILE:", '+', "FILE", "fcc", NULL);
     if (asprintf(&s, "FILE:%s/fcc", tmpdir) == -1 || s == NULL)

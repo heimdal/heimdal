@@ -1960,7 +1960,7 @@ krb5_kdc_pk_initialize(krb5_context context,
 			   NULL,
 			   NULL);
     if (ret) {
-	krb5_warn(context, ret, "PKINIT: ");
+	krb5_warn(context, ret, "PKINIT: failed to load ID");
 	config->enable_pkinit = 0;
 	return ret;
     }

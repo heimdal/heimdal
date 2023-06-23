@@ -3208,7 +3208,7 @@ krb5_keytype_to_enctypes (krb5_context context,
     }
     if (n == 0) {
 	krb5_set_error_message(context, KRB5_PROG_KEYTYPE_NOSUPP,
-			       "Keytype have no mapping");
+			       "Keytype has no mapping");
 	return KRB5_PROG_KEYTYPE_NOSUPP;
     }
 

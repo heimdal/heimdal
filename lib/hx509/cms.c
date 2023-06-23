@@ -242,7 +242,10 @@ unparse_CMSIdentifier(hx509_context context,
 	if (len < 0)
 	    return ENOMEM;
 
-	ret = asprintf(str, "certificate with id %s", keyid);
+	if (len)
+	    ret = asprintf(str, "certificate with id %s", keyid);
+	else
+	    ret = asprintf(str, "certificate");
 	free(keyid);
 	break;
     }

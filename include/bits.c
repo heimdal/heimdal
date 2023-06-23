@@ -267,6 +267,17 @@ int main(int argc, char **argv)
 #endif
     fprintf(f, "\n");
 
+#if !defined(HAVE_PID_T)
+    fprintf(f, "typedef int pid_t;\n");
+#endif
+#if !defined(HAVE_GID_T)
+    fprintf(f, "typedef int gid_t;\n");
+#endif
+#if !defined(HAVE_UID_T)
+    fprintf(f, "typedef int uid_t;\n");
+#endif
+    fprintf(f, "\n");
+
 #endif /* KRB5 */
 
     fprintf(f, "#if !defined(__has_extension)\n");

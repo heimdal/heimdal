@@ -1616,8 +1616,12 @@ match_ms_upn_san(krb5_context context,
 	goto out;
 
     if (list.len != 1) {
-	kdc_log(context, config, 0,
-		"More than one PKINIT MS UPN SAN");
+	if (list.len)
+	    kdc_log(context, config, 0,
+		    "More than one PKINIT MS UPN SAN");
+	else
+	    kdc_log(context, config, 0,
+		    "No PKINIT MS UPN SAN");
 	ret = KRB5_KDC_ERR_CLIENT_NAME_MISMATCH;
 	goto out;
     }

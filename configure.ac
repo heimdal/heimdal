@@ -648,7 +648,8 @@ AX_CHECK_SIGN([time_t],
 
 AC_CHECK_TYPES([int8_t, int16_t, int32_t, int64_t, 
 	u_int8_t, u_int16_t, u_int32_t, u_int64_t,
-	uint8_t, uint16_t, uint32_t, uint64_t],,,[
+	uint8_t, uint16_t, uint32_t, uint64_t,
+        gid_t, uid_t, pid_t],,,[
 #ifdef HAVE_INTTYPES_H
 #include <inttypes.h>
 #endif

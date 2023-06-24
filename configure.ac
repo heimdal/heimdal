@@ -368,15 +368,23 @@ AC_SUBST(ENABLE_AFS_STRING_TO_KEY)dnl
 
 rk_CHECK_MAN
 
-rk_TEST_PACKAGE(readline,
-[#include <stdio.h>
-#if defined(HAVE_READLINE_READLINE_H)
-#include <readline/readline.h>
-#elif defined(HAVE_READLINE_H)
-#include <readline.h>
-#endif
-],-lreadline,,, READLINE,, [readline.h readline/readline.h])
+AC_ARG_ENABLE([readline],
+	AS_HELP_STRING([--disable-readline],[if you don't want libreadline to be used]))
+if test "$enable_readline" = yes; then
+    rk_TEST_PACKAGE(readline,
+    [#include <stdio.h>
+    #if defined(HAVE_READLINE_READLINE_H)
+    #include <readline/readline.h>
+    #elif defined(HAVE_READLINE_H)
+    #include <readline.h>
+    #endif
+    ],-lreadline,,, READLINE,, [readline.h readline/readline.h])
+fi
 
+AC_ARG_ENABLE([editline],
+	AS_HELP_STRING([--disable-editline],[if you don't want libeditline to be used]))
+
+if test "$enable_editline" = yes; then
 rk_TEST_PACKAGE(libedit,
 [#include <stdio.h>
 #if defined(HAVE_READLINE_READLINE_H)
@@ -389,6 +397,7 @@ rk_TEST_PACKAGE(libedit,
 ],-ledit,,, READLINE,, [readline.h readline/readline.h editline/readline.h])
 
 AC_CONFIG_SUBDIRS([lib/libedit])
+fi
 
 KRB_C_BIGENDIAN
 AC_C_INLINE
@@ -670,7 +679,11 @@ AC_CHECK_TYPES([int8_t, int16_t, int32_t, int64_t,
 rk_FRAMEWORK_SECURITY
 rk_FRAMEWORK_COREFOUNDATION
 
-KRB_READLINE
+if test $enable_readline = yes -o $enable_editline = yes; then
+    KRB_READLINE
+else
+    AM_CONDITIONAL(LIBEDIT, false)
+fi
 
 rk_TELNET
 

@@ -76,6 +76,13 @@ libdir="$libdir$abilibdirext"
 
 AC_C___ATTRIBUTE__
 
+case "$host" in
+*mingw*) mingw=yes;;
+*) mingw=no;;
+esac
+
+AM_CONDITIONAL(MINGW, test "$mingw" = "yes")
+
 AM_CONDITIONAL(ENABLE_SHARED, test "$enable_shared" = "yes")
 rk_VERSIONSCRIPT
 

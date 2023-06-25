@@ -4,13 +4,19 @@ SUFFIXES = .et .h .pc.in .pc
 
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/include -I$(top_srcdir)/include
 
+if MINGW
+MINGW_CPPFLAGS = -DWIN32 -D_WIN32 -D__USE_MINGW_ALARM
+else
+MINGW_CPPFLAGS =
+endif
+
 AM_CPPFLAGS = $(INCLUDES_roken)
 
 if do_roken_rename
 ROKEN_RENAME = -DROKEN_RENAME
 endif
 
-AM_CFLAGS = $(WFLAGS)
+AM_CFLAGS = $(MINGW_CPPFLAGS) $(WFLAGS)
 
 CLANG_FORMAT_STYLE = '{BasedOnStyle: Mozilla, AlwaysBreakAfterReturnType: TopLevelDefinitions, IndentWidth: 4, SortIncludes: false}'
 

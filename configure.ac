@@ -113,6 +113,8 @@ if test "${cross_compiling}" != yes ; then
 
    ASN1_COMPILE_DEP="\$(ASN1_COMPILE)"
    SLC_DEP="\$(SLC)"
+
+   ac_cv_prog_COMPILE_ET=
 else
    ASN1_COMPILE="${with_cross_tools}asn1_compile"
    SLC="${with_cross_tools}slc"
@@ -121,7 +123,6 @@ else
    SLC_DEP=
 
    ac_cv_prog_COMPILE_ET=${with_cross_tools}compile_et
-
 fi
 
 AX_CHECK_COMPILE_FLAG([-Wno-error=enum-conversion],

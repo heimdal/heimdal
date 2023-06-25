@@ -3,11 +3,17 @@ dnl
 dnl CHECK_COMPILE_ET
 AC_DEFUN([CHECK_COMPILE_ET], [
 
-AC_CHECK_PROG(COMPILE_ET, compile_et, [compile_et], [no])
-
 krb_cv_compile_et="no"
 krb_cv_com_err_need_r=""
 krb_cv_compile_et_cross=no
+
+if test -n "$ac_cv_prog_COMPILE_ET"; then
+    # cross compiling
+    COMPILE_ET=$ac_cv_prog_COMPILE_ET
+    krb_cv_compile_et="yes"
+    krb_cv_compile_et_cross=yes
+else
+    AC_CHECK_PROG(COMPILE_ET, compile_et, [compile_et], [no])
 if test "${COMPILE_ET}" != "no"; then
 
 dnl We have compile_et.  Now let's see if it supports `prefix' and `index'.
@@ -42,6 +48,8 @@ return (CONFTEST_CODE2 - CONFTEST_CODE1) != 127;}
   [krb_cv_compile_et="yes" krb_cv_compile_et_cross=yes] )
 fi
 AC_MSG_RESULT(${krb_cv_compile_et})
+fi
+
 if test "${krb_cv_compile_et}" = "yes" -a "${krb_cv_compile_et_cross}" = no; then
   AC_MSG_CHECKING([for if com_err generates a initialize_conf_error_table_r])
   AC_EGREP_CPP([initialize_conf_error_table_r.*struct et_list],

@@ -572,6 +572,7 @@ AC_CHECK_FUNCS([				\
 	arc4random				\
 	backtrace				\
 	fcntl					\
+	fsync					\
 	fork					\
 	fseeko					\
 	ftello					\

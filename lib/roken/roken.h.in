@@ -759,6 +759,26 @@ ROKEN_LIB_FUNCTION char* ROKEN_LIB_CALL getcwd(char *, size_t);
 #include <pwd.h>
 #endif
 
+#ifndef HAVE_GETUID
+#define getuid gk_getuid
+ROKEN_LIB_FUNCTION gid_t ROKEN_LIB_CALL getuid(void);
+#endif
+
+#ifndef HAVE_GETEUID
+#define geteuid gk_geteuid
+ROKEN_LIB_FUNCTION uid_t ROKEN_LIB_CALL geteuid(void);
+#endif
+
+#ifndef HAVE_GETGID
+#define getgid gk_getgid
+ROKEN_LIB_FUNCTION gid_t ROKEN_LIB_CALL getgid(void);
+#endif
+
+#ifndef HAVE_GETEGID
+#define getegid rk_getegid
+ROKEN_LIB_FUNCTION gid_t ROKEN_LIB_CALL getegid(void);
+#endif
+
 #ifndef HAVE_SETEUID
 #define seteuid rk_seteuid
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL seteuid(uid_t);

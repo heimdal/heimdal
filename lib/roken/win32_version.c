@@ -22,12 +22,12 @@ GetVersionInfo(CHAR *filename, CHAR *szOutput, DWORD dwOutput)
 	return ERROR_NOT_ENOUGH_MEMORY;
 
     GetFileVersionInfo(filename, dwVersionHandle, size, pVersionInfo);
-    if (retval = GetLastError())
+    if ((retval = GetLastError()))
 	goto cleanup;
 
     VerQueryValue(pVersionInfo, TEXT("\\VarFileInfo\\Translation"),
 		       (LPVOID*)&pLangInfo, &len);
-    if (retval = GetLastError())
+    if ((retval = GetLastError()))
 	goto cleanup;
 
     wsprintf(szVerQ,
@@ -35,14 +35,14 @@ GetVersionInfo(CHAR *filename, CHAR *szOutput, DWORD dwOutput)
 	     LOWORD(*pLangInfo), HIWORD(*pLangInfo));
 
     VerQueryValue(pVersionInfo, szVerQ, (LPVOID*)&szVersion, &len);
-    if (retval = GetLastError()) {
+    if ((retval = GetLastError())) {
 	/* try again with language 409 since the old binaries were tagged wrong */
 	wsprintf(szVerQ,
 		  TEXT("\\StringFileInfo\\0409%04x\\FileVersion"),
 		  HIWORD(*pLangInfo));
 
 	VerQueryValue(pVersionInfo, szVerQ, (LPVOID*)&szVersion, &len);
-	if (retval = GetLastError())
+	if ((retval = GetLastError()))
 	    goto cleanup;
     }
     snprintf(szOutput, dwOutput, TEXT("%s"), szVersion);
@@ -54,6 +54,9 @@ GetVersionInfo(CHAR *filename, CHAR *szOutput, DWORD dwOutput)
     return retval;
 }
 
+typedef DWORD (WINAPI *pGetModuleFileNameExA_t)(HANDLE, HMODULE, LPTSTR, DWORD);
+typedef BOOL (WINAPI *pEnumProcessModules_t)(HANDLE, HMODULE *, DWORD, LPDWORD);
+
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 win32_getLibraryVersion(const char *libname, char **outname, char **outversion)
 {
@@ -64,8 +67,8 @@ win32_getLibraryVersion(const char *libname, char **outname, char **outversion)
     unsigned int i;
     int success = -1;
     HINSTANCE hPSAPI;
-    DWORD (WINAPI *pGetModuleFileNameExA)(HANDLE hProcess, HMODULE hModule, LPTSTR lpFilename, DWORD nSize);
-    BOOL (WINAPI *pEnumProcessModules)(HANDLE hProcess, HMODULE* lphModule, DWORD cb, LPDWORD lpcbNeeded);
+    pGetModuleFileNameExA_t pGetModuleFileNameExA;
+    pEnumProcessModules_t pEnumProcessModules;
 
     if (outversion)
 	*outversion = NULL;
@@ -76,10 +79,11 @@ win32_getLibraryVersion(const char *libname, char **outname, char **outversion)
     if ( hPSAPI == NULL )
 	return -1;
 
-    if (((FARPROC) pGetModuleFileNameExA =
-	  GetProcAddress( hPSAPI, "GetModuleFileNameExA" )) == NULL ||
-	 ((FARPROC) pEnumProcessModules =
-	   GetProcAddress( hPSAPI, "EnumProcessModules" )) == NULL)
+    if ((pGetModuleFileNameExA =
+            (pGetModuleFileNameExA_t)GetProcAddress(hPSAPI,
+                                                     "GetModuleFileNameExA")) == NULL ||
+        (pEnumProcessModules =
+            (pEnumProcessModules_t)GetProcAddress(hPSAPI, "EnumProcessModules")) == NULL)
     {
 	goto out;
     }

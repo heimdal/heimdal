@@ -534,7 +534,10 @@ struct msghdr {
 #define sendmsg sendmsg_w32
 
 ROKEN_LIB_FUNCTION ssize_t ROKEN_LIB_CALL
-sendmsg_w32(rk_socket_t s, const struct msghdr * msg, int flags);
+sendmsg_w32(rk_socket_t, const struct msghdr *, int);
+
+ROKEN_LIB_FUNCTION ssize_t ROKEN_LIB_CALL
+recvmsg(int, struct msghdr *, int);
 
 #endif	/* HAVE_WINSOCK2_H */
 
@@ -561,9 +564,11 @@ ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL unsetenv(const char *);
 #ifndef HAVE_GETUSERSHELL
 #define getusershell rk_getusershell
 #define endusershell rk_endusershell
+#define setusershell rk_setusershell
 #endif
 ROKEN_LIB_FUNCTION char * ROKEN_LIB_CALL getusershell(void);
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL endusershell(void);
+ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL setusershell(void);
 #endif
 
 #if !defined(HAVE_SNPRINTF) || defined(NEED_SNPRINTF_PROTO)
@@ -1375,6 +1380,10 @@ rk_random(void);
 #undef socket
 #define socket(_fam,_type,_prot) rk_socket(_fam,_type,_prot)
 int ROKEN_LIB_FUNCTION rk_socket(int, int, int);
+#endif
+
+#if defined(WIN32) || defined(HAVE_WINSOCK2_H)
+#define MAXHOSTNAMELEN MaxHostNameLen
 #endif
 
 /* Microsoft VC 2010 POSIX definitions */

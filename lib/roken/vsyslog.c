@@ -33,7 +33,7 @@
 
 #include <config.h>
 
-#ifndef HAVE_VSYSLOG
+#if !defined(HAVE_VSYSLOG) && defined(HAVE_SYSLOG_H)
 
 #include <stdio.h>
 #include <syslog.h>

@@ -44,6 +44,10 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+#ifdef WIN32
+#include <io.h>
+#include <signal.h>
+#endif
 #include <errno.h>
 
 #include "roken.h"

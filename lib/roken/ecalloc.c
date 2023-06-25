@@ -48,6 +48,6 @@ ecalloc (size_t number, size_t size)
     void *tmp = calloc (number, size);
 
     if (tmp == NULL && number * size != 0)
-	errx (1, "calloc %lu failed", (unsigned long)number * size);
+	errx (1, "calloc(%"PRIu64",%"PRIu64" failed", (uint64_t)number, (uint64_t)size);
     return tmp;
 }

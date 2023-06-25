@@ -433,6 +433,7 @@ AC_CHECK_HEADERS([\
 	libutil.h				\
 	limits.h				\
 	maillock.h				\
+	minwindef.h				\
 	netgroup.h				\
 	netinet/in6_machtypes.h			\
 	netinet/tcp.h				\

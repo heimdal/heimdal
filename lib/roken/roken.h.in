@@ -1103,11 +1103,8 @@ ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
 rk_freeaddrinfo(struct addrinfo *);
 
 #ifndef HAVE_GAI_STRERROR
+#if !defined(WIN32) && defined(HAVE_WINSOCK2_H)
 #define gai_strerror rk_gai_strerror
-#ifdef WIN32
-ROKEN_LIB_FUNCTION char * ROKEN_LIB_CALL
-gai_strerror(int);
-#else
 ROKEN_LIB_FUNCTION const char * ROKEN_LIB_CALL
 gai_strerror(int);
 #endif

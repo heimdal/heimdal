@@ -240,30 +240,27 @@ SUFFIXES += .hin
 .hin.h:
 	cp $< $@
 
-# Make make-roken deprecated in 1.4 when we know that roken-h-process.pl works
-if !CROSS_COMPILE
-
+# Replace make-roken with cf/roken-h-process.pl some day?
 noinst_PROGRAMS += make-roken
 BUILT_SOURCES += make-roken.c
 
 nodist_make_roken_SOURCES = make-roken.c
 
-roken.h: make-roken$(EXEEXT)
-	@./make-roken$(EXEEXT) > tmp.h ;\
+roken.h: make-roken$(BUILD_EXEEXT)
+	./make-roken$(BUILD_EXEEXT) > tmp.h ;\
 	if [ -f roken.h ] && cmp -s tmp.h roken.h ; then rm -f tmp.h ; \
 	else rm -f roken.h; mv tmp.h roken.h; fi
 
 make-roken.c: roken.h.in roken.awk
 	$(AWK) -f $(srcdir)/roken.awk $(srcdir)/roken.h.in > make-roken.c
 
-else
+make-roken: make-roken.c
+	$(CC_FOR_BUILD) -o $@ -DHAVE_CONFIG_H -I$(top_builddir)/include $<
 
-roken.h: $(top_srcdir)/cf/roken-h-process.pl roken.h.in
-	perl $(top_srcdir)/cf/roken-h-process.pl \
-	-c $(top_builddir)/include/config.h  \
-	-p $(srcdir)/roken.h.in -o roken.h
-
-endif
+#roken.h: $(top_srcdir)/cf/roken-h-process.pl roken.h.in
+#	perl $(top_srcdir)/cf/roken-h-process.pl \
+#	-c $(top_builddir)/include/config.h  \
+#	-p $(srcdir)/roken.h.in -o roken.h
 
 
 EXTRA_DIST = \

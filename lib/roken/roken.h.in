@@ -52,6 +52,10 @@
 #include <util.h>
 #endif
 
+#ifdef HAVE_MINWINDEF_H
+#include <minwindef.h>
+#endif
+
 # ifndef ROKEN_LIB_FUNCTION
 #  ifdef _WIN32
 #   ifdef ROKEN_LIB_DYNAMIC
@@ -148,7 +152,7 @@
 #endif
 #endif
 
-#ifdef HAVE_WINSOCK
+#if defined(HAVE_WINSOCK2_H) || defined(WIN32)
 /* Declarations for Microsoft Windows */
 
 #include <winsock2.h>
@@ -381,6 +385,7 @@ typedef int ssize_t;
 #endif  /* SSIZE_T_DEFINED */
 #endif  /* HAVE_SSIZE_T */
 
+#include <krb5-types.h>
 #include <roken-common.h>
 
 ROKEN_CPP_START
@@ -507,7 +512,7 @@ rk_wcsdup(const unsigned short *);
 ROKEN_LIB_FUNCTION void * ROKEN_LIB_CALL memmem(const void *, size_t, const void *, size_t);
 #endif
 
-#ifdef HAVE_WINSOCK
+#ifdef HAVE_WINSOCK2_H
 
 /* While we are at it, define WinSock specific scatter gather socket
    I/O. */
@@ -531,7 +536,7 @@ struct msghdr {
 ROKEN_LIB_FUNCTION ssize_t ROKEN_LIB_CALL
 sendmsg_w32(rk_socket_t s, const struct msghdr * msg, int flags);
 
-#endif	/* HAVE_WINSOCK */
+#endif	/* HAVE_WINSOCK2_H */
 
 #ifndef HAVE_PUTENV
 #define putenv rk_putenv
@@ -717,7 +722,7 @@ ROKEN_LIB_FUNCTION const char * ROKEN_LIB_CALL hstrerror(int);
 #endif
 #endif
 
-#if !HAVE_DECL_H_ERRNO
+#if !HAVE_DECL_H_ERRNO && !defined(HAVE_WINSOCK2_H)
 extern int h_errno;
 #endif
 
@@ -895,7 +900,7 @@ int rk_flock(int fd, int operation);
 #elif defined(HAVE_DIR_D_FD)
 #define dirfd(x) ((x)->d_fd)
 #else
-#ifndef _WIN32 /* Windows code never calls dirfd */
+#ifndef HAVE_WINSOCK2_H /* Windows code never calls dirfd */
 #error Missing dirfd() and ->dd_fd and ->d_fd
 #endif
 #endif
@@ -1078,10 +1083,12 @@ rk_getnameinfo(const struct sockaddr *, socklen_t,
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
 rk_freeaddrinfo(struct addrinfo *);
 
-#ifndef HAVE_GAI_STRERROR
+#if 0
+#if HAVE_GAI_STRERROR
 #define gai_strerror rk_gai_strerror
 ROKEN_LIB_FUNCTION const char * ROKEN_LIB_CALL
 gai_strerror(int);
+#endif
 #endif
 
 #ifdef NO_SLEEP

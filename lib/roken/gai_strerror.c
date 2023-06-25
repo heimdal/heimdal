@@ -54,7 +54,9 @@ static struct gai_error {
 {EAI_NONAME,		"nodename nor servname provided, or not known"},
 {EAI_SERVICE,		"servname not supported for ai_socktype"},
 {EAI_SOCKTYPE,		"ai_socktype not supported"},
+#ifdef EAI_SYSTEM
 {EAI_SYSTEM,		"system error returned in errno"},
+#endif
 {0,			NULL},
 };
 

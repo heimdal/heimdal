@@ -1476,7 +1476,7 @@ _kdc_pk_mk_pa_reply(astgs_request_t r, pk_client_params *cp)
 	    if (ret) {
 		close(fd);
 		kdc_log(r->context, config, 0,
-			"PKINIT failed to stat ocsp data %d", ret);
+			"PKINIT failed to allocate ocsp data %d", ret);
 		goto out_ocsp;
 	    }
 	    ocsp.data.length = sb.st_size;

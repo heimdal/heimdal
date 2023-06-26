@@ -889,7 +889,7 @@ pa_enc_ts_validate(astgs_request_t r, const PA_DATA *pa)
     krb5_crypto_destroy(r->context, crypto);
     /*
      * Since the user might have several keys with the same
-     * enctype but with diffrent salting, we need to try all
+     * enctype but with different salting, we need to try all
      * the keys with the same enctype.
      */
     if(ret){
@@ -1454,7 +1454,7 @@ get_pa_etype_info2(krb5_context context,
 }
 
 /*
- * Return 0 if the client have only older enctypes, this is for
+ * Return 0 if the client has only older enctypes, this is for
  * determining if the server should send ETYPE_INFO2 or not.
  */
 
@@ -2511,7 +2511,7 @@ _kdc_as_rep(astgs_request_t r)
 	_kdc_fix_time(&b->till);
 	t = *b->till;
 
-	/* be careful not overflowing */
+	/* be careful not to overflow */
 
         /*
          * Pre-auth can override r->client->max_life if configured.
@@ -2640,7 +2640,7 @@ _kdc_as_rep(astgs_request_t r)
     }
 
     /*
-     * Check and session and reply keys
+     * Check session and reply keys
      */
 
     if (r->session_key.keytype == ETYPE_NULL) {
@@ -2734,7 +2734,7 @@ _kdc_as_rep(astgs_request_t r)
 	goto out;
 
     /*
-     * Check if message too large
+     * Check if message is too large
      */
     if (r->datagram_reply && r->reply->length > config->max_datagram_reply_length) {
 	krb5_data_free(r->reply);

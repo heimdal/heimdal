@@ -1520,13 +1520,11 @@ hx509_cms_create_signed(hx509_context context,
 			heim_octet_string *signed_data)
 {
     unsigned int i, j;
-    hx509_name name;
     int ret;
     size_t size;
     struct sigctx sigctx;
 
     memset(&sigctx, 0, sizeof(sigctx));
-    memset(&name, 0, sizeof(name));
 
     if (eContentType == NULL)
 	eContentType = &asn1_oid_id_pkcs7_data;

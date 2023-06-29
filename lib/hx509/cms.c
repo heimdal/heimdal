@@ -1190,7 +1190,7 @@ add_one_attribute(Attribute **attr,
 }
 
 /**
- * Decode SignedData and verify that the signature is correct.
+ * Sign and encode a SignedData structure.
  *
  * @param context A hx509 context.
  * @param flags

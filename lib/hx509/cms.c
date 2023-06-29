@@ -977,14 +977,14 @@ hx509_cms_verify_signed_ext(hx509_context context,
 				       "SignerInfo has signed attributes "
 				       "but messageDigest (signature) "
 				       "is missing");
-		goto next_sigature;
+		goto next_signature;
 	    }
 	    if (attr->value.len != 1) {
 		ret = HX509_CRYPTO_SIGNATURE_MISSING;
 		hx509_set_error_string(context, 0, ret,
 				       "SignerInfo has more than one "
 				       "messageDigest (signature)");
-		goto next_sigature;
+		goto next_signature;
 	    }
 
 	    ret = decode_MessageDigest(attr->value.val[0].data,
@@ -995,7 +995,7 @@ hx509_cms_verify_signed_ext(hx509_context context,
 		hx509_set_error_string(context, 0, ret,
 				       "Failed to decode "
 				       "messageDigest (signature)");
-		goto next_sigature;
+		goto next_signature;
 	    }
 
 	    ret = _hx509_verify_signature(context,
@@ -1007,7 +1007,7 @@ hx509_cms_verify_signed_ext(hx509_context context,
 	    if (ret) {
 		hx509_set_error_string(context, HX509_ERROR_APPEND, ret,
 				       "Failed to verify messageDigest");
-		goto next_sigature;
+		goto next_signature;
 	    }
 
 	    /*
@@ -1022,7 +1022,7 @@ hx509_cms_verify_signed_ext(hx509_context context,
 		    ret = HX509_CMS_DATA_OID_MISMATCH;
 		    hx509_set_error_string(context, 0, ret,
 					   "More than one oid in signedAttrs");
-		    goto next_sigature;
+		    goto next_signature;
 
 		}
 		ret = decode_ContentType(attr->value.val[0].data,
@@ -1033,7 +1033,7 @@ hx509_cms_verify_signed_ext(hx509_context context,
 		    hx509_set_error_string(context, 0, ret,
 					   "Failed to decode "
 					   "oid in signedAttrs");
-		    goto next_sigature;
+		    goto next_signature;
 		}
 		match_oid = &decode_oid;
 	    }
@@ -1047,7 +1047,7 @@ hx509_cms_verify_signed_ext(hx509_context context,
 		if (match_oid == &decode_oid)
 		    der_free_oid(&decode_oid);
 		hx509_clear_error_string(context);
-		goto next_sigature;
+		goto next_signature;
 	    }
 	    if (size != signed_data.length)
 		_hx509_abort("internal ASN.1 encoder error");
@@ -1091,7 +1091,7 @@ hx509_cms_verify_signed_ext(hx509_context context,
             signed_data.data = NULL;
         }
 	if (ret)
-	    goto next_sigature;
+	    goto next_signature;
 
 	/**
 	 * If HX509_CMS_VS_NO_VALIDATE flags is set, return the signer
@@ -1107,7 +1107,7 @@ hx509_cms_verify_signed_ext(hx509_context context,
 		found_valid_sig++;
 	}
 
-    next_sigature:
+    next_signature:
 	if (cert)
 	    hx509_cert_free(cert);
 	cert = NULL;

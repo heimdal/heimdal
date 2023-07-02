@@ -556,6 +556,12 @@ pa_pkinit_validate(astgs_request_t r, const PA_DATA *pa)
     kdc_audit_setkv_number((kdc_request_t)r, KDC_REQUEST_KV_AUTH_EVENT,
 			   KDC_AUTH_EVENT_PREAUTH_SUCCEEDED);
 
+    /*
+     * Match Windows by preferring the authenticator nonce over the one in the
+     * request body.
+     */
+    r->ek.nonce = _kdc_pk_nonce(pkp);
+
  out:
     if (pkp)
 	_kdc_pk_free_client_param(r->context, pkp);
@@ -2611,7 +2617,10 @@ _kdc_as_rep(astgs_request_t r)
 	r->ek.last_req.val[r->ek.last_req.len].lr_value = 0;
 	++r->ek.last_req.len;
     }
-    r->ek.nonce = b->nonce;
+    /* Set the nonce if it’s not already set. */
+    if (!r->ek.nonce) {
+	r->ek.nonce = b->nonce;
+    }
     if (r->client->valid_end || r->client->pw_end) {
 	ALLOC(r->ek.key_expiration);
 	if (r->client->valid_end) {

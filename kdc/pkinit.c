@@ -801,6 +801,12 @@ _kdc_pk_max_life(pk_client_params *pkp)
     return pkp->max_life;
 }
 
+unsigned
+_kdc_pk_nonce(pk_client_params *pkp)
+{
+    return pkp->nonce;
+}
+
 /*
  *
  */

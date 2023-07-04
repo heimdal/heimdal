@@ -854,7 +854,7 @@ pa_enc_ts_validate(astgs_request_t r, const PA_DATA *pa)
 			  enc_data.etype, &pa_key);
     if(ret){
 	char *estr;
-	_kdc_set_e_text(r, "No key matching entype");
+	_kdc_set_e_text(r, "No key matching enctype");
 	ret = KRB5KDC_ERR_ETYPE_NOSUPP;
 	if(krb5_enctype_to_string(r->context, enc_data.etype, &estr))
 	    estr = NULL;
@@ -926,7 +926,7 @@ pa_enc_ts_validate(astgs_request_t r, const PA_DATA *pa)
     krb5_data_free(&ts_data);
     if(ret){
 	ret = KRB5KDC_ERR_PREAUTH_FAILED;
-	_kdc_r_log(r, 4, "Failed to decode PA-ENC-TS_ENC -- %s",
+	_kdc_r_log(r, 4, "Failed to decode PA-ENC-TS-ENC -- %s",
 		   r->cname);
 	goto out;
     }
@@ -2470,7 +2470,7 @@ _kdc_as_rep(astgs_request_t r)
     if(r->client->flags.postdate && r->server->flags.postdate)
 	r->et.flags.may_postdate = f.allow_postdate;
     else if (f.allow_postdate){
-	_kdc_set_e_text(r, "Ticket may not be postdate");
+	_kdc_set_e_text(r, "Ticket may not be postdateable");
 	ret = KRB5KDC_ERR_POLICY;
 	goto out;
     }
@@ -2650,7 +2650,7 @@ _kdc_as_rep(astgs_request_t r)
     }
 
     if (r->reply_key.keytype == ETYPE_NULL) {
-	_kdc_set_e_text(r, "Client have no reply key");
+	_kdc_set_e_text(r, "Client has no reply key");
 	ret = KRB5KDC_ERR_CLIENT_NOTYET;
 	goto out;
     }

@@ -110,7 +110,7 @@ pk_check_pkauthenticator_win2k(krb5_context context,
 
 static krb5_error_code
 pk_check_pkauthenticator(krb5_context context,
-			 PKAuthenticator *a,
+			 const PKAuthenticator *a,
 			 const KDC_REQ *req)
 {
     krb5_error_code ret;

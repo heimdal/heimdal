@@ -2224,6 +2224,33 @@ _kdc_as_rep(astgs_request_t r)
     }
 
     /*
+     * Select the best encryption type for the KDC without regard to
+     * the client since the client never needs to read that data.
+     */
+
+    ret = _kdc_get_preferred_key(r->context, config,
+				 r->server, r->sname,
+				 &setype, &skey);
+    if(ret)
+	goto out;
+
+    /* If server is not krbtgt, fetch local krbtgt key for signing authdata */
+    if (is_tgs) {
+	krbtgt_key = skey;
+    } else {
+	ret = get_local_tgs(r->context, config, r->server_princ->realm,
+			    &r->krbtgtdb, &r->krbtgt);
+	if (ret)
+	    goto out;
+
+	ret = _kdc_get_preferred_key(r->context, config, r->krbtgt,
+				      r->server_princ->realm,
+				      NULL, &krbtgt_key);
+	if (ret)
+	    goto out;
+    }
+
+    /*
      * Pre-auth processing
      */
 
@@ -2384,33 +2411,6 @@ _kdc_as_rep(astgs_request_t r)
 
     kdc_audit_setkv_number((kdc_request_t)r, KDC_REQUEST_KV_AUTH_EVENT,
 			   KDC_AUTH_EVENT_CLIENT_AUTHORIZED);
-
-    /*
-     * Select the best encryption type for the KDC without regard to
-     * the client since the client never needs to read that data.
-     */
-
-    ret = _kdc_get_preferred_key(r->context, config,
-				 r->server, r->sname,
-				 &setype, &skey);
-    if(ret)
-	goto out;
-
-    /* If server is not krbtgt, fetch local krbtgt key for signing authdata */
-    if (is_tgs) {
-	krbtgt_key = skey;
-    } else {
-	ret = get_local_tgs(r->context, config, r->server_princ->realm,
-			    &r->krbtgtdb, &r->krbtgt);
-	if (ret)
-	    goto out;
-
-	ret = _kdc_get_preferred_key(r->context, config, r->krbtgt,
-				      r->server_princ->realm,
-				      NULL, &krbtgt_key);
-	if (ret)
-	    goto out;
-    }
 
     if(f.renew || f.validate || f.proxy || f.forwarded || f.enc_tkt_in_skey) {
 	ret = KRB5KDC_ERR_BADOPTION;

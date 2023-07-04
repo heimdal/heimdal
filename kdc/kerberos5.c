@@ -526,6 +526,13 @@ pa_pkinit_validate(astgs_request_t r, const PA_DATA *pa)
 	goto out;
     }
 
+    /* Validate the freshness token. */
+    ret = _kdc_pk_validate_freshness_token(r, pkp);
+    if (ret) {
+	_kdc_r_log(r, 4, "Failed to validate freshness token");
+	goto out;
+    }
+
     ret = _kdc_pk_check_client(r, pkp, &client_cert);
     if (client_cert)
 	kdc_audit_addkv((kdc_request_t)r, 0, KDC_REQUEST_KV_PKINIT_CLIENT_CERT,
@@ -984,6 +991,109 @@ pa_enc_ts_validate(astgs_request_t r, const PA_DATA *pa)
 
  out:
 
+    return ret;
+}
+
+#ifdef PKINIT
+
+static krb5_error_code
+make_freshness_token(astgs_request_t r, const Key *krbtgt_key, unsigned krbtgt_kvno)
+{
+    krb5_error_code ret = 0;
+    const struct timeval current_kdc_time = krb5_kdc_get_time();
+    int usec = current_kdc_time.tv_usec;
+    const PA_ENC_TS_ENC ts_enc = {
+	.patimestamp = current_kdc_time.tv_sec,
+	.pausec = &usec,
+    };
+    unsigned char *encoded_ts_enc = NULL;
+    size_t ts_enc_size;
+    size_t ts_enc_len = 0;
+    EncryptedData encdata;
+    krb5_crypto crypto;
+    unsigned char *token = NULL;
+    size_t token_size;
+    size_t token_len = 0;
+    size_t token_alloc_size;
+
+    ASN1_MALLOC_ENCODE(PA_ENC_TS_ENC,
+		       encoded_ts_enc,
+		       ts_enc_size,
+		       &ts_enc,
+		       &ts_enc_len,
+		       ret);
+    if (ret)
+	return ret;
+    if (ts_enc_size != ts_enc_len)
+	krb5_abortx(r->context, "internal error in ASN.1 encoder");
+
+    ret = krb5_crypto_init(r->context, &krbtgt_key->key, 0, &crypto);
+    if (ret) {
+	free(encoded_ts_enc);
+	return ret;
+    }
+
+    ret = krb5_encrypt_EncryptedData(r->context,
+				     crypto,
+				     KRB5_KU_AS_FRESHNESS,
+				     encoded_ts_enc,
+				     ts_enc_len,
+				     krbtgt_kvno,
+				     &encdata);
+    free(encoded_ts_enc);
+    krb5_crypto_destroy(r->context, crypto);
+    if (ret)
+	return ret;
+
+    token_size = length_EncryptedData(&encdata);
+    token_alloc_size = token_size + 2; /* Account for the two leading zero bytes. */
+    token = calloc(1, token_alloc_size);
+    if (token == NULL) {
+	free_EncryptedData(&encdata);
+	return ENOMEM;
+    }
+
+    ret = encode_EncryptedData(token + token_alloc_size - 1,
+			       token_size,
+			       &encdata,
+			       &token_len);
+    free_EncryptedData(&encdata);
+    if (ret) {
+	free(token);
+	return ret;
+    }
+    if (token_size != token_len)
+	krb5_abortx(r->context, "internal error in ASN.1 encoder");
+
+    ret = krb5_padata_add(r->context,
+			  r->rep.padata,
+			  KRB5_PADATA_AS_FRESHNESS,
+			  token,
+			  token_alloc_size);
+    if (ret)
+	free(token);
+    return ret;
+}
+
+#endif /* PKINIT */
+
+static krb5_error_code
+send_freshness_token(astgs_request_t r, const Key *krbtgt_key, unsigned krbtgt_kvno)
+{
+    krb5_error_code ret = 0;
+#ifdef PKINIT
+    int idx = 0;
+    const PA_DATA *freshness_padata = NULL;
+
+    freshness_padata = _kdc_find_padata(&r->req,
+					&idx,
+					KRB5_PADATA_AS_FRESHNESS);
+    if (freshness_padata == NULL) {
+	return 0;
+    }
+
+    ret = make_freshness_token(r, krbtgt_key, krbtgt_kvno);
+#endif /* PKINIT */
     return ret;
 }
 
@@ -2077,6 +2187,7 @@ _kdc_as_rep(astgs_request_t r)
     krb5_boolean is_tgs;
     const char *msg;
     Key *krbtgt_key;
+    unsigned krbtgt_kvno;
 
     memset(rep, 0, sizeof(*rep));
 
@@ -2237,6 +2348,7 @@ _kdc_as_rep(astgs_request_t r)
     /* If server is not krbtgt, fetch local krbtgt key for signing authdata */
     if (is_tgs) {
 	krbtgt_key = skey;
+	krbtgt_kvno = r->server->kvno;
     } else {
 	ret = get_local_tgs(r->context, config, r->server_princ->realm,
 			    &r->krbtgtdb, &r->krbtgt);
@@ -2248,6 +2360,8 @@ _kdc_as_rep(astgs_request_t r)
 				      NULL, &krbtgt_key);
 	if (ret)
 	    goto out;
+
+	krbtgt_kvno = r->server->kvno;
     }
 
     /*
@@ -2366,6 +2480,14 @@ _kdc_as_rep(astgs_request_t r)
 	    if (ret)
 		goto out;
 	}
+
+	/*
+	 * If the client indicated support for PKINIT Freshness, send back a
+	 * freshness token.
+	 */
+	ret = send_freshness_token(r, krbtgt_key, krbtgt_kvno);
+	if (ret)
+	    goto out;
 
 	/* 
 	 * send requre preauth is its required or anon is requested,

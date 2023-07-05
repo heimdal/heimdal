@@ -184,7 +184,7 @@ This is a multi-valued parameter naming one or more stores of
 anchors for PKINIT KDC certificates.
 .It Li pkinit_revoke = Va HX509-STORE ...
 This is a multi-valued parameter naming one or more stores of
-of CRLs for the issuers of PKINIT KDC certificates.
+CRLs for the issuers of PKINIT KDC certificates.
 If no CRLs are configured, then CRLs will not be checked.
 This is because hx509 currently lacks support.
 .El
@@ -904,7 +904,7 @@ is also supported here.
 type stores are OpenSSL-style CA certificate hash directories.
 .It Li pkinit_revoke = Va HX509-STORE ...
 This is a multi-valued parameter naming one or more stores of
-of CRLs for the issuers of PKINIT client certificates.
+CRLs for the issuers of PKINIT client certificates.
 If no CRLs are configured, then CRLs will not be checked.
 This is because the KDC will not dereference CRL distribution
 points nor request OCSP responses.

@@ -220,8 +220,8 @@ wind_ucs4utf8(const uint32_t *in, size_t in_len, char *out, size_t *out_len)
             default:
                 break;
 	    }
+	    out += len;
 	}
-	out += len;
     }
     if (out) {
 	if (o + 1 >= *out_len)

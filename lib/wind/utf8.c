@@ -39,13 +39,17 @@ utf8toutf32(const unsigned char **pp, uint32_t *out)
 {
     const unsigned char *p = *pp;
     uint32_t c = *p;
+    uint32_t out_val;
 
     if (c & 0x80) {
 	if ((c & 0xE0) == 0xC0) {
 	    const uint32_t c2 = *++p;
 	    if ((c2 & 0xC0) == 0x80) {
-		*out =  ((c  & 0x1F) << 6)
+		out_val =  ((c  & 0x1F) << 6)
 		    | (c2 & 0x3F);
+		if (out_val < 0x80) {
+		    return WIND_ERR_INVALID_UTF8;
+		}
 	    } else {
 		return WIND_ERR_INVALID_UTF8;
 	    }
@@ -54,9 +58,12 @@ utf8toutf32(const unsigned char **pp, uint32_t *out)
 	    if ((c2 & 0xC0) == 0x80) {
 		const uint32_t c3 = *++p;
 		if ((c3 & 0xC0) == 0x80) {
-		    *out =   ((c  & 0x0F) << 12)
+		    out_val =   ((c  & 0x0F) << 12)
 			| ((c2 & 0x3F) << 6)
 			|  (c3 & 0x3F);
+		    if (out_val < 0x800) {
+			return WIND_ERR_INVALID_UTF8;
+		    }
 		} else {
 		    return WIND_ERR_INVALID_UTF8;
 		}
@@ -70,10 +77,13 @@ utf8toutf32(const unsigned char **pp, uint32_t *out)
 		if ((c3 & 0xC0) == 0x80) {
 		    const uint32_t c4 = *++p;
 		    if ((c4 & 0xC0) == 0x80) {
-			*out =   ((c  & 0x07) << 18)
+			out_val =   ((c  & 0x07) << 18)
 			    | ((c2 & 0x3F) << 12)
 			    | ((c3 & 0x3F) <<  6)
 			    |  (c4 & 0x3F);
+			if (out_val < 0x10000) {
+			    return WIND_ERR_INVALID_UTF8;
+			}
 		    } else {
 			return WIND_ERR_INVALID_UTF8;
 		    }
@@ -87,9 +97,16 @@ utf8toutf32(const unsigned char **pp, uint32_t *out)
 	    return WIND_ERR_INVALID_UTF8;
 	}
     } else {
-	*out = c;
+	out_val = c;
     }
 
+    /* Allow unpaired surrogates (in the range 0xd800–0xdfff). */
+
+    if (out_val > 0x10ffff) {
+	return WIND_ERR_INVALID_UTF8;
+    }
+
+    *out = out_val;
     *pp = p;
 
     return 0;

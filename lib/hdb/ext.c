@@ -43,7 +43,7 @@ hdb_entry_check_mandatory(krb5_context context, const hdb_entry *ent)
 	return 0;
 
     /*
-     * check for unknown extensions and if they where tagged mandatory
+     * check for unknown extensions and if they were tagged mandatory
      */
 
     for (i = 0; i < ent->extensions->len; i++) {

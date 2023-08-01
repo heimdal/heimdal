@@ -47,13 +47,13 @@ def read(filename):
         if not l:
             break
         if inTable:
-            m = re.search('^ *----- End Table ([A-Z0-9\.]+) ----- *$', l)
+            m = re.search(r'^ *----- End Table ([A-Z0-9\.]+) ----- *$', l)
             if m:
                 ret[m.group(1)] = t
                 inTable = False
             else:
                 t.append(l)
-        if re.search('^ *----- Start Table ([A-Z0-9\.]+) ----- *$', l):
+        if re.search(r'^ *----- Start Table ([A-Z0-9\.]+) ----- *$', l):
             inTable = True
             t = []
     f.close()

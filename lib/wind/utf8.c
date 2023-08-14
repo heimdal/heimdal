@@ -431,7 +431,7 @@ wind_utf8ucs2(const char *in, uint16_t *out, size_t *out_len)
  * string.
  *
  * @param in an UTF-8 string to convert.
- * @param out_len the length of the resulting UCS4 string.
+ * @param out_len the length of the resulting UCS2 string.
  *
  * @return returns 0 on success, an wind error code otherwise
  * @ingroup wind

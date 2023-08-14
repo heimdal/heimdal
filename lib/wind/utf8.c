@@ -38,11 +38,11 @@ static int
 utf8toutf32(const unsigned char **pp, uint32_t *out)
 {
     const unsigned char *p = *pp;
-    unsigned c = *p;
+    uint32_t c = *p;
 
     if (c & 0x80) {
 	if ((c & 0xE0) == 0xC0) {
-	    const unsigned c2 = *++p;
+	    const uint32_t c2 = *++p;
 	    if ((c2 & 0xC0) == 0x80) {
 		*out =  ((c  & 0x1F) << 6)
 		    | (c2 & 0x3F);
@@ -50,9 +50,9 @@ utf8toutf32(const unsigned char **pp, uint32_t *out)
 		return WIND_ERR_INVALID_UTF8;
 	    }
 	} else if ((c & 0xF0) == 0xE0) {
-	    const unsigned c2 = *++p;
+	    const uint32_t c2 = *++p;
 	    if ((c2 & 0xC0) == 0x80) {
-		const unsigned c3 = *++p;
+		const uint32_t c3 = *++p;
 		if ((c3 & 0xC0) == 0x80) {
 		    *out =   ((c  & 0x0F) << 12)
 			| ((c2 & 0x3F) << 6)
@@ -64,11 +64,11 @@ utf8toutf32(const unsigned char **pp, uint32_t *out)
 		return WIND_ERR_INVALID_UTF8;
 	    }
 	} else if ((c & 0xF8) == 0xF0) {
-	    const unsigned c2 = *++p;
+	    const uint32_t c2 = *++p;
 	    if ((c2 & 0xC0) == 0x80) {
-		const unsigned c3 = *++p;
+		const uint32_t c3 = *++p;
 		if ((c3 & 0xC0) == 0x80) {
-		    const unsigned c4 = *++p;
+		    const uint32_t c4 = *++p;
 		    if ((c4 & 0xC0) == 0x80) {
 			*out =   ((c  & 0x07) << 18)
 			    | ((c2 & 0x3F) << 12)

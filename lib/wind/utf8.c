@@ -412,15 +412,30 @@ wind_utf8ucs2(const char *in, uint16_t *out, size_t *out_len)
 	if (ret)
 	    return ret;
 
-	if (u & 0xffff0000)
-	    return WIND_ERR_NOT_UTF16;
+	if (u >= 0x10000) {
+	    if (out) {
+		uint16_t high_ten_bits;
+		uint16_t low_ten_bits;
 
-	if (out) {
-	    if (o >= *out_len)
-		return WIND_ERR_OVERRUN;
-	    out[o] = u;
+		if (o + 2 > *out_len)
+		    return WIND_ERR_OVERRUN;
+
+		u -= 0x10000;
+		high_ten_bits = (u >> 10) & 0x3ff;
+		low_ten_bits = u & 0x3ff;
+
+		out[o] = 0xd800 | high_ten_bits;
+		out[o+1] = 0xdc00 | low_ten_bits;
+	    }
+	    o += 2;
+	} else {
+	    if (out) {
+		if (o >= *out_len)
+		    return WIND_ERR_OVERRUN;
+		out[o] = u;
+	    }
+	    o++;
 	}
-	o++;
     }
     *out_len = o;
     return 0;

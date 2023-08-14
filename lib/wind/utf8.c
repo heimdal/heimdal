@@ -478,7 +478,7 @@ wind_utf8ucs2_length(const char *in, size_t *out_len)
 int
 wind_ucs2utf8(const uint16_t *in, size_t in_len, char *out, size_t *out_len)
 {
-    uint16_t ch;
+    uint32_t ch;
     size_t i, len, o;
 
     for (o = 0, i = 0; i < in_len; i++) {
@@ -488,8 +488,36 @@ wind_ucs2utf8(const uint16_t *in, size_t in_len, char *out, size_t *out_len)
 	    len = 1;
 	} else if (ch < 0x800) {
 	    len = 2;
-	} else
+	} else if (ch < 0xd800 || ch >= 0xe000) {
 	    len = 3;
+	} else if (ch < 0xdc00) {
+	    /* A high surrogate. */
+	    if (i < in_len - 1) {
+		uint16_t ch2 = in[i + 1];
+
+		if (ch2 >= 0xdc00 && ch2 < 0xe000) {
+		    uint16_t high_ten_bits;
+		    uint16_t low_ten_bits;
+
+		    /* A surrogate pair. */
+		    high_ten_bits = ch & 0x3ff;
+		    low_ten_bits = ch2 & 0x3ff;
+
+		    ch = 0x10000 + ((uint32_t)high_ten_bits << 10 | low_ten_bits);
+		    len = 4;
+		    ++i;
+		} else {
+		    /* An unpaired high surrogate. */
+		    len = 3;
+		}
+	    } else {
+		/* An unpaired high surrogate. */
+		len = 3;
+	    }
+	} else {
+	    /* An unpaired low surrogate. */
+	    len = 3;
+	}
 
 	o += len;
 
@@ -498,6 +526,10 @@ wind_ucs2utf8(const uint16_t *in, size_t in_len, char *out, size_t *out_len)
 		return WIND_ERR_OVERRUN;
 
 	    switch(len) {
+	    case 4:
+		out[3] = (ch | 0x80) & 0xbf;
+		ch = ch >> 6;
+		HEIM_FALLTHROUGH;
 	    case 3:
 		out[2] = (ch | 0x80) & 0xbf;
 		ch = ch >> 6;

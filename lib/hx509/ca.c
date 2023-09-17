@@ -1187,8 +1187,7 @@ hx509_ca_tbs_add_san_permanentIdentifier_string(hx509_context context,
     p = strchr(freeme, ':');
     if (!p) {
         hx509_set_error_string(context, 0, EINVAL,
-                               "Invalid PermanentIdentifier string (should be \"[<oid>]:[<id>]\")",
-                               oidstr);
+                               "Invalid PermanentIdentifier string (should be \"[<oid>]:[<id>]\")");
         free(freeme);
         return EINVAL;
     }
@@ -1297,8 +1296,7 @@ hx509_ca_tbs_add_san_hardwareModuleName_string(hx509_context context,
     if (!p) {
         hx509_set_error_string(context, 0, EINVAL,
                                "Invalid HardwareModuleName string (should be "
-                               "\"<oid>:<serial>\")",
-                               oidstr);
+                               "\"<oid>:<serial>\")");
         free(freeme);
         return EINVAL;
     }

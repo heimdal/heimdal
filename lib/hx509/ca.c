@@ -1733,7 +1733,12 @@ ca_sign(hx509_context context,
 	    hx509_set_error_string(context, 0, ret, "Out of memory");
 	    goto out;
 	}
-	RAND_bytes(tbsc->serialNumber.data, tbsc->serialNumber.length);
+	ret = RAND_bytes(tbsc->serialNumber.data, tbsc->serialNumber.length);
+	if (ret != 1) {
+	    ret = HX509_CRYPTO_INTERNAL_ERROR;
+	    hx509_set_error_string(context, 0, ret, "Failed to generate random bytes");
+	    goto out;
+	}
 	((unsigned char *)tbsc->serialNumber.data)[0] &= 0x7f;
 	((unsigned char *)tbsc->serialNumber.data)[0] |= 0x40;
     }

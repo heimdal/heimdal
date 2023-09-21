@@ -1925,10 +1925,13 @@ generate_type_header (const Symbol *s)
      * member fields are not OPTIONAL/DEFAULTed.
      */
     generate_subtypes_header(s);
-    fprintf(headerfile, "/*\n");
-    fprintf(headerfile, "%s ::= ", s->name);
-    define_asn1 (0, s->type);
-    fprintf(headerfile, "\n*/\n\n");
+    if (!s->emitted_asn1) {
+        fprintf(headerfile, "/*\n");
+        fprintf(headerfile, "%s ::= ", s->name);
+        define_asn1 (0, s->type);
+        fprintf(headerfile, "\n*/\n\n");
+        emitted_asn1(s);
+    }
 
     /*
      * Emit enums for the outermost tag of this type.  These are needed for

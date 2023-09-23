@@ -218,7 +218,8 @@ krb5_kt_resolve(krb5_context context,
     residual = keytab_name(name, &type, &type_len);
 
     for(i = 0; i < context->num_kt_types; i++) {
-	if(strncasecmp(type, context->kt_types[i].prefix, type_len) == 0)
+	if (strncasecmp(type, context->kt_types[i].prefix, type_len) == 0 &&
+            context->kt_types[i].prefix[type_len] == '\0')
 	    break;
     }
     if(i == context->num_kt_types) {

@@ -58,6 +58,7 @@ kadmin="${kadmin} -l -r $R"
 kdc="${kdc} --addresses=localhost -P $port"
 
 acquire_cred="${TESTS_ENVIRONMENT} ../../lib/gssapi/test_acquire_cred"
+acquire_cred2="${TESTS_ENVIRONMENT} $gsstool acquire-cred"
 test_kcred="${TESTS_ENVIRONMENT} ../../lib/gssapi/test_kcred"
 test_add_store_cred="${TESTS_ENVIRONMENT} ../../lib/gssapi/test_add_store_cred"
 
@@ -210,6 +211,14 @@ ${acquire_cred} \
     --acquire-type=initiate \
     --ccache=${cache} \
     --acquire-name=host@host.test.h5l.se 2>/dev/null || exit 1
+
+echo "test gsstool acquire-cred"
+${acquire_cred2} \
+    --mech=krb5 \
+    --name=user \
+    --from=password=upw \
+    --from=ccache=${cache} \
+    --into=unique_ccache_type=MEMORY || exit 1
 
 trap "" EXIT
 

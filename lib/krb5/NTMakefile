@@ -188,6 +188,7 @@ INCFILES=			\
 	$(INCDIR)\an2ln_plugin.h \
 	$(INCDIR)\ccache_plugin.h \
 	$(INCDIR)\db_plugin.h \
+	$(INCDIR)\keytab_plugin.h \
 	$(INCDIR)\kuserok_plugin.h \
 	$(INCDIR)\locate_plugin.h \
 	$(INCDIR)\send_to_kdc_plugin.h

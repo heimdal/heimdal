@@ -52,10 +52,85 @@ command = {
 	}
 }
 command = {
+	name = "acquire-cred"
+	help = "Acquire a credential"
+	option = {
+		long = "initiator"
+		type = "flag"
+	}
+	option = {
+		long = "acceptor"
+		type = "flag"
+	}
+	option = {
+		long = "mech"
+		type = "strings"
+		argument = "mechanism"
+	}
+	option = {
+		long = "name-type"
+		type = "string"
+		argument = "name-type for desired name"
+	}
+	option = {
+		long = "name"
+		type = "string"
+		argument = "desired name"
+	}
+	option = {
+		long = "time-req"
+		type = "integer"
+		argument = "desired credential lifetime"
+	}
+	option = {
+		long = "from"
+		type = "strings"
+		argument = "key=value pair"
+	}
+	option = {
+		long = "from-prompt"
+		type = "strings"
+		argument = "key=prompt pair"
+	}
+	option = {
+		long = "from-file"
+		type = "strings"
+		argument = "key=filename pair"
+	}
+	option = {
+		long = "into"
+		type = "strings"
+		argument = "key=value pair"
+	}
+	option = {
+		long = "into-prompt"
+		type = "strings"
+		argument = "key=prompt pair"
+	}
+	option = {
+		long = "into-file"
+		type = "strings"
+		argument = "key=filename pair"
+	}
+	option = {
+		long = "verbose"
+                short = "v"
+		type = "flag"
+		help = "Verbose"
+	}
+	option = {
+		long = "shell"
+		short = "s"
+		type = "flag"
+		help = "Verbose"
+	}
+	argument = "[cmd args]"
+}
+command = {
 	name = "help"
 	name = "?"
 	argument = "[command]"
 	min_args = "0"
 	max_args = "1"
-	help = "Help! I need somebody."
+	help = "gsstool mechanisms | attributes | acquire-cred"
 }

@@ -1843,11 +1843,11 @@ _krb5_pk_load_id(krb5_context context,
 		 struct krb5_pk_identity **ret_id,
 		 const char *user_id,
 		 const char *anchor_id,
-		 char * const *chain_list,
-		 char * const *revoke_list,
+		 const char * const *chain_list,
+		 const char * const *revoke_list,
 		 krb5_prompter_fct prompter,
 		 void *prompter_data,
-		 char *password)
+		 const char *password)
 {
     struct krb5_pk_identity *id = NULL;
     struct prompter p;
@@ -2356,12 +2356,12 @@ krb5_get_init_creds_opt_set_pkinit(krb5_context context,
 				   krb5_principal principal,
 				   const char *user_id,
 				   const char *x509_anchors,
-				   char * const * pool,
-				   char * const * pki_revoke,
+				   const char * const *pool,
+				   const char * const *pki_revoke,
 				   int flags,
 				   krb5_prompter_fct prompter,
 				   void *prompter_data,
-				   char *password)
+				   const char *password)
 {
 #ifdef PKINIT
     krb5_error_code ret;
@@ -2385,14 +2385,17 @@ krb5_get_init_creds_opt_set_pkinit(krb5_context context,
     opt->opt_private->pk_init_ctx->peer = NULL;
 
     /* XXX implement krb5_appdefault_strings  */
-    if (pool == NULL)
-        pool = freeme1 = krb5_config_get_strings(context, NULL, "appdefaults",
-                                                 "pkinit_pool", NULL);
+    if (pool == NULL) {
+        freeme1 = krb5_config_get_strings(context, NULL, "appdefaults",
+                                          "pkinit_pool", NULL);
+        pool = (const void *)freeme1;
+    }
 
-    if (pki_revoke == NULL)
-        pki_revoke = freeme2 = krb5_config_get_strings(context, NULL,
-                                                       "appdefaults",
-                                                       "pkinit_revoke", NULL);
+    if (pki_revoke == NULL) {
+        freeme2 = krb5_config_get_strings(context, NULL, "appdefaults",
+                                          "pkinit_revoke", NULL);
+        pki_revoke = (const void *)freeme2;
+    }
 
     if (x509_anchors == NULL) {
 	krb5_appdefault_string(context, "kinit",

@@ -97,8 +97,8 @@ main(int argc, char **argv)
 	krb5_kdc_pk_initialize(context, config,
 			       config->pkinit_kdc_identity,
 			       config->pkinit_kdc_anchors,
-			       config->pkinit_kdc_cert_pool,
-			       config->pkinit_kdc_revoke);
+			       (const char * const *)config->pkinit_kdc_cert_pool,
+			       (const char * const *)config->pkinit_kdc_revoke);
 
     }
 #endif /* PKINIT */

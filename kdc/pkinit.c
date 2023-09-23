@@ -1929,8 +1929,8 @@ krb5_kdc_pk_initialize(krb5_context context,
 		       krb5_kdc_configuration *config,
 		       const char *user_id,
 		       const char *anchors,
-		       char **pool,
-		       char **revoke_list)
+		       const char * const *pool,
+		       const char * const *revoke_list)
 {
     const char *file;
     char *fn = NULL;

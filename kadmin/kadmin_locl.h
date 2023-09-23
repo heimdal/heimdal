@@ -106,6 +106,7 @@ extern int list_chunk_size;
 /* util.c */
 
 void attributes2str(krb5_flags, char *, size_t);
+heim_array_t attributes2json_array(krb5_flags);
 int  str2attributes(const char *, krb5_flags *);
 int  parse_attributes (const char *, krb5_flags *, int *, int);
 int  edit_attributes (const char *, krb5_flags *, int *, int);

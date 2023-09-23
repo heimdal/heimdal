@@ -124,16 +124,13 @@ If no
 is specified, the realm to operate on is taken from the first
 principal.
 .It Nm import Oo JSON-FILE Oc
-Read an array of keytab entries in a JSON file and copy them to
-the keytab.
-Use the
-.Nm list
-command with its
+Read JSON objects or arrays of objects where the objects are
+keytab entries as serialized by the
+.Nm ktutil list
 .Fl Fl json
-option
-and
 .Fl Fl keys
-option to export a keytab.
+command, and append the keytab entries to the keytab, creating it
+if it doesn't exist.
 .It Nm list Oo Fl Fl keys Oc Op Fl Fl timestamp Oo Op Fl Fl json Oc
 List the keys stored in the keytab.
 Use the

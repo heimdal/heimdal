@@ -28,6 +28,7 @@
 
 #include "mech_locl.h"
 
+#ifndef TEST_SEQ_NUMS
 static OM_uint32
 _gss_copy_oid(OM_uint32 *minor_status,
 	      gss_const_OID from_oid,
@@ -379,3 +380,265 @@ _gss_mg_store_buffer(OM_uint32 *minor,
 
     return *minor ? GSS_S_FAILURE : GSS_S_COMPLETE;
 }
+#endif
+
+/*
+ * Check if `sn' is in the window `win', which supports only 32 sequence
+ * numbers in the window.
+ *
+ * Here the window has an odd seqnum that is the center of a 32-bit bitmask of
+ * sequence numbers, and which mask is paired with the low 32 bits of said
+ * center seqnum:
+ *
+ *     +----------------------------------------------+
+ *     | uint64_t center_seqnum (15, 31, 47, 63, ...) |
+ *     | uint64_t mask                                |
+ *     |       +-----------------------------------+  |
+ *     |       | center >>4 & 2^32-1 | 32-bit mask |  |
+ *     |       |     __ __ __ __     | __ __ __ __ |  |
+ *     |       +-----------------------------------+  |
+ *     +----------------------------------------------+
+ *
+ * Our task is to see if `sn' is too old, to maybe slide the window (replace
+ * `center_seqnum') if `sn - center_seqnum > 16' and re-write the mask, to set a
+ * bit in the 32-bit mask if we don't rewrite the mask.
+ *
+ * We use two atomic operations for this: a CAS to replace the `center_seqnum'
+ * (if need be) and a CAS to replace the `mask'.  Note that replacing the
+ * `center_seqnum' can implicitly slide the mask by 16 bits or even invalidate
+ * it altogether.  We use 32 bits of the `center_seqnum' to help with mask
+ * invalidation and recovery from mask invalidation.
+ */
+OM_uint32
+_gss_rcv_seqnum_check1(uint64_t sn, struct seqnum_window *win)
+{
+    uint64_t oldcenter, noo, oldmask, noomask;
+    uint32_t sn_lsb = ((sn >> 4) & ~UINT32_MAX);
+    size_t bit;
+    size_t i = 3;
+
+    oldcenter = heim_base_atomic_load(&win->center_seqnum);
+    if (oldcenter == 0) {
+        /* Win or lose, we win */
+        (void) heim_base_cas_64(&win->center_seqnum, oldcenter, 15);
+        oldcenter = heim_base_atomic_load(&win->center_seqnum);
+    }
+
+    /* Check invariants.  Mainly that `(win->center_seqnum & 15) == 15' */
+    if ((oldcenter & 15) != 15)
+        return GSS_S_FAILURE;
+
+    /* Check if this is a very old or very new token */
+    if (sn < oldcenter - 15)
+        return GSS_S_OLD_TOKEN; /* Fell out of the window */
+
+    /* Check how many times we're willing to race to CAS win->center_seqnum */
+    if (sn > oldcenter + 16)
+        i = ((sn & ~15) - (oldcenter + 1)) >> 4; /* Want to slide window */
+
+    /* While `sn' is far enough ahead of `win->center_seqnum' */
+    for (oldcenter = heim_base_atomic_load(&win->center_seqnum);
+         i && sn > oldcenter + 16;
+         i--, oldcenter = heim_base_atomic_load(&win->center_seqnum)) {
+
+        if ((sn & ~15) <= oldcenter + 16)
+            break; /* In the window now */
+
+        /* Slide window forward */
+        noo = (sn & ~15) - 1;
+        if (heim_base_cas_64(&win->center_seqnum, oldcenter, noo))
+            break;
+    }
+
+    if (sn < oldcenter - 15)
+        return GSS_S_OLD_TOKEN; /* Fell out of the window */
+    if (i == 0)
+        /*
+         * This shouldn't happen.  We can't lose the race to CAS
+         * win->center_seqnum so many times and not find that our sequence
+         * number is now too old, so it must just be very new (far into the
+         * future space of the sequence number window) and other threads are
+         * winning the race with less-new sequence numbers.  After all, we set
+         * the number of go arounds in the loop to the number of half-windows
+         * `sn' is ahead of `win->center_seqnum`!
+         *
+         * So this return should be dead code.
+         */
+        return GSS_S_FAILURE;
+
+    /*
+     * We now need to:
+     *
+     *  - check for mask invalidation
+     *  - check and set the bit corresponding to `sn'
+     *
+     * We use an atomic CAS to set the `bit' in the `win->mask[0]'.  The CAS can
+     * fail and need to be retried.  Since there are only 32 bits in the mask,
+     * we need not try the CAS more than 32 times, so our loop has a hard
+     * bound.
+     */
+    /* `bit' is a bit in whichever half of the 32-bit mask it belongs to */
+    bit = 1ULL << (sn & 15);
+    for (i = 0; i < 32; i++) {
+        uint32_t mask_sn_lsb;
+
+        oldmask = heim_base_atomic_load(&win->masks[0]);
+        mask_sn_lsb = (oldmask >> 4) & UINT32_MAX;
+
+        if (mask_sn_lsb > sn_lsb)
+            /*
+             * While we've been looping, the window slid forward enough to make
+             * `sn' old.
+             */
+            return GSS_S_OLD_TOKEN;
+
+        if (mask_sn_lsb == sn_lsb && sn > oldcenter) {
+            if (sn > oldcenter)
+                /*
+                 * We want to set the `bit' in the high 16-bit half of the
+                 * 32-bit mask half of `win->masks[0]'.  No need to slide the
+                 * mask.
+                 */
+                bit <<= 1;
+            /* else we want to set the `bit' in the low half of... */
+
+            noomask = oldmask | bit;
+        } else if (sn_lsb && mask_sn_lsb == sn_lsb + 1) {
+            /* We need to slide the mask */
+            noomask = (((uint64_t)sn_lsb) << 32) | ((oldmask & UINT32_MAX) >> 16);
+        } else {
+            /* Brand new mask */
+            noomask = (((uint64_t)sn_lsb) << 32) | bit;
+        }
+        if (oldmask & bit)
+            return GSS_S_DUPLICATE_TOKEN;
+
+        /* Finally, CAS the new mask into place */
+        if (!heim_base_cas_64(&win->masks[0], oldmask, noomask))
+            continue;
+
+        /* Returns only in the rest of this loop */
+
+        /* Decide if GAP or UNSEQ token or neither */
+        if ((oldmask & ((uint64_t)UINT32_MAX)) > bit)
+            return GSS_S_GAP_TOKEN;
+        if ((oldmask & ((uint64_t)UINT32_MAX)) < (bit>>1))
+            return GSS_S_UNSEQ_TOKEN;
+        return GSS_S_COMPLETE;
+    }
+    /*
+     * If we tried 32 times to set the bit and failed, then we must have lost a
+     * race with a thread that slid the window forward, making this sequence
+     * number too old now.
+     *
+     * XXX We almost certainly need to go around a few more times to be
+     * certain, since maybe we're setting one of the upper 16 bits and then
+     * that's now in the lower 16 bits.
+     */
+    return GSS_S_OLD_TOKEN;
+}
+
+#if 0
+/*
+ * Check if `sn' is in the window `win', which has `1ULL<<mshift' masks of 32
+ * sequence numbers.  Generalizes _gss_rcv_seqnum_check1() so as to have more
+ * than 32 sequence numbers in the window.
+ *
+ * XXX Implement?
+ *
+ * Generalizing the window sliding should be easy, maybe maybe maybe.
+ */
+OM_uint32
+_gss_rcv_seqnum_checkN(uint64_t sn, struct seqnum_window *win, int8_t mshift)
+{
+}
+#endif
+
+#ifdef TEST_SEQ_NUMS
+#include <inttypes.h>
+#include <gsskrb5_locl.h>
+#include <getarg.h>
+int version_flag;
+int help_flag;
+static struct getargs args[] = {
+    { "version", 0, arg_flag, &version_flag, NULL, NULL },
+    { "help", 'h', arg_flag, &help_flag, NULL, NULL }
+};
+
+int
+main(int argc, char **argv)
+{
+    struct seqnum_window win;
+    size_t linesz = 0;
+    char *line = NULL;
+    int optidx;
+
+    win.center_seqnum = 0;
+    win.masks[0] = 0;
+
+    if (getarg(args, sizeof(args)/sizeof(args[0]), argc, argv, &optidx)) {
+        fprintf(stderr, "Usage: test_seqnums [FILE]\n");
+        exit(1);
+    }
+    if (version_flag) {
+        print_version(NULL);
+        exit(0);
+    }
+    if (help_flag) {
+        printf("Usage: test_seqnums [FILE]\n"
+               "    Inputs to this program are of the following form:\n"
+               "        NUMBER (a received sequence number)\n"
+               "        show   (shows the state of the received window)\n"
+               "        reset  (resets the received window state to\n"
+               "                empty starting at 0)\n");
+        return 0;
+    }
+
+    argc -= optidx;
+    argv += optidx;
+
+    if (argc > 1)
+        errx(1, "Too many arguments");
+    if (argc) {
+        if (freopen(argv[0], "rb", stdin) == NULL)
+            err(1, "Could not open %s", argv[0]);
+    }
+    while (getline(&line, &linesz, stdin) > -1) {
+        uint64_t seqnum = 0;
+
+        if (strcmp(line, "show\n") == 0) {
+            printf("window: %"PRIu64" %"PRIx64"\n", win.center_seqnum, win.masks[0]);
+        } else if (strcmp(line, "reset\n") == 0) {
+            win.center_seqnum = 0;
+            win.masks[0] = 0;
+        } else if (sscanf(line, "%"SCNu64, &seqnum) == 1) {
+            OM_uint32 maj;
+            switch ((maj = _gss_rcv_seqnum_check1(seqnum, &win))) {
+            case GSS_S_FAILURE:
+                printf("%"PRIu64"\tFAIL\n", seqnum);
+                break;
+            case GSS_S_DUPLICATE_TOKEN:
+                printf("%"PRIu64"\tDUP\n", seqnum);
+                break;
+            case GSS_S_OLD_TOKEN:
+                printf("%"PRIu64"\tOLD\n", seqnum);
+                break;
+            case GSS_S_GAP_TOKEN:
+                printf("%"PRIu64"\tGAP\n", seqnum);
+                break;
+            case GSS_S_UNSEQ_TOKEN:
+                printf("%"PRIu64"\tUNSEQ\n", seqnum);
+                break;
+            case GSS_S_COMPLETE:
+                printf("%"PRIu64"\tCOMPLETE\n", seqnum);
+                break;
+            default:
+                errx(1, "Unexpected result: %u", maj);
+            }
+        } else {
+            errx(1, "Did not expect input: %s", line);
+        }
+    }
+    return 0;
+}
+#endif

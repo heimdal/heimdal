@@ -27,6 +27,10 @@
  *	$Id$
  */
 
+#ifndef MECH_UTILS_H
+#define MECH_UTILS_H
+#include "mech_locl.h"
+
 OM_uint32 _gss_free_oid(OM_uint32 *, gss_OID);
 OM_uint32 _gss_intern_oid(OM_uint32 *, gss_const_OID, gss_OID *);
 OM_uint32 _gss_copy_buffer(OM_uint32 *minor_status,
@@ -85,3 +89,43 @@ OM_uint32
 _gss_mg_store_buffer(OM_uint32 *minor,
 		     krb5_storage *sp,
 		     gss_const_buffer_t buffer);
+
+struct seqnum_window {
+    /*
+     * We have 64-bit sequence numbers, but we want to use something like a
+     * sliding bitmask to keep track of received sequence numbers.
+     *
+     * We want to be able to use atomic operations to implement a lock-free
+     * algorithm for checking and setting that we've seen a sequence number.
+     *
+     * We also want to be able to use the same data structure w/o atomics or
+     * locks for single-threaded operation.
+     *
+     * We also need to figure out which GSS supplementary status code to
+     * return (OLD, DUP, GAP, UNSEQ, or none) along with COMPLETE / FAILURE.
+     *
+     * State:
+     *
+     *  - the sequence number the center (odd) of the current window
+     *  - one, two, four, or any power of two of uint64_t values that are
+     *    actually some of the LSB of a sequence number, and a bitmask;
+     *    here it will be 32 bits of the sequence number lsb + a 32-bit bitmask
+     *    of sequence numbers seen in the window of 32 represented by the mask
+     *
+     *    (This generalizes to any number of masks, not just powers of two, but
+     *    division is expensive.)
+     *
+     * It is always possible from looking at a sequence number to tell which
+     * mask would contain it.
+     */
+    heim_base_atomic(uint64_t) center_seqnum;
+    heim_base_atomic(uint64_t) masks[1]; /* 1, 2, ...powers of two */
+};
+
+OM_uint32
+_gss_rcv_seqnum_check1(uint64_t, struct seqnum_window *);
+
+OM_uint32
+_gss_rcv_seqnum_checkN(uint64_t, struct seqnum_window *, int8_t);
+
+#endif /* MECH_UTILS_H */

@@ -27,6 +27,9 @@
  *	$Id$
  */
 
+#ifndef MECH_CONTEXT_H
+#define MECH_CONTEXT_H
+
 #include <gssapi_mech.h>
 
 struct _gss_context {
@@ -49,3 +52,5 @@ _gss_mg_error(gssapi_mech_interface, OM_uint32);
 
 OM_uint32
 _gss_mg_get_error(const gss_OID, OM_uint32, gss_buffer_t);
+
+#endif /* MECH_CONTEXT_H */

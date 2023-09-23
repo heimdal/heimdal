@@ -27,6 +27,9 @@
  *	$Id$
  */
 
+#ifndef MECH_CRED_H
+#define MECH_CRED_H
+
 struct _gss_mechanism_cred {
 	HEIM_TAILQ_ENTRY(_gss_mechanism_cred) gmc_link;
 	gssapi_mech_interface	gmc_mech;	/* mechanism ops for MC */
@@ -63,3 +66,5 @@ _gss_mg_add_mech_cred(OM_uint32 *minor_status,
 		      struct _gss_mechanism_cred **output_cred_handle,
 		      OM_uint32 *initiator_time_rec,
 		      OM_uint32 *acceptor_time_rec);
+
+#endif /* MECH_CRED_H */

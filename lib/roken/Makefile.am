@@ -145,6 +145,7 @@ libroken_la_SOURCES =		\
 	getarg.c		\
 	getauxval.c		\
 	getauxval.h		\
+	getline.c		\
 	getnameinfo_verified.c	\
 	getprogname.c		\
 	getuserinfo.c		\

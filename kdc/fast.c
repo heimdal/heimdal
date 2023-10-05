@@ -398,8 +398,8 @@ _kdc_fast_mk_error(astgs_request_t r,
 	    error_client = NULL;
 	    error_server = NULL;
 	}
-	csec = 0;
-	cusec = 0;
+	csec = NULL;
+	cusec = NULL;
 
 	ret = _kdc_fast_mk_response(r->context, armor_crypto,
 				    error_method, NULL, NULL,

@@ -373,8 +373,8 @@ _kdc_fast_mk_error(astgs_request_t r,
 			    NULL,
 			    error_client,
 			    error_server,
-			    NULL,
-			    NULL,
+			    csec,
+			    cusec,
 			    &e_data);
 	if (ret) {
 	    kdc_log(r->context, r->config, 1,

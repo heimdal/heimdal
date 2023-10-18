@@ -877,7 +877,7 @@ check_ticket_signature(krb5_context context,
 
     heim_assert(!is_krbtgt(&ticket.sname) == !!signedticket, "ticket-signature");
 
-    ret = krb5_pac_verify(context, pac, et.authtime, client,
+    ret = krb5_pac_verify(context, pac, et.authTime, client,
 			  tkt->key, tkt->kdc_key);
     if (ret)
 	t_err(context, tkt->name, "krb5_pac_verify ticket-sig", ret);
@@ -934,7 +934,7 @@ check_ticket_signature(krb5_context context,
 
     heim_assert(!is_krbtgt(&ticket.sname) == !!signedticket, "ticket-signature");
 
-    ret = krb5_pac_verify(context, pac, et.authtime, client, tkt->key,
+    ret = krb5_pac_verify(context, pac, et.authTime, client, tkt->key,
 			  tkt->kdc_key);
     if (ret)
 	t_err(context, tkt->name, "krb5_pac_verify ticket-sig 2", ret);

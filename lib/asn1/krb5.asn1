@@ -400,7 +400,7 @@ LR-TYPE ::= INTEGER {
 
 LastReq ::= SEQUENCE OF SEQUENCE {
 	lr-type[0]		LR-TYPE,
-	lr-value[1]		KerberosTime
+	lr-Value[1]		KerberosTime
 }
 
 
@@ -434,10 +434,10 @@ EncTicketPart ::= [APPLICATION 3] SEQUENCE {
 	crealm[2]		Realm,
 	cname[3]		PrincipalName,
 	transited[4]		TransitedEncoding,
-	authtime[5]		KerberosTime,
-	starttime[6]		KerberosTime OPTIONAL,
-	endtime[7]		KerberosTime,
-	renew-till[8]		KerberosTime OPTIONAL,
+	authTime[5]		KerberosTime,
+	startTime[6]		KerberosTime OPTIONAL,
+	endTime[7]		KerberosTime,
+	renew-Till[8]		KerberosTime OPTIONAL,
 	caddr[9]		HostAddresses OPTIONAL,
 	authorization-data[10]	AuthorizationData OPTIONAL
 }
@@ -525,7 +525,7 @@ Authenticator ::= [APPLICATION 2] SEQUENCE    {
 	cname[2]		PrincipalName,
 	cksum[3]		Checksum OPTIONAL,
 	cusec[4]		Krb5Int32,
-	ctime[5]		KerberosTime,
+	cTime[5]		KerberosTime,
 	subkey[6]		EncryptionKey OPTIONAL,
 	seq-number[7]		Krb5UInt32 OPTIONAL,
 	authorization-data[8]	AuthorizationData OPTIONAL
@@ -568,9 +568,9 @@ KDC-REQ-BODY ::= SEQUENCE {
 	realm[2]		Realm,	-- Server's realm
 					-- Also client's in AS-REQ
 	sname[3]		PrincipalName OPTIONAL,
-	from[4]			KerberosTime OPTIONAL,
-	till[5]			KerberosTime OPTIONAL,
-	rtime[6]		KerberosTime OPTIONAL,
+	fRom[4]			KerberosTime OPTIONAL,
+	tIll[5]			KerberosTime OPTIONAL,
+	rTime[6]		KerberosTime OPTIONAL,
 	nonce[7]		Krb5Int32,
 	etype[8]		SEQUENCE OF ENCTYPE, -- EncryptionType,
 					-- in preference order
@@ -594,7 +594,7 @@ TGS-REQ ::= [APPLICATION 12] KDC-REQ
 -- padata-value ::= EncryptedData - PA-ENC-TS-ENC
 
 PA-ENC-TS-ENC ::= SEQUENCE {
-	patimestamp[0]		KerberosTime, -- client's time
+	paTimestamp[0]		KerberosTime, -- client's time
 	pausec[1]		Krb5Int32 OPTIONAL
 }
 
@@ -651,12 +651,12 @@ EncKDCRepPart ::= SEQUENCE {
 	key[0]			EncryptionKey,
 	last-req[1]		LastReq,
 	nonce[2]		Krb5Int32,
-	key-expiration[3]	KerberosTime OPTIONAL,
+	key-Expiration[3]	KerberosTime OPTIONAL,
 	flags[4]		TicketFlags,
-	authtime[5]		KerberosTime,
-	starttime[6]		KerberosTime OPTIONAL,
-	endtime[7]		KerberosTime,
-	renew-till[8]		KerberosTime OPTIONAL,
+	authTime[5]		KerberosTime,
+	startTime[6]		KerberosTime OPTIONAL,
+	endTime[7]		KerberosTime,
+	renew-Till[8]		KerberosTime OPTIONAL,
 	srealm[9]		Realm,
 	sname[10]		PrincipalName,
 	caddr[11]		HostAddresses OPTIONAL,
@@ -681,7 +681,7 @@ AP-REP ::= [APPLICATION 15] SEQUENCE {
 }
 
 EncAPRepPart ::= [APPLICATION 27]     SEQUENCE {
-	ctime[0]		KerberosTime,
+	cTime[0]		KerberosTime,
 	cusec[1]		Krb5Int32,
 	subkey[2]		EncryptionKey OPTIONAL,
 	seq-number[3]		Krb5UInt32 OPTIONAL
@@ -689,7 +689,7 @@ EncAPRepPart ::= [APPLICATION 27]     SEQUENCE {
 
 KRB-SAFE-BODY ::= SEQUENCE {
 	user-data[0]		OCTET STRING,
-	timestamp[1]		KerberosTime OPTIONAL,
+	timeStamp[1]		KerberosTime OPTIONAL,
 	usec[2]			Krb5Int32 OPTIONAL,
 	seq-number[3]		Krb5UInt32 OPTIONAL,
 	s-address[4]		HostAddress OPTIONAL,
@@ -710,7 +710,7 @@ KRB-PRIV ::= [APPLICATION 21] SEQUENCE {
 }
 EncKrbPrivPart ::= [APPLICATION 28] SEQUENCE {
 	user-data[0]		OCTET STRING,
-	timestamp[1]		KerberosTime OPTIONAL,
+	timeStamp[1]		KerberosTime OPTIONAL,
 	usec[2]			Krb5Int32 OPTIONAL,
 	seq-number[3]		Krb5UInt32 OPTIONAL,
 	s-address[4]		HostAddress OPTIONAL, -- sender's addr
@@ -729,10 +729,10 @@ KrbCredInfo ::= SEQUENCE {
 	prealm[1]		Realm OPTIONAL,
 	pname[2]		PrincipalName OPTIONAL,
 	flags[3]		TicketFlags OPTIONAL,
-	authtime[4]		KerberosTime OPTIONAL,
-	starttime[5]		KerberosTime OPTIONAL,
-	endtime[6] 		KerberosTime OPTIONAL,
-	renew-till[7]		KerberosTime OPTIONAL,
+	authTime[4]		KerberosTime OPTIONAL,
+	startTime[5]		KerberosTime OPTIONAL,
+	endTime[6] 		KerberosTime OPTIONAL,
+	renew-Till[7]		KerberosTime OPTIONAL,
 	srealm[8]		Realm OPTIONAL,
 	sname[9]		PrincipalName OPTIONAL,
 	caddr[10]		HostAddresses OPTIONAL
@@ -741,7 +741,7 @@ KrbCredInfo ::= SEQUENCE {
 EncKrbCredPart ::= [APPLICATION 29]   SEQUENCE {
 	ticket-info[0]		SEQUENCE OF KrbCredInfo,
 	nonce[1]		Krb5Int32 OPTIONAL,
-	timestamp[2]		KerberosTime OPTIONAL,
+	timeStamp[2]		KerberosTime OPTIONAL,
 	usec[3]			Krb5Int32 OPTIONAL,
 	s-address[4]		HostAddress OPTIONAL,
 	r-address[5]		HostAddress OPTIONAL
@@ -750,9 +750,9 @@ EncKrbCredPart ::= [APPLICATION 29]   SEQUENCE {
 KRB-ERROR ::= [APPLICATION 30] SEQUENCE {
 	pvno[0]			Krb5Int32,
 	msg-type[1]		MESSAGE-TYPE,
-	ctime[2]		KerberosTime OPTIONAL,
+	cTime[2]		KerberosTime OPTIONAL,
 	cusec[3]		Krb5Int32 OPTIONAL,
-	stime[4]		KerberosTime,
+	sTime[4]		KerberosTime,
 	susec[5]		Krb5Int32,
 	error-code[6]		Krb5Int32,
 	crealm[7]		Realm OPTIONAL,
@@ -889,7 +889,7 @@ PA-ServerReferralData ::= SEQUENCE {
 	referred-realm		[0] Realm OPTIONAL,
 	true-principal-name	[1] PrincipalName OPTIONAL,
 	requested-principal-name [2] PrincipalName OPTIONAL,
-	referral-valid-until     [3] KerberosTime OPTIONAL,
+	referral-valid-Until     [3] KerberosTime OPTIONAL,
 	...
 }
 
@@ -938,7 +938,7 @@ PA-FX-FAST-REQUEST ::= CHOICE {
 }
 
 KrbFastFinished ::= SEQUENCE {
-	timestamp   [0] KerberosTime,
+	timeStamp   [0] KerberosTime,
 	usec        [1] Krb5Int32,
 	crealm      [2] Realm,
 	cname       [3] PrincipalName,
@@ -994,10 +994,10 @@ KDC-PROXY-MESSAGE ::= SEQUENCE {
 -- these messages are used in the GSSCred communication and is not part of Kerberos propper
 
 KERB-TIMES ::= SEQUENCE {
-	authtime	[0] KerberosTime,
-	starttime	[1] KerberosTime,
-	endtime		[2] KerberosTime,
-	renew_till	[3] KerberosTime
+	authTime	[0] KerberosTime,
+	startTime	[1] KerberosTime,
+	endTime		[2] KerberosTime,
+	renew_Till	[3] KerberosTime
 }
 
 KERB-CRED ::= SEQUENCE {

@@ -345,7 +345,7 @@ krb5_process_last_request(krb5_context context,
 	    if (lre[i] == NULL)
 		break;
 	    lre[i]->lr_type = lr->val[i].lr_type;
-	    lre[i]->value = lr->val[i].lr_value;
+	    lre[i]->value = lr->val[i].lr_Value;
 	}
 
 	(*options->opt_private->lr.func)(context, lre,
@@ -400,19 +400,19 @@ krb5_init_creds_warn_user(krb5_context context,
 			       7 * 24 * 60 * 60);
 
     for (i = 0; i < lr->len; ++i) {
-	if (lr->val[i].lr_value <= t) {
+	if (lr->val[i].lr_Value <= t) {
 	    switch (lr->val[i].lr_type) {
 	    case LR_PW_EXPTIME :
 		report_expiration(context, ctx->prompter,
 				  ctx->prompter_data,
 				  "Your password will expire at ",
-				  lr->val[i].lr_value);
+				  lr->val[i].lr_Value);
 		break;
 	    case LR_ACCT_EXPTIME :
 		report_expiration(context, ctx->prompter,
 				  ctx->prompter_data,
 				  "Your account will expire at ",
-				  lr->val[i].lr_value);
+				  lr->val[i].lr_Value);
 		break;
 	    default:
 		break;
@@ -764,28 +764,28 @@ init_as_req (krb5_context context,
 	goto fail;
 
     if(creds->times.starttime) {
-	a->req_body.from = malloc(sizeof(*a->req_body.from));
-	if (a->req_body.from == NULL) {
+	a->req_body.fRom = malloc(sizeof(*a->req_body.fRom));
+	if (a->req_body.fRom == NULL) {
 	    ret = krb5_enomem(context);
 	    goto fail;
 	}
-	*a->req_body.from = creds->times.starttime;
+	*a->req_body.fRom = creds->times.starttime;
     }
     if(creds->times.endtime){
-	if ((ALLOC(a->req_body.till, 1)) != NULL)
-            *a->req_body.till = creds->times.endtime;
+	if ((ALLOC(a->req_body.tIll, 1)) != NULL)
+            *a->req_body.tIll = creds->times.endtime;
         else {
             ret = krb5_enomem(context);
             goto fail;
         }
     }
     if(creds->times.renew_till){
-	a->req_body.rtime = malloc(sizeof(*a->req_body.rtime));
-	if (a->req_body.rtime == NULL) {
+	a->req_body.rTime = malloc(sizeof(*a->req_body.rTime));
+	if (a->req_body.rTime == NULL) {
 	    ret = krb5_enomem(context);
 	    goto fail;
 	}
-	*a->req_body.rtime = creds->times.renew_till;
+	*a->req_body.rTime = creds->times.renew_till;
     }
     a->req_body.nonce = 0;
     ret = _krb5_init_etype(context,
@@ -1014,7 +1014,7 @@ make_pa_enc_timestamp(krb5_context context, METHOD_DATA *md,
     int usec2;
     krb5_crypto crypto;
 
-    krb5_us_timeofday (context, &p.patimestamp, &usec);
+    krb5_us_timeofday (context, &p.paTimestamp, &usec);
     usec2         = usec;
     p.pausec      = &usec2;
 
@@ -1489,7 +1489,7 @@ _krb5_make_pa_enc_challenge(krb5_context context,
     int32_t usec;
     int usec2;
 
-    krb5_us_timeofday (context, &p.patimestamp, &usec);
+    krb5_us_timeofday (context, &p.paTimestamp, &usec);
     usec2         = usec;
     p.pausec      = &usec2;
 
@@ -1554,17 +1554,17 @@ _krb5_validate_pa_enc_challenge(krb5_context context,
 
     krb5_us_timeofday(context, &timestamp, &usec);
 
-    if (krb5_time_abs(timestamp, p.patimestamp) > context->max_skew) {
+    if (krb5_time_abs(timestamp, p.paTimestamp) > context->max_skew) {
 	char client_time[100];
 
-	krb5_format_time(context, p.patimestamp,
+	krb5_format_time(context, p.paTimestamp,
 			 client_time, sizeof(client_time), TRUE);
 
 	ret = KRB5KRB_AP_ERR_SKEW;
 	_krb5_debug(context, 0, "Too large time skew, "
 		    "client time %s is out by %u > %d seconds -- %s",
 		    client_time,
-		    (unsigned)krb5_time_abs(timestamp, p.patimestamp),
+		    (unsigned)krb5_time_abs(timestamp, p.paTimestamp),
 		    (int)context->max_skew,
 		    peer_name);
     } else {
@@ -3213,7 +3213,7 @@ init_creds_step(krb5_context context,
 		 * Try adapt to timeskrew when we are using pre-auth, and
 		 * if there was a time skew, try again.
 		 */
-		krb5_set_real_time(context, ctx->error.stime, -1);
+		krb5_set_real_time(context, ctx->error.sTime, -1);
 		if (context->kdc_sec_offset)
 		    ret = 0;
 

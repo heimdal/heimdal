@@ -197,30 +197,30 @@ init_tgs_req (krb5_context context,
 	goto fail;
 
     if (krbtgt->times.starttime) {
-        ALLOC(t->req_body.from, 1);
-        if(t->req_body.from == NULL){
+        ALLOC(t->req_body.fRom, 1);
+        if(t->req_body.fRom == NULL){
             ret = krb5_enomem(context);
             goto fail;
         }
-        *t->req_body.from = in_creds->times.starttime;
+        *t->req_body.fRom = in_creds->times.starttime;
     }
 
     /* req_body.till should be NULL if there is no endtime specified,
        but old MIT code (like DCE secd) doesn't like that */
-    ALLOC(t->req_body.till, 1);
-    if(t->req_body.till == NULL){
+    ALLOC(t->req_body.tIll, 1);
+    if(t->req_body.tIll == NULL){
 	ret = krb5_enomem(context);
 	goto fail;
     }
-    *t->req_body.till = in_creds->times.endtime;
+    *t->req_body.tIll = in_creds->times.endtime;
 
     if (t->req_body.kdc_options.renewable && krbtgt->times.renew_till) {
-        ALLOC(t->req_body.rtime, 1);
-        if(t->req_body.rtime == NULL){
+        ALLOC(t->req_body.rTime, 1);
+        if(t->req_body.rTime == NULL){
             ret = krb5_enomem(context);
             goto fail;
         }
-        *t->req_body.rtime = in_creds->times.renew_till;
+        *t->req_body.rTime = in_creds->times.renew_till;
     }
 
     t->req_body.nonce = nonce;

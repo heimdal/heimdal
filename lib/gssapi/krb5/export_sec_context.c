@@ -162,7 +162,7 @@ _gsskrb5_export_sec_context(
 	    goto failure;
 	}
     if (ac->authenticator) {
-        kret = krb5_store_int64(sp, ac->authenticator->ctime);
+        kret = krb5_store_int64(sp, ac->authenticator->cTime);
         if (kret) {
             *minor_status = kret;
             goto failure;

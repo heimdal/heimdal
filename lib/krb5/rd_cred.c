@@ -220,9 +220,9 @@ krb5_rd_cred(krb5_context context,
 
 	krb5_timeofday (context, &sec);
 
-	if (enc_krb_cred_part.timestamp == NULL ||
+	if (enc_krb_cred_part.timeStamp == NULL ||
 	    enc_krb_cred_part.usec      == NULL ||
-	    krb5_time_abs(*enc_krb_cred_part.timestamp, sec)
+	    krb5_time_abs(*enc_krb_cred_part.timeStamp, sec)
 	    > context->max_skew) {
 	    krb5_clear_error_message (context);
 	    ret = KRB5KRB_AP_ERR_SKEW;
@@ -235,8 +235,8 @@ krb5_rd_cred(krb5_context context,
 	/* if these fields are not present in the cred-part, silently
            return zero */
 	memset(outdata, 0, sizeof(*outdata));
-	if(enc_krb_cred_part.timestamp)
-	    outdata->timestamp = *enc_krb_cred_part.timestamp;
+	if(enc_krb_cred_part.timeStamp)
+	    outdata->timestamp = *enc_krb_cred_part.timeStamp;
 	if(enc_krb_cred_part.usec)
 	    outdata->usec = *enc_krb_cred_part.usec;
 	if(enc_krb_cred_part.nonce)
@@ -283,14 +283,14 @@ krb5_rd_cred(krb5_context context,
 						*kci->prealm);
 	if (kci->flags)
 	    creds->flags.b = *kci->flags;
-	if (kci->authtime)
-	    creds->times.authtime = *kci->authtime;
-	if (kci->starttime)
-	    creds->times.starttime = *kci->starttime;
-	if (kci->endtime)
-	    creds->times.endtime = *kci->endtime;
-	if (kci->renew_till)
-	    creds->times.renew_till = *kci->renew_till;
+	if (kci->authTime)
+	    creds->times.authtime = *kci->authTime;
+	if (kci->startTime)
+	    creds->times.starttime = *kci->startTime;
+	if (kci->endTime)
+	    creds->times.endtime = *kci->endTime;
+	if (kci->renew_Till)
+	    creds->times.renew_till = *kci->renew_Till;
 	if (kci->srealm && kci->sname)
 	    _krb5_principalname2krb5_principal (context,
 						&creds->server,

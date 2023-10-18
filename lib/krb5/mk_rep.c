@@ -51,7 +51,7 @@ krb5_mk_rep(krb5_context context,
 
     memset (&body, 0, sizeof(body));
 
-    body.ctime = auth_context->authenticator->ctime;
+    body.cTime = auth_context->authenticator->cTime;
     body.cusec = auth_context->authenticator->cusec;
     if (auth_context->flags & KRB5_AUTH_CONTEXT_USE_SUBKEY) {
 	if (auth_context->local_subkey == NULL) {

@@ -441,7 +441,7 @@ get_authtime(OM_uint32 *minor_status,
 	return GSS_S_FAILURE;
     }
 
-    authtime = ctx->ticket->ticket.authtime;
+    authtime = ctx->ticket->ticket.authTime;
 
     HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
 

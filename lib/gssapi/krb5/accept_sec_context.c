@@ -484,7 +484,7 @@ gsskrb5_acceptor_start(OM_uint32 * minor_status,
 	if (kret == 0)
 	    kret = krb5_rd_req_out_get_keyblock(context, out,
 						&ctx->service_keyblock);
-	ctx->endtime = ctx->ticket->ticket.endtime;
+	ctx->endtime = ctx->ticket->ticket.endTime;
 
 	krb5_rd_req_out_ctx_free(context, out);
 	if (kret) {
@@ -673,7 +673,7 @@ gsskrb5_acceptor_start(OM_uint32 * minor_status,
 
     /* Remember the flags */
 
-    ctx->endtime = ctx->ticket->ticket.endtime;
+    ctx->endtime = ctx->ticket->ticket.endTime;
     ctx->more_flags |= OPEN;
 
     if (mech_type)

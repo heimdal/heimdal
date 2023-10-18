@@ -30,7 +30,7 @@ gen_cert()
         if [ "$3" = "ca" ] ; then
 	    ${openssl} x509 \
 		-req \
-		-days 182500 \
+		-days 5040 \
 		-in cert.req \
 		-extfile ${config} \
 		-extensions $4 \
@@ -46,7 +46,7 @@ gen_cert()
 	    ${openssl} x509 \
 		-req \
 		-in cert.req \
-		-days 182500 \
+		-days 5040 \
 		-out cert.crt \
 		-CA $2.crt \
 		-CAkey $2.key \
@@ -59,7 +59,7 @@ gen_cert()
 
 	    ${openssl} ca \
 		-name $4 \
-		-days 182500 \
+		-days 5040 \
 		-cert $2.crt \
 		-keyfile $2.key \
 		-in cert.req \
@@ -350,7 +350,7 @@ ${openssl} ocsp \
 ${openssl} ca \
     -gencrl \
     -name usr \
-    -crldays 3600 \
+    -crldays 5040 \
     -keyfile ca.key \
     -cert ca.crt \
     -crl_reason superseded \

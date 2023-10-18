@@ -185,7 +185,7 @@ _krb5_build_authenticator (krb5_context context,
     if (ret)
 	goto fail;
 
-    krb5_us_timeofday (context, &auth.ctime, &auth.cusec);
+    krb5_us_timeofday (context, &auth.cTime, &auth.cusec);
 
     ret = krb5_auth_con_getlocalsubkey(context, auth_context, &auth.subkey);
     if(ret)
@@ -236,7 +236,7 @@ _krb5_build_authenticator (krb5_context context,
 
     /* XXX - Copy more to auth_context? */
 
-    auth_context->authenticator->ctime = auth.ctime;
+    auth_context->authenticator->cTime = auth.cTime;
     auth_context->authenticator->cusec = auth.cusec;
 
     ASN1_MALLOC_ENCODE(Authenticator, buf, buf_size, &auth, &len, ret);

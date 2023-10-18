@@ -190,7 +190,7 @@ checksum_authenticator(Authenticator *auth, void *data)
     for(i = 0; i < auth->cname.name_string.len; i++)
 	EVP_DigestUpdate(m, auth->cname.name_string.val[i],
 		   strlen(auth->cname.name_string.val[i]));
-    EVP_DigestUpdate(m, &auth->ctime, sizeof(auth->ctime));
+    EVP_DigestUpdate(m, &auth->cTime, sizeof(auth->cTime));
     EVP_DigestUpdate(m, &auth->cusec, sizeof(auth->cusec));
 
     EVP_DigestFinal_ex(m, data, NULL);

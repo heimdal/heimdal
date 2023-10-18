@@ -86,7 +86,7 @@ krb5_rd_rep(krb5_context context,
     }
 
     if (auth_context->flags & KRB5_AUTH_CONTEXT_DO_TIME) {
-	if ((*repl)->ctime != auth_context->authenticator->ctime ||
+	if ((*repl)->cTime != auth_context->authenticator->cTime ||
 	    (*repl)->cusec != auth_context->authenticator->cusec)
 	{
 	    ret = KRB5KRB_AP_ERR_MUT_FAIL;

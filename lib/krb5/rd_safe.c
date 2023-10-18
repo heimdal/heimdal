@@ -157,9 +157,9 @@ krb5_rd_safe(krb5_context context,
 
 	krb5_timeofday (context, &sec);
 
-	if (safe.safe_body.timestamp == NULL ||
+	if (safe.safe_body.timeStamp == NULL ||
 	    safe.safe_body.usec      == NULL ||
-	    krb5_time_abs(*safe.safe_body.timestamp, sec) > context->max_skew) {
+	    krb5_time_abs(*safe.safe_body.timeStamp, sec) > context->max_skew) {
 	    ret = KRB5KRB_AP_ERR_SKEW;
 	    krb5_clear_error_message (context);
 	    goto failure;
@@ -200,8 +200,8 @@ krb5_rd_safe(krb5_context context,
     if ((auth_context->flags &
 	 (KRB5_AUTH_CONTEXT_RET_TIME | KRB5_AUTH_CONTEXT_RET_SEQUENCE))) {
 
-	if(safe.safe_body.timestamp)
-	    outdata->timestamp = *safe.safe_body.timestamp;
+	if(safe.safe_body.timeStamp)
+	    outdata->timestamp = *safe.safe_body.timeStamp;
 	if(safe.safe_body.usec)
 	    outdata->usec = *safe.safe_body.usec;
 	if(safe.safe_body.seq_number)

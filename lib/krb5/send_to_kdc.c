@@ -757,7 +757,7 @@ eval_host_state(krb5_context context,
     if (host->state == CONNECTING && writeable)
 	host_connected(context, ctx, host);
 
-    if (readable) {
+    if (host->state != DEAD && readable) {
 
 	debug_host(context, 5, host, "reading packet");
 

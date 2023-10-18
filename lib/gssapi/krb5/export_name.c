@@ -47,7 +47,9 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_export_name
 
     GSSAPI_KRB5_INIT (&context);
 
-    kret = krb5_unparse_name (context, princ, &name);
+    kret = krb5_unparse_name_flags(context, princ,
+				   KRB5_PRINCIPAL_UNPARSE_EXPORT_NAME,
+				   &name);
     if (kret) {
 	*minor_status = kret;
 	return GSS_S_FAILURE;

@@ -20,6 +20,10 @@ if HAVE_DBHEADER
 AM_CPPFLAGS += -I$(DBHEADER)
 endif
 
+if have_gcd
+WFLAGS += -Wno-deprecated-declarations
+endif
+
 bin_PROGRAMS = rkvis rkbase32 rkbase64
 noinst_PROGRAMS = snprintf-test resolve-test rkpty test-detach test-auxval rtbl timeval
 

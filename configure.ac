@@ -553,6 +553,7 @@ AC_CHECK_FUNCS([				\
 	backtrace				\
 	fcntl					\
 	fork					\
+	vfork					\
 	fseeko					\
 	ftello					\
 	getpeereid				\

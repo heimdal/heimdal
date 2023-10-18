@@ -99,6 +99,7 @@ HEIMDAL_ROKEN_2.0 {
 		rk_pid_file_delete;
 		rk_pid_file_write;
 		rk_pidfile;
+		rk_pipe_exec;
 		rk_pipe_execv;
 		rk_print_flags_table;
 		rk_print_time_table;

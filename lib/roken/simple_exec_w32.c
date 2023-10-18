@@ -142,7 +142,72 @@ wait_for_process(pid_t pid)
 }
 
 static char *
-collect_commandline(const char * fn, va_list * ap)
+collect_commandline(const char *fn, char **argv)
+{
+    size_t len = 0;
+    size_t alloc_len = 0;
+    const char * s;
+    char * cmd = NULL;
+    size_t i = 0;
+
+    for (s = fn; s; s = argv[i++]) {
+	size_t cmp_len;
+	int need_quote = FALSE;
+
+	if (FAILED(StringCchLength(s, MAX_PATH, &cmp_len))) {
+	    if (cmd)
+		free(cmd);
+	    return NULL;
+	}
+
+	if (cmp_len == 0)
+	    continue;
+
+	if (strchr(s, ' ') &&	/* need to quote any component that
+				   has embedded spaces, but not if
+				   they are already quoted. */
+	    s[0] != '"' &&
+	    s[cmp_len - 1] != '"') {
+	    need_quote = TRUE;
+	    cmp_len += 2 * sizeof(char);
+	}
+
+	if (s != fn)
+	    cmp_len += 1 * sizeof(char);
+
+	if (alloc_len < len + cmp_len + 1) {
+	    char * nc;
+
+	    alloc_len += ((len + cmp_len - alloc_len) / MAX_PATH + 1) * MAX_PATH;
+	    nc = (char *) realloc(cmd, alloc_len * sizeof(char));
+	    if (nc == NULL) {
+		if (cmd)
+		    free(cmd);
+		return NULL;
+	    }
+	    cmd = nc;
+	}
+
+	if (cmd == NULL)
+	    return NULL;
+
+	if (s != fn)
+	    cmd[len++] = ' ';
+
+	if (need_quote) {
+	    StringCchPrintf(cmd + len, alloc_len - len, "\"%s\"", s);
+	} else {
+	    StringCchCopy(cmd + len, alloc_len - len, s);
+	}
+
+	len += cmp_len;
+    }
+
+    return cmd;
+}
+
+static char *
+collect_commandlinev(const char * fn, va_list * ap)
 {
     size_t len = 0;
     size_t alloc_len = 0;
@@ -205,9 +270,9 @@ collect_commandline(const char * fn, va_list * ap)
     return cmd;
 }
 
-ROKEN_LIB_FUNCTION pid_t ROKEN_LIB_CALL
-pipe_execv(FILE **stdin_fd, FILE **stdout_fd, FILE **stderr_fd,
-	   const char *file, ...)
+static pid_t
+pipe_exec_core(FILE **stdin_fd, FILE **stdout_fd, FILE **stderr_fd,
+               const char *file, char *commandline)
 {
     HANDLE  hOut_r = NULL;
     HANDLE  hOut_w = NULL;
@@ -220,19 +285,7 @@ pipe_execv(FILE **stdin_fd, FILE **stdout_fd, FILE **stderr_fd,
     STARTUPINFO si;
     PROCESS_INFORMATION pi;
 
-    char * commandline = NULL;
-
     pid_t rv = (pid_t) -1;
-
-    {
-	va_list ap;
-
-	va_start(ap, file);
-	commandline = collect_commandline(file, &ap);
-
-	if (commandline == NULL)
-	    return rv;
-    }
 
     ZeroMemory(&si, sizeof(si));
     ZeroMemory(&pi, sizeof(pi));
@@ -331,6 +384,41 @@ pipe_execv(FILE **stdin_fd, FILE **stdout_fd, FILE **stderr_fd,
 
     if (hErr_w) CloseHandle(hErr_w);
 
+    return rv;
+}
+
+ROKEN_LIB_FUNCTION pid_t ROKEN_LIB_CALL
+pipe_exec(FILE **stdin_fd, FILE **stdout_fd, FILE **stderr_fd,
+	  const char *file, char **argv)
+{
+    char *commandline;
+    pid_t rv;
+
+    commandline = collect_commandline(file, argv);
+    if (commandline == NULL)
+        return (pid_t)-1;
+
+    rv = pipe_exec_core(stdin_fd, stdout_fd, stderr_fd, file, commandline);
+    free(commandline);
+    return rv;
+}
+
+ROKEN_LIB_FUNCTION pid_t ROKEN_LIB_CALL
+pipe_execv(FILE **stdin_fd, FILE **stdout_fd, FILE **stderr_fd,
+	   const char *file, ...)
+{
+    char *commandline;
+    va_list ap;
+    pid_t rv;
+
+    va_start(ap, file);
+    commandline = collect_commandlinev(file, &ap);
+    va_end(ap);
+    if (commandline == NULL)
+        return (pid_t)-1;
+
+    rv = pipe_exec_core(stdin_fd, stdout_fd, stderr_fd, file, commandline);
+    free(commandline);
     return rv;
 }
 

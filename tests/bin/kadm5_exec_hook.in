@@ -1,0 +1,8 @@
+#!/bin/sh
+
+top_builddir="@top_builddir@"
+top_srcdir="@top_srcdir@"
+
+read pw
+
+echo "kadm5_exec_hook $# $* pw:$pw" >> "${top_builddir}/kadm5_exec_hook.log"

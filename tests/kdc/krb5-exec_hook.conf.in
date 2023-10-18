@@ -1,0 +1,4 @@
+include @objdirabs@/krb5.conf
+
+[kadmin]
+        exec_hook = @top_builddir@/tests/bin/kadm5_exec_hook

@@ -141,16 +141,20 @@ wait_for_process(pid_t pid)
 }
 
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
-pipe_execv(FILE **stdin_fd, FILE **stdout_fd, FILE **stderr_fd,
-	   const char *file, ...)
+pipe_exec(FILE **stdin_fd, FILE **stdout_fd, FILE **stderr_fd,
+	  const char *file, char **argv)
 {
     int in_fd[2] = {-1, -1};
     int out_fd[2] = {-1, -1};
     int err_fd[2] = {-1, -1};
     pid_t pid;
-    va_list ap;
-    char **argv;
     int ret = 0;
+
+    if(argv == NULL)
+        return SE_E_UNSPECIFIED;
+
+    if (file== NULL)
+        file = argv[0];
 
     if(stdin_fd != NULL)
 	ret = pipe(in_fd);
@@ -169,14 +173,13 @@ pipe_execv(FILE **stdin_fd, FILE **stdout_fd, FILE **stderr_fd,
 	return SE_E_UNSPECIFIED;
     }
 
+#ifdef HAVE_VFORK
+    pid = vfork();
+#else
     pid = fork();
+#endif
     switch(pid) {
     case 0:
-	va_start(ap, file);
-	argv = vstrcollect(&ap);
-	va_end(ap);
-	if(argv == NULL)
-	    exit(-1);
 
 	/* close pipes we're not interested in */
 	if(stdin_fd != NULL)
@@ -193,6 +196,9 @@ pipe_execv(FILE **stdin_fd, FILE **stdout_fd, FILE **stderr_fd,
 	    out_fd[1] = open(_PATH_DEVNULL, O_WRONLY);
 	if(stderr_fd == NULL)
 	    err_fd[1] = open(_PATH_DEVNULL, O_WRONLY);
+
+        if (in_fd[0] == -1 || out_fd[1]== -1 || err_fd[1] == -1)
+            _exit(EX_NOEXEC);
 
 	/* move to proper descriptors */
 	if(in_fd[0] != STDIN_FILENO) {
@@ -211,7 +217,7 @@ pipe_execv(FILE **stdin_fd, FILE **stdout_fd, FILE **stderr_fd,
 	closefrom(3);
 
 	execv(file, argv);
-	exit((errno == ENOENT) ? EX_NOTFOUND : EX_NOEXEC);
+	_exit((errno == ENOENT) ? EX_NOTFOUND : EX_NOEXEC);
     case -1:
 	if(stdin_fd != NULL) {
 	    close(in_fd[0]);
@@ -244,16 +250,40 @@ pipe_execv(FILE **stdin_fd, FILE **stdout_fd, FILE **stderr_fd,
 }
 
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
+pipe_execv(FILE **stdin_fd, FILE **stdout_fd, FILE **stderr_fd,
+	   const char *file, ...)
+{
+    va_list ap;
+    char **argv;
+    pid_t pid = 0;
+
+    va_start(ap, file);
+    argv = vstrcollect(&ap);
+    va_end(ap);
+    if(argv == NULL)
+        return SE_E_UNSPECIFIED;
+    pid = pipe_exec(stdin_fd, stdout_fd, stderr_fd, file, argv);
+    free(argv);
+    return pid;
+}
+
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 simple_execvp_timed(const char *file, char *const args[],
 		    time_t (*func)(void *), void *ptr, time_t timeout)
 {
-    pid_t pid = fork();
+    pid_t pid;
+
+#ifdef HAVE_VFORK
+    pid = vfork();
+#else
+    pid = fork();
+#endif
     switch(pid){
     case -1:
 	return SE_E_FORKFAILED;
     case 0:
 	execvp(file, args);
-	exit((errno == ENOENT) ? EX_NOTFOUND : EX_NOEXEC);
+	_exit((errno == ENOENT) ? EX_NOTFOUND : EX_NOEXEC);
     default:
 	return wait_for_process_timed(pid, func, ptr, timeout);
     }
@@ -270,13 +300,19 @@ ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 simple_execve_timed(const char *file, char *const args[], char *const envp[],
 		    time_t (*func)(void *), void *ptr, time_t timeout)
 {
-    pid_t pid = fork();
+    pid_t pid;
+
+#ifdef HAVE_VFORK
+    pid = vfork();
+#else
+    pid = fork();
+#endif
     switch(pid){
     case -1:
 	return SE_E_FORKFAILED;
     case 0:
 	execve(file, args, envp);
-	exit((errno == ENOENT) ? EX_NOTFOUND : EX_NOEXEC);
+	_exit((errno == ENOENT) ? EX_NOTFOUND : EX_NOEXEC);
     default:
 	return wait_for_process_timed(pid, func, ptr, timeout);
     }

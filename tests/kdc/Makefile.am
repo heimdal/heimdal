@@ -5,6 +5,7 @@ noinst_DATA = \
 	kdc-tester4.json \
 	krb5.conf \
 	krb5-kcm.conf \
+	krb5-exec_hook.conf \
 	krb5-cccol.conf \
 	krb5-authz.conf \
 	krb5-authz2.conf \
@@ -148,7 +149,7 @@ check-kinit: check-kinit.in Makefile
 	$(chmod) +x check-kinit.tmp && \
 	mv check-kinit.tmp check-kinit
 
-check-kadmin: check-kadmin.in Makefile
+check-kadmin: check-kadmin.in krb5.conf krb5-exec_hook.conf Makefile
 	$(do_subst) < $(srcdir)/check-kadmin.in > check-kadmin.tmp && \
 	$(chmod) +x check-kadmin.tmp && \
 	mv check-kadmin.tmp check-kadmin
@@ -206,6 +207,12 @@ krb5.conf: krb5.conf.in Makefile
 	   -e 's,[@]signalsocket[@],signal,g' \
 	   -e 's,[@]kdc[@],,g' < $(srcdir)/krb5.conf.in > krb5.conf.tmp && \
 	mv krb5.conf.tmp krb5.conf
+
+krb5-exec_hook.conf: krb5-exec_hook.conf.in Makefile
+	$(do_subst) \
+	   -e "s,[@]objdirabs[@],`pwd`,g" \
+	   < $(srcdir)/krb5-exec_hook.conf.in > krb5-exec_hook.conf.tmp && \
+	mv krb5-exec_hook.conf.tmp krb5-exec_hook.conf
 
 krb5-kcm.conf: krb5-kcm.conf.in Makefile
 	$(do_subst) \
@@ -347,8 +354,9 @@ CLEANFILES= \
 	krb5-authz2.conf \
 	krb5-canon.conf \
 	krb5-canon2.conf \
-	krb5-cc.conf \
 	krb5-cccol.conf \
+	krb5-exec_hook.conf \
+	krb5-kcm.conf \
 	krb5-hdb-mitdb.conf \
 	krb5-master2.conf \
 	krb5-pkinit-win.conf \
@@ -431,6 +439,8 @@ EXTRA_DIST = \
 	krb5-canon.conf.in \
 	krb5-canon2.conf.in \
 	krb5-cccol.conf.in \
+	krb5-exec_hook.conf.in \
+	krb5-kcm.conf.in \
 	krb5-hdb-mitdb.conf.in \
 	krb5-httpkadmind.conf.in \
 	krb5-pkinit.conf.in \

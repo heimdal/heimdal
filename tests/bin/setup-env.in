@@ -46,6 +46,7 @@ kx509="${TESTS_ENVIRONMENT} ${top_builddir}/kuser/heimtools kx509"
 ktutil="${TESTS_ENVIRONMENT} ${top_builddir}/admin/ktutil"
 gsstool="${TESTS_ENVIRONMENT} ${top_builddir}/lib/gssapi/gsstool"
 gsstoken="${TESTS_ENVIRONMENT} ${top_builddir}/lib/gssapi/gss-token"
+kadm5_exec_hook="${top_builddir}/tests/bin/kadm5_exec_hook"
 
 # regression test tools
 test_ap_req="${TESTS_ENVIRONMENT} ${top_builddir}/lib/krb5/test_ap-req"

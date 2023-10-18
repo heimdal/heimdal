@@ -1299,6 +1299,50 @@ Certification authority related parameters are as for
 .Va bx509 .
 .It Li [kadmin]
 .Bl -tag -width "xxx" -offset indent
+.It Li exec_hook = Va path
+If specified, this will be the path to a program to run for
+every transaction.
+Arguments are positional:
+.Bl -tag -width "xxx" -offset indent
+.It Li precommit | postcommit
+.It Li operation
+.It Li error-message
+.It Li error-code
+.It Li principal-name
+.It Li [target-principal-name] (for renames)
+.It Li [kvno] (for prunes)
+.El
+.Pp
+Operations are: chpass, chkey, create, modify, delete, randkey,
+rename, setkeys, prune.
+.Pp
+Command-line options are:
+.Fl K key-salt-tuple ,
+.Fl F flag ,
+.Fl M modify-field .
+.Pp
+.Ar Flag
+is one of
+.Ar KEEPOLD
+(change keys or password keeping old keys) or
+.Ar CONDITIONAL
+(change password only if the new one is not the same as the old one).
+.Ar Modify-field
+are not documented at this time.
+.Pp
+If a password is involved in a transaction, it will be provided
+on stdin.
+.Pp
+When the stage is
+.Dq precommit
+if the
+.Ar exec_hook
+exits with an error, the operation will be rejected.
+If it exits with status code
+.Ar 13
+then the reported error code will
+be
+.Ar EACCES (Permission denied).
 .It Li password_lifetime = Va time
 If a principal already have its password set for expiration, this is
 the time it will be valid for after a change.

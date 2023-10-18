@@ -625,40 +625,14 @@ load_crl(hx509_context context, const char *path, time_t *t, CRLCertificateList 
     return ret;
 }
 
-/**
- * Add a CRL file to the revokation context.
- *
- * @param context hx509 context
- * @param ctx hx509 revokation context
- * @param path path to file that is going to be added to the context.
- *
- * @return An hx509 error code, see hx509_get_error_string().
- *
- * @ingroup hx509_revoke
- */
-
 HX509_LIB_FUNCTION int HX509_LIB_CALL
-hx509_revoke_add_crl(hx509_context context,
+_hx509_revoke_add_crl(hx509_context context,
 		     hx509_revoke_ctx ctx,
 		     const char *path)
 {
     void *data;
     size_t i;
     int ret;
-
-    if (strncmp(path, "FILE:", 5) != 0) {
-	hx509_set_error_string(context, 0, HX509_UNSUPPORTED_OPERATION,
-			       "unsupported type in %s", path);
-	return HX509_UNSUPPORTED_OPERATION;
-    }
-
-
-    path += 5;
-
-    for (i = 0; i < ctx->crls.len; i++) {
-	if (strcmp(ctx->crls.val[i].path, path) == 0)
-	    return 0;
-    }
 
     data = realloc(ctx->crls.val,
 		   (ctx->crls.len + 1) * sizeof(ctx->crls.val[0]));
@@ -688,6 +662,88 @@ hx509_revoke_add_crl(hx509_context context,
     ctx->crls.len++;
 
     return ret;
+}
+
+/**
+ * Add a CRL file or directory to the revokation context.
+ *
+ * @param context hx509 context
+ * @param ctx hx509 revokation context
+ * @param path path to file or directory that is going to be added to the context.
+ *
+ * @return An hx509 error code, see hx509_get_error_string().
+ *
+ * @ingroup hx509_revoke
+ */
+
+HX509_LIB_FUNCTION int HX509_LIB_CALL
+hx509_revoke_add_crl(hx509_context context,
+		     hx509_revoke_ctx ctx,
+		     const char *path)
+{
+    void *data;
+    size_t i;
+    int ret;
+
+    if (strncmp(path, "FILE:", 5) != 0 && strncmp(path, "DIR:", 4) != 0) {
+	hx509_set_error_string(context, 0, HX509_UNSUPPORTED_OPERATION,
+			       "unsupported type in %s", path);
+	return HX509_UNSUPPORTED_OPERATION;
+    }
+
+
+    if (strncmp(path, "FILE:", 5) == 0) {    
+	path += 5;
+	    
+	for (i = 0; i < ctx->crls.len; i++) {
+		if (strcmp(ctx->crls.val[i].path, path) == 0)
+	    	    return 0
+	}
+	
+	ret = _hx509_revoke_add_crl(context, ctx, path);
+	
+	return ret;
+    }
+        
+    if (strncmp(path, "DIR:", 4) == 0) {
+	path += 4;
+	
+	DIR *dirp;
+	struct dirent *dir;
+	int crls = 0;
+	
+	if ((dirp = opendir(path)) == NULL) {
+	    hx509_set_error_string(context, 0, HX509_UNSUPPORTED_OPERATION,
+			           "Could not open CRL directory %s", path);
+	    return HX509_UNSUPPORTED_OPERATION;
+	}
+	
+	do {
+	    if ((dir = readdir(dirp)) != NULL) {
+		if (strcmp(dir->d_name, ".") == 0 || strcmp(dir->d_name, "..") == 0)
+		    continue;
+		    
+		    const char full_path[strlen(path) + strlen(dir->d_name) + 2];
+		    sprintf(full_path, "%s/%s", path, dir->d_name);
+		    ret = _hx509_revoke_add_crl(context, ctx, full_path);
+		    
+		    if (ret)
+			continue;
+
+	   	    crls++;
+	    }
+            
+	} while (dir != NULL);
+	
+	closedir(dirp);
+	
+	if (crls < 1) {
+	    hx509_set_error_string(context, 0, HX509_UNSUPPORTED_OPERATION,
+			           "No CRL files found in %s", path);
+	    return HX509_UNSUPPORTED_OPERATION;
+	}
+	
+	return 0;
 }
 
 /**

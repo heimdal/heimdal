@@ -125,7 +125,9 @@ PERL=perl.exe
 CMP=cmp.exe
 MAKECAT=makecat.exe
 HHC=hhc.exe
+!ifndef MAKEINFO
 MAKEINFO=makeinfo.exe
+!endif
 SED=sed.exe
 
 CANDLE_CMD=candle.exe

@@ -272,6 +272,7 @@ HEIMDAL_KRB5_2.0 {
 		krb5_enctype_valid;
 		krb5_enctypes_compatible_keys;
 		krb5_err;
+		krb5_error_from_error_data;
 		krb5_error_from_rd_error;
 		krb5_errx;
 		krb5_expand_hostname;

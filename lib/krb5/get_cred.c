@@ -743,7 +743,31 @@ get_cred_kdc(krb5_context context,
 		free_KERB_ERROR_DATA(&error_data);
 	    } else {
 		/* OK. */
+
+		/*
+		 * It’s no good calling _krb5_fast_unwrap_error() — if we used
+		 * FAST to send the request, the function will expect to find
+		 * FX-FAST padata in rep.error.edata, and will produce a
+		 * confusing error message when it can’t find any. Instead,
+		 * we’ll try to produce an error message based on what we find
+		 * in KERB-ERROR-DATA, and then return the error code that was
+		 * in the reply.
+		 */
+
+		ret = krb5_error_from_error_data(context,
+						 &rep.error,
+						 in_creds,
+						 &error_data);
+
+		/* log the failure */
+		if (_krb5_have_debug(context, 5)) {
+		    const char *str = krb5_get_error_message(context, ret);
+		    _krb5_debug(context, 5, "get_cred_kdc: KRB-ERROR %d/%s", ret, str);
+		    krb5_free_error_message(context, str);
+		}
+
 		free_KERB_ERROR_DATA(&error_data);
+		goto out;
 	    }
 	}
 

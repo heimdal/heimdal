@@ -138,3 +138,38 @@ krb5_error_from_rd_error(krb5_context context,
     }
     return ret;
 }
+
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+krb5_error_from_error_data(krb5_context context,
+			   const krb5_error *error,
+			   const krb5_creds *creds,
+			   const KERB_ERROR_DATA *error_data)
+{
+    krb5_error_code ret;
+
+    ret = krb5_error_from_rd_error(context, error, creds);
+
+    if (error_data->data_type == kERB_ERR_TYPE_EXTENDED &&
+	error_data->data_value->length == 12)
+    {
+	const unsigned char *data = error_data->data_value->data;
+	const char *error_message = NULL;
+	uint32_t status;
+
+	status = ((uint32_t)data[0]) | ((uint32_t)data[1] << 8) |
+	    ((uint32_t)data[2] << 16) | ((uint32_t)data[3]) << 24;
+
+	error_message = krb5_get_error_message(context, ret);
+	if (error_message != NULL) {
+	    krb5_set_error_message(context,
+				   ret,
+				   N_("%s (NT status code 0x%08" PRIx32 ")",
+				      ""),
+				   error_message,
+				   status);
+	    krb5_free_error_message(context, error_message);
+	}
+    }
+
+    return ret;
+}

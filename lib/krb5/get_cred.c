@@ -739,7 +739,7 @@ get_cred_kdc(krb5_context context,
 	/* log the failure */
 	if (_krb5_have_debug(context, 5)) {
 	    const char *str = krb5_get_error_message(context, ret);
-	    _krb5_debug(context, 5, "parse_tgs_rep: KRB-ERROR %d/%s", ret, str);
+	    _krb5_debug(context, 5, "get_cred_kdc: KRB-ERROR %d/%s", ret, str);
 	    krb5_free_error_message(context, str);
 	}
     } else if(resp.length > 0 && ((char*)resp.data)[0] == 4) {

@@ -75,6 +75,14 @@ krb5_error_from_rd_error(krb5_context context,
     krb5_error_code ret;
 
     ret = error->error_code;
+    if (ret == 0) {
+	/*
+	 * As we’ve got a KRB-ERROR structure, we should always return a non‐
+	 * zero error code. A KRB-ERROR reply with a error code indicating
+	 * success makes little sense.
+	 */
+	ret = KRB5KRB_ERR_GENERIC;
+    }
     if (error->e_text != NULL) {
 	krb5_set_error_message(context, ret, "%s", *error->e_text);
     } else {

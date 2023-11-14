@@ -87,42 +87,49 @@ krb5_error_from_rd_error(krb5_context context,
 	krb5_set_error_message(context, ret, "%s", *error->e_text);
     } else {
 	char clientname[256], servername[256];
+	krb5_boolean have_clientname = FALSE;
+	krb5_boolean have_servername = FALSE;
 
 	if (creds != NULL) {
-	    krb5_unparse_name_fixed(context, creds->client,
-				    clientname, sizeof(clientname));
-	    krb5_unparse_name_fixed(context, creds->server,
-				    servername, sizeof(servername));
+	    krb5_error_code ret2;
+
+	    ret2 = krb5_unparse_name_fixed(context, creds->client,
+					   clientname, sizeof(clientname));
+	    have_clientname = ret2 == 0;
+
+	    ret2 = krb5_unparse_name_fixed(context, creds->server,
+					   servername, sizeof(servername));
+	    have_servername = ret2 == 0;
 	}
 
 	switch (ret) {
 	case KRB5KDC_ERR_NAME_EXP :
 	    krb5_set_error_message(context, ret,
 				   N_("Client%s%s%s expired", ""),
-				   creds ? " (" : "",
-				   creds ? clientname : "",
-				   creds ? ")" : "");
+				   have_clientname ? " (" : "",
+				   have_clientname ? clientname : "",
+				   have_clientname ? ")" : "");
 	    break;
 	case KRB5KDC_ERR_SERVICE_EXP :
 	    krb5_set_error_message(context, ret,
 				   N_("Server%s%s%s expired", ""),
-				   creds ? " (" : "",
-				   creds ? servername : "",
-				   creds ? ")" : "");
+				   have_servername ? " (" : "",
+				   have_servername ? servername : "",
+				   have_servername ? ")" : "");
 	    break;
 	case KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN :
 	    krb5_set_error_message(context, ret,
 				   N_("Client%s%s%s unknown", ""),
-				   creds ? " (" : "",
-				   creds ? clientname : "",
-				   creds ? ")" : "");
+				   have_clientname ? " (" : "",
+				   have_clientname ? clientname : "",
+				   have_clientname ? ")" : "");
 	    break;
 	case KRB5KDC_ERR_S_PRINCIPAL_UNKNOWN :
 	    krb5_set_error_message(context, ret,
 				   N_("Server%s%s%s unknown", ""),
-				   creds ? " (" : "",
-				   creds ? servername : "",
-				   creds ? ")" : "");
+				   have_servername ? " (" : "",
+				   have_servername ? servername : "",
+				   have_servername ? ")" : "");
 	    break;
 	default :
 	    krb5_clear_error_message(context);

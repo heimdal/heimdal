@@ -36,6 +36,58 @@ typedef unsigned long long uint64_t;
 #define UINT64_MAX 0xFFFFFFFFFFFFFFFFLL
 #endif
 
+#ifdef _MSC_VER
+
+#ifndef PRId32
+#define PRId32 "I32d"
+#endif
+
+#ifndef PRIi32
+#define PRIi32 "I32i"
+#endif
+
+#ifndef PRIu32
+#define PRIu32 "I32u"
+#endif
+
+#ifndef PRIo32
+#define PRIo32 "I32o"
+#endif
+
+#ifndef PRIx32
+#define PRIx32 "I32x"
+#endif
+
+#ifndef PRIX32
+#define PRIX32 "I32X"
+#endif
+
+#ifndef PRId64
+#define PRId64 "I64d"
+#endif
+
+#ifndef PRIi64
+#define PRIi64 "I64i"
+#endif
+
+#ifndef PRIu64
+#define PRIu64 "I64u"
+#endif
+
+#ifndef PRIo64
+#define PRIo64 "I64o"
+#endif
+
+#ifndef PRIx64
+#define PRIx64 "I64x"
+#endif
+
+#ifndef PRIX64
+#define PRIX64 "I64X"
+#endif
+
+#endif
+
 #ifdef __cplusplus
 }
 #endif

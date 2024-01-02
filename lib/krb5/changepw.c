@@ -32,6 +32,7 @@
  */
 
 #include "krb5_locl.h"
+#include "socks4a.h"
 
 #undef __attribute__
 #define __attribute__(X)
@@ -502,6 +503,38 @@ static const struct kpwd_proc {
 };
 
 /*
+ * Proxy I/O
+ */
+
+static int
+chgpw_socks4a_read(void *vcontext, void *vsockp, void *buf, unsigned len)
+{
+    int *sockp = vsockp;
+
+    return recv(*sockp, buf, len, 0);
+}
+
+static int
+chgpw_socks4a_write(void *vcontext, void *vsockp, const void *buf,
+    unsigned len)
+{
+    int *sockp = vsockp;
+
+    return send(*sockp, buf, len, 0);
+}
+
+static struct socks4a_io
+chgpw_socks4a_io(int *sockp)
+{
+
+    return (struct socks4a_io) {
+	.sio_cookie = sockp,
+	.sio_read = &chgpw_socks4a_read,
+	.sio_write = &chgpw_socks4a_write,
+    };
+}
+
+/*
  *
  */
 
@@ -520,6 +553,7 @@ change_password_loop (krb5_context	context,
     krb5_krbhst_handle handle = NULL;
     krb5_krbhst_info *hi;
     struct addrinfo *proxy_ai = NULL;
+    char *proxy_userid = NULL;
     rk_socket_t sock;
     unsigned int i;
     int done = 0;
@@ -588,6 +622,13 @@ change_password_loop (krb5_context	context,
 	    ret = krb5_eai_to_heim_errno(ret, errno);
 	    goto out;
 	}
+
+	/*
+	 * Get the userid for stream isolation.
+	 */
+	ret = krb5_unparse_name(context, targprinc, &proxy_userid);
+	if (ret)
+	    goto out;
     }
 
     while (!done && (ret = krb5_krbhst_next(context, handle, &hi)) == 0) {
@@ -651,8 +692,8 @@ change_password_loop (krb5_context	context,
 		/*
 		 * Set up the SOCKS4a proxy connection request.
 		 */
-		ret = _krb5_socks4a_connect(sock, sock, hi->hostname, hi->port,
-		    /*userid*/NULL, &socks4a);
+		ret = _krb5_socks4a_connect(chgpw_socks4a_io(&sock),
+		    hi->hostname, hi->port, proxy_userid, &socks4a);
 		if (ret)
 		    continue;
 
@@ -764,6 +805,8 @@ change_password_loop (krb5_context	context,
     krb5_auth_con_free (context, auth_context);
     if (proxy_ai)
 	freeaddrinfo(proxy_ai);
+    if (proxy_userid)
+	free(proxy_userid);
 
     if (ret == KRB5_KDC_UNREACH) {
 	krb5_set_error_message(context,

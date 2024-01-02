@@ -519,6 +519,7 @@ change_password_loop (krb5_context	context,
     krb5_auth_context auth_context = NULL;
     krb5_krbhst_handle handle = NULL;
     krb5_krbhst_info *hi;
+    struct addrinfo *proxy_ai = NULL;
     rk_socket_t sock;
     unsigned int i;
     int done = 0;
@@ -540,6 +541,55 @@ change_password_loop (krb5_context	context,
     if (ret)
 	goto out;
 
+    /*
+     * If we're configured to talk through a SOCKS4a proxy, resolve its
+     * address first so we can reuse it in the loop over hosts.
+     */
+    if (context->socks4a_proxy) {
+	char *proxy, *proxyhost, *proxyport;
+	struct addrinfo hints;
+
+	/*
+	 * Parse `<host>[:<port>]' into parts.
+	 */
+	if ((proxy = strdup(context->socks4a_proxy)) == NULL) {
+	    ret = ENOMEM;
+	    goto out;
+	}
+	proxyhost = proxy;
+	if ((proxyport = strchr(proxy, ':')) != NULL)
+	    *proxyport++ = '\0';
+
+	/*
+	 * Set up getaddrinfo hints for stream connection.
+	 */
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = PF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
+
+	/*
+	 * If block_dns is enabled, make sure AI_CANONNAME is clear and
+	 * AI_NUMERICHOST|AI_NUMERICSERV are both set to avoid the
+	 * potential for DNS leaks.
+	 */
+	if (krb5_config_get_bool(context, NULL, "libdefaults", "block_dns",
+		NULL)) {
+	    hints.ai_flags &= ~AI_CANONNAME;
+	    hints.ai_flags |= AI_NUMERICHOST|AI_NUMERICSERV;
+	}
+
+	/*
+	 * Resolve the proxy's address.
+	 */
+	ret = getaddrinfo(proxyhost, proxyport ? proxyport : "1080", &hints,
+	    &proxy_ai);
+	free(proxy);
+	if (ret) {
+	    ret = krb5_eai_to_heim_errno(ret, errno);
+	    goto out;
+	}
+    }
+
     while (!done && (ret = krb5_krbhst_next(context, handle, &hi)) == 0) {
 	struct addrinfo *ai, *a;
 	int is_stream;
@@ -559,9 +609,23 @@ change_password_loop (krb5_context	context,
 	    continue;
 	}
 
-	ret = krb5_krbhst_get_addrinfo(context, hi, &ai);
-	if (ret)
-	    continue;
+	if (context->socks4a_proxy) {
+	    /*
+	     * Refuse anything but TCP connections when we have a
+	     * SOCKS4a proxy configured.
+	     */
+	    if (hi->proto != KRB5_KRBHST_TCP)
+		continue;
+
+	    /*
+	     * Make a connection to the proxy's addrinfo.
+	     */
+	    ai = proxy_ai;
+	} else {
+	    ret = krb5_krbhst_get_addrinfo(context, hi, &ai);
+	    if (ret)
+		continue;
+	}
 
 	for (a = ai; !done && a != NULL; a = a->ai_next) {
 	    int replied = 0;
@@ -575,6 +639,55 @@ change_password_loop (krb5_context	context,
 	    if (rk_IS_SOCKET_ERROR(ret)) {
 		rk_closesocket (sock);
 		goto out;
+	    }
+
+	    /*
+	     * If there's a SOCKS4a proxy in the way, we need the proxy
+	     * to connect to the real host before we can continue.
+	     */
+	    if (context->socks4a_proxy) {
+		struct socks4a *socks4a;
+
+		/*
+		 * Set up the SOCKS4a proxy connection request.
+		 */
+		ret = _krb5_socks4a_connect(sock, sock, hi->hostname, hi->port,
+		    /*userid*/NULL, &socks4a);
+		if (ret)
+		    continue;
+
+		/*
+		 * Until the SOCKS4a connection has succeeeded, wait
+		 * until we can read or write as needed by SOCKS4a and
+		 * do the SOCKS4a I/O.
+		 */
+		while (!_krb5_socks4a_connected(socks4a)) {
+		    fd_set readfds, writefds;
+		    int nready;
+
+		    FD_ZERO(&readfds);
+		    FD_ZERO(&writefds);
+		    if (_krb5_socks4a_reading(socks4a))
+			FD_SET(sock, &readfds);
+		    if (_krb5_socks4a_reading(socks4a))
+			FD_SET(sock, &writefds);
+		    nready = select(sock + 1, &readfds, &writefds,
+			/*exceptfds*/NULL, /*timeout*/NULL);
+		    if (nready == -1) {
+			ret = errno;
+			break;
+		    }
+		    if (nready <= 0) {
+			ret = EIO; /* timeout should be impossible */
+			break;
+		    }
+		    ret = _krb5_socks4a_io(socks4a);
+		    if (ret)
+			break;
+		}
+		_krb5_socks4a_free(socks4a);
+		if (ret)
+		    continue;
 	    }
 
 	    ret = krb5_auth_con_genaddrs (context, auth_context, sock,
@@ -649,6 +762,8 @@ change_password_loop (krb5_context	context,
  out:
     krb5_krbhst_free (context, handle);
     krb5_auth_con_free (context, auth_context);
+    if (proxy_ai)
+	freeaddrinfo(proxy_ai);
 
     if (ret == KRB5_KDC_UNREACH) {
 	krb5_set_error_message(context,

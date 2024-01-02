@@ -220,10 +220,12 @@ krbhst_empty(const struct krb5_krbhst_data *kd)
  */
 
 static int
-krbhst_get_default_proto(struct krb5_krbhst_data *kd)
+krbhst_get_default_proto(krb5_context context, struct krb5_krbhst_data *kd)
 {
     if (kd->flags & KD_LARGE_MSG)
 	return KRB5_KRBHST_TCP;
+    if (context && context->socks4a_proxy)
+	return KRB5_KRBHST_TCP;	/* can't proxy UDP */
     return KRB5_KRBHST_UDP;
 }
 
@@ -259,7 +261,7 @@ parse_hostspec(krb5_context context, struct krb5_krbhst_data *kd,
     if(hi == NULL)
 	return NULL;
 
-    hi->proto = krbhst_get_default_proto(kd);
+    hi->proto = krbhst_get_default_proto(context, kd);
 
     if(strncmp(p, "http://", 7) == 0){
 	hi->proto = KRB5_KRBHST_HTTP;
@@ -672,7 +674,7 @@ add_locate(void *ctx, int type, struct sockaddr *addr)
     else if (atoi(port) == 0)
 	snprintf(port, sizeof(port), "%d", krbhst_get_default_port(kd));
 
-    proto = krbhst_get_default_proto(kd);
+    proto = krbhst_get_default_proto(NULL, kd);
 
     ret = add_plugin_host(kd, host, port, portnum, proto);
     if (ret)
@@ -836,7 +838,7 @@ kdc_get_next(krb5_context context,
     while((kd->flags & KD_FALLBACK) == 0) {
 	ret = fallback_get_hosts(context, kd, "kerberos",
 				 kd->def_port,
-				 krbhst_get_default_proto(kd));
+				 krbhst_get_default_proto(context, kd));
 	if(ret)
 	    return ret;
 	if(get_next(kd, host))
@@ -891,7 +893,7 @@ admin_get_next(krb5_context context,
 	&& (kd->flags & KD_FALLBACK) == 0) {
 	ret = fallback_get_hosts(context, kd, "kerberos",
 				 kd->def_port,
-				 krbhst_get_default_proto(kd));
+				 krbhst_get_default_proto(context, kd));
 	if(ret)
 	    return ret;
 	kd->flags |= KD_FALLBACK;
@@ -957,7 +959,7 @@ kpasswd_get_next(krb5_context context,
 	kd->get_next = admin_get_next;
 	ret = (*kd->get_next)(context, kd, host);
 	if (ret == 0)
-	    (*host)->proto = krbhst_get_default_proto(kd);
+	    (*host)->proto = krbhst_get_default_proto(context, kd);
 	return ret;
     }
 

@@ -349,6 +349,7 @@ init_context_from_config_file(krb5_context context)
     INIT_FIELD(context, int, max_retries, 3, "max_retries");
 
     INIT_FIELD(context, string, http_proxy, NULL, "http_proxy");
+    INIT_FIELD(context, string, socks4a_proxy, NULL, "socks4a_proxy");
 
     ret = init_openssl(context, &context->ossl);
     if (ret)

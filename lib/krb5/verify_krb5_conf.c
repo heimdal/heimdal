@@ -454,6 +454,7 @@ struct entry libdefaults_entries[] = {
     { "proxiable", krb5_config_string, check_boolean, 0 },
     { "renew_lifetime", krb5_config_string, check_time, 0 },
     { "scan_interfaces", krb5_config_string, check_boolean, 0 },
+    { "socks4a_proxy", krb5_config_string, check_host, 0 },
     { "srv_lookup", krb5_config_string, check_boolean, 0 },
     { "srv_try_txt", krb5_config_string, check_boolean, 0 },
     { "ticket_lifetime", krb5_config_string, check_time, 0 },

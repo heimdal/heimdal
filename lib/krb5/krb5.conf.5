@@ -309,6 +309,16 @@ enable this option unconditionally.
 .It Li warn_pwexpire = Va time
 How soon to warn for expiring password.
 Default is seven days.
+.It Li socks4a_proxy = Va host Ns Oo Li : Ns Va port Oc
+SOCKS4a proxy to use when talking to the KDC.
+Default port is 1080.
+.Pp
+Only TCP service to KDC is allowed in this case, not UDP or HTTP.
+.Pp
+The KDC hostname is passed to the SOCKS4a proxy verbatim without any
+DNS resolution first.
+Other DNS resolution, of the proxy address and for any realm mapping or
+KDC discovery, may still be done outside the SOCKS4a proxy.
 .It Li http_proxy = Va proxy-spec
 A HTTP-proxy to use when talking to the KDC via HTTP.
 .It Li dns_proxy = Va proxy-spec

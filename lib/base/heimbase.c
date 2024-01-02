@@ -80,11 +80,11 @@ struct heim_auto_release {
 
 
 /**
- * Retain object (i.e., take a reference)
+ * Retain object (i.e., take a reference).
  *
- * @param object to be released, NULL is ok
+ * @param object to be released, NULL is ok.
  *
- * @return the same object as passed in
+ * @return the same object as passed in.
  */
 
 heim_object_t
@@ -106,9 +106,9 @@ heim_retain(heim_object_t ptr)
 }
 
 /**
- * Release object, free if reference count reaches zero
+ * Release object, free if reference count reaches zero.
  *
- * @param object to be released
+ * @param object to be released.
  */
 
 void
@@ -196,11 +196,11 @@ _heim_get_isa(heim_object_t ptr)
 }
 
 /**
- * Get type ID of object
+ * Get type ID of object.
  *
- * @param object object to get type id of
+ * @param object object to get type id of.
  *
- * @return type id of object
+ * @return type id of object.
  */
 
 heim_tid_t
@@ -211,11 +211,11 @@ heim_get_tid(heim_object_t ptr)
 }
 
 /**
- * Get hash value of object
+ * Get hash value of object.
  *
- * @param object object to get hash value for
+ * @param object object to get hash value for.
  *
- * @return a hash value
+ * @return a hash value.
  */
 
 uintptr_t
@@ -231,10 +231,10 @@ heim_get_hash(heim_object_t ptr)
  * Compare two objects, returns 0 if equal, can use used for qsort()
  * and friends.
  *
- * @param a first object to compare
- * @param b first object to compare
+ * @param a first object to compare.
+ * @param b first object to compare.
  *
- * @return 0 if objects are equal
+ * @return 0 if objects are equal.
  */
 
 int
@@ -258,7 +258,7 @@ heim_cmp(heim_object_t a, heim_object_t b)
 }
 
 /*
- * Private - allocates an memory object
+ * Private - allocates an memory object.
  */
 
 static void HEIM_CALLCONV
@@ -284,15 +284,15 @@ static const struct heim_type_data memory_object = {
 };
 
 /**
- * Allocate memory for an object of anonymous type
+ * Allocate memory for an object of anonymous type.
  *
- * @param size size of object to be allocated
- * @param name name of ad-hoc type
- * @param dealloc destructor function
+ * @param size size of object to be allocated.
+ * @param name name of ad-hoc type.
+ * @param dealloc destructor function.
  *
  * Objects allocated with this interface do not serialize.
  *
- * @return allocated object
+ * @return allocated object.
  */
 
 void *
@@ -405,11 +405,11 @@ once_callback_caller(void)
 #endif
 
 /**
- * Call func once and only once
+ * Call func once and only once.
  *
- * @param once pointer to a heim_base_once_t
- * @param ctx context passed to func
- * @param func function to be called
+ * @param once pointer to a heim_base_once_t.
+ * @param ctx context passed to func.
+ * @param func function to be called.
  */
 
 void
@@ -502,7 +502,7 @@ heim_base_once_f(heim_base_once_t *once, void *ctx, void (*func)(void *))
 }
 
 /**
- * Abort and log the failure (using syslog)
+ * Abort and log the failure (using syslog).
  */
 
 void
@@ -517,7 +517,7 @@ heim_abort(const char *fmt, ...)
 }
 
 /**
- * Abort and log the failure (using syslog)
+ * Abort and log the failure (using syslog).
  */
 
 void
@@ -644,7 +644,7 @@ static struct heim_type_data _heim_autorel_object = {
 };
 
 /**
- * Create thread-specific object auto-release pool
+ * Create thread-specific object auto-release pool.
  *
  * Objects placed on the per-thread auto-release pool (with
  * heim_auto_release()) can be released in one fell swoop by calling
@@ -674,9 +674,9 @@ heim_auto_release_create(void)
 }
 
 /**
- * Place the current object on the thread's auto-release pool
+ * Place the current object on the thread's auto-release pool.
  *
- * @param ptr object
+ * @param ptr object.
  */
 
 heim_object_t
@@ -712,7 +712,7 @@ heim_auto_release(heim_object_t ptr)
 }
 
 /**
- * Release all objects on the given auto-release pool
+ * Release all objects on the given auto-release pool.
  */
 
 void
@@ -797,13 +797,13 @@ heim_path_vget2(heim_object_t ptr, heim_object_t *parent, heim_object_t *key,
 }
 
 /**
- * Get a node in a heim_object tree by path
+ * Get a node in a heim_object tree by path.
  *
- * @param ptr tree
- * @param error error (output)
- * @param ap NULL-terminated va_list of heim_object_ts that form a path
+ * @param ptr tree.
+ * @param error error (output).
+ * @param ap NULL-terminated va_list of heim_object_ts that form a path.
  *
- * @return object (not retained) if found
+ * @return object (not retained) if found.
  *
  * @addtogroup heimbase
  */
@@ -817,13 +817,13 @@ heim_path_vget(heim_object_t ptr, heim_error_t *error, va_list ap)
 }
 
 /**
- * Get a node in a tree by path, with retained reference
+ * Get a node in a tree by path, with retained reference.
  *
- * @param ptr tree
- * @param error error (output)
- * @param ap NULL-terminated va_list of heim_object_ts that form a path
+ * @param ptr tree.
+ * @param error error (output).
+ * @param ap NULL-terminated va_list of heim_object_ts that form a path.
  *
- * @return retained object if found
+ * @return retained object if found.
  *
  * @addtogroup heimbase
  */
@@ -837,13 +837,13 @@ heim_path_vcopy(heim_object_t ptr, heim_error_t *error, va_list ap)
 }
 
 /**
- * Get a node in a tree by path
+ * Get a node in a tree by path.
  *
- * @param ptr tree
- * @param error error (output)
- * @param ... NULL-terminated va_list of heim_object_ts that form a path
+ * @param ptr tree.
+ * @param error error (output).
+ * @param ... NULL-terminated va_list of heim_object_ts that form a path.
  *
- * @return object (not retained) if found
+ * @return object (not retained) if found.
  *
  * @addtogroup heimbase
  */
@@ -865,13 +865,13 @@ heim_path_get(heim_object_t ptr, heim_error_t *error, ...)
 }
 
 /**
- * Get a node in a tree by path, with retained reference
+ * Get a node in a tree by path, with retained reference.
  *
- * @param ptr tree
- * @param error error (output)
- * @param ... NULL-terminated va_list of heim_object_ts that form a path
+ * @param ptr tree.
+ * @param error error (output).
+ * @param ... NULL-terminated va_list of heim_object_ts that form a path.
  *
- * @return retained object if found
+ * @return retained object if found.
  *
  * @addtogroup heimbase
  */
@@ -893,19 +893,19 @@ heim_path_copy(heim_object_t ptr, heim_error_t *error, ...)
 }
 
 /**
- * Create a path in a heim_object_t tree
+ * Create a path in a heim_object_t tree.
  *
- * @param ptr the tree
- * @param size the size of the heim_dict_t nodes to be created
- * @param leaf leaf node to be added, if any
- * @param error error (output)
- * @param ap NULL-terminated of path component objects
+ * @param ptr the tree.
+ * @param size the size of the heim_dict_t nodes to be created.
+ * @param leaf leaf node to be added, if any.
+ * @param error error (output).
+ * @param ap NULL-terminated of path component objects.
  *
  * Create a path of heim_dict_t interior nodes in a given heim_object_t
  * tree, as necessary, and set/replace a leaf, if given (if leaf is NULL
  * then the leaf is not deleted).
  *
- * @return 0 on success, else a system error
+ * @return 0 on success, else a system error.
  *
  * @addtogroup heimbase
  */
@@ -1024,19 +1024,19 @@ err:
 }
 
 /**
- * Create a path in a heim_object_t tree
+ * Create a path in a heim_object_t tree.
  *
- * @param ptr the tree
- * @param size the size of the heim_dict_t nodes to be created
- * @param leaf leaf node to be added, if any
- * @param error error (output)
- * @param ... NULL-terminated list of path component objects
+ * @param ptr the tree.
+ * @param size the size of the heim_dict_t nodes to be created.
+ * @param leaf leaf node to be added, if any.
+ * @param error error (output).
+ * @param ... NULL-terminated list of path component objects.
  *
  * Create a path of heim_dict_t interior nodes in a given heim_object_t
  * tree, as necessary, and set/replace a leaf, if given (if leaf is NULL
  * then the leaf is not deleted).
  *
- * @return 0 on success, else a system error
+ * @return 0 on success, else a system error.
  *
  * @addtogroup heimbase
  */
@@ -1055,11 +1055,11 @@ heim_path_create(heim_object_t ptr, size_t size, heim_object_t leaf,
 }
 
 /**
- * Delete leaf node named by a path in a heim_object_t tree
+ * Delete leaf node named by a path in a heim_object_t tree.
  *
- * @param ptr the tree
- * @param error error (output)
- * @param ap NULL-terminated list of path component objects
+ * @param ptr the tree.
+ * @param error error (output).
+ * @param ap NULL-terminated list of path component objects.
  *
  * @addtogroup heimbase
  */
@@ -1082,11 +1082,11 @@ heim_path_vdelete(heim_object_t ptr, heim_error_t *error, va_list ap)
 }
 
 /**
- * Delete leaf node named by a path in a heim_object_t tree
+ * Delete leaf node named by a path in a heim_object_t tree.
  *
- * @param ptr the tree
- * @param error error (output)
- * @param ap NULL-terminated list of path component objects
+ * @param ptr the tree.
+ * @param error error (output).
+ * @param ap NULL-terminated list of path component objects.
  *
  * @addtogroup heimbase
  */

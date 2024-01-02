@@ -315,7 +315,7 @@ report_expiration (krb5_context context,
  * use the prompter to print the warning.
  *
  * @param context A Kerberos 5 context.
- * @param options An GIC options structure
+ * @param options An GIC options structure.
  * @param ctx The krb5_init_creds_context check for expiration.
  */
 
@@ -367,6 +367,7 @@ krb5_process_last_request(krb5_context context,
  * @param ctx a krb5_init_creds_context context.
  *
  * @return 0 for success, or an Kerberos 5 error code, see krb5_get_error_message().
+ *
  * @ingroup krb5_credential
  */
 
@@ -2482,8 +2483,8 @@ capture_lkdc_domain(krb5_context context,
  * @param client The Kerberos principal to get the credential for, if
  *     NULL is given, the default principal is used as determined by
  *     krb5_get_default_principal().
- * @param prompter
- * @param prompter_data
+ * @param prompter.
+ * @param prompter_data.
  * @param start_time the time the ticket should start to be valid or 0 for now.
  * @param options a options structure, can be NULL for default options.
  * @param rctx A new allocated free with krb5_init_creds_free().
@@ -2550,9 +2551,10 @@ krb5_init_creds_init(krb5_context context,
  *
  * @param context a Kerberos 5 context.
  * @param ctx a krb5_init_creds_context context.
- * @param hostname the hostname for the KDC of realm
+ * @param hostname the hostname for the KDC of realm.
  *
  * @return 0 for success, or an Kerberos 5 error code, see krb5_get_error_message().
+ *
  * @ingroup krb5_credential
  */
 
@@ -2598,6 +2600,7 @@ krb5_init_creds_set_sitename(krb5_context context,
  *        realm is set.
  *
  * @return 0 for success, or an Kerberos 5 error code, see krb5_get_error_message().
+ *
  * @ingroup krb5_credential
  */
 
@@ -2653,6 +2656,7 @@ krb5_init_creds_set_service(krb5_context context,
  * @param password the password to use.
  *
  * @return 0 for success, or an Kerberos 5 error code, see krb5_get_error_message().
+ *
  * @ingroup krb5_credential
  */
 
@@ -2719,6 +2723,7 @@ keytab_key_proc(krb5_context context, krb5_enctype enctype,
  * @param keytab the keytab to read the key from.
  *
  * @return 0 for success, or an Kerberos 5 error code, see krb5_get_error_message().
+ *
  * @ingroup krb5_credential
  */
 
@@ -3438,7 +3443,7 @@ init_creds_step(krb5_context context,
  * @param context a Kerberos 5 context.
  * @param ctx ctx krb5_init_creds_context context.
  * @param in input data from KDC, first round it should be reset by krb5_data_zero().
- * @param out reply to KDC. The caller needs to call krb5_data_free()
+ * @param out reply to KDC. The caller needs to call krb5_data_free().
  * @param out_realm the destination realm for 'out', free with krb5_xfree()
  * @param flags status of the round, if
  *        KRB5_INIT_CREDS_STEP_FLAG_CONTINUE is set, continue one more round.
@@ -3489,7 +3494,7 @@ krb5_init_creds_step(krb5_context context,
  * context.
  *
  * @param context A Kerberos 5 context.
- * @param ctx
+ * @param ctx.
  * @param cred credentials, free with krb5_free_cred_contents().
  *
  * @return 0 for sucess or An Kerberos error code, see krb5_get_error_message().
@@ -3547,7 +3552,7 @@ _krb5_init_creds_get_cred_client(krb5_context context, krb5_init_creds_context c
 /**
  * Get the last error from the transaction.
  *
- * @return Returns 0 or an error code
+ * @return Returns 0 or an error code.
  *
  * @ingroup krb5_credential
  */
@@ -3567,13 +3572,13 @@ krb5_init_creds_get_error(krb5_context context,
 }
 
 /**
- * Store config
+ * Store config.
  *
  * @param context A Kerberos 5 context.
  * @param ctx The krb5_init_creds_context to free.
- * @param id store
+ * @param id store.
  *
- * @return Returns 0 or an error code
+ * @return Returns 0 or an error code.
  *
  * @ingroup krb5_credential
  */

@@ -203,9 +203,9 @@ parse_key_set(krb5_context context, const char *key,
 /**
  * This function prunes an HDB entry's historic keys by kvno.
  *
- * @param context   Context
- * @param entry	    HDB entry
- * @param kvno      Keyset kvno to prune, or zero to prune all too-old keys
+ * @param context   Context.
+ * @param entry	    HDB entry.
+ * @param kvno      Keyset kvno to prune, or zero to prune all too-old keys.
  */
 krb5_error_code
 hdb_prune_keys_kvno(krb5_context context, hdb_entry *entry, int kvno)
@@ -276,8 +276,8 @@ hdb_prune_keys_kvno(krb5_context context, hdb_entry *entry, int kvno)
  * This function prunes an HDB entry's keys that are too old to have been used
  * to mint still valid tickets (based on the entry's maximum ticket lifetime).
  * 
- * @param context   Context
- * @param entry	    HDB entry
+ * @param context   Context.
+ * @param entry	    HDB entry.
  */
 krb5_error_code
 hdb_prune_keys(krb5_context context, hdb_entry *entry)
@@ -291,10 +291,10 @@ hdb_prune_keys(krb5_context context, hdb_entry *entry)
 /**
  * This function adds a keyset to an HDB entry's key history.
  *
- * @param context   Context
- * @param entry	    HDB entry
- * @param kvno	    Key version number of the key to add to the history
- * @param key	    The Key to add
+ * @param context   Context.
+ * @param entry	    HDB entry.
+ * @param kvno	    Key version number of the key to add to the history.
+ * @param key	    The Key to add.
  */
 krb5_error_code
 hdb_add_history_keyset(krb5_context context,
@@ -340,8 +340,8 @@ hdb_add_history_keyset(krb5_context context,
  * history.  The current keyset is left alone; the caller is responsible
  * for freeing it.
  *
- * @param context   Context
- * @param entry	    HDB entry
+ * @param context   Context.
+ * @param entry	    HDB entry.
  *
  * @return Zero on success, or an error code otherwise.
  */
@@ -372,10 +372,10 @@ hdb_add_current_keys_to_history(krb5_context context, hdb_entry *entry)
 /**
  * This function adds a key to an HDB entry's key history.
  *
- * @param context   Context
- * @param entry	    HDB entry
- * @param kvno	    Key version number of the key to add to the history
- * @param key	    The Key to add
+ * @param context   Context.
+ * @param entry	    HDB entry.
+ * @param kvno	    Key version number of the key to add to the history.
+ * @param key	    The Key to add.
  *
  * @return Zero on success, or an error code otherwise.
  */
@@ -432,9 +432,9 @@ out:
  * set with a historical keyset.  If no historical keys are found then
  * an error is returned (the caller can still set entry->kvno directly).
  *
- * @param context	krb5_context
- * @param new_kvno	New kvno for the entry
- * @param entry		hdb_entry to modify
+ * @param context	krb5_context.
+ * @param new_kvno	New kvno for the entry.
+ * @param entry		hdb_entry to modify.
  */
 krb5_error_code
 hdb_change_kvno(krb5_context context, krb5_kvno new_kvno, hdb_entry *entry)

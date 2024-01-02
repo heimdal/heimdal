@@ -571,7 +571,7 @@ krb5_rd_req_in_set_keytab(krb5_context context,
 }
 
 /**
- * Set if krb5_rq_red() is going to check the Windows PAC or not
+ * Set if krb5_rq_red() is going to check the Windows PAC or not.
  *
  * @param context Keberos 5 context.
  * @param in krb5_rd_req_in_ctx to check the option on.
@@ -824,18 +824,17 @@ get_key_from_keytab(krb5_context context,
  * @param context Keberos 5 context.
  * @param auth_context the authentication context, can be NULL, then
  *        default values for the authentication context will used.
- * @param inbuf the (AP-REQ) authentication buffer
- *
+ * @param inbuf the (AP-REQ) authentication buffer.
  * @param server the server to authenticate to. If NULL the function
  *        will try to find any available credential in the keytab
  *        that will verify the reply. The function will prefer the
  *        server specified in the AP-REQ, but if
  *        there is no mach, it will try all keytab entries for a
  *        match. This has serious performance issues for large keytabs.
- *
  * @param inctx control the behavior of the function, if NULL, the
  *        default behavior is used.
  * @param outctx the return outctx, free with krb5_rd_req_out_ctx_free().
+ *
  * @return Kerberos 5 error code, see krb5_get_error_message().
  *
  * @ingroup krb5_auth

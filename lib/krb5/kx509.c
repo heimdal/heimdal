@@ -111,8 +111,8 @@ struct krb5_kx509_req_ctx_data {
 /**
  * Create a kx509 request context.
  *
- * @param context The Kerberos library context
- * @param out Where to place the kx509 request context
+ * @param context The Kerberos library context.
+ * @param out Where to place the kx509 request context.
  *
  * @return A krb5 error code.
  */
@@ -151,8 +151,8 @@ krb5_kx509_ctx_init(krb5_context context, krb5_kx509_req_ctx *out)
 /**
  * Free a kx509 request context.
  *
- * @param context The Kerberos library context
- * @param ctxp Pointer to krb5 request context to free
+ * @param context The Kerberos library context.
+ * @param ctxp Pointer to krb5 request context to free.
  *
  * @return A krb5 error code.
  */
@@ -178,9 +178,9 @@ krb5_kx509_ctx_free(krb5_context context, krb5_kx509_req_ctx *ctxp)
 /**
  * Set a realm to send kx509 request to, if different from the client's.
  *
- * @param context The Kerberos library context
- * @param ctx The kx509 request context
- * @param realm Realm name
+ * @param context The Kerberos library context.
+ * @param ctx The kx509 request context.
+ * @param realm Realm name.
  *
  * @return A krb5 error code.
  */
@@ -200,9 +200,9 @@ krb5_kx509_ctx_set_realm(krb5_context context,
  * automatically.  If a CSR is given then kx509 will use it instead of
  * generating one.
  *
- * @param context The Kerberos library context
- * @param ctx The kx509 request context
- * @param csr_der A DER-encoded PKCS#10 CSR
+ * @param context The Kerberos library context.
+ * @param ctx The kx509 request context.
+ * @param csr_der A DER-encoded PKCS#10 CSR.
  *
  * @return A krb5 error code.
  */
@@ -219,9 +219,9 @@ krb5_kx509_ctx_set_csr_der(krb5_context context,
  * Adds an EKU as an additional desired Certificate Extension or in the CSR if
  * the caller does not set a CSR.
  *
- * @param context The Kerberos library context
- * @param ctx The kx509 request context
- * @param oids A string representation of an OID
+ * @param context The Kerberos library context.
+ * @param ctx The kx509 request context.
+ * @param oids A string representation of an OID.
  *
  * @return A krb5 error code.
  */
@@ -244,9 +244,9 @@ krb5_kx509_ctx_add_eku(krb5_context context,
  * Adds a dNSName SAN (domainname, hostname) as an additional desired
  * Certificate Extension or in the CSR if the caller does not set a CSR.
  *
- * @param context The Kerberos library context
- * @param ctx The kx509 request context
- * @param dname A string containing a DNS domainname
+ * @param context The Kerberos library context.
+ * @param ctx The kx509 request context.
+ * @param dname A string containing a DNS domainname.
  *
  * @return A krb5 error code.
  */
@@ -263,9 +263,9 @@ krb5_kx509_ctx_add_san_dns_name(krb5_context context,
  * Adds an xmppAddr SAN (jabber address) as an additional desired Certificate
  * Extension or in the CSR if the caller does not set a CSR.
  *
- * @param context The Kerberos library context
- * @param ctx The kx509 request context
- * @param jid A string containing a Jabber address
+ * @param context The Kerberos library context.
+ * @param ctx The kx509 request context.
+ * @param jid A string containing a Jabber address.
  *
  * @return A krb5 error code.
  */
@@ -281,9 +281,9 @@ krb5_kx509_ctx_add_san_xmpp(krb5_context context,
  * Adds an rfc822Name SAN (e-mail address) as an additional desired Certificate
  * Extension or in the CSR if the caller does not set a CSR.
  *
- * @param context The Kerberos library context
- * @param ctx The kx509 request context
- * @param email A string containing an e-mail address
+ * @param context The Kerberos library context.
+ * @param ctx The kx509 request context.
+ * @param email A string containing an e-mail address.
  *
  * @return A krb5 error code.
  */
@@ -299,10 +299,10 @@ krb5_kx509_ctx_add_san_rfc822Name(krb5_context context,
  * Adds an pkinit SAN (Kerberos principal name) as an additional desired
  * Certificate Extension or in the CSR if the caller does not set a CSR.
  *
- * @param context The Kerberos library context
- * @param ctx The kx509 request context
+ * @param context The Kerberos library context.
+ * @param ctx The kx509 request context.
  * @param pname A string containing a representation of a Kerberos principal
- *              name
+ *              name.
  *
  * @return A krb5 error code.
  */
@@ -318,9 +318,9 @@ krb5_kx509_ctx_add_san_pkinit(krb5_context context,
  * Adds a Microsoft-style UPN (user principal name) as an additional desired
  * Certificate Extension or in the CSR if the caller does not set a CSR.
  *
- * @param context The Kerberos library context
- * @param ctx The kx509 request context
- * @param upn A string containing a representation of a UPN
+ * @param context The Kerberos library context.
+ * @param ctx The kx509 request context.
+ * @param upn A string containing a representation of a UPN.
  *
  * @return A krb5 error code.
  */
@@ -337,9 +337,9 @@ krb5_kx509_ctx_add_san_ms_upn(krb5_context context,
  * Adds an registeredID SAN (OID) as an additional desired Certificate
  * Extension or in the CSR if the caller does not set a CSR.
  *
- * @param context The Kerberos library context
- * @param ctx The kx509 request context
- * @param oids A string representation of an OID
+ * @param context The Kerberos library context.
+ * @param ctx The kx509 request context.
+ * @param oids A string representation of an OID.
  *
  * @return A krb5 error code.
  */
@@ -390,9 +390,9 @@ load_priv_key(krb5_context context,
 /**
  * Set a private key.
  *
- * @param context The Kerberos library context
- * @param ctx The kx509 request context
- * @param store The name of a PKIX credential store
+ * @param context The Kerberos library context.
+ * @param ctx The kx509 request context.
+ * @param store The name of a PKIX credential store.
  *
  * @return A krb5 error code.
  */
@@ -459,10 +459,10 @@ gen_priv_key(krb5_context context,
 /**
  * Generate a private key.
  *
- * @param context The Kerberos library context
- * @param ctx The kx509 request context
- * @param gen_type The type of key (default: rsa)
- * @param gen_bits The size of the key (for non-ECC, really, for RSA)
+ * @param context The Kerberos library context.
+ * @param ctx The kx509 request context.
+ * @param gen_type The type of key (default: rsa).
+ * @param gen_bits The size of the key (for non-ECC, really, for RSA).
  *
  * @return A krb5 error code.
  */
@@ -1181,13 +1181,13 @@ kx509_core(krb5_context context,
  * payload of a "cc config" named "kx509cert", while the key will be stored as
  * a DER-encoded PKCS#8 PrivateKeyInfo in a cc config named "kx509key".
  *
- * @param context The Kerberos library context
- * @param kx509_ctx A kx509 request context
- * @param incc A credential cache (if NULL use default ccache)
+ * @param context The Kerberos library context.
+ * @param kx509_ctx A kx509 request context.
+ * @param incc A credential cache (if NULL use default ccache).
  * @param hx509_store An PKIX credential store into which to store the private
- *                    key and certificate (e.g, "PEM-FILE:/path/to/file.pem")
+ *                    key and certificate (e.g, "PEM-FILE:/path/to/file.pem").
  * @param outcc A ccache into which to store the private key and certificate
- *              (mandatory)
+ *              (mandatory).
  *
  * @return A krb5 error code.
  */
@@ -1251,10 +1251,10 @@ krb5_kx509_ext(krb5_context context,
  *
  * XXX NOTE: Dicey feature here...  Review carefully!
  *
- * @param context The Kerberos library context
- * @param cc A credential cache
+ * @param context The Kerberos library context.
+ * @param cc A credential cache.
  * @param realm A realm from which to get the certificate (uses the client
- *              principal's realm if NULL)
+ *              principal's realm if NULL).
  *
  * @return A krb5 error code.
  */

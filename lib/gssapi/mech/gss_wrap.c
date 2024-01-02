@@ -36,7 +36,7 @@
  * @param context_handle context handle.
  * @param conf_req_flag if non zero, confidentiality is requestd.
  * @param qop_req type of protection needed, in most cases it GSS_C_QOP_DEFAULT should be passed in.
- * @param input_message_buffer messages to wrap
+ * @param input_message_buffer messages to wrap.
  * @param conf_state returns non zero if confidentiality was honoured.
  * @param output_message_buffer the resulting buffer, release with gss_release_buffer().
  *

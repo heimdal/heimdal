@@ -36,10 +36,10 @@
 #include "krb5_locl.h"
 
 /**
- * Free ticket and content
+ * Free ticket and content.
  *
- * @param context a Kerberos 5 context
- * @param ticket ticket to free
+ * @param context a Kerberos 5 context.
+ * @param ticket ticket to free.
  *
  * @return Returns 0 to indicate success.  Otherwise an kerberos et
  * error code is returned, see krb5_get_error_message().
@@ -59,11 +59,11 @@ krb5_free_ticket(krb5_context context,
 }
 
 /**
- * Copy ticket and content
+ * Copy ticket and content.
  *
- * @param context a Kerberos 5 context
- * @param from ticket to copy
- * @param to new copy of ticket, free with krb5_free_ticket()
+ * @param context a Kerberos 5 context.
+ * @param from ticket to copy.
+ * @param to new copy of ticket, free with krb5_free_ticket().
  *
  * @return Returns 0 to indicate success.  Otherwise an kerberos et
  * error code is returned, see krb5_get_error_message().
@@ -105,11 +105,11 @@ krb5_copy_ticket(krb5_context context,
 }
 
 /**
- * Return client principal in ticket
+ * Return client principal in ticket.
  *
- * @param context a Kerberos 5 context
- * @param ticket ticket to copy
- * @param client client principal, free with krb5_free_principal()
+ * @param context a Kerberos 5 context.
+ * @param ticket ticket to copy.
+ * @param client client principal, free with krb5_free_principal().
  *
  * @return Returns 0 to indicate success.  Otherwise an kerberos et
  * error code is returned, see krb5_get_error_message().
@@ -126,11 +126,11 @@ krb5_ticket_get_client(krb5_context context,
 }
 
 /**
- * Return server principal in ticket
+ * Return server principal in ticket.
  *
- * @param context a Kerberos 5 context
- * @param ticket ticket to copy
- * @param server server principal, free with krb5_free_principal()
+ * @param context a Kerberos 5 context.
+ * @param ticket ticket to copy.
+ * @param server server principal, free with krb5_free_principal().
  *
  * @return Returns 0 to indicate success.  Otherwise an kerberos et
  * error code is returned, see krb5_get_error_message().
@@ -147,12 +147,12 @@ krb5_ticket_get_server(krb5_context context,
 }
 
 /**
- * Return end time of a ticket
+ * Return end time of a ticket.
  *
- * @param context a Kerberos 5 context
- * @param ticket ticket to copy
+ * @param context a Kerberos 5 context.
+ * @param ticket ticket to copy.
  *
- * @return end time of ticket
+ * @return end time of ticket.
  *
  * @ingroup krb5
  */
@@ -165,11 +165,11 @@ krb5_ticket_get_endtime(krb5_context context,
 }
 
 /**
- * Return authentication, start, end, and renew limit times of a ticket
+ * Return authentication, start, end, and renew limit times of a ticket.
  *
- * @param context a Kerberos 5 context
- * @param ticket ticket to copy
- * @param t pointer to krb5_times structure
+ * @param context a Kerberos 5 context.
+ * @param ticket ticket to copy.
+ * @param t pointer to krb5_times structure.
  *
  * @ingroup krb5
  */
@@ -188,12 +188,12 @@ krb5_ticket_get_times(krb5_context context,
 }
 
 /**
- * Get the flags from the Kerberos ticket
+ * Get the flags from the Kerberos ticket.
  *
- * @param context Kerberos context
- * @param ticket Kerberos ticket
+ * @param context Kerberos context.
+ * @param ticket Kerberos ticket.
  *
- * @return ticket flags
+ * @return ticket flags.
  *
  * @ingroup krb5_ticket
  */
@@ -416,10 +416,10 @@ _krb5_get_ad(krb5_context context,
  * the field in data. This function is to use for kerberos
  * applications.
  *
- * @param context a Kerberos 5 context
- * @param ticket Kerberos ticket
- * @param type type to fetch
- * @param data returned data, free with krb5_data_free()
+ * @param context a Kerberos 5 context.
+ * @param ticket Kerberos ticket.
+ * @param type type to fetch.
+ * @param data returned data, free with krb5_data_free().
  *
  * @ingroup krb5
  */

@@ -263,7 +263,7 @@ wincng_key_init(EVP_CIPHER_CTX *ctx,
     }
 
 /**
- * The triple DES cipher type (Windows CNG provider)
+ * The triple DES cipher type (Windows CNG provider).
  *
  * @return the DES-EDE3-CBC EVP_CIPHER pointer.
  *
@@ -278,7 +278,7 @@ WINCNG_CIPHER_ALGORITHM(des_ede3_cbc,
 			EVP_CIPH_CBC_MODE);
 
 /**
- * The DES cipher type (Windows CNG provider)
+ * The DES cipher type (Windows CNG provider).
  *
  * @return the DES-CBC EVP_CIPHER pointer.
  *
@@ -293,7 +293,7 @@ WINCNG_CIPHER_ALGORITHM(des_cbc,
 			EVP_CIPH_CBC_MODE);
 
 /**
- * The AES-128 cipher type (Windows CNG provider)
+ * The AES-128 cipher type (Windows CNG provider).
  *
  * @return the AES-128-CBC EVP_CIPHER pointer.
  *
@@ -308,7 +308,7 @@ WINCNG_CIPHER_ALGORITHM(aes_128_cbc,
 			EVP_CIPH_CBC_MODE);
 
 /**
- * The AES-192 cipher type (Windows CNG provider)
+ * The AES-192 cipher type (Windows CNG provider).
  *
  * @return the AES-192-CBC EVP_CIPHER pointer.
  *
@@ -323,7 +323,7 @@ WINCNG_CIPHER_ALGORITHM(aes_192_cbc,
 			EVP_CIPH_CBC_MODE);
 
 /**
- * The AES-256 cipher type (Windows CNG provider)
+ * The AES-256 cipher type (Windows CNG provider).
  *
  * @return the AES-256-CBC EVP_CIPHER pointer.
  *
@@ -338,7 +338,7 @@ WINCNG_CIPHER_ALGORITHM(aes_256_cbc,
 			EVP_CIPH_CBC_MODE);
 
 /**
- * The AES-128 CFB8 cipher type (Windows CNG provider)
+ * The AES-128 CFB8 cipher type (Windows CNG provider).
  *
  * @return the AES-128-CFB8 EVP_CIPHER pointer.
  *
@@ -353,7 +353,7 @@ WINCNG_CIPHER_ALGORITHM(aes_128_cfb8,
 			EVP_CIPH_CFB8_MODE);
 
 /**
- * The AES-192 CFB8 cipher type (Windows CNG provider)
+ * The AES-192 CFB8 cipher type (Windows CNG provider).
  *
  * @return the AES-192-CFB8 EVP_CIPHER pointer.
  *
@@ -368,7 +368,7 @@ WINCNG_CIPHER_ALGORITHM(aes_192_cfb8,
 			EVP_CIPH_CFB8_MODE);
 
 /**
- * The AES-256 CFB8 cipher type (Windows CNG provider)
+ * The AES-256 CFB8 cipher type (Windows CNG provider).
  *
  * @return the AES-256-CFB8 EVP_CIPHER pointer.
  *
@@ -383,7 +383,7 @@ WINCNG_CIPHER_ALGORITHM(aes_256_cfb8,
 			EVP_CIPH_CFB8_MODE);
 
 /**
- * The RC2 cipher type - Windows CNG
+ * The RC2 cipher type - Windows CNG.
  *
  * @return the RC2 EVP_CIPHER pointer.
  *
@@ -398,7 +398,7 @@ WINCNG_CIPHER_ALGORITHM(rc2_cbc,
 			EVP_CIPH_CBC_MODE);
 
 /**
- * The RC2-40 cipher type - Windows CNG
+ * The RC2-40 cipher type - Windows CNG.
  *
  * @return the RC2-40 EVP_CIPHER pointer.
  *
@@ -413,7 +413,7 @@ WINCNG_CIPHER_ALGORITHM(rc2_40_cbc,
 			EVP_CIPH_CBC_MODE);
 
 /**
- * The RC2-64 cipher type - Windows CNG
+ * The RC2-64 cipher type - Windows CNG.
  *
  * @return the RC2-64 EVP_CIPHER pointer.
  *
@@ -428,7 +428,7 @@ WINCNG_CIPHER_ALGORITHM(rc2_64_cbc,
 			EVP_CIPH_CBC_MODE);
 
 /**
- * The Camellia-128 cipher type - CommonCrypto
+ * The Camellia-128 cipher type - CommonCrypto.
  *
  * @return the Camellia-128 EVP_CIPHER pointer.
  *
@@ -438,7 +438,7 @@ WINCNG_CIPHER_ALGORITHM(rc2_64_cbc,
 WINCNG_CIPHER_ALGORITHM_UNAVAILABLE(camellia_128_cbc);
 
 /**
- * The Camellia-198 cipher type - CommonCrypto
+ * The Camellia-198 cipher type - CommonCrypto.
  *
  * @return the Camellia-198 EVP_CIPHER pointer.
  *
@@ -448,7 +448,7 @@ WINCNG_CIPHER_ALGORITHM_UNAVAILABLE(camellia_128_cbc);
 WINCNG_CIPHER_ALGORITHM_UNAVAILABLE(camellia_192_cbc);
 
 /**
- * The Camellia-256 cipher type - CommonCrypto
+ * The Camellia-256 cipher type - CommonCrypto.
  *
  * @return the Camellia-256 EVP_CIPHER pointer.
  *
@@ -458,7 +458,7 @@ WINCNG_CIPHER_ALGORITHM_UNAVAILABLE(camellia_192_cbc);
 WINCNG_CIPHER_ALGORITHM_UNAVAILABLE(camellia_256_cbc);
 
 /**
- * The RC4 cipher type (Windows CNG provider)
+ * The RC4 cipher type (Windows CNG provider).
  *
  * @return the RC4 EVP_CIPHER pointer.
  *
@@ -473,7 +473,7 @@ WINCNG_CIPHER_ALGORITHM(rc4,
 			EVP_CIPH_STREAM_CIPHER | EVP_CIPH_VARIABLE_LENGTH);
 
 /**
- * The RC4-40 cipher type (Windows CNG provider)
+ * The RC4-40 cipher type (Windows CNG provider).
  *
  * @return the RC4 EVP_CIPHER pointer.
  *

@@ -42,8 +42,7 @@
  * wait_for_process_timed waits for a process to terminate or until a
  * specified timeout occurs.
  *
- * @param[in] pid Process id for the monitored process
-
+ * @param[in] pid Process id for the monitored process.
  * @param[in] func Timeout callback function.  When the wait times out,
  *     the callback function is called.  The possible return values
  *     from the callback function are:
@@ -53,16 +52,15 @@
  * - 0             Don't timeout again
  * - n             Seconds to next timeout
  *
- * @param[in] ptr Optional parameter for func()
- *
+ * @param[in] ptr Optional parameter for func().
  * @param[in] timeout Seconds to first timeout.
  *
- * @retval SE_E_UNSPECIFIED   Unspecified system error
- * @retval SE_E_FORKFAILED    Fork failure (not applicable for _WIN32 targets)
- * @retval SE_E_WAITPIDFAILED waitpid errors
- * @retval SE_E_EXECTIMEOUT   exec timeout
- * @retval 0 <= Return value  from subprocess
- * @retval SE_E_NOTFOUND      The program coudln't be found
+ * @retval SE_E_UNSPECIFIED   Unspecified system error.
+ * @retval SE_E_FORKFAILED    Fork failure (not applicable for _WIN32 targets).
+ * @retval SE_E_WAITPIDFAILED waitpid errors.
+ * @retval SE_E_EXECTIMEOUT   exec timeout.
+ * @retval 0 <= Return value  from subprocess.
+ * @retval SE_E_NOTFOUND      The program coudln't be found.
  * @retval 128- The signal that killed the subprocess +128.
  */
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL

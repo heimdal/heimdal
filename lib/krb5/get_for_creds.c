@@ -179,8 +179,8 @@ krb5_fwd_tgt_creds(krb5_context	context,
  *
  * @param context A kerberos 5 context.
  * @param auth_context the auth context with the key to encrypt the out_data.
- * @param ccache credential cache to use
- * @param flags the flags to control the resulting ticket flags
+ * @param ccache credential cache to use.
+ * @param flags the flags to control the resulting ticket flags.
  * @param hostname the host to forward the tickets too.
  * @param in_creds the in client and server ticket names.  The client
  * and server components forwarded to the remote host.
@@ -225,11 +225,11 @@ krb5_get_forwarded_creds (krb5_context	    context,
  * security penalty.
  *
  * @param context A kerberos 5 context.
- * @param ccache The credential cache to use
- * @param creds Creds with client and server principals
- * @param flags The flags to control the resulting ticket flags
- * @param hostname The hostname of server
- * @param out_creds The resulting credential
+ * @param ccache The credential cache to use.
+ * @param creds Creds with client and server principals.
+ * @param flags The flags to control the resulting ticket flags.
+ * @param hostname The hostname of server.
+ * @param out_creds The resulting credential.
  *
  * @return Return an error code or 0.
  */

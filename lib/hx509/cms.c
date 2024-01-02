@@ -549,7 +549,7 @@ out:
  * @param length length of the data that data point to.
  * @param encryption_type Encryption cipher to use for the bulk data,
  * use NULL to get default.
- * @param contentType type of the data that is encrypted
+ * @param contentType type of the data that is encrypted.
  * @param content the output of the function,
  * free with der_free_octet_string().
  *
@@ -838,7 +838,7 @@ hx509_cms_verify_signed(hx509_context context,
  * @param signer_certs list of the cerficates used to sign this
  * request, free with hx509_certs_free().
  * @param verify_flags flags indicating whether the certificate
- * was verified or not
+ * was verified or not.
  *
  * @return an hx509 error code.
  *
@@ -1193,9 +1193,9 @@ add_one_attribute(Attribute **attr,
  * Sign and encode a SignedData structure.
  *
  * @param context A hx509 context.
- * @param flags
+ * @param flags.
  * @param eContentType the type of the data.
- * @param data data to sign
+ * @param data data to sign.
  * @param length length of the data that data points to.
  * @param digest_alg digest algorithm to use, use NULL to get the
  * default or the peer determined algorithm.
@@ -1203,7 +1203,7 @@ add_one_attribute(Attribute **attr,
  * @param peer info about the peer the message to send the message to,
  * like what digest algorithm to use.
  * @param anchors trust anchors that the client will use, used to
- * polulate the certificates included in the message
+ * polulate the certificates included in the message.
  * @param pool certificates to use in try to build the path to the
  * trust anchors.
  * @param signed_data the output of the function, free with

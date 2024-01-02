@@ -45,7 +45,7 @@ typedef krb5_error_code (KRB5_LIB_CALL *set_result_f)(void *, const char *);
 
 /** @struct krb5plugin_an2ln_ftable_desc
  *
- * @brief Description of the krb5_aname_to_lname(3) plugin facility.
+ * Description of the krb5_aname_to_lname(3) plugin facility.
  *
  * The krb5_aname_to_lname(3) function is pluggable.  The plugin is
  * named KRB5_PLUGIN_AN2LN ("an2ln"), with a single minor version,
@@ -55,13 +55,10 @@ typedef krb5_error_code (KRB5_LIB_CALL *set_result_f)(void *, const char *);
  * referencing a structure of type krb5plugin_an2ln_ftable, with four
  * fields:
  *
- * @param init          Plugin initialization function (see krb5-plugin(7))
- *
- * @param minor_version The plugin minor version number (0)
- *
- * @param fini          Plugin finalization function
- *
- * @param an2ln         Plugin aname_to_lname function
+ * @param init          Plugin initialization function (see krb5-plugin(7)).
+ * @param minor_version The plugin minor version number (0).
+ * @param fini          Plugin finalization function.
+ * @param an2ln         Plugin aname_to_lname function.
  *
  * The an2ln field is the plugin entry point that performs the
  * traditional aname_to_lname operation however the plugin desires.  It

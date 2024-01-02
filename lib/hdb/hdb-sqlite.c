@@ -118,12 +118,12 @@ typedef struct hdb_sqlite_db {
 /**
  * Wrapper around sqlite3_prepare_v2.
  *
- * @param context   The current krb5 context
+ * @param context   The current krb5 context.
  * @param statement Where to store the pointer to the statement
- *                  after preparing it
- * @param str       SQL code for the statement
+ *                  after preparing it.
+ * @param str       SQL code for the statement.
  *
- * @return          0 if OK, an error code if not
+ * @return          0 if OK, an error code if not.
  */
 static krb5_error_code
 hdb_sqlite_prepare_stmt(krb5_context context,
@@ -265,12 +265,12 @@ finalize_stmts(krb5_context context, hdb_sqlite_db *hsdb)
 /**
  * A wrapper around sqlite3_exec.
  *
- * @param context    The current krb5 context
- * @param database   An open sqlite3 database handle
- * @param statement  SQL code to execute
- * @param error_code What to return if the statement fails
+ * @param context    The current krb5 context.
+ * @param database   An open sqlite3 database handle.
+ * @param statement  SQL code to execute.
+ * @param error_code What to return if the statement fails.
  *
- * @return           0 if OK, else error_code
+ * @return           0 if OK, else error_code.
  */
 static krb5_error_code
 hdb_sqlite_exec_stmt(krb5_context context,
@@ -334,10 +334,10 @@ static int hdb_sqlite_step(krb5_context, sqlite3 *, sqlite3_stmt *);
  * Opens an sqlite3 database handle to a file, may create the
  * database file depending on flags.
  *
- * @param context The current krb5 context
- * @param db      Heimdal database handle
+ * @param context The current krb5 context.
+ * @param db      Heimdal database handle.
  * @param flags   Controls whether or not the file may be created,
- *                may be 0 or SQLITE_OPEN_CREATE
+ *                may be 0 or SQLITE_OPEN_CREATE.
  */
 static krb5_error_code
 hdb_sqlite_open_database(krb5_context context, HDB *db, int flags)
@@ -382,8 +382,8 @@ hdb_sqlite_step(krb5_context context, sqlite3 *db, sqlite3_stmt *stmt)
 /**
  * Closes the database and frees memory allocated for statements.
  *
- * @param context The current krb5 context
- * @param db      Heimdal database handle
+ * @param context The current krb5 context.
+ * @param db      Heimdal database handle.
  */
 static krb5_error_code
 hdb_sqlite_close_database(krb5_context context, HDB *db)
@@ -407,11 +407,11 @@ hdb_sqlite_close_database(krb5_context context, HDB *db)
  * Opens an sqlite database file and prepares it for use.
  * If the file does not exist it will be created.
  *
- * @param context  The current krb5_context
- * @param db       The heimdal database handle
- * @param filename Where to store the database file
+ * @param context  The current krb5_context.
+ * @param db       The heimdal database handle.
+ * @param filename Where to store the database file.
  *
- * @return         0 if everything worked, an error code if not
+ * @return         0 if everything worked, an error code if not.
  */
 static krb5_error_code
 hdb_sqlite_make_database(krb5_context context, HDB *db, const char *filename)
@@ -485,13 +485,13 @@ hdb_sqlite_make_database(krb5_context context, HDB *db, const char *filename)
  * principal in the Principal database table, both
  * for canonical principals and aliases.
  *
- * @param context   The current krb5_context
- * @param db        Heimdal database handle
- * @param principal The principal whose entry to search for
- * @param flags     Currently only for HDB_F_DECRYPT
- * @param kvno	    kvno to fetch is HDB_F_KVNO_SPECIFIED use used
+ * @param context   The current krb5_context.
+ * @param db        Heimdal database handle.
+ * @param principal The principal whose entry to search for.
+ * @param flags     Currently only for HDB_F_DECRYPT.
+ * @param kvno	    kvno to fetch is HDB_F_KVNO_SPECIFIED use used.
  *
- * @return          0 if everything worked, an error code if not
+ * @return          0 if everything worked, an error code if not.
  */
 static krb5_error_code
 hdb_sqlite_fetch_kvno(krb5_context context, HDB *db, krb5_const_principal principal,
@@ -568,10 +568,10 @@ out:
  * Convenience function to step a prepared statement with no
  * value once.
  *
- * @param context   The current krb5_context
- * @param statement A prepared sqlite3 statement
+ * @param context   The current krb5_context.
+ * @param statement A prepared sqlite3 statement.
  *
- * @return        0 if everything worked, an error code if not
+ * @return        0 if everything worked, an error code if not.
  */
 static krb5_error_code
 hdb_sqlite_step_once(krb5_context context, HDB *db, sqlite3_stmt *statement)
@@ -591,12 +591,12 @@ hdb_sqlite_step_once(krb5_context context, HDB *db, sqlite3_stmt *statement)
  * Stores an hdb_entry in the database. If flags contains HDB_F_REPLACE
  * a previous entry may be replaced.
  *
- * @param context The current krb5_context
- * @param db      Heimdal database handle
- * @param flags   May currently only contain HDB_F_REPLACE
- * @param entry   The data to store
+ * @param context The current krb5_context.
+ * @param db      Heimdal database handle.
+ * @param flags   May currently only contain HDB_F_REPLACE.
+ * @param entry   The data to store.
  *
- * @return        0 if everything worked, an error code if not
+ * @return        0 if everything worked, an error code if not.
  */
 static krb5_error_code
 hdb_sqlite_store(krb5_context context, HDB *db, unsigned flags,
@@ -770,10 +770,10 @@ rollback:
  * and closing/opening the handle is an expensive operation.
  * Hence, this function does nothing.
  *
- * @param context The current krb5 context
- * @param db      Heimdal database handle
+ * @param context The current krb5 context.
+ * @param db      Heimdal database handle.
  *
- * @return        Always returns 0
+ * @return        Always returns 0.
  */
 static krb5_error_code
 hdb_sqlite_close(krb5_context context, HDB *db)
@@ -786,10 +786,10 @@ hdb_sqlite_close(krb5_context context, HDB *db)
  * many open handles to the database file the handle does not
  * need to be closed, or reopened.
  *
- * @param context The current krb5 context
- * @param db      Heimdal database handle
- * @param flags
- * @param mode_t
+ * @param context The current krb5 context.
+ * @param db      Heimdal database handle.
+ * @param flags.
+ * @param mode_t.
  *
  * @return        Always returns 0
  */
@@ -802,10 +802,10 @@ hdb_sqlite_open(krb5_context context, HDB *db, int flags, mode_t mode)
 /**
  * Closes the databse and frees all resources.
  *
- * @param context The current krb5 context
- * @param db      Heimdal database handle
+ * @param context The current krb5 context.
+ * @param db      Heimdal database handle.
  *
- * @return        0 on success, an error code if not
+ * @return        0 on success, an error code if not.
  */
 static krb5_error_code
 hdb_sqlite_destroy(krb5_context context, HDB *db)
@@ -1009,9 +1009,9 @@ hdb_sqlite_remove(krb5_context context, HDB *db,
  *
  * @param context A Kerberos 5 context.
  * @param db a returned database handle.
- * @param filename filename
+ * @param filename filename.
  *
- * @return        0 on success, an error code if not
+ * @return        0 on success, an error code if not.
  */
 
 krb5_error_code

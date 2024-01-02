@@ -98,7 +98,7 @@ _hx509_ks_register(hx509_context context, struct hx509_keyset_ops *ops)
 /**
  * Open or creates a new hx509 certificate store.
  *
- * @param context A hx509 context
+ * @param context A hx509 context.
  * @param name name of the store, format is TYPE:type-specific-string,
  * if NULL is used the MEMORY store is used.
  * @param flags list of flags:
@@ -177,8 +177,8 @@ hx509_certs_init(hx509_context context,
 /**
  * Destroys and frees a hx509 certificate store.
  *
- * @param context A hx509 context
- * @param certs A store to destroy
+ * @param context A hx509 context.
+ * @param certs A store to destroy.
  *
  * @return Returns an hx509 error code.
  *
@@ -209,7 +209,7 @@ hx509_certs_destroy(hx509_context context,
  *
  * @param context A hx509 context.
  * @param certs a certificate store to store.
- * @param flags currently one flag is defined: HX509_CERTS_STORE_NO_PRIVATE_KEYS
+ * @param flags currently one flag is defined: HX509_CERTS_STORE_NO_PRIVATE_KEYS.
  * @param lock a lock that unlocks the certificates store, use NULL to
  * select no password/certifictes/prompt lock (see @ref page_lock).
  *
@@ -274,10 +274,10 @@ hx509_certs_free(hx509_certs *certs)
 }
 
 /**
- * Start the integration
+ * Start the integration.
  *
  * @param context a hx509 context.
- * @param certs certificate store to iterate over
+ * @param certs certificate store to iterate over.
  * @param cursor cursor that will keep track of progress, free with
  * hx509_certs_end_seq().
  *
@@ -444,7 +444,7 @@ hx509_certs_iter(hx509_context context,
  *
  * @param context a hx509 context.
  * @param ctx used by hx509_certs_iter_f().
- * @param c a certificate
+ * @param c a certificate.
  *
  * @return Returns an hx509 error code.
  *
@@ -689,7 +689,7 @@ hx509_certs_merge(hx509_context context, hx509_certs to, hx509_certs from)
  * @param to the store to merge into.
  * @param lock a lock that unlocks the certificates store, use NULL to
  * select no password/certifictes/prompt lock (see @ref page_lock).
- * @param name name of the source store
+ * @param name name of the source store.
  *
  * @return Returns an hx509 error code.
  *

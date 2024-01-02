@@ -446,10 +446,10 @@ krb5_pac_init(krb5_context context, krb5_pac *pac)
 /**
  * Add a PAC buffer `nd' of type `type' to the pac `p'.
  *
- * @param context
- * @param p
- * @param type
- * @param nd
+ * @param context.
+ * @param p.
+ * @param type.
+ * @param nd.
  *
  * @return 0 on success or a Kerberos or system error.
  */
@@ -550,7 +550,7 @@ krb5_pac_add_buffer(krb5_context context, krb5_pac p,
  *
  * @param context Kerberos 5 context.
  * @param p the pac structure returned by krb5_pac_parse().
- * @param type type of buffer to get
+ * @param type type of buffer to get.
  * @param data return data, free with krb5_data_free().
  *
  * @return Returns 0 to indicate success, ENOENT to indicate that a buffer of
@@ -1331,7 +1331,7 @@ build_attributes_info(krb5_context context,
  * @param principal the principal to verify.
  * @param server The service key, most always be given.
  * @param privsvr The KDC key, may be given.
-
+ *
  * @return Returns 0 to indicate success. Otherwise an kerberos et
  * error code is returned, see krb5_get_error_message().
  *

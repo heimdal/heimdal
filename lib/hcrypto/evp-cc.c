@@ -149,7 +149,7 @@ cc_des_ede3_cbc_init(EVP_CIPHER_CTX *ctx,
 #endif /* HAVE_COMMONCRYPTO_COMMONCRYPTOR_H */
 
 /**
- * The triple DES cipher type (Apple CommonCrypto provider)
+ * The triple DES cipher type (Apple CommonCrypto provider).
  *
  * @return the DES-EDE3-CBC EVP_CIPHER pointer.
  *
@@ -201,7 +201,7 @@ cc_des_cbc_init(EVP_CIPHER_CTX *ctx,
 #endif
 
 /**
- * The DES cipher type (Apple CommonCrypto provider)
+ * The DES cipher type (Apple CommonCrypto provider).
  *
  * @return the DES-CBC EVP_CIPHER pointer.
  *
@@ -253,7 +253,7 @@ cc_aes_cbc_init(EVP_CIPHER_CTX *ctx,
 #endif
 
 /**
- * The AES-128 cipher type (Apple CommonCrypto provider)
+ * The AES-128 cipher type (Apple CommonCrypto provider).
  *
  * @return the AES-128-CBC EVP_CIPHER pointer.
  *
@@ -288,7 +288,7 @@ EVP_cc_aes_128_cbc(void)
 }
 
 /**
- * The AES-192 cipher type (Apple CommonCrypto provider)
+ * The AES-192 cipher type (Apple CommonCrypto provider).
  *
  * @return the AES-192-CBC EVP_CIPHER pointer.
  *
@@ -323,7 +323,7 @@ EVP_cc_aes_192_cbc(void)
 }
 
 /**
- * The AES-256 cipher type (Apple CommonCrypto provider)
+ * The AES-256 cipher type (Apple CommonCrypto provider).
  *
  * @return the AES-256-CBC EVP_CIPHER pointer.
  *
@@ -375,7 +375,7 @@ cc_aes_cfb8_init(EVP_CIPHER_CTX *ctx,
 #endif
 
 /**
- * The AES-128 CFB8 cipher type (Apple CommonCrypto provider)
+ * The AES-128 CFB8 cipher type (Apple CommonCrypto provider).
  *
  * @return the AES-128-CFB8 EVP_CIPHER pointer.
  *
@@ -410,7 +410,7 @@ EVP_cc_aes_128_cfb8(void)
 }
 
 /**
- * The AES-192 CFB8 cipher type (Apple CommonCrypto provider)
+ * The AES-192 CFB8 cipher type (Apple CommonCrypto provider).
  *
  * @return the AES-192-CFB8 EVP_CIPHER pointer.
  *
@@ -445,7 +445,7 @@ EVP_cc_aes_192_cfb8(void)
 }
 
 /**
- * The AES-256 CFB8 cipher type (Apple CommonCrypto provider)
+ * The AES-256 CFB8 cipher type (Apple CommonCrypto provider).
  *
  * @return the AES-256-CFB8 EVP_CIPHER pointer.
  *
@@ -497,7 +497,7 @@ cc_rc2_cbc_init(EVP_CIPHER_CTX *ctx,
 #endif
 
 /**
- * The RC2 cipher type - common crypto
+ * The RC2 cipher type - common crypto.
  *
  * @return the RC2 EVP_CIPHER pointer.
  *
@@ -533,7 +533,7 @@ EVP_cc_rc2_cbc(void)
 }
 
 /**
- * The RC2-40 cipher type - common crypto
+ * The RC2-40 cipher type - common crypto.
  *
  * @return the RC2-40 EVP_CIPHER pointer.
  *
@@ -570,7 +570,7 @@ EVP_cc_rc2_40_cbc(void)
 
 
 /**
- * The RC2-64 cipher type - common crypto
+ * The RC2-64 cipher type - common crypto.
  *
  * @return the RC2-64 EVP_CIPHER pointer.
  *
@@ -607,7 +607,7 @@ EVP_cc_rc2_64_cbc(void)
 
 
 /**
- * The CommonCrypto md4 provider
+ * The CommonCrypto md4 provider.
  *
  * @ingroup hcrypto_evp
  */
@@ -634,7 +634,7 @@ EVP_cc_md4(void)
 }
 
 /**
- * The CommonCrypto md5 provider
+ * The CommonCrypto md5 provider.
  *
  * @ingroup hcrypto_evp
  */
@@ -661,7 +661,7 @@ EVP_cc_md5(void)
 }
 
 /**
- * The CommonCrypto sha1 provider
+ * The CommonCrypto sha1 provider.
  *
  * @ingroup hcrypto_evp
  */
@@ -688,7 +688,7 @@ EVP_cc_sha1(void)
 }
 
 /**
- * The CommonCrypto sha256 provider
+ * The CommonCrypto sha256 provider.
  *
  * @ingroup hcrypto_evp
  */
@@ -715,7 +715,7 @@ EVP_cc_sha256(void)
 }
 
 /**
- * The CommonCrypto sha384 provider
+ * The CommonCrypto sha384 provider.
  *
  * @ingroup hcrypto_evp
  */
@@ -742,7 +742,7 @@ EVP_cc_sha384(void)
 }
 
 /**
- * The CommonCrypto sha512 provider
+ * The CommonCrypto sha512 provider.
  *
  * @ingroup hcrypto_evp
  */
@@ -769,7 +769,7 @@ EVP_cc_sha512(void)
 }
 
 /**
- * The Camellia-128 cipher type - CommonCrypto
+ * The Camellia-128 cipher type - CommonCrypto.
  *
  * @return the Camellia-128 EVP_CIPHER pointer.
  *
@@ -787,7 +787,7 @@ EVP_cc_camellia_128_cbc(void)
 }
 
 /**
- * The Camellia-198 cipher type - CommonCrypto
+ * The Camellia-198 cipher type - CommonCrypto.
  *
  * @return the Camellia-198 EVP_CIPHER pointer.
  *
@@ -805,7 +805,7 @@ EVP_cc_camellia_192_cbc(void)
 }
 
 /**
- * The Camellia-256 cipher type - CommonCrypto
+ * The Camellia-256 cipher type - CommonCrypto.
  *
  * @return the Camellia-256 EVP_CIPHER pointer.
  *
@@ -843,7 +843,7 @@ cc_rc4_init(EVP_CIPHER_CTX *ctx,
 
 /**
 
- * The RC4 cipher type (Apple CommonCrypto provider)
+ * The RC4 cipher type (Apple CommonCrypto provider).
  *
  * @return the RC4 EVP_CIPHER pointer.
  *
@@ -879,7 +879,7 @@ EVP_cc_rc4(void)
 
 
 /**
- * The RC4-40 cipher type (Apple CommonCrypto provider)
+ * The RC4-40 cipher type (Apple CommonCrypto provider).
  *
  * @return the RC4 EVP_CIPHER pointer.
  *

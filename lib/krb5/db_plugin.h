@@ -40,7 +40,7 @@
 
 /** @struct krb5plugin_db_ftable_desc
  *
- * @brief Description of the krb5 DB plugin facility.
+ * Description of the krb5 DB plugin facility.
  *
  * The krb5_aname_to_lname(3) function's DB rule is pluggable.  The
  * plugin is named KRB5_PLUGIN_DB ("krb5_db_plug"), with a single minor

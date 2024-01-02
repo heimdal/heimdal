@@ -109,13 +109,13 @@ log_init_sec_context(struct _gss_context *ctx,
  *        section.
  *
  * @param req_flags flags using when building the context, see @ref
- *        gssapi_context_flags
+ *        gssapi_context_flags.
  *
  * @param time_req time requested this context should be valid in
- *        seconds, common used value is GSS_C_INDEFINITE
+ *        seconds, common used value is GSS_C_INDEFINITE.
  *
  * @param input_chan_bindings Channel bindings used, if not exepected
- *        otherwise, used GSS_C_NO_CHANNEL_BINDINGS
+ *        otherwise, used GSS_C_NO_CHANNEL_BINDINGS.
  *
  * @param input_token input token sent from the acceptor, for the
  * 	  initial packet the buffer of { NULL, 0 } should be used.
@@ -125,13 +125,13 @@ log_init_sec_context(struct _gss_context *ctx,
  *
  * @param output_token if there is an output token, regardless of
  * 	  complete, continue_needed, or error it should be sent to the
- * 	  acceptor
+ * 	  acceptor.
  *
  * @param ret_flags return what flags was negotitated, caller should
  * 	  check if they are accetable. For example, if
  * 	  GSS_C_MUTUAL_FLAG was negotiated with the acceptor or not.
  *
- * @param time_rec amount of time this context is valid for
+ * @param time_rec amount of time this context is valid for.
  *
  * @returns a gss_error code, see gss_display_status() about printing
  *          the error code.

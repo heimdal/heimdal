@@ -100,9 +100,9 @@ _warnerr(heim_context context, int do_errtext,
  * the last failure.
  *
  * @param context A Kerberos 5 context.
- * @param code error code of the last error
- * @param fmt message to print
- * @param ap arguments
+ * @param code error code of the last error.
+ * @param fmt message to print.
+ * @param ap arguments.
  *
  * @ingroup heim_error
  */
@@ -120,8 +120,8 @@ heim_vwarn(heim_context context, heim_error_code code,
  * the last failure.
  *
  * @param context A Kerberos 5 context.
- * @param code error code of the last error
- * @param fmt message to print
+ * @param code error code of the last error.
+ * @param fmt message to print.
  *
  * @ingroup heim_error
  */
@@ -138,8 +138,8 @@ heim_warn(heim_context context, heim_error_code code, const char *fmt, ...)
  * Log a warning to the log, default stderr.
  *
  * @param context A Kerberos 5 context.
- * @param fmt message to print
- * @param ap arguments
+ * @param fmt message to print.
+ * @param ap arguments.
  *
  * @ingroup heim_error
  */
@@ -155,7 +155,7 @@ heim_vwarnx(heim_context context, const char *fmt, va_list ap)
  * Log a warning to the log, default stderr.
  *
  * @param context A Kerberos 5 context.
- * @param fmt message to print
+ * @param fmt message to print.
  *
  * @ingroup heim_error
  */

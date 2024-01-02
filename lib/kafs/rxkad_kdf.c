@@ -63,9 +63,9 @@ static int compress_parity_bits(void *, size_t *);
  * as traditional krb5 rxkad uses the ticket session key directly as the token
  * key.
  *
- * @param[in]  in      pointer to input key data
- * @param[in]  insize  length of input key data
- * @param[out] out     8-byte buffer to hold the derived key
+ * @param[in]  in      pointer to input key data.
+ * @param[in]  insize  length of input key data.
+ * @param[out] out     8-byte buffer to hold the derived key.
  *
  * @return Returns 0 to indicate success, or an error code.
  *
@@ -114,7 +114,7 @@ rxkad_derive_des_key(const void *in, size_t insize, char out[8])
  * rfc3961, converting blocks of 8 bytes to blocks of 7 bytes by distributing
  * the bits of each 8th byte as the lsb of the previous 7 bytes.
  *
- * @param[in,out]  buffer  Buffer containing the key to be converted
+ * @param[in,out]  buffer  Buffer containing the key to be converted.
  * @param[in,out]  bufsiz  Points to the size of the key data.  On
  * return, this is updated to reflect the size of the compressed data.
  *
@@ -153,10 +153,10 @@ compress_parity_bits(void *buffer, size_t *bufsiz)
  * If given a des key, use it directly; otherwise, perform any parity
  * fixup that may be needed and pass through to the hmad-md5 bits.
  *
- * @param[in]   enctype  Kerberos enctype of the input key
- * @param[in]   keydata  Input key data
- * @param[in]   keylen   Size of input key data
- * @param[out]  output   8-byte buffer to hold the derived key
+ * @param[in]   enctype  Kerberos enctype of the input key.
+ * @param[in]   keydata  Input key data.
+ * @param[in]   keylen   Size of input key data.
+ * @param[out]  output   8-byte buffer to hold the derived key.
  *
  * @return Returns 0 to indicate success, or an error code.
  *

@@ -68,10 +68,10 @@ hx509_clear_error_string(hx509_context context)
  * @param context A hx509 context.
  * @param flags
  * - HX509_ERROR_APPEND appends the error string to the old messages
-     (code is updated).
- * @param code error code related to error message
- * @param fmt error message format
- * @param ap arguments to error message format
+ *   (code is updated).
+ * @param code error code related to error message.
+ * @param fmt error message format.
+ * @param ap arguments to error message format.
  *
  * @ingroup hx509_error
  */
@@ -100,10 +100,10 @@ hx509_set_error_stringv(hx509_context context, int flags, int code,
  * @param context A hx509 context.
  * @param flags
  * - HX509_ERROR_APPEND appends the error string to the old messages
-     (code is updated).
- * @param code error code related to error message
- * @param fmt error message format
- * @param ... arguments to error message format
+ *   (code is updated).
+ * @param code error code related to error message.
+ * @param fmt error message format.
+ * @param ... arguments to error message format.
  *
  * @ingroup hx509_error
  */
@@ -187,7 +187,7 @@ hx509_free_error_string(char *str)
 }
 
 /**
- * Print error message and fatally exit from error code
+ * Print error message and fatally exit from error code.
  *
  * @param context A hx509 context.
  * @param exit_code exit() code from process.

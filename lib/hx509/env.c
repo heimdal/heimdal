@@ -44,8 +44,8 @@
  *
  * @param context A hx509 context.
  * @param env environment to add the environment variable too.
- * @param key key to add
- * @param value value to add
+ * @param key key to add.
+ * @param value value to add.
  *
  * @return An hx509 error code, see hx509_get_error_string().
  *
@@ -95,8 +95,8 @@ hx509_env_add(hx509_context context, hx509_env *env,
  *
  * @param context A hx509 context.
  * @param env environment to add the environment variable too.
- * @param key key to add
- * @param list binding list to add
+ * @param key key to add.
+ * @param list binding list to add.
  *
  * @return An hx509 error code, see hx509_get_error_string().
  *

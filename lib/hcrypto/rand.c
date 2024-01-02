@@ -74,8 +74,8 @@ init_method(void)
  * Seed that random number generator. Secret material can securely be
  * feed into the function, they will never be returned.
  *
- * @param indata seed data
- * @param size length seed data
+ * @param indata seed data.
+ * @param size length seed data.
  *
  * @ingroup hcrypto_rand
  */
@@ -90,8 +90,8 @@ RAND_seed(const void *indata, size_t size)
 /**
  * Get a random block from the random generator, can be used for key material.
  *
- * @param outdata random data
- * @param size length random data
+ * @param outdata random data.
+ * @param size length random data.
  *
  * @return 1 on success, 0 on failure.
  *
@@ -135,7 +135,6 @@ RAND_cleanup(void)
  * @param size size of in data.
  * @param entropi entropi in data.
  *
- *
  * @ingroup hcrypto_rand
  */
 
@@ -149,8 +148,8 @@ RAND_add(const void *indata, size_t size, double entropi)
 /**
  * Get a random block from the random generator, should NOT be used for key material.
  *
- * @param outdata random data
- * @param size length random data
+ * @param outdata random data.
+ * @param size length random data.
  *
  * @return 1 on success, 0 on failure.
  *
@@ -206,7 +205,7 @@ RAND_set_rand_method(const RAND_METHOD *meth)
 /**
  * Get the default random method.
  *
- * @return Returns a RAND_METHOD
+ * @return Returns a RAND_METHOD.
  *
  * @ingroup hcrypto_rand
  */
@@ -264,7 +263,7 @@ RAND_set_rand_engine(ENGINE *engine)
  * @param filename name of file to read.
  * @param size minimum size to read.
  *
- * @return Returns the number of seed bytes loaded (0 indicates failure)
+ * @return Returns the number of seed bytes loaded (0 indicates failure).
  *
  * @ingroup hcrypto_rand
  */
@@ -300,6 +299,7 @@ RAND_load_file(const char *filename, size_t size)
  * @param filename name of file to write.
  *
  * @return 1 on success and non-one on failure.
+ *
  * @ingroup hcrypto_rand
  */
 

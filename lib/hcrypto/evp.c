@@ -103,7 +103,7 @@ struct hc_EVP_MD_CTX {
 /**
  * Return the output size of the message digest function.
  *
- * @param md the evp message
+ * @param md the evp message.
  *
  * @return size output size of the message digest function.
  *
@@ -119,9 +119,9 @@ EVP_MD_size(const EVP_MD *md)
 /**
  * Return the blocksize of the message digest function.
  *
- * @param md the evp message
+ * @param md the evp message.
  *
- * @return size size of the message digest block size
+ * @return size size of the message digest block size.
  *
  * @ingroup hcrypto_evp
  */
@@ -223,7 +223,7 @@ EVP_MD_CTX_md(EVP_MD_CTX *ctx)
 /**
  * Return the output size of the message digest function.
  *
- * @param ctx the evp message digest context
+ * @param ctx the evp message digest context.
  *
  * @return size output size of the message digest function.
  *
@@ -239,9 +239,9 @@ EVP_MD_CTX_size(EVP_MD_CTX *ctx)
 /**
  * Return the blocksize of the message digest function.
  *
- * @param ctx the evp message digest context
+ * @param ctx the evp message digest context.
  *
- * @return size size of the message digest block size
+ * @return size size of the message digest block size.
  *
  * @ingroup hcrypto_evp
  */
@@ -286,9 +286,9 @@ EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *md, ENGINE *engine)
 /**
  * Update the digest with some data.
  *
- * @param ctx the context to update
- * @param data the data to update the context with
- * @param size length of data
+ * @param ctx the context to update.
+ * @param data the data to update the context with.
+ * @param size length of data.
  *
  * @return 1 on success.
  *
@@ -329,11 +329,11 @@ EVP_DigestFinal_ex(EVP_MD_CTX *ctx, void *hash, unsigned int *size)
  * EVP_DigestUpdate(), EVP_DigestFinal_ex(), EVP_MD_CTX_destroy()
  * dance in one call.
  *
- * @param data the data to update the context with
- * @param dsize length of data
+ * @param data the data to update the context with.
+ * @param dsize length of data.
  * @param hash output data of at least EVP_MD_size() length.
  * @param hsize output length of hash.
- * @param md message digest to use
+ * @param md message digest to use.
  * @param engine engine to use, NULL for default engine.
  *
  * @return 1 on success.
@@ -367,7 +367,7 @@ EVP_Digest(const void *data, size_t dsize, void *hash, unsigned int *hsize,
 }
 
 /**
- * The message digest SHA256
+ * The message digest SHA256.
  *
  * @return the message digest type.
  *
@@ -382,7 +382,7 @@ EVP_sha256(void)
 }
 
 /**
- * The message digest SHA384
+ * The message digest SHA384.
  *
  * @return the message digest type.
  *
@@ -397,7 +397,7 @@ EVP_sha384(void)
 }
 
 /**
- * The message digest SHA512
+ * The message digest SHA512.
  *
  * @return the message digest type.
  *
@@ -412,7 +412,7 @@ EVP_sha512(void)
 }
 
 /**
- * The message digest SHA1
+ * The message digest SHA1.
  *
  * @return the message digest type.
  *
@@ -427,7 +427,7 @@ EVP_sha1(void)
 }
 
 /**
- * The message digest SHA1
+ * The message digest SHA1.
  *
  * @return the message digest type.
  *
@@ -443,7 +443,7 @@ EVP_sha(void) HC_DEPRECATED
 }
 
 /**
- * The message digest MD5
+ * The message digest MD5.
  *
  * @return the message digest type.
  *
@@ -458,7 +458,7 @@ EVP_md5(void) HC_DEPRECATED_CRYPTO
 }
 
 /**
- * The message digest MD4
+ * The message digest MD4.
  *
  * @return the message digest type.
  *
@@ -500,7 +500,7 @@ null_Final(void *res, void *m)
 }
 
 /**
- * The null message digest
+ * The null message digest.
  *
  * @return the message digest type.
  *
@@ -613,10 +613,10 @@ EVP_CIPHER_CTX_cleanup(EVP_CIPHER_CTX *c)
 }
 
 /**
- * If the cipher type supports it, change the key length
+ * If the cipher type supports it, change the key length.
  *
- * @param c the cipher context to change the key length for
- * @param length new key length
+ * @param c the cipher context to change the key length for.
+ * @param length new key length.
  *
  * @return 1 on success.
  *
@@ -708,7 +708,7 @@ EVP_CIPHER_CTX_iv_length(const EVP_CIPHER_CTX *ctx)
 /**
  * Get the flags for an EVP_CIPHER_CTX context.
  *
- * @param ctx the EVP_CIPHER_CTX to get the flags from
+ * @param ctx the EVP_CIPHER_CTX to get the flags from.
  *
  * @return the flags for an EVP_CIPHER_CTX.
  *
@@ -724,7 +724,7 @@ EVP_CIPHER_CTX_flags(const EVP_CIPHER_CTX *ctx)
 /**
  * Get the mode for an EVP_CIPHER_CTX context.
  *
- * @param ctx the EVP_CIPHER_CTX to get the mode from
+ * @param ctx the EVP_CIPHER_CTX to get the mode from.
  *
  * @return the mode for an EVP_CIPHER_CTX.
  *
@@ -740,7 +740,7 @@ EVP_CIPHER_CTX_mode(const EVP_CIPHER_CTX *ctx)
 /**
  * Get the app data for an EVP_CIPHER_CTX context.
  *
- * @param ctx the EVP_CIPHER_CTX to get the app data from
+ * @param ctx the EVP_CIPHER_CTX to get the app data from.
  *
  * @return the app data for an EVP_CIPHER_CTX.
  *
@@ -756,7 +756,7 @@ EVP_CIPHER_CTX_get_app_data(EVP_CIPHER_CTX *ctx)
 /**
  * Set the app data for an EVP_CIPHER_CTX context.
  *
- * @param ctx the EVP_CIPHER_CTX to set the app data for
+ * @param ctx the EVP_CIPHER_CTX to set the app data for.
  * @param data the app data to set for an EVP_CIPHER_CTX.
  *
  * @ingroup hcrypto_evp
@@ -772,7 +772,7 @@ EVP_CIPHER_CTX_set_app_data(EVP_CIPHER_CTX *ctx, void *data)
  * Initiate the EVP_CIPHER_CTX context to encrypt or decrypt data.
  * Clean up with EVP_CIPHER_CTX_cleanup().
  *
- * @param ctx context to initiate
+ * @param ctx context to initiate.
  * @param c cipher to use.
  * @param engine crypto engine to use, NULL to select default.
  * @param key the crypto key to use, NULL will use the previous value.
@@ -844,11 +844,11 @@ EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *c, ENGINE *engine,
 }
 
 /**
- * Encipher/decipher partial data
+ * Encipher/decipher partial data.
  *
  * @param ctx the cipher context.
  * @param out output data from the operation.
- * @param outlen output length
+ * @param outlen output length.
  * @param in input data to the operation.
  * @param inlen length of data.
  *
@@ -933,11 +933,11 @@ EVP_CipherUpdate(EVP_CIPHER_CTX *ctx, void *out, int *outlen,
 }
 
 /**
- * Encipher/decipher final data
+ * Encipher/decipher final data.
  *
  * @param ctx the cipher context.
  * @param out output data from the operation.
- * @param outlen output length
+ * @param outlen output length.
  *
  * The input length needs to be at least EVP_CIPHER_block_size() bytes
  * long.
@@ -976,7 +976,7 @@ EVP_CipherFinal_ex(EVP_CIPHER_CTX *ctx, void *out, int *outlen)
 }
 
 /**
- * Encipher/decipher data
+ * Encipher/decipher data.
  *
  * @param ctx the cipher context.
  * @param out out data from the operation.
@@ -1051,7 +1051,7 @@ EVP_enc_null(void)
 }
 
 /**
- * The RC2 cipher type
+ * The RC2 cipher type.
  *
  * @return the RC2 EVP_CIPHER pointer.
  *
@@ -1073,7 +1073,7 @@ EVP_rc2_cbc(void)
 }
 
 /**
- * The RC2 cipher type
+ * The RC2 cipher type.
  *
  * @return the RC2 EVP_CIPHER pointer.
  *
@@ -1117,7 +1117,7 @@ EVP_rc2_64_cbc(void)
 }
 
 /**
- * The RC4 cipher type
+ * The RC4 cipher type.
  *
  * @return the RC4 EVP_CIPHER pointer.
  *
@@ -1139,7 +1139,7 @@ EVP_rc4(void)
 }
 
 /**
- * The RC4-40 cipher type
+ * The RC4-40 cipher type.
  *
  * @return the RC4-40 EVP_CIPHER pointer.
  *
@@ -1161,7 +1161,7 @@ EVP_rc4_40(void)
 }
 
 /**
- * The DES cipher type
+ * The DES cipher type.
  *
  * @return the DES-CBC EVP_CIPHER pointer.
  *
@@ -1183,7 +1183,7 @@ EVP_des_cbc(void)
 }
 
 /**
- * The triple DES cipher type
+ * The triple DES cipher type.
  *
  * @return the DES-EDE3-CBC EVP_CIPHER pointer.
  *
@@ -1198,7 +1198,7 @@ EVP_des_ede3_cbc(void)
 }
 
 /**
- * The AES-128 cipher type
+ * The AES-128 cipher type.
  *
  * @return the AES-128 EVP_CIPHER pointer.
  *
@@ -1213,7 +1213,7 @@ EVP_aes_128_cbc(void)
 }
 
 /**
- * The AES-192 cipher type
+ * The AES-192 cipher type.
  *
  * @return the AES-192 EVP_CIPHER pointer.
  *
@@ -1228,7 +1228,7 @@ EVP_aes_192_cbc(void)
 }
 
 /**
- * The AES-256 cipher type
+ * The AES-256 cipher type.
  *
  * @return the AES-256 EVP_CIPHER pointer.
  *
@@ -1243,7 +1243,7 @@ EVP_aes_256_cbc(void)
 }
 
 /**
- * The AES-128 cipher type
+ * The AES-128 cipher type.
  *
  * @return the AES-128 EVP_CIPHER pointer.
  *
@@ -1258,7 +1258,7 @@ EVP_aes_128_cfb8(void)
 }
 
 /**
- * The AES-192 cipher type
+ * The AES-192 cipher type.
  *
  * @return the AES-192 EVP_CIPHER pointer.
  *
@@ -1273,7 +1273,7 @@ EVP_aes_192_cfb8(void)
 }
 
 /**
- * The AES-256 cipher type
+ * The AES-256 cipher type.
  *
  * @return the AES-256 EVP_CIPHER pointer.
  *
@@ -1288,7 +1288,7 @@ EVP_aes_256_cfb8(void)
 }
 
 /**
- * The Camellia-128 cipher type
+ * The Camellia-128 cipher type.
  *
  * @return the Camellia-128 EVP_CIPHER pointer.
  *
@@ -1303,7 +1303,7 @@ EVP_camellia_128_cbc(void)
 }
 
 /**
- * The Camellia-198 cipher type
+ * The Camellia-198 cipher type.
  *
  * @return the Camellia-198 EVP_CIPHER pointer.
  *
@@ -1318,7 +1318,7 @@ EVP_camellia_192_cbc(void)
 }
 
 /**
- * The Camellia-256 cipher type
+ * The Camellia-256 cipher type.
  *
  * @return the Camellia-256 EVP_CIPHER pointer.
  *
@@ -1388,8 +1388,8 @@ EVP_get_cipherbyname(const char *name)
  * New protocols should use new string to key functions like NIST
  * SP56-800A or PKCS#5 v2.0 (see PKCS5_PBKDF2_HMAC_SHA1()).
  *
- * @param type type of cipher to use
- * @param md message digest to use
+ * @param type type of cipher to use.
+ * @param md message digest to use.
  * @param salt salt salt string, should be an binary 8 byte buffer.
  * @param data the password/input key string.
  * @param datalen length of data parameter.
@@ -1504,13 +1504,13 @@ EVP_CIPHER_CTX_rand_key(EVP_CIPHER_CTX *ctx, void *key)
 }
 
 /**
- * Perform a operation on a ctx
+ * Perform a operation on a ctx.
  *
  * @param ctx context to perform operation on.
  * @param type type of operation.
  * @param arg argument to operation.
  * @param data addition data to operation.
-
+ *
  * @return 1 for success, 0 for failure.
  *
  * @ingroup hcrypto_core

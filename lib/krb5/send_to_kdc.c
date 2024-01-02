@@ -328,6 +328,7 @@ struct host_fun {
 struct host {
     enum host_state { CONNECT, CONNECTING, CONNECTED, WAITING_REPLY, DEAD } state;
     krb5_krbhst_info *hi;
+    struct addrinfo *freeai;
     struct addrinfo *ai;
     rk_socket_t fd;
     const struct host_fun *fun;
@@ -393,6 +394,9 @@ deallocate_host(void *ptr)
     if (!rk_IS_BAD_SOCKET(host->fd))
 	rk_closesocket(host->fd);
     krb5_data_free(&host->data);
+    if (host->freeai)
+	freeaddrinfo(host->freeai);
+    host->freeai = NULL;
     host->ai = NULL;
 }
 
@@ -800,7 +804,7 @@ static krb5_error_code
 submit_request(krb5_context context, krb5_sendto_ctx ctx, krb5_krbhst_info *hi)
 {
     unsigned long submitted_host = 0;
-    krb5_boolean freeai = FALSE;
+    struct addrinfo *freeai = NULL;
     struct timeval nrstart, nrstop;
     krb5_error_code ret;
     struct addrinfo *ai = NULL, *a;
@@ -857,8 +861,8 @@ submit_request(krb5_context context, krb5_sendto_ctx ctx, krb5_krbhst_info *hi)
 	free(proxy2);
 	if (ret)
 	    return krb5_eai_to_heim_errno(ret, errno);
-	
-	freeai = TRUE;
+
+	freeai = ai;
 
     } else {
 	ret = krb5_krbhst_get_addrinfo(context, hi, &ai);
@@ -893,13 +897,15 @@ submit_request(krb5_context context, krb5_sendto_ctx ctx, krb5_krbhst_info *hi)
 	host = heim_alloc(sizeof(*host), "sendto-host", deallocate_host);
 	if (host == NULL) {
             if (freeai)
-                freeaddrinfo(ai);
+                freeaddrinfo(freeai);
 	    rk_closesocket(fd);
 	    return ENOMEM;
 	}
 	host->hi = hi;
 	host->fd = fd;
 	host->ai = a;
+	host->freeai = freeai;
+	freeai = NULL;
 	/* next version of stid */
 	host->tid = ctx->stid = (ctx->stid & 0xffff0000) | ((ctx->stid & 0xffff) + 1);
 
@@ -946,7 +952,7 @@ submit_request(krb5_context context, krb5_sendto_ctx ctx, krb5_krbhst_info *hi)
     }
 
     if (freeai)
-	freeaddrinfo(ai);
+	freeai = NULL;
 
     if (submitted_host == 0)
 	return KRB5_KDC_UNREACH;

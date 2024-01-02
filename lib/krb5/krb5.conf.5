@@ -319,6 +319,9 @@ The KDC hostname is passed to the SOCKS4a proxy verbatim without any
 DNS resolution first.
 Other DNS resolution, of the proxy address and for any realm mapping or
 KDC discovery, may still be done outside the SOCKS4a proxy.
+.Pp
+The caller's principal is passed as the SOCKS user id in order to
+enable stream isolation with Tor.
 .It Li http_proxy = Va proxy-spec
 A HTTP-proxy to use when talking to the KDC via HTTP.
 .It Li dns_proxy = Va proxy-spec

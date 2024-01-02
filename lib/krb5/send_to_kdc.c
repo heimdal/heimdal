@@ -153,6 +153,7 @@ struct krb5_sendto_ctx_data {
     void *data;
     char *hostname;
     char *sitename;
+    char *proxy_userid;
     krb5_krbhst_handle krbhst;
 
     /* context2 */
@@ -185,6 +186,8 @@ dealloc_sendto_ctx(void *ptr)
 	free(ctx->hostname);
     if (ctx->sitename)
 	free(ctx->sitename);
+    if (ctx->proxy_userid)
+	free(ctx->proxy_userid);
     heim_release(ctx->hosts);
     heim_release(ctx->krbhst);
 }
@@ -268,6 +271,18 @@ krb5_sendto_set_sitename(krb5_context context,
     free(ctx->sitename);
     ctx->sitename = newname;
     return 0;
+}
+
+krb5_error_code
+_krb5_sendto_set_principal(krb5_context context,
+			   krb5_sendto_ctx ctx,
+			   krb5_const_principal principal)
+{
+
+    if (context->socks4a_proxy == NULL)
+	return 0;
+
+    return krb5_unparse_name(context, principal, &ctx->proxy_userid);
 }
 
 KRB5_LIB_FUNCTION void KRB5_LIB_CALL
@@ -543,7 +558,7 @@ host_connected(krb5_context context, krb5_sendto_ctx ctx, struct host *host)
 	    debug_host(context, 5, host, "socks4a proxying");
 	    host->socks4a = NULL;
 	    ret = _krb5_socks4a_connect(host_socks4a_io(context, host),
-		host->hi->hostname, host->hi->port, /*userid*/NULL,
+		host->hi->hostname, host->hi->port, ctx->proxy_userid,
 		&host->socks4a);
 	    if (ret) {
 		host_dead(context, host, "socks4a proxy failed");

@@ -652,6 +652,11 @@ get_cred_kdc(krb5_context context,
 	    krb5_sendto_set_hostname(context, stctx, kdc_hostname);
 	if (sitename)
 	    krb5_sendto_set_sitename(context, stctx, sitename);
+	ret = _krb5_sendto_set_principal(context, stctx, in_creds->client);
+	if (ret) {
+	    krb5_sendto_ctx_free(context, stctx);
+	    goto out;
+	}
 
 	ret = krb5_sendto_context (context, stctx, &enc,
 				   krbtgt->server->name.name_string.val[1],

@@ -46,7 +46,7 @@ RCSID("$Id$");
 
 static krb5_error_code
 kcmss_get_name_2(krb5_context context,
-	         krb5_ccache id,
+                 krb5_ccache id,
                  const char **name,
                  const char **col,
                  const char **sub)
@@ -77,8 +77,8 @@ kcmss_gen_new(krb5_context context, krb5_ccache *id)
 
 static krb5_error_code
 kcmss_initialize(krb5_context context,
-		 krb5_ccache id,
-		 krb5_principal primary_principal)
+                 krb5_ccache id,
+                 krb5_principal primary_principal)
 {
     krb5_error_code ret;
     kcm_ccache c = KCMCACHE(id);
@@ -87,17 +87,17 @@ kcmss_initialize(krb5_context context,
 
     ret = kcm_zero_ccache_data_internal(context, c);
     if (ret)
-	return ret;
+        return ret;
 
     ret = krb5_copy_principal(context, primary_principal,
-			      &c->client);
+                              &c->client);
 
     return ret;
 }
 
 static krb5_error_code
 kcmss_close(krb5_context context,
-	    krb5_ccache id)
+            krb5_ccache id)
 {
     kcm_ccache c = KCMCACHE(id);
 
@@ -111,7 +111,7 @@ kcmss_close(krb5_context context,
 
 static krb5_error_code
 kcmss_destroy(krb5_context context,
-	      krb5_ccache id)
+              krb5_ccache id)
 {
     krb5_error_code ret;
     kcm_ccache c = KCMCACHE(id);
@@ -125,8 +125,8 @@ kcmss_destroy(krb5_context context,
 
 static krb5_error_code
 kcmss_store_cred(krb5_context context,
-		 krb5_ccache id,
-		 krb5_creds *creds)
+                 krb5_ccache id,
+                 krb5_creds *creds)
 {
     krb5_error_code ret;
     kcm_ccache c = KCMCACHE(id);
@@ -141,10 +141,10 @@ kcmss_store_cred(krb5_context context,
 
 static krb5_error_code
 kcmss_retrieve(krb5_context context,
-	       krb5_ccache id,
-	       krb5_flags which,
-	       const krb5_creds *mcred,
-	       krb5_creds *creds)
+               krb5_ccache id,
+               krb5_flags which,
+               const krb5_creds *mcred,
+               krb5_creds *creds)
 {
     krb5_error_code ret;
     kcm_ccache c = KCMCACHE(id);
@@ -153,21 +153,21 @@ kcmss_retrieve(krb5_context context,
     KCM_ASSERT_VALID(c);
 
     ret = kcm_ccache_retrieve_cred_internal(context, c, which,
-					    mcred, &credp);
+                                            mcred, &credp);
     if (ret)
-	return ret;
+        return ret;
 
     ret = krb5_copy_creds_contents(context, credp, creds);
     if (ret)
-	return ret;
+        return ret;
 
     return 0;
 }
 
 static krb5_error_code
 kcmss_get_principal(krb5_context context,
-		    krb5_ccache id,
-		    krb5_principal *principal)
+                    krb5_ccache id,
+                    krb5_principal *principal)
 {
     krb5_error_code ret;
     kcm_ccache c = KCMCACHE(id);
@@ -175,15 +175,15 @@ kcmss_get_principal(krb5_context context,
     KCM_ASSERT_VALID(c);
 
     ret = krb5_copy_principal(context, c->client,
-			      principal);
+                              principal);
 
     return ret;
 }
 
 static krb5_error_code
 kcmss_get_first (krb5_context context,
-		 krb5_ccache id,
-		 krb5_cc_cursor *cursor)
+                 krb5_ccache id,
+                 krb5_cc_cursor *cursor)
 {
     kcm_ccache c = KCMCACHE(id);
 
@@ -196,9 +196,9 @@ kcmss_get_first (krb5_context context,
 
 static krb5_error_code
 kcmss_get_next (krb5_context context,
-		krb5_ccache id,
-		krb5_cc_cursor *cursor,
-		krb5_creds *creds)
+                krb5_ccache id,
+                krb5_cc_cursor *cursor,
+                krb5_creds *creds)
 {
     krb5_error_code ret;
     kcm_ccache c = KCMCACHE(id);
@@ -206,22 +206,22 @@ kcmss_get_next (krb5_context context,
     KCM_ASSERT_VALID(c);
 
     ret = krb5_copy_creds_contents(context,
-				   &((struct kcm_creds *)cursor)->cred,
-				   creds);
+                                   &((struct kcm_creds *)cursor)->cred,
+                                   creds);
     if (ret)
-	return ret;
+        return ret;
 
     *cursor = ((struct kcm_creds *)cursor)->next;
     if (*cursor == 0)
-	ret = KRB5_CC_END;
+        ret = KRB5_CC_END;
 
     return ret;
 }
 
 static krb5_error_code
 kcmss_end_get (krb5_context context,
-	       krb5_ccache id,
-	       krb5_cc_cursor *cursor)
+               krb5_ccache id,
+               krb5_cc_cursor *cursor)
 {
     *cursor = NULL;
     return 0;
@@ -229,9 +229,9 @@ kcmss_end_get (krb5_context context,
 
 static krb5_error_code
 kcmss_remove_cred(krb5_context context,
-		  krb5_ccache id,
-		  krb5_flags which,
-		  krb5_creds *cred)
+                  krb5_ccache id,
+                  krb5_flags which,
+                  krb5_creds *cred)
 {
     krb5_error_code ret;
     kcm_ccache c = KCMCACHE(id);
@@ -245,15 +245,15 @@ kcmss_remove_cred(krb5_context context,
 
 static krb5_error_code
 kcmss_set_flags(krb5_context context,
-		krb5_ccache id,
-		krb5_flags flags)
+                krb5_ccache id,
+                krb5_flags flags)
 {
     return 0;
 }
 
 static krb5_error_code
 kcmss_get_version(krb5_context context,
-		  krb5_ccache id)
+                  krb5_ccache id)
 {
     return 0;
 }
@@ -291,8 +291,8 @@ static const krb5_cc_ops krb5_kcmss_ops = {
 
 krb5_error_code
 kcm_internal_ccache(krb5_context context,
-		    kcm_ccache c,
-		    krb5_ccache id)
+                    kcm_ccache c,
+                    krb5_ccache id)
 {
     id->ops = &krb5_kcmss_ops;
     id->data.length = sizeof(*c);

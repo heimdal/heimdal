@@ -33,14 +33,14 @@
 
 OM_uint32 GSSAPI_CALLCONV
 _gss_sanon_canonicalize_name(OM_uint32 *minor,
-			     gss_const_name_t src_name,
-			     const gss_OID mech_type,
-			     gss_name_t *dest_name)
+                             gss_const_name_t src_name,
+                             const gss_OID mech_type,
+                             gss_name_t *dest_name)
 {
     *minor = 0;
 
     if (src_name == GSS_C_NO_NAME)
-	return GSS_S_BAD_NAME;
+        return GSS_S_BAD_NAME;
 
     *dest_name = (gss_name_t)src_name;
 

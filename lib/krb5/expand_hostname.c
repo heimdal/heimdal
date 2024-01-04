@@ -35,12 +35,12 @@
 
 static krb5_error_code
 copy_hostname(krb5_context context,
-	      const char *orig_hostname,
-	      char **new_hostname)
+              const char *orig_hostname,
+              char **new_hostname)
 {
     *new_hostname = strdup (orig_hostname);
     if (*new_hostname == NULL)
-	return krb5_enomem(context);
+        return krb5_enomem(context);
     strlwr (*new_hostname);
     return 0;
 }
@@ -62,30 +62,30 @@ copy_hostname(krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_expand_hostname (krb5_context context,
-		      const char *orig_hostname,
-		      char **new_hostname)
+                      const char *orig_hostname,
+                      char **new_hostname)
 {
     struct addrinfo *ai, *a, hints;
     int error;
 
     if ((context->flags & KRB5_CTX_F_DNS_CANONICALIZE_HOSTNAME) == 0)
-	return copy_hostname (context, orig_hostname, new_hostname);
+        return copy_hostname (context, orig_hostname, new_hostname);
 
     memset (&hints, 0, sizeof(hints));
     hints.ai_flags = AI_CANONNAME;
 
     error = getaddrinfo (orig_hostname, NULL, &hints, &ai);
     if (error)
-	return copy_hostname (context, orig_hostname, new_hostname);
+        return copy_hostname (context, orig_hostname, new_hostname);
     for (a = ai; a != NULL; a = a->ai_next) {
-	if (a->ai_canonname != NULL) {
-	    *new_hostname = strdup (a->ai_canonname);
-	    freeaddrinfo (ai);
-	    if (*new_hostname == NULL)
-		return krb5_enomem(context);
-	    else
-		return 0;
-	}
+        if (a->ai_canonname != NULL) {
+            *new_hostname = strdup (a->ai_canonname);
+            freeaddrinfo (ai);
+            if (*new_hostname == NULL)
+                return krb5_enomem(context);
+            else
+                return 0;
+        }
     }
     freeaddrinfo (ai);
     return copy_hostname (context, orig_hostname, new_hostname);
@@ -97,21 +97,21 @@ krb5_expand_hostname (krb5_context context,
 
 static krb5_error_code
 vanilla_hostname (krb5_context context,
-		  const char *orig_hostname,
-		  char **new_hostname,
-		  char ***realms)
+                  const char *orig_hostname,
+                  char **new_hostname,
+                  char ***realms)
 {
     krb5_error_code ret;
 
     ret = copy_hostname (context, orig_hostname, new_hostname);
     if (ret)
-	return ret;
+        return ret;
     strlwr (*new_hostname);
 
     ret = krb5_get_host_realm (context, *new_hostname, realms);
     if (ret) {
-	free (*new_hostname);
-	return ret;
+        free (*new_hostname);
+        return ret;
     }
     return 0;
 }
@@ -136,41 +136,41 @@ vanilla_hostname (krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_expand_hostname_realms (krb5_context context,
-			     const char *orig_hostname,
-			     char **new_hostname,
-			     char ***realms)
+                             const char *orig_hostname,
+                             char **new_hostname,
+                             char ***realms)
 {
     struct addrinfo *ai, *a, hints;
     int error;
     krb5_error_code ret = 0;
 
     if ((context->flags & KRB5_CTX_F_DNS_CANONICALIZE_HOSTNAME) == 0)
-	return vanilla_hostname (context, orig_hostname, new_hostname,
-				 realms);
+        return vanilla_hostname (context, orig_hostname, new_hostname,
+                                 realms);
 
     memset (&hints, 0, sizeof(hints));
     hints.ai_flags = AI_CANONNAME;
 
     error = getaddrinfo (orig_hostname, NULL, &hints, &ai);
     if (error)
-	return vanilla_hostname (context, orig_hostname, new_hostname,
-				 realms);
+        return vanilla_hostname (context, orig_hostname, new_hostname,
+                                 realms);
 
     for (a = ai; a != NULL; a = a->ai_next) {
-	if (a->ai_canonname != NULL) {
-	    ret = copy_hostname (context, a->ai_canonname, new_hostname);
-	    if (ret) {
-		freeaddrinfo (ai);
-		return ret;
-	    }
-	    strlwr (*new_hostname);
-	    ret = krb5_get_host_realm (context, *new_hostname, realms);
-	    if (ret == 0) {
-		freeaddrinfo (ai);
-		return 0;
-	    }
-	    free (*new_hostname);
-	}
+        if (a->ai_canonname != NULL) {
+            ret = copy_hostname (context, a->ai_canonname, new_hostname);
+            if (ret) {
+                freeaddrinfo (ai);
+                return ret;
+            }
+            strlwr (*new_hostname);
+            ret = krb5_get_host_realm (context, *new_hostname, realms);
+            if (ret == 0) {
+                freeaddrinfo (ai);
+                return 0;
+            }
+            free (*new_hostname);
+        }
     }
     freeaddrinfo(ai);
     return vanilla_hostname (context, orig_hostname, new_hostname, realms);

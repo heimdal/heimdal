@@ -28,20 +28,20 @@
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_acquire_cred_impersonate_name(
-    OM_uint32 *minor_status,
-    gss_const_cred_id_t icred_handle,
-    gss_const_name_t desired_name,
-    OM_uint32 time_req,
-    gss_OID_set desired_mechs,
-    gss_cred_usage_t cred_usage,
-    gss_cred_id_t *ocred_handle,
-    gss_OID_set *actual_mechs,
-    OM_uint32 *time_rec)
+                                  OM_uint32 *minor_status,
+                                  gss_const_cred_id_t icred_handle,
+                                  gss_const_name_t desired_name,
+                                  OM_uint32 time_req,
+                                  gss_OID_set desired_mechs,
+                                  gss_cred_usage_t cred_usage,
+                                  gss_cred_id_t *ocred_handle,
+                                  gss_OID_set *actual_mechs,
+                                  OM_uint32 *time_rec)
 {
     *minor_status = 0;
 
     if (ocred_handle == NULL)
-	return GSS_S_CALL_INACCESSIBLE_WRITE;
+        return GSS_S_CALL_INACCESSIBLE_WRITE;
 
     *ocred_handle = GSS_C_NO_CREDENTIAL;
 

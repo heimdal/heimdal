@@ -33,16 +33,16 @@
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 _gss_sanon_inquire_cred(OM_uint32 *minor,
-		        gss_const_cred_id_t cred_handle,
-		        gss_name_t *name_ret,
-		        OM_uint32 *lifetime,
-		        gss_cred_usage_t *cred_usage,
-		        gss_OID_set *mechanisms)
+                        gss_const_cred_id_t cred_handle,
+                        gss_name_t *name_ret,
+                        OM_uint32 *lifetime,
+                        gss_cred_usage_t *cred_usage,
+                        gss_OID_set *mechanisms)
 {
     *minor = 0;
 
     if (cred_handle == GSS_C_NO_CREDENTIAL)
-	return GSS_S_NO_CRED;
+        return GSS_S_NO_CRED;
 
     /* the credential handle is a reference to the cred name */
     if (name_ret)

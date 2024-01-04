@@ -52,22 +52,22 @@ static __inline int
 wincng_check_availability(void)
 {
     if (wincng_available == -1) {
-	char szBCryptDllPath[MAX_PATH];
-	UINT cbBCryptDllPath;
+        char szBCryptDllPath[MAX_PATH];
+        UINT cbBCryptDllPath;
 
-	cbBCryptDllPath = GetSystemDirectory(szBCryptDllPath,
-					     sizeof(szBCryptDllPath));
-	if (cbBCryptDllPath > 0 &&
-	    cbBCryptDllPath < sizeof(szBCryptDllPath) &&
-	    strncat_s(szBCryptDllPath,
-		      sizeof(szBCryptDllPath), "\\bcrypt.dll", 11) == 0) {
-	    HANDLE hBCryptDll = LoadLibrary(szBCryptDllPath);
+        cbBCryptDllPath = GetSystemDirectory(szBCryptDllPath,
+                                             sizeof(szBCryptDllPath));
+        if (cbBCryptDllPath > 0 &&
+            cbBCryptDllPath < sizeof(szBCryptDllPath) &&
+            strncat_s(szBCryptDllPath,
+                      sizeof(szBCryptDllPath), "\\bcrypt.dll", 11) == 0) {
+            HANDLE hBCryptDll = LoadLibrary(szBCryptDllPath);
 
-	    InterlockedCompareExchangeRelease(&wincng_available,
-					      !!hBCryptDll, -1);
-	    if (hBCryptDll)
-		FreeLibrary(hBCryptDll);
-	}
+            InterlockedCompareExchangeRelease(&wincng_available,
+                                              !!hBCryptDll, -1);
+            if (hBCryptDll)
+                FreeLibrary(hBCryptDll);
+        }
     }
 
     return wincng_available == 1;
@@ -75,16 +75,16 @@ wincng_check_availability(void)
 
 BOOL WINAPI
 _hc_w32crypto_DllMain(HINSTANCE hinstDLL,
-		      DWORD fdwReason,
-		      LPVOID lpvReserved)
+                      DWORD fdwReason,
+                      LPVOID lpvReserved)
 {
     if (fdwReason == DLL_PROCESS_DETACH) {
-	/*
-	 * Don't bother cleaning up on process exit, only on
-	 * FreeLibrary() (in which case lpvReserved will be NULL).
-	 */
-	if (lpvReserved == NULL)
-	    _hc_wincng_cleanup();
+        /*
+         * Don't bother cleaning up on process exit, only on
+         * FreeLibrary() (in which case lpvReserved will be NULL).
+         */
+        if (lpvReserved == NULL)
+            _hc_wincng_cleanup();
     }
 
     return TRUE;

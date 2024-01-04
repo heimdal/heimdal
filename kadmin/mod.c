@@ -51,7 +51,7 @@ add_tl(kadm5_principal_ent_rec *princ, int type, krb5_data *data)
     princ->n_tl_data++;
     ptl = &princ->tl_data;
     while (*ptl != NULL)
-	ptl = &(*ptl)->tl_data_next;
+        ptl = &(*ptl)->tl_data_next;
     *ptl = tl;
 
     return;
@@ -73,8 +73,8 @@ get_tl(kadm5_principal_ent_rec *princ, int type)
 
 static void
 add_constrained_delegation(krb5_context contextp,
-			   kadm5_principal_ent_rec *princ,
-			   struct getarg_strings *strings)
+                           kadm5_principal_ent_rec *princ,
+                           struct getarg_strings *strings)
 {
     krb5_error_code ret;
     HDB_extension ext;
@@ -86,42 +86,42 @@ add_constrained_delegation(krb5_context contextp,
     ext.data.element = choice_HDB_extension_data_allowed_to_delegate_to;
 
     if (strings->num_strings == 1 && strings->strings[0][0] == '\0') {
-	ext.data.u.allowed_to_delegate_to.val = NULL;
-	ext.data.u.allowed_to_delegate_to.len = 0;
+        ext.data.u.allowed_to_delegate_to.val = NULL;
+        ext.data.u.allowed_to_delegate_to.len = 0;
     } else {
-	krb5_principal p;
-	int i;
+        krb5_principal p;
+        int i;
 
-	ext.data.u.allowed_to_delegate_to.val =
-	    calloc(strings->num_strings,
-		   sizeof(ext.data.u.allowed_to_delegate_to.val[0]));
-	ext.data.u.allowed_to_delegate_to.len = strings->num_strings;
+        ext.data.u.allowed_to_delegate_to.val =
+            calloc(strings->num_strings,
+                   sizeof(ext.data.u.allowed_to_delegate_to.val[0]));
+        ext.data.u.allowed_to_delegate_to.len = strings->num_strings;
 
-	for (i = 0; i < strings->num_strings; i++) {
-	    ret = krb5_parse_name(contextp, strings->strings[i], &p);
-	    if (ret)
-		abort();
-	    ret = copy_Principal(p, &ext.data.u.allowed_to_delegate_to.val[i]);
-	    if (ret)
-		abort();
-	    krb5_free_principal(contextp, p);
-	}
+        for (i = 0; i < strings->num_strings; i++) {
+            ret = krb5_parse_name(contextp, strings->strings[i], &p);
+            if (ret)
+                abort();
+            ret = copy_Principal(p, &ext.data.u.allowed_to_delegate_to.val[i]);
+            if (ret)
+                abort();
+            krb5_free_principal(contextp, p);
+        }
     }
 
     ASN1_MALLOC_ENCODE(HDB_extension, buf.data, buf.length,
-		       &ext, &size, ret);
+                       &ext, &size, ret);
     free_HDB_extension(&ext);
     if (ret)
-	abort();
+        abort();
     if (buf.length != size)
-	abort();
+        abort();
 
     add_tl(princ, KRB5_TL_EXTENSION, &buf);
 }
 
 static void
 add_aliases(krb5_context contextp, kadm5_principal_ent_rec *princ,
-	    struct getarg_strings *strings)
+            struct getarg_strings *strings)
 {
     krb5_error_code ret = 0;
     HDB_extension ext;
@@ -136,16 +136,16 @@ add_aliases(krb5_context contextp, kadm5_principal_ent_rec *princ,
     ext.data.u.aliases.case_insensitive = 0;
 
     if (strings->num_strings == 1 && strings->strings[0][0] == '\0') {
-	ext.data.u.aliases.aliases.val = NULL;
-	ext.data.u.aliases.aliases.len = 0;
+        ext.data.u.aliases.aliases.val = NULL;
+        ext.data.u.aliases.aliases.len = 0;
     } else {
-	ext.data.u.aliases.aliases.val =
-	    calloc(strings->num_strings,
-		   sizeof(ext.data.u.aliases.aliases.val[0]));
-	ext.data.u.aliases.aliases.len = strings->num_strings;
+        ext.data.u.aliases.aliases.val =
+            calloc(strings->num_strings,
+                   sizeof(ext.data.u.aliases.aliases.val[0]));
+        ext.data.u.aliases.aliases.len = strings->num_strings;
 
-	for (i = 0; ret == 0 && i < strings->num_strings; i++) {
-	    ret = krb5_parse_name(contextp, strings->strings[i], &p);
+        for (i = 0; ret == 0 && i < strings->num_strings; i++) {
+            ret = krb5_parse_name(contextp, strings->strings[i], &p);
             if (ret)
                 krb5_err(contextp, 1, ret, "Could not parse alias %s",
                          strings->strings[i]);
@@ -154,24 +154,24 @@ add_aliases(krb5_context contextp, kadm5_principal_ent_rec *princ,
             if (ret)
                 krb5_err(contextp, 1, ret, "Could not copy parsed alias %s",
                          strings->strings[i]);
-	    krb5_free_principal(contextp, p);
-	}
+            krb5_free_principal(contextp, p);
+        }
     }
 
     ASN1_MALLOC_ENCODE(HDB_extension, buf.data, buf.length,
-		       &ext, &size, ret);
+                       &ext, &size, ret);
     free_HDB_extension(&ext);
     if (ret)
-	abort();
+        abort();
     if (buf.length != size)
-	abort();
+        abort();
 
     add_tl(princ, KRB5_TL_EXTENSION, &buf);
 }
 
 static void
 add_pkinit_acl(krb5_context contextp, kadm5_principal_ent_rec *princ,
-	       struct getarg_strings *strings)
+               struct getarg_strings *strings)
 {
     krb5_error_code ret;
     HDB_extension ext;
@@ -185,26 +185,26 @@ add_pkinit_acl(krb5_context contextp, kadm5_principal_ent_rec *princ,
     ext.data.u.aliases.case_insensitive = 0;
 
     if (strings->num_strings == 1 && strings->strings[0][0] == '\0') {
-	ext.data.u.pkinit_acl.val = NULL;
-	ext.data.u.pkinit_acl.len = 0;
+        ext.data.u.pkinit_acl.val = NULL;
+        ext.data.u.pkinit_acl.len = 0;
     } else {
-	ext.data.u.pkinit_acl.val =
-	    calloc(strings->num_strings,
-		   sizeof(ext.data.u.pkinit_acl.val[0]));
-	ext.data.u.pkinit_acl.len = strings->num_strings;
+        ext.data.u.pkinit_acl.val =
+            calloc(strings->num_strings,
+                   sizeof(ext.data.u.pkinit_acl.val[0]));
+        ext.data.u.pkinit_acl.len = strings->num_strings;
 
-	for (i = 0; i < strings->num_strings; i++) {
-	    ext.data.u.pkinit_acl.val[i].subject = estrdup(strings->strings[i]);
-	}
+        for (i = 0; i < strings->num_strings; i++) {
+            ext.data.u.pkinit_acl.val[i].subject = estrdup(strings->strings[i]);
+        }
     }
 
     ASN1_MALLOC_ENCODE(HDB_extension, buf.data, buf.length,
-		       &ext, &size, ret);
+                       &ext, &size, ret);
     free_HDB_extension(&ext);
     if (ret)
-	abort();
+        abort();
     if (buf.length != size)
-	abort();
+        abort();
 
     add_tl(princ, KRB5_TL_EXTENSION, &buf);
 }
@@ -212,7 +212,7 @@ add_pkinit_acl(krb5_context contextp, kadm5_principal_ent_rec *princ,
 static krb5_error_code
 add_etypes(krb5_context contextp,
            kadm5_principal_ent_rec *princ,
-	   struct getarg_strings *strings)
+           struct getarg_strings *strings)
 {
     krb5_error_code ret = 0;
     HDB_EncTypeList etypes;
@@ -250,7 +250,7 @@ add_etypes(krb5_context contextp,
 
 static void
 add_kvno_diff(krb5_context contextp, kadm5_principal_ent_rec *princ,
-	      int is_svc_diff, krb5_kvno kvno_diff)
+              int is_svc_diff, krb5_kvno kvno_diff)
 {
     krb5_error_code ret;
     HDB_extension ext;
@@ -258,24 +258,24 @@ add_kvno_diff(krb5_context contextp, kadm5_principal_ent_rec *princ,
     size_t size = 0;
 
     if (kvno_diff < 0)
-	return;
+        return;
     if (kvno_diff > 2048)
-	kvno_diff = 2048;
+        kvno_diff = 2048;
 
     ext.mandatory = 0;
     if (is_svc_diff) {
-	ext.data.element = choice_HDB_extension_data_hist_kvno_diff_svc;
-	ext.data.u.hist_kvno_diff_svc = (unsigned int)kvno_diff;
+        ext.data.element = choice_HDB_extension_data_hist_kvno_diff_svc;
+        ext.data.u.hist_kvno_diff_svc = (unsigned int)kvno_diff;
     } else {
-	ext.data.element = choice_HDB_extension_data_hist_kvno_diff_clnt;
-	ext.data.u.hist_kvno_diff_clnt = (unsigned int)kvno_diff;
+        ext.data.element = choice_HDB_extension_data_hist_kvno_diff_clnt;
+        ext.data.u.hist_kvno_diff_clnt = (unsigned int)kvno_diff;
     }
     ASN1_MALLOC_ENCODE(HDB_extension, buf.data, buf.length,
-		       &ext, &size, ret);
+                       &ext, &size, ret);
     if (ret)
-	abort();
+        abort();
     if (buf.length != size)
-	abort();
+        abort();
 
     add_tl(princ, KRB5_TL_EXTENSION, &buf);
 }
@@ -300,12 +300,12 @@ add_krb5_config(kadm5_principal_ent_rec *princ, const char *fname)
     }
 
     ASN1_MALLOC_ENCODE(HDB_extension, buf.data, buf.length,
-		       &ext, &size, ret);
+                       &ext, &size, ret);
     free_HDB_extension(&ext);
     if (ret)
-	abort();
+        abort();
     if (buf.length != size)
-	abort();
+        abort();
     add_tl(princ, KRB5_TL_EXTENSION, &buf);
 }
 
@@ -327,12 +327,12 @@ do_mod_entry(krb5_principal principal, void *data)
 
     memset (&princ, 0, sizeof(princ));
     ret = kadm5_get_principal(m->kadm_handle, principal, &princ,
-			      KADM5_PRINCIPAL | KADM5_ATTRIBUTES |
-			      KADM5_MAX_LIFE | KADM5_MAX_RLIFE |
-			      KADM5_PRINC_EXPIRE_TIME |
-			      KADM5_PW_EXPIRATION);
+                              KADM5_PRINCIPAL | KADM5_ATTRIBUTES |
+                              KADM5_MAX_LIFE | KADM5_MAX_RLIFE |
+                              KADM5_PRINC_EXPIRE_TIME |
+                              KADM5_PW_EXPIRATION);
     if(ret)
-	return ret;
+        return ret;
 
     if(e->max_ticket_life_string ||
        e->max_renewable_life_string ||
@@ -348,52 +348,52 @@ do_mod_entry(krb5_principal principal, void *data)
        e->krb5_config_file_string ||
        e->hist_kvno_diff_clnt_integer != -1 ||
        e->hist_kvno_diff_svc_integer != -1) {
-	ret = set_entry(context, &princ, &mask,
-			e->max_ticket_life_string,
-			e->max_renewable_life_string,
-			e->expiration_time_string,
-			e->pw_expiration_time_string,
-			e->attributes_string,
-			e->policy_string);
-	if(e->kvno_integer != -1) {
-	    princ.kvno = e->kvno_integer;
-	    mask |= KADM5_KVNO;
-	}
-	if (e->constrained_delegation_strings.num_strings) {
-	    add_constrained_delegation(context, &princ,
-				       &e->constrained_delegation_strings);
-	    mask |= KADM5_TL_DATA;
-	}
-	if (e->alias_strings.num_strings) {
-	    add_aliases(context, &princ, &e->alias_strings);
-	    mask |= KADM5_TL_DATA;
-	}
-	if (e->pkinit_acl_strings.num_strings) {
-	    add_pkinit_acl(context, &princ, &e->pkinit_acl_strings);
-	    mask |= KADM5_TL_DATA;
-	}
+        ret = set_entry(context, &princ, &mask,
+                        e->max_ticket_life_string,
+                        e->max_renewable_life_string,
+                        e->expiration_time_string,
+                        e->pw_expiration_time_string,
+                        e->attributes_string,
+                        e->policy_string);
+        if(e->kvno_integer != -1) {
+            princ.kvno = e->kvno_integer;
+            mask |= KADM5_KVNO;
+        }
+        if (e->constrained_delegation_strings.num_strings) {
+            add_constrained_delegation(context, &princ,
+                                       &e->constrained_delegation_strings);
+            mask |= KADM5_TL_DATA;
+        }
+        if (e->alias_strings.num_strings) {
+            add_aliases(context, &princ, &e->alias_strings);
+            mask |= KADM5_TL_DATA;
+        }
+        if (e->pkinit_acl_strings.num_strings) {
+            add_pkinit_acl(context, &princ, &e->pkinit_acl_strings);
+            mask |= KADM5_TL_DATA;
+        }
         if (e->service_enctypes_strings.num_strings) {
             ret = add_etypes(context, &princ, &e->service_enctypes_strings);
-	    mask |= KADM5_TL_DATA;
+            mask |= KADM5_TL_DATA;
         }
-	if (e->hist_kvno_diff_clnt_integer != -1) {
-	    add_kvno_diff(context, &princ, 0, e->hist_kvno_diff_clnt_integer);
-	    mask |= KADM5_TL_DATA;
-	}
-	if (e->hist_kvno_diff_svc_integer != -1) {
-	    add_kvno_diff(context, &princ, 1, e->hist_kvno_diff_svc_integer);
-	    mask |= KADM5_TL_DATA;
-	}
+        if (e->hist_kvno_diff_clnt_integer != -1) {
+            add_kvno_diff(context, &princ, 0, e->hist_kvno_diff_clnt_integer);
+            mask |= KADM5_TL_DATA;
+        }
+        if (e->hist_kvno_diff_svc_integer != -1) {
+            add_kvno_diff(context, &princ, 1, e->hist_kvno_diff_svc_integer);
+            mask |= KADM5_TL_DATA;
+        }
         if (e->krb5_config_file_string) {
             add_krb5_config(&princ, e->krb5_config_file_string);
-	    mask |= KADM5_TL_DATA;
+            mask |= KADM5_TL_DATA;
         }
     } else
-	ret = edit_entry(&princ, &mask, NULL, 0);
+        ret = edit_entry(&princ, &mask, NULL, 0);
     if(ret == 0) {
-	ret = kadm5_modify_principal(m->kadm_handle, &princ, mask);
-	if(ret)
-	    krb5_warn(context, ret, "kadm5_modify_principal");
+        ret = kadm5_modify_principal(m->kadm_handle, &princ, mask);
+        if(ret)
+            krb5_warn(context, ret, "kadm5_modify_principal");
     }
 
     kadm5_free_principal_ent(m->kadm_handle, &princ);
@@ -414,7 +414,7 @@ mod_entry(struct modify_options *opt, int argc, char **argv)
 
     ret = kadm5_dup_context(kadm_handle, &data.kadm_handle);
     for (i = 0; ret == 0 && i < argc; i++)
-	ret = foreach_principal(argv[i], do_mod_entry, "mod", &data);
+        ret = foreach_principal(argv[i], do_mod_entry, "mod", &data);
     if (data.kadm_handle)
         kadm5_destroy(data.kadm_handle);
     return ret != 0;
@@ -431,12 +431,12 @@ do_mod_ns_entry(krb5_principal principal, void *data)
 
     memset (&princ, 0, sizeof(princ));
     ret = kadm5_get_principal(m->kadm_handle, principal, &princ,
-			      KADM5_PRINCIPAL | KADM5_ATTRIBUTES |
-			      KADM5_MAX_LIFE | KADM5_MAX_RLIFE |
-			      KADM5_PRINC_EXPIRE_TIME |
-			      KADM5_PW_EXPIRATION);
+                              KADM5_PRINCIPAL | KADM5_ATTRIBUTES |
+                              KADM5_MAX_LIFE | KADM5_MAX_RLIFE |
+                              KADM5_PRINC_EXPIRE_TIME |
+                              KADM5_PW_EXPIRATION);
     if(ret)
-	return ret;
+        return ret;
 
     if(e->max_ticket_life_string ||
        e->max_renewable_life_string ||
@@ -448,18 +448,18 @@ do_mod_ns_entry(krb5_principal principal, void *data)
                         e->attributes_string, NULL);
         if (e->enctypes_strings.num_strings) {
             ret = add_etypes(context, &princ, &e->enctypes_strings);
-	    mask |= KADM5_TL_DATA;
+            mask |= KADM5_TL_DATA;
         }
         if (e->krb5_config_file_string) {
             add_krb5_config(&princ, e->krb5_config_file_string);
-	    mask |= KADM5_TL_DATA;
+            mask |= KADM5_TL_DATA;
         }
     } else
-	ret = edit_entry(&princ, &mask, NULL, 0);
+        ret = edit_entry(&princ, &mask, NULL, 0);
     if(ret == 0) {
-	ret = kadm5_modify_principal(m->kadm_handle, &princ, mask);
-	if(ret)
-	    krb5_warn(context, ret, "kadm5_modify_principal");
+        ret = kadm5_modify_principal(m->kadm_handle, &princ, mask);
+        if(ret)
+            krb5_warn(context, ret, "kadm5_modify_principal");
     }
 
     kadm5_free_principal_ent(m->kadm_handle, &princ);
@@ -480,7 +480,7 @@ modify_namespace(struct modify_namespace_options *opt, int argc, char **argv)
 
     ret = kadm5_dup_context(kadm_handle, &data.kadm_handle);
     for (i = 0; ret == 0 && i < argc; i++)
-	ret = foreach_principal(argv[i], do_mod_ns_entry, "mod_ns", &data);
+        ret = foreach_principal(argv[i], do_mod_ns_entry, "mod_ns", &data);
     if (data.kadm_handle)
         kadm5_destroy(data.kadm_handle);
     return ret != 0;
@@ -600,7 +600,7 @@ do_mod_ns_kr(krb5_principal principal, void *data)
     }
 
     ret = kadm5_get_principal(kadm_handle, principal, &princ,
-			      KADM5_PRINCIPAL | KADM5_KVNO |
+                              KADM5_PRINCIPAL | KADM5_KVNO |
                               KADM5_KEY_DATA | KADM5_TL_DATA);
     if (ret == 0) {
         freeit = 1;
@@ -618,7 +618,7 @@ do_mod_ns_kr(krb5_principal principal, void *data)
         }
         if (!existing.len) {
             krb5_warnx(context, "no key rotation schedule; "
-                      "re-create namespace?");
+                       "re-create namespace?");
             kadm5_free_principal_ent(kadm_handle, &princ);
             return EINVAL;
         }
@@ -675,10 +675,10 @@ do_mod_ns_kr(krb5_principal principal, void *data)
     if (ret == 0)
         add_tl(&princ, KRB5_TL_EXTENSION, &d);
     if (ret == 0) {
-	ret = kadm5_modify_principal(kadm_handle, &princ,
+        ret = kadm5_modify_principal(kadm_handle, &princ,
                                      KADM5_PRINCIPAL | KADM5_TL_DATA);
-	if (ret)
-	    krb5_warn(context, ret, "Could not update namespace");
+        if (ret)
+            krb5_warn(context, ret, "Could not update namespace");
     }
 
     krb5_data_free(&d);
@@ -704,7 +704,7 @@ modify_ns_kr(struct modify_namespace_key_rotation_options *opt,
 
     ret = kadm5_dup_context(kadm_handle, &data.kadm_handle);
     for (i = 0; ret == 0 && i < argc; i++)
-	ret = foreach_principal(argv[i], do_mod_ns_kr, "mod_ns", opt);
+        ret = foreach_principal(argv[i], do_mod_ns_kr, "mod_ns", opt);
     if (data.kadm_handle)
         kadm5_destroy(data.kadm_handle);
     return ret != 0;
@@ -782,9 +782,9 @@ add_alias(void *opt, int argc, char **argv)
     }
 
     ret = kadm5_get_principal(kadm_handle, p, &princ,
-			      KADM5_PRINCIPAL_NORMAL_MASK | KADM5_TL_DATA);
+                              KADM5_PRINCIPAL_NORMAL_MASK | KADM5_TL_DATA);
     if (ret) {
-	krb5_warn(context, ret, "Principal not found %s", argv[0]);
+        krb5_warn(context, ret, "Principal not found %s", argv[0]);
         return 1;
     }
     krb5_free_principal(context, p);

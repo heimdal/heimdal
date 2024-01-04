@@ -108,12 +108,12 @@ match_string (const char **buf, const char **strs)
     int i = 0;
 
     for (i = 0; strs[i] != NULL; ++i) {
-	int len = strlen (strs[i]);
+        int len = strlen (strs[i]);
 
-	if (strncasecmp (*buf, strs[i], len) == 0) {
-	    *buf += len;
-	    return i;
-	}
+        if (strncasecmp (*buf, strs[i], len) == 0) {
+            *buf += len;
+            return i;
+        }
     }
     return -1;
 }
@@ -132,21 +132,21 @@ parse_number (const char **buf, int n, int *num)
 
     str = malloc(n + 1);
     if (str == NULL)
-	return -1;
+        return -1;
 
     /* skip whitespace */
     for (; **buf != '\0' && isspace((unsigned char)(**buf)); (*buf)++)
-	;
+        ;
 
     /* parse at least n characters */
     for (i = 0; **buf != '\0' && i < n && isdigit((unsigned char)(**buf)); i++, (*buf)++)
-	str[i] = **buf;
+        str[i] = **buf;
     str[i] = '\0';
 
     *num = strtol (str, &s, 10);
     free(str);
     if (s == str)
-	return -1;
+        return -1;
 
     return 0;
 }
@@ -177,7 +177,7 @@ first_day (int year)
     int ret = 4;
 
     for (; year > 1970; --year)
-	ret = (ret + (is_leap_year (year) ? 366 : 365)) % 7;
+        ret = (ret + (is_leap_year (year) ? 366 : 365)) % 7;
     return ret;
 }
 
@@ -192,8 +192,8 @@ set_week_number_sun (struct tm *timeptr, int wnum)
 
     timeptr->tm_yday = wnum * 7 + timeptr->tm_wday - fday;
     if (timeptr->tm_yday < 0) {
-	timeptr->tm_wday = fday;
-	timeptr->tm_yday = 0;
+        timeptr->tm_wday = fday;
+        timeptr->tm_yday = 0;
     }
 }
 
@@ -208,8 +208,8 @@ set_week_number_mon (struct tm *timeptr, int wnum)
 
     timeptr->tm_yday = wnum * 7 + (timeptr->tm_wday + 6) % 7 - fday;
     if (timeptr->tm_yday < 0) {
-	timeptr->tm_wday = (fday + 1) % 7;
-	timeptr->tm_yday = 0;
+        timeptr->tm_wday = (fday + 1) % 7;
+        timeptr->tm_yday = 0;
     }
 }
 
@@ -224,12 +224,12 @@ set_week_number_mon4 (struct tm *timeptr, int wnum)
     int offset = 0;
 
     if (fday < 4)
-	offset += 7;
+        offset += 7;
 
     timeptr->tm_yday = offset + (wnum - 1) * 7 + timeptr->tm_wday - fday;
     if (timeptr->tm_yday < 0) {
-	timeptr->tm_wday = fday;
-	timeptr->tm_yday = 0;
+        timeptr->tm_wday = fday;
+        timeptr->tm_yday = 0;
     }
 }
 
@@ -243,207 +243,207 @@ strptime (const char *buf, const char *format, struct tm *timeptr)
     char c;
 
     for (; (c = *format) != '\0'; ++format) {
-	char *s;
-	int ret;
+        char *s;
+        int ret;
 
-	if (isspace ((unsigned char)c)) {
-	    while (isspace ((unsigned char)*buf))
-		++buf;
-	} else if (c == '%' && format[1] != '\0') {
-	    c = *++format;
-	    if (c == 'E' || c == 'O')
-		c = *++format;
-	    switch (c) {
-	    case 'A' :
-		ret = match_string (&buf, full_weekdays);
-		if (ret < 0)
-		    return NULL;
-		timeptr->tm_wday = ret;
-		break;
-	    case 'a' :
-		ret = match_string (&buf, abb_weekdays);
-		if (ret < 0)
-		    return NULL;
-		timeptr->tm_wday = ret;
-		break;
-	    case 'B' :
-		ret = match_string (&buf, full_month);
-		if (ret < 0)
-		    return NULL;
-		timeptr->tm_mon = ret;
-		break;
-	    case 'b' :
-	    case 'h' :
-		ret = match_string (&buf, abb_month);
-		if (ret < 0)
-		    return NULL;
-		timeptr->tm_mon = ret;
-		break;
-	    case 'C' :
-		if (parse_number(&buf, 2, &ret))
-		    return NULL;
-		timeptr->tm_year = (ret * 100) - tm_year_base;
-		break;
-	    case 'c' :
-		abort ();
-	    case 'D' :		/* %m/%d/%y */
-		s = strptime (buf, "%m/%d/%y", timeptr);
-		if (s == NULL)
-		    return NULL;
-		buf = s;
-		break;
-	    case 'd' :
-	    case 'e' :
-		if (parse_number(&buf, 2, &ret))
-		    return NULL;
-		timeptr->tm_mday = ret;
-		break;
-	    case 'H' :
-	    case 'k' :
-		if (parse_number(&buf, 2, &ret))
-		    return NULL;
-		timeptr->tm_hour = ret;
-		break;
-	    case 'I' :
-	    case 'l' :
-		if (parse_number(&buf, 2, &ret))
-		    return NULL;
-		if (ret == 12)
-		    timeptr->tm_hour = 0;
-		else
-		    timeptr->tm_hour = ret;
-		break;
-	    case 'j' :
-		if (parse_number(&buf, 3, &ret))
-		    return NULL;
-		if (ret == 0)
-		    return NULL;
-		timeptr->tm_yday = ret - 1;
-		break;
-	    case 'm' :
-		if (parse_number(&buf, 2, &ret))
-		    return NULL;
-		if (ret == 0)
-		    return NULL;
-		timeptr->tm_mon = ret - 1;
-		break;
-	    case 'M' :
-		if (parse_number(&buf, 2, &ret))
-		    return NULL;
-		timeptr->tm_min = ret;
-		break;
-	    case 'n' :
-		while (isspace ((unsigned char)*buf))
-		    buf++;
-		break;
-	    case 'p' :
-		ret = match_string (&buf, ampm);
-		if (ret < 0)
-		    return NULL;
-		if (timeptr->tm_hour == 0) {
-		    if (ret == 1)
-			timeptr->tm_hour = 12;
-		} else
-		    timeptr->tm_hour += 12;
-		break;
-	    case 'r' :		/* %I:%M:%S %p */
-		s = strptime (buf, "%I:%M:%S %p", timeptr);
-		if (s == NULL)
-		    return NULL;
-		buf = s;
-		break;
-	    case 'R' :		/* %H:%M */
-		s = strptime (buf, "%H:%M", timeptr);
-		if (s == NULL)
-		    return NULL;
-		buf = s;
-		break;
-	    case 'S' :
-		if (parse_number(&buf, 2, &ret))
-		    return NULL;
-		timeptr->tm_sec = ret;
-		break;
-	    case 't' :
-		while (isspace ((unsigned char)*buf))
-		    buf++;
-		break;
-	    case 'T' :		/* %H:%M:%S */
-	    case 'X' :
-		s = strptime (buf, "%H:%M:%S", timeptr);
-		if (s == NULL)
-		    return NULL;
-		buf = s;
-		break;
-	    case 'u' :
-		if (parse_number(&buf, 1, &ret))
-		    return NULL;
-		if (ret <= 0)
-		    return NULL;
-		timeptr->tm_wday = ret - 1;
-		break;
-	    case 'w' :
-		if (parse_number(&buf, 1, &ret))
-		    return NULL;
-		timeptr->tm_wday = ret;
-		break;
-	    case 'U' :
-		if (parse_number(&buf, 2, &ret))
-		    return NULL;
-		set_week_number_sun (timeptr, ret);
-		break;
-	    case 'V' :
-		if (parse_number(&buf, 2, &ret))
-		    return NULL;
-		set_week_number_mon4 (timeptr, ret);
-		break;
-	    case 'W' :
-		if (parse_number(&buf, 2, &ret))
-		    return NULL;
-		set_week_number_mon (timeptr, ret);
-		break;
-	    case 'x' :
-		s = strptime (buf, "%Y:%m:%d", timeptr);
-		if (s == NULL)
-		    return NULL;
-		buf = s;
-		break;
-	    case 'y' :
-		if (parse_number(&buf, 2, &ret))
-		    return NULL;
-		if (ret < 70)
-		    timeptr->tm_year = 100 + ret;
-		else
-		    timeptr->tm_year = ret;
-		break;
-	    case 'Y' :
-		if (parse_number(&buf, 4, &ret))
-		    return NULL;
-		timeptr->tm_year = ret - tm_year_base;
-		break;
-	    case 'Z' :
-		abort ();
-	    case '\0' :
-		--format;
-                HEIM_FALLTHROUGH;
-	    case '%' :
-		if (*buf == '%')
-		    ++buf;
-		else
-		    return NULL;
-		break;
-	    default :
-		if (*buf == '%' || *++buf == c)
-		    ++buf;
-		else
-		    return NULL;
-		break;
-	    }
-	} else {
-	    if (*buf == c)
-		++buf;
-	    else
-		return NULL;
-	}
+        if (isspace ((unsigned char)c)) {
+            while (isspace ((unsigned char)*buf))
+                ++buf;
+        } else if (c == '%' && format[1] != '\0') {
+            c = *++format;
+            if (c == 'E' || c == 'O')
+                c = *++format;
+            switch (c) {
+                case 'A' :
+                    ret = match_string (&buf, full_weekdays);
+                    if (ret < 0)
+                        return NULL;
+                    timeptr->tm_wday = ret;
+                    break;
+                case 'a' :
+                    ret = match_string (&buf, abb_weekdays);
+                    if (ret < 0)
+                        return NULL;
+                    timeptr->tm_wday = ret;
+                    break;
+                case 'B' :
+                    ret = match_string (&buf, full_month);
+                    if (ret < 0)
+                        return NULL;
+                    timeptr->tm_mon = ret;
+                    break;
+                case 'b' :
+                case 'h' :
+                    ret = match_string (&buf, abb_month);
+                    if (ret < 0)
+                        return NULL;
+                    timeptr->tm_mon = ret;
+                    break;
+                case 'C' :
+                    if (parse_number(&buf, 2, &ret))
+                        return NULL;
+                    timeptr->tm_year = (ret * 100) - tm_year_base;
+                    break;
+                case 'c' :
+                    abort ();
+                case 'D' :		/* %m/%d/%y */
+                    s = strptime (buf, "%m/%d/%y", timeptr);
+                    if (s == NULL)
+                        return NULL;
+                    buf = s;
+                    break;
+                case 'd' :
+                case 'e' :
+                    if (parse_number(&buf, 2, &ret))
+                        return NULL;
+                    timeptr->tm_mday = ret;
+                    break;
+                case 'H' :
+                case 'k' :
+                    if (parse_number(&buf, 2, &ret))
+                        return NULL;
+                    timeptr->tm_hour = ret;
+                    break;
+                case 'I' :
+                case 'l' :
+                    if (parse_number(&buf, 2, &ret))
+                        return NULL;
+                    if (ret == 12)
+                        timeptr->tm_hour = 0;
+                    else
+                        timeptr->tm_hour = ret;
+                    break;
+                case 'j' :
+                    if (parse_number(&buf, 3, &ret))
+                        return NULL;
+                    if (ret == 0)
+                        return NULL;
+                    timeptr->tm_yday = ret - 1;
+                    break;
+                case 'm' :
+                    if (parse_number(&buf, 2, &ret))
+                        return NULL;
+                    if (ret == 0)
+                        return NULL;
+                    timeptr->tm_mon = ret - 1;
+                    break;
+                case 'M' :
+                    if (parse_number(&buf, 2, &ret))
+                        return NULL;
+                    timeptr->tm_min = ret;
+                    break;
+                case 'n' :
+                    while (isspace ((unsigned char)*buf))
+                        buf++;
+                    break;
+                case 'p' :
+                    ret = match_string (&buf, ampm);
+                    if (ret < 0)
+                        return NULL;
+                    if (timeptr->tm_hour == 0) {
+                        if (ret == 1)
+                            timeptr->tm_hour = 12;
+                    } else
+                        timeptr->tm_hour += 12;
+                    break;
+                case 'r' :		/* %I:%M:%S %p */
+                    s = strptime (buf, "%I:%M:%S %p", timeptr);
+                    if (s == NULL)
+                        return NULL;
+                    buf = s;
+                    break;
+                case 'R' :		/* %H:%M */
+                    s = strptime (buf, "%H:%M", timeptr);
+                    if (s == NULL)
+                        return NULL;
+                    buf = s;
+                    break;
+                case 'S' :
+                    if (parse_number(&buf, 2, &ret))
+                        return NULL;
+                    timeptr->tm_sec = ret;
+                    break;
+                case 't' :
+                    while (isspace ((unsigned char)*buf))
+                        buf++;
+                    break;
+                case 'T' :		/* %H:%M:%S */
+                case 'X' :
+                    s = strptime (buf, "%H:%M:%S", timeptr);
+                    if (s == NULL)
+                        return NULL;
+                    buf = s;
+                    break;
+                case 'u' :
+                    if (parse_number(&buf, 1, &ret))
+                        return NULL;
+                    if (ret <= 0)
+                        return NULL;
+                    timeptr->tm_wday = ret - 1;
+                    break;
+                case 'w' :
+                    if (parse_number(&buf, 1, &ret))
+                        return NULL;
+                    timeptr->tm_wday = ret;
+                    break;
+                case 'U' :
+                    if (parse_number(&buf, 2, &ret))
+                        return NULL;
+                    set_week_number_sun (timeptr, ret);
+                    break;
+                case 'V' :
+                    if (parse_number(&buf, 2, &ret))
+                        return NULL;
+                    set_week_number_mon4 (timeptr, ret);
+                    break;
+                case 'W' :
+                    if (parse_number(&buf, 2, &ret))
+                        return NULL;
+                    set_week_number_mon (timeptr, ret);
+                    break;
+                case 'x' :
+                    s = strptime (buf, "%Y:%m:%d", timeptr);
+                    if (s == NULL)
+                        return NULL;
+                    buf = s;
+                    break;
+                case 'y' :
+                    if (parse_number(&buf, 2, &ret))
+                        return NULL;
+                    if (ret < 70)
+                        timeptr->tm_year = 100 + ret;
+                    else
+                        timeptr->tm_year = ret;
+                    break;
+                case 'Y' :
+                    if (parse_number(&buf, 4, &ret))
+                        return NULL;
+                    timeptr->tm_year = ret - tm_year_base;
+                    break;
+                case 'Z' :
+                    abort ();
+                case '\0' :
+                    --format;
+                    HEIM_FALLTHROUGH;
+                case '%' :
+                    if (*buf == '%')
+                        ++buf;
+                    else
+                        return NULL;
+                    break;
+                default :
+                    if (*buf == '%' || *++buf == c)
+                        ++buf;
+                    else
+                        return NULL;
+                    break;
+            }
+        } else {
+            if (*buf == c)
+                ++buf;
+            else
+                return NULL;
+        }
     }
     return rk_UNCONST(buf);
 }

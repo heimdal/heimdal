@@ -61,12 +61,12 @@ typedef struct camellia_key {
 int CAMELLIA_set_key(const unsigned char *, const int, CAMELLIA_KEY *);
 
 void CAMELLIA_encrypt(const unsigned char *, unsigned char *,
-		      const CAMELLIA_KEY *);
+                      const CAMELLIA_KEY *);
 void CAMELLIA_decrypt(const unsigned char *, unsigned char *,
-		      const CAMELLIA_KEY *);
+                      const CAMELLIA_KEY *);
 
 void CAMELLIA_cbc_encrypt(const unsigned char *, unsigned char *,
-			  unsigned long, const CAMELLIA_KEY *,
-			  unsigned char *, int);
+                          unsigned long, const CAMELLIA_KEY *,
+                          unsigned char *, int);
 
 #endif /* HEIM_CAMELLIA_H */

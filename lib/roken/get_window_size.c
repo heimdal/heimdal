@@ -64,40 +64,40 @@ get_window_size(int fd, int *lines, int *columns)
 
 #if defined(TIOCGWINSZ)
     {
-	struct winsize ws;
+        struct winsize ws;
         int ret;
-	ret = ioctl(fd, TIOCGWINSZ, &ws);
-	if (ret != -1) {
-	    if (lines)
-		*lines = ws.ws_row;
-	    if (columns)
-		*columns = ws.ws_col;
-	    return 0;
-	}
+        ret = ioctl(fd, TIOCGWINSZ, &ws);
+        if (ret != -1) {
+            if (lines)
+                *lines = ws.ws_row;
+            if (columns)
+                *columns = ws.ws_col;
+            return 0;
+        }
     }
 #elif defined(TIOCGSIZE)
     {
-	struct ttysize ts;
+        struct ttysize ts;
         int ret;
-	ret = ioctl(fd, TIOCGSIZE, &ts);
-	if (ret != -1) {
-	    if (lines)
-		*lines = ts.ws_lines;
-	    if (columns)
-		*columns = ts.ts_cols;
-	    return 0;
- 	}
+        ret = ioctl(fd, TIOCGSIZE, &ts);
+        if (ret != -1) {
+            if (lines)
+                *lines = ts.ws_lines;
+            if (columns)
+                *columns = ts.ts_cols;
+            return 0;
+        }
     }
 #elif defined(HAVE__SCRSIZE)
     {
-	int dst[2];
+        int dst[2];
 
- 	_scrsize(dst);
-	if (lines)
-	    *lines = dst[1];
-	if (columns)
-	    *columns = dst[0];
-	return 0;
+        _scrsize(dst);
+        if (lines)
+            *lines = dst[1];
+        if (columns)
+            *columns = dst[0];
+        return 0;
     }
 #elif defined(_WIN32)
     {
@@ -117,16 +117,16 @@ get_window_size(int fd, int *lines, int *columns)
     }
 #endif
     if (columns) {
-    	if ((s = getenv("COLUMNS")))
-	    *columns = atoi(s);
-	else
-	    return -1;
+        if ((s = getenv("COLUMNS")))
+            *columns = atoi(s);
+        else
+            return -1;
     }
     if (lines) {
-	if ((s = getenv("LINES")))
-	    *lines = atoi(s);
-	else
-	    return -1;
+        if ((s = getenv("LINES")))
+            *lines = atoi(s);
+        else
+            return -1;
     }
     return 0;
 }

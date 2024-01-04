@@ -90,14 +90,14 @@ hkt_unlock(krb5_context context, HDB *db)
 
 static krb5_error_code
 hkt_firstkey(krb5_context context, HDB *db,
-	     unsigned flags, hdb_entry *entry)
+             unsigned flags, hdb_entry *entry)
 {
     return HDB_ERR_DB_INUSE;
 }
 
 static krb5_error_code
 hkt_nextkey(krb5_context context, HDB * db, unsigned flags,
-	     hdb_entry * entry)
+             hdb_entry * entry)
 {
     return HDB_ERR_DB_INUSE;
 }
@@ -112,22 +112,22 @@ hkt_open(krb5_context context, HDB * db, int flags, mode_t mode)
 
     ret = krb5_kt_resolve(context, k->path, &k->keytab);
     if (ret)
-	return ret;
+        return ret;
 
     return 0;
 }
 
 static krb5_error_code
 hkt_fetch_kvno(krb5_context context, HDB * db, krb5_const_principal principal,
-	       unsigned flags, krb5_kvno kvno, hdb_entry * entry)
+               unsigned flags, krb5_kvno kvno, hdb_entry * entry)
 {
     hdb_keytab k = (hdb_keytab)db->hdb_db;
     krb5_error_code ret;
     krb5_keytab_entry ktentry;
 
     if (!(flags & HDB_F_KVNO_SPECIFIED)) {
-	    /* Preserve previous behaviour if no kvno specified */
-	    kvno = 0;
+            /* Preserve previous behaviour if no kvno specified */
+            kvno = 0;
     }
 
     memset(&ktentry, 0, sizeof(ktentry));
@@ -138,9 +138,9 @@ hkt_fetch_kvno(krb5_context context, HDB * db, krb5_const_principal principal,
 
     /* Not recorded in the OD backend, make something up */
     ret = krb5_parse_name(context, "hdb/keytab@WELL-KNOWN:KEYTAB-BACKEND",
-			  &entry->created_by.principal);
+                          &entry->created_by.principal);
     if (ret)
-	goto out;
+        goto out;
 
     /*
      * XXX really needs to try all enctypes and just not pick the
@@ -151,20 +151,20 @@ hkt_fetch_kvno(krb5_context context, HDB * db, krb5_const_principal principal,
 
     ret = krb5_kt_get_entry(context, k->keytab, principal, kvno, 0, &ktentry);
     if (ret) {
-	ret = HDB_ERR_NOENTRY;
-	goto out;
+        ret = HDB_ERR_NOENTRY;
+        goto out;
     }
 
     ret = krb5_copy_principal(context, principal, &entry->principal);
     if (ret)
-	goto out;
+        goto out;
 
     ret = _hdb_keytab2hdb_entry(context, &ktentry, entry);
 
- out:
+out:
     if (ret) {
-	free_HDB_entry(entry);
-	memset(entry, 0, sizeof(*entry));
+        free_HDB_entry(entry);
+        memset(entry, 0, sizeof(*entry));
     }
     krb5_kt_free_entry(context, &ktentry);
 
@@ -173,7 +173,7 @@ hkt_fetch_kvno(krb5_context context, HDB * db, krb5_const_principal principal,
 
 static krb5_error_code
 hkt_store(krb5_context context, HDB * db, unsigned flags,
-	  hdb_entry * entry)
+          hdb_entry * entry)
 {
     return HDB_ERR_DB_INUSE;
 }
@@ -186,26 +186,26 @@ hdb_keytab_create(krb5_context context, HDB ** db, const char *arg)
 
     *db = calloc(1, sizeof(**db));
     if (*db == NULL) {
-	krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
-	return ENOMEM;
+        krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
+        return ENOMEM;
     }
     memset(*db, 0, sizeof(**db));
 
     k = calloc(1, sizeof(*k));
     if (k == NULL) {
-	free(*db);
-	*db = NULL;
-	krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
-	return ENOMEM;
+        free(*db);
+        *db = NULL;
+        krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
+        return ENOMEM;
     }
 
     k->path = strdup(arg);
     if (k->path == NULL) {
-	free(k);
-	free(*db);
-	*db = NULL;
-	krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
-	return ENOMEM;
+        free(k);
+        free(*db);
+        *db = NULL;
+        krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
+        return ENOMEM;
     }
 
 

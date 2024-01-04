@@ -24,30 +24,30 @@ main(int argc, char **argv)
     setprogname(argv[0]);
 
     if(getarg(args, num_args, argc, argv, &o))
-	krb5_std_usage(1, args, num_args);
+        krb5_std_usage(1, args, num_args);
 
     if(help_flag)
-	krb5_std_usage(0, args, num_args);
+        krb5_std_usage(0, args, num_args);
 
     if(version_flag){
-	print_version(NULL);
-	exit(0);
+        print_version(NULL);
+        exit(0);
     }
 
     ret = krb5_init_context(&context);
     if (ret)
-	errx(1, "krb5_init_context failed: %d", ret);
+        errx(1, "krb5_init_context failed: %d", ret);
 
     if (mkey_file) {
         hdb_master_key mkey;
 
-	ret = hdb_read_master_key(context, mkey_file, &mkey);
-	if (ret)
-	    krb5_err(context, 1, ret, "failed to read master key %s", mkey_file);
+        ret = hdb_read_master_key(context, mkey_file, &mkey);
+        if (ret)
+            krb5_err(context, 1, ret, "failed to read master key %s", mkey_file);
 
-	hdb_free_master_key(context, mkey);
+        hdb_free_master_key(context, mkey);
     } else
-      krb5_errx(context, 1, "no command option given");
+        krb5_errx(context, 1, "no command option given");
 
     krb5_free_context(context);
 

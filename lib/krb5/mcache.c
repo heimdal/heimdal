@@ -42,8 +42,8 @@ typedef struct krb5_mcache {
     unsigned int dead:1;
     krb5_principal primary_principal;
     struct link {
-	krb5_creds cred;
-	struct link *next;
+        krb5_creds cred;
+        struct link *next;
     } *creds;
     struct krb5_mcache *next;
     time_t mtime;
@@ -60,10 +60,10 @@ static struct krb5_mcache *mcc_head;
 
 static krb5_error_code KRB5_CALLCONV
 mcc_get_name_2(krb5_context context,
-	       krb5_ccache id,
-	       const char **name,
-	       const char **col,
-	       const char **sub)
+               krb5_ccache id,
+               const char **name,
+               const char **col,
+               const char **sub)
 {
     if (name)
         *name = MCACHE(id)->name;
@@ -84,7 +84,7 @@ mcc_alloc(krb5_context context, const char *name, krb5_mcache **out)
     *out = NULL;
     ALLOC(m, 1);
     if(m == NULL)
-	return krb5_enomem(context);
+        return krb5_enomem(context);
 
 again:
     if (counter > 3) {
@@ -93,12 +93,12 @@ again:
         return EAGAIN; /* XXX */
     }
     if(name == NULL)
-	ret = asprintf(&m->name, "u%p-%llu", m, (unsigned long long)counter);
+        ret = asprintf(&m->name, "u%p-%llu", m, (unsigned long long)counter);
     else
-	m->name = strdup(name);
+        m->name = strdup(name);
     if(ret < 0 || m->name == NULL) {
-	free(m);
-	return krb5_enomem(context);
+        free(m);
+        return krb5_enomem(context);
     }
     if (strcmp(m->name, "anonymous") == 0) {
         HEIMDAL_MUTEX_init(&(m->mutex));
@@ -158,9 +158,9 @@ again:
 
 static krb5_error_code KRB5_CALLCONV
 mcc_resolve_2(krb5_context context,
-	      krb5_ccache *id,
-	      const char *res,
-	      const char *sub)
+              krb5_ccache *id,
+              const char *res,
+              const char *sub)
 {
     krb5_error_code ret;
     krb5_mcache *m;
@@ -192,24 +192,24 @@ mcc_gen_new(krb5_context context, krb5_ccache *id)
 
 static void KRB5_CALLCONV
 mcc_destroy_internal(krb5_context context,
-		     krb5_mcache *m)
+                     krb5_mcache *m)
 {
     struct link *l;
 
     if (m->primary_principal != NULL) {
-	krb5_free_principal (context, m->primary_principal);
-	m->primary_principal = NULL;
+        krb5_free_principal (context, m->primary_principal);
+        m->primary_principal = NULL;
     }
     m->dead = 1;
 
     l = m->creds;
     while (l != NULL) {
-	struct link *old;
+        struct link *old;
 
-	krb5_free_cred_contents (context, &l->cred);
-	old = l;
-	l = l->next;
-	free (old);
+        krb5_free_cred_contents (context, &l->cred);
+        old = l;
+        l = l->next;
+        free (old);
     }
 
     m->creds = NULL;
@@ -218,8 +218,8 @@ mcc_destroy_internal(krb5_context context,
 
 static krb5_error_code KRB5_CALLCONV
 mcc_initialize(krb5_context context,
-	       krb5_ccache id,
-	       krb5_principal primary_principal)
+               krb5_ccache id,
+               krb5_principal primary_principal)
 {
     krb5_mcache *m = MCACHE(id);
     krb5_error_code ret = 0;
@@ -236,8 +236,8 @@ mcc_initialize(krb5_context context,
     m->kdc_offset = 0;
     m->mtime = time(NULL);
     ret = krb5_copy_principal (context,
-			       primary_principal,
-			       &m->primary_principal);
+                               primary_principal,
+                               &m->primary_principal);
     HEIMDAL_MUTEX_unlock(&(m->mutex));
     return ret;
 }
@@ -248,13 +248,13 @@ mcc_close_internal(krb5_mcache *m)
     HEIMDAL_MUTEX_lock(&(m->mutex));
     heim_assert(m->refcnt != 0, "closed dead cache mcache");
     if (--m->refcnt != 0) {
-	HEIMDAL_MUTEX_unlock(&(m->mutex));
-	return 0;
+        HEIMDAL_MUTEX_unlock(&(m->mutex));
+        return 0;
     }
     if (MISDEAD(m)) {
-	free(m->name);
-	HEIMDAL_MUTEX_unlock(&(m->mutex));
-	return 1;
+        free(m->name);
+        HEIMDAL_MUTEX_unlock(&(m->mutex));
+        return 1;
     }
     HEIMDAL_MUTEX_unlock(&(m->mutex));
     return 0;
@@ -262,20 +262,20 @@ mcc_close_internal(krb5_mcache *m)
 
 static krb5_error_code KRB5_CALLCONV
 mcc_close(krb5_context context,
-	  krb5_ccache id)
+          krb5_ccache id)
 {
     krb5_mcache *m = MCACHE(id);
 
     if (mcc_close_internal(MCACHE(id))) {
-	HEIMDAL_MUTEX_destroy(&(m->mutex));
-	krb5_data_free(&id->data);
+        HEIMDAL_MUTEX_destroy(&(m->mutex));
+        krb5_data_free(&id->data);
     }
     return 0;
 }
 
 static krb5_error_code KRB5_CALLCONV
 mcc_destroy(krb5_context context,
-	    krb5_ccache id)
+            krb5_ccache id)
 {
     krb5_mcache **n, *m = MCACHE(id);
 
@@ -295,21 +295,21 @@ mcc_destroy(krb5_context context,
     HEIMDAL_MUTEX_lock(&(m->mutex));
     if (m->refcnt == 0)
     {
-    	HEIMDAL_MUTEX_unlock(&(m->mutex));
-	HEIMDAL_MUTEX_unlock(&mcc_mutex);
-    	krb5_abortx(context, "mcc_destroy: refcnt already 0");
+        HEIMDAL_MUTEX_unlock(&(m->mutex));
+        HEIMDAL_MUTEX_unlock(&mcc_mutex);
+        krb5_abortx(context, "mcc_destroy: refcnt already 0");
     }
 
     if (!MISDEAD(m)) {
-	/* if this is an active mcache, remove it from the linked
+        /* if this is an active mcache, remove it from the linked
            list, and free all data */
-	for(n = &mcc_head; n && *n; n = &(*n)->next) {
-	    if(m == *n) {
-		*n = m->next;
-		break;
-	    }
-	}
-	mcc_destroy_internal(context, m);
+        for(n = &mcc_head; n && *n; n = &(*n)->next) {
+            if(m == *n) {
+                *n = m->next;
+                break;
+            }
+        }
+        mcc_destroy_internal(context, m);
     }
     HEIMDAL_MUTEX_unlock(&(m->mutex));
     HEIMDAL_MUTEX_unlock(&mcc_mutex);
@@ -318,8 +318,8 @@ mcc_destroy(krb5_context context,
 
 static krb5_error_code KRB5_CALLCONV
 mcc_store_cred(krb5_context context,
-	       krb5_ccache id,
-	       krb5_creds *creds)
+               krb5_ccache id,
+               krb5_creds *creds)
 {
     krb5_mcache *m = MCACHE(id);
     krb5_error_code ret;
@@ -328,8 +328,8 @@ mcc_store_cred(krb5_context context,
     HEIMDAL_MUTEX_lock(&(m->mutex));
     if (MISDEAD(m))
     {
-    	HEIMDAL_MUTEX_unlock(&(m->mutex));
-    	return ENOENT;
+        HEIMDAL_MUTEX_unlock(&(m->mutex));
+        return ENOENT;
     }
 
     l = malloc (sizeof(*l));
@@ -340,47 +340,47 @@ mcc_store_cred(krb5_context context,
     memset (&l->cred, 0, sizeof(l->cred));
     ret = krb5_copy_creds_contents (context, creds, &l->cred);
     if (ret) {
-    	m->creds = l->next;
-    	free (l);
-    	HEIMDAL_MUTEX_unlock(&(m->mutex));
-    	return ret;
+        m->creds = l->next;
+        free (l);
+        HEIMDAL_MUTEX_unlock(&(m->mutex));
+        return ret;
     }
     m->mtime = time(NULL);
-	HEIMDAL_MUTEX_unlock(&(m->mutex));
+        HEIMDAL_MUTEX_unlock(&(m->mutex));
     return 0;
 }
 
 static krb5_error_code KRB5_CALLCONV
 mcc_get_principal(krb5_context context,
-		  krb5_ccache id,
-		  krb5_principal *principal)
+                  krb5_ccache id,
+                  krb5_principal *principal)
 {
     krb5_mcache *m = MCACHE(id);
     krb5_error_code ret = 0;
 
     HEIMDAL_MUTEX_lock(&(m->mutex));
     if (MISDEAD(m) || m->primary_principal == NULL) {
-	HEIMDAL_MUTEX_unlock(&(m->mutex));
-	return ENOENT;
+        HEIMDAL_MUTEX_unlock(&(m->mutex));
+        return ENOENT;
     }
     ret = krb5_copy_principal (context,
-			       m->primary_principal,
-			       principal);
+                               m->primary_principal,
+                               principal);
     HEIMDAL_MUTEX_unlock(&(m->mutex));
     return ret;
 }
 
 static krb5_error_code KRB5_CALLCONV
 mcc_get_first (krb5_context context,
-		krb5_ccache id,
-		krb5_cc_cursor *cursor)
+                krb5_ccache id,
+                krb5_cc_cursor *cursor)
 {
     krb5_mcache *m = MCACHE(id);
 
     HEIMDAL_MUTEX_lock(&(m->mutex));
     if (MISDEAD(m)) {
-	HEIMDAL_MUTEX_unlock(&(m->mutex));
-	return ENOENT;
+        HEIMDAL_MUTEX_unlock(&(m->mutex));
+        return ENOENT;
     }
     *cursor = m->creds;
 
@@ -390,43 +390,43 @@ mcc_get_first (krb5_context context,
 
 static krb5_error_code KRB5_CALLCONV
 mcc_get_next (krb5_context context,
-	      krb5_ccache id,
-	      krb5_cc_cursor *cursor,
-	      krb5_creds *creds)
+              krb5_ccache id,
+              krb5_cc_cursor *cursor,
+              krb5_creds *creds)
 {
     krb5_mcache *m = MCACHE(id);
     struct link *l;
 
     HEIMDAL_MUTEX_lock(&(m->mutex));
     if (MISDEAD(m)) {
-	HEIMDAL_MUTEX_unlock(&(m->mutex));
-	return ENOENT;
+        HEIMDAL_MUTEX_unlock(&(m->mutex));
+        return ENOENT;
     }
     HEIMDAL_MUTEX_unlock(&(m->mutex));
 
     l = *cursor;
     if (l != NULL) {
-	*cursor = l->next;
-	return krb5_copy_creds_contents (context,
-					 &l->cred,
-					 creds);
+        *cursor = l->next;
+        return krb5_copy_creds_contents (context,
+                                         &l->cred,
+                                         creds);
     } else
-	return KRB5_CC_END;
+        return KRB5_CC_END;
 }
 
 static krb5_error_code KRB5_CALLCONV
 mcc_end_get (krb5_context context,
-	     krb5_ccache id,
-	     krb5_cc_cursor *cursor)
+             krb5_ccache id,
+             krb5_cc_cursor *cursor)
 {
     return 0;
 }
 
 static krb5_error_code KRB5_CALLCONV
 mcc_remove_cred(krb5_context context,
-		 krb5_ccache id,
-		 krb5_flags which,
-		 krb5_creds *mcreds)
+                 krb5_ccache id,
+                 krb5_flags which,
+                 krb5_creds *mcreds)
 {
     krb5_mcache *m = MCACHE(id);
     struct link **q, *p;
@@ -434,13 +434,13 @@ mcc_remove_cred(krb5_context context,
     HEIMDAL_MUTEX_lock(&(m->mutex));
 
     for(q = &m->creds, p = *q; p; p = *q) {
-	if(krb5_compare_creds(context, which, mcreds, &p->cred)) {
-	    *q = p->next;
-	    krb5_free_cred_contents(context, &p->cred);
-	    free(p);
-	    m->mtime = time(NULL);
-	} else
-	    q = &p->next;
+        if(krb5_compare_creds(context, which, mcreds, &p->cred)) {
+            *q = p->next;
+            krb5_free_cred_contents(context, &p->cred);
+            free(p);
+            m->mtime = time(NULL);
+        } else
+            q = &p->next;
     }
     HEIMDAL_MUTEX_unlock(&(m->mutex));
     return 0;
@@ -448,8 +448,8 @@ mcc_remove_cred(krb5_context context,
 
 static krb5_error_code KRB5_CALLCONV
 mcc_set_flags(krb5_context context,
-	      krb5_ccache id,
-	      krb5_flags flags)
+              krb5_ccache id,
+              krb5_flags flags)
 {
     return 0; /* XXX */
 }
@@ -465,14 +465,14 @@ mcc_get_cache_first(krb5_context context, krb5_cc_cursor *cursor)
 
     iter = calloc(1, sizeof(*iter));
     if (iter == NULL)
-	return krb5_enomem(context);
+        return krb5_enomem(context);
 
     HEIMDAL_MUTEX_lock(&mcc_mutex);
     iter->cache = mcc_head;
     if (iter->cache) {
-	HEIMDAL_MUTEX_lock(&(iter->cache->mutex));
-	iter->cache->refcnt++;
-	HEIMDAL_MUTEX_unlock(&(iter->cache->mutex));
+        HEIMDAL_MUTEX_lock(&(iter->cache->mutex));
+        iter->cache->refcnt++;
+        HEIMDAL_MUTEX_unlock(&(iter->cache->mutex));
     }
     HEIMDAL_MUTEX_unlock(&mcc_mutex);
 
@@ -488,15 +488,15 @@ mcc_get_cache_next(krb5_context context, krb5_cc_cursor cursor, krb5_ccache *id)
     krb5_mcache *m;
 
     if (iter->cache == NULL)
-	return KRB5_CC_END;
+        return KRB5_CC_END;
 
     HEIMDAL_MUTEX_lock(&mcc_mutex);
     m = iter->cache;
     if (m->next)
     {
-    	HEIMDAL_MUTEX_lock(&(m->next->mutex));
-    	m->next->refcnt++;
-    	HEIMDAL_MUTEX_unlock(&(m->next->mutex));
+        HEIMDAL_MUTEX_lock(&(m->next->mutex));
+        m->next->refcnt++;
+        HEIMDAL_MUTEX_unlock(&(m->next->mutex));
     }
 
     iter->cache = m->next;
@@ -504,7 +504,7 @@ mcc_get_cache_next(krb5_context context, krb5_cc_cursor cursor, krb5_ccache *id)
 
     ret = _krb5_cc_allocate(context, &krb5_mcc_ops, id);
     if (ret)
-	return ret;
+        return ret;
 
     (*id)->data.data = m;
     (*id)->data.length = sizeof(*m);
@@ -518,7 +518,7 @@ mcc_end_cache_get(krb5_context context, krb5_cc_cursor cursor)
     struct mcache_iter *iter = cursor;
 
     if (iter->cache)
-    	mcc_close_internal(iter->cache);
+        mcc_close_internal(iter->cache);
     iter->cache = NULL;
     free(iter);
     return 0;
@@ -536,10 +536,10 @@ mcc_move(krb5_context context, krb5_ccache from, krb5_ccache to)
 
     /* drop the from cache from the linked list to avoid lookups */
     for(n = &mcc_head; n && *n; n = &(*n)->next) {
-	if(mfrom == *n) {
-	    *n = mfrom->next;
-	    break;
-	}
+        if(mfrom == *n) {
+            *n = mfrom->next;
+            break;
+        }
     }
 
     HEIMDAL_MUTEX_lock(&(mfrom->mutex));
@@ -568,7 +568,7 @@ mcc_default_name(krb5_context context, char **str)
 {
     *str = strdup("MEMORY:");
     if (*str == NULL)
-	return krb5_enomem(context);
+        return krb5_enomem(context);
     return 0;
 }
 

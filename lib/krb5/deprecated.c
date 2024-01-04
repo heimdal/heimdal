@@ -70,24 +70,24 @@ krb5_free_data_contents(krb5_context context, krb5_data *data)
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_keytype_to_enctypes_default (krb5_context context,
-				  krb5_keytype keytype,
-				  unsigned *len,
-				  krb5_enctype **val)
+                                  krb5_keytype keytype,
+                                  unsigned *len,
+                                  krb5_enctype **val)
     KRB5_DEPRECATED_FUNCTION("Use X instead")
 {
     unsigned int i, n;
     krb5_enctype *ret;
 
     if (keytype != (krb5_keytype)KEYTYPE_DES || context->etypes_des == NULL)
-	return krb5_keytype_to_enctypes (context, keytype, len, val);
+        return krb5_keytype_to_enctypes (context, keytype, len, val);
 
     for (n = 0; context->etypes_des[n]; ++n)
-	;
+        ;
     ret = malloc (n * sizeof(*ret));
     if (ret == NULL && n != 0)
-	return krb5_enomem(context);
+        return krb5_enomem(context);
     for (i = 0; i < n; ++i)
-	ret[i] = context->etypes_des[i];
+        ret[i] = context->etypes_des[i];
     *len = n;
     *val = ret;
     return 0;
@@ -118,28 +118,28 @@ static int num_keys = sizeof(keys) / sizeof(keys[0]);
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_keytype_to_string(krb5_context context,
-		       krb5_keytype keytype,
-		       char **string)
+                       krb5_keytype keytype,
+                       char **string)
     KRB5_DEPRECATED_FUNCTION("Use krb5_enctype_to_string instead")
 {
     const char *name = NULL;
     int i;
 
     for(i = 0; i < num_keys; i++) {
-	if(keys[i].type == keytype) {
-	    name = keys[i].name;
-	    break;
-	}
+        if(keys[i].type == keytype) {
+            name = keys[i].name;
+            break;
+        }
     }
 
     if(i >= num_keys) {
-	krb5_set_error_message(context, KRB5_PROG_KEYTYPE_NOSUPP,
-			       "key type %d not supported", keytype);
-	return KRB5_PROG_KEYTYPE_NOSUPP;
+        krb5_set_error_message(context, KRB5_PROG_KEYTYPE_NOSUPP,
+                               "key type %d not supported", keytype);
+        return KRB5_PROG_KEYTYPE_NOSUPP;
     }
     *string = strdup(name);
     if (*string == NULL)
-	return krb5_enomem(context);
+        return krb5_enomem(context);
     return 0;
 }
 
@@ -152,28 +152,28 @@ krb5_keytype_to_string(krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_string_to_keytype(krb5_context context,
-		       const char *string,
-		       krb5_keytype *keytype)
+                       const char *string,
+                       krb5_keytype *keytype)
     KRB5_DEPRECATED_FUNCTION("Use krb5_string_to_enctype instead")
 {
     char *end;
     int i;
 
     for(i = 0; i < num_keys; i++)
-	if(strcasecmp(keys[i].name, string) == 0){
-	    *keytype = keys[i].type;
-	    return 0;
-	}
+        if(strcasecmp(keys[i].name, string) == 0){
+            *keytype = keys[i].type;
+            return 0;
+        }
 
     /* check if the enctype is a number */
     *keytype = strtol(string, &end, 0);
     if(*end == '\0' && *keytype != 0) {
-	if (krb5_enctype_valid(context, *keytype) == 0)
-	    return 0;
+        if (krb5_enctype_valid(context, *keytype) == 0)
+            return 0;
     }
 
     krb5_set_error_message(context, KRB5_PROG_KEYTYPE_NOSUPP,
-			   "key type %s not supported", string);
+                           "key type %s not supported", string);
     return KRB5_PROG_KEYTYPE_NOSUPP;
 }
 
@@ -185,10 +185,10 @@ krb5_string_to_keytype(krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_CALLCONV
 krb5_password_key_proc (krb5_context context,
-			krb5_enctype type,
-			krb5_salt salt,
-			krb5_const_pointer keyseed,
-			krb5_keyblock **key)
+                        krb5_enctype type,
+                        krb5_salt salt,
+                        krb5_const_pointer keyseed,
+                        krb5_keyblock **key)
     KRB5_DEPRECATED_FUNCTION("Use X instead")
 {
     krb5_error_code ret;
@@ -197,14 +197,14 @@ krb5_password_key_proc (krb5_context context,
 
     *key = malloc (sizeof (**key));
     if (*key == NULL)
-	return krb5_enomem(context);
+        return krb5_enomem(context);
     if (password == NULL) {
-	if(UI_UTIL_read_pw_string (buf, sizeof(buf), "Password: ", 0)) {
-	    free (*key);
-	    krb5_clear_error_message(context);
-	    return KRB5_LIBOS_PWDINTR;
-	}
-	password = buf;
+        if(UI_UTIL_read_pw_string (buf, sizeof(buf), "Password: ", 0)) {
+            free (*key);
+            krb5_clear_error_message(context);
+            return KRB5_LIBOS_PWDINTR;
+        }
+        password = buf;
     }
     ret = krb5_string_to_key_salt (context, type, password, salt, *key);
     memset_s(buf, sizeof(buf), 0, sizeof(buf));
@@ -219,36 +219,36 @@ krb5_password_key_proc (krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_get_in_tkt_with_password (krb5_context context,
-			       krb5_flags options,
-			       krb5_addresses *addrs,
-			       const krb5_enctype *etypes,
-			       const krb5_preauthtype *pre_auth_types,
-			       const char *password,
-			       krb5_ccache ccache,
-			       krb5_creds *creds,
-			       krb5_kdc_rep *ret_as_reply)
+                               krb5_flags options,
+                               krb5_addresses *addrs,
+                               const krb5_enctype *etypes,
+                               const krb5_preauthtype *pre_auth_types,
+                               const char *password,
+                               krb5_ccache ccache,
+                               krb5_creds *creds,
+                               krb5_kdc_rep *ret_as_reply)
     KRB5_DEPRECATED_FUNCTION("Use X instead")
 {
      return krb5_get_in_tkt (context,
-			     options,
-			     addrs,
-			     etypes,
-			     pre_auth_types,
-			     krb5_password_key_proc,
-			     password,
-			     NULL,
-			     NULL,
-			     creds,
-			     ccache,
-			     ret_as_reply);
+                             options,
+                             addrs,
+                             etypes,
+                             pre_auth_types,
+                             krb5_password_key_proc,
+                             password,
+                             NULL,
+                             NULL,
+                             creds,
+                             ccache,
+                             ret_as_reply);
 }
 
 static krb5_error_code KRB5_CALLCONV
 krb5_skey_key_proc (krb5_context context,
-		    krb5_enctype type,
-		    krb5_salt salt,
-		    krb5_const_pointer keyseed,
-		    krb5_keyblock **key)
+                    krb5_enctype type,
+                    krb5_salt salt,
+                    krb5_const_pointer keyseed,
+                    krb5_keyblock **key)
 {
     return krb5_copy_keyblock (context, keyseed, key);
 }
@@ -261,39 +261,39 @@ krb5_skey_key_proc (krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_get_in_tkt_with_skey (krb5_context context,
-			   krb5_flags options,
-			   krb5_addresses *addrs,
-			   const krb5_enctype *etypes,
-			   const krb5_preauthtype *pre_auth_types,
-			   const krb5_keyblock *key,
-			   krb5_ccache ccache,
-			   krb5_creds *creds,
-			   krb5_kdc_rep *ret_as_reply)
+                           krb5_flags options,
+                           krb5_addresses *addrs,
+                           const krb5_enctype *etypes,
+                           const krb5_preauthtype *pre_auth_types,
+                           const krb5_keyblock *key,
+                           krb5_ccache ccache,
+                           krb5_creds *creds,
+                           krb5_kdc_rep *ret_as_reply)
     KRB5_DEPRECATED_FUNCTION("Use X instead")
 {
     if(key == NULL)
-	return krb5_get_in_tkt_with_keytab (context,
-					    options,
-					    addrs,
-					    etypes,
-					    pre_auth_types,
-					    NULL,
-					    ccache,
-					    creds,
-					    ret_as_reply);
+        return krb5_get_in_tkt_with_keytab (context,
+                                            options,
+                                            addrs,
+                                            etypes,
+                                            pre_auth_types,
+                                            NULL,
+                                            ccache,
+                                            creds,
+                                            ret_as_reply);
     else
-	return krb5_get_in_tkt (context,
-				options,
-				addrs,
-				etypes,
-				pre_auth_types,
-				krb5_skey_key_proc,
-				key,
-				NULL,
-				NULL,
-				creds,
-				ccache,
-				ret_as_reply);
+        return krb5_get_in_tkt (context,
+                                options,
+                                addrs,
+                                etypes,
+                                pre_auth_types,
+                                krb5_skey_key_proc,
+                                key,
+                                NULL,
+                                NULL,
+                                creds,
+                                ccache,
+                                ret_as_reply);
 }
 
 /**
@@ -304,10 +304,10 @@ krb5_get_in_tkt_with_skey (krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_CALLCONV
 krb5_keytab_key_proc (krb5_context context,
-		      krb5_enctype enctype,
-		      krb5_salt salt,
-		      krb5_const_pointer keyseed,
-		      krb5_keyblock **key)
+                      krb5_enctype enctype,
+                      krb5_salt salt,
+                      krb5_const_pointer keyseed,
+                      krb5_keyblock **key)
     KRB5_DEPRECATED_FUNCTION("Use X instead")
 {
     krb5_keytab_key_proc_args *args  = rk_UNCONST(keyseed);
@@ -318,19 +318,19 @@ krb5_keytab_key_proc (krb5_context context,
     krb5_keytab_entry entry;
 
     if(keytab == NULL)
-	krb5_kt_default(context, &real_keytab);
+        krb5_kt_default(context, &real_keytab);
     else
-	real_keytab = keytab;
+        real_keytab = keytab;
 
     ret = krb5_kt_get_entry (context, real_keytab, principal,
-			     0, enctype, &entry);
+                             0, enctype, &entry);
     if (ret == 0) {
         ret = krb5_copy_keyblock (context, &entry.keyblock, key);
         krb5_kt_free_entry(context, &entry);
     }
 
     if (keytab == NULL)
-	krb5_kt_close (context, real_keytab);
+        krb5_kt_close (context, real_keytab);
     return ret;
 }
 
@@ -342,14 +342,14 @@ krb5_keytab_key_proc (krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_get_in_tkt_with_keytab (krb5_context context,
-			     krb5_flags options,
-			     krb5_addresses *addrs,
-			     const krb5_enctype *etypes,
-			     const krb5_preauthtype *pre_auth_types,
-			     krb5_keytab keytab,
-			     krb5_ccache ccache,
-			     krb5_creds *creds,
-			     krb5_kdc_rep *ret_as_reply)
+                             krb5_flags options,
+                             krb5_addresses *addrs,
+                             const krb5_enctype *etypes,
+                             const krb5_preauthtype *pre_auth_types,
+                             krb5_keytab keytab,
+                             krb5_ccache ccache,
+                             krb5_creds *creds,
+                             krb5_kdc_rep *ret_as_reply)
     KRB5_DEPRECATED_FUNCTION("Use X instead")
 {
     krb5_keytab_key_proc_args a;
@@ -358,17 +358,17 @@ krb5_get_in_tkt_with_keytab (krb5_context context,
     a.keytab    = keytab;
 
     return krb5_get_in_tkt (context,
-			    options,
-			    addrs,
-			    etypes,
-			    pre_auth_types,
-			    krb5_keytab_key_proc,
-			    &a,
-			    NULL,
-			    NULL,
-			    creds,
-			    ccache,
-			    ret_as_reply);
+                            options,
+                            addrs,
+                            etypes,
+                            pre_auth_types,
+                            krb5_keytab_key_proc,
+                            &a,
+                            NULL,
+                            NULL,
+                            creds,
+                            ccache,
+                            ret_as_reply);
 }
 
 /**
@@ -384,8 +384,8 @@ krb5_get_in_tkt_with_keytab (krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_cc_gen_new(krb5_context context,
-		const krb5_cc_ops *ops,
-		krb5_ccache *id)
+                const krb5_cc_ops *ops,
+                krb5_ccache *id)
     KRB5_DEPRECATED_FUNCTION("Use krb5_cc_new_unique instead")
 {
     return krb5_cc_new_unique(context, ops->prefix, NULL, id);
@@ -399,7 +399,7 @@ krb5_cc_gen_new(krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_realm * KRB5_LIB_CALL
 krb5_princ_realm(krb5_context context,
-		 krb5_principal principal)
+                 krb5_principal principal)
     KRB5_DEPRECATED_FUNCTION("Use krb5_principal_get_realm instead")
 {
     return &principal->realm;
@@ -414,8 +414,8 @@ krb5_princ_realm(krb5_context context,
 
 KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 krb5_princ_set_realm(krb5_context context,
-		     krb5_principal principal,
-		     krb5_realm *realm)
+                     krb5_principal principal,
+                     krb5_realm *realm)
     KRB5_DEPRECATED_FUNCTION("Use krb5_principal_set_realm instead")
 {
     principal->realm = *realm;
@@ -527,18 +527,18 @@ krb5_clear_error_string(krb5_context context)
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_get_cred_from_kdc_opt(krb5_context context,
-			   krb5_ccache ccache,
-			   krb5_creds *in_creds,
-			   krb5_creds **out_creds,
-			   krb5_creds ***ret_tgts,
-			   krb5_flags flags)
+                           krb5_ccache ccache,
+                           krb5_creds *in_creds,
+                           krb5_creds **out_creds,
+                           krb5_creds ***ret_tgts,
+                           krb5_flags flags)
     KRB5_DEPRECATED_FUNCTION("Use krb5_get_credentials_with_flags instead")
 {
     krb5_kdc_flags f;
     f.i = flags;
     return _krb5_get_cred_kdc_any(context, f, ccache, NULL,
-				  in_creds, NULL, NULL,
-				  out_creds, ret_tgts);
+                                  in_creds, NULL, NULL,
+                                  out_creds, ret_tgts);
 }
 
 /**
@@ -549,14 +549,14 @@ krb5_get_cred_from_kdc_opt(krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_get_cred_from_kdc(krb5_context context,
-		       krb5_ccache ccache,
-		       krb5_creds *in_creds,
-		       krb5_creds **out_creds,
-		       krb5_creds ***ret_tgts)
+                       krb5_ccache ccache,
+                       krb5_creds *in_creds,
+                       krb5_creds **out_creds,
+                       krb5_creds ***ret_tgts)
     KRB5_DEPRECATED_FUNCTION("Use krb5_get_credentials_with_flags instead")
 {
     return krb5_get_cred_from_kdc_opt(context, ccache,
-				      in_creds, out_creds, ret_tgts, 0);
+                                      in_creds, out_creds, ret_tgts, 0);
 }
 
 /**
@@ -580,8 +580,8 @@ krb5_free_unparsed_name(krb5_context context, char *str)
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_generate_subkey(krb5_context context,
-		     const krb5_keyblock *key,
-		     krb5_keyblock **subkey)
+                     const krb5_keyblock *key,
+                     krb5_keyblock **subkey)
     KRB5_DEPRECATED_FUNCTION("Use krb5_generate_subkey_extended instead")
 {
     return krb5_generate_subkey_extended(context, key, ETYPE_NULL, subkey);
@@ -595,12 +595,12 @@ krb5_generate_subkey(krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_auth_getremoteseqnumber(krb5_context context,
-			     krb5_auth_context auth_context,
-			     int32_t *seqnumber)
+                             krb5_auth_context auth_context,
+                             int32_t *seqnumber)
     KRB5_DEPRECATED_FUNCTION("Use krb5_auth_con_getremoteseqnumber instead")
 {
-  *seqnumber = auth_context->remote_seqnumber;
-  return 0;
+    *seqnumber = auth_context->remote_seqnumber;
+    return 0;
 }
 
 /**
@@ -641,16 +641,16 @@ struct send_to_kdc {
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_sendto (krb5_context context,
-	     const krb5_data *send_data,
-	     krb5_krbhst_handle handle,
-	     krb5_data *receive)
+             const krb5_data *send_data,
+             krb5_krbhst_handle handle,
+             krb5_data *receive)
 {
     krb5_error_code ret;
     krb5_sendto_ctx ctx;
 
     ret = krb5_sendto_ctx_alloc(context, &ctx);
     if (ret)
-	return ret;
+        return ret;
     _krb5_sendto_ctx_set_krb5hst(context, ctx, handle);
 
     ret = krb5_sendto_context(context, ctx, send_data, (char *)_krb5_krbhst_get_realm(handle), receive);
@@ -660,26 +660,26 @@ krb5_sendto (krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_sendto_kdc(krb5_context context,
-		const krb5_data *send_data,
-		const krb5_realm *realm,
-		krb5_data *receive)
+                const krb5_data *send_data,
+                const krb5_realm *realm,
+                krb5_data *receive)
 {
     return krb5_sendto_kdc_flags(context, send_data, realm, receive, 0);
 }
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_sendto_kdc_flags(krb5_context context,
-		      const krb5_data *send_data,
-		      const krb5_realm *realm,
-		      krb5_data *receive,
-		      int flags)
+                      const krb5_data *send_data,
+                      const krb5_realm *realm,
+                      krb5_data *receive,
+                      int flags)
 {
     krb5_error_code ret;
     krb5_sendto_ctx ctx;
 
     ret = krb5_sendto_ctx_alloc(context, &ctx);
     if (ret)
-	return ret;
+        return ret;
     krb5_sendto_ctx_add_flags(ctx, flags);
     krb5_sendto_ctx_set_func(ctx, _krb5_kdc_retry, NULL);
 
@@ -690,20 +690,20 @@ krb5_sendto_kdc_flags(krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_set_send_to_kdc_func(krb5_context context,
-			  krb5_send_to_kdc_func func,
-			  void *data)
+                          krb5_send_to_kdc_func func,
+                          void *data)
 {
     free(context->send_to_kdc);
     if (func == NULL) {
-	context->send_to_kdc = NULL;
-	return 0;
+        context->send_to_kdc = NULL;
+        return 0;
     }
 
     context->send_to_kdc = malloc(sizeof(*context->send_to_kdc));
     if (context->send_to_kdc == NULL) {
-	krb5_set_error_message(context, ENOMEM,
-			       N_("malloc: out of memory", ""));
-	return ENOMEM;
+        krb5_set_error_message(context, ENOMEM,
+                               N_("malloc: out of memory", ""));
+        return ENOMEM;
     }
 
     context->send_to_kdc->func = func;
@@ -715,11 +715,11 @@ KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_copy_send_to_kdc_func(krb5_context context, krb5_context to)
 {
     if (context->send_to_kdc)
-	return krb5_set_send_to_kdc_func(to,
-					 context->send_to_kdc->func,
-					 context->send_to_kdc->data);
+        return krb5_set_send_to_kdc_func(to,
+                                         context->send_to_kdc->func,
+                                         context->send_to_kdc->data);
     else
-	return krb5_set_send_to_kdc_func(to, NULL, NULL);
+        return krb5_set_send_to_kdc_func(to, NULL, NULL);
 }
 
 #endif /* HEIMDAL_SMALLER */

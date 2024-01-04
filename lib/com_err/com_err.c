@@ -50,15 +50,15 @@ error_message (long code)
     static char msg[128];
     const char *p = com_right(_et_list, code);
     if (p == NULL) {
-	if (code < 0)
-	    snprintf(msg, sizeof(msg), "Unknown error %ld", code);
-	else
-	    p = strerror(code);
+        if (code < 0)
+            snprintf(msg, sizeof(msg), "Unknown error %ld", code);
+        else
+            p = strerror(code);
     }
     if (p != NULL && *p != '\0') {
-	strlcpy(msg, p, sizeof(msg));
+        strlcpy(msg, p, sizeof(msg));
     } else
-	snprintf(msg, sizeof(msg), "Unknown error %ld", code);
+        snprintf(msg, sizeof(msg), "Unknown error %ld", code);
     return msg;
 }
 
@@ -77,11 +77,11 @@ static void KRB5_CALLCONV
 default_proc (const char *whoami, long code, const char *fmt, va_list args)
 {
     if (whoami)
-      fprintf(stderr, "%s: ", whoami);
+        fprintf(stderr, "%s: ", whoami);
     if (code)
-      fprintf(stderr, "%s ", error_message(code));
+        fprintf(stderr, "%s ", error_message(code));
     if (fmt)
-      vfprintf(stderr, fmt, args);
+        vfprintf(stderr, fmt, args);
     fprintf(stderr, "\r\n");	/* ??? */
 }
 
@@ -89,18 +89,18 @@ static errf com_err_hook = default_proc;
 
 KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 com_err_va (const char *whoami,
-	    long code,
-	    const char *fmt,
-	    va_list args)
+            long code,
+            const char *fmt,
+            va_list args)
 {
     (*com_err_hook) (whoami, code, fmt, args);
 }
 
 KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 com_err (const char *whoami,
-	 long code,
-	 const char *fmt,
-	 ...)
+         long code,
+         const char *fmt,
+         ...)
 {
     va_list ap;
     va_start(ap, fmt);
@@ -114,9 +114,9 @@ set_com_err_hook (errf new)
     errf old = com_err_hook;
 
     if (new)
-	com_err_hook = new;
+        com_err_hook = new;
     else
-	com_err_hook = default_proc;
+        com_err_hook = default_proc;
 
     return old;
 }
@@ -163,8 +163,8 @@ add_to_error_table(struct et_list *new_table)
     struct et_list *et;
 
     for (et = _et_list; et; et = et->next) {
-	if (et->table->base == new_table->table->base)
-	    return;
+        if (et->table->base == new_table->table->base)
+            return;
     }
 
     new_table->next = _et_list;

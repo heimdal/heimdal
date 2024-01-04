@@ -86,4 +86,4 @@ extern int fork_flag;
 int server_setup(krb5_context*, int, char**);
 int client_setup(krb5_context*, int*, char**);
 int client_doit (const char *hostname, int port, const char *service,
-		 int (*func)(int, const char *hostname, const char *service));
+                 int (*func)(int, const char *hostname, const char *service));

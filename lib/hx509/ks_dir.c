@@ -54,8 +54,8 @@ struct dircursor {
 
 static int
 dir_init(hx509_context context,
-	 hx509_certs certs, void **data, int flags,
-	 const char *residue, hx509_lock lock)
+         hx509_certs certs, void **data, int flags,
+         const char *residue, hx509_lock lock)
 {
     *data = NULL;
 
@@ -66,27 +66,27 @@ dir_init(hx509_context context,
     }
 
     {
-	struct stat sb;
-	int ret;
+        struct stat sb;
+        int ret;
 
-	ret = stat(residue, &sb);
-	if (ret == -1) {
-	    hx509_set_error_string(context, 0, ENOENT,
-				   "No such file %s", residue);
-	    return ENOENT;
-	}
+        ret = stat(residue, &sb);
+        if (ret == -1) {
+            hx509_set_error_string(context, 0, ENOENT,
+                                   "No such file %s", residue);
+            return ENOENT;
+        }
 
-	if (!S_ISDIR(sb.st_mode)) {
-	    hx509_set_error_string(context, 0, ENOTDIR,
-				   "%s is not a directory", residue);
-	    return ENOTDIR;
-	}
+        if (!S_ISDIR(sb.st_mode)) {
+            hx509_set_error_string(context, 0, ENOTDIR,
+                                   "%s is not a directory", residue);
+            return ENOTDIR;
+        }
     }
 
     *data = strdup(residue);
     if (*data == NULL) {
-	hx509_clear_error_string(context);
-	return ENOMEM;
+        hx509_clear_error_string(context);
+        return ENOMEM;
     }
 
     return 0;
@@ -101,7 +101,7 @@ dir_free(hx509_certs certs, void *data)
 
 static int
 dir_iter_start(hx509_context context,
-	       hx509_certs certs, void *data, void **cursor)
+               hx509_certs certs, void *data, void **cursor)
 {
     struct dircursor *d;
 
@@ -109,15 +109,15 @@ dir_iter_start(hx509_context context,
 
     d = calloc(1, sizeof(*d));
     if (d == NULL) {
-	hx509_clear_error_string(context);
-	return ENOMEM;
+        hx509_clear_error_string(context);
+        return ENOMEM;
     }
 
     d->dir = opendir(data);
     if (d->dir == NULL) {
-	hx509_clear_error_string(context);
-	free(d);
-	return errno;
+        hx509_clear_error_string(context);
+        free(d);
+        return errno;
     }
     rk_cloexec_dir(d->dir);
     d->certs = NULL;
@@ -129,7 +129,7 @@ dir_iter_start(hx509_context context,
 
 static int
 dir_iter(hx509_context context,
-	 hx509_certs certs, void *data, void *iter, hx509_cert *cert)
+         hx509_certs certs, void *data, void *iter, hx509_cert *cert)
 {
     struct dircursor *d = iter;
     int ret = 0;
@@ -137,51 +137,51 @@ dir_iter(hx509_context context,
     *cert = NULL;
 
     do {
-	struct dirent *dir;
-	char *fn;
+        struct dirent *dir;
+        char *fn;
 
-	if (d->certs) {
-	    ret = hx509_certs_next_cert(context, d->certs, d->iter, cert);
-	    if (ret) {
-		hx509_certs_end_seq(context, d->certs, d->iter);
-		d->iter = NULL;
-		hx509_certs_free(&d->certs);
-		return ret;
-	    }
-	    if (*cert) {
-		ret = 0;
-		break;
-	    }
-	    hx509_certs_end_seq(context, d->certs, d->iter);
-	    d->iter = NULL;
-	    hx509_certs_free(&d->certs);
-	}
+        if (d->certs) {
+            ret = hx509_certs_next_cert(context, d->certs, d->iter, cert);
+            if (ret) {
+                hx509_certs_end_seq(context, d->certs, d->iter);
+                d->iter = NULL;
+                hx509_certs_free(&d->certs);
+                return ret;
+            }
+            if (*cert) {
+                ret = 0;
+                break;
+            }
+            hx509_certs_end_seq(context, d->certs, d->iter);
+            d->iter = NULL;
+            hx509_certs_free(&d->certs);
+        }
 
-	dir = readdir(d->dir);
-	if (dir == NULL) {
-	    ret = 0;
-	    break;
-	}
-	if (strcmp(dir->d_name, ".") == 0 || strcmp(dir->d_name, "..") == 0)
-	    continue;
+        dir = readdir(d->dir);
+        if (dir == NULL) {
+            ret = 0;
+            break;
+        }
+        if (strcmp(dir->d_name, ".") == 0 || strcmp(dir->d_name, "..") == 0)
+            continue;
 
-	if (asprintf(&fn, "FILE:%s/%s", (char *)data, dir->d_name) == -1)
-	    return ENOMEM;
+        if (asprintf(&fn, "FILE:%s/%s", (char *)data, dir->d_name) == -1)
+            return ENOMEM;
 
-	ret = hx509_certs_init(context, fn, 0, NULL, &d->certs);
-	if (ret == 0) {
+        ret = hx509_certs_init(context, fn, 0, NULL, &d->certs);
+        if (ret == 0) {
 
-	    ret = hx509_certs_start_seq(context, d->certs, &d->iter);
-	    if (ret)
-	    hx509_certs_free(&d->certs);
-	}
-	/* ignore errors */
-	if (ret) {
-	    d->certs = NULL;
-	    ret = 0;
-	}
+            ret = hx509_certs_start_seq(context, d->certs, &d->iter);
+            if (ret)
+            hx509_certs_free(&d->certs);
+        }
+        /* ignore errors */
+        if (ret) {
+            d->certs = NULL;
+            ret = 0;
+        }
 
-	free(fn);
+        free(fn);
     } while(ret == 0);
 
     return ret;
@@ -190,16 +190,16 @@ dir_iter(hx509_context context,
 
 static int
 dir_iter_end(hx509_context context,
-	     hx509_certs certs,
-	     void *data,
-	     void *cursor)
+             hx509_certs certs,
+             void *data,
+             void *cursor)
 {
     struct dircursor *d = cursor;
 
     if (d->certs) {
-	hx509_certs_end_seq(context, d->certs, d->iter);
-	d->iter = NULL;
-	hx509_certs_free(&d->certs);
+        hx509_certs_end_seq(context, d->certs, d->iter);
+        d->iter = NULL;
+        hx509_certs_free(&d->certs);
     }
     closedir(d->dir);
     free(d);

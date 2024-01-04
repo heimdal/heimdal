@@ -30,91 +30,91 @@
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_inquire_context(OM_uint32 *minor_status,
-    gss_const_ctx_id_t context_handle,
-    gss_name_t *src_name,
-    gss_name_t *targ_name,
-    OM_uint32 *lifetime_rec,
-    gss_OID *mech_type,
-    OM_uint32 *ctx_flags,
-    int *locally_initiated,
-    int *xopen)
+                    gss_const_ctx_id_t context_handle,
+                    gss_name_t *src_name,
+                    gss_name_t *targ_name,
+                    OM_uint32 *lifetime_rec,
+                    gss_OID *mech_type,
+                    OM_uint32 *ctx_flags,
+                    int *locally_initiated,
+                    int *xopen)
 {
-	OM_uint32 major_status;
-	struct _gss_context *ctx = (struct _gss_context *) context_handle;
-	gssapi_mech_interface m;
-	struct _gss_name *name;
-	gss_name_t src_mn, targ_mn;
+    OM_uint32 major_status;
+    struct _gss_context *ctx = (struct _gss_context *) context_handle;
+    gssapi_mech_interface m;
+    struct _gss_name *name;
+    gss_name_t src_mn, targ_mn;
 
-	if (locally_initiated)
-	    *locally_initiated = 0;
-	if (xopen)
-	    *xopen = 0;
-	if (lifetime_rec)
-	    *lifetime_rec = 0;
+    if (locally_initiated)
+        *locally_initiated = 0;
+    if (xopen)
+        *xopen = 0;
+    if (lifetime_rec)
+        *lifetime_rec = 0;
 
-	if (src_name)
-	    *src_name = GSS_C_NO_NAME;
-	if (targ_name)
-	    *targ_name = GSS_C_NO_NAME;
-	if (mech_type)
-	    *mech_type = GSS_C_NO_OID;
-	src_mn = targ_mn = GSS_C_NO_NAME;
+    if (src_name)
+        *src_name = GSS_C_NO_NAME;
+    if (targ_name)
+        *targ_name = GSS_C_NO_NAME;
+    if (mech_type)
+        *mech_type = GSS_C_NO_OID;
+    src_mn = targ_mn = GSS_C_NO_NAME;
 
-	if (ctx == NULL || ctx->gc_ctx == NULL) {
-	    *minor_status = 0;
-	    return GSS_S_NO_CONTEXT;
-	}
+    if (ctx == NULL || ctx->gc_ctx == NULL) {
+        *minor_status = 0;
+        return GSS_S_NO_CONTEXT;
+    }
 
-	m = ctx->gc_mech;
+    m = ctx->gc_mech;
 
-	major_status = m->gm_inquire_context(minor_status,
-	    ctx->gc_ctx,
-	    src_name ? &src_mn : NULL,
-	    targ_name ? &targ_mn : NULL,
-	    lifetime_rec,
-	    mech_type,
-	    ctx_flags,
-	    locally_initiated,
-	    xopen);
+    major_status = m->gm_inquire_context(minor_status,
+                                         ctx->gc_ctx,
+                                         src_name ? &src_mn : NULL,
+                                         targ_name ? &targ_mn : NULL,
+                                         lifetime_rec,
+                                         mech_type,
+                                         ctx_flags,
+                                         locally_initiated,
+                                         xopen);
 
-	if (major_status != GSS_S_COMPLETE) {
-		_gss_mg_error(m, *minor_status);
-		return (major_status);
-	}
+    if (major_status != GSS_S_COMPLETE) {
+        _gss_mg_error(m, *minor_status);
+        return (major_status);
+    }
 
-	if (src_name && (m->gm_flags & GM_USE_MG_NAME)) {
-		*src_name = src_mn;
-		src_mn = GSS_C_NO_NAME;
-	} else if (src_name && src_mn) {
-		/* _gss_create_name() consumes `src_mn' on success */
-		name = _gss_create_name(src_mn, m);
-		if (!name) {
-			if (mech_type)
-				*mech_type = GSS_C_NO_OID;
-			m->gm_release_name(minor_status, &src_mn);
-			*minor_status = 0;
-			return (GSS_S_FAILURE);
-		}
-		*src_name = (gss_name_t) name;
-		src_mn = GSS_C_NO_NAME;
-	}
+    if (src_name && (m->gm_flags & GM_USE_MG_NAME)) {
+        *src_name = src_mn;
+        src_mn = GSS_C_NO_NAME;
+    } else if (src_name && src_mn) {
+        /* _gss_create_name() consumes `src_mn' on success */
+        name = _gss_create_name(src_mn, m);
+        if (!name) {
+            if (mech_type)
+                *mech_type = GSS_C_NO_OID;
+            m->gm_release_name(minor_status, &src_mn);
+            *minor_status = 0;
+            return (GSS_S_FAILURE);
+        }
+        *src_name = (gss_name_t) name;
+        src_mn = GSS_C_NO_NAME;
+    }
 
-	if (targ_name && (m->gm_flags & GM_USE_MG_NAME)) {
-		*targ_name = targ_mn;
-	} else if (targ_name && targ_mn) {
-		name = _gss_create_name(targ_mn, m);
-		if (!name) {
-			if (mech_type)
-				*mech_type = GSS_C_NO_OID;
-			if (src_name)
-				gss_release_name(minor_status, src_name);
-			m->gm_release_name(minor_status, &targ_mn);
-			*minor_status = 0;
-			return (GSS_S_FAILURE);
-		}
-		*targ_name = (gss_name_t) name;
-		targ_mn = GSS_C_NO_NAME;
-	}
+    if (targ_name && (m->gm_flags & GM_USE_MG_NAME)) {
+        *targ_name = targ_mn;
+    } else if (targ_name && targ_mn) {
+        name = _gss_create_name(targ_mn, m);
+        if (!name) {
+            if (mech_type)
+                *mech_type = GSS_C_NO_OID;
+            if (src_name)
+                gss_release_name(minor_status, src_name);
+            m->gm_release_name(minor_status, &targ_mn);
+            *minor_status = 0;
+            return (GSS_S_FAILURE);
+        }
+        *targ_name = (gss_name_t) name;
+        targ_mn = GSS_C_NO_NAME;
+    }
 
-	return (GSS_S_COMPLETE);
+    return (GSS_S_COMPLETE);
 }

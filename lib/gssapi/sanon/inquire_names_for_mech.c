@@ -44,8 +44,8 @@ static gss_OID name_list[] = {
 
 OM_uint32 GSSAPI_CALLCONV
 _gss_sanon_inquire_names_for_mech(OM_uint32 *minor,
-				  const gss_OID mechanism,
-				  gss_OID_set *name_types)
+                                  const gss_OID mechanism,
+                                  gss_OID_set *name_types)
 {
     OM_uint32 ret, tmp;
     int i;
@@ -53,25 +53,25 @@ _gss_sanon_inquire_names_for_mech(OM_uint32 *minor,
     *minor = 0;
 
     if (gss_oid_equal(mechanism, GSS_SANON_X25519_MECHANISM) == 0 &&
-	gss_oid_equal(mechanism, GSS_C_NULL_OID) == 0) {
-	*name_types = GSS_C_NO_OID_SET;
-	return GSS_S_BAD_MECH;
+        gss_oid_equal(mechanism, GSS_C_NULL_OID) == 0) {
+        *name_types = GSS_C_NO_OID_SET;
+        return GSS_S_BAD_MECH;
     }
 
     ret = gss_create_empty_oid_set(minor, name_types);
     if (ret != GSS_S_COMPLETE)
-	return ret;
+        return ret;
 
     for (i = 0; name_list[i] != NULL; i++) {
-	ret = gss_add_oid_set_member(minor,
-				     name_list[i],
-				     name_types);
-	if (ret != GSS_S_COMPLETE)
-	    break;
+        ret = gss_add_oid_set_member(minor,
+                                     name_list[i],
+                                     name_types);
+        if (ret != GSS_S_COMPLETE)
+            break;
     }
 
     if (ret != GSS_S_COMPLETE)
-	gss_release_oid_set(&tmp, name_types);
+        gss_release_oid_set(&tmp, name_types);
 
     return GSS_S_COMPLETE;
 }

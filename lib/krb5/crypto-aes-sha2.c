@@ -39,19 +39,19 @@
 
 krb5_error_code
 _krb5_aes_sha2_md_for_enctype(krb5_context context,
-			      krb5_enctype enctype,
-			      const EVP_MD **md)
+                              krb5_enctype enctype,
+                              const EVP_MD **md)
 {
     switch (enctype) {
-    case ETYPE_AES128_CTS_HMAC_SHA256_128:
-	*md = EVP_sha256();
-	break;
-    case ETYPE_AES256_CTS_HMAC_SHA384_192:
-	*md = EVP_sha384();
-	break;
-    default:
-	return KRB5_PROG_ETYPE_NOSUPP;
-	break;
+        case ETYPE_AES128_CTS_HMAC_SHA256_128:
+            *md = EVP_sha256();
+            break;
+        case ETYPE_AES256_CTS_HMAC_SHA384_192:
+            *md = EVP_sha384();
+            break;
+        default:
+            return KRB5_PROG_ETYPE_NOSUPP;
+            break;
     }
     return 0;
 }
@@ -59,11 +59,11 @@ _krb5_aes_sha2_md_for_enctype(krb5_context context,
 static krb5_error_code
 SP_HMAC_SHA2_checksum(krb5_context context,
                       krb5_crypto crypto,
-		      struct _krb5_key_data *key,
+                      struct _krb5_key_data *key,
                       unsigned usage,
                       const struct krb5_crypto_iov *iov,
                       int niov,
-		      Checksum *result)
+                      Checksum *result)
 {
     krb5_error_code ret;
     const EVP_MD *md;
@@ -72,7 +72,7 @@ SP_HMAC_SHA2_checksum(krb5_context context,
 
     ret = _krb5_aes_sha2_md_for_enctype(context, key->key->keytype, &md);
     if (ret)
-	return ret;
+        return ret;
 
     ret = _krb5_evp_hmac_iov(context, crypto, key, iov, niov, hmac,
                              &hmaclen, md, NULL);
@@ -136,9 +136,9 @@ struct _krb5_checksum_type _krb5_checksum_hmac_sha384_192_aes256 = {
 
 static krb5_error_code
 AES_SHA2_PRF(krb5_context context,
-	     krb5_crypto crypto,
-	     const krb5_data *in,
-	     krb5_data *out)
+             krb5_crypto crypto,
+             const krb5_data *in,
+             krb5_data *out)
 {
     krb5_error_code ret;
     krb5_data label;
@@ -146,20 +146,20 @@ AES_SHA2_PRF(krb5_context context,
 
     ret = _krb5_aes_sha2_md_for_enctype(context, crypto->et->type, &md);
     if (ret)
-	return ret;
+        return ret;
 
     label.data = "prf";
     label.length = 3;
 
     ret = krb5_data_alloc(out, EVP_MD_size(md));
     if (ret)
-	return ret;
+        return ret;
 
     ret = _krb5_SP800_108_HMAC_KDF(context, &crypto->key.key->keyvalue,
-				   &label, in, md, out);
+                                   &label, in, md, out);
 
     if (ret)
-	krb5_data_free(out);
+        krb5_data_free(out);
 
     return ret;
 }

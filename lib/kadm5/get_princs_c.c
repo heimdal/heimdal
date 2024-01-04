@@ -37,9 +37,9 @@ RCSID("$Id$");
 
 kadm5_ret_t
 kadm5_c_get_principals(void *server_handle,
-		       const char *expression,
-		       char ***princs,
-		       int *count)
+                       const char *expression,
+                       char ***princs,
+                       int *count)
 {
     kadm5_client_context *context = server_handle;
     kadm5_ret_t ret;
@@ -54,65 +54,65 @@ kadm5_c_get_principals(void *server_handle,
 
     ret = _kadm5_connect(server_handle, 0 /* want_write */);
     if (ret)
-	return ret;
+        return ret;
 
     krb5_data_zero(&reply);
 
     sp = krb5_storage_from_mem(buf, sizeof(buf));
     if (sp == NULL) {
-	ret = krb5_enomem(context->context);
-	goto out_keep_error;
+        ret = krb5_enomem(context->context);
+        goto out_keep_error;
     }
     ret = krb5_store_int32(sp, kadm_get_princs);
     if (ret)
-	goto out;
+        goto out;
     ret = krb5_store_int32(sp, expression != NULL ? 1 : 0);
     if (ret)
-	goto out;
+        goto out;
     if (expression) {
-	ret = krb5_store_string(sp, expression);
-	if (ret)
-	    goto out;
+        ret = krb5_store_string(sp, expression);
+        if (ret)
+            goto out;
     }
     ret = _kadm5_client_send(context, sp);
     if (ret)
-	goto out_keep_error;
+        goto out_keep_error;
     ret = _kadm5_client_recv(context, &reply);
     if (ret)
-	goto out_keep_error;
+        goto out_keep_error;
     krb5_storage_free(sp);
     sp = krb5_storage_from_data (&reply);
     if (sp == NULL) {
-	ret = krb5_enomem(context->context);
-	goto out_keep_error;
+        ret = krb5_enomem(context->context);
+        goto out_keep_error;
     }
     ret = krb5_ret_int32(sp, &tmp);
     if (ret == 0)
-	ret = tmp;
+        ret = tmp;
 
     if (ret)
-	goto out;
+        goto out;
 
     ret = krb5_ret_int32(sp, &tmp);
     if (ret)
-	goto out;
+        goto out;
 
     *princs = calloc(tmp + 1, sizeof(**princs));
     if (*princs == NULL) {
-	ret = krb5_enomem(context->context);
-	goto out_keep_error;
+        ret = krb5_enomem(context->context);
+        goto out_keep_error;
     }
     for (i = 0; i < tmp; i++) {
-	ret = krb5_ret_string(sp, &(*princs)[i]);
-	if (ret)
-	    goto out;
+        ret = krb5_ret_string(sp, &(*princs)[i]);
+        if (ret)
+            goto out;
     }
     *count = tmp;
 
-  out:
+out:
     krb5_clear_error_message(context->context);
 
-  out_keep_error:
+out_keep_error:
     krb5_storage_free(sp);
     krb5_data_free(&reply);
     return ret;
@@ -120,9 +120,9 @@ kadm5_c_get_principals(void *server_handle,
 
 kadm5_ret_t
 kadm5_c_iter_principals(void *server_handle,
-			const char *expression,
-			int (*cb)(void *, const char *),
-			void *cbdata)
+                        const char *expression,
+                        int (*cb)(void *, const char *),
+                        void *cbdata)
 {
     kadm5_client_context *context = server_handle;
     kadm5_ret_t ret;
@@ -135,18 +135,18 @@ kadm5_c_iter_principals(void *server_handle,
 
     ret = _kadm5_connect(server_handle, 0 /* want_write */);
     if (ret)
-	return ret;
+        return ret;
 
     krb5_data_zero(&reply);
 
     sp = krb5_storage_from_mem(buf, sizeof(buf));
     if (sp == NULL) {
-	ret = krb5_enomem(context->context);
-	goto out_keep_error;
+        ret = krb5_enomem(context->context);
+        goto out_keep_error;
     }
     ret = krb5_store_int32(sp, kadm_get_princs);
     if (ret)
-	goto out;
+        goto out;
 
     /*
      * Our protocol has an int boolean for this operation to indicate whether
@@ -159,32 +159,32 @@ kadm5_c_iter_principals(void *server_handle,
      */
     ret = krb5_store_int32(sp, 0x55555555);
     if (ret)
-	goto out;
+        goto out;
     ret = krb5_store_string(sp, expression ? expression : "");
     if (ret)
         goto out;
     ret = _kadm5_client_send(context, sp);
     if (ret)
-	goto out_keep_error;
+        goto out_keep_error;
     ret = _kadm5_client_recv(context, &reply);
     if (ret)
-	goto out_keep_error;
+        goto out_keep_error;
     krb5_storage_free(sp);
     sp = krb5_storage_from_data (&reply);
     if (sp == NULL) {
-	ret = krb5_enomem(context->context);
-	goto out_keep_error;
+        ret = krb5_enomem(context->context);
+        goto out_keep_error;
     }
     ret = krb5_ret_int32(sp, &tmp);
     if (ret == 0)
-	ret = tmp;
+        ret = tmp;
 
     if (ret)
-	goto out;
+        goto out;
 
     ret = krb5_ret_int32(sp, &tmp);
     if (ret)
-	goto out;
+        goto out;
 
     if (tmp < 0) {
         size_t n = -tmp;
@@ -292,7 +292,7 @@ out:
 
 out_keep_error:
     if (stop)
-	ret = stop;
+        ret = stop;
     krb5_storage_free(sp);
     krb5_data_free(&reply);
     return ret;

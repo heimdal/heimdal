@@ -44,14 +44,14 @@ _gss_ntlm_duplicate_cred(OM_uint32 *minor_status,
 
     if (input_cred_handle == GSS_C_NO_CREDENTIAL)
         return _gss_ntlm_acquire_cred_from(minor_status, GSS_C_NO_NAME,
-					   GSS_C_INDEFINITE, GSS_C_NO_OID_SET,
-					   GSS_C_BOTH, GSS_C_NO_CRED_STORE,
-					   output_cred_handle, NULL, NULL);
+                                           GSS_C_INDEFINITE, GSS_C_NO_OID_SET,
+                                           GSS_C_BOTH, GSS_C_NO_CRED_STORE,
+                                           output_cred_handle, NULL, NULL);
 
     *output_cred_handle = GSS_C_NO_CREDENTIAL;
 
     *minor_status = _gss_ntlm_copy_cred((ntlm_cred)input_cred_handle,
-					(ntlm_cred *)output_cred_handle);
- 
+                                        (ntlm_cred *)output_cred_handle);
+
     return *minor_status == 0 ? GSS_S_COMPLETE : GSS_S_FAILURE;
 }

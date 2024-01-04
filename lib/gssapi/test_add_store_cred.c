@@ -168,9 +168,9 @@ main(int argc, char **argv)
     to.elements = &to_elements;
 
     major = gss_add_cred_from(&minor, GSS_C_NO_CREDENTIAL, GSS_C_NO_NAME,
-			      GSS_KRB5_MECHANISM, GSS_C_INITIATE,
-			      GSS_C_INDEFINITE, GSS_C_INDEFINITE,
-			      &from, &from_cred, NULL, NULL, NULL);
+                              GSS_KRB5_MECHANISM, GSS_C_INITIATE,
+                              GSS_C_INDEFINITE, GSS_C_INDEFINITE,
+                              &from, &from_cred, NULL, NULL, NULL);
     if (major != GSS_S_COMPLETE)
         gss_err(1, major, minor, GSS_KRB5_MECHANISM,
                 "failed to acquire creds from %s", argv[0]);

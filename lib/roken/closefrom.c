@@ -48,10 +48,10 @@ rk_closefrom(int fd)
     int num = getdtablesize();
 
     if (num < 0)
-	num = 1024; /* XXX */
+        num = 1024; /* XXX */
 
     for (; fd <= num; fd++)
-	close(fd);
+        close(fd);
 
     return 0;
 }

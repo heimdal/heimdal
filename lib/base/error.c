@@ -54,7 +54,7 @@ error_cmp(void *a, void *b)
 {
     struct heim_error *ap = a, *bp = b;
     if (ap->error_code == bp->error_code)
-	return 0;
+        return 0;
     return heim_cmp(ap->msg, bp->msg);
 }
 
@@ -89,10 +89,10 @@ heim_error_create_opt(heim_error_t *error, int error_code, const char *fmt, ...)
     HEIMDAL_PRINTF_ATTRIBUTE((__printf__, 3, 4))
 {
     if (error) {
-	va_list ap;
-	va_start(ap, fmt);
-	*error = heim_error_createv(error_code, fmt, ap);
-	va_end(ap);
+        va_list ap;
+        va_start(ap, fmt);
+        *error = heim_error_createv(error_code, fmt, ap);
+        va_end(ap);
     }
 }
 
@@ -127,13 +127,13 @@ heim_error_createv(int error_code, const char *fmt, va_list ap)
     errno = save_errno;
     if (len < 0) {
         free(str);
-	return NULL; /* XXX We should have a special heim_error_t for this */
+        return NULL; /* XXX We should have a special heim_error_t for this */
     }
 
     e = _heim_alloc_object(&_heim_error_object, sizeof(struct heim_error));
     if (e) {
-	e->msg = heim_string_create(str);
-	e->error_code = error_code;
+        e->msg = heim_string_create(str);
+        e->error_code = error_code;
     }
     free(str);
 
@@ -145,9 +145,9 @@ heim_string_t
 heim_error_copy_string(heim_error_t error)
 {
     if (heim_get_tid(error) != HEIM_TID_ERROR) {
-	if (heim_get_tid(error) == heim_number_get_type_id())
-	    return __heim_string_constant(strerror(heim_number_get_int((heim_number_t)error)));
-	heim_abort("invalid heim_error_t");
+        if (heim_get_tid(error) == heim_number_get_type_id())
+            return __heim_string_constant(strerror(heim_number_get_int((heim_number_t)error)));
+        heim_abort("invalid heim_error_t");
     }
     /* XXX concat all strings */
     return heim_retain(error->msg);
@@ -157,11 +157,11 @@ int
 heim_error_get_code(heim_error_t error)
 {
     if (error == NULL)
-	return -1;
+        return -1;
     if (heim_get_tid(error) != HEIM_TID_ERROR) {
-	if (heim_get_tid(error) == heim_number_get_type_id())
-	    return heim_number_get_int((heim_number_t)error);
-	heim_abort("invalid heim_error_t");
+        if (heim_get_tid(error) == heim_number_get_type_id())
+            return heim_number_get_int((heim_number_t)error);
+        heim_abort("invalid heim_error_t");
     }
     return error->error_code;
 }
@@ -170,12 +170,12 @@ heim_error_t
 heim_error_append(heim_error_t top, heim_error_t append)
 {
     if (heim_get_tid(top) != HEIM_TID_ERROR) {
-	if (heim_get_tid(top) == heim_number_get_type_id())
-	    return top;
-	heim_abort("invalid heim_error_t");
+        if (heim_get_tid(top) == heim_number_get_type_id())
+            return top;
+        heim_abort("invalid heim_error_t");
     }
     if (top->next)
-	heim_release(top->next);
+        heim_release(top->next);
     top->next = heim_retain(append);
     return top;
 }

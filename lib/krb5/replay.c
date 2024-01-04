@@ -40,61 +40,61 @@ struct krb5_rcache_data {
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_rc_resolve(krb5_context context,
-		krb5_rcache id,
-		const char *name)
+                krb5_rcache id,
+                const char *name)
 {
     id->name = strdup(name);
     if(id->name == NULL) {
-	krb5_set_error_message(context, KRB5_RC_MALLOC,
-			       N_("malloc: out of memory", ""));
-	return KRB5_RC_MALLOC;
+        krb5_set_error_message(context, KRB5_RC_MALLOC,
+                               N_("malloc: out of memory", ""));
+        return KRB5_RC_MALLOC;
     }
     return 0;
 }
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_rc_resolve_type(krb5_context context,
-		     krb5_rcache *id,
-		     const char *type)
+                     krb5_rcache *id,
+                     const char *type)
 {
     *id = NULL;
     if (strcmp(type, "FILE") != 0) {
-	krb5_set_error_message (context, KRB5_RC_TYPE_NOTFOUND,
-				N_("replay cache type %s not supported", ""),
-				type);
-	return KRB5_RC_TYPE_NOTFOUND;
+        krb5_set_error_message (context, KRB5_RC_TYPE_NOTFOUND,
+                                N_("replay cache type %s not supported", ""),
+                                type);
+        return KRB5_RC_TYPE_NOTFOUND;
     }
     *id = calloc(1, sizeof(**id));
     if(*id == NULL) {
-	krb5_set_error_message(context, KRB5_RC_MALLOC,
-			       N_("malloc: out of memory", ""));
-	return KRB5_RC_MALLOC;
+        krb5_set_error_message(context, KRB5_RC_MALLOC,
+                               N_("malloc: out of memory", ""));
+        return KRB5_RC_MALLOC;
     }
     return 0;
 }
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_rc_resolve_full(krb5_context context,
-		     krb5_rcache *id,
-		     const char *string_name)
+                     krb5_rcache *id,
+                     const char *string_name)
 {
     krb5_error_code ret;
 
     *id = NULL;
 
     if (strncmp(string_name, "FILE:", 5) != 0) {
-	krb5_set_error_message(context, KRB5_RC_TYPE_NOTFOUND,
-			       N_("replay cache type %s not supported", ""),
-			       string_name);
-	return KRB5_RC_TYPE_NOTFOUND;
+        krb5_set_error_message(context, KRB5_RC_TYPE_NOTFOUND,
+                               N_("replay cache type %s not supported", ""),
+                               string_name);
+        return KRB5_RC_TYPE_NOTFOUND;
     }
     ret = krb5_rc_resolve_type(context, id, "FILE");
     if(ret)
-	return ret;
+        return ret;
     ret = krb5_rc_resolve(context, *id, string_name + 5);
     if (ret) {
-	krb5_rc_close(context, *id);
-	*id = NULL;
+        krb5_rc_close(context, *id);
+        *id = NULL;
     }
     return ret;
 }
@@ -113,7 +113,7 @@ krb5_rc_default_type(krb5_context context)
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_rc_default(krb5_context context,
-		krb5_rcache *id)
+                krb5_rcache *id)
 {
     return krb5_rc_resolve_full(context, id, krb5_rc_default_name(context));
 }
@@ -125,19 +125,19 @@ struct rc_entry{
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_rc_initialize(krb5_context context,
-		   krb5_rcache id,
-		   krb5_deltat auth_lifespan)
+                   krb5_rcache id,
+                   krb5_deltat auth_lifespan)
 {
     FILE *f = fopen(id->name, "w");
     struct rc_entry tmp;
     int ret;
 
     if(f == NULL) {
-	char buf[128];
-	ret = errno;
-	rk_strerror_r(ret, buf, sizeof(buf));
-	krb5_set_error_message(context, ret, "open(%s): %s", id->name, buf);
-	return ret;
+        char buf[128];
+        ret = errno;
+        rk_strerror_r(ret, buf, sizeof(buf));
+        krb5_set_error_message(context, ret, "open(%s): %s", id->name, buf);
+        return ret;
     }
     memset(&tmp, 0, sizeof(tmp));
     tmp.stamp = auth_lifespan;
@@ -148,30 +148,30 @@ krb5_rc_initialize(krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_rc_recover(krb5_context context,
-		krb5_rcache id)
+                krb5_rcache id)
 {
     return 0;
 }
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_rc_destroy(krb5_context context,
-		krb5_rcache id)
+                krb5_rcache id)
 {
     int ret;
 
     if(remove(id->name) < 0) {
-	char buf[128];
-	ret = errno;
-	rk_strerror_r(ret, buf, sizeof(buf));
-	krb5_set_error_message(context, ret, "remove(%s): %s", id->name, buf);
-	return ret;
+        char buf[128];
+        ret = errno;
+        rk_strerror_r(ret, buf, sizeof(buf));
+        krb5_set_error_message(context, ret, "remove(%s): %s", id->name, buf);
+        return ret;
     }
     return krb5_rc_close(context, id);
 }
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_rc_close(krb5_context context,
-	      krb5_rcache id)
+              krb5_rcache id)
 {
     free(id->name);
     free(id);
@@ -188,8 +188,8 @@ checksum_authenticator(Authenticator *auth, void *data)
 
     EVP_DigestUpdate(m, auth->crealm, strlen(auth->crealm));
     for(i = 0; i < auth->cname.name_string.len; i++)
-	EVP_DigestUpdate(m, auth->cname.name_string.val[i],
-		   strlen(auth->cname.name_string.val[i]));
+        EVP_DigestUpdate(m, auth->cname.name_string.val[i],
+                   strlen(auth->cname.name_string.val[i]));
     EVP_DigestUpdate(m, &auth->ctime, sizeof(auth->ctime));
     EVP_DigestUpdate(m, &auth->cusec, sizeof(auth->cusec));
 
@@ -199,8 +199,8 @@ checksum_authenticator(Authenticator *auth, void *data)
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_rc_store(krb5_context context,
-	      krb5_rcache id,
-	      krb5_donot_replay *rep)
+              krb5_rcache id,
+              krb5_donot_replay *rep)
 {
     struct rc_entry ent, tmp;
     time_t t;
@@ -212,45 +212,45 @@ krb5_rc_store(krb5_context context,
     checksum_authenticator(rep, ent.data);
     f = fopen(id->name, "r");
     if(f == NULL) {
-	char buf[128];
-	ret = errno;
-	rk_strerror_r(ret, buf, sizeof(buf));
-	krb5_set_error_message(context, ret, "open(%s): %s", id->name, buf);
-	return ret;
+        char buf[128];
+        ret = errno;
+        rk_strerror_r(ret, buf, sizeof(buf));
+        krb5_set_error_message(context, ret, "open(%s): %s", id->name, buf);
+        return ret;
     }
     rk_cloexec_file(f);
     count = fread(&tmp, sizeof(ent), 1, f);
     if (count != 1) {
-	fclose(f);
-	return KRB5_RC_IO_UNKNOWN;
+        fclose(f);
+        return KRB5_RC_IO_UNKNOWN;
     }
     t = ent.stamp - tmp.stamp;
     while(fread(&tmp, sizeof(ent), 1, f)){
-	if(tmp.stamp < t)
-	    continue;
-	if(memcmp(tmp.data, ent.data, sizeof(ent.data)) == 0){
-	    fclose(f);
-	    krb5_clear_error_message (context);
-	    return KRB5_RC_REPLAY;
-	}
+        if(tmp.stamp < t)
+            continue;
+        if(memcmp(tmp.data, ent.data, sizeof(ent.data)) == 0){
+            fclose(f);
+            krb5_clear_error_message (context);
+            return KRB5_RC_REPLAY;
+        }
     }
     if(ferror(f)){
-	char buf[128];
-	ret = errno;
-	fclose(f);
-	rk_strerror_r(ret, buf, sizeof(buf));
-	krb5_set_error_message(context, ret, "%s: %s",
-			       id->name, buf);
-	return ret;
+        char buf[128];
+        ret = errno;
+        fclose(f);
+        rk_strerror_r(ret, buf, sizeof(buf));
+        krb5_set_error_message(context, ret, "%s: %s",
+                               id->name, buf);
+        return ret;
     }
     fclose(f);
     f = fopen(id->name, "a");
     if(f == NULL) {
-	char buf[128];
-	rk_strerror_r(errno, buf, sizeof(buf));
-	krb5_set_error_message(context, KRB5_RC_IO_UNKNOWN,
-			       "open(%s): %s", id->name, buf);
-	return KRB5_RC_IO_UNKNOWN;
+        char buf[128];
+        rk_strerror_r(errno, buf, sizeof(buf));
+        krb5_set_error_message(context, KRB5_RC_IO_UNKNOWN,
+                               "open(%s): %s", id->name, buf);
+        return KRB5_RC_IO_UNKNOWN;
     }
     fwrite(&ent, 1, sizeof(ent), f);
     fclose(f);
@@ -259,15 +259,15 @@ krb5_rc_store(krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_rc_expunge(krb5_context context,
-		krb5_rcache id)
+                krb5_rcache id)
 {
     return 0;
 }
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_rc_get_lifespan(krb5_context context,
-		     krb5_rcache id,
-		     krb5_deltat *auth_lifespan)
+                     krb5_rcache id,
+                     krb5_deltat *auth_lifespan)
 {
     FILE *f = fopen(id->name, "r");
     int r;
@@ -275,8 +275,8 @@ krb5_rc_get_lifespan(krb5_context context,
     r = fread(&ent, sizeof(ent), 1, f);
     fclose(f);
     if(r){
-	*auth_lifespan = ent.stamp;
-	return 0;
+        *auth_lifespan = ent.stamp;
+        return 0;
     }
     krb5_clear_error_message (context);
     return KRB5_RC_IO_UNKNOWN;
@@ -284,22 +284,22 @@ krb5_rc_get_lifespan(krb5_context context,
 
 KRB5_LIB_FUNCTION const char* KRB5_LIB_CALL
 krb5_rc_get_name(krb5_context context,
-		 krb5_rcache id)
+                 krb5_rcache id)
 {
     return id->name;
 }
 
 KRB5_LIB_FUNCTION const char* KRB5_LIB_CALL
 krb5_rc_get_type(krb5_context context,
-		 krb5_rcache id)
+                 krb5_rcache id)
 {
     return "FILE";
 }
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_get_server_rcache(krb5_context context,
-		       const krb5_data *piece,
-		       krb5_rcache *id)
+                       const krb5_data *piece,
+                       krb5_rcache *id)
 {
     krb5_rcache rcache;
     krb5_error_code ret;
@@ -308,7 +308,7 @@ krb5_get_server_rcache(krb5_context context,
     char *name;
 
     if (tmp == NULL)
-	return krb5_enomem(context);
+        return krb5_enomem(context);
     strvisx(tmp, piece->data, piece->length, VIS_WHITE | VIS_OCTAL);
 #ifdef HAVE_GETEUID
     ret = asprintf(&name, "FILE:rc_%s_%u", tmp, (unsigned)geteuid());
@@ -317,12 +317,12 @@ krb5_get_server_rcache(krb5_context context,
 #endif
     free(tmp);
     if (ret < 0 || name == NULL)
-	return krb5_enomem(context);
+        return krb5_enomem(context);
 
     ret = krb5_rc_resolve_full(context, &rcache, name);
     free(name);
     if(ret)
-	return ret;
+        return ret;
     *id = rcache;
     return ret;
 }

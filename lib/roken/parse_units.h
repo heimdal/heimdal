@@ -57,21 +57,21 @@ struct units {
 
 ROKEN_LIB_FUNCTION int64_t ROKEN_LIB_CALL
 parse_units (const char *s, const struct units *units,
-	     const char *def_unit);
+             const char *def_unit);
 
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
 print_units_table (const struct units *units, FILE *f);
 
 ROKEN_LIB_FUNCTION uint64_t ROKEN_LIB_CALL
 parse_flags (const char *s, const struct units *units,
-	     int orig);
+             int orig);
 
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 unparse_units(int64_t num, const struct units *units, char *s, size_t len);
 
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 unparse_units_approx(int64_t num, const struct units *units, char *s,
-		     size_t len);
+                     size_t len);
 
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 unparse_flags(uint64_t num, const struct units *units, char *s, size_t len);
@@ -91,21 +91,21 @@ print_flags_table (const struct units *units, FILE *f);
 
 ROKEN_LIB_FUNCTION int64_t ROKEN_LIB_CALL
 parse_units (const char *s, const struct units *units,
-	     const char *def_unit);
+             const char *def_unit);
 
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
 print_units_table (const struct units *units, FILE *f);
 
 ROKEN_LIB_FUNCTION uint64_t ROKEN_LIB_CALL
 parse_flags(const char *s, const struct units *units,
-	    uint64_t orig);
+            uint64_t orig);
 
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 unparse_units(int64_t num, const struct units *units, char *s, size_t len);
 
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 unparse_units_approx(int64_t num, const struct units *units, char *s,
-		     size_t len);
+                     size_t len);
 
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 unparse_flags(uint64_t num, const struct units *units, char *s, size_t len);

@@ -36,13 +36,13 @@
 #include "netlogon.h"
 
 OM_uint32 _netlogon_inquire_cred
-           (OM_uint32 * minor_status,
-            gss_const_cred_id_t cred_handle,
-            gss_name_t * name,
-            OM_uint32 * lifetime,
-            gss_cred_usage_t * cred_usage,
-            gss_OID_set * mechanisms
-           )
+                                (OM_uint32 * minor_status,
+                                 gss_const_cred_id_t cred_handle,
+                                 gss_name_t * name,
+                                 OM_uint32 * lifetime,
+                                 gss_cred_usage_t * cred_usage,
+                                 gss_OID_set * mechanisms
+                                )
 {
     OM_uint32 ret;
     const gssnetlogon_cred cred = (const gssnetlogon_cred)cred_handle;
@@ -50,7 +50,7 @@ OM_uint32 _netlogon_inquire_cred
     *minor_status = 0;
 
     if (cred == NULL)
-	return GSS_S_NO_CRED;
+        return GSS_S_NO_CRED;
 
     if (name != NULL) {
         ret = _netlogon_duplicate_name(minor_status,

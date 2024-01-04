@@ -54,12 +54,12 @@ RCSID("$Id$");
     while(x){ x <<= 1; b++; if(x < zero) pre=""; }			\
     if(b >= len){							\
         size_t tabs;							\
-	snprintf(tmp, sizeof(tmp), "typedef %s %sint%d_t;", #TYPE,	\
+        snprintf(tmp, sizeof(tmp), "typedef %s %sint%d_t;", #TYPE,	\
                  pre, len);						\
-	tabs = 5 - strlen(tmp) / 8;					\
+        tabs = 5 - strlen(tmp) / 8;					\
         fprintf(f, "%s", tmp);						\
-	while(tabs-- > 0) fprintf(f, "\t");				\
-	fprintf(f, "/* %2d bits */\n", b);				\
+        while(tabs-- > 0) fprintf(f, "\t");				\
+        fprintf(f, "/* %2d bits */\n", b);				\
         return;                                                 	\
     }									\
 }
@@ -75,8 +75,8 @@ RCSID("$Id$");
         sprintf(tmp2, "typedef %s %s;", #TYPE, tmp);           \
         tabs = 5 - strlen(tmp2) / 8;                           \
         fprintf(f, "%s", tmp2);                                \
-	while(tabs-- > 0)                                      \
-	    fprintf(f, "\t");                                  \
+        while(tabs-- > 0)                                      \
+            fprintf(f, "\t");                                  \
         fprintf(f, "/* %2d bits */\n", b);                     \
         return;                                                \
     }							       \
@@ -125,10 +125,10 @@ static int
 print_bt(FILE *f, int flag)
 {
     if(flag == 0){
-	fprintf(f, "/* For compatibility with various type definitions */\n");
-	fprintf(f, "#ifndef __BIT_TYPES_DEFINED__\n");
-	fprintf(f, "#define __BIT_TYPES_DEFINED__\n");
-	fprintf(f, "\n");
+        fprintf(f, "/* For compatibility with various type definitions */\n");
+        fprintf(f, "#ifndef __BIT_TYPES_DEFINED__\n");
+        fprintf(f, "#define __BIT_TYPES_DEFINED__\n");
+        fprintf(f, "\n");
     }
     return 1;
 }
@@ -141,22 +141,22 @@ int main(int argc, char **argv)
     const char *hb;
 
     if (argc > 1 && strcmp(argv[1], "--version") == 0) {
-	printf("some version");
-	return 0;
+        printf("some version");
+        return 0;
     }
 
     if(argc < 2){
-	hb = "__BITS_H__";
-	f = stdout;
+        hb = "__BITS_H__";
+        f = stdout;
     } else {
-	p = malloc(strlen(argv[1]) + 5);
-	sprintf(p, "__%s__", argv[1]);
-	hb = p;
-	for(; *p; p++){
-	    if(!isalnum((unsigned char)*p))
-		*p = '_';
-	}
-	f = fopen(argv[1], "w");
+        p = malloc(strlen(argv[1]) + 5);
+        sprintf(p, "__%s__", argv[1]);
+        hb = p;
+        for(; *p; p++){
+            if(!isalnum((unsigned char)*p))
+                *p = '_';
+        }
+        f = fopen(argv[1], "w");
     }
     fprintf(f, "#ifndef %s\n", hb);
     fprintf(f, "#define %s\n", hb);
@@ -240,8 +240,8 @@ int main(int argc, char **argv)
 #endif /* HAVE_U_INT64_T */
 
     if(flag){
-	fprintf(f, "\n");
-	fprintf(f, "#endif /* __BIT_TYPES_DEFINED__ */\n\n");
+        fprintf(f, "\n");
+        fprintf(f, "#endif /* __BIT_TYPES_DEFINED__ */\n\n");
     }
 #ifdef KRB5
     fprintf(f, "\n");
@@ -324,6 +324,6 @@ int main(int argc, char **argv)
     fprintf(f, "#endif /* %s */\n", hb);
 
     if (f != stdout)
-	fclose(f);
+        fclose(f);
     return 0;
 }

@@ -75,12 +75,12 @@ segv_handler(int sig)
 
     fd = open("/dev/stdout", O_WRONLY, 0600);
     if (fd >= 0) {
-	ret = write(fd, msg, sizeof(msg) - 1);
-	if (ret != -1)
-	    ret = write(fd, testname, strlen(testname));
-	if (ret != -1)
-	    ret = write(fd, "\n", 1);
-	close(fd);
+        ret = write(fd, msg, sizeof(msg) - 1);
+        if (ret != -1)
+            ret = write(fd, testname, strlen(testname));
+        if (ret != -1)
+            ret = write(fd, "\n", 1);
+        close(fd);
     }
     _exit(1);
 }
@@ -95,7 +95,7 @@ segv_handler(int sig)
 
 ROKEN_LIB_FUNCTION void * ROKEN_LIB_CALL
 rk_test_mem_alloc(enum rk_test_mem_type type, const char *name,
-		  void *buf, size_t size)
+                  void *buf, size_t size)
 {
 #ifndef HAVE_MMAP
     unsigned char *p;
@@ -104,7 +104,7 @@ rk_test_mem_alloc(enum rk_test_mem_type type, const char *name,
 
     p = malloc(size + 2);
     if (p == NULL)
-	errx(1, "malloc");
+        errx(1, "malloc");
     map.type = type;
     map.start = p;
     map.size = size + 2;
@@ -127,7 +127,7 @@ rk_test_mem_alloc(enum rk_test_mem_type type, const char *name,
     flags = 0;
     fd = open ("/dev/zero", O_RDONLY);
     if(fd < 0)
-	err (1, "open /dev/zero");
+        err (1, "open /dev/zero");
 #endif
     map.fd = fd;
     flags |= MAP_PRIVATE;
@@ -135,29 +135,29 @@ rk_test_mem_alloc(enum rk_test_mem_type type, const char *name,
     map.size = size + pagesize - (size % pagesize) + pagesize * 2;
 
     p = (unsigned char *)mmap(0, map.size, PROT_READ | PROT_WRITE,
-			      flags, fd, 0);
+                              flags, fd, 0);
     if (p == (unsigned char *)MAP_FAILED)
-	err (1, "mmap");
+        err (1, "mmap");
 
     map.start = p;
 
     ret = mprotect ((void *)p, pagesize, 0);
     if (ret < 0)
-	err (1, "mprotect");
+        err (1, "mprotect");
 
     ret = mprotect (p + map.size - pagesize, pagesize, 0);
     if (ret < 0)
-	err (1, "mprotect");
+        err (1, "mprotect");
 
     switch (type) {
-    case RK_TM_OVERRUN:
-	map.data_start = p + map.size - pagesize - size;
-	break;
-    case RK_TM_UNDERRUN:
-	map.data_start = p + pagesize;
-	break;
-    default:
-	abort();
+        case RK_TM_OVERRUN:
+            map.data_start = p + map.size - pagesize - size;
+            break;
+        case RK_TM_UNDERRUN:
+            map.data_start = p + pagesize;
+            break;
+        default:
+            abort();
     }
 #endif
 #ifdef HAVE_SIGACTION
@@ -174,7 +174,7 @@ rk_test_mem_alloc(enum rk_test_mem_type type, const char *name,
 
     map.data_size = size;
     if (buf)
-	memcpy(map.data_start, buf, size);
+        memcpy(map.data_start, buf, size);
     return map.data_start;
 }
 
@@ -185,24 +185,24 @@ rk_test_mem_free(const char *map_name)
     unsigned char *p = map.start;
 
     if (testname == NULL)
-	errx(1, "test_mem_free call on no free");
+        errx(1, "test_mem_free call on no free");
 
     if (p[0] != 0xff)
-	errx(1, "%s: %s underrun %x\n", testname, map_name, p[0]);
+        errx(1, "%s: %s underrun %x\n", testname, map_name, p[0]);
     if (p[map.size-1] != 0xff)
-	errx(1, "%s: %s overrun %x\n", testname, map_name, p[map.size - 1]);
+        errx(1, "%s: %s overrun %x\n", testname, map_name, p[map.size - 1]);
     free(map.start);
 #else
     int ret;
 
     if (testname == NULL)
-	errx(1, "test_mem_free call on no free");
+        errx(1, "test_mem_free call on no free");
 
     ret = munmap (map.start, map.size);
     if (ret < 0)
-	err (1, "munmap");
+        err (1, "munmap");
     if (map.fd > 0)
-	close(map.fd);
+        close(map.fd);
 #endif
     free(testname);
     testname = NULL;

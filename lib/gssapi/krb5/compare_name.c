@@ -47,7 +47,7 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_compare_name
     GSSAPI_KRB5_INIT(&context);
 
     *name_equal = krb5_principal_compare (context,
-					  princ1, princ2);
+                                          princ1, princ2);
     *minor_status = 0;
     return GSS_S_COMPLETE;
 }

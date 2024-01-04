@@ -57,9 +57,9 @@ struct generic_key {
 
 static int
 generic_cbc_do_cipher(EVP_CIPHER_CTX *ctx,
-		       unsigned char *out,
-		       const unsigned char *in,
-		       unsigned int size)
+                      unsigned char *out,
+                      const unsigned char *in,
+                      unsigned int size)
 {
     struct generic_key *gk = ctx->cipher_data;
     BOOL bResult;
@@ -71,9 +71,9 @@ generic_cbc_do_cipher(EVP_CIPHER_CTX *ctx,
     memcpy(out, in, size);
 
     if (ctx->encrypt)
-	bResult = CryptEncrypt(gk->hKey, 0, TRUE, 0, out, &length, size);
+        bResult = CryptEncrypt(gk->hKey, 0, TRUE, 0, out, &length, size);
     else
-	bResult = CryptDecrypt(gk->hKey, 0, TRUE, 0, out, &length);
+        bResult = CryptDecrypt(gk->hKey, 0, TRUE, 0, out, &length);
     _ASSERT(bResult);
 
     return 1;
@@ -92,9 +92,9 @@ static HCRYPTKEY
 import_key(int alg, const unsigned char *key, size_t keylen)
 {
     struct {
-	BLOBHEADER hdr;
-	DWORD len;
-	BYTE key[1];
+        BLOBHEADER hdr;
+        DWORD len;
+        BYTE key[1];
     } *key_blob;
     size_t bloblen = sizeof(*key_blob) - 1 + keylen;
 
@@ -108,8 +108,8 @@ import_key(int alg, const unsigned char *key, size_t keylen)
     memcpy(key_blob->key, key, keylen);
 
     bResult = CryptImportKey(hCryptProv,
-			     (void *)key_blob, bloblen, 0, 0,
-			     &gk->hKey);
+                             (void *)key_blob, bloblen, 0, 0,
+                             &gk->hKey);
     free(key_blob);
     _ASSERT(bResult);
 
@@ -118,16 +118,16 @@ import_key(int alg, const unsigned char *key, size_t keylen)
 
 static int
 crypto_des_ede3_cbc_init(EVP_CIPHER_CTX *ctx,
-			 const unsigned char * key,
-			 const unsigned char * iv,
-			 int encp)
+                         const unsigned char * key,
+                         const unsigned char * iv,
+                         int encp)
 {
     struct generic_key *gk = ctx->cipher_data;
     DWORD paramData;
 
     gk->hKey = import_key(CALG_3DES,
-			  key->key->keyvalue.data,
-			  key->key->keyvalue.len);
+                          key->key->keyvalue.data,
+                          key->key->keyvalue.len);
 
     return 1;
 }
@@ -144,19 +144,19 @@ const EVP_CIPHER *
 EVP_wincrypt_des_ede3_cbc(void)
 {
     static const EVP_CIPHER des_ede3_cbc = {
-	0,
-	8,
-	24,
-	8,
-	EVP_CIPH_CBC_MODE,
-	crypto_des_ede3_cbc_init,
-	generic_cbc_do_cipher,
-	generic_cleanup,
-	sizeof(struct generic_key),
-	NULL,
-	NULL,
-	NULL,
-	NULL
+        0,
+        8,
+        24,
+        8,
+        EVP_CIPH_CBC_MODE,
+        crypto_des_ede3_cbc_init,
+        generic_cbc_do_cipher,
+        generic_cleanup,
+        sizeof(struct generic_key),
+        NULL,
+        NULL,
+        NULL,
+        NULL
     };
     return &des_ede3_cbc;
 }
@@ -205,13 +205,13 @@ const EVP_MD *
 EVP_wincrypt_md5(void)
 {
     static const struct hc_evp_md md5 = {
-	16,
-	64,
-	sizeof(struct generic_hash),
-	(hc_evp_md_init)crypto_md5_init,
-	(hc_evp_md_update)generic_hash_update,
-	(hc_evp_md_final)generic_hash_final,
-	(hc_evp_md_cleanup)generic_hash_cleanup
+        16,
+        64,
+        sizeof(struct generic_hash),
+        (hc_evp_md_init)crypto_md5_init,
+        (hc_evp_md_update)generic_hash_update,
+        (hc_evp_md_final)generic_hash_final,
+        (hc_evp_md_cleanup)generic_hash_cleanup
     };
     return &md5;
 }

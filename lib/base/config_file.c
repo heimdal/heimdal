@@ -592,13 +592,13 @@ heim_config_parse_file_multi(heim_context context,
         if (!heim_context_get_homedir_access(context)) {
             heim_set_error_message(context, EPERM,
                                    "Access to home directory not allowed");
-	    ret = EPERM;
-	    goto out;
+            ret = EPERM;
+            goto out;
         }
         if (asprintf(&newfname, "%%{USERCONFIG}%s", &fname[1]) < 0 ||
             newfname == NULL) {
-	    ret = heim_enomem(context);
-	    goto out;
+            ret = heim_enomem(context);
+            goto out;
         }
         fname = newfname;
     }
@@ -615,10 +615,10 @@ heim_config_parse_file_multi(heim_context context,
         heim_set_error_message(context, ENOENT,
                                "no support for plist configuration files");
         ret = ENOENT;
-	goto out;
+        goto out;
 #endif
     } else {
-	char *exp_fname = NULL;
+        char *exp_fname = NULL;
 
         /*
          * Note that heim_config_parse_dir_multi() doesn't want tokens
@@ -629,7 +629,7 @@ heim_config_parse_file_multi(heim_context context,
         ret = heim_expand_path_tokens(context, fname, 1, &exp_fname, NULL);
         if (ret)
             goto out;
-	free(newfname);
+        free(newfname);
         fname = newfname = exp_fname;
 
         f.context = context;
@@ -649,26 +649,26 @@ heim_config_parse_file_multi(heim_context context,
             heim_set_error_message(context, EISDIR, "not a regular file %s: %s",
                                    fname, strerror(EISDIR));
             ret = EISDIR;
-	    goto out;
+            goto out;
         }
 
         ret = heim_config_parse_debug(&f, res, &lineno, &str);
         fclose(f.f);
         if (ret) {
-	    if (ret != HEIM_ERR_CONFIG_BADFORMAT)
+            if (ret != HEIM_ERR_CONFIG_BADFORMAT)
                 ret = HEIM_ERR_CONFIG_BADFORMAT;
-	    heim_set_error_message(context, ret, "%s:%u: %s",
-				   fname, lineno, str);
+            heim_set_error_message(context, ret, "%s:%u: %s",
+                                   fname, lineno, str);
             goto out;
         }
     }
 
-  out:
+out:
     config_include_depth--;
     if (ret == HEIM_ERR_CONFIG_BADFORMAT || (ret && config_include_depth > 0)) {
-	heim_warn(context, ret, "Ignoring");
-	if (config_include_depth > 0)
-	    ret = 0;
+        heim_warn(context, ret, "Ignoring");
+        if (config_include_depth > 0)
+            ret = 0;
     }
     free(newfname);
     return ret;
@@ -1460,11 +1460,11 @@ heim_config_parse_string_multi(heim_context context,
 
     ret = heim_config_parse_debug(&f, res, &lineno, &str);
     if (ret) {
-	if (ret != HEIM_ERR_CONFIG_BADFORMAT) {
-	    ret = HEIM_ERR_CONFIG_BADFORMAT;
-	    heim_set_error_message(context, ret, "%s:%u: %s",
-				   "<constant>", lineno, str);
-	}
+        if (ret != HEIM_ERR_CONFIG_BADFORMAT) {
+            ret = HEIM_ERR_CONFIG_BADFORMAT;
+            heim_set_error_message(context, ret, "%s:%u: %s",
+                                   "<constant>", lineno, str);
+        }
         return ret;
     }
     return 0;

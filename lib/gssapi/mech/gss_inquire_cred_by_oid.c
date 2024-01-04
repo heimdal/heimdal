@@ -34,57 +34,57 @@
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_inquire_cred_by_oid (OM_uint32 *minor_status,
-			 gss_const_cred_id_t cred_handle,
-			 const gss_OID desired_object,
-			 gss_buffer_set_t *data_set)
+                         gss_const_cred_id_t cred_handle,
+                         const gss_OID desired_object,
+                         gss_buffer_set_t *data_set)
 {
-	struct _gss_cred *cred = (struct _gss_cred *) cred_handle;
-	OM_uint32		status = GSS_S_COMPLETE;
-	struct _gss_mechanism_cred *mc;
-	gssapi_mech_interface	m;
-	gss_buffer_set_t set = GSS_C_NO_BUFFER_SET;
+    struct _gss_cred *cred = (struct _gss_cred *) cred_handle;
+    OM_uint32		status = GSS_S_COMPLETE;
+    struct _gss_mechanism_cred *mc;
+    gssapi_mech_interface	m;
+    gss_buffer_set_t set = GSS_C_NO_BUFFER_SET;
 
-	*minor_status = 0;
-	*data_set = GSS_C_NO_BUFFER_SET;
+    *minor_status = 0;
+    *data_set = GSS_C_NO_BUFFER_SET;
 
-	if (cred == NULL)
-		return GSS_S_NO_CRED;
+    if (cred == NULL)
+        return GSS_S_NO_CRED;
 
-	status = GSS_S_FAILURE;
+    status = GSS_S_FAILURE;
 
-	HEIM_TAILQ_FOREACH(mc, &cred->gc_mc, gmc_link) {
-		gss_buffer_set_t rset = GSS_C_NO_BUFFER_SET;
-		size_t i;
+    HEIM_TAILQ_FOREACH(mc, &cred->gc_mc, gmc_link) {
+        gss_buffer_set_t rset = GSS_C_NO_BUFFER_SET;
+        size_t i;
 
-		m = mc->gmc_mech;
-		if (m == NULL) {
-			_gss_secure_release_buffer_set(minor_status, &set);
-			*minor_status = 0;
-			return GSS_S_BAD_MECH;
-		}
+        m = mc->gmc_mech;
+        if (m == NULL) {
+            _gss_secure_release_buffer_set(minor_status, &set);
+            *minor_status = 0;
+            return GSS_S_BAD_MECH;
+        }
 
-		if (m->gm_inquire_cred_by_oid == NULL)
-			continue;
+        if (m->gm_inquire_cred_by_oid == NULL)
+            continue;
 
-		status = m->gm_inquire_cred_by_oid(minor_status,
-		    mc->gmc_cred, desired_object, &rset);
-		if (status != GSS_S_COMPLETE) {
-			_gss_mg_error(m, *minor_status);
-			continue;
-		}
+        status = m->gm_inquire_cred_by_oid(minor_status,
+                                           mc->gmc_cred, desired_object, &rset);
+        if (status != GSS_S_COMPLETE) {
+            _gss_mg_error(m, *minor_status);
+            continue;
+        }
 
-		for (i = 0; rset != NULL && i < rset->count; i++) {
-			status = gss_add_buffer_set_member(minor_status,
-			     &rset->elements[i], &set);
-			if (status != GSS_S_COMPLETE)
-				break;
-		}
-		_gss_secure_release_buffer_set(minor_status, &rset);
-	}
-	if (set == GSS_C_NO_BUFFER_SET && status == GSS_S_COMPLETE)
-		status = GSS_S_FAILURE;
-	*data_set = set;
-	*minor_status = 0;
-	return status;
+        for (i = 0; rset != NULL && i < rset->count; i++) {
+            status = gss_add_buffer_set_member(minor_status,
+                                               &rset->elements[i], &set);
+            if (status != GSS_S_COMPLETE)
+                break;
+        }
+        _gss_secure_release_buffer_set(minor_status, &rset);
+    }
+    if (set == GSS_C_NO_BUFFER_SET && status == GSS_S_COMPLETE)
+        status = GSS_S_FAILURE;
+    *data_set = set;
+    *minor_status = 0;
+    return status;
 }
 

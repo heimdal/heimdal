@@ -49,16 +49,16 @@ gettimeofday (struct timeval *tp, void *ignore)
     ULONGLONG ull;
 
     if (lpGetSystemTime == NULL) {
-	HANDLE h1;
-	LPFN_GETSYSTEMTIME fn;
+        HANDLE h1;
+        LPFN_GETSYSTEMTIME fn;
 
-	h1 = GetModuleHandle(TEXT("kernel32.dll"));	/* no refcount increase */
-	fn = (LPFN_GETSYSTEMTIME)GetProcAddress(h1,
-						"GetSystemTimePreciseAsFileTime");
-	if (fn == NULL)
-	    fn = (LPFN_GETSYSTEMTIME)GetProcAddress(h1,
-						    "GetSystemTimeAsFileTime");
-	lpGetSystemTime = fn;
+        h1 = GetModuleHandle(TEXT("kernel32.dll"));	/* no refcount increase */
+        fn = (LPFN_GETSYSTEMTIME)GetProcAddress(h1,
+                                                "GetSystemTimePreciseAsFileTime");
+        if (fn == NULL)
+            fn = (LPFN_GETSYSTEMTIME)GetProcAddress(h1,
+                                                    "GetSystemTimeAsFileTime");
+        lpGetSystemTime = fn;
     }
 
     lpGetSystemTime(&ft);
@@ -82,12 +82,12 @@ gettimeofday (struct timeval *tp, void *ignore)
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 gettimeofday (struct timeval *tp, void *ignore)
 {
-     time_t t;
+    time_t t;
 
-     t = time(NULL);
-     tp->tv_sec  = (long) t;
-     tp->tv_usec = 0;
-     return 0;
+    t = time(NULL);
+    tp->tv_sec  = (long) t;
+    tp->tv_usec = 0;
+    return 0;
 }
 
 #endif  /* !_WIN32 */

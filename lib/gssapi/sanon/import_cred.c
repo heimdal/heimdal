@@ -33,10 +33,10 @@
 
 OM_uint32 GSSAPI_CALLCONV
 _gss_sanon_import_cred(OM_uint32 *minor,
-		       gss_buffer_t token,
-		       gss_cred_id_t *cred_handle)
+                       gss_buffer_t token,
+                       gss_cred_id_t *cred_handle)
 {
     return _gss_sanon_import_name(minor, token,
-				  GSS_C_NT_EXPORT_NAME,
-				  (gss_name_t *)cred_handle);
+                                  GSS_C_NT_EXPORT_NAME,
+                                  (gss_name_t *)cred_handle);
 }

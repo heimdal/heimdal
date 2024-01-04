@@ -41,54 +41,54 @@
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _kdc_tkt_add_if_relevant_ad(krb5_context context,
-			    EncTicketPart *tkt,
-			    int type,
-			    const krb5_data *data)
+                            EncTicketPart *tkt,
+                            int type,
+                            const krb5_data *data)
 {
     krb5_error_code ret;
     size_t size = 0;
 
     if (tkt->authorization_data == NULL) {
-	tkt->authorization_data = calloc(1, sizeof(*tkt->authorization_data));
-	if (tkt->authorization_data == NULL) {
-	    return krb5_enomem(context);
-	}
+        tkt->authorization_data = calloc(1, sizeof(*tkt->authorization_data));
+        if (tkt->authorization_data == NULL) {
+            return krb5_enomem(context);
+        }
     }
 
     /* add the entry to the last element */
     {
-	AuthorizationData ad = { 0, NULL };
-	AuthorizationDataElement ade;
+        AuthorizationData ad = { 0, NULL };
+        AuthorizationDataElement ade;
 
-	ade.ad_type = type;
-	ade.ad_data = *data;
+        ade.ad_type = type;
+        ade.ad_data = *data;
 
-	ret = add_AuthorizationData(&ad, &ade);
-	if (ret) {
-	    krb5_set_error_message(context, ret, "add AuthorizationData failed");
-	    return ret;
-	}
+        ret = add_AuthorizationData(&ad, &ade);
+        if (ret) {
+            krb5_set_error_message(context, ret, "add AuthorizationData failed");
+            return ret;
+        }
 
-	ade.ad_type = KRB5_AUTHDATA_IF_RELEVANT;
+        ade.ad_type = KRB5_AUTHDATA_IF_RELEVANT;
 
-	ASN1_MALLOC_ENCODE(AuthorizationData,
-			   ade.ad_data.data, ade.ad_data.length,
-			   &ad, &size, ret);
-	free_AuthorizationData(&ad);
-	if (ret) {
-	    krb5_set_error_message(context, ret, "ASN.1 encode of "
-				   "AuthorizationData failed");
-	    return ret;
-	}
-	if (ade.ad_data.length != size)
-	    krb5_abortx(context, "internal asn.1 encoder error");
+        ASN1_MALLOC_ENCODE(AuthorizationData,
+                           ade.ad_data.data, ade.ad_data.length,
+                           &ad, &size, ret);
+        free_AuthorizationData(&ad);
+        if (ret) {
+            krb5_set_error_message(context, ret, "ASN.1 encode of "
+                                   "AuthorizationData failed");
+            return ret;
+        }
+        if (ade.ad_data.length != size)
+            krb5_abortx(context, "internal asn.1 encoder error");
 
-	ret = add_AuthorizationData(tkt->authorization_data, &ade);
-	der_free_octet_string(&ade.ad_data);
-	if (ret) {
-	    krb5_set_error_message(context, ret, "add AuthorizationData failed");
-	    return ret;
-	}
+        ret = add_AuthorizationData(tkt->authorization_data, &ade);
+        der_free_octet_string(&ade.ad_data);
+        if (ret) {
+            krb5_set_error_message(context, ret, "add AuthorizationData failed");
+            return ret;
+        }
     }
 
     return 0;
@@ -101,22 +101,22 @@ _kdc_tkt_add_if_relevant_ad(krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _kdc_tkt_insert_pac(krb5_context context,
-		    EncTicketPart *tkt,
-		    const krb5_data *data)
+                    EncTicketPart *tkt,
+                    const krb5_data *data)
 {
     AuthorizationDataElement ade;
     unsigned int i;
     krb5_error_code ret;
 
     ret = _kdc_tkt_add_if_relevant_ad(context, tkt, KRB5_AUTHDATA_WIN2K_PAC,
-				      data);
+                                      data);
     if (ret)
-	return ret;
+        return ret;
 
     heim_assert(tkt->authorization_data->len != 0, "No authorization_data!");
     ade = tkt->authorization_data->val[tkt->authorization_data->len - 1];
     for (i = 0; i < tkt->authorization_data->len - 1; i++) {
-	tkt->authorization_data->val[i + 1] = tkt->authorization_data->val[i];
+        tkt->authorization_data->val[i + 1] = tkt->authorization_data->val[i];
     }
     tkt->authorization_data->val[0] = ade;
 

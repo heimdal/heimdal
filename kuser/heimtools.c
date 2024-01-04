@@ -48,11 +48,11 @@ static void
 usage(int ret)
 {
     arg_printusage_i18n(args,
-			sizeof(args)/sizeof(*args),
-			N_("Usage: ", ""),
-			NULL,
-			"command ..",
-			getarg_i18n);
+                        sizeof(args)/sizeof(*args),
+                        N_("Usage: ", ""),
+                        NULL,
+                        "command ..",
+                        getarg_i18n);
     exit (ret);
 }
 
@@ -89,12 +89,12 @@ static int
 command_alias(const char *name)
 {
     const char *aliases[] = {
-	"kinit", "klist", "kswitch", "kgetcred", "kvno", "kdeltkt",
-	"kdestroy", "kcpytkt", NULL
+        "kinit", "klist", "kswitch", "kgetcred", "kvno", "kdeltkt",
+        "kdestroy", "kcpytkt", NULL
     }, **p = aliases;
 
     while (*p && strcmp(name, *p) != 0)
-	p++;
+        p++;
     return *p != NULL;
 }
 
@@ -114,9 +114,9 @@ main(int argc, char **argv)
 
     ret = krb5_init_context(&heimtools_context);
     if (ret == KRB5_CONFIG_BADFORMAT)
-	errx (1, "krb5_init_context failed to parse configuration file");
+        errx (1, "krb5_init_context failed to parse configuration file");
     else if (ret)
-	errx(1, "krb5_init_context failed: %d", ret);
+        errx(1, "krb5_init_context failed: %d", ret);
 
     /*
      * Support linking of heimtools to commands
@@ -124,40 +124,40 @@ main(int argc, char **argv)
 
     if (!command_alias(getprogname())) {
 
-	if (argc == 1) {
-	    sl_slc_help(commands, 0, NULL);
-	    return 1;
-	}
+        if (argc == 1) {
+            sl_slc_help(commands, 0, NULL);
+            return 1;
+        }
 
-	if(getarg(args, sizeof(args) / sizeof(args[0]), argc, argv, &optidx))
-	    usage(1);
+        if(getarg(args, sizeof(args) / sizeof(args[0]), argc, argv, &optidx))
+            usage(1);
 
-	if (help_flag)
-	    usage (0);
+        if (help_flag)
+            usage (0);
 
-	if(version_flag) {
-	    print_version(NULL);
-	    exit(0);
-	}
+        if(version_flag) {
+            print_version(NULL);
+            exit(0);
+        }
 
     } else {
-	argv[0] = rk_UNCONST(getprogname());
+        argv[0] = rk_UNCONST(getprogname());
     }
 
     argc -= optidx;
     argv += optidx;
 
     if (argc != 0) {
-	ret = sl_command(commands, argc, argv);
-	if(ret == -1)
-	    sl_did_you_mean(commands, argv[0]);
-	else if (ret == -2)
-	    ret = 0;
-	if(ret != 0)
-	    exit_status = 1;
+        ret = sl_command(commands, argc, argv);
+        if(ret == -1)
+            sl_did_you_mean(commands, argv[0]);
+        else if (ret == -2)
+            ret = 0;
+        if(ret != 0)
+            exit_status = 1;
     } else {
-	sl_slc_help(commands, argc, argv);
-	exit_status = 1;
+        sl_slc_help(commands, argc, argv);
+        exit_status = 1;
     }
 
     krb5_free_context(heimtools_context);

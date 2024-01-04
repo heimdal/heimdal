@@ -193,7 +193,7 @@ issuid(void)
     {
         unsigned long p = rk_getauxval(AT_EXECPATH);
         struct stat st;
-        
+
         if (p != 0 && *(const char *)p == '/' &&
             stat((const char *)p, &st) == 0) {
             if ((st.st_mode & S_ISUID) || (st.st_mode & S_ISGID)) {
@@ -263,11 +263,11 @@ issuid(void)
 
 #if defined(HAVE_GETUID) && defined(HAVE_GETEUID)
     if (getuid() != geteuid())
-	return we_are_suid = 1;
+        return we_are_suid = 1;
 #endif
 #if defined(HAVE_GETGID) && defined(HAVE_GETEGID)
     if (getgid() != getegid())
-	return we_are_suid = 1;
+        return we_are_suid = 1;
 #endif
 
     errno = save_errno;

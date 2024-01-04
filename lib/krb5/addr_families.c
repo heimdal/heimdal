@@ -40,7 +40,7 @@ struct addr_operations {
     krb5_error_code (*sockaddr2addr)(const struct sockaddr *, krb5_address *);
     krb5_error_code (*sockaddr2port)(const struct sockaddr *, int16_t *);
     void (*addr2sockaddr)(const krb5_address *, struct sockaddr *,
-			  krb5_socklen_t *sa_size, int port);
+                          krb5_socklen_t *sa_size, int port);
     void (*h_addr2sockaddr)(const char *, struct sockaddr *, krb5_socklen_t *, int);
     krb5_error_code (*h_addr2addr)(const char *, krb5_address *);
     krb5_boolean (*uninteresting)(const struct sockaddr *);
@@ -52,7 +52,7 @@ struct addr_operations {
     int (*free_addr)(krb5_context, krb5_address*);
     int (*copy_addr)(krb5_context, const krb5_address*, krb5_address*);
     int (*mask_boundary)(krb5_context, const krb5_address*, unsigned long,
-			 krb5_address*, krb5_address*);
+                         krb5_address*, krb5_address*);
 };
 
 /*
@@ -81,9 +81,9 @@ ipv4_sockaddr2port (const struct sockaddr *sa, int16_t *port)
 
 static void
 ipv4_addr2sockaddr (const krb5_address *a,
-		    struct sockaddr *sa,
-		    krb5_socklen_t *sa_size,
-		    int port)
+                    struct sockaddr *sa,
+                    krb5_socklen_t *sa_size,
+                    int port)
 {
     struct sockaddr_in tmp;
 
@@ -97,9 +97,9 @@ ipv4_addr2sockaddr (const krb5_address *a,
 
 static void
 ipv4_h_addr2sockaddr(const char *addr,
-		     struct sockaddr *sa,
-		     krb5_socklen_t *sa_size,
-		     int port)
+                     struct sockaddr *sa,
+                     krb5_socklen_t *sa_size,
+                     int port)
 {
     struct sockaddr_in tmp;
 
@@ -113,7 +113,7 @@ ipv4_h_addr2sockaddr(const char *addr,
 
 static krb5_error_code
 ipv4_h_addr2addr (const char *addr,
-		  krb5_address *a)
+                  krb5_address *a)
 {
     unsigned char buf[4];
 
@@ -132,7 +132,7 @@ ipv4_uninteresting (const struct sockaddr *sa)
     const struct sockaddr_in *sin4 = (const struct sockaddr_in *)sa;
 
     if (sin4->sin_addr.s_addr == INADDR_ANY)
-	return TRUE;
+        return TRUE;
 
     return FALSE;
 }
@@ -143,7 +143,7 @@ ipv4_is_loopback (const struct sockaddr *sa)
     const struct sockaddr_in *sin4 = (const struct sockaddr_in *)sa;
 
     if ((ntohl(sin4->sin_addr.s_addr) >> 24) == IN_LOOPBACKNET)
-	return TRUE;
+        return TRUE;
 
     return FALSE;
 }
@@ -179,34 +179,34 @@ ipv4_parse_addr (krb5_context context, const char *address, krb5_address *addr)
 
     p = strchr(address, ':');
     if(p) {
-	p++;
-	if(strncasecmp(address, "ip:", p - address) != 0 &&
-	   strncasecmp(address, "ip4:", p - address) != 0 &&
-	   strncasecmp(address, "ipv4:", p - address) != 0 &&
-	   strncasecmp(address, "inet:", p - address) != 0)
-	    return -1;
+        p++;
+        if(strncasecmp(address, "ip:", p - address) != 0 &&
+           strncasecmp(address, "ip4:", p - address) != 0 &&
+           strncasecmp(address, "ipv4:", p - address) != 0 &&
+           strncasecmp(address, "inet:", p - address) != 0)
+            return -1;
     } else
-	p = address;
+        p = address;
     if(inet_aton(p, &a) == 0)
-	return -1;
+        return -1;
     addr->addr_type = KRB5_ADDRESS_INET;
     if(krb5_data_alloc(&addr->address, 4) != 0)
-	return -1;
+        return -1;
     _krb5_put_int(addr->address.data, ntohl(a.s_addr), addr->address.length);
     return 0;
 }
 
 static int
 ipv4_mask_boundary(krb5_context context, const krb5_address *inaddr,
-		   unsigned long len, krb5_address *low, krb5_address *high)
+                   unsigned long len, krb5_address *low, krb5_address *high)
 {
     unsigned long ia;
     uint32_t l, h, m = 0xffffffff;
 
     if (len > 32) {
-	krb5_set_error_message(context, KRB5_PROG_ATYPE_NOSUPP,
-			       N_("IPv4 prefix too large (%ld)", "len"), len);
-	return KRB5_PROG_ATYPE_NOSUPP;
+        krb5_set_error_message(context, KRB5_PROG_ATYPE_NOSUPP,
+                               N_("IPv4 prefix too large (%ld)", "len"), len);
+        return KRB5_PROG_ATYPE_NOSUPP;
     }
     m = m << (32 - len);
 
@@ -217,13 +217,13 @@ ipv4_mask_boundary(krb5_context context, const krb5_address *inaddr,
 
     low->addr_type = KRB5_ADDRESS_INET;
     if(krb5_data_alloc(&low->address, 4) != 0)
-	return -1;
+        return -1;
     _krb5_put_int(low->address.data, l, low->address.length);
 
     high->addr_type = KRB5_ADDRESS_INET;
     if(krb5_data_alloc(&high->address, 4) != 0) {
-	krb5_free_address(context, low);
-	return -1;
+        krb5_free_address(context, low);
+        return -1;
     }
     _krb5_put_int(high->address.data, h, high->address.length);
 
@@ -243,9 +243,9 @@ ipv6_sockaddr2addr (const struct sockaddr *sa, krb5_address *a)
     const struct sockaddr_in6 *sin6 = (const struct sockaddr_in6 *)sa;
 
     if (IN6_IS_ADDR_V4MAPPED(&sin6->sin6_addr)) {
-	unsigned char buf[4];
+        unsigned char buf[4];
 
-	a->addr_type      = KRB5_ADDRESS_INET;
+        a->addr_type      = KRB5_ADDRESS_INET;
 #ifndef IN6_ADDR_V6_TO_V4
 #ifdef IN6_EXTRACT_V4ADDR
 #define IN6_ADDR_V6_TO_V4(x) (&IN6_EXTRACT_V4ADDR(x))
@@ -253,13 +253,13 @@ ipv6_sockaddr2addr (const struct sockaddr *sa, krb5_address *a)
 #define IN6_ADDR_V6_TO_V4(x) ((const struct in_addr *)&(x)->s6_addr[12])
 #endif
 #endif
-	memcpy (buf, IN6_ADDR_V6_TO_V4(&sin6->sin6_addr), 4);
-	return krb5_data_copy(&a->address, buf, 4);
+        memcpy (buf, IN6_ADDR_V6_TO_V4(&sin6->sin6_addr), 4);
+        return krb5_data_copy(&a->address, buf, 4);
     } else {
-	a->addr_type = KRB5_ADDRESS_INET6;
-	return krb5_data_copy(&a->address,
-			      &sin6->sin6_addr,
-			      sizeof(sin6->sin6_addr));
+        a->addr_type = KRB5_ADDRESS_INET6;
+        return krb5_data_copy(&a->address,
+                              &sin6->sin6_addr,
+                              sizeof(sin6->sin6_addr));
     }
 }
 
@@ -274,9 +274,9 @@ ipv6_sockaddr2port (const struct sockaddr *sa, int16_t *port)
 
 static void
 ipv6_addr2sockaddr (const krb5_address *a,
-		    struct sockaddr *sa,
-		    krb5_socklen_t *sa_size,
-		    int port)
+                    struct sockaddr *sa,
+                    krb5_socklen_t *sa_size,
+                    int port)
 {
     struct sockaddr_in6 tmp;
 
@@ -290,9 +290,9 @@ ipv6_addr2sockaddr (const krb5_address *a,
 
 static void
 ipv6_h_addr2sockaddr(const char *addr,
-		     struct sockaddr *sa,
-		     krb5_socklen_t *sa_size,
-		     int port)
+                     struct sockaddr *sa,
+                     krb5_socklen_t *sa_size,
+                     int port)
 {
     struct sockaddr_in6 tmp;
 
@@ -306,7 +306,7 @@ ipv6_h_addr2sockaddr(const char *addr,
 
 static krb5_error_code
 ipv6_h_addr2addr (const char *addr,
-		  krb5_address *a)
+                  krb5_address *a)
 {
     a->addr_type = KRB5_ADDRESS_INET6;
     return krb5_data_copy(&a->address, addr, sizeof(struct in6_addr));
@@ -323,7 +323,7 @@ ipv6_uninteresting (const struct sockaddr *sa)
     const struct in6_addr *in6 = (const struct in6_addr *)&sin6->sin6_addr;
 
     return IN6_IS_ADDR_LINKLOCAL(in6)
-	|| IN6_IS_ADDR_V4COMPAT(in6);
+        || IN6_IS_ADDR_V4COMPAT(in6);
 }
 
 static krb5_boolean
@@ -352,18 +352,18 @@ ipv6_print_addr (const krb5_address *addr, char *str, size_t len)
 {
     char buf[128], buf2[3];
     if(inet_ntop(AF_INET6, addr->address.data, buf, sizeof(buf)) == NULL)
-	{
-	    /* XXX this is pretty ugly, but better than abort() */
-	    size_t i;
-	    unsigned char *p = addr->address.data;
-	    buf[0] = '\0';
-	    for(i = 0; i < addr->address.length; i++) {
-		snprintf(buf2, sizeof(buf2), "%02x", p[i]);
-		if(i > 0 && (i & 1) == 0)
-		    strlcat(buf, ":", sizeof(buf));
-		strlcat(buf, buf2, sizeof(buf));
-	    }
-	}
+        {
+            /* XXX this is pretty ugly, but better than abort() */
+            size_t i;
+            unsigned char *p = addr->address.data;
+            buf[0] = '\0';
+            for(i = 0; i < addr->address.length; i++) {
+                snprintf(buf2, sizeof(buf2), "%02x", p[i]);
+                if(i > 0 && (i & 1) == 0)
+                    strlcat(buf, ":", sizeof(buf));
+                strlcat(buf, buf2, sizeof(buf));
+            }
+        }
     return snprintf(str, len, "IPv6:%s", buf);
 }
 
@@ -376,70 +376,70 @@ ipv6_parse_addr (krb5_context context, const char *address, krb5_address *addr)
 
     p = strchr(address, ':');
     if(p) {
-	p++;
-	if(strncasecmp(address, "ip6:", p - address) == 0 ||
-	   strncasecmp(address, "ipv6:", p - address) == 0 ||
-	   strncasecmp(address, "inet6:", p - address) == 0)
-	    address = p;
+        p++;
+        if(strncasecmp(address, "ip6:", p - address) == 0 ||
+           strncasecmp(address, "ipv6:", p - address) == 0 ||
+           strncasecmp(address, "inet6:", p - address) == 0)
+            address = p;
     }
 
     ret = inet_pton(AF_INET6, address, &in6.s6_addr);
     if(ret == 1) {
-	addr->addr_type = KRB5_ADDRESS_INET6;
-	ret = krb5_data_alloc(&addr->address, sizeof(in6.s6_addr));
-	if (ret)
-	    return -1;
-	memcpy(addr->address.data, in6.s6_addr, sizeof(in6.s6_addr));
-	return 0;
+        addr->addr_type = KRB5_ADDRESS_INET6;
+        ret = krb5_data_alloc(&addr->address, sizeof(in6.s6_addr));
+        if (ret)
+            return -1;
+        memcpy(addr->address.data, in6.s6_addr, sizeof(in6.s6_addr));
+        return 0;
     }
     return -1;
 }
 
 static int
 ipv6_mask_boundary(krb5_context context, const krb5_address *inaddr,
-		   unsigned long len, krb5_address *low, krb5_address *high)
+                   unsigned long len, krb5_address *low, krb5_address *high)
 {
     struct in6_addr addr, laddr, haddr;
     uint32_t m;
     int i, sub_len;
 
     if (len > 128) {
-	krb5_set_error_message(context, KRB5_PROG_ATYPE_NOSUPP,
-			       N_("IPv6 prefix too large (%ld)", "length"), len);
-	return KRB5_PROG_ATYPE_NOSUPP;
+        krb5_set_error_message(context, KRB5_PROG_ATYPE_NOSUPP,
+                               N_("IPv6 prefix too large (%ld)", "length"), len);
+        return KRB5_PROG_ATYPE_NOSUPP;
     }
 
     if (inaddr->address.length != sizeof(addr)) {
-	krb5_set_error_message(context, KRB5_PROG_ATYPE_NOSUPP,
-			       N_("IPv6 addr bad length", ""));
-	return KRB5_PROG_ATYPE_NOSUPP;
+        krb5_set_error_message(context, KRB5_PROG_ATYPE_NOSUPP,
+                               N_("IPv6 addr bad length", ""));
+        return KRB5_PROG_ATYPE_NOSUPP;
     }
 
     memcpy(&addr, inaddr->address.data, inaddr->address.length);
 
     for (i = 0; i < 16; i++) {
-	sub_len = min(8, len);
+        sub_len = min(8, len);
 
-	m = 0xff << (8 - sub_len);
+        m = 0xff << (8 - sub_len);
 
-	laddr.s6_addr[i] = addr.s6_addr[i] & m;
-	haddr.s6_addr[i] = (addr.s6_addr[i] & m) | ~m;
+        laddr.s6_addr[i] = addr.s6_addr[i] & m;
+        haddr.s6_addr[i] = (addr.s6_addr[i] & m) | ~m;
 
-	if (len > 8)
-	    len -= 8;
-	else
-	    len = 0;
+        if (len > 8)
+            len -= 8;
+        else
+            len = 0;
     }
 
     low->addr_type = KRB5_ADDRESS_INET6;
     if (krb5_data_alloc(&low->address, sizeof(laddr.s6_addr)) != 0)
-	return -1;
+        return -1;
     memcpy(low->address.data, laddr.s6_addr, sizeof(laddr.s6_addr));
 
     high->addr_type = KRB5_ADDRESS_INET6;
     if (krb5_data_alloc(&high->address, sizeof(haddr.s6_addr)) != 0) {
-	krb5_free_address(context, low);
-	return -1;
+        krb5_free_address(context, low);
+        return -1;
     }
     memcpy(high->address.data, haddr.s6_addr, sizeof(haddr.s6_addr));
 
@@ -454,7 +454,7 @@ ipv6_mask_boundary(krb5_context context, const krb5_address *inaddr,
  * table
  */
 
-#define KRB5_ADDRESS_ARANGE	(-100)
+#define KRB5_ADDRESS_ARANGE     (-100)
 
 struct arange {
     krb5_address low;
@@ -463,7 +463,7 @@ struct arange {
 
 static int
 arange_parse_addr (krb5_context context,
-		   const char *address, krb5_address *addr)
+                   const char *address, krb5_address *addr)
 {
     char buf[1024], *p;
     krb5_address low0, high0;
@@ -471,82 +471,82 @@ arange_parse_addr (krb5_context context,
     krb5_error_code ret;
 
     if(strncasecmp(address, "RANGE:", 6) != 0)
-	return -1;
+        return -1;
 
     address += 6;
 
     p = strrchr(address, '/');
     if (p) {
-	krb5_addresses addrmask;
-	char *q;
-	long num;
+        krb5_addresses addrmask;
+        char *q;
+        long num;
 
-	if (strlcpy(buf, address, sizeof(buf)) > sizeof(buf))
-	    return -1;
-	buf[p - address] = '\0';
-	ret = krb5_parse_address(context, buf, &addrmask);
-	if (ret)
-	    return ret;
-	if(addrmask.len != 1) {
-	    krb5_free_addresses(context, &addrmask);
-	    return -1;
-	}
+        if (strlcpy(buf, address, sizeof(buf)) > sizeof(buf))
+            return -1;
+        buf[p - address] = '\0';
+        ret = krb5_parse_address(context, buf, &addrmask);
+        if (ret)
+            return ret;
+        if(addrmask.len != 1) {
+            krb5_free_addresses(context, &addrmask);
+            return -1;
+        }
 
-	address += p - address + 1;
+        address += p - address + 1;
 
-	num = strtol(address, &q, 10);
-	if (q == address || *q != '\0' || num < 0) {
-	    krb5_free_addresses(context, &addrmask);
-	    return -1;
-	}
+        num = strtol(address, &q, 10);
+        if (q == address || *q != '\0' || num < 0) {
+            krb5_free_addresses(context, &addrmask);
+            return -1;
+        }
 
-	ret = krb5_address_prefixlen_boundary(context, &addrmask.val[0], num,
-					      &low0, &high0);
-	krb5_free_addresses(context, &addrmask);
-	if (ret)
-	    return ret;
+        ret = krb5_address_prefixlen_boundary(context, &addrmask.val[0], num,
+                                              &low0, &high0);
+        krb5_free_addresses(context, &addrmask);
+        if (ret)
+            return ret;
 
     } else {
-	krb5_addresses low, high;
+        krb5_addresses low, high;
 
-	strsep_copy(&address, "-", buf, sizeof(buf));
-	ret = krb5_parse_address(context, buf, &low);
-	if(ret)
-	    return ret;
-	if(low.len != 1) {
-	    krb5_free_addresses(context, &low);
-	    return -1;
-	}
+        strsep_copy(&address, "-", buf, sizeof(buf));
+        ret = krb5_parse_address(context, buf, &low);
+        if(ret)
+            return ret;
+        if(low.len != 1) {
+            krb5_free_addresses(context, &low);
+            return -1;
+        }
 
-	strsep_copy(&address, "-", buf, sizeof(buf));
-	ret = krb5_parse_address(context, buf, &high);
-	if(ret) {
-	    krb5_free_addresses(context, &low);
-	    return ret;
-	}
+        strsep_copy(&address, "-", buf, sizeof(buf));
+        ret = krb5_parse_address(context, buf, &high);
+        if(ret) {
+            krb5_free_addresses(context, &low);
+            return ret;
+        }
 
-	if(high.len != 1 || high.val[0].addr_type != low.val[0].addr_type) {
-	    krb5_free_addresses(context, &low);
-	    krb5_free_addresses(context, &high);
-	    return -1;
-	}
+        if(high.len != 1 || high.val[0].addr_type != low.val[0].addr_type) {
+            krb5_free_addresses(context, &low);
+            krb5_free_addresses(context, &high);
+            return -1;
+        }
 
-	ret = krb5_copy_address(context, &high.val[0], &high0);
-	if (ret == 0) {
-	    ret = krb5_copy_address(context, &low.val[0], &low0);
-	    if (ret)
-		krb5_free_address(context, &high0);
-	}
-	krb5_free_addresses(context, &low);
-	krb5_free_addresses(context, &high);
-	if (ret)
-	    return ret;
+        ret = krb5_copy_address(context, &high.val[0], &high0);
+        if (ret == 0) {
+            ret = krb5_copy_address(context, &low.val[0], &low0);
+            if (ret)
+                krb5_free_address(context, &high0);
+        }
+        krb5_free_addresses(context, &low);
+        krb5_free_addresses(context, &high);
+        if (ret)
+            return ret;
     }
 
     ret = krb5_data_alloc(&addr->address, sizeof(*a));
     if (ret) {
-	krb5_free_address(context, &low0);
-	krb5_free_address(context, &high0);
+        krb5_free_address(context, &low0);
+        krb5_free_address(context, &high0);
         return ret;
     }
 
@@ -554,11 +554,11 @@ arange_parse_addr (krb5_context context,
     a = addr->address.data;
 
     if(krb5_address_order(context, &low0, &high0) < 0) {
-	a->low = low0;
-	a->high = high0;
+        a->low = low0;
+        a->high = high0;
     } else {
-	a->low = high0;
-	a->high = low0;
+        a->low = high0;
+        a->high = low0;
     }
     return 0;
 }
@@ -577,7 +577,7 @@ arange_free (krb5_context context, krb5_address *addr)
 
 static int
 arange_copy (krb5_context context, const krb5_address *inaddr,
-	     krb5_address *outaddr)
+             krb5_address *outaddr)
 {
     krb5_error_code ret;
     struct arange *i, *o;
@@ -585,19 +585,19 @@ arange_copy (krb5_context context, const krb5_address *inaddr,
     outaddr->addr_type = KRB5_ADDRESS_ARANGE;
     ret = krb5_data_alloc(&outaddr->address, sizeof(*o));
     if(ret)
-	return ret;
+        return ret;
     i = inaddr->address.data;
     o = outaddr->address.data;
     ret = krb5_copy_address(context, &i->low, &o->low);
     if(ret) {
-	krb5_data_free(&outaddr->address);
-	return ret;
+        krb5_data_free(&outaddr->address);
+        return ret;
     }
     ret = krb5_copy_address(context, &i->high, &o->high);
     if(ret) {
-	krb5_free_address(context, &o->low);
-	krb5_data_free(&outaddr->address);
-	return ret;
+        krb5_free_address(context, &o->low);
+        krb5_data_free(&outaddr->address);
+        return ret;
     }
     return 0;
 }
@@ -614,28 +614,28 @@ arange_print_addr (const krb5_address *addr, char *str, size_t len)
     l = strlcpy(str, "RANGE:", len);
     ret_len = l;
     if (l > len)
-	l = len;
+        l = len;
     size = l;
 
     ret = krb5_print_address (&a->low, str + size, len - size, &l);
     if (ret)
-	return ret;
+        return ret;
     ret_len += l;
     if (len - size > l)
-	size += l;
+        size += l;
     else
-	size = len;
+        size = len;
 
     l = strlcat(str + size, "-", len - size);
     ret_len += l;
     if (len - size > l)
-	size += l;
+        size += l;
     else
-	size = len;
+        size = len;
 
     ret = krb5_print_address (&a->high, str + size, len - size, &l);
     if (ret)
-	return ret;
+        return ret;
     ret_len += l;
 
     return ret_len;
@@ -643,42 +643,42 @@ arange_print_addr (const krb5_address *addr, char *str, size_t len)
 
 static int
 arange_order_addr(krb5_context context,
-		  const krb5_address *addr1,
-		  const krb5_address *addr2)
+                  const krb5_address *addr1,
+                  const krb5_address *addr2)
 {
     int tmp1, tmp2, sign;
     struct arange *a;
     const krb5_address *a2;
 
     if(addr1->addr_type == KRB5_ADDRESS_ARANGE) {
-	a = addr1->address.data;
-	a2 = addr2;
-	sign = 1;
+        a = addr1->address.data;
+        a2 = addr2;
+        sign = 1;
     } else if(addr2->addr_type == KRB5_ADDRESS_ARANGE) {
-	a = addr2->address.data;
-	a2 = addr1;
-	sign = -1;
+        a = addr2->address.data;
+        a2 = addr1;
+        sign = -1;
     } else {
-	abort();
+        abort();
         UNREACHABLE(return 0);
     }
 
     if(a2->addr_type == KRB5_ADDRESS_ARANGE) {
-	struct arange *b = a2->address.data;
-	tmp1 = krb5_address_order(context, &a->low, &b->low);
-	if(tmp1 != 0)
-	    return sign * tmp1;
-	return sign * krb5_address_order(context, &a->high, &b->high);
+        struct arange *b = a2->address.data;
+        tmp1 = krb5_address_order(context, &a->low, &b->low);
+        if(tmp1 != 0)
+            return sign * tmp1;
+        return sign * krb5_address_order(context, &a->high, &b->high);
     } else if(a2->addr_type == a->low.addr_type) {
-	tmp1 = krb5_address_order(context, &a->low, a2);
-	if(tmp1 > 0)
-	    return sign;
-	tmp2 = krb5_address_order(context, &a->high, a2);
-	if(tmp2 < 0)
-	    return -sign;
-	return 0;
+        tmp1 = krb5_address_order(context, &a->low, a2);
+        if(tmp1 > 0)
+            return sign;
+        tmp2 = krb5_address_order(context, &a->high, a2);
+        if(tmp2 < 0)
+            return -sign;
+        return 0;
     } else {
-	return sign * (addr1->addr_type - addr2->addr_type);
+        return sign * (addr1->addr_type - addr2->addr_type);
     }
 }
 
@@ -707,106 +707,106 @@ addrport_print_addr (const krb5_address *addr, char *str, size_t len)
     krb5_ret_address(sp, &addr2);
     krb5_storage_free(sp);
     if(addr2.addr_type == KRB5_ADDRESS_IPPORT && addr2.address.length == 2) {
-	unsigned long value;
-	_krb5_get_int(addr2.address.data, &value, 2);
-	port = value;
+        unsigned long value;
+        _krb5_get_int(addr2.address.data, &value, 2);
+        port = value;
     }
     l = strlcpy(str, "ADDRPORT:", len);
     ret_len += l;
     if (len > l)
-	size += l;
+        size += l;
     else
-	size = len;
+        size = len;
 
     ret = krb5_print_address(&addr1, str + size, len - size, &l);
     if (ret)
-	return ret;
+        return ret;
     ret_len += l;
     if (len - size > l)
-	size += l;
+        size += l;
     else
-	size = len;
+        size = len;
 
     ret = snprintf(str + size, len - size, ",PORT=%u", port);
     if (ret < 0)
-	return EINVAL;
+        return EINVAL;
     ret_len += ret;
     return ret_len;
 }
 
 static const struct addr_operations at[] = {
     {
-	AF_INET,	KRB5_ADDRESS_INET, sizeof(struct sockaddr_in),
-	ipv4_sockaddr2addr,
-	ipv4_sockaddr2port,
-	ipv4_addr2sockaddr,
-	ipv4_h_addr2sockaddr,
-	ipv4_h_addr2addr,
-	ipv4_uninteresting,
-	ipv4_is_loopback,
-	ipv4_anyaddr,
-	ipv4_print_addr,
-	ipv4_parse_addr,
-	NULL,
-	NULL,
-	NULL,
+        AF_INET,        KRB5_ADDRESS_INET, sizeof(struct sockaddr_in),
+        ipv4_sockaddr2addr,
+        ipv4_sockaddr2port,
+        ipv4_addr2sockaddr,
+        ipv4_h_addr2sockaddr,
+        ipv4_h_addr2addr,
+        ipv4_uninteresting,
+        ipv4_is_loopback,
+        ipv4_anyaddr,
+        ipv4_print_addr,
+        ipv4_parse_addr,
+        NULL,
+        NULL,
+        NULL,
      ipv4_mask_boundary
     },
 #ifdef HAVE_IPV6
     {
-	AF_INET6,	KRB5_ADDRESS_INET6, sizeof(struct sockaddr_in6),
-	ipv6_sockaddr2addr,
-	ipv6_sockaddr2port,
-	ipv6_addr2sockaddr,
-	ipv6_h_addr2sockaddr,
-	ipv6_h_addr2addr,
-	ipv6_uninteresting,
-	ipv6_is_loopback,
-	ipv6_anyaddr,
-	ipv6_print_addr,
-	ipv6_parse_addr,
-	NULL,
-	NULL,
-	NULL,
-	ipv6_mask_boundary
+        AF_INET6,       KRB5_ADDRESS_INET6, sizeof(struct sockaddr_in6),
+        ipv6_sockaddr2addr,
+        ipv6_sockaddr2port,
+        ipv6_addr2sockaddr,
+        ipv6_h_addr2sockaddr,
+        ipv6_h_addr2addr,
+        ipv6_uninteresting,
+        ipv6_is_loopback,
+        ipv6_anyaddr,
+        ipv6_print_addr,
+        ipv6_parse_addr,
+        NULL,
+        NULL,
+        NULL,
+        ipv6_mask_boundary
     } ,
 #endif
 #ifndef HEIMDAL_SMALLER
     /* fake address type */
     {
-	KRB5_ADDRESS_ARANGE, KRB5_ADDRESS_ARANGE, sizeof(struct arange),
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	arange_print_addr,
-	arange_parse_addr,
-	arange_order_addr,
-	arange_free,
-	arange_copy,
-	NULL
+        KRB5_ADDRESS_ARANGE, KRB5_ADDRESS_ARANGE, sizeof(struct arange),
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        arange_print_addr,
+        arange_parse_addr,
+        arange_order_addr,
+        arange_free,
+        arange_copy,
+        NULL
     },
 #endif
     {
-	KRB5_ADDRESS_ADDRPORT, KRB5_ADDRESS_ADDRPORT, 0,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	addrport_print_addr,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+        KRB5_ADDRESS_ADDRPORT, KRB5_ADDRESS_ADDRPORT, 0,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        addrport_print_addr,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NULL
     }
 };
 
@@ -824,8 +824,8 @@ find_af(int af)
     size_t i;
 
     for (i = 0; i < num_addrs; i++) {
-	if (af == at[i].af)
-	    return &at[i];
+        if (af == at[i].af)
+            return &at[i];
     }
     return NULL;
 }
@@ -836,8 +836,8 @@ find_atype(krb5_address_type atype)
     size_t i;
 
     for (i = 0; i < num_addrs; i++) {
-	if (atype == at[i].atype)
-	    return &at[i];
+        if (atype == at[i].atype)
+            return &at[i];
     }
     return NULL;
 }
@@ -857,14 +857,14 @@ find_atype(krb5_address_type atype)
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_sockaddr2address (krb5_context context,
-		       const struct sockaddr *sa, krb5_address *addr)
+                       const struct sockaddr *sa, krb5_address *addr)
 {
     const struct addr_operations *a = find_af(sa->sa_family);
     if (a == NULL) {
-	krb5_set_error_message (context, KRB5_PROG_ATYPE_NOSUPP,
-				N_("Address family %d not supported", ""),
-				sa->sa_family);
-	return KRB5_PROG_ATYPE_NOSUPP;
+        krb5_set_error_message (context, KRB5_PROG_ATYPE_NOSUPP,
+                                N_("Address family %d not supported", ""),
+                                sa->sa_family);
+        return KRB5_PROG_ATYPE_NOSUPP;
     }
     return (*a->sockaddr2addr)(sa, addr);
 }
@@ -885,14 +885,14 @@ krb5_sockaddr2address (krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_sockaddr2port (krb5_context context,
-		    const struct sockaddr *sa, int16_t *port)
+                    const struct sockaddr *sa, int16_t *port)
 {
     const struct addr_operations *a = find_af(sa->sa_family);
     if (a == NULL) {
-	krb5_set_error_message (context, KRB5_PROG_ATYPE_NOSUPP,
-				N_("Address family %d not supported", ""),
-				sa->sa_family);
-	return KRB5_PROG_ATYPE_NOSUPP;
+        krb5_set_error_message (context, KRB5_PROG_ATYPE_NOSUPP,
+                                N_("Address family %d not supported", ""),
+                                sa->sa_family);
+        return KRB5_PROG_ATYPE_NOSUPP;
     }
     return (*a->sockaddr2port)(sa, port);
 }
@@ -920,26 +920,26 @@ krb5_sockaddr2port (krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_addr2sockaddr (krb5_context context,
-		    const krb5_address *addr,
-		    struct sockaddr *sa,
-		    krb5_socklen_t *sa_size,
-		    int port)
+                    const krb5_address *addr,
+                    struct sockaddr *sa,
+                    krb5_socklen_t *sa_size,
+                    int port)
 {
     const struct addr_operations *a = find_atype(addr->addr_type);
 
     if (a == NULL) {
-	krb5_set_error_message (context, KRB5_PROG_ATYPE_NOSUPP,
-				N_("Address type %d not supported",
-				   "krb5_address type"),
-				addr->addr_type);
-	return KRB5_PROG_ATYPE_NOSUPP;
+        krb5_set_error_message (context, KRB5_PROG_ATYPE_NOSUPP,
+                                N_("Address type %d not supported",
+                                   "krb5_address type"),
+                                addr->addr_type);
+        return KRB5_PROG_ATYPE_NOSUPP;
     }
     if (a->addr2sockaddr == NULL) {
-	krb5_set_error_message (context,
-				KRB5_PROG_ATYPE_NOSUPP,
-				N_("Can't convert address type %d to sockaddr", ""),
-				addr->addr_type);
-	return KRB5_PROG_ATYPE_NOSUPP;
+        krb5_set_error_message (context,
+                                KRB5_PROG_ATYPE_NOSUPP,
+                                N_("Can't convert address type %d to sockaddr", ""),
+                                addr->addr_type);
+        return KRB5_PROG_ATYPE_NOSUPP;
     }
     (*a->addr2sockaddr)(addr, sa, sa_size, port);
     return 0;
@@ -958,10 +958,10 @@ KRB5_LIB_FUNCTION size_t KRB5_LIB_CALL
 krb5_max_sockaddr_size (void)
 {
     if (max_sockaddr_size == 0) {
-	size_t i;
+        size_t i;
 
-	for (i = 0; i < num_addrs; i++)
-	    max_sockaddr_size = max(max_sockaddr_size, at[i].max_sockaddr_size);
+        for (i = 0; i < num_addrs; i++)
+            max_sockaddr_size = max(max_sockaddr_size, at[i].max_sockaddr_size);
     }
     return max_sockaddr_size;
 }
@@ -983,7 +983,7 @@ krb5_sockaddr_uninteresting(const struct sockaddr *sa)
 {
     const struct addr_operations *a = find_af(sa->sa_family);
     if (a == NULL || a->uninteresting == NULL)
-	return TRUE;
+        return TRUE;
     return (*a->uninteresting)(sa);
 }
 
@@ -992,7 +992,7 @@ krb5_sockaddr_is_loopback(const struct sockaddr *sa)
 {
     const struct addr_operations *a = find_af(sa->sa_family);
     if (a == NULL || a->is_loopback == NULL)
-	return TRUE;
+        return TRUE;
     return (*a->is_loopback)(sa);
 }
 
@@ -1017,16 +1017,16 @@ krb5_sockaddr_is_loopback(const struct sockaddr *sa)
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_h_addr2sockaddr (krb5_context context,
-		      int af,
-		      const char *addr, struct sockaddr *sa,
-		      krb5_socklen_t *sa_size,
-		      int port)
+                      int af,
+                      const char *addr, struct sockaddr *sa,
+                      krb5_socklen_t *sa_size,
+                      int port)
 {
     const struct addr_operations *a = find_af(af);
     if (a == NULL) {
-	krb5_set_error_message (context, KRB5_PROG_ATYPE_NOSUPP,
-				"Address family %d not supported", af);
-	return KRB5_PROG_ATYPE_NOSUPP;
+        krb5_set_error_message (context, KRB5_PROG_ATYPE_NOSUPP,
+                                "Address family %d not supported", af);
+        return KRB5_PROG_ATYPE_NOSUPP;
     }
     (*a->h_addr2sockaddr)(addr, sa, sa_size, port);
     return 0;
@@ -1048,14 +1048,14 @@ krb5_h_addr2sockaddr (krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_h_addr2addr (krb5_context context,
-		  int af,
-		  const char *haddr, krb5_address *addr)
+                  int af,
+                  const char *haddr, krb5_address *addr)
 {
     const struct addr_operations *a = find_af(af);
     if (a == NULL) {
-	krb5_set_error_message (context, KRB5_PROG_ATYPE_NOSUPP,
-				N_("Address family %d not supported", ""), af);
-	return KRB5_PROG_ATYPE_NOSUPP;
+        krb5_set_error_message (context, KRB5_PROG_ATYPE_NOSUPP,
+                                N_("Address family %d not supported", ""), af);
+        return KRB5_PROG_ATYPE_NOSUPP;
     }
     return (*a->h_addr2addr)(haddr, addr);
 }
@@ -1079,17 +1079,17 @@ krb5_h_addr2addr (krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_anyaddr (krb5_context context,
-	      int af,
-	      struct sockaddr *sa,
-	      krb5_socklen_t *sa_size,
-	      int port)
+              int af,
+              struct sockaddr *sa,
+              krb5_socklen_t *sa_size,
+              int port)
 {
     const struct addr_operations *a = find_af (af);
 
     if (a == NULL) {
-	krb5_set_error_message (context, KRB5_PROG_ATYPE_NOSUPP,
-				N_("Address family %d not supported", ""), af);
-	return KRB5_PROG_ATYPE_NOSUPP;
+        krb5_set_error_message (context, KRB5_PROG_ATYPE_NOSUPP,
+                                N_("Address family %d not supported", ""), af);
+        return KRB5_PROG_ATYPE_NOSUPP;
     }
 
     (*a->anyaddr)(sa, sa_size, port);
@@ -1114,38 +1114,38 @@ krb5_anyaddr (krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_print_address (const krb5_address *addr,
-		    char *str, size_t len, size_t *ret_len)
+                    char *str, size_t len, size_t *ret_len)
 {
     const struct addr_operations *a = find_atype(addr->addr_type);
     int ret;
 
     if (a == NULL || a->print_addr == NULL) {
-	char *s;
-	int l;
-	size_t i;
+        char *s;
+        int l;
+        size_t i;
 
-	s = str;
-	l = snprintf(s, len, "TYPE_%d:", addr->addr_type);
-	if (l < 0 || (size_t)l >= len)
-	    return EINVAL;
-	s += l;
-	len -= l;
-	for(i = 0; i < addr->address.length; i++) {
-	    l = snprintf(s, len, "%02x", ((char*)addr->address.data)[i]);
-	    if (l < 0 || (size_t)l >= len)
-		return EINVAL;
-	    len -= l;
-	    s += l;
-	}
-	if(ret_len != NULL)
-	    *ret_len = s - str;
-	return 0;
+        s = str;
+        l = snprintf(s, len, "TYPE_%d:", addr->addr_type);
+        if (l < 0 || (size_t)l >= len)
+            return EINVAL;
+        s += l;
+        len -= l;
+        for(i = 0; i < addr->address.length; i++) {
+            l = snprintf(s, len, "%02x", ((char*)addr->address.data)[i]);
+            if (l < 0 || (size_t)l >= len)
+                return EINVAL;
+            len -= l;
+            s += l;
+        }
+        if(ret_len != NULL)
+            *ret_len = s - str;
+        return 0;
     }
     ret = (*a->print_addr)(addr, str, len);
     if (ret < 0)
-	return EINVAL;
+        return EINVAL;
     if(ret_len != NULL)
-	*ret_len = ret;
+        *ret_len = ret;
     return 0;
 }
 
@@ -1160,16 +1160,16 @@ _krb5_parse_address_no_lookup(krb5_context context,
     addresses->val = NULL;
 
     for(i = 0; i < num_addrs; i++) {
-	if(at[i].parse_addr) {
-	    krb5_address addr;
-	    if((*at[i].parse_addr)(context, string, &addr) == 0) {
-		ALLOC_SEQ(addresses, 1);
-		if (addresses->val == NULL)
-		    return krb5_enomem(context);
-		addresses->val[0] = addr;
-		return 0;
-	    }
-	}
+        if(at[i].parse_addr) {
+            krb5_address addr;
+            if((*at[i].parse_addr)(context, string, &addr) == 0) {
+                ALLOC_SEQ(addresses, 1);
+                if (addresses->val == NULL)
+                    return krb5_enomem(context);
+                addresses->val[0] = addr;
+                return 0;
+            }
+        }
     }
 
     return -1;
@@ -1190,8 +1190,8 @@ _krb5_parse_address_no_lookup(krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_parse_address(krb5_context context,
-		   const char *string,
-		   krb5_addresses *addresses)
+                   const char *string,
+                   krb5_addresses *addresses)
 {
     krb5_error_code ret;
     int i, n;
@@ -1212,34 +1212,34 @@ krb5_parse_address(krb5_context context,
     hint.ai_family = AF_UNSPEC;
     error = getaddrinfo (string, NULL, &hint, &ai);
     if (error) {
-	krb5_error_code ret2;
-	save_errno = errno;
-	ret2 = krb5_eai_to_heim_errno(save_errno, error);
-	krb5_set_error_message (context, ret2, "%s: %s",
-				string, gai_strerror(error));
-	return ret2;
+        krb5_error_code ret2;
+        save_errno = errno;
+        ret2 = krb5_eai_to_heim_errno(save_errno, error);
+        krb5_set_error_message (context, ret2, "%s: %s",
+                                string, gai_strerror(error));
+        return ret2;
     }
 
     n = 0;
     for (a = ai; a != NULL; a = a->ai_next)
-	++n;
+        ++n;
 
     ALLOC_SEQ(addresses, n);
     if (addresses->val == NULL) {
-	freeaddrinfo(ai);
-	return krb5_enomem(context);
+        freeaddrinfo(ai);
+        return krb5_enomem(context);
     }
 
     addresses->len = 0;
     for (a = ai, i = 0; a != NULL; a = a->ai_next) {
-	if (krb5_sockaddr2address (context, a->ai_addr, &addresses->val[i]))
-	    continue;
-	if(krb5_address_search(context, &addresses->val[i], addresses)) {
-	    krb5_free_address(context, &addresses->val[i]);
-	    continue;
-	}
-	i++;
-	addresses->len = i;
+        if (krb5_sockaddr2address (context, a->ai_addr, &addresses->val[i]))
+            continue;
+        if(krb5_address_search(context, &addresses->val[i], addresses)) {
+            krb5_free_address(context, &addresses->val[i]);
+            continue;
+        }
+        i++;
+        addresses->len = i;
     }
     freeaddrinfo (ai);
     return 0;
@@ -1262,38 +1262,38 @@ krb5_parse_address(krb5_context context,
 
 KRB5_LIB_FUNCTION int KRB5_LIB_CALL
 krb5_address_order(krb5_context context,
-		   const krb5_address *addr1,
-		   const krb5_address *addr2)
+                   const krb5_address *addr1,
+                   const krb5_address *addr2)
 {
     /* this sucks; what if both addresses have order functions, which
        should we call? this works for now, though */
     const struct addr_operations *a;
     a = find_atype(addr1->addr_type);
     if(a == NULL) {
-	krb5_set_error_message (context, KRB5_PROG_ATYPE_NOSUPP,
-				N_("Address family %d not supported", ""),
-				addr1->addr_type);
-	return KRB5_PROG_ATYPE_NOSUPP;
+        krb5_set_error_message (context, KRB5_PROG_ATYPE_NOSUPP,
+                                N_("Address family %d not supported", ""),
+                                addr1->addr_type);
+        return KRB5_PROG_ATYPE_NOSUPP;
     }
     if(a->order_addr != NULL)
-	return (*a->order_addr)(context, addr1, addr2);
+        return (*a->order_addr)(context, addr1, addr2);
     a = find_atype(addr2->addr_type);
     if(a == NULL) {
-	krb5_set_error_message (context, KRB5_PROG_ATYPE_NOSUPP,
-				N_("Address family %d not supported", ""),
-				addr2->addr_type);
-	return KRB5_PROG_ATYPE_NOSUPP;
+        krb5_set_error_message (context, KRB5_PROG_ATYPE_NOSUPP,
+                                N_("Address family %d not supported", ""),
+                                addr2->addr_type);
+        return KRB5_PROG_ATYPE_NOSUPP;
     }
     if(a->order_addr != NULL)
-	return (*a->order_addr)(context, addr1, addr2);
+        return (*a->order_addr)(context, addr1, addr2);
 
     if(addr1->addr_type != addr2->addr_type)
-	return addr1->addr_type - addr2->addr_type;
+        return addr1->addr_type - addr2->addr_type;
     if(addr1->address.length != addr2->address.length)
-	return addr1->address.length - addr2->address.length;
+        return addr1->address.length - addr2->address.length;
     return memcmp (addr1->address.data,
-		   addr2->address.data,
-		   addr1->address.length);
+                   addr2->address.data,
+                   addr1->address.length);
 }
 
 /**
@@ -1311,8 +1311,8 @@ krb5_address_order(krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_boolean KRB5_LIB_CALL
 krb5_address_compare(krb5_context context,
-		     const krb5_address *addr1,
-		     const krb5_address *addr2)
+                     const krb5_address *addr1,
+                     const krb5_address *addr2)
 {
     return krb5_address_order (context, addr1, addr2) == 0;
 }
@@ -1332,14 +1332,14 @@ krb5_address_compare(krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_boolean KRB5_LIB_CALL
 krb5_address_search(krb5_context context,
-		    const krb5_address *addr,
-		    const krb5_addresses *addrlist)
+                    const krb5_address *addr,
+                    const krb5_addresses *addrlist)
 {
     size_t i;
 
     for (i = 0; i < addrlist->len; ++i)
-	if (krb5_address_compare (context, addr, &addrlist->val[i]))
-	    return TRUE;
+        if (krb5_address_compare (context, addr, &addrlist->val[i]))
+            return TRUE;
     return FALSE;
 }
 
@@ -1357,11 +1357,11 @@ krb5_address_search(krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_free_address(krb5_context context,
-		  krb5_address *address)
+                  krb5_address *address)
 {
     const struct addr_operations *a = find_atype (address->addr_type);
     if(a != NULL && a->free_addr != NULL)
-	return (*a->free_addr)(context, address);
+        return (*a->free_addr)(context, address);
     krb5_data_free (&address->address);
     memset(address, 0, sizeof(*address));
     return 0;
@@ -1381,7 +1381,7 @@ krb5_free_address(krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_free_addresses(krb5_context context,
-		    krb5_addresses *addresses)
+                    krb5_addresses *addresses)
 {
     free_HostAddresses(addresses);
     return 0;
@@ -1402,12 +1402,12 @@ krb5_free_addresses(krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_copy_address(krb5_context context,
-		  const krb5_address *inaddr,
-		  krb5_address *outaddr)
+                  const krb5_address *inaddr,
+                  krb5_address *outaddr)
 {
     const struct addr_operations *a = find_af (inaddr->addr_type);
     if(a != NULL && a->copy_addr != NULL)
-	return (*a->copy_addr)(context, inaddr, outaddr);
+        return (*a->copy_addr)(context, inaddr, outaddr);
     return copy_HostAddress(inaddr, outaddr);
 }
 
@@ -1426,15 +1426,15 @@ krb5_copy_address(krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_copy_addresses(krb5_context context,
-		    const krb5_addresses *inaddr,
-		    krb5_addresses *outaddr)
+                    const krb5_addresses *inaddr,
+                    krb5_addresses *outaddr)
 {
     size_t i;
     ALLOC_SEQ(outaddr, inaddr->len);
     if(inaddr->len > 0 && outaddr->val == NULL)
-	return krb5_enomem(context);
+        return krb5_enomem(context);
     for(i = 0; i < inaddr->len; i++)
-	krb5_copy_address(context, &inaddr->val[i], &outaddr->val[i]);
+        krb5_copy_address(context, &inaddr->val[i], &outaddr->val[i]);
     return 0;
 }
 
@@ -1453,28 +1453,28 @@ krb5_copy_addresses(krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_append_addresses(krb5_context context,
-		      krb5_addresses *dest,
-		      const krb5_addresses *source)
+                      krb5_addresses *dest,
+                      const krb5_addresses *source)
 {
     krb5_address *tmp;
     krb5_error_code ret;
     size_t i;
     if(source->len > 0) {
-	tmp = realloc(dest->val, (dest->len + source->len) * sizeof(*tmp));
-	if (tmp == NULL)
-	    return krb5_enomem(context);
-	dest->val = tmp;
-	for(i = 0; i < source->len; i++) {
-	    /* skip duplicates */
-	    if(krb5_address_search(context, &source->val[i], dest))
-		continue;
-	    ret = krb5_copy_address(context,
-				    &source->val[i],
-				    &dest->val[dest->len]);
-	    if(ret)
-		return ret;
-	    dest->len++;
-	}
+        tmp = realloc(dest->val, (dest->len + source->len) * sizeof(*tmp));
+        if (tmp == NULL)
+            return krb5_enomem(context);
+        dest->val = tmp;
+        for(i = 0; i < source->len; i++) {
+            /* skip duplicates */
+            if(krb5_address_search(context, &source->val[i], dest))
+                continue;
+            ret = krb5_copy_address(context,
+                                    &source->val[i],
+                                    &dest->val[dest->len]);
+            if(ret)
+                return ret;
+            dest->len++;
+        }
     }
     return 0;
 }
@@ -1494,7 +1494,7 @@ krb5_append_addresses(krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_make_addrport (krb5_context context,
-		    krb5_address **res, const krb5_address *addr, int16_t port)
+                    krb5_address **res, const krb5_address *addr, int16_t port)
 {
     krb5_error_code ret;
     size_t len = addr->address.length + 2 + 4 * 4;
@@ -1504,13 +1504,13 @@ krb5_make_addrport (krb5_context context,
 
     *res = malloc (sizeof(**res));
     if (*res == NULL)
-	return krb5_enomem(context);
+        return krb5_enomem(context);
     (*res)->addr_type = KRB5_ADDRESS_ADDRPORT;
     ret = krb5_data_alloc (&(*res)->address, len);
     if (ret) {
-	free (*res);
-	*res = NULL;
-	return krb5_enomem(context);
+        free (*res);
+        *res = NULL;
+        return krb5_enomem(context);
     }
     p = (*res)->address.data;
     *p++ = 0;
@@ -1558,17 +1558,17 @@ krb5_make_addrport (krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_address_prefixlen_boundary(krb5_context context,
-				const krb5_address *inaddr,
-				unsigned long prefixlen,
-				krb5_address *low,
-				krb5_address *high)
+                                const krb5_address *inaddr,
+                                unsigned long prefixlen,
+                                krb5_address *low,
+                                krb5_address *high)
 {
     const struct addr_operations *a = find_atype (inaddr->addr_type);
     if(a != NULL && a->mask_boundary != NULL)
-	return (*a->mask_boundary)(context, inaddr, prefixlen, low, high);
+        return (*a->mask_boundary)(context, inaddr, prefixlen, low, high);
     krb5_set_error_message(context, KRB5_PROG_ATYPE_NOSUPP,
-			   N_("Address family %d doesn't support "
-			      "address mask operation", ""),
-			   inaddr->addr_type);
+                           N_("Address family %d doesn't support "
+                              "address mask operation", ""),
+                           inaddr->addr_type);
     return KRB5_PROG_ATYPE_NOSUPP;
 }

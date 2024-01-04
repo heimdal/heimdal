@@ -46,11 +46,11 @@ hostent_find_fqdn (const struct hostent *he)
     const char **h;
 
     if (strchr (ret, '.') == NULL)
-	for (h = (const char **)he->h_aliases; *h != NULL; ++h) {
-	    if (strchr (*h, '.') != NULL) {
-		ret = *h;
-		break;
-	    }
-	}
+        for (h = (const char **)he->h_aliases; *h != NULL; ++h) {
+            if (strchr (*h, '.') != NULL) {
+                ret = *h;
+                break;
+            }
+        }
     return ret;
 }

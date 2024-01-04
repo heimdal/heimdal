@@ -87,9 +87,9 @@ struct _krb5_checksum_type _krb5_checksum_hmac_sha1_aes256 = {
 
 static krb5_error_code
 AES_SHA1_PRF(krb5_context context,
-	     krb5_crypto crypto,
-	     const krb5_data *in,
-	     krb5_data *out)
+             krb5_crypto crypto,
+             const krb5_data *in,
+             krb5_data *out)
 {
     struct _krb5_checksum_type *ct = crypto->et->checksum;
     struct krb5_crypto_iov iov[1];
@@ -100,40 +100,40 @@ AES_SHA1_PRF(krb5_context context,
     result.cksumtype = ct->type;
     ret = krb5_data_alloc(&result.checksum, ct->checksumsize);
     if (ret) {
-	krb5_set_error_message(context, ret, N_("malloc: out memory", ""));
-	return ret;
+        krb5_set_error_message(context, ret, N_("malloc: out memory", ""));
+        return ret;
     }
 
     iov[0].data = *in;
     iov[0].flags = KRB5_CRYPTO_TYPE_DATA;
     ret = (*ct->checksum)(context, crypto, NULL, 0, iov, 1, &result);
     if (ret) {
-	krb5_data_free(&result.checksum);
-	return ret;
+        krb5_data_free(&result.checksum);
+        return ret;
     }
 
     if (result.checksum.length < crypto->et->blocksize)
-	krb5_abortx(context, "internal prf error");
+        krb5_abortx(context, "internal prf error");
 
     derived = NULL;
     ret = krb5_derive_key(context, crypto->key.key,
-			  crypto->et->type, "prf", 3, &derived);
+                          crypto->et->type, "prf", 3, &derived);
     if (ret)
-	krb5_abortx(context, "krb5_derive_key");
+        krb5_abortx(context, "krb5_derive_key");
 
     ret = krb5_data_alloc(out, crypto->et->blocksize);
     if (ret)
-	krb5_abortx(context, "malloc failed");
+        krb5_abortx(context, "malloc failed");
 
     {
-	const EVP_CIPHER *c = (*crypto->et->keytype->evp)();
-	EVP_CIPHER_CTX ctx;
+        const EVP_CIPHER *c = (*crypto->et->keytype->evp)();
+        EVP_CIPHER_CTX ctx;
 
-	EVP_CIPHER_CTX_init(&ctx); /* ivec all zero */
-	EVP_CipherInit_ex(&ctx, c, NULL, derived->keyvalue.data, NULL, 1);
-	EVP_Cipher(&ctx, out->data, result.checksum.data,
-		   crypto->et->blocksize);
-	EVP_CIPHER_CTX_cleanup(&ctx);
+        EVP_CIPHER_CTX_init(&ctx); /* ivec all zero */
+        EVP_CipherInit_ex(&ctx, c, NULL, derived->keyvalue.data, NULL, 1);
+        EVP_Cipher(&ctx, out->data, result.checksum.data,
+                   crypto->et->blocksize);
+        EVP_CIPHER_CTX_cleanup(&ctx);
     }
 
     krb5_data_free(&result.checksum);

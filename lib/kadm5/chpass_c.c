@@ -37,11 +37,11 @@ RCSID("$Id$");
 
 kadm5_ret_t
 kadm5_c_chpass_principal(void *server_handle,
-			 krb5_principal princ,
-			 int keepold,
-			 int n_ks_tuple,
-			 krb5_key_salt_tuple *ks_tuple,
-			 const char *password)
+                         krb5_principal princ,
+                         int keepold,
+                         int n_ks_tuple,
+                         krb5_key_salt_tuple *ks_tuple,
+                         const char *password)
 {
     kadm5_client_context *context = server_handle;
     kadm5_ret_t ret;
@@ -60,47 +60,47 @@ kadm5_c_chpass_principal(void *server_handle,
 
     ret = _kadm5_connect(server_handle, 1 /* want_write */);
     if (ret)
-	return ret;
+        return ret;
 
     krb5_data_zero(&reply);
 
     sp = krb5_storage_from_mem(buf, sizeof(buf));
     if (sp == NULL) {
-	ret = krb5_enomem(context->context);
-	goto out_keep_error;
+        ret = krb5_enomem(context->context);
+        goto out_keep_error;
     }
     ret = krb5_store_int32(sp, kadm_chpass);
     if (ret)
-	goto out;
+        goto out;
     ret = krb5_store_principal(sp, princ);
     if (ret)
-	goto out;
+        goto out;
     ret = krb5_store_string(sp, password);
     if (ret)
-	goto out;
+        goto out;
     ret = krb5_store_int32(sp, keepold); /* extension */
     if (ret)
-	goto out;
+        goto out;
     ret = _kadm5_client_send(context, sp);
     if (ret)
-	goto out_keep_error;
+        goto out_keep_error;
     ret = _kadm5_client_recv(context, &reply);
     if (ret)
-	goto out_keep_error;
+        goto out_keep_error;
     krb5_storage_free(sp);
     sp = krb5_storage_from_data(&reply);
     if (sp == NULL) {
-	ret = krb5_enomem(context->context);
-	goto out_keep_error;
+        ret = krb5_enomem(context->context);
+        goto out_keep_error;
     }
     ret = krb5_ret_int32(sp, &tmp);
     if (ret == 0)
-	ret = tmp;
+        ret = tmp;
 
-  out:
+out:
     krb5_clear_error_message(context->context);
 
-  out_keep_error:
+out_keep_error:
     krb5_storage_free(sp);
     krb5_data_free(&reply);
     return ret;
@@ -108,10 +108,10 @@ kadm5_c_chpass_principal(void *server_handle,
 
 kadm5_ret_t
 kadm5_c_chpass_principal_with_key(void *server_handle,
-				  krb5_principal princ,
-				  int keepold,
-				  int n_key_data,
-				  krb5_key_data *key_data)
+                                  krb5_principal princ,
+                                  int keepold,
+                                  int n_key_data,
+                                  krb5_key_data *key_data)
 {
     kadm5_client_context *context = server_handle;
     kadm5_ret_t ret;
@@ -123,52 +123,52 @@ kadm5_c_chpass_principal_with_key(void *server_handle,
 
     ret = _kadm5_connect(server_handle, 1 /* want_write */);
     if (ret)
-	return ret;
+        return ret;
 
     krb5_data_zero(&reply);
 
     sp = krb5_storage_from_mem(buf, sizeof(buf));
     if (sp == NULL) {
-	ret = krb5_enomem(context->context);
-	goto out_keep_error;
+        ret = krb5_enomem(context->context);
+        goto out_keep_error;
     }
     ret = krb5_store_int32(sp, kadm_chpass_with_key);
     if (ret)
-	goto out;
+        goto out;
     ret = krb5_store_principal(sp, princ);
     if (ret)
-	goto out;
+        goto out;
     ret = krb5_store_int32(sp, n_key_data);
     if (ret)
-	goto out;
+        goto out;
     for (i = 0; i < n_key_data; ++i) {
-	ret = kadm5_store_key_data (sp, &key_data[i]);
-	if (ret)
-	    goto out;
+        ret = kadm5_store_key_data (sp, &key_data[i]);
+        if (ret)
+            goto out;
     }
     ret = krb5_store_int32(sp, keepold); /* extension */
     if (ret)
-	goto out;
+        goto out;
     ret = _kadm5_client_send(context, sp);
     if (ret)
-	goto out_keep_error;
+        goto out_keep_error;
     ret = _kadm5_client_recv(context, &reply);
     if (ret)
-	goto out_keep_error;
+        goto out_keep_error;
     krb5_storage_free(sp);
     sp = krb5_storage_from_data (&reply);
     if (sp == NULL) {
-	ret = krb5_enomem(context->context);
-	goto out_keep_error;
+        ret = krb5_enomem(context->context);
+        goto out_keep_error;
     }
     ret = krb5_ret_int32(sp, &tmp);
     if (ret == 0)
-	ret = tmp;
+        ret = tmp;
 
-  out:
+out:
     krb5_clear_error_message(context->context);
 
-  out_keep_error:
+out_keep_error:
     krb5_storage_free(sp);
     krb5_data_free(&reply);
     return ret;

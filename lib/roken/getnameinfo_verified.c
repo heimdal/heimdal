@@ -45,9 +45,9 @@
 
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 getnameinfo_verified(const struct sockaddr *sa, socklen_t salen,
-		     char *host, size_t hostlen,
-		     char *serv, size_t servlen,
-		     int flags)
+                     char *host, size_t hostlen,
+                     char *serv, size_t servlen,
+                     int flags)
 {
     int ret;
     struct addrinfo *ai, *a;
@@ -57,38 +57,38 @@ getnameinfo_verified(const struct sockaddr *sa, socklen_t salen,
     size_t sasize;
 
     if (host == NULL)
-	return EAI_NONAME;
+        return EAI_NONAME;
 
     if (serv == NULL) {
-	serv = servbuf;
-	servlen = sizeof(servbuf);
+        serv = servbuf;
+        servlen = sizeof(servbuf);
     }
 
     ret = getnameinfo (sa, salen, host, hostlen, serv, servlen,
-		       flags | NI_NUMERICSERV);
+                       flags | NI_NUMERICSERV);
     if (ret)
-	goto fail;
+        goto fail;
 
     memset (&hints, 0, sizeof(hints));
     hints.ai_socktype = SOCK_STREAM;
     ret = getaddrinfo (host, serv, &hints, &ai);
     if (ret)
-	goto fail;
+        goto fail;
 
     saaddr = socket_get_address(sa);
     sasize = socket_addr_size(sa);
     for (a = ai; a != NULL; a = a->ai_next) {
-	if (sasize == socket_addr_size(a->ai_addr) &&
-	    memcmp(saaddr, socket_get_address(a->ai_addr), sasize) == 0) {
-	    freeaddrinfo (ai);
-	    return 0;
-	}
+        if (sasize == socket_addr_size(a->ai_addr) &&
+            memcmp(saaddr, socket_get_address(a->ai_addr), sasize) == 0) {
+            freeaddrinfo (ai);
+            return 0;
+        }
     }
     freeaddrinfo (ai);
- fail:
+fail:
     if (flags & NI_NAMEREQD)
-	return EAI_NONAME;
+        return EAI_NONAME;
     ret = getnameinfo (sa, salen, host, hostlen, serv, servlen,
-		       flags | NI_NUMERICSERV | NI_NUMERICHOST);
+                       flags | NI_NUMERICSERV | NI_NUMERICHOST);
     return ret;
 }

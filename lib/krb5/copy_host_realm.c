@@ -48,25 +48,25 @@
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_copy_host_realm(krb5_context context,
-		     const krb5_realm *from,
-		     krb5_realm **to)
+                     const krb5_realm *from,
+                     krb5_realm **to)
 {
     unsigned int n, i;
     const krb5_realm *p;
 
     for (n = 1, p = from; *p != NULL; ++p)
-	++n;
+        ++n;
 
     *to = calloc (n, sizeof(**to));
     if (*to == NULL)
-	return krb5_enomem(context);
+        return krb5_enomem(context);
 
     for (i = 0, p = from; *p != NULL; ++p, ++i) {
-	(*to)[i] = strdup(*p);
-	if ((*to)[i] == NULL) {
-	    krb5_free_host_realm (context, *to);
-	    return krb5_enomem(context);
-	}
+        (*to)[i] = strdup(*p);
+        if ((*to)[i] == NULL) {
+            krb5_free_host_realm (context, *to);
+            return krb5_enomem(context);
+        }
     }
     return 0;
 }

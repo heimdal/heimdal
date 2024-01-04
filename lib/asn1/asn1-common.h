@@ -10,8 +10,8 @@
 #ifndef __HEIM_BASE_DATA__
 #define __HEIM_BASE_DATA__ 1
 struct heim_base_data {
-	size_t length;
-	void *data;
+    size_t length;
+    void *data;
 };
 #endif
 

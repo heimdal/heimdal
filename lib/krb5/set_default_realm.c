@@ -44,11 +44,11 @@ string_to_list (krb5_context context, const char *s, krb5_realm **list)
 
     *list = malloc (2 * sizeof(**list));
     if (*list == NULL)
-	return krb5_enomem(context);
+        return krb5_enomem(context);
     (*list)[0] = strdup (s);
     if ((*list)[0] == NULL) {
-	free (*list);
-	return krb5_enomem(context);
+        free (*list);
+        return krb5_enomem(context);
     }
     (*list)[1] = NULL;
     return 0;
@@ -62,23 +62,23 @@ string_to_list (krb5_context context, const char *s, krb5_realm **list)
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_set_default_realm(krb5_context context,
-		       const char *realm)
+                       const char *realm)
 {
     krb5_error_code ret = 0;
     krb5_realm *realms = NULL;
 
     if (realm == NULL) {
-	realms = krb5_config_get_strings (context, NULL,
-					  "libdefaults",
-					  "default_realm",
-					  NULL);
-	if (realms == NULL)
-	    ret = krb5_get_host_realm(context, NULL, &realms);
+        realms = krb5_config_get_strings (context, NULL,
+                                          "libdefaults",
+                                          "default_realm",
+                                          NULL);
+        if (realms == NULL)
+            ret = krb5_get_host_realm(context, NULL, &realms);
     } else {
-	ret = string_to_list (context, realm, &realms);
+        ret = string_to_list (context, realm, &realms);
     }
     if (ret)
-	return ret;
+        return ret;
     krb5_free_host_realm (context, context->default_realms);
     context->default_realms = realms;
     return 0;

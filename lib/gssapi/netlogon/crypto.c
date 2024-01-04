@@ -157,15 +157,15 @@ _netlogon_decode_NL_AUTH_SIGNATURE(const uint8_t *ptr,
 
     /* Validate signature algorithm is known and matches enctype */
     switch (sig->SignatureAlgorithm) {
-    case NL_SIGN_ALG_HMAC_MD5:
-        cksumlen = NL_AUTH_SIGNATURE_LENGTH;
-        break;
-    case NL_SIGN_ALG_SHA256:
-        cksumlen = NL_AUTH_SHA2_SIGNATURE_LENGTH;
-        break;
-    default:
-        return EINVAL;
-        break;
+        case NL_SIGN_ALG_HMAC_MD5:
+            cksumlen = NL_AUTH_SIGNATURE_LENGTH;
+            break;
+        case NL_SIGN_ALG_SHA256:
+            cksumlen = NL_AUTH_SHA2_SIGNATURE_LENGTH;
+            break;
+        default:
+            return EINVAL;
+            break;
     }
 
     if (sig->SealAlgorithm == NL_SEAL_ALG_NONE)
@@ -308,13 +308,13 @@ _netlogon_seal(gssnetlogon_ctx ctx,
         gss_iov_buffer_t iovp = &iov[i];
 
         switch (GSS_IOV_BUFFER_TYPE(iovp->type)) {
-        case GSS_IOV_BUFFER_TYPE_DATA:
-        case GSS_IOV_BUFFER_TYPE_PADDING:
-            EVP_Cipher(&sealkey, iovp->buffer.value, iovp->buffer.value,
-                       iovp->buffer.length);
-            break;
-        default:
-            break;
+            case GSS_IOV_BUFFER_TYPE_DATA:
+            case GSS_IOV_BUFFER_TYPE_PADDING:
+                EVP_Cipher(&sealkey, iovp->buffer.value, iovp->buffer.value,
+                           iovp->buffer.length);
+                break;
+            default:
+                break;
         }
     }
 
@@ -369,13 +369,13 @@ _netlogon_digest_md5(gssnetlogon_ctx ctx,
         gss_iov_buffer_t iovp = &iov[i];
 
         switch (GSS_IOV_BUFFER_TYPE(iovp->type)) {
-        case GSS_IOV_BUFFER_TYPE_DATA:
-        case GSS_IOV_BUFFER_TYPE_PADDING:
-        case GSS_IOV_BUFFER_TYPE_SIGN_ONLY:
-            EVP_DigestUpdate(md5, iovp->buffer.value, iovp->buffer.length);
-            break;
-        default:
-            break;
+            case GSS_IOV_BUFFER_TYPE_DATA:
+            case GSS_IOV_BUFFER_TYPE_PADDING:
+            case GSS_IOV_BUFFER_TYPE_SIGN_ONLY:
+                EVP_DigestUpdate(md5, iovp->buffer.value, iovp->buffer.length);
+                break;
+            default:
+                break;
         }
     }
 
@@ -421,13 +421,13 @@ _netlogon_digest_sha256(gssnetlogon_ctx ctx,
         gss_iov_buffer_t iovp = &iov[i];
 
         switch (GSS_IOV_BUFFER_TYPE(iovp->type)) {
-        case GSS_IOV_BUFFER_TYPE_DATA:
-        case GSS_IOV_BUFFER_TYPE_PADDING:
-        case GSS_IOV_BUFFER_TYPE_SIGN_ONLY:
-            HMAC_Update(&hmac, iovp->buffer.value, iovp->buffer.length);
-            break;
-        default:
-            break;
+            case GSS_IOV_BUFFER_TYPE_DATA:
+            case GSS_IOV_BUFFER_TYPE_PADDING:
+            case GSS_IOV_BUFFER_TYPE_SIGN_ONLY:
+                HMAC_Update(&hmac, iovp->buffer.value, iovp->buffer.length);
+                break;
+            default:
+                break;
         }
     }
 
@@ -613,12 +613,12 @@ _netlogon_unwrap_iov(OM_uint32 *minor_status,
 
 OM_uint32
 _netlogon_wrap_iov_length(OM_uint32 * minor_status,
-        	          gss_ctx_id_t context_handle,
-        	          int conf_req_flag,
-        	          gss_qop_t qop_req,
-        	          int *conf_state,
-        	          gss_iov_buffer_desc *iov,
-        	          int iov_count)
+                          gss_ctx_id_t context_handle,
+                          int conf_req_flag,
+                          gss_qop_t qop_req,
+                          int *conf_state,
+                          gss_iov_buffer_desc *iov,
+                          int iov_count)
 {
     OM_uint32 ret;
     gss_iov_buffer_t iovp;
@@ -657,12 +657,12 @@ _netlogon_wrap_iov_length(OM_uint32 * minor_status,
 }
 
 OM_uint32 _netlogon_get_mic
-           (OM_uint32 * minor_status,
-            gss_const_ctx_id_t context_handle,
-            gss_qop_t qop_req,
-            const gss_buffer_t message_buffer,
-            gss_buffer_t message_token
-           )
+                           (OM_uint32 * minor_status,
+                            gss_const_ctx_id_t context_handle,
+                            gss_qop_t qop_req,
+                            const gss_buffer_t message_buffer,
+                            gss_buffer_t message_token
+                           )
 {
     gss_iov_buffer_desc iov[2];
     OM_uint32 ret;
@@ -683,12 +683,12 @@ OM_uint32 _netlogon_get_mic
 
 OM_uint32
 _netlogon_verify_mic
-           (OM_uint32 * minor_status,
-            gss_const_ctx_id_t context_handle,
-            const gss_buffer_t message_buffer,
-            const gss_buffer_t token_buffer,
-            gss_qop_t * qop_state
-            )
+                    (OM_uint32 * minor_status,
+                     gss_const_ctx_id_t context_handle,
+                     const gss_buffer_t message_buffer,
+                     const gss_buffer_t token_buffer,
+                     gss_qop_t * qop_state
+                     )
 {
     gss_iov_buffer_desc iov[2];
 
@@ -703,13 +703,13 @@ _netlogon_verify_mic
 
 OM_uint32
 _netlogon_wrap_size_limit (
-            OM_uint32 * minor_status,
-            gss_const_ctx_id_t context_handle,
-            int conf_req_flag,
-            gss_qop_t qop_req,
-            OM_uint32 req_output_size,
-            OM_uint32 *max_input_size
-           )
+                           OM_uint32 * minor_status,
+                           gss_const_ctx_id_t context_handle,
+                           int conf_req_flag,
+                           gss_qop_t qop_req,
+                           OM_uint32 req_output_size,
+                           OM_uint32 *max_input_size
+                          )
 {
     gss_iov_buffer_desc iov[1];
     OM_uint32 ret;

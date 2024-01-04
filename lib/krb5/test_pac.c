@@ -39,45 +39,45 @@
  */
 
 static const unsigned char saved_pac[] = {
-	0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0xd8, 0x01, 0x00, 0x00,
-	0x48, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0a, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00,
-	0x20, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00, 0x14, 0x00, 0x00, 0x00,
-	0x40, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x07, 0x00, 0x00, 0x00, 0x14, 0x00, 0x00, 0x00,
-	0x58, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x10, 0x08, 0x00, 0xcc, 0xcc, 0xcc, 0xcc,
-	0xc8, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x30, 0xdf, 0xa6, 0xcb,
-	0x4f, 0x7d, 0xc5, 0x01, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7f, 0xff, 0xff, 0xff, 0xff,
-	0xff, 0xff, 0xff, 0x7f, 0xc0, 0x3c, 0x4e, 0x59, 0x62, 0x73, 0xc5, 0x01, 0xc0, 0x3c, 0x4e, 0x59,
-	0x62, 0x73, 0xc5, 0x01, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7f, 0x16, 0x00, 0x16, 0x00,
-	0x04, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x08, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x0c, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x14, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x18, 0x00, 0x02, 0x00, 0x65, 0x00, 0x00, 0x00,
-	0xed, 0x03, 0x00, 0x00, 0x04, 0x02, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x1c, 0x00, 0x02, 0x00,
-	0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x14, 0x00, 0x16, 0x00, 0x20, 0x00, 0x02, 0x00, 0x16, 0x00, 0x18, 0x00,
-	0x24, 0x00, 0x02, 0x00, 0x28, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x21, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x01, 0x00, 0x00, 0x00, 0x2c, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x0b, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0b, 0x00, 0x00, 0x00,
-	0x57, 0x00, 0x32, 0x00, 0x30, 0x00, 0x30, 0x00, 0x33, 0x00, 0x46, 0x00, 0x49, 0x00, 0x4e, 0x00,
-	0x41, 0x00, 0x4c, 0x00, 0x24, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x04, 0x02, 0x00, 0x00, 0x07, 0x00, 0x00, 0x00,
-	0x0b, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0a, 0x00, 0x00, 0x00, 0x57, 0x00, 0x32, 0x00,
-	0x30, 0x00, 0x30, 0x00, 0x33, 0x00, 0x46, 0x00, 0x49, 0x00, 0x4e, 0x00, 0x41, 0x00, 0x4c, 0x00,
-	0x0c, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0b, 0x00, 0x00, 0x00, 0x57, 0x00, 0x49, 0x00,
-	0x4e, 0x00, 0x32, 0x00, 0x4b, 0x00, 0x33, 0x00, 0x54, 0x00, 0x48, 0x00, 0x49, 0x00, 0x4e, 0x00,
-	0x4b, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x01, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x05,
-	0x15, 0x00, 0x00, 0x00, 0x11, 0x2f, 0xaf, 0xb5, 0x90, 0x04, 0x1b, 0xec, 0x50, 0x3b, 0xec, 0xdc,
-	0x01, 0x00, 0x00, 0x00, 0x30, 0x00, 0x02, 0x00, 0x07, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
-	0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x05, 0x09, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x80, 0x66, 0x28, 0xea, 0x37, 0x80, 0xc5, 0x01, 0x16, 0x00, 0x77, 0x00, 0x32, 0x00, 0x30, 0x00,
-	0x30, 0x00, 0x33, 0x00, 0x66, 0x00, 0x69, 0x00, 0x6e, 0x00, 0x61, 0x00, 0x6c, 0x00, 0x24, 0x00,
-	0x76, 0xff, 0xff, 0xff, 0x37, 0xd5, 0xb0, 0xf7, 0x24, 0xf0, 0xd6, 0xd4, 0xec, 0x09, 0x86, 0x5a,
-	0xa0, 0xe8, 0xc3, 0xa9, 0x00, 0x00, 0x00, 0x00, 0x76, 0xff, 0xff, 0xff, 0xb4, 0xd8, 0xb8, 0xfe,
-	0x83, 0xb3, 0x13, 0x3f, 0xfc, 0x5c, 0x41, 0xad, 0xe2, 0x64, 0x83, 0xe0, 0x00, 0x00, 0x00, 0x00
+    0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0xd8, 0x01, 0x00, 0x00,
+    0x48, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0a, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00,
+    0x20, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00, 0x14, 0x00, 0x00, 0x00,
+    0x40, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x07, 0x00, 0x00, 0x00, 0x14, 0x00, 0x00, 0x00,
+    0x58, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x10, 0x08, 0x00, 0xcc, 0xcc, 0xcc, 0xcc,
+    0xc8, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x30, 0xdf, 0xa6, 0xcb,
+    0x4f, 0x7d, 0xc5, 0x01, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7f, 0xff, 0xff, 0xff, 0xff,
+    0xff, 0xff, 0xff, 0x7f, 0xc0, 0x3c, 0x4e, 0x59, 0x62, 0x73, 0xc5, 0x01, 0xc0, 0x3c, 0x4e, 0x59,
+    0x62, 0x73, 0xc5, 0x01, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7f, 0x16, 0x00, 0x16, 0x00,
+    0x04, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x08, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x0c, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x14, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x18, 0x00, 0x02, 0x00, 0x65, 0x00, 0x00, 0x00,
+    0xed, 0x03, 0x00, 0x00, 0x04, 0x02, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x1c, 0x00, 0x02, 0x00,
+    0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x14, 0x00, 0x16, 0x00, 0x20, 0x00, 0x02, 0x00, 0x16, 0x00, 0x18, 0x00,
+    0x24, 0x00, 0x02, 0x00, 0x28, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x21, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x01, 0x00, 0x00, 0x00, 0x2c, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x0b, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0b, 0x00, 0x00, 0x00,
+    0x57, 0x00, 0x32, 0x00, 0x30, 0x00, 0x30, 0x00, 0x33, 0x00, 0x46, 0x00, 0x49, 0x00, 0x4e, 0x00,
+    0x41, 0x00, 0x4c, 0x00, 0x24, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x04, 0x02, 0x00, 0x00, 0x07, 0x00, 0x00, 0x00,
+    0x0b, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0a, 0x00, 0x00, 0x00, 0x57, 0x00, 0x32, 0x00,
+    0x30, 0x00, 0x30, 0x00, 0x33, 0x00, 0x46, 0x00, 0x49, 0x00, 0x4e, 0x00, 0x41, 0x00, 0x4c, 0x00,
+    0x0c, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0b, 0x00, 0x00, 0x00, 0x57, 0x00, 0x49, 0x00,
+    0x4e, 0x00, 0x32, 0x00, 0x4b, 0x00, 0x33, 0x00, 0x54, 0x00, 0x48, 0x00, 0x49, 0x00, 0x4e, 0x00,
+    0x4b, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x01, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x05,
+    0x15, 0x00, 0x00, 0x00, 0x11, 0x2f, 0xaf, 0xb5, 0x90, 0x04, 0x1b, 0xec, 0x50, 0x3b, 0xec, 0xdc,
+    0x01, 0x00, 0x00, 0x00, 0x30, 0x00, 0x02, 0x00, 0x07, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
+    0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x05, 0x09, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x80, 0x66, 0x28, 0xea, 0x37, 0x80, 0xc5, 0x01, 0x16, 0x00, 0x77, 0x00, 0x32, 0x00, 0x30, 0x00,
+    0x30, 0x00, 0x33, 0x00, 0x66, 0x00, 0x69, 0x00, 0x6e, 0x00, 0x61, 0x00, 0x6c, 0x00, 0x24, 0x00,
+    0x76, 0xff, 0xff, 0xff, 0x37, 0xd5, 0xb0, 0xf7, 0x24, 0xf0, 0xd6, 0xd4, 0xec, 0x09, 0x86, 0x5a,
+    0xa0, 0xe8, 0xc3, 0xa9, 0x00, 0x00, 0x00, 0x00, 0x76, 0xff, 0xff, 0xff, 0xb4, 0xd8, 0xb8, 0xfe,
+    0x83, 0xb3, 0x13, 0x3f, 0xfc, 0x5c, 0x41, 0xad, 0xe2, 0x64, 0x83, 0xe0, 0x00, 0x00, 0x00, 0x00
 };
 
 static int type_1_length = 472;
@@ -827,12 +827,12 @@ static krb5_boolean
 is_krbtgt(const PrincipalName *p)
 {
     return (p->name_string.len == 2 &&
-	    strcmp(p->name_string.val[0], KRB5_TGS_NAME) == 0);
+            strcmp(p->name_string.val[0], KRB5_TGS_NAME) == 0);
 }
 
 static void
 check_ticket_signature(krb5_context context,
-		       const struct test_pac_ticket *tkt)
+                       const struct test_pac_ticket *tkt)
 {
     krb5_error_code ret;
     krb5_crypto crypto;
@@ -848,43 +848,43 @@ check_ticket_signature(krb5_context context,
 
     ret = decode_Ticket(tkt->ticket, tkt->ticket_len, &ticket, NULL);
     if (ret)
-	t_err(context, tkt->name, "decode_Ticket", ret);
+        t_err(context, tkt->name, "decode_Ticket", ret);
 
     ret = krb5_crypto_init(context, tkt->key, tkt->key->keytype, &crypto);
     if (ret)
-	t_err(context, tkt->name, "krb5_crypto_init", ret);
+        t_err(context, tkt->name, "krb5_crypto_init", ret);
 
     ret = krb5_decrypt_EncryptedData(context,
-				     crypto,
-				     KRB5_KU_TICKET,
-				     &ticket.enc_part,
-				     &data);
+                                     crypto,
+                                     KRB5_KU_TICKET,
+                                     &ticket.enc_part,
+                                     &data);
     if (ret)
-	t_err(context, tkt->name, "krb5_decrypt_EncryptedData", ret);
+        t_err(context, tkt->name, "krb5_decrypt_EncryptedData", ret);
 
     ret = decode_EncTicketPart(data.data, data.length, &et, NULL);
     if (ret)
-	t_err(context, tkt->name, "decode_EncTicketPart", ret);
+        t_err(context, tkt->name, "decode_EncTicketPart", ret);
 
     ret = _krb5_principalname2krb5_principal(context, &client, et.cname,
-					     et.crealm);
+                                             et.crealm);
     if (ret)
-	t_err(context, tkt->name, "_krb5_principalname2krb5_principal", ret);
+        t_err(context, tkt->name, "_krb5_principalname2krb5_principal", ret);
 
     ret = _krb5_kdc_pac_ticket_parse(context, &et, &signedticket, &pac);
     if (ret)
-	t_err(context, tkt->name, "_krb5_kdc_pac_ticket_parse", ret);
+        t_err(context, tkt->name, "_krb5_kdc_pac_ticket_parse", ret);
 
     heim_assert(!is_krbtgt(&ticket.sname) == !!signedticket, "ticket-signature");
 
     ret = krb5_pac_verify(context, pac, et.authtime, client,
-			  tkt->key, tkt->kdc_key);
+                          tkt->key, tkt->kdc_key);
     if (ret)
-	t_err(context, tkt->name, "krb5_pac_verify ticket-sig", ret);
+        t_err(context, tkt->name, "krb5_pac_verify ticket-sig", ret);
 
     ret = krb5_pac_get_kdc_checksum_info(context, pac, &cstype, &rodc_id);
     if (ret)
-	t_err(context, tkt->name, "krb5_pac_get_kdc_checksum_info", ret);
+        t_err(context, tkt->name, "krb5_pac_get_kdc_checksum_info", ret);
 
     heim_assert(cstype == CKSUMTYPE_HMAC_MD5, "Wrong checksum type");
     heim_assert(rodc_id == tkt->rodc_id, "Wrong RODCIdentifier");
@@ -892,21 +892,21 @@ check_ticket_signature(krb5_context context,
     /* Try to resign the PAC */
     ret = copy_AuthorizationDataElement(&et.authorization_data->val[0], &ad);
     if (ret)
-	t_err(context, tkt->name, "remove_AuthorizationData", ret);
+        t_err(context, tkt->name, "remove_AuthorizationData", ret);
     orig_pac_ad = ad.ad_data;
 
     ret = remove_AuthorizationData(et.authorization_data, 0);
     if (ret)
-	t_err(context, tkt->name, "remove_AuthorizationData", ret);
+        t_err(context, tkt->name, "remove_AuthorizationData", ret);
 
     ret = _krb5_kdc_pac_sign_ticket(context, pac, client, tkt->key,
-				    tkt->kdc_key, tkt->rodc_id,
-				    NULL, NULL, signedticket, &et, NULL);
+                                    tkt->kdc_key, tkt->rodc_id,
+                                    NULL, NULL, signedticket, &et, NULL);
     if (ret)
-	t_err(context, tkt->name, "_krb5_kdc_pac_sign_ticket", ret);
+        t_err(context, tkt->name, "_krb5_kdc_pac_sign_ticket", ret);
 
     heim_assert(krb5_data_cmp(&et.authorization_data->val[0].ad_data,
-			      &orig_pac_ad) == 0, "PACs differ");
+                              &orig_pac_ad) == 0, "PACs differ");
 
     free_AuthorizationDataElement(&ad);
 
@@ -914,34 +914,34 @@ check_ticket_signature(krb5_context context,
     krb5_pac_free(context, pac);
     ret = krb5_pac_init(context, &pac);
     if (ret)
-	t_err(context, tkt->name, "krb5_pac_init", ret);
+        t_err(context, tkt->name, "krb5_pac_init", ret);
 
     ret = remove_AuthorizationData(et.authorization_data, 0);
     if (ret)
-	t_err(context, tkt->name, "remove_AuthorizationData 2", ret);
+        t_err(context, tkt->name, "remove_AuthorizationData 2", ret);
 
     ret = _krb5_kdc_pac_sign_ticket(context, pac, client, tkt->key,
-				    tkt->kdc_key, tkt->rodc_id,
-				    NULL, NULL, signedticket, &et, NULL);
+                                    tkt->kdc_key, tkt->rodc_id,
+                                    NULL, NULL, signedticket, &et, NULL);
     if (ret)
-	t_err(context, tkt->name, "_krb5_kdcsignedticketsign_ticket 2", ret);
+        t_err(context, tkt->name, "_krb5_kdcsignedticketsign_ticket 2", ret);
 
     krb5_pac_free(context, pac);
 
     ret = _krb5_kdc_pac_ticket_parse(context, &et, &signedticket, &pac);
     if (ret)
-	t_err(context, tkt->name, "_krb5_kdc_pac_ticket_parse 2", ret);
+        t_err(context, tkt->name, "_krb5_kdc_pac_ticket_parse 2", ret);
 
     heim_assert(!is_krbtgt(&ticket.sname) == !!signedticket, "ticket-signature");
 
     ret = krb5_pac_verify(context, pac, et.authtime, client, tkt->key,
-			  tkt->kdc_key);
+                          tkt->kdc_key);
     if (ret)
-	t_err(context, tkt->name, "krb5_pac_verify ticket-sig 2", ret);
+        t_err(context, tkt->name, "krb5_pac_verify ticket-sig 2", ret);
 
     ret = krb5_pac_get_kdc_checksum_info(context, pac, &cstype, &rodc_id);
     if (ret)
-	t_err(context, tkt->name, "krb5_pac_get_kdc_checksum_info 2", ret);
+        t_err(context, tkt->name, "krb5_pac_get_kdc_checksum_info 2", ret);
 
     heim_assert(cstype == CKSUMTYPE_HMAC_MD5, "Wrong checksum type 2");
     heim_assert(rodc_id == tkt->rodc_id, "Wrong RODCIdentifier 2");
@@ -967,19 +967,19 @@ main(int argc, char **argv)
 
     ret = krb5_init_context(&context);
     if (ret)
-	errx(1, "krb5_init_context");
+        errx(1, "krb5_init_context");
 
     krb5_enctype_enable(context, ETYPE_DES_CBC_MD5);
 
     ret = krb5_parse_name_flags(context, user,
-				KRB5_PRINCIPAL_PARSE_NO_REALM, &p);
+                                KRB5_PRINCIPAL_PARSE_NO_REALM, &p);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_parse_name");
+        krb5_err(context, 1, ret, "krb5_parse_name");
 
     /* Attempt to parse a truncated PAC */
     ret = krb5_pac_parse(context, saved_pac, sizeof(saved_pac) >> 1, &pac);
     if (ret == 0)
-	krb5_err(context, 1, ret, "krb5_pac_parse parsed a short PAC");
+        krb5_err(context, 1, ret, "krb5_pac_parse parsed a short PAC");
 
     /* Attempt to parse a PAC with a buffer claiming too large a length */
     memcpy(bad_pac, saved_pac, sizeof(saved_pac));
@@ -987,7 +987,7 @@ main(int argc, char **argv)
 
     ret = krb5_pac_parse(context, bad_pac, sizeof(saved_pac), &pac);
     if (ret == 0)
-	krb5_err(context, 1, ret, "krb5_pac_parse parsed a malicious PAC");
+        krb5_err(context, 1, ret, "krb5_pac_parse parsed a malicious PAC");
 
     /* Attempt to parse a PAC with a buffer offset too far in */
     memcpy(bad_pac, saved_pac, sizeof(saved_pac));
@@ -995,7 +995,7 @@ main(int argc, char **argv)
 
     ret = krb5_pac_parse(context, bad_pac, sizeof(saved_pac), &pac);
     if (ret == 0)
-	krb5_err(context, 1, ret, "krb5_pac_parse parsed a malicious PAC");
+        krb5_err(context, 1, ret, "krb5_pac_parse parsed a malicious PAC");
 
     /* Attempt to parse a PAC with a buffer offset too far back */
     memcpy(bad_pac, saved_pac, sizeof(saved_pac));
@@ -1003,7 +1003,7 @@ main(int argc, char **argv)
 
     ret = krb5_pac_parse(context, bad_pac, sizeof(saved_pac), &pac);
     if (ret == 0)
-	krb5_err(context, 1, ret, "krb5_pac_parse parsed a malicious PAC");
+        krb5_err(context, 1, ret, "krb5_pac_parse parsed a malicious PAC");
 
     /* Attempt to parse a PAC with an incorrect buffer count */
     memcpy(bad_pac, saved_pac, sizeof(saved_pac));
@@ -1011,94 +1011,94 @@ main(int argc, char **argv)
 
     ret = krb5_pac_parse(context, bad_pac, sizeof(saved_pac), &pac);
     if (ret == 0)
-	krb5_err(context, 1, ret, "krb5_pac_parse parsed a malicious PAC");
+        krb5_err(context, 1, ret, "krb5_pac_parse parsed a malicious PAC");
 
     /* Parse a well-formed PAC */
     ret = krb5_pac_parse(context, saved_pac, sizeof(saved_pac), &pac);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_pac_parse");
+        krb5_err(context, 1, ret, "krb5_pac_parse");
 
     ret = krb5_pac_verify(context, pac, authtime, p,
-			   &member_keyblock, &kdc_keyblock);
+                          &member_keyblock, &kdc_keyblock);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_pac_verify");
+        krb5_err(context, 1, ret, "krb5_pac_verify");
 
     ret = _krb5_pac_sign(context, pac, authtime, p,
-			 &member_keyblock, &kdc_keyblock, 0, NULL, NULL,
-			 NULL, &data);
+                         &member_keyblock, &kdc_keyblock, 0, NULL, NULL,
+                         NULL, &data);
     if (ret)
-	krb5_err(context, 1, ret, "_krb5_pac_sign");
+        krb5_err(context, 1, ret, "_krb5_pac_sign");
 
     krb5_pac_free(context, pac);
 
     ret = krb5_pac_parse(context, data.data, data.length, &pac);
     krb5_data_free(&data);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_pac_parse 2");
+        krb5_err(context, 1, ret, "krb5_pac_parse 2");
 
     ret = krb5_pac_verify(context, pac, authtime, p,
-			   &member_keyblock, &kdc_keyblock);
+                          &member_keyblock, &kdc_keyblock);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_pac_verify 2");
+        krb5_err(context, 1, ret, "krb5_pac_verify 2");
 
     /* make a copy and try to reproduce it */
     {
-	uint32_t *list;
-	size_t len, i;
-	krb5_pac pac2;
+        uint32_t *list;
+        size_t len, i;
+        krb5_pac pac2;
 
-	ret = krb5_pac_init(context, &pac2);
-	if (ret)
-	    krb5_err(context, 1, ret, "krb5_pac_init");
+        ret = krb5_pac_init(context, &pac2);
+        if (ret)
+            krb5_err(context, 1, ret, "krb5_pac_init");
 
-	/* our two user buffer plus the three "system" buffers */
-	ret = krb5_pac_get_types(context, pac, &len, &list);
-	if (ret)
-	    krb5_err(context, 1, ret, "krb5_pac_get_types");
+        /* our two user buffer plus the three "system" buffers */
+        ret = krb5_pac_get_types(context, pac, &len, &list);
+        if (ret)
+            krb5_err(context, 1, ret, "krb5_pac_get_types");
 
-	for (i = 0; i < len; i++) {
-	    /* skip server_cksum, privsvr_cksum, and logon_name */
-	    if (list[i] == 6 || list[i] == 7 || list[i] == 10)
-		continue;
+        for (i = 0; i < len; i++) {
+            /* skip server_cksum, privsvr_cksum, and logon_name */
+            if (list[i] == 6 || list[i] == 7 || list[i] == 10)
+                continue;
 
-	    ret = krb5_pac_get_buffer(context, pac, list[i], &data);
-	    if (ret)
-		krb5_err(context, 1, ret, "krb5_pac_get_buffer");
+            ret = krb5_pac_get_buffer(context, pac, list[i], &data);
+            if (ret)
+                krb5_err(context, 1, ret, "krb5_pac_get_buffer");
 
-	    if (list[i] == 1) {
-		if (type_1_length != data.length)
-		    krb5_errx(context, 1, "type 1 have wrong length: %lu",
-			      (unsigned long)data.length);
-	    } else
-		krb5_errx(context, 1, "unknown type %lu",
-			  (unsigned long)list[i]);
+            if (list[i] == 1) {
+                if (type_1_length != data.length)
+                    krb5_errx(context, 1, "type 1 have wrong length: %lu",
+                              (unsigned long)data.length);
+            } else
+                krb5_errx(context, 1, "unknown type %lu",
+                          (unsigned long)list[i]);
 
-	    ret = krb5_pac_add_buffer(context, pac2, list[i], &data);
-	    if (ret)
-		krb5_err(context, 1, ret, "krb5_pac_add_buffer");
-	    krb5_data_free(&data);
-	}
-	free(list);
+            ret = krb5_pac_add_buffer(context, pac2, list[i], &data);
+            if (ret)
+                krb5_err(context, 1, ret, "krb5_pac_add_buffer");
+            krb5_data_free(&data);
+        }
+        free(list);
 
-	ret = _krb5_pac_sign(context, pac2, authtime, p,
-			     &member_keyblock, &kdc_keyblock, 0,
-			     NULL, NULL, NULL, &data);
-	if (ret)
-	    krb5_err(context, 1, ret, "_krb5_pac_sign 4");
+        ret = _krb5_pac_sign(context, pac2, authtime, p,
+                             &member_keyblock, &kdc_keyblock, 0,
+                             NULL, NULL, NULL, &data);
+        if (ret)
+            krb5_err(context, 1, ret, "_krb5_pac_sign 4");
 
-	krb5_pac_free(context, pac2);
+        krb5_pac_free(context, pac2);
 
-	ret = krb5_pac_parse(context, data.data, data.length, &pac2);
-	krb5_data_free(&data);
-	if (ret)
-	    krb5_err(context, 1, ret, "krb5_pac_parse 4");
+        ret = krb5_pac_parse(context, data.data, data.length, &pac2);
+        krb5_data_free(&data);
+        if (ret)
+            krb5_err(context, 1, ret, "krb5_pac_parse 4");
 
-	ret = krb5_pac_verify(context, pac2, authtime, p,
-			      &member_keyblock, &kdc_keyblock);
-	if (ret)
-	    krb5_err(context, 1, ret, "krb5_pac_verify 4");
+        ret = krb5_pac_verify(context, pac2, authtime, p,
+                              &member_keyblock, &kdc_keyblock);
+        if (ret)
+            krb5_err(context, 1, ret, "krb5_pac_verify 4");
 
-	krb5_pac_free(context, pac2);
+        krb5_pac_free(context, pac2);
     }
 
     krb5_pac_free(context, pac);
@@ -1108,18 +1108,18 @@ main(int argc, char **argv)
      */
 
     ret = krb5_parse_name_flags(context, user2,
-				KRB5_PRINCIPAL_PARSE_NO_REALM, &p2);
+                                KRB5_PRINCIPAL_PARSE_NO_REALM, &p2);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_parse_name");
+        krb5_err(context, 1, ret, "krb5_parse_name");
 
     ret = krb5_pac_parse(context, saved_pac2, sizeof(saved_pac2) -1, &pac);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_pac_parse");
+        krb5_err(context, 1, ret, "krb5_pac_parse");
 
     ret = krb5_pac_verify(context, pac, authtime2, p2,
-			   &member_keyblock2, NULL);
+                          &member_keyblock2, NULL);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_pac_verify c1");
+        krb5_err(context, 1, ret, "krb5_pac_verify c1");
 
     krb5_pac_free(context, pac);
     krb5_free_principal(context, p2);
@@ -1130,7 +1130,7 @@ main(int argc, char **argv)
 
     ret = krb5_pac_init(context, &pac);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_pac_init");
+        krb5_err(context, 1, ret, "krb5_pac_init");
     krb5_pac_free(context, pac);
 
     /*
@@ -1139,76 +1139,76 @@ main(int argc, char **argv)
 
     ret = krb5_pac_init(context, &pac);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_pac_init");
+        krb5_err(context, 1, ret, "krb5_pac_init");
 
     {
-	const krb5_data cdata = { 2, "\x00\x01" } ;
+        const krb5_data cdata = { 2, "\x00\x01" } ;
 
-	ret = krb5_pac_add_buffer(context, pac, 1, &cdata);
-	if (ret)
-	    krb5_err(context, 1, ret, "krb5_pac_add_buffer");
+        ret = krb5_pac_add_buffer(context, pac, 1, &cdata);
+        if (ret)
+            krb5_err(context, 1, ret, "krb5_pac_add_buffer");
     }
     {
-	ret = krb5_pac_get_buffer(context, pac, 1, &data);
-	if (ret)
-	    krb5_err(context, 1, ret, "krb5_pac_get_buffer");
-	if (data.length != 2 || memcmp(data.data, "\x00\x01", 2) != 0)
-	    krb5_errx(context, 1, "krb5_pac_get_buffer data not the same");
-	krb5_data_free(&data);
+        ret = krb5_pac_get_buffer(context, pac, 1, &data);
+        if (ret)
+            krb5_err(context, 1, ret, "krb5_pac_get_buffer");
+        if (data.length != 2 || memcmp(data.data, "\x00\x01", 2) != 0)
+            krb5_errx(context, 1, "krb5_pac_get_buffer data not the same");
+        krb5_data_free(&data);
     }
 
     {
-	const krb5_data cdata = { 2, "\x02\x00" } ;
+        const krb5_data cdata = { 2, "\x02\x00" } ;
 
-	ret = krb5_pac_add_buffer(context, pac, 2, &cdata);
-	if (ret)
-	    krb5_err(context, 1, ret, "krb5_pac_add_buffer");
+        ret = krb5_pac_add_buffer(context, pac, 2, &cdata);
+        if (ret)
+            krb5_err(context, 1, ret, "krb5_pac_add_buffer");
     }
     {
-	ret = krb5_pac_get_buffer(context, pac, 1, &data);
-	if (ret)
-	    krb5_err(context, 1, ret, "krb5_pac_get_buffer");
-	if (data.length != 2 || memcmp(data.data, "\x00\x01", 2) != 0)
-	    krb5_errx(context, 1, "krb5_pac_get_buffer data not the same");
-	krb5_data_free(&data);
-	/* */
-	ret = krb5_pac_get_buffer(context, pac, 2, &data);
-	if (ret)
-	    krb5_err(context, 1, ret, "krb5_pac_get_buffer");
-	if (data.length != 2 || memcmp(data.data, "\x02\x00", 2) != 0)
-	    krb5_errx(context, 1, "krb5_pac_get_buffer data not the same");
-	krb5_data_free(&data);
+        ret = krb5_pac_get_buffer(context, pac, 1, &data);
+        if (ret)
+            krb5_err(context, 1, ret, "krb5_pac_get_buffer");
+        if (data.length != 2 || memcmp(data.data, "\x00\x01", 2) != 0)
+            krb5_errx(context, 1, "krb5_pac_get_buffer data not the same");
+        krb5_data_free(&data);
+        /* */
+        ret = krb5_pac_get_buffer(context, pac, 2, &data);
+        if (ret)
+            krb5_err(context, 1, ret, "krb5_pac_get_buffer");
+        if (data.length != 2 || memcmp(data.data, "\x02\x00", 2) != 0)
+            krb5_errx(context, 1, "krb5_pac_get_buffer data not the same");
+        krb5_data_free(&data);
     }
 
     ret = _krb5_pac_sign(context, pac, authtime, p,
-			 &member_keyblock, &kdc_keyblock, 0,
-			 NULL, NULL, NULL, &data);
+                         &member_keyblock, &kdc_keyblock, 0,
+                         NULL, NULL, NULL, &data);
     if (ret)
-	krb5_err(context, 1, ret, "_krb5_pac_sign");
+        krb5_err(context, 1, ret, "_krb5_pac_sign");
 
     krb5_pac_free(context, pac);
 
     ret = krb5_pac_parse(context, data.data, data.length, &pac);
     krb5_data_free(&data);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_pac_parse 3");
+        krb5_err(context, 1, ret, "krb5_pac_parse 3");
 
     ret = krb5_pac_verify(context, pac, authtime, p,
-			   &member_keyblock, &kdc_keyblock);
+                          &member_keyblock, &kdc_keyblock);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_pac_verify 3");
+        krb5_err(context, 1, ret, "krb5_pac_verify 3");
 
     {
-	uint32_t *list;
-	size_t len;
+        uint32_t *list;
+        size_t len;
 
-	/* our two user buffer plus the three "system" buffers */
-	ret = krb5_pac_get_types(context, pac, &len, &list);
-	if (ret)
-	    krb5_err(context, 1, ret, "krb5_pac_get_types");
-	if (len != 5)
-	    krb5_errx(context, 1, "list wrong length");
-	free(list);
+        /* our two user buffer plus the three "system" buffers */
+        ret = krb5_pac_get_types(context, pac, &len, &list);
+        if (ret)
+            krb5_err(context, 1, ret, "krb5_pac_get_types");
+        if (len != 5)
+            krb5_errx(context, 1, "list wrong length");
+        free(list);
     }
 
     krb5_pac_free(context, pac);
@@ -1218,24 +1218,24 @@ main(int argc, char **argv)
      * check extra logon info PAC
      */
     ret = krb5_pac_parse(context, extra_logon_info,
-			 sizeof(extra_logon_info) - 1, &pac);
+                         sizeof(extra_logon_info) - 1, &pac);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_pac_parse");
+        krb5_err(context, 1, ret, "krb5_pac_parse");
 
     ret = krb5_pac_verify(context, pac, 0, NULL, NULL, NULL);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_pac_verify");
+        krb5_err(context, 1, ret, "krb5_pac_verify");
 
     ret = krb5_parse_name(context, "c9d801a8_0@EXAMPLE.COM", &p);
     if (ret)
-	krb5_err(context, 1, ret, "_krb5_pac_get_canon_principal");
+        krb5_err(context, 1, ret, "_krb5_pac_get_canon_principal");
 
     ret = _krb5_pac_get_canon_principal(context, pac, &p2);
     if (ret)
-	krb5_err(context, 1, ret, "_krb5_pac_get_canon_principal");
+        krb5_err(context, 1, ret, "_krb5_pac_get_canon_principal");
 
     if (!krb5_principal_compare(context, p, p2))
-	krb5_errx(context, 1, "canon principal doesn't match");
+        krb5_errx(context, 1, "canon principal doesn't match");
 
     krb5_pac_free(context, pac);
     krb5_free_principal(context, p);
@@ -1243,10 +1243,10 @@ main(int argc, char **argv)
 
     /* Test PAC ticket-signature */
     {
-	const struct test_pac_ticket *tkt;
+        const struct test_pac_ticket *tkt;
 
-	for (tkt = pac_tickets; tkt->name != NULL; tkt++)
-	    check_ticket_signature(context, tkt);
+        for (tkt = pac_tickets; tkt->name != NULL; tkt++)
+            check_ticket_signature(context, tkt);
     }
 
     krb5_free_context(context);

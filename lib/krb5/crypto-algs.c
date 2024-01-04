@@ -62,7 +62,7 @@ struct _krb5_checksum_type *_krb5_checksum_types[] = {
 };
 
 int _krb5_num_checksums
-	= sizeof(_krb5_checksum_types) / sizeof(_krb5_checksum_types[0]);
+    = sizeof(_krb5_checksum_types) / sizeof(_krb5_checksum_types[0]);
 
 /*
  * these should currently be in reverse preference order.

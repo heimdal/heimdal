@@ -44,16 +44,16 @@ writev(int d, const struct iovec *iov, int iovcnt)
     char *buf, *p;
 
     for(i = 0; i < iovcnt; ++i)
-	tot += iov[i].iov_len;
+        tot += iov[i].iov_len;
     buf = malloc(tot);
     if (tot != 0 && buf == NULL) {
-	errno = ENOMEM;
-	return -1;
+        errno = ENOMEM;
+        return -1;
     }
     p = buf;
     for (i = 0; i < iovcnt; ++i) {
-	memcpy (p, iov[i].iov_base, iov[i].iov_len);
-	p += iov[i].iov_len;
+        memcpy (p, iov[i].iov_base, iov[i].iov_len);
+        p += iov[i].iov_len;
     }
     ret = write (d, buf, tot);
     free (buf);

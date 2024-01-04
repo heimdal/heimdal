@@ -60,7 +60,7 @@ static void
 init_method(void)
 {
     if (selected_meth != NULL)
-	return;
+        return;
 #if defined(_WIN32)
     selected_meth = &hc_rand_w32crypto_method;
 #elif defined(__APPLE__)
@@ -101,7 +101,7 @@ int
 RAND_bytes(void *outdata, size_t size)
 {
     if (size == 0)
-	return 1;
+        return 1;
     init_method();
     return (*selected_meth->bytes)(outdata, size);
 }
@@ -122,9 +122,9 @@ RAND_cleanup(void)
     selected_engine = NULL;
 
     if (meth)
-	(*meth->cleanup)();
+        (*meth->cleanup)();
     if (engine)
-	ENGINE_finish(engine);
+        ENGINE_finish(engine);
 }
 
 /**
@@ -195,10 +195,10 @@ RAND_set_rand_method(const RAND_METHOD *meth)
     const RAND_METHOD *old = selected_meth;
     selected_meth = meth;
     if (old)
-	(*old->cleanup)();
+        (*old->cleanup)();
     if (selected_engine) {
-	ENGINE_finish(selected_engine);
-	selected_engine = NULL;
+        ENGINE_finish(selected_engine);
+        selected_engine = NULL;
     }
     return 1;
 }
@@ -234,21 +234,21 @@ RAND_set_rand_engine(ENGINE *engine)
     const RAND_METHOD *meth, *old = selected_meth;
 
     if (engine) {
-	ENGINE_up_ref(engine);
-	meth = ENGINE_get_RAND(engine);
-	if (meth == NULL) {
-	    ENGINE_finish(engine);
-	    return 0;
-	}
+        ENGINE_up_ref(engine);
+        meth = ENGINE_get_RAND(engine);
+        if (meth == NULL) {
+            ENGINE_finish(engine);
+            return 0;
+        }
     } else {
-	meth = NULL;
+        meth = NULL;
     }
 
     if (old)
-	(*old->cleanup)();
+        (*old->cleanup)();
 
     if (selected_engine)
-	ENGINE_finish(selected_engine);
+        ENGINE_finish(selected_engine);
 
     selected_engine = engine;
     selected_meth = meth;
@@ -279,15 +279,15 @@ RAND_load_file(const char *filename, size_t size)
 
     fd = open(filename, O_RDONLY | O_BINARY, 0600);
     if (fd < 0)
-	return 0;
+        return 0;
     rk_cloexec(fd);
     len = 0;
     while(len < size) {
-	slen = read(fd, buf, sizeof(buf));
-	if (slen <= 0)
-	    break;
-	RAND_seed(buf, slen);
-	len += slen;
+        slen = read(fd, buf, sizeof(buf));
+        if (slen <= 0)
+            break;
+        RAND_seed(buf, slen);
+        len += slen;
     }
     close(fd);
 
@@ -312,19 +312,19 @@ RAND_write_file(const char *filename)
 
     fd = open(filename, O_WRONLY | O_CREAT | O_BINARY, 0600);
     if (fd < 0)
-	return 0;
+        return 0;
     rk_cloexec(fd);
 
     len = 0;
     while(len < RAND_FILE_SIZE) {
-	res = RAND_bytes(buf, sizeof(buf));
-	if (res != 1)
-	    break;
-	if (write(fd, buf, sizeof(buf)) != sizeof(buf)) {
-	    res = 0;
-	    break;
-	}
-	len += sizeof(buf);
+        res = RAND_bytes(buf, sizeof(buf));
+        if (res != 1)
+            break;
+        if (write(fd, buf, sizeof(buf)) != sizeof(buf)) {
+            res = 0;
+            break;
+        }
+        len += sizeof(buf);
     }
 
     close(fd);
@@ -365,38 +365,38 @@ RAND_file_name(char *filename, size_t size)
      * So at least return the unix /dev/random if we have one
      */
     if (e == NULL) {
-	int fd;
+        int fd;
 
-	fd = _hc_unix_device_fd(O_RDONLY, &e);
-	if (fd >= 0)
-	    close(fd);
+        fd = _hc_unix_device_fd(O_RDONLY, &e);
+        if (fd >= 0)
+            close(fd);
     }
 #else  /* Win32 */
 
     if (e == NULL) {
-	char profile[MAX_PATH];
+        char profile[MAX_PATH];
 
-	if (SHGetFolderPath(NULL, CSIDL_LOCAL_APPDATA, NULL,
-			    SHGFP_TYPE_CURRENT, profile) == S_OK) {
-	    ret = snprintf(filename, size, "%s\\.rnd", profile);
+        if (SHGetFolderPath(NULL, CSIDL_LOCAL_APPDATA, NULL,
+                            SHGFP_TYPE_CURRENT, profile) == S_OK) {
+            ret = snprintf(filename, size, "%s\\.rnd", profile);
 
-	    if (ret > 0 && ret < size)
-		return filename;
-	}
+            if (ret > 0 && ret < size)
+                return filename;
+        }
     }
 
 #endif
 
     if (e == NULL)
-	return NULL;
+        return NULL;
 
     if (pathp)
-	ret = snprintf(filename, size, "%s/.rnd", e);
+        ret = snprintf(filename, size, "%s/.rnd", e);
     else
-	ret = snprintf(filename, size, "%s", e);
+        ret = snprintf(filename, size, "%s", e);
 
     if (ret <= 0 || ret >= size)
-	return NULL;
+        return NULL;
 
     return filename;
 }

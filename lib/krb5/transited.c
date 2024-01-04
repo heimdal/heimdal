@@ -51,77 +51,77 @@ free_realms(struct tr_realm *r)
 {
     struct tr_realm *p;
     while(r){
-	p = r;
-	r = r->next;
-	free(p->realm);
-	free(p);
+        p = r;
+        r = r->next;
+        free(p->realm);
+        free(p);
     }
 }
 
 static int
 make_path(krb5_context context, struct tr_realm *r,
-	  const char *from, const char *to)
+          const char *from, const char *to)
 {
     struct tr_realm *tmp;
     const char *p;
 
     if(strlen(from) < strlen(to)){
-	const char *str;
-	str = from;
-	from = to;
-	to = str;
+        const char *str;
+        str = from;
+        from = to;
+        to = str;
     }
 
     if(strcmp(from + strlen(from) - strlen(to), to) == 0){
-	p = from;
-	while(1){
-	    p = strchr(p, '.');
-	    if(p == NULL) {
-		krb5_clear_error_message (context);
-		return KRB5KDC_ERR_POLICY;
-	    }
-	    p++;
-	    if(strcmp(p, to) == 0)
-		break;
-	    tmp = calloc(1, sizeof(*tmp));
-	    if(tmp == NULL)
-		return krb5_enomem(context);
-	    tmp->next = r->next;
-	    r->next = tmp;
-	    tmp->realm = strdup(p);
-	    if(tmp->realm == NULL){
-		r->next = tmp->next;
-		free(tmp);
-		return krb5_enomem(context);
-	    }
-	}
+        p = from;
+        while(1){
+            p = strchr(p, '.');
+            if(p == NULL) {
+                krb5_clear_error_message (context);
+                return KRB5KDC_ERR_POLICY;
+            }
+            p++;
+            if(strcmp(p, to) == 0)
+                break;
+            tmp = calloc(1, sizeof(*tmp));
+            if(tmp == NULL)
+                return krb5_enomem(context);
+            tmp->next = r->next;
+            r->next = tmp;
+            tmp->realm = strdup(p);
+            if(tmp->realm == NULL){
+                r->next = tmp->next;
+                free(tmp);
+                return krb5_enomem(context);
+            }
+        }
     }else if(strncmp(from, to, strlen(to)) == 0){
-	p = from + strlen(from);
-	while(1){
-	    while(p >= from && *p != '/') p--;
-	    if(p == from)
-		return KRB5KDC_ERR_POLICY;
+        p = from + strlen(from);
+        while(1){
+            while(p >= from && *p != '/') p--;
+            if(p == from)
+                return KRB5KDC_ERR_POLICY;
 
-	    if(strncmp(to, from, p - from) == 0)
-		break;
-	    tmp = calloc(1, sizeof(*tmp));
-	    if(tmp == NULL)
-		return krb5_enomem(context);
-	    tmp->next = r->next;
-	    r->next = tmp;
-	    tmp->realm = malloc(p - from + 1);
-	    if(tmp->realm == NULL){
-		r->next = tmp->next;
-		free(tmp);
-		return krb5_enomem(context);
-	    }
-	    memcpy(tmp->realm, from, p - from);
-	    tmp->realm[p - from] = '\0';
-	    p--;
-	}
+            if(strncmp(to, from, p - from) == 0)
+                break;
+            tmp = calloc(1, sizeof(*tmp));
+            if(tmp == NULL)
+                return krb5_enomem(context);
+            tmp->next = r->next;
+            r->next = tmp;
+            tmp->realm = malloc(p - from + 1);
+            if(tmp->realm == NULL){
+                r->next = tmp->next;
+                free(tmp);
+                return krb5_enomem(context);
+            }
+            memcpy(tmp->realm, from, p - from);
+            tmp->realm[p - from] = '\0';
+            p--;
+        }
     } else {
-	krb5_clear_error_message (context);
-	return KRB5KDC_ERR_POLICY;
+        krb5_clear_error_message (context);
+        return KRB5KDC_ERR_POLICY;
     }
 
     return 0;
@@ -129,75 +129,75 @@ make_path(krb5_context context, struct tr_realm *r,
 
 static int
 make_paths(krb5_context context,
-	   struct tr_realm *realms, const char *client_realm,
-	   const char *server_realm)
+           struct tr_realm *realms, const char *client_realm,
+           const char *server_realm)
 {
     struct tr_realm *r;
     int ret;
     const char *prev_realm = client_realm;
     const char *next_realm = NULL;
     for(r = realms; r; r = r->next){
-	/* it *might* be that you can have more than one empty
-	   component in a row, at least that's how I interpret the
-	   "," exception in 1510 */
-	if(r->realm[0] == '\0'){
-	    while(r->next && r->next->realm[0] == '\0')
-		r = r->next;
-	    if(r->next)
-		next_realm = r->next->realm;
-	    else
-		next_realm = server_realm;
-	    ret = make_path(context, r, prev_realm, next_realm);
-	    if(ret){
-		free_realms(realms);
-		return ret;
-	    }
-	}
-	prev_realm = r->realm;
+        /* it *might* be that you can have more than one empty
+           component in a row, at least that's how I interpret the
+           "," exception in 1510 */
+        if(r->realm[0] == '\0'){
+            while(r->next && r->next->realm[0] == '\0')
+                r = r->next;
+            if(r->next)
+                next_realm = r->next->realm;
+            else
+                next_realm = server_realm;
+            ret = make_path(context, r, prev_realm, next_realm);
+            if(ret){
+                free_realms(realms);
+                return ret;
+            }
+        }
+        prev_realm = r->realm;
     }
     return 0;
 }
 
 static int
 expand_realms(krb5_context context,
-	      struct tr_realm *realms, const char *client_realm)
+              struct tr_realm *realms, const char *client_realm)
 {
     struct tr_realm *r;
     const char *prev_realm = NULL;
     for(r = realms; r; r = r->next){
-	if(r->trailing_dot){
-	    char *tmp;
-	    size_t len;
+        if(r->trailing_dot){
+            char *tmp;
+            size_t len;
 
-	    if(prev_realm == NULL)
-		prev_realm = client_realm;
+            if(prev_realm == NULL)
+                prev_realm = client_realm;
 
-	    len = strlen(r->realm) + strlen(prev_realm) + 1;
+            len = strlen(r->realm) + strlen(prev_realm) + 1;
 
-	    tmp = realloc(r->realm, len);
-	    if(tmp == NULL){
-		free_realms(realms);
-		return krb5_enomem(context);
-	    }
-	    r->realm = tmp;
-	    strlcat(r->realm, prev_realm, len);
-	}else if(r->leading_slash && !r->leading_space && prev_realm){
-	    /* yet another exception: if you use x500-names, the
+            tmp = realloc(r->realm, len);
+            if(tmp == NULL){
+                free_realms(realms);
+                return krb5_enomem(context);
+            }
+            r->realm = tmp;
+            strlcat(r->realm, prev_realm, len);
+        }else if(r->leading_slash && !r->leading_space && prev_realm){
+            /* yet another exception: if you use x500-names, the
                leading realm doesn't have to be "quoted" with a space */
-	    char *tmp;
-	    size_t len = strlen(r->realm) + strlen(prev_realm) + 1;
+            char *tmp;
+            size_t len = strlen(r->realm) + strlen(prev_realm) + 1;
 
-	    tmp = malloc(len);
-	    if(tmp == NULL){
-		free_realms(realms);
-		return krb5_enomem(context);
-	    }
-	    strlcpy(tmp, prev_realm, len);
-	    strlcat(tmp, r->realm, len);
-	    free(r->realm);
-	    r->realm = tmp;
-	}
-	prev_realm = r->realm;
+            tmp = malloc(len);
+            if(tmp == NULL){
+                free_realms(realms);
+                return krb5_enomem(context);
+            }
+            strlcpy(tmp, prev_realm, len);
+            strlcat(tmp, r->realm, len);
+            free(r->realm);
+            r->realm = tmp;
+        }
+        prev_realm = r->realm;
     }
     return 0;
 }
@@ -210,29 +210,29 @@ make_realm(char *realm)
     int quote = 0;
     r = calloc(1, sizeof(*r));
     if(r == NULL){
-	free(realm);
-	return NULL;
+        free(realm);
+        return NULL;
     }
     r->realm = realm;
     for(p = q = r->realm; *p; p++){
-	if(p == r->realm && *p == ' '){
-	    r->leading_space = 1;
-	    continue;
-	}
-	if(q == r->realm && *p == '/')
-	    r->leading_slash = 1;
-	if(quote){
-	    *q++ = *p;
-	    quote = 0;
-	    continue;
-	}
-	if(*p == '\\'){
-	    quote = 1;
-	    continue;
-	}
-	if(p[0] == '.' && p[1] == '\0')
-	    r->trailing_dot = 1;
-	*q++ = *p;
+        if(p == r->realm && *p == ' '){
+            r->leading_space = 1;
+            continue;
+        }
+        if(q == r->realm && *p == '/')
+            r->leading_slash = 1;
+        if(quote){
+            *q++ = *p;
+            quote = 0;
+            continue;
+        }
+        if(*p == '\\'){
+            quote = 1;
+            continue;
+        }
+        if(p[0] == '.' && p[1] == '\0')
+            r->trailing_dot = 1;
+        *q++ = *p;
     }
     *q = '\0';
     return r;
@@ -243,8 +243,8 @@ append_realm(struct tr_realm *head, struct tr_realm *r)
 {
     struct tr_realm *p;
     if(head == NULL){
-	r->next = NULL;
-	return r;
+        r->next = NULL;
+        return r;
     }
     p = head;
     while(p->next) p = p->next;
@@ -254,7 +254,7 @@ append_realm(struct tr_realm *head, struct tr_realm *r)
 
 static int
 decode_realms(krb5_context context,
-	      const char *tr, int length, struct tr_realm **realms)
+              const char *tr, int length, struct tr_realm **realms)
 {
     struct tr_realm *r = NULL;
 
@@ -264,46 +264,46 @@ decode_realms(krb5_context context,
     int i;
 
     for(i = 0; i < length; i++){
-	if(quote){
-	    quote = 0;
-	    continue;
-	}
-	if(tr[i] == '\\'){
-	    quote = 1;
-	    continue;
-	}
-	if(tr[i] == ','){
-	    tmp = malloc(tr + i - start + 1);
-	    if(tmp == NULL) {
-		free_realms(*realms);
+        if(quote){
+            quote = 0;
+            continue;
+        }
+        if(tr[i] == '\\'){
+            quote = 1;
+            continue;
+        }
+        if(tr[i] == ','){
+            tmp = malloc(tr + i - start + 1);
+            if(tmp == NULL) {
+                free_realms(*realms);
                 *realms = NULL;
-		return krb5_enomem(context);
+                return krb5_enomem(context);
             }
-	    memcpy(tmp, start, tr + i - start);
-	    tmp[tr + i - start] = '\0';
-	    r = make_realm(tmp);
-	    if(r == NULL){
-		free_realms(*realms);
+            memcpy(tmp, start, tr + i - start);
+            tmp[tr + i - start] = '\0';
+            r = make_realm(tmp);
+            if(r == NULL){
+                free_realms(*realms);
                 *realms = NULL;
-		return krb5_enomem(context);
-	    }
-	    *realms = append_realm(*realms, r);
-	    start = tr + i + 1;
-	}
+                return krb5_enomem(context);
+            }
+            *realms = append_realm(*realms, r);
+            start = tr + i + 1;
+        }
     }
     tmp = malloc(tr + i - start + 1);
     if(tmp == NULL){
         free_realms(*realms);
         *realms = NULL;
-	return krb5_enomem(context);
+        return krb5_enomem(context);
     }
     memcpy(tmp, start, tr + i - start);
     tmp[tr + i - start] = '\0';
     r = make_realm(tmp);
     if(r == NULL){
-	free_realms(*realms);
+        free_realms(*realms);
         *realms = NULL;
-	return krb5_enomem(context);
+        return krb5_enomem(context);
     }
     *realms = append_realm(*realms, r);
 
@@ -313,91 +313,91 @@ decode_realms(krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_domain_x500_decode(krb5_context context,
-			krb5_data tr, char ***realms, unsigned int *num_realms,
-			const char *client_realm, const char *server_realm)
+                        krb5_data tr, char ***realms, unsigned int *num_realms,
+                        const char *client_realm, const char *server_realm)
 {
     struct tr_realm *r = NULL;
     struct tr_realm *p, **q;
     int ret;
 
     if(tr.length == 0) {
-	*realms = NULL;
-	*num_realms = 0;
-	return 0;
+        *realms = NULL;
+        *num_realms = 0;
+        return 0;
     }
 
     /* split string in components */
     ret = decode_realms(context, tr.data, tr.length, &r);
     if(ret)
-	return ret;
+        return ret;
 
     /* apply prefix rule */
     ret = expand_realms(context, r, client_realm);
     if(ret)
-	return ret;
+        return ret;
 
     ret = make_paths(context, r, client_realm, server_realm);
     if(ret)
-	return ret;
+        return ret;
 
     /* remove empty components and count realms */
     *num_realms = 0;
     for(q = &r; *q; ){
-	if((*q)->realm[0] == '\0'){
-	    p = *q;
-	    *q = (*q)->next;
-	    free(p->realm);
-	    free(p);
-	}else{
-	    q = &(*q)->next;
-	    (*num_realms)++;
-	}
+        if((*q)->realm[0] == '\0'){
+            p = *q;
+            *q = (*q)->next;
+            free(p->realm);
+            free(p);
+        }else{
+            q = &(*q)->next;
+            (*num_realms)++;
+        }
     }
     if (*num_realms + 1 > UINT_MAX/sizeof(**realms))
-	return ERANGE;
+        return ERANGE;
 
     {
-	char **R;
-	R = malloc((*num_realms + 1) * sizeof(*R));
-	*realms = R;
-	while(r){
-	    *R++ = r->realm;
-	    p = r->next;
-	    free(r);
-	    r = p;
-	}
-	if (*realms == NULL)
-	    return krb5_enomem(context);
+        char **R;
+        R = malloc((*num_realms + 1) * sizeof(*R));
+        *realms = R;
+        while(r){
+            *R++ = r->realm;
+            p = r->next;
+            free(r);
+            r = p;
+        }
+        if (*realms == NULL)
+            return krb5_enomem(context);
     }
     return 0;
 }
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_domain_x500_encode(char **realms, unsigned int num_realms,
-			krb5_data *encoding)
+                        krb5_data *encoding)
 {
     char *s = NULL;
     int len = 0;
     unsigned int i;
     krb5_data_zero(encoding);
     if (num_realms == 0)
-	return 0;
+        return 0;
     for(i = 0; i < num_realms; i++){
-	len += strlen(realms[i]);
-	if(realms[i][0] == '/')
-	    len++;
+        len += strlen(realms[i]);
+        if(realms[i][0] == '/')
+            len++;
     }
     len += num_realms - 1;
     s = malloc(len + 1);
     if (s == NULL)
-	return ENOMEM;
+        return ENOMEM;
     *s = '\0';
     for(i = 0; i < num_realms; i++){
-	if(i)
-	    strlcat(s, ",", len + 1);
-	if(realms[i][0] == '/')
-	    strlcat(s, " ", len + 1);
-	strlcat(s, realms[i], len + 1);
+        if(i)
+            strlcat(s, ",", len + 1);
+        if(realms[i][0] == '/')
+            strlcat(s, " ", len + 1);
+        strlcat(s, realms[i], len + 1);
     }
     encoding->data = s;
     encoding->length = strlen(s);
@@ -545,7 +545,7 @@ _krb5_find_capath(krb5_context context,
         size_t i;
         size_t n;
 
-	for (rp = start; *rp; rp++)
+        for (rp = start; *rp; rp++)
             if (strcmp(*rp, local_realm) == 0)
                 start = rp+1;
         n = rp - start;
@@ -561,7 +561,7 @@ _krb5_find_capath(krb5_context context,
             return krb5_enomem(context);
         }
 
-	for (i = 0, rp = start; *rp; rp++) {
+        for (i = 0, rp = start; *rp; rp++) {
             if ((capath[i++] = strdup(*rp)) == NULL) {
                 _krb5_free_capath(context, capath);
                 krb5_config_free_strings(confpath);
@@ -608,11 +608,11 @@ _krb5_find_capath(krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_check_transited(krb5_context context,
-		     krb5_const_realm client_realm,
-		     krb5_const_realm server_realm,
-		     krb5_realm *realms,
-		     unsigned int num_realms,
-		     int *bad_realm)
+                     krb5_const_realm client_realm,
+                     krb5_const_realm server_realm,
+                     krb5_realm *realms,
+                     unsigned int num_realms,
+                     int *bad_realm)
 {
     krb5_error_code ret = 0;
     char **capath = NULL;
@@ -627,21 +627,21 @@ krb5_check_transited(krb5_context context,
         return ret;
 
     for (i = 0; i < num_realms; i++) {
-	for (j = 0; j < num_capath && capath[j]; ++j) {
+        for (j = 0; j < num_capath && capath[j]; ++j) {
             /* `capath[j]' can't be NULL, but compilers be dumb */
-	    if (strcmp(realms[i], capath[j]) == 0)
-		break;
-	}
-	if (j == num_capath || !capath[j]) {
+            if (strcmp(realms[i], capath[j]) == 0)
+                break;
+        }
+        if (j == num_capath || !capath[j]) {
             _krb5_free_capath(context, capath);
-	    krb5_set_error_message (context, KRB5KRB_AP_ERR_ILL_CR_TKT,
-				    N_("no transit allowed "
-				       "through realm %s from %s to %s", ""),
-				       realms[i], client_realm, server_realm);
-	    if (bad_realm)
-		*bad_realm = i;
-	    return KRB5KRB_AP_ERR_ILL_CR_TKT;
-	}
+            krb5_set_error_message (context, KRB5KRB_AP_ERR_ILL_CR_TKT,
+                                    N_("no transit allowed "
+                                       "through realm %s from %s to %s", ""),
+                                    realms[i], client_realm, server_realm);
+            if (bad_realm)
+                *bad_realm = i;
+            return KRB5KRB_AP_ERR_ILL_CR_TKT;
+        }
     }
 
     _krb5_free_capath(context, capath);
@@ -650,32 +650,32 @@ krb5_check_transited(krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_check_transited_realms(krb5_context context,
-			    const char *const *realms,
-			    unsigned int num_realms,
-			    int *bad_realm)
+                            const char *const *realms,
+                            unsigned int num_realms,
+                            int *bad_realm)
 {
     size_t i;
     int ret = 0;
     char **bad_realms = krb5_config_get_strings(context, NULL,
-						"libdefaults",
-						"transited_realms_reject",
-						NULL);
+                                                "libdefaults",
+                                                "transited_realms_reject",
+                                                NULL);
     if(bad_realms == NULL)
-	return 0;
+        return 0;
 
     for(i = 0; i < num_realms; i++) {
-	char **p;
-	for(p = bad_realms; *p; p++)
-	    if(strcmp(*p, realms[i]) == 0) {
-		ret = KRB5KRB_AP_ERR_ILL_CR_TKT;
-		krb5_set_error_message (context, ret,
-					N_("no transit allowed "
-					   "through realm %s", ""),
-					*p);
-		if(bad_realm)
-		    *bad_realm = i;
-		break;
-	    }
+        char **p;
+        for(p = bad_realms; *p; p++)
+            if(strcmp(*p, realms[i]) == 0) {
+                ret = KRB5KRB_AP_ERR_ILL_CR_TKT;
+                krb5_set_error_message (context, ret,
+                                        N_("no transit allowed "
+                                           "through realm %s", ""),
+                                        *p);
+                if(bad_realm)
+                    *bad_realm = i;
+                break;
+            }
     }
     krb5_config_free_strings(bad_realms);
     return ret;
@@ -691,9 +691,9 @@ main(int argc, char **argv)
     x.data = argv[1];
     x.length = strlen(x.data);
     if(domain_expand(x, &r, &num, argv[2], argv[3]))
-	exit(1);
+        exit(1);
     for(i = 0; i < num; i++)
-	printf("%s\n", r[i]);
+        printf("%s\n", r[i]);
     return 0;
 }
 #endif

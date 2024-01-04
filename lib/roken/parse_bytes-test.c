@@ -62,28 +62,28 @@ main(int argc, char **argv)
     int ret = 0;
 
     for (i = 0; i < sizeof(tests)/sizeof(tests[0]); ++i) {
-	char buf[256];
-	int64_t val = parse_bytes (tests[i].str, tests[i].def_unit);
+        char buf[256];
+        int64_t val = parse_bytes (tests[i].str, tests[i].def_unit);
 
-	if (val != tests[i].val) {
-	    printf ("parse_bytes (%s, %s) = %lld != %lld\n",
-		    tests[i].str,
-		    tests[i].def_unit ? tests[i].def_unit : "none",
-		    (long long)val, (long long)tests[i].val);
-	    ++ret;
-	}
-	if (tests[i].canonicalp) {
-	    (void) unparse_bytes (tests[i].val, buf, sizeof(buf));
-	    if (strcmp (tests[i].str, buf) != 0) {
-		printf ("unparse_bytes (%lld) = \"%s\" != \"%s\"\n",
-			(long long)tests[i].val, buf, tests[i].str);
-		++ret;
-	    }
-	}
+        if (val != tests[i].val) {
+            printf ("parse_bytes (%s, %s) = %lld != %lld\n",
+                    tests[i].str,
+                    tests[i].def_unit ? tests[i].def_unit : "none",
+                    (long long)val, (long long)tests[i].val);
+            ++ret;
+        }
+        if (tests[i].canonicalp) {
+            (void) unparse_bytes (tests[i].val, buf, sizeof(buf));
+            if (strcmp (tests[i].str, buf) != 0) {
+                printf ("unparse_bytes (%lld) = \"%s\" != \"%s\"\n",
+                        (long long)tests[i].val, buf, tests[i].str);
+                ++ret;
+            }
+        }
     }
     if (ret) {
-	printf ("%d errors\n", ret);
-	return 1;
+        printf ("%d errors\n", ret);
+        return 1;
     } else
-	return 0;
+        return 0;
 }

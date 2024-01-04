@@ -37,8 +37,8 @@
 struct acl_field {
     enum { acl_string, acl_fnmatch, acl_retval } type;
     union {
-	const char *cstr;
-	char **retv;
+        const char *cstr;
+        char **retv;
     } u;
     struct acl_field *next, **last;
 };
@@ -47,12 +47,12 @@ static void
 free_retv(struct acl_field *acl)
 {
     while(acl != NULL) {
-	if (acl->type == acl_retval) {
-	    if (*acl->u.retv)
-		free(*acl->u.retv);
-	    *acl->u.retv = NULL;
-	}
-	acl = acl->next;
+        if (acl->type == acl_retval) {
+            if (*acl->u.retv)
+                free(*acl->u.retv);
+            *acl->u.retv = NULL;
+        }
+        acl = acl->next;
     }
 }
 
@@ -61,53 +61,53 @@ acl_free_list(struct acl_field *acl, int retv)
 {
     struct acl_field *next;
     if (retv)
-	free_retv(acl);
+        free_retv(acl);
     while(acl != NULL) {
-	next = acl->next;
-	free(acl);
-	acl = next;
+        next = acl->next;
+        free(acl);
+        acl = next;
     }
 }
 
 static krb5_error_code
 acl_parse_format(krb5_context context,
-		 struct acl_field **acl_ret,
-		 const char *format,
-		 va_list ap)
+                 struct acl_field **acl_ret,
+                 const char *format,
+                 va_list ap)
 {
     const char *p;
     struct acl_field *acl = NULL, *tmp;
 
     for(p = format; *p != '\0'; p++) {
-	tmp = malloc(sizeof(*tmp));
-	if(tmp == NULL) {
-	    acl_free_list(acl, 0);
-	    return krb5_enomem(context);
-	}
-	if(*p == 's') {
-	    tmp->type = acl_string;
-	    tmp->u.cstr = va_arg(ap, const char*);
-	} else if(*p == 'f') {
-	    tmp->type = acl_fnmatch;
-	    tmp->u.cstr = va_arg(ap, const char*);
-	} else if(*p == 'r') {
-	    tmp->type = acl_retval;
-	    tmp->u.retv = va_arg(ap, char **);
-	    *tmp->u.retv = NULL;
-	} else {
-	    krb5_set_error_message(context, EINVAL,
-				   N_("Unknown format specifier %c while "
-				     "parsing ACL", "specifier"), *p);
-	    acl_free_list(acl, 0);
-	    free(tmp);
-	    return EINVAL;
-	}
-	tmp->next = NULL;
-	if(acl == NULL)
-	    acl = tmp;
-	else
-	    *acl->last = tmp;
-	acl->last = &tmp->next;
+        tmp = malloc(sizeof(*tmp));
+        if(tmp == NULL) {
+            acl_free_list(acl, 0);
+            return krb5_enomem(context);
+        }
+        if(*p == 's') {
+            tmp->type = acl_string;
+            tmp->u.cstr = va_arg(ap, const char*);
+        } else if(*p == 'f') {
+            tmp->type = acl_fnmatch;
+            tmp->u.cstr = va_arg(ap, const char*);
+        } else if(*p == 'r') {
+            tmp->type = acl_retval;
+            tmp->u.retv = va_arg(ap, char **);
+            *tmp->u.retv = NULL;
+        } else {
+            krb5_set_error_message(context, EINVAL,
+                                   N_("Unknown format specifier %c while "
+                                      "parsing ACL", "specifier"), *p);
+            acl_free_list(acl, 0);
+            free(tmp);
+            return EINVAL;
+        }
+        tmp->next = NULL;
+        if(acl == NULL)
+            acl = tmp;
+        else
+            *acl->last = tmp;
+        acl->last = &tmp->next;
     }
     *acl_ret = acl;
     return 0;
@@ -115,38 +115,38 @@ acl_parse_format(krb5_context context,
 
 static krb5_boolean
 acl_match_field(krb5_context context,
-		const char *string,
-		struct acl_field *field)
+                const char *string,
+                struct acl_field *field)
 {
     if(field->type == acl_string) {
-	return strcmp(field->u.cstr, string) == 0;
+        return strcmp(field->u.cstr, string) == 0;
     } else if(field->type == acl_fnmatch) {
-	return !fnmatch(field->u.cstr, string, 0);
+        return !fnmatch(field->u.cstr, string, 0);
     } else if(field->type == acl_retval) {
-	*field->u.retv = strdup(string);
-	return TRUE;
+        *field->u.retv = strdup(string);
+        return TRUE;
     }
     return FALSE;
 }
 
 static krb5_boolean
 acl_match_acl(krb5_context context,
-	      struct acl_field *acl,
-	      const char *string)
+              struct acl_field *acl,
+              const char *string)
 {
     char buf[256];
     while(strsep_copy(&string, " \t", buf, sizeof(buf)) != -1) {
-	if(buf[0] == '\0')
-	    continue; /* skip ws */
-	if (acl == NULL)
-	    return FALSE;
-	if(!acl_match_field(context, buf, acl)) {
-	    return FALSE;
-	}
-	acl = acl->next;
+        if(buf[0] == '\0')
+            continue; /* skip ws */
+        if (acl == NULL)
+            return FALSE;
+        if(!acl_match_field(context, buf, acl)) {
+            return FALSE;
+        }
+        acl = acl->next;
     }
     if (acl)
-	return FALSE;
+        return FALSE;
     return TRUE;
 }
 
@@ -198,9 +198,9 @@ acl_match_acl(krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_acl_match_string(krb5_context context,
-		      const char *string,
-		      const char *format,
-		      ...)
+                      const char *string,
+                      const char *format,
+                      ...)
 {
     krb5_error_code ret;
     krb5_boolean found;
@@ -211,15 +211,15 @@ krb5_acl_match_string(krb5_context context,
     ret = acl_parse_format(context, &acl, format, ap);
     va_end(ap);
     if(ret)
-	return ret;
+        return ret;
 
     found = acl_match_acl(context, acl, string);
     acl_free_list(acl, !found);
     if (found) {
-	return 0;
+        return 0;
     } else {
-	krb5_set_error_message(context, EACCES, N_("ACL did not match", ""));
-	return EACCES;
+        krb5_set_error_message(context, EACCES, N_("ACL did not match", ""));
+        return EACCES;
     }
 }
 
@@ -241,9 +241,9 @@ krb5_acl_match_string(krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_acl_match_file(krb5_context context,
-		    const char *file,
-		    const char *format,
-		    ...)
+                    const char *file,
+                    const char *format,
+                    ...)
 {
     krb5_error_code ret;
     struct acl_field *acl = NULL;
@@ -254,12 +254,12 @@ krb5_acl_match_file(krb5_context context,
 
     f = fopen(file, "r");
     if(f == NULL) {
-	int save_errno = errno;
-	rk_strerror_r(save_errno, buf, sizeof(buf));
-	krb5_set_error_message(context, save_errno,
-			       N_("open(%s): %s", "file, errno"),
-			       file, buf);
-	return save_errno;
+        int save_errno = errno;
+        rk_strerror_r(save_errno, buf, sizeof(buf));
+        krb5_set_error_message(context, save_errno,
+                               N_("open(%s): %s", "file, errno"),
+                               file, buf);
+        return save_errno;
     }
     rk_cloexec_file(f);
 
@@ -267,27 +267,27 @@ krb5_acl_match_file(krb5_context context,
     ret = acl_parse_format(context, &acl, format, ap);
     va_end(ap);
     if(ret) {
-	fclose(f);
-	return ret;
+        fclose(f);
+        return ret;
     }
 
     found = FALSE;
     while(fgets(buf, sizeof(buf), f)) {
-	if(buf[0] == '#')
-	    continue;
-	if(acl_match_acl(context, acl, buf)) {
-	    found = TRUE;
-	    break;
-	}
-	free_retv(acl);
+        if(buf[0] == '#')
+            continue;
+        if(acl_match_acl(context, acl, buf)) {
+            found = TRUE;
+            break;
+        }
+        free_retv(acl);
     }
 
     fclose(f);
     acl_free_list(acl, !found);
     if (found) {
-	return 0;
+        return 0;
     } else {
-	krb5_set_error_message(context, EACCES, N_("ACL did not match", ""));
-	return EACCES;
+        krb5_set_error_message(context, EACCES, N_("ACL did not match", ""));
+        return EACCES;
     }
 }

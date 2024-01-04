@@ -34,9 +34,9 @@
 #include "gsskrb5_locl.h"
 
 OM_uint32 GSSAPI_CALLCONV _gsskrb5_release_cred
-           (OM_uint32 * minor_status,
-            gss_cred_id_t * cred_handle
-           )
+                                                (OM_uint32 * minor_status,
+                                                 gss_cred_id_t * cred_handle
+                                                )
 {
     krb5_context context;
     gsskrb5_cred cred;
@@ -58,16 +58,16 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_release_cred
     if (cred->principal != NULL)
         krb5_free_principal(context, cred->principal);
     if (cred->keytab != NULL)
-	krb5_kt_close(context, cred->keytab);
+        krb5_kt_close(context, cred->keytab);
     if (cred->ccache != NULL) {
-	if (cred->cred_flags & GSS_CF_DESTROY_CRED_ON_RELEASE)
-	    krb5_cc_destroy(context, cred->ccache);
-	else
-	    krb5_cc_close(context, cred->ccache);
+        if (cred->cred_flags & GSS_CF_DESTROY_CRED_ON_RELEASE)
+            krb5_cc_destroy(context, cred->ccache);
+        else
+            krb5_cc_close(context, cred->ccache);
     }
     gss_release_oid_set(&junk, &cred->mechanisms);
     if (cred->enctypes)
-	free(cred->enctypes);
+        free(cred->enctypes);
     HEIMDAL_MUTEX_unlock(&cred->cred_id_mutex);
     HEIMDAL_MUTEX_destroy(&cred->cred_id_mutex);
     memset(cred, 0, sizeof(*cred));

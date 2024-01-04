@@ -85,48 +85,48 @@ typedef struct gssspnego_ctx_desc *gssspnego_ctx;
 
 typedef OM_uint32
 (*gssspnego_initiator_state)(OM_uint32 * minor_status,
-			     gss_const_cred_id_t cred,
-			     gssspnego_ctx ctx,
-			     gss_const_name_t name,
-			     gss_const_OID mech_type,
-			     OM_uint32 req_flags,
-			     OM_uint32 time_req,
-			     const gss_channel_bindings_t input_chan_bindings,
-			     gss_const_buffer_t input_token,
-			     gss_buffer_t output_token,
-			     OM_uint32 * ret_flags,
-			     OM_uint32 * time_rec);
+                             gss_const_cred_id_t cred,
+                             gssspnego_ctx ctx,
+                             gss_const_name_t name,
+                             gss_const_OID mech_type,
+                             OM_uint32 req_flags,
+                             OM_uint32 time_req,
+                             const gss_channel_bindings_t input_chan_bindings,
+                             gss_const_buffer_t input_token,
+                             gss_buffer_t output_token,
+                             OM_uint32 * ret_flags,
+                             OM_uint32 * time_rec);
 
 struct gssspnego_ctx_desc {
-	gss_buffer_desc		NegTokenInit_mech_types;
-	gss_OID			preferred_mech_type;
-	gss_OID			selected_mech_type;
-	gss_OID			negotiated_mech_type;
-	gss_ctx_id_t		negotiated_ctx_id;
-	OM_uint32		mech_flags;
-	OM_uint32		mech_time_rec;
-	gss_name_t		mech_src_name;
-	struct spnego_flags {
-	    unsigned int		open : 1;
-	    unsigned int		local : 1;
-	    unsigned int		require_mic : 1;
-	    unsigned int		peer_require_mic : 1;
-	    unsigned int		sent_mic : 1;
-	    unsigned int		verified_mic : 1;
-	    unsigned int		safe_omit : 1;
-	    unsigned int		maybe_open : 1;
-	    unsigned int		seen_supported_mech : 1;
-	} flags;
-	HEIMDAL_MUTEX		ctx_id_mutex;
+    gss_buffer_desc		NegTokenInit_mech_types;
+    gss_OID			preferred_mech_type;
+    gss_OID			selected_mech_type;
+    gss_OID			negotiated_mech_type;
+    gss_ctx_id_t		negotiated_ctx_id;
+    OM_uint32		mech_flags;
+    OM_uint32		mech_time_rec;
+    gss_name_t		mech_src_name;
+    struct spnego_flags {
+        unsigned int		open : 1;
+        unsigned int		local : 1;
+        unsigned int		require_mic : 1;
+        unsigned int		peer_require_mic : 1;
+        unsigned int		sent_mic : 1;
+        unsigned int		verified_mic : 1;
+        unsigned int		safe_omit : 1;
+        unsigned int		maybe_open : 1;
+        unsigned int		seen_supported_mech : 1;
+    } flags;
+    HEIMDAL_MUTEX		ctx_id_mutex;
 
-	gss_name_t		target_name;
-	gssspnego_initiator_state   initiator_state;
+    gss_name_t		target_name;
+    gssspnego_initiator_state   initiator_state;
 
-	uint8_t			negoex_step;
-	krb5_storage		*negoex_transcript;
-	uint32_t		negoex_seqnum;
-	conversation_id		negoex_conv_id;
-	HEIM_TAILQ_HEAD(negoex_mech_list, negoex_auth_mech) negoex_mechs;
+    uint8_t			negoex_step;
+    krb5_storage		*negoex_transcript;
+    uint32_t		negoex_seqnum;
+    conversation_id		negoex_conv_id;
+    HEIM_TAILQ_HEAD(negoex_mech_list, negoex_auth_mech) negoex_mechs;
 };
 
 extern gss_OID_desc _gss_spnego_mskrb_mechanism_oid_desc;
@@ -153,7 +153,7 @@ static inline int
 gssspnego_ctx_complete_p(gssspnego_ctx ctx)
 {
     return ctx->flags.open &&
-	    (ctx->flags.safe_omit || (ctx->flags.sent_mic && ctx->flags.verified_mic));
+        (ctx->flags.safe_omit || (ctx->flags.sent_mic && ctx->flags.verified_mic));
 }
 
 #endif /* SPNEGO_LOCL_H */

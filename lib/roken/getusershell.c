@@ -87,10 +87,10 @@ getusershell()
     char *ret;
 
     if (curshell == NULL)
-	curshell = initshells();
+        curshell = initshells();
     ret = *curshell;
     if (ret != NULL)
-	curshell++;
+        curshell++;
     return (ret);
 }
 
@@ -98,10 +98,10 @@ ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
 endusershell()
 {
     if (shells != NULL)
-	free(shells);
+        free(shells);
     shells = NULL;
     if (strings != NULL)
-	free(strings);
+        free(strings);
     strings = NULL;
     curshell = NULL;
 }
@@ -130,52 +130,52 @@ initshells()
     strings = NULL;
 #ifdef HAVE_GETCONFATTR
     if(getconfattr(SC_SYS_LOGIN, SC_SHELLS, &tmp, SEC_LIST) != 0)
-	return okshells;
+        return okshells;
 
     for(cp = tmp, nsh = 0; *cp; cp += strlen(cp) + 1, nsh++);
 
     shells = calloc(nsh + 1, sizeof(*shells));
     if(shells == NULL)
-	return okshells;
+        return okshells;
 
     strings = malloc(cp - tmp);
     if(strings == NULL) {
-	free(shells);
-	shells = NULL;
-	return okshells;
+        free(shells);
+        shells = NULL;
+        return okshells;
     }
     memcpy(strings, tmp, cp - tmp);
     for(sp = shells, cp = strings; *cp; cp += strlen(cp) + 1, sp++)
-	*sp = cp;
+        *sp = cp;
 #else
     if ((fp = fopen(_PATH_SHELLS, "r")) == NULL)
-	return (okshells);
+        return (okshells);
     if (fstat(fileno(fp), &statb) == -1) {
-	fclose(fp);
-	return (okshells);
+        fclose(fp);
+        return (okshells);
     }
     if ((strings = malloc((u_int)statb.st_size)) == NULL) {
-	fclose(fp);
-	return (okshells);
+        fclose(fp);
+        return (okshells);
     }
     shells = calloc((unsigned)statb.st_size / 3, sizeof (char *));
     if (shells == NULL) {
-	fclose(fp);
-	free(strings);
-	strings = NULL;
-	return (okshells);
+        fclose(fp);
+        free(strings);
+        strings = NULL;
+        return (okshells);
     }
     sp = shells;
     cp = strings;
     while (fgets(cp, MaxPathLen + 1, fp) != NULL) {
-	while (*cp != '#' && *cp != '/' && *cp != '\0')
-	    cp++;
-	if (*cp == '#' || *cp == '\0')
-	    continue;
-	*sp++ = cp;
-	while (!isspace((unsigned char)*cp) && *cp != '#' && *cp != '\0')
-	    cp++;
-	*cp++ = '\0';
+        while (*cp != '#' && *cp != '/' && *cp != '\0')
+            cp++;
+        if (*cp == '#' || *cp == '\0')
+            continue;
+        *sp++ = cp;
+        while (!isspace((unsigned char)*cp) && *cp != '#' && *cp != '\0')
+            cp++;
+        *cp++ = '\0';
     }
     fclose(fp);
 #endif

@@ -95,135 +95,135 @@ static void insertionsort(u_char *, size_t, size_t, cmp_t, void *);
 int
 mergesort_r(void *base, size_t nmemb, size_t size, cmp_t cmp, void *thunk)
 {
-	size_t i;
-	int sense;
-	int big, iflag;
-	u_char *f1, *f2, *t, *b, *tp2, *q, *l1, *l2;
-	u_char *list2, *list1, *p2, *p, *last, **p1;
-	u_char *freeme = NULL;
+    size_t i;
+    int sense;
+    int big, iflag;
+    u_char *f1, *f2, *t, *b, *tp2, *q, *l1, *l2;
+    u_char *list2, *list1, *p2, *p, *last, **p1;
+    u_char *freeme = NULL;
 
-	if (size < PSIZE / 2) {		/* Pointers must fit into 2 * size. */
-		errno = EINVAL;
-		return (-1);
-	}
+    if (size < PSIZE / 2) {		/* Pointers must fit into 2 * size. */
+        errno = EINVAL;
+        return (-1);
+    }
 
-	if (nmemb == 0)
-		return (0);
+    if (nmemb == 0)
+        return (0);
 
-	/*
-	 * XXX
-	 * Stupid subtraction for the Cray.
-	 */
-	iflag = 0;
-	if (!(size % ISIZE) && !(((uintptr_t)base) % ISIZE))
-		iflag = 1;
+    /*
+     * XXX
+     * Stupid subtraction for the Cray.
+     */
+    iflag = 0;
+    if (!(size % ISIZE) && !(((uintptr_t)base) % ISIZE))
+        iflag = 1;
 
-	if ((list2 = freeme = malloc(nmemb * size + PSIZE)) == NULL)
-		return (-1);
+    if ((list2 = freeme = malloc(nmemb * size + PSIZE)) == NULL)
+        return (-1);
 
-	list1 = base;
-	setup(list1, list2, nmemb, size, cmp, thunk);
-	last = list2 + nmemb * size;
-	i = big = 0;
-	while (*EVAL(list2) != last) {
-	    l2 = list1;
-	    p1 = EVAL(list1);
-	    for (tp2 = p2 = list2; p2 != last; p1 = EVAL(l2)) {
-	    	p2 = *EVAL(p2);
-	    	f1 = l2;
-	    	f2 = l1 = list1 + (p2 - list2);
-	    	if (p2 != last)
-	    		p2 = *EVAL(p2);
-	    	l2 = list1 + (p2 - list2);
-	    	while (f1 < l1 && f2 < l2) {
-	    		if (cmp(f1, f2, thunk) <= 0) {
-	    			q = f2;
-	    			b = f1, t = l1;
-	    			sense = -1;
-	    		} else {
-	    			q = f1;
-	    			b = f2, t = l2;
-	    			sense = 0;
-	    		}
-	    		if (!big) {	/* here i = 0 */
-				while ((b += size) < t && cmp(q, b, thunk) >sense)
-	    				if (++i == 6) {
-	    					big = 1;
-	    					goto EXPONENTIAL;
-	    				}
-	    		} else {
-EXPONENTIAL:	    		for (i = size; ; i <<= 1)
-	    				if ((p = (b + i)) >= t) {
-	    					if ((p = t - size) > b &&
-						    cmp(q, p, thunk) <= sense)
-	    						t = p;
-	    					else
-	    						b = p;
-	    					break;
-	    				} else if (cmp(q, p, thunk) <= sense) {
-	    					t = p;
-	    					if (i == size)
-	    						big = 0;
-	    					goto FASTCASE;
-	    				} else
-	    					b = p;
-				while (t > b+size) {
-	    				i = (((t - b) / size) >> 1) * size;
-	    				if (cmp(q, p = b + i, thunk) <= sense)
-	    					t = p;
-	    				else
-	    					b = p;
-	    			}
-	    			goto COPY;
-FASTCASE:	    		while (i > size)
-	    				if (cmp(q,
-	    					p = b + (i >>= 1), thunk) <= sense)
-	    					t = p;
-	    				else
-	    					b = p;
-COPY:	    			b = t;
-	    		}
-	    		i = size;
-	    		if (q == f1) {
-	    			if (iflag) {
-	    				ICOPY_LIST(f2, tp2, b);
-	    				ICOPY_ELT(f1, tp2, i);
-	    			} else {
-	    				CCOPY_LIST(f2, tp2, b);
-	    				CCOPY_ELT(f1, tp2, i);
-	    			}
-	    		} else {
-	    			if (iflag) {
-	    				ICOPY_LIST(f1, tp2, b);
-	    				ICOPY_ELT(f2, tp2, i);
-	    			} else {
-	    				CCOPY_LIST(f1, tp2, b);
-	    				CCOPY_ELT(f2, tp2, i);
-	    			}
-	    		}
-	    	}
-	    	if (f2 < l2) {
-	    		if (iflag)
-	    			ICOPY_LIST(f2, tp2, l2);
-	    		else
-	    			CCOPY_LIST(f2, tp2, l2);
-	    	} else if (f1 < l1) {
-	    		if (iflag)
-	    			ICOPY_LIST(f1, tp2, l1);
-	    		else
-	    			CCOPY_LIST(f1, tp2, l1);
-	    	}
-	    	*p1 = l2;
-	    }
-	    tp2 = list1;	/* swap list1, list2 */
-	    list1 = list2;
-	    list2 = tp2;
-	    last = list2 + nmemb*size;
-	}
-	if (base == list2)
-		memmove(list2, list1, nmemb*size);
-	free(freeme);
-	return (0);
+    list1 = base;
+    setup(list1, list2, nmemb, size, cmp, thunk);
+    last = list2 + nmemb * size;
+    i = big = 0;
+    while (*EVAL(list2) != last) {
+        l2 = list1;
+        p1 = EVAL(list1);
+        for (tp2 = p2 = list2; p2 != last; p1 = EVAL(l2)) {
+            p2 = *EVAL(p2);
+            f1 = l2;
+            f2 = l1 = list1 + (p2 - list2);
+            if (p2 != last)
+                p2 = *EVAL(p2);
+            l2 = list1 + (p2 - list2);
+            while (f1 < l1 && f2 < l2) {
+                if (cmp(f1, f2, thunk) <= 0) {
+                    q = f2;
+                    b = f1, t = l1;
+                    sense = -1;
+                } else {
+                    q = f1;
+                    b = f2, t = l2;
+                    sense = 0;
+                }
+                if (!big) { /* here i = 0 */
+                while ((b += size) < t && cmp(q, b, thunk) >sense)
+                        if (++i == 6) {
+                            big = 1;
+                            goto EXPONENTIAL;
+                        }
+                } else {
+EXPONENTIAL:                for (i = size; ; i <<= 1)
+                        if ((p = (b + i)) >= t) {
+                            if ((p = t - size) > b &&
+                            cmp(q, p, thunk) <= sense)
+                                t = p;
+                            else
+                                b = p;
+                            break;
+                        } else if (cmp(q, p, thunk) <= sense) {
+                            t = p;
+                            if (i == size)
+                                big = 0;
+                            goto FASTCASE;
+                        } else
+                            b = p;
+                while (t > b+size) {
+                        i = (((t - b) / size) >> 1) * size;
+                        if (cmp(q, p = b + i, thunk) <= sense)
+                            t = p;
+                        else
+                            b = p;
+                    }
+                    goto COPY;
+FASTCASE:               while (i > size)
+                        if (cmp(q,
+                            p = b + (i >>= 1), thunk) <= sense)
+                            t = p;
+                        else
+                            b = p;
+COPY:                   b = t;
+                }
+                i = size;
+                if (q == f1) {
+                    if (iflag) {
+                        ICOPY_LIST(f2, tp2, b);
+                        ICOPY_ELT(f1, tp2, i);
+                    } else {
+                        CCOPY_LIST(f2, tp2, b);
+                        CCOPY_ELT(f1, tp2, i);
+                    }
+                } else {
+                    if (iflag) {
+                        ICOPY_LIST(f1, tp2, b);
+                        ICOPY_ELT(f2, tp2, i);
+                    } else {
+                        CCOPY_LIST(f1, tp2, b);
+                        CCOPY_ELT(f2, tp2, i);
+                    }
+                }
+            }
+            if (f2 < l2) {
+                if (iflag)
+                    ICOPY_LIST(f2, tp2, l2);
+                else
+                    CCOPY_LIST(f2, tp2, l2);
+            } else if (f1 < l1) {
+                if (iflag)
+                    ICOPY_LIST(f1, tp2, l1);
+                else
+                    CCOPY_LIST(f1, tp2, l1);
+            }
+            *p1 = l2;
+        }
+        tp2 = list1;    /* swap list1, list2 */
+        list1 = list2;
+        list2 = tp2;
+        last = list2 + nmemb*size;
+    }
+    if (base == list2)
+        memmove(list2, list1, nmemb*size);
+    free(freeme);
+    return (0);
 }
 
 #define	swap(a, b) {					\
@@ -254,67 +254,67 @@ COPY:	    			b = t;
 void
 setup(u_char *list1, u_char *list2, size_t n, size_t size, cmp_t cmp, void *thunk)
 {
-	int i, length, size2, tmp, sense;
-	u_char *f1, *f2, *s, *l2, *last, *p2;
+    int i, length, size2, tmp, sense;
+    u_char *f1, *f2, *s, *l2, *last, *p2;
 
-	size2 = size*2;
-	if (n <= 5) {
-		insertionsort(list1, n, size, cmp, thunk);
-		*EVAL(list2) = (u_char*) list2 + n*size;
-		return;
-	}
-	/*
-	 * Avoid running pointers out of bounds; limit n to evens
-	 * for simplicity.
-	 */
-	i = 4 + (n & 1);
-	insertionsort(list1 + (n - i) * size, i, size, cmp, thunk);
-	last = list1 + size * (n - i);
-	*EVAL(list2 + (last - list1)) = list2 + n * size;
+    size2 = size*2;
+    if (n <= 5) {
+        insertionsort(list1, n, size, cmp, thunk);
+        *EVAL(list2) = (u_char*) list2 + n*size;
+        return;
+    }
+    /*
+     * Avoid running pointers out of bounds; limit n to evens
+     * for simplicity.
+     */
+    i = 4 + (n & 1);
+    insertionsort(list1 + (n - i) * size, i, size, cmp, thunk);
+    last = list1 + size * (n - i);
+    *EVAL(list2 + (last - list1)) = list2 + n * size;
 
 #ifdef NATURAL
-	p2 = list2;
-	f1 = list1;
-	sense = (cmp(f1, f1 + size, thunk) > 0);
-	for (; f1 < last; sense = !sense) {
-		length = 2;
-					/* Find pairs with same sense. */
-		for (f2 = f1 + size2; f2 < last; f2 += size2) {
-			if ((cmp(f2, f2+ size, thunk) > 0) != sense)
-				break;
-			length += 2;
-		}
-		if (length < THRESHOLD) {		/* Pairwise merge */
-			do {
-				p2 = *EVAL(p2) = f1 + size2 - list1 + list2;
-				if (sense > 0)
-					swap (f1, f1 + size);
-			} while ((f1 += size2) < f2);
-		} else {				/* Natural merge */
-			l2 = f2;
-			for (f2 = f1 + size2; f2 < l2; f2 += size2) {
-				if ((cmp(f2-size, f2, thunk) > 0) != sense) {
-					p2 = *EVAL(p2) = f2 - list1 + list2;
-					if (sense > 0)
-						reverse(f1, f2-size);
-					f1 = f2;
-				}
-			}
-			if (sense > 0)
-				reverse (f1, f2-size);
-			f1 = f2;
-			if (f2 < last || cmp(f2 - size, f2, thunk) > 0)
-				p2 = *EVAL(p2) = f2 - list1 + list2;
-			else
-				p2 = *EVAL(p2) = list2 + n*size;
-		}
-	}
+    p2 = list2;
+    f1 = list1;
+    sense = (cmp(f1, f1 + size, thunk) > 0);
+    for (; f1 < last; sense = !sense) {
+        length = 2;
+        /* Find pairs with same sense. */
+        for (f2 = f1 + size2; f2 < last; f2 += size2) {
+            if ((cmp(f2, f2+ size, thunk) > 0) != sense)
+                break;
+            length += 2;
+        }
+        if (length < THRESHOLD) {		/* Pairwise merge */
+            do {
+                p2 = *EVAL(p2) = f1 + size2 - list1 + list2;
+                if (sense > 0)
+                    swap (f1, f1 + size);
+            } while ((f1 += size2) < f2);
+        } else {				/* Natural merge */
+            l2 = f2;
+            for (f2 = f1 + size2; f2 < l2; f2 += size2) {
+                if ((cmp(f2-size, f2, thunk) > 0) != sense) {
+                    p2 = *EVAL(p2) = f2 - list1 + list2;
+                    if (sense > 0)
+                        reverse(f1, f2-size);
+                    f1 = f2;
+                }
+            }
+            if (sense > 0)
+                reverse (f1, f2-size);
+            f1 = f2;
+            if (f2 < last || cmp(f2 - size, f2, thunk) > 0)
+                p2 = *EVAL(p2) = f2 - list1 + list2;
+            else
+                p2 = *EVAL(p2) = list2 + n*size;
+        }
+    }
 #else		/* pairwise merge only. */
-	for (f1 = list1, p2 = list2; f1 < last; f1 += size2) {
-		p2 = *EVAL(p2) = p2 + size2;
-		if (cmp (f1, f1 + size) > 0)
-			swap(f1, f1 + size);
-	}
+    for (f1 = list1, p2 = list2; f1 < last; f1 += size2) {
+        p2 = *EVAL(p2) = p2 + size2;
+        if (cmp (f1, f1 + size) > 0)
+            swap(f1, f1 + size);
+    }
 #endif /* NATURAL */
 }
 
@@ -325,14 +325,14 @@ setup(u_char *list1, u_char *list2, size_t n, size_t size, cmp_t cmp, void *thun
 static void
 insertionsort(u_char *a, size_t n, size_t size, cmp_t cmp, void *thunk)
 {
-	u_char *ai, *s, *t, *u, tmp;
-	int i;
+    u_char *ai, *s, *t, *u, tmp;
+    int i;
 
-	for (ai = a+size; --n >= 1; ai += size)
-		for (t = ai; t > a; t -= size) {
-			u = t - size;
-			if (cmp(u, t, thunk) <= 0)
-				break;
-			swap(u, t);
-		}
+    for (ai = a+size; --n >= 1; ai += size)
+        for (t = ai; t > a; t -= size) {
+            u = t - size;
+            if (cmp(u, t, thunk) <= 0)
+                break;
+            swap(u, t);
+        }
 }

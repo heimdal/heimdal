@@ -60,27 +60,27 @@ main(int argc, char **argv)
 
     ret = krb5_init_context(&kcm_context);
     if (ret) {
-	errx (1, "krb5_init_context failed: %d", ret);
-	return ret;
+        errx (1, "krb5_init_context failed: %d", ret);
+        return ret;
     }
 
     kcm_configure(argc, argv);
 
 #ifdef HAVE_SIGACTION
     {
-	struct sigaction sa;
+        struct sigaction sa;
 
-	sa.sa_flags = 0;
-	sa.sa_handler = sigusr1;
-	sigemptyset(&sa.sa_mask);
+        sa.sa_flags = 0;
+        sa.sa_handler = sigusr1;
+        sigemptyset(&sa.sa_mask);
 
-	sigaction(SIGUSR1, &sa, NULL);
+        sigaction(SIGUSR1, &sa, NULL);
 
-	sa.sa_handler = sigusr2;
-	sigaction(SIGUSR2, &sa, NULL);
+        sa.sa_handler = sigusr2;
+        sigaction(SIGUSR2, &sa, NULL);
 
-	sa.sa_handler = SIG_IGN;
-	sigaction(SIGPIPE, &sa, NULL);
+        sa.sa_handler = SIG_IGN;
+        sigaction(SIGPIPE, &sa, NULL);
     }
 #else
     signal(SIGUSR1, sigusr1);
@@ -95,20 +95,20 @@ main(int argc, char **argv)
         setenv("HEIM_IPC_DIR", socket_path, 1);
 
     if (launchd_flag) {
-	heim_sipc mach;
-	ret = heim_sipc_launchd_mach_init(service_name, kcm_service, NULL, &mach);
+        heim_sipc mach;
+        ret = heim_sipc_launchd_mach_init(service_name, kcm_service, NULL, &mach);
         if (ret)
             krb5_err(kcm_context, 1, ret, "Could not setup launchd service");
     } else {
-	heim_sipc un;
-	ret = heim_sipc_service_unix(service_name, kcm_service, NULL, &un);
+        heim_sipc un;
+        ret = heim_sipc_service_unix(service_name, kcm_service, NULL, &un);
         if (ret)
             krb5_err(kcm_context, 1, ret, "Could not setup Unix domain socket service");
     }
 #ifdef HAVE_DOOR_CREATE
     {
-	heim_sipc door;
-	ret = heim_sipc_service_door(service_name, kcm_service, NULL, &door);
+        heim_sipc door;
+        ret = heim_sipc_service_door(service_name, kcm_service, NULL, &door);
         if (ret)
             krb5_err(kcm_context, 1, ret, "Could not setup door service");
     }

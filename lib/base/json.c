@@ -63,7 +63,7 @@ struct heim_strbuf {
     char *str;
     size_t len;
     size_t alloced;
-    int	enomem;
+    int enomem;
     heim_json_flags_t flags;
 };
 
@@ -75,7 +75,7 @@ indent(struct twojson *j)
 {
     size_t i = j->indent;
     if (j->flags & HEIM_JSON_F_ONE_LINE)
-	return;
+        return;
     if (j->flags & HEIM_JSON_F_INDENT2)
         while (i--)
             j->out(j->ctx, "  ");
@@ -95,12 +95,12 @@ array2json(heim_object_t value, void *ctx, int *stop)
 {
     struct twojson *j = ctx;
     if (j->ret)
-	return;
+        return;
     if (j->first) {
-	j->first = 0;
+        j->first = 0;
     } else {
-	j->out(j->ctx, NULL); /* eat previous '\n' if possible */
-	j->out(j->ctx, ",\n");
+        j->out(j->ctx, NULL); /* eat previous '\n' if possible */
+        j->out(j->ctx, ",\n");
     }
     j->ret = base2json(value, j, 0);
 }
@@ -110,31 +110,31 @@ dict2json(heim_object_t key, heim_object_t value, void *ctx)
 {
     struct twojson *j = ctx;
     if (j->ret)
-	return;
+        return;
     if (j->first) {
-	j->first = 0;
+        j->first = 0;
     } else {
-	j->out(j->ctx, NULL); /* eat previous '\n' if possible */
-	j->out(j->ctx, ",\n");
+        j->out(j->ctx, NULL); /* eat previous '\n' if possible */
+        j->out(j->ctx, ",\n");
     }
     j->ret = base2json(key, j, 0);
     if (j->ret)
-	return;
+        return;
     switch (heim_get_tid(value)) {
-    case HEIM_TID_ARRAY:
-    case HEIM_TID_DICT:
-    case HEIM_TID_DATA:
-        j->out(j->ctx, ":\n");
-        j->indent++;
-        j->ret = base2json(value, j, 0);
-        if (j->ret)
-            return;
-        j->indent--;
-        break;
-    default:
-        j->out(j->ctx, ": ");
-        j->ret = base2json(value, j, 1);
-        break;
+        case HEIM_TID_ARRAY:
+        case HEIM_TID_DICT:
+        case HEIM_TID_DATA:
+            j->out(j->ctx, ":\n");
+            j->indent++;
+            j->ret = base2json(value, j, 0);
+            if (j->ret)
+                return;
+            j->indent--;
+            break;
+        default:
+            j->out(j->ctx, ": ");
+            j->ret = base2json(value, j, 1);
+            break;
     }
 }
 
@@ -193,148 +193,195 @@ base2json(heim_object_t obj, struct twojson *j, int skip_indent)
     int first = 0;
 
     if (obj == NULL) {
-	if (j->flags & HEIM_JSON_F_CNULL2JSNULL) {
-	    obj = heim_null_create();
-	} else if (j->flags & HEIM_JSON_F_NO_C_NULL) {
-	    return EINVAL;
-	} else {
-	    indent(j);
-	    j->out(j->ctx, "<NULL>\n"); /* This is NOT valid JSON! */
-	    return 0;
-	}
+        if (j->flags & HEIM_JSON_F_CNULL2JSNULL) {
+            obj = heim_null_create();
+        } else if (j->flags & HEIM_JSON_F_NO_C_NULL) {
+            return EINVAL;
+        } else {
+            indent(j);
+            j->out(j->ctx, "<NULL>\n"); /* This is NOT valid JSON! */
+            return 0;
+        }
     }
 
     type = heim_get_tid(obj);
     switch (type) {
-    case HEIM_TID_ARRAY:
-	indent(j);
-	j->out(j->ctx, "[\n");
-	j->indent++;
-	first = j->first;
-	j->first = 1;
-	heim_array_iterate_f(obj, j, array2json);
-	j->indent--;
-	if (!j->first)
-	    j->out(j->ctx, "\n");
-	indent(j);
-	j->out(j->ctx, "]\n");
-	j->first = first;
-	break;
-
-    case HEIM_TID_DICT:
-	indent(j);
-	j->out(j->ctx, "{\n");
-	j->indent++;
-	first = j->first;
-	j->first = 1;
-	heim_dict_iterate_f(obj, j, dict2json);
-	j->indent--;
-	if (!j->first)
-	    j->out(j->ctx, "\n");
-	indent(j);
-	j->out(j->ctx, "}\n");
-	j->first = first;
-	break;
-
-    case HEIM_TID_STRING: {
-	const unsigned char *s = (const unsigned char *)heim_string_get_utf8(obj);
-	const unsigned char *p;
-        unsigned int c, cp, ctop, cbot;
-        char e[sizeof("\\u0123\\u3210")];
-        int good;
-        size_t i;
-
-        if (!skip_indent)
+        case HEIM_TID_ARRAY:
             indent(j);
-	j->out(j->ctx, "\"");
-        for (p = s; (c = *p); p++) {
-            switch (c) {
-            /* ASCII control characters w/ C-like escapes */
-            case '\b': j->out(j->ctx, "\\b");  continue;
-            case '\f': j->out(j->ctx, "\\f");  continue;
-            case '\n': j->out(j->ctx, "\\n");  continue;
-            case '\r': j->out(j->ctx, "\\r");  continue;
-            case '\t': j->out(j->ctx, "\\t");  continue;
-            /* Other must-escape non-control ASCII characters */
-            case '"':  j->out(j->ctx, "\\\""); continue;
-            case '\\': j->out(j->ctx, "\\\\"); continue;
-            default: break;
-            }
+            j->out(j->ctx, "[\n");
+            j->indent++;
+            first = j->first;
+            j->first = 1;
+            heim_array_iterate_f(obj, j, array2json);
+            j->indent--;
+            if (!j->first)
+                j->out(j->ctx, "\n");
+            indent(j);
+            j->out(j->ctx, "]\n");
+            j->first = first;
+            break;
 
-            /*
-             * JSON string encoding is... complex.
-             *
-             * Invalid UTF-8 w/  HEIM_JSON_F_STRICT_STRINGS set -> return 1
-             *
-             * Invalid UTF-8 w/o HEIM_JSON_F_STRICT_STRINGS set -> pass
-             * through, a sort of Heimdal WTF-8, but not _the_ WTF-8.
-             */
-            if (c < 0x20) {
-                /* ASCII control character w/o C-like escape */
-                e[0] = '\\';
-                e[1] = 'u';
-                e[2] = '0';
-                e[3] = '0';
-                e[4] = "0123456789ABCDEF"[c>>4];
-                e[5] = "0123456789ABCDEF"[c & 0x0f];
-                e[6] = '\0';
-                j->out(j->ctx, e);
-                continue;
-            }
-            if (c < 0x80) {
-                /* ASCII */
-                e[0] = c;
-                e[1] = '\0';
-                j->out(j->ctx, e);
-                continue;
-            }
-            if ((c & 0xc0) == 0x80) {
-                /* UTF-8 bare non-leading byte */
-                if (!(j->flags & HEIM_JSON_F_STRICT_STRINGS)) {
+        case HEIM_TID_DICT:
+            indent(j);
+            j->out(j->ctx, "{\n");
+            j->indent++;
+            first = j->first;
+            j->first = 1;
+            heim_dict_iterate_f(obj, j, dict2json);
+            j->indent--;
+            if (!j->first)
+                j->out(j->ctx, "\n");
+            indent(j);
+            j->out(j->ctx, "}\n");
+            j->first = first;
+            break;
+
+        case HEIM_TID_STRING: {
+            const unsigned char *s = (const unsigned char *)heim_string_get_utf8(obj);
+            const unsigned char *p;
+            unsigned int c, cp, ctop, cbot;
+            char e[sizeof("\\u0123\\u3210")];
+            int good;
+            size_t i;
+
+            if (!skip_indent)
+                indent(j);
+            j->out(j->ctx, "\"");
+            for (p = s; (c = *p); p++) {
+                switch (c) {
+                    /* ASCII control characters w/ C-like escapes */
+                    case '\b': j->out(j->ctx, "\\b");  continue;
+                    case '\f': j->out(j->ctx, "\\f");  continue;
+                    case '\n': j->out(j->ctx, "\\n");  continue;
+                    case '\r': j->out(j->ctx, "\\r");  continue;
+                    case '\t': j->out(j->ctx, "\\t");  continue;
+                    /* Other must-escape non-control ASCII characters */
+                    case '"':  j->out(j->ctx, "\\\""); continue;
+                    case '\\': j->out(j->ctx, "\\\\"); continue;
+                    default: break;
+                }
+
+                /*
+                 * JSON string encoding is... complex.
+                 *
+                 * Invalid UTF-8 w/  HEIM_JSON_F_STRICT_STRINGS set -> return 1
+                 *
+                 * Invalid UTF-8 w/o HEIM_JSON_F_STRICT_STRINGS set -> pass
+                 * through, a sort of Heimdal WTF-8, but not _the_ WTF-8.
+                 */
+                if (c < 0x20) {
+                    /* ASCII control character w/o C-like escape */
+                    e[0] = '\\';
+                    e[1] = 'u';
+                    e[2] = '0';
+                    e[3] = '0';
+                    e[4] = "0123456789ABCDEF"[c>>4];
+                    e[5] = "0123456789ABCDEF"[c & 0x0f];
+                    e[6] = '\0';
+                    j->out(j->ctx, e);
+                    continue;
+                }
+                if (c < 0x80) {
+                    /* ASCII */
                     e[0] = c;
                     e[1] = '\0';
                     j->out(j->ctx, e);
                     continue;
                 }
-                return 1;
-            }
-            if ((c & 0xe0) == 0xc0) {
-                /* UTF-8 leading byte of two-byte sequence */
-                good = 1;
-                for (i = 1; i < 2 && good && p[i]; i++) {
-                    if ((p[i] & 0xc0) != 0x80)
-                        good = 0;
-                }
-                if (i != 2)
-                    good = 0;
-                if (!good && !(j->flags & HEIM_JSON_F_STRICT_STRINGS)) {
-                    e[0] = c;
-                    e[1] = '\0';
-                    j->out(j->ctx, e);
-                    continue;
-                } else if (!good) {
+                if ((c & 0xc0) == 0x80) {
+                    /* UTF-8 bare non-leading byte */
+                    if (!(j->flags & HEIM_JSON_F_STRICT_STRINGS)) {
+                        e[0] = c;
+                        e[1] = '\0';
+                        j->out(j->ctx, e);
+                        continue;
+                    }
                     return 1;
                 }
-                if (j->flags & HEIM_JSON_F_ESCAPE_NON_ASCII) {
-                    out_escaped_bmp(j, p, 2);
+                if ((c & 0xe0) == 0xc0) {
+                    /* UTF-8 leading byte of two-byte sequence */
+                    good = 1;
+                    for (i = 1; i < 2 && good && p[i]; i++) {
+                        if ((p[i] & 0xc0) != 0x80)
+                            good = 0;
+                    }
+                    if (i != 2)
+                        good = 0;
+                    if (!good && !(j->flags & HEIM_JSON_F_STRICT_STRINGS)) {
+                        e[0] = c;
+                        e[1] = '\0';
+                        j->out(j->ctx, e);
+                        continue;
+                    } else if (!good) {
+                        return 1;
+                    }
+                    if (j->flags & HEIM_JSON_F_ESCAPE_NON_ASCII) {
+                        out_escaped_bmp(j, p, 2);
+                        p += 1;
+                        continue;
+                    }
+                    e[0] = c;
+                    e[1] = p[1];
+                    e[2] = '\0';
+                    j->out(j->ctx, e);
                     p += 1;
                     continue;
                 }
-                e[0] = c;
-                e[1] = p[1];
-                e[2] = '\0';
-                j->out(j->ctx, e);
-                p += 1;
-                continue;
-            }
-            if ((c & 0xf0) == 0xe0) {
-                /* UTF-8 leading byte of three-byte sequence */
+                if ((c & 0xf0) == 0xe0) {
+                    /* UTF-8 leading byte of three-byte sequence */
+                    good = 1;
+                    for (i = 1; i < 3 && good && p[i]; i++) {
+                        if ((p[i] & 0xc0) != 0x80)
+                            good = 0;
+                    }
+                    if (i != 3)
+                        good = 0;
+                    if (!good && !(j->flags & HEIM_JSON_F_STRICT_STRINGS)) {
+                        e[0] = c;
+                        e[1] = '\0';
+                        j->out(j->ctx, e);
+                        continue;
+                    } else if (!good) {
+                        return 1;
+                    }
+                    if (j->flags & HEIM_JSON_F_ESCAPE_NON_ASCII) {
+                        out_escaped_bmp(j, p, 3);
+                        p += 2;
+                        continue;
+                    }
+                    e[0] = c;
+                    e[1] = p[1];
+                    e[2] = p[2];
+                    e[3] = '\0';
+                    j->out(j->ctx, e);
+                    p += 2;
+                    continue;
+                }
+
+                if (c > 0xf7) {
+                    /* Invalid UTF-8 leading byte */
+                    if (!(j->flags & HEIM_JSON_F_STRICT_STRINGS)) {
+                        e[0] = c;
+                        e[1] = '\0';
+                        j->out(j->ctx, e);
+                        continue;
+                    }
+                    return 1;
+                }
+
+                /*
+                 * A codepoint > U+FFFF, needs encoding a la UTF-16 surrogate
+                 * pair because JSON takes after JS which uses UTF-16.  Ugly.
+                 */
+                cp = c & 0x7;
                 good = 1;
-                for (i = 1; i < 3 && good && p[i]; i++) {
-                    if ((p[i] & 0xc0) != 0x80)
+                for (i = 1; i < 4 && good && p[i]; i++) {
+                    if ((p[i] & 0xc0) == 0x80)
+                        cp = (cp << 6) | (p[i] & 0x3f);
+                    else
                         good = 0;
                 }
-                if (i != 3)
+                if (i != 4)
                     good = 0;
                 if (!good && !(j->flags & HEIM_JSON_F_STRICT_STRINGS)) {
                     e[0] = c;
@@ -344,161 +391,114 @@ base2json(heim_object_t obj, struct twojson *j, int skip_indent)
                 } else if (!good) {
                     return 1;
                 }
-                if (j->flags & HEIM_JSON_F_ESCAPE_NON_ASCII) {
-                    out_escaped_bmp(j, p, 3);
-                    p += 2;
-                    continue;
-                }
-                e[0] = c;
-                e[1] = p[1];
-                e[2] = p[2];
-                e[3] = '\0';
-                j->out(j->ctx, e);
-                p += 2;
-                continue;
-            }
+                p += 3;
 
-            if (c > 0xf7) {
-                /* Invalid UTF-8 leading byte */
-                if (!(j->flags & HEIM_JSON_F_STRICT_STRINGS)) {
-                    e[0] = c;
-                    e[1] = '\0';
-                    j->out(j->ctx, e);
-                    continue;
-                }
-                return 1;
-            }
+                cp -= 0x10000;
+                ctop = 0xD800 + (cp >>   10);
+                cbot = 0xDC00 + (cp & 0x3ff);
 
-            /*
-             * A codepoint > U+FFFF, needs encoding a la UTF-16 surrogate
-             * pair because JSON takes after JS which uses UTF-16.  Ugly.
-             */
-            cp = c & 0x7;
-            good = 1;
-            for (i = 1; i < 4 && good && p[i]; i++) {
-                if ((p[i] & 0xc0) == 0x80)
-                    cp = (cp << 6) | (p[i] & 0x3f);
-                else
-                    good = 0;
-            }
-            if (i != 4)
-                good = 0;
-            if (!good && !(j->flags & HEIM_JSON_F_STRICT_STRINGS)) {
-                e[0] = c;
-                e[1] = '\0';
+                e[0 ] = '\\';
+                e[1 ] = 'u';
+                e[2 ] = "0123456789ABCDEF"[(ctop         ) >> 12];
+                e[3 ] = "0123456789ABCDEF"[(ctop & 0x0f00) >>  8];
+                e[4 ] = "0123456789ABCDEF"[(ctop & 0x00f0) >>  4];
+                e[5 ] = "0123456789ABCDEF"[(ctop & 0x000f)      ];
+                e[6 ] = '\\';
+                e[7 ] = 'u';
+                e[8 ] = "0123456789ABCDEF"[(cbot         ) >> 12];
+                e[9 ] = "0123456789ABCDEF"[(cbot & 0x0f00) >>  8];
+                e[10] = "0123456789ABCDEF"[(cbot & 0x00f0) >>  4];
+                e[11] = "0123456789ABCDEF"[(cbot & 0x000f)      ];
+                e[12] = '\0';
                 j->out(j->ctx, e);
                 continue;
-            } else if (!good) {
-                return 1;
             }
-            p += 3;
-
-            cp -= 0x10000;
-            ctop = 0xD800 + (cp >>   10);
-            cbot = 0xDC00 + (cp & 0x3ff);
-
-            e[0 ] = '\\';
-            e[1 ] = 'u';
-            e[2 ] = "0123456789ABCDEF"[(ctop         ) >> 12];
-            e[3 ] = "0123456789ABCDEF"[(ctop & 0x0f00) >>  8];
-            e[4 ] = "0123456789ABCDEF"[(ctop & 0x00f0) >>  4];
-            e[5 ] = "0123456789ABCDEF"[(ctop & 0x000f)      ];
-            e[6 ] = '\\';
-            e[7 ] = 'u';
-            e[8 ] = "0123456789ABCDEF"[(cbot         ) >> 12];
-            e[9 ] = "0123456789ABCDEF"[(cbot & 0x0f00) >>  8];
-            e[10] = "0123456789ABCDEF"[(cbot & 0x00f0) >>  4];
-            e[11] = "0123456789ABCDEF"[(cbot & 0x000f)      ];
-            e[12] = '\0';
-            j->out(j->ctx, e);
-            continue;
+            j->out(j->ctx, "\"");
+            break;
         }
-	j->out(j->ctx, "\"");
-	break;
-    }
 
-    case HEIM_TID_DATA: {
-	heim_dict_t d;
-	heim_string_t v;
-	const heim_octet_string *data;
-	char *b64 = NULL;
-	int ret;
+        case HEIM_TID_DATA: {
+            heim_dict_t d;
+            heim_string_t v;
+            const heim_octet_string *data;
+            char *b64 = NULL;
+            int ret;
 
-	if (j->flags & HEIM_JSON_F_NO_DATA)
-	    return EINVAL; /* JSON doesn't do binary */
+            if (j->flags & HEIM_JSON_F_NO_DATA)
+                return EINVAL; /* JSON doesn't do binary */
 
-	data = heim_data_get_data(obj);
-	ret = rk_base64_encode(data->data, data->length, &b64);
-	if (ret < 0 || b64 == NULL)
-	    return ENOMEM;
+            data = heim_data_get_data(obj);
+            ret = rk_base64_encode(data->data, data->length, &b64);
+            if (ret < 0 || b64 == NULL)
+                return ENOMEM;
 
-	if (j->flags & HEIM_JSON_F_NO_DATA_DICT) {
-	    indent(j);
-	    j->out(j->ctx, "\"");
-	    j->out(j->ctx, b64); /* base64-encode; hope there's no aliasing */
-	    j->out(j->ctx, "\"");
-	    free(b64);
-	} else {
-	    /*
-	     * JSON has no way to represent binary data, therefore the
-	     * following is a Heimdal-specific convention.
-	     *
-	     * We encode binary data as a dict with a single very magic
-	     * key with a base64-encoded value.  The magic key includes
-	     * a uuid, so we're not likely to alias accidentally.
-	     */
-	    d = heim_dict_create(2);
-	    if (d == NULL) {
-		free(b64);
-		return ENOMEM;
-	    }
-	    v = heim_string_ref_create(b64, free);
-	    if (v == NULL) {
-		free(b64);
-		heim_release(d);
-		return ENOMEM;
-	    }
-	    ret = heim_dict_set_value(d, heim_tid_data_uuid_key, v);
-	    heim_release(v);
-	    if (ret) {
-		heim_release(d);
-		return ENOMEM;
-	    }
-	    ret = base2json(d, j, 0);
-	    heim_release(d);
-	    if (ret)
-		return ret;
-	}
-	break;
-    }
+            if (j->flags & HEIM_JSON_F_NO_DATA_DICT) {
+                indent(j);
+                j->out(j->ctx, "\"");
+                j->out(j->ctx, b64); /* base64-encode; hope there's no aliasing */
+                j->out(j->ctx, "\"");
+                free(b64);
+            } else {
+                /*
+                 * JSON has no way to represent binary data, therefore the
+                 * following is a Heimdal-specific convention.
+                 *
+                 * We encode binary data as a dict with a single very magic
+                 * key with a base64-encoded value.  The magic key includes
+                 * a uuid, so we're not likely to alias accidentally.
+                 */
+                d = heim_dict_create(2);
+                if (d == NULL) {
+                    free(b64);
+                    return ENOMEM;
+                }
+                v = heim_string_ref_create(b64, free);
+                if (v == NULL) {
+                    free(b64);
+                    heim_release(d);
+                    return ENOMEM;
+                }
+                ret = heim_dict_set_value(d, heim_tid_data_uuid_key, v);
+                heim_release(v);
+                if (ret) {
+                    heim_release(d);
+                    return ENOMEM;
+                }
+                ret = base2json(d, j, 0);
+                heim_release(d);
+                if (ret)
+                    return ret;
+            }
+            break;
+        }
 
-    case HEIM_TID_NUMBER: {
-	char num[32];
-        if (!skip_indent)
-            indent(j);
-	snprintf(num, sizeof (num), "%d", heim_number_get_int(obj));
-	j->out(j->ctx, num);
-	break;
-    }
-    case HEIM_TID_NULL:
-        if (!skip_indent)
-            indent(j);
-	j->out(j->ctx, "null");
-	break;
-    case HEIM_TID_BOOL:
-        if (!skip_indent)
-            indent(j);
-	j->out(j->ctx, heim_bool_val(obj) ? "true" : "false");
-	break;
-    default:
-	return 1;
+        case HEIM_TID_NUMBER: {
+            char num[32];
+            if (!skip_indent)
+                indent(j);
+            snprintf(num, sizeof (num), "%d", heim_number_get_int(obj));
+            j->out(j->ctx, num);
+            break;
+        }
+        case HEIM_TID_NULL:
+            if (!skip_indent)
+                indent(j);
+            j->out(j->ctx, "null");
+            break;
+        case HEIM_TID_BOOL:
+            if (!skip_indent)
+                indent(j);
+            j->out(j->ctx, heim_bool_val(obj) ? "true" : "false");
+            break;
+        default:
+            return 1;
     }
     return 0;
 }
 
 static int
 heim_base2json(heim_object_t obj, void *ctx, heim_json_flags_t flags,
-	       void (*out)(void *, const char *))
+               void (*out)(void *, const char *))
 {
     struct twojson j;
 
@@ -545,14 +545,14 @@ static int
 white_spaces(struct parse_ctx *ctx)
 {
     while (ctx->p < ctx->pend) {
-	uint8_t c = *ctx->p;
-	if (c == ' ' || c == '\t' || c == '\r') {
+        uint8_t c = *ctx->p;
+        if (c == ' ' || c == '\t' || c == '\r') {
 
-	} else if (c == '\n') {
-	    ctx->lineno++;
-	} else
-	    return 0;
-	(ctx->p)++;
+        } else if (c == '\n') {
+            ctx->lineno++;
+        } else
+            return 0;
+        (ctx->p)++;
     }
     return -1;
 }
@@ -569,22 +569,22 @@ parse_number(struct parse_ctx *ctx)
     int number = 0, neg = 1;
 
     if (ctx->p >= ctx->pend)
-	return NULL;
+        return NULL;
 
     if (*ctx->p == '-') {
-	if (ctx->p + 1 >= ctx->pend)
-	    return NULL;
-	neg = -1;
-	ctx->p += 1;
+        if (ctx->p + 1 >= ctx->pend)
+            return NULL;
+        neg = -1;
+        ctx->p += 1;
     }
 
     while (ctx->p < ctx->pend) {
-	if (is_number(*ctx->p)) {
-	    number = (number * 10) + (*ctx->p - '0');
-	} else {
-	    break;
-	}
-	ctx->p += 1;
+        if (is_number(*ctx->p)) {
+            number = (number * 10) + (*ctx->p - '0');
+        } else {
+            break;
+        }
+        ctx->p += 1;
     }
 
     return heim_number_create(number * neg);
@@ -845,45 +845,45 @@ parse_string(struct parse_ctx *ctx)
             return NULL;
         }
         switch (*ctx->p) {
-        /* Simple escapes */
-        case  'b': *(p++) = '\b'; ctx->p++; continue;
-        case  'f': *(p++) = '\f'; ctx->p++; continue;
-        case  'n': *(p++) = '\n'; ctx->p++; continue;
-        case  'r': *(p++) = '\r'; ctx->p++; continue;
-        case  't': *(p++) = '\t'; ctx->p++; continue;
-        case  '"': *(p++) = '"';  ctx->p++; continue;
-        case '\\': *(p++) = '\\'; ctx->p++; continue;
-        /* Escaped Unicode handled below */
-        case  'u':
-            /*
-             * Worst case for !strict we need 11 bytes for a truncated non-BMP
-             * codepoint escape.  Call it 12.
-             */
-            if (strict)
-                need = 4;
-            else
-                need = 12;
-            if (pend - p < need) {
-                /* Go back to the backslash, realloc, try again */
-                ctx->p--;
-                continue;
-            }
+            /* Simple escapes */
+            case  'b': *(p++) = '\b'; ctx->p++; continue;
+            case  'f': *(p++) = '\f'; ctx->p++; continue;
+            case  'n': *(p++) = '\n'; ctx->p++; continue;
+            case  'r': *(p++) = '\r'; ctx->p++; continue;
+            case  't': *(p++) = '\t'; ctx->p++; continue;
+            case  '"': *(p++) = '"';  ctx->p++; continue;
+            case '\\': *(p++) = '\\'; ctx->p++; continue;
+            /* Escaped Unicode handled below */
+            case  'u':
+                /*
+                 * Worst case for !strict we need 11 bytes for a truncated non-BMP
+                 * codepoint escape.  Call it 12.
+                 */
+                if (strict)
+                    need = 4;
+                else
+                    need = 12;
+                if (pend - p < need) {
+                    /* Go back to the backslash, realloc, try again */
+                    ctx->p--;
+                    continue;
+                }
 
-            need = 0;
-            ctx->p++;
-            break;
-        default:
-            if (!strict) {
-                *(p++) = *ctx->p;
+                need = 0;
                 ctx->p++;
-                continue;
-            }
-            ctx->error =
-                heim_error_create(EINVAL,
-                                  "Invalid backslash escape at line %lu",
-                                  ctx->lineno);
-            free(p0);
-            return NULL;
+                break;
+            default:
+                if (!strict) {
+                    *(p++) = *ctx->p;
+                    ctx->p++;
+                    continue;
+                }
+                ctx->error =
+                    heim_error_create(EINVAL,
+                                      "Invalid backslash escape at line %lu",
+                                      ctx->lineno);
+                free(p0);
+                return NULL;
         }
 
         /* Unicode code point */
@@ -976,9 +976,9 @@ parse_string(struct parse_ctx *ctx)
     /* NUL-terminate for rk_base64_decode() and plain paranoia */
     if (p0 != NULL && p == pend) {
         /*
-	 * Work out how far p is into p0 to re-establish p after
-	 * the realloc()
-	 */
+         * Work out how far p is into p0 to re-establish p after
+         * the realloc()
+         */
         size_t p0_to_pend_len = (pend - p0);
         char *tmp = realloc(p0, 1 + p0_to_pend_len);
 
@@ -1018,64 +1018,64 @@ parse_pair(heim_dict_t dict, struct parse_ctx *ctx)
     heim_object_t value;
 
     if (white_spaces(ctx))
-	return -1;
+        return -1;
 
     if (*ctx->p == '}') {
-	ctx->p++;
-	return 0;
+        ctx->p++;
+        return 0;
     }
 
     if (ctx->flags & HEIM_JSON_F_STRICT_DICT)
-	/* JSON allows only string keys */
-	key = parse_string(ctx);
+        /* JSON allows only string keys */
+        key = parse_string(ctx);
     else
-	/* heim_dict_t allows any heim_object_t as key */
-	key = parse_value(ctx);
+        /* heim_dict_t allows any heim_object_t as key */
+        key = parse_value(ctx);
     if (key == NULL)
-	/* Even heim_dict_t does not allow C NULLs as keys though! */
-	return -1;
+        /* Even heim_dict_t does not allow C NULLs as keys though! */
+        return -1;
 
     if (white_spaces(ctx)) {
-	heim_release(key);
-	return -1;
+        heim_release(key);
+        return -1;
     }
 
     if (*ctx->p != ':') {
-	heim_release(key);
-	return -1;
+        heim_release(key);
+        return -1;
     }
 
     ctx->p += 1; /* safe because we call white_spaces() next */
 
     if (white_spaces(ctx)) {
-	heim_release(key);
-	return -1;
+        heim_release(key);
+        return -1;
     }
 
     value = parse_value(ctx);
     if (value == NULL &&
-	(ctx->error != NULL || (ctx->flags & HEIM_JSON_F_NO_C_NULL))) {
-	if (ctx->error == NULL)
-	    ctx->error = heim_error_create(EINVAL, "Invalid JSON encoding");
-	heim_release(key);
-	return -1;
+        (ctx->error != NULL || (ctx->flags & HEIM_JSON_F_NO_C_NULL))) {
+        if (ctx->error == NULL)
+            ctx->error = heim_error_create(EINVAL, "Invalid JSON encoding");
+        heim_release(key);
+        return -1;
     }
     heim_dict_set_value(dict, key, value);
     heim_release(key);
     heim_release(value);
 
     if (white_spaces(ctx))
-	return -1;
+        return -1;
 
     if (*ctx->p == '}') {
-	/*
-	 * Return 1 but don't consume the '}' so we can count the one
-	 * pair in a one-pair dict
-	 */
-	return 1;
+        /*
+         * Return 1 but don't consume the '}' so we can count the one
+         * pair in a one-pair dict
+         */
+        return 1;
     } else if (*ctx->p == ',') {
-	ctx->p++;
-	return 1;
+        ctx->p++;
+        return 1;
     }
     return -1;
 }
@@ -1091,45 +1091,45 @@ parse_dict(struct parse_ctx *ctx)
 
     dict = heim_dict_create(11);
     if (dict == NULL) {
-	ctx->error = heim_error_create_enomem();
-	return NULL;
+        ctx->error = heim_error_create_enomem();
+        return NULL;
     }
 
     ctx->p += 1; /* safe because parse_pair() calls white_spaces() first */
 
     while ((ret = parse_pair(dict, ctx)) > 0)
-	count++;
+        count++;
     if (ret < 0) {
-	heim_release(dict);
-	return NULL;
+        heim_release(dict);
+        return NULL;
     }
     if (count == 1 && !(ctx->flags & HEIM_JSON_F_NO_DATA_DICT)) {
-	heim_object_t v = heim_dict_copy_value(dict, heim_tid_data_uuid_key);
+        heim_object_t v = heim_dict_copy_value(dict, heim_tid_data_uuid_key);
 
-	/*
-	 * Binary data encoded as a dict with a single magic key with
-	 * base64-encoded value?  Decode as heim_data_t.
-	 */
-	if (v != NULL && heim_get_tid(v) == HEIM_TID_STRING) {
-	    void *buf;
-	    size_t len;
+        /*
+         * Binary data encoded as a dict with a single magic key with
+         * base64-encoded value?  Decode as heim_data_t.
+         */
+        if (v != NULL && heim_get_tid(v) == HEIM_TID_STRING) {
+            void *buf;
+            size_t len;
 
-	    buf = malloc(strlen(heim_string_get_utf8(v)));
-	    if (buf == NULL) {
-		heim_release(dict);
-		heim_release(v);
-		ctx->error = heim_error_create_enomem();
-		return NULL;
-	    }
-	    len = rk_base64_decode(heim_string_get_utf8(v), buf);
-	    heim_release(v);
-	    if (len == -1) {
-		free(buf);
-		return dict; /* assume aliasing accident */
-	    }
-	    heim_release(dict);
-	    return (heim_dict_t)heim_data_ref_create(buf, len, free);
-	}
+            buf = malloc(strlen(heim_string_get_utf8(v)));
+            if (buf == NULL) {
+                heim_release(dict);
+                heim_release(v);
+                ctx->error = heim_error_create_enomem();
+                return NULL;
+            }
+            len = rk_base64_decode(heim_string_get_utf8(v), buf);
+            heim_release(v);
+            if (len == -1) {
+                free(buf);
+                return dict; /* assume aliasing accident */
+            }
+            heim_release(dict);
+            return (heim_dict_t)heim_data_ref_create(buf, len, free);
+        }
     }
     return dict;
 }
@@ -1140,30 +1140,30 @@ parse_item(heim_array_t array, struct parse_ctx *ctx)
     heim_object_t value;
 
     if (white_spaces(ctx))
-	return -1;
+        return -1;
 
     if (*ctx->p == ']') {
-	ctx->p++; /* safe because parse_value() calls white_spaces() first */
-	return 0;
+        ctx->p++; /* safe because parse_value() calls white_spaces() first */
+        return 0;
     }
 
     value = parse_value(ctx);
     if (value == NULL &&
-	(ctx->error || (ctx->flags & HEIM_JSON_F_NO_C_NULL)))
-	return -1;
+        (ctx->error || (ctx->flags & HEIM_JSON_F_NO_C_NULL)))
+        return -1;
 
     heim_array_append_value(array, value);
     heim_release(value);
 
     if (white_spaces(ctx))
-	return -1;
+        return -1;
 
     if (*ctx->p == ']') {
-	ctx->p++;
-	return 0;
+        ctx->p++;
+        return 0;
     } else if (*ctx->p == ',') {
-	ctx->p++;
-	return 1;
+        ctx->p++;
+        return 1;
     }
     return -1;
 }
@@ -1178,10 +1178,10 @@ parse_array(struct parse_ctx *ctx)
     ctx->p += 1;
 
     while ((ret = parse_item(array, ctx)) > 0)
-	;
+        ;
     if (ret < 0) {
-	heim_release(array);
-	return NULL;
+        heim_release(array);
+        return NULL;
     }
     return array;
 }
@@ -1193,66 +1193,66 @@ parse_value(struct parse_ctx *ctx)
     heim_object_t o;
 
     if (white_spaces(ctx))
-	return NULL;
+        return NULL;
 
     if (*ctx->p == '"') {
-	return parse_string(ctx);
+        return parse_string(ctx);
     } else if (*ctx->p == '{') {
-	if (ctx->depth-- == 1) {
-	    ctx->error = heim_error_create(EINVAL, "JSON object too deep");
-	    return NULL;
-	}
-	o = parse_dict(ctx);
-	ctx->depth++;
-	return o;
+        if (ctx->depth-- == 1) {
+            ctx->error = heim_error_create(EINVAL, "JSON object too deep");
+            return NULL;
+        }
+        o = parse_dict(ctx);
+        ctx->depth++;
+        return o;
     } else if (*ctx->p == '[') {
-	if (ctx->depth-- == 1) {
-	    ctx->error = heim_error_create(EINVAL, "JSON object too deep");
-	    return NULL;
-	}
-	o = parse_array(ctx);
-	ctx->depth++;
-	return o;
+        if (ctx->depth-- == 1) {
+            ctx->error = heim_error_create(EINVAL, "JSON object too deep");
+            return NULL;
+        }
+        o = parse_array(ctx);
+        ctx->depth++;
+        return o;
     } else if (is_number(*ctx->p) || *ctx->p == '-') {
-	return parse_number(ctx);
+        return parse_number(ctx);
     }
 
     len = ctx->pend - ctx->p;
 
     if ((ctx->flags & HEIM_JSON_F_NO_C_NULL) == 0 &&
-	len >= 6 && memcmp(ctx->p, "<NULL>", 6) == 0) {
-	ctx->p += 6;
-	return heim_null_create();
+        len >= 6 && memcmp(ctx->p, "<NULL>", 6) == 0) {
+        ctx->p += 6;
+        return heim_null_create();
     } else if (len >= 4 && memcmp(ctx->p, "null", 4) == 0) {
-	ctx->p += 4;
-	return heim_null_create();
+        ctx->p += 4;
+        return heim_null_create();
     } else if (len >= 4 && strncasecmp((char *)ctx->p, "true", 4) == 0) {
-	ctx->p += 4;
-	return heim_bool_create(1);
+        ctx->p += 4;
+        return heim_bool_create(1);
     } else if (len >= 5 && strncasecmp((char *)ctx->p, "false", 5) == 0) {
-	ctx->p += 5;
-	return heim_bool_create(0);
+        ctx->p += 5;
+        return heim_bool_create(0);
     }
 
     ctx->error = heim_error_create(EINVAL, "unknown char %c at %lu line %lu",
-				   (char)*ctx->p, 
-				   (unsigned long)(ctx->p - ctx->pstart),
-				   ctx->lineno);
+                                   (char)*ctx->p, 
+                                   (unsigned long)(ctx->p - ctx->pstart),
+                                   ctx->lineno);
     return NULL;
 }
 
 
 heim_object_t
 heim_json_create(const char *string, size_t max_depth, heim_json_flags_t flags,
-		 heim_error_t *error)
+                 heim_error_t *error)
 {
     return heim_json_create_with_bytes(string, strlen(string), max_depth, flags,
-				       error);
+                                       error);
 }
 
 heim_object_t
 heim_json_create_with_bytes(const void *data, size_t length, size_t max_depth,
-			    heim_json_flags_t flags, heim_error_t *error)
+                            heim_json_flags_t flags, heim_error_t *error)
 {
     struct parse_ctx ctx;
     heim_object_t o;
@@ -1270,9 +1270,9 @@ heim_json_create_with_bytes(const void *data, size_t length, size_t max_depth,
     o = parse_value(&ctx);
 
     if (o == NULL && error) {
-	*error = ctx.error;
+        *error = ctx.error;
     } else if (ctx.error) {
-	heim_release(ctx.error);
+        heim_release(ctx.error);
     }
 
     return o;
@@ -1283,7 +1283,7 @@ static void
 show_printf(void *ctx, const char *str)
 {
     if (str == NULL)
-	return;
+        return;
     fprintf(ctx, "%s", str);
 }
 
@@ -1307,38 +1307,38 @@ strbuf_add(void *ctx, const char *str)
     size_t len;
 
     if (strbuf->enomem)
-	return;
+        return;
 
     if (str == NULL) {
-	/*
-	 * Eat the last '\n'; this is used when formatting dict pairs
-	 * and array items so that the ',' separating them is never
-	 * preceded by a '\n'.
-	 */
-	if (strbuf->len > 0 && strbuf->str[strbuf->len - 1] == '\n')
-	    strbuf->len--;
-	return;
+        /*
+         * Eat the last '\n'; this is used when formatting dict pairs
+         * and array items so that the ',' separating them is never
+         * preceded by a '\n'.
+         */
+        if (strbuf->len > 0 && strbuf->str[strbuf->len - 1] == '\n')
+            strbuf->len--;
+        return;
     }
 
     len = strlen(str);
     if ((len + 1) > (strbuf->alloced - strbuf->len)) {
-	size_t new_len = strbuf->alloced + (strbuf->alloced >> 2) + len + 1;
-	char *s;
+        size_t new_len = strbuf->alloced + (strbuf->alloced >> 2) + len + 1;
+        char *s;
 
-	s = realloc(strbuf->str, new_len);
-	if (s == NULL) {
-	    strbuf->enomem = 1;
-	    return;
-	}
-	strbuf->str = s;
-	strbuf->alloced = new_len;
+        s = realloc(strbuf->str, new_len);
+        if (s == NULL) {
+            strbuf->enomem = 1;
+            return;
+        }
+        strbuf->str = s;
+        strbuf->alloced = new_len;
     }
     /* +1 so we copy the NUL */
     (void) memcpy(strbuf->str + strbuf->len, str, len + 1);
     strbuf->len += len;
     if (strbuf->str[strbuf->len - 1] == '\n' && 
-	strbuf->flags & HEIM_JSON_F_ONE_LINE)
-	strbuf->len--;
+        strbuf->flags & HEIM_JSON_F_ONE_LINE)
+        strbuf->len--;
 }
 
 #define STRBUF_INIT_SZ 64
@@ -1351,14 +1351,14 @@ heim_json_copy_serialize(heim_object_t obj, heim_json_flags_t flags, heim_error_
     int ret;
 
     if (error)
-	*error = NULL;
+        *error = NULL;
 
     memset(&strbuf, 0, sizeof (strbuf));
     strbuf.str = malloc(STRBUF_INIT_SZ);
     if (strbuf.str == NULL) {
-	if (error)
-	    *error = heim_error_create_enomem();
-	return NULL;
+        if (error)
+            *error = heim_error_create_enomem();
+        return NULL;
     }
     strbuf.len = 0;
     strbuf.alloced = STRBUF_INIT_SZ;
@@ -1367,25 +1367,25 @@ heim_json_copy_serialize(heim_object_t obj, heim_json_flags_t flags, heim_error_
 
     ret = heim_base2json(obj, &strbuf, flags, strbuf_add);
     if (ret || strbuf.enomem) {
-	if (error) {
-	    if (strbuf.enomem || ret == ENOMEM)
-		*error = heim_error_create_enomem();
-	    else
-		*error = heim_error_create(1, "Impossible to JSON-encode "
-					   "object");
-	}
-	free(strbuf.str);
-	return NULL;
+        if (error) {
+            if (strbuf.enomem || ret == ENOMEM)
+                *error = heim_error_create_enomem();
+            else
+                *error = heim_error_create(1, "Impossible to JSON-encode "
+                                           "object");
+        }
+        free(strbuf.str);
+        return NULL;
     }
     if (flags & HEIM_JSON_F_ONE_LINE) {
-	strbuf.flags &= ~HEIM_JSON_F_ONE_LINE;
-	strbuf_add(&strbuf, "\n");
+        strbuf.flags &= ~HEIM_JSON_F_ONE_LINE;
+        strbuf_add(&strbuf, "\n");
     }
     str = heim_string_ref_create(strbuf.str, free);
     if (str == NULL) {
-	if (error)
-	    *error = heim_error_create_enomem();
-	free(strbuf.str);
+        if (error)
+            *error = heim_error_create_enomem();
+        free(strbuf.str);
     }
     return str;
 }
@@ -1426,46 +1426,46 @@ heim_json_eq(heim_object_t a, heim_object_t b)
     if (atid != btid)
         return 0;
     switch (atid) {
-    case HEIM_TID_ARRAY: {
-        size_t len = heim_array_get_length(b);
-        size_t i;
+        case HEIM_TID_ARRAY: {
+            size_t len = heim_array_get_length(b);
+            size_t i;
 
-        if (heim_array_get_length(a) != len)
-            return 0;
-        for (i = 0; i < len; i++) {
-            if (!heim_json_eq(heim_array_get_value(a, i),
-                              heim_array_get_value(b, i)))
+            if (heim_array_get_length(a) != len)
                 return 0;
+            for (i = 0; i < len; i++) {
+                if (!heim_json_eq(heim_array_get_value(a, i),
+                                  heim_array_get_value(b, i)))
+                    return 0;
+            }
+            return 1;
         }
-        return 1;
-    }
-    case HEIM_TID_DICT: {
-        struct heim_eq_f_ctx ctx;
+        case HEIM_TID_DICT: {
+            struct heim_eq_f_ctx ctx;
 
-        ctx.other = b;
-        ctx.ret = 1;
-        heim_dict_iterate_f(a, &ctx, heim_eq_dict_iter_f);
+            ctx.other = b;
+            ctx.ret = 1;
+            heim_dict_iterate_f(a, &ctx, heim_eq_dict_iter_f);
 
-        if (ctx.ret) {
-            ctx.other = a;
-            heim_dict_iterate_f(b, &ctx, heim_eq_dict_iter_f);
+            if (ctx.ret) {
+                ctx.other = a;
+                heim_dict_iterate_f(b, &ctx, heim_eq_dict_iter_f);
+            }
+            return ctx.ret;
         }
-        return ctx.ret;
-    }
-    case HEIM_TID_STRING:
-        return strcmp(heim_string_get_utf8(a), heim_string_get_utf8(b)) == 0;
-    case HEIM_TID_DATA: {
-        return heim_data_get_length(a) == heim_data_get_length(b) &&
-               memcmp(heim_data_get_ptr(a), heim_data_get_ptr(b),
-                      heim_data_get_length(a)) == 0;
-    }
-    case HEIM_TID_NUMBER:
-        return heim_number_get_long(a) == heim_number_get_long(b);
-    case HEIM_TID_NULL:
-    case HEIM_TID_BOOL:
-        return heim_bool_val(a) == heim_bool_val(b);
-    default:
-        break;
+        case HEIM_TID_STRING:
+            return strcmp(heim_string_get_utf8(a), heim_string_get_utf8(b)) == 0;
+        case HEIM_TID_DATA: {
+            return heim_data_get_length(a) == heim_data_get_length(b) &&
+                   memcmp(heim_data_get_ptr(a), heim_data_get_ptr(b),
+                          heim_data_get_length(a)) == 0;
+        }
+        case HEIM_TID_NUMBER:
+            return heim_number_get_long(a) == heim_number_get_long(b);
+        case HEIM_TID_NULL:
+        case HEIM_TID_BOOL:
+            return heim_bool_val(a) == heim_bool_val(b);
+        default:
+            break;
     }
     return 0;
 }

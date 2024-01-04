@@ -50,16 +50,16 @@ heim_generate_challenge(const char *hostname)
     uint32_t num, t;
 
     if (hostname == NULL) {
-	if (gethostname(host, sizeof(host)))
-	    return NULL;
-	hostname = host;
+        if (gethostname(host, sizeof(host)))
+            return NULL;
+        hostname = host;
     }
 
     t = (uint32_t)time(NULL);
     num = rk_random();
-    
+
     asprintf(&str, "<%lu%lu@%s>", (unsigned long)t,
-	     (unsigned long)num, hostname);
+             (unsigned long)num, hostname);
 
     return str;
 }
@@ -79,7 +79,7 @@ heim_apop_create(const char *challenge, const char *password)
 
     hex_encode(hash, sizeof(hash), &str);
     if (str)
-      strlwr(str);
+        strlwr(str);
 
     return str;
 }
@@ -92,13 +92,13 @@ heim_apop_verify(const char *challenge, const char *password, const char *respon
 
     str = heim_apop_create(challenge, password);
     if (str == NULL)
-	return ENOMEM;
+        return ENOMEM;
 
     res = (strcasecmp(str, response) != 0);
     free(str);
 
     if (res)
-	return HNTLM_ERR_INVALID_APOP;
+        return HNTLM_ERR_INVALID_APOP;
     return 0;
 }
 
@@ -120,15 +120,15 @@ heim_cram_md5_export(const char *password, heim_CRAM_MD5_STATE *state)
     memset(&ctx, 0, sizeof(ctx));
 
     if (keylen > CC_MD5_BLOCK_BYTES) {
-	CC_MD5(password, (CC_LONG)keylen, key);
-	keylen = sizeof(keylen);
+        CC_MD5(password, (CC_LONG)keylen, key);
+        keylen = sizeof(keylen);
     } else {
-	memcpy(key, password, keylen);
+        memcpy(key, password, keylen);
     }
 
     memset(pad, 0x36, sizeof(pad));
     for (n = 0; n < keylen; n++)
-	pad[n] ^= key[n];
+        pad[n] ^= key[n];
 
     CC_MD5_Init(&ctx.ipad);
     CC_MD5_Init(&ctx.opad);
@@ -137,7 +137,7 @@ heim_cram_md5_export(const char *password, heim_CRAM_MD5_STATE *state)
 
     memset(pad, 0x5c, sizeof(pad));
     for (n = 0; n < keylen; n++)
-	pad[n] ^= key[n];
+        pad[n] ^= key[n];
 
     CC_MD5_Update(&ctx.opad, pad, sizeof(pad));
 
@@ -163,13 +163,13 @@ heim_cram_md5_import(void *data, size_t len)
 {
     heim_CRAM_MD5_STATE state;
     heim_cram_md5 ctx;
-    
+
     if (len != sizeof(state))
-	return NULL;
+        return NULL;
 
     ctx = calloc(1, sizeof(*ctx));
     if (ctx == NULL)
-	return NULL;
+        return NULL;
 
     memcpy(&state, data, sizeof(state));
 
@@ -205,13 +205,13 @@ heim_cram_md5_verify_ctx(heim_cram_md5 ctx, const char *challenge, const char *r
 
     hex_encode(hash, sizeof(hash), &str);
     if (str == NULL)
-	return ENOMEM;
+        return ENOMEM;
 
     res = (strcasecmp(str, response) != 0);
     free(str);
 
     if (res)
-	return HNTLM_ERR_INVALID_CRAM_MD5;
+        return HNTLM_ERR_INVALID_CRAM_MD5;
     return 0;
 }
 
@@ -238,7 +238,7 @@ heim_cram_md5_create(const char *challenge, const char *password)
 
     hex_encode(hash, sizeof(hash), &str);
     if (str)
-      strlwr(str);
+        strlwr(str);
 
     return str;
 }
@@ -251,13 +251,13 @@ heim_cram_md5_verify(const char *challenge, const char *password, const char *re
 
     str = heim_cram_md5_create(challenge, password);
     if (str == NULL)
-	return ENOMEM;
+        return ENOMEM;
 
     res = (strcasecmp(str, response) != 0);
     free(str);
 
     if (res)
-	return HNTLM_ERR_INVALID_CRAM_MD5;
+        return HNTLM_ERR_INVALID_CRAM_MD5;
     return 0;
 }
 

@@ -33,18 +33,18 @@
 
 OM_uint32 GSSAPI_CALLCONV
 _gss_sanon_display_name(OM_uint32 *minor,
-			gss_const_name_t input_name,
-			gss_buffer_t output_name_buffer,
-			gss_OID *output_name_type)
+                        gss_const_name_t input_name,
+                        gss_buffer_t output_name_buffer,
+                        gss_OID *output_name_type)
 {
     *minor = 0;
 
     if (input_name != _gss_sanon_anonymous_identity)
-	return GSS_S_BAD_NAME;
+        return GSS_S_BAD_NAME;
 
     if (output_name_type)
-	*output_name_type = GSS_C_NT_ANONYMOUS;
+        *output_name_type = GSS_C_NT_ANONYMOUS;
 
     return _gss_copy_buffer(minor, _gss_sanon_wellknown_user_name,
-			    output_name_buffer);
+                            output_name_buffer);
 }

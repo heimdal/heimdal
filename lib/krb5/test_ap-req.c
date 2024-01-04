@@ -65,11 +65,11 @@ usage (int ret)
 
 static void
 test_ap(krb5_context context,
-	krb5_principal target,
-	krb5_principal server,
-	krb5_keytab keytab,
-	krb5_ccache ccache,
-	const krb5_flags client_flags)
+        krb5_principal target,
+        krb5_principal server,
+        krb5_keytab keytab,
+        krb5_ccache ccache,
+        const krb5_flags client_flags)
 {
     krb5_error_code ret;
     krb5_auth_context client_ac = NULL, server_ac = NULL;
@@ -79,80 +79,80 @@ test_ap(krb5_context context,
     int32_t server_seq, client_seq;
 
     ret = krb5_mk_req_exact(context,
-			    &client_ac,
-			    client_flags,
-			    target,
-			    NULL,
-			    ccache,
-			    &data);
+                            &client_ac,
+                            client_flags,
+                            target,
+                            NULL,
+                            ccache,
+                            &data);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_mk_req_exact");
+        krb5_err(context, 1, ret, "krb5_mk_req_exact");
 
     ret = krb5_rd_req(context,
-		      &server_ac,
-		      &data,
-		      server,
-		      keytab,
-		      &server_flags,
-		      &ticket);
+                      &server_ac,
+                      &data,
+                      server,
+                      keytab,
+                      &server_flags,
+                      &ticket);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_rd_req");
+        krb5_err(context, 1, ret, "krb5_rd_req");
 
 
     if (server_flags & AP_OPTS_MUTUAL_REQUIRED) {
-	krb5_ap_rep_enc_part *repl;
+        krb5_ap_rep_enc_part *repl;
 
-	krb5_data_free(&data);
+        krb5_data_free(&data);
 
-	if ((client_flags & AP_OPTS_MUTUAL_REQUIRED) == 0)
-	    krb5_errx(context, 1, "client flag missing mutual req");
+        if ((client_flags & AP_OPTS_MUTUAL_REQUIRED) == 0)
+            krb5_errx(context, 1, "client flag missing mutual req");
 
-	ret = krb5_mk_rep (context, server_ac, &data);
-	if (ret)
-	    krb5_err(context, 1, ret, "krb5_mk_rep");
+        ret = krb5_mk_rep (context, server_ac, &data);
+        if (ret)
+            krb5_err(context, 1, ret, "krb5_mk_rep");
 
-	ret = krb5_rd_rep (context,
-			   client_ac,
-			   &data,
-			   &repl);
-	if (ret)
-	    krb5_err(context, 1, ret, "krb5_rd_rep");
+        ret = krb5_rd_rep (context,
+                           client_ac,
+                           &data,
+                           &repl);
+        if (ret)
+            krb5_err(context, 1, ret, "krb5_rd_rep");
 
-	krb5_free_ap_rep_enc_part (context, repl);
+        krb5_free_ap_rep_enc_part (context, repl);
     } else {
-	if (client_flags & AP_OPTS_MUTUAL_REQUIRED)
-	    krb5_errx(context, 1, "server flag missing mutual req");
+        if (client_flags & AP_OPTS_MUTUAL_REQUIRED)
+            krb5_errx(context, 1, "server flag missing mutual req");
     }
 
     krb5_auth_con_getremoteseqnumber(context, server_ac, &server_seq);
     krb5_auth_con_getremoteseqnumber(context, client_ac, &client_seq);
     if (server_seq != client_seq)
-	krb5_errx(context, 1, "seq num differ");
+        krb5_errx(context, 1, "seq num differ");
 
     krb5_auth_con_getlocalseqnumber(context, server_ac, &server_seq);
     krb5_auth_con_getlocalseqnumber(context, client_ac, &client_seq);
     if (server_seq != client_seq)
-	krb5_errx(context, 1, "seq num differ");
+        krb5_errx(context, 1, "seq num differ");
 
     krb5_data_free(&data);
     krb5_auth_con_free(context, client_ac);
     krb5_auth_con_free(context, server_ac);
 
     if (verify_pac) {
-	krb5_pac pac;
+        krb5_pac pac;
 
-	ret = krb5_ticket_get_authorization_data_type(context,
-						      ticket,
-						      KRB5_AUTHDATA_WIN2K_PAC,
-						      &data);
-	if (ret)
-	    krb5_err(context, 1, ret, "get pac");
+        ret = krb5_ticket_get_authorization_data_type(context,
+                                                      ticket,
+                                                      KRB5_AUTHDATA_WIN2K_PAC,
+                                                      &data);
+        if (ret)
+            krb5_err(context, 1, ret, "get pac");
 
-	ret = krb5_pac_parse(context, data.data, data.length, &pac);
-	if (ret)
-	    krb5_err(context, 1, ret, "pac parse");
+        ret = krb5_pac_parse(context, data.data, data.length, &pac);
+        if (ret)
+            krb5_err(context, 1, ret, "pac parse");
 
-	krb5_pac_free(context, pac);
+        krb5_pac_free(context, pac);
         krb5_data_free(&data);
     }
 
@@ -174,21 +174,21 @@ main(int argc, char **argv)
     setprogname(argv[0]);
 
     if(getarg(args, sizeof(args) / sizeof(args[0]), argc, argv, &optidx))
-	usage(1);
+        usage(1);
 
     if (help_flag)
-	usage (0);
+        usage (0);
 
     if(version_flag){
-	print_version(NULL);
-	exit(0);
+        print_version(NULL);
+        exit(0);
     }
 
     argc -= optidx;
     argv += optidx;
 
     if (argc < 3)
-	usage(1);
+        usage(1);
 
     principal = argv[0];
     keytab = argv[1];
@@ -196,24 +196,24 @@ main(int argc, char **argv)
 
     ret = krb5_init_context(&context);
     if (ret)
-	errx (1, "krb5_init_context failed: %d", ret);
+        errx (1, "krb5_init_context failed: %d", ret);
 
     ret = krb5_cc_resolve(context, ccache, &id);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_cc_resolve");
+        krb5_err(context, 1, ret, "krb5_cc_resolve");
 
     ret = krb5_parse_name(context, principal, &sprincipal);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_parse_name");
+        krb5_err(context, 1, ret, "krb5_parse_name");
 
     ret = krb5_kt_resolve(context, keytab, &kt);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_kt_resolve");
+        krb5_err(context, 1, ret, "krb5_kt_resolve");
 
     if (server_any)
-	server = NULL;
+        server = NULL;
     else
-	server = sprincipal;
+        server = sprincipal;
 
     test_ap(context, sprincipal, server, kt, id, 0);
     test_ap(context, sprincipal, server, kt, id, AP_OPTS_MUTUAL_REQUIRED);

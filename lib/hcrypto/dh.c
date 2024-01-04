@@ -84,28 +84,28 @@ DH_new_method(ENGINE *engine)
 
     dh = calloc(1, sizeof(*dh));
     if (dh == NULL)
-	return NULL;
+        return NULL;
 
     dh->references = 1;
 
     if (engine) {
-	ENGINE_up_ref(engine);
-	dh->engine = engine;
+        ENGINE_up_ref(engine);
+        dh->engine = engine;
     } else {
-	dh->engine = ENGINE_get_default_DH();
+        dh->engine = ENGINE_get_default_DH();
     }
 
     if (dh->engine) {
-	dh->meth = ENGINE_get_DH(dh->engine);
-	if (dh->meth == NULL) {
-	    ENGINE_finish(dh->engine);
-	    free(dh);
-	    return 0;
-	}
+        dh->meth = ENGINE_get_DH(dh->engine);
+        if (dh->meth == NULL) {
+            ENGINE_finish(dh->engine);
+            free(dh);
+            return 0;
+        }
     }
 
     if (dh->meth == NULL)
-	dh->meth = DH_get_default_method();
+        dh->meth = DH_get_default_method();
 
     (*dh->meth->init)(dh);
 
@@ -125,15 +125,15 @@ void
 DH_free(DH *dh)
 {
     if (dh->references <= 0)
-	abort();
+        abort();
 
     if (--dh->references > 0)
-	return;
+        return;
 
     (*dh->meth->finish)(dh);
 
     if (dh->engine)
-	ENGINE_finish(dh->engine);
+        ENGINE_finish(dh->engine);
 
 #define free_if(f) if (f) { BN_free(f); }
     free_if(dh->p);
@@ -236,7 +236,7 @@ int
 DH_generate_parameters_ex(DH *dh, int prime_len, int generator, BN_GENCB *cb)
 {
     if (dh->meth->generate_params)
-	return dh->meth->generate_params(dh, prime_len, generator, cb);
+        return dh->meth->generate_params(dh, prime_len, generator, cb);
     return 0;
 }
 
@@ -267,7 +267,7 @@ DH_check_pubkey(const DH *dh, const BIGNUM *pub_key, int *codes)
      */
 
     if (BN_is_negative(pub_key))
-	goto out;
+        goto out;
 
     /**
      * - pub_key > 1    and    pub_key < p - 1,
@@ -276,22 +276,22 @@ DH_check_pubkey(const DH *dh, const BIGNUM *pub_key, int *codes)
 
     bn = BN_new();
     if (bn == NULL)
-	goto out;
+        goto out;
 
     if (!BN_set_word(bn, 1))
-	goto out;
+        goto out;
 
     if (BN_cmp(bn, pub_key) >= 0)
-	*codes |= DH_CHECK_PUBKEY_TOO_SMALL;
+        *codes |= DH_CHECK_PUBKEY_TOO_SMALL;
 
     sum = BN_new();
     if (sum == NULL)
-	goto out;
+        goto out;
 
     BN_uadd(sum, pub_key, bn);
 
     if (BN_cmp(sum, dh->p) >= 0)
-	*codes |= DH_CHECK_PUBKEY_TOO_LARGE;
+        *codes |= DH_CHECK_PUBKEY_TOO_LARGE;
 
     /**
      * - if g == 2, pub_key have more then one bit set,
@@ -299,28 +299,28 @@ DH_check_pubkey(const DH *dh, const BIGNUM *pub_key, int *codes)
      */
 
     if (!BN_set_word(bn, 2))
-	goto out;
+        goto out;
 
     if (BN_cmp(bn, dh->g) == 0) {
-	unsigned i, n = BN_num_bits(pub_key);
-	unsigned bits = 0;
+        unsigned i, n = BN_num_bits(pub_key);
+        unsigned bits = 0;
 
-	for (i = 0; i < n; i++)
-	    if (BN_is_bit_set(pub_key, i))
-		bits++;
+        for (i = 0; i < n; i++)
+            if (BN_is_bit_set(pub_key, i))
+                bits++;
 
-	if (bits < 2) {
-	    *codes |= DH_CHECK_PUBKEY_TOO_SMALL;
-	    goto out;
-	}
+        if (bits < 2) {
+            *codes |= DH_CHECK_PUBKEY_TOO_SMALL;
+            goto out;
+        }
     }
 
     ret = 1;
 out:
     if (bn)
-	BN_free(bn);
+        BN_free(bn);
     if (sum)
-	BN_free(sum);
+        BN_free(sum);
 
     return ret;
 }
@@ -357,7 +357,7 @@ DH_generate_key(DH *dh)
 
 int
 DH_compute_key(unsigned char *shared_key,
-	       const BIGNUM *peer_pub_key, DH *dh)
+               const BIGNUM *peer_pub_key, DH *dh)
 {
     int codes;
 
@@ -367,7 +367,7 @@ DH_compute_key(unsigned char *shared_key,
      */
 
     if (!DH_check_pubkey(dh, peer_pub_key, &codes) || codes != 0)
-	return -1;
+        return -1;
 
     return dh->meth->compute_key(shared_key, peer_pub_key, dh);
 }
@@ -388,8 +388,8 @@ DH_set_method(DH *dh, const DH_METHOD *method)
 {
     (*dh->meth->finish)(dh);
     if (dh->engine) {
-	ENGINE_finish(dh->engine);
-	dh->engine = NULL;
+        ENGINE_finish(dh->engine);
+        dh->engine = NULL;
     }
     dh->meth = method;
     (*dh->meth->init)(dh);
@@ -497,8 +497,8 @@ bn2heim_int(BIGNUM *bn, heim_integer *integer)
     integer->length = BN_num_bytes(bn);
     integer->data = malloc(integer->length);
     if (integer->data == NULL) {
-	integer->length = 0;
-	return ENOMEM;
+        integer->length = 0;
+        return ENOMEM;
     }
     BN_bn2bin(bn, integer->data);
     integer->negative = BN_is_negative(bn);
@@ -519,32 +519,32 @@ i2d_DHparams(DH *dh, unsigned char **pp)
     memset(&data, 0, sizeof(data));
 
     if (bn2heim_int(dh->p, &data.prime) ||
-	bn2heim_int(dh->g, &data.base))
+        bn2heim_int(dh->g, &data.base))
     {
-	free_DHParameter(&data);
-	return -1;
+        free_DHParameter(&data);
+        return -1;
     }
 
     if (pp == NULL) {
-	size = length_DHParameter(&data);
-	free_DHParameter(&data);
+        size = length_DHParameter(&data);
+        free_DHParameter(&data);
     } else {
-	void *p;
-	size_t len;
+        void *p;
+        size_t len;
 
-	ASN1_MALLOC_ENCODE(DHParameter, p, len, &data, &size, ret);
-	free_DHParameter(&data);
-	if (ret)
-	    return -1;
-	if (len != size) {
-	    abort();
+        ASN1_MALLOC_ENCODE(DHParameter, p, len, &data, &size, ret);
+        free_DHParameter(&data);
+        if (ret)
+            return -1;
+        if (len != size) {
+            abort();
             return -1;
         }
 
-	memcpy(*pp, p, size);
-	free(p);
+        memcpy(*pp, p, size);
+        free(p);
 
-	*pp += size;
+        *pp += size;
     }
 
     return size;

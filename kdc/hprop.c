@@ -63,23 +63,23 @@ open_socket(krb5_context context, const char *hostname, const char *port)
 
     error = getaddrinfo (hostname, port, &hints, &ai);
     if (error) {
-	warnx ("%s: %s", hostname, gai_strerror(error));
-	return -1;
+        warnx ("%s: %s", hostname, gai_strerror(error));
+        return -1;
     }
 
     for (a = ai; a != NULL; a = a->ai_next) {
-	int s;
+        int s;
 
-	s = socket (a->ai_family, a->ai_socktype, a->ai_protocol);
-	if (s < 0)
-	    continue;
-	if (connect (s, a->ai_addr, a->ai_addrlen) < 0) {
-	    warn ("connect(%s)", hostname);
-	    close (s);
-	    continue;
-	}
-	freeaddrinfo (ai);
-	return s;
+        s = socket (a->ai_family, a->ai_socktype, a->ai_protocol);
+        if (s < 0)
+            continue;
+        if (connect (s, a->ai_addr, a->ai_addrlen) < 0) {
+            warn ("connect(%s)", hostname);
+            close (s);
+            continue;
+        }
+        freeaddrinfo (ai);
+        return s;
     }
     warnx ("failed to contact %s", hostname);
     freeaddrinfo (ai);
@@ -94,31 +94,31 @@ v5_prop(krb5_context context, HDB *db, hdb_entry *entry, void *appdata)
     krb5_data data;
 
     if(encrypt_flag) {
-	ret = hdb_seal_keys_mkey(context, entry, mkey5);
-	if (ret) {
-	    krb5_warn(context, ret, "hdb_seal_keys_mkey");
-	    return ret;
-	}
+        ret = hdb_seal_keys_mkey(context, entry, mkey5);
+        if (ret) {
+            krb5_warn(context, ret, "hdb_seal_keys_mkey");
+            return ret;
+        }
     }
     if(decrypt_flag) {
-	ret = hdb_unseal_keys_mkey(context, entry, mkey5);
-	if (ret) {
-	    krb5_warn(context, ret, "hdb_unseal_keys_mkey");
-	    return ret;
-	}
+        ret = hdb_unseal_keys_mkey(context, entry, mkey5);
+        if (ret) {
+            krb5_warn(context, ret, "hdb_unseal_keys_mkey");
+            return ret;
+        }
     }
 
     ret = hdb_entry2value(context, entry, &data);
     if(ret) {
-	krb5_warn(context, ret, "hdb_entry2value");
-	return ret;
+        krb5_warn(context, ret, "hdb_entry2value");
+        return ret;
     }
 
     if(to_stdout)
-	ret = krb5_write_message(context, &pd->sock, &data);
+        ret = krb5_write_message(context, &pd->sock, &data);
     else
-	ret = krb5_write_priv_message(context, pd->auth_context,
-				      &pd->sock, &data);
+        ret = krb5_write_priv_message(context, pd->auth_context,
+                                      &pd->sock, &data);
     krb5_data_free(&data);
     return ret;
 }
@@ -168,7 +168,7 @@ get_creds(krb5_context context, krb5_ccache *cache)
     if(ret) krb5_err(context, 1, ret, "krb5_kt_resolve");
 
     ret = krb5_make_principal(context, &client, NULL,
-			      "kadmin", HPROP_NAME, NULL);
+                              "kadmin", HPROP_NAME, NULL);
     if(ret) krb5_err(context, 1, ret, "krb5_make_principal");
 
     ret = krb5_get_init_creds_opt_alloc(context, &init_opts);
@@ -215,41 +215,41 @@ parse_source_type(const char *s)
 {
     size_t i;
     for(i = 0; i < sizeof(types) / sizeof(types[0]); i++) {
-	if(strstr(types[i].name, s) == types[i].name)
-	    return types[i].type;
+        if(strstr(types[i].name, s) == types[i].name)
+            return types[i].type;
     }
     return 0;
 }
 
 static int
 iterate (krb5_context context,
-	 const char *database_name,
-	 HDB *db,
-	 int type,
-	 struct prop_data *pd)
+         const char *database_name,
+         HDB *db,
+         int type,
+         struct prop_data *pd)
 {
     int ret;
 
     switch(type) {
-    case HPROP_MIT_DUMP:
-	ret = mit_prop_dump(pd, database_name);
-	if (ret)
-	    krb5_warn(context, ret, "mit_prop_dump");
-	break;
-    case HPROP_HEIMDAL:
-	ret = hdb_foreach(context, db, HDB_F_DECRYPT, v5_prop, pd);
-	if(ret)
-	    krb5_warn(context, ret, "hdb_foreach");
-	break;
-    default:
-	krb5_errx(context, 1, "unknown prop type: %d", type);
+        case HPROP_MIT_DUMP:
+            ret = mit_prop_dump(pd, database_name);
+            if (ret)
+                krb5_warn(context, ret, "mit_prop_dump");
+            break;
+        case HPROP_HEIMDAL:
+            ret = hdb_foreach(context, db, HDB_F_DECRYPT, v5_prop, pd);
+            if(ret)
+                krb5_warn(context, ret, "hdb_foreach");
+            break;
+        default:
+            krb5_errx(context, 1, "unknown prop type: %d", type);
     }
     return ret;
 }
 
 static int
 dump_database (krb5_context context, int type,
-	       const char *database_name, HDB *db)
+               const char *database_name, HDB *db)
 {
     krb5_error_code ret;
     struct prop_data pd;
@@ -261,131 +261,131 @@ dump_database (krb5_context context, int type,
 
     ret = iterate (context, database_name, db, type, &pd);
     if (ret)
-	krb5_errx(context, 1, "iterate failure");
+        krb5_errx(context, 1, "iterate failure");
     krb5_data_zero (&data);
     ret = krb5_write_message (context, &pd.sock, &data);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_write_message");
+        krb5_err(context, 1, ret, "krb5_write_message");
 
     return 0;
 }
 
 static int
 propagate_database (krb5_context context, int type,
-		    const char *database_name,
-		    HDB *db, krb5_ccache ccache,
-		    int optidx, int argc, char **argv)
+                    const char *database_name,
+                    HDB *db, krb5_ccache ccache,
+                    int optidx, int argc, char **argv)
 {
     krb5_principal server;
     krb5_error_code ret;
     int i, failed = 0;
 
     for(i = optidx; i < argc; i++){
-	krb5_auth_context auth_context;
-	int fd;
-	struct prop_data pd;
-	krb5_data data;
+        krb5_auth_context auth_context;
+        int fd;
+        struct prop_data pd;
+        krb5_data data;
 
-	char *port, portstr[NI_MAXSERV];
-	char *host = argv[i];
+        char *port, portstr[NI_MAXSERV];
+        char *host = argv[i];
 
-	port = strchr(host, ':');
-	if(port == NULL) {
-	    snprintf(portstr, sizeof(portstr), "%u",
-		     ntohs(krb5_getportbyname (context, "hprop", "tcp",
-					       HPROP_PORT)));
-	    port = portstr;
-	} else
-	    *port++ = '\0';
+        port = strchr(host, ':');
+        if(port == NULL) {
+            snprintf(portstr, sizeof(portstr), "%u",
+                     ntohs(krb5_getportbyname (context, "hprop", "tcp",
+                                               HPROP_PORT)));
+            port = portstr;
+        } else
+            *port++ = '\0';
 
-	fd = open_socket(context, host, port);
-	if(fd < 0) {
-	    failed++;
-	    krb5_warn (context, errno, "connect %s", host);
-	    continue;
-	}
+        fd = open_socket(context, host, port);
+        if(fd < 0) {
+            failed++;
+            krb5_warn (context, errno, "connect %s", host);
+            continue;
+        }
 
-	ret = krb5_sname_to_principal(context, argv[i],
-				      HPROP_NAME, KRB5_NT_SRV_HST, &server);
-	if(ret) {
-	    failed++;
-	    krb5_warn(context, ret, "krb5_sname_to_principal(%s)", host);
-	    close(fd);
-	    continue;
-	}
+        ret = krb5_sname_to_principal(context, argv[i],
+                                      HPROP_NAME, KRB5_NT_SRV_HST, &server);
+        if(ret) {
+            failed++;
+            krb5_warn(context, ret, "krb5_sname_to_principal(%s)", host);
+            close(fd);
+            continue;
+        }
 
         if (local_realm) {
             krb5_realm my_realm;
             ret = krb5_get_default_realm(context,&my_realm);
-	    if (ret == 0) {
-		ret = krb5_principal_set_realm(context,server,my_realm);
-		krb5_xfree(my_realm);
-	    }
-	    if (ret) {
-		failed++;
-		krb5_warn(context, ret, "unable to obtain default or set realm");
-		krb5_free_principal(context, server);
-		close(fd);
-		continue;
-	    }
+            if (ret == 0) {
+                ret = krb5_principal_set_realm(context,server,my_realm);
+                krb5_xfree(my_realm);
+            }
+            if (ret) {
+                failed++;
+                krb5_warn(context, ret, "unable to obtain default or set realm");
+                krb5_free_principal(context, server);
+                close(fd);
+                continue;
+            }
         }
 
-	auth_context = NULL;
-	ret = krb5_sendauth(context,
-			    &auth_context,
-			    &fd,
-			    HPROP_VERSION,
-			    NULL,
-			    server,
-			    AP_OPTS_MUTUAL_REQUIRED | AP_OPTS_USE_SUBKEY,
-			    NULL, /* in_data */
-			    NULL, /* in_creds */
-			    ccache,
-			    NULL,
-			    NULL,
-			    NULL);
+        auth_context = NULL;
+        ret = krb5_sendauth(context,
+                            &auth_context,
+                            &fd,
+                            HPROP_VERSION,
+                            NULL,
+                            server,
+                            AP_OPTS_MUTUAL_REQUIRED | AP_OPTS_USE_SUBKEY,
+                            NULL, /* in_data */
+                            NULL, /* in_creds */
+                            ccache,
+                            NULL,
+                            NULL,
+                            NULL);
 
-	krb5_free_principal(context, server);
+        krb5_free_principal(context, server);
 
-	if(ret) {
-	    failed++;
-	    krb5_warn(context, ret, "krb5_sendauth (%s)", host);
-	    goto next_host;
-	}
+        if(ret) {
+            failed++;
+            krb5_warn(context, ret, "krb5_sendauth (%s)", host);
+            goto next_host;
+        }
 
-	pd.context      = context;
-	pd.auth_context = auth_context;
-	pd.sock         = fd;
+        pd.context      = context;
+        pd.auth_context = auth_context;
+        pd.sock         = fd;
 
-	ret = iterate (context, database_name, db, type, &pd);
-	if (ret) {
-	    krb5_warnx(context, "iterate to host %s failed", host);
-	    failed++;
-	    goto next_host;
-	}
+        ret = iterate (context, database_name, db, type, &pd);
+        if (ret) {
+            krb5_warnx(context, "iterate to host %s failed", host);
+            failed++;
+            goto next_host;
+        }
 
-	krb5_data_zero (&data);
-	ret = krb5_write_priv_message(context, auth_context, &fd, &data);
-	if(ret) {
-	    krb5_warn(context, ret, "krb5_write_priv_message");
-	    failed++;
-	    goto next_host;
-	}
+        krb5_data_zero (&data);
+        ret = krb5_write_priv_message(context, auth_context, &fd, &data);
+        if(ret) {
+            krb5_warn(context, ret, "krb5_write_priv_message");
+            failed++;
+            goto next_host;
+        }
 
-	ret = krb5_read_priv_message(context, auth_context, &fd, &data);
-	if(ret) {
-	    krb5_warn(context, ret, "krb5_read_priv_message: %s", host);
-	    failed++;
-	    goto next_host;
-	} else
-	    krb5_data_free (&data);
+        ret = krb5_read_priv_message(context, auth_context, &fd, &data);
+        if(ret) {
+            krb5_warn(context, ret, "krb5_read_priv_message: %s", host);
+            failed++;
+            goto next_host;
+        } else
+            krb5_data_free (&data);
 
-    next_host:
-	krb5_auth_con_free(context, auth_context);
-	close(fd);
+next_host:
+        krb5_auth_con_free(context, auth_context);
+        close(fd);
     }
     if (failed)
-	return 1;
+        return 1;
     return 0;
 }
 
@@ -403,19 +403,19 @@ main(int argc, char **argv)
     setprogname(argv[0]);
 
     if(getarg(args, num_args, argc, argv, &optidx))
-	usage(1);
+        usage(1);
 
     if(help_flag)
-	usage(0);
+        usage(0);
 
     if(version_flag){
-	print_version(NULL);
-	exit(0);
+        print_version(NULL);
+        exit(0);
     }
 
     ret = krb5_init_context(&context);
     if(ret)
-	exit(1);
+        exit(1);
 
     /* We may be reading an old database encrypted with a DES master key. */
     ret = krb5_allow_weak_crypto(context, 1);
@@ -423,59 +423,59 @@ main(int argc, char **argv)
         krb5_err(context, 1, ret, "krb5_allow_weak_crypto");
 
     if(local_realm)
-	krb5_set_default_realm(context, local_realm);
+        krb5_set_default_realm(context, local_realm);
 
     if(encrypt_flag && decrypt_flag)
-	krb5_errx(context, 1,
-		  "only one of `--encrypt' and `--decrypt' is meaningful");
+        krb5_errx(context, 1,
+                  "only one of `--encrypt' and `--decrypt' is meaningful");
 
     if(source_type != NULL) {
-	type = parse_source_type(source_type);
-	if(type == 0)
-	    krb5_errx(context, 1, "unknown source type `%s'", source_type);
+        type = parse_source_type(source_type);
+        if(type == 0)
+            krb5_errx(context, 1, "unknown source type `%s'", source_type);
     } else
-	type = HPROP_HEIMDAL;
+        type = HPROP_HEIMDAL;
 
     if(!to_stdout)
-	get_creds(context, &ccache);
+        get_creds(context, &ccache);
 
     if(decrypt_flag || encrypt_flag) {
-	ret = hdb_read_master_key(context, mkeyfile, &mkey5);
-	if(ret && ret != ENOENT)
-	    krb5_err(context, 1, ret, "hdb_read_master_key");
-	if(ret)
-	    krb5_errx(context, 1, "No master key file found");
+        ret = hdb_read_master_key(context, mkeyfile, &mkey5);
+        if(ret && ret != ENOENT)
+            krb5_err(context, 1, ret, "hdb_read_master_key");
+        if(ret)
+            krb5_errx(context, 1, "No master key file found");
     }
 
     switch(type) {
-    case HPROP_MIT_DUMP:
-	if (database == NULL)
-	    krb5_errx(context, 1, "no dump file specified");
-	break;
-    case HPROP_HEIMDAL:
-	ret = hdb_create (context, &db, database);
-	if(ret)
-	    krb5_err(context, 1, ret, "hdb_create: %s", database);
-	ret = db->hdb_open(context, db, O_RDONLY, 0);
-	if(ret)
-	    krb5_err(context, 1, ret, "db->hdb_open");
-	break;
-    default:
-	krb5_errx(context, 1, "unknown dump type `%d'", type);
-	break;
+        case HPROP_MIT_DUMP:
+            if (database == NULL)
+                krb5_errx(context, 1, "no dump file specified");
+            break;
+        case HPROP_HEIMDAL:
+            ret = hdb_create (context, &db, database);
+            if(ret)
+                krb5_err(context, 1, ret, "hdb_create: %s", database);
+            ret = db->hdb_open(context, db, O_RDONLY, 0);
+            if(ret)
+                krb5_err(context, 1, ret, "db->hdb_open");
+            break;
+        default:
+            krb5_errx(context, 1, "unknown dump type `%d'", type);
+            break;
     }
 
     if (to_stdout)
-	exit_code = dump_database (context, type, database, db);
+        exit_code = dump_database (context, type, database, db);
     else
-	exit_code = propagate_database (context, type, database,
-					db, ccache, optidx, argc, argv);
+        exit_code = propagate_database (context, type, database,
+                                        db, ccache, optidx, argc, argv);
 
     if(ccache != NULL)
-	krb5_cc_destroy(context, ccache);
+        krb5_cc_destroy(context, ccache);
 
     if(db != NULL)
-	(*db->hdb_destroy)(context, db);
+        (*db->hdb_destroy)(context, db);
 
     krb5_free_context(context);
     return exit_code;

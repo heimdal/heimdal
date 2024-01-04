@@ -41,21 +41,21 @@
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_c_make_checksum(krb5_context context,
-		     krb5_cksumtype cksumtype,
-		     const krb5_keyblock *key,
-		     krb5_keyusage usage,
-		     const krb5_data *input,
-		     krb5_checksum *cksum)
+                     krb5_cksumtype cksumtype,
+                     const krb5_keyblock *key,
+                     krb5_keyusage usage,
+                     const krb5_data *input,
+                     krb5_checksum *cksum)
 {
     krb5_error_code ret;
     krb5_crypto crypto;
 
     ret = krb5_crypto_init(context, key, 0, &crypto);
     if (ret)
-	return ret;
+        return ret;
 
     ret = krb5_create_checksum(context, crypto,  usage, cksumtype,
-			       input->data, input->length, cksum);
+                               input->data, input->length, cksum);
     krb5_crypto_destroy(context, crypto);
 
     return ret ;
@@ -63,8 +63,8 @@ krb5_c_make_checksum(krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_c_verify_checksum(krb5_context context, const krb5_keyblock *key,
-		       krb5_keyusage usage, const krb5_data *data,
-		       const krb5_checksum *cksum, krb5_boolean *valid)
+                       krb5_keyusage usage, const krb5_data *data,
+                       const krb5_checksum *cksum, krb5_boolean *valid)
 {
     krb5_error_code ret;
     krb5_crypto crypto;
@@ -73,14 +73,14 @@ krb5_c_verify_checksum(krb5_context context, const krb5_keyblock *key,
 
     ret = krb5_crypto_init(context, key, 0, &crypto);
     if (ret)
-	return ret;
+        return ret;
 
     ret = krb5_verify_checksum(context, crypto, usage,
-			       data->data, data->length, rk_UNCONST(cksum));
+                               data->data, data->length, rk_UNCONST(cksum));
     krb5_crypto_destroy(context, crypto);
 
     if (ret == 0) {
-	*valid = 1;
+        *valid = 1;
     }
 
     return ret;
@@ -88,30 +88,30 @@ krb5_c_verify_checksum(krb5_context context, const krb5_keyblock *key,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_c_get_checksum(krb5_context context, const krb5_checksum *cksum,
-		    krb5_cksumtype *type, krb5_data **data)
+                    krb5_cksumtype *type, krb5_data **data)
 {
     krb5_error_code ret;
 
     if (type)
-	*type = cksum->cksumtype;
+        *type = cksum->cksumtype;
     if (data) {
-	*data = malloc(sizeof(**data));
-	if (*data == NULL)
-	    return krb5_enomem(context);
+        *data = malloc(sizeof(**data));
+        if (*data == NULL)
+            return krb5_enomem(context);
 
-	ret = der_copy_octet_string(&cksum->checksum, *data);
-	if (ret) {
-	    free(*data);
-	    *data = NULL;
-	    return ret;
-	}
+        ret = der_copy_octet_string(&cksum->checksum, *data);
+        if (ret) {
+            free(*data);
+            *data = NULL;
+            return ret;
+        }
     }
     return 0;
 }
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_c_set_checksum(krb5_context context, krb5_checksum *cksum,
-		    krb5_cksumtype type, const krb5_data *data)
+                    krb5_cksumtype type, const krb5_data *data)
 {
     cksum->cksumtype = type;
     return der_copy_octet_string(data, &cksum->checksum);
@@ -163,26 +163,26 @@ krb5_c_is_keyed_cksum(krb5_cksumtype ctype)
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_copy_checksum (krb5_context context,
-		    const krb5_checksum *old,
-		    krb5_checksum **new)
+                    const krb5_checksum *old,
+                    krb5_checksum **new)
 {
     *new = malloc(sizeof(**new));
     if (*new == NULL)
-	return krb5_enomem(context);
+        return krb5_enomem(context);
     return copy_Checksum(old, *new);
 }
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_c_checksum_length (krb5_context context, krb5_cksumtype cksumtype,
-			size_t *length)
+                        size_t *length)
 {
     return krb5_checksumsize(context, cksumtype, length);
 }
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_c_block_size(krb5_context context,
-		  krb5_enctype enctype,
-		  size_t *blocksize)
+                  krb5_enctype enctype,
+                  size_t *blocksize)
 {
     krb5_error_code ret;
     krb5_crypto crypto;
@@ -190,12 +190,12 @@ krb5_c_block_size(krb5_context context,
 
     ret = krb5_generate_random_keyblock(context, enctype, &key);
     if (ret)
-	return ret;
+        return ret;
 
     ret = krb5_crypto_init(context, &key, 0, &crypto);
     krb5_free_keyblock_contents(context, &key);
     if (ret)
-	return ret;
+        return ret;
     ret = krb5_crypto_getblocksize(context, crypto, blocksize);
     krb5_crypto_destroy(context, crypto);
 
@@ -204,38 +204,38 @@ krb5_c_block_size(krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_c_decrypt(krb5_context context,
-	       const krb5_keyblock key,
-	       krb5_keyusage usage,
-	       const krb5_data *ivec,
-	       krb5_enc_data *input,
-	       krb5_data *output)
+               const krb5_keyblock key,
+               krb5_keyusage usage,
+               const krb5_data *ivec,
+               krb5_enc_data *input,
+               krb5_data *output)
 {
     krb5_error_code ret;
     krb5_crypto crypto;
 
     ret = krb5_crypto_init(context, &key, input->enctype, &crypto);
     if (ret)
-	return ret;
+        return ret;
 
     if (ivec) {
-	size_t blocksize;
+        size_t blocksize;
 
-	ret = krb5_crypto_getblocksize(context, crypto, &blocksize);
-	if (ret) {
-	krb5_crypto_destroy(context, crypto);
-	return ret;
-	}
+        ret = krb5_crypto_getblocksize(context, crypto, &blocksize);
+        if (ret) {
+            krb5_crypto_destroy(context, crypto);
+            return ret;
+        }
 
-	if (blocksize > ivec->length) {
-	    krb5_crypto_destroy(context, crypto);
-	    return KRB5_BAD_MSIZE;
-	}
+        if (blocksize > ivec->length) {
+            krb5_crypto_destroy(context, crypto);
+            return KRB5_BAD_MSIZE;
+        }
     }
 
     ret = krb5_decrypt_ivec(context, crypto, usage,
-			    input->ciphertext.data, input->ciphertext.length,
-			    output,
-			    ivec ? ivec->data : NULL);
+                            input->ciphertext.data, input->ciphertext.length,
+                            output,
+                            ivec ? ivec->data : NULL);
 
     krb5_crypto_destroy(context, crypto);
 
@@ -244,38 +244,38 @@ krb5_c_decrypt(krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_c_encrypt(krb5_context context,
-	       const krb5_keyblock *key,
-	       krb5_keyusage usage,
-	       const krb5_data *ivec,
-	       const krb5_data *input,
-	       krb5_enc_data *output)
+               const krb5_keyblock *key,
+               krb5_keyusage usage,
+               const krb5_data *ivec,
+               const krb5_data *input,
+               krb5_enc_data *output)
 {
     krb5_error_code ret;
     krb5_crypto crypto;
 
     ret = krb5_crypto_init(context, key, 0, &crypto);
     if (ret)
-	return ret;
+        return ret;
 
     if (ivec) {
-	size_t blocksize;
+        size_t blocksize;
 
-	ret = krb5_crypto_getblocksize(context, crypto, &blocksize);
-	if (ret) {
-	    krb5_crypto_destroy(context, crypto);
-	    return ret;
-	}
+        ret = krb5_crypto_getblocksize(context, crypto, &blocksize);
+        if (ret) {
+            krb5_crypto_destroy(context, crypto);
+            return ret;
+        }
 
-	if (blocksize > ivec->length) {
-	    krb5_crypto_destroy(context, crypto);
-	    return KRB5_BAD_MSIZE;
-	}
+        if (blocksize > ivec->length) {
+            krb5_crypto_destroy(context, crypto);
+            return KRB5_BAD_MSIZE;
+        }
     }
 
     ret = krb5_encrypt_ivec(context, crypto, usage,
-			    input->data, input->length,
-			    &output->ciphertext,
-			    ivec ? ivec->data : NULL);
+                            input->data, input->length,
+                            &output->ciphertext,
+                            ivec ? ivec->data : NULL);
     output->kvno = 0;
     krb5_crypto_getenctype(context, crypto, &output->enctype);
 
@@ -286,9 +286,9 @@ krb5_c_encrypt(krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_c_encrypt_length(krb5_context context,
-		      krb5_enctype enctype,
-		      size_t inputlen,
-		      size_t *length)
+                      krb5_enctype enctype,
+                      size_t inputlen,
+                      size_t *length)
 {
     krb5_error_code ret;
     krb5_crypto crypto;
@@ -296,12 +296,12 @@ krb5_c_encrypt_length(krb5_context context,
 
     ret = krb5_generate_random_keyblock(context, enctype, &key);
     if (ret)
-	return ret;
+        return ret;
 
     ret = krb5_crypto_init(context, &key, 0, &crypto);
     krb5_free_keyblock_contents(context, &key);
     if (ret)
-	return ret;
+        return ret;
 
     *length = krb5_get_wrapped_length(context, crypto, inputlen);
     krb5_crypto_destroy(context, crypto);
@@ -317,9 +317,9 @@ krb5_c_encrypt_length(krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_c_enctype_compare(krb5_context context,
-		       krb5_enctype e1,
-		       krb5_enctype e2,
-		       krb5_boolean *similar)
+                       krb5_enctype e1,
+                       krb5_enctype e2,
+                       krb5_boolean *similar)
     KRB5_DEPRECATED_FUNCTION("Use X instead")
 {
     *similar = (e1 == e2);
@@ -328,47 +328,47 @@ krb5_c_enctype_compare(krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_c_make_random_key(krb5_context context,
-		       krb5_enctype enctype,
-		       krb5_keyblock *random_key)
+                       krb5_enctype enctype,
+                       krb5_keyblock *random_key)
 {
     return krb5_generate_random_keyblock(context, enctype, random_key);
 }
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_c_keylengths(krb5_context context,
-		  krb5_enctype enctype,
-		  size_t *ilen,
-		  size_t *keylen)
+                  krb5_enctype enctype,
+                  size_t *ilen,
+                  size_t *keylen)
 {
     krb5_error_code ret;
 
     ret = krb5_enctype_keybits(context, enctype, ilen);
     if (ret)
-	return ret;
+        return ret;
     *ilen = (*ilen + 7) / 8;
     return krb5_enctype_keysize(context, enctype, keylen);
 }
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_c_prf_length(krb5_context context,
-		  krb5_enctype type,
-		  size_t *length)
+                  krb5_enctype type,
+                  size_t *length)
 {
     return krb5_crypto_prf_length(context, type, length);
 }
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_c_prf(krb5_context context,
-	   const krb5_keyblock *key,
-	   const krb5_data *input,
-	   krb5_data *output)
+           const krb5_keyblock *key,
+           const krb5_data *input,
+           krb5_data *output)
 {
     krb5_crypto crypto;
     krb5_error_code ret;
 
     ret = krb5_crypto_init(context, key, 0, &crypto);
     if (ret)
-	return ret;
+        return ret;
 
     ret = krb5_crypto_prf(context, crypto, input, output);
     krb5_crypto_destroy(context, crypto);
@@ -391,8 +391,8 @@ krb5_c_random_make_octets(krb5_context context, krb5_data * data)
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_cc_copy_creds(krb5_context context,
-		   const krb5_ccache from,
-		   krb5_ccache to)
+                   const krb5_ccache from,
+                   krb5_ccache to)
 {
     return krb5_cc_copy_cache(context, from, to);
 }

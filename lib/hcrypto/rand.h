@@ -89,11 +89,11 @@ void	RAND_add(const void *, size_t, double);
 
 int	RAND_set_rand_method(const RAND_METHOD *);
 const RAND_METHOD *
-	RAND_get_rand_method(void);
+RAND_get_rand_method(void);
 int	RAND_set_rand_engine(ENGINE *);
 
 const char *
-	RAND_file_name(char *, size_t);
+RAND_file_name(char *, size_t);
 int	RAND_load_file(const char *, size_t);
 int	RAND_write_file(const char *);
 int	RAND_status(void);

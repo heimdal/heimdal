@@ -44,10 +44,10 @@ ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 strcasecmp(const char *s1, const char *s2)
 {
     while(toupper((unsigned char)*s1) == toupper((unsigned char)*s2)) {
-	if(*s1 == '\0')
-	    return 0;
-	s1++;
-	s2++;
+        if(*s1 == '\0')
+            return 0;
+        s1++;
+        s2++;
     }
     return toupper((unsigned char)*s1) - toupper((unsigned char)*s2);
 }

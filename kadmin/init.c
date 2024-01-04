@@ -41,10 +41,10 @@
 
 static kadm5_ret_t
 create_random_entry(krb5_principal princ,
-		    unsigned max_life,
-		    unsigned max_rlife,
-		    uint32_t attributes,
-		    unsigned flags)
+                    unsigned max_life,
+                    unsigned max_rlife,
+                    uint32_t attributes,
+                    unsigned flags)
 {
     kadm5_principal_ent_rec ent;
     kadm5_ret_t ret;
@@ -55,20 +55,20 @@ create_random_entry(krb5_principal princ,
 
     ret = krb5_unparse_name(context, princ, &name);
     if (ret) {
-	krb5_warn(context, ret, "failed to unparse principal name");
-	return ret;
+        krb5_warn(context, ret, "failed to unparse principal name");
+        return ret;
     }
 
     memset(&ent, 0, sizeof(ent));
     ent.principal = princ;
     mask |= KADM5_PRINCIPAL;
     if (max_life) {
-	ent.max_life = max_life;
-	mask |= KADM5_MAX_LIFE;
+        ent.max_life = max_life;
+        mask |= KADM5_MAX_LIFE;
     }
     if (max_rlife) {
-	ent.max_renewable_life = max_rlife;
-	mask |= KADM5_MAX_RLIFE;
+        ent.max_renewable_life = max_rlife;
+        mask |= KADM5_MAX_RLIFE;
     }
     ent.attributes |= attributes | KRB5_KDB_DISALLOW_ALL_TIX;
     mask |= KADM5_ATTRIBUTES | KADM5_KEY_DATA;
@@ -89,41 +89,41 @@ create_random_entry(krb5_principal princ,
      */
     ret = kadm5_s_create_principal_with_key(kadm_handle, &ent, mask);
     if(ret) {
-	if (ret == KADM5_DUP && (flags & CRE_DUP_OK))
-	    goto out;
-	krb5_warn(context, ret, "create_random_entry(%s): create failed",
-		  name);
-	goto out;
+        if (ret == KADM5_DUP && (flags & CRE_DUP_OK))
+            goto out;
+        krb5_warn(context, ret, "create_random_entry(%s): create failed",
+                  name);
+        goto out;
     }
 
     /* Replace the string2key based keys with real random bytes */
     ret = kadm5_randkey_principal(kadm_handle, princ, &keys, &n_keys);
     if(ret) {
-	krb5_warn(context, ret, "create_random_entry(%s): randkey failed",
-		  name);
-	goto out;
+        krb5_warn(context, ret, "create_random_entry(%s): randkey failed",
+                  name);
+        goto out;
     }
     for(i = 0; i < n_keys; i++)
-	krb5_free_keyblock_contents(context, &keys[i]);
+        krb5_free_keyblock_contents(context, &keys[i]);
     free(keys);
     ret = kadm5_get_principal(kadm_handle, princ, &ent,
-			      KADM5_PRINCIPAL | KADM5_ATTRIBUTES);
+                              KADM5_PRINCIPAL | KADM5_ATTRIBUTES);
     if(ret) {
-	krb5_warn(context, ret, "create_random_entry(%s): "
-		  "unable to get principal", name);
-	goto out;
+        krb5_warn(context, ret, "create_random_entry(%s): "
+                  "unable to get principal", name);
+        goto out;
     }
     ent.attributes &= (~KRB5_KDB_DISALLOW_ALL_TIX);
     ent.kvno = 1;
     ret = kadm5_modify_principal(kadm_handle, &ent,
-				 KADM5_ATTRIBUTES|KADM5_KVNO);
+                                 KADM5_ATTRIBUTES|KADM5_KVNO);
     kadm5_free_principal_ent (kadm_handle, &ent);
     if(ret) {
-	krb5_warn(context, ret, "create_random_entry(%s): "
-		  "unable to modify principal", name);
-	goto out;
+        krb5_warn(context, ret, "create_random_entry(%s): "
+                  "unable to modify principal", name);
+        goto out;
     }
- out:
+out:
     free(name);
     return ret;
 }
@@ -139,31 +139,31 @@ init(struct init_options *opt, int argc, char **argv)
     krb5_deltat max_life = 0, max_rlife = 0;
 
     if (!local_flag) {
-	krb5_warnx(context, "init is only available in local (-l) mode");
-	return 1;
+        krb5_warnx(context, "init is only available in local (-l) mode");
+        return 1;
     }
 
     if (opt->realm_max_ticket_life_string) {
-	if (str2deltat (opt->realm_max_ticket_life_string, &max_life) != 0) {
-	    krb5_warnx (context, "unable to parse \"%s\"",
-			opt->realm_max_ticket_life_string);
-	    return 1;
-	}
+        if (str2deltat (opt->realm_max_ticket_life_string, &max_life) != 0) {
+            krb5_warnx (context, "unable to parse \"%s\"",
+                        opt->realm_max_ticket_life_string);
+            return 1;
+        }
     }
     if (opt->realm_max_renewable_life_string) {
-	if (str2deltat (opt->realm_max_renewable_life_string, &max_rlife) != 0) {
-	    krb5_warnx (context, "unable to parse \"%s\"",
-			opt->realm_max_renewable_life_string);
-	    return 1;
-	}
+        if (str2deltat (opt->realm_max_renewable_life_string, &max_rlife) != 0) {
+            krb5_warnx (context, "unable to parse \"%s\"",
+                        opt->realm_max_renewable_life_string);
+            return 1;
+        }
     }
 
     db = _kadm5_s_get_db(kadm_handle);
 
     ret = db->hdb_open(context, db, O_RDWR | O_CREAT, 0600);
     if(ret){
-	krb5_warn(context, ret, "hdb_open");
-	return 1;
+        krb5_warn(context, ret, "hdb_open");
+        return 1;
     }
     ret = kadm5_log_reinit(kadm_handle, 0);
     if (ret) {
@@ -178,47 +178,47 @@ init(struct init_options *opt, int argc, char **argv)
     }
 
     for(i = 0; i < argc; i++){
-	krb5_principal princ = NULL;
-	const char *realm = argv[i];
+        krb5_principal princ = NULL;
+        const char *realm = argv[i];
 
-	if (opt->realm_max_ticket_life_string == NULL) {
-	    max_life = 0;
-	    if(edit_deltat ("Realm max ticket life", &max_life, NULL, 0)) {
-		return 1;
-	    }
-	}
-	if (opt->realm_max_renewable_life_string == NULL) {
-	    max_rlife = 0;
-	    if(edit_deltat("Realm max renewable ticket life", &max_rlife,
-			   NULL, 0)) {
-		return 1;
-	    }
-	}
+        if (opt->realm_max_ticket_life_string == NULL) {
+            max_life = 0;
+            if(edit_deltat ("Realm max ticket life", &max_life, NULL, 0)) {
+                return 1;
+            }
+        }
+        if (opt->realm_max_renewable_life_string == NULL) {
+            max_rlife = 0;
+            if(edit_deltat("Realm max renewable ticket life", &max_rlife,
+                           NULL, 0)) {
+                return 1;
+            }
+        }
 
-	/* Create `krbtgt/REALM' */
-	ret = krb5_make_principal(context, &princ, realm,
-				  KRB5_TGS_NAME, realm, NULL);
+        /* Create `krbtgt/REALM' */
+        ret = krb5_make_principal(context, &princ, realm,
+                                  KRB5_TGS_NAME, realm, NULL);
         if (ret == 0)
             ret = create_random_entry(princ, max_life, max_rlife, 0, 0);
-	krb5_free_principal(context, princ);
+        krb5_free_principal(context, princ);
         if (ret) {
             krb5_warn(context, ret, "Failed to create %s@%s", KRB5_TGS_NAME,
                       realm);
-	    return 1;
+            return 1;
         }
 
-	if (opt->bare_flag)
-	    continue;
+        if (opt->bare_flag)
+            continue;
 
-	/* Create `kadmin/changepw' */
-	ret = krb5_make_principal(context, &princ, realm, "kadmin",
+        /* Create `kadmin/changepw' */
+        ret = krb5_make_principal(context, &princ, realm, "kadmin",
                                   "changepw", NULL);
-	/*
-	 * The Windows XP (at least) password changing protocol
-	 * request the `kadmin/changepw' ticket with `renewable_ok,
-	 * renewable, forwardable' and so fails if we disallow
-	 * forwardable here.
-	 */
+        /*
+         * The Windows XP (at least) password changing protocol
+         * request the `kadmin/changepw' ticket with `renewable_ok,
+         * renewable, forwardable' and so fails if we disallow
+         * forwardable here.
+         */
         if (ret == 0)
             ret = create_random_entry(princ, 5*60, 5*60,
                                       KRB5_KDB_DISALLOW_TGT_BASED|
@@ -228,59 +228,59 @@ init(struct init_options *opt, int argc, char **argv)
                                       KRB5_KDB_DISALLOW_PROXIABLE|
                                       KRB5_KDB_REQUIRES_PRE_AUTH,
                                       0);
-	krb5_free_principal(context, princ);
+        krb5_free_principal(context, princ);
         if (ret) {
             krb5_warn(context, ret, "Failed to create kadmin/changepw@%s",
                       realm);
             return 1;
         }
 
-	/* Create `kadmin/admin' */
-	ret = krb5_make_principal(context, &princ, realm,
+        /* Create `kadmin/admin' */
+        ret = krb5_make_principal(context, &princ, realm,
                                   "kadmin", "admin", NULL);
         if (ret == 0)
             ret = create_random_entry(princ, 60*60, 60*60,
                                       KRB5_KDB_REQUIRES_PRE_AUTH, 0);
-	krb5_free_principal(context, princ);
+        krb5_free_principal(context, princ);
         if (ret) {
             krb5_warn(context, ret, "Failed to create kadmin/admin@%s", realm);
             return 1;
         }
 
-	/* Create `changepw/kerberos' (for v4 compat) */
-	ret = krb5_make_principal(context, &princ, realm,
+        /* Create `changepw/kerberos' (for v4 compat) */
+        ret = krb5_make_principal(context, &princ, realm,
                                   "changepw", "kerberos", NULL);
         if (ret == 0)
             ret = create_random_entry(princ, 60*60, 60*60,
                                       KRB5_KDB_DISALLOW_TGT_BASED|
                                       KRB5_KDB_PWCHANGE_SERVICE, 0);
-	krb5_free_principal(context, princ);
+        krb5_free_principal(context, princ);
         if (ret) {
             krb5_warn(context, ret, "Failed to create changepw/kerberos@%s",
                       realm);
             return 1;
         }
 
-	/* Create `kadmin/hprop' for database propagation */
+        /* Create `kadmin/hprop' for database propagation */
         ret = krb5_make_principal(context, &princ, realm,
                                   "kadmin", "hprop", NULL);
         if (ret == 0)
             ret = create_random_entry(princ, 60*60, 60*60,
                                       KRB5_KDB_REQUIRES_PRE_AUTH|
                                       KRB5_KDB_DISALLOW_TGT_BASED, 0);
-	krb5_free_principal(context, princ);
+        krb5_free_principal(context, princ);
         if (ret) {
             krb5_warn(context, ret, "Failed to create kadmin/hprop@%s", realm);
             return 1;
         }
 
-	/* Create `WELLKNOWN/ANONYMOUS' for anonymous as-req */
+        /* Create `WELLKNOWN/ANONYMOUS' for anonymous as-req */
         ret = krb5_make_principal(context, &princ, realm, KRB5_WELLKNOWN_NAME,
                                   KRB5_ANON_NAME, NULL);
         if (ret == 0)
             ret = create_random_entry(princ, 60*60, 60*60,
                                       KRB5_KDB_REQUIRES_PRE_AUTH, 0);
-	krb5_free_principal(context, princ);
+        krb5_free_principal(context, princ);
         if (ret) {
             krb5_warn(context, ret, "Failed to create %s/%s@%s",
                       KRB5_WELLKNOWN_NAME, KRB5_ANON_NAME, realm);
@@ -322,30 +322,30 @@ init(struct init_options *opt, int argc, char **argv)
             }
         }
 
-	/* Create `default' */
-	{
-	    kadm5_principal_ent_rec ent;
-	    int mask = 0;
+        /* Create `default' */
+        {
+            kadm5_principal_ent_rec ent;
+            int mask = 0;
 
-	    memset (&ent, 0, sizeof(ent));
-	    mask |= KADM5_PRINCIPAL;
-	    mask |= KADM5_MAX_LIFE;
-	    mask |= KADM5_MAX_RLIFE;
-	    mask |= KADM5_ATTRIBUTES;
-	    ent.max_life = 24 * 60 * 60;
-	    ent.max_renewable_life = 7 * ent.max_life;
-	    ent.attributes = KRB5_KDB_DISALLOW_ALL_TIX;
-	    ret = krb5_make_principal(context, &ent.principal, realm,
+            memset (&ent, 0, sizeof(ent));
+            mask |= KADM5_PRINCIPAL;
+            mask |= KADM5_MAX_LIFE;
+            mask |= KADM5_MAX_RLIFE;
+            mask |= KADM5_ATTRIBUTES;
+            ent.max_life = 24 * 60 * 60;
+            ent.max_renewable_life = 7 * ent.max_life;
+            ent.attributes = KRB5_KDB_DISALLOW_ALL_TIX;
+            ret = krb5_make_principal(context, &ent.principal, realm,
                                       "default", NULL);
             if (ret == 0)
                 ret = kadm5_create_principal(kadm_handle, &ent, mask, "");
-	    if (ret) {
-		krb5_warn(context, ret, "Failed to create default@%s", realm);
+            if (ret) {
+                krb5_warn(context, ret, "Failed to create default@%s", realm);
                 return 1;
             }
 
-	    krb5_free_principal(context, ent.principal);
-	}
+            krb5_free_principal(context, ent.principal);
+        }
     }
     return 0;
 }

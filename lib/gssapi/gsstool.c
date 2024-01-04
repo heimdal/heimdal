@@ -59,7 +59,7 @@ static void
 usage (int ret)
 {
     arg_printusage (args, sizeof(args)/sizeof(*args),
-		    NULL, "service@host");
+                    NULL, "service@host");
     exit (ret);
 }
 
@@ -81,13 +81,13 @@ mechanisms(void *argptr, int argc, char **argv)
 
     maj_stat = gss_indicate_mechs(&min_stat, &mechs);
     if (maj_stat != GSS_S_COMPLETE)
-	errx(1, "gss_indicate_mechs failed");
+        errx(1, "gss_indicate_mechs failed");
 
     printf("Supported mechanisms:\n");
 
     ct = rtbl_create();
     if (ct == NULL)
-	errx(1, "rtbl_create");
+        errx(1, "rtbl_create");
 
     rtbl_set_separator(ct, "  ");
     rtbl_add_column(ct, COL_OID, 0);
@@ -96,32 +96,32 @@ mechanisms(void *argptr, int argc, char **argv)
     rtbl_add_column(ct, COL_SASL, 0);
 
     for (i = 0; i < mechs->count; i++) {
-	gss_buffer_desc str, sasl_name, mech_name, mech_desc;
+        gss_buffer_desc str, sasl_name, mech_name, mech_desc;
 
-	maj_stat = gss_oid_to_str(&min_stat, &mechs->elements[i], &str);
-	if (maj_stat != GSS_S_COMPLETE)
-	    errx(1, "gss_oid_to_str failed");
+        maj_stat = gss_oid_to_str(&min_stat, &mechs->elements[i], &str);
+        if (maj_stat != GSS_S_COMPLETE)
+            errx(1, "gss_oid_to_str failed");
 
-	rtbl_add_column_entryv(ct, COL_OID, "%.*s",
-			       (int)str.length, (char *)str.value);
-	gss_release_buffer(&min_stat, &str);
+        rtbl_add_column_entryv(ct, COL_OID, "%.*s",
+                               (int)str.length, (char *)str.value);
+        gss_release_buffer(&min_stat, &str);
 
-	(void)gss_inquire_saslname_for_mech(&min_stat,
-					    &mechs->elements[i],
-					    &sasl_name,
-					    &mech_name,
-					    &mech_desc);
+        (void)gss_inquire_saslname_for_mech(&min_stat,
+                                            &mechs->elements[i],
+                                            &sasl_name,
+                                            &mech_name,
+                                            &mech_desc);
 
-	rtbl_add_column_entryv(ct, COL_NAME, "%.*s",
-			       (int)mech_name.length, (char *)mech_name.value);
-	rtbl_add_column_entryv(ct, COL_DESC, "%.*s",
-			       (int)mech_desc.length, (char *)mech_desc.value);
-	rtbl_add_column_entryv(ct, COL_SASL, "%.*s",
-			       (int)sasl_name.length, (char *)sasl_name.value);
+        rtbl_add_column_entryv(ct, COL_NAME, "%.*s",
+                               (int)mech_name.length, (char *)mech_name.value);
+        rtbl_add_column_entryv(ct, COL_DESC, "%.*s",
+                               (int)mech_desc.length, (char *)mech_desc.value);
+        rtbl_add_column_entryv(ct, COL_SASL, "%.*s",
+                               (int)sasl_name.length, (char *)sasl_name.value);
 
-	gss_release_buffer(&min_stat, &mech_name);
-	gss_release_buffer(&min_stat, &mech_desc);
-	gss_release_buffer(&min_stat, &sasl_name);
+        gss_release_buffer(&min_stat, &mech_name);
+        gss_release_buffer(&min_stat, &mech_desc);
+        gss_release_buffer(&min_stat, &sasl_name);
 
     }
     gss_release_oid_set(&min_stat, &mechs);
@@ -142,39 +142,39 @@ print_mech_attr(const char *mechname, gss_const_OID mech, gss_OID_set set)
 
     ct = rtbl_create();
     if (ct == NULL)
-	errx(1, "rtbl_create");
+        errx(1, "rtbl_create");
 
     rtbl_set_separator(ct, "  ");
     rtbl_add_column(ct, COL_OID, 0);
     rtbl_add_column(ct, COL_DESC, 0);
     if (mech)
-	rtbl_add_column(ct, COL_VALUE, 0);
+        rtbl_add_column(ct, COL_VALUE, 0);
 
     for (n = 0; n < set->count; n++) {
-	major = gss_display_mech_attr(&minor, &set->elements[n], &name, &desc, NULL);
-	if (major)
-	    continue;
+        major = gss_display_mech_attr(&minor, &set->elements[n], &name, &desc, NULL);
+        if (major)
+            continue;
 
-	rtbl_add_column_entryv(ct, COL_OID, "%.*s",
-			       (int)name.length, (char *)name.value);
-	rtbl_add_column_entryv(ct, COL_DESC, "%.*s",
-			       (int)desc.length, (char *)desc.value);
-	if (mech) {
-	    gss_buffer_desc value;
+        rtbl_add_column_entryv(ct, COL_OID, "%.*s",
+                               (int)name.length, (char *)name.value);
+        rtbl_add_column_entryv(ct, COL_DESC, "%.*s",
+                               (int)desc.length, (char *)desc.value);
+        if (mech) {
+            gss_buffer_desc value;
 
-	    if (gss_mo_get(mech, &set->elements[n], &value) != 0)
-		value.length = 0;
+            if (gss_mo_get(mech, &set->elements[n], &value) != 0)
+                value.length = 0;
 
-	    if (value.length)
-		rtbl_add_column_entryv(ct, COL_VALUE, "%.*s",
-				       (int)value.length, (char *)value.value);
-	    else
-		rtbl_add_column_entryv(ct, COL_VALUE, "<>");
-	    gss_release_buffer(&minor, &value);
-	}
+            if (value.length)
+                rtbl_add_column_entryv(ct, COL_VALUE, "%.*s",
+                                       (int)value.length, (char *)value.value);
+            else
+                rtbl_add_column_entryv(ct, COL_VALUE, "<>");
+            gss_release_buffer(&minor, &value);
+        }
 
-	gss_release_buffer(&minor, &name);
-	gss_release_buffer(&minor, &desc);
+        gss_release_buffer(&minor, &name);
+        gss_release_buffer(&minor, &desc);
     }
 
     printf("attributes for: %s\n", mechname);
@@ -191,21 +191,21 @@ attributes(struct attributes_options *opt, int argc, char **argv)
     OM_uint32 major, minor;
 
     if (opt->mech_string) {
-	mech = gss_name_to_oid(opt->mech_string);
-	if (mech == NULL)
-	    errx(1, "mech %s is unknown", opt->mech_string);
+        mech = gss_name_to_oid(opt->mech_string);
+        if (mech == NULL)
+            errx(1, "mech %s is unknown", opt->mech_string);
     }
 
     major = gss_inquire_attrs_for_mech(&minor, mech, &mech_attr, &known_mech_attrs);
     if (major)
-	errx(1, "gss_inquire_attrs_for_mech");
+        errx(1, "gss_inquire_attrs_for_mech");
 
     if (mech) {
-	print_mech_attr(opt->mech_string, mech, mech_attr);
+        print_mech_attr(opt->mech_string, mech, mech_attr);
     }
 
     if (opt->all_flag) {
-	print_mech_attr("all mechs", NULL, known_mech_attrs);
+        print_mech_attr("all mechs", NULL, known_mech_attrs);
     }
 
     gss_release_oid_set(&minor, &mech_attr);
@@ -234,30 +234,30 @@ main(int argc, char **argv)
     setprogname(argv[0]);
 
     if(getarg(args, sizeof(args) / sizeof(args[0]), argc, argv, &optidx))
-	usage(1);
+        usage(1);
 
     if (help_flag)
-	usage (0);
+        usage (0);
 
     if(version_flag){
-	print_version(NULL);
-	exit(0);
+        print_version(NULL);
+        exit(0);
     }
 
     argc -= optidx;
     argv += optidx;
 
     if (argc != 0) {
-	ret = sl_command(commands, argc, argv);
-	if(ret == -1)
-	    sl_did_you_mean(commands, argv[0]);
-	else if (ret == -2)
-	    ret = 0;
-	if(ret != 0)
-	    exit_status = 1;
+        ret = sl_command(commands, argc, argv);
+        if(ret == -1)
+            sl_did_you_mean(commands, argv[0]);
+        else if (ret == -2)
+            ret = 0;
+        if(ret != 0)
+            exit_status = 1;
     } else {
-	sl_slc_help(commands, argc, argv);
-	exit_status = 1;
+        sl_slc_help(commands, argc, argv);
+        exit_status = 1;
     }
 
     return exit_status;

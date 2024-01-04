@@ -51,21 +51,21 @@ main(int argc, char **argv)
 
     maj_stat = gss_oid_to_str(&minor_status, GSS_KRB5_MECHANISM, &data);
     if (GSS_ERROR(maj_stat))
-	errx(1, "gss_oid_to_str failed");
+        errx(1, "gss_oid_to_str failed");
 
     ret = strncmp(data.value, "1 2 840 113554 1 2 2", data.length);
     gss_release_buffer(&maj_stat, &data);
     if (ret != 0)
-	return 1;
+        return 1;
 
     maj_stat = gss_oid_to_str(&minor_status, GSS_C_NT_EXPORT_NAME, &data);
     if (GSS_ERROR(maj_stat))
-	errx(1, "gss_oid_to_str failed");
+        errx(1, "gss_oid_to_str failed");
 
     ret = strncmp(data.value, "1 3 6 1 5 6 4", data.length);
     gss_release_buffer(&maj_stat, &data);
     if (ret != 0)
-	return 1;
+        return 1;
 
     return 0;
 }

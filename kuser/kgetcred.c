@@ -88,9 +88,9 @@ static void
 usage(int ret)
 {
     arg_printusage(args,
-		   sizeof(args)/sizeof(*args),
-		   NULL,
-		   "service");
+                   sizeof(args)/sizeof(*args),
+                   NULL,
+                   "service");
     exit (ret);
 }
 
@@ -111,17 +111,17 @@ main(int argc, char **argv)
 
     ret = krb5_init_context(&context);
     if (ret)
-	errx(1, "krb5_init_context failed: %d", ret);
+        errx(1, "krb5_init_context failed: %d", ret);
 
     if (getarg(args, sizeof(args) / sizeof(args[0]), argc, argv, &optidx))
-	usage(1);
+        usage(1);
 
     if (help_flag)
-	usage (0);
+        usage (0);
 
     if (version_flag) {
-	print_version(NULL);
-	exit(0);
+        print_version(NULL);
+        exit(0);
     }
 
     argc -= optidx;
@@ -134,89 +134,89 @@ main(int argc, char **argv)
     }
 
     if (cache_str) {
-	ret = krb5_cc_resolve(context, cache_str, &cache);
-	if (ret)
-	    krb5_err(context, 1, ret, "%s", cache_str);
+        ret = krb5_cc_resolve(context, cache_str, &cache);
+        if (ret)
+            krb5_err(context, 1, ret, "%s", cache_str);
     } else {
-	ret = krb5_cc_default (context, &cache);
-	if (ret)
-	    krb5_err(context, 1, ret, "krb5_cc_resolve");
+        ret = krb5_cc_default (context, &cache);
+        if (ret)
+            krb5_err(context, 1, ret, "krb5_cc_resolve");
     }
 
     ret = krb5_get_creds_opt_alloc(context, &opt);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_get_creds_opt_alloc");
+        krb5_err(context, 1, ret, "krb5_get_creds_opt_alloc");
 
     if (etype_str) {
-	krb5_enctype enctype;
+        krb5_enctype enctype;
 
-	ret = krb5_string_to_enctype(context, etype_str, &enctype);
-	if (ret)
-	    krb5_errx(context, 1, N_("unrecognized enctype: %s", ""),
-		      etype_str);
-	krb5_get_creds_opt_set_enctype(context, opt, enctype);
+        ret = krb5_string_to_enctype(context, etype_str, &enctype);
+        if (ret)
+            krb5_errx(context, 1, N_("unrecognized enctype: %s", ""),
+                      etype_str);
+        krb5_get_creds_opt_set_enctype(context, opt, enctype);
     }
 
     if (impersonate_str) {
-	ret = krb5_parse_name(context, impersonate_str, &impersonate);
-	if (ret)
-	    krb5_err(context, 1, ret, "krb5_parse_name %s", impersonate_str);
-	krb5_get_creds_opt_set_impersonate(context, opt, impersonate);
-	krb5_get_creds_opt_add_options(context, opt, KRB5_GC_NO_STORE);
+        ret = krb5_parse_name(context, impersonate_str, &impersonate);
+        if (ret)
+            krb5_err(context, 1, ret, "krb5_parse_name %s", impersonate_str);
+        krb5_get_creds_opt_set_impersonate(context, opt, impersonate);
+        krb5_get_creds_opt_add_options(context, opt, KRB5_GC_NO_STORE);
         krb5_free_principal(context, impersonate);
     }
 
     if (out_cache_str)
-	krb5_get_creds_opt_add_options(context, opt, KRB5_GC_NO_STORE);
+        krb5_get_creds_opt_add_options(context, opt, KRB5_GC_NO_STORE);
 
     if (forwardable_flag)
-	krb5_get_creds_opt_add_options(context, opt, KRB5_GC_FORWARDABLE);
+        krb5_get_creds_opt_add_options(context, opt, KRB5_GC_FORWARDABLE);
     if (!transit_flag)
-	krb5_get_creds_opt_add_options(context, opt, KRB5_GC_NO_TRANSIT_CHECK);
+        krb5_get_creds_opt_add_options(context, opt, KRB5_GC_NO_TRANSIT_CHECK);
     if (canonicalize_flag)
-	krb5_get_creds_opt_add_options(context, opt, KRB5_GC_CANONICALIZE);
+        krb5_get_creds_opt_add_options(context, opt, KRB5_GC_CANONICALIZE);
     if (!store_flag)
-	krb5_get_creds_opt_add_options(context, opt, KRB5_GC_NO_STORE);
+        krb5_get_creds_opt_add_options(context, opt, KRB5_GC_NO_STORE);
     if (cached_only_flag)
-	krb5_get_creds_opt_add_options(context, opt, KRB5_GC_CACHED);
+        krb5_get_creds_opt_add_options(context, opt, KRB5_GC_CACHED);
     if (anonymous_flag)
-	krb5_get_creds_opt_add_options(context, opt, KRB5_GC_ANONYMOUS);
+        krb5_get_creds_opt_add_options(context, opt, KRB5_GC_ANONYMOUS);
 
     if (delegation_cred_str) {
-	krb5_ccache id;
-	krb5_creds c, mc;
-	Ticket ticket;
+        krb5_ccache id;
+        krb5_creds c, mc;
+        Ticket ticket;
 
-	krb5_cc_clear_mcred(&mc);
-	ret = krb5_cc_get_principal(context, cache, &mc.server);
-	if (ret)
-	    krb5_err(context, 1, ret, "krb5_cc_get_principal");
+        krb5_cc_clear_mcred(&mc);
+        ret = krb5_cc_get_principal(context, cache, &mc.server);
+        if (ret)
+            krb5_err(context, 1, ret, "krb5_cc_get_principal");
 
-	ret = krb5_cc_resolve(context, delegation_cred_str, &id);
-	if(ret)
-	    krb5_err(context, 1, ret, "krb5_cc_resolve");
+        ret = krb5_cc_resolve(context, delegation_cred_str, &id);
+        if(ret)
+            krb5_err(context, 1, ret, "krb5_cc_resolve");
 
-	ret = krb5_cc_retrieve_cred(context, id, 0, &mc, &c);
-	if(ret)
-	    krb5_err(context, 1, ret, "krb5_cc_retrieve_cred");
+        ret = krb5_cc_retrieve_cred(context, id, 0, &mc, &c);
+        if(ret)
+            krb5_err(context, 1, ret, "krb5_cc_retrieve_cred");
 
-	ret = decode_Ticket(c.ticket.data, c.ticket.length, &ticket, NULL);
-	if (ret) {
-	    krb5_clear_error_message(context);
-	    krb5_err(context, 1, ret, "decode_Ticket");
-	}
-	krb5_free_cred_contents(context, &c);
+        ret = decode_Ticket(c.ticket.data, c.ticket.length, &ticket, NULL);
+        if (ret) {
+            krb5_clear_error_message(context);
+            krb5_err(context, 1, ret, "decode_Ticket");
+        }
+        krb5_free_cred_contents(context, &c);
 
-	ret = krb5_get_creds_opt_set_ticket(context, opt, &ticket);
-	if(ret)
-	    krb5_err(context, 1, ret, "krb5_get_creds_opt_set_ticket");
-	free_Ticket(&ticket);
+        ret = krb5_get_creds_opt_set_ticket(context, opt, &ticket);
+        if(ret)
+            krb5_err(context, 1, ret, "krb5_get_creds_opt_set_ticket");
+        free_Ticket(&ticket);
 
-	krb5_cc_close(context, id);
-	krb5_free_principal(context, mc.server);
+        krb5_cc_close(context, id);
+        krb5_free_principal(context, mc.server);
 
-	krb5_get_creds_opt_add_options(context, opt,
-				       KRB5_GC_CONSTRAINED_DELEGATION);
+        krb5_get_creds_opt_add_options(context, opt,
+                                       KRB5_GC_CONSTRAINED_DELEGATION);
     }
 
     if (nametype_str != NULL) {
@@ -230,8 +230,8 @@ main(int argc, char **argv)
         is_hostbased_flag = 1;
 
     if (is_hostbased_flag) {
-	const char *sname = NULL;
-	const char *hname = NULL;
+        const char *sname = NULL;
+        const char *hname = NULL;
 
         if (nametype_str != NULL &&
             nametype != KRB5_NT_SRV_HST &&
@@ -281,8 +281,8 @@ main(int argc, char **argv)
              */
             hname = krb5_principal_get_comp_string(context, server, 1);
 
-	    ret = krb5_sname_to_principal(context, hname, sname,
-					   KRB5_NT_SRV_HST, &server2);
+            ret = krb5_sname_to_principal(context, hname, sname,
+                                          KRB5_NT_SRV_HST, &server2);
             if (ret)
                 krb5_err(context, 1, ret, "krb5_sname_to_principal %s %s",
                          sname, hname);
@@ -312,29 +312,29 @@ main(int argc, char **argv)
              * The service and hostname components can be defaulted by passing
              * empty strings.
              */
-	    sname = argv[0];
+            sname = argv[0];
             if (*sname == '\0')
                 sname = NULL;
-	    hname = argv[1];
+            hname = argv[1];
             if (hname == NULL || *hname == '\0')
                 hname = NULL;
-	    ret = krb5_sname_to_principal(context, hname, sname,
+            ret = krb5_sname_to_principal(context, hname, sname,
                                           KRB5_NT_SRV_HST, &server);
-	    if (ret)
-		krb5_err(context, 1, ret, "krb5_sname_to_principal");
+            if (ret)
+                krb5_err(context, 1, ret, "krb5_sname_to_principal");
 
             for (i = 2; i < argc; i++) {
                 ret = krb5_principal_set_comp_string(context, server, i, argv[i]);
                 if (ret)
                     krb5_err(context, 1, ret, "krb5_principal_set_comp_string");
             }
-	}
+        }
     } else if (argc == 1) {
-	ret = krb5_parse_name(context, argv[0], &server);
-	if (ret)
-	    krb5_err(context, 1, ret, "krb5_parse_name %s", argv[0]);
+        ret = krb5_parse_name(context, argv[0], &server);
+        if (ret)
+            krb5_err(context, 1, ret, "krb5_parse_name %s", argv[0]);
     } else {
-	usage(1);
+        usage(1);
     }
 
     if (nametype != KRB5_NT_UNKNOWN)
@@ -342,23 +342,23 @@ main(int argc, char **argv)
 
     ret = krb5_get_creds(context, opt, cache, server, &out);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_get_creds");
+        krb5_err(context, 1, ret, "krb5_get_creds");
 
     if (out_cache_str) {
-	krb5_ccache id;
+        krb5_ccache id;
 
-	ret = krb5_cc_resolve(context, out_cache_str, &id);
-	if(ret)
-	    krb5_err(context, 1, ret, "krb5_cc_resolve");
+        ret = krb5_cc_resolve(context, out_cache_str, &id);
+        if(ret)
+            krb5_err(context, 1, ret, "krb5_cc_resolve");
 
-	ret = krb5_cc_initialize(context, id, out->client);
-	if(ret)
-	    krb5_err(context, 1, ret, "krb5_cc_initialize");
+        ret = krb5_cc_initialize(context, id, out->client);
+        if(ret)
+            krb5_err(context, 1, ret, "krb5_cc_initialize");
 
-	ret = krb5_cc_store_cred(context, id, out);
-	if(ret)
-	    krb5_err(context, 1, ret, "krb5_cc_store_cred");
-	krb5_cc_close(context, id);
+        ret = krb5_cc_store_cred(context, id, out);
+        if(ret)
+            krb5_err(context, 1, ret, "krb5_cc_store_cred");
+        krb5_cc_close(context, id);
     }
 
     krb5_free_creds(context, out);

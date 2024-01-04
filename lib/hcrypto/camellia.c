@@ -43,7 +43,7 @@
 
 int
 CAMELLIA_set_key(const unsigned char *userkey,
-		 const int bits, CAMELLIA_KEY *key)
+                 const int bits, CAMELLIA_KEY *key)
 {
     key->bits = bits;
     Camellia_Ekeygen(bits, userkey, key->key);
@@ -52,7 +52,7 @@ CAMELLIA_set_key(const unsigned char *userkey,
 
 void
 CAMELLIA_encrypt(const unsigned char *in, unsigned char *out,
-		 const CAMELLIA_KEY *key)
+                 const CAMELLIA_KEY *key)
 {
     Camellia_EncryptBlock(key->bits, in, key->key, out);
 
@@ -60,54 +60,54 @@ CAMELLIA_encrypt(const unsigned char *in, unsigned char *out,
 
 void
 CAMELLIA_decrypt(const unsigned char *in, unsigned char *out,
-		 const CAMELLIA_KEY *key)
+                 const CAMELLIA_KEY *key)
 {
     Camellia_DecryptBlock(key->bits, in, key->key, out);
 }
 
 void
 CAMELLIA_cbc_encrypt(const unsigned char *in, unsigned char *out,
-		     unsigned long size, const CAMELLIA_KEY *key,
-		     unsigned char *iv, int mode_encrypt)
+                     unsigned long size, const CAMELLIA_KEY *key,
+                     unsigned char *iv, int mode_encrypt)
 {
     unsigned char tmp[CAMELLIA_BLOCK_SIZE];
     int i;
 
     if (mode_encrypt) {
-	while (size >= CAMELLIA_BLOCK_SIZE) {
-	    for (i = 0; i < CAMELLIA_BLOCK_SIZE; i++)
-		tmp[i] = in[i] ^ iv[i];
-	    CAMELLIA_encrypt(tmp, out, key);
-	    memcpy(iv, out, CAMELLIA_BLOCK_SIZE);
-	    size -= CAMELLIA_BLOCK_SIZE;
-	    in += CAMELLIA_BLOCK_SIZE;
-	    out += CAMELLIA_BLOCK_SIZE;
-	}
-	if (size) {
-	    for (i = 0; i < size; i++)
-		tmp[i] = in[i] ^ iv[i];
-	    for (i = size; i < CAMELLIA_BLOCK_SIZE; i++)
-		tmp[i] = iv[i];
-	    CAMELLIA_encrypt(tmp, out, key);
-	    memcpy(iv, out, CAMELLIA_BLOCK_SIZE);
-	}
+        while (size >= CAMELLIA_BLOCK_SIZE) {
+            for (i = 0; i < CAMELLIA_BLOCK_SIZE; i++)
+                tmp[i] = in[i] ^ iv[i];
+            CAMELLIA_encrypt(tmp, out, key);
+            memcpy(iv, out, CAMELLIA_BLOCK_SIZE);
+            size -= CAMELLIA_BLOCK_SIZE;
+            in += CAMELLIA_BLOCK_SIZE;
+            out += CAMELLIA_BLOCK_SIZE;
+        }
+        if (size) {
+            for (i = 0; i < size; i++)
+                tmp[i] = in[i] ^ iv[i];
+            for (i = size; i < CAMELLIA_BLOCK_SIZE; i++)
+                tmp[i] = iv[i];
+            CAMELLIA_encrypt(tmp, out, key);
+            memcpy(iv, out, CAMELLIA_BLOCK_SIZE);
+        }
     } else {
-	while (size >= CAMELLIA_BLOCK_SIZE) {
-	    memcpy(tmp, in, CAMELLIA_BLOCK_SIZE);
-	    CAMELLIA_decrypt(tmp, out, key);
-	    for (i = 0; i < CAMELLIA_BLOCK_SIZE; i++)
-		out[i] ^= iv[i];
-	    memcpy(iv, tmp, CAMELLIA_BLOCK_SIZE);
-	    size -= CAMELLIA_BLOCK_SIZE;
-	    in += CAMELLIA_BLOCK_SIZE;
-	    out += CAMELLIA_BLOCK_SIZE;
-	}
-	if (size) {
-	    memcpy(tmp, in, CAMELLIA_BLOCK_SIZE);
-	    CAMELLIA_decrypt(tmp, out, key);
-	    for (i = 0; i < size; i++)
-		out[i] ^= iv[i];
-	    memcpy(iv, tmp, CAMELLIA_BLOCK_SIZE);
-	}
+        while (size >= CAMELLIA_BLOCK_SIZE) {
+            memcpy(tmp, in, CAMELLIA_BLOCK_SIZE);
+            CAMELLIA_decrypt(tmp, out, key);
+            for (i = 0; i < CAMELLIA_BLOCK_SIZE; i++)
+                out[i] ^= iv[i];
+            memcpy(iv, tmp, CAMELLIA_BLOCK_SIZE);
+            size -= CAMELLIA_BLOCK_SIZE;
+            in += CAMELLIA_BLOCK_SIZE;
+            out += CAMELLIA_BLOCK_SIZE;
+        }
+        if (size) {
+            memcpy(tmp, in, CAMELLIA_BLOCK_SIZE);
+            CAMELLIA_decrypt(tmp, out, key);
+            for (i = 0; i < size; i++)
+                out[i] ^= iv[i];
+            memcpy(iv, tmp, CAMELLIA_BLOCK_SIZE);
+        }
     }
 }

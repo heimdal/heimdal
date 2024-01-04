@@ -51,10 +51,10 @@ RC4_set_key(RC4_KEY *key, const int len, const unsigned char *data)
     int i, j;
 
     for (i = 0; i < 256; i++)
-	key->state[i] = i;
+        key->state[i] = i;
     for (i = 0, j = 0; i < 256; i++) {
-	j = (j + key->state[i] + data[i % len]) % 256;
-	SWAP(key, i, j);
+        j = (j + key->state[i] + data[i % len]) % 256;
+        SWAP(key, i, j);
     }
     key->x = key->y = 0;
 }
@@ -68,11 +68,11 @@ RC4(RC4_KEY *key, const int len, const unsigned char *in, unsigned char *out)
     x = key->x;
     y = key->y;
     for (i = 0; i < len; i++) {
-	x = (x + 1) % 256;
-	y = (y + key->state[x]) % 256;
-	SWAP(key, x, y);
-	t = (key->state[x] + key->state[y]) % 256;
-	*out++ = key->state[t] ^ *in++;
+        x = (x + 1) % 256;
+        y = (y + key->state[x]) % 256;
+        SWAP(key, x, y);
+        t = (key->state[x] + key->state[y]) % 256;
+        *out++ = key->state[t] ^ *in++;
     }
     key->x = x;
     key->y = y;

@@ -54,19 +54,19 @@
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_get_init_creds_opt_alloc(krb5_context context,
-			      krb5_get_init_creds_opt **opt)
+                              krb5_get_init_creds_opt **opt)
 {
     krb5_get_init_creds_opt *o;
 
     *opt = NULL;
     o = calloc(1, sizeof(*o));
     if (o == NULL)
-	return krb5_enomem(context);
+        return krb5_enomem(context);
 
     o->opt_private = calloc(1, sizeof(*o->opt_private));
     if (o->opt_private == NULL) {
-	free(o);
-	return krb5_enomem(context);
+        free(o);
+        return krb5_enomem(context);
     }
     o->opt_private->refcount = 1;
     *opt = o;
@@ -81,15 +81,15 @@ krb5_get_init_creds_opt_alloc(krb5_context context,
 
 KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 krb5_get_init_creds_opt_free(krb5_context context,
-			     krb5_get_init_creds_opt *opt)
+                             krb5_get_init_creds_opt *opt)
 {
     if (opt == NULL || opt->opt_private == NULL)
-	return;
+        return;
     if (opt->opt_private->refcount < 1) /* abort ? */
-	return;
+        return;
     if (--opt->opt_private->refcount == 0) {
-	_krb5_get_init_creds_opt_free_pkinit(opt);
-	free(opt->opt_private);
+        _krb5_get_init_creds_opt_free_pkinit(opt);
+        free(opt->opt_private);
     }
     memset(opt, 0, sizeof(*opt));
     free(opt);
@@ -97,44 +97,44 @@ krb5_get_init_creds_opt_free(krb5_context context,
 
 static int
 get_config_time (krb5_context context,
-		 const char *realm,
-		 const char *name,
-		 int def)
+                 const char *realm,
+                 const char *name,
+                 int def)
 {
     int ret;
 
     ret = krb5_config_get_time (context, NULL,
-				"realms",
-				realm,
-				name,
-				NULL);
+                                "realms",
+                                realm,
+                                name,
+                                NULL);
     if (ret >= 0)
-	return ret;
+        return ret;
     ret = krb5_config_get_time (context, NULL,
-				"libdefaults",
-				name,
-				NULL);
+                                "libdefaults",
+                                name,
+                                NULL);
     if (ret >= 0)
-	return ret;
+        return ret;
     return def;
 }
 
 static krb5_boolean
 get_config_bool (krb5_context context,
-		 krb5_boolean def_value,
-		 const char *realm,
-		 const char *name)
+                 krb5_boolean def_value,
+                 const char *realm,
+                 const char *name)
 {
     krb5_boolean b;
 
     b = krb5_config_get_bool_default(context, NULL, def_value,
-				     "realms", realm, name, NULL);
+                                     "realms", realm, name, NULL);
     if (b != def_value)
-	return b;
+        return b;
     b = krb5_config_get_bool_default (context, NULL, def_value,
-				      "libdefaults", name, NULL);
+                                      "libdefaults", name, NULL);
     if (b != def_value)
-	return b;
+        return b;
     return def_value;
 }
 
@@ -147,15 +147,15 @@ get_config_bool (krb5_context context,
 
 KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 krb5_get_init_creds_opt_set_default_flags(krb5_context context,
-					  const char *appname,
-					  krb5_const_realm realm,
-					  krb5_get_init_creds_opt *opt)
+                                          const char *appname,
+                                          krb5_const_realm realm,
+                                          krb5_get_init_creds_opt *opt)
 {
     krb5_boolean b;
     time_t t;
 
     b = get_config_bool (context, KRB5_FORWARDABLE_DEFAULT,
-			 realm, "forwardable");
+                         realm, "forwardable");
     krb5_appdefault_boolean(context, appname, realm, "forwardable", b, &b);
     krb5_get_init_creds_opt_set_forwardable(opt, b);
 
@@ -165,18 +165,18 @@ krb5_get_init_creds_opt_set_default_flags(krb5_context context,
 
     krb5_appdefault_time(context, appname, realm, "ticket_lifetime", 0, &t);
     if (t == 0)
-	t = get_config_time (context, realm, "ticket_lifetime", 0);
+        t = get_config_time (context, realm, "ticket_lifetime", 0);
     if(t != 0)
-	krb5_get_init_creds_opt_set_tkt_life(opt, t);
+        krb5_get_init_creds_opt_set_tkt_life(opt, t);
 
     krb5_appdefault_time(context, appname, realm, "renew_lifetime", 0, &t);
     if (t == 0)
-	t = get_config_time (context, realm, "renew_lifetime", 0);
+        t = get_config_time (context, realm, "renew_lifetime", 0);
     if(t != 0)
-	krb5_get_init_creds_opt_set_renew_life(opt, t);
+        krb5_get_init_creds_opt_set_renew_life(opt, t);
 
     krb5_appdefault_boolean(context, appname, realm, "no-addresses",
-			    KRB5_ADDRESSLESS_DEFAULT, &b);
+                            KRB5_ADDRESSLESS_DEFAULT, &b);
     krb5_get_init_creds_opt_set_addressless (context, opt, b);
 
 #if 0
@@ -184,14 +184,14 @@ krb5_get_init_creds_opt_set_default_flags(krb5_context context,
     krb5_get_init_creds_opt_set_anonymous (opt, b);
 
     krb5_get_init_creds_opt_set_etype_list(opt, enctype,
-					   etype_str.num_strings);
+                                           etype_str.num_strings);
 
     krb5_get_init_creds_opt_set_salt(krb5_get_init_creds_opt *opt,
-				     krb5_data *salt);
+                                     krb5_data *salt);
 
     krb5_get_init_creds_opt_set_preauth_list(krb5_get_init_creds_opt *opt,
-					     krb5_preauthtype *preauth_list,
-					     int preauth_list_length);
+                                             krb5_preauthtype *preauth_list,
+                                             int preauth_list_length);
 #endif
 }
 
@@ -199,13 +199,13 @@ KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 krb5_get_init_creds_opt_set_change_password_prompt(krb5_get_init_creds_opt *opt,
                                                    int change_password_prompt)
 {
-	opt->flags |= KRB5_GET_INIT_CREDS_OPT_CHANGE_PASSWORD_PROMPT;
-	opt->change_password_prompt = change_password_prompt;
+        opt->flags |= KRB5_GET_INIT_CREDS_OPT_CHANGE_PASSWORD_PROMPT;
+        opt->change_password_prompt = change_password_prompt;
 }
 
 KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 krb5_get_init_creds_opt_set_tkt_life(krb5_get_init_creds_opt *opt,
-				     krb5_deltat tkt_life)
+                                     krb5_deltat tkt_life)
 {
     opt->flags |= KRB5_GET_INIT_CREDS_OPT_TKT_LIFE;
     opt->tkt_life = tkt_life;
@@ -213,7 +213,7 @@ krb5_get_init_creds_opt_set_tkt_life(krb5_get_init_creds_opt *opt,
 
 KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 krb5_get_init_creds_opt_set_renew_life(krb5_get_init_creds_opt *opt,
-				       krb5_deltat renew_life)
+                                       krb5_deltat renew_life)
 {
     opt->flags |= KRB5_GET_INIT_CREDS_OPT_RENEW_LIFE;
     opt->renew_life = renew_life;
@@ -221,7 +221,7 @@ krb5_get_init_creds_opt_set_renew_life(krb5_get_init_creds_opt *opt,
 
 KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 krb5_get_init_creds_opt_set_forwardable(krb5_get_init_creds_opt *opt,
-					int forwardable)
+                                        int forwardable)
 {
     opt->flags |= KRB5_GET_INIT_CREDS_OPT_FORWARDABLE;
     opt->forwardable = forwardable;
@@ -229,7 +229,7 @@ krb5_get_init_creds_opt_set_forwardable(krb5_get_init_creds_opt *opt,
 
 KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 krb5_get_init_creds_opt_set_proxiable(krb5_get_init_creds_opt *opt,
-				      int proxiable)
+                                      int proxiable)
 {
     opt->flags |= KRB5_GET_INIT_CREDS_OPT_PROXIABLE;
     opt->proxiable = proxiable;
@@ -237,8 +237,8 @@ krb5_get_init_creds_opt_set_proxiable(krb5_get_init_creds_opt *opt,
 
 KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 krb5_get_init_creds_opt_set_etype_list(krb5_get_init_creds_opt *opt,
-				       krb5_enctype *etype_list,
-				       int etype_list_length)
+                                       krb5_enctype *etype_list,
+                                       int etype_list_length)
 {
     opt->flags |= KRB5_GET_INIT_CREDS_OPT_ETYPE_LIST;
     opt->etype_list = etype_list;
@@ -247,7 +247,7 @@ krb5_get_init_creds_opt_set_etype_list(krb5_get_init_creds_opt *opt,
 
 KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 krb5_get_init_creds_opt_set_address_list(krb5_get_init_creds_opt *opt,
-					 krb5_addresses *addresses)
+                                         krb5_addresses *addresses)
 {
     opt->flags |= KRB5_GET_INIT_CREDS_OPT_ADDRESS_LIST;
     opt->address_list = addresses;
@@ -255,8 +255,8 @@ krb5_get_init_creds_opt_set_address_list(krb5_get_init_creds_opt *opt,
 
 KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 krb5_get_init_creds_opt_set_preauth_list(krb5_get_init_creds_opt *opt,
-					 krb5_preauthtype *preauth_list,
-					 int preauth_list_length)
+                                         krb5_preauthtype *preauth_list,
+                                         int preauth_list_length)
 {
     opt->flags |= KRB5_GET_INIT_CREDS_OPT_PREAUTH_LIST;
     opt->preauth_list_length = preauth_list_length;
@@ -265,7 +265,7 @@ krb5_get_init_creds_opt_set_preauth_list(krb5_get_init_creds_opt *opt,
 
 KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 krb5_get_init_creds_opt_set_salt(krb5_get_init_creds_opt *opt,
-				 krb5_data *salt)
+                                 krb5_data *salt)
 {
     opt->flags |= KRB5_GET_INIT_CREDS_OPT_SALT;
     opt->salt = salt;
@@ -273,7 +273,7 @@ krb5_get_init_creds_opt_set_salt(krb5_get_init_creds_opt *opt,
 
 KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 krb5_get_init_creds_opt_set_anonymous(krb5_get_init_creds_opt *opt,
-				      int anonymous)
+                                      int anonymous)
 {
     opt->flags |= KRB5_GET_INIT_CREDS_OPT_ANONYMOUS;
     opt->anonymous = anonymous;
@@ -281,27 +281,27 @@ krb5_get_init_creds_opt_set_anonymous(krb5_get_init_creds_opt *opt,
 
 static krb5_error_code
 require_ext_opt(krb5_context context,
-		krb5_get_init_creds_opt *opt,
-		const char *type)
+                krb5_get_init_creds_opt *opt,
+                const char *type)
 {
     if (opt->opt_private == NULL) {
-	krb5_set_error_message(context, EINVAL,
-			       N_("%s on non extendable opt", ""), type);
-	return EINVAL;
+        krb5_set_error_message(context, EINVAL,
+                               N_("%s on non extendable opt", ""), type);
+        return EINVAL;
     }
     return 0;
 }
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_get_init_creds_opt_set_pa_password(krb5_context context,
-					krb5_get_init_creds_opt *opt,
-					const char *password,
-					krb5_s2k_proc key_proc)
+                                        krb5_get_init_creds_opt *opt,
+                                        const char *password,
+                                        krb5_s2k_proc key_proc)
 {
     krb5_error_code ret;
     ret = require_ext_opt(context, opt, "init_creds_opt_set_pa_password");
     if (ret)
-	return ret;
+        return ret;
     opt->opt_private->password = password;
     opt->opt_private->key_proc = key_proc;
     return 0;
@@ -309,68 +309,68 @@ krb5_get_init_creds_opt_set_pa_password(krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_get_init_creds_opt_set_pac_request(krb5_context context,
-					krb5_get_init_creds_opt *opt,
-					krb5_boolean req_pac)
+                                        krb5_get_init_creds_opt *opt,
+                                        krb5_boolean req_pac)
 {
     krb5_error_code ret;
     ret = require_ext_opt(context, opt, "init_creds_opt_set_pac_req");
     if (ret)
-	return ret;
+        return ret;
     opt->opt_private->req_pac = req_pac ?
-	KRB5_INIT_CREDS_TRISTATE_TRUE :
-	KRB5_INIT_CREDS_TRISTATE_FALSE;
+        KRB5_INIT_CREDS_TRISTATE_TRUE :
+        KRB5_INIT_CREDS_TRISTATE_FALSE;
     return 0;
 }
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_get_init_creds_opt_set_addressless(krb5_context context,
-					krb5_get_init_creds_opt *opt,
-					krb5_boolean addressless)
+                                        krb5_get_init_creds_opt *opt,
+                                        krb5_boolean addressless)
 {
     krb5_error_code ret;
     ret = require_ext_opt(context, opt, "init_creds_opt_set_pac_req");
     if (ret)
-	return ret;
+        return ret;
     if (addressless)
-	opt->opt_private->addressless = KRB5_INIT_CREDS_TRISTATE_TRUE;
+        opt->opt_private->addressless = KRB5_INIT_CREDS_TRISTATE_TRUE;
     else
-	opt->opt_private->addressless = KRB5_INIT_CREDS_TRISTATE_FALSE;
+        opt->opt_private->addressless = KRB5_INIT_CREDS_TRISTATE_FALSE;
     return 0;
 }
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_get_init_creds_opt_set_canonicalize(krb5_context context,
-					 krb5_get_init_creds_opt *opt,
-					 krb5_boolean req)
+                                         krb5_get_init_creds_opt *opt,
+                                         krb5_boolean req)
 {
     krb5_error_code ret;
     ret = require_ext_opt(context, opt, "init_creds_opt_set_canonicalize");
     if (ret)
-	return ret;
+        return ret;
     if (req)
-	opt->opt_private->flags |= KRB5_INIT_CREDS_CANONICALIZE;
+        opt->opt_private->flags |= KRB5_INIT_CREDS_CANONICALIZE;
     else
-	opt->opt_private->flags &= ~KRB5_INIT_CREDS_CANONICALIZE;
+        opt->opt_private->flags &= ~KRB5_INIT_CREDS_CANONICALIZE;
     return 0;
 }
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_get_init_creds_opt_set_win2k(krb5_context context,
-				  krb5_get_init_creds_opt *opt,
-				  krb5_boolean req)
+                                  krb5_get_init_creds_opt *opt,
+                                  krb5_boolean req)
 {
     krb5_error_code ret;
     ret = require_ext_opt(context, opt, "init_creds_opt_set_win2k");
     if (ret)
-	return ret;
+        return ret;
     if (req) {
-	opt->opt_private->flags |= KRB5_INIT_CREDS_NO_C_CANON_CHECK;
-	opt->opt_private->flags |= KRB5_INIT_CREDS_NO_C_NO_EKU_CHECK;
-	opt->opt_private->flags |= KRB5_INIT_CREDS_PKINIT_NO_KRBTGT_OTHERNAME_CHECK;
+        opt->opt_private->flags |= KRB5_INIT_CREDS_NO_C_CANON_CHECK;
+        opt->opt_private->flags |= KRB5_INIT_CREDS_NO_C_NO_EKU_CHECK;
+        opt->opt_private->flags |= KRB5_INIT_CREDS_PKINIT_NO_KRBTGT_OTHERNAME_CHECK;
     } else {
-	opt->opt_private->flags &= ~KRB5_INIT_CREDS_NO_C_CANON_CHECK;
-	opt->opt_private->flags &= ~KRB5_INIT_CREDS_NO_C_NO_EKU_CHECK;
-	opt->opt_private->flags &= ~KRB5_INIT_CREDS_PKINIT_NO_KRBTGT_OTHERNAME_CHECK;
+        opt->opt_private->flags &= ~KRB5_INIT_CREDS_NO_C_CANON_CHECK;
+        opt->opt_private->flags &= ~KRB5_INIT_CREDS_NO_C_NO_EKU_CHECK;
+        opt->opt_private->flags &= ~KRB5_INIT_CREDS_PKINIT_NO_KRBTGT_OTHERNAME_CHECK;
     }
     return 0;
 }
@@ -378,14 +378,14 @@ krb5_get_init_creds_opt_set_win2k(krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_get_init_creds_opt_set_process_last_req(krb5_context context,
-					     krb5_get_init_creds_opt *opt,
-					     krb5_gic_process_last_req func,
-					     void *ctx)
+                                             krb5_get_init_creds_opt *opt,
+                                             krb5_gic_process_last_req func,
+                                             void *ctx)
 {
     krb5_error_code ret;
     ret = require_ext_opt(context, opt, "init_creds_opt_set_process_last_req");
     if (ret)
-	return ret;
+        return ret;
 
     opt->opt_private->lr.func = func;
     opt->opt_private->lr.ctx = ctx;
@@ -422,13 +422,13 @@ krb5_get_init_creds_opt_init(krb5_get_init_creds_opt *opt)
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_get_init_creds_opt_get_error(krb5_context context,
-				  krb5_get_init_creds_opt *opt,
-				  KRB_ERROR **error)
+                                  krb5_get_init_creds_opt *opt,
+                                  KRB_ERROR **error)
     KRB5_DEPRECATED_FUNCTION("Use X instead")
 {
     *error = calloc(1, sizeof(**error));
     if (*error == NULL)
-	return krb5_enomem(context);
+        return krb5_enomem(context);
 
     return 0;
 }

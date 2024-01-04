@@ -184,148 +184,148 @@ gss_OID_desc GSSAPI_LIB_VARIABLE __gss_iakerb_min_msg_mechanism_oid_desc =
 
 static gss_mo_desc krb5_mo[] = {
     {
-	GSS_C_MA_SASL_MECH_NAME,
-	GSS_MO_MA,
-	"SASL mech name",
-	rk_UNCONST("GS2-KRB5"),
-	_gss_mo_get_ctx_as_string,
-	NULL
+        GSS_C_MA_SASL_MECH_NAME,
+        GSS_MO_MA,
+        "SASL mech name",
+        rk_UNCONST("GS2-KRB5"),
+        _gss_mo_get_ctx_as_string,
+        NULL
     },
     {
-	GSS_C_MA_MECH_NAME,
-	GSS_MO_MA,
-	"Mechanism name",
-	rk_UNCONST("KRB5"),
-	_gss_mo_get_ctx_as_string,
-	NULL
+        GSS_C_MA_MECH_NAME,
+        GSS_MO_MA,
+        "Mechanism name",
+        rk_UNCONST("KRB5"),
+        _gss_mo_get_ctx_as_string,
+        NULL
     },
     {
-	GSS_C_MA_MECH_DESCRIPTION,
-	GSS_MO_MA,
-	"Mechanism description",
-	rk_UNCONST("Heimdal Kerberos 5 mech"),
-	_gss_mo_get_ctx_as_string,
-	NULL
+        GSS_C_MA_MECH_DESCRIPTION,
+        GSS_MO_MA,
+        "Mechanism description",
+        rk_UNCONST("Heimdal Kerberos 5 mech"),
+        _gss_mo_get_ctx_as_string,
+        NULL
     },
     {
-	GSS_C_MA_MECH_CONCRETE,
-	GSS_MO_MA,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+        GSS_C_MA_MECH_CONCRETE,
+        GSS_MO_MA,
+        NULL,
+        NULL,
+        NULL,
+        NULL
     },
     {
-	GSS_C_MA_ITOK_FRAMED,
-	GSS_MO_MA,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+        GSS_C_MA_ITOK_FRAMED,
+        GSS_MO_MA,
+        NULL,
+        NULL,
+        NULL,
+        NULL
     },
     {
-	GSS_C_MA_AUTH_INIT,
-	GSS_MO_MA,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+        GSS_C_MA_AUTH_INIT,
+        GSS_MO_MA,
+        NULL,
+        NULL,
+        NULL,
+        NULL
     },
     {
-	GSS_C_MA_AUTH_TARG,
-	GSS_MO_MA,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+        GSS_C_MA_AUTH_TARG,
+        GSS_MO_MA,
+        NULL,
+        NULL,
+        NULL,
+        NULL
     },
     {
-	GSS_C_MA_DELEG_CRED,
-	GSS_MO_MA,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+        GSS_C_MA_DELEG_CRED,
+        GSS_MO_MA,
+        NULL,
+        NULL,
+        NULL,
+        NULL
     },
     {
-	GSS_C_MA_INTEG_PROT,
-	GSS_MO_MA,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+        GSS_C_MA_INTEG_PROT,
+        GSS_MO_MA,
+        NULL,
+        NULL,
+        NULL,
+        NULL
     },
     {
-	GSS_C_MA_CONF_PROT,
-	GSS_MO_MA,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+        GSS_C_MA_CONF_PROT,
+        GSS_MO_MA,
+        NULL,
+        NULL,
+        NULL,
+        NULL
     },
     {
-	GSS_C_MA_MIC,
-	GSS_MO_MA,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+        GSS_C_MA_MIC,
+        GSS_MO_MA,
+        NULL,
+        NULL,
+        NULL,
+        NULL
     },
     {
-	GSS_C_MA_WRAP,
-	GSS_MO_MA,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+        GSS_C_MA_WRAP,
+        GSS_MO_MA,
+        NULL,
+        NULL,
+        NULL,
+        NULL
     },
     {
-	GSS_C_MA_PROT_READY,
-	GSS_MO_MA,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+        GSS_C_MA_PROT_READY,
+        GSS_MO_MA,
+        NULL,
+        NULL,
+        NULL,
+        NULL
     },
     {
-	GSS_C_MA_REPLAY_DET,
-	GSS_MO_MA,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+        GSS_C_MA_REPLAY_DET,
+        GSS_MO_MA,
+        NULL,
+        NULL,
+        NULL,
+        NULL
     },
     {
-	GSS_C_MA_OOS_DET,
-	GSS_MO_MA,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+        GSS_C_MA_OOS_DET,
+        GSS_MO_MA,
+        NULL,
+        NULL,
+        NULL,
+        NULL
     },
     {
-	GSS_C_MA_CBINDINGS,
-	GSS_MO_MA,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+        GSS_C_MA_CBINDINGS,
+        GSS_MO_MA,
+        NULL,
+        NULL,
+        NULL,
+        NULL
     },
     {
-	GSS_C_MA_PFS,
-	GSS_MO_MA,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+        GSS_C_MA_PFS,
+        GSS_MO_MA,
+        NULL,
+        NULL,
+        NULL,
+        NULL
     },
     {
-	GSS_C_MA_CTX_TRANS,
-	GSS_MO_MA,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+        GSS_C_MA_CTX_TRANS,
+        GSS_MO_MA,
+        NULL,
+        NULL,
+        NULL,
+        NULL
     }
 };
 

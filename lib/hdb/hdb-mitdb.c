@@ -121,15 +121,15 @@ attr_to_flags(unsigned attr, HDBFlags *flags)
 #ifdef HAVE_DB1
 static krb5_error_code
 mdb_principal2key(krb5_context context,
-		  krb5_const_principal principal,
-		  krb5_data *key)
+                  krb5_const_principal principal,
+                  krb5_data *key)
 {
     krb5_error_code ret;
     char *str;
 
     ret = krb5_unparse_name(context, principal, &str);
     if (ret)
-	return ret;
+        return ret;
     key->data = str;
     key->length = strlen(str) + 1;
     return 0;
@@ -151,64 +151,64 @@ fix_salt(krb5_context context, hdb_entry *ent, Key *k)
     Salt *salt = k->salt;
     /* fix salt type */
     switch((int)salt->type) {
-    case KRB5_KDB_SALTTYPE_NORMAL:
-	salt->type = KRB5_PADATA_PW_SALT;
-	break;
-    case KRB5_KDB_SALTTYPE_V4:
-	krb5_data_free(&salt->salt);
-	salt->type = KRB5_PADATA_PW_SALT;
-	break;
-    case KRB5_KDB_SALTTYPE_NOREALM:
-    {
-	size_t len;
-	size_t i;
-	char *p;
+        case KRB5_KDB_SALTTYPE_NORMAL:
+            salt->type = KRB5_PADATA_PW_SALT;
+            break;
+        case KRB5_KDB_SALTTYPE_V4:
+            krb5_data_free(&salt->salt);
+            salt->type = KRB5_PADATA_PW_SALT;
+            break;
+        case KRB5_KDB_SALTTYPE_NOREALM:
+        {
+            size_t len;
+            size_t i;
+            char *p;
 
-	len = 0;
-	for (i = 0; i < ent->principal->name.name_string.len; ++i)
-	    len += strlen(ent->principal->name.name_string.val[i]);
-	ret = krb5_data_alloc (&salt->salt, len);
-	if (ret)
-	    return ret;
-	p = salt->salt.data;
-	for (i = 0; i < ent->principal->name.name_string.len; ++i) {
-	    memcpy (p,
-		    ent->principal->name.name_string.val[i],
-		    strlen(ent->principal->name.name_string.val[i]));
-	    p += strlen(ent->principal->name.name_string.val[i]);
-	}
+            len = 0;
+            for (i = 0; i < ent->principal->name.name_string.len; ++i)
+                len += strlen(ent->principal->name.name_string.val[i]);
+            ret = krb5_data_alloc (&salt->salt, len);
+            if (ret)
+                return ret;
+            p = salt->salt.data;
+            for (i = 0; i < ent->principal->name.name_string.len; ++i) {
+                memcpy (p,
+                        ent->principal->name.name_string.val[i],
+                        strlen(ent->principal->name.name_string.val[i]));
+                p += strlen(ent->principal->name.name_string.val[i]);
+            }
 
-	salt->type = KRB5_PADATA_PW_SALT;
-	break;
-    }
-    case KRB5_KDB_SALTTYPE_ONLYREALM:
-	krb5_data_free(&salt->salt);
-	ret = krb5_data_copy(&salt->salt,
-			     ent->principal->realm,
-			     strlen(ent->principal->realm));
-	if(ret)
-	    return ret;
-	salt->type = KRB5_PADATA_PW_SALT;
-	break;
-    case KRB5_KDB_SALTTYPE_SPECIAL:
-	salt->type = KRB5_PADATA_PW_SALT;
-	break;
-    case KRB5_KDB_SALTTYPE_AFS3:
-	krb5_data_free(&salt->salt);
-	ret = krb5_data_copy(&salt->salt,
-		       ent->principal->realm,
-		       strlen(ent->principal->realm));
-	if(ret)
-	    return ret;
-	salt->type = KRB5_PADATA_AFS3_SALT;
-	break;
-    case KRB5_KDB_SALTTYPE_CERTHASH:
-	krb5_data_free(&salt->salt);
-	free(k->salt);
-	k->salt = NULL;
-	break;
-    default:
-	abort();
+            salt->type = KRB5_PADATA_PW_SALT;
+            break;
+        }
+        case KRB5_KDB_SALTTYPE_ONLYREALM:
+            krb5_data_free(&salt->salt);
+            ret = krb5_data_copy(&salt->salt,
+                                 ent->principal->realm,
+                                 strlen(ent->principal->realm));
+            if(ret)
+                return ret;
+            salt->type = KRB5_PADATA_PW_SALT;
+            break;
+        case KRB5_KDB_SALTTYPE_SPECIAL:
+            salt->type = KRB5_PADATA_PW_SALT;
+            break;
+        case KRB5_KDB_SALTTYPE_AFS3:
+            krb5_data_free(&salt->salt);
+            ret = krb5_data_copy(&salt->salt,
+                           ent->principal->realm,
+                           strlen(ent->principal->realm));
+            if(ret)
+                return ret;
+            salt->type = KRB5_PADATA_AFS3_SALT;
+            break;
+        case KRB5_KDB_SALTTYPE_CERTHASH:
+            krb5_data_free(&salt->salt);
+            free(k->salt);
+            k->salt = NULL;
+            break;
+        default:
+            abort();
     }
     return 0;
 }
@@ -234,66 +234,66 @@ mdb_keyvalue2key(krb5_context context, hdb_entry *entry, krb5_storage *sp, uint1
 
     k->mkvno = malloc(sizeof(*k->mkvno));
     if (k->mkvno == NULL) {
-	ret = ENOMEM;
-	goto out;
+        ret = ENOMEM;
+        goto out;
     }
     *k->mkvno = 1;
 
     for (i = 0; i < version; i++) {
-	CHECK(ret = krb5_ret_uint16(sp, &type));
-	CHECK(ret = krb5_ret_uint16(sp, &u16));
-	if (i == 0) {
-	    /* This "version" means we have a key */
-	    k->key.keytype = type;
-	    /*
-	     * MIT stores keys encrypted keys as {16-bit length
-	     * of plaintext key, {encrypted key}}.  The reason
-	     * for this is that the Kerberos cryptosystem is not
-	     * length-preserving.  Heimdal's approach is to
-	     * truncate the plaintext to the expected length of
-	     * the key given its enctype, so we ignore this
-	     * 16-bit length-of-plaintext-key field.
-	     */
-	    if (u16 > 2) {
-		krb5_storage_seek(sp, 2, SEEK_CUR); /* skip real length */
-		k->key.keyvalue.length = u16 - 2;   /* adjust cipher len */
-		k->key.keyvalue.data = malloc(k->key.keyvalue.length);
-		krb5_storage_read(sp, k->key.keyvalue.data,
-				  k->key.keyvalue.length);
-	    } else {
-		/* We'll ignore this key; see our caller */
-		k->key.keyvalue.length = 0;
-		k->key.keyvalue.data = NULL;
-		krb5_storage_seek(sp, u16, SEEK_CUR); /* skip real length */
-	    }
-	} else if (i == 1) {
-	    /* This "version" means we have a salt */
-	    k->salt = calloc(1, sizeof(*k->salt));
-	    if (k->salt == NULL) {
-		ret = ENOMEM;
-		goto out;
-	    }
-	    k->salt->type = type;
-	    if (u16 != 0) {
-		k->salt->salt.data = malloc(u16);
-		if (k->salt->salt.data == NULL) {
-		    ret = ENOMEM;
-		    goto out;
-		}
-		k->salt->salt.length = u16;
-		krb5_storage_read(sp, k->salt->salt.data, k->salt->salt.length);
-	    }
-	    fix_salt(context, entry, k);
-	} else {
-	    /*
-	     * Whatever this "version" might be, we skip it
-	     *
-	     * XXX A krb5.conf parameter requesting that we log
-	     * about strangeness like this, or return an error
-	     * from here, might be nice.
-	     */
-	    krb5_storage_seek(sp, u16, SEEK_CUR);
-	}
+        CHECK(ret = krb5_ret_uint16(sp, &type));
+        CHECK(ret = krb5_ret_uint16(sp, &u16));
+        if (i == 0) {
+            /* This "version" means we have a key */
+            k->key.keytype = type;
+            /*
+             * MIT stores keys encrypted keys as {16-bit length
+             * of plaintext key, {encrypted key}}.  The reason
+             * for this is that the Kerberos cryptosystem is not
+             * length-preserving.  Heimdal's approach is to
+             * truncate the plaintext to the expected length of
+             * the key given its enctype, so we ignore this
+             * 16-bit length-of-plaintext-key field.
+             */
+            if (u16 > 2) {
+                krb5_storage_seek(sp, 2, SEEK_CUR); /* skip real length */
+                k->key.keyvalue.length = u16 - 2;   /* adjust cipher len */
+                k->key.keyvalue.data = malloc(k->key.keyvalue.length);
+                krb5_storage_read(sp, k->key.keyvalue.data,
+                                  k->key.keyvalue.length);
+            } else {
+                /* We'll ignore this key; see our caller */
+                k->key.keyvalue.length = 0;
+                k->key.keyvalue.data = NULL;
+                krb5_storage_seek(sp, u16, SEEK_CUR); /* skip real length */
+            }
+        } else if (i == 1) {
+            /* This "version" means we have a salt */
+            k->salt = calloc(1, sizeof(*k->salt));
+            if (k->salt == NULL) {
+                ret = ENOMEM;
+                goto out;
+            }
+            k->salt->type = type;
+            if (u16 != 0) {
+                k->salt->salt.data = malloc(u16);
+                if (k->salt->salt.data == NULL) {
+                    ret = ENOMEM;
+                    goto out;
+                }
+                k->salt->salt.length = u16;
+                krb5_storage_read(sp, k->salt->salt.data, k->salt->salt.length);
+            }
+            fix_salt(context, entry, k);
+        } else {
+            /*
+             * Whatever this "version" might be, we skip it
+             *
+             * XXX A krb5.conf parameter requesting that we log
+             * about strangeness like this, or return an error
+             * from here, might be nice.
+             */
+            krb5_storage_seek(sp, u16, SEEK_CUR);
+        }
     }
 
     return 0;
@@ -331,40 +331,40 @@ dup_similar_keys_in_keyset(krb5_context context, Keys *keys)
     memset(&key, 0, sizeof (key));
     k = keys->len;
     for (i = 0; i < keys->len; i++) {
-	if (keys->val[i].key.keytype == ETYPE_DES_CBC_CRC) {
-	    keyset_has_1des_crc = 1;
-	    if (k == keys->len)
-		k = i;
-	} else if (keys->val[i].key.keytype == ETYPE_DES_CBC_MD4) {
-	    keyset_has_1des_crc = 1;
-	    if (k == keys->len)
-		k = i;
-	} else if (keys->val[i].key.keytype == ETYPE_DES_CBC_MD5) {
-	    keyset_has_1des_crc = 1;
-	    if (k == keys->len)
-		k = i;
-	}
+        if (keys->val[i].key.keytype == ETYPE_DES_CBC_CRC) {
+            keyset_has_1des_crc = 1;
+            if (k == keys->len)
+                k = i;
+        } else if (keys->val[i].key.keytype == ETYPE_DES_CBC_MD4) {
+            keyset_has_1des_crc = 1;
+            if (k == keys->len)
+                k = i;
+        } else if (keys->val[i].key.keytype == ETYPE_DES_CBC_MD5) {
+            keyset_has_1des_crc = 1;
+            if (k == keys->len)
+                k = i;
+        }
     }
     if (k == keys->len)
-	return 0;
+        return 0;
 
     ret = copy_Key(&keys->val[k], &key);
     if (ret)
-	return ret;
+        return ret;
     if (!keyset_has_1des_crc) {
-	ret = add_1des_dup(context, keys, &key, ETYPE_DES_CBC_CRC);
-	if (ret)
-	    goto out;
+        ret = add_1des_dup(context, keys, &key, ETYPE_DES_CBC_CRC);
+        if (ret)
+            goto out;
     }
     if (!keyset_has_1des_md4) {
-	ret = add_1des_dup(context, keys, &key, ETYPE_DES_CBC_MD4);
-	if (ret)
-	    goto out;
+        ret = add_1des_dup(context, keys, &key, ETYPE_DES_CBC_MD4);
+        if (ret)
+            goto out;
     }
     if (!keyset_has_1des_md5) {
-	ret = add_1des_dup(context, keys, &key, ETYPE_DES_CBC_MD5);
-	if (ret)
-	    goto out;
+        ret = add_1des_dup(context, keys, &key, ETYPE_DES_CBC_MD5);
+        if (ret)
+            goto out;
     }
 
 out:
@@ -383,16 +383,16 @@ dup_similar_keys(krb5_context context, hdb_entry *entry)
 
     ret = dup_similar_keys_in_keyset(context, &entry->keys);
     if (ret)
-	return ret;
+        return ret;
     extp = hdb_find_extension(entry, choice_HDB_extension_data_hist_keys);
     if (extp == NULL)
-	return 0;
+        return 0;
 
     hist_keys = &extp->data.u.hist_keys;
     for (i = 0; i < hist_keys->len; i++) {
-	ret = dup_similar_keys_in_keyset(context, &hist_keys->val[i].keys);
-	if (ret)
-	    return ret;
+        ret = dup_similar_keys_in_keyset(context, &hist_keys->val[i].keys);
+        if (ret)
+            return ret;
     }
     return 0;
 }
@@ -426,8 +426,8 @@ _hdb_mdb_value2entry(krb5_context context, krb5_data *data,
 
     sp = krb5_storage_from_data(data);
     if (sp == NULL) {
-	krb5_set_error_message(context, ENOMEM, "out of memory");
-	return ENOMEM;
+        krb5_set_error_message(context, ENOMEM, "out of memory");
+        return ENOMEM;
     }
 
     krb5_storage_set_byteorder(sp, KRB5_STORAGE_BYTEORDER_LE);
@@ -457,26 +457,26 @@ _hdb_mdb_value2entry(krb5_context context, krb5_data *data,
     /* 32: max time */
     CHECK(ret = krb5_ret_uint32(sp, &u32));
     if (u32) {
-	entry->max_life = malloc(sizeof(*entry->max_life));
-	*entry->max_life = u32;
+        entry->max_life = malloc(sizeof(*entry->max_life));
+        *entry->max_life = u32;
     }
     /* 32: max renewable time */
     CHECK(ret = krb5_ret_uint32(sp, &u32));
     if (u32) {
-	entry->max_renew = malloc(sizeof(*entry->max_renew));
-	*entry->max_renew = u32;
+        entry->max_renew = malloc(sizeof(*entry->max_renew));
+        *entry->max_renew = u32;
     }
     /* 32: client expire */
     CHECK(ret = krb5_ret_uint32(sp, &u32));
     if (u32) {
-	entry->valid_end = malloc(sizeof(*entry->valid_end));
-	*entry->valid_end = u32;
+        entry->valid_end = malloc(sizeof(*entry->valid_end));
+        *entry->valid_end = u32;
     }
     /* 32: passwd expire */
     CHECK(ret = krb5_ret_uint32(sp, &u32));
     if (u32) {
-	entry->pw_end = malloc(sizeof(*entry->pw_end));
-	*entry->pw_end = u32;
+        entry->pw_end = malloc(sizeof(*entry->pw_end));
+        *entry->pw_end = u32;
     }
     /* 32: last successful passwd */
     CHECK(ret = krb5_ret_uint32(sp, &u32));
@@ -494,23 +494,23 @@ _hdb_mdb_value2entry(krb5_context context, krb5_data *data,
     CHECK(ret = krb5_ret_uint16(sp, &u16));
     /* length: principal */
     {
-	/*
-	 * Note that the principal name includes the NUL in the entry,
-	 * but we don't want to take chances, so we add an extra NUL.
-	 */
-	p = malloc(u16 + 1);
-	if (p == NULL) {
-	    ret = ENOMEM;
-	    goto out;
-	}
-	sz = krb5_storage_read(sp, p, u16);
+        /*
+         * Note that the principal name includes the NUL in the entry,
+         * but we don't want to take chances, so we add an extra NUL.
+         */
+        p = malloc(u16 + 1);
+        if (p == NULL) {
+            ret = ENOMEM;
+            goto out;
+        }
+        sz = krb5_storage_read(sp, p, u16);
         if (sz != u16) {
             ret = EINVAL; /* XXX */
             goto out;
         }
-	p[u16] = '\0';
-	CHECK(ret = krb5_parse_name(context, p, &entry->principal));
-	free(p);
+        p[u16] = '\0';
+        CHECK(ret = krb5_parse_name(context, p, &entry->principal));
+        free(p);
     }
     /* for num tl data times
            16: tl data type
@@ -521,11 +521,11 @@ _hdb_mdb_value2entry(krb5_context context, krb5_data *data,
     for (i = 0; i < num_tl; i++) {
         int tl_type;
         krb5_principal modby;
-	/* 16: TL data type */
-	CHECK(ret = krb5_ret_uint16(sp, &u16));
+        /* 16: TL data type */
+        CHECK(ret = krb5_ret_uint16(sp, &u16));
         tl_type = u16;
-	/* 16: TL data length */
-	CHECK(ret = krb5_ret_uint16(sp, &u16));
+        /* 16: TL data length */
+        CHECK(ret = krb5_ret_uint16(sp, &u16));
         /*
          * For rollback to MIT purposes we really must understand some
          * TL data!
@@ -533,35 +533,35 @@ _hdb_mdb_value2entry(krb5_context context, krb5_data *data,
          * XXX Move all this to separate functions, one per-TL type.
          */
         switch (tl_type) {
-        case mit_KRB5_TL_LAST_PWD_CHANGE:
-            CHECK(ret = krb5_ret_uint32(sp, &u32));
-            CHECK(ret = hdb_entry_set_pw_change_time(context, entry, u32));
-            break;
-        case mit_KRB5_TL_MOD_PRINC:
-            if (u16 < 5) {
-                ret = EINVAL; /* XXX */
-                goto out;
-            }
-            CHECK(ret = krb5_ret_uint32(sp, &u32)); /* mod time */
-            p = malloc(u16 - 4 + 1);
-            if (!p) {
-                ret = ENOMEM;
-                goto out;
-            }
-            p[u16 - 4] = '\0';
-            sz = krb5_storage_read(sp, p, u16 - 4);
-            if (sz != u16 - 4) { 
-                ret = EINVAL; /* XXX */
-                goto out;
-            }
-            CHECK(ret = krb5_parse_name(context, p, &modby));
-            CHECK(ret = hdb_set_last_modified_by(context, entry, modby, u32));
-            krb5_free_principal(context, modby);
-            free(p);
-            break;
-        default:
-            krb5_storage_seek(sp, u16, SEEK_CUR);
-            break;
+            case mit_KRB5_TL_LAST_PWD_CHANGE:
+                CHECK(ret = krb5_ret_uint32(sp, &u32));
+                CHECK(ret = hdb_entry_set_pw_change_time(context, entry, u32));
+                break;
+            case mit_KRB5_TL_MOD_PRINC:
+                if (u16 < 5) {
+                    ret = EINVAL; /* XXX */
+                    goto out;
+                }
+                CHECK(ret = krb5_ret_uint32(sp, &u32)); /* mod time */
+                p = malloc(u16 - 4 + 1);
+                if (!p) {
+                    ret = ENOMEM;
+                    goto out;
+                }
+                p[u16 - 4] = '\0';
+                sz = krb5_storage_read(sp, p, u16 - 4);
+                if (sz != u16 - 4) { 
+                    ret = EINVAL; /* XXX */
+                    goto out;
+                }
+                CHECK(ret = krb5_parse_name(context, p, &modby));
+                CHECK(ret = hdb_set_last_modified_by(context, entry, modby, u32));
+                krb5_free_principal(context, modby);
+                free(p);
+                break;
+            default:
+                krb5_storage_seek(sp, u16, SEEK_CUR);
+                break;
         }
     }
     /*
@@ -578,78 +578,78 @@ _hdb_mdb_value2entry(krb5_context context, krb5_data *data,
      * That's right... hold that gag reflex, you can do it.
      */
     for (i = 0; i < num_keys; i++) {
-	uint16_t version;
+        uint16_t version;
 
-	CHECK(ret = krb5_ret_uint16(sp, &u16));
-	version = u16;
-	CHECK(ret = krb5_ret_uint16(sp, &u16));
-	key_kvno = u16;
+        CHECK(ret = krb5_ret_uint16(sp, &u16));
+        version = u16;
+        CHECK(ret = krb5_ret_uint16(sp, &u16));
+        key_kvno = u16;
 
-	ret = mdb_keyvalue2key(context, entry, sp, version, &k);
-	if (ret)
-	    goto out;
-	if (k.key.keytype == 0 || k.key.keyvalue.length == 0) {
-	    /*
-	     * Older MIT KDBs may have enctype 0 / length 0 keys.  We
-	     * ignore these.
-	     */
-	    free_Key(&k);
-	    continue;
-	}
+        ret = mdb_keyvalue2key(context, entry, sp, version, &k);
+        if (ret)
+            goto out;
+        if (k.key.keytype == 0 || k.key.keyvalue.length == 0) {
+            /*
+             * Older MIT KDBs may have enctype 0 / length 0 keys.  We
+             * ignore these.
+             */
+            free_Key(&k);
+            continue;
+        }
 
-	if ((target_kvno == 0 && entry->kvno < key_kvno) ||
-	    (target_kvno == key_kvno && entry->kvno != target_kvno)) {
-	    /*
-	     * MIT's KDB doesn't keep track of kvno.  The highest kvno
-	     * is the current kvno, and we just found a new highest
-	     * kvno or the desired kvno.
-	     *
-	     * Note that there's no guarantee of any key ordering, but
-	     * generally MIT KDB entries have keys in strictly
-	     * descending kvno order.
-	     *
-	     * XXX We do assume that keys are clustered by kvno.  If
-	     * not, then bad.  It might be possible to construct
-	     * non-clustered keys via the kadm5 API.  It wouldn't be
-	     * hard to cope with this, since if it happens the worst
-	     * that will happen is that some of the current keys can be
-	     * found in the history extension, and we could just pull
-	     * them back out in that case.
-	     */
-	    ret = hdb_add_current_keys_to_history(context, entry);
-	    if (ret)
-		goto out;
-	    free_Keys(&entry->keys);
-	    ret = add_Keys(&entry->keys, &k);
-	    free_Key(&k);
-	    if (ret)
-		goto out;
-	    entry->kvno = key_kvno;
-	    continue;
-	}
+        if ((target_kvno == 0 && entry->kvno < key_kvno) ||
+            (target_kvno == key_kvno && entry->kvno != target_kvno)) {
+            /*
+             * MIT's KDB doesn't keep track of kvno.  The highest kvno
+             * is the current kvno, and we just found a new highest
+             * kvno or the desired kvno.
+             *
+             * Note that there's no guarantee of any key ordering, but
+             * generally MIT KDB entries have keys in strictly
+             * descending kvno order.
+             *
+             * XXX We do assume that keys are clustered by kvno.  If
+             * not, then bad.  It might be possible to construct
+             * non-clustered keys via the kadm5 API.  It wouldn't be
+             * hard to cope with this, since if it happens the worst
+             * that will happen is that some of the current keys can be
+             * found in the history extension, and we could just pull
+             * them back out in that case.
+             */
+            ret = hdb_add_current_keys_to_history(context, entry);
+            if (ret)
+                goto out;
+            free_Keys(&entry->keys);
+            ret = add_Keys(&entry->keys, &k);
+            free_Key(&k);
+            if (ret)
+                goto out;
+            entry->kvno = key_kvno;
+            continue;
+        }
 
-	if (entry->kvno == key_kvno) {
-	    /*
-	     * Note that if key_kvno == 0 and target_kvno == 0 then we
-	     * end up adding those keys here.  Yeah, kvno 0 is very
-	     * special for us, but just in case, we keep such keys.
-	     */
-	    ret = add_Keys(&entry->keys, &k);
-	    free_Key(&k);
-	    if (ret)
-		goto out;
-	    entry->kvno = key_kvno;
-	} else  {
-	    ret = hdb_add_history_key(context, entry, key_kvno, &k);
-	    if (ret)
-		goto out;
-	    free_Key(&k);
-	}
+        if (entry->kvno == key_kvno) {
+            /*
+             * Note that if key_kvno == 0 and target_kvno == 0 then we
+             * end up adding those keys here.  Yeah, kvno 0 is very
+             * special for us, but just in case, we keep such keys.
+             */
+            ret = add_Keys(&entry->keys, &k);
+            free_Key(&k);
+            if (ret)
+                goto out;
+            entry->kvno = key_kvno;
+        } else  {
+            ret = hdb_add_history_key(context, entry, key_kvno, &k);
+            if (ret)
+                goto out;
+            free_Key(&k);
+        }
     }
 
     if (target_kvno != 0 && entry->kvno != target_kvno) {
-	ret = HDB_ERR_KVNO_NOT_FOUND;
-	goto out;
+        ret = HDB_ERR_KVNO_NOT_FOUND;
+        goto out;
     }
 
     krb5_storage_free(sp);
@@ -660,8 +660,8 @@ out:
     krb5_storage_free(sp);
 
     if (ret == HEIM_ERR_EOF)
-	/* Better error code than "end of file" */
-	ret = HEIM_ERR_BAD_HDBENT_ENCODING;
+        /* Better error code than "end of file" */
+        ret = HEIM_ERR_BAD_HDBENT_ENCODING;
     free_HDB_entry(entry);
     free_Key(&k);
     return ret;
@@ -724,19 +724,19 @@ mdb_lock(krb5_context context, HDB *db, int operation)
     krb5_error_code ret;
 
     if (db->lock_count > 1) {
-	db->lock_count++;
-	if (db->lock_type == HDB_WLOCK || db->lock_count == operation)
-	    return 0;
+        db->lock_count++;
+        if (db->lock_type == HDB_WLOCK || db->lock_count == operation)
+            return 0;
     }
 
     if(fd < 0) {
-	krb5_set_error_message(context, HDB_ERR_CANT_LOCK_DB,
-			       "Can't lock database: %s", db->hdb_name);
-	return HDB_ERR_CANT_LOCK_DB;
+        krb5_set_error_message(context, HDB_ERR_CANT_LOCK_DB,
+                               "Can't lock database: %s", db->hdb_name);
+        return HDB_ERR_CANT_LOCK_DB;
     }
     ret = hdb_lock(fd, operation);
     if (ret)
-	return ret;
+        return ret;
     db->lock_count++;
     return 0;
 }
@@ -755,9 +755,9 @@ mdb_unlock(krb5_context context, HDB *db)
     db->lock_count--;
 
     if(fd < 0) {
-	krb5_set_error_message(context, HDB_ERR_CANT_LOCK_DB,
-			       "Can't unlock database: %s", db->hdb_name);
-	return HDB_ERR_CANT_LOCK_DB;
+        krb5_set_error_message(context, HDB_ERR_CANT_LOCK_DB,
+                               "Can't unlock database: %s", db->hdb_name);
+        return HDB_ERR_CANT_LOCK_DB;
     }
     return hdb_unlock(fd);
 }
@@ -774,20 +774,20 @@ mdb_seq(krb5_context context, HDB *db,
 
     code = db->hdb_lock(context, db, HDB_RLOCK);
     if(code == -1) {
-	krb5_set_error_message(context, HDB_ERR_DB_INUSE, "Database %s in use", db->hdb_name);
-	return HDB_ERR_DB_INUSE;
+        krb5_set_error_message(context, HDB_ERR_DB_INUSE, "Database %s in use", db->hdb_name);
+        return HDB_ERR_DB_INUSE;
     }
     code = (*d->seq)(d, &key, &value, flag);
     db->hdb_unlock(context, db); /* XXX check value */
     if(code == -1) {
-	code = errno;
-	krb5_set_error_message(context, code, "Database %s seq error: %s",
-			       db->hdb_name, strerror(code));
-	return code;
+        code = errno;
+        krb5_set_error_message(context, code, "Database %s seq error: %s",
+                               db->hdb_name, strerror(code));
+        return code;
     }
     if(code == 1) {
-	krb5_clear_error_message(context);
-	return HDB_ERR_NOENTRY;
+        krb5_clear_error_message(context);
+        return HDB_ERR_NOENTRY;
     }
 
     data.data = value.data;
@@ -795,12 +795,12 @@ mdb_seq(krb5_context context, HDB *db,
     memset(entry, 0, sizeof(*entry));
 
     if (_hdb_mdb_value2entry(context, &data, 0, entry))
-	return mdb_seq(context, db, flags, entry, R_NEXT);
+        return mdb_seq(context, db, flags, entry, R_NEXT);
 
     if (db->hdb_master_key_set && (flags & HDB_F_DECRYPT)) {
-	code = hdb_unseal_keys (context, db, entry);
-	if (code)
-	    hdb_free_entry (context, db, entry);
+        code = hdb_unseal_keys (context, db, entry);
+        if (code)
+            hdb_free_entry (context, db, entry);
     }
 
     return code;
@@ -828,12 +828,12 @@ mdb_rename(krb5_context context, HDB *db, const char *new_name)
     char *new = NULL;
 
     if (asprintf(&old, "%s.db", db->hdb_name) < 0)
-	goto out;
+        goto out;
     if (asprintf(&new, "%s.db", new_name) < 0)
-	goto out;
+        goto out;
     ret = rename(old, new);
     if(ret)
-	goto out;
+        goto out;
 
     free(db->hdb_name);
     db->hdb_name = strdup(new_name);
@@ -856,18 +856,18 @@ mdb__get(krb5_context context, HDB *db, krb5_data key, krb5_data *reply)
     k.size = key.length;
     code = db->hdb_lock(context, db, HDB_RLOCK);
     if(code)
-	return code;
+        return code;
     code = (*d->get)(d, &k, &v, 0);
     db->hdb_unlock(context, db);
     if(code < 0) {
-	code = errno;
-	krb5_set_error_message(context, code, "Database %s get error: %s",
-			       db->hdb_name, strerror(code));
-	return code;
+        code = errno;
+        krb5_set_error_message(context, code, "Database %s get error: %s",
+                               db->hdb_name, strerror(code));
+        return code;
     }
     if(code == 1) {
-	krb5_clear_error_message(context);
-	return HDB_ERR_NOENTRY;
+        krb5_clear_error_message(context);
+        return HDB_ERR_NOENTRY;
     }
 
     krb5_data_copy(reply, v.data, v.size);
@@ -876,7 +876,7 @@ mdb__get(krb5_context context, HDB *db, krb5_data key, krb5_data *reply)
 
 static krb5_error_code
 mdb__put(krb5_context context, HDB *db, int replace,
-	krb5_data key, krb5_data value)
+        krb5_data key, krb5_data value)
 {
     MITDB *mdb = (MITDB *)db;
     DB *d = (DB*)db->hdb_db;
@@ -889,7 +889,7 @@ mdb__put(krb5_context context, HDB *db, int replace,
     v.size = value.length;
     code = db->hdb_lock(context, db, HDB_WLOCK);
     if(code)
-	return code;
+        return code;
     code = (*d->put)(d, &k, &v, replace ? 0 : R_NOOVERWRITE);
     if (code == 0) {
         code = mdb_set_sync(context, db, mdb->do_sync);
@@ -898,10 +898,10 @@ mdb__put(krb5_context context, HDB *db, int replace,
     }
     db->hdb_unlock(context, db);
     if(code < 0) {
-	code = errno;
-	krb5_set_error_message(context, code, "Database %s put error: %s",
-			       db->hdb_name, strerror(code));
-	return code;
+        code = errno;
+        krb5_set_error_message(context, code, "Database %s put error: %s",
+                               db->hdb_name, strerror(code));
+        return code;
     }
     krb5_clear_error_message(context);
     return HDB_ERR_EXISTS;
@@ -918,7 +918,7 @@ mdb__del(krb5_context context, HDB *db, krb5_data key)
     k.size = key.length;
     code = db->hdb_lock(context, db, HDB_WLOCK);
     if(code)
-	return code;
+        return code;
     code = (*d->del)(d, &k, 0);
     if (code == 0) {
         code = mdb_set_sync(context, db, mdb->do_sync);
@@ -927,39 +927,39 @@ mdb__del(krb5_context context, HDB *db, krb5_data key)
     }
     db->hdb_unlock(context, db);
     if(code == 1) {
-	code = errno;
-	krb5_set_error_message(context, code, "Database %s put error: %s",
-			       db->hdb_name, strerror(code));
-	return code;
+        code = errno;
+        krb5_set_error_message(context, code, "Database %s put error: %s",
+                               db->hdb_name, strerror(code));
+        return code;
     }
     if(code < 0)
-	return errno;
+        return errno;
     return 0;
 }
 
 static krb5_error_code
 mdb_fetch_kvno(krb5_context context, HDB *db, krb5_const_principal principal,
-	       unsigned flags, krb5_kvno kvno, hdb_entry *entry)
+               unsigned flags, krb5_kvno kvno, hdb_entry *entry)
 {
     krb5_data key, value;
     krb5_error_code ret;
 
     ret = mdb_principal2key(context, principal, &key);
     if (ret)
-	return ret;
+        return ret;
     ret = db->hdb__get(context, db, key, &value);
     krb5_data_free(&key);
     if(ret)
-	return ret;
+        return ret;
     ret = _hdb_mdb_value2entry(context, &value, kvno, entry);
     krb5_data_free(&value);
     if (ret)
-	return ret;
+        return ret;
 
     if (db->hdb_master_key_set && (flags & HDB_F_DECRYPT)) {
-	ret = hdb_unseal_keys (context, db, entry);
-	if (ret) {
-	    hdb_free_entry(context, db, entry);
+        ret = hdb_unseal_keys (context, db, entry);
+        if (ret) {
+            hdb_free_entry(context, db, entry);
             return ret;
         }
     }
@@ -1064,8 +1064,8 @@ mdb_open(krb5_context context, HDB *db, int flags, mode_t mode)
     struct stat st;
 
     if (asprintf(&fn, "%s.db", db->hdb_name) < 0) {
-	krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
-	return ENOMEM;
+        krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
+        return ENOMEM;
     }
 
     if (stat(fn, &st) == 0)
@@ -1074,21 +1074,21 @@ mdb_open(krb5_context context, HDB *db, int flags, mode_t mode)
         actual_fn = db->hdb_name;
     db->hdb_db = dbopen(actual_fn, flags, mode, DB_BTREE, NULL);
     if (db->hdb_db == NULL) {
-	switch (errno) {
+        switch (errno) {
 #ifdef EFTYPE
-	case EFTYPE:
+            case EFTYPE:
 #endif
-	case EINVAL:
-	    db->hdb_db = dbopen(actual_fn, flags, mode, DB_HASH, NULL);
-	}
+            case EINVAL:
+                db->hdb_db = dbopen(actual_fn, flags, mode, DB_HASH, NULL);
+        }
     }
     free(fn);
 
     if (db->hdb_db == NULL) {
-	ret = errno;
-	krb5_set_error_message(context, ret, "dbopen (%s): %s",
-			      db->hdb_name, strerror(ret));
-	return ret;
+        ret = errno;
+        krb5_set_error_message(context, ret, "dbopen (%s): %s",
+                              db->hdb_name, strerror(ret));
+        return ret;
     }
 #if 0
     /*
@@ -1096,41 +1096,41 @@ mdb_open(krb5_context context, HDB *db, int flags, mode_t mode)
      * HDB_DB_FORMAT_ENTRY key.
      */
     if ((flags & O_ACCMODE) != O_RDONLY)
-	ret = hdb_init_db(context, db);
+        ret = hdb_init_db(context, db);
 #endif
     ret = hdb_check_db_format(context, db);
     if (ret == HDB_ERR_NOENTRY) {
-	krb5_clear_error_message(context);
-	return 0;
+        krb5_clear_error_message(context);
+        return 0;
     }
     if (ret) {
-	mdb_close(context, db);
-	krb5_set_error_message(context, ret, "hdb_open: failed %s database %s",
-			      (flags & O_ACCMODE) == O_RDONLY ?
-			      "checking format of" : "initialize",
-			      db->hdb_name);
+        mdb_close(context, db);
+        krb5_set_error_message(context, ret, "hdb_open: failed %s database %s",
+                               (flags & O_ACCMODE) == O_RDONLY ?
+                               "checking format of" : "initialize",
+                               db->hdb_name);
     }
     return ret;
 }
 
 krb5_error_code
 hdb_mitdb_create(krb5_context context, HDB **db,
-		 const char *filename)
+                 const char *filename)
 {
     MITDB **mdb = (MITDB **)db;
     *mdb = calloc(1, sizeof(**mdb));
     if (*mdb == NULL) {
-	krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
-	return ENOMEM;
+        krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
+        return ENOMEM;
     }
 
     (*db)->hdb_db = NULL;
     (*db)->hdb_name = strdup(filename);
     if ((*db)->hdb_name == NULL) {
-	free(*db);
-	*db = NULL;
-	krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
-	return ENOMEM;
+        free(*db);
+        *db = NULL;
+        krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
+        return ENOMEM;
     }
     (*mdb)->do_sync = 1;
     (*db)->hdb_master_key_set = 0;
@@ -1204,7 +1204,7 @@ nexttoken(char **p)
 {
     char *q;
     do {
-	q = strsep(p, " \t");
+        q = strsep(p, " \t");
     } while(q && *q == '\0');
     return q;
 }
@@ -1242,10 +1242,10 @@ getdata(char **p, unsigned char *buf, size_t len, const char *what)
     }
     i = 0;
     while (*q && i < len) {
-	if (sscanf(q, "%02x", &v) != 1)
-	    break;
-	buf[i++] = v;
-	q += 2;
+        if (sscanf(q, "%02x", &v) != 1)
+            break;
+        buf[i++] = v;
+        q += 2;
     }
     return i;
 }

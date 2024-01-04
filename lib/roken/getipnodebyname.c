@@ -53,31 +53,31 @@ rk_getipnodebyname(const char *name, int af, int flags, int *error_num)
     tmp = gethostbyname2 (name, af);
 #else
     if (af != AF_INET) {
-	*error_num = NO_ADDRESS;
-	return NULL;
+        *error_num = NO_ADDRESS;
+        return NULL;
     }
     tmp = gethostbyname (name);
 #endif
     if (tmp == NULL) {
-	switch (h_errno) {
-	case HOST_NOT_FOUND :
-	case TRY_AGAIN :
-	case NO_RECOVERY :
-	    *error_num = h_errno;
-	    break;
-	case NO_DATA :
-	    *error_num = NO_ADDRESS;
-	    break;
-	default :
-	    *error_num = NO_RECOVERY;
-	    break;
-	}
-	return NULL;
+        switch (h_errno) {
+            case HOST_NOT_FOUND :
+            case TRY_AGAIN :
+            case NO_RECOVERY :
+                *error_num = h_errno;
+                break;
+            case NO_DATA :
+                *error_num = NO_ADDRESS;
+                break;
+            default :
+                *error_num = NO_RECOVERY;
+                break;
+        }
+        return NULL;
     }
     tmp = copyhostent (tmp);
     if (tmp == NULL) {
-	*error_num = TRY_AGAIN;
-	return NULL;
+        *error_num = TRY_AGAIN;
+        return NULL;
     }
     return tmp;
 }

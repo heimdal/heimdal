@@ -66,7 +66,7 @@ krb5_clear_error_message(krb5_context context)
 
 KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 krb5_set_error_message(krb5_context context, krb5_error_code ret,
-		       const char *fmt, ...)
+                       const char *fmt, ...)
     __attribute__ ((__format__ (__printf__, 3, 4)))
 {
     va_list ap;
@@ -98,13 +98,13 @@ krb5_vset_error_message(krb5_context context, krb5_error_code ret,
     const char *msg;
 
     if (context == NULL)
-	return;
+        return;
 
     heim_vset_error_message(context->hcontext, ret, fmt, args);
     msg = heim_get_error_message(context->hcontext, ret);
     if (msg) {
-	_krb5_debug(context, 100, "error message: %s: %d", msg, ret);
-	heim_free_error_message(context->hcontext, msg);
+        _krb5_debug(context, 100, "error message: %s: %d", msg, ret);
+        heim_free_error_message(context->hcontext, msg);
     }
 }
 
@@ -124,7 +124,7 @@ krb5_vset_error_message(krb5_context context, krb5_error_code ret,
 
 KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 krb5_prepend_error_message(krb5_context context, krb5_error_code ret,
-			   const char *fmt, ...)
+                           const char *fmt, ...)
     __attribute__ ((__format__ (__printf__, 3, 4)))
 {
     va_list ap;
@@ -149,7 +149,7 @@ krb5_prepend_error_message(krb5_context context, krb5_error_code ret,
 
 KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 krb5_vprepend_error_message(krb5_context context, krb5_error_code ret,
-			    const char *fmt, va_list args)
+                            const char *fmt, va_list args)
     __attribute__ ((__format__ (__printf__, 3, 0)))
 {
     if (context)
@@ -175,7 +175,7 @@ krb5_get_error_message(krb5_context context, krb5_error_code code)
     const char *cstr = NULL;
 
     if (code == 0)
-	return strdup("Success");
+        return strdup("Success");
 
     /*
      * The MIT version of this function ignores the krb5_context

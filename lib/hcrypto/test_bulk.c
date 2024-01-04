@@ -107,9 +107,9 @@ static void
 usage (int ret)
 {
     arg_printusage (args,
-		    sizeof(args)/sizeof(*args),
-		    NULL,
-		    "");
+                    sizeof(args)/sizeof(*args),
+                    NULL,
+                    "");
     exit (ret);
 }
 
@@ -123,7 +123,7 @@ test_bulk_cipher(const char *cname, const EVP_CIPHER *c)
 
     if (c == NULL) {
         printf("%s not supported\n", cname);
-	return 0;
+        return 0;
     }
 
     for (i = 0; i < loops; i++) {
@@ -136,30 +136,30 @@ test_bulk_cipher(const char *cname, const EVP_CIPHER *c)
         EVP_CIPHER_CTX_init(&dctx);
 
         if (EVP_CipherInit_ex(&ectx, c, NULL, NULL, NULL, 1) != 1)
-	    errx(1, "can't init encrypt");
+            errx(1, "can't init encrypt");
         if (EVP_CipherInit_ex(&dctx, c, NULL, NULL, NULL, 0) != 1)
-	    errx(1, "can't init decrypt");
+            errx(1, "can't init decrypt");
 
         EVP_CIPHER_CTX_set_key_length(&ectx, sizeof(key));
         EVP_CIPHER_CTX_set_key_length(&dctx, sizeof(key));
 
         if (EVP_CipherInit_ex(&ectx, NULL, NULL, key, iv, 1) != 1)
-	    errx(1, "can't init encrypt");
+            errx(1, "can't init encrypt");
         if (EVP_CipherInit_ex(&dctx, NULL, NULL, key, iv, 0) != 1)
-	    errx(1, "can't init decrypt");
+            errx(1, "can't init decrypt");
 
         if (!EVP_Cipher(&ectx, d, d, len))
-	    errx(1, "can't encrypt");
+            errx(1, "can't encrypt");
         if (!EVP_Cipher(&dctx, d, d, len))
-	    errx(1, "can't decrypt");
+            errx(1, "can't decrypt");
 
         EVP_CIPHER_CTX_cleanup(&ectx);
         EVP_CIPHER_CTX_cleanup(&dctx);
 
         STATS_END(M);
 
-	if (d[0] != 0x00 || d[len - 1] != ((len - 1) & 0xff))
-	    errx(1, "encrypt/decrypt inconsistent");
+        if (d[0] != 0x00 || d[len - 1] != ((len - 1) & 0xff))
+            errx(1, "encrypt/decrypt inconsistent");
     }
 
     printf("%s: mean time %llu usec%s\n", cname, (unsigned long long)M,
@@ -178,7 +178,7 @@ test_bulk_digest(const char *cname, const EVP_MD *md)
 
     if (md == NULL) {
         printf("%s not supported\n", cname);
-	return 0;
+        return 0;
     }
 
     for (i = 0; i < loops; i++) {
@@ -269,14 +269,14 @@ main(int argc, char **argv)
     setprogname(argv[0]);
 
     if(getarg(args, sizeof(args) / sizeof(args[0]), argc, argv, &idx))
-	usage(1);
+        usage(1);
 
     if (help_flag)
-	usage(0);
+        usage(0);
 
     if(version_flag) {
-	print_version(NULL);
-	exit(0);
+        print_version(NULL);
+        exit(0);
     }
 
     argc -= idx;

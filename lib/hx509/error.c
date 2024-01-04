@@ -57,8 +57,8 @@ HX509_LIB_FUNCTION void HX509_LIB_CALL
 hx509_clear_error_string(hx509_context context)
 {
     if (context) {
-	heim_release(context->error);
-	context->error = NULL;
+        heim_release(context->error);
+        context->error = NULL;
     }
 }
 
@@ -78,18 +78,18 @@ hx509_clear_error_string(hx509_context context)
 
 HX509_LIB_FUNCTION void HX509_LIB_CALL
 hx509_set_error_stringv(hx509_context context, int flags, int code,
-			const char *fmt, va_list ap)
+                        const char *fmt, va_list ap)
 {
     heim_error_t msg;
 
     if (context == NULL)
-	return;
+        return;
 
     msg = heim_error_createv(code, fmt, ap);
     if (msg) {
-	if (flags & HX509_ERROR_APPEND)
-	    heim_error_append(msg, context->error);
-	heim_release(context->error);
+        if (flags & HX509_ERROR_APPEND)
+            heim_error_append(msg, context->error);
+        heim_release(context->error);
     }
     context->error = msg;
 }
@@ -110,7 +110,7 @@ hx509_set_error_stringv(hx509_context context, int flags, int code,
 
 HX509_LIB_FUNCTION void HX509_LIB_CALL
 hx509_set_error_string(hx509_context context, int flags, int code,
-		       const char *fmt, ...)
+                       const char *fmt, ...)
 {
     va_list ap;
 
@@ -214,7 +214,7 @@ hx509_err(hx509_context context, int exit_code,
     va_end(ap);
     msg = hx509_get_error_string(context, error_code);
     if (msg == NULL)
-	msg = "no error";
+        msg = "no error";
 
     errx(exit_code, "%s: %s", ret != -1 ? str : "ENOMEM", msg);
 }

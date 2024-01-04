@@ -44,29 +44,29 @@ ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
 socket_set_any (struct sockaddr *sa, int af)
 {
     switch (af) {
-    case AF_INET : {
-	struct sockaddr_in *sin4 = (struct sockaddr_in *)sa;
+        case AF_INET : {
+            struct sockaddr_in *sin4 = (struct sockaddr_in *)sa;
 
-	memset (sin4, 0, sizeof(*sin4));
-	sin4->sin_family = AF_INET;
-	sin4->sin_port   = 0;
-	sin4->sin_addr.s_addr = INADDR_ANY;
-	break;
-    }
+            memset (sin4, 0, sizeof(*sin4));
+            sin4->sin_family = AF_INET;
+            sin4->sin_port   = 0;
+            sin4->sin_addr.s_addr = INADDR_ANY;
+            break;
+        }
 #ifdef HAVE_IPV6
-    case AF_INET6 : {
-	struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)sa;
+        case AF_INET6 : {
+            struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)sa;
 
-	memset (sin6, 0, sizeof(*sin6));
-	sin6->sin6_family = AF_INET6;
-	sin6->sin6_port   = 0;
-	sin6->sin6_addr   = in6addr_any;
-	break;
-    }
+            memset (sin6, 0, sizeof(*sin6));
+            sin6->sin6_family = AF_INET6;
+            sin6->sin6_port   = 0;
+            sin6->sin6_addr   = in6addr_any;
+            break;
+        }
 #endif
-    default :
-	errx (1, "unknown address family %d", sa->sa_family);
-	break;
+        default :
+            errx (1, "unknown address family %d", sa->sa_family);
+            break;
     }
 }
 
@@ -78,29 +78,29 @@ ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
 socket_set_address_and_port (struct sockaddr *sa, const void *ptr, int port)
 {
     switch (sa->sa_family) {
-    case AF_INET : {
-	struct sockaddr_in *sin4 = (struct sockaddr_in *)sa;
+        case AF_INET : {
+            struct sockaddr_in *sin4 = (struct sockaddr_in *)sa;
 
-	memset (sin4, 0, sizeof(*sin4));
-	sin4->sin_family = AF_INET;
-	sin4->sin_port   = port;
-	memcpy (&sin4->sin_addr, ptr, sizeof(struct in_addr));
-	break;
-    }
+            memset (sin4, 0, sizeof(*sin4));
+            sin4->sin_family = AF_INET;
+            sin4->sin_port   = port;
+            memcpy (&sin4->sin_addr, ptr, sizeof(struct in_addr));
+            break;
+        }
 #ifdef HAVE_IPV6
-    case AF_INET6 : {
-	struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)sa;
+        case AF_INET6 : {
+            struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)sa;
 
-	memset (sin6, 0, sizeof(*sin6));
-	sin6->sin6_family = AF_INET6;
-	sin6->sin6_port   = port;
-	memcpy (&sin6->sin6_addr, ptr, sizeof(struct in6_addr));
-	break;
-    }
+            memset (sin6, 0, sizeof(*sin6));
+            sin6->sin6_family = AF_INET6;
+            sin6->sin6_port   = port;
+            memcpy (&sin6->sin6_addr, ptr, sizeof(struct in6_addr));
+            break;
+        }
 #endif
-    default :
-	errx (1, "unknown address family %d", sa->sa_family);
-	break;
+        default :
+            errx (1, "unknown address family %d", sa->sa_family);
+            break;
     }
 }
 
@@ -112,14 +112,14 @@ ROKEN_LIB_FUNCTION size_t ROKEN_LIB_CALL
 socket_addr_size (const struct sockaddr *sa)
 {
     switch (sa->sa_family) {
-    case AF_INET :
-	return sizeof(struct in_addr);
+        case AF_INET :
+            return sizeof(struct in_addr);
 #ifdef HAVE_IPV6
-    case AF_INET6 :
-	return sizeof(struct in6_addr);
+        case AF_INET6 :
+            return sizeof(struct in6_addr);
 #endif
-    default :
-	return 0;
+        default :
+            return 0;
     }
 }
 
@@ -131,14 +131,14 @@ ROKEN_LIB_FUNCTION size_t ROKEN_LIB_CALL
 socket_sockaddr_size (const struct sockaddr *sa)
 {
     switch (sa->sa_family) {
-    case AF_INET :
-	return sizeof(struct sockaddr_in);
+        case AF_INET :
+            return sizeof(struct sockaddr_in);
 #ifdef HAVE_IPV6
-    case AF_INET6 :
-	return sizeof(struct sockaddr_in6);
+        case AF_INET6 :
+            return sizeof(struct sockaddr_in6);
 #endif
-    default:
-	return 0;
+        default:
+            return 0;
     }
 }
 
@@ -150,18 +150,18 @@ ROKEN_LIB_FUNCTION void * ROKEN_LIB_CALL
 socket_get_address (const struct sockaddr *sa)
 {
     switch (sa->sa_family) {
-    case AF_INET : {
-	const struct sockaddr_in *sin4 = (const struct sockaddr_in *)sa;
-	return rk_UNCONST(&sin4->sin_addr);
-    }
+        case AF_INET : {
+            const struct sockaddr_in *sin4 = (const struct sockaddr_in *)sa;
+            return rk_UNCONST(&sin4->sin_addr);
+        }
 #ifdef HAVE_IPV6
-    case AF_INET6 : {
-	const struct sockaddr_in6 *sin6 = (const struct sockaddr_in6 *)sa;
-	return rk_UNCONST(&sin6->sin6_addr);
-    }
+        case AF_INET6 : {
+            const struct sockaddr_in6 *sin6 = (const struct sockaddr_in6 *)sa;
+            return rk_UNCONST(&sin6->sin6_addr);
+        }
 #endif
-    default:
-	return NULL;
+        default:
+            return NULL;
     }
 }
 
@@ -173,18 +173,18 @@ ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 socket_get_port (const struct sockaddr *sa)
 {
     switch (sa->sa_family) {
-    case AF_INET : {
-	const struct sockaddr_in *sin4 = (const struct sockaddr_in *)sa;
-	return sin4->sin_port;
-    }
+        case AF_INET : {
+            const struct sockaddr_in *sin4 = (const struct sockaddr_in *)sa;
+            return sin4->sin_port;
+        }
 #ifdef HAVE_IPV6
-    case AF_INET6 : {
-	const struct sockaddr_in6 *sin6 = (const struct sockaddr_in6 *)sa;
-	return sin6->sin6_port;
-    }
+        case AF_INET6 : {
+            const struct sockaddr_in6 *sin6 = (const struct sockaddr_in6 *)sa;
+            return sin6->sin6_port;
+        }
 #endif
-    default :
-	return 0;
+        default :
+            return 0;
     }
 }
 
@@ -196,21 +196,21 @@ ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
 socket_set_port (struct sockaddr *sa, int port)
 {
     switch (sa->sa_family) {
-    case AF_INET : {
-	struct sockaddr_in *sin4 = (struct sockaddr_in *)sa;
-	sin4->sin_port = port;
-	break;
-    }
+        case AF_INET : {
+            struct sockaddr_in *sin4 = (struct sockaddr_in *)sa;
+            sin4->sin_port = port;
+            break;
+        }
 #ifdef HAVE_IPV6
-    case AF_INET6 : {
-	struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)sa;
-	sin6->sin6_port = port;
-	break;
-    }
+        case AF_INET6 : {
+            struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)sa;
+            sin6->sin6_port = port;
+            break;
+        }
 #endif
-    default :
-	errx (1, "unknown address family %d", sa->sa_family);
-	break;
+        default :
+            errx (1, "unknown address family %d", sa->sa_family);
+            break;
     }
 }
 
@@ -269,11 +269,11 @@ socket_set_nonblocking(rk_socket_t sock, int nonblock)
 #if defined(O_NONBLOCK)
     int flags = fcntl(sock, F_GETFL, 0);
     if (flags == -1)
-	return;
+        return;
     if (nonblock)
-	flags |= O_NONBLOCK;
+        flags |= O_NONBLOCK;
     else
-	flags &= ~O_NONBLOCK;
+        flags &= ~O_NONBLOCK;
     (void) fcntl(sock, F_SETFL, flags);
 #elif defined(FIOBIO)
     int flags = !!nonblock;
@@ -345,7 +345,7 @@ rk_SOCK_IOCTL(SOCKET s, long cmd, int * argp) {
 
     rv = ioctlsocket(s, cmd, &ul);
     if (argp)
-	*argp = (int) ul;
+        *argp = (int) ul;
     return rv;
 }
 #endif
@@ -362,8 +362,8 @@ rk_socket(int domain, int type, int protocol)
     s = socket (domain, type, protocol);
 #ifdef SOCK_CLOEXEC
     if ((SOCK_CLOEXEC & type) && s < 0 && errno == EINVAL) {
-	type &= ~SOCK_CLOEXEC;
-	s = socket (domain, type, protocol);
+        type &= ~SOCK_CLOEXEC;
+        s = socket (domain, type, protocol);
     }
 #endif
     return s;

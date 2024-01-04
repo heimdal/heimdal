@@ -51,8 +51,8 @@ add_enctype(struct add_enctype_options*opt, int argc, char **argv)
     krb5_enctype *etypes;
 
     if (!opt->random_key_flag) {
-	krb5_warnx (context, "only random key is supported now");
-	return 0;
+        krb5_warnx (context, "only random key is supported now");
+        return 0;
     }
 
     memset(&princ, 0, sizeof(princ));
@@ -60,96 +60,96 @@ add_enctype(struct add_enctype_options*opt, int argc, char **argv)
     n_etypes   = argc - 1;
     etypes     = malloc (n_etypes * sizeof(*etypes));
     if (etypes == NULL) {
-	krb5_warnx (context, "out of memory");
-	return 0;
+        krb5_warnx (context, "out of memory");
+        return 0;
     }
     argv++;
     for (i = 0; i < n_etypes; ++i) {
-	ret = krb5_string_to_enctype(context, argv[i], &etypes[i]);
-	if (ret) {
-	    krb5_warnx (context, "bad enctype \"%s\"", argv[i]);
-	    goto out2;
-	}
+        ret = krb5_string_to_enctype(context, argv[i], &etypes[i]);
+        if (ret) {
+            krb5_warnx (context, "bad enctype \"%s\"", argv[i]);
+            goto out2;
+        }
     }
 
     ret = krb5_parse_name(context, princ_name, &princ_ent);
     if (ret) {
-	krb5_warn(context, ret, "krb5_parse_name %s", princ_name);
-	goto out2;
+        krb5_warn(context, ret, "krb5_parse_name %s", princ_name);
+        goto out2;
     }
 
     /* The principal might have zero keys, but it will still have a kvno! */
     ret = kadm5_get_principal(kadm_handle, princ_ent, &princ,
-			      KADM5_KVNO | KADM5_PRINCIPAL | KADM5_KEY_DATA);
+                              KADM5_KVNO | KADM5_PRINCIPAL | KADM5_KEY_DATA);
     if (ret) {
-	krb5_free_principal(context, princ_ent);
-	krb5_warnx(context, "no such principal: %s", princ_name);
-	goto out2;
+        krb5_free_principal(context, princ_ent);
+        krb5_warnx(context, "no such principal: %s", princ_name);
+        goto out2;
     }
 
     /* Check that we got key data */
     if (kadm5_all_keys_are_bogus(princ.n_key_data, princ.key_data)) {
-	krb5_warnx(context, "user lacks get-keys privilege");
-	goto out;
+        krb5_warnx(context, "user lacks get-keys privilege");
+        goto out;
     }
 
     new_key_data = calloc(princ.n_key_data + n_etypes,
-			  sizeof(*new_key_data));
+                          sizeof(*new_key_data));
     if (new_key_data == NULL) {
-	krb5_warnx (context, "out of memory");
-	goto out;
+        krb5_warnx (context, "out of memory");
+        goto out;
     }
 
     for (i = 0; i < princ.n_key_data; ++i) {
-	krb5_key_data *key = &princ.key_data[i];
+        krb5_key_data *key = &princ.key_data[i];
 
-	for (j = 0; j < n_etypes; ++j) {
-	    if (etypes[j] == key->key_data_type[0]) {
-		/* XXX Should this be an error?  The admin can del_enctype... */
-		krb5_warnx(context, "enctype %d already exists",
-			   (int)etypes[j]);
-		goto out;
-	    }
-	}
-	new_key_data[i] = *key;
+        for (j = 0; j < n_etypes; ++j) {
+            if (etypes[j] == key->key_data_type[0]) {
+                /* XXX Should this be an error?  The admin can del_enctype... */
+                krb5_warnx(context, "enctype %d already exists",
+                           (int)etypes[j]);
+                goto out;
+            }
+        }
+        new_key_data[i] = *key;
     }
 
     for (i = 0; i < n_etypes; ++i) {
-	int n = princ.n_key_data + i;
-	krb5_keyblock keyblock;
+        int n = princ.n_key_data + i;
+        krb5_keyblock keyblock;
 
-	memset(&new_key_data[n], 0, sizeof(new_key_data[n]));
-	new_key_data[n].key_data_ver = 2;
-	new_key_data[n].key_data_kvno = princ.kvno;
+        memset(&new_key_data[n], 0, sizeof(new_key_data[n]));
+        new_key_data[n].key_data_ver = 2;
+        new_key_data[n].key_data_kvno = princ.kvno;
 
-	ret = krb5_generate_random_keyblock (context, etypes[i], &keyblock);
-	if (ret) {
-	    krb5_warnx(context, "genernate enctype %d failed", (int)etypes[i]);
-	    while (--i >= 0)
-		free(new_key_data[--n].key_data_contents[0]);
-	    goto out;
-	}
+        ret = krb5_generate_random_keyblock (context, etypes[i], &keyblock);
+        if (ret) {
+            krb5_warnx(context, "genernate enctype %d failed", (int)etypes[i]);
+            while (--i >= 0)
+                free(new_key_data[--n].key_data_contents[0]);
+            goto out;
+        }
 
-	/* key */
-	new_key_data[n].key_data_type[0] = etypes[i];
-	new_key_data[n].key_data_contents[0] = malloc(keyblock.keyvalue.length);
-	if (new_key_data[n].key_data_contents[0] == NULL) {
-	    ret = ENOMEM;
-	    krb5_warn(context, ret, "out of memory");
-	    while (--i >= 0)
-		free(new_key_data[--n].key_data_contents[0]);
-	    goto out;
-	}
-	new_key_data[n].key_data_length[0]   = keyblock.keyvalue.length;
-	memcpy(new_key_data[n].key_data_contents[0],
-	       keyblock.keyvalue.data,
-	       keyblock.keyvalue.length);
-	krb5_free_keyblock_contents(context, &keyblock);
+        /* key */
+        new_key_data[n].key_data_type[0] = etypes[i];
+        new_key_data[n].key_data_contents[0] = malloc(keyblock.keyvalue.length);
+        if (new_key_data[n].key_data_contents[0] == NULL) {
+            ret = ENOMEM;
+            krb5_warn(context, ret, "out of memory");
+            while (--i >= 0)
+                free(new_key_data[--n].key_data_contents[0]);
+            goto out;
+        }
+        new_key_data[n].key_data_length[0]   = keyblock.keyvalue.length;
+        memcpy(new_key_data[n].key_data_contents[0],
+               keyblock.keyvalue.data,
+               keyblock.keyvalue.length);
+        krb5_free_keyblock_contents(context, &keyblock);
 
-	/* salt */
-	new_key_data[n].key_data_type[1]     = KRB5_PW_SALT;
-	new_key_data[n].key_data_length[1]   = 0;
-	new_key_data[n].key_data_contents[1] = NULL;
+        /* salt */
+        new_key_data[n].key_data_type[1]     = KRB5_PW_SALT;
+        new_key_data[n].key_data_length[1]   = 0;
+        new_key_data[n].key_data_contents[1] = NULL;
 
     }
 
@@ -160,7 +160,7 @@ add_enctype(struct add_enctype_options*opt, int argc, char **argv)
 
     ret = kadm5_modify_principal (kadm_handle, &princ, KADM5_KEY_DATA);
     if (ret)
-	krb5_warn(context, ret, "kadm5_modify_principal");
+        krb5_warn(context, ret, "kadm5_modify_principal");
 out:
     free(new_key_data);
     krb5_free_principal (context, princ_ent);

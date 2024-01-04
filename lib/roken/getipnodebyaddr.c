@@ -47,25 +47,25 @@ rk_getipnodebyaddr(const void *src, size_t len, int af, int *error_num)
 
     tmp = gethostbyaddr (src, len, af);
     if (tmp == NULL) {
-	switch (h_errno) {
-	case HOST_NOT_FOUND :
-	case TRY_AGAIN :
-	case NO_RECOVERY :
-	    *error_num = h_errno;
-	    break;
-	case NO_DATA :
-	    *error_num = NO_ADDRESS;
-	    break;
-	default :
-	    *error_num = NO_RECOVERY;
-	    break;
-	}
-	return NULL;
+        switch (h_errno) {
+            case HOST_NOT_FOUND :
+            case TRY_AGAIN :
+            case NO_RECOVERY :
+                *error_num = h_errno;
+                break;
+            case NO_DATA :
+                *error_num = NO_ADDRESS;
+                break;
+            default :
+                *error_num = NO_RECOVERY;
+                break;
+        }
+        return NULL;
     }
     tmp = copyhostent (tmp);
     if (tmp == NULL) {
-	*error_num = TRY_AGAIN;
-	return NULL;
+        *error_num = TRY_AGAIN;
+        return NULL;
     }
     return tmp;
 }

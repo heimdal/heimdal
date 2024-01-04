@@ -147,7 +147,7 @@ struct cc_string_t {
 typedef struct cc_credentials_union {
     cc_int32 version;
     union {
-	cc_credentials_v5_t* credentials_v5;
+        cc_credentials_v5_t* credentials_v5;
     } credentials;
 } cc_credentials_union;
 
@@ -190,7 +190,7 @@ typedef struct cc_ccache_functions {
     cc_int32 (*store_credentials)(cc_ccache_t, const cc_credentials_union*);
     cc_int32 (*remove_credentials)(cc_ccache_t, cc_credentials_t);
     cc_int32 (*new_credentials_iterator)(cc_ccache_t,
-					 cc_credentials_iterator_t*);
+                                         cc_credentials_iterator_t*);
     cc_int32 (*move)(cc_ccache_t, cc_ccache_t);
     cc_int32 (*lock)(cc_ccache_t, cc_uint32, cc_uint32);
     cc_int32 (*unlock)(cc_ccache_t);
@@ -213,11 +213,11 @@ struct  cc_context_functions {
     cc_int32 (*open_ccache)(cc_context_t, const char*, cc_ccache_t *);
     cc_int32 (*open_default_ccache)(cc_context_t, cc_ccache_t*);
     cc_int32 (*create_ccache)(cc_context_t,const char*, cc_uint32,
-			      const char*, cc_ccache_t*);
+                              const char*, cc_ccache_t*);
     cc_int32 (*create_default_ccache)(cc_context_t, cc_uint32,
-				      const char*, cc_ccache_t*);
+                                      const char*, cc_ccache_t*);
     cc_int32 (*create_new_ccache)(cc_context_t, cc_uint32,
-				  const char*, cc_ccache_t*);
+                                  const char*, cc_ccache_t*);
     cc_int32 (*new_ccache_iterator)(cc_context_t, cc_ccache_iterator_t*);
     cc_int32 (*lock)(cc_context_t, cc_uint32, cc_uint32);
     cc_int32 (*unlock)(cc_context_t);

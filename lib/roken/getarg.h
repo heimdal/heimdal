@@ -52,13 +52,13 @@ struct getargs{
     const char *long_name;
     char short_name;
     enum { arg_integer,
-	   arg_string,
-	   arg_flag,
-	   arg_negative_flag,
-	   arg_strings,
-	   arg_double,
-	   arg_collect,
-	   arg_counter
+           arg_string,
+           arg_flag,
+           arg_negative_flag,
+           arg_strings,
+           arg_double,
+           arg_collect,
+           arg_counter
     } type;
     void *value;
     const char *help;
@@ -77,11 +77,11 @@ typedef struct getarg_strings {
 } getarg_strings;
 
 typedef int (*getarg_collect_func)(int short_opt,
-				   int argc,
-				   char **argv,
-				   int *goptind,
-				   int *goptarg,
-				   void *data);
+                                   int argc,
+                                   char **argv,
+                                   int *goptind,
+                                   int *goptarg,
+                                   void *data);
 
 typedef struct getarg_collect_info {
     getarg_collect_func func;
@@ -94,17 +94,17 @@ getarg(struct getargs *args, size_t num_args,
 
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
 arg_printusage (struct getargs *args,
-		size_t num_args,
-		const char *progname,
-		const char *extra_string);
+                size_t num_args,
+                const char *progname,
+                const char *extra_string);
 
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
 arg_printusage_i18n (struct getargs *args,
-		     size_t num_args,
-		     const char *usage,
-		     const char *progname,
-		     const char *extra_string,
-		     char *(*i18n)(const char *));
+                     size_t num_args,
+                     const char *usage,
+                     const char *progname,
+                     const char *extra_string,
+                     char *(*i18n)(const char *));
 
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
 free_getarg_strings (getarg_strings *);

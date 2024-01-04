@@ -47,18 +47,18 @@
 
 typedef krb5_error_code
 (KRB5_CALLCONV *krb5plugin_send_to_kdc_func)(krb5_context,
-			       void *,
-			       krb5_krbhst_info *,
-			       time_t timeout,
-			       const krb5_data *,
-			       krb5_data *);
+                                             void *,
+                                             krb5_krbhst_info *,
+                                             time_t timeout,
+                                             const krb5_data *,
+                                             krb5_data *);
 typedef krb5_error_code
 (KRB5_CALLCONV *krb5plugin_send_to_realm_func)(krb5_context,
-				 void *,
-				 krb5_const_realm,
-				 time_t timeout,
-				 const krb5_data *,
-				 krb5_data *);
+                                               void *,
+                                               krb5_const_realm,
+                                               time_t timeout,
+                                               const krb5_data *,
+                                               krb5_data *);
 
 
 typedef struct krb5plugin_send_to_kdc_ftable {

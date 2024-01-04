@@ -43,8 +43,8 @@ static krb5_error_code get_addresses(krb5_context, krb5_ccache, krb5_creds *,
 
 static krb5_error_code
 add_addrs(krb5_context context,
-	  krb5_addresses *addr,
-	  struct addrinfo *ai)
+          krb5_addresses *addr,
+          struct addrinfo *ai)
 {
     krb5_error_code ret;
     unsigned n, i;
@@ -53,34 +53,34 @@ add_addrs(krb5_context context,
 
     n = 0;
     for (a = ai; a != NULL; a = a->ai_next)
-	++n;
+        ++n;
 
     tmp = realloc(addr->val, (addr->len + n) * sizeof(*addr->val));
     if (tmp == NULL && (addr->len + n) != 0) {
-	ret = krb5_enomem(context);
-	goto fail;
+        ret = krb5_enomem(context);
+        goto fail;
     }
     addr->val = tmp;
     for (i = addr->len; i < (addr->len + n); ++i) {
-	addr->val[i].addr_type = 0;
-	krb5_data_zero(&addr->val[i].address);
+        addr->val[i].addr_type = 0;
+        krb5_data_zero(&addr->val[i].address);
     }
     i = addr->len;
     for (a = ai; a != NULL; a = a->ai_next) {
-	krb5_address ad;
+        krb5_address ad;
 
-	ret = krb5_sockaddr2address (context, a->ai_addr, &ad);
-	if (ret == 0) {
-	    if (krb5_address_search(context, &ad, addr))
-		krb5_free_address(context, &ad);
-	    else
-		addr->val[i++] = ad;
-	}
-	else if (ret == KRB5_PROG_ATYPE_NOSUPP)
-	    krb5_clear_error_message (context);
-	else
-	    goto fail;
-	addr->len = i;
+        ret = krb5_sockaddr2address (context, a->ai_addr, &ad);
+        if (ret == 0) {
+            if (krb5_address_search(context, &ad, addr))
+                krb5_free_address(context, &ad);
+            else
+                addr->val[i++] = ad;
+        }
+        else if (ret == KRB5_PROG_ATYPE_NOSUPP)
+            krb5_clear_error_message (context);
+        else
+            goto fail;
+        addr->len = i;
     }
     return 0;
 fail:
@@ -115,13 +115,13 @@ fail:
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_fwd_tgt_creds(krb5_context	context,
-		   krb5_auth_context	auth_context,
-		   const char		*hostname,
-		   krb5_const_principal	client,
-		   krb5_const_principal	server,
-		   krb5_ccache		ccache,
-		   int			forwardable,
-		   krb5_data		*out_data)
+                   krb5_auth_context	auth_context,
+                   const char		*hostname,
+                   krb5_const_principal	client,
+                   krb5_const_principal	server,
+                   krb5_ccache		ccache,
+                   int			forwardable,
+                   krb5_data		*out_data)
 {
     krb5_flags flags = 0;
     krb5_creds creds;
@@ -130,18 +130,18 @@ krb5_fwd_tgt_creds(krb5_context	context,
     flags |= KDC_OPT_FORWARDED;
 
     if (forwardable)
-	flags |= KDC_OPT_FORWARDABLE;
+        flags |= KDC_OPT_FORWARDABLE;
 
     if (hostname == NULL &&
-	krb5_principal_get_type(context, server) == KRB5_NT_SRV_HST) {
-	const char *inst = krb5_principal_get_comp_string(context, server, 0);
-	const char *host = krb5_principal_get_comp_string(context, server, 1);
+        krb5_principal_get_type(context, server) == KRB5_NT_SRV_HST) {
+        const char *inst = krb5_principal_get_comp_string(context, server, 0);
+        const char *host = krb5_principal_get_comp_string(context, server, 1);
 
-	if (inst != NULL &&
-	    strcmp(inst, "host") == 0 &&
-	    host != NULL &&
-	    krb5_principal_get_comp_string(context, server, 2) == NULL)
-	    hostname = host;
+        if (inst != NULL &&
+            strcmp(inst, "host") == 0 &&
+            host != NULL &&
+            krb5_principal_get_comp_string(context, server, 2) == NULL)
+            hostname = host;
     }
 
     /*
@@ -150,15 +150,15 @@ krb5_fwd_tgt_creds(krb5_context	context,
      */
     ret = set_tgs_creds(context, ccache, client, server, &creds);
     if (ret)
-	return ret;
+        return ret;
 
     ret = krb5_get_forwarded_creds (context,
-				    auth_context,
-				    ccache,
-				    flags,
-				    hostname,
-				    &creds,
-				    out_data);
+                                    auth_context,
+                                    ccache,
+                                    flags,
+                                    hostname,
+                                    &creds,
+                                    out_data);
 
     krb5_free_cred_contents(context, &creds);
     return ret;
@@ -193,12 +193,12 @@ krb5_fwd_tgt_creds(krb5_context	context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_get_forwarded_creds (krb5_context	    context,
-			  krb5_auth_context auth_context,
-			  krb5_ccache       ccache,
-			  krb5_flags        flags,
-			  const char        *hostname,
-			  krb5_creds        *in_creds,
-			  krb5_data         *out_data)
+                          krb5_auth_context auth_context,
+                          krb5_ccache       ccache,
+                          krb5_flags        flags,
+                          const char        *hostname,
+                          krb5_creds        *in_creds,
+                          krb5_data         *out_data)
 {
     krb5_error_code ret;
     krb5_creds *creds;
@@ -236,11 +236,11 @@ krb5_get_forwarded_creds (krb5_context	    context,
 
 static krb5_error_code
 get_cred(krb5_context      context,
-	 krb5_ccache       ccache,
-	 krb5_creds	   *creds,
-	 krb5_flags        flags,
-	 const char        *hostname,
-	 krb5_creds        **out_creds)
+         krb5_ccache       ccache,
+         krb5_creds	   *creds,
+         krb5_flags        flags,
+         const char        *hostname,
+         krb5_creds        **out_creds)
 {
     krb5_error_code ret;
     krb5_kdc_flags kdc_flags;
@@ -250,11 +250,11 @@ get_cred(krb5_context      context,
     addrs.val = NULL;
     ret = get_addresses(context, ccache, creds, hostname, &addrs);
     if (ret)
-	return ret;
+        return ret;
 
     kdc_flags.b = int2KDCOptions(flags);
     ret = krb5_get_kdc_cred(context, ccache, kdc_flags, &addrs, NULL,
-			    creds, out_creds);
+                            creds, out_creds);
 
     krb5_free_addresses(context, &addrs);
     return ret;
@@ -262,10 +262,10 @@ get_cred(krb5_context      context,
 
 static krb5_error_code
 set_tgs_creds(krb5_context		context,
-	      krb5_ccache		ccache,
-	      krb5_const_principal	client,
-	      krb5_const_principal	server,
-	      krb5_creds		*creds)
+              krb5_ccache		ccache,
+              krb5_const_principal	client,
+              krb5_const_principal	server,
+              krb5_creds		*creds)
 {
     krb5_error_code ret;
     krb5_const_realm client_realm;
@@ -279,12 +279,12 @@ set_tgs_creds(krb5_context		context,
     memset (creds, 0, sizeof(*creds));
     ret = krb5_copy_principal(context, client, &creds->client);
     if (ret)
-	return ret;
+        return ret;
     ret = krb5_make_principal(context, &creds->server, client_realm,
-			      KRB5_TGS_NAME, client_realm, NULL);
+                              KRB5_TGS_NAME, client_realm, NULL);
     if (ret) {
-	krb5_free_principal(context, creds->client);
-	return ret;
+        krb5_free_principal(context, creds->client);
+        return ret;
     }
 
     /*
@@ -295,15 +295,15 @@ set_tgs_creds(krb5_context		context,
      * is not set, we must use the start-realm.
      */
     krb5_appdefault_boolean(context, NULL, server_realm,
-			    "delegate-destination-tgt", FALSE, &fwd_dest_tgt);
+                            "delegate-destination-tgt", FALSE, &fwd_dest_tgt);
 
     if (!fwd_dest_tgt) {
-	ret = krb5_get_credentials(context, KRB5_GC_CACHED, ccache, creds,
-				   &client_tgt);
-	if (ret == 0) {
-	    krb5_free_creds(context, client_tgt);
-	    return ret;
-	}
+        ret = krb5_get_credentials(context, KRB5_GC_CACHED, ccache, creds,
+                                   &client_tgt);
+        if (ret == 0) {
+            krb5_free_creds(context, client_tgt);
+            return ret;
+        }
     }
 
     /*
@@ -312,7 +312,7 @@ set_tgs_creds(krb5_context		context,
     krb5_free_principal(context, creds->server);
     creds->server = 0;
     return krb5_make_principal(context, &creds->server, server_realm,
-			       KRB5_TGS_NAME, server_realm, NULL);
+                               KRB5_TGS_NAME, server_realm, NULL);
 }
 
 /*
@@ -320,10 +320,10 @@ set_tgs_creds(krb5_context		context,
  */
 static krb5_error_code
 get_addresses(krb5_context      context,
-	      krb5_ccache       ccache,
-	      krb5_creds        *creds,
-	      const char        *hostname,
-	      krb5_addresses    *addrs)
+              krb5_ccache       ccache,
+              krb5_creds        *creds,
+              const char        *hostname,
+              krb5_addresses    *addrs)
 {
     krb5_error_code ret;
     krb5_creds *ticket;
@@ -333,31 +333,31 @@ get_addresses(krb5_context      context,
     int eai;
 
     if (hostname == 0)
-	return 0;
+        return 0;
 
     ret = krb5_get_credentials(context, 0, ccache, creds, &ticket);
     if (ret == 0) {
         noaddr = (ticket->addresses.len == 0) ? TRUE : FALSE;
-	krb5_free_creds(context, ticket);
+        krb5_free_creds(context, ticket);
     } else {
-	realm = krb5_principal_get_realm(context, creds->server);
-	krb5_appdefault_boolean(context, NULL, realm, "no-addresses",
-				KRB5_ADDRESSLESS_DEFAULT, &noaddr);
+        realm = krb5_principal_get_realm(context, creds->server);
+        krb5_appdefault_boolean(context, NULL, realm, "no-addresses",
+                                KRB5_ADDRESSLESS_DEFAULT, &noaddr);
     }
 
     if (noaddr)
-	return 0;
+        return 0;
 
     /* Need addresses, get the address of the remote host. */
 
     eai = getaddrinfo (hostname, NULL, NULL, &ai);
     if (eai) {
-	ret = krb5_eai_to_heim_errno(eai, errno);
-	krb5_set_error_message(context, ret,
-			       N_("resolving host %s failed: %s",
-				  "hostname, error"),
-			       hostname, gai_strerror(eai));
-	return ret;
+        ret = krb5_eai_to_heim_errno(eai, errno);
+        krb5_set_error_message(context, ret,
+                               N_("resolving host %s failed: %s",
+                                  "hostname, error"),
+                               hostname, gai_strerror(eai));
+        return ret;
     }
 
     ret = add_addrs(context, addrs, ai);

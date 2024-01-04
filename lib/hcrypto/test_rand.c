@@ -77,9 +77,9 @@ static void
 usage (int ret)
 {
     arg_printusage (args,
-		    sizeof(args)/sizeof(args[0]),
-		    NULL,
-		    "");
+                    sizeof(args)/sizeof(args[0]),
+                    NULL,
+                    "");
     exit (ret);
 }
 
@@ -93,126 +93,126 @@ main(int argc, char **argv)
     setprogname(argv[0]);
 
     if(getarg(args, sizeof(args) / sizeof(args[0]), argc, argv, &idx))
-	usage(1);
+        usage(1);
 
     if (help_flag)
-	usage(0);
+        usage(0);
 
     if(version_flag){
-	print_version(NULL);
-	exit(0);
+        print_version(NULL);
+        exit(0);
     }
 
     if (argc != idx)
-	usage(1);
+        usage(1);
 
     buffer = emalloc(len);
 
     if (rand_method) {
-	if (0) {
-	}
+        if (0) {
+        }
 #ifndef NO_RAND_FORTUNA_METHOD
-	else if (strcasecmp(rand_method, "fortuna") == 0)
-	    RAND_set_rand_method(RAND_fortuna_method());
+        else if (strcasecmp(rand_method, "fortuna") == 0)
+            RAND_set_rand_method(RAND_fortuna_method());
 #endif
 #ifndef NO_RAND_UNIX_METHOD
-	else if (strcasecmp(rand_method, "unix") == 0)
-	    RAND_set_rand_method(RAND_unix_method());
+        else if (strcasecmp(rand_method, "unix") == 0)
+            RAND_set_rand_method(RAND_unix_method());
 #endif
 #ifdef WIN32
-	else if (strcasecmp(rand_method, "w32crypto") == 0)
-	    RAND_set_rand_method(RAND_w32crypto_method());
+        else if (strcasecmp(rand_method, "w32crypto") == 0)
+            RAND_set_rand_method(RAND_w32crypto_method());
 #endif
-	else
-	    errx(1, "unknown method %s", rand_method);
+        else
+            errx(1, "unknown method %s", rand_method);
     }
 
     if (RAND_file_name(path, sizeof(path)) == NULL)
-	errx(1, "RAND_file_name failed");
+        errx(1, "RAND_file_name failed");
 
     if (RAND_status() != 1)
-	errx(1, "random not ready yet");
+        errx(1, "random not ready yet");
 
     if (RAND_bytes(buffer, len) != 1)
-	errx(1, "RAND_bytes");
+        errx(1, "RAND_bytes");
 
     if (filename)
-	rk_dumpdata(filename, buffer, len);
+        rk_dumpdata(filename, buffer, len);
 
     /* head vs tail */
     if (len >= 100000) {
-	unsigned bytes[256]; 
-	unsigned bits[8];
-	size_t bit, i;
-	double res;
-	double slen = sqrt((double)len);
+        unsigned bytes[256]; 
+        unsigned bits[8];
+        size_t bit, i;
+        double res;
+        double slen = sqrt((double)len);
 
-	memset(bits, 0, sizeof(bits));
-	memset(bytes, 0, sizeof(bytes));
+        memset(bits, 0, sizeof(bits));
+        memset(bytes, 0, sizeof(bytes));
 
-	for (i = 0; i < len; i++) {
-	    unsigned char c = ((unsigned char *)buffer)[i];
+        for (i = 0; i < len; i++) {
+            unsigned char c = ((unsigned char *)buffer)[i];
 
-	    bytes[c]++;
+            bytes[c]++;
 
-	    for (bit = 0; bit < 8 && c; bit++) {
-		if (c & 1)
-		    bits[bit]++;
-		c = c >> 1;
-	    }
-	}
+            for (bit = 0; bit < 8 && c; bit++) {
+                if (c & 1)
+                    bits[bit]++;
+                c = c >> 1;
+            }
+        }
 
-	/*
-	 * The count for each bit value has a mean of n*p = len/2,
-	 * and a standard deviation of sqrt(n*p*q) ~ sqrt(len/4).
-	 * Normalizing by dividing by "n*p", we get a mean of 1 and
-	 * a standard deviation of sqrt(q/n*p) = 1/sqrt(len).
-	 *
-	 * A 5.33-sigma event happens 1 time in 10 million.
-	 * A 5.73-sigma event happens 1 time in 100 million.
-	 * A 6.11-sigma event happens 1 time in 1000 million.
-	 *
-	 * We tolerate 5.33-sigma events (we have 8 not entirely
-	 * independent chances of skewed results) and want to fail
-	 * with a good RNG less often than 1 time in million.
-	 */
-	for (bit = 0; bit < 8; bit++) {
-	    res = slen * fabs(1.0 - 2 * (double)bits[bit] / len);
-	    if (res > 5.33)
-		errx(1, "head%d vs tail%d: %.1f-sigma (%d of %d)",
-		     (int)bit, (int)bit, res, bits[bit], len);
-	    printf("head vs tails bit%d: %f-sigma\n", (int)bit, res);
-	}
+        /*
+         * The count for each bit value has a mean of n*p = len/2,
+         * and a standard deviation of sqrt(n*p*q) ~ sqrt(len/4).
+         * Normalizing by dividing by "n*p", we get a mean of 1 and
+         * a standard deviation of sqrt(q/n*p) = 1/sqrt(len).
+         *
+         * A 5.33-sigma event happens 1 time in 10 million.
+         * A 5.73-sigma event happens 1 time in 100 million.
+         * A 6.11-sigma event happens 1 time in 1000 million.
+         *
+         * We tolerate 5.33-sigma events (we have 8 not entirely
+         * independent chances of skewed results) and want to fail
+         * with a good RNG less often than 1 time in million.
+         */
+        for (bit = 0; bit < 8; bit++) {
+            res = slen * fabs(1.0 - 2 * (double)bits[bit] / len);
+            if (res > 5.33)
+                errx(1, "head%d vs tail%d: %.1f-sigma (%d of %d)",
+                     (int)bit, (int)bit, res, bits[bit], len);
+            printf("head vs tails bit%d: %f-sigma\n", (int)bit, res);
+        }
 
-	/*
-	 * The count of each byte value has a mean of n*p = len/256,
-	 * and a standard deviation of sqrt(n*p*q) ~ sqrt(len/256).
-	 * Normalizing by dividing by "n*p", we get a mean of 1 and
-	 * a standard deviation of sqrt(q/n*p) ~ 16/sqrt(len).
-	 *
-	 * We tolerate 5.73-sigma events (we have 256 not entirely
-	 * independent chances of skewed results).  Note, for example,
-	 * a 5.2-sigma event was observed in ~5,000 runs.
-	 */
-	for (i = 0; i < 256; i++) {
-	    res = (slen / 16) * fabs(1.0 - 256 * (double)bytes[i] / len);
-	    if (res > 5.73)
-		errx(1, "byte %d: %.1f-sigma (%d of %d)",
-		     (int) i, res, bytes[i], len);
-	    printf("byte %d: %f-sigma\n", (int)i, res);
-	}
+        /*
+         * The count of each byte value has a mean of n*p = len/256,
+         * and a standard deviation of sqrt(n*p*q) ~ sqrt(len/256).
+         * Normalizing by dividing by "n*p", we get a mean of 1 and
+         * a standard deviation of sqrt(q/n*p) ~ 16/sqrt(len).
+         *
+         * We tolerate 5.73-sigma events (we have 256 not entirely
+         * independent chances of skewed results).  Note, for example,
+         * a 5.2-sigma event was observed in ~5,000 runs.
+         */
+        for (i = 0; i < 256; i++) {
+            res = (slen / 16) * fabs(1.0 - 256 * (double)bytes[i] / len);
+            if (res > 5.73)
+                errx(1, "byte %d: %.1f-sigma (%d of %d)",
+                     (int) i, res, bytes[i], len);
+            printf("byte %d: %f-sigma\n", (int)i, res);
+        }
     }
 
     free(buffer);
 
     /* test write random file */
     {
-	static const char *file = "test.file";
-	if (RAND_write_file(file) != 1)
-	    errx(1, "RAND_write_file");
-	if (RAND_load_file(file, 1024) != 1)
-	    errx(1, "RAND_load_file");
-	unlink(file);
+        static const char *file = "test.file";
+        if (RAND_write_file(file) != 1)
+            errx(1, "RAND_write_file");
+        if (RAND_load_file(file, 1024) != 1)
+            errx(1, "RAND_load_file");
+        unlink(file);
     }
 
     return 0;

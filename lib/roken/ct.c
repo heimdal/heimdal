@@ -77,6 +77,6 @@ ct_memcmp(const volatile void * volatile p1,
     int r = 0;
 
     for (i = 0; i < len; i++)
-	r |= (s1[i] ^ s2[i]);
+        r |= (s1[i] ^ s2[i]);
     return !!r;
 }

@@ -30,22 +30,22 @@
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_get_mic(OM_uint32 *minor_status,
-    gss_const_ctx_id_t context_handle,
-    gss_qop_t qop_req,
-    const gss_buffer_t message_buffer,
-    gss_buffer_t message_token)
+            gss_const_ctx_id_t context_handle,
+            gss_qop_t qop_req,
+            const gss_buffer_t message_buffer,
+            gss_buffer_t message_token)
 {
-	struct _gss_context *ctx = (struct _gss_context *) context_handle;
-	gssapi_mech_interface m;
+    struct _gss_context *ctx = (struct _gss_context *) context_handle;
+    gssapi_mech_interface m;
 
-	_mg_buffer_zero(message_token);
-	if (ctx == NULL) {
-	    *minor_status = 0;
-	    return GSS_S_NO_CONTEXT;
-	}
+    _mg_buffer_zero(message_token);
+    if (ctx == NULL) {
+        *minor_status = 0;
+        return GSS_S_NO_CONTEXT;
+    }
 
-	m = ctx->gc_mech;
+    m = ctx->gc_mech;
 
-	return (m->gm_get_mic(minor_status, ctx->gc_ctx, qop_req,
-		    message_buffer, message_token));
+    return (m->gm_get_mic(minor_status, ctx->gc_ctx, qop_req,
+                          message_buffer, message_token));
 }

@@ -508,27 +508,27 @@ kadm5_log_get_version_fd(kadm5_server_context *server_context, int fd,
         return errno ? errno : ENOMEM;
 
     switch (which) {
-    case LOG_VERSION_LAST:
-        ret = kadm5_log_goto_end(server_context, sp);
-        if (ret == 0)
-            ret = get_version_prev(sp, ver, tstamp);
-        break;
-    case LOG_VERSION_FIRST:
-        ret = kadm5_log_goto_first(server_context, sp);
-        if (ret == 0)
-            ret = get_header(sp, LOG_DOPEEK, ver, tstamp, NULL, NULL);
-        break;
-    case LOG_VERSION_UBER:
-        if (krb5_storage_seek(sp, 0, SEEK_SET) == 0)
-            ret = get_header(sp, LOG_DOPEEK, ver, tstamp, &op, &len);
-        else
-            ret = errno;
-        if (ret == 0 && (op != kadm_nop || len != LOG_UBER_LEN || *ver != 0))
-            ret = KADM5_LOG_NEEDS_UPGRADE;
-        break;
-    default:
-        ret = ENOTSUP;
-        break;
+        case LOG_VERSION_LAST:
+            ret = kadm5_log_goto_end(server_context, sp);
+            if (ret == 0)
+                ret = get_version_prev(sp, ver, tstamp);
+            break;
+        case LOG_VERSION_FIRST:
+            ret = kadm5_log_goto_first(server_context, sp);
+            if (ret == 0)
+                ret = get_header(sp, LOG_DOPEEK, ver, tstamp, NULL, NULL);
+            break;
+        case LOG_VERSION_UBER:
+            if (krb5_storage_seek(sp, 0, SEEK_SET) == 0)
+                ret = get_header(sp, LOG_DOPEEK, ver, tstamp, &op, &len);
+            else
+                ret = errno;
+            if (ret == 0 && (op != kadm_nop || len != LOG_UBER_LEN || *ver != 0))
+                ret = KADM5_LOG_NEEDS_UPGRADE;
+            break;
+        default:
+            ret = ENOTSUP;
+            break;
     }
 
     krb5_storage_free(sp);
@@ -600,12 +600,12 @@ log_open(kadm5_server_context *server_context, int lock_mode)
         lock_it = (lock_mode != LOCK_UN);
     }
     if (lock_it && flock(fd, lock_mode | lock_nb) < 0) {
-	ret = errno;
-	krb5_set_error_message(server_context->context, ret,
+        ret = errno;
+        krb5_set_error_message(server_context->context, ret,
                                "log_open: flock %s", log_context->log_file);
         if (fd != log_context->log_fd)
             (void) close(fd);
-	return ret;
+        return ret;
     }
 
     log_context->log_fd = fd;
@@ -748,7 +748,7 @@ kadm5_log_reinit(kadm5_server_context *server_context, uint32_t vno)
 
     ret = log_open(server_context, LOCK_EX);
     if (ret)
-	return ret;
+        return ret;
     if (log_context->log_fd != -1) {
         if (ftruncate(log_context->log_fd, 0) < 0) {
             ret = errno;
@@ -796,9 +796,9 @@ kadm5_log_end(kadm5_server_context *server_context)
  */
 static kadm5_ret_t
 kadm5_log_preamble(kadm5_server_context *context,
-		   krb5_storage *sp,
-		   enum kadm_ops op,
-		   uint32_t vno)
+                   krb5_storage *sp,
+                   enum kadm_ops op,
+                   uint32_t vno)
 {
     kadm5_log_context *log_context = &context->log_context;
     time_t now = time(NULL);
@@ -820,8 +820,8 @@ kadm5_log_preamble(kadm5_server_context *context,
 /* Writes the version part of the trailer */
 static kadm5_ret_t
 kadm5_log_postamble(kadm5_log_context *context,
-		    krb5_storage *sp,
-		    uint32_t vno)
+                    krb5_storage *sp,
+                    uint32_t vno)
 {
     return krb5_store_uint32(sp, vno);
 }
@@ -898,7 +898,7 @@ kadm5_log_flush(kadm5_server_context *context, krb5_storage *sp)
     sp = krb5_storage_from_fd(log_context->log_fd);
     if (sp == NULL) {
         krb5_data_free(&data);
-	return krb5_enomem(context->context);
+        return krb5_enomem(context->context);
     }
 
     /* Check that we are at the end of the log and fail if not */
@@ -946,7 +946,7 @@ kadm5_log_flush(kadm5_server_context *context, krb5_storage *sp)
         krb5_storage_free(sp);
         ret = bytes == -1 ? errno : KADM5_LOG_CORRUPT;
         krb5_warn(context->context, ret, "short write to iprop log file");
-	return ret;
+        return ret;
     }
     if (bytes != (krb5_ssize_t)len) {
         krb5_storage_free(sp);
@@ -1018,7 +1018,7 @@ kadm5_log_create(kadm5_server_context *context, hdb_entry *entry)
         return ret;
     sp = krb5_storage_emem();
     if (sp == NULL)
-	ret = krb5_enomem(context->context);
+        ret = krb5_enomem(context->context);
     if (ret == 0)
         ret = kadm5_log_preamble(context, sp, kadm_create,
                                  log_context->version + 1);
@@ -1027,7 +1027,7 @@ kadm5_log_create(kadm5_server_context *context, hdb_entry *entry)
     if (ret == 0) {
         bytes = krb5_storage_write(sp, value.data, value.length);
         if (bytes != (krb5_ssize_t)value.length)
-	    ret = bytes == -1 ? errno : krb5_enomem(context->context);
+            ret = bytes == -1 ? errno : krb5_enomem(context->context);
     }
     if (ret == 0)
         ret = krb5_store_uint32(sp, value.length);
@@ -1049,9 +1049,9 @@ kadm5_log_create(kadm5_server_context *context, hdb_entry *entry)
  */
 static kadm5_ret_t
 kadm5_log_replay_create(kadm5_server_context *context,
-		        uint32_t ver,
-		        uint32_t len,
-		        krb5_storage *sp)
+                        uint32_t ver,
+                        uint32_t len,
+                        krb5_storage *sp)
 {
     krb5_error_code ret;
     krb5_data data;
@@ -1061,17 +1061,17 @@ kadm5_log_replay_create(kadm5_server_context *context,
 
     ret = krb5_data_alloc(&data, len);
     if (ret) {
-	krb5_set_error_message(context->context, ret, "out of memory");
-	return ret;
+        krb5_set_error_message(context->context, ret, "out of memory");
+        return ret;
     }
     krb5_storage_read(sp, data.data, len);
     ret = hdb_value2entry(context->context, &data, &ent);
     krb5_data_free(&data);
     if (ret) {
-	krb5_set_error_message(context->context, ret,
-			       "Unmarshaling hdb entry in log failed, "
+        krb5_set_error_message(context->context, ret,
+                               "Unmarshaling hdb entry in log failed, "
                                "version: %ld", (long)ver);
-	return ret;
+        return ret;
     }
     ret = context->db->hdb_store(context->context, context->db, 0, &ent);
     hdb_free_entry(context->context, context->db, &ent);
@@ -1083,7 +1083,7 @@ kadm5_log_replay_create(kadm5_server_context *context,
  */
 kadm5_ret_t
 kadm5_log_delete(kadm5_server_context *context,
-		 krb5_principal princ)
+                 krb5_principal princ)
 {
     kadm5_ret_t ret;
     kadm5_log_context *log_context = &context->log_context;
@@ -1101,7 +1101,7 @@ kadm5_log_delete(kadm5_server_context *context,
         return ret;
     sp = krb5_storage_emem();
     if (sp == NULL)
-	ret = krb5_enomem(context->context);
+        ret = krb5_enomem(context->context);
     if (ret == 0)
         ret = kadm5_log_preamble(context, sp, kadm_delete,
                                  log_context->version + 1);
@@ -1160,16 +1160,16 @@ kadm5_log_delete(kadm5_server_context *context,
  */
 static kadm5_ret_t
 kadm5_log_replay_delete(kadm5_server_context *context,
-		        uint32_t ver, uint32_t len, krb5_storage *sp)
+                        uint32_t ver, uint32_t len, krb5_storage *sp)
 {
     krb5_error_code ret;
     krb5_principal principal;
 
     ret = krb5_ret_principal(sp, &principal);
     if (ret) {
-	krb5_set_error_message(context->context,  ret, "Failed to read deleted "
-			       "principal from log version: %ld",  (long)ver);
-	return ret;
+        krb5_set_error_message(context->context,  ret, "Failed to read deleted "
+                               "principal from log version: %ld",  (long)ver);
+        return ret;
     }
 
     ret = context->db->hdb_remove(context->context, context->db, 0, principal);
@@ -1186,8 +1186,8 @@ static kadm5_ret_t kadm5_log_replay_rename(kadm5_server_context *,
  */
 kadm5_ret_t
 kadm5_log_rename(kadm5_server_context *context,
-		 krb5_principal source,
-		 hdb_entry *entry)
+                 krb5_principal source,
+                 hdb_entry *entry)
 {
     krb5_storage *sp;
     krb5_ssize_t bytes;
@@ -1223,14 +1223,14 @@ kadm5_log_rename(kadm5_server_context *context,
                                  HDB_F_PRECHECK, &ent);
     if (ret == 0)
         ret = context->db->hdb_remove(context->context, context->db,
-                                       HDB_F_PRECHECK, source);
+                                      HDB_F_PRECHECK, source);
     if (ret)
         return ret;
 
     sp = krb5_storage_emem();
     krb5_data_zero(&value);
     if (sp == NULL)
-	ret = krb5_enomem(context->context);
+        ret = krb5_enomem(context->context);
     if (ret == 0)
         ret = kadm5_log_preamble(context, sp, kadm_rename,
                                  log_context->version + 1);
@@ -1257,7 +1257,7 @@ kadm5_log_rename(kadm5_server_context *context,
         errno = 0;
         bytes = krb5_storage_write(sp, value.data, value.length);
         if (bytes != (krb5_ssize_t)value.length)
-	    ret = bytes == -1 ? errno : krb5_enomem(context->context);
+            ret = bytes == -1 ? errno : krb5_enomem(context->context);
     }
     if (ret == 0) {
         end_off = krb5_storage_seek(sp, 0, SEEK_CUR);
@@ -1300,9 +1300,9 @@ kadm5_log_rename(kadm5_server_context *context,
 
 static kadm5_ret_t
 kadm5_log_replay_rename(kadm5_server_context *context,
-		        uint32_t ver,
-		        uint32_t len,
-		        krb5_storage *sp)
+                        uint32_t ver,
+                        uint32_t len,
+                        krb5_storage *sp)
 {
     krb5_error_code ret;
     krb5_principal source;
@@ -1316,30 +1316,30 @@ kadm5_log_replay_rename(kadm5_server_context *context,
     off = krb5_storage_seek(sp, 0, SEEK_CUR);
     ret = krb5_ret_principal(sp, &source);
     if (ret) {
-	krb5_set_error_message(context->context, ret, "Failed to read renamed "
-			       "principal in log, version: %ld", (long)ver);
-	return ret;
+        krb5_set_error_message(context->context, ret, "Failed to read renamed "
+                               "principal in log, version: %ld", (long)ver);
+        return ret;
     }
     princ_len = krb5_storage_seek(sp, 0, SEEK_CUR) - off;
     data_len = len - princ_len;
     ret = krb5_data_alloc(&value, data_len);
     if (ret) {
-	krb5_free_principal (context->context, source);
-	return ret;
+        krb5_free_principal (context->context, source);
+        return ret;
     }
     krb5_storage_read(sp, value.data, data_len);
     ret = hdb_value2entry(context->context, &value, &target_ent);
     krb5_data_free(&value);
     if (ret) {
-	krb5_free_principal(context->context, source);
-	return ret;
+        krb5_free_principal(context->context, source);
+        return ret;
     }
     ret = context->db->hdb_store(context->context, context->db,
-				 0, &target_ent);
+                                 0, &target_ent);
     hdb_free_entry(context->context, context->db, &target_ent);
     if (ret) {
-	krb5_free_principal(context->context, source);
-	return ret;
+        krb5_free_principal(context->context, source);
+        return ret;
     }
     ret = context->db->hdb_remove(context->context, context->db, 0, source);
     krb5_free_principal(context->context, source);
@@ -1352,8 +1352,8 @@ kadm5_log_replay_rename(kadm5_server_context *context,
  */
 kadm5_ret_t
 kadm5_log_modify(kadm5_server_context *context,
-		 hdb_entry *entry,
-		 uint32_t mask)
+                 hdb_entry *entry,
+                 uint32_t mask)
 {
     krb5_storage *sp;
     krb5_ssize_t bytes;
@@ -1378,13 +1378,13 @@ kadm5_log_modify(kadm5_server_context *context,
     sp = krb5_storage_emem();
     krb5_data_zero(&value);
     if (sp == NULL)
-	ret = krb5_enomem(context->context);
+        ret = krb5_enomem(context->context);
     if (ret == 0)
         ret = hdb_entry2value(context->context, entry, &value);
     if (ret) {
         krb5_data_free(&value);
         krb5_storage_free(sp);
-	return ret;
+        return ret;
     }
 
     len = value.length + sizeof(len);
@@ -1400,7 +1400,7 @@ kadm5_log_modify(kadm5_server_context *context,
     if (ret == 0) {
         bytes = krb5_storage_write(sp, value.data, value.length);
         if (bytes != (krb5_ssize_t)value.length)
-	    ret = bytes == -1 ? errno : krb5_enomem(context->context);
+            ret = bytes == -1 ? errno : krb5_enomem(context->context);
     }
     if (ret == 0)
         ret = krb5_store_uint32(sp, len);
@@ -1421,9 +1421,9 @@ kadm5_log_modify(kadm5_server_context *context,
  */
 static kadm5_ret_t
 kadm5_log_replay_modify(kadm5_server_context *context,
-		        uint32_t ver,
-		        uint32_t len,
-		        krb5_storage *sp)
+                        uint32_t ver,
+                        uint32_t len,
+                        krb5_storage *sp)
 {
     krb5_error_code ret;
     uint32_t mask;
@@ -1438,8 +1438,8 @@ kadm5_log_replay_modify(kadm5_server_context *context,
     len -= 4;
     ret = krb5_data_alloc (&value, len);
     if (ret) {
-	krb5_set_error_message(context->context, ret, "out of memory");
-	return ret;
+        krb5_set_error_message(context->context, ret, "out of memory");
+        return ret;
     }
     errno = 0;
     if (krb5_storage_read (sp, value.data, len) != (krb5_ssize_t)len) {
@@ -1449,82 +1449,82 @@ kadm5_log_replay_modify(kadm5_server_context *context,
     ret = hdb_value2entry (context->context, &value, &log_ent);
     krb5_data_free(&value);
     if (ret)
-	return ret;
+        return ret;
 
     memset(&ent, 0, sizeof(ent));
     /* NOTE: We do not use hdb_fetch_kvno() here */
     ret = context->db->hdb_fetch_kvno(context->context, context->db,
-				      log_ent.principal,
-				      HDB_F_DECRYPT|HDB_F_ALL_KVNOS|
-				      HDB_F_GET_ANY|HDB_F_ADMIN_DATA, 0, &ent);
+                                      log_ent.principal,
+                                      HDB_F_DECRYPT|HDB_F_ALL_KVNOS|
+                                      HDB_F_GET_ANY|HDB_F_ADMIN_DATA, 0, &ent);
     if (ret)
-	goto out;
+        goto out;
     if (mask & KADM5_PRINC_EXPIRE_TIME) {
-	if (log_ent.valid_end == NULL) {
-	    ent.valid_end = NULL;
-	} else {
-	    if (ent.valid_end == NULL) {
-		ent.valid_end = malloc(sizeof(*ent.valid_end));
-		if (ent.valid_end == NULL) {
-		    ret = krb5_enomem(context->context);
-		    goto out;
-		}
-	    }
-	    *ent.valid_end = *log_ent.valid_end;
-	}
+        if (log_ent.valid_end == NULL) {
+            ent.valid_end = NULL;
+        } else {
+            if (ent.valid_end == NULL) {
+                ent.valid_end = malloc(sizeof(*ent.valid_end));
+                if (ent.valid_end == NULL) {
+                    ret = krb5_enomem(context->context);
+                    goto out;
+                }
+            }
+            *ent.valid_end = *log_ent.valid_end;
+        }
     }
     if (mask & KADM5_PW_EXPIRATION) {
-	if (log_ent.pw_end == NULL) {
-	    ent.pw_end = NULL;
-	} else {
-	    if (ent.pw_end == NULL) {
-		ent.pw_end = malloc(sizeof(*ent.pw_end));
-		if (ent.pw_end == NULL) {
-		    ret = krb5_enomem(context->context);
-		    goto out;
-		}
-	    }
-	    *ent.pw_end = *log_ent.pw_end;
-	}
+        if (log_ent.pw_end == NULL) {
+            ent.pw_end = NULL;
+        } else {
+            if (ent.pw_end == NULL) {
+                ent.pw_end = malloc(sizeof(*ent.pw_end));
+                if (ent.pw_end == NULL) {
+                    ret = krb5_enomem(context->context);
+                    goto out;
+                }
+            }
+            *ent.pw_end = *log_ent.pw_end;
+        }
     }
     if (mask & KADM5_LAST_PWD_CHANGE) {
         krb5_warnx (context->context,
                     "Unimplemented mask KADM5_LAST_PWD_CHANGE");
     }
     if (mask & KADM5_ATTRIBUTES) {
-	ent.flags = log_ent.flags;
+        ent.flags = log_ent.flags;
     }
     if (mask & KADM5_MAX_LIFE) {
-	if (log_ent.max_life == NULL) {
-	    ent.max_life = NULL;
-	} else {
-	    if (ent.max_life == NULL) {
-		ent.max_life = malloc (sizeof(*ent.max_life));
-		if (ent.max_life == NULL) {
-		    ret = krb5_enomem(context->context);
-		    goto out;
-		}
-	    }
-	    *ent.max_life = *log_ent.max_life;
-	}
+        if (log_ent.max_life == NULL) {
+            ent.max_life = NULL;
+        } else {
+            if (ent.max_life == NULL) {
+                ent.max_life = malloc (sizeof(*ent.max_life));
+                if (ent.max_life == NULL) {
+                    ret = krb5_enomem(context->context);
+                    goto out;
+                }
+            }
+            *ent.max_life = *log_ent.max_life;
+        }
     }
     if ((mask & KADM5_MOD_TIME) && (mask & KADM5_MOD_NAME)) {
-	if (ent.modified_by == NULL) {
-	    ent.modified_by = malloc(sizeof(*ent.modified_by));
-	    if (ent.modified_by == NULL) {
-		ret = krb5_enomem(context->context);
-		goto out;
-	    }
-	} else
-	    free_Event(ent.modified_by);
-	ret = copy_Event(log_ent.modified_by, ent.modified_by);
-	if (ret) {
-	    ret = krb5_enomem(context->context);
-	    goto out;
-	}
+        if (ent.modified_by == NULL) {
+            ent.modified_by = malloc(sizeof(*ent.modified_by));
+            if (ent.modified_by == NULL) {
+                ret = krb5_enomem(context->context);
+                goto out;
+            }
+        } else
+            free_Event(ent.modified_by);
+        ret = copy_Event(log_ent.modified_by, ent.modified_by);
+        if (ret) {
+            ret = krb5_enomem(context->context);
+            goto out;
+        }
     }
     if (mask & KADM5_KVNO) {
-	ent.kvno = log_ent.kvno;
+        ent.kvno = log_ent.kvno;
     }
     if (mask & KADM5_MKVNO) {
         krb5_warnx(context->context, "Unimplemented mask KADM5_KVNO");
@@ -1537,18 +1537,18 @@ kadm5_log_replay_modify(kadm5_server_context *context,
         krb5_warnx(context->context, "Unimplemented mask KADM5_POLICY_CLR");
     }
     if (mask & KADM5_MAX_RLIFE) {
-	if (log_ent.max_renew == NULL) {
-	    ent.max_renew = NULL;
-	} else {
-	    if (ent.max_renew == NULL) {
-		ent.max_renew = malloc (sizeof(*ent.max_renew));
-		if (ent.max_renew == NULL) {
-		    ret = krb5_enomem(context->context);
-		    goto out;
-		}
-	    }
-	    *ent.max_renew = *log_ent.max_renew;
-	}
+        if (log_ent.max_renew == NULL) {
+            ent.max_renew = NULL;
+        } else {
+            if (ent.max_renew == NULL) {
+                ent.max_renew = malloc (sizeof(*ent.max_renew));
+                if (ent.max_renew == NULL) {
+                    ret = krb5_enomem(context->context);
+                    goto out;
+                }
+            }
+            *ent.max_renew = *log_ent.max_renew;
+        }
     }
     if (mask & KADM5_LAST_SUCCESS) {
         krb5_warnx(context->context, "Unimplemented mask KADM5_LAST_SUCCESS");
@@ -1561,38 +1561,38 @@ kadm5_log_replay_modify(kadm5_server_context *context,
                    "Unimplemented mask KADM5_FAIL_AUTH_COUNT");
     }
     if (mask & KADM5_KEY_DATA) {
-	size_t num;
-	size_t i;
+        size_t num;
+        size_t i;
 
-	/*
-	 * We don't need to do anything about key history here because
-	 * the log entry contains a complete entry, including hdb
-	 * extensions.  We do need to make sure that KADM5_TL_DATA is in
-	 * the mask though, since that's what it takes to update the
-	 * extensions (see below).
-	 */
-	mask |= KADM5_TL_DATA;
+        /*
+         * We don't need to do anything about key history here because
+         * the log entry contains a complete entry, including hdb
+         * extensions.  We do need to make sure that KADM5_TL_DATA is in
+         * the mask though, since that's what it takes to update the
+         * extensions (see below).
+         */
+        mask |= KADM5_TL_DATA;
 
-	for (i = 0; i < ent.keys.len; ++i)
-	    free_Key(&ent.keys.val[i]);
-	free (ent.keys.val);
+        for (i = 0; i < ent.keys.len; ++i)
+            free_Key(&ent.keys.val[i]);
+        free (ent.keys.val);
 
-	num = log_ent.keys.len;
+        num = log_ent.keys.len;
 
-	ent.keys.len = num;
-	ent.keys.val = malloc(len * sizeof(*ent.keys.val));
-	if (ent.keys.val == NULL) {
-	    krb5_enomem(context->context);
-	    goto out;
-	}
-	for (i = 0; i < ent.keys.len; ++i) {
-	    ret = copy_Key(&log_ent.keys.val[i],
-			   &ent.keys.val[i]);
-	    if (ret) {
-		krb5_set_error_message(context->context, ret, "out of memory");
-		goto out;
-	    }
-	}
+        ent.keys.len = num;
+        ent.keys.val = malloc(len * sizeof(*ent.keys.val));
+        if (ent.keys.val == NULL) {
+            krb5_enomem(context->context);
+            goto out;
+        }
+        for (i = 0; i < ent.keys.len; ++i) {
+            ret = copy_Key(&log_ent.keys.val[i],
+                           &ent.keys.val[i]);
+            if (ret) {
+                krb5_set_error_message(context->context, ret, "out of memory");
+                goto out;
+            }
+        }
     }
     if ((mask & KADM5_TL_DATA) && log_ent.etypes) {
         if (ent.etypes)
@@ -1612,29 +1612,29 @@ kadm5_log_replay_modify(kadm5_server_context *context,
     }
 
     if ((mask & KADM5_TL_DATA) && log_ent.extensions) {
-	if (ent.extensions) {
-	    free_HDB_extensions(ent.extensions);
-	    free(ent.extensions);
+        if (ent.extensions) {
+            free_HDB_extensions(ent.extensions);
+            free(ent.extensions);
             ent.extensions = NULL;
-	}
+        }
 
-	ent.extensions = calloc(1, sizeof(*ent.extensions));
-	if (ent.extensions == NULL)
-	    ret = ENOMEM;
+        ent.extensions = calloc(1, sizeof(*ent.extensions));
+        if (ent.extensions == NULL)
+            ret = ENOMEM;
 
         if (ret == 0)
             ret = copy_HDB_extensions(log_ent.extensions,
                                       ent.extensions);
-	if (ret) {
-	    ret = krb5_enomem(context->context);
-	    free(ent.extensions);
-	    ent.extensions = NULL;
-	    goto out;
-	}
+        if (ret) {
+            ret = krb5_enomem(context->context);
+            free(ent.extensions);
+            ent.extensions = NULL;
+            goto out;
+        }
     }
     ret = context->db->hdb_store(context->context, context->db,
-				 HDB_F_REPLACE, &ent);
- out:
+                                 HDB_F_REPLACE, &ent);
+out:
     hdb_free_entry(context->context, context->db, &ent);
     hdb_free_entry(context->context, context->db, &log_ent);
     return ret;
@@ -1663,12 +1663,12 @@ log_update_uber(kadm5_server_context *context, off_t off)
 
     mem_sp = krb5_storage_emem();
     if (mem_sp == NULL)
-	return krb5_enomem(context->context);
+        return krb5_enomem(context->context);
 
     sp = krb5_storage_from_fd(log_context->log_fd);
     if (sp == NULL) {
         krb5_storage_free(mem_sp);
-	return krb5_enomem(context->context);
+        return krb5_enomem(context->context);
     }
 
     /* Skip first entry's version and timestamp */
@@ -1751,7 +1751,7 @@ kadm5_log_nop(kadm5_server_context *context, enum kadm_nop_type nop_type)
 
     sp = krb5_storage_emem();
     if (sp == NULL)
-	return krb5_enomem(context->context);
+        return krb5_enomem(context->context);
 
     ret = kadm5_log_preamble(context, sp, kadm_nop, off == 0 ? 0 : vno + 1);
     if (ret)
@@ -1811,9 +1811,9 @@ out:
  */
 static kadm5_ret_t
 kadm5_log_replay_nop(kadm5_server_context *context,
-		     uint32_t ver,
-		     uint32_t len,
-		     krb5_storage *sp)
+                     uint32_t ver,
+                     uint32_t len,
+                     krb5_storage *sp)
 {
     return 0;
 }
@@ -1851,17 +1851,17 @@ recover_replay(kadm5_server_context *context,
     else
         ret = kadm5_log_replay(context, op, ver, len, sp);
     switch (ret) {
-    case HDB_ERR_NOENTRY:
-    case HDB_ERR_EXISTS:
-        if (data->mode != kadm_recover_replay)
-            return ret;
-    case 0:
-        break;
-    case KADM5_LOG_CORRUPT:
-        return -1;
-    default:
-        krb5_warn(context->context, ret, "unexpected error while replaying");
-        return -1;
+        case HDB_ERR_NOENTRY:
+        case HDB_ERR_EXISTS:
+            if (data->mode != kadm_recover_replay)
+                return ret;
+        case 0:
+            break;
+        case KADM5_LOG_CORRUPT:
+            return -1;
+        default:
+            krb5_warn(context->context, ret, "unexpected error while replaying");
+            return -1;
     }
     data->count++;
     data->ver = ver;
@@ -1918,11 +1918,11 @@ kadm5_ret_t
 kadm5_log_foreach(kadm5_server_context *context,
                   enum kadm_iter_opts iter_opts,
                   off_t *off_lastp,
-		  kadm5_ret_t (*func)(kadm5_server_context *server_context,
+                  kadm5_ret_t (*func)(kadm5_server_context *server_context,
                                       uint32_t ver, time_t timestamp,
                                       enum kadm_ops op, uint32_t len,
                                       krb5_storage *sp, void *ctx),
-		  void *ctx)
+                  void *ctx)
 {
     kadm5_ret_t ret = 0;
     int fd = context->log_context.log_fd;
@@ -1997,8 +1997,8 @@ kadm5_log_foreach(kadm5_server_context *context,
     }
 
     for (;;) {
-	uint32_t ver, ver2, len, len2;
-	uint32_t tstamp;
+        uint32_t ver, ver2, len, len2;
+        uint32_t tstamp;
         time_t timestamp;
         enum kadm_ops op;
 
@@ -2048,15 +2048,15 @@ kadm5_log_foreach(kadm5_server_context *context,
             break;
         }
 
-	ret = krb5_ret_uint32(sp, &len2);
+        ret = krb5_ret_uint32(sp, &len2);
         if (ret)
             break;
-	ret = krb5_ret_uint32(sp, &ver2);
+        ret = krb5_ret_uint32(sp, &ver2);
         if (ret)
             break;
-	if (len != len2 || ver != ver2) {
+        if (len != len2 || ver != ver2) {
             ret = KADM5_LOG_CORRUPT;
-	    break;
+            break;
         }
 
         /* Rewind to start of payload and call callback if we have one */
@@ -2270,11 +2270,11 @@ kadm5_log_next(krb5_context context,
  */
 kadm5_ret_t
 kadm5_log_previous(krb5_context context,
-		   krb5_storage *sp,
-		   uint32_t *verp,
-		   time_t *tstampp,
-		   enum kadm_ops *opp,
-		   uint32_t *lenp)
+                   krb5_storage *sp,
+                   uint32_t *verp,
+                   time_t *tstampp,
+                   enum kadm_ops *opp,
+                   uint32_t *lenp)
 {
     krb5_error_code ret;
     off_t oldoff;
@@ -2312,31 +2312,31 @@ log_corrupt:
 
 kadm5_ret_t
 kadm5_log_replay(kadm5_server_context *context,
-		 enum kadm_ops op,
-		 uint32_t ver,
-		 uint32_t len,
-		 krb5_storage *sp)
+                 enum kadm_ops op,
+                 uint32_t ver,
+                 uint32_t len,
+                 krb5_storage *sp)
 {
     switch (op) {
-    case kadm_create :
-	return kadm5_log_replay_create(context, ver, len, sp);
-    case kadm_delete :
-	return kadm5_log_replay_delete(context, ver, len, sp);
-    case kadm_rename :
-	return kadm5_log_replay_rename(context, ver, len, sp);
-    case kadm_modify :
-	return kadm5_log_replay_modify(context, ver, len, sp);
-    case kadm_nop :
-	return kadm5_log_replay_nop(context, ver, len, sp);
-    default :
-        /*
-         * FIXME This default arm makes it difficult to add new kadm_ops
-         *       values.
-         */
-	krb5_set_error_message(context->context, KADM5_FAILURE,
-			       "Unsupported replay op %d", (int)op);
-        (void) krb5_storage_seek(sp, len, SEEK_CUR);
-	return KADM5_FAILURE;
+        case kadm_create :
+            return kadm5_log_replay_create(context, ver, len, sp);
+        case kadm_delete :
+            return kadm5_log_replay_delete(context, ver, len, sp);
+        case kadm_rename :
+            return kadm5_log_replay_rename(context, ver, len, sp);
+        case kadm_modify :
+            return kadm5_log_replay_modify(context, ver, len, sp);
+        case kadm_nop :
+            return kadm5_log_replay_nop(context, ver, len, sp);
+        default :
+            /*
+             * FIXME This default arm makes it difficult to add new kadm_ops
+             *       values.
+             */
+            krb5_set_error_message(context->context, KADM5_FAILURE,
+                                   "Unsupported replay op %d", (int)op);
+            (void) krb5_storage_seek(sp, len, SEEK_CUR);
+            return KADM5_FAILURE;
     }
 }
 
@@ -2370,12 +2370,12 @@ struct load_entries_data {
  */
 static kadm5_ret_t
 load_entries_cb(kadm5_server_context *server_context,
-            uint32_t ver,
-            time_t timestamp,
-            enum kadm_ops op,
-            uint32_t len,
-            krb5_storage *sp,
-            void *ctx)
+                uint32_t ver,
+                time_t timestamp,
+                enum kadm_ops op,
+                uint32_t len,
+                krb5_storage *sp,
+                void *ctx)
 {
     struct load_entries_data *entries = ctx;
     kadm5_ret_t ret;
@@ -2494,7 +2494,7 @@ load_entries(kadm5_server_context *context, krb5_data *p,
                             NULL, load_entries_cb, &entries);
     if (ret == 0 &&
         (entries.nentries || entries.p != base || entries.first != *first))
-            ret = KADM5_LOG_CORRUPT;
+        ret = KADM5_LOG_CORRUPT;
     if (ret)
         krb5_data_free(p);
     return ret;
@@ -2633,7 +2633,7 @@ kadm5_log_truncate(kadm5_server_context *context, size_t keep, size_t maxbytes)
     (void) lseek(context->log_context.log_fd, off, SEEK_SET);
     sp = krb5_storage_from_fd(context->log_context.log_fd);
     if (sp == NULL)
-	return errno ? errno : krb5_enomem(context->context);
+        return errno ? errno : krb5_enomem(context->context);
     ret = kadm5_log_goto_end(context, sp);
     if (ret == 0) {
         ret = get_version_prev(sp, &context->log_context.version, &last_tstamp);
@@ -2690,17 +2690,17 @@ kadm5_log_signal_socket(krb5_context context)
 
     HEIMDAL_MUTEX_lock(&signal_mutex);
     if (!default_signal)
-	ret = asprintf(&default_signal, "%s/signal", hdb_db_dir(context));
+        ret = asprintf(&default_signal, "%s/signal", hdb_db_dir(context));
     if (ret == -1)
-	default_signal = NULL;
+        default_signal = NULL;
     HEIMDAL_MUTEX_unlock(&signal_mutex);
 
     return krb5_config_get_string_default(context,
-					  NULL,
-					  default_signal,
-					  "kdc",
-					  "signal_socket",
-					  NULL);
+                                          NULL,
+                                          default_signal,
+                                          "kdc",
+                                          "signal_socket",
+                                          NULL);
 }
 
 #else  /* NO_UNIX_SOCKETS */
@@ -2710,8 +2710,8 @@ kadm5_log_signal_socket(krb5_context context)
 
 kadm5_ret_t
 kadm5_log_signal_socket_info(krb5_context context,
-			     int server_end,
-			     struct addrinfo **ret_addrs)
+                             int server_end,
+                             struct addrinfo **ret_addrs)
 {
     struct addrinfo hints;
     struct addrinfo *addrs = NULL;
@@ -2722,34 +2722,34 @@ kadm5_log_signal_socket_info(krb5_context context,
 
     hints.ai_flags = AI_NUMERICHOST;
     if (server_end)
-	hints.ai_flags |= AI_PASSIVE;
+        hints.ai_flags |= AI_PASSIVE;
     hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_protocol = IPPROTO_TCP;
 
     wsret = getaddrinfo(SIGNAL_SOCKET_HOST,
-			SIGNAL_SOCKET_PORT,
-			&hints, &addrs);
+                        SIGNAL_SOCKET_PORT,
+                        &hints, &addrs);
 
     if (wsret != 0) {
-	krb5_set_error_message(context, KADM5_FAILURE,
-			       "%s", gai_strerror(wsret));
-	goto done;
+        krb5_set_error_message(context, KADM5_FAILURE,
+                               "%s", gai_strerror(wsret));
+        goto done;
     }
 
     if (addrs == NULL) {
-	krb5_set_error_message(context, KADM5_FAILURE,
-			       "getaddrinfo() failed to return address list");
-	goto done;
+        krb5_set_error_message(context, KADM5_FAILURE,
+                               "getaddrinfo() failed to return address list");
+        goto done;
     }
 
     *ret_addrs = addrs;
     addrs = NULL;
     ret = 0;
 
- done:
+done:
     if (addrs)
-	freeaddrinfo(addrs);
+        freeaddrinfo(addrs);
     return ret;
 }
 

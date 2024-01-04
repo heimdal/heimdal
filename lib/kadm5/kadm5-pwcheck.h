@@ -41,8 +41,8 @@
 #define KADM5_PASSWD_VERSION_V1 1
 
 typedef const char* (*kadm5_passwd_quality_check_func_v0)(krb5_context,
-							  krb5_principal,
-							  krb5_data*);
+                                                          krb5_principal,
+                                                          krb5_data*);
 
 /*
  * The 4th argument, is a tuning parameter for the quality check
@@ -52,11 +52,11 @@ typedef const char* (*kadm5_passwd_quality_check_func_v0)(krb5_context,
 
 typedef int
 (*kadm5_passwd_quality_check_func)(krb5_context context,
-				   krb5_principal principal,
-				   krb5_data *password,
-				   const char *tuning,
-				   char *message,
-				   size_t length);
+                                   krb5_principal principal,
+                                   krb5_data *password,
+                                   const char *tuning,
+                                   char *message,
+                                   size_t length);
 
 struct kadm5_pw_policy_check_func {
     const char *name;

@@ -53,10 +53,10 @@ void
 DSA_free(DSA *dsa)
 {
     if (dsa->references <= 0)
-	abort();
+        abort();
 
     if (--dsa->references > 0)
-	return;
+        return;
 
     (*dsa->meth->finish)(dsa);
 
@@ -121,7 +121,7 @@ DSA_get_default_method(void)
 
 int
 DSA_verify(int type, const unsigned char * digest, int digest_len,
-	   const unsigned char *sig, int sig_len, DSA *dsa)
+           const unsigned char *sig, int sig_len, DSA *dsa)
 {
     return -1;
 }

@@ -108,25 +108,25 @@ calc (SHA256_CTX *m, uint32_t *in)
     HH = H;
 
     for (i = 0; i < 16; ++i)
-	data[i] = in[i];
+        data[i] = in[i];
     for (i = 16; i < 64; ++i)
-	data[i] = sigma1(data[i-2]) + data[i-7] +
-	    sigma0(data[i-15]) + data[i - 16];
+        data[i] = sigma1(data[i-2]) + data[i-7] +
+            sigma0(data[i-15]) + data[i - 16];
 
     for (i = 0; i < 64; i++) {
-	uint32_t T1, T2;
+        uint32_t T1, T2;
 
-	T1 = HH + Sigma1(EE) + Ch(EE, FF, GG) + constant_256[i] + data[i];
-	T2 = Sigma0(AA) + Maj(AA,BB,CC);
+        T1 = HH + Sigma1(EE) + Ch(EE, FF, GG) + constant_256[i] + data[i];
+        T2 = Sigma0(AA) + Maj(AA,BB,CC);
 
-	HH = GG;
-	GG = FF;
-	FF = EE;
-	EE = DD + T1;
-	DD = CC;
-	CC = BB;
-	BB = AA;
-	AA = T1 + T2;
+        HH = GG;
+        GG = FF;
+        FF = EE;
+        EE = DD + T1;
+        DD = CC;
+        CC = BB;
+        BB = AA;
+        AA = T1 + T2;
     }
 
     A += AA;
@@ -173,29 +173,29 @@ SHA256_Update (SHA256_CTX *m, const void *v, size_t len)
 
     m->sz[0] += len * 8;
     if (m->sz[0] < old_sz)
-	++m->sz[1];
+        ++m->sz[1];
     offset = (old_sz / 8) % 64;
     while(len > 0){
-	size_t l = min(len, 64 - offset);
-	memcpy(m->save + offset, p, l);
-	offset += l;
-	p += l;
-	len -= l;
-	if(offset == 64){
+        size_t l = min(len, 64 - offset);
+        memcpy(m->save + offset, p, l);
+        offset += l;
+        p += l;
+        len -= l;
+        if(offset == 64){
 #if !defined(WORDS_BIGENDIAN) || defined(_CRAY)
-	    int i;
-	    uint32_t current[16];
-	    struct x32 *us = (struct x32*)m->save;
-	    for(i = 0; i < 8; i++){
-		current[2*i+0] = swap_uint32_t(us[i].a);
-		current[2*i+1] = swap_uint32_t(us[i].b);
-	    }
-	    calc(m, current);
+            int i;
+            uint32_t current[16];
+            struct x32 *us = (struct x32*)m->save;
+            for(i = 0; i < 8; i++){
+                current[2*i+0] = swap_uint32_t(us[i].a);
+                current[2*i+1] = swap_uint32_t(us[i].b);
+            }
+            calc(m, current);
 #else
-	    calc(m, (uint32_t*)m->save);
+            calc(m, (uint32_t*)m->save);
 #endif
-	    offset = 0;
-	}
+            offset = 0;
+        }
     }
     return 1;
 }
@@ -219,15 +219,15 @@ SHA256_Final (void *res, SHA256_CTX *m)
     zeros[dstart+0] = (m->sz[1] >> 24) & 0xff;
     SHA256_Update (m, zeros, dstart + 8);
     {
-	int i;
-	unsigned char *r = (unsigned char*)res;
+        int i;
+        unsigned char *r = (unsigned char*)res;
 
-	for (i = 0; i < 8; ++i) {
-	    r[4*i+3] = m->counter[i] & 0xFF;
-	    r[4*i+2] = (m->counter[i] >> 8) & 0xFF;
-	    r[4*i+1] = (m->counter[i] >> 16) & 0xFF;
-	    r[4*i]   = (m->counter[i] >> 24) & 0xFF;
-	}
+        for (i = 0; i < 8; ++i) {
+            r[4*i+3] = m->counter[i] & 0xFF;
+            r[4*i+2] = (m->counter[i] >> 8) & 0xFF;
+            r[4*i+1] = (m->counter[i] >> 16) & 0xFF;
+            r[4*i]   = (m->counter[i] >> 24) & 0xFF;
+        }
     }
     return 1;
 }

@@ -36,6 +36,6 @@ gss_sign(OM_uint32 *minor_status,
     gss_buffer_t message_token)
 {
 
-	return gss_get_mic(minor_status,
-	    context_handle, qop_req, message_buffer, message_token);
+    return gss_get_mic(minor_status,
+                       context_handle, qop_req, message_buffer, message_token);
 }

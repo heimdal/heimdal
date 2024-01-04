@@ -41,24 +41,24 @@ RCSID("$Id$");
 
 kadm5_ret_t
 _kadm5_bump_pw_expire(kadm5_server_context *context,
-		      hdb_entry *ent)
+                      hdb_entry *ent)
 {
     if (ent->pw_end != NULL) {
-	time_t life;
+        time_t life;
 
-	life = krb5_config_get_time_default(context->context,
-					    NULL,
-					    365 * 24 * 60 * 60,
-					    "kadmin",
-					    "password_lifetime",
-					    NULL);
+        life = krb5_config_get_time_default(context->context,
+                                            NULL,
+                                            365 * 24 * 60 * 60,
+                                            "kadmin",
+                                            "password_lifetime",
+                                            NULL);
 
-	if (life != 0)
-	    *(ent->pw_end) = time(NULL) + life;
-	else {
-	    free(ent->pw_end);
-	    ent->pw_end = NULL;
-	}
+        if (life != 0)
+            *(ent->pw_end) = time(NULL) + life;
+        else {
+            free(ent->pw_end);
+            ent->pw_end = NULL;
+        }
     }
     return 0;
 }

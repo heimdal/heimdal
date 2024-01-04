@@ -36,10 +36,10 @@
 
 static void
 test_wrapping(krb5_context context,
-	      size_t min_size,
-	      size_t max_size,
-	      size_t step,
-	      krb5_enctype etype)
+              size_t min_size,
+              size_t max_size,
+              size_t step,
+              krb5_enctype etype)
 {
     krb5_error_code ret;
     krb5_keyblock key;
@@ -51,40 +51,40 @@ test_wrapping(krb5_context context,
 
     ret = krb5_generate_random_keyblock(context, etype, &key);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_generate_random_keyblock");
+        krb5_err(context, 1, ret, "krb5_generate_random_keyblock");
 
     ret = krb5_enctype_to_string(context, etype, &etype_name);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_enctype_to_string");
+        krb5_err(context, 1, ret, "krb5_enctype_to_string");
 
     buf = malloc(max_size);
     if (buf == NULL)
-	krb5_errx(context, 1, "out of memory");
+        krb5_errx(context, 1, "out of memory");
     memset(buf, 0, max_size);
 
     ret = krb5_crypto_init(context, &key, 0, &crypto);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_crypto_init");
+        krb5_err(context, 1, ret, "krb5_crypto_init");
 
     for (size = min_size; size < max_size; size += step) {
-	size_t wrapped_size;
+        size_t wrapped_size;
 
-	ret = krb5_encrypt(context, crypto, 0, buf, size, &data);
-	if (ret)
-	    krb5_err(context, 1, ret, "encrypt size %lu using %s",
-		     (unsigned long)size, etype_name);
+        ret = krb5_encrypt(context, crypto, 0, buf, size, &data);
+        if (ret)
+            krb5_err(context, 1, ret, "encrypt size %lu using %s",
+                     (unsigned long)size, etype_name);
 
-	wrapped_size = krb5_get_wrapped_length(context, crypto, size);
+        wrapped_size = krb5_get_wrapped_length(context, crypto, size);
 
-	if (wrapped_size != data.length)
-	    krb5_errx(context, 1, "calculated wrapped length %lu != "
-		      "real wrapped length %lu for data length %lu using "
-		      "enctype %s",
-		      (unsigned long)wrapped_size,
-		      (unsigned long)data.length,
-		      (unsigned long)size,
-		      etype_name);
-	krb5_data_free(&data);
+        if (wrapped_size != data.length)
+            krb5_errx(context, 1, "calculated wrapped length %lu != "
+                      "real wrapped length %lu for data length %lu using "
+                      "enctype %s",
+                      (unsigned long)wrapped_size,
+                      (unsigned long)data.length,
+                      (unsigned long)size,
+                      etype_name);
+        krb5_data_free(&data);
     }
 
     free(etype_name);
@@ -109,9 +109,9 @@ static void
 usage (int ret)
 {
     arg_printusage (args,
-		    sizeof(args)/sizeof(*args),
-		    NULL,
-		    "");
+                    sizeof(args)/sizeof(*args),
+                    NULL,
+                    "");
     exit (ret);
 }
 
@@ -124,29 +124,29 @@ main(int argc, char **argv)
 
     krb5_enctype enctypes[] = {
 #ifdef HEIM_WEAK_CRYPTO
-	ETYPE_DES_CBC_CRC,
-	ETYPE_DES_CBC_MD4,
-	ETYPE_DES_CBC_MD5,
+        ETYPE_DES_CBC_CRC,
+        ETYPE_DES_CBC_MD4,
+        ETYPE_DES_CBC_MD5,
 #endif
-	ETYPE_DES3_CBC_SHA1,
-	ETYPE_ARCFOUR_HMAC_MD5,
-	ETYPE_AES128_CTS_HMAC_SHA1_96,
-	ETYPE_AES256_CTS_HMAC_SHA1_96,
-	KRB5_ENCTYPE_AES128_CTS_HMAC_SHA256_128,
-	KRB5_ENCTYPE_AES256_CTS_HMAC_SHA384_192
+        ETYPE_DES3_CBC_SHA1,
+        ETYPE_ARCFOUR_HMAC_MD5,
+        ETYPE_AES128_CTS_HMAC_SHA1_96,
+        ETYPE_AES256_CTS_HMAC_SHA1_96,
+        KRB5_ENCTYPE_AES128_CTS_HMAC_SHA256_128,
+        KRB5_ENCTYPE_AES256_CTS_HMAC_SHA384_192
     };
 
     setprogname(argv[0]);
 
     if(getarg(args, sizeof(args) / sizeof(args[0]), argc, argv, &optidx))
-	usage(1);
+        usage(1);
 
     if (help_flag)
-	usage (0);
+        usage (0);
 
     if(version_flag){
-	print_version(NULL);
-	exit(0);
+        print_version(NULL);
+        exit(0);
     }
 
     argc -= optidx;
@@ -154,13 +154,13 @@ main(int argc, char **argv)
 
     ret = krb5_init_context(&context);
     if (ret)
-	errx (1, "krb5_init_context failed: %d", ret);
+        errx (1, "krb5_init_context failed: %d", ret);
 
     for (i = 0; i < sizeof(enctypes)/sizeof(enctypes[0]); i++) {
-	krb5_enctype_enable(context, enctypes[i]);
+        krb5_enctype_enable(context, enctypes[i]);
 
-	test_wrapping(context, 0, 1024, 1, enctypes[i]);
-	test_wrapping(context, 1024, 1024 * 100, 1024, enctypes[i]);
+        test_wrapping(context, 0, 1024, 1, enctypes[i]);
+        test_wrapping(context, 1024, 1024 * 100, 1024, enctypes[i]);
     }
     krb5_free_context(context);
 

@@ -47,16 +47,16 @@ sendmsg(rk_socket_t s, const struct msghdr *msg, int flags)
     struct iovec *iov = msg->msg_iov;
 
     for(i = 0; i < msg->msg_iovlen; ++i)
-	tot += iov[i].iov_len;
+        tot += iov[i].iov_len;
     buf = malloc(tot);
     if (tot != 0 && buf == NULL) {
-	errno = ENOMEM;
-	return -1;
+        errno = ENOMEM;
+        return -1;
     }
     p = buf;
     for (i = 0; i < msg->msg_iovlen; ++i) {
-	memcpy (p, iov[i].iov_base, iov[i].iov_len);
-	p += iov[i].iov_len;
+        memcpy (p, iov[i].iov_base, iov[i].iov_len);
+        p += iov[i].iov_len;
     }
     ret = sendto (s, buf, tot, flags, msg->msg_name, msg->msg_namelen);
     free (buf);
@@ -132,10 +132,10 @@ sendmsg_w32(rk_socket_t s, const struct msghdr * msg, int flags)
        WSAMSG which is a much more direct analogue to sendmsg(). */
 
     srv = WSASend(s, msg->msg_iov, msg->msg_iovlen,
-		  &num_bytes_sent, flags, NULL, NULL);
+                  &num_bytes_sent, flags, NULL, NULL);
 
     if (srv == 0)
-	return (int) num_bytes_sent;
+        return (int) num_bytes_sent;
 
     /* srv == SOCKET_ERROR and WSAGetLastError() == WSA_IO_PENDING
        indicates that a non-blocking transfer has been scheduled.

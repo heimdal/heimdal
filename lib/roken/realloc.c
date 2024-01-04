@@ -42,6 +42,6 @@ ROKEN_LIB_FUNCTION void * ROKEN_LIB_CALL
 rk_realloc(void *ptr, size_t size)
 {
     if (ptr == NULL)
-	return malloc(size);
+        return malloc(size);
     return realloc(ptr, size);
 }

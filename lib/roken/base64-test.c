@@ -42,56 +42,56 @@ main(int argc, char **argv)
     int numerr = 0;
     int numtest = 1;
     struct test {
-	void *data;
-	size_t len;
-	const char *result;
+        void *data;
+        size_t len;
+        const char *result;
     } *t, tests[] = {
-	{ "", 0 , "" },
-	{ "1", 1, "MQ==" },
-	{ "22", 2, "MjI=" },
-	{ "333", 3, "MzMz" },
-	{ "4444", 4, "NDQ0NA==" },
-	{ "55555", 5, "NTU1NTU=" },
-	{ "abc:def", 7, "YWJjOmRlZg==" },
-	{ NULL, 0, NULL }
+        { "", 0 , "" },
+        { "1", 1, "MQ==" },
+        { "22", 2, "MjI=" },
+        { "333", 3, "MzMz" },
+        { "4444", 4, "NDQ0NA==" },
+        { "55555", 5, "NTU1NTU=" },
+        { "abc:def", 7, "YWJjOmRlZg==" },
+        { NULL, 0, NULL }
     };
     for(t = tests; t->data; t++) {
-	char *str;
-	int len;
+        char *str;
+        int len;
 
-	(void) rk_base64_encode(t->data, t->len, &str);
-	if(strcmp(str, t->result) != 0) {
-	    fprintf(stderr, "failed test %d: %s != %s\n", numtest,
-		    str, t->result);
-	    numerr++;
-	}
-	free(str);
-	str = strdup(t->result);
-	len = rk_base64_decode(t->result, str);
-	if(len != t->len) {
-	    fprintf(stderr, "failed test %d: len %lu != %lu\n", numtest,
-		    (unsigned long)len, (unsigned long)t->len);
-	    numerr++;
-	} else if(memcmp(str, t->data, t->len) != 0) {
-	    fprintf(stderr, "failed test %d: data\n", numtest);
-	    numerr++;
-	}
-	free(str);
-	numtest++;
+        (void) rk_base64_encode(t->data, t->len, &str);
+        if(strcmp(str, t->result) != 0) {
+            fprintf(stderr, "failed test %d: %s != %s\n", numtest,
+                    str, t->result);
+            numerr++;
+        }
+        free(str);
+        str = strdup(t->result);
+        len = rk_base64_decode(t->result, str);
+        if(len != t->len) {
+            fprintf(stderr, "failed test %d: len %lu != %lu\n", numtest,
+                    (unsigned long)len, (unsigned long)t->len);
+            numerr++;
+        } else if(memcmp(str, t->data, t->len) != 0) {
+            fprintf(stderr, "failed test %d: data\n", numtest);
+            numerr++;
+        }
+        free(str);
+        numtest++;
     }
 
     {
-	char str[32];
-	if(rk_base64_decode("M=M=", str) != -1) {
-	    fprintf(stderr, "failed test %d: successful decode of `M=M='\n",
-		    numtest++);
-	    numerr++;
-	}
-	if(rk_base64_decode("MQ===", str) != -1) {
-	    fprintf(stderr, "failed test %d: successful decode of `MQ==='\n",
-		    numtest++);
-	    numerr++;
-	}
+        char str[32];
+        if(rk_base64_decode("M=M=", str) != -1) {
+            fprintf(stderr, "failed test %d: successful decode of `M=M='\n",
+                    numtest++);
+            numerr++;
+        }
+        if(rk_base64_decode("MQ===", str) != -1) {
+            fprintf(stderr, "failed test %d: successful decode of `MQ==='\n",
+                    numtest++);
+            numerr++;
+        }
     }
     return numerr;
 }

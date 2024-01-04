@@ -48,24 +48,24 @@
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_generate_subkey_extended(krb5_context context,
-			      const krb5_keyblock *key,
-			      krb5_enctype etype,
-			      krb5_keyblock **subkey)
+                              const krb5_keyblock *key,
+                              krb5_enctype etype,
+                              krb5_keyblock **subkey)
 {
     krb5_error_code ret;
 
     ALLOC(*subkey, 1);
     if (*subkey == NULL)
-	return krb5_enomem(context);
+        return krb5_enomem(context);
 
     if (etype == ETYPE_NULL)
-	etype = key->keytype; /* use session key etype */
+        etype = key->keytype; /* use session key etype */
 
     /* XXX should we use the session key as input to the RF? */
     ret = krb5_generate_random_keyblock(context, etype, *subkey);
     if (ret != 0) {
-	free(*subkey);
-	*subkey = NULL;
+        free(*subkey);
+        *subkey = NULL;
     }
 
     return ret;

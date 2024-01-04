@@ -47,37 +47,37 @@ main(void)
     unsigned failures = 0;
 
     for (i = 0; i < punycode_examples_size; ++i) {
-	char buf[256];
-	int ret;
-	const struct punycode_example *e = &punycode_examples[i];
-	size_t len;
+        char buf[256];
+        int ret;
+        const struct punycode_example *e = &punycode_examples[i];
+        size_t len;
 
-	len = sizeof(buf);
-	ret = wind_punycode_label_toascii(e->val, e->len, buf, &len);
-	if (ret) {
-	    printf("punycode %u (%s) failed: %d\n", i, e->description, ret);
-	    ++failures;
-	    continue;
-	}
-	if (strncmp(buf, "xn--", 4) == 0) {
-	    memmove(buf, buf + 4, len - 4);
-	    len -= 4;
-	}
-	if (len != strlen(e->pc)) {
-	    printf("punycode %u (%s) wrong len, actual: %u, expected: %u\n",
-		   i, e->description,
-		   (unsigned int)len, (unsigned int)strlen(e->pc));
-	    printf("buf %s != pc: %s\n", buf, e->pc);
-	    ++failures;
-	    continue;
-	}
-	if (strncasecmp(buf, e->pc, len) != 0) {
-	    printf("punycode %u (%s) wrong contents, "
-		   "actual: \"%.*s\", expected: \"%s\"\n",
-		   i, e->description, (unsigned int)len, buf, e->pc);
-	    ++failures;
-	    continue;
-	}
+        len = sizeof(buf);
+        ret = wind_punycode_label_toascii(e->val, e->len, buf, &len);
+        if (ret) {
+            printf("punycode %u (%s) failed: %d\n", i, e->description, ret);
+            ++failures;
+            continue;
+        }
+        if (strncmp(buf, "xn--", 4) == 0) {
+            memmove(buf, buf + 4, len - 4);
+            len -= 4;
+        }
+        if (len != strlen(e->pc)) {
+            printf("punycode %u (%s) wrong len, actual: %u, expected: %u\n",
+                   i, e->description,
+                   (unsigned int)len, (unsigned int)strlen(e->pc));
+            printf("buf %s != pc: %s\n", buf, e->pc);
+            ++failures;
+            continue;
+        }
+        if (strncasecmp(buf, e->pc, len) != 0) {
+            printf("punycode %u (%s) wrong contents, "
+                   "actual: \"%.*s\", expected: \"%s\"\n",
+                   i, e->description, (unsigned int)len, buf, e->pc);
+            ++failures;
+            continue;
+        }
     }
     return failures != 0;
 }

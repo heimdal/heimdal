@@ -59,8 +59,8 @@ mkdtemp(char *template)
     pid_t val = getpid();
 
     for (i = 0; i < len && i < 7 && template[len - i] == 'X'; i++) {
-	template[len - i] = '0' + val % 10;
-	val /= 10;
+        template[len - i] = '0' + val % 10;
+        val /= 10;
         if (!val)
             val = getpid();
     }
@@ -74,13 +74,13 @@ mkdtemp(char *template)
     do {
         if (mkdir(template, 0700) == 0)
             return template;
-	for (i = start + 1; i < len; i++) {
-	    if (++(template[i]) == '9' + 1)
-		template[i] = 'a';
-	    if (template[i] <= 'z')
-		break;
-	    template[i] = 'a';
-	}
+        for (i = start + 1; i < len; i++) {
+            if (++(template[i]) == '9' + 1)
+                template[i] = 'a';
+            if (template[i] <= 'z')
+                break;
+            template[i] = 'a';
+        }
     } while(1);
 }
 #endif

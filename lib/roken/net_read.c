@@ -49,17 +49,17 @@ net_read (rk_socket_t fd, void *buf, size_t nbytes)
     size_t rem = nbytes;
 
     while (rem > 0) {
-	count = read (fd, cbuf, rem);
-	if (count < 0) {
-	    if (errno == EINTR)
-		continue;
-	    else
-		return count;
-	} else if (count == 0) {
-	    return count;
-	}
-	cbuf += count;
-	rem -= count;
+        count = read (fd, cbuf, rem);
+        if (count < 0) {
+            if (errno == EINTR)
+                continue;
+            else
+                return count;
+        } else if (count == 0) {
+            return count;
+        }
+        cbuf += count;
+        rem -= count;
     }
     return nbytes;
 }
@@ -79,38 +79,38 @@ net_read(rk_socket_t sock, void *buf, size_t nbytes)
 
     while (rem > 0) {
 #ifdef SOCKET_IS_NOT_AN_FD
-	if (use_read)
-	    count = _read (sock, cbuf, rem);
-	else
-	    count = recv (sock, cbuf, rem, 0);
+        if (use_read)
+            count = _read (sock, cbuf, rem);
+        else
+            count = recv (sock, cbuf, rem, 0);
 
-	if (use_read == 0 &&
-	    rk_IS_SOCKET_ERROR(count) &&
+        if (use_read == 0 &&
+            rk_IS_SOCKET_ERROR(count) &&
             (rk_SOCK_ERRNO == WSANOTINITIALISED ||
              rk_SOCK_ERRNO == WSAENOTSOCK)) {
-	    use_read = 1;
+            use_read = 1;
 
-	    count = _read (sock, cbuf, rem);
-	}
+            count = _read (sock, cbuf, rem);
+        }
 #else
-	count = recv (sock, cbuf, rem, 0);
+        count = recv (sock, cbuf, rem, 0);
 #endif
-	if (count < 0) {
+        if (count < 0) {
 
-	    /* With WinSock, the error EINTR (WSAEINTR), is used to
-	       indicate that a blocking call was cancelled using
-	       WSACancelBlockingCall(). */
+            /* With WinSock, the error EINTR (WSAEINTR), is used to
+               indicate that a blocking call was cancelled using
+               WSACancelBlockingCall(). */
 
 #ifndef HAVE_WINSOCK
-	    if (rk_SOCK_ERRNO == EINTR)
-		continue;
+            if (rk_SOCK_ERRNO == EINTR)
+                continue;
 #endif
-	    return count;
-	} else if (count == 0) {
-	    return count;
-	}
-	cbuf += count;
-	rem -= count;
+            return count;
+        } else if (count == 0) {
+            return count;
+        }
+        cbuf += count;
+        rem -= count;
     }
     return nbytes;
 }

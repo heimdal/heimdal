@@ -37,8 +37,8 @@
 
 void GSSAPI_CALLCONV
 _gss_ntlm_iter_creds_f(OM_uint32 flags,
-		       void *userctx ,
-		       void (*cred_iter)(void *, gss_OID, gss_cred_id_t))
+                       void *userctx ,
+                       void (*cred_iter)(void *, gss_OID, gss_cred_id_t))
 {
 #ifdef HAVE_KCM
     krb5_error_code ret;
@@ -48,52 +48,52 @@ _gss_ntlm_iter_creds_f(OM_uint32 flags,
 
     ret = krb5_init_context(&context);
     if (ret)
-	goto done;
+        goto done;
 
     ret = krb5_kcm_storage_request(context, KCM_OP_GET_NTLM_USER_LIST, &request);
     if (ret)
-	goto done;
+        goto done;
 
     ret = krb5_kcm_call(context, request, &response, &response_data);
     krb5_storage_free(request);
     if (ret)
-	goto done;
+        goto done;
 
     while (1) {
-	uint32_t morep;
-	char *user = NULL, *domain = NULL;
-	ntlm_cred dn;
+        uint32_t morep;
+        char *user = NULL, *domain = NULL;
+        ntlm_cred dn;
 
-	ret = krb5_ret_uint32(response, &morep);
-	if (ret) goto out;
+        ret = krb5_ret_uint32(response, &morep);
+        if (ret) goto out;
 
-	if (!morep) goto out;
+        if (!morep) goto out;
 
-	ret = krb5_ret_stringz(response, &user);
-	if (ret) goto out;
-	ret = krb5_ret_stringz(response, &domain);
-	if (ret) {
-	    free(user);
-	    goto out;
-	}
+        ret = krb5_ret_stringz(response, &user);
+        if (ret) goto out;
+        ret = krb5_ret_stringz(response, &domain);
+        if (ret) {
+            free(user);
+            goto out;
+        }
 
-	dn = calloc(1, sizeof(*dn));
-	if (dn == NULL) {
-	    free(user);
-	    free(domain);
-	    goto out;
-	}
-	dn->username = user;
-	dn->domain = domain;
+        dn = calloc(1, sizeof(*dn));
+        if (dn == NULL) {
+            free(user);
+            free(domain);
+            goto out;
+        }
+        dn->username = user;
+        dn->domain = domain;
 
-	cred_iter(userctx, GSS_NTLM_MECHANISM, (gss_cred_id_t)dn);
+        cred_iter(userctx, GSS_NTLM_MECHANISM, (gss_cred_id_t)dn);
     }
- out:
+out:
     krb5_storage_free(response);
     krb5_data_free(&response_data);
- done:
+done:
     if (context)
-	krb5_free_context(context);
+        krb5_free_context(context);
 #endif /* HAVE_KCM */
     (*cred_iter)(userctx, NULL, NULL);
 }

@@ -42,9 +42,9 @@ size_t	ASN1CALL length_heim_any(const heim_any *);
 int	ASN1CALL copy_heim_any(const heim_any *, heim_any *);
 
 int	ASN1CALL encode_heim_any_set(unsigned char *, size_t,
-			    const heim_any_set *, size_t *);
+                                     const heim_any_set *, size_t *);
 int	ASN1CALL decode_heim_any_set(const unsigned char *, size_t,
-			    heim_any_set *,size_t *);
+                                     heim_any_set *,size_t *);
 void	ASN1CALL free_heim_any_set(heim_any_set *);
 char   *ASN1CALL print_heim_any_set(const heim_any_set *, int);
 size_t	ASN1CALL length_heim_any_set(const heim_any_set *);
@@ -59,9 +59,9 @@ size_t	ASN1CALL length_HEIM_ANY(const heim_any *);
 int	ASN1CALL copy_HEIM_ANY(const heim_any *, heim_any *);
 
 int	ASN1CALL encode_HEIM_ANY_SET(unsigned char *, size_t,
-			    const heim_any_set *, size_t *);
+                                     const heim_any_set *, size_t *);
 int	ASN1CALL decode_HEIM_ANY_SET(const unsigned char *, size_t,
-			    heim_any_set *,size_t *);
+                                     heim_any_set *,size_t *);
 void	ASN1CALL free_HEIM_ANY_SET(heim_any_set *);
 char   *ASN1CALL print_HEIM_ANY_SET(const heim_any_set *, int);
 size_t	ASN1CALL length_HEIM_ANY_SET(const heim_any_set *);

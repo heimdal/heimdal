@@ -60,8 +60,8 @@ hx509_peer_info_alloc(hx509_context context, hx509_peer_info *peer)
 {
     *peer = calloc(1, sizeof(**peer));
     if (*peer == NULL) {
-	hx509_set_error_string(context, 0, ENOMEM, "out of memory");
-	return ENOMEM;
+        hx509_set_error_string(context, 0, ENOMEM, "out of memory");
+        return ENOMEM;
     }
     return 0;
 }
@@ -71,12 +71,12 @@ static void
 free_cms_alg(hx509_peer_info peer)
 {
     if (peer->val) {
-	size_t i;
-	for (i = 0; i < peer->len; i++)
-	    free_AlgorithmIdentifier(&peer->val[i]);
-	free(peer->val);
-	peer->val = NULL;
-	peer->len = 0;
+        size_t i;
+        for (i = 0; i < peer->len; i++)
+            free_AlgorithmIdentifier(&peer->val[i]);
+        free(peer->val);
+        peer->val = NULL;
+        peer->len = 0;
     }
 }
 
@@ -92,9 +92,9 @@ HX509_LIB_FUNCTION void HX509_LIB_CALL
 hx509_peer_info_free(hx509_peer_info peer)
 {
     if (peer == NULL)
-	return;
+        return;
     if (peer->cert)
-	hx509_cert_free(peer->cert);
+        hx509_cert_free(peer->cert);
     free_cms_alg(peer);
     memset(peer, 0, sizeof(*peer));
     free(peer);
@@ -113,10 +113,10 @@ hx509_peer_info_free(hx509_peer_info peer)
 
 HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_peer_info_set_cert(hx509_peer_info peer,
-			 hx509_cert cert)
+                         hx509_cert cert)
 {
     if (peer->cert)
-	hx509_cert_free(peer->cert);
+        hx509_cert_free(peer->cert);
     peer->cert = hx509_cert_ref(cert);
     return 0;
 }
@@ -135,23 +135,23 @@ hx509_peer_info_set_cert(hx509_peer_info peer,
 
 HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_peer_info_add_cms_alg(hx509_context context,
-			    hx509_peer_info peer,
-			    const AlgorithmIdentifier *val)
+                            hx509_peer_info peer,
+                            const AlgorithmIdentifier *val)
 {
     void *ptr;
     int ret;
 
     ptr = realloc(peer->val, sizeof(peer->val[0]) * (peer->len + 1));
     if (ptr == NULL) {
-	hx509_set_error_string(context, 0, ENOMEM, "out of memory");
-	return ENOMEM;
+        hx509_set_error_string(context, 0, ENOMEM, "out of memory");
+        return ENOMEM;
     }
     peer->val = ptr;
     ret = copy_AlgorithmIdentifier(val, &peer->val[peer->len]);
     if (ret == 0)
-	peer->len += 1;
+        peer->len += 1;
     else
-	hx509_set_error_string(context, 0, ret, "out of memory");
+        hx509_set_error_string(context, 0, ret, "out of memory");
     return ret;
 }
 
@@ -170,9 +170,9 @@ hx509_peer_info_add_cms_alg(hx509_context context,
 
 HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_peer_info_set_cms_algs(hx509_context context,
-			     hx509_peer_info peer,
-			     const AlgorithmIdentifier *val,
-			     size_t len)
+                             hx509_peer_info peer,
+                             const AlgorithmIdentifier *val,
+                             size_t len)
 {
     size_t i;
 
@@ -180,19 +180,19 @@ hx509_peer_info_set_cms_algs(hx509_context context,
 
     peer->val = calloc(len, sizeof(*peer->val));
     if (peer->val == NULL) {
-	peer->len = 0;
-	hx509_set_error_string(context, 0, ENOMEM, "out of memory");
-	return ENOMEM;
+        peer->len = 0;
+        hx509_set_error_string(context, 0, ENOMEM, "out of memory");
+        return ENOMEM;
     }
     peer->len = len;
     for (i = 0; i < len; i++) {
-	int ret;
-	ret = copy_AlgorithmIdentifier(&val[i], &peer->val[i]);
-	if (ret) {
-	    hx509_clear_error_string(context);
-	    free_cms_alg(peer);
-	    return ret;
-	}
+        int ret;
+        ret = copy_AlgorithmIdentifier(&val[i], &peer->val[i]);
+        if (ret) {
+            hx509_clear_error_string(context);
+            free_cms_alg(peer);
+            return ret;
+        }
     }
     return 0;
 }
@@ -205,14 +205,14 @@ hx509_peer_info_set_cms_algs(hx509_context context,
 
 HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_peer_info_parse_smime(hx509_peer_info peer,
-			    const heim_octet_string *data)
+                            const heim_octet_string *data)
 {
     return 0;
 }
 
 HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_peer_info_unparse_smime(hx509_peer_info peer,
-			      heim_octet_string *data)
+                              heim_octet_string *data)
 {
     return 0;
 }
@@ -223,14 +223,14 @@ hx509_peer_info_unparse_smime(hx509_peer_info peer,
 
 HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_peer_info_parse(hx509_peer_info peer,
-		      const heim_octet_string *data)
+                      const heim_octet_string *data)
 {
     return 0;
 }
 
 HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_peer_info_unparse(hx509_peer_info peer,
-			heim_octet_string *data)
+                        heim_octet_string *data)
 {
     return 0;
 }

@@ -50,14 +50,14 @@ generate_type_seq (const Symbol *s)
     Type *type;
 
     if (!seq_type(s->name))
-	return;
+        return;
     type = s->type;
     while(type->type == TTag)
-	type = type->subtype;
+        type = type->subtype;
 
     if (type->type != TSequenceOf && type->type != TSetOf) {
-	fprintf(stderr, "%s not seq of %d\n", s->name, (int)type->type);
-	return;
+        fprintf(stderr, "%s not seq of %d\n", s->name, (int)type->type);
+        return;
     }
 
     /*
@@ -66,62 +66,62 @@ generate_type_seq (const Symbol *s)
      */
 
     if (type->subtype->type != TType) {
-	fprintf(stderr, "%s subtype is not a type, can't generate "
-	       "sequence code for this case: %d\n",
-		s->name, (int)type->subtype->type);
-	exit(1);
+        fprintf(stderr, "%s subtype is not a type, can't generate "
+                "sequence code for this case: %d\n",
+                s->name, (int)type->subtype->type);
+        exit(1);
     }
 
     subname = type->subtype->symbol->gen_name;
 
     fprintf (headerfile,
-	     "ASN1EXP int   ASN1CALL add_%s  (%s *, const %s *);\n"
-	     "ASN1EXP int   ASN1CALL remove_%s  (%s *, unsigned int);\n",
-	     s->gen_name, s->gen_name, subname,
-	     s->gen_name, s->gen_name);
+             "ASN1EXP int   ASN1CALL add_%s  (%s *, const %s *);\n"
+             "ASN1EXP int   ASN1CALL remove_%s  (%s *, unsigned int);\n",
+             s->gen_name, s->gen_name, subname,
+             s->gen_name, s->gen_name);
 
     fprintf (get_code_file(), "int ASN1CALL\n"
-	     "add_%s(%s *data, const %s *element)\n"
-	     "{\n",
-	     s->gen_name, s->gen_name, subname);
+             "add_%s(%s *data, const %s *element)\n"
+             "{\n",
+             s->gen_name, s->gen_name, subname);
 
     fprintf (get_code_file(),
-	     "int ret;\n"
-	     "void *ptr;\n"
-	     "\n"
-	     "ptr = realloc(data->val, \n"
-	     "\t(data->len + 1) * sizeof(data->val[0]));\n"
-	     "if (ptr == NULL) return ENOMEM;\n"
-	     "data->val = ptr;\n\n"
-	     "ret = copy_%s(element, &data->val[data->len]);\n"
-	     "if (ret) return ret;\n"
-	     "data->len++;\n"
-	     "return 0;\n",
-	     subname);
+             "int ret;\n"
+             "void *ptr;\n"
+             "\n"
+             "ptr = realloc(data->val, \n"
+             "\t(data->len + 1) * sizeof(data->val[0]));\n"
+             "if (ptr == NULL) return ENOMEM;\n"
+             "data->val = ptr;\n\n"
+             "ret = copy_%s(element, &data->val[data->len]);\n"
+             "if (ret) return ret;\n"
+             "data->len++;\n"
+             "return 0;\n",
+             subname);
 
     fprintf (get_code_file(), "}\n\n");
 
     fprintf (get_code_file(), "int ASN1CALL\n"
-	     "remove_%s(%s *data, unsigned int element)\n"
-	     "{\n",
-	     s->gen_name, s->gen_name);
+             "remove_%s(%s *data, unsigned int element)\n"
+             "{\n",
+             s->gen_name, s->gen_name);
 
     fprintf (get_code_file(),
-	     "void *ptr;\n"
-	     "\n"
-	     "if (data->len == 0 || element >= data->len)\n"
-	     "\treturn ASN1_OVERRUN;\n"
-	     "free_%s(&data->val[element]);\n"
-	     "data->len--;\n"
-	     /* don't move if its the last element */
-	     "if (element < data->len)\n"
-	     "\tmemmove(&data->val[element], &data->val[element + 1], \n"
-	     "\t\tsizeof(data->val[0]) * (data->len - element));\n"
-	     /* resize but don't care about failures since it doesn't matter */
-	     "ptr = realloc(data->val, data->len * sizeof(data->val[0]));\n"
-	     "if (ptr != NULL || data->len == 0) data->val = ptr;\n"
-	     "return 0;\n",
-	     subname);
+             "void *ptr;\n"
+             "\n"
+             "if (data->len == 0 || element >= data->len)\n"
+             "\treturn ASN1_OVERRUN;\n"
+             "free_%s(&data->val[element]);\n"
+             "data->len--;\n"
+             /* don't move if its the last element */
+             "if (element < data->len)\n"
+             "\tmemmove(&data->val[element], &data->val[element + 1], \n"
+             "\t\tsizeof(data->val[0]) * (data->len - element));\n"
+             /* resize but don't care about failures since it doesn't matter */
+             "ptr = realloc(data->val, data->len * sizeof(data->val[0]));\n"
+             "if (ptr != NULL || data->len == 0) data->val = ptr;\n"
+             "return 0;\n",
+             subname);
 
     fprintf (get_code_file(), "}\n\n");
 }

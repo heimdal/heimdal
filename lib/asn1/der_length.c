@@ -44,13 +44,13 @@ _heim_len_unsigned (unsigned val)
     int last_val_gt_128;
 
     do {
-	++ret;
-	last_val_gt_128 = (val >= 128);
-	val /= 256;
+        ++ret;
+        last_val_gt_128 = (val >= 128);
+        val /= 256;
     } while (val);
 
     if(last_val_gt_128)
-	ret++;
+        ret++;
 
     return ret;
 }
@@ -62,13 +62,13 @@ _heim_len_unsigned64 (uint64_t val)
     int last_val_gt_128;
 
     do {
-	++ret;
-	last_val_gt_128 = (val >= 128);
-	val /= 256;
+        ++ret;
+        last_val_gt_128 = (val >= 128);
+        val /= 256;
     } while (val);
 
     if(last_val_gt_128)
-	ret++;
+        ret++;
 
     return ret;
 }
@@ -80,22 +80,22 @@ _heim_len_int (int val)
     size_t ret = 0;
 
     if (val >= 0) {
-	do {
-	    q = val % 256;
-	    ret++;
-	    val /= 256;
-	} while(val);
-	if(q >= 128)
-	    ret++;
+        do {
+            q = val % 256;
+            ret++;
+            val /= 256;
+        } while(val);
+        if(q >= 128)
+            ret++;
     } else {
-	val = ~val;
-	do {
-	    q = ~(val % 256);
-	    ret++;
-	    val /= 256;
-	} while(val);
-	if(q < 128)
-	    ret++;
+        val = ~val;
+        do {
+            q = ~(val % 256);
+            ret++;
+            val /= 256;
+        } while(val);
+        if(q < 128)
+            ret++;
     }
     return ret;
 }
@@ -107,22 +107,22 @@ _heim_len_int64 (int64_t val)
     size_t ret = 0;
 
     if (val >= 0) {
-	do {
-	    q = val % 256;
-	    ret++;
-	    val /= 256;
-	} while(val);
-	if(q >= 128)
-	    ret++;
+        do {
+            q = val % 256;
+            ret++;
+            val /= 256;
+        } while(val);
+        if(q >= 128)
+            ret++;
     } else {
-	val = ~val;
-	do {
-	    q = ~(val % 256);
-	    ret++;
-	    val /= 256;
-	} while(val);
-	if(q < 128)
-	    ret++;
+        val = ~val;
+        do {
+            q = ~(val % 256);
+            ret++;
+            val /= 256;
+        } while(val);
+        if(q < 128)
+            ret++;
     }
     return ret;
 }
@@ -134,12 +134,12 @@ len_oid (const heim_oid *oid)
     size_t n;
 
     for (n = 2; n < oid->length; ++n) {
-	unsigned u = oid->components[n];
+        unsigned u = oid->components[n];
 
-	do {
-	    ++ret;
-	    u /= 128;
-	} while(u > 0);
+        do {
+            ++ret;
+            u /= 128;
+        } while(u > 0);
     }
     return ret;
 }
@@ -148,14 +148,14 @@ size_t ASN1CALL
 der_length_len (size_t len)
 {
     if (len < 128)
-	return 1;
+        return 1;
     else {
-	int ret = 0;
-	do {
-	    ++ret;
-	    len /= 256;
-	} while (len);
-	return ret + 1;
+        int ret = 0;
+        do {
+            ++ret;
+            len /= 256;
+        } while (len);
+        return ret + 1;
     }
 }
 
@@ -165,10 +165,10 @@ der_length_tag(unsigned int tag)
     size_t len = 0;
 
     if(tag <= 30)
-	return 1;
+        return 1;
     while(tag) {
-	tag /= 128;
-	len++;
+        tag /= 128;
+        len++;
     }
     return len + 1;
 }
@@ -255,13 +255,13 @@ size_t ASN1CALL
 der_length_heim_integer (const heim_integer *k)
 {
     if (k->length == 0)
-	return 1;
+        return 1;
     if (k->negative && k->length == 1 && ((unsigned char *)k->data)[0] == 1)
         return 1;
     else if (k->negative)
-	return k->length + (((~(((unsigned char *)k->data)[0])) & 0x80) ? 0 : 1);
+        return k->length + (((~(((unsigned char *)k->data)[0])) & 0x80) ? 0 : 1);
     else
-	return k->length + ((((unsigned char *)k->data)[0] & 0x80) ? 1 : 0);
+        return k->length + ((((unsigned char *)k->data)[0] & 0x80) ? 1 : 0);
 }
 
 size_t ASN1CALL

@@ -50,11 +50,11 @@ _hc_CryptProvider(void)
     HCRYPTPROV cryptprovider = (HCRYPTPROV)0;
 
     if (g_cryptprovider)
-	goto out;
+        goto out;
 
     rv = CryptAcquireContext(&cryptprovider, NULL,
-			      MS_ENHANCED_PROV, PROV_RSA_FULL,
-			      CRYPT_VERIFYCONTEXT);
+                             MS_ENHANCED_PROV, PROV_RSA_FULL,
+                             CRYPT_VERIFYCONTEXT);
 
     if (GetLastError() == NTE_BAD_KEYSET) {
         rv = CryptAcquireContext(&cryptprovider, NULL,
@@ -82,7 +82,7 @@ _hc_CryptProvider(void)
 
     if (rv == 0 &&
         InterlockedCompareExchangePointer((PVOID *) &g_cryptprovider,
-					  (PVOID) cryptprovider, NULL) != 0) {
+                                          (PVOID) cryptprovider, NULL) != 0) {
 
         CryptReleaseContext(cryptprovider, 0);
     }
@@ -106,7 +106,7 @@ static int
 w32crypto_bytes(unsigned char *outdata, int size)
 {
     if (CryptGenRandom(_hc_CryptProvider(), size, outdata))
-	return 1;
+        return 1;
     return 0;
 }
 
@@ -116,7 +116,7 @@ w32crypto_cleanup(void)
     HCRYPTPROV cryptprovider;
 
     if (InterlockedCompareExchangePointer((PVOID *) &cryptprovider,
-					  0, (PVOID) g_cryptprovider) == 0) {
+                                          0, (PVOID) g_cryptprovider) == 0) {
         CryptReleaseContext(cryptprovider, 0);
     }
 }
@@ -130,7 +130,7 @@ static int
 w32crypto_status(void)
 {
     if (_hc_CryptProvider() == 0)
-	return 0;
+        return 0;
     return 1;
 }
 

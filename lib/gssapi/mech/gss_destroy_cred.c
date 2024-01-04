@@ -45,7 +45,7 @@
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_destroy_cred(OM_uint32 *minor_status,
-		 gss_cred_id_t *cred_handle)
+                 gss_cred_id_t *cred_handle)
 {
     struct _gss_cred *cred;
     struct _gss_mechanism_cred *mc, *next;
@@ -53,20 +53,20 @@ gss_destroy_cred(OM_uint32 *minor_status,
     OM_uint32 junk;
 
     if (cred_handle == NULL)
-	return GSS_S_CALL_INACCESSIBLE_READ;
+        return GSS_S_CALL_INACCESSIBLE_READ;
     if (*cred_handle == GSS_C_NO_CREDENTIAL)
-	return GSS_S_COMPLETE;
+        return GSS_S_COMPLETE;
 
     cred = (struct _gss_cred *)*cred_handle;
     *cred_handle = GSS_C_NO_CREDENTIAL;
 
     HEIM_TAILQ_FOREACH_SAFE(mc, &cred->gc_mc, gmc_link, next) {
-	HEIM_TAILQ_REMOVE(&cred->gc_mc, mc, gmc_link);
-	if (mc->gmc_mech->gm_destroy_cred)
-	    mc->gmc_mech->gm_destroy_cred(&junk, &mc->gmc_cred);
-	else
-	    mc->gmc_mech->gm_release_cred(&junk, &mc->gmc_cred);
-	free(mc);
+        HEIM_TAILQ_REMOVE(&cred->gc_mc, mc, gmc_link);
+        if (mc->gmc_mech->gm_destroy_cred)
+            mc->gmc_mech->gm_destroy_cred(&junk, &mc->gmc_cred);
+        else
+            mc->gmc_mech->gm_release_cred(&junk, &mc->gmc_cred);
+        free(mc);
     }
     free(cred);
 

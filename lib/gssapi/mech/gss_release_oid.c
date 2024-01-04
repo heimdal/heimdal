@@ -40,7 +40,7 @@ gss_release_oid(OM_uint32 *minor_status, gss_OID *oid)
     *oid = GSS_C_NO_OID;
 
     if (minor_status != NULL)
-	*minor_status = 0;
+        *minor_status = 0;
 
     return GSS_S_COMPLETE;
 }

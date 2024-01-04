@@ -52,14 +52,14 @@ gethostname(char *name, int namelen)
 {
 #if defined(HAVE_UNAME)
     {
-	struct utsname utsname;
-	int ret;
+        struct utsname utsname;
+        int ret;
 
-	ret = uname (&utsname);
-	if (ret < 0)
-	    return ret;
-	strlcpy (name, utsname.nodename, namelen);
-	return 0;
+        ret = uname (&utsname);
+        if (ret < 0)
+            return ret;
+        strlcpy (name, utsname.nodename, namelen);
+        return 0;
     }
 #else
     strlcpy (name, "some.random.host", namelen);

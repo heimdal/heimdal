@@ -137,23 +137,23 @@ try_aix(void)
      * If we are root or running setuid don't trust AFSLIBPATH!
      */
     if (getuid() != 0 && (p = secure_getenv("AFSLIBPATH")) != NULL)
-	strlcpy(path, p, sizeof(path));
+        strlcpy(path, p, sizeof(path));
     else
-	snprintf(path, sizeof(path), "%s/afslib.so", LIBDIR);
+        snprintf(path, sizeof(path), "%s/afslib.so", LIBDIR);
 
     ptr = dlopen(path, RTLD_NOW);
     if(ptr == NULL) {
-	if(_kafs_debug) {
-	    if(errno == ENOEXEC && (p = dlerror()) != NULL)
-		fprintf(stderr, "dlopen(%s): %s\n", path, p);
-	    else if (errno != ENOENT)
-		fprintf(stderr, "dlopen(%s): %s\n", path, strerror(errno));
-	}
-	return 1;
+        if(_kafs_debug) {
+            if(errno == ENOEXEC && (p = dlerror()) != NULL)
+                fprintf(stderr, "dlopen(%s): %s\n", path, p);
+            else if (errno != ENOENT)
+                fprintf(stderr, "dlopen(%s): %s\n", path, strerror(errno));
+        }
+        return 1;
     }
     Setpag = (int (*)(void))dlsym(ptr, "aix_setpag");
     Pioctl = (int (*)(char*, int,
-		      struct ViceIoctl*, int))dlsym(ptr, "aix_pioctl");
+                      struct ViceIoctl*, int))dlsym(ptr, "aix_pioctl");
 #endif
     afs_entry_point = AIX_ENTRY_POINTS;
     return 0;
@@ -178,22 +178,22 @@ map_syscall_name_to_number (const char *str, int *res)
 
     f = fopen (_PATH_ETC_NAME_TO_SYSNUM, "r");
     if (f == NULL)
-	return -1;
+        return -1;
     while (fgets (buf, sizeof(buf), f) != NULL) {
-	if (buf[0] == '#')
-	    continue;
+        if (buf[0] == '#')
+            continue;
 
-	if (strncmp (str, buf, str_len) == 0) {
-	    char *begptr = buf + str_len;
-	    char *endptr;
-	    long val = strtol (begptr, &endptr, 0);
+        if (strncmp (str, buf, str_len) == 0) {
+            char *begptr = buf + str_len;
+            char *endptr;
+            long val = strtol (begptr, &endptr, 0);
 
-	    if (val != 0 && endptr != begptr) {
-		fclose (f);
-		*res = val;
-		return 0;
-	    }
-	}
+            if (val != 0 && endptr != begptr) {
+                fclose (f);
+                *res = val;
+                return 0;
+            }
+        }
     }
     fclose (f);
     return -1;
@@ -207,28 +207,28 @@ try_ioctlpath(const char *path, unsigned long ioctlnum, int entrypoint)
 
     fd = open(path, O_RDWR);
     if (fd < 0)
-	return 1;
+        return 1;
     switch (entrypoint) {
-    case LINUX_PROC_POINT: {
-	struct procdata data = { 0, 0, 0, 0, AFSCALL_PIOCTL };
-	data.param2 = (unsigned long)VIOCGETTOK;
-	ret = ioctl(fd, ioctlnum, &data);
-	break;
-    }
-    case MACOS_DEV_POINT: {
-	struct devdata data = { AFSCALL_PIOCTL, 0, 0, 0, 0, 0, 0, 0 };
-	data.param2 = (unsigned long)VIOCGETTOK;
-	ret = ioctl(fd, ioctlnum, &data);
-	break;
-    }
-    case SUN_PROC_POINT: {
-	struct sundevdata data = { 0, 0, 0, 0, 0, 0, AFSCALL_PIOCTL };
-	data.param2 = (unsigned long)VIOCGETTOK;
-	ret = ioctl(fd, ioctlnum, &data);
-	break;
-    }
-    default:
-	abort();
+        case LINUX_PROC_POINT: {
+            struct procdata data = { 0, 0, 0, 0, AFSCALL_PIOCTL };
+            data.param2 = (unsigned long)VIOCGETTOK;
+            ret = ioctl(fd, ioctlnum, &data);
+            break;
+        }
+        case MACOS_DEV_POINT: {
+            struct devdata data = { AFSCALL_PIOCTL, 0, 0, 0, 0, 0, 0, 0 };
+            data.param2 = (unsigned long)VIOCGETTOK;
+            ret = ioctl(fd, ioctlnum, &data);
+            break;
+        }
+        case SUN_PROC_POINT: {
+            struct sundevdata data = { 0, 0, 0, 0, 0, 0, AFSCALL_PIOCTL };
+            data.param2 = (unsigned long)VIOCGETTOK;
+            ret = ioctl(fd, ioctlnum, &data);
+            break;
+        }
+        default:
+            abort();
     }
     saved_errno = errno;
     close(fd);
@@ -237,14 +237,14 @@ try_ioctlpath(const char *path, unsigned long ioctlnum, int entrypoint)
      * that should trigger given that params is NULL.
      */
     if (ret &&
-	(saved_errno != EFAULT &&
-	 saved_errno != EDOM &&
-	 saved_errno != ENOTCONN))
-	return 1;
+        (saved_errno != EFAULT &&
+         saved_errno != EDOM &&
+         saved_errno != ENOTCONN))
+        return 1;
     afs_ioctlnum = ioctlnum;
     afs_ioctlpath = strdup(path);
     if (afs_ioctlpath == NULL)
-	return 1;
+        return 1;
     afs_entry_point = entrypoint;
     return 0;
 }
@@ -255,8 +255,8 @@ do_ioctl(void *data)
     int fd, ret, saved_errno;
     fd = open(afs_ioctlpath, O_RDWR);
     if (fd < 0) {
-	errno = EINVAL;
-	return -1;
+        errno = EINVAL;
+        return -1;
     }
     ret = ioctl(fd, afs_ioctlnum, data);
     saved_errno = errno;
@@ -267,58 +267,58 @@ do_ioctl(void *data)
 
 int
 k_pioctl(char *a_path,
-	 int o_opcode,
-	 struct ViceIoctl *a_paramsP,
-	 int a_followSymlinks)
+         int o_opcode,
+         struct ViceIoctl *a_paramsP,
+         int a_followSymlinks)
 {
 #ifndef NO_AFS
     switch(afs_entry_point){
 #if defined(AFS_SYSCALL) || defined(AFS_SYSCALL2) || defined(AFS_SYSCALL3)
-    case SINGLE_ENTRY_POINT:
-    case SINGLE_ENTRY_POINT2:
-    case SINGLE_ENTRY_POINT3:
-	return syscall(afs_syscalls[0], AFSCALL_PIOCTL,
-		       a_path, o_opcode, a_paramsP, a_followSymlinks);
+        case SINGLE_ENTRY_POINT:
+        case SINGLE_ENTRY_POINT2:
+        case SINGLE_ENTRY_POINT3:
+            return syscall(afs_syscalls[0], AFSCALL_PIOCTL,
+                           a_path, o_opcode, a_paramsP, a_followSymlinks);
 #endif
 #if defined(AFS_PIOCTL)
-    case MULTIPLE_ENTRY_POINT:
-	return syscall(afs_syscalls[0],
-		       a_path, o_opcode, a_paramsP, a_followSymlinks);
+        case MULTIPLE_ENTRY_POINT:
+            return syscall(afs_syscalls[0],
+                           a_path, o_opcode, a_paramsP, a_followSymlinks);
 #endif
-    case LINUX_PROC_POINT: {
-	struct procdata data = { 0, 0, 0, 0, AFSCALL_PIOCTL };
-	data.param1 = (unsigned long)a_path;
-	data.param2 = (unsigned long)o_opcode;
-	data.param3 = (unsigned long)a_paramsP;
-	data.param4 = (unsigned long)a_followSymlinks;
-	return do_ioctl(&data);
-    }
-    case MACOS_DEV_POINT: {
-	struct devdata data = { AFSCALL_PIOCTL, 0, 0, 0, 0, 0, 0, 0 };
-	int ret;
+        case LINUX_PROC_POINT: {
+            struct procdata data = { 0, 0, 0, 0, AFSCALL_PIOCTL };
+            data.param1 = (unsigned long)a_path;
+            data.param2 = (unsigned long)o_opcode;
+            data.param3 = (unsigned long)a_paramsP;
+            data.param4 = (unsigned long)a_followSymlinks;
+            return do_ioctl(&data);
+        }
+        case MACOS_DEV_POINT: {
+            struct devdata data = { AFSCALL_PIOCTL, 0, 0, 0, 0, 0, 0, 0 };
+            int ret;
 
-	data.param1 = (unsigned long)a_path;
-	data.param2 = (unsigned long)o_opcode;
-	data.param3 = (unsigned long)a_paramsP;
-	data.param4 = (unsigned long)a_followSymlinks;
+            data.param1 = (unsigned long)a_path;
+            data.param2 = (unsigned long)o_opcode;
+            data.param3 = (unsigned long)a_paramsP;
+            data.param4 = (unsigned long)a_followSymlinks;
 
-	ret = do_ioctl(&data);
-	if (ret)
-	    return ret;
+            ret = do_ioctl(&data);
+            if (ret)
+                return ret;
 
-	return data.retval;
-    }
-    case SUN_PROC_POINT: {
-	struct sundevdata data = { 0, 0, 0, 0, 0, 0, AFSCALL_PIOCTL };
-	data.param1 = (unsigned long)a_path;
-	data.param2 = (unsigned long)o_opcode;
-	data.param3 = (unsigned long)a_paramsP;
-	data.param4 = (unsigned long)a_followSymlinks;
-	return do_ioctl(&data);
-    }
+            return data.retval;
+        }
+        case SUN_PROC_POINT: {
+            struct sundevdata data = { 0, 0, 0, 0, 0, 0, AFSCALL_PIOCTL };
+            data.param1 = (unsigned long)a_path;
+            data.param2 = (unsigned long)o_opcode;
+            data.param3 = (unsigned long)a_paramsP;
+            data.param4 = (unsigned long)a_followSymlinks;
+            return do_ioctl(&data);
+        }
 #ifdef _AIX
-    case AIX_ENTRY_POINTS:
-	return Pioctl(a_path, o_opcode, a_paramsP, a_followSymlinks);
+        case AIX_ENTRY_POINTS:
+            return Pioctl(a_path, o_opcode, a_paramsP, a_followSymlinks);
 #endif
     }
     errno = ENOSYS;
@@ -354,33 +354,33 @@ k_setpag(void)
 #ifndef NO_AFS
     switch(afs_entry_point){
 #if defined(AFS_SYSCALL) || defined(AFS_SYSCALL2) || defined(AFS_SYSCALL3)
-    case SINGLE_ENTRY_POINT:
-    case SINGLE_ENTRY_POINT2:
-    case SINGLE_ENTRY_POINT3:
-	return syscall(afs_syscalls[0], AFSCALL_SETPAG);
+        case SINGLE_ENTRY_POINT:
+        case SINGLE_ENTRY_POINT2:
+        case SINGLE_ENTRY_POINT3:
+            return syscall(afs_syscalls[0], AFSCALL_SETPAG);
 #endif
 #if defined(AFS_PIOCTL)
-    case MULTIPLE_ENTRY_POINT:
-	return syscall(afs_syscalls[1]);
+        case MULTIPLE_ENTRY_POINT:
+            return syscall(afs_syscalls[1]);
 #endif
-    case LINUX_PROC_POINT: {
-	struct procdata data = { 0, 0, 0, 0, AFSCALL_SETPAG };
-	return do_ioctl(&data);
-    }
-    case MACOS_DEV_POINT: {
-	struct devdata data = { AFSCALL_SETPAG, 0, 0, 0, 0, 0, 0, 0 };
-	int ret = do_ioctl(&data);
-	if (ret)
-	    return ret;
-	return data.retval;
-     }
-    case SUN_PROC_POINT: {
-	struct sundevdata data = { 0, 0, 0, 0, 0, 0, AFSCALL_SETPAG };
-	return do_ioctl(&data);
-    }
+        case LINUX_PROC_POINT: {
+            struct procdata data = { 0, 0, 0, 0, AFSCALL_SETPAG };
+            return do_ioctl(&data);
+        }
+        case MACOS_DEV_POINT: {
+            struct devdata data = { AFSCALL_SETPAG, 0, 0, 0, 0, 0, 0, 0 };
+            int ret = do_ioctl(&data);
+            if (ret)
+                return ret;
+            return data.retval;
+         }
+        case SUN_PROC_POINT: {
+            struct sundevdata data = { 0, 0, 0, 0, 0, 0, AFSCALL_SETPAG };
+            return do_ioctl(&data);
+        }
 #ifdef _AIX
-    case AIX_ENTRY_POINTS:
-	return Setpag();
+        case AIX_ENTRY_POINTS:
+            return Setpag();
 #endif
     }
 
@@ -418,13 +418,13 @@ try_one (int syscall_num)
     memset(&parms, 0, sizeof(parms));
 
     if (setjmp(catch_SIGSYS) == 0) {
-	syscall(syscall_num, AFSCALL_PIOCTL,
-		0, VIOCSETTOK, &parms, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-	if (errno == EINVAL) {
-	    afs_entry_point = SINGLE_ENTRY_POINT;
-	    afs_syscalls[0] = syscall_num;
-	    return 0;
-	}
+        syscall(syscall_num, AFSCALL_PIOCTL,
+                0, VIOCSETTOK, &parms, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+        if (errno == EINVAL) {
+            afs_entry_point = SINGLE_ENTRY_POINT;
+            afs_syscalls[0] = syscall_num;
+            return 0;
+        }
     }
     return 1;
 }
@@ -444,14 +444,14 @@ try_two (int syscall_pioctl, int syscall_setpag)
     memset(&parms, 0, sizeof(parms));
 
     if (setjmp(catch_SIGSYS) == 0) {
-	syscall(syscall_pioctl,
-		0, VIOCSETTOK, &parms, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-	if (errno == EINVAL) {
-	    afs_entry_point = MULTIPLE_ENTRY_POINT;
-	    afs_syscalls[0] = syscall_pioctl;
-	    afs_syscalls[1] = syscall_setpag;
-	    return 0;
-	}
+        syscall(syscall_pioctl,
+                0, VIOCSETTOK, &parms, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+        if (errno == EINVAL) {
+            afs_entry_point = MULTIPLE_ENTRY_POINT;
+            afs_syscalls[0] = syscall_pioctl;
+            afs_syscalls[1] = syscall_setpag;
+            return 0;
+        }
     }
     return 1;
 }
@@ -472,7 +472,7 @@ k_hasafs(void)
      * Already checked presence of AFS syscalls?
      */
     if (afs_entry_point != UNKNOWN_ENTRY_POINT)
-	return afs_entry_point != NO_ENTRY_POINT;
+        return afs_entry_point != NO_ENTRY_POINT;
 
     /*
      * Probe kernel for AFS specific syscalls,
@@ -488,128 +488,128 @@ k_hasafs(void)
 #endif
     if (env && strstr(env, "..") == NULL) {
 
-	if (strncmp("/proc/", env, 6) == 0) {
-	    if (try_ioctlpath(env, VIOC_SYSCALL_PROC, LINUX_PROC_POINT) == 0)
-		goto done;
-	}
-	if (strncmp("/dev/", env, 5) == 0) {
+        if (strncmp("/proc/", env, 6) == 0) {
+            if (try_ioctlpath(env, VIOC_SYSCALL_PROC, LINUX_PROC_POINT) == 0)
+                goto done;
+        }
+        if (strncmp("/dev/", env, 5) == 0) {
 #ifdef VIOC_SYSCALL_DEV
-	    if (try_ioctlpath(env, VIOC_SYSCALL_DEV, MACOS_DEV_POINT) == 0)
-		goto done;
+            if (try_ioctlpath(env, VIOC_SYSCALL_DEV, MACOS_DEV_POINT) == 0)
+                goto done;
 #endif
 #ifdef VIOC_SYSCALL_DEV_OPENAFS
-	    if (try_ioctlpath(env,VIOC_SYSCALL_DEV_OPENAFS,MACOS_DEV_POINT) ==0)
-		goto done;
+            if (try_ioctlpath(env,VIOC_SYSCALL_DEV_OPENAFS,MACOS_DEV_POINT) ==0)
+                goto done;
 #endif
-	}
+        }
     }
 
     ret = try_ioctlpath("/proc/fs/openafs/afs_ioctl",
-			VIOC_SYSCALL_PROC, LINUX_PROC_POINT);
+                        VIOC_SYSCALL_PROC, LINUX_PROC_POINT);
     if (ret == 0)
-	goto done;
+        goto done;
     ret = try_ioctlpath("/proc/fs/nnpfs/afs_ioctl",
-			VIOC_SYSCALL_PROC, LINUX_PROC_POINT);
+                        VIOC_SYSCALL_PROC, LINUX_PROC_POINT);
     if (ret == 0)
-	goto done;
+        goto done;
 
 #ifdef VIOC_SYSCALL_DEV_OPENAFS
     ret = try_ioctlpath("/dev/openafs_ioctl",
-			VIOC_SYSCALL_DEV_OPENAFS, MACOS_DEV_POINT);
+                        VIOC_SYSCALL_DEV_OPENAFS, MACOS_DEV_POINT);
     if (ret == 0)
-	goto done;
+        goto done;
 #endif
 #ifdef VIOC_SYSCALL_DEV
     ret = try_ioctlpath("/dev/nnpfs_ioctl", VIOC_SYSCALL_DEV, MACOS_DEV_POINT);
     if (ret == 0)
-	goto done;
+        goto done;
 #endif
 #ifdef VIOC_SUN_SYSCALL_DEV
     ret = try_ioctlpath("/dev/afs", VIOC_SUN_SYSCALL_DEV, SUN_PROC_POINT);
     if (ret == 0)
-	goto done;
+        goto done;
 #endif
 
 
 #if defined(AFS_SYSCALL) || defined(AFS_SYSCALL2) || defined(AFS_SYSCALL3)
     {
-	int tmp;
+        int tmp;
 
-	if (env != NULL) {
-	    if (sscanf (env, "%d", &tmp) == 1) {
-		if (try_one (tmp) == 0)
-		    goto done;
-	    } else {
-		char *end = NULL;
-		char *p;
-		char *s = strdup (env);
+        if (env != NULL) {
+            if (sscanf (env, "%d", &tmp) == 1) {
+                if (try_one (tmp) == 0)
+                    goto done;
+            } else {
+                char *end = NULL;
+                char *p;
+                char *s = strdup (env);
 
-		if (s != NULL) {
-		    for (p = strtok_r (s, ",", &end);
-			 p != NULL;
-			 p = strtok_r (NULL, ",", &end)) {
-			if (map_syscall_name_to_number (p, &tmp) == 0)
-			    if (try_one (tmp) == 0) {
-				free (s);
-				goto done;
-			    }
-		    }
-		    free (s);
-		}
-	    }
-	}
+                if (s != NULL) {
+                    for (p = strtok_r (s, ",", &end);
+                         p != NULL;
+                         p = strtok_r (NULL, ",", &end)) {
+                        if (map_syscall_name_to_number (p, &tmp) == 0)
+                            if (try_one (tmp) == 0) {
+                                free (s);
+                                goto done;
+                            }
+                    }
+                    free (s);
+                }
+            }
+        }
     }
 #endif /* AFS_SYSCALL || AFS_SYSCALL2 || AFS_SYSCALL3 */
 
 #ifdef AFS_SYSCALL
     if (try_one (AFS_SYSCALL) == 0)
-	goto done;
+        goto done;
 #endif /* AFS_SYSCALL */
 
 #ifdef AFS_PIOCTL
     {
-	int tmp[2];
+        int tmp[2];
 
-	if (env != NULL && sscanf (env, "%d%d", &tmp[0], &tmp[1]) == 2)
-	    if (try_two (tmp[0], tmp[1]) == 2)
-		goto done;
+        if (env != NULL && sscanf (env, "%d%d", &tmp[0], &tmp[1]) == 2)
+            if (try_two (tmp[0], tmp[1]) == 2)
+                goto done;
     }
 #endif /* AFS_PIOCTL */
 
 #ifdef AFS_PIOCTL
     if (try_two (AFS_PIOCTL, AFS_SETPAG) == 0)
-	goto done;
+        goto done;
 #endif /* AFS_PIOCTL */
 
 #ifdef AFS_SYSCALL2
     if (try_one (AFS_SYSCALL2) == 0)
-	goto done;
+        goto done;
 #endif /* AFS_SYSCALL2 */
 
 #ifdef AFS_SYSCALL3
     if (try_one (AFS_SYSCALL3) == 0)
-	goto done;
+        goto done;
 #endif /* AFS_SYSCALL3 */
 
 #ifdef _AIX
 #if 0
     if (env != NULL) {
-	char *pos = NULL;
-	char *pioctl_name;
-	char *setpag_name;
+        char *pos = NULL;
+        char *pioctl_name;
+        char *setpag_name;
 
-	pioctl_name = strtok_r (env, ", \t", &pos);
-	if (pioctl_name != NULL) {
-	    setpag_name = strtok_r (NULL, ", \t", &pos);
-	    if (setpag_name != NULL)
-		if (try_aix (pioctl_name, setpag_name) == 0)
-		    goto done;
-	}
+        pioctl_name = strtok_r (env, ", \t", &pos);
+        if (pioctl_name != NULL) {
+            setpag_name = strtok_r (NULL, ", \t", &pos);
+            if (setpag_name != NULL)
+                if (try_aix (pioctl_name, setpag_name) == 0)
+                    goto done;
+        }
     }
 #endif
 
     if(try_aix() == 0)
-	goto done;
+        goto done;
 #endif
 
 

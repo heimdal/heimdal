@@ -51,8 +51,8 @@ struct gss_msg_order {
 
 static OM_uint32
 msg_order_alloc(OM_uint32 *minor_status,
-		struct gss_msg_order **o,
-		OM_uint32 jitter_window)
+                struct gss_msg_order **o,
+                OM_uint32 jitter_window)
 {
     size_t len;
 
@@ -62,8 +62,8 @@ msg_order_alloc(OM_uint32 *minor_status,
 
     *o = calloc(1, len);
     if (*o == NULL) {
-	*minor_status = ENOMEM;
-	return GSS_S_FAILURE;
+        *minor_status = ENOMEM;
+        return GSS_S_FAILURE;
     }
 
     *minor_status = 0;
@@ -76,16 +76,16 @@ msg_order_alloc(OM_uint32 *minor_status,
 
 OM_uint32
 _gssapi_msg_order_create(OM_uint32 *minor_status,
-			 struct gss_msg_order **o,
-			 OM_uint32 flags,
-			 OM_uint32 seq_num,
-			 OM_uint32 jitter_window,
-			 int use_64)
+                         struct gss_msg_order **o,
+                         OM_uint32 flags,
+                         OM_uint32 seq_num,
+                         OM_uint32 jitter_window,
+                         int use_64)
 {
     OM_uint32 ret;
 
     if (jitter_window == 0)
-	jitter_window = DEFAULT_JITTER_WINDOW;
+        jitter_window = DEFAULT_JITTER_WINDOW;
 
     ret = msg_order_alloc(minor_status, o, jitter_window);
     if(ret != GSS_S_COMPLETE)
@@ -117,19 +117,19 @@ elem_set(struct gss_msg_order *o, unsigned int slot, OM_uint32 val)
 
 static void
 elem_insert(struct gss_msg_order *o,
-	    unsigned int after_slot,
-	    OM_uint32 seq_num)
+            unsigned int after_slot,
+            OM_uint32 seq_num)
 {
     assert(o->jitter_window > after_slot);
 
     if (o->length > after_slot)
-	memmove(&o->elem[after_slot + 1], &o->elem[after_slot],
-		(o->length - after_slot - 1) * sizeof(o->elem[0]));
+        memmove(&o->elem[after_slot + 1], &o->elem[after_slot],
+                (o->length - after_slot - 1) * sizeof(o->elem[0]));
 
     elem_set(o, after_slot, seq_num);
 
     if (o->length < o->jitter_window)
-	o->length++;
+        o->length++;
 }
 
 /* rule 1: expected sequence number */
@@ -144,15 +144,15 @@ _gssapi_msg_order_check(struct gss_msg_order *o, OM_uint32 seq_num)
     size_t i;
 
     if (o == NULL)
-	return GSS_S_COMPLETE;
+        return GSS_S_COMPLETE;
 
     if ((o->flags & (GSS_C_REPLAY_FLAG|GSS_C_SEQUENCE_FLAG)) == 0)
-	return GSS_S_COMPLETE;
+        return GSS_S_COMPLETE;
 
     /* check if the packet is the next in order */
     if (o->elem[0] == seq_num - 1) {
-	elem_insert(o, 0, seq_num);
-	return GSS_S_COMPLETE;
+        elem_insert(o, 0, seq_num);
+        return GSS_S_COMPLETE;
     }
 
     r = (o->flags & (GSS_C_REPLAY_FLAG|GSS_C_SEQUENCE_FLAG))==GSS_C_REPLAY_FLAG;
@@ -160,41 +160,41 @@ _gssapi_msg_order_check(struct gss_msg_order *o, OM_uint32 seq_num)
     /* sequence number larger then largest sequence number
      * or smaller then the first sequence number */
     if (seq_num > o->elem[0]
-	|| seq_num < o->first_seq
-	|| o->length == 0)
+        || seq_num < o->first_seq
+        || o->length == 0)
     {
-	elem_insert(o, 0, seq_num);
-	if (r) {
-	    return GSS_S_COMPLETE;
-	} else {
-	    return GSS_S_GAP_TOKEN;
-	}
+        elem_insert(o, 0, seq_num);
+        if (r) {
+            return GSS_S_COMPLETE;
+        } else {
+            return GSS_S_GAP_TOKEN;
+        }
     }
 
     assert(o->length > 0);
 
     /* sequence number smaller the first sequence number */
     if (seq_num < o->elem[o->length - 1]) {
-	if (r)
-	    return(GSS_S_OLD_TOKEN);
-	else
-	    return(GSS_S_UNSEQ_TOKEN);
+        if (r)
+            return(GSS_S_OLD_TOKEN);
+        else
+            return(GSS_S_UNSEQ_TOKEN);
     }
 
     if (seq_num == o->elem[o->length - 1]) {
-	return GSS_S_DUPLICATE_TOKEN;
+        return GSS_S_DUPLICATE_TOKEN;
     }
 
     for (i = 0; i < o->length - 1; i++) {
-	if (o->elem[i] == seq_num)
-	    return GSS_S_DUPLICATE_TOKEN;
-	if (o->elem[i + 1] < seq_num && o->elem[i] < seq_num) {
-	    elem_insert(o, i, seq_num);
-	    if (r)
-		return GSS_S_COMPLETE;
-	    else
-		return GSS_S_UNSEQ_TOKEN;
-	}
+        if (o->elem[i] == seq_num)
+            return GSS_S_DUPLICATE_TOKEN;
+        if (o->elem[i + 1] < seq_num && o->elem[i] < seq_num) {
+            elem_insert(o, i, seq_num);
+            if (r)
+                return GSS_S_COMPLETE;
+            else
+                return GSS_S_UNSEQ_TOKEN;
+        }
     }
 
     return GSS_S_FAILURE;
@@ -234,8 +234,8 @@ _gssapi_msg_order_export(krb5_storage *sp, struct gss_msg_order *o)
 
     for (i = 0; i < o->jitter_window; i++) {
         kret = krb5_store_int32(sp, o->elem[i]);
-	if (kret)
-	    return kret;
+        if (kret)
+            return kret;
     }
 
     return 0;
@@ -243,8 +243,8 @@ _gssapi_msg_order_export(krb5_storage *sp, struct gss_msg_order *o)
 
 OM_uint32
 _gssapi_msg_order_import(OM_uint32 *minor_status,
-			 krb5_storage *sp,
-			 struct gss_msg_order **o)
+                         krb5_storage *sp,
+                         struct gss_msg_order **o)
 {
     OM_uint32 ret;
     krb5_error_code kret;
@@ -252,19 +252,19 @@ _gssapi_msg_order_import(OM_uint32 *minor_status,
 
     kret = krb5_ret_int32(sp, &flags);
     if (kret)
-	goto failed;
+        goto failed;
     kret = krb5_ret_int32(sp, &start);
     if (kret)
-	goto failed;
+        goto failed;
     kret = krb5_ret_int32(sp, &length);
     if (kret)
-	goto failed;
+        goto failed;
     kret = krb5_ret_int32(sp, &jitter_window);
     if (kret)
-	goto failed;
+        goto failed;
     kret = krb5_ret_int32(sp, &first_seq);
     if (kret)
-	goto failed;
+        goto failed;
 
     ret = msg_order_alloc(minor_status, o, jitter_window);
     if (ret != GSS_S_COMPLETE)
@@ -278,8 +278,8 @@ _gssapi_msg_order_import(OM_uint32 *minor_status,
 
     for( i = 0; i < jitter_window; i++ ) {
         kret = krb5_ret_int32(sp, (int32_t*)&((*o)->elem[i]));
-	if (kret)
-	    goto failed;
+        if (kret)
+            goto failed;
     }
 
     *minor_status = 0;

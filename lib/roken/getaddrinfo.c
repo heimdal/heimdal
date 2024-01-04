@@ -41,10 +41,10 @@
 
 static int
 get_port_protocol_socktype (const char *servname,
-			    const struct addrinfo *hints,
-			    int *port,
-			    int *protocol,
-			    int *socktype)
+                            const struct addrinfo *hints,
+                            int *port,
+                            int *protocol,
+                            int *socktype)
 {
     struct servent *se;
     const char *proto_str = NULL;
@@ -52,67 +52,67 @@ get_port_protocol_socktype (const char *servname,
     *socktype = 0;
 
     if (hints != NULL && hints->ai_protocol != 0) {
-	struct protoent *protoent = getprotobynumber (hints->ai_protocol);
+        struct protoent *protoent = getprotobynumber (hints->ai_protocol);
 
-	if (protoent == NULL)
-	    return EAI_SOCKTYPE; /* XXX */
+        if (protoent == NULL)
+            return EAI_SOCKTYPE; /* XXX */
 
-	proto_str = protoent->p_name;
-	*protocol = protoent->p_proto;
+        proto_str = protoent->p_name;
+        *protocol = protoent->p_proto;
     }
 
     if (hints != NULL)
-	*socktype = hints->ai_socktype;
+        *socktype = hints->ai_socktype;
 
     if (*socktype == SOCK_STREAM) {
-	se = getservbyname (servname, proto_str ? proto_str : "tcp");
-	if (proto_str == NULL)
-	    *protocol = IPPROTO_TCP;
+        se = getservbyname (servname, proto_str ? proto_str : "tcp");
+        if (proto_str == NULL)
+            *protocol = IPPROTO_TCP;
     } else if (*socktype == SOCK_DGRAM) {
-	se = getservbyname (servname, proto_str ? proto_str : "udp");
-	if (proto_str == NULL)
-	    *protocol = IPPROTO_UDP;
+        se = getservbyname (servname, proto_str ? proto_str : "udp");
+        if (proto_str == NULL)
+            *protocol = IPPROTO_UDP;
     } else if (*socktype == 0) {
-	if (proto_str != NULL) {
-	    se = getservbyname (servname, proto_str);
-	} else {
-	    se = getservbyname (servname, "tcp");
-	    *protocol = IPPROTO_TCP;
-	    *socktype = SOCK_STREAM;
-	    if (se == NULL) {
-		se = getservbyname (servname, "udp");
-		*protocol = IPPROTO_UDP;
-		*socktype = SOCK_DGRAM;
-	    }
-	}
+        if (proto_str != NULL) {
+            se = getservbyname (servname, proto_str);
+        } else {
+            se = getservbyname (servname, "tcp");
+            *protocol = IPPROTO_TCP;
+            *socktype = SOCK_STREAM;
+            if (se == NULL) {
+                se = getservbyname (servname, "udp");
+                *protocol = IPPROTO_UDP;
+                *socktype = SOCK_DGRAM;
+            }
+        }
     } else
-	return EAI_SOCKTYPE;
+        return EAI_SOCKTYPE;
 
     if (se == NULL) {
-	char *endstr;
+        char *endstr;
 
-	*port = htons(strtol (servname, &endstr, 10));
-	if (servname == endstr)
-	    return EAI_NONAME;
+        *port = htons(strtol (servname, &endstr, 10));
+        if (servname == endstr)
+            return EAI_NONAME;
     } else {
-	*port = se->s_port;
+        *port = se->s_port;
     }
     return 0;
 }
 
 static int
 add_one (int port, int protocol, int socktype,
-	 struct addrinfo ***ptr,
-	 int (*func)(struct addrinfo *, void *data, int port),
-	 void *data,
-	 char *canonname)
+         struct addrinfo ***ptr,
+         int (*func)(struct addrinfo *, void *data, int port),
+         void *data,
+         char *canonname)
 {
     struct addrinfo *a;
     int ret;
 
     a = malloc (sizeof (*a));
     if (a == NULL)
-	return EAI_MEMORY;
+        return EAI_MEMORY;
     memset (a, 0, sizeof(*a));
     a->ai_flags     = 0;
     a->ai_next      = NULL;
@@ -121,8 +121,8 @@ add_one (int port, int protocol, int socktype,
     a->ai_canonname = canonname;
     ret = (*func)(a, data, port);
     if (ret) {
-	free (a);
-	return ret;
+        free (a);
+        return ret;
     }
     **ptr = a;
     *ptr = &a->ai_next;
@@ -139,7 +139,7 @@ const_v4 (struct addrinfo *a, void *data, int port)
     a->ai_addrlen = sizeof(*sin4);
     a->ai_addr    = malloc (sizeof(*sin4));
     if (a->ai_addr == NULL)
-	return EAI_MEMORY;
+        return EAI_MEMORY;
     sin4 = (struct sockaddr_in *)a->ai_addr;
     memset (sin4, 0, sizeof(*sin4));
     sin4->sin_family = AF_INET;
@@ -159,7 +159,7 @@ const_v6 (struct addrinfo *a, void *data, int port)
     a->ai_addrlen = sizeof(*sin6);
     a->ai_addr    = malloc (sizeof(*sin6));
     if (a->ai_addr == NULL)
-	return EAI_MEMORY;
+        return EAI_MEMORY;
     sin6 = (struct sockaddr_in6 *)a->ai_addr;
     memset (sin6, 0, sizeof(*sin6));
     sin6->sin6_family = AF_INET6;
@@ -178,8 +178,8 @@ struct in6_addr in6addr_loopback = IN6ADDR_LOOPBACK_INIT;
 
 static int
 get_null (const struct addrinfo *hints,
-	  int port, int protocol, int socktype,
-	  struct addrinfo **res)
+          int port, int protocol, int socktype,
+          struct addrinfo **res)
 {
     struct in_addr v4_addr;
 #ifdef HAVE_IPV6
@@ -191,29 +191,29 @@ get_null (const struct addrinfo *hints,
     int ret = EAI_FAMILY;
 
     if (hints != NULL)
-	family = hints->ai_family;
+        family = hints->ai_family;
 
     if (hints && hints->ai_flags & AI_PASSIVE) {
-	v4_addr.s_addr = INADDR_ANY;
+        v4_addr.s_addr = INADDR_ANY;
 #ifdef HAVE_IPV6
-	v6_addr        = in6addr_any;
+        v6_addr        = in6addr_any;
 #endif
     } else {
-	v4_addr.s_addr = htonl(INADDR_LOOPBACK);
+        v4_addr.s_addr = htonl(INADDR_LOOPBACK);
 #ifdef HAVE_IPV6
-	v6_addr        = in6addr_loopback;
+        v6_addr        = in6addr_loopback;
 #endif
     }
 
 #ifdef HAVE_IPV6
     if (family == PF_INET6 || family == PF_UNSPEC) {
-	ret = add_one (port, protocol, socktype,
-		       &current, const_v6, &v6_addr, NULL);
+        ret = add_one (port, protocol, socktype,
+                       &current, const_v6, &v6_addr, NULL);
     }
 #endif
     if (family == PF_INET || family == PF_UNSPEC) {
-	ret = add_one (port, protocol, socktype,
-		       &current, const_v4, &v4_addr, NULL);
+        ret = add_one (port, protocol, socktype,
+                       &current, const_v4, &v4_addr, NULL);
     }
     *res = first;
     return ret;
@@ -221,57 +221,57 @@ get_null (const struct addrinfo *hints,
 
 static int
 add_hostent (int port, int protocol, int socktype,
-	     struct addrinfo ***current,
-	     int (*func)(struct addrinfo *, void *data, int port),
-	     struct hostent *he, int *flags)
+             struct addrinfo ***current,
+             int (*func)(struct addrinfo *, void *data, int port),
+             struct hostent *he, int *flags)
 {
     int ret;
     char *canonname = NULL;
     char **h;
 
     if (*flags & AI_CANONNAME) {
-	struct hostent *he2 = NULL;
-	const char *tmp_canon;
+        struct hostent *he2 = NULL;
+        const char *tmp_canon;
 
-	tmp_canon = hostent_find_fqdn (he);
-	if (strchr (tmp_canon, '.') == NULL) {
-	    int error;
+        tmp_canon = hostent_find_fqdn (he);
+        if (strchr (tmp_canon, '.') == NULL) {
+            int error;
 
-	    he2 = getipnodebyaddr (he->h_addr_list[0], he->h_length,
-				   he->h_addrtype, &error);
-	    if (he2 != NULL) {
-		const char *tmp = hostent_find_fqdn (he2);
+            he2 = getipnodebyaddr (he->h_addr_list[0], he->h_length,
+                                   he->h_addrtype, &error);
+            if (he2 != NULL) {
+                const char *tmp = hostent_find_fqdn (he2);
 
-		if (strchr (tmp, '.') != NULL)
-		    tmp_canon = tmp;
-	    }
-	}
+                if (strchr (tmp, '.') != NULL)
+                    tmp_canon = tmp;
+            }
+        }
 
-	canonname = strdup (tmp_canon);
-	if (he2 != NULL)
-	    freehostent (he2);
-	if (canonname == NULL)
-	    return EAI_MEMORY;
+        canonname = strdup (tmp_canon);
+        if (he2 != NULL)
+            freehostent (he2);
+        if (canonname == NULL)
+            return EAI_MEMORY;
     }
 
     for (h = he->h_addr_list; *h != NULL; ++h) {
-	ret = add_one (port, protocol, socktype,
-		       current, func, *h, canonname);
-	if (ret)
-	    return ret;
-	if (*flags & AI_CANONNAME) {
-	    *flags &= ~AI_CANONNAME;
-	    canonname = NULL;
-	}
+        ret = add_one (port, protocol, socktype,
+                       current, func, *h, canonname);
+        if (ret)
+            return ret;
+        if (*flags & AI_CANONNAME) {
+            *flags &= ~AI_CANONNAME;
+            canonname = NULL;
+        }
     }
     return 0;
 }
 
 static int
 get_number (const char *nodename,
-	    const struct addrinfo *hints,
-	    int port, int protocol, int socktype,
-	    struct addrinfo **res)
+            const struct addrinfo *hints,
+            int port, int protocol, int socktype,
+            struct addrinfo **res)
 {
     struct addrinfo *first = NULL;
     struct addrinfo **current = &first;
@@ -279,39 +279,39 @@ get_number (const char *nodename,
     int ret;
 
     if (hints != NULL) {
-	family = hints->ai_family;
+        family = hints->ai_family;
     }
 
 #ifdef HAVE_IPV6
     if (family == PF_INET6 || family == PF_UNSPEC) {
-	struct in6_addr v6_addr;
+        struct in6_addr v6_addr;
 
-	if (inet_pton (PF_INET6, nodename, &v6_addr) == 1) {
-	    ret = add_one (port, protocol, socktype,
-			   &current, const_v6, &v6_addr, NULL);
-	    *res = first;
-	    return ret;
-	}
+        if (inet_pton (PF_INET6, nodename, &v6_addr) == 1) {
+            ret = add_one (port, protocol, socktype,
+                           &current, const_v6, &v6_addr, NULL);
+            *res = first;
+            return ret;
+        }
     }
 #endif
     if (family == PF_INET || family == PF_UNSPEC) {
-	struct in_addr v4_addr;
+        struct in_addr v4_addr;
 
-	if (inet_pton (PF_INET, nodename, &v4_addr) == 1) {
-	    ret = add_one (port, protocol, socktype,
-			   &current, const_v4, &v4_addr, NULL);
-	    *res = first;
-	    return ret;
-	}
+        if (inet_pton (PF_INET, nodename, &v4_addr) == 1) {
+            ret = add_one (port, protocol, socktype,
+                           &current, const_v4, &v4_addr, NULL);
+            *res = first;
+            return ret;
+        }
     }
     return EAI_NONAME;
 }
 
 static int
 get_nodes (const char *nodename,
-	   const struct addrinfo *hints,
-	   int port, int protocol, int socktype,
-	   struct addrinfo **res)
+           const struct addrinfo *hints,
+           int port, int protocol, int socktype,
+           struct addrinfo **res)
 {
     struct addrinfo *first = NULL;
     struct addrinfo **current = &first;
@@ -321,33 +321,33 @@ get_nodes (const char *nodename,
     int error;
 
     if (hints != NULL) {
-	family = hints->ai_family;
-	flags  = hints->ai_flags;
+        family = hints->ai_family;
+        flags  = hints->ai_flags;
     }
 
 #ifdef HAVE_IPV6
     if (family == PF_INET6 || family == PF_UNSPEC) {
-	struct hostent *he;
+        struct hostent *he;
 
-	he = getipnodebyname (nodename, PF_INET6, 0, &error);
+        he = getipnodebyname (nodename, PF_INET6, 0, &error);
 
-	if (he != NULL) {
-	    ret = add_hostent (port, protocol, socktype,
-			       &current, const_v6, he, &flags);
-	    freehostent (he);
-	}
+        if (he != NULL) {
+            ret = add_hostent (port, protocol, socktype,
+                               &current, const_v6, he, &flags);
+            freehostent (he);
+        }
     }
 #endif
     if (family == PF_INET || family == PF_UNSPEC) {
-	struct hostent *he;
+        struct hostent *he;
 
-	he = getipnodebyname (nodename, PF_INET, 0, &error);
+        he = getipnodebyname (nodename, PF_INET, 0, &error);
 
-	if (he != NULL) {
-	    ret = add_hostent (port, protocol, socktype,
-			       &current, const_v4, he, &flags);
-	    freehostent (he);
-	}
+        if (he != NULL) {
+            ret = add_hostent (port, protocol, socktype,
+                               &current, const_v4, he, &flags);
+            freehostent (he);
+        }
     }
     *res = first;
     return ret;
@@ -367,9 +367,9 @@ get_nodes (const char *nodename,
 
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 rk_getaddrinfo(const char *nodename,
-	       const char *servname,
-	       const struct addrinfo *hints,
-	       struct addrinfo **res)
+               const char *servname,
+               const struct addrinfo *hints,
+               struct addrinfo **res)
 {
     int ret;
     int port     = 0;
@@ -379,36 +379,36 @@ rk_getaddrinfo(const char *nodename,
     *res = NULL;
 
     if (servname == NULL && nodename == NULL)
-	return EAI_NONAME;
+        return EAI_NONAME;
 
     if (hints != NULL
-	&& hints->ai_family != PF_UNSPEC
-	&& hints->ai_family != PF_INET
+        && hints->ai_family != PF_UNSPEC
+        && hints->ai_family != PF_INET
 #ifdef HAVE_IPV6
-	&& hints->ai_family != PF_INET6
+        && hints->ai_family != PF_INET6
 #endif
-	)
-	return EAI_FAMILY;
+        )
+        return EAI_FAMILY;
 
     if (servname != NULL) {
-	ret = get_port_protocol_socktype (servname, hints,
-					  &port, &protocol, &socktype);
-	if (ret)
-	    return ret;
+        ret = get_port_protocol_socktype (servname, hints,
+                                          &port, &protocol, &socktype);
+        if (ret)
+            return ret;
     }
     if (nodename != NULL) {
-	ret = get_number (nodename, hints, port, protocol, socktype, res);
-	if (ret) {
-	    if(hints && hints->ai_flags & AI_NUMERICHOST)
-		ret = EAI_NONAME;
-	    else
-		ret = get_nodes (nodename, hints, port, protocol, socktype,
-				 res);
-	}
+        ret = get_number (nodename, hints, port, protocol, socktype, res);
+        if (ret) {
+            if(hints && hints->ai_flags & AI_NUMERICHOST)
+                ret = EAI_NONAME;
+            else
+                ret = get_nodes (nodename, hints, port, protocol, socktype,
+                                 res);
+        }
     } else {
-	ret = get_null (hints, port, protocol, socktype, res);
+        ret = get_null (hints, port, protocol, socktype, res);
     }
     if (ret)
-	rk_freeaddrinfo(*res);
+        rk_freeaddrinfo(*res);
     return ret;
 }

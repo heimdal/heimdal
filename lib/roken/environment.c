@@ -48,8 +48,8 @@ find_var(char **env, char *assignment, size_t len)
 {
     int i;
     for(i = 0; env != NULL && env[i] != NULL; i++)
-	if(strncmp(env[i], assignment, len) == 0)
-	    return i;
+        if(strncmp(env[i], assignment, len) == 0)
+            return i;
     return -1;
 }
 
@@ -82,51 +82,51 @@ read_env_file(FILE *F, char ***env, int *assigned)
      * Wietses sysv_environ from K4 was...
      */
     while (fgets(buf, BUFSIZ, F) != NULL) {
-	buf[strcspn(buf, "#\n")] = '\0';
+        buf[strcspn(buf, "#\n")] = '\0';
 
-	for(p = buf; isspace((unsigned char)*p); p++);
-	if (*p == '\0')
-	    continue;
+        for(p = buf; isspace((unsigned char)*p); p++);
+        if (*p == '\0')
+            continue;
 
-	/* Here one should check that it's a 'valid' env string... */
-	r = strchr(p, '=');
-	if (r == NULL)
-	    continue;
+        /* Here one should check that it's a 'valid' env string... */
+        r = strchr(p, '=');
+        if (r == NULL)
+            continue;
 
-	if((i = find_var(l, p, r - p + 1)) >= 0) {
-	    char *val;
+        if((i = find_var(l, p, r - p + 1)) >= 0) {
+            char *val;
 
             if ((size_t)i >= alloced)
                 continue; /* Doesn't happen (fix scan-build noise) */
-	    val = strdup(p);
-	    if(val == NULL) {
-		ret = ENOMEM;
-		break;
-	    }
-	    free(l[i]);
-	    l[i] = val;
-	    (*assigned)++;
-	    continue;
-	}
+            val = strdup(p);
+            if(val == NULL) {
+                ret = ENOMEM;
+                break;
+            }
+            free(l[i]);
+            l[i] = val;
+            (*assigned)++;
+            continue;
+        }
 
-	tmp = realloc(l, (idx+2) * sizeof (char *));
-	if(tmp == NULL) {
-	    ret = ENOMEM;
-	    break;
-	}
+        tmp = realloc(l, (idx+2) * sizeof (char *));
+        if(tmp == NULL) {
+            ret = ENOMEM;
+            break;
+        }
 
-	l = tmp;
-	l[idx] = strdup(p);
-	if(l[idx] == NULL) {
-	    ret = ENOMEM;
-	    break;
-	}
-	l[++idx] = NULL;
+        l = tmp;
+        l[idx] = strdup(p);
+        if(l[idx] == NULL) {
+            ret = ENOMEM;
+            break;
+        }
+        l[++idx] = NULL;
         alloced = idx + 1;
-	(*assigned)++;
+        (*assigned)++;
     }
     if(ferror(F))
-	ret = errno;
+        ret = errno;
     *env = l;
     return ret;
 }
@@ -143,7 +143,7 @@ read_environment(const char *file, char ***env)
     FILE *F;
 
     if ((F = fopen(file, "r")) == NULL)
-	return 0;
+        return 0;
 
     read_env_file(F, env, &assigned);
     fclose(F);
@@ -155,8 +155,8 @@ free_environment(char **env)
 {
     int i;
     if (env == NULL)
-	return;
+        return;
     for (i = 0; env[i]; i++)
-	free(env[i]);
+        free(env[i]);
     free(env);
 }

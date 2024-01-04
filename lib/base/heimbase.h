@@ -259,7 +259,7 @@ typedef struct heim_db_data *heim_db_t;
 typedef void (*heim_db_iterator_f_t)(heim_data_t, heim_data_t, void *);
 
 typedef int (*heim_db_plug_open_f_t)(void *, const char *, const char *,
-				     heim_dict_t, void **, heim_error_t *);
+                                     heim_dict_t, void **, heim_error_t *);
 typedef int (*heim_db_plug_clone_f_t)(void *, void **, heim_error_t *);
 typedef int (*heim_db_plug_close_f_t)(void *, heim_error_t *);
 typedef int (*heim_db_plug_lock_f_t)(void *, int, heim_error_t *);
@@ -315,21 +315,21 @@ typedef struct heim_auto_release * heim_auto_release_t;
  * JSON
  */
 typedef enum heim_json_flags {
-	HEIM_JSON_F_NO_C_NULL = 1,
-	HEIM_JSON_F_STRICT_STRINGS = 2,
-	HEIM_JSON_F_NO_DATA = 4,
-	HEIM_JSON_F_NO_DATA_DICT = 8,
-	HEIM_JSON_F_STRICT_DICT = 16,
-	HEIM_JSON_F_STRICT = 31,
-	HEIM_JSON_F_CNULL2JSNULL = 32,
-	HEIM_JSON_F_TRY_DECODE_DATA = 64,
-	HEIM_JSON_F_ONE_LINE = 128,
-        HEIM_JSON_F_ESCAPE_NON_ASCII = 256,
-        HEIM_JSON_F_NO_ESCAPE_NON_ASCII = 512,
-        /* The default is to indent with one tab */
-	HEIM_JSON_F_INDENT2 = 1024,
-	HEIM_JSON_F_INDENT4 = 2048,
-	HEIM_JSON_F_INDENT8 = 4096,
+    HEIM_JSON_F_NO_C_NULL = 1,
+    HEIM_JSON_F_STRICT_STRINGS = 2,
+    HEIM_JSON_F_NO_DATA = 4,
+    HEIM_JSON_F_NO_DATA_DICT = 8,
+    HEIM_JSON_F_STRICT_DICT = 16,
+    HEIM_JSON_F_STRICT = 31,
+    HEIM_JSON_F_CNULL2JSNULL = 32,
+    HEIM_JSON_F_TRY_DECODE_DATA = 64,
+    HEIM_JSON_F_ONE_LINE = 128,
+    HEIM_JSON_F_ESCAPE_NON_ASCII = 256,
+    HEIM_JSON_F_NO_ESCAPE_NON_ASCII = 512,
+    /* The default is to indent with one tab */
+    HEIM_JSON_F_INDENT2 = 1024,
+    HEIM_JSON_F_INDENT4 = 2048,
+    HEIM_JSON_F_INDENT8 = 4096,
 } heim_json_flags_t;
 
 /*
@@ -343,13 +343,13 @@ typedef enum heim_json_flags {
  */
 typedef struct bsearch_file_handle *bsearch_file_handle;
 int _bsearch_text(const char *buf, size_t buf_sz, const char *key,
-		   char **value, size_t *location, size_t *loops);
+                  char **value, size_t *location, size_t *loops);
 int _bsearch_file_open(const char *fname, size_t max_sz, size_t page_sz,
-			bsearch_file_handle *bfh, size_t *reads);
+                       bsearch_file_handle *bfh, size_t *reads);
 int _bsearch_file(bsearch_file_handle bfh, const char *key, char **value,
-		   size_t *location, size_t *loops, size_t *reads);
+                   size_t *location, size_t *loops, size_t *reads);
 void _bsearch_file_info(bsearch_file_handle bfh, size_t *page_sz,
-			 size_t *max_sz, int *blockwise);
+                        size_t *max_sz, int *blockwise);
 void _bsearch_file_close(bsearch_file_handle *bfh);
 
 /*

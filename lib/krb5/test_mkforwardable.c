@@ -51,7 +51,7 @@ check(krb5_error_code code)
     const char *errmsg;
 
     if (code == 0)
-	return;
+        return;
 
     errmsg = krb5_get_error_message(context, code);
     fprintf(stderr, "%s\n", errmsg);
@@ -62,9 +62,9 @@ check(krb5_error_code code)
 
 static void
 decrypt_ticket_enc_part(EncryptionKey *key,
-			krb5_enctype etype,
-			Ticket *ticket,
-			EncTicketPart *et)
+                        krb5_enctype etype,
+                        Ticket *ticket,
+                        EncTicketPart *et)
 {
     krb5_error_code ret;
     krb5_data plain;
@@ -74,10 +74,10 @@ decrypt_ticket_enc_part(EncryptionKey *key,
     check(krb5_crypto_init(context, key, etype, &crypto));
 
     ret = krb5_decrypt_EncryptedData (context,
-				      crypto,
-				      KRB5_KU_TICKET,
-				      &ticket->enc_part,
-				      &plain);
+                                      crypto,
+                                      KRB5_KU_TICKET,
+                                      &ticket->enc_part,
+                                      &plain);
     check(ret);
 
     check(decode_EncTicketPart(plain.data, plain.length, et, &len));
@@ -88,10 +88,10 @@ decrypt_ticket_enc_part(EncryptionKey *key,
 
 static void
 encrypt_ticket_enc_part(EncryptionKey *key,
-			krb5_enctype etype,
-			krb5_kvno skvno,
-			EncTicketPart *et,
-			Ticket *ticket)
+                        krb5_enctype etype,
+                        krb5_kvno skvno,
+                        EncTicketPart *et,
+                        Ticket *ticket)
 {
     size_t len, size;
     char *buf;
@@ -103,12 +103,12 @@ encrypt_ticket_enc_part(EncryptionKey *key,
 
     check(krb5_crypto_init(context, key, etype, &crypto));
     ret = krb5_encrypt_EncryptedData(context,
-				      crypto,
-				      KRB5_KU_TICKET,
-				      buf,
-				      len,
-				      skvno,
-				      &ticket->enc_part);
+                                     crypto,
+                                     KRB5_KU_TICKET,
+                                     buf,
+                                     len,
+                                     skvno,
+                                     &ticket->enc_part);
     check(ret);
 
     free(buf);
@@ -133,11 +133,11 @@ main(int argc, char **argv)
     memset(&cred, 0, sizeof(cred));
 
     if (argc != 3)
-	errx(1, "Usage: mkforwardable server out_ccache");
+        errx(1, "Usage: mkforwardable server out_ccache");
 
     ret = krb5_init_context(&context);
     if (ret)
-	errx(1, "krb5_init_context failed: %u", ret);
+        errx(1, "krb5_init_context failed: %u", ret);
 
     check(krb5_cc_default(context, &ccache));
 
@@ -152,7 +152,7 @@ main(int argc, char **argv)
     etype = ticket.enc_part.etype;
 
     if (ticket.enc_part.kvno != NULL)
-	kvno = *ticket.enc_part.kvno;
+        kvno = *ticket.enc_part.kvno;
 
     check(krb5_kt_default(context, &kt));
 
@@ -169,7 +169,7 @@ main(int argc, char **argv)
 
     krb5_data_free(&cred.ticket);
     ASN1_MALLOC_ENCODE(Ticket, cred.ticket.data, cred.ticket.length, &ticket,
-		       &size, ret);
+                       &size, ret);
     check(ret);
 
     krb5_cc_close(context, ccache);

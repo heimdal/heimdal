@@ -76,36 +76,36 @@ attr_to_flags(unsigned attr, HDBFlags *flags)
 
 static kadm5_ret_t
 perform_tl_data(krb5_context context,
-		HDB *db,
-		hdb_entry *ent,
-		const krb5_tl_data *tl_data)
+                HDB *db,
+                hdb_entry *ent,
+                const krb5_tl_data *tl_data)
 {
     kadm5_ret_t ret = 0;
 
     if (tl_data->tl_data_type == KRB5_TL_PASSWORD) {
-	heim_utf8_string pw = tl_data->tl_data_contents;
+        heim_utf8_string pw = tl_data->tl_data_contents;
 
-	if (pw[tl_data->tl_data_length] != '\0')
-	    return KADM5_BAD_TL_TYPE;
+        if (pw[tl_data->tl_data_length] != '\0')
+            return KADM5_BAD_TL_TYPE;
 
-	ret = hdb_entry_set_password(context, db, ent, pw);
+        ret = hdb_entry_set_password(context, db, ent, pw);
 
     } else if (tl_data->tl_data_type == KRB5_TL_LAST_PWD_CHANGE) {
         unsigned long t;
-	unsigned char *s;
+        unsigned char *s;
 
-	if (tl_data->tl_data_length != 4)
-	    return KADM5_BAD_TL_TYPE;
+        if (tl_data->tl_data_length != 4)
+            return KADM5_BAD_TL_TYPE;
 
-	s = tl_data->tl_data_contents;
+        s = tl_data->tl_data_contents;
 
         (void) _krb5_get_int(s, &t, tl_data->tl_data_length);
         ret = hdb_entry_set_pw_change_time(context, ent, t);
 
     } else if (tl_data->tl_data_type == KRB5_TL_KEY_ROTATION) {
         HDB_Ext_KeyRotation *prev_kr = 0;
-	HDB_extension *prev_ext;
-	HDB_extension ext;
+        HDB_extension *prev_ext;
+        HDB_extension ext;
 
         ext.mandatory = 0;
         ext.data.element = choice_HDB_extension_data_key_rotation;
@@ -120,16 +120,16 @@ perform_tl_data(krb5_context context,
                                              &ext.data.u.key_rotation);
         if (ret == 0)
             ret = hdb_replace_extension(context, ent, &ext);
-	free_HDB_extension(&ext);
+        free_HDB_extension(&ext);
     } else if (tl_data->tl_data_type == KRB5_TL_EXTENSION) {
-	HDB_extension ext;
+        HDB_extension ext;
 
-	ret = decode_HDB_extension(tl_data->tl_data_contents,
-				   tl_data->tl_data_length,
-				   &ext,
-				   NULL);
-	if (ret)
-	    return KADM5_BAD_TL_TYPE;
+        ret = decode_HDB_extension(tl_data->tl_data_contents,
+                                   tl_data->tl_data_length,
+                                   &ext,
+                                   NULL);
+        if (ret)
+            return KADM5_BAD_TL_TYPE;
 
         if (ext.data.element == choice_HDB_extension_data_key_rotation) {
             HDB_extension *prev_ext = hdb_find_extension(ent,
@@ -141,11 +141,11 @@ perform_tl_data(krb5_context context,
             ret = hdb_validate_key_rotations(context, prev_kr,
                                              &ext.data.u.key_rotation);
         }
-	if (ret)
-	    ret = KADM5_BAD_TL_TYPE; /* XXX Need new error code */
+        if (ret)
+            ret = KADM5_BAD_TL_TYPE; /* XXX Need new error code */
         if (ret == 0)
             ret = hdb_replace_extension(context, ent, &ext);
-	free_HDB_extension(&ext);
+        free_HDB_extension(&ext);
     } else if (tl_data->tl_data_type == KRB5_TL_ETYPES) {
         if (!ent->etypes &&
             (ent->etypes = calloc(1,
@@ -157,12 +157,12 @@ perform_tl_data(krb5_context context,
             ret = decode_HDB_EncTypeList(tl_data->tl_data_contents,
                                          tl_data->tl_data_length,
                                          ent->etypes, NULL);
-	if (ret)
-	    return KADM5_BAD_TL_TYPE;
+        if (ret)
+            return KADM5_BAD_TL_TYPE;
     } else if (tl_data->tl_data_type == KRB5_TL_ALIASES) {
         return 0;
     } else {
-	return KADM5_BAD_TL_TYPE;
+        return KADM5_BAD_TL_TYPE;
     }
     return ret;
 }
@@ -187,90 +187,90 @@ default_flags(hdb_entry *ent)
 
 kadm5_ret_t
 _kadm5_setup_entry(kadm5_server_context *context,
-		   hdb_entry *ent,
-		   uint32_t mask,
-		   kadm5_principal_ent_t princ,
-		   uint32_t princ_mask,
-		   kadm5_principal_ent_t def,
-		   uint32_t def_mask)
+                   hdb_entry *ent,
+                   uint32_t mask,
+                   kadm5_principal_ent_t princ,
+                   uint32_t princ_mask,
+                   kadm5_principal_ent_t def,
+                   uint32_t def_mask)
 {
     if(mask & KADM5_PRINC_EXPIRE_TIME
        && princ_mask & KADM5_PRINC_EXPIRE_TIME) {
-	if (princ->princ_expire_time)
-	    set_value(ent->valid_end, princ->princ_expire_time);
-	else
-	    set_null(ent->valid_end);
+        if (princ->princ_expire_time)
+            set_value(ent->valid_end, princ->princ_expire_time);
+        else
+            set_null(ent->valid_end);
     }
     if(mask & KADM5_PW_EXPIRATION
        && princ_mask & KADM5_PW_EXPIRATION) {
-	if (princ->pw_expiration)
-	    set_value(ent->pw_end, princ->pw_expiration);
-	else
-	    set_null(ent->pw_end);
+        if (princ->pw_expiration)
+            set_value(ent->pw_end, princ->pw_expiration);
+        else
+            set_null(ent->pw_end);
     }
     if(mask & KADM5_ATTRIBUTES) {
-	if (princ_mask & KADM5_ATTRIBUTES) {
-	    attr_to_flags(princ->attributes, &ent->flags);
-	} else if(def_mask & KADM5_ATTRIBUTES) {
-	    attr_to_flags(def->attributes, &ent->flags);
-	    ent->flags.invalid = 0;
-	} else {
-	    default_flags(ent);
-	}
+        if (princ_mask & KADM5_ATTRIBUTES) {
+            attr_to_flags(princ->attributes, &ent->flags);
+        } else if(def_mask & KADM5_ATTRIBUTES) {
+            attr_to_flags(def->attributes, &ent->flags);
+            ent->flags.invalid = 0;
+        } else {
+            default_flags(ent);
+        }
     }
 
     if(mask & KADM5_MAX_LIFE) {
-	if(princ_mask & KADM5_MAX_LIFE) {
-	    if(princ->max_life)
-	      set_value(ent->max_life, princ->max_life);
-	    else
-	      set_null(ent->max_life);
-	} else if(def_mask & KADM5_MAX_LIFE) {
-	    if(def->max_life)
-	      set_value(ent->max_life, def->max_life);
-	    else
-	      set_null(ent->max_life);
-	}
+        if(princ_mask & KADM5_MAX_LIFE) {
+            if(princ->max_life)
+              set_value(ent->max_life, princ->max_life);
+            else
+              set_null(ent->max_life);
+        } else if(def_mask & KADM5_MAX_LIFE) {
+            if(def->max_life)
+              set_value(ent->max_life, def->max_life);
+            else
+              set_null(ent->max_life);
+        }
     }
     if(mask & KADM5_KVNO
        && (princ_mask & KADM5_KVNO)) {
-	krb5_error_code ret;
+        krb5_error_code ret;
 
-	ret = hdb_change_kvno(context->context, princ->kvno, ent);
-	if (ret && ret != HDB_ERR_KVNO_NOT_FOUND)
-	    return ret;
-	ent->kvno = princ->kvno; /* force it */
+        ret = hdb_change_kvno(context->context, princ->kvno, ent);
+        if (ret && ret != HDB_ERR_KVNO_NOT_FOUND)
+            return ret;
+        ent->kvno = princ->kvno; /* force it */
     }
     if(mask & KADM5_MAX_RLIFE) {
-	if(princ_mask & KADM5_MAX_RLIFE) {
-	  if(princ->max_renewable_life)
-	    set_value(ent->max_renew, princ->max_renewable_life);
-	  else
-	    set_null(ent->max_renew);
-	} else if(def_mask & KADM5_MAX_RLIFE) {
-	  if(def->max_renewable_life)
-	    set_value(ent->max_renew, def->max_renewable_life);
-	  else
-	    set_null(ent->max_renew);
-	}
+        if(princ_mask & KADM5_MAX_RLIFE) {
+          if(princ->max_renewable_life)
+            set_value(ent->max_renew, princ->max_renewable_life);
+          else
+            set_null(ent->max_renew);
+        } else if(def_mask & KADM5_MAX_RLIFE) {
+          if(def->max_renewable_life)
+            set_value(ent->max_renew, def->max_renewable_life);
+          else
+            set_null(ent->max_renew);
+        }
     }
     if(mask & KADM5_KEY_DATA
        && princ_mask & KADM5_KEY_DATA) {
-	_kadm5_set_keys2(context, ent,
-			 princ->n_key_data, princ->key_data);
+        _kadm5_set_keys2(context, ent,
+                         princ->n_key_data, princ->key_data);
     }
     if(mask & KADM5_TL_DATA) {
-	krb5_tl_data *tl;
+        krb5_tl_data *tl;
 
-	for (tl = princ->tl_data; tl != NULL; tl = tl->tl_data_next) {
-	    kadm5_ret_t ret;
-	    ret = perform_tl_data(context->context, context->db, ent, tl);
-	    if (ret)
-		return ret;
-	}
+        for (tl = princ->tl_data; tl != NULL; tl = tl->tl_data_next) {
+            kadm5_ret_t ret;
+            ret = perform_tl_data(context->context, context->db, ent, tl);
+            if (ret)
+                return ret;
+        }
     }
     if(mask & KADM5_FAIL_AUTH_COUNT) {
-	/* XXX */
+        /* XXX */
     }
     return 0;
 }

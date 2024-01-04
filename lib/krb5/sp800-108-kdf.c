@@ -50,11 +50,11 @@
  */
 krb5_error_code
 _krb5_SP800_108_HMAC_KDF(krb5_context context,
-			 const krb5_data *kdf_K1,
-			 const krb5_data *kdf_label,
-			 const krb5_data *kdf_context,
-			 const EVP_MD *md,
-			 krb5_data *kdf_K0)
+                         const krb5_data *kdf_K1,
+                         const krb5_data *kdf_label,
+                         const krb5_data *kdf_context,
+                         const EVP_MD *md,
+                         krb5_data *kdf_K0)
 {
     HMAC_CTX c;
     unsigned char *p = kdf_K0->data;
@@ -70,28 +70,28 @@ _krb5_SP800_108_HMAC_KDF(krb5_context context,
     n = L / h;
 
     for (i = 0; i <= n; i++) {
-	unsigned char tmp[4];
-	size_t len;
+        unsigned char tmp[4];
+        size_t len;
 
         if (HMAC_Init_ex(&c, kdf_K1->data, kdf_K1->length, md, NULL) == 0) {
             HMAC_CTX_cleanup(&c);
             return krb5_enomem(context);
         }
 
-	_krb5_put_int(tmp, i + 1, 4);
-	HMAC_Update(&c, tmp, 4);
-	HMAC_Update(&c, kdf_label->data, kdf_label->length);
-	HMAC_Update(&c, (unsigned char *)"", 1);
-	if (kdf_context)
-	    HMAC_Update(&c, kdf_context->data, kdf_context->length);
-	_krb5_put_int(tmp, L * 8, 4);
-	HMAC_Update(&c, tmp, 4);
+        _krb5_put_int(tmp, i + 1, 4);
+        HMAC_Update(&c, tmp, 4);
+        HMAC_Update(&c, kdf_label->data, kdf_label->length);
+        HMAC_Update(&c, (unsigned char *)"", 1);
+        if (kdf_context)
+            HMAC_Update(&c, kdf_context->data, kdf_context->length);
+        _krb5_put_int(tmp, L * 8, 4);
+        HMAC_Update(&c, tmp, 4);
 
-	HMAC_Final(&c, hmac, &h);
-	len = h > left ? left : h;
-	memcpy(p, hmac, len);
-	p += len;
-	left -= len;
+        HMAC_Final(&c, hmac, &h);
+        len = h > left ? left : h;
+        memcpy(p, hmac, len);
+        p += len;
+        left -= len;
     }
 
     HMAC_CTX_cleanup(&c);

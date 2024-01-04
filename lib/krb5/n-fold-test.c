@@ -98,22 +98,22 @@ main(int argc, char **argv)
     int ret = 0;
 
     for (t = tests; t->str; ++t) {
-	int i;
+        int i;
 
-	ret = _krb5_n_fold (t->str, strlen(t->str), data, t->n);
-	if (ret)
-	    errx(1, "out of memory");
-	if (memcmp (data, t->res, t->n) != 0) {
-	    printf ("n-fold(\"%s\", %d) failed\n", t->str, t->n);
-	    printf ("should be: ");
-	    for (i = 0; i < t->n; ++i)
-		printf ("%02x", t->res[i]);
-	    printf ("\nresult was: ");
-	    for (i = 0; i < t->n; ++i)
-		printf ("%02x", data[i]);
-	    printf ("\n");
-	    ret = 1;
-	}
+        ret = _krb5_n_fold (t->str, strlen(t->str), data, t->n);
+        if (ret)
+            errx(1, "out of memory");
+        if (memcmp (data, t->res, t->n) != 0) {
+            printf ("n-fold(\"%s\", %d) failed\n", t->str, t->n);
+            printf ("should be: ");
+            for (i = 0; i < t->n; ++i)
+                printf ("%02x", t->res[i]);
+            printf ("\nresult was: ");
+            for (i = 0; i < t->n; ++i)
+                printf ("%02x", data[i]);
+            printf ("\n");
+            ret = 1;
+        }
     }
     return ret;
 }

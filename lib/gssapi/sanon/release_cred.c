@@ -33,7 +33,7 @@
 
 OM_uint32 GSSAPI_CALLCONV
 _gss_sanon_release_cred(OM_uint32 *minor,
-			gss_cred_id_t *cred_handle)
+                        gss_cred_id_t *cred_handle)
 {
     *minor = 0;
     *cred_handle = GSS_C_NO_CREDENTIAL;

@@ -43,10 +43,10 @@ _gss_negoex_end(gssspnego_ctx ctx)
 
     mech = HEIM_TAILQ_FIRST(&ctx->negoex_mechs);
     if (mech == NULL || mech->mech_context == GSS_C_NO_CONTEXT)
-	return;
+        return;
 
     heim_assert(ctx->negotiated_ctx_id == GSS_C_NO_CONTEXT,
-		"SPNEGO/NegoEx context mismatch");
+                "SPNEGO/NegoEx context mismatch");
     ctx->negotiated_ctx_id = mech->mech_context;
     mech->mech_context = GSS_C_NO_CONTEXT;
 }
@@ -57,28 +57,28 @@ _gss_negoex_begin(OM_uint32 *minor, gssspnego_ctx ctx)
     struct negoex_auth_mech *mech;
 
     if (ctx->negoex_transcript != NULL) {
-	/*
-	 * The context is already initialized for NegoEx; undo what
-	 * _gss_negoex_end() did, if applicable.
-	 */
-	if (ctx->negotiated_ctx_id != GSS_C_NO_CONTEXT) {
-	    mech = HEIM_TAILQ_FIRST(&ctx->negoex_mechs);
-	    heim_assert(mech != NULL && mech->mech_context == GSS_C_NO_CONTEXT,
-			"NegoEx/SPNEGO context mismatch");
-	    mech->mech_context = ctx->negotiated_ctx_id;
-	    ctx->negotiated_ctx_id = GSS_C_NO_CONTEXT;
-	}
-	return GSS_S_COMPLETE;
+        /*
+         * The context is already initialized for NegoEx; undo what
+         * _gss_negoex_end() did, if applicable.
+         */
+        if (ctx->negotiated_ctx_id != GSS_C_NO_CONTEXT) {
+            mech = HEIM_TAILQ_FIRST(&ctx->negoex_mechs);
+            heim_assert(mech != NULL && mech->mech_context == GSS_C_NO_CONTEXT,
+                        "NegoEx/SPNEGO context mismatch");
+            mech->mech_context = ctx->negotiated_ctx_id;
+            ctx->negotiated_ctx_id = GSS_C_NO_CONTEXT;
+        }
+        return GSS_S_COMPLETE;
     }
 
     ctx->negoex_transcript = krb5_storage_emem();
     if (ctx->negoex_transcript == NULL) {
-	*minor = ENOMEM;
-	return GSS_S_FAILURE;
+        *minor = ENOMEM;
+        return GSS_S_FAILURE;
     }
 
     krb5_storage_set_byteorder(ctx->negoex_transcript,
-			       KRB5_STORAGE_BYTEORDER_LE);
+                               KRB5_STORAGE_BYTEORDER_LE);
 
     return GSS_S_COMPLETE;
 }
@@ -90,12 +90,12 @@ release_all_mechs(gssspnego_ctx ctx, krb5_context context)
     struct negoex_auth_mech *prev = NULL;
 
     HEIM_TAILQ_FOREACH_SAFE(mech, &ctx->negoex_mechs, links, next) {
-	if (prev)
-	    _gss_negoex_release_auth_mech(context, prev);
-	prev = mech;
+        if (prev)
+            _gss_negoex_release_auth_mech(context, prev);
+        prev = mech;
     }
     if (prev)
-	_gss_negoex_release_auth_mech(context, mech);
+        _gss_negoex_release_auth_mech(context, mech);
 
     HEIM_TAILQ_INIT(&ctx->negoex_mechs);
 }
@@ -106,8 +106,8 @@ _gss_negoex_release_context(gssspnego_ctx ctx)
     krb5_context context = _gss_mg_krb5_context();
 
     if (ctx->negoex_transcript != NULL) {
-	krb5_storage_free(ctx->negoex_transcript);
-	ctx->negoex_transcript = NULL;
+        krb5_storage_free(ctx->negoex_transcript);
+        ctx->negoex_transcript = NULL;
     }
 
     release_all_mechs(ctx, context);
@@ -124,60 +124,60 @@ guid_to_string(const uint8_t guid[16], char *buffer, size_t bufsiz)
     _gss_mg_decode_le_uint16(&guid[6], &data3);
 
     return snprintf(buffer, bufsiz,
-		    "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
-		    data1, data2, data3, guid[8], guid[9], guid[10], guid[11],
-		    guid[12], guid[13], guid[14], guid[15]);
+                    "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
+                    data1, data2, data3, guid[8], guid[9], guid[10], guid[11],
+                    guid[12], guid[13], guid[14], guid[15]);
 }
 
 void
 _gss_negoex_log_auth_scheme(int initiator,
-			    int index,
-			    const auth_scheme scheme)
+                            int index,
+                            const auth_scheme scheme)
 {
     char scheme_str[37];
 
     guid_to_string(scheme, scheme_str, sizeof(scheme_str));
 
     _gss_mg_log(NEGOEX_LOG_LEVEL,
-		"negoex: %s authentication scheme %d %s",
-		initiator ? "proposing" : "received", index, scheme_str);
+                "negoex: %s authentication scheme %d %s",
+                initiator ? "proposing" : "received", index, scheme_str);
 }
 
 void
 _gss_negoex_log_message(int direction,
-			enum message_type type,
-			const conversation_id conv_id,
-			unsigned int seqnum,
-			unsigned int header_len,
-			unsigned int msg_len)
+                        enum message_type type,
+                        const conversation_id conv_id,
+                        unsigned int seqnum,
+                        unsigned int header_len,
+                        unsigned int msg_len)
 {
     char conv_str[37];
     char *typestr;
 
     if (type == INITIATOR_NEGO)
-	typestr = "INITIATOR_NEGO";
+        typestr = "INITIATOR_NEGO";
     else if (type == ACCEPTOR_NEGO)
-	typestr = "ACCEPTOR_NEGO";
+        typestr = "ACCEPTOR_NEGO";
     else if (type == INITIATOR_META_DATA)
-	typestr = "INITIATOR_META_DATA";
+        typestr = "INITIATOR_META_DATA";
     else if (type == ACCEPTOR_META_DATA)
-	typestr = "ACCEPTOR_META_DATA";
+        typestr = "ACCEPTOR_META_DATA";
     else if (type == CHALLENGE)
-	typestr = "CHALLENGE";
+        typestr = "CHALLENGE";
     else if (type == AP_REQUEST)
-	typestr = "AP_REQUEST";
+        typestr = "AP_REQUEST";
     else if (type == VERIFY)
-	typestr = "VERIFY";
+        typestr = "VERIFY";
     else if (type == ALERT)
-	typestr = "ALERT";
+        typestr = "ALERT";
     else
-	typestr = "UNKNOWN";
+        typestr = "UNKNOWN";
 
     guid_to_string(conv_id, conv_str, sizeof(conv_str));
     _gss_mg_log(NEGOEX_LOG_LEVEL,
-		"negoex: %s (%d)%s conversation %s",
-		direction ? "received" : "sending",
-		seqnum, typestr, conv_str);
+                "negoex: %s (%d)%s conversation %s",
+                direction ? "received" : "sending",
+                seqnum, typestr, conv_str);
 }
 
 /*
@@ -186,17 +186,17 @@ _gss_negoex_log_message(int direction,
  */
 static inline const uint8_t *
 vector_base(size_t offset, size_t count, size_t width,
-	    const uint8_t *msg_base, size_t msg_len)
+            const uint8_t *msg_base, size_t msg_len)
 {
     if (offset > msg_len || count > (msg_len - offset) / width)
-	return NULL;
+        return NULL;
     return msg_base + offset;
 }
 
 static OM_uint32
 parse_nego_message(OM_uint32 *minor, krb5_storage *sp,
-		   const uint8_t *msg_base, size_t msg_len,
-		   struct nego_message *msg)
+                   const uint8_t *msg_base, size_t msg_len,
+                   struct nego_message *msg)
 {
     krb5_error_code ret;
     const uint8_t *p;
@@ -206,51 +206,51 @@ parse_nego_message(OM_uint32 *minor, krb5_storage *sp,
     size_t i;
 
     if (krb5_storage_read(sp, msg->random,
-			  sizeof(msg->random)) != sizeof(msg->random)) {
-	*minor = (OM_uint32)NEGOEX_INVALID_MESSAGE_SIZE;
-	return GSS_S_DEFECTIVE_TOKEN;
+                          sizeof(msg->random)) != sizeof(msg->random)) {
+        *minor = (OM_uint32)NEGOEX_INVALID_MESSAGE_SIZE;
+        return GSS_S_DEFECTIVE_TOKEN;
     }
 
     ret = krb5_ret_uint64(sp, &protocol_version);
     if (ret) {
-	*minor = ret;
-	return GSS_S_DEFECTIVE_TOKEN;
+        *minor = ret;
+        return GSS_S_DEFECTIVE_TOKEN;
     }
 
     if (protocol_version != 0) {
-	*minor = (OM_uint32)NEGOEX_UNSUPPORTED_VERSION;
-	return GSS_S_UNAVAILABLE;
+        *minor = (OM_uint32)NEGOEX_UNSUPPORTED_VERSION;
+        return GSS_S_UNAVAILABLE;
     }
 
     ret = krb5_ret_uint32(sp, &offset);
     if (ret == 0)
-	ret = krb5_ret_uint16(sp, &count);
+        ret = krb5_ret_uint16(sp, &count);
     if (ret) {
-	*minor = ret;
-	return GSS_S_DEFECTIVE_TOKEN;
+        *minor = ret;
+        return GSS_S_DEFECTIVE_TOKEN;
     }
 
     msg->schemes = vector_base(offset, count, GUID_LENGTH, msg_base, msg_len);
     msg->nschemes = count;
     if (msg->schemes == NULL) {
-	*minor = (OM_uint32)NEGOEX_INVALID_MESSAGE_SIZE;
-	return GSS_S_DEFECTIVE_TOKEN;
+        *minor = (OM_uint32)NEGOEX_INVALID_MESSAGE_SIZE;
+        return GSS_S_DEFECTIVE_TOKEN;
     }
 
     ret = krb5_ret_uint32(sp, &offset);
     if (ret == 0)
-	ret = krb5_ret_uint16(sp, &count);
+        ret = krb5_ret_uint16(sp, &count);
     if (ret) {
-	*minor = ret;
-	return GSS_S_DEFECTIVE_TOKEN;
+        *minor = ret;
+        return GSS_S_DEFECTIVE_TOKEN;
     }
     p = vector_base(offset, count, EXTENSION_LENGTH, msg_base, msg_len);
     for (i = 0; i < count; i++) {
-	_gss_mg_decode_le_uint32(p + i * EXTENSION_LENGTH, &extension_type);
-	if (extension_type & EXTENSION_FLAG_CRITICAL) {
-	    *minor = (OM_uint32)NEGOEX_UNSUPPORTED_CRITICAL_EXTENSION;
-	    return GSS_S_UNAVAILABLE;
-	}
+        _gss_mg_decode_le_uint32(p + i * EXTENSION_LENGTH, &extension_type);
+        if (extension_type & EXTENSION_FLAG_CRITICAL) {
+            *minor = (OM_uint32)NEGOEX_UNSUPPORTED_CRITICAL_EXTENSION;
+            return GSS_S_UNAVAILABLE;
+        }
     }
 
     return GSS_S_COMPLETE;
@@ -258,8 +258,8 @@ parse_nego_message(OM_uint32 *minor, krb5_storage *sp,
 
 static OM_uint32
 parse_exchange_message(OM_uint32 *minor, krb5_storage *sp,
-		       const uint8_t *msg_base, size_t msg_len,
-		       struct exchange_message *msg)
+                       const uint8_t *msg_base, size_t msg_len,
+                       struct exchange_message *msg)
 {
     krb5_error_code ret;
     const uint8_t *p;
@@ -267,22 +267,22 @@ parse_exchange_message(OM_uint32 *minor, krb5_storage *sp,
     uint16_t len;
 
     if (krb5_storage_read(sp, msg->scheme, GUID_LENGTH) != GUID_LENGTH) {
-	*minor = (OM_uint32)NEGOEX_INVALID_MESSAGE_SIZE;
-	return GSS_S_DEFECTIVE_TOKEN;
+        *minor = (OM_uint32)NEGOEX_INVALID_MESSAGE_SIZE;
+        return GSS_S_DEFECTIVE_TOKEN;
     }
 
     ret = krb5_ret_uint32(sp, &offset);
     if (ret == 0)
-	ret = krb5_ret_uint16(sp, &len);
+        ret = krb5_ret_uint16(sp, &len);
     if (ret) {
-	*minor = (OM_uint32)NEGOEX_INVALID_MESSAGE_SIZE;
-	return GSS_S_DEFECTIVE_TOKEN;
+        *minor = (OM_uint32)NEGOEX_INVALID_MESSAGE_SIZE;
+        return GSS_S_DEFECTIVE_TOKEN;
     }
 
     p = vector_base(offset, len, 1, msg_base, msg_len);
     if (p == NULL) {
-	*minor = (OM_uint32)NEGOEX_INVALID_MESSAGE_SIZE;
-	return GSS_S_DEFECTIVE_TOKEN;
+        *minor = (OM_uint32)NEGOEX_INVALID_MESSAGE_SIZE;
+        return GSS_S_DEFECTIVE_TOKEN;
     }
     msg->token.value = (void *)p;
     msg->token.length = len;
@@ -292,55 +292,55 @@ parse_exchange_message(OM_uint32 *minor, krb5_storage *sp,
 
 static OM_uint32
 parse_verify_message(OM_uint32 *minor, krb5_storage *sp,
-		     const uint8_t *msg_base, size_t msg_len,
-		     size_t token_offset, struct verify_message *msg)
+                     const uint8_t *msg_base, size_t msg_len,
+                     size_t token_offset, struct verify_message *msg)
 {
     krb5_error_code ret;
     uint32_t hdrlen, cksum_scheme;
     uint32_t offset, len;
 
     if (krb5_storage_read(sp, msg->scheme, GUID_LENGTH) == GUID_LENGTH)
-	ret = 0;
+        ret = 0;
     else
-	ret = NEGOEX_INVALID_MESSAGE_SIZE;
+        ret = NEGOEX_INVALID_MESSAGE_SIZE;
     if (ret == 0)
-	ret = krb5_ret_uint32(sp, &hdrlen);
+        ret = krb5_ret_uint32(sp, &hdrlen);
     if (ret) {
-	*minor = ret;
-	return GSS_S_DEFECTIVE_TOKEN;
+        *minor = ret;
+        return GSS_S_DEFECTIVE_TOKEN;
     }
 
     if (hdrlen != CHECKSUM_HEADER_LENGTH) {
-	*minor = (OM_uint32)NEGOEX_INVALID_MESSAGE_SIZE;
-	return GSS_S_DEFECTIVE_TOKEN;
+        *minor = (OM_uint32)NEGOEX_INVALID_MESSAGE_SIZE;
+        return GSS_S_DEFECTIVE_TOKEN;
     }
 
     ret = krb5_ret_uint32(sp, &cksum_scheme);
     if (ret == 0)
-	ret = krb5_ret_uint32(sp, &msg->cksum_type);
+        ret = krb5_ret_uint32(sp, &msg->cksum_type);
     if (ret) {
-	*minor = ret;
-	return GSS_S_DEFECTIVE_TOKEN;
+        *minor = ret;
+        return GSS_S_DEFECTIVE_TOKEN;
     }
 
     if (cksum_scheme != CHECKSUM_SCHEME_RFC3961) {
-	*minor = (OM_uint32)NEGOEX_UNKNOWN_CHECKSUM_SCHEME;
-	return GSS_S_UNAVAILABLE;
+        *minor = (OM_uint32)NEGOEX_UNKNOWN_CHECKSUM_SCHEME;
+        return GSS_S_UNAVAILABLE;
     }
 
     ret = krb5_ret_uint32(sp, &offset);
     if (ret == 0)
-	ret = krb5_ret_uint32(sp, &len);
+        ret = krb5_ret_uint32(sp, &len);
     if (ret) {
-	*minor = ret;
-	return GSS_S_DEFECTIVE_TOKEN;
+        *minor = ret;
+        return GSS_S_DEFECTIVE_TOKEN;
     }
 
     msg->cksum = vector_base(offset, len, 1, msg_base, msg_len);
     msg->cksum_len = len;
     if (msg->cksum == NULL) {
-	*minor = (OM_uint32)NEGOEX_INVALID_MESSAGE_SIZE;
-	return GSS_S_DEFECTIVE_TOKEN;
+        *minor = (OM_uint32)NEGOEX_INVALID_MESSAGE_SIZE;
+        return GSS_S_DEFECTIVE_TOKEN;
     }
 
     msg->offset_in_token = token_offset;
@@ -349,14 +349,14 @@ parse_verify_message(OM_uint32 *minor, krb5_storage *sp,
 
 static OM_uint32
 storage_from_memory(OM_uint32 *minor,
-		    const uint8_t *data,
-		    size_t length,
-		    krb5_storage **sp)
+                    const uint8_t *data,
+                    size_t length,
+                    krb5_storage **sp)
 {
     *sp = krb5_storage_from_readonly_mem(data, length);
     if (*sp == NULL) {
-	*minor = ENOMEM;
-	return GSS_S_FAILURE;
+        *minor = ENOMEM;
+        return GSS_S_FAILURE;
     }
 
     krb5_storage_set_byteorder(*sp, KRB5_STORAGE_BYTEORDER_LE);
@@ -367,8 +367,8 @@ storage_from_memory(OM_uint32 *minor,
 
 static OM_uint32
 parse_alert_message(OM_uint32 *minor, krb5_storage *sp,
-		    const uint8_t *msg_base, size_t msg_len,
-		    struct alert_message *msg)
+                    const uint8_t *msg_base, size_t msg_len,
+                    struct alert_message *msg)
 {
     OM_uint32 major;
     krb5_error_code ret;
@@ -379,28 +379,28 @@ parse_alert_message(OM_uint32 *minor, krb5_storage *sp,
     krb5_storage *alerts;
 
     if (krb5_storage_read(sp, msg->scheme, GUID_LENGTH) == GUID_LENGTH)
-	ret = 0;
+        ret = 0;
     else
-	ret = NEGOEX_INVALID_MESSAGE_SIZE;
+        ret = NEGOEX_INVALID_MESSAGE_SIZE;
     if (ret == 0)
-	ret = krb5_ret_uint32(sp, &error_code);
+        ret = krb5_ret_uint32(sp, &error_code);
     if (ret) {
-	*minor = ret;
-	return GSS_S_DEFECTIVE_TOKEN;
+        *minor = ret;
+        return GSS_S_DEFECTIVE_TOKEN;
     }
 
     ret = krb5_ret_uint32(sp, &alerts_offset);
     if (ret == 0)
-	ret = krb5_ret_uint32(sp, &nalerts);
+        ret = krb5_ret_uint32(sp, &nalerts);
     if (ret) {
-	*minor = ret;
-	return GSS_S_DEFECTIVE_TOKEN;
+        *minor = ret;
+        return GSS_S_DEFECTIVE_TOKEN;
     }
 
     p = vector_base(alerts_offset, nalerts, ALERT_LENGTH, msg_base, msg_len);
     if (p == NULL) {
-	*minor = (OM_uint32)NEGOEX_INVALID_MESSAGE_SIZE;
-	return GSS_S_DEFECTIVE_TOKEN;
+        *minor = (OM_uint32)NEGOEX_INVALID_MESSAGE_SIZE;
+        return GSS_S_DEFECTIVE_TOKEN;
     }
 
     /* Look for a VERIFY_NO_KEY pulse alert in the alerts vector. */
@@ -408,48 +408,48 @@ parse_alert_message(OM_uint32 *minor, krb5_storage *sp,
 
     major = storage_from_memory(minor, p, nalerts * ALERT_LENGTH, &alerts);
     if (major != GSS_S_COMPLETE)
-	return major;
+        return major;
 
     for (i = 0; i < nalerts; i++) {
-	ret = krb5_ret_uint32(alerts, &atype);
-	if (ret == 0)
-	    ret = krb5_ret_uint32(alerts, &value_offset);
-	if (ret == 0)
-	    ret = krb5_ret_uint32(alerts, &value_len);
-	if (ret) {
-	    *minor = ret;
-	    major = GSS_S_DEFECTIVE_TOKEN;
-	    break;
-	}
+        ret = krb5_ret_uint32(alerts, &atype);
+        if (ret == 0)
+            ret = krb5_ret_uint32(alerts, &value_offset);
+        if (ret == 0)
+            ret = krb5_ret_uint32(alerts, &value_len);
+        if (ret) {
+            *minor = ret;
+            major = GSS_S_DEFECTIVE_TOKEN;
+            break;
+        }
 
-	p = vector_base(value_offset, value_len, 1, msg_base, msg_len);
-	if (p == NULL) {
-	    *minor = (OM_uint32)NEGOEX_INVALID_MESSAGE_SIZE;
-	    major = GSS_S_DEFECTIVE_TOKEN;
-	    break;
-	}
+        p = vector_base(value_offset, value_len, 1, msg_base, msg_len);
+        if (p == NULL) {
+            *minor = (OM_uint32)NEGOEX_INVALID_MESSAGE_SIZE;
+            major = GSS_S_DEFECTIVE_TOKEN;
+            break;
+        }
 
-	if (atype == ALERT_TYPE_PULSE && value_len >= ALERT_PULSE_LENGTH) {
-	    krb5_storage *pulse;
-	    uint32_t hdrlen, reason;
+        if (atype == ALERT_TYPE_PULSE && value_len >= ALERT_PULSE_LENGTH) {
+            krb5_storage *pulse;
+            uint32_t hdrlen, reason;
 
-	    major = storage_from_memory(minor, p, value_len, &pulse);
-	    if (major != GSS_S_COMPLETE)
-		break;
+            major = storage_from_memory(minor, p, value_len, &pulse);
+            if (major != GSS_S_COMPLETE)
+                break;
 
-	    ret = krb5_ret_uint32(pulse, &hdrlen);
-	    if (ret == 0)
-		ret = krb5_ret_uint32(pulse, &reason);
-	    krb5_storage_free(pulse);
-	    if (ret) {
-		*minor = ret;
-		major = GSS_S_DEFECTIVE_TOKEN;
-		break;
-	    }
+            ret = krb5_ret_uint32(pulse, &hdrlen);
+            if (ret == 0)
+                ret = krb5_ret_uint32(pulse, &reason);
+            krb5_storage_free(pulse);
+            if (ret) {
+                *minor = ret;
+                major = GSS_S_DEFECTIVE_TOKEN;
+                break;
+            }
 
-	    if (reason == ALERT_VERIFY_NO_KEY)
-		msg->verify_no_key = TRUE;
-	}
+            if (reason == ALERT_VERIFY_NO_KEY)
+                msg->verify_no_key = TRUE;
+        }
     }
 
     krb5_storage_free(alerts);
@@ -459,10 +459,10 @@ parse_alert_message(OM_uint32 *minor, krb5_storage *sp,
 
 static OM_uint32
 parse_message(OM_uint32 *minor,
-	      gssspnego_ctx ctx,
-	      gss_const_buffer_t token,
-	      size_t *token_offset,
-	      struct negoex_message *msg)
+              gssspnego_ctx ctx,
+              gss_const_buffer_t token,
+              size_t *token_offset,
+              struct negoex_message *msg)
 {
     OM_uint32 major;
     krb5_error_code ret;
@@ -476,76 +476,76 @@ parse_message(OM_uint32 *minor,
 
     major = storage_from_memory(minor, msg_base, token_remaining, &sp);
     if (major != GSS_S_COMPLETE)
-	return major;
+        return major;
 
     major = GSS_S_DEFECTIVE_TOKEN;
 
     ret = krb5_ret_uint64(sp, &signature);
     if (ret == 0)
-	ret = krb5_ret_uint32(sp, &type);
+        ret = krb5_ret_uint32(sp, &type);
     if (ret == 0)
-	ret = krb5_ret_uint32(sp, &seqnum);
+        ret = krb5_ret_uint32(sp, &seqnum);
     if (ret == 0)
-	ret = krb5_ret_uint32(sp, &header_len);
+        ret = krb5_ret_uint32(sp, &header_len);
     if (ret == 0)
-	ret = krb5_ret_uint32(sp, &msg_len);
+        ret = krb5_ret_uint32(sp, &msg_len);
     if (ret == 0) {
-	if (krb5_storage_read(sp, conv_id, GUID_LENGTH) != GUID_LENGTH)
-	    ret = NEGOEX_INVALID_MESSAGE_SIZE;
+        if (krb5_storage_read(sp, conv_id, GUID_LENGTH) != GUID_LENGTH)
+            ret = NEGOEX_INVALID_MESSAGE_SIZE;
     }
     if (ret) {
-	*minor = ret;
-	goto cleanup;
+        *minor = ret;
+        goto cleanup;
     }
 
     if (msg_len > token_remaining || header_len > msg_len) {
-	*minor = (OM_uint32)NEGOEX_INVALID_MESSAGE_SIZE;
-	goto cleanup;
+        *minor = (OM_uint32)NEGOEX_INVALID_MESSAGE_SIZE;
+        goto cleanup;
     }
     if (signature != MESSAGE_SIGNATURE) {
-	*minor = (OM_uint32)NEGOEX_INVALID_MESSAGE_SIGNATURE;
-	goto cleanup;
+        *minor = (OM_uint32)NEGOEX_INVALID_MESSAGE_SIGNATURE;
+        goto cleanup;
     }
     if (seqnum != ctx->negoex_seqnum) {
-	*minor = (OM_uint32)NEGOEX_MESSAGE_OUT_OF_SEQUENCE;
-	goto cleanup;
+        *minor = (OM_uint32)NEGOEX_MESSAGE_OUT_OF_SEQUENCE;
+        goto cleanup;
     }
     if (seqnum == 0) {
-	memcpy(ctx->negoex_conv_id, conv_id, GUID_LENGTH);
+        memcpy(ctx->negoex_conv_id, conv_id, GUID_LENGTH);
     } else if (!GUID_EQ(conv_id, ctx->negoex_conv_id)) {
-	*minor = (OM_uint32)NEGOEX_INVALID_CONVERSATION_ID;
-	goto cleanup;
+        *minor = (OM_uint32)NEGOEX_INVALID_CONVERSATION_ID;
+        goto cleanup;
     }
 
     krb5_storage_truncate(sp, msg_len);
 
     msg->type = type;
     if (type == INITIATOR_NEGO || type == ACCEPTOR_NEGO) {
-	major = parse_nego_message(minor, sp, msg_base, msg_len, &msg->u.n);
+        major = parse_nego_message(minor, sp, msg_base, msg_len, &msg->u.n);
     } else if (type == INITIATOR_META_DATA || type == ACCEPTOR_META_DATA ||
-	       type == CHALLENGE || type == AP_REQUEST) {
-	major = parse_exchange_message(minor, sp, msg_base, msg_len,
-				       &msg->u.e);
+               type == CHALLENGE || type == AP_REQUEST) {
+        major = parse_exchange_message(minor, sp, msg_base, msg_len,
+                                       &msg->u.e);
     } else if (type == VERIFY) {
-	major = parse_verify_message(minor, sp, msg_base, msg_len,
-				     msg_base - (uint8_t *)token->value,
-				     &msg->u.v);
+        major = parse_verify_message(minor, sp, msg_base, msg_len,
+                                     msg_base - (uint8_t *)token->value,
+                                     &msg->u.v);
     } else if (type == ALERT) {
-	major = parse_alert_message(minor, sp, msg_base, msg_len, &msg->u.a);
+        major = parse_alert_message(minor, sp, msg_base, msg_len, &msg->u.a);
     } else {
-	*minor = (OM_uint32)NEGOEX_INVALID_MESSAGE_TYPE;
-	goto cleanup;
+        *minor = (OM_uint32)NEGOEX_INVALID_MESSAGE_TYPE;
+        goto cleanup;
     }
 
 cleanup:
     krb5_storage_free(sp);
 
     if (major == GSS_S_COMPLETE) {
-	_gss_negoex_log_message(1, msg->type,
-				ctx->negoex_conv_id, ctx->negoex_seqnum,
-				header_len, msg_len);
-	ctx->negoex_seqnum++;
-	*token_offset += msg_len;
+        _gss_negoex_log_message(1, msg->type,
+                                ctx->negoex_conv_id, ctx->negoex_seqnum,
+                                header_len, msg_len);
+        ctx->negoex_seqnum++;
+        *token_offset += msg_len;
     }
 
     return major;
@@ -561,10 +561,10 @@ cleanup:
  */
 OM_uint32
 _gss_negoex_parse_token(OM_uint32 *minor,
-			gssspnego_ctx ctx,
-			gss_const_buffer_t token,
-			struct negoex_message **messages_out,
-			size_t *count_out)
+                        gssspnego_ctx ctx,
+                        gss_const_buffer_t token,
+                        struct negoex_message **messages_out,
+                        size_t *count_out)
 {
     OM_uint32 major = GSS_S_DEFECTIVE_TOKEN;
     size_t count = 0;
@@ -576,29 +576,29 @@ _gss_negoex_parse_token(OM_uint32 *minor,
     heim_assert(token != GSS_C_NO_BUFFER, "Invalid null NegoEx input token");
 
     while (token_offset < token->length) {
-	newptr = realloc(messages, (count + 1) * sizeof(*newptr));
-	if (newptr == NULL) {
-	    free(messages);
-	    *minor = ENOMEM;
-	    return GSS_S_FAILURE;
-	}
-	messages = newptr;
+        newptr = realloc(messages, (count + 1) * sizeof(*newptr));
+        if (newptr == NULL) {
+            free(messages);
+            *minor = ENOMEM;
+            return GSS_S_FAILURE;
+        }
+        messages = newptr;
 
-	major = parse_message(minor, ctx, token, &token_offset,
-			      &messages[count]);
-	if (major != GSS_S_COMPLETE)
-	    break;
+        major = parse_message(minor, ctx, token, &token_offset,
+                              &messages[count]);
+        if (major != GSS_S_COMPLETE)
+            break;
 
-	count++;
+        count++;
     }
 
     if (token_offset != token->length) {
-	*minor = (OM_uint32)NEGOEX_INVALID_MESSAGE_SIZE;
-	major = GSS_S_DEFECTIVE_TOKEN;
+        *minor = (OM_uint32)NEGOEX_INVALID_MESSAGE_SIZE;
+        major = GSS_S_DEFECTIVE_TOKEN;
     }
     if (major != GSS_S_COMPLETE) {
-	free(messages);
-	return major;
+        free(messages);
+        return major;
     }
 
     *messages_out = messages;
@@ -608,13 +608,13 @@ _gss_negoex_parse_token(OM_uint32 *minor,
 
 static struct negoex_message *
 locate_message(struct negoex_message *messages, size_t nmessages,
-	       enum message_type type)
+               enum message_type type)
 {
     uint32_t i;
 
     for (i = 0; i < nmessages; i++) {
-	if (messages[i].type == type)
-	    return &messages[i];
+        if (messages[i].type == type)
+            return &messages[i];
     }
 
     return NULL;
@@ -622,8 +622,8 @@ locate_message(struct negoex_message *messages, size_t nmessages,
 
 struct nego_message *
 _gss_negoex_locate_nego_message(struct negoex_message *messages,
-				size_t nmessages,
-				enum message_type type)
+                                size_t nmessages,
+                                enum message_type type)
 {
     struct negoex_message *msg = locate_message(messages, nmessages, type);
 
@@ -632,8 +632,8 @@ _gss_negoex_locate_nego_message(struct negoex_message *messages,
 
 struct exchange_message *
 _gss_negoex_locate_exchange_message(struct negoex_message *messages,
-				    size_t nmessages,
-				    enum message_type type)
+                                    size_t nmessages,
+                                    enum message_type type)
 {
     struct negoex_message *msg = locate_message(messages, nmessages, type);
 
@@ -642,7 +642,7 @@ _gss_negoex_locate_exchange_message(struct negoex_message *messages,
 
 struct verify_message *
 _gss_negoex_locate_verify_message(struct negoex_message *messages,
-				  size_t nmessages)
+                                  size_t nmessages)
 {
     struct negoex_message *msg = locate_message(messages, nmessages, VERIFY);
 
@@ -651,7 +651,7 @@ _gss_negoex_locate_verify_message(struct negoex_message *messages,
 
 struct alert_message *
 _gss_negoex_locate_alert_message(struct negoex_message *messages,
-				 size_t nmessages)
+                                 size_t nmessages)
 {
     struct negoex_message *msg = locate_message(messages, nmessages, ALERT);
 
@@ -666,23 +666,23 @@ _gss_negoex_locate_alert_message(struct negoex_message *messages,
  */
 static OM_uint32
 put_message_header(OM_uint32 *minor, gssspnego_ctx ctx,
-		   enum message_type type, uint32_t payload_len,
-		   uint32_t *payload_start_out)
+                   enum message_type type, uint32_t payload_len,
+                   uint32_t *payload_start_out)
 {
     krb5_error_code ret;
     size_t header_len = 0;
 
     if (type == INITIATOR_NEGO || type == ACCEPTOR_NEGO)
-	header_len = NEGO_MESSAGE_HEADER_LENGTH;
+        header_len = NEGO_MESSAGE_HEADER_LENGTH;
     else if (type == INITIATOR_META_DATA || type == ACCEPTOR_META_DATA ||
-	     type == CHALLENGE || type == AP_REQUEST)
-	header_len = EXCHANGE_MESSAGE_HEADER_LENGTH;
+             type == CHALLENGE || type == AP_REQUEST)
+        header_len = EXCHANGE_MESSAGE_HEADER_LENGTH;
     else if (type == VERIFY)
-	header_len = VERIFY_MESSAGE_HEADER_LENGTH;
+        header_len = VERIFY_MESSAGE_HEADER_LENGTH;
     else if (type == ALERT)
-	header_len = ALERT_MESSAGE_HEADER_LENGTH;
+        header_len = ALERT_MESSAGE_HEADER_LENGTH;
     else
-	heim_assert(0, "Invalid NegoEx message type");
+        heim_assert(0, "Invalid NegoEx message type");
 
     /* Signature */
     CHECK(ret, krb5_store_uint64(ctx->negoex_transcript, MESSAGE_SIGNATURE));
@@ -698,9 +698,9 @@ put_message_header(OM_uint32 *minor, gssspnego_ctx ctx,
     CHECK(ret, krb5_store_bytes(ctx->negoex_transcript, ctx->negoex_conv_id, GUID_LENGTH));
 
     _gss_negoex_log_message(0, type,
-			    ctx->negoex_conv_id, ctx->negoex_seqnum,
-			    header_len,
-			    header_len + payload_len);
+                            ctx->negoex_conv_id, ctx->negoex_seqnum,
+                            header_len,
+                            header_len + payload_len);
 
     ctx->negoex_seqnum++;
 
@@ -714,9 +714,9 @@ fail:
 
 OM_uint32
 _gss_negoex_add_nego_message(OM_uint32 *minor,
-			     gssspnego_ctx ctx,
-			     enum message_type type,
-			     uint8_t random[32])
+                             gssspnego_ctx ctx,
+                             enum message_type type,
+                             uint8_t random[32])
 {
     OM_uint32 major;
     krb5_error_code ret;
@@ -726,12 +726,12 @@ _gss_negoex_add_nego_message(OM_uint32 *minor,
 
     nschemes = 0;
     HEIM_TAILQ_FOREACH(mech, &ctx->negoex_mechs, links)
-	nschemes++;
+        nschemes++;
 
     major = put_message_header(minor, ctx, type,
-			       nschemes * GUID_LENGTH, &payload_start);
+                               nschemes * GUID_LENGTH, &payload_start);
     if (major != GSS_S_COMPLETE)
-	return major;
+        return major;
 
     CHECK(ret, krb5_store_bytes(ctx->negoex_transcript, random, 32));
     /* ProtocolVersion */
@@ -747,7 +747,7 @@ _gss_negoex_add_nego_message(OM_uint32 *minor,
 
     /* Payload (auth schemes) */
     HEIM_TAILQ_FOREACH(mech, &ctx->negoex_mechs, links) {
-	CHECK(ret, krb5_store_bytes(ctx->negoex_transcript, mech->scheme, GUID_LENGTH));
+        CHECK(ret, krb5_store_bytes(ctx->negoex_transcript, mech->scheme, GUID_LENGTH));
     }
 
     return GSS_S_COMPLETE;
@@ -759,10 +759,10 @@ fail:
 
 OM_uint32
 _gss_negoex_add_exchange_message(OM_uint32 *minor,
-				 gssspnego_ctx ctx,
-				 enum message_type type,
-				 const auth_scheme scheme,
-				 gss_buffer_t token)
+                                 gssspnego_ctx ctx,
+                                 enum message_type type,
+                                 const auth_scheme scheme,
+                                 gss_buffer_t token)
 {
     OM_uint32 major;
     krb5_error_code ret;
@@ -770,7 +770,7 @@ _gss_negoex_add_exchange_message(OM_uint32 *minor,
 
     major = put_message_header(minor, ctx, type, token->length, &payload_start);
     if (major != GSS_S_COMPLETE)
-	return major;
+        return major;
 
     CHECK(ret, krb5_store_bytes(ctx->negoex_transcript, scheme, GUID_LENGTH));
     /* Exchange byte vector */
@@ -788,11 +788,11 @@ fail:
 
 OM_uint32
 _gss_negoex_add_verify_message(OM_uint32 *minor,
-			       gssspnego_ctx ctx,
-			       const auth_scheme scheme,
-			       uint32_t cksum_type,
-			       const uint8_t *cksum,
-			       uint32_t cksum_len)
+                               gssspnego_ctx ctx,
+                               const auth_scheme scheme,
+                               uint32_t cksum_type,
+                               const uint8_t *cksum,
+                               uint32_t cksum_len)
 {
     OM_uint32 major;
     krb5_error_code ret;
@@ -800,7 +800,7 @@ _gss_negoex_add_verify_message(OM_uint32 *minor,
 
     major = put_message_header(minor, ctx, VERIFY, cksum_len, &payload_start);
     if (major != GSS_S_COMPLETE)
-	return major;
+        return major;
 
     CHECK(ret, krb5_store_bytes(ctx->negoex_transcript, scheme, GUID_LENGTH));
     CHECK(ret, krb5_store_uint32(ctx->negoex_transcript, CHECKSUM_HEADER_LENGTH));
@@ -827,18 +827,18 @@ fail:
  */
 OM_uint32
 _gss_negoex_add_verify_no_key_alert(OM_uint32 *minor,
-				    gssspnego_ctx ctx,
-				    const auth_scheme scheme)
+                                    gssspnego_ctx ctx,
+                                    const auth_scheme scheme)
 {
     OM_uint32 major;
     krb5_error_code ret;
     uint32_t payload_start;
 
     major = put_message_header(minor, ctx,
-			       ALERT, ALERT_LENGTH + ALERT_PULSE_LENGTH,
-			       &payload_start);
+                               ALERT, ALERT_LENGTH + ALERT_PULSE_LENGTH,
+                               &payload_start);
     if (major != GSS_S_COMPLETE)
-	return major;
+        return major;
 
     CHECK(ret, krb5_store_bytes(ctx->negoex_transcript, scheme, GUID_LENGTH));
     /* ErrorCode */
@@ -851,7 +851,7 @@ _gss_negoex_add_verify_no_key_alert(OM_uint32 *minor,
     /* Payload part 1: a single ALERT element */
     CHECK(ret, krb5_store_uint32(ctx->negoex_transcript, ALERT_TYPE_PULSE));
     CHECK(ret, krb5_store_uint32(ctx->negoex_transcript,
-				 payload_start + ALERT_LENGTH));
+                                 payload_start + ALERT_LENGTH));
     CHECK(ret, krb5_store_uint32(ctx->negoex_transcript, ALERT_PULSE_LENGTH));
     /* Payload part 2: ALERT_PULSE */
     CHECK(ret, krb5_store_uint32(ctx->negoex_transcript, ALERT_PULSE_LENGTH));
@@ -867,27 +867,27 @@ fail:
 
 void
 _gss_negoex_release_auth_mech(krb5_context context,
-			      struct negoex_auth_mech *mech)
+                              struct negoex_auth_mech *mech)
 {
     OM_uint32 tmpmin;
 
     if (mech == NULL)
-	return;
+        return;
 
     gss_delete_sec_context(&tmpmin, &mech->mech_context, NULL);
     gss_release_oid(&tmpmin, &mech->oid);
     gss_release_buffer(&tmpmin, &mech->metadata);
     if (mech->crypto)
-	krb5_crypto_destroy(context, mech->crypto);
+        krb5_crypto_destroy(context, mech->crypto);
     if (mech->verify_crypto)
-	krb5_crypto_destroy(context, mech->verify_crypto);
+        krb5_crypto_destroy(context, mech->verify_crypto);
 
     free(mech);
 }
 
 void
 _gss_negoex_delete_auth_mech(gssspnego_ctx ctx,
-			     struct negoex_auth_mech *mech)
+                             struct negoex_auth_mech *mech)
 {
     krb5_context context = _gss_mg_krb5_context();
 
@@ -898,7 +898,7 @@ _gss_negoex_delete_auth_mech(gssspnego_ctx ctx,
 /* Remove all auth mech entries except for mech from ctx->mechs. */
 void
 _gss_negoex_select_auth_mech(gssspnego_ctx ctx,
-			     struct negoex_auth_mech *mech)
+                             struct negoex_auth_mech *mech)
 {
     krb5_context context = _gss_mg_krb5_context();
 
@@ -910,23 +910,23 @@ _gss_negoex_select_auth_mech(gssspnego_ctx ctx,
 
 OM_uint32
 _gss_negoex_add_auth_mech(OM_uint32 *minor,
-			  gssspnego_ctx ctx,
-			  gss_const_OID oid,
-			  auth_scheme scheme)
+                          gssspnego_ctx ctx,
+                          gss_const_OID oid,
+                          auth_scheme scheme)
 {
     OM_uint32 major;
     struct negoex_auth_mech *mech;
 
     mech = calloc(1, sizeof(*mech));
     if (mech == NULL) {
-	*minor = ENOMEM;
-	return GSS_S_FAILURE;
+        *minor = ENOMEM;
+        return GSS_S_FAILURE;
     }
 
     major = gss_duplicate_oid(minor, (gss_OID)oid, &mech->oid);
     if (major != GSS_S_COMPLETE) {
-	free(mech);
-	return major;
+        free(mech);
+        return major;
     }
 
     memcpy(mech->scheme, scheme, GUID_LENGTH);
@@ -939,13 +939,13 @@ _gss_negoex_add_auth_mech(OM_uint32 *minor,
 
 struct negoex_auth_mech *
 _gss_negoex_locate_auth_scheme(gssspnego_ctx ctx,
-			       const auth_scheme scheme)
+                               const auth_scheme scheme)
 {
     struct negoex_auth_mech *mech;
 
     HEIM_TAILQ_FOREACH(mech, &ctx->negoex_mechs, links) {
-	if (GUID_EQ(mech->scheme, scheme))
-	    return mech;
+        if (GUID_EQ(mech->scheme, scheme))
+            return mech;
     }
 
     return NULL;
@@ -957,8 +957,8 @@ _gss_negoex_locate_auth_scheme(gssspnego_ctx ctx,
  */
 void
 _gss_negoex_common_auth_schemes(gssspnego_ctx ctx,
-				const uint8_t *schemes,
-				uint16_t nschemes)
+                                const uint8_t *schemes,
+                                uint16_t nschemes)
 {
     struct negoex_mech_list list;
     struct negoex_auth_mech *mech;
@@ -968,11 +968,11 @@ _gss_negoex_common_auth_schemes(gssspnego_ctx ctx,
     /* Construct a new list in the order of schemes. */
     HEIM_TAILQ_INIT(&list);
     for (i = 0; i < nschemes; i++) {
-	mech = _gss_negoex_locate_auth_scheme(ctx, schemes + i * GUID_LENGTH);
-	if (mech == NULL)
-	    continue;
-	HEIM_TAILQ_REMOVE(&ctx->negoex_mechs, mech, links);
-	HEIM_TAILQ_INSERT_TAIL(&list, mech, links);
+        mech = _gss_negoex_locate_auth_scheme(ctx, schemes + i * GUID_LENGTH);
+        if (mech == NULL)
+            continue;
+        HEIM_TAILQ_REMOVE(&ctx->negoex_mechs, mech, links);
+        HEIM_TAILQ_INSERT_TAIL(&list, mech, links);
     }
 
     /* Release any leftover entries and replace the context list. */
@@ -986,22 +986,22 @@ _gss_negoex_common_auth_schemes(gssspnego_ctx ctx,
  */
 void
 _gss_negoex_restrict_auth_schemes(gssspnego_ctx ctx,
-				  const uint8_t *schemes,
-				  uint16_t nschemes)
+                                  const uint8_t *schemes,
+                                  uint16_t nschemes)
 {
     struct negoex_auth_mech *mech, *next;
     uint16_t i;
     int found;
 
     HEIM_TAILQ_FOREACH_SAFE(mech, &ctx->negoex_mechs, links, next) {
-	found = FALSE;
-	for (i = 0; i < nschemes && !found; i++) {
-	    if (GUID_EQ(mech->scheme, schemes + i * GUID_LENGTH))
-		found = TRUE;
-	}
+        found = FALSE;
+        for (i = 0; i < nschemes && !found; i++) {
+            if (GUID_EQ(mech->scheme, schemes + i * GUID_LENGTH))
+                found = TRUE;
+        }
 
-	if (!found)
-	    _gss_negoex_delete_auth_mech(ctx, mech);
+        if (!found)
+            _gss_negoex_delete_auth_mech(ctx, mech);
     }
 }
 
@@ -1027,9 +1027,9 @@ _gss_negoex_and_spnego_mech_p(gss_const_OID mech)
 
     major = gss_inquire_attrs_for_mech(&minor, mech, &attrs, NULL);
     if (major == GSS_S_COMPLETE) {
-	gss_test_oid_set_member(&minor, GSS_C_MA_NEGOEX_AND_SPNEGO,
-				attrs, &negoex_and_spnego);
-	gss_release_oid_set(&minor, &attrs);
+        gss_test_oid_set_member(&minor, GSS_C_MA_NEGOEX_AND_SPNEGO,
+                                attrs, &negoex_and_spnego);
+        gss_release_oid_set(&minor, &attrs);
     }
 
     return negoex_and_spnego;
@@ -1042,6 +1042,6 @@ _gss_negoex_mech_p(gss_const_OID mech)
     auth_scheme scheme;
 
     return gssspi_query_mechanism_info(&minor, mech,
-				       scheme) == GSS_S_COMPLETE;
+                                       scheme) == GSS_S_COMPLETE;
 }
 

@@ -164,13 +164,13 @@ check_destination_tgt_policy(krb5_context context,
 
 OM_uint32 GSSAPI_CALLCONV
 _gsskrb5_store_cred_into2(OM_uint32         *minor_status,
-			  gss_const_cred_id_t input_cred_handle,
-			  gss_cred_usage_t  cred_usage,
-			  const gss_OID     desired_mech,
-			  OM_uint32         store_cred_flags,
-			  gss_const_key_value_set_t cred_store,
-			  gss_OID_set       *elements_stored,
-			  gss_cred_usage_t  *cred_usage_stored,
+                          gss_const_cred_id_t input_cred_handle,
+                          gss_cred_usage_t  cred_usage,
+                          const gss_OID     desired_mech,
+                          OM_uint32         store_cred_flags,
+                          gss_const_key_value_set_t cred_store,
+                          gss_OID_set       *elements_stored,
+                          gss_cred_usage_t  *cred_usage_stored,
                           gss_buffer_set_t  *envp)
 {
     krb5_context context;
@@ -195,45 +195,45 @@ _gsskrb5_store_cred_into2(OM_uint32         *minor_status,
     /* Sanity check inputs */
     if (cred_usage != GSS_C_INITIATE) {
         /* It'd be nice if we could also do accept, writing a keytab */
-	*minor_status = GSS_KRB5_S_G_BAD_USAGE;
-	return GSS_S_FAILURE;
+        *minor_status = GSS_KRB5_S_G_BAD_USAGE;
+        return GSS_S_FAILURE;
     }
     if (desired_mech != GSS_C_NO_OID &&
         gss_oid_equal(desired_mech, GSS_KRB5_MECHANISM) == 0)
-	return GSS_S_BAD_MECH;
+        return GSS_S_BAD_MECH;
     if (input_cred_handle == GSS_C_NO_CREDENTIAL)
-	return GSS_S_CALL_INACCESSIBLE_READ;
+        return GSS_S_CALL_INACCESSIBLE_READ;
     input_cred = (gsskrb5_cred)input_cred_handle;
 
     /* Sanity check the input_cred */
     if (input_cred->usage != cred_usage && input_cred->usage != GSS_C_BOTH) {
-	*minor_status = GSS_KRB5_S_G_BAD_USAGE;
-	return GSS_S_NO_CRED;
+        *minor_status = GSS_KRB5_S_G_BAD_USAGE;
+        return GSS_S_NO_CRED;
     }
     if (input_cred->principal == NULL) {
-	*minor_status = GSS_KRB5_S_KG_TGT_MISSING;
-	return GSS_S_NO_CRED;
+        *minor_status = GSS_KRB5_S_KG_TGT_MISSING;
+        return GSS_S_NO_CRED;
     }
 
     /* Extract the ccache name from the store if given */
     if (cred_store != GSS_C_NO_CRED_STORE) {
-	major_status = __gsskrb5_cred_store_find(minor_status, cred_store,
+        major_status = __gsskrb5_cred_store_find(minor_status, cred_store,
                                                  "unique_ccache_type",
                                                  &cs_unique_ccache);
-	if (GSS_ERROR(major_status))
-	    return major_status;
-	major_status = __gsskrb5_cred_store_find(minor_status, cred_store,
-						 "ccache", &cs_ccache_name);
-	if (GSS_ERROR(major_status))
-	    return major_status;
-	major_status = __gsskrb5_cred_store_find(minor_status, cred_store,
-						 "username", &cs_user_name);
-	if (GSS_ERROR(major_status))
-	    return major_status;
-	major_status = __gsskrb5_cred_store_find(minor_status, cred_store,
-						 "appname", &cs_app_name);
-	if (GSS_ERROR(major_status))
-	    return major_status;
+        if (GSS_ERROR(major_status))
+            return major_status;
+        major_status = __gsskrb5_cred_store_find(minor_status, cred_store,
+                                                 "ccache", &cs_ccache_name);
+        if (GSS_ERROR(major_status))
+            return major_status;
+        major_status = __gsskrb5_cred_store_find(minor_status, cred_store,
+                                                 "username", &cs_user_name);
+        if (GSS_ERROR(major_status))
+            return major_status;
+        major_status = __gsskrb5_cred_store_find(minor_status, cred_store,
+                                                 "appname", &cs_app_name);
+        if (GSS_ERROR(major_status))
+            return major_status;
     }
 
     GSSAPI_KRB5_INIT (&context);
@@ -253,18 +253,18 @@ _gsskrb5_store_cred_into2(OM_uint32         *minor_status,
     /* More sanity checking of the input_cred (good to fail early) */
     ret = krb5_cc_get_lifetime(context, input_cred->ccache, &exp_new);
     if (ret) {
-	HEIMDAL_MUTEX_unlock(&input_cred->cred_id_mutex);
-	*minor_status = ret;
+        HEIMDAL_MUTEX_unlock(&input_cred->cred_id_mutex);
+        *minor_status = ret;
         free(ccache_name);
-	return GSS_S_NO_CRED;
+        return GSS_S_NO_CRED;
     }
 
     ret = check_destination_tgt_policy(context, cs_app_name, input_cred);
     if (ret) {
-	HEIMDAL_MUTEX_unlock(&input_cred->cred_id_mutex);
-	*minor_status = ret;
+        HEIMDAL_MUTEX_unlock(&input_cred->cred_id_mutex);
+        *minor_status = ret;
         free(ccache_name);
-	return GSS_S_NO_CRED;
+        return GSS_S_NO_CRED;
     }
 
     /*
@@ -296,10 +296,10 @@ _gsskrb5_store_cred_into2(OM_uint32         *minor_status,
     }
 
     if (ret || id == NULL) {
-	HEIMDAL_MUTEX_unlock(&input_cred->cred_id_mutex);
-	*minor_status = ret;
+        HEIMDAL_MUTEX_unlock(&input_cred->cred_id_mutex);
+        *minor_status = ret;
         free(ccache_name);
-	return ret == 0 ? GSS_S_NO_CRED : GSS_S_FAILURE;
+        return ret == 0 ? GSS_S_NO_CRED : GSS_S_FAILURE;
     }
 
     /*
@@ -330,7 +330,7 @@ _gsskrb5_store_cred_into2(OM_uint32         *minor_status,
         envp = &env;
     if (envp != NULL) {
         char *fullname = NULL;
-        
+
         if ((ret = krb5_cc_get_full_name(context, id, &fullname)) == 0) {
             major_status = add_env(minor_status, envp, "KRB5CCNAME", fullname);
             free(fullname);
@@ -352,14 +352,14 @@ _gsskrb5_store_cred_into2(OM_uint32         *minor_status,
 
 OM_uint32 GSSAPI_CALLCONV
 _gsskrb5_store_cred_into(OM_uint32         *minor_status,
-			 gss_const_cred_id_t input_cred_handle,
-			 gss_cred_usage_t  cred_usage,
-			 const gss_OID     desired_mech,
-			 OM_uint32         overwrite_cred,
-			 OM_uint32         default_cred,
-			 gss_const_key_value_set_t cred_store,
-			 gss_OID_set       *elements_stored,
-			 gss_cred_usage_t  *cred_usage_stored)
+                         gss_const_cred_id_t input_cred_handle,
+                         gss_cred_usage_t  cred_usage,
+                         const gss_OID     desired_mech,
+                         OM_uint32         overwrite_cred,
+                         OM_uint32         default_cred,
+                         gss_const_key_value_set_t cred_store,
+                         gss_OID_set       *elements_stored,
+                         gss_cred_usage_t  *cred_usage_stored)
 {
     OM_uint32 store_cred_flags =
         (overwrite_cred ? GSS_C_STORE_CRED_OVERWRITE : 0) |

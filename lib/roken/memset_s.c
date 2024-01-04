@@ -39,13 +39,13 @@ memset_s(void *s, size_t smax, int c, size_t n)
 
 #ifdef _WIN32
     if (c == 0) {
-	SecureZeroMemory(s, n);
-	return 0;
+        SecureZeroMemory(s, n);
+        return 0;
     }
 #endif
 
     while (n--) 
-    	*p++ = c; 
+        *p++ = c; 
 
     return 0;
 }

@@ -35,10 +35,10 @@
 
 OM_uint32 GSSAPI_CALLCONV
 _gsskrb5_export_sec_context(
-    OM_uint32 *minor_status,
-    gss_ctx_id_t *context_handle,
-    gss_buffer_t interprocess_token
-    )
+                            OM_uint32 *minor_status,
+                            gss_ctx_id_t *context_handle,
+                            gss_buffer_t interprocess_token
+                            )
 {
     krb5_context context;
     const gsskrb5_ctx ctx = (const gsskrb5_ctx) *context_handle;
@@ -55,16 +55,16 @@ _gsskrb5_export_sec_context(
     HEIMDAL_MUTEX_lock(&ctx->ctx_id_mutex);
 
     if (!(ctx->flags & GSS_C_TRANS_FLAG)) {
-	HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
-	*minor_status = 0;
-	return GSS_S_UNAVAILABLE;
+        HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
+        *minor_status = 0;
+        return GSS_S_UNAVAILABLE;
     }
 
     sp = krb5_storage_emem ();
     if (sp == NULL) {
-	HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
-	*minor_status = ENOMEM;
-	return GSS_S_FAILURE;
+        HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
+        *minor_status = ENOMEM;
+        return GSS_S_FAILURE;
     }
     ac = ctx->auth_context;
 
@@ -75,92 +75,92 @@ _gsskrb5_export_sec_context(
 
     flags = 0;
     if (ac->local_address)
-	flags |= SC_LOCAL_ADDRESS;
+        flags |= SC_LOCAL_ADDRESS;
     if (ac->remote_address)
-	flags |= SC_REMOTE_ADDRESS;
+        flags |= SC_REMOTE_ADDRESS;
     if (ac->keyblock)
-	flags |= SC_KEYBLOCK;
+        flags |= SC_KEYBLOCK;
     if (ac->local_subkey)
-	flags |= SC_LOCAL_SUBKEY;
+        flags |= SC_LOCAL_SUBKEY;
     if (ac->remote_subkey)
-	flags |= SC_REMOTE_SUBKEY;
+        flags |= SC_REMOTE_SUBKEY;
     if (ac->authenticator)
-	flags |= SC_AUTHENTICATOR;
+        flags |= SC_AUTHENTICATOR;
     if (ctx->source)
-	flags |= SC_SOURCE_NAME;
+        flags |= SC_SOURCE_NAME;
     if (ctx->target)
-	flags |= SC_TARGET_NAME;
+        flags |= SC_TARGET_NAME;
     if (ctx->order)
-	flags |= SC_ORDER;
+        flags |= SC_ORDER;
 
     kret = krb5_store_int32 (sp, flags);
     if (kret) {
-	*minor_status = kret;
-	goto failure;
+        *minor_status = kret;
+        goto failure;
     }
 
     /* marshall auth context */
 
     kret = krb5_store_int32 (sp, ac->flags);
     if (kret) {
-	*minor_status = kret;
-	goto failure;
+        *minor_status = kret;
+        goto failure;
     }
     if (ac->local_address) {
-	kret = krb5_store_address (sp, *ac->local_address);
-	if (kret) {
-	    *minor_status = kret;
-	    goto failure;
-	}
+        kret = krb5_store_address (sp, *ac->local_address);
+        if (kret) {
+            *minor_status = kret;
+            goto failure;
+        }
     }
     if (ac->remote_address) {
-	kret = krb5_store_address (sp, *ac->remote_address);
-	if (kret) {
-	    *minor_status = kret;
-	    goto failure;
-	}
+        kret = krb5_store_address (sp, *ac->remote_address);
+        if (kret) {
+            *minor_status = kret;
+            goto failure;
+        }
     }
     kret = krb5_store_int16 (sp, ac->local_port);
     if (kret) {
-	*minor_status = kret;
-	goto failure;
+        *minor_status = kret;
+        goto failure;
     }
     kret = krb5_store_int16 (sp, ac->remote_port);
     if (kret) {
-	*minor_status = kret;
-	goto failure;
+        *minor_status = kret;
+        goto failure;
     }
     if (ac->keyblock) {
-	kret = krb5_store_keyblock (sp, *ac->keyblock);
-	if (kret) {
-	    *minor_status = kret;
-	    goto failure;
-	}
+        kret = krb5_store_keyblock (sp, *ac->keyblock);
+        if (kret) {
+            *minor_status = kret;
+            goto failure;
+        }
     }
     if (ac->local_subkey) {
-	kret = krb5_store_keyblock (sp, *ac->local_subkey);
-	if (kret) {
-	    *minor_status = kret;
-	    goto failure;
-	}
+        kret = krb5_store_keyblock (sp, *ac->local_subkey);
+        if (kret) {
+            *minor_status = kret;
+            goto failure;
+        }
     }
     if (ac->remote_subkey) {
-	kret = krb5_store_keyblock (sp, *ac->remote_subkey);
-	if (kret) {
-	    *minor_status = kret;
-	    goto failure;
-	}
+        kret = krb5_store_keyblock (sp, *ac->remote_subkey);
+        if (kret) {
+            *minor_status = kret;
+            goto failure;
+        }
     }
     kret = krb5_store_int32 (sp, ac->local_seqnumber);
-	if (kret) {
-	    *minor_status = kret;
-	    goto failure;
-	}
+    if (kret) {
+        *minor_status = kret;
+        goto failure;
+    }
     kret = krb5_store_int32 (sp, ac->remote_seqnumber);
-	if (kret) {
-	    *minor_status = kret;
-	    goto failure;
-	}
+    if (kret) {
+        *minor_status = kret;
+        goto failure;
+    }
     if (ac->authenticator) {
         kret = krb5_store_int64(sp, ac->authenticator->ctime);
         if (kret) {
@@ -176,41 +176,41 @@ _gsskrb5_export_sec_context(
 
     kret = krb5_store_int32 (sp, ac->keytype);
     if (kret) {
-	*minor_status = kret;
-	goto failure;
+        *minor_status = kret;
+        goto failure;
     }
     kret = krb5_store_int32 (sp, ac->cksumtype);
     if (kret) {
-	*minor_status = kret;
-	goto failure;
+        *minor_status = kret;
+        goto failure;
     }
 
     /* names */
     if (ctx->source) {
         kret = krb5_store_principal(sp, ctx->source);
-	if (kret) {
-	    *minor_status = kret;
-	    goto failure;
-	}
+        if (kret) {
+            *minor_status = kret;
+            goto failure;
+        }
     }
 
     if (ctx->target) {
         kret = krb5_store_principal(sp, ctx->target);
-	if (kret) {
-	    *minor_status = kret;
-	    goto failure;
-	}
+        if (kret) {
+            *minor_status = kret;
+            goto failure;
+        }
     }
 
     kret = krb5_store_int32 (sp, ctx->flags);
     if (kret) {
-	*minor_status = kret;
-	goto failure;
+        *minor_status = kret;
+        goto failure;
     }
     kret = krb5_store_int32 (sp, ctx->more_flags);
     if (kret) {
-	*minor_status = kret;
-	goto failure;
+        *minor_status = kret;
+        goto failure;
     }
     kret = krb5_store_int32 (sp, ctx->state);
     if (kret) {
@@ -223,8 +223,8 @@ _gsskrb5_export_sec_context(
      */
     kret = krb5_store_int32 (sp, ctx->endtime);
     if (kret) {
-	*minor_status = kret;
-	goto failure;
+        *minor_status = kret;
+        goto failure;
     }
     if (ctx->order) {
         kret = _gssapi_msg_order_export(sp, ctx->order);
@@ -237,20 +237,20 @@ _gsskrb5_export_sec_context(
     kret = krb5_storage_to_data (sp, &data);
     krb5_storage_free (sp);
     if (kret) {
-	HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
-	*minor_status = kret;
-	return GSS_S_FAILURE;
+        HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
+        *minor_status = kret;
+        return GSS_S_FAILURE;
     }
     interprocess_token->length = data.length;
     interprocess_token->value  = data.data;
     HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
     ret = _gsskrb5_delete_sec_context (minor_status, context_handle,
-				       GSS_C_NO_BUFFER);
+                                       GSS_C_NO_BUFFER);
     if (ret != GSS_S_COMPLETE)
-	_gss_secure_release_buffer (&minor, interprocess_token);
+        _gss_secure_release_buffer (&minor, interprocess_token);
     *minor_status = 0;
     return ret;
- failure:
+failure:
     HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
     krb5_storage_free (sp);
     return ret;

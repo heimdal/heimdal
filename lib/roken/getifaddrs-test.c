@@ -55,8 +55,8 @@ static void
 usage(int ret)
 {
     arg_printusage (args,
-		    sizeof(args) / sizeof(args[0]),
-		    NULL, "");
+                    sizeof(args) / sizeof(args[0]),
+                    NULL, "");
     exit (ret);
 }
 
@@ -68,10 +68,10 @@ print_addr(const char *s, struct sockaddr *sa)
     printf("  %s=%d/", s, sa->sa_family);
 #ifdef HAVE_STRUCT_SOCKADDR_SA_LEN
     for(i = 0; i < sa->sa_len - ((long)sa->sa_data - (long)&sa->sa_family); i++)
-	printf("%02x", ((unsigned char*)sa->sa_data)[i]);
+        printf("%02x", ((unsigned char*)sa->sa_data)[i]);
 #else
     for(i = 0; i < sizeof(sa->sa_data); i++)
-	printf("%02x", ((unsigned char*)sa->sa_data)[i]);
+        printf("%02x", ((unsigned char*)sa->sa_data)[i]);
 #endif
     printf("\n");
 }
@@ -82,17 +82,17 @@ print_ifaddrs(struct ifaddrs *x)
     struct ifaddrs *p;
 
     for(p = x; p; p = p->ifa_next) {
-	if (verbose_counter) {
-	    printf("%s\n", p->ifa_name);
-	    printf("  flags=%x\n", p->ifa_flags);
-	    if(p->ifa_addr)
-		print_addr("addr", p->ifa_addr);
-	    if(p->ifa_dstaddr)
-		print_addr("dstaddr", p->ifa_dstaddr);
-	    if(p->ifa_netmask)
-		print_addr("netmask", p->ifa_netmask);
-	    printf("  %p\n", p->ifa_data);
-	}
+        if (verbose_counter) {
+            printf("%s\n", p->ifa_name);
+            printf("  flags=%x\n", p->ifa_flags);
+            if(p->ifa_addr)
+                print_addr("addr", p->ifa_addr);
+            if(p->ifa_dstaddr)
+                print_addr("dstaddr", p->ifa_dstaddr);
+            if(p->ifa_netmask)
+                print_addr("netmask", p->ifa_netmask);
+            printf("  %p\n", p->ifa_data);
+        }
     }
 }
 
@@ -105,26 +105,26 @@ main(int argc, char **argv)
     setprogname (argv[0]);
 
     if (getarg (args, sizeof(args) / sizeof(args[0]), argc, argv,
-		&optidx))
-	usage (1);
+                &optidx))
+        usage (1);
 
     if (help_flag)
-	usage (0);
+        usage (0);
 
     if (version_flag) {
-	fprintf (stderr, "%s from %s-%s\n", getprogname(), PACKAGE, VERSION);
-	return 0;
+        fprintf (stderr, "%s from %s-%s\n", getprogname(), PACKAGE, VERSION);
+        return 0;
     }
 
     if (rk_SOCK_INIT())
-	errx(1, "Failed to initialize sockets (%s)", strerror(rk_SOCK_ERRNO));
+        errx(1, "Failed to initialize sockets (%s)", strerror(rk_SOCK_ERRNO));
 
     ret = getifaddrs(&addrs);
     if (ret != 0)
-	err(1, "getifaddrs");
+        err(1, "getifaddrs");
 
     if (addrs == NULL)
-	errx(1, "address == NULL");
+        errx(1, "address == NULL");
 
     print_ifaddrs(addrs);
 

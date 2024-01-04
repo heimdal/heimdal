@@ -87,21 +87,21 @@ test_uint64(void)
                            9223372036854775807LL, 18446744073709551615ULL };
 
     for (i = 0; i < ntests; i++)
-       tests[i].val = &values[i];
+        tests[i].val = &values[i];
 
     if (sizeof(TESTuint64) != sizeof(uint64_t)) {
-       ret += 1;
-       printf("sizeof(TESTuint64) %d != sizeof(uint64_t) %d\n",
-              (int)sizeof(TESTuint64), (int)sizeof(uint64_t));
+        ret += 1;
+        printf("sizeof(TESTuint64) %d != sizeof(uint64_t) %d\n",
+               (int)sizeof(TESTuint64), (int)sizeof(uint64_t));
     }
 
     ret += generic_test (tests, ntests, sizeof(TESTuint64),
-                        (generic_encode)encode_TESTuint64,
-                        (generic_length)length_TESTuint64,
-                        (generic_decode)decode_TESTuint64,
-                        (generic_free)free_TESTuint64,
-                        cmp_dummy,
-                        NULL);
+                         (generic_encode)encode_TESTuint64,
+                         (generic_length)length_TESTuint64,
+                         (generic_decode)decode_TESTuint64,
+                         (generic_free)free_TESTuint64,
+                         cmp_dummy,
+                         NULL);
     return ret;
 }
 
@@ -109,15 +109,15 @@ static int
 test_seqofseq(void)
 {
     struct test_case tests[] = {
-	{ NULL,  2,
-	  "\x30\x00",
-	  "seqofseq 0" },
-	{ NULL,  9,
-	  "\x30\x07\x30\x05\xa0\x03\x02\x01\x00",
-	  "seqofseq 1" },
-	{ NULL,  16,
-	  "\x30\x0e\x30\x05\xa0\x03\x02\x01\x00\x30\x05\xa0\x03\x02\x01\x01",
-	  "seqofseq 2" }
+        { NULL,  2,
+          "\x30\x00",
+          "seqofseq 0" },
+        { NULL,  9,
+          "\x30\x07\x30\x05\xa0\x03\x02\x01\x00",
+          "seqofseq 1" },
+        { NULL,  16,
+          "\x30\x0e\x30\x05\xa0\x03\x02\x01\x00\x30\x05\xa0\x03\x02\x01\x01",
+          "seqofseq 2" }
     };
 
     int ret = 0, ntests = sizeof(tests) / sizeof(*tests);
@@ -140,12 +140,12 @@ test_seqofseq(void)
     tests[2].val = &c2;
 
     ret += generic_test (tests, ntests, sizeof(TESTSeqOfSeq),
-			 (generic_encode)encode_TESTSeqOfSeq,
-			 (generic_length)length_TESTSeqOfSeq,
-			 (generic_decode)decode_TESTSeqOfSeq,
-			 (generic_free)free_TESTSeqOfSeq,
-			 cmp_dummy,
-			 NULL);
+                         (generic_encode)encode_TESTSeqOfSeq,
+                         (generic_length)length_TESTSeqOfSeq,
+                         (generic_decode)decode_TESTSeqOfSeq,
+                         (generic_free)free_TESTSeqOfSeq,
+                         cmp_dummy,
+                         NULL);
     return ret;
 }
 
@@ -153,16 +153,16 @@ static int
 test_seqofseq2(void)
 {
     struct test_case tests[] = {
-	{ NULL,  2,
-	  "\x30\x00",
-	  "seqofseq2 0" },
-	{ NULL,  11,
-	  "\x30\x09\x30\x07\xa0\x05\x1b\x03\x65\x74\x74",
-	  "seqofseq2 1" },
-	{ NULL,  21,
-	  "\x30\x13\x30\x07\xa0\x05\x1b\x03\x65\x74\x74\x30\x08\xa0"
-	  "\x06\x1b\x04\x74\x76\x61\x61",
-	  "seqofseq2 2" }
+        { NULL,  2,
+          "\x30\x00",
+          "seqofseq2 0" },
+        { NULL,  11,
+          "\x30\x09\x30\x07\xa0\x05\x1b\x03\x65\x74\x74",
+          "seqofseq2 1" },
+        { NULL,  21,
+          "\x30\x13\x30\x07\xa0\x05\x1b\x03\x65\x74\x74\x30\x08\xa0"
+          "\x06\x1b\x04\x74\x76\x61\x61",
+          "seqofseq2 2" }
     };
 
     int ret = 0, ntests = sizeof(tests) / sizeof(*tests);
@@ -185,12 +185,12 @@ test_seqofseq2(void)
     tests[2].val = &c2;
 
     ret += generic_test (tests, ntests, sizeof(TESTSeqOfSeq2),
-			 (generic_encode)encode_TESTSeqOfSeq2,
-			 (generic_length)length_TESTSeqOfSeq2,
-			 (generic_decode)decode_TESTSeqOfSeq2,
-			 (generic_free)free_TESTSeqOfSeq2,
-			 cmp_dummy,
-			 NULL);
+                         (generic_encode)encode_TESTSeqOfSeq2,
+                         (generic_length)length_TESTSeqOfSeq2,
+                         (generic_decode)decode_TESTSeqOfSeq2,
+                         (generic_free)free_TESTSeqOfSeq2,
+                         cmp_dummy,
+                         NULL);
     return ret;
 }
 
@@ -198,15 +198,15 @@ static int
 test_seqof2(void)
 {
     struct test_case tests[] = {
-	{ NULL,  4,
-	  "\x30\x02\x30\x00",
-	  "seqof2 1" },
-	{ NULL,  9,
-	  "\x30\x07\x30\x05\x1b\x03\x66\x6f\x6f",
-	  "seqof2 2" },
-	{ NULL,  14,
-	  "\x30\x0c\x30\x0a\x1b\x03\x66\x6f\x6f\x1b\x03\x62\x61\x72",
-	  "seqof2 3" }
+        { NULL,  4,
+          "\x30\x02\x30\x00",
+          "seqof2 1" },
+        { NULL,  9,
+          "\x30\x07\x30\x05\x1b\x03\x66\x6f\x6f",
+          "seqof2 2" },
+        { NULL,  14,
+          "\x30\x0c\x30\x0a\x1b\x03\x66\x6f\x6f\x1b\x03\x62\x61\x72",
+          "seqof2 3" }
     };
 
     int ret = 0, ntests = sizeof(tests) / sizeof(*tests);
@@ -229,12 +229,12 @@ test_seqof2(void)
     tests[2].val = &c2;
 
     ret += generic_test (tests, ntests, sizeof(TESTSeqOf2),
-			 (generic_encode)encode_TESTSeqOf2,
-			 (generic_length)length_TESTSeqOf2,
-			 (generic_decode)decode_TESTSeqOf2,
-			 (generic_free)free_TESTSeqOf2,
-			 cmp_dummy,
-			 NULL);
+                         (generic_encode)encode_TESTSeqOf2,
+                         (generic_length)length_TESTSeqOf2,
+                         (generic_decode)decode_TESTSeqOf2,
+                         (generic_free)free_TESTSeqOf2,
+                         cmp_dummy,
+                         NULL);
     return ret;
 }
 
@@ -242,18 +242,18 @@ static int
 test_seqof3(void)
 {
     struct test_case tests[] = {
-	{ NULL,  2,
-	  "\x30\x00",
-	  "seqof3 0" },
-	{ NULL,  4,
-	  "\x30\x02\x30\x00",
-	  "seqof3 1" },
-	{ NULL,  9,
-	  "\x30\x07\x30\x05\x1b\x03\x66\x6f\x6f",
-	  "seqof3 2" },
-	{ NULL,  14,
-	  "\x30\x0c\x30\x0a\x1b\x03\x66\x6f\x6f\x1b\x03\x62\x61\x72",
-	  "seqof3 3" }
+        { NULL,  2,
+          "\x30\x00",
+          "seqof3 0" },
+        { NULL,  4,
+          "\x30\x02\x30\x00",
+          "seqof3 1" },
+        { NULL,  9,
+          "\x30\x07\x30\x05\x1b\x03\x66\x6f\x6f",
+          "seqof3 2" },
+        { NULL,  14,
+          "\x30\x0c\x30\x0a\x1b\x03\x66\x6f\x6f\x1b\x03\x62\x61\x72",
+          "seqof3 3" }
     };
 
     int ret = 0, ntests = sizeof(tests) / sizeof(*tests);
@@ -283,12 +283,12 @@ test_seqof3(void)
     tests[3].val = &c3;
 
     ret += generic_test (tests, ntests, sizeof(TESTSeqOf3),
-			 (generic_encode)encode_TESTSeqOf3,
-			 (generic_length)length_TESTSeqOf3,
-			 (generic_decode)decode_TESTSeqOf3,
-			 (generic_free)free_TESTSeqOf3,
-			 cmp_dummy,
-			 NULL);
+                         (generic_encode)encode_TESTSeqOf3,
+                         (generic_length)length_TESTSeqOf3,
+                         (generic_decode)decode_TESTSeqOf3,
+                         (generic_free)free_TESTSeqOf3,
+                         cmp_dummy,
+                         NULL);
     return ret;
 }
 
@@ -297,47 +297,47 @@ static int
 test_seqof4(void)
 {
     struct test_case tests[] = {
-	{ NULL,  2,
-	  "\x30\x00",
-	  "seq4 0" },
-	{ NULL,  4,
-	  "\x30\x02" "\xa1\x00",
-	  "seq4 1" },
-	{ NULL,  8,
-	  "\x30\x06" "\xa0\x02\x30\x00" "\xa1\x00",
-	  "seq4 2" },
-	{ NULL,  2 + (2 + 0x18) + (2 + 0x27) + (2 + 0x31),
-	  "\x30\x76"					/* 2 SEQ */
-	   "\xa0\x18\x30\x16"				/* 4 [0] SEQ */
-	    "\x30\x14"					/* 2 SEQ */
-	     "\x04\x00"					/* 2 OCTET-STRING */
+        { NULL,  2,
+          "\x30\x00",
+          "seq4 0" },
+        { NULL,  4,
+          "\x30\x02" "\xa1\x00",
+          "seq4 1" },
+        { NULL,  8,
+          "\x30\x06" "\xa0\x02\x30\x00" "\xa1\x00",
+          "seq4 2" },
+        { NULL,  2 + (2 + 0x18) + (2 + 0x27) + (2 + 0x31),
+          "\x30\x76"					/* 2 SEQ */
+           "\xa0\x18\x30\x16"				/* 4 [0] SEQ */
+            "\x30\x14"					/* 2 SEQ */
+             "\x04\x00"					/* 2 OCTET-STRING */
              "\x04\x02\x01\x02"				/* 4 OCTET-STRING */
-	     "\x02\x01\x01"				/* 3 INT */
-	     "\x02\x09\x00\xff\xff\xff\xff\xff\xff\xff\xff"
-							/* 11 INT */
-	   "\xa1\x27"					/* 2 [1] IMPL SEQ */
-	    "\x30\x25"					/* 2 SEQ */
-	     "\x02\x01\x01"				/* 3 INT */
-	     "\x02\x09\x00\xff\xff\xff\xff\xff\xff\xff\xff"
-							/* 11 INT */
-	     "\x02\x09\x00\x80\x00\x00\x00\x00\x00\x00\x00"
-							/* 11 INT */
-	     "\x04\x00"					/* 2 OCTET-STRING */
+             "\x02\x01\x01"				/* 3 INT */
+             "\x02\x09\x00\xff\xff\xff\xff\xff\xff\xff\xff"
+             						/* 11 INT */
+           "\xa1\x27"					/* 2 [1] IMPL SEQ */
+            "\x30\x25"					/* 2 SEQ */
+             "\x02\x01\x01"				/* 3 INT */
+             "\x02\x09\x00\xff\xff\xff\xff\xff\xff\xff\xff"
+             						/* 11 INT */
+             "\x02\x09\x00\x80\x00\x00\x00\x00\x00\x00\x00"
+             						/* 11 INT */
+             "\x04\x00"					/* 2 OCTET-STRING */
              "\x04\x02\x01\x02"				/* 4 OCTET-STRING */
              "\x04\x04\x00\x01\x02\x03"			/* 6 OCTET-STRING */
-	   "\xa2\x31"					/* 2 [2] IMPL SEQ */
-	    "\x30\x2f"					/* 2 SEQ */
-	     "\x04\x00"					/* 2 OCTET-STRING */
-	     "\x02\x01\x01"				/* 3 INT */
+           "\xa2\x31"					/* 2 [2] IMPL SEQ */
+            "\x30\x2f"					/* 2 SEQ */
+             "\x04\x00"					/* 2 OCTET-STRING */
+             "\x02\x01\x01"				/* 3 INT */
              "\x04\x02\x01\x02"				/* 4 OCTET-STRING */
-	     "\x02\x09\x00\xff\xff\xff\xff\xff\xff\xff\xff"
-							/* 11 INT */
+             "\x02\x09\x00\xff\xff\xff\xff\xff\xff\xff\xff"
+             						/* 11 INT */
              "\x04\x04\x00\x01\x02\x03"			/* 6 OCTET-STRING */
-	     "\x02\x09\x00\x80\x00\x00\x00\x00\x00\x00\x00"
-							/* 11 INT */
-	     "\x04\x01\x00"				/* 3 OCTET-STRING */
-	     "\x02\x05\x01\x00\x00\x00\x00",		/* 7 INT */
-	  "seq4 3" },
+             "\x02\x09\x00\x80\x00\x00\x00\x00\x00\x00\x00"
+             						/* 11 INT */
+             "\x04\x01\x00"				/* 3 OCTET-STRING */
+             "\x02\x05\x01\x00\x00\x00\x00",		/* 7 INT */
+          "seq4 3" },
     };
 
     int ret = 0, ntests = sizeof(tests) / sizeof(*tests);
@@ -412,12 +412,12 @@ test_seqof4(void)
     tests[3].val = &c[3];
 
     ret += generic_test (tests, ntests, sizeof(TESTSeqOf4),
-			 (generic_encode)encode_TESTSeqOf4,
-			 (generic_length)length_TESTSeqOf4,
-			 (generic_decode)decode_TESTSeqOf4,
-			 (generic_free)free_TESTSeqOf4,
-			 cmp_dummy,
-			 NULL);
+                         (generic_encode)encode_TESTSeqOf4,
+                         (generic_length)length_TESTSeqOf4,
+                         (generic_decode)decode_TESTSeqOf4,
+                         (generic_free)free_TESTSeqOf4,
+                         cmp_dummy,
+                         NULL);
     return ret;
 }
 
@@ -452,8 +452,8 @@ static int
 test_seqof5(void)
 {
     struct test_case tests[] = {
-	{ NULL,  2, "\x30\x00", "seq5 0" },
-	{ NULL,  126,
+        { NULL,  2, "\x30\x00", "seq5 0" },
+        { NULL,  126,
           "\x30\x7c"                                            /* SEQ */
             "\x30\x7a"                                          /* SEQ */
               "\x30\x78"                                        /* SEQ */
@@ -502,12 +502,12 @@ test_seqof5(void)
     tests[1].val = &c[1];
 
     ret += generic_test (tests, ntests, sizeof(TESTSeqOf5),
-			 (generic_encode)encode_TESTSeqOf5,
-			 (generic_length)length_TESTSeqOf5,
-			 (generic_decode)decode_TESTSeqOf5,
-			 (generic_free)free_TESTSeqOf5,
-			 cmp_test_seqof5,
-			 NULL);
+                         (generic_encode)encode_TESTSeqOf5,
+                         (generic_length)length_TESTSeqOf5,
+                         (generic_decode)decode_TESTSeqOf5,
+                         (generic_free)free_TESTSeqOf5,
+                         cmp_test_seqof5,
+                         NULL);
 
     for (i = 0; i < 8; ++i)
         free(s[i].data);

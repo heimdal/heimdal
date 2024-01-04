@@ -42,24 +42,24 @@ kadm5_s_lock(void *server_handle)
     kadm5_ret_t ret;
 
     if (context->keep_open) {
-	/*
-	 * We open/close around every operation, but we retain the DB
-	 * open if the DB was locked with a prior call to kadm5_lock(),
-	 * so if it's open here that must be because the DB is locked.
-	 */
-	heim_assert(context->db->lock_count > 0,
-		    "Internal error in tracking HDB locks");
-	return KADM5_ALREADY_LOCKED;
+        /*
+         * We open/close around every operation, but we retain the DB
+         * open if the DB was locked with a prior call to kadm5_lock(),
+         * so if it's open here that must be because the DB is locked.
+         */
+        heim_assert(context->db->lock_count > 0,
+                    "Internal error in tracking HDB locks");
+        return KADM5_ALREADY_LOCKED;
     }
 
     ret = context->db->hdb_open(context->context, context->db, O_RDWR, 0);
     if (ret)
-	return ret;
+        return ret;
 
     ret = context->db->hdb_lock(context->context, context->db, HDB_WLOCK);
     if (ret) {
         (void) context->db->hdb_close(context->context, context->db);
-	return ret;
+        return ret;
     }
 
     /*
@@ -84,7 +84,7 @@ kadm5_s_unlock(void *server_handle)
     kadm5_ret_t ret;
 
     if (!context->keep_open)
-	return KADM5_NOT_LOCKED;
+        return KADM5_NOT_LOCKED;
 
     context->keep_open = 0;
     ret = context->db->hdb_unlock(context->context, context->db);
@@ -147,83 +147,83 @@ find_db_spec(kadm5_server_context *ctx)
     int aret;
 
     if (ctx->config.realm) {
-	/* fetch the databases */
-	ret = hdb_get_dbinfo(context, &info);
-	if (ret)
-	    return ret;
+        /* fetch the databases */
+        ret = hdb_get_dbinfo(context, &info);
+        if (ret)
+            return ret;
 
-	d = NULL;
-	while ((d = hdb_dbinfo_get_next(info, d)) != NULL) {
-	    const char *p = hdb_dbinfo_get_realm(context, d);
+        d = NULL;
+        while ((d = hdb_dbinfo_get_next(info, d)) != NULL) {
+            const char *p = hdb_dbinfo_get_realm(context, d);
 
-	    /* match default (realm-less) */
-	    if(p != NULL && strcmp(ctx->config.realm, p) != 0)
-		continue;
+            /* match default (realm-less) */
+            if(p != NULL && strcmp(ctx->config.realm, p) != 0)
+                continue;
 
-	    p = hdb_dbinfo_get_dbname(context, d);
-	    if (p) {
-		ctx->config.dbname = strdup(p);
+            p = hdb_dbinfo_get_dbname(context, d);
+            if (p) {
+                ctx->config.dbname = strdup(p);
                 if (ctx->config.dbname == NULL) {
-		    hdb_free_dbinfo(context, &info);
-		    return krb5_enomem(context);
-		}
+                    hdb_free_dbinfo(context, &info);
+                    return krb5_enomem(context);
+                }
             }
 
-	    p = hdb_dbinfo_get_acl_file(context, d);
-	    if (p) {
-		ctx->config.acl_file = strdup(p);
+            p = hdb_dbinfo_get_acl_file(context, d);
+            if (p) {
+                ctx->config.acl_file = strdup(p);
                 if (ctx->config.acl_file == NULL) {
-		    hdb_free_dbinfo(context, &info);
-		    return krb5_enomem(context);
-		}
+                    hdb_free_dbinfo(context, &info);
+                    return krb5_enomem(context);
+                }
             }
 
-	    p = hdb_dbinfo_get_mkey_file(context, d);
-	    if (p) {
-		ctx->config.stash_file = strdup(p);
+            p = hdb_dbinfo_get_mkey_file(context, d);
+            if (p) {
+                ctx->config.stash_file = strdup(p);
                 if (ctx->config.stash_file == NULL) {
-		    hdb_free_dbinfo(context, &info);
-		    return krb5_enomem(context);
-		}
+                    hdb_free_dbinfo(context, &info);
+                    return krb5_enomem(context);
+                }
             }
 
-	    p = hdb_dbinfo_get_log_file(context, d);
-	    if (p) {
-		ctx->log_context.log_file = strdup(p);
+            p = hdb_dbinfo_get_log_file(context, d);
+            if (p) {
+                ctx->log_context.log_file = strdup(p);
                 if (ctx->log_context.log_file == NULL) {
-		    hdb_free_dbinfo(context, &info);
-		    return krb5_enomem(context);
-		}
+                    hdb_free_dbinfo(context, &info);
+                    return krb5_enomem(context);
+                }
             }
-	    break;
-	}
-	hdb_free_dbinfo(context, &info);
+            break;
+        }
+        hdb_free_dbinfo(context, &info);
     }
 
     /* If any of the values was unset, pick up the default value */
 
     if (ctx->config.dbname == NULL) {
-	ctx->config.dbname = strdup(hdb_default_db(context));
+        ctx->config.dbname = strdup(hdb_default_db(context));
         if (ctx->config.dbname == NULL)
-	    return krb5_enomem(context);
+            return krb5_enomem(context);
     }
     if (ctx->config.acl_file == NULL) {
-	aret = asprintf(&ctx->config.acl_file, "%s/kadmind.acl",
-			hdb_db_dir(context));
-	if (aret == -1)
-	    return krb5_enomem(context);
+        aret = asprintf(&ctx->config.acl_file, "%s/kadmind.acl",
+                        hdb_db_dir(context));
+        if (aret == -1)
+            return krb5_enomem(context);
     }
     if (ctx->config.stash_file == NULL) {
-	aret = asprintf(&ctx->config.stash_file, "%s/m-key",
-			hdb_db_dir(context));
-	if (aret == -1)
-	    return krb5_enomem(context);
+        aret = asprintf(&ctx->config.stash_file, "%s/m-key",
+                        hdb_db_dir(context));
+        if (aret == -1)
+            return krb5_enomem(context);
     }
     if (ctx->log_context.log_file == NULL) {
-	aret = asprintf(&ctx->log_context.log_file, "%s/log",
-			hdb_db_dir(context));
-	if (aret == -1)
-	    return krb5_enomem(context);
+        aret = asprintf(&ctx->log_context.log_file, "%s/log",
+                        hdb_db_dir(context));
+        if (aret == -1)
+            return krb5_enomem(context);
     }
 
 #ifndef NO_UNIX_SOCKETS
@@ -237,14 +237,14 @@ find_db_spec(kadm5_server_context *ctx)
 
 kadm5_ret_t
 _kadm5_s_init_context(kadm5_server_context **ctx,
-		      kadm5_config_params *params,
-		      krb5_context context)
+                      kadm5_config_params *params,
+                      krb5_context context)
 {
     kadm5_ret_t ret = 0;
 
     *ctx = calloc(1, sizeof(**ctx));
     if (*ctx == NULL)
-	return krb5_enomem(context);
+        return krb5_enomem(context);
     (*ctx)->log_context.socket_fd = rk_INVALID_SOCKET;
 
     set_funcs(*ctx);
@@ -255,37 +255,37 @@ _kadm5_s_init_context(kadm5_server_context **ctx,
     if (params)
         (*ctx)->config.mask = params->mask;
     if (is_set(REALM)) {
-	(*ctx)->config.realm = strdup(params->realm);
+        (*ctx)->config.realm = strdup(params->realm);
         if ((*ctx)->config.realm == NULL)
-	    return krb5_enomem(context);
+            return krb5_enomem(context);
     } else {
-	ret = krb5_get_default_realm(context, &(*ctx)->config.realm);
+        ret = krb5_get_default_realm(context, &(*ctx)->config.realm);
         if (ret)
             return ret;
     }
     if (is_set(DBNAME)) {
-	(*ctx)->config.dbname = strdup(params->dbname);
+        (*ctx)->config.dbname = strdup(params->dbname);
         if ((*ctx)->config.dbname == NULL)
-	    return krb5_enomem(context);
+            return krb5_enomem(context);
     }
     if (is_set(ACL_FILE)) {
-	(*ctx)->config.acl_file = strdup(params->acl_file);
+        (*ctx)->config.acl_file = strdup(params->acl_file);
         if ((*ctx)->config.acl_file == NULL)
-	    return krb5_enomem(context);
+            return krb5_enomem(context);
     }
     if (is_set(STASH_FILE)) {
-	(*ctx)->config.stash_file = strdup(params->stash_file);
+        (*ctx)->config.stash_file = strdup(params->stash_file);
         if ((*ctx)->config.stash_file == NULL)
-	    return krb5_enomem(context);
+            return krb5_enomem(context);
     }
 
     ret = find_db_spec(*ctx);
     if (ret == 0)
         ret = _kadm5_s_init_hooks(*ctx);
     if (ret != 0) {
-	kadm5_s_destroy(*ctx);
-	*ctx = NULL;
-	return ret;
+        kadm5_s_destroy(*ctx);
+        *ctx = NULL;
+        return ret;
     }
 
     /* PROFILE can't be specified for now */

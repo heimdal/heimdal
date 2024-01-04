@@ -349,8 +349,8 @@ simple_execve(const char*, char*const[], char*const[]);
 #define simple_execve_timed rk_simple_execve_timed
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 simple_execve_timed(const char *, char *const[],
-		    char *const [], time_t (*)(void *),
-		    void *, time_t);
+                    char *const [], time_t (*)(void *),
+                    void *, time_t);
 
 #define simple_execvp rk_simple_execvp
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
@@ -359,7 +359,7 @@ simple_execvp(const char*, char *const[]);
 #define simple_execvp_timed rk_simple_execvp_timed
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 simple_execvp_timed(const char *, char *const[],
-		    time_t (*)(void *), void *, time_t);
+                    time_t (*)(void *), void *, time_t);
 
 #define simple_execlp rk_simple_execlp
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
@@ -376,7 +376,7 @@ wait_for_process(pid_t);
 #define wait_for_process_timed rk_wait_for_process_timed
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 wait_for_process_timed(pid_t, time_t (*)(void *),
-		       void *, time_t);
+                       void *, time_t);
 
 #define pipe_execv rk_pipe_execv
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL

@@ -35,14 +35,14 @@
 
 OM_uint32 GSSAPI_CALLCONV
 _gss_ntlm_duplicate_name (
-            OM_uint32 * minor_status,
-            gss_const_name_t src_name,
-            gss_name_t * dest_name
-           )
+                          OM_uint32 * minor_status,
+                          gss_const_name_t src_name,
+                          gss_name_t * dest_name
+                         )
 {
     if (minor_status)
-	*minor_status = 0;
+        *minor_status = 0;
     if (dest_name)
-	*dest_name = NULL;
+        *dest_name = NULL;
     return GSS_S_COMPLETE;
 }

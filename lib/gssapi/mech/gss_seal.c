@@ -38,8 +38,8 @@ gss_seal(OM_uint32 *minor_status,
     gss_buffer_t output_message_buffer)
 {
 
-	return (gss_wrap(minor_status,
-		    context_handle, conf_req_flag, qop_req,
-		    input_message_buffer, conf_state,
-		    output_message_buffer));
+    return (gss_wrap(minor_status,
+            context_handle, conf_req_flag, qop_req,
+            input_message_buffer, conf_state,
+            output_message_buffer));
 }

@@ -164,35 +164,35 @@ scc_free(krb5_scache *s)
     if (!s)
         return;
     if (s->file)
-	free(s->file);
+        free(s->file);
     if (s->sub)
-	free(s->sub);
+        free(s->sub);
     if (s->name)
-	free(s->name);
+        free(s->name);
 
     if (s->icred)
-	sqlite3_finalize(s->icred);
+        sqlite3_finalize(s->icred);
     if (s->dcred)
-	sqlite3_finalize(s->dcred);
+        sqlite3_finalize(s->dcred);
     if (s->iprincipal)
-	sqlite3_finalize(s->iprincipal);
+        sqlite3_finalize(s->iprincipal);
     if (s->icache)
-	sqlite3_finalize(s->icache);
+        sqlite3_finalize(s->icache);
     if (s->ucachen)
-	sqlite3_finalize(s->ucachen);
+        sqlite3_finalize(s->ucachen);
     if (s->ucachep)
-	sqlite3_finalize(s->ucachep);
+        sqlite3_finalize(s->ucachep);
     if (s->dcache)
-	sqlite3_finalize(s->dcache);
+        sqlite3_finalize(s->dcache);
     if (s->scache)
-	sqlite3_finalize(s->scache);
+        sqlite3_finalize(s->scache);
     if (s->scache_name)
-	sqlite3_finalize(s->scache_name);
+        sqlite3_finalize(s->scache_name);
     if (s->umaster)
-	sqlite3_finalize(s->umaster);
+        sqlite3_finalize(s->umaster);
 
     if (s->db)
-	sqlite3_close(s->db);
+        sqlite3_close(s->db);
     free(s);
 }
 
@@ -206,32 +206,32 @@ trace(void* ptr, const char * str)
 
 static krb5_error_code
 prepare_stmt(krb5_context context, sqlite3 *db,
-	     sqlite3_stmt **stmt, const char *str)
+             sqlite3_stmt **stmt, const char *str)
 {
     int ret;
 
     ret = sqlite3_prepare_v2(db, str, -1, stmt, NULL);
     if (ret != SQLITE_OK) {
-	krb5_set_error_message(context, ENOENT,
-			       N_("Failed to prepare stmt %s: %s", ""),
-			       str, sqlite3_errmsg(db));
-	return ENOENT;
+        krb5_set_error_message(context, ENOENT,
+                               N_("Failed to prepare stmt %s: %s", ""),
+                               str, sqlite3_errmsg(db));
+        return ENOENT;
     }
     return 0;
 }
 
 static krb5_error_code
 exec_stmt(krb5_context context, sqlite3 *db, const char *str,
-	  krb5_error_code code)
+          krb5_error_code code)
 {
     int ret;
 
     ret = sqlite3_exec(db, str, NULL, NULL, NULL);
     if (ret != SQLITE_OK && code) {
-	krb5_set_error_message(context, code,
-			       N_("scache execute %s: %s", ""), str,
-			       sqlite3_errmsg(db));
-	return code;
+        krb5_set_error_message(context, code,
+                               N_("scache execute %s: %s", ""), str,
+                               sqlite3_errmsg(db));
+        return code;
     }
     return 0;
 }
@@ -365,28 +365,28 @@ get_def_name(krb5_context context, char *filein, char **str, char **file)
 
     ret = default_db(context, filein, &db, file);
     if (ret)
-	return ret;
+        return ret;
 
     ret = prepare_stmt(context, db, &stmt, "SELECT defaultcache FROM master");
     if (ret) {
-	sqlite3_close(db);
-	return ret;
+        sqlite3_close(db);
+        return ret;
     }
 
     ret = sqlite3_step(stmt);
     if (ret != SQLITE_ROW)
-	goto out;
+        goto out;
 
     if (sqlite3_column_type(stmt, 0) != SQLITE_TEXT)
-	goto out;
+        goto out;
 
     name = (const char *)sqlite3_column_text(stmt, 0);
     if (name == NULL)
-	goto out;
+        goto out;
 
     *str = strdup(name);
     if (*str == NULL)
-	goto out;
+        goto out;
 
     sqlite3_finalize(stmt);
     sqlite3_close(db);
@@ -413,7 +413,7 @@ scc_alloc(krb5_context context,
 
     ALLOC(s, 1);
     if(s == NULL)
-	return NULL;
+        return NULL;
 
     s->cid = SCACHE_INVALID_CID;
 
@@ -447,7 +447,7 @@ scc_alloc(krb5_context context,
 
         if ((s->file = strdup(name)) == NULL) {
             ret = krb5_enomem(context);
-	    goto out;
+            goto out;
         }
 
         if ((subsidiary = strrchr(s->file, ':'))) {
@@ -479,10 +479,10 @@ scc_alloc(krb5_context context,
         (asprintf(&s->name, "%s:%s", s->file, s->sub) < 0 || s->name == NULL))
         ret = krb5_enomem(context);
 
- out:
+out:
     if (ret || s->file == NULL || s->sub == NULL || s->name == NULL) {
-	scc_free(s);
-	s = NULL;
+        scc_free(s);
+        s = NULL;
     }
 
     free(freeme);
@@ -506,17 +506,17 @@ open_database(krb5_context context, krb5_scache *s, int flags)
         return ret;
     sret = sqlite3_open_v2(s->file, &s->db, SQLITE_OPEN_READWRITE|flags, NULL);
     if (sret != SQLITE_OK) {
-	if (s->db) {
-	    krb5_set_error_message(context, ENOENT,
-				   N_("Error opening scache file %s: %s (%d)", ""),
-				   s->file, sqlite3_errmsg(s->db), sret);
-	    sqlite3_close(s->db);
-	    s->db = NULL;
-	} else
-	    krb5_set_error_message(context, ENOENT,
-				   N_("Error opening scache file %s: %s (%d)", ""),
+        if (s->db) {
+            krb5_set_error_message(context, ENOENT,
+                                   N_("Error opening scache file %s: %s (%d)", ""),
+                                   s->file, sqlite3_errmsg(s->db), sret);
+            sqlite3_close(s->db);
+            s->db = NULL;
+        } else
+            krb5_set_error_message(context, ENOENT,
+                                   N_("Error opening scache file %s: %s (%d)", ""),
                                    s->file, sqlite3_errstr(sret), sret);
-	return ENOENT;
+        return ENOENT;
     }
     return 0;
 }
@@ -528,12 +528,12 @@ create_cache(krb5_context context, krb5_scache *s)
 
     sqlite3_bind_text(s->icache, 1, s->sub, -1, NULL);
     do {
-	ret = sqlite3_step(s->icache);
+        ret = sqlite3_step(s->icache);
     } while (ret == SQLITE_ROW);
     if (ret != SQLITE_DONE) {
-	krb5_set_error_message(context, KRB5_CC_IO,
-			       N_("Failed to add scache: %d", ""), ret);
-	return KRB5_CC_IO;
+        krb5_set_error_message(context, KRB5_CC_IO,
+                               N_("Failed to add scache: %d", ""), ret);
+        return KRB5_CC_IO;
     }
     sqlite3_reset(s->icache);
 
@@ -549,30 +549,30 @@ make_database(krb5_context context, krb5_scache *s)
     int ret;
 
     if (s->db)
-	return 0;
+        return 0;
 
     ret = open_database(context, s, 0);
     if (ret) {
-	ret = open_database(context, s, SQLITE_OPEN_CREATE);
-	if (ret) goto out;
+        ret = open_database(context, s, SQLITE_OPEN_CREATE);
+        if (ret) goto out;
 
-	created_file = 1;
+        created_file = 1;
 
-	ret = exec_stmt(context, s->db, SQL_CMASTER, KRB5_CC_IO);
-	if (ret) goto out;
-	ret = exec_stmt(context, s->db, SQL_CCACHE, KRB5_CC_IO);
-	if (ret) goto out;
-	ret = exec_stmt(context, s->db, SQL_CCREDS, KRB5_CC_IO);
-	if (ret) goto out;
-	ret = exec_stmt(context, s->db, SQL_CPRINCIPALS, KRB5_CC_IO);
-	if (ret) goto out;
-	ret = exec_stmt(context, s->db, SQL_SETUP_MASTER, KRB5_CC_IO);
-	if (ret) goto out;
+        ret = exec_stmt(context, s->db, SQL_CMASTER, KRB5_CC_IO);
+        if (ret) goto out;
+        ret = exec_stmt(context, s->db, SQL_CCACHE, KRB5_CC_IO);
+        if (ret) goto out;
+        ret = exec_stmt(context, s->db, SQL_CCREDS, KRB5_CC_IO);
+        if (ret) goto out;
+        ret = exec_stmt(context, s->db, SQL_CPRINCIPALS, KRB5_CC_IO);
+        if (ret) goto out;
+        ret = exec_stmt(context, s->db, SQL_SETUP_MASTER, KRB5_CC_IO);
+        if (ret) goto out;
 
-	ret = exec_stmt(context, s->db, SQL_TCACHE, KRB5_CC_IO);
-	if (ret) goto out;
-	ret = exec_stmt(context, s->db, SQL_TCRED, KRB5_CC_IO);
-	if (ret) goto out;
+        ret = exec_stmt(context, s->db, SQL_TCACHE, KRB5_CC_IO);
+        if (ret) goto out;
+        ret = exec_stmt(context, s->db, SQL_TCRED, KRB5_CC_IO);
+        if (ret) goto out;
     }
 
 #ifdef TRACEME
@@ -612,34 +612,34 @@ make_database(krb5_context context, krb5_scache *s)
 
 out:
     if (s->db)
-	sqlite3_close(s->db);
+        sqlite3_close(s->db);
     if (created_file)
-	unlink(s->file);
+        unlink(s->file);
 
     return ret;
 }
 
 static krb5_error_code
 bind_principal(krb5_context context,
-	       sqlite3 *db,
-	       sqlite3_stmt *stmt,
-	       int col,
-	       krb5_const_principal principal)
+               sqlite3 *db,
+               sqlite3_stmt *stmt,
+               int col,
+               krb5_const_principal principal)
 {
     krb5_error_code ret;
     char *str;
 
     ret = krb5_unparse_name(context, principal, &str);
     if (ret)
-	return ret;
+        return ret;
 
     ret = sqlite3_bind_text(stmt, col, str, -1, free_krb5);
     if (ret != SQLITE_OK) {
-	krb5_xfree(str);
-	krb5_set_error_message(context, ENOMEM,
-			       N_("scache bind principal: %s", ""),
-			       sqlite3_errmsg(db));
-	return ENOMEM;
+        krb5_xfree(str);
+        krb5_set_error_message(context, ENOMEM,
+                               N_("scache bind principal: %s", ""),
+                               sqlite3_errmsg(db));
+        return ENOMEM;
     }
     return 0;
 }
@@ -650,10 +650,10 @@ bind_principal(krb5_context context,
 
 static krb5_error_code KRB5_CALLCONV
 scc_get_name_2(krb5_context context,
-	       krb5_ccache id,
-	       const char **name,
-	       const char **file,
-	       const char **sub)
+               krb5_ccache id,
+               const char **name,
+               const char **file,
+               const char **sub)
 {
     if (name)
         *name = SCACHE(id)->name;
@@ -666,24 +666,24 @@ scc_get_name_2(krb5_context context,
 
 static krb5_error_code KRB5_CALLCONV
 scc_resolve_2(krb5_context context,
-	      krb5_ccache *id,
-	      const char *res,
-	      const char *sub)
+              krb5_ccache *id,
+              const char *res,
+              const char *sub)
 {
     krb5_error_code ret;
     krb5_scache *s;
 
     s = scc_alloc(context, res, sub, 0);
     if (s == NULL) {
-	krb5_set_error_message(context, KRB5_CC_NOMEM,
-			       N_("malloc: out of memory", ""));
-	return KRB5_CC_NOMEM;
+        krb5_set_error_message(context, KRB5_CC_NOMEM,
+                               N_("malloc: out of memory", ""));
+        return KRB5_CC_NOMEM;
     }
 
     ret = make_database(context, s);
     if (ret) {
-	scc_free(s);
-	return ret;
+        scc_free(s);
+        return ret;
     }
 
     ret = sqlite3_bind_text(s->scache_name, 1, s->sub, -1, NULL);
@@ -696,19 +696,19 @@ scc_resolve_2(krb5_context context,
 
     if (sqlite3_step(s->scache_name) == SQLITE_ROW) {
 
-	if (sqlite3_column_type(s->scache_name, 0) != SQLITE_INTEGER) {
-	    sqlite3_reset(s->scache_name);
-	    krb5_set_error_message(context, KRB5_CC_END,
-				   N_("Cache name of wrong type "
-				      "for scache %s", ""),
-				   s->name);
-	    scc_free(s);
-	    return KRB5_CC_END;
-	}
+        if (sqlite3_column_type(s->scache_name, 0) != SQLITE_INTEGER) {
+            sqlite3_reset(s->scache_name);
+            krb5_set_error_message(context, KRB5_CC_END,
+                                   N_("Cache name of wrong type "
+                                      "for scache %s", ""),
+                                   s->name);
+            scc_free(s);
+            return KRB5_CC_END;
+        }
 
-	s->cid = sqlite3_column_int(s->scache_name, 0);
+        s->cid = sqlite3_column_int(s->scache_name, 0);
     } else {
-	s->cid = SCACHE_INVALID_CID;
+        s->cid = SCACHE_INVALID_CID;
     }
     sqlite3_reset(s->scache_name);
 
@@ -726,9 +726,9 @@ scc_gen_new(krb5_context context, krb5_ccache *id)
     s = scc_alloc(context, NULL, NULL, 1);
 
     if (s == NULL) {
-	krb5_set_error_message(context, KRB5_CC_NOMEM,
-			       N_("malloc: out of memory", ""));
-	return KRB5_CC_NOMEM;
+        krb5_set_error_message(context, KRB5_CC_NOMEM,
+                               N_("malloc: out of memory", ""));
+        return KRB5_CC_NOMEM;
     }
 
     (*id)->data.data = s;
@@ -739,54 +739,54 @@ scc_gen_new(krb5_context context, krb5_ccache *id)
 
 static krb5_error_code KRB5_CALLCONV
 scc_initialize(krb5_context context,
-	       krb5_ccache id,
-	       krb5_principal principal)
+               krb5_ccache id,
+               krb5_principal principal)
 {
     krb5_scache *s = SCACHE(id);
     krb5_error_code ret;
 
     ret = make_database(context, s);
     if (ret)
-	return ret;
+        return ret;
 
     ret = exec_stmt(context, s->db, "BEGIN IMMEDIATE TRANSACTION", KRB5_CC_IO);
     if (ret) return ret;
 
     if (s->cid == SCACHE_INVALID_CID) {
-	ret = create_cache(context, s);
-	if (ret)
-	    goto rollback;
+        ret = create_cache(context, s);
+        if (ret)
+            goto rollback;
     } else {
-	sqlite3_bind_int(s->dcred, 1, s->cid);
-	do {
-	    ret = sqlite3_step(s->dcred);
-	} while (ret == SQLITE_ROW);
-	sqlite3_reset(s->dcred);
-	if (ret != SQLITE_DONE) {
-	    ret = KRB5_CC_IO;
-	    krb5_set_error_message(context, ret,
-				   N_("Failed to delete old "
-				      "credentials: %s", ""),
-				   sqlite3_errmsg(s->db));
-	    goto rollback;
-	}
+        sqlite3_bind_int(s->dcred, 1, s->cid);
+        do {
+            ret = sqlite3_step(s->dcred);
+        } while (ret == SQLITE_ROW);
+        sqlite3_reset(s->dcred);
+        if (ret != SQLITE_DONE) {
+            ret = KRB5_CC_IO;
+            krb5_set_error_message(context, ret,
+                                   N_("Failed to delete old "
+                                      "credentials: %s", ""),
+                                   sqlite3_errmsg(s->db));
+            goto rollback;
+        }
     }
 
     ret = bind_principal(context, s->db, s->ucachep, 1, principal);
     if (ret)
-	goto rollback;
+        goto rollback;
     sqlite3_bind_int(s->ucachep, 2, s->cid);
 
     do {
-	ret = sqlite3_step(s->ucachep);
+        ret = sqlite3_step(s->ucachep);
     } while (ret == SQLITE_ROW);
     sqlite3_reset(s->ucachep);
     if (ret != SQLITE_DONE) {
-	ret = KRB5_CC_IO;
-	krb5_set_error_message(context, ret,
-			       N_("Failed to bind principal to cache %s", ""),
-			       sqlite3_errmsg(s->db));
-	goto rollback;
+        ret = KRB5_CC_IO;
+        krb5_set_error_message(context, ret,
+                               N_("Failed to bind principal to cache %s", ""),
+                               sqlite3_errmsg(s->db));
+        goto rollback;
     }
 
     ret = exec_stmt(context, s->db, "COMMIT", KRB5_CC_IO);
@@ -803,7 +803,7 @@ rollback:
 
 static krb5_error_code KRB5_CALLCONV
 scc_close(krb5_context context,
-	  krb5_ccache id)
+          krb5_ccache id)
 {
     scc_free(SCACHE(id));
     return 0;
@@ -811,24 +811,24 @@ scc_close(krb5_context context,
 
 static krb5_error_code KRB5_CALLCONV
 scc_destroy(krb5_context context,
-	    krb5_ccache id)
+            krb5_ccache id)
 {
     krb5_scache *s = SCACHE(id);
     int ret;
 
     if (s->cid == SCACHE_INVALID_CID)
-	return 0;
+        return 0;
 
     sqlite3_bind_int(s->dcache, 1, s->cid);
     do {
-	ret = sqlite3_step(s->dcache);
+        ret = sqlite3_step(s->dcache);
     } while (ret == SQLITE_ROW);
     sqlite3_reset(s->dcache);
     if (ret != SQLITE_DONE) {
-	krb5_set_error_message(context, KRB5_CC_IO,
-			       N_("Failed to destroy cache %s: %s", ""),
-			       s->name, sqlite3_errmsg(s->db));
-	return KRB5_CC_IO;
+        krb5_set_error_message(context, KRB5_CC_IO,
+                               N_("Failed to destroy cache %s: %s", ""),
+                               s->name, sqlite3_errmsg(s->db));
+        return KRB5_CC_IO;
     }
     return 0;
 }
@@ -842,41 +842,41 @@ encode_creds(krb5_context context, krb5_creds *creds, krb5_data *data)
     krb5_data_zero(data);
     sp = krb5_storage_emem();
     if (sp == NULL)
-	return krb5_enomem(context);
+        return krb5_enomem(context);
 
     ret = krb5_store_creds(sp, creds);
     if (ret) {
-	krb5_set_error_message(context, ret,
-			       N_("Failed to store credential in scache", ""));
-	krb5_storage_free(sp);
-	return ret;
+        krb5_set_error_message(context, ret,
+                               N_("Failed to store credential in scache", ""));
+        krb5_storage_free(sp);
+        return ret;
     }
 
     ret = krb5_storage_to_data(sp, data);
     krb5_storage_free(sp);
     if (ret)
-	krb5_set_error_message(context, ret,
-			       N_("Failed to encode credential in scache", ""));
+        krb5_set_error_message(context, ret,
+                               N_("Failed to encode credential in scache", ""));
     return ret;
 }
 
 static krb5_error_code
 decode_creds(krb5_context context, const void *data, size_t length,
-	     krb5_creds *creds)
+             krb5_creds *creds)
 {
     krb5_error_code ret;
     krb5_storage *sp;
 
     sp = krb5_storage_from_readonly_mem(data, length);
     if (sp == NULL)
-	return krb5_enomem(context);
+        return krb5_enomem(context);
 
     ret = krb5_ret_creds(sp, creds);
     krb5_storage_free(sp);
     if (ret) {
-	krb5_set_error_message(context, ret,
-			       N_("Failed to read credential in scache", ""));
-	return ret;
+        krb5_set_error_message(context, ret,
+                               N_("Failed to read credential in scache", ""));
+        return ret;
     }
     return 0;
 }
@@ -884,8 +884,8 @@ decode_creds(krb5_context context, const void *data, size_t length,
 
 static krb5_error_code KRB5_CALLCONV
 scc_store_cred(krb5_context context,
-	       krb5_ccache id,
-	       krb5_creds *creds)
+               krb5_ccache id,
+               krb5_creds *creds)
 {
     sqlite_uint64 credid;
     krb5_scache *s = SCACHE(id);
@@ -894,32 +894,32 @@ scc_store_cred(krb5_context context,
 
     ret = make_database(context, s);
     if (ret)
-	return ret;
+        return ret;
 
     ret = encode_creds(context, creds, &data);
     if (ret)
-	return ret;
+        return ret;
 
     sqlite3_bind_int(s->icred, 1, s->cid);
     {
-	krb5_enctype etype = 0;
-	int kvno = 0;
-	Ticket t;
-	size_t len;
+        krb5_enctype etype = 0;
+        int kvno = 0;
+        Ticket t;
+        size_t len;
 
-	ret = decode_Ticket(creds->ticket.data,
-			    creds->ticket.length, &t, &len);
-	if (ret == 0) {
-	    if(t.enc_part.kvno)
-		kvno = *t.enc_part.kvno;
+        ret = decode_Ticket(creds->ticket.data,
+                            creds->ticket.length, &t, &len);
+        if (ret == 0) {
+            if(t.enc_part.kvno)
+                kvno = *t.enc_part.kvno;
 
-	    etype = t.enc_part.etype;
+            etype = t.enc_part.etype;
 
-	    free_Ticket(&t);
-	}
+            free_Ticket(&t);
+        }
 
-	sqlite3_bind_int(s->icred, 2, kvno);
-	sqlite3_bind_int(s->icred, 3, etype);
+        sqlite3_bind_int(s->icred, 2, kvno);
+        sqlite3_bind_int(s->icred, 3, etype);
 
     }
 
@@ -930,53 +930,53 @@ scc_store_cred(krb5_context context,
     if (ret) return ret;
 
     do {
-	ret = sqlite3_step(s->icred);
+        ret = sqlite3_step(s->icred);
     } while (ret == SQLITE_ROW);
     sqlite3_reset(s->icred);
     if (ret != SQLITE_DONE) {
-	ret = KRB5_CC_IO;
-	krb5_set_error_message(context, ret,
-			       N_("Failed to add credential: %s", ""),
-			       sqlite3_errmsg(s->db));
-	goto rollback;
+        ret = KRB5_CC_IO;
+        krb5_set_error_message(context, ret,
+                               N_("Failed to add credential: %s", ""),
+                               sqlite3_errmsg(s->db));
+        goto rollback;
     }
 
     credid = sqlite3_last_insert_rowid(s->db);
 
     {
-	bind_principal(context, s->db, s->iprincipal, 1, creds->server);
-	sqlite3_bind_int(s->iprincipal, 2, 1);
-	sqlite3_bind_int(s->iprincipal, 3, credid);
+        bind_principal(context, s->db, s->iprincipal, 1, creds->server);
+        sqlite3_bind_int(s->iprincipal, 2, 1);
+        sqlite3_bind_int(s->iprincipal, 3, credid);
 
-	do {
-	    ret = sqlite3_step(s->iprincipal);
-	} while (ret == SQLITE_ROW);
-	sqlite3_reset(s->iprincipal);
-	if (ret != SQLITE_DONE) {
-	    ret = KRB5_CC_IO;
-	    krb5_set_error_message(context, ret,
-				   N_("Failed to add principal: %s", ""),
-				   sqlite3_errmsg(s->db));
-	    goto rollback;
-	}
+        do {
+            ret = sqlite3_step(s->iprincipal);
+        } while (ret == SQLITE_ROW);
+        sqlite3_reset(s->iprincipal);
+        if (ret != SQLITE_DONE) {
+            ret = KRB5_CC_IO;
+            krb5_set_error_message(context, ret,
+                                   N_("Failed to add principal: %s", ""),
+                                   sqlite3_errmsg(s->db));
+            goto rollback;
+        }
     }
 
     {
-	bind_principal(context, s->db, s->iprincipal, 1, creds->client);
-	sqlite3_bind_int(s->iprincipal, 2, 0);
-	sqlite3_bind_int(s->iprincipal, 3, credid);
+        bind_principal(context, s->db, s->iprincipal, 1, creds->client);
+        sqlite3_bind_int(s->iprincipal, 2, 0);
+        sqlite3_bind_int(s->iprincipal, 3, credid);
 
-	do {
-	    ret = sqlite3_step(s->iprincipal);
-	} while (ret == SQLITE_ROW);
-	sqlite3_reset(s->iprincipal);
-	if (ret != SQLITE_DONE) {
-	    ret = KRB5_CC_IO;
-	    krb5_set_error_message(context, ret,
-				   N_("Failed to add principal: %s", ""),
-				   sqlite3_errmsg(s->db));
-	    goto rollback;
-	}
+        do {
+            ret = sqlite3_step(s->iprincipal);
+        } while (ret == SQLITE_ROW);
+        sqlite3_reset(s->iprincipal);
+        if (ret != SQLITE_DONE) {
+            ret = KRB5_CC_IO;
+            krb5_set_error_message(context, ret,
+                                   N_("Failed to add principal: %s", ""),
+                                   sqlite3_errmsg(s->db));
+            goto rollback;
+        }
     }
 
     ret = exec_stmt(context, s->db, "COMMIT", KRB5_CC_IO);
@@ -992,8 +992,8 @@ rollback:
 
 static krb5_error_code KRB5_CALLCONV
 scc_get_principal(krb5_context context,
-		  krb5_ccache id,
-		  krb5_principal *principal)
+                  krb5_ccache id,
+                  krb5_principal *principal)
 {
     krb5_scache *s = SCACHE(id);
     krb5_error_code ret;
@@ -1003,34 +1003,34 @@ scc_get_principal(krb5_context context,
 
     ret = make_database(context, s);
     if (ret)
-	return ret;
+        return ret;
 
     sqlite3_bind_int(s->scache, 1, s->cid);
 
     if (sqlite3_step(s->scache) != SQLITE_ROW) {
-	sqlite3_reset(s->scache);
-	krb5_set_error_message(context, KRB5_CC_END,
-			       N_("No principal for cache SCC:%s", ""),
-			       s->name);
-	return KRB5_CC_END;
+        sqlite3_reset(s->scache);
+        krb5_set_error_message(context, KRB5_CC_END,
+                               N_("No principal for cache SCC:%s", ""),
+                               s->name);
+        return KRB5_CC_END;
     }
 
     if (sqlite3_column_type(s->scache, 0) != SQLITE_TEXT) {
-	sqlite3_reset(s->scache);
-	krb5_set_error_message(context, KRB5_CC_END,
-			       N_("Principal data of wrong type "
-				  "for SCC:%s", ""),
-			       s->name);
-	return KRB5_CC_END;
+        sqlite3_reset(s->scache);
+        krb5_set_error_message(context, KRB5_CC_END,
+                               N_("Principal data of wrong type "
+                                  "for SCC:%s", ""),
+                               s->name);
+        return KRB5_CC_END;
     }
 
     str = (const char *)sqlite3_column_text(s->scache, 0);
     if (str == NULL) {
-	sqlite3_reset(s->scache);
-	krb5_set_error_message(context, KRB5_CC_END,
-			       N_("Principal not set for SCC:%s", ""),
-			       s->name);
-	return KRB5_CC_END;
+        sqlite3_reset(s->scache);
+        krb5_set_error_message(context, KRB5_CC_END,
+                               N_("Principal not set for SCC:%s", ""),
+                               s->name);
+        return KRB5_CC_END;
     }
 
     ret = krb5_parse_name(context, str, principal);
@@ -1048,8 +1048,8 @@ struct cred_ctx {
 
 static krb5_error_code KRB5_CALLCONV
 scc_get_first (krb5_context context,
-	       krb5_ccache id,
-	       krb5_cc_cursor *cursor)
+               krb5_ccache id,
+               krb5_cc_cursor *cursor)
 {
     krb5_scache *s = SCACHE(id);
     krb5_error_code ret;
@@ -1060,63 +1060,63 @@ scc_get_first (krb5_context context,
 
     ctx = calloc(1, sizeof(*ctx));
     if (ctx == NULL)
-	return krb5_enomem(context);
+        return krb5_enomem(context);
 
     ret = make_database(context, s);
     if (ret) {
-	free(ctx);
-	return ret;
+        free(ctx);
+        return ret;
     }
 
     if (s->cid == SCACHE_INVALID_CID) {
-	krb5_set_error_message(context, KRB5_CC_END,
-			       N_("Iterating a invalid scache %s", ""),
-			       s->name);
-	free(ctx);
-	return KRB5_CC_END;
+        krb5_set_error_message(context, KRB5_CC_END,
+                               N_("Iterating a invalid scache %s", ""),
+                               s->name);
+        free(ctx);
+        return KRB5_CC_END;
     }
 
     ret = asprintf(&name, "credIteration%pPid%d",
                    ctx, (int)getpid());
     if (ret < 0 || name == NULL) {
-	free(ctx);
-	return krb5_enomem(context);
+        free(ctx);
+        return krb5_enomem(context);
     }
 
     ret = asprintf(&ctx->drop, "DROP TABLE %s", name);
     if (ret < 0 || ctx->drop == NULL) {
-	free(name);
-	free(ctx);
-	return krb5_enomem(context);
+        free(name);
+        free(ctx);
+        return krb5_enomem(context);
     }
 
     ret = asprintf(&str, "CREATE TEMPORARY TABLE %s "
-	     "AS SELECT oid,created_at FROM credentials WHERE cid = %lu",
-	     name, (unsigned long)s->cid);
+             "AS SELECT oid,created_at FROM credentials WHERE cid = %lu",
+             name, (unsigned long)s->cid);
     if (ret < 0 || str == NULL) {
-	free(ctx->drop);
-	free(name);
-	free(ctx);
-	return krb5_enomem(context);
+        free(ctx->drop);
+        free(name);
+        free(ctx);
+        return krb5_enomem(context);
     }
 
     ret = exec_stmt(context, s->db, str, KRB5_CC_IO);
     free(str);
     str = NULL;
     if (ret) {
-	free(ctx->drop);
-	free(name);
-	free(ctx);
-	return ret;
+        free(ctx->drop);
+        free(name);
+        free(ctx);
+        return ret;
     }
 
     ret = asprintf(&str, "SELECT oid FROM %s ORDER BY created_at", name);
     if (ret < 0 || str == NULL) {
-	exec_stmt(context, s->db, ctx->drop, 0);
-	free(ctx->drop);
-	free(name);
-	free(ctx);
-	return ret;
+        exec_stmt(context, s->db, ctx->drop, 0);
+        free(ctx->drop);
+        free(name);
+        free(ctx);
+        return ret;
     }
 
     ret = prepare_stmt(context, s->db, &ctx->stmt, str);
@@ -1124,20 +1124,20 @@ scc_get_first (krb5_context context,
     str = NULL;
     free(name);
     if (ret) {
-	exec_stmt(context, s->db, ctx->drop, 0);
-	free(ctx->drop);
-	free(ctx);
-	return ret;
+        exec_stmt(context, s->db, ctx->drop, 0);
+        free(ctx->drop);
+        free(ctx);
+        return ret;
     }
 
     ret = prepare_stmt(context, s->db, &ctx->credstmt,
-		       "SELECT cred FROM credentials WHERE oid = ?");
+                       "SELECT cred FROM credentials WHERE oid = ?");
     if (ret) {
-	sqlite3_finalize(ctx->stmt);
-	exec_stmt(context, s->db, ctx->drop, 0);
-	free(ctx->drop);
-	free(ctx);
-	return ret;
+        sqlite3_finalize(ctx->stmt);
+        exec_stmt(context, s->db, ctx->drop, 0);
+        free(ctx->drop);
+        free(ctx);
+        return ret;
     }
 
     *cursor = ctx;
@@ -1147,9 +1147,9 @@ scc_get_first (krb5_context context,
 
 static krb5_error_code KRB5_CALLCONV
 scc_get_next (krb5_context context,
-	      krb5_ccache id,
-	      krb5_cc_cursor *cursor,
-	      krb5_creds *creds)
+              krb5_ccache id,
+              krb5_cc_cursor *cursor,
+              krb5_creds *creds)
 {
     struct cred_ctx *ctx = *cursor;
     krb5_scache *s = SCACHE(id);
@@ -1161,12 +1161,12 @@ scc_get_next (krb5_context context,
 next:
     ret = sqlite3_step(ctx->stmt);
     if (ret == SQLITE_DONE) {
-	krb5_clear_error_message(context);
+        krb5_clear_error_message(context);
         return KRB5_CC_END;
     } else if (ret != SQLITE_ROW) {
-	krb5_set_error_message(context, KRB5_CC_IO,
-			       N_("scache Database failed: %s", ""),
-			       sqlite3_errmsg(s->db));
+        krb5_set_error_message(context, KRB5_CC_IO,
+                               N_("scache Database failed: %s", ""),
+                               sqlite3_errmsg(s->db));
         return KRB5_CC_IO;
     }
 
@@ -1178,16 +1178,16 @@ next:
 
     ret = sqlite3_step(ctx->credstmt);
     if (ret != SQLITE_ROW) {
-	sqlite3_reset(ctx->credstmt);
-	goto next;
+        sqlite3_reset(ctx->credstmt);
+        goto next;
     }
 
     if (sqlite3_column_type(ctx->credstmt, 0) != SQLITE_BLOB) {
-	krb5_set_error_message(context, KRB5_CC_END,
-			       N_("credential of wrong type for SCC:%s", ""),
-			       s->name);
-	sqlite3_reset(ctx->credstmt);
-	return KRB5_CC_END;
+        krb5_set_error_message(context, KRB5_CC_END,
+                               N_("credential of wrong type for SCC:%s", ""),
+                               s->name);
+        sqlite3_reset(ctx->credstmt);
+        return KRB5_CC_END;
     }
 
     data = sqlite3_column_blob(ctx->credstmt, 0);
@@ -1200,8 +1200,8 @@ next:
 
 static krb5_error_code KRB5_CALLCONV
 scc_end_get (krb5_context context,
-	     krb5_ccache id,
-	     krb5_cc_cursor *cursor)
+             krb5_ccache id,
+             krb5_cc_cursor *cursor)
 {
     struct cred_ctx *ctx = *cursor;
     krb5_scache *s = SCACHE(id);
@@ -1219,9 +1219,9 @@ scc_end_get (krb5_context context,
 
 static krb5_error_code KRB5_CALLCONV
 scc_remove_cred(krb5_context context,
-		 krb5_ccache id,
-		 krb5_flags which,
-		 krb5_creds *mcreds)
+                 krb5_ccache id,
+                 krb5_flags which,
+                 krb5_creds *mcreds)
 {
     krb5_scache *s = SCACHE(id);
     krb5_error_code ret;
@@ -1232,55 +1232,55 @@ scc_remove_cred(krb5_context context,
 
     ret = make_database(context, s);
     if (ret)
-	return ret;
+        return ret;
 
     ret = prepare_stmt(context, s->db, &stmt,
-		       "SELECT cred,oid FROM credentials "
-		       "WHERE cid = ?");
+                       "SELECT cred,oid FROM credentials "
+                       "WHERE cid = ?");
     if (ret)
-	return ret;
+        return ret;
 
     sqlite3_bind_int(stmt, 1, s->cid);
 
     /* find credential... */
     while (1) {
-	krb5_creds creds;
+        krb5_creds creds;
 
-	ret = sqlite3_step(stmt);
-	if (ret == SQLITE_DONE) {
-	    ret = 0;
-	    break;
-	} else if (ret != SQLITE_ROW) {
-	    ret = KRB5_CC_IO;
-	    krb5_set_error_message(context, ret,
-				   N_("scache Database failed: %s", ""),
-				   sqlite3_errmsg(s->db));
-	    break;
-	}
+        ret = sqlite3_step(stmt);
+        if (ret == SQLITE_DONE) {
+            ret = 0;
+            break;
+        } else if (ret != SQLITE_ROW) {
+            ret = KRB5_CC_IO;
+            krb5_set_error_message(context, ret,
+                                   N_("scache Database failed: %s", ""),
+                                   sqlite3_errmsg(s->db));
+            break;
+        }
 
-	if (sqlite3_column_type(stmt, 0) != SQLITE_BLOB) {
-	    ret = KRB5_CC_END;
-	    krb5_set_error_message(context, ret,
-				   N_("Credential of wrong type "
-				      "for SCC:%s", ""),
-				   s->name);
-	    break;
-	}
+        if (sqlite3_column_type(stmt, 0) != SQLITE_BLOB) {
+            ret = KRB5_CC_END;
+            krb5_set_error_message(context, ret,
+                                   N_("Credential of wrong type "
+                                      "for SCC:%s", ""),
+                                   s->name);
+            break;
+        }
 
-	data = sqlite3_column_blob(stmt, 0);
-	len = sqlite3_column_bytes(stmt, 0);
+        data = sqlite3_column_blob(stmt, 0);
+        len = sqlite3_column_bytes(stmt, 0);
 
-	ret = decode_creds(context, data, len, &creds);
-	if (ret)
-	    break;
+        ret = decode_creds(context, data, len, &creds);
+        if (ret)
+            break;
 
-	ret = krb5_compare_creds(context, which, mcreds, &creds);
-	krb5_free_cred_contents(context, &creds);
-	if (ret) {
-	    credid = sqlite3_column_int64(stmt, 1);
-	    ret = 0;
-	    break;
-	}
+        ret = krb5_compare_creds(context, which, mcreds, &creds);
+        krb5_free_cred_contents(context, &creds);
+        if (ret) {
+            credid = sqlite3_column_int64(stmt, 1);
+            ret = 0;
+            break;
+        }
     }
 
     sqlite3_finalize(stmt);
@@ -1310,8 +1310,8 @@ scc_remove_cred(krb5_context context,
 
 static krb5_error_code KRB5_CALLCONV
 scc_set_flags(krb5_context context,
-	      krb5_ccache id,
-	      krb5_flags flags)
+              krb5_ccache id,
+              krb5_flags flags)
 {
     return 0; /* XXX */
 }
@@ -1334,70 +1334,70 @@ scc_get_cache_first(krb5_context context, krb5_cc_cursor *cursor)
 
     ctx = calloc(1, sizeof(*ctx));
     if (ctx == NULL)
-	return krb5_enomem(context);
+        return krb5_enomem(context);
 
     ret = default_db(context, NULL, &ctx->db, &ctx->file);
     if (ret) {
-	free(ctx);
-	return ret;
+        free(ctx);
+        return ret;
     }
 
     ret = asprintf(&name, "cacheIteration%pPid%d",
                    ctx, (int)getpid());
     if (ret < 0 || name == NULL) {
-       sqlite3_close(ctx->db);
-       free(ctx);
-       return krb5_enomem(context);
+        sqlite3_close(ctx->db);
+        free(ctx);
+        return krb5_enomem(context);
     }
 
     ret = asprintf(&ctx->drop, "DROP TABLE %s", name);
     if (ret < 0 || ctx->drop == NULL) {
-       sqlite3_close(ctx->db);
-       free(name);
-       free(ctx);
-       return krb5_enomem(context);
+        sqlite3_close(ctx->db);
+        free(name);
+        free(ctx);
+        return krb5_enomem(context);
     }
 
     ret = asprintf(&str, "CREATE TEMPORARY TABLE %s AS SELECT name FROM caches",
             name);
     if (ret < 0 || str == NULL) {
-       sqlite3_close(ctx->db);
-       free(name);
-       free(ctx->drop);
-       free(ctx);
-       return krb5_enomem(context);
+        sqlite3_close(ctx->db);
+        free(name);
+        free(ctx->drop);
+        free(ctx);
+        return krb5_enomem(context);
     }
 
     ret = exec_stmt(context, ctx->db, str, KRB5_CC_IO);
     free(str);
     str = NULL;
     if (ret) {
-       sqlite3_close(ctx->db);
-       free(name);
-       free(ctx->drop);
-       free(ctx);
-       return ret;
+        sqlite3_close(ctx->db);
+        free(name);
+        free(ctx->drop);
+        free(ctx);
+        return ret;
     }
 
     ret = asprintf(&str, "SELECT name FROM %s", name);
     if (ret < 0 || str == NULL) {
-       exec_stmt(context, ctx->db, ctx->drop, 0);
-       sqlite3_close(ctx->db);
-       free(name);
-       free(ctx->drop);
-       free(ctx);
-       return krb5_enomem(context);
+        exec_stmt(context, ctx->db, ctx->drop, 0);
+        sqlite3_close(ctx->db);
+        free(name);
+        free(ctx->drop);
+        free(ctx);
+        return krb5_enomem(context);
     }
     free(name);
 
     ret = prepare_stmt(context, ctx->db, &ctx->stmt, str);
     free(str);
     if (ret) {
-	exec_stmt(context, ctx->db, ctx->drop, 0);
-	sqlite3_close(ctx->db);
-	free(ctx->drop);
-	free(ctx);
-	return ret;
+        exec_stmt(context, ctx->db, ctx->drop, 0);
+        sqlite3_close(ctx->db);
+        free(ctx->drop);
+        free(ctx);
+        return ret;
     }
 
     *cursor = ctx;
@@ -1407,8 +1407,8 @@ scc_get_cache_first(krb5_context context, krb5_cc_cursor *cursor)
 
 static krb5_error_code KRB5_CALLCONV
 scc_get_cache_next(krb5_context context,
-		   krb5_cc_cursor cursor,
-		   krb5_ccache *id)
+                   krb5_cc_cursor cursor,
+                   krb5_ccache *id)
 {
     struct cache_iter *ctx = cursor;
     krb5_error_code ret;
@@ -1417,25 +1417,25 @@ scc_get_cache_next(krb5_context context,
 again:
     ret = sqlite3_step(ctx->stmt);
     if (ret == SQLITE_DONE) {
-	krb5_clear_error_message(context);
+        krb5_clear_error_message(context);
         return KRB5_CC_END;
     } else if (ret != SQLITE_ROW) {
-	krb5_set_error_message(context, KRB5_CC_IO,
-			       N_("Database failed: %s", ""),
-			       sqlite3_errmsg(ctx->db));
+        krb5_set_error_message(context, KRB5_CC_IO,
+                               N_("Database failed: %s", ""),
+                               sqlite3_errmsg(ctx->db));
         return KRB5_CC_IO;
     }
 
     if (sqlite3_column_type(ctx->stmt, 0) != SQLITE_TEXT)
-	goto again;
+        goto again;
 
     name = (const char *)sqlite3_column_text(ctx->stmt, 0);
     if (name == NULL)
-	goto again;
+        goto again;
 
     ret = _krb5_cc_allocate(context, &krb5_scc_ops, id);
     if (ret == 0)
-	ret = scc_resolve_2(context, id, ctx->file, name);
+        ret = scc_resolve_2(context, id, ctx->file, name);
     if (ret) {
         free(*id);
         *id = NULL;
@@ -1466,45 +1466,45 @@ scc_move(krb5_context context, krb5_ccache from, krb5_ccache to)
 
     if (strcmp(sfrom->file, sto->file) != 0) {
         /* Let upstairs handle the move */
-	return EXDEV;
+        return EXDEV;
     }
 
     ret = make_database(context, sfrom);
     if (ret)
-	return ret;
+        return ret;
 
     ret = exec_stmt(context, sfrom->db,
-		    "BEGIN IMMEDIATE TRANSACTION", KRB5_CC_IO);
+                    "BEGIN IMMEDIATE TRANSACTION", KRB5_CC_IO);
     if (ret) return ret;
 
     if (sto->cid != SCACHE_INVALID_CID) {
-	/* drop old cache entry */
+        /* drop old cache entry */
 
-	sqlite3_bind_int(sfrom->dcache, 1, sto->cid);
-	do {
-	    ret = sqlite3_step(sfrom->dcache);
-	} while (ret == SQLITE_ROW);
-	sqlite3_reset(sfrom->dcache);
-	if (ret != SQLITE_DONE) {
-	    krb5_set_error_message(context, KRB5_CC_IO,
-				   N_("Failed to delete old cache: %d", ""),
-				   (int)ret);
-	    goto rollback;
-	}
+        sqlite3_bind_int(sfrom->dcache, 1, sto->cid);
+        do {
+            ret = sqlite3_step(sfrom->dcache);
+        } while (ret == SQLITE_ROW);
+        sqlite3_reset(sfrom->dcache);
+        if (ret != SQLITE_DONE) {
+            krb5_set_error_message(context, KRB5_CC_IO,
+                                   N_("Failed to delete old cache: %d", ""),
+                                   (int)ret);
+            goto rollback;
+        }
     }
 
     sqlite3_bind_text(sfrom->ucachen, 1, sto->sub, -1, NULL);
     sqlite3_bind_int(sfrom->ucachen, 2, sfrom->cid);
 
     do {
-	ret = sqlite3_step(sfrom->ucachen);
+        ret = sqlite3_step(sfrom->ucachen);
     } while (ret == SQLITE_ROW);
     sqlite3_reset(sfrom->ucachen);
     if (ret != SQLITE_DONE) {
-	krb5_set_error_message(context, KRB5_CC_IO,
-			       N_("Failed to update new cache: %d", ""),
-			       (int)ret);
-	goto rollback;
+        krb5_set_error_message(context, KRB5_CC_IO,
+                               N_("Failed to update new cache: %d", ""),
+                               (int)ret);
+        goto rollback;
     }
 
     sto->cid = sfrom->cid;
@@ -1534,29 +1534,29 @@ scc_set_default(krb5_context context, krb5_ccache id)
     krb5_error_code ret;
 
     if (s->cid == SCACHE_INVALID_CID) {
-	krb5_set_error_message(context, KRB5_CC_IO,
-			       N_("Trying to set a invalid cache "
-				  "as default %s", ""),
-			       s->name);
-	return KRB5_CC_IO;
+        krb5_set_error_message(context, KRB5_CC_IO,
+                               N_("Trying to set a invalid cache "
+                                  "as default %s", ""),
+                               s->name);
+        return KRB5_CC_IO;
     }
 
     ret = sqlite3_bind_text(s->umaster, 1, s->sub, -1, NULL);
     if (ret) {
-	sqlite3_reset(s->umaster);
-	krb5_set_error_message(context, KRB5_CC_IO,
-			       N_("Failed to set name of default cache", ""));
-	return KRB5_CC_IO;
+        sqlite3_reset(s->umaster);
+        krb5_set_error_message(context, KRB5_CC_IO,
+                               N_("Failed to set name of default cache", ""));
+        return KRB5_CC_IO;
     }
 
     do {
-	ret = sqlite3_step(s->umaster);
+        ret = sqlite3_step(s->umaster);
     } while (ret == SQLITE_ROW);
     sqlite3_reset(s->umaster);
     if (ret != SQLITE_DONE) {
-	krb5_set_error_message(context, KRB5_CC_IO,
-			       N_("Failed to update default cache", ""));
-	return KRB5_CC_IO;
+        krb5_set_error_message(context, KRB5_CC_IO,
+                               N_("Failed to update default cache", ""));
+        return KRB5_CC_IO;
     }
 
     return 0;

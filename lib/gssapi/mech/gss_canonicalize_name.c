@@ -56,49 +56,49 @@
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_canonicalize_name(OM_uint32 *minor_status,
-    gss_const_name_t input_name,
-    const gss_OID mech_type,
-    gss_name_t *output_name)
+                      gss_const_name_t input_name,
+                      const gss_OID mech_type,
+                      gss_name_t *output_name)
 {
-	OM_uint32 major_status;
-	struct _gss_name *name = (struct _gss_name *) input_name;
-	struct _gss_mechanism_name *mn;
-	gssapi_mech_interface m;
-	gss_name_t new_canonical_name;
+    OM_uint32 major_status;
+    struct _gss_name *name = (struct _gss_name *) input_name;
+    struct _gss_mechanism_name *mn;
+    gssapi_mech_interface m;
+    gss_name_t new_canonical_name;
 
-	*minor_status = 0;
-	*output_name = GSS_C_NO_NAME;
+    *minor_status = 0;
+    *output_name = GSS_C_NO_NAME;
 
-	if ((m = __gss_get_mechanism(mech_type)) == NULL ||
-            (m->gm_flags & GM_USE_MG_NAME))
-		return GSS_S_BAD_MECH;
+    if ((m = __gss_get_mechanism(mech_type)) == NULL ||
+        (m->gm_flags & GM_USE_MG_NAME))
+        return GSS_S_BAD_MECH;
 
-	major_status = _gss_find_mn(minor_status, name, mech_type, &mn);
-	if (major_status)
-		return major_status;
-	if (mn == NULL)
-		return GSS_S_BAD_NAME;
+    major_status = _gss_find_mn(minor_status, name, mech_type, &mn);
+    if (major_status)
+        return major_status;
+    if (mn == NULL)
+        return GSS_S_BAD_NAME;
 
-	m = mn->gmn_mech;
-	major_status = m->gm_canonicalize_name(minor_status,
-	    mn->gmn_name, mech_type, &new_canonical_name);
-	if (major_status) {
-		_gss_mg_error(m, *minor_status);
-		return (major_status);
-	}
+    m = mn->gmn_mech;
+    major_status = m->gm_canonicalize_name(minor_status,
+                                           mn->gmn_name, mech_type, &new_canonical_name);
+    if (major_status) {
+        _gss_mg_error(m, *minor_status);
+        return (major_status);
+    }
 
-	/*
-	 * Now we make a new name and mark it as an MN.
-	 */
-	*minor_status = 0;
-	name = _gss_create_name(new_canonical_name, m);
-	if (!name) {
-		m->gm_release_name(minor_status, &new_canonical_name);
-		*minor_status = ENOMEM;
-		return (GSS_S_FAILURE);
-	}
+    /*
+     * Now we make a new name and mark it as an MN.
+     */
+    *minor_status = 0;
+    name = _gss_create_name(new_canonical_name, m);
+    if (!name) {
+        m->gm_release_name(minor_status, &new_canonical_name);
+        *minor_status = ENOMEM;
+        return (GSS_S_FAILURE);
+    }
 
-	*output_name = (gss_name_t) name;
+    *output_name = (gss_name_t) name;
 
-	return (GSS_S_COMPLETE);
+    return (GSS_S_COMPLETE);
 }

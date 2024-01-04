@@ -35,38 +35,38 @@
 
 OM_uint32 GSSAPI_CALLCONV
 _gss_sanon_inquire_cred_by_mech(OM_uint32 *minor,
-				gss_const_cred_id_t cred_handle,
-				const gss_OID mech_type,
-				gss_name_t *name,
-				OM_uint32 *initiator_lifetime,
-				OM_uint32 *acceptor_lifetime,
-				gss_cred_usage_t *cred_usage)
+                                gss_const_cred_id_t cred_handle,
+                                const gss_OID mech_type,
+                                gss_name_t *name,
+                                OM_uint32 *initiator_lifetime,
+                                OM_uint32 *acceptor_lifetime,
+                                gss_cred_usage_t *cred_usage)
 {
     gss_cred_usage_t usage;
     OM_uint32 major;
     OM_uint32 lifetime;
 
     major = _gss_sanon_inquire_cred(minor, cred_handle,
-				    name, &lifetime, &usage, NULL);
+                                    name, &lifetime, &usage, NULL);
     if (major)
-	return major;
+        return major;
 
     if (initiator_lifetime) {
-	if (usage == GSS_C_INITIATE || usage == GSS_C_BOTH)
-	    *initiator_lifetime = lifetime;
-	else
-	    *initiator_lifetime = 0;
+        if (usage == GSS_C_INITIATE || usage == GSS_C_BOTH)
+            *initiator_lifetime = lifetime;
+        else
+            *initiator_lifetime = 0;
     }
 
     if (acceptor_lifetime) {
-	if (usage == GSS_C_ACCEPT || usage == GSS_C_BOTH)
-	    *acceptor_lifetime = lifetime;
-	else
-	    *acceptor_lifetime = 0;
+        if (usage == GSS_C_ACCEPT || usage == GSS_C_BOTH)
+            *acceptor_lifetime = lifetime;
+        else
+            *acceptor_lifetime = 0;
     }
 
     if (cred_usage)
-	*cred_usage = usage;
+        *cred_usage = usage;
 
     *minor = 0;
 

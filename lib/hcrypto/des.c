@@ -118,7 +118,7 @@ DES_set_odd_parity(DES_cblock *key)
 {
     unsigned int i;
     for (i = 0; i < DES_CBLOCK_LEN; i++)
-	(*key)[i] = odd_parity[(*key)[i]];
+        (*key)[i] = odd_parity[(*key)[i]];
 }
 
 /**
@@ -135,8 +135,8 @@ DES_check_key_parity(DES_cblock *key)
     unsigned int i;
 
     for (i = 0; i <  DES_CBLOCK_LEN; i++)
-	if ((*key)[i] != odd_parity[(*key)[i]])
-	    return 0;
+        if ((*key)[i] != odd_parity[(*key)[i]])
+            return 0;
     return 1;
 }
 
@@ -181,7 +181,7 @@ DES_is_weak_key(DES_cblock *key)
     int i;
 
     for (i = 0; i < sizeof(weak_keys)/sizeof(weak_keys[0]); i++)
-	weak ^= (ct_memcmp(weak_keys[i], key, DES_CBLOCK_LEN) == 0);
+        weak ^= (ct_memcmp(weak_keys[i], key, DES_CBLOCK_LEN) == 0);
 
     return !!weak;
 }
@@ -235,48 +235,48 @@ DES_set_key_unchecked(DES_cblock *key, DES_key_schedule *ks)
        | (*key)[7];
 
     c =   (pc1_c_3[(t1 >> (5            )) & 0x7] << 3)
-	| (pc1_c_3[(t1 >> (5 + 8        )) & 0x7] << 2)
-	| (pc1_c_3[(t1 >> (5 + 8 + 8    )) & 0x7] << 1)
-	| (pc1_c_3[(t1 >> (5 + 8 + 8 + 8)) & 0x7] << 0)
-	| (pc1_c_4[(t2 >> (4            )) & 0xf] << 3)
-	| (pc1_c_4[(t2 >> (4 + 8        )) & 0xf] << 2)
-	| (pc1_c_4[(t2 >> (4 + 8 + 8    )) & 0xf] << 1)
-	| (pc1_c_4[(t2 >> (4 + 8 + 8 + 8)) & 0xf] << 0);
+        | (pc1_c_3[(t1 >> (5 + 8        )) & 0x7] << 2)
+        | (pc1_c_3[(t1 >> (5 + 8 + 8    )) & 0x7] << 1)
+        | (pc1_c_3[(t1 >> (5 + 8 + 8 + 8)) & 0x7] << 0)
+        | (pc1_c_4[(t2 >> (4            )) & 0xf] << 3)
+        | (pc1_c_4[(t2 >> (4 + 8        )) & 0xf] << 2)
+        | (pc1_c_4[(t2 >> (4 + 8 + 8    )) & 0xf] << 1)
+        | (pc1_c_4[(t2 >> (4 + 8 + 8 + 8)) & 0xf] << 0);
 
 
     d =   (pc1_d_3[(t2 >> (1            )) & 0x7] << 3)
-	| (pc1_d_3[(t2 >> (1 + 8        )) & 0x7] << 2)
-	| (pc1_d_3[(t2 >> (1 + 8 + 8    )) & 0x7] << 1)
-	| (pc1_d_3[(t2 >> (1 + 8 + 8 + 8)) & 0x7] << 0)
-	| (pc1_d_4[(t1 >> (1            )) & 0xf] << 3)
-	| (pc1_d_4[(t1 >> (1 + 8        )) & 0xf] << 2)
-	| (pc1_d_4[(t1 >> (1 + 8 + 8    )) & 0xf] << 1)
-	| (pc1_d_4[(t1 >> (1 + 8 + 8 + 8)) & 0xf] << 0);
+        | (pc1_d_3[(t2 >> (1 + 8        )) & 0x7] << 2)
+        | (pc1_d_3[(t2 >> (1 + 8 + 8    )) & 0x7] << 1)
+        | (pc1_d_3[(t2 >> (1 + 8 + 8 + 8)) & 0x7] << 0)
+        | (pc1_d_4[(t1 >> (1            )) & 0xf] << 3)
+        | (pc1_d_4[(t1 >> (1 + 8        )) & 0xf] << 2)
+        | (pc1_d_4[(t1 >> (1 + 8 + 8    )) & 0xf] << 1)
+        | (pc1_d_4[(t1 >> (1 + 8 + 8 + 8)) & 0xf] << 0);
 
     for (i = 0; i < 16; i++) {
-	uint32_t kc, kd;
+        uint32_t kc, kd;
 
-	ROTATE_LEFT28(c, shifts[i]);
-	ROTATE_LEFT28(d, shifts[i]);
+        ROTATE_LEFT28(c, shifts[i]);
+        ROTATE_LEFT28(d, shifts[i]);
 
-	kc = pc2_c_1[(c >> 22) & 0x3f] |
-	    pc2_c_2[((c >> 16) & 0x30) | ((c >> 15) & 0xf)] |
-	    pc2_c_3[((c >> 9 ) & 0x3c) | ((c >> 8 ) & 0x3)] |
-	    pc2_c_4[((c >> 2 ) & 0x20) | ((c >> 1) & 0x18) | (c & 0x7)];
-	kd = pc2_d_1[(d >> 22) & 0x3f] |
-	    pc2_d_2[((d >> 15) & 0x30) | ((d >> 14) & 0xf)] |
-	    pc2_d_3[ (d >> 7 ) & 0x3f] |
-	    pc2_d_4[((d >> 1 ) & 0x3c) | ((d      ) & 0x3)];
+        kc = pc2_c_1[(c >> 22) & 0x3f] |
+            pc2_c_2[((c >> 16) & 0x30) | ((c >> 15) & 0xf)] |
+            pc2_c_3[((c >> 9 ) & 0x3c) | ((c >> 8 ) & 0x3)] |
+            pc2_c_4[((c >> 2 ) & 0x20) | ((c >> 1) & 0x18) | (c & 0x7)];
+        kd = pc2_d_1[(d >> 22) & 0x3f] |
+            pc2_d_2[((d >> 15) & 0x30) | ((d >> 14) & 0xf)] |
+            pc2_d_3[ (d >> 7 ) & 0x3f] |
+            pc2_d_4[((d >> 1 ) & 0x3c) | ((d      ) & 0x3)];
 
-	/* Change to byte order used by the S boxes */
-	*k  =    (kc & 0x00fc0000L) << 6;
-	*k |=    (kc & 0x00000fc0L) << 10;
-	*k |=    (kd & 0x00fc0000L) >> 10;
-	*k++  |= (kd & 0x00000fc0L) >> 6;
-	*k  =    (kc & 0x0003f000L) << 12;
-	*k |=    (kc & 0x0000003fL) << 16;
-	*k |=    (kd & 0x0003f000L) >> 4;
-	*k++  |= (kd & 0x0000003fL);
+        /* Change to byte order used by the S boxes */
+        *k  =    (kc & 0x00fc0000L) << 6;
+        *k |=    (kc & 0x00000fc0L) << 10;
+        *k |=    (kd & 0x00fc0000L) >> 10;
+        *k++  |= (kd & 0x00000fc0L) >> 6;
+        *k  =    (kc & 0x0003f000L) << 12;
+        *k |=    (kc & 0x0000003fL) << 16;
+        *k |=    (kd & 0x0003f000L) >> 4;
+        *k++  |= (kd & 0x0000003fL);
     }
 
     return 0;
@@ -297,12 +297,12 @@ int
 DES_set_key_checked(DES_cblock *key, DES_key_schedule *ks)
 {
     if (!DES_check_key_parity(key)) {
-	memset(ks, 0, sizeof(*ks));
-	return -1;
+        memset(ks, 0, sizeof(*ks));
+        return -1;
     }
     if (DES_is_weak_key(key)) {
-	memset(ks, 0, sizeof(*ks));
-	return -2;
+        memset(ks, 0, sizeof(*ks));
+        return -2;
     }
     return DES_set_key_unchecked(key, ks);
 }
@@ -385,7 +385,7 @@ DES_encrypt(uint32_t u[2], DES_key_schedule *ks, int encp)
 
 void
 DES_ecb_encrypt(DES_cblock *input, DES_cblock *output,
-		DES_key_schedule *ks, int encp)
+                DES_key_schedule *ks, int encp)
 {
     uint32_t u[2];
     load(*input, u);
@@ -410,7 +410,7 @@ DES_ecb_encrypt(DES_cblock *input, DES_cblock *output,
 
 void
 DES_cbc_encrypt(const void *in, void *out, long length,
-		DES_key_schedule *ks, DES_cblock *iv, int encp)
+                DES_key_schedule *ks, DES_cblock *iv, int encp)
 {
     const unsigned char *input = in;
     unsigned char *output = out;
@@ -420,49 +420,49 @@ DES_cbc_encrypt(const void *in, void *out, long length,
     load(*iv, uiv);
 
     if (encp) {
-	while (length >= DES_CBLOCK_LEN) {
-	    load(input, u);
-	    u[0] ^= uiv[0]; u[1] ^= uiv[1];
-	    DES_encrypt(u, ks, 1);
-	    uiv[0] = u[0]; uiv[1] = u[1];
-	    store(u, output);
+        while (length >= DES_CBLOCK_LEN) {
+            load(input, u);
+            u[0] ^= uiv[0]; u[1] ^= uiv[1];
+            DES_encrypt(u, ks, 1);
+            uiv[0] = u[0]; uiv[1] = u[1];
+            store(u, output);
 
-	    length -= DES_CBLOCK_LEN;
-	    input += DES_CBLOCK_LEN;
-	    output += DES_CBLOCK_LEN;
-	}
-	if (length) {
-	    unsigned char tmp[DES_CBLOCK_LEN];
-	    memcpy(tmp, input, length);
-	    memset(tmp + length, 0, DES_CBLOCK_LEN - length);
-	    load(tmp, u);
-	    u[0] ^= uiv[0]; u[1] ^= uiv[1];
-	    DES_encrypt(u, ks, 1);
-	    store(u, output);
-	}
+            length -= DES_CBLOCK_LEN;
+            input += DES_CBLOCK_LEN;
+            output += DES_CBLOCK_LEN;
+        }
+        if (length) {
+            unsigned char tmp[DES_CBLOCK_LEN];
+            memcpy(tmp, input, length);
+            memset(tmp + length, 0, DES_CBLOCK_LEN - length);
+            load(tmp, u);
+            u[0] ^= uiv[0]; u[1] ^= uiv[1];
+            DES_encrypt(u, ks, 1);
+            store(u, output);
+        }
     } else {
-	uint32_t t[2];
-	while (length >= DES_CBLOCK_LEN) {
-	    load(input, u);
-	    t[0] = u[0]; t[1] = u[1];
-	    DES_encrypt(u, ks, 0);
-	    u[0] ^= uiv[0]; u[1] ^= uiv[1];
-	    store(u, output);
-	    uiv[0] = t[0]; uiv[1] = t[1];
+        uint32_t t[2];
+        while (length >= DES_CBLOCK_LEN) {
+            load(input, u);
+            t[0] = u[0]; t[1] = u[1];
+            DES_encrypt(u, ks, 0);
+            u[0] ^= uiv[0]; u[1] ^= uiv[1];
+            store(u, output);
+            uiv[0] = t[0]; uiv[1] = t[1];
 
-	    length -= DES_CBLOCK_LEN;
-	    input += DES_CBLOCK_LEN;
-	    output += DES_CBLOCK_LEN;
-	}
-	if (length) {
-	    unsigned char tmp[DES_CBLOCK_LEN];
-	    memcpy(tmp, input, length);
-	    memset(tmp + length, 0, DES_CBLOCK_LEN - length);
-	    load(tmp, u);
-	    DES_encrypt(u, ks, 0);
-	    u[0] ^= uiv[0]; u[1] ^= uiv[1];
-	    store(u, output);
-	}
+            length -= DES_CBLOCK_LEN;
+            input += DES_CBLOCK_LEN;
+            output += DES_CBLOCK_LEN;
+        }
+        if (length) {
+            unsigned char tmp[DES_CBLOCK_LEN];
+            memcpy(tmp, input, length);
+            memset(tmp + length, 0, DES_CBLOCK_LEN - length);
+            load(tmp, u);
+            DES_encrypt(u, ks, 0);
+            u[0] ^= uiv[0]; u[1] ^= uiv[1];
+            store(u, output);
+        }
     }
     uiv[0] = 0; u[0] = 0; uiv[1] = 0; u[1] = 0;
 }
@@ -486,7 +486,7 @@ DES_cbc_encrypt(const void *in, void *out, long length,
 
 void
 DES_pcbc_encrypt(const void *in, void *out, long length,
-		 DES_key_schedule *ks, DES_cblock *iv, int encp)
+                 DES_key_schedule *ks, DES_cblock *iv, int encp)
 {
     const unsigned char *input = in;
     unsigned char *output = out;
@@ -496,50 +496,50 @@ DES_pcbc_encrypt(const void *in, void *out, long length,
     load(*iv, uiv);
 
     if (encp) {
-	uint32_t t[2];
-	while (length >= DES_CBLOCK_LEN) {
-	    load(input, u);
-	    t[0] = u[0]; t[1] = u[1];
-	    u[0] ^= uiv[0]; u[1] ^= uiv[1];
-	    DES_encrypt(u, ks, 1);
-	    uiv[0] = u[0] ^ t[0]; uiv[1] = u[1] ^ t[1];
-	    store(u, output);
+        uint32_t t[2];
+        while (length >= DES_CBLOCK_LEN) {
+            load(input, u);
+            t[0] = u[0]; t[1] = u[1];
+            u[0] ^= uiv[0]; u[1] ^= uiv[1];
+            DES_encrypt(u, ks, 1);
+            uiv[0] = u[0] ^ t[0]; uiv[1] = u[1] ^ t[1];
+            store(u, output);
 
-	    length -= DES_CBLOCK_LEN;
-	    input += DES_CBLOCK_LEN;
-	    output += DES_CBLOCK_LEN;
-	}
-	if (length) {
-	    unsigned char tmp[DES_CBLOCK_LEN];
-	    memcpy(tmp, input, length);
-	    memset(tmp + length, 0, DES_CBLOCK_LEN - length);
-	    load(tmp, u);
-	    u[0] ^= uiv[0]; u[1] ^= uiv[1];
-	    DES_encrypt(u, ks, 1);
-	    store(u, output);
-	}
+            length -= DES_CBLOCK_LEN;
+            input += DES_CBLOCK_LEN;
+            output += DES_CBLOCK_LEN;
+        }
+        if (length) {
+            unsigned char tmp[DES_CBLOCK_LEN];
+            memcpy(tmp, input, length);
+            memset(tmp + length, 0, DES_CBLOCK_LEN - length);
+            load(tmp, u);
+            u[0] ^= uiv[0]; u[1] ^= uiv[1];
+            DES_encrypt(u, ks, 1);
+            store(u, output);
+        }
     } else {
-	uint32_t t[2];
-	while (length >= DES_CBLOCK_LEN) {
-	    load(input, u);
-	    t[0] = u[0]; t[1] = u[1];
-	    DES_encrypt(u, ks, 0);
-	    u[0] ^= uiv[0]; u[1] ^= uiv[1];
-	    store(u, output);
-	    uiv[0] = t[0] ^ u[0]; uiv[1] = t[1] ^ u[1];
+        uint32_t t[2];
+        while (length >= DES_CBLOCK_LEN) {
+            load(input, u);
+            t[0] = u[0]; t[1] = u[1];
+            DES_encrypt(u, ks, 0);
+            u[0] ^= uiv[0]; u[1] ^= uiv[1];
+            store(u, output);
+            uiv[0] = t[0] ^ u[0]; uiv[1] = t[1] ^ u[1];
 
-	    length -= DES_CBLOCK_LEN;
-	    input += DES_CBLOCK_LEN;
-	    output += DES_CBLOCK_LEN;
-	}
-	if (length) {
-	    unsigned char tmp[DES_CBLOCK_LEN];
-	    memcpy(tmp, input, length);
-	    memset(tmp + length, 0, DES_CBLOCK_LEN - length);
-	    load(tmp, u);
-	    DES_encrypt(u, ks, 0);
-	    u[0] ^= uiv[0]; u[1] ^= uiv[1];
-	}
+            length -= DES_CBLOCK_LEN;
+            input += DES_CBLOCK_LEN;
+            output += DES_CBLOCK_LEN;
+        }
+        if (length) {
+            unsigned char tmp[DES_CBLOCK_LEN];
+            memcpy(tmp, input, length);
+            memset(tmp + length, 0, DES_CBLOCK_LEN - length);
+            load(tmp, u);
+            DES_encrypt(u, ks, 0);
+            u[0] ^= uiv[0]; u[1] ^= uiv[1];
+        }
     }
     uiv[0] = 0; u[0] = 0; uiv[1] = 0; u[1] = 0;
 }
@@ -550,17 +550,17 @@ DES_pcbc_encrypt(const void *in, void *out, long length,
 
 static void
 _des3_encrypt(uint32_t u[2], DES_key_schedule *ks1, DES_key_schedule *ks2,
-	      DES_key_schedule *ks3, int encp)
+              DES_key_schedule *ks3, int encp)
 {
     IP(u);
     if (encp) {
-	desx(u, ks1, 1); /* IP + FP cancel out each other */
-	desx(u, ks2, 0);
-	desx(u, ks3, 1);
+        desx(u, ks1, 1); /* IP + FP cancel out each other */
+        desx(u, ks2, 0);
+        desx(u, ks3, 1);
     } else {
-	desx(u, ks3, 0);
-	desx(u, ks2, 1);
-	desx(u, ks1, 0);
+        desx(u, ks3, 0);
+        desx(u, ks2, 1);
+        desx(u, ks1, 0);
     }
     FP(u);
 }
@@ -581,11 +581,11 @@ _des3_encrypt(uint32_t u[2], DES_key_schedule *ks1, DES_key_schedule *ks2,
 
 void
 DES_ecb3_encrypt(DES_cblock *input,
-		 DES_cblock *output,
-		 DES_key_schedule *ks1,
-		 DES_key_schedule *ks2,
-		 DES_key_schedule *ks3,
-		 int encp)
+                 DES_cblock *output,
+                 DES_key_schedule *ks1,
+                 DES_key_schedule *ks2,
+                 DES_key_schedule *ks3,
+                 int encp)
 {
     uint32_t u[2];
     load(*input, u);
@@ -613,9 +613,9 @@ DES_ecb3_encrypt(DES_cblock *input,
 
 void
 DES_ede3_cbc_encrypt(const void *in, void *out,
-		     long length, DES_key_schedule *ks1,
-		     DES_key_schedule *ks2, DES_key_schedule *ks3,
-		     DES_cblock *iv, int encp)
+                     long length, DES_key_schedule *ks1,
+                     DES_key_schedule *ks2, DES_key_schedule *ks3,
+                     DES_cblock *iv, int encp)
 {
     const unsigned char *input = in;
     unsigned char *output = out;
@@ -625,49 +625,49 @@ DES_ede3_cbc_encrypt(const void *in, void *out,
     load(*iv, uiv);
 
     if (encp) {
-	while (length >= DES_CBLOCK_LEN) {
-	    load(input, u);
-	    u[0] ^= uiv[0]; u[1] ^= uiv[1];
-	    _des3_encrypt(u, ks1, ks2, ks3, 1);
-	    uiv[0] = u[0]; uiv[1] = u[1];
-	    store(u, output);
+        while (length >= DES_CBLOCK_LEN) {
+            load(input, u);
+            u[0] ^= uiv[0]; u[1] ^= uiv[1];
+            _des3_encrypt(u, ks1, ks2, ks3, 1);
+            uiv[0] = u[0]; uiv[1] = u[1];
+            store(u, output);
 
-	    length -= DES_CBLOCK_LEN;
-	    input += DES_CBLOCK_LEN;
-	    output += DES_CBLOCK_LEN;
-	}
-	if (length) {
-	    unsigned char tmp[DES_CBLOCK_LEN];
-	    memcpy(tmp, input, length);
-	    memset(tmp + length, 0, DES_CBLOCK_LEN - length);
-	    load(tmp, u);
-	    u[0] ^= uiv[0]; u[1] ^= uiv[1];
-	    _des3_encrypt(u, ks1, ks2, ks3, 1);
-	    store(u, output);
-	}
+            length -= DES_CBLOCK_LEN;
+            input += DES_CBLOCK_LEN;
+            output += DES_CBLOCK_LEN;
+        }
+        if (length) {
+            unsigned char tmp[DES_CBLOCK_LEN];
+            memcpy(tmp, input, length);
+            memset(tmp + length, 0, DES_CBLOCK_LEN - length);
+            load(tmp, u);
+            u[0] ^= uiv[0]; u[1] ^= uiv[1];
+            _des3_encrypt(u, ks1, ks2, ks3, 1);
+            store(u, output);
+        }
     } else {
-	uint32_t t[2];
-	while (length >= DES_CBLOCK_LEN) {
-	    load(input, u);
-	    t[0] = u[0]; t[1] = u[1];
-	    _des3_encrypt(u, ks1, ks2, ks3, 0);
-	    u[0] ^= uiv[0]; u[1] ^= uiv[1];
-	    store(u, output);
-	    uiv[0] = t[0]; uiv[1] = t[1];
+        uint32_t t[2];
+        while (length >= DES_CBLOCK_LEN) {
+            load(input, u);
+            t[0] = u[0]; t[1] = u[1];
+            _des3_encrypt(u, ks1, ks2, ks3, 0);
+            u[0] ^= uiv[0]; u[1] ^= uiv[1];
+            store(u, output);
+            uiv[0] = t[0]; uiv[1] = t[1];
 
-	    length -= DES_CBLOCK_LEN;
-	    input += DES_CBLOCK_LEN;
-	    output += DES_CBLOCK_LEN;
-	}
-	if (length) {
-	    unsigned char tmp[DES_CBLOCK_LEN];
-	    memcpy(tmp, input, length);
-	    memset(tmp + length, 0, DES_CBLOCK_LEN - length);
-	    load(tmp, u);
-	    _des3_encrypt(u, ks1, ks2, ks3, 0);
-	    u[0] ^= uiv[0]; u[1] ^= uiv[1];
-	    store(u, output);
-	}
+            length -= DES_CBLOCK_LEN;
+            input += DES_CBLOCK_LEN;
+            output += DES_CBLOCK_LEN;
+        }
+        if (length) {
+            unsigned char tmp[DES_CBLOCK_LEN];
+            memcpy(tmp, input, length);
+            memset(tmp + length, 0, DES_CBLOCK_LEN - length);
+            load(tmp, u);
+            _des3_encrypt(u, ks1, ks2, ks3, 0);
+            u[0] ^= uiv[0]; u[1] ^= uiv[1];
+            store(u, output);
+        }
     }
     store(uiv, *iv);
     uiv[0] = 0; u[0] = 0; uiv[1] = 0; u[1] = 0;
@@ -692,8 +692,8 @@ DES_ede3_cbc_encrypt(const void *in, void *out,
 
 void
 DES_cfb64_encrypt(const void *in, void *out,
-		  long length, DES_key_schedule *ks, DES_cblock *iv,
-		  int *num, int encp)
+                  long length, DES_key_schedule *ks, DES_cblock *iv,
+                  int *num, int encp)
 {
     const unsigned char *input = in;
     unsigned char *output = out;
@@ -705,50 +705,50 @@ DES_cfb64_encrypt(const void *in, void *out,
     assert(*num >= 0 && *num < DES_CBLOCK_LEN);
 
     if (encp) {
-	int i = *num;
+        int i = *num;
 
-	while (length > 0) {
-	    if (i == 0)
-		DES_encrypt(uiv, ks, 1);
-	    store(uiv, tmp);
-	    for (; i < DES_CBLOCK_LEN && i < length; i++) {
-		output[i] = tmp[i] ^ input[i];
-	    }
-	    if (i == DES_CBLOCK_LEN)
-		load(output, uiv);
-	    output += i;
-	    input += i;
-	    length -= i;
-	    if (i == DES_CBLOCK_LEN)
-		i = 0;
-	}
-	store(uiv, *iv);
-	*num = i;
+        while (length > 0) {
+            if (i == 0)
+                DES_encrypt(uiv, ks, 1);
+            store(uiv, tmp);
+            for (; i < DES_CBLOCK_LEN && i < length; i++) {
+                output[i] = tmp[i] ^ input[i];
+            }
+            if (i == DES_CBLOCK_LEN)
+                load(output, uiv);
+            output += i;
+            input += i;
+            length -= i;
+            if (i == DES_CBLOCK_LEN)
+                i = 0;
+        }
+        store(uiv, *iv);
+        *num = i;
     } else {
-	int i = *num;
-	unsigned char c;
+        int i = *num;
+        unsigned char c;
 
-	memset(tmp, 0, DES_CBLOCK_LEN);
-	while (length > 0) {
-	    if (i == 0) {
-		DES_encrypt(uiv, ks, 1);
-		store(uiv, tmp);
-	    }
-	    for (; i < DES_CBLOCK_LEN && i < length; i++) {
-		c = input[i];
-		output[i] = tmp[i] ^ input[i];
-		(*iv)[i] = c;
-	    }
-	    output += i;
-	    input += i;
-	    length -= i;
-	    if (i == DES_CBLOCK_LEN) {
-		i = 0;
-		load(*iv, uiv);
-	    }
-	}
-	store(uiv, *iv);
-	*num = i;
+        memset(tmp, 0, DES_CBLOCK_LEN);
+        while (length > 0) {
+            if (i == 0) {
+                DES_encrypt(uiv, ks, 1);
+                store(uiv, tmp);
+            }
+            for (; i < DES_CBLOCK_LEN && i < length; i++) {
+                c = input[i];
+                output[i] = tmp[i] ^ input[i];
+                (*iv)[i] = c;
+            }
+            output += i;
+            input += i;
+            length -= i;
+            if (i == DES_CBLOCK_LEN) {
+                i = 0;
+                load(*iv, uiv);
+            }
+        }
+        store(uiv, *iv);
+        *num = i;
     }
 }
 
@@ -769,7 +769,7 @@ DES_cfb64_encrypt(const void *in, void *out,
 
 uint32_t
 DES_cbc_cksum(const void *in, DES_cblock *output,
-	      long length, DES_key_schedule *ks, DES_cblock *iv)
+              long length, DES_key_schedule *ks, DES_cblock *iv)
 {
     const unsigned char *input = in;
     uint32_t uiv[2];
@@ -778,24 +778,24 @@ DES_cbc_cksum(const void *in, DES_cblock *output,
     load(*iv, uiv);
 
     while (length >= DES_CBLOCK_LEN) {
-	load(input, u);
-	u[0] ^= uiv[0]; u[1] ^= uiv[1];
-	DES_encrypt(u, ks, 1);
-	uiv[0] = u[0]; uiv[1] = u[1];
+        load(input, u);
+        u[0] ^= uiv[0]; u[1] ^= uiv[1];
+        DES_encrypt(u, ks, 1);
+        uiv[0] = u[0]; uiv[1] = u[1];
 
-	length -= DES_CBLOCK_LEN;
-	input += DES_CBLOCK_LEN;
+        length -= DES_CBLOCK_LEN;
+        input += DES_CBLOCK_LEN;
     }
     if (length) {
-	unsigned char tmp[DES_CBLOCK_LEN];
-	memcpy(tmp, input, length);
-	memset(tmp + length, 0, DES_CBLOCK_LEN - length);
-	load(tmp, u);
-	u[0] ^= uiv[0]; u[1] ^= uiv[1];
-	DES_encrypt(u, ks, 1);
+        unsigned char tmp[DES_CBLOCK_LEN];
+        memcpy(tmp, input, length);
+        memset(tmp + length, 0, DES_CBLOCK_LEN - length);
+        load(tmp, u);
+        u[0] ^= uiv[0]; u[1] ^= uiv[1];
+        DES_encrypt(u, ks, 1);
     }
     if (output)
-	store(u, *output);
+        store(u, *output);
 
     uiv[0] = 0; u[0] = 0; uiv[1] = 0;
     return u[1];
@@ -811,8 +811,8 @@ bitswap8(unsigned char b)
     unsigned char r = 0;
     int i;
     for (i = 0; i < 8; i++) {
-	r = r << 1 | (b & 1);
-	b = b >> 1;
+        r = r << 1 | (b & 1);
+        b = b >> 1;
     }
     return r;
 }
@@ -841,20 +841,20 @@ DES_string_to_key(const char *str, DES_cblock *key)
 
     len = strlen(str);
     for (i = 0; i < len; i++) {
-	if ((i % 16) < 8)
-	    k[i % 8] ^= s[i] << 1;
-	else
-	    k[7 - (i % 8)] ^= bitswap8(s[i]);
+        if ((i % 16) < 8)
+            k[i % 8] ^= s[i] << 1;
+        else
+            k[7 - (i % 8)] ^= bitswap8(s[i]);
     }
     DES_set_odd_parity(key);
     if (DES_is_weak_key(key))
-	k[7] ^= 0xF0;
+        k[7] ^= 0xF0;
     DES_set_key(key, &ks);
     DES_cbc_cksum(s, key, len, &ks, key);
     memset_s(&ks, sizeof(ks), 0, sizeof(ks));
     DES_set_odd_parity(key);
     if (DES_is_weak_key(key))
-	k[7] ^= 0xF0;
+        k[7] ^= 0xF0;
 }
 
 /**
@@ -877,7 +877,7 @@ DES_read_password(DES_cblock *key, char *prompt, int verify)
 
     ret = UI_UTIL_read_pw_string(buf, sizeof(buf) - 1, prompt, verify);
     if (ret == 1)
-	DES_string_to_key(buf, key);
+        DES_string_to_key(buf, key);
     return ret;
 }
 
@@ -896,12 +896,12 @@ _DES_ipfp_test(void)
     IP(u);
     FP(u);
     if (u[0] != 1 || u[1] != 0)
-	abort();
+        abort();
 
     load(k, u);
     store(u, k2);
     if (memcmp(k, k2, 8) != 0)
-	abort();
+        abort();
 }
 
 /* D3DES (V5.09) -
@@ -1121,65 +1121,65 @@ desx(uint32_t block[2], DES_key_schedule *ks, int encp)
     right = block[1];
 
     if (encp) {
-	keys = &ks->ks[0];
+        keys = &ks->ks[0];
 
-	for( round = 0; round < 8; round++ ) {
-	    work  = (right << 28) | (right >> 4);
-	    work ^= *keys++;
-	    fval  = SP7[ work     & 0x3fL];
-	    fval |= SP5[(work >>  8) & 0x3fL];
-	    fval |= SP3[(work >> 16) & 0x3fL];
-	    fval |= SP1[(work >> 24) & 0x3fL];
-	    work  = right ^ *keys++;
-	    fval |= SP8[ work     & 0x3fL];
-	    fval |= SP6[(work >>  8) & 0x3fL];
-	    fval |= SP4[(work >> 16) & 0x3fL];
-	    fval |= SP2[(work >> 24) & 0x3fL];
-	    left ^= fval;
-	    work  = (left << 28) | (left >> 4);
-	    work ^= *keys++;
-	    fval  = SP7[ work     & 0x3fL];
-	    fval |= SP5[(work >>  8) & 0x3fL];
-	    fval |= SP3[(work >> 16) & 0x3fL];
-	    fval |= SP1[(work >> 24) & 0x3fL];
-	    work  = left ^ *keys++;
-	    fval |= SP8[ work     & 0x3fL];
-	    fval |= SP6[(work >>  8) & 0x3fL];
-	    fval |= SP4[(work >> 16) & 0x3fL];
-	    fval |= SP2[(work >> 24) & 0x3fL];
-	    right ^= fval;
-	}
+        for( round = 0; round < 8; round++ ) {
+            work  = (right << 28) | (right >> 4);
+            work ^= *keys++;
+            fval  = SP7[ work     & 0x3fL];
+            fval |= SP5[(work >>  8) & 0x3fL];
+            fval |= SP3[(work >> 16) & 0x3fL];
+            fval |= SP1[(work >> 24) & 0x3fL];
+            work  = right ^ *keys++;
+            fval |= SP8[ work     & 0x3fL];
+            fval |= SP6[(work >>  8) & 0x3fL];
+            fval |= SP4[(work >> 16) & 0x3fL];
+            fval |= SP2[(work >> 24) & 0x3fL];
+            left ^= fval;
+            work  = (left << 28) | (left >> 4);
+            work ^= *keys++;
+            fval  = SP7[ work     & 0x3fL];
+            fval |= SP5[(work >>  8) & 0x3fL];
+            fval |= SP3[(work >> 16) & 0x3fL];
+            fval |= SP1[(work >> 24) & 0x3fL];
+            work  = left ^ *keys++;
+            fval |= SP8[ work     & 0x3fL];
+            fval |= SP6[(work >>  8) & 0x3fL];
+            fval |= SP4[(work >> 16) & 0x3fL];
+            fval |= SP2[(work >> 24) & 0x3fL];
+            right ^= fval;
+        }
     } else {
-	keys = &ks->ks[30];
+        keys = &ks->ks[30];
 
-	for( round = 0; round < 8; round++ ) {
-	    work  = (right << 28) | (right >> 4);
-	    work ^= *keys++;
-	    fval  = SP7[ work     & 0x3fL];
-	    fval |= SP5[(work >>  8) & 0x3fL];
-	    fval |= SP3[(work >> 16) & 0x3fL];
-	    fval |= SP1[(work >> 24) & 0x3fL];
-	    work  = right ^ *keys++;
-	    fval |= SP8[ work     & 0x3fL];
-	    fval |= SP6[(work >>  8) & 0x3fL];
-	    fval |= SP4[(work >> 16) & 0x3fL];
-	    fval |= SP2[(work >> 24) & 0x3fL];
-	    left ^= fval;
-	    work  = (left << 28) | (left >> 4);
-	    keys -= 4;
-	    work ^= *keys++;
-	    fval  = SP7[ work     & 0x3fL];
-	    fval |= SP5[(work >>  8) & 0x3fL];
-	    fval |= SP3[(work >> 16) & 0x3fL];
-	    fval |= SP1[(work >> 24) & 0x3fL];
-	    work  = left ^ *keys++;
-	    fval |= SP8[ work     & 0x3fL];
-	    fval |= SP6[(work >>  8) & 0x3fL];
-	    fval |= SP4[(work >> 16) & 0x3fL];
-	    fval |= SP2[(work >> 24) & 0x3fL];
-	    right ^= fval;
-	    keys -= 4;
-	}
+        for( round = 0; round < 8; round++ ) {
+            work  = (right << 28) | (right >> 4);
+            work ^= *keys++;
+            fval  = SP7[ work     & 0x3fL];
+            fval |= SP5[(work >>  8) & 0x3fL];
+            fval |= SP3[(work >> 16) & 0x3fL];
+            fval |= SP1[(work >> 24) & 0x3fL];
+            work  = right ^ *keys++;
+            fval |= SP8[ work     & 0x3fL];
+            fval |= SP6[(work >>  8) & 0x3fL];
+            fval |= SP4[(work >> 16) & 0x3fL];
+            fval |= SP2[(work >> 24) & 0x3fL];
+            left ^= fval;
+            work  = (left << 28) | (left >> 4);
+            keys -= 4;
+            work ^= *keys++;
+            fval  = SP7[ work     & 0x3fL];
+            fval |= SP5[(work >>  8) & 0x3fL];
+            fval |= SP3[(work >> 16) & 0x3fL];
+            fval |= SP1[(work >> 24) & 0x3fL];
+            work  = left ^ *keys++;
+            fval |= SP8[ work     & 0x3fL];
+            fval |= SP6[(work >>  8) & 0x3fL];
+            fval |= SP4[(work >> 16) & 0x3fL];
+            fval |= SP2[(work >> 24) & 0x3fL];
+            right ^= fval;
+            keys -= 4;
+        }
     }
     block[0] = right;
     block[1] = left;

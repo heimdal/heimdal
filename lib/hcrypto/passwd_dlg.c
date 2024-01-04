@@ -51,16 +51,16 @@ pwd_dialog_proc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch(uMsg)
     {
-    case WM_COMMAND:
-	switch(wParam)
-	{
-	case IDOK:
-	    if(!GetDlgItemText(hwndDlg,IDC_PASSWD_EDIT, passwd, passwdBufSZ))
-		EndDialog(hwndDlg, IDCANCEL);
-	case IDCANCEL:
-	    EndDialog(hwndDlg, wParam);
-	    return TRUE;
-	}
+        case WM_COMMAND:
+            switch(wParam)
+            {
+                case IDOK:
+                    if(!GetDlgItemText(hwndDlg,IDC_PASSWD_EDIT, passwd, passwdBufSZ))
+                        EndDialog(hwndDlg, IDCANCEL);
+                case IDCANCEL:
+                    EndDialog(hwndDlg, wParam);
+                    return TRUE;
+            }
     }
     return FALSE;
 }
@@ -75,14 +75,14 @@ pwd_dialog(char *buf, int size)
     HANDLE hInst = GetModuleHandle("des");
     switch(DialogBox(hInst,MAKEINTRESOURCE(IDD_PASSWD_DIALOG),wnd,pwd_dialog_proc))
     {
-    case IDOK:
-	strlcpy(buf, passwd, size);
-	memset_s (passwd, sizeof(passwd), 0, sizeof(passwd));
-	return 0;
-    case IDCANCEL:
-    default:
-	memset_s (passwd, sizeof(passwd), 0, sizeof(passwd));
-	return 1;
+        case IDOK:
+            strlcpy(buf, passwd, size);
+            memset_s (passwd, sizeof(passwd), 0, sizeof(passwd));
+            return 0;
+        case IDCANCEL:
+        default:
+            memset_s (passwd, sizeof(passwd), 0, sizeof(passwd));
+            return 1;
     }
 }
 

@@ -39,8 +39,8 @@ _krb5_put_int(void *buffer, uint64_t value, size_t size)
     unsigned char *p = buffer;
     int i;
     for (i = size - 1; i >= 0; i--) {
-	p[i] = value & 0xff;
-	value >>= 8;
+        p[i] = value & 0xff;
+        value >>= 8;
     }
     return size;
 }
@@ -52,7 +52,7 @@ _krb5_get_int64(void *buffer, uint64_t *value, size_t size)
     uint64_t v = 0;
     size_t i;
     for (i = 0; i < size; i++)
-	v = (v << 8) + p[i];
+        v = (v << 8) + p[i];
     *value = v;
     return size;
 }

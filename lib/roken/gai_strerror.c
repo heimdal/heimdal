@@ -68,7 +68,7 @@ gai_strerror(int ecode)
     struct gai_error *g;
 
     for (g = errors; g->str != NULL; ++g)
-	if (g->code == ecode)
-	    return g->str;
+        if (g->code == ecode)
+            return g->str;
     return "unknown error code in gai_strerror";
 }

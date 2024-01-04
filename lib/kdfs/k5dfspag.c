@@ -118,9 +118,9 @@ static int (*dpagaix)(int, int, int, int, int, int) = 0;
 
 
 #ifdef  WAIT_USES_INT
-                int wait_status;
+int wait_status;
 #else   /* WAIT_USES_INT */
-                union wait wait_status;
+union wait wait_status;
 #endif  /* WAIT_USES_INT */
 
 #ifndef K5DCECON
@@ -138,7 +138,7 @@ static sigjmp_buf setpag_buf;
 
 static sigtype mysig()
 {
-  siglongjmp(setpag_buf, 1);
+    siglongjmp(setpag_buf, 1);
 }
 
 /*
@@ -149,38 +149,38 @@ static sigtype mysig()
  */
 
 static int  krb5_dfs_pag_syscall(opt1,opt2)
-  int opt1;
-  int opt2;
+    int opt1;
+    int opt2;
 {
-  handler sa1, osa1;
-  handler sa2, osa2;
-  int pag = -2;
+    handler sa1, osa1;
+    handler sa2, osa2;
+    int pag = -2;
 
-  handler_init (sa1, mysig);
-  handler_init (sa2, mysig);
-  handler_swap (SIGSYS, sa1, osa1);
-  handler_swap (SIGSEGV, sa2, osa2);
+    handler_init (sa1, mysig);
+    handler_init (sa2, mysig);
+    handler_swap (SIGSYS, sa1, osa1);
+    handler_swap (SIGSEGV, sa2, osa2);
 
-  if (sigsetjmp(setpag_buf, 1) == 0) {
+    if (sigsetjmp(setpag_buf, 1) == 0) {
 
 #if defined(_AIX)
-    if (!dpagaix)
-      dpagaix = load(DPAGAIX, 0, 0);
-    if (dpagaix)
-      pag = (*dpagaix)(opt1, opt2, 0, 0, 0, 0);
+        if (!dpagaix)
+            dpagaix = load(DPAGAIX, 0, 0);
+        if (dpagaix)
+            pag = (*dpagaix)(opt1, opt2, 0, 0, 0, 0);
 #else
-    pag = syscall(AFS_SYSCALL, opt1, opt2, 0, 0, 0, 0);
+        pag = syscall(AFS_SYSCALL, opt1, opt2, 0, 0, 0, 0);
 #endif
 
+        handler_set (SIGSYS, osa1);
+        handler_set (SIGSEGV, osa2);
+        return(pag);
+    }
+
+    /* syscall failed! return 0 */
     handler_set (SIGSYS, osa1);
     handler_set (SIGSEGV, osa2);
-    return(pag);
-  }
-
-  /* syscall failed! return 0 */
-  handler_set (SIGSYS, osa1);
-  handler_set (SIGSEGV, osa2);
-  return(-2);
+    return(-2);
 }
 
 /*
@@ -197,9 +197,9 @@ static int  krb5_dfs_pag_syscall(opt1,opt2)
  */
 
 int krb5_dfs_newpag(new_pag)
-  int new_pag;
+    int new_pag;
 {
-  return(krb5_dfs_pag_syscall(AFSCALL_SETPAG, new_pag));
+    return(krb5_dfs_pag_syscall(AFSCALL_SETPAG, new_pag));
 }
 
 /*
@@ -210,7 +210,7 @@ int krb5_dfs_newpag(new_pag)
 
 int krb5_dfs_getpag()
 {
-  return(krb5_dfs_pag_syscall(AFSCALL_GETPAG, 0));
+    return(krb5_dfs_pag_syscall(AFSCALL_GETPAG, 0));
 }
 
 /*
@@ -245,108 +245,108 @@ int krb5_dfs_getpag()
  */
 
 int krb5_dfs_pag(context, flag, principal, luser)
-	krb5_context context;
-    int flag; /* 1 if a forwarded TGT is to be used */
-	krb5_principal principal;
-	const char *luser;
+                 krb5_context context;
+                 int flag; /* 1 if a forwarded TGT is to be used */
+                 krb5_principal principal;
+                 const char *luser;
 
 {
 
-  struct stat stx;
-  int fd[2];
-  int i,j;
-  int pid;
-  int new_pag;
-  int pag;
-  char newccname[MAXPATHLEN] = "";
-  char *princ;
-  int err;
-  struct sigaction newsig, oldsig;
+    struct stat stx;
+    int fd[2];
+    int i,j;
+    int pid;
+    int new_pag;
+    int pag;
+    char newccname[MAXPATHLEN] = "";
+    char *princ;
+    int err;
+    struct sigaction newsig, oldsig;
 
 #ifdef  WAIT_USES_INT
-  int wait_status;
+    int wait_status;
 #else   /* WAIT_USES_INT */
-  union wait wait_status;
+    union wait wait_status;
 #endif  /* WAIT_USES_INT */
 
-  if (krb5_unparse_name(context, principal, &princ))
-   return(0);
+    if (krb5_unparse_name(context, principal, &princ))
+        return(0);
 
-   /* test if DFS is running or installed */
-   if (krb5_dfs_getpag() == -2)
-     return(0); /* DFS not running, don't try */
+    /* test if DFS is running or installed */
+    if (krb5_dfs_getpag() == -2)
+        return(0); /* DFS not running, don't try */
 
-  if (pipe(fd) == -1)
-     return(0);
+    if (pipe(fd) == -1)
+        return(0);
 
-  /* Make sure that telnetd.c's SIGCHLD action don't happen right now... */
-  memset((char *)&newsig, 0, sizeof(newsig));
-  newsig.sa_handler = SIG_DFL;
-  sigaction(SIGCHLD, &newsig, &oldsig);
+    /* Make sure that telnetd.c's SIGCHLD action don't happen right now... */
+    memset((char *)&newsig, 0, sizeof(newsig));
+    newsig.sa_handler = SIG_DFL;
+    sigaction(SIGCHLD, &newsig, &oldsig);
 
-  pid = fork();
-  if (pid <0)
-   return(0);
+    pid = fork();
+    if (pid <0)
+        return(0);
 
-  if (pid == 0) {  /* child process */
+    if (pid == 0) {  /* child process */
 
-    close(1);       /* close stdout */
-    dup(fd[1]);     /* point stdout at pipe here */
-    close(fd[0]);   /* don't use end of pipe here */
-    close(fd[1]);   /* pipe now as stdout */
+        close(1);       /* close stdout */
+        dup(fd[1]);     /* point stdout at pipe here */
+        close(fd[0]);   /* don't use end of pipe here */
+        close(fd[1]);   /* pipe now as stdout */
 
-    execl(K5DCECON, "k5dcecon",
-         (flag) ? "-f" : "-s" ,
-		 "-l", luser,
-		 "-p", princ, (char *)0);
+        execl(K5DCECON, "k5dcecon",
+              (flag) ? "-f" : "-s" ,
+              "-l", luser,
+              "-p", princ, (char *)0);
 
-    exit(127);      /* incase execl fails */
-  }
+        exit(127);      /* incase execl fails */
+    }
 
-  /* parent, wait for child to finish */
+    /* parent, wait for child to finish */
 
-  close(fd[1]);  /* don't need this end of pipe */
+    close(fd[1]);  /* don't need this end of pipe */
 
 /* #if defined(sgi) || defined(_sgi) */
-  /* wait_status.w_status = 0; */
-  /* waitpid((pid_t) pid, &wait_status.w_status, 0); */
+    /* wait_status.w_status = 0; */
+    /* waitpid((pid_t) pid, &wait_status.w_status, 0); */
 /* #else */
 
 
-  wait_status = 0;
+    wait_status = 0;
 #ifdef  HAVE_WAITPID
-  err = waitpid((pid_t) pid, &wait_status, 0);
+    err = waitpid((pid_t) pid, &wait_status, 0);
 #else   /* HAVE_WAITPID */
-  err = wait4(pid, &wait_status, 0, (struct rusage *) NULL);
+    err = wait4(pid, &wait_status, 0, (struct rusage *) NULL);
 #endif  /* HAVE_WAITPID */
 /* #endif */
 
-  sigaction(SIGCHLD, &oldsig, 0);
-  if (WIFEXITED(wait_status)){
-    if (WEXITSTATUS(wait_status) == 0) {
-      i = 1;
-      j = 0;
-      while (i != 0) {
-        i = read(fd[0], &newccname[j], sizeof(newccname)-1-j);
-        if ( i > 0)
-          j += i;
-        if (j >=  sizeof(newccname)-1)
-          i = 0;
-      }
-      close(fd[0]);
-      if (j > 0) {
-        newccname[j] = '\0';
-        esetenv("KRB5CCNAME",newccname,1);
-        sscanf(&newccname[j-8],"%8x",&new_pag);
-        if (new_pag && strncmp("FILE:/opt/dcelocal/var/security/creds/dcecred_", newccname, 46) == 0) {
-          if((pag = krb5_dfs_newpag(new_pag)) != -2) {
-            return(pag);
+    sigaction(SIGCHLD, &oldsig, 0);
+    if (WIFEXITED(wait_status)){
+      if (WEXITSTATUS(wait_status) == 0) {
+        i = 1;
+        j = 0;
+        while (i != 0) {
+          i = read(fd[0], &newccname[j], sizeof(newccname)-1-j);
+          if ( i > 0)
+            j += i;
+          if (j >=  sizeof(newccname)-1)
+            i = 0;
+        }
+        close(fd[0]);
+        if (j > 0) {
+          newccname[j] = '\0';
+          esetenv("KRB5CCNAME",newccname,1);
+          sscanf(&newccname[j-8],"%8x",&new_pag);
+          if (new_pag && strncmp("FILE:/opt/dcelocal/var/security/creds/dcecred_", newccname, 46) == 0) {
+            if((pag = krb5_dfs_newpag(new_pag)) != -2) {
+              return(pag);
+            }
           }
         }
       }
     }
-  }
-  return(0); /* something not right */
+    return(0); /* something not right */
 }
 
 #else /* DCE */
@@ -358,11 +358,11 @@ int krb5_dfs_pag(context, flag, principal, luser)
 
 krb5_boolean
 krb5_dfs_pag(context, principal, luser)
-	krb5_context context;
-	krb5_principal principal;
-	const char *luser;
+    krb5_context context;
+    krb5_principal principal;
+    const char *luser;
 {
-	return(0);
+    return(0);
 }
 
 #endif /* DCE */

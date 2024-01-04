@@ -53,13 +53,13 @@ roken_vconcat (char *s, size_t len, va_list args)
     const char *a;
 
     while ((a = va_arg(args, const char*))) {
-	size_t n = strlen (a);
+        size_t n = strlen (a);
 
-	if (n >= len)
-	    return -1;
-	memcpy (s, a, n);
-	s += n;
-	len -= n;
+        if (n >= len)
+            return -1;
+        memcpy (s, a, n);
+        s += n;
+        len -= n;
     }
     *s = '\0';
     return 0;
@@ -74,23 +74,23 @@ roken_vmconcat (char **s, size_t max_len, va_list args)
     *s = NULL;
     p = malloc(1);
     if(p == NULL)
-	return 0;
+        return 0;
     len = 1;
     while ((a = va_arg(args, const char*))) {
-	size_t n = strlen (a);
+        size_t n = strlen (a);
 
-	if(max_len && len + n > max_len){
-	    free(p);
-	    return 0;
-	}
-	q = realloc(p, len + n);
-	if(q == NULL){
-	    free(p);
-	    return 0;
-	}
-	p = q;
-	memcpy (p + len - 1, a, n);
-	len += n;
+        if(max_len && len + n > max_len){
+            free(p);
+            return 0;
+        }
+        q = realloc(p, len + n);
+        if(q == NULL){
+            free(p);
+            return 0;
+        }
+        p = q;
+        memcpy (p + len - 1, a, n);
+        len += n;
     }
     p[len - 1] = '\0';
     *s = p;

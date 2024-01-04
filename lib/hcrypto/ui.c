@@ -59,7 +59,7 @@ intr(int sig)
 
 static int
 read_string(const char *preprompt, const char *prompt,
-	    char *buf, size_t len, int echo)
+            char *buf, size_t len, int echo)
 {
     int of = 0;
     int c;
@@ -72,27 +72,27 @@ read_string(const char *preprompt, const char *prompt,
 
     p = buf;
     while(intr_flag == 0){
-	c = ((echo)? _getche(): _getch());
-	if(c == '\n' || c == '\r')
-	    break;
-	if(of == 0)
-	    *p++ = c;
-	of = (p == buf + len);
+        c = ((echo)? _getche(): _getch());
+        if(c == '\n' || c == '\r')
+            break;
+        if(of == 0)
+            *p++ = c;
+        of = (p == buf + len);
     }
     if(of)
-	p--;
+        p--;
     *p = 0;
 
     if(echo == 0){
-	printf("\n");
+        printf("\n");
     }
 
     signal(SIGINT, oldsigintr);
 
     if(intr_flag)
-	return -2;
+        return -2;
     if(of)
-	return -1;
+        return -1;
     return 0;
 }
 
@@ -104,7 +104,7 @@ read_string(const char *preprompt, const char *prompt,
 
 static int
 read_string(const char *preprompt, const char *prompt,
-	    char *buf, size_t len, int echo)
+            char *buf, size_t len, int echo)
 {
     struct sigaction sigs[NSIG];
     int oksigs[NSIG];
@@ -125,61 +125,61 @@ read_string(const char *preprompt, const char *prompt,
     sigemptyset(&sa.sa_mask);
     sa.sa_flags = 0;
     for(i = 1; i < sizeof(sigs) / sizeof(sigs[0]); i++)
-	if (i != SIGALRM)
-	    if (sigaction(i, &sa, &sigs[i]) == 0)
-		oksigs[i] = 1;
+        if (i != SIGALRM)
+            if (sigaction(i, &sa, &sigs[i]) == 0)
+                oksigs[i] = 1;
 
     if((tty = fopen("/dev/tty", "r")) != NULL)
-	rk_cloexec_file(tty);
+        rk_cloexec_file(tty);
     else
-	tty = stdin;
+        tty = stdin;
 
     fprintf(stderr, "%s%s", preprompt, prompt);
     fflush(stderr);
 
     if(echo == 0){
-	tcgetattr(fileno(tty), &t_old);
-	memcpy(&t_new, &t_old, sizeof(t_new));
-	t_new.c_lflag &= ~ECHO;
-	tcsetattr(fileno(tty), TCSANOW, &t_new);
+        tcgetattr(fileno(tty), &t_old);
+        memcpy(&t_new, &t_old, sizeof(t_new));
+        t_new.c_lflag &= ~ECHO;
+        tcsetattr(fileno(tty), TCSANOW, &t_new);
     }
     intr_flag = 0;
     p = buf;
     while(intr_flag == 0){
-	c = getc(tty);
-	if(c == EOF){
-	    if(!ferror(tty))
-		ret = 1;
-	    break;
-	}
-	if(c == '\n')
-	    break;
-	if(of == 0)
-	    *p++ = c;
-	of = (p == buf + len);
+        c = getc(tty);
+        if(c == EOF){
+            if(!ferror(tty))
+                ret = 1;
+            break;
+        }
+        if(c == '\n')
+            break;
+        if(of == 0)
+            *p++ = c;
+        of = (p == buf + len);
     }
     if(of)
-	p--;
+        p--;
     *p = 0;
 
     if(echo == 0){
-	fprintf(stderr, "\n");
-	tcsetattr(fileno(tty), TCSANOW, &t_old);
+        fprintf(stderr, "\n");
+        tcsetattr(fileno(tty), TCSANOW, &t_old);
     }
 
     if(tty != stdin)
-	fclose(tty);
+        fclose(tty);
 
     for(i = 1; i < sizeof(sigs) / sizeof(sigs[0]); i++)
-	if (oksigs[i])
-	    sigaction(i, &sigs[i], NULL);
+        if (oksigs[i])
+            sigaction(i, &sigs[i], NULL);
 
     if(ret)
-	return -3;
+        return -3;
     if(intr_flag)
-	return -2;
+        return -2;
     if(of)
-	return -1;
+        return -1;
     return 0;
 }
 
@@ -192,27 +192,27 @@ UI_UTIL_read_pw_string(char *buf, int length, const char *prompt, int verify)
 
     ret = read_string("", prompt, buf, length, 0);
     if (ret)
-	return ret;
+        return ret;
 
     if (verify & UI_UTIL_FLAG_VERIFY) {
-	char *buf2;
-	buf2 = malloc(length);
-	if (buf2 == NULL)
-	    return 1;
+        char *buf2;
+        buf2 = malloc(length);
+        if (buf2 == NULL)
+            return 1;
 
-	ret = read_string("Verify password - ", prompt, buf2, length, 0);
-	if (ret) {
-	    free(buf2);
-	    return ret;
-	}
-	if (strcmp(buf2, buf) != 0) {
-	    if (!(verify & UI_UTIL_FLAG_VERIFY_SILENT)) {
-		fprintf(stderr, "Verify failure\n");
-		fflush(stderr);
-	    }
-	    ret = 1;
-	}
-	free(buf2);
+        ret = read_string("Verify password - ", prompt, buf2, length, 0);
+        if (ret) {
+            free(buf2);
+            return ret;
+        }
+        if (strcmp(buf2, buf) != 0) {
+            if (!(verify & UI_UTIL_FLAG_VERIFY_SILENT)) {
+                fprintf(stderr, "Verify failure\n");
+                fflush(stderr);
+            }
+            ret = 1;
+        }
+        free(buf2);
     }
     return ret;
 }

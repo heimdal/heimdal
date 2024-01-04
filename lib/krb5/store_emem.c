@@ -50,7 +50,7 @@ emem_fetch(krb5_storage *sp, void *data, size_t size)
     assert(data != NULL && s->ptr != NULL);
 
     if((size_t)(s->base + s->len - s->ptr) < size)
-	size = s->base + s->len - s->ptr;
+        size = s->base + s->len - s->ptr;
     memmove(data, s->ptr, size);
     sp->seek(sp, size, SEEK_CUR);
     return size;
@@ -62,8 +62,8 @@ emem_store(krb5_storage *sp, const void *data, size_t size)
     emem_storage *s;
 
     if (size == 0) {
-	sp->seek(sp, 0, SEEK_CUR);
-	return 0;
+        sp->seek(sp, 0, SEEK_CUR);
+        return 0;
     }
 
     s = (emem_storage*)sp->data;
@@ -71,18 +71,18 @@ emem_store(krb5_storage *sp, const void *data, size_t size)
     assert(data != NULL);
 
     if(size > (size_t)(s->base + s->size - s->ptr)){
-	void *base;
-	size_t sz, off;
-	off = s->ptr - s->base;
-	sz = off + size;
-	if (sz < 4096)
-	    sz *= 2;
-	base = realloc(s->base, sz);
-	if(base == NULL)
-	    return -1;
-	s->size = sz;
-	s->base = base;
-	s->ptr = (unsigned char*)base + off;
+        void *base;
+        size_t sz, off;
+        off = s->ptr - s->base;
+        sz = off + size;
+        if (sz < 4096)
+            sz *= 2;
+        base = realloc(s->base, sz);
+        if(base == NULL)
+            return -1;
+        s->size = sz;
+        s->base = base;
+        s->ptr = (unsigned char*)base + off;
     }
     if (size)
         memmove(s->ptr, data, size);
@@ -95,24 +95,24 @@ emem_seek(krb5_storage *sp, off_t offset, int whence)
 {
     emem_storage *s = (emem_storage*)sp->data;
     switch(whence){
-    case SEEK_SET:
-	if((size_t)offset > s->size)
-	    offset = s->size;
-	if(offset < 0)
-	    offset = 0;
-	s->ptr = s->base + offset;
-	if((size_t)offset > s->len)
-	    s->len = offset;
-	break;
-    case SEEK_CUR:
-	sp->seek(sp,s->ptr - s->base + offset, SEEK_SET);
-	break;
-    case SEEK_END:
-	sp->seek(sp, s->len + offset, SEEK_SET);
-	break;
-    default:
-	errno = EINVAL;
-	return -1;
+        case SEEK_SET:
+            if((size_t)offset > s->size)
+                offset = s->size;
+            if(offset < 0)
+                offset = 0;
+            s->ptr = s->base + offset;
+            if((size_t)offset > s->len)
+                s->len = offset;
+            break;
+        case SEEK_CUR:
+            sp->seek(sp,s->ptr - s->base + offset, SEEK_SET);
+            break;
+        case SEEK_END:
+            sp->seek(sp, s->len + offset, SEEK_SET);
+            break;
+        default:
+            errno = EINVAL;
+            return -1;
     }
     return s->ptr - s->base;
 }
@@ -138,21 +138,21 @@ emem_trunc(krb5_storage *sp, off_t offset)
         s->len = 0;
         s->ptr = s->base;
     } else if ((size_t)offset > s->size || (s->size / 2) > (size_t)offset) {
-	void *base;
-	size_t off;
-	off = s->ptr - s->base;
-	base = realloc(s->base, offset);
-	if(base == NULL)
-	    return ENOMEM;
-	if ((size_t)offset > s->size)
-	    memset((char *)base + s->size, 0, offset - s->size);
-	s->size = offset;
-	s->base = base;
-	s->ptr = (unsigned char *)base + off;
+        void *base;
+        size_t off;
+        off = s->ptr - s->base;
+        base = realloc(s->base, offset);
+        if(base == NULL)
+            return ENOMEM;
+        if ((size_t)offset > s->size)
+            memset((char *)base + s->size, 0, offset - s->size);
+        s->size = offset;
+        s->base = base;
+        s->ptr = (unsigned char *)base + off;
     }
     s->len = offset;
     if ((s->ptr - s->base) > offset)
-	s->ptr = s->base + offset;
+        s->ptr = s->base + offset;
     return 0;
 }
 
@@ -192,12 +192,12 @@ krb5_storage_emem(void)
 
     sp = malloc(sizeof(krb5_storage));
     if (sp == NULL)
-	return NULL;
+        return NULL;
 
     s = malloc(sizeof(*s));
     if (s == NULL) {
-	free(sp);
-	return NULL;
+        free(sp);
+        return NULL;
     }
     sp->data = s;
     sp->flags = 0;
@@ -205,9 +205,9 @@ krb5_storage_emem(void)
     s->size = 1024;
     s->base = calloc(1, s->size);
     if (s->base == NULL) {
-	free(sp);
-	free(s);
-	return NULL;
+        free(sp);
+        free(s);
+        return NULL;
     }
     s->len = 0;
     s->ptr = s->base;

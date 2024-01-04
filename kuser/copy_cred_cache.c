@@ -43,27 +43,27 @@ bitswap32(int32_t b)
     int32_t r = 0;
     int i;
     for (i = 0; i < 32; i++) {
-	r = r << 1 | (b & 1);
-	b = b >> 1;
+        r = r << 1 | (b & 1);
+        b = b >> 1;
     }
     return r;
 }
 
 static void
 parse_ticket_flags(krb5_context context,
-		   const char *string, krb5_ticket_flags *ret_flags)
+                   const char *string, krb5_ticket_flags *ret_flags)
 {
     TicketFlags ff;
     int flags = parse_flags(string, asn1_TicketFlags_units(), 0);
     if (flags == -1)	/* XXX */
-	krb5_errx(context, 1, "bad flags specified: \"%s\"", string);
+        krb5_errx(context, 1, "bad flags specified: \"%s\"", string);
 
     memset(&ff, 0, sizeof(ff));
     ff.proxy = 1;
     if ((size_t)parse_flags("proxy", asn1_TicketFlags_units(), 0) == TicketFlags2int(ff))
-	ret_flags->i = flags;
+        ret_flags->i = flags;
     else
-	ret_flags->i = bitswap32(flags);
+        ret_flags->i = bitswap32(flags);
 }
 
 struct ctx {
@@ -76,7 +76,7 @@ matchfunc(krb5_context context, void *ptr, const krb5_creds *creds)
 {
     struct ctx *ctx = ptr;
     if (krb5_compare_creds(context, ctx->whichfields, &ctx->mcreds, creds))
-	return TRUE;
+        return TRUE;
     return FALSE;
 }
 
@@ -92,73 +92,73 @@ copy_cred_cache(struct copy_cred_cache_options *opt, int argc, char **argv)
     memset(&ctx, 0, sizeof(ctx));
 
     if (opt->service_string) {
-	ret = krb5_parse_name(heimtools_context, opt->service_string, &ctx.mcreds.server);
-	if (ret)
-	    krb5_err(heimtools_context, 1, ret, "%s", opt->service_string);
+        ret = krb5_parse_name(heimtools_context, opt->service_string, &ctx.mcreds.server);
+        if (ret)
+            krb5_err(heimtools_context, 1, ret, "%s", opt->service_string);
     }
     if (opt->enctype_string) {
-	krb5_enctype enctype;
-	ret = krb5_string_to_enctype(heimtools_context, opt->enctype_string, &enctype);
-	if (ret)
-	    krb5_err(heimtools_context, 1, ret, "%s", opt->enctype_string);
-	ctx.whichfields |= KRB5_TC_MATCH_KEYTYPE;
-	ctx.mcreds.session.keytype = enctype;
+        krb5_enctype enctype;
+        ret = krb5_string_to_enctype(heimtools_context, opt->enctype_string, &enctype);
+        if (ret)
+            krb5_err(heimtools_context, 1, ret, "%s", opt->enctype_string);
+        ctx.whichfields |= KRB5_TC_MATCH_KEYTYPE;
+        ctx.mcreds.session.keytype = enctype;
     }
     if (opt->flags_string) {
-	parse_ticket_flags(heimtools_context, opt->flags_string, &ctx.mcreds.flags);
-	ctx.whichfields |= KRB5_TC_MATCH_FLAGS;
+        parse_ticket_flags(heimtools_context, opt->flags_string, &ctx.mcreds.flags);
+        ctx.whichfields |= KRB5_TC_MATCH_FLAGS;
     }
     if (opt->valid_for_string) {
-	time_t t = parse_time(opt->valid_for_string, "s");
-	if(t < 0)
-	    errx(1, "unknown time \"%s\"", opt->valid_for_string);
-	krb5_timeofday(heimtools_context, &ctx.mcreds.times.endtime);
-	ctx.mcreds.times.endtime += t;
-	ctx.whichfields |= KRB5_TC_MATCH_TIMES;
+        time_t t = parse_time(opt->valid_for_string, "s");
+        if(t < 0)
+            errx(1, "unknown time \"%s\"", opt->valid_for_string);
+        krb5_timeofday(heimtools_context, &ctx.mcreds.times.endtime);
+        ctx.mcreds.times.endtime += t;
+        ctx.whichfields |= KRB5_TC_MATCH_TIMES;
     }
     if (opt->fcache_version_integer)
-	krb5_set_fcache_version(heimtools_context, opt->fcache_version_integer);
+        krb5_set_fcache_version(heimtools_context, opt->fcache_version_integer);
 
     if (argc == 1) {
-	from_name = krb5_cc_default_name(heimtools_context);
-	to_name = argv[0];
+        from_name = krb5_cc_default_name(heimtools_context);
+        to_name = argv[0];
     } else {
-	from_name = argv[0];
-	to_name = argv[1];
+        from_name = argv[0];
+        to_name = argv[1];
     }
 
     ret = krb5_cc_resolve(heimtools_context, from_name, &from_ccache);
     if (ret)
-	krb5_err(heimtools_context, 1, ret, "%s", from_name);
+        krb5_err(heimtools_context, 1, ret, "%s", from_name);
 
     if (opt->krbtgt_only_flag) {
-	krb5_principal client;
-	ret = krb5_cc_get_principal(heimtools_context, from_ccache, &client);
-	if (ret)
-	    krb5_err(heimtools_context, 1, ret, "getting default principal");
-	ret = krb5_make_principal(heimtools_context, &ctx.mcreds.server,
-				  krb5_principal_get_realm(heimtools_context, client),
-				  KRB5_TGS_NAME,
-				  krb5_principal_get_realm(heimtools_context, client),
-				  NULL);
-	if (ret)
-	    krb5_err(heimtools_context, 1, ret, "constructing krbtgt principal");
-	krb5_free_principal(heimtools_context, client);
+        krb5_principal client;
+        ret = krb5_cc_get_principal(heimtools_context, from_ccache, &client);
+        if (ret)
+            krb5_err(heimtools_context, 1, ret, "getting default principal");
+        ret = krb5_make_principal(heimtools_context, &ctx.mcreds.server,
+                                  krb5_principal_get_realm(heimtools_context, client),
+                                  KRB5_TGS_NAME,
+                                  krb5_principal_get_realm(heimtools_context, client),
+                                  NULL);
+        if (ret)
+            krb5_err(heimtools_context, 1, ret, "constructing krbtgt principal");
+        krb5_free_principal(heimtools_context, client);
     }
     ret = krb5_cc_resolve(heimtools_context, to_name, &to_ccache);
     if (ret)
-	krb5_err(heimtools_context, 1, ret, "%s", to_name);
+        krb5_err(heimtools_context, 1, ret, "%s", to_name);
 
     ret = krb5_cc_copy_match_f(heimtools_context, from_ccache, to_ccache,
-			       matchfunc, &ctx, &matched);
+                               matchfunc, &ctx, &matched);
     if (ret)
-	krb5_err(heimtools_context, 1, ret, "copying cred cache");
+        krb5_err(heimtools_context, 1, ret, "copying cred cache");
 
     krb5_cc_close(heimtools_context, from_ccache);
     if(matched == 0)
-	krb5_cc_destroy(heimtools_context, to_ccache);
+        krb5_cc_destroy(heimtools_context, to_ccache);
     else
-	krb5_cc_close(heimtools_context, to_ccache);
+        krb5_cc_close(heimtools_context, to_ccache);
 
     return matched == 0;
 }

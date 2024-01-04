@@ -42,14 +42,14 @@ test_name(hx509_context context, const char *name)
 
     ret = hx509_parse_name(context, name, &n);
     if (ret)
-	return 1;
+        return 1;
 
     ret = hx509_name_to_string(n, &s);
     if (ret)
-	return 1;
+        return 1;
 
     if (strcmp(s, name) != 0)
-	return 1;
+        return 1;
 
     hx509_name_free(&n);
     free(s);
@@ -63,7 +63,7 @@ test_name_fail(hx509_context context, const char *name)
     hx509_name n;
 
     if (hx509_parse_name(context, name, &n) == HX509_NAME_MALFORMED)
-	return 0;
+        return 0;
     hx509_name_free(&n);
     return 1;
 }
@@ -80,22 +80,22 @@ test_expand(hx509_context context, const char *name, const char *expected)
 
     ret = hx509_parse_name(context, name, &n);
     if (ret)
-	return 1;
+        return 1;
 
     ret = hx509_name_expand(context, n, env);
     hx509_env_free(&env);
     if (ret)
-	return 1;
+        return 1;
 
     ret = hx509_name_to_string(n, &s);
     hx509_name_free(&n);
     if (ret)
-	return 1;
+        return 1;
 
     ret = strcmp(s, expected) != 0;
     free(s);
     if (ret)
-	return 1;
+        return 1;
 
     return 0;
 }
@@ -324,7 +324,7 @@ test_compare(hx509_context context)
 
     c2 = hx509_cert_init_data(context, certdata2, sizeof(certdata2) - 1, NULL);
     if (c2 == NULL) return 1;
-    
+
     c3 = hx509_cert_init_data(context, certdata3, sizeof(certdata3) - 1, NULL);
     if (c3 == NULL) return 1;
 
@@ -426,7 +426,7 @@ main(int argc, char **argv)
 
     ret = hx509_context_init(&context);
     if (ret)
-	errx(1, "hx509_context_init failed with %d", ret);
+        errx(1, "hx509_context_init failed with %d", ret);
 
     ret += test_name(context, "CN=foo,C=SE");
     ret += test_name(context, "CN=foo,CN=kaka,CN=FOO,DC=ad1,C=SE");

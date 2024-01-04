@@ -60,23 +60,23 @@
 
 static int
 aes_init(EVP_CIPHER_CTX *ctx,
-	 const unsigned char * key,
-	 const unsigned char * iv,
-	 int encp)
+         const unsigned char * key,
+         const unsigned char * iv,
+         int encp)
 {
     AES_KEY *k = ctx->cipher_data;
     if (ctx->encrypt || EVP_CIPHER_CTX_mode(ctx) == EVP_CIPH_CFB8_MODE)
-	AES_set_encrypt_key(key, ctx->cipher->key_len * 8, k);
+        AES_set_encrypt_key(key, ctx->cipher->key_len * 8, k);
     else
-	AES_set_decrypt_key(key, ctx->cipher->key_len * 8, k);
+        AES_set_decrypt_key(key, ctx->cipher->key_len * 8, k);
     return 1;
 }
 
 static int
 aes_do_cipher(EVP_CIPHER_CTX *ctx,
-	      unsigned char *out,
-	      const unsigned char *in,
-	      unsigned int size)
+              unsigned char *out,
+              const unsigned char *in,
+              unsigned int size)
 {
     AES_KEY *k = ctx->cipher_data;
     if (EVP_CIPHER_CTX_mode(ctx) == EVP_CIPH_CFB8_MODE)
@@ -98,19 +98,19 @@ const EVP_CIPHER *
 EVP_hcrypto_aes_128_cbc(void)
 {
     static const EVP_CIPHER aes_128_cbc = {
-	0,
-	16,
-	16,
-	16,
-	EVP_CIPH_CBC_MODE,
-	aes_init,
-	aes_do_cipher,
-	NULL,
-	sizeof(AES_KEY),
-	NULL,
-	NULL,
-	NULL,
-	NULL
+        0,
+        16,
+        16,
+        16,
+        EVP_CIPH_CBC_MODE,
+        aes_init,
+        aes_do_cipher,
+        NULL,
+        sizeof(AES_KEY),
+        NULL,
+        NULL,
+        NULL,
+        NULL
     };
 
     return &aes_128_cbc;
@@ -128,19 +128,19 @@ const EVP_CIPHER *
 EVP_hcrypto_aes_192_cbc(void)
 {
     static const EVP_CIPHER aes_192_cbc = {
-	0,
-	16,
-	24,
-	16,
-	EVP_CIPH_CBC_MODE,
-	aes_init,
-	aes_do_cipher,
-	NULL,
-	sizeof(AES_KEY),
-	NULL,
-	NULL,
-	NULL,
-	NULL
+        0,
+        16,
+        24,
+        16,
+        EVP_CIPH_CBC_MODE,
+        aes_init,
+        aes_do_cipher,
+        NULL,
+        sizeof(AES_KEY),
+        NULL,
+        NULL,
+        NULL,
+        NULL
     };
     return &aes_192_cbc;
 }
@@ -157,19 +157,19 @@ const EVP_CIPHER *
 EVP_hcrypto_aes_256_cbc(void)
 {
     static const EVP_CIPHER aes_256_cbc = {
-	0,
-	16,
-	32,
-	16,
-	EVP_CIPH_CBC_MODE,
-	aes_init,
-	aes_do_cipher,
-	NULL,
-	sizeof(AES_KEY),
-	NULL,
-	NULL,
-	NULL,
-	NULL
+        0,
+        16,
+        32,
+        16,
+        EVP_CIPH_CBC_MODE,
+        aes_init,
+        aes_do_cipher,
+        NULL,
+        sizeof(AES_KEY),
+        NULL,
+        NULL,
+        NULL,
+        NULL
     };
     return &aes_256_cbc;
 }
@@ -186,19 +186,19 @@ const EVP_CIPHER *
 EVP_hcrypto_aes_128_cfb8(void)
 {
     static const EVP_CIPHER aes_128_cfb8 = {
-	0,
-	1,
-	16,
-	16,
-	EVP_CIPH_CFB8_MODE,
-	aes_init,
-	aes_do_cipher,
-	NULL,
-	sizeof(AES_KEY),
-	NULL,
-	NULL,
-	NULL,
-	NULL
+        0,
+        1,
+        16,
+        16,
+        EVP_CIPH_CFB8_MODE,
+        aes_init,
+        aes_do_cipher,
+        NULL,
+        sizeof(AES_KEY),
+        NULL,
+        NULL,
+        NULL,
+        NULL
     };
 
     return &aes_128_cfb8;
@@ -216,19 +216,19 @@ const EVP_CIPHER *
 EVP_hcrypto_aes_192_cfb8(void)
 {
     static const EVP_CIPHER aes_192_cfb8 = {
-	0,
-	1,
-	24,
-	16,
-	EVP_CIPH_CFB8_MODE,
-	aes_init,
-	aes_do_cipher,
-	NULL,
-	sizeof(AES_KEY),
-	NULL,
-	NULL,
-	NULL,
-	NULL
+        0,
+        1,
+        24,
+        16,
+        EVP_CIPH_CFB8_MODE,
+        aes_init,
+        aes_do_cipher,
+        NULL,
+        sizeof(AES_KEY),
+        NULL,
+        NULL,
+        NULL,
+        NULL
     };
     return &aes_192_cfb8;
 }
@@ -245,19 +245,19 @@ const EVP_CIPHER *
 EVP_hcrypto_aes_256_cfb8(void)
 {
     static const EVP_CIPHER aes_256_cfb8 = {
-	0,
-	1,
-	32,
-	16,
-	EVP_CIPH_CFB8_MODE,
-	aes_init,
-	aes_do_cipher,
-	NULL,
-	sizeof(AES_KEY),
-	NULL,
-	NULL,
-	NULL,
-	NULL
+        0,
+        1,
+        32,
+        16,
+        EVP_CIPH_CFB8_MODE,
+        aes_init,
+        aes_do_cipher,
+        NULL,
+        sizeof(AES_KEY),
+        NULL,
+        NULL,
+        NULL,
+        NULL
     };
     return &aes_256_cfb8;
 }
@@ -274,13 +274,13 @@ const EVP_MD *
 EVP_hcrypto_sha256(void)
 {
     static const struct hc_evp_md sha256 = {
-	32,
-	64,
-	sizeof(SHA256_CTX),
-	(hc_evp_md_init)SHA256_Init,
-	(hc_evp_md_update)SHA256_Update,
-	(hc_evp_md_final)SHA256_Final,
-	NULL
+        32,
+        64,
+        sizeof(SHA256_CTX),
+        (hc_evp_md_init)SHA256_Init,
+        (hc_evp_md_update)SHA256_Update,
+        (hc_evp_md_final)SHA256_Final,
+        NULL
     };
     return &sha256;
 }
@@ -297,13 +297,13 @@ const EVP_MD *
 EVP_hcrypto_sha384(void)
 {
     static const struct hc_evp_md sha384 = {
-	48,
-	128,
-	sizeof(SHA384_CTX),
-	(hc_evp_md_init)SHA384_Init,
-	(hc_evp_md_update)SHA384_Update,
-	(hc_evp_md_final)SHA384_Final,
-	NULL
+        48,
+        128,
+        sizeof(SHA384_CTX),
+        (hc_evp_md_init)SHA384_Init,
+        (hc_evp_md_update)SHA384_Update,
+        (hc_evp_md_final)SHA384_Final,
+        NULL
     };
     return &sha384;
 }
@@ -320,13 +320,13 @@ const EVP_MD *
 EVP_hcrypto_sha512(void)
 {
     static const struct hc_evp_md sha512 = {
-	64,
-	128,
-	sizeof(SHA512_CTX),
-	(hc_evp_md_init)SHA512_Init,
-	(hc_evp_md_update)SHA512_Update,
-	(hc_evp_md_final)SHA512_Final,
-	NULL
+        64,
+        128,
+        sizeof(SHA512_CTX),
+        (hc_evp_md_init)SHA512_Init,
+        (hc_evp_md_update)SHA512_Update,
+        (hc_evp_md_final)SHA512_Final,
+        NULL
     };
     return &sha512;
 }
@@ -343,13 +343,13 @@ const EVP_MD *
 EVP_hcrypto_sha1(void)
 {
     static const struct hc_evp_md sha1 = {
-	20,
-	64,
-	sizeof(SHA_CTX),
-	(hc_evp_md_init)SHA1_Init,
-	(hc_evp_md_update)SHA1_Update,
-	(hc_evp_md_final)SHA1_Final,
-	NULL
+        20,
+        64,
+        sizeof(SHA_CTX),
+        (hc_evp_md_init)SHA1_Init,
+        (hc_evp_md_update)SHA1_Update,
+        (hc_evp_md_final)SHA1_Final,
+        NULL
     };
     return &sha1;
 }
@@ -366,13 +366,13 @@ const EVP_MD *
 EVP_hcrypto_md5(void)
 {
     static const struct hc_evp_md md5 = {
-	16,
-	64,
-	sizeof(MD5_CTX),
-	(hc_evp_md_init)MD5_Init,
-	(hc_evp_md_update)MD5_Update,
-	(hc_evp_md_final)MD5_Final,
-	NULL
+        16,
+        64,
+        sizeof(MD5_CTX),
+        (hc_evp_md_init)MD5_Init,
+        (hc_evp_md_update)MD5_Update,
+        (hc_evp_md_final)MD5_Final,
+        NULL
     };
     return &md5;
 }
@@ -389,13 +389,13 @@ const EVP_MD *
 EVP_hcrypto_md4(void)
 {
     static const struct hc_evp_md md4 = {
-	16,
-	64,
-	sizeof(MD4_CTX),
-	(hc_evp_md_init)MD4_Init,
-	(hc_evp_md_update)MD4_Update,
-	(hc_evp_md_final)MD4_Final,
-	NULL
+        16,
+        64,
+        sizeof(MD4_CTX),
+        (hc_evp_md_init)MD4_Init,
+        (hc_evp_md_update)MD4_Update,
+        (hc_evp_md_final)MD4_Final,
+        NULL
     };
     return &md4;
 }
@@ -407,9 +407,9 @@ EVP_hcrypto_md4(void)
 
 static int
 des_cbc_init(EVP_CIPHER_CTX *ctx,
-	     const unsigned char * key,
-	     const unsigned char * iv,
-	     int encp)
+             const unsigned char * key,
+             const unsigned char * iv,
+             int encp)
 {
     DES_key_schedule *k = ctx->cipher_data;
     DES_cblock deskey;
@@ -420,13 +420,13 @@ des_cbc_init(EVP_CIPHER_CTX *ctx,
 
 static int
 des_cbc_do_cipher(EVP_CIPHER_CTX *ctx,
-		  unsigned char *out,
-		  const unsigned char *in,
-		  unsigned int size)
+                  unsigned char *out,
+                  const unsigned char *in,
+                  unsigned int size)
 {
     DES_key_schedule *k = ctx->cipher_data;
     DES_cbc_encrypt(in, out, size,
-		    k, (DES_cblock *)ctx->iv, ctx->encrypt);
+                    k, (DES_cblock *)ctx->iv, ctx->encrypt);
     return 1;
 }
 
@@ -442,19 +442,19 @@ const EVP_CIPHER *
 EVP_hcrypto_des_cbc(void)
 {
     static const EVP_CIPHER des_cbc = {
-	0,
-	8,
-	8,
-	8,
-	EVP_CIPH_CBC_MODE,
-	des_cbc_init,
-	des_cbc_do_cipher,
-	NULL,
-	sizeof(DES_key_schedule),
-	NULL,
-	NULL,
-	NULL,
-	NULL
+        0,
+        8,
+        8,
+        8,
+        EVP_CIPH_CBC_MODE,
+        des_cbc_init,
+        des_cbc_do_cipher,
+        NULL,
+        sizeof(DES_key_schedule),
+        NULL,
+        NULL,
+        NULL,
+        NULL
     };
     return &des_cbc;
 }
@@ -469,9 +469,9 @@ struct des_ede3_cbc {
 
 static int
 des_ede3_cbc_init(EVP_CIPHER_CTX *ctx,
-		  const unsigned char * key,
-		  const unsigned char * iv,
-		  int encp)
+                  const unsigned char * key,
+                  const unsigned char * iv,
+                  int encp)
 {
     struct des_ede3_cbc *k = ctx->cipher_data;
     DES_cblock deskey;
@@ -493,14 +493,14 @@ des_ede3_cbc_init(EVP_CIPHER_CTX *ctx,
 
 static int
 des_ede3_cbc_do_cipher(EVP_CIPHER_CTX *ctx,
-		       unsigned char *out,
-		       const unsigned char *in,
-		       unsigned int size)
+                       unsigned char *out,
+                       const unsigned char *in,
+                       unsigned int size)
 {
     struct des_ede3_cbc *k = ctx->cipher_data;
     DES_ede3_cbc_encrypt(in, out, size,
-			 &k->ks[0], &k->ks[1], &k->ks[2],
-			 (DES_cblock *)ctx->iv, ctx->encrypt);
+                         &k->ks[0], &k->ks[1], &k->ks[2],
+                         (DES_cblock *)ctx->iv, ctx->encrypt);
     return 1;
 }
 
@@ -516,19 +516,19 @@ const EVP_CIPHER *
 EVP_hcrypto_des_ede3_cbc(void)
 {
     static const EVP_CIPHER des_ede3_cbc = {
-	0,
-	8,
-	24,
-	8,
-	EVP_CIPH_CBC_MODE,
-	des_ede3_cbc_init,
-	des_ede3_cbc_do_cipher,
-	NULL,
-	sizeof(struct des_ede3_cbc),
-	NULL,
-	NULL,
-	NULL,
-	NULL
+        0,
+        8,
+        24,
+        8,
+        EVP_CIPH_CBC_MODE,
+        des_ede3_cbc_init,
+        des_ede3_cbc_do_cipher,
+        NULL,
+        sizeof(struct des_ede3_cbc),
+        NULL,
+        NULL,
+        NULL,
+        NULL
     };
     return &des_ede3_cbc;
 }
@@ -544,24 +544,24 @@ struct rc2_cbc {
 
 static int
 rc2_init(EVP_CIPHER_CTX *ctx,
-	 const unsigned char * key,
-	 const unsigned char * iv,
-	 int encp)
+         const unsigned char * key,
+         const unsigned char * iv,
+         int encp)
 {
     struct rc2_cbc *k = ctx->cipher_data;
     k->maximum_effective_key = EVP_CIPHER_CTX_key_length(ctx) * 8;
     RC2_set_key(&k->key,
-		EVP_CIPHER_CTX_key_length(ctx),
-		key,
-		k->maximum_effective_key);
+                EVP_CIPHER_CTX_key_length(ctx),
+                key,
+                k->maximum_effective_key);
     return 1;
 }
 
 static int
 rc2_do_cipher(EVP_CIPHER_CTX *ctx,
-	      unsigned char *out,
-	      const unsigned char *in,
-	      unsigned int size)
+              unsigned char *out,
+              const unsigned char *in,
+              unsigned int size)
 {
     struct rc2_cbc *k = ctx->cipher_data;
     RC2_cbc_encrypt(in, out, size, &k->key, ctx->iv, ctx->encrypt);
@@ -580,19 +580,19 @@ const EVP_CIPHER *
 EVP_hcrypto_rc2_cbc(void)
 {
     static const EVP_CIPHER rc2_cbc = {
-	0,
-	RC2_BLOCK_SIZE,
-	RC2_KEY_LENGTH,
-	RC2_BLOCK_SIZE,
-	EVP_CIPH_CBC_MODE|EVP_CIPH_VARIABLE_LENGTH,
-	rc2_init,
-	rc2_do_cipher,
-	NULL,
-	sizeof(struct rc2_cbc),
-	NULL,
-	NULL,
-	NULL,
-	NULL
+        0,
+        RC2_BLOCK_SIZE,
+        RC2_KEY_LENGTH,
+        RC2_BLOCK_SIZE,
+        EVP_CIPH_CBC_MODE|EVP_CIPH_VARIABLE_LENGTH,
+        rc2_init,
+        rc2_do_cipher,
+        NULL,
+        sizeof(struct rc2_cbc),
+        NULL,
+        NULL,
+        NULL,
+        NULL
     };
     return &rc2_cbc;
 }
@@ -609,19 +609,19 @@ const EVP_CIPHER *
 EVP_hcrypto_rc2_40_cbc(void)
 {
     static const EVP_CIPHER rc2_40_cbc = {
-	0,
-	RC2_BLOCK_SIZE,
-	5,
-	RC2_BLOCK_SIZE,
-	EVP_CIPH_CBC_MODE,
-	rc2_init,
-	rc2_do_cipher,
-	NULL,
-	sizeof(struct rc2_cbc),
-	NULL,
-	NULL,
-	NULL,
-	NULL
+        0,
+        RC2_BLOCK_SIZE,
+        5,
+        RC2_BLOCK_SIZE,
+        EVP_CIPH_CBC_MODE,
+        rc2_init,
+        rc2_do_cipher,
+        NULL,
+        sizeof(struct rc2_cbc),
+        NULL,
+        NULL,
+        NULL,
+        NULL
     };
     return &rc2_40_cbc;
 }
@@ -638,28 +638,28 @@ const EVP_CIPHER *
 EVP_hcrypto_rc2_64_cbc(void)
 {
     static const EVP_CIPHER rc2_64_cbc = {
-	0,
-	RC2_BLOCK_SIZE,
-	8,
-	RC2_BLOCK_SIZE,
-	EVP_CIPH_CBC_MODE,
-	rc2_init,
-	rc2_do_cipher,
-	NULL,
-	sizeof(struct rc2_cbc),
-	NULL,
-	NULL,
-	NULL,
-	NULL
+        0,
+        RC2_BLOCK_SIZE,
+        8,
+        RC2_BLOCK_SIZE,
+        EVP_CIPH_CBC_MODE,
+        rc2_init,
+        rc2_do_cipher,
+        NULL,
+        sizeof(struct rc2_cbc),
+        NULL,
+        NULL,
+        NULL,
+        NULL
     };
     return &rc2_64_cbc;
 }
 
 static int
 camellia_init(EVP_CIPHER_CTX *ctx,
-	 const unsigned char * key,
-	 const unsigned char * iv,
-	 int encp)
+              const unsigned char * key,
+              const unsigned char * iv,
+              int encp)
 {
     CAMELLIA_KEY *k = ctx->cipher_data;
     k->bits = ctx->cipher->key_len * 8;
@@ -669,9 +669,9 @@ camellia_init(EVP_CIPHER_CTX *ctx,
 
 static int
 camellia_do_cipher(EVP_CIPHER_CTX *ctx,
-	      unsigned char *out,
-	      const unsigned char *in,
-	      unsigned int size)
+                   unsigned char *out,
+                   const unsigned char *in,
+                   unsigned int size)
 {
     CAMELLIA_KEY *k = ctx->cipher_data;
     CAMELLIA_cbc_encrypt(in, out, size, k, ctx->iv, ctx->encrypt);
@@ -690,19 +690,19 @@ const EVP_CIPHER *
 EVP_hcrypto_camellia_128_cbc(void)
 {
     static const EVP_CIPHER cipher = {
-	0,
-	16,
-	16,
-	16,
-	EVP_CIPH_CBC_MODE,
-	camellia_init,
-	camellia_do_cipher,
-	NULL,
-	sizeof(CAMELLIA_KEY),
-	NULL,
-	NULL,
-	NULL,
-	NULL
+        0,
+        16,
+        16,
+        16,
+        EVP_CIPH_CBC_MODE,
+        camellia_init,
+        camellia_do_cipher,
+        NULL,
+        sizeof(CAMELLIA_KEY),
+        NULL,
+        NULL,
+        NULL,
+        NULL
     };
     return &cipher;
 }
@@ -719,19 +719,19 @@ const EVP_CIPHER *
 EVP_hcrypto_camellia_192_cbc(void)
 {
     static const EVP_CIPHER cipher = {
-	0,
-	16,
-	24,
-	16,
-	EVP_CIPH_CBC_MODE,
-	camellia_init,
-	camellia_do_cipher,
-	NULL,
-	sizeof(CAMELLIA_KEY),
-	NULL,
-	NULL,
-	NULL,
-	NULL
+        0,
+        16,
+        24,
+        16,
+        EVP_CIPH_CBC_MODE,
+        camellia_init,
+        camellia_do_cipher,
+        NULL,
+        sizeof(CAMELLIA_KEY),
+        NULL,
+        NULL,
+        NULL,
+        NULL
     };
     return &cipher;
 }
@@ -748,28 +748,28 @@ const EVP_CIPHER *
 EVP_hcrypto_camellia_256_cbc(void)
 {
     static const EVP_CIPHER cipher = {
-	0,
-	16,
-	32,
-	16,
-	EVP_CIPH_CBC_MODE,
-	camellia_init,
-	camellia_do_cipher,
-	NULL,
-	sizeof(CAMELLIA_KEY),
-	NULL,
-	NULL,
-	NULL,
-	NULL
+        0,
+        16,
+        32,
+        16,
+        EVP_CIPH_CBC_MODE,
+        camellia_init,
+        camellia_do_cipher,
+        NULL,
+        sizeof(CAMELLIA_KEY),
+        NULL,
+        NULL,
+        NULL,
+        NULL
     };
     return &cipher;
 }
 
 static int
 rc4_init(EVP_CIPHER_CTX *ctx,
-	 const unsigned char *key,
-	 const unsigned char *iv,
-	 int enc)
+         const unsigned char *key,
+         const unsigned char *iv,
+         int enc)
 {
     RC4_KEY *k = ctx->cipher_data;
     RC4_set_key(k, ctx->key_len, key);
@@ -778,9 +778,9 @@ rc4_init(EVP_CIPHER_CTX *ctx,
 
 static int
 rc4_do_cipher(EVP_CIPHER_CTX *ctx,
-	      unsigned char *out,
-	      const unsigned char *in,
-	      unsigned int size)
+              unsigned char *out,
+              const unsigned char *in,
+              unsigned int size)
 {
     RC4_KEY *k = ctx->cipher_data;
     RC4(k, size, in, out);
@@ -791,19 +791,19 @@ const EVP_CIPHER *
 EVP_hcrypto_rc4(void)
 {
     static const EVP_CIPHER rc4 = {
-	0,
-	1,
-	16,
-	0,
-	EVP_CIPH_STREAM_CIPHER|EVP_CIPH_VARIABLE_LENGTH,
-	rc4_init,
-	rc4_do_cipher,
-	NULL,
-	sizeof(RC4_KEY),
-	NULL,
-	NULL,
-	NULL,
-	NULL
+        0,
+        1,
+        16,
+        0,
+        EVP_CIPH_STREAM_CIPHER|EVP_CIPH_VARIABLE_LENGTH,
+        rc4_init,
+        rc4_do_cipher,
+        NULL,
+        sizeof(RC4_KEY),
+        NULL,
+        NULL,
+        NULL,
+        NULL
     };
     return &rc4;
 }
@@ -813,19 +813,19 @@ const EVP_CIPHER *
 EVP_hcrypto_rc4_40(void)
 {
     static const EVP_CIPHER rc4_40 = {
-	0,
-	1,
-	5,
-	0,
-	EVP_CIPH_STREAM_CIPHER|EVP_CIPH_VARIABLE_LENGTH,
-	rc4_init,
-	rc4_do_cipher,
-	NULL,
-	sizeof(RC4_KEY),
-	NULL,
-	NULL,
-	NULL,
-	NULL
+        0,
+        1,
+        5,
+        0,
+        EVP_CIPH_STREAM_CIPHER|EVP_CIPH_VARIABLE_LENGTH,
+        rc4_init,
+        rc4_do_cipher,
+        NULL,
+        sizeof(RC4_KEY),
+        NULL,
+        NULL,
+        NULL,
+        NULL
     };
     return &rc4_40;
 }

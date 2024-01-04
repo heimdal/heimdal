@@ -33,26 +33,26 @@
 
 OM_uint32 GSSAPI_CALLCONV
 _gssspi_sanon_query_mechanism_info(OM_uint32 *minor,
-				   gss_const_OID mech_oid,
-				   unsigned char auth_scheme[16])
+                                   gss_const_OID mech_oid,
+                                   unsigned char auth_scheme[16])
 {
     heim_assert(gss_oid_equal(mech_oid, GSS_SANON_X25519_MECHANISM),
-		"Invalid mechanism OID passed to query_mechanism_info");
+                "Invalid mechanism OID passed to query_mechanism_info");
 
     *minor = 0;
 
     /* {DEE384FF-1086-4E86-BE78-B94170BFD376} */
     memcpy(auth_scheme,
-	   "\xff\x84\xe3\xde\x86\x10\x86\x4e\xbe\x78\xb9\x41\x70\xbf\xd3\x76", 16);
+           "\xff\x84\xe3\xde\x86\x10\x86\x4e\xbe\x78\xb9\x41\x70\xbf\xd3\x76", 16);
 
     return GSS_S_COMPLETE;
 }
 
 OM_uint32
 _gss_sanon_inquire_negoex_key(OM_uint32 *minor,
-			      const sanon_ctx sc,
-			      gss_const_OID desired_object,
-			      gss_buffer_set_t *data_set)
+                              const sanon_ctx sc,
+                              gss_const_OID desired_object,
+                              gss_buffer_set_t *data_set)
 {
     OM_uint32 major, tmpMinor;
     int initiator_key;
@@ -60,14 +60,14 @@ _gss_sanon_inquire_negoex_key(OM_uint32 *minor,
     gss_buffer_desc salt, keyvalue = GSS_C_EMPTY_BUFFER, keytype;
 
     if (sc->rfc4121 == GSS_C_NO_CONTEXT) {
-	*minor = KRB5KRB_AP_ERR_NOKEY;
-	return GSS_S_UNAVAILABLE;
+        *minor = KRB5KRB_AP_ERR_NOKEY;
+        return GSS_S_UNAVAILABLE;
     }
 
     initiator_key = !!(sc->is_initiator);
 
     if (gss_oid_equal(desired_object, GSS_C_INQ_NEGOEX_VERIFY_KEY))
-	initiator_key ^= 1;
+        initiator_key ^= 1;
     else if (!gss_oid_equal(desired_object, GSS_C_INQ_NEGOEX_KEY))
         return GSS_S_UNAVAILABLE;
 
@@ -85,12 +85,12 @@ _gss_sanon_inquire_negoex_key(OM_uint32 *minor,
     keytype.value = typebytes;
 
     major = gss_pseudo_random(minor, sc->rfc4121,
-			      GSS_C_PRF_KEY_FULL, &salt,
-			      16, &keyvalue);
+                              GSS_C_PRF_KEY_FULL, &salt,
+                              16, &keyvalue);
     if (major == GSS_S_COMPLETE)
-	major = gss_add_buffer_set_member(minor, &keyvalue, data_set);
+        major = gss_add_buffer_set_member(minor, &keyvalue, data_set);
     if (major == GSS_S_COMPLETE)
-	major = gss_add_buffer_set_member(minor, &keytype, data_set);
+        major = gss_add_buffer_set_member(minor, &keytype, data_set);
 
     _gss_secure_release_buffer(&tmpMinor, &keyvalue);
 
@@ -99,32 +99,32 @@ _gss_sanon_inquire_negoex_key(OM_uint32 *minor,
 
 OM_uint32 GSSAPI_CALLCONV
 _gssspi_sanon_query_meta_data(OM_uint32 *minor,
-			      gss_const_OID mech_oid,
-			      gss_cred_id_t cred_handle,
-			      gss_ctx_id_t *context_handle,
-			      gss_const_name_t targ_name,
-			      OM_uint32 req_flags,
-			      gss_buffer_t meta_data)
+                              gss_const_OID mech_oid,
+                              gss_cred_id_t cred_handle,
+                              gss_ctx_id_t *context_handle,
+                              gss_const_name_t targ_name,
+                              OM_uint32 req_flags,
+                              gss_buffer_t meta_data)
 {
     int is_initiator = (targ_name != GSS_C_NO_NAME);
 
     *minor = 0;
 
     if (is_initiator &&
-	!_gss_sanon_available_p(cred_handle, targ_name, req_flags))
-	return GSS_S_UNAVAILABLE;
+        !_gss_sanon_available_p(cred_handle, targ_name, req_flags))
+        return GSS_S_UNAVAILABLE;
 
     return GSS_S_COMPLETE;
 }
 
 OM_uint32 GSSAPI_CALLCONV
 _gssspi_sanon_exchange_meta_data(OM_uint32 *minor,
-				 gss_const_OID mech_oid,
-				 gss_cred_id_t cred_handle,
-				 gss_ctx_id_t *context_handle,
-				 gss_const_name_t targ_name,
-				 OM_uint32 req_flags,
-				 gss_const_buffer_t meta_data)
+                                 gss_const_OID mech_oid,
+                                 gss_cred_id_t cred_handle,
+                                 gss_ctx_id_t *context_handle,
+                                 gss_const_name_t targ_name,
+                                 OM_uint32 req_flags,
+                                 gss_const_buffer_t meta_data)
 {
     *minor = 0;
     return GSS_S_COMPLETE;

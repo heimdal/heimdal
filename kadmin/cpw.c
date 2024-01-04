@@ -54,9 +54,9 @@ set_random_key(void *dup_kadm_handle, krb5_principal principal, int keepold)
     ret = kadm5_randkey_principal_3(dup_kadm_handle, principal, keepold, 0,
                                     NULL, &keys, &num_keys);
     if(ret)
-	return ret;
+        return ret;
     for(i = 0; i < num_keys; i++)
-	krb5_free_keyblock_contents(context, &keys[i]);
+        krb5_free_keyblock_contents(context, &keys[i]);
     free(keys);
     return 0;
 }
@@ -72,13 +72,13 @@ set_random_password(void *dup_kadm_handle,
 
     ret = krb5_unparse_name(context, principal, &princ_name);
     if (ret)
-	return ret;
+        return ret;
 
     random_password(pw, sizeof(pw));
     ret = kadm5_chpass_principal_3(dup_kadm_handle, principal, keepold, 0,
                                    NULL, pw);
     if (ret == 0)
-	printf ("%s's password set to \"%s\"\n", princ_name, pw);
+        printf ("%s's password set to \"%s\"\n", princ_name, pw);
     free(princ_name);
     memset_s(pw, sizeof(pw), 0, sizeof(pw));
     return ret;
@@ -95,24 +95,24 @@ set_password(void *dup_kadm_handle,
     int aret;
 
     if(password == NULL) {
-	char *princ_name;
-	char *prompt;
+        char *princ_name;
+        char *prompt;
 
-	ret = krb5_unparse_name(context, principal, &princ_name);
-	if (ret)
-	    return ret;
-	aret = asprintf(&prompt, "%s's Password: ", princ_name);
-	free (princ_name);
-	if (aret == -1)
-	    return ENOMEM;
-	ret = UI_UTIL_read_pw_string(pwbuf, sizeof(pwbuf), prompt,
-				     UI_UTIL_FLAG_VERIFY |
-				     UI_UTIL_FLAG_VERIFY_SILENT);
-	free (prompt);
-	if(ret){
+        ret = krb5_unparse_name(context, principal, &princ_name);
+        if (ret)
+            return ret;
+        aret = asprintf(&prompt, "%s's Password: ", princ_name);
+        free (princ_name);
+        if (aret == -1)
+            return ENOMEM;
+        ret = UI_UTIL_read_pw_string(pwbuf, sizeof(pwbuf), prompt,
+                                     UI_UTIL_FLAG_VERIFY |
+                                     UI_UTIL_FLAG_VERIFY_SILENT);
+        free (prompt);
+        if(ret){
             return KRB5_LIBOS_BADPWDMATCH;
-	}
-	password = pwbuf;
+        }
+        password = pwbuf;
     }
     if(ret == 0)
         ret = kadm5_chpass_principal_3(dup_kadm_handle, principal, keepold, 0,
@@ -130,7 +130,7 @@ set_key_data(void *dup_kadm_handle,
     krb5_error_code ret;
 
     ret = kadm5_chpass_principal_with_key_3(dup_kadm_handle, principal, keepold,
-					    3, key_data);
+                                            3, key_data);
     return ret;
 }
 
@@ -140,13 +140,13 @@ do_cpw_entry(krb5_principal principal, void *data)
     struct cpw_entry_data *e = data;
 
     if (e->random_key)
-	return set_random_key(e->kadm_handle, principal, e->keepold);
+        return set_random_key(e->kadm_handle, principal, e->keepold);
     else if (e->random_password)
-	return set_random_password(e->kadm_handle, principal, e->keepold);
+        return set_random_password(e->kadm_handle, principal, e->keepold);
     else if (e->key_data)
-	return set_key_data(e->kadm_handle, principal, e->key_data, e->keepold);
+        return set_key_data(e->kadm_handle, principal, e->key_data, e->keepold);
     else
-	return set_password(e->kadm_handle, principal, e->password, e->keepold);
+        return set_password(e->kadm_handle, principal, e->password, e->keepold);
 }
 
 int
@@ -194,34 +194,34 @@ cpw_entry(struct passwd_options *opt, int argc, char **argv)
 
     num = 0;
     if (data.random_key)
-	++num;
+        ++num;
     if (data.random_password)
-	++num;
+        ++num;
     if (data.password)
-	++num;
+        ++num;
     if (opt->key_string)
-	++num;
+        ++num;
 
     if (num > 1) {
-	fprintf (stderr, "give only one of "
-		"--random-key, --random-password, --password, --key\n");
-	return 1;
+        fprintf (stderr, "give only one of "
+                 "--random-key, --random-password, --password, --key\n");
+        return 1;
     }
 
     if (opt->key_string) {
-	const char *error;
+        const char *error;
 
-	if (parse_des_key (opt->key_string, key_data, &error)) {
-	    fprintf (stderr, "failed parsing key \"%s\": %s\n",
-		     opt->key_string, error);
-	    return 1;
-	}
+        if (parse_des_key (opt->key_string, key_data, &error)) {
+            fprintf (stderr, "failed parsing key \"%s\": %s\n",
+                     opt->key_string, error);
+            return 1;
+        }
         n_key_data = sizeof(key_data)/sizeof(key_data[0]);
-	data.key_data = key_data;
+        data.key_data = key_data;
     }
 
     for(i = 0; i < argc; i++)
-	ret = foreach_principal(argv[i], do_cpw_entry, "cpw", &data);
+        ret = foreach_principal(argv[i], do_cpw_entry, "cpw", &data);
 
     kadm5_destroy(data.kadm_handle);
 

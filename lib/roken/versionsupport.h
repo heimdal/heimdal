@@ -54,21 +54,21 @@
 /* Based upon VersionHelpers.h */
 FORCEINLINE BOOL
 IsWindowsVersionOrGreater(WORD wMajorVersion,
-			  WORD wMinorVersion,
-			  WORD wServicePackMajor)
+                          WORD wMinorVersion,
+                          WORD wServicePackMajor)
 {
     OSVERSIONINFOEXW osvi;
     DWORDLONG        dwlConditionMask = 0;
 
     dwlConditionMask = VerSetConditionMask(dwlConditionMask,
-					   VER_MAJORVERSION,
-					   VER_GREATER_EQUAL);
+                                           VER_MAJORVERSION,
+                                           VER_GREATER_EQUAL);
     dwlConditionMask = VerSetConditionMask(dwlConditionMask,
-					   VER_MINORVERSION,
-					   VER_GREATER_EQUAL);
+                                           VER_MINORVERSION,
+                                           VER_GREATER_EQUAL);
     dwlConditionMask = VerSetConditionMask(dwlConditionMask,
-					   VER_SERVICEPACKMAJOR,
-					   VER_GREATER_EQUAL);
+                                           VER_SERVICEPACKMAJOR,
+                                           VER_GREATER_EQUAL);
 
     memset(&osvi, 0, sizeof(OSVERSIONINFOEXW));
     osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEXW);
@@ -77,42 +77,42 @@ IsWindowsVersionOrGreater(WORD wMajorVersion,
     osvi.wServicePackMajor = wServicePackMajor;
 
     return VerifyVersionInfoW(&osvi,
-			      (VER_MAJORVERSION |
-			       VER_MINORVERSION |
-			       VER_SERVICEPACKMAJOR),
-			      dwlConditionMask);
+                              (VER_MAJORVERSION |
+                               VER_MINORVERSION |
+                               VER_SERVICEPACKMAJOR),
+                              dwlConditionMask);
 }
 
 FORCEINLINE BOOL
 IsWindowsXPOrGreater(VOID)
 {
     return IsWindowsVersionOrGreater(HIBYTE(_WIN32_WINNT_WINXP),
-				     LOBYTE(_WIN32_WINNT_WINXP),
-				     0);
+                                     LOBYTE(_WIN32_WINNT_WINXP),
+                                     0);
 }
 
 FORCEINLINE BOOL
 IsWindows7OrGreater(VOID)
 {
     return IsWindowsVersionOrGreater(HIBYTE(_WIN32_WINNT_WIN7),
-				     LOBYTE(_WIN32_WINNT_WIN7),
-				     0);
+                                     LOBYTE(_WIN32_WINNT_WIN7),
+                                     0);
 }
 
 FORCEINLINE BOOL
 IsWindows8OrGreater(VOID)
 {
     return IsWindowsVersionOrGreater(HIBYTE(_WIN32_WINNT_WIN8),
-				     LOBYTE(_WIN32_WINNT_WIN8),
-				     0);
+                                     LOBYTE(_WIN32_WINNT_WIN8),
+                                     0);
 }
 
 FORCEINLINE BOOL
 IsWindows8Point1OrGreater(VOID)
 {
     return IsWindowsVersionOrGreater(HIBYTE(_WIN32_WINNT_WINBLUE),
-				     LOBYTE(_WIN32_WINNT_WINBLUE),
-				     0);
+                                     LOBYTE(_WIN32_WINNT_WINBLUE),
+                                     0);
 }
 
 #define IS_WINDOWS_VERSION_OR_GREATER_CACHED(fn)		\

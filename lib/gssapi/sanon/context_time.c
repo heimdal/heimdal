@@ -35,8 +35,8 @@
 
 OM_uint32 GSSAPI_CALLCONV
 _gss_sanon_context_time(OM_uint32 *minor,
-			gss_const_ctx_id_t context_handle,
-			OM_uint32 *time_rec)
+                        gss_const_ctx_id_t context_handle,
+                        OM_uint32 *time_rec)
 {
     const sanon_ctx sc = (const sanon_ctx)context_handle;
 
@@ -44,7 +44,7 @@ _gss_sanon_context_time(OM_uint32 *minor,
     *time_rec = GSS_C_INDEFINITE;
 
     if (sc == NULL)
-	return GSS_S_NO_CONTEXT;
+        return GSS_S_NO_CONTEXT;
 
     return GSS_S_COMPLETE;
 }

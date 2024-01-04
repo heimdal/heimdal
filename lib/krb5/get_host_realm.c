@@ -50,64 +50,64 @@
 
 static int
 copy_txt_to_realms(krb5_context context,
-		   const char *domain,
-		   struct rk_resource_record *head,
-		   krb5_realm **realms)
+                   const char *domain,
+                   struct rk_resource_record *head,
+                   krb5_realm **realms)
 {
     struct rk_resource_record *rr;
     unsigned int n, i;
 
     for(n = 0, rr = head; rr; rr = rr->next)
-	if (rr->type == rk_ns_t_txt)
-	    ++n;
+        if (rr->type == rk_ns_t_txt)
+            ++n;
 
     if (n == 0)
-	return -1;
+        return -1;
 
     *realms = malloc ((n + 1) * sizeof(krb5_realm));
     if (*realms == NULL)
-	return krb5_enomem(context);;
+        return krb5_enomem(context);;
 
     for (i = 0; i < n + 1; ++i)
-	(*realms)[i] = NULL;
+        (*realms)[i] = NULL;
 
     for (i = 0, rr = head; rr; rr = rr->next) {
-	if (rr->type == rk_ns_t_txt) {
-	    char *tmp = NULL;
-	    int invalid_tld = 1;
+        if (rr->type == rk_ns_t_txt) {
+            char *tmp = NULL;
+            int invalid_tld = 1;
 
-	    /* Check for a gTLD controlled interruption */
-	    if (strcmp("Your DNS configuration needs immediate "
-			"attention see https://icann.org/namecollision",
-			rr->u.txt) != 0) {
-		invalid_tld = 0;
-		tmp = strdup(rr->u.txt);
-	    }
-	    if (tmp == NULL) {
-		for (i = 0; i < n; ++i)
-		    free ((*realms)[i]);
-		free (*realms);
-		if (invalid_tld) {
-		    krb5_warnx(context,
-			       "Realm lookup failed: "
-			       "Domain '%s' needs immediate attention "
-			       "see https://icann.org/namecollision",
-				domain);
-		    return KRB5_KDC_UNREACH;
-		}
-		return krb5_enomem(context);;
-	    }
-	    (*realms)[i] = tmp;
-	    ++i;
-	}
+            /* Check for a gTLD controlled interruption */
+            if (strcmp("Your DNS configuration needs immediate "
+                        "attention see https://icann.org/namecollision",
+                        rr->u.txt) != 0) {
+                invalid_tld = 0;
+                tmp = strdup(rr->u.txt);
+            }
+            if (tmp == NULL) {
+                for (i = 0; i < n; ++i)
+                    free ((*realms)[i]);
+                free (*realms);
+                if (invalid_tld) {
+                    krb5_warnx(context,
+                               "Realm lookup failed: "
+                               "Domain '%s' needs immediate attention "
+                               "see https://icann.org/namecollision",
+                                domain);
+                    return KRB5_KDC_UNREACH;
+                }
+                return krb5_enomem(context);;
+            }
+            (*realms)[i] = tmp;
+            ++i;
+        }
     }
     return 0;
 }
 
 static int
 dns_find_realm(krb5_context context,
-	       const char *domain,
-	       krb5_realm **realms)
+               const char *domain,
+               krb5_realm **realms)
 {
     static const char *const default_labels[] = { "_kerberos", NULL };
     char dom[MAXHOSTNAMELEN];
@@ -117,35 +117,35 @@ dns_find_realm(krb5_context context,
     int i, ret = 0;
 
     config_labels = krb5_config_get_strings(context, NULL, "libdefaults",
-					    "dns_lookup_realm_labels", NULL);
+                                            "dns_lookup_realm_labels", NULL);
     if(config_labels != NULL)
-	labels = (const char *const *)config_labels;
+        labels = (const char *const *)config_labels;
     else
-	labels = default_labels;
+        labels = default_labels;
     if(*domain == '.')
-	domain++;
+        domain++;
     for (i = 0; labels[i] != NULL; i++) {
-	ret = snprintf(dom, sizeof(dom), "%s.%s.", labels[i], domain);
-	if(ret < 0 || (size_t)ret >= sizeof(dom)) {
-	    ret = krb5_enomem(context);
-	    goto out;
-	}
-    	r = rk_dns_lookup(dom, "TXT");
-    	if(r != NULL) {
-	    ret = copy_txt_to_realms(context, domain, r->head, realms);
-	    rk_dns_free_data(r);
-	    if(ret == 0)
-		goto out;
-	}
+        ret = snprintf(dom, sizeof(dom), "%s.%s.", labels[i], domain);
+        if(ret < 0 || (size_t)ret >= sizeof(dom)) {
+            ret = krb5_enomem(context);
+            goto out;
+        }
+        r = rk_dns_lookup(dom, "TXT");
+        if(r != NULL) {
+            ret = copy_txt_to_realms(context, domain, r->head, realms);
+            rk_dns_free_data(r);
+            if(ret == 0)
+                goto out;
+        }
     }
     krb5_set_error_message(context, KRB5_KDC_UNREACH,
-			    "Realm lookup failed: "
-			    "No DNS TXT record for %s",
-			    domain);
+                           "Realm lookup failed: "
+                           "No DNS TXT record for %s",
+                           domain);
     ret = KRB5_KDC_UNREACH;
 out:
     if (config_labels)
-	krb5_config_free_strings(config_labels);
+        krb5_config_free_strings(config_labels);
     return ret;
 }
 
@@ -156,16 +156,16 @@ out:
 
 static int
 config_find_realm(krb5_context context,
-		  const char *domain,
-		  krb5_realm **realms)
+                  const char *domain,
+                  krb5_realm **realms)
 {
     char **tmp = krb5_config_get_strings (context, NULL,
-					  "domain_realm",
-					  domain,
-					  NULL);
+                                          "domain_realm",
+                                          domain,
+                                          NULL);
 
     if (tmp == NULL)
-	return -1;
+        return -1;
     *realms = tmp;
     return 0;
 }
@@ -203,8 +203,8 @@ _krb5_get_host_realm_int(krb5_context context,
         if (config_find_realm(context, p, realms) == 0) {
             if (strcasecmp(*realms[0], "dns_locate") != 0)
                 break;
-	    krb5_free_host_realm(context, *realms);
-	    *realms = NULL;
+            krb5_free_host_realm(context, *realms);
+            *realms = NULL;
             if (!use_dns)
                 continue;
             for (q = host; q != NULL; q = strchr(q + 1, '.'))
@@ -267,8 +267,8 @@ _krb5_get_host_realm_int(krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_get_host_realm(krb5_context context,
-		    const char *targethost,
-		    krb5_realm **realms)
+                    const char *targethost,
+                    krb5_realm **realms)
 {
     const char *host = targethost;
     char hostname[MAXHOSTNAMELEN];
@@ -276,11 +276,11 @@ krb5_get_host_realm(krb5_context context,
     int use_dns;
 
     if (host == NULL) {
-	if (gethostname (hostname, sizeof(hostname))) {
-	    *realms = NULL;
-	    return errno;
-	}
-	host = hostname;
+        if (gethostname (hostname, sizeof(hostname))) {
+            *realms = NULL;
+            return errno;
+        }
+        host = hostname;
     }
 
     /*
@@ -291,18 +291,18 @@ krb5_get_host_realm(krb5_context context,
 
     ret = _krb5_get_host_realm_int (context, host, use_dns, realms);
     if (ret && targethost != NULL) {
-	/*
-	 * If there was no realm mapping for the host (and we wasn't
-	 * looking for ourself), guess at the local realm, maybe our
-	 * KDC knows better then we do and we get a referral back.
-	 */
-	ret = krb5_get_default_realms(context, realms);
-	if (ret) {
-	    krb5_set_error_message(context, KRB5_ERR_HOST_REALM_UNKNOWN,
-				   N_("Unable to find realm of host %s", ""),
-				   host);
-	    return KRB5_ERR_HOST_REALM_UNKNOWN;
-	}
+        /*
+         * If there was no realm mapping for the host (and we wasn't
+         * looking for ourself), guess at the local realm, maybe our
+         * KDC knows better then we do and we get a referral back.
+         */
+        ret = krb5_get_default_realms(context, realms);
+        if (ret) {
+            krb5_set_error_message(context, KRB5_ERR_HOST_REALM_UNKNOWN,
+                                   N_("Unable to find realm of host %s", ""),
+                                   host);
+            return KRB5_ERR_HOST_REALM_UNKNOWN;
+        }
     }
     return ret;
 }

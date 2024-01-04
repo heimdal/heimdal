@@ -35,28 +35,28 @@
 
 static gss_mo_desc ntlm_mo[] = {
     {
-	GSS_C_MA_SASL_MECH_NAME,
-	GSS_MO_MA,
-	"SASL mech name",
-	rk_UNCONST("NTLM"),
-	_gss_mo_get_ctx_as_string,
-	NULL
+        GSS_C_MA_SASL_MECH_NAME,
+        GSS_MO_MA,
+        "SASL mech name",
+        rk_UNCONST("NTLM"),
+        _gss_mo_get_ctx_as_string,
+        NULL
     },
     {
-	GSS_C_MA_MECH_NAME,
-	GSS_MO_MA,
-	"Mechanism name",
-	rk_UNCONST("NTLMSPP"),
-	_gss_mo_get_ctx_as_string,
-	NULL
+        GSS_C_MA_MECH_NAME,
+        GSS_MO_MA,
+        "Mechanism name",
+        rk_UNCONST("NTLMSPP"),
+        _gss_mo_get_ctx_as_string,
+        NULL
     },
     {
-	GSS_C_MA_MECH_DESCRIPTION,
-	GSS_MO_MA,
-	"Mechanism description",
-	rk_UNCONST("Heimdal NTLMSSP Mechanism"),
-	_gss_mo_get_ctx_as_string,
-	NULL
+        GSS_C_MA_MECH_DESCRIPTION,
+        GSS_MO_MA,
+        "Mechanism description",
+        rk_UNCONST("Heimdal NTLMSSP Mechanism"),
+        _gss_mo_get_ctx_as_string,
+        NULL
     }
 };
 
@@ -136,5 +136,5 @@ static gssapi_mech_interface_desc ntlm_mech = {
 gssapi_mech_interface
 __gss_ntlm_initialize(void)
 {
-	return &ntlm_mech;
+    return &ntlm_mech;
 }

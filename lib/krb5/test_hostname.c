@@ -46,24 +46,24 @@ expand_hostname(krb5_context context, const char *host)
 
     ret = krb5_expand_hostname(context, host, &h);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_expand_hostname(%s)", host);
+        krb5_err(context, 1, ret, "krb5_expand_hostname(%s)", host);
 
     if (debug_flag)
-	printf("hostname: %s -> %s\n", host, h);
+        printf("hostname: %s -> %s\n", host, h);
 
     free(h);
 
     ret = krb5_expand_hostname_realms(context, host, &h, &r);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_expand_hostname_realms(%s)", host);
+        krb5_err(context, 1, ret, "krb5_expand_hostname_realms(%s)", host);
 
     if (debug_flag) {
-	int j;
+        int j;
 
-	printf("hostname: %s -> %s\n", host, h);
-	for (j = 0; r[j]; j++) {
-	    printf("\trealm: %s\n", r[j]);
-	}
+        printf("hostname: %s -> %s\n", host, h);
+        for (j = 0; r[j]; j++) {
+            printf("\trealm: %s\n", r[j]);
+        }
     }
     free(h);
     krb5_free_host_realm(context, r);
@@ -77,16 +77,16 @@ test_expand_hostname(krb5_context context)
     int i, errors = 0;
 
     struct t {
-	krb5_error_code ret;
-	const char *orig_hostname;
-	const char *new_hostname;
+        krb5_error_code ret;
+        const char *orig_hostname;
+        const char *new_hostname;
     } tests[] = {
-	{ 0, "pstn1.su.se", "pstn1.su.se" },
-	{ 0, "pstnproxy.su.se", "pstnproxy.su.se" },
+        { 0, "pstn1.su.se", "pstn1.su.se" },
+        { 0, "pstnproxy.su.se", "pstnproxy.su.se" },
     };
 
     for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++) {
-	errors += expand_hostname(context, tests[i].orig_hostname);
+        errors += expand_hostname(context, tests[i].orig_hostname);
     }
 
     return errors;
@@ -119,14 +119,14 @@ main(int argc, char **argv)
     setprogname(argv[0]);
 
     if(getarg(args, sizeof(args) / sizeof(args[0]), argc, argv, &optidx))
-	usage(1);
+        usage(1);
 
     if (help_flag)
-	usage (0);
+        usage (0);
 
     if(version_flag){
-	print_version(NULL);
-	exit(0);
+        print_version(NULL);
+        exit(0);
     }
 
     argc -= optidx;
@@ -134,12 +134,12 @@ main(int argc, char **argv)
 
     ret = krb5_init_context(&context);
     if (ret)
-	errx (1, "krb5_init_context failed: %d", ret);
+        errx (1, "krb5_init_context failed: %d", ret);
 
     if (argc > 0) {
-	while (argc-- > 0)
-	    errors += expand_hostname(context, *argv++);
-	return errors;
+        while (argc-- > 0)
+            errors += expand_hostname(context, *argv++);
+        return errors;
     }
 
     errors += test_expand_hostname(context);

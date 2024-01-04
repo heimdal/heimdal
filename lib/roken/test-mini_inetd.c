@@ -56,7 +56,7 @@ get_address(int flags, struct addrinfo ** ret)
 
     rv = getaddrinfo("127.0.0.1", PORT_S, &ai, ret);
     if (rv)
-	warnx("getaddrinfo: %s", gai_strerror(rv));
+        warnx("getaddrinfo: %s", gai_strerror(rv));
     return rv;
 }
 
@@ -69,28 +69,28 @@ get_connected_socket(rk_socket_t * s_ret)
 
     rv = get_address(0, &ai);
     if (rv)
-	return rv;
+        return rv;
 
     s = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
     if (rk_IS_BAD_SOCKET(s)) {
-	rv = 1;
-	goto done;
+        rv = 1;
+        goto done;
     }
 
     rv = connect(s, ai->ai_addr, ai->ai_addrlen);
     if (rk_IS_SOCKET_ERROR(rv))
-	goto done;
+        goto done;
 
     *s_ret = s;
     s = rk_INVALID_SOCKET;
     rv = 0;
 
- done:
+done:
     if (!rk_IS_BAD_SOCKET(s))
-	rk_closesocket(s);
+        rk_closesocket(s);
 
     if (ai)
-	freeaddrinfo(ai);
+        freeaddrinfo(ai);
 
     return (rv) ? rk_SOCK_ERRNO : 0;
 }
@@ -113,41 +113,41 @@ test_simple_echo_client(void)
     fprintf(stderr, "[%s] Getting connected socket...", getprogname());
     rv = get_connected_socket(&s);
     if (rv) {
-	fprintf(stderr, "\n[%s] get_connected_socket() failed (%s)\n",
-		getprogname(), strerror(rk_SOCK_ERRNO));
-	return 1;
+        fprintf(stderr, "\n[%s] get_connected_socket() failed (%s)\n",
+                getprogname(), strerror(rk_SOCK_ERRNO));
+        return 1;
     }
 
     fprintf(stderr, "[%s] done\n", getprogname());
 
     for (i=0; i < sizeof(test_strings)/sizeof(test_strings[0]); i++) {
-	rv = send(s, test_strings[i], strlen(test_strings[i]), 0);
-	if (rk_IS_SOCKET_ERROR(rv)) {
-	    fprintf(stderr, "[%s] send() failure (%s)\n",
-		    getprogname(), strerror(rk_SOCK_ERRNO));
-	    rk_closesocket(s);
-	    return 1;
-	}
+        rv = send(s, test_strings[i], strlen(test_strings[i]), 0);
+        if (rk_IS_SOCKET_ERROR(rv)) {
+            fprintf(stderr, "[%s] send() failure (%s)\n",
+                    getprogname(), strerror(rk_SOCK_ERRNO));
+            rk_closesocket(s);
+            return 1;
+        }
 
-	rv = recv(s, buf, sizeof(buf), 0);
-	if (rk_IS_SOCKET_ERROR(rv)) {
-	    fprintf (stderr, "[%s] recv() failure (%s)\n",
-		     getprogname(), strerror(rk_SOCK_ERRNO));
-	    rk_closesocket(s);
-	    return 1;
-	}
+        rv = recv(s, buf, sizeof(buf), 0);
+        if (rk_IS_SOCKET_ERROR(rv)) {
+            fprintf (stderr, "[%s] recv() failure (%s)\n",
+                     getprogname(), strerror(rk_SOCK_ERRNO));
+            rk_closesocket(s);
+            return 1;
+        }
 
-	if (rv == 0) {
-	    fprintf (stderr, "[%s] No data received\n", prog);
-	    rk_closesocket(s);
-	    return 1;
-	}
+        if (rv == 0) {
+            fprintf (stderr, "[%s] No data received\n", prog);
+            rk_closesocket(s);
+            return 1;
+        }
 
-	if (rv != strlen(test_strings[i])) {
-	    fprintf (stderr, "[%s] Data length mismatch %d != %zu\n", prog, rv, strlen(test_strings[i]));
-	    rk_closesocket(s);
-	    return 1;
-	}
+        if (rv != strlen(test_strings[i])) {
+            fprintf (stderr, "[%s] Data length mismatch %d != %zu\n", prog, rv, strlen(test_strings[i]));
+            rk_closesocket(s);
+            return 1;
+        }
     }
 
     fprintf (stderr, "[%s] Done\n", prog);
@@ -162,53 +162,53 @@ test_simple_echo_socket(void)
     fprintf (stderr, "[%s] Starting echo test with sockets\n", prog);
 
     if (is_client) {
-	return test_simple_echo_client();
+        return test_simple_echo_client();
     } else {
 
-	rk_socket_t s = rk_INVALID_SOCKET;
+        rk_socket_t s = rk_INVALID_SOCKET;
 
-	fprintf (stderr, "[%s] Listening for connections...\n", prog);
-	mini_inetd(htons(PORT), &s);
-	if (rk_IS_BAD_SOCKET(s)) {
-	    fprintf (stderr, "[%s] Connect failed (%s)\n",
-		     getprogname(), strerror(rk_SOCK_ERRNO));
-	} else {
-	    fprintf (stderr, "[%s] Connected\n", prog);
-	}
+        fprintf (stderr, "[%s] Listening for connections...\n", prog);
+        mini_inetd(htons(PORT), &s);
+        if (rk_IS_BAD_SOCKET(s)) {
+            fprintf (stderr, "[%s] Connect failed (%s)\n",
+                     getprogname(), strerror(rk_SOCK_ERRNO));
+        } else {
+            fprintf (stderr, "[%s] Connected\n", prog);
+        }
 
-	{
-	    char buf[81];
-	    int rv, srv;
+        {
+            char buf[81];
+            int rv, srv;
 
-	    while ((rv = recv(s, buf, sizeof(buf), 0)) != 0 && !rk_IS_SOCKET_ERROR(rv)) {
-		buf[rv] = 0;
-		fprintf(stderr, "[%s] Received [%s]\n", prog, buf);
+            while ((rv = recv(s, buf, sizeof(buf), 0)) != 0 && !rk_IS_SOCKET_ERROR(rv)) {
+                buf[rv] = 0;
+                fprintf(stderr, "[%s] Received [%s]\n", prog, buf);
 
-		/* simple echo */
-		srv = send(s, buf, rv, 0);
-		if (srv != rv) {
-		    if (rk_IS_SOCKET_ERROR(srv))
-			fprintf(stderr, "[%s] send() error [%s]\n",
-				getprogname(), strerror(rk_SOCK_ERRNO));
-		    else
-			fprintf(stderr, "[%s] send() size mismatch %d != %d",
-				getprogname(), srv, rv);
-		}
+                /* simple echo */
+                srv = send(s, buf, rv, 0);
+                if (srv != rv) {
+                    if (rk_IS_SOCKET_ERROR(srv))
+                        fprintf(stderr, "[%s] send() error [%s]\n",
+                                getprogname(), strerror(rk_SOCK_ERRNO));
+                    else
+                        fprintf(stderr, "[%s] send() size mismatch %d != %d",
+                                getprogname(), srv, rv);
+                }
 
-		if (strcmp(buf, "exit") == 0) {
-		    fprintf(stderr, "[%s] Exiting...\n", prog);
-		    shutdown(s, SD_SEND);
-		    rk_closesocket(s);
-		    return 0;
-		}
-	    }
+                if (strcmp(buf, "exit") == 0) {
+                    fprintf(stderr, "[%s] Exiting...\n", prog);
+                    shutdown(s, SD_SEND);
+                    rk_closesocket(s);
+                    return 0;
+                }
+            }
 
-	    fprintf(stderr, "[%s] recv() failed (%s)\n",
-		    getprogname(),
-		    strerror(rk_SOCK_ERRNO));
-	}
+            fprintf(stderr, "[%s] recv() failed (%s)\n",
+                    getprogname(),
+                    strerror(rk_SOCK_ERRNO));
+        }
 
-	rk_closesocket(s);
+        rk_closesocket(s);
     }
 
     return 1;
@@ -221,28 +221,28 @@ test_simple_echo(void)
 
     if (is_client) {
 
-	return test_simple_echo_client();
+        return test_simple_echo_client();
 
     } else {
 
-	fprintf (stderr, "[%s] Listening for connections...\n", prog);
-	mini_inetd(htons(PORT), NULL);
-	fprintf (stderr, "[%s] Connected\n", prog);
+        fprintf (stderr, "[%s] Listening for connections...\n", prog);
+        mini_inetd(htons(PORT), NULL);
+        fprintf (stderr, "[%s] Connected\n", prog);
 
-	{
-	    char buf[81];
-	    while (gets(buf)) {
-		fprintf(stderr, "[%s] Received [%s]\n", prog, buf);
+        {
+            char buf[81];
+            while (gets(buf)) {
+                fprintf(stderr, "[%s] Received [%s]\n", prog, buf);
 
-		if (strcmp(buf, "exit") == 0)
-		    return 0;
+                if (strcmp(buf, "exit") == 0)
+                    return 0;
 
-		/* simple echo */
-		puts(buf);
-	    }
+                /* simple echo */
+                puts(buf);
+            }
 
-	    fprintf(stderr, "[%s] gets() failed (%s)\n", prog, _strerror("gets"));
-	}
+            fprintf(stderr, "[%s] gets() failed (%s)\n", prog, _strerror("gets"));
+        }
     }
 
     return 1;
@@ -254,7 +254,7 @@ do_client(void)
     int rv = 0;
 
     if (rk_SOCK_INIT())
-	errx(1, "Failed to initialize sockets (%s)", strerror(rk_SOCK_ERRNO));
+        errx(1, "Failed to initialize sockets (%s)", strerror(rk_SOCK_ERRNO));
 
     prog = "Client";
     is_client = 1;
@@ -274,7 +274,7 @@ do_server(void)
     int rv = 0;
 
     if (rk_SOCK_INIT())
-	errx(1, "Failed to initialize sockets (%s)", strerror(rk_SOCK_ERRNO));
+        errx(1, "Failed to initialize sockets (%s)", strerror(rk_SOCK_ERRNO));
 
     prog = "Server";
 
@@ -303,8 +303,8 @@ do_test(char * path)
 
     p_server = _spawnl(_P_NOWAIT, path, path, "--server", NULL);
     if (p_server <= 0) {
-	fprintf(stderr, "%s: %s", path, _strerror("Can't start server process"));
-	return 1;
+        fprintf(stderr, "%s: %s", path, _strerror("Can't start server process"));
+        return 1;
     }
 #ifdef _WIN32
     /* On Windows, the _spawn*() functions return a process handle on
@@ -317,11 +317,11 @@ do_test(char * path)
 
     p_client = _spawnl(_P_NOWAIT, path, path, "--client", NULL);
     if (p_client <= 0) {
-	fprintf(stderr, "%s: %s", path, _strerror("Can't start client process"));
-	fprintf(stderr, "Waiting for server process to terminate ...");
-	wait_for_process_timed(p_server, wait_callback, NULL, 5);
-	fprintf(stderr, "DONE\n");
-	return 1;
+        fprintf(stderr, "%s: %s", path, _strerror("Can't start client process"));
+        fprintf(stderr, "Waiting for server process to terminate ...");
+        wait_for_process_timed(p_server, wait_callback, NULL, 5);
+        fprintf(stderr, "DONE\n");
+        return 1;
     }
 #ifdef _WIN32
     p_client = GetProcessId((HANDLE) p_client);
@@ -331,25 +331,25 @@ do_test(char * path)
     fprintf(stderr, "Waiting for client process to terminate ...");
     client_rv = wait_for_process_timed(p_client, wait_callback, NULL, 5);
     if (SE_IS_ERROR(client_rv)) {
-	fprintf(stderr, "\nwait_for_process_timed() failed for client. rv=%d\n", client_rv);
+        fprintf(stderr, "\nwait_for_process_timed() failed for client. rv=%d\n", client_rv);
     } else {
-	fprintf(stderr, "DONE\n");
+        fprintf(stderr, "DONE\n");
     }
 
     fprintf(stderr, "Waiting for server process to terminate ...");
     server_rv = wait_for_process_timed(p_server, wait_callback, NULL, 5);
     if (SE_IS_ERROR(server_rv)) {
-	fprintf(stderr, "\nwait_for_process_timed() failed for server. rv=%d\n", server_rv);
+        fprintf(stderr, "\nwait_for_process_timed() failed for server. rv=%d\n", server_rv);
     } else {
-	fprintf(stderr, "DONE\n");
+        fprintf(stderr, "DONE\n");
     }
 
     if (client_rv == 0 && server_rv == 0) {
-	fprintf(stderr, "PASS\n");
-	return 0;
+        fprintf(stderr, "PASS\n");
+        return 0;
     } else {
-	fprintf(stderr, "FAIL: Client rv=%d, Server rv=%d\n", client_rv, server_rv);
-	return 1;
+        fprintf(stderr, "FAIL: Client rv=%d, Server rv=%d\n", client_rv, server_rv);
+        return 1;
     }
 }
 
@@ -358,14 +358,14 @@ int main(int argc, char ** argv)
     setprogname(argv[0]);
 
     if (argc == 2 && strcmp(argv[1], "--client") == 0)
-	return do_client();
+        return do_client();
     else if (argc == 2 && strcmp(argv[1], "--server") == 0)
-	return do_server();
+        return do_server();
     else if (argc == 1)
-	return do_test(argv[0]);
+        return do_test(argv[0]);
     else {
-	printf ("%s: Test mini_inetd() function.  Run with no arguments to start test\n",
-		argv[0]);
-	return 1;
+        printf ("%s: Test mini_inetd() function.  Run with no arguments to start test\n",
+                argv[0]);
+        return 1;
     }
 }

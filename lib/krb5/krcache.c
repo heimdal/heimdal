@@ -192,8 +192,8 @@ typedef heim_base_atomic(key_serial_t) atomic_key_serial_t;
 typedef union _krb5_krcache_and_princ_id {
     heim_base_atomic(uint64_t) krcu_cache_and_princ_id;
     struct {
-	atomic_key_serial_t cache_id;	/* keyring ID representing ccache */
-	atomic_key_serial_t princ_id;	/* key ID holding principal info */
+        atomic_key_serial_t cache_id;	/* keyring ID representing ccache */
+        atomic_key_serial_t princ_id;	/* key ID holding principal info */
     } krcu_id;
     #define krcu_cache_id		krcu_id.cache_id
     #define krcu_princ_id		krcu_id.princ_id
@@ -227,14 +227,14 @@ krcc_get_first(krb5_context, krb5_ccache id, krb5_cc_cursor *cursor);
 
 static krb5_error_code KRB5_CALLCONV
 krcc_get_next(krb5_context context,
-	      krb5_ccache id,
-	      krb5_cc_cursor *cursor,
-	      krb5_creds *creds);
+              krb5_ccache id,
+              krb5_cc_cursor *cursor,
+              krb5_creds *creds);
 
 static krb5_error_code KRB5_CALLCONV
 krcc_end_get(krb5_context context,
-	     krb5_ccache id,
-	     krb5_cc_cursor *cursor);
+             krb5_ccache id,
+             krb5_cc_cursor *cursor);
 
 static krb5_error_code KRB5_CALLCONV
 krcc_end_cache_get(krb5_context context, krb5_cc_cursor cursor);
@@ -244,29 +244,29 @@ clear_cache_keyring(krb5_context context, atomic_key_serial_t *pcache_id);
 
 static krb5_error_code
 alloc_cache(krb5_context context,
- 	    key_serial_t collection_id,
-	    key_serial_t cache_id,
-	    const char *anchor_name,
-	    const char *collection_name,
-	    const char *subsidiary_name,
-	    krb5_krcache **data);
+            key_serial_t collection_id,
+            key_serial_t cache_id,
+            const char *anchor_name,
+            const char *collection_name,
+            const char *subsidiary_name,
+            krb5_krcache **data);
 
 static krb5_error_code
 save_principal(krb5_context context,
-	       key_serial_t cache_id,
-	       krb5_const_principal princ,
-	       atomic_key_serial_t *pprinc_id);
+               key_serial_t cache_id,
+               krb5_const_principal princ,
+               atomic_key_serial_t *pprinc_id);
 
 static krb5_error_code
 save_time_offsets(krb5_context context,
-		  key_serial_t cache_id,
-		  int32_t sec_offset,
-		  int32_t usec_offset);
+                  key_serial_t cache_id,
+                  int32_t sec_offset,
+                  int32_t usec_offset);
 
 static void
 update_change_time(krb5_context context,
-		   krb5_timestamp now,
-		   krb5_krcache *d);
+                   krb5_timestamp now,
+                   krb5_krcache *d);
 
 /*
  * GET_PERSISTENT(uid) acquires the persistent keyring for uid, or falls back
@@ -323,23 +323,23 @@ session_write_anchor(void)
  */
 static krb5_error_code
 find_or_create_keyring(key_serial_t parent,
-		       key_serial_t possess,
-		       const char *name,
-		       atomic_key_serial_t *pkey)
+                       key_serial_t possess,
+                       const char *name,
+                       atomic_key_serial_t *pkey)
 {
     key_serial_t key;
 
     key = keyctl_search(parent, KRCC_KEY_TYPE_KEYRING, name, possess);
     if (key == -1) {
-	if (possess != 0) {
-	    key = add_key(KRCC_KEY_TYPE_KEYRING, name, NULL, 0, possess);
-	    if (key == -1 || keyctl_link(key, parent) == -1)
-		return errno;
-	} else {
-	    key = add_key(KRCC_KEY_TYPE_KEYRING, name, NULL, 0, parent);
-	    if (key == -1)
-		return errno;
-	}
+        if (possess != 0) {
+            key = add_key(KRCC_KEY_TYPE_KEYRING, name, NULL, 0, possess);
+            if (key == -1 || keyctl_link(key, parent) == -1)
+                return errno;
+        } else {
+            key = add_key(KRCC_KEY_TYPE_KEYRING, name, NULL, 0, parent);
+            if (key == -1)
+                return errno;
+        }
     }
 
     heim_base_atomic_store(pkey, key);
@@ -353,10 +353,10 @@ find_or_create_keyring(key_serial_t parent,
  */
 static krb5_error_code
 parse_residual(krb5_context context,
-	       const char *residual,
-	       char **panchor_name,
-	       char **pcollection_name,
-	       char **psubsidiary_name)
+               const char *residual,
+               char **panchor_name,
+               char **pcollection_name,
+               char **psubsidiary_name)
 {
     char *anchor_name = NULL;
     char *collection_name = NULL;
@@ -373,30 +373,30 @@ parse_residual(krb5_context context,
     /* Parse out the anchor name.  Use the legacy anchor if not present. */
     sep = strchr(residual, ':');
     if (sep == NULL) {
-	anchor_name = strdup(KRCC_LEGACY_ANCHOR);
-	if (anchor_name == NULL)
-	    goto nomem;
+        anchor_name = strdup(KRCC_LEGACY_ANCHOR);
+        if (anchor_name == NULL)
+            goto nomem;
     } else {
-	anchor_name = strndup(residual, sep - residual);
-	if (anchor_name == NULL)
-	    goto nomem;
-	residual = sep + 1;
+        anchor_name = strndup(residual, sep - residual);
+        if (anchor_name == NULL)
+            goto nomem;
+        residual = sep + 1;
     }
 
     /* Parse out the collection and subsidiary name. */
     sep = strchr(residual, ':');
     if (sep == NULL) {
-	collection_name = strdup(residual);
-	if (collection_name == NULL)
-	    goto nomem;
+        collection_name = strdup(residual);
+        if (collection_name == NULL)
+            goto nomem;
     } else {
-	collection_name = strndup(residual, sep - residual);
-	if (collection_name == NULL)
-	    goto nomem;
+        collection_name = strndup(residual, sep - residual);
+        if (collection_name == NULL)
+            goto nomem;
 
-	subsidiary_name = strdup(sep + 1);
-	if (subsidiary_name == NULL)
-	    goto nomem;
+        subsidiary_name = strdup(sep + 1);
+        if (subsidiary_name == NULL)
+            goto nomem;
     }
 
     *panchor_name = anchor_name;
@@ -429,20 +429,20 @@ is_legacy_cache_name_p(const char *residual)
     aname = residual;
     sep = strchr(residual, ':');
     if (sep == NULL)
-	return FALSE;
+        return FALSE;
 
     alen = sep - aname;
     cname = sep + 1;
     sep = strchr(cname, ':');
     if (sep == NULL)
-	return FALSE;
+        return FALSE;
 
     clen = sep - cname;
     sname = sep + 1;
 
     return alen == legacy_len && clen == strlen(sname) &&
-	   strncmp(aname, KRCC_LEGACY_ANCHOR, alen) == 0 &&
-	   strncmp(cname, sname, clen) == 0;
+           strncmp(aname, KRCC_LEGACY_ANCHOR, alen) == 0 &&
+           strncmp(cname, sname, clen) == 0;
 }
 
 /*
@@ -451,9 +451,9 @@ is_legacy_cache_name_p(const char *residual)
  */
 static krb5_error_code
 get_default(krb5_context context,
-	    char **panchor_name,
-	    char **pcollection_name,
-	    char **psubsidiary_name)
+            char **panchor_name,
+            char **pcollection_name,
+            char **psubsidiary_name)
 {
     const char *defname;
 
@@ -461,24 +461,24 @@ get_default(krb5_context context,
 
     defname = krb5_cc_default_name(context);
     if (defname == NULL || strncmp(defname, "KEYRING:", 8) != 0)
-	return 0;
+        return 0;
 
     return parse_residual(context, defname + 8,
-			  panchor_name, pcollection_name, psubsidiary_name);
+                          panchor_name, pcollection_name, psubsidiary_name);
 }
 
 /* Create a residual identifying a subsidiary cache. */
 static krb5_error_code
 make_subsidiary_residual(krb5_context context,
-			 const char *anchor_name,
-			 const char *collection_name,
-			 const char *subsidiary_name,
-			 char **presidual)
+                         const char *anchor_name,
+                         const char *collection_name,
+                         const char *subsidiary_name,
+                         char **presidual)
 {
     if (asprintf(presidual, "%s:%s:%s", anchor_name, collection_name,
-		 subsidiary_name ? subsidiary_name : "tkt") < 0) {
-	*presidual = NULL;
-	return krb5_enomem(context);
+                 subsidiary_name ? subsidiary_name : "tkt") < 0) {
+        *presidual = NULL;
+        return krb5_enomem(context);
     }
 
     return 0;
@@ -490,9 +490,9 @@ make_subsidiary_residual(krb5_context context,
  */
 static krb5_error_code
 get_collection(krb5_context context,
-	       const char *anchor_name,
-	       const char *collection_name,
-	       atomic_key_serial_t *pcollection_id)
+               const char *anchor_name,
+               const char *collection_name,
+               atomic_key_serial_t *pcollection_id)
 {
     krb5_error_code ret;
     key_serial_t persistent_id, anchor_id, possess_id = 0;
@@ -502,58 +502,58 @@ get_collection(krb5_context context,
     heim_base_atomic_init(pcollection_id, 0);
 
     if (!anchor_name || !collection_name)
-	return KRB5_KCC_INVALID_ANCHOR;
+        return KRB5_KCC_INVALID_ANCHOR;
 
     if (strcmp(anchor_name, KRCC_PERSISTENT_ANCHOR) == 0) {
-	/*
-	 * The collection name is a uid (or empty for the current effective
-	 * uid), and we look up a fixed keyring name within the persistent
-	 * keyring for that uid.  We link it to the process keyring to ensure
-	 * that we have possession rights on the collection key.
-	 */
-	if (*collection_name != '\0') {
-	    errno = 0;
-	    uidnum = (uid_t)strtol(collection_name, &cnend, 10);
-	    if (errno || *cnend != '\0')
-		return KRB5_KCC_INVALID_UID;
-	} else {
-	    uidnum = geteuid();
-	}
+        /*
+         * The collection name is a uid (or empty for the current effective
+         * uid), and we look up a fixed keyring name within the persistent
+         * keyring for that uid.  We link it to the process keyring to ensure
+         * that we have possession rights on the collection key.
+         */
+        if (*collection_name != '\0') {
+            errno = 0;
+            uidnum = (uid_t)strtol(collection_name, &cnend, 10);
+            if (errno || *cnend != '\0')
+                return KRB5_KCC_INVALID_UID;
+        } else {
+            uidnum = geteuid();
+        }
 
-	persistent_id = GET_PERSISTENT(uidnum);
-	if (persistent_id == -1)
-	    return KRB5_KCC_INVALID_UID;
+        persistent_id = GET_PERSISTENT(uidnum);
+        if (persistent_id == -1)
+            return KRB5_KCC_INVALID_UID;
 
-	return find_or_create_keyring(persistent_id, KEY_SPEC_PROCESS_KEYRING,
-				      KRCC_PERSISTENT_KEYRING_NAME,
-				      pcollection_id);
+        return find_or_create_keyring(persistent_id, KEY_SPEC_PROCESS_KEYRING,
+                                      KRCC_PERSISTENT_KEYRING_NAME,
+                                      pcollection_id);
     }
 
     if (strcmp(anchor_name, KRCC_PROCESS_ANCHOR) == 0) {
-	anchor_id = KEY_SPEC_PROCESS_KEYRING;
+        anchor_id = KEY_SPEC_PROCESS_KEYRING;
     } else if (strcmp(anchor_name, KRCC_THREAD_ANCHOR) == 0) {
-	anchor_id = KEY_SPEC_THREAD_KEYRING;
+        anchor_id = KEY_SPEC_THREAD_KEYRING;
     } else if (strcmp(anchor_name, KRCC_SESSION_ANCHOR) == 0) {
-	anchor_id = session_write_anchor();
+        anchor_id = session_write_anchor();
     } else if (strcmp(anchor_name, KRCC_USER_ANCHOR) == 0) {
-	/*
-	 * The user keyring does not confer possession, so we need to link the
-	 * collection to the process keyring to maintain possession rights.
-	 */
-	anchor_id = KEY_SPEC_USER_KEYRING;
-	possess_id = KEY_SPEC_PROCESS_KEYRING;
+        /*
+         * The user keyring does not confer possession, so we need to link the
+         * collection to the process keyring to maintain possession rights.
+         */
+        anchor_id = KEY_SPEC_USER_KEYRING;
+        possess_id = KEY_SPEC_PROCESS_KEYRING;
     } else if (strcmp(anchor_name, KRCC_LEGACY_ANCHOR) == 0) {
-	anchor_id = session_write_anchor();
+        anchor_id = session_write_anchor();
     } else {
-	return KRB5_KCC_INVALID_ANCHOR;
+        return KRB5_KCC_INVALID_ANCHOR;
     }
 
     /* Look up the collection keyring name within the anchor keyring. */
     if (asprintf(&ckname, "%s%s", KRCC_CCCOL_PREFIX, collection_name) == -1)
-	return krb5_enomem(context);
+        return krb5_enomem(context);
 
     ret = find_or_create_keyring(anchor_id, possess_id, ckname,
-				 pcollection_id);
+                                 pcollection_id);
     free(ckname);
 
     return ret;
@@ -562,8 +562,8 @@ get_collection(krb5_context context,
 /* Store subsidiary_name into the primary index key for collection_id. */
 static krb5_error_code
 set_primary_name(krb5_context context,
-		 key_serial_t collection_id,
-		 const char *subsidiary_name)
+                 key_serial_t collection_id,
+                 const char *subsidiary_name)
 {
     krb5_error_code ret;
     krb5_storage *sp;
@@ -572,25 +572,25 @@ set_primary_name(krb5_context context,
 
     sp = krb5_storage_emem();
     if (sp == NULL) {
-	krb5_set_error_message(context, KRB5_CC_NOMEM, N_("malloc: out of memory", ""));
-	return KRB5_CC_NOMEM;
+        krb5_set_error_message(context, KRB5_CC_NOMEM, N_("malloc: out of memory", ""));
+        return KRB5_CC_NOMEM;
     }
     krb5_storage_set_byteorder(sp, KRB5_STORAGE_BYTEORDER_BE);
 
     ret = krb5_store_int32(sp, KRCC_COLLECTION_VERSION);
     if (ret)
-	goto cleanup;
+        goto cleanup;
 
     ret = krb5_store_string(sp, subsidiary_name);
     if (ret)
-	goto cleanup;
+        goto cleanup;
 
     ret = krb5_storage_to_data(sp, &payload);
     if (ret)
-	goto cleanup;
+        goto cleanup;
 
     key = add_key(KRCC_KEY_TYPE_USER, KRCC_COLLECTION_PRIMARY,
-		  payload.data, payload.length, collection_id);
+                  payload.data, payload.length, collection_id);
     ret = (key == -1) ? errno : 0;
     krb5_data_free(&payload);
 
@@ -602,10 +602,10 @@ cleanup:
 
 static krb5_error_code
 parse_index(krb5_context context,
-	    int32_t *version,
-	    char **primary,
-	    const unsigned char *payload,
-	    size_t psize)
+            int32_t *version,
+            char **primary,
+            const unsigned char *payload,
+            size_t psize)
 {
     krb5_error_code ret;
     krb5_data payload_data;
@@ -616,13 +616,13 @@ parse_index(krb5_context context,
 
     sp = krb5_storage_from_data(&payload_data);
     if (sp == NULL)
-	return KRB5_CC_NOMEM;
+        return KRB5_CC_NOMEM;
 
     krb5_storage_set_byteorder(sp, KRB5_STORAGE_BYTEORDER_BE);
 
     ret = krb5_ret_int32(sp, version);
     if (ret == 0)
-	ret = krb5_ret_string(sp, primary);
+        ret = krb5_ret_string(sp, primary);
 
     krb5_storage_free(sp);
 
@@ -636,10 +636,10 @@ parse_index(krb5_context context,
  */
 static krb5_error_code
 get_primary_name(krb5_context context,
-		 const char *anchor_name,
-		 const char *collection_name,
-		 key_serial_t collection_id,
-		 char **psubsidiary)
+                 const char *anchor_name,
+                 const char *collection_name,
+                 key_serial_t collection_id,
+                 char **psubsidiary)
 {
     krb5_error_code ret;
     key_serial_t primary_id, legacy;
@@ -651,51 +651,51 @@ get_primary_name(krb5_context context,
     *psubsidiary = NULL;
 
     primary_id = keyctl_search(collection_id, KRCC_KEY_TYPE_USER,
-			       KRCC_COLLECTION_PRIMARY, 0);
+                               KRCC_COLLECTION_PRIMARY, 0);
     if (primary_id == -1) {
-	/*
-	 * Initialize the primary key using the collection name.  We can't name
-	 * a key with the empty string, so map that to an arbitrary string.
-	 */
-	subsidiary_name = strdup((*collection_name == '\0') ? "tkt" :
-				 collection_name);
-	if (subsidiary_name == NULL) {
-	    ret = krb5_enomem(context);
-	    goto cleanup;
-	}
+        /*
+         * Initialize the primary key using the collection name.  We can't name
+         * a key with the empty string, so map that to an arbitrary string.
+         */
+        subsidiary_name = strdup((*collection_name == '\0') ? "tkt" :
+                                 collection_name);
+        if (subsidiary_name == NULL) {
+            ret = krb5_enomem(context);
+            goto cleanup;
+        }
 
-	ret = set_primary_name(context, collection_id, subsidiary_name);
-	if (ret)
-	    goto cleanup;
+        ret = set_primary_name(context, collection_id, subsidiary_name);
+        if (ret)
+            goto cleanup;
 
-	if (strcmp(anchor_name, KRCC_LEGACY_ANCHOR) == 0) {
-	    /*
-	     * Look for a cache created by old code. If we find one, add it to
-	     * the collection.
-	     */
-	    legacy = keyctl_search(KEY_SPEC_SESSION_KEYRING,
-				   KRCC_KEY_TYPE_KEYRING, subsidiary_name, 0);
-	    if (legacy != -1 && keyctl_link(legacy, collection_id) == -1) {
-		ret = errno;
-		goto cleanup;
-	    }
-	}
+        if (strcmp(anchor_name, KRCC_LEGACY_ANCHOR) == 0) {
+            /*
+             * Look for a cache created by old code. If we find one, add it to
+             * the collection.
+             */
+            legacy = keyctl_search(KEY_SPEC_SESSION_KEYRING,
+                                   KRCC_KEY_TYPE_KEYRING, subsidiary_name, 0);
+            if (legacy != -1 && keyctl_link(legacy, collection_id) == -1) {
+                ret = errno;
+                goto cleanup;
+            }
+        }
     } else {
-	/* Read, parse, and free the primary key's payload. */
-	payloadlen = keyctl_read_alloc(primary_id, &payload);
-	if (payloadlen == -1) {
-	    ret = errno;
-	    goto cleanup;
-	}
-	ret = parse_index(context, &version, &subsidiary_name, payload,
-			  payloadlen);
-	if (ret)
-	    goto cleanup;
+        /* Read, parse, and free the primary key's payload. */
+        payloadlen = keyctl_read_alloc(primary_id, &payload);
+        if (payloadlen == -1) {
+            ret = errno;
+            goto cleanup;
+        }
+        ret = parse_index(context, &version, &subsidiary_name, payload,
+                          payloadlen);
+        if (ret)
+            goto cleanup;
 
-	if (version != KRCC_COLLECTION_VERSION) {
-	    ret = KRB5_KCC_UNKNOWN_VERSION;
-	    goto cleanup;
-	}
+        if (version != KRCC_COLLECTION_VERSION) {
+            ret = KRB5_KCC_UNKNOWN_VERSION;
+            goto cleanup;
+        }
     }
 
     *psubsidiary = subsidiary_name;
@@ -722,12 +722,12 @@ generate_random_string(krb5_context context, char *s, size_t slen)
 
     p = malloc(slen);
     if (p == NULL)
-	return krb5_enomem(context);
+        return krb5_enomem(context);
 
     krb5_generate_random_block(p, slen);
 
     for (i = 0; i < slen; i++)
-	s[i] = chars[p[i] % (sizeof(chars) - 1)];
+        s[i] = chars[p[i] % (sizeof(chars) - 1)];
 
     s[i] = '\0';
     free(p);
@@ -741,9 +741,9 @@ generate_random_string(krb5_context context, char *s, size_t slen)
  */
 static krb5_error_code
 add_unique_keyring(krb5_context context,
-		   key_serial_t collection_id,
-		   char **psubsidiary,
-		   key_serial_t *pcache_id)
+                   key_serial_t collection_id,
+                   char **psubsidiary,
+                   key_serial_t *pcache_id)
 {
     key_serial_t key;
     krb5_error_code ret;
@@ -757,24 +757,24 @@ add_unique_keyring(krb5_context context,
     memcpy(uniquename, KRCC_NAME_PREFIX, sizeof(KRCC_NAME_PREFIX));
 
     for (key = -1, tries = 0; tries < 5; tries++) {
-	ret = generate_random_string(context, uniquename + prefixlen,
-				     KRCC_NAME_RAND_CHARS);
-	if (ret)
-	    return ret;
+        ret = generate_random_string(context, uniquename + prefixlen,
+                                     KRCC_NAME_RAND_CHARS);
+        if (ret)
+            return ret;
 
-	key = keyctl_search(collection_id, KRCC_KEY_TYPE_KEYRING, uniquename, 0);
-	if (key == -1) {
-	    /* Name does not already exist.  Create it to reserve the name. */
-	    key = add_key(KRCC_KEY_TYPE_KEYRING, uniquename, NULL, 0, collection_id);
-	    if (key == -1)
-		return errno;
-	    break;
-	}
+        key = keyctl_search(collection_id, KRCC_KEY_TYPE_KEYRING, uniquename, 0);
+        if (key == -1) {
+            /* Name does not already exist.  Create it to reserve the name. */
+            key = add_key(KRCC_KEY_TYPE_KEYRING, uniquename, NULL, 0, collection_id);
+            if (key == -1)
+                return errno;
+            break;
+        }
     }
 
     *psubsidiary = strdup(uniquename);
     if (*psubsidiary == NULL)
-	return krb5_enomem(context);
+        return krb5_enomem(context);
 
     *pcache_id = key;
 
@@ -783,30 +783,30 @@ add_unique_keyring(krb5_context context,
 
 static krb5_error_code
 add_cred_key(const char *name,
-	     const void *payload,
-	     size_t plen,
-	     key_serial_t cache_id,
-	     krb5_boolean legacy_type,
-	     key_serial_t *pkey)
+             const void *payload,
+             size_t plen,
+             key_serial_t cache_id,
+             krb5_boolean legacy_type,
+             key_serial_t *pkey)
 {
     key_serial_t key;
 
     *pkey = -1;
 
     if (!legacy_type) {
-	/* Try the preferred cred key type; fall back if no kernel support. */
-	key = add_key(KRCC_CRED_KEY_TYPE, name, payload, plen, cache_id);
-	if (key != -1) {
-	    *pkey = key;
-	    return 0;
-	} else if (errno != EINVAL && errno != ENODEV)
-	    return errno;
+        /* Try the preferred cred key type; fall back if no kernel support. */
+        key = add_key(KRCC_CRED_KEY_TYPE, name, payload, plen, cache_id);
+        if (key != -1) {
+            *pkey = key;
+            return 0;
+        } else if (errno != EINVAL && errno != ENODEV)
+            return errno;
     }
 
     /* Use the user key type. */
     key = add_key(KRCC_KEY_TYPE_USER, name, payload, plen, cache_id);
     if (key == -1)
-	return errno;
+        return errno;
 
     *pkey = key;
 
@@ -815,9 +815,9 @@ add_cred_key(const char *name,
 
 static void
 update_keyring_expiration(krb5_context context,
-			  krb5_ccache id,
-			  key_serial_t cache_id,
-			  krb5_timestamp now)
+                          krb5_ccache id,
+                          key_serial_t cache_id,
+                          krb5_timestamp now)
 {
     krb5_cc_cursor cursor;
     krb5_creds creds;
@@ -831,19 +831,19 @@ update_keyring_expiration(krb5_context context,
      * all start TGT keys and find out the highest endtime time.
      */
     if (krcc_get_first(context, id, &cursor) != 0)
-	return;
+        return;
 
     for (;;) {
-	if (krcc_get_next(context, id, &cursor, &creds) != 0)
-	    break;
-	if (creds.times.endtime > endtime)
-	    endtime = creds.times.endtime;
-	krb5_free_cred_contents(context, &creds);
+        if (krcc_get_next(context, id, &cursor, &creds) != 0)
+            break;
+        if (creds.times.endtime > endtime)
+            endtime = creds.times.endtime;
+        krb5_free_cred_contents(context, &creds);
     }
     (void) krcc_end_get(context, id, &cursor);
 
     if (endtime == 0)	/* No creds with end times */
-	return;
+        return;
 
     /*
      * Setting the timeout to zero would reset the timeout, so we set it to one
@@ -858,8 +858,8 @@ update_keyring_expiration(krb5_context context,
  */
 static krb5_error_code
 initialize_internal(krb5_context context,
-		    krb5_ccache id,
-		    krb5_const_principal princ)
+                    krb5_ccache id,
+                    krb5_const_principal princ)
 {
     krb5_krcache *data = KRCACHE(id);
     krb5_error_code ret;
@@ -867,25 +867,25 @@ initialize_internal(krb5_context context,
     krb5_krcache_and_princ_id ids;
 
     if (data == NULL)
-	return krb5_einval(context, 2);
+        return krb5_einval(context, 2);
 
     memset(&ids, 0, sizeof(ids));
     ids.krcu_cache_and_princ_id = heim_base_atomic_load(&data->krc_cache_and_principal_id);
 
     ret = clear_cache_keyring(context, &ids.krcu_cache_id);
     if (ret)
-	return ret;
+        return ret;
 
     if (ids.krcu_cache_id == 0) {
-	/*
-	 * The key didn't exist at resolve time, or was destroyed after resolving.
-	 * Check again and create the key if it still isn't there.
+        /*
+         * The key didn't exist at resolve time, or was destroyed after resolving.
+         * Check again and create the key if it still isn't there.
          */
-	p = strrchr(data->krc_name, ':');
-	cache_name = (p != NULL) ? p + 1 : data->krc_name;
-	ret = find_or_create_keyring(data->krc_coll_id, 0, cache_name, &ids.krcu_cache_id);
-	if (ret)
-	    return ret;
+        p = strrchr(data->krc_name, ':');
+        cache_name = (p != NULL) ? p + 1 : data->krc_name;
+        ret = find_or_create_keyring(data->krc_coll_id, 0, cache_name, &ids.krcu_cache_id);
+        if (ret)
+            return ret;
     }
 
     /*
@@ -893,26 +893,26 @@ initialize_internal(krb5_context context,
      * directly to the session keyring so that old code can see it.
      */
     if (is_legacy_cache_name_p(data->krc_name))
-	(void) keyctl_link(ids.krcu_cache_id, session_write_anchor());
+        (void) keyctl_link(ids.krcu_cache_id, session_write_anchor());
 
     if (princ != NULL) {
-	ret = save_principal(context, ids.krcu_cache_id, princ, &ids.krcu_princ_id);
-	if (ret)
-	    return ret;
+        ret = save_principal(context, ids.krcu_cache_id, princ, &ids.krcu_princ_id);
+        if (ret)
+            return ret;
     } else
-	ids.krcu_princ_id = 0;
+        ids.krcu_princ_id = 0;
 
     /*
      * Save time offset if it is valid and this is not a legacy cache.  Legacy
      * applications would fail to parse the new key in the cache keyring.
      */
     if (context->kdc_sec_offset && !is_legacy_cache_name_p(data->krc_name)) {
-	ret = save_time_offsets(context,
-				ids.krcu_cache_id,
-				context->kdc_sec_offset,
-				context->kdc_usec_offset);
-	if (ret)
-	    return ret;
+        ret = save_time_offsets(context,
+                                ids.krcu_cache_id,
+                                context->kdc_sec_offset,
+                                context->kdc_usec_offset);
+        if (ret)
+            return ret;
     }
 
     /* update cache and principal IDs atomically */
@@ -928,14 +928,14 @@ krcc_initialize(krb5_context context, krb5_ccache id, krb5_principal princ)
     krb5_error_code ret;
 
     if (data == NULL)
-	return krb5_einval(context, 2);
+        return krb5_einval(context, 2);
 
     if (princ == NULL)
-	return KRB5_CC_BADNAME;
+        return KRB5_CC_BADNAME;
 
     ret = initialize_internal(context, id, princ);
     if (ret == 0)
-	update_change_time(context, 0, data);
+        update_change_time(context, 0, data);
 
     return ret;
 }
@@ -947,7 +947,7 @@ krcc_close(krb5_context context, krb5_ccache id)
     krb5_krcache *data = KRCACHE(id);
 
     if (data == NULL)
-	return krb5_einval(context, 2);
+        return krb5_einval(context, 2);
 
     free(data->krc_subsidiary);
     free(data->krc_collection);
@@ -962,7 +962,7 @@ krcc_close(krb5_context context, krb5_ccache id)
  */
 static krb5_error_code
 clear_cache_keyring(krb5_context context,
-		    atomic_key_serial_t *pcache_id)
+                    atomic_key_serial_t *pcache_id)
 {
     int res;
     key_serial_t cache_id = heim_base_atomic_load(pcache_id);
@@ -970,17 +970,17 @@ clear_cache_keyring(krb5_context context,
     _krb5_debug(context, 10, "clear_cache_keyring: cache_id %d\n", cache_id);
 
     if (cache_id != 0) {
-	res = keyctl_clear(cache_id);
-	if (res == -1 && (errno == EACCES || errno == ENOKEY)) {
-	    /*
-	     * Possibly the keyring was destroyed between krcc_resolve() and now;
-	     * if we really don't have permission, we will fail later.
-	     */
-	    res = 0;
-	    heim_base_atomic_store(pcache_id, 0);
-	}
-	if (res == -1)
-	    return errno;
+        res = keyctl_clear(cache_id);
+        if (res == -1 && (errno == EACCES || errno == ENOKEY)) {
+            /*
+             * Possibly the keyring was destroyed between krcc_resolve() and now;
+             * if we really don't have permission, we will fail later.
+             */
+            res = 0;
+            heim_base_atomic_store(pcache_id, 0);
+        }
+        if (res == -1)
+            return errno;
     }
 
     return 0;
@@ -995,21 +995,21 @@ krcc_destroy(krb5_context context, krb5_ccache id)
     int res;
 
     if (data == NULL)
-	return krb5_einval(context, 2);
+        return krb5_einval(context, 2);
 
     /* no atomics, destroy is not thread-safe */
     (void) clear_cache_keyring(context, &data->krc_cache_id);
 
     if (data->krc_cache_id != 0) {
-	res = keyctl_unlink(data->krc_cache_id, data->krc_coll_id);
-	if (res < 0) {
-	    ret = errno;
-	    _krb5_debug(context, 10, "unlinking key %d from ring %d: %s",
-			data->krc_cache_id, data->krc_coll_id, error_message(errno));
-	}
-	/* If this is a legacy cache, unlink it from the session anchor. */
-	if (is_legacy_cache_name_p(data->krc_name))
-	    (void) keyctl_unlink(data->krc_cache_id, session_write_anchor());
+        res = keyctl_unlink(data->krc_cache_id, data->krc_coll_id);
+        if (res < 0) {
+            ret = errno;
+            _krb5_debug(context, 10, "unlinking key %d from ring %d: %s",
+                        data->krc_cache_id, data->krc_coll_id, error_message(errno));
+        }
+        /* If this is a legacy cache, unlink it from the session anchor. */
+        if (is_legacy_cache_name_p(data->krc_name))
+            (void) keyctl_unlink(data->krc_cache_id, session_write_anchor());
     }
 
     heim_base_atomic_store(&data->krc_princ_id, 0);
@@ -1021,12 +1021,12 @@ krcc_destroy(krb5_context context, krb5_ccache id)
 /* Create a cache handle for a cache ID. */
 static krb5_error_code
 make_cache(krb5_context context,
-	   key_serial_t collection_id,
-	   key_serial_t cache_id,
-	   const char *anchor_name,
-	   const char *collection_name,
-	   const char *subsidiary_name,
-	   krb5_ccache *cache)
+           key_serial_t collection_id,
+           key_serial_t cache_id,
+           const char *anchor_name,
+           const char *collection_name,
+           const char *subsidiary_name,
+           krb5_ccache *cache)
 {
     krb5_error_code ret;
     krb5_krcache *data;
@@ -1035,20 +1035,20 @@ make_cache(krb5_context context,
     /* Determine the key containing principal information, if present. */
     princ_id = keyctl_search(cache_id, KRCC_KEY_TYPE_USER, KRCC_SPEC_PRINC_KEYNAME, 0);
     if (princ_id == -1)
-	princ_id = 0;
+        princ_id = 0;
 
     ret = alloc_cache(context, collection_id, cache_id,
-		      anchor_name, collection_name, subsidiary_name, &data);
+                      anchor_name, collection_name, subsidiary_name, &data);
     if (ret)
-	return ret;
+        return ret;
 
     if (*cache == NULL) {
-	ret = _krb5_cc_allocate(context, &krb5_krcc_ops, cache);
-	if (ret) {
-	    free(data->krc_name);
-	    free(data);
-	    return ret;
-	}
+        ret = _krb5_cc_allocate(context, &krb5_krcc_ops, cache);
+        if (ret) {
+            free(data->krc_name);
+            free(data);
+            return ret;
+        }
     }
 
     data->krc_princ_id = princ_id;
@@ -1062,9 +1062,9 @@ make_cache(krb5_context context,
 /* Create a keyring ccache handle for the given residual string. */
 static krb5_error_code KRB5_CALLCONV
 krcc_resolve_2(krb5_context context,
-	       krb5_ccache *id,
-	       const char *residual,
-	       const char *sub)
+               krb5_ccache *id,
+               const char *residual,
+               const char *sub)
 {
     krb5_error_code ret;
     atomic_key_serial_t collection_id;
@@ -1074,7 +1074,7 @@ krcc_resolve_2(krb5_context context,
     ret = parse_residual(context, residual, &anchor_name, &collection_name,
                          &subsidiary_name);
     if (ret)
-	goto cleanup;
+        goto cleanup;
     if (sub) {
         free(subsidiary_name);
         if ((subsidiary_name = strdup(sub)) == NULL) {
@@ -1085,26 +1085,26 @@ krcc_resolve_2(krb5_context context,
 
     ret = get_collection(context, anchor_name, collection_name, &collection_id);
     if (ret)
-	goto cleanup;
+        goto cleanup;
 
     if (subsidiary_name == NULL) {
-	/* Retrieve or initialize the primary name for the collection. */
-	ret = get_primary_name(context, anchor_name, collection_name,
-			       collection_id, &subsidiary_name);
-	if (ret)
-	    goto cleanup;
+        /* Retrieve or initialize the primary name for the collection. */
+        ret = get_primary_name(context, anchor_name, collection_name,
+                               collection_id, &subsidiary_name);
+        if (ret)
+            goto cleanup;
     }
 
     /* Look up the cache keyring ID, if the cache is already initialized. */
     cache_id = keyctl_search(collection_id, KRCC_KEY_TYPE_KEYRING,
-			     subsidiary_name, 0);
+                             subsidiary_name, 0);
     if (cache_id < 0)
-	cache_id = 0;
+        cache_id = 0;
 
     ret = make_cache(context, collection_id, cache_id, anchor_name,
-		     collection_name, subsidiary_name, id);
+                     collection_name, subsidiary_name, id);
     if (ret)
-	goto cleanup;
+        goto cleanup;
 
 cleanup:
     free(anchor_name);
@@ -1125,8 +1125,8 @@ struct krcc_cursor {
 /* Prepare for a sequential iteration over the cache keyring. */
 static krb5_error_code
 krcc_get_first(krb5_context context,
-	       krb5_ccache id,
-	       krb5_cc_cursor *cursor)
+               krb5_ccache id,
+               krb5_cc_cursor *cursor)
 {
     struct krcc_cursor *krcursor;
     krb5_krcache *data = KRCACHE(id);
@@ -1135,28 +1135,28 @@ krcc_get_first(krb5_context context,
     long size;
 
     if (data == NULL)
-	return krb5_einval(context, 2);
+        return krb5_einval(context, 2);
 
     cache_id = heim_base_atomic_load(&data->krc_cache_id);
     if (cache_id == 0)
-	return KRB5_FCC_NOFILE;
+        return KRB5_FCC_NOFILE;
 
     size = keyctl_read_alloc(cache_id, &keys);
     if (size == -1) {
-	_krb5_debug(context, 10, "Error getting from keyring: %s\n",
-		    strerror(errno));
-	return KRB5_CC_IO;
+        _krb5_debug(context, 10, "Error getting from keyring: %s\n",
+                    strerror(errno));
+        return KRB5_CC_IO;
     }
 
     krcursor = calloc(1, sizeof(*krcursor));
     if (krcursor == NULL) {
-	free(keys);
-	return KRB5_CC_NOMEM;
+        free(keys);
+        return KRB5_CC_NOMEM;
     }
 
     krcursor->princ_id = heim_base_atomic_load(&data->krc_princ_id);
     krcursor->offsets_id = keyctl_search(cache_id, KRCC_KEY_TYPE_USER,
-					 KRCC_TIME_OFFSETS, 0);
+                                         KRCC_TIME_OFFSETS, 0);
     krcursor->numkeys = size / sizeof(key_serial_t);
     krcursor->keys = keys;
 
@@ -1178,9 +1178,9 @@ keyctl_read_krb5_data(key_serial_t keyid, krb5_data *payload)
 /* Get the next credential from the cache keyring. */
 static krb5_error_code KRB5_CALLCONV
 krcc_get_next(krb5_context context,
-	      krb5_ccache id,
-	      krb5_cc_cursor *cursor,
-	      krb5_creds *creds)
+              krb5_ccache id,
+              krb5_cc_cursor *cursor,
+              krb5_creds *creds)
 {
     struct krcc_cursor *krcursor;
     krb5_error_code ret;
@@ -1191,37 +1191,37 @@ krcc_get_next(krb5_context context,
 
     krcursor = *cursor;
     if (krcursor == NULL)
-	return KRB5_CC_END;
+        return KRB5_CC_END;
 
     if (krcursor->currkey >= krcursor->numkeys)
-	return KRB5_CC_END;
+        return KRB5_CC_END;
 
     /*
      * If we're pointing at the entry with the principal, or at the key
      * with the time offsets, skip it.
      */
     while (krcursor->keys[krcursor->currkey] == krcursor->princ_id ||
-	   krcursor->keys[krcursor->currkey] == krcursor->offsets_id) {
-	krcursor->currkey++;
-	if (krcursor->currkey >= krcursor->numkeys)
-	    return KRB5_CC_END;
+           krcursor->keys[krcursor->currkey] == krcursor->offsets_id) {
+        krcursor->currkey++;
+        if (krcursor->currkey >= krcursor->numkeys)
+            return KRB5_CC_END;
     }
 
     ret = keyctl_read_krb5_data(krcursor->keys[krcursor->currkey], &payload);
     if (ret) {
-	_krb5_debug(context, 10, "Error reading key %d: %s\n",
-		    krcursor->keys[krcursor->currkey],
-		    strerror(errno));
-	return ret;
+        _krb5_debug(context, 10, "Error reading key %d: %s\n",
+                    krcursor->keys[krcursor->currkey],
+                    strerror(errno));
+        return ret;
     }
     krcursor->currkey++;
 
     sp = krb5_storage_from_data(&payload);
     if (sp == NULL) {
-	ret = KRB5_CC_IO;
+        ret = KRB5_CC_IO;
     } else {
-	ret = krb5_ret_creds(sp, creds);
-	krb5_storage_free(sp);
+        ret = krb5_ret_creds(sp, creds);
+        krb5_storage_free(sp);
     }
 
     krb5_data_free(&payload);
@@ -1236,8 +1236,8 @@ krcc_end_get(krb5_context context, krb5_ccache id, krb5_cc_cursor *cursor)
     struct krcc_cursor *krcursor = *cursor;
 
     if (krcursor != NULL) {
-	free(krcursor->keys);
-	free(krcursor);
+        free(krcursor->keys);
+        free(krcursor);
     }
 
     *cursor = NULL;
@@ -1248,12 +1248,12 @@ krcc_end_get(krb5_context context, krb5_ccache id, krb5_cc_cursor *cursor)
 /* Create keyring data for a credential cache. */
 static krb5_error_code
 alloc_cache(krb5_context context,
- 	    key_serial_t collection_id,
-	    key_serial_t cache_id,
-	    const char *anchor_name,
-	    const char *collection_name,
-	    const char *subsidiary_name,
-	    krb5_krcache **pdata)
+            key_serial_t collection_id,
+            key_serial_t cache_id,
+            const char *anchor_name,
+            const char *collection_name,
+            const char *subsidiary_name,
+            krb5_krcache **pdata)
 {
     krb5_error_code ret;
     krb5_krcache *data;
@@ -1262,10 +1262,10 @@ alloc_cache(krb5_context context,
 
     data = calloc(1, sizeof(*data));
     if (data == NULL)
-	return KRB5_CC_NOMEM;
+        return KRB5_CC_NOMEM;
 
     ret = make_subsidiary_residual(context, anchor_name, collection_name,
-				   subsidiary_name, &data->krc_name);
+                                   subsidiary_name, &data->krc_name);
     if (ret ||
         (data->krc_collection = strdup(collection_name)) == NULL ||
         (data->krc_subsidiary = strdup(subsidiary_name ? subsidiary_name : "tkt")) == NULL) {
@@ -1273,10 +1273,10 @@ alloc_cache(krb5_context context,
             free(data->krc_collection);
             free(data->krc_name);
         }
-	free(data);
+        free(data);
         if (ret == 0)
             ret = krb5_enomem(context);
-	return ret;
+        return ret;
     }
 
     heim_base_atomic_init(&data->krc_princ_id, 0);
@@ -1305,38 +1305,38 @@ krcc_gen_new(krb5_context context, krb5_ccache *id)
 
     /* Determine the collection in which we will create the cache.*/
     ret = get_default(context, &anchor_name, &collection_name,
-		      &subsidiary_name);
+                      &subsidiary_name);
     if (ret)
-	return ret;
+        return ret;
 
     if (anchor_name == NULL) {
-	ret = parse_residual(context, KRCC_DEFAULT_UNIQUE_COLLECTION, &anchor_name,
-			     &collection_name, &subsidiary_name);
-	if (ret)
-	    return ret;
+        ret = parse_residual(context, KRCC_DEFAULT_UNIQUE_COLLECTION, &anchor_name,
+                             &collection_name, &subsidiary_name);
+        if (ret)
+            return ret;
     }
     if (subsidiary_name != NULL) {
-	krb5_set_error_message(context, KRB5_DCC_CANNOT_CREATE,
-		N_("Can't create new subsidiary cache because default cache "
-		   "is already a subsidiary", ""));
-	ret = KRB5_DCC_CANNOT_CREATE;
-	goto cleanup;
+        krb5_set_error_message(context, KRB5_DCC_CANNOT_CREATE,
+                N_("Can't create new subsidiary cache because default cache "
+                   "is already a subsidiary", ""));
+        ret = KRB5_DCC_CANNOT_CREATE;
+        goto cleanup;
     }
 
     /* Make a unique keyring within the chosen collection. */
     ret = get_collection(context, anchor_name, collection_name, &collection_id);
     if (ret)
-	goto cleanup;
+        goto cleanup;
 
     ret = add_unique_keyring(context, collection_id, &new_subsidiary_name, &cache_id);
     if (ret)
-	goto cleanup;
+        goto cleanup;
 
     ret = alloc_cache(context, collection_id, cache_id,
-		      anchor_name, collection_name, new_subsidiary_name,
-		      &data);
+                      anchor_name, collection_name, new_subsidiary_name,
+                      &data);
     if (ret)
-	goto cleanup;
+        goto cleanup;
 
     (*id)->data.data = data;
     (*id)->data.length = sizeof(*data);
@@ -1354,15 +1354,15 @@ cleanup:
 /* Return an alias to the residual string of the cache. */
 static krb5_error_code KRB5_CALLCONV
 krcc_get_name_2(krb5_context context,
-		krb5_ccache id,
-		const char **name,
-		const char **collection_name,
-		const char **subsidiary_name)
+                krb5_ccache id,
+                const char **name,
+                const char **collection_name,
+                const char **subsidiary_name)
 {
     krb5_krcache *data = KRCACHE(id);
 
     if (data == NULL)
-	return krb5_einval(context, 2);
+        return krb5_einval(context, 2);
 
     if (name)
         *name = data->krc_name;
@@ -1376,8 +1376,8 @@ krcc_get_name_2(krb5_context context,
 /* Retrieve a copy of the default principal, if the cache is initialized. */
 static krb5_error_code KRB5_CALLCONV
 krcc_get_principal(krb5_context context,
-		   krb5_ccache id,
-		   krb5_principal *princ)
+                   krb5_ccache id,
+                   krb5_principal *princ)
 {
     krb5_krcache *data = KRCACHE(id);
     krb5_error_code ret;
@@ -1389,34 +1389,34 @@ krcc_get_principal(krb5_context context,
     *princ = NULL;
 
     if (data == NULL)
-	return krb5_einval(context, 2);
+        return krb5_einval(context, 2);
 
     memset(&ids, 0, sizeof(ids));
     ids.krcu_cache_and_princ_id = heim_base_atomic_load(&data->krc_cache_and_principal_id);
     if (ids.krcu_cache_id == 0 || ids.krcu_princ_id == 0) {
-	ret = KRB5_FCC_NOFILE;
-	krb5_set_error_message(context, ret,
-			       N_("Credentials cache keyring '%s' not found", ""),
-			       data->krc_name);
-	goto cleanup;
+        ret = KRB5_FCC_NOFILE;
+        krb5_set_error_message(context, ret,
+                               N_("Credentials cache keyring '%s' not found", ""),
+                               data->krc_name);
+        goto cleanup;
     }
 
     ret = keyctl_read_krb5_data(ids.krcu_princ_id, &payload);
     if (ret) {
-	_krb5_debug(context, 10, "Reading principal key %d: %s\n",
-		    ids.krcu_princ_id, strerror(errno));
-	goto cleanup;
+        _krb5_debug(context, 10, "Reading principal key %d: %s\n",
+                    ids.krcu_princ_id, strerror(errno));
+        goto cleanup;
     }
 
     sp = krb5_storage_from_data(&payload);
     if (sp == NULL) {
-	ret = KRB5_CC_IO;
-	goto cleanup;
+        ret = KRB5_CC_IO;
+        goto cleanup;
     }
 
     ret = krb5_ret_principal(sp, princ);
     if (ret)
-	goto cleanup;
+        goto cleanup;
 
 cleanup:
     krb5_storage_free(sp);
@@ -1428,7 +1428,7 @@ cleanup:
 /* Remove a cred from the cache keyring */
 static krb5_error_code KRB5_CALLCONV
 krcc_remove_cred(krb5_context context, krb5_ccache id,
-		 krb5_flags which, krb5_creds *mcred)
+                 krb5_flags which, krb5_creds *mcred)
 {
     krb5_krcache *data = KRCACHE(id);
     krb5_error_code ret, ret2;
@@ -1437,35 +1437,35 @@ krcc_remove_cred(krb5_context context, krb5_ccache id,
     krb5_krcache_and_princ_id ids;
 
     if (data == NULL)
-	return krb5_einval(context, 2);
+        return krb5_einval(context, 2);
 
     ret = krcc_get_first(context, id, &cursor);
     if (ret)
-	return ret;
+        return ret;
 
     memset(&ids, 0, sizeof(ids));
     ids.krcu_cache_and_princ_id = heim_base_atomic_load(&data->krc_cache_and_principal_id);
 
     while ((ret = krcc_get_next(context, id, &cursor, &found_cred)) == 0) {
-	struct krcc_cursor *krcursor = cursor;
+        struct krcc_cursor *krcursor = cursor;
 
-	if (!krb5_compare_creds(context, which, mcred, &found_cred)) {
-	    krb5_free_cred_contents(context, &found_cred);
-	    continue;
-	}
+        if (!krb5_compare_creds(context, which, mcred, &found_cred)) {
+            krb5_free_cred_contents(context, &found_cred);
+            continue;
+        }
 
-	_krb5_debug(context, 10, "Removing cred %d from cache_id %d, princ_id %d\n",
-		    krcursor->keys[krcursor->currkey - 1],
-		    ids.krcu_cache_id, ids.krcu_princ_id);
+        _krb5_debug(context, 10, "Removing cred %d from cache_id %d, princ_id %d\n",
+                    krcursor->keys[krcursor->currkey - 1],
+                    ids.krcu_cache_id, ids.krcu_princ_id);
 
-	keyctl_invalidate(krcursor->keys[krcursor->currkey - 1]);
-	krcursor->keys[krcursor->currkey - 1] = 0;
-	krb5_free_cred_contents(context, &found_cred);
+        keyctl_invalidate(krcursor->keys[krcursor->currkey - 1]);
+        krcursor->keys[krcursor->currkey - 1] = 0;
+        krb5_free_cred_contents(context, &found_cred);
     }
 
     ret2 = krcc_end_get(context, id, &cursor);
     if (ret == KRB5_CC_END)
-	ret = ret2;
+        ret = ret2;
 
     return ret;
 }
@@ -1482,7 +1482,7 @@ krcc_get_version(krb5_context context, krb5_ccache id)
 {
     return 0;
 }
- 
+
 /* Store a credential in the cache keyring. */
 static krb5_error_code KRB5_CALLCONV
 krcc_store(krb5_context context, krb5_ccache id, krb5_creds *creds)
@@ -1498,47 +1498,47 @@ krcc_store(krb5_context context, krb5_ccache id, krb5_creds *creds)
     krb5_data_zero(&payload);
 
     if (data == NULL)
-	return krb5_einval(context, 2);
+        return krb5_einval(context, 2);
 
     cache_id = heim_base_atomic_load(&data->krc_cache_id);
     if (cache_id == 0)
-	return KRB5_FCC_NOFILE;
+        return KRB5_FCC_NOFILE;
 
     ret = krb5_unparse_name(context, creds->server, &keyname);
     if (ret)
-	goto cleanup;
+        goto cleanup;
 
     sp = krb5_storage_emem();
     if (sp == NULL) {
-	krb5_set_error_message(context, KRB5_CC_NOMEM, N_("malloc: out of memory", ""));
-	ret = KRB5_CC_NOMEM;
-	goto cleanup;
+        krb5_set_error_message(context, KRB5_CC_NOMEM, N_("malloc: out of memory", ""));
+        ret = KRB5_CC_NOMEM;
+        goto cleanup;
     }
 
     ret = krb5_store_creds(sp, creds);
     if (ret)
-	goto cleanup;
+        goto cleanup;
 
     ret = krb5_storage_to_data(sp, &payload);
     if (ret)
-	goto cleanup;
+        goto cleanup;
 
     _krb5_debug(context, 10, "krcc_store: adding new key '%s' to keyring %d\n",
-		keyname, cache_id);
+                keyname, cache_id);
     ret = add_cred_key(keyname, payload.data, payload.length, cache_id,
-		       data->krc_is_legacy, &cred_key);
+                       data->krc_is_legacy, &cred_key);
     if (ret)
-	goto cleanup;
+        goto cleanup;
 
     ret = krb5_timeofday(context, &now);
     if (ret)
-	goto cleanup;
+        goto cleanup;
 
     update_change_time(context, now, data);
 
     /* Set timeout on credential key */
     if (creds->times.endtime > now)
-	(void) keyctl_set_timeout(cred_key, creds->times.endtime - now);
+        (void) keyctl_set_timeout(cred_key, creds->times.endtime - now);
 
     /* Set timeout on credential cache keyring */
     update_keyring_expiration(context, id, cache_id, now);
@@ -1557,13 +1557,13 @@ cleanup:
  */
 static krb5_error_code KRB5_CALLCONV
 krcc_lastchange(krb5_context context,
-		krb5_ccache id,
-		krb5_timestamp *change_time)
+                krb5_ccache id,
+                krb5_timestamp *change_time)
 {
     krb5_krcache *data = KRCACHE(id);
 
     if (data == NULL)
-	return krb5_einval(context, 2);
+        return krb5_einval(context, 2);
 
     *change_time = heim_base_atomic_load(&data->krc_changetime);
 
@@ -1572,9 +1572,9 @@ krcc_lastchange(krb5_context context,
 
 static krb5_error_code
 save_principal(krb5_context context,
-	       key_serial_t cache_id,
-	       krb5_const_principal princ,
-	       atomic_key_serial_t *pprinc_id)
+               key_serial_t cache_id,
+               krb5_const_principal princ,
+               atomic_key_serial_t *pprinc_id)
 {
     krb5_error_code ret;
     krb5_storage *sp;
@@ -1585,45 +1585,45 @@ save_principal(krb5_context context,
 
     sp = krb5_storage_emem();
     if (sp == NULL) {
-	krb5_set_error_message(context, KRB5_CC_NOMEM, N_("malloc: out of memory", ""));
-	return KRB5_CC_NOMEM;
+        krb5_set_error_message(context, KRB5_CC_NOMEM, N_("malloc: out of memory", ""));
+        return KRB5_CC_NOMEM;
     }
 
     ret = krb5_store_principal(sp, princ);
     if (ret) {
-	krb5_storage_free(sp);
-	return ret;
+        krb5_storage_free(sp);
+        return ret;
     }
 
     ret = krb5_storage_to_data(sp, &payload);
     if (ret) {
-	krb5_storage_free(sp);
-	return ret;
+        krb5_storage_free(sp);
+        return ret;
     }
 
     krb5_storage_free(sp);
     {
-	krb5_error_code tmp;
-	char *princname = NULL;
+        krb5_error_code tmp;
+        char *princname = NULL;
 
-	tmp = krb5_unparse_name(context, princ, &princname);
-	_krb5_debug(context, 10, "save_principal: adding new key '%s' "
-		    "to keyring %d for principal '%s'\n",
-		    KRCC_SPEC_PRINC_KEYNAME, cache_id,
-		    tmp ? "<unknown>" : princname);
-	if (tmp == 0)
-	    krb5_xfree(princname);
+        tmp = krb5_unparse_name(context, princ, &princname);
+        _krb5_debug(context, 10, "save_principal: adding new key '%s' "
+                    "to keyring %d for principal '%s'\n",
+                    KRCC_SPEC_PRINC_KEYNAME, cache_id,
+                    tmp ? "<unknown>" : princname);
+        if (tmp == 0)
+            krb5_xfree(princname);
     }
 
     /* Add new key into keyring */
     newkey = add_key(KRCC_KEY_TYPE_USER, KRCC_SPEC_PRINC_KEYNAME,
-		     payload.data, payload.length, cache_id);
+                     payload.data, payload.length, cache_id);
     if (newkey == -1) {
-	ret = errno;
-	_krb5_debug(context, 10, "Error adding principal key: %s\n", strerror(ret));
+        ret = errno;
+        _krb5_debug(context, 10, "Error adding principal key: %s\n", strerror(ret));
     } else {
-	ret = 0;
-	heim_base_atomic_store(pprinc_id, newkey);
+        ret = 0;
+        heim_base_atomic_store(pprinc_id, newkey);
     }
 
     krb5_data_free(&payload);
@@ -1634,9 +1634,9 @@ save_principal(krb5_context context,
 /* Add a key to the cache keyring containing the given time offsets. */
 static krb5_error_code
 save_time_offsets(krb5_context context,
-		  key_serial_t cache_id,
-		  int32_t sec_offset,
-		  int32_t usec_offset)
+                  key_serial_t cache_id,
+                  int32_t sec_offset,
+                  int32_t usec_offset)
 {
     krb5_error_code ret;
     key_serial_t newkey;
@@ -1647,30 +1647,30 @@ save_time_offsets(krb5_context context,
 
     sp = krb5_storage_emem();
     if (sp == NULL) {
-	krb5_set_error_message(context, KRB5_CC_NOMEM, N_("malloc: out of memory", ""));
-	return KRB5_CC_NOMEM;
+        krb5_set_error_message(context, KRB5_CC_NOMEM, N_("malloc: out of memory", ""));
+        return KRB5_CC_NOMEM;
     }
 
     krb5_storage_set_byteorder(sp, KRB5_STORAGE_BYTEORDER_BE);
 
     ret = krb5_store_int32(sp, sec_offset);
     if (ret == 0)
-	ret = krb5_store_int32(sp, usec_offset);
+        ret = krb5_store_int32(sp, usec_offset);
     if (ret) {
-	krb5_storage_free(sp);
-	return ret;
+        krb5_storage_free(sp);
+        return ret;
     }
 
     ret = krb5_storage_to_data(sp, &payload);
     if (ret) {
-	krb5_storage_free(sp);
-	return ret;
+        krb5_storage_free(sp);
+        return ret;
     }
 
     krb5_storage_free(sp);
 
     newkey = add_key(KRCC_KEY_TYPE_USER, KRCC_TIME_OFFSETS, payload.data,
-		     payload.length, cache_id);
+                     payload.length, cache_id);
     ret = newkey == -1 ? errno : 0;
 
     krb5_data_free(&payload);
@@ -1686,13 +1686,13 @@ krcc_set_kdc_offset(krb5_context context, krb5_ccache id, krb5_deltat offset)
     krb5_error_code ret;
 
     if (data == NULL)
-	return krb5_einval(context, 2);
+        return krb5_einval(context, 2);
 
     cache_id = heim_base_atomic_load(&data->krc_cache_id);
- 
+
     ret = save_time_offsets(context, cache_id, (int32_t)offset, 0);
     if (ret == 0)
-	update_change_time(context, 0, data);
+        update_change_time(context, 0, data);
 
     return ret;
 }
@@ -1700,8 +1700,8 @@ krcc_set_kdc_offset(krb5_context context, krb5_ccache id, krb5_deltat offset)
 /* Retrieve and parse the key in the cache keyring containing time offsets. */
 static krb5_error_code KRB5_CALLCONV
 krcc_get_kdc_offset(krb5_context context,
-		    krb5_ccache id,
-		    krb5_deltat *offset)
+                    krb5_ccache id,
+                    krb5_deltat *offset)
 {
     krb5_krcache *data = KRCACHE(id);
     krb5_error_code ret = 0;
@@ -1711,33 +1711,33 @@ krcc_get_kdc_offset(krb5_context context,
     int32_t sec_offset = 0;
 
     if (data == NULL)
-	return krb5_einval(context, 2);
+        return krb5_einval(context, 2);
 
     krb5_data_zero(&payload);
 
     cache_id = heim_base_atomic_load(&data->krc_cache_id);
     if (cache_id == 0) {
-	ret = KRB5_FCC_NOFILE;
-	goto cleanup;
+        ret = KRB5_FCC_NOFILE;
+        goto cleanup;
     }
 
     key = keyctl_search(cache_id, KRCC_KEY_TYPE_USER, KRCC_TIME_OFFSETS, 0);
     if (key == -1) {
-	ret = ENOENT;
-	goto cleanup;
+        ret = ENOENT;
+        goto cleanup;
     }
 
     ret = keyctl_read_krb5_data(key, &payload);
     if (ret) {
-	_krb5_debug(context, 10, "Reading time offsets key %d: %s\n",
-		    key, strerror(errno));
-	goto cleanup;
+        _krb5_debug(context, 10, "Reading time offsets key %d: %s\n",
+                    key, strerror(errno));
+        goto cleanup;
     }
 
     sp = krb5_storage_from_data(&payload);
     if (sp == NULL) {
-	ret = krb5_enomem(context);;
-	goto cleanup;
+        ret = krb5_enomem(context);;
+        goto cleanup;
     }
 
     krb5_storage_set_byteorder(sp, KRB5_STORAGE_BYTEORDER_BE);
@@ -1779,41 +1779,41 @@ krcc_get_cache_first(krb5_context context, krb5_cc_cursor *cursor)
 
     iter = calloc(1, sizeof(*iter));
     if (iter == NULL) {
-	ret = krb5_enomem(context);
-	goto error;
+        ret = krb5_enomem(context);
+        goto error;
     }
     iter->first = TRUE;
 
     ret = get_default(context, &iter->anchor_name, &iter->collection_name,
-		      &iter->subsidiary_name);
+                      &iter->subsidiary_name);
     if (ret)
-	goto error;
+        goto error;
 
     /* If there is no default collection, return an empty cursor. */
     if (iter->anchor_name == NULL) {
-	*cursor = iter;
-	return 0;
+        *cursor = iter;
+        return 0;
     }
 
     ret = get_collection(context, iter->anchor_name, iter->collection_name,
-			 &iter->collection_id);
+                         &iter->collection_id);
     if (ret)
-	goto error;
+        goto error;
 
     if (iter->subsidiary_name == NULL) {
-	ret = get_primary_name(context, iter->anchor_name,
-			       iter->collection_name, iter->collection_id,
-			       &iter->primary_name);
-	if (ret)
-	    goto error;
+        ret = get_primary_name(context, iter->anchor_name,
+                               iter->collection_name, iter->collection_id,
+                               &iter->primary_name);
+        if (ret)
+            goto error;
 
-	size = keyctl_read_alloc(iter->collection_id, &keys);
-	if (size == -1) {
-	    ret = errno;
-	    goto error;
-	}
-	iter->keys = keys;
-	iter->num_keys = size / sizeof(key_serial_t);
+        size = keyctl_read_alloc(iter->collection_id, &keys);
+        if (size == -1) {
+            ret = errno;
+            goto error;
+        }
+        iter->keys = keys;
+        iter->num_keys = size / sizeof(key_serial_t);
     }
 
     *cursor = iter;
@@ -1828,8 +1828,8 @@ error:
 
 static krb5_error_code KRB5_CALLCONV
 krcc_get_cache_next(krb5_context context,
-		    krb5_cc_cursor cursor,
-		    krb5_ccache *cache)
+                    krb5_cc_cursor cursor,
+                    krb5_ccache *cache)
 {
     krb5_error_code ret;
     struct krcc_iter *iter = cursor;
@@ -1842,62 +1842,62 @@ krcc_get_cache_next(krb5_context context,
 
     /* No keyring available */
     if (iter->collection_id == 0)
-	return KRB5_CC_END;
+        return KRB5_CC_END;
 
     if (iter->first) {
-	/*
-	 * Look for the primary cache for a collection cursor, or the
-	 * subsidiary cache for a subsidiary cursor.
-	 */
-	iter->first = FALSE;
-	first_name = (iter->primary_name != NULL) ? iter->primary_name :
-		     iter->subsidiary_name;
-	cache_id = keyctl_search(iter->collection_id, KRCC_KEY_TYPE_KEYRING,
-				 first_name, 0);
-	if (cache_id != -1) {
-	    return make_cache(context, iter->collection_id, cache_id,
-			      iter->anchor_name, iter->collection_name,
-			      first_name, cache);
-	}
+        /*
+         * Look for the primary cache for a collection cursor, or the
+         * subsidiary cache for a subsidiary cursor.
+         */
+        iter->first = FALSE;
+        first_name = (iter->primary_name != NULL) ? iter->primary_name :
+                     iter->subsidiary_name;
+        cache_id = keyctl_search(iter->collection_id, KRCC_KEY_TYPE_KEYRING,
+                                 first_name, 0);
+        if (cache_id != -1) {
+            return make_cache(context, iter->collection_id, cache_id,
+                              iter->anchor_name, iter->collection_name,
+                              first_name, cache);
+        }
     }
 
     /* A subsidiary cursor yields at most the first cache. */
     if (iter->subsidiary_name != NULL)
-	return KRB5_CC_END;
+        return KRB5_CC_END;
 
     keytype = KRCC_KEY_TYPE_KEYRING ";";
     keytypelen = strlen(keytype);
 
     for (ret = KRB5_CC_END; iter->next_key < iter->num_keys; iter->next_key++) {
-	free(description);
-	description = NULL;
+        free(description);
+        description = NULL;
 
-	/*
-	 * Get the key description, which should have the form:
-	 *   typename;UID;GID;permissions;description
-	 */
-	key = iter->keys[iter->next_key];
-	if (keyctl_describe_alloc(key, &description) < 0)
-	    continue;
-	sep = strrchr(description, ';');
-	if (sep == NULL)
-	    continue;
-	subsidiary_name = sep + 1;
+        /*
+         * Get the key description, which should have the form:
+         *   typename;UID;GID;permissions;description
+         */
+        key = iter->keys[iter->next_key];
+        if (keyctl_describe_alloc(key, &description) < 0)
+            continue;
+        sep = strrchr(description, ';');
+        if (sep == NULL)
+            continue;
+        subsidiary_name = sep + 1;
 
-	/* Skip this key if it isn't a keyring. */
-	if (strncmp(description, keytype, keytypelen) != 0)
-	    continue;
+        /* Skip this key if it isn't a keyring. */
+        if (strncmp(description, keytype, keytypelen) != 0)
+            continue;
 
-	/* Don't repeat the primary cache. */
-	if (iter->primary_name &&
+        /* Don't repeat the primary cache. */
+        if (iter->primary_name &&
             strcmp(subsidiary_name, iter->primary_name) == 0)
-	    continue;
+            continue;
 
-	/* We found a valid key */
-	iter->next_key++;
-	ret = make_cache(context, iter->collection_id, key, iter->anchor_name,
-			 iter->collection_name, subsidiary_name, cache);
-	break;
+        /* We found a valid key */
+        iter->next_key++;
+        ret = make_cache(context, iter->collection_id, key, iter->anchor_name,
+                         iter->collection_name, subsidiary_name, cache);
+        break;
     }
 
     free(description);
@@ -1911,14 +1911,14 @@ krcc_end_cache_get(krb5_context context, krb5_cc_cursor cursor)
     struct krcc_iter *iter = cursor;
 
     if (iter != NULL) {
-	free(iter->anchor_name);
-	free(iter->collection_name);
-	free(iter->subsidiary_name);
-	free(iter->primary_name);
-	free(iter->keys);
+        free(iter->anchor_name);
+        free(iter->collection_name);
+        free(iter->subsidiary_name);
+        free(iter->primary_name);
+        free(iter->keys);
 
-	memset(iter, 0, sizeof(*iter));
-	free(iter);
+        memset(iter, 0, sizeof(*iter));
+        free(iter);
     }
 
     return 0;
@@ -1933,20 +1933,20 @@ krcc_set_default(krb5_context context, krb5_ccache id)
     atomic_key_serial_t collection_id;
 
     if (data == NULL)
-	return krb5_einval(context, 2);
+        return krb5_einval(context, 2);
 
     ret = parse_residual(context, data->krc_name,
-			 &anchor_name, &collection_name, &subsidiary_name);
+                         &anchor_name, &collection_name, &subsidiary_name);
     if (ret)
-	goto cleanup;
+        goto cleanup;
 
     ret = get_collection(context, anchor_name, collection_name, &collection_id);
     if (ret)
-	goto cleanup;
+        goto cleanup;
 
     ret = set_primary_name(context, collection_id, subsidiary_name);
     if (ret)
-	goto cleanup;
+        goto cleanup;
 
 cleanup:
     free(anchor_name);
@@ -1966,23 +1966,23 @@ update_change_time(krb5_context context, krb5_timestamp now, krb5_krcache *data)
     krb5_timestamp old;
 
     if (now == 0)
-	krb5_timeofday(context, &now);
+        krb5_timeofday(context, &now);
 
     old = heim_base_exchange_time_t(&data->krc_changetime, now);
     if (old > now) /* don't go backwards */
-	heim_base_atomic_store(&data->krc_changetime, old + 1);
+        heim_base_atomic_store(&data->krc_changetime, old + 1);
 }
 
 static int
 move_key_to_new_keyring(key_serial_t parent, key_serial_t key,
-			char *desc, int desc_len, void *data)
+                        char *desc, int desc_len, void *data)
 {
     key_serial_t cache_id = *(key_serial_t *)data;
 
     if (parent) {
-	if (keyctl_link(key, cache_id) == -1 ||
-	    keyctl_unlink(key, parent) == -1)
-	    return -1;
+        if (keyctl_link(key, cache_id) == -1 ||
+            keyctl_unlink(key, parent) == -1)
+            return -1;
     }
 
     return 0;
@@ -1999,25 +1999,25 @@ krcc_move(krb5_context context, krb5_ccache from, krb5_ccache to)
     key_serial_t to_cache_id;
 
     if (krfrom == NULL || krto == NULL)
-	return krb5_einval(context, 2);
+        return krb5_einval(context, 2);
 
     ret = initialize_internal(context, to, NULL);
     if (ret)
-	return ret;
+        return ret;
 
     krb5_timeofday(context, &now);
     to_cache_id = heim_base_atomic_load(&krto->krc_cache_id);
 
     if (krfrom->krc_cache_id != 0) {
-	ret = recursive_key_scan(krfrom->krc_cache_id,
-				 move_key_to_new_keyring, &to_cache_id);
-	if (ret)
-	    return KRB5_CC_IO;
+        ret = recursive_key_scan(krfrom->krc_cache_id,
+                                 move_key_to_new_keyring, &to_cache_id);
+        if (ret)
+            return KRB5_CC_IO;
 
-	if (keyctl_unlink(krfrom->krc_cache_id, krfrom->krc_coll_id) == -1)
-	    return errno;
+        if (keyctl_unlink(krfrom->krc_cache_id, krfrom->krc_coll_id) == -1)
+            return errno;
 
-	heim_base_exchange_32(&krto->krc_princ_id, krfrom->krc_princ_id);
+        heim_base_exchange_32(&krto->krc_princ_id, krfrom->krc_princ_id);
     }
 
     update_change_time(context, now, krto);
@@ -2030,7 +2030,7 @@ krcc_get_default_name(krb5_context context, char **str)
 {
     *str = strdup("KEYRING:");
     if (*str == NULL)
-	return krb5_enomem(context);
+        return krb5_enomem(context);
 
     return 0;
 }

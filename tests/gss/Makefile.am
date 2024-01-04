@@ -2,6 +2,8 @@
 
 include $(top_srcdir)/Makefile.am.common
 
+.NOTPARALLEL:
+
 noinst_DATA = krb5.conf new_clients_k5.conf mech
 
 SCRIPT_TESTS = check-basic check-gss check-gssmask check-context check-spnego check-ntlm check-negoex

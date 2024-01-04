@@ -433,7 +433,6 @@ AC_CHECK_HEADERS([\
 	signal.h				\
 	strings.h				\
 	stropts.h				\
-	stdatomic.h				\
 	sys/bitypes.h				\
 	sys/category.h				\
 	sys/file.h				\
@@ -463,6 +462,24 @@ AC_CHECK_HEADERS([\
 	udb.h					\
 	util.h					\
 ])
+
+AC_CHECK_HEADERS([stdatomic.h],
+    [AC_MSG_CHECKING([whether libatomic is required])
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <stdatomic.h>]], [[_Atomic(long long) i; atomic_init(&i, (long long) 0);]])],
+        [AC_MSG_RESULT([no])],
+        [AC_MSG_RESULT([yes])
+        AC_MSG_CHECKING([whether libatomic works])
+        save_LIBS="$LIBS"
+        LIBS="$LIBS -latomic"
+        AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <stdatomic.h>]], [[_Atomic(long long) i; atomic_init(&i, (long long) 0);]])],
+            [AC_MSG_RESULT([yes])],
+            [AC_MSG_RESULT([no, using fallback])
+             LIBS="$save_LIBS"
+             AC_DEFINE([HEIM_BASE_ATOMICS_FALLBACK], [], [Define if you want fallbacks for atomic operations])]
+        )]
+    )],
+    []
+)
 
 dnl On Solaris 8 there's a compilation warning for term.h because
 dnl it doesn't define `bool'.

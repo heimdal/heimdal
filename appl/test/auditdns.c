@@ -147,7 +147,7 @@ getaddrinfo(const char *hostname, const char *servname,
 	break;
     case SOCK_DGRAM:		/* datagram <-> UDP */
 	if (hints->ai_protocol != 0 && hints->ai_protocol != IPPROTO_UDP) {
-	    error = EAI_SOCKTYPE;;
+	    error = EAI_SOCKTYPE;
 	    goto out;
 	}
 	socktype[0] = SOCK_DGRAM;
@@ -178,9 +178,17 @@ getaddrinfo(const char *hostname, const char *servname,
 	port = 0;
     } else {
 	/*
-	 * Service specified.  Parse it as a nonnegative integer, at
-	 * most 65535.
+	 * Service specified.  First verify it is at most 5 decimal
+	 * digits; then parse it as a nonnegative integer in decimal,
+	 * at most 65535.  (This avoids pathological inputs like
+	 * -18446744073709551493 for which strtoul will succeed and
+	 * return 123 on LP64 platforms.)
 	 */
+	if (strlen(servname) > strlen("65535") ||
+	    strlen(servname) != strspn(servname, "0123456789")) {
+	    error = EAI_NONAME;
+	    goto out;
+	}
 	errno = 0;
 	port = strtoul(servname, &servend, 10);
 	if (servend == servname ||
@@ -300,13 +308,13 @@ getaddrinfo(const char *hostname, const char *servname,
 		goto have_addr;
 	    }
 	}
-    }
 
-    /*
-     * No hostname, or hostname can't be parsed.
-     */
-    error = EAI_NONAME;
-    goto out;
+	/*
+	 * Hostname can't be parsed.
+	 */
+	error = EAI_NONAME;
+	goto out;
+    }
 
 have_addr:
     /*

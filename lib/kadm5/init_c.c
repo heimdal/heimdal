@@ -574,7 +574,7 @@ kadm_connect(kadm5_client_context *ctx)
     if (krb5_config_get_bool(context, NULL, "libdefaults", "block_dns",
 	    NULL)) {
 	hints.ai_flags &= ~AI_CANONNAME;
-	hints.ai_flags |= AI_NUMERICHOST;
+	hints.ai_flags |= AI_NUMERICHOST|AI_NUMERICSERV;
     }
     error = getaddrinfo(hostname, portstr, &hints, &ai);
     if (error) {

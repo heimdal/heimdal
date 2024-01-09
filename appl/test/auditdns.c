@@ -28,8 +28,11 @@
 #include <config.h>
 #endif
 
-#include <dlfcn.h>
+#include <arpa/inet.h>
+#include <assert.h>
+#include <errno.h>
 #include <netdb.h>
+#include <netinet/in.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -65,32 +68,308 @@ gethostbyname2(const char *name, int af)
 
 #ifdef HAVE_GETADDRINFO
 
-typedef int getaddrinfo_fn_t(const char *, const char *,
-    const struct addrinfo *restrict,
-    struct addrinfo **restrict);
-getaddrinfo_fn_t getaddrinfo;
+void
+freeaddrinfo(struct addrinfo *ai)
+{
+
+    free(ai->ai_addr);
+    free(ai);
+}
+
 int
 getaddrinfo(const char *hostname, const char *servname,
     const struct addrinfo *restrict hints,
     struct addrinfo **restrict res)
 {
-    void *sym;
+    char *servend;
+    unsigned long port;
+    union {
+	struct sockaddr		sa;
+	struct sockaddr_in	sin;
+	struct sockaddr_in6	sin6;
+    } *addr = NULL;
+    int af[2] = {AF_INET, AF_INET6};
+    socklen_t addrlen[2] = {sizeof(addr->sin), sizeof(addr->sin6)};
+    int socktype[2] = {SOCK_DGRAM, SOCK_STREAM};
+    int proto[2] = {IPPROTO_UDP, IPPROTO_TCP};
+    size_t i, j, naddr, nproto;
+    struct addrinfo *ai = NULL;
+    int error;
 
+    /*
+     * DNS audit: Abort unless the user specified hints with
+     * AI_NUMERICHOST, AI_NUMERICSERV, and no AI_CANONNAME.
+     */
     if (hints == NULL ||
 	(hints->ai_flags & AI_NUMERICHOST) == 0 ||
+	(hints->ai_flags & AI_NUMERICSERV) == 0 ||
 	(hints->ai_flags & AI_CANONNAME) != 0) {
 	fprintf(stderr, "DNS leak: %s %s:%s\n",
 	    __func__, hostname, servname);
 	abort();
     }
 
-    if ((sym = dlsym(RTLD_NEXT, __func__)) == NULL) {
-	fprintf(stderr, "dlsym(RTLD_NEXT, \"%s\") failed: %s\n",
-	    __func__, dlerror());
-	return EAI_FAIL;
+    /*
+     * Check hints for address family.  If unspecified, use the default
+     * set of address families: {AF_INET, AF_INET6}.
+     */
+    switch (hints->ai_family) {
+    case AF_UNSPEC:
+	naddr = 2;
+	break;
+    case AF_INET:
+	naddr = 1;
+	af[0] = AF_INET;
+	addrlen[0] = sizeof(addr->sin);
+	break;
+    case AF_INET6:
+	naddr = 1;
+	af[0] = AF_INET6;
+	addrlen[0] = sizeof(addr->sin6);
+	break;
+    default:
+	error = EAI_FAMILY;
+	goto out;
     }
 
-    return (*(getaddrinfo_fn_t *)sym)(hostname, servname, hints, res);
+    /*
+     * Check hints for socket type and protocol.  If both are zero, we
+     * use the default set of socktype/proto pairs.  If one is
+     * specified but not the other, use the default.  If both are
+     * specified, make sure they match.
+     */
+    switch (hints->ai_socktype) {
+    case 0:
+	if (hints->ai_protocol == 0)
+	    nproto = sizeof(proto)/sizeof(proto[0]);
+	else
+	    nproto = 1;
+	break;
+    case SOCK_DGRAM:		/* datagram <-> UDP */
+	if (hints->ai_protocol != 0 && hints->ai_protocol != IPPROTO_UDP) {
+	    error = EAI_SOCKTYPE;;
+	    goto out;
+	}
+	socktype[0] = SOCK_DGRAM;
+	proto[0] = IPPROTO_UDP;
+	nproto = 1;
+	break;
+    case SOCK_STREAM:		/* stream <-> TCP */
+	if (hints->ai_protocol != 0 && hints->ai_protocol != IPPROTO_TCP) {
+	    error = EAI_SOCKTYPE;
+	    goto out;
+	}
+	socktype[0] = SOCK_STREAM;
+	proto[0] = IPPROTO_TCP;
+	nproto = 1;
+	break;
+    default:
+	error = EAI_SOCKTYPE;
+	goto out;
+    }
+
+    /*
+     * Check whether a service is specified at all.
+     */
+    if (servname == NULL) {
+	/*
+	 * No service specified.  Use the wildcard port 0.
+	 */
+	port = 0;
+    } else {
+	/*
+	 * Service specified.  Parse it as a nonnegative integer, at
+	 * most 65535.
+	 */
+	errno = 0;
+	port = strtoul(servname, &servend, 10);
+	if (servend == servname ||
+	    *servend != '\0' ||
+	    errno != 0 ||
+	    port > 65535) {
+	    error = EAI_NONAME;
+	    goto out;
+	}
+    }
+
+    /*
+     * Check whether a hostname is specified at all.
+     */
+    if (hostname == NULL) {
+	/*
+	 * No hostname.  This only makes sense if we're going to bind
+	 * to a socket and receive incoming packets or listen and
+	 * accept incoming connections, i.e., only if AI_PASSIVE is
+	 * set.  Otherwise, fail with EAI_NONAME.
+	 */
+	if ((hints->ai_flags & AI_PASSIVE) == 0) {
+	    error = EAI_NONAME;
+	    goto out;
+	}
+
+	/*
+	 * Allocate an array of as many addresses as the hints allow.
+	 */
+	if ((addr = calloc(naddr, sizeof(*addr))) == NULL) {
+	    error = EAI_MEMORY;
+	    goto out;
+	}
+
+	/*
+	 * Fill the addresses with the ANY wildcard address, IPv4
+	 * 0.0.0.0 or IPv6 `::' (i.e., 0000:0000:....:0000).
+	 */
+	switch (hints->ai_family) {
+	case AF_UNSPEC:
+	    assert(naddr == 2);
+	    addr[0].sin.sin_family = AF_INET;
+	    addr[0].sin.sin_port = htons(port);
+	    addr[0].sin.sin_addr.s_addr = htonl(INADDR_ANY);
+	    addr[1].sin6.sin6_family = AF_INET6;
+	    addr[1].sin6.sin6_port = htons(port);
+	    addr[1].sin6.sin6_addr = in6addr_any;
+	    break;
+	case AF_INET:
+	    assert(naddr == 1);
+	    addr[0].sin.sin_family = AF_INET;
+	    addr[0].sin.sin_port = htons(port);
+	    addr[0].sin.sin_addr.s_addr = htonl(INADDR_ANY);
+	    break;
+	case AF_INET6:
+	    assert(naddr == 1);
+	    addr[0].sin6.sin6_family = AF_INET6;
+	    addr[0].sin6.sin6_port = htons(port);
+	    addr[0].sin6.sin6_addr = in6addr_any;
+	    break;
+	default:
+	    error = EAI_FAIL;	/* XXX unreachable */
+	    goto out;
+	}
+	goto have_addr;
+    } else {
+	/*
+	 * Allocate a single socket address record.  Since we have
+	 * AI_NUMERICHOST, the hostname can be parsed as only one
+	 * address and won't be resolved to an array of possibly >1
+	 * addresses.
+	 */
+	naddr = 1;
+	if ((addr = calloc(naddr, sizeof(*addr))) == NULL) {
+	    error = EAI_MEMORY;
+	    goto out;
+	}
+
+	/*
+	 * If the hints specify AF_INET, or don't specify anything, try
+	 * to parse it as an IPv4 address.  If this fails, it will fall
+	 * through.
+	 */
+	if (hints->ai_family == AF_UNSPEC || hints->ai_family == AF_INET) {
+	    switch (inet_pton(AF_INET, hostname, &addr->sin.sin_addr)) {
+	    case -1:		/* system error */
+		error = EAI_SYSTEM;
+		goto out;
+	    case 0:		/* failure */
+		break;
+	    case 1:		/* success */
+		addr->sin.sin_family = AF_INET;
+		addr->sin.sin_port = htons(port);
+		af[0] = AF_INET;
+		addrlen[0] = sizeof(addr->sin);
+		goto have_addr;
+	    }
+	}
+
+	/*
+	 * If the hints specify AF_INET6, or don't specify anything,
+	 * try to parse it as an IPv6 address.  If this fails, it will
+	 * fall through.
+	 */
+	if (hints->ai_family == AF_UNSPEC || hints->ai_family == AF_INET6) {
+	    switch (inet_pton(AF_INET6, hostname, &addr->sin6.sin6_addr)) {
+	    case -1:		/* system error */
+		error = EAI_SYSTEM;
+		goto out;
+	    case 0:		/* failure */
+		break;
+	    case 1:		/* success */
+		addr->sin6.sin6_family = AF_INET6;
+		addr->sin6.sin6_port = htons(port);
+		af[0] = AF_INET6;
+		addrlen[0] = sizeof(addr->sin6);
+		goto have_addr;
+	    }
+	}
+    }
+
+    /*
+     * No hostname, or hostname can't be parsed.
+     */
+    error = EAI_NONAME;
+    goto out;
+
+have_addr:
+    /*
+     * We have an address, or multiple possible addresses.  Allocate an
+     * array of addrinfo records to store the result.
+     */
+    if ((ai = calloc(naddr * nproto, sizeof(*ai))) == NULL) {
+	error = EAI_MEMORY;
+	goto out;
+    }
+
+    /*
+     * Fill in the addrinfo records with the cartesian product of
+     * matching address families and matching socktype/protocol pairs.
+     *
+     * XXX Consider randomizing the output for fun!
+     */
+    for (i = 0; i < naddr; i++) {
+	for (j = 0; j < nproto; j++) {
+	    ai[i*nproto + j] = (struct addrinfo) {
+		.ai_flags = 0, /* input flags, unused on output */
+		.ai_family = af[i],
+		.ai_addrlen = addrlen[i],
+		.ai_addr = &addr[i].sa,
+		.ai_socktype = socktype[j],
+		.ai_protocol = proto[j],
+		.ai_canonname = NULL,
+		.ai_next = &ai[i*nproto + j + 1],
+	    };
+	}
+    }
+    addr = NULL;		/* reference consumed by ai[...].ai_addr */
+
+    /*
+     * Null out the last addrinfo's next pointer.
+     */
+    ai[naddr*nproto - 1].ai_next = NULL;
+
+    /*
+     * Success!
+     */
+    error = 0;
+
+out:
+    /*
+     * In the event of error, free whatever we've allocated so far.
+     * Make sure to save and restore errno in case free touches it,
+     * because EAI_SYSTEM requires errno to report the system error.
+     */
+    if (error) {
+	int errno_save = errno;
+
+	if (addr)
+	    free(addr);
+	addr = NULL;
+	if (ai)
+	    freeaddrinfo(ai);
+	ai = NULL;
+
+	errno = errno_save;
+    }
+    *res = ai;
+    return error;
 }
 
 #endif	/* HAVE_GETADDRINFO */

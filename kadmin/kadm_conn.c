@@ -65,7 +65,11 @@ add_kadm_port(krb5_context contextp, const char *service, unsigned int port)
 static void
 add_standard_ports (krb5_context contextp)
 {
-    add_kadm_port(contextp, "kerberos-adm", 749);
+    if (krb5_config_get_bool(context, NULL, "libdefaults", "block_dns",
+	    NULL))
+	add_kadm_port(contextp, "749", 749);
+    else
+	add_kadm_port(contextp, "kerberos-adm", 749);
 }
 
 /*

@@ -860,7 +860,7 @@ submit_request(krb5_context context, krb5_sendto_ctx ctx, krb5_krbhst_info *hi)
 	if (krb5_config_get_bool(context, NULL, "libdefaults", "block_dns",
 		NULL)) {
 	    hints.ai_flags &= ~AI_CANONNAME;
-	    hints.ai_flags |= AI_NUMERICHOST;
+	    hints.ai_flags |= AI_NUMERICHOST|AI_NUMERICSERV;
 	}
 	ret = getaddrinfo(proxy, portstr, &hints, &ai);
 	free(proxy2);

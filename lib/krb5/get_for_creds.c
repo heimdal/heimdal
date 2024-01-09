@@ -353,7 +353,7 @@ get_addresses(krb5_context      context,
     if (krb5_config_get_bool(context, NULL, "libdefaults", "block_dns",
 	    NULL)) {
 	hints.ai_flags &= ~AI_CANONNAME;
-	hints.ai_flags |= AI_NUMERICHOST;
+	hints.ai_flags |= AI_NUMERICHOST|AI_NUMERICSERV;
     }
     eai = getaddrinfo(hostname, NULL, &hints, &ai);
     if (eai) {

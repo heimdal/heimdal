@@ -433,7 +433,7 @@ krb5_krbhst_get_addrinfo(krb5_context context, krb5_krbhst_info *host,
 	if (krb5_config_get_bool(context, NULL, "libdefaults", "block_dns",
 		NULL)) {
 	    hints.ai_flags &= ~AI_CANONNAME;
-	    hints.ai_flags |= AI_NUMERICHOST;
+	    hints.ai_flags |= AI_NUMERICHOST|AI_NUMERICSERV;
 	}
 	ret = getaddrinfo(host->hostname, portstr, &hints, &host->ai);
 	if (ret) {
@@ -558,7 +558,7 @@ fallback_get_hosts(krb5_context context, struct krb5_krbhst_data *kd,
     if (krb5_config_get_bool(context, NULL, "libdefaults", "block_dns",
 	    NULL)) {
 	hints.ai_flags &= ~AI_CANONNAME;
-	hints.ai_flags |= AI_NUMERICHOST;
+	hints.ai_flags |= AI_NUMERICHOST|AI_NUMERICSERV;
     }
     ret = getaddrinfo(host, portstr, &hints, &ai);
     if (ret) {

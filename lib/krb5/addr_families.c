@@ -1213,7 +1213,7 @@ krb5_parse_address(krb5_context context,
     if (krb5_config_get_bool(context, NULL, "libdefaults", "block_dns",
 	    NULL)) {
 	hint.ai_flags &= ~AI_CANONNAME;
-	hint.ai_flags |= AI_NUMERICHOST;
+	hint.ai_flags |= AI_NUMERICHOST|AI_NUMERICSERV;
     }
     error = getaddrinfo (string, NULL, &hint, &ai);
     if (error) {

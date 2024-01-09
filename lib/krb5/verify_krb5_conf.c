@@ -205,7 +205,7 @@ check_host(krb5_context context, const char *path, char *data)
     if (krb5_config_get_bool(context, NULL, "libdefaults", "block_dns",
 	    NULL)) {
 	hints.ai_flags &= ~AI_CANONNAME;
-	hints.ai_flags |= AI_NUMERICHOST;
+	hints.ai_flags |= AI_NUMERICHOST|AI_NUMERICSERV;
     }
     ret = getaddrinfo(hostname, service, &hints, &ai);
     if (ret == EAI_SERVICE && !isdigit((unsigned char)service[0])) {

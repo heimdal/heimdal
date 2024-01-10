@@ -369,7 +369,8 @@ debug_host(krb5_context context, int level, struct host *host, const char *fmt, 
 	proto = "udp";
 
     if (getnameinfo(host->ai->ai_addr, host->ai->ai_addrlen,
-		    name, sizeof(name), port, sizeof(port), NI_NUMERICHOST) != 0)
+		    name, sizeof(name), port, sizeof(port),
+		    NI_NUMERICHOST|NI_NUMERICSERV|NI_NUMERICSCOPE) != 0)
 	name[0] = '\0';
 
     switch (host->state) {

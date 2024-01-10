@@ -85,7 +85,8 @@ connect_to_master (krb5_context context, const char *master,
     for (a = ai; a != NULL; a = a->ai_next) {
 	char node[NI_MAXHOST];
 	error = getnameinfo(a->ai_addr, a->ai_addrlen,
-			    node, sizeof(node), NULL, 0, NI_NUMERICHOST);
+			    node, sizeof(node), NULL, 0,
+			    NI_NUMERICHOST|NI_NUMERICSERV|NI_NUMERICSCOPE);
 	if (error)
 	    strlcpy(node, "[unknown-addr]", sizeof(node));
 

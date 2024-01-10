@@ -656,7 +656,7 @@ add_locate(void *ctx, int type, struct sockaddr *addr)
     portnum = socket_get_port(addr);
 
     ret = getnameinfo(addr, socklen, host, sizeof(host), port, sizeof(port),
-		      NI_NUMERICHOST|NI_NUMERICSERV);
+		      NI_NUMERICHOST|NI_NUMERICSERV|NI_NUMERICSCOPE);
     if (ret != 0)
 	return 0;
 

@@ -2074,6 +2074,8 @@ _kdc_as_rep(astgs_request_t r)
 
     memset(rep, 0, sizeof(*rep));
 
+    kdc_audit_setkv_bool((kdc_request_t)r, "udp", r->datagram_reply);
+
     ALLOC(rep->padata);
     if (rep->padata == NULL) {
 	ret = ENOMEM;
@@ -2740,16 +2742,22 @@ _kdc_as_rep(astgs_request_t r)
     if (ret)
 	goto out;
 
-    /*
-     * Check if message is too large
-     */
+    /* Check if message is too large */
     if (r->datagram_reply && r->reply->length > config->max_datagram_reply_length) {
 	krb5_data_free(r->reply);
 	ret = KRB5KRB_ERR_RESPONSE_TOO_BIG;
+        _kdc_r_log(r, 4, "Successful reply too large");
 	_kdc_set_e_text(r, "Reply packet too large");
     }
 
 out:
+    if (r->datagram_reply && config->max_datagram_reply_length == 0 &&
+        ret != KRB5KRB_ERR_RESPONSE_TOO_BIG) {
+	krb5_data_free(r->reply);
+	ret = KRB5KRB_ERR_RESPONSE_TOO_BIG;
+        _kdc_r_log(r, 4, "Error reply too large");
+	_kdc_set_e_text(r, "Reply packet too large");
+    }
     if (ret) {
 	/* Overwrite ‘error_code’ only if we have an actual error. */
 	r->error_code = ret;
@@ -2758,14 +2766,18 @@ out:
 	krb5_error_code ret2 = _kdc_audit_request(r);
 	if (ret2) {
 	    krb5_data_free(r->reply);
-	    ret = ret2;
+	    r->error_code = ret = ret2;
 	}
     }
 
     /*
-     * In case of a non proxy error, build an error message.
+     * Note that if we're not using FAST then _kdc_fast_mk_error() will make a
+     * non-FAST KRB-ERROR.  It will also make a minimal size KRB-ERROR if
+     * `r->error_code == KRB5KRB_ERR_RESPONSE_TOO_BIG'.
      */
-    if (ret != 0 && ret != HDB_ERR_NOT_FOUND_HERE && r->reply->length == 0)
+    if (ret != 0 && ret != HDB_ERR_NOT_FOUND_HERE && r->reply->length == 0) {
+        kdc_log(r->context, config, 5, "as-req: sending error: %d to client",
+                r->error_code);
 	ret = _kdc_fast_mk_error(r,
 				 r->rep.padata,
 			         r->armor_crypto,
@@ -2775,6 +2787,7 @@ out:
 			         r->server_princ,
 			         NULL, NULL,
 			         r->reply);
+    }
 
     if (r->pa_used && r->pa_used->cleanup)
 	r->pa_used->cleanup(r);

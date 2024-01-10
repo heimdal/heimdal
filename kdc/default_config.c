@@ -218,7 +218,7 @@ krb5_kdc_get_config(krb5_context context, krb5_kdc_configuration **config)
     c->max_datagram_reply_length =
 	krb5_config_get_int_default(context,
 				    NULL,
-				    1400,
+				    0,
 				    "kdc",
 				    "max-kdc-datagram-reply-length",
 				    NULL);

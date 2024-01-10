@@ -172,8 +172,16 @@ they would also grant access to unauthenticated anonymous users.
 As such, it is not recommend to set this option to
 .Li true.
 .It Li max-kdc-datagram-reply-length = Va number
-Maximum packet size the UDP rely that the KDC will transmit, instead
-the KDC sends back a reply telling the client to use TCP instead.
+Maximum PDU size for UDP replies which if exceeded causes the KDC to send back
+an error telling the client to use TCP instead.
+Operators may wish to tune this downward to cope with smaller MTUs on their
+networks or with distributed denial of service (DDoS) attacks based on
+amplification.
+Defaults to 0, meaning that all requests received over UDP will receive an
+error telling the client to switch to TCP.
+This default is appropriate for KDCs operating on the Internet; operators on
+private networks may wish to set it to their minimum MTU minus the IP and UDP
+header sizes.
 .It Li transited-policy = Li always-check \*(Ba \
 Li allow-per-principal | Li always-honour-request
 This controls how KDC requests with the

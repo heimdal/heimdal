@@ -391,8 +391,12 @@ ${kinit} --password-file=${objdir}/notfoopassword \
 grep 'Password incorrect' kinit-log.tmp > /dev/null || \
 	{ ec=1 ; eval "${testfailed}"; }
 echo "Getting client initial tickets"; > messages.log
-${kinit} --password-file=${objdir}/foopassword foo@$R || \
+${kinit} --pk-anon-fast-armor --password-file=${objdir}/foopassword foo@$R || \
 	{ ec=1 ; eval "${testfailed}"; }
+grep 'AS-REQ KRB5KRB_ERR_RESPONSE_TOO_BIG.*udp=true' messages.log > /dev/null ||
+        { ec=1 ; echo "Incorrect KRB_ERR_RESPONSE_TOO_BIG handling"; eval "$testfailed"; }
+grep 'AS-REQ SUCCESS.*udp=false' messages.log > /dev/null ||
+        { ec=1 ; echo "Incorrect KRB_ERR_RESPONSE_TOO_BIG handling"; eval "$testfailed"; }
 echo "Doing krbtgt key rollover"; > messages.log
 ${kadmin} cpw -r --keepold krbtgt/${R}@${R} || exit 1
 echo "Getting tickets"; > messages.log

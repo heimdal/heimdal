@@ -2081,7 +2081,6 @@ _kdc_tgs_rep(astgs_request_t r)
     krb5_data *data = r->reply;
     const char *from = r->from;
     struct sockaddr *from_addr = r->addr;
-    int datagram_reply = r->datagram_reply;
     AuthorizationData *auth_data = NULL;
     krb5_error_code ret;
     int i = 0;
@@ -2092,6 +2091,8 @@ _kdc_tgs_rep(astgs_request_t r)
     int *cusec = NULL;
 
     r->e_text = NULL;
+
+    kdc_audit_setkv_bool((kdc_request_t)r, "udp", r->datagram_reply);
 
     if(req->padata == NULL){
 	ret = KRB5KDC_ERR_PREAUTH_REQUIRED; /* XXX ??? */
@@ -2153,10 +2154,11 @@ _kdc_tgs_rep(astgs_request_t r)
 	goto out;
     }
 
-    /* */
-    if (datagram_reply && data->length > config->max_datagram_reply_length) {
+    /* Check if message is too large */
+    if (r->datagram_reply && data->length > config->max_datagram_reply_length) {
 	krb5_data_free(data);
 	ret = KRB5KRB_ERR_RESPONSE_TOO_BIG;
+        kdc_log(r->context, config, 4, "Successful reply too large");
         _kdc_set_const_e_text(r, "Reply packet too large");
     }
 
@@ -2165,18 +2167,32 @@ out:
 	/* Overwrite ‘error_code’ only if we have an actual error. */
 	r->error_code = ret;
     }
+
     {
 	krb5_error_code ret2 = _kdc_audit_request(r);
 	if (ret2) {
 	    krb5_data_free(data);
-	    ret = ret2;
+	    r->error_code = ret = ret2;
 	}
+    }
+
+    /*
+     * Setting [kdc] max-kdc-datagram-reply-length == 0 disables even all
+     * errors over UDP.
+     */
+    if (r->datagram_reply && config->max_datagram_reply_length == 0 &&
+        r->error_code != KRB5KRB_ERR_RESPONSE_TOO_BIG) {
+	krb5_data_free(r->reply);
+	ret = KRB5KRB_ERR_RESPONSE_TOO_BIG;
+        kdc_log(r->context, config, 4, "Error reply too large");
+	_kdc_set_e_text(r, "Reply packet too large");
     }
 
     if(ret && ret != HDB_ERR_NOT_FOUND_HERE && data->data == NULL){
 	METHOD_DATA error_method = { 0, NULL };
 
-	kdc_log(r->context, config, 5, "tgs-req: sending error: %d to client", ret);
+        kdc_log(r->context, config, 5, "tgs-req: sending error: %d to client",
+                r->error_code);
 	ret = _kdc_fast_mk_error(r,
 				 &error_method,
 				 r->armor_crypto,

@@ -356,7 +356,34 @@ _kdc_fast_mk_error(astgs_request_t r,
 	}
     }
 
-    if (armor_crypto) {
+    if (outer_error == KRB5KRB_ERR_RESPONSE_TOO_BIG) {
+        /*
+         * Always send KRB5KRB_ERR_RESPONSE_TOO_BIG as a non-FAST KRB-ERROR
+         * even if FAST was used.  The only privacy leak would be that... the
+         * response was too big, but so what, especially if the KDC is
+         * configured to send back KRB5KRB_ERR_RESPONSE_TOO_BIG to all requests
+         * received over UDP, the KRB5KRB_ERR_RESPONSE_TOO_BIG then means
+         * nothing.  And if the KDC is not configured to send
+         * KRB5KRB_ERR_RESPONSE_TOO_BIG to all UDP requests then sending back
+         * that error naked might at most imply that the request would have
+         * succeeded.
+         *
+         * The Heimdal client only handles KRB5KRB_ERR_RESPONSE_TOO_BIG
+         * correctly if sent as a non-FAST KRB-ERROR anyways, and the MIT
+         * Kerberos KDC only sends KRB5KRB_ERR_RESPONSE_TOO_BIG as a non-FAST
+         * error too.  If nothing else we have to do the same for
+         * interoperability reasons, though we don't know at this time how
+         * Windows handles this.
+         *
+         * We do want to minimize the KRB-ERROR sent though, so we will exclude
+         * several OPTIONAL fields:
+         */
+        error_client = NULL;
+        cusec = NULL;
+        csec = NULL;
+        kdc_log(r->context, r->config, 5, "Making ERR_RESPONSE_TOO_BIG %sKRB-ERROR",
+                armor_crypto ? "" : "outer ");
+    } else if (armor_crypto) {
 	PA_FX_FAST_REPLY fxfastrep;
 	KrbFastResponse fastrep;
 

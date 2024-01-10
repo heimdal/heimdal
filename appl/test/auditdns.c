@@ -35,8 +35,10 @@
 #include <netinet/in.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "resolve.h"
+#include "roken.h"
 
 struct rk_dns_reply *
 rk_dns_lookup(const char *domain, const char *type_name)
@@ -65,6 +67,24 @@ gethostbyname2(const char *name, int af)
 }
 
 #endif	/* HAVE_GETHOSTBYNAME2 */
+
+struct hostent *
+gethostbyaddr(const void *addr, socklen_t len, int af)
+{
+    const socklen_t maxlen[] = {
+	[AF_INET] = sizeof(struct in_addr),
+	[AF_INET6] = sizeof(struct in6_addr),
+    };
+    char n[INET6_ADDRSTRLEN + 1];
+
+    if (af < 0 || af >= sizeof(maxlen)/sizeof(maxlen[0]) ||
+	maxlen[af] == 0 || len < maxlen[af] ||
+	inet_ntop(af, addr, n, sizeof n) == NULL)
+	fprintf(stderr, "Reverse DNS leak: %s\n", __func__);
+    else
+	fprintf(stderr, "Reverse DNS leak: %s %s\n", __func__, n);
+    abort();
+}
 
 #ifdef HAVE_GETADDRINFO
 
@@ -294,6 +314,7 @@ getaddrinfo(const char *hostname, const char *servname,
 	 * fall through.
 	 */
 	if (hints->ai_family == AF_UNSPEC || hints->ai_family == AF_INET6) {
+	    /* XXX scope id? */
 	    switch (inet_pton(AF_INET6, hostname, &addr->sin6.sin6_addr)) {
 	    case -1:		/* system error */
 		error = EAI_SYSTEM;
@@ -381,3 +402,105 @@ out:
 }
 
 #endif	/* HAVE_GETADDRINFO */
+
+#ifdef HAVE_GETNAMEINFO
+
+int
+getnameinfo(const struct sockaddr *restrict sa, socklen_t salen,
+    char *restrict node, socklen_t nodelen,
+    char *restrict service, socklen_t servicelen,
+    int flags)
+{
+    char n[INET6_ADDRSTRLEN + 1] = "";
+    char s[5 + 1] = "";		/* ceil(log_10(2^16)) + 1 */
+
+    /*
+     * Call inet_ntop to format the appropriate member of the
+     * sockaddr_*.
+     */
+    switch (sa->sa_family) {
+    case AF_INET: {
+	struct sockaddr_in sin;
+
+	/*
+	 * Verify the socket address length is at least enough for
+	 * sockaddr_in, and make a copy to avoid strict aliasing
+	 * violation.
+	 */
+	if (salen < sizeof sin)
+	    return EAI_FAIL;
+	memcpy(&sin, sa, sizeof sin);
+
+	/*
+	 * Use inet_ntop to format sin_addr as x.y.z.w, and use
+	 * snprintf to format the port number in decimal.
+	 */
+	if (inet_ntop(AF_INET, &sin.sin_addr, n, sizeof n) == NULL)
+	    return EAI_FAIL;
+	snprintf(s, sizeof s, "%d", (int)sin.sin_port);
+	break;
+    }
+    case AF_INET6: {
+	struct sockaddr_in6 sin6;
+
+	/*
+	 * Verify the socket address length is at least enough for
+	 * sockaddr_in6, and make a copy to avoid strict aliasing
+	 * violation.
+	 */
+	if (salen < sizeof sin6)
+	    return EAI_FAIL;
+	memcpy(&sin6, sa, sizeof sin6);
+
+	/*
+	 * Use inet_ntop to format sin6_addr as a:b:c:...:h, and use
+	 * snprintf to format the port number in decimal.
+	 */
+	if (inet_ntop(AF_INET6, &sin6.sin6_addr, n, sizeof n) == NULL)
+	    return EAI_FAIL;
+	/* XXX scope id? */
+	snprintf(s, sizeof s, "%d", (int)sin6.sin6_port);
+	break;
+    }
+    default:
+	return EAI_FAMILY;
+    }
+
+    /*
+     * DNS audit: Abort unless the user specified flags with
+     * NI_NUMERICHOST|NI_NUMERICSERV|NI_NUMERICSCOPE.  We format the
+     * numeric syntax first so it can be included in the error message
+     * to give a clue about what might have DNS leaks.
+     *
+     * The NI_NUMERICSCOPE test is written in a funny way so that on
+     * platforms where it simply doesn't exist (like glibc and
+     * Windows), it doesn't spuriously fail -- scope ids naming is
+     * probably not a source of network leaks.
+     */
+    if ((flags & NI_NUMERICHOST) == 0 ||
+	(flags & NI_NUMERICSERV) == 0 ||
+	(flags & NI_NUMERICSCOPE) != NI_NUMERICSCOPE) {
+	fprintf(stderr, "Reverse DNS leak: %s %s %s\n", __func__, n, s);
+	abort();
+    }
+
+    /*
+     * Verify the (numeric) `names' we determined fit in the buffers
+     * provided, if any.
+     */
+    if ((node && nodelen > 0 && strlen(n) >= nodelen) ||
+	(service && servicelen > 0 && strlen(s) >= servicelen))
+	return EAI_OVERFLOW;
+
+    /*
+     * Copy out the answers that were requested.
+     */
+    if (node)
+	strlcpy(node, n, nodelen);
+    if (service)
+	strlcpy(service, s, servicelen);
+
+    return 0;
+}
+
+#endif	/* HAVE_GETNAMEINFO */

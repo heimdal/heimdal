@@ -311,7 +311,7 @@ cleanup() {
     tail iprop-stats
     exit 1
 }
-trap cleanup EXIT
+trap cleanup EXIT INT TERM HUP
 
 echo Starting kdc ; > messages.log
 ${kdc} --detach --testing || { echo "kdc failed to start"; cat messages.log; exit 1; }
@@ -585,7 +585,7 @@ sh ${leaks_kill} ipropd-slave $ipds || leaked=true
 sh ${leaks_kill} ipropd-master $ipdm2 || leaked=true
 sh ${leaks_kill} ipropd-slave $ipds2 || leaked=true
 rm -f iprop-slave-status
-trap "" EXIT
+trap "" EXIT INT TERM HUP
 $leaked && exit 1
 
 echo "compare versions on master and slave logs"

@@ -52,14 +52,34 @@
 .Op Fl i | Fl Fl interactive
 .Op Fl Fl version
 .Op Fl Fl help
+.Op Ar command Op Ar args
 .Sh DESCRIPTION
+.Nm
+changes the notion of default credentials cache, either globally
+for all processes that do not have the
+.Ev KRB5CCNAME
+environment variable (or similar program option or configuration)
+set to a specific cache, or locally for just the command given to
+.Nm .
+.Pp
+If a command is given then that command will be run with the
+.Ev KRB5CCNAME
+environment variable set to the specified cache, much as
+.Xr kinit 1
+does, except that credentials will not be refreshed automatically.
+.Pp
+If a command is not given the default cache will be
+.Dq switched
+to the given or matching one in its collection.
+For example, if using the
+.Sq DIR
+credentials cache type, the
+.Sq primary
+file in the given directory will be changed to name the given or
+matching cache in that directory.
+.Pp
 Supported options:
 .Bl -tag -width Ds
-.It Xo
-.Fl t Ar type ,
-.Fl Fl type= Ns Ar type
-.Xc
-type of credential cache
 .It Xo
 .Fl c Ar cache ,
 .Fl Fl cache= Ns Ar cache
@@ -70,6 +90,11 @@ name of credential cache to switch to
 .Fl Fl principal= Ns Ar principal
 .Xc
 name of principal to switch to
+.It Xo
+.Fl t Ar type ,
+.Fl Fl type= Ns Ar type
+.Xc
+type of credential cache
 .It Xo
 .Fl i ,
 .Fl Fl interactive
@@ -83,3 +108,5 @@ print version
 .Fl Fl help
 .Xc
 .El
+.Sh SEE ALSO
+.Xr kinit 1

@@ -324,6 +324,7 @@ acquire_initiator_cred(OM_uint32 *minor_status,
     krb5_error_code kret = 0;
     OM_uint32 left;
     const char *cs_ccache_name;
+    const char *cs_cccol_name;
     time_t lifetime = 0;
     time_t now;
 
@@ -331,6 +332,11 @@ acquire_initiator_cred(OM_uint32 *minor_status,
 
     ret = __gsskrb5_cred_store_find(minor_status, cred_store,
 				    "ccache", &cs_ccache_name);
+    if (GSS_ERROR(ret))
+	return ret;
+
+    ret = __gsskrb5_cred_store_find(minor_status, cred_store,
+				    "ccache_collection", &cs_cccol_name);
     if (GSS_ERROR(ret))
 	return ret;
 
@@ -362,9 +368,8 @@ acquire_initiator_cred(OM_uint32 *minor_status,
          * Not default credential case.  See if we can find a ccache in
          * the cccol for the desired_name.
          */
-	kret = krb5_cc_cache_match(context,
-				   handle->principal,
-				   &ccache);
+        kret = krb5_cc_cache_match2(context, cs_cccol_name, handle->principal,
+                                    &ccache);
 	if (kret == 0) {
             kret = krb5_cc_get_lifetime(context, ccache, &lifetime);
             if (kret == 0) {

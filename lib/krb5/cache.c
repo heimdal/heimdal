@@ -100,10 +100,9 @@ main (int argc, char **argv)
 * @endcode
 */
 
-static const krb5_cc_ops *
-cc_get_prefix_ops(krb5_context context,
-		  const char *prefix,
-		  const char **residual);
+static const krb5_cc_ops *cc_get_prefix_ops(krb5_context,
+                                            const char *,
+                                            const char **);
 
 /**
  * Add a new ccache type with operations `ops', overwriting any
@@ -289,29 +288,27 @@ get_default_cc_type_win32(krb5_context context)
 }
 #endif /* _WIN32 */
 
+/*
+ * Returns either the default cache type as configured, or the cache type of
+ * the default cache.
+ */
 static const char *
-get_default_cc_type(krb5_context context, int simple)
+get_default_cc_type(krb5_context context, int configured_default_only)
 {
     const char *def_ccname;
-    const char *def_cctype =
-        krb5_config_get_string_default(context, NULL,
-                                       secure_getenv("KRB5CCTYPE"),
-                                       "libdefaults", "default_cc_type", NULL);
-    const char *def_cccol =
-        krb5_config_get_string(context, NULL, "libdefaults",
-                               "default_cc_collection", NULL);
+    const char *def_cctype;
     const krb5_cc_ops *ops;
 
-    if (!simple && (def_ccname = krb5_cc_default_name(context))) {
+    if (!configured_default_only &&
+        (def_ccname = krb5_cc_default_name(context))) {
 	ops = cc_get_prefix_ops(context, def_ccname, NULL);
 	if (ops)
 	    return ops->prefix;
     }
-    if (!def_cctype && def_cccol) {
-	ops = cc_get_prefix_ops(context, def_cccol, NULL);
-	if (ops)
-	    return ops->prefix;
-    }
+
+    def_cctype = krb5_config_get_string(context, NULL,
+                                        "libdefaults",
+                                        "default_cc_type", NULL);
 #ifdef _WIN32
     if (def_cctype == NULL)
 	def_cctype = get_default_cc_type_win32(context);
@@ -346,6 +343,7 @@ krb5_cc_resolve_sub(krb5_context context,
                     krb5_ccache *id)
 {
     const krb5_cc_ops *ops = NULL;
+    const char *def_ccname = NULL;
 
     *id = NULL;
 
@@ -355,6 +353,12 @@ krb5_cc_resolve_sub(krb5_context context,
 
     if (ops == NULL)
 	ops = cc_get_prefix_ops(context, get_default_cc_type(context, 0), NULL);
+
+    if (collection == NULL) {
+        def_ccname = krb5_cc_default_name(context);
+        if (cc_get_prefix_ops(context, def_ccname, &collection) != ops)
+            collection = NULL;
+    }
 
     if (ops == NULL) {
 	krb5_set_error_message(context, KRB5_CC_UNKNOWN_TYPE,
@@ -438,21 +442,58 @@ krb5_cc_new_unique(krb5_context context, const char *type,
 {
     const krb5_cc_ops *ops;
     krb5_error_code ret;
+    const char *def_type = get_default_cc_type(context, 0);
+    const char *res = NULL;
 
-    if (type == NULL)
-        type = get_default_cc_type(context, 1);
+    if (type == NULL) {
+        type = def_type;
+        ops = krb5_cc_get_prefix_ops(context, type);
+    } else {
+        ops = cc_get_prefix_ops(context, type, &res);
 
-    ops = krb5_cc_get_prefix_ops(context, type);
+        /*
+         * Try to accomodate older apps that don't pass us any hint or
+         * residual.
+         */
+        if (res == NULL && hint == NULL &&
+            context->default_cc_name &&
+            strcmp(ops->prefix, def_type) == 0) {
+            ops = cc_get_prefix_ops(context, context->default_cc_name, &res);
+        }
+        if (res == NULL && hint == NULL &&
+            !context->default_cc_name_defaulted &&
+            strcmp(ops->prefix, def_type) != 0 &&
+            strncmp(type, "MEMORY", sizeof("MEMORY")) != 0) {
+            krb5_set_error_message(context, KRB5_CC_NOSUPP,
+                                   "Refusing to create a new unique cache in "
+                                   "the default collection for cache type %s "
+                                   "because it is not the type of the "
+                                   "default cache", type);
+            return KRB5_CC_NOSUPP;
+        }
+        type = ops->prefix;
+    }
+
     if (ops == NULL) {
 	krb5_set_error_message(context, KRB5_CC_UNKNOWN_TYPE,
 			      "Credential cache type %s is unknown", type);
 	return KRB5_CC_UNKNOWN_TYPE;
     }
 
+    if ((res || hint) && ops->gen_new_2 == NULL) {
+        krb5_set_error_message(context, KRB5_CC_NOSUPP,
+                               "Cannot create a new unique cache in %s:%s",
+                               type, hint ? hint : res);
+        return KRB5_CC_NOSUPP;
+    }
+
     ret = _krb5_cc_allocate(context, ops, id);
     if (ret)
 	return ret;
-    ret = (*id)->ops->gen_new(context, id);
+    if ((*id)->ops->gen_new_2)
+        ret = (*id)->ops->gen_new_2(context, hint ? hint : res, id);
+    else
+        ret = (*id)->ops->gen_new(context, id);
     if (ret) {
 	free(*id);
 	*id = NULL;
@@ -594,15 +635,49 @@ krb5_cc_get_ops(krb5_context context, krb5_ccache id)
  */
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
-_krb5_expand_default_cc_name(krb5_context context, const char *str, char **res)
+_krb5_expand_default_cc_name(krb5_context context, const krb5_cc_ops *ops, const char *str, char **res)
 {
-    int filepath;
+    int filepath = 0;
 
-    filepath = (strncmp("FILE:", str, 5) == 0
-		 || strncmp("DIR:", str, 4) == 0
-		 || strncmp("SCC:", str, 4) == 0);
-
+    if (ops == NULL)
+        ops = cc_get_prefix_ops(context, str, NULL);
+    if (ops)
+        filepath = ops->filepath;
     return _krb5_expand_path_tokens(context, str, filepath, res);
+}
+
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+_krb5_default_cc_name(krb5_context context,
+                      const krb5_cc_ops *ops,
+                      const char *type,
+                      const char *hardcoded_default,
+                      char **res)
+{
+    const char *s;
+
+    if (ops == NULL)
+        ops = cc_get_prefix_ops(context, type, NULL);
+    if (ops == NULL)
+        return _krb5_expand_path_tokens(context, hardcoded_default, 0, res);
+
+    if (type == NULL)
+        type = ops->prefix;
+
+    s = krb5_config_get_string(context, NULL, "libdefaults",
+                               "default_ccache_name_by_type", type, NULL);
+    if (s == NULL)
+        return _krb5_expand_path_tokens(context, hardcoded_default, 0, res);
+
+    if (strncmp(s, type, strlen(type)) != 0 ||
+        s[strlen(type)] != ':') {
+        krb5_set_error_message(context, KRB5_CC_FORMAT,
+                               "Default directory name in [libdefaults] "
+                               "default_ccache_name_by_type for cache type "
+                               "%s (\"%s\") does not start with \"%s:\"",
+                               type, s, type);
+        return KRB5_CC_FORMAT;
+    }
+    return _krb5_expand_path_tokens(context, s, 0, res);
 }
 
 /*
@@ -711,6 +786,7 @@ krb5_cc_set_default_name(krb5_context context, const char *name)
              * this from the environment, which might change.
              */
             context->default_cc_name_set = 0;
+            context->default_cc_name_defaulted = 0;
         } else if ((e = krb5_cc_configured_default_name(context))) {
             if ((p = strdup(e)) == NULL)
                 return krb5_enomem(context);
@@ -726,6 +802,8 @@ krb5_cc_set_default_name(krb5_context context, const char *name)
              *     from krb5_cc_configured_default_name() about that!
              */
             context->default_cc_name_set = 1;
+            context->default_cc_name_defaulted = 1;
+            context->default_cc_name_env = NULL;
         }
     } else {
         int filepath = (strncmp("FILE:", name, 5) == 0 ||
@@ -742,6 +820,7 @@ krb5_cc_set_default_name(krb5_context context, const char *name)
          * is reset.
          */
 	context->default_cc_name_set = 1;
+        context->default_cc_name_defaulted = 0;
     }
 
     free(context->default_cc_name);
@@ -794,7 +873,7 @@ krb5_cc_configured_default_name(krb5_context context)
         cfg = krb5_config_get_string(context, NULL, "libdefaults",
                                      "default_ccache_name", NULL);
     if (cfg) {
-        ret = _krb5_expand_default_cc_name(context, cfg, &expanded);
+        ret = _krb5_expand_default_cc_name(context, NULL, cfg, &expanded);
         if (ret) {
             krb5_set_error_message(context, ret,
                                    "token expansion failed for %s", cfg);
@@ -822,10 +901,21 @@ krb5_cc_configured_default_name(krb5_context context)
     return context->configured_default_cc_name = expanded;
 }
 
+/**
+ * Get the default cache collection name, which is a lot like the default
+ * cache.
+ *
+ * @param context
+ *
+ * @return Returns the name of the default collection / cache
+ *
+ * @ingroup krb5_ccache
+ */
+
 KRB5_LIB_FUNCTION char * KRB5_LIB_CALL
 krb5_cccol_get_default_ccname(krb5_context context)
 {
-    const char *cfg = get_default_cc_type(context, 1);
+    const char *cfg = get_default_cc_type(context, 0);
     char *cccol_default_ccname;
     const krb5_cc_ops *ops = krb5_cc_get_prefix_ops(context, cfg);
 
@@ -1409,6 +1499,14 @@ cc_get_prefix_ops(krb5_context context,
     if (residual)
 	*residual = prefix;
 
+    /*
+     * TODO:
+     *
+     *  - If there's no prefix then assume it's one of FILE, DIR, or SCC, then
+     *    stat() the collection name from the residual, and if it's a regular
+     *    file choose FILE, if it's a directory and "sdb" in it is a regular
+     *    file, then choose SCC, else choose DIR.
+     */
     if (prefix == NULL)
 	return KRB5_DEFAULT_CCTYPE;
 
@@ -1451,7 +1549,8 @@ struct krb5_cc_cache_cursor_data {
  * krb5_cccol_cursor_new().
 
  * @param context A Kerberos 5 context
- * @param type optional type to iterate over, if NULL, the default cache is used.
+ * @param collection optional cache collection to iterate over;
+ *                   if NULL, the default collection will be used
  * @param cursor cursor should be freed with krb5_cc_cache_end_seq_get().
  *
  * @return Return an error code or 0, see krb5_get_error_message().
@@ -1462,42 +1561,85 @@ struct krb5_cc_cache_cursor_data {
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_cc_cache_get_first (krb5_context context,
-			 const char *type,
+			 const char *cc,
 			 krb5_cc_cache_cursor *cursor)
 {
     const krb5_cc_ops *ops;
     krb5_error_code ret;
+    const char *cctype = NULL;
+    char *ccname = NULL;
+    char *cccol = NULL;
 
-    if (type == NULL)
-	type = krb5_cc_default_name(context);
+    ret = krb5_cc_parse_name(context, cc, NULL, 1, &cctype, NULL, &cccol, NULL,
+                             &ccname);
+    if (ret) {
+        krb5_set_error_message(context, KRB5_CC_UNKNOWN_TYPE,
+                               "Could not parse default credentials cache name: %s", cc);
+        return KRB5_CC_UNKNOWN_TYPE;
+    }
 
-    ops = krb5_cc_get_prefix_ops(context, type);
+    ops = krb5_cc_get_prefix_ops(context, cctype);
     if (ops == NULL) {
 	krb5_set_error_message(context, KRB5_CC_UNKNOWN_TYPE,
-			       "Unknown type \"%s\" when iterating "
-			       "trying to iterate the credential caches", type);
+			       "Unknown type when trying to iterate "
+                               "credential cache \"%s\"", cc);
+        free(cccol);
+        free(ccname);
 	return KRB5_CC_UNKNOWN_TYPE;
     }
 
-    if (ops->get_cache_first == NULL) {
-	krb5_set_error_message(context, KRB5_CC_NOSUPP,
+    if (ops->get_cache_first_2 == NULL && ops->get_cache_first == NULL) {
+	krb5_set_error_message(context, ret = KRB5_CC_NOSUPP,
 			       N_("Credential cache type %s doesn't support "
 				 "iterations over caches", "type"),
 			       ops->prefix);
-	return KRB5_CC_NOSUPP;
+        free(cccol);
+        free(ccname);
+        return KRB5_CC_NOSUPP;
+    }
+
+    if (ops->get_cache_first_2 == NULL) {
+        const char *def_cctype = NULL;
+        char *def_cccol = NULL;
+        char *def_ccname = NULL;
+
+        ret = krb5_cc_parse_name(context, ccname, NULL, 1, &def_cctype, NULL,
+                                 &def_cccol, NULL, &def_ccname);
+        if (ret || (cccol && def_cccol && strcmp(cccol, def_cccol) != 0)) {
+            krb5_set_error_message(context, KRB5_CC_NOSUPP,
+                                   "Cache type %s does not support iteration "
+                                   "of non-default credentials cache "
+                                   "collections; could not list caches in %s",
+                                   cctype, cc);
+            free(def_ccname);
+            free(def_cccol);
+            free(cccol);
+            free(ccname);
+            return KRB5_CC_NOSUPP;
+        }
+        free(def_ccname);
+        free(def_cccol);
     }
 
     *cursor = calloc(1, sizeof(**cursor));
-    if (*cursor == NULL)
+    if (*cursor == NULL) {
+        free(cccol);
+        free(ccname);
 	return krb5_enomem(context);
+    }
 
     (*cursor)->ops = ops;
 
-    ret = ops->get_cache_first(context, &(*cursor)->cursor);
+    if (ops->get_cache_first_2)
+        ret = ops->get_cache_first_2(context, ccname, &(*cursor)->cursor);
+    else
+        ret = ops->get_cache_first(context, &(*cursor)->cursor);
     if (ret) {
 	free(*cursor);
 	*cursor = NULL;
     }
+    free(ccname);
+    free(cccol);
     return ret;
 }
 
@@ -1545,9 +1687,9 @@ krb5_cc_cache_end_seq_get (krb5_context context,
 }
 
 /**
- * Search for a matching credential cache that have the
- * `principal' as the default principal. On success, `id' needs to be
- * freed with krb5_cc_close() or krb5_cc_destroy().
+ * Search the default cache collection for a matching credential cache that
+ * has the given `principal' as the default principal.  On success, `id' needs
+ * to be freed with krb5_cc_close() or krb5_cc_destroy().
  *
  * @param context A Kerberos 5 context
  * @param client The principal to search for
@@ -1558,9 +1700,32 @@ krb5_cc_cache_end_seq_get (krb5_context context,
  * @ingroup krb5_ccache
  */
 
-
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_cc_cache_match (krb5_context context,
+		     krb5_principal client,
+		     krb5_ccache *id)
+{
+    return krb5_cc_cache_match2(context, NULL, client, id);
+}
+
+/**
+ * Search the named cache `collection' for a matching credential cache that has
+ * the `principal' as the default principal.  On success, `id' needs to be
+ * freed with krb5_cc_close() or krb5_cc_destroy().
+ *
+ * @param context A Kerberos 5 context
+ * @param collection The name of a cache or cache collection to search
+ * @param client The principal to search for
+ * @param id the returned credential cache
+ *
+ * @return On failure, error code is returned and `id' is set to NULL.
+ *
+ * @ingroup krb5_ccache
+ */
+
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+krb5_cc_cache_match2(krb5_context context,
+                     const char *collection,
 		     krb5_principal client,
 		     krb5_ccache *id)
 {
@@ -1571,7 +1736,7 @@ krb5_cc_cache_match (krb5_context context,
 
     *id = NULL;
 
-    ret = krb5_cccol_cursor_new (context, &cursor);
+    ret = krb5_cccol_cursor_new2(context, collection, &cursor);
     if (ret)
 	return ret;
 
@@ -1846,6 +2011,8 @@ out:
 
 struct krb5_cccol_cursor_data {
     int idx;
+    char *collection;
+    const char *type;
     krb5_cc_cache_cursor cursor;
 };
 
@@ -1864,13 +2031,61 @@ struct krb5_cccol_cursor_data {
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_cccol_cursor_new(krb5_context context, krb5_cccol_cursor *cursor)
 {
+    return krb5_cccol_cursor_new2(context, NULL, cursor);
+}
+
+/**
+ * Get a new cache interation cursor that will interate over all
+ * credentials caches independent of type.
+ *
+ * @param context a Kerberos context
+ * @param collection the name of a credentials cache or cache collection to iterate
+ * @param cursor passed into krb5_cccol_cursor_next() and free with krb5_cccol_cursor_free().
+ *
+ * @return Returns 0 or and error code, see krb5_get_error_message().
+ *
+ * @ingroup krb5_ccache
+ */
+
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+krb5_cccol_cursor_new2(krb5_context context,
+                       const char *collection,
+                       krb5_cccol_cursor *cursor)
+{
+    krb5_error_code ret;
+    char *s = NULL;
+
     *cursor = calloc(1, sizeof(**cursor));
-    if (*cursor == NULL)
+    if (*cursor == NULL) {
+        free(s);
 	return krb5_enomem(context);
+    }
+    ret = krb5_cc_parse_name(context, collection, NULL, 1, &(*cursor)->type,
+                             NULL, NULL, NULL, NULL);
+    if (ret)
+        goto out;
     (*cursor)->idx = 0;
     (*cursor)->cursor = NULL;
+    if (collection) {
+        (*cursor)->collection = strdup(collection);
+        if ((*cursor)->collection == NULL) {
+            ret = krb5_enomem(context);
+            goto out;
+        }
+    }
+    if (ret)
+        krb5_set_error_message(context, ret,
+                               "Could not parse default credentials cache name: %s",
+                               collection);
 
-    return 0;
+out:
+    if (ret) {
+        free((*cursor)->collection);
+        free(*cursor);
+        *cursor = NULL;
+    }
+    free(s);
+    return ret;
 }
 
 /**
@@ -1900,12 +2115,16 @@ krb5_cccol_cursor_next(krb5_context context, krb5_cccol_cursor cursor,
     *cache = NULL;
 
     while (cursor->idx < context->num_cc_ops) {
+        if (strcmp(context->cc_ops[cursor->idx]->prefix, cursor->type) != 0) {
+            cursor->idx++;
+            continue;
+        }
 
 	if (cursor->cursor == NULL) {
-	    ret = krb5_cc_cache_get_first (context,
-					   context->cc_ops[cursor->idx]->prefix,
-					   &cursor->cursor);
+            ret = krb5_cc_cache_get_first(context, cursor->collection,
+                                          &cursor->cursor);
 	    if (ret) {
+                /* No caches in this type's collection -> onto the next type */
 		cursor->idx++;
 		continue;
 	    }
@@ -1949,6 +2168,7 @@ krb5_cccol_cursor_free(krb5_context context, krb5_cccol_cursor *cursor)
 
     *cursor = NULL;
     if (c) {
+        free(c->collection);
 	if (c->cursor)
 	    krb5_cc_cache_end_seq_get(context, c->cursor);
 	free(c);
@@ -2298,3 +2518,275 @@ _krb5_set_default_cc_name_to_registry(krb5_context context, krb5_ccache id)
     return ret;
 }
 #endif
+
+/**
+ * Utility function for cache type plugins that parses a cache name into its
+ * type and residual, and further split the residual into collection and
+ * subsidiary cache names.
+ *
+ * All the outputs are optional.
+ *
+ * @param context A Kerberos 5 context.
+ * @param ccname A ccache name, possibly just a ccache type, possibly the empty string or even NULL.
+ * @param ops An optional cache type in case the ccname lacks a prefix.
+ * @param use_defaults Use defaults for any missing parts of the cache name.
+ * @param type The type of the ccache is output here.
+ * @param residual The ccache name without the type is output here.
+ * @param collection The ccache collection's name is output here.
+ * @param subsidiary The name of the ccache in the collection is output here.
+ *
+ * @return Return an error code or 0, see krb5_get_error_message().
+ *
+ * @ingroup krb5_ccache
+ */
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+krb5_cc_parse_name(krb5_context context,
+                   const char *ccname,
+                   const krb5_cc_ops *ops,
+                   int use_defaults,
+                   const char **type,
+                   char **residual,
+                   char **collection,
+                   char **subsidiary,
+                   char **fullname)
+{
+    unsigned char subsep = ':';
+    krb5_error_code ret;
+    const char *res = NULL;
+    char *freeme1 = NULL;
+    char *xfreeme2 = NULL;
+    char *colname = NULL;
+    char *res_sans_sub = NULL;
+    char *sub = NULL;
+    char *p;
+    int filepath = 0;
+    int use_last_subsep = 0;
+
+    /*
+     * We want to parse `ccname', extracting the type and residual, then
+     * splitting out the collection name and subsidiary cache name from the
+     * residual, and we want to default any missing parts, except that for the
+     * subsidiary we want to look up what the current primary subsidiary cache
+     * is in the collection.
+     *
+     * Sometimes we recurse, but only when `use_defaults' is true, and then we
+     * set it to false.
+     */
+
+    if (type)
+        *type = NULL;
+    if (residual)
+        *residual = NULL;
+    if (collection)
+        *collection = NULL;
+    if (subsidiary)
+        *subsidiary = NULL;
+
+    if (ops == NULL && (ccname == NULL || *ccname == '\0')) {
+        if (!use_defaults)
+            return KRB5_CC_UNKNOWN_TYPE;
+
+        /* Parse the default cache name then */
+        return krb5_cc_parse_name(context, krb5_cc_default_name(context), ops,
+                                  1, type, residual, collection, subsidiary,
+                                  fullname);
+    } else if (ops && ccname == NULL) {
+        ccname = "";
+    }
+
+    if (ops) {
+        size_t plen = strlen(ops->prefix);
+
+        /*
+         * Check that ccname either doesn't start with a prefix or starts with
+         * the same prefix as that of the given ops'.  This is a heuristic
+         * check.
+         */
+        if (strncmp(ccname, ops->prefix, plen) != 0 ||
+            strlen(ccname) < plen + 1 || ccname[plen] != ':') {
+            size_t i;
+
+            /* Check if `ccname' starts with something like a prefix */
+            for (i = 0; ccname[i]; i++) {
+                if (isupper(ccname[i]))
+                    continue;
+                if (i && ccname[i] == ':') {
+                    if (cc_get_prefix_ops(context, ccname, &res) == ops)
+                        break;
+
+                    krb5_set_error_message(context, ret = EINVAL,
+                                           "Cache type of \"%s\" is not \"%s\"",
+                                           ccname, ops->prefix);
+                    goto out;
+                }
+                /* Looks like there's no prefix */
+                break;
+            }
+            if (res == NULL || *res == '\0')
+                res = ccname;
+        } else if (res == NULL || *res == '\0') {
+            res = ccname + plen + 1;
+        }
+    } else {
+        ops = cc_get_prefix_ops(context, ccname, &res);
+    }
+    if (ops == NULL)
+        return KRB5_CC_UNKNOWN_TYPE;
+    if (type)
+        *type = ops->prefix;
+
+    if (ops->version >= KRB5_CC_OPS_VERSION_6) {
+        use_last_subsep = ops->use_last_subsep;
+        filepath = ops->filepath;
+        subsep = ops->subsep;
+    }
+
+    if (res == NULL || res[0] == '\0') {
+        if (!use_defaults) {
+            if (res) {
+                /* E.g., `ccname' is MEMORY: */
+                if (residual && (*residual = strdup(res)) == NULL)
+                    goto enomem;
+                if (fullname &&
+                    (asprintf(fullname, "%s:", ops->prefix) == -1 ||
+                     *fullname == NULL))
+                    goto enomem;
+            }
+            return 0;
+        }
+
+        /* Get the default cache for this type and parse that then */
+        ret = ops->get_default_name(context, &xfreeme2);
+        if (ret == 0)
+            ret = krb5_cc_parse_name(context, xfreeme2, ops, 0, type, residual,
+                                     collection, subsidiary, fullname);
+        if (ops->version >= KRB5_CC_OPS_VERSION_6)
+            ops->xfree(xfreeme2);
+        return ret;
+    }
+
+    /* `res' is now neither NULL nor an empty string */
+    if (residual && (*residual = strdup(res)) == NULL)
+        return krb5_enomem(context);
+
+    /* The collection name will be the residual minus the subsidiary */
+    if (res && (freeme1 = strdup(res)) == NULL)
+        goto enomem;
+    p = colname = freeme1;
+
+    /*
+     * `use_last_subsep' is for the KEYRING cache, which uses multiple ':'s to
+     * split the residual into an anchor, collection, and subsidiary, while all
+     * other cache types want to split on the first `subsep' so that the
+     * subsidiary is not required to transliterate or forbid `subsep'.
+     */
+#ifdef WIN32
+    if (subsep == ':' && filepath && isalpha(p[0]) && p[1] == ':') {
+        char *r;
+        /*
+         * Don't allow subsep to match the colon after the drive name.
+         */
+        p += 2;
+        if (use_last_subsep)
+            r = strrchr(p, subsep);
+        else
+            r = strchr(p, subsep);
+        if (r > p)
+            p = r;
+        else
+            p = NULL;
+    } else {
+        if (use_last_subsep)
+            p = strrchr(p, subsep);
+        else
+            p = strchr(p, subsep);
+    }
+#else
+    (void) filepath;
+    if (use_last_subsep)
+        p = strrchr(p, subsep);
+    else
+        p = strchr(p, subsep);
+#endif
+
+    if (p && *p) {
+        *(p++) = '\0';
+        if (*p)
+            sub = p;
+    }
+
+    if ((res_sans_sub = strdup(colname)) == NULL)
+        goto enomem;
+
+#if 0
+    if (*colname != '\0' && use_last_subsep &&
+        (p = strrchr(colname, subsep))) {
+        /*
+         * This is a KEYRING special.  The KEYRING cache's names of the form
+         *
+         *      KEYRING:[<stuff>:]<collection>:<subsidiary>
+         *
+         * See lib/krb5/krcache.c and the kinit(1) manual page for details.
+         */
+        *(p++) = '\0';
+        colname = p;
+        if (*colname == '\0')
+            colname = NULL;
+    }
+#endif
+
+    if (colname && *colname != '\0' && collection &&
+        (*collection = strdup(colname)) == NULL)
+        goto enomem;
+
+    if ((subsidiary || fullname) && (sub == NULL || *sub == '\0')) {
+        char *partial = NULL;
+
+        if (asprintf(&partial, "%s:%s", ops->prefix, res) == -1 ||
+            partial == NULL)
+            goto enomem;
+        if (use_defaults && ops->version >= KRB5_CC_OPS_VERSION_6 &&
+            ops->get_primary_name)
+            (void) ops->get_primary_name(context, partial, &xfreeme2);
+        sub = xfreeme2;
+        free(partial);
+    }
+    if ((sub && subsidiary && (*subsidiary = strdup(sub)) == NULL) ||
+        (fullname &&
+         (asprintf(fullname, "%s:%s%c%s", ops->prefix, res_sans_sub,
+                   sub ? subsep : '\0', sub ? sub : "") == -1 ||
+          *fullname == NULL))) {
+        goto enomem;
+    }
+
+    ret = 0;
+
+out:
+    if (ret) {
+        if (residual) {
+            free(*residual);
+            *residual = NULL;
+        }
+        if (collection) {
+            free(*collection);
+            *collection = NULL;
+        }
+        if (subsidiary) {
+            free(*subsidiary);
+            *subsidiary = NULL;
+        }
+        if (fullname) {
+            free(*fullname);
+            *fullname = NULL;
+        }
+    }
+    if (ops && ops->version >= KRB5_CC_OPS_VERSION_6)
+        ops->xfree(xfreeme2);
+    free(res_sans_sub);
+    free(freeme1);
+    return ret;
+
+enomem:
+    ret = krb5_enomem(context);
+    goto out;
+}

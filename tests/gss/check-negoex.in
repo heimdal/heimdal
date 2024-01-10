@@ -273,6 +273,6 @@ for mech in spnego spnegoiov; do
 
 done
 
-trap "" EXIT
+trap "" EXIT INT TERM HUP
 
 exit $exitcode

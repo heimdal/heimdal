@@ -113,6 +113,8 @@ static void do_v5_kvno (int count, char *names[],
     if (ret)
 	errx(1, "krb5_init_context failed: %d", ret);
 
+    (void) krb5_cc_set_default_name(context, ccache_name);
+
     if (etype_str) {
         ret = krb5_string_to_enctype(context, etype_str, &etype);
 	if (ret)

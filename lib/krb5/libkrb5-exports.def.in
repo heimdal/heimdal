@@ -81,6 +81,7 @@ EXPORTS
 	krb5_cc_cache_end_seq_get
 	krb5_cc_cache_get_first
 	krb5_cc_cache_match
+	krb5_cc_cache_match2
 	krb5_cc_cache_next
 	krb5_cc_clear_mcred
 	krb5_cc_close
@@ -95,6 +96,7 @@ EXPORTS
 	krb5_cc_destroy
 	krb5_cc_end_seq_get
 	krb5_cc_gen_new
+	krb5_cc_get_collection
 	krb5_cc_get_config
 	krb5_cc_get_friendly_name
 	krb5_cc_get_full_name
@@ -748,6 +750,7 @@ EXPORTS
 	krb5_xfree
 	krb5_cccol_last_change_time
 	krb5_cccol_cursor_new
+	krb5_cccol_cursor_new2
 	krb5_cccol_cursor_next
 	krb5_cccol_cursor_free
 	krb5_cccol_get_default_ccname
@@ -881,6 +884,7 @@ EXPORTS
 	krb5_time_abs;
 	_krb5_n_fold
 	_krb5_expand_default_cc_name
+	_krb5_default_cc_name
 
 	; FAST
 	_krb5_fast_cf2
@@ -893,3 +897,4 @@ EXPORTS
 	_krb5_expand_path_tokensv;
         _krb5_find_capath;
         _krb5_free_capath;
+        krb5_cc_parse_name;

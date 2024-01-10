@@ -81,7 +81,8 @@ kswitch(struct kswitch_options *opt, int argc, char **argv)
         rtbl_add_column_by_id(ct, 2, "Type", 0);
         rtbl_set_column_affix_by_id(ct, 2, "  ", "");
 
-	ret = krb5_cc_cache_get_first(heimtools_context, NULL, &cursor);
+        ret = krb5_cc_cache_get_first(heimtools_context, opt->cache_string,
+                                      &cursor);
 	if (ret)
 	    krb5_err(heimtools_context, 1, ret, "krb5_cc_cache_get_first");
 
@@ -133,13 +134,25 @@ kswitch(struct kswitch_options *opt, int argc, char **argv)
 	free(ids);
     } else if (opt->principal_string) {
 	krb5_principal p;
+        time_t ttl;
 
 	ret = krb5_parse_name(heimtools_context, opt->principal_string, &p);
 	if (ret)
 	    krb5_err(heimtools_context, 1, ret, "krb5_parse_name: %s",
 		     opt->principal_string);
 
-	ret = krb5_cc_cache_match(heimtools_context, p, &id);
+	ret = krb5_cc_default_for(heimtools_context, p, &id);
+        if (ret == 0) {
+            ret = krb5_cc_get_lifetime(heimtools_context, id, &ttl);
+            if (ret || ttl < 300) {
+                krb5_cc_close(heimtools_context, id);
+                id = NULL;
+                ret = 1;
+            }
+        }
+        if (ret)
+            ret = krb5_cc_cache_match2(heimtools_context, opt->cache_string,
+                                       p, &id);
 	if (ret)
 	    krb5_err(heimtools_context, 1, ret,
 		     N_("Did not find principal: %s", ""),
@@ -169,11 +182,36 @@ kswitch(struct kswitch_options *opt, int argc, char **argv)
 	krb5_errx(heimtools_context, 1, "missing option for kswitch");
     }
 
-    ret = krb5_cc_switch(heimtools_context, id);
-    if (ret)
-	krb5_err(heimtools_context, 1, ret, "krb5_cc_switch");
+#define EX_NOEXEC       126
+#define EX_NOTFOUND     127
+    if (argc) {
+        char *krb5ccname = NULL;
+        char *cache_name = NULL;
 
-    krb5_cc_close(heimtools_context, id);
+        ret = krb5_cc_get_full_name(heimtools_context, id, &cache_name);
+        if (ret)
+            krb5_err(heimtools_context, 1, ret, "krb5_cc_get_full_name");
+
+        if (asprintf(&krb5ccname, "KRB5CCNAME=%s", cache_name) == -1 ||
+            krb5ccname == NULL)
+            krb5_errx(heimtools_context, 1, "Out of memory");
+        krb5_xfree(cache_name);
+        putenv(krb5ccname);
+        ret = simple_execvp(argv[0], argv);
+        if (ret == EX_NOEXEC)
+            krb5_warnx(heimtools_context, N_("permission denied: %s", ""), argv[1]);
+        else if (ret == EX_NOTFOUND)
+            krb5_warnx(heimtools_context, N_("command not found: %s", ""), argv[1]);
+
+        krb5_cc_close(heimtools_context, id);
+        exit(ret);
+    } else {
+        ret = krb5_cc_switch(heimtools_context, id);
+        if (ret)
+            krb5_err(heimtools_context, 1, ret, "krb5_cc_switch");
+
+        krb5_cc_close(heimtools_context, id);
+    }
 
     return 0;
 }

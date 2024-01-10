@@ -111,7 +111,7 @@ env ${HEIM_MALLOC_DEBUG} ${kpasswdd} --detach ||
     { echo "kpasswdd failed to start"; exit 1; }
 kpasswddpid=`getpid kpasswdd`
 
-trap "kill -9 ${kdcpid} ${kpasswddpid}; echo signal killing kdc; exit \$ec;" EXIT
+trap "kill -9 ${kdcpid} ${kpasswddpid}; echo signal killing kdc; exit \$ec;" EXIT INT TERM HUP
 
 ec=0
 
@@ -189,6 +189,6 @@ echo "killing kdc (${kdcpid} ${kpasswddpid})"
 sh ${leaks_kill} kdc $kdcpid || exit 1
 sh ${leaks_kill} kpasswdd $kpasswddpid || exit 1
 
-trap "" EXIT
+trap "" EXIT INT TERM HUP
 
 exit $ec

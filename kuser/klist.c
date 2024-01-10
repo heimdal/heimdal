@@ -38,6 +38,16 @@
 #include "heimtools-commands.h"
 #undef HC_DEPRECATED_CRYPTO
 
+static krb5_boolean
+is_config_princ(krb5_context context, krb5_const_principal p)
+{
+    if (krb5_is_config_principal(context, p))
+        return TRUE;
+    if (strcmp(krb5_principal_get_realm(context, p), "X-RMED-CONF:") == 0)
+        return TRUE;
+    return FALSE;
+}
+
 static const char *
 printable_time_internal(time_t t, int x)
 {
@@ -90,7 +100,9 @@ print_cred(krb5_context context, krb5_creds *cred, rtbl_t ct, int do_flags)
 	rtbl_add_column_entry(ct, COL_ISSUED,
 			      printable_time(cred->times.authtime));
 
-    if(cred->times.endtime > sec)
+    if (is_config_princ(context, cred->server))
+        rtbl_add_column_entry(ct, COL_EXPIRES, N_(">>>Configuration<<<", ""));
+    else if (cred->times.endtime > sec)
 	rtbl_add_column_entry(ct, COL_EXPIRES,
 			      printable_time(cred->times.endtime));
     else
@@ -317,7 +329,10 @@ print_cred_verbose(krb5_context context, krb5_creds *cred)
     printf(N_("Client: %s\n", ""), str);
     free (str);
     
-    if (krb5_is_config_principal(context, cred->server)) {
+    if (is_config_princ(context, cred->server)) {
+        if (!krb5_is_config_principal(context, cred->server))
+            printf(N_("Removed: true\n", ""));
+
         if (krb5_principal_get_num_comp(context, cred->server) > 1) {
             const char *s;
 
@@ -556,7 +571,7 @@ print_tickets(krb5_context context,
 	rtbl_set_separator(ct, "  ");
     }
     while ((ret = krb5_cc_next_cred(context, ccache, &cursor, &creds)) == 0) {
-	if (!do_hidden && krb5_is_config_principal(context, creds.server)) {
+	if (!do_hidden && is_config_princ(context, creds.server)) {
 	    ;
 	} else if (do_verbose) {
 	    print_cred_verbose(context, &creds);
@@ -693,10 +708,10 @@ display_v5_ccache(krb5_context context, krb5_ccache ccache,
     if (ret) {
 	if (dict)
 	    return 0;
-	if(ret == ENOENT) {
+	if (ret != ENOMEM && ret != KRB5_CC_NOMEM) {
 	    if (!do_test)
-		krb5_warnx(context, N_("No ticket file: %s", ""),
-			   krb5_cc_get_name(context, ccache));
+		krb5_warn(context, ret, N_("No ticket cache: %s", ""),
+			  krb5_cc_get_name(context, ccache));
 	    return 1;
 	} else
 	    krb5_err (context, 1, ret, "krb5_cc_get_principal");
@@ -909,6 +924,9 @@ klist(struct klist_options *opt, int argc, char **argv)
 	print_version(NULL);
 	exit(0);
     }
+
+    if (opt->cache_string)
+        (void) krb5_cc_set_default_name(heimtools_context, opt->cache_string);
 
     if (opt->list_all_flag) {
         if (opt->json_flag)

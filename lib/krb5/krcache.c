@@ -463,7 +463,7 @@ get_default(krb5_context context,
     if (defname == NULL || strncmp(defname, "KEYRING:", 8) != 0)
 	return 0;
 
-    return parse_residual(context, defname + 8,
+    return parse_residual(context, defname + sizeof("KEYRING:") - 1,
 			  panchor_name, pcollection_name, psubsidiary_name);
 }
 
@@ -1294,7 +1294,7 @@ alloc_cache(krb5_context context,
 
 /* Create a new keyring cache with a unique name. */
 static krb5_error_code KRB5_CALLCONV
-krcc_gen_new(krb5_context context, krb5_ccache *id)
+krcc_gen_new_2(krb5_context context, const char *name, krb5_ccache *id)
 {
     krb5_error_code ret;
     char *anchor_name, *collection_name, *subsidiary_name;
@@ -1304,8 +1304,12 @@ krcc_gen_new(krb5_context context, krb5_ccache *id)
     key_serial_t cache_id = 0;
 
     /* Determine the collection in which we will create the cache.*/
-    ret = get_default(context, &anchor_name, &collection_name,
-		      &subsidiary_name);
+    if (name)
+        ret = parse_residual(context, name, &anchor_name, &collection_name,
+                             &subsidiary_name);
+    else
+        ret = get_default(context, &anchor_name, &collection_name,
+                          &subsidiary_name);
     if (ret)
 	return ret;
 
@@ -1314,13 +1318,6 @@ krcc_gen_new(krb5_context context, krb5_ccache *id)
 			     &collection_name, &subsidiary_name);
 	if (ret)
 	    return ret;
-    }
-    if (subsidiary_name != NULL) {
-	krb5_set_error_message(context, KRB5_DCC_CANNOT_CREATE,
-		N_("Can't create new subsidiary cache because default cache "
-		   "is already a subsidiary", ""));
-	ret = KRB5_DCC_CANNOT_CREATE;
-	goto cleanup;
     }
 
     /* Make a unique keyring within the chosen collection. */
@@ -2026,13 +2023,54 @@ krcc_move(krb5_context context, krb5_ccache from, krb5_ccache to)
 }
 
 static krb5_error_code KRB5_CALLCONV
+krcc_get_primary_name(krb5_context context, const char *collection, char **str)
+{
+    krb5_error_code ret;
+    atomic_key_serial_t collection_id;
+    char *anchor_name = NULL, *collection_name = NULL, *subsidiary_name = NULL;
+
+    *str = NULL;
+    ret = parse_residual(context, collection, &anchor_name, &collection_name,
+                         &subsidiary_name);
+    if (ret)
+	goto cleanup;
+
+    ret = get_collection(context, anchor_name, collection_name, &collection_id);
+    if (ret)
+	goto cleanup;
+
+    ret = get_primary_name(context, anchor_name, collection_name,
+                           collection_id, str);
+    if (ret)
+        goto cleanup;
+
+cleanup:
+    free(anchor_name);
+    free(collection_name);
+    free(subsidiary_name);
+    return ret;
+}
+
+static krb5_error_code KRB5_CALLCONV
 krcc_get_default_name(krb5_context context, char **str)
 {
-    *str = strdup("KEYRING:");
-    if (*str == NULL)
-	return krb5_enomem(context);
+    krb5_error_code ret;
+    char *s = NULL;
 
-    return 0;
+    ret = krcc_get_primary_name(context, NULL, &s);
+    if (ret)
+        return ret;
+    if (asprintf(str, "KEYRING:::%s", s ? s : "") == -1 || *str == NULL)
+	ret = krb5_enomem(context);
+
+    free(s);
+    return ret;
+}
+
+static void KRB5_CALLCONV
+krcc_xfree(void *p)
+{
+    krb5_xfree(p);
 }
 
 /*
@@ -2042,11 +2080,11 @@ krcc_get_default_name(krb5_context context, char **str)
  * be stored at the process or thread level respectively.
  */
 KRB5_LIB_VARIABLE const krb5_cc_ops krb5_krcc_ops = {
-    KRB5_CC_OPS_VERSION_5,
+    KRB5_CC_OPS_VERSION_6,
     "KEYRING",
     NULL,
     NULL,
-    krcc_gen_new,
+    NULL,
     krcc_initialize,
     krcc_destroy,
     krcc_close,
@@ -2069,7 +2107,14 @@ KRB5_LIB_VARIABLE const krb5_cc_ops krb5_krcc_ops = {
     krcc_set_kdc_offset,
     krcc_get_kdc_offset,
     krcc_get_name_2,
-    krcc_resolve_2
+    krcc_resolve_2,
+    krcc_get_primary_name,
+    krcc_gen_new_2,
+    NULL, /* krcc_get_cache_first_2 */
+    krcc_xfree,
+    ':',  /* subsep */
+    0,    /* filepath */
+    1,    /* use_last_subsep */
 };
 
 #endif /* HAVE_KEYUTILS_H */

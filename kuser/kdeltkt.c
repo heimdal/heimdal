@@ -82,6 +82,8 @@ static void do_kdeltkt (int count, char *names[],
     if (ret)
 	errx(1, "krb5_init_context failed: %d", ret);
 
+    (void) krb5_cc_set_default_name(context, ccachestr);
+
     if (etypestr) {
         ret = krb5_string_to_enctype(context, etypestr, &etype);
 	if (ret)

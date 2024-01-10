@@ -2081,7 +2081,6 @@ _kdc_tgs_rep(astgs_request_t r)
     krb5_data *data = r->reply;
     const char *from = r->from;
     struct sockaddr *from_addr = r->addr;
-    int datagram_reply = r->datagram_reply;
     AuthorizationData *auth_data = NULL;
     krb5_error_code ret;
     int i = 0;
@@ -2092,6 +2091,8 @@ _kdc_tgs_rep(astgs_request_t r)
     int *cusec = NULL;
 
     r->e_text = NULL;
+
+    kdc_audit_setkv_bool((kdc_request_t)r, "udp", r->datagram_reply);
 
     if(req->padata == NULL){
 	ret = KRB5KDC_ERR_PREAUTH_REQUIRED; /* XXX ??? */
@@ -2153,30 +2154,53 @@ _kdc_tgs_rep(astgs_request_t r)
 	goto out;
     }
 
-    /* */
-    if (datagram_reply && data->length > config->max_datagram_reply_length) {
-	krb5_data_free(data);
+out:
+    /*
+     * Check if message is too large.
+     *
+     * Setting [kdc] max-kdc-datagram-reply-length == 0 disables even all
+     * errors over UDP, sending back KRB_ERR_RESPONSE_TOO_BIG instead.
+     */
+    if (r->datagram_reply && data->length > config->max_datagram_reply_length) {
+	krb5_data_free(r->reply);
 	ret = KRB5KRB_ERR_RESPONSE_TOO_BIG;
-        _kdc_set_const_e_text(r, "Reply packet too large");
+        kdc_log(r->context, config, 4, "%s reply too large",
+                ret ? "Error" : "Successful");
+	_kdc_set_e_text(r, "Reply packet too large");
     }
 
-out:
     if (ret) {
 	/* Overwrite ‘error_code’ only if we have an actual error. */
 	r->error_code = ret;
     }
+
     {
 	krb5_error_code ret2 = _kdc_audit_request(r);
 	if (ret2) {
 	    krb5_data_free(data);
-	    ret = ret2;
+	    r->error_code = ret = ret2;
 	}
     }
 
+    /*
+     * From the commit (heimdal Return HDB_ERR_NOT_FOUND_HERE to the caller)
+     * message that introduced the special casing of HDB_ERR_NOT_FOUND_HERE
+     * here:
+     *
+     *   This means that no reply packet should be generated, but that instead
+     *   the user of the libkdc API should forward the packet to a real KDC,
+     *   that has a full database.
+     */
     if(ret && ret != HDB_ERR_NOT_FOUND_HERE && data->data == NULL){
 	METHOD_DATA error_method = { 0, NULL };
 
-	kdc_log(r->context, config, 5, "tgs-req: sending error: %d to client", ret);
+        kdc_log(r->context, config, 5, "tgs-req: sending error: %d to client",
+                r->error_code);
+        /*
+         * Note that if we're not using FAST then _kdc_fast_mk_error() will
+         * make a non-FAST KRB-ERROR.  It will also make a minimal size
+         * KRB-ERROR if `r->error_code == KRB5KRB_ERR_RESPONSE_TOO_BIG'.
+         */
 	ret = _kdc_fast_mk_error(r,
 				 &error_method,
 				 r->armor_crypto,

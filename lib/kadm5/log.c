@@ -682,6 +682,27 @@ kadm5_log_init(kadm5_server_context *server_context)
     return log_init(server_context, LOCK_EX);
 }
 
+/* Open the log for possible replay */
+kadm5_ret_t
+kadm5_log_init_recover(kadm5_server_context *server_context)
+{
+    int ret;
+    int ret2;
+
+    /* Replay needs an open database handle */
+    ret = server_context->db->hdb_open(server_context->context,
+                                       server_context->db,
+                                       O_RDWR | O_CREAT, 0600);
+    if (ret)
+        return ret;
+    ret = log_init(server_context, LOCK_EX);
+    ret2 = server_context->db->hdb_close(server_context->context,
+                                         server_context->db);
+    if (ret != 0)
+        return ret;
+    return ret2;
+}
+
 /* Open the log with an exclusive non-blocking lock */
 kadm5_ret_t
 kadm5_log_init_nb(kadm5_server_context *server_context)

@@ -75,6 +75,7 @@ EXPORTS
 	kadm5_log_init
 	kadm5_log_init_nb
 	kadm5_log_init_nolock
+	kadm5_log_init_recover
 	kadm5_log_init_sharedlock
 	kadm5_log_next
 	kadm5_log_nop

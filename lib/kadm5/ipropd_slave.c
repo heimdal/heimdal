@@ -800,19 +800,9 @@ main(int argc, char **argv)
 
     slave_status(context, status_file, "creating log file");
 
-    ret = server_context->db->hdb_open(context,
-                                       server_context->db,
-                                       O_RDWR | O_CREAT, 0600);
+    ret = kadm5_log_init_recover(server_context);
     if (ret)
-	krb5_err (context, 1, ret, "db->open");
-
-    ret = kadm5_log_init (server_context);
-    if (ret)
-	krb5_err (context, 1, ret, "kadm5_log_init");
-
-    ret = server_context->db->hdb_close (context, server_context->db);
-    if (ret)
-	krb5_err (context, 1, ret, "db->close");
+	krb5_err (context, 1, ret, "kadm5_log_init_recover");
 
     get_creds(context, keytab_str, &ccache, master);
 
@@ -979,20 +969,11 @@ main(int argc, char **argv)
                 continue;
             }
 
-	    ret = server_context->db->hdb_open(context,
-					       server_context->db,
-					       O_RDWR | O_CREAT, 0600);
-	    if (ret)
-		krb5_err (context, 1, ret, "db->open");
-
-            ret = kadm5_log_init(server_context);
+            ret = kadm5_log_init_recover(server_context);
             if (ret) {
-                krb5_err(context, IPROPD_RESTART, ret, "kadm5_log_init while "
-                         "handling a message from the master");
+                krb5_err(context, IPROPD_RESTART, ret, "kadm5_log_init_recover"
+                         " while handling a message from the master");
             }
-	    ret = server_context->db->hdb_close (context, server_context->db);
-	    if (ret)
-		krb5_err (context, 1, ret, "db->close");
 
 	    switch (tmp) {
 	    case FOR_YOU :

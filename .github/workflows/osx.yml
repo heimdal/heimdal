@@ -80,7 +80,7 @@ jobs:
                 /bin/sh ./autogen.sh
                 mkdir build
                 cd build
-                ../configure --srcdir=`dirname "$PWD"` --disable-heimdal-documentation --disable-afs-support --enable-maintainer-mode --enable-developer $CONFIGURE_OPTS --prefix=$HOME/inst CFLAGS="-Wno-error=shadow -Wno-error=bad-function-cast -Wno-error=unused-function -Wno-error=unused-result -Wno-error=deprecated-declarations -Wno-deprecated-declarations"
+                ../configure --srcdir=`dirname "$PWD"` --disable-heimdal-documentation --disable-afs-support --enable-maintainer-mode --enable-developer $CONFIGURE_OPTS --prefix=$HOME/inst CFLAGS="-Wno-error=shadow -Wno-error=bad-function-cast -Wno-error=unused-function -Wno-error=unused-result -Wno-error=deprecated-declarations -Wno-deprecated-declarations" --with-hcrypto-default-backend=hcrypto
                 ulimit -c unlimited
                 PATH=/usr/local/opt/texinfo/bin:$PATH
                 export PATH

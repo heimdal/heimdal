@@ -86,31 +86,6 @@ struct tests aes_cfb_tests[] = {
 };
 
 
-struct tests rc2_tests[] = {
-    { "rc2",
-      "\x88\xbc\xa9\x0e\x90\x87\x5a\x7f\x0f\x79\xc3\x84\x62\x7b\xaf\xb2",
-      16,
-      "\x00\x00\x00\x00\x00\x00\x00\x00",
-      8,
-      "\x00\x00\x00\x00\x00\x00\x00\x00",
-      "\x22\x69\x55\x2a\xb0\xf8\x5c\xa6",
-      NULL
-    }
-};
-
-
-struct tests rc2_40_tests[] = {
-    { "rc2-40",
-      "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00",
-      16,
-      "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00",
-      16,
-      "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00",
-      "\xc0\xb8\xff\xa5\xd6\xeb\xc9\x62\xcc\x52\x5f\xfe\x9a\x3c\x97\xe6",
-      NULL
-    }
-};
-
 struct tests des_ede3_tests[] = {
     { "des-ede3",
       "\x19\x17\xff\xe6\xbb\x77\x2e\xfc"
@@ -354,10 +329,6 @@ main(int argc, char **argv)
 	ret += test_cipher(i, EVP_hcrypto_aes_256_cbc(), &aes_tests[i]);
     for (i = 0; i < sizeof(aes_cfb_tests)/sizeof(aes_cfb_tests[0]); i++)
 	ret += test_cipher(i, EVP_hcrypto_aes_128_cfb8(), &aes_cfb_tests[i]);
-    for (i = 0; i < sizeof(rc2_tests)/sizeof(rc2_tests[0]); i++)
-	ret += test_cipher(i, EVP_hcrypto_rc2_cbc(), &rc2_tests[i]);
-    for (i = 0; i < sizeof(rc2_40_tests)/sizeof(rc2_40_tests[0]); i++)
-	ret += test_cipher(i, EVP_hcrypto_rc2_40_cbc(), &rc2_40_tests[i]);
     for (i = 0; i < sizeof(des_ede3_tests)/sizeof(des_ede3_tests[0]); i++)
 	ret += test_cipher(i, EVP_hcrypto_des_ede3_cbc(), &des_ede3_tests[i]);
     for (i = 0; i < sizeof(camellia128_tests)/sizeof(camellia128_tests[0]); i++)
@@ -372,8 +343,6 @@ main(int argc, char **argv)
 	ret += test_cipher(i, EVP_cc_aes_256_cbc(), &aes_tests[i]);
     for (i = 0; i < sizeof(aes_cfb_tests)/sizeof(aes_cfb_tests[0]); i++)
 	ret += test_cipher(i, EVP_cc_aes_128_cfb8(), &aes_cfb_tests[i]);
-    for (i = 0; i < sizeof(rc2_40_tests)/sizeof(rc2_40_tests[0]); i++)
-	ret += test_cipher(i, EVP_cc_rc2_40_cbc(), &rc2_40_tests[i]);
     for (i = 0; i < sizeof(des_ede3_tests)/sizeof(des_ede3_tests[0]); i++)
 	ret += test_cipher(i, EVP_cc_des_ede3_cbc(), &des_ede3_tests[i]);
     for (i = 0; i < sizeof(camellia128_tests)/sizeof(camellia128_tests[0]); i++)
@@ -389,10 +358,6 @@ main(int argc, char **argv)
 	ret += test_cipher(i, EVP_w32crypto_aes_256_cbc(), &aes_tests[i]);
     for (i = 0; i < sizeof(aes_cfb_tests)/sizeof(aes_cfb_tests[0]); i++)
 	ret += test_cipher(i, EVP_w32crypto_aes_128_cfb8(), &aes_cfb_tests[i]);
-    for (i = 0; i < sizeof(rc2_tests)/sizeof(rc2_tests[0]); i++)
-	ret += test_cipher(i, EVP_w32crypto_rc2_cbc(), &rc2_tests[i]);
-    for (i = 0; i < sizeof(rc2_40_tests)/sizeof(rc2_40_tests[0]); i++)
-	ret += test_cipher(i, EVP_w32crypto_rc2_40_cbc(), &rc2_40_tests[i]);
     for (i = 0; i < sizeof(des_ede3_tests)/sizeof(des_ede3_tests[0]); i++)
 	ret += test_cipher(i, EVP_w32crypto_des_ede3_cbc(), &des_ede3_tests[i]);
     for (i = 0; i < sizeof(rc4_tests)/sizeof(rc4_tests[0]); i++)
@@ -405,10 +370,6 @@ main(int argc, char **argv)
 	ret += test_cipher(i, EVP_pkcs11_aes_256_cbc(), &aes_tests[i]);
     for (i = 0; i < sizeof(aes_cfb_tests)/sizeof(aes_cfb_tests[0]); i++)
 	ret += test_cipher(i, EVP_pkcs11_aes_128_cfb8(), &aes_cfb_tests[i]);
-    for (i = 0; i < sizeof(rc2_tests)/sizeof(rc2_tests[0]); i++)
-	ret += test_cipher(i, EVP_pkcs11_rc2_cbc(), &rc2_tests[i]);
-    for (i = 0; i < sizeof(rc2_40_tests)/sizeof(rc2_40_tests[0]); i++)
-	ret += test_cipher(i, EVP_pkcs11_rc2_40_cbc(), &rc2_40_tests[i]);
     for (i = 0; i < sizeof(des_ede3_tests)/sizeof(des_ede3_tests[0]); i++)
 	ret += test_cipher(i, EVP_pkcs11_des_ede3_cbc(), &des_ede3_tests[i]);
     for (i = 0; i < sizeof(rc4_tests)/sizeof(rc4_tests[0]); i++)
@@ -421,10 +382,6 @@ main(int argc, char **argv)
 	ret += test_cipher(i, EVP_ossl_aes_256_cbc(), &aes_tests[i]);
     for (i = 0; i < sizeof(aes_cfb_tests)/sizeof(aes_cfb_tests[0]); i++)
 	ret += test_cipher(i, EVP_ossl_aes_128_cfb8(), &aes_cfb_tests[i]);
-    for (i = 0; i < sizeof(rc2_tests)/sizeof(rc2_tests[0]); i++)
-	ret += test_cipher(i, EVP_ossl_rc2_cbc(), &rc2_tests[i]);
-    for (i = 0; i < sizeof(rc2_40_tests)/sizeof(rc2_40_tests[0]); i++)
-	ret += test_cipher(i, EVP_ossl_rc2_40_cbc(), &rc2_40_tests[i]);
     for (i = 0; i < sizeof(des_ede3_tests)/sizeof(des_ede3_tests[0]); i++)
 	ret += test_cipher(i, EVP_ossl_des_ede3_cbc(), &des_ede3_tests[i]);
     for (i = 0; i < sizeof(rc4_tests)/sizeof(rc4_tests[0]); i++)

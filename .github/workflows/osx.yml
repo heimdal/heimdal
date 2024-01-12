@@ -6,6 +6,7 @@ on:
          - 'master'
          - 'osx-build'
          - 'heimdal-7-1-branch'
+         - 'heimdal-7-8-branch'
       paths:
          - '!docs/**'
          - '!**.md'

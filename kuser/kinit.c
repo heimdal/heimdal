@@ -991,7 +991,7 @@ renew_func(void *ptr)
      * for some reason...
      */
 
-    if (expire < 1) {
+    if (ret || expire < 1) {
 	/*
 	 * We can't ask to keep spamming stderr but not syslog, so we warn
 	 * only once.

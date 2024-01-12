@@ -147,7 +147,7 @@ SUFFIXES += .x .z .hx
 # clang-format styles is to sort includes, but in many cases in-tree we really
 # don't want to do that.
 .x.c:
-	@if [ -z "$(CLANG_FORMAT)" ]; then \
+	@if [ -z "$(CLANG_FORMAT)" -o "$(CLANG_FORMAT)" = "no" ]; then \
 	    cmp -s $< $@ 2> /dev/null || cp $< $@; \
 	else \
 	    cp $< $@.tmp.c; \

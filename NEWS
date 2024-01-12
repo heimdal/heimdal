@@ -1,3 +1,11 @@
+Release Notes - Heimdal - Version Heimdal 7.8.1
+
+ Bug fixes
+
+ - CVE-2022-42898 PAC parse integer overflows (fix had been missing in 7.8.0)
+
+ - Fix crash in ipropd-slave when started with pending log recovery
+
 Release Notes - Heimdal - Version Heimdal 7.8
 
  Bug fixes

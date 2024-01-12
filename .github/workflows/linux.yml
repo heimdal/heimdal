@@ -57,11 +57,11 @@ jobs:
                 name: [linux-clang, linux-gcc]
                 include:
                     - name: linux-clang
-                      os: ubuntu-18.04
+                      os: ubuntu-20.04
                       compiler: clang
                       cflags: ''
                     - name: linux-gcc
-                      os: ubuntu-18.04
+                      os: ubuntu-20.04
                       compiler: gcc
                       cflags: '-Wnonnull'
         steps:

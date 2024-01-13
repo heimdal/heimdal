@@ -800,9 +800,9 @@ main(int argc, char **argv)
 
     slave_status(context, status_file, "creating log file");
 
-    ret = kadm5_log_init (server_context);
+    ret = kadm5_log_init_recover(server_context);
     if (ret)
-	krb5_err (context, 1, ret, "kadm5_log_init");
+	krb5_err (context, 1, ret, "kadm5_log_init_recover");
 
     get_creds(context, keytab_str, &ccache, master);
 
@@ -969,11 +969,12 @@ main(int argc, char **argv)
                 continue;
             }
 
-            ret = kadm5_log_init(server_context);
+            ret = kadm5_log_init_recover(server_context);
             if (ret) {
-                krb5_err(context, IPROPD_RESTART, ret, "kadm5_log_init while "
-                         "handling a message from the master");
+                krb5_err(context, IPROPD_RESTART, ret, "kadm5_log_init_recover"
+                         " while handling a message from the master");
             }
+
 	    switch (tmp) {
 	    case FOR_YOU :
                 if (verbose)

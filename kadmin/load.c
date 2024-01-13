@@ -436,7 +436,7 @@ doit(const char *filename, int mergep)
      * If we're merging, first recover unconfirmed records in the existing log.
      */
     if (mergep)
-        ret = kadm5_log_init(kadm_handle);
+        ret = kadm5_log_init_recover(kadm_handle);
     if (ret == 0)
         ret = kadm5_log_reinit(kadm_handle, 0);
     if (ret) {

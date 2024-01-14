@@ -81,7 +81,8 @@ lib_LTLIBRARIES = libhdb.la $(ldap_so)
 libhdb_la_LDFLAGS = -version-info 11:0:2
 
 if versionscript
-libhdb_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(srcdir)/version-script.map
+libhdb_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(builddir)/version-script.map
+BUILT_SOURCES += version-script.map
 endif
 
 # test_hdbkeys and test_mkey are not tests -- they are manual test utils
@@ -108,8 +109,6 @@ dist_libhdb_la_SOURCES =			\
 	print.c
 
 nodist_libhdb_la_SOURCES = $(BUILT_SOURCES)
-
-libhdb_la_DEPENDENCIES = version-script.map
 
 include_HEADERS = hdb.h $(srcdir)/hdb-protos.h
 nodist_include_HEADERS =  hdb_err.h hdb_asn1.h
@@ -165,6 +164,5 @@ EXTRA_DIST = \
 	hdb.asn1 \
 	hdb_err.et \
 	hdb.schema \
-	version-script.map \
 	data-mkey.mit.des3.le \
 	data-mkey.mit.des3.be

@@ -1,8 +1,8 @@
-# $Id$
+/* $Id$ */
 
 HEIMDAL_GSS_2.0 {
 	global:
-#		__gss_c_nt_anonymous;
+/* __gss_c_nt_anonymous; */
 		__gss_c_nt_anonymous_oid_desc;
 		__gss_c_nt_composite_export_oid_desc;
 		__gss_c_nt_export_name_oid_desc;
@@ -130,8 +130,8 @@ HEIMDAL_GSS_2.0 {
 		gss_name_to_oid;
 		gss_oid_to_name;
 
-		# _gsskrb5cfx_ are really internal symbols, but export
-		# then now to make testing easier.
+		/* _gsskrb5cfx_ are really internal symbols, but export */
+		/* then now to make testing easier. */
 		_gsskrb5cfx_wrap_length_cfx;
 		_gssapi_wrap_size_cfx;
 

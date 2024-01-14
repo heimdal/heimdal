@@ -42,8 +42,6 @@ $(code:.c=.lo): $(built)
 dist_libwind_la_SOURCES = $(code) $(built)
 nodist_libwind_la_SOURCES = wind_err.c wind_err.h
 
-libwind_la_DEPENDENCIES = version-script.map
-
 dist_include_HEADERS = wind.h
 nodist_include_HEADERS = wind_err.h
 
@@ -55,13 +53,14 @@ libwind_la_LIBADD = \
 	$(LIB_roken) \
 	$(LIB_com_err)
 
-if versionscript
-libwind_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(srcdir)/version-script.map
-endif
-
 BUILT_SOURCES =					\
 	wind_err.c				\
 	wind_err.h
+
+if versionscript
+libwind_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(builddir)/version-script.map
+BUILT_SOURCES += version-script.map
+endif
 
 TESTS =						\
 	$(check_PROGRAMS)
@@ -137,10 +136,10 @@ EXTRA_DIST = \
 	rfc4518.txt \
 	stringprep.py \
 	util.py \
-	version-script.map \
 	wind_err.et
 
 CLEANFILES = \
+	$(BUILT_SOURCES) \
 	wind_err.c  \
 	wind_err.h
 

@@ -256,6 +256,14 @@ sanonsrc = \
 	sanon/sanon_locl.h \
 	sanon/sanon-private.h
 
+BUILT_SOURCES = \
+	$(spnego_files) \
+	$(gssapi_files) \
+	gkrb5_err.c \
+	gkrb5_err.h \
+	negoex_err.c \
+	negoex_err.h
+
 dist_libgssapi_la_SOURCES  = \
 	$(krb5src) \
 	$(mechsrc) \
@@ -266,12 +274,11 @@ dist_libgssapi_la_SOURCES  = \
 nodist_libgssapi_la_SOURCES  = \
 	$(BUILT_SOURCES)
 
-libgssapi_la_DEPENDENCIES = version-script.map
-
 libgssapi_la_LDFLAGS = -version-info 3:0:0
 
 if versionscript
-libgssapi_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(srcdir)/version-script.map
+libgssapi_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(builddir)/version-script.map
+BUILT_SOURCES += version-script.map
 endif
 
 libgssapi_la_LIBADD = \
@@ -326,16 +333,6 @@ BUILTHEADERS = \
 
 $(libgssapi_la_OBJECTS): $(BUILTHEADERS)
 $(test_context_OBJECTS): $(BUILTHEADERS)
-
-$(libgssapi_la_OBJECTS): $(srcdir)/version-script.map
-
-BUILT_SOURCES = \
-	$(spnego_files) \
-	$(gssapi_files) \
-	gkrb5_err.c \
-	gkrb5_err.h \
-	negoex_err.c \
-	negoex_err.h
 
 $(libgssapi_la_OBJECTS): gkrb5_err.h negoex_err.h
 gkrb5_err.h: $(srcdir)/krb5/gkrb5_err.et
@@ -445,7 +442,6 @@ EXTRA_DIST = \
 	spnego/spnego.opt \
 	spnego/negoex_err.et \
 	test_negoex_mech.c \
-	version-script.map \
 	gss-commands.in
 
 $(libgssapi_la_OBJECTS): gkrb5_err.h gssapi_asn1.h gssapi_asn1-priv.h

@@ -16,12 +16,6 @@ libasn1template_la_LDFLAGS = -version-info 8:0:0
 
 noinst_LTLIBRARIES = libasn1base.la
 
-if versionscript
-libasn1_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(srcdir)/version-script.map
-libasn1template_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(srcdir)/version-script.map
-endif
-
-
 libasn1_la_LIBADD = \
 	libasn1base.la \
 	@LIB_com_err@ \
@@ -45,6 +39,12 @@ BUILT_SOURCES =			\
 	$(gen_files_pkcs12)	\
 	$(gen_files_digest)	\
 	$(gen_files_kx509)
+
+if versionscript
+libasn1_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(builddir)/version-script.map
+libasn1template_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(builddir)/version-script.map
+BUILT_SOURCES += version-script.map
+endif
 
 BUILT_TEMPLATE_SOURCES =		\
 	$(gen_files_rfc2459_template)	\
@@ -545,8 +545,7 @@ EXTRA_DIST =			\
 	asn1_err.c		\
 	asn1_err.h		\
 	asn1_print.1		\
-	asn1_compile.1		\
-	version-script.map
+	asn1_compile.1
 
 DER_PROTOS = $(srcdir)/der-protos.h $(srcdir)/der-private.h
 

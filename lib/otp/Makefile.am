@@ -46,14 +46,15 @@ dist_libotp_la_SOURCES = \
 
 nodist_libotp_la_SOURCES = $(ndbm_wrap) $(ROKEN_SRCS)
 
-libotp_la_DEPENDENCIES = version-script.map
-
 if do_roken_rename
 ROKEN_SRCS = snprintf.c strcasecmp.c strncasecmp.c strlwr.c strlcpy.c strlcat.c
 endif
 
+BUILT_SOURCES =
+
 if versionscript
-libotp_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(srcdir)/version-script.map
+libotp_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(builddir)/version-script.map
+BUILT_SOURCES += version-script.map
 endif
 
 $(libotp_la_OBJECTS): $(ndbm_wrap)
@@ -78,6 +79,7 @@ strlcat.c:
 	$(LN_S) $(srcdir)/../roken/strlcat.c .
 
 CLEANFILES = \
+	$(BUILT_SOURCES) \
 	ndbm_wrap.c \
 	ndbm_wrap.h \
 	snprintf.c \
@@ -87,4 +89,4 @@ CLEANFILES = \
 	strlwr.c \
 	strncasecmp.c
 
-EXTRA_DIST = NTMakefile version-script.map
+EXTRA_DIST = NTMakefile

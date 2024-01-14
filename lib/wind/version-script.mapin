@@ -1,4 +1,4 @@
-# $Id$
+/* $Id$ */
 
 HEIMDAL_WIND_1.0 {
 	global:
@@ -15,7 +15,7 @@ HEIMDAL_WIND_1.0 {
 		wind_ucs2utf8_length;
 		wind_ucs2read;
 		wind_ucs2write;
-		# testing
+		/* testing */
 		_wind_combining_class;
 		_wind_stringprep_testbidi;
 		_wind_stringprep_error;
@@ -23,7 +23,6 @@ HEIMDAL_WIND_1.0 {
 		_wind_stringprep_map;
 		_wind_stringprep_normalize;
 		_wind_ldap_case_exact_attribute;
-		_wind_ucs2read;
 	local:
 		*;
 };

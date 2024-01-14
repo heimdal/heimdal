@@ -14,10 +14,12 @@ nodist_libheimntlm_la_SOURCES = ntlm_err.c
 
 libheimntlm_la_LDFLAGS = -version-info 1:0:1
 
+BUILT_SOURCES =
+
 if versionscript
-libheimntlm_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(srcdir)/version-script.map
+libheimntlm_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(builddir)/version-script.map
+BUILT_SOURCES += version-script.map
 endif
-$(libheimntlm_la_OBJECTS): $(srcdir)/version-script.map
 
 libheimntlm_la_LIBADD = \
 	../krb5/libkrb5.la \
@@ -40,10 +42,8 @@ EXTRA_DIST = \
 	NTMakefile \
 	libheimntlm-version.rc \
 	libheimntlm-exports.def \
-	version-script.map \
 	ntlm_err.et
 
-CLEANFILES = \
-	ntlm_err.c ntlm_err.h
+CLEANFILES = $(BUILT_SOURCES) ntlm_err.c ntlm_err.h
 
 ntlm_err.h: ntlm_err.et

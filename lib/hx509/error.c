@@ -120,6 +120,21 @@ hx509_set_error_string(hx509_context context, int flags, int code,
 }
 
 /**
+ * Sets ENOMEM as the error on a hx509 context.
+ *
+ * @param context A hx509 context.
+ *
+ * @ingroup hx509_error
+ */
+
+int
+hx509_enomem(hx509_context context)
+{
+    hx509_set_error_string(context, 0, ENOMEM, "Out of memory");
+    return ENOMEM;
+}
+
+/**
  * Get an error string from context associated with error_code.
  *
  * @param context A hx509 context.

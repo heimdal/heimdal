@@ -69,19 +69,14 @@ rm -f mkey.file*
 > messages.log
 
 echo Creating database
-${kadmin} \
-    init \
-    --realm-max-ticket-life=1day \
-    --realm-max-renewable-life=1month \
-    ${R} || exit 1
-
-${kadmin} add -p foo --use-defaults foo@${R} || exit 1
-${kadmin} add -p foo --use-defaults bar@${R} || exit 1
-${kadmin} add -p kaka --use-defaults ${server}@${R} || exit 1
-${kadmin} ext -k ${keytab} ${server}@${R} || exit 1
-
-echo "Doing database check"
-${kadmin} check ${R} || exit 1
+${kadmin} <<EOF || exit 1
+init --realm-max-ticket-life=1day --realm-max-renewable-life=1month ${R}
+add -p foo --use-defaults foo@${R}
+add -p foo --use-defaults bar@${R}
+add -p kaka --use-defaults ${server}@${R}
+ext -k ${keytab} ${server}@${R}
+check ${R}
+EOF
 
 echo foo > ${objdir}/foopassword
 

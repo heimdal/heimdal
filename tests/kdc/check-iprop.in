@@ -225,18 +225,14 @@ rm -f messages.log messages.log
 > messages.log2
 
 echo Creating database
-${kadmin} -l \
-    init \
-    --realm-max-ticket-life=1day \
-    --realm-max-renewable-life=1month \
-    ${R} || exit 1
-
-${kadmin} -l add -p foo --use-defaults user@${R} || exit 1
-
-${kadmin} -l add --random-key --use-defaults iprop/localhost@${R} || exit 1
-${kadmin} -l ext -k ${keytab} iprop/localhost@${R} || exit 1
-${kadmin} -l add --random-key --use-defaults iprop/slave.test.h5l.se@${R} || exit 1
-${kadmin} -l ext -k ${keytab} iprop/slave.test.h5l.se@${R} || exit 1
+${kadmin} -l <<EOF || exit 1
+init --realm-max-ticket-life=1day --realm-max-renewable-life=1month ${R}
+add -p foo --use-defaults user@${R}
+add --random-key --use-defaults iprop/localhost@${R}
+ext -k ${keytab} iprop/localhost@${R}
+add --random-key --use-defaults iprop/slave.test.h5l.se@${R}
+ext -k ${keytab} iprop/slave.test.h5l.se@${R}
+EOF
 
 echo foo > ${objdir}/foopassword
 

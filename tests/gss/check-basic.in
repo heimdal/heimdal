@@ -76,22 +76,17 @@ rm -f mkey.file*
 
 > messages.log
 
-echo Creating database
-${kadmin} \
-    init \
-    --realm-max-ticket-life=1day \
-    --realm-max-renewable-life=1month \
-    ${R} || exit 1
-
 echo upw > ${objdir}/foopassword
 
-${kadmin} add -p upw --use-defaults user@${R} || exit 1
-${kadmin} add -p upw --use-defaults another@${R} || exit 1
-${kadmin} add -p p1 --use-defaults host/host.test.h5l.se@${R} || exit 1
-${kadmin} ext -k ${keytab} host/host.test.h5l.se@${R} || exit 1
-
-echo "Doing database check"
-${kadmin} check ${R} || exit 1
+echo Creating database
+${kadmin} <<EOF || exit 1
+init --realm-max-ticket-life=1day --realm-max-renewable-life=1month ${R}
+add -p upw --use-defaults user@${R}
+add -p upw --use-defaults another@${R}
+add -p p1 --use-defaults host/host.test.h5l.se@${R}
+ext -k ${keytab} host/host.test.h5l.se@${R}
+check ${R}
+EOF
 
 echo Starting kdc
 ${kdc} --detach --testing || { echo "kdc failed to start"; cat messages.log; exit 1; }

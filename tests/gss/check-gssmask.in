@@ -92,11 +92,22 @@ ${kadmin} add -p u1 --use-defaults user1@${R} || exit 1
 echo "Doing database check"
 ${kadmin} check ${R} || exit 1
 
+kdcpid=
+n1pid=
+n2pid=
+n3pid=
+cleanup() {
+    echo signal killing kdcs
+    kill -9 ${kdcpid} ${n1pid} ${n2pid} ${n3pid} 2>/dev/null
+    trap '' EXIT INT TERM
+    cat messages.log
+    exit 1
+}
+trap cleanup EXIT INT TERM
+
 echo Starting kdc
 ${kdc} --detach --testing || { echo "kdc failed to start"; cat messages.log; exit 1; }
 kdcpid=`getpid kdc`
-
-trap "kill -9 ${kdcpid}; echo signal killing kdc; exit 1;" EXIT
 
 exitcode=0
 
@@ -114,8 +125,6 @@ n2pid=$!
 echo "Starting client 3"
 ${gssmaskn3} --moniker=n3 &
 n3pid=$!
-
-trap "kill ${kdcpid} ${n1pid} ${n2pid} ${n3pid} 2> /dev/null; echo signal killing kdc and maskar; exit 1;" EXIT
 
 sleep 10
 

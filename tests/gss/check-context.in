@@ -118,7 +118,14 @@ echo Starting kdc
 ${kdc} --detach --testing || { echo "kdc failed to start"; cat messages.log; exit 1; }
 kdcpid=`getpid kdc`
 
-trap "kill -9 ${kdcpid}; echo signal killing kdc; exit 1;" EXIT
+cleanup() {
+    echo signal killing kdc
+    kill -9 ${kdcpid} 2>/dev/null
+    trap '' EXIT INT TERM
+    cat messages.log
+    exit 1
+}
+trap cleanup EXIT INT TERM
 
 testfailed="echo test failed; cat messages.log; exit 1"
 

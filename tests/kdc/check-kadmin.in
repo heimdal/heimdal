@@ -105,7 +105,14 @@ ${kadmind} --detach --list-chunk-size=1 \
     || { echo "kadmind failed to start"; cat messages.log; exit 1; }
 kadmpid=`getpid kadmind`
 
-trap "kill -9 ${kdcpid} ${kadmpid}" EXIT
+cleanup() {
+    echo signal killing kdc
+    kill -9 ${kdcpid} ${kadmpid} 2>/dev/null
+    trap '' EXIT INT TERM
+    cat messages.log
+    exit 1
+}
+trap cleanup EXIT INT TERM
 
 #----------------------------------
 echo "kinit (no admin); test mod --alias authorization"

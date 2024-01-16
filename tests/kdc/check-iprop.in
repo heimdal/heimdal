@@ -307,11 +307,12 @@ cleanup() {
     test -n "$ipds" && kill -9 $ipds        >/dev/null 2>/dev/null
     test -n "$ipds2" && kill -9 $ipds2      >/dev/null 2>/dev/null
     test -n "$kdcpid" && kill -9 $kdcpid    >/dev/null 2>/dev/null
+    trap '' EXIT INT TERM
     tail messages.log
     tail iprop-stats
     exit 1
 }
-trap cleanup EXIT
+trap cleanup EXIT INT TERM
 
 echo Starting kdc ; > messages.log
 ${kdc} --detach --testing || { echo "kdc failed to start"; cat messages.log; exit 1; }

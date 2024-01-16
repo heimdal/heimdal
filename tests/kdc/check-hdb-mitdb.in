@@ -44,7 +44,8 @@ testfailed="echo test failed; cat messages.log; exit 1"
 
 # If there is no ldap support compiled in, disable test
 if ${kdc} --builtin-hdb | grep mit-db > /dev/null ; then
-    :
+    echo "Testing MIT KDB support"
+    ${kdc} --builtin-hdb
 else
     echo "no MIT KDB support"
     exit 77

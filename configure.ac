@@ -196,6 +196,24 @@ AM_CONDITIONAL([HAVE_CAPNG], [test "$with_capng" != "no"])
 AC_SUBST([CAPNG_CFLAGS])
 AC_SUBST([CAPNG_LIBS])
 
+dnl mitdb
+AC_ARG_WITH([mitdb],
+  AC_HELP_STRING([--with-mitdb], [Path to MIT Kerberos DB include header and shared object]),
+  [],
+  [with_mitdb=no])
+if test -n "$with_mitdb" -a -d "$with_mitdb"; then
+  AC_DEFINE_UNQUOTED([HAVE_MITDB], 1, [Define if building with MIT Kerberos DB driver])
+  AC_DEFINE(HAVE_DB1, 1, [define if you have a berkeley db1/2 library])
+  mitdb=$with_mitdb
+elif test "$with_mitdb" = no; then
+  with_mitdb=
+  mitdb=
+elif test "$with_mitdb" = yes; then
+  AC_MSG_ERROR([Need path to MIT Kerberos DB include header and shared object])
+fi
+AM_CONDITIONAL([HAVE_MITDB], [test -n "$with_mitdb"])
+AC_SUBST([MITDB], ["$with_mitdb"])
+
 dnl libmicrohttpd
 AC_ARG_WITH([microhttpd],
   AC_HELP_STRING([--with-microhttpd], [use microhttpd to serve KDC REST API @<:@default=check@:>@]),

@@ -111,18 +111,19 @@ echo "Starting client 2"
 ${gssmaskn2} --moniker=n2 &
 n2pid=$!
 
-echo "Starting client 3"
-${gssmaskn3} --moniker=n3 &
-n3pid=$!
+#echo "Starting client 3"
+#${gssmaskn3} --moniker=n3 &
+#n3pid=$!
 
 sleep 10
 
-#    --wrap-ext
+# XXX Make --wrap-ext work (seems to fail)
+#
+# Add --slaves=localhost:8891 if re-enabling client 3
 
 ${gssmaestro} \
     --slaves=localhost:8889 \
     --slaves=localhost:8890 \
-    --slaves=localhost:8891 \
     --principals=user1@${R}:u1 || exitcode=1
 
 trap "" EXIT

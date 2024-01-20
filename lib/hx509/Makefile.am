@@ -53,9 +53,6 @@ dist_libhx509template_la_SOURCES = $(dist_libhx509_la_SOURCES)
 sel-gram.h: sel-gram.c
 sel-lex.c: sel-gram.h
 
-libhx509_la_DEPENDENCIES = version-script.map
-libhx509template_la_DEPENDENCIES = version-script.map
-
 libhx509_la_LIBADD = \
 	$(LIB_com_err) \
 	$(LIB_hcrypto) \
@@ -82,11 +79,12 @@ libhx509template_la_LDFLAGS += -framework Security -framework CoreFoundation
 endif
 
 if versionscript
-libhx509_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(srcdir)/version-script.map
-libhx509template_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(srcdir)/version-script.map
+libhx509_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(builddir)/version-script.map
+libhx509template_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(builddir)/version-script.map
+BUILT_SOURCES += version-script.map
 endif
-$(libhx509_la_OBJECTS): $(srcdir)/version-script.map $(nodist_include_HEADERS) $(priv_headers)
-$(libhx509template_la_OBJECTS): $(srcdir)/version-script.map $(nodist_include_HEADERS) $(priv_headers)
+$(libhx509_la_OBJECTS): $(nodist_include_HEADERS) $(priv_headers)
+$(libhx509template_la_OBJECTS): $(nodist_include_HEADERS) $(priv_headers)
 
 nodist_libhx509_la_SOURCES = $(BUILT_SOURCES)
 nodist_libhx509template_la_SOURCES = $(BUILT_SOURCES)
@@ -264,7 +262,6 @@ EXTRA_DIST = \
 	NTMakefile \
 	hxtool-version.rc \
 	libhx509-exports.def \
-	version-script.map \
 	hx509_err.et \
 	hxtool-commands.in \
 	quote.py \

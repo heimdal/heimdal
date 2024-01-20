@@ -164,11 +164,12 @@ $(ALL_OBJECTS): $(KDC_PROTOS)
 
 libkdc_la_LDFLAGS = -version-info 2:0:0
 
-if versionscript
-libkdc_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(srcdir)/version-script.map
-endif
+BUILT_SOURCES =
 
-$(libkdc_la_OBJECTS): $(srcdir)/version-script.map
+if versionscript
+libkdc_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(builddir)/version-script.map
+BUILT_SOURCES += version-script.map
+endif
 
 $(srcdir)/kdc-protos.h: $(libkdc_la_SOURCES)
 	cd $(srcdir) && perl ../cf/make-proto.pl -E KDC_LIB -q -P comment -o kdc-protos.h $(libkdc_la_SOURCES) || rm -f kdc-protos.h
@@ -260,4 +261,6 @@ EXTRA_DIST = \
 	libkdc-version.rc \
 	string2key-version.rc \
 	libkdc-exports.def \
-	NTMakefile $(man_MANS) version-script.map
+	NTMakefile $(man_MANS)
+
+CLEANFILES = $(BUILT_SOURCES)

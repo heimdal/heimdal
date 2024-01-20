@@ -363,11 +363,12 @@ $(libhcrypto_la_OBJECTS) $(test_rand_OBJECTS): hcrypto-link
 
 libhcrypto_la_CPPFLAGS = -DBUILD_HCRYPTO_LIB $(AM_CPPFLAGS)
 
-if versionscript
-libhcrypto_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(srcdir)/version-script.map
-endif
-$(libhcrypto_la_OBJECTS): $(srcdir)/version-script.map
+BUILT_SOURCES =
 
+if versionscript
+libhcrypto_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(builddir)/version-script.map
+BUILT_SOURCES += version-script.map
+endif
 
 hcrypto-link:
 	$(LN_S) $(srcdir)/../hcrypto hcrypto
@@ -381,6 +382,7 @@ test_crypto: test_crypto.in Makefile
 	mv test_crypto.tmp test_crypto
 
 CLEANFILES = \
+	$(BUILT_SOURCES) \
 	crypto-test \
 	crypto-test2 \
 	error \
@@ -420,5 +422,4 @@ EXTRA_DIST = \
 	rsakey.der \
 	rsakey2048.der \
 	rsakey4096.der \
-	test_crypto.in \
-	version-script.map
+	test_crypto.in

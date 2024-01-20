@@ -1,18 +1,17 @@
+#include <config.defs.h>
+
 HEIMDAL_ROKEN_2.0 {
 	global:
 		arg_printusage;
 		arg_printusage_i18n;
-		cgetclose;
-		cgetmatch;
-		cgetnum;
-		cgetset;
-		cgetustr;
 		ct_memcmp;
-		err;
-		errx;
 		free_getarg_strings;
+#ifndef HAVE_FSEEKO
 		fseeko;
+#endif
+#ifndef HAVE_FTELLO
 		ftello;
+#endif
 		get_window_size;
 		getarg;
 		getnameinfo_verified;
@@ -30,8 +29,12 @@ HEIMDAL_ROKEN_2.0 {
 		print_flags_table;
 		print_time_table;
 		print_units_table;
+#ifndef HAVE_ASNPRINTF
 		rk_asnprintf;
+#endif
+#ifndef HAVE_ASPRINTF
 		rk_asprintf;
+#endif
 		rk_base32_decode;
 		rk_base32_encode;
 		rk_base64_decode;
@@ -61,39 +64,77 @@ HEIMDAL_ROKEN_2.0 {
 		rk_estrdup;
 		rk_evasprintf;
 		rk_ewrite;
+#ifndef HAVE_FLOCK
 		rk_flock;
+#endif
+#ifndef HAVE_FNMATCH
 		rk_fnmatch;
+#endif
 		rk_free_environment;
+#ifndef HAVE_FREEADDRINFO
 		rk_freeaddrinfo;
+#endif
+#ifndef HAVE_FREEHOSTENT
 		rk_freehostent;
-		rk_freeifaddrs;
+#endif
+#ifndef HAVE_GAI_STRERROR
 		rk_gai_strerror;
+#endif
+#ifndef HAVE_GETADDRINFO
 		rk_getaddrinfo;
+#endif
 		rk_getauxv;
 		rk_getauxval;
+#ifndef HAVE_GETIFADDRS
 		rk_getifaddrs;
+#endif
+#ifndef HAVE_GETIPNODEBYADDR
 		rk_getipnodebyaddr;
+#endif
+#ifndef HAVE_GETIPNODEBYNAME
 		rk_getipnodebyname;
+#endif
+#ifndef HAVE_GETNAMEINFO
 		rk_getnameinfo;
+#endif
+#ifndef HAVE_GETPROGNAME
 		rk_getprogname;
-		rk_getpwnam_r;
-		rk_glob;
-		rk_globfree;
+#endif
 		rk_hex_decode;
 		rk_hex_encode;
 		rk_hostent_find_fqdn;
+#ifndef HAVE_INET_NTOP
 		rk_inet_ntop;
+#endif
+#ifndef HAVE_INET_PTON
 		rk_inet_pton;
+#endif
 		rk_injectauxv;
+#ifndef HAVE_LOCALTIME_R
 		rk_localtime_r;
-		rk_memmem;
+#endif
+#ifndef HAVE_MEMMEM
+		rk_smemmem;
+#endif
+#ifndef HAVE_MEMSET_S
 		rk_memset_s;
+#endif
+#ifndef HAVE_MERGESORT
 		rk_mergesort;
+#endif
+#ifndef HAVE_MERGESORT_R
 		rk_mergesort_r;
+#endif
 		rk_mkdir;
+#ifndef HAVE_MKDTEMP
 		rk_mkdtemp;
+#endif
+#ifndef HAVE_MKOSTEMP
 		rk_mkostemp;
+#endif
+#ifndef HAVE_MKSTEMP
 		rk_mkstemp;
+#endif
 		rk_parse_flags;
 		rk_parse_time;
 		rk_parse_units;
@@ -106,10 +147,14 @@ HEIMDAL_ROKEN_2.0 {
 		rk_print_units_table;
 		rk_random_init;
 		rk_read_environment;
+#ifndef HAVE_READV
 		rk_readv;
+#endif
 		rk_realloc;
 		rk_secure_getenv;
+#ifndef HAVE_SETPROGNAME
 		rk_setprogname;
+#endif
 		rk_simple_execle;
 		rk_simple_execlp;
 		rk_simple_execve;
@@ -133,44 +178,83 @@ HEIMDAL_ROKEN_2.0 {
 		rk_socket_sockaddr_size;
 		rk_strasvis;
 		rk_strasvisx;
-		rk_stravis;
-		rk_stravisx;
 		rk_strcollect;
+#if !defined(HAVE_STRERROR) && !defined(strerror)
 		rk_strerror;
+#endif
+#if (!defined(HAVE_STRERROR_R) && !defined(strerror_r)) || (!defined(STRERROR_R_PROTO_COMPATIBLE) && defined(HAVE_STRERROR_R))
 		rk_strerror_r;
+#endif
+#ifndef HAVE_STRFTIME
 		rk_strftime;
+#endif
+#ifndef HAVE_STRLCAT
 		rk_strlcat;
+#endif
+#ifndef HAVE_STRLCPY
 		rk_strlcpy;
+#endif
 		rk_strlwr;
+#ifndef HAVE_STRNDUP
 		rk_strndup;
+#endif
+#ifndef HAVE_STRNLEN
 		rk_strnlen;
+#endif
 		rk_strpoolcollect;
 		rk_strpoolfree;
 		rk_strpoolprintf;
+#ifndef HAVE_STRPTIME
 		rk_strptime;
+#endif
 		rk_strrasvis;
 		rk_strrasvisx;
 		rk_strsep_copy;
+#ifndef HAVE_STRSVIS
 		rk_strsvis;
+#endif
+#ifndef HAVE_STRSVISX
 		rk_strsvisx;
+#endif
+#ifndef HAVE_STRTOLL
 		rk_strtoll;
+#endif
+#ifndef HAVE_STRTOULL
 		rk_strtoull;
+#endif
+#ifndef HAVE_STRUNVIS
 		rk_strunvis;
-		rk_strunvisx;
+#endif
 		rk_strupr;
+#ifndef HAVE_STRVIS
 		rk_strvis;
+#endif
+#ifndef HAVE_STRVISX
 		rk_strvisx;
+#endif
+#ifndef HAVE_SVIS
 		rk_svis;
+#endif
+#ifndef HAVE_TDELETE
 		rk_tdelete;
+#endif
+#ifndef HAVE_TFIND
 		rk_tfind;
+#endif
+#ifndef HAVE_TIMEGM
 		rk_timegm;
+#endif
 		rk_time_add;
 		rk_time_sub;
 		rk_timevaladd;
 		rk_timevalfix;
 		rk_timevalsub;
+#ifndef HAVE_TSEARCH
 		rk_tsearch;
+#endif
+#ifndef HAVE_TWALK
 		rk_twalk;
+#endif
 		rk_undumpdata;
 		rk_undumptext;
 		rk_unparse_flags;
@@ -179,10 +263,18 @@ HEIMDAL_ROKEN_2.0 {
 		rk_unparse_units;
 		rk_unparse_units_approx;
 		rk_unvis;
+#ifndef HAVE_VASNPRINTF
 		rk_vasnprintf;
+#endif
+#ifndef HAVE_VASPRINTF
 		rk_vasprintf;
+#endif
+#ifndef HAVE_VIS
 		rk_vis;
+#endif
+#ifndef HAVE_VSNPRINTF
 		rk_vsnprintf;
+#endif
 		rk_vstrcollect;
 		rk_wait_for_process;
 		rk_wait_for_process_timed;
@@ -220,8 +312,6 @@ HEIMDAL_ROKEN_2.0 {
 		rtbl_set_flags;
 		rtbl_set_prefix;
 		rtbl_set_separator;
-		signal;
-		simple_execl;
 		tm2time;
 		unparse_bytes;
 		unparse_bytes_short;
@@ -230,13 +320,6 @@ HEIMDAL_ROKEN_2.0 {
 		unparse_time_approx;
 		unparse_units;
 		unparse_units_approx;
-		verr;
-		verrx;
-		vwarn;
-		vwarnx;
-		warn;
-		warnx;
-		writev;
 	local:
 		*;
 };

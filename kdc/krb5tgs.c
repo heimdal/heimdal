@@ -1592,6 +1592,12 @@ server_lookup:
     }
 
     /*
+     * We might have set r->error_code if we failed to find the server, but
+     * then if we found a referral we need to reset it.
+     */
+    priv->error_code = 0;
+
+    /*
      * Now refetch the primary krbtgt, and get the current kvno (the
      * sign check may have been on an old kvno, and the server may
      * have been an incoming trust)

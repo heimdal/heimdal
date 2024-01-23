@@ -34,10 +34,10 @@
 #include "krb5_locl.h"
 
 /**
- * Free all memory allocated by `realmlist'
+ * Free all memory allocated by `realmlist'.
  *
  * @param context A Kerberos 5 context.
- * @param realmlist realmlist to free, NULL is ok
+ * @param realmlist realmlist to free, NULL is ok.
  *
  * @return a Kerberos error code, always 0.
  *

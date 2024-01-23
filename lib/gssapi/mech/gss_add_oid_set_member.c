@@ -40,8 +40,8 @@
  * added to to the set.
  *
  * @param minor_status minor status code.
- * @param member_oid member to add to the oid set
- * @param oid_set oid set to add the member too
+ * @param member_oid member to add to the oid set.
+ * @param oid_set oid set to add the member too.
  *
  * @returns a gss_error code, see gss_display_status() about printing
  *          the error code.

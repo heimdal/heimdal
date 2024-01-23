@@ -243,7 +243,7 @@ hx509_set_warn_dest(hx509_context context, heim_log_facility *fac)
  *
  * @param context hx509 context to change the flag for.
  * @param flag zero, revocation method required, non zero missing
- * revocation method ok
+ * revocation method ok.
  *
  * @ingroup hx509_verify
  */
@@ -336,10 +336,10 @@ cert_init(hx509_context context, heim_error_t *error)
  * certificate `c´.
  *
  * @param context A hx509 context.
- * @param c
- * @param error
+ * @param c.
+ * @param error.
  *
- * @return Returns an hx509 certificate
+ * @return Returns an hx509 certificate.
  *
  * @ingroup hx509_cert
  */
@@ -373,10 +373,10 @@ hx509_cert_init(hx509_context context, const Certificate *c, heim_error_t *error
  * Copy a certificate object, but drop any private key assignment.
  *
  * @param context A hx509 context.
- * @param src Certificate object
- * @param error
+ * @param src Certificate object.
+ * @param error.
  *
- * @return Returns an hx509 certificate
+ * @return Returns an hx509 certificate.
  *
  * @ingroup hx509_cert
  */
@@ -394,10 +394,10 @@ hx509_cert_copy_no_private_key(hx509_context context,
  * (but no Certificate).
  *
  * @param context A hx509 context.
- * @param key
- * @param error
+ * @param key.
+ * @param error.
  *
- * @return Returns an hx509 certificate
+ * @return Returns an hx509 certificate.
  *
  * @ingroup hx509_cert
  */
@@ -426,9 +426,9 @@ hx509_cert_init_private_key(hx509_context context,
  * @param context A hx509 context.
  * @param ptr pointer to memory region containing encoded certificate.
  * @param len length of memory region.
- * @param error possibly returns an error
+ * @param error possibly returns an error.
  *
- * @return An hx509 certificate
+ * @return An hx509 certificate.
  *
  * @ingroup hx509_cert
  */
@@ -607,7 +607,7 @@ hx509_verify_destroy_ctx(hx509_verify_ctx ctx)
  * independent of the destruction of the verification context (ctx).
  * If there already is a keyset attached, it's released.
  *
- * @param ctx a verification context
+ * @param ctx a verification context.
  * @param set a keyset containing the trust anchors.
  *
  * @ingroup hx509_verify
@@ -671,7 +671,7 @@ _hx509_verify_get_time(hx509_verify_ctx ctx)
  * Set the maximum depth of the certificate chain that the path
  * builder is going to try.
  *
- * @param ctx a verification context
+ * @param ctx a verification context.
  * @param max_depth maxium depth of the certificate chain, include
  * trust anchor.
  *
@@ -687,7 +687,7 @@ hx509_verify_set_max_depth(hx509_verify_ctx ctx, unsigned int max_depth)
 /**
  * Allow or deny the use of proxy certificates
  *
- * @param ctx a verification context
+ * @param ctx a verification context.
  * @param boolean if non zero, allow proxy certificates.
  *
  * @ingroup hx509_verify
@@ -707,7 +707,7 @@ hx509_verify_set_proxy_certificate(hx509_verify_ctx ctx, int boolean)
  * checking key usage on CA certificates, this will make version 1
  * certificiates unuseable.
  *
- * @param ctx a verification context
+ * @param ctx a verification context.
  * @param boolean if non zero, use strict verification.
  *
  * @ingroup hx509_verify
@@ -726,10 +726,9 @@ hx509_verify_set_strict_rfc3280_verification(hx509_verify_ctx ctx, int boolean)
  * Allow using the operating system builtin trust anchors if no other
  * trust anchors are configured.
  *
- * @param ctx a verification context
+ * @param ctx a verification context.
  * @param boolean if non zero, useing the operating systems builtin
  * trust anchors.
- *
  *
  * @return An hx509 error code, see hx509_get_error_string().
  *
@@ -1671,7 +1670,7 @@ hx509_cert_get_serialnumber(hx509_cert p, heim_integer *i)
  *
  * @param p a hx509 certificate object.
  *
- * @return return not before time
+ * @return return not before time.
  *
  * @ingroup hx509_cert
  */
@@ -1830,13 +1829,13 @@ get_x_unique_id(hx509_context context, const char *name,
 /**
  * Get a copy of the Issuer Unique ID
  *
- * @param context a hx509_context
- * @param p a hx509 certificate
- * @param issuer the issuer id returned, free with der_free_bit_string()
+ * @param context a hx509_context.
+ * @param p a hx509 certificate.
+ * @param issuer the issuer id returned, free with der_free_bit_string().
  *
  * @return An hx509 error code, see hx509_get_error_string(). The
  * error code HX509_EXTENSION_NOT_FOUND is returned if the certificate
- * doesn't have a issuerUniqueID
+ * doesn't have a issuerUniqueID.
  *
  * @ingroup hx509_cert
  */
@@ -1848,15 +1847,15 @@ hx509_cert_get_issuer_unique_id(hx509_context context, hx509_cert p, heim_bit_st
 }
 
 /**
- * Get a copy of the Subect Unique ID
+ * Get a copy of the Subect Unique ID.
  *
- * @param context a hx509_context
- * @param p a hx509 certificate
- * @param subject the subject id returned, free with der_free_bit_string()
+ * @param context a hx509_context.
+ * @param p a hx509 certificate.
+ * @param subject the subject id returned, free with der_free_bit_string().
  *
  * @return An hx509 error code, see hx509_get_error_string(). The
  * error code HX509_EXTENSION_NOT_FOUND is returned if the certificate
- * doesn't have a subjectUniqueID
+ * doesn't have a subjectUniqueID.
  *
  * @ingroup hx509_cert
  */
@@ -1877,7 +1876,7 @@ _hx509_cert_private_key(hx509_cert p)
 /**
  * Indicate whether a hx509_cert has a private key.
  *
- * @param p a hx509 certificate
+ * @param p a hx509 certificate.
  *
  * @return 1 if p has a private key, 0 otherwise.
  *
@@ -1892,7 +1891,7 @@ hx509_cert_have_private_key(hx509_cert p)
 /**
  * Indicate whether a hx509_cert has a private key only (no certificate).
  *
- * @param p a hx509 certificate
+ * @param p a hx509 certificate.
  *
  * @return 1 if p has a private key only (no certificate), 0 otherwise.
  *
@@ -2753,15 +2752,15 @@ _hx509_verify_signature_bitstring(hx509_context context,
  * and address.
  *
  * @param context A hx509 context.
- * @param cert the certificate to match with
+ * @param cert the certificate to match with.
  * @param flags Flags to modify the behavior:
  * - HX509_VHN_F_ALLOW_NO_MATCH no match is ok
  * @param type type of hostname:
  * - HX509_HN_HOSTNAME for plain hostname.
  * - HX509_HN_DNSSRV for DNS SRV names.
- * @param hostname the hostname to check
- * @param sa address of the host
- * @param sa_size length of address
+ * @param hostname the hostname to check.
+ * @param sa address of the host.
+ * @param sa_size length of address.
  *
  * @return An hx509 error code, see hx509_get_error_string().
  *
@@ -2909,7 +2908,7 @@ _hx509_set_cert_attribute(hx509_context context,
  * Get an external attribute for the certificate, examples are
  * friendly name and id.
  *
- * @param cert hx509 certificate object to search
+ * @param cert hx509 certificate object to search.
  * @param oid an oid to search for.
  *
  * @return an hx509_cert_attribute, only valid as long as the
@@ -2931,7 +2930,7 @@ hx509_cert_get_attribute(hx509_cert cert, const heim_oid *oid)
 /**
  * Set the friendly name on the certificate.
  *
- * @param cert The certificate to set the friendly name on
+ * @param cert The certificate to set the friendly name on.
  * @param name Friendly name.
  *
  * @return An hx509 error code, see hx509_get_error_string().
@@ -3078,8 +3077,8 @@ hx509_query_match_option(hx509_query *q, hx509_query_option option)
  * Set the issuer and serial number of match in the query
  * controller. The function make copies of the isser and serial number.
  *
- * @param q a hx509 query controller
- * @param issuer issuer to search for
+ * @param q a hx509 query controller.
+ * @param issuer issuer to search for.
  * @param serialNumber the serialNumber of the issuer.
  *
  * @return An hx509 error code, see hx509_get_error_string().
@@ -3127,7 +3126,7 @@ hx509_query_match_issuer_serial(hx509_query *q,
  * Set the query controller to match on a friendly name
  *
  * @param q a hx509 query controller.
- * @param name a friendly name to match on
+ * @param name a friendly name to match on.
  *
  * @return An hx509 error code, see hx509_get_error_string().
  *
@@ -3437,7 +3436,7 @@ _hx509_query_match_cert(hx509_context context, const hx509_query *q, hx509_cert 
  * Set a statistic file for the query statistics.
  *
  * @param context A hx509 context.
- * @param fn statistics file name
+ * @param fn statistics file name.
  *
  * @ingroup hx509_cert
  */
@@ -3507,7 +3506,7 @@ stat_sort(const void *a, const void *b)
  * Unparse the statistics file and print the result on a FILE descriptor.
  *
  * @param context A hx509 context.
- * @param printtype tyep to print
+ * @param printtype tyep to print.
  * @param out the FILE to write the data on.
  *
  * @ingroup hx509_cert
@@ -3593,7 +3592,7 @@ hx509_query_unparse_stats(hx509_context context, int printtype, FILE *out)
  *
  * @param context A hx509 context.
  * @param cert A hx509 context.
- * @param eku the EKU to check for
+ * @param eku the EKU to check for.
  * @param allow_any_eku if the any EKU is set, allow that to be a
  * substitute.
  *
@@ -3888,13 +3887,13 @@ out:
 }
 
 /**
- * Print a simple representation of a certificate
+ * Print a simple representation of a certificate.
  *
- * @param context A hx509 context, can be NULL
- * @param cert certificate to print
- * @param out the stdio output stream, if NULL, stdout is used
+ * @param context A hx509 context, can be NULL.
+ * @param cert certificate to print.
+ * @param out the stdio output stream, if NULL, stdout is used.
  *
- * @return An hx509 error code
+ * @return An hx509 error code.
  *
  * @ingroup hx509_cert
  */

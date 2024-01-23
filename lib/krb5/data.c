@@ -133,7 +133,7 @@ krb5_data_realloc(krb5_data *p, int len)
  * Copy the data of len into the krb5_data.
  *
  * @param p krb5_data to copy into.
- * @param data data to copy..
+ * @param data data to copy.
  * @param len new size.
  *
  * @return Returns 0 to indicate success. Otherwise an kerberos et
@@ -189,8 +189,8 @@ krb5_copy_data(krb5_context context,
 /**
  * Compare to data.
  *
- * @param data1 krb5_data to compare
- * @param data2 krb5_data to compare
+ * @param data1 krb5_data to compare.
+ * @param data2 krb5_data to compare.
  *
  * @return return the same way as memcmp(), useful when sorting.
  *
@@ -209,10 +209,10 @@ krb5_data_cmp(const krb5_data *data1, const krb5_data *data2)
 }
 
 /**
- * Compare to data not exposing timing information from the checksum data
+ * Compare to data not exposing timing information from the checksum data.
  *
- * @param data1 krb5_data to compare
- * @param data2 krb5_data to compare
+ * @param data1 krb5_data to compare.
+ * @param data2 krb5_data to compare.
  *
  * @return returns zero for same data, otherwise non zero.
  *

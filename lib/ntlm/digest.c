@@ -868,7 +868,7 @@ heim_digest_verify(heim_digest_t context, char **response)
  * Create a rspauth= response.
  * Assumes that the A1hash/password serverNonce, clientNC, clientNonce, clientQOP is set.
  *
- * @return the rspauth string (including rspauth), return key are stored in serverReply and will be invalid after another call to heim_digest_*
+ * @return the rspauth string (including rspauth), return key are stored in serverReply and will be invalid after another call to heim_digest_*.
  */
 
 const char *

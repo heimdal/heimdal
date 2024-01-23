@@ -183,11 +183,11 @@ _gss_import_export_name(OM_uint32 *minor_status,
  *
  * @sa gss_export_name(), @ref internalVSmechname.
  *
- * @param minor_status       minor status code
- * @param input_name_buffer  import name buffer
- * @param input_name_type    type of the import name buffer
+ * @param minor_status       minor status code.
+ * @param input_name_buffer  import name buffer.
+ * @param input_name_type    type of the import name buffer.
  * @param output_name        the resulting type, release with
- *        gss_release_name(), independent of input_name
+ *        gss_release_name(), independent of input_name.
  *
  * @returns a gss_error code, see gss_display_status() about printing
  *        the error code.

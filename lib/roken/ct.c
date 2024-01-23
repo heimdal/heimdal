@@ -48,11 +48,11 @@
  * because in some GCC versions there is a bug which can be worked
  * around by doing this.
  *
- * @param p1 memory region 1 to compare
- * @param p2 memory region 2 to compare
- * @param len length of memory
+ * @param p1 memory region 1 to compare.
+ * @param p2 memory region 2 to compare.
+ * @param len length of memory.
  *
- * @return 0 when the memory regions are equal, non zero if not
+ * @return 0 when the memory regions are equal, non zero if not.
  *
  * @ingroup roken
  */

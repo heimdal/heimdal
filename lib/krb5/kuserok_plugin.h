@@ -39,7 +39,7 @@
 
 /** @struct krb5plugin_kuserok_ftable_desc
  *
- * @brief Description of the krb5_kuserok(3) plugin facility.
+ * Description of the krb5_kuserok(3) plugin facility.
  *
  * The krb5_kuserok(3) function is pluggable.  The plugin is named
  * KRB5_PLUGIN_KUSEROK ("krb5_plugin_kuserok"), with a single minor
@@ -48,13 +48,10 @@
  * The plugin for krb5_kuserok(3) consists of a data symbol referencing
  * a structure of type krb5plugin_kuserok_ftable, with four fields:
  *
- * @param init          Plugin initialization function (see krb5-plugin(7))
- *
- * @param minor_version The plugin minor version number (0)
- *
- * @param fini          Plugin finalization function
- *
- * @param kuserok       Plugin kuserok function
+ * @param init          Plugin initialization function (see krb5-plugin(7)).
+ * @param minor_version The plugin minor version number (0).
+ * @param fini          Plugin finalization function.
+ * @param kuserok       Plugin kuserok function.
  *
  * The kuserok field is the plugin entry point that performs the
  * traditional kuserok operation however the plugin desires.  It is

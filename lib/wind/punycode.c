@@ -73,7 +73,7 @@ adapt(unsigned delta, unsigned numpoints, int first)
  * Convert an UCS4 string to a puny-coded DNS label string suitable
  * when combined with delimiters and other labels for DNS lookup.
  *
- * @param in an UCS4 string to convert
+ * @param in an UCS4 string to convert.
  * @param in_len the length of in.
  * @param out the resulting puny-coded string. The string is not NUL
  * terminatied.
@@ -81,7 +81,8 @@ adapt(unsigned delta, unsigned numpoints, int first)
  * the out variable, after processing it will be the length of the out
  * string.
  *
- * @return returns 0 on success, an wind error code otherwise
+ * @return returns 0 on success, an wind error code otherwise.
+ *
  * @ingroup wind
  */
 

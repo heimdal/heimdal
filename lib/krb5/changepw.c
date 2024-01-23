@@ -676,7 +676,7 @@ find_chpw_proto(const char *name)
 /**
  * Deprecated: krb5_change_password() is deprecated, use krb5_set_password().
  *
- * @param context a Keberos context
+ * @param context a Keberos context.
  * @param creds
  * @param newpw
  * @param result_code
@@ -684,8 +684,8 @@ find_chpw_proto(const char *name)
  * @param result_string
  *
  * @return On sucess password is changed.
-
- * @ingroup @krb5_deprecated
+ *
+ * @ingroup krb5_deprecated
  */
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
@@ -715,10 +715,10 @@ krb5_change_password (krb5_context	context,
 /**
  * Change password using creds.
  *
- * @param context a Keberos context
- * @param creds The initial kadmin/passwd for the principal or an admin principal
- * @param newpw The new password to set
- * @param targprinc if unset, the client principal from creds is used
+ * @param context a Keberos context.
+ * @param creds The initial kadmin/passwd for the principal or an admin principal.
+ * @param newpw The new password to set.
+ * @param targprinc if unset, the client principal from creds is used.
  * @param result_code Result code, KRB5_KPASSWD_SUCCESS is when password is changed.
  * @param result_code_string binary message from the server, contains
  * at least the result_code.
@@ -726,8 +726,8 @@ krb5_change_password (krb5_context	context,
  * library in human printable form. The string is NUL terminated.
  *
  * @return On sucess and *result_code is KRB5_KPASSWD_SUCCESS, the password is changed.
-
- * @ingroup @krb5
+ *
+ * @ingroup krb5
  */
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL

@@ -268,9 +268,9 @@ krb5_compare_creds(krb5_context context, krb5_flags whichfields,
  * Returns the ticket flags for the credentials in creds.
  * See also krb5_ticket_get_flags().
  *
- * @param creds credential to get ticket flags from
+ * @param creds credential to get ticket flags from.
  *
- * @return ticket flags
+ * @return ticket flags.
  *
  * @ingroup krb5
  */

@@ -90,7 +90,7 @@ seed_something(void)
  *
  * This function can fail, and callers must check the return value.
  *
- * @param buf a buffer to fill with randomness
+ * @param buf a buffer to fill with randomness.
  * @param len length of memory that buf points to.
  *
  * @return return 0 on success or HEIM_ERR_RANDOM_OFFLINE if the
@@ -136,7 +136,7 @@ krb5_generate_random(void *buf, size_t len)
  * will not fail once it have started to produce good output,
  * /dev/urandom behavies that way.
  *
- * @param buf a buffer to fill with randomness
+ * @param buf a buffer to fill with randomness.
  * @param len length of memory that buf points to.
  *
  * @ingroup krb5_crypto

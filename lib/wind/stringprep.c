@@ -42,13 +42,14 @@
 /**
  * Process a input UCS4 string according a string-prep profile.
  *
- * @param in input UCS4 string to process
- * @param in_len length of the input string
- * @param out output UCS4 string
+ * @param in input UCS4 string to process.
+ * @param in_len length of the input string.
+ * @param out output UCS4 string.
  * @param out_len length of the output string.
  * @param flags stringprep profile.
  *
- * @return returns 0 on success, an wind error code otherwise
+ * @return returns 0 on success, an wind error code otherwise.
+ *
  * @ingroup wind
  */
 
@@ -126,7 +127,8 @@ static const struct {
  * @param name name of the profile.
  * @param flags the resulting profile.
  *
- * @return returns 0 on success, an wind error code otherwise
+ * @return returns 0 on success, an wind error code otherwise.
+ *
  * @ingroup wind
  */
 

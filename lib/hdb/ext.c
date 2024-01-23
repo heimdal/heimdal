@@ -697,10 +697,10 @@ hdb_validate_key_rotations(krb5_context context,
  * change.  One of `entry' and `krs' must be NULL, and the other non-NULL, and
  * whichever is given will be altered.
  *
- * @param context Context
- * @param entry An HDB entry
- * @param krs A key rotation extension for hdb_entry
- * @param kr A new KeyRotation value
+ * @param context Context.
+ * @param entry An HDB entry.
+ * @param krs A key rotation extension for hdb_entry.
+ * @param kr A new KeyRotation value.
  *
  * @return Zero on success, an error otherwise.
  */

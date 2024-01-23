@@ -161,11 +161,11 @@ plugin_dealloc(void *arg)
 }
 
 /** heim_db_register
- * @brief Registers a DB type for use with heim_db_create().
+ * Registers a DB type for use with heim_db_create().
  *
- * @param dbtype Name of DB type
- * @param data   Private data argument to the dbtype's openf method
- * @param plugin Structure with DB type methods (function pointers)
+ * @param dbtype Name of DB type.
+ * @param data   Private data argument to the dbtype's openf method.
+ * @param plugin Structure with DB type methods (function pointers).
  *
  * Backends that provide begin/commit/rollback methods must provide ACID
  * semantics.
@@ -304,13 +304,13 @@ dbtype_iter2create_f(heim_object_t dbtype, heim_object_t junk, void *arg)
  *  - "sync", with any value (make transactions durable)
  *  - "journal-name", with a string value naming a journal file name
  *
- * @param dbtype  Name of DB type
- * @param dbname  Name of DB (likely a file path)
- * @param options Options dict
- * @param db      Output open DB handle
- * @param error   Output error  object
+ * @param dbtype  Name of DB type.
+ * @param dbname  Name of DB (likely a file path).
+ * @param options Options dict.
+ * @param db      Output open DB handle.
+ * @param error   Output error  object.
  *
- * @return a DB handle
+ * @return a DB handle.
  *
  * @addtogroup heimbase
  */
@@ -431,10 +431,10 @@ heim_db_create(const char *dbtype, const char *dbname,
  *
  * Returns EBUSY if there is an open transaction for the input db.
  *
- * @param db      Open DB handle
- * @param error   Output error object
+ * @param db      Open DB handle.
+ * @param error   Output error object.
  *
- * @return a DB handle
+ * @return a DB handle.
  *
  * @addtogroup heimbase
  */
@@ -479,10 +479,10 @@ heim_db_clone(heim_db_t db, heim_error_t *error)
 /**
  * Open a transaction on the given db.
  *
- * @param db    Open DB handle
- * @param error Output error object
+ * @param db    Open DB handle.
+ * @param error Output error object.
  *
- * @return 0 on success, system error otherwise
+ * @return 0 on success, system error otherwise.
  *
  * @addtogroup heimbase
  */
@@ -544,10 +544,10 @@ heim_db_begin(heim_db_t db, int read_only, heim_error_t *error)
 /**
  * Commit an open transaction on the given db.
  *
- * @param db    Open DB handle
- * @param error Output error object
+ * @param db    Open DB handle.
+ * @param error Output error object.
  *
- * @return 0 on success, system error otherwise
+ * @return 0 on success, system error otherwise.
  *
  * @addtogroup heimbase
  */
@@ -679,10 +679,10 @@ err:
 /**
  * Rollback an open transaction on the given db.
  *
- * @param db    Open DB handle
- * @param error Output error object
+ * @param db    Open DB handle.
+ * @param error Output error object.
  *
- * @return 0 on success, system error otherwise
+ * @return 0 on success, system error otherwise.
  *
  * @addtogroup heimbase
  */
@@ -737,11 +737,11 @@ _heim_db_get_value(heim_db_t db, heim_string_t table, heim_data_t key,
  * Returns 0 on success, -1 if the key does not exist in the DB, or a
  * system error number on failure.
  *
- * @param db    Open DB handle
- * @param key   Key
- * @param error Output error object
+ * @param db    Open DB handle.
+ * @param key   Key.
+ * @param error Output error object.
  *
- * @return the value (retained), if there is one for the given key
+ * @return the value (retained), if there is one for the given key.
  *
  * @addtogroup heimbase
  */
@@ -790,12 +790,12 @@ heim_db_copy_value(heim_db_t db, heim_string_t table, heim_data_t key,
 /**
  * Set a key's value in the DB.
  *
- * @param db    Open DB handle
- * @param key   Key
- * @param value Value (if NULL the key will be deleted, but empty is OK)
- * @param error Output error object
+ * @param db    Open DB handle.
+ * @param key   Key.
+ * @param value Value (if NULL the key will be deleted, but empty is OK).
+ * @param error Output error object.
  *
- * @return 0 on success, system error otherwise
+ * @return 0 on success, system error otherwise.
  *
  * @addtogroup heimbase
  */
@@ -866,14 +866,13 @@ err:
 }
 
 /**
- * Delete a key and its value from the DB
+ * Delete a key and its value from the DB.
  *
+ * @param db    Open DB handle.
+ * @param key   Key.
+ * @param error Output error object.
  *
- * @param db    Open DB handle
- * @param key   Key
- * @param error Output error object
- *
- * @return 0 on success, system error otherwise
+ * @return 0 on success, system error otherwise.
  *
  * @addtogroup heimbase
  */
@@ -937,10 +936,10 @@ err:
 /**
  * Iterate a callback function over keys and values from a DB.
  *
- * @param db        Open DB handle
- * @param iter_data Callback function's private data
- * @param iter_f    Callback function, called once per-key/value pair
- * @param error     Output error object
+ * @param db        Open DB handle.
+ * @param iter_data Callback function's private data.
+ * @param iter_f    Callback function, called once per-key/value pair.
+ * @param error     Output error object.
  *
  * @addtogroup heimbase
  */

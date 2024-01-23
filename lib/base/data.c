@@ -86,11 +86,11 @@ struct heim_type_data _heim_data_object = {
 };
 
 /**
- * Create a data object
+ * Create a data object.
  *
- * @param string the string to create, must be an utf8 string
+ * @param string the string to create, must be an utf8 string.
  *
- * @return string object
+ * @return string object.
  */
 
 heim_data_t
@@ -126,9 +126,9 @@ heim_data_ref_create(const void *data, size_t length,
 
 
 /**
- * Return the type ID of data objects
+ * Return the type ID of data objects.
  *
- * @return type id of data objects
+ * @return type id of data objects.
  */
 
 heim_tid_t
@@ -140,9 +140,9 @@ heim_data_get_type_id(void)
 /**
  * Get the data value of the content.
  *
- * @param data the data object to get the value from
+ * @param data the data object to get the value from.
  *
- * @return a heim_octet_string
+ * @return a heim_octet_string.
  */
 
 const heim_octet_string *

@@ -39,9 +39,9 @@
  * KDC time and local system time.
  *
  * @param context Keberos 5 context.
- * @param sec The applications new of "now" in seconds
- * @param usec The applications new of "now" in micro seconds
-
+ * @param sec The applications new of "now" in seconds.
+ * @param usec The applications new of "now" in micro seconds.
+ *
  * @return Kerberos 5 error code, see krb5_get_error_message().
  *
  * @ingroup krb5

@@ -39,7 +39,7 @@
 /**
  * Clears the error message from the Kerberos 5 context.
  *
- * @param context The Kerberos 5 context to clear
+ * @param context The Kerberos 5 context to clear.
  *
  * @ingroup krb5_error
  */
@@ -56,9 +56,9 @@ krb5_clear_error_message(krb5_context context)
  *
  * The if context is NULL, no error string is stored.
  *
- * @param context Kerberos 5 context
- * @param ret The error code
- * @param fmt Error string for the error code
+ * @param context Kerberos 5 context.
+ * @param ret The error code.
+ * @param fmt Error string for the error code.
  * @param ... printf(3) style parameters.
  *
  * @ingroup krb5_error
@@ -81,9 +81,9 @@ krb5_set_error_message(krb5_context context, krb5_error_code ret,
  *
  * The if context is NULL, no error string is stored.
  *
- * @param context Kerberos 5 context
- * @param ret The error code
- * @param fmt Error string for the error code
+ * @param context Kerberos 5 context.
+ * @param ret The error code.
+ * @param fmt Error string for the error code.
  * @param args printf(3) style parameters.
  *
  * @ingroup krb5_error
@@ -114,9 +114,9 @@ krb5_vset_error_message(krb5_context context, krb5_error_code ret,
  *
  * The if context is NULL, no error string is stored.
  *
- * @param context Kerberos 5 context
- * @param ret The error code
- * @param fmt Error string for the error code
+ * @param context Kerberos 5 context.
+ * @param ret The error code.
+ * @param fmt Error string for the error code.
  * @param ... printf(3) style parameters.
  *
  * @ingroup krb5_error
@@ -139,9 +139,9 @@ krb5_prepend_error_message(krb5_context context, krb5_error_code ret,
  *
  * The if context is NULL, no error string is stored.
  *
- * @param context Kerberos 5 context
- * @param ret The error code
- * @param fmt Error string for the error code
+ * @param context Kerberos 5 context.
+ * @param ret The error code.
+ * @param fmt Error string for the error code.
  * @param args printf(3) style parameters.
  *
  * @ingroup krb5_error
@@ -160,8 +160,8 @@ krb5_vprepend_error_message(krb5_context context, krb5_error_code ret,
  * Return the error message for `code' in context. On memory
  * allocation error the function returns NULL.
  *
- * @param context Kerberos 5 context
- * @param code Error code related to the error
+ * @param context Kerberos 5 context.
+ * @param code Error code related to the error.
  *
  * @return an error string, needs to be freed with
  * krb5_free_error_message(). The functions return NULL on error.
@@ -200,7 +200,7 @@ krb5_get_error_message(krb5_context context, krb5_error_code code)
 /**
  * Free the error message returned by krb5_get_error_message().
  *
- * @param context Kerberos context
+ * @param context Kerberos context.
  * @param msg error message to free, returned byg
  *        krb5_get_error_message().
  *

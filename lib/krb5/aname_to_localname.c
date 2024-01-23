@@ -285,12 +285,10 @@ an2ln_default(krb5_context context,
  * Returns 0 on success, KRB5_NO_LOCALNAME if no mapping was found, or
  * some Kerberos or system error.
  *
- * Inputs:
- *
- * @param context    A krb5_context
- * @param aname      A principal name
- * @param lnsize     The size of the buffer into which the username will be written
- * @param lname      The buffer into which the username will be written
+ * @param[in] context    A krb5_context.
+ * @param[in] aname      A principal name.
+ * @param[in] lnsize     The size of the buffer into which the username will be written.
+ * @param[in] lname      The buffer into which the username will be written.
  *
  * @ingroup krb5_support
  */

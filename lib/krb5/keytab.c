@@ -195,7 +195,7 @@ keytab_name(const char *name, const char **type, size_t *type_len)
  * into a keytab in `id'.
  *
  * @param context a Keberos context.
- * @param name name to resolve
+ * @param name name to resolve.
  * @param id resulting keytab, free with krb5_kt_close().
  *
  * @return Return an error code or 0, see krb5_get_error_message().
@@ -260,8 +260,8 @@ static const char *default_ktname(krb5_context context)
  * copy the name of the default keytab into `name'.
  *
  * @param context a Keberos context.
- * @param name buffer where the name will be written
- * @param namesize length of name
+ * @param name buffer where the name will be written.
+ * @param namesize length of name.
  *
  * @return Return an error code or 0, see krb5_get_error_message().
  *
@@ -282,8 +282,8 @@ krb5_kt_default_name(krb5_context context, char *name, size_t namesize)
  * Copy the name of the default modify keytab into `name'.
  *
  * @param context a Keberos context.
- * @param name buffer where the name will be written
- * @param namesize length of name
+ * @param name buffer where the name will be written.
+ * @param namesize length of name.
  *
  * @return Return an error code or 0, see krb5_get_error_message().
  *
@@ -339,11 +339,11 @@ krb5_kt_default(krb5_context context, krb5_keytab *id)
  * keytab in `keyprocarg' (the default if == NULL) into `*key'.
  *
  * @param context a Keberos context.
- * @param keyprocarg
- * @param principal
- * @param vno
- * @param enctype
- * @param key
+ * @param keyprocarg.
+ * @param principal.
+ * @param vno.
+ * @param enctype.
+ * @param key.
  *
  * @return Return an error code or 0, see krb5_get_error_message().
  *
@@ -385,9 +385,9 @@ krb5_kt_read_service_key(krb5_context context,
  * `prefixsize'.
  *
  * @param context a Keberos context.
- * @param keytab the keytab to get the prefix for
- * @param prefix prefix buffer
- * @param prefixsize length of prefix buffer
+ * @param keytab the keytab to get the prefix for.
+ * @param prefix prefix buffer.
+ * @param prefixsize length of prefix buffer.
  *
  * @return Return an error code or 0, see krb5_get_error_message().
  *
@@ -759,7 +759,7 @@ krb5_kt_copy_entry_contents(krb5_context context,
  * Free the contents of `entry'.
  *
  * @param context a Keberos context.
- * @param entry the entry to free
+ * @param entry the entry to free.
  *
  * @return Return an error code or 0, see krb5_get_error_message().
  *
@@ -865,7 +865,7 @@ krb5_kt_end_seq_get(krb5_context context,
  *
  * @param context a Keberos context.
  * @param id a keytab.
- * @param entry the entry to add
+ * @param entry the entry to add.
  *
  * @return Return an error code or 0, see krb5_get_error_message().
  *
@@ -894,7 +894,7 @@ krb5_kt_add_entry(krb5_context context,
 
  * @param context a Keberos context.
  * @param id a keytab.
- * @param entry the entry to remove
+ * @param entry the entry to remove.
  *
  * @return Return an error code or 0, see krb5_get_error_message().
  *
@@ -916,7 +916,7 @@ krb5_kt_remove_entry(krb5_context context,
 }
 
 /**
- * Return true if the keytab exists and have entries
+ * Return true if the keytab exists and have entries.
  *
  * @param context a Keberos context.
  * @param id a keytab.

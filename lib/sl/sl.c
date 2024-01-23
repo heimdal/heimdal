@@ -476,8 +476,8 @@ osad(const char *s1, const char *s2)
  * Will propose a list of command that are almost matching the command
  * used, if there is no matching, will ask the user to use "help".
  *
- * @param cmds command array to use for matching
- * @param match the command that didn't exists
+ * @param cmds command array to use for matching.
+ * @param match the command that didn't exists.
  */
 
 void

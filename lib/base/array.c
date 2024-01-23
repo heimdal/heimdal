@@ -68,9 +68,9 @@ struct heim_type_data array_object = {
 };
 
 /**
- * Allocate an array
+ * Allocate an array.
  *
- * @return A new allocated array, free with heim_release()
+ * @return A new allocated array, free with heim_release().
  */
 
 heim_array_t
@@ -91,9 +91,9 @@ heim_array_create(void)
 }
 
 /**
- * Get type id of an dict
+ * Get type id of an dict.
  *
- * @return the type id
+ * @return the type id.
  */
 
 heim_tid_t
@@ -103,12 +103,12 @@ heim_array_get_type_id(void)
 }
 
 /**
- * Append object to array
+ * Append object to array.
  *
- * @param array array to add too
- * @param object the object to add
+ * @param array array to add too.
+ * @param object the object to add.
  *
- * @return zero if added, errno otherwise
+ * @return zero if added, errno otherwise.
  */
 
 int
@@ -204,13 +204,13 @@ heim_array_prepend_value(heim_array_t array, heim_object_t object)
 }
 
 /**
- * Insert an object at a given index in an array
+ * Insert an object at a given index in an array.
  *
- * @param array array to add too
- * @param idx index where to add element (-1 == append, -2 next to last, ...)
- * @param object the object to add
+ * @param array array to add too.
+ * @param idx index where to add element (-1 == append, -2 next to last, ...).
+ * @param object the object to add.
  *
- * @return zero if added, errno otherwise
+ * @return zero if added, errno otherwise.
  */
 
 int
@@ -244,11 +244,11 @@ heim_array_insert_value(heim_array_t array, size_t idx, heim_object_t object)
 }
 
 /**
- * Iterate over all objects in array
+ * Iterate over all objects in array.
  *
- * @param array array to iterate over
- * @param ctx context passed to fn
- * @param fn function to call on each object
+ * @param array array to iterate over.
+ * @param ctx context passed to fn.
+ * @param fn function to call on each object.
  */
 
 void
@@ -265,10 +265,10 @@ heim_array_iterate_f(heim_array_t array, void *ctx, heim_array_iterator_f_t fn)
 
 #ifdef __BLOCKS__
 /**
- * Iterate over all objects in array
+ * Iterate over all objects in array.
  *
- * @param array array to iterate over
- * @param fn block to call on each object
+ * @param array array to iterate over.
+ * @param fn block to call on each object.
  */
 
 void
@@ -285,11 +285,11 @@ heim_array_iterate(heim_array_t array, void (^fn)(heim_object_t, int *))
 #endif
 
 /**
- * Iterate over all objects in array, backwards
+ * Iterate over all objects in array, backwards.
  *
- * @param array array to iterate over
- * @param ctx context passed to fn
- * @param fn function to call on each object
+ * @param array array to iterate over.
+ * @param ctx context passed to fn.
+ * @param fn function to call on each object.
  */
 
 void
@@ -307,10 +307,10 @@ heim_array_iterate_reverse_f(heim_array_t array, void *ctx, heim_array_iterator_
 
 #ifdef __BLOCKS__
 /**
- * Iterate over all objects in array, backwards
+ * Iterate over all objects in array, backwards.
  *
- * @param array array to iterate over
- * @param fn block to call on each object
+ * @param array array to iterate over.
+ * @param fn block to call on each object.
  */
 
 void
@@ -327,11 +327,11 @@ heim_array_iterate_reverse(heim_array_t array, void (^fn)(heim_object_t, int *))
 #endif
 
 /**
- * Get length of array
+ * Get length of array.
  *
- * @param array array to get length of
+ * @param array array to get length of.
  *
- * @return length of array
+ * @return length of array.
  */
 
 size_t
@@ -341,13 +341,13 @@ heim_array_get_length(heim_array_t array)
 }
 
 /**
- * Get value of element at array index
+ * Get value of element at array index.
  *
- * @param array array copy object from
+ * @param array array copy object from.
  * @param idx index of object, 0 based, must be smaller then
- *        heim_array_get_length()
+ *        heim_array_get_length().
  *
- * @return a not-retained copy of the object
+ * @return a not-retained copy of the object.
  */
 
 heim_object_t
@@ -359,13 +359,13 @@ heim_array_get_value(heim_array_t array, size_t idx)
 }
 
 /**
- * Get value of element at array index
+ * Get value of element at array index.
  *
- * @param array array copy object from
+ * @param array array copy object from.
  * @param idx index of object, 0 based, must be smaller then
- *        heim_array_get_length()
+ *        heim_array_get_length().
  *
- * @return a retained copy of the object
+ * @return a retained copy of the object.
  */
 
 heim_object_t
@@ -377,12 +377,12 @@ heim_array_copy_value(heim_array_t array, size_t idx)
 }
 
 /**
- * Set value at array index
+ * Set value at array index.
  *
- * @param array array copy object from
+ * @param array array copy object from.
  * @param idx index of object, 0 based, must be smaller then
- *        heim_array_get_length()
- * @param value value to set 
+ *        heim_array_get_length().
+ * @param value value to set.
  *
  */
 
@@ -396,10 +396,10 @@ heim_array_set_value(heim_array_t array, size_t idx, heim_object_t value)
 }
 
 /**
- * Delete value at idx
+ * Delete value at idx.
  *
- * @param array the array to modify
- * @param idx the key to delete
+ * @param array the array to modify.
+ * @param idx the key to delete.
  */
 
 void
@@ -432,10 +432,10 @@ heim_array_delete_value(heim_array_t array, size_t idx)
 }
 
 /**
- * Filter out entres of array when function return true
+ * Filter out entres of array when function return true.
  *
- * @param array the array to modify
- * @param fn filter function
+ * @param array the array to modify.
+ * @param fn filter function.
  */
 
 void
@@ -455,10 +455,10 @@ heim_array_filter_f(heim_array_t array, void *ctx, heim_array_filter_f_t fn)
 #ifdef __BLOCKS__
 
 /**
- * Filter out entres of array when block return true
+ * Filter out entres of array when block return true.
  *
- * @param array the array to modify
- * @param block filter block
+ * @param array the array to modify.
+ * @param block filter block.
  */
 
 void

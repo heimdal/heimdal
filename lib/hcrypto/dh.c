@@ -208,7 +208,7 @@ DH_set_ex_data(DH *dh, int idx, void *data)
  * @param dh DH object.
  * @param idx index to get the data for.
  *
- * @return the object store in index idx
+ * @return the object store in index idx.
  *
  * @ingroup hcrypto_dh
  */
@@ -223,8 +223,8 @@ DH_get_ex_data(DH *dh, int idx)
  * Generate DH parameters for the DH object give parameters.
  *
  * @param dh The DH object to generate parameters for.
- * @param prime_len length of the prime
- * @param generator generator, g
+ * @param prime_len length of the prime.
+ * @param generator generator, g.
  * @param cb Callback parameters to show progress, can be NULL.
  *
  * @return the maximum size in bytes of the out data.
@@ -248,7 +248,7 @@ DH_generate_parameters_ex(DH *dh, int prime_len, int generator, BN_GENCB *cb)
  * @param codes return that the failures of the pub_key are.
  *
  * @return 1 on success, 0 on failure and *codes is set the the
- * combined fail check for the public key
+ * combined fail check for the public key.
  *
  * @ingroup hcrypto_dh
  */

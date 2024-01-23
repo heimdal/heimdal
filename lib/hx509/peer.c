@@ -103,7 +103,7 @@ hx509_peer_info_free(hx509_peer_info peer)
 /**
  * Set the certificate that remote peer is using.
  *
- * @param peer peer info to update
+ * @param peer peer info to update.
  * @param cert cerificate of the remote peer.
  *
  * @return An hx509 error code, see hx509_get_error_string().
@@ -125,8 +125,8 @@ hx509_peer_info_set_cert(hx509_peer_info peer,
  * Add an additional algorithm that the peer supports.
  *
  * @param context A hx509 context.
- * @param peer the peer to set the new algorithms for
- * @param val an AlgorithmsIdentier to add
+ * @param peer the peer to set the new algorithms for.
+ * @param val an AlgorithmsIdentier to add.
  *
  * @return An hx509 error code, see hx509_get_error_string().
  *
@@ -159,8 +159,8 @@ hx509_peer_info_add_cms_alg(hx509_context context,
  * Set the algorithms that the peer supports.
  *
  * @param context A hx509 context.
- * @param peer the peer to set the new algorithms for
- * @param val array of supported AlgorithmsIdentiers
+ * @param peer the peer to set the new algorithms for.
+ * @param val array of supported AlgorithmsIdentiers.
  * @param len length of array val.
  *
  * @return An hx509 error code, see hx509_get_error_string().

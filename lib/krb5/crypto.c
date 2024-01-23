@@ -866,10 +866,11 @@ krb5_enctype_to_keytype(krb5_context context,
 /**
  * Check if a enctype is valid, return 0 if it is.
  *
- * @param context Kerberos context
- * @param etype enctype to check if its valid or not
+ * @param context Kerberos context.
+ * @param etype enctype to check if its valid or not.
  *
  * @return Return an error code for an failure or 0 on success (enctype valid).
+ *
  * @ingroup krb5_crypto
  */
 
@@ -895,12 +896,13 @@ krb5_enctype_valid(krb5_context context,
 /**
  * Return the coresponding encryption type for a checksum type.
  *
- * @param context Kerberos context
- * @param ctype The checksum type to get the result enctype for
+ * @param context Kerberos context.
+ * @param ctype The checksum type to get the result enctype for.
  * @param etype The returned encryption, when the matching etype is
  * not found, etype is set to ETYPE_NULL.
  *
  * @return Return an error code for an failure or 0 on success.
+ *
  * @ingroup krb5_crypto
  */
 
@@ -1626,16 +1628,17 @@ iov_pad_validate(const struct _krb5_encryption_type *et,
 }
 
 /**
- * Inline encrypt a kerberos message
+ * Inline encrypt a kerberos message.
  *
- * @param context Kerberos context
- * @param crypto Kerberos crypto context
- * @param usage Key usage for this buffer
- * @param data array of buffers to process
- * @param num_data length of array
- * @param ivec initial cbc/cts vector
+ * @param context Kerberos context.
+ * @param crypto Kerberos crypto context.
+ * @param usage Key usage for this buffer.
+ * @param data array of buffers to process.
+ * @param num_data length of array.
+ * @param ivec initial cbc/cts vector.
  *
  * @return Return an error code or 0.
+ *
  * @ingroup krb5_crypto
  *
  * Kerberos encrypted data look like this:
@@ -1826,14 +1829,15 @@ cleanup:
 /**
  * Inline decrypt a Kerberos message.
  *
- * @param context Kerberos context
- * @param crypto Kerberos crypto context
- * @param usage Key usage for this buffer
- * @param data array of buffers to process
- * @param num_data length of array
- * @param ivec initial cbc/cts vector
+ * @param context Kerberos context.
+ * @param crypto Kerberos crypto context.
+ * @param usage Key usage for this buffer.
+ * @param data array of buffers to process.
+ * @param num_data length of array.
+ * @param ivec initial cbc/cts vector.
  *
  * @return Return an error code or 0.
+ *
  * @ingroup krb5_crypto
  *
  * 1. KRB5_CRYPTO_TYPE_HEADER
@@ -1985,14 +1989,15 @@ cleanup:
 /**
  * Create a Kerberos message checksum.
  *
- * @param context Kerberos context
- * @param crypto Kerberos crypto context
- * @param usage Key usage for this buffer
- * @param data array of buffers to process
- * @param num_data length of array
- * @param type output data
+ * @param context Kerberos context.
+ * @param crypto Kerberos crypto context.
+ * @param usage Key usage for this buffer.
+ * @param data array of buffers to process.
+ * @param num_data length of array.
+ * @param type output data.
  *
  * @return Return an error code or 0.
+ *
  * @ingroup krb5_crypto
  */
 
@@ -2049,14 +2054,15 @@ krb5_create_checksum_iov(krb5_context context,
 /**
  * Verify a Kerberos message checksum.
  *
- * @param context Kerberos context
- * @param crypto Kerberos crypto context
- * @param usage Key usage for this buffer
- * @param data array of buffers to process
- * @param num_data length of array
- * @param type return checksum type if not NULL
+ * @param context Kerberos context.
+ * @param crypto Kerberos crypto context.
+ * @param usage Key usage for this buffer.
+ * @param data array of buffers to process.
+ * @param num_data length of array.
+ * @param type return checksum type if not NULL.
  *
  * @return Return an error code or 0.
+ *
  * @ingroup krb5_crypto
  */
 
@@ -2539,10 +2545,10 @@ _get_derived_key(krb5_context context,
  *
  * To free the crypto context, use krb5_crypto_destroy().
  *
- * @param context Kerberos context
- * @param key the key block information with all key data
- * @param etype the encryption type
- * @param crypto the resulting crypto context
+ * @param context Kerberos context.
+ * @param key the key block information with all key data.
+ * @param etype the encryption type.
+ * @param crypto the resulting crypto context.
  *
  * @return Return an error code or 0.
  *
@@ -2619,8 +2625,8 @@ free_key_usage(krb5_context context, struct _krb5_key_usage *ku,
 /**
  * Free a crypto context created by krb5_crypto_init().
  *
- * @param context Kerberos context
- * @param crypto crypto context to free
+ * @param context Kerberos context.
+ * @param crypto crypto context to free.
  *
  * @return Return an error code or 0.
  *
@@ -2649,11 +2655,11 @@ krb5_crypto_destroy(krb5_context context,
 }
 
 /**
- * Return the blocksize used algorithm referenced by the crypto context
+ * Return the blocksize used algorithm referenced by the crypto context.
  *
- * @param context Kerberos context
- * @param crypto crypto context to query
- * @param blocksize the resulting blocksize
+ * @param context Kerberos context.
+ * @param crypto crypto context to query.
+ * @param blocksize the resulting blocksize.
  *
  * @return Return an error code or 0.
  *
@@ -2670,11 +2676,11 @@ krb5_crypto_getblocksize(krb5_context context,
 }
 
 /**
- * Return the encryption type used by the crypto context
+ * Return the encryption type used by the crypto context.
  *
- * @param context Kerberos context
- * @param crypto crypto context to query
- * @param enctype the resulting encryption type
+ * @param context Kerberos context.
+ * @param crypto crypto context to query.
+ * @param enctype the resulting encryption type.
  *
  * @return Return an error code or 0.
  *
@@ -2691,11 +2697,11 @@ krb5_crypto_getenctype(krb5_context context,
 }
 
 /**
- * Return the padding size used by the crypto context
+ * Return the padding size used by the crypto context.
  *
- * @param context Kerberos context
- * @param crypto crypto context to query
- * @param padsize the return padding size
+ * @param context Kerberos context.
+ * @param crypto crypto context to query.
+ * @param padsize the return padding size.
  *
  * @return Return an error code or 0.
  *
@@ -2712,11 +2718,11 @@ krb5_crypto_getpadsize(krb5_context context,
 }
 
 /**
- * Return the confounder size used by the crypto context
+ * Return the confounder size used by the crypto context.
  *
- * @param context Kerberos context
- * @param crypto crypto context to query
- * @param confoundersize the returned confounder size
+ * @param context Kerberos context.
+ * @param crypto crypto context to query.
+ * @param confoundersize the returned confounder size.
  *
  * @return Return an error code or 0.
  *
@@ -2734,10 +2740,10 @@ krb5_crypto_getconfoundersize(krb5_context context,
 
 
 /**
- * Disable encryption type
+ * Disable encryption type.
  *
- * @param context Kerberos 5 context
- * @param enctype encryption type to disable
+ * @param context Kerberos 5 context.
+ * @param enctype encryption type to disable.
  *
  * @return Return an error code or 0.
  *
@@ -2761,10 +2767,10 @@ krb5_enctype_disable(krb5_context context,
 }
 
 /**
- * Enable encryption type
+ * Enable encryption type.
  *
- * @param context Kerberos 5 context
- * @param enctype encryption type to enable
+ * @param context Kerberos 5 context.
+ * @param enctype encryption type to enable.
  *
  * @return Return an error code or 0.
  *
@@ -2788,10 +2794,10 @@ krb5_enctype_enable(krb5_context context,
 }
 
 /**
- * Enable or disable all weak encryption types
+ * Enable or disable all weak encryption types.
  *
- * @param context Kerberos 5 context
- * @param enable true to enable, false to disable
+ * @param context Kerberos 5 context.
+ * @param enable true to enable, false to disable.
  *
  * @return Return an error code or 0.
  *
@@ -2815,10 +2821,10 @@ krb5_allow_weak_crypto(krb5_context context,
 }
 
 /**
- * Returns is the encryption is strong or weak
+ * Returns is the encryption is strong or weak.
  *
- * @param context Kerberos 5 context
- * @param enctype encryption type to probe
+ * @param context Kerberos 5 context.
+ * @param enctype encryption type to probe.
  *
  * @return Returns true if encryption type is weak or is not supported.
  *
@@ -2835,10 +2841,10 @@ krb5_is_enctype_weak(krb5_context context, krb5_enctype enctype)
 }
 
 /**
- * Returns whether the encryption type is new or old
+ * Returns whether the encryption type is new or old.
  *
- * @param context Kerberos 5 context
- * @param enctype encryption type to probe
+ * @param context Kerberos 5 context.
+ * @param enctype encryption type to probe.
  *
  * @return Returns true if encryption type is old or is not supported.
  *
@@ -2855,12 +2861,12 @@ krb5_is_enctype_old(krb5_context context, krb5_enctype enctype)
 }
 
 /**
- * Returns whether the encryption type should use randomly generated salts
+ * Returns whether the encryption type should use randomly generated salts.
  *
- * @param context Kerberos 5 context
- * @param enctype encryption type to probe
+ * @param context Kerberos 5 context.
+ * @param enctype encryption type to probe.
  *
- * @return Returns true if generated salts should have random component
+ * @return Returns true if generated salts should have random component.
  *
  * @ingroup krb5_crypto
  */
@@ -2973,11 +2979,11 @@ krb5_crypto_overhead (krb5_context context, krb5_crypto crypto)
  * the input string are equally random, even though the entropy
  * present in the random source may be limited.
  *
- * @param context Kerberos 5 context
- * @param type the enctype resulting key will be of
- * @param data input random data to convert to a key
- * @param size size of input random data, at least krb5_enctype_keysize() long
- * @param key key, output key, free with krb5_free_keyblock_contents()
+ * @param context Kerberos 5 context.
+ * @param type the enctype resulting key will be of.
+ * @param data input random data to convert to a key.
+ * @param size size of input random data, at least krb5_enctype_keysize() long.
+ * @param key key, output key, free with krb5_free_keyblock_contents().
  *
  * @return Return an error code or 0.
  *
@@ -3117,13 +3123,13 @@ krb5_crypto_prfplus(krb5_context context,
 /**
  * The FX-CF2 key derivation function, used in FAST and preauth framework.
  *
- * @param context Kerberos 5 context
- * @param crypto1 first key to combine
- * @param crypto2 second key to combine
- * @param pepper1 factor to combine with first key to guarantee uniqueness
- * @param pepper2 factor to combine with second key to guarantee uniqueness
- * @param enctype the encryption type of the resulting key
- * @param res allocated key, free with krb5_free_keyblock_contents()
+ * @param context Kerberos 5 context.
+ * @param crypto1 first key to combine.
+ * @param crypto2 second key to combine.
+ * @param pepper1 factor to combine with first key to guarantee uniqueness.
+ * @param pepper2 factor to combine with second key to guarantee uniqueness.
+ * @param enctype the encryption type of the resulting key.
+ * @param res allocated key, free with krb5_free_keyblock_contents().
  *
  * @return Return an error code or 0.
  *

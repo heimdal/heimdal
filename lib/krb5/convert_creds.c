@@ -42,8 +42,8 @@
  * gotten from the KDC and stored in the cred cache `ccache'.
  *
  * @param context Kerberos 5 context.
- * @param in_cred the credential to convert
- * @param v4creds the converted credential
+ * @param in_cred the credential to convert.
+ * @param v4creds the converted credential.
  *
  * @return Returns 0 to indicate success. Otherwise an kerberos et
  * error code is returned, see krb5_get_error_message().
@@ -68,8 +68,8 @@ krb524_convert_creds_kdc(krb5_context context,
  *
  * @param context Kerberos 5 context.
  * @param ccache credential cache used to check for des-ticket.
- * @param in_cred the credential to convert
- * @param v4creds the converted credential
+ * @param in_cred the credential to convert.
+ * @param v4creds the converted credential.
  *
  * @return Returns 0 to indicate success. Otherwise an kerberos et
  * error code is returned, see krb5_get_error_message().

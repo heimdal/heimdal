@@ -49,8 +49,9 @@
  * into one resulting krb5_config_section by calling it repeatably.
  *
  * @param context a Kerberos 5 context.
- * @param dname a directory name to a Kerberos configuration file
+ * @param dname a directory name to a Kerberos configuration file.
  * @param res the returned result, must be free with krb5_free_config_files().
+ *
  * @return Return an error code or 0, see krb5_get_error_message().
  *
  * @ingroup krb5_support
@@ -84,8 +85,9 @@ krb5_config_parse_dir_multi(krb5_context context,
  * resulting krb5_config_section by calling it repeatably.
  *
  * @param context a Kerberos 5 context.
- * @param fname a file name to a Kerberos configuration file
+ * @param fname a file name to a Kerberos configuration file.
  * @param res the returned result, must be free with krb5_free_config_files().
+ *
  * @return Return an error code or 0, see krb5_get_error_message().
  *
  * @ingroup krb5_support
@@ -125,11 +127,11 @@ krb5_config_parse_file(krb5_context context,
  * Free configuration file section, the result of
  * krb5_config_parse_file() and krb5_config_parse_file_multi().
  *
- * @param context A Kerberos 5 context
- * @param s the configuration section to free
+ * @param context A Kerberos 5 context.
+ * @param s the configuration section to free.
  *
  * @return returns 0 on successes, otherwise an error code, see
- *          krb5_get_error_message()
+ *          krb5_get_error_message().
  *
  * @ingroup krb5_support
  */
@@ -223,13 +225,13 @@ _krb5_config_vget(krb5_context context,
 }
 
 /**
- * Get a list of configuration binding list for more processing
+ * Get a list of configuration binding list for more processing.
  *
  * @param context A Kerberos 5 context.
- * @param c a configuration section, or NULL to use the section from context
+ * @param c a configuration section, or NULL to use the section from context.
  * @param ... a list of names, terminated with NULL.
  *
- * @return NULL if configuration list is not found, a list otherwise
+ * @return NULL if configuration list is not found, a list otherwise.
  *
  * @ingroup krb5_support
  */
@@ -251,13 +253,13 @@ krb5_config_get_list(krb5_context context,
 }
 
 /**
- * Get a list of configuration binding list for more processing
+ * Get a list of configuration binding list for more processing.
  *
  * @param context A Kerberos 5 context.
- * @param c a configuration section, or NULL to use the section from context
- * @param args a va_list of arguments
+ * @param c a configuration section, or NULL to use the section from context.
+ * @param args a va_list of arguments.
  *
- * @return NULL if configuration list is not found, a list otherwise
+ * @return NULL if configuration list is not found, a list otherwise.
  *
  * @ingroup krb5_support
  */
@@ -282,10 +284,10 @@ krb5_config_vget_list(krb5_context context,
  * the string.
  *
  * @param context A Kerberos 5 context.
- * @param c a configuration section, or NULL to use the section from context
+ * @param c a configuration section, or NULL to use the section from context.
  * @param ... a list of names, terminated with NULL.
  *
- * @return NULL if configuration string not found, a string otherwise
+ * @return NULL if configuration string not found, a string otherwise.
  *
  * @ingroup krb5_support
  */
@@ -310,10 +312,10 @@ krb5_config_get_string(krb5_context context,
  * Like krb5_config_get_string(), but uses a va_list instead of ...
  *
  * @param context A Kerberos 5 context.
- * @param c a configuration section, or NULL to use the section from context
- * @param args a va_list of arguments
+ * @param c a configuration section, or NULL to use the section from context.
+ * @param args a va_list of arguments.
  *
- * @return NULL if configuration string not found, a string otherwise
+ * @return NULL if configuration string not found, a string otherwise.
  *
  * @ingroup krb5_support
  */
@@ -333,12 +335,12 @@ krb5_config_vget_string(krb5_context context,
  * instead return a default value.
  *
  * @param context A Kerberos 5 context.
- * @param c a configuration section, or NULL to use the section from context
+ * @param c a configuration section, or NULL to use the section from context.
  * @param def_value the default value to return if no configuration
  *        found in the database.
- * @param args a va_list of arguments
+ * @param args a va_list of arguments.
  *
- * @return a configuration string
+ * @return a configuration string.
  *
  * @ingroup krb5_support
  */
@@ -359,12 +361,12 @@ krb5_config_vget_string_default(krb5_context context,
  * instead return a default value.
  *
  * @param context A Kerberos 5 context.
- * @param c a configuration section, or NULL to use the section from context
+ * @param c a configuration section, or NULL to use the section from context.
  * @param def_value the default value to return if no configuration
  *        found in the database.
  * @param ... a list of names, terminated with NULL.
  *
- * @return a configuration string
+ * @return a configuration string.
  *
  * @ingroup krb5_support
  */
@@ -391,8 +393,8 @@ krb5_config_get_string_default(krb5_context context,
  * krb5_config_free_strings().
  *
  * @param context A Kerberos 5 context.
- * @param c a configuration section, or NULL to use the section from context
- * @param args a va_list of arguments
+ * @param c a configuration section, or NULL to use the section from context.
+ * @param args a va_list of arguments.
  *
  * @return TRUE or FALSE
  *
@@ -414,7 +416,7 @@ krb5_config_vget_strings(krb5_context context,
  * krb5_config_free_strings().
  *
  * @param context A Kerberos 5 context.
- * @param c a configuration section, or NULL to use the section from context
+ * @param c a configuration section, or NULL to use the section from context.
  * @param ... a list of names, terminated with NULL.
  *
  * @return TRUE or FALSE
@@ -441,7 +443,7 @@ krb5_config_get_strings(krb5_context context,
  * Free the resulting strings from krb5_config-get_strings() and
  * krb5_config_vget_strings().
  *
- * @param strings strings to free
+ * @param strings strings to free.
  *
  * @ingroup krb5_support
  */
@@ -460,10 +462,10 @@ krb5_config_free_strings(char **strings)
  * non-zero number means TRUE and other value is FALSE.
  *
  * @param context A Kerberos 5 context.
- * @param c a configuration section, or NULL to use the section from context
+ * @param c a configuration section, or NULL to use the section from context.
  * @param def_value the default value to return if no configuration
  *        found in the database.
- * @param args a va_list of arguments
+ * @param args a va_list of arguments.
  *
  * @return TRUE or FALSE
  *
@@ -487,8 +489,8 @@ krb5_config_vget_bool_default(krb5_context context,
  * number means TRUE and other value is FALSE.
  *
  * @param context A Kerberos 5 context.
- * @param c a configuration section, or NULL to use the section from context
- * @param args a va_list of arguments
+ * @param c a configuration section, or NULL to use the section from context.
+ * @param args a va_list of arguments.
  *
  * @return TRUE or FALSE
  *
@@ -511,7 +513,7 @@ krb5_config_vget_bool(krb5_context context,
  * number means TRUE and other value is FALSE.
  *
  * @param context A Kerberos 5 context.
- * @param c a configuration section, or NULL to use the section from context
+ * @param c a configuration section, or NULL to use the section from context.
  * @param def_value the default value to return if no configuration
  *        found in the database.
  * @param ... a list of names, terminated with NULL.
@@ -545,7 +547,7 @@ krb5_config_get_bool_default(krb5_context context,
  * non-zero number means TRUE and other value is FALSE.
  *
  * @param context A Kerberos 5 context.
- * @param c a configuration section, or NULL to use the section from context
+ * @param c a configuration section, or NULL to use the section from context.
  * @param ... a list of names, terminated with NULL.
  *
  * @return TRUE or FALSE
@@ -573,12 +575,12 @@ krb5_config_get_bool (krb5_context context,
  * configuration selection.
  *
  * @param context A Kerberos 5 context.
- * @param c a configuration section, or NULL to use the section from context
+ * @param c a configuration section, or NULL to use the section from context.
  * @param def_value the default value to return if no configuration
  *        found in the database.
- * @param args a va_list of arguments
+ * @param args a va_list of arguments.
  *
- * @return parsed the time (or def_value on parse error)
+ * @return parsed the time (or def_value on parse error).
  *
  * @ingroup krb5_support
  */
@@ -598,10 +600,10 @@ krb5_config_vget_time_default(krb5_context context,
  * Get the time from the configuration file using a relative time, for example: 1h30s
  *
  * @param context A Kerberos 5 context.
- * @param c a configuration section, or NULL to use the section from context
- * @param args a va_list of arguments
+ * @param c a configuration section, or NULL to use the section from context.
+ * @param args a va_list of arguments.
  *
- * @return parsed the time or -1 on error
+ * @return parsed the time or -1 on error.
  *
  * @ingroup krb5_support
  */
@@ -620,12 +622,12 @@ krb5_config_vget_time(krb5_context context,
  * Get the time from the configuration file using a relative time, for example: 1h30s
  *
  * @param context A Kerberos 5 context.
- * @param c a configuration section, or NULL to use the section from context
+ * @param c a configuration section, or NULL to use the section from context.
  * @param def_value the default value to return if no configuration
  *        found in the database.
  * @param ... a list of names, terminated with NULL.
  *
- * @return parsed the time (or def_value on parse error)
+ * @return parsed the time (or def_value on parse error).
  *
  * @ingroup krb5_support
  */
@@ -650,10 +652,10 @@ krb5_config_get_time_default(krb5_context context,
  * Get the time from the configuration file using a relative time, for example: 1h30s
  *
  * @param context A Kerberos 5 context.
- * @param c a configuration section, or NULL to use the section from context
+ * @param c a configuration section, or NULL to use the section from context.
  * @param ... a list of names, terminated with NULL.
  *
- * @return parsed the time or -1 on error
+ * @return parsed the time or -1 on error.
  *
  * @ingroup krb5_support
  */

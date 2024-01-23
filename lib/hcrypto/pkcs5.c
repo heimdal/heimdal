@@ -46,7 +46,7 @@
  *
  * @param password Password.
  * @param password_len Length of password.
- * @param salt Salt
+ * @param salt Salt.
  * @param salt_len Length of salt.
  * @param iter iteration counter.
  * @param md the digest function.
@@ -132,7 +132,7 @@ PKCS5_PBKDF2_HMAC(const void * password, size_t password_len,
  *
  * @param password Password.
  * @param password_len Length of password.
- * @param salt Salt
+ * @param salt Salt.
  * @param salt_len Length of salt.
  * @param iter iteration counter.
  * @param keylen the output key length.

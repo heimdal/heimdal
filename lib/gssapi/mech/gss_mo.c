@@ -261,11 +261,11 @@ inquire_saslname_for_mech_compat(OM_uint32 *minor,
 /**
  * Returns different protocol names and description of the mechanism.
  *
- * @param minor_status minor status code
- * @param desired_mech mech list query
- * @param sasl_mech_name SASL GS2 protocol name
- * @param mech_name gssapi protocol name
- * @param mech_description description of gssapi mech
+ * @param minor_status minor status code.
+ * @param desired_mech mech list query.
+ * @param sasl_mech_name SASL GS2 protocol name.
+ * @param mech_name gssapi protocol name.
+ * @param mech_description description of gssapi mech.
  *
  * @return returns GSS_S_COMPLETE or a error code.
  *
@@ -330,11 +330,11 @@ gss_inquire_saslname_for_mech(OM_uint32 *minor_status,
 }
 
 /**
- * Find a mech for a sasl name
+ * Find a mech for a sasl name.
  *
- * @param minor_status minor status code
- * @param sasl_mech_name
- * @param mech_type
+ * @param minor_status minor status code.
+ * @param sasl_mech_name.
+ * @param mech_type.
  *
  * @return returns GSS_S_COMPLETE or an error code.
  */
@@ -432,12 +432,12 @@ test_mech_attrs(gssapi_mech_interface mi,
 }
 
 /**
- * Return set of mechanism that fullfill the criteria
+ * Return set of mechanism that fullfill the criteria.
  *
- * @param minor_status minor status code
- * @param desired_mech_attrs
- * @param except_mech_attrs
- * @param critical_mech_attrs
+ * @param minor_status minor status code.
+ * @param desired_mech_attrs.
+ * @param except_mech_attrs.
+ * @param critical_mech_attrs.
  * @param mechs returned mechs, free with gss_release_oid_set().
  *
  * @return returns GSS_S_COMPLETE or an error code.
@@ -501,7 +501,7 @@ gss_indicate_mechs_by_attrs(OM_uint32 * minor_status,
 /**
  * List support attributes for a mech and/or all mechanisms.
  *
- * @param minor_status minor status code
+ * @param minor_status minor status code.
  * @param mech given together with mech_attr will return the list of
  *        attributes for mechanism, can optionally be GSS_C_NO_OID.
  * @param mech_attr see mech parameter, can optionally be NULL,
@@ -571,13 +571,13 @@ gss_inquire_attrs_for_mech(OM_uint32 * minor_status,
 }
 
 /**
- * Return names and descriptions of mech attributes
+ * Return names and descriptions of mech attributes.
  *
- * @param minor_status minor status code
- * @param mech_attr
- * @param name
- * @param short_desc
- * @param long_desc
+ * @param minor_status minor status code.
+ * @param mech_attr.
+ * @param name.
+ * @param short_desc.
+ * @param long_desc.
  *
  * @return returns GSS_S_COMPLETE or an error code.
  */

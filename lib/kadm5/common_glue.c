@@ -141,14 +141,14 @@ kadm5_get_principal(void *server_handle,
  * no-op for Heimdal because we fetch the entry with decrypted keys.
  * Sadly this is not fully a no-op, as we have to allocate a copy.
  *
- * @server_handle is the kadm5 handle
- * @entry is the HDB entry for the principal in question
- * @ktype is the enctype to get a key for, or -1 to get the first one
- * @stype is the salttype to get a key for, or -1 to get the first match
- * @kvno is the kvno to search for, or -1 to get the first match (highest kvno)
- * @keyblock is where the key will be placed
- * @keysalt, if not NULL, is where the salt will be placed
- * @kvnop, if not NULL, is where the selected kvno will be placed
+ * @param server_handle is the kadm5 handle.
+ * @param entry is the HDB entry for the principal in question.
+ * @param ktype is the enctype to get a key for, or -1 to get the first one.
+ * @param stype is the salttype to get a key for, or -1 to get the first match.
+ * @param kvno is the kvno to search for, or -1 to get the first match (highest kvno).
+ * @param keyblock is where the key will be placed.
+ * @param keysalt, if not NULL, is where the salt will be placed.
+ * @param kvnop, if not NULL, is where the selected kvno will be placed.
  */
 kadm5_ret_t
 kadm5_decrypt_key(void *server_handle,

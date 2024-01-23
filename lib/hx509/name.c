@@ -226,8 +226,8 @@ stringtooid(const char *name, size_t len, heim_oid *oid)
  * Convert the hx509 name object into a printable string.
  * The resulting string should be freed with free().
  *
- * @param name name to print
- * @param str the string to return
+ * @param name name to print.
+ * @param str the string to return.
  *
  * @return An hx509 error code, see hx509_get_error_string().
  *
@@ -804,8 +804,8 @@ out:
  * Copy a hx509 name object.
  *
  * @param context A hx509 cotext.
- * @param from the name to copy from
- * @param to the name to copy to
+ * @param from the name to copy from.
+ * @param to the name to copy to.
  *
  * @return An hx509 error code, see hx509_get_error_string().
  *
@@ -832,8 +832,8 @@ hx509_name_copy(hx509_context context, const hx509_name from, hx509_name *to)
 /**
  * Convert a hx509_name into a Name.
  *
- * @param from the name to copy from
- * @param to the name to copy to
+ * @param from the name to copy from.
+ * @param to the name to copy to.
  *
  * @return An hx509 error code, see hx509_get_error_string().
  *
@@ -1051,8 +1051,8 @@ hx509_name_free(hx509_name *name)
 /**
  * Convert a DER encoded name info a string.
  *
- * @param data data to a DER/BER encoded name
- * @param length length of data
+ * @param data data to a DER/BER encoded name.
+ * @param length length of data.
  * @param str the resulting string, is NULL on failure.
  *
  * @return An hx509 error code, see hx509_get_error_string().
@@ -1079,8 +1079,8 @@ hx509_unparse_der_name(const void *data, size_t length, char **str)
 /**
  * Convert a hx509_name object to DER encoded name.
  *
- * @param name name to concert
- * @param os data to a DER encoded name, free the resulting octet
+ * @param name name to concert.
+ * @param os data to a DER encoded name, free the resulting octet.
  * string with hx509_xfree(os->data).
  *
  * @return An hx509 error code, see hx509_get_error_string().
@@ -1384,8 +1384,8 @@ struct {
 /**
  * Unparse the hx509 name in name into a string.
  *
- * @param name the name to print
- * @param str an allocated string returns the name in string form
+ * @param name the name to print.
+ * @param str an allocated string returns the name in string form.
  *
  * @return An hx509 error code, see hx509_get_error_string().
  *
@@ -1408,9 +1408,9 @@ hx509_general_name_unparse(GeneralName *name, char **str)
 /**
  * Unparse the hx509 name in name into a string.
  *
- * @param context hx509 library context
- * @param name the name to print
- * @param str an allocated string returns the name in string form
+ * @param context hx509 library context.
+ * @param name the name to print.
+ * @param str an allocated string returns the name in string form.
  *
  * @return An hx509 error code, see hx509_get_error_string().
  *

@@ -75,7 +75,7 @@ store_mech_cred(OM_uint32 *minor_status,
  * const key/value hashmap-like thing that specifies a credential store in a
  * mechanism- and implementation-specific way, though Heimdal and MIT agree on
  * at least the following keys for the Kerberos mechanism: ccache, keytab, and
- * client_keytab.  A set of environment variables may be output as well
+ * client_keytab.  A set of environment variables may be output as well.
  */
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_store_cred_into2(OM_uint32 *minor_status,

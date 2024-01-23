@@ -68,7 +68,7 @@ accept_it (rk_socket_t s, rk_socket_t *ret_socket)
 }
 
 /**
- * Listen on a specified addresses
+ * Listen on a specified addresses.
  *
  * Listens on the specified addresses for incoming connections.  If
  * the \a ret_socket parameter is \a NULL, on return STDIN and STDOUT
@@ -80,7 +80,7 @@ accept_it (rk_socket_t s, rk_socket_t *ret_socket)
  * This function does not return if there is an error or if no
  * connection is established.
  *
- * @param[in] ai Addresses to listen on
+ * @param[in] ai Addresses to listen on.
  * @param[out] ret_socket If non-NULL receives the accepted socket.
  *
  * @see mini_inetd()
@@ -156,7 +156,7 @@ mini_inetd_addrinfo (struct addrinfo *ai, rk_socket_t *ret_socket)
 }
 
 /**
- * Listen on a specified port
+ * Listen on a specified port.
  *
  * Listens on the specified port for incoming connections.  If the \a
  * ret_socket parameter is \a NULL, on return STDIN and STDOUT will be
@@ -167,7 +167,7 @@ mini_inetd_addrinfo (struct addrinfo *ai, rk_socket_t *ret_socket)
  * This function does not return if there is an error or if no
  * connection is established.
  *
- * @param[in] port Port to listen on
+ * @param[in] port Port to listen on.
  * @param[out] ret_socket If non-NULL receives the accepted socket.
  *
  * @see mini_inetd_addrinfo()

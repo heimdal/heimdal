@@ -36,9 +36,9 @@
  */
 
 /**
- * As described in SP800-108 5.1 (for HMAC)
+ * As described in SP800-108 5.1 (for HMAC).
  *
- * @param context	Kerberos 5 context
+ * @param context	Kerberos 5 context.
  * @param kdf_K1	Base key material.
  * @param kdf_label	A string that identifies the purpose for the derived key.
  * @param kdf_context   A binary string containing parties, nonce, etc.
@@ -46,6 +46,7 @@
  * @param kdf_K0	Derived key data.
  *
  * @return Return an error code for an failure or 0 on success.
+ *
  * @ingroup krb5_crypto
  */
 krb5_error_code

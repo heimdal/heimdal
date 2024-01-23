@@ -61,10 +61,12 @@
 
 /**
  * Register a plugin symbol name of specific type.
- * @param context a Keberos context
- * @param type type of plugin symbol
- * @param name name of plugin symbol
- * @param symbol a pointer to the named symbol
+ *
+ * @param context a Keberos context.
+ * @param type type of plugin symbol.
+ * @param name name of plugin symbol.
+ * @param symbol a pointer to the named symbol.
+ *
  * @return In case of error a non zero error com_err error is returned
  * and the Kerberos error string is set.
  *
@@ -95,11 +97,9 @@ krb5_plugin_register(krb5_context context,
  * Load plugins (new system) for the given module @name (typically
  * "krb5") from the given directory @paths.
  *
- * Inputs:
- *
- * @context A krb5_context
- * @name    Name of plugin module (typically "krb5")
- * @paths   Array of directory paths where to look
+ * @param[in]  context A krb5_context.
+ * @param[in]  name    Name of plugin module (typically "krb5").
+ * @param[in]  paths   Array of directory paths where to look.
  */
 KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 _krb5_load_plugins(krb5_context context, const char *name, const char **paths)
@@ -160,14 +160,9 @@ _krb5_plugin_run_f(krb5_context context,
 /**
  * Return a cookie identifying this instance of a library.
  *
- * Inputs:
- *
- * @context     A krb5_context
- * @module      Our library name or a library we depend on
- *
- * Outputs:	The instance cookie
- *
- * @ingroup	krb5_support
+ * @param[in]   context     A krb5_context
+ * @param[in]   module      Our library name or a library we depend on
+ * @param[out]  ingroup	krb5_support
  */
 
 #ifdef WIN32

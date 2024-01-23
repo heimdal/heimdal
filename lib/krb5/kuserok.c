@@ -102,14 +102,14 @@ reg_def_plugins_once(void *ctx)
  *
  * Inputs:
  *
- * @param context            A krb5_context
- * @param filename	     Name of item to introspection
+ * @param context            A krb5_context.
+ * @param filename	     Name of item to introspection.
  * @param is_system_location TRUE if the dir/file are system locations or
- *                     	     FALSE if they are user home directory locations
- * @param dir                Directory (optional)
- * @param dirlstat           A pointer to struct stat for the directory (optional)
- * @param file               File (optional)
- * @param owner              Name of user that is expected to own the file
+ *                     	     FALSE if they are user home directory locations.
+ * @param dir                Directory (optional).
+ * @param dirlstat           A pointer to struct stat for the directory (optional).
+ * @param file               File (optional).
+ * @param owner              Name of user that is expected to own the file.
  */
 
 static krb5_error_code
@@ -438,8 +438,8 @@ out:
  * ie luser@@LOCAL-REALMS-IN-CONFIGURATION-FILES.
  *
  * @param context Kerberos 5 context.
- * @param principal principal to check if allowed to login
- * @param luser local user id
+ * @param principal principal to check if allowed to login.
+ * @param luser local user id.
  *
  * @return returns TRUE if access should be granted, FALSE otherwise.
  *

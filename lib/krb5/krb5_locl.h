@@ -194,6 +194,9 @@ typedef void (KRB5_LIB_CALL *krb5_gssic_delete_sec_context)(
 
 #define KRB5_GSS_IC_FLAG_RELEASE_CRED 1
 
+struct socks4a;			/* XXX */
+struct socks4a_io;		/* XXX */
+
 #include <krb5-private.h>
 
 #include "heim_threads.h"
@@ -294,6 +297,7 @@ typedef struct krb5_context_data {
     const krb5_cc_ops **cc_ops;
     int num_cc_ops;
     const char *http_proxy;
+    const char *socks4a_proxy;
     const char *time_fmt;
     krb5_boolean log_utc;
     const char *default_keytab;

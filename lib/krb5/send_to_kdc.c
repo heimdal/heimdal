@@ -35,6 +35,7 @@
 
 #include "krb5_locl.h"
 #include "send_to_kdc_plugin.h"
+#include "socks4a.h"
 
 /**
  * @section send_to_kdc Locating and sending packets to the KDC
@@ -152,6 +153,7 @@ struct krb5_sendto_ctx_data {
     void *data;
     char *hostname;
     char *sitename;
+    char *proxy_userid;
     krb5_krbhst_handle krbhst;
 
     /* context2 */
@@ -184,6 +186,8 @@ dealloc_sendto_ctx(void *ptr)
 	free(ctx->hostname);
     if (ctx->sitename)
 	free(ctx->sitename);
+    if (ctx->proxy_userid)
+	free(ctx->proxy_userid);
     heim_release(ctx->hosts);
     heim_release(ctx->krbhst);
 }
@@ -269,6 +273,18 @@ krb5_sendto_set_sitename(krb5_context context,
     return 0;
 }
 
+krb5_error_code
+_krb5_sendto_set_principal(krb5_context context,
+			   krb5_sendto_ctx ctx,
+			   krb5_const_principal principal)
+{
+
+    if (context->socks4a_proxy == NULL)
+	return 0;
+
+    return krb5_unparse_name(context, principal, &ctx->proxy_userid);
+}
+
 KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 _krb5_sendto_ctx_set_krb5hst(krb5_context context,
 			     krb5_sendto_ctx ctx,
@@ -326,11 +342,12 @@ struct host_fun {
 };
 
 struct host {
-    enum host_state { CONNECT, CONNECTING, CONNECTED, WAITING_REPLY, DEAD } state;
+    enum host_state { CONNECT, CONNECTING, PROXYING, CONNECTED, WAITING_REPLY, DEAD } state;
     krb5_krbhst_info *hi;
     struct addrinfo *freeai;
     struct addrinfo *ai;
     rk_socket_t fd;
+    struct socks4a *socks4a;
     const struct host_fun *fun;
     unsigned int tries;
     time_t timeout;
@@ -394,6 +411,10 @@ deallocate_host(void *ptr)
     struct host *host = ptr;
     if (!rk_IS_BAD_SOCKET(host->fd))
 	rk_closesocket(host->fd);
+    heim_assert((host->state == PROXYING) == (host->socks4a != NULL),
+	"inconsistent socks4a proxy state");
+    _krb5_socks4a_free(host->socks4a);
+    host->socks4a = NULL;	/* paranoia */
     krb5_data_free(&host->data);
     if (host->freeai)
 	freeaddrinfo(host->freeai);
@@ -480,6 +501,40 @@ host_next_timeout(krb5_context context, struct host *host)
 }
 
 /*
+ * Proxy I/O
+ */
+
+static int
+host_socks4a_read(void *vcontext, void *vhost, void *buf, unsigned len)
+{
+    krb5_context context = vcontext;
+    struct host *host = vhost;
+
+    return krb5_net_read(context, &host->fd, buf, len);
+}
+
+static int
+host_socks4a_write(void *vcontext, void *vhost, const void *buf, unsigned len)
+{
+    krb5_context context = vcontext;
+    struct host *host = vhost;
+
+    return krb5_net_write(context, &host->fd, buf, len);
+}
+
+static struct socks4a_io
+host_socks4a_io(krb5_context context, struct host *host)
+{
+
+    return (struct socks4a_io) {
+	.sio_context = context,
+	.sio_cookie = host,
+	.sio_read = &host_socks4a_read,
+	.sio_write = &host_socks4a_write,
+    };
+}
+
+/*
  * connected host
  */
 
@@ -487,6 +542,43 @@ static void
 host_connected(krb5_context context, krb5_sendto_ctx ctx, struct host *host)
 {
     krb5_error_code ret;
+
+    /*
+     * If we have a SOCKS4a proxy configured, we need to request
+     * proxying between when the underlying socket connection succeeds
+     * and when we enter the CONNECTED state meaning we're ready to
+     * send and receive application data.
+     */
+    if (context->socks4a_proxy) {
+	if (host->state == CONNECTING) {
+	    /*
+	     * The underlying socket connection has just succeeded.
+	     * Attempt to request proxying and enter the intermediate
+	     * PROXYING state.
+	     */
+	    debug_host(context, 5, host, "socks4a proxying");
+	    host->socks4a = NULL;
+	    ret = _krb5_socks4a_connect(host_socks4a_io(context, host),
+		host->hi->hostname, host->hi->port, ctx->proxy_userid,
+		&host->socks4a);
+	    if (ret) {
+		host_dead(context, host, "socks4a proxy failed");
+		return;
+	    }
+	    host->state = PROXYING;
+	    return;
+	} else {
+	    debug_host(context, 5, host, "socks4a proxied");
+	    heim_assert(host->state == PROXYING, "bad host_connected state");
+	    /*
+	     * The proxy has accepted our proxying request.  We are now
+	     * ready to enter the CONNECTED state as if we had no proxy
+	     * in the way.
+	     */
+	    _krb5_socks4a_free(host->socks4a);
+	    host->socks4a = NULL;
+	}
+    }
 
     host->state = CONNECTED; 
     /*
@@ -762,6 +854,43 @@ eval_host_state(krb5_context context,
     if (host->state == CONNECTING && writeable)
 	host_connected(context, ctx, host);
 
+    if (host->state == PROXYING) {
+	/*
+	 * Proxy is still connecting.  Do an I/O step to see if we
+	 * can make progress.
+	 */
+	debug_host(context, 10, host, "socks4a i/o (reading=%d writing=%d)",
+	    _krb5_socks4a_reading(host->socks4a),
+	    _krb5_socks4a_writing(host->socks4a));
+	heim_assert(context->socks4a_proxy, "proxying without proxy");
+	heim_assert(_krb5_socks4a_reading(host->socks4a) ? readable : 1,
+	    "woken for read when not readable");
+	heim_assert(_krb5_socks4a_writing(host->socks4a) ? writeable : 1,
+	    "woken for read when not readable");
+	ret = _krb5_socks4a_io(host->socks4a);
+	if (ret) {
+	    _krb5_socks4a_free(host->socks4a);
+	    host->socks4a = NULL;
+	    host_dead(context, host, "socks4a proxy failed");
+	    return 0;	/* no reply yet */
+	}
+	if (!_krb5_socks4a_connected(host->socks4a)) {
+	    /*
+	     * Proxy is still connecting.  Wait until we can do another
+	     * I/O step.
+	     */
+	    debug_host(context, 10, host, "socks4a still connecting");
+	    return 0;
+	}
+	/*
+	 * Proxy has connected on our behalf, transition to CONNECTED
+	 * and start over since _krb5_socks4a_io has consumed the I/O
+	 * state.
+	 */
+	host_connected(context, ctx, host);
+	return 0;
+    }
+
     if (readable) {
 
 	debug_host(context, 5, host, "reading packet");
@@ -828,7 +957,55 @@ submit_request(krb5_context context, krb5_sendto_ctx ctx, krb5_krbhst_info *hi)
 
     gettimeofday(&nrstart, NULL);
 
-    if (hi->proto == KRB5_KRBHST_HTTP && context->http_proxy) {
+    if (context->socks4a_proxy) {
+	char *proxy, *proxyhost, *proxyport;
+	struct addrinfo hints;
+
+	/*
+	 * Refuse anything but TCP connections when we have a SOCKS4a
+	 * proxy configured.
+	 */
+	if (hi->proto != KRB5_KRBHST_TCP)
+	    return KRB5_KDC_UNREACH;
+
+	/*
+	 * Parse `<host>[:<port>]' into parts.
+	 */
+	if ((proxy = strdup(context->socks4a_proxy)) == NULL)
+	    return ENOMEM;
+	proxyhost = proxy;
+	if ((proxyport = strchr(proxy, ':')) != NULL)
+	    *proxyport++ = '\0';
+
+	/*
+	 * Set up getaddrinfo hints for stream connection.
+	 */
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = PF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
+
+	/*
+	 * If block_dns is enabled, make sure AI_CANONNAME is clear and
+	 * AI_NUMERICHOST|AI_NUMERICSERV are both set to avoid the
+	 * potential for DNS leaks.
+	 */
+	if (krb5_config_get_bool(context, NULL, "libdefaults", "block_dns",
+		NULL)) {
+	    hints.ai_flags &= ~AI_CANONNAME;
+	    hints.ai_flags |= AI_NUMERICHOST|AI_NUMERICSERV;
+	}
+
+	/*
+	 * Resolve the proxy's address.
+	 */
+	ret = getaddrinfo(proxyhost, proxyport ? proxyport : "1080", &hints,
+	    &ai);
+	free(proxy);
+	if (ret)
+	    return krb5_eai_to_heim_errno(ret, errno);
+	freeai = ai;
+
+    } else if (hi->proto == KRB5_KRBHST_HTTP && context->http_proxy) {
 	char *proxy2 = strdup(context->http_proxy);
 	char *el, *proxy  = proxy2;
 	struct addrinfo hints;
@@ -1017,6 +1194,12 @@ wait_setup(heim_object_t obj, void *iter_ctx, int *stop)
     case CONNECTED:
 	FD_SET(h->fd, &wait_ctx->rfds);
 	FD_SET(h->fd, &wait_ctx->wfds);
+	break;
+    case PROXYING:
+	if (_krb5_socks4a_reading(h->socks4a))
+	    FD_SET(h->fd, &wait_ctx->rfds);
+	if (_krb5_socks4a_writing(h->socks4a))
+	    FD_SET(h->fd, &wait_ctx->wfds);
 	break;
     default:
 	debug_host(wait_ctx->context, 5, h, "invalid sendto host state");

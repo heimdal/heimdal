@@ -3188,10 +3188,10 @@ init_creds_step(krb5_context context,
              * Handle special error codes
              */
 
-            if (ret == KRB5KDC_ERR_PREAUTH_REQUIRED
-                || ret == KRB5_KDC_ERR_MORE_PREAUTH_DATA_REQUIRED
-                || ret == KRB5KDC_ERR_ETYPE_NOSUPP)
-            {
+             if (ret == KRB5KDC_ERR_PREAUTH_REQUIRED
+                 || ret == KRB5_KDC_ERR_MORE_PREAUTH_DATA_REQUIRED
+                 || ret == KRB5KDC_ERR_ETYPE_NOSUPP)
+             {
                 /*
                  * If no preauth was set and KDC requires it, give it one
                  * more try.
@@ -3205,7 +3205,7 @@ init_creds_step(krb5_context context,
                 if (available_padata_count(&ctx->md) == 0) {
                     krb5_set_error_message(context, ret,
                                            N_("Preauth required but no preauth "
-                                              "options send by KDC", ""));
+                                           "options sent by KDC", ""));
                     goto out;
                 }
             } else if (ret == KRB5KRB_AP_ERR_SKEW && context->kdc_sec_offset == 0) {
@@ -3332,7 +3332,7 @@ init_creds_step(krb5_context context,
                     goto out;
                 }
 
-            retry:
+retry:
                 pa_restart(context, ctx);
 
             } else if (ctx->fast_state.flags & KRB5_FAST_OPTIMISTIC) {

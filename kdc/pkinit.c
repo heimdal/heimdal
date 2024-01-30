@@ -668,7 +668,7 @@ _kdc_pk_rd_padata(astgs_request_t priv,
 
         ret = pk_check_pkauthenticator_win2k(context,
                                              &ap.pkAuthenticator,
-                                             req);
+                                             req)
         if (ret) {
             free_AuthPack_Win2k(&ap);
             goto out;
@@ -681,6 +681,7 @@ _kdc_pk_rd_padata(astgs_request_t priv,
             ret = KRB5KRB_ERR_GENERIC;
             krb5_set_error_message(context, ret,
                                    "DH not supported for Win2k");
+            free_AuthPack_Win2k(&ap);
             goto out;
         }
         free_AuthPack_Win2k(&ap);

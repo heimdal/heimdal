@@ -65,9 +65,9 @@ struct cc_key {
 
 static int
 cc_do_cipher(EVP_CIPHER_CTX *ctx,
-	     unsigned char *out,
-	     const unsigned char *in,
-	     unsigned int size)
+             unsigned char *out,
+             const unsigned char *in,
+             unsigned int size)
 {
     struct cc_key *cc = ctx->cipher_data;
     CCCryptorStatus ret;
@@ -77,10 +77,10 @@ cc_do_cipher(EVP_CIPHER_CTX *ctx,
 
     ret = CCCryptorUpdate(cc->href, in, size, out, size, &moved);
     if (ret)
-	return 0;
+        return 0;
 
     if (moved != size)
-	return 0;
+        return 0;
 
     return 1;
 }
@@ -90,14 +90,14 @@ cc_cleanup(EVP_CIPHER_CTX *ctx)
 {
     struct cc_key *cc = ctx->cipher_data;
     if (cc->href)
-	CCCryptorRelease(cc->href);
+        CCCryptorRelease(cc->href);
     return 1;
 }
 
 static int
 init_cc_key(int encp, unsigned long flags,
-	    CCAlgorithm alg, const void *key, size_t keylen,
-	    const void *iv, CCCryptorRef *ref)
+            CCAlgorithm alg, const void *key, size_t keylen,
+            const void *iv, CCCryptorRef *ref)
 {
     CCOperation op = encp ? kCCEncrypt : kCCDecrypt;
     CCMode mode;
@@ -105,31 +105,31 @@ init_cc_key(int encp, unsigned long flags,
     CCCryptorStatus ret;
 
     if (*ref) {
-	if (key == NULL && iv) {
-	    CCCryptorReset(*ref, iv);
-	    return 1;
-	}
-	CCCryptorRelease(*ref);
+        if (key == NULL && iv) {
+            CCCryptorReset(*ref, iv);
+            return 1;
+        }
+        CCCryptorRelease(*ref);
     }
 
     if (key) {
-	switch (flags & EVP_CIPH_MODE) {
-	case EVP_CIPH_STREAM_CIPHER:
-	    mode = kCCModeRC4;
-	    break;
-	case EVP_CIPH_CFB8_MODE:
-	    mode = kCCModeCFB8;
-	    break;
-	default:
-	    mode = kCCModeCBC;
-	    break;
-	}
+        switch (flags & EVP_CIPH_MODE) {
+            case EVP_CIPH_STREAM_CIPHER:
+                mode = kCCModeRC4;
+                break;
+            case EVP_CIPH_CFB8_MODE:
+                mode = kCCModeCFB8;
+                break;
+            default:
+                mode = kCCModeCBC;
+                break;
+        }
 
-	ret = CCCryptorCreateWithMode(op, mode, alg, ccNoPadding,
-				      iv, key, keylen, NULL, 0, 0,
-				      options, ref);
-	if (ret)
-	    return 0;
+        ret = CCCryptorCreateWithMode(op, mode, alg, ccNoPadding,
+                                      iv, key, keylen, NULL, 0, 0,
+                                      options, ref);
+        if (ret)
+            return 0;
     }
 
     return 1;
@@ -137,13 +137,13 @@ init_cc_key(int encp, unsigned long flags,
 
 static int
 cc_des_ede3_cbc_init(EVP_CIPHER_CTX *ctx,
-		     const unsigned char * key,
-		     const unsigned char * iv,
-		     int encp)
+                     const unsigned char * key,
+                     const unsigned char * iv,
+                     int encp)
 {
     struct cc_key *cc = ctx->cipher_data;
     return init_cc_key(encp, ctx->cipher->flags, kCCAlgorithm3DES,
-		       key, kCCKeySize3DES, iv, &cc->href);
+                       key, kCCKeySize3DES, iv, &cc->href);
 }
 
 #endif /* HAVE_COMMONCRYPTO_COMMONCRYPTOR_H */
@@ -161,19 +161,19 @@ EVP_cc_des_ede3_cbc(void)
 {
 #ifdef HAVE_COMMONCRYPTO_COMMONCRYPTOR_H
     static const EVP_CIPHER des_ede3_cbc = {
-	0,
-	8,
-	24,
-	8,
-	EVP_CIPH_CBC_MODE|EVP_CIPH_ALWAYS_CALL_INIT,
-	cc_des_ede3_cbc_init,
-	cc_do_cipher,
-	cc_cleanup,
-	sizeof(struct cc_key),
-	NULL,
-	NULL,
-	NULL,
-	NULL
+        0,
+        8,
+        24,
+        8,
+        EVP_CIPH_CBC_MODE|EVP_CIPH_ALWAYS_CALL_INIT,
+        cc_des_ede3_cbc_init,
+        cc_do_cipher,
+        cc_cleanup,
+        sizeof(struct cc_key),
+        NULL,
+        NULL,
+        NULL,
+        NULL
     };
     return &des_ede3_cbc;
 #elif HCRYPTO_FALLBACK
@@ -190,13 +190,13 @@ EVP_cc_des_ede3_cbc(void)
 
 static int
 cc_des_cbc_init(EVP_CIPHER_CTX *ctx,
-		const unsigned char * key,
-		const unsigned char * iv,
-		int encp)
+                const unsigned char * key,
+                const unsigned char * iv,
+                int encp)
 {
     struct cc_key *cc = ctx->cipher_data;
     return init_cc_key(encp, ctx->cipher->flags, kCCAlgorithmDES,
-		       key, kCCBlockSizeDES, iv, &cc->href);
+                       key, kCCBlockSizeDES, iv, &cc->href);
 }
 #endif
 
@@ -213,19 +213,19 @@ EVP_cc_des_cbc(void)
 {
 #ifdef HAVE_COMMONCRYPTO_COMMONCRYPTOR_H
     static const EVP_CIPHER des_ede3_cbc = {
-	0,
-	kCCBlockSizeDES,
-	kCCBlockSizeDES,
-	kCCBlockSizeDES,
-	EVP_CIPH_CBC_MODE|EVP_CIPH_ALWAYS_CALL_INIT,
-	cc_des_cbc_init,
-	cc_do_cipher,
-	cc_cleanup,
-	sizeof(struct cc_key),
-	NULL,
-	NULL,
-	NULL,
-	NULL
+        0,
+        kCCBlockSizeDES,
+        kCCBlockSizeDES,
+        kCCBlockSizeDES,
+        EVP_CIPH_CBC_MODE|EVP_CIPH_ALWAYS_CALL_INIT,
+        cc_des_cbc_init,
+        cc_do_cipher,
+        cc_cleanup,
+        sizeof(struct cc_key),
+        NULL,
+        NULL,
+        NULL,
+        NULL
     };
     return &des_ede3_cbc;
 #elif HCRYPTO_FALLBACK
@@ -242,13 +242,13 @@ EVP_cc_des_cbc(void)
 
 static int
 cc_aes_cbc_init(EVP_CIPHER_CTX *ctx,
-		const unsigned char * key,
-		const unsigned char * iv,
-		int encp)
+                const unsigned char * key,
+                const unsigned char * iv,
+                int encp)
 {
     struct cc_key *cc = ctx->cipher_data;
     return init_cc_key(encp, ctx->cipher->flags, kCCAlgorithmAES128,
-		       key, ctx->cipher->key_len, iv, &cc->href);
+                       key, ctx->cipher->key_len, iv, &cc->href);
 }
 #endif
 
@@ -265,19 +265,19 @@ EVP_cc_aes_128_cbc(void)
 {
 #ifdef HAVE_COMMONCRYPTO_COMMONCRYPTOR_H
     static const EVP_CIPHER c = {
-	0,
-	kCCBlockSizeAES128,
-	kCCKeySizeAES128,
-	kCCBlockSizeAES128,
-	EVP_CIPH_CBC_MODE|EVP_CIPH_ALWAYS_CALL_INIT,
-	cc_aes_cbc_init,
-	cc_do_cipher,
-	cc_cleanup,
-	sizeof(struct cc_key),
-	NULL,
-	NULL,
-	NULL,
-	NULL
+        0,
+        kCCBlockSizeAES128,
+        kCCKeySizeAES128,
+        kCCBlockSizeAES128,
+        EVP_CIPH_CBC_MODE|EVP_CIPH_ALWAYS_CALL_INIT,
+        cc_aes_cbc_init,
+        cc_do_cipher,
+        cc_cleanup,
+        sizeof(struct cc_key),
+        NULL,
+        NULL,
+        NULL,
+        NULL
     };
     return &c;
 #elif HCRYPTO_FALLBACK
@@ -300,19 +300,19 @@ EVP_cc_aes_192_cbc(void)
 {
 #ifdef HAVE_COMMONCRYPTO_COMMONCRYPTOR_H
     static const EVP_CIPHER c = {
-	0,
-	kCCBlockSizeAES128,
-	kCCKeySizeAES192,
-	kCCBlockSizeAES128,
-	EVP_CIPH_CBC_MODE|EVP_CIPH_ALWAYS_CALL_INIT,
-	cc_aes_cbc_init,
-	cc_do_cipher,
-	cc_cleanup,
-	sizeof(struct cc_key),
-	NULL,
-	NULL,
-	NULL,
-	NULL
+        0,
+        kCCBlockSizeAES128,
+        kCCKeySizeAES192,
+        kCCBlockSizeAES128,
+        EVP_CIPH_CBC_MODE|EVP_CIPH_ALWAYS_CALL_INIT,
+        cc_aes_cbc_init,
+        cc_do_cipher,
+        cc_cleanup,
+        sizeof(struct cc_key),
+        NULL,
+        NULL,
+        NULL,
+        NULL
     };
     return &c;
 #elif HCRYPTO_FALLBACK
@@ -335,19 +335,19 @@ EVP_cc_aes_256_cbc(void)
 {
 #ifdef HAVE_COMMONCRYPTO_COMMONCRYPTOR_H
     static const EVP_CIPHER c = {
-	0,
-	kCCBlockSizeAES128,
-	kCCKeySizeAES256,
-	kCCBlockSizeAES128,
-	EVP_CIPH_CBC_MODE|EVP_CIPH_ALWAYS_CALL_INIT,
-	cc_aes_cbc_init,
-	cc_do_cipher,
-	cc_cleanup,
-	sizeof(struct cc_key),
-	NULL,
-	NULL,
-	NULL,
-	NULL
+        0,
+        kCCBlockSizeAES128,
+        kCCKeySizeAES256,
+        kCCBlockSizeAES128,
+        EVP_CIPH_CBC_MODE|EVP_CIPH_ALWAYS_CALL_INIT,
+        cc_aes_cbc_init,
+        cc_do_cipher,
+        cc_cleanup,
+        sizeof(struct cc_key),
+        NULL,
+        NULL,
+        NULL,
+        NULL
     };
     return &c;
 #elif HCRYPTO_FALLBACK
@@ -364,13 +364,13 @@ EVP_cc_aes_256_cbc(void)
 
 static int
 cc_aes_cfb8_init(EVP_CIPHER_CTX *ctx,
-		const unsigned char * key,
-		const unsigned char * iv,
-		int encp)
+                 const unsigned char * key,
+                 const unsigned char * iv,
+                 int encp)
 {
     struct cc_key *cc = ctx->cipher_data;
     return init_cc_key(encp, ctx->cipher->flags, kCCAlgorithmAES128,
-		       key, ctx->cipher->key_len, NULL, &cc->href);
+                       key, ctx->cipher->key_len, NULL, &cc->href);
 }
 #endif
 
@@ -387,19 +387,19 @@ EVP_cc_aes_128_cfb8(void)
 {
 #ifdef HAVE_COMMONCRYPTO_COMMONCRYPTOR_H
     static const EVP_CIPHER c = {
-	0,
-	1,
-	kCCKeySizeAES128,
-	kCCBlockSizeAES128,
-	EVP_CIPH_CFB8_MODE|EVP_CIPH_ALWAYS_CALL_INIT,
-	cc_aes_cfb8_init,
-	cc_do_cipher,
-	cc_cleanup,
-	sizeof(struct cc_key),
-	NULL,
-	NULL,
-	NULL,
-	NULL
+        0,
+        1,
+        kCCKeySizeAES128,
+        kCCBlockSizeAES128,
+        EVP_CIPH_CFB8_MODE|EVP_CIPH_ALWAYS_CALL_INIT,
+        cc_aes_cfb8_init,
+        cc_do_cipher,
+        cc_cleanup,
+        sizeof(struct cc_key),
+        NULL,
+        NULL,
+        NULL,
+        NULL
     };
     return &c;
 #elif HCRYPTO_FALLBACK
@@ -422,19 +422,19 @@ EVP_cc_aes_192_cfb8(void)
 {
 #ifdef HAVE_COMMONCRYPTO_COMMONCRYPTOR_H
     static const EVP_CIPHER c = {
-	0,
-	1,
-	kCCKeySizeAES192,
-	kCCBlockSizeAES128,
-	EVP_CIPH_CFB8_MODE|EVP_CIPH_ALWAYS_CALL_INIT,
-	cc_aes_cfb8_init,
-	cc_do_cipher,
-	cc_cleanup,
-	sizeof(struct cc_key),
-	NULL,
-	NULL,
-	NULL,
-	NULL
+        0,
+        1,
+        kCCKeySizeAES192,
+        kCCBlockSizeAES128,
+        EVP_CIPH_CFB8_MODE|EVP_CIPH_ALWAYS_CALL_INIT,
+        cc_aes_cfb8_init,
+        cc_do_cipher,
+        cc_cleanup,
+        sizeof(struct cc_key),
+        NULL,
+        NULL,
+        NULL,
+        NULL
     };
     return &c;
 #elif HCRYPTO_FALLBACK
@@ -457,19 +457,19 @@ EVP_cc_aes_256_cfb8(void)
 {
 #ifdef HAVE_COMMONCRYPTO_COMMONCRYPTOR_H
     static const EVP_CIPHER c = {
-	0,
-	kCCBlockSizeAES128,
-	kCCKeySizeAES256,
-	kCCBlockSizeAES128,
-	EVP_CIPH_CFB8_MODE|EVP_CIPH_ALWAYS_CALL_INIT,
-	cc_aes_cfb8_init,
-	cc_do_cipher,
-	cc_cleanup,
-	sizeof(struct cc_key),
-	NULL,
-	NULL,
-	NULL,
-	NULL
+        0,
+        kCCBlockSizeAES128,
+        kCCKeySizeAES256,
+        kCCBlockSizeAES128,
+        EVP_CIPH_CFB8_MODE|EVP_CIPH_ALWAYS_CALL_INIT,
+        cc_aes_cfb8_init,
+        cc_do_cipher,
+        cc_cleanup,
+        sizeof(struct cc_key),
+        NULL,
+        NULL,
+        NULL,
+        NULL
     };
     return &c;
 #elif HCRYPTO_FALLBACK
@@ -486,13 +486,13 @@ EVP_cc_aes_256_cfb8(void)
 #ifdef COMMONCRYPTO_SUPPORTS_RC2
 static int
 cc_rc2_cbc_init(EVP_CIPHER_CTX *ctx,
-		const unsigned char * key,
-		const unsigned char * iv,
-		int encp)
+                const unsigned char * key,
+                const unsigned char * iv,
+                int encp)
 {
     struct cc_key *cc = ctx->cipher_data;
     return init_cc_key(encp, ctx->cipher->flags, kCCAlgorithmRC2,
-		       key, ctx->cipher->key_len, iv, &cc->href);
+                       key, ctx->cipher->key_len, iv, &cc->href);
 }
 #endif
 
@@ -510,19 +510,19 @@ EVP_cc_rc2_cbc(void)
 {
 #ifdef COMMONCRYPTO_SUPPORTS_RC2
     static const EVP_CIPHER rc2_cbc = {
-	0,
-	kCCBlockSizeRC2,
-	16,
-	kCCBlockSizeRC2,
-	EVP_CIPH_CBC_MODE|EVP_CIPH_ALWAYS_CALL_INIT,
-	cc_rc2_cbc_init,
-	cc_do_cipher,
-	cc_cleanup,
-	sizeof(struct cc_key),
-	NULL,
-	NULL,
-	NULL,
-	NULL
+        0,
+        kCCBlockSizeRC2,
+        16,
+        kCCBlockSizeRC2,
+        EVP_CIPH_CBC_MODE|EVP_CIPH_ALWAYS_CALL_INIT,
+        cc_rc2_cbc_init,
+        cc_do_cipher,
+        cc_cleanup,
+        sizeof(struct cc_key),
+        NULL,
+        NULL,
+        NULL,
+        NULL
     };
     return &rc2_cbc;
 #elif HCRYPTO_FALLBACK
@@ -546,19 +546,19 @@ EVP_cc_rc2_40_cbc(void)
 {
 #ifdef COMMONCRYPTO_SUPPORTS_RC2
     static const EVP_CIPHER rc2_40_cbc = {
-	0,
-	kCCBlockSizeRC2,
-	5,
-	kCCBlockSizeRC2,
-	EVP_CIPH_CBC_MODE|EVP_CIPH_ALWAYS_CALL_INIT,
-	cc_rc2_cbc_init,
-	cc_do_cipher,
-	cc_cleanup,
-	sizeof(struct cc_key),
-	NULL,
-	NULL,
-	NULL,
-	NULL
+        0,
+        kCCBlockSizeRC2,
+        5,
+        kCCBlockSizeRC2,
+        EVP_CIPH_CBC_MODE|EVP_CIPH_ALWAYS_CALL_INIT,
+        cc_rc2_cbc_init,
+        cc_do_cipher,
+        cc_cleanup,
+        sizeof(struct cc_key),
+        NULL,
+        NULL,
+        NULL,
+        NULL
     };
     return &rc2_40_cbc;
 #elif HCRYPTO_FALLBACK
@@ -583,19 +583,19 @@ EVP_cc_rc2_64_cbc(void)
 {
 #ifdef COMMONCRYPTO_SUPPORTS_RC2
     static const EVP_CIPHER rc2_64_cbc = {
-	0,
-	kCCBlockSizeRC2,
-	8,
-	kCCBlockSizeRC2,
-	EVP_CIPH_CBC_MODE|EVP_CIPH_ALWAYS_CALL_INIT,
-	cc_rc2_cbc_init,
-	cc_do_cipher,
-	cc_cleanup,
-	sizeof(struct cc_key),
-	NULL,
-	NULL,
-	NULL,
-	NULL
+        0,
+        kCCBlockSizeRC2,
+        8,
+        kCCBlockSizeRC2,
+        EVP_CIPH_CBC_MODE|EVP_CIPH_ALWAYS_CALL_INIT,
+        cc_rc2_cbc_init,
+        cc_do_cipher,
+        cc_cleanup,
+        sizeof(struct cc_key),
+        NULL,
+        NULL,
+        NULL,
+        NULL
     };
     return &rc2_64_cbc;
 #elif HCRYPTO_FALLBACK
@@ -617,13 +617,13 @@ EVP_cc_md4(void)
 {
 #ifdef HAVE_COMMONCRYPTO_COMMONDIGEST_H
     static const struct hc_evp_md md4 = {
-	CC_MD4_DIGEST_LENGTH,
-	CC_MD4_BLOCK_BYTES,
-	sizeof(CC_MD4_CTX),
-	(hc_evp_md_init)CC_MD4_Init,
-	(hc_evp_md_update)CC_MD4_Update,
-	(hc_evp_md_final)CC_MD4_Final,
-	(hc_evp_md_cleanup)NULL
+        CC_MD4_DIGEST_LENGTH,
+        CC_MD4_BLOCK_BYTES,
+        sizeof(CC_MD4_CTX),
+        (hc_evp_md_init)CC_MD4_Init,
+        (hc_evp_md_update)CC_MD4_Update,
+        (hc_evp_md_final)CC_MD4_Final,
+        (hc_evp_md_cleanup)NULL
     };
     return &md4;
 #elif HCRYPTO_FALLBACK
@@ -644,13 +644,13 @@ EVP_cc_md5(void)
 {
 #ifdef HAVE_COMMONCRYPTO_COMMONDIGEST_H
     static const struct hc_evp_md md5 = {
-	CC_MD5_DIGEST_LENGTH,
-	CC_MD5_BLOCK_BYTES,
-	sizeof(CC_MD5_CTX),
-	(hc_evp_md_init)CC_MD5_Init,
-	(hc_evp_md_update)CC_MD5_Update,
-	(hc_evp_md_final)CC_MD5_Final,
-	(hc_evp_md_cleanup)NULL
+        CC_MD5_DIGEST_LENGTH,
+        CC_MD5_BLOCK_BYTES,
+        sizeof(CC_MD5_CTX),
+        (hc_evp_md_init)CC_MD5_Init,
+        (hc_evp_md_update)CC_MD5_Update,
+        (hc_evp_md_final)CC_MD5_Final,
+        (hc_evp_md_cleanup)NULL
     };
     return &md5;
 #elif HCRYPTO_FALLBACK
@@ -671,13 +671,13 @@ EVP_cc_sha1(void)
 {
 #ifdef HAVE_COMMONCRYPTO_COMMONDIGEST_H
     static const struct hc_evp_md sha1 = {
-	CC_SHA1_DIGEST_LENGTH,
-	CC_SHA1_BLOCK_BYTES,
-	sizeof(CC_SHA1_CTX),
-	(hc_evp_md_init)CC_SHA1_Init,
-	(hc_evp_md_update)CC_SHA1_Update,
-	(hc_evp_md_final)CC_SHA1_Final,
-	(hc_evp_md_cleanup)NULL
+        CC_SHA1_DIGEST_LENGTH,
+        CC_SHA1_BLOCK_BYTES,
+        sizeof(CC_SHA1_CTX),
+        (hc_evp_md_init)CC_SHA1_Init,
+        (hc_evp_md_update)CC_SHA1_Update,
+        (hc_evp_md_final)CC_SHA1_Final,
+        (hc_evp_md_cleanup)NULL
     };
     return &sha1;
 #elif HCRYPTO_FALLBACK
@@ -698,13 +698,13 @@ EVP_cc_sha256(void)
 {
 #ifdef HAVE_COMMONCRYPTO_COMMONDIGEST_H
     static const struct hc_evp_md sha256 = {
-	CC_SHA256_DIGEST_LENGTH,
-	CC_SHA256_BLOCK_BYTES,
-	sizeof(CC_SHA256_CTX),
-	(hc_evp_md_init)CC_SHA256_Init,
-	(hc_evp_md_update)CC_SHA256_Update,
-	(hc_evp_md_final)CC_SHA256_Final,
-	(hc_evp_md_cleanup)NULL
+        CC_SHA256_DIGEST_LENGTH,
+        CC_SHA256_BLOCK_BYTES,
+        sizeof(CC_SHA256_CTX),
+        (hc_evp_md_init)CC_SHA256_Init,
+        (hc_evp_md_update)CC_SHA256_Update,
+        (hc_evp_md_final)CC_SHA256_Final,
+        (hc_evp_md_cleanup)NULL
     };
     return &sha256;
 #elif HCRYPTO_FALLBACK
@@ -725,13 +725,13 @@ EVP_cc_sha384(void)
 {
 #ifdef HAVE_COMMONCRYPTO_COMMONDIGEST_H
     static const struct hc_evp_md sha384 = {
-	CC_SHA384_DIGEST_LENGTH,
-	CC_SHA384_BLOCK_BYTES,
-	sizeof(CC_SHA512_CTX),
-	(hc_evp_md_init)CC_SHA384_Init,
-	(hc_evp_md_update)CC_SHA384_Update,
-	(hc_evp_md_final)CC_SHA384_Final,
-	(hc_evp_md_cleanup)NULL
+        CC_SHA384_DIGEST_LENGTH,
+        CC_SHA384_BLOCK_BYTES,
+        sizeof(CC_SHA512_CTX),
+        (hc_evp_md_init)CC_SHA384_Init,
+        (hc_evp_md_update)CC_SHA384_Update,
+        (hc_evp_md_final)CC_SHA384_Final,
+        (hc_evp_md_cleanup)NULL
     };
     return &sha384;
 #elif HCRYPTO_FALLBACK
@@ -752,13 +752,13 @@ EVP_cc_sha512(void)
 {
 #ifdef HAVE_COMMONCRYPTO_COMMONDIGEST_H
     static const struct hc_evp_md sha512 = {
-	CC_SHA512_DIGEST_LENGTH,
-	CC_SHA512_BLOCK_BYTES,
-	sizeof(CC_SHA512_CTX),
-	(hc_evp_md_init)CC_SHA512_Init,
-	(hc_evp_md_update)CC_SHA512_Update,
-	(hc_evp_md_final)CC_SHA512_Final,
-	(hc_evp_md_cleanup)NULL
+        CC_SHA512_DIGEST_LENGTH,
+        CC_SHA512_BLOCK_BYTES,
+        sizeof(CC_SHA512_CTX),
+        (hc_evp_md_init)CC_SHA512_Init,
+        (hc_evp_md_update)CC_SHA512_Update,
+        (hc_evp_md_final)CC_SHA512_Final,
+        (hc_evp_md_cleanup)NULL
     };
     return &sha512;
 #elif HCRYPTO_FALLBACK
@@ -830,13 +830,13 @@ EVP_cc_camellia_256_cbc(void)
 
 static int
 cc_rc4_init(EVP_CIPHER_CTX *ctx,
-	    const unsigned char * key,
-	    const unsigned char * iv,
-	    int encp)
+            const unsigned char * key,
+            const unsigned char * iv,
+            int encp)
 {
     struct cc_key *cc = ctx->cipher_data;
     return init_cc_key(encp, ctx->cipher->flags, kCCAlgorithmRC4,
-		       key, ctx->key_len, iv, &cc->href);
+                       key, ctx->key_len, iv, &cc->href);
 }
 
 #endif
@@ -855,19 +855,19 @@ EVP_cc_rc4(void)
 {
 #ifdef HAVE_COMMONCRYPTO_COMMONCRYPTOR_H
     static const EVP_CIPHER rc4 = {
-	0,
-	1,
-	16,
-	0,
-	EVP_CIPH_STREAM_CIPHER|EVP_CIPH_VARIABLE_LENGTH,
-	cc_rc4_init,
-	cc_do_cipher,
-	cc_cleanup,
-	sizeof(struct cc_key),
-	NULL,
-	NULL,
-	NULL,
-	NULL
+        0,
+        1,
+        16,
+        0,
+        EVP_CIPH_STREAM_CIPHER|EVP_CIPH_VARIABLE_LENGTH,
+        cc_rc4_init,
+        cc_do_cipher,
+        cc_cleanup,
+        sizeof(struct cc_key),
+        NULL,
+        NULL,
+        NULL,
+        NULL
     };
     return &rc4;
 #elif HCRYPTO_FALLBACK
@@ -891,19 +891,19 @@ EVP_cc_rc4_40(void)
 {
 #ifdef HAVE_COMMONCRYPTO_COMMONCRYPTOR_H
     static const EVP_CIPHER rc4_40 = {
-	0,
-	1,
-	5,
-	0,
-	EVP_CIPH_STREAM_CIPHER|EVP_CIPH_VARIABLE_LENGTH,
-	cc_rc4_init,
-	cc_do_cipher,
-	cc_cleanup,
-	sizeof(struct cc_key),
-	NULL,
-	NULL,
-	NULL,
-	NULL
+        0,
+        1,
+        5,
+        0,
+        EVP_CIPH_STREAM_CIPHER|EVP_CIPH_VARIABLE_LENGTH,
+        cc_rc4_init,
+        cc_do_cipher,
+        cc_cleanup,
+        sizeof(struct cc_key),
+        NULL,
+        NULL,
+        NULL,
+        NULL
     };
     return &rc4_40;
 #elif HCRYPTO_FALLBACK

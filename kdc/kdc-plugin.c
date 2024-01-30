@@ -87,25 +87,25 @@ generate(krb5_context context, const void *plug, void *plugctx, void *userctx)
     struct generate_uc *uc = (struct generate_uc *)userctx;    
 
     if (ft->pac_generate == NULL)
-	return KRB5_PLUGIN_NO_HANDLE;
+        return KRB5_PLUGIN_NO_HANDLE;
 
     return ft->pac_generate((void *)plug,
-			    uc->r,
-			    uc->client,
-			    uc->server,
-			    uc->reply_key,
-			    uc->pac_attributes,
-			    uc->pac);
+                            uc->r,
+                            uc->client,
+                            uc->server,
+                            uc->reply_key,
+                            uc->pac_attributes,
+                            uc->pac);
 }
 
 
 krb5_error_code
 _kdc_pac_generate(astgs_request_t r,
-		  hdb_entry *client,
-		  hdb_entry *server,
-		  const krb5_keyblock *reply_key,
-		  uint64_t pac_attributes,
-		  krb5_pac *pac)
+                  hdb_entry *client,
+                  hdb_entry *server,
+                  const krb5_keyblock *reply_key,
+                  uint64_t pac_attributes,
+                  krb5_pac *pac)
 {
     krb5_error_code ret = 0;
     struct generate_uc uc;
@@ -113,27 +113,27 @@ _kdc_pac_generate(astgs_request_t r,
     *pac = NULL;
 
     if (krb5_config_get_bool_default(r->context, NULL, FALSE, "realms",
-				     client->principal->realm,
-				     "disable_pac", NULL))
-	return 0;
+                                     client->principal->realm,
+                                     "disable_pac", NULL))
+        return 0;
 
     if (have_plugin) {
-	uc.r = r;
-	uc.client = client;
-	uc.server = server;
-	uc.reply_key = reply_key;
-	uc.pac = pac;
-	uc.pac_attributes = pac_attributes;
+        uc.r = r;
+        uc.client = client;
+        uc.server = server;
+        uc.reply_key = reply_key;
+        uc.pac = pac;
+        uc.pac_attributes = pac_attributes;
 
-	ret = _krb5_plugin_run_f(r->context, &kdc_plugin_data,
-				 0, &uc, generate);
-	if (ret != KRB5_PLUGIN_NO_HANDLE)
-	    return ret;
-	ret = 0;
+        ret = _krb5_plugin_run_f(r->context, &kdc_plugin_data,
+                                 0, &uc, generate);
+        if (ret != KRB5_PLUGIN_NO_HANDLE)
+            return ret;
+        ret = 0;
     }
 
     if (*pac == NULL)
-	ret = krb5_pac_init(r->context, pac);
+        ret = krb5_pac_init(r->context, pac);
 
     return ret;
 }
@@ -156,29 +156,29 @@ verify(krb5_context context, const void *plug, void *plugctx, void *userctx)
     krb5_error_code ret;
 
     if (ft->pac_verify == NULL)
-	return KRB5_PLUGIN_NO_HANDLE;
+        return KRB5_PLUGIN_NO_HANDLE;
 
     ret = ft->pac_verify((void *)plug,
-			 uc->r,
-			 uc->client_principal,
-			 uc->delegated_proxy_principal,
-			 uc->client, uc->server, uc->krbtgt, uc->pac);
+                         uc->r,
+                         uc->client_principal,
+                         uc->delegated_proxy_principal,
+                         uc->client, uc->server, uc->krbtgt, uc->pac);
     return ret;
 }
 
 krb5_error_code
 _kdc_pac_verify(astgs_request_t r,
-		const krb5_principal client_principal,
-		const krb5_principal delegated_proxy_principal,
-		hdb_entry *client,
-		hdb_entry *server,
-		hdb_entry *krbtgt,
-		krb5_pac *pac)
+                const krb5_principal client_principal,
+                const krb5_principal delegated_proxy_principal,
+                hdb_entry *client,
+                hdb_entry *server,
+                hdb_entry *krbtgt,
+                krb5_pac *pac)
 {
     struct verify_uc uc;
 
     if (!have_plugin)
-	return KRB5_PLUGIN_NO_HANDLE;
+        return KRB5_PLUGIN_NO_HANDLE;
 
     uc.r = r;
     uc.client_principal = client_principal;
@@ -189,7 +189,7 @@ _kdc_pac_verify(astgs_request_t r,
     uc.pac = pac;
 
     return _krb5_plugin_run_f(r->context, &kdc_plugin_data,
-			     0, &uc, verify);
+                              0, &uc, verify);
 }
 
 static krb5_error_code KRB5_LIB_CALL
@@ -198,7 +198,7 @@ check(krb5_context context, const void *plug, void *plugctx, void *userctx)
     const krb5plugin_kdc_ftable *ft = (const krb5plugin_kdc_ftable *)plug;
 
     if (ft->client_access == NULL)
-	return KRB5_PLUGIN_NO_HANDLE;
+        return KRB5_PLUGIN_NO_HANDLE;
     return ft->client_access((void *)plug, userctx);
 }
 
@@ -224,7 +224,7 @@ referral_policy(krb5_context context, const void *plug, void *plugctx, void *use
     const krb5plugin_kdc_ftable *ft = (const krb5plugin_kdc_ftable *)plug;
 
     if (ft->referral_policy == NULL)
-	return KRB5_PLUGIN_NO_HANDLE;
+        return KRB5_PLUGIN_NO_HANDLE;
     return ft->referral_policy((void *)plug, userctx);
 }
 
@@ -245,7 +245,7 @@ finalize_reply(krb5_context context, const void *plug, void *plugctx, void *user
     const krb5plugin_kdc_ftable *ft = (const krb5plugin_kdc_ftable *)plug;
 
     if (ft->finalize_reply == NULL)
-	return KRB5_PLUGIN_NO_HANDLE;
+        return KRB5_PLUGIN_NO_HANDLE;
     return ft->finalize_reply((void *)plug, userctx);
 }
 
@@ -269,7 +269,7 @@ audit(krb5_context context, const void *plug, void *plugctx, void *userctx)
     const krb5plugin_kdc_ftable *ft = (const krb5plugin_kdc_ftable *)plug;
 
     if (ft->audit == NULL)
-	return KRB5_PLUGIN_NO_HANDLE;
+        return KRB5_PLUGIN_NO_HANDLE;
     return ft->audit((void *)plug, userctx);
 }
 
@@ -295,7 +295,7 @@ kdc_get_instance(const char *libname)
     if (strcmp(libname, "kdc") == 0)
         return (uintptr_t)instance;
     else if (strcmp(libname, "hdb") == 0)
-	return hdb_get_instance(libname);
+        return hdb_get_instance(libname);
     else if (strcmp(libname, "krb5") == 0)
         return krb5_get_instance(libname);
 
@@ -435,10 +435,10 @@ KDC_LIB_FUNCTION krb5_error_code KDC_LIB_CALL
 kdc_request_add_encrypted_padata(astgs_request_t r, PA_DATA *md)
 {
     if (r->ek.encrypted_pa_data == NULL) {
-	r->ek.encrypted_pa_data = calloc(1, sizeof *(r->ek.encrypted_pa_data));
-	if (r->ek.encrypted_pa_data == NULL) {
-	    return ENOMEM;
-	}
+        r->ek.encrypted_pa_data = calloc(1, sizeof *(r->ek.encrypted_pa_data));
+        if (r->ek.encrypted_pa_data == NULL) {
+            return ENOMEM;
+        }
     }
 
     return add_METHOD_DATA(r->ek.encrypted_pa_data, md);
@@ -446,24 +446,24 @@ kdc_request_add_encrypted_padata(astgs_request_t r, PA_DATA *md)
 
 KDC_LIB_FUNCTION krb5_error_code KDC_LIB_CALL
 kdc_request_add_pac_buffer(astgs_request_t r,
-			   uint32_t pactype,
-			   const krb5_data *d)
+                           uint32_t pactype,
+                           const krb5_data *d)
 {
     krb5_error_code ret;
     krb5_pac pac;
 
     if (r->pac == NULL) {
-	ret = krb5_pac_init(r->context, &pac);
-	if (ret)
-	    return ret;
+        ret = krb5_pac_init(r->context, &pac);
+        if (ret)
+            return ret;
     } else
-	pac = heim_retain(r->pac);
+        pac = heim_retain(r->pac);
 
     ret = krb5_pac_add_buffer(r->context, pac, pactype, d);
     if (ret == 0 && r->pac == NULL)
-	r->pac = pac;
+        r->pac = pac;
     else
-	heim_release(pac);
+        heim_release(pac);
 
     return ret;
 }
@@ -551,7 +551,7 @@ copy_string_ptr(const char *src, char **dst)
 {
     *dst = strdup(src);
     if (*dst == NULL)
-	return ENOMEM;
+        return ENOMEM;
 
     return 0;
 }
@@ -572,13 +572,13 @@ copy_Principal_ptr(krb5_const_principal src, krb5_principal *dst)
 
     p = calloc(1, sizeof(*p));
     if (p == NULL)
-	return ENOMEM;
+        return ENOMEM;
 
     ret = copy_Principal(src, p);
     if (ret == 0)
-	*dst = p;
+        *dst = p;
     else
-	free(p);
+        free(p);
 
     return ret;
 }
@@ -587,8 +587,8 @@ static void
 free_Principal_ptr(krb5_principal p)
 {
     if (p) {
-	free_Principal(p);
-	free(p);
+        free_Principal(p);
+        free(p);
     }
 }
 

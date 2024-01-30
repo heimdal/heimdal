@@ -73,55 +73,55 @@ main(void)
 
 
     for (i = 0; i < sizeof(testcases)/sizeof(testcases[0]); ++i) {
-	const struct testcase *t = &testcases[i];
+        const struct testcase *t = &testcases[i];
 
-	olen = sizeof(out)/sizeof(out[0]);
-	assert(olen > t->olen);
+        olen = sizeof(out)/sizeof(out[0]);
+        assert(olen > t->olen);
 
-	ret = _wind_ldap_case_exact_attribute(t->in, t->ilen, out, &olen);
-	if (ret) {
-	    printf("wlcea: %u: %d\n", i, ret);
-	    ++failures;
-	    continue;
-	}
-	if (olen != t->olen) {
-	    printf("len wlcea: %u %u != %u\n", i,
-		   (unsigned)olen, (unsigned)t->olen);
-	    failures++;
-	    continue;
-	}
-	if (memcmp(t->out, out, sizeof(out[0]) * olen) != 0) {
-	    printf("memcmp wlcea: %u\n", i);
-	    failures++;
-	    continue;
-	}
+        ret = _wind_ldap_case_exact_attribute(t->in, t->ilen, out, &olen);
+        if (ret) {
+            printf("wlcea: %u: %d\n", i, ret);
+            ++failures;
+            continue;
+        }
+        if (olen != t->olen) {
+            printf("len wlcea: %u %u != %u\n", i,
+                   (unsigned)olen, (unsigned)t->olen);
+            failures++;
+            continue;
+        }
+        if (memcmp(t->out, out, sizeof(out[0]) * olen) != 0) {
+            printf("memcmp wlcea: %u\n", i);
+            failures++;
+            continue;
+        }
     }
 
     for (i = 0; i < sizeof(testcases2)/sizeof(testcases2[0]); ++i) {
-	const struct testcase *t = &testcases2[i];
+        const struct testcase *t = &testcases2[i];
 
-	olen = sizeof(out)/sizeof(out[0]);
-	assert(olen > t->olen);
+        olen = sizeof(out)/sizeof(out[0]);
+        assert(olen > t->olen);
 
-	ret = wind_stringprep(t->in, t->ilen, out, &olen,
-			      WIND_PROFILE_LDAP_CASE);
+        ret = wind_stringprep(t->in, t->ilen, out, &olen,
+                              WIND_PROFILE_LDAP_CASE);
 
-	if (ret) {
-	    printf("wsplc: %u: %d\n", i, ret);
-	    ++failures;
-	    continue;
-	}
+        if (ret) {
+            printf("wsplc: %u: %d\n", i, ret);
+            ++failures;
+            continue;
+        }
 
-	if (olen != t->olen) {
-	    printf("strlen wsplc: %u: %d\n", i, ret);
-	    ++failures;
-	    continue;
-	}
-	if (memcmp(t->out, out, sizeof(out[0]) * olen) != 0) {
-	    printf("memcmp wsplc: %u\n", i);
-	    failures++;
-	    continue;
-	}
+        if (olen != t->olen) {
+            printf("strlen wsplc: %u: %d\n", i, ret);
+            ++failures;
+            continue;
+        }
+        if (memcmp(t->out, out, sizeof(out[0]) * olen) != 0) {
+            printf("memcmp wsplc: %u\n", i);
+            failures++;
+            continue;
+        }
     }
 
     return failures != 0;

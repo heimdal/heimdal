@@ -64,7 +64,7 @@ void RC2_encryptc(unsigned char *, unsigned char *, const RC2_KEY *);
 void RC2_decryptc(unsigned char *, unsigned char *, const RC2_KEY *);
 
 void RC2_cbc_encrypt(const unsigned char *, unsigned char *, long,
-		     RC2_KEY *, unsigned char *, int);
+                     RC2_KEY *, unsigned char *, int);
 
 #ifdef  __cplusplus
 }

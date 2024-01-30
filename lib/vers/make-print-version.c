@@ -48,14 +48,14 @@ main(int argc, char **argv)
 {
     FILE *f;
     if(argc != 2)
-	return 1;
+        return 1;
     if (strcmp(argv[1], "--version") == 0) {
-	printf("some version");
-	return 0;
+        printf("some version");
+        return 0;
     }
     f = fopen(argv[1], "w");
     if(f == NULL)
-	return 1;
+        return 1;
     fprintf(f, "#define VERSIONLIST \"");
 #ifdef KRB5
     fprintf(f, "%s", heimdal_version);

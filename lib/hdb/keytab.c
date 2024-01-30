@@ -60,40 +60,40 @@ hdb_resolve(krb5_context context, const char *name, krb5_keytab id)
 
     d = malloc(sizeof(*d));
     if(d == NULL) {
-	krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
-	return ENOMEM;
+        krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
+        return ENOMEM;
     }
     db = name;
     mkey = strstr(name, ":mkey=");
     if(mkey == NULL || mkey[6] == '\0') {
-	if(*name == '\0')
-	    d->dbname = NULL;
-	else {
-	    d->dbname = strdup(name);
-	    if(d->dbname == NULL) {
-		free(d);
-		krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
-		return ENOMEM;
-	    }
-	}
-	d->mkey = NULL;
+        if(*name == '\0')
+            d->dbname = NULL;
+        else {
+            d->dbname = strdup(name);
+            if(d->dbname == NULL) {
+                free(d);
+                krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
+                return ENOMEM;
+            }
+        }
+        d->mkey = NULL;
     } else {
-	d->dbname = malloc(mkey - db + 1);
-	if(d->dbname == NULL) {
-	    free(d);
-	    krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
-	    return ENOMEM;
-	}
-	memmove(d->dbname, db, mkey - db);
-	d->dbname[mkey - db] = '\0';
+        d->dbname = malloc(mkey - db + 1);
+        if(d->dbname == NULL) {
+            free(d);
+            krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
+            return ENOMEM;
+        }
+        memmove(d->dbname, db, mkey - db);
+        d->dbname[mkey - db] = '\0';
 
-	d->mkey = strdup(mkey + 6);
-	if(d->mkey == NULL) {
-	    free(d->dbname);
-	    free(d);
-	    krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
-	    return ENOMEM;
-	}
+        d->mkey = strdup(mkey + 6);
+        if(d->mkey == NULL) {
+            free(d->dbname);
+            free(d);
+            krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
+            return ENOMEM;
+        }
     }
     id->data = d;
     return 0;
@@ -112,16 +112,16 @@ hdb_close(krb5_context context, krb5_keytab id)
 
 static krb5_error_code KRB5_CALLCONV
 hdb_get_name(krb5_context context,
-	     krb5_keytab id,
-	     char *name,
-	     size_t namesize)
+             krb5_keytab id,
+             char *name,
+             size_t namesize)
 {
     struct hdb_data *d = id->data;
 
     snprintf(name, namesize, "%s%s%s",
-	     d->dbname ? d->dbname : "",
-	     (d->dbname || d->mkey) ? ":" : "",
-	     d->mkey ? d->mkey : "");
+             d->dbname ? d->dbname : "",
+             (d->dbname || d->mkey) ? ":" : "",
+             d->mkey ? d->mkey : "");
     return 0;
 }
 
@@ -132,9 +132,9 @@ hdb_get_name(krb5_context context,
 
 static krb5_error_code
 find_db (krb5_context context,
-	 char **dbname,
-	 char **mkey,
-	 krb5_const_principal principal)
+         char **dbname,
+         char **mkey,
+         krb5_const_principal principal)
 {
     krb5_const_realm realm = krb5_principal_get_realm(context, principal);
     krb5_error_code ret;
@@ -144,19 +144,19 @@ find_db (krb5_context context,
 
     ret = hdb_get_dbinfo(context, &head);
     if (ret)
-	return ret;
+        return ret;
 
     while ((dbinfo = hdb_dbinfo_get_next(head, dbinfo)) != NULL) {
-	const char *p = hdb_dbinfo_get_realm(context, dbinfo);
-	if (p && strcmp (realm, p) == 0) {
-	    p = hdb_dbinfo_get_dbname(context, dbinfo);
-	    if (p)
-		*dbname = strdup(p);
-	    p = hdb_dbinfo_get_mkey_file(context, dbinfo);
-	    if (p)
-		*mkey = strdup(p);
-	    break;
-	}
+        const char *p = hdb_dbinfo_get_realm(context, dbinfo);
+        if (p && strcmp (realm, p) == 0) {
+            p = hdb_dbinfo_get_dbname(context, dbinfo);
+            if (p)
+                *dbname = strdup(p);
+            p = hdb_dbinfo_get_mkey_file(context, dbinfo);
+            if (p)
+                *mkey = strdup(p);
+            break;
+        }
     }
     hdb_free_dbinfo(context, &head);
     if (*dbname == NULL &&
@@ -175,11 +175,11 @@ find_db (krb5_context context,
 
 static krb5_error_code KRB5_CALLCONV
 hdb_get_entry(krb5_context context,
-	      krb5_keytab id,
-	      krb5_const_principal principal,
-	      krb5_kvno kvno,
-	      krb5_enctype enctype,
-	      krb5_keytab_entry *entry)
+              krb5_keytab id,
+              krb5_const_principal principal,
+              krb5_kvno kvno,
+              krb5_enctype enctype,
+              krb5_keytab_entry *entry)
 {
     hdb_entry ent;
     krb5_error_code ret;
@@ -196,26 +196,26 @@ hdb_get_entry(krb5_context context,
     memset(&ent, 0, sizeof(ent));
 
     if (dbname == NULL) {
-	ret = find_db(context, &fdbname, &fmkey, principal);
-	if (ret)
-	    return ret;
-	dbname = fdbname;
-	mkey = fmkey;
+        ret = find_db(context, &fdbname, &fmkey, principal);
+        if (ret)
+            return ret;
+        dbname = fdbname;
+        mkey = fmkey;
     }
 
     ret = hdb_create (context, &db, dbname);
     if (ret)
-	goto out2;
+        goto out2;
     ret = hdb_set_master_keyfile (context, db, mkey);
     if (ret) {
-	(*db->hdb_destroy)(context, db);
-	goto out2;
+        (*db->hdb_destroy)(context, db);
+        goto out2;
     }
 
     ret = (*db->hdb_open)(context, db, O_RDONLY, 0);
     if (ret) {
-	(*db->hdb_destroy)(context, db);
-	goto out2;
+        (*db->hdb_destroy)(context, db);
+        goto out2;
     }
 
     ret = hdb_fetch_kvno(context, db, principal,
@@ -224,35 +224,35 @@ hdb_get_entry(krb5_context context,
                          0, 0, kvno, &ent);
 
     if (ret == HDB_ERR_WRONG_REALM || ret == HDB_ERR_NOENTRY)
-	ret = KRB5_KT_NOTFOUND;
+        ret = KRB5_KT_NOTFOUND;
     if (ret)
-	goto out;
+        goto out;
 
     if(kvno && (krb5_kvno)ent.kvno != kvno) {
-	hdb_free_entry(context, db, &ent);
- 	ret = KRB5_KT_NOTFOUND;
-	goto out;
+        hdb_free_entry(context, db, &ent);
+        ret = KRB5_KT_NOTFOUND;
+        goto out;
     }
     if(enctype == 0)
-	if(ent.keys.len > 0)
-	    enctype = ent.keys.val[0].key.keytype;
+        if(ent.keys.len > 0)
+            enctype = ent.keys.val[0].key.keytype;
     ret = KRB5_KT_NOTFOUND;
     for(i = 0; i < ent.keys.len; i++) {
-	if(ent.keys.val[i].key.keytype == enctype) {
-	    krb5_copy_principal(context, principal, &entry->principal);
-	    entry->vno = ent.kvno;
-	    krb5_copy_keyblock_contents(context,
-					&ent.keys.val[i].key,
-					&entry->keyblock);
-	    ret = 0;
-	    break;
-	}
+        if(ent.keys.val[i].key.keytype == enctype) {
+            krb5_copy_principal(context, principal, &entry->principal);
+            entry->vno = ent.kvno;
+            krb5_copy_keyblock_contents(context,
+                                        &ent.keys.val[i].key,
+                                        &entry->keyblock);
+            ret = 0;
+            break;
+        }
     }
     hdb_free_entry(context, db, &ent);
- out:
+out:
     (*db->hdb_close)(context, db);
     (*db->hdb_destroy)(context, db);
- out2:
+out2:
     free(fdbname);
     free(fmkey);
     return ret;
@@ -265,8 +265,8 @@ hdb_get_entry(krb5_context context,
 
 static krb5_error_code KRB5_CALLCONV
 hdb_start_seq_get(krb5_context context,
-		  krb5_keytab id,
-		  krb5_kt_cursor *cursor)
+                  krb5_keytab id,
+                  krb5_kt_cursor *cursor)
 {
     krb5_error_code ret;
     struct hdb_cursor *c;
@@ -276,35 +276,35 @@ hdb_start_seq_get(krb5_context context,
     HDB *db;
 
     if (dbname == NULL) {
-	/*
-	 * We don't support enumerating without being told what
-	 * backend to enumerate on
-	 */
-  	ret = KRB5_KT_NOTFOUND;
-	return ret;
+        /*
+         * We don't support enumerating without being told what
+         * backend to enumerate on
+         */
+        ret = KRB5_KT_NOTFOUND;
+        return ret;
     }
 
     ret = hdb_create (context, &db, dbname);
     if (ret)
-	return ret;
+        return ret;
     ret = hdb_set_master_keyfile (context, db, mkey);
     if (ret) {
-	(*db->hdb_destroy)(context, db);
-	return ret;
+        (*db->hdb_destroy)(context, db);
+        return ret;
     }
 
     ret = (*db->hdb_open)(context, db, O_RDONLY, 0);
     if (ret) {
-	(*db->hdb_destroy)(context, db);
-	return ret;
+        (*db->hdb_destroy)(context, db);
+        return ret;
     }
 
     cursor->data = c = malloc (sizeof(*c));
     if(c == NULL){
-	(*db->hdb_close)(context, db);
-	(*db->hdb_destroy)(context, db);
-	krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
-	return ENOMEM;
+        (*db->hdb_close)(context, db);
+        (*db->hdb_destroy)(context, db);
+        krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
+        return ENOMEM;
     }
 
     c->db = db;
@@ -318,9 +318,9 @@ hdb_start_seq_get(krb5_context context,
 
 static int KRB5_CALLCONV
 hdb_next_entry(krb5_context context,
-	       krb5_keytab id,
-	       krb5_keytab_entry *entry,
-	       krb5_kt_cursor *cursor)
+               krb5_keytab id,
+               krb5_keytab_entry *entry,
+               krb5_kt_cursor *cursor)
 {
     struct hdb_cursor *c = cursor->data;
     krb5_error_code ret;
@@ -328,37 +328,37 @@ hdb_next_entry(krb5_context context,
     memset(entry, 0, sizeof(*entry));
 
     if (c->first) {
-	c->first = FALSE;
-	ret = (c->db->hdb_firstkey)(context, c->db,
-				    HDB_F_DECRYPT|
-				    HDB_F_GET_CLIENT|HDB_F_GET_SERVER|HDB_F_GET_KRBTGT,
-				    &c->hdb_entry);
-	if (ret == HDB_ERR_NOENTRY)
-	    return KRB5_KT_END;
-	else if (ret)
-	    return ret;
+        c->first = FALSE;
+        ret = (c->db->hdb_firstkey)(context, c->db,
+                                    HDB_F_DECRYPT|
+                                    HDB_F_GET_CLIENT|HDB_F_GET_SERVER|HDB_F_GET_KRBTGT,
+                                    &c->hdb_entry);
+        if (ret == HDB_ERR_NOENTRY)
+            return KRB5_KT_END;
+        else if (ret)
+            return ret;
 
-	if (c->hdb_entry.keys.len == 0)
-	    hdb_free_entry(context, c->db, &c->hdb_entry);
-	else
-	    c->next = FALSE;
+        if (c->hdb_entry.keys.len == 0)
+            hdb_free_entry(context, c->db, &c->hdb_entry);
+        else
+            c->next = FALSE;
     }
 
     while (c->next) {
-	ret = (c->db->hdb_nextkey)(context, c->db,
-				   HDB_F_DECRYPT|
-				   HDB_F_GET_CLIENT|HDB_F_GET_SERVER|HDB_F_GET_KRBTGT,
-				   &c->hdb_entry);
-	if (ret == HDB_ERR_NOENTRY)
-	    return KRB5_KT_END;
-	else if (ret)
-	    return ret;
+        ret = (c->db->hdb_nextkey)(context, c->db,
+                                   HDB_F_DECRYPT|
+                                   HDB_F_GET_CLIENT|HDB_F_GET_SERVER|HDB_F_GET_KRBTGT,
+                                   &c->hdb_entry);
+        if (ret == HDB_ERR_NOENTRY)
+            return KRB5_KT_END;
+        else if (ret)
+            return ret;
 
-	/* If no keys on this entry, try again */
-	if (c->hdb_entry.keys.len == 0)
-	    hdb_free_entry(context, c->db, &c->hdb_entry);
-	else
-	    c->next = FALSE;
+        /* If no keys on this entry, try again */
+        if (c->hdb_entry.keys.len == 0)
+            hdb_free_entry(context, c->db, &c->hdb_entry);
+        else
+            c->next = FALSE;
     }
 
     /*
@@ -367,19 +367,19 @@ hdb_next_entry(krb5_context context,
      */
 
     ret = krb5_copy_principal(context,
-			      c->hdb_entry.principal,
-			      &entry->principal);
+                              c->hdb_entry.principal,
+                              &entry->principal);
     if (ret)
-	return ret;
+        return ret;
 
     entry->vno = c->hdb_entry.kvno;
     ret = krb5_copy_keyblock_contents(context,
-				      &c->hdb_entry.keys.val[c->key_idx].key,
-				      &entry->keyblock);
+                                      &c->hdb_entry.keys.val[c->key_idx].key,
+                                      &entry->keyblock);
     if (ret) {
-	krb5_free_principal(context, entry->principal);
-	memset(entry, 0, sizeof(*entry));
-	return ret;
+        krb5_free_principal(context, entry->principal);
+        memset(entry, 0, sizeof(*entry));
+        return ret;
     }
     c->key_idx++;
 
@@ -389,9 +389,9 @@ hdb_next_entry(krb5_context context,
      */
 
     if ((size_t)c->key_idx == c->hdb_entry.keys.len) {
-	hdb_free_entry(context, c->db, &c->hdb_entry);
-	c->next = TRUE;
-	c->key_idx = 0;
+        hdb_free_entry(context, c->db, &c->hdb_entry);
+        c->next = TRUE;
+        c->key_idx = 0;
     }
 
     return 0;
@@ -400,13 +400,13 @@ hdb_next_entry(krb5_context context,
 
 static int KRB5_CALLCONV
 hdb_end_seq_get(krb5_context context,
-		krb5_keytab id,
-		krb5_kt_cursor *cursor)
+                krb5_keytab id,
+                krb5_kt_cursor *cursor)
 {
     struct hdb_cursor *c = cursor->data;
 
     if (!c->next)
-	hdb_free_entry(context, c->db, &c->hdb_entry);
+        hdb_free_entry(context, c->db, &c->hdb_entry);
 
     (c->db->hdb_close)(context, c->db);
     (c->db->hdb_destroy)(context, c->db);

@@ -37,7 +37,7 @@ static int  quiet_flag = 0;
 
 static void do_v5_kvno (int argc, char *argv[],
                         char *ccache_name, char *etype_str, char *keytab_name,
-			char *sname);
+                        char *sname);
 
 struct getargs args[] = {
     { "enctype",        'e', arg_string, &etype_str,
@@ -95,7 +95,7 @@ int main(int argc, char *argv[])
 
 static void do_v5_kvno (int count, char *names[],
                         char * ccache_name, char *etype_str, char *keytab_name,
-			char *sname)
+                        char *sname)
 {
     krb5_error_code ret;
     krb5_context context = 0;
@@ -111,14 +111,14 @@ static void do_v5_kvno (int count, char *names[],
 
     ret = krb5_init_context(&context);
     if (ret)
-	errx(1, "krb5_init_context failed: %d", ret);
+        errx(1, "krb5_init_context failed: %d", ret);
 
     if (etype_str) {
         ret = krb5_string_to_enctype(context, etype_str, &etype);
-	if (ret)
-	    krb5_err(context, 1, ret, "Failed to convert encryption type %s", etype_str);
+        if (ret)
+            krb5_err(context, 1, ret, "Failed to convert encryption type %s", etype_str);
     } else {
-	etype = 0;
+        etype = 0;
     }
 
     if (ccache_name)
@@ -130,8 +130,8 @@ static void do_v5_kvno (int count, char *names[],
                  (ccache_name) ? ccache_name : "(Default)");
 
     if (keytab_name) {
-	ret = krb5_kt_resolve(context, keytab_name, &keytab);
-	if (ret)
+        ret = krb5_kt_resolve(context, keytab_name, &keytab);
+        if (ret)
             krb5_err(context, 1, ret, "Can't resolve keytab %s", keytab_name);
     }
 
@@ -142,53 +142,53 @@ static void do_v5_kvno (int count, char *names[],
     errors = 0;
 
     for (i = 0; i < count; i++) {
-	memset(&in_creds, 0, sizeof(in_creds));
+        memset(&in_creds, 0, sizeof(in_creds));
         memset(&ticket, 0, sizeof(ticket));
 
-	in_creds.client = me;
+        in_creds.client = me;
 
-	if (sname != NULL) {
-	    ret = krb5_sname_to_principal(context, names[i],
-					  sname, KRB5_NT_SRV_HST,
-					  &in_creds.server);
-	} else {
-	    ret = krb5_parse_name(context, names[i], &in_creds.server);
-	}
-	if (ret) {
-	    if (!quiet_flag)
+        if (sname != NULL) {
+            ret = krb5_sname_to_principal(context, names[i],
+                                          sname, KRB5_NT_SRV_HST,
+                                          &in_creds.server);
+        } else {
+            ret = krb5_parse_name(context, names[i], &in_creds.server);
+        }
+        if (ret) {
+            if (!quiet_flag)
                 krb5_warn(context, ret, "Couldn't parse principal name %s", names[i]);
             errors++;
-	    continue;
-	}
+            continue;
+        }
 
-	ret = krb5_unparse_name(context, in_creds.server, &princ);
-	if (ret) {
+        ret = krb5_unparse_name(context, in_creds.server, &princ);
+        if (ret) {
             krb5_warn(context, ret, "Couldn't format parsed principal name for '%s'",
                       names[i]);
-	    errors++;
+            errors++;
             goto next;
-	}
+        }
 
-	in_creds.session.keytype = etype;
+        in_creds.session.keytype = etype;
 
-	ret = krb5_get_credentials(context, 0, ccache, &in_creds, &out_creds);
+        ret = krb5_get_credentials(context, 0, ccache, &in_creds, &out_creds);
 
-	if (ret) {
+        if (ret) {
             krb5_warn(context, ret, "Couldn't get credentials for %s", princ);
-	    errors++;
-	    goto next;
-	}
-
-	ret = decode_Ticket(out_creds->ticket.data, out_creds->ticket.length,
-                            &ticket, &len);
-	if (ret) {
-	    krb5_err(context, 1, ret, "Can't decode ticket for %s", princ);
-	    errors++;
+            errors++;
             goto next;
-	    continue;
-	}
+        }
 
-	if (keytab) {
+        ret = decode_Ticket(out_creds->ticket.data, out_creds->ticket.length,
+                            &ticket, &len);
+        if (ret) {
+            krb5_err(context, 1, ret, "Can't decode ticket for %s", princ);
+            errors++;
+            goto next;
+            continue;
+        }
+
+        if (keytab) {
             krb5_keytab_entry   kte;
             krb5_crypto         crypto;
             krb5_data           dec_data;
@@ -238,18 +238,18 @@ static void do_v5_kvno (int count, char *names[],
             }
 
             if (!quiet_flag)
-		printf("%s: kvno = %d, keytab entry valid\n", princ,
+                printf("%s: kvno = %d, keytab entry valid\n", princ,
                        (ticket.enc_part.kvno != NULL)?
                        *ticket.enc_part.kvno : 0);
 
             free_EncTicketPart(&decr_part);
-	} else {
-	    if (!quiet_flag)
-		printf("%s: kvno = %d\n", princ,
+        } else {
+            if (!quiet_flag)
+                printf("%s: kvno = %d\n", princ,
                        (ticket.enc_part.kvno != NULL)? *ticket.enc_part.kvno : 0);
-	}
+        }
 
-    next:
+next:
         if (out_creds) {
             krb5_free_creds(context, out_creds);
             out_creds = NULL;
@@ -260,19 +260,19 @@ static void do_v5_kvno (int count, char *names[],
             princ = NULL;
         }
 
-	krb5_free_principal(context, in_creds.server);
+        krb5_free_principal(context, in_creds.server);
 
         free_Ticket(&ticket);
     }
 
     if (keytab)
-	krb5_kt_close(context, keytab);
+        krb5_kt_close(context, keytab);
     krb5_free_principal(context, me);
     krb5_cc_close(context, ccache);
     krb5_free_context(context);
 
     if (errors)
-	exit(1);
+        exit(1);
 
     exit(0);
 }

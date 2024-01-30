@@ -71,50 +71,50 @@ get_cell_and_realm (krb5_context context, struct akf_data *d)
 
     f = fopen (AFS_SERVERTHISCELL, "r");
     if (f == NULL) {
-	ret = errno;
-	krb5_set_error_message (context, ret,
-				N_("Open ThisCell %s: %s", ""),
-				AFS_SERVERTHISCELL,
-				strerror(ret));
-	return ret;
+        ret = errno;
+        krb5_set_error_message (context, ret,
+                                N_("Open ThisCell %s: %s", ""),
+                                AFS_SERVERTHISCELL,
+                                strerror(ret));
+        return ret;
     }
     if (fgets (buf, sizeof(buf), f) == NULL) {
-	fclose (f);
-	krb5_set_error_message (context, EINVAL,
-				N_("No cell in ThisCell file %s", ""),
-				AFS_SERVERTHISCELL);
-	return EINVAL;
+        fclose (f);
+        krb5_set_error_message (context, EINVAL,
+                                N_("No cell in ThisCell file %s", ""),
+                                AFS_SERVERTHISCELL);
+        return EINVAL;
     }
     buf[strcspn(buf, "\n")] = '\0';
     fclose(f);
 
     d->cell = strdup (buf);
     if (d->cell == NULL)
-	return krb5_enomem(context);
+        return krb5_enomem(context);
 
     f = fopen (AFS_SERVERMAGICKRBCONF, "r");
     if (f != NULL) {
-	if (fgets (buf, sizeof(buf), f) == NULL) {
-	    free (d->cell);
-	    d->cell = NULL;
-	    fclose (f);
-	    krb5_set_error_message (context, EINVAL,
-				    N_("No realm in ThisCell file %s", ""),
-				    AFS_SERVERMAGICKRBCONF);
-	    return EINVAL;
-	}
-	buf[strcspn(buf, "\n")] = '\0';
-	fclose(f);
+        if (fgets (buf, sizeof(buf), f) == NULL) {
+            free (d->cell);
+            d->cell = NULL;
+            fclose (f);
+            krb5_set_error_message (context, EINVAL,
+                                    N_("No realm in ThisCell file %s", ""),
+                                    AFS_SERVERMAGICKRBCONF);
+            return EINVAL;
+        }
+        buf[strcspn(buf, "\n")] = '\0';
+        fclose(f);
     }
     /* uppercase */
     for (cp = buf; *cp != '\0'; cp++)
-	*cp = toupper((unsigned char)*cp);
+        *cp = toupper((unsigned char)*cp);
 
     d->realm = strdup (buf);
     if (d->realm == NULL) {
-	free (d->cell);
-	d->cell = NULL;
-	return krb5_enomem(context);
+        free (d->cell);
+        d->cell = NULL;
+        return krb5_enomem(context);
     }
     return 0;
 }
@@ -130,20 +130,20 @@ akf_resolve(krb5_context context, const char *name, krb5_keytab id)
     struct akf_data *d = calloc(1, sizeof (struct akf_data));
 
     if (d == NULL)
-	return krb5_enomem(context);
+        return krb5_enomem(context);
 
     d->num_entries = 0;
     ret = get_cell_and_realm (context, d);
     if (ret) {
-	free (d);
-	return ret;
+        free (d);
+        return ret;
     }
     d->filename = strdup (name);
     if (d->filename == NULL) {
-	free (d->cell);
-	free (d->realm);
-	free (d);
-	return krb5_enomem(context);
+        free (d->cell);
+        free (d->realm);
+        free (d);
+        return krb5_enomem(context);
     }
     id->data = d;
 
@@ -171,9 +171,9 @@ akf_close(krb5_context context, krb5_keytab id)
 
 static krb5_error_code KRB5_CALLCONV
 akf_get_name(krb5_context context,
-	     krb5_keytab id,
-	     char *name,
-	     size_t name_sz)
+             krb5_keytab id,
+             char *name,
+             size_t name_sz)
 {
     struct akf_data *d = id->data;
 
@@ -187,38 +187,38 @@ akf_get_name(krb5_context context,
 
 static krb5_error_code KRB5_CALLCONV
 akf_start_seq_get(krb5_context context,
-		  krb5_keytab id,
-		  krb5_kt_cursor *c)
+                  krb5_keytab id,
+                  krb5_kt_cursor *c)
 {
     int32_t ret;
     struct akf_data *d = id->data;
 
     c->fd = open (d->filename, O_RDONLY | O_BINARY | O_CLOEXEC, 0600);
     if (c->fd < 0) {
-	ret = errno;
-	krb5_set_error_message(context, ret,
-			       N_("keytab afs keyfile open %s failed: %s", ""),
-			       d->filename, strerror(ret));
-	return ret;
+        ret = errno;
+        krb5_set_error_message(context, ret,
+                               N_("keytab afs keyfile open %s failed: %s", ""),
+                               d->filename, strerror(ret));
+        return ret;
     }
 
     c->data = NULL;
     c->sp = krb5_storage_from_fd(c->fd);
     if (c->sp == NULL) {
-	close(c->fd);
-	krb5_clear_error_message (context);
-	return KRB5_KT_NOTFOUND;
+        close(c->fd);
+        krb5_clear_error_message (context);
+        return KRB5_KT_NOTFOUND;
     }
     krb5_storage_set_eof_code(c->sp, KRB5_KT_END);
 
     ret = krb5_ret_uint32(c->sp, &d->num_entries);
     if(ret || d->num_entries > INT_MAX / 8) {
-	krb5_storage_free(c->sp);
-	close(c->fd);
-	krb5_clear_error_message (context);
-	if(ret == KRB5_KT_END)
-	    return KRB5_KT_NOTFOUND;
-	return ret;
+        krb5_storage_free(c->sp);
+        close(c->fd);
+        krb5_clear_error_message (context);
+        if(ret == KRB5_KT_END)
+            return KRB5_KT_NOTFOUND;
+        return ret;
     }
 
     return 0;
@@ -226,9 +226,9 @@ akf_start_seq_get(krb5_context context,
 
 static krb5_error_code KRB5_CALLCONV
 akf_next_entry(krb5_context context,
-	       krb5_keytab id,
-	       krb5_keytab_entry *entry,
-	       krb5_kt_cursor *cursor)
+               krb5_keytab id,
+               krb5_keytab_entry *entry,
+               krb5_kt_cursor *cursor)
 {
     struct akf_data *d = id->data;
     int32_t kvno;
@@ -238,56 +238,56 @@ akf_next_entry(krb5_context context,
     pos = krb5_storage_seek(cursor->sp, 0, SEEK_CUR);
 
     if ((pos - 4) / (4 + 8) >= d->num_entries)
-	return KRB5_KT_END;
+        return KRB5_KT_END;
 
     ret = krb5_make_principal (context, &entry->principal,
-			       d->realm, "afs", d->cell, NULL);
+                               d->realm, "afs", d->cell, NULL);
     if (ret)
-	goto out;
+        goto out;
 
     ret = krb5_ret_int32(cursor->sp, &kvno);
     if (ret) {
-	krb5_free_principal (context, entry->principal);
-	goto out;
+        krb5_free_principal (context, entry->principal);
+        goto out;
     }
 
     entry->vno = kvno;
 
     if (cursor->data)
-	entry->keyblock.keytype         = ETYPE_DES_CBC_MD5;
+        entry->keyblock.keytype         = ETYPE_DES_CBC_MD5;
     else
-	entry->keyblock.keytype         = ETYPE_DES_CBC_CRC;
+        entry->keyblock.keytype         = ETYPE_DES_CBC_CRC;
     entry->keyblock.keyvalue.length = 8;
     entry->keyblock.keyvalue.data   = malloc (8);
     if (entry->keyblock.keyvalue.data == NULL) {
-	krb5_free_principal (context, entry->principal);
-	ret = krb5_enomem(context);
-	goto out;
+        krb5_free_principal (context, entry->principal);
+        ret = krb5_enomem(context);
+        goto out;
     }
 
     ret = krb5_storage_read(cursor->sp, entry->keyblock.keyvalue.data, 8);
     if(ret != 8)
-	ret = (ret < 0) ? errno : KRB5_KT_END;
+        ret = (ret < 0) ? errno : KRB5_KT_END;
     else
-	ret = 0;
+        ret = 0;
 
     entry->timestamp = time(NULL);
     entry->flags = 0;
     entry->aliases = NULL;
 
- out:
+out:
     if (cursor->data) {
-	krb5_storage_seek(cursor->sp, pos + 4 + 8, SEEK_SET);
-	cursor->data = NULL;
+        krb5_storage_seek(cursor->sp, pos + 4 + 8, SEEK_SET);
+        cursor->data = NULL;
     } else
-	cursor->data = cursor;
+        cursor->data = cursor;
     return ret;
 }
 
 static krb5_error_code KRB5_CALLCONV
 akf_end_seq_get(krb5_context context,
-		krb5_keytab id,
-		krb5_kt_cursor *cursor)
+                krb5_keytab id,
+                krb5_kt_cursor *cursor)
 {
     krb5_storage_free(cursor->sp);
     close(cursor->fd);
@@ -297,8 +297,8 @@ akf_end_seq_get(krb5_context context,
 
 static krb5_error_code KRB5_CALLCONV
 akf_add_entry(krb5_context context,
-	      krb5_keytab id,
-	      krb5_keytab_entry *entry)
+              krb5_keytab id,
+              krb5_keytab_entry *entry)
 {
     struct akf_data *d = id->data;
     int fd, created = 0;
@@ -308,55 +308,55 @@ akf_add_entry(krb5_context context,
 
 
     if (entry->keyblock.keyvalue.length != 8)
-	return 0;
+        return 0;
     switch(entry->keyblock.keytype) {
-    case ETYPE_DES_CBC_CRC:
-    case ETYPE_DES_CBC_MD4:
-    case ETYPE_DES_CBC_MD5:
-	break;
-    default:
-	return 0;
+        case ETYPE_DES_CBC_CRC:
+        case ETYPE_DES_CBC_MD4:
+        case ETYPE_DES_CBC_MD5:
+            break;
+        default:
+            return 0;
     }
 
     fd = open (d->filename, O_RDWR | O_BINARY | O_CLOEXEC);
     if (fd < 0) {
-	fd = open (d->filename,
-		   O_RDWR | O_BINARY | O_CREAT | O_EXCL | O_CLOEXEC, 0600);
-	if (fd < 0) {
-	    ret = errno;
-	    krb5_set_error_message(context, ret,
-				   N_("open keyfile(%s): %s", ""),
-				   d->filename,
-				   strerror(ret));
-	    return ret;
-	}
-	created = 1;
+        fd = open (d->filename,
+                   O_RDWR | O_BINARY | O_CREAT | O_EXCL | O_CLOEXEC, 0600);
+        if (fd < 0) {
+            ret = errno;
+            krb5_set_error_message(context, ret,
+                                   N_("open keyfile(%s): %s", ""),
+                                   d->filename,
+                                   strerror(ret));
+            return ret;
+        }
+        created = 1;
     }
 
     sp = krb5_storage_from_fd(fd);
     if(sp == NULL) {
-	close(fd);
-	return krb5_enomem(context);
+        close(fd);
+        return krb5_enomem(context);
     }
     if (created)
-	len = 0;
+        len = 0;
     else {
-	if(krb5_storage_seek(sp, 0, SEEK_SET) < 0) {
-	    ret = errno;
-	    krb5_storage_free(sp);
-	    close(fd);
-	    krb5_set_error_message(context, ret,
-				   N_("seeking in keyfile: %s", ""),
-				   strerror(ret));
-	    return ret;
-	}
+        if(krb5_storage_seek(sp, 0, SEEK_SET) < 0) {
+            ret = errno;
+            krb5_storage_free(sp);
+            close(fd);
+            krb5_set_error_message(context, ret,
+                                   N_("seeking in keyfile: %s", ""),
+                                   strerror(ret));
+            return ret;
+        }
 
-	ret = krb5_ret_int32(sp, &len);
-	if(ret) {
-	    krb5_storage_free(sp);
-	    close(fd);
-	    return ret;
-	}
+        ret = krb5_ret_int32(sp, &len);
+        if(ret) {
+            krb5_storage_free(sp);
+            close(fd);
+            return ret;
+        }
     }
 
     /*
@@ -364,71 +364,71 @@ akf_add_entry(krb5_context context,
      * encryption types are all the same key.
      */
     if (len > 0) {
-	int32_t kvno;
-	int i;
+        int32_t kvno;
+        int i;
 
-	for (i = 0; i < len; i++) {
-	    ret = krb5_ret_int32(sp, &kvno);
-	    if (ret) {
-		krb5_set_error_message (context, ret,
-					N_("Failed getting kvno from keyfile", ""));
-		goto out;
-	    }
-	    if(krb5_storage_seek(sp, 8, SEEK_CUR) < 0) {
-		ret = errno;
-		krb5_set_error_message (context, ret,
-					N_("Failed seeing in keyfile: %s", ""),
-					strerror(ret));
-		goto out;
-	    }
-	    if (kvno == entry->vno) {
-		ret = 0;
-		goto out;
-	    }
-	}
+        for (i = 0; i < len; i++) {
+            ret = krb5_ret_int32(sp, &kvno);
+            if (ret) {
+                krb5_set_error_message (context, ret,
+                                        N_("Failed getting kvno from keyfile", ""));
+                goto out;
+            }
+            if(krb5_storage_seek(sp, 8, SEEK_CUR) < 0) {
+                ret = errno;
+                krb5_set_error_message (context, ret,
+                                        N_("Failed seeing in keyfile: %s", ""),
+                                        strerror(ret));
+                goto out;
+            }
+            if (kvno == entry->vno) {
+                ret = 0;
+                goto out;
+            }
+        }
     }
 
     len++;
 
     if(krb5_storage_seek(sp, 0, SEEK_SET) < 0) {
-	ret = errno;
-	krb5_set_error_message (context, ret,
-				N_("Failed seeing in keyfile: %s", ""),
-				strerror(ret));
-	goto out;
+        ret = errno;
+        krb5_set_error_message (context, ret,
+                                N_("Failed seeing in keyfile: %s", ""),
+                                strerror(ret));
+        goto out;
     }
 
     ret = krb5_store_int32(sp, len);
     if(ret) {
-	ret = errno;
-	krb5_set_error_message (context, ret,
-				N_("keytab keyfile failed new length", ""));
-	goto out;
+        ret = errno;
+        krb5_set_error_message (context, ret,
+                                N_("keytab keyfile failed new length", ""));
+        goto out;
     }
 
     if(krb5_storage_seek(sp, (len - 1) * (8 + 4), SEEK_CUR) < 0) {
-	ret = errno;
-	krb5_set_error_message (context, ret,
-				N_("seek to end: %s", ""), strerror(ret));
-	goto out;
+        ret = errno;
+        krb5_set_error_message (context, ret,
+                                N_("seek to end: %s", ""), strerror(ret));
+        goto out;
     }
 
     ret = krb5_store_int32(sp, entry->vno);
     if(ret) {
-	krb5_set_error_message(context, ret,
-			       N_("keytab keyfile failed store kvno", ""));
-	goto out;
+        krb5_set_error_message(context, ret,
+                               N_("keytab keyfile failed store kvno", ""));
+        goto out;
     }
     ret = krb5_storage_write(sp, entry->keyblock.keyvalue.data,
-			     entry->keyblock.keyvalue.length);
+                             entry->keyblock.keyvalue.length);
     if(ret != entry->keyblock.keyvalue.length) {
-	if (ret < 0)
-	    ret = errno;
-	else
-	    ret = ENOTTY;
-	krb5_set_error_message(context, ret,
-			       N_("keytab keyfile failed to add key", ""));
-	goto out;
+        if (ret < 0)
+            ret = errno;
+        else
+            ret = ENOTTY;
+        krb5_set_error_message(context, ret,
+                               N_("keytab keyfile failed to add key", ""));
+        goto out;
     }
     ret = 0;
 out:

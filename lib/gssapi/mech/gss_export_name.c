@@ -46,43 +46,43 @@
  */
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_export_name(OM_uint32 *minor_status,
-    gss_const_name_t input_name,
-    gss_buffer_t exported_name)
+                gss_const_name_t input_name,
+                gss_buffer_t exported_name)
 {
-	struct _gss_name *name = (struct _gss_name *) input_name;
-	struct _gss_mechanism_name *mn;
+    struct _gss_name *name = (struct _gss_name *) input_name;
+    struct _gss_mechanism_name *mn;
 
-	_mg_buffer_zero(exported_name);
+    _mg_buffer_zero(exported_name);
 
-	/*
-	 * If this name already has any attached MNs, export the first
-	 * one, otherwise export based on the first mechanism in our
-	 * list.
-	 */
-	mn = HEIM_TAILQ_FIRST(&name->gn_mn);
-	if (!mn) {
-		*minor_status = 0;
-		return (GSS_S_NAME_NOT_MN);
-	}
+    /*
+     * If this name already has any attached MNs, export the first
+     * one, otherwise export based on the first mechanism in our
+     * list.
+     */
+    mn = HEIM_TAILQ_FIRST(&name->gn_mn);
+    if (!mn) {
+        *minor_status = 0;
+        return (GSS_S_NAME_NOT_MN);
+    }
 
-	return mn->gmn_mech->gm_export_name(minor_status,
-	    mn->gmn_name, exported_name);
+    return mn->gmn_mech->gm_export_name(minor_status,
+                                        mn->gmn_name, exported_name);
 }
 
 OM_uint32
 gss_mg_export_name(OM_uint32 *minor_status,
-		   const gss_const_OID mech,
-		   const void *name,
-		   size_t length, 
-		   gss_buffer_t exported_name)
+                   const gss_const_OID mech,
+                   const void *name,
+                   size_t length, 
+                   gss_buffer_t exported_name)
 {
     uint8_t *buf;
 
     exported_name->length = 10 + length + mech->length;
     exported_name->value  = malloc(exported_name->length);
     if (exported_name->value == NULL) {
-	*minor_status = ENOMEM;
-	return GSS_S_FAILURE;
+        *minor_status = ENOMEM;
+        return GSS_S_FAILURE;
     }
 
     /* TOK, MECH_OID_LEN, DER(MECH_OID), NAME_LEN, NAME */

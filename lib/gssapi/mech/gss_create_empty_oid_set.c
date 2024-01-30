@@ -30,22 +30,22 @@
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_create_empty_oid_set(OM_uint32 *minor_status,
-    gss_OID_set *oid_set)
+                         gss_OID_set *oid_set)
 {
-	gss_OID_set set;
+    gss_OID_set set;
 
-	*minor_status = 0;
-	*oid_set = GSS_C_NO_OID_SET;
+    *minor_status = 0;
+    *oid_set = GSS_C_NO_OID_SET;
 
-	set = malloc(sizeof(gss_OID_set_desc));
-	if (!set) {
-		*minor_status = ENOMEM;
-		return (GSS_S_FAILURE);
-	}
+    set = malloc(sizeof(gss_OID_set_desc));
+    if (!set) {
+        *minor_status = ENOMEM;
+        return (GSS_S_FAILURE);
+    }
 
-	set->count = 0;
-	set->elements = 0;
-	*oid_set = set;
+    set->count = 0;
+    set->elements = 0;
+    *oid_set = set;
 
-	return (GSS_S_COMPLETE);
+    return (GSS_S_COMPLETE);
 }

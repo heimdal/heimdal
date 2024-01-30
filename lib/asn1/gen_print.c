@@ -37,7 +37,7 @@ void
 generate_type_print_stub(const Symbol *s)
 {
     fprintf(codefile, "char * ASN1CALL\n"
-	    "print_%s(const %s *data, int flags)\n"
-	    "{ errno = EINVAL; return 0; }\n\n",
-	    s->gen_name, s->gen_name);
+            "print_%s(const %s *data, int flags)\n"
+            "{ errno = EINVAL; return 0; }\n\n",
+            s->gen_name, s->gen_name);
 }

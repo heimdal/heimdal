@@ -35,26 +35,26 @@
 
 OM_uint32 GSSAPI_CALLCONV
 _gss_sanon_display_status(OM_uint32 *minor,
-			  OM_uint32 status_value,
-			  int status_type,
-			  const gss_OID mech_type,
-			  OM_uint32 *message_context,
-			  gss_buffer_t status_string)
+                          OM_uint32 status_value,
+                          int status_type,
+                          const gss_OID mech_type,
+                          OM_uint32 *message_context,
+                          gss_buffer_t status_string)
 {
     _mg_buffer_zero(status_string);
 
     if (gss_oid_equal(mech_type, GSS_C_NO_OID) == 0 &&
-	gss_oid_equal(mech_type, GSS_SANON_X25519_MECHANISM) == 0) {
-	*minor = 0;
-	return GSS_S_BAD_MECH;
+        gss_oid_equal(mech_type, GSS_SANON_X25519_MECHANISM) == 0) {
+        *minor = 0;
+        return GSS_S_BAD_MECH;
     }
 
     if (status_type == GSS_C_MECH_CODE) {
-	return gss_display_status(minor, status_value,
-				  GSS_C_MECH_CODE, GSS_KRB5_MECHANISM,
-				  message_context, status_string);
+        return gss_display_status(minor, status_value,
+                                  GSS_C_MECH_CODE, GSS_KRB5_MECHANISM,
+                                  message_context, status_string);
     } else {
-	*minor = EINVAL;
-	return GSS_S_BAD_STATUS;
+        *minor = EINVAL;
+        return GSS_S_BAD_STATUS;
     }
 }

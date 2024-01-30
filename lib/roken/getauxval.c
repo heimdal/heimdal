@@ -186,8 +186,8 @@ rk_getauxval(unsigned long type)
 
     if (getauxval_sets_errno == 0) {
         errno = save_errno;
-	a = rk_getauxv(type);
-	if (a == NULL) {
+        a = rk_getauxv(type);
+        if (a == NULL) {
             errno = ENOENT;
             return 0;
         }

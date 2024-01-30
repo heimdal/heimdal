@@ -49,17 +49,17 @@ int max_size_int;
 
 struct getargs args[] = {
     { "print-keys",     'K',  arg_flag, &print_keys_flag,
-	"print keys", NULL },
+        "print keys", NULL },
     { "no-values",      'V',  arg_flag, &no_values_flag,
-	"don't print values", NULL },
+        "don't print values", NULL },
     { "verbose",        'v',  arg_flag, &verbose_flag,
-	"print statistics and informative messages", NULL },
+        "print statistics and informative messages", NULL },
     { "help",           'h',  arg_flag, &help_flag,
-	"print usage message", NULL },
+        "print usage message", NULL },
     { "block-size",     'b',  arg_integer, &block_size_int,
-	"block size", "integer" },
+        "block size", "integer" },
     { "max-cache-size", 'm',  arg_integer, &max_size_int,
-	"maximum cache size", "integer" },
+        "maximum cache size", "integer" },
     { "version",        '\0', arg_flag, &version_flag, NULL, NULL }
 };
 
@@ -97,44 +97,44 @@ main(int argc, char **argv)
 
     setprogname(argv[0]);
     if (getarg(args, num_args, argc, argv, &optidx))
-	usage(1);
+        usage(1);
 
     if (version_flag) {
-	print_version(NULL);
-	return 0;
+        print_version(NULL);
+        return 0;
     }
 
     if (help_flag)
-	usage(0);
+        usage(0);
 
     if (block_size_int != 0 && block_size_int < 512) {
-	fprintf(stderr, "Invalid block size: too small\n");
-	return 1;
+        fprintf(stderr, "Invalid block size: too small\n");
+        return 1;
     }
     if (block_size_int > 0) {
-	/* Check that block_size is a power of 2 */
-	num = block_size_int;
-	while (num) {
-	    if ((num % 2) && (num >> 1)) {
-		fprintf(stderr, "Invalid block size: must be power "
-			"of two\n");
-		return 1;
-	    }
-	    num >>= 1;
-	}
-	if (block_size_int > MAX_BLOCK_SIZE)
-	    fprintf(stderr, "Invalid block size: too large\n");
-	block_size = block_size_int;
+        /* Check that block_size is a power of 2 */
+        num = block_size_int;
+        while (num) {
+            if ((num % 2) && (num >> 1)) {
+                fprintf(stderr, "Invalid block size: must be power "
+                        "of two\n");
+                return 1;
+            }
+            num >>= 1;
+        }
+        if (block_size_int > MAX_BLOCK_SIZE)
+            fprintf(stderr, "Invalid block size: too large\n");
+        block_size = block_size_int;
     }
     if (max_size_int < 0)
-	usage(1);
+        usage(1);
     max_size = max_size_int;
 
     argc -= optind;
     argv += optind;
 
     if (argc == 0)
-	usage(1);
+        usage(1);
 
     fname = argv[0];
     argc--;
@@ -142,64 +142,64 @@ main(int argc, char **argv)
 
     ret = _bsearch_file_open(fname, max_size, block_size, &bfh, &reads);
     if (ret != 0) {
-	perror("bsearch_file_open");
-	return 1;
+        perror("bsearch_file_open");
+        return 1;
     }
 
     _bsearch_file_info(bfh, &block_size, &max_size, &blockwise);
     if (verbose_flag && blockwise) {
-	fprintf(stderr, "Using block-wise method with block size %lu and "
-		"cache size %lu\n",
-		(long unsigned)block_size, (long unsigned)max_size);
+        fprintf(stderr, "Using block-wise method with block size %lu and "
+                "cache size %lu\n",
+                (long unsigned)block_size, (long unsigned)max_size);
     } else if (verbose_flag) {
-	fprintf(stderr, "Using whole-file method\n");
+        fprintf(stderr, "Using whole-file method\n");
     }
 
     for (;;) {
-	loops = 0; /* reset stats */
-	/* Eww */
-	if (argc) {
-	    key = *(argv++);
-	    if (!key)
-		break;
-	} else {
-	    if (!fgets(keybuf, sizeof (keybuf), stdin))
-		break;
-	    p = strchr(key, '\n');
-	    if (!p)
-		break;
-	    *p = '\0';
-	    if (!*key)
-		continue;
-	}
-	ret = _bsearch_file(bfh, key, &value, &loc, &loops, &reads);
-	if (ret != 0) {
-	    if (ret > 0) {
-		fprintf(stderr, "Error: %s\n", strerror(ret));
-		_bsearch_file_close(&bfh);
-		return 1;
-	    }
-	    if (verbose_flag)
-		fprintf(stderr, "Key %s not found in %lu loops and %lu reads; "
-			"insert at %lu\n", key, (long unsigned)loops,
-			(long unsigned)reads, (long unsigned)loc);
-	    failures++;
-	    continue;
-	}
-	if (verbose_flag)
-	    fprintf(stderr, "Key %s found at offset %lu in %lu loops and "
-		    "%lu reads\n", key, (long unsigned)loc,
-		    (long unsigned)loops, (long unsigned)reads);
-	if (print_keys_flag && !no_values_flag && value)
-	    printf("%s %s\n", key, value);
-	else if (print_keys_flag)
-	    printf("%s\n", key);
-	else if (no_values_flag && value)
-	    printf("%s\n", value);
-	free(value);
+        loops = 0; /* reset stats */
+        /* Eww */
+        if (argc) {
+            key = *(argv++);
+            if (!key)
+                break;
+        } else {
+            if (!fgets(keybuf, sizeof (keybuf), stdin))
+                break;
+            p = strchr(key, '\n');
+            if (!p)
+                break;
+            *p = '\0';
+            if (!*key)
+                continue;
+        }
+        ret = _bsearch_file(bfh, key, &value, &loc, &loops, &reads);
+        if (ret != 0) {
+            if (ret > 0) {
+                fprintf(stderr, "Error: %s\n", strerror(ret));
+                _bsearch_file_close(&bfh);
+                return 1;
+            }
+            if (verbose_flag)
+                fprintf(stderr, "Key %s not found in %lu loops and %lu reads; "
+                        "insert at %lu\n", key, (long unsigned)loops,
+                        (long unsigned)reads, (long unsigned)loc);
+            failures++;
+            continue;
+        }
+        if (verbose_flag)
+            fprintf(stderr, "Key %s found at offset %lu in %lu loops and "
+                    "%lu reads\n", key, (long unsigned)loc,
+                    (long unsigned)loops, (long unsigned)reads);
+        if (print_keys_flag && !no_values_flag && value)
+            printf("%s %s\n", key, value);
+        else if (print_keys_flag)
+            printf("%s\n", key);
+        else if (no_values_flag && value)
+            printf("%s\n", value);
+        free(value);
     }
     if (failures)
-	return 2;
+        return 2;
     _bsearch_file_close(&bfh);
     return 0;
 }

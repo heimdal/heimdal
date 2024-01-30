@@ -79,20 +79,20 @@ reg_def_plugins_once(void *ctx)
     krb5_context context = ctx;
 
     plugin_reg_ret = krb5_plugin_register(context, PLUGIN_TYPE_DATA,
-					  KRB5_PLUGIN_KUSEROK,
-					  &kuserok_simple_plug);
+                                          KRB5_PLUGIN_KUSEROK,
+                                          &kuserok_simple_plug);
     ret = krb5_plugin_register(context, PLUGIN_TYPE_DATA,
                                KRB5_PLUGIN_KUSEROK, &kuserok_sys_k5login_plug);
     if (!plugin_reg_ret)
-	plugin_reg_ret = ret;
+        plugin_reg_ret = ret;
     ret = krb5_plugin_register(context, PLUGIN_TYPE_DATA,
                                KRB5_PLUGIN_KUSEROK, &kuserok_user_k5login_plug);
     if (!plugin_reg_ret)
-	plugin_reg_ret = ret;
+        plugin_reg_ret = ret;
     ret = krb5_plugin_register(context, PLUGIN_TYPE_DATA,
                                KRB5_PLUGIN_KUSEROK, &kuserok_deny_plug);
     if (!plugin_reg_ret)
-	plugin_reg_ret = ret;
+        plugin_reg_ret = ret;
 }
 
 /**
@@ -114,11 +114,11 @@ reg_def_plugins_once(void *ctx)
 
 static krb5_error_code
 check_owner_dir(krb5_context context,
-		const char *filename,
-		krb5_boolean is_system_location,
-		DIR *dir,
-		struct stat *dirlstat,
-		const char *owner)
+                const char *filename,
+                krb5_boolean is_system_location,
+                DIR *dir,
+                struct stat *dirlstat,
+                const char *owner)
 {
 #ifdef _WIN32
     /*
@@ -133,9 +133,9 @@ check_owner_dir(krb5_context context,
      * lookup at least (to get the user's SID). 
      */
     if (is_system_location || owner == NULL)
-	return 0;
+        return 0;
     krb5_set_error_message(context, EACCES,
-			   "User k5login files not supported on Windows");
+                           "User k5login files not supported on Windows");
     return EACCES;
 #else
     struct passwd pw, *pwd = NULL;
@@ -145,53 +145,53 @@ check_owner_dir(krb5_context context,
     heim_assert(owner != NULL, "no directory owner ?");
 
     if (getpwnam_r(owner, &pw, pwbuf, sizeof(pwbuf), &pwd) != 0) {
-	krb5_set_error_message(context, errno,
-			       "User unknown %s (getpwnam_r())", owner);
-	return EACCES;
+        krb5_set_error_message(context, errno,
+                               "User unknown %s (getpwnam_r())", owner);
+        return EACCES;
     }
     if (pwd == NULL) {
-	krb5_set_error_message(context, EACCES, "no user %s", owner);
-	return EACCES;
+        krb5_set_error_message(context, EACCES, "no user %s", owner);
+        return EACCES;
     }
 
     if (fstat(dirfd(dir), &st) == -1) {
-	krb5_set_error_message(context, EACCES,
-			       "fstat(%s) of k5login.d failed",
-			       filename);
-	return EACCES;
+        krb5_set_error_message(context, EACCES,
+                               "fstat(%s) of k5login.d failed",
+                               filename);
+        return EACCES;
     }
     if (!S_ISDIR(st.st_mode)) {
-	krb5_set_error_message(context, ENOTDIR, "%s not a directory",
-			       filename);
-	return ENOTDIR;
+        krb5_set_error_message(context, ENOTDIR, "%s not a directory",
+                               filename);
+        return ENOTDIR;
     }
     if (st.st_dev != dirlstat->st_dev || st.st_ino != dirlstat->st_ino) {
-	krb5_set_error_message(context, EACCES,
-			       "%s was renamed during kuserok "
-			       "operation", filename);
-	return EACCES;
+        krb5_set_error_message(context, EACCES,
+                               "%s was renamed during kuserok "
+                               "operation", filename);
+        return EACCES;
     }
     if ((st.st_mode & (S_IWGRP | S_IWOTH)) != 0) {
-	krb5_set_error_message(context, EACCES,
-			       "%s has world and/or group write "
-			       "permissions", filename);
-	return EACCES;
+        krb5_set_error_message(context, EACCES,
+                               "%s has world and/or group write "
+                               "permissions", filename);
+        return EACCES;
     }
     if (pwd->pw_uid != st.st_uid && st.st_uid != 0) {
-	krb5_set_error_message(context, EACCES,
-			       "%s not owned by the user (%s) or root",
-			       filename, owner);
-	return EACCES;
+        krb5_set_error_message(context, EACCES,
+                               "%s not owned by the user (%s) or root",
+                               filename, owner);
+        return EACCES;
     }
-    
+
     return 0;
 #endif
 }
 
 static krb5_error_code
 check_owner_file(krb5_context context,
-		 const char *filename,
-		 FILE *file, const char *owner)
+                 const char *filename,
+                 FILE *file, const char *owner)
 {
 #ifdef _WIN32
     /*
@@ -206,10 +206,10 @@ check_owner_file(krb5_context context,
      * lookup at least (to get the user's SID). 
      */
     if (owner == NULL)
-	return 0;
+        return 0;
 
     krb5_set_error_message(context, EACCES,
-			   "User k5login files not supported on Windows");
+                           "User k5login files not supported on Windows");
     return EACCES;
 #else
     struct passwd pw, *pwd = NULL;
@@ -217,39 +217,39 @@ check_owner_file(krb5_context context,
     struct stat st;
 
     if (owner == NULL)
-	return 0;
+        return 0;
 
     if (getpwnam_r(owner, &pw, pwbuf, sizeof(pwbuf), &pwd) != 0) {
-	krb5_set_error_message(context, errno,
-			       "User unknown %s (getpwnam_r())", owner);
-	return EACCES;
+        krb5_set_error_message(context, errno,
+                               "User unknown %s (getpwnam_r())", owner);
+        return EACCES;
     }
     if (pwd == NULL) {
-	krb5_set_error_message(context, EACCES, "no user %s", owner);
-	return EACCES;
+        krb5_set_error_message(context, EACCES, "no user %s", owner);
+        return EACCES;
     }
 
     if (fstat(fileno(file), &st) == -1) {
-	krb5_set_error_message(context, EACCES, "fstat(%s) of k5login failed",
-			       filename);
-	return EACCES;
+        krb5_set_error_message(context, EACCES, "fstat(%s) of k5login failed",
+                               filename);
+        return EACCES;
     }
     if (S_ISDIR(st.st_mode)) {
-	krb5_set_error_message(context, EISDIR, "k5login: %s is a directory",
-			       filename);
-	return EISDIR;
+        krb5_set_error_message(context, EISDIR, "k5login: %s is a directory",
+                               filename);
+        return EISDIR;
     }
     if ((st.st_mode & (S_IWGRP | S_IWOTH)) != 0) {
-	krb5_set_error_message(context, EISDIR,
-			       "k5login %s has world and/or group write "
-			       "permissions", filename);
-	return EACCES;
+        krb5_set_error_message(context, EISDIR,
+                               "k5login %s has world and/or group write "
+                               "permissions", filename);
+        return EACCES;
     }
     if (pwd->pw_uid != st.st_uid && st.st_uid != 0) {
-	krb5_set_error_message(context, EACCES,
-			       "k5login %s not owned by the user or root",
-			       filename);
-	return EACCES;
+        krb5_set_error_message(context, EACCES,
+                               "k5login %s not owned by the user or root",
+                               filename);
+        return EACCES;
     }
 
     return 0;
@@ -262,11 +262,11 @@ check_owner_file(krb5_context context,
 
 static krb5_error_code
 check_one_file(krb5_context context,
-	       const char *filename,
-	       const char *owner,
-	       krb5_boolean is_system_location,
-	       krb5_const_principal principal,
-	       krb5_boolean *result)
+               const char *filename,
+               const char *owner,
+               krb5_boolean is_system_location,
+               krb5_const_principal principal,
+               krb5_boolean *result)
 {
     FILE *f;
     char buf[BUFSIZ];
@@ -276,37 +276,37 @@ check_one_file(krb5_context context,
 
     f = fopen(filename, "r");
     if (f == NULL)
-	return errno;
+        return errno;
     rk_cloexec_file(f);
 
     ret = check_owner_file(context, filename, f, owner);
     if (ret)
-	goto out;
+        goto out;
 
     while (fgets(buf, sizeof(buf), f) != NULL) {
-	krb5_principal tmp;
-	char *newline = buf + strcspn(buf, "\n");
+        krb5_principal tmp;
+        char *newline = buf + strcspn(buf, "\n");
 
-	if (*newline != '\n') {
-	    int c;
-	    c = fgetc(f);
-	    if (c != EOF) {
-		while (c != EOF && c != '\n')
-		    c = fgetc(f);
-		/* line was too long, so ignore it */
-		continue;
-	    }
-	}
-	*newline = '\0';
-	ret = krb5_parse_name(context, buf, &tmp);
-	if (ret)
-	    continue;
-	*result = krb5_principal_compare(context, principal, tmp);
-	krb5_free_principal(context, tmp);
-	if (*result) {
-	    fclose (f);
-	    return 0;
-	}
+        if (*newline != '\n') {
+            int c;
+            c = fgetc(f);
+            if (c != EOF) {
+                while (c != EOF && c != '\n')
+                    c = fgetc(f);
+                /* line was too long, so ignore it */
+                continue;
+            }
+        }
+        *newline = '\0';
+        ret = krb5_parse_name(context, buf, &tmp);
+        if (ret)
+            continue;
+        *result = krb5_principal_compare(context, principal, tmp);
+        krb5_free_principal(context, tmp);
+        if (*result) {
+            fclose (f);
+            return 0;
+        }
     }
 
 out:
@@ -316,11 +316,11 @@ out:
 
 static krb5_error_code
 check_directory(krb5_context context,
-		const char *dirname,
-		const char *owner,
-	        krb5_boolean is_system_location,
-		krb5_const_principal principal,
-		krb5_boolean *result)
+                const char *dirname,
+                const char *owner,
+                krb5_boolean is_system_location,
+                krb5_const_principal principal,
+                krb5_boolean *result)
 {
     DIR *d;
     struct dirent *dent;
@@ -332,43 +332,43 @@ check_directory(krb5_context context,
     *result = FALSE;
 
     if (lstat(dirname, &st) < 0)
-	return errno;
+        return errno;
 
     if (!S_ISDIR(st.st_mode)) {
-	krb5_set_error_message(context, ENOTDIR, "k5login.d not a directory");
-	return ENOTDIR;
+        krb5_set_error_message(context, ENOTDIR, "k5login.d not a directory");
+        return ENOTDIR;
     }
 
     if ((d = opendir(dirname)) == NULL) {
-	krb5_set_error_message(context, ENOTDIR, "Could not open k5login.d");
-	return errno;
+        krb5_set_error_message(context, ENOTDIR, "Could not open k5login.d");
+        return errno;
     }
 
     ret = check_owner_dir(context, dirname, is_system_location, d, &st, owner);
     if (ret)
-	goto out;
+        goto out;
 
     while ((dent = readdir(d)) != NULL) {
-	/*
-	 * XXX: Should we also skip files whose names start with "."?
-	 * Vim ".filename.swp" files are also good candidates to skip.
-	 * Once we ignore "#*" and "*~", it is not clear what other
-	 * heuristics to apply.
-	 */
-	if (strcmp(dent->d_name, ".") == 0 ||
-	   strcmp(dent->d_name, "..") == 0 ||
-	   dent->d_name[0] == '#' ||			  /* emacs autosave */
-	   dent->d_name[strlen(dent->d_name) - 1] == '~') /* emacs backup */
-	    continue;
-	len = snprintf(filename, sizeof(filename), "%s/%s", dirname, dent->d_name);
-	/* Skip too-long filenames that got truncated by snprintf() */
-	if (len < sizeof(filename)) {
-	    ret = check_one_file(context, filename, owner, is_system_location,
-				 principal, result);
-	    if (ret == 0 && *result == TRUE)
-		break;
-	}
-	ret = 0; /* don't propagate errors upstream */
+        /*
+         * XXX: Should we also skip files whose names start with "."?
+         * Vim ".filename.swp" files are also good candidates to skip.
+         * Once we ignore "#*" and "*~", it is not clear what other
+         * heuristics to apply.
+         */
+        if (strcmp(dent->d_name, ".") == 0 ||
+           strcmp(dent->d_name, "..") == 0 ||
+           dent->d_name[0] == '#' ||			  /* emacs autosave */
+           dent->d_name[strlen(dent->d_name) - 1] == '~') /* emacs backup */
+            continue;
+        len = snprintf(filename, sizeof(filename), "%s/%s", dirname, dent->d_name);
+        /* Skip too-long filenames that got truncated by snprintf() */
+        if (len < sizeof(filename)) {
+            ret = check_one_file(context, filename, owner, is_system_location,
+                                 principal, result);
+            if (ret == 0 && *result == TRUE)
+                break;
+        }
+        ret = 0; /* don't propagate errors upstream */
     }
 
 out:
@@ -378,9 +378,9 @@ out:
 
 static krb5_error_code
 check_an2ln(krb5_context context,
-	    krb5_const_principal principal,
-	    const char *luser,
-	    krb5_boolean *result)
+            krb5_const_principal principal,
+            const char *luser,
+            krb5_boolean *result)
 {
     krb5_error_code ret;
     char *lname;
@@ -389,21 +389,21 @@ check_an2ln(krb5_context context,
     /* XXX Should we make this an option? */
     /* multi-component principals can never match */
     if (krb5_principal_get_comp_string(context, principal, 1) != NULL) {
-	*result =  FALSE;
-	return 0;
+        *result =  FALSE;
+        return 0;
     }
 #endif
 
     lname = malloc(strlen(luser) + 1);
     if (lname == NULL)
-	return krb5_enomem(context);
+        return krb5_enomem(context);
     ret = krb5_aname_to_localname(context, principal, strlen(luser)+1, lname);
     if (ret)
-	goto out;
+        goto out;
     if (strcmp(lname, luser) == 0)
-	*result = TRUE;
+        *result = TRUE;
     else
-	*result = FALSE;
+        *result = FALSE;
 
 out:
     free(lname);
@@ -448,8 +448,8 @@ out:
 
 KRB5_LIB_FUNCTION krb5_boolean KRB5_LIB_CALL
 krb5_kuserok(krb5_context context,
-	     krb5_principal principal,
-	     const char *luser)
+             krb5_principal principal,
+             const char *luser)
 {
     return _krb5_kuserok(context, principal, luser, TRUE);
 }
@@ -468,9 +468,9 @@ kuserok_plugin_data = {
 
 KRB5_LIB_FUNCTION krb5_boolean KRB5_LIB_CALL
 _krb5_kuserok(krb5_context context,
-	      krb5_principal principal,
-	      const char *luser,
-	      krb5_boolean an2ln_ok)
+              krb5_principal principal,
+              const char *luser,
+              krb5_boolean an2ln_ok)
 {
     static heim_base_once_t reg_def_plugins = HEIM_BASE_ONCE_INIT;
     krb5_error_code ret;
@@ -492,45 +492,45 @@ _krb5_kuserok(krb5_context context,
     ctx.result = FALSE;
 
     ctx.k5login_dir = krb5_config_get_string(context, NULL, "libdefaults",
-					     "k5login_directory", NULL);
+                                             "k5login_directory", NULL);
 
     if (an2ln_ok)
-	ctx.flags |= KUSEROK_ANAME_TO_LNAME_OK;
+        ctx.flags |= KUSEROK_ANAME_TO_LNAME_OK;
 
     if (krb5_config_get_bool_default(context, NULL, FALSE, "libdefaults",
-				     "k5login_authoritative", NULL))
-	ctx.flags |= KUSEROK_K5LOGIN_IS_AUTHORITATIVE;
+                                     "k5login_authoritative", NULL))
+        ctx.flags |= KUSEROK_K5LOGIN_IS_AUTHORITATIVE;
 
     if ((ctx.flags & KUSEROK_K5LOGIN_IS_AUTHORITATIVE) && plugin_reg_ret)
-	return plugin_reg_ret; /* fail safe */
+        return plugin_reg_ret; /* fail safe */
 
     rules = krb5_config_get_strings(context, NULL, "libdefaults",
-				    "kuserok", NULL);
+                                    "kuserok", NULL);
     if (rules == NULL) {
-	/* Default: check ~/.k5login */
-	ctx.rule = "USER-K5LOGIN";
+        /* Default: check ~/.k5login */
+        ctx.rule = "USER-K5LOGIN";
 
-	ret = plcallback(context, &kuserok_user_k5login_plug, NULL, &ctx);
-	if (ret == 0)
-	    goto out;
+        ret = plcallback(context, &kuserok_user_k5login_plug, NULL, &ctx);
+        if (ret == 0)
+            goto out;
 
-	ctx.rule = "SIMPLE";
-	ret = plcallback(context, &kuserok_simple_plug, NULL, &ctx);
-	if (ret == 0)
-	    goto out;
+        ctx.rule = "SIMPLE";
+        ret = plcallback(context, &kuserok_simple_plug, NULL, &ctx);
+        if (ret == 0)
+            goto out;
 
-	ctx.result = FALSE;
+        ctx.result = FALSE;
     } else {
-	size_t n;
+        size_t n;
 
-	for (n = 0; rules[n]; n++) {
-	    ctx.rule = rules[n];
+        for (n = 0; rules[n]; n++) {
+            ctx.rule = rules[n];
 
-	    ret = _krb5_plugin_run_f(context, &kuserok_plugin_data,
-				     0, &ctx, plcallback);
-	    if (ret != KRB5_PLUGIN_NO_HANDLE) 
-		goto out;
-	}
+            ret = _krb5_plugin_run_f(context, &kuserok_plugin_data,
+                                     0, &ctx, plcallback);
+            if (ret != KRB5_PLUGIN_NO_HANDLE) 
+                goto out;
+        }
     }
 
 out:
@@ -545,18 +545,18 @@ out:
 
 static krb5_error_code KRB5_LIB_CALL
 kuserok_simple_plug_f(void *plug_ctx, krb5_context context, const char *rule,
-		      unsigned int flags, const char *k5login_dir,
-		      const char *luser, krb5_const_principal principal,
-		      krb5_boolean *result)
+                      unsigned int flags, const char *k5login_dir,
+                      const char *luser, krb5_const_principal principal,
+                      krb5_boolean *result)
 {
     krb5_error_code ret;
 
     if (strcmp(rule, "SIMPLE") != 0 || (flags & KUSEROK_ANAME_TO_LNAME_OK) == 0)
-	return KRB5_PLUGIN_NO_HANDLE;
+        return KRB5_PLUGIN_NO_HANDLE;
 
     ret = check_an2ln(context, principal, luser, result);
     if (ret == 0 && *result == FALSE)
-	return KRB5_PLUGIN_NO_HANDLE;
+        return KRB5_PLUGIN_NO_HANDLE;
 
     return 0;
 }
@@ -568,9 +568,9 @@ kuserok_simple_plug_f(void *plug_ctx, krb5_context context, const char *rule,
 
 static krb5_error_code KRB5_LIB_CALL
 kuserok_sys_k5login_plug_f(void *plug_ctx, krb5_context context,
-			   const char *rule, unsigned int flags,
-			   const char *k5login_dir, const char *luser,
-			   krb5_const_principal principal, krb5_boolean *result)
+                           const char *rule, unsigned int flags,
+                           const char *k5login_dir, const char *luser,
+                           krb5_const_principal principal, krb5_boolean *result)
 {
     char filename[MAXPATHLEN];
     size_t len;
@@ -580,22 +580,22 @@ kuserok_sys_k5login_plug_f(void *plug_ctx, krb5_context context,
     *result = FALSE;
 
     if (strcmp(rule, "SYSTEM-K5LOGIN") != 0 &&
-	strncmp(rule, "SYSTEM-K5LOGIN:", strlen("SYSTEM-K5LOGIN:")) != 0)
-	return KRB5_PLUGIN_NO_HANDLE;
+        strncmp(rule, "SYSTEM-K5LOGIN:", strlen("SYSTEM-K5LOGIN:")) != 0)
+        return KRB5_PLUGIN_NO_HANDLE;
 
     profile_dir = strchr(rule, ':');
     if (profile_dir == NULL)
-	profile_dir = k5login_dir ? k5login_dir : SYSTEM_K5LOGIN_DIR;
+        profile_dir = k5login_dir ? k5login_dir : SYSTEM_K5LOGIN_DIR;
     else
-	profile_dir++;
+        profile_dir++;
 
     len = snprintf(filename, sizeof(filename), "%s/%s", profile_dir, luser);
     if (len < sizeof(filename)) {
-	ret = check_one_file(context, filename, NULL, TRUE, principal, result);
+        ret = check_one_file(context, filename, NULL, TRUE, principal, result);
 
-	if (ret == 0 &&
-	    ((flags & KUSEROK_K5LOGIN_IS_AUTHORITATIVE) || *result == TRUE))
-	    return 0;
+        if (ret == 0 &&
+            ((flags & KUSEROK_K5LOGIN_IS_AUTHORITATIVE) || *result == TRUE))
+            return 0;
     }
 
     *result = FALSE;
@@ -608,10 +608,10 @@ kuserok_sys_k5login_plug_f(void *plug_ctx, krb5_context context,
 
 static krb5_error_code KRB5_LIB_CALL
 kuserok_user_k5login_plug_f(void *plug_ctx, krb5_context context,
-			    const char *rule, unsigned int flags,
-			    const char *k5login_dir, const char *luser,
-			    krb5_const_principal principal,
-			    krb5_boolean *result)
+                            const char *rule, unsigned int flags,
+                            const char *k5login_dir, const char *luser,
+                            krb5_const_principal principal,
+                            krb5_boolean *result)
 {
 #ifdef _WIN32
     return KRB5_PLUGIN_NO_HANDLE;
@@ -625,35 +625,35 @@ kuserok_user_k5login_plug_f(void *plug_ctx, krb5_context context,
     char pwbuf[2048];
 
     if (strcmp(rule, "USER-K5LOGIN") != 0)
-	return KRB5_PLUGIN_NO_HANDLE;
+        return KRB5_PLUGIN_NO_HANDLE;
 
     profile_dir = k5login_dir;
     if (profile_dir == NULL) {
-	/* Don't deadlock with gssd or anything of the sort */
-	if (!_krb5_homedir_access(context))
-	    return KRB5_PLUGIN_NO_HANDLE;
+        /* Don't deadlock with gssd or anything of the sort */
+        if (!_krb5_homedir_access(context))
+            return KRB5_PLUGIN_NO_HANDLE;
 
-	if (getpwnam_r(luser, &pw, pwbuf, sizeof(pwbuf), &pwd) != 0) {
-	    krb5_set_error_message(context, errno, "User unknown (getpwnam_r())");
-	    return KRB5_PLUGIN_NO_HANDLE;
-	}
-	if (pwd == NULL) {
-	    krb5_set_error_message(context, errno, "User unknown (getpwnam())");
-	    return KRB5_PLUGIN_NO_HANDLE;
-	}
-	profile_dir = pwd->pw_dir;
+        if (getpwnam_r(luser, &pw, pwbuf, sizeof(pwbuf), &pwd) != 0) {
+            krb5_set_error_message(context, errno, "User unknown (getpwnam_r())");
+            return KRB5_PLUGIN_NO_HANDLE;
+        }
+        if (pwd == NULL) {
+            krb5_set_error_message(context, errno, "User unknown (getpwnam())");
+            return KRB5_PLUGIN_NO_HANDLE;
+        }
+        profile_dir = pwd->pw_dir;
     }
 
 #define KLOGIN "/.k5login"
 
     if (asprintf(&path, "%s/.k5login.d", profile_dir) == -1)
-	return krb5_enomem(context);
+        return krb5_enomem(context);
 
     ret = _krb5_expand_path_tokensv(context, path, 1, &path_exp,
-				    "luser", luser, NULL);
+                                    "luser", luser, NULL);
     free(path);
     if (ret)
-	return ret;
+        return ret;
     path = path_exp;
 
     /* check user's ~/.k5login */
@@ -665,11 +665,11 @@ kuserok_user_k5login_plug_f(void *plug_ctx, krb5_context context,
      * .k5login.d code below.
      */
     if (ret == 0 && *result == TRUE) {
-	free(path);
-	return 0;
+        free(path);
+        return 0;
     }
     if (ret != ENOENT)
-	found_file = TRUE;
+        found_file = TRUE;
 
     /*
      * A match in ~/.k5login.d/somefile is sufficient.  A non-match, falls
@@ -681,9 +681,9 @@ kuserok_user_k5login_plug_f(void *plug_ctx, krb5_context context,
     ret = check_directory(context, path, luser, FALSE, principal, result);
     free(path);
     if (ret == 0 && *result == TRUE)
-	return 0;
+        return 0;
     if (ret != ENOENT && ret != ENOTDIR)
-	found_file = TRUE;
+        found_file = TRUE;
 
     /*
      * When either ~/.k5login or ~/.k5login.d/ exists, but neither matches
@@ -692,19 +692,19 @@ kuserok_user_k5login_plug_f(void *plug_ctx, krb5_context context,
      */
     *result = FALSE;
     if (found_file && (flags & KUSEROK_K5LOGIN_IS_AUTHORITATIVE))
-	return 0;
+        return 0;
     return KRB5_PLUGIN_NO_HANDLE;
 #endif
 }
 
 static krb5_error_code KRB5_LIB_CALL
 kuserok_deny_plug_f(void *plug_ctx, krb5_context context, const char *rule,
-		    unsigned int flags, const char *k5login_dir,
-		    const char *luser, krb5_const_principal principal,
-		    krb5_boolean *result)
+                    unsigned int flags, const char *k5login_dir,
+                    const char *luser, krb5_const_principal principal,
+                    krb5_boolean *result)
 {
     if (strcmp(rule, "DENY") != 0)
-	return KRB5_PLUGIN_NO_HANDLE;
+        return KRB5_PLUGIN_NO_HANDLE;
 
     *result = FALSE;
     return 0;

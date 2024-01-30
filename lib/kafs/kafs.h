@@ -91,17 +91,17 @@
 #define VIOCSETTOK2		_AFSCIOCTL(8)
 
 struct ViceIoctl {
-  caddr_t in, out;
-  unsigned short in_size;
-  unsigned short out_size;
+    caddr_t in, out;
+    unsigned short in_size;
+    unsigned short out_size;
 };
 
 struct ClearToken {
-  int32_t AuthHandle;
-  char HandShakeKey[8];
-  int32_t ViceId;
-  int32_t BeginTimestamp;
-  int32_t EndTimestamp;
+    int32_t AuthHandle;
+    char HandShakeKey[8];
+    int32_t ViceId;
+    int32_t BeginTimestamp;
+    int32_t EndTimestamp;
 };
 
 /* Use k_hasafs() to probe if the machine supports AFS syscalls.
@@ -113,9 +113,9 @@ int k_hasafs_recheck (void);
 int krb_afslog (const char *cell, const char *realm);
 int krb_afslog_uid (const char *cell, const char *realm, uid_t uid);
 int krb_afslog_home (const char *cell, const char *realm,
-			 const char *homedir);
+                     const char *homedir);
 int krb_afslog_uid_home (const char *cell, const char *realm, uid_t uid,
-			     const char *homedir);
+                         const char *homedir);
 
 int krb_realm_of_cell (const char *cell, char **realm);
 
@@ -124,9 +124,9 @@ int krb_realm_of_cell (const char *cell, char **realm);
 #define k_afsklog_uid krb_afslog_uid
 
 int k_pioctl (char *a_path,
-		  int o_opcode,
-		  struct ViceIoctl *a_paramsP,
-		  int a_followSymlinks);
+              int o_opcode,
+              struct ViceIoctl *a_paramsP,
+              int a_followSymlinks);
 int k_unlog (void);
 int k_setpag (void);
 int k_afs_cell_of_file (const char *path, char *cell, int len);
@@ -144,7 +144,7 @@ int k_afs_cell_of_file (const char *path, char *cell, int len);
 
 void kafs_set_verbose (void (*kafs_verbose)(void *, const char *), void *);
 int kafs_settoken_rxkad (const char *, struct ClearToken *,
-			     void *ticket, size_t ticket_len);
+                         void *ticket, size_t ticket_len);
 #ifdef KRB_H_INCLUDED
 int kafs_settoken (const char*, uid_t, CREDENTIALS*);
 #endif
@@ -155,26 +155,26 @@ int kafs_settoken5 (krb5_context, const char*, uid_t, krb5_creds*);
 
 #ifdef KRB5_H_INCLUDED
 krb5_error_code krb5_afslog_uid (krb5_context context,
-				     krb5_ccache id,
-				     const char *cell,
-				     krb5_const_realm realm,
-				     uid_t uid);
+                                 krb5_ccache id,
+                                 const char *cell,
+                                 krb5_const_realm realm,
+                                 uid_t uid);
 krb5_error_code krb5_afslog (krb5_context context,
-				 krb5_ccache id,
-				 const char *cell,
-				 krb5_const_realm realm);
+                             krb5_ccache id,
+                             const char *cell,
+                             krb5_const_realm realm);
 krb5_error_code krb5_afslog_uid_home (krb5_context context,
-					  krb5_ccache id,
-					  const char *cell,
-					  krb5_const_realm realm,
-					  uid_t uid,
-					  const char *homedir);
+                                      krb5_ccache id,
+                                      const char *cell,
+                                      krb5_const_realm realm,
+                                      uid_t uid,
+                                      const char *homedir);
 
 krb5_error_code krb5_afslog_home (krb5_context context,
-				      krb5_ccache id,
-				      const char *cell,
-				      krb5_const_realm realm,
-				      const char *homedir);
+                                  krb5_ccache id,
+                                  const char *cell,
+                                  krb5_const_realm realm,
+                                  const char *homedir);
 
 krb5_error_code krb5_realm_of_cell (const char *cell, char **realm);
 

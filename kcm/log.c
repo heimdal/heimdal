@@ -44,13 +44,13 @@ kcm_openlog(void)
     krb5_initlog(kcm_context, "kcm", &logfac);
     s = krb5_config_get_strings(kcm_context, NULL, "kcm", "logging", NULL);
     if(s == NULL)
-	s = krb5_config_get_strings(kcm_context, NULL, "logging", "kcm", NULL);
+        s = krb5_config_get_strings(kcm_context, NULL, "logging", "kcm", NULL);
     if(s){
-	for(p = s; *p; p++)
-	    krb5_addlog_dest(kcm_context, logfac, *p);
-	krb5_config_free_strings(s);
+        for(p = s; *p; p++)
+            krb5_addlog_dest(kcm_context, logfac, *p);
+        krb5_config_free_strings(s);
     }else
-	krb5_addlog_dest(kcm_context, logfac, DEFAULT_LOG_DEST);
+        krb5_addlog_dest(kcm_context, logfac, DEFAULT_LOG_DEST);
     krb5_set_warn_dest(kcm_context, logfac);
 }
 

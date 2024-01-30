@@ -166,28 +166,28 @@ typedef struct HDB {
      * knvo (if specified and flags HDB_F_KVNO_SPECIFIED set) is the kvno to get
      */
     krb5_error_code (*hdb_fetch_kvno)(krb5_context, struct HDB*,
-				      krb5_const_principal, unsigned, krb5_kvno,
-				      hdb_entry*);
+                                      krb5_const_principal, unsigned, krb5_kvno,
+                                      hdb_entry*);
     /**
      * Store an entry to database
      */
     krb5_error_code (*hdb_store)(krb5_context, struct HDB*,
-				 unsigned, hdb_entry*);
+                                 unsigned, hdb_entry*);
     /**
      * Remove an entry from the database.
      */
     krb5_error_code (*hdb_remove)(krb5_context, struct HDB*,
-				  unsigned, krb5_const_principal);
+                                  unsigned, krb5_const_principal);
     /**
      * As part of iteration, fetch one entry
      */
     krb5_error_code (*hdb_firstkey)(krb5_context, struct HDB*,
-				    unsigned, hdb_entry*);
+                                    unsigned, hdb_entry*);
     /**
      * As part of iteration, fetch next entry
      */
     krb5_error_code (*hdb_nextkey)(krb5_context, struct HDB*,
-				   unsigned, hdb_entry*);
+                                   unsigned, hdb_entry*);
     /**
      * Lock database
      *
@@ -214,7 +214,7 @@ typedef struct HDB {
      * encoded entry is of type hdb_entry or hdb_entry_alias.
      */
     krb5_error_code (*hdb__get)(krb5_context, struct HDB*,
-				krb5_data, krb5_data*);
+                                krb5_data, krb5_data*);
     /**
      * Store an hdb_entry from a classical DB backend
      *
@@ -228,7 +228,7 @@ typedef struct HDB {
      * per-transaction will require HDB API extensions.
      */
     krb5_error_code (*hdb__put)(krb5_context, struct HDB*, int,
-				krb5_data, krb5_data);
+                                krb5_data, krb5_data);
     /**
      * Delete and hdb_entry from a classical DB backend
      *
@@ -327,7 +327,7 @@ struct hdb_print_entry_arg {
 };
 
 typedef krb5_error_code (*hdb_foreach_func_t)(krb5_context, HDB*,
-					      hdb_entry*, void*);
+                                              hdb_entry*, void*);
 extern krb5_kt_ops hdb_kt_ops;
 extern krb5_kt_ops hdb_get_kt_ops;
 

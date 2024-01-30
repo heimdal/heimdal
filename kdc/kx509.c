@@ -542,13 +542,13 @@ update_csr(krb5_context context, kx509_req_context reqctx, Extensions *exts)
         }
     }
     if (ret) {
-	const char *emsg = krb5_get_error_message(context, ret);
+        const char *emsg = krb5_get_error_message(context, ret);
         kdc_log(context, reqctx->config, 1,
                 "Error handling requested extensions: %s", emsg);
         kdc_audit_addreason((kdc_request_t)reqctx,
                             "Error handling requested extensions: %s",
                             emsg);
-	krb5_free_error_message(context, emsg);
+        krb5_free_error_message(context, emsg);
     }
     return ret;
 }
@@ -683,29 +683,29 @@ check_authz(krb5_context context,
 
             /* This should be an hx509 function... */
             switch (san_type) {
-            case HX509_SAN_TYPE_EMAIL: san_type_s = "rfc822Name"; break;
-            case HX509_SAN_TYPE_DNSNAME: san_type_s = "dNSName"; break;
-            case HX509_SAN_TYPE_DN: san_type_s = "DN"; break;
-            case HX509_SAN_TYPE_REGISTERED_ID: san_type_s = "registeredID"; break;
-            case HX509_SAN_TYPE_XMPP: san_type_s = "xMPPName"; break;
-            case HX509_SAN_TYPE_PKINIT: san_type_s = "krb5PrincipalName"; break;
-            case HX509_SAN_TYPE_MS_UPN: san_type_s = "ms-UPN"; break;
-            default: san_type_s = "unknown"; break;
+                case HX509_SAN_TYPE_EMAIL: san_type_s = "rfc822Name"; break;
+                case HX509_SAN_TYPE_DNSNAME: san_type_s = "dNSName"; break;
+                case HX509_SAN_TYPE_DN: san_type_s = "DN"; break;
+                case HX509_SAN_TYPE_REGISTERED_ID: san_type_s = "registeredID"; break;
+                case HX509_SAN_TYPE_XMPP: san_type_s = "xMPPName"; break;
+                case HX509_SAN_TYPE_PKINIT: san_type_s = "krb5PrincipalName"; break;
+                case HX509_SAN_TYPE_MS_UPN: san_type_s = "ms-UPN"; break;
+                default: san_type_s = "unknown"; break;
             }
             kdc_audit_addkv((kdc_request_t)reqctx, 0, "san0_type", "%s",
                             san_type_s);
             kdc_audit_addkv((kdc_request_t)reqctx, 0, "san0", "%s", s);
         }
-	frees(&s);
+        frees(&s);
         ret = hx509_request_get_eku(reqctx->csr, 0, &s);
         if (ret == 0)
             kdc_audit_addkv((kdc_request_t)reqctx, 0, "eku0", "%s", s);
-	free(s);
+        free(s);
         return 0;
     }
     if (ret != KRB5_PLUGIN_NO_HANDLE) {
         kdc_audit_addreason((kdc_request_t)reqctx,
-                             "Requested extensions rejected by plugin");
+                            "Requested extensions rejected by plugin");
         return ret;
     }
 
@@ -720,32 +720,32 @@ check_authz(krb5_context context,
         if (ret)
             break;
         switch (san_type) {
-        case HX509_SAN_TYPE_DNSNAME:
-            if (ncomp != 2 || strcasecmp(comp1, s) != 0 ||
-                strchr(s, '.') == NULL ||
-                !check_authz_svc_ok(context, comp0)) {
+            case HX509_SAN_TYPE_DNSNAME:
+                if (ncomp != 2 || strcasecmp(comp1, s) != 0 ||
+                    strchr(s, '.') == NULL ||
+                    !check_authz_svc_ok(context, comp0)) {
+                    kdc_audit_addreason((kdc_request_t)reqctx,
+                                        "Requested extensions rejected by "
+                                        "default policy (dNSName SAN "
+                                        "does not match client)");
+                    goto eacces;
+                }
+                break;
+            case HX509_SAN_TYPE_PKINIT:
+                if (strcmp(cprinc, s) != 0) {
+                    kdc_audit_addreason((kdc_request_t)reqctx,
+                                        "Requested extensions rejected by "
+                                        "default policy (PKINIT SAN "
+                                        "does not match client)");
+                    goto eacces;
+                }
+                break;
+            default:
                 kdc_audit_addreason((kdc_request_t)reqctx,
                                     "Requested extensions rejected by "
-                                    "default policy (dNSName SAN "
-                                    "does not match client)");
+                                    "default policy (non-default SAN "
+                                    "requested)");
                 goto eacces;
-            }
-            break;
-        case HX509_SAN_TYPE_PKINIT:
-            if (strcmp(cprinc, s) != 0) {
-                kdc_audit_addreason((kdc_request_t)reqctx,
-                                    "Requested extensions rejected by "
-                                    "default policy (PKINIT SAN "
-                                    "does not match client)");
-                goto eacces;
-            }
-            break;
-        default:
-            kdc_audit_addreason((kdc_request_t)reqctx,
-                                "Requested extensions rejected by "
-                                "default policy (non-default SAN "
-                                "requested)");
-            goto eacces;
         }
     }
     frees(&s);
@@ -802,7 +802,7 @@ eacces:
 out:
     /* XXX Display error code */
     kdc_audit_addreason((kdc_request_t)reqctx,
-                         "Error handling requested extensions");
+                        "Error handling requested extensions");
 out2:
     free(cprinc);
     free(s);
@@ -900,12 +900,12 @@ _kdc_do_kx509(kx509_req_context r)
     /* Authenticate the request (consume the AP-REQ) */
     ret = krb5_kt_resolve(r->context, "HDBGET:", &id);
     if (ret) {
-	const char *msg = krb5_get_error_message(r->context, ret);
+        const char *msg = krb5_get_error_message(r->context, ret);
         ret = mk_error_response(r->context, r, 1,
                                 KRB5KDC_ERR_S_PRINCIPAL_UNKNOWN,
                                 "Can't open HDB/keytab for kx509: %s",
-				msg);
-	krb5_free_error_message(r->context, msg);
+                                msg);
+        krb5_free_error_message(r->context, msg);
         goto out;
     }
 
@@ -941,7 +941,7 @@ _kdc_do_kx509(kx509_req_context r)
     }
 
     if (ret == 0)
-	ret = krb5_unparse_name(r->context, cprincipal, &r->cname);
+        ret = krb5_unparse_name(r->context, cprincipal, &r->cname);
 
     /* Check that the service name is a valid kx509 service name */
     if (ret == 0)
@@ -983,20 +983,20 @@ _kdc_do_kx509(kx509_req_context r)
     /* Extract and parse CSR or a DER-encoded RSA public key */
     ret = get_csr(r->context, r);
     if (ret) {
-	const char *msg = krb5_get_error_message(r->context, ret);
+        const char *msg = krb5_get_error_message(r->context, ret);
         ret = mk_error_response(r->context, r, 3, ret,
                                 "Failed to parse CSR: %s", msg);
-	krb5_free_error_message(r->context, msg);
+        krb5_free_error_message(r->context, msg);
         goto out;
     }
 
     /* Authorize the request */
     ret = check_authz(r->context, r, cprincipal);
     if (ret) {
-	const char *msg = krb5_get_error_message(r->context, ret);
+        const char *msg = krb5_get_error_message(r->context, ret);
         ret = mk_error_response(r->context, r, 3, ret,
                                 "Rejected by policy: %s", msg);
-	krb5_free_error_message(r->context, msg);
+        krb5_free_error_message(r->context, msg);
         goto out;
     }
 
@@ -1017,23 +1017,23 @@ _kdc_do_kx509(kx509_req_context r)
                                 r->send_chain, &certs);
     if (ret) {
         int level = 1;
-	const char *msg = krb5_get_error_message(r->context, ret);
+        const char *msg = krb5_get_error_message(r->context, ret);
 
         if (ret == KRB5KDC_ERR_POLICY)
             level = 4; /* _kdc_audit_trail() logs at level 3 */
         ret = mk_error_response(r->context, r, level, ret,
                                 "Certificate isuance failed: %s", msg);
-	krb5_free_error_message(r->context, msg);
+        krb5_free_error_message(r->context, msg);
         goto out;
     }
 
     ret = encode_cert_and_chain(r->context->hx509ctx, certs, rep.certificate);
     if (ret) {
-	const char *msg = krb5_get_error_message(r->context, ret);
+        const char *msg = krb5_get_error_message(r->context, ret);
         ret = mk_error_response(r->context, r, 1, ret,
                                 "Could not encode certificate and chain: %s",
-				msg);
-	krb5_free_error_message(r->context, msg);
+                                msg);
+        krb5_free_error_message(r->context, msg);
         goto out;
     }
 

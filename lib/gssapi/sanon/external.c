@@ -61,132 +61,132 @@ _gss_sanon_wellknown_service_name = &wellknown_service_name;
 
 static gss_mo_desc sanon_mo[] = {
     {
-	GSS_C_MA_MECH_NAME,
-	GSS_MO_MA,
-	"Mechanism name",
-	rk_UNCONST("SANON-X25519"),
-	_gss_mo_get_ctx_as_string,
-	NULL
+        GSS_C_MA_MECH_NAME,
+        GSS_MO_MA,
+        "Mechanism name",
+        rk_UNCONST("SANON-X25519"),
+        _gss_mo_get_ctx_as_string,
+        NULL
     },
     {
-	GSS_C_MA_MECH_DESCRIPTION,
-	GSS_MO_MA,
-	"Mechanism description",
-	rk_UNCONST("Heimdal Simple Anonymous (X25519) Mechanism"),
-	_gss_mo_get_ctx_as_string,
-	NULL
+        GSS_C_MA_MECH_DESCRIPTION,
+        GSS_MO_MA,
+        "Mechanism description",
+        rk_UNCONST("Heimdal Simple Anonymous (X25519) Mechanism"),
+        _gss_mo_get_ctx_as_string,
+        NULL
     },
     {
-	GSS_C_MA_MECH_CONCRETE,
-	GSS_MO_MA,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+        GSS_C_MA_MECH_CONCRETE,
+        GSS_MO_MA,
+        NULL,
+        NULL,
+        NULL,
+        NULL
     },
     {
-	GSS_C_MA_ITOK_FRAMED,
-	GSS_MO_MA,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+        GSS_C_MA_ITOK_FRAMED,
+        GSS_MO_MA,
+        NULL,
+        NULL,
+        NULL,
+        NULL
     },
     {
-	GSS_C_MA_AUTH_INIT_ANON,
-	GSS_MO_MA,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+        GSS_C_MA_AUTH_INIT_ANON,
+        GSS_MO_MA,
+        NULL,
+        NULL,
+        NULL,
+        NULL
     },
     {
-	GSS_C_MA_AUTH_TARG_ANON,
-	GSS_MO_MA,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+        GSS_C_MA_AUTH_TARG_ANON,
+        GSS_MO_MA,
+        NULL,
+        NULL,
+        NULL,
+        NULL
     },
     {
-	GSS_C_MA_INTEG_PROT,
-	GSS_MO_MA,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+        GSS_C_MA_INTEG_PROT,
+        GSS_MO_MA,
+        NULL,
+        NULL,
+        NULL,
+        NULL
     },
     {
-	GSS_C_MA_CONF_PROT,
-	GSS_MO_MA,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+        GSS_C_MA_CONF_PROT,
+        GSS_MO_MA,
+        NULL,
+        NULL,
+        NULL,
+        NULL
     },
     {
-	GSS_C_MA_MIC,
-	GSS_MO_MA,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+        GSS_C_MA_MIC,
+        GSS_MO_MA,
+        NULL,
+        NULL,
+        NULL,
+        NULL
     },
     {
-	GSS_C_MA_WRAP,
-	GSS_MO_MA,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+        GSS_C_MA_WRAP,
+        GSS_MO_MA,
+        NULL,
+        NULL,
+        NULL,
+        NULL
     },
     {
-	GSS_C_MA_REPLAY_DET,
-	GSS_MO_MA,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+        GSS_C_MA_REPLAY_DET,
+        GSS_MO_MA,
+        NULL,
+        NULL,
+        NULL,
+        NULL
     },
     {
-	GSS_C_MA_OOS_DET,
-	GSS_MO_MA,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+        GSS_C_MA_OOS_DET,
+        GSS_MO_MA,
+        NULL,
+        NULL,
+        NULL,
+        NULL
     },
     {
-	GSS_C_MA_CBINDINGS,
-	GSS_MO_MA,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+        GSS_C_MA_CBINDINGS,
+        GSS_MO_MA,
+        NULL,
+        NULL,
+        NULL,
+        NULL
     },
     {
-	GSS_C_MA_PFS,
-	GSS_MO_MA,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+        GSS_C_MA_PFS,
+        GSS_MO_MA,
+        NULL,
+        NULL,
+        NULL,
+        NULL
     },
     {
-	GSS_C_MA_CTX_TRANS,
-	GSS_MO_MA,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+        GSS_C_MA_CTX_TRANS,
+        GSS_MO_MA,
+        NULL,
+        NULL,
+        NULL,
+        NULL
     },
     {
-	GSS_C_MA_NEGOEX_AND_SPNEGO,
-	GSS_MO_MA,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+        GSS_C_MA_NEGOEX_AND_SPNEGO,
+        GSS_MO_MA,
+        NULL,
+        NULL,
+        NULL,
+        NULL
     }
 };
 

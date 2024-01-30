@@ -46,9 +46,9 @@ gss_duplicate_oid_set(OM_uint32 *minor_status,
     major_status = gss_create_empty_oid_set(minor_status, dest_oid_set);
 
     for (i = 0; major_status == GSS_S_COMPLETE && i < src_oid_set->count; i++)
-	major_status = gss_add_oid_set_member(minor_status,
-					      &src_oid_set->elements[i],
-					      dest_oid_set);
+        major_status = gss_add_oid_set_member(minor_status,
+                                              &src_oid_set->elements[i],
+                                              dest_oid_set);
 
     if (major_status != GSS_S_COMPLETE)
         gss_release_oid_set(&junk, dest_oid_set);

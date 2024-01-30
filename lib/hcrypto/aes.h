@@ -70,11 +70,11 @@ void AES_encrypt(const unsigned char *, unsigned char *, const AES_KEY *);
 void AES_decrypt(const unsigned char *, unsigned char *, const AES_KEY *);
 
 void AES_cbc_encrypt(const unsigned char *, unsigned char *,
-		     unsigned long, const AES_KEY *,
-		     unsigned char *, int);
+                     unsigned long, const AES_KEY *,
+                     unsigned char *, int);
 void AES_cfb8_encrypt(const unsigned char *, unsigned char *,
-		      unsigned long, const AES_KEY *,
-		      unsigned char *, int);
+                      unsigned long, const AES_KEY *,
+                      unsigned char *, int);
 
 #ifdef  __cplusplus
 }

@@ -59,33 +59,33 @@ main(int argc, char **argv)
 
     ret = krb5_init_context(&context);
     if (ret)
-	errx(1, "krb5_init_context %d", ret);
+        errx(1, "krb5_init_context %d", ret);
 
     ret = krb5_generate_random_keyblock(context, etype, &key);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_generate_random_keyblock");
+        krb5_err(context, 1, ret, "krb5_generate_random_keyblock");
 
     ret = krb5_crypto_prf_length(context, etype, &length);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_crypto_prf_length");
+        krb5_err(context, 1, ret, "krb5_crypto_prf_length");
 
     ret = krb5_crypto_init(context, &key, 0, &crypto);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_crypto_init");
+        krb5_err(context, 1, ret, "krb5_crypto_init");
 
     input.data = rk_UNCONST("foo");
     input.length = 3;
 
     ret = krb5_crypto_prf(context, crypto, &input, &output);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_crypto_prf");
+        krb5_err(context, 1, ret, "krb5_crypto_prf");
 
     ret = krb5_crypto_prf(context, crypto, &input, &output2);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_crypto_prf");
+        krb5_err(context, 1, ret, "krb5_crypto_prf");
 
     if (krb5_data_cmp(&output, &output2) != 0)
-	krb5_errx(context, 1, "krb5_data_cmp");
+        krb5_errx(context, 1, "krb5_data_cmp");
 
     krb5_data_free(&output);
     krb5_data_free(&output2);

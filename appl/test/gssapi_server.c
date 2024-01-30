@@ -43,36 +43,36 @@
 
 static int
 process_it(int sock,
-	   gss_ctx_id_t context_hdl,
-	   gss_name_t client_name
-	   )
+           gss_ctx_id_t context_hdl,
+           gss_name_t client_name
+           )
 {
     OM_uint32 maj_stat, min_stat;
     gss_buffer_desc real_input_token, real_output_token;
     gss_buffer_t input_token = &real_input_token,
-	output_token = &real_output_token;
+        output_token = &real_output_token;
     gss_name_t server_name;
     int conf_flag;
 
     print_gss_name("User is", client_name);
 
     maj_stat = gss_inquire_context(&min_stat,
-				   context_hdl,
-				   NULL,
-				   &server_name,
-				   NULL,
-				   NULL,
-				   NULL,
-				   NULL,
-				   NULL);
+                                   context_hdl,
+                                   NULL,
+                                   &server_name,
+                                   NULL,
+                                   NULL,
+                                   NULL,
+                                   NULL,
+                                   NULL);
     if (GSS_ERROR(maj_stat))
-	gss_err (1, min_stat, "gss_inquire_context");
+        gss_err (1, min_stat, "gss_inquire_context");
 
     print_gss_name("Server is", server_name);
 
     maj_stat = gss_release_name(&min_stat, &server_name);
     if (GSS_ERROR(maj_stat))
-	gss_err (1, min_stat, "gss_release_name");
+        gss_err (1, min_stat, "gss_release_name");
 
     /* gss_verify_mic */
 
@@ -80,15 +80,15 @@ process_it(int sock,
     read_token (sock, output_token);
 
     maj_stat = gss_verify_mic (&min_stat,
-			       context_hdl,
-			       input_token,
-			       output_token,
-			       NULL);
+                               context_hdl,
+                               input_token,
+                               output_token,
+                               NULL);
     if (GSS_ERROR(maj_stat))
-	gss_err (1, min_stat, "gss_verify_mic");
+        gss_err (1, min_stat, "gss_verify_mic");
 
     fprintf (stderr, "gss_verify_mic: %.*s\n", (int)input_token->length,
-	    (char *)input_token->value);
+             (char *)input_token->value);
 
     gss_release_buffer (&min_stat, input_token);
     gss_release_buffer (&min_stat, output_token);
@@ -99,12 +99,12 @@ process_it(int sock,
     input_token->value  = strdup("hejsan");
 
     maj_stat = gss_get_mic(&min_stat,
-			   context_hdl,
-			   GSS_C_QOP_DEFAULT,
-			   input_token,
-			   output_token);
+                           context_hdl,
+                           GSS_C_QOP_DEFAULT,
+                           input_token,
+                           output_token);
     if (GSS_ERROR(maj_stat))
-	gss_err (1, min_stat, "gss_get_mic");
+        gss_err (1, min_stat, "gss_get_mic");
 
     write_token (sock, input_token);
     write_token (sock, output_token);
@@ -116,17 +116,17 @@ process_it(int sock,
     read_token (sock, input_token);
 
     maj_stat = gss_unwrap (&min_stat,
-			   context_hdl,
-			   input_token,
-			   output_token,
-			   &conf_flag,
-			   NULL);
+                           context_hdl,
+                           input_token,
+                           output_token,
+                           &conf_flag,
+                           NULL);
     if(GSS_ERROR(maj_stat))
-	gss_err (1, min_stat, "gss_unwrap");
+        gss_err (1, min_stat, "gss_unwrap");
 
     fprintf (stderr, "gss_unwrap: %.*s %s\n", (int)output_token->length,
-	    (char *)output_token->value,
-	     conf_flag ? "CONF" : "INT");
+             (char *)output_token->value,
+             conf_flag ? "CONF" : "INT");
 
     gss_release_buffer (&min_stat, input_token);
     gss_release_buffer (&min_stat, output_token);
@@ -134,17 +134,17 @@ process_it(int sock,
     read_token (sock, input_token);
 
     maj_stat = gss_unwrap (&min_stat,
-			   context_hdl,
-			   input_token,
-			   output_token,
-			   &conf_flag,
-			   NULL);
+                           context_hdl,
+                           input_token,
+                           output_token,
+                           &conf_flag,
+                           NULL);
     if(GSS_ERROR(maj_stat))
-	gss_err (1, min_stat, "gss_unwrap");
+        gss_err (1, min_stat, "gss_unwrap");
 
     fprintf (stderr, "gss_unwrap: %.*s %s\n", (int)output_token->length,
-	     (char *)output_token->value,
-	     conf_flag ? "CONF" : "INT");
+             (char *)output_token->value,
+             conf_flag ? "CONF" : "INT");
 
     gss_release_buffer (&min_stat, input_token);
     gss_release_buffer (&min_stat, output_token);
@@ -153,14 +153,14 @@ process_it(int sock,
     input_token->length = 6;
 
     maj_stat = gss_wrap (&min_stat,
-			 context_hdl,
-			 1,
-			 GSS_C_QOP_DEFAULT,
-			 input_token,
-			 NULL,
-			 output_token);
+                         context_hdl,
+                         1,
+                         GSS_C_QOP_DEFAULT,
+                         input_token,
+                         NULL,
+                         output_token);
     if (GSS_ERROR(maj_stat))
-	gss_err(1, min_stat, "gss_wrap");
+        gss_err(1, min_stat, "gss_wrap");
 
     write_token (sock, output_token);
     gss_release_buffer (&min_stat, output_token);
@@ -168,7 +168,7 @@ process_it(int sock,
     read_token (sock, input_token);
 
     if (input_token->length != 6 && memcmp(input_token->value, "hejhej", 6) != 0)
-	errx(1, "invalid reply");
+        errx(1, "invalid reply");
 
     return 0;
 }
@@ -181,7 +181,7 @@ proto (int sock, const char *service)
     gss_ctx_id_t context_hdl = GSS_C_NO_CONTEXT;
     gss_buffer_desc real_input_token, real_output_token;
     gss_buffer_t input_token = &real_input_token,
-	output_token = &real_output_token;
+        output_token = &real_output_token;
     OM_uint32 maj_stat, min_stat;
     gss_name_t client_name;
     struct gss_channel_bindings_struct input_chan_bindings;
@@ -197,13 +197,13 @@ proto (int sock, const char *service)
 
     addrlen = sizeof(local);
     if (getsockname (sock, (struct sockaddr *)&local, &addrlen) < 0
-	|| addrlen != sizeof(local))
-	err (1, "getsockname)");
+        || addrlen != sizeof(local))
+        err (1, "getsockname)");
 
     addrlen = sizeof(remote);
     if (getpeername (sock, (struct sockaddr *)&remote, &addrlen) < 0
-	|| addrlen != sizeof(remote))
-	err (1, "getpeername");
+        || addrlen != sizeof(remote))
+        err (1, "getpeername");
 
     input_chan_bindings.initiator_addrtype = GSS_C_AF_INET;
     input_chan_bindings.initiator_address.length = 4;
@@ -236,113 +236,113 @@ proto (int sock, const char *service)
     delegated_cred_handle = GSS_C_NO_CREDENTIAL;
 
     do {
-	read_token (sock, input_token);
-	maj_stat =
-	    gss_accept_sec_context (&min_stat,
-				    &context_hdl,
-				    GSS_C_NO_CREDENTIAL,
-				    input_token,
-				    &input_chan_bindings,
-				    &client_name,
-				    &mech_oid,
-				    output_token,
-				    NULL,
-				    NULL,
-				    &delegated_cred_handle);
-	if(GSS_ERROR(maj_stat))
-	    gss_err (1, min_stat, "gss_accept_sec_context");
-	if (output_token->length != 0)
-	    write_token (sock, output_token);
-	if (GSS_ERROR(maj_stat)) {
-	    if (context_hdl != GSS_C_NO_CONTEXT)
-		gss_delete_sec_context (&min_stat,
-					&context_hdl,
-					GSS_C_NO_BUFFER);
-	    break;
-	}
+        read_token (sock, input_token);
+        maj_stat =
+            gss_accept_sec_context (&min_stat,
+                                    &context_hdl,
+                                    GSS_C_NO_CREDENTIAL,
+                                    input_token,
+                                    &input_chan_bindings,
+                                    &client_name,
+                                    &mech_oid,
+                                    output_token,
+                                    NULL,
+                                    NULL,
+                                    &delegated_cred_handle);
+        if(GSS_ERROR(maj_stat))
+            gss_err (1, min_stat, "gss_accept_sec_context");
+        if (output_token->length != 0)
+            write_token (sock, output_token);
+        if (GSS_ERROR(maj_stat)) {
+            if (context_hdl != GSS_C_NO_CONTEXT)
+                gss_delete_sec_context (&min_stat,
+                                        &context_hdl,
+                                        GSS_C_NO_BUFFER);
+            break;
+        }
     } while(maj_stat & GSS_S_CONTINUE_NEEDED);
 
     p = (char *)mech_oid->elements;
     if (mech_oid->length == GSS_KRB5_MECHANISM->length
-	&& memcmp(p, GSS_KRB5_MECHANISM->elements, mech_oid->length) == 0)
-	mech = "Kerberos 5";
+        && memcmp(p, GSS_KRB5_MECHANISM->elements, mech_oid->length) == 0)
+        mech = "Kerberos 5";
     else if (mech_oid->length == GSS_SPNEGO_MECHANISM->length
-	&& memcmp(p, GSS_SPNEGO_MECHANISM->elements, mech_oid->length) == 0)
-	mech = "SPNEGO"; /* XXX Silly, wont show up */
+        && memcmp(p, GSS_SPNEGO_MECHANISM->elements, mech_oid->length) == 0)
+        mech = "SPNEGO"; /* XXX Silly, wont show up */
     else
-	mech = "Unknown";
+        mech = "Unknown";
 
     printf("Using mech: %s\n", mech);
 
     if (delegated_cred_handle != GSS_C_NO_CREDENTIAL) {
-       krb5_context context = NULL;
+        krb5_context context = NULL;
 
-       printf("Delegated cred found\n");
+        printf("Delegated cred found\n");
 
-       min_stat = krb5_init_context(&context);
-       if (min_stat)
-	    gss_err(1, min_stat, "krb5_init_context");
-       if (min_stat == 0)
-           min_stat = krb5_cc_resolve(context, "FILE:/tmp/krb5cc_test", &ccache);
-       if (min_stat == 0)
-           maj_stat = gss_krb5_copy_ccache(&min_stat,
-                                           delegated_cred_handle,
-                                           ccache);
-       else
-           maj_stat = GSS_S_FAILURE;
-       if (maj_stat == 0) {
-	   krb5_principal p;
-	   maj_stat = krb5_cc_get_principal(context, ccache, &p);
-	   if (maj_stat == 0) {
-	       char *name;
-	       maj_stat = krb5_unparse_name(context, p, &name);
-	       if (maj_stat == 0) {
-		   printf("Delegated user is: `%s'\n", name);
-		   free(name);
-	       }
-	       krb5_free_principal(context, p);
-	   }
-       }
-       krb5_cc_close(context, ccache);
-       krb5_free_context(context);
-       gss_release_cred(&min_stat, &delegated_cred_handle);
+        min_stat = krb5_init_context(&context);
+        if (min_stat)
+            gss_err(1, min_stat, "krb5_init_context");
+        if (min_stat == 0)
+            min_stat = krb5_cc_resolve(context, "FILE:/tmp/krb5cc_test", &ccache);
+        if (min_stat == 0)
+            maj_stat = gss_krb5_copy_ccache(&min_stat,
+                                            delegated_cred_handle,
+                                            ccache);
+        else
+            maj_stat = GSS_S_FAILURE;
+        if (maj_stat == 0) {
+            krb5_principal p;
+            maj_stat = krb5_cc_get_principal(context, ccache, &p);
+            if (maj_stat == 0) {
+                char *name;
+                maj_stat = krb5_unparse_name(context, p, &name);
+                if (maj_stat == 0) {
+                    printf("Delegated user is: `%s'\n", name);
+                    free(name);
+                }
+                krb5_free_principal(context, p);
+            }
+        }
+        krb5_cc_close(context, ccache);
+        krb5_free_context(context);
+        gss_release_cred(&min_stat, &delegated_cred_handle);
     }
 
     if (fork_flag) {
-	pid_t pid;
-	int pipefd[2];
+        pid_t pid;
+        int pipefd[2];
 
-	if (pipe (pipefd) < 0)
-	    err (1, "pipe");
+        if (pipe (pipefd) < 0)
+            err (1, "pipe");
 
-	pid = fork ();
-	if (pid < 0)
-	    err (1, "fork");
-	if (pid != 0) {
-	    gss_buffer_desc buf;
+        pid = fork ();
+        if (pid < 0)
+            err (1, "fork");
+        if (pid != 0) {
+            gss_buffer_desc buf;
 
-	    maj_stat = gss_export_sec_context (&min_stat,
-					       &context_hdl,
-					       &buf);
-	    if (GSS_ERROR(maj_stat))
-		gss_err (1, min_stat, "gss_export_sec_context");
-	    write_token (pipefd[1], &buf);
-	    exit (0);
-	} else {
-	    gss_ctx_id_t context_hdl;
-	    gss_buffer_desc buf;
+            maj_stat = gss_export_sec_context (&min_stat,
+                                               &context_hdl,
+                                               &buf);
+            if (GSS_ERROR(maj_stat))
+                gss_err (1, min_stat, "gss_export_sec_context");
+            write_token (pipefd[1], &buf);
+            exit (0);
+        } else {
+            gss_ctx_id_t context_hdl;
+            gss_buffer_desc buf;
 
-	    close (pipefd[1]);
-	    read_token (pipefd[0], &buf);
-	    close (pipefd[0]);
-	    maj_stat = gss_import_sec_context (&min_stat, &buf, &context_hdl);
-	    if (GSS_ERROR(maj_stat))
-		gss_err (1, min_stat, "gss_import_sec_context");
-	    gss_release_buffer (&min_stat, &buf);
-	    return process_it (sock, context_hdl, client_name);
-	}
+            close (pipefd[1]);
+            read_token (pipefd[0], &buf);
+            close (pipefd[0]);
+            maj_stat = gss_import_sec_context (&min_stat, &buf, &context_hdl);
+            if (GSS_ERROR(maj_stat))
+                gss_err (1, min_stat, "gss_import_sec_context");
+            gss_release_buffer (&min_stat, &buf);
+            return process_it (sock, context_hdl, client_name);
+        }
     } else {
-	return process_it (sock, context_hdl, client_name);
+        return process_it (sock, context_hdl, client_name);
     }
 }
 
@@ -354,11 +354,11 @@ loop (int port, const char *service)
     int one = 1;
 
     if (keytab_str)
-	gsskrb5_register_acceptor_identity(keytab_str);
+        gsskrb5_register_acceptor_identity(keytab_str);
 
     sock = socket (AF_INET, SOCK_STREAM, 0);
     if (sock < 0)
-	err (1, "socket");
+        err (1, "socket");
 
     memset (&my_addr, 0, sizeof(my_addr));
     my_addr.sin_family      = AF_INET;
@@ -366,19 +366,19 @@ loop (int port, const char *service)
     my_addr.sin_addr.s_addr = INADDR_ANY;
 
     if (setsockopt (sock, SOL_SOCKET, SO_REUSEADDR,
-		    (void *)&one, sizeof(one)) < 0)
-	warn ("setsockopt SO_REUSEADDR");
+                    (void *)&one, sizeof(one)) < 0)
+        warn ("setsockopt SO_REUSEADDR");
 
     if (bind (sock, (struct sockaddr *)&my_addr, sizeof(my_addr)) < 0)
-	err (1, "bind");
+        err (1, "bind");
 
     while (1) {
         if (listen (sock, 1) < 0)
-	    err (1, "listen");
+            err (1, "listen");
 
         sock2 = accept (sock, NULL, NULL);
         if (sock2 < 0)
-	    err (1, "accept");
+            err (1, "accept");
 
         proto (sock2, service);
     }

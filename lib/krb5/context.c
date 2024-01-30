@@ -42,21 +42,21 @@
 
 static void _krb5_init_ets(krb5_context);
 
-#define INIT_FIELD(C, T, E, D, F)					\
-    (C)->E = krb5_config_get_ ## T ## _default ((C), NULL, (D), 	\
-						"libdefaults", F, NULL)
+#define INIT_FIELD(C, T, E, D, F)                                       \
+    (C)->E = krb5_config_get_ ## T ## _default ((C), NULL, (D),         \
+                                                "libdefaults", F, NULL)
 
-#define INIT_FLAG(C, O, V, D, F)					\
-    do {								\
-	if (krb5_config_get_bool_default((C), NULL, (D),"libdefaults", F, NULL)) { \
-	    (C)->O |= V;						\
-        }								\
+#define INIT_FLAG(C, O, V, D, F)                                        \
+    do {                                                                \
+        if (krb5_config_get_bool_default((C), NULL, (D),"libdefaults", F, NULL)) { \
+            (C)->O |= V;                                                \
+        }                                                               \
     } while(0)
 
 static krb5_error_code
 copy_enctypes(krb5_context context,
-	      const krb5_enctype *in,
-	      krb5_enctype **out);
+              const krb5_enctype *in,
+              krb5_enctype **out);
 
 /*
  * Set the list of etypes `ret_etypes' from the configuration variable
@@ -65,32 +65,32 @@ copy_enctypes(krb5_context context,
 
 static krb5_error_code
 set_etypes (krb5_context context,
-	    const char *name,
-	    krb5_enctype **ret_enctypes)
+            const char *name,
+            krb5_enctype **ret_enctypes)
 {
     char **etypes_str;
     krb5_enctype *etypes = NULL;
 
     etypes_str = krb5_config_get_strings(context, NULL, "libdefaults",
-					 name, NULL);
+                                         name, NULL);
     if(etypes_str){
-	int i, j, k;
-	for(i = 0; etypes_str[i]; i++);
-	etypes = malloc((i+1) * sizeof(*etypes));
-	if (etypes == NULL) {
-	    krb5_config_free_strings (etypes_str);
-	    return krb5_enomem(context);
-	}
-	for(j = 0, k = 0; j < i; j++) {
-	    krb5_enctype e;
-	    if(krb5_string_to_enctype(context, etypes_str[j], &e) != 0)
-		continue;
-	    if (krb5_enctype_valid(context, e) != 0)
-		continue;
-	    etypes[k++] = e;
-	}
-	etypes[k] = ETYPE_NULL;
-	krb5_config_free_strings(etypes_str);
+        int i, j, k;
+        for(i = 0; etypes_str[i]; i++);
+        etypes = malloc((i+1) * sizeof(*etypes));
+        if (etypes == NULL) {
+            krb5_config_free_strings (etypes_str);
+            return krb5_enomem(context);
+        }
+        for(j = 0, k = 0; j < i; j++) {
+            krb5_enctype e;
+            if(krb5_string_to_enctype(context, etypes_str[j], &e) != 0)
+                continue;
+            if (krb5_enctype_valid(context, e) != 0)
+                continue;
+            etypes[k++] = e;
+        }
+        etypes[k] = ETYPE_NULL;
+        krb5_config_free_strings(etypes_str);
     }
     *ret_enctypes = etypes;
     return 0;
@@ -116,20 +116,20 @@ init_context_from_config_file(krb5_context context)
     INIT_FIELD(context, string, http_proxy, NULL, "http_proxy");
 
     ret = krb5_config_get_bool_default(context, NULL, FALSE,
-				       "libdefaults",
-				       "allow_weak_crypto", NULL);
+                                       "libdefaults",
+                                       "allow_weak_crypto", NULL);
     if (ret) {
-	krb5_enctype_enable(context, ETYPE_DES_CBC_CRC);
-	krb5_enctype_enable(context, ETYPE_DES_CBC_MD4);
-	krb5_enctype_enable(context, ETYPE_DES_CBC_MD5);
-	krb5_enctype_enable(context, ETYPE_DES_CBC_NONE);
-	krb5_enctype_enable(context, ETYPE_DES_CFB64_NONE);
-	krb5_enctype_enable(context, ETYPE_DES_PCBC_NONE);
+        krb5_enctype_enable(context, ETYPE_DES_CBC_CRC);
+        krb5_enctype_enable(context, ETYPE_DES_CBC_MD4);
+        krb5_enctype_enable(context, ETYPE_DES_CBC_MD5);
+        krb5_enctype_enable(context, ETYPE_DES_CBC_NONE);
+        krb5_enctype_enable(context, ETYPE_DES_CFB64_NONE);
+        krb5_enctype_enable(context, ETYPE_DES_PCBC_NONE);
     }
 
     ret = set_etypes (context, "default_etypes", &tmptypes);
     if(ret)
-	return ret;
+        return ret;
     free(context->etypes);
     context->etypes = tmptypes;
 
@@ -140,94 +140,94 @@ init_context_from_config_file(krb5_context context)
     free(context->cfg_etypes);
     context->cfg_etypes = NULL;
     if (tmptypes) {
-	ret = copy_enctypes(context, tmptypes, &context->cfg_etypes);
-	if (ret)
-	    return ret;
+        ret = copy_enctypes(context, tmptypes, &context->cfg_etypes);
+        if (ret)
+            return ret;
     }
 
     ret = set_etypes (context, "default_etypes_des", &tmptypes);
     if(ret)
-	return ret;
+        return ret;
     free(context->etypes_des);
     context->etypes_des = tmptypes;
 
     ret = set_etypes (context, "default_as_etypes", &tmptypes);
     if(ret)
-	return ret;
+        return ret;
     free(context->as_etypes);
     context->as_etypes = tmptypes;
 
     ret = set_etypes (context, "default_tgs_etypes", &tmptypes);
     if(ret)
-	return ret;
+        return ret;
     free(context->tgs_etypes);
     context->tgs_etypes = tmptypes;
 
     ret = set_etypes (context, "permitted_enctypes", &tmptypes);
     if(ret)
-	return ret;
+        return ret;
     free(context->permitted_enctypes);
     context->permitted_enctypes = tmptypes;
 
     INIT_FIELD(context, string, default_keytab,
-	       KEYTAB_DEFAULT, "default_keytab_name");
+               KEYTAB_DEFAULT, "default_keytab_name");
 
     INIT_FIELD(context, string, default_keytab_modify,
-	       NULL, "default_keytab_modify_name");
+               NULL, "default_keytab_modify_name");
 
     INIT_FIELD(context, string, time_fmt,
-	       "%Y-%m-%dT%H:%M:%S", "time_format");
+               "%Y-%m-%dT%H:%M:%S", "time_format");
 
     INIT_FIELD(context, string, date_fmt,
-	       "%Y-%m-%d", "date_format");
+               "%Y-%m-%d", "date_format");
 
     INIT_FIELD(context, bool, log_utc,
-	       FALSE, "log_utc");
+               FALSE, "log_utc");
 
     context->no_ticket_store =
         getenv("KRB5_NO_TICKET_STORE") != NULL;
 
     /* init dns-proxy slime */
     tmp = krb5_config_get_string(context, NULL, "libdefaults",
-				 "dns_proxy", NULL);
+                                 "dns_proxy", NULL);
     if(tmp)
-	roken_gethostby_setup(context->http_proxy, tmp);
+        roken_gethostby_setup(context->http_proxy, tmp);
     krb5_free_host_realm (context, context->default_realms);
     context->default_realms = NULL;
 
     {
-	krb5_addresses addresses;
-	char **adr, **a;
+        krb5_addresses addresses;
+        char **adr, **a;
 
-	krb5_set_extra_addresses(context, NULL);
-	adr = krb5_config_get_strings(context, NULL,
-				      "libdefaults",
-				      "extra_addresses",
-				      NULL);
-	memset(&addresses, 0, sizeof(addresses));
-	for(a = adr; a && *a; a++) {
-	    ret = krb5_parse_address(context, *a, &addresses);
-	    if (ret == 0) {
-		krb5_add_extra_addresses(context, &addresses);
-		krb5_free_addresses(context, &addresses);
-	    }
-	}
-	krb5_config_free_strings(adr);
+        krb5_set_extra_addresses(context, NULL);
+        adr = krb5_config_get_strings(context, NULL,
+                                      "libdefaults",
+                                      "extra_addresses",
+                                      NULL);
+        memset(&addresses, 0, sizeof(addresses));
+        for(a = adr; a && *a; a++) {
+            ret = krb5_parse_address(context, *a, &addresses);
+            if (ret == 0) {
+                krb5_add_extra_addresses(context, &addresses);
+                krb5_free_addresses(context, &addresses);
+            }
+        }
+        krb5_config_free_strings(adr);
 
-	krb5_set_ignore_addresses(context, NULL);
-	adr = krb5_config_get_strings(context, NULL,
-				      "libdefaults",
-				      "ignore_addresses",
-				      NULL);
-	memset(&addresses, 0, sizeof(addresses));
-	for(a = adr; a && *a; a++) {
-	    ret = krb5_parse_address(context, *a, &addresses);
-	    if (ret == 0) {
-		krb5_add_ignore_addresses(context, &addresses);
-		krb5_free_addresses(context, &addresses);
-	    }
-	}
-	krb5_config_free_strings(adr);
+        krb5_set_ignore_addresses(context, NULL);
+        adr = krb5_config_get_strings(context, NULL,
+                                      "libdefaults",
+                                      "ignore_addresses",
+                                      NULL);
+        memset(&addresses, 0, sizeof(addresses));
+        for(a = adr; a && *a; a++) {
+            ret = krb5_parse_address(context, *a, &addresses);
+            if (ret == 0) {
+                krb5_add_ignore_addresses(context, &addresses);
+                krb5_free_addresses(context, &addresses);
+            }
+        }
+        krb5_config_free_strings(adr);
     }
 
     INIT_FIELD(context, bool, scan_interfaces, TRUE, "scan_interfaces");
@@ -244,7 +244,7 @@ init_context_from_config_file(krb5_context context)
 
     /* report_canonical_client_name implies check_pac */
     if (context->flags & KRB5_CTX_F_REPORT_CANONICAL_CLIENT_NAME)
-	context->flags |= KRB5_CTX_F_CHECK_PAC;
+        context->flags |= KRB5_CTX_F_CHECK_PAC;
 
     free(context->default_cc_name);
     context->default_cc_name = NULL;
@@ -257,7 +257,7 @@ init_context_from_config_file(krb5_context context)
         heim_add_debug_dest(context->hcontext, "libkrb5", tmp);
     s = krb5_config_get_strings(context, NULL, "logging", "krb5", NULL);
     if (s) {
-	char **p;
+        char **p;
 
         for (p = s; *p; p++)
             heim_add_debug_dest(context->hcontext, "libkrb5", *p);
@@ -265,18 +265,18 @@ init_context_from_config_file(krb5_context context)
     }
 
     tmp = krb5_config_get_string(context, NULL, "libdefaults",
-				 "check-rd-req-server", NULL);
+                                 "check-rd-req-server", NULL);
     if (tmp == NULL)
-	tmp = secure_getenv("KRB5_CHECK_RD_REQ_SERVER");
+        tmp = secure_getenv("KRB5_CHECK_RD_REQ_SERVER");
     if(tmp) {
-	if (strcasecmp(tmp, "ignore") == 0)
-	    context->flags |= KRB5_CTX_F_RD_REQ_IGNORE;
+        if (strcasecmp(tmp, "ignore") == 0)
+            context->flags |= KRB5_CTX_F_RD_REQ_IGNORE;
     }
     ret = krb5_config_get_bool_default(context, NULL, TRUE,
-				       "libdefaults",
-				       "fcache_strict_checking", NULL);
+                                       "libdefaults",
+                                       "fcache_strict_checking", NULL);
     if (ret)
-	context->flags |= KRB5_CTX_F_FCACHE_STRICT_CHECKING;
+        context->flags |= KRB5_CTX_F_FCACHE_STRICT_CHECKING;
 
     return 0;
 }
@@ -292,36 +292,36 @@ cc_ops_register(krb5_context context)
 #ifndef KCM_IS_API_CACHE
     ret = krb5_cc_register(context, &krb5_acc_ops, TRUE);
     if (ret)
-	return ret;
+        return ret;
 #endif
     ret = krb5_cc_register(context, &krb5_fcc_ops, TRUE);
     if (ret)
-	return ret;
+        return ret;
     ret = krb5_cc_register(context, &krb5_dcc_ops, TRUE);
     if (ret)
-	return ret;
+        return ret;
     ret = krb5_cc_register(context, &krb5_mcc_ops, TRUE);
     if (ret)
-	return ret;
+        return ret;
 #ifdef HAVE_SCC
     ret = krb5_cc_register(context, &krb5_scc_ops, TRUE);
     if (ret)
-	return ret;
+        return ret;
 #endif
 #ifdef HAVE_KCM
 #ifdef KCM_IS_API_CACHE
     ret = krb5_cc_register(context, &krb5_akcm_ops, TRUE);
     if (ret)
-	return ret;
+        return ret;
 #endif
     ret = krb5_cc_register(context, &krb5_kcm_ops, TRUE);
     if (ret)
-	return ret;
+        return ret;
 #endif
 #if defined(HAVE_KEYUTILS_H)
     ret = krb5_cc_register(context, &krb5_krcc_ops, TRUE);
     if (ret)
-	return ret;
+        return ret;
 #endif
     ret = _krb5_load_ccache_plugins(context);
     return ret;
@@ -336,17 +336,17 @@ cc_ops_copy(krb5_context context, const krb5_context src_context)
     context->num_cc_ops = 0;
 
     if (src_context->num_cc_ops == 0)
-	return 0;
+        return 0;
 
     cc_ops = malloc(sizeof(cc_ops[0]) * src_context->num_cc_ops);
     if (cc_ops == NULL) {
-	krb5_set_error_message(context, KRB5_CC_NOMEM,
-			       N_("malloc: out of memory", ""));
-	return KRB5_CC_NOMEM;
+        krb5_set_error_message(context, KRB5_CC_NOMEM,
+                               N_("malloc: out of memory", ""));
+        return KRB5_CC_NOMEM;
     }
 
     memcpy(rk_UNCONST(cc_ops), src_context->cc_ops,
-	   sizeof(cc_ops[0]) * src_context->num_cc_ops);
+           sizeof(cc_ops[0]) * src_context->num_cc_ops);
     context->cc_ops = cc_ops;
     context->num_cc_ops = src_context->num_cc_ops;
 
@@ -363,20 +363,20 @@ kt_ops_register(krb5_context context)
 
     ret = krb5_kt_register (context, &krb5_fkt_ops);
     if (ret)
-	return ret;
+        return ret;
     ret = krb5_kt_register (context, &krb5_wrfkt_ops);
     if (ret)
-	return ret;
+        return ret;
     ret = krb5_kt_register (context, &krb5_javakt_ops);
     if (ret)
-	return ret;
+        return ret;
     ret = krb5_kt_register (context, &krb5_mkt_ops);
     if (ret)
-	return ret;
+        return ret;
 #ifndef HEIMDAL_SMALLER
     ret = krb5_kt_register (context, &krb5_akf_ops);
     if (ret)
-	return ret;
+        return ret;
 #endif
     ret = krb5_kt_register (context, &krb5_any_ops);
     return ret;
@@ -389,15 +389,15 @@ kt_ops_copy(krb5_context context, const krb5_context src_context)
     context->kt_types     = NULL;
 
     if (src_context->num_kt_types == 0)
-	return 0;
+        return 0;
 
     context->kt_types = malloc(sizeof(context->kt_types[0]) * src_context->num_kt_types);
     if (context->kt_types == NULL)
-	return krb5_enomem(context);
+        return krb5_enomem(context);
 
     context->num_kt_types = src_context->num_kt_types;
     memcpy(context->kt_types, src_context->kt_types,
-	   sizeof(context->kt_types[0]) * src_context->num_kt_types);
+           sizeof(context->kt_types[0]) * src_context->num_kt_types);
 
     return 0;
 }
@@ -428,15 +428,15 @@ init_context_once(void *ctx)
     dirs = rk_UNCONST(sysplugin_dirs);
 #else
     dirs = krb5_config_get_strings(context, NULL, "libdefaults",
-				   "plugin_dir", NULL);
+                                   "plugin_dir", NULL);
     if (dirs == NULL)
-	dirs = rk_UNCONST(sysplugin_dirs);
+        dirs = rk_UNCONST(sysplugin_dirs);
 #endif
 
     _krb5_load_plugins(context, "krb5", (const char **)dirs);
 
     if (dirs != rk_UNCONST(sysplugin_dirs))
-	krb5_config_free_strings(dirs);
+        krb5_config_free_strings(dirs);
 
     bindtextdomain(HEIMDAL_TEXTDOMAIN, HEIMDAL_LOCALEDIR);
 }
@@ -479,11 +479,11 @@ krb5_init_context(krb5_context *context)
      */
     ret = krb5_generate_random(&rnd, sizeof(rnd));
     if (ret)
-	return ret;
+        return ret;
 
     p = calloc(1, sizeof(*p));
     if(!p)
-	return ENOMEM;
+        return ENOMEM;
 
     if ((p->hcontext = heim_context_init()) == NULL) {
         ret = ENOMEM;
@@ -495,11 +495,11 @@ krb5_init_context(krb5_context *context)
 
     ret = krb5_get_default_config_files(&files);
     if(ret)
-	goto out;
+        goto out;
     ret = krb5_set_config_files(p, files);
     krb5_free_config_files(files);
     if(ret)
-	goto out;
+        goto out;
 
     /* done enough to load plugins */
     heim_base_once_f(&init_context, p, init_context_once);
@@ -508,23 +508,23 @@ krb5_init_context(krb5_context *context)
     _krb5_init_ets(p);
     ret = cc_ops_register(p);
     if (ret)
-	goto out;
+        goto out;
     ret = kt_ops_register(p);
     if (ret)
-	goto out;
+        goto out;
 
 #ifdef PKINIT
     ret = hx509_context_init(&p->hx509ctx);
     if (ret)
-	goto out;
+        goto out;
 #endif
     if (rk_SOCK_INIT())
-	p->flags |= KRB5_CTX_F_SOCKETS_INITIALIZED;
+        p->flags |= KRB5_CTX_F_SOCKETS_INITIALIZED;
 
 out:
     if (ret) {
-	krb5_free_context(p);
-	p = NULL;
+        krb5_free_context(p);
+        p = NULL;
     } else {
         heim_context_set_log_utc(p->hcontext, p->log_utc);
     }
@@ -536,7 +536,7 @@ out:
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_get_permitted_enctypes(krb5_context context,
-			    krb5_enctype **etypes)
+                            krb5_enctype **etypes)
 {
     return krb5_get_default_in_tkt_etypes(context, KRB5_PDU_NONE, etypes);
 }
@@ -547,18 +547,18 @@ krb5_get_permitted_enctypes(krb5_context context,
 
 static krb5_error_code
 copy_etypes (krb5_context context,
-	     krb5_enctype *enctypes,
-	     krb5_enctype **ret_enctypes)
+             krb5_enctype *enctypes,
+             krb5_enctype **ret_enctypes)
 {
     unsigned int i;
 
     for (i = 0; enctypes[i]; i++)
-	;
+        ;
     i++;
 
     *ret_enctypes = malloc(sizeof(enctypes[0]) * i);
     if (*ret_enctypes == NULL)
-	return krb5_enomem(context);
+        return krb5_enomem(context);
     memcpy(*ret_enctypes, enctypes, sizeof(enctypes[0]) * i);
     return 0;
 }
@@ -586,7 +586,7 @@ krb5_copy_context(krb5_context context, krb5_context *out)
 
     p = calloc(1, sizeof(*p));
     if (p == NULL)
-	return krb5_enomem(context);
+        return krb5_enomem(context);
 
     p->cc_ops = NULL;
     p->etypes = NULL;
@@ -626,21 +626,21 @@ krb5_copy_context(krb5_context context, krb5_context *out)
 
     if (ret == 0 && context->etypes) {
         free(p->etypes);
-	ret = copy_etypes(context, context->etypes, &p->etypes);
+        ret = copy_etypes(context, context->etypes, &p->etypes);
     }
     if (ret == 0 && context->cfg_etypes) {
         free(p->cfg_etypes);
-	ret = copy_etypes(context, context->cfg_etypes, &p->cfg_etypes);
+        ret = copy_etypes(context, context->cfg_etypes, &p->cfg_etypes);
     }
     if (ret == 0 && context->etypes_des) {
         free(p->etypes_des);
-	ret = copy_etypes(context, context->etypes_des, &p->etypes_des);
+        ret = copy_etypes(context, context->etypes_des, &p->etypes_des);
     }
 
     if (ret == 0 && context->default_realms) {
         krb5_free_host_realm(context, p->default_realms);
-	ret = krb5_copy_host_realm(context,
-				   context->default_realms, &p->default_realms);
+        ret = krb5_copy_host_realm(context,
+                                   context->default_realms, &p->default_realms);
     }
 
     /* XXX should copy */
@@ -702,7 +702,7 @@ krb5_free_context(krb5_context context)
 #endif
 
     if (context->flags & KRB5_CTX_F_SOCKETS_INITIALIZED) {
- 	rk_SOCK_EXIT();
+        rk_SOCK_EXIT();
     }
 
     heim_context_free(&context->hcontext);
@@ -762,7 +762,7 @@ krb5_set_config(krb5_context context, const char *config)
     /* with this enabled and if there are no config files, Kerberos is
        considererd disabled */
     if (tmp == NULL)
-	return ENXIO;
+        return ENXIO;
 #endif
 
     krb5_config_file_free(context, context->cf);
@@ -856,27 +856,27 @@ KRB5_LIB_FUNCTION const krb5_enctype * KRB5_LIB_CALL
 krb5_kerberos_enctypes(krb5_context context)
 {
     static const krb5_enctype p[] = {
-	ETYPE_AES256_CTS_HMAC_SHA1_96,
-	ETYPE_AES128_CTS_HMAC_SHA1_96,
-	ETYPE_AES256_CTS_HMAC_SHA384_192,
-	ETYPE_AES128_CTS_HMAC_SHA256_128,
-	ETYPE_DES3_CBC_SHA1,
-	ETYPE_ARCFOUR_HMAC_MD5,
-	ETYPE_NULL
+        ETYPE_AES256_CTS_HMAC_SHA1_96,
+        ETYPE_AES128_CTS_HMAC_SHA1_96,
+        ETYPE_AES256_CTS_HMAC_SHA384_192,
+        ETYPE_AES128_CTS_HMAC_SHA256_128,
+        ETYPE_DES3_CBC_SHA1,
+        ETYPE_ARCFOUR_HMAC_MD5,
+        ETYPE_NULL
     };
 
     static const krb5_enctype weak[] = {
-	ETYPE_AES256_CTS_HMAC_SHA1_96,
-	ETYPE_AES128_CTS_HMAC_SHA1_96,
-	ETYPE_AES256_CTS_HMAC_SHA384_192,
-	ETYPE_AES128_CTS_HMAC_SHA256_128,
-	ETYPE_DES3_CBC_SHA1,
-	ETYPE_DES3_CBC_MD5,
-	ETYPE_ARCFOUR_HMAC_MD5,
-	ETYPE_DES_CBC_MD5,
-	ETYPE_DES_CBC_MD4,
-	ETYPE_DES_CBC_CRC,
-	ETYPE_NULL
+        ETYPE_AES256_CTS_HMAC_SHA1_96,
+        ETYPE_AES128_CTS_HMAC_SHA1_96,
+        ETYPE_AES256_CTS_HMAC_SHA384_192,
+        ETYPE_AES128_CTS_HMAC_SHA256_128,
+        ETYPE_DES3_CBC_SHA1,
+        ETYPE_DES3_CBC_MD5,
+        ETYPE_ARCFOUR_HMAC_MD5,
+        ETYPE_DES_CBC_MD5,
+        ETYPE_DES_CBC_MD4,
+        ETYPE_DES_CBC_CRC,
+        ETYPE_NULL
     };
 
     /*
@@ -901,29 +901,29 @@ krb5_kerberos_enctypes(krb5_context context)
 
 static krb5_error_code
 copy_enctypes(krb5_context context,
-	      const krb5_enctype *in,
-	      krb5_enctype **out)
+              const krb5_enctype *in,
+              krb5_enctype **out)
 {
     krb5_enctype *p = NULL;
     size_t m, n;
 
     for (n = 0; in[n]; n++)
-	;
+        ;
     n++;
     ALLOC(p, n);
     if(p == NULL)
-	return krb5_enomem(context);
+        return krb5_enomem(context);
     for (n = 0, m = 0; in[n]; n++) {
-	if (krb5_enctype_valid(context, in[n]) != 0)
-	    continue;
-	p[m++] = in[n];
+        if (krb5_enctype_valid(context, in[n]) != 0)
+            continue;
+        p[m++] = in[n];
     }
     p[m] = KRB5_ENCTYPE_NULL;
     if (m == 0) {
-	free(p);
-	krb5_set_error_message (context, KRB5_PROG_ETYPE_NOSUPP,
-				N_("no valid enctype set", ""));
-	return KRB5_PROG_ETYPE_NOSUPP;
+        free(p);
+        krb5_set_error_message (context, KRB5_PROG_ETYPE_NOSUPP,
+                                N_("no valid enctype set", ""));
+        return KRB5_PROG_ETYPE_NOSUPP;
     }
     *out = p;
     return 0;
@@ -958,22 +958,22 @@ default_etypes(krb5_context context, krb5_enctype **etype)
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_set_default_in_tkt_etypes(krb5_context context,
-			       const krb5_enctype *etypes)
+                               const krb5_enctype *etypes)
 {
     krb5_error_code ret;
     krb5_enctype *p = NULL;
 
     if(!etypes) {
-	etypes = context->cfg_etypes;
+        etypes = context->cfg_etypes;
     }
 
     if(etypes) {
-	ret = copy_enctypes(context, etypes, &p);
-	if (ret)
-	    return ret;
+        ret = copy_enctypes(context, etypes, &p);
+        if (ret)
+            return ret;
     }
     if(context->etypes)
-	free(context->etypes);
+        free(context->etypes);
     context->etypes = p;
     return 0;
 }
@@ -995,32 +995,32 @@ krb5_set_default_in_tkt_etypes(krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_get_default_in_tkt_etypes(krb5_context context,
-			       krb5_pdu pdu_type,
-			       krb5_enctype **etypes)
+                               krb5_pdu pdu_type,
+                               krb5_enctype **etypes)
 {
     krb5_enctype *enctypes = NULL;
     krb5_error_code ret;
     krb5_enctype *p;
 
     heim_assert(pdu_type == KRB5_PDU_AS_REQUEST || 
-		pdu_type == KRB5_PDU_TGS_REQUEST ||
-		pdu_type == KRB5_PDU_NONE, "unexpected pdu type");
+                pdu_type == KRB5_PDU_TGS_REQUEST ||
+                pdu_type == KRB5_PDU_NONE, "unexpected pdu type");
 
     if (pdu_type == KRB5_PDU_AS_REQUEST && context->as_etypes != NULL)
-	enctypes = context->as_etypes;
+        enctypes = context->as_etypes;
     else if (pdu_type == KRB5_PDU_TGS_REQUEST && context->tgs_etypes != NULL)
-	enctypes = context->tgs_etypes;
+        enctypes = context->tgs_etypes;
     else if (context->etypes != NULL)
-	enctypes = context->etypes;
+        enctypes = context->etypes;
 
     if (enctypes != NULL) {
-	ret = copy_enctypes(context, enctypes, &p);
-	if (ret)
-	    return ret;
+        ret = copy_enctypes(context, enctypes, &p);
+        if (ret)
+            return ret;
     } else {
-	ret = default_etypes(context, &p);
-	if (ret)
-	    return ret;
+        ret = default_etypes(context, &p);
+        if (ret)
+            return ret;
     }
     *etypes = p;
     return 0;
@@ -1113,10 +1113,10 @@ krb5_add_extra_addresses(krb5_context context, krb5_addresses *addresses)
 {
 
     if(context->extra_addresses)
-	return krb5_append_addresses(context,
-				     context->extra_addresses, addresses);
+        return krb5_append_addresses(context,
+                                     context->extra_addresses, addresses);
     else
-	return krb5_set_extra_addresses(context, addresses);
+        return krb5_set_extra_addresses(context, addresses);
 }
 
 /**
@@ -1136,19 +1136,19 @@ KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_set_extra_addresses(krb5_context context, const krb5_addresses *addresses)
 {
     if(context->extra_addresses)
-	krb5_free_addresses(context, context->extra_addresses);
+        krb5_free_addresses(context, context->extra_addresses);
 
     if(addresses == NULL) {
-	if(context->extra_addresses != NULL) {
-	    free(context->extra_addresses);
-	    context->extra_addresses = NULL;
-	}
-	return 0;
+        if(context->extra_addresses != NULL) {
+            free(context->extra_addresses);
+            context->extra_addresses = NULL;
+        }
+        return 0;
     }
     if(context->extra_addresses == NULL) {
-	context->extra_addresses = malloc(sizeof(*context->extra_addresses));
-	if (context->extra_addresses == NULL)
-	    return krb5_enomem(context);
+        context->extra_addresses = malloc(sizeof(*context->extra_addresses));
+        if (context->extra_addresses == NULL)
+            return krb5_enomem(context);
     }
     return krb5_copy_addresses(context, addresses, context->extra_addresses);
 }
@@ -1170,8 +1170,8 @@ KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_get_extra_addresses(krb5_context context, krb5_addresses *addresses)
 {
     if(context->extra_addresses == NULL) {
-	memset(addresses, 0, sizeof(*addresses));
-	return 0;
+        memset(addresses, 0, sizeof(*addresses));
+        return 0;
     }
     return krb5_copy_addresses(context,context->extra_addresses, addresses);
 }
@@ -1194,10 +1194,10 @@ krb5_add_ignore_addresses(krb5_context context, krb5_addresses *addresses)
 {
 
     if(context->ignore_addresses)
-	return krb5_append_addresses(context,
-				     context->ignore_addresses, addresses);
+        return krb5_append_addresses(context,
+                                     context->ignore_addresses, addresses);
     else
-	return krb5_set_ignore_addresses(context, addresses);
+        return krb5_set_ignore_addresses(context, addresses);
 }
 
 /**
@@ -1217,18 +1217,18 @@ KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_set_ignore_addresses(krb5_context context, const krb5_addresses *addresses)
 {
     if(context->ignore_addresses)
-	krb5_free_addresses(context, context->ignore_addresses);
+        krb5_free_addresses(context, context->ignore_addresses);
     if(addresses == NULL) {
-	if(context->ignore_addresses != NULL) {
-	    free(context->ignore_addresses);
-	    context->ignore_addresses = NULL;
-	}
-	return 0;
+        if(context->ignore_addresses != NULL) {
+            free(context->ignore_addresses);
+            context->ignore_addresses = NULL;
+        }
+        return 0;
     }
     if(context->ignore_addresses == NULL) {
-	context->ignore_addresses = malloc(sizeof(*context->ignore_addresses));
-	if (context->ignore_addresses == NULL)
-	    return krb5_enomem(context);
+        context->ignore_addresses = malloc(sizeof(*context->ignore_addresses));
+        if (context->ignore_addresses == NULL)
+            return krb5_enomem(context);
     }
     return krb5_copy_addresses(context, addresses, context->ignore_addresses);
 }
@@ -1250,8 +1250,8 @@ KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_get_ignore_addresses(krb5_context context, krb5_addresses *addresses)
 {
     if(context->ignore_addresses == NULL) {
-	memset(addresses, 0, sizeof(*addresses));
-	return 0;
+        memset(addresses, 0, sizeof(*addresses));
+        return 0;
     }
     return krb5_copy_addresses(context, context->ignore_addresses, addresses);
 }
@@ -1326,9 +1326,9 @@ KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 krb5_set_dns_canonicalize_hostname (krb5_context context, krb5_boolean flag)
 {
     if (flag)
-	context->flags |= KRB5_CTX_F_DNS_CANONICALIZE_HOSTNAME;
+        context->flags |= KRB5_CTX_F_DNS_CANONICALIZE_HOSTNAME;
     else
-	context->flags &= ~KRB5_CTX_F_DNS_CANONICALIZE_HOSTNAME;
+        context->flags &= ~KRB5_CTX_F_DNS_CANONICALIZE_HOSTNAME;
 }
 
 /**
@@ -1363,9 +1363,9 @@ KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_get_kdc_sec_offset (krb5_context context, int32_t *sec, int32_t *usec)
 {
     if (sec)
-	*sec = context->kdc_sec_offset;
+        *sec = context->kdc_sec_offset;
     if (usec)
-	*usec = context->kdc_usec_offset;
+        *usec = context->kdc_usec_offset;
     return 0;
 }
 
@@ -1386,7 +1386,7 @@ krb5_set_kdc_sec_offset (krb5_context context, int32_t sec, int32_t usec)
 {
     context->kdc_sec_offset = sec;
     if (usec >= 0)
-	context->kdc_usec_offset = usec;
+        context->kdc_usec_offset = usec;
     return 0;
 }
 
@@ -1438,24 +1438,24 @@ krb5_set_max_time_skew (krb5_context context, time_t t)
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_init_etype(krb5_context context,
-		 krb5_pdu pdu_type,
-		 unsigned *len,
-		 krb5_enctype **val,
-		 const krb5_enctype *etypes)
+                 krb5_pdu pdu_type,
+                 unsigned *len,
+                 krb5_enctype **val,
+                 const krb5_enctype *etypes)
 {
     krb5_error_code ret;
 
     if (etypes == NULL)
-	ret = krb5_get_default_in_tkt_etypes(context, pdu_type, val);
+        ret = krb5_get_default_in_tkt_etypes(context, pdu_type, val);
     else
-	ret = copy_enctypes(context, etypes, val);
+        ret = copy_enctypes(context, etypes, val);
     if (ret)
-	return ret;
+        return ret;
 
     if (len) {
-	*len = 0;
-	while ((*val)[*len] != KRB5_ENCTYPE_NULL)
-	    (*len)++;
+        *len = 0;
+        while ((*val)[*len] != KRB5_ENCTYPE_NULL)
+            (*len)++;
     }
     return 0;
 }
@@ -1494,10 +1494,10 @@ krb5_set_home_dir_access(krb5_context context, krb5_boolean allow)
     krb5_boolean old = _krb5_homedir_access(context);
 
     if (context) {
-	if (allow)
-	    context->flags |= KRB5_CTX_F_HOMEDIR_ACCESS;
-	else
-	    context->flags &= ~KRB5_CTX_F_HOMEDIR_ACCESS;
+        if (allow)
+            context->flags |= KRB5_CTX_F_HOMEDIR_ACCESS;
+        else
+            context->flags &= ~KRB5_CTX_F_HOMEDIR_ACCESS;
         heim_context_set_homedir_access(context->hcontext, allow ? 1 : 0);
     }
 

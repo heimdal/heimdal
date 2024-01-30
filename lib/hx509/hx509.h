@@ -142,7 +142,7 @@ typedef struct hx509_pem_header {
 
 typedef int
 (*hx509_pem_read_func)(hx509_context, const char *, const hx509_pem_header *,
-		       const void *, size_t, void *ctx);
+                       const void *, size_t, void *ctx);
 
 /*
  * Options passed to hx509_query_match_option.

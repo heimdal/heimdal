@@ -213,88 +213,88 @@ audit_trail(kadmin_request_desc r, krb5_error_code ret)
      */
 #define CASE(x) case x : retname = #x; break
     switch (ret) {
-    case ENOSYS: retname = "ECSRFTOKENREQD"; break;
-    CASE(EINVAL);
-    CASE(ENOMEM);
-    CASE(EACCES);
-    CASE(HDB_ERR_NOT_FOUND_HERE);
-    CASE(HDB_ERR_WRONG_REALM);
-    CASE(HDB_ERR_EXISTS);
-    CASE(HDB_ERR_KVNO_NOT_FOUND);
-    CASE(HDB_ERR_NOENTRY);
-    CASE(HDB_ERR_NO_MKEY);
-    CASE(KRB5_KDC_UNREACH);
-    CASE(KADM5_FAILURE);
-    CASE(KADM5_AUTH_GET);
-    CASE(KADM5_AUTH_ADD);
-    CASE(KADM5_AUTH_MODIFY);
-    CASE(KADM5_AUTH_DELETE);
-    CASE(KADM5_AUTH_INSUFFICIENT);
-    CASE(KADM5_BAD_DB);
-    CASE(KADM5_DUP);
-    CASE(KADM5_RPC_ERROR);
-    CASE(KADM5_NO_SRV);
-    CASE(KADM5_BAD_HIST_KEY);
-    CASE(KADM5_NOT_INIT);
-    CASE(KADM5_UNK_PRINC);
-    CASE(KADM5_UNK_POLICY);
-    CASE(KADM5_BAD_MASK);
-    CASE(KADM5_BAD_CLASS);
-    CASE(KADM5_BAD_LENGTH);
-    CASE(KADM5_BAD_POLICY);
-    CASE(KADM5_BAD_PRINCIPAL);
-    CASE(KADM5_BAD_AUX_ATTR);
-    CASE(KADM5_BAD_HISTORY);
-    CASE(KADM5_BAD_MIN_PASS_LIFE);
-    CASE(KADM5_PASS_Q_TOOSHORT);
-    CASE(KADM5_PASS_Q_CLASS);
-    CASE(KADM5_PASS_Q_DICT);
-    CASE(KADM5_PASS_Q_GENERIC);
-    CASE(KADM5_PASS_REUSE);
-    CASE(KADM5_PASS_TOOSOON);
-    CASE(KADM5_POLICY_REF);
-    CASE(KADM5_INIT);
-    CASE(KADM5_BAD_PASSWORD);
-    CASE(KADM5_PROTECT_PRINCIPAL);
-    CASE(KADM5_BAD_SERVER_HANDLE);
-    CASE(KADM5_BAD_STRUCT_VERSION);
-    CASE(KADM5_OLD_STRUCT_VERSION);
-    CASE(KADM5_NEW_STRUCT_VERSION);
-    CASE(KADM5_BAD_API_VERSION);
-    CASE(KADM5_OLD_LIB_API_VERSION);
-    CASE(KADM5_OLD_SERVER_API_VERSION);
-    CASE(KADM5_NEW_LIB_API_VERSION);
-    CASE(KADM5_NEW_SERVER_API_VERSION);
-    CASE(KADM5_SECURE_PRINC_MISSING);
-    CASE(KADM5_NO_RENAME_SALT);
-    CASE(KADM5_BAD_CLIENT_PARAMS);
-    CASE(KADM5_BAD_SERVER_PARAMS);
-    CASE(KADM5_AUTH_LIST);
-    CASE(KADM5_AUTH_CHANGEPW);
-    CASE(KADM5_BAD_TL_TYPE);
-    CASE(KADM5_MISSING_CONF_PARAMS);
-    CASE(KADM5_BAD_SERVER_NAME);
-    CASE(KADM5_KS_TUPLE_NOSUPP);
-    CASE(KADM5_SETKEY3_ETYPE_MISMATCH);
-    CASE(KADM5_DECRYPT_USAGE_NOSUPP);
-    CASE(KADM5_POLICY_OP_NOSUPP);
-    CASE(KADM5_KEEPOLD_NOSUPP);
-    CASE(KADM5_AUTH_GET_KEYS);
-    CASE(KADM5_ALREADY_LOCKED);
-    CASE(KADM5_NOT_LOCKED);
-    CASE(KADM5_LOG_CORRUPT);
-    CASE(KADM5_LOG_NEEDS_UPGRADE);
-    CASE(KADM5_BAD_SERVER_HOOK);
-    CASE(KADM5_SERVER_HOOK_NOT_FOUND);
-    CASE(KADM5_OLD_SERVER_HOOK_VERSION);
-    CASE(KADM5_NEW_SERVER_HOOK_VERSION);
-    CASE(KADM5_READ_ONLY);
-    case 0:
-        retname = "SUCCESS";
-        break;
-    default:
-        retname = NULL;
-        break;
+        case ENOSYS: retname = "ECSRFTOKENREQD"; break;
+        CASE(EINVAL);
+        CASE(ENOMEM);
+        CASE(EACCES);
+        CASE(HDB_ERR_NOT_FOUND_HERE);
+        CASE(HDB_ERR_WRONG_REALM);
+        CASE(HDB_ERR_EXISTS);
+        CASE(HDB_ERR_KVNO_NOT_FOUND);
+        CASE(HDB_ERR_NOENTRY);
+        CASE(HDB_ERR_NO_MKEY);
+        CASE(KRB5_KDC_UNREACH);
+        CASE(KADM5_FAILURE);
+        CASE(KADM5_AUTH_GET);
+        CASE(KADM5_AUTH_ADD);
+        CASE(KADM5_AUTH_MODIFY);
+        CASE(KADM5_AUTH_DELETE);
+        CASE(KADM5_AUTH_INSUFFICIENT);
+        CASE(KADM5_BAD_DB);
+        CASE(KADM5_DUP);
+        CASE(KADM5_RPC_ERROR);
+        CASE(KADM5_NO_SRV);
+        CASE(KADM5_BAD_HIST_KEY);
+        CASE(KADM5_NOT_INIT);
+        CASE(KADM5_UNK_PRINC);
+        CASE(KADM5_UNK_POLICY);
+        CASE(KADM5_BAD_MASK);
+        CASE(KADM5_BAD_CLASS);
+        CASE(KADM5_BAD_LENGTH);
+        CASE(KADM5_BAD_POLICY);
+        CASE(KADM5_BAD_PRINCIPAL);
+        CASE(KADM5_BAD_AUX_ATTR);
+        CASE(KADM5_BAD_HISTORY);
+        CASE(KADM5_BAD_MIN_PASS_LIFE);
+        CASE(KADM5_PASS_Q_TOOSHORT);
+        CASE(KADM5_PASS_Q_CLASS);
+        CASE(KADM5_PASS_Q_DICT);
+        CASE(KADM5_PASS_Q_GENERIC);
+        CASE(KADM5_PASS_REUSE);
+        CASE(KADM5_PASS_TOOSOON);
+        CASE(KADM5_POLICY_REF);
+        CASE(KADM5_INIT);
+        CASE(KADM5_BAD_PASSWORD);
+        CASE(KADM5_PROTECT_PRINCIPAL);
+        CASE(KADM5_BAD_SERVER_HANDLE);
+        CASE(KADM5_BAD_STRUCT_VERSION);
+        CASE(KADM5_OLD_STRUCT_VERSION);
+        CASE(KADM5_NEW_STRUCT_VERSION);
+        CASE(KADM5_BAD_API_VERSION);
+        CASE(KADM5_OLD_LIB_API_VERSION);
+        CASE(KADM5_OLD_SERVER_API_VERSION);
+        CASE(KADM5_NEW_LIB_API_VERSION);
+        CASE(KADM5_NEW_SERVER_API_VERSION);
+        CASE(KADM5_SECURE_PRINC_MISSING);
+        CASE(KADM5_NO_RENAME_SALT);
+        CASE(KADM5_BAD_CLIENT_PARAMS);
+        CASE(KADM5_BAD_SERVER_PARAMS);
+        CASE(KADM5_AUTH_LIST);
+        CASE(KADM5_AUTH_CHANGEPW);
+        CASE(KADM5_BAD_TL_TYPE);
+        CASE(KADM5_MISSING_CONF_PARAMS);
+        CASE(KADM5_BAD_SERVER_NAME);
+        CASE(KADM5_KS_TUPLE_NOSUPP);
+        CASE(KADM5_SETKEY3_ETYPE_MISMATCH);
+        CASE(KADM5_DECRYPT_USAGE_NOSUPP);
+        CASE(KADM5_POLICY_OP_NOSUPP);
+        CASE(KADM5_KEEPOLD_NOSUPP);
+        CASE(KADM5_AUTH_GET_KEYS);
+        CASE(KADM5_ALREADY_LOCKED);
+        CASE(KADM5_NOT_LOCKED);
+        CASE(KADM5_LOG_CORRUPT);
+        CASE(KADM5_LOG_NEEDS_UPGRADE);
+        CASE(KADM5_BAD_SERVER_HOOK);
+        CASE(KADM5_SERVER_HOOK_NOT_FOUND);
+        CASE(KADM5_OLD_SERVER_HOOK_VERSION);
+        CASE(KADM5_NEW_SERVER_HOOK_VERSION);
+        CASE(KADM5_READ_ONLY);
+        case 0:
+            retname = "SUCCESS";
+            break;
+        default:
+            retname = NULL;
+            break;
     }
     heim_audit_trail((heim_svc_req_desc)r, ret, retname);
 }
@@ -766,7 +766,7 @@ bad_reqv(kadmin_request_desc r,
     context = r->context;
     if (r->hcontext && r->kv)
         heim_audit_setkv_number((heim_svc_req_desc)r, "http-status-code",
-				http_status_code);
+                                http_status_code);
     (void) gettimeofday(&r->tv_end, NULL);
     if (code == ENOMEM) {
         if (context)
@@ -1651,32 +1651,32 @@ get_keysN(kadmin_request_desc r)
                                                                   i)));
     }
     switch (ret) {
-    case -1:
-        /* Can't happen */
-        krb5_log_msg(r->context, logfac, 1, NULL,
-                     "Failed to extract keys for unknown reasons");
-        if (r->response_set)
-            return MHD_YES;
-        return bad_503(r, ret, "Could not get keys");
-    case ENOSYS:
-        /* Our convention */
-        return bad_method_want_POST(r);
-    case KADM5_READ_ONLY:
-        if (primary_server_URI) {
+        case -1:
+            /* Can't happen */
             krb5_log_msg(r->context, logfac, 1, NULL,
-                         "Redirect %s to primary server", r->cname);
-            return resp(r, MHD_HTTP_TEMPORARY_REDIRECT, KADM5_READ_ONLY,
-                        MHD_RESPMEM_PERSISTENT, NULL, "", 0, NULL);
-        } else {
-            krb5_log_msg(r->context, logfac, 1, NULL, "HDB is read-only");
-            return bad_403(r, ret, "HDB is read-only");
-        }
-    case 0:
-        krb5_log_msg(r->context, logfac, 1, NULL, "Sent keytab to %s",
-                     r->cname);
-        return good_ext_keytab(r);
-    default:
-        return bad_503(r, ret, "Could not get keys");
+                         "Failed to extract keys for unknown reasons");
+            if (r->response_set)
+                return MHD_YES;
+            return bad_503(r, ret, "Could not get keys");
+        case ENOSYS:
+            /* Our convention */
+            return bad_method_want_POST(r);
+        case KADM5_READ_ONLY:
+            if (primary_server_URI) {
+                krb5_log_msg(r->context, logfac, 1, NULL,
+                             "Redirect %s to primary server", r->cname);
+                return resp(r, MHD_HTTP_TEMPORARY_REDIRECT, KADM5_READ_ONLY,
+                            MHD_RESPMEM_PERSISTENT, NULL, "", 0, NULL);
+            } else {
+                krb5_log_msg(r->context, logfac, 1, NULL, "HDB is read-only");
+                return bad_403(r, ret, "HDB is read-only");
+            }
+        case 0:
+            krb5_log_msg(r->context, logfac, 1, NULL, "Sent keytab to %s",
+                         r->cname);
+            return good_ext_keytab(r);
+        default:
+            return bad_503(r, ret, "Could not get keys");
     }
 }
 

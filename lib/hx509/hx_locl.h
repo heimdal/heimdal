@@ -175,17 +175,17 @@ struct hx509_keyset_ops {
     const char *name;
     int flags;
     int (*init)(hx509_context, hx509_certs, void **,
-		int, const char *, hx509_lock);
+                int, const char *, hx509_lock);
     int (*store)(hx509_context, hx509_certs, void *, int, hx509_lock);
     int (*free)(hx509_certs, void *);
     int (*add)(hx509_context, hx509_certs, void *, hx509_cert);
     int (*query)(hx509_context, hx509_certs, void *,
-		 const hx509_query *, hx509_cert *);
+                 const hx509_query *, hx509_cert *);
     int (*iter_start)(hx509_context, hx509_certs, void *, void **);
     int (*iter)(hx509_context, hx509_certs, void *, void *, hx509_cert *);
     int (*iter_end)(hx509_context, hx509_certs, void *, void *);
     int (*printinfo)(hx509_context, hx509_certs,
-		     void *, int (*)(void *, const char *), void *);
+                     void *, int (*)(void *, const char *), void *);
     int (*getkeys)(hx509_context, hx509_certs, void *, hx509_private_key **);
     int (*addkey)(hx509_context, hx509_certs, void *, hx509_private_key);
     int (*destroy)(hx509_context, hx509_certs, void *);
@@ -222,8 +222,8 @@ struct hx509_env_data {
     char *name;
     struct hx509_env_data *next;
     union {
-	char *string;
-	struct hx509_env_data *list;
+        char *string;
+        struct hx509_env_data *list;
     } u;
 };
 
@@ -252,20 +252,20 @@ struct hx509_private_key_ops {
     const char *pemtype;
     const heim_oid *key_oid;
     int (*available)(const hx509_private_key,
-		     const AlgorithmIdentifier *);
+                     const AlgorithmIdentifier *);
     int (*get_spki)(hx509_context,
-		    const hx509_private_key,
-		    SubjectPublicKeyInfo *);
+                    const hx509_private_key,
+                    SubjectPublicKeyInfo *);
     int (*export)(hx509_context context,
-		  const hx509_private_key,
-		  hx509_key_format_t,
-		  heim_octet_string *);
+                  const hx509_private_key,
+                  hx509_key_format_t,
+                  heim_octet_string *);
     int (*import)(hx509_context, const AlgorithmIdentifier *,
-		  const void *, size_t, hx509_key_format_t,
-		  hx509_private_key);
+                  const void *, size_t, hx509_key_format_t,
+                  hx509_private_key);
     int (*generate_private_key)(hx509_context,
-				struct hx509_generate_private_context *,
-				hx509_private_key);
+                                struct hx509_generate_private_context *,
+                                hx509_private_key);
     BIGNUM *(*get_internal)(hx509_context, hx509_private_key, const char *);
 };
 
@@ -274,8 +274,8 @@ struct hx509_private_key {
     const struct signature_alg *md;
     const heim_oid *signature_alg;
     union {
-	RSA *rsa;
-	void *keydata;
+        RSA *rsa;
+        void *keydata;
         void *ecdsa; /* EC_KEY */
     } private_key;
     hx509_private_key_ops *ops;
@@ -306,18 +306,18 @@ struct signature_alg {
     time_t best_before; /* refuse signature made after best before date */
     const EVP_MD *(*evp_md)(void);
     int (*verify_signature)(hx509_context context,
-			    const struct signature_alg *,
-			    const Certificate *,
-			    const AlgorithmIdentifier *,
-			    const heim_octet_string *,
-			    const heim_octet_string *);
+                            const struct signature_alg *,
+                            const Certificate *,
+                            const AlgorithmIdentifier *,
+                            const heim_octet_string *,
+                            const heim_octet_string *);
     int (*create_signature)(hx509_context,
-			    const struct signature_alg *,
-			    const hx509_private_key,
-			    const AlgorithmIdentifier *,
-			    const heim_octet_string *,
-			    AlgorithmIdentifier *,
-			    heim_octet_string *);
+                            const struct signature_alg *,
+                            const hx509_private_key,
+                            const AlgorithmIdentifier *,
+                            const heim_octet_string *,
+                            AlgorithmIdentifier *,
+                            heim_octet_string *);
     int digest_size;
 };
 

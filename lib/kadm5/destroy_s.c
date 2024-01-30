@@ -64,8 +64,8 @@ destroy_kadm5_log_context (kadm5_log_context *c)
         rk_closesocket(c->socket_fd);
 #ifdef NO_UNIX_SOCKETS
     if (c->socket_info) {
-	freeaddrinfo(c->socket_info);
-	c->socket_info = NULL;
+        freeaddrinfo(c->socket_info);
+        c->socket_info = NULL;
     }
 #endif
 }
@@ -88,7 +88,7 @@ kadm5_s_destroy(void *server_handle)
     destroy_config(&context->config);
     krb5_free_principal(kcontext, context->caller);
     if (context->my_context)
-	krb5_free_context(kcontext);
+        krb5_free_context(kcontext);
     free(context);
 
     return ret;

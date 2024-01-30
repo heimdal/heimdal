@@ -105,21 +105,21 @@ test_pkcs12_pbe(struct tests *t)
 
     key = malloc(t->keylen);
     if (t->password)
-	pwlen = strlen(t->password);
+        pwlen = strlen(t->password);
 
     if (!PKCS12_key_gen(t->password, pwlen,
-			t->salt, t->saltsize,
-			t->id, t->iterations, t->keylen,
-			key, t->md()))
+                        t->salt, t->saltsize,
+                        t->id, t->iterations, t->keylen,
+                        key, t->md()))
     {
-	printf("key_gen failed\n");
-	return 1;
+        printf("key_gen failed\n");
+        return 1;
     }
 
     if (memcmp(t->key, key, t->keylen) != 0) {
-	printf("incorrect key\n");
-	free(key);
-	return 1;
+        printf("incorrect key\n");
+        free(key);
+        return 1;
     }
     free(key);
     return 0;
@@ -132,7 +132,7 @@ main(int argc, char **argv)
     int i;
 
     for (i = 0; i < sizeof(p12_pbe_tests)/sizeof(p12_pbe_tests[0]); i++)
-	ret += test_pkcs12_pbe(&p12_pbe_tests[i]);
+        ret += test_pkcs12_pbe(&p12_pbe_tests[i]);
 
     return ret;
 }

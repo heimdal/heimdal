@@ -40,15 +40,15 @@ static krb5_error_code
 lr_proc(krb5_context context, krb5_last_req_entry **e, void *ctx)
 {
     while (e && *e) {
-	printf("e type: %d value: %d\n", (*e)->lr_type, (int)(*e)->value);
-	e++;
+        printf("e type: %d value: %d\n", (*e)->lr_type, (int)(*e)->value);
+        e++;
     }
     return 0;
 }
 
 static void
 test_get_init_creds(krb5_context context,
-		    krb5_principal client)
+                    krb5_principal client)
 {
     krb5_error_code ret;
     krb5_get_init_creds_opt *opt;
@@ -56,28 +56,28 @@ test_get_init_creds(krb5_context context,
 
     ret = krb5_get_init_creds_opt_alloc(context, &opt);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_get_init_creds_opt_alloc");
+        krb5_err(context, 1, ret, "krb5_get_init_creds_opt_alloc");
 
 
     ret = krb5_get_init_creds_opt_set_process_last_req(context,
-						       opt,
-						       lr_proc,
-						       NULL);
+                                                       opt,
+                                                       lr_proc,
+                                                       NULL);
     if (ret)
-	krb5_err(context, 1, ret,
-		 "krb5_get_init_creds_opt_set_process_last_req");
+        krb5_err(context, 1, ret,
+                 "krb5_get_init_creds_opt_set_process_last_req");
 
     ret = krb5_get_init_creds_password(context,
-				       &cred,
-				       client,
-				       password_str,
-				       krb5_prompter_posix,
-				       NULL,
-				       0,
-				       NULL,
-				       opt);
+                                       &cred,
+                                       client,
+                                       password_str,
+                                       krb5_prompter_posix,
+                                       NULL,
+                                       0,
+                                       NULL,
+                                       opt);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_get_init_creds_password");
+        krb5_err(context, 1, ret, "krb5_get_init_creds_password");
 
     krb5_get_init_creds_opt_free(context, opt);
 }
@@ -119,26 +119,26 @@ main(int argc, char **argv)
     setprogname(argv[0]);
 
     if(getarg(args, sizeof(args) / sizeof(args[0]), argc, argv, &optidx))
-	usage(1);
+        usage(1);
 
     if (help_flag)
-	usage (0);
+        usage (0);
 
     if(version_flag){
-	print_version(NULL);
-	exit(0);
+        print_version(NULL);
+        exit(0);
     }
 
     if(client_str == NULL)
-	errx(1, "client is not set");
+        errx(1, "client is not set");
 
     ret = krb5_init_context(&context);
     if (ret)
-	errx (1, "krb5_init_context failed: %d", ret);
+        errx (1, "krb5_init_context failed: %d", ret);
 
     ret = krb5_parse_name(context, client_str, &client);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_parse_name: %d", ret);
+        krb5_err(context, 1, ret, "krb5_parse_name: %d", ret);
 
     test_get_init_creds(context, client);
 

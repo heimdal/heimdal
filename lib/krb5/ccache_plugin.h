@@ -39,8 +39,8 @@
 
 krb5_error_code KRB5_CALLCONV
 ccache_ops_plugin_load(krb5_context context,
-		       krb5_get_instance_func_t *func,
-		       size_t *n_ftables,
-		       heim_plugin_common_ftable_p **ftables);
+                       krb5_get_instance_func_t *func,
+                       size_t *n_ftables,
+                       heim_plugin_common_ftable_p **ftables);
 
 #endif /* HEIMDAL_KRB5_CCACHE_PLUGIN_H */

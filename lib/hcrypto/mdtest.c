@@ -244,62 +244,62 @@ hash_test (struct hash_foo *hash, struct test *tests)
 
     printf ("%s... ", hash->name);
     for (t = tests; t->str; ++t) {
-	char buf[1000];
+        char buf[1000];
 
-	ectx = EVP_MD_CTX_create();
+        ectx = EVP_MD_CTX_create();
         if (hash->evp() == NULL) {
             printf("unavailable\n");
             continue;
         }
-	EVP_DigestInit_ex(ectx, hash->evp(), NULL);
+        EVP_DigestInit_ex(ectx, hash->evp(), NULL);
 
-	(*hash->init)(ctx);
-	if(strcmp(t->str, ONE_MILLION_A) == 0) {
-	    int i;
-	    memset(buf, 'a', sizeof(buf));
-	    for(i = 0; i < 1000; i++) {
-		(*hash->update)(ctx, buf, sizeof(buf));
-		EVP_DigestUpdate(ectx, buf, sizeof(buf));
-	    }
-	} else {
-	    (*hash->update)(ctx, (unsigned char *)t->str, strlen(t->str));
-	    EVP_DigestUpdate(ectx, t->str, strlen(t->str));
-	}
+        (*hash->init)(ctx);
+        if(strcmp(t->str, ONE_MILLION_A) == 0) {
+            int i;
+            memset(buf, 'a', sizeof(buf));
+            for(i = 0; i < 1000; i++) {
+                (*hash->update)(ctx, buf, sizeof(buf));
+                EVP_DigestUpdate(ectx, buf, sizeof(buf));
+            }
+        } else {
+            (*hash->update)(ctx, (unsigned char *)t->str, strlen(t->str));
+            EVP_DigestUpdate(ectx, t->str, strlen(t->str));
+        }
 
-	(*hash->final) (res, ctx);
-	if (memcmp (res, t->hash, hash->hsize) != 0) {
-	    int i;
+        (*hash->final) (res, ctx);
+        if (memcmp (res, t->hash, hash->hsize) != 0) {
+            int i;
 
-	    printf ("%s(\"%s\") failed\n", hash->name, t->str);
-	    printf("should be:  ");
-	    for(i = 0; i < hash->hsize; ++i) {
-		if(i > 0 && (i % 16) == 0)
-		    printf("\n            ");
-		printf("%02x ", t->hash[i]);
-	    }
-	    printf("\nresult was: ");
-	    for(i = 0; i < hash->hsize; ++i) {
-		if(i > 0 && (i % 16) == 0)
-		    printf("\n            ");
-		printf("%02x ", res[i]);
-	    }
-	    printf("\n");
-	    return 1;
-	}
+            printf ("%s(\"%s\") failed\n", hash->name, t->str);
+            printf("should be:  ");
+            for(i = 0; i < hash->hsize; ++i) {
+                if(i > 0 && (i % 16) == 0)
+                    printf("\n            ");
+                printf("%02x ", t->hash[i]);
+            }
+            printf("\nresult was: ");
+            for(i = 0; i < hash->hsize; ++i) {
+                if(i > 0 && (i % 16) == 0)
+                    printf("\n            ");
+                printf("%02x ", res[i]);
+            }
+            printf("\n");
+            return 1;
+        }
 
-	EVP_DigestFinal_ex(ectx, res, &esize);
-	EVP_MD_CTX_destroy(ectx);
+        EVP_DigestFinal_ex(ectx, res, &esize);
+        EVP_MD_CTX_destroy(ectx);
 
-	if (hash->hsize != esize) {
-	    printf("EVP %s returned wrong hash size\n", hash->name);
-	    return 1;
-	}
+        if (hash->hsize != esize) {
+            printf("EVP %s returned wrong hash size\n", hash->name);
+            return 1;
+        }
 
-	if (memcmp (res, t->hash, hash->hsize) != 0) {
-	    printf("EVP %s failed here old function where successful!\n",
-		   hash->name);
-	    return 1;
-	}
+        if (memcmp (res, t->hash, hash->hsize) != 0) {
+            printf("EVP %s failed here old function where successful!\n",
+                   hash->name);
+            return 1;
+        }
     }
     free(ctx);
     free(res);
@@ -311,10 +311,10 @@ int
 main (void)
 {
     return
-	hash_test(&md4, md4_tests) +
-	hash_test(&md5, md5_tests) +
-	hash_test(&sha1, sha1_tests) +
-	hash_test(&sha256, sha256_tests) +
-	hash_test(&sha384, sha384_tests) +
-	hash_test(&sha512, sha512_tests);
+        hash_test(&md4, md4_tests) +
+        hash_test(&md5, md5_tests) +
+        hash_test(&sha1, sha1_tests) +
+        hash_test(&sha256, sha256_tests) +
+        hash_test(&sha384, sha384_tests) +
+        hash_test(&sha512, sha512_tests);
 }

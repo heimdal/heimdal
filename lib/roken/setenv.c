@@ -51,24 +51,24 @@ setenv(const char *var, const char *val, int rewrite)
     char *t = NULL;
 
     if (!rewrite && getenv(var) != 0)
-	return 0;
+        return 0;
 
     if (asprintf (&t, "%s=%s", var, val) < 0 || t == NULL)
-	return -1;
+        return -1;
 
     if (putenv(t) == 0)
-	return 0;
+        return 0;
     else
-	return -1;
+        return -1;
 #else  /* Win32 */
     char dummy[8];
 
     if (!rewrite && GetEnvironmentVariable(var, dummy, sizeof(dummy)/sizeof(char)) != 0)
-	return 0;
+        return 0;
 
     if (SetEnvironmentVariable(var, val) == 0)
-	return -1;
+        return -1;
     else
-	return 0;
+        return 0;
 #endif
 }

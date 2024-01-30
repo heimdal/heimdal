@@ -51,7 +51,7 @@ enum kadm5_hook_stage {
     KADM5_HOOK_STAGE_POSTCOMMIT
 };
 
-#define KADM5_HOOK_FLAG_KEEPOLD	    0x1 /* keep old password */
+#define KADM5_HOOK_FLAG_KEEPOLD     0x1 /* keep old password */
 #define KADM5_HOOK_FLAG_CONDITIONAL 0x2 /* only change password if different */
 
 typedef struct kadm5_hook_ftable {
@@ -66,75 +66,75 @@ typedef struct kadm5_hook_ftable {
      * commit hooks are not called if a pre-commit hook aborted the call.
      */
     krb5_error_code (KRB5_CALLCONV *chpass)(krb5_context context,
-					    void *data,
-					    enum kadm5_hook_stage stage,
-					    krb5_error_code code,
-					    krb5_const_principal princ,
-					    uint32_t flags,
-					    size_t n_ks_tuple,
-					    krb5_key_salt_tuple *ks_tuple,
-					    const char *password);
+                                            void *data,
+                                            enum kadm5_hook_stage stage,
+                                            krb5_error_code code,
+                                            krb5_const_principal princ,
+                                            uint32_t flags,
+                                            size_t n_ks_tuple,
+                                            krb5_key_salt_tuple *ks_tuple,
+                                            const char *password);
 
     krb5_error_code (KRB5_CALLCONV *chpass_with_key)(krb5_context context,
-						     void *data,
-						     enum kadm5_hook_stage stage,
-						     krb5_error_code code,
-						     krb5_const_principal princ,
-						     uint32_t flags,
-						     size_t n_key_data,
-						     krb5_key_data *key_data);
+                                                     void *data,
+                                                     enum kadm5_hook_stage stage,
+                                                     krb5_error_code code,
+                                                     krb5_const_principal princ,
+                                                     uint32_t flags,
+                                                     size_t n_key_data,
+                                                     krb5_key_data *key_data);
 
     krb5_error_code (KRB5_CALLCONV *create)(krb5_context context,
-					    void *data,
-					    enum kadm5_hook_stage stage,
-					    krb5_error_code code,
-					    kadm5_principal_ent_t ent,
-					    uint32_t mask,
-					    const char *password);
+                                            void *data,
+                                            enum kadm5_hook_stage stage,
+                                            krb5_error_code code,
+                                            kadm5_principal_ent_t ent,
+                                            uint32_t mask,
+                                            const char *password);
 
     krb5_error_code (KRB5_CALLCONV *modify)(krb5_context context,
-					    void *data,
-					    enum kadm5_hook_stage stage,
-					    krb5_error_code code,
-					    kadm5_principal_ent_t ent,
-					    uint32_t mask);
+                                            void *data,
+                                            enum kadm5_hook_stage stage,
+                                            krb5_error_code code,
+                                            kadm5_principal_ent_t ent,
+                                            uint32_t mask);
 
     krb5_error_code (KRB5_CALLCONV *delete)(krb5_context context,
-					    void *data,
-					    enum kadm5_hook_stage stage,
-					    krb5_error_code code,
-					    krb5_const_principal princ);
+                                            void *data,
+                                            enum kadm5_hook_stage stage,
+                                            krb5_error_code code,
+                                            krb5_const_principal princ);
 
     krb5_error_code (KRB5_CALLCONV *randkey)(krb5_context context,
-					     void *data,
-					     enum kadm5_hook_stage stage,
-					     krb5_error_code code,
-					     krb5_const_principal princ);
+                                             void *data,
+                                             enum kadm5_hook_stage stage,
+                                             krb5_error_code code,
+                                             krb5_const_principal princ);
 
     krb5_error_code (KRB5_CALLCONV *rename)(krb5_context context,
-					    void *data,
-					    enum kadm5_hook_stage stage,
-					    krb5_error_code code,
-					    krb5_const_principal source,
-					    krb5_const_principal target);
+                                            void *data,
+                                            enum kadm5_hook_stage stage,
+                                            krb5_error_code code,
+                                            krb5_const_principal source,
+                                            krb5_const_principal target);
 
     krb5_error_code (KRB5_CALLCONV *set_keys)(krb5_context context,
-					      void *data,
-					      enum kadm5_hook_stage stage,
-					      krb5_error_code code,
-					      krb5_const_principal princ,
-					      uint32_t flags,
-					      size_t n_ks_tuple,
-					      krb5_key_salt_tuple *ks_tuple,
-					      size_t n_keys,
-					      krb5_keyblock *keyblocks);
+                                              void *data,
+                                              enum kadm5_hook_stage stage,
+                                              krb5_error_code code,
+                                              krb5_const_principal princ,
+                                              uint32_t flags,
+                                              size_t n_ks_tuple,
+                                              krb5_key_salt_tuple *ks_tuple,
+                                              size_t n_keys,
+                                              krb5_keyblock *keyblocks);
 
     krb5_error_code (KRB5_CALLCONV *prune)(krb5_context context,
-					   void *data,
-					   enum kadm5_hook_stage stage,
-					   krb5_error_code code,
-					   krb5_const_principal princ,
-					   int kvno);
+                                           void *data,
+                                           enum kadm5_hook_stage stage,
+                                           krb5_error_code code,
+                                           krb5_const_principal princ,
+                                           int kvno);
 
 } kadm5_hook_ftable;
 
@@ -144,8 +144,8 @@ typedef struct kadm5_hook_ftable {
  */
 typedef krb5_error_code
 (KRB5_CALLCONV *kadm5_hook_plugin_load_t)(krb5_context context,
-					  krb5_get_instance_func_t *func,
-					  size_t *n_hooks,
-					  const kadm5_hook_ftable *const **hooks);
+                                          krb5_get_instance_func_t *func,
+                                          size_t *n_hooks,
+                                          const kadm5_hook_ftable *const **hooks);
 
 #endif /* !KADM5_HOOK_H */

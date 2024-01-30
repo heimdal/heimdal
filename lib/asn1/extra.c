@@ -42,14 +42,14 @@ RCSID("$Id$");
 
 int ASN1CALL
 encode_heim_any(unsigned char *p, size_t len,
-		const heim_any *data, size_t *size)
+                const heim_any *data, size_t *size)
 {
     return der_put_octet_string (p, len, data, size);
 }
 
 int ASN1CALL
 decode_heim_any(const unsigned char *p, size_t len,
-		heim_any *data, size_t *size)
+                heim_any *data, size_t *size)
 {
     size_t len_len, length, l;
     Der_class thisclass;
@@ -62,26 +62,26 @@ decode_heim_any(const unsigned char *p, size_t len,
     e = der_get_tag (p, len, &thisclass, &thistype, &thistag, &l);
     if (e) return e;
     if (l > len)
-	return ASN1_OVERFLOW;
+        return ASN1_OVERFLOW;
     e = der_get_length(p + l, len - l, &length, &len_len);
     if (e) return e;
     if (length == ASN1_INDEFINITE) {
         if (len < len_len + l)
-	    return ASN1_OVERFLOW;
-	length = len - (len_len + l);
+            return ASN1_OVERFLOW;
+        length = len - (len_len + l);
     } else {
-	if (len < length + len_len + l)
-	    return ASN1_OVERFLOW;
+        if (len < length + len_len + l)
+            return ASN1_OVERFLOW;
     }
 
     data->data = malloc(length + len_len + l);
     if (data->data == NULL)
-	return ENOMEM;
+        return ENOMEM;
     data->length = length + len_len + l;
     memcpy(data->data, p, length + len_len + l);
 
     if (size)
-	*size = length + len_len + l;
+        *size = length + len_len + l;
 
     return 0;
 }
@@ -124,14 +124,14 @@ copy_heim_any(const heim_any *from, heim_any *to)
 
 int ASN1CALL
 encode_HEIM_ANY(unsigned char *p, size_t len,
-		const heim_any *data, size_t *size)
+                const heim_any *data, size_t *size)
 {
     return encode_heim_any(p, len, data, size);
 }
 
 int ASN1CALL
 decode_HEIM_ANY(const unsigned char *p, size_t len,
-		heim_any *data, size_t *size)
+                heim_any *data, size_t *size)
 {
     return decode_heim_any(p, len, data, size);
 }
@@ -174,14 +174,14 @@ copy_HEIM_ANY(const heim_any *from, heim_any *to)
 
 int ASN1CALL
 encode_heim_any_set(unsigned char *p, size_t len,
-		    const heim_any_set *data, size_t *size)
+                    const heim_any_set *data, size_t *size)
 {
     return der_put_octet_string (p, len, data, size);
 }
 
 int ASN1CALL
 decode_heim_any_set(const unsigned char *p, size_t len,
-		heim_any_set *data, size_t *size)
+                    heim_any_set *data, size_t *size)
 {
     return der_get_octet_string(p, len, data, size);
 }
@@ -230,7 +230,7 @@ heim_any_cmp(const heim_any_set *p, const heim_any_set *q)
 
 int ASN1CALL
 encode_HEIM_ANY_SET(unsigned char *p, size_t len,
-		    const heim_any_set *data, size_t *size)
+                    const heim_any_set *data, size_t *size)
 {
     return encode_heim_any_set(p, len, data, size);
 }

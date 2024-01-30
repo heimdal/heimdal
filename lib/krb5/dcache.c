@@ -96,7 +96,7 @@ primary_create(krb5_dcache *dc)
     char *primary = NULL;
     int asprintf_ret = asprintf(&primary, "%s/primary", dc->dir);
     if (asprintf_ret == -1 || primary == NULL) {
-	return NULL;
+        return NULL;
     }
 
     return primary;
@@ -127,19 +127,19 @@ set_default_cache(krb5_context context, krb5_dcache *dc, const char *residual)
 
     asprintf_ret = asprintf(&path, "%s/primary-XXXXXX", dc->dir);
     if (asprintf_ret == -1 || path == NULL) {
-	return krb5_enomem(context);
+        return krb5_enomem(context);
     }
 
     fd = mkstemp(path);
     if (fd < 0) {
-	ret = errno;
-	goto out;
+        ret = errno;
+        goto out;
     }
     rk_cloexec(fd);
 #ifndef _WIN32
     if (fchmod(fd, S_IRUSR | S_IWUSR) < 0) {
-	ret = errno;
-	goto out;
+        ret = errno;
+        goto out;
     }
 #endif
     len = strlen(residual);
@@ -150,34 +150,34 @@ set_default_cache(krb5_context context, krb5_dcache *dc, const char *residual)
     iov[1].iov_len = 1;
 
     if (writev(fd, iov, sizeof(iov)/sizeof(iov[0])) != len + 1) {
-	ret = errno;
-	goto out;
+        ret = errno;
+        goto out;
     }
-    
+
     primary = primary_create(dc);
     if (primary == NULL) {
-	ret = krb5_enomem(context);
-	goto out;
+        ret = krb5_enomem(context);
+        goto out;
     }
 
     if (rename(path, primary) < 0) {
-	ret = errno;
-	goto out;
+        ret = errno;
+        goto out;
     }
 
     close(fd);
     fd = -1;
 
     ret = 0;
- out:
+out:
     if (fd >= 0) {
-	(void)unlink(path);
-	close(fd);
+        (void)unlink(path);
+        close(fd);
     }
     if (path)
-	free(path);
+        free(path);
     if (primary)
-	free(primary);
+        free(primary);
 
     return ret;
 }
@@ -197,38 +197,38 @@ get_default_cache(krb5_context context, krb5_dcache *dc,
 
     primary = primary_create(dc);
     if (primary == NULL)
-	return krb5_enomem(context);
+        return krb5_enomem(context);
 
     f = fopen(primary, "r");
     if (f == NULL) {
-	if (errno == ENOENT) {
-	    free(primary);
-	    *residual = strdup("tkt");
-	    if (*residual == NULL)
-		return krb5_enomem(context);
-	    return 0;
-	}
-	ret = errno;
-	krb5_set_error_message(context, ret, "failed to open %s", primary);
-	free(primary);
-	return ret;
+        if (errno == ENOENT) {
+            free(primary);
+            *residual = strdup("tkt");
+            if (*residual == NULL)
+                return krb5_enomem(context);
+            return 0;
+        }
+        ret = errno;
+        krb5_set_error_message(context, ret, "failed to open %s", primary);
+        free(primary);
+        return ret;
     }
 
     if (fgets(buf, sizeof(buf), f) == NULL) {
-	ret = ferror(f);
-	fclose(f);
-	krb5_set_error_message(context, ret, "read file %s", primary);
-	free(primary);
-	return ret;
+        ret = ferror(f);
+        fclose(f);
+        krb5_set_error_message(context, ret, "read file %s", primary);
+        free(primary);
+        return ret;
     }
     fclose(f);
-	
+
     buf[strcspn(buf, "\r\n")] = '\0';
 
     if (!is_filename_cacheish(buf)) {
-	krb5_set_error_message(context, KRB5_CC_FORMAT,
-			       "name in %s is not a cache (doesn't start with tkt)", primary);
-	free(primary);
+        krb5_set_error_message(context, KRB5_CC_FORMAT,
+                               "name in %s is not a cache (doesn't start with tkt)", primary);
+        free(primary);
         return KRB5_CC_FORMAT;
     }
 
@@ -236,7 +236,7 @@ get_default_cache(krb5_context context, krb5_dcache *dc,
 
     *residual = strdup(buf);
     if (*residual == NULL)
-	return krb5_enomem(context);
+        return krb5_enomem(context);
 
     return 0;
 }
@@ -245,10 +245,10 @@ get_default_cache(krb5_context context, krb5_dcache *dc,
 
 static krb5_error_code KRB5_CALLCONV
 dcc_get_name_2(krb5_context context,
-	       krb5_ccache id,
-	       const char **name,
-	       const char **dir,
-	       const char **sub)
+               krb5_ccache id,
+               const char **name,
+               const char **dir,
+               const char **sub)
 {
     krb5_dcache *dc = DCACHE(id);
 
@@ -278,20 +278,20 @@ verify_directory(krb5_context context, const char *path)
         return 0;
 
     if (stat(path, &sb) != 0) {
-	if (errno == ENOENT) {
-	    krb5_set_error_message(context, ENOENT,
-				   N_("DIR directory %s doesn't exists", ""), path);
-	    return ENOENT;
-	} else {
-	    krb5_set_error_message(context, errno,
-				   N_("DIR directory %s is bad: %s", ""), path, strerror(errno));
-	    return errno;
-	}
+        if (errno == ENOENT) {
+            krb5_set_error_message(context, ENOENT,
+                                   N_("DIR directory %s doesn't exists", ""), path);
+            return ENOENT;
+        } else {
+            krb5_set_error_message(context, errno,
+                                   N_("DIR directory %s is bad: %s", ""), path, strerror(errno));
+            return errno;
+        }
     }
     if (!S_ISDIR(sb.st_mode)) {
-	krb5_set_error_message(context, KRB5_CC_BADNAME, 
-			       N_("DIR directory %s is not a directory", ""), path);
-	return KRB5_CC_BADNAME;
+        krb5_set_error_message(context, KRB5_CC_BADNAME, 
+                               N_("DIR directory %s is not a directory", ""), path);
+        return KRB5_CC_BADNAME;
     }
 
     return 0;
@@ -301,7 +301,7 @@ static void
 dcc_release(krb5_context context, krb5_dcache *dc)
 {
     if (dc->fcache)
-	krb5_cc_close(context, dc->fcache);
+        krb5_cc_close(context, dc->fcache);
     free(dc->sub);
     free(dc->dir);
     free(dc->name);
@@ -329,9 +329,9 @@ get_default_dir(krb5_context context, char **res)
 
 static krb5_error_code KRB5_CALLCONV
 dcc_resolve_2(krb5_context context,
-	      krb5_ccache *id,
-	      const char *res,
-	      const char *sub)
+              krb5_ccache *id,
+              const char *res,
+              const char *sub)
 {
     krb5_error_code ret;
     krb5_dcache *dc = NULL;
@@ -477,8 +477,8 @@ dcc_resolve_2(krb5_context context,
     ret = krb5_cc_resolve(context, filename, &dc->fcache);
     free(filename);
     if (ret) {
-	dcc_release(context, dc);
-	return ret;
+        dcc_release(context, dc);
+        return ret;
     }
 
     dc->default_candidate = 1;
@@ -500,11 +500,11 @@ dcc_gen_new(krb5_context context, krb5_ccache *id)
         ret = verify_directory(context, def_dir);
     if (ret == 0 &&
         (asprintf(&name, "DIR::%s/tktXXXXXX", def_dir) == -1 || name == NULL))
-	ret = krb5_enomem(context);
+        ret = krb5_enomem(context);
     if (ret == 0 && (fd = mkstemp(name + sizeof("DIR::") - 1)) == -1)
-	ret = errno;
+        ret = errno;
     if (ret == 0)
-	ret = dcc_resolve_2(context, id, name + sizeof("DIR:") - 1, NULL);
+        ret = dcc_resolve_2(context, id, name + sizeof("DIR:") - 1, NULL);
 
     free(def_dir);
     free(name);
@@ -515,8 +515,8 @@ dcc_gen_new(krb5_context context, krb5_ccache *id)
 
 static krb5_error_code KRB5_CALLCONV
 dcc_initialize(krb5_context context,
-	       krb5_ccache id,
-	       krb5_principal primary_principal)
+               krb5_ccache id,
+               krb5_principal primary_principal)
 {
     krb5_dcache *dc = DCACHE(id);
     return krb5_cc_initialize(context, D2FCACHE(dc), primary_principal);
@@ -524,7 +524,7 @@ dcc_initialize(krb5_context context,
 
 static krb5_error_code KRB5_CALLCONV
 dcc_close(krb5_context context,
-	  krb5_ccache id)
+          krb5_ccache id)
 {
     krb5_dcache *dc = DCACHE(id);
     krb5_principal p = NULL;
@@ -551,7 +551,7 @@ dcc_close(krb5_context context,
 
 static krb5_error_code KRB5_CALLCONV
 dcc_destroy(krb5_context context,
-	    krb5_ccache id)
+            krb5_ccache id)
 {
     krb5_dcache *dc = DCACHE(id);
     krb5_ccache fcache = D2FCACHE(dc);
@@ -561,8 +561,8 @@ dcc_destroy(krb5_context context,
 
 static krb5_error_code KRB5_CALLCONV
 dcc_store_cred(krb5_context context,
-	       krb5_ccache id,
-	       krb5_creds *creds)
+               krb5_ccache id,
+               krb5_creds *creds)
 {
     krb5_dcache *dc = DCACHE(id);
     return krb5_cc_store_cred(context, D2FCACHE(dc), creds);
@@ -570,8 +570,8 @@ dcc_store_cred(krb5_context context,
 
 static krb5_error_code KRB5_CALLCONV
 dcc_get_principal(krb5_context context,
-		  krb5_ccache id,
-		  krb5_principal *principal)
+                  krb5_ccache id,
+                  krb5_principal *principal)
 {
     krb5_dcache *dc = DCACHE(id);
     return krb5_cc_get_principal(context, D2FCACHE(dc), principal);
@@ -579,8 +579,8 @@ dcc_get_principal(krb5_context context,
 
 static krb5_error_code KRB5_CALLCONV
 dcc_get_first (krb5_context context,
-	       krb5_ccache id,
-	       krb5_cc_cursor *cursor)
+               krb5_ccache id,
+               krb5_cc_cursor *cursor)
 {
     krb5_dcache *dc = DCACHE(id);
     return krb5_cc_start_seq_get(context, D2FCACHE(dc), cursor);
@@ -588,9 +588,9 @@ dcc_get_first (krb5_context context,
 
 static krb5_error_code KRB5_CALLCONV
 dcc_get_next (krb5_context context,
-	      krb5_ccache id,
-	      krb5_cc_cursor *cursor,
-	      krb5_creds *creds)
+              krb5_ccache id,
+              krb5_cc_cursor *cursor,
+              krb5_creds *creds)
 {
     krb5_dcache *dc = DCACHE(id);
     return krb5_cc_next_cred(context, D2FCACHE(dc), cursor, creds);
@@ -598,8 +598,8 @@ dcc_get_next (krb5_context context,
 
 static krb5_error_code KRB5_CALLCONV
 dcc_end_get (krb5_context context,
-	     krb5_ccache id,
-	     krb5_cc_cursor *cursor)
+             krb5_ccache id,
+             krb5_cc_cursor *cursor)
 {
     krb5_dcache *dc = DCACHE(id);
     return krb5_cc_end_seq_get(context, D2FCACHE(dc), cursor);
@@ -607,9 +607,9 @@ dcc_end_get (krb5_context context,
 
 static krb5_error_code KRB5_CALLCONV
 dcc_remove_cred(krb5_context context,
-		 krb5_ccache id,
-		 krb5_flags which,
-		 krb5_creds *cred)
+                krb5_ccache id,
+                krb5_flags which,
+                krb5_creds *cred)
 {
     krb5_dcache *dc = DCACHE(id);
     return krb5_cc_remove_cred(context, D2FCACHE(dc), which, cred);
@@ -617,8 +617,8 @@ dcc_remove_cred(krb5_context context,
 
 static krb5_error_code KRB5_CALLCONV
 dcc_set_flags(krb5_context context,
-	      krb5_ccache id,
-	      krb5_flags flags)
+              krb5_ccache id,
+              krb5_flags flags)
 {
     krb5_dcache *dc = DCACHE(id);
     return krb5_cc_set_flags(context, D2FCACHE(dc), flags);
@@ -626,7 +626,7 @@ dcc_set_flags(krb5_context context,
 
 static int KRB5_CALLCONV
 dcc_get_version(krb5_context context,
-		krb5_ccache id)
+                krb5_ccache id)
 {
     krb5_dcache *dc = DCACHE(id);
     return krb5_cc_get_version(context, D2FCACHE(dc));
@@ -650,9 +650,9 @@ dcc_get_cache_first(krb5_context context, krb5_cc_cursor *cursor)
     *cursor = NULL;
 
     if (strncmp(name, "DIR:", sizeof("DIR:") - 1) != 0) {
-	krb5_set_error_message(context, KRB5_CC_FORMAT,
-			       N_("Can't list DIR caches unless its the default type", ""));
-	return KRB5_CC_FORMAT;
+        krb5_set_error_message(context, KRB5_CC_FORMAT,
+                               N_("Can't list DIR caches unless its the default type", ""));
+        return KRB5_CC_FORMAT;
     }
 
     if ((iter = calloc(1, sizeof(*iter))) == NULL ||
@@ -661,7 +661,7 @@ dcc_get_cache_first(krb5_context context, krb5_cc_cursor *cursor)
         if (iter)
             free(iter->dc);
         free(iter);
-	return krb5_enomem(context);
+        return krb5_enomem(context);
     }
     iter->first = 1;
     p = strrchr(iter->dc->dir, ':');
@@ -680,13 +680,13 @@ dcc_get_cache_first(krb5_context context, krb5_cc_cursor *cursor)
     }
 
     if ((iter->d = opendir(iter->dc->dir)) == NULL) {
-	krb5_set_error_message(context, KRB5_CC_FORMAT,
+        krb5_set_error_message(context, KRB5_CC_FORMAT,
                                N_("Can't open DIR %s: %s", ""),
                                iter->dc->dir, strerror(errno));
         free(iter->dc->dir);
         free(iter->dc);
         free(iter);
-	return KRB5_CC_FORMAT;
+        return KRB5_CC_FORMAT;
     }
 
     *cursor = iter;
@@ -790,7 +790,7 @@ dcc_set_default(krb5_context context, krb5_ccache id)
     krb5_dcache *dc = DCACHE(id);
 
     if (dc->sub == NULL)
-	return ENOENT;
+        return ENOENT;
     return set_default_cache(context, dc, dc->sub);
 }
 

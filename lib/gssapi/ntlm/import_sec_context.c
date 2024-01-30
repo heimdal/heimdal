@@ -35,14 +35,14 @@
 
 OM_uint32 GSSAPI_CALLCONV
 _gss_ntlm_import_sec_context (
-    OM_uint32 * minor_status,
-    const gss_buffer_t interprocess_token,
-    gss_ctx_id_t * context_handle
-    )
+                              OM_uint32 * minor_status,
+                              const gss_buffer_t interprocess_token,
+                              gss_ctx_id_t * context_handle
+                             )
 {
     if (minor_status)
-	*minor_status = 0;
+        *minor_status = 0;
     if (context_handle)
-	*context_handle = GSS_C_NO_CONTEXT;
+        *context_handle = GSS_C_NO_CONTEXT;
     return GSS_S_FAILURE;
 }

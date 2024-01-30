@@ -71,121 +71,121 @@ main(int argc, char **argv)
 
     ret = krb5_init_context (&context);
     if (ret)
-	errx (1, "krb5_init_context failed: %d", ret);
+        errx (1, "krb5_init_context failed: %d", ret);
 
     /* to enable realm-less principal name above */
 
     krb5_set_default_realm(context, "");
 
     for (t = tests; t->input_string; ++t) {
-	krb5_principal princ;
-	int i, j;
-	char name_buf[1024];
-	char *s;
+        krb5_principal princ;
+        int i, j;
+        char name_buf[1024];
+        char *s;
 
-	ret = krb5_parse_name(context, t->input_string, &princ);
-	if (ret)
-	    krb5_err (context, 1, ret, "krb5_parse_name %s",
-		      t->input_string);
-	if (strcmp (t->realm, princ->realm) != 0) {
-	    printf ("wrong realm (\"%s\" should be \"%s\")"
-		    " for \"%s\"\n",
-		    princ->realm, t->realm,
-		    t->input_string);
-	    val = 1;
-	}
+        ret = krb5_parse_name(context, t->input_string, &princ);
+        if (ret)
+            krb5_err (context, 1, ret, "krb5_parse_name %s",
+                      t->input_string);
+        if (strcmp (t->realm, princ->realm) != 0) {
+            printf ("wrong realm (\"%s\" should be \"%s\")"
+                    " for \"%s\"\n",
+                    princ->realm, t->realm,
+                    t->input_string);
+            val = 1;
+        }
 
-	if (t->ncomponents != princ->name.name_string.len) {
-	    printf ("wrong number of components (%u should be %u)"
-		    " for \"%s\"\n",
-		    princ->name.name_string.len, t->ncomponents,
-		    t->input_string);
-	    val = 1;
-	} else {
-	    for (i = 0; i < t->ncomponents; ++i) {
-		if (strcmp(t->comp_val[i],
-			   princ->name.name_string.val[i]) != 0) {
-		    printf ("bad component %d (\"%s\" should be \"%s\")"
-			    " for \"%s\"\n",
-			    i,
-			    princ->name.name_string.val[i],
-			    t->comp_val[i],
-			    t->input_string);
-		    val = 1;
-		}
-	    }
-	}
-	for (j = 0; j < strlen(t->output_string); ++j) {
-	    ret = krb5_unparse_name_fixed(context, princ,
-					  name_buf, j);
-	    if (ret != ERANGE) {
-		printf ("unparse_name %s with length %d should have failed\n",
-			t->input_string, j);
-		val = 1;
-		break;
-	    }
-	}
-	ret = krb5_unparse_name_fixed(context, princ,
-				      name_buf, sizeof(name_buf));
-	if (ret)
-	    krb5_err (context, 1, ret, "krb5_unparse_name_fixed");
+        if (t->ncomponents != princ->name.name_string.len) {
+            printf ("wrong number of components (%u should be %u)"
+                    " for \"%s\"\n",
+                    princ->name.name_string.len, t->ncomponents,
+                    t->input_string);
+            val = 1;
+        } else {
+            for (i = 0; i < t->ncomponents; ++i) {
+                if (strcmp(t->comp_val[i],
+                           princ->name.name_string.val[i]) != 0) {
+                    printf ("bad component %d (\"%s\" should be \"%s\")"
+                            " for \"%s\"\n",
+                            i,
+                            princ->name.name_string.val[i],
+                            t->comp_val[i],
+                            t->input_string);
+                    val = 1;
+                }
+            }
+        }
+        for (j = 0; j < strlen(t->output_string); ++j) {
+            ret = krb5_unparse_name_fixed(context, princ,
+                                          name_buf, j);
+            if (ret != ERANGE) {
+                printf ("unparse_name %s with length %d should have failed\n",
+                        t->input_string, j);
+                val = 1;
+                break;
+            }
+        }
+        ret = krb5_unparse_name_fixed(context, princ,
+                                      name_buf, sizeof(name_buf));
+        if (ret)
+            krb5_err (context, 1, ret, "krb5_unparse_name_fixed");
 
-	if (strcmp (t->output_string, name_buf) != 0) {
-	    printf ("failed comparing the re-parsed"
-		    " (\"%s\" should be \"%s\")\n",
-		    name_buf, t->output_string);
-	    val = 1;
-	}
+        if (strcmp (t->output_string, name_buf) != 0) {
+            printf ("failed comparing the re-parsed"
+                    " (\"%s\" should be \"%s\")\n",
+                    name_buf, t->output_string);
+            val = 1;
+        }
 
-	ret = krb5_unparse_name(context, princ, &s);
-	if (ret)
-	    krb5_err (context, 1, ret, "krb5_unparse_name");
+        ret = krb5_unparse_name(context, princ, &s);
+        if (ret)
+            krb5_err (context, 1, ret, "krb5_unparse_name");
 
-	if (strcmp (t->output_string, s) != 0) {
-	    printf ("failed comparing the re-parsed"
-		    " (\"%s\" should be \"%s\"\n",
-		    s, t->output_string);
-	    val = 1;
-	}
-	free(s);
+        if (strcmp (t->output_string, s) != 0) {
+            printf ("failed comparing the re-parsed"
+                    " (\"%s\" should be \"%s\"\n",
+                    s, t->output_string);
+            val = 1;
+        }
+        free(s);
 
-	if (!t->realmp) {
-	    for (j = 0; j < strlen(t->input_string); ++j) {
-		ret = krb5_unparse_name_fixed_short(context, princ,
-						    name_buf, j);
-		if (ret != ERANGE) {
-		    printf ("unparse_name_short %s with length %d"
-			    " should have failed\n",
-			    t->input_string, j);
-		    val = 1;
-		    break;
-		}
-	    }
-	    ret = krb5_unparse_name_fixed_short(context, princ,
-						name_buf, sizeof(name_buf));
-	    if (ret)
-		krb5_err (context, 1, ret, "krb5_unparse_name_fixed");
+        if (!t->realmp) {
+            for (j = 0; j < strlen(t->input_string); ++j) {
+                ret = krb5_unparse_name_fixed_short(context, princ,
+                                                    name_buf, j);
+                if (ret != ERANGE) {
+                    printf ("unparse_name_short %s with length %d"
+                            " should have failed\n",
+                            t->input_string, j);
+                    val = 1;
+                    break;
+                }
+            }
+            ret = krb5_unparse_name_fixed_short(context, princ,
+                                                name_buf, sizeof(name_buf));
+            if (ret)
+                krb5_err (context, 1, ret, "krb5_unparse_name_fixed");
 
-	    if (strcmp (t->input_string, name_buf) != 0) {
-		printf ("failed comparing the re-parsed"
-			" (\"%s\" should be \"%s\")\n",
-			name_buf, t->input_string);
-		val = 1;
-	    }
+            if (strcmp (t->input_string, name_buf) != 0) {
+                printf ("failed comparing the re-parsed"
+                        " (\"%s\" should be \"%s\")\n",
+                        name_buf, t->input_string);
+                val = 1;
+            }
 
-	    ret = krb5_unparse_name_short(context, princ, &s);
-	    if (ret)
-		krb5_err (context, 1, ret, "krb5_unparse_name_short");
+            ret = krb5_unparse_name_short(context, princ, &s);
+            if (ret)
+                krb5_err (context, 1, ret, "krb5_unparse_name_short");
 
-	    if (strcmp (t->input_string, s) != 0) {
-		printf ("failed comparing the re-parsed"
-			" (\"%s\" should be \"%s\"\n",
-			s, t->input_string);
-		val = 1;
-	    }
-	    free(s);
-	}
-	krb5_free_principal (context, princ);
+            if (strcmp (t->input_string, s) != 0) {
+                printf ("failed comparing the re-parsed"
+                        " (\"%s\" should be \"%s\"\n",
+                        s, t->input_string);
+                val = 1;
+            }
+            free(s);
+        }
+        krb5_free_principal (context, princ);
     }
     krb5_free_context(context);
     return val;

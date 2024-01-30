@@ -260,35 +260,35 @@ str2val(const char *str, int base, size_t *len)
 
     i = 0;
     for (p = str; *p != '\0'; p++) {
-	if (isxdigit((unsigned char)*p))
-	    i++;
-	else if (isspace((unsigned char)*p))
-	    ;
-	else
-	    return NULL;
+        if (isxdigit((unsigned char)*p))
+            i++;
+        else if (isspace((unsigned char)*p))
+            ;
+        else
+            return NULL;
     }
     if (i == 0 || (i % 2) != 0)
-	return NULL;
+        return NULL;
     i /= 2;
 
     if ((dst = malloc(i)) == NULL)
-	return NULL;
+        return NULL;
 
     i = 0;
     f = 0;
     for (rp = dst, p = str; *p != '\0'; p++) {
-	if (isxdigit((unsigned char)*p)) {
-	    if (!f) {
-		b[0] = *p;
-		f = 1;
-	    } else {
-		b[1] = *p;
-		b[2] = '\0';
-		*rp++ = (char)strtol(b, NULL, base);
-		i++;
-		f = 0;
-	    }
-	}
+        if (isxdigit((unsigned char)*p)) {
+            if (!f) {
+                b[0] = *p;
+                f = 1;
+            } else {
+                b[1] = *p;
+                b[2] = '\0';
+                *rp++ = (char)strtol(b, NULL, base);
+                i++;
+                f = 0;
+            }
+        }
     }
 
     *len = i;
@@ -303,7 +303,7 @@ static void set_prime(BIGNUM *p, char *str)
 
     prime = (unsigned char *)str2val(str, 16, &len);
     if (prime == NULL)
-	errx(1, "failed to parse %s", str);
+        errx(1, "failed to parse %s", str);
     BN_bin2bn(prime, len, p);
 }
 
@@ -317,7 +317,7 @@ static void print_secret(unsigned char *sec, size_t len)
     size_t i;
 
     for (i = 0; i < len; ++i)
-	printf("%x", sec[i]);
+        printf("%x", sec[i]);
 
     printf("\n");
 }
@@ -331,7 +331,7 @@ static int check_prime(ENGINE *engine, struct prime *pr)
     int ret;
 
     if (verbose)
-	printf("Testing %s\n", pr->name);
+        printf("Testing %s\n", pr->name);
 
     p = BN_new();
     g = BN_new();
@@ -349,50 +349,50 @@ static int check_prime(ENGINE *engine, struct prime *pr)
     /* 2. set keys */
     ret = DH_generate_key(dh1);
     if (ret == 0) {
-	fprintf(stderr, "DH_generate_key\n");
-	exit(EXIT_FAILURE);
+        fprintf(stderr, "DH_generate_key\n");
+        exit(EXIT_FAILURE);
     }
     ret = DH_generate_key(dh2);
     if (ret == 0) {
-	fprintf(stderr, "DH_generate_key\n");
-	exit(EXIT_FAILURE);
+        fprintf(stderr, "DH_generate_key\n");
+        exit(EXIT_FAILURE);
     }
 
     /* 3. compute shared secret */
     size = DH_size(dh1);
     if (size != DH_size(dh2)) {
-	fprintf(stderr, "size does not match!\n");
-	exit(EXIT_FAILURE);
+        fprintf(stderr, "size does not match!\n");
+        exit(EXIT_FAILURE);
     }
     sec1 = malloc(size);
     sec2 = malloc(size);
     if (!sec1 || !sec2) {
-	perror("malloc");
-	exit(EXIT_FAILURE);
+        perror("malloc");
+        exit(EXIT_FAILURE);
     }
     ret = DH_compute_key(sec1, dh2->pub_key, dh1);
     if (ret == -1) {
-	fprintf(stderr, "DH_compute_key");
-	exit(EXIT_FAILURE);
+        fprintf(stderr, "DH_compute_key");
+        exit(EXIT_FAILURE);
     }
     ret = DH_compute_key(sec2, dh1->pub_key, dh2);
     if (ret == -1) {
-	fprintf(stderr, "DH_compute_key");
-	exit(EXIT_FAILURE);
+        fprintf(stderr, "DH_compute_key");
+        exit(EXIT_FAILURE);
     }
 
     /* 4. compare shared secret */
     if (verbose) {
-	printf("shared secret 1\n");
-	print_secret(sec1, size);
-	printf("shared secret 2\n");
-	print_secret(sec2, size);
+        printf("shared secret 1\n");
+        print_secret(sec1, size);
+        printf("shared secret 2\n");
+        print_secret(sec2, size);
     }
 
     if (memcmp(sec1, sec2, size) == 0)
-	ret = 1;
+        ret = 1;
     else
-	ret = 0;
+        ret = 0;
 
     free(sec2);
     free(sec1);
@@ -412,9 +412,9 @@ static void
 usage (int ret)
 {
     arg_printusage (args,
-		    sizeof(args)/sizeof(*args),
-		    NULL,
-		    "");
+                    sizeof(args)/sizeof(*args),
+                    NULL,
+                    "");
     exit (ret);
 }
 
@@ -427,14 +427,14 @@ main(int argc, char **argv)
     setprogname(argv[0]);
 
     if(getarg(args, sizeof(args) / sizeof(args[0]), argc, argv, &idx))
-	usage(1);
+        usage(1);
 
     if (help_flag)
-	usage(0);
+        usage(0);
 
     if(version_flag){
-	print_version(NULL);
-	exit(0);
+        print_version(NULL);
+        exit(0);
     }
 
     argc -= idx;
@@ -447,25 +447,25 @@ main(int argc, char **argv)
     ENGINE_load_builtin_engines();
 
     if (id_string) {
-	engine = ENGINE_by_id(id_string);
-	if (engine == NULL)
-	    engine = ENGINE_by_dso(id_string, id_string);
+        engine = ENGINE_by_id(id_string);
+        if (engine == NULL)
+            engine = ENGINE_by_dso(id_string, id_string);
     } else {
-	engine = ENGINE_by_id("builtin");
+        engine = ENGINE_by_id("builtin");
     }
     if (engine == NULL)
-	errx(1, "ENGINE_by_dso failed");
+        errx(1, "ENGINE_by_dso failed");
 
     printf("dh %s\n", ENGINE_get_DH(engine)->name);
 
     {
-	struct prime *p = primes;
+        struct prime *p = primes;
 
-	for (; p->name; ++p)
-	    if (check_prime(engine, p))
-		printf("%s: shared secret OK\n", p->name);
-	    else
-		printf("%s: shared secret FAILURE\n", p->name);
+        for (; p->name; ++p)
+            if (check_prime(engine, p))
+                printf("%s: shared secret OK\n", p->name);
+            else
+                printf("%s: shared secret FAILURE\n", p->name);
     }
 
     return 0;

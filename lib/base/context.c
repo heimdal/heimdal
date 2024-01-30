@@ -218,13 +218,13 @@ get_default_config_config_files_from_registry(const char *envvar)
     HKEY key;
 
     if (stricmp(envvar, "KRB5_CONFIG") == 0)
-	ValueName = "config";
+        ValueName = "config";
     else
-	ValueName = envvar;
+        ValueName = envvar;
 
     rcode = RegOpenKeyEx(HKEY_CURRENT_USER, KeyName, 0, KEY_READ, &key);
     if (rcode == ERROR_SUCCESS) {
-	config_file = heim_parse_reg_value_as_multi_string(NULL, key, ValueName,
+        config_file = heim_parse_reg_value_as_multi_string(NULL, key, ValueName,
                                                            REG_NONE, 0, PATH_SEP);
         RegCloseKey(key);
     }
@@ -234,7 +234,7 @@ get_default_config_config_files_from_registry(const char *envvar)
 
     rcode = RegOpenKeyEx(HKEY_LOCAL_MACHINE, KeyName, 0, KEY_READ, &key);
     if (rcode == ERROR_SUCCESS) {
-	config_file = heim_parse_reg_value_as_multi_string(NULL, key, ValueName,
+        config_file = heim_parse_reg_value_as_multi_string(NULL, key, ValueName,
                                                            REG_NONE, 0, PATH_SEP);
         RegCloseKey(key);
     }
@@ -332,7 +332,7 @@ heim_get_default_config_files(const char *def,
 #ifdef _WIN32
     if (files == NULL) {
         char * reg_files;
-	reg_files = get_default_config_config_files_from_registry(envvar);
+        reg_files = get_default_config_config_files_from_registry(envvar);
         if (reg_files != NULL) {
             heim_error_code code;
 

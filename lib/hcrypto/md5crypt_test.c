@@ -51,20 +51,20 @@ do_test (void)
     int res = 0;
 
     for (t = tests; t->str != NULL; ++t) {
-	const char *c;
+        const char *c;
 
-	c = crypt (t->str, t->salt);
+        c = crypt (t->str, t->salt);
 
-	if (strcmp (c, t->result) != 0) {
-	    res = 1;
-	    printf ("should have been: \"%s\"\n", t->result);
-	    printf ("result was:       \"%s\"\n", c);
-	}
+        if (strcmp (c, t->result) != 0) {
+            res = 1;
+            printf ("should have been: \"%s\"\n", t->result);
+            printf ("result was:       \"%s\"\n", c);
+        }
     }
     if (res)
-	printf ("failed\n");
+        printf ("failed\n");
     else
-	printf ("success\n");
+        printf ("success\n");
     return res;
 }
 

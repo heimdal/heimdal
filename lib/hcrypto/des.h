@@ -77,7 +77,7 @@
 typedef unsigned char DES_cblock[DES_CBLOCK_LEN];
 typedef struct DES_key_schedule
 {
-	uint32_t ks[32];
+    uint32_t ks[32];
 } DES_key_schedule;
 
 /*
@@ -133,7 +133,7 @@ void	DES_cfb64_encrypt(const void *, void *, long,
 
 
 uint32_t DES_cbc_cksum(const void *, DES_cblock *,
-		      long, DES_key_schedule *, DES_cblock *);
+                       long, DES_key_schedule *, DES_cblock *);
 
 
 void	_DES_ipfp_test(void);

@@ -39,33 +39,33 @@
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_principal2principalname(PrincipalName *p,
-			      krb5_const_principal from)
+                              krb5_const_principal from)
 {
     return copy_PrincipalName(&from->name, p);
 }
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_principalname2krb5_principal (krb5_context context,
-				    krb5_principal *principal,
-				    const PrincipalName from,
-				    const Realm realm)
+                                    krb5_principal *principal,
+                                    const PrincipalName from,
+                                    const Realm realm)
 {
     krb5_error_code ret;
     krb5_principal p;
 
     p = calloc(1, sizeof(*p));
     if (p == NULL)
-	return krb5_enomem(context);
+        return krb5_enomem(context);
     ret = copy_PrincipalName(&from, &p->name);
     if (ret) {
-	free(p);
-	return ret;
+        free(p);
+        return ret;
     }
     p->realm = strdup(realm);
     if (p->realm == NULL) {
-	free_PrincipalName(&p->name);
+        free_PrincipalName(&p->name);
         free(p);
-	return krb5_enomem(context);
+        return krb5_enomem(context);
     }
     *principal = p;
     return 0;

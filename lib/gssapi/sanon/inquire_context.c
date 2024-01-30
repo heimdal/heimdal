@@ -33,14 +33,14 @@
 
 OM_uint32 GSSAPI_CALLCONV
 _gss_sanon_inquire_context(OM_uint32 *minor,
-			   gss_const_ctx_id_t context_handle,
-			   gss_name_t *src_name,
-			   gss_name_t *targ_name,
-			   OM_uint32 *lifetime_rec,
-			   gss_OID *mech_type,
-			   OM_uint32 *ctx_flags,
-			   int *locally_initiated,
-			   int *open_context)
+                           gss_const_ctx_id_t context_handle,
+                           gss_name_t *src_name,
+                           gss_name_t *targ_name,
+                           OM_uint32 *lifetime_rec,
+                           gss_OID *mech_type,
+                           OM_uint32 *ctx_flags,
+                           int *locally_initiated,
+                           int *open_context)
 {
     const sanon_ctx sc = (const sanon_ctx)context_handle;
     OM_uint32 major = GSS_S_COMPLETE;
@@ -48,16 +48,16 @@ _gss_sanon_inquire_context(OM_uint32 *minor,
     *minor = 0;
 
     if (sc == NULL)
-	return GSS_S_NO_CONTEXT;
+        return GSS_S_NO_CONTEXT;
 
     if (src_name)
-	*src_name = _gss_sanon_anonymous_identity;
+        *src_name = _gss_sanon_anonymous_identity;
     if (targ_name)
-	*targ_name = _gss_sanon_anonymous_identity;
+        *targ_name = _gss_sanon_anonymous_identity;
     if (lifetime_rec)
-	*lifetime_rec = GSS_C_INDEFINITE;
+        *lifetime_rec = GSS_C_INDEFINITE;
     if (mech_type)
-	*mech_type = GSS_SANON_X25519_MECHANISM;
+        *mech_type = GSS_SANON_X25519_MECHANISM;
     if (sc->rfc4121 == GSS_C_NO_CONTEXT) {
         if (locally_initiated)
             *locally_initiated = sc->is_initiator;
@@ -65,7 +65,7 @@ _gss_sanon_inquire_context(OM_uint32 *minor,
             *open_context = 0;
         if (ctx_flags)
             *ctx_flags = GSS_C_REPLAY_FLAG | GSS_C_SEQUENCE_FLAG |
-			 GSS_C_CONF_FLAG | GSS_C_INTEG_FLAG | GSS_C_ANON_FLAG;
+                         GSS_C_CONF_FLAG | GSS_C_INTEG_FLAG | GSS_C_ANON_FLAG;
     } else {
         major = gss_inquire_context(minor, sc->rfc4121, NULL, NULL, NULL,
                                     NULL, ctx_flags, locally_initiated,

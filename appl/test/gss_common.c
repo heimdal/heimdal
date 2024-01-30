@@ -49,9 +49,9 @@ write_token (int sock, gss_buffer_t buf)
     net_len = htonl(len);
 
     if (net_write (sock, &net_len, 4) != 4)
-	err (1, "write");
+        err (1, "write");
     if (net_write (sock, buf->value, len) != len)
-	err (1, "write");
+        err (1, "write");
 
     gss_release_buffer (&min_stat, buf);
 }
@@ -63,9 +63,9 @@ enet_read(int fd, void *buf, size_t len)
 
     ret = net_read (fd, buf, len);
     if (ret == 0)
-	errx (1, "EOF in read");
+        errx (1, "EOF in read");
     else if (ret < 0)
-	errx (1, "read");
+        errx (1, "read");
 }
 
 void
@@ -89,15 +89,15 @@ gss_print_errors (int min_stat)
     OM_uint32 ret;
 
     do {
-	ret = gss_display_status (&new_stat,
-				  min_stat,
-				  GSS_C_MECH_CODE,
-				  GSS_C_NO_OID,
-				  &msg_ctx,
-				  &status_string);
-	fprintf (stderr, "%.*s\n", (int)status_string.length,
-		 (char *)status_string.value);
-	gss_release_buffer (&new_stat, &status_string);
+        ret = gss_display_status (&new_stat,
+                                  min_stat,
+                                  GSS_C_MECH_CODE,
+                                  GSS_C_NO_OID,
+                                  &msg_ctx,
+                                  &status_string);
+        fprintf (stderr, "%.*s\n", (int)status_string.length,
+                 (char *)status_string.value);
+        gss_release_buffer (&new_stat, &status_string);
     } while (!GSS_ERROR(ret) && msg_ctx != 0);
 }
 
@@ -123,13 +123,13 @@ gss_OID
 select_mech(const char *mech)
 {
     if (strcasecmp(mech, "krb5") == 0)
-	return GSS_KRB5_MECHANISM;
+        return GSS_KRB5_MECHANISM;
     else if (strcasecmp(mech, "spnego") == 0)
-	return GSS_SPNEGO_MECHANISM;
+        return GSS_SPNEGO_MECHANISM;
     else if (strcasecmp(mech, "no-oid") == 0)
-	return GSS_C_NO_OID;
+        return GSS_C_NO_OID;
     else
-	errx (1, "Unknown mechanism '%s' (spnego, krb5, no-oid)", mech);
+        errx (1, "Unknown mechanism '%s' (spnego, krb5, no-oid)", mech);
 }
 
 void
@@ -139,15 +139,15 @@ print_gss_name(const char *prefix, gss_name_t name)
     gss_buffer_desc name_token;
 
     maj_stat = gss_display_name (&min_stat,
-				 name,
-				 &name_token,
-				 NULL);
+                                 name,
+                                 &name_token,
+                                 NULL);
     if (GSS_ERROR(maj_stat))
-	gss_err (1, min_stat, "gss_display_name");
+        gss_err (1, min_stat, "gss_display_name");
 
     fprintf (stderr, "%s `%.*s'\n", prefix,
-	     (int)name_token.length,
-	     (char *)name_token.value);
+             (int)name_token.length,
+             (char *)name_token.value);
 
     gss_release_buffer (&min_stat, &name_token);
 

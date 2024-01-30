@@ -43,7 +43,7 @@ destroy_context(void *ptr)
     krb5_context context = ptr;
 
     if (context == NULL)
-	return;
+        return;
     krb5_free_context(context);
 }
 
@@ -55,27 +55,27 @@ _gsskrb5_init (krb5_context *context)
     HEIMDAL_MUTEX_lock(&context_mutex);
 
     if (!created_key) {
-	HEIMDAL_key_create(&context_key, destroy_context, ret);
-	if (ret) {
-	    HEIMDAL_MUTEX_unlock(&context_mutex);
-	    return ret;
-	}
-	created_key = 1;
+        HEIMDAL_key_create(&context_key, destroy_context, ret);
+        if (ret) {
+            HEIMDAL_MUTEX_unlock(&context_mutex);
+            return ret;
+        }
+        created_key = 1;
     }
     HEIMDAL_MUTEX_unlock(&context_mutex);
 
     *context = HEIMDAL_getspecific(context_key);
     if (*context == NULL) {
 
-	ret = krb5_init_context(context);
-	if (ret == 0) {
-	    krb5_add_et_list(*context, initialize_gk5_error_table_r);
-	    HEIMDAL_setspecific(context_key, *context, ret);
-	    if (ret) {
-		krb5_free_context(*context);
-		*context = NULL;
-	    }
-	}
+        ret = krb5_init_context(context);
+        if (ret == 0) {
+            krb5_add_et_list(*context, initialize_gk5_error_table_r);
+            HEIMDAL_setspecific(context_key, *context, ret);
+            if (ret) {
+                krb5_free_context(*context);
+                *context = NULL;
+            }
+        }
     }
 
     return ret;

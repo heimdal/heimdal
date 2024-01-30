@@ -58,28 +58,28 @@ mkt_resolve(krb5_context context, const char *name, krb5_keytab id)
     HEIMDAL_MUTEX_lock(&mkt_mutex);
 
     for (d = mkt_head; d != NULL; d = d->next)
-	if (strcmp(d->name, name) == 0)
-	    break;
+        if (strcmp(d->name, name) == 0)
+            break;
     if (d) {
-	if (d->refcount < 1)
-	    krb5_abortx(context, "Double close on memory keytab, "
-			"refcount < 1 %d", d->refcount);
-	d->refcount++;
-	id->data = d;
-	HEIMDAL_MUTEX_unlock(&mkt_mutex);
-	return 0;
+        if (d->refcount < 1)
+            krb5_abortx(context, "Double close on memory keytab, "
+                        "refcount < 1 %d", d->refcount);
+        d->refcount++;
+        id->data = d;
+        HEIMDAL_MUTEX_unlock(&mkt_mutex);
+        return 0;
     }
 
     d = calloc(1, sizeof(*d));
     if(d == NULL) {
-	HEIMDAL_MUTEX_unlock(&mkt_mutex);
-	return krb5_enomem(context);
+        HEIMDAL_MUTEX_unlock(&mkt_mutex);
+        return krb5_enomem(context);
     }
     d->name = strdup(name);
     if (d->name == NULL) {
-	HEIMDAL_MUTEX_unlock(&mkt_mutex);
-	free(d);
-	return krb5_enomem(context);
+        HEIMDAL_MUTEX_unlock(&mkt_mutex);
+        free(d);
+        return krb5_enomem(context);
     }
     d->entries = NULL;
     d->num_entries = 0;
@@ -99,24 +99,24 @@ mkt_close(krb5_context context, krb5_keytab id)
 
     HEIMDAL_MUTEX_lock(&mkt_mutex);
     if (d->refcount < 1)
-	krb5_abortx(context,
-		    "krb5 internal error, memory keytab refcount < 1 on close");
+        krb5_abortx(context,
+                    "krb5 internal error, memory keytab refcount < 1 on close");
 
     if (--d->refcount > 0) {
-	HEIMDAL_MUTEX_unlock(&mkt_mutex);
-	return 0;
+        HEIMDAL_MUTEX_unlock(&mkt_mutex);
+        return 0;
     }
     for (dp = &mkt_head; *dp != NULL; dp = &(*dp)->next) {
-	if (*dp == d) {
-	    *dp = d->next;
-	    break;
-	}
+        if (*dp == d) {
+            *dp = d->next;
+            break;
+        }
     }
     HEIMDAL_MUTEX_unlock(&mkt_mutex);
 
     free(d->name);
     for(i = 0; i < d->num_entries; i++)
-	krb5_kt_free_entry(context, &d->entries[i]);
+        krb5_kt_free_entry(context, &d->entries[i]);
     free(d->entries);
     free(d);
     return 0;
@@ -124,9 +124,9 @@ mkt_close(krb5_context context, krb5_keytab id)
 
 static krb5_error_code KRB5_CALLCONV
 mkt_get_name(krb5_context context,
-	     krb5_keytab id,
-	     char *name,
-	     size_t namesize)
+             krb5_keytab id,
+             char *name,
+             size_t namesize)
 {
     struct mkt_data *d = id->data;
     strlcpy(name, d->name, namesize);
@@ -135,8 +135,8 @@ mkt_get_name(krb5_context context,
 
 static krb5_error_code KRB5_CALLCONV
 mkt_start_seq_get(krb5_context context,
-		  krb5_keytab id,
-		  krb5_kt_cursor *c)
+                  krb5_keytab id,
+                  krb5_kt_cursor *c)
 {
     /* XXX */
     c->fd = 0;
@@ -145,72 +145,72 @@ mkt_start_seq_get(krb5_context context,
 
 static krb5_error_code KRB5_CALLCONV
 mkt_next_entry(krb5_context context,
-	       krb5_keytab id,
-	       krb5_keytab_entry *entry,
-	       krb5_kt_cursor *c)
+               krb5_keytab id,
+               krb5_keytab_entry *entry,
+               krb5_kt_cursor *c)
 {
     struct mkt_data *d = id->data;
     if(c->fd >= d->num_entries)
-	return KRB5_KT_END;
+        return KRB5_KT_END;
     return krb5_kt_copy_entry_contents(context, &d->entries[c->fd++], entry);
 }
 
 static krb5_error_code KRB5_CALLCONV
 mkt_end_seq_get(krb5_context context,
-		krb5_keytab id,
-		krb5_kt_cursor *cursor)
+                krb5_keytab id,
+                krb5_kt_cursor *cursor)
 {
     return 0;
 }
 
 static krb5_error_code KRB5_CALLCONV
 mkt_add_entry(krb5_context context,
-	      krb5_keytab id,
-	      krb5_keytab_entry *entry)
+              krb5_keytab id,
+              krb5_keytab_entry *entry)
 {
     struct mkt_data *d = id->data;
     krb5_keytab_entry *tmp;
     tmp = realloc(d->entries, (d->num_entries + 1) * sizeof(*d->entries));
     if (tmp == NULL)
-	return krb5_enomem(context);
+        return krb5_enomem(context);
     d->entries = tmp;
     return krb5_kt_copy_entry_contents(context, entry,
-				       &d->entries[d->num_entries++]);
+                                       &d->entries[d->num_entries++]);
 }
 
 static krb5_error_code KRB5_CALLCONV
 mkt_remove_entry(krb5_context context,
-		 krb5_keytab id,
-		 krb5_keytab_entry *entry)
+                 krb5_keytab id,
+                 krb5_keytab_entry *entry)
 {
     struct mkt_data *d = id->data;
     krb5_keytab_entry *e, *end;
     int found = 0;
 
     if (d->num_entries == 0) {
-	krb5_clear_error_message(context);
+        krb5_clear_error_message(context);
         return KRB5_KT_NOTFOUND;
     }
 
     /* do this backwards to minimize copying */
     for(end = d->entries + d->num_entries, e = end - 1; e >= d->entries; e--) {
-	if(krb5_kt_compare(context, e, entry->principal,
-			   entry->vno, entry->keyblock.keytype)) {
-	    krb5_kt_free_entry(context, e);
-	    memmove(e, e + 1, (end - e - 1) * sizeof(*e));
-	    memset(end - 1, 0, sizeof(*end));
-	    d->num_entries--;
-	    end--;
-	    found = 1;
-	}
+        if(krb5_kt_compare(context, e, entry->principal,
+                           entry->vno, entry->keyblock.keytype)) {
+            krb5_kt_free_entry(context, e);
+            memmove(e, e + 1, (end - e - 1) * sizeof(*e));
+            memset(end - 1, 0, sizeof(*end));
+            d->num_entries--;
+            end--;
+            found = 1;
+        }
     }
     if (!found) {
-	krb5_clear_error_message (context);
-	return KRB5_KT_NOTFOUND;
+        krb5_clear_error_message (context);
+        return KRB5_KT_NOTFOUND;
     }
     e = realloc(d->entries, d->num_entries * sizeof(*d->entries));
     if(e != NULL || d->num_entries == 0)
-	d->entries = e;
+        d->entries = e;
     return 0;
 }
 

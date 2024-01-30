@@ -33,14 +33,14 @@
 
 OM_uint32 GSSAPI_CALLCONV
 _gss_sanon_inquire_sec_context_by_oid(OM_uint32 *minor,
-				      gss_const_ctx_id_t context_handle,
-				      const gss_OID desired_object,
-				      gss_buffer_set_t *data_set)
+                                      gss_const_ctx_id_t context_handle,
+                                      const gss_OID desired_object,
+                                      gss_buffer_set_t *data_set)
 {
     const sanon_ctx sc = (const sanon_ctx)context_handle;
 
     if (sc == NULL)
-	return GSS_S_NO_CONTEXT;
+        return GSS_S_NO_CONTEXT;
 
     *data_set = GSS_C_NO_BUFFER_SET;
 
@@ -49,13 +49,13 @@ _gss_sanon_inquire_sec_context_by_oid(OM_uint32 *minor,
         gss_oid_equal(desired_object, GSS_KRB5_GET_INITIATOR_SUBKEY_X) ||
         gss_oid_equal(desired_object, GSS_KRB5_GET_ACCEPTOR_SUBKEY_X) ||
         gss_oid_equal(desired_object, GSS_KRB5_EXPORT_LUCID_CONTEXT_X))
-	return gss_inquire_sec_context_by_oid(minor, sc->rfc4121,
-					      desired_object, data_set);
+        return gss_inquire_sec_context_by_oid(minor, sc->rfc4121,
+                                              desired_object, data_set);
     else if (gss_oid_equal(desired_object, GSS_C_INQ_NEGOEX_KEY) ||
-	     gss_oid_equal(desired_object, GSS_C_INQ_NEGOEX_VERIFY_KEY))
-	return _gss_sanon_inquire_negoex_key(minor, sc, desired_object, data_set);
+             gss_oid_equal(desired_object, GSS_C_INQ_NEGOEX_VERIFY_KEY))
+        return _gss_sanon_inquire_negoex_key(minor, sc, desired_object, data_set);
     else {
-	*minor = EINVAL;
-	return GSS_S_UNAVAILABLE;
+        *minor = EINVAL;
+        return GSS_S_UNAVAILABLE;
     }
 }

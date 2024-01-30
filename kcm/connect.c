@@ -37,9 +37,9 @@
 
 void
 kcm_service(void *ctx, const heim_idata *req,
-	    const heim_icred cred,
-	    heim_ipc_complete complete,
-	    heim_sipc_call cctx)
+            const heim_icred cred,
+            heim_ipc_complete complete,
+            heim_sipc_call cctx)
 {
     kcm_client peercred;
     krb5_error_code ret;
@@ -55,21 +55,21 @@ kcm_service(void *ctx, const heim_idata *req,
     peercred.session = heim_ipc_cred_get_session(cred);
 
     if (req->length < 4) {
-	kcm_log(1, "malformed request from process %d (too short)",
-		peercred.pid);
-	(*complete)(cctx, EINVAL, NULL);
-	return;
+        kcm_log(1, "malformed request from process %d (too short)",
+                peercred.pid);
+        (*complete)(cctx, EINVAL, NULL);
+        return;
     }
 
     buf = req->data;
     len = req->length;
 
     if (buf[0] != KCM_PROTOCOL_VERSION_MAJOR ||
-	buf[1] != KCM_PROTOCOL_VERSION_MINOR) {
-	kcm_log(1, "incorrect protocol version %d.%d from process %d",
-		buf[0], buf[1], peercred.pid);
-	(*complete)(cctx, EINVAL, NULL);
-	return;
+        buf[1] != KCM_PROTOCOL_VERSION_MINOR) {
+        kcm_log(1, "incorrect protocol version %d.%d from process %d",
+                buf[0], buf[1], peercred.pid);
+        (*complete)(cctx, EINVAL, NULL);
+        return;
     }
 
     request.data = buf + 2;

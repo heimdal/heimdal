@@ -67,7 +67,7 @@ struct salt_type {
     krb5_salttype type;
     const char *name;
     krb5_error_code (*string_to_key)(krb5_context, krb5_enctype, krb5_data,
-				     krb5_salt, krb5_data, krb5_keyblock*);
+                                     krb5_salt, krb5_data, krb5_keyblock*);
 };
 
 struct _krb5_key_type {
@@ -91,17 +91,17 @@ struct _krb5_checksum_type {
     size_t checksumsize;
     unsigned flags;
     krb5_error_code (*checksum)(krb5_context context,
-				krb5_crypto crypto,
-				struct _krb5_key_data *key,
-				unsigned usage,
-				const struct krb5_crypto_iov *iov, int niov,
-				Checksum *csum);
+                                krb5_crypto crypto,
+                                struct _krb5_key_data *key,
+                                unsigned usage,
+                                const struct krb5_crypto_iov *iov, int niov,
+                                Checksum *csum);
     krb5_error_code (*verify)(krb5_context context,
-			      krb5_crypto crypto,
-			      struct _krb5_key_data *key,
-			      unsigned usage,
-			      const struct krb5_crypto_iov *iov, int niov,
-			      Checksum *csum);
+                              krb5_crypto crypto,
+                              struct _krb5_key_data *key,
+                              unsigned usage,
+                              const struct krb5_crypto_iov *iov, int niov,
+                              Checksum *csum);
 };
 
 struct _krb5_encryption_type {
@@ -116,20 +116,20 @@ struct _krb5_encryption_type {
     struct _krb5_checksum_type *keyed_checksum;
     unsigned flags;
     krb5_error_code (*encrypt)(krb5_context context,
-			       struct _krb5_key_data *key,
-			       void *data, size_t len,
-			       krb5_boolean encryptp,
-			       int usage,
-			       void *ivec);
+                               struct _krb5_key_data *key,
+                               void *data, size_t len,
+                               krb5_boolean encryptp,
+                               int usage,
+                               void *ivec);
     krb5_error_code (*encrypt_iov)(krb5_context context,
-			       struct _krb5_key_data *key,
-			       krb5_crypto_iov *iov, int niov,
-			       krb5_boolean encryptp,
-			       int usage,
-			       void *ivec);
+                               struct _krb5_key_data *key,
+                               krb5_crypto_iov *iov, int niov,
+                               krb5_boolean encryptp,
+                               int usage,
+                               void *ivec);
     size_t prf_length;
     krb5_error_code (*prf)(krb5_context,
-			   krb5_crypto, const krb5_data *, krb5_data *);
+                           krb5_crypto, const krb5_data *, krb5_data *);
 };
 
 #define ENCRYPTION_USAGE(U) (((uint32_t)(U) << 8) | 0xAA)

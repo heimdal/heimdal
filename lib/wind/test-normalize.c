@@ -53,16 +53,16 @@ parse_vector(char *buf, uint32_t *v)
     unsigned u;
 
     for(n = strtok_r(buf, " ", &last);
-	n != NULL;
-	n = strtok_r(NULL, " ", &last)) {
-	if (ret >= MAX_LENGTH_CANON) {
-	    errx(1, "increase MAX_LENGTH_CANON");
-	}
-	if (sscanf(n, "%x", &u) != 1) {
-	    errx(1, "failed to parse hex: %s", n);
-	}
-	v[ret] = u;
-	++ret;
+        n != NULL;
+        n = strtok_r(NULL, " ", &last)) {
+        if (ret >= MAX_LENGTH_CANON) {
+            errx(1, "increase MAX_LENGTH_CANON");
+        }
+        if (sscanf(n, "%x", &u) != 1) {
+            errx(1, "failed to parse hex: %s", n);
+        }
+        v[ret] = u;
+        ++ret;
     }
     return ret;
 }
@@ -74,7 +74,7 @@ dump_vector(const char * msg, uint32_t * v, size_t len)
 
     printf("%s: (%d) ", msg, (int)len);
     for (i=0; i < len; i++) {
-	printf("%s%x", (i > 0? " ":""), v[i]);
+        printf("%s%x", (i > 0? " ":""), v[i]);
     }
     printf("\n");
 }
@@ -94,44 +94,44 @@ test(char *buf, unsigned lineno)
 
     c = strtok_r(buf, ";", &last);
     if (c == NULL)
-	return 0;
+        return 0;
 
     in_len = parse_vector(c, in);
     if (strtok_r(NULL, ";", &last) == NULL)
-	return 0;
+        return 0;
     if (strtok_r(NULL, ";", &last) == NULL)
-	return 0;
+        return 0;
     c = strtok_r(NULL, ";", &last);
     if (c == NULL)
-	return 0;
+        return 0;
     out_len = parse_vector(c, out);
     if (strtok_r(NULL, ";", &last) == NULL)
-	return 0;
+        return 0;
     c = last;
 
     norm_len = MAX_LENGTH_CANON;
     tmp = malloc(norm_len * sizeof(uint32_t));
     if (tmp == NULL && norm_len != 0)
-	err(1, "malloc");
+        err(1, "malloc");
     ret = _wind_stringprep_normalize(in, in_len, tmp, &norm_len);
     if (ret) {
-	printf("wind_stringprep_normalize %s failed\n", c);
-	free(tmp);
-	return 1;
+        printf("wind_stringprep_normalize %s failed\n", c);
+        free(tmp);
+        return 1;
     }
     if (out_len != norm_len) {
-	printf("%u: wrong out len (%s)\n", lineno, c);
-	dump_vector("Expected", out, out_len);
-	dump_vector("Received", tmp, norm_len);
-	free(tmp);
-	return 1;
+        printf("%u: wrong out len (%s)\n", lineno, c);
+        dump_vector("Expected", out, out_len);
+        dump_vector("Received", tmp, norm_len);
+        free(tmp);
+        return 1;
     }
     if (memcmp(out, tmp, out_len * sizeof(uint32_t)) != 0) {
-	printf("%u: wrong out data (%s)\n", lineno, c);
-	dump_vector("Expected", out, out_len);
-	dump_vector("Received", tmp, norm_len);
-	free(tmp);
-	return 1;
+        printf("%u: wrong out data (%s)\n", lineno, c);
+        dump_vector("Expected", out, out_len);
+        dump_vector("Received", tmp, norm_len);
+        free(tmp);
+        return 1;
     }
     free(tmp);
     return 0;
@@ -147,32 +147,32 @@ main(int argc, char **argv)
     unsigned lineno = 0;
 
     if (argc > 2)
-	errx(1, "usage: %s [file]", argv[0]);
+        errx(1, "usage: %s [file]", argv[0]);
     else if (argc == 2)
         fn = argv[1];
 
     f = fopen(fn, "r");
     if (f == NULL) {
-	const char *srcdir = getenv("srcdir");
-	if (srcdir != NULL) {
+        const char *srcdir = getenv("srcdir");
+        if (srcdir != NULL) {
             char *long_fn = NULL;
             if (asprintf(&long_fn, "%s/%s", srcdir, fn) == -1 ||
                 long_fn == NULL)
                 errx(1, "Out of memory");
-	    f = fopen(long_fn, "r");
+            f = fopen(long_fn, "r");
             free(long_fn);
-	}
-	if (f == NULL)
-	    err(1, "open %s", fn);
+        }
+        if (f == NULL)
+            err(1, "open %s", fn);
     }
     while (fgets(buf, sizeof(buf), f) != NULL) {
-	lineno++;
-	if (buf[0] == '#')
-	    continue;
-	if (buf[0] == '@') {
-	    continue;
-	}
-	failures += test(buf, lineno);
+        lineno++;
+        if (buf[0] == '#')
+            continue;
+        if (buf[0] == '@') {
+            continue;
+        }
+        failures += test(buf, lineno);
     }
     fclose(f);
     return failures != 0;

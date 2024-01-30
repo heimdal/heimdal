@@ -49,12 +49,12 @@ struct hx509_ca_tbs {
     PolicyMappings pms;
     heim_integer serial;
     struct {
-	unsigned int proxy:1;
-	unsigned int ca:1;
-	unsigned int key:1;
-	unsigned int serial:1;
-	unsigned int domaincontroller:1;
-	unsigned int xUniqueID:1;
+        unsigned int proxy:1;
+        unsigned int ca:1;
+        unsigned int key:1;
+        unsigned int serial:1;
+        unsigned int domaincontroller:1;
+        unsigned int xUniqueID:1;
     } flags;
     time_t notBefore;
     time_t notAfter;
@@ -84,7 +84,7 @@ hx509_ca_tbs_init(hx509_context context, hx509_ca_tbs *tbs)
 {
     *tbs = calloc(1, sizeof(**tbs));
     if (*tbs == NULL)
-	return ENOMEM;
+        return ENOMEM;
 
     return 0;
 }
@@ -101,7 +101,7 @@ HX509_LIB_FUNCTION void HX509_LIB_CALL
 hx509_ca_tbs_free(hx509_ca_tbs *tbs)
 {
     if (tbs == NULL || *tbs == NULL)
-	return;
+        return;
 
     free_SubjectPublicKeyInfo(&(*tbs)->spki);
     free_CertificatePolicies(&(*tbs)->cps);
@@ -115,8 +115,8 @@ hx509_ca_tbs_free(hx509_ca_tbs *tbs)
     if ((*tbs)->subject)
         hx509_name_free(&(*tbs)->subject);
     if ((*tbs)->sigalg) {
-	free_AlgorithmIdentifier((*tbs)->sigalg);
-	free((*tbs)->sigalg);
+        free_AlgorithmIdentifier((*tbs)->sigalg);
+        free((*tbs)->sigalg);
     }
 
     memset(*tbs, 0, sizeof(**tbs));
@@ -139,8 +139,8 @@ hx509_ca_tbs_free(hx509_ca_tbs *tbs)
 
 HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_ca_tbs_set_notBefore(hx509_context context,
-			   hx509_ca_tbs tbs,
-			   time_t t)
+                           hx509_ca_tbs tbs,
+                           time_t t)
 {
     tbs->notBefore = t;
     return 0;
@@ -160,8 +160,8 @@ hx509_ca_tbs_set_notBefore(hx509_context context,
 
 HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_ca_tbs_set_notAfter(hx509_context context,
-			   hx509_ca_tbs tbs,
-			   time_t t)
+                          hx509_ca_tbs tbs,
+                          time_t t)
 {
     tbs->notAfter = t;
     return 0;
@@ -181,8 +181,8 @@ hx509_ca_tbs_set_notAfter(hx509_context context,
 
 HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_ca_tbs_set_notAfter_lifetime(hx509_context context,
-				   hx509_ca_tbs tbs,
-				   time_t delta)
+                                   hx509_ca_tbs tbs,
+                                   time_t delta)
 {
     return hx509_ca_tbs_set_notAfter(context, tbs, time(NULL) + delta);
 }
@@ -239,62 +239,62 @@ hx509_ca_tbs_template_units(void)
 
 HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_ca_tbs_set_template(hx509_context context,
-			  hx509_ca_tbs tbs,
-			  int flags,
-			  hx509_cert cert)
+                          hx509_ca_tbs tbs,
+                          int flags,
+                          hx509_cert cert)
 {
     int ret;
 
     if (flags & HX509_CA_TEMPLATE_SUBJECT) {
-	if (tbs->subject)
-	    hx509_name_free(&tbs->subject);
-	ret = hx509_cert_get_subject(cert, &tbs->subject);
-	if (ret) {
-	    hx509_set_error_string(context, 0, ret,
-				   "Failed to get subject from template");
-	    return ret;
-	}
+        if (tbs->subject)
+            hx509_name_free(&tbs->subject);
+        ret = hx509_cert_get_subject(cert, &tbs->subject);
+        if (ret) {
+            hx509_set_error_string(context, 0, ret,
+                                   "Failed to get subject from template");
+            return ret;
+        }
     }
     if (flags & HX509_CA_TEMPLATE_SERIAL) {
-	der_free_heim_integer(&tbs->serial);
-	ret = hx509_cert_get_serialnumber(cert, &tbs->serial);
-	tbs->flags.serial = !ret;
-	if (ret) {
-	    hx509_set_error_string(context, 0, ret,
-				   "Failed to copy serial number");
-	    return ret;
-	}
+        der_free_heim_integer(&tbs->serial);
+        ret = hx509_cert_get_serialnumber(cert, &tbs->serial);
+        tbs->flags.serial = !ret;
+        if (ret) {
+            hx509_set_error_string(context, 0, ret,
+                                   "Failed to copy serial number");
+            return ret;
+        }
     }
     if (flags & HX509_CA_TEMPLATE_NOTBEFORE)
-	tbs->notBefore = hx509_cert_get_notBefore(cert);
+        tbs->notBefore = hx509_cert_get_notBefore(cert);
     if (flags & HX509_CA_TEMPLATE_NOTAFTER)
-	tbs->notAfter = hx509_cert_get_notAfter(cert);
+        tbs->notAfter = hx509_cert_get_notAfter(cert);
     if (flags & HX509_CA_TEMPLATE_SPKI) {
-	free_SubjectPublicKeyInfo(&tbs->spki);
-	ret = hx509_cert_get_SPKI(context, cert, &tbs->spki);
-	tbs->flags.key = !ret;
-	if (ret)
-	    return ret;
+        free_SubjectPublicKeyInfo(&tbs->spki);
+        ret = hx509_cert_get_SPKI(context, cert, &tbs->spki);
+        tbs->flags.key = !ret;
+        if (ret)
+            return ret;
     }
     if (flags & HX509_CA_TEMPLATE_KU) {
-	ret = _hx509_cert_get_keyusage(context, cert, &tbs->ku);
-	if (ret)
-	    return ret;
+        ret = _hx509_cert_get_keyusage(context, cert, &tbs->ku);
+        if (ret)
+            return ret;
     }
     if (flags & HX509_CA_TEMPLATE_EKU) {
-	ExtKeyUsage eku;
-	size_t i;
-	ret = _hx509_cert_get_eku(context, cert, &eku);
-	if (ret)
-	    return ret;
-	for (i = 0; i < eku.len; i++) {
-	    ret = hx509_ca_tbs_add_eku(context, tbs, &eku.val[i]);
-	    if (ret) {
-		free_ExtKeyUsage(&eku);
-		return ret;
-	    }
-	}
-	free_ExtKeyUsage(&eku);
+        ExtKeyUsage eku;
+        size_t i;
+        ret = _hx509_cert_get_eku(context, cert, &eku);
+        if (ret)
+            return ret;
+        for (i = 0; i < eku.len; i++) {
+            ret = hx509_ca_tbs_add_eku(context, tbs, &eku.val[i]);
+            if (ret) {
+                free_ExtKeyUsage(&eku);
+                return ret;
+            }
+        }
+        free_ExtKeyUsage(&eku);
     }
     if (flags & HX509_CA_TEMPLATE_PKINIT_MAX_LIFE) {
         time_t max_life;
@@ -321,8 +321,8 @@ hx509_ca_tbs_set_template(hx509_context context,
 
 HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_ca_tbs_set_ca(hx509_context context,
-		    hx509_ca_tbs tbs,
-		    int pathLenConstraint)
+                    hx509_ca_tbs tbs,
+                    int pathLenConstraint)
 {
     tbs->flags.ca = 1;
     tbs->pathLenConstraint = pathLenConstraint;
@@ -345,8 +345,8 @@ hx509_ca_tbs_set_ca(hx509_context context,
 
 HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_ca_tbs_set_proxy(hx509_context context,
-		       hx509_ca_tbs tbs,
-		       int pathLenConstraint)
+                       hx509_ca_tbs tbs,
+                       int pathLenConstraint)
 {
     tbs->flags.proxy = 1;
     tbs->pathLenConstraint = pathLenConstraint;
@@ -367,7 +367,7 @@ hx509_ca_tbs_set_proxy(hx509_context context,
 
 HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_ca_tbs_set_domaincontroller(hx509_context context,
-				  hx509_ca_tbs tbs)
+                                  hx509_ca_tbs tbs)
 {
     tbs->flags.domaincontroller = 1;
     return 0;
@@ -389,8 +389,8 @@ hx509_ca_tbs_set_domaincontroller(hx509_context context,
 
 HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_ca_tbs_set_spki(hx509_context context,
-		      hx509_ca_tbs tbs,
-		      const SubjectPublicKeyInfo *spki)
+                      hx509_ca_tbs tbs,
+                      const SubjectPublicKeyInfo *spki)
 {
     int ret;
     free_SubjectPublicKeyInfo(&tbs->spki);
@@ -414,8 +414,8 @@ hx509_ca_tbs_set_spki(hx509_context context,
 
 HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_ca_tbs_set_serialnumber(hx509_context context,
-			      hx509_ca_tbs tbs,
-			      const heim_integer *serialNumber)
+                              hx509_ca_tbs tbs,
+                              const heim_integer *serialNumber)
 {
     int ret;
     der_free_heim_integer(&tbs->serial);
@@ -438,8 +438,8 @@ hx509_ca_tbs_set_serialnumber(hx509_context context,
 
 HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_ca_tbs_set_from_csr(hx509_context context,
-	                  hx509_ca_tbs tbs,
-	                  hx509_request req)
+                          hx509_ca_tbs tbs,
+                          hx509_request req)
 {
     hx509_san_type san_type;
     heim_oid oid = { 0, NULL };
@@ -499,8 +499,8 @@ hx509_ca_tbs_set_from_csr(hx509_context context,
 
 HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_ca_tbs_add_ku(hx509_context context,
-		    hx509_ca_tbs tbs,
-		    KeyUsage ku)
+                    hx509_ca_tbs tbs,
+                    KeyUsage ku)
 {
     tbs->ku = ku;
     return 0;
@@ -521,8 +521,8 @@ hx509_ca_tbs_add_ku(hx509_context context,
 
 HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_ca_tbs_add_eku(hx509_context context,
-		     hx509_ca_tbs tbs,
-		     const heim_oid *oid)
+                     hx509_ca_tbs tbs,
+                     const heim_oid *oid)
 {
     void *ptr;
     int ret;
@@ -530,20 +530,20 @@ hx509_ca_tbs_add_eku(hx509_context context,
 
     /* search for duplicates */
     for (i = 0; i < tbs->eku.len; i++) {
-	if (der_heim_oid_cmp(oid, &tbs->eku.val[i]) == 0)
-	    return 0;
+        if (der_heim_oid_cmp(oid, &tbs->eku.val[i]) == 0)
+            return 0;
     }
 
     ptr = realloc(tbs->eku.val, sizeof(tbs->eku.val[0]) * (tbs->eku.len + 1));
     if (ptr == NULL) {
-	hx509_set_error_string(context, 0, ENOMEM, "out of memory");
-	return ENOMEM;
+        hx509_set_error_string(context, 0, ENOMEM, "out of memory");
+        return ENOMEM;
     }
     tbs->eku.val = ptr;
     ret = der_copy_oid(oid, &tbs->eku.val[tbs->eku.len]);
     if (ret) {
-	hx509_set_error_string(context, 0, ret, "out of memory");
-	return ret;
+        hx509_set_error_string(context, 0, ret, "out of memory");
+        return ret;
     }
     tbs->eku.len += 1;
     return 0;
@@ -566,8 +566,8 @@ hx509_ca_tbs_add_eku(hx509_context context,
 
 HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_ca_tbs_add_pol(hx509_context context,
-		     hx509_ca_tbs tbs,
-		     const heim_oid *oid,
+                     hx509_ca_tbs tbs,
+                     const heim_oid *oid,
                      const char *cps_uri,
                      const char *user_notice)
 {
@@ -579,8 +579,8 @@ hx509_ca_tbs_add_pol(hx509_context context,
 
     /* search for duplicates */
     for (i = 0; i < tbs->cps.len; i++) {
-	if (der_heim_oid_cmp(oid, &tbs->cps.val[i].policyIdentifier) == 0)
-	    return 0;
+        if (der_heim_oid_cmp(oid, &tbs->cps.val[i].policyIdentifier) == 0)
+            return 0;
     }
 
     memset(&pi, 0, sizeof(pi));
@@ -595,10 +595,10 @@ hx509_ca_tbs_add_pol(hx509_context context,
         uri.data = (void *)(uintptr_t)cps_uri;
         pqi.policyQualifierId = asn1_oid_id_pkix_qt_cps;
 
-	ASN1_MALLOC_ENCODE(CPSuri,
-			   pqi.qualifier.data,
-			   pqi.qualifier.length,
-			   &uri, &size, ret);
+        ASN1_MALLOC_ENCODE(CPSuri,
+                           pqi.qualifier.data,
+                           pqi.qualifier.length,
+                           &uri, &size, ret);
         if (ret == 0) {
             ret = add_PolicyQualifierInfos(&pqis, &pqi);
             free_heim_any(&pqi.qualifier);
@@ -614,10 +614,10 @@ hx509_ca_tbs_add_pol(hx509_context context,
         un.noticeRef = 0;
 
         pqi.policyQualifierId = asn1_oid_id_pkix_qt_unotice;
-	ASN1_MALLOC_ENCODE(UserNotice,
-			   pqi.qualifier.data,
-			   pqi.qualifier.length,
-			   &un, &size, ret);
+        ASN1_MALLOC_ENCODE(UserNotice,
+                           pqi.qualifier.data,
+                           pqi.qualifier.length,
+                           &un, &size, ret);
         if (ret == 0) {
             ret = add_PolicyQualifierInfos(&pqis, &pqi);
             free_heim_any(&pqi.qualifier);
@@ -659,9 +659,9 @@ hx509_ca_tbs_add_pol_mapping(hx509_context context,
     /* search for duplicates */
     for (i = 0; i < tbs->pms.len; i++) {
         PolicyMapping *pmp = &tbs->pms.val[i];
-	if (der_heim_oid_cmp(issuer, &pmp->issuerDomainPolicy) == 0 &&
+        if (der_heim_oid_cmp(issuer, &pmp->issuerDomainPolicy) == 0 &&
             der_heim_oid_cmp(subject, &pmp->subjectDomainPolicy) == 0)
-	    return 0;
+            return 0;
     }
 
     memset(&pm, 0, sizeof(pm));
@@ -686,9 +686,9 @@ hx509_ca_tbs_add_pol_mapping(hx509_context context,
 
 HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_ca_tbs_add_crl_dp_uri(hx509_context context,
-			    hx509_ca_tbs tbs,
-			    const char *uri,
-			    hx509_name issuername)
+                            hx509_ca_tbs tbs,
+                            const char *uri,
+                            hx509_name issuername)
 {
     DistributionPointName dpn;
     DistributionPoint dp;
@@ -710,15 +710,15 @@ hx509_ca_tbs_add_crl_dp_uri(hx509_context context,
     dp.distributionPoint = &dpn;
 
     if (issuername) {
-	ign.element = choice_GeneralName_directoryName;
-	ret = hx509_name_to_Name(issuername, &ign.u.directoryName);
-	if (ret) {
-	    hx509_set_error_string(context, 0, ret, "out of memory");
-	    return ret;
-	}
+        ign.element = choice_GeneralName_directoryName;
+        ret = hx509_name_to_Name(issuername, &ign.u.directoryName);
+        if (ret) {
+            hx509_set_error_string(context, 0, ret, "out of memory");
+            return ret;
+        }
         crlissuer.len = 1;
         crlissuer.val = &ign;
-	dp.cRLIssuer = &crlissuer;
+        dp.cRLIssuer = &crlissuer;
     }
 
     ret = add_CRLDistributionPoints(&tbs->crldp, &dp);
@@ -726,7 +726,7 @@ hx509_ca_tbs_add_crl_dp_uri(hx509_context context,
         free_Name(&ign.u.directoryName);
 
     if (ret)
-	hx509_set_error_string(context, 0, ret, "out of memory");
+        hx509_set_error_string(context, 0, ret, "out of memory");
     return ret;
 }
 
@@ -746,9 +746,9 @@ hx509_ca_tbs_add_crl_dp_uri(hx509_context context,
 
 HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_ca_tbs_add_san_otherName(hx509_context context,
-			       hx509_ca_tbs tbs,
-			       const heim_oid *oid,
-			       const heim_octet_string *os)
+                               hx509_ca_tbs tbs,
+                               const heim_oid *oid,
+                               const heim_octet_string *os)
 {
     GeneralName gn;
 
@@ -776,31 +776,31 @@ dequote_strndup(hx509_context context, const char *in, size_t len, char **out)
     for (k = i = 0; i < len; i++) {
         if (in[i] == '\\') {
             switch (in[++i]) {
-            case 't': s[k++] = '\t'; break;
-            case 'b': s[k++] = '\b'; break;
-            case 'n': s[k++] = '\n'; break;
-            case '0':
-                for (i++; i < len; i++) {
-                    if (in[i] == '\0')
-                        break;
-                    if (in[i++] == '\\' && in[i] == '0')
-                        continue;
+                case 't': s[k++] = '\t'; break;
+                case 'b': s[k++] = '\b'; break;
+                case 'n': s[k++] = '\n'; break;
+                case '0':
+                    for (i++; i < len; i++) {
+                        if (in[i] == '\0')
+                            break;
+                        if (in[i++] == '\\' && in[i] == '0')
+                            continue;
+                        hx509_set_error_string(context, 0,
+                                               HX509_PARSING_NAME_FAILED,
+                                               "embedded NULs not supported in "
+                                               "PKINIT SANs");
+                        free(s);
+                        return HX509_PARSING_NAME_FAILED;
+                    }
+                    break;
+                case '\0':
                     hx509_set_error_string(context, 0,
                                            HX509_PARSING_NAME_FAILED,
-                                           "embedded NULs not supported in "
-                                           "PKINIT SANs");
+                                           "trailing unquoted backslashes not "
+                                           "allowed in PKINIT SANs");
                     free(s);
                     return HX509_PARSING_NAME_FAILED;
-                }
-                break;
-            case '\0':
-                hx509_set_error_string(context, 0,
-                                       HX509_PARSING_NAME_FAILED,
-                                       "trailing unquoted backslashes not "
-                                       "allowed in PKINIT SANs");
-                free(s);
-                return HX509_PARSING_NAME_FAILED;
-            default:  s[k++] = in[i]; break;
+                default:  s[k++] = in[i]; break;
             }
         } else {
             s[k++] = in[i];
@@ -827,54 +827,54 @@ _hx509_make_pkinit_san(hx509_context context,
 
     /* Parse principal */
     {
-	const char *str, *str_start;
+        const char *str, *str_start;
         size_t n, i;
 
-	/* Count number of components */
-	n = 1;
-	for (str = principal; *str != '\0' && *str != '@'; str++) {
-	    if (*str == '\\') {
-		if (str[1] == '\0') {
-		    ret = HX509_PARSING_NAME_FAILED;
-		    hx509_set_error_string(context, 0, ret,
-					   "trailing \\ in principal name");
-		    goto out;
-		}
-		str++;
-	    } else if(*str == '/') {
-		n++;
-	    } else if(*str == '@') {
-		break;
+        /* Count number of components */
+        n = 1;
+        for (str = principal; *str != '\0' && *str != '@'; str++) {
+            if (*str == '\\') {
+                if (str[1] == '\0') {
+                    ret = HX509_PARSING_NAME_FAILED;
+                    hx509_set_error_string(context, 0, ret,
+                                           "trailing \\ in principal name");
+                    goto out;
+                }
+                str++;
+            } else if(*str == '/') {
+                n++;
+            } else if(*str == '@') {
+                break;
             }
-	}
-	if (*str != '@') {
+        }
+        if (*str != '@') {
             /* Note that we allow the realm to be empty */
-	    ret = HX509_PARSING_NAME_FAILED;
-	    hx509_set_error_string(context, 0, ret, "Missing @ in principal");
-	    goto out;
-	};
+            ret = HX509_PARSING_NAME_FAILED;
+            hx509_set_error_string(context, 0, ret, "Missing @ in principal");
+            goto out;
+        };
 
-	p.principalName.name_string.val =
-	    calloc(n, sizeof(*p.principalName.name_string.val));
-	if (p.principalName.name_string.val == NULL) {
-	    ret = ENOMEM;
-	    hx509_set_error_string(context, 0, ret, "malloc: out of memory");
-	    goto out;
-	}
-	p.principalName.name_string.len = n;
-	p.principalName.name_type = KRB5_NT_PRINCIPAL;
+        p.principalName.name_string.val =
+            calloc(n, sizeof(*p.principalName.name_string.val));
+        if (p.principalName.name_string.val == NULL) {
+            ret = ENOMEM;
+            hx509_set_error_string(context, 0, ret, "malloc: out of memory");
+            goto out;
+        }
+        p.principalName.name_string.len = n;
+        p.principalName.name_type = KRB5_NT_PRINCIPAL;
 
-	for (i = 0, str_start = str = principal; *str != '\0'; str++) {
-	    if (*str=='\\') {
-		str++;
-	    } else if(*str == '/') {
+        for (i = 0, str_start = str = principal; *str != '\0'; str++) {
+            if (*str=='\\') {
+                str++;
+            } else if(*str == '/') {
                 /* Note that we allow components to be empty */
                 ret = dequote_strndup(context, str_start, str - str_start,
                                       &p.principalName.name_string.val[i++]);
                 if (ret)
                     goto out;
                 str_start = str + 1;
-	    } else if(*str == '@') {
+            } else if(*str == '@') {
                 ret = dequote_strndup(context, str_start, str - str_start,
                                       &p.principalName.name_string.val[i++]);
                 if (ret == 0)
@@ -883,16 +883,16 @@ _hx509_make_pkinit_san(hx509_context context,
                     goto out;
                 break;
             }
-	}
+        }
     }
 
     ASN1_MALLOC_ENCODE(KRB5PrincipalName, os->data, os->length, &p, &size, ret);
     if (ret) {
-	hx509_set_error_string(context, 0, ret, "Out of memory");
-	goto out;
+        hx509_set_error_string(context, 0, ret, "Out of memory");
+        goto out;
     }
     if (size != os->length)
-	_hx509_abort("internal ASN.1 encoder error");
+        _hx509_abort("internal ASN.1 encoder error");
 
 out:
     free_KRB5PrincipalName(&p);
@@ -918,11 +918,11 @@ add_ia5string_san(hx509_context context,
 
     ASN1_MALLOC_ENCODE(SRVName, os.data, os.length, &ustring, &size, ret);
     if (ret) {
-	hx509_set_error_string(context, 0, ret, "Out of memory");
-	return ret;
+        hx509_set_error_string(context, 0, ret, "Out of memory");
+        return ret;
     }
     if (size != os.length)
-	_hx509_abort("internal ASN.1 encoder error");
+        _hx509_abort("internal ASN.1 encoder error");
 
     ret = hx509_ca_tbs_add_san_otherName(context, tbs, oid, &os);
     free(os.data);
@@ -943,8 +943,8 @@ add_ia5string_san(hx509_context context,
 
 HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_ca_tbs_add_san_dnssrv(hx509_context context,
-			    hx509_ca_tbs tbs,
-			    const char *dnssrv)
+                            hx509_ca_tbs tbs,
+                            const char *dnssrv)
 {
     size_t i, len;
 
@@ -981,8 +981,8 @@ hx509_ca_tbs_add_san_dnssrv(hx509_context context,
 
 HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_ca_tbs_add_san_pkinit(hx509_context context,
-			    hx509_ca_tbs tbs,
-			    const char *principal)
+                            hx509_ca_tbs tbs,
+                            const char *principal)
 {
     heim_octet_string os;
     int ret;
@@ -1001,9 +1001,9 @@ hx509_ca_tbs_add_san_pkinit(hx509_context context,
 
 static int
 add_utf8_san(hx509_context context,
-	     hx509_ca_tbs tbs,
-	     const heim_oid *oid,
-	     const char *string)
+             hx509_ca_tbs tbs,
+             const heim_oid *oid,
+             const char *string)
 {
     const PKIXXmppAddr ustring = (const PKIXXmppAddr)(uintptr_t)string;
     heim_octet_string os;
@@ -1015,11 +1015,11 @@ add_utf8_san(hx509_context context,
 
     ASN1_MALLOC_ENCODE(PKIXXmppAddr, os.data, os.length, &ustring, &size, ret);
     if (ret) {
-	hx509_set_error_string(context, 0, ret, "Out of memory");
-	return ret;
+        hx509_set_error_string(context, 0, ret, "Out of memory");
+        return ret;
     }
     if (size != os.length)
-	_hx509_abort("internal ASN.1 encoder error");
+        _hx509_abort("internal ASN.1 encoder error");
 
     ret = hx509_ca_tbs_add_san_otherName(context, tbs, oid, &os);
     free(os.data);
@@ -1041,8 +1041,8 @@ add_utf8_san(hx509_context context,
 
 HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_ca_tbs_add_san_ms_upn(hx509_context context,
-			    hx509_ca_tbs tbs,
-			    const char *principal)
+                            hx509_ca_tbs tbs,
+                            const char *principal)
 {
     return add_utf8_san(context, tbs, &asn1_oid_id_pkinit_ms_san, principal);
 }
@@ -1062,8 +1062,8 @@ hx509_ca_tbs_add_san_ms_upn(hx509_context context,
 
 HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_ca_tbs_add_san_jid(hx509_context context,
-			 hx509_ca_tbs tbs,
-			 const char *jid)
+                         hx509_ca_tbs tbs,
+                         const char *jid)
 {
     return add_utf8_san(context, tbs, &asn1_oid_id_pkix_on_xmppAddr, jid);
 }
@@ -1087,8 +1087,8 @@ hx509_ca_tbs_add_san_jid(hx509_context context,
 
 HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_ca_tbs_add_san_hostname(hx509_context context,
-			      hx509_ca_tbs tbs,
-			      const char *dnsname)
+                              hx509_ca_tbs tbs,
+                              const char *dnsname)
 {
     GeneralName gn;
 
@@ -1115,8 +1115,8 @@ hx509_ca_tbs_add_san_hostname(hx509_context context,
 
 HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_ca_tbs_add_san_rfc822name(hx509_context context,
-				hx509_ca_tbs tbs,
-				const char *rfc822Name)
+                                hx509_ca_tbs tbs,
+                                const char *rfc822Name)
 {
     GeneralName gn;
 
@@ -1250,11 +1250,11 @@ hx509_ca_tbs_add_san_permanentIdentifier(hx509_context context,
     ASN1_MALLOC_ENCODE(PermanentIdentifier, os.data, os.length, &pi, &size,
                        ret);
     if (ret) {
-	hx509_set_error_string(context, 0, ret, "Out of memory");
-	return ret;
+        hx509_set_error_string(context, 0, ret, "Out of memory");
+        return ret;
     }
     if (size != os.length)
-	_hx509_abort("internal ASN.1 encoder error");
+        _hx509_abort("internal ASN.1 encoder error");
 
     ret = hx509_ca_tbs_add_san_otherName(context, tbs,
                                          &asn1_oid_id_pkix_on_permanentIdentifier,
@@ -1363,11 +1363,11 @@ hx509_ca_tbs_add_san_hardwareModuleName(hx509_context context,
     ASN1_MALLOC_ENCODE(HardwareModuleName, os.data, os.length, &hm, &size,
                        ret);
     if (ret) {
-	hx509_set_error_string(context, 0, ret, "Out of memory");
-	return ret;
+        hx509_set_error_string(context, 0, ret, "Out of memory");
+        return ret;
     }
     if (size != os.length)
-	_hx509_abort("internal ASN.1 encoder error");
+        _hx509_abort("internal ASN.1 encoder error");
 
     ret = hx509_ca_tbs_add_san_otherName(context, tbs,
                                          &asn1_oid_id_on_hardwareModuleName,
@@ -1396,22 +1396,22 @@ hx509_ca_tbs_add_san(hx509_context context,
                      const char *s)
 {
     switch (type) {
-    case HX509_SAN_TYPE_EMAIL:
-        return hx509_ca_tbs_add_san_rfc822name(context, tbs, s);
-    case HX509_SAN_TYPE_DNSNAME:
-        return hx509_ca_tbs_add_san_hostname(context, tbs, s);
-    case HX509_SAN_TYPE_DN:
-        return ENOTSUP;
-    case HX509_SAN_TYPE_REGISTERED_ID:
-        return ENOTSUP;
-    case HX509_SAN_TYPE_XMPP:
-        return hx509_ca_tbs_add_san_jid(context, tbs, s);
-    case HX509_SAN_TYPE_PKINIT:
-        return hx509_ca_tbs_add_san_pkinit(context, tbs, s);
-    case HX509_SAN_TYPE_MS_UPN:
-        return hx509_ca_tbs_add_san_ms_upn(context, tbs, s);
-    default:
-        return ENOTSUP;
+        case HX509_SAN_TYPE_EMAIL:
+            return hx509_ca_tbs_add_san_rfc822name(context, tbs, s);
+        case HX509_SAN_TYPE_DNSNAME:
+            return hx509_ca_tbs_add_san_hostname(context, tbs, s);
+        case HX509_SAN_TYPE_DN:
+            return ENOTSUP;
+        case HX509_SAN_TYPE_REGISTERED_ID:
+            return ENOTSUP;
+        case HX509_SAN_TYPE_XMPP:
+            return hx509_ca_tbs_add_san_jid(context, tbs, s);
+        case HX509_SAN_TYPE_PKINIT:
+            return hx509_ca_tbs_add_san_pkinit(context, tbs, s);
+        case HX509_SAN_TYPE_MS_UPN:
+            return hx509_ca_tbs_add_san_ms_upn(context, tbs, s);
+        default:
+            return ENOTSUP;
     }
 }
 
@@ -1429,11 +1429,11 @@ hx509_ca_tbs_add_san(hx509_context context,
 
 HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_ca_tbs_set_subject(hx509_context context,
-			 hx509_ca_tbs tbs,
-			 hx509_name subject)
+                         hx509_ca_tbs tbs,
+                         hx509_name subject)
 {
     if (tbs->subject)
-	hx509_name_free(&tbs->subject);
+        hx509_name_free(&tbs->subject);
     return hx509_name_copy(context, subject, &tbs->subject);
 }
 
@@ -1457,9 +1457,9 @@ hx509_ca_tbs_set_subject(hx509_context context,
 
 HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_ca_tbs_set_unique(hx509_context context,
-			hx509_ca_tbs tbs,
-			const heim_bit_string *subjectUniqueID,
-			const heim_bit_string *issuerUniqueID)
+                        hx509_ca_tbs tbs,
+                        const heim_bit_string *subjectUniqueID,
+                        const heim_bit_string *issuerUniqueID)
 {
     int ret;
 
@@ -1467,15 +1467,15 @@ hx509_ca_tbs_set_unique(hx509_context context,
     der_free_bit_string(&tbs->issuerUniqueID);
 
     if (subjectUniqueID) {
-	ret = der_copy_bit_string(subjectUniqueID, &tbs->subjectUniqueID);
-	if (ret)
-	    return ret;
+        ret = der_copy_bit_string(subjectUniqueID, &tbs->subjectUniqueID);
+        if (ret)
+            return ret;
     }
 
     if (issuerUniqueID) {
-	ret = der_copy_bit_string(issuerUniqueID, &tbs->issuerUniqueID);
-	if (ret)
-	    return ret;
+        ret = der_copy_bit_string(issuerUniqueID, &tbs->issuerUniqueID);
+        if (ret)
+            return ret;
     }
 
     return 0;
@@ -1497,8 +1497,8 @@ hx509_ca_tbs_set_unique(hx509_context context,
 
 HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_ca_tbs_subject_expand(hx509_context context,
-			    hx509_ca_tbs tbs,
-			    hx509_env env)
+                            hx509_ca_tbs tbs,
+                            hx509_env env)
 {
     return hx509_name_expand(context, tbs->subject, env);
 }
@@ -1534,21 +1534,21 @@ hx509_ca_tbs_get_name(hx509_ca_tbs tbs)
 
 HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_ca_tbs_set_signature_algorithm(hx509_context context,
-				     hx509_ca_tbs tbs,
-				     const AlgorithmIdentifier *sigalg)
+                                     hx509_ca_tbs tbs,
+                                     const AlgorithmIdentifier *sigalg)
 {
     int ret;
 
     tbs->sigalg = calloc(1, sizeof(*tbs->sigalg));
     if (tbs->sigalg == NULL) {
-	hx509_set_error_string(context, 0, ENOMEM, "Out of memory");
-	return ENOMEM;
+        hx509_set_error_string(context, 0, ENOMEM, "Out of memory");
+        return ENOMEM;
     }
     ret = copy_AlgorithmIdentifier(sigalg, tbs->sigalg);
     if (ret) {
-	free(tbs->sigalg);
-	tbs->sigalg = NULL;
-	return ret;
+        free(tbs->sigalg);
+        tbs->sigalg = NULL;
+        return ret;
     }
     return 0;
 }
@@ -1559,10 +1559,10 @@ hx509_ca_tbs_set_signature_algorithm(hx509_context context,
 
 static int
 add_extension(hx509_context context,
-	      TBSCertificate *tbsc,
-	      int critical_flag,
-	      const heim_oid *oid,
-	      const heim_octet_string *data)
+              TBSCertificate *tbsc,
+              int critical_flag,
+              const heim_oid *oid,
+              const heim_octet_string *data)
 {
     Extension ext;
     int ret;
@@ -1572,18 +1572,18 @@ add_extension(hx509_context context,
     ext.critical = critical_flag;
     ret = der_copy_oid(oid, &ext.extnID);
     if (ret) {
-	hx509_set_error_string(context, 0, ret, "Out of memory");
-	goto out;
+        hx509_set_error_string(context, 0, ret, "Out of memory");
+        goto out;
     }
     ret = der_copy_octet_string(data, &ext.extnValue);
     if (ret) {
-	hx509_set_error_string(context, 0, ret, "Out of memory");
-	goto out;
+        hx509_set_error_string(context, 0, ret, "Out of memory");
+        goto out;
     }
     ret = add_Extensions(tbsc->extensions, &ext);
     if (ret) {
-	hx509_set_error_string(context, 0, ret, "Out of memory");
-	goto out;
+        hx509_set_error_string(context, 0, ret, "Out of memory");
+        goto out;
     }
 out:
     free_Extension(&ext);
@@ -1599,33 +1599,33 @@ build_proxy_prefix(hx509_context context, const Name *issuer, Name *subject)
 
     ret = copy_Name(issuer, subject);
     if (ret) {
-	hx509_set_error_string(context, 0, ret,
-			       "Failed to copy subject name");
-	return ret;
+        hx509_set_error_string(context, 0, ret,
+                               "Failed to copy subject name");
+        return ret;
     }
 
     t = time(NULL);
     ret = asprintf(&tstr, "ts-%lu", (unsigned long)t);
     if (ret == -1 || tstr == NULL) {
-	hx509_set_error_string(context, 0, ENOMEM,
-			       "Failed to copy subject name");
-	return ENOMEM;
+        hx509_set_error_string(context, 0, ENOMEM,
+                               "Failed to copy subject name");
+        return ENOMEM;
     }
     /* prefix with CN=<ts>,...*/
     ret = _hx509_name_modify(context, subject, 1, &asn1_oid_id_at_commonName, tstr);
     free(tstr);
     if (ret)
-	free_Name(subject);
+        free_Name(subject);
     return ret;
 }
 
 static int
 ca_sign(hx509_context context,
-	hx509_ca_tbs tbs,
-	hx509_private_key signer,
-	const AuthorityKeyIdentifier *ai,
-	const Name *issuername,
-	hx509_cert *certificate)
+        hx509_ca_tbs tbs,
+        hx509_private_key signer,
+        const AuthorityKeyIdentifier *ai,
+        const Name *issuername,
+        hx509_cert *certificate)
 {
     heim_error_t error = NULL;
     heim_octet_string data;
@@ -1639,7 +1639,7 @@ ca_sign(hx509_context context,
 
     sigalg = tbs->sigalg;
     if (sigalg == NULL)
-	sigalg = _hx509_crypto_default_sig_alg;
+        sigalg = _hx509_crypto_default_sig_alg;
 
     memset(&c, 0, sizeof(c));
 
@@ -1650,17 +1650,17 @@ ca_sign(hx509_context context,
      */
     notBefore = tbs->notBefore;
     if (notBefore == 0)
-	notBefore = time(NULL) - 3600 * 24;
+        notBefore = time(NULL) - 3600 * 24;
     notAfter = tbs->notAfter;
     if (notAfter == 0)
-	notAfter = time(NULL) + 3600 * 24 * 365;
+        notAfter = time(NULL) + 3600 * 24 * 365;
 
     if (tbs->flags.ca) {
-	tbs->ku.keyCertSign = 1;
-	tbs->ku.cRLSign = 1;
+        tbs->ku.keyCertSign = 1;
+        tbs->ku.cRLSign = 1;
     } else if (KeyUsage2int(tbs->ku) == 0) {
-	tbs->ku.digitalSignature = 1;
-	tbs->ku.keyEncipherment = 1;
+        tbs->ku.digitalSignature = 1;
+        tbs->ku.keyEncipherment = 1;
     }
 
     /*
@@ -1676,87 +1676,87 @@ ca_sign(hx509_context context,
 
     /* Sanity checks */
     if (tbs->flags.key == 0) {
-	ret = EINVAL;
-	hx509_set_error_string(context, 0, ret, "No public key set");
-	return ret;
+        ret = EINVAL;
+        hx509_set_error_string(context, 0, ret, "No public key set");
+        return ret;
     }
     /*
      * Don't put restrictions on proxy certificate's subject name, it
      * will be generated below.
      */
     if (!tbs->flags.proxy) {
-	if (hx509_name_is_null_p(tbs->subject) && tbs->san.len == 0) {
-	    hx509_set_error_string(context, 0, EINVAL,
-				   "Empty subject and no SubjectAltNames");
-	    return EINVAL;
-	}
+        if (hx509_name_is_null_p(tbs->subject) && tbs->san.len == 0) {
+            hx509_set_error_string(context, 0, EINVAL,
+                                   "Empty subject and no SubjectAltNames");
+            return EINVAL;
+        }
     }
     if (tbs->flags.ca && tbs->flags.proxy) {
-	hx509_set_error_string(context, 0, EINVAL, "Can't be proxy and CA "
-			       "at the same time");
-	return EINVAL;
+        hx509_set_error_string(context, 0, EINVAL, "Can't be proxy and CA "
+                               "at the same time");
+        return EINVAL;
     }
     if (tbs->flags.proxy) {
-	if (tbs->san.len > 0) {
-	    hx509_set_error_string(context, 0, EINVAL,
-				   "Proxy certificate is not allowed "
-				   "to have SubjectAltNames");
-	    return EINVAL;
-	}
+        if (tbs->san.len > 0) {
+            hx509_set_error_string(context, 0, EINVAL,
+                                   "Proxy certificate is not allowed "
+                                   "to have SubjectAltNames");
+            return EINVAL;
+        }
     }
 
     /* version         [0]  Version OPTIONAL, -- EXPLICIT nnn DEFAULT 1, */
     tbsc->version = calloc(1, sizeof(*tbsc->version));
     if (tbsc->version == NULL) {
-	ret = ENOMEM;
-	hx509_set_error_string(context, 0, ret, "Out of memory");
-	goto out;
+        ret = ENOMEM;
+        hx509_set_error_string(context, 0, ret, "Out of memory");
+        goto out;
     }
     *tbsc->version = rfc3280_version_3;
     /* serialNumber         CertificateSerialNumber, */
     if (tbs->flags.serial) {
-	ret = der_copy_heim_integer(&tbs->serial, &tbsc->serialNumber);
-	if (ret) {
-	    hx509_set_error_string(context, 0, ret, "Out of memory");
-	    goto out;
-	}
+        ret = der_copy_heim_integer(&tbs->serial, &tbsc->serialNumber);
+        if (ret) {
+            hx509_set_error_string(context, 0, ret, "Out of memory");
+            goto out;
+        }
     } else {
-	/*
-	 * If no explicit serial number is specified, 20 random bytes should be
-	 * sufficiently collision resistant.  Since the serial number must be a
-	 * positive integer, ensure minimal ASN.1 DER form by forcing the high
-	 * bit off and the next bit on (thus avoiding an all zero first octet).
-	 */
-	tbsc->serialNumber.length = 20;
-	tbsc->serialNumber.data = malloc(tbsc->serialNumber.length);
-	if (tbsc->serialNumber.data == NULL){
-	    ret = ENOMEM;
-	    hx509_set_error_string(context, 0, ret, "Out of memory");
-	    goto out;
-	}
-	ret = RAND_bytes(tbsc->serialNumber.data, tbsc->serialNumber.length);
-	if (ret != 1) {
-	    ret = HX509_CRYPTO_INTERNAL_ERROR;
-	    hx509_set_error_string(context, 0, ret, "Failed to generate random bytes");
-	    goto out;
-	}
-	((unsigned char *)tbsc->serialNumber.data)[0] &= 0x7f;
-	((unsigned char *)tbsc->serialNumber.data)[0] |= 0x40;
+        /*
+         * If no explicit serial number is specified, 20 random bytes should be
+         * sufficiently collision resistant.  Since the serial number must be a
+         * positive integer, ensure minimal ASN.1 DER form by forcing the high
+         * bit off and the next bit on (thus avoiding an all zero first octet).
+         */
+        tbsc->serialNumber.length = 20;
+        tbsc->serialNumber.data = malloc(tbsc->serialNumber.length);
+        if (tbsc->serialNumber.data == NULL){
+            ret = ENOMEM;
+            hx509_set_error_string(context, 0, ret, "Out of memory");
+            goto out;
+        }
+        ret = RAND_bytes(tbsc->serialNumber.data, tbsc->serialNumber.length);
+        if (ret != 1) {
+            ret = HX509_CRYPTO_INTERNAL_ERROR;
+            hx509_set_error_string(context, 0, ret, "Failed to generate random bytes");
+            goto out;
+        }
+        ((unsigned char *)tbsc->serialNumber.data)[0] &= 0x7f;
+        ((unsigned char *)tbsc->serialNumber.data)[0] |= 0x40;
     }
     /* signature            AlgorithmIdentifier, */
     ret = copy_AlgorithmIdentifier(sigalg, &tbsc->signature);
     if (ret) {
-	hx509_set_error_string(context, 0, ret, "Failed to copy signature alg");
-	goto out;
+        hx509_set_error_string(context, 0, ret, "Failed to copy signature alg");
+        goto out;
     }
     /* issuer               Name, */
     if (issuername)
-	ret = copy_Name(issuername, &tbsc->issuer);
+        ret = copy_Name(issuername, &tbsc->issuer);
     else
-	ret = hx509_name_to_Name(tbs->subject, &tbsc->issuer);
+        ret = hx509_name_to_Name(tbs->subject, &tbsc->issuer);
     if (ret) {
-	hx509_set_error_string(context, 0, ret, "Failed to copy issuer name");
-	goto out;
+        hx509_set_error_string(context, 0, ret, "Failed to copy issuer name");
+        goto out;
     }
     /* validity             Validity, */
     {
@@ -1787,349 +1787,349 @@ ca_sign(hx509_context context,
     }
     /* subject              Name, */
     if (tbs->flags.proxy) {
-	ret = build_proxy_prefix(context, &tbsc->issuer, &tbsc->subject);
-	if (ret)
-	    goto out;
+        ret = build_proxy_prefix(context, &tbsc->issuer, &tbsc->subject);
+        if (ret)
+            goto out;
     } else {
-	ret = hx509_name_to_Name(tbs->subject, &tbsc->subject);
-	if (ret) {
-	    hx509_set_error_string(context, 0, ret,
-				   "Failed to copy subject name");
-	    goto out;
-	}
+        ret = hx509_name_to_Name(tbs->subject, &tbsc->subject);
+        if (ret) {
+            hx509_set_error_string(context, 0, ret,
+                                   "Failed to copy subject name");
+            goto out;
+        }
     }
     /* subjectPublicKeyInfo SubjectPublicKeyInfo, */
     ret = copy_SubjectPublicKeyInfo(&tbs->spki, &tbsc->subjectPublicKeyInfo);
     if (ret) {
-	hx509_set_error_string(context, 0, ret, "Failed to copy spki");
-	goto out;
+        hx509_set_error_string(context, 0, ret, "Failed to copy spki");
+        goto out;
     }
     /* issuerUniqueID  [1]  IMPLICIT BIT STRING OPTIONAL */
     if (tbs->issuerUniqueID.length) {
-	tbsc->issuerUniqueID = calloc(1, sizeof(*tbsc->issuerUniqueID));
-	if (tbsc->issuerUniqueID == NULL) {
-	    ret = ENOMEM;
-	    hx509_set_error_string(context, 0, ret, "Out of memory");
-	    goto out;
-	}
-	ret = der_copy_bit_string(&tbs->issuerUniqueID, tbsc->issuerUniqueID);
-	if (ret) {
-	    hx509_set_error_string(context, 0, ret, "Out of memory");
-	    goto out;
-	}
+        tbsc->issuerUniqueID = calloc(1, sizeof(*tbsc->issuerUniqueID));
+        if (tbsc->issuerUniqueID == NULL) {
+            ret = ENOMEM;
+            hx509_set_error_string(context, 0, ret, "Out of memory");
+            goto out;
+        }
+        ret = der_copy_bit_string(&tbs->issuerUniqueID, tbsc->issuerUniqueID);
+        if (ret) {
+            hx509_set_error_string(context, 0, ret, "Out of memory");
+            goto out;
+        }
     }
     /* subjectUniqueID [2]  IMPLICIT BIT STRING OPTIONAL */
     if (tbs->subjectUniqueID.length) {
-	tbsc->subjectUniqueID = calloc(1, sizeof(*tbsc->subjectUniqueID));
-	if (tbsc->subjectUniqueID == NULL) {
-	    ret = ENOMEM;
-	    hx509_set_error_string(context, 0, ret, "Out of memory");
-	    goto out;
-	}
+        tbsc->subjectUniqueID = calloc(1, sizeof(*tbsc->subjectUniqueID));
+        if (tbsc->subjectUniqueID == NULL) {
+            ret = ENOMEM;
+            hx509_set_error_string(context, 0, ret, "Out of memory");
+            goto out;
+        }
 
-	ret = der_copy_bit_string(&tbs->subjectUniqueID, tbsc->subjectUniqueID);
-	if (ret) {
-	    hx509_set_error_string(context, 0, ret, "Out of memory");
-	    goto out;
-	}
+        ret = der_copy_bit_string(&tbs->subjectUniqueID, tbsc->subjectUniqueID);
+        if (ret) {
+            hx509_set_error_string(context, 0, ret, "Out of memory");
+            goto out;
+        }
     }
 
     /* extensions      [3]  EXPLICIT Extensions OPTIONAL */
     tbsc->extensions = calloc(1, sizeof(*tbsc->extensions));
     if (tbsc->extensions == NULL) {
-	ret = ENOMEM;
-	hx509_set_error_string(context, 0, ret, "Out of memory");
-	goto out;
+        ret = ENOMEM;
+        hx509_set_error_string(context, 0, ret, "Out of memory");
+        goto out;
     }
 
     /* Add the text BMP string Domaincontroller to the cert */
     if (tbs->flags.domaincontroller) {
-	data.data = rk_UNCONST("\x1e\x20\x00\x44\x00\x6f\x00\x6d"
-			       "\x00\x61\x00\x69\x00\x6e\x00\x43"
-			       "\x00\x6f\x00\x6e\x00\x74\x00\x72"
-			       "\x00\x6f\x00\x6c\x00\x6c\x00\x65"
-			       "\x00\x72");
-	data.length = 34;
+        data.data = rk_UNCONST("\x1e\x20\x00\x44\x00\x6f\x00\x6d"
+                               "\x00\x61\x00\x69\x00\x6e\x00\x43"
+                               "\x00\x6f\x00\x6e\x00\x74\x00\x72"
+                               "\x00\x6f\x00\x6c\x00\x6c\x00\x65"
+                               "\x00\x72");
+        data.length = 34;
 
-	ret = add_extension(context, tbsc, 0,
-			    &asn1_oid_id_ms_cert_enroll_domaincontroller,
-			    &data);
-	if (ret)
-	    goto out;
+        ret = add_extension(context, tbsc, 0,
+                            &asn1_oid_id_ms_cert_enroll_domaincontroller,
+                            &data);
+        if (ret)
+            goto out;
     }
 
     /* Add KeyUsage */
     if (KeyUsage2int(tbs->ku) > 0) {
         ASN1_MALLOC_ENCODE(KeyUsage, data.data, data.length,
                            &tbs->ku, &size, ret);
-	if (ret) {
-	    hx509_set_error_string(context, 0, ret, "Out of memory");
-	    goto out;
-	}
-	if (size != data.length)
-	    _hx509_abort("internal ASN.1 encoder error");
-	ret = add_extension(context, tbsc, 1,
-			    &asn1_oid_id_x509_ce_keyUsage, &data);
-	free(data.data);
-	if (ret)
-	    goto out;
+        if (ret) {
+            hx509_set_error_string(context, 0, ret, "Out of memory");
+            goto out;
+        }
+        if (size != data.length)
+            _hx509_abort("internal ASN.1 encoder error");
+        ret = add_extension(context, tbsc, 1,
+                            &asn1_oid_id_x509_ce_keyUsage, &data);
+        free(data.data);
+        if (ret)
+            goto out;
     }
 
     /* Add ExtendedKeyUsage */
     if (tbs->eku.len > 0) {
-	ASN1_MALLOC_ENCODE(ExtKeyUsage, data.data, data.length,
-			   &tbs->eku, &size, ret);
-	if (ret) {
-	    hx509_set_error_string(context, 0, ret, "Out of memory");
-	    goto out;
-	}
-	if (size != data.length)
-	    _hx509_abort("internal ASN.1 encoder error");
-	ret = add_extension(context, tbsc, 1,
-			    &asn1_oid_id_x509_ce_extKeyUsage, &data);
-	free(data.data);
-	if (ret)
-	    goto out;
+        ASN1_MALLOC_ENCODE(ExtKeyUsage, data.data, data.length,
+                           &tbs->eku, &size, ret);
+        if (ret) {
+            hx509_set_error_string(context, 0, ret, "Out of memory");
+            goto out;
+        }
+        if (size != data.length)
+            _hx509_abort("internal ASN.1 encoder error");
+        ret = add_extension(context, tbsc, 1,
+                            &asn1_oid_id_x509_ce_extKeyUsage, &data);
+        free(data.data);
+        if (ret)
+            goto out;
     }
 
     /* Add Subject Alternative Name */
     if (tbs->san.len > 0) {
-	ASN1_MALLOC_ENCODE(GeneralNames, data.data, data.length,
-			   &tbs->san, &size, ret);
-	if (ret) {
-	    hx509_set_error_string(context, 0, ret, "Out of memory");
-	    goto out;
-	}
-	if (size != data.length)
-	    _hx509_abort("internal ASN.1 encoder error");
+        ASN1_MALLOC_ENCODE(GeneralNames, data.data, data.length,
+                           &tbs->san, &size, ret);
+        if (ret) {
+            hx509_set_error_string(context, 0, ret, "Out of memory");
+            goto out;
+        }
+        if (size != data.length)
+            _hx509_abort("internal ASN.1 encoder error");
 
         /* The SAN extension is critical if the subject Name is empty */
         ret = add_extension(context, tbsc, hx509_name_is_null_p(tbs->subject),
                             &asn1_oid_id_x509_ce_subjectAltName, &data);
-	free(data.data);
-	if (ret)
-	    goto out;
+        free(data.data);
+        if (ret)
+            goto out;
     }
 
     /* Add Authority Key Identifier */
     if (ai) {
-	ASN1_MALLOC_ENCODE(AuthorityKeyIdentifier, data.data, data.length,
-			   ai, &size, ret);
-	if (ret) {
-	    hx509_set_error_string(context, 0, ret, "Out of memory");
-	    goto out;
-	}
-	if (size != data.length)
-	    _hx509_abort("internal ASN.1 encoder error");
-	ret = add_extension(context, tbsc, 0,
-			    &asn1_oid_id_x509_ce_authorityKeyIdentifier,
-			    &data);
-	free(data.data);
-	if (ret)
-	    goto out;
+        ASN1_MALLOC_ENCODE(AuthorityKeyIdentifier, data.data, data.length,
+                           ai, &size, ret);
+        if (ret) {
+            hx509_set_error_string(context, 0, ret, "Out of memory");
+            goto out;
+        }
+        if (size != data.length)
+            _hx509_abort("internal ASN.1 encoder error");
+        ret = add_extension(context, tbsc, 0,
+                            &asn1_oid_id_x509_ce_authorityKeyIdentifier,
+                            &data);
+        free(data.data);
+        if (ret)
+            goto out;
     }
 
     /* Add Subject Key Identifier */
     {
-	SubjectKeyIdentifier si;
-	unsigned char hash[SHA_DIGEST_LENGTH];
+        SubjectKeyIdentifier si;
+        unsigned char hash[SHA_DIGEST_LENGTH];
 
-	{
-	    EVP_MD_CTX *ctx;
+        {
+            EVP_MD_CTX *ctx;
 
-	    ctx = EVP_MD_CTX_create();
-	    EVP_DigestInit_ex(ctx, EVP_sha1(), NULL);
-	    EVP_DigestUpdate(ctx, tbs->spki.subjectPublicKey.data,
-			     tbs->spki.subjectPublicKey.length / 8);
-	    EVP_DigestFinal_ex(ctx, hash, NULL);
-	    EVP_MD_CTX_destroy(ctx);
-	}
+            ctx = EVP_MD_CTX_create();
+            EVP_DigestInit_ex(ctx, EVP_sha1(), NULL);
+            EVP_DigestUpdate(ctx, tbs->spki.subjectPublicKey.data,
+                             tbs->spki.subjectPublicKey.length / 8);
+            EVP_DigestFinal_ex(ctx, hash, NULL);
+            EVP_MD_CTX_destroy(ctx);
+        }
 
-	si.data = hash;
-	si.length = sizeof(hash);
+        si.data = hash;
+        si.length = sizeof(hash);
 
-	ASN1_MALLOC_ENCODE(SubjectKeyIdentifier, data.data, data.length,
-			   &si, &size, ret);
-	if (ret) {
-	    hx509_set_error_string(context, 0, ret, "Out of memory");
-	    goto out;
-	}
-	if (size != data.length)
-	    _hx509_abort("internal ASN.1 encoder error");
-	ret = add_extension(context, tbsc, 0,
-			    &asn1_oid_id_x509_ce_subjectKeyIdentifier,
-			    &data);
-	free(data.data);
-	if (ret)
-	    goto out;
+        ASN1_MALLOC_ENCODE(SubjectKeyIdentifier, data.data, data.length,
+                           &si, &size, ret);
+        if (ret) {
+            hx509_set_error_string(context, 0, ret, "Out of memory");
+            goto out;
+        }
+        if (size != data.length)
+            _hx509_abort("internal ASN.1 encoder error");
+        ret = add_extension(context, tbsc, 0,
+                            &asn1_oid_id_x509_ce_subjectKeyIdentifier,
+                            &data);
+        free(data.data);
+        if (ret)
+            goto out;
     }
 
     /* Add BasicConstraints */
     {
-	BasicConstraints bc;
-	unsigned int path;
+        BasicConstraints bc;
+        unsigned int path;
 
-	memset(&bc, 0, sizeof(bc));
+        memset(&bc, 0, sizeof(bc));
 
-	if (tbs->flags.ca) {
-	    bc.cA = 1;
-	    if (tbs->pathLenConstraint >= 0) {
-		path = tbs->pathLenConstraint;
-		bc.pathLenConstraint = &path;
-	    }
-	}
+        if (tbs->flags.ca) {
+            bc.cA = 1;
+            if (tbs->pathLenConstraint >= 0) {
+                path = tbs->pathLenConstraint;
+                bc.pathLenConstraint = &path;
+            }
+        }
 
-	ASN1_MALLOC_ENCODE(BasicConstraints, data.data, data.length,
-			   &bc, &size, ret);
-	if (ret) {
-	    hx509_set_error_string(context, 0, ret, "Out of memory");
-	    goto out;
-	}
-	if (size != data.length)
-	    _hx509_abort("internal ASN.1 encoder error");
-	/* Critical if this is a CA */
-	ret = add_extension(context, tbsc, tbs->flags.ca,
-			    &asn1_oid_id_x509_ce_basicConstraints,
-			    &data);
-	free(data.data);
-	if (ret)
-	    goto out;
+        ASN1_MALLOC_ENCODE(BasicConstraints, data.data, data.length,
+                           &bc, &size, ret);
+        if (ret) {
+            hx509_set_error_string(context, 0, ret, "Out of memory");
+            goto out;
+        }
+        if (size != data.length)
+            _hx509_abort("internal ASN.1 encoder error");
+        /* Critical if this is a CA */
+        ret = add_extension(context, tbsc, tbs->flags.ca,
+                            &asn1_oid_id_x509_ce_basicConstraints,
+                            &data);
+        free(data.data);
+        if (ret)
+            goto out;
     }
 
     /* Add Proxy */
     if (tbs->flags.proxy) {
-	ProxyCertInfo info;
+        ProxyCertInfo info;
 
-	memset(&info, 0, sizeof(info));
+        memset(&info, 0, sizeof(info));
 
-	if (tbs->pathLenConstraint >= 0) {
-	    info.pCPathLenConstraint =
-		malloc(sizeof(*info.pCPathLenConstraint));
-	    if (info.pCPathLenConstraint == NULL) {
-		ret = ENOMEM;
-		hx509_set_error_string(context, 0, ret, "Out of memory");
-		goto out;
-	    }
-	    *info.pCPathLenConstraint = tbs->pathLenConstraint;
-	}
+        if (tbs->pathLenConstraint >= 0) {
+            info.pCPathLenConstraint =
+                malloc(sizeof(*info.pCPathLenConstraint));
+            if (info.pCPathLenConstraint == NULL) {
+                ret = ENOMEM;
+                hx509_set_error_string(context, 0, ret, "Out of memory");
+                goto out;
+            }
+            *info.pCPathLenConstraint = tbs->pathLenConstraint;
+        }
 
-	ret = der_copy_oid(&asn1_oid_id_pkix_ppl_inheritAll,
-			   &info.proxyPolicy.policyLanguage);
-	if (ret) {
-	    free_ProxyCertInfo(&info);
-	    hx509_set_error_string(context, 0, ret, "Out of memory");
-	    goto out;
-	}
+        ret = der_copy_oid(&asn1_oid_id_pkix_ppl_inheritAll,
+                           &info.proxyPolicy.policyLanguage);
+        if (ret) {
+            free_ProxyCertInfo(&info);
+            hx509_set_error_string(context, 0, ret, "Out of memory");
+            goto out;
+        }
 
-	ASN1_MALLOC_ENCODE(ProxyCertInfo, data.data, data.length,
-			   &info, &size, ret);
-	free_ProxyCertInfo(&info);
-	if (ret) {
-	    hx509_set_error_string(context, 0, ret, "Out of memory");
-	    goto out;
-	}
-	if (size != data.length)
-	    _hx509_abort("internal ASN.1 encoder error");
-	ret = add_extension(context, tbsc, 0,
-			    &asn1_oid_id_pkix_pe_proxyCertInfo,
-			    &data);
-	free(data.data);
-	if (ret)
-	    goto out;
+        ASN1_MALLOC_ENCODE(ProxyCertInfo, data.data, data.length,
+                           &info, &size, ret);
+        free_ProxyCertInfo(&info);
+        if (ret) {
+            hx509_set_error_string(context, 0, ret, "Out of memory");
+            goto out;
+        }
+        if (size != data.length)
+            _hx509_abort("internal ASN.1 encoder error");
+        ret = add_extension(context, tbsc, 0,
+                            &asn1_oid_id_pkix_pe_proxyCertInfo,
+                            &data);
+        free(data.data);
+        if (ret)
+            goto out;
     }
 
     /* Add CRL distribution point */
     if (tbs->crldp.len) {
-	ASN1_MALLOC_ENCODE(CRLDistributionPoints, data.data, data.length,
-			   &tbs->crldp, &size, ret);
-	if (ret) {
-	    hx509_set_error_string(context, 0, ret, "Out of memory");
-	    goto out;
-	}
-	if (size != data.length)
-	    _hx509_abort("internal ASN.1 encoder error");
-	ret = add_extension(context, tbsc, FALSE,
-			    &asn1_oid_id_x509_ce_cRLDistributionPoints,
-			    &data);
-	free(data.data);
-	if (ret)
-	    goto out;
+        ASN1_MALLOC_ENCODE(CRLDistributionPoints, data.data, data.length,
+                           &tbs->crldp, &size, ret);
+        if (ret) {
+            hx509_set_error_string(context, 0, ret, "Out of memory");
+            goto out;
+        }
+        if (size != data.length)
+            _hx509_abort("internal ASN.1 encoder error");
+        ret = add_extension(context, tbsc, FALSE,
+                            &asn1_oid_id_x509_ce_cRLDistributionPoints,
+                            &data);
+        free(data.data);
+        if (ret)
+            goto out;
     }
 
     /* Add CertificatePolicies */
     if (tbs->cps.len) {
-	ASN1_MALLOC_ENCODE(CertificatePolicies, data.data, data.length,
-			   &tbs->cps, &size, ret);
-	if (ret) {
-	    hx509_set_error_string(context, 0, ret, "Out of memory");
-	    goto out;
-	}
-	if (size != data.length)
-	    _hx509_abort("internal ASN.1 encoder error");
+        ASN1_MALLOC_ENCODE(CertificatePolicies, data.data, data.length,
+                           &tbs->cps, &size, ret);
+        if (ret) {
+            hx509_set_error_string(context, 0, ret, "Out of memory");
+            goto out;
+        }
+        if (size != data.length)
+            _hx509_abort("internal ASN.1 encoder error");
         ret = add_extension(context, tbsc, FALSE,
                             &asn1_oid_id_x509_ce_certificatePolicies, &data);
         free(data.data);
-	if (ret)
-	    goto out;
+        if (ret)
+            goto out;
     }
 
     /* Add PolicyMappings */
     if (tbs->cps.len) {
-	ASN1_MALLOC_ENCODE(PolicyMappings, data.data, data.length,
-			   &tbs->pms, &size, ret);
-	if (ret) {
-	    hx509_set_error_string(context, 0, ret, "Out of memory");
-	    goto out;
-	}
-	if (size != data.length)
-	    _hx509_abort("internal ASN.1 encoder error");
+        ASN1_MALLOC_ENCODE(PolicyMappings, data.data, data.length,
+                           &tbs->pms, &size, ret);
+        if (ret) {
+            hx509_set_error_string(context, 0, ret, "Out of memory");
+            goto out;
+        }
+        if (size != data.length)
+            _hx509_abort("internal ASN.1 encoder error");
         ret = add_extension(context, tbsc, FALSE,
                             &asn1_oid_id_x509_ce_policyMappings, &data);
         free(data.data);
-	if (ret)
-	    goto out;
+        if (ret)
+            goto out;
     }
 
     /* Add Heimdal PKINIT ticket max life extension */
     if (tbs->pkinitTicketMaxLife > 0) {
         ASN1_MALLOC_ENCODE(HeimPkinitPrincMaxLifeSecs, data.data, data.length,
                            &tbs->pkinitTicketMaxLife, &size, ret);
-	if (ret) {
-	    hx509_set_error_string(context, 0, ret, "Out of memory");
-	    goto out;
-	}
-	if (size != data.length)
-	    _hx509_abort("internal ASN.1 encoder error");
+        if (ret) {
+            hx509_set_error_string(context, 0, ret, "Out of memory");
+            goto out;
+        }
+        if (size != data.length)
+            _hx509_abort("internal ASN.1 encoder error");
         ret = add_extension(context, tbsc, FALSE,
                             &asn1_oid_id_heim_ce_pkinit_princ_max_life, &data);
         free(data.data);
-	if (ret)
-	    goto out;
+        if (ret)
+            goto out;
     }
 
     ASN1_MALLOC_ENCODE(TBSCertificate, data.data, data.length,tbsc, &size, ret);
     if (ret) {
-	hx509_set_error_string(context, 0, ret, "malloc out of memory");
-	goto out;
+        hx509_set_error_string(context, 0, ret, "malloc out of memory");
+        goto out;
     }
     if (data.length != size)
-	_hx509_abort("internal ASN.1 encoder error");
+        _hx509_abort("internal ASN.1 encoder error");
 
     ret = _hx509_create_signature_bitstring(context,
-					    signer,
-					    sigalg,
-					    &data,
-					    &c.signatureAlgorithm,
-					    &c.signatureValue);
+                                            signer,
+                                            sigalg,
+                                            &data,
+                                            &c.signatureAlgorithm,
+                                            &c.signatureValue);
     free(data.data);
     if (ret)
-	goto out;
+        goto out;
 
     *certificate = hx509_cert_init(context, &c, &error);
     if (*certificate == NULL) {
-	ret = heim_error_get_code(error);
-	heim_release(error);
-	goto out;
+        ret = heim_error_get_code(error);
+        heim_release(error);
+        goto out;
     }
 
     free_Certificate(&c);
@@ -2143,88 +2143,88 @@ out:
 
 static int
 get_AuthorityKeyIdentifier(hx509_context context,
-			   const Certificate *certificate,
-			   AuthorityKeyIdentifier *ai)
+                           const Certificate *certificate,
+                           AuthorityKeyIdentifier *ai)
 {
     SubjectKeyIdentifier si;
     int ret;
 
     ret = _hx509_find_extension_subject_key_id(certificate, &si);
     if (ret == 0) {
-	ai->keyIdentifier = calloc(1, sizeof(*ai->keyIdentifier));
-	if (ai->keyIdentifier == NULL) {
-	    free_SubjectKeyIdentifier(&si);
-	    ret = ENOMEM;
-	    hx509_set_error_string(context, 0, ret, "Out of memory");
-	    goto out;
-	}
-	ret = der_copy_octet_string(&si, ai->keyIdentifier);
-	free_SubjectKeyIdentifier(&si);
-	if (ret) {
-	    hx509_set_error_string(context, 0, ret, "Out of memory");
-	    goto out;
-	}
+        ai->keyIdentifier = calloc(1, sizeof(*ai->keyIdentifier));
+        if (ai->keyIdentifier == NULL) {
+            free_SubjectKeyIdentifier(&si);
+            ret = ENOMEM;
+            hx509_set_error_string(context, 0, ret, "Out of memory");
+            goto out;
+        }
+        ret = der_copy_octet_string(&si, ai->keyIdentifier);
+        free_SubjectKeyIdentifier(&si);
+        if (ret) {
+            hx509_set_error_string(context, 0, ret, "Out of memory");
+            goto out;
+        }
     } else {
-	GeneralNames gns;
-	GeneralName gn;
-	Name name;
+        GeneralNames gns;
+        GeneralName gn;
+        Name name;
 
-	memset(&gn, 0, sizeof(gn));
-	memset(&gns, 0, sizeof(gns));
-	memset(&name, 0, sizeof(name));
+        memset(&gn, 0, sizeof(gn));
+        memset(&gns, 0, sizeof(gns));
+        memset(&name, 0, sizeof(name));
 
-	ai->authorityCertIssuer =
-	    calloc(1, sizeof(*ai->authorityCertIssuer));
-	if (ai->authorityCertIssuer == NULL) {
-	    ret = ENOMEM;
-	    hx509_set_error_string(context, 0, ret, "Out of memory");
-	    goto out;
-	}
-	ai->authorityCertSerialNumber =
-	    calloc(1, sizeof(*ai->authorityCertSerialNumber));
-	if (ai->authorityCertSerialNumber == NULL) {
-	    ret = ENOMEM;
-	    hx509_set_error_string(context, 0, ret, "Out of memory");
-	    goto out;
-	}
+        ai->authorityCertIssuer =
+            calloc(1, sizeof(*ai->authorityCertIssuer));
+        if (ai->authorityCertIssuer == NULL) {
+            ret = ENOMEM;
+            hx509_set_error_string(context, 0, ret, "Out of memory");
+            goto out;
+        }
+        ai->authorityCertSerialNumber =
+            calloc(1, sizeof(*ai->authorityCertSerialNumber));
+        if (ai->authorityCertSerialNumber == NULL) {
+            ret = ENOMEM;
+            hx509_set_error_string(context, 0, ret, "Out of memory");
+            goto out;
+        }
 
-	/*
-	 * XXX unbreak when asn1 compiler handle IMPLICIT
-	 *
-	 * This is so horrible.
-	 */
+        /*
+         * XXX unbreak when asn1 compiler handle IMPLICIT
+         *
+         * This is so horrible.
+         */
 
-	ret = copy_Name(&certificate->tbsCertificate.subject, &name);
-	if (ret) {
-	    hx509_set_error_string(context, 0, ret, "Out of memory");
-	    goto out;
-	}
+        ret = copy_Name(&certificate->tbsCertificate.subject, &name);
+        if (ret) {
+            hx509_set_error_string(context, 0, ret, "Out of memory");
+            goto out;
+        }
 
-	memset(&gn, 0, sizeof(gn));
-	gn.element = choice_GeneralName_directoryName;
-	gn.u.directoryName.element = choice_Name_rdnSequence;
-	gn.u.directoryName.u.rdnSequence = name.u.rdnSequence;
+        memset(&gn, 0, sizeof(gn));
+        gn.element = choice_GeneralName_directoryName;
+        gn.u.directoryName.element = choice_Name_rdnSequence;
+        gn.u.directoryName.u.rdnSequence = name.u.rdnSequence;
 
-	ret = add_GeneralNames(&gns, &gn);
-	if (ret) {
-	    hx509_set_error_string(context, 0, ret, "Out of memory");
-	    goto out;
-	}
+        ret = add_GeneralNames(&gns, &gn);
+        if (ret) {
+            hx509_set_error_string(context, 0, ret, "Out of memory");
+            goto out;
+        }
 
-	ai->authorityCertIssuer->val = gns.val;
-	ai->authorityCertIssuer->len = gns.len;
+        ai->authorityCertIssuer->val = gns.val;
+        ai->authorityCertIssuer->len = gns.len;
 
-	ret = der_copy_heim_integer(&certificate->tbsCertificate.serialNumber,
-				    ai->authorityCertSerialNumber);
-	if (ai->authorityCertSerialNumber == NULL) {
-	    ret = ENOMEM;
-	    hx509_set_error_string(context, 0, ret, "Out of memory");
-	    goto out;
-	}
+        ret = der_copy_heim_integer(&certificate->tbsCertificate.serialNumber,
+                                    ai->authorityCertSerialNumber);
+        if (ai->authorityCertSerialNumber == NULL) {
+            ret = ENOMEM;
+            hx509_set_error_string(context, 0, ret, "Out of memory");
+            goto out;
+        }
     }
 out:
     if (ret)
-	free_AuthorityKeyIdentifier(ai);
+        free_AuthorityKeyIdentifier(ai);
     return ret;
 }
 
@@ -2255,9 +2255,9 @@ out:
 
 HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_ca_sign(hx509_context context,
-	      hx509_ca_tbs tbs,
-	      hx509_cert signer,
-	      hx509_cert *certificate)
+              hx509_ca_tbs tbs,
+              hx509_cert signer,
+              hx509_cert *certificate)
 {
     const Certificate *signer_cert;
     AuthorityKeyIdentifier ai;
@@ -2269,14 +2269,14 @@ hx509_ca_sign(hx509_context context,
 
     ret = get_AuthorityKeyIdentifier(context, signer_cert, &ai);
     if (ret)
-	goto out;
+        goto out;
 
     ret = ca_sign(context,
-		  tbs,
-		  _hx509_cert_private_key(signer),
-		  &ai,
-		  &signer_cert->tbsCertificate.subject,
-		  certificate);
+                  tbs,
+                  _hx509_cert_private_key(signer),
+                  &ai,
+                  &signer_cert->tbsCertificate.subject,
+                  certificate);
 
 out:
     free_AuthorityKeyIdentifier(&ai);
@@ -2299,16 +2299,16 @@ out:
 
 HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_ca_sign_self(hx509_context context,
-		   hx509_ca_tbs tbs,
-		   hx509_private_key signer,
-		   hx509_cert *certificate)
+                   hx509_ca_tbs tbs,
+                   hx509_private_key signer,
+                   hx509_cert *certificate)
 {
     return ca_sign(context,
-		   tbs,
-		   signer,
-		   NULL,
-		   NULL,
-		   certificate);
+                   tbs,
+                   signer,
+                   NULL,
+                   NULL,
+                   certificate);
 }
 
 /*
@@ -2363,15 +2363,15 @@ count_sans(hx509_request req, size_t *n)
         if (ret)
             break;
         switch (san_type) {
-        case HX509_SAN_TYPE_DNSNAME:
-        case HX509_SAN_TYPE_EMAIL:
-        case HX509_SAN_TYPE_XMPP:
-        case HX509_SAN_TYPE_PKINIT:
-        case HX509_SAN_TYPE_MS_UPN:
-            (*n)++;
-            break;
-        default:
-            ret = ENOTSUP;
+            case HX509_SAN_TYPE_DNSNAME:
+            case HX509_SAN_TYPE_EMAIL:
+            case HX509_SAN_TYPE_XMPP:
+            case HX509_SAN_TYPE_PKINIT:
+            case HX509_SAN_TYPE_MS_UPN:
+                (*n)++;
+                break;
+            default:
+                ret = ENOTSUP;
         }
         frees(&s);
     }
@@ -2398,18 +2398,18 @@ characterize_cprinc(hx509_context context,
     const char *comp1 = princ_get_comp_string(cprinc, 1);
 
     switch (ncomp) {
-    case 1:
-        return CERT_CLIENT;
-    case 2:
-        if (strchr(comp1, '.') == NULL)
+        case 1:
             return CERT_CLIENT;
-        return CERT_SERVER;
-    case 3:
-        if (strchr(comp1, '.'))
+        case 2:
+            if (strchr(comp1, '.') == NULL)
+                return CERT_CLIENT;
             return CERT_SERVER;
-        return CERT_NOTSUP;
-    default:
-        return CERT_NOTSUP;
+        case 3:
+            if (strchr(comp1, '.'))
+                return CERT_SERVER;
+            return CERT_NOTSUP;
+        default:
+            return CERT_NOTSUP;
     }
 }
 
@@ -2468,19 +2468,19 @@ characterize(hx509_context context,
         if (ret)
             break;
         switch (san_type) {
-        case HX509_SAN_TYPE_DNSNAME:
-            if (!want_ekus)
-                res |= CERT_SERVER;
-            break;
-        case HX509_SAN_TYPE_EMAIL:
-        case HX509_SAN_TYPE_XMPP:
-        case HX509_SAN_TYPE_PKINIT:
-        case HX509_SAN_TYPE_MS_UPN:
-            if (!want_ekus)
-                res |= CERT_CLIENT;
-            break;
-        default:
-            ret = ENOTSUP;
+            case HX509_SAN_TYPE_DNSNAME:
+                if (!want_ekus)
+                    res |= CERT_SERVER;
+                break;
+            case HX509_SAN_TYPE_EMAIL:
+            case HX509_SAN_TYPE_XMPP:
+            case HX509_SAN_TYPE_PKINIT:
+            case HX509_SAN_TYPE_MS_UPN:
+                if (!want_ekus)
+                    res |= CERT_CLIENT;
+                break;
+            default:
+                ret = ENOTSUP;
         }
         if (ret)
             break;
@@ -2544,14 +2544,14 @@ get_cf(hx509_context context,
         def = "custom";
         /* Client requested some certificate extension, a SAN or EKU */
         switch (certtype) {
-        case CERT_MIXED:    label = "mixed";  break;
-        case CERT_CLIENT:   label = "client"; break;
-        case CERT_SERVER:   label = "server"; break;
-        default:
-            hx509_set_error_string(context, 0, ret = ENOTSUP,
-                                   "Requested SAN/EKU combination not "
-                                   "supported");
-            return ret;
+            case CERT_MIXED:    label = "mixed";  break;
+            case CERT_CLIENT:   label = "client"; break;
+            case CERT_SERVER:   label = "server"; break;
+            default:
+                hx509_set_error_string(context, 0, ret = ENOTSUP,
+                                       "Requested SAN/EKU combination not "
+                                       "supported");
+                return ret;
         }
     } else {
         def = "default";
@@ -2579,9 +2579,9 @@ get_cf(hx509_context context,
                      "-> %s -> kx509 -> %s%s%s", def, label, realm, label,
                      svc ? " -> " : "", svc ? svc : "");
         hx509_set_error_string(context, 0, EACCES,
-                "No configuration for %s %s certificate's realm "
-                "-> %s -> kx509 -> %s%s%s", def, label, realm, label,
-                svc ? " -> " : "", svc ? svc : "");
+                               "No configuration for %s %s certificate's realm "
+                               "-> %s -> kx509 -> %s%s%s", def, label, realm, label,
+                               svc ? " -> " : "", svc ? svc : "");
     }
     return ret;
 }

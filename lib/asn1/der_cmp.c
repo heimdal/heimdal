@@ -63,7 +63,7 @@ der_heim_oid_cmp(const heim_oid *p, const heim_oid *q)
 
 int ASN1CALL
 der_heim_octet_string_cmp(const heim_octet_string *p,
-			  const heim_octet_string *q)
+                          const heim_octet_string *q)
 {
     int c;
 
@@ -86,21 +86,21 @@ der_heim_octet_string_cmp(const heim_octet_string *p,
 
 int ASN1CALL
 der_printable_string_cmp(const heim_printable_string *p,
-			 const heim_printable_string *q)
+                         const heim_printable_string *q)
 {
     return der_heim_octet_string_cmp(p, q);
 }
 
 int ASN1CALL
 der_ia5_string_cmp(const heim_ia5_string *p,
-		   const heim_ia5_string *q)
+                   const heim_ia5_string *q)
 {
     return der_heim_octet_string_cmp(p, q);
 }
 
 int ASN1CALL
 der_heim_bit_string_cmp(const heim_bit_string *p,
-			const heim_bit_string *q)
+                        const heim_bit_string *q)
 {
     unsigned char pc, qc;
     size_t bits;
@@ -192,12 +192,12 @@ der_heim_bit_string_cmp(const heim_bit_string *p,
 
 int ASN1CALL
 der_heim_integer_cmp(const heim_integer *p,
-		     const heim_integer *q)
+                     const heim_integer *q)
 {
     if (p->negative != q->negative)
-	return q->negative - p->negative;
+        return q->negative - p->negative;
     if (p->length != q->length)
-	return (int)(p->length - q->length);
+        return (int)(p->length - q->length);
     return memcmp(p->data, q->data, p->length);
 }
 
@@ -225,7 +225,7 @@ der_heim_bmp_string_cmp(const heim_bmp_string *p, const heim_bmp_string *q)
 
 int ASN1CALL
 der_heim_universal_string_cmp(const heim_universal_string *p,
-			      const heim_universal_string *q)
+                              const heim_universal_string *q)
 {
     int c;
 

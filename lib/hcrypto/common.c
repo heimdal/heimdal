@@ -49,7 +49,7 @@ _hc_BN_to_integer(BIGNUM *bn, heim_integer *integer)
     integer->length = BN_num_bytes(bn);
     integer->data = malloc(integer->length);
     if (integer->data == NULL)
-	return ENOMEM;
+        return ENOMEM;
     BN_bn2bin(bn, integer->data);
     integer->negative = BN_is_negative(bn);
     return 0;
@@ -60,6 +60,6 @@ _hc_integer_to_BN(const heim_integer *i, BIGNUM *bn)
 {
     bn = BN_bin2bn(i->data, i->length, bn);
     if (bn)
-	BN_set_negative(bn, i->negative);
+        BN_set_negative(bn, i->negative);
     return bn;
 }

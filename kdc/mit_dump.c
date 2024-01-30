@@ -90,7 +90,7 @@ nexttoken(char **p)
 {
     char *q;
     do {
-	q = strsep(p, " \t");
+        q = strsep(p, " \t");
     } while(q && *q == '\0');
     return q;
 }
@@ -154,7 +154,7 @@ mit_prop_dump(void *arg, const char *file)
     memset(&ent, 0, sizeof (ent));
     f = fopen(file, "r");
     if (f == NULL)
-	return errno;
+        return errno;
 
     ret = ENOMEM;
     sp = krb5_storage_emem();
@@ -166,31 +166,31 @@ mit_prop_dump(void *arg, const char *file)
         char *q;
 
         lineno++;
-	if(strncmp(line, "kdb5_util", strlen("kdb5_util")) == 0) {
-	    int major;
+        if(strncmp(line, "kdb5_util", strlen("kdb5_util")) == 0) {
+            int major;
             q = nexttoken(&p);
             if (strcmp(q, "kdb5_util") != 0)
                 errx(1, "line %d: unknown version", lineno);
-	    q = nexttoken(&p); /* load_dump */
-	    if (strcmp(q, "load_dump") != 0)
-		errx(1, "line %d: unknown version", lineno);
-	    q = nexttoken(&p); /* load_dump */
-	    if (strcmp(q, "version") != 0)
-		errx(1, "line %d: unknown version", lineno);
-	    q = nexttoken(&p); /* x.0 */
-	    if (sscanf(q, "%d", &major) != 1)
-		errx(1, "line %d: unknown version", lineno);
-	    if (major != 4 && major != 5 && major != 6)
-		errx(1, "unknown dump file format, got %d, expected 4-6",
-		     major);
-	    continue;
-	} else if(strncmp(p, "policy", strlen("policy")) == 0) {
+            q = nexttoken(&p); /* load_dump */
+            if (strcmp(q, "load_dump") != 0)
+                errx(1, "line %d: unknown version", lineno);
+            q = nexttoken(&p); /* load_dump */
+            if (strcmp(q, "version") != 0)
+                errx(1, "line %d: unknown version", lineno);
+            q = nexttoken(&p); /* x.0 */
+            if (sscanf(q, "%d", &major) != 1)
+                errx(1, "line %d: unknown version", lineno);
+            if (major != 4 && major != 5 && major != 6)
+                errx(1, "unknown dump file format, got %d, expected 4-6",
+                     major);
+            continue;
+        } else if(strncmp(p, "policy", strlen("policy")) == 0) {
             warnx("line: %d: ignoring policy (not supported)", lineno);
-	    continue;
-	} else if(strncmp(p, "princ", strlen("princ")) != 0) {
-	    warnx("line %d: not a principal", lineno);
-	    continue;
-	}
+            continue;
+        } else if(strncmp(p, "princ", strlen("princ")) != 0) {
+            warnx("line %d: not a principal", lineno);
+            continue;
+        }
         krb5_storage_truncate(sp, 0);
         ret = _hdb_mit_dump2mitdb_entry(pd->context, line, sp);
         if (ret) {
@@ -208,7 +208,7 @@ mit_prop_dump(void *arg, const char *file)
             warnx("line: %d: failed to store; ignoring", lineno);
             continue;
         }
-	ret = v5_prop(pd->context, NULL, &ent, arg);
+        ret = v5_prop(pd->context, NULL, &ent, arg);
         hdb_free_entry(pd->context, NULL, &ent); /* XXX */
         if (ret) break;
     }

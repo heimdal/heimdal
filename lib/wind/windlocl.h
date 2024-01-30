@@ -55,13 +55,13 @@ int _wind_stringprep_error(const uint32_t, wind_profile_flags);
 int _wind_stringprep_prohibited(const uint32_t *, size_t, wind_profile_flags);
 
 int _wind_stringprep_map(const uint32_t *, size_t,
-			 uint32_t *, size_t *,
-			 wind_profile_flags);
+                         uint32_t *, size_t *,
+                         wind_profile_flags);
 
 int _wind_stringprep_normalize(const uint32_t *, size_t, uint32_t *, size_t *);
 
 int _wind_ldap_case_exact_attribute(const uint32_t *, size_t,
-				    uint32_t *, size_t *);
+                                    uint32_t *, size_t *);
 
 
 #endif /* _WINDLOCL_H_ */

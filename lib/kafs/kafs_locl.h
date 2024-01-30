@@ -109,13 +109,13 @@ typedef struct credentials CREDENTIALS;
 struct kafs_data;
 struct kafs_token;
 typedef int (*afslog_uid_func_t)(struct kafs_data *,
-				 const char *,
-				 const char *,
-				 uid_t,
-				 const char *);
+                                 const char *,
+                                 const char *,
+                                 uid_t,
+                                 const char *);
 
 typedef int (*get_cred_func_t)(struct kafs_data*, const char*, const char*,
-			       const char*, uid_t, struct kafs_token *);
+                               const char*, uid_t, struct kafs_token *);
 
 typedef char* (*get_realm_func_t)(struct kafs_data*, const char*);
 
@@ -140,7 +140,7 @@ void _kafs_foldup(char *, const char *);
 int _kafs_afslog_all_local_cells(struct kafs_data*, uid_t, const char*);
 
 int _kafs_get_cred(struct kafs_data*, const char*, const char*, const char *,
-		   uid_t, struct kafs_token *);
+                   uid_t, struct kafs_token *);
 
 int
 _kafs_realm_of_cell(struct kafs_data *, const char *, char **);

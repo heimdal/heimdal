@@ -34,9 +34,9 @@
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_display_name_ext(OM_uint32 *minor_status,
-		     gss_name_t input_name,
-		     gss_OID display_as_name_type,
-		     gss_buffer_t display_name)
+                     gss_name_t input_name,
+                     gss_OID display_as_name_type,
+                     gss_buffer_t display_name)
 {
     OM_uint32 major_status = GSS_S_UNAVAILABLE;
     struct _gss_name *name = (struct _gss_name *) input_name;

@@ -57,14 +57,14 @@ adapt(unsigned delta, unsigned numpoints, int first)
     unsigned k;
 
     if (first)
-	delta = delta / damp;
+        delta = delta / damp;
     else
-	delta /= 2;
+        delta /= 2;
     delta += delta / numpoints;
     k = 0;
     while (delta > ((base - t_min) * t_max) / 2) {
-	delta /= base - t_min;
-	k += base;
+        delta /= base - t_min;
+        k += base;
     }
     return k + (((base - t_min + 1) * delta) / (delta + skew));
 }
@@ -87,7 +87,7 @@ adapt(unsigned delta, unsigned numpoints, int first)
 
 int
 wind_punycode_label_toascii(const uint32_t *in, size_t in_len,
-			    char *out, size_t *out_len)
+                            char *out, size_t *out_len)
 {
     unsigned n     = initial_n;
     unsigned delta = 0;
@@ -99,68 +99,68 @@ wind_punycode_label_toascii(const uint32_t *in, size_t in_len,
     unsigned m;
 
     for (i = 0; i < in_len; ++i) {
-	if (in[i] < 0x80) {
-	    ++h;
-	    if (o >= *out_len)
-		return WIND_ERR_OVERRUN;
-	    out[o++] = in[i];
-	}
+        if (in[i] < 0x80) {
+            ++h;
+            if (o >= *out_len)
+                return WIND_ERR_OVERRUN;
+            out[o++] = in[i];
+        }
     }
     b = h;
     if (b > 0) {
-	if (o >= *out_len)
-	    return WIND_ERR_OVERRUN;
-	out[o++] = 0x2D;
+        if (o >= *out_len)
+            return WIND_ERR_OVERRUN;
+        out[o++] = 0x2D;
     }
     /* is this string punycoded */
     if (h < in_len) {
-	if (o + 4 >= *out_len)
-	    return WIND_ERR_OVERRUN;
-	memmove(out + 4, out, o);
-	memcpy(out, "xn--", 4);
-	o += 4;
+        if (o + 4 >= *out_len)
+            return WIND_ERR_OVERRUN;
+        memmove(out + 4, out, o);
+        memcpy(out, "xn--", 4);
+        o += 4;
     }
 
     while (h < in_len) {
-	m = (unsigned)-1;
-	for (i = 0; i < in_len; ++i)
-	    if(in[i] < m && in[i] >= n)
-		m = in[i];
+        m = (unsigned)-1;
+        for (i = 0; i < in_len; ++i)
+            if(in[i] < m && in[i] >= n)
+                m = in[i];
 
-	delta += (m - n) * (h + 1);
-	n = m;
-	for (i = 0; i < in_len; ++i) {
-	    if (in[i] < n) {
-		++delta;
-	    } else if (in[i] == n) {
-		unsigned q = delta;
-		unsigned k;
-		for (k = base; ; k += base) {
-		    unsigned t;
-		    if (k <= bias)
-			t = t_min;
-		    else if (k >= bias + t_max)
-			t = t_max;
-		    else
-			t = k - bias;
-		    if (q < t)
-			break;
-		    if (o >= *out_len)
-			return WIND_ERR_OVERRUN;
-		    out[o++] = digit(t + ((q - t) % (base - t)));
-		    q = (q - t) / (base - t);
-		}
-		if (o >= *out_len)
-		    return WIND_ERR_OVERRUN;
-		out[o++] = digit(q);
-		/* output */
-		bias = adapt(delta, h + 1, h == b);
-		delta = 0;
-		++h;
-	    }
-	}
-	++delta;
-	++n;
+        delta += (m - n) * (h + 1);
+        n = m;
+        for (i = 0; i < in_len; ++i) {
+            if (in[i] < n) {
+                ++delta;
+            } else if (in[i] == n) {
+                unsigned q = delta;
+                unsigned k;
+                for (k = base; ; k += base) {
+                    unsigned t;
+                    if (k <= bias)
+                        t = t_min;
+                    else if (k >= bias + t_max)
+                        t = t_max;
+                    else
+                        t = k - bias;
+                    if (q < t)
+                        break;
+                    if (o >= *out_len)
+                        return WIND_ERR_OVERRUN;
+                    out[o++] = digit(t + ((q - t) % (base - t)));
+                    q = (q - t) / (base - t);
+                }
+                if (o >= *out_len)
+                    return WIND_ERR_OVERRUN;
+                out[o++] = digit(q);
+                /* output */
+                bias = adapt(delta, h + 1, h == b);
+                delta = 0;
+                ++h;
+            }
+        }
+        ++delta;
+        ++n;
     }
 
     *out_len = o;

@@ -45,21 +45,21 @@ recvmsg(int s, struct msghdr *msg, int flags)
     struct iovec *iov = msg->msg_iov;
 
     for(i = 0; i < msg->msg_iovlen; ++i)
-	tot += iov[i].iov_len;
+        tot += iov[i].iov_len;
     buf = malloc(tot);
     if (tot != 0 && buf == NULL) {
-	errno = ENOMEM;
-	return -1;
+        errno = ENOMEM;
+        return -1;
     }
     nb = ret = recvfrom (s, buf, tot, flags, msg->msg_name, &msg->msg_namelen);
     p = buf;
     while (nb > 0) {
-	ssize_t cnt = min(nb, iov->iov_len);
+        ssize_t cnt = min(nb, iov->iov_len);
 
-	memcpy (iov->iov_base, p, cnt);
-	p += cnt;
-	nb -= cnt;
-	++iov;
+        memcpy (iov->iov_base, p, cnt);
+        p += cnt;
+        nb -= cnt;
+        ++iov;
     }
     free(buf);
     return ret;

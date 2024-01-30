@@ -295,23 +295,23 @@ enum gssMaggotOp {
 
 enum gssMaggotLogOp{
   eLogInfo = 0,
-	/*
-	string: File
-	int32: Line
-	string: message
+  /*
+       string: File
+       int32: Line
+       string: message
      reply:
-  	int32: ackid
-	*/
+       int32: ackid
+   */
   eLogFailure,
-	/*
-	string: File
-	int32: Line
-	string: message
+  /*
+       string: File
+       int32: Line
+       string: message
      reply:
-  	int32: ackid
-	*/
+       int32: ackid
+   */
   eLogSetMoniker
-	/*
-	string: moniker
-	*/
+   /*
+       string: moniker
+    */
 };

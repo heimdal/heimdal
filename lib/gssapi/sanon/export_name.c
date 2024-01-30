@@ -33,20 +33,20 @@
 
 OM_uint32 GSSAPI_CALLCONV
 _gss_sanon_export_name(OM_uint32 *minor,
-		       gss_const_name_t input_name,
-		       gss_buffer_t exported_name)
+                       gss_const_name_t input_name,
+                       gss_buffer_t exported_name)
 {
     uint8_t is_anonymous;
 
     *minor = 0;
 
     if (input_name == GSS_C_NO_NAME)
-	return GSS_S_BAD_NAME;
+        return GSS_S_BAD_NAME;
 
     is_anonymous = input_name == _gss_sanon_anonymous_identity;
     if (!is_anonymous)
-	return GSS_S_BAD_NAME;
+        return GSS_S_BAD_NAME;
 
     return gss_mg_export_name(minor, GSS_SANON_X25519_MECHANISM,
-			      &is_anonymous, 1, exported_name);
+                              &is_anonymous, 1, exported_name);
 }

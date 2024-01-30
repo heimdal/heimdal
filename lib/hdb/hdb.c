@@ -115,24 +115,24 @@ static struct hdb_method methods[] = {
  */
 const Keys *
 hdb_kvno2keys(krb5_context context,
-	      const hdb_entry *e,
-	      krb5_kvno kvno)
+              const hdb_entry *e,
+              krb5_kvno kvno)
 {
     HDB_Ext_KeySet *hist_keys;
     HDB_extension *extp;
     size_t i;
 
     if (kvno == 0 || e->kvno == kvno)
-	return &e->keys;
+        return &e->keys;
 
     extp = hdb_find_extension(e, choice_HDB_extension_data_hist_keys);
     if (extp == NULL)
-	return 0;
+        return 0;
 
     hist_keys = &extp->data.u.hist_keys;
     for (i = 0; i < hist_keys->len; i++) {
-	if (hist_keys->val[i].kvno == kvno)
-	    return &hist_keys->val[i].keys;
+        if (hist_keys->val[i].kvno == kvno)
+            return &hist_keys->val[i].keys;
     }
 
     return NULL;
@@ -212,11 +212,11 @@ hdb_remove_keys(krb5_context context,
 
     extp = hdb_find_extension(e, choice_HDB_extension_data_hist_keys);
     if (extp == NULL)
-	return 0;
+        return 0;
 
     hist_keys = &extp->data.u.hist_keys;
     for (i = 0; i < hist_keys->len; i++) {
-	if (hist_keys->val[i].kvno != kvno)
+        if (hist_keys->val[i].kvno != kvno)
             continue;
         if (ks)
             return dequeue_HDB_Ext_KeySet(hist_keys, i, ks);
@@ -311,32 +311,32 @@ hdb_install_keyset(krb5_context context,
 
 krb5_error_code
 hdb_next_enctype2key(krb5_context context,
-		     const hdb_entry *e,
-		     const Keys *keyset,
-		     krb5_enctype enctype,
-		     Key **key)
+                     const hdb_entry *e,
+                     const Keys *keyset,
+                     krb5_enctype enctype,
+                     Key **key)
 {
     const Keys *keys = keyset ? keyset : &e->keys;
     Key *k;
 
     for (k = *key ? (*key) + 1 : keys->val; k < keys->val + keys->len; k++) {
-	if(k->key.keytype == enctype){
-	    *key = k;
-	    return 0;
-	}
+        if(k->key.keytype == enctype){
+            *key = k;
+            return 0;
+        }
     }
     krb5_set_error_message(context, KRB5_PROG_ETYPE_NOSUPP,
-			   "No next enctype %d for hdb-entry",
-			  (int)enctype);
+                           "No next enctype %d for hdb-entry",
+                           (int)enctype);
     return KRB5_PROG_ETYPE_NOSUPP; /* XXX */
 }
 
 krb5_error_code
 hdb_enctype2key(krb5_context context,
-		hdb_entry *e,
-		const Keys *keyset,
-		krb5_enctype enctype,
-		Key **key)
+                hdb_entry *e,
+                const Keys *keyset,
+                krb5_enctype enctype,
+                Key **key)
 {
     *key = NULL;
     return hdb_next_enctype2key(context, e, keyset, enctype, key);
@@ -346,9 +346,9 @@ void
 hdb_free_key(Key *key)
 {
     memset_s(key->key.keyvalue.data,
-	     key->key.keyvalue.length,
-	     0,
-	     key->key.keyvalue.length);
+             key->key.keyvalue.length,
+             0,
+             key->key.keyvalue.length);
     free_Key(key);
     free(key);
 }
@@ -360,15 +360,15 @@ hdb_lock(int fd, int operation)
     int i, code = 0;
 
     for(i = 0; i < 3; i++){
-	code = flock(fd, (operation == HDB_RLOCK ? LOCK_SH : LOCK_EX) | LOCK_NB);
-	if(code == 0 || errno != EWOULDBLOCK)
-	    break;
-	sleep(1);
+        code = flock(fd, (operation == HDB_RLOCK ? LOCK_SH : LOCK_EX) | LOCK_NB);
+        if(code == 0 || errno != EWOULDBLOCK)
+            break;
+        sleep(1);
     }
     if(code == 0)
-	return 0;
+        return 0;
     if(errno == EWOULDBLOCK)
-	return HDB_ERR_DB_INUSE;
+        return HDB_ERR_DB_INUSE;
     return HDB_ERR_CANT_LOCK_DB;
 }
 
@@ -378,7 +378,7 @@ hdb_unlock(int fd)
     int code;
     code = flock(fd, LOCK_UN);
     if(code)
-	return 4711 /* XXX */;
+        return 4711 /* XXX */;
     return 0;
 }
 
@@ -389,39 +389,39 @@ hdb_free_entry(krb5_context context, HDB *db, hdb_entry *ent)
     size_t i;
 
     if (db && db->hdb_free_entry_context)
-	db->hdb_free_entry_context(context, db, ent);
+        db->hdb_free_entry_context(context, db, ent);
 
     for(i = 0; i < ent->keys.len; i++) {
-	k = &ent->keys.val[i];
+        k = &ent->keys.val[i];
 
-	memset_s(k->key.keyvalue.data,
-		 k->key.keyvalue.length,
-		 0,
-		 k->key.keyvalue.length);
+        memset_s(k->key.keyvalue.data,
+                 k->key.keyvalue.length,
+                 0,
+                 k->key.keyvalue.length);
     }
     free_HDB_entry(ent);
 }
 
 krb5_error_code
 hdb_foreach(krb5_context context,
-	    HDB *db,
-	    unsigned flags,
-	    hdb_foreach_func_t func,
-	    void *data)
+            HDB *db,
+            unsigned flags,
+            hdb_foreach_func_t func,
+            void *data)
 {
     krb5_error_code ret;
     hdb_entry entry;
     ret = db->hdb_firstkey(context, db, flags, &entry);
     if (ret == 0)
-	krb5_clear_error_message(context);
+        krb5_clear_error_message(context);
     while(ret == 0){
-	ret = (*func)(context, db, &entry, data);
-	hdb_free_entry(context, db, &entry);
-	if(ret == 0)
-	    ret = db->hdb_nextkey(context, db, flags, &entry);
+        ret = (*func)(context, db, &entry, data);
+        hdb_free_entry(context, db, &entry);
+        if(ret == 0)
+            ret = db->hdb_nextkey(context, db, flags, &entry);
     }
     if(ret == HDB_ERR_NOENTRY)
-	ret = 0;
+        ret = 0;
     return ret;
 }
 
@@ -436,22 +436,22 @@ hdb_check_db_format(krb5_context context, HDB *db)
 
     ret = db->hdb_lock(context, db, HDB_RLOCK);
     if (ret)
-	return ret;
+        return ret;
 
     tag.data = (void *)(intptr_t)HDB_DB_FORMAT_ENTRY;
     tag.length = strlen(tag.data);
     ret = (*db->hdb__get)(context, db, tag, &version);
     ret2 = db->hdb_unlock(context, db);
     if(ret)
-	return ret;
+        return ret;
     if (ret2)
-	return ret2;
+        return ret2;
     foo = sscanf(version.data, "%u", &ver);
     krb5_data_free (&version);
     if (foo != 1)
-	return HDB_ERR_BADVERSION;
+        return HDB_ERR_BADVERSION;
     if(ver != HDB_DB_FORMAT)
-	return HDB_ERR_BADVERSION;
+        return HDB_ERR_BADVERSION;
     return 0;
 }
 
@@ -465,11 +465,11 @@ hdb_init_db(krb5_context context, HDB *db)
 
     ret = hdb_check_db_format(context, db);
     if(ret != HDB_ERR_NOENTRY)
-	return ret;
+        return ret;
 
     ret = db->hdb_lock(context, db, HDB_WLOCK);
     if (ret)
-	return ret;
+        return ret;
 
     tag.data = (void *)(intptr_t)HDB_DB_FORMAT_ENTRY;
     tag.length = strlen(tag.data);
@@ -479,9 +479,9 @@ hdb_init_db(krb5_context context, HDB *db)
     ret = (*db->hdb__put)(context, db, 0, tag, version);
     ret2 = db->hdb_unlock(context, db);
     if (ret) {
-	if (ret2)
-	    krb5_clear_error_message(context);
-	return ret;
+        if (ret2)
+            krb5_clear_error_message(context);
+        return ret;
     }
     return ret2;
 }
@@ -531,8 +531,8 @@ has_method_prefix(const char *filename)
     const struct hdb_method *h;
 
     for (h = methods; h->prefix != NULL; ++h)
-	if (strncmp(filename, h->prefix, strlen(h->prefix)) == 0)
-	    return h;
+        if (strncmp(filename, h->prefix, strlen(h->prefix)) == 0)
+            return h;
     return NULL;
 }
 
@@ -564,9 +564,9 @@ callback(krb5_context context, const void *plug, void *plugctx, void *userctx)
     struct cb_s *cb_ctx = (struct cb_s *)userctx;
 
     if (strncmp(cb_ctx->filename, h->prefix, strlen(h->prefix)) == 0) {
-	cb_ctx->residual = cb_ctx->filename + strlen(h->prefix) + 1;
-	cb_ctx->h = h;
-	return 0;
+        cb_ctx->residual = cb_ctx->filename + strlen(h->prefix) + 1;
+        cb_ctx->h = h;
+        return 0;
     }
    return KRB5_PLUGIN_NO_HANDLE;
 }
@@ -599,15 +599,15 @@ hdb_list_builtin(krb5_context context, char **list)
     char *buf = NULL;
 
     for (h = methods; h->prefix != NULL; ++h) {
-	if (h->prefix[0] == '\0')
-	    continue;
-	len += strlen(h->prefix) + 2;
+        if (h->prefix[0] == '\0')
+            continue;
+        len += strlen(h->prefix) + 2;
     }
 
     len += 1;
     buf = malloc(len);
     if (buf == NULL) {
-	return krb5_enomem(context);
+        return krb5_enomem(context);
     }
     buf[0] = '\0';
 
@@ -615,12 +615,12 @@ hdb_list_builtin(krb5_context context, char **list)
         if (h->create == NULL) {
             struct cb_s cb_ctx;
             char *f;
-	    struct heim_plugin_data hdb_plugin_data;
+            struct heim_plugin_data hdb_plugin_data;
 
-	    hdb_plugin_data.module = "krb5";
-	    hdb_plugin_data.min_version = HDB_INTERFACE_VERSION;
-	    hdb_plugin_data.deps = hdb_plugin_deps;
-	    hdb_plugin_data.get_instance = hdb_get_instance;
+            hdb_plugin_data.module = "krb5";
+            hdb_plugin_data.min_version = HDB_INTERFACE_VERSION;
+            hdb_plugin_data.deps = hdb_plugin_deps;
+            hdb_plugin_data.get_instance = hdb_get_instance;
 
             /* Try loading the plugin */
             if (asprintf(&f, "%sfoo", h->prefix) == -1)
@@ -640,9 +640,9 @@ hdb_list_builtin(krb5_context context, char **list)
             if (cb_ctx.h == NULL || cb_ctx.h->create == NULL)
                 continue;
         }
-	if (h != methods)
-	    strlcat(buf, ", ", len);
-	strlcat(buf, h->prefix, len);
+        if (h != methods)
+            strlcat(buf, ", ", len);
+        strlcat(buf, h->prefix, len);
     }
     *list = buf;
     return 0;
@@ -650,23 +650,23 @@ hdb_list_builtin(krb5_context context, char **list)
 
 krb5_error_code
 _hdb_keytab2hdb_entry(krb5_context context,
-		      const krb5_keytab_entry *ktentry,
-		      hdb_entry *entry)
+                      const krb5_keytab_entry *ktentry,
+                      hdb_entry *entry)
 {
     entry->kvno = ktentry->vno;
     entry->created_by.time = ktentry->timestamp;
 
     entry->keys.val = calloc(1, sizeof(entry->keys.val[0]));
     if (entry->keys.val == NULL)
-	return ENOMEM;
+        return ENOMEM;
     entry->keys.len = 1;
 
     entry->keys.val[0].mkvno = NULL;
     entry->keys.val[0].salt = NULL;
 
     return krb5_copy_keyblock_contents(context,
-				       &ktentry->keyblock,
-				       &entry->keys.val[0].key);
+                                       &ktentry->keyblock,
+                                       &entry->keys.val[0].key);
 }
 
 static krb5_error_code
@@ -735,23 +735,23 @@ hdb_create(krb5_context context, HDB **db, const char *filename)
 
     *db = NULL;
     if (filename == NULL)
-	filename = hdb_default_db(context);
+        filename = hdb_default_db(context);
 
     cb_ctx.h = find_method(filename, &cb_ctx.residual);
     cb_ctx.filename = filename;
 
     if (cb_ctx.h == NULL || cb_ctx.h->create == NULL) {
-	struct heim_plugin_data hdb_plugin_data;
+        struct heim_plugin_data hdb_plugin_data;
 
         /*
          * `filename' does not start with a known HDB backend prefix.
          *
          * Try plugins.
          */
-	hdb_plugin_data.module = "krb5";
-	hdb_plugin_data.min_version = HDB_INTERFACE_VERSION;
-	hdb_plugin_data.deps = hdb_plugin_deps;
-	hdb_plugin_data.get_instance = hdb_get_instance;
+        hdb_plugin_data.module = "krb5";
+        hdb_plugin_data.min_version = HDB_INTERFACE_VERSION;
+        hdb_plugin_data.deps = hdb_plugin_deps;
+        hdb_plugin_data.get_instance = hdb_get_instance;
 
         if ((hdb_plugin_data.name = make_sym(filename)) == NULL)
             return krb5_enomem(context);
@@ -795,7 +795,7 @@ hdb_create(krb5_context context, HDB **db, const char *filename)
                 (*db)->hdb_destroy(context, *db);
             *db = NULL;
         }
-	if (cb_ctx.h->prefix == NULL)
+        if (cb_ctx.h->prefix == NULL)
             cb_ctx.h = NULL;
     }
 #ifdef HDB_DEFAULT_DB_TYPE
@@ -840,9 +840,9 @@ hdb_get_instance(const char *libname)
     static const char *instance = "libhdb";
 
     if (strcmp(libname, "hdb") == 0)
-	return (uintptr_t)instance;
+        return (uintptr_t)instance;
     else if (strcmp(libname, "krb5") == 0)
-	return krb5_get_instance(libname);
+        return krb5_get_instance(libname);
 
     return 0;
 }

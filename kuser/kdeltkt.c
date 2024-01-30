@@ -17,7 +17,7 @@ struct getargs args[] = {
     { "flags", 'f', arg_string, &flagstr,
       "Flags", "flags" },
     { "expired-only", 'E', arg_flag, &exp_only,
-	"Delete only expired tickets" },
+        "Delete only expired tickets" },
     { "quiet", 'q', arg_flag, &quiet_flag, "Quiet" },
     { "version",        0, arg_flag, &version_flag },
     { "help",           0, arg_flag, &help_flag }
@@ -80,15 +80,15 @@ static void do_kdeltkt (int count, char *names[],
 
     ret = krb5_init_context(&context);
     if (ret)
-	errx(1, "krb5_init_context failed: %d", ret);
+        errx(1, "krb5_init_context failed: %d", ret);
 
     if (etypestr) {
         ret = krb5_string_to_enctype(context, etypestr, &etype);
-	if (ret)
+        if (ret)
             krb5_err(context, 1, ret, "Can't convert enctype %s", etypestr);
         retflags = KRB5_TC_MATCH_SRV_NAMEONLY | KRB5_TC_MATCH_KEYTYPE;
     } else {
-	etype = 0;
+        etype = 0;
         retflags = KRB5_TC_MATCH_SRV_NAMEONLY;
     }
 
@@ -106,58 +106,58 @@ static void do_kdeltkt (int count, char *names[],
     errors = 0;
 
     for (i = 0; i < count; i++) {
-	memset(&in_creds, 0, sizeof(in_creds));
+        memset(&in_creds, 0, sizeof(in_creds));
 
-	in_creds.client = me;
+        in_creds.client = me;
 
-	ret = krb5_parse_name(context, names[i], &in_creds.server);
-	if (ret) {
-	    if (!quiet_flag)
+        ret = krb5_parse_name(context, names[i], &in_creds.server);
+        if (ret) {
+            if (!quiet_flag)
                 krb5_warn(context, ret, "Can't parse principal name %s", names[i]);
-	    errors++;
-	    continue;
-	}
+            errors++;
+            continue;
+        }
 
-	ret = krb5_unparse_name(context, in_creds.server, &princ);
-	if (ret) {
+        ret = krb5_unparse_name(context, in_creds.server, &princ);
+        if (ret) {
             krb5_warn(context, ret, "Can't unparse principal name %s", names[i]);
-	    errors++;
-	    continue;
-	}
+            errors++;
+            continue;
+        }
 
-	in_creds.session.keytype = etype;
+        in_creds.session.keytype = etype;
 
-	if (exp_only) {
-	    krb5_timeofday(context, &in_creds.times.endtime);
-	    retflags |= KRB5_TC_MATCH_TIMES;
-	}
+        if (exp_only) {
+            krb5_timeofday(context, &in_creds.times.endtime);
+            retflags |= KRB5_TC_MATCH_TIMES;
+        }
 
         ret = krb5_cc_retrieve_cred(context, ccache, retflags,
                                     &in_creds, &out_creds);
-	if (ret) {
+        if (ret) {
             krb5_warn(context, ret, "Can't retrieve credentials for %s", princ);
 
-	    krb5_free_unparsed_name(context, princ);
+            krb5_free_unparsed_name(context, princ);
 
-	    errors++;
-	    continue;
-	}
+            errors++;
+            continue;
+        }
 
-	ret = krb5_cc_remove_cred(context, ccache, flags, &out_creds);
+        ret = krb5_cc_remove_cred(context, ccache, flags, &out_creds);
 
-	krb5_free_principal(context, in_creds.server);
+        krb5_free_principal(context, in_creds.server);
 
-	if (ret) {
+        if (ret) {
             krb5_warn(context, ret, "Can't remove credentials for %s", princ);
 
             krb5_free_cred_contents(context, &out_creds);
-	    krb5_free_unparsed_name(context, princ);
+            krb5_free_unparsed_name(context, princ);
 
-	    errors++;
-	    continue;
-	}
+            errors++;
+            continue;
+        }
 
-	krb5_free_unparsed_name(context, princ);
+        krb5_free_unparsed_name(context, princ);
         krb5_free_cred_contents(context, &out_creds);
     }
 
@@ -166,7 +166,7 @@ static void do_kdeltkt (int count, char *names[],
     krb5_free_context(context);
 
     if (errors)
-	exit(1);
+        exit(1);
 
     exit(0);
 }

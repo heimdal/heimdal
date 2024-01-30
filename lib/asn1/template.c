@@ -110,14 +110,14 @@ _asn1_sizeofType(const struct asn1_template *t)
 
 static void
 _asn1_bmember_get_bit(const unsigned char *p, void *data,
-		      unsigned int bit, size_t size)
+                      unsigned int bit, size_t size)
 {
     unsigned int localbit = bit % 8;
     if ((*p >> (7 - localbit)) & 1) {
 #ifdef WORDS_BIGENDIAN
-	*(unsigned int *)data |= (1u << ((size * 8) - bit - 1));
+        *(unsigned int *)data |= (1u << ((size * 8) - bit - 1));
 #else
-	*(unsigned int *)data |= (1u << bit);
+        *(unsigned int *)data |= (1u << bit);
 #endif
     }
 }
@@ -127,25 +127,25 @@ _asn1_bmember_isset_bit(const void *data, unsigned int bit, size_t size)
 {
 #ifdef WORDS_BIGENDIAN
     if ((*(unsigned int *)data) & (1u << ((size * 8) - bit - 1)))
-	return 1;
+        return 1;
     return 0;
 #else
     if ((*(unsigned int *)data) & (1u << bit))
-	return 1;
+        return 1;
     return 0;
 #endif
 }
 
 void
 _asn1_bmember_put_bit(unsigned char *p, const void *data, unsigned int bit,
-		      size_t size, unsigned int *bitset)
+                      size_t size, unsigned int *bitset)
 {
     unsigned int localbit = bit % 8;
 
     if (_asn1_bmember_isset_bit(data, bit, size)) {
-	*p |= (1u << (7 - localbit));
-	if (*bitset == 0)
-	    *bitset = (7 - localbit) + 1;
+        *p |= (1u << (7 - localbit));
+        if (*bitset == 0)
+            *bitset = (7 - localbit) + 1;
     }
 }
 
@@ -163,26 +163,26 @@ is_tagged(const struct asn1_template *t)
     if (elements != 1)
         return 0;
     switch (t->tt & A1_OP_MASK) {
-    case A1_OP_SEQOF:       return 0;
-    case A1_OP_SETOF:       return 0;
-    case A1_OP_BMEMBER:     return 0;
-    case A1_OP_PARSE:       return 0;
-    case A1_OP_TAG:         return 1;
-    case A1_OP_CHOICE:      return 1;
-    case A1_OP_TYPE:        return 1;
-    case A1_OP_TYPE_EXTERN: {
-        const struct asn1_type_func *f = t->ptr;
+        case A1_OP_SEQOF:       return 0;
+        case A1_OP_SETOF:       return 0;
+        case A1_OP_BMEMBER:     return 0;
+        case A1_OP_PARSE:       return 0;
+        case A1_OP_TAG:         return 1;
+        case A1_OP_CHOICE:      return 1;
+        case A1_OP_TYPE:        return 1;
+        case A1_OP_TYPE_EXTERN: {
+            const struct asn1_type_func *f = t->ptr;
 
-        /*
-         * XXX Add a boolean to struct asn1_type_func to tell us if the type is
-         * tagged or not.  Basically, it's not tagged if it's primitive.
-         */
-        if (f->encode == (asn1_type_encode)encode_heim_any ||
-            f->encode == (asn1_type_encode)encode_HEIM_ANY)
-            return 0;
-        abort(); /* XXX */
-    }
-    default: abort();
+            /*
+             * XXX Add a boolean to struct asn1_type_func to tell us if the type is
+             * tagged or not.  Basically, it's not tagged if it's primitive.
+             */
+            if (f->encode == (asn1_type_encode)encode_heim_any ||
+                f->encode == (asn1_type_encode)encode_HEIM_ANY)
+                return 0;
+            abort(); /* XXX */
+        }
+        default: abort();
     }
 }
 
@@ -195,28 +195,28 @@ inner_type_taglen(const struct asn1_template *t)
     if (elements != 1)
         return 0;
     switch (t->tt & A1_OP_MASK) {
-    case A1_OP_SEQOF:       return 0;
-    case A1_OP_SETOF:       return 0;
-    case A1_OP_BMEMBER:     return 0;
-    case A1_OP_PARSE:       return 0;
-    case A1_OP_CHOICE:      return 1;
-    case A1_OP_TYPE:        return inner_type_taglen(t->ptr);
-    case A1_OP_TAG:         return der_length_tag(A1_TAG_TAG(t->tt));
-    case A1_OP_TYPE_EXTERN: {
-        const struct asn1_type_func *f = t->ptr;
+        case A1_OP_SEQOF:       return 0;
+        case A1_OP_SETOF:       return 0;
+        case A1_OP_BMEMBER:     return 0;
+        case A1_OP_PARSE:       return 0;
+        case A1_OP_CHOICE:      return 1;
+        case A1_OP_TYPE:        return inner_type_taglen(t->ptr);
+        case A1_OP_TAG:         return der_length_tag(A1_TAG_TAG(t->tt));
+        case A1_OP_TYPE_EXTERN: {
+            const struct asn1_type_func *f = t->ptr;
 
-        /*
-         * XXX Add a boolean to struct asn1_type_func to tell us if the type is
-         * tagged or not.  Basically, it's not tagged if it's primitive.
-         */
-        if (f->encode == (asn1_type_encode)encode_heim_any ||
-            f->encode == (asn1_type_encode)encode_HEIM_ANY)
-            return 0;
-        abort(); /* XXX */
-    }
-    default: abort();
+            /*
+             * XXX Add a boolean to struct asn1_type_func to tell us if the type is
+             * tagged or not.  Basically, it's not tagged if it's primitive.
+             */
+            if (f->encode == (asn1_type_encode)encode_heim_any ||
+                f->encode == (asn1_type_encode)encode_HEIM_ANY)
+                return 0;
+            abort(); /* XXX */
+        }
+        default: abort();
 #ifdef WIN32
-             _exit(0); /* Quiet VC */
+            _exit(0); /* Quiet VC */
 #endif
     }
 }
@@ -244,9 +244,9 @@ typeid_int_cmp(const void *intp,
         A1_PARSE_TYPE(tint[1].tt) != A1T_IMEMBER)
         return -1;
     switch (tint[0].offset) {
-    case 8:     return i - *(const int64_t *)intp;
-    case 4:     return i - *(const int32_t *)intp;
-    default:    return -1;
+        case 8:     return i - *(const int64_t *)intp;
+        case 4:     return i - *(const int32_t *)intp;
+        default:    return -1;
     }
 }
 
@@ -267,17 +267,17 @@ template4member(const struct asn1_template *t, size_t f)
 
     for (i = 0, t++; i < n; t++, i++) {
         switch (t->tt & A1_OP_MASK) {
-        case A1_OP_TAG:
-        case A1_OP_TYPE:
-        case A1_OP_TYPE_EXTERN:
-            if (f-- == 0)
-                return t;
-            continue;
-        case A1_OP_OPENTYPE_OBJSET:
-        case A1_OP_NAME:
-            return NULL;
-        default:
-            continue;
+            case A1_OP_TAG:
+            case A1_OP_TYPE:
+            case A1_OP_TYPE_EXTERN:
+                if (f-- == 0)
+                    return t;
+                continue;
+            case A1_OP_OPENTYPE_OBJSET:
+            case A1_OP_NAME:
+                return NULL;
+            default:
+                continue;
         }
     }
     return NULL;
@@ -507,34 +507,34 @@ _asn1_decode_open_type(const struct asn1_template *t,
         ttypeid_univ++;
     }
     switch (ttypeid_univ->tt & A1_OP_MASK) {
-    case A1_OP_TAG:
-        if (A1_TAG_CLASS(ttypeid_univ->tt) != ASN1_C_UNIV)
-            return 0;       /* Do nothing, silently */
-        switch (A1_TAG_TAG(ttypeid_univ->tt)) {
-        case UT_OID:
-            typeid_is_oid = 1;
-            break;
-        case UT_Integer: {
-            const struct asn1_template *tint = ttypeid_univ->ptr;
+        case A1_OP_TAG:
+            if (A1_TAG_CLASS(ttypeid_univ->tt) != ASN1_C_UNIV)
+                return 0;       /* Do nothing, silently */
+            switch (A1_TAG_TAG(ttypeid_univ->tt)) {
+            case UT_OID:
+                typeid_is_oid = 1;
+                break;
+            case UT_Integer: {
+                const struct asn1_template *tint = ttypeid_univ->ptr;
 
-            tint++;
-            
-            if ((tint->tt & A1_OP_MASK) != A1_OP_PARSE)
-                return 0;   /* Do nothing, silently */
-            if (A1_PARSE_TYPE(tint->tt) != A1T_INTEGER &&
-                A1_PARSE_TYPE(tint->tt) != A1T_UNSIGNED &&
-                A1_PARSE_TYPE(tint->tt) != A1T_INTEGER64 &&
-                A1_PARSE_TYPE(tint->tt) != A1T_UNSIGNED64 &&
-                A1_PARSE_TYPE(tint->tt) != A1T_IMEMBER)
-                return 0;   /* Do nothing, silently (maybe a large int) */
-            typeid_is_int = 1;
+                tint++;
+
+                if ((tint->tt & A1_OP_MASK) != A1_OP_PARSE)
+                    return 0;   /* Do nothing, silently */
+                if (A1_PARSE_TYPE(tint->tt) != A1T_INTEGER &&
+                    A1_PARSE_TYPE(tint->tt) != A1T_UNSIGNED &&
+                    A1_PARSE_TYPE(tint->tt) != A1T_INTEGER64 &&
+                    A1_PARSE_TYPE(tint->tt) != A1T_UNSIGNED64 &&
+                    A1_PARSE_TYPE(tint->tt) != A1T_IMEMBER)
+                    return 0;   /* Do nothing, silently (maybe a large int) */
+                typeid_is_int = 1;
+                break;
+            }
+            /* It might be cool to support string types as type ID types */
+            default: return 0;  /* Do nothing, silently */
+            }
             break;
-        }
-        /* It might be cool to support string types as type ID types */
-        default: return 0;  /* Do nothing, silently */
-        }
-        break;
-    default: return 0;      /* Do nothing, silently */
+        default: return 0;      /* Do nothing, silently */
     }
 
     /*
@@ -722,7 +722,7 @@ _asn1_decode_open_type(const struct asn1_template *t,
 
 int
 _asn1_decode(const struct asn1_template *t, unsigned flags,
-	     const unsigned char *p, size_t len, void *data, size_t *size)
+             const unsigned char *p, size_t len, void *data, size_t *size)
 {
     const struct asn1_template *tbase = t;
     const struct asn1_template *tdefval = NULL;
@@ -759,474 +759,474 @@ _asn1_decode(const struct asn1_template *t, unsigned flags,
     t++;
 
     if (template_flags & A1_HF_PRESERVE)
-	startp = p;
+        startp = p;
 
     while (elements) {
-	switch (t->tt & A1_OP_MASK) {
-        case A1_OP_OPENTYPE_OBJSET: {
-            size_t opentypeid = t->tt & ((1<<10)-1);
-            size_t opentype = (t->tt >> 10) & ((1<<10)-1);
+        switch (t->tt & A1_OP_MASK) {
+            case A1_OP_OPENTYPE_OBJSET: {
+                size_t opentypeid = t->tt & ((1<<10)-1);
+                size_t opentype = (t->tt >> 10) & ((1<<10)-1);
 
-            /* Note that the only error returned here would be ENOMEM */
-            ret = _asn1_decode_open_type(t, flags, data,
-                                         template4member(tbase, opentypeid),
-                                         template4member(tbase, opentype));
-            if (ret)
-                return ret;
-            break;
-        }
-	case A1_OP_TYPE_DECORATE_EXTERN: break;
-	case A1_OP_TYPE_DECORATE: break;
-        case A1_OP_NAME: break;
-	case A1_OP_DEFVAL:
-            tdefval = t;
-            break;
-	case A1_OP_TYPE:
-	case A1_OP_TYPE_EXTERN: {
-	    size_t newsize, elsize;
-	    void *el = DPO(data, t->offset);
-	    void **pel = (void **)el;
+                /* Note that the only error returned here would be ENOMEM */
+                ret = _asn1_decode_open_type(t, flags, data,
+                                             template4member(tbase, opentypeid),
+                                             template4member(tbase, opentype));
+                if (ret)
+                    return ret;
+                break;
+            }
+            case A1_OP_TYPE_DECORATE_EXTERN: break;
+            case A1_OP_TYPE_DECORATE: break;
+            case A1_OP_NAME: break;
+            case A1_OP_DEFVAL:
+                tdefval = t;
+                break;
+            case A1_OP_TYPE:
+            case A1_OP_TYPE_EXTERN: {
+                size_t newsize, elsize;
+                void *el = DPO(data, t->offset);
+                void **pel = (void **)el;
 
-	    if ((t->tt & A1_OP_MASK) == A1_OP_TYPE) {
-		elsize = _asn1_sizeofType(t->ptr);
-	    } else {
-		const struct asn1_type_func *f = t->ptr;
-		elsize = f->size;
-	    }
-
-	    if (t->tt & A1_FLAG_OPTIONAL) {
-		*pel = calloc(1, elsize);
-		if (*pel == NULL)
-		    return ENOMEM;
-		el = *pel;
                 if ((t->tt & A1_OP_MASK) == A1_OP_TYPE) {
-                    ret = _asn1_decode(t->ptr, flags, p, len, el, &newsize);
+                    elsize = _asn1_sizeofType(t->ptr);
                 } else {
                     const struct asn1_type_func *f = t->ptr;
-                    ret = (f->decode)(p, len, el, &newsize);
+                    elsize = f->size;
                 }
-                if (ret) {
-                    /*
-                     * Optional field not present in encoding, presumably,
-                     * though we should really look more carefully at `ret'.
-                     */
+
+                if (t->tt & A1_FLAG_OPTIONAL) {
+                    *pel = calloc(1, elsize);
+                    if (*pel == NULL)
+                        return ENOMEM;
+                    el = *pel;
                     if ((t->tt & A1_OP_MASK) == A1_OP_TYPE) {
-                        _asn1_free(t->ptr, el);
+                        ret = _asn1_decode(t->ptr, flags, p, len, el, &newsize);
                     } else {
                         const struct asn1_type_func *f = t->ptr;
-                        f->release(el);
+                        ret = (f->decode)(p, len, el, &newsize);
                     }
-		    free(*pel);
-		    *pel = NULL;
-		    break;
-                }
-	    } else {
-                if ((t->tt & A1_OP_MASK) == A1_OP_TYPE) {
-                    ret = _asn1_decode(t->ptr, flags, p, len, el, &newsize);
+                    if (ret) {
+                        /*
+                         * Optional field not present in encoding, presumably,
+                         * though we should really look more carefully at `ret'.
+                         */
+                        if ((t->tt & A1_OP_MASK) == A1_OP_TYPE) {
+                            _asn1_free(t->ptr, el);
+                        } else {
+                            const struct asn1_type_func *f = t->ptr;
+                            f->release(el);
+                        }
+                        free(*pel);
+                        *pel = NULL;
+                        break;
+                    }
                 } else {
-                    const struct asn1_type_func *f = t->ptr;
-                    ret = (f->decode)(p, len, el, &newsize);
+                    if ((t->tt & A1_OP_MASK) == A1_OP_TYPE) {
+                        ret = _asn1_decode(t->ptr, flags, p, len, el, &newsize);
+                    } else {
+                        const struct asn1_type_func *f = t->ptr;
+                        ret = (f->decode)(p, len, el, &newsize);
+                    }
                 }
+                if (ret) {
+                    if (t->tt & A1_FLAG_OPTIONAL) {
+                    } else if (t->tt & A1_FLAG_DEFAULT) {
+                        if (!tdefval)
+                            return ASN1_PARSE_ERROR; /* Can't happen */
+                        /*
+                         * Defaulted field not present in encoding, presumably,
+                         * though we should really look more carefully at `ret'.
+                         */
+                        if (tdefval->tt & A1_DV_BOOLEAN) {
+                            int *i = (void *)(char *)el;
+
+                            *i = tdefval->ptr ? 1 : 0;
+                        } else if (tdefval->tt & A1_DV_INTEGER64) {
+                            int64_t *i = (void *)(char *)el;
+
+                            *i = (int64_t)(intptr_t)tdefval->ptr;
+                        } else if (tdefval->tt & A1_DV_INTEGER32) {
+                            int32_t *i = (void *)(char *)el;
+
+                            *i = (int32_t)(intptr_t)tdefval->ptr;
+                        } else if (tdefval->tt & A1_DV_INTEGER) {
+                            struct heim_integer *i = (void *)(char *)el;
+
+                            if ((ret = der_copy_heim_integer(tdefval->ptr, i)))
+                                return ret;
+                        } else if (tdefval->tt & A1_DV_UTF8STRING) {
+                            char **s = el;
+
+                            if ((*s = strdup(tdefval->ptr)) == NULL)
+                                return ENOMEM;
+                        } else {
+                            abort();
+                        }
+                        break;
+                    }
+                    return ret; /* Error decoding required field */
+                }
+                p += newsize; len -= newsize;
+
+                break;
             }
-	    if (ret) {
-		if (t->tt & A1_FLAG_OPTIONAL) {
-		} else if (t->tt & A1_FLAG_DEFAULT) {
-                    if (!tdefval)
-                        return ASN1_PARSE_ERROR; /* Can't happen */
-                    /*
-                     * Defaulted field not present in encoding, presumably,
-                     * though we should really look more carefully at `ret'.
-                     */
-                    if (tdefval->tt & A1_DV_BOOLEAN) {
-                        int *i = (void *)(char *)el;
-
-                        *i = tdefval->ptr ? 1 : 0;
-                    } else if (tdefval->tt & A1_DV_INTEGER64) {
-                        int64_t *i = (void *)(char *)el;
-
-                        *i = (int64_t)(intptr_t)tdefval->ptr;
-                    } else if (tdefval->tt & A1_DV_INTEGER32) {
-                        int32_t *i = (void *)(char *)el;
-
-                        *i = (int32_t)(intptr_t)tdefval->ptr;
-                    } else if (tdefval->tt & A1_DV_INTEGER) {
-                        struct heim_integer *i = (void *)(char *)el;
-
-                        if ((ret = der_copy_heim_integer(tdefval->ptr, i)))
-                            return ret;
-                    } else if (tdefval->tt & A1_DV_UTF8STRING) {
-                        char **s = el;
-
-                        if ((*s = strdup(tdefval->ptr)) == NULL)
-                            return ENOMEM;
-                    } else {
-                        abort();
-                    }
-                    break;
-                }
-		return ret; /* Error decoding required field */
-	    }
-	    p += newsize; len -= newsize;
-
-	    break;
-	}
-	case A1_OP_TAG: {
-	    Der_type dertype;
-	    size_t newsize = 0;
-	    size_t datalen, l = 0;
-	    void *olddata = data;
-	    int is_indefinite = 0;
-	    int subflags = flags;
-            int replace_tag = (t->tt & A1_FLAG_IMPLICIT) && is_tagged(t->ptr);
-	    void *el = data = DPO(data, t->offset);
-	    void **pel = (void **)el;
-
-            /*
-             * XXX If this type (chasing t->ptr through IMPLICIT tags, if this
-             * one is too, till we find a non-TTag) is a [UNIVERSAL SET] type,
-             * then we have to accept fields out of order.  For each field tag
-             * we see we'd have to do a linear search of the SET's template
-             * because it won't be sorted (or we could sort a copy and do a
-             * binary search on that, but these SETs will always be small so it
-             * won't be worthwhile).  We'll need a utility function to do all
-             * of this.
-             */
-	    ret = der_match_tag_and_length(p, len, A1_TAG_CLASS(t->tt),
-					   &dertype, A1_TAG_TAG(t->tt),
-					   &datalen, &l);
-	    if (ret) {
-		if (t->tt & A1_FLAG_OPTIONAL) {
-                    data = olddata;
-		    break;
-                } else if (t->tt & A1_FLAG_DEFAULT) {
-                    if (!tdefval)
-                        return ASN1_PARSE_ERROR; /* Can't happen */
-                    /*
-                     * Defaulted field not present in encoding, presumably,
-                     * though we should really look more carefully at `ret'.
-                     */
-                    if (tdefval->tt & A1_DV_BOOLEAN) {
-                        int *i = (void *)(char *)data;
-
-                        *i = tdefval->ptr ? 1 : 0;
-                    } else if (tdefval->tt & A1_DV_INTEGER64) {
-                        int64_t *i = (void *)(char *)data;
-
-                        *i = (int64_t)(intptr_t)tdefval->ptr;
-                    } else if (tdefval->tt & A1_DV_INTEGER32) {
-                        int32_t *i = (void *)(char *)data;
-
-                        *i = (int32_t)(intptr_t)tdefval->ptr;
-                    } else if (tdefval->tt & A1_DV_INTEGER) {
-                        struct heim_integer *i = (void *)(char *)data;
-
-                        if ((ret = der_copy_heim_integer(tdefval->ptr, i)))
-                            return ret;
-                    } else if (tdefval->tt & A1_DV_UTF8STRING) {
-                        char **s = data;
-
-                        if ((*s = strdup(tdefval->ptr)) == NULL)
-                            return ENOMEM;
-                    } else {
-                        abort();
-                    }
-                    data = olddata;
-                    break;
-                }
-		return ret; /* Error decoding required field */
-	    }
-
-	    p += l; len -= l;
-
-	    /*
-	     * Only allow indefinite encoding for OCTET STRING and BER
-	     * for now. Should handle BIT STRING too.
-	     */
-
-	    if (dertype != A1_TAG_TYPE(t->tt) && (flags & A1_PF_ALLOW_BER)) {
-		const struct asn1_template *subtype = t->ptr;
-		subtype++; /* skip header */
-
-		if (((subtype->tt & A1_OP_MASK) == A1_OP_PARSE) &&
-		    A1_PARSE_TYPE(subtype->tt) == A1T_OCTET_STRING)
-		    subflags |= A1_PF_INDEFINTE;
-	    }
-
-	    if (datalen == ASN1_INDEFINITE) {
-		if ((flags & A1_PF_ALLOW_BER) == 0)
-		    return ASN1_GOT_BER;
-		is_indefinite = 1;
-		datalen = len;
-		if (datalen < 2)
-		    return ASN1_OVERRUN;
-		/* hide EndOfContent for sub-decoder, catching it below */
-		datalen -= 2;
-	    } else if (datalen > len)
-		return ASN1_OVERRUN;
-
-	    if (t->tt & A1_FLAG_OPTIONAL) {
-		size_t ellen = _asn1_sizeofType(t->ptr);
-
-		*pel = calloc(1, ellen);
-		if (*pel == NULL)
-		    return ENOMEM;
-		data = *pel;
-	    }
-
-            if (replace_tag) {
-                const struct asn1_template *subtype = t->ptr;
-                int have_tag = 0;
+            case A1_OP_TAG: {
+                Der_type dertype;
+                size_t newsize = 0;
+                size_t datalen, l = 0;
+                void *olddata = data;
+                int is_indefinite = 0;
+                int subflags = flags;
+                int replace_tag = (t->tt & A1_FLAG_IMPLICIT) && is_tagged(t->ptr);
+                void *el = data = DPO(data, t->offset);
+                void **pel = (void **)el;
 
                 /*
-                 * So, we have an IMPLICIT tag.  What we want to do is find the
-                 * template for the body of the type so-tagged.  That's going
-                 * to be a template that has a tag that isn't itself IMPLICIT.
-                 *
-                 * So we chase the pointer in the template until we find such a
-                 * thing, then decode using that template.
+                 * XXX If this type (chasing t->ptr through IMPLICIT tags, if this
+                 * one is too, till we find a non-TTag) is a [UNIVERSAL SET] type,
+                 * then we have to accept fields out of order.  For each field tag
+                 * we see we'd have to do a linear search of the SET's template
+                 * because it won't be sorted (or we could sort a copy and do a
+                 * binary search on that, but these SETs will always be small so it
+                 * won't be worthwhile).  We'll need a utility function to do all
+                 * of this.
                  */
-                while (!have_tag) {
-                    subtype++;
-                    if ((subtype->tt & A1_OP_MASK) == A1_OP_TAG)
-                        replace_tag = (subtype->tt & A1_FLAG_IMPLICIT) && is_tagged(t->ptr);
-                    if (replace_tag) {
-                        subtype = subtype->ptr;
-                        continue;
-                    }
-                    if ((subtype->tt & A1_OP_MASK) == A1_OP_TAG) {
-                        ret = _asn1_decode(subtype->ptr, subflags, p, datalen, data, &newsize);
-                        have_tag = 1;
-                    } else {
-                        subtype = subtype->ptr;
-                    }
-                }
-            } else {
-                ret = _asn1_decode(t->ptr, subflags, p, datalen, data, &newsize);
-            }
-            if (ret == 0 && !is_indefinite && newsize != datalen)
-		/* Hidden data */
-                ret = ASN1_EXTRA_DATA;
+                ret = der_match_tag_and_length(p, len, A1_TAG_CLASS(t->tt),
+                                               &dertype, A1_TAG_TAG(t->tt),
+                                               &datalen, &l);
+                if (ret) {
+                    if (t->tt & A1_FLAG_OPTIONAL) {
+                        data = olddata;
+                        break;
+                    } else if (t->tt & A1_FLAG_DEFAULT) {
+                        if (!tdefval)
+                            return ASN1_PARSE_ERROR; /* Can't happen */
+                        /*
+                         * Defaulted field not present in encoding, presumably,
+                         * though we should really look more carefully at `ret'.
+                         */
+                        if (tdefval->tt & A1_DV_BOOLEAN) {
+                            int *i = (void *)(char *)data;
 
-            if (ret == 0) {
-                if (is_indefinite) {
-                    /* If we use indefinite encoding, the newsize is the datasize. */
-                    datalen = newsize;
+                            *i = tdefval->ptr ? 1 : 0;
+                        } else if (tdefval->tt & A1_DV_INTEGER64) {
+                            int64_t *i = (void *)(char *)data;
+
+                            *i = (int64_t)(intptr_t)tdefval->ptr;
+                        } else if (tdefval->tt & A1_DV_INTEGER32) {
+                            int32_t *i = (void *)(char *)data;
+
+                            *i = (int32_t)(intptr_t)tdefval->ptr;
+                        } else if (tdefval->tt & A1_DV_INTEGER) {
+                            struct heim_integer *i = (void *)(char *)data;
+
+                            if ((ret = der_copy_heim_integer(tdefval->ptr, i)))
+                                return ret;
+                        } else if (tdefval->tt & A1_DV_UTF8STRING) {
+                            char **s = data;
+
+                            if ((*s = strdup(tdefval->ptr)) == NULL)
+                                return ENOMEM;
+                        } else {
+                            abort();
+                        }
+                        data = olddata;
+                        break;
+                    }
+                    return ret; /* Error decoding required field */
                 }
 
-                len -= datalen;
-                p += datalen;
+                p += l; len -= l;
 
                 /*
-                 * Indefinite encoding needs a trailing EndOfContent,
-                 * check for that.
+                 * Only allow indefinite encoding for OCTET STRING and BER
+                 * for now. Should handle BIT STRING too.
                  */
-                if (is_indefinite) {
-                    ret = der_match_tag_and_length(p, len, ASN1_C_UNIV,
-                                                   &dertype, UT_EndOfContent,
-                                                   &datalen, &l);
-                    if (ret == 0 && dertype != PRIM)
-                        ret = ASN1_BAD_ID;
-                    else if (ret == 0 && datalen != 0)
-                        ret = ASN1_INDEF_EXTRA_DATA;
-                    if (ret == 0) {
-                        p += l; len -= l;
+
+                if (dertype != A1_TAG_TYPE(t->tt) && (flags & A1_PF_ALLOW_BER)) {
+                    const struct asn1_template *subtype = t->ptr;
+                    subtype++; /* skip header */
+
+                    if (((subtype->tt & A1_OP_MASK) == A1_OP_PARSE) &&
+                        A1_PARSE_TYPE(subtype->tt) == A1T_OCTET_STRING)
+                        subflags |= A1_PF_INDEFINTE;
+                }
+
+                if (datalen == ASN1_INDEFINITE) {
+                    if ((flags & A1_PF_ALLOW_BER) == 0)
+                        return ASN1_GOT_BER;
+                    is_indefinite = 1;
+                    datalen = len;
+                    if (datalen < 2)
+                        return ASN1_OVERRUN;
+                    /* hide EndOfContent for sub-decoder, catching it below */
+                    datalen -= 2;
+                } else if (datalen > len)
+                    return ASN1_OVERRUN;
+
+                if (t->tt & A1_FLAG_OPTIONAL) {
+                    size_t ellen = _asn1_sizeofType(t->ptr);
+
+                    *pel = calloc(1, ellen);
+                    if (*pel == NULL)
+                        return ENOMEM;
+                    data = *pel;
+                }
+
+                if (replace_tag) {
+                    const struct asn1_template *subtype = t->ptr;
+                    int have_tag = 0;
+
+                    /*
+                     * So, we have an IMPLICIT tag.  What we want to do is find the
+                     * template for the body of the type so-tagged.  That's going
+                     * to be a template that has a tag that isn't itself IMPLICIT.
+                     *
+                     * So we chase the pointer in the template until we find such a
+                     * thing, then decode using that template.
+                     */
+                    while (!have_tag) {
+                        subtype++;
+                        if ((subtype->tt & A1_OP_MASK) == A1_OP_TAG)
+                            replace_tag = (subtype->tt & A1_FLAG_IMPLICIT) && is_tagged(t->ptr);
+                        if (replace_tag) {
+                            subtype = subtype->ptr;
+                            continue;
+                        }
+                        if ((subtype->tt & A1_OP_MASK) == A1_OP_TAG) {
+                            ret = _asn1_decode(subtype->ptr, subflags, p, datalen, data, &newsize);
+                            have_tag = 1;
+                        } else {
+                            subtype = subtype->ptr;
+                        }
+                    }
+                } else {
+                    ret = _asn1_decode(t->ptr, subflags, p, datalen, data, &newsize);
+                }
+                if (ret == 0 && !is_indefinite && newsize != datalen)
+                    /* Hidden data */
+                    ret = ASN1_EXTRA_DATA;
+
+                if (ret == 0) {
+                    if (is_indefinite) {
+                        /* If we use indefinite encoding, the newsize is the datasize. */
+                        datalen = newsize;
+                    }
+
+                    len -= datalen;
+                    p += datalen;
+
+                    /*
+                     * Indefinite encoding needs a trailing EndOfContent,
+                     * check for that.
+                     */
+                    if (is_indefinite) {
+                        ret = der_match_tag_and_length(p, len, ASN1_C_UNIV,
+                                                       &dertype, UT_EndOfContent,
+                                                       &datalen, &l);
+                        if (ret == 0 && dertype != PRIM)
+                            ret = ASN1_BAD_ID;
+                        else if (ret == 0 && datalen != 0)
+                            ret = ASN1_INDEF_EXTRA_DATA;
+                        if (ret == 0) {
+                            p += l; len -= l;
+                        }
                     }
                 }
-            }
-            if (ret) {
-                if (!(t->tt & A1_FLAG_OPTIONAL))
+                if (ret) {
+                    if (!(t->tt & A1_FLAG_OPTIONAL))
+                        return ret;
+
+                    _asn1_free(t->ptr, data);
+                    free(data);
+                    *pel = NULL;
                     return ret;
+                }
+                data = olddata;
 
-                _asn1_free(t->ptr, data);
-                free(data);
-                *pel = NULL;
-                return ret;
+                break;
             }
-	    data = olddata;
+            case A1_OP_PARSE: {
+                unsigned int type = A1_PARSE_TYPE(t->tt);
+                size_t newsize;
+                void *el = DPO(data, t->offset);
 
-	    break;
-	}
-	case A1_OP_PARSE: {
-	    unsigned int type = A1_PARSE_TYPE(t->tt);
-	    size_t newsize;
-	    void *el = DPO(data, t->offset);
-
-	    /*
-	     * INDEFINITE primitive types are one element after the
-	     * same type but non-INDEFINITE version.
-	    */
-	    if (flags & A1_PF_INDEFINTE)
-		type++;
-
-	    if (type >= sizeof(asn1_template_prim)/sizeof(asn1_template_prim[0])) {
-		ABORT_ON_ERROR();
-		return ASN1_PARSE_ERROR;
-	    }
-
-	    ret = (asn1_template_prim[type].decode)(p, len, el, &newsize);
-	    if (ret)
-		return ret;
-	    p += newsize; len -= newsize;
-
-	    break;
-	}
-	case A1_OP_SETOF:
-	case A1_OP_SEQOF: {
-	    struct template_of *el = DPO(data, t->offset);
-	    size_t newsize;
-	    size_t ellen = _asn1_sizeofType(t->ptr);
-	    size_t vallength = 0;
-
-	    while (len > 0) {
-		void *tmp;
-		size_t newlen = vallength + ellen;
-		if (vallength > newlen)
-		    return ASN1_OVERFLOW;
-
-                /* XXX Slow */
-		tmp = realloc(el->val, newlen);
-		if (tmp == NULL)
-		    return ENOMEM;
-
-		memset(DPO(tmp, vallength), 0, ellen);
-		el->val = tmp;
-
-		el->len++;
-		ret = _asn1_decode(t->ptr, flags & (~A1_PF_INDEFINTE), p, len,
-				   DPO(el->val, vallength), &newsize);
-		if (ret)
-		    return ret;
-		vallength = newlen;
-		p += newsize; len -= newsize;
-	    }
-
-	    break;
-	}
-	case A1_OP_BMEMBER: {
-	    const struct asn1_template *bmember = t->ptr;
-	    size_t bsize = bmember->offset;
-	    size_t belements = A1_HEADER_LEN(bmember);
-	    size_t pos = 0;
-
-	    bmember++;
-
-	    memset(data, 0, bsize);
-
-	    if (len < 1)
-		return ASN1_OVERRUN;
-	    p++; len--;
-
-	    while (belements && len) {
-		while (bmember->offset / 8 > pos / 8) {
-		    if (len < 1)
-			break;
-		    p++; len--;
-		    pos += 8;
-		}
-		if (len) {
-		    _asn1_bmember_get_bit(p, data, bmember->offset, bsize);
-		    belements--; bmember++;
-		}
-	    }
-	    len = 0;
-	    break;
-	}
-	case A1_OP_CHOICE: {
-	    const struct asn1_template *choice = t->ptr;
-	    unsigned int *element = DPO(data, choice->offset);
-	    size_t datalen;
-	    unsigned int i;
-
-	    /*
-             * CHOICE element IDs are assigned in monotonically increasing
-             * fashion.  Therefore any unrealistic value is a suitable invalid
-             * CHOICE value.  The largest binary value (or -1 if treating the
-             * enum as signed on a twos-complement system, or...) will do.
-             */
-	    *element = ~0;
-
-	    for (i = 1; i < A1_HEADER_LEN(choice) + 1 && choice[i].tt; i++) {
-		/*
-                 * This is more permissive than is required.  CHOICE
-                 * alternatives must have different outer tags, so in principle
-                 * we should just match the tag at `p' and `len' in sequence to
-                 * the choice alternatives.
-                 *
-                 * Trying every alternative instead happens to do this anyways
-                 * because each one will first match the tag at `p' and `len',
-                 * but if there are CHOICE altnernatives with the same outer
-                 * tag, then we'll allow it, and they had better be unambiguous
-                 * in their internal details, otherwise there would be some
-                 * aliasing.
-                 *
-                 * Arguably the *compiler* should detect ambiguous CHOICE types
-                 * and raise an error, then we don't have to be concerned here
-                 * at all.
-                 */
-		ret = _asn1_decode(choice[i].ptr, 0, p, len,
-				   DPO(data, choice[i].offset), &datalen);
-		if (ret == 0) {
-		    *element = i;
-		    p += datalen; len -= datalen;
-		    break;
-		}
-                _asn1_free(choice[i].ptr, DPO(data, choice[i].offset));
-                if (ret != ASN1_BAD_ID && ret != ASN1_MISPLACED_FIELD &&
-                    ret != ASN1_MISSING_FIELD)
-		    return ret;
-	    }
-	    if (i >= A1_HEADER_LEN(choice) + 1 || !choice[i].tt) {
                 /*
-                 * If this is an extensible CHOICE, then choice->tt will be the
-                 * offset to u.ellipsis.  If it's not, then this "extension" is
-                 * an error and must stop parsing it.  (We could be permissive
-                 * and throw away the extension, though one might as well just
-                 * mark such a CHOICE as extensible.)
+                 * INDEFINITE primitive types are one element after the
+                 * same type but non-INDEFINITE version.
+                */
+                if (flags & A1_PF_INDEFINTE)
+                    type++;
+
+                if (type >= sizeof(asn1_template_prim)/sizeof(asn1_template_prim[0])) {
+                    ABORT_ON_ERROR();
+                    return ASN1_PARSE_ERROR;
+                }
+
+                ret = (asn1_template_prim[type].decode)(p, len, el, &newsize);
+                if (ret)
+                    return ret;
+                p += newsize; len -= newsize;
+
+                break;
+            }
+            case A1_OP_SETOF:
+            case A1_OP_SEQOF: {
+                struct template_of *el = DPO(data, t->offset);
+                size_t newsize;
+                size_t ellen = _asn1_sizeofType(t->ptr);
+                size_t vallength = 0;
+
+                while (len > 0) {
+                    void *tmp;
+                    size_t newlen = vallength + ellen;
+                    if (vallength > newlen)
+                        return ASN1_OVERFLOW;
+
+                    /* XXX Slow */
+                    tmp = realloc(el->val, newlen);
+                    if (tmp == NULL)
+                        return ENOMEM;
+
+                    memset(DPO(tmp, vallength), 0, ellen);
+                    el->val = tmp;
+
+                    el->len++;
+                    ret = _asn1_decode(t->ptr, flags & (~A1_PF_INDEFINTE), p, len,
+                                       DPO(el->val, vallength), &newsize);
+                    if (ret)
+                        return ret;
+                    vallength = newlen;
+                    p += newsize; len -= newsize;
+                }
+
+                break;
+            }
+            case A1_OP_BMEMBER: {
+                const struct asn1_template *bmember = t->ptr;
+                size_t bsize = bmember->offset;
+                size_t belements = A1_HEADER_LEN(bmember);
+                size_t pos = 0;
+
+                bmember++;
+
+                memset(data, 0, bsize);
+
+                if (len < 1)
+                    return ASN1_OVERRUN;
+                p++; len--;
+
+                while (belements && len) {
+                    while (bmember->offset / 8 > pos / 8) {
+                        if (len < 1)
+                            break;
+                        p++; len--;
+                        pos += 8;
+                    }
+                    if (len) {
+                        _asn1_bmember_get_bit(p, data, bmember->offset, bsize);
+                        belements--; bmember++;
+                    }
+                }
+                len = 0;
+                break;
+            }
+            case A1_OP_CHOICE: {
+                const struct asn1_template *choice = t->ptr;
+                unsigned int *element = DPO(data, choice->offset);
+                size_t datalen;
+                unsigned int i;
+
+                /*
+                 * CHOICE element IDs are assigned in monotonically increasing
+                 * fashion.  Therefore any unrealistic value is a suitable invalid
+                 * CHOICE value.  The largest binary value (or -1 if treating the
+                 * enum as signed on a twos-complement system, or...) will do.
                  */
-		if (choice->tt == 0)
-		    return ASN1_BAD_ID;
+                *element = ~0;
 
-                /* This is the ellipsis case */
-		*element = 0;
-		ret = der_get_octet_string(p, len,
-					   DPO(data, choice->tt), &datalen);
-		if (ret)
-		    return ret;
-		p += datalen; len -= datalen;
-	    }
+                for (i = 1; i < A1_HEADER_LEN(choice) + 1 && choice[i].tt; i++) {
+                    /*
+                     * This is more permissive than is required.  CHOICE
+                     * alternatives must have different outer tags, so in principle
+                     * we should just match the tag at `p' and `len' in sequence to
+                     * the choice alternatives.
+                     *
+                     * Trying every alternative instead happens to do this anyways
+                     * because each one will first match the tag at `p' and `len',
+                     * but if there are CHOICE altnernatives with the same outer
+                     * tag, then we'll allow it, and they had better be unambiguous
+                     * in their internal details, otherwise there would be some
+                     * aliasing.
+                     *
+                     * Arguably the *compiler* should detect ambiguous CHOICE types
+                     * and raise an error, then we don't have to be concerned here
+                     * at all.
+                     */
+                    ret = _asn1_decode(choice[i].ptr, 0, p, len,
+                                       DPO(data, choice[i].offset), &datalen);
+                    if (ret == 0) {
+                        *element = i;
+                        p += datalen; len -= datalen;
+                        break;
+                    }
+                    _asn1_free(choice[i].ptr, DPO(data, choice[i].offset));
+                    if (ret != ASN1_BAD_ID && ret != ASN1_MISPLACED_FIELD &&
+                        ret != ASN1_MISSING_FIELD)
+                        return ret;
+                }
+                if (i >= A1_HEADER_LEN(choice) + 1 || !choice[i].tt) {
+                    /*
+                     * If this is an extensible CHOICE, then choice->tt will be the
+                     * offset to u.ellipsis.  If it's not, then this "extension" is
+                     * an error and must stop parsing it.  (We could be permissive
+                     * and throw away the extension, though one might as well just
+                     * mark such a CHOICE as extensible.)
+                     */
+                    if (choice->tt == 0)
+                        return ASN1_BAD_ID;
 
-	    break;
-	}
-	default:
-	    ABORT_ON_ERROR();
-	    return ASN1_PARSE_ERROR;
-	}
-	t++;
-	elements--;
+                    /* This is the ellipsis case */
+                    *element = 0;
+                    ret = der_get_octet_string(p, len,
+                                               DPO(data, choice->tt), &datalen);
+                    if (ret)
+                        return ret;
+                    p += datalen; len -= datalen;
+                }
+
+                break;
+            }
+            default:
+                ABORT_ON_ERROR();
+                return ASN1_PARSE_ERROR;
+        }
+        t++;
+        elements--;
     }
     /* if we are using padding, eat up read of context */
     if (template_flags & A1_HF_ELLIPSIS)
-	len = 0;
+        len = 0;
 
     oldlen -= len;
 
     if (size)
-	*size = oldlen;
+        *size = oldlen;
 
     /*
      * saved the raw bits if asked for it, useful for signature
      * verification.
      */
     if (startp) {
-	heim_octet_string *save = data;
+        heim_octet_string *save = data;
 
-	save->data = malloc(oldlen);
-	if (save->data == NULL)
-	    return ENOMEM;
-	else {
-	    save->length = oldlen;
-	    memcpy(save->data, startp, oldlen);
-	}
+        save->data = malloc(oldlen);
+        if (save->data == NULL)
+            return ENOMEM;
+        else {
+            save->length = oldlen;
+            memcpy(save->data, startp, oldlen);
+        }
     }
     return 0;
 }
@@ -1247,9 +1247,9 @@ typeid_int_copy(void *intp,
     if (A1_PARSE_TYPE(tint[1].tt) != A1T_INTEGER)
         return -1;
     switch (tint[0].offset) {
-    case 8:     *((int64_t *)intp) = i; return 0;
-    case 4:     *((int32_t *)intp) = i; return 0;
-    default:    memset(intp, 0, tint[0].offset); return 0;
+        case 8:     *((int64_t *)intp) = i; return 0;
+        case 4:     *((int32_t *)intp) = i; return 0;
+        default:    memset(intp, 0, tint[0].offset); return 0;
     }
 }
 
@@ -1291,31 +1291,31 @@ _asn1_encode_open_type(const struct asn1_template *t,
         ttypeid_univ++;
     }
     switch (ttypeid_univ->tt & A1_OP_MASK) {
-    case A1_OP_TAG:
-        if (A1_TAG_CLASS(ttypeid_univ->tt) != ASN1_C_UNIV) {
-            enotsup = 1;
-            break;
-        }
-        switch (A1_TAG_TAG(ttypeid_univ->tt)) {
-        case UT_OID:
-            typeid_is_oid = 1;
-            break;
-        case UT_Integer: {
-            const struct asn1_template *tint = ttypeid_univ->ptr;
-
-            tint++;
-            if ((tint->tt & A1_OP_MASK) != A1_OP_PARSE ||
-                A1_PARSE_TYPE(tint->tt) != A1T_INTEGER) {
+        case A1_OP_TAG:
+            if (A1_TAG_CLASS(ttypeid_univ->tt) != ASN1_C_UNIV) {
                 enotsup = 1;
                 break;
             }
-            typeid_is_int = 1;
+            switch (A1_TAG_TAG(ttypeid_univ->tt)) {
+                case UT_OID:
+                    typeid_is_oid = 1;
+                    break;
+                case UT_Integer: {
+                    const struct asn1_template *tint = ttypeid_univ->ptr;
+
+                    tint++;
+                    if ((tint->tt & A1_OP_MASK) != A1_OP_PARSE ||
+                        A1_PARSE_TYPE(tint->tt) != A1T_INTEGER) {
+                        enotsup = 1;
+                        break;
+                    }
+                    typeid_is_int = 1;
+                    break;
+                }
+                default: enotsup = 1; break;
+            }
             break;
-        }
         default: enotsup = 1; break;
-        }
-        break;
-    default: enotsup = 1; break;
     }
 
     /*
@@ -1418,406 +1418,406 @@ _asn1_encode(const struct asn1_template *t, unsigned char *p, size_t len, const 
     t += A1_HEADER_LEN(t);
 
     while (elements) {
-	switch (t->tt & A1_OP_MASK) {
-        case A1_OP_OPENTYPE_OBJSET: {
-            size_t opentypeid = t->tt & ((1<<10)-1);
-            size_t opentype = (t->tt >> 10) & ((1<<10)-1);
-            ret = _asn1_encode_open_type(t, data,
-                                         template4member(tbase, opentypeid),
-                                         template4member(tbase, opentype));
-            if (ret)
-                return ret;
-            break;
-        }
-        case A1_OP_NAME: break;
-	case A1_OP_DEFVAL: break;
-	case A1_OP_TYPE_DECORATE_EXTERN: break;
-	case A1_OP_TYPE_DECORATE: break;
-	case A1_OP_TYPE:
-	case A1_OP_TYPE_EXTERN: {
-	    size_t newsize;
-	    const void *el = DPOC(data, t->offset);
-
-	    if (t->tt & A1_FLAG_OPTIONAL) {
-		void **pel = (void **)el;
-		if (*pel == NULL)
-		    break;
-		el = *pel;
-            } else if ((t->tt & A1_FLAG_DEFAULT) && elements > 1) {
-                const struct asn1_template *tdefval = t - 1;
-                /* Compare tdefval to whatever's at `el' */
-                if (tdefval->tt & A1_DV_BOOLEAN) {
-                    const int *i = (void *)(char *)el;
-
-                    if ((*i && tdefval->ptr) || (!*i && !tdefval->ptr))
-                        break;
-                } else if (tdefval->tt & A1_DV_INTEGER64) {
-                    const int64_t *i = (void *)(char *)el;
-
-                    if (*i == (int64_t)(intptr_t)tdefval->ptr)
-                        break;
-                } else if (tdefval->tt & A1_DV_INTEGER32) {
-                    const int32_t *i = (void *)(char *)el;
-
-                    if ((int64_t)(intptr_t)tdefval->ptr <= INT_MAX &&
-                        (int64_t)(intptr_t)tdefval->ptr >= INT_MIN &&
-                        *i == (int32_t)(intptr_t)tdefval->ptr)
-                        break;
-                } else if (tdefval->tt & A1_DV_INTEGER) {
-                    const struct heim_integer *i = (void *)(char *)el;
-
-                    if (der_heim_integer_cmp(i, tdefval->ptr) == 0)
-                        break;
-                } else if (tdefval->tt & A1_DV_UTF8STRING) {
-                    const char * const *s = el;
-
-                    if (*s && strcmp(*s, tdefval->ptr) == 0)
-                        break;
-                } else {
-                    abort();
-                }
+        switch (t->tt & A1_OP_MASK) {
+            case A1_OP_OPENTYPE_OBJSET: {
+                size_t opentypeid = t->tt & ((1<<10)-1);
+                size_t opentype = (t->tt >> 10) & ((1<<10)-1);
+                ret = _asn1_encode_open_type(t, data,
+                                             template4member(tbase, opentypeid),
+                                             template4member(tbase, opentype));
+                if (ret)
+                    return ret;
+                break;
             }
+            case A1_OP_NAME: break;
+            case A1_OP_DEFVAL: break;
+            case A1_OP_TYPE_DECORATE_EXTERN: break;
+            case A1_OP_TYPE_DECORATE: break;
+            case A1_OP_TYPE:
+            case A1_OP_TYPE_EXTERN: {
+                size_t newsize;
+                const void *el = DPOC(data, t->offset);
 
-	    if ((t->tt & A1_OP_MASK) == A1_OP_TYPE) {
-		ret = _asn1_encode(t->ptr, p, len, el, &newsize);
-	    } else {
-		const struct asn1_type_func *f = t->ptr;
-		ret = (f->encode)(p, len, el, &newsize);
-	    }
-
-	    if (ret)
-		return ret;
-	    p -= newsize; len -= newsize;
-
-	    break;
-	}
-	case A1_OP_TAG: {
-	    const void *olddata = data;
-	    size_t l, datalen = 0;
-            int replace_tag = 0;
-
-            /*
-             * XXX If this type (chasing t->ptr through IMPLICIT tags, if this
-             * one is too) till we find a non-TTag) is a [UNIVERSAL SET] type,
-             * then we have to sort [a copy of] its template by tag, then
-             * encode the SET using that sorted template.  These SETs will
-             * generally be small, so when they are we might want to allocate
-             * the copy on the stack and insertion sort it.  We'll need a
-             * utility function to do all of this.
-             */
-
-	    data = DPOC(data, t->offset);
-
-	    if (t->tt & A1_FLAG_OPTIONAL) {
-		void **el = (void **)data;
-		if (*el == NULL) {
-		    data = olddata;
-		    break;
-		}
-		data = *el;
-            } else if ((t->tt & A1_FLAG_DEFAULT) && elements > 1) {
-                const struct asn1_template *tdefval = t - 1;
-                int exclude = 0;
-
-                /* Compare tdefval to whatever's at `data' */
-                if (tdefval->tt & A1_DV_BOOLEAN) {
-                    const int *i = (void *)(char *)data;
-
-                    if ((*i && tdefval->ptr) || (!*i && !tdefval->ptr))
-                        exclude = 1;
-                } else if (tdefval->tt & A1_DV_INTEGER64) {
-                    const int64_t *i = (void *)(char *)data;
-
-                    if (*i == (int64_t)(intptr_t)tdefval->ptr)
-                        exclude = 1;
-                } else if (tdefval->tt & A1_DV_INTEGER32) {
-                    const int32_t *i = (void *)(char *)data;
-
-                    if ((int64_t)(intptr_t)tdefval->ptr <= INT_MAX &&
-                        (int64_t)(intptr_t)tdefval->ptr >= INT_MIN &&
-                        *i == (int32_t)(intptr_t)tdefval->ptr)
-                        exclude = 1;
-                } else if (tdefval->tt & A1_DV_INTEGER) {
-                    const struct heim_integer *i = (void *)(char *)data;
-
-                    if (der_heim_integer_cmp(i, tdefval->ptr) == 0)
+                if (t->tt & A1_FLAG_OPTIONAL) {
+                    void **pel = (void **)el;
+                    if (*pel == NULL)
                         break;
-                } else if (tdefval->tt & A1_DV_UTF8STRING) {
-                    const char * const *s = data;
+                    el = *pel;
+                } else if ((t->tt & A1_FLAG_DEFAULT) && elements > 1) {
+                    const struct asn1_template *tdefval = t - 1;
+                    /* Compare tdefval to whatever's at `el' */
+                    if (tdefval->tt & A1_DV_BOOLEAN) {
+                        const int *i = (void *)(char *)el;
 
-                    if (*s && strcmp(*s, tdefval->ptr) == 0)
-                        exclude = 1;
+                        if ((*i && tdefval->ptr) || (!*i && !tdefval->ptr))
+                            break;
+                    } else if (tdefval->tt & A1_DV_INTEGER64) {
+                        const int64_t *i = (void *)(char *)el;
+
+                        if (*i == (int64_t)(intptr_t)tdefval->ptr)
+                            break;
+                    } else if (tdefval->tt & A1_DV_INTEGER32) {
+                        const int32_t *i = (void *)(char *)el;
+
+                        if ((int64_t)(intptr_t)tdefval->ptr <= INT_MAX &&
+                            (int64_t)(intptr_t)tdefval->ptr >= INT_MIN &&
+                            *i == (int32_t)(intptr_t)tdefval->ptr)
+                            break;
+                    } else if (tdefval->tt & A1_DV_INTEGER) {
+                        const struct heim_integer *i = (void *)(char *)el;
+
+                        if (der_heim_integer_cmp(i, tdefval->ptr) == 0)
+                            break;
+                    } else if (tdefval->tt & A1_DV_UTF8STRING) {
+                        const char * const *s = el;
+
+                        if (*s && strcmp(*s, tdefval->ptr) == 0)
+                            break;
+                    } else {
+                        abort();
+                    }
+                }
+
+                if ((t->tt & A1_OP_MASK) == A1_OP_TYPE) {
+                    ret = _asn1_encode(t->ptr, p, len, el, &newsize);
                 } else {
-                    abort();
+                    const struct asn1_type_func *f = t->ptr;
+                    ret = (f->encode)(p, len, el, &newsize);
                 }
-                if (exclude) {
-                    data = olddata;
-                    break;
-                }
+
+                if (ret)
+                    return ret;
+                p -= newsize; len -= newsize;
+
+                break;
             }
+            case A1_OP_TAG: {
+                const void *olddata = data;
+                size_t l, datalen = 0;
+                int replace_tag = 0;
 
-            replace_tag = (t->tt & A1_FLAG_IMPLICIT) && is_tagged(t->ptr);
+                /*
+                 * XXX If this type (chasing t->ptr through IMPLICIT tags, if this
+                 * one is too) till we find a non-TTag) is a [UNIVERSAL SET] type,
+                 * then we have to sort [a copy of] its template by tag, then
+                 * encode the SET using that sorted template.  These SETs will
+                 * generally be small, so when they are we might want to allocate
+                 * the copy on the stack and insertion sort it.  We'll need a
+                 * utility function to do all of this.
+                 */
 
-            /* IMPLICIT tags need special handling (see gen_encode.c) */
-            if (replace_tag) {
-                unsigned char *pfree, *psave = p;
-                Der_class found_class;
-                Der_type found_type = 0;
-                unsigned int found_tag;
-                size_t lensave = len;
-                size_t oldtaglen = 0;
-                size_t taglen = der_length_tag(A1_TAG_TAG(t->tt));;
+                data = DPOC(data, t->offset);
 
-                /* Allocate a buffer at least as big as we need */
-                len = _asn1_length(t->ptr, data) + taglen;
-                if ((p = pfree = malloc(len)) == NULL) {
-                    ret = ENOMEM;
+                if (t->tt & A1_FLAG_OPTIONAL) {
+                    void **el = (void **)data;
+                    if (*el == NULL) {
+                        data = olddata;
+                        break;
+                    }
+                    data = *el;
+                } else if ((t->tt & A1_FLAG_DEFAULT) && elements > 1) {
+                    const struct asn1_template *tdefval = t - 1;
+                    int exclude = 0;
+
+                    /* Compare tdefval to whatever's at `data' */
+                    if (tdefval->tt & A1_DV_BOOLEAN) {
+                        const int *i = (void *)(char *)data;
+
+                        if ((*i && tdefval->ptr) || (!*i && !tdefval->ptr))
+                            exclude = 1;
+                    } else if (tdefval->tt & A1_DV_INTEGER64) {
+                        const int64_t *i = (void *)(char *)data;
+
+                        if (*i == (int64_t)(intptr_t)tdefval->ptr)
+                            exclude = 1;
+                    } else if (tdefval->tt & A1_DV_INTEGER32) {
+                        const int32_t *i = (void *)(char *)data;
+
+                        if ((int64_t)(intptr_t)tdefval->ptr <= INT_MAX &&
+                            (int64_t)(intptr_t)tdefval->ptr >= INT_MIN &&
+                            *i == (int32_t)(intptr_t)tdefval->ptr)
+                            exclude = 1;
+                    } else if (tdefval->tt & A1_DV_INTEGER) {
+                        const struct heim_integer *i = (void *)(char *)data;
+
+                        if (der_heim_integer_cmp(i, tdefval->ptr) == 0)
+                            break;
+                    } else if (tdefval->tt & A1_DV_UTF8STRING) {
+                        const char * const *s = data;
+
+                        if (*s && strcmp(*s, tdefval->ptr) == 0)
+                            exclude = 1;
+                    } else {
+                        abort();
+                    }
+                    if (exclude) {
+                        data = olddata;
+                        break;
+                    }
+                }
+
+                replace_tag = (t->tt & A1_FLAG_IMPLICIT) && is_tagged(t->ptr);
+
+                /* IMPLICIT tags need special handling (see gen_encode.c) */
+                if (replace_tag) {
+                    unsigned char *pfree, *psave = p;
+                    Der_class found_class;
+                    Der_type found_type = 0;
+                    unsigned int found_tag;
+                    size_t lensave = len;
+                    size_t oldtaglen = 0;
+                    size_t taglen = der_length_tag(A1_TAG_TAG(t->tt));;
+
+                    /* Allocate a buffer at least as big as we need */
+                    len = _asn1_length(t->ptr, data) + taglen;
+                    if ((p = pfree = malloc(len)) == NULL) {
+                        ret = ENOMEM;
+                    } else {
+                        /*
+                         * Encode into it (with the wrong tag, which we'll replace
+                         * below).
+                         */
+                        p += len - 1;
+                        ret = _asn1_encode(t->ptr, p, len, data, &datalen);
+                    }
+                    if (ret == 0) {
+                        /* Get the old tag and, critically, its length */
+                        len -= datalen; p -= datalen;
+                        ret = der_get_tag(p + 1, datalen, &found_class, &found_type,
+                                          &found_tag, &oldtaglen);
+                    }
+                    if (ret == 0) {
+                        /* Drop the old tag */
+                        len += oldtaglen; p += oldtaglen;
+                        /* Put the new tag */
+                        ret = der_put_tag(p, len,
+                                          A1_TAG_CLASS(t->tt),
+                                          found_type,
+                                          A1_TAG_TAG(t->tt), &l);
+                    }
+                    if (ret == 0) {
+                        /* Copy the encoding where it belongs */
+                        psave -= (datalen + l - oldtaglen);
+                        lensave -= (datalen + l - oldtaglen);
+                        memcpy(psave + 1, p + 1 - l, datalen + l - oldtaglen);
+                        p = psave;
+                        len = lensave;
+                    }
+                    free(pfree);
                 } else {
-                    /*
-                     * Encode into it (with the wrong tag, which we'll replace
-                     * below).
-                     */
-                    p += len - 1;
+                    /* Easy case */
                     ret = _asn1_encode(t->ptr, p, len, data, &datalen);
-                }
-                if (ret == 0) {
-                    /* Get the old tag and, critically, its length */
+                    if (ret)
+                        return ret;
+
                     len -= datalen; p -= datalen;
-                    ret = der_get_tag(p + 1, datalen, &found_class, &found_type,
-                                      &found_tag, &oldtaglen);
+
+                    ret = der_put_length_and_tag(p, len, datalen,
+                                                 A1_TAG_CLASS(t->tt),
+                                                 A1_TAG_TYPE(t->tt),
+                                                 A1_TAG_TAG(t->tt), &l);
+                    if (ret == 0) {
+                        p -= l; len -= l;
+                    }
                 }
-                if (ret == 0) {
-                    /* Drop the old tag */
-                    len += oldtaglen; p += oldtaglen;
-                    /* Put the new tag */
-                    ret = der_put_tag(p, len,
-                                      A1_TAG_CLASS(t->tt),
-                                      found_type,
-                                      A1_TAG_TAG(t->tt), &l);
-                }
-                if (ret == 0) {
-                    /* Copy the encoding where it belongs */
-                    psave -= (datalen + l - oldtaglen);
-                    lensave -= (datalen + l - oldtaglen);
-                    memcpy(psave + 1, p + 1 - l, datalen + l - oldtaglen);
-                    p = psave;
-                    len = lensave;
-                }
-                free(pfree);
-            } else {
-                /* Easy case */
-                ret = _asn1_encode(t->ptr, p, len, data, &datalen);
                 if (ret)
                     return ret;
 
-                len -= datalen; p -= datalen;
+                data = olddata;
 
-                ret = der_put_length_and_tag(p, len, datalen,
-                                             A1_TAG_CLASS(t->tt),
-                                             A1_TAG_TYPE(t->tt),
-                                             A1_TAG_TAG(t->tt), &l);
-                if (ret == 0) {
-                    p -= l; len -= l;
-                }
+                break;
             }
-	    if (ret)
-		return ret;
+            case A1_OP_PARSE: {
+                unsigned int type = A1_PARSE_TYPE(t->tt);
+                size_t newsize;
+                const void *el = DPOC(data, t->offset);
 
-	    data = olddata;
+                if (type >= sizeof(asn1_template_prim)/sizeof(asn1_template_prim[0])) {
+                    ABORT_ON_ERROR();
+                    return ASN1_PARSE_ERROR;
+                }
 
-	    break;
-	}
-	case A1_OP_PARSE: {
-	    unsigned int type = A1_PARSE_TYPE(t->tt);
-	    size_t newsize;
-	    const void *el = DPOC(data, t->offset);
+                ret = (asn1_template_prim[type].encode)(p, len, el, &newsize);
+                if (ret)
+                    return ret;
+                p -= newsize; len -= newsize;
 
-	    if (type >= sizeof(asn1_template_prim)/sizeof(asn1_template_prim[0])) {
-		ABORT_ON_ERROR();
-		return ASN1_PARSE_ERROR;
-	    }
+                break;
+            }
+            case A1_OP_SETOF: {
+                const struct template_of *el = DPOC(data, t->offset);
+                size_t ellen = _asn1_sizeofType(t->ptr);
+                heim_octet_string *val;
+                unsigned char *elptr = el->val;
+                size_t i, totallen;
 
-	    ret = (asn1_template_prim[type].encode)(p, len, el, &newsize);
-	    if (ret)
-		return ret;
-	    p -= newsize; len -= newsize;
+                if (el->len == 0)
+                    break;
 
-	    break;
-	}
-	case A1_OP_SETOF: {
-	    const struct template_of *el = DPOC(data, t->offset);
-	    size_t ellen = _asn1_sizeofType(t->ptr);
-	    heim_octet_string *val;
-	    unsigned char *elptr = el->val;
-	    size_t i, totallen;
+                if (el->len > UINT_MAX/sizeof(val[0]))
+                    return ERANGE;
 
-	    if (el->len == 0)
-		break;
+                val = calloc(el->len, sizeof(val[0]));
+                if (val == NULL)
+                    return ENOMEM;
 
-	    if (el->len > UINT_MAX/sizeof(val[0]))
-		return ERANGE;
+                for(totallen = 0, i = 0; i < el->len; i++) {
+                    unsigned char *next;
+                    size_t l;
 
-	    val = calloc(el->len, sizeof(val[0]));
-	    if (val == NULL)
-		return ENOMEM;
+                    val[i].length = _asn1_length(t->ptr, elptr);
+                    if (val[i].length) {
+                        val[i].data = malloc(val[i].length);
+                        if (val[i].data == NULL) {
+                            ret = ENOMEM;
+                            break;
+                        }
+                    }
 
-	    for(totallen = 0, i = 0; i < el->len; i++) {
-		unsigned char *next;
-		size_t l;
+                    ret = _asn1_encode(t->ptr, DPO(val[i].data, val[i].length - 1),
+                                       val[i].length, elptr, &l);
+                    if (ret)
+                        break;
 
-		val[i].length = _asn1_length(t->ptr, elptr);
-		if (val[i].length) {
-		    val[i].data = malloc(val[i].length);
-		    if (val[i].data == NULL) {
-			ret = ENOMEM;
-			break;
-		    }
-		}
+                    next = elptr + ellen;
+                    if (next < elptr) {
+                        ret = ASN1_OVERFLOW;
+                        break;
+                    }
+                    elptr = next;
+                    totallen += val[i].length;
+                }
+                if (ret == 0 && totallen > len)
+                    ret = ASN1_OVERFLOW;
+                if (ret) {
+                    for (i = 0; i < el->len; i++)
+                        free(val[i].data);
+                    free(val);
+                    return ret;
+                }
 
-		ret = _asn1_encode(t->ptr, DPO(val[i].data, val[i].length - 1),
-				   val[i].length, elptr, &l);
-		if (ret)
-		    break;
+                len -= totallen;
 
-		next = elptr + ellen;
-		if (next < elptr) {
-		    ret = ASN1_OVERFLOW;
-		    break;
-		}
-		elptr = next;
-		totallen += val[i].length;
-	    }
-	    if (ret == 0 && totallen > len)
-		ret = ASN1_OVERFLOW;
-	    if (ret) {
-		for (i = 0; i < el->len; i++)
-		    free(val[i].data);
-		free(val);
-		return ret;
-	    }
+                qsort(val, el->len, sizeof(val[0]), _heim_der_set_sort);
 
-	    len -= totallen;
+                i = el->len - 1;
+                do {
+                    p -= val[i].length;
+                    memcpy(p + 1, val[i].data, val[i].length);
+                    free(val[i].data);
+                } while(i-- > 0);
+                free(val);
 
-	    qsort(val, el->len, sizeof(val[0]), _heim_der_set_sort);
+                break;
 
-	    i = el->len - 1;
-	    do {
-		p -= val[i].length;
-		memcpy(p + 1, val[i].data, val[i].length);
-		free(val[i].data);
-	    } while(i-- > 0);
-	    free(val);
+            }
+            case A1_OP_SEQOF: {
+                struct template_of *el = DPO(data, t->offset);
+                size_t ellen = _asn1_sizeofType(t->ptr);
+                size_t newsize;
+                unsigned int i;
+                unsigned char *elptr = el->val;
 
-	    break;
+                if (el->len == 0)
+                    break;
 
-	}
-	case A1_OP_SEQOF: {
-	    struct template_of *el = DPO(data, t->offset);
-	    size_t ellen = _asn1_sizeofType(t->ptr);
-	    size_t newsize;
-	    unsigned int i;
-	    unsigned char *elptr = el->val;
+                elptr += ellen * (el->len - 1);
 
-	    if (el->len == 0)
-		break;
+                for (i = 0; i < el->len; i++) {
+                    ret = _asn1_encode(t->ptr, p, len,
+                                       elptr,
+                                       &newsize);
+                    if (ret)
+                        return ret;
+                    p -= newsize; len -= newsize;
+                    elptr -= ellen;
+                }
 
-	    elptr += ellen * (el->len - 1);
+                break;
+            }
+            case A1_OP_BMEMBER: {
+                const struct asn1_template *bmember = t->ptr;
+                size_t bsize = bmember->offset;
+                size_t belements = A1_HEADER_LEN(bmember);
+                size_t pos;
+                unsigned char c = 0;
+                unsigned int bitset = 0;
+                int rfc1510 = (bmember->tt & A1_HBF_RFC1510);
 
-	    for (i = 0; i < el->len; i++) {
-		ret = _asn1_encode(t->ptr, p, len,
-				   elptr,
-				   &newsize);
-		if (ret)
-		    return ret;
-		p -= newsize; len -= newsize;
-		elptr -= ellen;
-	    }
+                bmember += belements;
 
-	    break;
-	}
-	case A1_OP_BMEMBER: {
-	    const struct asn1_template *bmember = t->ptr;
-	    size_t bsize = bmember->offset;
-	    size_t belements = A1_HEADER_LEN(bmember);
-	    size_t pos;
-	    unsigned char c = 0;
-	    unsigned int bitset = 0;
-	    int rfc1510 = (bmember->tt & A1_HBF_RFC1510);
+                if (rfc1510)
+                    pos = 31;
+                else
+                    pos = bmember->offset;
 
-	    bmember += belements;
+                while (belements && len) {
+                    while (bmember->offset / 8 < pos / 8) {
+                        if (rfc1510 || bitset || c) {
+                            if (len < 1)
+                                return ASN1_OVERFLOW;
+                            *p-- = c; len--;
+                        }
+                        c = 0;
+                        pos -= 8;
+                    }
+                    _asn1_bmember_put_bit(&c, data, bmember->offset, bsize, &bitset);
+                    belements--; bmember--;
+                }
+                if (rfc1510 || bitset) {
+                    if (len < 1)
+                        return ASN1_OVERFLOW;
+                    *p-- = c; len--;
+                }
 
-	    if (rfc1510)
-		pos = 31;
-	    else
-		pos = bmember->offset;
+                if (len < 1)
+                    return ASN1_OVERFLOW;
+                if (rfc1510 || bitset == 0)
+                    *p-- = 0;
+                else
+                    *p-- = bitset - 1;
 
-	    while (belements && len) {
-		while (bmember->offset / 8 < pos / 8) {
-		    if (rfc1510 || bitset || c) {
-			if (len < 1)
-			    return ASN1_OVERFLOW;
-			*p-- = c; len--;
-		    }
-		    c = 0;
-		    pos -= 8;
-		}
-		_asn1_bmember_put_bit(&c, data, bmember->offset, bsize, &bitset);
-		belements--; bmember--;
-	    }
-	    if (rfc1510 || bitset) {
-		if (len < 1)
-		    return ASN1_OVERFLOW;
-		*p-- = c; len--;
-	    }
+                len--;
 
-	    if (len < 1)
-		return ASN1_OVERFLOW;
-	    if (rfc1510 || bitset == 0)
-		*p-- = 0;
-	    else
-		*p-- = bitset - 1;
+                break;
+            }
+            case A1_OP_CHOICE: {
+                const struct asn1_template *choice = t->ptr;
+                const unsigned int *element = DPOC(data, choice->offset);
+                size_t datalen;
+                const void *el;
 
-	    len--;
+                if (*element > A1_HEADER_LEN(choice)) {
+                    printf("element: %d\n", *element);
+                    return ASN1_PARSE_ERROR;
+                }
 
-	    break;
-	}
-	case A1_OP_CHOICE: {
-	    const struct asn1_template *choice = t->ptr;
-	    const unsigned int *element = DPOC(data, choice->offset);
-	    size_t datalen;
-	    const void *el;
-
-	    if (*element > A1_HEADER_LEN(choice)) {
-		printf("element: %d\n", *element);
-		return ASN1_PARSE_ERROR;
-	    }
-
-	    if (*element == 0) {
-                if (choice->tt) {
-                    /* This is an extensible CHOICE */
-                    ret += der_put_octet_string(p, len,
-                                                DPOC(data, choice->tt), &datalen);
+                if (*element == 0) {
+                    if (choice->tt) {
+                        /* This is an extensible CHOICE */
+                        ret += der_put_octet_string(p, len,
+                                                    DPOC(data, choice->tt), &datalen);
+                        len -= datalen; p -= datalen;
+                    } /* else this is really an error -- XXX what to do? */
+                } else {
+                    choice += *element;
+                    el = DPOC(data, choice->offset);
+                    ret = _asn1_encode(choice->ptr, p, len, el, &datalen);
+                    if (ret)
+                        return ret;
                     len -= datalen; p -= datalen;
-                } /* else this is really an error -- XXX what to do? */
-	    } else {
-		choice += *element;
-		el = DPOC(data, choice->offset);
-		ret = _asn1_encode(choice->ptr, p, len, el, &datalen);
-		if (ret)
-		    return ret;
-                len -= datalen; p -= datalen;
-	    }
+                }
 
-	    break;
-	}
-	default:
-	    ABORT_ON_ERROR();
-	}
-	t--;
-	elements--;
+                break;
+            }
+            default:
+                ABORT_ON_ERROR();
+        }
+        t--;
+        elements--;
     }
     if (size)
-	*size = oldlen - len;
+        *size = oldlen - len;
 
     return 0;
 }
@@ -1890,27 +1890,27 @@ _asn1_length_open_type(const struct asn1_template *tbase,
         ttypeid_univ++;
     }
     switch (ttypeid_univ->tt & A1_OP_MASK) {
-    case A1_OP_TAG:
-        if (A1_TAG_CLASS(ttypeid_univ->tt) != ASN1_C_UNIV)
-            return 0;
-        switch (A1_TAG_TAG(ttypeid_univ->tt)) {
-        case UT_OID:
-            typeid_is_oid = 1;
-            break;
-        case UT_Integer: {
-            const struct asn1_template *tint = ttypeid_univ->ptr;
-
-            tint++;
-            if ((tint->tt & A1_OP_MASK) != A1_OP_PARSE ||
-                A1_PARSE_TYPE(tint->tt) != A1T_INTEGER)
+        case A1_OP_TAG:
+            if (A1_TAG_CLASS(ttypeid_univ->tt) != ASN1_C_UNIV)
                 return 0;
-            typeid_is_int = 1;
+            switch (A1_TAG_TAG(ttypeid_univ->tt)) {
+                case UT_OID:
+                    typeid_is_oid = 1;
+                    break;
+                case UT_Integer: {
+                    const struct asn1_template *tint = ttypeid_univ->ptr;
+
+                    tint++;
+                    if ((tint->tt & A1_OP_MASK) != A1_OP_PARSE ||
+                        A1_PARSE_TYPE(tint->tt) != A1T_INTEGER)
+                        return 0;
+                    typeid_is_int = 1;
+                    break;
+                }
+                default: return 0;
+            }
             break;
-        }
         default: return 0;
-        }
-        break;
-    default: return 0;
     }
     if (!(t->tt & A1_OS_OT_IS_ARRAY)) {
         struct heim_base_data *os = DPO(data, topentype->offset);
@@ -1935,20 +1935,20 @@ _asn1_length_open_type(const struct asn1_template *tbase,
         int32_t i4;
 
         switch (ttypeid_univ->offset) {
-        case 8:
-            i8 = (intptr_t)t->ptr;
-            sz = _asn1_length_open_type_id(ttypeid, &i8);
-            i8 = 0;
-            sz -= _asn1_length_open_type_id(ttypeid, &i8);
-            break;
-        case 4:
-            i4 = (intptr_t)t->ptr;
-            sz = _asn1_length_open_type_id(ttypeid, &i4);
-            i4 = 0;
-            sz -= _asn1_length_open_type_id(ttypeid, &i8);
-            break;
-        default:
-            return 0;
+            case 8:
+                i8 = (intptr_t)t->ptr;
+                sz = _asn1_length_open_type_id(ttypeid, &i8);
+                i8 = 0;
+                sz -= _asn1_length_open_type_id(ttypeid, &i8);
+                break;
+            case 4:
+                i4 = (intptr_t)t->ptr;
+                sz = _asn1_length_open_type_id(ttypeid, &i4);
+                i4 = 0;
+                sz -= _asn1_length_open_type_id(ttypeid, &i8);
+                break;
+            default:
+                return 0;
         }
     } else if (typeid_is_oid) {
         heim_oid no_oid = { 0, 0 };
@@ -1998,208 +1998,208 @@ _asn1_length(const struct asn1_template *t, const void *data)
     t += A1_HEADER_LEN(t);
 
     while (elements) {
-	switch (t->tt & A1_OP_MASK) {
-        case A1_OP_OPENTYPE_OBJSET: {
-            size_t opentypeid = t->tt & ((1<<10)-1);
-            size_t opentype = (t->tt >> 10) & ((1<<10)-1);
-            ret += _asn1_length_open_type(tbase, t, data,
-                                          template4member(tbase, opentypeid),
-                                          template4member(tbase, opentype));
-            break;
-        }
-        case A1_OP_NAME: break;
-	case A1_OP_DEFVAL: break;
-	case A1_OP_TYPE_DECORATE_EXTERN: break;
-	case A1_OP_TYPE_DECORATE: break;
-	case A1_OP_TYPE:
-	case A1_OP_TYPE_EXTERN: {
-	    const void *el = DPOC(data, t->offset);
-
-	    if (t->tt & A1_FLAG_OPTIONAL) {
-		void **pel = (void **)el;
-		if (*pel == NULL)
-		    break;
-		el = *pel;
-            } else if ((t->tt & A1_FLAG_DEFAULT) && elements > 1) {
-                const struct asn1_template *tdefval = t - 1;
-
-                /* Compare tdefval to whatever's at `el' */
-                if (tdefval->tt & A1_DV_BOOLEAN) {
-                    const int *i = (void *)(char *)el;
-
-                    if ((*i && tdefval->ptr) || (!*i && !tdefval->ptr))
-                        break;
-                } else if (tdefval->tt & A1_DV_INTEGER64) {
-                    const int64_t *i = (void *)(char *)el;
-
-                    if (*i == (int64_t)(intptr_t)tdefval->ptr)
-                        break;
-                } else if (tdefval->tt & A1_DV_INTEGER32) {
-                    const int32_t *i = (void *)(char *)el;
-
-                    if ((int64_t)(intptr_t)tdefval->ptr <= INT_MAX &&
-                        (int64_t)(intptr_t)tdefval->ptr >= INT_MIN &&
-                        *i == (int32_t)(intptr_t)tdefval->ptr)
-                        break;
-                } else if (tdefval->tt & A1_DV_INTEGER) {
-                    const struct heim_integer *i = (void *)(char *)el;
-
-                    if (der_heim_integer_cmp(i, tdefval->ptr) == 0)
-                        break;
-                } else if (tdefval->tt & A1_DV_UTF8STRING) {
-                    const char * const *s = el;
-
-                    if (*s && strcmp(*s, tdefval->ptr) == 0)
-                        break;
-                } else {
-                    abort();
-                }
+        switch (t->tt & A1_OP_MASK) {
+            case A1_OP_OPENTYPE_OBJSET: {
+                size_t opentypeid = t->tt & ((1<<10)-1);
+                size_t opentype = (t->tt >> 10) & ((1<<10)-1);
+                ret += _asn1_length_open_type(tbase, t, data,
+                                              template4member(tbase, opentypeid),
+                                              template4member(tbase, opentype));
+                break;
             }
+            case A1_OP_NAME: break;
+            case A1_OP_DEFVAL: break;
+            case A1_OP_TYPE_DECORATE_EXTERN: break;
+            case A1_OP_TYPE_DECORATE: break;
+            case A1_OP_TYPE:
+            case A1_OP_TYPE_EXTERN: {
+                const void *el = DPOC(data, t->offset);
 
-	    if ((t->tt & A1_OP_MASK) == A1_OP_TYPE) {
-		ret += _asn1_length(t->ptr, el);
-	    } else {
-		const struct asn1_type_func *f = t->ptr;
-		ret += (f->length)(el);
-	    }
-	    break;
-	}
-	case A1_OP_TAG: {
-	    size_t datalen;
-	    const void *olddata = data;
-            size_t oldtaglen = 0;
+                if (t->tt & A1_FLAG_OPTIONAL) {
+                    void **pel = (void **)el;
+                    if (*pel == NULL)
+                        break;
+                    el = *pel;
+                } else if ((t->tt & A1_FLAG_DEFAULT) && elements > 1) {
+                    const struct asn1_template *tdefval = t - 1;
 
-	    data = DPO(data, t->offset);
+                    /* Compare tdefval to whatever's at `el' */
+                    if (tdefval->tt & A1_DV_BOOLEAN) {
+                        const int *i = (void *)(char *)el;
 
-	    if (t->tt & A1_FLAG_OPTIONAL) {
-		void **el = (void **)data;
-		if (*el == NULL) {
-		    data = olddata;
-		    break;
-		}
-		data = *el;
-	    } else if ((t->tt & A1_FLAG_DEFAULT) && elements > 1) {
-                const struct asn1_template *tdefval = t - 1;
-                int exclude = 0;
+                        if ((*i && tdefval->ptr) || (!*i && !tdefval->ptr))
+                            break;
+                    } else if (tdefval->tt & A1_DV_INTEGER64) {
+                        const int64_t *i = (void *)(char *)el;
 
-                /* Compare tdefval to whatever's at `data' */
-                if (tdefval->tt & A1_DV_BOOLEAN) {
-                    const int *i = (void *)(char *)data;
+                        if (*i == (int64_t)(intptr_t)tdefval->ptr)
+                            break;
+                    } else if (tdefval->tt & A1_DV_INTEGER32) {
+                        const int32_t *i = (void *)(char *)el;
 
-                    if ((*i && tdefval->ptr) || (!*i && !tdefval->ptr))
-                        exclude = 1;
-                } else if (tdefval->tt & A1_DV_INTEGER64) {
-                    const int64_t *i = (void *)(char *)data;
+                        if ((int64_t)(intptr_t)tdefval->ptr <= INT_MAX &&
+                            (int64_t)(intptr_t)tdefval->ptr >= INT_MIN &&
+                            *i == (int32_t)(intptr_t)tdefval->ptr)
+                            break;
+                    } else if (tdefval->tt & A1_DV_INTEGER) {
+                        const struct heim_integer *i = (void *)(char *)el;
 
-                    if (*i == (int64_t)(intptr_t)tdefval->ptr)
-                        exclude = 1;
-                } else if (tdefval->tt & A1_DV_INTEGER32) {
-                    const int32_t *i = (void *)(char *)data;
+                        if (der_heim_integer_cmp(i, tdefval->ptr) == 0)
+                            break;
+                    } else if (tdefval->tt & A1_DV_UTF8STRING) {
+                        const char * const *s = el;
 
-                    if ((int64_t)(intptr_t)tdefval->ptr <= INT_MAX &&
-                        (int64_t)(intptr_t)tdefval->ptr >= INT_MIN &&
-                        *i == (int32_t)(intptr_t)tdefval->ptr)
-                        exclude = 1;
-                } else if (tdefval->tt & A1_DV_INTEGER) {
-                    const struct heim_integer *i = (void *)(char *)data;
-
-                    if (der_heim_integer_cmp(i, tdefval->ptr) == 0)
-                        exclude = 1;
-                } else if (tdefval->tt & A1_DV_UTF8STRING) {
-                    const char * const *s = data;
-
-                    if (*s && strcmp(*s, tdefval->ptr) == 0)
-                        exclude = 1;
-                } else {
-                    abort();
+                        if (*s && strcmp(*s, tdefval->ptr) == 0)
+                            break;
+                    } else {
+                        abort();
+                    }
                 }
-                if (exclude) {
-                    data = olddata;
+
+                if ((t->tt & A1_OP_MASK) == A1_OP_TYPE) {
+                    ret += _asn1_length(t->ptr, el);
+                } else {
+                    const struct asn1_type_func *f = t->ptr;
+                    ret += (f->length)(el);
+                }
+                break;
+            }
+            case A1_OP_TAG: {
+                size_t datalen;
+                const void *olddata = data;
+                size_t oldtaglen = 0;
+
+                data = DPO(data, t->offset);
+
+                if (t->tt & A1_FLAG_OPTIONAL) {
+                    void **el = (void **)data;
+                    if (*el == NULL) {
+                        data = olddata;
+                        break;
+                    }
+                    data = *el;
+                } else if ((t->tt & A1_FLAG_DEFAULT) && elements > 1) {
+                    const struct asn1_template *tdefval = t - 1;
+                    int exclude = 0;
+
+                    /* Compare tdefval to whatever's at `data' */
+                    if (tdefval->tt & A1_DV_BOOLEAN) {
+                        const int *i = (void *)(char *)data;
+
+                        if ((*i && tdefval->ptr) || (!*i && !tdefval->ptr))
+                            exclude = 1;
+                    } else if (tdefval->tt & A1_DV_INTEGER64) {
+                        const int64_t *i = (void *)(char *)data;
+
+                        if (*i == (int64_t)(intptr_t)tdefval->ptr)
+                            exclude = 1;
+                    } else if (tdefval->tt & A1_DV_INTEGER32) {
+                        const int32_t *i = (void *)(char *)data;
+
+                        if ((int64_t)(intptr_t)tdefval->ptr <= INT_MAX &&
+                            (int64_t)(intptr_t)tdefval->ptr >= INT_MIN &&
+                            *i == (int32_t)(intptr_t)tdefval->ptr)
+                            exclude = 1;
+                    } else if (tdefval->tt & A1_DV_INTEGER) {
+                        const struct heim_integer *i = (void *)(char *)data;
+
+                        if (der_heim_integer_cmp(i, tdefval->ptr) == 0)
+                            exclude = 1;
+                    } else if (tdefval->tt & A1_DV_UTF8STRING) {
+                        const char * const *s = data;
+
+                        if (*s && strcmp(*s, tdefval->ptr) == 0)
+                            exclude = 1;
+                    } else {
+                        abort();
+                    }
+                    if (exclude) {
+                        data = olddata;
+                        break;
+                    }
+                }
+
+                if (t->tt & A1_FLAG_IMPLICIT)
+                    oldtaglen = inner_type_taglen(t->ptr);
+
+                datalen = _asn1_length(t->ptr, data);
+                ret += datalen;
+                ret += der_length_tag(A1_TAG_TAG(t->tt));
+                ret += oldtaglen ? -oldtaglen : der_length_len(datalen);
+                data = olddata;
+                break;
+            }
+            case A1_OP_PARSE: {
+                unsigned int type = A1_PARSE_TYPE(t->tt);
+                const void *el = DPOC(data, t->offset);
+
+                if (type >= sizeof(asn1_template_prim)/sizeof(asn1_template_prim[0])) {
+                    ABORT_ON_ERROR();
                     break;
                 }
+                ret += (asn1_template_prim[type].length)(el);
+                break;
             }
+            case A1_OP_SETOF:
+            case A1_OP_SEQOF: {
+                const struct template_of *el = DPOC(data, t->offset);
+                size_t ellen = _asn1_sizeofType(t->ptr);
+                const unsigned char *element = el->val;
+                unsigned int i;
 
-            if (t->tt & A1_FLAG_IMPLICIT)
-                oldtaglen = inner_type_taglen(t->ptr);
+                for (i = 0; i < el->len; i++) {
+                    ret += _asn1_length(t->ptr, element);
+                    element += ellen;
+                }
 
-	    datalen = _asn1_length(t->ptr, data);
-	    ret += datalen;
-	    ret += der_length_tag(A1_TAG_TAG(t->tt));
-            ret += oldtaglen ? -oldtaglen : der_length_len(datalen);
-	    data = olddata;
-	    break;
-	}
-	case A1_OP_PARSE: {
-	    unsigned int type = A1_PARSE_TYPE(t->tt);
-	    const void *el = DPOC(data, t->offset);
+                break;
+            }
+            case A1_OP_BMEMBER: {
+                const struct asn1_template *bmember = t->ptr;
+                size_t size = bmember->offset;
+                size_t belements = A1_HEADER_LEN(bmember);
+                int rfc1510 = (bmember->tt & A1_HBF_RFC1510);
 
-	    if (type >= sizeof(asn1_template_prim)/sizeof(asn1_template_prim[0])) {
-		ABORT_ON_ERROR();
-		break;
-	    }
-	    ret += (asn1_template_prim[type].length)(el);
-	    break;
-	}
-	case A1_OP_SETOF:
-	case A1_OP_SEQOF: {
-	    const struct template_of *el = DPOC(data, t->offset);
-	    size_t ellen = _asn1_sizeofType(t->ptr);
-	    const unsigned char *element = el->val;
-	    unsigned int i;
+                if (rfc1510) {
+                    ret += 5;
+                } else {
 
-	    for (i = 0; i < el->len; i++) {
-		ret += _asn1_length(t->ptr, element);
-		element += ellen;
-	    }
+                    ret += 1;
 
-	    break;
-	}
-	case A1_OP_BMEMBER: {
-	    const struct asn1_template *bmember = t->ptr;
-	    size_t size = bmember->offset;
-	    size_t belements = A1_HEADER_LEN(bmember);
-	    int rfc1510 = (bmember->tt & A1_HBF_RFC1510);
+                    bmember += belements;
 
-	    if (rfc1510) {
-		ret += 5;
-	    } else {
+                    while (belements) {
+                        if (_asn1_bmember_isset_bit(data, bmember->offset, size)) {
+                            ret += (bmember->offset / 8) + 1;
+                            break;
+                        }
+                        belements--; bmember--;
+                    }
+                }
+                break;
+            }
+            case A1_OP_CHOICE: {
+                const struct asn1_template *choice = t->ptr;
+                const unsigned int *element = DPOC(data, choice->offset);
 
-		ret += 1;
+                if (*element > A1_HEADER_LEN(choice))
+                    break;
 
-		bmember += belements;
-
-		while (belements) {
-		    if (_asn1_bmember_isset_bit(data, bmember->offset, size)) {
-			ret += (bmember->offset / 8) + 1;
-			break;
-		    }
-		    belements--; bmember--;
-		}
-	    }
-	    break;
-	}
-	case A1_OP_CHOICE: {
-	    const struct asn1_template *choice = t->ptr;
-	    const unsigned int *element = DPOC(data, choice->offset);
-
-	    if (*element > A1_HEADER_LEN(choice))
-		break;
-
-	    if (*element == 0) {
-                if (choice->tt)
-                    ret += der_length_octet_string(DPOC(data, choice->tt));
-	    } else {
-		choice += *element;
-		ret += _asn1_length(choice->ptr, DPOC(data, choice->offset));
-	    }
-	    break;
-	}
-	default:
-	    ABORT_ON_ERROR();
-	    break;
-	}
-	elements--;
-	t--;
+                if (*element == 0) {
+                    if (choice->tt)
+                        ret += der_length_octet_string(DPOC(data, choice->tt));
+                } else {
+                    choice += *element;
+                    ret += _asn1_length(choice->ptr, DPOC(data, choice->offset));
+                }
+                break;
+            }
+            default:
+                ABORT_ON_ERROR();
+                break;
+        }
+        elements--;
+        t--;
     }
     return ret;
 }
@@ -2261,129 +2261,129 @@ _asn1_free(const struct asn1_template *t, void *data)
     size_t elements = A1_HEADER_LEN(t);
 
     if (t->tt & A1_HF_PRESERVE)
-	der_free_octet_string(data);
+        der_free_octet_string(data);
 
     t++;
 
     while (elements) {
-	switch (t->tt & A1_OP_MASK) {
-        case A1_OP_OPENTYPE_OBJSET: {
-            _asn1_free_open_type(t, data);
-            break;
-        }
-        case A1_OP_NAME: break;
-	case A1_OP_DEFVAL: break;
-	case A1_OP_TYPE_DECORATE_EXTERN:
-	case A1_OP_TYPE_DECORATE:
-	case A1_OP_TYPE:
-	case A1_OP_TYPE_EXTERN: {
-	    void *el = DPO(data, t->offset);
-            void **pel = (void **)el;
-
-	    if (t->tt & A1_FLAG_OPTIONAL) {
-		if (*pel == NULL)
-		    break;
-		el = *pel;
-	    }
-
-	    if ((t->tt & A1_OP_MASK) == A1_OP_TYPE || (t->tt & A1_OP_MASK) == A1_OP_TYPE_DECORATE) {
-		_asn1_free(t->ptr, el);
-	    } else if ((t->tt & A1_OP_MASK) == A1_OP_TYPE_EXTERN) {
-		const struct asn1_type_func *f = t->ptr;
-		(f->release)(el);
-	    } else {
-                /* A1_OP_TYPE_DECORATE_EXTERN */
-		const struct asn1_type_func *f = t->ptr;
-
-                if (f && f->release)
-                    (f->release)(el);
-                else if (f)
-                    memset(el, 0, f->size);
-	    }
-	    if (t->tt & A1_FLAG_OPTIONAL) {
-		free(el);
-                *pel = NULL;
+        switch (t->tt & A1_OP_MASK) {
+            case A1_OP_OPENTYPE_OBJSET: {
+                _asn1_free_open_type(t, data);
+                break;
             }
-
-	    break;
-	}
-	case A1_OP_PARSE: {
-	    unsigned int type = A1_PARSE_TYPE(t->tt);
-	    void *el = DPO(data, t->offset);
-
-	    if (type >= sizeof(asn1_template_prim)/sizeof(asn1_template_prim[0])) {
-		ABORT_ON_ERROR();
-		break;
-	    }
-	    (asn1_template_prim[type].release)(el);
-	    break;
-	}
-	case A1_OP_TAG: {
-	    void *el = DPO(data, t->offset);
-
-	    if (t->tt & A1_FLAG_OPTIONAL) {
+            case A1_OP_NAME: break;
+            case A1_OP_DEFVAL: break;
+            case A1_OP_TYPE_DECORATE_EXTERN:
+            case A1_OP_TYPE_DECORATE:
+            case A1_OP_TYPE:
+            case A1_OP_TYPE_EXTERN: {
+                void *el = DPO(data, t->offset);
                 void **pel = (void **)el;
 
-		if (*pel == NULL)
-		    break;
-                _asn1_free(t->ptr, *pel);
-		free(*pel);
-                *pel = NULL;
-            } else {
-                _asn1_free(t->ptr, el);
+                if (t->tt & A1_FLAG_OPTIONAL) {
+                    if (*pel == NULL)
+                        break;
+                    el = *pel;
+                }
+
+                if ((t->tt & A1_OP_MASK) == A1_OP_TYPE || (t->tt & A1_OP_MASK) == A1_OP_TYPE_DECORATE) {
+                    _asn1_free(t->ptr, el);
+                } else if ((t->tt & A1_OP_MASK) == A1_OP_TYPE_EXTERN) {
+                    const struct asn1_type_func *f = t->ptr;
+                    (f->release)(el);
+                } else {
+                    /* A1_OP_TYPE_DECORATE_EXTERN */
+                    const struct asn1_type_func *f = t->ptr;
+
+                    if (f && f->release)
+                        (f->release)(el);
+                    else if (f)
+                        memset(el, 0, f->size);
+                }
+                if (t->tt & A1_FLAG_OPTIONAL) {
+                    free(el);
+                    *pel = NULL;
+                }
+
+                break;
             }
+            case A1_OP_PARSE: {
+                unsigned int type = A1_PARSE_TYPE(t->tt);
+                void *el = DPO(data, t->offset);
 
-	    break;
-	}
-	case A1_OP_SETOF:
-	case A1_OP_SEQOF: {
-	    struct template_of *el = DPO(data, t->offset);
-	    size_t ellen = _asn1_sizeofType(t->ptr);
-	    unsigned char *element = el->val;
-	    unsigned int i;
+                if (type >= sizeof(asn1_template_prim)/sizeof(asn1_template_prim[0])) {
+                    ABORT_ON_ERROR();
+                    break;
+                }
+                (asn1_template_prim[type].release)(el);
+                break;
+            }
+            case A1_OP_TAG: {
+                void *el = DPO(data, t->offset);
 
-	    for (i = 0; i < el->len; i++) {
-		_asn1_free(t->ptr, element);
-		element += ellen;
-	    }
-	    free(el->val);
-	    el->val = NULL;
-	    el->len = 0;
+                if (t->tt & A1_FLAG_OPTIONAL) {
+                    void **pel = (void **)el;
 
-	    break;
-	}
-	case A1_OP_BMEMBER:
-	    break;
-	case A1_OP_CHOICE: {
-	    const struct asn1_template *choice = t->ptr;
-	    const unsigned int *element = DPOC(data, choice->offset);
+                    if (*pel == NULL)
+                        break;
+                    _asn1_free(t->ptr, *pel);
+                    free(*pel);
+                    *pel = NULL;
+                } else {
+                    _asn1_free(t->ptr, el);
+                }
 
-	    if (*element > A1_HEADER_LEN(choice))
-		break;
+                break;
+            }
+            case A1_OP_SETOF:
+            case A1_OP_SEQOF: {
+                struct template_of *el = DPO(data, t->offset);
+                size_t ellen = _asn1_sizeofType(t->ptr);
+                unsigned char *element = el->val;
+                unsigned int i;
 
-	    if (*element == 0) {
-                /*
-                 * If choice->tt != 0 then this is an extensible choice, and
-                 * the offset choice->tt is the offset to u.ellipsis.
-                 */
-                if (choice->tt != 0)
-                    der_free_octet_string(DPO(data, choice->tt));
-                /*
-                 * Else this was a not-fully initialized CHOICE.  We could
-                 * stand to memset clear the rest of it though...
-                 */
-	    } else {
-		choice += *element;
-		_asn1_free(choice->ptr, DPO(data, choice->offset));
-	    }
-	    break;
-	}
-	default:
-	    ABORT_ON_ERROR();
-	    break;
-	}
-	t++;
-	elements--;
+                for (i = 0; i < el->len; i++) {
+                    _asn1_free(t->ptr, element);
+                    element += ellen;
+                }
+                free(el->val);
+                el->val = NULL;
+                el->len = 0;
+
+                break;
+            }
+            case A1_OP_BMEMBER:
+                break;
+            case A1_OP_CHOICE: {
+                const struct asn1_template *choice = t->ptr;
+                const unsigned int *element = DPOC(data, choice->offset);
+
+                if (*element > A1_HEADER_LEN(choice))
+                    break;
+
+                if (*element == 0) {
+                    /*
+                     * If choice->tt != 0 then this is an extensible choice, and
+                     * the offset choice->tt is the offset to u.ellipsis.
+                     */
+                    if (choice->tt != 0)
+                        der_free_octet_string(DPO(data, choice->tt));
+                    /*
+                     * Else this was a not-fully initialized CHOICE.  We could
+                     * stand to memset clear the rest of it though...
+                     */
+                } else {
+                    choice += *element;
+                    _asn1_free(choice->ptr, DPO(data, choice->offset));
+                }
+                break;
+            }
+            default:
+                ABORT_ON_ERROR();
+                break;
+        }
+        t++;
+        elements--;
     }
 }
 
@@ -2469,7 +2469,7 @@ _asn1_print_open_type(const struct asn1_template *t, /* object set template */
                                      indents ? indents : "", opentype_name, s);
             free(s);
         }
-	free(indents);
+        free(indents);
         return r;
     }
 
@@ -2553,22 +2553,22 @@ _asn1_print(const struct asn1_template *t,
 
     t = tbase + 1;
     while (r && elements && (t->tt & A1_OP_MASK) != A1_OP_NAME) {
-	switch (t->tt & A1_OP_MASK) {
-        case A1_OP_NAME:
-            continue;
-	case A1_OP_DEFVAL:
-            t++;
-            elements--;
-            continue;
-        case A1_OP_OPENTYPE_OBJSET: {
-            size_t opentype = (t->tt >> 10) & ((1<<10)-1);
-            r = _asn1_print_open_type(t, r, flags, indent + 1, data,
-                                      tbase[(nelements - nnames) + 2 + opentype].ptr);
-            t++;
-            elements--;
-            continue;
-        }
-        default: break;
+        switch (t->tt & A1_OP_MASK) {
+            case A1_OP_NAME:
+                continue;
+            case A1_OP_DEFVAL:
+                t++;
+                elements--;
+                continue;
+            case A1_OP_OPENTYPE_OBJSET: {
+                size_t opentype = (t->tt >> 10) & ((1<<10)-1);
+                r = _asn1_print_open_type(t, r, flags, indent + 1, data,
+                                          tbase[(nelements - nnames) + 2 + opentype].ptr);
+                t++;
+                elements--;
+                continue;
+            }
+            default: break;
         }
         if (nnames &&
             (t->tt & A1_OP_MASK) != A1_OP_TYPE_DECORATE_EXTERN &&
@@ -2576,200 +2576,200 @@ _asn1_print(const struct asn1_template *t,
             r = rk_strpoolprintf(r, ",%s\"%s\":",
                                  indents ? indents : "",
                                  (const char *)(tnames++)->ptr);
-	switch (t->tt & A1_OP_MASK) {
-        case A1_OP_OPENTYPE_OBJSET:
-            break;
-        case A1_OP_NAME: break;
-	case A1_OP_DEFVAL: break;
-	case A1_OP_TYPE_DECORATE_EXTERN: break;
-	case A1_OP_TYPE_DECORATE: break; /* We could probably print this though */
-	case A1_OP_TYPE:
-	case A1_OP_TYPE_EXTERN: {
-	    const void *el = DPOC(data, t->offset);
+        switch (t->tt & A1_OP_MASK) {
+            case A1_OP_OPENTYPE_OBJSET:
+                break;
+            case A1_OP_NAME: break;
+            case A1_OP_DEFVAL: break;
+            case A1_OP_TYPE_DECORATE_EXTERN: break;
+            case A1_OP_TYPE_DECORATE: break; /* We could probably print this though */
+            case A1_OP_TYPE:
+            case A1_OP_TYPE_EXTERN: {
+                const void *el = DPOC(data, t->offset);
 
-	    if (t->tt & A1_FLAG_OPTIONAL) {
-		const void * const *pel = (const void *const *)el;
-		if (*pel == NULL) {
-                    r = rk_strpoolprintf(r, "null");
-		    break;
+                if (t->tt & A1_FLAG_OPTIONAL) {
+                    const void * const *pel = (const void *const *)el;
+                    if (*pel == NULL) {
+                        r = rk_strpoolprintf(r, "null");
+                        break;
+                    }
+                    el = *pel;
                 }
-		el = *pel;
-	    }
 
-	    if ((t->tt & A1_OP_MASK) == A1_OP_TYPE) {
-		r = _asn1_print(t->ptr, r, flags, indent + 1, el, saved);
-	    } else {
-		const struct asn1_type_func *f = t->ptr;
+                if ((t->tt & A1_OP_MASK) == A1_OP_TYPE) {
+                    r = _asn1_print(t->ptr, r, flags, indent + 1, el, saved);
+                } else {
+                    const struct asn1_type_func *f = t->ptr;
+                    char *s = NULL;
+
+                    s = (f->print)(el, 0);
+                    if (s == NULL) {
+                        rk_strpoolfree(r);
+                        free(indents);
+                        return NULL;
+                    }
+                    r = rk_strpoolprintf(r, "%s", s);
+                    free(s);
+                }
+                break;
+            }
+            case A1_OP_PARSE: {
+                unsigned int type = A1_PARSE_TYPE(t->tt);
+                const void *el = DPOC(data, t->offset);
                 char *s = NULL;
 
-                s = (f->print)(el, 0);
-                if (s == NULL) {
+                if (type >= sizeof(asn1_template_prim)/sizeof(asn1_template_prim[0])) {
+                    ABORT_ON_ERROR();
+                    break;
+                }
+
+                if (type == A1T_IMEMBER && t->ptr) {
+                    /* Enumeration.  Use the symbolic name of this value */
+                    const struct asn1_template *tenum = t->ptr;
+                    size_t left = 0;
+                    size_t right = A1_HEADER_LEN(tenum);
+                    size_t mid;
+                    uint32_t v = *(unsigned int *)el;
+                    int c = -1;
+
+                    while (left <= right) {
+                        mid = (left + right) >> 1;
+
+                        if ((tenum[mid].tt & A1_OP_MASK) != A1_OP_NAME)
+                            break;
+                        c = v - tenum[mid].offset;
+                        if (c < 0) {
+                            if (mid)
+                                right = mid - 1;
+                            else
+                                break;
+                        } else if (c > 0) {
+                            left = mid + 1;
+                        } else {
+                            break;
+                        }
+                    }
+                    if (c == 0) {
+                        r = rk_strpoolprintf(r, "\"%s\"", (const char *)tenum[mid].ptr);
+                        break;
+                    }
+                }
+                s = (asn1_template_prim[type].print)(el, flags);
+                switch (type) {
+                    case A1T_OID:
+                    case A1T_IMEMBER:
+                    case A1T_BOOLEAN:
+                    case A1T_INTEGER:
+                    case A1T_INTEGER64:
+                    case A1T_UNSIGNED:
+                    case A1T_UNSIGNED64:
+                        if (s)
+                            r = rk_strpoolprintf(r, "%s", s);
+                        break;
+                    default: {
+                        char *s2 = NULL;
+
+                        if (s)
+                            (void) rk_strasvis(&s2, s, VIS_CSTYLE|VIS_TAB|VIS_NL, "\"");
+                        free(s);
+                        s = s2;
+                        if (s)
+                            r = rk_strpoolprintf(r, "\"%s\"", s);
+                    }
+                }
+                if (!s) {
                     rk_strpoolfree(r);
                     free(indents);
                     return NULL;
                 }
-		r = rk_strpoolprintf(r, "%s", s);
                 free(s);
-	    }
-	    break;
-	}
-	case A1_OP_PARSE: {
-	    unsigned int type = A1_PARSE_TYPE(t->tt);
-	    const void *el = DPOC(data, t->offset);
-            char *s = NULL;
+                break;
+            }
+            case A1_OP_TAG: {
+                const void *el = DPOC(data, t->offset);
 
-	    if (type >= sizeof(asn1_template_prim)/sizeof(asn1_template_prim[0])) {
-		ABORT_ON_ERROR();
-		break;
-	    }
-
-            if (type == A1T_IMEMBER && t->ptr) {
-                /* Enumeration.  Use the symbolic name of this value */
-                const struct asn1_template *tenum = t->ptr;
-                size_t left = 0;
-                size_t right = A1_HEADER_LEN(tenum);
-                size_t mid;
-                uint32_t v = *(unsigned int *)el;
-                int c = -1;
-
-                while (left <= right) {
-                    mid = (left + right) >> 1;
-
-                    if ((tenum[mid].tt & A1_OP_MASK) != A1_OP_NAME)
-                        break;
-                    c = v - tenum[mid].offset;
-                    if (c < 0) {
-                        if (mid)
-                            right = mid - 1;
-                        else
-                            break;
-                    } else if (c > 0) {
-                        left = mid + 1;
-                    } else {
+                if (t->tt & A1_FLAG_OPTIONAL) {
+                    const void * const *pel = (const void * const *)el;
+                    if (*pel == NULL) {
+                        r = rk_strpoolprintf(r, "null");
                         break;
                     }
+                    el = *pel;
                 }
-                if (c == 0) {
-                    r = rk_strpoolprintf(r, "\"%s\"", (const char *)tenum[mid].ptr);
-                    break;
-                }
-            }
-	    s = (asn1_template_prim[type].print)(el, flags);
-            switch (type) {
-            case A1T_OID:
-            case A1T_IMEMBER:
-            case A1T_BOOLEAN:
-            case A1T_INTEGER:
-            case A1T_INTEGER64:
-            case A1T_UNSIGNED:
-            case A1T_UNSIGNED64:
-                if (s)
-                    r = rk_strpoolprintf(r, "%s", s);
+
+                r = _asn1_print(t->ptr, r, flags, indent + 1, el, saved);
                 break;
-            default: {
-                char *s2 = NULL;
+            }
+            case A1_OP_SETOF:
+            case A1_OP_SEQOF: {
+                const struct template_of *el = DPOC(data, t->offset);
+                size_t ellen = _asn1_sizeofType(t->ptr);
+                const unsigned char *element = el->val;
+                unsigned int i;
 
-                if (s)
-                    (void) rk_strasvis(&s2, s, VIS_CSTYLE|VIS_TAB|VIS_NL, "\"");
-                free(s);
-                s = s2;
-                if (s)
-                    r = rk_strpoolprintf(r, "\"%s\"", s);
+                r = rk_strpoolprintf(r, "%s[", indents ? indents : "");
+                for (i = 0; r && i < el->len; i++) {
+                    if (i)
+                        r = rk_strpoolprintf(r, ",%s", indents ? indents : "");
+                    r = _asn1_print(t->ptr, r, flags, indent + 1, element, saved);
+                    element += ellen;
+                }
+                if (r)
+                    r = rk_strpoolprintf(r, "]");
+                break;
             }
-            }
-            if (!s) {
-                rk_strpoolfree(r);
-                free(indents);
-                return NULL;
-            }
-            free(s);
-	    break;
-	}
-	case A1_OP_TAG: {
-	    const void *el = DPOC(data, t->offset);
+            case A1_OP_BMEMBER: {
+                const struct asn1_template *bmember = t->ptr;
+                size_t size = bmember->offset;
+                size_t belements = A1_HEADER_LEN(bmember);
+                int first = 1;
 
-	    if (t->tt & A1_FLAG_OPTIONAL) {
-		const void * const *pel = (const void * const *)el;
-		if (*pel == NULL) {
+                bmember += belements;
+                r = rk_strpoolprintf(r, "%s[", indents ? indents : "");
+                while (r && belements) {
+                    if (r && _asn1_bmember_isset_bit(data, bmember->offset, size)) {
+                        if (!first)
+                            r = rk_strpoolprintf(r, ",");
+                        first = 0;
+                        r = rk_strpoolprintf(r, "%s\"%s\"", indents ? indents : "",
+                                             (const char *)bmember->ptr);
+                    }
+                    belements--; bmember--;
+                }
+                if (r)
+                    r = rk_strpoolprintf(r, "]");
+                break;
+            }
+            case A1_OP_CHOICE: {
+                const struct asn1_template *choice = t->ptr;
+                const unsigned int *element = DPOC(data, choice->offset);
+                unsigned int nchoices = ((uintptr_t)choice->ptr) >> 1;
+
+                if (*element > A1_HEADER_LEN(choice)) {
                     r = rk_strpoolprintf(r, "null");
-		    break;
+                } else if (*element == 0) {
+                    /* XXX If choice->tt then we should print the u.ellipsis */
+                    r = rk_strpoolprintf(r, "null");
+                } else {
+                    choice += *element;
+                    r = rk_strpoolprintf(r, "%s{\"_choice\":\"%s\",%s\"value\":",
+                                         indents ? indents : "",
+                                         (const char *)choice[nchoices].ptr,
+                                         indents ? indents : "");
+                    if (r)
+                        r = _asn1_print(choice->ptr, r, flags, indent + 1,
+                                        DPOC(data, choice->offset), NULL);
+                    if (r)
+                        r = rk_strpoolprintf(r, "}");
                 }
-		el = *pel;
-	    }
-
-	    r = _asn1_print(t->ptr, r, flags, indent + 1, el, saved);
-	    break;
-	}
-	case A1_OP_SETOF:
-	case A1_OP_SEQOF: {
-	    const struct template_of *el = DPOC(data, t->offset);
-	    size_t ellen = _asn1_sizeofType(t->ptr);
-	    const unsigned char *element = el->val;
-	    unsigned int i;
-
-            r = rk_strpoolprintf(r, "%s[", indents ? indents : "");
-	    for (i = 0; r && i < el->len; i++) {
-                if (i)
-                    r = rk_strpoolprintf(r, ",%s", indents ? indents : "");
-		r = _asn1_print(t->ptr, r, flags, indent + 1, element, saved);
-		element += ellen;
-	    }
-            if (r)
-                r = rk_strpoolprintf(r, "]");
-	    break;
-	}
-	case A1_OP_BMEMBER: {
-	    const struct asn1_template *bmember = t->ptr;
-	    size_t size = bmember->offset;
-	    size_t belements = A1_HEADER_LEN(bmember);
-            int first = 1;
-
-            bmember += belements;
-            r = rk_strpoolprintf(r, "%s[", indents ? indents : "");
-            while (r && belements) {
-                if (r && _asn1_bmember_isset_bit(data, bmember->offset, size)) {
-                    if (!first)
-                        r = rk_strpoolprintf(r, ",");
-                    first = 0;
-                    r = rk_strpoolprintf(r, "%s\"%s\"", indents ? indents : "",
-                                         (const char *)bmember->ptr);
-                }
-                belements--; bmember--;
-	    }
-            if (r)
-                r = rk_strpoolprintf(r, "]");
-	    break;
-	}
-	case A1_OP_CHOICE: {
-	    const struct asn1_template *choice = t->ptr;
-	    const unsigned int *element = DPOC(data, choice->offset);
-            unsigned int nchoices = ((uintptr_t)choice->ptr) >> 1;
-
-	    if (*element > A1_HEADER_LEN(choice)) {
-                r = rk_strpoolprintf(r, "null");
-            } else if (*element == 0) {
-                /* XXX If choice->tt then we should print the u.ellipsis */
-                r = rk_strpoolprintf(r, "null");
-	    } else {
-		choice += *element;
-                r = rk_strpoolprintf(r, "%s{\"_choice\":\"%s\",%s\"value\":",
-                                     indents ? indents : "",
-                                     (const char *)choice[nchoices].ptr,
-                                     indents ? indents : "");
-                if (r)
-                    r = _asn1_print(choice->ptr, r, flags, indent + 1,
-                                    DPOC(data, choice->offset), NULL);
-                if (r)
-                    r = rk_strpoolprintf(r, "}");
-	    }
-	    break;
-	}
-	default:
-	    ABORT_ON_ERROR();
-	    break;
-	}
-	t++;
-	elements--;
+                break;
+            }
+            default:
+                ABORT_ON_ERROR();
+                break;
+        }
+        t++;
+        elements--;
     }
     free(indents);
     if (nnames && r)
@@ -2890,184 +2890,184 @@ _asn1_copy(const struct asn1_template *t, const void *from, void *to)
     t++;
 
     if (preserve) {
-	ret = der_copy_octet_string(from, to);
-	if (ret)
-	    return ret;
+        ret = der_copy_octet_string(from, to);
+        if (ret)
+            return ret;
     }
 
     while (elements) {
-	switch (t->tt & A1_OP_MASK) {
-        case A1_OP_OPENTYPE_OBJSET: {
-            _asn1_copy_open_type(t, from, to);
-            break;
-        }
-        case A1_OP_NAME: break;
-	case A1_OP_DEFVAL: break;
-	case A1_OP_TYPE_DECORATE_EXTERN:
-	case A1_OP_TYPE_DECORATE:
-	case A1_OP_TYPE:
-	case A1_OP_TYPE_EXTERN: {
-	    const void *fel = DPOC(from, t->offset);
-	    void *tel = DPO(to, t->offset);
-	    void **ptel = (void **)tel;
-	    size_t size;
+        switch (t->tt & A1_OP_MASK) {
+            case A1_OP_OPENTYPE_OBJSET: {
+                _asn1_copy_open_type(t, from, to);
+                break;
+            }
+            case A1_OP_NAME: break;
+            case A1_OP_DEFVAL: break;
+            case A1_OP_TYPE_DECORATE_EXTERN:
+            case A1_OP_TYPE_DECORATE:
+            case A1_OP_TYPE:
+            case A1_OP_TYPE_EXTERN: {
+                const void *fel = DPOC(from, t->offset);
+                void *tel = DPO(to, t->offset);
+                void **ptel = (void **)tel;
+                size_t size;
 
-	    if ((t->tt & A1_OP_MASK) == A1_OP_TYPE ||
-                (t->tt & A1_OP_MASK) == A1_OP_TYPE_DECORATE) {
-		size = _asn1_sizeofType(t->ptr);
-	    } else {
-		const struct asn1_type_func *f = t->ptr;
-		size = f->size;
-	    }
+                if ((t->tt & A1_OP_MASK) == A1_OP_TYPE ||
+                    (t->tt & A1_OP_MASK) == A1_OP_TYPE_DECORATE) {
+                    size = _asn1_sizeofType(t->ptr);
+                } else {
+                    const struct asn1_type_func *f = t->ptr;
+                    size = f->size;
+                }
 
-	    if (t->tt & A1_FLAG_OPTIONAL) {
-		void **pfel = (void **)fel;
-		if (*pfel == NULL)
-		    break;
-		fel = *pfel;
+                if (t->tt & A1_FLAG_OPTIONAL) {
+                    void **pfel = (void **)fel;
+                    if (*pfel == NULL)
+                        break;
+                    fel = *pfel;
 
-		tel = *ptel = calloc(1, size);
-		if (tel == NULL)
-		    return ENOMEM;
-	    }
+                    tel = *ptel = calloc(1, size);
+                    if (tel == NULL)
+                        return ENOMEM;
+                }
 
-	    if ((t->tt & A1_OP_MASK) == A1_OP_TYPE ||
-                (t->tt & A1_OP_MASK) == A1_OP_TYPE_DECORATE) {
-		ret = _asn1_copy(t->ptr, fel, tel);
-	    } else if ((t->tt & A1_OP_MASK) == A1_OP_TYPE_EXTERN) {
-		const struct asn1_type_func *f = t->ptr;
-                ret = (f->copy)(fel, tel);
-	    } else {
-		const struct asn1_type_func *f = t->ptr;
-
-                /* A1_OP_TYPE_DECORATE_EXTERN */
-                if (f && f->copy)
+                if ((t->tt & A1_OP_MASK) == A1_OP_TYPE ||
+                    (t->tt & A1_OP_MASK) == A1_OP_TYPE_DECORATE) {
+                    ret = _asn1_copy(t->ptr, fel, tel);
+                } else if ((t->tt & A1_OP_MASK) == A1_OP_TYPE_EXTERN) {
+                    const struct asn1_type_func *f = t->ptr;
                     ret = (f->copy)(fel, tel);
-                else if (f)
-                    memset(tel, 0, f->size);
-	    }
+                } else {
+                    const struct asn1_type_func *f = t->ptr;
 
-	    if (ret) {
-		if (t->tt & A1_FLAG_OPTIONAL) {
-		    free(*ptel);
-		    *ptel = NULL;
-		}
-		return ret;
-	    }
-	    break;
-	}
-	case A1_OP_PARSE: {
-	    unsigned int type = A1_PARSE_TYPE(t->tt);
-	    const void *fel = DPOC(from, t->offset);
-	    void *tel = DPO(to, t->offset);
+                    /* A1_OP_TYPE_DECORATE_EXTERN */
+                    if (f && f->copy)
+                        ret = (f->copy)(fel, tel);
+                    else if (f)
+                        memset(tel, 0, f->size);
+                }
 
-	    if (type >= sizeof(asn1_template_prim)/sizeof(asn1_template_prim[0])) {
-		ABORT_ON_ERROR();
-		return ASN1_PARSE_ERROR;
-	    }
-	    ret = (asn1_template_prim[type].copy)(fel, tel);
-	    if (ret)
-		return ret;
-	    break;
-	}
-	case A1_OP_TAG: {
-	    const void *oldfrom = from;
-	    void *oldto = to;
-	    void **tel = NULL;
+                if (ret) {
+                    if (t->tt & A1_FLAG_OPTIONAL) {
+                        free(*ptel);
+                        *ptel = NULL;
+                    }
+                    return ret;
+                }
+                break;
+            }
+            case A1_OP_PARSE: {
+                unsigned int type = A1_PARSE_TYPE(t->tt);
+                const void *fel = DPOC(from, t->offset);
+                void *tel = DPO(to, t->offset);
 
-	    from = DPOC(from, t->offset);
-	    to = DPO(to, t->offset);
+                if (type >= sizeof(asn1_template_prim)/sizeof(asn1_template_prim[0])) {
+                    ABORT_ON_ERROR();
+                    return ASN1_PARSE_ERROR;
+                }
+                ret = (asn1_template_prim[type].copy)(fel, tel);
+                if (ret)
+                    return ret;
+                break;
+            }
+            case A1_OP_TAG: {
+                const void *oldfrom = from;
+                void *oldto = to;
+                void **tel = NULL;
 
-	    if (t->tt & A1_FLAG_OPTIONAL) {
-		void **fel = (void **)from;
-		tel = (void **)to;
-		if (*fel == NULL) {
-		    from = oldfrom;
-		    to = oldto;
-		    break;
-		}
-		from = *fel;
+                from = DPOC(from, t->offset);
+                to = DPO(to, t->offset);
 
-		to = *tel = calloc(1, _asn1_sizeofType(t->ptr));
-		if (to == NULL)
-		    return ENOMEM;
-	    }
+                if (t->tt & A1_FLAG_OPTIONAL) {
+                    void **fel = (void **)from;
+                    tel = (void **)to;
+                    if (*fel == NULL) {
+                        from = oldfrom;
+                        to = oldto;
+                        break;
+                    }
+                    from = *fel;
 
-	    ret = _asn1_copy(t->ptr, from, to);
-	    if (ret) {
-		if (tel) {
-		    free(*tel);
-		    *tel = NULL;
-		}
-		return ret;
-	    }
+                    to = *tel = calloc(1, _asn1_sizeofType(t->ptr));
+                    if (to == NULL)
+                        return ENOMEM;
+                }
 
-	    from = oldfrom;
-	    to = oldto;
+                ret = _asn1_copy(t->ptr, from, to);
+                if (ret) {
+                    if (tel) {
+                        free(*tel);
+                        *tel = NULL;
+                    }
+                    return ret;
+                }
 
-	    break;
-	}
-	case A1_OP_SETOF:
-	case A1_OP_SEQOF: {
-	    const struct template_of *fel = DPOC(from, t->offset);
-	    struct template_of *tel = DPO(to, t->offset);
-	    size_t ellen = _asn1_sizeofType(t->ptr);
-	    unsigned int i;
+                from = oldfrom;
+                to = oldto;
 
-	    tel->val = calloc(fel->len, ellen);
-	    if (tel->val == NULL && fel->len > 0)
-		return ENOMEM;
+                break;
+            }
+            case A1_OP_SETOF:
+            case A1_OP_SEQOF: {
+                const struct template_of *fel = DPOC(from, t->offset);
+                struct template_of *tel = DPO(to, t->offset);
+                size_t ellen = _asn1_sizeofType(t->ptr);
+                unsigned int i;
 
-	    tel->len = fel->len;
+                tel->val = calloc(fel->len, ellen);
+                if (tel->val == NULL && fel->len > 0)
+                    return ENOMEM;
 
-	    for (i = 0; i < fel->len; i++) {
-		ret = _asn1_copy(t->ptr,
-				 DPOC(fel->val, (i * ellen)),
-				 DPO(tel->val, (i *ellen)));
-		if (ret)
-		    return ret;
-	    }
-	    break;
-	}
-	case A1_OP_BMEMBER: {
-	    const struct asn1_template *bmember = t->ptr;
-	    size_t size = bmember->offset;
-	    memcpy(to, from, size);
-	    break;
-	}
-	case A1_OP_CHOICE: {
-	    const struct asn1_template *choice = t->ptr;
-	    const unsigned int *felement = DPOC(from, choice->offset);
-	    unsigned int *telement = DPO(to, choice->offset);
+                tel->len = fel->len;
 
-	    if (*felement > A1_HEADER_LEN(choice))
-		return ASN1_PARSE_ERROR;
+                for (i = 0; i < fel->len; i++) {
+                    ret = _asn1_copy(t->ptr,
+                                     DPOC(fel->val, (i * ellen)),
+                                     DPO(tel->val, (i *ellen)));
+                    if (ret)
+                        return ret;
+                }
+                break;
+            }
+            case A1_OP_BMEMBER: {
+                const struct asn1_template *bmember = t->ptr;
+                size_t size = bmember->offset;
+                memcpy(to, from, size);
+                break;
+            }
+            case A1_OP_CHOICE: {
+                const struct asn1_template *choice = t->ptr;
+                const unsigned int *felement = DPOC(from, choice->offset);
+                unsigned int *telement = DPO(to, choice->offset);
 
-	    *telement = *felement;
+                if (*felement > A1_HEADER_LEN(choice))
+                    return ASN1_PARSE_ERROR;
 
-	    if (*felement == 0) {
-                if (choice->tt)
-                    ret = der_copy_octet_string(DPOC(from, choice->tt), DPO(to, choice->tt));
-                /*
-                 * Else we should really memset clear the rest of this choice,
-                 * but we don't really know its size.
-                 */
-	    } else {
-		choice += *felement;
-		ret = _asn1_copy(choice->ptr,
-				 DPOC(from, choice->offset),
-				 DPO(to, choice->offset));
-	    }
-	    if (ret)
-		return ret;
-	    break;
-	}
-	default:
-	    ABORT_ON_ERROR();
-	    break;
-	}
-	t++;
-	elements--;
+                *telement = *felement;
+
+                if (*felement == 0) {
+                    if (choice->tt)
+                        ret = der_copy_octet_string(DPOC(from, choice->tt), DPO(to, choice->tt));
+                    /*
+                     * Else we should really memset clear the rest of this choice,
+                     * but we don't really know its size.
+                     */
+                } else {
+                    choice += *felement;
+                    ret = _asn1_copy(choice->ptr,
+                                     DPOC(from, choice->offset),
+                                     DPO(to, choice->offset));
+                }
+                if (ret)
+                    return ret;
+                break;
+            }
+            default:
+                ABORT_ON_ERROR();
+                break;
+        }
+        t++;
+        elements--;
     }
     return 0;
 }
@@ -3079,7 +3079,7 @@ _asn1_decode_top(const struct asn1_template *t, unsigned flags, const unsigned c
     memset(data, 0, t->offset);
     ret = _asn1_decode(t, flags, p, len, data, size);
     if (ret)
-	_asn1_free_top(t, data);
+        _asn1_free_top(t, data);
 
     return ret;
 }
@@ -3091,7 +3091,7 @@ _asn1_copy_top(const struct asn1_template *t, const void *from, void *to)
     memset(to, 0, t->offset);
     ret = _asn1_copy(t, from, to);
     if (ret)
-	_asn1_free_top(t, to);
+        _asn1_free_top(t, to);
 
     return ret;
 }

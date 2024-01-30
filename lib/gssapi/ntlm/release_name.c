@@ -35,18 +35,18 @@
 
 OM_uint32 GSSAPI_CALLCONV
 _gss_ntlm_release_name
-           (OM_uint32 * minor_status,
-            gss_name_t * input_name
-           )
+                      (OM_uint32 * minor_status,
+                       gss_name_t * input_name
+                      )
 {
     if (minor_status)
-	*minor_status = 0;
+        *minor_status = 0;
     if (input_name && *input_name) {
-	ntlm_name n = (ntlm_name)*input_name;
-	*input_name = GSS_C_NO_NAME;
-	free(n->user);
-	free(n->domain);
-	free(n);
+        ntlm_name n = (ntlm_name)*input_name;
+        *input_name = GSS_C_NO_NAME;
+        free(n->user);
+        free(n->domain);
+        free(n);
     }
     return GSS_S_COMPLETE;
 }

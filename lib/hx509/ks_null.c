@@ -36,8 +36,8 @@
 
 static int
 null_init(hx509_context context,
-	  hx509_certs certs, void **data, int flags,
-	  const char *residue, hx509_lock lock)
+          hx509_certs certs, void **data, int flags,
+          const char *residue, hx509_lock lock)
 {
     *data = NULL;
     return 0;
@@ -52,7 +52,7 @@ null_free(hx509_certs certs, void *data)
 
 static int
 null_iter_start(hx509_context context,
-		hx509_certs certs, void *data, void **cursor)
+                hx509_certs certs, void *data, void **cursor)
 {
     *cursor = NULL;
     return 0;
@@ -60,7 +60,7 @@ null_iter_start(hx509_context context,
 
 static int
 null_iter(hx509_context context,
-	  hx509_certs certs, void *data, void *iter, hx509_cert *cert)
+          hx509_certs certs, void *data, void *iter, hx509_cert *cert)
 {
     *cert = NULL;
     return ENOENT;
@@ -68,9 +68,9 @@ null_iter(hx509_context context,
 
 static int
 null_iter_end(hx509_context context,
-	      hx509_certs certs,
-	      void *data,
-	      void *cursor)
+              hx509_certs certs,
+              void *data,
+              void *cursor)
 {
     assert(cursor == NULL);
     return 0;

@@ -35,14 +35,14 @@
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_generate_seq_number(krb5_context context,
-			 const krb5_keyblock *key,
-			 uint32_t *seqno)
+                         const krb5_keyblock *key,
+                         uint32_t *seqno)
 {
     if (RAND_bytes((void *)seqno, sizeof(*seqno)) <= 0)
-	krb5_abortx(context, "Failed to generate random block");
+        krb5_abortx(context, "Failed to generate random block");
     /* MIT used signed numbers, lets not stomp into that space directly */
     *seqno &= 0x3fffffff;
     if (*seqno == 0)
-	*seqno = 1;
+        *seqno = 1;
     return 0;
 }

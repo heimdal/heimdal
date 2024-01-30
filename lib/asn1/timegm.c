@@ -55,41 +55,41 @@ static const unsigned ndays[2][12] ={
 time_t
 _der_timegm (struct tm *tm)
 {
-  time_t res = 0;
-  int i;
+    time_t res = 0;
+    int i;
 
-  /*
-   * See comment in _der_gmtime
-   */
-  if (tm->tm_year > ASN1_MAX_YEAR)
-      return 0;
+    /*
+     * See comment in _der_gmtime
+     */
+    if (tm->tm_year > ASN1_MAX_YEAR)
+        return 0;
 
-  if (tm->tm_year < 0)
-      return -1;
-  if (tm->tm_mon < 0 || tm->tm_mon > 11)
-      return -1;
-  if (tm->tm_mday < 1 || tm->tm_mday > (int)ndays[is_leap(tm->tm_year)][tm->tm_mon])
-      return -1;
-  if (tm->tm_hour < 0 || tm->tm_hour > 23)
-      return -1;
-  if (tm->tm_min < 0 || tm->tm_min > 59)
-      return -1;
-  if (tm->tm_sec < 0 || tm->tm_sec > 59)
-      return -1;
+    if (tm->tm_year < 0)
+        return -1;
+    if (tm->tm_mon < 0 || tm->tm_mon > 11)
+        return -1;
+    if (tm->tm_mday < 1 || tm->tm_mday > (int)ndays[is_leap(tm->tm_year)][tm->tm_mon])
+        return -1;
+    if (tm->tm_hour < 0 || tm->tm_hour > 23)
+        return -1;
+    if (tm->tm_min < 0 || tm->tm_min > 59)
+        return -1;
+    if (tm->tm_sec < 0 || tm->tm_sec > 59)
+        return -1;
 
-  for (i = 70; i < tm->tm_year; ++i)
-    res += is_leap(i) ? 366 : 365;
+    for (i = 70; i < tm->tm_year; ++i)
+        res += is_leap(i) ? 366 : 365;
 
-  for (i = 0; i < tm->tm_mon; ++i)
-    res += ndays[is_leap(tm->tm_year)][i];
-  res += tm->tm_mday - 1;
-  res *= 24;
-  res += tm->tm_hour;
-  res *= 60;
-  res += tm->tm_min;
-  res *= 60;
-  res += tm->tm_sec;
-  return res;
+    for (i = 0; i < tm->tm_mon; ++i)
+        res += ndays[is_leap(tm->tm_year)][i];
+    res += tm->tm_mday - 1;
+    res *= 24;
+    res += tm->tm_hour;
+    res *= 60;
+    res += tm->tm_min;
+    res *= 60;
+    res += tm->tm_sec;
+    return res;
 }
 
 struct tm *
@@ -111,24 +111,24 @@ _der_gmtime(time_t t, struct tm *tm)
      * denial of sevice.
      */
     if (days > (ASN1_MAX_YEAR * 365))
-	return NULL;
+        return NULL;
 
     tm->tm_year = 70;
     while(1) {
-	unsigned dayinyear = (is_leap(tm->tm_year) ? 366 : 365);
-	if (days < dayinyear)
-	    break;
-	tm->tm_year += 1;
-	days -= dayinyear;
+        unsigned dayinyear = (is_leap(tm->tm_year) ? 366 : 365);
+        if (days < dayinyear)
+            break;
+        tm->tm_year += 1;
+        days -= dayinyear;
     }
     tm->tm_mon = 0;
 
     while (1) {
-	unsigned daysinmonth = ndays[is_leap(tm->tm_year)][tm->tm_mon];
-	if (days < daysinmonth)
-	    break;
-	days -= daysinmonth;
-	tm->tm_mon++;
+        unsigned daysinmonth = ndays[is_leap(tm->tm_year)][tm->tm_mon];
+        if (days < daysinmonth)
+            break;
+        days -= daysinmonth;
+        tm->tm_mon++;
     }
     tm->tm_mday = (int)(days + 1);
 

@@ -56,23 +56,23 @@ stdio_fetch(krb5_storage * sp, void *data, size_t size)
 
     /* similar pattern to net_read() to support pipes */
     while (rem > 0) {
-	count = fread(cbuf, 1, rem, F(sp));
-	if (count < 0) {
-	    POS(sp) = -1;
-	    if (errno == EINTR)
-		continue;
-	    else
-		return count;
-	} else if (count == 0) {
-	    if (POS(sp) >= 0)
-		POS(sp) += size - rem;
-	    return size - rem;
-	}
-	cbuf += count;
-	rem -= count;
+        count = fread(cbuf, 1, rem, F(sp));
+        if (count < 0) {
+            POS(sp) = -1;
+            if (errno == EINTR)
+                continue;
+            else
+                return count;
+        } else if (count == 0) {
+            if (POS(sp) >= 0)
+                POS(sp) += size - rem;
+            return size - rem;
+        }
+        cbuf += count;
+        rem -= count;
     }
     if (POS(sp) >= 0)
-	POS(sp) += size;
+        POS(sp) += size;
     return size;
 }
 
@@ -92,10 +92,10 @@ stdio_store(krb5_storage * sp, const void *data, size_t size)
 
     /* similar pattern to net_write() to support pipes */
     while (rem > 0) {
-	count = fwrite(cbuf, 1, rem, F(sp));
-	if (count < 0) {
-	    if (errno == EINTR)
-		continue;
+        count = fwrite(cbuf, 1, rem, F(sp));
+        if (count < 0) {
+            if (errno == EINTR)
+                continue;
             /*
              * What does it mean to have a short write when using stdio?
              *
@@ -103,18 +103,18 @@ stdio_store(krb5_storage * sp, const void *data, size_t size)
              * earlier writes that appeared complete may have failed,
              * and so we don't know how much we really failed to write.
              */
-	    POS(sp) = -1;
+            POS(sp) = -1;
             return -1;
-	}
+        }
         if (count == 0) {
-	    POS(sp) = -1;
+            POS(sp) = -1;
             return -1;
-	}
-	cbuf += count;
-	rem -= count;
+        }
+        cbuf += count;
+        rem -= count;
     }
     if (POS(sp) >= 0)
-	POS(sp) += size;
+        POS(sp) += size;
     return size;
 }
 
@@ -124,10 +124,10 @@ stdio_seek(krb5_storage * sp, off_t offset, int whence)
     int save_errno = errno;
 
     if (whence == SEEK_SET && POS(sp) == offset)
-	return POS(sp);
+        return POS(sp);
 
     if (whence == SEEK_CUR && POS(sp) >= 0 && offset == 0)
-	return POS(sp);
+        return POS(sp);
 
     if (fseeko(F(sp), offset, whence) != 0)
         return -1;
@@ -145,15 +145,15 @@ stdio_trunc(krb5_storage * sp, off_t offset)
         return errno;
     tmpoff = ftello(F(sp));
     if (tmpoff < 0)
-	return errno;
+        return errno;
     if (tmpoff > offset)
-	tmpoff = offset;
+        tmpoff = offset;
     if (ftruncate(fileno(F(sp)), offset) == -1)
-	return errno;
+        return errno;
     if (fseeko(F(sp), 0, SEEK_END) == -1)
         return errno;
     if (fseeko(F(sp), tmpoff, SEEK_SET) == -1)
-	return errno;
+        return errno;
     errno = save_errno;
     POS(sp) = tmpoff;
     return 0;
@@ -163,9 +163,9 @@ static int
 stdio_sync(krb5_storage * sp)
 {
     if (fflush(F(sp)) == EOF)
-	return errno;
+        return errno;
     if (fsync(fileno(F(sp))) == -1)
-	return errno;
+        return errno;
     return 0;
 }
 
@@ -235,26 +235,26 @@ krb5_storage_stdio_from_fd(int fd_in, const char *mode)
         saved_errno = errno;
         (void) fclose(f);
         errno = saved_errno;
-	return NULL;
+        return NULL;
     }
 
     errno = ENOMEM;
     sp = malloc(sizeof(krb5_storage));
     if (sp == NULL) {
-	saved_errno = errno;
-	(void) fclose(f);
-	errno = saved_errno;
-	return NULL;
+        saved_errno = errno;
+        (void) fclose(f);
+        errno = saved_errno;
+        return NULL;
     }
 
     errno = ENOMEM;
     sp->data = malloc(sizeof(stdio_storage));
     if (sp->data == NULL) {
-	saved_errno = errno;
-	(void) fclose(f);
-	free(sp);
-	errno = saved_errno;
-	return NULL;
+        saved_errno = errno;
+        (void) fclose(f);
+        free(sp);
+        errno = saved_errno;
+        return NULL;
     }
     sp->flags = 0;
     sp->eof_code = HEIM_ERR_EOF;

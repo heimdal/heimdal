@@ -48,6 +48,6 @@ emalloc (size_t sz)
     void *tmp = malloc (sz);
 
     if (tmp == NULL && sz != 0)
-	errx (1, "malloc %lu failed", (unsigned long)sz);
+        errx (1, "malloc %lu failed", (unsigned long)sz);
     return tmp;
 }

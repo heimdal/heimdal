@@ -33,8 +33,8 @@
 
 OM_uint32 GSSAPI_CALLCONV
 _gss_sanon_duplicate_cred(OM_uint32 *minor,
-			  gss_const_cred_id_t input_cred_handle,
-			  gss_cred_id_t *output_cred_handle)
+                          gss_const_cred_id_t input_cred_handle,
+                          gss_cred_id_t *output_cred_handle)
 {
     *minor = 0;
     *output_cred_handle = (gss_cred_id_t)input_cred_handle;

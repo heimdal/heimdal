@@ -51,21 +51,21 @@ generate_2int (const Type *t, const char *gen_name)
     Member *m;
 
     fprintf (headerfile,
-	     "uint64_t %s2int(%s);\n",
-	     gen_name, gen_name);
+             "uint64_t %s2int(%s);\n",
+             gen_name, gen_name);
 
     fprintf (get_code_file(),
-	     "uint64_t %s2int(%s f)\n"
-	     "{\n"
-	     "uint64_t r = 0;\n",
-	     gen_name, gen_name);
+             "uint64_t %s2int(%s f)\n"
+             "{\n"
+             "uint64_t r = 0;\n",
+             gen_name, gen_name);
 
     HEIM_TAILQ_FOREACH(m, t->members, members) {
-	fprintf (get_code_file(), "if(f.%s) r |= (1ULL << %d);\n",
-		 m->gen_name, (int)m->val);
+        fprintf (get_code_file(), "if(f.%s) r |= (1ULL << %d);\n",
+                 m->gen_name, (int)m->val);
     }
     fprintf (get_code_file(), "return r;\n"
-	     "}\n\n");
+             "}\n\n");
 }
 
 static void
@@ -74,24 +74,24 @@ generate_int2 (const Type *t, const char *gen_name)
     Member *m;
 
     fprintf (headerfile,
-	     "%s int2%s(uint64_t);\n",
-	     gen_name, gen_name);
+             "%s int2%s(uint64_t);\n",
+             gen_name, gen_name);
 
     fprintf (get_code_file(),
-	     "%s int2%s(uint64_t n)\n"
-	     "{\n"
-	     "\t%s flags;\n\n"
-	     "\tmemset(&flags, 0, sizeof(flags));\n\n",
-	     gen_name, gen_name, gen_name);
+             "%s int2%s(uint64_t n)\n"
+             "{\n"
+             "\t%s flags;\n\n"
+             "\tmemset(&flags, 0, sizeof(flags));\n\n",
+             gen_name, gen_name, gen_name);
 
     if(t->members) {
-	HEIM_TAILQ_FOREACH(m, t->members, members) {
-	    fprintf (get_code_file(), "\tflags.%s = (n >> %d) & 1;\n",
-		     m->gen_name, (int)m->val);
-	}
+        HEIM_TAILQ_FOREACH(m, t->members, members) {
+            fprintf (get_code_file(), "\tflags.%s = (n >> %d) & 1;\n",
+                     m->gen_name, (int)m->val);
+        }
     }
     fprintf (get_code_file(), "\treturn flags;\n"
-	     "}\n\n");
+             "}\n\n");
 }
 
 /*
@@ -108,19 +108,19 @@ generate_units (const Type *t, const char *gen_name)
              gen_name);
 
     fprintf (get_code_file(),
-	     "static struct units %s_units[] = {\n",
-	     gen_name);
+             "static struct units %s_units[] = {\n",
+             gen_name);
 
     if(t->members) {
-	HEIM_TAILQ_FOREACH_REVERSE(m, t->members, memhead, members) {
-	    fprintf (get_code_file(),
-		     "\t{\"%s\",\t1ULL << %d},\n", m->name, (int)m->val);
-	}
+        HEIM_TAILQ_FOREACH_REVERSE(m, t->members, memhead, members) {
+            fprintf (get_code_file(),
+                     "\t{\"%s\",\t1ULL << %d},\n", m->name, (int)m->val);
+        }
     }
 
     fprintf (get_code_file(),
-	     "\t{NULL,\t0}\n"
-	     "};\n\n");
+             "\t{NULL,\t0}\n"
+             "};\n\n");
 
     fprintf (get_code_file(),
              "const struct units * asn1_%s_units(void){\n"
@@ -135,28 +135,28 @@ void
 generate_glue (const Type *t, const char *gen_name)
 {
     switch(t->type) {
-    case TTag:
-	generate_glue(t->subtype, gen_name);
-	break;
-    case TBitString : {
-        Member *m;
-
-        if (HEIM_TAILQ_EMPTY(t->members))
+        case TTag:
+            generate_glue(t->subtype, gen_name);
             break;
-        HEIM_TAILQ_FOREACH(m, t->members, members) {
-            if (m->val > 63) {
-                warnx("Not generating 2int, int2, or units for %s due to "
-                      "having a member valued more than 63", gen_name);
-                return;
+        case TBitString : {
+            Member *m;
+
+            if (HEIM_TAILQ_EMPTY(t->members))
+                break;
+            HEIM_TAILQ_FOREACH(m, t->members, members) {
+                if (m->val > 63) {
+                    warnx("Not generating 2int, int2, or units for %s due to "
+                          "having a member valued more than 63", gen_name);
+                    return;
+                }
             }
+            generate_2int (t, gen_name);
+            generate_int2 (t, gen_name);
+            if (parse_units_flag)
+                generate_units (t, gen_name);
+            break;
         }
-        generate_2int (t, gen_name);
-        generate_int2 (t, gen_name);
-        if (parse_units_flag)
-            generate_units (t, gen_name);
-	break;
-    }
-    default :
-	break;
+        default :
+            break;
     }
 }

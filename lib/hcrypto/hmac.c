@@ -46,23 +46,23 @@ void
 HMAC_CTX_cleanup(HMAC_CTX *ctx)
 {
     if (ctx->buf) {
-	memset_s(ctx->buf, ctx->key_length, 0, ctx->key_length);
-	free(ctx->buf);
-	ctx->buf = NULL;
+        memset_s(ctx->buf, ctx->key_length, 0, ctx->key_length);
+        free(ctx->buf);
+        ctx->buf = NULL;
     }
     if (ctx->opad) {
-	memset_s(ctx->opad, EVP_MD_block_size(ctx->md), 0, EVP_MD_block_size(ctx->md));
-	free(ctx->opad);
-	ctx->opad = NULL;
+        memset_s(ctx->opad, EVP_MD_block_size(ctx->md), 0, EVP_MD_block_size(ctx->md));
+        free(ctx->opad);
+        ctx->opad = NULL;
     }
     if (ctx->ipad) {
-	memset_s(ctx->ipad, EVP_MD_block_size(ctx->md), 0, EVP_MD_block_size(ctx->md));
-	free(ctx->ipad);
-	ctx->ipad = NULL;
+        memset_s(ctx->ipad, EVP_MD_block_size(ctx->md), 0, EVP_MD_block_size(ctx->md));
+        free(ctx->ipad);
+        ctx->ipad = NULL;
     }
     if (ctx->ctx) {
-	EVP_MD_CTX_destroy(ctx->ctx);
-	ctx->ctx = NULL;
+        EVP_MD_CTX_destroy(ctx->ctx);
+        ctx->ctx = NULL;
     }
 }
 
@@ -87,10 +87,10 @@ HMAC_size(const HMAC_CTX *ctx)
 
 int
 HMAC_Init_ex(HMAC_CTX *ctx,
-	     const void *key,
-	     size_t keylen,
-	     const EVP_MD *md,
-	     ENGINE *engine)
+             const void *key,
+             size_t keylen,
+             const EVP_MD *md,
+             ENGINE *engine)
 {
     unsigned char *p;
     size_t i, blockSize;
@@ -101,12 +101,12 @@ HMAC_Init_ex(HMAC_CTX *ctx,
         if (ctx->md != NULL)
             HMAC_CTX_cleanup(ctx);
 
-	ctx->md = md;
-	ctx->key_length = EVP_MD_size(ctx->md);
+        ctx->md = md;
+        ctx->key_length = EVP_MD_size(ctx->md);
         ctx->opad = NULL;
         ctx->ipad = NULL;
         ctx->ctx = NULL;
-	ctx->buf = malloc(ctx->key_length);
+        ctx->buf = malloc(ctx->key_length);
         if (ctx->buf)
             ctx->opad = malloc(blockSize);
         if (ctx->opad)
@@ -116,25 +116,25 @@ HMAC_Init_ex(HMAC_CTX *ctx,
     }
     /* We do this check here to quiet scan-build */
     if (!ctx->buf || !ctx->opad || !ctx->ipad || !ctx->ctx)
-	return 0;
+        return 0;
 #if 0
     ctx->engine = engine;
 #endif
 
     if (keylen > blockSize) {
-	if (EVP_Digest(key, keylen, ctx->buf, NULL, ctx->md, engine) == 0)
+        if (EVP_Digest(key, keylen, ctx->buf, NULL, ctx->md, engine) == 0)
             return 0;
-	key = ctx->buf;
-	keylen = EVP_MD_size(ctx->md);
+        key = ctx->buf;
+        keylen = EVP_MD_size(ctx->md);
     }
 
     memset(ctx->ipad, 0x36, blockSize);
     memset(ctx->opad, 0x5c, blockSize);
 
     for (i = 0, p = ctx->ipad; i < keylen; i++)
-	p[i] ^= ((const unsigned char *)key)[i];
+        p[i] ^= ((const unsigned char *)key)[i];
     for (i = 0, p = ctx->opad; i < keylen; i++)
-	p[i] ^= ((const unsigned char *)key)[i];
+        p[i] ^= ((const unsigned char *)key)[i];
 
     if (EVP_DigestInit_ex(ctx->ctx, ctx->md, ctx->engine) == 0)
         return 0;

@@ -42,10 +42,10 @@ static gss_OID name_list[] = {
 };
 
 OM_uint32 GSSAPI_CALLCONV _gsskrb5_inquire_names_for_mech (
-            OM_uint32 * minor_status,
-            const gss_OID mechanism,
-            gss_OID_set * name_types
-           )
+                                                           OM_uint32 * minor_status,
+                                                           const gss_OID mechanism,
+                                                           gss_OID_set * name_types
+                                                          )
 {
     OM_uint32 ret;
     int i;
@@ -53,25 +53,25 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_inquire_names_for_mech (
     *minor_status = 0;
 
     if (gss_oid_equal(mechanism, GSS_KRB5_MECHANISM) == 0 &&
-	gss_oid_equal(mechanism, GSS_C_NULL_OID) == 0) {
-	*name_types = GSS_C_NO_OID_SET;
-	return GSS_S_BAD_MECH;
+        gss_oid_equal(mechanism, GSS_C_NULL_OID) == 0) {
+        *name_types = GSS_C_NO_OID_SET;
+        return GSS_S_BAD_MECH;
     }
 
     ret = gss_create_empty_oid_set(minor_status, name_types);
     if (ret != GSS_S_COMPLETE)
-	return ret;
+        return ret;
 
     for (i = 0; name_list[i] != NULL; i++) {
-	ret = gss_add_oid_set_member(minor_status,
-				     name_list[i],
-				     name_types);
-	if (ret != GSS_S_COMPLETE)
-	    break;
+        ret = gss_add_oid_set_member(minor_status,
+                                     name_list[i],
+                                     name_types);
+        if (ret != GSS_S_COMPLETE)
+            break;
     }
 
     if (ret != GSS_S_COMPLETE)
-	gss_release_oid_set(NULL, name_types);
+        gss_release_oid_set(NULL, name_types);
 
     return GSS_S_COMPLETE;
 }

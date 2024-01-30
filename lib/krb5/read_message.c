@@ -35,8 +35,8 @@
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_read_message (krb5_context context,
-		   krb5_pointer p_fd,
-		   krb5_data *data)
+                   krb5_pointer p_fd,
+                   krb5_data *data)
 {
     krb5_error_code ret;
     uint32_t len;
@@ -46,41 +46,41 @@ krb5_read_message (krb5_context context,
 
     ret = krb5_net_read (context, p_fd, buf, 4);
     if(ret == -1) {
-	ret = errno;
-	krb5_clear_error_message (context);
-	return ret;
+        ret = errno;
+        krb5_clear_error_message (context);
+        return ret;
     }
     if(ret < 4) {
-	krb5_clear_error_message(context);
-	return HEIM_ERR_EOF;
+        krb5_clear_error_message(context);
+        return HEIM_ERR_EOF;
     }
     len = (buf[0] << 24) | (buf[1] << 16) | (buf[2] << 8) | buf[3];
     ret = krb5_data_alloc (data, len);
     if (ret) {
-	krb5_clear_error_message(context);
-	return ret;
+        krb5_clear_error_message(context);
+        return ret;
     }
     if (krb5_net_read (context, p_fd, data->data, len) != len) {
-	ret = errno;
-	krb5_data_free (data);
-	krb5_clear_error_message (context);
-	return ret;
+        ret = errno;
+        krb5_data_free (data);
+        krb5_clear_error_message (context);
+        return ret;
     }
     return 0;
 }
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_read_priv_message(krb5_context context,
-		       krb5_auth_context ac,
-		       krb5_pointer p_fd,
-		       krb5_data *data)
+                       krb5_auth_context ac,
+                       krb5_pointer p_fd,
+                       krb5_data *data)
 {
     krb5_error_code ret;
     krb5_data packet;
 
     ret = krb5_read_message(context, p_fd, &packet);
     if(ret)
-	return ret;
+        return ret;
     ret = krb5_rd_priv (context, ac, &packet, data, NULL);
     krb5_data_free(&packet);
     return ret;
@@ -88,16 +88,16 @@ krb5_read_priv_message(krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_read_safe_message(krb5_context context,
-		       krb5_auth_context ac,
-		       krb5_pointer p_fd,
-		       krb5_data *data)
+                       krb5_auth_context ac,
+                       krb5_pointer p_fd,
+                       krb5_data *data)
 {
     krb5_error_code ret;
     krb5_data packet;
 
     ret = krb5_read_message(context, p_fd, &packet);
     if(ret)
-	return ret;
+        return ret;
     ret = krb5_rd_safe (context, ac, &packet, data, NULL);
     krb5_data_free(&packet);
     return ret;

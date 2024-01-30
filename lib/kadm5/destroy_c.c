@@ -46,13 +46,13 @@ kadm5_c_destroy(void *server_handle)
     if (context->sock != rk_INVALID_SOCKET)
         rk_closesocket(context->sock);
     if (context->client_name)
-	free(context->client_name);
+        free(context->client_name);
     if (context->service_name)
-	free(context->service_name);
+        free(context->service_name);
     if (context->ac != NULL)
-	krb5_auth_con_free(context->context, context->ac);
+        krb5_auth_con_free(context->context, context->ac);
     if(context->my_context)
-	krb5_free_context(context->context);
+        krb5_free_context(context->context);
     free(context);
     return 0;
 }

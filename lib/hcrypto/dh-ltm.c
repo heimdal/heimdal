@@ -50,8 +50,8 @@ BN2mpz(mp_int *s, const BIGNUM *bn)
     p = malloc(len);
     BN_bn2bin(bn, p);
     if (mp_from_ubin(s, p, len) != MP_OKAY) {
-	free(p);
-	return -1;
+        free(p);
+        return -1;
     }
     free(p);
     return 0;
@@ -68,10 +68,10 @@ mpz2BN(mp_int *s)
     size = mp_ubin_size(s);
     p = malloc(size);
     if (p == NULL)
-	return NULL;
+        return NULL;
     if (mp_to_ubin(s, p, SIZE_MAX, NULL) != MP_OKAY) {
-	free(p);
-	return NULL;
+        free(p);
+        return NULL;
     };
 
     bn = BN_bin2bn(p, size, NULL);
@@ -94,68 +94,68 @@ ltm_dh_generate_key(DH *dh)
     int res;
 
     if (dh->p == NULL || dh->g == NULL)
-	return 0;
+        return 0;
 
     while (times++ < DH_NUM_TRIES) {
-	if (!have_private_key) {
-	    size_t bits = BN_num_bits(dh->p);
+        if (!have_private_key) {
+            size_t bits = BN_num_bits(dh->p);
 
-	    if (dh->priv_key)
-		BN_free(dh->priv_key);
+            if (dh->priv_key)
+                BN_free(dh->priv_key);
 
-	    dh->priv_key = BN_new();
-	    if (dh->priv_key == NULL)
-		return 0;
-	    if (!BN_rand(dh->priv_key, bits - 1, 0, 0)) {
-		BN_clear_free(dh->priv_key);
-		dh->priv_key = NULL;
-		return 0;
-	    }
-	}
-	if (dh->pub_key) {
-	    BN_free(dh->pub_key);
-	    dh->pub_key = NULL;
-	}
+            dh->priv_key = BN_new();
+            if (dh->priv_key == NULL)
+                return 0;
+            if (!BN_rand(dh->priv_key, bits - 1, 0, 0)) {
+                BN_clear_free(dh->priv_key);
+                dh->priv_key = NULL;
+                return 0;
+            }
+        }
+        if (dh->pub_key) {
+            BN_free(dh->pub_key);
+            dh->pub_key = NULL;
+        }
 
-	if (mp_init_multi(&pub, &priv_key, &g, &p, NULL) != MP_OKAY)
-	    continue;
+        if (mp_init_multi(&pub, &priv_key, &g, &p, NULL) != MP_OKAY)
+            continue;
 
-	if (BN2mpz(&priv_key, dh->priv_key) != 0)
-	    continue;
+        if (BN2mpz(&priv_key, dh->priv_key) != 0)
+            continue;
 
-	if (BN2mpz(&g, dh->g) != 0)
-	    continue;
+        if (BN2mpz(&g, dh->g) != 0)
+            continue;
 
-	if (BN2mpz(&p, dh->p) != 0)
-	    continue;
+        if (BN2mpz(&p, dh->p) != 0)
+            continue;
 
-	res = mp_exptmod(&g, &priv_key, &p, &pub);
+        res = mp_exptmod(&g, &priv_key, &p, &pub);
 
-	mp_clear_multi(&priv_key, &g, &p, NULL);
-	if (res != 0)
-	    continue;
+        mp_clear_multi(&priv_key, &g, &p, NULL);
+        if (res != 0)
+            continue;
 
-	dh->pub_key = mpz2BN(&pub);
-	mp_clear(&pub);
-	if (dh->pub_key == NULL)
-	    return 0;
+        dh->pub_key = mpz2BN(&pub);
+        mp_clear(&pub);
+        if (dh->pub_key == NULL)
+            return 0;
 
-	if (DH_check_pubkey(dh, dh->pub_key, &codes) && codes == 0)
-	    break;
-	if (have_private_key)
-	    return 0;
+        if (DH_check_pubkey(dh, dh->pub_key, &codes) && codes == 0)
+            break;
+        if (have_private_key)
+            return 0;
     }
 
     if (times >= DH_NUM_TRIES) {
-	if (!have_private_key && dh->priv_key) {
-	    BN_free(dh->priv_key);
-	    dh->priv_key = NULL;
-	}
-	if (dh->pub_key) {
-	    BN_free(dh->pub_key);
-	    dh->pub_key = NULL;
-	}
-	return 0;
+        if (!have_private_key && dh->priv_key) {
+            BN_free(dh->priv_key);
+            dh->priv_key = NULL;
+        }
+        if (dh->pub_key) {
+            BN_free(dh->pub_key);
+            dh->pub_key = NULL;
+        }
+        return 0;
     }
 
     return 1;
@@ -168,46 +168,46 @@ ltm_dh_compute_key(unsigned char *shared, const BIGNUM * pub, DH *dh)
     int ret;
 
     if (dh->pub_key == NULL || dh->g == NULL || dh->priv_key == NULL)
-	return -1;
+        return -1;
 
     if (mp_init_multi(&s, &priv_key, &p, &peer_pub, NULL) != MP_OKAY)
         return -1;
 
     if (BN2mpz(&p, dh->p) != 0) {
-	ret = -1;
-	goto out;
+        ret = -1;
+        goto out;
     }
 
     if (BN2mpz(&peer_pub, pub) != 0) {
-	ret = 1;
-	goto out;
+        ret = 1;
+        goto out;
     }
 
     /* check if peers pubkey is reasonable */
     if (mp_isneg(&peer_pub)
-	|| mp_cmp(&peer_pub, &p) >= 0
-	|| mp_cmp_d(&peer_pub, 1) <= 0)
+        || mp_cmp(&peer_pub, &p) >= 0
+        || mp_cmp_d(&peer_pub, 1) <= 0)
     {
-	ret = -1;
-	goto out;
+        ret = -1;
+        goto out;
     }
 
     if (BN2mpz(&priv_key, dh->priv_key) != 0) {
-	ret = -1;
-	goto out;
+        ret = -1;
+        goto out;
     }
 
     ret = mp_exptmod(&peer_pub, &priv_key, &p, &s);
     if (ret != 0) {
-	ret = -1;
-	goto out;
+        ret = -1;
+        goto out;
     }
 
     ret = mp_ubin_size(&s);
     if (mp_to_ubin(&s, shared, SIZE_MAX, NULL) != MP_OKAY)
         ret = -1;
 
- out:
+out:
     mp_clear_multi(&s, &priv_key, &p, &peer_pub, NULL);
 
     return ret;

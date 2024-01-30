@@ -50,9 +50,9 @@ static void
 usage (int ret)
 {
     arg_printusage (args,
-		    sizeof(args)/sizeof(*args),
-		    NULL,
-		    "[realms ...]");
+                    sizeof(args)/sizeof(*args),
+                    NULL,
+                    "[realms ...]");
     exit (ret);
 }
 
@@ -63,21 +63,21 @@ main(int argc, char **argv)
     int i, j;
     krb5_context context;
     int types[] = {KRB5_KRBHST_KDC, KRB5_KRBHST_ADMIN, KRB5_KRBHST_CHANGEPW,
-		   KRB5_KRBHST_KRB524};
+                   KRB5_KRBHST_KRB524};
     const char *type_str[] = {"kdc", "admin", "changepw", "krb524"};
     int optidx = 0;
 
     setprogname (argv[0]);
 
     if(getarg(args, sizeof(args) / sizeof(args[0]), argc, argv, &optidx))
-	usage(1);
+        usage(1);
 
     if (help_flag)
-	usage (0);
+        usage (0);
 
     if(version_flag){
-	print_version(NULL);
-	exit(0);
+        print_version(NULL);
+        exit(0);
     }
 
     argc -= optidx;
@@ -87,23 +87,23 @@ main(int argc, char **argv)
     if (ret)
         krb5_err(NULL, 1, ret, "Failed to initialize context");
     for(i = 0; i < argc; i++) {
-	krb5_krbhst_handle handle;
-	char host[MAXHOSTNAMELEN];
+        krb5_krbhst_handle handle;
+        char host[MAXHOSTNAMELEN];
 
-	for (j = 0; j < sizeof(types)/sizeof(*types); ++j) {
-	    printf ("%s for %s:\n", type_str[j], argv[i]);
+        for (j = 0; j < sizeof(types)/sizeof(*types); ++j) {
+            printf ("%s for %s:\n", type_str[j], argv[i]);
 
-	    ret = krb5_krbhst_init(context, argv[i], types[j], &handle);
+            ret = krb5_krbhst_init(context, argv[i], types[j], &handle);
             if (ret)
                 krb5_err(context, 1, ret, "Could not init krbhst iterator");
-	    while ((ret = krb5_krbhst_next_as_string(context, handle, host,
+            while ((ret = krb5_krbhst_next_as_string(context, handle, host,
                                                      sizeof(host))) == 0)
-		printf("\thost: %s\n", host);
-	    krb5_krbhst_reset(context, handle);
-	    printf("\n");
+                printf("\thost: %s\n", host);
+            krb5_krbhst_reset(context, handle);
+            printf("\n");
             if (ret)
                 krb5_err(context, 1, ret, "Could not iterate all krbhst");
-	}
+        }
     }
     return 0;
 }

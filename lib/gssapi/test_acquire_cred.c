@@ -52,10 +52,10 @@ static void
 print_time(OM_uint32 time_rec)
 {
     if (time_rec == GSS_C_INDEFINITE) {
-	printf("cred never expire\n");
+        printf("cred never expire\n");
     } else {
-	time_t t = time_rec + time(NULL);
-	printf("expiration time: %s", ctime(&t));
+        time_t t = time_rec + time(NULL);
+        printf("expiration time: %s", ctime(&t));
     }
 }
 
@@ -69,26 +69,26 @@ test_add(gss_cred_id_t cred_handle)
     OM_uint32 time_rec;
 
     major_status = gss_add_cred (&minor_status,
-				 cred_handle,
-				 GSS_C_NO_NAME,
-				 GSS_KRB5_MECHANISM,
-				 GSS_C_INITIATE,
-				 0,
-				 0,
-				 &copy_cred,
-				 NULL,
-				 &time_rec,
-				 NULL);
+                                 cred_handle,
+                                 GSS_C_NO_NAME,
+                                 GSS_KRB5_MECHANISM,
+                                 GSS_C_INITIATE,
+                                 0,
+                                 0,
+                                 &copy_cred,
+                                 NULL,
+                                 &time_rec,
+                                 NULL);
 
     if (GSS_ERROR(major_status))
-	errx(1, "add_cred failed");
+        errx(1, "add_cred failed");
 
     print_time(time_rec);
 
     major_status = gss_release_cred(&minor_status,
-				    &copy_cred);
+                                    &copy_cred);
     if (GSS_ERROR(major_status))
-	errx(1, "release_cred failed");
+        errx(1, "release_cred failed");
 }
 
 static void
@@ -99,15 +99,15 @@ copy_cred(void)
     OM_uint32 time_rec;
 
     major_status = gss_acquire_cred(&minor_status,
-				    GSS_C_NO_NAME,
-				    0,
-				    NULL,
-				    GSS_C_INITIATE,
-				    &cred_handle,
-				    NULL,
-				    &time_rec);
+                                    GSS_C_NO_NAME,
+                                    0,
+                                    NULL,
+                                    GSS_C_INITIATE,
+                                    &cred_handle,
+                                    NULL,
+                                    &time_rec);
     if (GSS_ERROR(major_status))
-	errx(1, "acquire_cred failed");
+        errx(1, "acquire_cred failed");
 
     print_time(time_rec);
 
@@ -116,18 +116,18 @@ copy_cred(void)
     test_add(cred_handle);
 
     major_status = gss_release_cred(&minor_status,
-				    &cred_handle);
+                                    &cred_handle);
     if (GSS_ERROR(major_status))
-	errx(1, "release_cred failed");
+        errx(1, "release_cred failed");
 }
 #endif
 
 static gss_cred_id_t
 acquire_cred_service(const char *service,
-		     gss_OID nametype,
-		     gss_OID_set oidset,
-		     gss_cred_usage_t usage,
-		     gss_const_key_value_set_t cred_store)
+                     gss_OID nametype,
+                     gss_OID_set oidset,
+                     gss_cred_usage_t usage,
+                     gss_const_key_value_set_t cred_store)
 {
     OM_uint32 major_status, minor_status;
     gss_cred_id_t cred_handle;
@@ -136,39 +136,39 @@ acquire_cred_service(const char *service,
     gss_name_t name = GSS_C_NO_NAME;
 
     if (service) {
-	name_buffer.value = rk_UNCONST(service);
-	name_buffer.length = strlen(service);
+        name_buffer.value = rk_UNCONST(service);
+        name_buffer.length = strlen(service);
 
-	major_status = gss_import_name(&minor_status,
-				       &name_buffer,
-				       nametype,
-				       &name);
-	if (GSS_ERROR(major_status))
-	    errx(1, "import_name failed");
+        major_status = gss_import_name(&minor_status,
+                                       &name_buffer,
+                                       nametype,
+                                       &name);
+        if (GSS_ERROR(major_status))
+            errx(1, "import_name failed");
     }
 
     major_status = gss_acquire_cred_from(&minor_status,
-					 name,
-					 0,
-					 oidset,
-					 usage,
-					 cred_store,
-					 &cred_handle,
-					 NULL,
-					 &time_rec);
+                                         name,
+                                         0,
+                                         oidset,
+                                         usage,
+                                         cred_store,
+                                         &cred_handle,
+                                         NULL,
+                                         &time_rec);
     if (GSS_ERROR(major_status)) {
-	warnx("acquire_cred failed: %s",
-	     gssapi_err(major_status, minor_status, GSS_C_NO_OID));
+        warnx("acquire_cred failed: %s",
+             gssapi_err(major_status, minor_status, GSS_C_NO_OID));
     } else {
-	print_time(time_rec);
-	gss_release_cred(&minor_status, &cred_handle);
+        print_time(time_rec);
+        gss_release_cred(&minor_status, &cred_handle);
     }
 
     if (name != GSS_C_NO_NAME)
-	gss_release_name(&minor_status, &name);
+        gss_release_name(&minor_status, &name);
 
     if (GSS_ERROR(major_status))
-	exit(1);
+        exit(1);
 
     return cred_handle;
 }
@@ -225,117 +225,117 @@ main(int argc, char **argv)
 
     setprogname(argv[0]);
     if(getarg(args, sizeof(args) / sizeof(args[0]), argc, argv, &optidx))
-	usage(1);
+        usage(1);
 
     if (help_flag)
-	usage (0);
+        usage (0);
 
     if(version_flag){
-	print_version(NULL);
-	exit(0);
+        print_version(NULL);
+        exit(0);
     }
 
     argc -= optidx;
     argv += optidx;
 
     if (argc != 0)
-	usage(1);
+        usage(1);
 
     if (acquire_type) {
-	if (strcasecmp(acquire_type, "both") == 0)
-	    cred_usage = GSS_C_BOTH;
-	else if (strcasecmp(acquire_type, "accept") == 0)
-	    cred_usage = GSS_C_ACCEPT;
-	else if (strcasecmp(acquire_type, "initiate") == 0)
-	    cred_usage = GSS_C_INITIATE;
-	else
-	    errx(1, "unknown type %s", acquire_type);
+        if (strcasecmp(acquire_type, "both") == 0)
+            cred_usage = GSS_C_BOTH;
+        else if (strcasecmp(acquire_type, "accept") == 0)
+            cred_usage = GSS_C_ACCEPT;
+        else if (strcasecmp(acquire_type, "initiate") == 0)
+            cred_usage = GSS_C_INITIATE;
+        else
+            errx(1, "unknown type %s", acquire_type);
     }
 
     if (name_type) {
-	if (strcasecmp("hostbased-service", name_type) == 0)
-	    type = GSS_C_NT_HOSTBASED_SERVICE;
-	else if (strcasecmp("user-name", name_type) == 0)
-	    type = GSS_C_NT_USER_NAME;
-	else
-	    errx(1, "unknown name type %s", name_type);
+        if (strcasecmp("hostbased-service", name_type) == 0)
+            type = GSS_C_NT_HOSTBASED_SERVICE;
+        else if (strcasecmp("user-name", name_type) == 0)
+            type = GSS_C_NT_USER_NAME;
+        else
+            errx(1, "unknown name type %s", name_type);
     }
 
     if (ccache) {
-	store.elements[store.count].key = "ccache";
-	store.elements[store.count].value = ccache;
-	store.count++;
+        store.elements[store.count].key = "ccache";
+        store.elements[store.count].value = ccache;
+        store.count++;
     }
     if (client_keytab) {
-	store.elements[store.count].key = "client_keytab";
-	store.elements[store.count].value = client_keytab;
-	store.count++;
+        store.elements[store.count].key = "client_keytab";
+        store.elements[store.count].value = client_keytab;
+        store.count++;
     }
 
     if (store.count)
-	storep = &store;
+        storep = &store;
 
     if (kerberos_flag) {
-	mechoid = GSS_KRB5_MECHANISM;
+        mechoid = GSS_KRB5_MECHANISM;
 
-	maj_stat = gss_create_empty_oid_set(&min_stat, &oidset);
-	if (maj_stat != GSS_S_COMPLETE)
-	    errx(1, "gss_create_empty_oid_set: %s",
-		 gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));
+        maj_stat = gss_create_empty_oid_set(&min_stat, &oidset);
+        if (maj_stat != GSS_S_COMPLETE)
+            errx(1, "gss_create_empty_oid_set: %s",
+                 gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));
 
-	maj_stat = gss_add_oid_set_member(&min_stat, GSS_KRB5_MECHANISM, &oidset);
-	if (maj_stat != GSS_S_COMPLETE)
-	    errx(1, "gss_add_oid_set_member: %s",
-		 gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));
+        maj_stat = gss_add_oid_set_member(&min_stat, GSS_KRB5_MECHANISM, &oidset);
+        if (maj_stat != GSS_S_COMPLETE)
+            errx(1, "gss_add_oid_set_member: %s",
+                 gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));
     }
 
     if (target_name) {
-	gss_buffer_desc name;
+        gss_buffer_desc name;
 
-	name.value = target_name;
-	name.length = strlen(target_name);
-	maj_stat = gss_import_name(&min_stat, &name,
-				   GSS_C_NT_HOSTBASED_SERVICE, &target);
-	if (maj_stat != GSS_S_COMPLETE)
-	    errx(1, "gss_import_name: %s",
-		 gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));
+        name.value = target_name;
+        name.length = strlen(target_name);
+        maj_stat = gss_import_name(&min_stat, &name,
+                                   GSS_C_NT_HOSTBASED_SERVICE, &target);
+        if (maj_stat != GSS_S_COMPLETE)
+            errx(1, "gss_import_name: %s",
+                 gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));
     }
 
     for (i = 0; i < num_loops; i++) {
 
-	cred = acquire_cred_service(acquire_name, type, oidset, cred_usage, storep);
+        cred = acquire_cred_service(acquire_name, type, oidset, cred_usage, storep);
 
-	if (enctype) {
-	    int32_t enctypelist = enctype;
+        if (enctype) {
+            int32_t enctypelist = enctype;
 
-	    maj_stat = gss_krb5_set_allowable_enctypes(&min_stat, cred,
-						       1, &enctypelist);
-	    if (maj_stat)
-		errx(1, "gss_krb5_set_allowable_enctypes: %s",
-		     gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));
-	}
+            maj_stat = gss_krb5_set_allowable_enctypes(&min_stat, cred,
+                                                       1, &enctypelist);
+            if (maj_stat)
+                errx(1, "gss_krb5_set_allowable_enctypes: %s",
+                     gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));
+        }
 
-	if (target) {
-	    gss_ctx_id_t context = GSS_C_NO_CONTEXT;
-	    gss_buffer_desc out;
+        if (target) {
+            gss_ctx_id_t context = GSS_C_NO_CONTEXT;
+            gss_buffer_desc out;
 
-	    out.length = 0;
-	    out.value = NULL;
+            out.length = 0;
+            out.value = NULL;
 
-	    maj_stat = gss_init_sec_context(&min_stat,
-					    cred, &context,
-					    target, mechoid,
-					    GSS_C_MUTUAL_FLAG, 0, NULL,
-					    GSS_C_NO_BUFFER, NULL,
-					    &out, NULL, NULL);
-	    if (maj_stat != GSS_S_COMPLETE && maj_stat != GSS_S_CONTINUE_NEEDED)
-		errx(1, "init_sec_context failed: %s",
-		     gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));
+            maj_stat = gss_init_sec_context(&min_stat,
+                                            cred, &context,
+                                            target, mechoid,
+                                            GSS_C_MUTUAL_FLAG, 0, NULL,
+                                            GSS_C_NO_BUFFER, NULL,
+                                            &out, NULL, NULL);
+            if (maj_stat != GSS_S_COMPLETE && maj_stat != GSS_S_CONTINUE_NEEDED)
+                errx(1, "init_sec_context failed: %s",
+                     gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));
 
-	    gss_release_buffer(&min_stat, &out);
-	    gss_delete_sec_context(&min_stat, &context, NULL);
-	}
-	gss_release_cred(&min_stat, &cred);
+            gss_release_buffer(&min_stat, &out);
+            gss_delete_sec_context(&min_stat, &context, NULL);
+        }
+        gss_release_cred(&min_stat, &cred);
     }
     gss_release_oid_set(&min_stat, &oidset);
     gss_release_name(&min_stat, &target);

@@ -37,12 +37,12 @@ RCSID("$Id$");
 
 static krb5_error_code
 change_entry(krb5_keytab keytab,
-	     krb5_principal principal,
+             krb5_principal principal,
              krb5_kvno kvno,
              int keep,
              size_t nkstuple,
              krb5_key_salt_tuple *kstuple,
-	     const char *realm,
+             const char *realm,
              const char *admin_server,
              int server_port)
 {
@@ -56,73 +56,73 @@ change_entry(krb5_keytab keytab,
 
     ret = krb5_unparse_name (context, principal, &client_name);
     if (ret) {
-	krb5_warn (context, ret, "krb5_unparse_name");
-	return ret;
+        krb5_warn (context, ret, "krb5_unparse_name");
+        return ret;
     }
 
     memset (&conf, 0, sizeof(conf));
 
     if(realm == NULL)
-	realm = krb5_principal_get_realm(context, principal);
+        realm = krb5_principal_get_realm(context, principal);
     conf.realm = strdup(realm);
     if (conf.realm == NULL) {
-	free (client_name);
-	krb5_set_error_message(context, ENOMEM, "malloc failed");
-	return ENOMEM;
+        free (client_name);
+        krb5_set_error_message(context, ENOMEM, "malloc failed");
+        return ENOMEM;
     }
     conf.mask |= KADM5_CONFIG_REALM;
 
     if (admin_server) {
-	conf.admin_server = strdup(admin_server);
-	if (conf.admin_server == NULL) {
-	    free(client_name);
-	    free(conf.realm);
-	    krb5_set_error_message(context, ENOMEM, "malloc failed");
-	    return ENOMEM;
-	}
-	conf.mask |= KADM5_CONFIG_ADMIN_SERVER;
+        conf.admin_server = strdup(admin_server);
+        if (conf.admin_server == NULL) {
+            free(client_name);
+            free(conf.realm);
+            krb5_set_error_message(context, ENOMEM, "malloc failed");
+            return ENOMEM;
+        }
+        conf.mask |= KADM5_CONFIG_ADMIN_SERVER;
     }
 
     if (server_port) {
-	conf.kadmind_port = htons(server_port);
-	conf.mask |= KADM5_CONFIG_KADMIND_PORT;
+        conf.kadmind_port = htons(server_port);
+        conf.mask |= KADM5_CONFIG_KADMIND_PORT;
     }
 
     ret = kadm5_init_with_skey_ctx (context,
-				    client_name,
-				    keytab_string,
-				    KADM5_ADMIN_SERVICE,
-				    &conf, 0, 0,
-				    &kadm_handle);
+                                    client_name,
+                                    keytab_string,
+                                    KADM5_ADMIN_SERVICE,
+                                    &conf, 0, 0,
+                                    &kadm_handle);
     free(conf.admin_server);
     free(conf.realm);
     if (ret) {
-	krb5_warn (context, ret,
-		   "kadm5_c_init_with_skey_ctx: %s:", client_name);
-	free (client_name);
-	return ret;
+        krb5_warn (context, ret,
+                   "kadm5_c_init_with_skey_ctx: %s:", client_name);
+        free (client_name);
+        return ret;
     }
     ret = kadm5_randkey_principal_3(kadm_handle, principal, keep, nkstuple,
                                     kstuple, &keys, &num_keys);
     kadm5_destroy(kadm_handle);
     if (ret) {
-	krb5_warn(context, ret, "kadm5_randkey_principal_3: %s:", client_name);
-	free (client_name);
-	return ret;
+        krb5_warn(context, ret, "kadm5_randkey_principal_3: %s:", client_name);
+        free (client_name);
+        return ret;
     }
     free(client_name);
     for (i = 0; i < num_keys; ++i) {
-	krb5_keytab_entry new_entry;
+        krb5_keytab_entry new_entry;
 
-	new_entry.principal = principal;
-	new_entry.timestamp = time (NULL);
-	new_entry.vno = kvno + 1;
-	new_entry.keyblock  = keys[i];
+        new_entry.principal = principal;
+        new_entry.timestamp = time (NULL);
+        new_entry.vno = kvno + 1;
+        new_entry.keyblock  = keys[i];
 
-	ret = krb5_kt_add_entry (context, keytab, &new_entry);
-	if (ret)
-	    krb5_warn (context, ret, "krb5_kt_add_entry");
-	krb5_free_keyblock_contents (context, &keys[i]);
+        ret = krb5_kt_add_entry (context, keytab, &new_entry);
+        if (ret)
+            krb5_warn (context, ret, "krb5_kt_add_entry");
+        krb5_free_keyblock_contents (context, &keys[i]);
     }
     return ret;
 }
@@ -184,8 +184,8 @@ kt_change(struct change_options *opt, int argc, char **argv)
 
     /* XXX Parameterize keytab name */
     if ((keytab = ktutil_open_keytab()) == NULL) {
-	free(kstuple);
-	return 1;
+        free(kstuple);
+        return 1;
     }
 
     j = 0;
@@ -194,103 +194,103 @@ kt_change(struct change_options *opt, int argc, char **argv)
 
     ret = krb5_kt_start_seq_get(context, keytab, &cursor);
     if(ret){
-	krb5_warn(context, ret, "%s", keytab_string);
-	goto out;
+        krb5_warn(context, ret, "%s", keytab_string);
+        goto out;
     }
 
     while((ret = krb5_kt_next_entry(context, keytab, &entry, &cursor)) == 0) {
-	int add = 0;
+        int add = 0;
 
-	for (i = 0; i < j; ++i) {
-	    if (krb5_principal_compare (context, changeset[i].principal,
-					entry.principal)) {
-		if (changeset[i].kvno < entry.vno)
-		    changeset[i].kvno = entry.vno;
-		break;
-	    }
-	}
-	if (i < j) {
-	    krb5_kt_free_entry (context, &entry);
-	    continue;
-	}
+        for (i = 0; i < j; ++i) {
+            if (krb5_principal_compare (context, changeset[i].principal,
+                                        entry.principal)) {
+                if (changeset[i].kvno < entry.vno)
+                    changeset[i].kvno = entry.vno;
+                break;
+            }
+        }
+        if (i < j) {
+            krb5_kt_free_entry (context, &entry);
+            continue;
+        }
 
-	if (argc == 0) {
-	    add = 1;
-	} else {
-	    for (i = 0; i < argc; ++i) {
-		krb5_principal princ;
+        if (argc == 0) {
+            add = 1;
+        } else {
+            for (i = 0; i < argc; ++i) {
+                krb5_principal princ;
 
-		ret = krb5_parse_name (context, argv[i], &princ);
-		if (ret) {
-		    krb5_warn (context, ret, "%s", argv[i]);
-		    continue;
-		}
-		if (krb5_principal_compare (context, princ, entry.principal))
-		    add = 1;
+                ret = krb5_parse_name (context, argv[i], &princ);
+                if (ret) {
+                    krb5_warn (context, ret, "%s", argv[i]);
+                    continue;
+                }
+                if (krb5_principal_compare (context, princ, entry.principal))
+                    add = 1;
 
-		krb5_free_principal (context, princ);
-	    }
-	}
+                krb5_free_principal (context, princ);
+            }
+        }
 
-	if (add) {
-	    if (j >= max) {
-		void *tmp;
+        if (add) {
+            if (j >= max) {
+                void *tmp;
 
-		max = max(max * 2, 1);
-		tmp = realloc (changeset, max * sizeof(*changeset));
-		if (tmp == NULL) {
-		    krb5_kt_free_entry (context, &entry);
-		    krb5_warnx (context, "realloc: out of memory");
-		    ret = ENOMEM;
-		    break;
-		}
-		changeset = tmp;
-	    }
-	    ret = krb5_copy_principal (context, entry.principal,
-				       &changeset[j].principal);
-	    if (ret) {
-		krb5_warn (context, ret, "krb5_copy_principal");
-		krb5_kt_free_entry (context, &entry);
-		break;
-	    }
-	    changeset[j].kvno = entry.vno;
-	    ++j;
-	}
-	krb5_kt_free_entry (context, &entry);
+                max = max(max * 2, 1);
+                tmp = realloc (changeset, max * sizeof(*changeset));
+                if (tmp == NULL) {
+                    krb5_kt_free_entry (context, &entry);
+                    krb5_warnx (context, "realloc: out of memory");
+                    ret = ENOMEM;
+                    break;
+                }
+                changeset = tmp;
+            }
+            ret = krb5_copy_principal (context, entry.principal,
+                                       &changeset[j].principal);
+            if (ret) {
+                krb5_warn (context, ret, "krb5_copy_principal");
+                krb5_kt_free_entry (context, &entry);
+                break;
+            }
+            changeset[j].kvno = entry.vno;
+            ++j;
+        }
+        krb5_kt_free_entry (context, &entry);
     }
     krb5_kt_end_seq_get(context, keytab, &cursor);
 
     if (ret == KRB5_KT_END) {
-	for (i = 0; i < j; i++) {
-	    if (verbose_flag) {
-		char *client_name;
+        for (i = 0; i < j; i++) {
+            if (verbose_flag) {
+                char *client_name;
 
-		ret = krb5_unparse_name (context, changeset[i].principal,
-					 &client_name);
-		if (ret) {
-		    krb5_warn (context, ret, "krb5_unparse_name");
-		} else {
-		    printf("Changing %s kvno %d\n",
-			   client_name, changeset[i].kvno);
-		    free(client_name);
-		}
-	    }
+                ret = krb5_unparse_name (context, changeset[i].principal,
+                                         &client_name);
+                if (ret) {
+                    krb5_warn (context, ret, "krb5_unparse_name");
+                } else {
+                    printf("Changing %s kvno %d\n",
+                           client_name, changeset[i].kvno);
+                    free(client_name);
+                }
+            }
             ret = change_entry(keytab,
                                changeset[i].principal, changeset[i].kvno,
                                keep, nkstuple, kstuple,
                                opt->realm_string,
                                opt->admin_server_string,
                                opt->server_port_integer);
-	    if (ret != 0)
-		errors = 1;
-	}
+            if (ret != 0)
+                errors = 1;
+        }
     } else
-	errors = 1;
+        errors = 1;
     for (i = 0; i < j; i++)
-	krb5_free_principal (context, changeset[i].principal);
+        krb5_free_principal (context, changeset[i].principal);
     free (changeset);
 
- out:
+out:
     free(kstuple);
     krb5_kt_close(context, keytab);
     return errors;

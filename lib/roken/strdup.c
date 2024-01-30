@@ -39,9 +39,9 @@
 ROKEN_LIB_FUNCTION char * ROKEN_LIB_CALL
 strdup(const char *old)
 {
-	char *t = malloc(strlen(old)+1);
-	if (t != 0)
-		strcpy(t, old);
-	return t;
+    char *t = malloc(strlen(old)+1);
+    if (t != 0)
+        strcpy(t, old);
+    return t;
 }
 #endif

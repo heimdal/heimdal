@@ -73,9 +73,9 @@
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_plugin_register(krb5_context context,
-		     enum krb5_plugin_type type,
-		     const char *name,
-		     const void *symbol)
+                     enum krb5_plugin_type type,
+                     const char *name,
+                     const void *symbol)
 {
     /*
      * It's not clear that PLUGIN_TYPE_FUNC was ever used or supported. It likely
@@ -83,8 +83,8 @@ krb5_plugin_register(krb5_context context,
      * assumed PLUGIN_TYPE_DATA.
      */
     if (type != PLUGIN_TYPE_DATA) {
-	krb5_warnx(context, "krb5_plugin_register: PLUGIN_TYPE_DATA no longer supported");
-	return EINVAL;
+        krb5_warnx(context, "krb5_plugin_register: PLUGIN_TYPE_DATA no longer supported");
+        return EINVAL;
     }
 
     return heim_plugin_register(context->hcontext, (heim_pcontext)context,
@@ -147,10 +147,10 @@ _krb5_unload_plugins(krb5_context context, const char *name)
  */
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_plugin_run_f(krb5_context context,
-		   const struct heim_plugin_data *caller,
-		   int flags,
-		   void *userctx,
-		   krb5_error_code (KRB5_LIB_CALL *func)(krb5_context, const void *, void *, void *))
+                   const struct heim_plugin_data *caller,
+                   int flags,
+                   void *userctx,
+                   krb5_error_code (KRB5_LIB_CALL *func)(krb5_context, const void *, void *, void *))
 {
     int32_t (HEIM_LIB_CALL *func2)(void *, const void *, void *, void *) = (void *)func;
     return heim_plugin_run_f(context->hcontext, (heim_pcontext)context, caller,
@@ -177,7 +177,7 @@ djb2(uintptr_t hash, unsigned char *str)
     int c;
 
     while (c = *str++)
-	hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
+        hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
 
     return hash;
 }
@@ -192,7 +192,7 @@ krb5_get_instance(const char *libname)
     uintptr_t instance;
 
     if (win32_getLibraryVersion("heimdal", &name, &version))
-	return 0;
+        return 0;
     instance = djb2(5381, name);
     instance = djb2(instance, version);
     free(name);
@@ -202,7 +202,7 @@ krb5_get_instance(const char *libname)
     static const char *instance = "libkrb5";
 
     if (strcmp(libname, "krb5") == 0)
-	return (uintptr_t)instance;
+        return (uintptr_t)instance;
     return 0;
 #endif
 }

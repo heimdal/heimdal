@@ -49,8 +49,8 @@
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_set_real_time (krb5_context context,
-		    krb5_timestamp sec,
-		    int32_t usec)
+                    krb5_timestamp sec,
+                    int32_t usec)
 {
     struct timeval tv;
 
@@ -63,14 +63,14 @@ krb5_set_real_time (krb5_context context,
      * unknown and the function will use the current time usec.
      */
     if (usec >= 0) {
-	context->kdc_usec_offset = usec - tv.tv_usec;
+        context->kdc_usec_offset = usec - tv.tv_usec;
 
-	if (context->kdc_usec_offset < 0) {
-	    context->kdc_sec_offset--;
-	    context->kdc_usec_offset += 1000000;
-	}
+        if (context->kdc_usec_offset < 0) {
+            context->kdc_sec_offset--;
+            context->kdc_usec_offset += 1000000;
+        }
     } else
-	context->kdc_usec_offset = tv.tv_usec;
+        context->kdc_usec_offset = tv.tv_usec;
 
     return 0;
 }
@@ -81,7 +81,7 @@ krb5_set_real_time (krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_timeofday (krb5_context context,
-		krb5_timestamp *timeret)
+                krb5_timestamp *timeret)
 {
     *timeret = time(NULL) + context->kdc_sec_offset;
     return 0;
@@ -93,8 +93,8 @@ krb5_timeofday (krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_us_timeofday (krb5_context context,
-		   krb5_timestamp *sec,
-		   int32_t *usec)
+                   krb5_timestamp *sec,
+                   int32_t *usec)
 {
     struct timeval tv;
 
@@ -107,16 +107,16 @@ krb5_us_timeofday (krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_format_time(krb5_context context, time_t t,
-		 char *s, size_t len, krb5_boolean include_time)
+                 char *s, size_t len, krb5_boolean include_time)
 {
     struct tm *tm;
     if(context->log_utc)
-	tm = gmtime (&t);
+        tm = gmtime (&t);
     else
-	tm = localtime(&t);
+        tm = localtime(&t);
     if(tm == NULL ||
        strftime(s, len, include_time ? context->time_fmt : context->date_fmt, tm) == 0)
-	snprintf(s, len, "%ld", (long)t);
+        snprintf(s, len, "%ld", (long)t);
     return 0;
 }
 
@@ -124,7 +124,7 @@ KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_string_to_deltat(const char *string, krb5_deltat *deltat)
 {
     if((*deltat = parse_time(string, "s")) == -1)
-	return KRB5_DELTAT_BADFORMAT;
+        return KRB5_DELTAT_BADFORMAT;
     return 0;
 }
 
@@ -133,6 +133,6 @@ krb5_time_abs(krb5_deltat t1, krb5_deltat t2)
 {
     krb5_deltat t = t1 - t2;
     if (t < 0)
-	return -t;
+        return -t;
     return t;
 }

@@ -38,37 +38,37 @@ HINSTANCE _krb5_hInstance = NULL;
 #if NTDDI_VERSION >= NTDDI_VISTA
 extern BOOL WINAPI
 _hc_w32crypto_DllMain(HINSTANCE hinstDLL,
-		      DWORD fdwReason,
-		      LPVOID lpvReserved);
+                      DWORD fdwReason,
+                      LPVOID lpvReserved);
 #endif
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL,
-		    DWORD fdwReason,
-		    LPVOID lpvReserved)
+                    DWORD fdwReason,
+                    LPVOID lpvReserved)
 {
 #if NTDDI_VERSION >= NTDDI_VISTA
     BOOL ret;
 
     ret = _hc_w32crypto_DllMain(hinstDLL, fdwReason, lpvReserved);
     if (!ret)
-	return ret;
+        return ret;
 #endif
 
     switch (fdwReason) {
-    case DLL_PROCESS_ATTACH:
+        case DLL_PROCESS_ATTACH:
 
-	_krb5_hInstance = hinstDLL;
-	return TRUE;
+            _krb5_hInstance = hinstDLL;
+            return TRUE;
 
-    case DLL_PROCESS_DETACH:
-	return FALSE;
+        case DLL_PROCESS_DETACH:
+            return FALSE;
 
-    case DLL_THREAD_ATTACH:
-	return FALSE;
+        case DLL_THREAD_ATTACH:
+            return FALSE;
 
-    case DLL_THREAD_DETACH:
-        heim_w32_service_thread_detach(NULL);
-	return FALSE;
+        case DLL_THREAD_DETACH:
+            heim_w32_service_thread_detach(NULL);
+            return FALSE;
     }
 
     return FALSE;

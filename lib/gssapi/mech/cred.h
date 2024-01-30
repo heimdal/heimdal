@@ -28,16 +28,16 @@
  */
 
 struct _gss_mechanism_cred {
-	HEIM_TAILQ_ENTRY(_gss_mechanism_cred) gmc_link;
-	gssapi_mech_interface	gmc_mech;	/* mechanism ops for MC */
-	gss_OID			gmc_mech_oid;	/* mechanism oid for MC */
-	gss_cred_id_t		gmc_cred;	/* underlying MC */
+    HEIM_TAILQ_ENTRY(_gss_mechanism_cred) gmc_link;
+    gssapi_mech_interface	gmc_mech;	/* mechanism ops for MC */
+    gss_OID			gmc_mech_oid;	/* mechanism oid for MC */
+    gss_cred_id_t		gmc_cred;	/* underlying MC */
 };
 HEIM_TAILQ_HEAD(_gss_mechanism_cred_list, _gss_mechanism_cred);
 
 struct _gss_cred {
-	struct _gss_mechanism_cred_list gc_mc;
-	gss_OID_set gc_neg_mechs;
+    struct _gss_mechanism_cred_list gc_mc;
+    gss_OID_set gc_neg_mechs;
 };
 
 struct _gss_cred *
@@ -53,13 +53,13 @@ struct _gss_mechanism_name;
 
 OM_uint32
 _gss_mg_add_mech_cred(OM_uint32 *minor_status,
-		      gssapi_mech_interface m,
-		      const struct _gss_mechanism_cred *mc,
-		      const struct _gss_mechanism_name *mn,
-		      gss_cred_usage_t cred_usage,
-		      OM_uint32 initiator_time_req,
-		      OM_uint32 acceptor_time_req,
-		      gss_const_key_value_set_t cred_store,
-		      struct _gss_mechanism_cred **output_cred_handle,
-		      OM_uint32 *initiator_time_rec,
-		      OM_uint32 *acceptor_time_rec);
+                      gssapi_mech_interface m,
+                      const struct _gss_mechanism_cred *mc,
+                      const struct _gss_mechanism_name *mn,
+                      gss_cred_usage_t cred_usage,
+                      OM_uint32 initiator_time_req,
+                      OM_uint32 acceptor_time_req,
+                      gss_const_key_value_set_t cred_store,
+                      struct _gss_mechanism_cred **output_cred_handle,
+                      OM_uint32 *initiator_time_rec,
+                      OM_uint32 *acceptor_time_rec);

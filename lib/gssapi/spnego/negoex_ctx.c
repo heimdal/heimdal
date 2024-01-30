@@ -50,9 +50,9 @@
 
 static OM_uint32
 buffer_set_to_crypto(OM_uint32 *minor,
-		     krb5_context context,
-		     gss_buffer_set_t buffers,
-		     krb5_crypto *crypto)
+                     krb5_context context,
+                     gss_buffer_set_t buffers,
+                     krb5_crypto *crypto)
 {
     krb5_error_code ret;
     krb5_keyblock keyblock;
@@ -64,14 +64,14 @@ buffer_set_to_crypto(OM_uint32 *minor,
      * the second.
      */
     if (buffers->count != 2 ||
-	buffers->elements[1].length != sizeof(tmp)) {
-	*minor = (OM_uint32)NEGOEX_NO_VERIFY_KEY;
-	return GSS_S_FAILURE;
+        buffers->elements[1].length != sizeof(tmp)) {
+        *minor = (OM_uint32)NEGOEX_NO_VERIFY_KEY;
+        return GSS_S_FAILURE;
     }
 
     if (*crypto != NULL) {
-	krb5_crypto_destroy(context, *crypto);
-	*crypto = NULL;
+        krb5_crypto_destroy(context, *crypto);
+        *crypto = NULL;
     }
 
     keyblock.keyvalue.data = buffers->elements[0].value;
@@ -81,8 +81,8 @@ buffer_set_to_crypto(OM_uint32 *minor,
 
     ret = krb5_crypto_init(context, &keyblock, 0, crypto);
     if (ret) {
-	*minor = ret;
-	return GSS_S_FAILURE;
+        *minor = ret;
+        return GSS_S_FAILURE;
     }
 
     return GSS_S_COMPLETE;
@@ -94,36 +94,36 @@ buffer_set_to_crypto(OM_uint32 *minor,
 
 static OM_uint32
 get_session_keys(OM_uint32 *minor,
-		 krb5_context context,
-		 OM_uint32 flags,
-		 struct negoex_auth_mech *mech)
+                 krb5_context context,
+                 OM_uint32 flags,
+                 struct negoex_auth_mech *mech)
 {
     OM_uint32 major, tmpMinor;
     gss_buffer_set_t buffers = GSS_C_NO_BUFFER_SET;
 
     if (flags & NEGOEX_SIGN_KEY) {
-	major = gss_inquire_sec_context_by_oid(&tmpMinor, mech->mech_context,
-					       GSS_C_INQ_NEGOEX_KEY, &buffers);
-	if (major == GSS_S_COMPLETE) {
-	    major = buffer_set_to_crypto(minor, context,
-					 buffers, &mech->crypto);
-	    _gss_secure_release_buffer_set(&tmpMinor, &buffers);
-	    if (major != GSS_S_COMPLETE)
-		return major;
-	}
+        major = gss_inquire_sec_context_by_oid(&tmpMinor, mech->mech_context,
+                                               GSS_C_INQ_NEGOEX_KEY, &buffers);
+        if (major == GSS_S_COMPLETE) {
+            major = buffer_set_to_crypto(minor, context,
+                                         buffers, &mech->crypto);
+            _gss_secure_release_buffer_set(&tmpMinor, &buffers);
+            if (major != GSS_S_COMPLETE)
+                return major;
+        }
     }
 
     if (flags & NEGOEX_VERIFY_KEY) {
-	major = gss_inquire_sec_context_by_oid(&tmpMinor, mech->mech_context,
-					       GSS_C_INQ_NEGOEX_VERIFY_KEY,
-					       &buffers);
-	if (major == GSS_S_COMPLETE) {
-	    major = buffer_set_to_crypto(minor, context,
-					 buffers, &mech->verify_crypto);
-	    _gss_secure_release_buffer_set(&tmpMinor, &buffers);
-	    if (major != GSS_S_COMPLETE)
-		return major;
-	}
+        major = gss_inquire_sec_context_by_oid(&tmpMinor, mech->mech_context,
+                                               GSS_C_INQ_NEGOEX_VERIFY_KEY,
+                                               &buffers);
+        if (major == GSS_S_COMPLETE) {
+            major = buffer_set_to_crypto(minor, context,
+                                         buffers, &mech->verify_crypto);
+            _gss_secure_release_buffer_set(&tmpMinor, &buffers);
+            if (major != GSS_S_COMPLETE)
+                return major;
+        }
     }
 
     return GSS_S_COMPLETE;
@@ -139,31 +139,31 @@ emit_initiator_nego(OM_uint32 *minor, gssspnego_ctx ctx)
     krb5_generate_random_block(random, sizeof(random));
 
     HEIM_TAILQ_FOREACH(mech, &ctx->negoex_mechs, links)
-	_gss_negoex_log_auth_scheme(ctx->flags.local, ++i, mech->scheme);
+        _gss_negoex_log_auth_scheme(ctx->flags.local, ++i, mech->scheme);
 
     return _gss_negoex_add_nego_message(minor, ctx, INITIATOR_NEGO, random);
 }
 
 static OM_uint32
 process_initiator_nego(OM_uint32 *minor,
-		       gssspnego_ctx ctx,
-		       struct negoex_message *messages,
-		       size_t nmessages)
+                       gssspnego_ctx ctx,
+                       struct negoex_message *messages,
+                       size_t nmessages)
 {
     struct nego_message *msg;
     size_t i;
 
     heim_assert(!ctx->flags.local && ctx->negoex_step == 1,
-		"NegoEx INITIATOR_NEGO token received after first leg");
+                "NegoEx INITIATOR_NEGO token received after first leg");
 
     msg = _gss_negoex_locate_nego_message(messages, nmessages, INITIATOR_NEGO);
     if (msg == NULL) {
-	*minor = (OM_uint32)NEGOEX_MISSING_NEGO_MESSAGE;
-	return GSS_S_DEFECTIVE_TOKEN;
+        *minor = (OM_uint32)NEGOEX_MISSING_NEGO_MESSAGE;
+        return GSS_S_DEFECTIVE_TOKEN;
     }
 
     for (i = 0; i < msg->nschemes; i++)
-	_gss_negoex_log_auth_scheme(ctx->flags.local, i + 1, &msg->schemes[i * GUID_LENGTH]);
+        _gss_negoex_log_auth_scheme(ctx->flags.local, i + 1, &msg->schemes[i * GUID_LENGTH]);
 
     _gss_negoex_restrict_auth_schemes(ctx, msg->schemes, msg->nschemes);
 
@@ -182,16 +182,16 @@ emit_acceptor_nego(OM_uint32 *minor, gssspnego_ctx ctx)
 
 static OM_uint32
 process_acceptor_nego(OM_uint32 *minor,
-		      gssspnego_ctx ctx,
-		      struct negoex_message *messages,
-		      size_t nmessages)
+                      gssspnego_ctx ctx,
+                      struct negoex_message *messages,
+                      size_t nmessages)
 {
     struct nego_message *msg;
 
     msg = _gss_negoex_locate_nego_message(messages, nmessages, ACCEPTOR_NEGO);
     if (msg == NULL) {
-	*minor = (OM_uint32)NEGOEX_MISSING_NEGO_MESSAGE;
-	return GSS_S_DEFECTIVE_TOKEN;
+        *minor = (OM_uint32)NEGOEX_MISSING_NEGO_MESSAGE;
+        return GSS_S_DEFECTIVE_TOKEN;
     }
 
     /*
@@ -205,9 +205,9 @@ process_acceptor_nego(OM_uint32 *minor,
 
 static void
 query_meta_data(gssspnego_ctx ctx,
-		struct gssspnego_optimistic_ctx *opt,
-		gss_cred_id_t cred,
-		OM_uint32 req_flags)
+                struct gssspnego_optimistic_ctx *opt,
+                gss_cred_id_t cred,
+                OM_uint32 req_flags)
 {
     OM_uint32 major, minor;
     struct negoex_auth_mech *p, *next;
@@ -219,23 +219,23 @@ query_meta_data(gssspnego_ctx ctx,
      * will be NULL on entry.
      */
     HEIM_TAILQ_FOREACH_SAFE(p, &ctx->negoex_mechs, links, next) {
-	if (opt != NULL && memcmp(opt->scheme, p->scheme, GUID_LENGTH) == 0)
-	    p->mech_context = opt->gssctx;;
+        if (opt != NULL && memcmp(opt->scheme, p->scheme, GUID_LENGTH) == 0)
+            p->mech_context = opt->gssctx;;
 
-	major = gssspi_query_meta_data(&minor, p->oid, cred, &p->mech_context,
-				       ctx->target_name, req_flags, &p->metadata);
-	/* GSS_Query_meta_data failure removes mechanism from list. */
-	if (major != GSS_S_COMPLETE)
-	    _gss_negoex_delete_auth_mech(ctx, p);
+        major = gssspi_query_meta_data(&minor, p->oid, cred, &p->mech_context,
+                                       ctx->target_name, req_flags, &p->metadata);
+        /* GSS_Query_meta_data failure removes mechanism from list. */
+        if (major != GSS_S_COMPLETE)
+            _gss_negoex_delete_auth_mech(ctx, p);
     }
 }
 
 static void
 exchange_meta_data(gssspnego_ctx ctx,
-		   gss_cred_id_t cred,
-		   OM_uint32 req_flags,
-		   struct negoex_message *messages,
-		   size_t nmessages)
+                   gss_cred_id_t cred,
+                   OM_uint32 req_flags,
+                   struct negoex_message *messages,
+                   size_t nmessages)
 {
     OM_uint32 major, minor;
     struct negoex_auth_mech *mech;
@@ -246,21 +246,21 @@ exchange_meta_data(gssspnego_ctx ctx,
     type = ctx->flags.local ? ACCEPTOR_META_DATA : INITIATOR_META_DATA;
 
     for (i = 0; i < nmessages; i++) {
-	if (messages[i].type != type)
-	    continue;
-	msg = &messages[i].u.e;
+        if (messages[i].type != type)
+            continue;
+        msg = &messages[i].u.e;
 
-	mech = _gss_negoex_locate_auth_scheme(ctx, msg->scheme);
-	if (mech == NULL)
-	    continue;
+        mech = _gss_negoex_locate_auth_scheme(ctx, msg->scheme);
+        if (mech == NULL)
+            continue;
 
-	major = gssspi_exchange_meta_data(&minor, mech->oid, cred,
-					  &mech->mech_context,
-					  ctx->target_name,
-					  req_flags, &msg->token);
-	/* GSS_Exchange_meta_data failure removes mechanism from list. */
-	if (major != GSS_S_COMPLETE)
-	    _gss_negoex_delete_auth_mech(ctx, mech);
+        major = gssspi_exchange_meta_data(&minor, mech->oid, cred,
+                                          &mech->mech_context,
+                                          ctx->target_name,
+                                          req_flags, &msg->token);
+        /* GSS_Exchange_meta_data failure removes mechanism from list. */
+        if (major != GSS_S_COMPLETE)
+            _gss_negoex_delete_auth_mech(ctx, mech);
     }
 }
 
@@ -270,16 +270,16 @@ release_mech_crypto(struct negoex_auth_mech *mech)
     krb5_context context = NULL;
 
     if (mech->crypto || mech->verify_crypto)
-	context = _gss_mg_krb5_context();
+        context = _gss_mg_krb5_context();
 
     if (mech->crypto) {
-	krb5_crypto_destroy(context, mech->crypto);
-	mech->crypto = NULL;
+        krb5_crypto_destroy(context, mech->crypto);
+        mech->crypto = NULL;
     }
 
     if (mech->verify_crypto) {
-	krb5_crypto_destroy(context, mech->verify_crypto);
-	mech->verify_crypto = NULL;
+        krb5_crypto_destroy(context, mech->verify_crypto);
+        mech->verify_crypto = NULL;
     }
 
     mech->sent_checksum = FALSE;
@@ -292,55 +292,55 @@ release_mech_crypto(struct negoex_auth_mech *mech)
  */
 static void
 check_optimistic_result(gssspnego_ctx ctx,
-			struct negoex_message *messages,
-			size_t nmessages)
+                        struct negoex_message *messages,
+                        size_t nmessages)
 {
     struct negoex_auth_mech *mech;
     OM_uint32 tmpMinor;
 
     heim_assert(ctx->flags.local && ctx->negoex_step == 2,
-		"NegoEx optimistic result should only be checked in second leg");
+                "NegoEx optimistic result should only be checked in second leg");
 
     /* Do nothing if we didn't make an optimistic context. */
     mech = HEIM_TAILQ_FIRST(&ctx->negoex_mechs);
     if (mech == NULL || mech->mech_context == GSS_C_NO_CONTEXT)
-	return;
+        return;
 
     /*
      * If the acceptor used the optimistic token, it will send an acceptor
      * token or a checksum (or both) in its first reply.
      */
     if (_gss_negoex_locate_exchange_message(messages, nmessages,
-					    CHALLENGE) != NULL ||
-	_gss_negoex_locate_verify_message(messages, nmessages) != NULL) {
-	/*
-	 * The acceptor continued the optimistic mech, and metadata exchange
-	 * didn't remove it. Commit to this mechanism.
-	 */
-	_gss_negoex_select_auth_mech(ctx, mech);
+                                            CHALLENGE) != NULL ||
+        _gss_negoex_locate_verify_message(messages, nmessages) != NULL) {
+        /*
+         * The acceptor continued the optimistic mech, and metadata exchange
+         * didn't remove it. Commit to this mechanism.
+         */
+        _gss_negoex_select_auth_mech(ctx, mech);
     } else {
-	/*
-	 * The acceptor ignored the optimistic token. Restart the mech.
-	 */
-	gss_delete_sec_context(&tmpMinor, &mech->mech_context, GSS_C_NO_BUFFER);
-	release_mech_crypto(mech);
-	mech->complete = FALSE;
+        /*
+         * The acceptor ignored the optimistic token. Restart the mech.
+         */
+        gss_delete_sec_context(&tmpMinor, &mech->mech_context, GSS_C_NO_BUFFER);
+        release_mech_crypto(mech);
+        mech->complete = FALSE;
     }
 }
 
 /* Perform an initiator step of the underlying mechanism exchange. */
 static OM_uint32
 mech_init(OM_uint32 *minor,
-	  struct gssspnego_optimistic_ctx *opt,
-	  gssspnego_ctx ctx,
-	  gss_cred_id_t cred,
-	  OM_uint32 req_flags,
-	  OM_uint32 time_req,
-	  const gss_channel_bindings_t input_chan_bindings,
-	  struct negoex_message *messages,
-	  size_t nmessages,
-	  gss_buffer_t output_token,
-	  int *mech_error)
+          struct gssspnego_optimistic_ctx *opt,
+          gssspnego_ctx ctx,
+          gss_cred_id_t cred,
+          OM_uint32 req_flags,
+          OM_uint32 time_req,
+          const gss_channel_bindings_t input_chan_bindings,
+          struct negoex_message *messages,
+          size_t nmessages,
+          gss_buffer_t output_token,
+          int *mech_error)
 {
     OM_uint32 major, first_major = GSS_S_COMPLETE, first_minor = 0;
     struct negoex_auth_mech *mech = NULL;
@@ -356,12 +356,12 @@ mech_init(OM_uint32 *minor,
 
     /* Allow disabling of optimistic token for testing. */
     if (ctx->negoex_step == 1 &&
-	secure_getenv("NEGOEX_NO_OPTIMISTIC_TOKEN") != NULL)
-	return GSS_S_COMPLETE;
+        secure_getenv("NEGOEX_NO_OPTIMISTIC_TOKEN") != NULL)
+        return GSS_S_COMPLETE;
 
     if (HEIM_TAILQ_EMPTY(&ctx->negoex_mechs)) {
-	*minor = (OM_uint32)NEGOEX_NO_AVAILABLE_MECHS;
-	return GSS_S_FAILURE;
+        *minor = (OM_uint32)NEGOEX_NO_AVAILABLE_MECHS;
+        return GSS_S_FAILURE;
     }
 
     /*
@@ -372,71 +372,71 @@ mech_init(OM_uint32 *minor,
     mech = HEIM_TAILQ_FIRST(&ctx->negoex_mechs);
     msg = _gss_negoex_locate_exchange_message(messages, nmessages, CHALLENGE);
     if (msg != NULL && GUID_EQ(msg->scheme, mech->scheme))
-	input_token = &msg->token;
+        input_token = &msg->token;
 
     if (mech->complete)
-	return GSS_S_COMPLETE;
+        return GSS_S_COMPLETE;
 
     first_mech = TRUE;
     major = GSS_S_BAD_MECH;
 
     while (!HEIM_TAILQ_EMPTY(&ctx->negoex_mechs)) {
-	mech = HEIM_TAILQ_FIRST(&ctx->negoex_mechs);
+        mech = HEIM_TAILQ_FIRST(&ctx->negoex_mechs);
 
-	/*
-	 * If SPNEGO generated an optimistic token when probing available
-	 * mechanisms, we can reuse it here. This avoids a potentially
-	 * expensive and redundant call to GSS_Init_sec_context();
-	 */
-	if (opt != NULL && memcmp(opt->scheme, mech->scheme, GUID_LENGTH) == 0) {
-	    heim_assert(ctx->negoex_step == 1,
-			"SPNEGO optimistic token only valid for NegoEx first leg");
+        /*
+         * If SPNEGO generated an optimistic token when probing available
+         * mechanisms, we can reuse it here. This avoids a potentially
+         * expensive and redundant call to GSS_Init_sec_context();
+         */
+        if (opt != NULL && memcmp(opt->scheme, mech->scheme, GUID_LENGTH) == 0) {
+            heim_assert(ctx->negoex_step == 1,
+                        "SPNEGO optimistic token only valid for NegoEx first leg");
 
-	    major = _gss_copy_buffer(minor, &opt->optimistic_token, output_token);
-	    if (GSS_ERROR(major))
-		return major;
+            major = _gss_copy_buffer(minor, &opt->optimistic_token, output_token);
+            if (GSS_ERROR(major))
+                return major;
 
-	    ctx->negotiated_mech_type = opt->negotiated_mech_type;
-	    ctx->mech_flags = opt->optimistic_flags;
-	    ctx->mech_time_rec = opt->optimistic_time_rec;
+            ctx->negotiated_mech_type = opt->negotiated_mech_type;
+            ctx->mech_flags = opt->optimistic_flags;
+            ctx->mech_time_rec = opt->optimistic_time_rec;
 
-	    mech->mech_context = opt->gssctx;
-	    opt->gssctx = NULL; /* steal it */
+            mech->mech_context = opt->gssctx;
+            opt->gssctx = NULL; /* steal it */
 
-	    mech->complete = opt->complete;
-	    major = GSS_S_COMPLETE;
-	} else {
-	    major = gss_init_sec_context(minor, cred, &mech->mech_context,
-					 ctx->target_name, mech->oid,
-					 req_flags, time_req,
-					 input_chan_bindings, input_token,
-					 &ctx->negotiated_mech_type, output_token,
-					 &ctx->mech_flags, &ctx->mech_time_rec);
-	    if (major == GSS_S_COMPLETE)
-		mech->complete = 1;
-	    else if (GSS_ERROR(major)) {
-		gss_mg_collect_error(mech->oid, major, *minor);
-		*mech_error = TRUE;
-	    }
-	}
-	if (!GSS_ERROR(major))
-	    return get_session_keys(minor, context, NEGOEX_BOTH_KEYS, mech);
+            mech->complete = opt->complete;
+            major = GSS_S_COMPLETE;
+        } else {
+            major = gss_init_sec_context(minor, cred, &mech->mech_context,
+                                         ctx->target_name, mech->oid,
+                                         req_flags, time_req,
+                                         input_chan_bindings, input_token,
+                                         &ctx->negotiated_mech_type, output_token,
+                                         &ctx->mech_flags, &ctx->mech_time_rec);
+            if (major == GSS_S_COMPLETE)
+                mech->complete = 1;
+            else if (GSS_ERROR(major)) {
+                gss_mg_collect_error(mech->oid, major, *minor);
+                *mech_error = TRUE;
+            }
+        }
+        if (!GSS_ERROR(major))
+            return get_session_keys(minor, context, NEGOEX_BOTH_KEYS, mech);
 
-	/* Remember the error we got from the first mech. */
-	if (first_mech) {
-	    first_major = major;
-	    first_minor = *minor;
-	}
+        /* Remember the error we got from the first mech. */
+        if (first_mech) {
+            first_major = major;
+            first_minor = *minor;
+        }
 
-	/* If we still have multiple mechs to try, move on to the next one. */
-	_gss_negoex_delete_auth_mech(ctx, mech);
-	first_mech = FALSE;
-	input_token = GSS_C_NO_BUFFER;
+        /* If we still have multiple mechs to try, move on to the next one. */
+        _gss_negoex_delete_auth_mech(ctx, mech);
+        first_mech = FALSE;
+        input_token = GSS_C_NO_BUFFER;
     }
 
     if (HEIM_TAILQ_EMPTY(&ctx->negoex_mechs)) {
-	major = first_major;
-	*minor = first_minor;
+        major = first_major;
+        *minor = first_minor;
     }
 
     return major;
@@ -445,14 +445,14 @@ mech_init(OM_uint32 *minor,
 /* Perform an acceptor step of the underlying mechanism exchange. */
 static OM_uint32
 mech_accept(OM_uint32 *minor,
-	    gssspnego_ctx ctx,
-	    gss_cred_id_t cred,
-	    const gss_channel_bindings_t input_chan_bindings,
-	    struct negoex_message *messages,
-	    size_t nmessages,
-	    gss_buffer_t output_token,
-	    gss_cred_id_t *deleg_cred,
-	    int *mech_error)
+            gssspnego_ctx ctx,
+            gss_cred_id_t cred,
+            const gss_channel_bindings_t input_chan_bindings,
+            struct negoex_message *messages,
+            size_t nmessages,
+            gss_buffer_t output_token,
+            gss_cred_id_t *deleg_cred,
+            int *mech_error)
 {
     OM_uint32 major, tmpMinor;
     struct negoex_auth_mech *mech;
@@ -460,74 +460,74 @@ mech_accept(OM_uint32 *minor,
     krb5_context context = _gss_mg_krb5_context();
 
     heim_assert(!ctx->flags.local && !HEIM_TAILQ_EMPTY(&ctx->negoex_mechs),
-		"Acceptor NegoEx function called in wrong sequence");
+                "Acceptor NegoEx function called in wrong sequence");
 
     *mech_error = FALSE;
 
     msg = _gss_negoex_locate_exchange_message(messages, nmessages, AP_REQUEST);
     if (msg == NULL) {
-	/*
-	 * No input token is okay on the first request or if the mech is
-	 * complete.
-	 */
-	if (ctx->negoex_step == 1 ||
-	    HEIM_TAILQ_FIRST(&ctx->negoex_mechs)->complete)
-	    return GSS_S_COMPLETE;
-	*minor = (OM_uint32)NEGOEX_MISSING_AP_REQUEST_MESSAGE;
-	return GSS_S_DEFECTIVE_TOKEN;
+        /*
+         * No input token is okay on the first request or if the mech is
+         * complete.
+         */
+        if (ctx->negoex_step == 1 ||
+            HEIM_TAILQ_FIRST(&ctx->negoex_mechs)->complete)
+            return GSS_S_COMPLETE;
+        *minor = (OM_uint32)NEGOEX_MISSING_AP_REQUEST_MESSAGE;
+        return GSS_S_DEFECTIVE_TOKEN;
     }
 
     if (ctx->negoex_step == 1) {
-	/*
-	 * Ignore the optimistic token if it isn't for our most preferred
-	 * mech.
-	 */
-	mech = HEIM_TAILQ_FIRST(&ctx->negoex_mechs);
-	if (!GUID_EQ(msg->scheme, mech->scheme)) {
-	    _gss_mg_log(10, "negoex ignored optimistic token as not for preferred mech");
-	    return GSS_S_COMPLETE;
-	}
+        /*
+         * Ignore the optimistic token if it isn't for our most preferred
+         * mech.
+         */
+        mech = HEIM_TAILQ_FIRST(&ctx->negoex_mechs);
+        if (!GUID_EQ(msg->scheme, mech->scheme)) {
+            _gss_mg_log(10, "negoex ignored optimistic token as not for preferred mech");
+            return GSS_S_COMPLETE;
+        }
     } else {
-	/* The initiator has selected a mech; discard other entries. */
-	mech = _gss_negoex_locate_auth_scheme(ctx, msg->scheme);
-	if (mech == NULL) {
-	    *minor = (OM_uint32)NEGOEX_NO_AVAILABLE_MECHS;
-	    return GSS_S_FAILURE;
-	}
-	_gss_negoex_select_auth_mech(ctx, mech);
+        /* The initiator has selected a mech; discard other entries. */
+        mech = _gss_negoex_locate_auth_scheme(ctx, msg->scheme);
+        if (mech == NULL) {
+            *minor = (OM_uint32)NEGOEX_NO_AVAILABLE_MECHS;
+            return GSS_S_FAILURE;
+        }
+        _gss_negoex_select_auth_mech(ctx, mech);
     }
 
     if (mech->complete)
-	return GSS_S_COMPLETE;
+        return GSS_S_COMPLETE;
 
     if (ctx->mech_src_name != GSS_C_NO_NAME)
-	gss_release_name(&tmpMinor, &ctx->mech_src_name);
+        gss_release_name(&tmpMinor, &ctx->mech_src_name);
     if (deleg_cred && *deleg_cred != GSS_C_NO_CREDENTIAL)
-	gss_release_cred(&tmpMinor, deleg_cred);
+        gss_release_cred(&tmpMinor, deleg_cred);
 
     major = gss_accept_sec_context(minor, &mech->mech_context, cred,
-				   &msg->token, input_chan_bindings,
-				   &ctx->mech_src_name, &ctx->negotiated_mech_type,
-				   output_token, &ctx->mech_flags,
-				   &ctx->mech_time_rec, deleg_cred);
+                                   &msg->token, input_chan_bindings,
+                                   &ctx->mech_src_name, &ctx->negotiated_mech_type,
+                                   output_token, &ctx->mech_flags,
+                                   &ctx->mech_time_rec, deleg_cred);
     if (major == GSS_S_COMPLETE)
-	mech->complete = 1;
+        mech->complete = 1;
 
     if (!GSS_ERROR(major)) {
-	if (major == GSS_S_COMPLETE &&
-	    !gss_oid_equal(ctx->negotiated_mech_type, mech->oid))
-	    _gss_mg_log(1, "negoex client didn't send the mech they said they would");
+        if (major == GSS_S_COMPLETE &&
+            !gss_oid_equal(ctx->negotiated_mech_type, mech->oid))
+            _gss_mg_log(1, "negoex client didn't send the mech they said they would");
 
-	major = get_session_keys(minor, context, NEGOEX_BOTH_KEYS, mech);
+        major = get_session_keys(minor, context, NEGOEX_BOTH_KEYS, mech);
     } else if (ctx->negoex_step == 1) {
-	gss_mg_collect_error(ctx->negotiated_mech_type, major, *minor);
-	*mech_error = TRUE;
+        gss_mg_collect_error(ctx->negotiated_mech_type, major, *minor);
+        *mech_error = TRUE;
 
-	/* This was an optimistic token; pretend this never happened. */
-	major = GSS_S_COMPLETE;
-	*minor = 0;
-	gss_release_buffer(&tmpMinor, output_token);
-	gss_delete_sec_context(&tmpMinor, &mech->mech_context, GSS_C_NO_BUFFER);
+        /* This was an optimistic token; pretend this never happened. */
+        major = GSS_S_COMPLETE;
+        *minor = 0;
+        gss_release_buffer(&tmpMinor, output_token);
+        gss_delete_sec_context(&tmpMinor, &mech->mech_context, GSS_C_NO_BUFFER);
     }
 
     return major;
@@ -538,23 +538,23 @@ verify_keyusage(gssspnego_ctx ctx, int make_checksum)
 {
     /* Of course, these are the wrong way around in the spec. */
     return (ctx->flags.local ^ !make_checksum) ?
-	NEGOEX_KEYUSAGE_ACCEPTOR_CHECKSUM : NEGOEX_KEYUSAGE_INITIATOR_CHECKSUM;
+        NEGOEX_KEYUSAGE_ACCEPTOR_CHECKSUM : NEGOEX_KEYUSAGE_INITIATOR_CHECKSUM;
 }
 
 static OM_uint32
 verify_key_flags(gssspnego_ctx ctx, int make_checksum)
 {
     return (ctx->flags.local ^ make_checksum) ?
-	NEGOEX_SIGN_KEY : NEGOEX_VERIFY_KEY;
+        NEGOEX_SIGN_KEY : NEGOEX_VERIFY_KEY;
 }
 
 static OM_uint32
 verify_checksum(OM_uint32 *minor,
-		gssspnego_ctx ctx,
-		struct negoex_message *messages,
-		size_t nmessages,
-		gss_const_buffer_t input_token,
-		int *send_alert_out)
+                gssspnego_ctx ctx,
+                struct negoex_message *messages,
+                size_t nmessages,
+                gss_const_buffer_t input_token,
+                int *send_alert_out)
 {
     krb5_error_code ret;
     struct negoex_auth_mech *mech = HEIM_TAILQ_FIRST(&ctx->negoex_mechs);
@@ -572,27 +572,27 @@ verify_checksum(OM_uint32 *minor,
      */
     msg = _gss_negoex_locate_verify_message(messages, nmessages);
     if (msg == NULL || !GUID_EQ(msg->scheme, mech->scheme))
-	return GSS_S_COMPLETE;
+        return GSS_S_COMPLETE;
 
     /*
      * Last chance attempt to obtain session key for imported exported partial
      * contexts (which do not carry the session key at the NegoEx layer).
      */
     if (mech->verify_crypto == NULL)
-	get_session_keys(minor, context, verify_key_flags(ctx, FALSE), mech);
+        get_session_keys(minor, context, verify_key_flags(ctx, FALSE), mech);
 
     /*
      * A recoverable error may cause us to be unable to verify a token from the
      * other party. In this case we should send an alert.
      */
     if (mech->verify_crypto == NULL) {
-	*send_alert_out = TRUE;
-	return GSS_S_COMPLETE;
+        *send_alert_out = TRUE;
+        return GSS_S_COMPLETE;
     }
 
     if (!krb5_checksum_is_keyed(context, msg->cksum_type)) {
-	*minor = (OM_uint32)NEGOEX_INVALID_CHECKSUM;
-	return GSS_S_BAD_SIG;
+        *minor = (OM_uint32)NEGOEX_INVALID_CHECKSUM;
+        return GSS_S_BAD_SIG;
     }
 
     /*
@@ -602,8 +602,8 @@ verify_checksum(OM_uint32 *minor,
     iov[0].flags = KRB5_CRYPTO_TYPE_DATA;
     ret = krb5_storage_to_data(ctx->negoex_transcript, &iov[0].data);
     if (ret) {
-	*minor = ret;
-	return GSS_S_FAILURE;
+        *minor = ret;
+        return GSS_S_FAILURE;
     }
 
     iov[1].flags = KRB5_CRYPTO_TYPE_DATA;
@@ -615,11 +615,11 @@ verify_checksum(OM_uint32 *minor,
     iov[2].data.length = msg->cksum_len;
 
     ret = krb5_verify_checksum_iov(context, mech->verify_crypto, usage,
-				   iov, sizeof(iov) / sizeof(iov[0]), NULL);
+                                   iov, sizeof(iov) / sizeof(iov[0]), NULL);
     if (ret == 0)
-	mech->verified_checksum = TRUE;
+        mech->verified_checksum = TRUE;
     else
-	*minor = ret;
+        *minor = ret;
 
     krb5_data_free(&iov[0].data);
 
@@ -640,43 +640,43 @@ make_checksum(OM_uint32 *minor, gssspnego_ctx ctx)
     heim_assert(mech != NULL, "Invalid null mech when making NegoEx checksum");
 
     if (mech->crypto == NULL) {
-	if (mech->complete) {
-	    /*
-	     * Last chance attempt to obtain session key for imported exported partial
-	     * contexts (which do not carry the session key at the NegoEx layer).
-	     */
-	    get_session_keys(minor, context, verify_key_flags(ctx, TRUE), mech);
-	    if (mech->crypto == NULL) {
-		*minor = (OM_uint32)NEGOEX_NO_VERIFY_KEY;
-		return GSS_S_UNAVAILABLE;
-	    }
-	} else {
-	    return GSS_S_COMPLETE;
-	}
+        if (mech->complete) {
+            /*
+             * Last chance attempt to obtain session key for imported exported partial
+             * contexts (which do not carry the session key at the NegoEx layer).
+             */
+            get_session_keys(minor, context, verify_key_flags(ctx, TRUE), mech);
+            if (mech->crypto == NULL) {
+                *minor = (OM_uint32)NEGOEX_NO_VERIFY_KEY;
+                return GSS_S_UNAVAILABLE;
+            }
+        } else {
+            return GSS_S_COMPLETE;
+        }
     }
 
     ret = krb5_storage_to_data(ctx->negoex_transcript, &d);
     if (ret) {
-	*minor = ret;
-	return GSS_S_FAILURE;
+        *minor = ret;
+        return GSS_S_FAILURE;
     }
 
     ret = krb5_create_checksum(context, mech->crypto,
-			       usage, 0, d.data, d.length, &cksum);
+                               usage, 0, d.data, d.length, &cksum);
     krb5_data_free(&d);
     if (ret) {
-	*minor = ret;
-	return GSS_S_FAILURE;
+        *minor = ret;
+        return GSS_S_FAILURE;
     }
 
     major = _gss_negoex_add_verify_message(minor, ctx, mech->scheme,
-					   cksum.cksumtype,
-					   cksum.checksum.data,
-					   cksum.checksum.length);
+                                           cksum.cksumtype,
+                                           cksum.checksum.data,
+                                           cksum.checksum.length);
     free_Checksum(&cksum);
 
     if (major == GSS_S_COMPLETE)
-	mech->sent_checksum = TRUE;
+        mech->sent_checksum = TRUE;
 
     return major;
 }
@@ -687,26 +687,26 @@ make_checksum(OM_uint32 *minor, gssspnego_ctx ctx)
  */
 static void
 process_alerts(gssspnego_ctx ctx,
-	       struct negoex_message *messages,
-	       uint32_t nmessages)
+               struct negoex_message *messages,
+               uint32_t nmessages)
 {
     struct alert_message *msg;
     struct negoex_auth_mech *mech;
 
     msg = _gss_negoex_locate_alert_message(messages, nmessages);
     if (msg != NULL && msg->verify_no_key) {
-	mech = _gss_negoex_locate_auth_scheme(ctx, msg->scheme);
-	if (mech != NULL)
-	    release_mech_crypto(mech);
+        mech = _gss_negoex_locate_auth_scheme(ctx, msg->scheme);
+        if (mech != NULL)
+            release_mech_crypto(mech);
     }
 }
 
 static OM_uint32
 make_output_token(OM_uint32 *minor,
-		  gssspnego_ctx ctx,
-		  gss_buffer_t mech_output_token,
-		  int send_alert,
-		  gss_buffer_t output_token)
+                  gssspnego_ctx ctx,
+                  gss_buffer_t mech_output_token,
+                  int send_alert,
+                  gss_buffer_t output_token)
 {
     OM_uint32 major, tmpMinor;
     struct negoex_auth_mech *mech;
@@ -723,71 +723,71 @@ make_output_token(OM_uint32 *minor,
      * processed the last leg and don't need to send another token.
      */
     if (mech_output_token->length == 0 &&
-	HEIM_TAILQ_FIRST(&ctx->negoex_mechs)->sent_checksum)
-	return GSS_S_COMPLETE;
+        HEIM_TAILQ_FIRST(&ctx->negoex_mechs)->sent_checksum)
+        return GSS_S_COMPLETE;
 
     if (ctx->negoex_step == 1) {
-	if (ctx->flags.local)
-	    major = emit_initiator_nego(minor, ctx);
-	else
-	    major = emit_acceptor_nego(minor, ctx);
-	if (major != GSS_S_COMPLETE)
-	    return major;
+        if (ctx->flags.local)
+            major = emit_initiator_nego(minor, ctx);
+        else
+            major = emit_acceptor_nego(minor, ctx);
+        if (major != GSS_S_COMPLETE)
+            return major;
 
-	type = ctx->flags.local ? INITIATOR_META_DATA : ACCEPTOR_META_DATA;
-	HEIM_TAILQ_FOREACH(mech, &ctx->negoex_mechs, links) {
-	    if (mech->metadata.length > 0) {
-		major = _gss_negoex_add_exchange_message(minor, ctx,
-							 type, mech->scheme,
-							 &mech->metadata);
-		if (major != GSS_S_COMPLETE)
-		    return major;
-	    }
-	}
+        type = ctx->flags.local ? INITIATOR_META_DATA : ACCEPTOR_META_DATA;
+        HEIM_TAILQ_FOREACH(mech, &ctx->negoex_mechs, links) {
+            if (mech->metadata.length > 0) {
+                major = _gss_negoex_add_exchange_message(minor, ctx,
+                                                         type, mech->scheme,
+                                                         &mech->metadata);
+                if (major != GSS_S_COMPLETE)
+                    return major;
+            }
+        }
     }
 
     mech = HEIM_TAILQ_FIRST(&ctx->negoex_mechs);
 
     if (mech_output_token->length > 0) {
-	type = ctx->flags.local ? AP_REQUEST : CHALLENGE;
-	major = _gss_negoex_add_exchange_message(minor, ctx,
-						 type, mech->scheme,
-						 mech_output_token);
-	if (major != GSS_S_COMPLETE)
-	    return major;
+        type = ctx->flags.local ? AP_REQUEST : CHALLENGE;
+        major = _gss_negoex_add_exchange_message(minor, ctx,
+                                                 type, mech->scheme,
+                                                 mech_output_token);
+        if (major != GSS_S_COMPLETE)
+            return major;
     }
 
     if (send_alert) {
-	major = _gss_negoex_add_verify_no_key_alert(minor, ctx, mech->scheme);
-	if (major != GSS_S_COMPLETE)
-	    return major;
+        major = _gss_negoex_add_verify_no_key_alert(minor, ctx, mech->scheme);
+        if (major != GSS_S_COMPLETE)
+            return major;
     }
 
     /* Try to add a VERIFY message if we haven't already done so. */
     if (!mech->sent_checksum) {
-	major = make_checksum(minor, ctx);
-	if (major != GSS_S_COMPLETE)
-	    return major;
+        major = make_checksum(minor, ctx);
+        if (major != GSS_S_COMPLETE)
+            return major;
     }
 
     heim_assert(ctx->negoex_transcript != NULL, "NegoEx context uninitialized");
 
     output_token->length =
-	krb5_storage_seek(ctx->negoex_transcript, 0, SEEK_CUR) - old_transcript_len;
+        krb5_storage_seek(ctx->negoex_transcript, 0, SEEK_CUR) - old_transcript_len;
     output_token->value = malloc(output_token->length);
     if (output_token->value == NULL) {
-	*minor = ENOMEM;
-	return GSS_S_FAILURE;
+        *minor = ENOMEM;
+        return GSS_S_FAILURE;
     }
 
     krb5_storage_seek(ctx->negoex_transcript, old_transcript_len, SEEK_SET);
 
     if (krb5_storage_read(ctx->negoex_transcript,
-			  output_token->value,
-			  output_token->length) != output_token->length) {
-	*minor = ERANGE;
-	gss_release_buffer(&tmpMinor, output_token);
-	return GSS_S_FAILURE;
+                          output_token->value,
+                          output_token->length) != output_token->length) {
+        *minor = ERANGE;
+        gss_release_buffer(&tmpMinor, output_token);
+        return GSS_S_FAILURE;
     }
 
     krb5_storage_seek(ctx->negoex_transcript, 0, SEEK_END);
@@ -797,14 +797,14 @@ make_output_token(OM_uint32 *minor,
 
 OM_uint32
 _gss_negoex_init(OM_uint32 *minor,
-		 struct gssspnego_optimistic_ctx *opt,
-		 gssspnego_ctx ctx,
-		 gss_cred_id_t cred,
-		 OM_uint32 req_flags,
-		 OM_uint32 time_req,
-		 const gss_channel_bindings_t input_chan_bindings,
-		 gss_const_buffer_t input_token,
-		 gss_buffer_t output_token)
+                 struct gssspnego_optimistic_ctx *opt,
+                 gssspnego_ctx ctx,
+                 gss_cred_id_t cred,
+                 OM_uint32 req_flags,
+                 OM_uint32 time_req,
+                 const gss_channel_bindings_t input_chan_bindings,
+                 gss_const_buffer_t input_token,
+                 gss_buffer_t output_token)
 {
     OM_uint32 major, tmpMinor;
     gss_buffer_desc mech_output_token = GSS_C_EMPTY_BUFFER;
@@ -817,41 +817,41 @@ _gss_negoex_init(OM_uint32 *minor,
     output_token->value = NULL;
 
     if (ctx->negoex_step == 0 && input_token != GSS_C_NO_BUFFER &&
-	input_token->length != 0)
-	return GSS_S_DEFECTIVE_TOKEN;
+        input_token->length != 0)
+        return GSS_S_DEFECTIVE_TOKEN;
 
     major = _gss_negoex_begin(minor, ctx);
     if (major != GSS_S_COMPLETE)
-	goto cleanup;
+        goto cleanup;
 
     ctx->negoex_step++;
 
     if (input_token != GSS_C_NO_BUFFER && input_token->length > 0) {
-	major = _gss_negoex_parse_token(minor, ctx, input_token,
-					&messages, &nmessages);
-	if (major != GSS_S_COMPLETE)
-	    goto cleanup;
+        major = _gss_negoex_parse_token(minor, ctx, input_token,
+                                        &messages, &nmessages);
+        if (major != GSS_S_COMPLETE)
+            goto cleanup;
     }
 
     process_alerts(ctx, messages, nmessages);
 
     if (ctx->negoex_step == 1) {
-	/* Choose a random conversation ID. */
-	krb5_generate_random_block(ctx->negoex_conv_id, GUID_LENGTH);
+        /* Choose a random conversation ID. */
+        krb5_generate_random_block(ctx->negoex_conv_id, GUID_LENGTH);
 
-	/* Query each mech for its metadata (this may prune the mech list). */
-	query_meta_data(ctx, opt, cred, req_flags);
+        /* Query each mech for its metadata (this may prune the mech list). */
+        query_meta_data(ctx, opt, cred, req_flags);
     } else if (ctx->negoex_step == 2) {
-	/* See if the mech processed the optimistic token. */
-	check_optimistic_result(ctx, messages, nmessages);
+        /* See if the mech processed the optimistic token. */
+        check_optimistic_result(ctx, messages, nmessages);
 
-	/* Pass the acceptor metadata to each mech to prune the list. */
-	exchange_meta_data(ctx, cred, req_flags, messages, nmessages);
+        /* Pass the acceptor metadata to each mech to prune the list. */
+        exchange_meta_data(ctx, cred, req_flags, messages, nmessages);
 
-	/* Process the ACCEPTOR_NEGO message. */
-	major = process_acceptor_nego(minor, ctx, messages, nmessages);
-	if (major != GSS_S_COMPLETE)
-	    goto cleanup;
+        /* Process the ACCEPTOR_NEGO message. */
+        major = process_acceptor_nego(minor, ctx, messages, nmessages);
+        if (major != GSS_S_COMPLETE)
+            goto cleanup;
     }
 
     /*
@@ -859,43 +859,43 @@ _gss_negoex_init(OM_uint32 *minor,
      * the mech list, but on success there will be at least one mech entry.
      */
     major = mech_init(minor, opt, ctx, cred, req_flags, time_req,
-		      input_chan_bindings, messages, nmessages,
-		      &mech_output_token, &mech_error);
+                      input_chan_bindings, messages, nmessages,
+                      &mech_output_token, &mech_error);
     if (major != GSS_S_COMPLETE)
-	goto cleanup;
+        goto cleanup;
     heim_assert(!HEIM_TAILQ_EMPTY(&ctx->negoex_mechs),
-		"Invalid empty NegoEx mechanism list");
+                "Invalid empty NegoEx mechanism list");
 
     /*
      * At this point in step 2 we have performed the metadata exchange and
      * chosen a mech we can use, so discard any fallback mech entries.
      */
     if (ctx->negoex_step == 2)
-	_gss_negoex_select_auth_mech(ctx, HEIM_TAILQ_FIRST(&ctx->negoex_mechs));
+        _gss_negoex_select_auth_mech(ctx, HEIM_TAILQ_FIRST(&ctx->negoex_mechs));
 
     major = verify_checksum(minor, ctx, messages, nmessages, input_token,
-			    &send_alert);
+                            &send_alert);
     if (major != GSS_S_COMPLETE)
-	goto cleanup;
+        goto cleanup;
 
     if (input_token != GSS_C_NO_BUFFER) {
-	if (krb5_storage_write(ctx->negoex_transcript,
-			       input_token->value,
-			       input_token->length) != input_token->length) {
-	    major = GSS_S_FAILURE;
-	    *minor = ENOMEM;
-	    goto cleanup;
-	}
+        if (krb5_storage_write(ctx->negoex_transcript,
+                               input_token->value,
+                               input_token->length) != input_token->length) {
+            major = GSS_S_FAILURE;
+            *minor = ENOMEM;
+            goto cleanup;
+        }
     }
 
     major = make_output_token(minor, ctx, &mech_output_token, send_alert,
-			      output_token);
+                              output_token);
     if (major != GSS_S_COMPLETE)
-	goto cleanup;
+        goto cleanup;
 
     mech = HEIM_TAILQ_FIRST(&ctx->negoex_mechs);
     major = (mech->complete && mech->verified_checksum) ? GSS_S_COMPLETE :
-	GSS_S_CONTINUE_NEEDED;
+        GSS_S_CONTINUE_NEEDED;
 
 cleanup:
     free(messages);
@@ -903,18 +903,18 @@ cleanup:
     _gss_negoex_end(ctx);
 
     if (GSS_ERROR(major)) {
-	if (!mech_error) {
-	    krb5_context context = _gss_mg_krb5_context();
-	    const char *emsg = krb5_get_error_message(context, *minor);
+        if (!mech_error) {
+            krb5_context context = _gss_mg_krb5_context();
+            const char *emsg = krb5_get_error_message(context, *minor);
 
-	    gss_mg_set_error_string(GSS_SPNEGO_MECHANISM,
-				    major, *minor,
-				    "NegoEx failed to initialize security context: %s",
-				    emsg);
-	    krb5_free_error_message(context, emsg);
-	}
+            gss_mg_set_error_string(GSS_SPNEGO_MECHANISM,
+                                    major, *minor,
+                                    "NegoEx failed to initialize security context: %s",
+                                    emsg);
+            krb5_free_error_message(context, emsg);
+        }
 
-	_gss_negoex_release_context(ctx);
+        _gss_negoex_release_context(ctx);
     }
 
     return major;
@@ -922,12 +922,12 @@ cleanup:
 
 OM_uint32
 _gss_negoex_accept(OM_uint32 *minor,
-		   gssspnego_ctx ctx,
-		   gss_cred_id_t cred,
-		   gss_const_buffer_t input_token,
-		   const gss_channel_bindings_t input_chan_bindings,
-		   gss_buffer_t output_token,
-		   gss_cred_id_t *deleg_cred)
+                   gssspnego_ctx ctx,
+                   gss_cred_id_t cred,
+                   gss_const_buffer_t input_token,
+                   const gss_channel_bindings_t input_chan_bindings,
+                   gss_buffer_t output_token,
+                   gss_cred_id_t *deleg_cred)
 {
     OM_uint32 major, tmpMinor;
     gss_buffer_desc mech_output_token = GSS_C_EMPTY_BUFFER;
@@ -939,47 +939,47 @@ _gss_negoex_accept(OM_uint32 *minor,
     output_token->length = 0;
     output_token->value = NULL;
     if (deleg_cred)
-	*deleg_cred = GSS_C_NO_CREDENTIAL;
+        *deleg_cred = GSS_C_NO_CREDENTIAL;
 
     if (input_token == GSS_C_NO_BUFFER || input_token->length == 0) {
-	major = GSS_S_DEFECTIVE_TOKEN;
-	goto cleanup;
+        major = GSS_S_DEFECTIVE_TOKEN;
+        goto cleanup;
     }
 
     major = _gss_negoex_begin(minor, ctx);
     if (major != GSS_S_COMPLETE)
-	goto cleanup;
+        goto cleanup;
 
     ctx->negoex_step++;
 
     major = _gss_negoex_parse_token(minor, ctx, input_token,
-				    &messages, &nmessages);
+                                    &messages, &nmessages);
     if (major != GSS_S_COMPLETE)
-	goto cleanup;
+        goto cleanup;
 
     process_alerts(ctx, messages, nmessages);
 
     if (ctx->negoex_step == 1) {
-	/*
-	 * Read the INITIATOR_NEGO message to prune the candidate mech list.
-	 */
-	major = process_initiator_nego(minor, ctx, messages, nmessages);
-	if (major != GSS_S_COMPLETE)
-	    goto cleanup;
+        /*
+         * Read the INITIATOR_NEGO message to prune the candidate mech list.
+         */
+        major = process_initiator_nego(minor, ctx, messages, nmessages);
+        if (major != GSS_S_COMPLETE)
+            goto cleanup;
 
-	/*
-	 * Pass the initiator metadata to each mech to prune the list, and
-	 * query each mech for its acceptor metadata (which may also prune the
-	 * list).
-	 */
-	exchange_meta_data(ctx, cred, 0, messages, nmessages);
-	query_meta_data(ctx, NULL, cred, 0);
+        /*
+         * Pass the initiator metadata to each mech to prune the list, and
+         * query each mech for its acceptor metadata (which may also prune the
+         * list).
+         */
+        exchange_meta_data(ctx, cred, 0, messages, nmessages);
+        query_meta_data(ctx, NULL, cred, 0);
 
-	if (HEIM_TAILQ_EMPTY(&ctx->negoex_mechs)) {
-	    *minor = (OM_uint32)NEGOEX_NO_AVAILABLE_MECHS;
-	    major = GSS_S_FAILURE;
-	    goto cleanup;
-	}
+        if (HEIM_TAILQ_EMPTY(&ctx->negoex_mechs)) {
+            *minor = (OM_uint32)NEGOEX_NO_AVAILABLE_MECHS;
+            major = GSS_S_FAILURE;
+            goto cleanup;
+        }
     }
 
     /*
@@ -988,34 +988,34 @@ _gss_negoex_accept(OM_uint32 *minor,
      * is generated, so that we send the token to the initiator.
      */
     major = mech_accept(minor, ctx, cred, input_chan_bindings,
-			messages, nmessages, &mech_output_token,
-			deleg_cred, &mech_error);
+                        messages, nmessages, &mech_output_token,
+                        deleg_cred, &mech_error);
     if (major != GSS_S_COMPLETE && mech_output_token.length == 0)
-	goto cleanup;
+        goto cleanup;
 
     if (major == GSS_S_COMPLETE) {
-	major = verify_checksum(minor, ctx, messages, nmessages, input_token,
-				&send_alert);
-	if (major != GSS_S_COMPLETE)
-	    goto cleanup;
+        major = verify_checksum(minor, ctx, messages, nmessages, input_token,
+                                &send_alert);
+        if (major != GSS_S_COMPLETE)
+            goto cleanup;
     }
 
     if (krb5_storage_write(ctx->negoex_transcript,
-			   input_token->value,
-			   input_token->length) != input_token->length) {
-	major = GSS_S_FAILURE;
-	*minor = ENOMEM;
-	goto cleanup;
+                           input_token->value,
+                           input_token->length) != input_token->length) {
+        major = GSS_S_FAILURE;
+        *minor = ENOMEM;
+        goto cleanup;
     }
 
     major = make_output_token(minor, ctx, &mech_output_token, send_alert,
-			      output_token);
+                              output_token);
     if (major != GSS_S_COMPLETE)
-	goto cleanup;
+        goto cleanup;
 
     mech = HEIM_TAILQ_FIRST(&ctx->negoex_mechs);
     major = (mech->complete && mech->verified_checksum) ? GSS_S_COMPLETE :
-	GSS_S_CONTINUE_NEEDED;
+        GSS_S_CONTINUE_NEEDED;
 
 cleanup:
     free(messages);
@@ -1023,18 +1023,18 @@ cleanup:
     _gss_negoex_end(ctx);
 
     if (GSS_ERROR(major)) {
-	if (!mech_error) {
-	    krb5_context context = _gss_mg_krb5_context();
-	    const char *emsg = krb5_get_error_message(context, *minor);
+        if (!mech_error) {
+            krb5_context context = _gss_mg_krb5_context();
+            const char *emsg = krb5_get_error_message(context, *minor);
 
-	    gss_mg_set_error_string(GSS_SPNEGO_MECHANISM,
-				    major, *minor,
-				    "NegoEx failed to accept security context: %s",
-				    emsg);
-	    krb5_free_error_message(context, emsg);
-	}
+            gss_mg_set_error_string(GSS_SPNEGO_MECHANISM,
+                                    major, *minor,
+                                    "NegoEx failed to accept security context: %s",
+                                    emsg);
+            krb5_free_error_message(context, emsg);
+        }
 
-	_gss_negoex_release_context(ctx);
+        _gss_negoex_release_context(ctx);
     }
 
     return major;

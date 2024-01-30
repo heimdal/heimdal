@@ -35,9 +35,9 @@
 
 void
 _gssapi_encap_length (size_t data_len,
-		      size_t *len,
-		      size_t *total_len,
-		      const gss_OID mech)
+                      size_t *len,
+                      size_t *total_len,
+                      const gss_OID mech)
 {
     size_t len_len;
 
@@ -50,17 +50,17 @@ _gssapi_encap_length (size_t data_len,
 
 void
 _gsskrb5_encap_length (size_t data_len,
-			  size_t *len,
-			  size_t *total_len,
-			  const gss_OID mech)
+                       size_t *len,
+                       size_t *total_len,
+                       const gss_OID mech)
 {
     _gssapi_encap_length(data_len + 2, len, total_len, mech);
 }
 
 void *
 _gssapi_make_mech_header(void *ptr,
-			 size_t len,
-			 const gss_OID mech)
+                         size_t len,
+                         const gss_OID mech)
 {
     u_char *p = ptr;
     int e;
@@ -70,7 +70,7 @@ _gssapi_make_mech_header(void *ptr,
     len_len = der_length_len(len);
     e = der_put_length (p + len_len - 1, len_len, len, &foo);
     if(e || foo != len_len)
-	abort ();
+        abort ();
     p += len_len;
     *p++ = 0x06;
     *p++ = mech->length;
@@ -81,9 +81,9 @@ _gssapi_make_mech_header(void *ptr,
 
 void *
 _gsskrb5_make_header (void *ptr,
-			 size_t len,
-			 const void *type,
-			 const gss_OID mech)
+                      size_t len,
+                      const void *type,
+                      const gss_OID mech)
 {
     u_char *p = ptr;
     p = _gssapi_make_mech_header(p, len, mech);
@@ -112,8 +112,8 @@ _gssapi_encapsulate(
     output_token->length = outer_len;
     output_token->value  = malloc (outer_len);
     if (output_token->value == NULL) {
-	*minor_status = ENOMEM;
-	return GSS_S_FAILURE;
+        *minor_status = ENOMEM;
+        return GSS_S_FAILURE;
     }
 
     p = _gssapi_make_mech_header (output_token->value, len, mech);
@@ -128,11 +128,11 @@ _gssapi_encapsulate(
 
 OM_uint32
 _gsskrb5_encapsulate(
-			OM_uint32 *minor_status,
-			const krb5_data *in_data,
-			gss_buffer_t output_token,
-			const void *type,
-			const gss_OID mech
+                     OM_uint32 *minor_status,
+                     const krb5_data *in_data,
+                     gss_buffer_t output_token,
+                     const void *type,
+                     const gss_OID mech
 )
 {
     size_t len, outer_len;
@@ -143,8 +143,8 @@ _gsskrb5_encapsulate(
     output_token->length = outer_len;
     output_token->value  = malloc (outer_len);
     if (output_token->value == NULL) {
-	*minor_status = ENOMEM;
-	return GSS_S_FAILURE;
+        *minor_status = ENOMEM;
+        return GSS_S_FAILURE;
     }
 
     p = _gsskrb5_make_header (output_token->value, len, type, mech);

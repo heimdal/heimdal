@@ -39,8 +39,8 @@ RCSID("$Id$");
 #include "otp_locl.h"
 
 struct e {
-  const char *s;
-  unsigned n;
+    const char *s;
+    unsigned n;
 };
 
 extern const struct e inv_std_dict[2048];
@@ -48,167 +48,167 @@ extern const struct e inv_std_dict[2048];
 static int
 cmp(const void *a, const void *b)
 {
-  const struct e *e1, *e2;
+    const struct e *e1, *e2;
 
-  e1 = (const struct e *)a;
-  e2 = (const struct e *)b;
-  return strcasecmp (e1->s, e2->s);
+    e1 = (const struct e *)a;
+    e2 = (const struct e *)b;
+    return strcasecmp (e1->s, e2->s);
 }
 
 static int
 get_stdword (const char *s, void *v)
 {
-  struct e e, *r;
+    struct e e, *r;
 
-  e.s = s;
-  e.n = -1;
-  r = (struct e *) bsearch (&e, inv_std_dict,
-			    sizeof(inv_std_dict)/sizeof(*inv_std_dict),
-			    sizeof(*inv_std_dict), cmp);
-  if (r)
-    return r->n;
-  else
-    return -1;
+    e.s = s;
+    e.n = -1;
+    r = (struct e *) bsearch (&e, inv_std_dict,
+                              sizeof(inv_std_dict)/sizeof(*inv_std_dict),
+                              sizeof(*inv_std_dict), cmp);
+    if (r)
+      return r->n;
+    else
+      return -1;
 }
 
 static void
 compress (OtpKey key, unsigned wn[])
 {
-  key[0] = wn[0] >> 3;
-  key[1] = ((wn[0] & 0x07) << 5) | (wn[1] >> 6);
-  key[2] = ((wn[1] & 0x3F) << 2) | (wn[2] >> 9);
-  key[3] = ((wn[2] >> 1) & 0xFF);
-  key[4] = ((wn[2] & 0x01) << 7) | (wn[3] >> 4);
-  key[5] = ((wn[3] & 0x0F) << 4) | (wn[4] >> 7);
-  key[6] = ((wn[4] & 0x7F) << 1) | (wn[5] >> 10);
-  key[7] = ((wn[5] >> 2) & 0xFF);
+    key[0] = wn[0] >> 3;
+    key[1] = ((wn[0] & 0x07) << 5) | (wn[1] >> 6);
+    key[2] = ((wn[1] & 0x3F) << 2) | (wn[2] >> 9);
+    key[3] = ((wn[2] >> 1) & 0xFF);
+    key[4] = ((wn[2] & 0x01) << 7) | (wn[3] >> 4);
+    key[5] = ((wn[3] & 0x0F) << 4) | (wn[4] >> 7);
+    key[6] = ((wn[4] & 0x7F) << 1) | (wn[5] >> 10);
+    key[7] = ((wn[5] >> 2) & 0xFF);
 }
 
 static int
 get_altword (const char *s, void *a)
 {
-  OtpAlgorithm *alg = (OtpAlgorithm *)a;
-  int ret;
-  unsigned char *res = malloc(alg->hashsize);
+    OtpAlgorithm *alg = (OtpAlgorithm *)a;
+    int ret;
+    unsigned char *res = malloc(alg->hashsize);
 
-  if (res == NULL)
-    return -1;
-  alg->hash (s, strlen(s), res);
-  ret = (unsigned)(res[alg->hashsize - 1]) |
-      ((res[alg->hashsize - 2] & 0x03) << 8);
-  free (res);
-  return ret;
+    if (res == NULL)
+        return -1;
+    alg->hash (s, strlen(s), res);
+    ret = (unsigned)(res[alg->hashsize - 1]) |
+        ((res[alg->hashsize - 2] & 0x03) << 8);
+    free (res);
+    return ret;
 }
 
 static int
 parse_words(unsigned wn[],
-	    const char *str,
-	    int (*convert)(const char *, void *),
-	    void *arg)
+            const char *str,
+            int (*convert)(const char *, void *),
+            void *arg)
 {
-  const unsigned char *w, *wend;
-  char *wcopy;
-  int i;
-  int tmp;
+    const unsigned char *w, *wend;
+    char *wcopy;
+    int i;
+    int tmp;
 
-  w = (const unsigned char *)str;
-  for (i = 0; i < 6; ++i) {
-    while (isspace(*w))
-      ++w;
-    wend = w;
-    while (isalpha (*wend))
-      ++wend;
+    w = (const unsigned char *)str;
+    for (i = 0; i < 6; ++i) {
+        while (isspace(*w))
+            ++w;
+        wend = w;
+        while (isalpha (*wend))
+            ++wend;
 
-    tmp = wend - w;
-    wcopy = malloc(tmp + 1);
-    if (wcopy == NULL)
-	return -1;
-    memcpy(wcopy, w, tmp);
-    wcopy[tmp] = '\0';
+        tmp = wend - w;
+        wcopy = malloc(tmp + 1);
+        if (wcopy == NULL)
+            return -1;
+        memcpy(wcopy, w, tmp);
+        wcopy[tmp] = '\0';
 
-    tmp = (*convert)(wcopy, arg);
-    free(wcopy);
-    w = wend;
-    if (tmp < 0)
-      return -1;
-    wn[i] = tmp;
-  }
-  return 0;
+        tmp = (*convert)(wcopy, arg);
+        free(wcopy);
+        w = wend;
+        if (tmp < 0)
+            return -1;
+        wn[i] = tmp;
+    }
+    return 0;
 }
 
 static int
 otp_parse_internal (OtpKey key, const char *str,
-		    OtpAlgorithm *alg,
-		    int (*convert)(const char *, void *))
+                    OtpAlgorithm *alg,
+                    int (*convert)(const char *, void *))
 {
-  unsigned wn[6];
+    unsigned wn[6];
 
-  if (parse_words (wn, str, convert, alg))
-    return -1;
-  compress (key, wn);
-  if (otp_checksum (key) != (wn[5] & 0x03))
-    return -1;
-  return 0;
+    if (parse_words (wn, str, convert, alg))
+        return -1;
+    compress (key, wn);
+    if (otp_checksum (key) != (wn[5] & 0x03))
+        return -1;
+    return 0;
 }
 
 int
 otp_parse_stddict (OtpKey key, const char *str)
 {
-  return otp_parse_internal (key, str, NULL, get_stdword);
+    return otp_parse_internal (key, str, NULL, get_stdword);
 }
 
 int
 otp_parse_altdict (OtpKey key, const char *str, OtpAlgorithm *alg)
 {
-  return otp_parse_internal (key, str, alg, get_altword);
+    return otp_parse_internal (key, str, alg, get_altword);
 }
 
 int
 otp_parse_hex (OtpKey key, const char *s)
 {
-  char buf[17], *b;
-  int is[8];
-  int i;
+    char buf[17], *b;
+    int is[8];
+    int i;
 
-  b = buf;
-  while (*s) {
-    if (strchr ("0123456789ABCDEFabcdef", *s)) {
-      if (b - buf >= 16)
-	return -1;
-      else
-	*b++ = tolower((unsigned char)*s);
+    b = buf;
+    while (*s) {
+        if (strchr ("0123456789ABCDEFabcdef", *s)) {
+            if (b - buf >= 16)
+                return -1;
+            else
+                *b++ = tolower((unsigned char)*s);
+        }
+        s++;
     }
-    s++;
-  }
-  *b = '\0';
-  if (sscanf (buf, "%2x%2x%2x%2x%2x%2x%2x%2x",
-	      &is[0], &is[1], &is[2], &is[3], &is[4],
-	      &is[5], &is[6], &is[7]) != 8)
-    return -1;
-  for (i = 0; i < OTPKEYSIZE; ++i)
-    key[i] = is[i];
-  return 0;
+    *b = '\0';
+    if (sscanf (buf, "%2x%2x%2x%2x%2x%2x%2x%2x",
+                &is[0], &is[1], &is[2], &is[3], &is[4],
+                &is[5], &is[6], &is[7]) != 8)
+        return -1;
+    for (i = 0; i < OTPKEYSIZE; ++i)
+        key[i] = is[i];
+    return 0;
 }
 
 int
 otp_parse (OtpKey key, const char *s, OtpAlgorithm *alg)
 {
-  int ret;
-  int dohex = 1;
+    int ret;
+    int dohex = 1;
 
-  if (strncmp (s, OTP_HEXPREFIX, strlen(OTP_HEXPREFIX)) == 0)
-    return otp_parse_hex (key, s + strlen(OTP_HEXPREFIX));
-  if (strncmp (s, OTP_WORDPREFIX, strlen(OTP_WORDPREFIX)) == 0) {
-    s += strlen(OTP_WORDPREFIX);
-    dohex = 0;
-  }
+    if (strncmp (s, OTP_HEXPREFIX, strlen(OTP_HEXPREFIX)) == 0)
+        return otp_parse_hex (key, s + strlen(OTP_HEXPREFIX));
+    if (strncmp (s, OTP_WORDPREFIX, strlen(OTP_WORDPREFIX)) == 0) {
+        s += strlen(OTP_WORDPREFIX);
+        dohex = 0;
+    }
 
-  ret = otp_parse_stddict (key, s);
-  if (ret)
-    ret = otp_parse_altdict (key, s, alg);
-  if (ret && dohex)
-    ret = otp_parse_hex (key, s);
-  return ret;
+    ret = otp_parse_stddict (key, s);
+    if (ret)
+        ret = otp_parse_altdict (key, s, alg);
+    if (ret && dohex)
+        ret = otp_parse_hex (key, s);
+    return ret;
 }
 
 const char *const std_dict[2048] =

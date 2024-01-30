@@ -43,19 +43,19 @@
 
 static krb5_error_code
 get_default (kadm5_server_context *contextp,
-	     krb5_principal princ,
-	     kadm5_principal_ent_t default_ent)
+             krb5_principal princ,
+             kadm5_principal_ent_t default_ent)
 {
     krb5_error_code ret;
     krb5_principal def_principal;
     krb5_const_realm realm = krb5_principal_get_realm(contextp->context, princ);
 
     ret = krb5_make_principal (contextp->context, &def_principal,
-			       realm, "default", NULL);
+                               realm, "default", NULL);
     if (ret)
-	return ret;
+        return ret;
     ret = kadm5_get_principal (contextp, def_principal, default_ent,
-			       KADM5_PRINCIPAL_NORMAL_MASK);
+                               KADM5_PRINCIPAL_NORMAL_MASK);
     krb5_free_principal (contextp->context, def_principal);
     return ret;
 }
@@ -94,94 +94,94 @@ add_one_principal(const char *name,
     memset(&princ, 0, sizeof(princ));
     ret = krb5_parse_name(context, name, &princ_ent);
     if (ret) {
-	krb5_warn(context, ret, "krb5_parse_name");
-	return ret;
+        krb5_warn(context, ret, "krb5_parse_name");
+        return ret;
     }
 
     if (rand_password) {
-	ret = krb5_unparse_name(context, princ_ent, &princ_name);
-	if (ret) {
-	    krb5_warn(context, ret, "krb5_parse_name");
-	    goto out;
-	}
+        ret = krb5_unparse_name(context, princ_ent, &princ_name);
+        if (ret) {
+            krb5_warn(context, ret, "krb5_parse_name");
+            goto out;
+        }
     }
     princ.principal = princ_ent;
     mask |= KADM5_PRINCIPAL;
 
     ret = set_entry(context, &princ, &mask,
-		    max_ticket_life, max_renewable_life,
-		    expiration, pw_expiration, attributes, policy);
+                    max_ticket_life, max_renewable_life,
+                    expiration, pw_expiration, attributes, policy);
     if (ret)
-	goto out;
+        goto out;
 
     default_ent = &defrec;
     ret = get_default (kadm_handle, princ_ent, default_ent);
     if (ret) {
-	default_ent  = NULL;
-	default_mask = 0;
+        default_ent  = NULL;
+        default_mask = 0;
     } else {
-	default_mask = KADM5_ATTRIBUTES | KADM5_MAX_LIFE | KADM5_MAX_RLIFE |
-	    KADM5_PRINC_EXPIRE_TIME | KADM5_PW_EXPIRATION;
+        default_mask = KADM5_ATTRIBUTES | KADM5_MAX_LIFE | KADM5_MAX_RLIFE |
+            KADM5_PRINC_EXPIRE_TIME | KADM5_PW_EXPIRATION;
     }
 
     if(use_defaults)
-	set_defaults(&princ, &mask, default_ent, default_mask);
+        set_defaults(&princ, &mask, default_ent, default_mask);
     else
-	if(edit_entry(&princ, &mask, default_ent, default_mask))
-	    goto out;
+        if(edit_entry(&princ, &mask, default_ent, default_mask))
+            goto out;
     if(rand_key || key_data) {
-	princ.attributes |= KRB5_KDB_DISALLOW_ALL_TIX;
-	mask |= KADM5_ATTRIBUTES;
-	random_password (pwbuf, sizeof(pwbuf));
-	password = pwbuf;
+        princ.attributes |= KRB5_KDB_DISALLOW_ALL_TIX;
+        mask |= KADM5_ATTRIBUTES;
+        random_password (pwbuf, sizeof(pwbuf));
+        password = pwbuf;
     } else if (rand_password) {
-	random_password (pwbuf, sizeof(pwbuf));
-	password = pwbuf;
+        random_password (pwbuf, sizeof(pwbuf));
+        password = pwbuf;
     } else if(password == NULL) {
-	char *prompt;
-	int aret;
+        char *prompt;
+        int aret;
 
-	ret = krb5_unparse_name(context, princ_ent, &princ_name);
-	if (ret)
-	    goto out;
-	aret = asprintf (&prompt, "%s's Password: ", princ_name);
-	if (aret == -1) {
-	    ret = ENOMEM;
-	    krb5_set_error_message(context, ret, "out of memory");
-	    goto out;
-	}
-	ret = UI_UTIL_read_pw_string (pwbuf, sizeof(pwbuf), prompt,
-				      UI_UTIL_FLAG_VERIFY |
-				      UI_UTIL_FLAG_VERIFY_SILENT);
-	free (prompt);
-	if (ret) {
-	    ret = KRB5_LIBOS_BADPWDMATCH;
-	    krb5_set_error_message(context, ret, "failed to verify password");
-	    goto out;
-	}
-	password = pwbuf;
+        ret = krb5_unparse_name(context, princ_ent, &princ_name);
+        if (ret)
+            goto out;
+        aret = asprintf (&prompt, "%s's Password: ", princ_name);
+        if (aret == -1) {
+            ret = ENOMEM;
+            krb5_set_error_message(context, ret, "out of memory");
+            goto out;
+        }
+        ret = UI_UTIL_read_pw_string (pwbuf, sizeof(pwbuf), prompt,
+                                      UI_UTIL_FLAG_VERIFY |
+                                      UI_UTIL_FLAG_VERIFY_SILENT);
+        free (prompt);
+        if (ret) {
+            ret = KRB5_LIBOS_BADPWDMATCH;
+            krb5_set_error_message(context, ret, "failed to verify password");
+            goto out;
+        }
+        password = pwbuf;
     }
 
     ret = kadm5_create_principal(kadm_handle, &princ, mask, password);
     if(ret) {
-	krb5_warn(context, ret, "kadm5_create_principal");
-	goto out;
+        krb5_warn(context, ret, "kadm5_create_principal");
+        goto out;
     }
     /* Save requested password expiry before it's clobbered */
     pw_expire = princ.pw_expiration;
     if (rand_key) {
-	krb5_keyblock *new_keys;
-	int n_keys, i;
-	ret = kadm5_randkey_principal_3(kadm_handle, princ_ent, 0,
+        krb5_keyblock *new_keys;
+        int n_keys, i;
+        ret = kadm5_randkey_principal_3(kadm_handle, princ_ent, 0,
                                         nkstuple, kstuple, &new_keys, &n_keys);
-	if(ret){
-	    krb5_warn(context, ret, "kadm5_randkey_principal");
-	    n_keys = 0;
-	}
-	for(i = 0; i < n_keys; i++)
-	    krb5_free_keyblock_contents(context, &new_keys[i]);
-	if (n_keys > 0)
-	    free(new_keys);
+        if(ret){
+            krb5_warn(context, ret, "kadm5_randkey_principal");
+            n_keys = 0;
+        }
+        for(i = 0; i < n_keys; i++)
+            krb5_free_keyblock_contents(context, &new_keys[i]);
+        if (n_keys > 0)
+            free(new_keys);
         ret = kadm5_get_principal(kadm_handle, princ_ent, &princ,
                                   KADM5_PRINCIPAL | KADM5_KVNO |
                                       KADM5_ATTRIBUTES);
@@ -191,42 +191,42 @@ add_one_principal(const char *name,
         }
         krb5_free_principal(context, princ_ent);
         princ_ent = princ.principal;
-	princ.attributes &= (~KRB5_KDB_DISALLOW_ALL_TIX);
-	princ.pw_expiration = pw_expire;
-	/*
-	 * Updating kvno w/o key data and vice-versa gives _kadm5_setup_entry()
-	 * and _kadm5_set_keys2() headaches.  But we used to, so we handle
-	 * this in in those two functions.  Might as well leave this code as
-	 * it was then.
-	 */
-	princ.kvno = 1;
-	kadm5_modify_principal(kadm_handle, &princ,
-			       KADM5_PW_EXPIRATION | KADM5_ATTRIBUTES | KADM5_KVNO);
+        princ.attributes &= (~KRB5_KDB_DISALLOW_ALL_TIX);
+        princ.pw_expiration = pw_expire;
+        /*
+         * Updating kvno w/o key data and vice-versa gives _kadm5_setup_entry()
+         * and _kadm5_set_keys2() headaches.  But we used to, so we handle
+         * this in in those two functions.  Might as well leave this code as
+         * it was then.
+         */
+        princ.kvno = 1;
+        kadm5_modify_principal(kadm_handle, &princ,
+                               KADM5_PW_EXPIRATION | KADM5_ATTRIBUTES | KADM5_KVNO);
     } else if (key_data) {
-	ret = kadm5_chpass_principal_with_key (kadm_handle, princ_ent,
-					       3, key_data);
-	if (ret) {
-	    krb5_warn(context, ret, "kadm5_chpass_principal_with_key");
-	}
-	kadm5_get_principal(kadm_handle, princ_ent, &princ,
-			    KADM5_PRINCIPAL | KADM5_ATTRIBUTES);
+        ret = kadm5_chpass_principal_with_key (kadm_handle, princ_ent,
+                                               3, key_data);
+        if (ret) {
+            krb5_warn(context, ret, "kadm5_chpass_principal_with_key");
+        }
+        kadm5_get_principal(kadm_handle, princ_ent, &princ,
+                            KADM5_PRINCIPAL | KADM5_ATTRIBUTES);
         krb5_free_principal(context, princ_ent);
         princ_ent = princ.principal;
-	princ.attributes &= (~KRB5_KDB_DISALLOW_ALL_TIX);
-	princ.pw_expiration = pw_expire;
-	kadm5_modify_principal(kadm_handle, &princ,
-			       KADM5_PW_EXPIRATION | KADM5_ATTRIBUTES);
+        princ.attributes &= (~KRB5_KDB_DISALLOW_ALL_TIX);
+        princ.pw_expiration = pw_expire;
+        kadm5_modify_principal(kadm_handle, &princ,
+                               KADM5_PW_EXPIRATION | KADM5_ATTRIBUTES);
     } else if (rand_password) {
-	printf ("added %s with password \"%s\"\n", princ_name, password);
+        printf ("added %s with password \"%s\"\n", princ_name, password);
     }
 out:
     free(princ_name);
     kadm5_free_principal_ent(kadm_handle, &princ); /* frees princ_ent */
     if(default_ent)
-	kadm5_free_principal_ent (kadm_handle, default_ent);
+        kadm5_free_principal_ent (kadm_handle, default_ent);
     if (password != NULL) {
-	size_t len = strlen(password);
-	memset_s(password, len, 0, len);
+        size_t len = strlen(password);
+        memset_s(password, len, 0, len);
     }
     return ret;
 }
@@ -256,18 +256,18 @@ add_new_key(struct add_options *opt, int argc, char **argv)
 
     num = 0;
     if (opt->random_key_flag)
-	++num;
+        ++num;
     if (opt->random_password_flag)
-	++num;
+        ++num;
     if (opt->password_string)
-	++num;
+        ++num;
     if (opt->key_string)
-	++num;
+        ++num;
 
     if (num > 1) {
-	fprintf (stderr, "give only one of "
-		"--random-key, --random-password, --password, --key\n");
-	return 1;
+        fprintf (stderr, "give only one of "
+                "--random-key, --random-password, --password, --key\n");
+        return 1;
     }
 
     enctypes = opt->enctypes_string;
@@ -284,15 +284,15 @@ add_new_key(struct add_options *opt, int argc, char **argv)
 
 
     if (opt->key_string) {
-	const char *error;
+        const char *error;
 
-	if (parse_des_key (opt->key_string, key_data, &error)) {
-	    fprintf(stderr, "failed parsing key \"%s\": %s\n",
-		    opt->key_string, error);
+        if (parse_des_key (opt->key_string, key_data, &error)) {
+            fprintf(stderr, "failed parsing key \"%s\": %s\n",
+                    opt->key_string, error);
             free(kstuple);
-	    return 1;
-	}
-	kdp = key_data;
+            return 1;
+        }
+        kdp = key_data;
     }
 
     for(i = 0; i < argc; i++) {
@@ -310,14 +310,14 @@ add_new_key(struct add_options *opt, int argc, char **argv)
                                 opt->attributes_string,
                                 opt->expiration_time_string,
                                 opt->pw_expiration_time_string);
-	if (ret) {
-	    krb5_warn (context, ret, "adding %s", argv[i]);
-	    break;
-	}
+        if (ret) {
+            krb5_warn (context, ret, "adding %s", argv[i]);
+            break;
+        }
     }
     if (kdp) {
-	int16_t dummy = 3;
-	kadm5_free_key_data (kadm_handle, &dummy, key_data);
+        int16_t dummy = 3;
+        kadm5_free_key_data (kadm_handle, &dummy, key_data);
     }
     free(kstuple);
     return ret != 0;
@@ -377,20 +377,20 @@ add_one_namespace(const char *name,
     krb5_deltat krp;
 
     if (!key_rotation_epoch) {
-	krb5_warnx(context, "key rotation epoch defaulted to \"now\"");
+        krb5_warnx(context, "key rotation epoch defaulted to \"now\"");
         key_rotation_epoch = "now";
     }
     if (!key_rotation_period) {
-	krb5_warnx(context, "key rotation period defaulted to \"5d\"");
+        krb5_warnx(context, "key rotation period defaulted to \"5d\"");
         key_rotation_period = "5d";
     }
     if ((ret = str2time_t(key_rotation_epoch, &kre)) != 0) {
-	krb5_warn(context, ret, "invalid rotation epoch: %s",
+        krb5_warn(context, ret, "invalid rotation epoch: %s",
                   key_rotation_epoch);
         return ret;
     }
     if (ret == 0 && (ret = str2deltat(key_rotation_period, &krp)) != 0) {
-	krb5_warn(context, ret, "invalid rotation period: %s",
+        krb5_warn(context, ret, "invalid rotation period: %s",
                   key_rotation_period);
         return ret;
     }
@@ -401,11 +401,11 @@ add_one_namespace(const char *name,
         ret = krb5_parse_name(context, name, &princ_ent);
         if (ret)
             krb5_warn(context, ret, "krb5_parse_name");
-	else
-	    princ.principal = princ_ent;
+        else
+            princ.principal = princ_ent;
     }
     if (ret != 0)
-	return ret;
+        return ret;
 
     /*
      * Check that namespace has exactly one component, and prepend
@@ -416,7 +416,7 @@ add_one_namespace(const char *name,
         || (comp1 = krb5_principal_get_comp_string(context, princ_ent, 1)) == 0
         || *comp0 == 0 || *comp1 == 0
         || strcmp(comp0, "krbtgt") == 0)
-	krb5_warn(context, ret = EINVAL,
+        krb5_warn(context, ret = EINVAL,
                   "namespaces must have exactly two non-empty components "
                   "like host-base principal names");
     if (ret == 0)
@@ -519,10 +519,10 @@ add_new_namespace(struct add_namespace_options *opt, int argc, char **argv)
                                 opt->key_rotation_epoch_string,
                                 opt->key_rotation_period_string,
                                 opt->attributes_string);
-	if (ret) {
-	    krb5_warn(context, ret, "adding namespace %s", argv[i]);
-	    break;
-	}
+        if (ret) {
+            krb5_warn(context, ret, "adding namespace %s", argv[i]);
+            break;
+        }
     }
 
     free(kstuple);

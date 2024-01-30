@@ -44,7 +44,7 @@
 #ifdef NEED_SECKEYGETCSPHANDLE_PROTO
 OSStatus SecKeyGetCSPHandle(SecKeyRef, CSSM_CSP_HANDLE *);
 OSStatus SecKeyGetCredentials(SecKeyRef, CSSM_ACL_AUTHORIZATION_TAG,
-			      int, const CSSM_ACCESS_CREDENTIALS **);
+                              int, const CSSM_ACCESS_CREDENTIALS **);
 #define kSecCredentialTypeDefault 0
 #define CSSM_SIZE uint32_t
 #endif
@@ -52,7 +52,7 @@ OSStatus SecKeyGetCredentials(SecKeyRef, CSSM_ACL_AUTHORIZATION_TAG,
 
 static int
 getAttribute(SecKeychainItemRef itemRef, SecItemAttr item,
-	     SecKeychainAttributeList **attrs)
+             SecKeychainAttributeList **attrs)
 {
     SecKeychainAttributeInfo attrInfo;
     UInt32 attrFormat = 0;
@@ -65,9 +65,9 @@ getAttribute(SecKeychainItemRef itemRef, SecItemAttr item,
     attrInfo.format = &attrFormat;
 
     ret = SecKeychainItemCopyAttributesAndData(itemRef, &attrInfo, NULL,
-					       attrs, NULL, NULL);
+                                               attrs, NULL, NULL);
     if (ret)
-	return EINVAL;
+        return EINVAL;
     return 0;
 }
 
@@ -84,20 +84,20 @@ struct kc_rsa {
 
 static int
 kc_rsa_public_encrypt(int flen,
-		      const unsigned char *from,
-		      unsigned char *to,
-		      RSA *rsa,
-		      int padding)
+                      const unsigned char *from,
+                      unsigned char *to,
+                      RSA *rsa,
+                      int padding)
 {
     return -1;
 }
 
 static int
 kc_rsa_public_decrypt(int flen,
-		      const unsigned char *from,
-		      unsigned char *to,
-		      RSA *rsa,
-		      int padding)
+                      const unsigned char *from,
+                      unsigned char *to,
+                      RSA *rsa,
+                      int padding)
 {
     return -1;
 }
@@ -105,10 +105,10 @@ kc_rsa_public_decrypt(int flen,
 
 static int
 kc_rsa_private_encrypt(int flen,
-		       const unsigned char *from,
-		       unsigned char *to,
-		       RSA *rsa,
-		       int padding)
+                       const unsigned char *from,
+                       unsigned char *to,
+                       RSA *rsa,
+                       int padding)
 {
     struct kc_rsa *kc = RSA_get_app_data(rsa);
 
@@ -123,7 +123,7 @@ kc_rsa_private_encrypt(int flen,
     int fret = 0;
 
     if (padding != RSA_PKCS1_PADDING)
-	return -1;
+        return -1;
 
     cret = SecKeyGetCSSMKey(privKeyRef, &cssmKey);
     if(cret) abort();
@@ -132,11 +132,11 @@ kc_rsa_private_encrypt(int flen,
     if(cret) abort();
 
     ret = SecKeyGetCredentials(privKeyRef, CSSM_ACL_AUTHORIZATION_SIGN,
-			       kSecCredentialTypeDefault, &creds);
+                               kSecCredentialTypeDefault, &creds);
     if(ret) abort();
 
     ret = CSSM_CSP_CreateSignatureContext(cspHandle, CSSM_ALGID_RSA,
-					  creds, cssmKey, &sigHandle);
+                                          creds, cssmKey, &sigHandle);
     if(ret) abort();
 
     in.Data = (uint8 *)from;
@@ -147,20 +147,20 @@ kc_rsa_private_encrypt(int flen,
 
     cret = CSSM_SignData(sigHandle, &in, 1, CSSM_ALGID_NONE, &sig);
     if(cret) {
-	/* cssmErrorString(cret); */
-	fret = -1;
+        /* cssmErrorString(cret); */
+        fret = -1;
     } else
-	fret = sig.Length;
+        fret = sig.Length;
 
     if(sigHandle)
-	CSSM_DeleteContext(sigHandle);
+        CSSM_DeleteContext(sigHandle);
 
     return fret;
 }
 
 static int
 kc_rsa_private_decrypt(int flen, const unsigned char *from, unsigned char *to,
-		       RSA * rsa, int padding)
+                       RSA * rsa, int padding)
 {
     struct kc_rsa *kc = RSA_get_app_data(rsa);
 
@@ -177,7 +177,7 @@ kc_rsa_private_decrypt(int flen, const unsigned char *from, unsigned char *to,
     char remdata[1024];
 
     if (padding != RSA_PKCS1_PADDING)
-	return -1;
+        return -1;
 
     cret = SecKeyGetCSSMKey(privKeyRef, &cssmKey);
     if(cret) abort();
@@ -186,16 +186,16 @@ kc_rsa_private_decrypt(int flen, const unsigned char *from, unsigned char *to,
     if(cret) abort();
 
     ret = SecKeyGetCredentials(privKeyRef, CSSM_ACL_AUTHORIZATION_DECRYPT,
-			       kSecCredentialTypeDefault, &creds);
+                               kSecCredentialTypeDefault, &creds);
     if(ret) abort();
 
 
     ret = CSSM_CSP_CreateAsymmetricContext (cspHandle,
-					    CSSM_ALGID_RSA,
-					    creds,
-					    cssmKey,
-					    CSSM_PADDING_PKCS1,
-					    &handle);
+                                            CSSM_ALGID_RSA,
+                                            creds,
+                                            cssmKey,
+                                            CSSM_PADDING_PKCS1,
+                                            &handle);
     if(ret) abort();
 
     in.Data = (uint8 *)from;
@@ -209,13 +209,13 @@ kc_rsa_private_decrypt(int flen, const unsigned char *from, unsigned char *to,
 
     cret = CSSM_DecryptData(handle, &in, 1, &out, 1, &outlen, &rem);
     if(cret) {
-	/* cssmErrorString(cret); */
-	fret = -1;
+        /* cssmErrorString(cret); */
+        fret = -1;
     } else
-	fret = out.Length;
+        fret = out.Length;
 
     if(handle)
-	CSSM_DeleteContext(handle);
+        CSSM_DeleteContext(handle);
 
     return fret;
 }
@@ -255,8 +255,8 @@ static const RSA_METHOD kc_rsa_pkcs1_method = {
 
 static int
 set_private_key(hx509_context context,
-		SecKeychainItemRef itemRef,
-		hx509_cert cert)
+                SecKeychainItemRef itemRef,
+                hx509_cert cert)
 {
     struct kc_rsa *kc;
     hx509_private_key key;
@@ -265,46 +265,46 @@ set_private_key(hx509_context context,
 
     ret = hx509_private_key_init(&key, NULL, NULL);
     if (ret)
-	return ret;
+        return ret;
 
     kc = calloc(1, sizeof(*kc));
     if (kc == NULL)
-	_hx509_abort("out of memory");
+        _hx509_abort("out of memory");
 
     kc->item = itemRef;
 
     rsa = RSA_new();
     if (rsa == NULL)
-	_hx509_abort("out of memory");
+        _hx509_abort("out of memory");
 
     /* Argh, fake modulus since OpenSSL API is on crack */
     {
-	SecKeychainAttributeList *attrs = NULL;
-	uint32_t size;
-	void *data;
+        SecKeychainAttributeList *attrs = NULL;
+        uint32_t size;
+        void *data;
 
-	rsa->n = BN_new();
-	if (rsa->n == NULL) abort();
+        rsa->n = BN_new();
+        if (rsa->n == NULL) abort();
 
-	ret = getAttribute(itemRef, kSecKeyKeySizeInBits, &attrs);
-	if (ret) abort();
+        ret = getAttribute(itemRef, kSecKeyKeySizeInBits, &attrs);
+        if (ret) abort();
 
-	size = *(uint32_t *)attrs->attr[0].data;
-	SecKeychainItemFreeAttributesAndData(attrs, NULL);
+        size = *(uint32_t *)attrs->attr[0].data;
+        SecKeychainItemFreeAttributesAndData(attrs, NULL);
 
-	kc->keysize = (size + 7) / 8;
+        kc->keysize = (size + 7) / 8;
 
-	data = malloc(kc->keysize);
-	memset(data, 0xe0, kc->keysize);
-	BN_bin2bn(data, kc->keysize, rsa->n);
-	free(data);
+        data = malloc(kc->keysize);
+        memset(data, 0xe0, kc->keysize);
+        BN_bin2bn(data, kc->keysize, rsa->n);
+        free(data);
     }
     rsa->e = NULL;
 
     RSA_set_method(rsa, &kc_rsa_pkcs1_method);
     ret = RSA_set_app_data(rsa, kc);
     if (ret != 1)
-	_hx509_abort("RSA_set_app_data");
+        _hx509_abort("RSA_set_app_data");
 
     hx509_private_key_assign_rsa(key, rsa);
     _hx509_cert_assign_key(cert, key);
@@ -323,8 +323,8 @@ struct ks_keychain {
 
 static int
 keychain_init(hx509_context context,
-	      hx509_certs certs, void **data, int flags,
-	      const char *residue, hx509_lock lock)
+              hx509_certs certs, void **data, int flags,
+              const char *residue, hx509_lock lock)
 {
     struct ks_keychain *ctx;
 
@@ -337,29 +337,29 @@ keychain_init(hx509_context context,
 
     ctx = calloc(1, sizeof(*ctx));
     if (ctx == NULL) {
-	hx509_clear_error_string(context);
-	return ENOMEM;
+        hx509_clear_error_string(context);
+        return ENOMEM;
     }
 
     if (residue) {
-	if (strcasecmp(residue, "system-anchors") == 0) {
-	    ctx->anchors = 1;
-	} else if (strncasecmp(residue, "FILE:", 5) == 0) {
-	    OSStatus ret;
+        if (strcasecmp(residue, "system-anchors") == 0) {
+            ctx->anchors = 1;
+        } else if (strncasecmp(residue, "FILE:", 5) == 0) {
+            OSStatus ret;
 
-	    ret = SecKeychainOpen(residue + 5, &ctx->keychain);
-	    if (ret != noErr) {
-		hx509_set_error_string(context, 0, ENOENT,
-				       "Failed to open %s", residue);
-		free(ctx);
-		return ENOENT;
-	    }
-	} else {
-	    hx509_set_error_string(context, 0, ENOENT,
-				   "Unknown subtype %s", residue);
-	    free(ctx);
-	    return ENOENT;
-	}
+            ret = SecKeychainOpen(residue + 5, &ctx->keychain);
+            if (ret != noErr) {
+                hx509_set_error_string(context, 0, ENOENT,
+                                       "Failed to open %s", residue);
+                free(ctx);
+                return ENOENT;
+            }
+        } else {
+            hx509_set_error_string(context, 0, ENOENT,
+                                   "Unknown subtype %s", residue);
+            free(ctx);
+            return ENOENT;
+        }
     }
 
     *data = ctx;
@@ -375,7 +375,7 @@ keychain_free(hx509_certs certs, void *data)
 {
     struct ks_keychain *ctx = data;
     if (ctx->keychain)
-	CFRelease(ctx->keychain);
+        CFRelease(ctx->keychain);
     memset(ctx, 0, sizeof(*ctx));
     free(ctx);
     return 0;
@@ -393,77 +393,77 @@ struct iter {
 
 static int
 keychain_iter_start(hx509_context context,
-		    hx509_certs certs, void *data, void **cursor)
+                    hx509_certs certs, void *data, void **cursor)
 {
     struct ks_keychain *ctx = data;
     struct iter *iter;
 
     iter = calloc(1, sizeof(*iter));
     if (iter == NULL) {
-	hx509_set_error_string(context, 0, ENOMEM, "out of memory");
-	return ENOMEM;
+        hx509_set_error_string(context, 0, ENOMEM, "out of memory");
+        return ENOMEM;
     }
 
     if (ctx->anchors) {
         CFArrayRef anchors;
-	int ret;
-	int i;
+        int ret;
+        int i;
 
-	ret = hx509_certs_init(context, "MEMORY:ks-file-create",
-			       0, NULL, &iter->certs);
-	if (ret) {
-	    free(iter);
-	    return ret;
-	}
+        ret = hx509_certs_init(context, "MEMORY:ks-file-create",
+                               0, NULL, &iter->certs);
+        if (ret) {
+            free(iter);
+            return ret;
+        }
 
-	ret = SecTrustCopyAnchorCertificates(&anchors);
-	if (ret != 0) {
-	    hx509_certs_free(&iter->certs);
-	    free(iter);
-	    hx509_set_error_string(context, 0, ENOMEM,
-				   "Can't get trust anchors from Keychain");
-	    return ENOMEM;
-	}
-	for (i = 0; i < CFArrayGetCount(anchors); i++) {
-	    SecCertificateRef cr;
-	    hx509_cert cert;
-	    CSSM_DATA cssm;
+        ret = SecTrustCopyAnchorCertificates(&anchors);
+        if (ret != 0) {
+            hx509_certs_free(&iter->certs);
+            free(iter);
+            hx509_set_error_string(context, 0, ENOMEM,
+                                   "Can't get trust anchors from Keychain");
+            return ENOMEM;
+        }
+        for (i = 0; i < CFArrayGetCount(anchors); i++) {
+            SecCertificateRef cr;
+            hx509_cert cert;
+            CSSM_DATA cssm;
 
-	    cr = (SecCertificateRef)CFArrayGetValueAtIndex(anchors, i);
+            cr = (SecCertificateRef)CFArrayGetValueAtIndex(anchors, i);
 
-	    SecCertificateGetData(cr, &cssm);
+            SecCertificateGetData(cr, &cssm);
 
-	    cert = hx509_cert_init_data(context, cssm.Data, cssm.Length, NULL);
-	    if (cert == NULL)
-		continue;
+            cert = hx509_cert_init_data(context, cssm.Data, cssm.Length, NULL);
+            if (cert == NULL)
+                continue;
 
-	    ret = hx509_certs_add(context, iter->certs, cert);
-	    hx509_cert_free(cert);
-	}
-	CFRelease(anchors);
+            ret = hx509_certs_add(context, iter->certs, cert);
+            hx509_cert_free(cert);
+        }
+        CFRelease(anchors);
     }
 
     if (iter->certs) {
-	int ret;
-	ret = hx509_certs_start_seq(context, iter->certs, &iter->cursor);
-	if (ret) {
-	    hx509_certs_free(&iter->certs);
-	    free(iter);
-	    return ret;
-	}
+        int ret;
+        ret = hx509_certs_start_seq(context, iter->certs, &iter->cursor);
+        if (ret) {
+            hx509_certs_free(&iter->certs);
+            free(iter);
+            return ret;
+        }
     } else {
-	OSStatus ret;
+        OSStatus ret;
 
-	ret = SecKeychainSearchCreateFromAttributes(ctx->keychain,
-						    kSecCertificateItemClass,
-						    NULL,
-						    &iter->searchRef);
-	if (ret) {
-	    free(iter);
-	    hx509_set_error_string(context, 0, ret,
-				   "Failed to start search for attributes");
-	    return ENOMEM;
-	}
+        ret = SecKeychainSearchCreateFromAttributes(ctx->keychain,
+                                                    kSecCertificateItemClass,
+                                                    NULL,
+                                                    &iter->searchRef);
+        if (ret) {
+            free(iter);
+            hx509_set_error_string(context, 0, ret,
+                                   "Failed to start search for attributes");
+            return ENOMEM;
+        }
     }
 
     *cursor = iter;
@@ -476,7 +476,7 @@ keychain_iter_start(hx509_context context,
 
 static int
 keychain_iter(hx509_context context,
-	      hx509_certs certs, void *data, void *cursor, hx509_cert *cert)
+              hx509_certs certs, void *data, void *cursor, hx509_cert *cert)
 {
     SecKeychainAttributeList *attrs = NULL;
     SecKeychainAttributeInfo attrInfo;
@@ -490,15 +490,15 @@ keychain_iter(hx509_context context,
     void *ptr = NULL;
 
     if (iter->certs)
-	return hx509_certs_next_cert(context, iter->certs, iter->cursor, cert);
+        return hx509_certs_next_cert(context, iter->certs, iter->cursor, cert);
 
     *cert = NULL;
 
     ret = SecKeychainSearchCopyNext(iter->searchRef, &itemRef);
     if (ret == errSecItemNotFound)
-	return 0;
+        return 0;
     else if (ret != 0)
-	return EINVAL;
+        return EINVAL;
 
     /*
      * Pick out certificate and matching "keyid"
@@ -511,15 +511,15 @@ keychain_iter(hx509_context context,
     attrInfo.format = attrFormat;
 
     ret = SecKeychainItemCopyAttributesAndData(itemRef, &attrInfo, NULL,
-					       &attrs, &len, &ptr);
+                                               &attrs, &len, &ptr);
     if (ret)
-	return EINVAL;
+        return EINVAL;
 
     *cert = hx509_cert_init_data(context, ptr, len, &error);
     if (*cert == NULL) {
-	ret = heim_error_get_code(error);
-	heim_release(error);
-	goto out;
+        ret = heim_error_get_code(error);
+        heim_release(error);
+        goto out;
     }
 
     /*
@@ -527,36 +527,36 @@ keychain_iter(hx509_context context,
      * kSecPublicKeyHashItemAttr == kSecKeyLabel
      */
     {
-	SecKeychainSearchRef search;
-	SecKeychainAttribute attrKeyid;
-	SecKeychainAttributeList attrList;
+        SecKeychainSearchRef search;
+        SecKeychainAttribute attrKeyid;
+        SecKeychainAttributeList attrList;
 
-	attrKeyid.tag = kSecKeyLabel;
-	attrKeyid.length = attrs->attr[0].length;
-	attrKeyid.data = attrs->attr[0].data;
+        attrKeyid.tag = kSecKeyLabel;
+        attrKeyid.length = attrs->attr[0].length;
+        attrKeyid.data = attrs->attr[0].data;
 
-	attrList.count = 1;
-	attrList.attr = &attrKeyid;
+        attrList.count = 1;
+        attrList.attr = &attrKeyid;
 
-	ret = SecKeychainSearchCreateFromAttributes(NULL,
-						    CSSM_DL_DB_RECORD_PRIVATE_KEY,
-						    &attrList,
-						    &search);
-	if (ret) {
-	    ret = 0;
-	    goto out;
-	}
+        ret = SecKeychainSearchCreateFromAttributes(NULL,
+                                                    CSSM_DL_DB_RECORD_PRIVATE_KEY,
+                                                    &attrList,
+                                                    &search);
+        if (ret) {
+            ret = 0;
+            goto out;
+        }
 
-	ret = SecKeychainSearchCopyNext(search, &itemRef);
-	CFRelease(search);
-	if (ret == errSecItemNotFound) {
-	    ret = 0;
-	    goto out;
-	} else if (ret) {
-	    ret = EINVAL;
-	    goto out;
-	}
-	set_private_key(context, itemRef, *cert);
+        ret = SecKeychainSearchCopyNext(search, &itemRef);
+        CFRelease(search);
+        if (ret == errSecItemNotFound) {
+            ret = 0;
+            goto out;
+        } else if (ret) {
+            ret = EINVAL;
+            goto out;
+        }
+        set_private_key(context, itemRef, *cert);
     }
 
 out:
@@ -571,17 +571,17 @@ out:
 
 static int
 keychain_iter_end(hx509_context context,
-		  hx509_certs certs,
-		  void *data,
-		  void *cursor)
+                  hx509_certs certs,
+                  void *data,
+                  void *cursor)
 {
     struct iter *iter = cursor;
 
     if (iter->certs) {
-	hx509_certs_end_seq(context, iter->certs, iter->cursor);
-	hx509_certs_free(&iter->certs);
+        hx509_certs_end_seq(context, iter->certs, iter->cursor);
+        hx509_certs_free(&iter->certs);
     } else {
-	CFRelease(iter->searchRef);
+        CFRelease(iter->searchRef);
     }
 
     memset(iter, 0, sizeof(*iter));

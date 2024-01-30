@@ -84,22 +84,22 @@ test_ipc(const char *service)
 
     ret = heim_ipc_init_context(service, &ipc);
     if (ret)
-	errx(1, "heim_ipc_init_context: %d", ret);
+        errx(1, "heim_ipc_init_context: %d", ret);
 
     req.length = strlen(buf);
     req.data = buf;
 
     ret = heim_ipc_call(ipc, &req, &rep, NULL);
     if (ret)
-	errx(1, "heim_ipc_call: %d", ret);
+        errx(1, "heim_ipc_call: %d", ret);
 
     s = heim_ipc_semaphore_create(0);
     if (s == NULL)
-	errx(1, "heim_ipc_semaphore_create");
+        errx(1, "heim_ipc_semaphore_create");
 
     ret = heim_ipc_async(ipc, &req, s, reply);
     if (ret)
-	errx(1, "heim_ipc_async: %d", ret);
+        errx(1, "heim_ipc_async: %d", ret);
 
     heim_ipc_semaphore_wait(s, HEIM_IPC_WAIT_FOREVER); /* wait for reply to complete the work */
 
@@ -115,14 +115,14 @@ main(int argc, char **argv)
     setprogname(argv[0]);
 
     if (getarg(args, num_args, argc, argv, &optidx))
-	usage(1);
+        usage(1);
 
     if (help_flag)
-	usage(0);
+        usage(0);
 
     if (version_flag) {
-	print_version(NULL);
-	exit(0);
+        print_version(NULL);
+        exit(0);
     }
 
 #ifdef __APPLE__

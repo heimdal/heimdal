@@ -46,13 +46,13 @@
 int
 MD4_Init (struct md4 *m)
 {
-  m->sz[0] = 0;
-  m->sz[1] = 0;
-  D = 0x10325476;
-  C = 0x98badcfe;
-  B = 0xefcdab89;
-  A = 0x67452301;
-  return 1;
+    m->sz[0] = 0;
+    m->sz[1] = 0;
+    D = 0x10325476;
+    C = 0x98badcfe;
+    B = 0xefcdab89;
+    A = 0x67452301;
+    return 1;
 }
 
 #define F(x,y,z) CRAYFIX((x & y) | (~x & z))
@@ -69,83 +69,83 @@ a = cshift(a + OP(b,c,d) + X[k] + i, s)
 static inline void
 calc (struct md4 *m, uint32_t *data)
 {
-  uint32_t AA, BB, CC, DD;
+    uint32_t AA, BB, CC, DD;
 
-  AA = A;
-  BB = B;
-  CC = C;
-  DD = D;
+    AA = A;
+    BB = B;
+    CC = C;
+    DD = D;
 
-  /* Round 1 */
+    /* Round 1 */
 
-  DO1(A,B,C,D,0,3,0);
-  DO1(D,A,B,C,1,7,0);
-  DO1(C,D,A,B,2,11,0);
-  DO1(B,C,D,A,3,19,0);
+    DO1(A,B,C,D,0,3,0);
+    DO1(D,A,B,C,1,7,0);
+    DO1(C,D,A,B,2,11,0);
+    DO1(B,C,D,A,3,19,0);
 
-  DO1(A,B,C,D,4,3,0);
-  DO1(D,A,B,C,5,7,0);
-  DO1(C,D,A,B,6,11,0);
-  DO1(B,C,D,A,7,19,0);
+    DO1(A,B,C,D,4,3,0);
+    DO1(D,A,B,C,5,7,0);
+    DO1(C,D,A,B,6,11,0);
+    DO1(B,C,D,A,7,19,0);
 
-  DO1(A,B,C,D,8,3,0);
-  DO1(D,A,B,C,9,7,0);
-  DO1(C,D,A,B,10,11,0);
-  DO1(B,C,D,A,11,19,0);
+    DO1(A,B,C,D,8,3,0);
+    DO1(D,A,B,C,9,7,0);
+    DO1(C,D,A,B,10,11,0);
+    DO1(B,C,D,A,11,19,0);
 
-  DO1(A,B,C,D,12,3,0);
-  DO1(D,A,B,C,13,7,0);
-  DO1(C,D,A,B,14,11,0);
-  DO1(B,C,D,A,15,19,0);
+    DO1(A,B,C,D,12,3,0);
+    DO1(D,A,B,C,13,7,0);
+    DO1(C,D,A,B,14,11,0);
+    DO1(B,C,D,A,15,19,0);
 
-  /* Round 2 */
+    /* Round 2 */
 
-  DO2(A,B,C,D,0,3,0x5A827999);
-  DO2(D,A,B,C,4,5,0x5A827999);
-  DO2(C,D,A,B,8,9,0x5A827999);
-  DO2(B,C,D,A,12,13,0x5A827999);
+    DO2(A,B,C,D,0,3,0x5A827999);
+    DO2(D,A,B,C,4,5,0x5A827999);
+    DO2(C,D,A,B,8,9,0x5A827999);
+    DO2(B,C,D,A,12,13,0x5A827999);
 
-  DO2(A,B,C,D,1,3,0x5A827999);
-  DO2(D,A,B,C,5,5,0x5A827999);
-  DO2(C,D,A,B,9,9,0x5A827999);
-  DO2(B,C,D,A,13,13,0x5A827999);
+    DO2(A,B,C,D,1,3,0x5A827999);
+    DO2(D,A,B,C,5,5,0x5A827999);
+    DO2(C,D,A,B,9,9,0x5A827999);
+    DO2(B,C,D,A,13,13,0x5A827999);
 
-  DO2(A,B,C,D,2,3,0x5A827999);
-  DO2(D,A,B,C,6,5,0x5A827999);
-  DO2(C,D,A,B,10,9,0x5A827999);
-  DO2(B,C,D,A,14,13,0x5A827999);
+    DO2(A,B,C,D,2,3,0x5A827999);
+    DO2(D,A,B,C,6,5,0x5A827999);
+    DO2(C,D,A,B,10,9,0x5A827999);
+    DO2(B,C,D,A,14,13,0x5A827999);
 
-  DO2(A,B,C,D,3,3,0x5A827999);
-  DO2(D,A,B,C,7,5,0x5A827999);
-  DO2(C,D,A,B,11,9,0x5A827999);
-  DO2(B,C,D,A,15,13,0x5A827999);
+    DO2(A,B,C,D,3,3,0x5A827999);
+    DO2(D,A,B,C,7,5,0x5A827999);
+    DO2(C,D,A,B,11,9,0x5A827999);
+    DO2(B,C,D,A,15,13,0x5A827999);
 
-  /* Round 3 */
+    /* Round 3 */
 
-  DO3(A,B,C,D,0,3,0x6ED9EBA1);
-  DO3(D,A,B,C,8,9,0x6ED9EBA1);
-  DO3(C,D,A,B,4,11,0x6ED9EBA1);
-  DO3(B,C,D,A,12,15,0x6ED9EBA1);
+    DO3(A,B,C,D,0,3,0x6ED9EBA1);
+    DO3(D,A,B,C,8,9,0x6ED9EBA1);
+    DO3(C,D,A,B,4,11,0x6ED9EBA1);
+    DO3(B,C,D,A,12,15,0x6ED9EBA1);
 
-  DO3(A,B,C,D,2,3,0x6ED9EBA1);
-  DO3(D,A,B,C,10,9,0x6ED9EBA1);
-  DO3(C,D,A,B,6,11,0x6ED9EBA1);
-  DO3(B,C,D,A,14,15,0x6ED9EBA1);
+    DO3(A,B,C,D,2,3,0x6ED9EBA1);
+    DO3(D,A,B,C,10,9,0x6ED9EBA1);
+    DO3(C,D,A,B,6,11,0x6ED9EBA1);
+    DO3(B,C,D,A,14,15,0x6ED9EBA1);
 
-  DO3(A,B,C,D,1,3,0x6ED9EBA1);
-  DO3(D,A,B,C,9,9,0x6ED9EBA1);
-  DO3(C,D,A,B,5,11,0x6ED9EBA1);
-  DO3(B,C,D,A,13,15,0x6ED9EBA1);
+    DO3(A,B,C,D,1,3,0x6ED9EBA1);
+    DO3(D,A,B,C,9,9,0x6ED9EBA1);
+    DO3(C,D,A,B,5,11,0x6ED9EBA1);
+    DO3(B,C,D,A,13,15,0x6ED9EBA1);
 
-  DO3(A,B,C,D,3,3,0x6ED9EBA1);
-  DO3(D,A,B,C,11,9,0x6ED9EBA1);
-  DO3(C,D,A,B,7,11,0x6ED9EBA1);
-  DO3(B,C,D,A,15,15,0x6ED9EBA1);
+    DO3(A,B,C,D,3,3,0x6ED9EBA1);
+    DO3(D,A,B,C,11,9,0x6ED9EBA1);
+    DO3(C,D,A,B,7,11,0x6ED9EBA1);
+    DO3(B,C,D,A,15,15,0x6ED9EBA1);
 
-  A += AA;
-  B += BB;
-  C += CC;
-  D += DD;
+    A += AA;
+    B += BB;
+    C += CC;
+    D += DD;
 }
 
 /*
@@ -156,20 +156,20 @@ calc (struct md4 *m, uint32_t *data)
 static inline uint32_t
 swap_uint32_t (uint32_t t)
 {
-  uint32_t temp1, temp2;
+    uint32_t temp1, temp2;
 
-  temp1   = cshift(t, 16);
-  temp2   = temp1 >> 8;
-  temp1  &= 0x00ff00ff;
-  temp2  &= 0x00ff00ff;
-  temp1 <<= 8;
-  return temp1 | temp2;
+    temp1   = cshift(t, 16);
+    temp2   = temp1 >> 8;
+    temp1  &= 0x00ff00ff;
+    temp2  &= 0x00ff00ff;
+    temp1 <<= 8;
+    return temp1 | temp2;
 }
 #endif
 
 struct x32{
-  unsigned int a:32;
-  unsigned int b:32;
+    unsigned int a:32;
+    unsigned int b:32;
 };
 
 int
@@ -181,29 +181,29 @@ MD4_Update (struct md4 *m, const void *v, size_t len)
 
     m->sz[0] += len * 8;
     if (m->sz[0] < old_sz)
-	++m->sz[1];
+        ++m->sz[1];
     offset = (old_sz / 8)  % 64;
     while(len > 0) {
-	size_t l = min(len, 64 - offset);
-	memcpy(m->save + offset, p, l);
-	offset += l;
-	p += l;
-	len -= l;
-	if(offset == 64) {
+        size_t l = min(len, 64 - offset);
+        memcpy(m->save + offset, p, l);
+        offset += l;
+        p += l;
+        len -= l;
+        if(offset == 64) {
 #if defined(WORDS_BIGENDIAN)
-	    int i;
-	    uint32_t current[16];
-	    struct x32 *us = (struct x32*)m->save;
-	    for(i = 0; i < 8; i++){
-		current[2*i+0] = swap_uint32_t(us[i].a);
-		current[2*i+1] = swap_uint32_t(us[i].b);
-	    }
-	    calc(m, current);
+            int i;
+            uint32_t current[16];
+            struct x32 *us = (struct x32*)m->save;
+            for(i = 0; i < 8; i++){
+                current[2*i+0] = swap_uint32_t(us[i].a);
+                current[2*i+1] = swap_uint32_t(us[i].b);
+            }
+            calc(m, current);
 #else
-	    calc(m, (uint32_t*)m->save);
+            calc(m, (uint32_t*)m->save);
 #endif
-	    offset = 0;
-	}
+            offset = 0;
+        }
     }
     return 1;
 }
@@ -211,40 +211,40 @@ MD4_Update (struct md4 *m, const void *v, size_t len)
 int
 MD4_Final (void *res, struct md4 *m)
 {
-  unsigned char zeros[72];
-  unsigned offset = (m->sz[0] / 8) % 64;
-  unsigned int dstart = (120 - offset - 1) % 64 + 1;
+    unsigned char zeros[72];
+    unsigned offset = (m->sz[0] / 8) % 64;
+    unsigned int dstart = (120 - offset - 1) % 64 + 1;
 
-  *zeros = 0x80;
-  memset (zeros + 1, 0, sizeof(zeros) - 1);
-  zeros[dstart+0] = (m->sz[0] >> 0) & 0xff;
-  zeros[dstart+1] = (m->sz[0] >> 8) & 0xff;
-  zeros[dstart+2] = (m->sz[0] >> 16) & 0xff;
-  zeros[dstart+3] = (m->sz[0] >> 24) & 0xff;
-  zeros[dstart+4] = (m->sz[1] >> 0) & 0xff;
-  zeros[dstart+5] = (m->sz[1] >> 8) & 0xff;
-  zeros[dstart+6] = (m->sz[1] >> 16) & 0xff;
-  zeros[dstart+7] = (m->sz[1] >> 24) & 0xff;
-  MD4_Update (m, zeros, dstart + 8);
-  {
-      int i;
-      unsigned char *r = (unsigned char *)res;
+    *zeros = 0x80;
+    memset (zeros + 1, 0, sizeof(zeros) - 1);
+    zeros[dstart+0] = (m->sz[0] >> 0) & 0xff;
+    zeros[dstart+1] = (m->sz[0] >> 8) & 0xff;
+    zeros[dstart+2] = (m->sz[0] >> 16) & 0xff;
+    zeros[dstart+3] = (m->sz[0] >> 24) & 0xff;
+    zeros[dstart+4] = (m->sz[1] >> 0) & 0xff;
+    zeros[dstart+5] = (m->sz[1] >> 8) & 0xff;
+    zeros[dstart+6] = (m->sz[1] >> 16) & 0xff;
+    zeros[dstart+7] = (m->sz[1] >> 24) & 0xff;
+    MD4_Update (m, zeros, dstart + 8);
+    {
+        int i;
+        unsigned char *r = (unsigned char *)res;
 
-      for (i = 0; i < 4; ++i) {
-	  r[4*i]   = m->counter[i] & 0xFF;
-	  r[4*i+1] = (m->counter[i] >> 8) & 0xFF;
-	  r[4*i+2] = (m->counter[i] >> 16) & 0xFF;
-	  r[4*i+3] = (m->counter[i] >> 24) & 0xFF;
-      }
-  }
+        for (i = 0; i < 4; ++i) {
+            r[4*i]   = m->counter[i] & 0xFF;
+            r[4*i+1] = (m->counter[i] >> 8) & 0xFF;
+            r[4*i+2] = (m->counter[i] >> 16) & 0xFF;
+            r[4*i+3] = (m->counter[i] >> 24) & 0xFF;
+        }
+    }
 #if 0
-  {
-    int i;
-    uint32_t *r = (uint32_t *)res;
+    {
+        int i;
+        uint32_t *r = (uint32_t *)res;
 
-    for (i = 0; i < 4; ++i)
-      r[i] = swap_uint32_t (m->counter[i]);
-  }
+        for (i = 0; i < 4; ++i)
+            r[i] = swap_uint32_t (m->counter[i]);
+    }
 #endif
-  return 1;
+    return 1;
 }

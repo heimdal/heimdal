@@ -45,44 +45,44 @@ doit (int af,
       int flags)
 {
     if (host != NULL) {
-	if (flags & NI_NUMERICHOST) {
-	    if (inet_ntop (af, addr, host, hostlen) == NULL)
-		return EAI_SYSTEM;
-	} else {
-	    struct hostent *he = gethostbyaddr (addr,
-						addrlen,
-						af);
-	    if (he != NULL) {
-		strlcpy (host, hostent_find_fqdn(he), hostlen);
-		if (flags & NI_NOFQDN) {
-		    char *dot = strchr (host, '.');
-		    if (dot != NULL)
-			*dot = '\0';
-		}
-	    } else if (flags & NI_NAMEREQD) {
-		return EAI_NONAME;
-	    } else if (inet_ntop (af, addr, host, hostlen) == NULL)
-		return EAI_SYSTEM;
-	}
+        if (flags & NI_NUMERICHOST) {
+            if (inet_ntop (af, addr, host, hostlen) == NULL)
+                return EAI_SYSTEM;
+        } else {
+            struct hostent *he = gethostbyaddr (addr,
+                                                addrlen,
+                                                af);
+            if (he != NULL) {
+                strlcpy (host, hostent_find_fqdn(he), hostlen);
+                if (flags & NI_NOFQDN) {
+                    char *dot = strchr (host, '.');
+                    if (dot != NULL)
+                        *dot = '\0';
+                }
+            } else if (flags & NI_NAMEREQD) {
+                return EAI_NONAME;
+            } else if (inet_ntop (af, addr, host, hostlen) == NULL)
+                return EAI_SYSTEM;
+        }
     }
 
     if (serv != NULL) {
-	if (flags & NI_NUMERICSERV) {
-	    snprintf (serv, servlen, "%u", ntohs(port));
-	} else {
-	    const char *proto = "tcp";
-	    struct servent *se;
+        if (flags & NI_NUMERICSERV) {
+            snprintf (serv, servlen, "%u", ntohs(port));
+        } else {
+            const char *proto = "tcp";
+            struct servent *se;
 
-	    if (flags & NI_DGRAM)
-		proto = "udp";
+            if (flags & NI_DGRAM)
+                proto = "udp";
 
-	    se = getservbyport (port, proto);
-	    if (se == NULL) {
-		snprintf (serv, servlen, "%u", ntohs(port));
-	    } else {
-		strlcpy (serv, se->s_name, servlen);
-	    }
-	}
+            se = getservbyport (port, proto);
+            if (se == NULL) {
+                snprintf (serv, servlen, "%u", ntohs(port));
+            } else {
+                strlcpy (serv, se->s_name, servlen);
+            }
+        }
     }
     return 0;
 }
@@ -93,32 +93,32 @@ doit (int af,
 
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 rk_getnameinfo(const struct sockaddr *sa, socklen_t salen,
-	       char *host, size_t hostlen,
-	       char *serv, size_t servlen,
-	       int flags)
+               char *host, size_t hostlen,
+               char *serv, size_t servlen,
+               int flags)
 {
     switch (sa->sa_family) {
 #ifdef HAVE_IPV6
-    case AF_INET6 : {
-	const struct sockaddr_in6 *sin6 = (const struct sockaddr_in6 *)sa;
+        case AF_INET6 : {
+            const struct sockaddr_in6 *sin6 = (const struct sockaddr_in6 *)sa;
 
-	return doit (AF_INET6, &sin6->sin6_addr, sizeof(sin6->sin6_addr),
-		     sin6->sin6_port,
-		     host, hostlen,
-		     serv, servlen,
-		     flags);
-    }
+            return doit (AF_INET6, &sin6->sin6_addr, sizeof(sin6->sin6_addr),
+                         sin6->sin6_port,
+                         host, hostlen,
+                         serv, servlen,
+                         flags);
+        }
 #endif
-    case AF_INET : {
-	const struct sockaddr_in *sin4 = (const struct sockaddr_in *)sa;
+        case AF_INET : {
+            const struct sockaddr_in *sin4 = (const struct sockaddr_in *)sa;
 
-	return doit (AF_INET, &sin4->sin_addr, sizeof(sin4->sin_addr),
-		     sin4->sin_port,
-		     host, hostlen,
-		     serv, servlen,
-		     flags);
-    }
-    default :
-	return EAI_FAMILY;
+            return doit (AF_INET, &sin4->sin_addr, sizeof(sin4->sin_addr),
+                         sin4->sin_port,
+                         host, hostlen,
+                         serv, servlen,
+                         flags);
+        }
+        default :
+            return EAI_FAMILY;
     }
 }

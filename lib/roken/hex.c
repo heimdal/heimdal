@@ -61,13 +61,13 @@ hex_encode(const void *data, size_t size, char **str)
     p = calloc(size + 1, 2);
     if (p == NULL) {
         *str = NULL;
-	return -1;
+        return -1;
     }
 
     for (i = 0; i < size; i++) {
-	p[i * 2] = hexchar[(*q >> 4) & 0xf];
-	p[i * 2 + 1] = hexchar[*q & 0xf];
-	q++;
+        p[i * 2] = hexchar[(*q >> 4) & 0xf];
+        p[i * 2 + 1] = hexchar[*q & 0xf];
+        q++;
     }
     p[i * 2] = '\0';
     *str = p;
@@ -87,22 +87,22 @@ hex_decode(const char *str, void *data, size_t len)
 
     /* check for overflow, same as (l+1)/2 but overflow safe */
     if ((l/2) + (l&1) > len)
-	return -1;
+        return -1;
 
     if (l & 1) {
         if ((d = pos(str[0])) == -1)
             return -1;
-	p[0] = d;
-	str++;
-	p++;
+        p[0] = d;
+        str++;
+        p++;
     }
     for (i = 0; i < l / 2; i++) {
         if ((d = pos(str[i * 2])) == -1)
             return -1;
-	p[i] = d << 4;
+        p[i] = d << 4;
         if ((d = pos(str[(i * 2) + 1])) == -1)
             return -1;
-	p[i] |= d;
+        p[i] |= d;
     }
     return i + (l & 1);
 }

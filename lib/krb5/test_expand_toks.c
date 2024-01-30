@@ -46,9 +46,9 @@ static void
 usage (int ret)
 {
     arg_printusage (args,
-		    sizeof(args)/sizeof(*args),
-		    NULL,
-		    "");
+                    sizeof(args)/sizeof(*args),
+                    NULL,
+                    "");
     exit (ret);
 }
 
@@ -63,14 +63,14 @@ main(int argc, char **argv)
     setprogname(argv[0]);
 
     if (getarg(args, sizeof(args) / sizeof(args[0]), argc, argv, &optidx))
-	usage(1);
+        usage(1);
 
     if (help_flag)
-	usage (0);
+        usage (0);
 
     if (version_flag){
-	print_version(NULL);
-	exit(0);
+        print_version(NULL);
+        exit(0);
     }
 
     argc -= optidx;
@@ -78,7 +78,7 @@ main(int argc, char **argv)
 
     ret = krb5_init_context(&context);
     if (ret)
-	errx (1, "krb5_init_context failed: %d", ret);
+        errx (1, "krb5_init_context failed: %d", ret);
 
     ret = _krb5_expand_path_tokensv(context, "/tmp/%{foo}/%{bar}%{baz}/x", 0,
                                     &expanded,

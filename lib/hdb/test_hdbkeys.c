@@ -61,60 +61,60 @@ main(int argc, char **argv)
     setprogname(argv[0]);
 
     if(getarg(args, num_args, argc, argv, &o))
-	krb5_std_usage(1, args, num_args);
+        krb5_std_usage(1, args, num_args);
 
     if(help_flag)
-	krb5_std_usage(0, args, num_args);
+        krb5_std_usage(0, args, num_args);
 
     if(version_flag){
-	print_version(NULL);
-	exit(0);
+        print_version(NULL);
+        exit(0);
     }
 
     ret = krb5_init_context(&context);
     if (ret)
-	errx (1, "krb5_init_context failed: %d", ret);
+        errx (1, "krb5_init_context failed: %d", ret);
 
     if (argc != 3)
-	errx(1, "username and password missing");
+        errx(1, "username and password missing");
 
     principal_str = argv[1];
     password_str = argv[2];
 
     ret = krb5_parse_name (context, principal_str, &principal);
     if (ret)
-	krb5_err (context, 1, ret, "krb5_parse_name %s", principal_str);
+        krb5_err (context, 1, ret, "krb5_parse_name %s", principal_str);
 
     memset(&keyset, 0, sizeof(keyset));
 
     keyset.kvno = kvno_integer;
     keyset.set_time = malloc(sizeof (*keyset.set_time));
     if (keyset.set_time == NULL)
-	errx(1, "couldn't allocate set_time field of keyset");
+        errx(1, "couldn't allocate set_time field of keyset");
     *keyset.set_time = time(NULL);
 
     ret = hdb_generate_key_set_password(context, principal, password_str,
-					&keyset.keys.val, &len);
+                                        &keyset.keys.val, &len);
     if (ret)
-	krb5_err(context, 1, ret, "hdb_generate_key_set_password");
+        krb5_err(context, 1, ret, "hdb_generate_key_set_password");
     keyset.keys.len = len;
 
     if (keyset.keys.len == 0)
-	krb5_errx (context, 1, "hdb_generate_key_set_password length 0");
+        krb5_errx (context, 1, "hdb_generate_key_set_password length 0");
 
     krb5_free_principal (context, principal);
 
     ASN1_MALLOC_ENCODE(HDB_keyset, data, length, &keyset, &len, ret);
     if (ret)
-	krb5_errx(context, 1, "encode keyset");
+        krb5_errx(context, 1, "encode keyset");
     if (len != length)
-	krb5_abortx(context, "foo");
+        krb5_abortx(context, "foo");
 
     krb5_free_context(context);
 
     ret = rk_base64_encode(data, length, &str);
     if (ret < 0)
-	errx(1, "base64_encode");
+        errx(1, "base64_encode");
 
     printf("keyset: %s\n", str);
 

@@ -30,33 +30,33 @@
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_delete_sec_context(OM_uint32 *minor_status,
-    gss_ctx_id_t *context_handle,
-    gss_buffer_t output_token)
+                       gss_ctx_id_t *context_handle,
+                       gss_buffer_t output_token)
 {
-	OM_uint32 major_status;
-	struct _gss_context *ctx = (struct _gss_context *) *context_handle;
+    OM_uint32 major_status;
+    struct _gss_context *ctx = (struct _gss_context *) *context_handle;
 
-	if (output_token)
-	    _mg_buffer_zero(output_token);
+    if (output_token)
+        _mg_buffer_zero(output_token);
 
-	*minor_status = 0;
-	major_status = GSS_S_COMPLETE;
+    *minor_status = 0;
+    major_status = GSS_S_COMPLETE;
 
-        if (!ctx)
-                return GSS_S_COMPLETE;
+    if (!ctx)
+        return GSS_S_COMPLETE;
 
-        free(ctx->gc_free_this);
+    free(ctx->gc_free_this);
 
-        /*
-         * If we have an implementation ctx, delete it,
-         * otherwise fake an empty token.
-         */
-        if (ctx->gc_ctx) {
-                major_status = ctx->gc_mech->gm_delete_sec_context(
-                        minor_status, &ctx->gc_ctx, output_token);
-        }
-        free(ctx);
-        *context_handle = GSS_C_NO_CONTEXT;
+    /*
+     * If we have an implementation ctx, delete it,
+     * otherwise fake an empty token.
+     */
+    if (ctx->gc_ctx) {
+        major_status = ctx->gc_mech->gm_delete_sec_context(
+                                                           minor_status, &ctx->gc_ctx, output_token);
+    }
+    free(ctx);
+    *context_handle = GSS_C_NO_CONTEXT;
 
-	return major_status;
+    return major_status;
 }

@@ -35,9 +35,9 @@
 
 static krb5_error_code
 check_compat(OM_uint32 *minor_status,
-	     krb5_context context, krb5_const_principal name,
-	     const char *option, krb5_boolean *compat,
-	     krb5_boolean match_val)
+             krb5_context context, krb5_const_principal name,
+             const char *option, krb5_boolean *compat,
+             krb5_boolean match_val)
 {
     krb5_error_code ret = 0;
     char **p, **q;
@@ -45,32 +45,32 @@ check_compat(OM_uint32 *minor_status,
 
 
     p = krb5_config_get_strings(context, NULL, "gssapi",
-				option, NULL);
+                                option, NULL);
     if(p == NULL)
-	return 0;
+        return 0;
 
     match = NULL;
     for(q = p; *q; q++) {
-	ret = krb5_parse_name(context, *q, &match);
-	if (ret)
-	    break;
+        ret = krb5_parse_name(context, *q, &match);
+        if (ret)
+            break;
 
-	if (krb5_principal_match(context, name, match)) {
-	    *compat = match_val;
-	    break;
-	}
+        if (krb5_principal_match(context, name, match)) {
+            *compat = match_val;
+            break;
+        }
 
-	krb5_free_principal(context, match);
-	match = NULL;
+        krb5_free_principal(context, match);
+        match = NULL;
     }
     if (match)
-	krb5_free_principal(context, match);
+        krb5_free_principal(context, match);
     krb5_config_free_strings(p);
 
     if (ret) {
-	if (minor_status)
-	    *minor_status = ret;
-	return GSS_S_FAILURE;
+        if (minor_status)
+            *minor_status = ret;
+        return GSS_S_FAILURE;
     }
 
     return 0;
@@ -82,25 +82,25 @@ check_compat(OM_uint32 *minor_status,
 
 OM_uint32
 _gss_DES3_get_mic_compat(OM_uint32 *minor_status,
-			 gsskrb5_ctx ctx,
-			 krb5_context context)
+                         gsskrb5_ctx ctx,
+                         krb5_context context)
 {
     krb5_boolean use_compat = FALSE;
     OM_uint32 ret;
 
     if ((ctx->more_flags & COMPAT_OLD_DES3_SELECTED) == 0) {
-	ret = check_compat(minor_status, context, ctx->target,
-			   "broken_des3_mic", &use_compat, TRUE);
-	if (ret)
-	    return ret;
-	ret = check_compat(minor_status, context, ctx->target,
-			   "correct_des3_mic", &use_compat, FALSE);
-	if (ret)
-	    return ret;
+        ret = check_compat(minor_status, context, ctx->target,
+                           "broken_des3_mic", &use_compat, TRUE);
+        if (ret)
+            return ret;
+        ret = check_compat(minor_status, context, ctx->target,
+                           "correct_des3_mic", &use_compat, FALSE);
+        if (ret)
+            return ret;
 
-	if (use_compat)
-	    ctx->more_flags |= COMPAT_OLD_DES3;
-	ctx->more_flags |= COMPAT_OLD_DES3_SELECTED;
+        if (use_compat)
+            ctx->more_flags |= COMPAT_OLD_DES3;
+        ctx->more_flags |= COMPAT_OLD_DES3_SELECTED;
     }
     return 0;
 }
@@ -113,9 +113,9 @@ gss_krb5_compat_des3_mic(OM_uint32 *minor_status, gss_ctx_id_t ctx, int on)
 
     HEIMDAL_MUTEX_lock(&ctx->ctx_id_mutex);
     if (on) {
-	ctx->more_flags |= COMPAT_OLD_DES3;
+        ctx->more_flags |= COMPAT_OLD_DES3;
     } else {
-	ctx->more_flags &= ~COMPAT_OLD_DES3;
+        ctx->more_flags &= ~COMPAT_OLD_DES3;
     }
     ctx->more_flags |= COMPAT_OLD_DES3_SELECTED;
     HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);

@@ -76,11 +76,11 @@ struct DSA_METHOD {
     int (*dsa_sign_setup)(DSA *, BN_CTX *, BIGNUM **, BIGNUM **);
     int (*dsa_do_verify)(const unsigned char *, int, DSA_SIG *, DSA *);
     int (*dsa_mod_exp)(DSA *, BIGNUM *, BIGNUM *, BIGNUM *,
-		       BIGNUM *, BIGNUM *, BIGNUM *, BN_CTX *,
-		       BN_MONT_CTX *);
+                       BIGNUM *, BIGNUM *, BIGNUM *, BN_CTX *,
+                       BN_MONT_CTX *);
     int (*bn_mod_exp)(DSA *, BIGNUM *, BIGNUM *, const BIGNUM *,
-		      const BIGNUM *, BN_CTX *,
-		      BN_MONT_CTX *);
+                      const BIGNUM *, BN_CTX *,
+                      BN_MONT_CTX *);
     int (*init)(DSA *);
     int (*finish)(DSA *);
     int flags;
@@ -104,8 +104,8 @@ struct DSA {
     void *method_mont_p;
     int references;
     struct dsa_CRYPTO_EX_DATA {
-	void *sk;
-	int dummy;
+        void *sk;
+        int dummy;
     } ex_data;
     const DSA_METHOD *meth;
     void *engine;

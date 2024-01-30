@@ -92,8 +92,8 @@ get_type(const char *name, const char *list[], unsigned len)
 {
     unsigned i;
     for (i = 0; i < len; i++)
-	if (list[i] && strcasecmp(list[i], name) == 0)
-	    return i;
+        if (list[i] && strcasecmp(list[i], name) == 0)
+            return i;
     return -1;
 }
 
@@ -103,7 +103,7 @@ const char * ASN1CALL
 der_get_class_name(unsigned num)
 {
     if (num >= SIZEOF_ARRAY(class_names))
-	return NULL;
+        return NULL;
     return class_names[num];
 }
 
@@ -117,7 +117,7 @@ const char * ASN1CALL
 der_get_type_name(unsigned num)
 {
     if (num >= SIZEOF_ARRAY(type_names))
-	return NULL;
+        return NULL;
     return type_names[num];
 }
 
@@ -131,7 +131,7 @@ const char * ASN1CALL
 der_get_tag_name(unsigned num)
 {
     if (num >= SIZEOF_ARRAY(tag_names))
-	return NULL;
+        return NULL;
     return tag_names[num];
 }
 

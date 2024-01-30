@@ -37,18 +37,18 @@ RCSID("$Id$");
 
 kadm5_ret_t
 _kadm5_set_modifier(kadm5_server_context *context,
-		    hdb_entry *ent)
+                    hdb_entry *ent)
 {
     kadm5_ret_t ret;
     if(ent->modified_by == NULL){
-	ent->modified_by = malloc(sizeof(*ent->modified_by));
-	if(ent->modified_by == NULL)
-	    return krb5_enomem(context->context);
+        ent->modified_by = malloc(sizeof(*ent->modified_by));
+        if(ent->modified_by == NULL)
+            return krb5_enomem(context->context);
     } else
-	free_Event(ent->modified_by);
+        free_Event(ent->modified_by);
     ent->modified_by->time = time(NULL);
     ret = krb5_copy_principal(context->context, context->caller,
-			      &ent->modified_by->principal);
+                              &ent->modified_by->principal);
     return ret;
 }
 

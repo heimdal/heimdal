@@ -34,12 +34,12 @@
 #include "ntlm.h"
 
 OM_uint32 GSSAPI_CALLCONV _gss_ntlm_context_time
-           (OM_uint32 * minor_status,
-            gss_const_ctx_id_t context_handle,
-            OM_uint32 * time_rec
-           )
+                                                 (OM_uint32 * minor_status,
+                                                  gss_const_ctx_id_t context_handle,
+                                                  OM_uint32 * time_rec
+                                                 )
 {
     if (time_rec)
-	*time_rec = GSS_C_INDEFINITE;
+        *time_rec = GSS_C_INDEFINITE;
     return GSS_S_COMPLETE;
 }

@@ -65,46 +65,46 @@ main(int argc, char **argv)
 
     ret = krb5_init_context (&context);
     if (ret)
-	errx (1, "krb5_init_context failed: %d", ret);
+        errx (1, "krb5_init_context failed: %d", ret);
 
     for (t = tests; t->enctype != 0; ++t) {
-	krb5_keyblock key;
-	krb5_crypto crypto;
-	krb5_data constant, prf;
+        krb5_keyblock key;
+        krb5_crypto crypto;
+        krb5_data constant, prf;
 
-	krb5_data_zero(&prf);
+        krb5_data_zero(&prf);
 
-	key.keytype = t->enctype;
-	krb5_enctype_keysize(context, t->enctype, &key.keyvalue.length);
-	key.keyvalue.data   = t->key;
+        key.keytype = t->enctype;
+        krb5_enctype_keysize(context, t->enctype, &key.keyvalue.length);
+        key.keyvalue.data   = t->key;
 
-	ret = krb5_crypto_init(context, &key, 0, &crypto);
-	if (ret)
-	    krb5_err (context, 1, ret, "krb5_crypto_init");
+        ret = krb5_crypto_init(context, &key, 0, &crypto);
+        if (ret)
+            krb5_err (context, 1, ret, "krb5_crypto_init");
 
-	constant.data = t->constant;
-	constant.length = t->constant_len;
+        constant.data = t->constant;
+        constant.length = t->constant_len;
 
-	ret = krb5_crypto_prf(context, crypto, &constant, &prf);
-	if (ret)
-	    krb5_err (context, 1, ret, "krb5_crypto_prf");
+        ret = krb5_crypto_prf(context, crypto, &constant, &prf);
+        if (ret)
+            krb5_err (context, 1, ret, "krb5_crypto_prf");
 
-	if (memcmp(prf.data, t->res, prf.length) != 0) {
-	    const unsigned char *p = prf.data;
-	    int i;
+        if (memcmp(prf.data, t->res, prf.length) != 0) {
+            const unsigned char *p = prf.data;
+            int i;
 
-	    printf ("PRF failed (enctype %d)\n", t->enctype);
-	    printf ("should be: ");
-	    for (i = 0; i < prf.length; ++i)
-		printf ("%02x", t->res[i]);
-	    printf ("\nresult was: ");
-	    for (i = 0; i < prf.length; ++i)
-		printf ("%02x", p[i]);
-	    printf ("\n");
-	    val = 1;
-	}
-	krb5_data_free(&prf);
-	krb5_crypto_destroy(context, crypto);
+            printf ("PRF failed (enctype %d)\n", t->enctype);
+            printf ("should be: ");
+            for (i = 0; i < prf.length; ++i)
+                printf ("%02x", t->res[i]);
+            printf ("\nresult was: ");
+            for (i = 0; i < prf.length; ++i)
+                printf ("%02x", p[i]);
+            printf ("\n");
+            val = 1;
+        }
+        krb5_data_free(&prf);
+        krb5_crypto_destroy(context, crypto);
     }
     krb5_free_context(context);
 

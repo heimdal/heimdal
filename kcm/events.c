@@ -40,17 +40,17 @@ static kcm_event *events_head = NULL;
 static time_t last_run = 0;
 
 static char *action_strings[] = {
-	"NONE", "ACQUIRE_CREDS", "RENEW_CREDS",
-	"DESTROY_CREDS", "DESTROY_EMPTY_CACHE" };
+        "NONE", "ACQUIRE_CREDS", "RENEW_CREDS",
+        "DESTROY_CREDS", "DESTROY_EMPTY_CACHE" };
 
 krb5_error_code
 kcm_enqueue_event(krb5_context context,
-		  kcm_event *event)
+                  kcm_event *event)
 {
     krb5_error_code ret;
 
     if (event->action == KCM_EVENT_NONE) {
-	return 0;
+        return 0;
     }
 
     HEIMDAL_MUTEX_lock(&events_mutex);
@@ -64,9 +64,9 @@ static void
 print_times(time_t t, char buf[64])
 {
     if (t)
-	strftime(buf, 64, "%m-%dT%H:%M", gmtime(&t));
+        strftime(buf, 64, "%m-%dT%H:%M", gmtime(&t));
     else
-	strlcpy(buf, "never", 64);
+        strlcpy(buf, "never", 64);
 }
 
 static void
@@ -78,27 +78,27 @@ log_event(kcm_event *event, char *msg)
     print_times(event->expire_time, expire_time);
 
     kcm_log(7, "%s event %08x: fire_time %s fire_count %d expire_time %s "
-	    "backoff_time %d action %s cache %s",
-	    msg, event, fire_time, event->fire_count, expire_time,
-	    event->backoff_time, action_strings[event->action],
-	    event->ccache->name);
+            "backoff_time %d action %s cache %s",
+            msg, event, fire_time, event->fire_count, expire_time,
+            event->backoff_time, action_strings[event->action],
+            event->ccache->name);
 }
 
 krb5_error_code
 kcm_enqueue_event_internal(krb5_context context,
-			   kcm_event *event)
+                           kcm_event *event)
 {
     kcm_event **e;
 
     if (event->action == KCM_EVENT_NONE)
-	return 0;
+        return 0;
 
     for (e = &events_head; *e != NULL; e = &(*e)->next)
-	;
+        ;
 
     *e = (kcm_event *)malloc(sizeof(kcm_event));
     if (*e == NULL) {
-	return KRB5_CC_NOMEM;
+        return KRB5_CC_NOMEM;
     }
 
     (*e)->valid = 1;
@@ -127,14 +127,14 @@ kcm_debug_events(krb5_context context)
     kcm_event *e;
 
     for (e = events_head; e != NULL; e = e->next)
-	log_event(e, "debug");
+        log_event(e, "debug");
 
     return 0;
 }
 
 krb5_error_code
 kcm_enqueue_event_relative(krb5_context context,
-			   kcm_event *event)
+                           kcm_event *event)
 {
     krb5_error_code ret;
     kcm_event e;
@@ -150,7 +150,7 @@ kcm_enqueue_event_relative(krb5_context context,
 
 static krb5_error_code
 kcm_remove_event_internal(krb5_context context,
-			  kcm_event **e)
+                          kcm_event **e)
 {
     kcm_event *next;
 
@@ -172,25 +172,25 @@ kcm_remove_event_internal(krb5_context context,
 
 static int
 is_primary_credential_p(krb5_context context,
-			kcm_ccache ccache,
-			krb5_creds *newcred)
+                        kcm_ccache ccache,
+                        krb5_creds *newcred)
 {
     krb5_flags whichfields;
 
     if (ccache->client == NULL)
-	return 0;
+        return 0;
 
     if (newcred->client == NULL ||
-	!krb5_principal_compare(context, ccache->client, newcred->client))
-	return 0;
+        !krb5_principal_compare(context, ccache->client, newcred->client))
+        return 0;
 
     /* XXX just checks whether it's the first credential in the cache */
     if (ccache->creds == NULL)
-	return 0;
+        return 0;
 
     whichfields = KRB5_TC_MATCH_KEYTYPE | KRB5_TC_MATCH_FLAGS_EXACT |
-		  KRB5_TC_MATCH_TIMES_EXACT | KRB5_TC_MATCH_AUTHDATA |
-		  KRB5_TC_MATCH_2ND_TKT | KRB5_TC_MATCH_IS_SKEY;
+                  KRB5_TC_MATCH_TIMES_EXACT | KRB5_TC_MATCH_AUTHDATA |
+                  KRB5_TC_MATCH_2ND_TKT | KRB5_TC_MATCH_IS_SKEY;
 
     return krb5_compare_creds(context, whichfields, newcred, &ccache->creds->cred);
 }
@@ -200,8 +200,8 @@ is_primary_credential_p(krb5_context context,
  */
 static krb5_error_code
 kcm_ccache_make_default_event(krb5_context context,
-			      kcm_event *event,
-			      krb5_creds *newcred)
+                              kcm_event *event,
+                              krb5_creds *newcred)
 {
     krb5_error_code ret = 0;
     kcm_ccache ccache = event->ccache;
@@ -211,29 +211,29 @@ kcm_ccache_make_default_event(krb5_context context,
     event->backoff_time = KCM_EVENT_DEFAULT_BACKOFF_TIME;
 
     if (newcred == NULL) {
-	/* no creds, must be acquire creds request */
-	if ((ccache->flags & KCM_MASK_KEY_PRESENT) == 0) {
-	    kcm_log(0, "Cannot acquire credentials without a key");
-	    return KRB5_FCC_INTERNAL;
-	}
+        /* no creds, must be acquire creds request */
+        if ((ccache->flags & KCM_MASK_KEY_PRESENT) == 0) {
+            kcm_log(0, "Cannot acquire credentials without a key");
+            return KRB5_FCC_INTERNAL;
+        }
 
-	event->fire_time = time(NULL); /* right away */
-	event->action = KCM_EVENT_ACQUIRE_CREDS;
+        event->fire_time = time(NULL); /* right away */
+        event->action = KCM_EVENT_ACQUIRE_CREDS;
     } else if (is_primary_credential_p(context, ccache, newcred)) {
-	if (automatic_renewal && newcred->flags.b.renewable) {
-	    event->action = KCM_EVENT_RENEW_CREDS;
-	    ccache->flags |= KCM_FLAGS_RENEWABLE;
-	} else {
-	    if (ccache->flags & KCM_MASK_KEY_PRESENT)
-		event->action = KCM_EVENT_ACQUIRE_CREDS;
-	    else
-		event->action = KCM_EVENT_NONE;
-	    ccache->flags &= ~(KCM_FLAGS_RENEWABLE);
-	}
-	/* requeue with some slop factor */
-	event->fire_time = newcred->times.endtime - KCM_EVENT_QUEUE_INTERVAL;
+        if (automatic_renewal && newcred->flags.b.renewable) {
+            event->action = KCM_EVENT_RENEW_CREDS;
+            ccache->flags |= KCM_FLAGS_RENEWABLE;
+        } else {
+            if (ccache->flags & KCM_MASK_KEY_PRESENT)
+                event->action = KCM_EVENT_ACQUIRE_CREDS;
+            else
+                event->action = KCM_EVENT_NONE;
+            ccache->flags &= ~(KCM_FLAGS_RENEWABLE);
+        }
+        /* requeue with some slop factor */
+        event->fire_time = newcred->times.endtime - KCM_EVENT_QUEUE_INTERVAL;
     } else {
-	event->action = KCM_EVENT_NONE;
+        event->action = KCM_EVENT_NONE;
     }
 
     return ret;
@@ -241,8 +241,8 @@ kcm_ccache_make_default_event(krb5_context context,
 
 krb5_error_code
 kcm_ccache_enqueue_default(krb5_context context,
-			   kcm_ccache ccache,
-			   krb5_creds *newcred)
+                           kcm_ccache ccache,
+                           krb5_creds *newcred)
 {
     kcm_event event;
     krb5_error_code ret;
@@ -252,18 +252,18 @@ kcm_ccache_enqueue_default(krb5_context context,
 
     ret = kcm_ccache_make_default_event(context, &event, newcred);
     if (ret)
-	return ret;
+        return ret;
 
     ret = kcm_enqueue_event_internal(context, &event);
     if (ret)
-	return ret;
+        return ret;
 
     return 0;
 }
 
 krb5_error_code
 kcm_remove_event(krb5_context context,
-		 kcm_event *event)
+                 kcm_event *event)
 {
     krb5_error_code ret;
     kcm_event **e;
@@ -273,16 +273,16 @@ kcm_remove_event(krb5_context context,
 
     HEIMDAL_MUTEX_lock(&events_mutex);
     for (e = &events_head; *e != NULL; e = &(*e)->next) {
-	if (event == *e) {
-	    *e = event->next;
-	    found++;
-	    break;
-	}
+        if (event == *e) {
+            *e = event->next;
+            found++;
+            break;
+        }
     }
 
     if (!found) {
-	ret = KRB5_CC_NOTFOUND;
-	goto out;
+        ret = KRB5_CC_NOTFOUND;
+        goto out;
     }
 
     ret = kcm_remove_event_internal(context, &event);
@@ -295,7 +295,7 @@ out:
 
 krb5_error_code
 kcm_cleanup_events(krb5_context context,
-		   kcm_ccache ccache)
+                   kcm_ccache ccache)
 {
     kcm_event **e;
 
@@ -304,11 +304,11 @@ kcm_cleanup_events(krb5_context context,
     HEIMDAL_MUTEX_lock(&events_mutex);
 
     for (e = &events_head; *e != NULL; e = &(*e)->next) {
-	if ((*e)->valid && (*e)->ccache == ccache) {
-	    kcm_remove_event_internal(context, e);
-	}
-	if (*e == NULL)
-	    break;
+        if ((*e)->valid && (*e)->ccache == ccache) {
+            kcm_remove_event_internal(context, e);
+        }
+        if (*e == NULL)
+            break;
     }
 
     HEIMDAL_MUTEX_unlock(&events_mutex);
@@ -318,7 +318,7 @@ kcm_cleanup_events(krb5_context context,
 
 static krb5_error_code
 kcm_fire_event(krb5_context context,
-	       kcm_event **e)
+               kcm_event **e)
 {
     kcm_event *event;
     krb5_error_code ret;
@@ -329,65 +329,65 @@ kcm_fire_event(krb5_context context,
 
     switch (event->action) {
     case KCM_EVENT_ACQUIRE_CREDS:
-	ret = kcm_ccache_acquire(context, event->ccache, &credp);
-	oneshot = 0;
-	break;
+        ret = kcm_ccache_acquire(context, event->ccache, &credp);
+        oneshot = 0;
+        break;
     case KCM_EVENT_RENEW_CREDS:
-	ret = kcm_ccache_refresh(context, event->ccache, &credp);
-	if (ret == KRB5KRB_AP_ERR_TKT_EXPIRED) {
-	    ret = kcm_ccache_acquire(context, event->ccache, &credp);
-	}
-	oneshot = 0;
-	break;
+        ret = kcm_ccache_refresh(context, event->ccache, &credp);
+        if (ret == KRB5KRB_AP_ERR_TKT_EXPIRED) {
+            ret = kcm_ccache_acquire(context, event->ccache, &credp);
+        }
+        oneshot = 0;
+        break;
     case KCM_EVENT_DESTROY_CREDS:
-	ret = kcm_ccache_destroy(context, event->ccache->name);
-	break;
+        ret = kcm_ccache_destroy(context, event->ccache->name);
+        break;
     case KCM_EVENT_DESTROY_EMPTY_CACHE:
-	ret = kcm_ccache_destroy_if_empty(context, event->ccache);
-	break;
+        ret = kcm_ccache_destroy_if_empty(context, event->ccache);
+        break;
     default:
-	ret = KRB5_FCC_INTERNAL;
-	break;
+        ret = KRB5_FCC_INTERNAL;
+        break;
     }
 
     event->fire_count++;
 
     if (ret) {
-	/* Reschedule failed event for another time */
-	event->fire_time += event->backoff_time;
-	if (event->backoff_time < KCM_EVENT_MAX_BACKOFF_TIME)
-	    event->backoff_time *= 2;
+        /* Reschedule failed event for another time */
+        event->fire_time += event->backoff_time;
+        if (event->backoff_time < KCM_EVENT_MAX_BACKOFF_TIME)
+            event->backoff_time *= 2;
 
-	/* Remove it if it would never get executed */
-	if (event->expire_time &&
-	    event->fire_time > event->expire_time)
-	    kcm_remove_event_internal(context, e);
+        /* Remove it if it would never get executed */
+        if (event->expire_time &&
+            event->fire_time > event->expire_time)
+            kcm_remove_event_internal(context, e);
     } else {
-	if (!oneshot) {
-	    char *cpn;
+        if (!oneshot) {
+            char *cpn;
 
-	    if (krb5_unparse_name(context, event->ccache->client,
-				  &cpn))
-		cpn = NULL;
+            if (krb5_unparse_name(context, event->ccache->client,
+                                  &cpn))
+                cpn = NULL;
 
-	    kcm_log(0, "%s credentials in cache %s for principal %s",
-		    (event->action == KCM_EVENT_ACQUIRE_CREDS) ?
-			"Acquired" : "Renewed",
-		    event->ccache->name,
-		    (cpn != NULL) ? cpn : "<none>");
+            kcm_log(0, "%s credentials in cache %s for principal %s",
+                    (event->action == KCM_EVENT_ACQUIRE_CREDS) ?
+                        "Acquired" : "Renewed",
+                    event->ccache->name,
+                    (cpn != NULL) ? cpn : "<none>");
 
-	    if (cpn != NULL)
-		free(cpn);
+            if (cpn != NULL)
+                free(cpn);
 
-	    /* Succeeded, but possibly replaced with another event */
-	    ret = kcm_ccache_make_default_event(context, event, credp);
-	    if (ret || event->action == KCM_EVENT_NONE)
-		oneshot = 1;
-	    else
-		log_event(event, "requeuing");
-	}
-	if (oneshot)
-	    kcm_remove_event_internal(context, e);
+            /* Succeeded, but possibly replaced with another event */
+            ret = kcm_ccache_make_default_event(context, event, credp);
+            if (ret || event->action == KCM_EVENT_NONE)
+                oneshot = 1;
+            else
+                log_event(event, "requeuing");
+        }
+        if (oneshot)
+            kcm_remove_event_internal(context, e);
     }
 
     return ret;
@@ -404,35 +404,35 @@ kcm_run_events(krb5_context context, time_t now)
 
     /* Only run event queue every N seconds */
     if (now < last_run + KCM_EVENT_QUEUE_INTERVAL) {
-	HEIMDAL_MUTEX_unlock(&events_mutex);
-	return 0;
+        HEIMDAL_MUTEX_unlock(&events_mutex);
+        return 0;
     }
 
     /* go through events list, fire and expire */
     for (e = &events_head; *e != NULL; e = &(*e)->next) {
-	if ((*e)->valid == 0)
-	    continue;
+        if ((*e)->valid == 0)
+            continue;
 
-	if (now >= (*e)->fire_time) {
-	    ret = kcm_fire_event(context, e);
-	    if (ret) {
-		estr = krb5_get_error_message(context, ret);
-		kcm_log(1, "Could not fire event for cache %s: %s",
-			(*e)->ccache->name, estr);
-		krb5_free_error_message(context, estr);
-	    }
-	} else if ((*e)->expire_time && now >= (*e)->expire_time) {
-	    ret = kcm_remove_event_internal(context, e);
-	    if (ret) {
-		estr = krb5_get_error_message(context, ret);
-		kcm_log(1, "Could not expire event for cache %s: %s",
-			(*e)->ccache->name, estr);
-		krb5_free_error_message(context, estr);
-	    }
-	}
+        if (now >= (*e)->fire_time) {
+            ret = kcm_fire_event(context, e);
+            if (ret) {
+                estr = krb5_get_error_message(context, ret);
+                kcm_log(1, "Could not fire event for cache %s: %s",
+                        (*e)->ccache->name, estr);
+                krb5_free_error_message(context, estr);
+            }
+        } else if ((*e)->expire_time && now >= (*e)->expire_time) {
+            ret = kcm_remove_event_internal(context, e);
+            if (ret) {
+                estr = krb5_get_error_message(context, ret);
+                kcm_log(1, "Could not expire event for cache %s: %s",
+                        (*e)->ccache->name, estr);
+                krb5_free_error_message(context, estr);
+            }
+        }
 
-	if (*e == NULL)
-	    break;
+        if (*e == NULL)
+            break;
     }
 
     last_run = now;

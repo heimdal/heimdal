@@ -55,7 +55,7 @@ main(int argc, char **argv)
 
     ret = hx509_context_init(&context);
     if (ret)
-	errx(1, "hx509_context_init failed with %d", ret);
+        errx(1, "hx509_context_init failed with %d", ret);
 
     hx509_env_add(context, &env, "variable", "foo");
     hx509_env_add(context, &env2, "variable", "foo");
@@ -63,22 +63,22 @@ main(int argc, char **argv)
 
     for (i = 0; i < sizeof(foo)/sizeof(foo[0]); i++) {
 
-	expr = _hx509_expr_parse(foo[i].str);
-	if (expr == NULL)
-	    errx(1, "_hx509_expr_parse failed for %d: %s", i, foo[i].str);
+        expr = _hx509_expr_parse(foo[i].str);
+        if (expr == NULL)
+            errx(1, "_hx509_expr_parse failed for %d: %s", i, foo[i].str);
 
-	val = _hx509_expr_eval(context, env, expr);
-	if (foo[i].val) {
-	    if (val == 0)
-		errx(1, "_hx509_expr_eval not true when it should: %d: %s",
-		     i, foo[i].str);
-	} else {
-	    if (val)
-		errx(1, "_hx509_expr_eval true when it should not: %d: %s",
-		     i, foo[i].str);
-	}
+        val = _hx509_expr_eval(context, env, expr);
+        if (foo[i].val) {
+            if (val == 0)
+                errx(1, "_hx509_expr_eval not true when it should: %d: %s",
+                     i, foo[i].str);
+        } else {
+            if (val)
+                errx(1, "_hx509_expr_eval true when it should not: %d: %s",
+                     i, foo[i].str);
+        }
 
-	_hx509_expr_free(expr);
+        _hx509_expr_free(expr);
     }
 
     hx509_env_free(&env);

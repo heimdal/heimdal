@@ -251,9 +251,9 @@ extern struct asn1_type_func asn1_template_prim[A1T_NUM_ENTRY];
 
 int
 _asn1_copy_top (
-	const struct asn1_template * /*t*/,
-	const void * /*from*/,
-	void * /*to*/);
+        const struct asn1_template * /*t*/,
+        const void * /*from*/,
+        void * /*to*/);
 
 void
 _asn1_free_top(const struct asn1_template *, void *);
@@ -263,43 +263,43 @@ _asn1_print_top(const struct asn1_template *, int, const void *);
 
 int
 _asn1_decode_top (
-	const struct asn1_template * /*t*/,
-	unsigned /*flags*/,
-	const unsigned char * /*p*/,
-	size_t /*len*/,
-	void * /*data*/,
-	size_t * /*size*/);
+        const struct asn1_template * /*t*/,
+        unsigned /*flags*/,
+        const unsigned char * /*p*/,
+        size_t /*len*/,
+        void * /*data*/,
+        size_t * /*size*/);
 
 int
 _asn1_encode (
-	const struct asn1_template * /*t*/,
-	unsigned char * /*p*/,
-	size_t /*len*/,
-	const void * /*data*/,
-	size_t * /*size*/);
+        const struct asn1_template * /*t*/,
+        unsigned char * /*p*/,
+        size_t /*len*/,
+        const void * /*data*/,
+        size_t * /*size*/);
 
 int
 _asn1_encode_fuzzer (
-	const struct asn1_template * /*t*/,
-	unsigned char * /*p*/,
-	size_t /*len*/,
-	const void * /*data*/,
-	size_t * /*size*/);
+        const struct asn1_template * /*t*/,
+        unsigned char * /*p*/,
+        size_t /*len*/,
+        const void * /*data*/,
+        size_t * /*size*/);
 
 void
 _asn1_free (
-	const struct asn1_template * /*t*/,
-	void * /*data*/);
+        const struct asn1_template * /*t*/,
+        void * /*data*/);
 
 size_t
 _asn1_length (
-	const struct asn1_template * /*t*/,
-	const void * /*data*/);
+        const struct asn1_template * /*t*/,
+        const void * /*data*/);
 
 size_t
 _asn1_length_fuzzer (
-	const struct asn1_template * /*t*/,
-	const void * /*data*/);
+        const struct asn1_template * /*t*/,
+        const void * /*data*/);
 
 
 #endif

@@ -48,12 +48,12 @@ resolve_fini(void *ctx)
 
 static krb5_error_code KRB5_CALLCONV
 resolve_lookup(void *ctx,
-	       enum locate_service_type service,
-	       const char *realm,
-	       int domain,
-	       int type,
-	       int (*add)(void *,int,struct sockaddr *),
-	       void *addctx)
+               enum locate_service_type service,
+               const char *realm,
+               int domain,
+               int type,
+               int (*add)(void *,int,struct sockaddr *),
+               void *addctx)
 {
     struct sockaddr_in s;
 
@@ -67,8 +67,8 @@ resolve_lookup(void *ctx,
     s.sin_addr.s_addr = htonl(0x7f000002);
 
     if (strcmp(realm, "NOTHERE.H5L.SE") == 0) {
-	(*add)(addctx, type, (struct sockaddr *)&s);
-	return 0;
+        (*add)(addctx, type, (struct sockaddr *)&s);
+        return 0;
     }
 
     return KRB5_PLUGIN_NO_HANDLE;
@@ -97,32 +97,32 @@ main(int argc, char **argv)
 
     ret = krb5_init_context(&context);
     if (ret)
-	errx(1, "krb5_init_contex");
+        errx(1, "krb5_init_contex");
 
     ret = krb5_plugin_register(context, PLUGIN_TYPE_DATA,
-			       KRB5_PLUGIN_LOCATE, &resolve);
+                               KRB5_PLUGIN_LOCATE, &resolve);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_plugin_register");
+        krb5_err(context, 1, ret, "krb5_plugin_register");
 
 
     ret = krb5_krbhst_init_flags(context,
-				 "NOTHERE.H5L.SE",
-				 KRB5_KRBHST_KDC,
-				 0,
-				 &handle);
+                                 "NOTHERE.H5L.SE",
+                                 KRB5_KRBHST_KDC,
+                                 0,
+                                 &handle);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_krbhst_init_flags");
+        krb5_err(context, 1, ret, "krb5_krbhst_init_flags");
 
 
     while(krb5_krbhst_next_as_string(context, handle, host, sizeof(host)) == 0){
-	found++;
- 	if (!found && strcmp(host, "127.0.0.2") != 0 && strcmp(host, "tcp/127.0.0.2") != 0)
-	    krb5_errx(context, 1, "wrong address: %s", host);
+        found++;
+        if (!found && strcmp(host, "127.0.0.2") != 0 && strcmp(host, "tcp/127.0.0.2") != 0)
+            krb5_errx(context, 1, "wrong address: %s", host);
     }
     if (!found)
-	krb5_errx(context, 1, "failed to find host");
+        krb5_errx(context, 1, "failed to find host");
     if (found < 2)
-	krb5_errx(context, 1, "did not get the two expected results");
+        krb5_errx(context, 1, "did not get the two expected results");
 
     krb5_krbhst_free(context, handle);
 

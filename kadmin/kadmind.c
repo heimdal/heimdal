@@ -138,16 +138,16 @@ main(int argc, char **argv)
     setprogname(argv[0]);
 
     if (getarg(args, num_args, argc, argv, &optidx)) {
-	warnx("error at argument `%s'", argv[optidx]);
-	usage(1);
+        warnx("error at argument `%s'", argv[optidx]);
+        usage(1);
     }
 
     if (help_flag)
-	usage (0);
+        usage (0);
 
     if (version_flag) {
-	print_version(NULL);
-	exit(0);
+        print_version(NULL);
+        exit(0);
     }
 
     if (detach_from_console > 0 && daemon_child == -1)
@@ -155,7 +155,7 @@ main(int argc, char **argv)
 
     ret = krb5_init_context(&context);
     if (ret)
-	errx (1, "krb5_init_context failed: %d", ret);
+        errx (1, "krb5_init_context failed: %d", ret);
 
     argc -= optidx;
     argv += optidx;
@@ -163,91 +163,91 @@ main(int argc, char **argv)
         usage(1);
 
     if (config_file == NULL) {
-	int aret;
+        int aret;
 
-	aret = asprintf(&config_file, "%s/kdc.conf", hdb_db_dir(context));
-	if (aret == -1)
-	    errx(1, "out of memory");
+        aret = asprintf(&config_file, "%s/kdc.conf", hdb_db_dir(context));
+        if (aret == -1)
+            errx(1, "out of memory");
     }
 
     ret = krb5_prepend_config_files_default(config_file, &files);
     if (ret)
-	krb5_err(context, 1, ret, "getting configuration files");
+        krb5_err(context, 1, ret, "getting configuration files");
 
     ret = krb5_set_config_files(context, files);
     krb5_free_config_files(files);
     if(ret)
-	krb5_err(context, 1, ret, "reading configuration files");
+        krb5_err(context, 1, ret, "reading configuration files");
 
     ret = krb5_openlog(context, "kadmind", &logfacility);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_openlog");
+        krb5_err(context, 1, ret, "krb5_openlog");
     ret = krb5_set_warn_dest(context, logfacility);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_set_warn_dest");
+        krb5_err(context, 1, ret, "krb5_set_warn_dest");
 
     ret = krb5_kt_register(context, &hdb_get_kt_ops);
     if(ret)
-	krb5_err(context, 1, ret, "krb5_kt_register");
+        krb5_err(context, 1, ret, "krb5_kt_register");
 
     ret = krb5_kt_resolve(context, keytab_str, &keytab);
     if(ret)
-	krb5_err(context, 1, ret, "krb5_kt_resolve");
+        krb5_err(context, 1, ret, "krb5_kt_resolve");
 
     kadm5_setup_passwd_quality_check (context, check_library, check_function);
 
     for (i = 0; i < policy_libraries.num_strings; i++) {
-	ret = kadm5_add_passwd_quality_verifier(context,
-						policy_libraries.strings[i]);
-	if (ret)
-	    krb5_err(context, 1, ret, "kadm5_add_passwd_quality_verifier");
+        ret = kadm5_add_passwd_quality_verifier(context,
+                                                policy_libraries.strings[i]);
+        if (ret)
+            krb5_err(context, 1, ret, "kadm5_add_passwd_quality_verifier");
     }
     ret = kadm5_add_passwd_quality_verifier(context, NULL);
     if (ret)
-	krb5_err(context, 1, ret, "kadm5_add_passwd_quality_verifier");
+        krb5_err(context, 1, ret, "kadm5_add_passwd_quality_verifier");
 
     if(debug_flag) {
-	int debug_port;
+        int debug_port;
 
-	if(port_str == NULL)
-	    debug_port = krb5_getportbyname (context, "kerberos-adm",
-					     "tcp", 749);
-	else
-	    debug_port = htons(atoi(port_str));
-	mini_inetd(debug_port, &sfd);
+        if(port_str == NULL)
+            debug_port = krb5_getportbyname (context, "kerberos-adm",
+                                             "tcp", 749);
+        else
+            debug_port = htons(atoi(port_str));
+        mini_inetd(debug_port, &sfd);
     } else {
 #ifdef _WIN32
-	start_server(context, port_str);
+        start_server(context, port_str);
 #else
-	struct sockaddr_storage __ss;
-	struct sockaddr *sa = (struct sockaddr *)&__ss;
-	socklen_t sa_size = sizeof(__ss);
+        struct sockaddr_storage __ss;
+        struct sockaddr *sa = (struct sockaddr *)&__ss;
+        socklen_t sa_size = sizeof(__ss);
 
-	/*
-	 * Check if we are running inside inetd or not, if not, start
-	 * our own server.
-	 */
+        /*
+         * Check if we are running inside inetd or not, if not, start
+         * our own server.
+         */
 
-	if(roken_getsockname(STDIN_FILENO, sa, &sa_size) < 0 &&
-	   rk_SOCK_ERRNO == ENOTSOCK) {
-	    start_server(context, port_str);
-	}
+        if(roken_getsockname(STDIN_FILENO, sa, &sa_size) < 0 &&
+           rk_SOCK_ERRNO == ENOTSOCK) {
+            start_server(context, port_str);
+        }
 #endif /* _WIN32 */
-	sfd = STDIN_FILENO;
+        sfd = STDIN_FILENO;
 
-	socket_set_keepalive(sfd, 1);
+        socket_set_keepalive(sfd, 1);
     }
 
     if(realm)
-	krb5_set_default_realm(context, realm); /* XXX */
+        krb5_set_default_realm(context, realm); /* XXX */
 
 #ifndef WIN32
     if (fuzz_file) {
-	HEIMDAL_THREAD_ID tid;
+        HEIMDAL_THREAD_ID tid;
 
-	if (fuzz_admin_server == NULL)
-	    errx(1, "If --fuzz-file is given then --fuzz-server must be too");
-	HEIMDAL_THREAD_create(&tid, fuzz_thread, NULL);
+        if (fuzz_admin_server == NULL)
+            errx(1, "If --fuzz-file is given then --fuzz-server must be too");
+        HEIMDAL_THREAD_create(&tid, fuzz_thread, NULL);
     }
 #endif
 
@@ -273,40 +273,40 @@ fuzz_thread(void *arg)
 
     fd = open(fuzz_file, O_RDONLY);
     if (fd < 0)
-	err(1, "Could not open fuzz file %s", fuzz_file);
+        err(1, "Could not open fuzz file %s", fuzz_file);
     sp = krb5_storage_from_fd(fd);
     if (sp == NULL)
-	err(1, "Could not read fuzz file %s", fuzz_file);
+        err(1, "Could not read fuzz file %s", fuzz_file);
     (void) close(fd);
 
     ret = krb5_init_context(&context2);
     if (ret)
-	errx(1, "Fuzzing failed: krb5_init_context failed: %d", ret);
+        errx(1, "Fuzzing failed: krb5_init_context failed: %d", ret);
     ret = kadm5_c_init_with_skey_ctx(context2,
                                      fuzz_client_name,
                                      fuzz_keytab_name,
-				     fuzz_service_name ?
-					fuzz_service_name :
-					 KADM5_ADMIN_SERVICE,
+                                     fuzz_service_name ?
+                                         fuzz_service_name :
+                                         KADM5_ADMIN_SERVICE,
                                      &conf,
                                      0, /* struct_version */
                                      0, /* api_version */
                                      &server_handle);
     if (ret)
-	errx(1, "Fuzzing failed: kadm5_c_init_with_skey_ctx failed: %d", ret);
+        errx(1, "Fuzzing failed: kadm5_c_init_with_skey_ctx failed: %d", ret);
 
     ret = _kadm5_connect(server_handle, 1 /* want_write */);
     if (ret)
-	errx(1, "Fuzzing failed: Could not connect to self (%s): "
+        errx(1, "Fuzzing failed: Could not connect to self (%s): "
              "_kadm5_connect failed: %d", fuzz_admin_server, ret);
     ret = _kadm5_client_send(server_handle, sp);
     if (ret)
-	errx(1, "Fuzzing failed: Could not send request to self (%s): "
+        errx(1, "Fuzzing failed: Could not send request to self (%s): "
              "_kadm5_client_send failed: %d", fuzz_admin_server, ret);
     krb5_data_zero(&reply);
     ret = _kadm5_client_recv(server_handle, &reply);
     if (ret)
-	errx(1, "Fuzzing failed: Could not read reply from self (%s): "
+        errx(1, "Fuzzing failed: Could not read reply from self (%s): "
              "_kadm5_client_recv failed: %d", fuzz_admin_server, ret);
     krb5_storage_free(sp);
     krb5_data_free(&reply);

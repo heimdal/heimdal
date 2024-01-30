@@ -145,7 +145,7 @@ pa_gss_decode_context_state(astgs_request_t r,
     sp = krb5_storage_from_readonly_mem(state->data, state->length);
     if (sp == NULL) {
         ret = krb5_enomem(r->context);
-	goto out;
+        goto out;
     }
 
     krb5_storage_set_eof_code(sp, KRB5_BAD_MSIZE);
@@ -162,13 +162,13 @@ pa_gss_decode_context_state(astgs_request_t r,
     req_body_checksum->cksumtype = (CKSUMTYPE)cksumtype;
 
     if (req_body_checksum->cksumtype == CKSUMTYPE_NONE ||
-	krb5_checksum_is_keyed(r->context, req_body_checksum->cksumtype)) {
-	ret = KRB5KDC_ERR_SUMTYPE_NOSUPP;
-	goto out;
+        krb5_checksum_is_keyed(r->context, req_body_checksum->cksumtype)) {
+        ret = KRB5KDC_ERR_SUMTYPE_NOSUPP;
+        goto out;
     }
 
     ret = krb5_checksumsize(r->context, req_body_checksum->cksumtype,
-			    &cksumsize);
+                            &cksumsize);
     if (ret)
         goto out;
 
@@ -236,9 +236,9 @@ pa_gss_get_context_state(astgs_request_t r,
     if (GSS_ERROR(major)) {
         pa_gss_display_status(r, major, minor, gcp,
                               "Failed to import GSS pre-authentication context");
-	ret = _krb5_gss_map_error(major, minor);
+        ret = _krb5_gss_map_error(major, minor);
     } else
-	ret = 0;
+        ret = 0;
 
     gss_release_buffer(&minor, &sec_context_token);
 
@@ -265,7 +265,7 @@ pa_gss_encode_context_state(astgs_request_t r,
     sp = krb5_storage_emem();
     if (sp == NULL) {
         ret = krb5_enomem(r->context);
-	goto out;
+        goto out;
     }
 
     krb5_storage_set_byteorder(sp, KRB5_STORAGE_BYTEORDER_PACKED);
@@ -1007,9 +1007,9 @@ pa_gss_display_name(gss_name_t name,
 
 static krb5_error_code KRB5_LIB_CALL
 pa_gss_finalize_pac_cb(krb5_context context,
-		        const void *plug,
-		        void *plugctx,
-		        void *userctx)
+                        const void *plug,
+                        void *plugctx,
+                        void *userctx)
 {
     const krb5plugin_gss_preauth_authorizer_ftable *authorizer = plug;
 
@@ -1019,7 +1019,7 @@ pa_gss_finalize_pac_cb(krb5_context context,
 
 krb5_error_code
 _kdc_gss_finalize_pac(astgs_request_t r,
-		      gss_client_params *gcp)
+                      gss_client_params *gcp)
 {
     krb5_error_code ret;
 
@@ -1028,7 +1028,7 @@ _kdc_gss_finalize_pac(astgs_request_t r,
                              0, r, pa_gss_finalize_pac_cb);
 
     if (ret == KRB5_PLUGIN_NO_HANDLE)
-	ret = 0;
+        ret = 0;
 
     return ret;
 }

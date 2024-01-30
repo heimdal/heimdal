@@ -49,10 +49,10 @@ strlcat (char *dst, const char *src, size_t dst_sz)
 #endif
 
     if (dst_sz <= len)
-	/* the total size of dst is less than the string it contains;
+        /* the total size of dst is less than the string it contains;
            this could be considered bad input, but we might as well
            handle it */
-	return len + strlen(src);
+        return len + strlen(src);
 
     return len + strlcpy (dst + len, src, dst_sz - len);
 }

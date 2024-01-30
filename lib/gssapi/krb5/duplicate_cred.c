@@ -34,9 +34,9 @@
 #include "gsskrb5_locl.h"
 
 OM_uint32 GSSAPI_CALLCONV _gsskrb5_duplicate_cred (
-     OM_uint32           *minor_status,
-     gss_const_cred_id_t input_cred_handle,
-     gss_cred_id_t       *output_cred_handle)
+                                                   OM_uint32           *minor_status,
+                                                   gss_const_cred_id_t input_cred_handle,
+                                                   gss_cred_id_t       *output_cred_handle)
 {
     krb5_context context;
     gsskrb5_cred cred, dup;
@@ -54,12 +54,12 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_duplicate_cred (
     if (input_cred_handle == GSS_C_NO_CREDENTIAL) {
         /* Duplicate the default credential */
         return _gsskrb5_acquire_cred_from(minor_status, GSS_C_NO_NAME,
-					  GSS_C_INDEFINITE,
-					  GSS_C_NO_OID_SET,
-					  GSS_C_BOTH,
-					  GSS_C_NO_CRED_STORE,
-					  output_cred_handle,
-					  NULL, NULL);
+                                          GSS_C_INDEFINITE,
+                                          GSS_C_NO_OID_SET,
+                                          GSS_C_BOTH,
+                                          GSS_C_NO_CRED_STORE,
+                                          output_cred_handle,
+                                          NULL, NULL);
     }
 
     /* Duplicate the input credential */

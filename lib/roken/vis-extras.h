@@ -6,16 +6,16 @@
 ROKEN_CPP_START
 
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
-	rk_strasvis(char **, const char *, int, const char *);
+    rk_strasvis(char **, const char *, int, const char *);
 
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
-	rk_strasvisx(char **, const char *, size_t, int, const char *);
+    rk_strasvisx(char **, const char *, size_t, int, const char *);
 
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
-	rk_strrasvis(char **, size_t *, const char *, int, const char *);
+    rk_strrasvis(char **, size_t *, const char *, int, const char *);
 
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
-	rk_strrasvisx(char **, size_t *, const char *, size_t, int, const char *);
+    rk_strrasvisx(char **, size_t *, const char *, size_t, int, const char *);
 
 ROKEN_CPP_END
 

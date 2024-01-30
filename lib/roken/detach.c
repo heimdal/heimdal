@@ -97,12 +97,12 @@ roken_detach_prep(int argc, char **argv, char *special_arg)
     {
         intptr_t child_handle;
 
-	_flushall();
-	child_handle = spawnvp(_P_NOWAIT, argv[0], new_argv);
-	if (child_handle == -1)
-	  child = (pid_t)-1;
-	else
-	  child = GetProcessId((HANDLE)child_handle);
+        _flushall();
+        child_handle = spawnvp(_P_NOWAIT, argv[0], new_argv);
+        if (child_handle == -1)
+            child = (pid_t)-1;
+        else
+            child = GetProcessId((HANDLE)child_handle);
     }
 #endif
     if (child == (pid_t)-1)
@@ -182,7 +182,7 @@ roken_detach_finish(const char *dir, int daemon_child_fd)
     if (pipefds[1] == -1 && daemon_child_fd != -1)
         pipefds[1] = daemon_child_fd;
     if (pipefds[0] != -1)
-	(void) close(pipefds[0]);
+        (void) close(pipefds[0]);
     if (pipefds[1] == -1)
         return;
 

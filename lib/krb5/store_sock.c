@@ -66,7 +66,7 @@ static int
 socket_trunc(krb5_storage * sp, off_t offset)
 {
     if (ftruncate(SOCK(sp), offset) == -1)
-	return errno;
+        return errno;
     return 0;
 }
 
@@ -74,7 +74,7 @@ static int
 socket_sync(krb5_storage * sp)
 {
     if (fsync(SOCK(sp)) == -1)
-	return errno;
+        return errno;
     return 0;
 }
 
@@ -119,35 +119,35 @@ krb5_storage_from_socket(krb5_socket_t sock_in)
     if (WSADuplicateSocket(sock_in, GetCurrentProcessId(), &info) == 0)
     {
 
-	sock = WSASocket( FROM_PROTOCOL_INFO,
-			  FROM_PROTOCOL_INFO,
-			  FROM_PROTOCOL_INFO,
-			  &info, 0, 0);
+        sock = WSASocket( FROM_PROTOCOL_INFO,
+                          FROM_PROTOCOL_INFO,
+                          FROM_PROTOCOL_INFO,
+                          &info, 0, 0);
     }
 #else
     sock = dup(sock_in);
 #endif
 
     if (sock == rk_INVALID_SOCKET)
-	return NULL;
+        return NULL;
 
     errno = ENOMEM;
     sp = malloc(sizeof(krb5_storage));
     if (sp == NULL) {
-	saved_errno = errno;
-	rk_closesocket(sock);
-	errno = saved_errno;
-	return NULL;
+        saved_errno = errno;
+        rk_closesocket(sock);
+        errno = saved_errno;
+        return NULL;
     }
 
     errno = ENOMEM;
     sp->data = malloc(sizeof(socket_storage));
     if (sp->data == NULL) {
-	saved_errno = errno;
-	rk_closesocket(sock);
-	free(sp);
-	errno = saved_errno;
-	return NULL;
+        saved_errno = errno;
+        rk_closesocket(sock);
+        free(sp);
+        errno = saved_errno;
+        return NULL;
     }
     sp->flags = 0;
     sp->eof_code = HEIM_ERR_EOF;

@@ -52,7 +52,7 @@ array_dealloc(heim_object_t ptr)
     heim_array_t array = ptr;
     size_t n;
     for (n = 0; n < array->len; n++)
-	heim_release(array->val[n]);
+        heim_release(array->val[n]);
     free(array->allocated);
 }
 
@@ -80,7 +80,7 @@ heim_array_create(void)
 
     array = _heim_alloc_object(&array_object, sizeof(*array));
     if (array == NULL)
-	return NULL;
+        return NULL;
 
     array->allocated = NULL;
     array->allocated_len = 0;
@@ -120,30 +120,30 @@ heim_array_append_value(heim_array_t array, heim_object_t object)
     size_t new_len;
 
     if (trailing > 0) {
-	/* We have pre-allocated space; use it */
-	array->val[array->len++] = heim_retain(object);
-	return 0;
+        /* We have pre-allocated space; use it */
+        array->val[array->len++] = heim_retain(object);
+        return 0;
     }
 
     if (leading > (array->len + 1)) {
-	/*
-	 * We must have appending to, and deleting at index 0 from this
-	 * array a lot; don't want to grow forever!
-	 */
-	(void) memmove(&array->allocated[0], &array->val[0],
-		       array->len * sizeof(array->val[0]));
-	array->val = array->allocated;
+        /*
+         * We must have appending to, and deleting at index 0 from this
+         * array a lot; don't want to grow forever!
+         */
+        (void) memmove(&array->allocated[0], &array->val[0],
+                       array->len * sizeof(array->val[0]));
+        array->val = array->allocated;
 
-	/* We have pre-allocated space; use it */
-	array->val[array->len++] = heim_retain(object);
-	return 0;
+        /* We have pre-allocated space; use it */
+        array->val[array->len++] = heim_retain(object);
+        return 0;
     }
 
     /* Pre-allocate extra .5 times number of used slots */
     new_len = leading + array->len + 1 + (array->len >> 1);
     ptr = realloc(array->allocated, new_len * sizeof(array->val[0]));
     if (ptr == NULL)
-	return ENOMEM;
+        return ENOMEM;
     array->allocated = ptr;
     array->allocated_len = new_len;
     array->val = &ptr[leading];
@@ -166,33 +166,33 @@ heim_array_prepend_value(heim_array_t array, heim_object_t object)
     size_t new_len;
 
     if (leading > 0) {
-	/* We have pre-allocated space; use it */
-	array->val--;
-	array->val[0] = heim_retain(object);
-	array->len++;
-	return 0;
+        /* We have pre-allocated space; use it */
+        array->val--;
+        array->val[0] = heim_retain(object);
+        array->len++;
+        return 0;
     }
     if (trailing > (array->len + 1)) {
-	/*
-	 * We must have prepending to, and deleting at index
-	 * array->len - 1 from this array a lot; don't want to grow
-	 * forever!
-	 */
-	(void) memmove(&array->allocated[array->len], &array->val[0],
-		       array->len * sizeof(array->val[0]));
-	array->val = &array->allocated[array->len];
+        /*
+         * We must have prepending to, and deleting at index
+         * array->len - 1 from this array a lot; don't want to grow
+         * forever!
+         */
+        (void) memmove(&array->allocated[array->len], &array->val[0],
+                       array->len * sizeof(array->val[0]));
+        array->val = &array->allocated[array->len];
 
-	/* We have pre-allocated space; use it */
-	array->val--;
-	array->val[0] = heim_retain(object);
-	array->len++;
-	return 0;
+        /* We have pre-allocated space; use it */
+        array->val--;
+        array->val[0] = heim_retain(object);
+        array->len++;
+        return 0;
     }
     /* Pre-allocate extra .5 times number of used slots */
     new_len = array->len + 1 + trailing + (array->len >> 1);
     ptr = realloc(array->allocated, new_len * sizeof(array->val[0]));
     if (ptr == NULL)
-	return ENOMEM;
+        return ENOMEM;
     (void) memmove(&ptr[1], &ptr[0], array->len * sizeof (array->val[0]));
     array->allocated = ptr;
     array->allocated_len = new_len;
@@ -219,9 +219,9 @@ heim_array_insert_value(heim_array_t array, size_t idx, heim_object_t object)
     int ret;
 
     if (idx == 0)
-	return heim_array_prepend_value(array, object);
+        return heim_array_prepend_value(array, object);
     else if (idx > array->len)
-	heim_abort("index too large");
+        heim_abort("index too large");
 
     /*
      * We cheat: append this element then rotate elements around so we
@@ -231,13 +231,13 @@ heim_array_insert_value(heim_array_t array, size_t idx, heim_object_t object)
      */
     ret = heim_array_append_value(array, object);
     if (ret != 0 || idx == (array->len - 1))
-	return ret;
+        return ret;
     /*
      * Shift to the right by one all the elements after idx, then set
      * [idx] to the new object.
      */
     (void) memmove(&array->val[idx + 1], &array->val[idx],
-	           (array->len - idx - 1) * sizeof(array->val[0]));
+                   (array->len - idx - 1) * sizeof(array->val[0]));
     array->val[idx] = heim_retain(object);
 
     return 0;
@@ -257,9 +257,9 @@ heim_array_iterate_f(heim_array_t array, void *ctx, heim_array_iterator_f_t fn)
     size_t n;
     int stop = 0;
     for (n = 0; n < array->len; n++) {
-	fn(array->val[n], ctx, &stop);
-	if (stop)
-	    return;
+        fn(array->val[n], ctx, &stop);
+        if (stop)
+            return;
     }
 }
 
@@ -277,9 +277,9 @@ heim_array_iterate(heim_array_t array, void (^fn)(heim_object_t, int *))
     size_t n;
     int stop = 0;
     for (n = 0; n < array->len; n++) {
-	fn(array->val[n], &stop);
-	if (stop)
-	    return;
+        fn(array->val[n], &stop);
+        if (stop)
+            return;
     }
 }
 #endif
@@ -299,9 +299,9 @@ heim_array_iterate_reverse_f(heim_array_t array, void *ctx, heim_array_iterator_
     int stop = 0;
 
     for (n = array->len; n > 0; n--) {
-	fn(array->val[n - 1], ctx, &stop);
-	if (stop)
-	    return;
+        fn(array->val[n - 1], ctx, &stop);
+        if (stop)
+            return;
     }
 }
 
@@ -319,9 +319,9 @@ heim_array_iterate_reverse(heim_array_t array, void (^fn)(heim_object_t, int *))
     size_t n;
     int stop = 0;
     for (n = array->len; n > 0; n--) {
-	fn(array->val[n - 1], &stop);
-	if (stop)
-	    return;
+        fn(array->val[n - 1], &stop);
+        if (stop)
+            return;
     }
 }
 #endif
@@ -354,7 +354,7 @@ heim_object_t
 heim_array_get_value(heim_array_t array, size_t idx)
 {
     if (idx >= array->len)
-	heim_abort("index too large");
+        heim_abort("index too large");
     return array->val[idx];
 }
 
@@ -372,7 +372,7 @@ heim_object_t
 heim_array_copy_value(heim_array_t array, size_t idx)
 {
     if (idx >= array->len)
-	heim_abort("index too large");
+        heim_abort("index too large");
     return heim_retain(array->val[idx]);
 }
 
@@ -390,7 +390,7 @@ void
 heim_array_set_value(heim_array_t array, size_t idx, heim_object_t value)
 {
     if (idx >= array->len)
-	heim_abort("index too large");
+        heim_abort("index too large");
     heim_release(array->val[idx]);
     array->val[idx] = heim_retain(value);
 }
@@ -407,7 +407,7 @@ heim_array_delete_value(heim_array_t array, size_t idx)
 {
     heim_object_t obj;
     if (idx >= array->len)
-	heim_abort("index too large");
+        heim_abort("index too large");
     obj = array->val[idx];
 
     array->len--;
@@ -423,10 +423,10 @@ heim_array_delete_value(heim_array_t array, size_t idx)
      * delete, and opportunistically re-use those holes on insert.
      */
     if (idx == 0)
-	array->val++;
+        array->val++;
     else if (idx < array->len)
-	(void) memmove(&array->val[idx], &array->val[idx + 1],
-		       (array->len - idx) * sizeof(array->val[0]));
+        (void) memmove(&array->val[idx], &array->val[idx + 1],
+                       (array->len - idx) * sizeof(array->val[0]));
 
     heim_release(obj);
 }
@@ -444,11 +444,11 @@ heim_array_filter_f(heim_array_t array, void *ctx, heim_array_filter_f_t fn)
     size_t n = 0;
 
     while (n < array->len) {
-	if (fn(array->val[n], ctx)) {
-	    heim_array_delete_value(array, n);
-	} else {
-	    n++;
-	}
+        if (fn(array->val[n], ctx)) {
+            heim_array_delete_value(array, n);
+        } else {
+            n++;
+        }
     }
 }
 
@@ -467,11 +467,11 @@ heim_array_filter(heim_array_t array, int (^block)(heim_object_t))
     size_t n = 0;
 
     while (n < array->len) {
-	if (block(array->val[n])) {
-	    heim_array_delete_value(array, n);
-	} else {
-	    n++;
-	}
+        if (block(array->val[n])) {
+            heim_array_delete_value(array, n);
+        } else {
+            n++;
+        }
     }
 }
 

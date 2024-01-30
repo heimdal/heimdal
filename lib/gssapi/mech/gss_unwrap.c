@@ -30,27 +30,27 @@
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_unwrap(OM_uint32 *minor_status,
-    gss_const_ctx_id_t context_handle,
-    const gss_buffer_t input_message_buffer,
-    gss_buffer_t output_message_buffer,
-    int *conf_state,
-    gss_qop_t *qop_state)
+           gss_const_ctx_id_t context_handle,
+           const gss_buffer_t input_message_buffer,
+           gss_buffer_t output_message_buffer,
+           int *conf_state,
+           gss_qop_t *qop_state)
 {
-	struct _gss_context *ctx = (struct _gss_context *) context_handle;
-	gssapi_mech_interface m;
+    struct _gss_context *ctx = (struct _gss_context *) context_handle;
+    gssapi_mech_interface m;
 
-	if (conf_state)
-	    *conf_state = 0;
-	if (qop_state)
-	    *qop_state = 0;
+    if (conf_state)
+        *conf_state = 0;
+    if (qop_state)
+        *qop_state = 0;
 
-	if (ctx == NULL) {
-	    *minor_status = 0;
-	    return GSS_S_NO_CONTEXT;
-	}
-	m = ctx->gc_mech;
+    if (ctx == NULL) {
+        *minor_status = 0;
+        return GSS_S_NO_CONTEXT;
+    }
+    m = ctx->gc_mech;
 
-	return (m->gm_unwrap(minor_status, ctx->gc_ctx,
-		    input_message_buffer, output_message_buffer,
-		    conf_state, qop_state));
+    return (m->gm_unwrap(minor_status, ctx->gc_ctx,
+            input_message_buffer, output_message_buffer,
+            conf_state, qop_state));
 }

@@ -45,7 +45,7 @@ mem_fetch(krb5_storage *sp, void *data, size_t size)
 {
     mem_storage *s = (mem_storage*)sp->data;
     if(size > (size_t)(s->base + s->size - s->ptr))
-	size = s->base + s->size - s->ptr;
+        size = s->base + s->size - s->ptr;
     memmove(data, s->ptr, size);
     sp->seek(sp, size, SEEK_CUR);
     return size;
@@ -56,7 +56,7 @@ mem_store(krb5_storage *sp, const void *data, size_t size)
 {
     mem_storage *s = (mem_storage*)sp->data;
     if(size > (size_t)(s->base + s->size - s->ptr))
-	size = s->base + s->size - s->ptr;
+        size = s->base + s->size - s->ptr;
     memmove(s->ptr, data, size);
     sp->seek(sp, size, SEEK_CUR);
     return size;
@@ -73,20 +73,20 @@ mem_seek(krb5_storage *sp, off_t offset, int whence)
 {
     mem_storage *s = (mem_storage*)sp->data;
     switch(whence){
-    case SEEK_SET:
-	if((size_t)offset > s->size)
-	    offset = s->size;
-	if(offset < 0)
-	    offset = 0;
-	s->ptr = s->base + offset;
-	break;
-    case SEEK_CUR:
-	return sp->seek(sp, s->ptr - s->base + offset, SEEK_SET);
-    case SEEK_END:
-	return sp->seek(sp, s->size + offset, SEEK_SET);
-    default:
-	errno = EINVAL;
-	return -1;
+        case SEEK_SET:
+            if((size_t)offset > s->size)
+                offset = s->size;
+            if(offset < 0)
+                offset = 0;
+            s->ptr = s->base + offset;
+            break;
+        case SEEK_CUR:
+            return sp->seek(sp, s->ptr - s->base + offset, SEEK_SET);
+        case SEEK_END:
+            return sp->seek(sp, s->size + offset, SEEK_SET);
+        default:
+            errno = EINVAL;
+            return -1;
     }
     return s->ptr - s->base;
 }
@@ -96,10 +96,10 @@ mem_trunc(krb5_storage *sp, off_t offset)
 {
     mem_storage *s = (mem_storage*)sp->data;
     if((size_t)offset > s->size)
-	return ERANGE;
+        return ERANGE;
     s->size = offset;
     if ((s->ptr - s->base) > offset)
-	s->ptr = s->base + offset;
+        s->ptr = s->base + offset;
     return 0;
 }
 
@@ -129,11 +129,11 @@ krb5_storage_from_mem(void *buf, size_t len)
     krb5_storage *sp = malloc(sizeof(krb5_storage));
     mem_storage *s;
     if(sp == NULL)
-	return NULL;
+        return NULL;
     s = malloc(sizeof(*s));
     if(s == NULL) {
-	free(sp);
-	return NULL;
+        free(sp);
+        return NULL;
     }
     sp->data = s;
     sp->flags = 0;
@@ -189,11 +189,11 @@ krb5_storage_from_readonly_mem(const void *buf, size_t len)
     krb5_storage *sp = malloc(sizeof(krb5_storage));
     mem_storage *s;
     if(sp == NULL)
-	return NULL;
+        return NULL;
     s = malloc(sizeof(*s));
     if(s == NULL) {
-	free(sp);
-	return NULL;
+        free(sp);
+        return NULL;
     }
     sp->data = s;
     sp->flags = 0;

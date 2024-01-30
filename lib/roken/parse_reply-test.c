@@ -88,38 +88,38 @@ main(int argc, char **argv)
     sigaction (SIGSEGV, &sa, NULL);
 
     for (i = 0; val == 0 && i < sizeof(tests)/sizeof(tests[0]); ++i) {
-	const struct testcase *t = &tests[i];
-	unsigned char *p1, *p2;
-	int flags;
-	int fd;
-	size_t pagesize = getpagesize();
-	unsigned char *buf;
+        const struct testcase *t = &tests[i];
+        unsigned char *p1, *p2;
+        int flags;
+        int fd;
+        size_t pagesize = getpagesize();
+        unsigned char *buf;
 
 #ifdef MAP_ANON
-	flags = MAP_ANON;
-	fd = -1;
+        flags = MAP_ANON;
+        fd = -1;
 #else
-	flags = 0;
-	fd = open ("/dev/zero", O_RDONLY);
-	if(fd < 0)
-	    err (1, "open /dev/zero");
+        flags = 0;
+        fd = open ("/dev/zero", O_RDONLY);
+        if(fd < 0)
+            err (1, "open /dev/zero");
 #endif
-	flags |= MAP_PRIVATE;
+        flags |= MAP_PRIVATE;
 
-	p1 = (unsigned char *)mmap(0, 2 * pagesize, PROT_READ | PROT_WRITE,
-		  flags, fd, 0);
-	if (p1 == (unsigned char *)MAP_FAILED)
-	    err (1, "mmap");
-	p2 = p1 + pagesize;
-	ret = mprotect ((void *)p2, pagesize, 0);
-	if (ret < 0)
-	    err (1, "mprotect");
-	buf = p2 - t->buf_len;
-	memcpy (buf, t->buf, t->buf_len);
-	parse_reply (buf, t->buf_len);
-	ret = munmap ((void *)p1, 2 * pagesize);
-	if (ret < 0)
-	    err (1, "munmap");
+        p1 = (unsigned char *)mmap(0, 2 * pagesize, PROT_READ | PROT_WRITE,
+                                   flags, fd, 0);
+        if (p1 == (unsigned char *)MAP_FAILED)
+            err (1, "mmap");
+        p2 = p1 + pagesize;
+        ret = mprotect ((void *)p2, pagesize, 0);
+        if (ret < 0)
+            err (1, "mprotect");
+        buf = p2 - t->buf_len;
+        memcpy (buf, t->buf, t->buf_len);
+        parse_reply (buf, t->buf_len);
+        ret = munmap ((void *)p1, 2 * pagesize);
+        if (ret < 0)
+            err (1, "munmap");
     }
     return val;
 #endif /* HAVE_MMAP */

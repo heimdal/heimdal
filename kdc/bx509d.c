@@ -575,7 +575,7 @@ bad_reqv(struct bx509_request_desc *r,
     char *msg = NULL;
 
     heim_audit_setkv_number((heim_svc_req_desc)r, "http-status-code",
-			    http_status_code);
+                            http_status_code);
     (void) gettimeofday(&r->tv_end, NULL);
     if (code == ENOMEM) {
         if (r->context)

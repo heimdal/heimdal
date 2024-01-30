@@ -51,18 +51,18 @@ test_time(void)
     int i, errors = 0;
 
     for (i = 0; i < sizeof(ts)/sizeof(ts[0]); i++) {
-	time_t t;
-	int ret;
+        time_t t;
+        int ret;
 
-	ret = str2time_t (ts[i].str, &t);
-	if (ret != ts[i].ret) {
-	    printf("%d: %d is wrong ret\n", i, ret);
-	    errors++;
-	}
-	else if (t != ts[i].t) {
-	    printf("%d: %d is wrong time\n", i, (int)t);
-	    errors++;
-	}
+        ret = str2time_t (ts[i].str, &t);
+        if (ret != ts[i].ret) {
+            printf("%d: %d is wrong ret\n", i, ret);
+            errors++;
+        }
+        else if (t != ts[i].t) {
+            printf("%d: %d is wrong time\n", i, (int)t);
+            errors++;
+        }
     }
 
     return errors;
@@ -78,7 +78,7 @@ main(int argc, char **argv)
 
     ret = krb5_init_context(&context);
     if (ret)
-	errx (1, "krb5_init_context failed: %d", ret);
+        errx (1, "krb5_init_context failed: %d", ret);
 
     ret = 0;
     ret += test_time();

@@ -60,53 +60,53 @@ rk_base32_encode(const void *data, int size, char **str, enum rk_base32_flags fl
     const unsigned char *q;
 
     if (size > INT_MAX/8 || size < 0) {
-	*str = NULL;
+        *str = NULL;
         errno = ERANGE;
-	return -1;
+        return -1;
     }
 
     p = s = malloc(((size + 5 - 1) / 5) * 8 + 1);
     if (p == NULL) {
         *str = NULL;
-	return -1;
+        return -1;
     }
     q = (const unsigned char *) data;
 
     for (i = 0; i < size;) {
         /* 5 bytes of input will give us 8 output bytes' worth of bits */
-	c = q[i++];
-	c <<= 8;
-	if (i < size)
-	    c += q[i];
-	i++;
-	c <<= 8;
-	if (i < size)
-	    c += q[i];
-	i++;
-	c <<= 8;
-	if (i < size)
-	    c += q[i];
-	i++;
-	c <<= 8;
-	if (i < size)
-	    c += q[i];
-	i++;
-	p[0] = chars[(c & 0x000000f800000000ULL) >> 35];
-	p[1] = chars[(c & 0x00000007c0000000ULL) >> 30];
-	p[2] = chars[(c & 0x000000003e000000ULL) >> 25];
-	p[3] = chars[(c & 0x0000000001f00000ULL) >> 20];
-	p[4] = chars[(c & 0x00000000000f8000ULL) >> 15];
-	p[5] = chars[(c & 0x0000000000007c00ULL) >> 10];
-	p[6] = chars[(c & 0x00000000000003e0ULL) >> 5];
-	p[7] = chars[(c & 0x000000000000001fULL) >> 0];
+        c = q[i++];
+        c <<= 8;
+        if (i < size)
+            c += q[i];
+        i++;
+        c <<= 8;
+        if (i < size)
+            c += q[i];
+        i++;
+        c <<= 8;
+        if (i < size)
+            c += q[i];
+        i++;
+        c <<= 8;
+        if (i < size)
+            c += q[i];
+        i++;
+        p[0] = chars[(c & 0x000000f800000000ULL) >> 35];
+        p[1] = chars[(c & 0x00000007c0000000ULL) >> 30];
+        p[2] = chars[(c & 0x000000003e000000ULL) >> 25];
+        p[3] = chars[(c & 0x0000000001f00000ULL) >> 20];
+        p[4] = chars[(c & 0x00000000000f8000ULL) >> 15];
+        p[5] = chars[(c & 0x0000000000007c00ULL) >> 10];
+        p[6] = chars[(c & 0x00000000000003e0ULL) >> 5];
+        p[7] = chars[(c & 0x000000000000001fULL) >> 0];
         switch (i - size) {
-        case 4: p[2] = p[3] = '=';  HEIM_FALLTHROUGH;
-        case 3: p[4] = '=';         HEIM_FALLTHROUGH;
-        case 2: p[5] = p[6] = '=';  HEIM_FALLTHROUGH;
-        case 1: p[7] = '=';         HEIM_FALLTHROUGH;
-        default:                    break;
+            case 4: p[2] = p[3] = '=';  HEIM_FALLTHROUGH;
+            case 3: p[4] = '=';         HEIM_FALLTHROUGH;
+            case 2: p[5] = p[6] = '=';  HEIM_FALLTHROUGH;
+            case 1: p[7] = '=';         HEIM_FALLTHROUGH;
+            default:                    break;
         }
-	p += 8;
+        p += 8;
     }
     *p = 0;
     *str = s;
@@ -142,12 +142,12 @@ token_decode(const char *token, enum rk_base32_flags flags)
     int i, c;
 
     for (i = 0; i < 8 && token[i] != '\0'; i++) {
-	val <<= 5;
-	if (token[i] == '=')
-	    marker++;
-	else if (marker)
-	    return DECODE_ERROR;
-	else if ((c = pos(token[i], preserve_order)) == -1 &&
+        val <<= 5;
+        if (token[i] == '=')
+            marker++;
+        else if (marker)
+            return DECODE_ERROR;
+        else if ((c = pos(token[i], preserve_order)) == -1 &&
             (flags & RK_BASE32_FLAG_STOP_ON_GARBAGE))
             break;
         else if (c == -1)
@@ -156,7 +156,7 @@ token_decode(const char *token, enum rk_base32_flags flags)
             val |= c;
     }
     if (i < 8 || marker > 6)
-	return DECODE_ERROR;
+        return DECODE_ERROR;
     return (marker << 40) | val;
 }
 
@@ -169,22 +169,22 @@ rk_base32_decode(const char *str, void *data, enum rk_base32_flags flags)
 
     q = data;
     for (p = str; *p && (*p == '=' || pos(*p, preserve_order) != -1); p += 8) {
-	uint64_t val = token_decode(p, flags);
-	uint64_t marker = (val >> 40) & 0xffULL;
+        uint64_t val = token_decode(p, flags);
+        uint64_t marker = (val >> 40) & 0xffULL;
 
-	if (val == DECODE_ERROR) {
+        if (val == DECODE_ERROR) {
             errno = EINVAL;
-	    return -1;
+            return -1;
         }
-	*q++ = (val >> 32) & 0xffULL;
-	if (marker < 6)
-	    *q++ = (val >> 24) & 0xffULL;
-	if (marker < 4)
-	    *q++ = (val >> 16) & 0xffULL;
-	if (marker < 3)
-	    *q++ = (val >> 8) & 0xffULL;
-	if (marker < 1)
-	    *q++ = val & 0xffULL;
+        *q++ = (val >> 32) & 0xffULL;
+        if (marker < 6)
+            *q++ = (val >> 24) & 0xffULL;
+        if (marker < 4)
+            *q++ = (val >> 16) & 0xffULL;
+        if (marker < 3)
+            *q++ = (val >> 8) & 0xffULL;
+        if (marker < 1)
+            *q++ = val & 0xffULL;
         if (marker && !(flags & RK_BASE32_FLAG_INTERIOR_PADDING_OK))
             break;
     }

@@ -73,34 +73,34 @@ client_usage(int code, struct getargs *args, int num_args)
 
 static int
 common_setup(krb5_context *context, int *argc, char **argv,
-	     void (*usage)(int, struct getargs*, int))
+             void (*usage)(int, struct getargs*, int))
 {
     int port = 0;
     *argc = krb5_program_setup(context, *argc, argv, args, num_args, usage);
 
     if(help_flag)
-	(*usage)(0, args, num_args);
+        (*usage)(0, args, num_args);
     if(version_flag) {
-	print_version(NULL);
-	exit(0);
+        print_version(NULL);
+        exit(0);
     }
 
     if(port_str){
-	struct servent *s = roken_getservbyname(port_str, "tcp");
-	if(s)
-	    port = s->s_port;
-	else {
-	    char *ptr;
+        struct servent *s = roken_getservbyname(port_str, "tcp");
+        if(s)
+            port = s->s_port;
+        else {
+            char *ptr;
 
-	    port = strtol (port_str, &ptr, 10);
-	    if (port == 0 && ptr == port_str)
-		errx (1, "Bad port `%s'", port_str);
-	    port = htons(port);
-	}
+            port = strtol (port_str, &ptr, 10);
+            if (port == 0 && ptr == port_str)
+                errx (1, "Bad port `%s'", port_str);
+            port = htons(port);
+        }
     }
 
     if (port == 0)
-	port = krb5_getportbyname (*context, PORT, "tcp", 4711);
+        port = krb5_getportbyname (*context, PORT, "tcp", 4711);
 
     return port;
 }
@@ -112,7 +112,7 @@ server_setup(krb5_context *context, int argc, char **argv)
     krb5_error_code ret;
 
     if(argv[argc] != NULL)
-	server_usage(1, args, num_args);
+        server_usage(1, args, num_args);
     if (keytab_str != NULL) {
         ret = krb5_kt_resolve (*context, keytab_str, &keytab);
         if (ret)
@@ -131,14 +131,14 @@ client_setup(krb5_context *context, int *argc, char **argv)
     int optind = *argc;
     int port = common_setup(context, &optind, argv, client_usage);
     if(*argc - optind != 1)
-	client_usage(1, args, num_args);
+        client_usage(1, args, num_args);
     *argc = optind;
     return port;
 }
 
 int
 client_doit (const char *hostname, int port, const char *service,
-	     int (*func)(int, const char *hostname, const char *service))
+             int (*func)(int, const char *hostname, const char *service))
 {
     struct addrinfo *ai, *a;
     struct addrinfo hints;
@@ -153,26 +153,26 @@ client_doit (const char *hostname, int port, const char *service,
 
     error = getaddrinfo (hostname, portstr, &hints, &ai);
     if (error) {
-	errx (1, "%s: %s", hostname, gai_strerror(error));
-	return -1;
+        errx (1, "%s: %s", hostname, gai_strerror(error));
+        return -1;
     }
 
     for (a = ai; a != NULL; a = a->ai_next) {
-	int s;
+        int s;
 
-	s = socket (a->ai_family, a->ai_socktype, a->ai_protocol);
-	if (s < 0)
-	    continue;
+        s = socket (a->ai_family, a->ai_socktype, a->ai_protocol);
+        if (s < 0)
+            continue;
 
-	socket_set_ipv6only(s, 1);
+        socket_set_ipv6only(s, 1);
 
-	if (connect (s, a->ai_addr, a->ai_addrlen) < 0) {
-	    warn ("connect(%s)", hostname);
-	    close (s);
-	    continue;
-	}
-	freeaddrinfo (ai);
-	return (*func) (s, hostname, service);
+        if (connect (s, a->ai_addr, a->ai_addrlen) < 0) {
+            warn ("connect(%s)", hostname);
+            close (s);
+            continue;
+        }
+        freeaddrinfo (ai);
+        return (*func) (s, hostname, service);
     }
     warnx ("failed to contact %s", hostname);
     freeaddrinfo (ai);

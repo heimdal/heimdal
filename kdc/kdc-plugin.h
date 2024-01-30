@@ -48,12 +48,12 @@
 
 typedef krb5_error_code
 (KRB5_CALLCONV *krb5plugin_kdc_pac_generate)(void *,
-					     astgs_request_t,
-					     hdb_entry *, /* client */
-					     hdb_entry *, /* server */
-					     const krb5_keyblock *, /* pk_replykey */
-					     uint64_t,	      /* pac_attributes */
-					     krb5_pac *);
+                                             astgs_request_t,
+                                             hdb_entry *, /* client */
+                                             hdb_entry *, /* server */
+                                             const krb5_keyblock *, /* pk_replykey */
+                                             uint64_t,        /* pac_attributes */
+                                             krb5_pac *);
 
 /*
  * Verify the PAC KDC signatures by fetching the appropriate TGS key
@@ -63,13 +63,13 @@ typedef krb5_error_code
 
 typedef krb5_error_code
 (KRB5_CALLCONV *krb5plugin_kdc_pac_verify)(void *,
-					   astgs_request_t,
-					   const krb5_principal, /* new ticket client */
-					   const krb5_principal, /* delegation proxy */
-					   hdb_entry *,/* client */
-					   hdb_entry *,/* server */
-					   hdb_entry *,/* krbtgt */
-					   krb5_pac *);
+                                           astgs_request_t,
+                                           const krb5_principal, /* new ticket client */
+                                           const krb5_principal, /* delegation proxy */
+                                           hdb_entry *,/* client */
+                                           hdb_entry *,/* server */
+                                           hdb_entry *,/* krbtgt */
+                                           krb5_pac *);
 
 /*
  * Authorize the client principal's access to the Authentication Service (AS).

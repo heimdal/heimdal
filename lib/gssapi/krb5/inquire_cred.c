@@ -34,13 +34,13 @@
 #include "gsskrb5_locl.h"
 
 OM_uint32 GSSAPI_CALLCONV _gsskrb5_inquire_cred
-(OM_uint32 * minor_status,
- gss_const_cred_id_t cred_handle,
- gss_name_t * output_name,
- OM_uint32 * lifetime,
- gss_cred_usage_t * cred_usage,
- gss_OID_set * mechanisms
-    )
+                                                (OM_uint32 * minor_status,
+                                                 gss_const_cred_id_t cred_handle,
+                                                 gss_name_t * output_name,
+                                                 OM_uint32 * lifetime,
+                                                 gss_cred_usage_t * cred_usage,
+                                                 gss_OID_set * mechanisms
+                                                )
 {
     krb5_context context;
     gss_cred_id_t aqcred_init = GSS_C_NO_CREDENTIAL;
@@ -81,14 +81,14 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_inquire_cred
          */
         /* Get the info for the default ACCEPT credential */
         aret = _gsskrb5_acquire_cred_from(&aminor,
-					  GSS_C_NO_NAME,
-					  GSS_C_INDEFINITE,
-					  GSS_C_NO_OID_SET,
-					  GSS_C_ACCEPT,
-					  GSS_C_NO_CRED_STORE,
-					  &aqcred_accept,
-					  NULL,
-					  NULL);
+                                          GSS_C_NO_NAME,
+                                          GSS_C_INDEFINITE,
+                                          GSS_C_NO_OID_SET,
+                                          GSS_C_ACCEPT,
+                                          GSS_C_NO_CRED_STORE,
+                                          &aqcred_accept,
+                                          NULL,
+                                          NULL);
         if (aret == GSS_S_COMPLETE) {
             aret = _gsskrb5_inquire_cred(&aminor,
                                         aqcred_accept,
@@ -118,14 +118,14 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_inquire_cred
 
         /* Get the info for the default INITIATE credential */
         ret = _gsskrb5_acquire_cred_from(minor_status,
-					 GSS_C_NO_NAME,
-					 GSS_C_INDEFINITE,
-					 GSS_C_NO_OID_SET,
-					 GSS_C_INITIATE,
-					 GSS_C_NO_CRED_STORE,
-					 &aqcred_init,
-					 NULL,
-					 NULL);
+                                         GSS_C_NO_NAME,
+                                         GSS_C_INDEFINITE,
+                                         GSS_C_NO_OID_SET,
+                                         GSS_C_INITIATE,
+                                         GSS_C_NO_CRED_STORE,
+                                         &aqcred_init,
+                                         NULL,
+                                         NULL);
         if (ret == GSS_S_COMPLETE) {
             ret = _gsskrb5_inquire_cred(minor_status,
                                         aqcred_init,

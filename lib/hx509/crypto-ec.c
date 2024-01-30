@@ -108,33 +108,33 @@ ECParameters2nid(hx509_context context,
     int ret;
 
     if (parameters == NULL) {
-	ret = HX509_PARSING_KEY_FAILED;
-	hx509_set_error_string(context, 0, ret,
-			       "EC parameters missing");
-	return ret;
+        ret = HX509_PARSING_KEY_FAILED;
+        hx509_set_error_string(context, 0, ret,
+                               "EC parameters missing");
+        return ret;
     }
 
     ret = decode_ECParameters(parameters->data, parameters->length,
-			      &ecparam, &size);
+                              &ecparam, &size);
     if (ret) {
-	hx509_set_error_string(context, 0, ret,
-			       "Failed to decode EC parameters");
-	return ret;
+        hx509_set_error_string(context, 0, ret,
+                               "Failed to decode EC parameters");
+        return ret;
     }
 
     if (ecparam.element != choice_ECParameters_namedCurve) {
-	free_ECParameters(&ecparam);
-	hx509_set_error_string(context, 0, ret,
-			       "EC parameters is not a named curve");
-	return HX509_CRYPTO_SIG_INVALID_FORMAT;
+        free_ECParameters(&ecparam);
+        hx509_set_error_string(context, 0, ret,
+                               "EC parameters is not a named curve");
+        return HX509_CRYPTO_SIG_INVALID_FORMAT;
     }
 
     *nid = _hx509_ossl_oid2nid(&ecparam.u.namedCurve);
     free_ECParameters(&ecparam);
     if (*nid == NID_undef) {
-	hx509_set_error_string(context, 0, ret,
-			       "Failed to find matcing NID for EC curve");
-	return HX509_CRYPTO_SIG_INVALID_FORMAT;
+        hx509_set_error_string(context, 0, ret,
+                               "Failed to find matcing NID for EC curve");
+        return HX509_CRYPTO_SIG_INVALID_FORMAT;
     }
     return 0;
 }
@@ -179,11 +179,11 @@ signature_alg2digest_evp_md(hx509_context context,
 
 static int
 ecdsa_verify_signature(hx509_context context,
-		       const struct signature_alg *sig_alg,
-		       const Certificate *signer,
-		       const AlgorithmIdentifier *alg,
-		       const heim_octet_string *data,
-		       const heim_octet_string *sig)
+                       const struct signature_alg *sig_alg,
+                       const Certificate *signer,
+                       const AlgorithmIdentifier *alg,
+                       const heim_octet_string *data,
+                       const heim_octet_string *sig)
 {
 #ifdef HAVE_OPENSSL_30
     const AlgorithmIdentifier *digest_alg = sig_alg->digest_alg;
@@ -298,19 +298,19 @@ ecdsa_verify_signature(hx509_context context,
     digest_alg = sig_alg->digest_alg;
 
     ret = _hx509_create_signature(context,
-                                 NULL,
-                                 digest_alg,
-                                 data,
-                                 NULL,
-                                 &digest);
+                                  NULL,
+                                  digest_alg,
+                                  data,
+                                  NULL,
+                                  &digest);
     if (ret)
-       return ret;
+        return ret;
 
     /* set up EC KEY */
     spi = &signer->tbsCertificate.subjectPublicKeyInfo;
 
     if (der_heim_oid_cmp(&spi->algorithm.algorithm, ASN1_OID_ID_ECPUBLICKEY) != 0)
-       return HX509_CRYPTO_SIG_INVALID_FORMAT;
+        return HX509_CRYPTO_SIG_INVALID_FORMAT;
 
     /*
      * Find the group id
@@ -318,8 +318,8 @@ ecdsa_verify_signature(hx509_context context,
 
     ret = ECParameters2nid(context, spi->algorithm.parameters, &groupnid);
     if (ret) {
-       der_free_octet_string(&digest);
-       return ret;
+        der_free_octet_string(&digest);
+        return ret;
     }
 
     /*
@@ -335,17 +335,17 @@ ecdsa_verify_signature(hx509_context context,
     len = spi->subjectPublicKey.length / 8;
 
     if (o2i_ECPublicKey(&key, &p, len) == NULL) {
-       EC_KEY_free(key);
-       return HX509_CRYPTO_SIG_INVALID_FORMAT;
+        EC_KEY_free(key);
+        return HX509_CRYPTO_SIG_INVALID_FORMAT;
     }
 
     ret = ECDSA_verify(-1, digest.data, digest.length,
-                      sig->data, sig->length, key);
+                       sig->data, sig->length, key);
     der_free_octet_string(&digest);
     EC_KEY_free(key);
     if (ret != 1) {
-       ret = HX509_CRYPTO_SIG_INVALID_FORMAT;
-       return ret;
+        ret = HX509_CRYPTO_SIG_INVALID_FORMAT;
+        return ret;
     }
 
     return 0;
@@ -354,12 +354,12 @@ ecdsa_verify_signature(hx509_context context,
 
 static int
 ecdsa_create_signature(hx509_context context,
-		       const struct signature_alg *sig_alg,
-		       const hx509_private_key signer,
-		       const AlgorithmIdentifier *alg,
-		       const heim_octet_string *data,
-		       AlgorithmIdentifier *signatureAlgorithm,
-		       heim_octet_string *sig)
+                       const struct signature_alg *sig_alg,
+                       const hx509_private_key signer,
+                       const AlgorithmIdentifier *alg,
+                       const heim_octet_string *data,
+                       AlgorithmIdentifier *signatureAlgorithm,
+                       heim_octet_string *sig)
 {
 #ifdef HAVE_OPENSSL_30
     const AlgorithmIdentifier *digest_alg = sig_alg->digest_alg;
@@ -372,7 +372,7 @@ ecdsa_create_signature(hx509_context context,
     sig->data = NULL;
     sig->length = 0;
     if (signer->ops && der_heim_oid_cmp(signer->ops->key_oid, ASN1_OID_ID_ECPUBLICKEY) != 0)
-	_hx509_abort("internal error passing private key to wrong ops");
+        _hx509_abort("internal error passing private key to wrong ops");
 
     sig_oid = sig_alg->sig_oid;
     digest_alg = sig_alg->digest_alg;
@@ -397,8 +397,8 @@ ecdsa_create_signature(hx509_context context,
 
     if (ret == HX509_CMS_FAILED_CREATE_SIGATURE) {
         /* XXX Extract error detail from OpenSSL */
-	hx509_set_error_string(context, 0, ret,
-			       "ECDSA sign failed");
+        hx509_set_error_string(context, 0, ret,
+                               "ECDSA sign failed");
     }
 
     if (ret) {
@@ -476,7 +476,7 @@ error:
 
 static int
 ecdsa_available(const hx509_private_key signer,
-		const AlgorithmIdentifier *sig_alg)
+                const AlgorithmIdentifier *sig_alg)
 {
 #ifdef HAVE_OPENSSL_30
     const struct signature_alg *sig;
@@ -488,11 +488,11 @@ ecdsa_available(const hx509_private_key signer,
     int ret = 0;
 
     if (der_heim_oid_cmp(signer->ops->key_oid, &asn1_oid_id_ecPublicKey) != 0)
-	_hx509_abort("internal error passing private key to wrong ops");
+        _hx509_abort("internal error passing private key to wrong ops");
 
     sig = _hx509_find_sig_alg(&sig_alg->algorithm);
     if (sig == NULL || sig->digest_size == 0)
-	return 0;
+        return 0;
 
     if (EVP_PKEY_get_group_name(signer->private_key.ecdsa, group_name_buf,
                                 sizeof(group_name_buf),
@@ -505,7 +505,7 @@ ecdsa_available(const hx509_private_key signer,
     order = BN_new();
     if (group && bnctx && order &&
         EC_GROUP_get_order(group, order, bnctx) == 1)
-	ret = 1;
+        ret = 1;
 
 #if 0
     /*
@@ -528,35 +528,35 @@ ecdsa_available(const hx509_private_key signer,
     int ret = 0;
 
     if (der_heim_oid_cmp(signer->ops->key_oid, &asn1_oid_id_ecPublicKey) != 0)
-       _hx509_abort("internal error passing private key to wrong ops");
+        _hx509_abort("internal error passing private key to wrong ops");
 
     sig = _hx509_find_sig_alg(&sig_alg->algorithm);
 
     if (sig == NULL || sig->digest_size == 0)
-       return 0;
+        return 0;
 
     group = EC_KEY_get0_group(signer->private_key.ecdsa);
     if (group == NULL)
-       return 0;
+        return 0;
 
     bnctx = BN_CTX_new();
     order = BN_new();
     if (order == NULL)
-       goto err;
+        goto err;
 
     if (EC_GROUP_get_order(group, order, bnctx) != 1)
-       goto err;
+        goto err;
 
 #if 0
     /* If anything, require a digest at least as wide as the EC key size */
     if (BN_num_bytes(order) > sig->digest_size)
 #endif
-       ret = 1;
- err:
+        ret = 1;
+err:
     if (bnctx)
-       BN_CTX_free(bnctx);
+        BN_CTX_free(bnctx);
     if (order)
-       BN_clear_free(order);
+        BN_clear_free(order);
 
      return ret;
 #endif
@@ -564,8 +564,8 @@ ecdsa_available(const hx509_private_key signer,
 
 static int
 ecdsa_private_key2SPKI(hx509_context context,
-		       hx509_private_key private_key,
-		       SubjectPublicKeyInfo *spki)
+                       hx509_private_key private_key,
+                       SubjectPublicKeyInfo *spki)
 {
     memset(spki, 0, sizeof(*spki));
     return ENOMEM;
@@ -573,20 +573,20 @@ ecdsa_private_key2SPKI(hx509_context context,
 
 static int
 ecdsa_private_key_export(hx509_context context,
-			 const hx509_private_key key,
-			 hx509_key_format_t format,
-			 heim_octet_string *data)
+                         const hx509_private_key key,
+                         hx509_key_format_t format,
+                         heim_octet_string *data)
 {
     return HX509_CRYPTO_KEY_FORMAT_UNSUPPORTED;
 }
 
 static int
 ecdsa_private_key_import(hx509_context context,
-			 const AlgorithmIdentifier *keyai,
-			 const void *data,
-			 size_t len,
-			 hx509_key_format_t format,
-			 hx509_private_key private_key)
+                         const AlgorithmIdentifier *keyai,
+                         const void *data,
+                         size_t len,
+                         hx509_key_format_t format,
+                         hx509_private_key private_key)
 {
 #ifdef HAVE_OPENSSL_30
     const unsigned char *p = data;
@@ -594,17 +594,17 @@ ecdsa_private_key_import(hx509_context context,
     int ret = 0;
 
     switch (format) {
-    case HX509_KEY_FORMAT_PKCS8:
-        key = d2i_PrivateKey(EVP_PKEY_EC, NULL, &p, len);
-	if (key == NULL) {
-	    hx509_set_error_string(context, 0, HX509_PARSING_KEY_FAILED,
-				   "Failed to parse EC private key");
-	    return HX509_PARSING_KEY_FAILED;
-	}
-	break;
+        case HX509_KEY_FORMAT_PKCS8:
+            key = d2i_PrivateKey(EVP_PKEY_EC, NULL, &p, len);
+            if (key == NULL) {
+                hx509_set_error_string(context, 0, HX509_PARSING_KEY_FAILED,
+                                       "Failed to parse EC private key");
+                return HX509_PARSING_KEY_FAILED;
+            }
+            break;
 
-    default:
-	return HX509_CRYPTO_KEY_FORMAT_UNSUPPORTED;
+        default:
+            return HX509_CRYPTO_KEY_FORMAT_UNSUPPORTED;
     }
 
     /*
@@ -656,47 +656,47 @@ ecdsa_private_key_import(hx509_context context,
     EC_KEY *key;
 
     if (keyai->parameters) {
-       EC_GROUP *group;
-       int groupnid;
-       int ret;
+        EC_GROUP *group;
+        int groupnid;
+        int ret;
 
-       ret = ECParameters2nid(context, keyai->parameters, &groupnid);
-       if (ret)
-           return ret;
+        ret = ECParameters2nid(context, keyai->parameters, &groupnid);
+        if (ret)
+            return ret;
 
-       key = EC_KEY_new();
-       if (key == NULL)
-           return ENOMEM;
+        key = EC_KEY_new();
+        if (key == NULL)
+            return ENOMEM;
 
-       group = EC_GROUP_new_by_curve_name(groupnid);
-       if (group == NULL) {
-           EC_KEY_free(key);
-           return ENOMEM;
-       }
-       EC_GROUP_set_asn1_flag(group, OPENSSL_EC_NAMED_CURVE);
-       if (EC_KEY_set_group(key, group) != 1) {
-           EC_KEY_free(key);
-           EC_GROUP_free(group);
-           return ENOMEM;
-       }
-       EC_GROUP_free(group);
-       pkey = &key;
+        group = EC_GROUP_new_by_curve_name(groupnid);
+        if (group == NULL) {
+            EC_KEY_free(key);
+            return ENOMEM;
+        }
+        EC_GROUP_set_asn1_flag(group, OPENSSL_EC_NAMED_CURVE);
+        if (EC_KEY_set_group(key, group) != 1) {
+            EC_KEY_free(key);
+            EC_GROUP_free(group);
+            return ENOMEM;
+        }
+        EC_GROUP_free(group);
+        pkey = &key;
     }
 
     switch (format) {
-    case HX509_KEY_FORMAT_DER:
+        case HX509_KEY_FORMAT_DER:
 
-       private_key->private_key.ecdsa = d2i_ECPrivateKey(pkey, &p, len);
-       if (private_key->private_key.ecdsa == NULL) {
-           hx509_set_error_string(context, 0, HX509_PARSING_KEY_FAILED,
-                                  "Failed to parse EC private key");
-           return HX509_PARSING_KEY_FAILED;
-       }
-       private_key->signature_alg = ASN1_OID_ID_ECDSA_WITH_SHA256;
-       break;
+            private_key->private_key.ecdsa = d2i_ECPrivateKey(pkey, &p, len);
+            if (private_key->private_key.ecdsa == NULL) {
+                hx509_set_error_string(context, 0, HX509_PARSING_KEY_FAILED,
+                                       "Failed to parse EC private key");
+                return HX509_PARSING_KEY_FAILED;
+            }
+            private_key->signature_alg = ASN1_OID_ID_ECDSA_WITH_SHA256;
+            break;
 
-    default:
-       return HX509_CRYPTO_KEY_FORMAT_UNSUPPORTED;
+        default:
+            return HX509_CRYPTO_KEY_FORMAT_UNSUPPORTED;
     }
 
     return 0;
@@ -705,16 +705,16 @@ ecdsa_private_key_import(hx509_context context,
 
 static int
 ecdsa_generate_private_key(hx509_context context,
-			   struct hx509_generate_private_context *ctx,
-			   hx509_private_key private_key)
+                           struct hx509_generate_private_context *ctx,
+                           hx509_private_key private_key)
 {
     return ENOMEM;
 }
 
 static BIGNUM *
 ecdsa_get_internal(hx509_context context,
-		   hx509_private_key key,
-		   const char *type)
+                   hx509_private_key key,
+                   const char *type)
 {
     return NULL;
 }

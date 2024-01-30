@@ -132,25 +132,25 @@ calc (SHA512_CTX *m, uint64_t *in)
     HH = H;
 
     for (i = 0; i < 16; ++i)
-	data[i] = in[i];
+        data[i] = in[i];
     for (i = 16; i < 80; ++i)
-	data[i] = sigma1(data[i-2]) + data[i-7] +
-	    sigma0(data[i-15]) + data[i - 16];
+        data[i] = sigma1(data[i-2]) + data[i-7] +
+            sigma0(data[i-15]) + data[i - 16];
 
     for (i = 0; i < 80; i++) {
-	uint64_t T1, T2;
+        uint64_t T1, T2;
 
-	T1 = HH + Sigma1(EE) + Ch(EE, FF, GG) + constant_512[i] + data[i];
-	T2 = Sigma0(AA) + Maj(AA,BB,CC);
+        T1 = HH + Sigma1(EE) + Ch(EE, FF, GG) + constant_512[i] + data[i];
+        T2 = Sigma0(AA) + Maj(AA,BB,CC);
 
-	HH = GG;
-	GG = FF;
-	FF = EE;
-	EE = DD + T1;
-	DD = CC;
-	CC = BB;
-	BB = AA;
-	AA = T1 + T2;
+        HH = GG;
+        GG = FF;
+        FF = EE;
+        EE = DD + T1;
+        DD = CC;
+        CC = BB;
+        BB = AA;
+        AA = T1 + T2;
     }
 
     A += AA;
@@ -195,29 +195,29 @@ SHA512_Update (SHA512_CTX *m, const void *v, size_t len)
 
     m->sz[0] += len * 8;
     if (m->sz[0] < old_sz)
-	++m->sz[1];
+        ++m->sz[1];
     offset = (old_sz / 8) % 128;
     while(len > 0){
-	size_t l = min(len, 128 - offset);
-	memcpy(m->save + offset, p, l);
-	offset += l;
-	p += l;
-	len -= l;
-	if(offset == 128){
+        size_t l = min(len, 128 - offset);
+        memcpy(m->save + offset, p, l);
+        offset += l;
+        p += l;
+        len -= l;
+        if(offset == 128){
 #if !defined(WORDS_BIGENDIAN) || defined(_CRAY)
-	    int i;
-	    uint64_t current[16];
-	    struct x64 *us = (struct x64*)m->save;
-	    for(i = 0; i < 8; i++){
-		current[2*i+0] = swap_uint64_t(us[i].a);
-		current[2*i+1] = swap_uint64_t(us[i].b);
-	    }
-	    calc(m, current);
+            int i;
+            uint64_t current[16];
+            struct x64 *us = (struct x64*)m->save;
+            for(i = 0; i < 8; i++){
+                current[2*i+0] = swap_uint64_t(us[i].a);
+                current[2*i+1] = swap_uint64_t(us[i].b);
+            }
+            calc(m, current);
 #else
-	    calc(m, (uint64_t*)m->save);
+            calc(m, (uint64_t*)m->save);
 #endif
-	    offset = 0;
-	}
+            offset = 0;
+        }
     }
     return 1;
 }
@@ -250,19 +250,19 @@ SHA512_Final (void *res, SHA512_CTX *m)
     zeros[dstart+0] = (m->sz[1] >> 56) & 0xff;
     SHA512_Update (m, zeros, dstart + 16);
     {
-	int i;
-	unsigned char *r = (unsigned char*)res;
+        int i;
+        unsigned char *r = (unsigned char*)res;
 
-	for (i = 0; i < 8; ++i) {
-	    r[8*i+7] = m->counter[i] & 0xFF;
-	    r[8*i+6] = (m->counter[i] >> 8) & 0xFF;
-	    r[8*i+5] = (m->counter[i] >> 16) & 0xFF;
-	    r[8*i+4] = (m->counter[i] >> 24) & 0xFF;
-	    r[8*i+3] = (m->counter[i] >> 32) & 0XFF;
-	    r[8*i+2] = (m->counter[i] >> 40) & 0xFF;
-	    r[8*i+1] = (m->counter[i] >> 48) & 0xFF;
-	    r[8*i]   = (m->counter[i] >> 56) & 0xFF;
-	}
+        for (i = 0; i < 8; ++i) {
+            r[8*i+7] = m->counter[i] & 0xFF;
+            r[8*i+6] = (m->counter[i] >> 8) & 0xFF;
+            r[8*i+5] = (m->counter[i] >> 16) & 0xFF;
+            r[8*i+4] = (m->counter[i] >> 24) & 0xFF;
+            r[8*i+3] = (m->counter[i] >> 32) & 0XFF;
+            r[8*i+2] = (m->counter[i] >> 40) & 0xFF;
+            r[8*i+1] = (m->counter[i] >> 48) & 0xFF;
+            r[8*i]   = (m->counter[i] >> 56) & 0xFF;
+        }
     }
     return 1;
 }

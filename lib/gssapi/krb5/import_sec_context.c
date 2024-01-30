@@ -35,10 +35,10 @@
 
 OM_uint32 GSSAPI_CALLCONV
 _gsskrb5_import_sec_context (
-    OM_uint32 * minor_status,
-    const gss_buffer_t interprocess_token,
-    gss_ctx_id_t * context_handle
-    )
+                             OM_uint32 * minor_status,
+                             const gss_buffer_t interprocess_token,
+                             gss_ctx_id_t * context_handle
+                             )
 {
     OM_uint32 ret = GSS_S_FAILURE;
     krb5_context context;
@@ -59,10 +59,10 @@ _gsskrb5_import_sec_context (
     localp = remotep = NULL;
 
     sp = krb5_storage_from_mem (interprocess_token->value,
-				interprocess_token->length);
+                                interprocess_token->length);
     if (sp == NULL) {
-	*minor_status = ENOMEM;
-	return GSS_S_FAILURE;
+        *minor_status = ENOMEM;
+        return GSS_S_FAILURE;
     }
 
     krb5_storage_set_byteorder(sp, KRB5_STORAGE_BYTEORDER_PACKED);
@@ -70,18 +70,18 @@ _gsskrb5_import_sec_context (
 
     ctx = calloc(1, sizeof(*ctx));
     if (ctx == NULL) {
-	*minor_status = ENOMEM;
-	krb5_storage_free (sp);
-	return GSS_S_FAILURE;
+        *minor_status = ENOMEM;
+        krb5_storage_free (sp);
+        return GSS_S_FAILURE;
     }
     HEIMDAL_MUTEX_init(&ctx->ctx_id_mutex);
 
     kret = krb5_auth_con_init (context,
-			       &ctx->auth_context);
+                               &ctx->auth_context);
     if (kret) {
-	*minor_status = kret;
-	ret = GSS_S_FAILURE;
-	goto failure;
+        *minor_status = kret;
+        ret = GSS_S_FAILURE;
+        goto failure;
     }
 
     /* flags */
@@ -89,58 +89,58 @@ _gsskrb5_import_sec_context (
     *minor_status = 0;
 
     if (krb5_ret_int32 (sp, &flags) != 0)
-	goto failure;
+        goto failure;
 
     /* retrieve the auth context */
 
     ac = ctx->auth_context;
     if (krb5_ret_int32 (sp, &tmp) != 0)
-	goto failure;
+        goto failure;
     ac->flags = tmp;
     if (flags & SC_LOCAL_ADDRESS) {
-	if (krb5_ret_address (sp, localp = &local) != 0)
-	    goto failure;
+        if (krb5_ret_address (sp, localp = &local) != 0)
+            goto failure;
     }
 
     if (flags & SC_REMOTE_ADDRESS) {
-	if (krb5_ret_address (sp, remotep = &remote) != 0)
-	    goto failure;
+        if (krb5_ret_address (sp, remotep = &remote) != 0)
+            goto failure;
     }
 
     krb5_auth_con_setaddrs (context, ac, localp, remotep);
     if (localp)
-	krb5_free_address (context, localp);
+        krb5_free_address (context, localp);
     if (remotep)
-	krb5_free_address (context, remotep);
+        krb5_free_address (context, remotep);
     localp = remotep = NULL;
 
     if (krb5_ret_int16 (sp, &ac->local_port) != 0)
-	goto failure;
+        goto failure;
 
     if (krb5_ret_int16 (sp, &ac->remote_port) != 0)
-	goto failure;
+        goto failure;
     if (flags & SC_KEYBLOCK) {
-	if (krb5_ret_keyblock (sp, &keyblock) != 0)
-	    goto failure;
-	krb5_auth_con_setkey (context, ac, &keyblock);
-	krb5_free_keyblock_contents (context, &keyblock);
+        if (krb5_ret_keyblock (sp, &keyblock) != 0)
+            goto failure;
+        krb5_auth_con_setkey (context, ac, &keyblock);
+        krb5_free_keyblock_contents (context, &keyblock);
     }
     if (flags & SC_LOCAL_SUBKEY) {
-	if (krb5_ret_keyblock (sp, &keyblock) != 0)
-	    goto failure;
-	krb5_auth_con_setlocalsubkey (context, ac, &keyblock);
-	krb5_free_keyblock_contents (context, &keyblock);
+        if (krb5_ret_keyblock (sp, &keyblock) != 0)
+            goto failure;
+        krb5_auth_con_setlocalsubkey (context, ac, &keyblock);
+        krb5_free_keyblock_contents (context, &keyblock);
     }
     if (flags & SC_REMOTE_SUBKEY) {
-	if (krb5_ret_keyblock (sp, &keyblock) != 0)
-	    goto failure;
-	krb5_auth_con_setremotesubkey (context, ac, &keyblock);
-	krb5_free_keyblock_contents (context, &keyblock);
+        if (krb5_ret_keyblock (sp, &keyblock) != 0)
+            goto failure;
+        krb5_auth_con_setremotesubkey (context, ac, &keyblock);
+        krb5_free_keyblock_contents (context, &keyblock);
     }
     if (krb5_ret_uint32 (sp, &ac->local_seqnumber))
-	goto failure;
+        goto failure;
     if (krb5_ret_uint32 (sp, &ac->remote_seqnumber))
-	goto failure;
+        goto failure;
 
     if (flags & SC_AUTHENTICATOR) {
         if (krb5_ret_int64(sp, &tmp64))
@@ -152,28 +152,28 @@ _gsskrb5_import_sec_context (
     }
 
     if (krb5_ret_int32 (sp, &tmp) != 0)
-	goto failure;
+        goto failure;
     ac->keytype = tmp;
     if (krb5_ret_int32 (sp, &tmp) != 0)
-	goto failure;
+        goto failure;
     ac->cksumtype = tmp;
 
     /* names */
     if (flags & SC_SOURCE_NAME) {
         if (krb5_ret_principal(sp, &ctx->source))
-	    goto failure;
+            goto failure;
     }
 
     if (flags & SC_TARGET_NAME) {
         if (krb5_ret_principal(sp, &ctx->target))
-	    goto failure;
+            goto failure;
     }
 
     if (krb5_ret_int32 (sp, &tmp))
-	goto failure;
+        goto failure;
     ctx->flags = tmp;
     if (krb5_ret_int32 (sp, &tmp))
-	goto failure;
+        goto failure;
     ctx->more_flags = tmp;
     if (krb5_ret_int32 (sp, &tmp))
         goto failure;
@@ -183,7 +183,7 @@ _gsskrb5_import_sec_context (
      * krb5_ret_int64() yet.
      */
     if (krb5_ret_int32 (sp, &tmp))
-	goto failure;
+        goto failure;
     ctx->endtime = tmp;
 
     if (flags & SC_ORDER) {
@@ -202,17 +202,17 @@ _gsskrb5_import_sec_context (
 
 failure:
     krb5_auth_con_free (context,
-			ctx->auth_context);
+                        ctx->auth_context);
     if (ctx->source != NULL)
-	krb5_free_principal(context, ctx->source);
+        krb5_free_principal(context, ctx->source);
     if (ctx->target != NULL)
-	krb5_free_principal(context, ctx->target);
+        krb5_free_principal(context, ctx->target);
     if (localp)
-	krb5_free_address (context, localp);
+        krb5_free_address (context, localp);
     if (remotep)
-	krb5_free_address (context, remotep);
+        krb5_free_address (context, remotep);
     if(ctx->order)
-	_gssapi_msg_order_destroy(&ctx->order);
+        _gssapi_msg_order_destroy(&ctx->order);
     HEIMDAL_MUTEX_destroy(&ctx->ctx_id_mutex);
     krb5_storage_free (sp);
     free (ctx);

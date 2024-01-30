@@ -41,13 +41,13 @@ bswap64 (uint64_t val)
 {
     return
         (val & 0xffULL) << 56 |
-	(val & 0xff00ULL) << 40 |
-	(val & 0xff0000ULL) << 24 |
-	(val & 0xff000000ULL) << 8 |
-	(val & 0xff00000000ULL) >> 8 |
-	(val & 0xff0000000000ULL) >> 24 |
-	(val & 0xff000000000000ULL) >> 40 |
-	(val & 0xff00000000000000ULL) >> 56 ;
+        (val & 0xff00ULL) << 40 |
+        (val & 0xff0000ULL) << 24 |
+        (val & 0xff000000ULL) << 8 |
+        (val & 0xff00000000ULL) >> 8 |
+        (val & 0xff0000000000ULL) >> 24 |
+        (val & 0xff000000000000ULL) >> 40 |
+        (val & 0xff00000000000000ULL) >> 56 ;
 }
 #endif
 
@@ -57,9 +57,9 @@ ROKEN_LIB_FUNCTION unsigned int ROKEN_LIB_CALL
 bswap32 (unsigned int val)
 {
     return (val & 0xff) << 24 |
-	(val & 0xff00) << 8 |
-	(val & 0xff0000) >> 8 |
-	(val & 0xff000000) >> 24;
+        (val & 0xff00) << 8 |
+        (val & 0xff0000) >> 8 |
+        (val & 0xff000000) >> 24;
 }
 #endif
 
@@ -69,6 +69,6 @@ ROKEN_LIB_FUNCTION unsigned short ROKEN_LIB_CALL
 bswap16 (unsigned short val)
 {
     return (val & 0xff) << 8 |
-	(val & 0xff00) >> 8;
+        (val & 0xff00) >> 8;
 }
 #endif

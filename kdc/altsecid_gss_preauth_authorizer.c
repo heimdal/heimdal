@@ -294,7 +294,7 @@ ad_lookup(krb5_context context,
 
     *canon_principal = NULL;
     if (requestor_sid)
-	*requestor_sid = NULL;
+        *requestor_sid = NULL;
 
     mech_type_str = gss_oid_to_name(mech_type);
     if (mech_type_str == NULL) {
@@ -351,19 +351,19 @@ ad_lookup(krb5_context context,
     ret = krb5_make_principal(context, canon_principal, realm,
                               values[0]->bv_val, NULL);
     if (ret)
-	goto out;
+        goto out;
 
     if (requestor_sid) {
-	ldap_value_free_len(values);
+        ldap_value_free_len(values);
 
-	values = ldap_get_values_len(server->ld, m0, "objectSid");
-	if (values == NULL ||
-	    ldap_count_values_len(values) == 0)
-	    goto out;
+        values = ldap_get_values_len(server->ld, m0, "objectSid");
+        if (values == NULL ||
+            ldap_count_values_len(values) == 0)
+            goto out;
 
-	*requestor_sid = kdc_data_create(values[0]->bv_val, values[0]->bv_len);
-	if (*requestor_sid == NULL)
-	    goto enomem;
+        *requestor_sid = kdc_data_create(values[0]->bv_val, values[0]->bv_len);
+        if (*requestor_sid == NULL)
+            goto enomem;
     }
 
     goto out;
@@ -374,13 +374,13 @@ enomem:
 
 out:
     if (ret) {
-	krb5_free_principal(context, *canon_principal);
-	*canon_principal = NULL;
+        krb5_free_principal(context, *canon_principal);
+        *canon_principal = NULL;
 
-	if (requestor_sid) {
-	    kdc_object_release(*requestor_sid);
-	    *requestor_sid = NULL;
-	}
+        if (requestor_sid) {
+            kdc_object_release(*requestor_sid);
+            *requestor_sid = NULL;
+        }
     }
 
     ldap_value_free_len(values);
@@ -462,9 +462,9 @@ authorize(void *ctx,
     } while (reconnect_p);
 
     if (requestor_sid) {
-	kdc_request_set_attribute((kdc_request_t)r,
-				  HSTR("org.h5l.gss-pa-requestor-sid"), requestor_sid);
-	kdc_object_release(requestor_sid);
+        kdc_request_set_attribute((kdc_request_t)r,
+                                  HSTR("org.h5l.gss-pa-requestor-sid"), requestor_sid);
+        kdc_object_release(requestor_sid);
     }
 
     return ret;
@@ -476,14 +476,14 @@ finalize_pac(void *ctx, astgs_request_t r)
     kdc_data_t requestor_sid;
 
     requestor_sid = kdc_request_get_attribute((kdc_request_t)r,
-					      HSTR("org.h5l.gss-pa-requestor-sid"));
+                                              HSTR("org.h5l.gss-pa-requestor-sid"));
     if (requestor_sid == NULL)
-	return 0;
+        return 0;
 
     kdc_audit_setkv_object((kdc_request_t)r, "gss_requestor_sid", requestor_sid);
 
     return kdc_request_add_pac_buffer(r, PAC_REQUESTOR_SID,
-				      kdc_data_get_data(requestor_sid));
+                                      kdc_data_get_data(requestor_sid));
 }
 
 static KRB5_LIB_CALL krb5_error_code

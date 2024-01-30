@@ -43,44 +43,44 @@
  */
 static gss_mo_desc spnego_mo[] = {
     {
-	GSS_C_MA_SASL_MECH_NAME,
-	GSS_MO_MA,
-	"SASL mech name",
-	rk_UNCONST("SPNEGO"),
-	_gss_mo_get_ctx_as_string,
-	NULL
+        GSS_C_MA_SASL_MECH_NAME,
+        GSS_MO_MA,
+        "SASL mech name",
+        rk_UNCONST("SPNEGO"),
+        _gss_mo_get_ctx_as_string,
+        NULL
     },
     {
-	GSS_C_MA_MECH_NAME,
-	GSS_MO_MA,
-	"Mechanism name",
-	rk_UNCONST("SPNEGO"),
-	_gss_mo_get_ctx_as_string,
-	NULL
+        GSS_C_MA_MECH_NAME,
+        GSS_MO_MA,
+        "Mechanism name",
+        rk_UNCONST("SPNEGO"),
+        _gss_mo_get_ctx_as_string,
+        NULL
     },
     {
-	GSS_C_MA_MECH_DESCRIPTION,
-	GSS_MO_MA,
-	"Mechanism description",
-	rk_UNCONST("Heimdal SPNEGO Mechanism"),
-	_gss_mo_get_ctx_as_string,
-	NULL
+        GSS_C_MA_MECH_DESCRIPTION,
+        GSS_MO_MA,
+        "Mechanism description",
+        rk_UNCONST("Heimdal SPNEGO Mechanism"),
+        _gss_mo_get_ctx_as_string,
+        NULL
     },
     {
-	GSS_C_MA_MECH_NEGO,
-	GSS_MO_MA,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+        GSS_C_MA_MECH_NEGO,
+        GSS_MO_MA,
+        NULL,
+        NULL,
+        NULL,
+        NULL
     },
     {
-	GSS_C_MA_MECH_PSEUDO,
-	GSS_MO_MA,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+        GSS_C_MA_MECH_PSEUDO,
+        GSS_MO_MA,
+        NULL,
+        NULL,
+        NULL,
+        NULL
     }
 };
 
@@ -160,6 +160,6 @@ static gssapi_mech_interface_desc spnego_mech = {
 gssapi_mech_interface
 __gss_spnego_initialize(void)
 {
-	return &spnego_mech;
+    return &spnego_mech;
 }
 

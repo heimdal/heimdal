@@ -51,11 +51,11 @@ check_length(krb5_context context,
              krb5_data *password)
 {
     int min_length = krb5_config_get_int_default(context, NULL, 6,
-						 "password_quality",
-						 "min_length",
-						 NULL);
+                                                 "password_quality",
+                                                 "min_length",
+                                                 NULL);
     if(password->length < min_length)
-	return "Password too short";
+        return "Password too short";
     return NULL;
 }
 
@@ -67,14 +67,14 @@ check_length(krb5_context context,
 
 const char*
 check_cracklib(krb5_context context,
-	       krb5_principal principal,
-	       krb5_data *password)
+               krb5_principal principal,
+               krb5_data *password)
 {
     char *s = malloc(password->length + 1);
     char *msg;
     char *strings[2];
     if(s == NULL)
-	return NULL; /* XXX */
+        return NULL; /* XXX */
     strings[0] = principal->name.name_string.val[0]; /* XXX */
     strings[1] = NULL;
     memcpy(s, password->data, password->length);

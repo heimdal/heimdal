@@ -68,7 +68,7 @@ mpz2BN(mpz_t s)
     mpz_export(NULL, &size, 1, 1, 1, 0, s);
     p = malloc(size);
     if (p == NULL && size != 0)
-	return NULL;
+        return NULL;
     mpz_export(p, &size, 1, 1, 1, 0, s);
     bn = BN_bin2bn(p, size, NULL);
     free(p);
@@ -77,8 +77,8 @@ mpz2BN(mpz_t s)
 
 static int
 rsa_private_calculate(mpz_t in, mpz_t p,  mpz_t q,
-		      mpz_t dmp1, mpz_t dmq1, mpz_t iqmp,
-		      mpz_t out)
+                      mpz_t dmp1, mpz_t dmq1, mpz_t iqmp,
+                      mpz_t out)
 {
     mpz_t vp, vq, u;
     mpz_init(vp); mpz_init(vq); mpz_init(u);
@@ -95,7 +95,7 @@ rsa_private_calculate(mpz_t in, mpz_t p,  mpz_t q,
     mpz_sub(u, vp, vq);
 #if 0
     if (mp_int_compare_zero(&u) < 0)
-	mp_int_add(&u, p, &u);
+        mp_int_add(&u, p, &u);
 #endif
     mpz_mul(u, iqmp, u);
     mpz_fdiv_r(u, u, p);
@@ -117,28 +117,28 @@ rsa_private_calculate(mpz_t in, mpz_t p,  mpz_t q,
 
 static int
 gmp_rsa_public_encrypt(int flen, const unsigned char* from,
-			unsigned char* to, RSA* rsa, int padding)
+                       unsigned char* to, RSA* rsa, int padding)
 {
     unsigned char *p, *p0;
     size_t size, padlen;
     mpz_t enc, dec, n, e;
 
     if (padding != RSA_PKCS1_PADDING)
-	return -1;
+        return -1;
 
     size = RSA_size(rsa);
 
     if (size < RSA_PKCS1_PADDING_SIZE || size - RSA_PKCS1_PADDING_SIZE < flen)
-	return -2;
+        return -2;
 
     BN2mpz(n, rsa->n);
     BN2mpz(e, rsa->e);
 
     p = p0 = malloc(size - 1);
     if (p0 == NULL) {
-	mpz_clear(e);
-	mpz_clear(n);
-	return -3;
+        mpz_clear(e);
+        mpz_clear(n);
+        return -3;
     }
 
     padlen = size - flen - 3;
@@ -146,16 +146,16 @@ gmp_rsa_public_encrypt(int flen, const unsigned char* from,
 
     *p++ = 2;
     if (RAND_bytes(p, padlen) != 1) {
-	mpz_clear(e);
-	mpz_clear(n);
-	free(p0);
-	return -4;
+        mpz_clear(e);
+        mpz_clear(n);
+        free(p0);
+        return -4;
     }
     while(padlen) {
-	if (*p == 0)
-	    *p = 1;
-	padlen--;
-	p++;
+        if (*p == 0)
+            *p = 1;
+        padlen--;
+        p++;
     }
     *p++ = 0;
     memcpy(p, from, flen);
@@ -173,10 +173,10 @@ gmp_rsa_public_encrypt(int flen, const unsigned char* from,
     mpz_clear(e);
     mpz_clear(n);
     {
-	size_t ssize;
-	mpz_export(to, &ssize, 1, 1, 1, 0, enc);
-	assert(size >= ssize);
-	size = ssize;
+        size_t ssize;
+        mpz_export(to, &ssize, 1, 1, 1, 0, enc);
+        assert(size >= ssize);
+        size = ssize;
     }
     mpz_clear(enc);
 
@@ -185,17 +185,17 @@ gmp_rsa_public_encrypt(int flen, const unsigned char* from,
 
 static int
 gmp_rsa_public_decrypt(int flen, const unsigned char* from,
-			 unsigned char* to, RSA* rsa, int padding)
+                       unsigned char* to, RSA* rsa, int padding)
 {
     unsigned char *p;
     size_t size;
     mpz_t s, us, n, e;
 
     if (padding != RSA_PKCS1_PADDING)
-	return -1;
+        return -1;
 
     if (flen > RSA_size(rsa))
-	return -2;
+        return -2;
 
     BN2mpz(n, rsa->n);
     BN2mpz(e, rsa->e);
@@ -203,9 +203,9 @@ gmp_rsa_public_decrypt(int flen, const unsigned char* from,
 #if 0
     /* Check that the exponent is larger then 3 */
     if (mp_int_compare_value(&e, 3) <= 0) {
-	mp_int_clear(&n);
-	mp_int_clear(&e);
-	return -3;
+        mp_int_clear(&n);
+        mp_int_clear(&e);
+        return -3;
     }
 #endif
 
@@ -214,9 +214,9 @@ gmp_rsa_public_decrypt(int flen, const unsigned char* from,
     mpz_import(s, flen, 1, 1, 1, 0, rk_UNCONST(from));
 
     if (mpz_cmp(s, n) >= 0) {
-	mpz_clear(n);
-	mpz_clear(e);
-	return -4;
+        mpz_clear(n);
+        mpz_clear(e);
+        return -4;
     }
 
     mpz_powm(us, s, e, n);
@@ -234,15 +234,15 @@ gmp_rsa_public_decrypt(int flen, const unsigned char* from,
 
     /* head zero was skipped by mp_int_to_unsigned */
     if (*p == 0)
-	return -6;
+        return -6;
     if (*p != 1)
-	return -7;
+        return -7;
     size--; p++;
     while (size && *p == 0xff) {
-	size--; p++;
+        size--; p++;
     }
     if (size == 0 || *p != 0)
-	return -8;
+        return -8;
     size--; p++;
 
     memmove(to, p, size);
@@ -252,19 +252,19 @@ gmp_rsa_public_decrypt(int flen, const unsigned char* from,
 
 static int
 gmp_rsa_private_encrypt(int flen, const unsigned char* from,
-			  unsigned char* to, RSA* rsa, int padding)
+                        unsigned char* to, RSA* rsa, int padding)
 {
     unsigned char *p, *p0;
     size_t size;
     mpz_t in, out, n, e;
 
     if (padding != RSA_PKCS1_PADDING)
-	return -1;
+        return -1;
 
     size = RSA_size(rsa);
 
     if (size < RSA_PKCS1_PADDING_SIZE || size - RSA_PKCS1_PADDING_SIZE < flen)
-	return -2;
+        return -2;
 
     p0 = p = malloc(size);
     *p++ = 0;
@@ -287,40 +287,40 @@ gmp_rsa_private_encrypt(int flen, const unsigned char* from,
 #if 0
     if(mp_int_compare_zero(&in) < 0 ||
        mp_int_compare(&in, &n) >= 0) {
-	size = 0;
-	goto out;
+        size = 0;
+        goto out;
     }
 #endif
 
     if (rsa->p && rsa->q && rsa->dmp1 && rsa->dmq1 && rsa->iqmp) {
-	mpz_t p, q, dmp1, dmq1, iqmp;
+        mpz_t p, q, dmp1, dmq1, iqmp;
 
-	BN2mpz(p, rsa->p);
-	BN2mpz(q, rsa->q);
-	BN2mpz(dmp1, rsa->dmp1);
-	BN2mpz(dmq1, rsa->dmq1);
-	BN2mpz(iqmp, rsa->iqmp);
+        BN2mpz(p, rsa->p);
+        BN2mpz(q, rsa->q);
+        BN2mpz(dmp1, rsa->dmp1);
+        BN2mpz(dmq1, rsa->dmq1);
+        BN2mpz(iqmp, rsa->iqmp);
 
-	rsa_private_calculate(in, p, q, dmp1, dmq1, iqmp, out);
+        rsa_private_calculate(in, p, q, dmp1, dmq1, iqmp, out);
 
-	mpz_clear(p);
-	mpz_clear(q);
-	mpz_clear(dmp1);
-	mpz_clear(dmq1);
-	mpz_clear(iqmp);
+        mpz_clear(p);
+        mpz_clear(q);
+        mpz_clear(dmp1);
+        mpz_clear(dmq1);
+        mpz_clear(iqmp);
     } else {
-	mpz_t d;
+        mpz_t d;
 
-	BN2mpz(d, rsa->d);
-	mpz_powm(out, in, d, n);
-	mpz_clear(d);
+        BN2mpz(d, rsa->d);
+        mpz_powm(out, in, d, n);
+        mpz_clear(d);
     }
 
     {
-	size_t ssize;
-	mpz_export(to, &ssize, 1, 1, 1, 0, out);
-	assert(size >= ssize);
-	size = ssize;
+        size_t ssize;
+        mpz_export(to, &ssize, 1, 1, 1, 0, out);
+        assert(size >= ssize);
+        size = ssize;
     }
 
     mpz_clear(e);
@@ -333,18 +333,18 @@ gmp_rsa_private_encrypt(int flen, const unsigned char* from,
 
 static int
 gmp_rsa_private_decrypt(int flen, const unsigned char* from,
-			  unsigned char* to, RSA* rsa, int padding)
+                        unsigned char* to, RSA* rsa, int padding)
 {
     unsigned char *ptr;
     size_t size;
     mpz_t in, out, n, e;
 
     if (padding != RSA_PKCS1_PADDING)
-	return -1;
+        return -1;
 
     size = RSA_size(rsa);
     if (flen > size)
-	return -2;
+        return -2;
 
     mpz_init(in);
     mpz_init(out);
@@ -356,57 +356,57 @@ gmp_rsa_private_decrypt(int flen, const unsigned char* from,
 
     if(mpz_cmp_ui(in, 0) < 0 ||
        mpz_cmp(in, n) >= 0) {
-	size = 0;
-	goto out;
+        size = 0;
+        goto out;
     }
 
     if (rsa->p && rsa->q && rsa->dmp1 && rsa->dmq1 && rsa->iqmp) {
-	mpz_t p, q, dmp1, dmq1, iqmp;
+        mpz_t p, q, dmp1, dmq1, iqmp;
 
-	BN2mpz(p, rsa->p);
-	BN2mpz(q, rsa->q);
-	BN2mpz(dmp1, rsa->dmp1);
-	BN2mpz(dmq1, rsa->dmq1);
-	BN2mpz(iqmp, rsa->iqmp);
+        BN2mpz(p, rsa->p);
+        BN2mpz(q, rsa->q);
+        BN2mpz(dmp1, rsa->dmp1);
+        BN2mpz(dmq1, rsa->dmq1);
+        BN2mpz(iqmp, rsa->iqmp);
 
-	rsa_private_calculate(in, p, q, dmp1, dmq1, iqmp, out);
+        rsa_private_calculate(in, p, q, dmp1, dmq1, iqmp, out);
 
-	mpz_clear(p);
-	mpz_clear(q);
-	mpz_clear(dmp1);
-	mpz_clear(dmq1);
-	mpz_clear(iqmp);
+        mpz_clear(p);
+        mpz_clear(q);
+        mpz_clear(dmp1);
+        mpz_clear(dmq1);
+        mpz_clear(iqmp);
     } else {
-	mpz_t d;
+        mpz_t d;
 
 #if 0
-	if(mp_int_compare_zero(&in) < 0 ||
-	   mp_int_compare(&in, &n) >= 0)
-	    return MP_RANGE;
+        if(mp_int_compare_zero(&in) < 0 ||
+           mp_int_compare(&in, &n) >= 0)
+            return MP_RANGE;
 #endif
 
-	BN2mpz(d, rsa->d);
-	mpz_powm(out, in, d, n);
-	mpz_clear(d);
+        BN2mpz(d, rsa->d);
+        mpz_powm(out, in, d, n);
+        mpz_clear(d);
     }
 
     ptr = to;
     {
-	size_t ssize;
-	mpz_export(ptr, &ssize, 1, 1, 1, 0, out);
-	assert(size >= ssize);
-	size = ssize;
+        size_t ssize;
+        mpz_export(ptr, &ssize, 1, 1, 1, 0, out);
+        assert(size >= ssize);
+        size = ssize;
     }
 
     /* head zero was skipped by mp_int_to_unsigned */
     if (*ptr != 2)
-	return -3;
+        return -3;
     size--; ptr++;
     while (size && *ptr != 0) {
-	size--; ptr++;
+        size--; ptr++;
     }
     if (size == 0)
-	return -4;
+        return -4;
     size--; ptr++;
 
     memmove(to, ptr, size);
@@ -428,10 +428,10 @@ random_num(mpz_t num, size_t len)
     len = (len + 7) / 8;
     p = malloc(len);
     if (p == NULL)
-	return 1;
+        return 1;
     if (RAND_bytes(p, len) != 1) {
-	free(p);
-	return 1;
+        free(p);
+        return 1;
     }
     mpz_import(num, len, 1, 1, 1, 0, p);
     free(p);
@@ -446,7 +446,7 @@ gmp_rsa_generate_key(RSA *rsa, int bits, BIGNUM *e, BN_GENCB *cb)
     int counter, ret;
 
     if (bits < 789)
-	return -1;
+        return -1;
 
     ret = -1;
 
@@ -468,29 +468,29 @@ gmp_rsa_generate_key(RSA *rsa, int bits, BIGNUM *e, BN_GENCB *cb)
 
     counter = 0;
     do {
-	BN_GENCB_call(cb, 2, counter++);
-	random_num(p, bits / 2 + 1);
-	mpz_nextprime(p, p);
+        BN_GENCB_call(cb, 2, counter++);
+        random_num(p, bits / 2 + 1);
+        mpz_nextprime(p, p);
 
-	mpz_sub_ui(t1, p, 1);
-	mpz_gcd(t2, t1, el);
+        mpz_sub_ui(t1, p, 1);
+        mpz_gcd(t2, t1, el);
     } while(mpz_cmp_ui(t2, 1) != 0);
 
     BN_GENCB_call(cb, 3, 0);
 
     counter = 0;
     do {
-	BN_GENCB_call(cb, 2, counter++);
-	random_num(q, bits / 2 + 1);
-	mpz_nextprime(q, q);
+        BN_GENCB_call(cb, 2, counter++);
+        random_num(q, bits / 2 + 1);
+        mpz_nextprime(q, q);
 
-	mpz_sub_ui(t1, q, 1);
-	mpz_gcd(t2, t1, el);
+        mpz_sub_ui(t1, q, 1);
+        mpz_gcd(t2, t1, el);
     } while(mpz_cmp_ui(t2, 1) != 0);
 
     /* make p > q */
     if (mpz_cmp(p, q) < 0)
-	mpz_swap(p, q);
+        mpz_swap(p, q);
 
     BN_GENCB_call(cb, 3, 1);
 

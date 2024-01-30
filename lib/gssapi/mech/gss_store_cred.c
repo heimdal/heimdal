@@ -36,22 +36,22 @@
 /* See RFC5588 */
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_store_cred(OM_uint32         *minor_status,
-	       gss_cred_id_t     input_cred_handle,
-	       gss_cred_usage_t  cred_usage,
-	       const gss_OID     desired_mech,
-	       OM_uint32         overwrite_cred,
-	       OM_uint32         default_cred,
-	       gss_OID_set       *elements_stored,
-	       gss_cred_usage_t  *cred_usage_stored)
+               gss_cred_id_t     input_cred_handle,
+               gss_cred_usage_t  cred_usage,
+               const gss_OID     desired_mech,
+               OM_uint32         overwrite_cred,
+               OM_uint32         default_cred,
+               gss_OID_set       *elements_stored,
+               gss_cred_usage_t  *cred_usage_stored)
 {
     return gss_store_cred_into(minor_status,
-			       input_cred_handle,
-			       cred_usage,
-			       desired_mech,
-			       overwrite_cred,
-			       default_cred,
-			       GSS_C_NO_CRED_STORE,
-			       elements_stored,
-			       cred_usage_stored);
+                               input_cred_handle,
+                               cred_usage,
+                               desired_mech,
+                               overwrite_cred,
+                               default_cred,
+                               GSS_C_NO_CRED_STORE,
+                               elements_stored,
+                               cred_usage_stored);
 }
 

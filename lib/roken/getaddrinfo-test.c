@@ -57,9 +57,9 @@ static void
 usage(int ret)
 {
     arg_printusage (args,
-		    sizeof(args) / sizeof(args[0]),
-		    NULL,
-		    "[nodename servname...]");
+                    sizeof(args) / sizeof(args[0]),
+                    NULL,
+                    "[nodename servname...]");
     exit (ret);
 }
 
@@ -71,7 +71,7 @@ doit (const char *nodename, const char *servname)
     int ret;
 
     if (verbose_counter)
-	printf ("(%s,%s)... ", nodename ? nodename : "null", servname);
+        printf ("(%s,%s)... ", nodename ? nodename : "null", servname);
 
     memset (&hints, 0, sizeof(hints));
     hints.ai_flags    = flags;
@@ -80,31 +80,31 @@ doit (const char *nodename, const char *servname)
 
     ret = getaddrinfo (nodename, servname, &hints, &res);
     if (ret)
-	errx(1, "error: %s\n", gai_strerror(ret));
+        errx(1, "error: %s\n", gai_strerror(ret));
 
     if (verbose_counter)
-	printf ("\n");
+        printf ("\n");
 
     for (r = res; r != NULL; r = r->ai_next) {
-	char addrstr[256];
+        char addrstr[256];
 
-	if (inet_ntop (r->ai_family,
-		       socket_get_address (r->ai_addr),
-		       addrstr, sizeof(addrstr)) == NULL) {
-	    if (verbose_counter)
-		printf ("\tbad address?\n");
-	    continue;
-	}
-	if (verbose_counter) {
-	    printf ("\tfamily = %d, socktype = %d, protocol = %d, "
-		    "address = \"%s\", port = %d",
-		    r->ai_family, r->ai_socktype, r->ai_protocol,
-		    addrstr,
-		    ntohs(socket_get_port (r->ai_addr)));
-	    if (r->ai_canonname)
-		printf (", canonname = \"%s\"", r->ai_canonname);
-	    printf ("\n");
-	}
+        if (inet_ntop (r->ai_family,
+                       socket_get_address (r->ai_addr),
+                       addrstr, sizeof(addrstr)) == NULL) {
+            if (verbose_counter)
+                printf ("\tbad address?\n");
+            continue;
+        }
+        if (verbose_counter) {
+            printf ("\tfamily = %d, socktype = %d, protocol = %d, "
+                    "address = \"%s\", port = %d",
+                    r->ai_family, r->ai_socktype, r->ai_protocol,
+                    addrstr,
+                    ntohs(socket_get_port (r->ai_addr)));
+            if (r->ai_canonname)
+                printf (", canonname = \"%s\"", r->ai_canonname);
+            printf ("\n");
+        }
     }
     freeaddrinfo (res);
 }
@@ -118,33 +118,33 @@ main(int argc, char **argv)
     setprogname (argv[0]);
 
     if (getarg (args, sizeof(args) / sizeof(args[0]), argc, argv,
-		&optidx))
-	usage (1);
+                &optidx))
+        usage (1);
 
     if (help_flag)
-	usage (0);
+        usage (0);
 
     if (version_flag) {
-	fprintf (stderr, "%s from %s-%s\n", getprogname(), PACKAGE, VERSION);
-	return 0;
+        fprintf (stderr, "%s from %s-%s\n", getprogname(), PACKAGE, VERSION);
+        return 0;
     }
 
     if (rk_SOCK_INIT())
-	errx(1, "Failed to initialize sockets (%s)", strerror(rk_SOCK_ERRNO));
+        errx(1, "Failed to initialize sockets (%s)", strerror(rk_SOCK_ERRNO));
 
     argc -= optidx;
     argv += optidx;
 
     if (argc % 2 != 0)
-	usage (1);
+        usage (1);
 
     for (i = 0; i < argc; i += 2) {
-	const char *nodename = argv[i];
+        const char *nodename = argv[i];
 
-	if (strcmp (nodename, "null") == 0)
-	    nodename = NULL;
+        if (strcmp (nodename, "null") == 0)
+            nodename = NULL;
 
-	doit (nodename, argv[i+1]);
+        doit (nodename, argv[i+1]);
     }
     rk_SOCK_EXIT();
     return 0;

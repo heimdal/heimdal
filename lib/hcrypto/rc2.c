@@ -83,16 +83,16 @@ RC2_set_key(RC2_KEY *key, int len, const unsigned char *data, int bits)
     int j, T8, TM;
 
     if (len <= 0)
-	abort();
+        abort();
     if (len > 128)
-	len = 128;
+        len = 128;
     if (bits <= 0 || bits > 1024)
-	bits = 1024;
+        bits = 1024;
 
     for (j = 0; j < len; j++)
-	k[j] = data[j];
+        k[j] = data[j];
     for (; j < 128; j++)
-	k[j] = Sbox[(k[j - len] + k[j - 1]) & 0xff];
+        k[j] = Sbox[(k[j - len] + k[j - 1]) & 0xff];
 
     T8 = (bits + 7) / 8;
     j = (8*T8 - bits);
@@ -101,10 +101,10 @@ RC2_set_key(RC2_KEY *key, int len, const unsigned char *data, int bits)
     k[128 - T8] = Sbox[k[128 - T8] & TM];
 
     for (j = 127 - T8; j >= 0; j--)
-	k[j] = Sbox[k[j + 1] ^ k[j + T8]];
+        k[j] = Sbox[k[j + 1] ^ k[j + T8]];
 
     for (j = 0; j < 64; j++)
-	key->data[j] = k[(j * 2) + 0] | (k[(j * 2) + 1] << 8);
+        key->data[j] = k[(j * 2) + 0] | (k[(j * 2) + 1] << 8);
     memset_s(k, sizeof(k), 0, sizeof(k));
 }
 
@@ -124,21 +124,21 @@ RC2_encryptc(unsigned char *in, unsigned char *out, const RC2_KEY *key)
     w3 = in[6] | (in[7] << 8);
 
     for (i = 0; i < 16; i++) {
-	j = i * 4;
-	t0 = (w0 + (w1 & ~w3) + (w2 & w3) + key->data[j + 0]) & 0xffff;
-	w0 = ROT16L(t0, 1);
-	t1 = (w1 + (w2 & ~w0) + (w3 & w0) + key->data[j + 1]) & 0xffff;
-	w1 = ROT16L(t1, 2);
-	t2 = (w2 + (w3 & ~w1) + (w0 & w1) + key->data[j + 2]) & 0xffff;
-	w2 = ROT16L(t2, 3);
-	t3 = (w3 + (w0 & ~w2) + (w1 & w2) + key->data[j + 3]) & 0xffff;
-	w3 = ROT16L(t3, 5);
-	if(i == 4 || i == 10) {
-	    w0 += key->data[w3 & 63];
-	    w1 += key->data[w0 & 63];
-	    w2 += key->data[w1 & 63];
-	    w3 += key->data[w2 & 63];
-	}
+        j = i * 4;
+        t0 = (w0 + (w1 & ~w3) + (w2 & w3) + key->data[j + 0]) & 0xffff;
+        w0 = ROT16L(t0, 1);
+        t1 = (w1 + (w2 & ~w0) + (w3 & w0) + key->data[j + 1]) & 0xffff;
+        w1 = ROT16L(t1, 2);
+        t2 = (w2 + (w3 & ~w1) + (w0 & w1) + key->data[j + 2]) & 0xffff;
+        w2 = ROT16L(t2, 3);
+        t3 = (w3 + (w0 & ~w2) + (w1 & w2) + key->data[j + 3]) & 0xffff;
+        w3 = ROT16L(t3, 5);
+        if(i == 4 || i == 10) {
+            w0 += key->data[w3 & 63];
+            w1 += key->data[w0 & 63];
+            w2 += key->data[w1 & 63];
+            w3 += key->data[w2 & 63];
+        }
     }
 
     out[0] = w0 & 0xff;
@@ -164,23 +164,23 @@ RC2_decryptc(unsigned char *in, unsigned char *out, const RC2_KEY *key)
     w3 = in[6] | (in[7] << 8);
 
     for (i = 15; i >= 0; i--) {
-	j = i * 4;
+        j = i * 4;
 
-	if(i == 4 || i == 10) {
-	    w3 = (w3 - key->data[w2 & 63]) & 0xffff;
-	    w2 = (w2 - key->data[w1 & 63]) & 0xffff;
-	    w1 = (w1 - key->data[w0 & 63]) & 0xffff;
-	    w0 = (w0 - key->data[w3 & 63]) & 0xffff;
-	}
+        if(i == 4 || i == 10) {
+            w3 = (w3 - key->data[w2 & 63]) & 0xffff;
+            w2 = (w2 - key->data[w1 & 63]) & 0xffff;
+            w1 = (w1 - key->data[w0 & 63]) & 0xffff;
+            w0 = (w0 - key->data[w3 & 63]) & 0xffff;
+        }
 
-	t3 = ROT16R(w3, 5);
-	w3 = (t3 - (w0 & ~w2) - (w1 & w2) - key->data[j + 3]) & 0xffff;
-	t2 = ROT16R(w2, 3);
-	w2 = (t2 - (w3 & ~w1) - (w0 & w1) - key->data[j + 2]) & 0xffff;
-	t1 = ROT16R(w1, 2);
-	w1 = (t1 - (w2 & ~w0) - (w3 & w0) - key->data[j + 1]) & 0xffff;
-	t0 = ROT16R(w0, 1);
-	w0 = (t0 - (w1 & ~w3) - (w2 & w3) - key->data[j + 0]) & 0xffff;
+        t3 = ROT16R(w3, 5);
+        w3 = (t3 - (w0 & ~w2) - (w1 & w2) - key->data[j + 3]) & 0xffff;
+        t2 = ROT16R(w2, 3);
+        w2 = (t2 - (w3 & ~w1) - (w0 & w1) - key->data[j + 2]) & 0xffff;
+        t1 = ROT16R(w1, 2);
+        w1 = (t1 - (w2 & ~w0) - (w3 & w0) - key->data[j + 1]) & 0xffff;
+        t0 = ROT16R(w0, 1);
+        w0 = (t0 - (w1 & ~w3) - (w2 & w3) - key->data[j + 0]) & 0xffff;
 
     }
     out[0] = w0 & 0xff;
@@ -195,46 +195,46 @@ RC2_decryptc(unsigned char *in, unsigned char *out, const RC2_KEY *key)
 
 void
 RC2_cbc_encrypt(const unsigned char *in, unsigned char *out, long size,
-		RC2_KEY *key, unsigned char *iv, int forward_encrypt)
+                RC2_KEY *key, unsigned char *iv, int forward_encrypt)
 {
     unsigned char tmp[RC2_BLOCK_SIZE];
     int i;
 
     if (forward_encrypt) {
-	while (size >= RC2_BLOCK_SIZE) {
-	    for (i = 0; i < RC2_BLOCK_SIZE; i++)
-		tmp[i] = in[i] ^ iv[i];
-	    RC2_encryptc(tmp, out, key);
-	    memcpy(iv, out, RC2_BLOCK_SIZE);
-	    size -= RC2_BLOCK_SIZE;
-	    in += RC2_BLOCK_SIZE;
-	    out += RC2_BLOCK_SIZE;
-	}
-	if (size) {
-	    for (i = 0; i < size; i++)
-		tmp[i] = in[i] ^ iv[i];
-	    for (i = size; i < RC2_BLOCK_SIZE; i++)
-		tmp[i] = iv[i];
-	    RC2_encryptc(tmp, out, key);
-	    memcpy(iv, out, RC2_BLOCK_SIZE);
-	}
+        while (size >= RC2_BLOCK_SIZE) {
+            for (i = 0; i < RC2_BLOCK_SIZE; i++)
+                tmp[i] = in[i] ^ iv[i];
+            RC2_encryptc(tmp, out, key);
+            memcpy(iv, out, RC2_BLOCK_SIZE);
+            size -= RC2_BLOCK_SIZE;
+            in += RC2_BLOCK_SIZE;
+            out += RC2_BLOCK_SIZE;
+        }
+        if (size) {
+            for (i = 0; i < size; i++)
+                tmp[i] = in[i] ^ iv[i];
+            for (i = size; i < RC2_BLOCK_SIZE; i++)
+                tmp[i] = iv[i];
+            RC2_encryptc(tmp, out, key);
+            memcpy(iv, out, RC2_BLOCK_SIZE);
+        }
     } else {
-	while (size >= RC2_BLOCK_SIZE) {
-	    memcpy(tmp, in, RC2_BLOCK_SIZE);
-	    RC2_decryptc(tmp, out, key);
-	    for (i = 0; i < RC2_BLOCK_SIZE; i++)
-		out[i] ^= iv[i];
-	    memcpy(iv, tmp, RC2_BLOCK_SIZE);
-	    size -= RC2_BLOCK_SIZE;
-	    in += RC2_BLOCK_SIZE;
-	    out += RC2_BLOCK_SIZE;
-	}
-	if (size) {
-	    memcpy(tmp, in, RC2_BLOCK_SIZE);
-	    RC2_decryptc(tmp, out, key);
-	    for (i = 0; i < size; i++)
-		out[i] ^= iv[i];
-	    memcpy(iv, tmp, RC2_BLOCK_SIZE);
-	}
+        while (size >= RC2_BLOCK_SIZE) {
+            memcpy(tmp, in, RC2_BLOCK_SIZE);
+            RC2_decryptc(tmp, out, key);
+            for (i = 0; i < RC2_BLOCK_SIZE; i++)
+                out[i] ^= iv[i];
+            memcpy(iv, tmp, RC2_BLOCK_SIZE);
+            size -= RC2_BLOCK_SIZE;
+            in += RC2_BLOCK_SIZE;
+            out += RC2_BLOCK_SIZE;
+        }
+        if (size) {
+            memcpy(tmp, in, RC2_BLOCK_SIZE);
+            RC2_decryptc(tmp, out, key);
+            for (i = 0; i < size; i++)
+                out[i] ^= iv[i];
+            memcpy(iv, tmp, RC2_BLOCK_SIZE);
+        }
     }
 }

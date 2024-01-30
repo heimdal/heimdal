@@ -49,9 +49,9 @@ static void
 usage (int ret)
 {
     arg_printusage (args,
-		    sizeof(args)/sizeof(*args),
-		    NULL,
-		    "[principal]");
+                    sizeof(args)/sizeof(*args),
+                    NULL,
+                    "[principal]");
     exit (ret);
 }
 
@@ -69,47 +69,47 @@ main(int argc, char **argv)
     setprogname(argv[0]);
 
     if(getarg(args, sizeof(args) / sizeof(args[0]), argc, argv, &optidx))
-	usage(1);
+        usage(1);
 
     if (help_flag)
-	usage (0);
+        usage (0);
 
     if(version_flag){
-	print_version(NULL);
-	exit(0);
+        print_version(NULL);
+        exit(0);
     }
 
     argc -= optidx;
     argv += optidx;
 
     if (argc > 0)
-	in_tkt_service = argv[0];
+        in_tkt_service = argv[0];
 
     memset(&out, 0, sizeof(out));
 
     ret = krb5_init_context(&context);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_init_context");
+        krb5_err(context, 1, ret, "krb5_init_context");
 
     ret = krb5_cc_default(context, &id);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_cc_default");
+        krb5_err(context, 1, ret, "krb5_cc_default");
 
     ret = krb5_cc_get_principal(context, id, &client);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_cc_default");
+        krb5_err(context, 1, ret, "krb5_cc_default");
 
     ret = krb5_get_renewed_creds(context,
-				 &out,
-				 client,
-				 id,
-				 in_tkt_service);
+                                 &out,
+                                 client,
+                                 id,
+                                 in_tkt_service);
 
     if(ret)
-	krb5_err(context, 1, ret, "krb5_get_renewed_creds");
+        krb5_err(context, 1, ret, "krb5_get_renewed_creds");
 
     if (krb5_principal_compare(context, out.client, client) != TRUE)
-	krb5_errx(context, 1, "return principal is not as expected");
+        krb5_errx(context, 1, "return principal is not as expected");
 
     krb5_free_cred_contents(context, &out);
 

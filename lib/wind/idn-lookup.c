@@ -74,38 +74,38 @@ lookup(const char *name)
     uint32_t *norm;
 
     if (u_len == 0)
-	return;
+        return;
 
     u = calloc(u_len, sizeof(uint32_t));
     if (u == NULL && u_len != 0)
-	errx(1, "malloc failed");
+        errx(1, "malloc failed");
     norm = calloc(norm_len, sizeof(uint32_t));
     if (norm == NULL && norm_len != 0)
-	errx(1, "malloc failed");
+        errx(1, "malloc failed");
 
     ret = wind_utf8ucs4(name, u, &u_len);
     if (ret)
-	errx(1, "utf8 conversion failed");
+        errx(1, "utf8 conversion failed");
     ret = wind_stringprep(u, u_len, norm, &norm_len, WIND_PROFILE_NAME);
     if (ret)
-	errx(1, "stringprep failed");
+        errx(1, "stringprep failed");
     free(u);
 
     ep = encoded;
     for (i = 0; i < norm_len; ++i) {
-	unsigned j;
-	size_t len;
+        unsigned j;
+        size_t len;
 
-	for (j = i; j < norm_len && !is_separator(norm[j]); ++j)
-	    ;
-	len = sizeof(encoded) - (ep - encoded);
-	ret = wind_punycode_label_toascii(norm + i, j - i, ep, &len);
-	if (ret)
-	    errx(1, "punycode failed");
+        for (j = i; j < norm_len && !is_separator(norm[j]); ++j)
+            ;
+        len = sizeof(encoded) - (ep - encoded);
+        ret = wind_punycode_label_toascii(norm + i, j - i, ep, &len);
+        if (ret)
+            errx(1, "punycode failed");
 
-	ep += len;
-	*ep++ = '.';
-	i = j;
+        ep += len;
+        *ep++ = '.';
+        i = j;
     }
     *ep = '\0';
     free(norm);
@@ -116,7 +116,7 @@ lookup(const char *name)
     hints.ai_flags = AI_CANONNAME;
     ret = getaddrinfo(encoded, NULL, &hints, &ai);
     if(ret)
-	errx(1, "getaddrinfo failed: %s", gai_strerror(ret));
+        errx(1, "getaddrinfo failed: %s", gai_strerror(ret));
     printf("canonical-name: %s\n", ai->ai_canonname);
     freeaddrinfo(ai);
 }
@@ -132,7 +132,7 @@ static void
 usage (int ret)
 {
     arg_printusage(args, sizeof(args)/sizeof(args[0]), NULL,
-		   "dns-names ...");
+                   "dns-names ...");
     exit (ret);
 }
 
@@ -145,23 +145,23 @@ main(int argc, char **argv)
     setprogname (argv[0]);
 
     if(getarg(args, sizeof(args) / sizeof(args[0]), argc, argv, &optidx))
-	usage(1);
+        usage(1);
 
     if (help_flag)
-	usage (0);
+        usage (0);
 
     if(version_flag){
-	print_version(NULL);
-	exit(0);
+        print_version(NULL);
+        exit(0);
     }
 
     argc -= optidx;
     argv += optidx;
 
     if (argc == 0)
-	usage(1);
+        usage(1);
 
     for (i = 0; i < argc; ++i)
-	lookup(argv[i]);
+        lookup(argv[i]);
     return 0;
 }

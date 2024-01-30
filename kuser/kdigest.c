@@ -56,7 +56,7 @@ static void
 usage (int ret)
 {
     arg_printusage (args, sizeof(args)/sizeof(*args),
-		    NULL, "");
+                    NULL, "");
     exit (ret);
 }
 
@@ -64,7 +64,7 @@ static krb5_context context;
 
 int
 digest_probe(struct digest_probe_options *opt,
-	     int argc, char ** argv)
+             int argc, char ** argv)
 {
     krb5_error_code ret;
     krb5_realm realm;
@@ -73,11 +73,11 @@ digest_probe(struct digest_probe_options *opt,
     realm = opt->realm_string;
 
     if (realm == NULL)
-	errx(1, "realm missing");
+        errx(1, "realm missing");
 
     ret = krb5_digest_probe(context, realm, id, &flags);
     if (ret)
-	krb5_err(context, 1, ret, "digest_probe");
+        krb5_err(context, 1, ret, "digest_probe");
 
     printf("flags: %u\n", flags);
 
@@ -86,40 +86,40 @@ digest_probe(struct digest_probe_options *opt,
 
 int
 digest_server_init(struct digest_server_init_options *opt,
-		   int argc, char ** argv)
+                   int argc, char ** argv)
 {
     krb5_error_code ret;
     krb5_digest digest;
 
     ret = krb5_digest_alloc(context, &digest);
     if (ret)
-	krb5_err(context, 1, ret, "digest_alloc");
+        krb5_err(context, 1, ret, "digest_alloc");
 
     ret = krb5_digest_set_type(context, digest, opt->type_string);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_digest_set_type");
+        krb5_err(context, 1, ret, "krb5_digest_set_type");
 
     if (opt->cb_type_string && opt->cb_value_string) {
-	ret = krb5_digest_set_server_cb(context, digest,
-					opt->cb_type_string,
-					opt->cb_value_string);
-	if (ret)
-	    krb5_err(context, 1, ret, "krb5_digest_set_server_cb");
+        ret = krb5_digest_set_server_cb(context, digest,
+                                        opt->cb_type_string,
+                                        opt->cb_value_string);
+        if (ret)
+            krb5_err(context, 1, ret, "krb5_digest_set_server_cb");
     }
     ret = krb5_digest_init_request(context,
-				   digest,
-				   opt->kerberos_realm_string,
-				   id);
+                                   digest,
+                                   opt->kerberos_realm_string,
+                                   id);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_digest_init_request");
+        krb5_err(context, 1, ret, "krb5_digest_init_request");
 
     printf("type=%s\n", opt->type_string);
     printf("server-nonce=%s\n",
-	   krb5_digest_get_server_nonce(context, digest));
+           krb5_digest_get_server_nonce(context, digest));
     {
-	const char *s = krb5_digest_get_identifier(context, digest);
-	if (s)
-	    printf("identifier=%s\n", s);
+        const char *s = krb5_digest_get_identifier(context, digest);
+        if (s)
+            printf("identifier=%s\n", s);
     }
     printf("opaque=%s\n", krb5_digest_get_opaque(context, digest));
 
@@ -130,7 +130,7 @@ digest_server_init(struct digest_server_init_options *opt,
 
 int
 digest_server_request(struct digest_server_request_options *opt,
-		      int argc, char **argv)
+                      int argc, char **argv)
 {
     krb5_error_code ret;
     krb5_digest digest;
@@ -138,83 +138,83 @@ digest_server_request(struct digest_server_request_options *opt,
     krb5_data session_key;
 
     if (opt->server_nonce_string == NULL)
-	errx(1, "server nonce missing");
+        errx(1, "server nonce missing");
     if (opt->type_string == NULL)
-	errx(1, "type missing");
+        errx(1, "type missing");
     if (opt->opaque_string == NULL)
-	errx(1, "opaque missing");
+        errx(1, "opaque missing");
     if (opt->client_response_string == NULL)
-	errx(1, "client response missing");
+        errx(1, "client response missing");
 
     ret = krb5_digest_alloc(context, &digest);
     if (ret)
-	krb5_err(context, 1, ret, "digest_alloc");
+        krb5_err(context, 1, ret, "digest_alloc");
 
     if (strcasecmp(opt->type_string, "CHAP") == 0) {
-	if (opt->server_identifier_string == NULL)
-	    errx(1, "server identifier missing");
+        if (opt->server_identifier_string == NULL)
+            errx(1, "server identifier missing");
 
-	ret = krb5_digest_set_identifier(context, digest,
-					 opt->server_identifier_string);
-	if (ret)
-	    krb5_err(context, 1, ret, "krb5_digest_set_type");
+        ret = krb5_digest_set_identifier(context, digest,
+                                         opt->server_identifier_string);
+        if (ret)
+            krb5_err(context, 1, ret, "krb5_digest_set_type");
     }
 
     ret = krb5_digest_set_type(context, digest, opt->type_string);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_digest_set_type");
+        krb5_err(context, 1, ret, "krb5_digest_set_type");
 
     ret = krb5_digest_set_username(context, digest, opt->username_string);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_digest_set_username");
+        krb5_err(context, 1, ret, "krb5_digest_set_username");
 
     ret = krb5_digest_set_server_nonce(context, digest,
-				       opt->server_nonce_string);
+                                       opt->server_nonce_string);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_digest_set_server_nonce");
+        krb5_err(context, 1, ret, "krb5_digest_set_server_nonce");
 
     if(opt->client_nonce_string) {
-	ret = krb5_digest_set_client_nonce(context, digest,
-					   opt->client_nonce_string);
-	if (ret)
-	    krb5_err(context, 1, ret, "krb5_digest_set_client_nonce");
+        ret = krb5_digest_set_client_nonce(context, digest,
+                                           opt->client_nonce_string);
+        if (ret)
+            krb5_err(context, 1, ret, "krb5_digest_set_client_nonce");
     }
 
 
     ret = krb5_digest_set_opaque(context, digest, opt->opaque_string);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_digest_set_opaque");
+        krb5_err(context, 1, ret, "krb5_digest_set_opaque");
 
     ret = krb5_digest_set_responseData(context, digest,
-				       opt->client_response_string);
+                                       opt->client_response_string);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_digest_set_responseData");
+        krb5_err(context, 1, ret, "krb5_digest_set_responseData");
 
     ret = krb5_digest_request(context, digest,
-			      opt->kerberos_realm_string, id);
+                              opt->kerberos_realm_string, id);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_digest_request");
+        krb5_err(context, 1, ret, "krb5_digest_request");
 
     status = krb5_digest_rep_get_status(context, digest) ? "ok" : "failed";
     rsp = krb5_digest_get_rsp(context, digest);
 
     printf("status=%s\n", status);
     if (rsp)
-	printf("rsp=%s\n", rsp);
+        printf("rsp=%s\n", rsp);
     printf("tickets=no\n");
 
     ret = krb5_digest_get_session_key(context, digest, &session_key);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_digest_get_session_key");
+        krb5_err(context, 1, ret, "krb5_digest_get_session_key");
 
     if (session_key.length) {
-	char *key;
-	hex_encode(session_key.data, session_key.length, &key);
-	if (key == NULL)
-	    krb5_errx(context, 1, "hex_encode");
-	krb5_data_free(&session_key);
-	printf("session-key=%s\n", key);
-	free(key);
+        char *key;
+        hex_encode(session_key.data, session_key.length, &key);
+        if (key == NULL)
+            krb5_errx(context, 1, "hex_encode");
+        krb5_data_free(&session_key);
+        printf("session-key=%s\n", key);
+        free(key);
     }
 
     krb5_digest_free(digest);
@@ -224,8 +224,8 @@ digest_server_request(struct digest_server_request_options *opt,
 
 static void
 client_chap(const void *server_nonce, size_t snoncelen,
-	    unsigned char server_identifier,
-	    const char *password)
+            unsigned char server_identifier,
+            const char *password)
 {
     EVP_MD_CTX *ctx;
     unsigned char md[MD5_DIGEST_LENGTH];
@@ -268,9 +268,9 @@ static const unsigned char ms_rfc3079_magic1[27] = {
 
 static void
 client_mschapv2(const void *server_nonce, size_t snoncelen,
-		const void *client_nonce, size_t cnoncelen,
-		const char *username,
-		const char *password)
+                const void *client_nonce, size_t cnoncelen,
+                const char *username,
+                const char *password)
 {
     EVP_MD_CTX *hctx, *ctx;
     unsigned char md[SHA_DIGEST_LENGTH], challenge[SHA_DIGEST_LENGTH];
@@ -292,8 +292,8 @@ client_mschapv2(const void *server_nonce, size_t snoncelen,
     EVP_DigestInit_ex(hctx, EVP_md4(), NULL);
     len = strlen(password);
     for (i = 0; i < len; i++) {
-	EVP_DigestUpdate(hctx, &password[i], 1);
-	EVP_DigestUpdate(hctx, &password[len], 1);
+        EVP_DigestUpdate(hctx, &password[i], 1);
+        EVP_DigestUpdate(hctx, &password[len], 1);
     }
     EVP_DigestFinal_ex(hctx, hmd, NULL);
 
@@ -301,7 +301,7 @@ client_mschapv2(const void *server_nonce, size_t snoncelen,
     /* ChallengeResponse */
     ret = heim_ntlm_calculate_ntlm1(hmd, sizeof(hmd), md, &answer);
     if (ret)
-	errx(1, "heim_ntlm_calculate_ntlm1");
+        errx(1, "heim_ntlm_calculate_ntlm1");
 
     hex_encode(answer.data, answer.length, &h);
     printf("responseData=%s\n", h);
@@ -357,68 +357,68 @@ client_mschapv2(const void *server_nonce, size_t snoncelen,
 
 int
 digest_client_request(struct digest_client_request_options *opt,
-		      int argc, char **argv)
+                      int argc, char **argv)
 {
     char *server_nonce, *client_nonce = NULL, server_identifier;
     ssize_t snoncelen, cnoncelen = 0;
 
     if (opt->server_nonce_string == NULL)
-	errx(1, "server nonce missing");
+        errx(1, "server nonce missing");
     if (opt->password_string == NULL)
-	errx(1, "password missing");
+        errx(1, "password missing");
 
     if (opt->opaque_string == NULL)
-	errx(1, "opaque missing");
+        errx(1, "opaque missing");
 
     snoncelen = strlen(opt->server_nonce_string);
     server_nonce = malloc(snoncelen);
     if (server_nonce == NULL)
-	errx(1, "server_nonce");
+        errx(1, "server_nonce");
 
     snoncelen = hex_decode(opt->server_nonce_string, server_nonce, snoncelen);
     if (snoncelen <= 0)
-	errx(1, "server nonce wrong");
+        errx(1, "server nonce wrong");
 
     if (opt->client_nonce_string) {
-	cnoncelen = strlen(opt->client_nonce_string);
-	client_nonce = malloc(cnoncelen);
-	if (client_nonce == NULL)
-	    errx(1, "client_nonce");
+        cnoncelen = strlen(opt->client_nonce_string);
+        client_nonce = malloc(cnoncelen);
+        if (client_nonce == NULL)
+            errx(1, "client_nonce");
 
-	cnoncelen = hex_decode(opt->client_nonce_string,
-			       client_nonce, cnoncelen);
-	if (cnoncelen <= 0)
-	    errx(1, "client nonce wrong");
+        cnoncelen = hex_decode(opt->client_nonce_string,
+                               client_nonce, cnoncelen);
+        if (cnoncelen <= 0)
+            errx(1, "client nonce wrong");
     }
 
     if (opt->server_identifier_string) {
-	int ret;
+        int ret;
 
-	ret = hex_decode(opt->server_identifier_string, &server_identifier, 1);
-	if (ret != 1)
-	    errx(1, "server identifier wrong length");
+        ret = hex_decode(opt->server_identifier_string, &server_identifier, 1);
+        if (ret != 1)
+            errx(1, "server identifier wrong length");
     }
 
     if (strcasecmp(opt->type_string, "CHAP") == 0) {
-	if (opt->server_identifier_string == NULL)
-	    errx(1, "server identifier missing");
+        if (opt->server_identifier_string == NULL)
+            errx(1, "server identifier missing");
 
-	client_chap(server_nonce, snoncelen, server_identifier,
-		    opt->password_string);
+        client_chap(server_nonce, snoncelen, server_identifier,
+                    opt->password_string);
 
     } else if (strcasecmp(opt->type_string, "MS-CHAP-V2") == 0) {
-	if (opt->client_nonce_string == NULL)
-	    errx(1, "client nonce missing");
-	if (opt->username_string == NULL)
-	    errx(1, "client nonce missing");
+        if (opt->client_nonce_string == NULL)
+            errx(1, "client nonce missing");
+        if (opt->username_string == NULL)
+            errx(1, "client nonce missing");
 
-	client_mschapv2(server_nonce, snoncelen,
-			client_nonce, cnoncelen,
-			opt->username_string,
-			opt->password_string);
+        client_mschapv2(server_nonce, snoncelen,
+                        client_nonce, cnoncelen,
+                        opt->username_string,
+                        opt->password_string);
     }
     if (client_nonce)
-	free(client_nonce);
+        free(client_nonce);
     free(server_nonce);
 
     return 0;
@@ -428,7 +428,7 @@ digest_client_request(struct digest_client_request_options *opt,
 
 int
 ntlm_server_init(struct ntlm_server_init_options *opt,
-		 int argc, char ** argv)
+                 int argc, char ** argv)
 {
     krb5_error_code ret;
     krb5_ntlm ntlm;
@@ -442,17 +442,17 @@ ntlm_server_init(struct ntlm_server_init_options *opt,
 
     ret = krb5_ntlm_alloc(context, &ntlm);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_ntlm_alloc");
+        krb5_err(context, 1, ret, "krb5_ntlm_alloc");
 
     ret = krb5_ntlm_init_request(context,
-				 ntlm,
-				 opt->kerberos_realm_string,
-				 id,
-				 NTLM_NEG_UNICODE|NTLM_NEG_NTLM,
-				 "NUTCRACKER",
-				 "L");
+                                 ntlm,
+                                 opt->kerberos_realm_string,
+                                 id,
+                                 NTLM_NEG_UNICODE|NTLM_NEG_NTLM,
+                                 "NUTCRACKER",
+                                 "L");
     if (ret)
-	krb5_err(context, 1, ret, "krb5_ntlm_init_request");
+        krb5_err(context, 1, ret, "krb5_ntlm_init_request");
 
     /*
      *
@@ -460,16 +460,16 @@ ntlm_server_init(struct ntlm_server_init_options *opt,
 
     ret = krb5_ntlm_init_get_challenge(context, ntlm, &challenge);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_ntlm_init_get_challenge");
+        krb5_err(context, 1, ret, "krb5_ntlm_init_get_challenge");
 
     if (challenge.length != sizeof(type2.challenge))
-	krb5_errx(context, 1, "ntlm challenge have wrong length");
+        krb5_errx(context, 1, "ntlm challenge have wrong length");
     memcpy(type2.challenge, challenge.data, sizeof(type2.challenge));
     krb5_data_free(&challenge);
 
     ret = krb5_ntlm_init_get_flags(context, ntlm, &type2.flags);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_ntlm_init_get_flags");
+        krb5_err(context, 1, ret, "krb5_ntlm_init_get_flags");
 
     krb5_ntlm_init_get_targetname(context, ntlm, &type2.targetname);
     type2.targetinfo.data = zero2;
@@ -477,7 +477,7 @@ ntlm_server_init(struct ntlm_server_init_options *opt,
 
     ret = heim_ntlm_encode_type2(&type2, &data);
     if (ret)
-	krb5_errx(context, 1, "heim_ntlm_encode_type2");
+        krb5_errx(context, 1, "heim_ntlm_encode_type2");
 
     free(type2.targetname);
 
@@ -496,7 +496,7 @@ ntlm_server_init(struct ntlm_server_init_options *opt,
 
     ret = krb5_ntlm_init_get_opaque(context, ntlm, &opaque);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_ntlm_init_get_opaque");
+        krb5_err(context, 1, ret, "krb5_ntlm_init_get_opaque");
 
     rk_base64_encode(opaque.data, opaque.length, &s);
     krb5_data_free(&opaque);
@@ -534,39 +534,39 @@ main(int argc, char **argv)
 
     ret = krb5_init_context (&context);
     if (ret == KRB5_CONFIG_BADFORMAT)
-	errx (1, "krb5_init_context failed to parse configuration file");
+        errx (1, "krb5_init_context failed to parse configuration file");
     else if (ret)
-	errx(1, "krb5_init_context failed: %d", ret);
+        errx(1, "krb5_init_context failed: %d", ret);
 
     if(getarg(args, sizeof(args) / sizeof(args[0]), argc, argv, &optidx))
-	usage(1);
+        usage(1);
 
     if (help_flag)
-	usage (0);
+        usage (0);
 
     if(version_flag){
-	print_version(NULL);
-	exit(0);
+        print_version(NULL);
+        exit(0);
     }
 
     argc -= optidx;
     argv += optidx;
 
     if (argc == 0) {
-	help(NULL, argc, argv);
-	return 1;
+        help(NULL, argc, argv);
+        return 1;
     }
 
     if (ccache_string) {
-	ret = krb5_cc_resolve(context, ccache_string, &id);
-	if (ret)
-	    krb5_err(context, 1, ret, "krb5_cc_resolve");
+        ret = krb5_cc_resolve(context, ccache_string, &id);
+        if (ret)
+            krb5_err(context, 1, ret, "krb5_cc_resolve");
     }
 
     ret = sl_command (commands, argc, argv);
     if (ret == -1) {
-	help(NULL, argc, argv);
-	return 1;
+        help(NULL, argc, argv);
+        return 1;
     }
     return ret;
 }

@@ -34,10 +34,10 @@
 #include "gsskrb5_locl.h"
 
 OM_uint32 GSSAPI_CALLCONV _gsskrb5_duplicate_name (
-            OM_uint32 * minor_status,
-            gss_const_name_t src_name,
-            gss_name_t * dest_name
-           )
+                                                   OM_uint32 * minor_status,
+                                                   gss_const_name_t src_name,
+                                                   gss_name_t * dest_name
+                                                  )
 {
     krb5_const_principal src = (krb5_const_principal)src_name;
     krb5_context context;
@@ -48,11 +48,11 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_duplicate_name (
 
     kret = krb5_copy_principal (context, src, &dest);
     if (kret) {
-	*minor_status = kret;
-	return GSS_S_FAILURE;
+        *minor_status = kret;
+        return GSS_S_FAILURE;
     } else {
-	*dest_name = (gss_name_t)dest;
-	*minor_status = 0;
-	return GSS_S_COMPLETE;
+        *dest_name = (gss_name_t)dest;
+        *minor_status = 0;
+        return GSS_S_COMPLETE;
     }
 }

@@ -67,14 +67,14 @@ rk_strerror_r(int eno, char *strerrbuf, size_t buflen)
     const char *str;
     str = strerror_r(eno, strerrbuf, buflen);
     if (str != strerrbuf)
-	if (strlcpy(strerrbuf, str, buflen) >= buflen)
-	    return ERANGE;
+        if (strlcpy(strerrbuf, str, buflen) >= buflen)
+            return ERANGE;
     return 0;
 #else
     int ret;
     ret = strlcpy(strerrbuf, strerror(eno), buflen);
     if (ret > buflen)
-	return ERANGE;
+        return ERANGE;
     return 0;
 #endif
 }

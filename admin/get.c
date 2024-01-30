@@ -37,9 +37,9 @@ RCSID("$Id$");
 
 static void*
 open_kadmin_connection(char *principal,
-		       const char *realm,
-		       char *admin_server,
-		       int server_port)
+                       const char *realm,
+                       char *admin_server,
+                       int server_port)
 {
     static kadm5_config_params conf;
     krb5_error_code ret;
@@ -47,37 +47,37 @@ open_kadmin_connection(char *principal,
     memset(&conf, 0, sizeof(conf));
 
     if(realm) {
-	conf.realm = strdup(realm);
-	if (conf.realm == NULL) {
-	    krb5_set_error_message(context, 0, "malloc: out of memory");
-	    return NULL;
-	}
-	conf.mask |= KADM5_CONFIG_REALM;
+        conf.realm = strdup(realm);
+        if (conf.realm == NULL) {
+            krb5_set_error_message(context, 0, "malloc: out of memory");
+            return NULL;
+        }
+        conf.mask |= KADM5_CONFIG_REALM;
     }
 
     if (admin_server) {
-	conf.admin_server = admin_server;
-	conf.mask |= KADM5_CONFIG_ADMIN_SERVER;
+        conf.admin_server = admin_server;
+        conf.mask |= KADM5_CONFIG_ADMIN_SERVER;
     }
 
     if (server_port) {
-	conf.kadmind_port = htons(server_port);
-	conf.mask |= KADM5_CONFIG_KADMIND_PORT;
+        conf.kadmind_port = htons(server_port);
+        conf.mask |= KADM5_CONFIG_KADMIND_PORT;
     }
 
     /* should get realm from each principal, instead of doing
        everything with the same (local) realm */
 
     ret = kadm5_init_with_password_ctx(context,
-				       principal,
-				       NULL,
-				       KADM5_ADMIN_SERVICE,
-				       &conf, 0, 0,
-				       &kadm_handle);
+                                       principal,
+                                       NULL,
+                                       KADM5_ADMIN_SERVICE,
+                                       &conf, 0, 0,
+                                       &kadm_handle);
     free(conf.realm);
     if(ret) {
-	krb5_warn(context, ret, "kadm5_init_with_password");
-	return NULL;
+        krb5_warn(context, ret, "kadm5_init_with_password");
+        return NULL;
     }
     return kadm_handle;
 }
@@ -109,7 +109,7 @@ parse_enctypes(struct get_options *opt,
             free(s);
             return krb5_enomem(context);
         }
-	free(s);
+        free(s);
         s = tmp;
     }
     ret = krb5_string_to_keysalts2(context, s, nks, ks);
@@ -155,48 +155,48 @@ kt_get(struct get_options *opt, int argc, char **argv)
 
     if((keytab = ktutil_open_keytab()) == NULL) {
         free(ks);
-	return 1;
+        return 1;
     }
 
     if(opt->realm_string)
-	krb5_set_default_realm(context, opt->realm_string);
+        krb5_set_default_realm(context, opt->realm_string);
 
     for(a = 0; a < argc; a++){
-	krb5_principal princ_ent;
-	kadm5_principal_ent_rec princ;
-	int mask = 0;
-	krb5_keyblock *keys;
-	int n_keys = 0;
-	int created = 0;
-	krb5_keytab_entry entry;
+        krb5_principal princ_ent;
+        kadm5_principal_ent_rec princ;
+        int mask = 0;
+        krb5_keyblock *keys;
+        int n_keys = 0;
+        int created = 0;
+        krb5_keytab_entry entry;
 
-	ret = krb5_parse_name(context, argv[a], &princ_ent);
-	if (ret) {
-	    krb5_warn(context, ret, "can't parse principal %s", argv[a]);
-	    failed++;
-	    continue;
-	}
-	memset(&princ, 0, sizeof(princ));
-	princ.principal = princ_ent;
-	mask |= KADM5_PRINCIPAL;
-	princ.attributes |= KRB5_KDB_DISALLOW_ALL_TIX;
-	mask |= KADM5_ATTRIBUTES;
-	princ.princ_expire_time = 0;
-	mask |= KADM5_PRINC_EXPIRE_TIME;
+        ret = krb5_parse_name(context, argv[a], &princ_ent);
+        if (ret) {
+            krb5_warn(context, ret, "can't parse principal %s", argv[a]);
+            failed++;
+            continue;
+        }
+        memset(&princ, 0, sizeof(princ));
+        princ.principal = princ_ent;
+        mask |= KADM5_PRINCIPAL;
+        princ.attributes |= KRB5_KDB_DISALLOW_ALL_TIX;
+        mask |= KADM5_ATTRIBUTES;
+        princ.princ_expire_time = 0;
+        mask |= KADM5_PRINC_EXPIRE_TIME;
 
-	if(kadm_handle == NULL) {
-	    const char *r;
-	    if(opt->realm_string != NULL)
-		r = opt->realm_string;
-	    else
-		r = krb5_principal_get_realm(context, princ_ent);
-	    kadm_handle = open_kadmin_connection(opt->principal_string,
-						 r,
-						 opt->admin_server_string,
-						 opt->server_port_integer);
-	    if(kadm_handle == NULL)
-		break;
-	}
+        if(kadm_handle == NULL) {
+            const char *r;
+            if(opt->realm_string != NULL)
+                r = opt->realm_string;
+            else
+                r = krb5_principal_get_realm(context, princ_ent);
+            kadm_handle = open_kadmin_connection(opt->principal_string,
+                                                 r,
+                                                 opt->admin_server_string,
+                                                 opt->server_port_integer);
+            if(kadm_handle == NULL)
+                break;
+        }
 
         if (opt->create_flag) {
             ret = kadm5_create_principal(kadm_handle, &princ, mask, "thisIs_aUseless.password123");
@@ -220,34 +220,34 @@ kt_get(struct get_options *opt, int argc, char **argv)
             }
         }
 
-	ret = kadm5_get_principal(kadm_handle, princ_ent, &princ,
-			      KADM5_PRINCIPAL | KADM5_KVNO | KADM5_ATTRIBUTES);
-	if (ret) {
-	    krb5_warn(context, ret, "kadm5_get_principal(%s)", argv[a]);
-	    for (j = 0; j < n_keys; j++)
-		krb5_free_keyblock_contents(context, &keys[j]);
-	    krb5_free_principal(context, princ_ent);
-	    failed++;
-	    continue;
-	}
-	if(!created && (princ.attributes & KRB5_KDB_DISALLOW_ALL_TIX))
-	    krb5_warnx(context, "%s: disallow-all-tix flag set - clearing", argv[a]);
-	princ.attributes &= (~KRB5_KDB_DISALLOW_ALL_TIX);
-	mask = KADM5_ATTRIBUTES;
-	if(created) {
-	    princ.kvno = 1;
-	    mask |= KADM5_KVNO;
-	}
-	ret = kadm5_modify_principal(kadm_handle, &princ, mask);
-	if (ret) {
-	    krb5_warn(context, ret, "kadm5_modify_principal(%s)", argv[a]);
-	    for (j = 0; j < n_keys; j++)
-		krb5_free_keyblock_contents(context, &keys[j]);
-	    krb5_free_principal(context, princ_ent);
-	    failed++;
-	    continue;
-	}
-	for(j = 0; j < n_keys; j++) {
+        ret = kadm5_get_principal(kadm_handle, princ_ent, &princ,
+                              KADM5_PRINCIPAL | KADM5_KVNO | KADM5_ATTRIBUTES);
+        if (ret) {
+            krb5_warn(context, ret, "kadm5_get_principal(%s)", argv[a]);
+            for (j = 0; j < n_keys; j++)
+                krb5_free_keyblock_contents(context, &keys[j]);
+            krb5_free_principal(context, princ_ent);
+            failed++;
+            continue;
+        }
+        if(!created && (princ.attributes & KRB5_KDB_DISALLOW_ALL_TIX))
+            krb5_warnx(context, "%s: disallow-all-tix flag set - clearing", argv[a]);
+        princ.attributes &= (~KRB5_KDB_DISALLOW_ALL_TIX);
+        mask = KADM5_ATTRIBUTES;
+        if(created) {
+            princ.kvno = 1;
+            mask |= KADM5_KVNO;
+        }
+        ret = kadm5_modify_principal(kadm_handle, &princ, mask);
+        if (ret) {
+            krb5_warn(context, ret, "kadm5_modify_principal(%s)", argv[a]);
+            for (j = 0; j < n_keys; j++)
+                krb5_free_keyblock_contents(context, &keys[j]);
+            krb5_free_principal(context, princ_ent);
+            failed++;
+            continue;
+        }
+        for(j = 0; j < n_keys; j++) {
             entry.principal = princ_ent;
             entry.vno = princ.kvno;
             entry.keyblock = keys[j];
@@ -255,14 +255,14 @@ kt_get(struct get_options *opt, int argc, char **argv)
             ret = krb5_kt_add_entry(context, keytab, &entry);
             if (ret)
                 krb5_warn(context, ret, "krb5_kt_add_entry");
-	    krb5_free_keyblock_contents(context, &keys[j]);
-	}
+            krb5_free_keyblock_contents(context, &keys[j]);
+        }
 
-	kadm5_free_principal_ent(kadm_handle, &princ);
-	krb5_free_principal(context, princ_ent);
+        kadm5_free_principal_ent(kadm_handle, &princ);
+        krb5_free_principal(context, princ_ent);
     }
     if (kadm_handle)
-	kadm5_destroy(kadm_handle);
+        kadm5_destroy(kadm_handle);
     krb5_kt_close(context, keytab);
     free(ks);
     return ret != 0 || failed > 0;

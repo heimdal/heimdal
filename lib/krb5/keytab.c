@@ -99,27 +99,27 @@ main (int argc, char **argv)
     char *principal;
 
     if (krb5_init_context (&context) != 0)
-	errx(1, "krb5_context");
+        errx(1, "krb5_context");
 
     ret = krb5_kt_default (context, &keytab);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_kt_default");
+        krb5_err(context, 1, ret, "krb5_kt_default");
 
     ret = krb5_kt_start_seq_get(context, keytab, &cursor);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_kt_start_seq_get");
+        krb5_err(context, 1, ret, "krb5_kt_start_seq_get");
     while((ret = krb5_kt_next_entry(context, keytab, &entry, &cursor)) == 0){
-	krb5_unparse_name(context, entry.principal, &principal);
-	printf("principal: %s\n", principal);
-	free(principal);
-	krb5_kt_free_entry(context, &entry);
+        krb5_unparse_name(context, entry.principal, &principal);
+        printf("principal: %s\n", principal);
+        free(principal);
+        krb5_kt_free_entry(context, &entry);
     }
     ret = krb5_kt_end_seq_get(context, keytab, &cursor);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_kt_end_seq_get");
+        krb5_err(context, 1, ret, "krb5_kt_end_seq_get");
     ret = krb5_kt_close(context, keytab);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_kt_close");
+        krb5_err(context, 1, ret, "krb5_kt_close");
     krb5_free_context(context);
     return 0;
 }
@@ -141,22 +141,22 @@ main (int argc, char **argv)
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_kt_register(krb5_context context,
-		 const krb5_kt_ops *ops)
+                 const krb5_kt_ops *ops)
 {
     struct krb5_keytab_data *tmp;
 
     if (strlen(ops->prefix) > KRB5_KT_PREFIX_MAX_LEN - 1) {
-	krb5_set_error_message(context, KRB5_KT_BADNAME,
-			       N_("can't register cache type, prefix too long", ""));
-	return KRB5_KT_BADNAME;
+        krb5_set_error_message(context, KRB5_KT_BADNAME,
+                               N_("can't register cache type, prefix too long", ""));
+        return KRB5_KT_BADNAME;
     }
 
     tmp = realloc(context->kt_types,
-		  (context->num_kt_types + 1) * sizeof(*context->kt_types));
+                  (context->num_kt_types + 1) * sizeof(*context->kt_types));
     if(tmp == NULL)
-	return krb5_enomem(context);
+        return krb5_enomem(context);
     memcpy(&tmp[context->num_kt_types], ops,
-	   sizeof(tmp[context->num_kt_types]));
+           sizeof(tmp[context->num_kt_types]));
     context->kt_types = tmp;
     context->num_kt_types++;
     return 0;
@@ -170,7 +170,7 @@ keytab_name(const char *name, const char **type, size_t *type_len)
     residual = strchr(name, ':');
 
     if (residual == NULL ||
-	ISPATHSEP(name[0])
+        ISPATHSEP(name[0])
 #ifdef _WIN32
         /* Avoid treating <drive>:<path> as a keytab type
          * specification */
@@ -206,8 +206,8 @@ keytab_name(const char *name, const char **type, size_t *type_len)
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_kt_resolve(krb5_context context,
-		const char *name,
-		krb5_keytab *id)
+                const char *name,
+                krb5_keytab *id)
 {
     krb5_keytab k;
     int i;
@@ -218,25 +218,25 @@ krb5_kt_resolve(krb5_context context,
     residual = keytab_name(name, &type, &type_len);
 
     for(i = 0; i < context->num_kt_types; i++) {
-	if(strncasecmp(type, context->kt_types[i].prefix, type_len) == 0)
-	    break;
+        if(strncasecmp(type, context->kt_types[i].prefix, type_len) == 0)
+            break;
     }
     if(i == context->num_kt_types) {
-	krb5_set_error_message(context, KRB5_KT_UNKNOWN_TYPE,
-			       N_("unknown keytab type %.*s", "type"),
-			       (int)type_len, type);
-	return KRB5_KT_UNKNOWN_TYPE;
+        krb5_set_error_message(context, KRB5_KT_UNKNOWN_TYPE,
+                               N_("unknown keytab type %.*s", "type"),
+                               (int)type_len, type);
+        return KRB5_KT_UNKNOWN_TYPE;
     }
 
     k = malloc (sizeof(*k));
     if (k == NULL)
-	return krb5_enomem(context);
+        return krb5_enomem(context);
     memcpy(k, &context->kt_types[i], sizeof(*k));
     k->data = NULL;
     ret = (*k->resolve)(context, residual, k);
     if(ret) {
-	free(k);
-	k = NULL;
+        free(k);
+        k = NULL;
     }
     *id = k;
     return ret;
@@ -252,7 +252,7 @@ static const char *default_ktname(krb5_context context)
 
     tmp = secure_getenv("KRB5_KTNAME");
     if(tmp != NULL)
-	return tmp;
+        return tmp;
     return context->default_keytab;
 }
 
@@ -272,8 +272,8 @@ KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_kt_default_name(krb5_context context, char *name, size_t namesize)
 {
     if (strlcpy (name, default_ktname(context), namesize) >= namesize) {
-	krb5_clear_error_message (context);
-	return KRB5_CONFIG_NOTENUFSPACE;
+        krb5_clear_error_message (context);
+        return KRB5_CONFIG_NOTENUFSPACE;
     }
     return 0;
 }
@@ -296,23 +296,23 @@ krb5_kt_default_modify_name(krb5_context context, char *name, size_t namesize)
     const char *kt;
 
     if(context->default_keytab_modify == NULL) {
-	kt = default_ktname(context);
+        kt = default_ktname(context);
 
-	if (strncasecmp(kt, "ANY:", 4) == 0) {
-	    size_t len = strcspn(kt + 4, ",");
-	    if (len >= namesize) {
-		krb5_clear_error_message(context);
-		return KRB5_CONFIG_NOTENUFSPACE;
-	    }
-	    strlcpy(name, kt + 4, namesize);
-	    name[len] = '\0';
-	    return 0;
-	}
+        if (strncasecmp(kt, "ANY:", 4) == 0) {
+            size_t len = strcspn(kt + 4, ",");
+            if (len >= namesize) {
+                krb5_clear_error_message(context);
+                return KRB5_CONFIG_NOTENUFSPACE;
+            }
+            strlcpy(name, kt + 4, namesize);
+            name[len] = '\0';
+            return 0;
+        }
     } else
-	kt = context->default_keytab_modify;
+        kt = context->default_keytab_modify;
     if (strlcpy (name, kt, namesize) >= namesize) {
-	krb5_clear_error_message (context);
-	return KRB5_CONFIG_NOTENUFSPACE;
+        krb5_clear_error_message (context);
+        return KRB5_CONFIG_NOTENUFSPACE;
     }
     return 0;
 }
@@ -352,11 +352,11 @@ krb5_kt_default(krb5_context context, krb5_keytab *id)
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_kt_read_service_key(krb5_context context,
-			 krb5_pointer keyprocarg,
-			 krb5_principal principal,
-			 krb5_kvno vno,
-			 krb5_enctype enctype,
-			 krb5_keyblock **key)
+                         krb5_pointer keyprocarg,
+                         krb5_principal principal,
+                         krb5_kvno vno,
+                         krb5_enctype enctype,
+                         krb5_keyblock **key)
 {
     krb5_keytab keytab = NULL; /* Quiet lint */
     krb5_keytab_entry entry;
@@ -364,12 +364,12 @@ krb5_kt_read_service_key(krb5_context context,
 
     memset(&entry, 0, sizeof(entry));
     if (keyprocarg)
-	ret = krb5_kt_resolve (context, keyprocarg, &keytab);
+        ret = krb5_kt_resolve (context, keyprocarg, &keytab);
     else
-	ret = krb5_kt_default (context, &keytab);
+        ret = krb5_kt_default (context, &keytab);
 
     if (ret)
-	return ret;
+        return ret;
 
     ret = krb5_kt_get_entry (context, keytab, principal, vno, enctype, &entry);
     if (ret == 0) {
@@ -396,9 +396,9 @@ krb5_kt_read_service_key(krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_kt_get_type(krb5_context context,
-		 krb5_keytab keytab,
-		 char *prefix,
-		 size_t prefixsize)
+                 krb5_keytab keytab,
+                 char *prefix,
+                 size_t prefixsize)
 {
     strlcpy(prefix, keytab->prefix, prefixsize);
     return 0;
@@ -419,9 +419,9 @@ krb5_kt_get_type(krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_kt_get_name(krb5_context context,
-		 krb5_keytab keytab,
-		 char *name,
-		 size_t namesize)
+                 krb5_keytab keytab,
+                 char *name,
+                 size_t namesize)
 {
     return (*keytab->get_name)(context, keytab, name, namesize);
 }
@@ -442,8 +442,8 @@ krb5_kt_get_name(krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_kt_get_full_name(krb5_context context,
-		      krb5_keytab keytab,
-		      char **str)
+                      krb5_keytab keytab,
+                      char **str)
 {
     char type[KRB5_KT_PREFIX_MAX_LEN];
     char name[MAXPATHLEN];
@@ -453,15 +453,15 @@ krb5_kt_get_full_name(krb5_context context,
 
     ret = krb5_kt_get_type(context, keytab, type, sizeof(type));
     if (ret)
-	return ret;
+        return ret;
 
     ret = krb5_kt_get_name(context, keytab, name, sizeof(name));
     if (ret)
-	return ret;
+        return ret;
 
     if (asprintf(str, "%s:%s", type, name) == -1) {
-	*str = NULL;
-	return krb5_enomem(context);
+        *str = NULL;
+        return krb5_enomem(context);
     }
 
     return 0;
@@ -481,7 +481,7 @@ krb5_kt_get_full_name(krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_kt_close(krb5_context context,
-	      krb5_keytab id)
+              krb5_keytab id)
 {
     krb5_error_code ret = 0;
 
@@ -507,7 +507,7 @@ krb5_kt_close(krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_kt_destroy(krb5_context context,
-		krb5_keytab id)
+                krb5_keytab id)
 {
     krb5_error_code ret;
 
@@ -522,15 +522,15 @@ krb5_kt_destroy(krb5_context context,
 
 static krb5_boolean
 compare_aliases(krb5_context context,
-		 krb5_keytab_entry *entry,
-		 krb5_const_principal principal)
+                 krb5_keytab_entry *entry,
+                 krb5_const_principal principal)
 {
     unsigned int i;
     if (entry->aliases == NULL)
-	return FALSE;
+        return FALSE;
     for (i = 0; i < entry->aliases->len; i++)
-	if (krb5_principal_compare(context, &entry->aliases->val[i], principal))
-	    return TRUE;
+        if (krb5_principal_compare(context, &entry->aliases->val[i], principal))
+            return TRUE;
     return FALSE;
 }
 
@@ -552,10 +552,10 @@ compare_aliases(krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_boolean KRB5_LIB_CALL
 krb5_kt_compare(krb5_context context,
-		krb5_keytab_entry *entry,
-		krb5_const_principal principal,
-		krb5_kvno vno,
-		krb5_enctype enctype)
+                krb5_keytab_entry *entry,
+                krb5_const_principal principal,
+                krb5_kvno vno,
+                krb5_enctype enctype)
 {
     /* krb5_principal_compare() does not special-case the referral realm */
     if (principal != NULL && strcmp(principal->realm, "") == 0 &&
@@ -565,22 +565,22 @@ krb5_kt_compare(krb5_context context,
     } else if (principal != NULL && strcmp(principal->realm, "") != 0 &&
         !(krb5_principal_compare(context, entry->principal, principal) ||
           compare_aliases(context, entry, principal))) {
-	return FALSE;
+        return FALSE;
     }
     if (vno && vno != entry->vno)
-	return FALSE;
+        return FALSE;
     if (enctype && enctype != entry->keyblock.keytype)
-	return FALSE;
+        return FALSE;
     return TRUE;
 }
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_kt_principal_not_found(krb5_context context,
-			     krb5_error_code ret,
-			     krb5_keytab id,
-			     krb5_const_principal principal,
-			     krb5_enctype enctype,
-			     int kvno)
+                             krb5_error_code ret,
+                             krb5_keytab id,
+                             krb5_const_principal principal,
+                             krb5_enctype enctype,
+                             int kvno)
 {
     char kvno_str[25];
     char *enctype_str = NULL;
@@ -590,20 +590,20 @@ _krb5_kt_principal_not_found(krb5_context context,
     (void) krb5_unparse_name(context, principal, &princ);
     (void) krb5_kt_get_full_name(context, id, &kt_name);
     if (enctype)
-	(void) krb5_enctype_to_string(context, enctype, &enctype_str);
+        (void) krb5_enctype_to_string(context, enctype, &enctype_str);
 
     if (kvno)
-	snprintf(kvno_str, sizeof(kvno_str), "(kvno %d)", kvno);
+        snprintf(kvno_str, sizeof(kvno_str), "(kvno %d)", kvno);
     else
-	kvno_str[0] = '\0';
+        kvno_str[0] = '\0';
 
     krb5_set_error_message(context, ret,
-			   N_("Failed to find %s%s in keytab %s (%s)",
-			      "principal, kvno, keytab file, enctype"),
-			   princ ? princ : "<unknown>",
-			   kvno_str,
-			   kt_name ? kt_name : "unknown keytab",
-			   enctype_str ? enctype_str : "unknown enctype");
+                           N_("Failed to find %s%s in keytab %s (%s)",
+                              "principal, kvno, keytab file, enctype"),
+                           princ ? princ : "<unknown>",
+                           kvno_str,
+                           kt_name ? kt_name : "unknown keytab",
+                           enctype_str ? enctype_str : "unknown enctype");
     free(princ);
     free(kt_name);
     free(enctype_str);
@@ -612,51 +612,51 @@ _krb5_kt_principal_not_found(krb5_context context,
 
 static krb5_error_code
 krb5_kt_get_entry_wrapped(krb5_context context,
-			  krb5_keytab id,
-			  krb5_const_principal principal,
-			  krb5_kvno kvno,
-			  krb5_enctype enctype,
-			  krb5_keytab_entry *entry)
+                          krb5_keytab id,
+                          krb5_const_principal principal,
+                          krb5_kvno kvno,
+                          krb5_enctype enctype,
+                          krb5_keytab_entry *entry)
 {
     krb5_keytab_entry tmp;
     krb5_error_code ret;
     krb5_kt_cursor cursor;
 
     if(id->get)
-	return (*id->get)(context, id, principal, kvno, enctype, entry);
+        return (*id->get)(context, id, principal, kvno, enctype, entry);
 
     memset(&tmp, 0, sizeof(tmp));
     ret = krb5_kt_start_seq_get (context, id, &cursor);
     if (ret) {
-	/* This is needed for krb5_verify_init_creds, but keep error
-	 * string from previous error for the human. */
-	context->error_code = KRB5_KT_NOTFOUND;
-	return KRB5_KT_NOTFOUND;
+        /* This is needed for krb5_verify_init_creds, but keep error
+         * string from previous error for the human. */
+        context->error_code = KRB5_KT_NOTFOUND;
+        return KRB5_KT_NOTFOUND;
     }
 
     entry->vno = 0;
     while (krb5_kt_next_entry(context, id, &tmp, &cursor) == 0) {
-	if (krb5_kt_compare(context, &tmp, principal, 0, enctype)) {
-	    /* the file keytab might only store the lower 8 bits of
-	       the kvno, so only compare those bits */
-	    if (kvno == tmp.vno
-		|| (tmp.vno < 256 && kvno % 256 == tmp.vno)) {
-		krb5_kt_copy_entry_contents (context, &tmp, entry);
-		krb5_kt_free_entry (context, &tmp);
-		krb5_kt_end_seq_get(context, id, &cursor);
-		return 0;
-	    } else if (kvno == 0 && tmp.vno > entry->vno) {
-		if (entry->vno)
-		    krb5_kt_free_entry (context, entry);
-		krb5_kt_copy_entry_contents (context, &tmp, entry);
-	    }
-	}
-	krb5_kt_free_entry(context, &tmp);
+        if (krb5_kt_compare(context, &tmp, principal, 0, enctype)) {
+            /* the file keytab might only store the lower 8 bits of
+               the kvno, so only compare those bits */
+            if (kvno == tmp.vno
+                || (tmp.vno < 256 && kvno % 256 == tmp.vno)) {
+                krb5_kt_copy_entry_contents (context, &tmp, entry);
+                krb5_kt_free_entry (context, &tmp);
+                krb5_kt_end_seq_get(context, id, &cursor);
+                return 0;
+            } else if (kvno == 0 && tmp.vno > entry->vno) {
+                if (entry->vno)
+                    krb5_kt_free_entry (context, entry);
+                krb5_kt_copy_entry_contents (context, &tmp, entry);
+            }
+        }
+        krb5_kt_free_entry(context, &tmp);
     }
     krb5_kt_end_seq_get (context, id, &cursor);
     if (entry->vno == 0)
-	return _krb5_kt_principal_not_found(context, KRB5_KT_NOTFOUND,
-					    id, principal, enctype, kvno);
+        return _krb5_kt_principal_not_found(context, KRB5_KT_NOTFOUND,
+                                            id, principal, enctype, kvno);
     return 0;
 }
 
@@ -678,11 +678,11 @@ krb5_kt_get_entry_wrapped(krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_kt_get_entry(krb5_context context,
-		  krb5_keytab id,
-		  krb5_const_principal principal,
-		  krb5_kvno kvno,
-		  krb5_enctype enctype,
-		  krb5_keytab_entry *entry)
+                  krb5_keytab id,
+                  krb5_const_principal principal,
+                  krb5_kvno kvno,
+                  krb5_enctype enctype,
+                  krb5_keytab_entry *entry)
 {
     krb5_error_code ret;
     krb5_const_principal try_princ;
@@ -690,30 +690,30 @@ krb5_kt_get_entry(krb5_context context,
 
     if (!principal)
         /* Use `NULL' instead of `principal' to quiet static analizers */
-	return krb5_kt_get_entry_wrapped(context, id, NULL, kvno, enctype,
-					 entry);
+        return krb5_kt_get_entry_wrapped(context, id, NULL, kvno, enctype,
+                                         entry);
 
     ret = krb5_name_canon_iterator_start(context, principal, &name_canon_iter);
     if (ret)
-	return ret;
+        return ret;
 
     do {
-	ret = krb5_name_canon_iterate(context, &name_canon_iter, &try_princ,
+        ret = krb5_name_canon_iterate(context, &name_canon_iter, &try_princ,
                                       NULL);
-	if (ret)
-	    break;
+        if (ret)
+            break;
         if (try_princ == NULL) {
             ret = KRB5_KT_NOTFOUND;
             continue;
         }
-	ret = krb5_kt_get_entry_wrapped(context, id, try_princ, kvno,
-					enctype, entry);
+        ret = krb5_kt_get_entry_wrapped(context, id, try_princ, kvno,
+                                        enctype, entry);
     } while (ret == KRB5_KT_NOTFOUND && name_canon_iter);
 
     if (ret && ret != KRB5_KT_NOTFOUND)
-	krb5_set_error_message(context, ret,
-			       N_("Name canon failed while searching keytab",
-				  ""));
+        krb5_set_error_message(context, ret,
+                               N_("Name canon failed while searching keytab",
+                                  ""));
     krb5_free_name_canon_iterator(context, name_canon_iter);
     return ret;
 }
@@ -732,8 +732,8 @@ krb5_kt_get_entry(krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_kt_copy_entry_contents(krb5_context context,
-			    const krb5_keytab_entry *in,
-			    krb5_keytab_entry *out)
+                            const krb5_keytab_entry *in,
+                            krb5_keytab_entry *out)
 {
     krb5_error_code ret;
 
@@ -741,10 +741,10 @@ krb5_kt_copy_entry_contents(krb5_context context,
 
     ret = krb5_copy_principal (context, in->principal, &out->principal);
     if (ret)
-	return ret;
+        return ret;
     ret = krb5_copy_keyblock_contents (context,
-				       &in->keyblock,
-				       &out->keyblock);
+                                       &in->keyblock,
+                                       &out->keyblock);
     if (ret) {
         krb5_free_principal(context, out->principal);
         memset(out, 0, sizeof(*out));
@@ -768,7 +768,7 @@ krb5_kt_copy_entry_contents(krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_kt_free_entry(krb5_context context,
-		   krb5_keytab_entry *entry)
+                   krb5_keytab_entry *entry)
 {
     krb5_free_principal (context, entry->principal);
     krb5_free_keyblock_contents (context, &entry->keyblock);
@@ -790,15 +790,15 @@ krb5_kt_free_entry(krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_kt_start_seq_get(krb5_context context,
-		      krb5_keytab id,
-		      krb5_kt_cursor *cursor)
+                      krb5_keytab id,
+                      krb5_kt_cursor *cursor)
 {
     if(id->start_seq_get == NULL) {
-	krb5_set_error_message(context, HEIM_ERR_OPNOTSUPP,
-			       N_("start_seq_get is not supported "
-				  "in the %s keytab type", ""),
-			       id->prefix);
-	return HEIM_ERR_OPNOTSUPP;
+        krb5_set_error_message(context, HEIM_ERR_OPNOTSUPP,
+                               N_("start_seq_get is not supported "
+                                  "in the %s keytab type", ""),
+                               id->prefix);
+        return HEIM_ERR_OPNOTSUPP;
     }
     return (*id->start_seq_get)(context, id, cursor);
 }
@@ -819,16 +819,16 @@ krb5_kt_start_seq_get(krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_kt_next_entry(krb5_context context,
-		   krb5_keytab id,
-		   krb5_keytab_entry *entry,
-		   krb5_kt_cursor *cursor)
+                   krb5_keytab id,
+                   krb5_keytab_entry *entry,
+                   krb5_kt_cursor *cursor)
 {
     if(id->next_entry == NULL) {
-	krb5_set_error_message(context, HEIM_ERR_OPNOTSUPP,
-			       N_("next_entry is not supported in the %s "
-				  " keytab", ""),
-			       id->prefix);
-	return HEIM_ERR_OPNOTSUPP;
+        krb5_set_error_message(context, HEIM_ERR_OPNOTSUPP,
+                               N_("next_entry is not supported in the %s "
+                                  " keytab", ""),
+                               id->prefix);
+        return HEIM_ERR_OPNOTSUPP;
     }
     memset(entry, 0x0, sizeof(*entry));
     return (*id->next_entry)(context, id, entry, cursor);
@@ -848,14 +848,14 @@ krb5_kt_next_entry(krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_kt_end_seq_get(krb5_context context,
-		    krb5_keytab id,
-		    krb5_kt_cursor *cursor)
+                    krb5_keytab id,
+                    krb5_kt_cursor *cursor)
 {
     if(id->end_seq_get == NULL) {
-	krb5_set_error_message(context, HEIM_ERR_OPNOTSUPP,
-			       "end_seq_get is not supported in the %s "
-			       " keytab", id->prefix);
-	return HEIM_ERR_OPNOTSUPP;
+        krb5_set_error_message(context, HEIM_ERR_OPNOTSUPP,
+                               "end_seq_get is not supported in the %s "
+                               " keytab", id->prefix);
+        return HEIM_ERR_OPNOTSUPP;
     }
     return (*id->end_seq_get)(context, id, cursor);
 }
@@ -874,14 +874,14 @@ krb5_kt_end_seq_get(krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_kt_add_entry(krb5_context context,
-		  krb5_keytab id,
-		  krb5_keytab_entry *entry)
+                  krb5_keytab id,
+                  krb5_keytab_entry *entry)
 {
     if(id->add == NULL) {
-	krb5_set_error_message(context, KRB5_KT_NOWRITE,
-			       N_("Add is not supported in the %s keytab", ""),
-			       id->prefix);
-	return KRB5_KT_NOWRITE;
+        krb5_set_error_message(context, KRB5_KT_NOWRITE,
+                               N_("Add is not supported in the %s keytab", ""),
+                               id->prefix);
+        return KRB5_KT_NOWRITE;
     }
     if (entry->timestamp == 0)
         entry->timestamp = time(NULL);
@@ -903,14 +903,14 @@ krb5_kt_add_entry(krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_kt_remove_entry(krb5_context context,
-		     krb5_keytab id,
-		     krb5_keytab_entry *entry)
+                     krb5_keytab id,
+                     krb5_keytab_entry *entry)
 {
     if(id->remove == NULL) {
-	krb5_set_error_message(context, KRB5_KT_NOWRITE,
-			       N_("Remove is not supported in the %s keytab", ""),
-			       id->prefix);
-	return KRB5_KT_NOWRITE;
+        krb5_set_error_message(context, KRB5_KT_NOWRITE,
+                               N_("Remove is not supported in the %s keytab", ""),
+                               id->prefix);
+        return KRB5_KT_NOWRITE;
     }
     return (*id->remove)(context, id, entry);
 }
@@ -928,7 +928,7 @@ krb5_kt_remove_entry(krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_kt_have_content(krb5_context context,
-		     krb5_keytab id)
+                     krb5_keytab id)
 {
     krb5_keytab_entry entry;
     krb5_kt_cursor cursor;
@@ -938,23 +938,23 @@ krb5_kt_have_content(krb5_context context,
     memset(&entry, 0, sizeof(entry));
     ret = krb5_kt_start_seq_get(context, id, &cursor);
     if (ret)
-	goto notfound;
+        goto notfound;
 
     ret = krb5_kt_next_entry(context, id, &entry, &cursor);
     krb5_kt_end_seq_get(context, id, &cursor);
     if (ret)
-	goto notfound;
+        goto notfound;
 
     krb5_kt_free_entry(context, &entry);
 
     return 0;
 
- notfound:
+notfound:
     ret = krb5_kt_get_full_name(context, id, &name);
     if (ret == 0) {
-	krb5_set_error_message(context, KRB5_KT_NOTFOUND,
-			       N_("No entry in keytab: %s", ""), name);
-	free(name);
+        krb5_set_error_message(context, KRB5_KT_NOTFOUND,
+                               N_("No entry in keytab: %s", ""), name);
+        free(name);
     }
     return KRB5_KT_NOTFOUND;
 }
@@ -966,11 +966,11 @@ _krb5_kt_client_default_name(krb5_context context, char **name)
 
     tmp = secure_getenv("KRB5_CLIENT_KTNAME");
     if (tmp == NULL)
-	tmp =  krb5_config_get_string(context, NULL,
+        tmp =  krb5_config_get_string(context, NULL,
                                       "libdefaults",
                                       "default_client_keytab_name", NULL);
     if (tmp == NULL)
-	tmp = CLIENT_KEYTAB_DEFAULT;
+        tmp = CLIENT_KEYTAB_DEFAULT;
 
     return _krb5_expand_path_tokens(context, tmp, 1, name);
 }

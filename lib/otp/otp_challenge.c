@@ -41,28 +41,28 @@ RCSID("$Id$");
 int
 otp_challenge (OtpContext *ctx, char *user, char *str, size_t len)
 {
-  void *dbm;
-  int ret;
+    void *dbm;
+    int ret;
 
-  ctx->challengep = 0;
-  ctx->err = NULL;
-  ctx->user = strdup(user);
-  if (ctx->user == NULL) {
-    ctx->err = "Out of memory";
-    return -1;
-  }
-  dbm = otp_db_open ();
-  if (dbm == NULL) {
-    ctx->err = "Cannot open database";
-    return -1;
-  }
-  ret = otp_get (dbm, ctx);
-  otp_db_close (dbm);
-  if (ret)
-    return ret;
-  snprintf (str, len,
-	    "[ otp-%s %u %s ]",
-	    ctx->alg->name, ctx->n-1, ctx->seed);
-  ctx->challengep = 1;
-  return 0;
+    ctx->challengep = 0;
+    ctx->err = NULL;
+    ctx->user = strdup(user);
+    if (ctx->user == NULL) {
+        ctx->err = "Out of memory";
+        return -1;
+    }
+    dbm = otp_db_open ();
+    if (dbm == NULL) {
+        ctx->err = "Cannot open database";
+        return -1;
+    }
+    ret = otp_get (dbm, ctx);
+    otp_db_close (dbm);
+    if (ret)
+        return ret;
+    snprintf (str, len,
+              "[ otp-%s %u %s ]",
+              ctx->alg->name, ctx->n-1, ctx->seed);
+    ctx->challengep = 1;
+    return 0;
 }

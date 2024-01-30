@@ -43,13 +43,13 @@ data_dealloc(void *ptr)
     heim_data_free_f_t dealloc;
 
     if (os->data == NULL)
-	return;
+        return;
 
     /* Possible string ref */
     deallocp = _heim_get_isaextra(os, 0);
     dealloc = *deallocp;
     if (dealloc != NULL)
-	dealloc(os->data);
+        dealloc(os->data);
 }
 
 static int
@@ -57,7 +57,7 @@ data_cmp(void *a, void *b)
 {
     heim_octet_string *osa = a, *osb = b;
     if (osa->length != osb->length)
-	return osa->length - osb->length;
+        return osa->length - osb->length;
     return memcmp(osa->data, osb->data, osa->length);
 }
 
@@ -68,10 +68,10 @@ data_hash(void *ptr)
     const unsigned char *s = os->data;
 
     if (os->length < 4)
-	return os->length;
+        return os->length;
 
     return ((unsigned long)s[os->length - 1] << 24)
-	| (s[os->length - 2] << 16) | (s[1] << 8) | s[0];
+        | (s[os->length - 2] << 16) | (s[1] << 8) | s[0];
 }
 
 struct heim_type_data _heim_data_object = {
@@ -100,26 +100,26 @@ heim_data_create(const void *data, size_t length)
 
     os = _heim_alloc_object(&_heim_data_object, sizeof(*os) + length);
     if (os) {
-	os->data = (uint8_t *)os + sizeof(*os);
-	os->length = length;
-	memcpy(os->data, data, length);
+        os->data = (uint8_t *)os + sizeof(*os);
+        os->length = length;
+        memcpy(os->data, data, length);
     }
     return (heim_data_t)os;
 }
 
 heim_data_t
 heim_data_ref_create(const void *data, size_t length,
-		     heim_data_free_f_t dealloc)
+                     heim_data_free_f_t dealloc)
 {
     heim_octet_string *os;
     heim_data_free_f_t *deallocp;
 
     os = _heim_alloc_object(&_heim_data_object, sizeof(*os) + length);
     if (os) {
-	os->data = (void *)data;
-	os->length = length;
-	deallocp = _heim_get_isaextra(os, 0);
-	*deallocp = dealloc;
+        os->data = (void *)data;
+        os->length = length;
+        deallocp = _heim_get_isaextra(os, 0);
+        *deallocp = dealloc;
     }
     return (heim_data_t)os;
 }
@@ -159,7 +159,7 @@ heim_data_get_ptr(heim_data_t data)
     return ((const heim_octet_string *)data)->data;
 }
 
-size_t	heim_data_get_length(heim_data_t data)
+size_t  heim_data_get_length(heim_data_t data)
 {
     /* Note that this works for data and data_ref objects */
     return ((const heim_octet_string *)data)->length;

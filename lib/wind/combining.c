@@ -51,12 +51,12 @@ _wind_combining_class(uint32_t code_point)
 {
     struct translation ts = {code_point, 0};
     void *s = bsearch(&ts, _wind_combining_table, _wind_combining_table_size,
-		      sizeof(_wind_combining_table[0]),
-		      translation_cmp);
+                      sizeof(_wind_combining_table[0]),
+                      translation_cmp);
     if (s != NULL) {
-	const struct translation *t = (const struct translation *)s;
-	return t->combining_class;
+        const struct translation *t = (const struct translation *)s;
+        return t->combining_class;
     } else {
-	return 0;
+        return 0;
     }
 }

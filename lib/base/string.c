@@ -44,14 +44,14 @@ string_dealloc(void *ptr)
     heim_string_free_f_t dealloc;
 
     if (*(const char *)ptr != '\0')
-	return;
+        return;
 
     /* Possible string ref */
     deallocp = _heim_get_isaextra(s, 0);
     dealloc = *deallocp;
     if (dealloc != NULL) {
-	char **strp = _heim_get_isaextra(s, 1);
-	dealloc(*strp);
+        char **strp = _heim_get_isaextra(s, 1);
+        dealloc(*strp);
     }
 }
 
@@ -59,16 +59,16 @@ static int
 string_cmp(void *a, void *b)
 {
     if (*(char *)a == '\0') {
-	char **strp = _heim_get_isaextra(a, 1);
+        char **strp = _heim_get_isaextra(a, 1);
 
-	if (*strp != NULL)
-	    a = *strp; /* a is a string ref */
+        if (*strp != NULL)
+            a = *strp; /* a is a string ref */
     }
     if (*(char *)b == '\0') {
-	char **strp = _heim_get_isaextra(b, 1);
+        char **strp = _heim_get_isaextra(b, 1);
 
-	if (*strp != NULL)
-	    b = *strp; /* b is a string ref */
+        if (*strp != NULL)
+            b = *strp; /* b is a string ref */
     }
     return strcmp(a, b);
 }
@@ -80,7 +80,7 @@ string_hash(void *ptr)
     uintptr_t n;
 
     for (n = 0; *s; ++s)
-	n += *s;
+        n += *s;
     return n;
 }
 
@@ -126,13 +126,13 @@ heim_string_ref_create(const char *string, heim_string_free_f_t dealloc)
 
     s = _heim_alloc_object(&_heim_string_object, 1);
     if (s) {
-	const char **strp;
+        const char **strp;
 
-	((char *)s)[0] = '\0';
-	deallocp = _heim_get_isaextra(s, 0);
-	*deallocp = dealloc;
-	strp = _heim_get_isaextra(s, 1);
-	*strp = string;
+        ((char *)s)[0] = '\0';
+        deallocp = _heim_get_isaextra(s, 0);
+        *deallocp = dealloc;
+        strp = _heim_get_isaextra(s, 1);
+        *strp = string;
     }
     return s;
 }
@@ -155,7 +155,7 @@ heim_string_create_with_bytes(const void *data, size_t len)
     if (s) {
         if (len)
             memcpy(s, data, len);
-	((char *)s)[len] = '\0';
+        ((char *)s)[len] = '\0';
     }
     return s;
 }
@@ -181,11 +181,11 @@ heim_string_create_with_format(const char *fmt, ...)
     ret = vasprintf(&str, fmt, ap);
     va_end(ap);
     if (ret < 0 || str == NULL)
-	return NULL;
+        return NULL;
 
     s = heim_string_ref_create(str, free);
     if (s == NULL)
-	free(str);
+        free(str);
     return s;
 }
 
@@ -213,12 +213,12 @@ const char *
 heim_string_get_utf8(heim_string_t string)
 {
     if (*(const char *)string == '\0') {
-	const char **strp;
+        const char **strp;
 
-	/* String ref */
-	strp = _heim_get_isaextra(string, 1);
-	if (*strp != NULL)
-	    return *strp;
+        /* String ref */
+        strp = _heim_get_isaextra(string, 1);
+        if (*strp != NULL)
+            return *strp;
     }
     return (const char *)string;
 }
@@ -249,11 +249,11 @@ __heim_string_constant(const char *_str)
     HEIMDAL_MUTEX_lock(&mutex);
     s2 = heim_dict_get_value(dict, s);
     if (s2) {
-	heim_release(s);
-	s = s2;
+        heim_release(s);
+        s = s2;
     } else {
-	_heim_make_permanent(s);
-	heim_dict_set_value(dict, s, s);
+        _heim_make_permanent(s);
+        heim_dict_set_value(dict, s, s);
     }
     HEIMDAL_MUTEX_unlock(&mutex);
 

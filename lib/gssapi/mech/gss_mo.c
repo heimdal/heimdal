@@ -60,27 +60,27 @@ int
 _gss_mo_get_ctx_as_string(gss_const_OID mech, gss_mo_desc *mo, gss_buffer_t value)
 {
     if (value) {
-	value->value = strdup((char *)mo->ctx);
-	if (value->value == NULL)
-	    return GSS_S_FAILURE;
-	value->length = strlen((char *)mo->ctx);
+        value->value = strdup((char *)mo->ctx);
+        if (value->value == NULL)
+            return GSS_S_FAILURE;
+        value->length = strlen((char *)mo->ctx);
     }
     return GSS_S_COMPLETE;
 }
 
 GSSAPI_LIB_FUNCTION int GSSAPI_LIB_CALL
 gss_mo_set(gss_const_OID mech, gss_const_OID option,
-	   int enable, gss_buffer_t value)
+           int enable, gss_buffer_t value)
 {
     gssapi_mech_interface m;
     size_t n;
 
     if ((m = __gss_get_mechanism(mech)) == NULL)
-	return GSS_S_BAD_MECH;
+        return GSS_S_BAD_MECH;
 
     for (n = 0; n < m->gm_mo_num; n++)
-	if (gss_oid_equal(option, m->gm_mo[n].option) && m->gm_mo[n].set)
-	    return m->gm_mo[n].set(mech, &m->gm_mo[n], enable, value);
+        if (gss_oid_equal(option, m->gm_mo[n].option) && m->gm_mo[n].set)
+            return m->gm_mo[n].set(mech, &m->gm_mo[n], enable, value);
 
     return GSS_S_UNAVAILABLE;
 }
@@ -94,11 +94,11 @@ gss_mo_get(gss_const_OID mech, gss_const_OID option, gss_buffer_t value)
     _mg_buffer_zero(value);
 
     if ((m = __gss_get_mechanism(mech)) == NULL)
-	return GSS_S_BAD_MECH;
+        return GSS_S_BAD_MECH;
 
     for (n = 0; n < m->gm_mo_num; n++)
-	if (gss_oid_equal(option, m->gm_mo[n].option) && m->gm_mo[n].get)
-	    return m->gm_mo[n].get(mech, &m->gm_mo[n], value);
+        if (gss_oid_equal(option, m->gm_mo[n].option) && m->gm_mo[n].get)
+            return m->gm_mo[n].get(mech, &m->gm_mo[n], value);
 
     return GSS_S_UNAVAILABLE;
 }
@@ -110,8 +110,8 @@ add_all_mo(gssapi_mech_interface m, gss_OID_set *options, OM_uint32 mask)
     size_t n;
 
     for (n = 0; n < m->gm_mo_num; n++)
-	if ((m->gm_mo[n].flags & mask) == mask)
-	    gss_add_oid_set_member(&minor, m->gm_mo[n].option, options);
+        if ((m->gm_mo[n].flags & mask) == mask)
+            gss_add_oid_set_member(&minor, m->gm_mo[n].option, options);
 }
 
 GSSAPI_LIB_FUNCTION void GSSAPI_LIB_CALL
@@ -121,16 +121,16 @@ gss_mo_list(gss_const_OID mech, gss_OID_set *options)
     OM_uint32 major, minor;
 
     if (options == NULL)
-	return;
+        return;
 
     *options = GSS_C_NO_OID_SET;
 
     if ((m = __gss_get_mechanism(mech)) == NULL)
-	return;
+        return;
 
     major = gss_create_empty_oid_set(&minor, options);
     if (major != GSS_S_COMPLETE)
-	return;
+        return;
 
     add_all_mo(m, options, 0);
 }
@@ -142,29 +142,29 @@ gss_mo_name(gss_const_OID mech, gss_const_OID option, gss_buffer_t name)
     size_t n;
 
     if (name == NULL)
-	return GSS_S_BAD_NAME;
+        return GSS_S_BAD_NAME;
 
     if ((m = __gss_get_mechanism(mech)) == NULL)
-	return GSS_S_BAD_MECH;
+        return GSS_S_BAD_MECH;
 
     for (n = 0; n < m->gm_mo_num; n++) {
-	if (gss_oid_equal(option, m->gm_mo[n].option)) {
-	    /*
-	     * If there is no name, its because its a GSS_C_MA and
-	     * there is already a table for that.
-	     */
-	    if (m->gm_mo[n].name) {
-		name->value = strdup(m->gm_mo[n].name);
-		if (name->value == NULL)
-		    return GSS_S_BAD_NAME;
-		name->length = strlen(m->gm_mo[n].name);
-		return GSS_S_COMPLETE;
-	    } else {
-		OM_uint32 junk;
-		return gss_display_mech_attr(&junk, option,
-					     NULL, name, NULL);
-	    }
-	}
+        if (gss_oid_equal(option, m->gm_mo[n].option)) {
+            /*
+             * If there is no name, its because its a GSS_C_MA and
+             * there is already a table for that.
+             */
+            if (m->gm_mo[n].name) {
+                name->value = strdup(m->gm_mo[n].name);
+                if (name->value == NULL)
+                    return GSS_S_BAD_NAME;
+                name->length = strlen(m->gm_mo[n].name);
+                return GSS_S_COMPLETE;
+            } else {
+                OM_uint32 junk;
+                return gss_display_mech_attr(&junk, option,
+                                             NULL, name, NULL);
+            }
+        }
     }
     return GSS_S_BAD_NAME;
 }
@@ -177,7 +177,7 @@ static OM_uint32
 mo_value(const gss_const_OID mech, gss_const_OID option, gss_buffer_t name)
 {
     if (name == NULL)
-	return GSS_S_COMPLETE;
+        return GSS_S_COMPLETE;
 
     return gss_mo_get(mech, option, name);
 }
@@ -274,10 +274,10 @@ inquire_saslname_for_mech_compat(OM_uint32 *minor,
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_inquire_saslname_for_mech(OM_uint32 *minor_status,
-			      const gss_OID desired_mech,
-			      gss_buffer_t sasl_mech_name,
-			      gss_buffer_t mech_name,
-			      gss_buffer_t mech_description)
+                              const gss_OID desired_mech,
+                              gss_buffer_t sasl_mech_name,
+                              gss_buffer_t mech_name,
+                              gss_buffer_t mech_description)
 {
     OM_uint32 major;
 
@@ -286,10 +286,10 @@ gss_inquire_saslname_for_mech(OM_uint32 *minor_status,
     _mg_buffer_zero(mech_description);
 
     if (minor_status)
-	*minor_status = 0;
+        *minor_status = 0;
 
     if (desired_mech == NULL)
-	return GSS_S_BAD_MECH;
+        return GSS_S_BAD_MECH;
 
     major = mo_value(desired_mech, GSS_C_MA_SASL_MECH_NAME, sasl_mech_name);
     if (major == GSS_S_COMPLETE) {
@@ -341,8 +341,8 @@ gss_inquire_saslname_for_mech(OM_uint32 *minor_status,
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_inquire_mech_for_saslname(OM_uint32 *minor_status,
-			      const gss_buffer_t sasl_mech_name,
-			      gss_OID *mech_type)
+                              const gss_buffer_t sasl_mech_name,
+                              gss_OID *mech_type)
 {
     struct _gss_mech_switch *m;
     gss_buffer_desc name;
@@ -364,8 +364,8 @@ gss_inquire_mech_for_saslname(OM_uint32 *minor_status,
                 gss_release_buffer(&junk, &name);
                 *mech_type = m->gm_mech_oid;
                 return GSS_S_COMPLETE;
-	}
-	gss_release_buffer(&junk, &name);
+        }
+        gss_release_buffer(&junk, &name);
 
         if (GSS_ERROR(major)) {
             /* API-as-SPI compatibility */
@@ -445,10 +445,10 @@ test_mech_attrs(gssapi_mech_interface mi,
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_indicate_mechs_by_attrs(OM_uint32 * minor_status,
-			    gss_const_OID_set desired_mech_attrs,
-			    gss_const_OID_set except_mech_attrs,
-			    gss_const_OID_set critical_mech_attrs,
-			    gss_OID_set *mechs)
+                            gss_const_OID_set desired_mech_attrs,
+                            gss_const_OID_set except_mech_attrs,
+                            gss_const_OID_set critical_mech_attrs,
+                            gss_OID_set *mechs)
 {
     struct _gss_mech_switch *ms;
     gss_OID_set mech_attrs = GSS_C_NO_OID_SET;
@@ -457,12 +457,12 @@ gss_indicate_mechs_by_attrs(OM_uint32 * minor_status,
 
     major = gss_create_empty_oid_set(minor_status, mechs);
     if (GSS_ERROR(major))
-	return major;
+        return major;
 
     _gss_load_mech();
 
     HEIM_TAILQ_FOREACH(ms, &_gss_mechs, gm_link) {
-	gssapi_mech_interface mi = &ms->gm_mech;
+        gssapi_mech_interface mi = &ms->gm_mech;
         struct gss_mech_compat_desc_struct *gmc = mi->gm_compat;
 
         if (gmc && gmc->gmc_inquire_attrs_for_mech) {
@@ -493,7 +493,7 @@ gss_indicate_mechs_by_attrs(OM_uint32 * minor_status,
     }
 
     if (major)
-	gss_release_oid_set(&tmp, mechs);
+        gss_release_oid_set(&tmp, mechs);
 
     return major;
 }
@@ -514,9 +514,9 @@ gss_indicate_mechs_by_attrs(OM_uint32 * minor_status,
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_inquire_attrs_for_mech(OM_uint32 * minor_status,
-			   gss_const_OID mech,
-			   gss_OID_set *mech_attr,
-			   gss_OID_set *known_mech_attrs)
+                           gss_const_OID mech,
+                           gss_OID_set *mech_attr,
+                           gss_OID_set *known_mech_attrs)
 {
     OM_uint32 major, junk;
 
@@ -524,13 +524,13 @@ gss_inquire_attrs_for_mech(OM_uint32 * minor_status,
         *known_mech_attrs = GSS_C_NO_OID_SET;
 
     if (mech_attr && mech) {
-	gssapi_mech_interface m;
+        gssapi_mech_interface m;
         struct gss_mech_compat_desc_struct *gmc;
 
-	if ((m = __gss_get_mechanism(mech)) == NULL) {
-	    *minor_status = 0;
-	    return GSS_S_BAD_MECH;
-	}
+        if ((m = __gss_get_mechanism(mech)) == NULL) {
+            *minor_status = 0;
+            return GSS_S_BAD_MECH;
+        }
 
         gmc = m->gm_compat;
 
@@ -540,30 +540,30 @@ gss_inquire_attrs_for_mech(OM_uint32 * minor_status,
                                                     mech_attr,
                                                     known_mech_attrs);
         } else {
-	    major = gss_create_empty_oid_set(minor_status, mech_attr);
+            major = gss_create_empty_oid_set(minor_status, mech_attr);
             if (major == GSS_S_COMPLETE)
-	        add_all_mo(m, mech_attr, GSS_MO_MA);
+                add_all_mo(m, mech_attr, GSS_MO_MA);
         }
-	if (GSS_ERROR(major))
-	    return major;
+        if (GSS_ERROR(major))
+            return major;
     }
 
     if (known_mech_attrs) {
-	struct _gss_mech_switch *m;
+        struct _gss_mech_switch *m;
 
         if (*known_mech_attrs == GSS_C_NO_OID_SET) {
-	    major = gss_create_empty_oid_set(minor_status, known_mech_attrs);
-	    if (GSS_ERROR(major)) {
-	        if (mech_attr)
-		    gss_release_oid_set(&junk, mech_attr);
-	        return major;
-	    }
+            major = gss_create_empty_oid_set(minor_status, known_mech_attrs);
+            if (GSS_ERROR(major)) {
+                if (mech_attr)
+                    gss_release_oid_set(&junk, mech_attr);
+                return major;
+            }
         }
 
-	_gss_load_mech();
+        _gss_load_mech();
 
-	HEIM_TAILQ_FOREACH(m, &_gss_mechs, gm_link)
-	    add_all_mo(&m->gm_mech, known_mech_attrs, GSS_MO_MA);
+        HEIM_TAILQ_FOREACH(m, &_gss_mechs, gm_link)
+            add_all_mo(&m->gm_mech, known_mech_attrs, GSS_MO_MA);
     }
 
 
@@ -584,10 +584,10 @@ gss_inquire_attrs_for_mech(OM_uint32 * minor_status,
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_display_mech_attr(OM_uint32 * minor_status,
-		      gss_const_OID mech_attr,
-		      gss_buffer_t name,
-		      gss_buffer_t short_desc,
-		      gss_buffer_t long_desc)
+                      gss_const_OID mech_attr,
+                      gss_buffer_t name,
+                      gss_buffer_t short_desc,
+                      gss_buffer_t long_desc)
 {
     struct _gss_oid_name_table *ma = NULL;
     OM_uint32 major;
@@ -598,40 +598,40 @@ gss_display_mech_attr(OM_uint32 * minor_status,
     _mg_buffer_zero(long_desc);
 
     if (minor_status)
-	*minor_status = 0;
+        *minor_status = 0;
 
     for (n = 0; ma == NULL && _gss_ont_ma[n].oid; n++)
-	if (gss_oid_equal(mech_attr, _gss_ont_ma[n].oid))
-	    ma = &_gss_ont_ma[n];
+        if (gss_oid_equal(mech_attr, _gss_ont_ma[n].oid))
+            ma = &_gss_ont_ma[n];
 
     if (ma == NULL)
-	return GSS_S_BAD_MECH_ATTR;
+        return GSS_S_BAD_MECH_ATTR;
 
     if (name) {
-	gss_buffer_desc bd;
-	bd.value = rk_UNCONST(ma->name);
-	bd.length = strlen(ma->name);
-	major = _gss_copy_buffer(minor_status, &bd, name);
-	if (major != GSS_S_COMPLETE)
-	    return major;
+        gss_buffer_desc bd;
+        bd.value = rk_UNCONST(ma->name);
+        bd.length = strlen(ma->name);
+        major = _gss_copy_buffer(minor_status, &bd, name);
+        if (major != GSS_S_COMPLETE)
+            return major;
     }
 
     if (short_desc) {
-	gss_buffer_desc bd;
-	bd.value = rk_UNCONST(ma->short_desc);
-	bd.length = strlen(ma->short_desc);
-	major = _gss_copy_buffer(minor_status, &bd, short_desc);
-	if (major != GSS_S_COMPLETE)
-	    return major;
+        gss_buffer_desc bd;
+        bd.value = rk_UNCONST(ma->short_desc);
+        bd.length = strlen(ma->short_desc);
+        major = _gss_copy_buffer(minor_status, &bd, short_desc);
+        if (major != GSS_S_COMPLETE)
+            return major;
     }
 
     if (long_desc) {
-	gss_buffer_desc bd;
-	bd.value = rk_UNCONST(ma->long_desc);
-	bd.length = strlen(ma->long_desc);
-	major = _gss_copy_buffer(minor_status, &bd, long_desc);
-	if (major != GSS_S_COMPLETE)
-	    return major;
+        gss_buffer_desc bd;
+        bd.value = rk_UNCONST(ma->long_desc);
+        bd.length = strlen(ma->long_desc);
+        major = _gss_copy_buffer(minor_status, &bd, long_desc);
+        if (major != GSS_S_COMPLETE)
+            return major;
     }
 
     return GSS_S_COMPLETE;

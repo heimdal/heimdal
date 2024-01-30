@@ -35,15 +35,15 @@
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_mk_error_ext(krb5_context context,
-		  krb5_error_code error_code,
-		  const char *e_text,
-		  const krb5_data *e_data,
-		  const krb5_principal server,
-		  const PrincipalName *client_name,
-		  const Realm *client_realm,
-		  time_t *client_time,
-		  int *client_usec,
-		  krb5_data *reply)
+                  krb5_error_code error_code,
+                  const char *e_text,
+                  const krb5_data *e_data,
+                  const krb5_principal server,
+                  const PrincipalName *client_name,
+                  const Realm *client_realm,
+                  time_t *client_time,
+                  int *client_usec,
+                  krb5_data *reply)
 {
     const char *e_text2 = NULL;
     KRB_ERROR msg;
@@ -63,55 +63,55 @@ krb5_mk_error_ext(krb5_context context,
     msg.cusec    = client_usec;
     /* Make sure we only send `protocol' error codes */
     if(error_code < KRB5KDC_ERR_NONE || error_code >= KRB5_ERR_RCSID) {
-	if(e_text == NULL)
-	    e_text = e_text2 = krb5_get_error_message(context, error_code);
-	error_code = KRB5KRB_ERR_GENERIC;
+        if(e_text == NULL)
+            e_text = e_text2 = krb5_get_error_message(context, error_code);
+        error_code = KRB5KRB_ERR_GENERIC;
     }
     msg.error_code = error_code - KRB5KDC_ERR_NONE;
     if (e_text)
-	msg.e_text = rk_UNCONST(&e_text);
+        msg.e_text = rk_UNCONST(&e_text);
     if (e_data)
-	msg.e_data = rk_UNCONST(e_data);
+        msg.e_data = rk_UNCONST(e_data);
     if(server){
-	msg.realm = server->realm;
-	msg.sname = server->name;
+        msg.realm = server->realm;
+        msg.sname = server->name;
     }else{
-	static const char unspec[] = "<unspecified realm>";
-	msg.realm = rk_UNCONST(unspec);
+        static const char unspec[] = "<unspecified realm>";
+        msg.realm = rk_UNCONST(unspec);
     }
     msg.crealm = rk_UNCONST(client_realm);
     msg.cname = rk_UNCONST(client_name);
 
     ASN1_MALLOC_ENCODE(KRB_ERROR, reply->data, reply->length, &msg, &len, ret);
     if (e_text2)
-	krb5_free_error_message(context, e_text2);
+        krb5_free_error_message(context, e_text2);
     if (ret)
-	return ret;
+        return ret;
     if(reply->length != len)
-	krb5_abortx(context, "internal error in ASN.1 encoder");
+        krb5_abortx(context, "internal error in ASN.1 encoder");
     return 0;
 }
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_mk_error(krb5_context context,
-	      krb5_error_code error_code,
-	      const char *e_text,
-	      const krb5_data *e_data,
-	      const krb5_principal client,
-	      const krb5_principal server,
-	      time_t *client_time,
-	      int *client_usec,
-	      krb5_data *reply)
+              krb5_error_code error_code,
+              const char *e_text,
+              const krb5_data *e_data,
+              const krb5_principal client,
+              const krb5_principal server,
+              time_t *client_time,
+              int *client_usec,
+              krb5_data *reply)
 {
     const PrincipalName *client_name = NULL;
     const Realm *client_realm = NULL;
 
     if (client) {
-	client_realm = &client->realm;
-	client_name = &client->name;
+        client_realm = &client->realm;
+        client_name = &client->name;
     }
 
     return krb5_mk_error_ext(context, error_code, e_text, e_data,
-			     server, client_name, client_realm,
-			     client_time, client_usec, reply);
+                             server, client_name, client_realm,
+                             client_time, client_usec, reply);
 }

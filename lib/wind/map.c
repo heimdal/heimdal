@@ -51,34 +51,34 @@ translation_cmp(const void *key, const void *data)
 
 int
 _wind_stringprep_map(const uint32_t *in, size_t in_len,
-		     uint32_t *out, size_t *out_len,
-		     wind_profile_flags flags)
+                     uint32_t *out, size_t *out_len,
+                     wind_profile_flags flags)
 {
     unsigned i;
     unsigned o = 0;
 
     for (i = 0; i < in_len; ++i) {
-	struct translation ts = {in[i], 0, 0, 0};
-	const struct translation *s;
+        struct translation ts = {in[i], 0, 0, 0};
+        const struct translation *s;
 
-	s = (const struct translation *)
-	    bsearch(&ts, _wind_map_table, _wind_map_table_size,
-		    sizeof(_wind_map_table[0]),
-		    translation_cmp);
-	if (s != NULL && (s->flags & flags)) {
-	    unsigned j;
+        s = (const struct translation *)
+            bsearch(&ts, _wind_map_table, _wind_map_table_size,
+                    sizeof(_wind_map_table[0]),
+                    translation_cmp);
+        if (s != NULL && (s->flags & flags)) {
+            unsigned j;
 
-	    for (j = 0; j < s->val_len; ++j) {
-		if (o >= *out_len)
-		    return WIND_ERR_OVERRUN;
-		out[o++] = _wind_map_table_val[s->val_offset + j];
-	    }
-	} else {
-	    if (o >= *out_len)
-		return WIND_ERR_OVERRUN;
-	    out[o++] = in[i];
+            for (j = 0; j < s->val_len; ++j) {
+                if (o >= *out_len)
+                    return WIND_ERR_OVERRUN;
+                out[o++] = _wind_map_table_val[s->val_offset + j];
+            }
+        } else {
+            if (o >= *out_len)
+                return WIND_ERR_OVERRUN;
+            out[o++] = in[i];
 
-	}
+        }
     }
     *out_len = o;
     return 0;

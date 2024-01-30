@@ -119,8 +119,8 @@ EC_POINT_new(void)
     p = calloc(1, sizeof(*p));
 
     if (mp_init_multi(&p->x, &p->y, &p->z, NULL) != 0) {
-	EC_POINT_free(p);
-	return NULL;
+        EC_POINT_free(p);
+        return NULL;
     }
 
     return p;
@@ -132,17 +132,17 @@ EC_KEY_generate_key(EC_KEY *key)
     int ret = 0;
 
     if (key->group == NULL)
-	return 0;
+        return 0;
 
     do {
-	random(key->privkey, key->group->size);
+        random(key->privkey, key->group->size);
     } while(mp_cmp(key->privkey, key->group->order) >= 0);
 
     if (key->pubkey == NULL)
-	key->pubkey = EC_POINT_new();
+        key->pubkey = EC_POINT_new();
 
     if (ec_point_mul(&key->pubkey, key->group, key->privkey) != 1)
-	goto error;
+        goto error;
 
     ret = 1;
  error:

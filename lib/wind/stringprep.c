@@ -54,8 +54,8 @@
 
 int
 wind_stringprep(const uint32_t *in, size_t in_len,
-		uint32_t *out, size_t *out_len,
-		wind_profile_flags flags)
+                uint32_t *out, size_t *out_len,
+                wind_profile_flags flags)
 {
     size_t tmp_len = in_len * 3;
     uint32_t *tmp;
@@ -63,48 +63,48 @@ wind_stringprep(const uint32_t *in, size_t in_len,
     size_t olen;
 
     if (in_len == 0) {
-	*out_len = 0;
-	return 0;
+        *out_len = 0;
+        return 0;
     }
 
     tmp = malloc(tmp_len * sizeof(uint32_t));
     if (tmp == NULL)
-	return ENOMEM;
+        return ENOMEM;
 
     ret = _wind_stringprep_map(in, in_len, tmp, &tmp_len, flags);
     if (ret) {
-	free(tmp);
-	return ret;
+        free(tmp);
+        return ret;
     }
 
     olen = *out_len;
     ret = _wind_stringprep_normalize(tmp, tmp_len, tmp, &olen);
     if (ret) {
-	free(tmp);
-	return ret;
+        free(tmp);
+        return ret;
     }
     ret = _wind_stringprep_prohibited(tmp, olen, flags);
     if (ret) {
-	free(tmp);
-	return ret;
+        free(tmp);
+        return ret;
     }
     ret = _wind_stringprep_testbidi(tmp, olen, flags);
     if (ret) {
-	free(tmp);
-	return ret;
+        free(tmp);
+        return ret;
     }
 
     /* Insignificant Character Handling for ldap-prep */
     if (flags & WIND_PROFILE_LDAP_CASE_EXACT_ATTRIBUTE) {
-	ret = _wind_ldap_case_exact_attribute(tmp, olen, out, out_len);
+        ret = _wind_ldap_case_exact_attribute(tmp, olen, out, out_len);
 #if 0
     } else if (flags & WIND_PROFILE_LDAP_CASE_EXACT_ASSERTION) {
     } else if (flags & WIND_PROFILE_LDAP_NUMERIC) {
     } else if (flags & WIND_PROFILE_LDAP_TELEPHONE) {
 #endif
     } else {
-	memcpy(out, tmp, sizeof(out[0]) * olen);
-	*out_len = olen;
+        memcpy(out, tmp, sizeof(out[0]) * olen);
+        *out_len = olen;
     }
     free(tmp);
 
@@ -136,10 +136,10 @@ wind_profile(const char *name, wind_profile_flags *flags)
     unsigned int i;
 
     for (i = 0; i < sizeof(profiles)/sizeof(profiles[0]); i++) {
-	if (strcasecmp(profiles[i].name, name) == 0) {
-	    *flags = profiles[i].flags;
-	    return 0;
-	}
+        if (strcasecmp(profiles[i].name, name) == 0) {
+            *flags = profiles[i].flags;
+            return 0;
+        }
     }
     return WIND_ERR_NO_PROFILE;
 }

@@ -39,22 +39,22 @@ test_int8(krb5_context context, krb5_storage *sp)
     krb5_error_code ret;
     int i;
     int8_t val[] = {
-	0, 1, -1, 128, -127
+        0, 1, -1, 128, -127
     }, v;
 
     krb5_storage_truncate(sp, 0);
 
     for (i = 0; i < sizeof(val)/sizeof(val[0]); i++) {
 
-	ret = krb5_store_int8(sp, val[i]);
-	if (ret)
-	    krb5_err(context, 1, ret, "krb5_store_int8");
-	krb5_storage_seek(sp, i, SEEK_SET);
-	ret = krb5_ret_int8(sp, &v);
-	if (ret)
-	    krb5_err(context, 1, ret, "krb5_ret_int8");
-	if (v != val[i])
-	    krb5_errx(context, 1, "store and ret mismatch");
+        ret = krb5_store_int8(sp, val[i]);
+        if (ret)
+            krb5_err(context, 1, ret, "krb5_store_int8");
+        krb5_storage_seek(sp, i, SEEK_SET);
+        ret = krb5_ret_int8(sp, &v);
+        if (ret)
+            krb5_err(context, 1, ret, "krb5_ret_int8");
+        if (v != val[i])
+            krb5_errx(context, 1, "store and ret mismatch");
     }
 }
 
@@ -64,22 +64,22 @@ test_int16(krb5_context context, krb5_storage *sp)
     krb5_error_code ret;
     int i;
     int16_t val[] = {
-	0, 1, -1, 32767, -32768
+        0, 1, -1, 32767, -32768
     }, v;
 
     krb5_storage_truncate(sp, 0);
 
     for (i = 0; i < sizeof(val)/sizeof(val[0]); i++) {
 
-	ret = krb5_store_int16(sp, val[i]);
-	if (ret)
-	    krb5_err(context, 1, ret, "krb5_store_int16");
-	krb5_storage_seek(sp, i * sizeof (v), SEEK_SET);
-	ret = krb5_ret_int16(sp, &v);
-	if (ret)
-	    krb5_err(context, 1, ret, "krb5_ret_int16");
-	if (v != val[i])
-	    krb5_errx(context, 1, "store and ret mismatch");
+        ret = krb5_store_int16(sp, val[i]);
+        if (ret)
+            krb5_err(context, 1, ret, "krb5_store_int16");
+        krb5_storage_seek(sp, i * sizeof (v), SEEK_SET);
+        ret = krb5_ret_int16(sp, &v);
+        if (ret)
+            krb5_err(context, 1, ret, "krb5_ret_int16");
+        if (v != val[i])
+            krb5_errx(context, 1, "store and ret mismatch");
     }
 }
 
@@ -89,22 +89,22 @@ test_int32(krb5_context context, krb5_storage *sp)
     krb5_error_code ret;
     int i;
     int32_t val[] = {
-	0, 1, -1, 2147483647, -2147483646
+        0, 1, -1, 2147483647, -2147483646
     }, v;
 
     krb5_storage_truncate(sp, 0);
 
     for (i = 0; i < sizeof(val)/sizeof(val[0]); i++) {
 
-	ret = krb5_store_int32(sp, val[i]);
-	if (ret)
-	    krb5_err(context, 1, ret, "krb5_store_int32");
-	krb5_storage_seek(sp, i * sizeof (v), SEEK_SET);
-	ret = krb5_ret_int32(sp, &v);
-	if (ret)
-	    krb5_err(context, 1, ret, "krb5_ret_int32");
-	if (v != val[i])
-	    krb5_errx(context, 1, "store and ret mismatch");
+        ret = krb5_store_int32(sp, val[i]);
+        if (ret)
+            krb5_err(context, 1, ret, "krb5_store_int32");
+        krb5_storage_seek(sp, i * sizeof (v), SEEK_SET);
+        ret = krb5_ret_int32(sp, &v);
+        if (ret)
+            krb5_err(context, 1, ret, "krb5_ret_int32");
+        if (v != val[i])
+            krb5_errx(context, 1, "store and ret mismatch");
     }
 }
 
@@ -114,22 +114,22 @@ test_uint8(krb5_context context, krb5_storage *sp)
     krb5_error_code ret;
     int i;
     uint8_t val[] = {
-	0, 1, 255
+        0, 1, 255
     }, v;
 
     krb5_storage_truncate(sp, 0);
 
     for (i = 0; i < sizeof(val)/sizeof(val[0]); i++) {
 
-	ret = krb5_store_uint8(sp, val[i]);
-	if (ret)
-	    krb5_err(context, 1, ret, "krb5_store_uint8");
-	krb5_storage_seek(sp, i * sizeof (v), SEEK_SET);
-	ret = krb5_ret_uint8(sp, &v);
-	if (ret)
-	    krb5_err(context, 1, ret, "krb5_ret_uint8");
-	if (v != val[i])
-	    krb5_errx(context, 1, "store and ret mismatch");
+        ret = krb5_store_uint8(sp, val[i]);
+        if (ret)
+            krb5_err(context, 1, ret, "krb5_store_uint8");
+        krb5_storage_seek(sp, i * sizeof (v), SEEK_SET);
+        ret = krb5_ret_uint8(sp, &v);
+        if (ret)
+            krb5_err(context, 1, ret, "krb5_ret_uint8");
+        if (v != val[i])
+            krb5_errx(context, 1, "store and ret mismatch");
     }
 }
 
@@ -139,22 +139,22 @@ test_uint16(krb5_context context, krb5_storage *sp)
     krb5_error_code ret;
     int i;
     uint16_t val[] = {
-	0, 1, 65535
+        0, 1, 65535
     }, v;
 
     krb5_storage_truncate(sp, 0);
 
     for (i = 0; i < sizeof(val)/sizeof(val[0]); i++) {
 
-	ret = krb5_store_uint16(sp, val[i]);
-	if (ret)
-	    krb5_err(context, 1, ret, "krb5_store_uint16");
-	krb5_storage_seek(sp, i * sizeof (v), SEEK_SET);
-	ret = krb5_ret_uint16(sp, &v);
-	if (ret)
-	    krb5_err(context, 1, ret, "krb5_ret_uint16");
-	if (v != val[i])
-	    krb5_errx(context, 1, "store and ret mismatch");
+        ret = krb5_store_uint16(sp, val[i]);
+        if (ret)
+            krb5_err(context, 1, ret, "krb5_store_uint16");
+        krb5_storage_seek(sp, i * sizeof (v), SEEK_SET);
+        ret = krb5_ret_uint16(sp, &v);
+        if (ret)
+            krb5_err(context, 1, ret, "krb5_ret_uint16");
+        if (v != val[i])
+            krb5_errx(context, 1, "store and ret mismatch");
     }
 }
 
@@ -164,22 +164,22 @@ test_uint32(krb5_context context, krb5_storage *sp)
     krb5_error_code ret;
     int i;
     uint32_t val[] = {
-	0, 1, 4294967295UL
+        0, 1, 4294967295UL
     }, v;
 
     krb5_storage_truncate(sp, 0);
 
     for (i = 0; i < sizeof(val)/sizeof(val[0]); i++) {
 
-	ret = krb5_store_uint32(sp, val[i]);
-	if (ret)
-	    krb5_err(context, 1, ret, "krb5_store_uint32");
-	krb5_storage_seek(sp, i * sizeof (v), SEEK_SET);
-	ret = krb5_ret_uint32(sp, &v);
-	if (ret)
-	    krb5_err(context, 1, ret, "krb5_ret_uint32");
-	if (v != val[i])
-	    krb5_errx(context, 1, "store and ret mismatch");
+        ret = krb5_store_uint32(sp, val[i]);
+        if (ret)
+            krb5_err(context, 1, ret, "krb5_store_uint32");
+        krb5_storage_seek(sp, i * sizeof (v), SEEK_SET);
+        ret = krb5_ret_uint32(sp, &v);
+        if (ret)
+            krb5_err(context, 1, ret, "krb5_ret_uint32");
+        if (v != val[i])
+            krb5_errx(context, 1, "store and ret mismatch");
     }
 }
 
@@ -206,16 +206,16 @@ test_truncate(krb5_context context, krb5_storage *sp, int fd)
     krb5_storage_truncate(sp, 2);
 
     if (fstat(fd, &sb) != 0)
-	krb5_err(context, 1, errno, "fstat");
+        krb5_err(context, 1, errno, "fstat");
     if (sb.st_size != 2)
-	krb5_errx(context, 1, "length not 2");
+        krb5_errx(context, 1, "length not 2");
 
     krb5_storage_truncate(sp, 1024);
 
     if (fstat(fd, &sb) != 0)
-	krb5_err(context, 1, errno, "fstat");
+        krb5_err(context, 1, errno, "fstat");
     if (sb.st_size != 1024)
-	krb5_errx(context, 1, "length not 1024");
+        krb5_errx(context, 1, "length not 1024");
 }
 
 static void
@@ -228,20 +228,20 @@ test_buffer_issues(krb5_context context, krb5_storage *sp)
     krb5_storage_set_eof_code(sp, -1);
     krb5_storage_truncate(sp, 0);
     for (i=0; i < 4096; i++) {
-	krb5_store_uint32(sp, i);
+        krb5_store_uint32(sp, i);
     }
 
     krb5_storage_truncate(sp, 1024);
     ret = krb5_ret_uint32(sp, &v);
     if (ret != -1)
-	krb5_errx(context, 1, "Should have received EOF");
+        krb5_errx(context, 1, "Should have received EOF");
 
     krb5_storage_seek(sp, 8, SEEK_SET);
     ret = krb5_ret_uint32(sp, &v);
     if (ret == -1)
-	krb5_errx(context, 1, "Should not have received EOF");
+        krb5_errx(context, 1, "Should not have received EOF");
     if (v != 2)
-	krb5_errx(context, 1, "uint32 should have been 2");
+        krb5_errx(context, 1, "uint32 should have been 2");
 }
 
 static void
@@ -253,12 +253,12 @@ check_too_large(krb5_context context, krb5_storage *sp)
     size_t n;
 
     for (n = 0; n < sizeof(too_big_sizes) / sizeof(too_big_sizes[0]); n++) {
-	krb5_storage_truncate(sp, 0);
-	krb5_store_uint32(sp, too_big_sizes[n]);
-	krb5_storage_seek(sp, 0, SEEK_SET);
-	ret = krb5_ret_data(sp, &data);
-	if (ret != HEIM_ERR_TOO_BIG)
-	    errx(1, "not too big: %lu", (unsigned long)n);
+        krb5_storage_truncate(sp, 0);
+        krb5_store_uint32(sp, too_big_sizes[n]);
+        krb5_storage_seek(sp, 0, SEEK_SET);
+        ret = krb5_ret_data(sp, &data);
+        if (ret != HEIM_ERR_TOO_BIG)
+            errx(1, "not too big: %lu", (unsigned long)n);
     }
 }
 
@@ -280,9 +280,9 @@ static void
 usage (int ret)
 {
     arg_printusage (args,
-		    sizeof(args)/sizeof(*args),
-		    NULL,
-		    "");
+                    sizeof(args)/sizeof(*args),
+                    NULL,
+                    "");
     exit (ret);
 }
 
@@ -298,14 +298,14 @@ main(int argc, char **argv)
     setprogname(argv[0]);
 
     if(getarg(args, sizeof(args) / sizeof(args[0]), argc, argv, &optidx))
-	usage(1);
+        usage(1);
 
     if (help_flag)
-	usage (0);
+        usage (0);
 
     if(version_flag){
-	print_version(NULL);
-	exit(0);
+        print_version(NULL);
+        exit(0);
     }
 
     argc -= optidx;
@@ -313,7 +313,7 @@ main(int argc, char **argv)
 
     ret = krb5_init_context (&context);
     if (ret)
-	errx (1, "krb5_init_context failed: %d", ret);
+        errx (1, "krb5_init_context failed: %d", ret);
 
     /*
      * Test encoding/decoding of primotive types on diffrent backends
@@ -321,7 +321,7 @@ main(int argc, char **argv)
 
     sp = krb5_storage_emem();
     if (sp == NULL)
-	krb5_errx(context, 1, "krb5_storage_emem: no mem");
+        krb5_errx(context, 1, "krb5_storage_emem: no mem");
 
     test_storage(context, sp);
     check_too_large(context, sp);
@@ -330,11 +330,11 @@ main(int argc, char **argv)
 
     fd = open(fn, O_RDWR|O_CREAT|O_TRUNC, 0600);
     if (fd < 0)
-	krb5_err(context, 1, errno, "open(%s)", fn);
+        krb5_err(context, 1, errno, "open(%s)", fn);
 
     sp = krb5_storage_from_fd(fd);
     if (sp == NULL)
-	krb5_errx(context, 1, "krb5_storage_from_fd: %s no mem", fn);
+        krb5_errx(context, 1, "krb5_storage_from_fd: %s no mem", fn);
 
     test_storage(context, sp);
     test_truncate(context, sp, fd);
@@ -345,11 +345,11 @@ main(int argc, char **argv)
 
     fd = open(fn, O_RDWR|O_CREAT|O_TRUNC, 0600);
     if (fd < 0)
-	krb5_err(context, 1, errno, "open(%s)", fn);
+        krb5_err(context, 1, errno, "open(%s)", fn);
 
     sp = krb5_storage_stdio_from_fd(fd, "r+");
     if (sp == NULL)
-	krb5_errx(context, 1, "krb5_storage_stdio_from_fd: %s no mem", fn);
+        krb5_errx(context, 1, "krb5_storage_stdio_from_fd: %s no mem", fn);
 
     test_storage(context, sp);
     test_truncate(context, sp, fd);

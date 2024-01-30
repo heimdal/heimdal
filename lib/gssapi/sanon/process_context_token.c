@@ -33,8 +33,8 @@
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 _gss_sanon_process_context_token(OM_uint32 *minor,
-				 gss_const_ctx_id_t context_handle,
-				 const gss_buffer_t token_buffer)
+                                 gss_const_ctx_id_t context_handle,
+                                 const gss_buffer_t token_buffer)
 {
     *minor = 0;
 

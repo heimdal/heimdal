@@ -73,8 +73,8 @@ print_pem_stamp(FILE *f, const char *type, const char *str)
 
 HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_pem_write(hx509_context context, const char *type,
-		hx509_pem_header *headers, FILE *f,
-		const void *data, size_t size)
+                hx509_pem_header *headers, FILE *f,
+                const void *data, size_t size)
 {
     const char *p = data;
     size_t length;
@@ -85,29 +85,29 @@ hx509_pem_write(hx509_context context, const char *type,
     print_pem_stamp(f, "BEGIN", type);
 
     while (headers) {
-	fprintf(f, "%s: %s\n%s",
-		headers->header, headers->value,
-		headers->next ? "" : "\n");
-	headers = headers->next;
+        fprintf(f, "%s: %s\n%s",
+                headers->header, headers->value,
+                headers->next ? "" : "\n");
+        headers = headers->next;
     }
 
     while (size > 0) {
-	ssize_t l;
+        ssize_t l;
 
-	length = size;
-	if (length > ENCODE_LINE_LENGTH)
-	    length = ENCODE_LINE_LENGTH;
+        length = size;
+        if (length > ENCODE_LINE_LENGTH)
+            length = ENCODE_LINE_LENGTH;
 
-	l = rk_base64_encode(p, length, &line);
-	if (l < 0) {
-	    hx509_set_error_string(context, 0, ENOMEM,
-				   "malloc - out of memory");
-	    return ENOMEM;
-	}
-	size -= length;
-	fprintf(f, "%s\n", line);
-	p += length;
-	free(line);
+        l = rk_base64_encode(p, length, &line);
+        if (l < 0) {
+            hx509_set_error_string(context, 0, ENOMEM,
+                                   "malloc - out of memory");
+            return ENOMEM;
+        }
+        size -= length;
+        fprintf(f, "%s\n", line);
+        p += length;
+        free(line);
     }
 
     print_pem_stamp(f, "END", type);
@@ -121,23 +121,23 @@ hx509_pem_write(hx509_context context, const char *type,
 
 HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_pem_add_header(hx509_pem_header **headers,
-		     const char *header, const char *value)
+                     const char *header, const char *value)
 {
     hx509_pem_header *h;
 
     h = calloc(1, sizeof(*h));
     if (h == NULL)
-	return ENOMEM;
+        return ENOMEM;
     h->header = strdup(header);
     if (h->header == NULL) {
-	free(h);
-	return ENOMEM;
+        free(h);
+        return ENOMEM;
     }
     h->value = strdup(value);
     if (h->value == NULL) {
-	free(h->header);
-	free(h);
-	return ENOMEM;
+        free(h->header);
+        free(h);
+        return ENOMEM;
     }
 
     h->next = *headers;
@@ -151,11 +151,11 @@ hx509_pem_free_header(hx509_pem_header *headers)
 {
     hx509_pem_header *h;
     while (headers) {
-	h = headers;
-	headers = headers->next;
-	free(h->header);
-	free(h->value);
-	free(h);
+        h = headers;
+        headers = headers->next;
+        free(h->header);
+        free(h->value);
+        free(h);
     }
 }
 
@@ -167,9 +167,9 @@ HX509_LIB_FUNCTION const char * HX509_LIB_CALL
 hx509_pem_find_header(const hx509_pem_header *h, const char *header)
 {
     while(h) {
-	if (strcmp(header, h->header) == 0)
-	    return h->value;
-	h = h->next;
+        if (strcmp(header, h->header) == 0)
+            return h->value;
+        h = h->next;
     }
     return NULL;
 }
@@ -181,9 +181,9 @@ hx509_pem_find_header(const hx509_pem_header *h, const char *header)
 
 HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_pem_read(hx509_context context,
-	       FILE *f,
-	       hx509_pem_read_func func,
-	       void *ctx)
+               FILE *f,
+               hx509_pem_read_func func,
+               void *ctx)
 {
     hx509_pem_header *headers = NULL;
     char *type = NULL;
@@ -197,106 +197,106 @@ hx509_pem_read(hx509_context context,
     where = BEFORE;
 
     while (fgets(buf, sizeof(buf), f) != NULL) {
-	char *p;
-	int i;
+        char *p;
+        int i;
 
-	i = strcspn(buf, "\n");
-	if (buf[i] == '\n') {
-	    buf[i] = '\0';
-	    if (i > 0)
-		i--;
-	}
-	if (buf[i] == '\r') {
-	    buf[i] = '\0';
-	    if (i > 0)
-		i--;
-	}
+        i = strcspn(buf, "\n");
+        if (buf[i] == '\n') {
+            buf[i] = '\0';
+            if (i > 0)
+                i--;
+        }
+        if (buf[i] == '\r') {
+            buf[i] = '\0';
+            if (i > 0)
+                i--;
+        }
 
-	switch (where) {
-	case BEFORE:
-	    if (strncmp("-----BEGIN ", buf, 11) == 0) {
-		type = strdup(buf + 11);
-		if (type == NULL)
-		    break;
-		p = strchr(type, '-');
-		if (p)
-		    *p = '\0';
-		where = SEARCHHEADER;
-	    }
-	    break;
-	case SEARCHHEADER:
-	    p = strchr(buf, ':');
-	    if (p == NULL) {
-		where = INDATA;
-		goto indata;
-	    }
-            HEIM_FALLTHROUGH;
-	case INHEADER:
-	    if (buf[0] == '\0') {
-		where = INDATA;
-		break;
-	    }
-	    p = strchr(buf, ':');
-	    if (p) {
-		*p++ = '\0';
-		while (isspace((unsigned char)*p))
-		    p++;
-		ret = hx509_pem_add_header(&headers, buf, p);
-		if (ret)
-		    abort();
-	    }
-	    break;
-	case INDATA:
-	indata:
+        switch (where) {
+            case BEFORE:
+                if (strncmp("-----BEGIN ", buf, 11) == 0) {
+                    type = strdup(buf + 11);
+                    if (type == NULL)
+                        break;
+                    p = strchr(type, '-');
+                    if (p)
+                        *p = '\0';
+                    where = SEARCHHEADER;
+                }
+                break;
+            case SEARCHHEADER:
+                p = strchr(buf, ':');
+                if (p == NULL) {
+                    where = INDATA;
+                    goto indata;
+                }
+                HEIM_FALLTHROUGH;
+            case INHEADER:
+                if (buf[0] == '\0') {
+                    where = INDATA;
+                    break;
+                }
+                p = strchr(buf, ':');
+                if (p) {
+                    *p++ = '\0';
+                    while (isspace((unsigned char)*p))
+                        p++;
+                    ret = hx509_pem_add_header(&headers, buf, p);
+                    if (ret)
+                        abort();
+                }
+                break;
+            case INDATA:
+indata:
 
-	    if (strncmp("-----END ", buf, 9) == 0) {
-		where = DONE;
-		break;
-	    }
+                if (strncmp("-----END ", buf, 9) == 0) {
+                    where = DONE;
+                    break;
+                }
 
-	    p = emalloc(i);
-	    i = rk_base64_decode(buf, p);
-	    if (i < 0) {
-		free(p);
-		goto out;
-	    }
+                p = emalloc(i);
+                i = rk_base64_decode(buf, p);
+                if (i < 0) {
+                    free(p);
+                    goto out;
+                }
 
-	    data = erealloc(data, len + i);
-	    memcpy(((char *)data) + len, p, i);
-	    free(p);
-	    len += i;
-	    break;
-	case DONE:
-	    abort();
-	}
+                data = erealloc(data, len + i);
+                memcpy(((char *)data) + len, p, i);
+                free(p);
+                len += i;
+                break;
+            case DONE:
+                abort();
+        }
 
-	if (where == DONE) {
-	    ret = (*func)(context, type, headers, data, len, ctx);
-	out:
-	    free(data);
-	    data = NULL;
-	    len = 0;
-	    free(type);
-	    type = NULL;
-	    where = BEFORE;
-	    hx509_pem_free_header(headers);
-	    headers = NULL;
-	    if (ret)
-		break;
-	}
+        if (where == DONE) {
+            ret = (*func)(context, type, headers, data, len, ctx);
+out:
+            free(data);
+            data = NULL;
+            len = 0;
+            free(type);
+            type = NULL;
+            where = BEFORE;
+            hx509_pem_free_header(headers);
+            headers = NULL;
+            if (ret)
+                break;
+        }
     }
 
     if (where != BEFORE) {
-	hx509_set_error_string(context, 0, HX509_PARSING_KEY_FAILED,
-			       "File ends before end of PEM end tag");
-	ret = HX509_PARSING_KEY_FAILED;
+        hx509_set_error_string(context, 0, HX509_PARSING_KEY_FAILED,
+                               "File ends before end of PEM end tag");
+        ret = HX509_PARSING_KEY_FAILED;
     }
     if (data)
-	free(data);
+        free(data);
     if (type)
-	free(type);
+        free(type);
     if (headers)
-	hx509_pem_free_header(headers);
+        hx509_pem_free_header(headers);
 
     return ret;
 }
@@ -349,11 +349,11 @@ _hx509_erase_file(hx509_context context, const char *fn)
 
     fd = open(fn, O_RDWR | O_BINARY | O_CLOEXEC | O_NOFOLLOW);
     if (fd < 0)
-	return errno == ENOENT ? 0 : errno;
+        return errno == ENOENT ? 0 : errno;
     rk_cloexec(fd);
 
     if (unlink(fn) < 0) {
-	ret = errno;
+        ret = errno;
         (void) close(fd);
         hx509_set_error_string(context, 0, ret, "hx509_certs_destroy: "
                                "unlinking \"%s\": %s", fn, strerror(ret));
@@ -363,16 +363,16 @@ _hx509_erase_file(hx509_context context, const char *fn)
     /* check TOCTOU, symlinks */
     ret = fstat(fd, &sb2);
     if (ret < 0) {
-	ret = errno;
+        ret = errno;
         hx509_set_error_string(context, 0, ret, "hx509_certs_destroy: "
                                "fstat of %d, \"%s\": %s", fd, fn,
                                strerror(ret));
-	(void) close(fd);
-	return ret;
+        (void) close(fd);
+        return ret;
     }
     if (sb1.st_dev != sb2.st_dev || sb1.st_ino != sb2.st_ino) {
-	(void) close(fd);
-	return EPERM;
+        (void) close(fd);
+        return EPERM;
     }
 
     /* there are still hard links to this file */

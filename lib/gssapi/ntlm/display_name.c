@@ -35,37 +35,37 @@
 
 OM_uint32 GSSAPI_CALLCONV
 _gss_ntlm_display_name
-           (OM_uint32 * minor_status,
-            gss_const_name_t input_name,
-            gss_buffer_t output_name_buffer,
-            gss_OID * output_name_type
-           )
+                       (OM_uint32 * minor_status,
+                        gss_const_name_t input_name,
+                        gss_buffer_t output_name_buffer,
+                        gss_OID * output_name_type
+                       )
 {
     *minor_status = 0;
 
     if (output_name_type)
-	*output_name_type = GSS_NTLM_MECHANISM;
+        *output_name_type = GSS_NTLM_MECHANISM;
 
     if (output_name_buffer) {
-	ntlm_name n = (ntlm_name)input_name;
-	char *str = NULL;
-	int len;
+        ntlm_name n = (ntlm_name)input_name;
+        char *str = NULL;
+        int len;
 
-	output_name_buffer->length = 0;
-	output_name_buffer->value = NULL;
+        output_name_buffer->length = 0;
+        output_name_buffer->value = NULL;
 
-	if (n == NULL) {
-	    *minor_status = 0;
-	    return GSS_S_BAD_NAME;
-	}
+        if (n == NULL) {
+            *minor_status = 0;
+            return GSS_S_BAD_NAME;
+        }
 
-	len = asprintf(&str, "%s@%s", n->user, n->domain);
-	if (len < 0 || str == NULL) {
-	    *minor_status = ENOMEM;
-	    return GSS_S_FAILURE;
-	}
-	output_name_buffer->length = len;
-	output_name_buffer->value = str;
+        len = asprintf(&str, "%s@%s", n->user, n->domain);
+        if (len < 0 || str == NULL) {
+            *minor_status = ENOMEM;
+            return GSS_S_FAILURE;
+        }
+        output_name_buffer->length = len;
+        output_name_buffer->value = str;
     }
     return GSS_S_COMPLETE;
 }

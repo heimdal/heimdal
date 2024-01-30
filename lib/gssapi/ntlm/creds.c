@@ -37,54 +37,54 @@
 
 OM_uint32 GSSAPI_CALLCONV
 _gss_ntlm_inquire_cred
-           (OM_uint32 * minor_status,
-            gss_const_cred_id_t cred_handle,
-            gss_name_t * name,
-            OM_uint32 * lifetime,
-            gss_cred_usage_t * cred_usage,
-            gss_OID_set * mechanisms
-           )
+                      (OM_uint32 * minor_status,
+                       gss_const_cred_id_t cred_handle,
+                       gss_name_t * name,
+                       OM_uint32 * lifetime,
+                       gss_cred_usage_t * cred_usage,
+                       gss_OID_set * mechanisms
+                      )
 {
     OM_uint32 ret, junk;
 
     *minor_status = 0;
 
     if (cred_handle == NULL)
-	return GSS_S_NO_CRED;
+        return GSS_S_NO_CRED;
 
     if (name) {
-	ntlm_name n = calloc(1, sizeof(*n));
-	ntlm_cred c = (ntlm_cred)cred_handle;
-	if (n) {
-	    n->user = strdup(c->username);
-	    n->domain = strdup(c->domain);
-	}
-	if (n == NULL || n->user == NULL || n->domain == NULL) {
-	    if (n) {
-		free(n->user);
-		free(n->domain);
-		free(n);
-	    }
-	    *minor_status = ENOMEM;
-	    return GSS_S_FAILURE;
-	}
-	*name = (gss_name_t)n;
+        ntlm_name n = calloc(1, sizeof(*n));
+        ntlm_cred c = (ntlm_cred)cred_handle;
+        if (n) {
+            n->user = strdup(c->username);
+            n->domain = strdup(c->domain);
+        }
+        if (n == NULL || n->user == NULL || n->domain == NULL) {
+            if (n) {
+                free(n->user);
+                free(n->domain);
+                free(n);
+            }
+            *minor_status = ENOMEM;
+            return GSS_S_FAILURE;
+        }
+        *name = (gss_name_t)n;
     }
     if (lifetime)
-	*lifetime = GSS_C_INDEFINITE;
+        *lifetime = GSS_C_INDEFINITE;
     if (cred_usage)
-	*cred_usage = 0;
+        *cred_usage = 0;
     if (mechanisms)
-	*mechanisms = GSS_C_NO_OID_SET;
+        *mechanisms = GSS_C_NO_OID_SET;
     if (mechanisms) {
         ret = gss_create_empty_oid_set(minor_status, mechanisms);
         if (ret)
-	    goto out;
-	ret = gss_add_oid_set_member(minor_status,
-				     GSS_NTLM_MECHANISM,
-				     mechanisms);
+            goto out;
+        ret = gss_add_oid_set_member(minor_status,
+                                     GSS_NTLM_MECHANISM,
+                                     mechanisms);
         if (ret)
-	    goto out;
+            goto out;
     }
 
     return GSS_S_COMPLETE;
@@ -111,19 +111,19 @@ _gss_ntlm_destroy_kcm_cred(gss_cred_id_t *cred_handle)
 
     ret = krb5_kcm_storage_request(context, KCM_OP_DEL_NTLM_CRED, &request);
     if (ret)
-	goto out;
+        goto out;
 
     ret = krb5_store_stringz(request, cred->username);
     if (ret)
-	goto out;
+        goto out;
 
     ret = krb5_store_stringz(request, cred->domain);
     if (ret)
-	goto out;
+        goto out;
 
     ret = krb5_kcm_call(context, request, &response, &response_data);
     if (ret)
-	goto out;
+        goto out;
 
     krb5_storage_free(request);
     krb5_storage_free(response);
@@ -138,20 +138,20 @@ _gss_ntlm_destroy_kcm_cred(gss_cred_id_t *cred_handle)
 
 OM_uint32 GSSAPI_CALLCONV
 _gss_ntlm_destroy_cred(OM_uint32 *minor_status,
-		       gss_cred_id_t *cred_handle)
+                       gss_cred_id_t *cred_handle)
 {
 #ifdef HAVE_KCM
     krb5_error_code ret;
 #endif
 
     if (cred_handle == NULL || *cred_handle == GSS_C_NO_CREDENTIAL)
-	return GSS_S_COMPLETE;
+        return GSS_S_COMPLETE;
 
 #ifdef HAVE_KCM
     ret = _gss_ntlm_destroy_kcm_cred(cred_handle);
     if (ret) {
-	*minor_status = ret;
-	return GSS_S_FAILURE;
+        *minor_status = ret;
+        return GSS_S_FAILURE;
     }
 #endif
 

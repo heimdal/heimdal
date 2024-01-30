@@ -40,17 +40,17 @@
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_get_default_realms (krb5_context context,
-			 krb5_realm **realms)
+                         krb5_realm **realms)
 {
     if (context->default_realms == NULL) {
-	krb5_error_code ret = krb5_set_default_realm (context, NULL);
-	if (ret)
-	    return KRB5_CONFIG_NODEFREALM;
+        krb5_error_code ret = krb5_set_default_realm (context, NULL);
+        if (ret)
+            return KRB5_CONFIG_NODEFREALM;
     }
 
     return krb5_copy_host_realm (context,
-				 context->default_realms,
-				 realms);
+                                 context->default_realms,
+                                 realms);
 }
 
 /*
@@ -59,22 +59,22 @@ krb5_get_default_realms (krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_get_default_realm(krb5_context context,
-		       krb5_realm *realm)
+                       krb5_realm *realm)
 {
     krb5_error_code ret;
     char *res;
 
     if (context->default_realms == NULL
-	|| context->default_realms[0] == NULL) {
-	krb5_clear_error_message(context);
-	ret = krb5_set_default_realm (context, NULL);
-	if (ret)
-	    return ret;
+        || context->default_realms[0] == NULL) {
+        krb5_clear_error_message(context);
+        ret = krb5_set_default_realm (context, NULL);
+        if (ret)
+            return ret;
     }
 
     res = strdup (context->default_realms[0]);
     if (res == NULL)
-	return krb5_enomem(context);
+        return krb5_enomem(context);
     *realm = res;
     return 0;
 }

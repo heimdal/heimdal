@@ -94,7 +94,7 @@ string_to_oid(const char *name)
     gss_OID oid = gss_name_to_oid(name);
 
     if (oid == GSS_C_NO_OID)
-	errx(1, "name '%s' not known", name);
+        errx(1, "name '%s' not known", name);
 
     return oid;
 }
@@ -112,25 +112,25 @@ string_to_oids(gss_OID_set *oidsetp, char *names)
     }
 
     if (strcasecmp(names, "all") == 0) {
-	maj_stat = gss_indicate_mechs(&min_stat, oidsetp);
-	if (GSS_ERROR(maj_stat))
-	    errx(1, "gss_indicate_mechs: %s",
-		 gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));
+        maj_stat = gss_indicate_mechs(&min_stat, oidsetp);
+        if (GSS_ERROR(maj_stat))
+            errx(1, "gss_indicate_mechs: %s",
+                 gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));
     } else {
-	maj_stat = gss_create_empty_oid_set(&min_stat, oidsetp);
-	if (GSS_ERROR(maj_stat))
-	    errx(1, "gss_create_empty_oid_set: %s",
-		 gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));
+        maj_stat = gss_create_empty_oid_set(&min_stat, oidsetp);
+        if (GSS_ERROR(maj_stat))
+            errx(1, "gss_create_empty_oid_set: %s",
+                 gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));
 
         for (name = strtok_r(names, ", ", &s);
              name != NULL;
              name = strtok_r(NULL, ", ", &s)) {
-	    gss_OID oid = string_to_oid(name);
+            gss_OID oid = string_to_oid(name);
 
-	    maj_stat = gss_add_oid_set_member(&min_stat, oid, oidsetp);
-	    if (GSS_ERROR(maj_stat))
-		errx(1, "gss_add_oid_set_member: %s",
-		    gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));
+            maj_stat = gss_add_oid_set_member(&min_stat, oid, oidsetp);
+            if (GSS_ERROR(maj_stat))
+                errx(1, "gss_add_oid_set_member: %s",
+                     gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));
         }
     }
 }
@@ -155,83 +155,83 @@ show_pac_client_info(gss_name_t n)
 
     maj = gss_inquire_name(&min, n, &name_is_MN, &MN_mech, &attrs);
     if (maj != GSS_S_COMPLETE)
-	errx(1, "gss_inquire_name: %s",
-	     gssapi_err(maj, min, GSS_KRB5_MECHANISM));
+        errx(1, "gss_inquire_name: %s",
+             gssapi_err(maj, min, GSS_KRB5_MECHANISM));
 
     a.value = "urn:mspac:client-info";
     a.length = sizeof("urn:mspac:client-info") - 1;
 
     for (found = 0, i = 0; i < attrs->count; i++) {
-	gss_buffer_t attr = &attrs->elements[i];
+        gss_buffer_t attr = &attrs->elements[i];
 
-	if (attr->length == a.length &&
-	    memcmp(attr->value, a.value, a.length) == 0) {
-	    found++;
-	    break;
-	}
+        if (attr->length == a.length &&
+            memcmp(attr->value, a.value, a.length) == 0) {
+            found++;
+            break;
+        }
     }
 
     gss_release_buffer_set(&min, &attrs);
 
     if (!found)
-	errx(1, "gss_inquire_name: attribute %.*s not enumerated",
-	     (int)a.length, (char *)a.value);
+        errx(1, "gss_inquire_name: attribute %.*s not enumerated",
+             (int)a.length, (char *)a.value);
 
     more = 0;
     maj = gss_get_name_attribute(&min, n, &a, &authenticated, &complete, &v,
                                  &dv, &more);
     if (maj != GSS_S_COMPLETE)
-	errx(1, "gss_get_name_attribute: %s",
-	     gssapi_err(maj, min, GSS_KRB5_MECHANISM));
+        errx(1, "gss_get_name_attribute: %s",
+             gssapi_err(maj, min, GSS_KRB5_MECHANISM));
 
 
     sp = krb5_storage_from_readonly_mem(v.value, v.length);
     if (sp == NULL)
-	errx(1, "show_pac_client_info: out of memory");
+        errx(1, "show_pac_client_info: out of memory");
 
     krb5_storage_set_flags(sp, KRB5_STORAGE_BYTEORDER_LE);
 
     ret = krb5_ret_uint64(sp, &tmp); /* skip over time */
     if (ret == 0)
-	ret = krb5_ret_uint16(sp, &len);
+        ret = krb5_ret_uint16(sp, &len);
     if (ret || len == 0)
-	errx(1, "show_pac_client_info: invalid PAC logon info length");
+        errx(1, "show_pac_client_info: invalid PAC logon info length");
 
     s = malloc(len);
     ret = krb5_storage_read(sp, s, len);
     if (ret != len)
-	errx(1, "show_pac_client_info:, failed to read PAC logon name");
+        errx(1, "show_pac_client_info:, failed to read PAC logon name");
 
     krb5_storage_free(sp);
 
     {
-	size_t ucs2len = len / 2;
-	uint16_t *ucs2;
-	size_t u8len;
-	unsigned int flags = WIND_RW_LE;
+        size_t ucs2len = len / 2;
+        uint16_t *ucs2;
+        size_t u8len;
+        unsigned int flags = WIND_RW_LE;
 
-	ucs2 = malloc(sizeof(ucs2[0]) * ucs2len);
-	if (ucs2 == NULL)
-	    errx(1, "show_pac_client_info: out of memory");
+        ucs2 = malloc(sizeof(ucs2[0]) * ucs2len);
+        if (ucs2 == NULL)
+            errx(1, "show_pac_client_info: out of memory");
 
-	ret = wind_ucs2read(s, len, &flags, ucs2, &ucs2len);
-	free(s);
-	if (ret)
-	    errx(1, "failed to convert string to UCS-2");
+        ret = wind_ucs2read(s, len, &flags, ucs2, &ucs2len);
+        free(s);
+        if (ret)
+            errx(1, "failed to convert string to UCS-2");
 
-	ret = wind_ucs2utf8_length(ucs2, ucs2len, &u8len);
-	if (ret)
-	    errx(1, "failed to count length of UCS-2 string");
+        ret = wind_ucs2utf8_length(ucs2, ucs2len, &u8len);
+        if (ret)
+            errx(1, "failed to count length of UCS-2 string");
 
-	u8len += 1; /* Add space for NUL */
-	logon_string = malloc(u8len);
-	if (logon_string == NULL)
-	    errx(1, "show_pac_client_info: out of memory");
+        u8len += 1; /* Add space for NUL */
+        logon_string = malloc(u8len);
+        if (logon_string == NULL)
+            errx(1, "show_pac_client_info: out of memory");
 
-	ret = wind_ucs2utf8(ucs2, ucs2len, logon_string, &u8len);
-	free(ucs2);
-	if (ret)
-	    errx(1, "failed to convert to UTF-8");
+        ret = wind_ucs2utf8(ucs2, ucs2len, logon_string, &u8len);
+        free(ucs2);
+        if (ret)
+            errx(1, "failed to convert to UTF-8");
     }
 
     printf("logon name: %s\n", logon_string);
@@ -278,25 +278,25 @@ loop(gss_OID mechoid,
     flags |= GSS_C_CONF_FLAG;
 
     if (mutual_auth_flag)
-	flags |= GSS_C_MUTUAL_FLAG;
+        flags |= GSS_C_MUTUAL_FLAG;
     if (anon_flag)
-	flags |= GSS_C_ANON_FLAG;
+        flags |= GSS_C_ANON_FLAG;
     if (dce_style_flag)
-	flags |= GSS_C_DCE_STYLE;
+        flags |= GSS_C_DCE_STYLE;
     if (deleg_flag)
-	flags |= GSS_C_DELEG_FLAG;
+        flags |= GSS_C_DELEG_FLAG;
     if (policy_deleg_flag)
-	flags |= GSS_C_DELEG_POLICY_FLAG;
+        flags |= GSS_C_DELEG_POLICY_FLAG;
 
     input_token.value = rk_UNCONST(target);
     input_token.length = strlen(target);
 
     maj_stat = gss_import_name(&min_stat,
-			       &input_token,
-			       nameoid,
-			       &gss_target_name);
+                               &input_token,
+                               nameoid,
+                               &gss_target_name);
     if (GSS_ERROR(maj_stat))
-	err(1, "import name creds failed with: %d", maj_stat);
+        err(1, "import name creds failed with: %d", maj_stat);
 
     if (on_behalf_of_string) {
         AuthorizationDataElement e;
@@ -328,14 +328,14 @@ loop(gss_OID mechoid,
     input_token.value = NULL;
 
     if (i_channel_bindings) {
-	i_channel_bindings_data.application_data.length = strlen(i_channel_bindings);
-	i_channel_bindings_data.application_data.value = i_channel_bindings;
-	i_channel_bindings_p = &i_channel_bindings_data;
+        i_channel_bindings_data.application_data.length = strlen(i_channel_bindings);
+        i_channel_bindings_data.application_data.value = i_channel_bindings;
+        i_channel_bindings_p = &i_channel_bindings_data;
     }
     if (a_channel_bindings) {
-	a_channel_bindings_data.application_data.length = strlen(a_channel_bindings);
-	a_channel_bindings_data.application_data.value = a_channel_bindings;
-	a_channel_bindings_p = &a_channel_bindings_data;
+        a_channel_bindings_data.application_data.length = strlen(a_channel_bindings);
+        a_channel_bindings_data.application_data.value = a_channel_bindings;
+        a_channel_bindings_p = &a_channel_bindings_data;
     }
 
     /*
@@ -347,7 +347,7 @@ loop(gss_OID mechoid,
      */
 
     while (!server_done || !client_done) {
-	num_loops++;
+        num_loops++;
         if (verbose_flag)
             printf("loop #%d: input_token.length=%zu client_done=%d\n",
                 num_loops, input_token.length, client_done);
@@ -382,7 +382,7 @@ loop(gss_OID mechoid,
                      gssapi_err(maj_stat, min_stat, mechoid));
             client_done = !(maj_stat & GSS_S_CONTINUE_NEEDED);
 
-	    gss_release_buffer(&min_stat, &input_token);
+            gss_release_buffer(&min_stat, &input_token);
             input_token.length = 0;
             input_token.value  = NULL;
 
@@ -416,13 +416,13 @@ loop(gss_OID mechoid,
             gsskrb5_get_time_offset(&client_time_offset);
             gsskrb5_set_time_offset(server_time_offset);
 
-	    if (output_token.length && ((uint8_t *)output_token.value)[0] == 0x60) {
-		tmp.length = output_token.length - offset;
-		if (token_split && tmp.length > token_split)
-		    tmp.length = token_split;
-		tmp.value  = (char *)output_token.value + offset;
-	    } else
-		tmp = output_token;
+            if (output_token.length && ((uint8_t *)output_token.value)[0] == 0x60) {
+                tmp.length = output_token.length - offset;
+                if (token_split && tmp.length > token_split)
+                    tmp.length = token_split;
+                tmp.value  = (char *)output_token.value + offset;
+            } else
+                tmp = output_token;
 
             if (verbose_flag)
                 printf("loop #%d: accept offset=%zu len=%zu\n", num_loops,
@@ -469,22 +469,22 @@ loop(gss_OID mechoid,
             printf("loop #%d: end\n", num_loops);
     }
     if (output_token.length != 0)
-	gss_release_buffer(&min_stat, &output_token);
+        gss_release_buffer(&min_stat, &output_token);
     if (input_token.length != 0)
-	gss_release_buffer(&min_stat, &input_token);
+        gss_release_buffer(&min_stat, &input_token);
     gss_release_name(&min_stat, &gss_target_name);
 
     if (deleg_flag || policy_deleg_flag) {
-	if (server_no_deleg_flag) {
-	    if (*deleg_cred != GSS_C_NO_CREDENTIAL)
-		errx(1, "got delegated cred but didn't expect one");
-	} else if (*deleg_cred == GSS_C_NO_CREDENTIAL)
-	    errx(1, "asked for delegarated cred but did get one");
+        if (server_no_deleg_flag) {
+            if (*deleg_cred != GSS_C_NO_CREDENTIAL)
+                errx(1, "got delegated cred but didn't expect one");
+        } else if (*deleg_cred == GSS_C_NO_CREDENTIAL)
+            errx(1, "asked for delegarated cred but did get one");
     } else if (*deleg_cred != GSS_C_NO_CREDENTIAL)
-	  errx(1, "got deleg_cred cred but didn't ask");
+          errx(1, "got deleg_cred cred but didn't ask");
 
     if (gss_oid_equal(actual_mech_server, actual_mech_client) == 0)
-	errx(1, "mech mismatch");
+        errx(1, "mech mismatch");
     *actual_mech = actual_mech_server;
 
     if (on_behalf_of_string) {
@@ -548,52 +548,52 @@ loop(gss_OID mechoid,
         } else
             warnx("display_name: %s",
                  gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));
-	if (!anon_flag &&
-	    gss_oid_equal(actual_mech_server, GSS_KRB5_MECHANISM))
-	    show_pac_client_info(src_name);
+        if (!anon_flag &&
+            gss_oid_equal(actual_mech_server, GSS_KRB5_MECHANISM))
+            show_pac_client_info(src_name);
     }
     gss_release_name(&min_stat, &src_name);
 
     if (max_loops && num_loops > max_loops)
-	errx(1, "num loops %d was lager then max loops %d",
-	     num_loops, max_loops);
+        errx(1, "num loops %d was lager then max loops %d",
+             num_loops, max_loops);
 
     if (verbose_flag) {
-	printf("server time offset: %d\n", server_time_offset);
-	printf("client time offset: %d\n", client_time_offset);
-	printf("num loops %d\n", num_loops);
-	printf("cflags: ");
-	if (ret_cflags & GSS_C_DELEG_FLAG)
-	    printf("deleg ");
-	if (ret_cflags & GSS_C_MUTUAL_FLAG)
-	    printf("mutual ");
-	if (ret_cflags & GSS_C_REPLAY_FLAG)
-	    printf("replay ");
-	if (ret_cflags & GSS_C_SEQUENCE_FLAG)
-	    printf("sequence ");
-	if (ret_cflags & GSS_C_CONF_FLAG)
-	    printf("conf ");
-	if (ret_cflags & GSS_C_INTEG_FLAG)
-	    printf("integ ");
-	if (ret_cflags & GSS_C_ANON_FLAG)
-	    printf("anon ");
-	if (ret_cflags & GSS_C_PROT_READY_FLAG)
-	    printf("prot-ready ");
-	if (ret_cflags & GSS_C_TRANS_FLAG)
-	    printf("trans ");
-	if (ret_cflags & GSS_C_DCE_STYLE)
-	    printf("dce-style ");
-	if (ret_cflags & GSS_C_IDENTIFY_FLAG)
-	    printf("identify " );
-	if (ret_cflags & GSS_C_EXTENDED_ERROR_FLAG)
-	    printf("extended-error " );
-	if (ret_cflags & GSS_C_DELEG_POLICY_FLAG)
-	    printf("deleg-policy " );
-	printf("\n");
-	printf("sflags: ");
-	if (ret_sflags & GSS_C_CHANNEL_BOUND_FLAG)
-	    printf("channel-bound " );
-	printf("\n");
+        printf("server time offset: %d\n", server_time_offset);
+        printf("client time offset: %d\n", client_time_offset);
+        printf("num loops %d\n", num_loops);
+        printf("cflags: ");
+        if (ret_cflags & GSS_C_DELEG_FLAG)
+            printf("deleg ");
+        if (ret_cflags & GSS_C_MUTUAL_FLAG)
+            printf("mutual ");
+        if (ret_cflags & GSS_C_REPLAY_FLAG)
+            printf("replay ");
+        if (ret_cflags & GSS_C_SEQUENCE_FLAG)
+            printf("sequence ");
+        if (ret_cflags & GSS_C_CONF_FLAG)
+            printf("conf ");
+        if (ret_cflags & GSS_C_INTEG_FLAG)
+            printf("integ ");
+        if (ret_cflags & GSS_C_ANON_FLAG)
+            printf("anon ");
+        if (ret_cflags & GSS_C_PROT_READY_FLAG)
+            printf("prot-ready ");
+        if (ret_cflags & GSS_C_TRANS_FLAG)
+            printf("trans ");
+        if (ret_cflags & GSS_C_DCE_STYLE)
+            printf("dce-style ");
+        if (ret_cflags & GSS_C_IDENTIFY_FLAG)
+            printf("identify " );
+        if (ret_cflags & GSS_C_EXTENDED_ERROR_FLAG)
+            printf("extended-error " );
+        if (ret_cflags & GSS_C_DELEG_POLICY_FLAG)
+            printf("deleg-policy " );
+        printf("\n");
+        printf("sflags: ");
+        if (ret_sflags & GSS_C_CHANNEL_BOUND_FLAG)
+            printf("channel-bound " );
+        printf("\n");
     }
 }
 
@@ -609,23 +609,23 @@ wrapunwrap(gss_ctx_id_t cctx, gss_ctx_id_t sctx, int flags, gss_OID mechoid)
     input_token.length = 3;
 
     maj_stat = gss_wrap(&min_stat, cctx, flags, 0, &input_token,
-			&conf_state, &output_token);
+                        &conf_state, &output_token);
     if (maj_stat != GSS_S_COMPLETE)
-	errx(1, "gss_wrap failed: %s",
-	     gssapi_err(maj_stat, min_stat, mechoid));
+        errx(1, "gss_wrap failed: %s",
+             gssapi_err(maj_stat, min_stat, mechoid));
 
     maj_stat = gss_unwrap(&min_stat, sctx, &output_token,
-			  &output_token2, &conf_state, &qop_state);
+                          &output_token2, &conf_state, &qop_state);
     if (maj_stat != GSS_S_COMPLETE)
-	errx(1, "gss_unwrap failed: %s",
-	     gssapi_err(maj_stat, min_stat, mechoid));
+        errx(1, "gss_unwrap failed: %s",
+             gssapi_err(maj_stat, min_stat, mechoid));
 
     gss_release_buffer(&min_stat, &output_token);
     gss_release_buffer(&min_stat, &output_token2);
 
 #if 0 /* doesn't work for NTLM yet */
     if (!!conf_state != !!flags)
-	errx(1, "conf_state mismatch");
+        errx(1, "conf_state mismatch");
 #endif
 }
 
@@ -657,15 +657,15 @@ wrapunwrap_iov(gss_ctx_id_t cctx, gss_ctx_id_t sctx, int flags, gss_OID mechoid)
     memset(&iov, 0, sizeof(iov));
 
     if (flags & USE_SIGN_ONLY) {
-	header.data = header_data;
-	header.length = 9;
-	trailer.data = trailer_data;
-	trailer.length = 10;
+        header.data = header_data;
+        header.length = 9;
+        trailer.data = trailer_data;
+        trailer.length = 10;
     } else {
-	header.data = NULL;
-	header.length = 0;
-	trailer.data = NULL;
-	trailer.length = 0;
+        header.data = NULL;
+        header.length = 0;
+        trailer.data = NULL;
+        trailer.length = 0;
     }
 
     token.data = token_data;
@@ -678,59 +678,59 @@ wrapunwrap_iov(gss_ctx_id_t cctx, gss_ctx_id_t sctx, int flags, gss_OID mechoid)
     iov[0].type = GSS_IOV_BUFFER_TYPE_HEADER | GSS_IOV_BUFFER_FLAG_ALLOCATE;
 
     if (header.length != 0) {
-	iov[1].type = GSS_IOV_BUFFER_TYPE_SIGN_ONLY;
-	iov[1].buffer.length = header.length;
-	iov[1].buffer.value = header.data;
+        iov[1].type = GSS_IOV_BUFFER_TYPE_SIGN_ONLY;
+        iov[1].buffer.length = header.length;
+        iov[1].buffer.value = header.data;
     } else {
-	iov[1].type = GSS_IOV_BUFFER_TYPE_EMPTY;
-	iov[1].buffer.length = 0;
-	iov[1].buffer.value = NULL;
+        iov[1].type = GSS_IOV_BUFFER_TYPE_EMPTY;
+        iov[1].buffer.length = 0;
+        iov[1].buffer.value = NULL;
     }
     iov[2].type = GSS_IOV_BUFFER_TYPE_DATA;
     if (flags & NO_DATA) {
-	iov[2].buffer.length = 0;
+        iov[2].buffer.length = 0;
     } else {
-	iov[2].buffer.length = token.length;
+        iov[2].buffer.length = token.length;
     }
     iov[2].buffer.value = token.data;
     if (trailer.length != 0) {
-	iov[3].type = GSS_IOV_BUFFER_TYPE_SIGN_ONLY;
-	iov[3].buffer.length = trailer.length;
-	iov[3].buffer.value = trailer.data;
+        iov[3].type = GSS_IOV_BUFFER_TYPE_SIGN_ONLY;
+        iov[3].buffer.length = trailer.length;
+        iov[3].buffer.value = trailer.data;
     } else {
-	iov[3].type = GSS_IOV_BUFFER_TYPE_EMPTY;
-	iov[3].buffer.length = 0;
-	iov[3].buffer.value = NULL;
+        iov[3].type = GSS_IOV_BUFFER_TYPE_EMPTY;
+        iov[3].buffer.length = 0;
+        iov[3].buffer.value = NULL;
     }
     if (dce_style_flag) {
-	iov[4].type = GSS_IOV_BUFFER_TYPE_EMPTY;
+        iov[4].type = GSS_IOV_BUFFER_TYPE_EMPTY;
     } else {
-	iov[4].type = GSS_IOV_BUFFER_TYPE_PADDING | GSS_IOV_BUFFER_FLAG_ALLOCATE;
+        iov[4].type = GSS_IOV_BUFFER_TYPE_PADDING | GSS_IOV_BUFFER_FLAG_ALLOCATE;
     }
     iov[4].buffer.length = 0;
     iov[4].buffer.value = 0;
     if (dce_style_flag) {
-	iov[5].type = GSS_IOV_BUFFER_TYPE_EMPTY;
+        iov[5].type = GSS_IOV_BUFFER_TYPE_EMPTY;
     } else if (flags & USE_HEADER_ONLY) {
-	iov[5].type = GSS_IOV_BUFFER_TYPE_EMPTY;
+        iov[5].type = GSS_IOV_BUFFER_TYPE_EMPTY;
     } else {
-	iov[5].type = GSS_IOV_BUFFER_TYPE_TRAILER | GSS_IOV_BUFFER_FLAG_ALLOCATE;
+        iov[5].type = GSS_IOV_BUFFER_TYPE_TRAILER | GSS_IOV_BUFFER_FLAG_ALLOCATE;
     }
     iov[5].buffer.length = 0;
     iov[5].buffer.value = 0;
 
     maj_stat = gss_wrap_iov(&min_stat, cctx, dce_style_flag || flags & USE_CONF, 0, &conf_state,
-			    iov, iov_len);
+                            iov, iov_len);
     if (maj_stat != GSS_S_COMPLETE)
-	errx(1, "gss_wrap_iov failed");
+        errx(1, "gss_wrap_iov failed");
 
     token.length =
-	iov[0].buffer.length +
-	iov[1].buffer.length +
-	iov[2].buffer.length +
-	iov[3].buffer.length +
-	iov[4].buffer.length +
-	iov[5].buffer.length;
+        iov[0].buffer.length +
+        iov[1].buffer.length +
+        iov[2].buffer.length +
+        iov[3].buffer.length +
+        iov[4].buffer.length +
+        iov[5].buffer.length;
     token.data = emalloc(token.length);
 
     p = token.data;
@@ -762,30 +762,30 @@ wrapunwrap_iov(gss_ctx_id_t cctx, gss_ctx_id_t sctx, int flags, gss_OID mechoid)
     assert(p - ((unsigned char *)token.data) == token.length);
 
     if ((flags & (USE_SIGN_ONLY|FORCE_IOV)) == 0) {
-	gss_buffer_desc input, output;
+        gss_buffer_desc input, output;
 
-	input.value = token.data;
-	input.length = token.length;
+        input.value = token.data;
+        input.length = token.length;
 
-	maj_stat = gss_unwrap(&min_stat, sctx, &input,
-			      &output, &conf_state2, &qop_state);
+        maj_stat = gss_unwrap(&min_stat, sctx, &input,
+                              &output, &conf_state2, &qop_state);
 
-	if (maj_stat != GSS_S_COMPLETE)
-	    errx(1, "gss_unwrap from gss_wrap_iov failed: %s",
-		 gssapi_err(maj_stat, min_stat, mechoid));
+        if (maj_stat != GSS_S_COMPLETE)
+            errx(1, "gss_unwrap from gss_wrap_iov failed: %s",
+                 gssapi_err(maj_stat, min_stat, mechoid));
 
-	gss_release_buffer(&min_stat, &output);
+        gss_release_buffer(&min_stat, &output);
     } else {
-	maj_stat = gss_unwrap_iov(&min_stat, sctx, &conf_state2, &qop_state,
-				  iov, iov_len);
+        maj_stat = gss_unwrap_iov(&min_stat, sctx, &conf_state2, &qop_state,
+                                  iov, iov_len);
 
-	if (maj_stat != GSS_S_COMPLETE)
-	    errx(1, "gss_unwrap_iov failed: %x %s", flags,
-		 gssapi_err(maj_stat, min_stat, mechoid));
+        if (maj_stat != GSS_S_COMPLETE)
+            errx(1, "gss_unwrap_iov failed: %x %s", flags,
+                 gssapi_err(maj_stat, min_stat, mechoid));
 
     }
     if (conf_state2 != conf_state)
-	errx(1, "conf state wrong for iov: %x", flags);
+        errx(1, "conf state wrong for iov: %x", flags);
 
     gss_release_iov_buffer(&min_stat, iov, iov_len);
 
@@ -804,43 +804,43 @@ wrapunwrap_aead(gss_ctx_id_t cctx, gss_ctx_id_t sctx, int flags, gss_OID mechoid
     char token_data[16] = "0123456789abcdef";
 
     if (flags & USE_SIGN_ONLY) {
-	assoc.value = assoc_data;
-	assoc.length = 9;
+        assoc.value = assoc_data;
+        assoc.length = 9;
     } else {
-	assoc.value = NULL;
-	assoc.length = 0;
+        assoc.value = NULL;
+        assoc.length = 0;
     }
 
     token.value = token_data;
     token.length = 16;
 
     maj_stat = gss_wrap_aead(&min_stat, cctx, dce_style_flag || flags & USE_CONF,
-			     GSS_C_QOP_DEFAULT, &assoc, &token,
-			     &conf_state, &message);
+                             GSS_C_QOP_DEFAULT, &assoc, &token,
+                             &conf_state, &message);
     if (maj_stat != GSS_S_COMPLETE)
-	errx(1, "gss_wrap_aead failed");
+        errx(1, "gss_wrap_aead failed");
 
     if ((flags & (USE_SIGN_ONLY|FORCE_IOV)) == 0) {
-	maj_stat = gss_unwrap(&min_stat, sctx, &message,
-			      &output, &conf_state2, &qop_state);
+        maj_stat = gss_unwrap(&min_stat, sctx, &message,
+                              &output, &conf_state2, &qop_state);
 
-	if (maj_stat != GSS_S_COMPLETE)
-	    errx(1, "gss_unwrap from gss_wrap_aead failed: %s",
-		 gssapi_err(maj_stat, min_stat, mechoid));
+        if (maj_stat != GSS_S_COMPLETE)
+            errx(1, "gss_unwrap from gss_wrap_aead failed: %s",
+                 gssapi_err(maj_stat, min_stat, mechoid));
     } else {
-	maj_stat = gss_unwrap_aead(&min_stat, sctx, &message, &assoc,
-				   &output, &conf_state2, &qop_state);
-	if (maj_stat != GSS_S_COMPLETE)
-	    errx(1, "gss_unwrap_aead failed: %x %s", flags,
-		 gssapi_err(maj_stat, min_stat, mechoid));
+        maj_stat = gss_unwrap_aead(&min_stat, sctx, &message, &assoc,
+                                   &output, &conf_state2, &qop_state);
+        if (maj_stat != GSS_S_COMPLETE)
+            errx(1, "gss_unwrap_aead failed: %x %s", flags,
+                 gssapi_err(maj_stat, min_stat, mechoid));
     }
 
     if (output.length != token.length)
-	errx(1, "plaintext length wrong for aead");
+        errx(1, "plaintext length wrong for aead");
     else if (memcmp(output.value, token.value, token.length) != 0)
-	errx(1, "plaintext wrong for aead");
+        errx(1, "plaintext wrong for aead");
     if (conf_state2 != conf_state)
-	errx(1, "conf state wrong for aead: %x", flags);
+        errx(1, "conf state wrong for aead: %x", flags);
 
     gss_release_buffer(&min_stat, &message);
     gss_release_buffer(&min_stat, &output);
@@ -857,16 +857,16 @@ getverifymic(gss_ctx_id_t cctx, gss_ctx_id_t sctx, gss_OID mechoid)
     input_token.length = 3;
 
     maj_stat = gss_get_mic(&min_stat, cctx, 0, &input_token,
-			   &output_token);
+                           &output_token);
     if (maj_stat != GSS_S_COMPLETE)
-	errx(1, "gss_get_mic failed: %s",
-	     gssapi_err(maj_stat, min_stat, mechoid));
+        errx(1, "gss_get_mic failed: %s",
+             gssapi_err(maj_stat, min_stat, mechoid));
 
     maj_stat = gss_verify_mic(&min_stat, sctx, &input_token,
-			      &output_token, &qop_state);
+                              &output_token, &qop_state);
     if (maj_stat != GSS_S_COMPLETE)
-	errx(1, "gss_verify_mic failed: %s",
-	     gssapi_err(maj_stat, min_stat, mechoid));
+        errx(1, "gss_verify_mic failed: %s",
+             gssapi_err(maj_stat, min_stat, mechoid));
 
     gss_release_buffer(&min_stat, &output_token);
 }
@@ -937,7 +937,7 @@ static void
 usage (int ret)
 {
     arg_printusage (args, sizeof(args)/sizeof(*args),
-		    NULL, "service@host");
+                    NULL, "service@host");
     exit (ret);
 }
 
@@ -962,43 +962,43 @@ main(int argc, char **argv)
     setprogname(argv[0]);
 
     if (krb5_init_context(&context))
-	errx(1, "krb5_init_context");
+        errx(1, "krb5_init_context");
 
     cctx = sctx = GSS_C_NO_CONTEXT;
 
     if(getarg(args, sizeof(args) / sizeof(args[0]), argc, argv, &optidx))
-	usage(1);
+        usage(1);
 
     if (help_flag)
-	usage (0);
+        usage (0);
 
     if(version_flag){
-	print_version(NULL);
-	exit(0);
+        print_version(NULL);
+        exit(0);
     }
 
     argc -= optidx;
     argv += optidx;
 
     if (argc != 1)
-	usage(1);
+        usage(1);
 
     if (dns_canon_flag != -1)
-	gsskrb5_set_dns_canonicalize(dns_canon_flag);
+        gsskrb5_set_dns_canonicalize(dns_canon_flag);
 
     if (type_string == NULL)
-	nameoid = GSS_C_NT_HOSTBASED_SERVICE;
+        nameoid = GSS_C_NT_HOSTBASED_SERVICE;
     else if (strcmp(type_string, "hostbased-service") == 0)
-	nameoid = GSS_C_NT_HOSTBASED_SERVICE;
+        nameoid = GSS_C_NT_HOSTBASED_SERVICE;
     else if (strcmp(type_string, "krb5-principal-name") == 0)
-	nameoid = GSS_KRB5_NT_PRINCIPAL_NAME;
+        nameoid = GSS_KRB5_NT_PRINCIPAL_NAME;
     else
-	errx(1, "%s not supported", type_string);
+        errx(1, "%s not supported", type_string);
 
     if (mech_string == NULL)
-	mechoid = GSS_KRB5_MECHANISM;
+        mechoid = GSS_KRB5_MECHANISM;
     else
-	mechoid = string_to_oid(mech_string);
+        mechoid = string_to_oid(mech_string);
 
     if (mechs_string == NULL) {
         /*
@@ -1031,101 +1031,101 @@ main(int argc, char **argv)
     }
 
     if (gsskrb5_acceptor_identity) {
-	/* XXX replace this with cred store, but test suites will need work */
-	maj_stat = gsskrb5_register_acceptor_identity(gsskrb5_acceptor_identity);
-	if (maj_stat)
-	    errx(1, "gsskrb5_acceptor_identity: %s",
-		 gssapi_err(maj_stat, 0, GSS_C_NO_OID));
+        /* XXX replace this with cred store, but test suites will need work */
+        maj_stat = gsskrb5_register_acceptor_identity(gsskrb5_acceptor_identity);
+        if (maj_stat)
+            errx(1, "gsskrb5_acceptor_identity: %s",
+                 gssapi_err(maj_stat, 0, GSS_C_NO_OID));
     }
 
     if (client_password && (client_ccache || client_keytab)) {
-	errx(1, "password option mutually exclusive with ccache or keytab option");
+        errx(1, "password option mutually exclusive with ccache or keytab option");
     }
 
     if (client_password) {
-	credential_data.value = client_password;
-	credential_data.length = strlen(client_password);
+        credential_data.value = client_password;
+        credential_data.length = strlen(client_password);
     }
 
     client_cred_store.count = 0;
     client_cred_store.elements = client_cred_elements;
 
     if (client_ccache) {
-	client_cred_store.elements[client_cred_store.count].key = "ccache";
-	client_cred_store.elements[client_cred_store.count].value = client_ccache;
+        client_cred_store.elements[client_cred_store.count].key = "ccache";
+        client_cred_store.elements[client_cred_store.count].value = client_ccache;
 
-	client_cred_store.count++;
+        client_cred_store.count++;
     }
 
     if (client_keytab) {
-	client_cred_store.elements[client_cred_store.count].key = "client_keytab";
-	client_cred_store.elements[client_cred_store.count].value = client_keytab;
+        client_cred_store.elements[client_cred_store.count].key = "client_keytab";
+        client_cred_store.elements[client_cred_store.count].value = client_keytab;
 
-	client_cred_store.count++;
+        client_cred_store.count++;
     }
 
     if (client_name) {
-	gss_buffer_desc cn;
+        gss_buffer_desc cn;
 
-	cn.value = client_name;
-	cn.length = strlen(client_name);
+        cn.value = client_name;
+        cn.length = strlen(client_name);
 
-	maj_stat = gss_import_name(&min_stat, &cn, GSS_C_NT_USER_NAME, &cname);
-	if (maj_stat)
-	    errx(1, "gss_import_name: %s",
-		 gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));
+        maj_stat = gss_import_name(&min_stat, &cn, GSS_C_NT_USER_NAME, &cname);
+        if (maj_stat)
+            errx(1, "gss_import_name: %s",
+                 gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));
     }
 
     if (client_password) {
-	maj_stat = gss_acquire_cred_with_password(&min_stat,
-						  cname,
-						  &credential_data,
-						  GSS_C_INDEFINITE,
-						  mechoids,
-						  GSS_C_INITIATE,
-						  &client_cred,
-						  &actual_mechs,
-						  NULL);
-	if (GSS_ERROR(maj_stat)) {
+        maj_stat = gss_acquire_cred_with_password(&min_stat,
+                                                  cname,
+                                                  &credential_data,
+                                                  GSS_C_INDEFINITE,
+                                                  mechoids,
+                                                  GSS_C_INITIATE,
+                                                  &client_cred,
+                                                  &actual_mechs,
+                                                  NULL);
+        if (GSS_ERROR(maj_stat)) {
             if (mechoids != GSS_C_NO_OID_SET && mechoids->count == 1)
                 mechoid = &mechoids->elements[0];
             else
                 mechoid = GSS_C_NO_OID;
-	    errx(1, "gss_acquire_cred_with_password: %s",
-		 gssapi_err(maj_stat, min_stat, mechoid));
+            errx(1, "gss_acquire_cred_with_password: %s",
+                 gssapi_err(maj_stat, min_stat, mechoid));
         }
     } else {
-	maj_stat = gss_acquire_cred_from(&min_stat,
-					 cname,
-					 GSS_C_INDEFINITE,
-					 mechoids,
-					 GSS_C_INITIATE,
-					 client_cred_store.count ? &client_cred_store
-								 : GSS_C_NO_CRED_STORE,
-					 &client_cred,
-					 &actual_mechs,
-					 NULL);
-	if (GSS_ERROR(maj_stat) && !anon_flag)
-	    errx(1, "gss_acquire_cred: %s",
-		 gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));
+        maj_stat = gss_acquire_cred_from(&min_stat,
+                                         cname,
+                                         GSS_C_INDEFINITE,
+                                         mechoids,
+                                         GSS_C_INITIATE,
+                                         client_cred_store.count ? &client_cred_store
+                                                                 : GSS_C_NO_CRED_STORE,
+                                         &client_cred,
+                                         &actual_mechs,
+                                         NULL);
+        if (GSS_ERROR(maj_stat) && !anon_flag)
+            errx(1, "gss_acquire_cred: %s",
+                 gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));
     }
 
     gss_release_name(&min_stat, &cname);
 
     if (verbose_flag) {
-	size_t i;
+        size_t i;
 
-	printf("cred mechs:");
-	for (i = 0; i < actual_mechs->count; i++)
-	    printf(" %s", gss_oid_to_name(&actual_mechs->elements[i]));
-	printf("\n");
+        printf("cred mechs:");
+        for (i = 0; i < actual_mechs->count; i++)
+            printf(" %s", gss_oid_to_name(&actual_mechs->elements[i]));
+        printf("\n");
     }
 
     if (gss_oid_equal(mechoid, GSS_SPNEGO_MECHANISM) && mechs_string) {
-	maj_stat = gss_set_neg_mechs(&min_stat, client_cred, mechoids);
-	if (GSS_ERROR(maj_stat))
-	    errx(1, "gss_set_neg_mechs: %s",
-		 gssapi_err(maj_stat, min_stat, GSS_SPNEGO_MECHANISM));
+        maj_stat = gss_set_neg_mechs(&min_stat, client_cred, mechoids);
+        if (GSS_ERROR(maj_stat))
+            errx(1, "gss_set_neg_mechs: %s",
+                 gssapi_err(maj_stat, min_stat, GSS_SPNEGO_MECHANISM));
 
         mechoid_descs.elements = GSS_SPNEGO_MECHANISM;
         mechoid_descs.count = 1;
@@ -1133,414 +1133,414 @@ main(int argc, char **argv)
     }
 
     if (ei_cred_flag) {
-	gss_cred_id_t cred2 = GSS_C_NO_CREDENTIAL;
-	gss_buffer_desc cb;
+        gss_cred_id_t cred2 = GSS_C_NO_CREDENTIAL;
+        gss_buffer_desc cb;
 
-	maj_stat = gss_export_cred(&min_stat, client_cred, &cb);
-	if (maj_stat != GSS_S_COMPLETE)
-	    errx(1, "export cred failed: %s",
-		 gssapi_err(maj_stat, min_stat, NULL));
+        maj_stat = gss_export_cred(&min_stat, client_cred, &cb);
+        if (maj_stat != GSS_S_COMPLETE)
+            errx(1, "export cred failed: %s",
+                 gssapi_err(maj_stat, min_stat, NULL));
 
-	maj_stat = gss_import_cred(&min_stat, &cb, &cred2);
-	if (maj_stat != GSS_S_COMPLETE)
-	    errx(1, "import cred failed: %s",
-		 gssapi_err(maj_stat, min_stat, NULL));
+        maj_stat = gss_import_cred(&min_stat, &cb, &cred2);
+        if (maj_stat != GSS_S_COMPLETE)
+            errx(1, "import cred failed: %s",
+                 gssapi_err(maj_stat, min_stat, NULL));
 
-	gss_release_buffer(&min_stat, &cb);
-	gss_release_cred(&min_stat, &client_cred);
-	client_cred = cred2;
+        gss_release_buffer(&min_stat, &cb);
+        gss_release_cred(&min_stat, &client_cred);
+        client_cred = cred2;
     }
 
     if (limit_enctype_string) {
-	krb5_error_code ret;
+        krb5_error_code ret;
 
-	ret = krb5_string_to_enctype(context,
-				     limit_enctype_string,
-				     &limit_enctype);
-	if (ret)
-	    krb5_err(context, 1, ret, "krb5_string_to_enctype");
+        ret = krb5_string_to_enctype(context,
+                                     limit_enctype_string,
+                                     &limit_enctype);
+        if (ret)
+            krb5_err(context, 1, ret, "krb5_string_to_enctype");
     }
 
 
     if (limit_enctype) {
-	if (client_cred == NULL)
-	    errx(1, "client_cred missing");
+        if (client_cred == NULL)
+            errx(1, "client_cred missing");
 
-	maj_stat = gss_krb5_set_allowable_enctypes(&min_stat, client_cred,
-						   1, &limit_enctype);
-	if (maj_stat)
-	    errx(1, "gss_krb5_set_allowable_enctypes: %s",
-		 gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));
+        maj_stat = gss_krb5_set_allowable_enctypes(&min_stat, client_cred,
+                                                   1, &limit_enctype);
+        if (maj_stat)
+            errx(1, "gss_krb5_set_allowable_enctypes: %s",
+                 gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));
     }
 
     loop(mechoid, nameoid, argv[0], client_cred,
-	 &sctx, &cctx, &actual_mech, &deleg_cred);
+         &sctx, &cctx, &actual_mech, &deleg_cred);
 
     if (verbose_flag)
-	printf("resulting mech: %s\n", gss_oid_to_name(actual_mech));
+        printf("resulting mech: %s\n", gss_oid_to_name(actual_mech));
 
     if (ret_mech_string) {
-	gss_OID retoid;
+        gss_OID retoid;
 
-	retoid = string_to_oid(ret_mech_string);
+        retoid = string_to_oid(ret_mech_string);
 
-	if (gss_oid_equal(retoid, actual_mech) == 0)
-	    errx(1, "actual_mech mech is not the expected type %s",
-		 ret_mech_string);
+        if (gss_oid_equal(retoid, actual_mech) == 0)
+            errx(1, "actual_mech mech is not the expected type %s",
+                 ret_mech_string);
     }
 
     /* XXX should be actual_mech */
     if (gss_oid_equal(mechoid, GSS_KRB5_MECHANISM)) {
-	time_t sc_time;
-	gss_buffer_desc authz_data;
-	gss_buffer_desc in, out1, out2;
-	krb5_keyblock *keyblock, *keyblock2;
-	krb5_timestamp now;
-	krb5_error_code ret;
+        time_t sc_time;
+        gss_buffer_desc authz_data;
+        gss_buffer_desc in, out1, out2;
+        krb5_keyblock *keyblock, *keyblock2;
+        krb5_timestamp now;
+        krb5_error_code ret;
 
-	ret = krb5_timeofday(context, &now);
-	if (ret)
-	    errx(1, "krb5_timeofday failed");
+        ret = krb5_timeofday(context, &now);
+        if (ret)
+            errx(1, "krb5_timeofday failed");
 
-	/* client */
-	maj_stat = gss_krb5_export_lucid_sec_context(&min_stat,
-						     &cctx,
-						     1, /* version */
-						     &ctx);
-	if (maj_stat != GSS_S_COMPLETE)
-	    errx(1, "gss_krb5_export_lucid_sec_context failed: %s",
-		 gssapi_err(maj_stat, min_stat, actual_mech));
-
-
-	maj_stat = gss_krb5_free_lucid_sec_context(&maj_stat, ctx);
-	if (maj_stat != GSS_S_COMPLETE)
-	    errx(1, "gss_krb5_free_lucid_sec_context failed: %s",
-		     gssapi_err(maj_stat, min_stat, actual_mech));
-
-	/* server */
-	maj_stat = gss_krb5_export_lucid_sec_context(&min_stat,
-						     &sctx,
-						     1, /* version */
-						     &ctx);
-	if (maj_stat != GSS_S_COMPLETE)
-	    errx(1, "gss_krb5_export_lucid_sec_context failed: %s",
-		     gssapi_err(maj_stat, min_stat, actual_mech));
-	maj_stat = gss_krb5_free_lucid_sec_context(&min_stat, ctx);
-	if (maj_stat != GSS_S_COMPLETE)
-	    errx(1, "gss_krb5_free_lucid_sec_context failed: %s",
-		     gssapi_err(maj_stat, min_stat, actual_mech));
-
- 	maj_stat = gsskrb5_extract_authtime_from_sec_context(&min_stat,
-							     sctx,
-							     &sc_time);
-	if (maj_stat != GSS_S_COMPLETE)
-	    errx(1, "gsskrb5_extract_authtime_from_sec_context failed: %s",
-		     gssapi_err(maj_stat, min_stat, actual_mech));
-
-	if (sc_time > now)
-	    errx(1, "gsskrb5_extract_authtime_from_sec_context failed: "
-		 "time authtime is before now: %ld %ld",
-		 (long)sc_time, (long)now);
-
- 	maj_stat = gsskrb5_extract_service_keyblock(&min_stat,
-						    sctx,
-						    &keyblock);
-	if (maj_stat != GSS_S_COMPLETE)
-	    errx(1, "gsskrb5_export_service_keyblock failed: %s",
-		     gssapi_err(maj_stat, min_stat, actual_mech));
-
-	krb5_free_keyblock(context, keyblock);
-
- 	maj_stat = gsskrb5_get_subkey(&min_stat,
-				      sctx,
-				      &keyblock);
-	if (maj_stat != GSS_S_COMPLETE
-	    && (!(maj_stat == GSS_S_FAILURE && min_stat == GSS_KRB5_S_KG_NO_SUBKEY)))
-	    errx(1, "gsskrb5_get_subkey server failed: %s",
-		     gssapi_err(maj_stat, min_stat, actual_mech));
-
-	if (maj_stat != GSS_S_COMPLETE)
-	    keyblock = NULL;
-	else if (limit_enctype && keyblock->keytype != limit_enctype)
-	    errx(1, "gsskrb5_get_subkey wrong enctype");
-
- 	maj_stat = gsskrb5_get_subkey(&min_stat,
-				      cctx,
-				      &keyblock2);
-	if (maj_stat != GSS_S_COMPLETE
-	    && (!(maj_stat == GSS_S_FAILURE && min_stat == GSS_KRB5_S_KG_NO_SUBKEY)))
-	    errx(1, "gsskrb5_get_subkey client failed: %s",
-		     gssapi_err(maj_stat, min_stat, actual_mech));
-
-	if (maj_stat != GSS_S_COMPLETE)
-	    keyblock2 = NULL;
-	else if (limit_enctype && keyblock && keyblock->keytype != limit_enctype)
-	    errx(1, "gsskrb5_get_subkey wrong enctype");
-
-	if (keyblock || keyblock2) {
-	    if (keyblock == NULL)
-		errx(1, "server missing token keyblock");
-	    if (keyblock2 == NULL)
-		errx(1, "client missing token keyblock");
-
-	    if (keyblock->keytype != keyblock2->keytype)
-		errx(1, "enctype mismatch");
-	    if (keyblock->keyvalue.length != keyblock2->keyvalue.length)
-		errx(1, "key length mismatch");
-	    if (memcmp(keyblock->keyvalue.data, keyblock2->keyvalue.data,
-		       keyblock2->keyvalue.length) != 0)
-		errx(1, "key data mismatch");
-	}
-
-	if (session_enctype_string) {
-	    krb5_enctype enctype;
-
-	    ret = krb5_string_to_enctype(context,
-					 session_enctype_string,
-					 &enctype);
-
-	    if (ret)
-		krb5_err(context, 1, ret, "krb5_string_to_enctype");
-
-	    if (keyblock && enctype != keyblock->keytype)
-		errx(1, "keytype is not the expected %d != %d",
-		     (int)enctype, (int)keyblock2->keytype);
-	}
-
-	if (keyblock)
-	    krb5_free_keyblock(context, keyblock);
-	if (keyblock2)
-	    krb5_free_keyblock(context, keyblock2);
-
- 	maj_stat = gsskrb5_get_initiator_subkey(&min_stat,
-						sctx,
-						&keyblock);
-	if (maj_stat != GSS_S_COMPLETE
-	    && (!(maj_stat == GSS_S_FAILURE && min_stat == GSS_KRB5_S_KG_NO_SUBKEY)))
-	    errx(1, "gsskrb5_get_initiator_subkey failed: %s",
-		     gssapi_err(maj_stat, min_stat, actual_mech));
-
-	if (maj_stat == GSS_S_COMPLETE) {
-
-	    if (limit_enctype && keyblock->keytype != limit_enctype)
-		errx(1, "gsskrb5_get_initiator_subkey wrong enctype");
-	    krb5_free_keyblock(context, keyblock);
-	}
-
- 	maj_stat = gsskrb5_extract_authz_data_from_sec_context(&min_stat,
-							       sctx,
-							       128,
-							       &authz_data);
-	if (maj_stat == GSS_S_COMPLETE)
-	    gss_release_buffer(&min_stat, &authz_data);
+        /* client */
+        maj_stat = gss_krb5_export_lucid_sec_context(&min_stat,
+                                                     &cctx,
+                                                     1, /* version */
+                                                     &ctx);
+        if (maj_stat != GSS_S_COMPLETE)
+            errx(1, "gss_krb5_export_lucid_sec_context failed: %s",
+                 gssapi_err(maj_stat, min_stat, actual_mech));
 
 
-	memset(&out1, 0, sizeof(out1));
-	memset(&out2, 0, sizeof(out2));
+        maj_stat = gss_krb5_free_lucid_sec_context(&maj_stat, ctx);
+        if (maj_stat != GSS_S_COMPLETE)
+            errx(1, "gss_krb5_free_lucid_sec_context failed: %s",
+                     gssapi_err(maj_stat, min_stat, actual_mech));
 
-	in.value = "foo";
-	in.length = 3;
+        /* server */
+        maj_stat = gss_krb5_export_lucid_sec_context(&min_stat,
+                                                     &sctx,
+                                                     1, /* version */
+                                                     &ctx);
+        if (maj_stat != GSS_S_COMPLETE)
+            errx(1, "gss_krb5_export_lucid_sec_context failed: %s",
+                 gssapi_err(maj_stat, min_stat, actual_mech));
+        maj_stat = gss_krb5_free_lucid_sec_context(&min_stat, ctx);
+        if (maj_stat != GSS_S_COMPLETE)
+            errx(1, "gss_krb5_free_lucid_sec_context failed: %s",
+                 gssapi_err(maj_stat, min_stat, actual_mech));
 
-	gss_pseudo_random(&min_stat, sctx, GSS_C_PRF_KEY_FULL, &in,
-			  100, &out1);
-	gss_pseudo_random(&min_stat, cctx, GSS_C_PRF_KEY_FULL, &in,
-			  100, &out2);
+        maj_stat = gsskrb5_extract_authtime_from_sec_context(&min_stat,
+                                                             sctx,
+                                                             &sc_time);
+        if (maj_stat != GSS_S_COMPLETE)
+            errx(1, "gsskrb5_extract_authtime_from_sec_context failed: %s",
+                 gssapi_err(maj_stat, min_stat, actual_mech));
 
-	if (out1.length != out2.length)
-	    errx(1, "prf len mismatch");
-	if (out1.length && memcmp(out1.value, out2.value, out1.length) != 0)
-	    errx(1, "prf data mismatch");
+        if (sc_time > now)
+            errx(1, "gsskrb5_extract_authtime_from_sec_context failed: "
+                 "time authtime is before now: %ld %ld",
+                 (long)sc_time, (long)now);
 
-	gss_release_buffer(&min_stat, &out1);
+        maj_stat = gsskrb5_extract_service_keyblock(&min_stat,
+                                                    sctx,
+                                                    &keyblock);
+        if (maj_stat != GSS_S_COMPLETE)
+            errx(1, "gsskrb5_export_service_keyblock failed: %s",
+                 gssapi_err(maj_stat, min_stat, actual_mech));
 
-	gss_pseudo_random(&min_stat, sctx, GSS_C_PRF_KEY_FULL, &in,
-			  100, &out1);
+        krb5_free_keyblock(context, keyblock);
 
-	if (out1.length != out2.length)
-	    errx(1, "prf len mismatch");
-	if (out1.length && memcmp(out1.value, out2.value, out1.length) != 0)
-	    errx(1, "prf data mismatch");
+        maj_stat = gsskrb5_get_subkey(&min_stat,
+                                      sctx,
+                                      &keyblock);
+        if (maj_stat != GSS_S_COMPLETE
+            && (!(maj_stat == GSS_S_FAILURE && min_stat == GSS_KRB5_S_KG_NO_SUBKEY)))
+            errx(1, "gsskrb5_get_subkey server failed: %s",
+                 gssapi_err(maj_stat, min_stat, actual_mech));
 
-	gss_release_buffer(&min_stat, &out1);
-	gss_release_buffer(&min_stat, &out2);
+        if (maj_stat != GSS_S_COMPLETE)
+            keyblock = NULL;
+        else if (limit_enctype && keyblock->keytype != limit_enctype)
+            errx(1, "gsskrb5_get_subkey wrong enctype");
 
-	in.value = "bar";
-	in.length = 3;
+        maj_stat = gsskrb5_get_subkey(&min_stat,
+                                      cctx,
+                                      &keyblock2);
+        if (maj_stat != GSS_S_COMPLETE
+            && (!(maj_stat == GSS_S_FAILURE && min_stat == GSS_KRB5_S_KG_NO_SUBKEY)))
+            errx(1, "gsskrb5_get_subkey client failed: %s",
+                 gssapi_err(maj_stat, min_stat, actual_mech));
 
-	gss_pseudo_random(&min_stat, sctx, GSS_C_PRF_KEY_PARTIAL, &in,
-			  100, &out1);
-	gss_pseudo_random(&min_stat, cctx, GSS_C_PRF_KEY_PARTIAL, &in,
-			  100, &out2);
+        if (maj_stat != GSS_S_COMPLETE)
+            keyblock2 = NULL;
+        else if (limit_enctype && keyblock && keyblock->keytype != limit_enctype)
+            errx(1, "gsskrb5_get_subkey wrong enctype");
 
-	if (out1.length != out2.length)
-	    errx(1, "prf len mismatch");
-	if (memcmp(out1.value, out2.value, out1.length) != 0)
-	    errx(1, "prf data mismatch");
+        if (keyblock || keyblock2) {
+            if (keyblock == NULL)
+                errx(1, "server missing token keyblock");
+            if (keyblock2 == NULL)
+                errx(1, "client missing token keyblock");
 
-	gss_release_buffer(&min_stat, &out1);
-	gss_release_buffer(&min_stat, &out2);
+            if (keyblock->keytype != keyblock2->keytype)
+                errx(1, "enctype mismatch");
+            if (keyblock->keyvalue.length != keyblock2->keyvalue.length)
+                errx(1, "key length mismatch");
+            if (memcmp(keyblock->keyvalue.data, keyblock2->keyvalue.data,
+                       keyblock2->keyvalue.length) != 0)
+                errx(1, "key data mismatch");
+        }
 
-	wrapunwrap_flag = 1;
-	getverifymic_flag = 1;
+        if (session_enctype_string) {
+            krb5_enctype enctype;
+
+            ret = krb5_string_to_enctype(context,
+                                         session_enctype_string,
+                                         &enctype);
+
+            if (ret)
+                krb5_err(context, 1, ret, "krb5_string_to_enctype");
+
+            if (keyblock && enctype != keyblock->keytype)
+                errx(1, "keytype is not the expected %d != %d",
+                     (int)enctype, (int)keyblock2->keytype);
+        }
+
+        if (keyblock)
+            krb5_free_keyblock(context, keyblock);
+        if (keyblock2)
+            krb5_free_keyblock(context, keyblock2);
+
+        maj_stat = gsskrb5_get_initiator_subkey(&min_stat,
+                                                sctx,
+                                                &keyblock);
+        if (maj_stat != GSS_S_COMPLETE
+            && (!(maj_stat == GSS_S_FAILURE && min_stat == GSS_KRB5_S_KG_NO_SUBKEY)))
+            errx(1, "gsskrb5_get_initiator_subkey failed: %s",
+                 gssapi_err(maj_stat, min_stat, actual_mech));
+
+        if (maj_stat == GSS_S_COMPLETE) {
+
+            if (limit_enctype && keyblock->keytype != limit_enctype)
+                errx(1, "gsskrb5_get_initiator_subkey wrong enctype");
+            krb5_free_keyblock(context, keyblock);
+        }
+
+        maj_stat = gsskrb5_extract_authz_data_from_sec_context(&min_stat,
+                                                               sctx,
+                                                               128,
+                                                               &authz_data);
+        if (maj_stat == GSS_S_COMPLETE)
+            gss_release_buffer(&min_stat, &authz_data);
+
+
+        memset(&out1, 0, sizeof(out1));
+        memset(&out2, 0, sizeof(out2));
+
+        in.value = "foo";
+        in.length = 3;
+
+        gss_pseudo_random(&min_stat, sctx, GSS_C_PRF_KEY_FULL, &in,
+                          100, &out1);
+        gss_pseudo_random(&min_stat, cctx, GSS_C_PRF_KEY_FULL, &in,
+                          100, &out2);
+
+        if (out1.length != out2.length)
+            errx(1, "prf len mismatch");
+        if (out1.length && memcmp(out1.value, out2.value, out1.length) != 0)
+            errx(1, "prf data mismatch");
+
+        gss_release_buffer(&min_stat, &out1);
+
+        gss_pseudo_random(&min_stat, sctx, GSS_C_PRF_KEY_FULL, &in,
+                          100, &out1);
+
+        if (out1.length != out2.length)
+            errx(1, "prf len mismatch");
+        if (out1.length && memcmp(out1.value, out2.value, out1.length) != 0)
+            errx(1, "prf data mismatch");
+
+        gss_release_buffer(&min_stat, &out1);
+        gss_release_buffer(&min_stat, &out2);
+
+        in.value = "bar";
+        in.length = 3;
+
+        gss_pseudo_random(&min_stat, sctx, GSS_C_PRF_KEY_PARTIAL, &in,
+                          100, &out1);
+        gss_pseudo_random(&min_stat, cctx, GSS_C_PRF_KEY_PARTIAL, &in,
+                          100, &out2);
+
+        if (out1.length != out2.length)
+            errx(1, "prf len mismatch");
+        if (memcmp(out1.value, out2.value, out1.length) != 0)
+            errx(1, "prf data mismatch");
+
+        gss_release_buffer(&min_stat, &out1);
+        gss_release_buffer(&min_stat, &out2);
+
+        wrapunwrap_flag = 1;
+        getverifymic_flag = 1;
     }
 
     if (ei_ctx_flag) {
-	gss_buffer_desc ctx_token = GSS_C_EMPTY_BUFFER;
+        gss_buffer_desc ctx_token = GSS_C_EMPTY_BUFFER;
 
-	maj_stat = gss_export_sec_context(&min_stat, &cctx, &ctx_token);
-	if (maj_stat != GSS_S_COMPLETE)
-	    errx(1, "export client context failed: %s",
-		 gssapi_err(maj_stat, min_stat, NULL));
+        maj_stat = gss_export_sec_context(&min_stat, &cctx, &ctx_token);
+        if (maj_stat != GSS_S_COMPLETE)
+            errx(1, "export client context failed: %s",
+                 gssapi_err(maj_stat, min_stat, NULL));
 
-	if (cctx != GSS_C_NO_CONTEXT)
-	    errx(1, "export client context did not release it");
+        if (cctx != GSS_C_NO_CONTEXT)
+            errx(1, "export client context did not release it");
 
-	maj_stat = gss_import_sec_context(&min_stat, &ctx_token, &cctx);
-	if (maj_stat != GSS_S_COMPLETE)
-	    errx(1, "import client context failed: %s",
-		 gssapi_err(maj_stat, min_stat, NULL));
+        maj_stat = gss_import_sec_context(&min_stat, &ctx_token, &cctx);
+        if (maj_stat != GSS_S_COMPLETE)
+            errx(1, "import client context failed: %s",
+                 gssapi_err(maj_stat, min_stat, NULL));
 
-	gss_release_buffer(&min_stat, &ctx_token);
+        gss_release_buffer(&min_stat, &ctx_token);
 
-	maj_stat = gss_export_sec_context(&min_stat, &sctx, &ctx_token);
-	if (maj_stat != GSS_S_COMPLETE)
-	    errx(1, "export server context failed: %s",
-		 gssapi_err(maj_stat, min_stat, NULL));
+        maj_stat = gss_export_sec_context(&min_stat, &sctx, &ctx_token);
+        if (maj_stat != GSS_S_COMPLETE)
+            errx(1, "export server context failed: %s",
+                 gssapi_err(maj_stat, min_stat, NULL));
 
-	if (sctx != GSS_C_NO_CONTEXT)
-	    errx(1, "export server context did not release it");
+        if (sctx != GSS_C_NO_CONTEXT)
+            errx(1, "export server context did not release it");
 
-	maj_stat = gss_import_sec_context(&min_stat, &ctx_token, &sctx);
-	if (maj_stat != GSS_S_COMPLETE)
-	    errx(1, "import server context failed: %s",
-		 gssapi_err(maj_stat, min_stat, NULL));
+        maj_stat = gss_import_sec_context(&min_stat, &ctx_token, &sctx);
+        if (maj_stat != GSS_S_COMPLETE)
+            errx(1, "import server context failed: %s",
+                 gssapi_err(maj_stat, min_stat, NULL));
 
-	gss_release_buffer(&min_stat, &ctx_token);
+        gss_release_buffer(&min_stat, &ctx_token);
     }
 
     if (wrapunwrap_flag) {
-	wrapunwrap(cctx, sctx, 0, actual_mech);
-	wrapunwrap(cctx, sctx, 1, actual_mech);
-	wrapunwrap(sctx, cctx, 0, actual_mech);
-	wrapunwrap(sctx, cctx, 1, actual_mech);
+        wrapunwrap(cctx, sctx, 0, actual_mech);
+        wrapunwrap(cctx, sctx, 1, actual_mech);
+        wrapunwrap(sctx, cctx, 0, actual_mech);
+        wrapunwrap(sctx, cctx, 1, actual_mech);
     }
 
     if (iov_flag) {
-	wrapunwrap_iov(cctx, sctx, 0, actual_mech);
-	wrapunwrap_iov(cctx, sctx, USE_HEADER_ONLY|FORCE_IOV, actual_mech);
-	wrapunwrap_iov(cctx, sctx, USE_HEADER_ONLY, actual_mech);
-	wrapunwrap_iov(cctx, sctx, USE_CONF, actual_mech);
-	wrapunwrap_iov(cctx, sctx, USE_CONF|USE_HEADER_ONLY, actual_mech);
+        wrapunwrap_iov(cctx, sctx, 0, actual_mech);
+        wrapunwrap_iov(cctx, sctx, USE_HEADER_ONLY|FORCE_IOV, actual_mech);
+        wrapunwrap_iov(cctx, sctx, USE_HEADER_ONLY, actual_mech);
+        wrapunwrap_iov(cctx, sctx, USE_CONF, actual_mech);
+        wrapunwrap_iov(cctx, sctx, USE_CONF|USE_HEADER_ONLY, actual_mech);
 
-	wrapunwrap_iov(cctx, sctx, FORCE_IOV, actual_mech);
-	wrapunwrap_iov(cctx, sctx, USE_CONF|FORCE_IOV, actual_mech);
-	wrapunwrap_iov(cctx, sctx, USE_HEADER_ONLY|FORCE_IOV, actual_mech);
-	wrapunwrap_iov(cctx, sctx, USE_CONF|USE_HEADER_ONLY|FORCE_IOV, actual_mech);
+        wrapunwrap_iov(cctx, sctx, FORCE_IOV, actual_mech);
+        wrapunwrap_iov(cctx, sctx, USE_CONF|FORCE_IOV, actual_mech);
+        wrapunwrap_iov(cctx, sctx, USE_HEADER_ONLY|FORCE_IOV, actual_mech);
+        wrapunwrap_iov(cctx, sctx, USE_CONF|USE_HEADER_ONLY|FORCE_IOV, actual_mech);
 
-	wrapunwrap_iov(cctx, sctx, USE_SIGN_ONLY|FORCE_IOV, actual_mech);
-	wrapunwrap_iov(cctx, sctx, USE_CONF|USE_SIGN_ONLY|FORCE_IOV, actual_mech);
-	wrapunwrap_iov(cctx, sctx, USE_CONF|USE_HEADER_ONLY|USE_SIGN_ONLY|FORCE_IOV, actual_mech);
+        wrapunwrap_iov(cctx, sctx, USE_SIGN_ONLY|FORCE_IOV, actual_mech);
+        wrapunwrap_iov(cctx, sctx, USE_CONF|USE_SIGN_ONLY|FORCE_IOV, actual_mech);
+        wrapunwrap_iov(cctx, sctx, USE_CONF|USE_HEADER_ONLY|USE_SIGN_ONLY|FORCE_IOV, actual_mech);
 
 /* works */
-	wrapunwrap_iov(cctx, sctx, 0, actual_mech);
-	wrapunwrap_iov(cctx, sctx, FORCE_IOV, actual_mech);
+        wrapunwrap_iov(cctx, sctx, 0, actual_mech);
+        wrapunwrap_iov(cctx, sctx, FORCE_IOV, actual_mech);
 
-	wrapunwrap_iov(cctx, sctx, USE_CONF, actual_mech);
-	wrapunwrap_iov(cctx, sctx, USE_CONF|FORCE_IOV, actual_mech);
+        wrapunwrap_iov(cctx, sctx, USE_CONF, actual_mech);
+        wrapunwrap_iov(cctx, sctx, USE_CONF|FORCE_IOV, actual_mech);
 
-	wrapunwrap_iov(cctx, sctx, USE_SIGN_ONLY, actual_mech);
-	wrapunwrap_iov(cctx, sctx, USE_SIGN_ONLY|FORCE_IOV, actual_mech);
+        wrapunwrap_iov(cctx, sctx, USE_SIGN_ONLY, actual_mech);
+        wrapunwrap_iov(cctx, sctx, USE_SIGN_ONLY|FORCE_IOV, actual_mech);
 
-	wrapunwrap_iov(cctx, sctx, USE_CONF|USE_SIGN_ONLY, actual_mech);
-	wrapunwrap_iov(cctx, sctx, USE_CONF|USE_SIGN_ONLY|FORCE_IOV, actual_mech);
+        wrapunwrap_iov(cctx, sctx, USE_CONF|USE_SIGN_ONLY, actual_mech);
+        wrapunwrap_iov(cctx, sctx, USE_CONF|USE_SIGN_ONLY|FORCE_IOV, actual_mech);
 
-	wrapunwrap_iov(cctx, sctx, USE_HEADER_ONLY, actual_mech);
-	wrapunwrap_iov(cctx, sctx, USE_HEADER_ONLY|FORCE_IOV, actual_mech);
+        wrapunwrap_iov(cctx, sctx, USE_HEADER_ONLY, actual_mech);
+        wrapunwrap_iov(cctx, sctx, USE_HEADER_ONLY|FORCE_IOV, actual_mech);
 
-	wrapunwrap_iov(cctx, sctx, USE_CONF|USE_HEADER_ONLY, actual_mech);
-	wrapunwrap_iov(cctx, sctx, USE_CONF|USE_HEADER_ONLY|FORCE_IOV, actual_mech);
+        wrapunwrap_iov(cctx, sctx, USE_CONF|USE_HEADER_ONLY, actual_mech);
+        wrapunwrap_iov(cctx, sctx, USE_CONF|USE_HEADER_ONLY|FORCE_IOV, actual_mech);
 
-	wrapunwrap_iov(cctx, sctx, NO_DATA, actual_mech);
-	wrapunwrap_iov(cctx, sctx, NO_DATA|USE_HEADER_ONLY|FORCE_IOV, actual_mech);
-	wrapunwrap_iov(cctx, sctx, NO_DATA|USE_HEADER_ONLY, actual_mech);
-	wrapunwrap_iov(cctx, sctx, NO_DATA|USE_CONF, actual_mech);
-	wrapunwrap_iov(cctx, sctx, NO_DATA|USE_CONF|USE_HEADER_ONLY, actual_mech);
+        wrapunwrap_iov(cctx, sctx, NO_DATA, actual_mech);
+        wrapunwrap_iov(cctx, sctx, NO_DATA|USE_HEADER_ONLY|FORCE_IOV, actual_mech);
+        wrapunwrap_iov(cctx, sctx, NO_DATA|USE_HEADER_ONLY, actual_mech);
+        wrapunwrap_iov(cctx, sctx, NO_DATA|USE_CONF, actual_mech);
+        wrapunwrap_iov(cctx, sctx, NO_DATA|USE_CONF|USE_HEADER_ONLY, actual_mech);
 
-	wrapunwrap_iov(cctx, sctx, NO_DATA|FORCE_IOV, actual_mech);
-	wrapunwrap_iov(cctx, sctx, NO_DATA|USE_CONF|FORCE_IOV, actual_mech);
-	wrapunwrap_iov(cctx, sctx, NO_DATA|USE_HEADER_ONLY|FORCE_IOV, actual_mech);
-	wrapunwrap_iov(cctx, sctx, NO_DATA|USE_CONF|USE_HEADER_ONLY|FORCE_IOV, actual_mech);
+        wrapunwrap_iov(cctx, sctx, NO_DATA|FORCE_IOV, actual_mech);
+        wrapunwrap_iov(cctx, sctx, NO_DATA|USE_CONF|FORCE_IOV, actual_mech);
+        wrapunwrap_iov(cctx, sctx, NO_DATA|USE_HEADER_ONLY|FORCE_IOV, actual_mech);
+        wrapunwrap_iov(cctx, sctx, NO_DATA|USE_CONF|USE_HEADER_ONLY|FORCE_IOV, actual_mech);
 
-	wrapunwrap_iov(cctx, sctx, NO_DATA|USE_SIGN_ONLY|FORCE_IOV, actual_mech);
-	wrapunwrap_iov(cctx, sctx, NO_DATA|USE_CONF|USE_SIGN_ONLY|FORCE_IOV, actual_mech);
-	wrapunwrap_iov(cctx, sctx, NO_DATA|USE_CONF|USE_HEADER_ONLY|USE_SIGN_ONLY|FORCE_IOV, actual_mech);
+        wrapunwrap_iov(cctx, sctx, NO_DATA|USE_SIGN_ONLY|FORCE_IOV, actual_mech);
+        wrapunwrap_iov(cctx, sctx, NO_DATA|USE_CONF|USE_SIGN_ONLY|FORCE_IOV, actual_mech);
+        wrapunwrap_iov(cctx, sctx, NO_DATA|USE_CONF|USE_HEADER_ONLY|USE_SIGN_ONLY|FORCE_IOV, actual_mech);
 
  /* works */
-	wrapunwrap_iov(cctx, sctx, NO_DATA, actual_mech);
-	wrapunwrap_iov(cctx, sctx, NO_DATA|FORCE_IOV, actual_mech);
+        wrapunwrap_iov(cctx, sctx, NO_DATA, actual_mech);
+        wrapunwrap_iov(cctx, sctx, NO_DATA|FORCE_IOV, actual_mech);
 
-	wrapunwrap_iov(cctx, sctx, NO_DATA|USE_CONF, actual_mech);
-	wrapunwrap_iov(cctx, sctx, NO_DATA|USE_CONF|FORCE_IOV, actual_mech);
+        wrapunwrap_iov(cctx, sctx, NO_DATA|USE_CONF, actual_mech);
+        wrapunwrap_iov(cctx, sctx, NO_DATA|USE_CONF|FORCE_IOV, actual_mech);
 
-	wrapunwrap_iov(cctx, sctx, NO_DATA|USE_SIGN_ONLY, actual_mech);
-	wrapunwrap_iov(cctx, sctx, NO_DATA|USE_SIGN_ONLY|FORCE_IOV, actual_mech);
+        wrapunwrap_iov(cctx, sctx, NO_DATA|USE_SIGN_ONLY, actual_mech);
+        wrapunwrap_iov(cctx, sctx, NO_DATA|USE_SIGN_ONLY|FORCE_IOV, actual_mech);
 
-	wrapunwrap_iov(cctx, sctx, NO_DATA|USE_CONF|USE_SIGN_ONLY, actual_mech);
-	wrapunwrap_iov(cctx, sctx, NO_DATA|USE_CONF|USE_SIGN_ONLY|FORCE_IOV, actual_mech);
+        wrapunwrap_iov(cctx, sctx, NO_DATA|USE_CONF|USE_SIGN_ONLY, actual_mech);
+        wrapunwrap_iov(cctx, sctx, NO_DATA|USE_CONF|USE_SIGN_ONLY|FORCE_IOV, actual_mech);
 
-	wrapunwrap_iov(cctx, sctx, NO_DATA|USE_HEADER_ONLY, actual_mech);
-	wrapunwrap_iov(cctx, sctx, NO_DATA|USE_HEADER_ONLY|FORCE_IOV, actual_mech);
+        wrapunwrap_iov(cctx, sctx, NO_DATA|USE_HEADER_ONLY, actual_mech);
+        wrapunwrap_iov(cctx, sctx, NO_DATA|USE_HEADER_ONLY|FORCE_IOV, actual_mech);
 
-	wrapunwrap_iov(cctx, sctx, NO_DATA|USE_CONF|USE_HEADER_ONLY, actual_mech);
-	wrapunwrap_iov(cctx, sctx, NO_DATA|USE_CONF|USE_HEADER_ONLY|FORCE_IOV, actual_mech);
+        wrapunwrap_iov(cctx, sctx, NO_DATA|USE_CONF|USE_HEADER_ONLY, actual_mech);
+        wrapunwrap_iov(cctx, sctx, NO_DATA|USE_CONF|USE_HEADER_ONLY|FORCE_IOV, actual_mech);
     }
 
     if (aead_flag) {
-	wrapunwrap_aead(cctx, sctx, 0, actual_mech);
-	wrapunwrap_aead(cctx, sctx, USE_CONF, actual_mech);
+        wrapunwrap_aead(cctx, sctx, 0, actual_mech);
+        wrapunwrap_aead(cctx, sctx, USE_CONF, actual_mech);
 
-	wrapunwrap_aead(cctx, sctx, FORCE_IOV, actual_mech);
-	wrapunwrap_aead(cctx, sctx, USE_CONF|FORCE_IOV, actual_mech);
+        wrapunwrap_aead(cctx, sctx, FORCE_IOV, actual_mech);
+        wrapunwrap_aead(cctx, sctx, USE_CONF|FORCE_IOV, actual_mech);
 
-	wrapunwrap_aead(cctx, sctx, USE_SIGN_ONLY|FORCE_IOV, actual_mech);
-	wrapunwrap_aead(cctx, sctx, USE_CONF|USE_SIGN_ONLY|FORCE_IOV, actual_mech);
+        wrapunwrap_aead(cctx, sctx, USE_SIGN_ONLY|FORCE_IOV, actual_mech);
+        wrapunwrap_aead(cctx, sctx, USE_CONF|USE_SIGN_ONLY|FORCE_IOV, actual_mech);
 
-	wrapunwrap_aead(cctx, sctx, 0, actual_mech);
-	wrapunwrap_aead(cctx, sctx, FORCE_IOV, actual_mech);
+        wrapunwrap_aead(cctx, sctx, 0, actual_mech);
+        wrapunwrap_aead(cctx, sctx, FORCE_IOV, actual_mech);
 
-	wrapunwrap_aead(cctx, sctx, USE_CONF, actual_mech);
-	wrapunwrap_aead(cctx, sctx, USE_CONF|FORCE_IOV, actual_mech);
+        wrapunwrap_aead(cctx, sctx, USE_CONF, actual_mech);
+        wrapunwrap_aead(cctx, sctx, USE_CONF|FORCE_IOV, actual_mech);
 
-	wrapunwrap_aead(cctx, sctx, USE_SIGN_ONLY, actual_mech);
-	wrapunwrap_aead(cctx, sctx, USE_SIGN_ONLY|FORCE_IOV, actual_mech);
+        wrapunwrap_aead(cctx, sctx, USE_SIGN_ONLY, actual_mech);
+        wrapunwrap_aead(cctx, sctx, USE_SIGN_ONLY|FORCE_IOV, actual_mech);
 
-	wrapunwrap_aead(cctx, sctx, USE_CONF|USE_SIGN_ONLY, actual_mech);
-	wrapunwrap_aead(cctx, sctx, USE_CONF|USE_SIGN_ONLY|FORCE_IOV, actual_mech);
+        wrapunwrap_aead(cctx, sctx, USE_CONF|USE_SIGN_ONLY, actual_mech);
+        wrapunwrap_aead(cctx, sctx, USE_CONF|USE_SIGN_ONLY|FORCE_IOV, actual_mech);
     }
 
     if (getverifymic_flag) {
-	getverifymic(cctx, sctx, actual_mech);
-	getverifymic(cctx, sctx, actual_mech);
-	getverifymic(sctx, cctx, actual_mech);
-	getverifymic(sctx, cctx, actual_mech);
+        getverifymic(cctx, sctx, actual_mech);
+        getverifymic(cctx, sctx, actual_mech);
+        getverifymic(sctx, cctx, actual_mech);
+        getverifymic(sctx, cctx, actual_mech);
     }
 
     gss_delete_sec_context(&min_stat, &cctx, NULL);
     gss_delete_sec_context(&min_stat, &sctx, NULL);
 
     if (deleg_cred != GSS_C_NO_CREDENTIAL) {
-	gss_cred_id_t cred2 = GSS_C_NO_CREDENTIAL;
-	gss_buffer_desc cb;
+        gss_cred_id_t cred2 = GSS_C_NO_CREDENTIAL;
+        gss_buffer_desc cb;
 
-	if (verbose_flag)
-	    printf("checking actual mech (%s) on delegated cred\n",
-		   gss_oid_to_name(actual_mech));
-	loop(actual_mech, nameoid, argv[0], deleg_cred, &sctx, &cctx, &actual_mech2, &cred2);
+        if (verbose_flag)
+            printf("checking actual mech (%s) on delegated cred\n",
+                   gss_oid_to_name(actual_mech));
+        loop(actual_mech, nameoid, argv[0], deleg_cred, &sctx, &cctx, &actual_mech2, &cred2);
 
-	gss_delete_sec_context(&min_stat, &cctx, NULL);
-	gss_delete_sec_context(&min_stat, &sctx, NULL);
+        gss_delete_sec_context(&min_stat, &cctx, NULL);
+        gss_delete_sec_context(&min_stat, &sctx, NULL);
 
-	gss_release_cred(&min_stat, &cred2);
+        gss_release_cred(&min_stat, &cred2);
 
 #if 0
         /*
@@ -1549,71 +1549,71 @@ main(int argc, char **argv)
          * credentials *then* gss_add/acquire_cred() with SPNEGO, then
          * we could try loop() with those credentials.
          */
-	/* try again using SPNEGO */
-	if (verbose_flag)
-	    printf("checking spnego on delegated cred\n");
-	loop(GSS_SPNEGO_MECHANISM, nameoid, argv[0], deleg_cred, &sctx, &cctx,
-	     &actual_mech2, &cred2);
+        /* try again using SPNEGO */
+        if (verbose_flag)
+            printf("checking spnego on delegated cred\n");
+        loop(GSS_SPNEGO_MECHANISM, nameoid, argv[0], deleg_cred, &sctx, &cctx,
+             &actual_mech2, &cred2);
 
-	gss_delete_sec_context(&min_stat, &cctx, NULL);
-	gss_delete_sec_context(&min_stat, &sctx, NULL);
+        gss_delete_sec_context(&min_stat, &cctx, NULL);
+        gss_delete_sec_context(&min_stat, &sctx, NULL);
 
-	gss_release_cred(&min_stat, &cred2);
+        gss_release_cred(&min_stat, &cred2);
 #endif
 
-	/* check export/import */
-	if (ei_cred_flag) {
+        /* check export/import */
+        if (ei_cred_flag) {
 
-	    maj_stat = gss_export_cred(&min_stat, deleg_cred, &cb);
-	    if (maj_stat != GSS_S_COMPLETE)
-		errx(1, "export cred failed: %s",
-		     gssapi_err(maj_stat, min_stat, NULL));
+            maj_stat = gss_export_cred(&min_stat, deleg_cred, &cb);
+            if (maj_stat != GSS_S_COMPLETE)
+                errx(1, "export cred failed: %s",
+                     gssapi_err(maj_stat, min_stat, NULL));
 
-	    maj_stat = gss_import_cred(&min_stat, &cb, &cred2);
-	    if (maj_stat != GSS_S_COMPLETE)
-		errx(1, "import cred failed: %s",
-		     gssapi_err(maj_stat, min_stat, NULL));
+            maj_stat = gss_import_cred(&min_stat, &cb, &cred2);
+            if (maj_stat != GSS_S_COMPLETE)
+                errx(1, "import cred failed: %s",
+                     gssapi_err(maj_stat, min_stat, NULL));
 
-	    gss_release_buffer(&min_stat, &cb);
-	    gss_release_cred(&min_stat, &deleg_cred);
+            gss_release_buffer(&min_stat, &cb);
+            gss_release_cred(&min_stat, &deleg_cred);
 
-	    if (verbose_flag)
-		printf("checking actual mech (%s) on export/imported cred\n",
-		       gss_oid_to_name(actual_mech));
-	    loop(actual_mech, nameoid, argv[0], cred2, &sctx, &cctx,
-		 &actual_mech2, &deleg_cred);
+            if (verbose_flag)
+                printf("checking actual mech (%s) on export/imported cred\n",
+                       gss_oid_to_name(actual_mech));
+            loop(actual_mech, nameoid, argv[0], cred2, &sctx, &cctx,
+                 &actual_mech2, &deleg_cred);
 
-	    gss_release_cred(&min_stat, &deleg_cred);
+            gss_release_cred(&min_stat, &deleg_cred);
 
-	    gss_delete_sec_context(&min_stat, &cctx, NULL);
-	    gss_delete_sec_context(&min_stat, &sctx, NULL);
+            gss_delete_sec_context(&min_stat, &cctx, NULL);
+            gss_delete_sec_context(&min_stat, &sctx, NULL);
 
 #if 0
             /* XXX See above */
-	    /* try again using SPNEGO */
-	    if (verbose_flag)
-		printf("checking SPNEGO on export/imported cred\n");
-	    loop(GSS_SPNEGO_MECHANISM, nameoid, argv[0], cred2, &sctx, &cctx,
-		 &actual_mech2, &deleg_cred);
+            /* try again using SPNEGO */
+            if (verbose_flag)
+                printf("checking SPNEGO on export/imported cred\n");
+            loop(GSS_SPNEGO_MECHANISM, nameoid, argv[0], cred2, &sctx, &cctx,
+                 &actual_mech2, &deleg_cred);
 
-	    gss_release_cred(&min_stat, &deleg_cred);
+            gss_release_cred(&min_stat, &deleg_cred);
 
-	    gss_delete_sec_context(&min_stat, &cctx, NULL);
-	    gss_delete_sec_context(&min_stat, &sctx, NULL);
+            gss_delete_sec_context(&min_stat, &cctx, NULL);
+            gss_delete_sec_context(&min_stat, &sctx, NULL);
 #endif
 
-	    gss_release_cred(&min_stat, &cred2);
+            gss_release_cred(&min_stat, &cred2);
 
-	} else  {
-	    gss_release_cred(&min_stat, &deleg_cred);
-	}
+        } else  {
+            gss_release_cred(&min_stat, &deleg_cred);
+        }
 
     }
 
     gss_release_cred(&min_stat, &client_cred);
     gss_release_oid_set(&min_stat, &actual_mechs);
     if (mechoids != GSS_C_NO_OID_SET && mechoids != &mechoid_descs)
-	gss_release_oid_set(&min_stat, &mechoids);
+        gss_release_oid_set(&min_stat, &mechoids);
     empty_release();
 
     krb5_free_context(context);

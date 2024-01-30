@@ -52,7 +52,7 @@ make_file(char *tmpl, size_t l)
     strlcpy(tmpl, "env.XXXXXX", l);
     fd = mkstemp(tmpl);
     if(fd < 0)
-	err(1, "mkstemp");
+        err(1, "mkstemp");
     close(fd);
 }
 
@@ -62,14 +62,14 @@ write_file(const char *fn, const char *s)
     FILE *f;
     f = fopen(fn, "w");
     if(f == NULL) {
-	unlink(fn);
-	err(1, "fopen");
+        unlink(fn);
+        err(1, "fopen");
     }
     if(fwrite(s, 1, strlen(s), f) != strlen(s))
-	err(1, "short write");
+        err(1, "short write");
     if(fclose(f) != 0) {
-	unlink(fn);
-	err(1, "fclose");
+        unlink(fn);
+        err(1, "fclose");
     }
 }
 
@@ -86,27 +86,27 @@ main(int argc, char **argv)
     write_file(fn, s1);
     count = read_environment(fn, &env);
     if(count != 3) {
-	warnx("test 1: variable count %d != 3", count);
-	error++;
+        warnx("test 1: variable count %d != 3", count);
+        error++;
     }
 
     write_file(fn, s2);
     count = read_environment(fn, &env);
     if(count != 1) {
-	warnx("test 2: variable count %d != 1", count);
-	error++;
+        warnx("test 2: variable count %d != 1", count);
+        error++;
     }
 
     unlink(fn);
     count = read_environment(fn, &env);
     if(count != 0) {
-	warnx("test 3: variable count %d != 0", count);
-	error++;
+        warnx("test 3: variable count %d != 0", count);
+        error++;
     }
     for(count = 0; env && env[count]; count++);
     if(count != 3) {
-	warnx("total variable count %d != 3", count);
-	error++;
+        warnx("total variable count %d != 3", count);
+        error++;
     }
     free_environment(env);
 

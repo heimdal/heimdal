@@ -55,11 +55,11 @@ _krb5_xor8(unsigned char *a, const unsigned char *b)
 #if defined(DES3_OLD_ENCTYPE) || defined(HEIM_WEAK_CRYPTO)
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_des_checksum(krb5_context context,
-		   const EVP_MD *evp_md,
-		   struct _krb5_key_data *key,
-		   const struct krb5_crypto_iov *iov,
-		   int niov,
-		   Checksum *cksum)
+                   const EVP_MD *evp_md,
+                   struct _krb5_key_data *key,
+                   const struct krb5_crypto_iov *iov,
+                   int niov,
+                   Checksum *cksum)
 {
     struct _krb5_evp_schedule *ctx = key->schedule->data;
     EVP_MD_CTX *m;
@@ -71,13 +71,13 @@ _krb5_des_checksum(krb5_context context,
 
     m = EVP_MD_CTX_create();
     if (m == NULL)
-	return krb5_enomem(context);
+        return krb5_enomem(context);
 
     EVP_DigestInit_ex(m, evp_md, NULL);
     EVP_DigestUpdate(m, p, 8);
     for (i = 0; i < niov; i++) {
-	if (_krb5_crypto_iov_should_sign(&iov[i]))
-	    EVP_DigestUpdate(m, iov[i].data.data, iov[i].data.length);
+        if (_krb5_crypto_iov_should_sign(&iov[i]))
+            EVP_DigestUpdate(m, iov[i].data.data, iov[i].data.length);
     }
     EVP_DigestFinal_ex (m, p + 8, NULL);
     EVP_MD_CTX_destroy(m);
@@ -90,11 +90,11 @@ _krb5_des_checksum(krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_des_verify(krb5_context context,
-		 const EVP_MD *evp_md,
-		 struct _krb5_key_data *key,
-		 const struct krb5_crypto_iov *iov,
-		 int niov,
-		 Checksum *C)
+                 const EVP_MD *evp_md,
+                 struct _krb5_key_data *key,
+                 const struct krb5_crypto_iov *iov,
+                 int niov,
+                 Checksum *C)
 {
     struct _krb5_evp_schedule *ctx = key->schedule->data;
     EVP_MD_CTX *m;
@@ -106,7 +106,7 @@ _krb5_des_verify(krb5_context context,
 
     m = EVP_MD_CTX_create();
     if (m == NULL)
-	return krb5_enomem(context);
+        return krb5_enomem(context);
 
     memset_s(&ivec, sizeof(ivec), 0, sizeof(ivec));
     EVP_CipherInit_ex(&ctx->dctx, NULL, NULL, NULL, (void *)&ivec, -1);
@@ -115,14 +115,14 @@ _krb5_des_verify(krb5_context context,
     EVP_DigestInit_ex(m, evp_md, NULL);
     EVP_DigestUpdate(m, tmp, 8); /* confounder */
     for (i = 0; i < niov; i++) {
-	if (_krb5_crypto_iov_should_sign(&iov[i]))
-	    EVP_DigestUpdate(m, iov[i].data.data, iov[i].data.length);
+        if (_krb5_crypto_iov_should_sign(&iov[i]))
+            EVP_DigestUpdate(m, iov[i].data.data, iov[i].data.length);
     }
     EVP_DigestFinal_ex (m, res, NULL);
     EVP_MD_CTX_destroy(m);
     if(ct_memcmp(res, tmp + 8, sizeof(res)) != 0) {
-	krb5_clear_error_message (context);
-	ret = KRB5KRB_AP_ERR_BAD_INTEGRITY;
+        krb5_clear_error_message (context);
+        ret = KRB5KRB_AP_ERR_BAD_INTEGRITY;
     }
     memset_s(tmp, sizeof(tmp), 0, sizeof(tmp));
     memset_s(res, sizeof(res), 0, sizeof(res));
@@ -133,16 +133,16 @@ _krb5_des_verify(krb5_context context,
 
 static krb5_error_code
 RSA_MD5_checksum(krb5_context context,
-		 krb5_crypto crypto,
-		 struct _krb5_key_data *key,
-		 unsigned usage,
-		 const struct krb5_crypto_iov *iov,
-		 int niov,
-		 Checksum *C)
+                 krb5_crypto crypto,
+                 struct _krb5_key_data *key,
+                 unsigned usage,
+                 const struct krb5_crypto_iov *iov,
+                 int niov,
+                 Checksum *C)
 {
     if (_krb5_evp_digest_iov(crypto, iov, niov, C->checksum.data,
-			     NULL, EVP_md5(), NULL) != 1)
-	krb5_abortx(context, "md5 checksum failed");
+                             NULL, EVP_md5(), NULL) != 1)
+        krb5_abortx(context, "md5 checksum failed");
 
     return 0;
 }

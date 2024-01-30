@@ -68,11 +68,11 @@ DB_close(krb5_context context, HDB *db)
     heim_assert(d != 0, "Closing already closed HDB");
 
     if (dbcp != NULL)
-	dbcp->c_close(dbcp);
+        dbcp->c_close(dbcp);
     if (d != NULL)
-	d->close(d, 0);
+        d->close(d, 0);
     if (db3->lock_fd >= 0)
-	close(db3->lock_fd);
+        close(db3->lock_fd);
 
     db3->lock_fd = -1;
     db->hdb_dbc = 0;
@@ -147,9 +147,9 @@ DB_seq(krb5_context context, HDB *db,
     memset(&value, 0, sizeof(DBT));
     code = (*dbcp->c_get)(dbcp, &key, &value, flag);
     if (code == DB_NOTFOUND)
-	return HDB_ERR_NOENTRY;
+        return HDB_ERR_NOENTRY;
     if (code)
-	return code;
+        return code;
 
     key_data.data = key.data;
     key_data.length = key.size;
@@ -157,21 +157,21 @@ DB_seq(krb5_context context, HDB *db,
     data.length = value.size;
     memset(entry, 0, sizeof(*entry));
     if (hdb_value2entry(context, &data, entry))
-	return DB_seq(context, db, flags, entry, DB_NEXT);
+        return DB_seq(context, db, flags, entry, DB_NEXT);
     if (db->hdb_master_key_set && (flags & HDB_F_DECRYPT)) {
-	code = hdb_unseal_keys (context, db, entry);
-	if (code)
-	    hdb_free_entry (context, db, entry);
+        code = hdb_unseal_keys (context, db, entry);
+        if (code)
+            hdb_free_entry (context, db, entry);
     }
     if (entry->principal == NULL) {
-	entry->principal = malloc(sizeof(*entry->principal));
-	if (entry->principal == NULL) {
-	    hdb_free_entry (context, db, entry);
-	    krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
-	    return ENOMEM;
-	} else {
-	    hdb_key2principal(context, &key_data, entry->principal);
-	}
+        entry->principal = malloc(sizeof(*entry->principal));
+        if (entry->principal == NULL) {
+            hdb_free_entry (context, db, entry);
+            krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
+            return ENOMEM;
+        } else {
+            hdb_key2principal(context, &key_data, entry->principal);
+        }
     }
     return 0;
 }
@@ -203,17 +203,17 @@ DB_rename(krb5_context context, HDB *db, const char *new_name)
 
     ret = asprintf(&old, "%s.db", db->hdb_name);
     if (ret == -1)
-	return ENOMEM;
+        return ENOMEM;
     ret = asprintf(&new, "%s.db", new_name);
     if (ret == -1) {
-	free(old);
-	return ENOMEM;
+        free(old);
+        return ENOMEM;
     }
     ret = rename(old, new);
     free(old);
     if(ret) {
-	free(new);
-	return errno;
+        free(new);
+        return errno;
     }
 
     free(db->hdb_name);
@@ -236,9 +236,9 @@ DB__get(krb5_context context, HDB *db, krb5_data key, krb5_data *reply)
     k.flags = 0;
     code = (*d->get)(d, NULL, &k, &v, 0);
     if(code == DB_NOTFOUND)
-	return HDB_ERR_NOENTRY;
+        return HDB_ERR_NOENTRY;
     if(code)
-	return code;
+        return code;
 
     krb5_data_copy(reply, v.data, v.size);
     return 0;
@@ -246,7 +246,7 @@ DB__get(krb5_context context, HDB *db, krb5_data key, krb5_data *reply)
 
 static krb5_error_code
 DB__put(krb5_context context, HDB *db, int replace,
-	krb5_data key, krb5_data value)
+        krb5_data key, krb5_data value)
 {
     DB3_HDB *db3 = (DB3_HDB *)db;
     DB *d = (DB*)db->hdb_db;
@@ -263,7 +263,7 @@ DB__put(krb5_context context, HDB *db, int replace,
     v.flags = 0;
     code = (*d->put)(d, NULL, &k, &v, replace ? 0 : DB_NOOVERWRITE);
     if(code == DB_KEYEXIST)
-	return HDB_ERR_EXISTS;
+        return HDB_ERR_EXISTS;
     if (code) {
         /*
          * Berkeley DB 3 and up have a terrible error reporting
@@ -288,7 +288,7 @@ DB__put(krb5_context context, HDB *db, int replace,
                                    "Database %s put error: unknown (%d)",
                                    db->hdb_name, code);
         }
-	return code;
+        return code;
     }
     return db->hdb_set_sync(context, db, db3->do_sync);
 }
@@ -306,7 +306,7 @@ DB__del(krb5_context context, HDB *db, krb5_data key)
     k.flags = 0;
     code = (*d->del)(d, NULL, &k, 0);
     if(code == DB_NOTFOUND)
-	return HDB_ERR_NOENTRY;
+        return HDB_ERR_NOENTRY;
     if (code) {
         if (code == EACCES || code == ENOSPC || code == EINVAL) {
             krb5_set_error_message(context, code,
@@ -318,7 +318,7 @@ DB__del(krb5_context context, HDB *db, krb5_data key)
                                    "Database %s del error: unknown (%d)",
                                    db->hdb_name, code);
         }
-	return code;
+        return code;
     }
     return db->hdb_set_sync(context, db, db3->do_sync);
 }
@@ -346,10 +346,10 @@ _open_db(DB *d, char *fn, int myflags, int flags, mode_t mode, int *fd)
 
     ret = flock(*fd, (myflags&DB_RDONLY) ? LOCK_SH : LOCK_EX);
     if (ret == -1) {
-	ret = errno;
-	close(*fd);
-	*fd = -1;
-	return ret;
+        ret = errno;
+        close(*fd);
+        *fd = -1;
+        return ret;
     }
 
     d->set_cachesize(d, 0, cache_size, 0);
@@ -361,8 +361,8 @@ _open_db(DB *d, char *fn, int myflags, int flags, mode_t mode, int *fd)
 #endif
 
     if (ret != 0) {
-	close(*fd);
-	*fd = -1;
+        close(*fd);
+        *fd = -1;
     }
 
     return ret;
@@ -395,14 +395,14 @@ DB_open(krb5_context context, HDB *db, int flags, mode_t mode)
 
     aret = asprintf(&fn, "%s.db", db->hdb_name);
     if (aret == -1) {
-	krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
-	return ENOMEM;
+        krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
+        return ENOMEM;
     }
 
     if (db_create(&d, NULL, 0) != 0) {
-	free(fn);
-	krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
-	return ENOMEM;
+        free(fn);
+        krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
+        return ENOMEM;
     }
     db->hdb_db = d;
 
@@ -411,15 +411,15 @@ DB_open(krb5_context context, HDB *db, int flags, mode_t mode)
     ret = _open_db(d, fn, myflags, flags, mode, &db3->lock_fd);
     free(fn);
     if (ret == ENOENT) {
-	/* try to open without .db extension */
-	ret = _open_db(d, db->hdb_name, myflags, flags, mode, &db3->lock_fd);
+        /* try to open without .db extension */
+        ret = _open_db(d, db->hdb_name, myflags, flags, mode, &db3->lock_fd);
     }
 
     if (ret) {
-	DB_close(context, db);
-	krb5_set_error_message(context, ret, "opening %s: %s",
-			       db->hdb_name, strerror(ret));
-	return ret;
+        DB_close(context, db);
+        krb5_set_error_message(context, ret, "opening %s: %s",
+                               db->hdb_name, strerror(ret));
+        return ret;
     }
 
 #ifndef DB_CURSOR_BULK
@@ -428,24 +428,24 @@ DB_open(krb5_context context, HDB *db, int flags, mode_t mode)
     ret = (*d->cursor)(d, NULL, &dbc, DB_CURSOR_BULK);
 
     if (ret) {
-	DB_close(context, db);
-	krb5_set_error_message(context, ret, "d->cursor: %s", strerror(ret));
+        DB_close(context, db);
+        krb5_set_error_message(context, ret, "d->cursor: %s", strerror(ret));
         return ret;
     }
     db->hdb_dbc = dbc;
 
     if((flags & O_ACCMODE) == O_RDONLY)
-	ret = hdb_check_db_format(context, db);
+        ret = hdb_check_db_format(context, db);
     else
-	ret = hdb_init_db(context, db);
+        ret = hdb_init_db(context, db);
     if(ret == HDB_ERR_NOENTRY)
-	return 0;
+        return 0;
     if (ret) {
-	DB_close(context, db);
-	krb5_set_error_message(context, ret, "hdb_open: failed %s database %s",
-			       (flags & O_ACCMODE) == O_RDONLY ?
-			       "checking format of" : "initialize",
-			       db->hdb_name);
+        DB_close(context, db);
+        krb5_set_error_message(context, ret, "hdb_open: failed %s database %s",
+                               (flags & O_ACCMODE) == O_RDONLY ?
+                               "checking format of" : "initialize",
+                               db->hdb_name);
     }
 
     return ret;
@@ -453,22 +453,22 @@ DB_open(krb5_context context, HDB *db, int flags, mode_t mode)
 
 krb5_error_code
 hdb_db3_create(krb5_context context, HDB **db,
-	       const char *filename)
+               const char *filename)
 {
     DB3_HDB **db3 = (DB3_HDB **)db;
     *db3 = calloc(1, sizeof(**db3));    /* Allocate space for the larger db3 */
     if (*db == NULL) {
-	krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
-	return ENOMEM;
+        krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
+        return ENOMEM;
     }
 
     (*db)->hdb_db = NULL;
     (*db)->hdb_name = strdup(filename);
     if ((*db)->hdb_name == NULL) {
-	free(*db);
-	*db = NULL;
-	krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
-	return ENOMEM;
+        free(*db);
+        *db = NULL;
+        krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
+        return ENOMEM;
     }
     (*db)->hdb_master_key_set = 0;
     (*db)->hdb_openp = 0;

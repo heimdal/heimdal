@@ -47,14 +47,14 @@ hdb_free_keys(krb5_context context, int len, Key *keys)
     size_t i;
 
     for (i = 0; i < len; i++) {
-	free(keys[i].mkvno);
-	keys[i].mkvno = NULL;
-	if (keys[i].salt != NULL) {
-	    free_Salt(keys[i].salt);
-	    free(keys[i].salt);
-	    keys[i].salt = NULL;
-	}
-	krb5_free_keyblock_contents(context, &keys[i].key);
+        free(keys[i].mkvno);
+        keys[i].mkvno = NULL;
+        if (keys[i].salt != NULL) {
+            free_Salt(keys[i].salt);
+            free(keys[i].salt);
+            keys[i].salt = NULL;
+        }
+        krb5_free_keyblock_contents(context, &keys[i].key);
     }
     free (keys);
 }
@@ -84,8 +84,8 @@ static const krb5_enctype all_etypes[] = {
 
 static krb5_error_code
 parse_key_set(krb5_context context, const char *key,
-	      krb5_enctype **ret_enctypes, size_t *ret_num_enctypes,
-	      krb5_salt *salt, krb5_principal principal)
+              krb5_enctype **ret_enctypes, size_t *ret_num_enctypes,
+              krb5_salt *salt, krb5_principal principal)
 {
     const char *p;
     char buf[3][256];
@@ -102,54 +102,54 @@ parse_key_set(krb5_context context, const char *key,
 
     /* split p in a list of :-separated strings */
     for(num_buf = 0; num_buf < 3; num_buf++)
-	if(strsep_copy(&p, ":", buf[num_buf], sizeof(buf[num_buf])) == -1)
-	    break;
+        if(strsep_copy(&p, ":", buf[num_buf], sizeof(buf[num_buf])) == -1)
+            break;
 
     salt->saltvalue.data = NULL;
     salt->saltvalue.length = 0;
 
     for(i = 0; i < num_buf; i++) {
-	if(enctypes == NULL && num_buf > 1) {
-	    /* this might be a etype specifier */
-	    /* XXX there should be a string_to_etypes handling
-	       special cases like `des' and `all' */
-	    if(strcmp(buf[i], "des") == 0) {
-		enctypes = des_etypes;
-		num_enctypes = sizeof(des_etypes)/sizeof(des_etypes[0]);
-	    } else if(strcmp(buf[i], "des3") == 0) {
-		e = KRB5_ENCTYPE_DES3_CBC_SHA1;
-		enctypes = &e;
-		num_enctypes = 1;
-	    } else {
-		ret = krb5_string_to_enctype(context, buf[i], &e);
-		if (ret == 0) {
-		    enctypes = &e;
-		    num_enctypes = 1;
-		} else
-		    return ret;
-	    }
-	    continue;
-	}
-	if(salt->salttype == 0) {
-	    /* interpret string as a salt specifier, if no etype
-	       is set, this sets default values */
-	    /* XXX should perhaps use string_to_salttype, but that
-	       interface sucks */
-	    if(strcmp(buf[i], "pw-salt") == 0) {
-		if(enctypes == NULL) {
-		    enctypes = all_etypes;
-		    num_enctypes = sizeof(all_etypes)/sizeof(all_etypes[0]);
-		}
-		salt->salttype = KRB5_PW_SALT;
-	    } else if(strcmp(buf[i], "afs3-salt") == 0) {
-		if(enctypes == NULL) {
-		    enctypes = des_etypes;
-		    num_enctypes = sizeof(des_etypes)/sizeof(des_etypes[0]);
-		}
-		salt->salttype = KRB5_AFS3_SALT;
-	    }
-	    continue;
-	}
+        if(enctypes == NULL && num_buf > 1) {
+            /* this might be a etype specifier */
+            /* XXX there should be a string_to_etypes handling
+               special cases like `des' and `all' */
+            if(strcmp(buf[i], "des") == 0) {
+                enctypes = des_etypes;
+                num_enctypes = sizeof(des_etypes)/sizeof(des_etypes[0]);
+            } else if(strcmp(buf[i], "des3") == 0) {
+                e = KRB5_ENCTYPE_DES3_CBC_SHA1;
+                enctypes = &e;
+                num_enctypes = 1;
+            } else {
+                ret = krb5_string_to_enctype(context, buf[i], &e);
+                if (ret == 0) {
+                    enctypes = &e;
+                    num_enctypes = 1;
+                } else
+                    return ret;
+            }
+            continue;
+        }
+        if(salt->salttype == 0) {
+            /* interpret string as a salt specifier, if no etype
+               is set, this sets default values */
+            /* XXX should perhaps use string_to_salttype, but that
+               interface sucks */
+            if(strcmp(buf[i], "pw-salt") == 0) {
+                if(enctypes == NULL) {
+                    enctypes = all_etypes;
+                    num_enctypes = sizeof(all_etypes)/sizeof(all_etypes[0]);
+                }
+                salt->salttype = KRB5_PW_SALT;
+            } else if(strcmp(buf[i], "afs3-salt") == 0) {
+                if(enctypes == NULL) {
+                    enctypes = des_etypes;
+                    num_enctypes = sizeof(des_etypes)/sizeof(des_etypes[0]);
+                }
+                salt->salttype = KRB5_AFS3_SALT;
+            }
+            continue;
+        }
 
         if (salt->saltvalue.data != NULL)
             free(salt->saltvalue.data);
@@ -163,36 +163,36 @@ parse_key_set(krb5_context context, const char *key,
     }
 
     if(enctypes == NULL || salt->salttype == 0) {
-	krb5_free_salt(context, *salt);
-	krb5_set_error_message(context, EINVAL, "bad value for default_keys `%s'", key);
-	return EINVAL;
+        krb5_free_salt(context, *salt);
+        krb5_set_error_message(context, EINVAL, "bad value for default_keys `%s'", key);
+        return EINVAL;
     }
 
     /* if no salt was specified make up default salt */
     if(salt->saltvalue.data == NULL) {
-	if(salt->salttype == KRB5_PW_SALT) {
-	    ret = krb5_get_pw_salt(context, principal, salt);
-	    if (ret)
-		return ret;
-	} else if(salt->salttype == KRB5_AFS3_SALT) {
-	    krb5_const_realm realm = krb5_principal_get_realm(context, principal);
-	    salt->saltvalue.data = strdup(realm);
-	    if(salt->saltvalue.data == NULL) {
-		krb5_set_error_message(context, ENOMEM,
-				       "out of memory while "
-				       "parsing salt specifiers");
-		return ENOMEM;
-	    }
-	    strlwr(salt->saltvalue.data);
-	    salt->saltvalue.length = strlen(realm);
-	}
+        if(salt->salttype == KRB5_PW_SALT) {
+            ret = krb5_get_pw_salt(context, principal, salt);
+            if (ret)
+                return ret;
+        } else if(salt->salttype == KRB5_AFS3_SALT) {
+            krb5_const_realm realm = krb5_principal_get_realm(context, principal);
+            salt->saltvalue.data = strdup(realm);
+            if(salt->saltvalue.data == NULL) {
+                krb5_set_error_message(context, ENOMEM,
+                                       "out of memory while "
+                                       "parsing salt specifiers");
+                return ENOMEM;
+            }
+            strlwr(salt->saltvalue.data);
+            salt->saltvalue.length = strlen(realm);
+        }
     }
 
     *ret_enctypes = malloc(sizeof(enctypes[0]) * num_enctypes);
     if (*ret_enctypes == NULL) {
-	krb5_free_salt(context, *salt);
-	krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
-	return ENOMEM;
+        krb5_free_salt(context, *salt);
+        krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
+        return ENOMEM;
     }
     memcpy(*ret_enctypes, enctypes, sizeof(enctypes[0]) * num_enctypes);
     *ret_num_enctypes = num_enctypes;
@@ -228,7 +228,7 @@ hdb_prune_keys_kvno(krb5_context context, hdb_entry *entry, int kvno)
 
     ext = hdb_find_extension(entry, choice_HDB_extension_data_hist_keys);
     if (ext == NULL)
-	return 0;
+        return 0;
     keys = &ext->data.u.hist_keys;
     nelem = keys->len;
 
@@ -237,18 +237,18 @@ hdb_prune_keys_kvno(krb5_context context, hdb_entry *entry, int kvno)
      * all the keys no longer needed to decrypt extant tickets.
      */
     if (kvno == 0 && entry->max_life != NULL && nelem > 0) {
-	time_t ceiling = time(NULL) - *entry->max_life;
+        time_t ceiling = time(NULL) - *entry->max_life;
 
-	/*
-	 * Compute most recent key timestamp that predates the current time
-	 * by at least the entry's maximum ticket lifetime.
-	 */
-	for (i = 0; i < nelem; ++i) {
-	    elem = &keys->val[i];
-	    if (elem->set_time && *elem->set_time < ceiling
-		&& (keep_time == 0 || *elem->set_time > keep_time))
-		keep_time = *elem->set_time;
-	}
+        /*
+         * Compute most recent key timestamp that predates the current time
+         * by at least the entry's maximum ticket lifetime.
+         */
+        for (i = 0; i < nelem; ++i) {
+            elem = &keys->val[i];
+            if (elem->set_time && *elem->set_time < ceiling
+                && (keep_time == 0 || *elem->set_time > keep_time))
+                keep_time = *elem->set_time;
+        }
     }
 
     if (kvno == 0 && keep_time == 0)
@@ -353,11 +353,11 @@ hdb_add_current_keys_to_history(krb5_context context, hdb_entry *entry)
     time_t newtime;
 
     if (entry->keys.len == 0)
-	return 0; /* nothing to do */
+        return 0; /* nothing to do */
 
     ret = hdb_entry_get_pw_change_time(entry, &newtime);
     if (ret)
-	return ret;
+        return ret;
 
     ks.keys = entry->keys;
     ks.kvno = entry->kvno;
@@ -394,31 +394,31 @@ hdb_add_history_key(krb5_context context, hdb_entry *entry, krb5_kvno kvno, Key 
 
     extp = hdb_find_extension(entry, choice_HDB_extension_data_hist_keys);
     if (extp == NULL) {
-	ext.data.element = choice_HDB_extension_data_hist_keys;
-	extp = &ext;
+        ext.data.element = choice_HDB_extension_data_hist_keys;
+        extp = &ext;
     }
 
     extp->mandatory = FALSE;
     hist_keys = &extp->data.u.hist_keys;
 
     for (i = 0; i < hist_keys->len; i++) {
-	if (hist_keys->val[i].kvno == kvno) {
-	    ret = add_Keys(&hist_keys->val[i].keys, key);
-	    goto out;
-	}
+        if (hist_keys->val[i].kvno == kvno) {
+            ret = add_Keys(&hist_keys->val[i].keys, key);
+            goto out;
+        }
     }
 
     keyset.kvno = kvno;
     ret = add_Keys(&keyset.keys, key);
     if (ret)
-	goto out;
+        goto out;
     ret = add_HDB_Ext_KeySet(hist_keys, &keyset);
     if (ret)
-	goto out;
+        goto out;
     if (extp == &ext) {
-	ret = hdb_replace_extension(context, entry, &ext);
-	if (ret)
-	    goto out;
+        ret = hdb_replace_extension(context, entry, &ext);
+        if (ret)
+            goto out;
     }
 
 out:
@@ -448,36 +448,36 @@ hdb_change_kvno(krb5_context context, krb5_kvno new_kvno, hdb_entry *entry)
     krb5_error_code ret;
 
     if (entry->kvno == new_kvno)
-	return 0;
+        return 0;
 
     extp = hdb_find_extension(entry, choice_HDB_extension_data_hist_keys);
     if (extp == NULL) {
-	memset(&ext, 0, sizeof (ext));
-	ext.data.element = choice_HDB_extension_data_hist_keys;
-	extp = &ext;
+        memset(&ext, 0, sizeof (ext));
+        ext.data.element = choice_HDB_extension_data_hist_keys;
+        extp = &ext;
     }
 
     memset(&keyset, 0, sizeof (keyset));
     hist_keys = &extp->data.u.hist_keys;
     for (i = 0; i < hist_keys->len; i++) {
-	if (hist_keys->val[i].kvno == new_kvno) {
-	    found = 1;
-	    ret = copy_HDB_keyset(&hist_keys->val[i], &keyset);
-	    if (ret)
-		goto out;
-	    ret = remove_HDB_Ext_KeySet(hist_keys, i);
-	    if (ret)
-		goto out;
-	    break;
-	}
+        if (hist_keys->val[i].kvno == new_kvno) {
+            found = 1;
+            ret = copy_HDB_keyset(&hist_keys->val[i], &keyset);
+            if (ret)
+                goto out;
+            ret = remove_HDB_Ext_KeySet(hist_keys, i);
+            if (ret)
+                goto out;
+            break;
+        }
     }
 
     if (!found)
-	return HDB_ERR_KVNO_NOT_FOUND;
+        return HDB_ERR_KVNO_NOT_FOUND;
 
     ret = hdb_add_current_keys_to_history(context, entry);
     if (ret)
-	goto out;
+        goto out;
 
     /* Note: we do nothing with keyset.set_time */
     entry->kvno = new_kvno;
@@ -492,7 +492,7 @@ out:
 
 static krb5_error_code
 add_enctype_to_key_set(Key **key_set, size_t *nkeyset,
-		       krb5_enctype enctype, krb5_salt *salt)
+                       krb5_enctype enctype, krb5_salt *salt)
 {
     krb5_error_code ret;
     Key key, *tmp;
@@ -501,7 +501,7 @@ add_enctype_to_key_set(Key **key_set, size_t *nkeyset,
 
     tmp = realloc(*key_set, (*nkeyset + 1) * sizeof((*key_set)[0]));
     if (tmp == NULL)
-	return ENOMEM;
+        return ENOMEM;
 
     *key_set = tmp;
 
@@ -510,24 +510,24 @@ add_enctype_to_key_set(Key **key_set, size_t *nkeyset,
     key.key.keyvalue.data = NULL;
 
     if (salt) {
-	key.salt = calloc(1, sizeof(*key.salt));
-	if (key.salt == NULL) {
-	    free_Key(&key);
-	    return ENOMEM;
-	}
+        key.salt = calloc(1, sizeof(*key.salt));
+        if (key.salt == NULL) {
+            free_Key(&key);
+            return ENOMEM;
+        }
 
-	key.salt->type = salt->salttype;
-	krb5_data_zero (&key.salt->salt);
+        key.salt->type = salt->salttype;
+        krb5_data_zero (&key.salt->salt);
 
-	ret = krb5_data_copy(&key.salt->salt,
-			     salt->saltvalue.data,
-			     salt->saltvalue.length);
-	if (ret) {
-	    free_Key(&key);
-	    return ret;
-	}
+        ret = krb5_data_copy(&key.salt->salt,
+                             salt->saltvalue.data,
+                             salt->saltvalue.length);
+        if (ret) {
+            free_Key(&key);
+            return ret;
+        }
     } else
-	key.salt = NULL;
+        key.salt = NULL;
 
     (*key_set)[*nkeyset] = key;
 
@@ -540,49 +540,49 @@ add_enctype_to_key_set(Key **key_set, size_t *nkeyset,
 static
 krb5_error_code
 ks_tuple2str(krb5_context context, int n_ks_tuple,
-	     krb5_key_salt_tuple *ks_tuple, char ***ks_tuple_strs)
+             krb5_key_salt_tuple *ks_tuple, char ***ks_tuple_strs)
 {
-	size_t i;
-	char **ksnames;
-	krb5_error_code rc = KRB5_PROG_ETYPE_NOSUPP;
+    size_t i;
+    char **ksnames;
+    krb5_error_code rc = KRB5_PROG_ETYPE_NOSUPP;
 
-	*ks_tuple_strs = NULL;
-	if (n_ks_tuple < 1)
-		return 0;
+    *ks_tuple_strs = NULL;
+    if (n_ks_tuple < 1)
+        return 0;
 
-	if ((ksnames = calloc(n_ks_tuple + 1, sizeof (*ksnames))) == NULL)
-		return (errno);
+    if ((ksnames = calloc(n_ks_tuple + 1, sizeof (*ksnames))) == NULL)
+        return (errno);
 
-	for (i = 0; i < n_ks_tuple; i++) {
-            char *ename, *sname;
+    for (i = 0; i < n_ks_tuple; i++) {
+        char *ename, *sname;
 
-	    if (krb5_enctype_to_string(context, ks_tuple[i].ks_enctype, &ename))
-		goto out;
-	    if (krb5_salttype_to_string(context, ks_tuple[i].ks_enctype,
-					ks_tuple[i].ks_salttype, &sname)) {
-                free(ename);
-		goto out;
-            }
+        if (krb5_enctype_to_string(context, ks_tuple[i].ks_enctype, &ename))
+            goto out;
+        if (krb5_salttype_to_string(context, ks_tuple[i].ks_enctype,
+                                    ks_tuple[i].ks_salttype, &sname)) {
+            free(ename);
+            goto out;
+        }
 
-	    if (asprintf(&ksnames[i], "%s:%s", ename, sname) == -1) {
-		    rc = errno;
-		    free(ename);
-		    free(sname);
-		    goto out;
-	    }
-	    free(ename);
-	    free(sname);
-	}
+        if (asprintf(&ksnames[i], "%s:%s", ename, sname) == -1) {
+            rc = errno;
+            free(ename);
+            free(sname);
+            goto out;
+        }
+        free(ename);
+        free(sname);
+    }
 
-	ksnames[i] = NULL;
-	*ks_tuple_strs = ksnames;
-	return 0;
+    ksnames[i] = NULL;
+    *ks_tuple_strs = ksnames;
+    return 0;
 
 out:
-	for (i = 0; i < n_ks_tuple; i++)
-		free(ksnames[i]);
-	free(ksnames);
-	return (rc);
+    for (i = 0; i < n_ks_tuple; i++)
+        free(ksnames[i]);
+    free(ksnames);
+    return (rc);
 }
 
 /*
@@ -597,23 +597,23 @@ glob_rules_keys(krb5_context context, krb5_const_principal principal)
     krb5_error_code ret;
 
     list = krb5_config_get_list(context, NULL, "kadmin",
-				"default_key_rules", NULL);
+                                "default_key_rules", NULL);
     if (list == NULL)
-	return NULL;
+        return NULL;
 
     while (list) {
-	if (list->type == krb5_config_string) {
-	    ret = krb5_parse_name(context, list->name, &pattern);
-	    if (ret == 0) {
-		ret = krb5_principal_match(context, principal, pattern);
-		krb5_free_principal(context, pattern);
-		if (ret) {
-		    return krb5_config_get_strings(context, list, 
-						   list->name, NULL);
-		}
-	    }
-	}
-	list = list->next;
+        if (list->type == krb5_config_string) {
+            ret = krb5_parse_name(context, list->name, &pattern);
+            if (ret == 0) {
+                ret = krb5_principal_match(context, principal, pattern);
+                krb5_free_principal(context, pattern);
+                if (ret) {
+                    return krb5_config_get_strings(context, list, 
+                                                   list->name, NULL);
+                }
+            }
+        }
+        list = list->next;
     }
     return NULL;    
 }
@@ -635,12 +635,12 @@ add_random_to_salt(krb5_context context, krb5_salt *in, krb5_salt *out)
 
     slen = rk_base64_encode(random, sizeof(random), &s);
     if (slen < 0)
-	return ENOMEM;
+        return ENOMEM;
 
     ret = krb5_data_alloc(&out->saltvalue, slen + in->saltvalue.length);
     if (ret) {
-	free(s);
-	return ret;
+        free(s);
+        return ret;
     }
 
     p = out->saltvalue.data;
@@ -661,8 +661,8 @@ add_random_to_salt(krb5_context context, krb5_salt *in, krb5_salt *out)
 
 krb5_error_code
 hdb_generate_key_set(krb5_context context, krb5_principal principal,
-		     krb5_key_salt_tuple *ks_tuple, int n_ks_tuple,
-		     Key **ret_key_set, size_t *nkeyset, int no_salt)
+                     krb5_key_salt_tuple *ks_tuple, int n_ks_tuple,
+                     Key **ret_key_set, size_t *nkeyset, int no_salt)
 {
     char **ktypes = NULL;
     char **kp;
@@ -672,14 +672,14 @@ hdb_generate_key_set(krb5_context context, krb5_principal principal,
     char **ks_tuple_strs;
     char **config_ktypes = NULL;
     static const char *default_keytypes[] = {
-	"aes256-cts-hmac-sha1-96:pw-salt",
-	"des3-cbc-sha1:pw-salt",
-	"arcfour-hmac-md5:pw-salt",
-	NULL
+        "aes256-cts-hmac-sha1-96:pw-salt",
+        "des3-cbc-sha1:pw-salt",
+        "arcfour-hmac-md5:pw-salt",
+        NULL
     };
 
     if ((ret = ks_tuple2str(context, n_ks_tuple, ks_tuple, &ks_tuple_strs)))
-	    return ret;
+        return ret;
 
     ktypes = ks_tuple_strs;
     if (ktypes == NULL) {
@@ -687,114 +687,114 @@ hdb_generate_key_set(krb5_context context, krb5_principal principal,
         ktypes = config_ktypes;
     }
     if (ktypes == NULL) {
-	config_ktypes = krb5_config_get_strings(context, NULL, "kadmin",
-						"default_keys", NULL);
-	ktypes = config_ktypes;
+        config_ktypes = krb5_config_get_strings(context, NULL, "kadmin",
+                                                "default_keys", NULL);
+        ktypes = config_ktypes;
     }
     if (ktypes == NULL)
-	ktypes = (char **)(intptr_t)default_keytypes;
+        ktypes = (char **)(intptr_t)default_keytypes;
 
     *ret_key_set = key_set = NULL;
     *nkeyset = 0;
 
     for(kp = ktypes; kp && *kp; kp++) {
-	const char *p;
-	krb5_salt salt;
-	krb5_enctype *enctypes;
-	size_t num_enctypes;
+        const char *p;
+        krb5_salt salt;
+        krb5_enctype *enctypes;
+        size_t num_enctypes;
 
-	p = *kp;
-	/* check alias */
-	if(strcmp(p, "v5") == 0)
-	    p = "pw-salt";
-	else if(strcmp(p, "v4") == 0)
-	    p = "des:pw-salt:";
-	else if(strcmp(p, "afs") == 0 || strcmp(p, "afs3") == 0)
-	    p = "des:afs3-salt";
-	else if (strcmp(p, "arcfour-hmac-md5") == 0)
-	    p = "arcfour-hmac-md5:pw-salt";
+        p = *kp;
+        /* check alias */
+        if(strcmp(p, "v5") == 0)
+            p = "pw-salt";
+        else if(strcmp(p, "v4") == 0)
+            p = "des:pw-salt:";
+        else if(strcmp(p, "afs") == 0 || strcmp(p, "afs3") == 0)
+            p = "des:afs3-salt";
+        else if (strcmp(p, "arcfour-hmac-md5") == 0)
+            p = "arcfour-hmac-md5:pw-salt";
 
-	memset(&salt, 0, sizeof(salt));
+        memset(&salt, 0, sizeof(salt));
 
-	ret = parse_key_set(context, p,
-			    &enctypes, &num_enctypes, &salt, principal);
-	if (ret) {
-	    krb5_warn(context, ret, "bad value for default_keys `%s'", *kp);
-	    ret = 0;
+        ret = parse_key_set(context, p,
+                            &enctypes, &num_enctypes, &salt, principal);
+        if (ret) {
+            krb5_warn(context, ret, "bad value for default_keys `%s'", *kp);
+            ret = 0;
             krb5_free_salt(context, salt);
-	    continue;
-	}
+            continue;
+        }
 
-	for (i = 0; i < num_enctypes; i++) {
-	    krb5_salt *saltp = no_salt ? NULL : &salt;
-	    krb5_salt rsalt;
+        for (i = 0; i < num_enctypes; i++) {
+            krb5_salt *saltp = no_salt ? NULL : &salt;
+            krb5_salt rsalt;
 
-	    /* find duplicates */
-	    for (j = 0; j < *nkeyset; j++) {
+            /* find duplicates */
+            for (j = 0; j < *nkeyset; j++) {
 
-		k = &key_set[j];
+                k = &key_set[j];
 
-		if (k->key.keytype == enctypes[i]) {
-		    if (no_salt)
-			break;
-		    if (k->salt == NULL && salt.salttype == KRB5_PW_SALT)
-			break;
-		    if (k->salt->type == salt.salttype &&
-			k->salt->salt.length == salt.saltvalue.length &&
-			memcmp(k->salt->salt.data, salt.saltvalue.data,
-			       salt.saltvalue.length) == 0)
-			break;
-		}
-	    }
-	    /* not a duplicate, lets add it */
-	    if (j < *nkeyset)
-		continue;
+                if (k->key.keytype == enctypes[i]) {
+                    if (no_salt)
+                        break;
+                    if (k->salt == NULL && salt.salttype == KRB5_PW_SALT)
+                        break;
+                    if (k->salt->type == salt.salttype &&
+                        k->salt->salt.length == salt.saltvalue.length &&
+                        memcmp(k->salt->salt.data, salt.saltvalue.data,
+                               salt.saltvalue.length) == 0)
+                        break;
+                }
+            }
+            /* not a duplicate, lets add it */
+            if (j < *nkeyset)
+                continue;
 
-	    memset(&rsalt, 0, sizeof(rsalt));
+            memset(&rsalt, 0, sizeof(rsalt));
 
-	    /* prepend salt with randomness if required */
-	    if (!no_salt &&
-		_krb5_enctype_requires_random_salt(context, enctypes[i])) {
-		saltp = &rsalt;
-		ret = add_random_to_salt(context, &salt, &rsalt);
-	    }
+            /* prepend salt with randomness if required */
+            if (!no_salt &&
+                _krb5_enctype_requires_random_salt(context, enctypes[i])) {
+                saltp = &rsalt;
+                ret = add_random_to_salt(context, &salt, &rsalt);
+            }
 
-	    if (ret == 0)
-		ret = add_enctype_to_key_set(&key_set, nkeyset, enctypes[i],
-					     saltp);
-	    krb5_free_salt(context, rsalt);
+            if (ret == 0)
+                ret = add_enctype_to_key_set(&key_set, nkeyset, enctypes[i],
+                                             saltp);
+            krb5_free_salt(context, rsalt);
 
-	    if (ret) {
-		free(enctypes);
-		krb5_free_salt(context, salt);
-		goto out;
-	    }
-	}
-	free(enctypes);
-	krb5_free_salt(context, salt);
+            if (ret) {
+                free(enctypes);
+                krb5_free_salt(context, salt);
+                goto out;
+            }
+        }
+        free(enctypes);
+        krb5_free_salt(context, salt);
     }
 
     *ret_key_set = key_set;
 
- out:
+out:
     if (config_ktypes != NULL)
-	krb5_config_free_strings(config_ktypes);
+        krb5_config_free_strings(config_ktypes);
 
     for(kp = ks_tuple_strs; kp && *kp; kp++)
-	free(*kp);
+        free(*kp);
     free(ks_tuple_strs);
 
     if (ret) {
-	krb5_warn(context, ret,
-		  "failed to parse the [kadmin]default_keys values");
+        krb5_warn(context, ret,
+                  "failed to parse the [kadmin]default_keys values");
 
-	for (i = 0; i < *nkeyset; i++)
-	    free_Key(&key_set[i]);
-	free(key_set);
+        for (i = 0; i < *nkeyset; i++)
+            free_Key(&key_set[i]);
+        free(key_set);
     } else if (*nkeyset == 0) {
-	krb5_warnx(context,
-		   "failed to parse any of the [kadmin]default_keys values");
-	ret = EINVAL; /* XXX */
+        krb5_warnx(context,
+                   "failed to parse any of the [kadmin]default_keys values");
+        ret = EINVAL; /* XXX */
     }
 
     return ret;
@@ -803,40 +803,40 @@ hdb_generate_key_set(krb5_context context, krb5_principal principal,
 
 krb5_error_code
 hdb_generate_key_set_password_with_ks_tuple(krb5_context context,
-					    krb5_principal principal,
-					    const char *password,
-					    krb5_key_salt_tuple *ks_tuple,
-					    int n_ks_tuple,
-					    Key **keys, size_t *num_keys)
+                                            krb5_principal principal,
+                                            const char *password,
+                                            krb5_key_salt_tuple *ks_tuple,
+                                            int n_ks_tuple,
+                                            Key **keys, size_t *num_keys)
 {
     krb5_error_code ret;
     size_t i;
 
     ret = hdb_generate_key_set(context, principal, ks_tuple, n_ks_tuple,
-				keys, num_keys, 0);
+                               keys, num_keys, 0);
     if (ret)
-	return ret;
+        return ret;
 
     for (i = 0; i < (*num_keys); i++) {
-	krb5_salt salt;
-	Key *key = &(*keys)[i];
+        krb5_salt salt;
+        Key *key = &(*keys)[i];
 
-	salt.salttype = key->salt->type;
-	salt.saltvalue.length = key->salt->salt.length;
-	salt.saltvalue.data = key->salt->salt.data;
+        salt.salttype = key->salt->type;
+        salt.saltvalue.length = key->salt->salt.length;
+        salt.saltvalue.data = key->salt->salt.data;
 
-	ret = krb5_string_to_key_salt (context,
-				       key->key.keytype,
-				       password,
-				       salt,
-				       &key->key);
-	if(ret)
-	    break;
+        ret = krb5_string_to_key_salt (context,
+                                       key->key.keytype,
+                                       password,
+                                       salt,
+                                       &key->key);
+        if(ret)
+            break;
     }
 
     if(ret) {
-	hdb_free_keys (context, *num_keys, *keys);
-	return ret;
+        hdb_free_keys (context, *num_keys, *keys);
+        return ret;
     }
     return ret;
 }
@@ -844,12 +844,12 @@ hdb_generate_key_set_password_with_ks_tuple(krb5_context context,
 
 krb5_error_code
 hdb_generate_key_set_password(krb5_context context,
-			      krb5_principal principal,
-			      const char *password,
-			      Key **keys, size_t *num_keys)
+                              krb5_principal principal,
+                              const char *password,
+                              Key **keys, size_t *num_keys)
 {
 
     return hdb_generate_key_set_password_with_ks_tuple(context, principal,
-						       password, NULL, 0,
-						       keys, num_keys);
+                                                       password, NULL, 0,
+                                                       keys, num_keys);
 }

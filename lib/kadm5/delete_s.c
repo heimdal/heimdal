@@ -44,32 +44,32 @@ struct delete_principal_hook_ctx {
 
 static krb5_error_code KRB5_LIB_CALL
 delete_principal_hook_cb(krb5_context context,
-			 const void *hook,
-			 void *hookctx,
-			 void *userctx)
+                         const void *hook,
+                         void *hookctx,
+                         void *userctx)
 {
     krb5_error_code ret;
     const struct kadm5_hook_ftable *ftable = hook;
     struct delete_principal_hook_ctx *ctx = userctx;
 
     ret = ftable->delete(context, hookctx,
-			 ctx->stage, ctx->code, ctx->princ);
+                         ctx->stage, ctx->code, ctx->princ);
     if (ret != 0 && ret != KRB5_PLUGIN_NO_HANDLE)
-	_kadm5_s_set_hook_error_message(ctx->context, ret, "delete",
-					hook, ctx->stage);
+        _kadm5_s_set_hook_error_message(ctx->context, ret, "delete",
+                                        hook, ctx->stage);
 
     /* only pre-commit plugins can abort */
     if (ret == 0 || ctx->stage == KADM5_HOOK_STAGE_POSTCOMMIT)
-	ret = KRB5_PLUGIN_NO_HANDLE;
+        ret = KRB5_PLUGIN_NO_HANDLE;
 
     return ret;
 }
 
 static kadm5_ret_t
 delete_principal_hook(kadm5_server_context *context,
-		      enum kadm5_hook_stage stage,
-		      krb5_error_code code,
-		      krb5_const_principal princ)
+                      enum kadm5_hook_stage stage,
+                      krb5_error_code code,
+                      krb5_const_principal princ)
 {
     krb5_error_code ret;
     struct delete_principal_hook_ctx ctx;
@@ -80,9 +80,9 @@ delete_principal_hook(kadm5_server_context *context,
     ctx.princ = princ;
 
     ret = _krb5_plugin_run_f(context->context, &kadm5_hook_plugin_data,
-			     0, &ctx, delete_principal_hook_cb);
+                             0, &ctx, delete_principal_hook_cb);
     if (ret == KRB5_PLUGIN_NO_HANDLE)
-	ret = 0;
+        ret = 0;
 
     return ret;
 }
@@ -96,11 +96,11 @@ kadm5_s_delete_principal(void *server_handle, krb5_principal princ)
 
     memset(&ent, 0, sizeof(ent));
     if (!context->keep_open) {
-	ret = context->db->hdb_open(context->context, context->db, O_RDWR, 0);
-	if(ret) {
-	    krb5_warn(context->context, ret, "opening database");
-	    return ret;
-	}
+        ret = context->db->hdb_open(context->context, context->db, O_RDWR, 0);
+        if(ret) {
+            krb5_warn(context->context, ret, "opening database");
+            return ret;
+        }
     }
 
     ret = kadm5_log_init(context);
@@ -111,30 +111,30 @@ kadm5_s_delete_principal(void *server_handle, krb5_principal princ)
                                       HDB_F_DECRYPT|HDB_F_GET_ANY|HDB_F_ADMIN_DATA,
                                       0, &ent);
     if (ret == HDB_ERR_NOENTRY)
-	goto out2;
+        goto out2;
     if (ent.flags.immutable) {
-	ret = KADM5_PROTECT_PRINCIPAL;
-	goto out3;
+        ret = KADM5_PROTECT_PRINCIPAL;
+        goto out3;
     }
 
     ret = delete_principal_hook(context, KADM5_HOOK_STAGE_PRECOMMIT, 0, princ);
     if (ret)
-	goto out3;
+        goto out3;
 
     ret = hdb_seal_keys(context->context, context->db, &ent);
     if (ret)
-	goto out3;
+        goto out3;
 
     /* This logs the change for iprop and writes to the HDB */
     ret = kadm5_log_delete(context, princ);
 
     (void) delete_principal_hook(context, KADM5_HOOK_STAGE_POSTCOMMIT, ret, princ);
 
- out3:
+out3:
     hdb_free_entry(context->context, context->db, &ent);
- out2:
+out2:
     (void) kadm5_log_end(context);
- out:
+out:
     if (!context->keep_open) {
         kadm5_ret_t ret2;
         ret2 = context->db->hdb_close(context->context, context->db);

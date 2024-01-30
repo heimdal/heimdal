@@ -35,14 +35,14 @@
 
 OM_uint32 GSSAPI_CALLCONV
 _gss_ntlm_inquire_mechs_for_name (
-            OM_uint32 * minor_status,
-            gss_const_name_t input_name,
-            gss_OID_set * mech_types
-           )
+                                  OM_uint32 * minor_status,
+                                  gss_const_name_t input_name,
+                                  gss_OID_set * mech_types
+                                 )
 {
     if (minor_status)
-	*minor_status = 0;
+        *minor_status = 0;
     if (mech_types)
-	*mech_types = GSS_C_NO_OID_SET;
+        *mech_types = GSS_C_NO_OID_SET;
     return GSS_S_COMPLETE;
 }

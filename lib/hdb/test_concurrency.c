@@ -76,7 +76,7 @@ threaded_reader(void *d)
     printf("Reader thread opening HDB\n");
 
     if ((krb5_init_context(&context)))
-	errx(1, "krb5_init_context failed");
+        errx(1, "krb5_init_context failed");
 
     printf("Reader thread waiting for writer to create the HDB\n");
     (void) pthread_mutex_lock(&s->lock);
@@ -128,8 +128,8 @@ threaded_reader(void *d)
     if ((ret = dbr->hdb_nextkey(context, dbr, 0, &entr)) == 0) {
         //(void) unlink(s->fname);
         krb5_warn(context, ret,
-                 "HDB %s sees writes committed since starting iteration",
-                 s->hdb_name);
+                  "HDB %s sees writes committed since starting iteration",
+                  s->hdb_name);
     } else if (ret != HDB_ERR_NOENTRY) {
         //(void) unlink(s->fname);
         krb5_err(context, 1, ret,
@@ -166,7 +166,7 @@ forked_reader(struct tsync *s)
     s->writer_go_pipe[0] = -1;
     s->reader_go_pipe[1] = -1;
     if ((krb5_init_context(&context)))
-	errx(1, "krb5_init_context failed");
+        errx(1, "krb5_init_context failed");
 
     printf("Reader process waiting for writer\n");
     while ((bytes = read(s->reader_go_pipe[0], b, sizeof(b))) == -1 &&
@@ -222,8 +222,8 @@ forked_reader(struct tsync *s)
     if ((ret = dbr->hdb_nextkey(context, dbr, 0, &entr)) == 0) {
         //(void) unlink(s->fname);
         krb5_warn(context, ret,
-                 "HDB %s sees writes committed since starting iteration (%s)",
-                 s->hdb_name, entr.principal->name.name_string.val[0]);
+                  "HDB %s sees writes committed since starting iteration (%s)",
+                  s->hdb_name, entr.principal->name.name_string.val[0]);
     } else if (ret != HDB_ERR_NOENTRY) {
         //(void) unlink(s->fname);
         krb5_err(context, 1, ret,
@@ -338,7 +338,7 @@ test_hdb_concurrency(char *name, const char *ext, int threaded)
     (void) pthread_mutex_init(&ts.lock, NULL);
 
     if ((krb5_init_context(&context)))
-	errx(1, "krb5_init_context failed");
+        errx(1, "krb5_init_context failed");
 
     /* Use mkstemp() then unlink() to avoid warnings about mktemp(); ugh */
     if ((fd = mkstemp(fname)) == -1)
@@ -370,9 +370,9 @@ test_hdb_concurrency(char *name, const char *ext, int threaded)
         if (pipe(ts.reader_go_pipe) == -1)
             err(1, "Could not create a pipe");
         switch ((child = fork())) {
-        case -1: err(1, "Could not fork a child");
-        case  0: forked_reader(&ts); _exit(0);
-        default: break;
+            case -1: err(1, "Could not fork a child");
+            case  0: forked_reader(&ts); _exit(0);
+            default: break;
         }
         (void) close(ts.writer_go_pipe[1]);
         ts.writer_go_pipe[1] = -1;
@@ -464,14 +464,14 @@ main(int argc, char **argv)
     setprogname(argv[0]);
 
     if (getarg(args, num_args, argc, argv, &o))
-	krb5_std_usage(1, args, num_args);
+        krb5_std_usage(1, args, num_args);
 
     if (help_flag)
-	krb5_std_usage(0, args, num_args);
+        krb5_std_usage(0, args, num_args);
 
     if (version_flag){
-	print_version(NULL);
-	return 0;
+        print_version(NULL);
+        return 0;
     }
 
     if (!use_fork && !use_threads)

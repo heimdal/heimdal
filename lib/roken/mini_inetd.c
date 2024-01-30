@@ -47,23 +47,23 @@ accept_it (rk_socket_t s, rk_socket_t *ret_socket)
 
     as = accept(s, NULL, NULL);
     if(rk_IS_BAD_SOCKET(as))
-	err (1, "accept");
+        err (1, "accept");
 
     if (ret_socket) {
 
-	*ret_socket = as;
+        *ret_socket = as;
 
     } else {
-	int fd = socket_to_fd(as, 0);
+        int fd = socket_to_fd(as, 0);
 
-	/* We would use _O_RDONLY for the socket_to_fd() call for
-	   STDIN, but there are instances where we assume that STDIN
-	   is a r/w socket. */
+        /* We would use _O_RDONLY for the socket_to_fd() call for
+           STDIN, but there are instances where we assume that STDIN
+           is a r/w socket. */
 
-	dup2(fd, STDIN_FILENO);
-	dup2(fd, STDOUT_FILENO);
+        dup2(fd, STDIN_FILENO);
+        dup2(fd, STDOUT_FILENO);
 
-	rk_closesocket(as);
+        rk_closesocket(as);
     }
 }
 
@@ -96,62 +96,62 @@ mini_inetd_addrinfo (struct addrinfo *ai, rk_socket_t *ret_socket)
     rk_socket_t max_fd = (rk_socket_t)-1;
 
     for (nalloc = 0, a = ai; a != NULL; a = a->ai_next)
-	++nalloc;
+        ++nalloc;
 
     fds = malloc (nalloc * sizeof(*fds));
     if (fds == NULL) {
-	errx (1, "mini_inetd: out of memory");
-	UNREACHABLE(return);
+        errx (1, "mini_inetd: out of memory");
+        UNREACHABLE(return);
     }
 
     FD_ZERO(&orig_read_set);
 
     for (i = 0, a = ai; a != NULL; a = a->ai_next) {
-	fds[i] = socket (a->ai_family, a->ai_socktype, a->ai_protocol);
-	if (rk_IS_BAD_SOCKET(fds[i]))
-	    continue;
-	socket_set_reuseaddr (fds[i], 1);
-	socket_set_ipv6only(fds[i], 1);
-	if (rk_IS_SOCKET_ERROR(bind (fds[i], a->ai_addr, a->ai_addrlen))) {
-	    warn ("bind af = %d", a->ai_family);
-	    rk_closesocket(fds[i]);
-	    fds[i] = rk_INVALID_SOCKET;
-	    continue;
-	}
-	if (rk_IS_SOCKET_ERROR(listen (fds[i], SOMAXCONN))) {
-	    warn ("listen af = %d", a->ai_family);
-	    rk_closesocket(fds[i]);
-	    fds[i] = rk_INVALID_SOCKET;
-	    continue;
-	}
+        fds[i] = socket (a->ai_family, a->ai_socktype, a->ai_protocol);
+        if (rk_IS_BAD_SOCKET(fds[i]))
+            continue;
+        socket_set_reuseaddr (fds[i], 1);
+        socket_set_ipv6only(fds[i], 1);
+        if (rk_IS_SOCKET_ERROR(bind (fds[i], a->ai_addr, a->ai_addrlen))) {
+            warn ("bind af = %d", a->ai_family);
+            rk_closesocket(fds[i]);
+            fds[i] = rk_INVALID_SOCKET;
+            continue;
+        }
+        if (rk_IS_SOCKET_ERROR(listen (fds[i], SOMAXCONN))) {
+            warn ("listen af = %d", a->ai_family);
+            rk_closesocket(fds[i]);
+            fds[i] = rk_INVALID_SOCKET;
+            continue;
+        }
 #ifndef NO_LIMIT_FD_SETSIZE
-	if (fds[i] >= FD_SETSIZE)
-	    errx (1, "fd too large");
+        if (fds[i] >= FD_SETSIZE)
+            errx (1, "fd too large");
 #endif
-	FD_SET(fds[i], &orig_read_set);
-	max_fd = max(max_fd, fds[i]);
-	++i;
+        FD_SET(fds[i], &orig_read_set);
+        max_fd = max(max_fd, fds[i]);
+        ++i;
     }
     if (i == 0)
-	errx (1, "no sockets");
+        errx (1, "no sockets");
     n = i;
 
     do {
-	read_set = orig_read_set;
+        read_set = orig_read_set;
 
-	ret = select (max_fd + 1, &read_set, NULL, NULL, NULL);
-	if (rk_IS_SOCKET_ERROR(ret) && rk_SOCK_ERRNO != EINTR)
-	    err (1, "select");
+        ret = select (max_fd + 1, &read_set, NULL, NULL, NULL);
+        if (rk_IS_SOCKET_ERROR(ret) && rk_SOCK_ERRNO != EINTR)
+            err (1, "select");
     } while (ret <= 0);
 
     for (i = 0; i < n; ++i)
-	if (FD_ISSET (fds[i], &read_set)) {
-	    accept_it (fds[i], ret_socket);
-	    for (i = 0; i < n; ++i)
-	      rk_closesocket(fds[i]);
-	    free(fds);
-	    return;
-	}
+        if (FD_ISSET (fds[i], &read_set)) {
+            accept_it (fds[i], ret_socket);
+            for (i = 0; i < n; ++i)
+              rk_closesocket(fds[i]);
+            free(fds);
+            return;
+        }
     abort ();
 }
 
@@ -188,7 +188,7 @@ mini_inetd(int port, rk_socket_t * ret_socket)
 
     error = getaddrinfo (NULL, portstr, &hints, &ai);
     if (error)
-	errx (1, "getaddrinfo: %s", gai_strerror (error));
+        errx (1, "getaddrinfo: %s", gai_strerror (error));
 
     mini_inetd_addrinfo(ai, ret_socket);
 

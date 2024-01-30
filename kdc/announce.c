@@ -81,11 +81,11 @@ CFString2utf8(CFStringRef string)
     size = 1 + CFStringGetMaximumSizeForEncoding(CFStringGetLength(string), kCFStringEncodingUTF8);
     str = malloc(size);
     if (str == NULL)
-	return NULL;
+        return NULL;
 
     if (CFStringGetCString(string, str, size, kCFStringEncodingUTF8) == false) {
-	free(str);
-	return NULL;
+        free(str);
+        return NULL;
     }
     return str;
 }
@@ -101,13 +101,13 @@ retry_timer(void)
     dispatch_time_t t;
 
     s = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER,
-			       0, 0, g_queue);
+                               0, 0, g_queue);
     t = dispatch_time(DISPATCH_TIME_NOW, 5ull * NSEC_PER_SEC);
     dispatch_source_set_timer(s, t, 0, NSEC_PER_SEC);
     dispatch_source_set_event_handler(s, ^{
-	    create_dns_sd();
-	    dispatch_release(s);
-	});
+            create_dns_sd();
+            dispatch_release(s);
+        });
     dispatch_resume(s);
 }
 
@@ -123,29 +123,29 @@ create_dns_sd(void)
 
     error = DNSServiceCreateConnection(&g_dnsRef);
     if (error) {
-	retry_timer();
-	return;
+        retry_timer();
+        return;
     }
 
     dispatch_suspend(g_queue);
 
     s = dispatch_source_create(DISPATCH_SOURCE_TYPE_READ,
-			       DNSServiceRefSockFD(g_dnsRef),
-			       0, g_queue);
+                               DNSServiceRefSockFD(g_dnsRef),
+                               0, g_queue);
 
     dispatch_source_set_event_handler(s, ^{
-	    DNSServiceErrorType ret = DNSServiceProcessResult(g_dnsRef);
-	    /* on error tear down and set timer to recreate */
-	    if (ret != kDNSServiceErr_NoError && ret != kDNSServiceErr_Transient) {
-		dispatch_source_cancel(s);
-	    }
-	});
+            DNSServiceErrorType ret = DNSServiceProcessResult(g_dnsRef);
+            /* on error tear down and set timer to recreate */
+            if (ret != kDNSServiceErr_NoError && ret != kDNSServiceErr_Transient) {
+                dispatch_source_cancel(s);
+            }
+        });
 
     dispatch_source_set_cancel_handler(s, ^{
-	    destroy_dns_sd();
-	    retry_timer();
-	    dispatch_release(s);
-	});
+            destroy_dns_sd();
+            retry_timer();
+            dispatch_release(s);
+        });
 
     dispatch_resume(s);
 
@@ -160,24 +160,24 @@ domain_add(const char *domain, const char *realm, int flag)
     struct entry *e;
 
     for (e = g_entries; e != NULL; e = e->next) {
-	if (strcmp(domain, e->domain) == 0 && strcmp(realm, e->realm) == 0) {
-	    e->flags |= flag;
-	    return;
-	}
+        if (strcmp(domain, e->domain) == 0 && strcmp(realm, e->realm) == 0) {
+            e->flags |= flag;
+            return;
+        }
     }
 
     LOG("Adding realm %s to domain %s", realm, domain);
 
     e = calloc(1, sizeof(*e));
     if (e == NULL)
-	return;
+        return;
     e->domain = strdup(domain);
     e->realm = strdup(realm);
     if (e->domain == NULL || e->realm == NULL) {
-	free(e->domain);
-	free(e->realm);
-	free(e);
-	return;
+        free(e->domain);
+        free(e->realm);
+        free(e);
+        return;
     }
     e->flags = flag | F_PUSH; /* if we allocate, we push */
     e->next = g_entries;
@@ -196,19 +196,19 @@ domains_add(const void *key, const void *value, void *context)
     struct addctx *ctx = context;
 
     if (str == NULL)
-	return;
+        return;
     if (str[0] != '\0')
-	domain_add(str, ctx->realm, F_EXISTS | ctx->flags);
+        domain_add(str, ctx->realm, F_EXISTS | ctx->flags);
     free(str);
 }
 
 
 static void
 dnsCallback(DNSServiceRef sdRef __attribute__((unused)),
-	    DNSRecordRef RecordRef __attribute__((unused)),
-	    DNSServiceFlags flags __attribute__((unused)),
-	    DNSServiceErrorType errorCode __attribute__((unused)),
-	    void *context __attribute__((unused)))
+            DNSRecordRef RecordRef __attribute__((unused)),
+            DNSServiceFlags flags __attribute__((unused)),
+            DNSServiceErrorType errorCode __attribute__((unused)),
+            void *context __attribute__((unused)))
 {
 }
 
@@ -237,7 +237,7 @@ register_srv(const char *realm, const char *hostname, int port)
 
     /* skip registering LKDC realms */
     if (strncmp(realm, "LKDC:", 5) == 0)
-	return;
+        return;
 
     /* encode SRV-RR */
     target[0] = 0; /* priority */
@@ -249,40 +249,40 @@ register_srv(const char *realm, const char *hostname, int port)
 
     size = dn_comp(hostname, target + 6, sizeof(target) - 6, NULL, NULL);
     if (size < 0)
-	return;
+        return;
 
     size += 6;
 
     LOG("register SRV rr for realm %s hostname %s:%d", realm, hostname, port);
 
     for (i = 0; i < sizeof(register_names)/sizeof(register_names[0]); i++) {
-	char name[kDNSServiceMaxDomainName];
-	DNSServiceErrorType error;
-	void *ptr;
+        char name[kDNSServiceMaxDomainName];
+        DNSServiceErrorType error;
+        void *ptr;
 
-	ptr = realloc(srvRefs.val, sizeof(srvRefs.val[0]) * (srvRefs.len + 1));
-	if (ptr == NULL)
-	    errx(1, "malloc: out of memory");
-	srvRefs.val = ptr;
+        ptr = realloc(srvRefs.val, sizeof(srvRefs.val[0]) * (srvRefs.len + 1));
+        if (ptr == NULL)
+            errx(1, "malloc: out of memory");
+        srvRefs.val = ptr;
 
-	DNSServiceConstructFullName(name, NULL, register_names[i], realm);
+        DNSServiceConstructFullName(name, NULL, register_names[i], realm);
 
-	error = DNSServiceRegisterRecord(g_dnsRef,
-					 &srvRefs.val[srvRefs.len],
-					 kDNSServiceFlagsUnique | kDNSServiceFlagsShareConnection,
-					 0,
-					 name,
-					 kDNSServiceType_SRV,
-					 kDNSServiceClass_IN,
-					 size,
-					 target,
-					 0,
-					 dnsCallback,
-					 NULL);
-	if (error) {
-	    LOG("Failed to register SRV rr for realm %s: %d", realm, error);
-	} else
-	    srvRefs.len++;
+        error = DNSServiceRegisterRecord(g_dnsRef,
+                                         &srvRefs.val[srvRefs.len],
+                                         kDNSServiceFlagsUnique | kDNSServiceFlagsShareConnection,
+                                         0,
+                                         name,
+                                         kDNSServiceType_SRV,
+                                         kDNSServiceClass_IN,
+                                         size,
+                                         target,
+                                         0,
+                                         dnsCallback,
+                                         NULL);
+        if (error) {
+            LOG("Failed to register SRV rr for realm %s: %d", realm, error);
+        } else
+            srvRefs.len++;
     }
 }
 
@@ -290,8 +290,8 @@ static void
 unregister_srv_realms(void)
 {
     if (g_dnsRef) {
-	for (i = 0; i < srvRefs.len; i++)
-	    DNSServiceRemoveRecord(g_dnsRef, srvRefs.val[i], 0);
+        for (i = 0; i < srvRefs.len; i++)
+            DNSServiceRemoveRecord(g_dnsRef, srvRefs.val[i], 0);
     }
     free(srvRefs.val);
     srvRefs.len = 0;
@@ -309,20 +309,20 @@ register_srv_realms(CFStringRef host)
 
     hostname = CFString2utf8(host);
     if (hostname == NULL)
-	return;
+        return;
 
     for(i = 0; i < announce_config->num_db; i++) {
-	char **realms, **r;
+        char **realms, **r;
 
-	if (announce_config->db[i]->hdb_get_realms == NULL)
-	    continue;
+        if (announce_config->db[i]->hdb_get_realms == NULL)
+            continue;
 
-	ret = (announce_config->db[i]->hdb_get_realms)(announce_context, &realms);
-	if (ret == 0) {
-	    for (r = realms; r && *r; r++)
-		register_srv(*r, hostname, 88);
-	    krb5_free_host_realm(announce_context, realms);
-	}
+        ret = (announce_config->db[i]->hdb_get_realms)(announce_context, &realms);
+        if (ret == 0) {
+            for (r = realms; r && *r; r++)
+                register_srv(*r, hostname, 88);
+            krb5_free_host_realm(announce_context, realms);
+        }
     }
 
     free(hostname);
@@ -338,60 +338,60 @@ update_dns(void)
 
     hostname = CFString2utf8(g_hostname);
     if (hostname == NULL)
-	return;
+        return;
 
     while (*e != NULL) {
-	/* remove if this wasn't updated */
-	if (((*e)->flags & F_EXISTS) == 0) {
-	    struct entry *drop = *e;
-	    *e = (*e)->next;
+        /* remove if this wasn't updated */
+        if (((*e)->flags & F_EXISTS) == 0) {
+            struct entry *drop = *e;
+            *e = (*e)->next;
 
-	    LOG("Deleting realm %s from domain %s",
-		drop->realm, drop->domain);
+            LOG("Deleting realm %s from domain %s",
+                drop->realm, drop->domain);
 
-	    if (drop->recordRef && g_dnsRef)
-		DNSServiceRemoveRecord(g_dnsRef, drop->recordRef, 0);
-	    free(drop->domain);
-	    free(drop->realm);
-	    free(drop);
-	    continue;
-	}
-	if ((*e)->flags & F_PUSH) {
-	    struct entry *update = *e;
-	    char *dnsdata, *name;
-	    size_t len;
+            if (drop->recordRef && g_dnsRef)
+                DNSServiceRemoveRecord(g_dnsRef, drop->recordRef, 0);
+            free(drop->domain);
+            free(drop->realm);
+            free(drop);
+            continue;
+        }
+        if ((*e)->flags & F_PUSH) {
+            struct entry *update = *e;
+            char *dnsdata, *name;
+            size_t len;
 
-	    len = strlen(update->realm);
-	    asprintf(&dnsdata, "%c%s", (int)len, update->realm);
-	    if (dnsdata == NULL)
-		errx(1, "malloc");
+            len = strlen(update->realm);
+            asprintf(&dnsdata, "%c%s", (int)len, update->realm);
+            if (dnsdata == NULL)
+                errx(1, "malloc");
 
-	    asprintf(&name, "_kerberos.%s.%s", hostname, update->domain);
-	    if (name == NULL)
-		errx(1, "malloc");
+            asprintf(&name, "_kerberos.%s.%s", hostname, update->domain);
+            if (name == NULL)
+                errx(1, "malloc");
 
-	    if (update->recordRef)
-		DNSServiceRemoveRecord(g_dnsRef, update->recordRef, 0);
+            if (update->recordRef)
+                DNSServiceRemoveRecord(g_dnsRef, update->recordRef, 0);
 
-	    error = DNSServiceRegisterRecord(g_dnsRef,
-					     &update->recordRef,
-					     kDNSServiceFlagsShared | kDNSServiceFlagsAllowRemoteQuery,
-					     0,
-					     name,
-					     kDNSServiceType_TXT,
-					     kDNSServiceClass_IN,
-					     len+1,
-					     dnsdata,
-					     0,
-					     dnsCallback,
-					     NULL);
-	    free(name);
-	    free(dnsdata);
-	    if (error)
-		errx(1, "failure to update entry for %s/%s",
-		     update->domain, update->realm);
-	}
-	e = &(*e)->next;
+            error = DNSServiceRegisterRecord(g_dnsRef,
+                                             &update->recordRef,
+                                             kDNSServiceFlagsShared | kDNSServiceFlagsAllowRemoteQuery,
+                                             0,
+                                             name,
+                                             kDNSServiceType_TXT,
+                                             kDNSServiceClass_IN,
+                                             len+1,
+                                             dnsdata,
+                                             0,
+                                             dnsCallback,
+                                             NULL);
+            free(name);
+            free(dnsdata);
+            if (error)
+                errx(1, "failure to update entry for %s/%s",
+                     update->domain, update->realm);
+        }
+        e = &(*e)->next;
     }
     free(hostname);
 }
@@ -407,13 +407,13 @@ update_entries(SCDynamicStoreRef store, const char *realm, int flags)
     /* announce btmm */
     btmm = SCDynamicStoreCopyValue(store, NetworkChangedKey_BackToMyMac);
     if (btmm) {
-	struct addctx addctx;
+        struct addctx addctx;
 
-	addctx.flags = flags;
-	addctx.realm = realm;
+        addctx.flags = flags;
+        addctx.realm = realm;
 
-	CFDictionaryApplyFunction(btmm, domains_add, &addctx);
-	CFRelease(btmm);
+        CFDictionaryApplyFunction(btmm, domains_add, &addctx);
+        CFRelease(btmm);
     }
 }
 
@@ -428,35 +428,35 @@ update_all(SCDynamicStoreRef store, CFArrayRef changedKeys, void *info)
 
     host = SCDynamicStoreCopyLocalHostName(store);
     if (host == NULL)
-	return;
+        return;
 
     if (g_hostname == NULL || CFStringCompare(host, g_hostname, 0) != kCFCompareEqualTo) {
-	if (g_hostname)
-	    CFRelease(g_hostname);
-	g_hostname = CFRetain(host);
-	flags = F_PUSH; /* if hostname has changed, force push */
+        if (g_hostname)
+            CFRelease(g_hostname);
+        g_hostname = CFRetain(host);
+        flags = F_PUSH; /* if hostname has changed, force push */
 
 #ifdef REGISTER_SRV_RR
-	register_srv_realms(g_hostname);
+        register_srv_realms(g_hostname);
 #endif
     }
 
     for (e = g_entries; e != NULL; e = e->next)
-	e->flags &= ~(F_EXISTS|F_PUSH);
+        e->flags &= ~(F_EXISTS|F_PUSH);
 
     for(i = 0; i < announce_config->num_db; i++) {
-	krb5_error_code ret;
-	char **realms, **r;
+        krb5_error_code ret;
+        char **realms, **r;
 
-	if (announce_config->db[i]->hdb_get_realms == NULL)
-	    continue;
+        if (announce_config->db[i]->hdb_get_realms == NULL)
+            continue;
 
-	ret = (announce_config->db[i]->hdb_get_realms)(announce_context, announce_config->db[i], &realms);
-	if (ret == 0) {
-	    for (r = realms; r && *r; r++)
-		update_entries(store, *r, flags);
-	    krb5_free_host_realm(announce_context, realms);
-	}
+        ret = (announce_config->db[i]->hdb_get_realms)(announce_context, announce_config->db[i], &realms);
+        if (ret == 0) {
+            for (r = realms; r && *r; r++)
+                update_entries(store, *r, flags);
+            krb5_free_host_realm(announce_context, realms);
+        }
     }
 
     update_dns();
@@ -470,18 +470,18 @@ delete_all(void)
     struct entry *e;
 
     for (e = g_entries; e != NULL; e = e->next)
-	e->flags &= ~(F_EXISTS|F_PUSH);
+        e->flags &= ~(F_EXISTS|F_PUSH);
 
     update_dns();
     if (g_entries != NULL)
-	errx(1, "Failed to remove all bonjour entries");
+        errx(1, "Failed to remove all bonjour entries");
 }
 
 static void
 destroy_dns_sd(void)
 {
     if (g_dnsRef == NULL)
-	return;
+        return;
 
     delete_all();
 #ifdef REGISTER_SRV_RR
@@ -503,25 +503,25 @@ register_notification(void)
     computerNameKey = SCDynamicStoreKeyCreateHostNames(kCFAllocatorDefault);
 
     store = SCDynamicStoreCreate(kCFAllocatorDefault, CFSTR("Network watcher"),
-				 update_all, NULL);
+                                 update_all, NULL);
     if (store == NULL)
-	errx(1, "SCDynamicStoreCreate");
+        errx(1, "SCDynamicStoreCreate");
 
     keys = CFArrayCreateMutable(kCFAllocatorDefault, 2, &kCFTypeArrayCallBacks);
     if (keys == NULL)
-	errx(1, "CFArrayCreateMutable");
+        errx(1, "CFArrayCreateMutable");
 
     CFArrayAppendValue(keys, computerNameKey);
     CFArrayAppendValue(keys, NetworkChangedKey_BackToMyMac);
 
     if (SCDynamicStoreSetNotificationKeys(store, keys, NULL) == false)
-	errx(1, "SCDynamicStoreSetNotificationKeys");
+        errx(1, "SCDynamicStoreSetNotificationKeys");
 
     CFRelease(computerNameKey);
     CFRelease(keys);
 
     if (!SCDynamicStoreSetDispatchQueue(store, g_queue))
-	errx(1, "SCDynamicStoreSetDispatchQueue");
+        errx(1, "SCDynamicStoreSetDispatchQueue");
 
     return store;
 }
@@ -533,7 +533,7 @@ bonjour_announce(krb5_context context, krb5_kdc_configuration *config)
 #if defined(__APPLE__) && defined(HAVE_GCD)
     g_queue = dispatch_queue_create("com.apple.kdc_announce", NULL);
     if (!g_queue)
-	errx(1, "dispatch_queue_create");
+        errx(1, "dispatch_queue_create");
 
     g_store = register_notification();
     announce_config = config;

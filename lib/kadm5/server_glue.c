@@ -37,114 +37,114 @@ RCSID("$Id$");
 
 kadm5_ret_t
 kadm5_init_with_password(const char *client_name,
-			 const char *password,
-			 const char *service_name,
-			 kadm5_config_params *realm_params,
-			 unsigned long struct_version,
-			 unsigned long api_version,
-			 void **server_handle)
+                         const char *password,
+                         const char *service_name,
+                         kadm5_config_params *realm_params,
+                         unsigned long struct_version,
+                         unsigned long api_version,
+                         void **server_handle)
 {
     return kadm5_s_init_with_password(client_name,
-				      password,
-				      service_name,
-				      realm_params,
-				      struct_version,
-				      api_version,
-				      server_handle);
+                                      password,
+                                      service_name,
+                                      realm_params,
+                                      struct_version,
+                                      api_version,
+                                      server_handle);
 }
 
 kadm5_ret_t
 kadm5_init_with_password_ctx(krb5_context context,
-			     const char *client_name,
-			     const char *password,
-			     const char *service_name,
-			     kadm5_config_params *realm_params,
-			     unsigned long struct_version,
-			     unsigned long api_version,
-			     void **server_handle)
+                             const char *client_name,
+                             const char *password,
+                             const char *service_name,
+                             kadm5_config_params *realm_params,
+                             unsigned long struct_version,
+                             unsigned long api_version,
+                             void **server_handle)
 {
     return kadm5_s_init_with_password_ctx(context,
-					  client_name,
-					  password,
-					  service_name,
-					  realm_params,
-					  struct_version,
-					  api_version,
-					  server_handle);
+                                          client_name,
+                                          password,
+                                          service_name,
+                                          realm_params,
+                                          struct_version,
+                                          api_version,
+                                          server_handle);
 }
 
 kadm5_ret_t
 kadm5_init_with_skey(const char *client_name,
-		     const char *keytab,
-		     const char *service_name,
-		     kadm5_config_params *realm_params,
-		     unsigned long struct_version,
-		     unsigned long api_version,
-		     void **server_handle)
+                     const char *keytab,
+                     const char *service_name,
+                     kadm5_config_params *realm_params,
+                     unsigned long struct_version,
+                     unsigned long api_version,
+                     void **server_handle)
 {
     return kadm5_s_init_with_skey(client_name,
-				  keytab,
-				  service_name,
-				  realm_params,
-				  struct_version,
-				  api_version,
-				  server_handle);
+                                  keytab,
+                                  service_name,
+                                  realm_params,
+                                  struct_version,
+                                  api_version,
+                                  server_handle);
 }
 
 kadm5_ret_t
 kadm5_init_with_skey_ctx(krb5_context context,
-			 const char *client_name,
-			 const char *keytab,
-			 const char *service_name,
-			 kadm5_config_params *realm_params,
-			 unsigned long struct_version,
-			 unsigned long api_version,
-			 void **server_handle)
+                         const char *client_name,
+                         const char *keytab,
+                         const char *service_name,
+                         kadm5_config_params *realm_params,
+                         unsigned long struct_version,
+                         unsigned long api_version,
+                         void **server_handle)
 {
     return kadm5_s_init_with_skey_ctx(context,
-				      client_name,
-				      keytab,
-				      service_name,
-				      realm_params,
-				      struct_version,
-				      api_version,
-				      server_handle);
+                                      client_name,
+                                      keytab,
+                                      service_name,
+                                      realm_params,
+                                      struct_version,
+                                      api_version,
+                                      server_handle);
 }
 
 kadm5_ret_t
 kadm5_init_with_creds(const char *client_name,
-		      krb5_ccache ccache,
-		      const char *service_name,
-		      kadm5_config_params *realm_params,
-		      unsigned long struct_version,
-		      unsigned long api_version,
-		      void **server_handle)
+                      krb5_ccache ccache,
+                      const char *service_name,
+                      kadm5_config_params *realm_params,
+                      unsigned long struct_version,
+                      unsigned long api_version,
+                      void **server_handle)
 {
     return kadm5_s_init_with_creds(client_name,
-				   ccache,
-				   service_name,
-				   realm_params,
-				   struct_version,
-				   api_version,
-				   server_handle);
+                                   ccache,
+                                   service_name,
+                                   realm_params,
+                                   struct_version,
+                                   api_version,
+                                   server_handle);
 }
 
 kadm5_ret_t
 kadm5_init_with_creds_ctx(krb5_context context,
-			  const char *client_name,
-			  krb5_ccache ccache,
-			  const char *service_name,
-			  kadm5_config_params *realm_params,
-			  unsigned long struct_version,
-			  unsigned long api_version,
-			  void **server_handle)
+                          const char *client_name,
+                          krb5_ccache ccache,
+                          const char *service_name,
+                          kadm5_config_params *realm_params,
+                          unsigned long struct_version,
+                          unsigned long api_version,
+                          void **server_handle)
 {
     return kadm5_s_init_with_creds_ctx(context,
-				       client_name,
-				       ccache,
-				       service_name,
-				       realm_params,
-				       struct_version,
-				       api_version,
-				       server_handle);
+                                       client_name,
+                                       ccache,
+                                       service_name,
+                                       realm_params,
+                                       struct_version,
+                                       api_version,
+                                       server_handle);
 }

@@ -55,59 +55,59 @@
 struct gss_msg_order;
 
 typedef struct gsskrb5_ctx {
-  struct krb5_auth_context_data *auth_context;
-  struct krb5_auth_context_data *deleg_auth_context;
-  krb5_principal source, target;
-  OM_uint32 flags;
-  enum { LOCAL = 1, OPEN = 2,
-	 COMPAT_OLD_DES3 = 4,
-         COMPAT_OLD_DES3_SELECTED = 8,
-	 ACCEPTOR_SUBKEY = 16,
-	 RETRIED = 32,
-	 CLOSE_CCACHE = 64,
-	 IS_CFX = 128
-  } more_flags;
-  enum gss_ctx_id_t_state {
-      /* initiator states */
-      INITIATOR_START,
-      INITIATOR_RESTART,
-      INITIATOR_WAIT_FOR_MUTUAL,
-      INITIATOR_READY,
-      /* acceptor states */
-      ACCEPTOR_START,
-      ACCEPTOR_WAIT_FOR_DCESTYLE,
-      ACCEPTOR_READY
-  } state;
-  krb5_creds *kcred;
-  krb5_ccache ccache;
-  struct krb5_ticket *ticket;
-  time_t endtime;
-  HEIMDAL_MUTEX ctx_id_mutex;
-  struct gss_msg_order *order;
-  krb5_keyblock *service_keyblock;
-  krb5_data fwd_data;
-  krb5_crypto crypto;
+    struct krb5_auth_context_data *auth_context;
+    struct krb5_auth_context_data *deleg_auth_context;
+    krb5_principal source, target;
+    OM_uint32 flags;
+    enum { LOCAL = 1, OPEN = 2,
+           COMPAT_OLD_DES3 = 4,
+           COMPAT_OLD_DES3_SELECTED = 8,
+           ACCEPTOR_SUBKEY = 16,
+           RETRIED = 32,
+           CLOSE_CCACHE = 64,
+           IS_CFX = 128
+    } more_flags;
+    enum gss_ctx_id_t_state {
+        /* initiator states */
+        INITIATOR_START,
+        INITIATOR_RESTART,
+        INITIATOR_WAIT_FOR_MUTUAL,
+        INITIATOR_READY,
+        /* acceptor states */
+        ACCEPTOR_START,
+        ACCEPTOR_WAIT_FOR_DCESTYLE,
+        ACCEPTOR_READY
+    } state;
+    krb5_creds *kcred;
+    krb5_ccache ccache;
+    struct krb5_ticket *ticket;
+    time_t endtime;
+    HEIMDAL_MUTEX ctx_id_mutex;
+    struct gss_msg_order *order;
+    krb5_keyblock *service_keyblock;
+    krb5_data fwd_data;
+    krb5_crypto crypto;
 } *gsskrb5_ctx;
 
 static inline krb5_boolean
 IS_DCE_STYLE(gsskrb5_ctx ctx)
 {
-  return (ctx->flags & GSS_C_DCE_STYLE) != 0;
+    return (ctx->flags & GSS_C_DCE_STYLE) != 0;
 }
 
 typedef struct {
-  krb5_principal principal;
-  char *destination_realm;  /* Realm of acceptor service, if delegated */
-  int cred_flags;
+    krb5_principal principal;
+    char *destination_realm;  /* Realm of acceptor service, if delegated */
+    int cred_flags;
 #define GSS_CF_DESTROY_CRED_ON_RELEASE	1
 #define GSS_CF_NO_CI_FLAGS		2
-  struct krb5_keytab_data *keytab;
-  time_t endtime;
-  gss_cred_usage_t usage;
-  gss_OID_set mechanisms;
-  struct krb5_ccache_data *ccache;
-  HEIMDAL_MUTEX cred_id_mutex;
-  krb5_enctype *enctypes;
+    struct krb5_keytab_data *keytab;
+    time_t endtime;
+    gss_cred_usage_t usage;
+    gss_OID_set mechanisms;
+    struct krb5_ccache_data *ccache;
+    HEIMDAL_MUTEX cred_id_mutex;
+    krb5_enctype *enctypes;
 } *gsskrb5_cred;
 
 typedef struct Principal *gsskrb5_name;

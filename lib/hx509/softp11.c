@@ -67,28 +67,28 @@ static struct soft_token {
     char *config_file;
     hx509_certs certs;
     struct {
-	struct st_object **objs;
-	int num_objs;
+        struct st_object **objs;
+        int num_objs;
     } object;
     struct {
-	int hardware_slot;
-	int app_error_fatal;
-	int login_done;
+        int hardware_slot;
+        int app_error_fatal;
+        int login_done;
     } flags;
     int open_sessions;
     struct session_state {
-	CK_SESSION_HANDLE session_handle;
+        CK_SESSION_HANDLE session_handle;
 
-	struct {
-	    CK_ATTRIBUTE *attributes;
-	    CK_ULONG num_attributes;
-	    int next_object;
-	} find;
+        struct {
+            CK_ATTRIBUTE *attributes;
+            CK_ULONG num_attributes;
+            int next_object;
+        } find;
 
-	int sign_object;
-	CK_MECHANISM_PTR sign_mechanism;
-	int verify_object;
-	CK_MECHANISM_PTR verify_mechanism;
+        int sign_object;
+        CK_MECHANISM_PTR sign_mechanism;
+        int verify_object;
+        CK_MECHANISM_PTR verify_mechanism;
     } state[10];
 #define MAX_NUM_SESSION (sizeof(soft_token.state)/sizeof(soft_token.state[0]))
     FILE *logfile;
@@ -104,7 +104,7 @@ application_error(const char *fmt, ...)
     vprintf(fmt, ap);
     va_end(ap);
     if (soft_token.flags.app_error_fatal)
-	abort();
+        abort();
 }
 
 static void
@@ -112,7 +112,7 @@ st_logf(const char *fmt, ...)
 {
     va_list ap;
     if (soft_token.logfile == NULL)
-	return;
+        return;
     va_start(ap, fmt);
     vfprintf(soft_token.logfile, fmt, ap);
     va_end(ap);
@@ -123,9 +123,9 @@ static CK_RV
 init_context(void)
 {
     if (context == NULL) {
-	int ret = hx509_context_init(&context);
-	if (ret)
-	    return CKR_GENERAL_ERROR;
+        int ret = hx509_context_init(&context);
+        if (ret)
+            return CKR_GENERAL_ERROR;
     }
     return CKR_OK;
 }
@@ -141,9 +141,9 @@ snprintf_fill(char *str, size_t size, char fillchar, const char *fmt, ...)
     len = vsnprintf(str, size, fmt, ap);
     va_end(ap);
     if (len < 0 || (size_t)len > size)
-	return;
+        return;
     while ((size_t)len < size)
-	str[len++] = fillchar;
+        str[len++] = fillchar;
 }
 
 #ifndef TEST_APP
@@ -161,45 +161,45 @@ snprintf_fill(char *str, size_t size, char fillchar, const char *fmt, ...)
 
 static CK_RV
 verify_session_handle(CK_SESSION_HANDLE hSession,
-		      struct session_state **state)
+                      struct session_state **state)
 {
     size_t i;
 
     for (i = 0; i < MAX_NUM_SESSION; i++){
-	if (soft_token.state[i].session_handle == hSession)
-	    break;
+        if (soft_token.state[i].session_handle == hSession)
+            break;
     }
     if (i == MAX_NUM_SESSION) {
-	application_error("use of invalid handle: 0x%08lx\n",
-			  (unsigned long)hSession);
-	return CKR_SESSION_HANDLE_INVALID;
+        application_error("use of invalid handle: 0x%08lx\n",
+                          (unsigned long)hSession);
+        return CKR_SESSION_HANDLE_INVALID;
     }
     if (state)
-	*state = &soft_token.state[i];
+        *state = &soft_token.state[i];
     return CKR_OK;
 }
 
 static CK_RV
 object_handle_to_object(CK_OBJECT_HANDLE handle,
-			struct st_object **object)
+                        struct st_object **object)
 {
     int i = HANDLE_OBJECT_ID(handle);
 
     *object = NULL;
     if (i >= soft_token.object.num_objs)
-	return CKR_ARGUMENTS_BAD;
+        return CKR_ARGUMENTS_BAD;
     if (soft_token.object.objs[i] == NULL)
-	return CKR_ARGUMENTS_BAD;
+        return CKR_ARGUMENTS_BAD;
     if (soft_token.object.objs[i]->object_handle != handle)
-	return CKR_ARGUMENTS_BAD;
+        return CKR_ARGUMENTS_BAD;
     *object = soft_token.object.objs[i];
     return CKR_OK;
 }
 
 static int
 attributes_match(const struct st_object *obj,
-		 const CK_ATTRIBUTE *attributes,
-		 CK_ULONG num_attributes)
+                 const CK_ATTRIBUTE *attributes,
+                 CK_ULONG num_attributes)
 {
     CK_ULONG i;
     int j;
@@ -207,20 +207,20 @@ attributes_match(const struct st_object *obj,
     st_logf("attributes_match: %ld\n", (unsigned long)OBJECT_ID(obj));
 
     for (i = 0; i < num_attributes; i++) {
-	int match = 0;
-	for (j = 0; j < obj->num_attributes; j++) {
-	    if (attributes[i].type == obj->attrs[j].attribute.type &&
-		attributes[i].ulValueLen == obj->attrs[j].attribute.ulValueLen &&
-		memcmp(attributes[i].pValue, obj->attrs[j].attribute.pValue,
-		       attributes[i].ulValueLen) == 0) {
-		match = 1;
-		break;
-	    }
-	}
-	if (match == 0) {
-	    st_logf("type %d attribute have no match\n", attributes[i].type);
-	    return 0;
-	}
+        int match = 0;
+        for (j = 0; j < obj->num_attributes; j++) {
+            if (attributes[i].type == obj->attrs[j].attribute.type &&
+                attributes[i].ulValueLen == obj->attrs[j].attribute.ulValueLen &&
+                memcmp(attributes[i].pValue, obj->attrs[j].attribute.pValue,
+                       attributes[i].ulValueLen) == 0) {
+                match = 1;
+                break;
+            }
+        }
+        if (match == 0) {
+            st_logf("type %d attribute have no match\n", attributes[i].type);
+            return 0;
+        }
     }
     st_logf("attribute matches\n");
     return 1;
@@ -228,75 +228,75 @@ attributes_match(const struct st_object *obj,
 
 static void
 print_attributes(const CK_ATTRIBUTE *attributes,
-		 CK_ULONG num_attributes)
+                 CK_ULONG num_attributes)
 {
     CK_ULONG i;
 
     st_logf("find objects: attrs: %lu\n", (unsigned long)num_attributes);
 
     for (i = 0; i < num_attributes; i++) {
-	st_logf("  type: ");
-	switch (attributes[i].type) {
-	case CKA_TOKEN: {
-	    CK_BBOOL *ck_true;
-	    if (attributes[i].ulValueLen != sizeof(CK_BBOOL)) {
-		application_error("token attribute wrong length\n");
-		break;
-	    }
-	    ck_true = attributes[i].pValue;
-	    st_logf("token: %s", *ck_true ? "TRUE" : "FALSE");
-	    break;
-	}
-	case CKA_CLASS: {
-	    CK_OBJECT_CLASS *class;
-	    if (attributes[i].ulValueLen != sizeof(CK_ULONG)) {
-		application_error("class attribute wrong length\n");
-		break;
-	    }
-	    class = attributes[i].pValue;
-	    st_logf("class ");
-	    switch (*class) {
-	    case CKO_CERTIFICATE:
-		st_logf("certificate");
-		break;
-	    case CKO_PUBLIC_KEY:
-		st_logf("public key");
-		break;
-	    case CKO_PRIVATE_KEY:
-		st_logf("private key");
-		break;
-	    case CKO_SECRET_KEY:
-		st_logf("secret key");
-		break;
-	    case CKO_DOMAIN_PARAMETERS:
-		st_logf("domain parameters");
-		break;
-	    default:
-		st_logf("[class %lx]", (long unsigned)*class);
-		break;
-	    }
-	    break;
-	}
-	case CKA_PRIVATE:
-	    st_logf("private");
-	    break;
-	case CKA_LABEL:
-	    st_logf("label");
-	    break;
-	case CKA_APPLICATION:
-	    st_logf("application");
-	    break;
-	case CKA_VALUE:
-	    st_logf("value");
-	    break;
-	case CKA_ID:
-	    st_logf("id");
-	    break;
-	default:
-	    st_logf("[unknown 0x%08lx]", (unsigned long)attributes[i].type);
-	    break;
-	}
-	st_logf("\n");
+        st_logf("  type: ");
+        switch (attributes[i].type) {
+            case CKA_TOKEN: {
+                CK_BBOOL *ck_true;
+                if (attributes[i].ulValueLen != sizeof(CK_BBOOL)) {
+                    application_error("token attribute wrong length\n");
+                    break;
+                }
+                ck_true = attributes[i].pValue;
+                st_logf("token: %s", *ck_true ? "TRUE" : "FALSE");
+                break;
+            }
+            case CKA_CLASS: {
+                CK_OBJECT_CLASS *class;
+                if (attributes[i].ulValueLen != sizeof(CK_ULONG)) {
+                    application_error("class attribute wrong length\n");
+                    break;
+                }
+                class = attributes[i].pValue;
+                st_logf("class ");
+                switch (*class) {
+                    case CKO_CERTIFICATE:
+                        st_logf("certificate");
+                        break;
+                    case CKO_PUBLIC_KEY:
+                        st_logf("public key");
+                        break;
+                    case CKO_PRIVATE_KEY:
+                        st_logf("private key");
+                        break;
+                    case CKO_SECRET_KEY:
+                        st_logf("secret key");
+                        break;
+                    case CKO_DOMAIN_PARAMETERS:
+                        st_logf("domain parameters");
+                        break;
+                    default:
+                        st_logf("[class %lx]", (long unsigned)*class);
+                        break;
+                }
+                break;
+            }
+            case CKA_PRIVATE:
+                st_logf("private");
+                break;
+            case CKA_LABEL:
+                st_logf("label");
+                break;
+            case CKA_APPLICATION:
+                st_logf("application");
+                break;
+            case CKA_VALUE:
+                st_logf("value");
+                break;
+            case CKA_ID:
+                st_logf("id");
+                break;
+            default:
+                st_logf("[unknown 0x%08lx]", (unsigned long)attributes[i].type);
+                break;
+        }
+        st_logf("\n");
     }
 }
 
@@ -308,36 +308,36 @@ add_st_object(void)
 
     o = calloc(1, sizeof(*o));
     if (o == NULL)
-	return NULL;
+        return NULL;
 
     for (i = 0; i < soft_token.object.num_objs; i++) {
-	if (soft_token.object.objs[i] == NULL) {
-	    soft_token.object.objs[i] = o;
-	    break;
-	}
+        if (soft_token.object.objs[i] == NULL) {
+            soft_token.object.objs[i] = o;
+            break;
+        }
     }
     if (i == soft_token.object.num_objs) {
-	objs = realloc(soft_token.object.objs,
-		       (soft_token.object.num_objs + 1) * sizeof(soft_token.object.objs[0]));
-	if (objs == NULL) {
-	    free(o);
-	    return NULL;
-	}
-	soft_token.object.objs = objs;
-	soft_token.object.objs[soft_token.object.num_objs++] = o;
+        objs = realloc(soft_token.object.objs,
+                       (soft_token.object.num_objs + 1) * sizeof(soft_token.object.objs[0]));
+        if (objs == NULL) {
+            free(o);
+            return NULL;
+        }
+        soft_token.object.objs = objs;
+        soft_token.object.objs[soft_token.object.num_objs++] = o;
     }
     soft_token.object.objs[i]->object_handle =
-	(random() & (~OBJECT_ID_MASK)) | i;
+        (random() & (~OBJECT_ID_MASK)) | i;
 
     return o;
 }
 
 static CK_RV
 add_object_attribute(struct st_object *o,
-		     int secret,
-		     CK_ATTRIBUTE_TYPE type,
-		     CK_VOID_PTR pValue,
-		     CK_ULONG ulValueLen)
+                     int secret,
+                     CK_ATTRIBUTE_TYPE type,
+                     CK_VOID_PTR pValue,
+                     CK_ULONG ulValueLen)
 {
     struct st_attr *a;
     int i;
@@ -348,13 +348,13 @@ add_object_attribute(struct st_object *o,
     i = o->num_attributes;
     a = realloc(o->attrs, (i + 1) * sizeof(o->attrs[0]));
     if (a == NULL)
-	return CKR_DEVICE_MEMORY;
+        return CKR_DEVICE_MEMORY;
     o->attrs = a;
     o->attrs[i].secret = secret;
     o->attrs[i].attribute.type = type;
     o->attrs[i].attribute.pValue = malloc(ulValueLen);
     if (o->attrs[i].attribute.pValue == NULL && ulValueLen != 0)
-	return CKR_DEVICE_MEMORY;
+        return CKR_DEVICE_MEMORY;
     if (ulValueLen)
         memcpy(o->attrs[i].attribute.pValue, pValue, ulValueLen);
     o->attrs[i].attribute.ulValueLen = ulValueLen;
@@ -365,7 +365,7 @@ add_object_attribute(struct st_object *o,
 
 static CK_RV
 add_pubkey_info(hx509_context hxctx, struct st_object *o,
-		CK_KEY_TYPE key_type, hx509_cert cert)
+                CK_KEY_TYPE key_type, hx509_cert cert)
 {
     BIGNUM *num;
     CK_BYTE *modulus = NULL;
@@ -375,15 +375,15 @@ add_pubkey_info(hx509_context hxctx, struct st_object *o,
     size_t exponent_len = 0;
 
     if (key_type != CKK_RSA)
-	return CKR_OK;
+        return CKR_OK;
     if (_hx509_cert_private_key(cert) == NULL)
-	return CKR_OK;
+        return CKR_OK;
 
     num = _hx509_private_key_get_internal(context,
-					  _hx509_cert_private_key(cert),
-					  "rsa-modulus");
+                                          _hx509_cert_private_key(cert),
+                                          "rsa-modulus");
     if (num == NULL)
-	return CKR_GENERAL_ERROR;
+        return CKR_GENERAL_ERROR;
     modulus_bits = BN_num_bits(num);
 
     modulus_len = BN_num_bytes(num);
@@ -393,15 +393,15 @@ add_pubkey_info(hx509_context hxctx, struct st_object *o,
 
     add_object_attribute(o, 0, CKA_MODULUS, modulus, modulus_len);
     add_object_attribute(o, 0, CKA_MODULUS_BITS,
-			 &modulus_bits, sizeof(modulus_bits));
+                         &modulus_bits, sizeof(modulus_bits));
 
     free(modulus);
 
     num = _hx509_private_key_get_internal(context,
-					  _hx509_cert_private_key(cert),
-					  "rsa-exponent");
+                                          _hx509_cert_private_key(cert),
+                                          "rsa-exponent");
     if (num == NULL)
-	return CKR_GENERAL_ERROR;
+        return CKR_GENERAL_ERROR;
 
     exponent_len = BN_num_bytes(num);
     exponent = malloc(exponent_len);
@@ -409,7 +409,7 @@ add_pubkey_info(hx509_context hxctx, struct st_object *o,
     BN_free(num);
 
     add_object_attribute(o, 0, CKA_PUBLIC_EXPONENT,
-			 exponent, exponent_len);
+                         exponent, exponent_len);
 
     free(exponent);
 
@@ -446,48 +446,48 @@ add_cert(hx509_context hxctx, void *ctx, hx509_cert cert)
 
     hret = hx509_cert_binary(hxctx, cert, &cert_data);
     if (hret)
-	goto out;
+        goto out;
 
     {
-	    hx509_name name;
+            hx509_name name;
 
-	    hret = hx509_cert_get_issuer(cert, &name);
-	    if (hret)
-		goto out;
-	    hret = hx509_name_binary(name, &issuer_data);
-	    hx509_name_free(&name);
-	    if (hret)
-		goto out;
+            hret = hx509_cert_get_issuer(cert, &name);
+            if (hret)
+                goto out;
+            hret = hx509_name_binary(name, &issuer_data);
+            hx509_name_free(&name);
+            if (hret)
+                goto out;
 
-	    hret = hx509_cert_get_subject(cert, &name);
-	    if (hret)
-		goto out;
-	    hret = hx509_name_binary(name, &subject_data);
-	    hx509_name_free(&name);
-	    if (hret)
-		goto out;
+            hret = hx509_cert_get_subject(cert, &name);
+            if (hret)
+                goto out;
+            hret = hx509_name_binary(name, &subject_data);
+            hx509_name_free(&name);
+            if (hret)
+                goto out;
     }
 
     {
-	AlgorithmIdentifier alg;
+        AlgorithmIdentifier alg;
 
-	hret = hx509_cert_get_SPKI_AlgorithmIdentifier(context, cert, &alg);
-	if (hret) {
-	    ret = CKR_DEVICE_MEMORY;
-	    goto out;
-	}
+        hret = hx509_cert_get_SPKI_AlgorithmIdentifier(context, cert, &alg);
+        if (hret) {
+            ret = CKR_DEVICE_MEMORY;
+            goto out;
+        }
 
-	key_type = CKK_RSA; /* XXX */
+        key_type = CKK_RSA; /* XXX */
 
-	free_AlgorithmIdentifier(&alg);
+        free_AlgorithmIdentifier(&alg);
     }
 
 
     type = CKO_CERTIFICATE;
     o = add_st_object();
     if (o == NULL) {
-	ret = CKR_DEVICE_MEMORY;
-	goto out;
+        ret = CKR_DEVICE_MEMORY;
+        goto out;
     }
 
     o->cert = hx509_cert_ref(cert);
@@ -512,8 +512,8 @@ add_cert(hx509_context hxctx, void *ctx, hx509_cert cert)
     type = CKO_PUBLIC_KEY;
     o = add_st_object();
     if (o == NULL) {
-	ret = CKR_DEVICE_MEMORY;
-	goto out;
+        ret = CKR_DEVICE_MEMORY;
+        goto out;
     }
     o->cert = hx509_cert_ref(cert);
 
@@ -544,55 +544,55 @@ add_cert(hx509_context hxctx, void *ctx, hx509_cert cert)
     st_logf("add key ok: %lx\n", (unsigned long)OBJECT_ID(o));
 
     if (hx509_cert_have_private_key(cert)) {
-	CK_FLAGS flags;
+        CK_FLAGS flags;
 
-	type = CKO_PRIVATE_KEY;
+        type = CKO_PRIVATE_KEY;
 
         /* Note to static analyzers: `o' is still referred to via globals */
-	o = add_st_object();
-	if (o == NULL) {
-	    ret = CKR_DEVICE_MEMORY;
-	    goto out;
-	}
-	o->cert = hx509_cert_ref(cert);
+        o = add_st_object();
+        if (o == NULL) {
+            ret = CKR_DEVICE_MEMORY;
+            goto out;
+        }
+        o->cert = hx509_cert_ref(cert);
 
-	add_object_attribute(o, 0, CKA_CLASS, &type, sizeof(type));
-	add_object_attribute(o, 0, CKA_TOKEN, &bool_true, sizeof(bool_true));
-	add_object_attribute(o, 0, CKA_PRIVATE, &bool_true, sizeof(bool_false));
-	add_object_attribute(o, 0, CKA_MODIFIABLE, &bool_false, sizeof(bool_false));
-	add_object_attribute(o, 0, CKA_LABEL, foo->label, strlen(foo->label));
+        add_object_attribute(o, 0, CKA_CLASS, &type, sizeof(type));
+        add_object_attribute(o, 0, CKA_TOKEN, &bool_true, sizeof(bool_true));
+        add_object_attribute(o, 0, CKA_PRIVATE, &bool_true, sizeof(bool_false));
+        add_object_attribute(o, 0, CKA_MODIFIABLE, &bool_false, sizeof(bool_false));
+        add_object_attribute(o, 0, CKA_LABEL, foo->label, strlen(foo->label));
 
-	add_object_attribute(o, 0, CKA_KEY_TYPE, &key_type, sizeof(key_type));
-	add_object_attribute(o, 0, CKA_ID, foo->id, strlen(foo->id));
-	add_object_attribute(o, 0, CKA_START_DATE, empty, 1); /* XXX */
-	add_object_attribute(o, 0, CKA_END_DATE, empty, 1); /* XXX */
-	add_object_attribute(o, 0, CKA_DERIVE, &bool_false, sizeof(bool_false));
-	add_object_attribute(o, 0, CKA_LOCAL, &bool_false, sizeof(bool_false));
-	mech_type = CKM_RSA_X_509;
-	add_object_attribute(o, 0, CKA_KEY_GEN_MECHANISM, &mech_type, sizeof(mech_type));
+        add_object_attribute(o, 0, CKA_KEY_TYPE, &key_type, sizeof(key_type));
+        add_object_attribute(o, 0, CKA_ID, foo->id, strlen(foo->id));
+        add_object_attribute(o, 0, CKA_START_DATE, empty, 1); /* XXX */
+        add_object_attribute(o, 0, CKA_END_DATE, empty, 1); /* XXX */
+        add_object_attribute(o, 0, CKA_DERIVE, &bool_false, sizeof(bool_false));
+        add_object_attribute(o, 0, CKA_LOCAL, &bool_false, sizeof(bool_false));
+        mech_type = CKM_RSA_X_509;
+        add_object_attribute(o, 0, CKA_KEY_GEN_MECHANISM, &mech_type, sizeof(mech_type));
 
-	add_object_attribute(o, 0, CKA_SUBJECT, subject_data.data, subject_data.length);
-	add_object_attribute(o, 0, CKA_SENSITIVE, &bool_true, sizeof(bool_true));
-	add_object_attribute(o, 0, CKA_SECONDARY_AUTH, &bool_false, sizeof(bool_true));
-	flags = 0;
-	add_object_attribute(o, 0, CKA_AUTH_PIN_FLAGS, &flags, sizeof(flags));
+        add_object_attribute(o, 0, CKA_SUBJECT, subject_data.data, subject_data.length);
+        add_object_attribute(o, 0, CKA_SENSITIVE, &bool_true, sizeof(bool_true));
+        add_object_attribute(o, 0, CKA_SECONDARY_AUTH, &bool_false, sizeof(bool_true));
+        flags = 0;
+        add_object_attribute(o, 0, CKA_AUTH_PIN_FLAGS, &flags, sizeof(flags));
 
-	add_object_attribute(o, 0, CKA_DECRYPT, &bool_true, sizeof(bool_true));
-	add_object_attribute(o, 0, CKA_SIGN, &bool_true, sizeof(bool_true));
-	add_object_attribute(o, 0, CKA_SIGN_RECOVER, &bool_false, sizeof(bool_false));
-	add_object_attribute(o, 0, CKA_UNWRAP, &bool_true, sizeof(bool_true));
-	add_object_attribute(o, 0, CKA_EXTRACTABLE, &bool_true, sizeof(bool_true));
-	add_object_attribute(o, 0, CKA_NEVER_EXTRACTABLE, &bool_false, sizeof(bool_false));
+        add_object_attribute(o, 0, CKA_DECRYPT, &bool_true, sizeof(bool_true));
+        add_object_attribute(o, 0, CKA_SIGN, &bool_true, sizeof(bool_true));
+        add_object_attribute(o, 0, CKA_SIGN_RECOVER, &bool_false, sizeof(bool_false));
+        add_object_attribute(o, 0, CKA_UNWRAP, &bool_true, sizeof(bool_true));
+        add_object_attribute(o, 0, CKA_EXTRACTABLE, &bool_true, sizeof(bool_true));
+        add_object_attribute(o, 0, CKA_NEVER_EXTRACTABLE, &bool_false, sizeof(bool_false));
 
-	add_pubkey_info(hxctx, o, key_type, cert);
+        add_pubkey_info(hxctx, o, key_type, cert);
     }
 
     ret = CKR_OK;
- out:
+out:
     if (ret != CKR_OK) {
-	st_logf("something went wrong when adding cert!\n");
+        st_logf("something went wrong when adding cert!\n");
 
-	/* XXX wack o */;
+        /* XXX wack o */;
     }
     hx509_xfree(cert_data.data);
     hx509_xfree(serial_data.data);
@@ -605,9 +605,9 @@ add_cert(hx509_context hxctx, void *ctx, hx509_cert cert)
 
 static CK_RV
 add_certificate(const char *cert_file,
-		const char *pin,
-		char *id,
-		char *label)
+                const char *pin,
+                char *id,
+                char *label)
 {
     hx509_certs certs;
     hx509_lock lock = NULL;
@@ -618,34 +618,34 @@ add_certificate(const char *cert_file,
     foo.label = label;
 
     if (pin == NULL)
-	flags |= HX509_CERTS_UNPROTECT_ALL;
+        flags |= HX509_CERTS_UNPROTECT_ALL;
 
     if (pin) {
-	char *str;
-	ret = asprintf(&str, "PASS:%s", pin);
-	if (ret == -1 || !str) {
-	    st_logf("failed to allocate memory\n");
-	    return CKR_GENERAL_ERROR;
-	}
+        char *str;
+        ret = asprintf(&str, "PASS:%s", pin);
+        if (ret == -1 || !str) {
+            st_logf("failed to allocate memory\n");
+            return CKR_GENERAL_ERROR;
+        }
 
-	hx509_lock_init(context, &lock);
-	hx509_lock_command_string(lock, str);
+        hx509_lock_init(context, &lock);
+        hx509_lock_command_string(lock, str);
 
-	memset(str, 0, strlen(str));
-	free(str);
+        memset(str, 0, strlen(str));
+        free(str);
     }
 
     ret = hx509_certs_init(context, cert_file, flags, lock, &certs);
     if (ret) {
-	st_logf("failed to open file %s\n", cert_file);
-	return CKR_GENERAL_ERROR;
+        st_logf("failed to open file %s\n", cert_file);
+        return CKR_GENERAL_ERROR;
     }
 
     ret = hx509_certs_iter_f(context, certs, add_cert, &foo);
     hx509_certs_free(&certs);
     if (ret) {
-	st_logf("failed adding certs from file %s\n", cert_file);
-	return CKR_GENERAL_ERROR;
+        st_logf("failed adding certs from file %s\n", cert_file);
+        return CKR_GENERAL_ERROR;
     }
 
     return CKR_OK;
@@ -655,16 +655,16 @@ static void
 find_object_final(struct session_state *state)
 {
     if (state->find.attributes) {
-	CK_ULONG i;
+        CK_ULONG i;
 
-	for (i = 0; i < state->find.num_attributes; i++) {
-	    if (state->find.attributes[i].pValue)
-		free(state->find.attributes[i].pValue);
-	}
-	free(state->find.attributes);
-	state->find.attributes = NULL;
-	state->find.num_attributes = 0;
-	state->find.next_object = -1;
+        for (i = 0; i < state->find.num_attributes; i++) {
+            if (state->find.attributes[i].pValue)
+                free(state->find.attributes[i].pValue);
+        }
+        free(state->find.attributes);
+        state->find.attributes = NULL;
+        state->find.num_attributes = 0;
+        state->find.next_object = -1;
     }
 }
 
@@ -673,11 +673,11 @@ reset_crypto_state(struct session_state *state)
 {
     state->sign_object = -1;
     if (state->sign_mechanism)
-	free(state->sign_mechanism);
+        free(state->sign_mechanism);
     state->sign_mechanism = NULL_PTR;
     state->verify_object = -1;
     if (state->verify_mechanism)
-	free(state->verify_mechanism);
+        free(state->verify_mechanism);
     state->verify_mechanism = NULL_PTR;
 }
 
@@ -685,8 +685,8 @@ static void
 close_session(struct session_state *state)
 {
     if (state->find.attributes) {
-	application_error("application didn't do C_FindObjectsFinal\n");
-	find_object_final(state);
+        application_error("application didn't do C_FindObjectsFinal\n");
+        find_object_final(state);
     }
 
     state->session_handle = CK_INVALID_HANDLE;
@@ -716,95 +716,95 @@ read_conf_file(const char *fn, CK_USER_TYPE userType, const char *pin)
 
     f = fopen(fn, "r");
     if (f == NULL) {
-	st_logf("can't open configuration file %s\n", fn);
-	return CKR_GENERAL_ERROR;
+        st_logf("can't open configuration file %s\n", fn);
+        return CKR_GENERAL_ERROR;
     }
     rk_cloexec_file(f);
 
     while(fgets(buf, sizeof(buf), f) != NULL) {
-	buf[strcspn(buf, "\n")] = '\0';
+        buf[strcspn(buf, "\n")] = '\0';
 
-	st_logf("line: %s\n", buf);
+        st_logf("line: %s\n", buf);
 
-	p = buf;
-	while (isspace((unsigned char)*p))
-	    p++;
-	if (*p == '#')
-	    continue;
-	while (isspace((unsigned char)*p))
-	    p++;
+        p = buf;
+        while (isspace((unsigned char)*p))
+            p++;
+        if (*p == '#')
+            continue;
+        while (isspace((unsigned char)*p))
+            p++;
 
-	s = NULL;
-	type = strtok_r(p, "\t", &s);
-	if (type == NULL)
-	    continue;
+        s = NULL;
+        type = strtok_r(p, "\t", &s);
+        if (type == NULL)
+            continue;
 
-	if (strcasecmp("certificate", type) == 0) {
-	    char *cert, *id, *label;
+        if (strcasecmp("certificate", type) == 0) {
+            char *cert, *id, *label;
 
-	    id = strtok_r(NULL, "\t", &s);
-	    if (id == NULL) {
-		st_logf("no id\n");
-		continue;
-	    }
-	    st_logf("id: %s\n", id);
-	    label = strtok_r(NULL, "\t", &s);
-	    if (label == NULL) {
-		st_logf("no label\n");
-		continue;
-	    }
-	    cert = strtok_r(NULL, "\t", &s);
-	    if (cert == NULL) {
-		st_logf("no certfiicate store\n");
-		continue;
-	    }
+            id = strtok_r(NULL, "\t", &s);
+            if (id == NULL) {
+                st_logf("no id\n");
+                continue;
+            }
+            st_logf("id: %s\n", id);
+            label = strtok_r(NULL, "\t", &s);
+            if (label == NULL) {
+                st_logf("no label\n");
+                continue;
+            }
+            cert = strtok_r(NULL, "\t", &s);
+            if (cert == NULL) {
+                st_logf("no certfiicate store\n");
+                continue;
+            }
 
-	    st_logf("adding: %s: %s in file %s\n", id, label, cert);
+            st_logf("adding: %s: %s in file %s\n", id, label, cert);
 
-	    ret = add_certificate(cert, pin, id, label);
-	    if (ret)
-		failed = ret;
-	} else if (strcasecmp("debug", type) == 0) {
-	    char *name;
+            ret = add_certificate(cert, pin, id, label);
+            if (ret)
+                failed = ret;
+        } else if (strcasecmp("debug", type) == 0) {
+            char *name;
 
-	    name = strtok_r(NULL, "\t", &s);
-	    if (name == NULL) {
-		st_logf("no filename\n");
-		continue;
-	    }
+            name = strtok_r(NULL, "\t", &s);
+            if (name == NULL) {
+                st_logf("no filename\n");
+                continue;
+            }
 
-	    if (soft_token.logfile)
-		fclose(soft_token.logfile);
+            if (soft_token.logfile)
+                fclose(soft_token.logfile);
 
-	    if (strcasecmp(name, "stdout") == 0)
-		soft_token.logfile = stdout;
-	    else {
-		soft_token.logfile = fopen(name, "a");
-		if (soft_token.logfile)
-		    rk_cloexec_file(soft_token.logfile);
-	    }
-	    if (soft_token.logfile == NULL)
-		st_logf("failed to open file: %s\n", name);
+            if (strcasecmp(name, "stdout") == 0)
+                soft_token.logfile = stdout;
+            else {
+                soft_token.logfile = fopen(name, "a");
+                if (soft_token.logfile)
+                    rk_cloexec_file(soft_token.logfile);
+            }
+            if (soft_token.logfile == NULL)
+                st_logf("failed to open file: %s\n", name);
 
-	} else if (strcasecmp("app-fatal", type) == 0) {
-	    char *name;
+        } else if (strcasecmp("app-fatal", type) == 0) {
+            char *name;
 
-	    name = strtok_r(NULL, "\t", &s);
-	    if (name == NULL) {
-		st_logf("argument to app-fatal\n");
-		continue;
-	    }
+            name = strtok_r(NULL, "\t", &s);
+            if (name == NULL) {
+                st_logf("argument to app-fatal\n");
+                continue;
+            }
 
-	    if (strcmp(name, "true") == 0 || strcmp(name, "on") == 0)
-		soft_token.flags.app_error_fatal = 1;
-	    else if (strcmp(name, "false") == 0 || strcmp(name, "off") == 0)
-		soft_token.flags.app_error_fatal = 0;
-	    else
-		st_logf("unknown app-fatal: %s\n", name);
+            if (strcmp(name, "true") == 0 || strcmp(name, "on") == 0)
+                soft_token.flags.app_error_fatal = 1;
+            else if (strcmp(name, "false") == 0 || strcmp(name, "off") == 0)
+                soft_token.flags.app_error_fatal = 0;
+            else
+                st_logf("unknown app-fatal: %s\n", name);
 
-	} else {
-	    st_logf("unknown type: %s\n", type);
-	}
+        } else {
+            st_logf("unknown type: %s\n", type);
+        }
     }
 
     fclose(f);
@@ -834,8 +834,8 @@ get_config_file_for_user(void)
 
         if (home) {
             ret = asprintf(&fn, "%s/.soft-token.rc", home);
-	    if (ret == -1)
-		fn = NULL;
+            if (ret == -1)
+                fn = NULL;
         } else {
 #ifndef WIN32
             fn = strdup("/etc/soft-token.rc");
@@ -863,11 +863,11 @@ C_Initialize(CK_VOID_PTR a)
     srandom(getpid() ^ (int) time(NULL));
 
     for (i = 0; i < MAX_NUM_SESSION; i++) {
-	soft_token.state[i].session_handle = CK_INVALID_HANDLE;
-	soft_token.state[i].find.attributes = NULL;
-	soft_token.state[i].find.num_attributes = 0;
-	soft_token.state[i].find.next_object = -1;
-	reset_crypto_state(&soft_token.state[i]);
+        soft_token.state[i].session_handle = CK_INVALID_HANDLE;
+        soft_token.state[i].find.attributes = NULL;
+        soft_token.state[i].find.num_attributes = 0;
+        soft_token.state[i].find.next_object = -1;
+        reset_crypto_state(&soft_token.state[i]);
     }
 
     soft_token.flags.hardware_slot = 1;
@@ -886,11 +886,11 @@ C_Initialize(CK_VOID_PTR a)
 #endif
 
     if (a != NULL_PTR) {
-	st_logf("\tCreateMutex:\t%p\n", args->CreateMutex);
-	st_logf("\tDestroyMutext\t%p\n", args->DestroyMutex);
-	st_logf("\tLockMutext\t%p\n", args->LockMutex);
-	st_logf("\tUnlockMutext\t%p\n", args->UnlockMutex);
-	st_logf("\tFlags\t%04x\n", (unsigned int)args->flags);
+        st_logf("\tCreateMutex:\t%p\n", args->CreateMutex);
+        st_logf("\tDestroyMutext\t%p\n", args->DestroyMutex);
+        st_logf("\tLockMutext\t%p\n", args->LockMutex);
+        st_logf("\tUnlockMutext\t%p\n", args->UnlockMutex);
+        st_logf("\tFlags\t%04x\n", (unsigned int)args->flags);
     }
 
     soft_token.config_file = get_config_file_for_user();
@@ -901,7 +901,7 @@ C_Initialize(CK_VOID_PTR a)
      */
     ret = read_conf_file(soft_token.config_file, CKU_USER, NULL);
     if (ret == CKR_OK)
-	soft_token.flags.login_done = 1;
+        soft_token.flags.login_done = 1;
 
     return CKR_OK;
 }
@@ -916,11 +916,11 @@ C_Finalize(CK_VOID_PTR args)
     st_logf("Finalize\n");
 
     for (i = 0; i < MAX_NUM_SESSION; i++) {
-	if (soft_token.state[i].session_handle != CK_INVALID_HANDLE) {
-	    application_error("application finalized without "
-			      "closing session\n");
-	    close_session(&soft_token.state[i]);
-	}
+        if (soft_token.state[i].session_handle != CK_INVALID_HANDLE) {
+            application_error("application finalized without "
+                              "closing session\n");
+            close_session(&soft_token.state[i]);
+        }
     }
 
     return CKR_OK;
@@ -937,12 +937,12 @@ C_GetInfo(CK_INFO_PTR args)
     args->cryptokiVersion.major = 2;
     args->cryptokiVersion.minor = 10;
     snprintf_fill((char *)args->manufacturerID,
-		  sizeof(args->manufacturerID),
-		  ' ',
-		  "Heimdal hx509 SoftToken");
+                  sizeof(args->manufacturerID),
+                  ' ',
+                  "Heimdal hx509 SoftToken");
     snprintf_fill((char *)args->libraryDescription,
-		  sizeof(args->libraryDescription), ' ',
-		  "Heimdal hx509 SoftToken");
+                  sizeof(args->libraryDescription), ' ',
+                  "Heimdal hx509 SoftToken");
     args->libraryVersion.major = 2;
     args->libraryVersion.minor = 0;
 
@@ -962,21 +962,21 @@ C_GetFunctionList(CK_FUNCTION_LIST_PTR_PTR ppFunctionList)
 
 CK_RV
 C_GetSlotList(CK_BBOOL tokenPresent,
-	      CK_SLOT_ID_PTR pSlotList,
-	      CK_ULONG_PTR   pulCount)
+              CK_SLOT_ID_PTR pSlotList,
+              CK_ULONG_PTR   pulCount)
 {
     INIT_CONTEXT();
     st_logf("GetSlotList: %s\n",
-	    tokenPresent ? "tokenPresent" : "token not Present");
+            tokenPresent ? "tokenPresent" : "token not Present");
     if (pSlotList)
-	pSlotList[0] = 1;
+        pSlotList[0] = 1;
     *pulCount = 1;
     return CKR_OK;
 }
 
 CK_RV
 C_GetSlotInfo(CK_SLOT_ID slotID,
-	      CK_SLOT_INFO_PTR pInfo)
+              CK_SLOT_INFO_PTR pInfo)
 {
     INIT_CONTEXT();
     st_logf("GetSlotInfo: slot: %d : %s\n", (int)slotID, has_session());
@@ -984,19 +984,19 @@ C_GetSlotInfo(CK_SLOT_ID slotID,
     memset(pInfo, 18, sizeof(*pInfo));
 
     if (slotID != 1)
-	return CKR_ARGUMENTS_BAD;
+        return CKR_ARGUMENTS_BAD;
 
     snprintf_fill((char *)pInfo->slotDescription,
-		  sizeof(pInfo->slotDescription),
-		  ' ',
-		  "Heimdal hx509 SoftToken (slot)");
+                  sizeof(pInfo->slotDescription),
+                  ' ',
+                  "Heimdal hx509 SoftToken (slot)");
     snprintf_fill((char *)pInfo->manufacturerID,
-		  sizeof(pInfo->manufacturerID),
-		  ' ',
-		  "Heimdal hx509 SoftToken (slot)");
+                  sizeof(pInfo->manufacturerID),
+                  ' ',
+                  "Heimdal hx509 SoftToken (slot)");
     pInfo->flags = CKF_TOKEN_PRESENT;
     if (soft_token.flags.hardware_slot)
-	pInfo->flags |= CKF_HW_SLOT;
+        pInfo->flags |= CKF_HW_SLOT;
     pInfo->hardwareVersion.major = 1;
     pInfo->hardwareVersion.minor = 0;
     pInfo->firmwareVersion.major = 1;
@@ -1007,7 +1007,7 @@ C_GetSlotInfo(CK_SLOT_ID slotID,
 
 CK_RV
 C_GetTokenInfo(CK_SLOT_ID slotID,
-	       CK_TOKEN_INFO_PTR pInfo)
+               CK_TOKEN_INFO_PTR pInfo)
 {
     INIT_CONTEXT();
     st_logf("GetTokenInfo: %s\n", has_session());
@@ -1015,27 +1015,27 @@ C_GetTokenInfo(CK_SLOT_ID slotID,
     memset(pInfo, 19, sizeof(*pInfo));
 
     snprintf_fill((char *)pInfo->label,
-		  sizeof(pInfo->label),
-		  ' ',
-		  "Heimdal hx509 SoftToken (token)");
+                  sizeof(pInfo->label),
+                  ' ',
+                  "Heimdal hx509 SoftToken (token)");
     snprintf_fill((char *)pInfo->manufacturerID,
-		  sizeof(pInfo->manufacturerID),
-		  ' ',
-		  "Heimdal hx509 SoftToken (token)");
+                  sizeof(pInfo->manufacturerID),
+                  ' ',
+                  "Heimdal hx509 SoftToken (token)");
     snprintf_fill((char *)pInfo->model,
-		  sizeof(pInfo->model),
-		  ' ',
-		  "Heimdal hx509 SoftToken (token)");
+                  sizeof(pInfo->model),
+                  ' ',
+                  "Heimdal hx509 SoftToken (token)");
     snprintf_fill((char *)pInfo->serialNumber,
-		  sizeof(pInfo->serialNumber),
-		  ' ',
-		  "4711");
+                  sizeof(pInfo->serialNumber),
+                  ' ',
+                  "4711");
     pInfo->flags =
-	CKF_TOKEN_INITIALIZED |
-	CKF_USER_PIN_INITIALIZED;
+        CKF_TOKEN_INITIALIZED |
+        CKF_USER_PIN_INITIALIZED;
 
     if (soft_token.flags.login_done == 0)
-	pInfo->flags |= CKF_LOGIN_REQUIRED;
+        pInfo->flags |= CKF_LOGIN_REQUIRED;
 
     /* CFK_RNG |
        CKF_RESTORE_KEY_NOT_NEEDED |
@@ -1060,15 +1060,15 @@ C_GetTokenInfo(CK_SLOT_ID slotID,
 
 CK_RV
 C_GetMechanismList(CK_SLOT_ID slotID,
-		   CK_MECHANISM_TYPE_PTR pMechanismList,
-		   CK_ULONG_PTR pulCount)
+                   CK_MECHANISM_TYPE_PTR pMechanismList,
+                   CK_ULONG_PTR pulCount)
 {
     INIT_CONTEXT();
     st_logf("GetMechanismList\n");
 
     *pulCount = 1;
     if (pMechanismList == NULL_PTR)
-	return CKR_OK;
+        return CKR_OK;
     pMechanismList[0] = CKM_RSA_PKCS;
 
     return CKR_OK;
@@ -1076,12 +1076,12 @@ C_GetMechanismList(CK_SLOT_ID slotID,
 
 CK_RV
 C_GetMechanismInfo(CK_SLOT_ID slotID,
-		   CK_MECHANISM_TYPE type,
-		   CK_MECHANISM_INFO_PTR pInfo)
+                   CK_MECHANISM_TYPE type,
+                   CK_MECHANISM_INFO_PTR pInfo)
 {
     INIT_CONTEXT();
     st_logf("GetMechanismInfo: slot %d type: %d\n",
-	    (int)slotID, (int)type);
+            (int)slotID, (int)type);
     memset(pInfo, 0, sizeof(*pInfo));
 
     return CKR_OK;
@@ -1089,9 +1089,9 @@ C_GetMechanismInfo(CK_SLOT_ID slotID,
 
 CK_RV
 C_InitToken(CK_SLOT_ID slotID,
-	    CK_UTF8CHAR_PTR pPin,
-	    CK_ULONG ulPinLen,
-	    CK_UTF8CHAR_PTR pLabel)
+            CK_UTF8CHAR_PTR pPin,
+            CK_ULONG ulPinLen,
+            CK_UTF8CHAR_PTR pLabel)
 {
     INIT_CONTEXT();
     st_logf("InitToken: slot %d\n", (int)slotID);
@@ -1100,31 +1100,31 @@ C_InitToken(CK_SLOT_ID slotID,
 
 CK_RV
 C_OpenSession(CK_SLOT_ID slotID,
-	      CK_FLAGS flags,
-	      CK_VOID_PTR pApplication,
-	      CK_NOTIFY Notify,
-	      CK_SESSION_HANDLE_PTR phSession)
+              CK_FLAGS flags,
+              CK_VOID_PTR pApplication,
+              CK_NOTIFY Notify,
+              CK_SESSION_HANDLE_PTR phSession)
 {
     size_t i;
     INIT_CONTEXT();
     st_logf("OpenSession: slot: %d\n", (int)slotID);
 
     if (soft_token.open_sessions == MAX_NUM_SESSION)
-	return CKR_SESSION_COUNT;
+        return CKR_SESSION_COUNT;
 
     soft_token.application = pApplication;
     soft_token.notify = Notify;
 
     for (i = 0; i < MAX_NUM_SESSION; i++)
-	if (soft_token.state[i].session_handle == CK_INVALID_HANDLE)
-	    break;
+        if (soft_token.state[i].session_handle == CK_INVALID_HANDLE)
+            break;
     if (i == MAX_NUM_SESSION)
-	abort();
+        abort();
 
     soft_token.open_sessions++;
 
     soft_token.state[i].session_handle =
-	(CK_SESSION_HANDLE)(random() & 0xfffff);
+        (CK_SESSION_HANDLE)(random() & 0xfffff);
     *phSession = soft_token.state[i].session_handle;
 
     return CKR_OK;
@@ -1138,9 +1138,9 @@ C_CloseSession(CK_SESSION_HANDLE hSession)
     st_logf("CloseSession\n");
 
     if (verify_session_handle(hSession, &state) != CKR_OK)
-	application_error("closed session not open");
+        application_error("closed session not open");
     else
-	close_session(state);
+        close_session(state);
 
     return CKR_OK;
 }
@@ -1154,15 +1154,15 @@ C_CloseAllSessions(CK_SLOT_ID slotID)
     st_logf("CloseAllSessions\n");
 
     for (i = 0; i < MAX_NUM_SESSION; i++)
-	if (soft_token.state[i].session_handle != CK_INVALID_HANDLE)
-	    close_session(&soft_token.state[i]);
+        if (soft_token.state[i].session_handle != CK_INVALID_HANDLE)
+            close_session(&soft_token.state[i]);
 
     return CKR_OK;
 }
 
 CK_RV
 C_GetSessionInfo(CK_SESSION_HANDLE hSession,
-		 CK_SESSION_INFO_PTR pInfo)
+                 CK_SESSION_INFO_PTR pInfo)
 {
     st_logf("GetSessionInfo\n");
     INIT_CONTEXT();
@@ -1173,9 +1173,9 @@ C_GetSessionInfo(CK_SESSION_HANDLE hSession,
 
     pInfo->slotID = 1;
     if (soft_token.flags.login_done)
-	pInfo->state = CKS_RO_USER_FUNCTIONS;
+        pInfo->state = CKS_RO_USER_FUNCTIONS;
     else
-	pInfo->state = CKS_RO_PUBLIC_SESSION;
+        pInfo->state = CKS_RO_PUBLIC_SESSION;
     pInfo->flags = CKF_SERIAL_SESSION;
     pInfo->ulDeviceError = 0;
 
@@ -1184,9 +1184,9 @@ C_GetSessionInfo(CK_SESSION_HANDLE hSession,
 
 CK_RV
 C_Login(CK_SESSION_HANDLE hSession,
-	CK_USER_TYPE userType,
-	CK_UTF8CHAR_PTR pPin,
-	CK_ULONG ulPinLen)
+        CK_USER_TYPE userType,
+        CK_UTF8CHAR_PTR pPin,
+        CK_ULONG ulPinLen)
 {
     char *pin = NULL;
     CK_RV ret;
@@ -1197,13 +1197,13 @@ C_Login(CK_SESSION_HANDLE hSession,
     VERIFY_SESSION_HANDLE(hSession, NULL);
 
     if (pPin != NULL_PTR) {
-	int aret;
+        int aret;
 
-	aret = asprintf(&pin, "%.*s", (int)ulPinLen, pPin);
-	if (aret != -1 && pin)
-		st_logf("type: %d password: %s\n", (int)userType, pin);
-	else
-		st_logf("memory error: asprintf failed\n");
+        aret = asprintf(&pin, "%.*s", (int)ulPinLen, pPin);
+        if (aret != -1 && pin)
+            st_logf("type: %d password: %s\n", (int)userType, pin);
+        else
+            st_logf("memory error: asprintf failed\n");
     }
 
     /*
@@ -1212,7 +1212,7 @@ C_Login(CK_SESSION_HANDLE hSession,
 
     ret = read_conf_file(soft_token.config_file, userType, pin);
     if (ret == CKR_OK)
-	soft_token.flags.login_done = 1;
+        soft_token.flags.login_done = 1;
 
     free(pin);
 
@@ -1231,8 +1231,8 @@ C_Logout(CK_SESSION_HANDLE hSession)
 
 CK_RV
 C_GetObjectSize(CK_SESSION_HANDLE hSession,
-		CK_OBJECT_HANDLE hObject,
-		CK_ULONG_PTR pulSize)
+                CK_OBJECT_HANDLE hObject,
+                CK_ULONG_PTR pulSize)
 {
     st_logf("GetObjectSize\n");
     INIT_CONTEXT();
@@ -1243,9 +1243,9 @@ C_GetObjectSize(CK_SESSION_HANDLE hSession,
 
 CK_RV
 C_GetAttributeValue(CK_SESSION_HANDLE hSession,
-		    CK_OBJECT_HANDLE hObject,
-		    CK_ATTRIBUTE_PTR pTemplate,
-		    CK_ULONG ulCount)
+                    CK_OBJECT_HANDLE hObject,
+                    CK_ATTRIBUTE_PTR pTemplate,
+                    CK_ULONG ulCount)
 {
     struct session_state *state;
     struct st_object *obj;
@@ -1256,36 +1256,36 @@ C_GetAttributeValue(CK_SESSION_HANDLE hSession,
     INIT_CONTEXT();
 
     st_logf("GetAttributeValue: %lx\n",
-	    (unsigned long)HANDLE_OBJECT_ID(hObject));
+            (unsigned long)HANDLE_OBJECT_ID(hObject));
     VERIFY_SESSION_HANDLE(hSession, &state);
 
     if ((ret = object_handle_to_object(hObject, &obj)) != CKR_OK) {
-	st_logf("object not found: %lx\n",
-		(unsigned long)HANDLE_OBJECT_ID(hObject));
-	return ret;
+        st_logf("object not found: %lx\n",
+                (unsigned long)HANDLE_OBJECT_ID(hObject));
+        return ret;
     }
 
     for (i = 0; i < ulCount; i++) {
-	st_logf("	getting 0x%08lx\n", (unsigned long)pTemplate[i].type);
-	for (j = 0; j < obj->num_attributes; j++) {
-	    if (obj->attrs[j].secret) {
-		pTemplate[i].ulValueLen = (CK_ULONG)-1;
-		break;
-	    }
-	    if (pTemplate[i].type == obj->attrs[j].attribute.type) {
-		if (pTemplate[i].pValue != NULL_PTR && obj->attrs[j].secret == 0) {
-		    if (pTemplate[i].ulValueLen >= obj->attrs[j].attribute.ulValueLen)
-			memcpy(pTemplate[i].pValue, obj->attrs[j].attribute.pValue,
-			       obj->attrs[j].attribute.ulValueLen);
-		}
-		pTemplate[i].ulValueLen = obj->attrs[j].attribute.ulValueLen;
-		break;
-	    }
-	}
-	if (j == obj->num_attributes) {
-	    st_logf("key type: 0x%08lx not found\n", (unsigned long)pTemplate[i].type);
-	    pTemplate[i].ulValueLen = (CK_ULONG)-1;
-	}
+        st_logf("	getting 0x%08lx\n", (unsigned long)pTemplate[i].type);
+        for (j = 0; j < obj->num_attributes; j++) {
+            if (obj->attrs[j].secret) {
+                pTemplate[i].ulValueLen = (CK_ULONG)-1;
+                break;
+            }
+            if (pTemplate[i].type == obj->attrs[j].attribute.type) {
+                if (pTemplate[i].pValue != NULL_PTR && obj->attrs[j].secret == 0) {
+                    if (pTemplate[i].ulValueLen >= obj->attrs[j].attribute.ulValueLen)
+                        memcpy(pTemplate[i].pValue, obj->attrs[j].attribute.pValue,
+                               obj->attrs[j].attribute.ulValueLen);
+                }
+                pTemplate[i].ulValueLen = obj->attrs[j].attribute.ulValueLen;
+                break;
+            }
+        }
+        if (j == obj->num_attributes) {
+            st_logf("key type: 0x%08lx not found\n", (unsigned long)pTemplate[i].type);
+            pTemplate[i].ulValueLen = (CK_ULONG)-1;
+        }
 
     }
     return CKR_OK;
@@ -1293,8 +1293,8 @@ C_GetAttributeValue(CK_SESSION_HANDLE hSession,
 
 CK_RV
 C_FindObjectsInit(CK_SESSION_HANDLE hSession,
-		  CK_ATTRIBUTE_PTR pTemplate,
-		  CK_ULONG ulCount)
+                  CK_ATTRIBUTE_PTR pTemplate,
+                  CK_ULONG ulCount)
 {
     struct session_state *state;
 
@@ -1305,37 +1305,37 @@ C_FindObjectsInit(CK_SESSION_HANDLE hSession,
     VERIFY_SESSION_HANDLE(hSession, &state);
 
     if (state->find.next_object != -1) {
-	application_error("application didn't do C_FindObjectsFinal\n");
-	find_object_final(state);
+        application_error("application didn't do C_FindObjectsFinal\n");
+        find_object_final(state);
     }
     if (ulCount) {
-	CK_ULONG i;
+        CK_ULONG i;
 
-	print_attributes(pTemplate, ulCount);
+        print_attributes(pTemplate, ulCount);
 
-	state->find.attributes =
-	    calloc(1, ulCount * sizeof(state->find.attributes[0]));
-	if (state->find.attributes == NULL)
-	    return CKR_DEVICE_MEMORY;
-	for (i = 0; i < ulCount; i++) {
-	    state->find.attributes[i].pValue =
-		malloc(pTemplate[i].ulValueLen);
-	    if (state->find.attributes[i].pValue == NULL) {
-		find_object_final(state);
-		return CKR_DEVICE_MEMORY;
-	    }
-	    memcpy(state->find.attributes[i].pValue,
-		   pTemplate[i].pValue, pTemplate[i].ulValueLen);
-	    state->find.attributes[i].type = pTemplate[i].type;
-	    state->find.attributes[i].ulValueLen = pTemplate[i].ulValueLen;
-	}
-	state->find.num_attributes = ulCount;
-	state->find.next_object = 0;
+        state->find.attributes =
+            calloc(1, ulCount * sizeof(state->find.attributes[0]));
+        if (state->find.attributes == NULL)
+            return CKR_DEVICE_MEMORY;
+        for (i = 0; i < ulCount; i++) {
+            state->find.attributes[i].pValue =
+                malloc(pTemplate[i].ulValueLen);
+            if (state->find.attributes[i].pValue == NULL) {
+                find_object_final(state);
+                return CKR_DEVICE_MEMORY;
+            }
+            memcpy(state->find.attributes[i].pValue,
+                   pTemplate[i].pValue, pTemplate[i].ulValueLen);
+            state->find.attributes[i].type = pTemplate[i].type;
+            state->find.attributes[i].ulValueLen = pTemplate[i].ulValueLen;
+        }
+        state->find.num_attributes = ulCount;
+        state->find.next_object = 0;
     } else {
-	st_logf("find all objects\n");
-	state->find.attributes = NULL;
-	state->find.num_attributes = 0;
-	state->find.next_object = 0;
+        st_logf("find all objects\n");
+        state->find.attributes = NULL;
+        state->find.num_attributes = 0;
+        state->find.next_object = 0;
     }
 
     return CKR_OK;
@@ -1343,9 +1343,9 @@ C_FindObjectsInit(CK_SESSION_HANDLE hSession,
 
 CK_RV
 C_FindObjects(CK_SESSION_HANDLE hSession,
-	      CK_OBJECT_HANDLE_PTR phObject,
-	      CK_ULONG ulMaxObjectCount,
-	      CK_ULONG_PTR pulObjectCount)
+              CK_OBJECT_HANDLE_PTR phObject,
+              CK_ULONG ulMaxObjectCount,
+              CK_ULONG_PTR pulObjectCount)
 {
     struct session_state *state;
     int i;
@@ -1357,26 +1357,26 @@ C_FindObjects(CK_SESSION_HANDLE hSession,
     VERIFY_SESSION_HANDLE(hSession, &state);
 
     if (state->find.next_object == -1) {
-	application_error("application didn't do C_FindObjectsInit\n");
-	return CKR_ARGUMENTS_BAD;
+        application_error("application didn't do C_FindObjectsInit\n");
+        return CKR_ARGUMENTS_BAD;
     }
     if (ulMaxObjectCount == 0) {
-	application_error("application asked for 0 objects\n");
-	return CKR_ARGUMENTS_BAD;
+        application_error("application asked for 0 objects\n");
+        return CKR_ARGUMENTS_BAD;
     }
     *pulObjectCount = 0;
     for (i = state->find.next_object; i < soft_token.object.num_objs; i++) {
-	st_logf("FindObjects: %d\n", i);
-	state->find.next_object = i + 1;
-	if (attributes_match(soft_token.object.objs[i],
-			     state->find.attributes,
-			     state->find.num_attributes)) {
-	    *phObject++ = soft_token.object.objs[i]->object_handle;
-	    ulMaxObjectCount--;
-	    (*pulObjectCount)++;
-	    if (ulMaxObjectCount == 0)
-		break;
-	}
+        st_logf("FindObjects: %d\n", i);
+        state->find.next_object = i + 1;
+        if (attributes_match(soft_token.object.objs[i],
+                             state->find.attributes,
+                             state->find.num_attributes)) {
+            *phObject++ = soft_token.object.objs[i]->object_handle;
+            ulMaxObjectCount--;
+            (*pulObjectCount)++;
+            if (ulMaxObjectCount == 0)
+                break;
+        }
     }
     return CKR_OK;
 }
@@ -1396,31 +1396,31 @@ C_FindObjectsFinal(CK_SESSION_HANDLE hSession)
 
 static CK_RV
 commonInit(CK_ATTRIBUTE *attr_match, int attr_match_len,
-	   const CK_MECHANISM_TYPE *mechs, int mechs_len,
-	   const CK_MECHANISM_PTR pMechanism, CK_OBJECT_HANDLE hKey,
-	   struct st_object **o)
+           const CK_MECHANISM_TYPE *mechs, int mechs_len,
+           const CK_MECHANISM_PTR pMechanism, CK_OBJECT_HANDLE hKey,
+           struct st_object **o)
 {
     CK_RV ret;
     int i;
 
     *o = NULL;
     if ((ret = object_handle_to_object(hKey, o)) != CKR_OK)
-	return ret;
+        return ret;
 
     ret = attributes_match(*o, attr_match, attr_match_len);
     if (!ret) {
-	application_error("called commonInit on key that doesn't "
-			  "support required attr");
-	return CKR_ARGUMENTS_BAD;
+        application_error("called commonInit on key that doesn't "
+                          "support required attr");
+        return CKR_ARGUMENTS_BAD;
     }
 
     for (i = 0; i < mechs_len; i++)
-	if (mechs[i] == pMechanism->mechanism)
-	    break;
+        if (mechs[i] == pMechanism->mechanism)
+            break;
     if (i == mechs_len) {
-	application_error("called mech (%08lx) not supported\n",
-			  pMechanism->mechanism);
-	return CKR_ARGUMENTS_BAD;
+        application_error("called mech (%08lx) not supported\n",
+                          pMechanism->mechanism);
+        return CKR_ARGUMENTS_BAD;
     }
     return CKR_OK;
 }
@@ -1433,10 +1433,10 @@ dup_mechanism(CK_MECHANISM_PTR *dp, const CK_MECHANISM_PTR pMechanism)
 
     p = malloc(sizeof(*p));
     if (p == NULL)
-	return CKR_DEVICE_MEMORY;
+        return CKR_DEVICE_MEMORY;
 
     if (*dp)
-	free(*dp);
+        free(*dp);
     *dp = p;
     memcpy(p, pMechanism, sizeof(*p));
 
@@ -1445,7 +1445,7 @@ dup_mechanism(CK_MECHANISM_PTR *dp, const CK_MECHANISM_PTR pMechanism)
 
 CK_RV
 C_DigestInit(CK_SESSION_HANDLE hSession,
-	     CK_MECHANISM_PTR pMechanism)
+             CK_MECHANISM_PTR pMechanism)
 {
     st_logf("DigestInit\n");
     INIT_CONTEXT();
@@ -1455,14 +1455,14 @@ C_DigestInit(CK_SESSION_HANDLE hSession,
 
 CK_RV
 C_SignInit(CK_SESSION_HANDLE hSession,
-	   CK_MECHANISM_PTR pMechanism,
-	   CK_OBJECT_HANDLE hKey)
+           CK_MECHANISM_PTR pMechanism,
+           CK_OBJECT_HANDLE hKey)
 {
     struct session_state *state;
     CK_MECHANISM_TYPE mechs[] = { CKM_RSA_PKCS };
     CK_BBOOL bool_true = CK_TRUE;
     CK_ATTRIBUTE attr[] = {
-	{ CKA_SIGN, &bool_true, sizeof(bool_true) }
+        { CKA_SIGN, &bool_true, sizeof(bool_true) }
     };
     struct st_object *o;
     CK_RV ret;
@@ -1472,14 +1472,14 @@ C_SignInit(CK_SESSION_HANDLE hSession,
     VERIFY_SESSION_HANDLE(hSession, &state);
 
     ret = commonInit(attr, sizeof(attr)/sizeof(attr[0]),
-		     mechs, sizeof(mechs)/sizeof(mechs[0]),
-		     pMechanism, hKey, &o);
+                     mechs, sizeof(mechs)/sizeof(mechs[0]),
+                     pMechanism, hKey, &o);
     if (ret)
-	return ret;
+        return ret;
 
     ret = dup_mechanism(&state->sign_mechanism, pMechanism);
     if (ret == CKR_OK)
-	state->sign_object = OBJECT_ID(o);
+        state->sign_object = OBJECT_ID(o);
 
     return CKR_OK;
 }
@@ -1506,67 +1506,67 @@ C_Sign(CK_SESSION_HANDLE hSession,
     sig.length = 0;
 
     if (state->sign_object == -1)
-	return CKR_ARGUMENTS_BAD;
+        return CKR_ARGUMENTS_BAD;
 
     if (pulSignatureLen == NULL) {
-	st_logf("signature len NULL\n");
-	ret = CKR_ARGUMENTS_BAD;
-	goto out;
+        st_logf("signature len NULL\n");
+        ret = CKR_ARGUMENTS_BAD;
+        goto out;
     }
 
     if (pData == NULL_PTR) {
-	st_logf("data NULL\n");
-	ret = CKR_ARGUMENTS_BAD;
-	goto out;
+        st_logf("data NULL\n");
+        ret = CKR_ARGUMENTS_BAD;
+        goto out;
     }
 
     o = soft_token.object.objs[state->sign_object];
 
     if (hx509_cert_have_private_key(o->cert) == 0) {
-	st_logf("private key NULL\n");
-	return CKR_ARGUMENTS_BAD;
+        st_logf("private key NULL\n");
+        return CKR_ARGUMENTS_BAD;
     }
 
     switch(state->sign_mechanism->mechanism) {
-    case CKM_RSA_PKCS:
-	alg = hx509_signature_rsa_pkcs1_x509();
-	break;
-    default:
-	ret = CKR_FUNCTION_NOT_SUPPORTED;
-	goto out;
+        case CKM_RSA_PKCS:
+            alg = hx509_signature_rsa_pkcs1_x509();
+            break;
+        default:
+            ret = CKR_FUNCTION_NOT_SUPPORTED;
+            goto out;
     }
 
     data.data = pData;
     data.length = ulDataLen;
 
     hret = _hx509_create_signature(context,
-				   _hx509_cert_private_key(o->cert),
-				   alg,
-				   &data,
-				   NULL,
-				   &sig);
+                                   _hx509_cert_private_key(o->cert),
+                                   alg,
+                                   &data,
+                                   NULL,
+                                   &sig);
     if (hret) {
-	ret = CKR_DEVICE_ERROR;
-	goto out;
+        ret = CKR_DEVICE_ERROR;
+        goto out;
     }
     *pulSignatureLen = sig.length;
 
     if (pSignature != NULL_PTR)
-	memcpy(pSignature, sig.data, sig.length);
+        memcpy(pSignature, sig.data, sig.length);
 
     ret = CKR_OK;
- out:
+out:
     if (sig.data) {
-	memset(sig.data, 0, sig.length);
-	der_free_octet_string(&sig);
+        memset(sig.data, 0, sig.length);
+        der_free_octet_string(&sig);
     }
     return ret;
 }
 
 CK_RV
 C_SignUpdate(CK_SESSION_HANDLE hSession,
-	     CK_BYTE_PTR pPart,
-	     CK_ULONG ulPartLen)
+             CK_BYTE_PTR pPart,
+             CK_ULONG ulPartLen)
 {
     INIT_CONTEXT();
     st_logf("SignUpdate\n");
@@ -1577,8 +1577,8 @@ C_SignUpdate(CK_SESSION_HANDLE hSession,
 
 CK_RV
 C_SignFinal(CK_SESSION_HANDLE hSession,
-	    CK_BYTE_PTR pSignature,
-	    CK_ULONG_PTR pulSignatureLen)
+            CK_BYTE_PTR pSignature,
+            CK_ULONG_PTR pulSignatureLen)
 {
     INIT_CONTEXT();
     st_logf("SignUpdate\n");
@@ -1588,14 +1588,14 @@ C_SignFinal(CK_SESSION_HANDLE hSession,
 
 CK_RV
 C_VerifyInit(CK_SESSION_HANDLE hSession,
-	     CK_MECHANISM_PTR pMechanism,
-	     CK_OBJECT_HANDLE hKey)
+             CK_MECHANISM_PTR pMechanism,
+             CK_OBJECT_HANDLE hKey)
 {
     struct session_state *state;
     CK_MECHANISM_TYPE mechs[] = { CKM_RSA_PKCS };
     CK_BBOOL bool_true = CK_TRUE;
     CK_ATTRIBUTE attr[] = {
-	{ CKA_VERIFY, &bool_true, sizeof(bool_true) }
+        { CKA_VERIFY, &bool_true, sizeof(bool_true) }
     };
     struct st_object *o;
     CK_RV ret;
@@ -1605,24 +1605,24 @@ C_VerifyInit(CK_SESSION_HANDLE hSession,
     VERIFY_SESSION_HANDLE(hSession, &state);
 
     ret = commonInit(attr, sizeof(attr)/sizeof(attr[0]),
-		     mechs, sizeof(mechs)/sizeof(mechs[0]),
-		     pMechanism, hKey, &o);
+                     mechs, sizeof(mechs)/sizeof(mechs[0]),
+                     pMechanism, hKey, &o);
     if (ret)
-	return ret;
+        return ret;
 
     ret = dup_mechanism(&state->verify_mechanism, pMechanism);
     if (ret == CKR_OK)
-	state->verify_object = OBJECT_ID(o);
+        state->verify_object = OBJECT_ID(o);
 
     return ret;
 }
 
 CK_RV
 C_Verify(CK_SESSION_HANDLE hSession,
-	 CK_BYTE_PTR pData,
-	 CK_ULONG ulDataLen,
-	 CK_BYTE_PTR pSignature,
-	 CK_ULONG ulSignatureLen)
+         CK_BYTE_PTR pData,
+         CK_ULONG ulDataLen,
+         CK_BYTE_PTR pSignature,
+         CK_ULONG ulSignatureLen)
 {
     struct session_state *state;
     struct st_object *o;
@@ -1636,17 +1636,17 @@ C_Verify(CK_SESSION_HANDLE hSession,
     VERIFY_SESSION_HANDLE(hSession, &state);
 
     if (state->verify_object == -1)
-	return CKR_ARGUMENTS_BAD;
+        return CKR_ARGUMENTS_BAD;
 
     o = soft_token.object.objs[state->verify_object];
 
     switch(state->verify_mechanism->mechanism) {
-    case CKM_RSA_PKCS:
-	alg = hx509_signature_rsa_pkcs1_x509();
-	break;
-    default:
-	ret = CKR_FUNCTION_NOT_SUPPORTED;
-	goto out;
+        case CKM_RSA_PKCS:
+            alg = hx509_signature_rsa_pkcs1_x509();
+            break;
+        default:
+            ret = CKR_FUNCTION_NOT_SUPPORTED;
+            goto out;
     }
 
     sig.data = pData;
@@ -1655,25 +1655,25 @@ C_Verify(CK_SESSION_HANDLE hSession,
     data.length = ulSignatureLen;
 
     hret = _hx509_verify_signature(context,
-				   o->cert,
-				   alg,
-				   &data,
-				   &sig);
+                                   o->cert,
+                                   alg,
+                                   &data,
+                                   &sig);
     if (hret) {
-	ret = CKR_GENERAL_ERROR;
-	goto out;
+        ret = CKR_GENERAL_ERROR;
+        goto out;
     }
     ret = CKR_OK;
 
- out:
+out:
     return ret;
 }
 
 
 CK_RV
 C_VerifyUpdate(CK_SESSION_HANDLE hSession,
-	       CK_BYTE_PTR pPart,
-	       CK_ULONG ulPartLen)
+               CK_BYTE_PTR pPart,
+               CK_ULONG ulPartLen)
 {
     INIT_CONTEXT();
     st_logf("VerifyUpdate\n");
@@ -1683,8 +1683,8 @@ C_VerifyUpdate(CK_SESSION_HANDLE hSession,
 
 CK_RV
 C_VerifyFinal(CK_SESSION_HANDLE hSession,
-	      CK_BYTE_PTR pSignature,
-	      CK_ULONG ulSignatureLen)
+              CK_BYTE_PTR pSignature,
+              CK_ULONG ulSignatureLen)
 {
     INIT_CONTEXT();
     st_logf("VerifyFinal\n");
@@ -1694,8 +1694,8 @@ C_VerifyFinal(CK_SESSION_HANDLE hSession,
 
 CK_RV
 C_GenerateRandom(CK_SESSION_HANDLE hSession,
-		 CK_BYTE_PTR RandomData,
-		 CK_ULONG ulRandomLen)
+                 CK_BYTE_PTR RandomData,
+                 CK_ULONG ulRandomLen)
 {
     INIT_CONTEXT();
     st_logf("GenerateRandom\n");

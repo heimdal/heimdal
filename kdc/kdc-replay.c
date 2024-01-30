@@ -62,147 +62,147 @@ main(int argc, char **argv)
     setprogname(argv[0]);
 
     if(getarg(args, num_args, argc, argv, &optidx))
-	usage(1);
+        usage(1);
 
     if(help_flag)
-	usage(0);
+        usage(0);
 
     if(version_flag){
-	print_version(NULL);
-	exit(0);
+        print_version(NULL);
+        exit(0);
     }
 
     ret = krb5_init_context(&context);
     if (ret)
-	errx (1, "krb5_init_context failed to parse configuration file");
+        errx (1, "krb5_init_context failed to parse configuration file");
 
     ret = krb5_kdc_get_config(context, &config);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_kdc_default_config");
+        krb5_err(context, 1, ret, "krb5_kdc_default_config");
 
     kdc_openlog(context, "kdc-replay", config);
 
     ret = krb5_kdc_set_dbinfo(context, config);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_kdc_set_dbinfo");
+        krb5_err(context, 1, ret, "krb5_kdc_set_dbinfo");
 
 #ifdef PKINIT
     if (config->enable_pkinit) {
-	if (config->pkinit_kdc_identity == NULL)
-	    krb5_errx(context, 1, "pkinit enabled but no identity");
+        if (config->pkinit_kdc_identity == NULL)
+            krb5_errx(context, 1, "pkinit enabled but no identity");
 
-	if (config->pkinit_kdc_anchors == NULL)
-	    krb5_errx(context, 1, "pkinit enabled but no X509 anchors");
+        if (config->pkinit_kdc_anchors == NULL)
+            krb5_errx(context, 1, "pkinit enabled but no X509 anchors");
 
-	krb5_kdc_pk_initialize(context, config,
-			       config->pkinit_kdc_identity,
-			       config->pkinit_kdc_anchors,
-			       config->pkinit_kdc_cert_pool,
-			       config->pkinit_kdc_revoke);
+        krb5_kdc_pk_initialize(context, config,
+                               config->pkinit_kdc_identity,
+                               config->pkinit_kdc_anchors,
+                               config->pkinit_kdc_cert_pool,
+                               config->pkinit_kdc_revoke);
 
     }
 #endif /* PKINIT */
 
     if (argc != 2)
-	errx(1, "argc != 2");
+        errx(1, "argc != 2");
 
     printf("kdc replay\n");
 
     fd = open(argv[1], O_RDONLY);
     if (fd < 0)
-	err(1, "open: %s", argv[1]);
+        err(1, "open: %s", argv[1]);
 
     sp = krb5_storage_from_fd(fd);
     if (sp == NULL)
-	krb5_errx(context, 1, "krb5_storage_from_fd");
+        krb5_errx(context, 1, "krb5_storage_from_fd");
 
     while(1) {
-	struct sockaddr_storage sa;
-	krb5_socklen_t salen = sizeof(sa);
-	struct timeval tv;
-	krb5_address a;
-	krb5_data d, r;
-	uint32_t t, clty, tag;
-	char astr[80];
+        struct sockaddr_storage sa;
+        krb5_socklen_t salen = sizeof(sa);
+        struct timeval tv;
+        krb5_address a;
+        krb5_data d, r;
+        uint32_t t, clty, tag;
+        char astr[80];
 
-	ret = krb5_ret_uint32(sp, &t);
-	if (ret == HEIM_ERR_EOF)
-	    break;
-	else if (ret)
-	    krb5_errx(context, 1, "krb5_ret_uint32(version)");
-	if (t != 1)
-	    krb5_errx(context, 1, "version not 1");
-	ret = krb5_ret_uint32(sp, &t);
-	if (ret)
-	    krb5_errx(context, 1, "krb5_ret_uint32(time)");
-	ret = krb5_ret_address(sp, &a);
-	if (ret)
-	    krb5_errx(context, 1, "krb5_ret_address");
-	ret = krb5_ret_data(sp, &d);
-	if (ret)
-	    krb5_errx(context, 1, "krb5_ret_data");
-	ret = krb5_ret_uint32(sp, &clty);
-	if (ret)
-	    krb5_errx(context, 1, "krb5_ret_uint32(class|type)");
-	ret = krb5_ret_uint32(sp, &tag);
-	if (ret)
-	    krb5_errx(context, 1, "krb5_ret_uint32(tag)");
+        ret = krb5_ret_uint32(sp, &t);
+        if (ret == HEIM_ERR_EOF)
+            break;
+        else if (ret)
+            krb5_errx(context, 1, "krb5_ret_uint32(version)");
+        if (t != 1)
+            krb5_errx(context, 1, "version not 1");
+        ret = krb5_ret_uint32(sp, &t);
+        if (ret)
+            krb5_errx(context, 1, "krb5_ret_uint32(time)");
+        ret = krb5_ret_address(sp, &a);
+        if (ret)
+            krb5_errx(context, 1, "krb5_ret_address");
+        ret = krb5_ret_data(sp, &d);
+        if (ret)
+            krb5_errx(context, 1, "krb5_ret_data");
+        ret = krb5_ret_uint32(sp, &clty);
+        if (ret)
+            krb5_errx(context, 1, "krb5_ret_uint32(class|type)");
+        ret = krb5_ret_uint32(sp, &tag);
+        if (ret)
+            krb5_errx(context, 1, "krb5_ret_uint32(tag)");
 
 
-	ret = krb5_addr2sockaddr (context, &a, (struct sockaddr *)&sa,
-				  &salen, 88);
-	if (ret == KRB5_PROG_ATYPE_NOSUPP)
-	    goto out;
-	else if (ret)
-	    krb5_err(context, 1, ret, "krb5_addr2sockaddr");
+        ret = krb5_addr2sockaddr (context, &a, (struct sockaddr *)&sa,
+                                  &salen, 88);
+        if (ret == KRB5_PROG_ATYPE_NOSUPP)
+            goto out;
+        else if (ret)
+            krb5_err(context, 1, ret, "krb5_addr2sockaddr");
 
-	ret = krb5_print_address(&a, astr, sizeof(astr), NULL);
-	if (ret)
-	    krb5_err(context, 1, ret, "krb5_print_address");
+        ret = krb5_print_address(&a, astr, sizeof(astr), NULL);
+        if (ret)
+            krb5_err(context, 1, ret, "krb5_print_address");
 
-	printf("processing request from %s, %lu bytes\n",
-	       astr, (unsigned long)d.length);
+        printf("processing request from %s, %lu bytes\n",
+               astr, (unsigned long)d.length);
 
-	r.length = 0;
-	r.data = NULL;
+        r.length = 0;
+        r.data = NULL;
 
-	tv.tv_sec = t;
-	tv.tv_usec = 0;
+        tv.tv_sec = t;
+        tv.tv_usec = 0;
 
-	krb5_kdc_update_time(&tv);
-	krb5_set_real_time(context, tv.tv_sec, 0);
+        krb5_kdc_update_time(&tv);
+        krb5_set_real_time(context, tv.tv_sec, 0);
 
-	ret = krb5_kdc_process_request(context, config, d.data, d.length,
-				       &r, NULL, astr,
-				       (struct sockaddr *)&sa, 0);
-	if (ret)
-	    krb5_err(context, 1, ret, "krb5_kdc_process_request");
+        ret = krb5_kdc_process_request(context, config, d.data, d.length,
+                                       &r, NULL, astr,
+                                       (struct sockaddr *)&sa, 0);
+        if (ret)
+            krb5_err(context, 1, ret, "krb5_kdc_process_request");
 
-	if (r.length) {
-	    Der_class cl;
-	    Der_type ty;
-	    unsigned int tag2;
-	    ret = der_get_tag (r.data, r.length,
-			       &cl, &ty, &tag2, NULL);
+        if (r.length) {
+            Der_class cl;
+            Der_type ty;
+            unsigned int tag2;
+            ret = der_get_tag (r.data, r.length,
+                               &cl, &ty, &tag2, NULL);
             if (ret)
                 krb5_err(context, 1, ret, "Could not decode replay data");
-	    if (MAKE_TAG(cl, ty, 0) != clty)
-		krb5_errx(context, 1, "class|type mismatch: %d != %d",
-			  (int)MAKE_TAG(cl, ty, 0), (int)clty);
-	    if (tag != tag2)
-		krb5_errx(context, 1, "tag mismatch");
+            if (MAKE_TAG(cl, ty, 0) != clty)
+                krb5_errx(context, 1, "class|type mismatch: %d != %d",
+                          (int)MAKE_TAG(cl, ty, 0), (int)clty);
+            if (tag != tag2)
+                krb5_errx(context, 1, "tag mismatch");
 
-	    krb5_data_free(&r);
-	} else {
-	    if (clty != 0xffffffff)
-		krb5_errx(context, 1, "clty not invalid");
-	    if (tag != 0xffffffff)
-		krb5_errx(context, 1, "tag not invalid");
-	}
+            krb5_data_free(&r);
+        } else {
+            if (clty != 0xffffffff)
+                krb5_errx(context, 1, "clty not invalid");
+            if (tag != 0xffffffff)
+                krb5_errx(context, 1, "tag not invalid");
+        }
 
-    out:
-	krb5_data_free(&d);
-	krb5_free_address(context, &a);
+out:
+        krb5_data_free(&d);
+        krb5_free_address(context, &a);
     }
 
     krb5_storage_free(sp);

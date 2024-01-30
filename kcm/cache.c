@@ -50,15 +50,15 @@ char *kcm_ccache_nextid(pid_t pid, uid_t uid, gid_t gid)
 
     ret = asprintf(&name, "%ld:%u", (long)uid, n);
     if (ret == -1)
-	return NULL;
+        return NULL;
 
     return name;
 }
 
 krb5_error_code
 kcm_ccache_resolve(krb5_context context,
-		   const char *name,
-		   kcm_ccache *ccache)
+                   const char *name,
+                   kcm_ccache *ccache)
 {
     kcm_ccache p;
     krb5_error_code ret;
@@ -70,17 +70,17 @@ kcm_ccache_resolve(krb5_context context,
     HEIMDAL_MUTEX_lock(&ccache_mutex);
 
     for (p = ccache_head; p != NULL; p = p->next) {
-	if ((p->flags & KCM_FLAGS_VALID) == 0)
-	    continue;
-	if (strcmp(p->name, name) == 0) {
-	    ret = 0;
-	    break;
-	}
+        if ((p->flags & KCM_FLAGS_VALID) == 0)
+            continue;
+        if (strcmp(p->name, name) == 0) {
+            ret = 0;
+            break;
+        }
     }
 
     if (ret == 0) {
-	kcm_retain_ccache(context, p);
-	*ccache = p;
+        kcm_retain_ccache(context, p);
+        *ccache = p;
     }
 
     HEIMDAL_MUTEX_unlock(&ccache_mutex);
@@ -90,8 +90,8 @@ kcm_ccache_resolve(krb5_context context,
 
 krb5_error_code
 kcm_ccache_resolve_by_uuid(krb5_context context,
-			   kcmuuid_t uuid,
-			   kcm_ccache *ccache)
+                           kcmuuid_t uuid,
+                           kcm_ccache *ccache)
 {
     kcm_ccache p;
     krb5_error_code ret;
@@ -103,17 +103,17 @@ kcm_ccache_resolve_by_uuid(krb5_context context,
     HEIMDAL_MUTEX_lock(&ccache_mutex);
 
     for (p = ccache_head; p != NULL; p = p->next) {
-	if ((p->flags & KCM_FLAGS_VALID) == 0)
-	    continue;
-	if (memcmp(p->uuid, uuid, sizeof(kcmuuid_t)) == 0) {
-	    ret = 0;
-	    break;
-	}
+        if ((p->flags & KCM_FLAGS_VALID) == 0)
+            continue;
+        if (memcmp(p->uuid, uuid, sizeof(kcmuuid_t)) == 0) {
+            ret = 0;
+            break;
+        }
     }
 
     if (ret == 0) {
-	kcm_retain_ccache(context, p);
-	*ccache = p;
+        kcm_retain_ccache(context, p);
+        *ccache = p;
     }
 
     HEIMDAL_MUTEX_unlock(&ccache_mutex);
@@ -132,14 +132,14 @@ kcm_ccache_get_uuids(krb5_context context, kcm_client *client, kcm_operation opc
     HEIMDAL_MUTEX_lock(&ccache_mutex);
 
     for (p = ccache_head; p != NULL; p = p->next) {
-	if ((p->flags & KCM_FLAGS_VALID) == 0)
-	    continue;
-	ret = kcm_access(context, client, opcode, p);
-	if (ret) {
-	    ret = 0;
-	    continue;
-	}
-	krb5_storage_write(sp, p->uuid, sizeof(p->uuid));
+        if ((p->flags & KCM_FLAGS_VALID) == 0)
+            continue;
+        ret = kcm_access(context, client, opcode, p);
+        if (ret) {
+            ret = 0;
+            continue;
+        }
+        krb5_storage_write(sp, p->uuid, sizeof(p->uuid));
     }
 
     HEIMDAL_MUTEX_unlock(&ccache_mutex);
@@ -153,31 +153,31 @@ krb5_error_code kcm_debug_ccache(krb5_context context)
     kcm_ccache p;
 
     for (p = ccache_head; p != NULL; p = p->next) {
-	char *cpn = NULL, *spn = NULL;
-	int ncreds = 0;
-	struct kcm_creds *k;
+        char *cpn = NULL, *spn = NULL;
+        int ncreds = 0;
+        struct kcm_creds *k;
 
-	if ((p->flags & KCM_FLAGS_VALID) == 0) {
-	    kcm_log(7, "cache %08x: empty slot");
-	    continue;
-	}
+        if ((p->flags & KCM_FLAGS_VALID) == 0) {
+            kcm_log(7, "cache %08x: empty slot");
+            continue;
+        }
 
-	KCM_ASSERT_VALID(p);
+        KCM_ASSERT_VALID(p);
 
-	for (k = p->creds; k != NULL; k = k->next)
-	    ncreds++;
+        for (k = p->creds; k != NULL; k = k->next)
+            ncreds++;
 
-	if (p->client != NULL)
-	    (void) krb5_unparse_name(context, p->client, &cpn);
-	if (p->server != NULL)
-	    (void) krb5_unparse_name(context, p->server, &spn);
+        if (p->client != NULL)
+            (void) krb5_unparse_name(context, p->client, &cpn);
+        if (p->server != NULL)
+            (void) krb5_unparse_name(context, p->server, &spn);
 
-	kcm_log(7, "cache %08x: name %s refcnt %d flags %04x mode %04o "
-		"uid %d gid %d client %s server %s ncreds %d",
-		p, p->name, p->refcnt, p->flags, p->mode, p->uid, p->gid,
-		(cpn == NULL) ? "<none>" : cpn,
-		(spn == NULL) ? "<none>" : spn,
-		ncreds);
+        kcm_log(7, "cache %08x: name %s refcnt %d flags %04x mode %04o "
+                "uid %d gid %d client %s server %s ncreds %d",
+                p, p->name, p->refcnt, p->flags, p->mode, p->uid, p->gid,
+                (cpn == NULL) ? "<none>" : cpn,
+                (spn == NULL) ? "<none>" : spn,
+                ncreds);
 
         free(cpn);
         free(spn);
@@ -188,21 +188,21 @@ krb5_error_code kcm_debug_ccache(krb5_context context)
 
 static void
 kcm_free_ccache_data_internal(krb5_context context,
-			      kcm_ccache_data *cache)
+                              kcm_ccache_data *cache)
 {
     KCM_ASSERT_VALID(cache);
 
     if (cache->name != NULL) {
-	free(cache->name);
-	cache->name = NULL;
+        free(cache->name);
+        cache->name = NULL;
     }
 
     if (cache->flags & KCM_FLAGS_USE_KEYTAB) {
-	krb5_kt_close(context, cache->key.keytab);
-	cache->key.keytab = NULL;
+        krb5_kt_close(context, cache->key.keytab);
+        cache->key.keytab = NULL;
     } else if (cache->flags & KCM_FLAGS_USE_CACHED_KEY) {
-	krb5_free_keyblock_contents(context, &cache->key.keyblock);
-	krb5_keyblock_zero(&cache->key.keyblock);
+        krb5_free_keyblock_contents(context, &cache->key.keyblock);
+        krb5_keyblock_zero(&cache->key.keyblock);
     }
 
     cache->flags = 0;
@@ -235,19 +235,19 @@ kcm_ccache_destroy(krb5_context context, const char *name)
 
     HEIMDAL_MUTEX_lock(&ccache_mutex);
     for (p = &ccache_head; *p != NULL; p = &(*p)->next) {
-	if (((*p)->flags & KCM_FLAGS_VALID) == 0)
-	    continue;
-	if (strcmp((*p)->name, name) == 0) {
-	    ret = 0;
-	    break;
-	}
+        if (((*p)->flags & KCM_FLAGS_VALID) == 0)
+            continue;
+        if (strcmp((*p)->name, name) == 0) {
+            ret = 0;
+            break;
+        }
     }
     if (ret)
-	goto out;
+        goto out;
 
     if ((*p)->refcnt != 1) {
-	ret = EAGAIN;
-	goto out;
+        ret = EAGAIN;
+        goto out;
     }
 
     ccache = *p;
@@ -263,8 +263,8 @@ out:
 
 static krb5_error_code
 kcm_ccache_alloc(krb5_context context,
-		 const char *name,
-		 kcm_ccache *ccache)
+                 const char *name,
+                 kcm_ccache *ccache)
 {
     kcm_ccache slot = NULL, p;
     krb5_error_code ret;
@@ -276,38 +276,38 @@ kcm_ccache_alloc(krb5_context context,
     HEIMDAL_MUTEX_lock(&ccache_mutex);
     ret = 0;
     for (p = ccache_head; p != NULL; p = p->next) {
-	if (p->flags & KCM_FLAGS_VALID) {
-	    if (strcmp(p->name, name) == 0) {
-		ret = KRB5_CC_WRITE;
-		break;
-	    }
-	} else if (slot == NULL)
-	    slot = p;
+        if (p->flags & KCM_FLAGS_VALID) {
+            if (strcmp(p->name, name) == 0) {
+                ret = KRB5_CC_WRITE;
+                break;
+            }
+        } else if (slot == NULL)
+            slot = p;
     }
 
     if (ret)
-	goto out;
+        goto out;
 
     /*
      * Create an enpty slot for us.
      */
     if (slot == NULL) {
-	slot = (kcm_ccache_data *)malloc(sizeof(*slot));
-	if (slot == NULL) {
-	    ret = KRB5_CC_NOMEM;
-	    goto out;
-	}
-	slot->next = ccache_head;
-	HEIMDAL_MUTEX_init(&slot->mutex);
-	new_slot = 1;
+        slot = (kcm_ccache_data *)malloc(sizeof(*slot));
+        if (slot == NULL) {
+            ret = KRB5_CC_NOMEM;
+            goto out;
+        }
+        slot->next = ccache_head;
+        HEIMDAL_MUTEX_init(&slot->mutex);
+        new_slot = 1;
     }
 
     RAND_bytes(slot->uuid, sizeof(slot->uuid));
 
     slot->name = strdup(name);
     if (slot->name == NULL) {
-	ret = KRB5_CC_NOMEM;
-	goto out;
+        ret = KRB5_CC_NOMEM;
+        goto out;
     }
 
     slot->refcnt = 1;
@@ -324,7 +324,7 @@ kcm_ccache_alloc(krb5_context context,
     slot->kdc_offset = 0;
 
     if (new_slot)
-	ccache_head = slot;
+        ccache_head = slot;
 
     *ccache = slot;
 
@@ -334,26 +334,26 @@ kcm_ccache_alloc(krb5_context context,
 out:
     HEIMDAL_MUTEX_unlock(&ccache_mutex);
     if (new_slot && slot != NULL) {
-	HEIMDAL_MUTEX_destroy(&slot->mutex);
-	free(slot);
+        HEIMDAL_MUTEX_destroy(&slot->mutex);
+        free(slot);
     }
     return ret;
 }
 
 krb5_error_code
 kcm_ccache_remove_creds_internal(krb5_context context,
-				 kcm_ccache ccache)
+                                 kcm_ccache ccache)
 {
     struct kcm_creds *k;
 
     k = ccache->creds;
     while (k != NULL) {
-	struct kcm_creds *old;
+        struct kcm_creds *old;
 
-	krb5_free_cred_contents(context, &k->cred);
-	old = k;
-	k = k->next;
-	free(old);
+        krb5_free_cred_contents(context, &k->cred);
+        old = k;
+        k = k->next;
+        free(old);
     }
     ccache->creds = NULL;
 
@@ -362,7 +362,7 @@ kcm_ccache_remove_creds_internal(krb5_context context,
 
 krb5_error_code
 kcm_ccache_remove_creds(krb5_context context,
-			kcm_ccache ccache)
+                        kcm_ccache ccache)
 {
     krb5_error_code ret;
 
@@ -377,16 +377,16 @@ kcm_ccache_remove_creds(krb5_context context,
 
 krb5_error_code
 kcm_zero_ccache_data_internal(krb5_context context,
-			      kcm_ccache_data *cache)
+                              kcm_ccache_data *cache)
 {
     if (cache->client != NULL) {
-	krb5_free_principal(context, cache->client);
-	cache->client = NULL;
+        krb5_free_principal(context, cache->client);
+        cache->client = NULL;
     }
 
     if (cache->server != NULL) {
-	krb5_free_principal(context, cache->server);
-	cache->server = NULL;
+        krb5_free_principal(context, cache->server);
+        cache->server = NULL;
     }
 
     kcm_ccache_remove_creds_internal(context, cache);
@@ -396,7 +396,7 @@ kcm_zero_ccache_data_internal(krb5_context context,
 
 krb5_error_code
 kcm_zero_ccache_data(krb5_context context,
-		     kcm_ccache cache)
+                     kcm_ccache cache)
 {
     krb5_error_code ret;
 
@@ -411,7 +411,7 @@ kcm_zero_ccache_data(krb5_context context,
 
 krb5_error_code
 kcm_retain_ccache(krb5_context context,
-		  kcm_ccache ccache)
+                  kcm_ccache ccache)
 {
     KCM_ASSERT_VALID(ccache);
 
@@ -431,11 +431,11 @@ kcm_release_ccache(krb5_context context, kcm_ccache c)
 
     HEIMDAL_MUTEX_lock(&c->mutex);
     if (c->refcnt == 1) {
-	kcm_free_ccache_data_internal(context, c);
-	free(c);
+        kcm_free_ccache_data_internal(context, c);
+        free(c);
     } else {
-	c->refcnt--;
-	HEIMDAL_MUTEX_unlock(&c->mutex);
+        c->refcnt--;
+        HEIMDAL_MUTEX_unlock(&c->mutex);
     }
 
     return ret;
@@ -443,17 +443,17 @@ kcm_release_ccache(krb5_context context, kcm_ccache c)
 
 krb5_error_code
 kcm_ccache_gen_new(krb5_context context,
-		   pid_t pid,
-		   uid_t uid,
-		   gid_t gid,
-		   kcm_ccache *ccache)
+                   pid_t pid,
+                   uid_t uid,
+                   gid_t gid,
+                   kcm_ccache *ccache)
 {
     krb5_error_code ret;
     char *name;
 
     name = kcm_ccache_nextid(pid, uid, gid);
     if (name == NULL) {
-	return KRB5_CC_NOMEM;
+        return KRB5_CC_NOMEM;
     }
 
     ret = kcm_ccache_new(context, name, ccache);
@@ -464,18 +464,18 @@ kcm_ccache_gen_new(krb5_context context,
 
 krb5_error_code
 kcm_ccache_new(krb5_context context,
-	       const char *name,
-	       kcm_ccache *ccache)
+               const char *name,
+               kcm_ccache *ccache)
 {
     krb5_error_code ret;
 
     ret = kcm_ccache_alloc(context, name, ccache);
     if (ret == 0) {
-	/*
-	 * one reference is held by the linked list,
-	 * one by the caller
-	 */
-	kcm_retain_ccache(context, *ccache);
+        /*
+         * one reference is held by the linked list,
+         * one by the caller
+         */
+        kcm_retain_ccache(context, *ccache);
     }
 
     return ret;
@@ -483,25 +483,25 @@ kcm_ccache_new(krb5_context context,
 
 krb5_error_code
 kcm_ccache_destroy_if_empty(krb5_context context,
-			    kcm_ccache ccache)
+                            kcm_ccache ccache)
 {
     krb5_error_code ret;
 
     KCM_ASSERT_VALID(ccache);
 
     if (ccache->creds == NULL) {
-	ret = kcm_ccache_destroy(context, ccache->name);
+        ret = kcm_ccache_destroy(context, ccache->name);
     } else
-	ret = 0;
+        ret = 0;
 
     return ret;
 }
 
 krb5_error_code
 kcm_ccache_store_cred(krb5_context context,
-		      kcm_ccache ccache,
-		      krb5_creds *creds,
-		      int copy)
+                      kcm_ccache ccache,
+                      krb5_creds *creds,
+                      int copy)
 {
     krb5_error_code ret;
     krb5_creds *tmp;
@@ -517,14 +517,14 @@ kcm_ccache_store_cred(krb5_context context,
 
 struct kcm_creds *
 kcm_ccache_find_cred_uuid(krb5_context context,
-			  kcm_ccache ccache,
-			  kcmuuid_t uuid)
+                          kcm_ccache ccache,
+                          kcmuuid_t uuid)
 {
     struct kcm_creds *c;
 
     for (c = ccache->creds; c != NULL; c = c->next)
-	if (memcmp(c->uuid, uuid, sizeof(c->uuid)) == 0)
-	    return c;
+        if (memcmp(c->uuid, uuid, sizeof(c->uuid)) == 0)
+            return c;
 
     return NULL;
 }
@@ -533,34 +533,34 @@ kcm_ccache_find_cred_uuid(krb5_context context,
 
 krb5_error_code
 kcm_ccache_store_cred_internal(krb5_context context,
-			       kcm_ccache ccache,
-			       krb5_creds *creds,
-			       int copy,
-			       krb5_creds **credp)
+                               kcm_ccache ccache,
+                               krb5_creds *creds,
+                               int copy,
+                               krb5_creds **credp)
 {
     struct kcm_creds **c;
     krb5_error_code ret;
 
     for (c = &ccache->creds; *c != NULL; c = &(*c)->next)
-	;
+        ;
 
     *c = (struct kcm_creds *)calloc(1, sizeof(**c));
     if (*c == NULL)
-	return KRB5_CC_NOMEM;
+        return KRB5_CC_NOMEM;
 
     RAND_bytes((*c)->uuid, sizeof((*c)->uuid));
 
     *credp = &(*c)->cred;
 
     if (copy) {
-	ret = krb5_copy_creds_contents(context, creds, *credp);
-	if (ret) {
-	    free(*c);
-	    *c = NULL;
-	}
+        ret = krb5_copy_creds_contents(context, creds, *credp);
+        if (ret) {
+            free(*c);
+            *c = NULL;
+        }
     } else {
-	**credp = *creds;
-	ret = 0;
+        **credp = *creds;
+        ret = 0;
     }
 
     return ret;
@@ -568,9 +568,9 @@ kcm_ccache_store_cred_internal(krb5_context context,
 
 krb5_error_code
 kcm_ccache_remove_cred_internal(krb5_context context,
-				kcm_ccache ccache,
-				krb5_flags whichfields,
-				const krb5_creds *mcreds)
+                                kcm_ccache ccache,
+                                krb5_flags whichfields,
+                                const krb5_creds *mcreds)
 {
     krb5_error_code ret;
     struct kcm_creds **c;
@@ -578,16 +578,16 @@ kcm_ccache_remove_cred_internal(krb5_context context,
     ret = KRB5_CC_NOTFOUND;
 
     for (c = &ccache->creds; *c != NULL; c = &(*c)->next) {
-	if (krb5_compare_creds(context, whichfields, mcreds, &(*c)->cred)) {
-	    struct kcm_creds *cred = *c;
+        if (krb5_compare_creds(context, whichfields, mcreds, &(*c)->cred)) {
+            struct kcm_creds *cred = *c;
 
-	    *c = cred->next;
-	    krb5_free_cred_contents(context, &cred->cred);
-	    free(cred);
-	    ret = 0;
-	    if (*c == NULL)
-		break;
-	}
+            *c = cred->next;
+            krb5_free_cred_contents(context, &cred->cred);
+            free(cred);
+            ret = 0;
+            if (*c == NULL)
+                break;
+        }
     }
 
     return ret;
@@ -595,9 +595,9 @@ kcm_ccache_remove_cred_internal(krb5_context context,
 
 krb5_error_code
 kcm_ccache_remove_cred(krb5_context context,
-		       kcm_ccache ccache,
-		       krb5_flags whichfields,
-		       const krb5_creds *mcreds)
+                       kcm_ccache ccache,
+                       krb5_flags whichfields,
+                       const krb5_creds *mcreds)
 {
     krb5_error_code ret;
 
@@ -612,10 +612,10 @@ kcm_ccache_remove_cred(krb5_context context,
 
 krb5_error_code
 kcm_ccache_retrieve_cred_internal(krb5_context context,
-			 	  kcm_ccache ccache,
-			 	  krb5_flags whichfields,
-			 	  const krb5_creds *mcreds,
-			 	  krb5_creds **creds)
+                                  kcm_ccache ccache,
+                                  krb5_flags whichfields,
+                                  const krb5_creds *mcreds,
+                                  krb5_creds **creds)
 {
     krb5_boolean match;
     struct kcm_creds *c;
@@ -627,14 +627,14 @@ kcm_ccache_retrieve_cred_internal(krb5_context context,
 
     match = FALSE;
     for (c = ccache->creds; c != NULL; c = c->next) {
-	match = krb5_compare_creds(context, whichfields, mcreds, &c->cred);
-	if (match)
-	    break;
+        match = krb5_compare_creds(context, whichfields, mcreds, &c->cred);
+        if (match)
+            break;
     }
 
     if (match) {
-	ret = 0;
-	*creds = &c->cred;
+        ret = 0;
+        *creds = &c->cred;
     }
 
     return ret;
@@ -642,10 +642,10 @@ kcm_ccache_retrieve_cred_internal(krb5_context context,
 
 krb5_error_code
 kcm_ccache_retrieve_cred(krb5_context context,
-			 kcm_ccache ccache,
-			 krb5_flags whichfields,
-			 const krb5_creds *mcreds,
-			 krb5_creds **credp)
+                         kcm_ccache ccache,
+                         krb5_flags whichfields,
+                         const krb5_creds *mcreds,
+                         krb5_creds **credp)
 {
     krb5_error_code ret;
 
@@ -653,7 +653,7 @@ kcm_ccache_retrieve_cred(krb5_context context,
 
     HEIMDAL_MUTEX_lock(&ccache->mutex);
     ret = kcm_ccache_retrieve_cred_internal(context, ccache,
-					    whichfields, mcreds, credp);
+                                            whichfields, mcreds, credp);
     HEIMDAL_MUTEX_unlock(&ccache->mutex);
 
     return ret;
@@ -668,11 +668,11 @@ kcm_ccache_first_name(kcm_client *client)
     HEIMDAL_MUTEX_lock(&ccache_mutex);
 
     for (p = ccache_head; p != NULL; p = p->next) {
-	if (kcm_is_same_session(client, p->uid, p->session))
-	    break;
+        if (kcm_is_same_session(client, p->uid, p->session))
+            break;
     }
     if (p)
-	name = strdup(p->name);
+        name = strdup(p->name);
     HEIMDAL_MUTEX_unlock(&ccache_mutex);
     return name;
 }

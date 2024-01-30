@@ -206,7 +206,7 @@ generate_ecdh_keyblock_ossl11(krb5_context context,
     EC_KEY_set_group(ephemeral, group);
 
     if (EC_KEY_generate_key(ephemeral) != 1) {
-       EC_KEY_free(ephemeral);
+        EC_KEY_free(ephemeral);
         return krb5_enomem(context);
     }
 
@@ -294,9 +294,9 @@ get_ecdh_param_ossl30(krb5_context context,
     memset(&ecp, 0, sizeof(ecp));
 
     if (dh_key_info->algorithm.parameters == NULL)
-	krb5_set_error_message(context, ret = KRB5_BADMSGTYPE,
-			       "PKINIT missing algorithm parameter "
-			       "in clientPublicValue");
+        krb5_set_error_message(context, ret = KRB5_BADMSGTYPE,
+                               "PKINIT missing algorithm parameter "
+                               "in clientPublicValue");
     if (ret == 0)
         ret = decode_ECParameters(dh_key_info->algorithm.parameters->data,
                                   dh_key_info->algorithm.parameters->length,
@@ -377,31 +377,31 @@ get_ecdh_param_ossl11(krb5_context context,
     int nid;
 
     if (dh_key_info->algorithm.parameters == NULL) {
-       krb5_set_error_message(context, KRB5_BADMSGTYPE,
-                              "PKINIT missing algorithm parameter "
-                              "in clientPublicValue");
-       return KRB5_BADMSGTYPE;
+        krb5_set_error_message(context, KRB5_BADMSGTYPE,
+                               "PKINIT missing algorithm parameter "
+                               "in clientPublicValue");
+        return KRB5_BADMSGTYPE;
     }
     /* XXX Algorithm agility; XXX KRB5_BADMSGTYPE?? */
 
     memset(&ecp, 0, sizeof(ecp));
 
     ret = decode_ECParameters(dh_key_info->algorithm.parameters->data,
-                             dh_key_info->algorithm.parameters->length, &ecp, &len);
+                              dh_key_info->algorithm.parameters->length, &ecp, &len);
     if (ret)
-       goto out;
+        goto out;
 
     if (ecp.element != choice_ECParameters_namedCurve) {
-       ret = KRB5_BADMSGTYPE;
-       goto out;
+        ret = KRB5_BADMSGTYPE;
+        goto out;
     }
 
     if (der_heim_oid_cmp(&ecp.u.namedCurve, &asn1_oid_id_ec_group_secp256r1) == 0)
-       nid = NID_X9_62_prime256v1;
+        nid = NID_X9_62_prime256v1;
     else {
-       ret = KRB5_BADMSGTYPE;
-       goto out;
-   }
+        ret = KRB5_BADMSGTYPE;
+        goto out;
+    }
 
     /* XXX verify group is ok */
 
@@ -410,17 +410,17 @@ get_ecdh_param_ossl11(krb5_context context,
     p = dh_key_info->subjectPublicKey.data;
     len = dh_key_info->subjectPublicKey.length / 8;
     if (o2i_ECPublicKey(&public, &p, len) == NULL) {
-       ret = KRB5_BADMSGTYPE;
-       krb5_set_error_message(context, ret,
-                              "PKINIT failed to decode ECDH key");
-       goto out;
+        ret = KRB5_BADMSGTYPE;
+        krb5_set_error_message(context, ret,
+                               "PKINIT failed to decode ECDH key");
+        goto out;
     }
     *out = public;
     public = NULL;
 
- out:
+out:
     if (public)
-       EC_KEY_free(public);
+        EC_KEY_free(public);
     free_ECParameters(&ecp);
     return ret;
 }
@@ -479,8 +479,8 @@ serialize_ecdh_key_ossl30(krb5_context context,
     if (len <= 0) {
         free(*out);
         *out = NULL;
-	krb5_set_error_message(context, EINVAL /* XXX Better error please */,
-			       "PKINIT failed to encode ECDH key");
+        krb5_set_error_message(context, EINVAL /* XXX Better error please */,
+                               "PKINIT failed to encode ECDH key");
         return EINVAL;
     }
 
@@ -517,8 +517,8 @@ serialize_ecdh_key_ossl11(krb5_context context,
     if (len <= 0) {
         free(*out);
         *out = NULL;
-	krb5_set_error_message(context, EINVAL /* XXX Better error please */,
-			       "PKINIT failed to encode ECDH key");
+        krb5_set_error_message(context, EINVAL /* XXX Better error please */,
+                               "PKINIT failed to encode ECDH key");
         return EINVAL;
     }
 

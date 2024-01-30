@@ -73,16 +73,16 @@ struct typereference;
 
 struct value {
     enum { booleanvalue,
-	   nullvalue,
-	   integervalue,
-	   stringvalue,
-	   objectidentifiervalue
+           nullvalue,
+           integervalue,
+           stringvalue,
+           objectidentifiervalue
     } type;
     union {
-	int booleanvalue;
-	int64_t integervalue;
-	char *stringvalue;
-	struct objid *objectidentifiervalue;
+        int booleanvalue;
+        int64_t integervalue;
+        char *stringvalue;
+        struct objid *objectidentifiervalue;
     } u;
     struct symbol *s;
 };
@@ -213,11 +213,11 @@ struct component_relation_constraint {
 struct constraint_spec {
     enum ctype ctype;
     union {
-	struct {
-	    Type *type;
-	    struct value *encoding;
+        struct {
+            Type *type;
+            struct value *encoding;
             struct component_relation_constraint crel;
-	} content;
+        } content;
         struct range *range;
     } u;
 };

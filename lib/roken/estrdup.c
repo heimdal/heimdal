@@ -48,6 +48,6 @@ estrdup (const char *str)
     char *tmp = strdup (str);
 
     if (tmp == NULL)
-	errx (1, "strdup failed");
+        errx (1, "strdup failed");
     return tmp;
 }

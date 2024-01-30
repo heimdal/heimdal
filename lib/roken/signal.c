@@ -57,20 +57,20 @@ signal(int iSig, SigAction pAction)
     saNew.sa_flags = 0;
 
     if (iSig == SIGALRM)
-	{
+    {
 #ifdef SA_INTERRUPT
-	    saNew.sa_flags |= SA_INTERRUPT;
+        saNew.sa_flags |= SA_INTERRUPT;
 #endif
-	}
+    }
     else
-	{
+        {
 #ifdef SA_RESTART
-	    saNew.sa_flags |= SA_RESTART;
+        saNew.sa_flags |= SA_RESTART;
 #endif
-	}
+    }
 
     if (sigaction(iSig, &saNew, &saOld) < 0)
-	return(SIG_ERR);
+        return(SIG_ERR);
 
     return(saOld.sa_handler);
 }

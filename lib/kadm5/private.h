@@ -44,29 +44,29 @@
 
 struct kadm_func {
     kadm5_ret_t (*chpass_principal) (void *, krb5_principal, int,
-				     int, krb5_key_salt_tuple*, const char*);
+                                     int, krb5_key_salt_tuple*, const char*);
     kadm5_ret_t (*create_principal) (void*, kadm5_principal_ent_t, uint32_t,
-				     int, krb5_key_salt_tuple *,
-				     const char*);
+                                     int, krb5_key_salt_tuple *,
+                                     const char*);
     kadm5_ret_t (*delete_principal) (void*, krb5_principal);
     kadm5_ret_t (*destroy) (void*);
     kadm5_ret_t (*flush) (void*);
     kadm5_ret_t (*get_principal) (void*, krb5_principal,
-				  kadm5_principal_ent_t, uint32_t);
+                                  kadm5_principal_ent_t, uint32_t);
     kadm5_ret_t (*get_principals) (void*, const char*, char***, int*);
     kadm5_ret_t (*get_privs) (void*, uint32_t*);
     kadm5_ret_t (*modify_principal) (void*, kadm5_principal_ent_t, uint32_t);
     kadm5_ret_t (*randkey_principal) (void*, krb5_principal, krb5_boolean, int,
-				      krb5_key_salt_tuple*, krb5_keyblock**,
-				      int*);
+                                      krb5_key_salt_tuple*, krb5_keyblock**,
+                                      int*);
     kadm5_ret_t (*rename_principal) (void*, krb5_principal, krb5_principal);
     kadm5_ret_t (*chpass_principal_with_key) (void *, krb5_principal, int,
-					      int, krb5_key_data *);
+                                              int, krb5_key_data *);
     kadm5_ret_t (*lock) (void *);
     kadm5_ret_t (*unlock) (void *);
     kadm5_ret_t (*setkey_principal_3) (void *, krb5_principal, krb5_boolean,
-				       int, krb5_key_salt_tuple *,
-				       krb5_keyblock *, int);
+                                       int, krb5_key_salt_tuple *,
+                                       krb5_keyblock *, int);
     kadm5_ret_t (*prune_principal) (void *, krb5_principal, int);
     kadm5_ret_t (*iter_principals) (void*, const char*, int (*)(void *, const char *), void *);
     kadm5_ret_t (*dup_context) (void*, void **);

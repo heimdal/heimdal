@@ -59,7 +59,7 @@
 #define DH_check_pubkey hc_DH_check_pubkey
 #define DH_generate_key hc_DH_generate_key
 #define DH_compute_key hc_DH_compute_key
-#define	i2d_DHparams hc_i2d_DHparams
+#define i2d_DHparams hc_i2d_DHparams
 
 /*
  *
@@ -76,8 +76,8 @@ struct DH_METHOD {
     int (*generate_key)(DH *);
     int (*compute_key)(unsigned char *,const BIGNUM *,DH *);
     int (*bn_mod_exp)(const DH *, BIGNUM *, const BIGNUM *,
-		      const BIGNUM *, const BIGNUM *, BN_CTX *,
-		      BN_MONT_CTX *);
+                      const BIGNUM *, const BIGNUM *, BN_CTX *,
+                      BN_MONT_CTX *);
     int (*init)(DH *);
     int (*finish)(DH *);
     int flags;
@@ -102,8 +102,8 @@ struct DH {
     BIGNUM *counter;
     int references;
     struct CRYPTO_EX_DATA {
-	void *sk;
-	int dummy;
+        void *sk;
+        int dummy;
     } ex_data;
     const DH_METHOD *meth;
     ENGINE *engine;
@@ -131,7 +131,7 @@ int	DH_size(const DH *);
 
 void	DH_set_default_method(const DH_METHOD *);
 const DH_METHOD *
-	DH_get_default_method(void);
+DH_get_default_method(void);
 int	DH_set_method(DH *, const DH_METHOD *);
 
 int	DH_set_ex_data(DH *, int, void *);

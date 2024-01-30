@@ -46,7 +46,7 @@ rk_dumpdata (const char *filename, const void *buf, size_t size)
 
     fd = open(filename, O_WRONLY|O_TRUNC|O_CREAT, 0640);
     if (fd < 0)
-	return;
+        return;
     net_write(fd, buf, size);
     close(fd);
 }
@@ -144,10 +144,10 @@ rk_undumpdata(const char *filename, void **buf, size_t *size)
 
     fd = open(filename, O_RDONLY, 0);
     if (fd < 0)
-	return errno;
+        return errno;
     if (fstat(fd, &sb) != 0){
-	ret = errno;
-	goto out;
+        ret = errno;
+        goto out;
     }
     if (!S_ISREG(sb.st_mode)) {
         char *char_buf;
@@ -162,23 +162,23 @@ rk_undumpdata(const char *filename, void **buf, size_t *size)
         sb.st_size = 0;
     *buf = malloc(sb.st_size);
     if (*buf == NULL) {
-	ret = ENOMEM;
-	goto out;
+        ret = ENOMEM;
+        goto out;
     }
     *size = sb.st_size;
 
     sret = read(fd, *buf, *size);
     if (sret < 0)
-	ret = errno;
+        ret = errno;
     else if (sret != (ssize_t)*size)
-	ret = EINVAL;
+        ret = EINVAL;
     else
-	ret = 0;
+        ret = 0;
 
-  out:
+out:
     if (ret) {
-	free(*buf);
-	*buf = NULL;
+        free(*buf);
+        *buf = NULL;
     }
     close(fd);
     return ret;
@@ -211,7 +211,7 @@ rk_undumptext(const char *filename, char **out, size_t *size)
         return errno;
     if (fstat(fd, &sb) != 0) {
         (void) close(fd);
-	return errno;
+        return errno;
     }
     if (!S_ISREG(sb.st_mode)) {
         ret = undump_not_file(fd, out, size, 1);
@@ -223,23 +223,23 @@ rk_undumptext(const char *filename, char **out, size_t *size)
         sb.st_size = 0;
     buf = malloc(sb.st_size + 1);
     if (buf == NULL) {
-	ret = ENOMEM;
-	goto out;
+        ret = ENOMEM;
+        goto out;
     }
     if (size)
         *size = sb.st_size;
 
     sret = read(fd, buf, sb.st_size);
     if (sret < 0)
-	ret = errno;
+        ret = errno;
     else if (sret != (ssize_t)sb.st_size)
-	ret = EINVAL;
+        ret = EINVAL;
     else
-	ret = 0;
+        ret = 0;
 
 out:
     if (ret) {
-	free(buf);
+        free(buf);
     } else {
         buf[sb.st_size] = '\0';
         *out = buf;

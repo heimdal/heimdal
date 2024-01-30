@@ -51,8 +51,8 @@ com_right(struct et_list *list, long code)
 {
     struct et_list *p;
     for (p = list; p; p = p->next)
-	if (code >= p->table->base && code < p->table->base + p->table->n_msgs)
-	    return p->table->msgs[code - p->table->base];
+        if (code >= p->table->base && code < p->table->base + p->table->n_msgs)
+            return p->table->msgs[code - p->table->base];
     return NULL;
 }
 
@@ -61,15 +61,15 @@ com_right_r(struct et_list *list, long code, char *str, size_t len)
 {
     struct et_list *p;
     for (p = list; p; p = p->next) {
-	if (code >= p->table->base && code < p->table->base + p->table->n_msgs) {
-	    const char *msg = p->table->msgs[code - p->table->base];
+        if (code >= p->table->base && code < p->table->base + p->table->n_msgs) {
+            const char *msg = p->table->msgs[code - p->table->base];
 #ifdef LIBINTL
-	    char domain[12 + 20];
-	    snprintf(domain, sizeof(domain), "heim_com_err%ld", p->table->base);
+            char domain[12 + 20];
+            snprintf(domain, sizeof(domain), "heim_com_err%ld", p->table->base);
 #endif
-	    strlcpy(str, dgettext(domain, msg), len);
-	    return str;
-	}
+            strlcpy(str, dgettext(domain, msg), len);
+            return str;
+        }
     }
     return NULL;
 }
@@ -81,9 +81,9 @@ struct foobar {
 
 KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 initialize_error_table_r(struct et_list **list,
-			 const char *const *messages,
-			 int num_errors,
-			 long base)
+                         const char *const *messages,
+                         int num_errors,
+                         long base)
 {
     struct et_list *et, **end;
     struct foobar *f;
@@ -107,8 +107,8 @@ KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 free_error_table(struct et_list *et)
 {
     while(et){
-	struct et_list *p = et;
-	et = et->next;
-	free(p);
+        struct et_list *p = et;
+        et = et->next;
+        free(p);
     }
 }

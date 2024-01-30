@@ -87,14 +87,14 @@ expand_one_file(FILE *f, const char *cell)
     char *p;
 
     while (fgets (buf, sizeof(buf), f) != NULL) {
-	if(buf[0] == '>') {
-	    for(p = buf; *p && !isspace((unsigned char)*p) && *p != '#'; p++)
-		;
-	    *p = '\0';
-	    if(strncmp(buf + 1, cell, strlen(cell)) == 0)
-		return buf + 1;
-	}
-	buf[0] = '\0';
+        if(buf[0] == '>') {
+            for(p = buf; *p && !isspace((unsigned char)*p) && *p != '#'; p++)
+                ;
+            *p = '\0';
+            if(strncmp(buf + 1, cell, strlen(cell)) == 0)
+                return buf + 1;
+        }
+        buf[0] = '\0';
     }
     return NULL;
 }
@@ -105,18 +105,18 @@ expand_cell_name(const char *cell)
     FILE *f;
     const char *c;
     const char **fn, *fns[] = { _PATH_CELLSERVDB,
-				_PATH_ARLA_CELLSERVDB,
-				_PATH_OPENAFS_DEBIAN_CELLSERVDB,
-				_PATH_ARLA_DEBIAN_CELLSERVDB,
-				NULL };
+                                _PATH_ARLA_CELLSERVDB,
+                                _PATH_OPENAFS_DEBIAN_CELLSERVDB,
+                                _PATH_ARLA_DEBIAN_CELLSERVDB,
+                                NULL };
     for(fn = fns; *fn; fn++) {
-	f = fopen(*fn, "r");
-	if(f == NULL)
-	    continue;
-	c = expand_one_file(f, cell);
-	fclose(f);
-	if(c)
-	    return c;
+        f = fopen(*fn, "r");
+        if(f == NULL)
+            continue;
+        c = expand_one_file(f, cell);
+        fclose(f);
+        if(c)
+            return c;
     }
     return NULL;
 }
@@ -139,26 +139,26 @@ afslog_cell(const char *cell, int expand)
     struct cell_list *p, **q;
     const char *c = cell;
     if(expand){
-	c = expand_cell_name(cell);
-	if(c == NULL){
-	    warnx("No cell matching \"%s\" found.", cell);
-	    return -1;
-	}
-	if(verbose && strcmp(c, cell) != 0)
-	    warnx("Cell \"%s\" expanded to \"%s\"", cell, c);
+        c = expand_cell_name(cell);
+        if(c == NULL){
+            warnx("No cell matching \"%s\" found.", cell);
+            return -1;
+        }
+        if(verbose && strcmp(c, cell) != 0)
+            warnx("Cell \"%s\" expanded to \"%s\"", cell, c);
     }
     /* add to list of cells to get tokens for, and also remove
        duplicates; the actual afslog takes place later */
     for(p = cell_list, q = &cell_list; p; q = &p->next, p = p->next)
-	if(strcmp(p->cell, c) == 0)
-	    return 0;
+        if(strcmp(p->cell, c) == 0)
+            return 0;
     p = malloc(sizeof(*p));
     if(p == NULL)
-	return -1;
+        return -1;
     p->cell = strdup(c);
     if(p->cell == NULL) {
-	free(p);
-	return -1;
+        free(p);
+        return -1;
     }
     p->next = NULL;
     *q = p;
@@ -170,11 +170,11 @@ afslog_file(const char *path)
 {
     char cell[64];
     if(k_afs_cell_of_file(path, cell, sizeof(cell))){
-	warnx("No cell found for file \"%s\".", path);
-	return -1;
+        warnx("No cell found for file \"%s\".", path);
+        return -1;
     }
     if(verbose)
-	warnx("File \"%s\" lives in cell \"%s\"", path, cell);
+        warnx("File \"%s\" lives in cell \"%s\"", path, cell);
     return afslog_cell(cell, 0);
 }
 
@@ -187,19 +187,19 @@ do_afslog(const char *cell)
 
 #ifdef KRB5
     if(context != NULL && id != NULL && use_krb5) {
-	k5ret = krb5_afslog(context, id, cell, realm);
-	if(k5ret == 0)
-	    return 0;
+        k5ret = krb5_afslog(context, id, cell, realm);
+        if(k5ret == 0)
+            return 0;
     }
 #endif
     if (cell == NULL)
-	cell = "<default cell>";
+        cell = "<default cell>";
 #ifdef KRB5
     if (k5ret)
-	krb5_warn(context, k5ret, "krb5_afslog(%s)", cell);
+        krb5_warn(context, k5ret, "krb5_afslog(%s)", cell);
 #endif
     if (k5ret)
-	return 1;
+        return 1;
     return 0;
 }
 
@@ -222,81 +222,81 @@ main(int argc, char **argv)
     setprogname(argv[0]);
 
     if(getarg(args, num_args, argc, argv, &optidx))
-	usage(1);
+        usage(1);
     if(help_flag)
-	usage(0);
+        usage(0);
     if(version_flag) {
-	print_version(NULL);
-	exit(0);
+        print_version(NULL);
+        exit(0);
     }
 
     if(!k_hasafs())
-	errx(1, "AFS does not seem to be present on this machine");
+        errx(1, "AFS does not seem to be present on this machine");
 
     if(unlog_flag){
-	k_unlog();
-	exit(0);
+        k_unlog();
+        exit(0);
     }
 #ifdef KRB5
     ret = krb5_init_context(&context);
     if (ret) {
-	context = NULL;
+        context = NULL;
     } else {
-	if (client_string) {
-	    krb5_principal client;
+        if (client_string) {
+            krb5_principal client;
 
-	    ret = krb5_parse_name(context, client_string, &client);
-	    if (ret == 0)
-		ret = krb5_cc_cache_match(context, client, &id);
-	    if (ret)
-		id = NULL;
-	}
-	if (id == NULL && cache_string) {
-	    if(krb5_cc_resolve(context, cache_string, &id) != 0) {
-		krb5_warnx(context, "failed to open kerberos 5 cache '%s'",
-			   cache_string);
-		id = NULL;
-	    }
-	}
-	if (id == NULL)
-	    if(krb5_cc_default(context, &id) != 0)
-		id = NULL;
+            ret = krb5_parse_name(context, client_string, &client);
+            if (ret == 0)
+                ret = krb5_cc_cache_match(context, client, &id);
+            if (ret)
+                id = NULL;
+        }
+        if (id == NULL && cache_string) {
+            if(krb5_cc_resolve(context, cache_string, &id) != 0) {
+                krb5_warnx(context, "failed to open kerberos 5 cache '%s'",
+                           cache_string);
+                id = NULL;
+            }
+        }
+        if (id == NULL)
+            if(krb5_cc_default(context, &id) != 0)
+                id = NULL;
     }
 #endif
 
     if (verbose)
-	kafs_set_verbose(log_func, NULL);
+        kafs_set_verbose(log_func, NULL);
 
     num = 0;
     for(i = 0; i < files.num_strings; i++){
-	afslog_file(files.strings[i]);
-	num++;
+        afslog_file(files.strings[i]);
+        num++;
     }
     free_getarg_strings (&files);
     for(i = 0; i < cells.num_strings; i++){
-	afslog_cell(cells.strings[i], 1);
-	num++;
+        afslog_cell(cells.strings[i], 1);
+        num++;
     }
     free_getarg_strings (&cells);
     for(i = optidx; i < argc; i++){
-	num++;
-	if(strcmp(argv[i], ".") == 0 ||
-	   strcmp(argv[i], "..") == 0 ||
-	   strchr(argv[i], '/') ||
-	   access(argv[i], F_OK) == 0)
-	    afslog_file(argv[i]);
-	else
-	    afslog_cell(argv[i], 1);
+        num++;
+        if(strcmp(argv[i], ".") == 0 ||
+           strcmp(argv[i], "..") == 0 ||
+           strchr(argv[i], '/') ||
+           access(argv[i], F_OK) == 0)
+            afslog_file(argv[i]);
+        else
+            afslog_cell(argv[i], 1);
     }
     if(num == 0) {
-	if(do_afslog(NULL))
-	    failed++;
+        if(do_afslog(NULL))
+            failed++;
     } else
-	for(p = cell_list; p; p = p->next) {
-	    if(verbose)
-		warnx("Getting tokens for cell \"%s\"", p->cell);
-	    if(do_afslog(p->cell))
-		failed++;
+        for(p = cell_list; p; p = p->next) {
+            if(verbose)
+                warnx("Getting tokens for cell \"%s\"", p->cell);
+            if(do_afslog(p->cell))
+                failed++;
     }
 
     return failed;

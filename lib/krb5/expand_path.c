@@ -51,9 +51,9 @@
  */
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_expand_path_tokens(krb5_context context,
-			 const char *path_in,
-			 int filepath,
-			 char **ppath_out)
+                         const char *path_in,
+                         int filepath,
+                         char **ppath_out)
 {
     return heim_expand_path_tokens(context ? context->hcontext : NULL, path_in,
                                    filepath, ppath_out, NULL);
@@ -79,9 +79,9 @@ _krb5_expand_path_tokens(krb5_context context,
  */
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_expand_path_tokensv(krb5_context context,
-			  const char *path_in,
-			  int filepath,
-			  char **ppath_out, ...)
+                          const char *path_in,
+                          int filepath,
+                          char **ppath_out, ...)
 {
     krb5_error_code ret;
     va_list ap;

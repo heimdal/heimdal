@@ -70,29 +70,29 @@ print (int argc,
        OtpAlgorithm *alg,
        void (*print_fn)(OtpKey, char *, size_t))
 {
-  char pw[64];
-  OtpKey key;
-  int n;
-  int i;
-  char *seed;
+    char pw[64];
+    OtpKey key;
+    int n;
+    int i;
+    char *seed;
 
-  if (argc != 2)
-      usage (1);
-  n = atoi(argv[0]);
-  seed = argv[1];
-  if (UI_UTIL_read_pw_string (pw, sizeof(pw), "Pass-phrase: ", 0))
-    return 1;
-  alg->init (key, pw, seed);
-  for (i = 0; i < n; ++i) {
-    char s[64];
+    if (argc != 2)
+        usage (1);
+    n = atoi(argv[0]);
+    seed = argv[1];
+    if (UI_UTIL_read_pw_string (pw, sizeof(pw), "Pass-phrase: ", 0))
+        return 1;
+    alg->init (key, pw, seed);
+    for (i = 0; i < n; ++i) {
+        char s[64];
 
-    alg->next (key);
-    if (i >= n - incount) {
-      (*print_fn)(key, s, sizeof(s));
-      printf ("%d: %s\n", i + 1, s);
+        alg->next (key);
+        if (i >= n - incount) {
+            (*print_fn)(key, s, sizeof(s));
+            printf ("%d: %s\n", i + 1, s);
+        }
     }
-  }
-  return 0;
+    return 0;
 }
 
 int
@@ -104,32 +104,32 @@ main (int argc, char **argv)
 
     setprogname (argv[0]);
     if(getarg(args, num_args, argc, argv, &optidx))
-	usage(1);
+        usage(1);
     if(help_flag)
-	usage(0);
+        usage(0);
     if(version_flag) {
-	print_version(NULL);
-	exit(0);
+        print_version(NULL);
+        exit(0);
     }
 
     if(alg_string) {
-	alg = otp_find_alg (alg_string);
-	if (alg == NULL)
-	    errx(1, "Unknown algorithm: %s", alg_string);
+        alg = otp_find_alg (alg_string);
+        if (alg == NULL)
+            errx(1, "Unknown algorithm: %s", alg_string);
     }
     argc -= optidx;
     argv += optidx;
 
     if (hexp) {
-	if (extendedp)
-	    fn = otp_print_hex_extended;
-	else
-	    fn = otp_print_hex;
+        if (extendedp)
+            fn = otp_print_hex_extended;
+        else
+            fn = otp_print_hex;
     } else {
-	if (extendedp)
-	    fn = otp_print_stddict_extended;
-	else
-	    fn = otp_print_stddict;
+        if (extendedp)
+            fn = otp_print_stddict_extended;
+        else
+            fn = otp_print_stddict;
     }
 
     return print (argc, argv, count, alg, fn);

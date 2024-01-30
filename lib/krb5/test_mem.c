@@ -43,19 +43,19 @@ check_log(void)
     int i;
 
     for (i = 0; i < 10; i++) {
-	krb5_log_facility *logfacility;
-	krb5_context context;
-	krb5_error_code ret;
+        krb5_log_facility *logfacility;
+        krb5_context context;
+        krb5_error_code ret;
 
-	ret = krb5_init_context(&context);
-	if (ret)
-	    errx (1, "krb5_init_context failed: %d", ret);
+        ret = krb5_init_context(&context);
+        if (ret)
+            errx (1, "krb5_init_context failed: %d", ret);
 
-	krb5_initlog(context, "test-mem", &logfacility);
-	krb5_addlog_dest(context, logfacility, "0/STDERR:");
-	krb5_set_warn_dest(context, logfacility);
+        krb5_initlog(context, "test-mem", &logfacility);
+        krb5_addlog_dest(context, logfacility, "0/STDERR:");
+        krb5_set_warn_dest(context, logfacility);
 
-	krb5_free_context(context);
+        krb5_free_context(context);
     }
 }
 

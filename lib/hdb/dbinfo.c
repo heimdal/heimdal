@@ -46,9 +46,9 @@ struct hdb_dbinfo {
 
 static int
 get_dbinfo(krb5_context context,
-	   const krb5_config_binding *db_binding,
-	   const char *label,
-	   struct hdb_dbinfo **db)
+           const krb5_config_binding *db_binding,
+           const char *label,
+           struct hdb_dbinfo **db)
 {
     struct hdb_dbinfo *di;
     const char *p;
@@ -57,28 +57,28 @@ get_dbinfo(krb5_context context,
 
     p = krb5_config_get_string(context, db_binding, "dbname", NULL);
     if(p == NULL)
-	return 0;
+        return 0;
 
     di = calloc(1, sizeof(*di));
     if (di == NULL) {
-	krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
-	return ENOMEM;
+        krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
+        return ENOMEM;
     }
     di->label = strdup(label);
     di->dbname = strdup(p);
 
     p = krb5_config_get_string(context, db_binding, "realm", NULL);
     if(p)
-	di->realm = strdup(p);
+        di->realm = strdup(p);
     p = krb5_config_get_string(context, db_binding, "mkey_file", NULL);
     if(p)
-	di->mkey_file = strdup(p);
+        di->mkey_file = strdup(p);
     p = krb5_config_get_string(context, db_binding, "acl_file", NULL);
     if(p)
-	di->acl_file = strdup(p);
+        di->acl_file = strdup(p);
     p = krb5_config_get_string(context, db_binding, "log_file", NULL);
     if(p)
-	di->log_file = strdup(p);
+        di->log_file = strdup(p);
 
     di->binding = db_binding;
 
@@ -103,68 +103,68 @@ hdb_get_dbinfo(krb5_context context, struct hdb_dbinfo **dbp)
     databases = NULL;
 
     db_binding = krb5_config_get_list(context, NULL,
-				      "kdc",
-				      "database",
-				      NULL);
+                                      "kdc",
+                                      "database",
+                                      NULL);
     if (db_binding) {
 
-	ret = get_dbinfo(context, db_binding, "default", &databases);
-	if (ret == 0 && databases != NULL)
-	    dt = &databases->next;
+        ret = get_dbinfo(context, db_binding, "default", &databases);
+        if (ret == 0 && databases != NULL)
+            dt = &databases->next;
 
-	for ( ; db_binding != NULL; db_binding = db_binding->next) {
+        for ( ; db_binding != NULL; db_binding = db_binding->next) {
 
-	    if (db_binding->type != krb5_config_list)
-		continue;
+            if (db_binding->type != krb5_config_list)
+                continue;
 
-	    ret = get_dbinfo(context, db_binding->u.list,
-			     db_binding->name, &di);
-	    if (ret)
-		krb5_err(context, 1, ret, "failed getting realm");
+            ret = get_dbinfo(context, db_binding->u.list,
+                             db_binding->name, &di);
+            if (ret)
+                krb5_err(context, 1, ret, "failed getting realm");
 
-	    if (di == NULL)
-		continue;
+            if (di == NULL)
+                continue;
 
-	    if (dt)
-		*dt = di;
-	    else {
+            if (dt)
+                *dt = di;
+            else {
                 hdb_free_dbinfo(context, &databases);
-		databases = di;
+                databases = di;
             }
-	    dt = &di->next;
+            dt = &di->next;
 
-	}
+        }
     }
 
     if (databases == NULL) {
-	/* if there are none specified, create one and use defaults */
-	databases = calloc(1, sizeof(*databases));
-	databases->label = strdup("default");
+        /* if there are none specified, create one and use defaults */
+        databases = calloc(1, sizeof(*databases));
+        databases->label = strdup("default");
     }
 
     for (di = databases; di; di = di->next) {
-	if (di->dbname == NULL) {
-	    di->dbname = strdup(default_dbname);
-	    if (di->mkey_file == NULL)
-		di->mkey_file = strdup(default_mkey);
-	}
-	if (di->mkey_file == NULL) {
-	    p = strrchr(di->dbname, '.');
-	    if(p == NULL || strchr(p, '/') != NULL)
-		/* final pathname component does not contain a . */
-		ret = asprintf(&di->mkey_file, "%s.mkey", di->dbname);
-	    else
-		/* the filename is something.else, replace .else with
+        if (di->dbname == NULL) {
+            di->dbname = strdup(default_dbname);
+            if (di->mkey_file == NULL)
+                di->mkey_file = strdup(default_mkey);
+        }
+        if (di->mkey_file == NULL) {
+            p = strrchr(di->dbname, '.');
+            if(p == NULL || strchr(p, '/') != NULL)
+                /* final pathname component does not contain a . */
+                ret = asprintf(&di->mkey_file, "%s.mkey", di->dbname);
+            else
+                /* the filename is something.else, replace .else with
                    .mkey */
-		ret = asprintf(&di->mkey_file, "%.*s.mkey",
-			       (int)(p - di->dbname), di->dbname);
-	    if (ret == -1) {
+                ret = asprintf(&di->mkey_file, "%.*s.mkey",
+                               (int)(p - di->dbname), di->dbname);
+            if (ret == -1) {
                 hdb_free_dbinfo(context, &databases);
-		return ENOMEM;
+                return ENOMEM;
             }
-	}
-	if(di->acl_file == NULL)
-	    di->acl_file = strdup(default_acl);
+        }
+        if(di->acl_file == NULL)
+            di->acl_file = strdup(default_acl);
     }
     *dbp = databases;
     return 0;
@@ -175,9 +175,9 @@ struct hdb_dbinfo *
 hdb_dbinfo_get_next(struct hdb_dbinfo *dbp, struct hdb_dbinfo *dbprevp)
 {
     if (dbprevp == NULL)
-	return dbp;
+        return dbp;
     else
-	return dbprevp->next;
+        return dbprevp->next;
 }
 
 const char *
@@ -228,14 +228,14 @@ hdb_free_dbinfo(krb5_context context, struct hdb_dbinfo **dbp)
     struct hdb_dbinfo *di, *ndi;
 
     for(di = *dbp; di != NULL; di = ndi) {
-	ndi = di->next;
-	free (di->label);
-	free (di->realm);
-	free (di->dbname);
-	free (di->mkey_file);
-	free (di->acl_file);
-	free (di->log_file);
-	free(di);
+        ndi = di->next;
+        free (di->label);
+        free (di->realm);
+        free (di->dbname);
+        free (di->mkey_file);
+        free (di->acl_file);
+        free (di->log_file);
+        free(di);
     }
     *dbp = NULL;
 }
@@ -255,7 +255,7 @@ hdb_db_dir(krb5_context context)
 
     p = krb5_config_get_string(context, NULL, "hdb", "db-dir", NULL);
     if (p)
-	return p;
+        return p;
 
     return HDB_DB_DIR;
 }

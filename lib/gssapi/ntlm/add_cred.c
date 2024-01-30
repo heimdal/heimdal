@@ -34,27 +34,27 @@
 #include "ntlm.h"
 
 OM_uint32 GSSAPI_CALLCONV _gss_ntlm_add_cred (
-     OM_uint32           *minor_status,
-     gss_const_cred_id_t input_cred_handle,
-     gss_const_name_t    desired_name,
-     const gss_OID       desired_mech,
-     gss_cred_usage_t    cred_usage,
-     OM_uint32           initiator_time_req,
-     OM_uint32           acceptor_time_req,
-     gss_cred_id_t       *output_cred_handle,
-     gss_OID_set         *actual_mechs,
-     OM_uint32           *initiator_time_rec,
-     OM_uint32           *acceptor_time_rec)
+                                              OM_uint32           *minor_status,
+                                              gss_const_cred_id_t input_cred_handle,
+                                              gss_const_name_t    desired_name,
+                                              const gss_OID       desired_mech,
+                                              gss_cred_usage_t    cred_usage,
+                                              OM_uint32           initiator_time_req,
+                                              OM_uint32           acceptor_time_req,
+                                              gss_cred_id_t       *output_cred_handle,
+                                              gss_OID_set         *actual_mechs,
+                                              OM_uint32           *initiator_time_rec,
+                                              OM_uint32           *acceptor_time_rec)
 {
     if (minor_status)
-	*minor_status = 0;
+        *minor_status = 0;
     if (output_cred_handle)
-	*output_cred_handle = GSS_C_NO_CREDENTIAL;
+        *output_cred_handle = GSS_C_NO_CREDENTIAL;
     if (actual_mechs)
-	*actual_mechs = GSS_C_NO_OID_SET;
+        *actual_mechs = GSS_C_NO_OID_SET;
     if (initiator_time_rec)
-	*initiator_time_rec = 0;
+        *initiator_time_rec = 0;
     if (acceptor_time_rec)
-	*acceptor_time_rec = 0;
+        *acceptor_time_rec = 0;
     return GSS_S_COMPLETE;
 }

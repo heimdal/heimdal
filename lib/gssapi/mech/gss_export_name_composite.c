@@ -34,8 +34,8 @@
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_export_name_composite(OM_uint32 *minor_status,
-		          gss_name_t input_name,
-		          gss_buffer_t exp_composite_name)
+                          gss_name_t input_name,
+                          gss_buffer_t exp_composite_name)
 {
     OM_uint32 major_status = GSS_S_UNAVAILABLE;
     struct _gss_name *name = (struct _gss_name *) input_name;

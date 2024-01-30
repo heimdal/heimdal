@@ -34,14 +34,14 @@
 #include "gsskrb5_locl.h"
 
 OM_uint32 GSSAPI_CALLCONV _gsskrb5_inquire_cred_by_mech (
-    OM_uint32 * minor_status,
-	gss_const_cred_id_t cred_handle,
-	const gss_OID mech_type,
-	gss_name_t * name,
-	OM_uint32 * initiator_lifetime,
-	OM_uint32 * acceptor_lifetime,
-	gss_cred_usage_t * cred_usage
-    )
+                                                         OM_uint32 * minor_status,
+                                                         gss_const_cred_id_t cred_handle,
+                                                         const gss_OID mech_type,
+                                                         gss_name_t * name,
+                                                         OM_uint32 * initiator_lifetime,
+                                                         OM_uint32 * acceptor_lifetime,
+                                                         gss_cred_usage_t * cred_usage
+                                                        )
 {
     gss_cred_usage_t usage;
     OM_uint32 maj_stat;
@@ -52,27 +52,27 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_inquire_cred_by_mech (
      * terms of _gsskrb5_inquire_cred_by_mech(), NOT the other way around.
      */
     maj_stat =
-	_gsskrb5_inquire_cred (minor_status, cred_handle,
-			       name, &lifetime, &usage, NULL);
+        _gsskrb5_inquire_cred (minor_status, cred_handle,
+                               name, &lifetime, &usage, NULL);
     if (maj_stat)
-	return maj_stat;
+        return maj_stat;
 
     if (initiator_lifetime) {
-	if (usage == GSS_C_INITIATE || usage == GSS_C_BOTH)
-	    *initiator_lifetime = lifetime;
-	else
-	    *initiator_lifetime = 0;
+        if (usage == GSS_C_INITIATE || usage == GSS_C_BOTH)
+            *initiator_lifetime = lifetime;
+        else
+            *initiator_lifetime = 0;
     }
 
     if (acceptor_lifetime) {
-	if (usage == GSS_C_ACCEPT || usage == GSS_C_BOTH)
-	    *acceptor_lifetime = lifetime;
-	else
-	    *acceptor_lifetime = 0;
+        if (usage == GSS_C_ACCEPT || usage == GSS_C_BOTH)
+            *acceptor_lifetime = lifetime;
+        else
+            *acceptor_lifetime = 0;
     }
 
     if (cred_usage)
-	*cred_usage = usage;
+        *cred_usage = usage;
 
     return GSS_S_COMPLETE;
 }

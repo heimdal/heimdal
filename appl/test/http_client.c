@@ -59,22 +59,22 @@ do_connect (const char *hostname, const char *port)
 
     error = getaddrinfo (hostname, port, &hints, &ai);
     if (error)
-	errx (1, "getaddrinfo(%s): %s", hostname, gai_strerror(error));
+        errx (1, "getaddrinfo(%s): %s", hostname, gai_strerror(error));
 
     for (a = ai; a != NULL; a = a->ai_next) {
-	s = socket (a->ai_family, a->ai_socktype, a->ai_protocol);
-	if (s < 0)
-	    continue;
-	if (connect (s, a->ai_addr, a->ai_addrlen) < 0) {
-	    warn ("connect(%s)", hostname);
- 	    close (s);
- 	    continue;
-	}
-	break;
+        s = socket (a->ai_family, a->ai_socktype, a->ai_protocol);
+        if (s < 0)
+            continue;
+        if (connect (s, a->ai_addr, a->ai_addrlen) < 0) {
+            warn ("connect(%s)", hostname);
+            close (s);
+            continue;
+        }
+        break;
     }
     freeaddrinfo (ai);
     if (a == NULL)
-	errx (1, "failed to contact %s", hostname);
+        errx (1, "failed to contact %s", hostname);
 
     return s;
 }
@@ -92,18 +92,18 @@ fdprintf(int s, const char *fmt, ...)
     va_end(ap);
 
     if (str == NULL)
-	errx(1, "vasprintf");
+        errx(1, "vasprintf");
 
     buf = str;
     len = strlen(buf);
     while (len) {
-	ret = write(s, buf, len);
-	if (ret == 0)
-	    err(1, "connection closed");
-	else if (ret < 0)
-	    err(1, "error");
-	len -= ret;
-	buf += ret;
+        ret = write(s, buf, len);
+        if (ret == 0)
+            err(1, "connection closed");
+        else if (ret < 0)
+            err(1, "error");
+        len -= ret;
+        buf += ret;
     }
     free(str);
 }
@@ -169,7 +169,7 @@ http_req_free(struct http_req *req)
 
     free(req->response);
     for (i = 0; i < req->num_headers; i++)
-	free(req->headers[i]);
+        free(req->headers[i]);
     free(req->headers);
     free(req->body);
     http_req_zero(req);
@@ -181,9 +181,9 @@ http_find_header(struct http_req *req, const char *header)
     int i, len = strlen(header);
 
     for (i = 0; i < req->num_headers; i++) {
-	if (strncasecmp(header, req->headers[i], len) == 0) {
-	    return req->headers[i] + len + 1;
-	}
+        if (strncasecmp(header, req->headers[i], len) == 0) {
+            return req->headers[i] + len + 1;
+        }
     }
     return NULL;
 }
@@ -191,7 +191,7 @@ http_find_header(struct http_req *req, const char *header)
 
 static int
 http_query(const char *host, const char *page,
-	   char **headers, struct http_req *req)
+           char **headers, struct http_req *req)
 {
     enum { RESPONSE, HEADER, BODY } state;
     ssize_t ret;
@@ -203,82 +203,82 @@ http_query(const char *host, const char *page,
 
     s = do_connect(host, port_str);
     if (s < 0)
-	errx(1, "connection failed");
+        errx(1, "connection failed");
 
     fdprintf(s, "GET %s HTTP/1.0\r\n", page);
     for (i = 0; headers[i]; i++)
-	fdprintf(s, "%s\r\n", headers[i]);
+        fdprintf(s, "%s\r\n", headers[i]);
     fdprintf(s, "Host: %s\r\n\r\n", host);
 
     state = RESPONSE;
 
     while (1) {
-	ret = read (s, in_ptr, sizeof(in_buf) - in_len - 1);
-	if (ret == 0)
-	    break;
-	else if (ret < 0)
-	    err (1, "read: %lu", (unsigned long)ret);
+        ret = read (s, in_ptr, sizeof(in_buf) - in_len - 1);
+        if (ret == 0)
+            break;
+        else if (ret < 0)
+            err (1, "read: %lu", (unsigned long)ret);
 
-	in_buf[ret + in_len] = '\0';
+        in_buf[ret + in_len] = '\0';
 
-	if (state == HEADER || state == RESPONSE) {
-	    char *p;
+        if (state == HEADER || state == RESPONSE) {
+            char *p;
 
-	    in_len += ret;
-	    in_ptr += ret;
+            in_len += ret;
+            in_ptr += ret;
 
-	    while (1) {
-		p = strstr(in_buf, "\r\n");
+            while (1) {
+                p = strstr(in_buf, "\r\n");
 
-		if (p == NULL) {
-		    break;
-		} else if (p == in_buf) {
-		    memmove(in_buf, in_buf + 2, sizeof(in_buf) - 2);
-		    state = BODY;
-		    in_len -= 2;
-		    in_ptr -= 2;
-		    break;
-		} else if (state == RESPONSE) {
-		    req->response = emalloc(p - in_buf + 1);
-		    memcpy(req->response, in_buf, p - in_buf);
-		    req->response[p - in_buf] = '\0';
-		    state = HEADER;
-		} else {
-		    req->headers = realloc(req->headers,
-					   (req->num_headers + 1) * sizeof(req->headers[0]));
-		    req->headers[req->num_headers] = emalloc(p - in_buf + 1);
-		    memcpy(req->headers[req->num_headers], in_buf, p - in_buf);
-		    req->headers[req->num_headers][p - in_buf] = '\0';
-		    if (req->headers[req->num_headers] == NULL)
-			errx(1, "strdup");
-		    req->num_headers++;
-		}
-		memmove(in_buf, p + 2, sizeof(in_buf) - (p - in_buf) - 2);
-		in_len -= (p - in_buf) + 2;
-		in_ptr -= (p - in_buf) + 2;
-	    }
-	}
+                if (p == NULL) {
+                    break;
+                } else if (p == in_buf) {
+                    memmove(in_buf, in_buf + 2, sizeof(in_buf) - 2);
+                    state = BODY;
+                    in_len -= 2;
+                    in_ptr -= 2;
+                    break;
+                } else if (state == RESPONSE) {
+                    req->response = emalloc(p - in_buf + 1);
+                    memcpy(req->response, in_buf, p - in_buf);
+                    req->response[p - in_buf] = '\0';
+                    state = HEADER;
+                } else {
+                    req->headers = realloc(req->headers,
+                                           (req->num_headers + 1) * sizeof(req->headers[0]));
+                    req->headers[req->num_headers] = emalloc(p - in_buf + 1);
+                    memcpy(req->headers[req->num_headers], in_buf, p - in_buf);
+                    req->headers[req->num_headers][p - in_buf] = '\0';
+                    if (req->headers[req->num_headers] == NULL)
+                        errx(1, "strdup");
+                    req->num_headers++;
+                }
+                memmove(in_buf, p + 2, sizeof(in_buf) - (p - in_buf) - 2);
+                in_len -= (p - in_buf) + 2;
+                in_ptr -= (p - in_buf) + 2;
+            }
+        }
 
-	if (state == BODY) {
+        if (state == BODY) {
 
-	    req->body = erealloc(req->body, req->body_size + ret + 1);
+            req->body = erealloc(req->body, req->body_size + ret + 1);
 
-	    memcpy((char *)req->body + req->body_size, in_buf, ret);
-	    req->body_size += ret;
-	    ((char *)req->body)[req->body_size] = '\0';
+            memcpy((char *)req->body + req->body_size, in_buf, ret);
+            req->body_size += ret;
+            ((char *)req->body)[req->body_size] = '\0';
 
-	    in_ptr = in_buf;
-	    in_len = 0;
-	} else
-	    abort();
+            in_ptr = in_buf;
+            in_len = 0;
+        } else
+            abort();
     }
 
     if (verbose_flag) {
-	int i;
-	printf("response: %s\n", req->response);
-	for (i = 0; i < req->num_headers; i++)
-	    printf("header[%d] %s\n", i, req->headers[i]);
-	printf("body: %.*s\n", (int)req->body_size, (char *)req->body);
+        int i;
+        printf("response: %s\n", req->response);
+        for (i = 0; i < req->num_headers; i++)
+            printf("header[%d] %s\n", i, req->headers[i]);
+        printf("body: %.*s\n", (int)req->body_size, (char *)req->body);
     }
 
     close(s);
@@ -303,14 +303,14 @@ main(int argc, char **argv)
     setprogname(argv[0]);
 
     if(getarg(http_args, num_http_args, argc, argv, &optind))
-	usage(1);
+        usage(1);
 
     if (help_flag)
-	usage (0);
+        usage (0);
 
     if(version_flag) {
-	print_version(NULL);
-	exit(0);
+        print_version(NULL);
+        exit(0);
     }
 
     argc -= optind;
@@ -320,198 +320,198 @@ main(int argc, char **argv)
     mech_oid = select_mech(mech);
 
     if (argc != 1 && argc != 2)
-	errx(1, "usage: %s host [page]", getprogname());
+        errx(1, "usage: %s host [page]", getprogname());
     host = argv[0];
     if (argc == 2)
-	page = argv[1];
+        page = argv[1];
     else
-	page = "/";
+        page = "/";
 
     flags = 0;
     if (delegate_flag)
-	flags |= GSS_C_DELEG_FLAG;
+        flags |= GSS_C_DELEG_FLAG;
     if (mutual_flag)
-	flags |= GSS_C_MUTUAL_FLAG;
+        flags |= GSS_C_MUTUAL_FLAG;
 
     done = 0;
     num_headers = 0;
     gssapi_done = 1;
     gssapi_started = 0;
     do {
-	print_body = 0;
+        print_body = 0;
 
-	http_query(host, page, headers, &req);
-	for (i = 0 ; headers[i]; i++) {
-	    free(headers[i]);
-	    headers[i] = NULL;
-	}
-	num_headers = 0;
+        http_query(host, page, headers, &req);
+        for (i = 0 ; headers[i]; i++) {
+            free(headers[i]);
+            headers[i] = NULL;
+        }
+        num_headers = 0;
 
-	if (req.response == NULL)
-	    errx(1, "Got no response");
+        if (req.response == NULL)
+            errx(1, "Got no response");
 
-	if (strstr(req.response, " 200 ") != NULL) {
-	    print_body = 1;
-	    done = 1;
-	} else if (strstr(req.response, " 401 ") != NULL) {
-	    if (http_find_header(&req, "WWW-Authenticate:") == NULL)
-		errx(1, "Got %s but missed `WWW-Authenticate'", req.response);
-	    gssapi_done = 0;
-	}
+        if (strstr(req.response, " 200 ") != NULL) {
+            print_body = 1;
+            done = 1;
+        } else if (strstr(req.response, " 401 ") != NULL) {
+            if (http_find_header(&req, "WWW-Authenticate:") == NULL)
+                errx(1, "Got %s but missed `WWW-Authenticate'", req.response);
+            gssapi_done = 0;
+        }
 
-	if (!gssapi_done) {
-	    const char *h = http_find_header(&req, "WWW-Authenticate:");
-	    if (h == NULL)
-		errx(1, "Got %s but missed `WWW-Authenticate'", req.response);
+        if (!gssapi_done) {
+            const char *h = http_find_header(&req, "WWW-Authenticate:");
+            if (h == NULL)
+                errx(1, "Got %s but missed `WWW-Authenticate'", req.response);
 
-	    if (strncasecmp(h, "Negotiate", 9) == 0) {
-		OM_uint32 maj_stat, min_stat;
-		gss_buffer_desc input_token, output_token;
+            if (strncasecmp(h, "Negotiate", 9) == 0) {
+                OM_uint32 maj_stat, min_stat;
+                gss_buffer_desc input_token, output_token;
 
-		if (verbose_flag)
-		    printf("Negotiate found\n");
+                if (verbose_flag)
+                    printf("Negotiate found\n");
 
-		if (server == GSS_C_NO_NAME) {
-		    char *name;
-		    asprintf(&name, "%s@%s", gss_service, host);
-		    input_token.length = strlen(name);
-		    input_token.value = name;
+                if (server == GSS_C_NO_NAME) {
+                    char *name;
+                    asprintf(&name, "%s@%s", gss_service, host);
+                    input_token.length = strlen(name);
+                    input_token.value = name;
 
-		    maj_stat = gss_import_name(&min_stat,
-					       &input_token,
-					       GSS_C_NT_HOSTBASED_SERVICE,
-					       &server);
-		    if (GSS_ERROR(maj_stat))
-			gss_err (1, min_stat, "gss_inport_name");
-		    free(name);
-		    input_token.length = 0;
-		    input_token.value = NULL;
-		}
+                    maj_stat = gss_import_name(&min_stat,
+                                               &input_token,
+                                               GSS_C_NT_HOSTBASED_SERVICE,
+                                               &server);
+                    if (GSS_ERROR(maj_stat))
+                        gss_err (1, min_stat, "gss_inport_name");
+                    free(name);
+                    input_token.length = 0;
+                    input_token.value = NULL;
+                }
 
-		i = 9;
-		while(h[i] && isspace((unsigned char)h[i]))
-		    i++;
-		if (h[i] != '\0') {
-		    int len = strlen(&h[i]);
-		    if (len == 0)
-			errx(1, "invalid Negotiate token");
-		    input_token.value = emalloc(len);
-		    len = rk_base64_decode(&h[i], input_token.value);
-		    if (len < 0)
-			errx(1, "invalid base64 Negotiate token %s", &h[i]);
-		    input_token.length = len;
-		} else {
-		    if (gssapi_started)
-			errx(1, "Negotiate already started");
-		    gssapi_started = 1;
+                i = 9;
+                while(h[i] && isspace((unsigned char)h[i]))
+                    i++;
+                if (h[i] != '\0') {
+                    int len = strlen(&h[i]);
+                    if (len == 0)
+                        errx(1, "invalid Negotiate token");
+                    input_token.value = emalloc(len);
+                    len = rk_base64_decode(&h[i], input_token.value);
+                    if (len < 0)
+                        errx(1, "invalid base64 Negotiate token %s", &h[i]);
+                    input_token.length = len;
+                } else {
+                    if (gssapi_started)
+                        errx(1, "Negotiate already started");
+                    gssapi_started = 1;
 
-		    input_token.length = 0;
-		    input_token.value = NULL;
-		}
+                    input_token.length = 0;
+                    input_token.value = NULL;
+                }
 
-		maj_stat =
-		    gss_init_sec_context(&min_stat,
-					 GSS_C_NO_CREDENTIAL,
-					 &context_hdl,
-					 server,
-					 mech_oid,
-					 flags,
-					 0,
-					 GSS_C_NO_CHANNEL_BINDINGS,
-					 &input_token,
-					 NULL,
-					 &output_token,
-					 NULL,
-					 NULL);
-		if (GSS_ERROR(maj_stat))
-		    gss_err (1, min_stat, "gss_init_sec_context");
-		else if (maj_stat & GSS_S_CONTINUE_NEEDED)
-		    gssapi_done = 0;
-		else {
-		    gss_name_t targ_name, src_name;
-		    gss_buffer_desc name_buffer;
-		    gss_OID mech_type;
+                maj_stat =
+                    gss_init_sec_context(&min_stat,
+                                         GSS_C_NO_CREDENTIAL,
+                                         &context_hdl,
+                                         server,
+                                         mech_oid,
+                                         flags,
+                                         0,
+                                         GSS_C_NO_CHANNEL_BINDINGS,
+                                         &input_token,
+                                         NULL,
+                                         &output_token,
+                                         NULL,
+                                         NULL);
+                if (GSS_ERROR(maj_stat))
+                    gss_err (1, min_stat, "gss_init_sec_context");
+                else if (maj_stat & GSS_S_CONTINUE_NEEDED)
+                    gssapi_done = 0;
+                else {
+                    gss_name_t targ_name, src_name;
+                    gss_buffer_desc name_buffer;
+                    gss_OID mech_type;
 
-		    gssapi_done = 1;
+                    gssapi_done = 1;
 
-		    printf("Negotiate done: %s\n", mech);
+                    printf("Negotiate done: %s\n", mech);
 
-		    maj_stat = gss_inquire_context(&min_stat,
-						   context_hdl,
-						   &src_name,
-						   &targ_name,
-						   NULL,
-						   &mech_type,
-						   NULL,
-						   NULL,
-						   NULL);
-		    if (GSS_ERROR(maj_stat))
-			gss_err (1, min_stat, "gss_inquire_context");
+                    maj_stat = gss_inquire_context(&min_stat,
+                                                   context_hdl,
+                                                   &src_name,
+                                                   &targ_name,
+                                                   NULL,
+                                                   &mech_type,
+                                                   NULL,
+                                                   NULL,
+                                                   NULL);
+                    if (GSS_ERROR(maj_stat))
+                        gss_err (1, min_stat, "gss_inquire_context");
 
-		    maj_stat = gss_display_name(&min_stat,
-						src_name,
-						&name_buffer,
-						NULL);
-		    if (GSS_ERROR(maj_stat))
-			gss_err (1, min_stat, "gss_display_name");
+                    maj_stat = gss_display_name(&min_stat,
+                                                src_name,
+                                                &name_buffer,
+                                                NULL);
+                    if (GSS_ERROR(maj_stat))
+                        gss_err (1, min_stat, "gss_display_name");
 
-		    printf("Source: %.*s\n",
-			   (int)name_buffer.length,
-			   (char *)name_buffer.value);
+                    printf("Source: %.*s\n",
+                           (int)name_buffer.length,
+                           (char *)name_buffer.value);
 
-		    gss_release_buffer(&min_stat, &name_buffer);
+                    gss_release_buffer(&min_stat, &name_buffer);
 
-		    maj_stat = gss_display_name(&min_stat,
-						targ_name,
-						&name_buffer,
-						NULL);
-		    if (GSS_ERROR(maj_stat))
-			gss_err (1, min_stat, "gss_display_name");
+                    maj_stat = gss_display_name(&min_stat,
+                                                targ_name,
+                                                &name_buffer,
+                                                NULL);
+                    if (GSS_ERROR(maj_stat))
+                        gss_err (1, min_stat, "gss_display_name");
 
-		    printf("Target: %.*s\n",
-			   (int)name_buffer.length,
-			   (char *)name_buffer.value);
+                    printf("Target: %.*s\n",
+                           (int)name_buffer.length,
+                           (char *)name_buffer.value);
 
-		    gss_release_name(&min_stat, &targ_name);
-		    gss_release_buffer(&min_stat, &name_buffer);
-		}
+                    gss_release_name(&min_stat, &targ_name);
+                    gss_release_buffer(&min_stat, &name_buffer);
+                }
 
-		if (output_token.length) {
-		    char *neg_token;
+                if (output_token.length) {
+                    char *neg_token;
 
-		    rk_base64_encode(output_token.value,
-				     output_token.length,
-				     &neg_token);
+                    rk_base64_encode(output_token.value,
+                                     output_token.length,
+                                     &neg_token);
 
-		    asprintf(&headers[num_headers++], "Authorization: Negotiate %s",
-			     neg_token);
+                    asprintf(&headers[num_headers++], "Authorization: Negotiate %s",
+                             neg_token);
 
-		    free(neg_token);
-		    gss_release_buffer(&min_stat, &output_token);
-		}
-		if (input_token.length)
-		    free(input_token.value);
+                    free(neg_token);
+                    gss_release_buffer(&min_stat, &output_token);
+                }
+                if (input_token.length)
+                    free(input_token.value);
 
-	    } else
-		done = 1;
-	} else
-	    done = 1;
+            } else
+                done = 1;
+        } else
+            done = 1;
 
-	if (verbose_flag) {
-	    printf("%s\n\n", req.response);
+        if (verbose_flag) {
+            printf("%s\n\n", req.response);
 
-	    for (i = 0; i < req.num_headers; i++)
-		printf("%s\n", req.headers[i]);
-	    printf("\n");
-	}
-	if (print_body || verbose_flag)
-	    printf("%.*s\n", (int)req.body_size, (char *)req.body);
+            for (i = 0; i < req.num_headers; i++)
+                printf("%s\n", req.headers[i]);
+            printf("\n");
+        }
+        if (print_body || verbose_flag)
+            printf("%.*s\n", (int)req.body_size, (char *)req.body);
 
-	http_req_free(&req);
+        http_req_free(&req);
     } while (!done);
 
     if (gssapi_done == 0)
-	errx(1, "gssapi not done but http dance done");
+        errx(1, "gssapi not done but http dance done");
 
     return 0;
 }

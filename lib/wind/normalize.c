@@ -66,7 +66,7 @@ enum { n_count = v_count * t_count};
 
 static int
 hangul_decomp(const uint32_t *in, size_t in_len,
-	      uint32_t *out, size_t *out_len)
+              uint32_t *out, size_t *out_len)
 {
     uint32_t u = *in;
     unsigned s_index;
@@ -74,20 +74,20 @@ hangul_decomp(const uint32_t *in, size_t in_len,
     unsigned o;
 
     if (u < s_base || u >= s_base + s_count)
-	return 0;
+        return 0;
     s_index = u - s_base;
     l = l_base + s_index / n_count;
     v = v_base + (s_index % n_count) / t_count;
     t = t_base + s_index % t_count;
     o = 2;
     if (t != t_base)
-	++o;
+        ++o;
     if (*out_len < o)
-	return WIND_ERR_OVERRUN;
+        return WIND_ERR_OVERRUN;
     out[0] = l;
     out[1] = v;
     if (t != t_base)
-	out[2] = t;
+        out[2] = t;
     *out_len = o;
     return 1;
 }
@@ -96,69 +96,69 @@ static uint32_t
 hangul_composition(const uint32_t *in, size_t in_len)
 {
     if (in_len < 2)
-	return 0;
+        return 0;
     if (in[0] >= l_base && in[0] < l_base + l_count) {
-	unsigned l_index = in[0] - l_base;
-	unsigned v_index;
+        unsigned l_index = in[0] - l_base;
+        unsigned v_index;
 
-	if (in[1] < v_base || in[1] >= v_base + v_count)
-	    return 0;
-	v_index = in[1] - v_base;
-	return (l_index * v_count + v_index) * t_count + s_base;
+        if (in[1] < v_base || in[1] >= v_base + v_count)
+            return 0;
+        v_index = in[1] - v_base;
+        return (l_index * v_count + v_index) * t_count + s_base;
     } else if (in[0] >= s_base && in[0] < s_base + s_count) {
-	unsigned s_index = in[0] - s_base;
-	unsigned t_index;
+        unsigned s_index = in[0] - s_base;
+        unsigned t_index;
 
-	if (s_index % t_count != 0)
-	    return 0;
-	if (in[1] < t_base || in[1] >= t_base + t_count)
-	    return 0;
-	t_index = in[1] - t_base;
-	return in[0] + t_index;
+        if (s_index % t_count != 0)
+            return 0;
+        if (in[1] < t_base || in[1] >= t_base + t_count)
+            return 0;
+        t_index = in[1] - t_base;
+        return in[0] + t_index;
     }
     return 0;
 }
 
 static int
 compat_decomp(const uint32_t *in, size_t in_len,
-	      uint32_t *out, size_t *out_len)
+              uint32_t *out, size_t *out_len)
 {
     unsigned i;
     unsigned o = 0;
 
     for (i = 0; i < in_len; ++i) {
-	struct translation ts = {in[i], 0, 0};
-	size_t sub_len = *out_len - o;
-	int ret;
+        struct translation ts = {in[i], 0, 0};
+        size_t sub_len = *out_len - o;
+        int ret;
 
-	ret = hangul_decomp(in + i, in_len - i,
-			    out + o, &sub_len);
-	if (ret) {
-	    if (ret == WIND_ERR_OVERRUN)
-		return ret;
-	    o += sub_len;
-	} else {
-	    void *s = bsearch(&ts,
-			      _wind_normalize_table,
-			      _wind_normalize_table_size,
-			      sizeof(_wind_normalize_table[0]),
-			      translation_cmp);
-	    if (s != NULL) {
-		const struct translation *t = (const struct translation *)s;
+        ret = hangul_decomp(in + i, in_len - i,
+                            out + o, &sub_len);
+        if (ret) {
+            if (ret == WIND_ERR_OVERRUN)
+                return ret;
+            o += sub_len;
+        } else {
+            void *s = bsearch(&ts,
+                              _wind_normalize_table,
+                              _wind_normalize_table_size,
+                              sizeof(_wind_normalize_table[0]),
+                              translation_cmp);
+            if (s != NULL) {
+                const struct translation *t = (const struct translation *)s;
 
-		ret = compat_decomp(_wind_normalize_val_table + t->val_offset,
-				    t->val_len,
-				    out + o, &sub_len);
-		if (ret)
-		    return ret;
-		o += sub_len;
-	    } else {
-		if (o >= *out_len)
-		    return WIND_ERR_OVERRUN;
-		out[o++] = in[i];
+                ret = compat_decomp(_wind_normalize_val_table + t->val_offset,
+                                    t->val_len,
+                                    out + o, &sub_len);
+                if (ret)
+                    return ret;
+                o += sub_len;
+            } else {
+                if (o >= *out_len)
+                    return WIND_ERR_OVERRUN;
+                out[o++] = in[i];
 
-	    }
-	}
+            }
+        }
     }
     *out_len = o;
     return 0;
@@ -181,14 +181,14 @@ canonical_reorder_sequence(uint32_t * a, size_t len)
     size_t i, j;
 
     if (len <= 1)
-	return;
+        return;
 
     for (i = 1; i < len; i++) {
-	for (j = i;
-	     j > 0 &&
-		 _wind_combining_class(a[j]) < _wind_combining_class(a[j-1]);
-	     j--)
-	    swap_char(&a[j], &a[j-1]);
+        for (j = i;
+             j > 0 &&
+                _wind_combining_class(a[j]) < _wind_combining_class(a[j-1]);
+             j--)
+            swap_char(&a[j], &a[j-1]);
     }
 }
 
@@ -198,16 +198,16 @@ canonical_reorder(uint32_t *tmp, size_t tmp_len)
     size_t i;
 
     for (i = 0; i < tmp_len; ++i) {
-	int cc = _wind_combining_class(tmp[i]);
-	if (cc) {
-	    size_t j;
-	    for (j = i + 1;
-		 j < tmp_len && _wind_combining_class(tmp[j]);
-		 ++j)
-		;
-	    canonical_reorder_sequence(&tmp[i], j - i);
-	    i = j;
-	}
+        int cc = _wind_combining_class(tmp[i]);
+        if (cc) {
+            size_t j;
+            for (j = i + 1;
+                 j < tmp_len && _wind_combining_class(tmp[j]);
+                 ++j)
+                ;
+            canonical_reorder_sequence(&tmp[i], j - i);
+            i = j;
+        }
     }
 }
 
@@ -220,35 +220,35 @@ find_composition(const uint32_t *in, unsigned in_len)
 
     cur = hangul_composition(in, in_len);
     if (cur)
-	return cur;
+        return cur;
 
     do {
-	const struct canon_node *c = &_wind_canon_table[canon_index];
-	unsigned i;
+        const struct canon_node *c = &_wind_canon_table[canon_index];
+        unsigned i;
 
-	if (n % 5 == 0) {
-	    if (in_len-- == 0)
-		return c->val;
-	    cur = *in++;
-	}
+        if (n % 5 == 0) {
+            if (in_len-- == 0)
+                return c->val;
+            cur = *in++;
+        }
 
-	i = cur >> 16;
-	if (i < c->next_start || i >= c->next_end)
-	    canon_index = 0;
-	else
-	    canon_index =
-		_wind_canon_next_table[c->next_offset + i - c->next_start];
-	if (canon_index != 0) {
-	    cur = (cur << 4) & 0xFFFFF;
-	    ++n;
-	}
+        i = cur >> 16;
+        if (i < c->next_start || i >= c->next_end)
+            canon_index = 0;
+        else
+            canon_index =
+                _wind_canon_next_table[c->next_offset + i - c->next_start];
+        if (canon_index != 0) {
+            cur = (cur << 4) & 0xFFFFF;
+            ++n;
+        }
     } while (canon_index != 0);
     return 0;
 }
 
 static int
 combine(const uint32_t *in, size_t in_len,
-	uint32_t *out, size_t *out_len)
+        uint32_t *out, size_t *out_len)
 {
     unsigned i;
     int ostarter;
@@ -256,38 +256,38 @@ combine(const uint32_t *in, size_t in_len,
     int old_cc;
 
     for (i = 0; i < in_len;) {
-	while (i < in_len && _wind_combining_class(in[i]) != 0) {
-	    out[o++] = in[i++];
-	}
-	if (i < in_len) {
-	    if (o >= *out_len)
-		return WIND_ERR_OVERRUN;
-	    ostarter = o;
-	    out[o++] = in[i++];
-	    old_cc   = -1;
+        while (i < in_len && _wind_combining_class(in[i]) != 0) {
+            out[o++] = in[i++];
+        }
+        if (i < in_len) {
+            if (o >= *out_len)
+                return WIND_ERR_OVERRUN;
+            ostarter = o;
+            out[o++] = in[i++];
+            old_cc   = -1;
 
-	    while (i < in_len) {
-		uint32_t comb;
-		uint32_t v[2];
-		int cc;
+            while (i < in_len) {
+                uint32_t comb;
+                uint32_t v[2];
+                int cc;
 
-		v[0] = out[ostarter];
-		v[1] = in[i];
+                v[0] = out[ostarter];
+                v[1] = in[i];
 
-		cc = _wind_combining_class(in[i]);
-		if (old_cc != cc && (comb = find_composition(v, 2))) {
-		    out[ostarter] = comb;
-		} else if (cc == 0) {
-		    break;
-		} else {
-		    if (o >= *out_len)
-			return WIND_ERR_OVERRUN;
-		    out[o++] = in[i];
-		    old_cc   = cc;
-		}
-		++i;
-	    }
-	}
+                cc = _wind_combining_class(in[i]);
+                if (old_cc != cc && (comb = find_composition(v, 2))) {
+                    out[ostarter] = comb;
+                } else if (cc == 0) {
+                    break;
+                } else {
+                    if (o >= *out_len)
+                        return WIND_ERR_OVERRUN;
+                    out[o++] = in[i];
+                    old_cc   = cc;
+                }
+                ++i;
+            }
+        }
     }
     *out_len = o;
     return 0;
@@ -295,28 +295,28 @@ combine(const uint32_t *in, size_t in_len,
 
 int
 _wind_stringprep_normalize(const uint32_t *in, size_t in_len,
-			   uint32_t *out, size_t *out_len)
+                           uint32_t *out, size_t *out_len)
 {
     size_t tmp_len;
     uint32_t *tmp;
     int ret;
 
     if (in_len == 0) {
-	*out_len = 0;
-	return 0;
+        *out_len = 0;
+        return 0;
     }
 
     tmp_len = in_len * 4;
     if (tmp_len < MAX_LENGTH_CANON)
-	tmp_len = MAX_LENGTH_CANON;
+        tmp_len = MAX_LENGTH_CANON;
     tmp = malloc(tmp_len * sizeof(uint32_t));
     if (tmp == NULL)
-	return ENOMEM;
+        return ENOMEM;
 
     ret = compat_decomp(in, in_len, tmp, &tmp_len);
     if (ret) {
-	free(tmp);
-	return ret;
+        free(tmp);
+        return ret;
     }
     canonical_reorder(tmp, tmp_len);
     ret = combine(tmp, tmp_len, out, out_len);

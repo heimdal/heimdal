@@ -113,16 +113,16 @@ string_encode_sz(const char *in)
         char c = *(in++);
 
         switch (c) {
-        case '@':
-        case '.':
-        case '-':
-        case '_':
-        case '/':
-            continue;
-        default:
-            if (isalnum((unsigned char)c))
+            case '@':
+            case '.':
+            case '-':
+            case '_':
+            case '/':
                 continue;
-            sz += 2;
+            default:
+                if (isalnum((unsigned char)c))
+                    continue;
+                sz += 2;
         }
     }
     return sz;
@@ -144,21 +144,21 @@ string_encode(const char *in)
         unsigned char c = ((const unsigned char *)in)[i];
 
         switch (c) {
-        case '@':
-        case '.':
-        case '-':
-        case '_':
-        case '/':
-            s[k++] = c;
-            break;
-        default:
-            if (isalnum(c)) {
+            case '@':
+            case '.':
+            case '-':
+            case '_':
+            case '/':
                 s[k++] = c;
-            } else  {
-                s[k++] = '%';
-                s[k++] = "0123456789abcdef"[(c&0xff)>>4];
-                s[k++] = "0123456789abcdef"[(c&0x0f)];
-            }
+                break;
+            default:
+                if (isalnum(c)) {
+                    s[k++] = c;
+                } else  {
+                    s[k++] = '%';
+                    s[k++] = "0123456789abcdef"[(c&0xff)>>4];
+                    s[k++] = "0123456789abcdef"[(c&0x0f)];
+                }
         }
     }
     return s;
@@ -180,19 +180,19 @@ cmd_append(struct rk_strpool **cmd, const char *s0, ...)
 
         if ((s = string_encode(arg)) == NULL) {
             rk_strpoolfree(*cmd);
-	    *cmd = NULL;
-	    ret = ENOMEM;
-	    goto out;
-	}
+            *cmd = NULL;
+            ret = ENOMEM;
+            goto out;
+        }
         *cmd = rk_strpoolprintf(*cmd, "%s", s);
         free(s);
         if (*cmd == NULL) {
             ret = ENOMEM;
-	    goto out;
-	}
+            goto out;
+        }
     }
 
- out:
+out:
     va_end(ap);
     return ret;
 }
@@ -520,7 +520,7 @@ authorize(void *ctx,
                                          "ipc_csr_authorizer", "optional",
                                          NULL))
             return KRB5_PLUGIN_NO_HANDLE;
-	krb5_set_error_message(context, ret, "Could not set up IPC client "
+        krb5_set_error_message(context, ret, "Could not set up IPC client "
                                "end-point for service %s", svc);
         return ret;
     }
@@ -554,35 +554,35 @@ authorize(void *ctx,
             piecemeal_check_ok = 0;
 
         switch (san_type) {
-        case HX509_SAN_TYPE_EMAIL:
-            if ((ret = cmd_append(&cmd, " san_email=", s, NULL)))
-                goto enomem;
-            do_check = 1;
-            break;
-        case HX509_SAN_TYPE_DNSNAME:
-            if ((ret = cmd_append(&cmd, " san_dnsname=", s, NULL)))
-                goto enomem;
-            do_check = 1;
-            break;
-        case HX509_SAN_TYPE_XMPP:
-            if ((ret = cmd_append(&cmd, " san_xmpp=", s, NULL)))
-                goto enomem;
-            do_check = 1;
-            break;
-        case HX509_SAN_TYPE_PKINIT:
-            if ((ret = cmd_append(&cmd, " san_pkinit=", s, NULL)))
-                goto enomem;
-            do_check = 1;
-            break;
-        case HX509_SAN_TYPE_MS_UPN:
-            if ((ret = cmd_append(&cmd, " san_ms_upn=", s, NULL)))
-                goto enomem;
-            do_check = 1;
-            break;
-        default:
-            if ((ret = hx509_request_reject_san(csr, i)))
-                goto out;
-            break;
+            case HX509_SAN_TYPE_EMAIL:
+                if ((ret = cmd_append(&cmd, " san_email=", s, NULL)))
+                    goto enomem;
+                do_check = 1;
+                break;
+            case HX509_SAN_TYPE_DNSNAME:
+                if ((ret = cmd_append(&cmd, " san_dnsname=", s, NULL)))
+                    goto enomem;
+                do_check = 1;
+                break;
+            case HX509_SAN_TYPE_XMPP:
+                if ((ret = cmd_append(&cmd, " san_xmpp=", s, NULL)))
+                    goto enomem;
+                do_check = 1;
+                break;
+            case HX509_SAN_TYPE_PKINIT:
+                if ((ret = cmd_append(&cmd, " san_pkinit=", s, NULL)))
+                    goto enomem;
+                do_check = 1;
+                break;
+            case HX509_SAN_TYPE_MS_UPN:
+                if ((ret = cmd_append(&cmd, " san_ms_upn=", s, NULL)))
+                    goto enomem;
+                do_check = 1;
+                break;
+            default:
+                if ((ret = hx509_request_reject_san(csr, i)))
+                    goto out;
+                break;
         }
         frees(&s);
     }

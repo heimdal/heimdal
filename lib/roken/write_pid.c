@@ -70,11 +70,11 @@ pid_file_write(const char *progname)
 #endif
 
     if (asprintf(&ret, "%s%s%s.pid", pidfile_dir, sep, progname) < 0 || ret == NULL)
-	return NULL;
+        return NULL;
     fp = fopen(ret, "w");
     if (fp == NULL) {
-	free(ret);
-	return NULL;
+        free(ret);
+        return NULL;
     }
     fprintf(fp, "%lu\n", (unsigned long)getpid());
     fclose(fp);
@@ -85,9 +85,9 @@ ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
 pid_file_delete(char **filename)
 {
     if (*filename != NULL) {
-	unlink(*filename);
-	free(*filename);
-	*filename = NULL;
+        unlink(*filename);
+        free(*filename);
+        *filename = NULL;
     }
 }
 
@@ -98,7 +98,7 @@ static void
 pidfile_cleanup(void)
 {
     if (pidfile_path != NULL && pidfile_pid == getpid())
-	pid_file_delete(&pidfile_path);
+        pid_file_delete(&pidfile_path);
 }
 
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
@@ -114,9 +114,9 @@ rk_pidfile(const char *bname)
 #endif
 
     if (pidfile_path != NULL)
-	return;
+        return;
     if (bname == NULL)
-	bname = getprogname();
+        bname = getprogname();
     pidfile_path = pid_file_write(bname);
     pidfile_pid = getpid();
 #if defined(HAVE_ATEXIT)

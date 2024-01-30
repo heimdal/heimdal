@@ -35,34 +35,34 @@
 
 OM_uint32 GSSAPI_CALLCONV
 _gss_ntlm_inquire_context (
-            OM_uint32 * minor_status,
-            gss_const_ctx_id_t context_handle,
-            gss_name_t * src_name,
-            gss_name_t * targ_name,
-            OM_uint32 * lifetime_rec,
-            gss_OID * mech_type,
-            OM_uint32 * ctx_flags,
-            int * locally_initiated,
-            int * open_context
-           )
+                           OM_uint32 * minor_status,
+                           gss_const_ctx_id_t context_handle,
+                           gss_name_t * src_name,
+                           gss_name_t * targ_name,
+                           OM_uint32 * lifetime_rec,
+                           gss_OID * mech_type,
+                           OM_uint32 * ctx_flags,
+                           int * locally_initiated,
+                           int * open_context
+                          )
 {
     ntlm_ctx ctx = (ntlm_ctx)context_handle;
 
     *minor_status = 0;
     if (src_name)
-	*src_name = GSS_C_NO_NAME;
+        *src_name = GSS_C_NO_NAME;
     if (targ_name)
-	*targ_name = GSS_C_NO_NAME;
+        *targ_name = GSS_C_NO_NAME;
     if (lifetime_rec)
-	*lifetime_rec = GSS_C_INDEFINITE;
+        *lifetime_rec = GSS_C_INDEFINITE;
     if (mech_type)
-	*mech_type = GSS_NTLM_MECHANISM;
+        *mech_type = GSS_NTLM_MECHANISM;
     if (ctx_flags)
-	*ctx_flags = ctx->gssflags;
+        *ctx_flags = ctx->gssflags;
     if (locally_initiated)
-	*locally_initiated = (ctx->status & STATUS_CLIENT) ? 1 : 0;
+        *locally_initiated = (ctx->status & STATUS_CLIENT) ? 1 : 0;
     if (open_context)
-	*open_context = (ctx->status & STATUS_OPEN) ? 1 : 0;
+        *open_context = (ctx->status & STATUS_OPEN) ? 1 : 0;
 
     return GSS_S_COMPLETE;
 }

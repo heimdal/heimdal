@@ -44,18 +44,18 @@ kcm_is_same_session(kcm_client *client, uid_t uid, pid_t session)
 {
 #if 0 /* XXX pppd is running in diffrent session the user */
     if (session != -1)
-	return (client->session == session);
+        return (client->session == session);
     else
 #endif
-	return  (client->uid == uid);
+        return  (client->uid == uid);
 }
 
 static krb5_error_code
 kcm_op_noop(krb5_context context,
-	    kcm_client *client,
-	    kcm_operation opcode,
-	    krb5_storage *request,
-	    krb5_storage *response)
+            kcm_client *client,
+            kcm_operation opcode,
+            krb5_storage *request,
+            krb5_storage *response)
 {
     KCM_LOG_REQUEST(context, client, opcode);
 
@@ -71,10 +71,10 @@ kcm_op_noop(krb5_context context,
  */
 static krb5_error_code
 kcm_op_get_name(krb5_context context,
-		kcm_client *client,
-		kcm_operation opcode,
-		krb5_storage *request,
-		krb5_storage *response)
+                kcm_client *client,
+                kcm_operation opcode,
+                krb5_storage *request,
+                krb5_storage *response)
 
 {
     krb5_error_code ret;
@@ -83,22 +83,22 @@ kcm_op_get_name(krb5_context context,
 
     ret = krb5_ret_stringz(request, &name);
     if (ret)
-	return ret;
+        return ret;
 
     KCM_LOG_REQUEST_NAME(context, client, opcode, name);
 
     ret = kcm_ccache_resolve_client(context, client, opcode,
-				    name, &ccache);
+                                    name, &ccache);
     if (ret) {
-	free(name);
-	return ret;
+        free(name);
+        return ret;
     }
 
     ret = krb5_store_stringz(response, ccache->name);
     if (ret) {
-	kcm_release_ccache(context, ccache);
-	free(name);
-	return ret;
+        kcm_release_ccache(context, ccache);
+        free(name);
+        return ret;
     }
 
     free(name);
@@ -114,10 +114,10 @@ kcm_op_get_name(krb5_context context,
  */
 static krb5_error_code
 kcm_op_gen_new(krb5_context context,
-	       kcm_client *client,
-	       kcm_operation opcode,
-	       krb5_storage *request,
-	       krb5_storage *response)
+               kcm_client *client,
+               kcm_operation opcode,
+               krb5_storage *request,
+               krb5_storage *response)
 {
     krb5_error_code ret;
     char *name;
@@ -126,7 +126,7 @@ kcm_op_gen_new(krb5_context context,
 
     name = kcm_ccache_nextid(client->pid, client->uid, client->gid);
     if (name == NULL) {
-	return KRB5_CC_NOMEM;
+        return KRB5_CC_NOMEM;
     }
 
     ret = krb5_store_stringz(response, name);
@@ -145,10 +145,10 @@ kcm_op_gen_new(krb5_context context,
  */
 static krb5_error_code
 kcm_op_initialize(krb5_context context,
-		  kcm_client *client,
-		  kcm_operation opcode,
-		  krb5_storage *request,
-		  krb5_storage *response)
+                  kcm_client *client,
+                  kcm_operation opcode,
+                  krb5_storage *request,
+                  krb5_storage *response)
 {
     kcm_ccache ccache;
     krb5_principal principal;
@@ -162,19 +162,19 @@ kcm_op_initialize(krb5_context context,
 
     ret = krb5_ret_stringz(request, &name);
     if (ret)
-	return ret;
+        return ret;
 
     ret = krb5_ret_principal(request, &principal);
     if (ret) {
-	free(name);
-	return ret;
+        free(name);
+        return ret;
     }
 
     ret = kcm_ccache_new_client(context, client, name, &ccache);
     if (ret) {
-	free(name);
-	krb5_free_principal(context, principal);
-	return ret;
+        free(name);
+        krb5_free_principal(context, principal);
+        return ret;
     }
 
     ccache->client = principal;
@@ -211,23 +211,23 @@ kcm_op_initialize(krb5_context context,
  */
 static krb5_error_code
 kcm_op_destroy(krb5_context context,
-	       kcm_client *client,
-	       kcm_operation opcode,
-	       krb5_storage *request,
-	       krb5_storage *response)
+               kcm_client *client,
+               kcm_operation opcode,
+               krb5_storage *request,
+               krb5_storage *response)
 {
     krb5_error_code ret;
     char *name;
 
     ret = krb5_ret_stringz(request, &name);
     if (ret)
-	return ret;
+        return ret;
 
     KCM_LOG_REQUEST_NAME(context, client, opcode, name);
 
     ret = kcm_ccache_destroy_client(context, client, name);
     if (ret == 0)
-	kcm_drop_default_cache(context, client, name);
+        kcm_drop_default_cache(context, client, name);
 
     free(name);
 
@@ -244,10 +244,10 @@ kcm_op_destroy(krb5_context context,
  */
 static krb5_error_code
 kcm_op_store(krb5_context context,
-	     kcm_client *client,
-	     kcm_operation opcode,
-	     krb5_storage *request,
-	     krb5_storage *response)
+             kcm_client *client,
+             kcm_operation opcode,
+             krb5_storage *request,
+             krb5_storage *response)
 {
     krb5_creds creds;
     krb5_error_code ret;
@@ -256,30 +256,30 @@ kcm_op_store(krb5_context context,
 
     ret = krb5_ret_stringz(request, &name);
     if (ret)
-	return ret;
+        return ret;
 
     KCM_LOG_REQUEST_NAME(context, client, opcode, name);
 
     ret = krb5_ret_creds(request, &creds);
     if (ret) {
-	free(name);
-	return ret;
+        free(name);
+        return ret;
     }
 
     ret = kcm_ccache_resolve_client(context, client, opcode,
-				    name, &ccache);
+                                    name, &ccache);
     if (ret) {
-	free(name);
-	krb5_free_cred_contents(context, &creds);
-	return ret;
+        free(name);
+        krb5_free_cred_contents(context, &creds);
+        return ret;
     }
 
     ret = kcm_ccache_store_cred(context, ccache, &creds, 0);
     if (ret) {
-	free(name);
-	krb5_free_cred_contents(context, &creds);
-	kcm_release_ccache(context, ccache);
-	return ret;
+        free(name);
+        krb5_free_cred_contents(context, &creds);
+        kcm_release_ccache(context, ccache);
+        return ret;
     }
 
     kcm_ccache_enqueue_default(context, ccache, &creds);
@@ -302,10 +302,10 @@ kcm_op_store(krb5_context context,
  */
 static krb5_error_code
 kcm_op_retrieve(krb5_context context,
-		kcm_client *client,
-		kcm_operation opcode,
-		krb5_storage *request,
-		krb5_storage *response)
+                kcm_client *client,
+                kcm_operation opcode,
+                krb5_storage *request,
+                krb5_storage *response)
 {
     uint32_t flags;
     krb5_creds mcreds;
@@ -317,61 +317,61 @@ kcm_op_retrieve(krb5_context context,
 
     ret = krb5_ret_stringz(request, &name);
     if (ret)
-	return ret;
+        return ret;
 
     KCM_LOG_REQUEST_NAME(context, client, opcode, name);
 
     ret = krb5_ret_uint32(request, &flags);
     if (ret) {
-	free(name);
-	return ret;
+        free(name);
+        return ret;
     }
 
     ret = krb5_ret_creds_tag(request, &mcreds);
     if (ret) {
-	free(name);
-	return ret;
+        free(name);
+        return ret;
     }
 
     if (disallow_getting_krbtgt &&
-	mcreds.server->name.name_string.len == 2 &&
-	strcmp(mcreds.server->name.name_string.val[0], KRB5_TGS_NAME) == 0)
+        mcreds.server->name.name_string.len == 2 &&
+        strcmp(mcreds.server->name.name_string.val[0], KRB5_TGS_NAME) == 0)
     {
-	free(name);
-	krb5_free_cred_contents(context, &mcreds);
-	return KRB5_FCC_PERM;
+        free(name);
+        krb5_free_cred_contents(context, &mcreds);
+        return KRB5_FCC_PERM;
     }
 
     ret = kcm_ccache_resolve_client(context, client, opcode,
-				    name, &ccache);
+                                    name, &ccache);
     if (ret) {
-	free(name);
-	krb5_free_cred_contents(context, &mcreds);
-	return ret;
+        free(name);
+        krb5_free_cred_contents(context, &mcreds);
+        return ret;
     }
 
     ret = kcm_ccache_retrieve_cred(context, ccache, flags,
-				   &mcreds, &credp);
+                                   &mcreds, &credp);
     if (ret && ((flags & KRB5_GC_CACHED) == 0) &&
-	!krb5_is_config_principal(context, mcreds.server)) {
-	krb5_ccache_data ccdata;
+        !krb5_is_config_principal(context, mcreds.server)) {
+        krb5_ccache_data ccdata;
 
-	/* try and acquire */
-	HEIMDAL_MUTEX_lock(&ccache->mutex);
+        /* try and acquire */
+        HEIMDAL_MUTEX_lock(&ccache->mutex);
 
-	/* Fake up an internal ccache */
-	kcm_internal_ccache(context, ccache, &ccdata);
+        /* Fake up an internal ccache */
+        kcm_internal_ccache(context, ccache, &ccdata);
 
-	/* glue cc layer will store creds */
-	ret = krb5_get_credentials(context, 0, &ccdata, &mcreds, &credp);
-	if (ret == 0)
-	    free_creds = 1;
+        /* glue cc layer will store creds */
+        ret = krb5_get_credentials(context, 0, &ccdata, &mcreds, &credp);
+        if (ret == 0)
+            free_creds = 1;
 
-	HEIMDAL_MUTEX_unlock(&ccache->mutex);
+        HEIMDAL_MUTEX_unlock(&ccache->mutex);
     }
 
     if (ret == 0) {
-	ret = krb5_store_creds(response, credp);
+        ret = krb5_store_creds(response, credp);
     }
 
     free(name);
@@ -379,7 +379,7 @@ kcm_op_retrieve(krb5_context context,
     kcm_release_ccache(context, ccache);
 
     if (free_creds)
-	krb5_free_cred_contents(context, credp);
+        krb5_free_cred_contents(context, credp);
 
     return ret;
 }
@@ -393,10 +393,10 @@ kcm_op_retrieve(krb5_context context,
  */
 static krb5_error_code
 kcm_op_get_principal(krb5_context context,
-		     kcm_client *client,
-		     kcm_operation opcode,
-		     krb5_storage *request,
-		     krb5_storage *response)
+                     kcm_client *client,
+                     kcm_operation opcode,
+                     krb5_storage *request,
+                     krb5_storage *response)
 {
     krb5_error_code ret;
     kcm_ccache ccache;
@@ -404,21 +404,21 @@ kcm_op_get_principal(krb5_context context,
 
     ret = krb5_ret_stringz(request, &name);
     if (ret)
-	return ret;
+        return ret;
 
     KCM_LOG_REQUEST_NAME(context, client, opcode, name);
 
     ret = kcm_ccache_resolve_client(context, client, opcode,
-				    name, &ccache);
+                                    name, &ccache);
     if (ret) {
-	free(name);
-	return ret;
+        free(name);
+        return ret;
     }
 
     if (ccache->client == NULL)
-	ret = KRB5_CC_NOTFOUND;
+        ret = KRB5_CC_NOTFOUND;
     else
-	ret = krb5_store_principal(response, ccache->client);
+        ret = krb5_store_principal(response, ccache->client);
 
     free(name);
     kcm_release_ccache(context, ccache);
@@ -436,10 +436,10 @@ kcm_op_get_principal(krb5_context context,
  */
 static krb5_error_code
 kcm_op_get_cred_uuid_list(krb5_context context,
-			  kcm_client *client,
-			  kcm_operation opcode,
-			  krb5_storage *request,
-			  krb5_storage *response)
+                          kcm_client *client,
+                          kcm_operation opcode,
+                          krb5_storage *request,
+                          krb5_storage *response)
 {
     struct kcm_creds *creds;
     krb5_error_code ret;
@@ -448,23 +448,23 @@ kcm_op_get_cred_uuid_list(krb5_context context,
 
     ret = krb5_ret_stringz(request, &name);
     if (ret)
-	return ret;
+        return ret;
 
     KCM_LOG_REQUEST_NAME(context, client, opcode, name);
 
     ret = kcm_ccache_resolve_client(context, client, opcode,
-				    name, &ccache);
+                                    name, &ccache);
     free(name);
     if (ret)
-	return ret;
+        return ret;
 
     for (creds = ccache->creds ; creds ; creds = creds->next) {
-	ssize_t sret;
-	sret = krb5_storage_write(response, &creds->uuid, sizeof(creds->uuid));
-	if (sret != sizeof(creds->uuid)) {
-	    ret = ENOMEM;
-	    break;
-	}
+        ssize_t sret;
+        sret = krb5_storage_write(response, &creds->uuid, sizeof(creds->uuid));
+        if (sret != sizeof(creds->uuid)) {
+            ret = ENOMEM;
+            break;
+        }
     }
 
     kcm_release_ccache(context, ccache);
@@ -482,10 +482,10 @@ kcm_op_get_cred_uuid_list(krb5_context context,
  */
 static krb5_error_code
 kcm_op_get_cred_by_uuid(krb5_context context,
-			kcm_client *client,
-			kcm_operation opcode,
-			krb5_storage *request,
-			krb5_storage *response)
+                        kcm_client *client,
+                        kcm_operation opcode,
+                        krb5_storage *request,
+                        krb5_storage *response)
 {
     krb5_error_code ret;
     kcm_ccache ccache;
@@ -496,27 +496,27 @@ kcm_op_get_cred_by_uuid(krb5_context context,
 
     ret = krb5_ret_stringz(request, &name);
     if (ret)
-	return ret;
+        return ret;
 
     KCM_LOG_REQUEST_NAME(context, client, opcode, name);
 
     ret = kcm_ccache_resolve_client(context, client, opcode,
-				    name, &ccache);
+                                    name, &ccache);
     free(name);
     if (ret)
-	return ret;
+        return ret;
 
     sret = krb5_storage_read(request, &uuid, sizeof(uuid));
     if (sret != sizeof(uuid)) {
-	kcm_release_ccache(context, ccache);
-	krb5_clear_error_message(context);
-	return KRB5_CC_IO;
+        kcm_release_ccache(context, ccache);
+        krb5_clear_error_message(context);
+        return KRB5_CC_IO;
     }
 
     c = kcm_ccache_find_cred_uuid(context, ccache, uuid);
     if (c == NULL) {
-	kcm_release_ccache(context, ccache);
-	return KRB5_CC_END;
+        kcm_release_ccache(context, ccache);
+        return KRB5_CC_END;
     }
 
     HEIMDAL_MUTEX_lock(&ccache->mutex);
@@ -539,10 +539,10 @@ kcm_op_get_cred_by_uuid(krb5_context context,
  */
 static krb5_error_code
 kcm_op_remove_cred(krb5_context context,
-		   kcm_client *client,
-		   kcm_operation opcode,
-		   krb5_storage *request,
-		   krb5_storage *response)
+                   kcm_client *client,
+                   kcm_operation opcode,
+                   krb5_storage *request,
+                   krb5_storage *response)
 {
     uint32_t whichfields;
     krb5_creds mcreds;
@@ -552,28 +552,28 @@ kcm_op_remove_cred(krb5_context context,
 
     ret = krb5_ret_stringz(request, &name);
     if (ret)
-	return ret;
+        return ret;
 
     KCM_LOG_REQUEST_NAME(context, client, opcode, name);
 
     ret = krb5_ret_uint32(request, &whichfields);
     if (ret) {
-	free(name);
-	return ret;
+        free(name);
+        return ret;
     }
 
     ret = krb5_ret_creds_tag(request, &mcreds);
     if (ret) {
-	free(name);
-	return ret;
+        free(name);
+        return ret;
     }
 
     ret = kcm_ccache_resolve_client(context, client, opcode,
-				    name, &ccache);
+                                    name, &ccache);
     if (ret) {
-	free(name);
-	krb5_free_cred_contents(context, &mcreds);
-	return ret;
+        free(name);
+        krb5_free_cred_contents(context, &mcreds);
+        return ret;
     }
 
     ret = kcm_ccache_remove_cred(context, ccache, whichfields, &mcreds);
@@ -597,10 +597,10 @@ kcm_op_remove_cred(krb5_context context,
  */
 static krb5_error_code
 kcm_op_set_flags(krb5_context context,
-		 kcm_client *client,
-		 kcm_operation opcode,
-		 krb5_storage *request,
-		 krb5_storage *response)
+                 kcm_client *client,
+                 kcm_operation opcode,
+                 krb5_storage *request,
+                 krb5_storage *response)
 {
     uint32_t flags;
     krb5_error_code ret;
@@ -609,21 +609,21 @@ kcm_op_set_flags(krb5_context context,
 
     ret = krb5_ret_stringz(request, &name);
     if (ret)
-	return ret;
+        return ret;
 
     KCM_LOG_REQUEST_NAME(context, client, opcode, name);
 
     ret = krb5_ret_uint32(request, &flags);
     if (ret) {
-	free(name);
-	return ret;
+        free(name);
+        return ret;
     }
 
     ret = kcm_ccache_resolve_client(context, client, opcode,
-				    name, &ccache);
+                                    name, &ccache);
     if (ret) {
-	free(name);
-	return ret;
+        free(name);
+        return ret;
     }
 
     /* we don't really support any flags yet */
@@ -644,10 +644,10 @@ kcm_op_set_flags(krb5_context context,
  */
 static krb5_error_code
 kcm_op_chown(krb5_context context,
-	     kcm_client *client,
-	     kcm_operation opcode,
-	     krb5_storage *request,
-	     krb5_storage *response)
+             kcm_client *client,
+             kcm_operation opcode,
+             krb5_storage *request,
+             krb5_storage *response)
 {
     uint32_t uid;
     uint32_t gid;
@@ -657,27 +657,27 @@ kcm_op_chown(krb5_context context,
 
     ret = krb5_ret_stringz(request, &name);
     if (ret)
-	return ret;
+        return ret;
 
     KCM_LOG_REQUEST_NAME(context, client, opcode, name);
 
     ret = krb5_ret_uint32(request, &uid);
     if (ret) {
-	free(name);
-	return ret;
+        free(name);
+        return ret;
     }
 
     ret = krb5_ret_uint32(request, &gid);
     if (ret) {
-	free(name);
-	return ret;
+        free(name);
+        return ret;
     }
 
     ret = kcm_ccache_resolve_client(context, client, opcode,
-				    name, &ccache);
+                                    name, &ccache);
     if (ret) {
-	free(name);
-	return ret;
+        free(name);
+        return ret;
     }
 
     ret = kcm_chown(context, client, ccache, uid, gid);
@@ -698,10 +698,10 @@ kcm_op_chown(krb5_context context,
  */
 static krb5_error_code
 kcm_op_chmod(krb5_context context,
-	     kcm_client *client,
-	     kcm_operation opcode,
-	     krb5_storage *request,
-	     krb5_storage *response)
+             kcm_client *client,
+             kcm_operation opcode,
+             krb5_storage *request,
+             krb5_storage *response)
 {
     uint16_t mode;
     krb5_error_code ret;
@@ -710,21 +710,21 @@ kcm_op_chmod(krb5_context context,
 
     ret = krb5_ret_stringz(request, &name);
     if (ret)
-	return ret;
+        return ret;
 
     KCM_LOG_REQUEST_NAME(context, client, opcode, name);
 
     ret = krb5_ret_uint16(request, &mode);
     if (ret) {
-	free(name);
-	return ret;
+        free(name);
+        return ret;
     }
 
     ret = kcm_ccache_resolve_client(context, client, opcode,
-				    name, &ccache);
+                                    name, &ccache);
     if (ret) {
-	free(name);
-	return ret;
+        free(name);
+        return ret;
     }
 
     ret = kcm_chmod(context, client, ccache, mode);
@@ -752,10 +752,10 @@ kcm_op_chmod(krb5_context context,
  */
 static krb5_error_code
 kcm_op_get_initial_ticket(krb5_context context,
-			  kcm_client *client,
-			  kcm_operation opcode,
-			  krb5_storage *request,
-			  krb5_storage *response)
+                          kcm_client *client,
+                          kcm_operation opcode,
+                          krb5_storage *request,
+                          krb5_storage *response)
 {
     krb5_error_code ret;
     kcm_ccache ccache;
@@ -768,63 +768,63 @@ kcm_op_get_initial_ticket(krb5_context context,
 
     ret = krb5_ret_stringz(request, &name);
     if (ret)
-	return ret;
+        return ret;
 
     KCM_LOG_REQUEST_NAME(context, client, opcode, name);
 
     ret = krb5_ret_int8(request, &not_tgt);
     if (ret) {
-	free(name);
-	return ret;
+        free(name);
+        return ret;
     }
 
     if (not_tgt) {
-	ret = krb5_ret_principal(request, &server);
-	if (ret) {
-	    free(name);
-	    return ret;
-	}
+        ret = krb5_ret_principal(request, &server);
+        if (ret) {
+            free(name);
+            return ret;
+        }
     }
 
     ret = krb5_ret_keyblock(request, &key);
     if (ret) {
-	free(name);
-	if (server != NULL)
-	    krb5_free_principal(context, server);
-	return ret;
+        free(name);
+        if (server != NULL)
+            krb5_free_principal(context, server);
+        return ret;
     }
 
     ret = kcm_ccache_resolve_client(context, client, opcode,
-				    name, &ccache);
+                                    name, &ccache);
     if (ret == 0) {
-	HEIMDAL_MUTEX_lock(&ccache->mutex);
+        HEIMDAL_MUTEX_lock(&ccache->mutex);
 
-	if (ccache->server != NULL) {
-	    krb5_free_principal(context, ccache->server);
-	    ccache->server = NULL;
-	}
+        if (ccache->server != NULL) {
+            krb5_free_principal(context, ccache->server);
+            ccache->server = NULL;
+        }
 
-	krb5_free_keyblock(context, &ccache->key.keyblock);
+        krb5_free_keyblock(context, &ccache->key.keyblock);
 
-	ccache->server = server;
-	ccache->key.keyblock = key;
-    	ccache->flags |= KCM_FLAGS_USE_CACHED_KEY;
+        ccache->server = server;
+        ccache->key.keyblock = key;
+        ccache->flags |= KCM_FLAGS_USE_CACHED_KEY;
 
-	ret = kcm_ccache_enqueue_default(context, ccache, NULL);
-	if (ret) {
-	    ccache->server = NULL;
-	    krb5_keyblock_zero(&ccache->key.keyblock);
-	    ccache->flags &= ~(KCM_FLAGS_USE_CACHED_KEY);
-	}
+        ret = kcm_ccache_enqueue_default(context, ccache, NULL);
+        if (ret) {
+            ccache->server = NULL;
+            krb5_keyblock_zero(&ccache->key.keyblock);
+            ccache->flags &= ~(KCM_FLAGS_USE_CACHED_KEY);
+        }
 
-	HEIMDAL_MUTEX_unlock(&ccache->mutex);
+        HEIMDAL_MUTEX_unlock(&ccache->mutex);
     }
 
     free(name);
 
     if (ret != 0) {
-	krb5_free_principal(context, server);
-	krb5_free_keyblock_contents(context, &key);
+        krb5_free_principal(context, server);
+        krb5_free_keyblock_contents(context, &key);
     }
 
     kcm_release_ccache(context, ccache);
@@ -844,10 +844,10 @@ kcm_op_get_initial_ticket(krb5_context context,
  */
 static krb5_error_code
 kcm_op_get_ticket(krb5_context context,
-		  kcm_client *client,
-		  kcm_operation opcode,
-		  krb5_storage *request,
-		  krb5_storage *response)
+                  kcm_client *client,
+                  kcm_operation opcode,
+                  krb5_storage *request,
+                  krb5_storage *response)
 {
     krb5_error_code ret;
     kcm_ccache ccache;
@@ -861,34 +861,34 @@ kcm_op_get_ticket(krb5_context context,
 
     ret = krb5_ret_stringz(request, &name);
     if (ret)
-	return ret;
+        return ret;
 
     KCM_LOG_REQUEST_NAME(context, client, opcode, name);
 
     ret = krb5_ret_uint32(request, &flags.i);
     if (ret) {
-	free(name);
-	return ret;
+        free(name);
+        return ret;
     }
 
     ret = krb5_ret_int32(request, &in.session.keytype);
     if (ret) {
-	free(name);
-	return ret;
+        free(name);
+        return ret;
     }
 
     ret = krb5_ret_principal(request, &server);
     if (ret) {
-	free(name);
-	return ret;
+        free(name);
+        return ret;
     }
 
     ret = kcm_ccache_resolve_client(context, client, opcode,
-				    name, &ccache);
+                                    name, &ccache);
     if (ret) {
-	krb5_free_principal(context, server);
-	free(name);
-	return ret;
+        krb5_free_principal(context, server);
+        free(name);
+        return ret;
     }
 
     HEIMDAL_MUTEX_lock(&ccache->mutex);
@@ -902,14 +902,14 @@ kcm_op_get_ticket(krb5_context context,
 
     /* glue cc layer will store creds */
     ret = krb5_get_credentials_with_flags(context, 0, flags,
-					  &ccdata, &in, &out);
+                                          &ccdata, &in, &out);
 
     HEIMDAL_MUTEX_unlock(&ccache->mutex);
 
     krb5_free_principal(context, server);
 
     if (ret == 0)
-	krb5_free_cred_contents(context, out);
+        krb5_free_cred_contents(context, out);
 
     kcm_release_ccache(context, ccache);
     free(name);
@@ -927,10 +927,10 @@ kcm_op_get_ticket(krb5_context context,
  */
 static krb5_error_code
 kcm_op_move_cache(krb5_context context,
-		  kcm_client *client,
-		  kcm_operation opcode,
-		  krb5_storage *request,
-		  krb5_storage *response)
+                  kcm_client *client,
+                  kcm_operation opcode,
+                  krb5_storage *request,
+                  krb5_storage *response)
 {
     krb5_error_code ret;
     kcm_ccache oldid, newid;
@@ -938,40 +938,40 @@ kcm_op_move_cache(krb5_context context,
 
     ret = krb5_ret_stringz(request, &oldname);
     if (ret)
-	return ret;
+        return ret;
 
     KCM_LOG_REQUEST_NAME(context, client, opcode, oldname);
 
     ret = krb5_ret_stringz(request, &newname);
     if (ret) {
-	free(oldname);
-	return ret;
+        free(oldname);
+        return ret;
     }
 
     /* move to ourself is simple, done! */
     if (strcmp(oldname, newname) == 0) {
-	free(oldname);
-	free(newname);
-	return 0;
+        free(oldname);
+        free(newname);
+        return 0;
     }
 
     ret = kcm_ccache_resolve_client(context, client, opcode, oldname, &oldid);
     if (ret) {
-	free(oldname);
-	free(newname);
-	return ret;
+        free(oldname);
+        free(newname);
+        return ret;
     }
 
     /* Check if new credential cache exists, if not create one. */
     ret = kcm_ccache_resolve_client(context, client, opcode, newname, &newid);
     if (ret == KRB5_FCC_NOFILE)
-	ret = kcm_ccache_new_client(context, client, newname, &newid);
+        ret = kcm_ccache_new_client(context, client, newname, &newid);
     free(newname);
 
     if (ret) {
-	free(oldname);
-	kcm_release_ccache(context, oldid);
-	return ret;
+        free(oldname);
+        kcm_release_ccache(context, oldid);
+        return ret;
     }
 
     HEIMDAL_MUTEX_lock(&oldid->mutex);
@@ -979,18 +979,18 @@ kcm_op_move_cache(krb5_context context,
 
     /* move content */
     {
-	kcm_ccache_data tmp;
+        kcm_ccache_data tmp;
 
 #define MOVE(n,o,f) { tmp.f = n->f ; n->f = o->f; o->f = tmp.f; }
 
-	MOVE(newid, oldid, flags);
-	MOVE(newid, oldid, client);
-	MOVE(newid, oldid, server);
-	MOVE(newid, oldid, creds);
-	MOVE(newid, oldid, tkt_life);
-	MOVE(newid, oldid, renew_life);
-	MOVE(newid, oldid, key);
-	MOVE(newid, oldid, kdc_offset);
+        MOVE(newid, oldid, flags);
+        MOVE(newid, oldid, client);
+        MOVE(newid, oldid, server);
+        MOVE(newid, oldid, creds);
+        MOVE(newid, oldid, tkt_life);
+        MOVE(newid, oldid, renew_life);
+        MOVE(newid, oldid, key);
+        MOVE(newid, oldid, kdc_offset);
 #undef MOVE
     }
 
@@ -1002,7 +1002,7 @@ kcm_op_move_cache(krb5_context context,
 
     ret = kcm_ccache_destroy_client(context, client, oldname);
     if (ret == 0)
-	kcm_drop_default_cache(context, client, oldname);
+        kcm_drop_default_cache(context, client, oldname);
 
     free(oldname);
 
@@ -1011,10 +1011,10 @@ kcm_op_move_cache(krb5_context context,
 
 static krb5_error_code
 kcm_op_get_cache_uuid_list(krb5_context context,
-			   kcm_client *client,
-			   kcm_operation opcode,
-			   krb5_storage *request,
-			   krb5_storage *response)
+                           kcm_client *client,
+                           kcm_operation opcode,
+                           krb5_storage *request,
+                           krb5_storage *response)
 {
     KCM_LOG_REQUEST(context, client, opcode);
 
@@ -1023,10 +1023,10 @@ kcm_op_get_cache_uuid_list(krb5_context context,
 
 static krb5_error_code
 kcm_op_get_cache_by_uuid(krb5_context context,
-			 kcm_client *client,
-			 kcm_operation opcode,
-			 krb5_storage *request,
-			 krb5_storage *response)
+                         kcm_client *client,
+                         kcm_operation opcode,
+                         krb5_storage *request,
+                         krb5_storage *response)
 {
     krb5_error_code ret;
     kcmuuid_t uuid;
@@ -1037,20 +1037,20 @@ kcm_op_get_cache_by_uuid(krb5_context context,
 
     sret = krb5_storage_read(request, &uuid, sizeof(uuid));
     if (sret != sizeof(uuid)) {
-	krb5_clear_error_message(context);
-	return KRB5_CC_IO;
+        krb5_clear_error_message(context);
+        return KRB5_CC_IO;
     }
 
     ret = kcm_ccache_resolve_by_uuid(context, uuid, &cache);
     if (ret)
-	return ret;
+        return ret;
 
     ret = kcm_access(context, client, opcode, cache);
     if (ret)
-	ret = KRB5_FCC_NOFILE;
+        ret = KRB5_FCC_NOFILE;
 
     if (ret == 0)
-	ret = krb5_store_stringz(response, cache->name);
+        ret = krb5_store_stringz(response, cache->name);
 
     kcm_release_ccache(context, cache);
 
@@ -1061,10 +1061,10 @@ struct kcm_default_cache *default_caches;
 
 static krb5_error_code
 kcm_op_get_default_cache(krb5_context context,
-			 kcm_client *client,
-			 kcm_operation opcode,
-			 krb5_storage *request,
-			 krb5_storage *response)
+                         kcm_client *client,
+                         kcm_operation opcode,
+                         krb5_storage *request,
+                         krb5_storage *response)
 {
     struct kcm_default_cache *c;
     krb5_error_code ret;
@@ -1075,24 +1075,24 @@ kcm_op_get_default_cache(krb5_context context,
     KCM_LOG_REQUEST(context, client, opcode);
 
     for (c = default_caches; c != NULL; c = c->next) {
-	if (kcm_is_same_session(client, c->uid, c->session)) {
-	    name = c->name;
-	    break;
-	}
+        if (kcm_is_same_session(client, c->uid, c->session)) {
+            name = c->name;
+            break;
+        }
     }
     if (name == NULL)
-	name = n = kcm_ccache_first_name(client);
+        name = n = kcm_ccache_first_name(client);
 
     if (name == NULL) {
-	aret = asprintf(&n, "%d", (int)client->uid);
-	if (aret != -1)
-	    name = n;
+        aret = asprintf(&n, "%d", (int)client->uid);
+        if (aret != -1)
+            name = n;
     }
     if (name == NULL)
-	return ENOMEM;
+        return ENOMEM;
     ret = krb5_store_stringz(response, name);
     if (n)
-	free(n);
+        free(n);
     return ret;
 }
 
@@ -1102,24 +1102,24 @@ kcm_drop_default_cache(krb5_context context, kcm_client *client, char *name)
     struct kcm_default_cache **c;
 
     for (c = &default_caches; *c != NULL; c = &(*c)->next) {
-	if (!kcm_is_same_session(client, (*c)->uid, (*c)->session))
-	    continue;
-	if (strcmp((*c)->name, name) == 0) {
-	    struct kcm_default_cache *h = *c;
-	    *c = (*c)->next;
-	    free(h->name);
-	    free(h);
-	    break;
-	}
+        if (!kcm_is_same_session(client, (*c)->uid, (*c)->session))
+            continue;
+        if (strcmp((*c)->name, name) == 0) {
+            struct kcm_default_cache *h = *c;
+            *c = (*c)->next;
+            free(h->name);
+            free(h);
+            break;
+        }
     }
 }
 
 static krb5_error_code
 kcm_op_set_default_cache(krb5_context context,
-			 kcm_client *client,
-			 kcm_operation opcode,
-			 krb5_storage *request,
-			 krb5_storage *response)
+                         kcm_client *client,
+                         kcm_operation opcode,
+                         krb5_storage *request,
+                         krb5_storage *response)
 {
     struct kcm_default_cache *c;
     krb5_error_code ret;
@@ -1127,29 +1127,29 @@ kcm_op_set_default_cache(krb5_context context,
 
     ret = krb5_ret_stringz(request, &name);
     if (ret)
-	return ret;
+        return ret;
 
     KCM_LOG_REQUEST_NAME(context, client, opcode, name);
 
     for (c = default_caches; c != NULL; c = c->next) {
-	if (kcm_is_same_session(client, c->uid, c->session))
-	    break;
+        if (kcm_is_same_session(client, c->uid, c->session))
+            break;
     }
     if (c == NULL) {
-	c = malloc(sizeof(*c));
-	if (c == NULL) {
+        c = malloc(sizeof(*c));
+        if (c == NULL) {
             free(name);
-	    return ENOMEM;
+            return ENOMEM;
         }
-	c->session = client->session;
-	c->uid = client->uid;
-	c->name = name;
+        c->session = client->session;
+        c->uid = client->uid;
+        c->name = name;
 
-	c->next = default_caches;
-	default_caches = c;
+        c->next = default_caches;
+        default_caches = c;
     } else {
-	free(c->name);
-	c->name = name;
+        free(c->name);
+        c->name = name;
     }
 
     return 0;
@@ -1157,10 +1157,10 @@ kcm_op_set_default_cache(krb5_context context,
 
 static krb5_error_code
 kcm_op_get_kdc_offset(krb5_context context,
-		      kcm_client *client,
-		      kcm_operation opcode,
-		      krb5_storage *request,
-		      krb5_storage *response)
+                      kcm_client *client,
+                      kcm_operation opcode,
+                      krb5_storage *request,
+                      krb5_storage *response)
 {
     krb5_error_code ret;
     kcm_ccache ccache;
@@ -1168,14 +1168,14 @@ kcm_op_get_kdc_offset(krb5_context context,
 
     ret = krb5_ret_stringz(request, &name);
     if (ret)
-	return ret;
+        return ret;
 
     KCM_LOG_REQUEST_NAME(context, client, opcode, name);
 
     ret = kcm_ccache_resolve_client(context, client, opcode, name, &ccache);
     free(name);
     if (ret)
-	return ret;
+        return ret;
 
     HEIMDAL_MUTEX_lock(&ccache->mutex);
     ret = krb5_store_int32(response, ccache->kdc_offset);
@@ -1188,10 +1188,10 @@ kcm_op_get_kdc_offset(krb5_context context,
 
 static krb5_error_code
 kcm_op_set_kdc_offset(krb5_context context,
-		      kcm_client *client,
-		      kcm_operation opcode,
-		      krb5_storage *request,
-		      krb5_storage *response)
+                      kcm_client *client,
+                      kcm_operation opcode,
+                      krb5_storage *request,
+                      krb5_storage *response)
 {
     krb5_error_code ret;
     kcm_ccache ccache;
@@ -1200,20 +1200,20 @@ kcm_op_set_kdc_offset(krb5_context context,
 
     ret = krb5_ret_stringz(request, &name);
     if (ret)
-	return ret;
+        return ret;
 
     KCM_LOG_REQUEST_NAME(context, client, opcode, name);
 
     ret = krb5_ret_int32(request, &offset);
     if (ret) {
-	free(name);
-	return ret;
+        free(name);
+        return ret;
     }
 
     ret = kcm_ccache_resolve_client(context, client, opcode, name, &ccache);
     free(name);
     if (ret)
-	return ret;
+        return ret;
 
     HEIMDAL_MUTEX_lock(&ccache->mutex);
     ccache->kdc_offset = offset;
@@ -1261,53 +1261,53 @@ find_ntlm_cred(const char *user, const char *domain, kcm_client *client)
     struct kcm_ntlm_cred *c;
 
     for (c = ntlm_head; c != NULL; c = c->next)
-	if ((user[0] == '\0' || strcmp(user, c->user) == 0) &&
-	    (domain == NULL || strcmp(domain, c->domain) == 0) &&
-	    kcm_is_same_session(client, c->uid, c->session))
-	    return c;
+        if ((user[0] == '\0' || strcmp(user, c->user) == 0) &&
+            (domain == NULL || strcmp(domain, c->domain) == 0) &&
+            kcm_is_same_session(client, c->uid, c->session))
+            return c;
 
     return NULL;
 }
 
 static krb5_error_code
 kcm_op_add_ntlm_cred(krb5_context context,
-		     kcm_client *client,
-		     kcm_operation opcode,
-		     krb5_storage *request,
-		     krb5_storage *response)
+                     kcm_client *client,
+                     kcm_operation opcode,
+                     krb5_storage *request,
+                     krb5_storage *response)
 {
     struct kcm_ntlm_cred *cred, *c;
     krb5_error_code ret;
 
     cred = calloc(1, sizeof(*cred));
     if (cred == NULL)
-	return ENOMEM;
+        return ENOMEM;
 
     RAND_bytes(cred->uuid, sizeof(cred->uuid));
 
     ret = krb5_ret_stringz(request, &cred->user);
     if (ret)
-	goto error;
+        goto error;
 
     ret = krb5_ret_stringz(request, &cred->domain);
     if (ret)
-	goto error;
+        goto error;
 
     ret = krb5_ret_data(request, &cred->nthash);
     if (ret)
-	goto error;
+        goto error;
 
     /* search for dups */
     c = find_ntlm_cred(cred->user, cred->domain, client);
     if (c) {
-	krb5_data hash = c->nthash;
-	c->nthash = cred->nthash;
-	cred->nthash = hash;
-	free_cred(cred);
-	cred = c;
+        krb5_data hash = c->nthash;
+        c->nthash = cred->nthash;
+        cred->nthash = hash;
+        free_cred(cred);
+        cred = c;
     } else {
-	cred->next = ntlm_head;
-	ntlm_head = cred;
+        cred->next = ntlm_head;
+        ntlm_head = cred;
     }
 
     cred->uid = client->uid;
@@ -1334,10 +1334,10 @@ kcm_op_add_ntlm_cred(krb5_context context,
 
 static krb5_error_code
 kcm_op_have_ntlm_cred(krb5_context context,
-		     kcm_client *client,
-		     kcm_operation opcode,
-		     krb5_storage *request,
-		     krb5_storage *response)
+                     kcm_client *client,
+                     kcm_operation opcode,
+                     krb5_storage *request,
+                     krb5_storage *response)
 {
     struct kcm_ntlm_cred *c;
     char *user = NULL, *domain = NULL;
@@ -1345,25 +1345,25 @@ kcm_op_have_ntlm_cred(krb5_context context,
 
     ret = krb5_ret_stringz(request, &user);
     if (ret)
-	goto error;
+        goto error;
 
     ret = krb5_ret_stringz(request, &domain);
     if (ret)
-	goto error;
+        goto error;
 
     if (domain[0] == '\0') {
-	free(domain);
-	domain = NULL;
+        free(domain);
+        domain = NULL;
     }
 
     c = find_ntlm_cred(user, domain, client);
     if (c == NULL)
-	ret = ENOENT;
+        ret = ENOENT;
 
  error:
     free(user);
     if (domain)
-	free(domain);
+        free(domain);
 
     return ret;
 }
@@ -1378,10 +1378,10 @@ kcm_op_have_ntlm_cred(krb5_context context,
 
 static krb5_error_code
 kcm_op_del_ntlm_cred(krb5_context context,
-		     kcm_client *client,
-		     kcm_operation opcode,
-		     krb5_storage *request,
-		     krb5_storage *response)
+                     kcm_client *client,
+                     kcm_operation opcode,
+                     krb5_storage *request,
+                     krb5_storage *response)
 {
     struct kcm_ntlm_cred **cp, *c;
     char *user = NULL, *domain = NULL;
@@ -1389,22 +1389,22 @@ kcm_op_del_ntlm_cred(krb5_context context,
 
     ret = krb5_ret_stringz(request, &user);
     if (ret)
-	goto error;
+        goto error;
 
     ret = krb5_ret_stringz(request, &domain);
     if (ret)
-	goto error;
+        goto error;
 
     for (cp = &ntlm_head; *cp != NULL; cp = &(*cp)->next) {
-	if (strcmp(user, (*cp)->user) == 0 && strcmp(domain, (*cp)->domain) == 0 &&
-	    kcm_is_same_session(client, (*cp)->uid, (*cp)->session))
-	{
-	    c = *cp;
-	    *cp = c->next;
+        if (strcmp(user, (*cp)->user) == 0 && strcmp(domain, (*cp)->domain) == 0 &&
+            kcm_is_same_session(client, (*cp)->uid, (*cp)->session))
+        {
+            c = *cp;
+            *cp = c->next;
 
-	    free_cred(c);
-	    break;
-	}
+            free_cred(c);
+            break;
+        }
     }
 
  error:
@@ -1434,10 +1434,10 @@ kcm_op_del_ntlm_cred(krb5_context context,
 
 static krb5_error_code
 kcm_op_do_ntlm(krb5_context context,
-	       kcm_client *client,
-	       kcm_operation opcode,
-	       krb5_storage *request,
-	       krb5_storage *response)
+               kcm_client *client,
+               kcm_operation opcode,
+               krb5_storage *request,
+               krb5_storage *response)
 {
     struct kcm_ntlm_cred *c;
     struct ntlm_type2 type2;
@@ -1455,26 +1455,26 @@ kcm_op_do_ntlm(krb5_context context,
 
     ret = krb5_ret_stringz(request, &user);
     if (ret)
-	goto error;
+        goto error;
 
     ret = krb5_ret_stringz(request, &domain);
     if (ret)
-	goto error;
+        goto error;
 
     if (domain[0] == '\0') {
-	free(domain);
-	domain = NULL;
+        free(domain);
+        domain = NULL;
     }
 
     c = find_ntlm_cred(user, domain, client);
     if (c == NULL) {
-	ret = EINVAL;
-	goto error;
+        ret = EINVAL;
+        goto error;
     }
 
     ret = krb5_ret_data(request, &data);
     if (ret)
-	goto error;
+        goto error;
 
     ndata.data = data.data;
     ndata.length = data.length;
@@ -1482,11 +1482,11 @@ kcm_op_do_ntlm(krb5_context context,
     ret = heim_ntlm_decode_type2(&ndata, &type2);
     krb5_data_free(&data);
     if (ret)
-	goto error;
+        goto error;
 
     if (domain && strcmp(domain, type2.targetname) == 0) {
-	ret = EINVAL;
-	goto error;
+        ret = EINVAL;
+        goto error;
     }
 
     type3.username = c->user;
@@ -1499,134 +1499,134 @@ kcm_op_do_ntlm(krb5_context context,
      */
 
     if (1 || type2.targetinfo.length == 0) {
-	struct ntlm_buf tmpsesskey;
+        struct ntlm_buf tmpsesskey;
 
-	if (type2.flags & NTLM_NEG_NTLM2_SESSION) {
-	    unsigned char nonce[8];
+        if (type2.flags & NTLM_NEG_NTLM2_SESSION) {
+            unsigned char nonce[8];
 
-	    if (RAND_bytes(nonce, sizeof(nonce)) != 1) {
-		ret = EINVAL;
-		goto error;
-	    }
+            if (RAND_bytes(nonce, sizeof(nonce)) != 1) {
+                ret = EINVAL;
+                goto error;
+            }
 
-	    ret = heim_ntlm_calculate_ntlm2_sess(nonce,
-						 type2.challenge,
-						 c->nthash.data,
-						 &type3.lm,
-						 &type3.ntlm);
-	} else {
-	    ret = heim_ntlm_calculate_ntlm1(c->nthash.data,
-					    c->nthash.length,
-					    type2.challenge,
-					    &type3.ntlm);
+            ret = heim_ntlm_calculate_ntlm2_sess(nonce,
+                                                 type2.challenge,
+                                                 c->nthash.data,
+                                                 &type3.lm,
+                                                 &type3.ntlm);
+        } else {
+            ret = heim_ntlm_calculate_ntlm1(c->nthash.data,
+                                            c->nthash.length,
+                                            type2.challenge,
+                                            &type3.ntlm);
 
-	}
-	if (ret)
-	    goto error;
+        }
+        if (ret)
+            goto error;
 
-	ret = heim_ntlm_build_ntlm1_master(c->nthash.data,
-					   c->nthash.length,
-					   &tmpsesskey,
-					   &type3.sessionkey);
-	if (ret) {
-	    if (type3.lm.data)
-		free(type3.lm.data);
-	    if (type3.ntlm.data)
-		free(type3.ntlm.data);
-	    goto error;
-	}
+        ret = heim_ntlm_build_ntlm1_master(c->nthash.data,
+                                           c->nthash.length,
+                                           &tmpsesskey,
+                                           &type3.sessionkey);
+        if (ret) {
+            if (type3.lm.data)
+                free(type3.lm.data);
+            if (type3.ntlm.data)
+                free(type3.ntlm.data);
+            goto error;
+        }
 
-	free(tmpsesskey.data);
-	flags |= NTLM_FLAG_SESSIONKEY;
+        free(tmpsesskey.data);
+        flags |= NTLM_FLAG_SESSIONKEY;
 #if 0
     } else {
-	struct ntlm_buf sessionkey;
-	unsigned char ntlmv2[16];
-	struct ntlm_targetinfo ti;
+        struct ntlm_buf sessionkey;
+        unsigned char ntlmv2[16];
+        struct ntlm_targetinfo ti;
 
-	/* verify infotarget */
+        /* verify infotarget */
 
-	ret = heim_ntlm_decode_targetinfo(&type2.targetinfo, 1, &ti);
-	if(ret) {
-	    _gss_ntlm_delete_sec_context(minor_status,
-					 context_handle, NULL);
-	    *minor_status = ret;
-	    return GSS_S_FAILURE;
-	}
+        ret = heim_ntlm_decode_targetinfo(&type2.targetinfo, 1, &ti);
+        if(ret) {
+            _gss_ntlm_delete_sec_context(minor_status,
+                                         context_handle, NULL);
+            *minor_status = ret;
+            return GSS_S_FAILURE;
+        }
 
-	if (ti.domainname && strcmp(ti.domainname, name->domain) != 0) {
-	    _gss_ntlm_delete_sec_context(minor_status,
-					 context_handle, NULL);
-	    *minor_status = EINVAL;
-	    return GSS_S_FAILURE;
-	}
+        if (ti.domainname && strcmp(ti.domainname, name->domain) != 0) {
+            _gss_ntlm_delete_sec_context(minor_status,
+                                         context_handle, NULL);
+            *minor_status = EINVAL;
+            return GSS_S_FAILURE;
+        }
 
-	ret = heim_ntlm_calculate_ntlm2(ctx->client->key.data,
-					ctx->client->key.length,
-					type3.username,
-					name->domain,
-					type2.challenge,
-					&type2.targetinfo,
-					ntlmv2,
-					&type3.ntlm);
-	if (ret) {
-	    _gss_ntlm_delete_sec_context(minor_status,
-					 context_handle, NULL);
-	    *minor_status = ret;
-	    return GSS_S_FAILURE;
-	}
+        ret = heim_ntlm_calculate_ntlm2(ctx->client->key.data,
+                                        ctx->client->key.length,
+                                        type3.username,
+                                        name->domain,
+                                        type2.challenge,
+                                        &type2.targetinfo,
+                                        ntlmv2,
+                                        &type3.ntlm);
+        if (ret) {
+            _gss_ntlm_delete_sec_context(minor_status,
+                                         context_handle, NULL);
+            *minor_status = ret;
+            return GSS_S_FAILURE;
+        }
 
-	ret = heim_ntlm_build_ntlm1_master(ntlmv2, sizeof(ntlmv2),
-					   &sessionkey,
-					   &type3.sessionkey);
-	memset(ntlmv2, 0, sizeof(ntlmv2));
-	if (ret) {
-	    _gss_ntlm_delete_sec_context(minor_status,
-					 context_handle, NULL);
-	    *minor_status = ret;
-	    return GSS_S_FAILURE;
-	}
+        ret = heim_ntlm_build_ntlm1_master(ntlmv2, sizeof(ntlmv2),
+                                           &sessionkey,
+                                           &type3.sessionkey);
+        memset(ntlmv2, 0, sizeof(ntlmv2));
+        if (ret) {
+            _gss_ntlm_delete_sec_context(minor_status,
+                                         context_handle, NULL);
+            *minor_status = ret;
+            return GSS_S_FAILURE;
+        }
 
-	flags |= NTLM_FLAG_NTLM2_SESSION |
-	         NTLM_FLAG_SESSION;
+        flags |= NTLM_FLAG_NTLM2_SESSION |
+                 NTLM_FLAG_SESSION;
 
-	if (type3.flags & NTLM_NEG_KEYEX)
-	    flags |= NTLM_FLAG_KEYEX;
+        if (type3.flags & NTLM_NEG_KEYEX)
+            flags |= NTLM_FLAG_KEYEX;
 
-	ret = krb5_data_copy(&ctx->sessionkey,
-			     sessionkey.data, sessionkey.length);
-	free(sessionkey.data);
-	if (ret) {
-	    _gss_ntlm_delete_sec_context(minor_status,
-					 context_handle, NULL);
-	    *minor_status = ret;
-	    return GSS_S_FAILURE;
-	}
+        ret = krb5_data_copy(&ctx->sessionkey,
+                             sessionkey.data, sessionkey.length);
+        free(sessionkey.data);
+        if (ret) {
+            _gss_ntlm_delete_sec_context(minor_status,
+                                         context_handle, NULL);
+            *minor_status = ret;
+            return GSS_S_FAILURE;
+        }
 #endif
     }
 
 #if 0
     if (flags & NTLM_FLAG_NTLM2_SESSION) {
-	_gss_ntlm_set_key(&ctx->u.v2.send, 0, (ctx->flags & NTLM_NEG_KEYEX),
-			  ctx->sessionkey.data,
-			  ctx->sessionkey.length);
-	_gss_ntlm_set_key(&ctx->u.v2.recv, 1, (ctx->flags & NTLM_NEG_KEYEX),
-			  ctx->sessionkey.data,
-			  ctx->sessionkey.length);
+        _gss_ntlm_set_key(&ctx->u.v2.send, 0, (ctx->flags & NTLM_NEG_KEYEX),
+                          ctx->sessionkey.data,
+                          ctx->sessionkey.length);
+        _gss_ntlm_set_key(&ctx->u.v2.recv, 1, (ctx->flags & NTLM_NEG_KEYEX),
+                          ctx->sessionkey.data,
+                          ctx->sessionkey.length);
     } else {
-	flags |= NTLM_FLAG_SESSION;
-	RC4_set_key(&ctx->u.v1.crypto_recv.key,
-		    ctx->sessionkey.length,
-		    ctx->sessionkey.data);
-	RC4_set_key(&ctx->u.v1.crypto_send.key,
-		    ctx->sessionkey.length,
-		    ctx->sessionkey.data);
+        flags |= NTLM_FLAG_SESSION;
+        RC4_set_key(&ctx->u.v1.crypto_recv.key,
+                    ctx->sessionkey.length,
+                    ctx->sessionkey.data);
+        RC4_set_key(&ctx->u.v1.crypto_send.key,
+                    ctx->sessionkey.length,
+                    ctx->sessionkey.data);
     }
 #endif
 
     ret = heim_ntlm_encode_type3(&type3, &ndata, NULL);
     if (ret)
-	goto error;
+        goto error;
 
     data.data = ndata.data;
     data.length = ndata.length;
@@ -1643,12 +1643,12 @@ kcm_op_do_ntlm(krb5_context context,
     ret = krb5_store_data(response, data);
     if (ret) goto error;
 
- error:
+error:
     free(type3.username);
     heim_ntlm_free_type2(&type2);
     free(user);
     if (domain)
-	free(domain);
+        free(domain);
 
     return ret;
 }
@@ -1664,27 +1664,27 @@ kcm_op_do_ntlm(krb5_context context,
 
 static krb5_error_code
 kcm_op_get_ntlm_user_list(krb5_context context,
-			  kcm_client *client,
-			  kcm_operation opcode,
-			  krb5_storage *request,
-			  krb5_storage *response)
+                          kcm_client *client,
+                          kcm_operation opcode,
+                          krb5_storage *request,
+                          krb5_storage *response)
 {
     struct kcm_ntlm_cred *c;
     krb5_error_code ret;
 
     for (c = ntlm_head; c != NULL; c = c->next) {
-	if (!kcm_is_same_session(client, c->uid, c->session))
-	    continue;
+        if (!kcm_is_same_session(client, c->uid, c->session))
+            continue;
 
-	ret = krb5_store_uint32(response, 1);
-	if (ret)
-	    return ret;
-	ret = krb5_store_stringz(response, c->user);
-	if (ret)
-	    return ret;
-	ret = krb5_store_stringz(response, c->domain);
-	if (ret)
-	    return ret;
+        ret = krb5_store_uint32(response, 1);
+        if (ret)
+            return ret;
+        ret = krb5_store_stringz(response, c->user);
+        if (ret)
+            return ret;
+        ret = krb5_store_stringz(response, c->domain);
+        if (ret)
+            return ret;
     }
     return krb5_store_uint32(response, 0);
 }
@@ -1730,16 +1730,16 @@ const char *
 kcm_op2string(kcm_operation opcode)
 {
     if (opcode >= sizeof(kcm_ops)/sizeof(kcm_ops[0]))
-	return "Unknown operation";
+        return "Unknown operation";
 
     return kcm_ops[opcode].name;
 }
 
 krb5_error_code
 kcm_dispatch(krb5_context context,
-	     kcm_client *client,
-	     krb5_data *req_data,
-	     krb5_data *resp_data)
+             kcm_client *client,
+             krb5_data *req_data,
+             krb5_data *resp_data)
 {
     krb5_error_code ret;
     kcm_method method;
@@ -1750,41 +1750,41 @@ kcm_dispatch(krb5_context context,
     krb5_data_zero(resp_data);
     resp_sp = krb5_storage_emem();
     if (resp_sp == NULL) {
-	return ENOMEM;
+        return ENOMEM;
     }
 
     if (client->pid == -1) {
-	kcm_log(0, "Client had invalid process number");
-	ret = KRB5_FCC_INTERNAL;
-	goto out;
+        kcm_log(0, "Client had invalid process number");
+        ret = KRB5_FCC_INTERNAL;
+        goto out;
     }
 
     req_sp = krb5_storage_from_data(req_data);
     if (req_sp == NULL) {
-	kcm_log(0, "Process %d: failed to initialize storage from data",
-		client->pid);
-	ret = KRB5_CC_IO;
-	goto out;
+        kcm_log(0, "Process %d: failed to initialize storage from data",
+                client->pid);
+        ret = KRB5_CC_IO;
+        goto out;
     }
 
     ret = krb5_ret_uint16(req_sp, &opcode);
     if (ret) {
-	kcm_log(0, "Process %d: didn't send a message", client->pid);
-	goto out;
+        kcm_log(0, "Process %d: didn't send a message", client->pid);
+        goto out;
     }
 
     if (opcode >= sizeof(kcm_ops)/sizeof(kcm_ops[0])) {
-	kcm_log(0, "Process %d: invalid operation code %d",
-		client->pid, opcode);
-	ret = KRB5_FCC_INTERNAL;
-	goto out;
+        kcm_log(0, "Process %d: invalid operation code %d",
+                client->pid, opcode);
+        ret = KRB5_FCC_INTERNAL;
+        goto out;
     }
     method = kcm_ops[opcode].method;
     if (method == NULL) {
-	kcm_log(0, "Process %d: operation code %s not implemented",
-		client->pid, kcm_op2string(opcode));
-	ret = KRB5_FCC_INTERNAL;
-	goto out;
+        kcm_log(0, "Process %d: operation code %s not implemented",
+                client->pid, kcm_op2string(opcode));
+        ret = KRB5_FCC_INTERNAL;
+        goto out;
     }
 
     /* seek past place for status code */
@@ -1794,7 +1794,7 @@ kcm_dispatch(krb5_context context,
 
 out:
     if (req_sp != NULL) {
-	krb5_storage_free(req_sp);
+        krb5_storage_free(req_sp);
     }
 
     if (resp_sp) {

@@ -40,12 +40,12 @@
 
   principal
   keyblock
-  	kvno
-	keys...
-		mkvno
-		enctype
-		keyvalue
-		salt (- means use normal salt)
+        kvno
+        keys...
+                mkvno
+                enctype
+                keyvalue
+                salt (- means use normal salt)
   creation date and principal
   modification date and principal
   principal valid from date (not used)
@@ -72,8 +72,8 @@ append_string(krb5_context context, krb5_storage *sp, const char *fmt, ...)
     rc = vasprintf(&s, fmt, ap);
     va_end(ap);
     if(rc < 0) {
-	krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
-	return -1;
+        krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
+        return -1;
     }
     sz = krb5_storage_write(sp, s, strlen(s));
     free(s);
@@ -99,8 +99,8 @@ append_hex(krb5_context context, krb5_storage *sp,
         }
     }
     if (printable && !always_encode)
-	return append_string(context, sp, "\"%.*s\"",
-			     data->length, data->data);
+        return append_string(context, sp, "\"%.*s\"",
+                             data->length, data->data);
     sz = hex_encode(data->data, data->length, &p);
     if (sz == -1) return sz;
     if (lower)
@@ -125,7 +125,7 @@ append_event(krb5_context context, krb5_storage *sp, Event *ev)
     ssize_t sz;
     char *pr = NULL;
     if(ev == NULL)
-	return append_string(context, sp, "- ");
+        return append_string(context, sp, "- ");
     if (ev->principal != NULL) {
        ret = krb5_unparse_name(context, ev->principal, &pr);
        if (ret) return -1; /* krb5_unparse_name() sets error info */
@@ -174,37 +174,37 @@ append_mit_key(krb5_context context, krb5_storage *sp,
 
     /* Map salt to MIT KDB style */
     switch (key->salt->type) {
-    case KRB5_PADATA_PW_SALT:
+        case KRB5_PADATA_PW_SALT:
 
-        /*
-         * Compute normal salt and then see whether it matches the stored one
-         */
-        ret = krb5_get_pw_salt(context, princ, &k5salt);
-        if (ret) return -1;
-        if (k5salt.saltvalue.length == key->salt->salt.length &&
-            memcmp(k5salt.saltvalue.data, key->salt->salt.data,
-                   k5salt.saltvalue.length) == 0)
-            salttype = KRB5_KDB_SALTTYPE_NORMAL; /* matches */
-        else if (key->salt->salt.length == strlen(princ->realm) &&
-                 memcmp(key->salt->salt.data, princ->realm,
-                        key->salt->salt.length) == 0)
-            salttype = KRB5_KDB_SALTTYPE_ONLYREALM; /* matches realm */
-        else if (key->salt->salt.length ==
-		 k5salt.saltvalue.length - strlen(princ->realm) &&
-                 memcmp((char *)k5salt.saltvalue.data + strlen(princ->realm),
-                        key->salt->salt.data, key->salt->salt.length) == 0)
-            salttype = KRB5_KDB_SALTTYPE_NOREALM; /* matches w/o realm */
-        else
-            salttype = KRB5_KDB_SALTTYPE_NORMAL;  /* hope for best */
+            /*
+             * Compute normal salt and then see whether it matches the stored one
+             */
+            ret = krb5_get_pw_salt(context, princ, &k5salt);
+            if (ret) return -1;
+            if (k5salt.saltvalue.length == key->salt->salt.length &&
+                memcmp(k5salt.saltvalue.data, key->salt->salt.data,
+                       k5salt.saltvalue.length) == 0)
+                salttype = KRB5_KDB_SALTTYPE_NORMAL; /* matches */
+            else if (key->salt->salt.length == strlen(princ->realm) &&
+                     memcmp(key->salt->salt.data, princ->realm,
+                            key->salt->salt.length) == 0)
+                salttype = KRB5_KDB_SALTTYPE_ONLYREALM; /* matches realm */
+            else if (key->salt->salt.length ==
+                     k5salt.saltvalue.length - strlen(princ->realm) &&
+                     memcmp((char *)k5salt.saltvalue.data + strlen(princ->realm),
+                            key->salt->salt.data, key->salt->salt.length) == 0)
+                salttype = KRB5_KDB_SALTTYPE_NOREALM; /* matches w/o realm */
+            else
+                salttype = KRB5_KDB_SALTTYPE_NORMAL;  /* hope for best */
 
-	break;
+            break;
 
-    case KRB5_PADATA_AFS3_SALT:
-        salttype = KRB5_KDB_SALTTYPE_AFS3;
-	break;
+        case KRB5_PADATA_AFS3_SALT:
+            salttype = KRB5_KDB_SALTTYPE_AFS3;
+            break;
 
-    default:
-	return -1;
+        default:
+            return -1;
     }
 
     sz = append_string(context, sp, "\t%u\t%u\t", salttype,
@@ -223,30 +223,30 @@ entry2string_int (krb5_context context, krb5_storage *sp, hdb_entry *ent)
     /* --- principal */
     ret = krb5_unparse_name(context, ent->principal, &p);
     if(ret)
-	return ret;
+        return ret;
     append_string(context, sp, "%s ", p);
     free(p);
     /* --- kvno */
     append_string(context, sp, "%d", ent->kvno);
     /* --- keys */
     for(i = 0; i < ent->keys.len; i++){
-	/* --- mkvno, keytype */
-	if(ent->keys.val[i].mkvno)
-	    append_string(context, sp, ":%d:%d:",
-			  *ent->keys.val[i].mkvno,
-			  ent->keys.val[i].key.keytype);
-	else
-	    append_string(context, sp, "::%d:",
-			  ent->keys.val[i].key.keytype);
-	/* --- keydata */
-	append_hex(context, sp, 0, 0, &ent->keys.val[i].key.keyvalue);
-	append_string(context, sp, ":");
-	/* --- salt */
-	if(ent->keys.val[i].salt){
-	    append_string(context, sp, "%u/", ent->keys.val[i].salt->type);
-	    append_hex(context, sp, 0, 0, &ent->keys.val[i].salt->salt);
-	}else
-	    append_string(context, sp, "-");
+        /* --- mkvno, keytype */
+        if(ent->keys.val[i].mkvno)
+            append_string(context, sp, ":%d:%d:",
+                          *ent->keys.val[i].mkvno,
+                          ent->keys.val[i].key.keytype);
+        else
+            append_string(context, sp, "::%d:",
+                          ent->keys.val[i].key.keytype);
+        /* --- keydata */
+        append_hex(context, sp, 0, 0, &ent->keys.val[i].key.keyvalue);
+        append_string(context, sp, ":");
+        /* --- salt */
+        if(ent->keys.val[i].salt){
+            append_string(context, sp, "%u/", ent->keys.val[i].salt->type);
+            append_hex(context, sp, 0, 0, &ent->keys.val[i].salt->salt);
+        }else
+            append_string(context, sp, "-");
     }
     append_string(context, sp, " ");
     /* --- created by */
@@ -256,73 +256,73 @@ entry2string_int (krb5_context context, krb5_storage *sp, hdb_entry *ent)
 
     /* --- valid start */
     if(ent->valid_start)
-	append_string(context, sp, "%s ", time2str(*ent->valid_start));
+        append_string(context, sp, "%s ", time2str(*ent->valid_start));
     else
-	append_string(context, sp, "- ");
+        append_string(context, sp, "- ");
 
     /* --- valid end */
     if(ent->valid_end)
-	append_string(context, sp, "%s ", time2str(*ent->valid_end));
+        append_string(context, sp, "%s ", time2str(*ent->valid_end));
     else
-	append_string(context, sp, "- ");
+        append_string(context, sp, "- ");
 
     /* --- password ends */
     if(ent->pw_end)
-	append_string(context, sp, "%s ", time2str(*ent->pw_end));
+        append_string(context, sp, "%s ", time2str(*ent->pw_end));
     else
-	append_string(context, sp, "- ");
+        append_string(context, sp, "- ");
 
     /* --- max life */
     if(ent->max_life)
-	append_string(context, sp, "%d ", *ent->max_life);
+        append_string(context, sp, "%d ", *ent->max_life);
     else
-	append_string(context, sp, "- ");
+        append_string(context, sp, "- ");
 
     /* --- max renewable life */
     if(ent->max_renew)
-	append_string(context, sp, "%d ", *ent->max_renew);
+        append_string(context, sp, "%d ", *ent->max_renew);
     else
-	append_string(context, sp, "- ");
+        append_string(context, sp, "- ");
 
     /* --- flags */
     append_string(context, sp, "%d ", HDBFlags2int(ent->flags));
 
     /* --- generation number */
     if(ent->generation) {
-	append_string(context, sp, "%s:%d:%d ", time2str(ent->generation->time),
-		      ent->generation->usec,
-		      ent->generation->gen);
+        append_string(context, sp, "%s:%d:%d ", time2str(ent->generation->time),
+                      ent->generation->usec,
+                      ent->generation->gen);
     } else
-	append_string(context, sp, "- ");
+        append_string(context, sp, "- ");
 
     /* --- extensions */
     if(ent->extensions && ent->extensions->len > 0) {
-	for(i = 0; i < ent->extensions->len; i++) {
-	    void *d;
-	    size_t size, sz = 0;
+        for(i = 0; i < ent->extensions->len; i++) {
+            void *d;
+            size_t size, sz = 0;
 
-	    ASN1_MALLOC_ENCODE(HDB_extension, d, size,
-			       &ent->extensions->val[i], &sz, ret);
-	    if (ret) {
-		krb5_clear_error_message(context);
-		return ret;
-	    }
-	    if(size != sz)
-		krb5_abortx(context, "internal asn.1 encoder error");
+            ASN1_MALLOC_ENCODE(HDB_extension, d, size,
+                               &ent->extensions->val[i], &sz, ret);
+            if (ret) {
+                krb5_clear_error_message(context);
+                return ret;
+            }
+            if(size != sz)
+                krb5_abortx(context, "internal asn.1 encoder error");
 
-	    if (hex_encode(d, size, &p) < 0) {
-		free(d);
-		krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
-		return ENOMEM;
-	    }
+            if (hex_encode(d, size, &p) < 0) {
+                free(d);
+                krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
+                return ENOMEM;
+            }
 
-	    free(d);
-	    append_string(context, sp, "%s%s", p,
-			  ent->extensions->len - 1 != i ? ":" : "");
-	    free(p);
-	}
+            free(d);
+            append_string(context, sp, "%s%s", p,
+                          ent->extensions->len - 1 != i ? ":" : "");
+            free(p);
+        }
     } else
-	append_string(context, sp, "-");
+        append_string(context, sp, "-");
 
     return 0;
 }
@@ -451,10 +451,10 @@ entry2mit_string_int(krb5_context context, krb5_storage *sp, hdb_entry *ent)
         krb5_data d;
         time_t val;
         unsigned char *ptr;
-        
+
         ptr = (unsigned char *)&last_pw_chg;
         val = ((unsigned long)ptr[3] << 24) | (ptr[2] << 16)
-	    | (ptr[1] << 8) | ptr[0];
+            | (ptr[1] << 8) | ptr[0];
         d.data = &val;
         d.length = sizeof (last_pw_chg);
         sz = append_string(context, sp, "\t%u\t%u\t",
@@ -476,15 +476,15 @@ entry2mit_string_int(krb5_context context, krb5_storage *sp, hdb_entry *ent)
         d.length = sizeof (ent->modified_by->time);
         ret = krb5_unparse_name(context, ent->modified_by->principal, &modby_p);
         if (ret)
-	    return ret;
+            return ret;
         plen = strlen(modby_p);
         sz = append_string(context, sp, "\t%u\t%u\t",
                            mit_KRB5_TL_MOD_PRINC,
                            d.length + plen + 1 /* NULL counted */);
         if (sz == -1) {
-	    free(modby_p);
-	    return ENOMEM;
-	}
+            free(modby_p);
+            return ENOMEM;
+        }
         sz = append_hex(context, sp, 1, 1, &d);
         if (sz == -1) {
             free(modby_p);
@@ -495,7 +495,7 @@ entry2mit_string_int(krb5_context context, krb5_storage *sp, hdb_entry *ent)
         sz = append_hex(context, sp, 1, 1, &d);
         free(modby_p);
         if (sz == -1)
-	    return ENOMEM;
+            return ENOMEM;
     }
     /*
      * Dump keys (remembering to not include any with kvno higher than
@@ -542,14 +542,14 @@ hdb_entry2string(krb5_context context, hdb_entry *ent, char **str)
 
     sp = krb5_storage_emem();
     if (sp == NULL) {
-	krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
-	return ENOMEM;
+        krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
+        return ENOMEM;
     }
 
     ret = entry2string_int(context, sp, ent);
     if (ret) {
-	krb5_storage_free(sp);
-	return ret;
+        krb5_storage_free(sp);
+        return ret;
     }
 
     krb5_storage_write(sp, "\0", 1);
@@ -572,23 +572,23 @@ hdb_print_entry(krb5_context context, HDB *db, hdb_entry *entry,
     fflush(parg->out);
     sp = krb5_storage_from_fd(fileno(parg->out));
     if (sp == NULL) {
-	krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
-	return ENOMEM;
+        krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
+        return ENOMEM;
     }
 
     switch (parg->fmt) {
-    case HDB_DUMP_HEIMDAL:
-        ret = entry2string_int(context, sp, entry);
-        break;
-    case HDB_DUMP_MIT:
-        ret = entry2mit_string_int(context, sp, entry);
-        break;
-    default:
-        heim_abort("Only two dump formats supported: Heimdal and MIT");
+        case HDB_DUMP_HEIMDAL:
+            ret = entry2string_int(context, sp, entry);
+            break;
+        case HDB_DUMP_MIT:
+            ret = entry2mit_string_int(context, sp, entry);
+            break;
+        default:
+            heim_abort("Only two dump formats supported: Heimdal and MIT");
     }
     if (ret) {
-	krb5_storage_free(sp);
-	return ret;
+        krb5_storage_free(sp);
+        return ret;
     }
 
     krb5_storage_write(sp, "\n", 1);

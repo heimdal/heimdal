@@ -69,16 +69,16 @@ hx509_lock_init(hx509_context context, hx509_lock *lock)
 
     l = calloc(1, sizeof(*l));
     if (l == NULL)
-	return ENOMEM;
+        return ENOMEM;
 
     ret = hx509_certs_init(context,
-			   "MEMORY:locks-internal",
-			   0,
-			   NULL,
-			   &l->certs);
+                           "MEMORY:locks-internal",
+                           0,
+                           NULL,
+                           &l->certs);
     if (ret) {
-	free(l);
-	return ret;
+        free(l);
+        return ret;
     }
 
     *lock = l;
@@ -94,13 +94,13 @@ hx509_lock_add_password(hx509_lock lock, const char *password)
 
     s = strdup(password);
     if (s == NULL)
-	return ENOMEM;
+        return ENOMEM;
 
     d = realloc(lock->password.val,
-		(lock->password.len + 1) * sizeof(lock->password.val[0]));
+                (lock->password.len + 1) * sizeof(lock->password.val[0]));
     if (d == NULL) {
-	free(s);
-	return ENOMEM;
+        free(s);
+        return ENOMEM;
     }
     lock->password.val = d;
     lock->password.val[lock->password.len] = s;
@@ -126,7 +126,7 @@ hx509_lock_reset_passwords(hx509_lock lock)
 {
     size_t i;
     for (i = 0; i < lock->password.len; i++)
-	free(lock->password.val[i]);
+        free(lock->password.val[i]);
     free(lock->password.val);
     lock->password.val = NULL;
     lock->password.len = 0;
@@ -151,14 +151,14 @@ hx509_lock_reset_certs(hx509_context context, hx509_lock lock)
     int ret;
 
     ret = hx509_certs_init(context,
-			   "MEMORY:locks-internal",
-			   0,
-			   NULL,
-			   &lock->certs);
+                           "MEMORY:locks-internal",
+                           0,
+                           NULL,
+                           &lock->certs);
     if (ret == 0)
-	hx509_certs_free(&certs);
+        hx509_certs_free(&certs);
     else
-	lock->certs = certs;
+        lock->certs = certs;
 }
 
 HX509_LIB_FUNCTION int HX509_LIB_CALL
@@ -187,21 +187,21 @@ static int
 default_prompter(void *data, const hx509_prompt *prompter)
 {
     if (hx509_prompt_hidden(prompter->type)) {
-	if(UI_UTIL_read_pw_string(prompter->reply.data,
-				  prompter->reply.length,
-				  prompter->prompt,
-				  0))
-	    return 1;
+        if(UI_UTIL_read_pw_string(prompter->reply.data,
+                                  prompter->reply.length,
+                                  prompter->prompt,
+                                  0))
+            return 1;
     } else {
-	char *s = prompter->reply.data;
+        char *s = prompter->reply.data;
 
-	fputs (prompter->prompt, stdout);
-	fflush (stdout);
-	if(fgets(prompter->reply.data,
-		 prompter->reply.length,
-		 stdin) == NULL)
-	    return 1;
-	s[strcspn(s, "\n")] = '\0';
+        fputs (prompter->prompt, stdout);
+        fflush (stdout);
+        if(fgets(prompter->reply.data,
+                 prompter->reply.length,
+                 stdin) == NULL)
+            return 1;
+        s[strcspn(s, "\n")] = '\0';
     }
     return 0;
 }
@@ -210,7 +210,7 @@ HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_lock_prompt(hx509_lock lock, hx509_prompt *prompt)
 {
     if (lock->prompt == NULL)
-	return HX509_CRYPTO_NO_PROMPTER;
+        return HX509_CRYPTO_NO_PROMPTER;
     return (*lock->prompt)(lock->prompt_data, prompt);
 }
 
@@ -218,10 +218,10 @@ HX509_LIB_FUNCTION void HX509_LIB_CALL
 hx509_lock_free(hx509_lock lock)
 {
     if (lock) {
-	hx509_certs_free(&lock->certs);
-	hx509_lock_reset_passwords(lock);
-	memset(lock, 0, sizeof(*lock));
-	free(lock);
+        hx509_certs_free(&lock->certs);
+        hx509_lock_reset_passwords(lock);
+        memset(lock, 0, sizeof(*lock));
+        free(lock);
     }
 }
 
@@ -231,11 +231,11 @@ hx509_prompt_hidden(hx509_prompt_type type)
     /* default to hidden if unknown */
 
     switch (type) {
-    case HX509_PROMPT_TYPE_QUESTION:
-    case HX509_PROMPT_TYPE_INFO:
-	return 0;
-    default:
-	return 1;
+        case HX509_PROMPT_TYPE_QUESTION:
+        case HX509_PROMPT_TYPE_INFO:
+            return 0;
+        default:
+            return 1;
     }
 }
 
@@ -243,10 +243,10 @@ HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_lock_command_string(hx509_lock lock, const char *string)
 {
     if (strncasecmp(string, "PASS:", 5) == 0) {
-	hx509_lock_add_password(lock, string + 5);
+        hx509_lock_add_password(lock, string + 5);
     } else if (strcasecmp(string, "PROMPT") == 0) {
-	hx509_lock_set_prompter(lock, default_prompter, NULL);
+        hx509_lock_set_prompter(lock, default_prompter, NULL);
     } else
-	return HX509_UNKNOWN_LOCK_COMMAND;
+        return HX509_UNKNOWN_LOCK_COMMAND;
     return 0;
 }

@@ -62,9 +62,9 @@ nt_write_token (int sock, gss_buffer_t buf)
     net_len[3] = (len >> 24) & 0xFF;
 
     if (write (sock, net_len, 4) != 4)
-	err (1, "write");
+        err (1, "write");
     if (write (sock, buf->value, len) != len)
-	err (1, "write");
+        err (1, "write");
 
     gss_release_buffer (&min_stat, buf);
 }
@@ -80,18 +80,18 @@ nt_read_token (int sock, gss_buffer_t buf)
     uint32_t len;
 
     if (read(sock, net_len, 4) != 4)
-	err (1, "read");
+        err (1, "read");
     len = (net_len[0] <<  0)
-	| (net_len[1] <<  8)
-	| (net_len[2] << 16)
-	| (net_len[3] << 24);
+        | (net_len[1] <<  8)
+        | (net_len[2] << 16)
+        | (net_len[3] << 24);
 
     if (len > INT_MAX/16)
-	errx(1, "len too large");
+        errx(1, "len too large");
     buf->length = len;
     buf->value  = malloc(len);
     if (read (sock, buf->value, len) != len)
-	err (1, "read");
+        err (1, "read");
 }
 
 void
@@ -103,16 +103,16 @@ gss_print_errors (int min_stat)
     OM_uint32 ret;
 
     do {
-	ret = gss_display_status (&new_stat,
-				  min_stat,
-				  GSS_C_MECH_CODE,
-				  GSS_C_NO_OID,
-				  &msg_ctx,
-				  &status_string);
-	fprintf (stderr, "%.*s\n",
-		(int)status_string.length,
-		(char *)status_string.value);
-	gss_release_buffer (&new_stat, &status_string);
+        ret = gss_display_status (&new_stat,
+                                  min_stat,
+                                  GSS_C_MECH_CODE,
+                                  GSS_C_NO_OID,
+                                  &msg_ctx,
+                                  &status_string);
+        fprintf (stderr, "%.*s\n",
+                 (int)status_string.length,
+                 (char *)status_string.value);
+        gss_release_buffer (&new_stat, &status_string);
     } while (!GSS_ERROR(ret) && msg_ctx != 0);
 }
 

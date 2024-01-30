@@ -42,9 +42,9 @@ mergesort_compar_thunk(const void *a, const void *b, void *thunk)
 
 int ROKEN_LIB_FUNCTION
 mergesort(void *base, size_t nel, size_t width,
-	  int (*compar)(const void *, const void *))
+          int (*compar)(const void *, const void *))
 {
     return rk_mergesort_r(base, nel, width,
-			  mergesort_compar_thunk, compar);
+                          mergesort_compar_thunk, compar);
 }
 

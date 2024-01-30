@@ -55,24 +55,24 @@ putenv(const char *string)
     int len;
 
     if (eq == NULL)
-	return 1;
+        return 1;
     len = eq - string;
 
     if(environ == NULL) {
-	environ = malloc(sizeof(char*));
-	if(environ == NULL)
-	    return 1;
-	environ[0] = NULL;
+        environ = malloc(sizeof(char*));
+        if(environ == NULL)
+            return 1;
+        environ[0] = NULL;
     }
 
     for(i = 0; environ[i] != NULL; i++)
-	if(strncmp(string, environ[i], len) == 0) {
-	    environ[i] = string;
-	    return 0;
-	}
+        if(strncmp(string, environ[i], len) == 0) {
+            environ[i] = string;
+            return 0;
+        }
     environ = realloc(environ, sizeof(char*) * (i + 2));
     if(environ == NULL)
-	return 1;
+        return 1;
     environ[i]   = string;
     environ[i+1] = NULL;
     return 0;

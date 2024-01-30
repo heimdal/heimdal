@@ -74,11 +74,11 @@ generate_c(void)
 
     FILE *c_file = fopen(cfn, "w");
     if(c_file == NULL)
-	return 1;
+        return 1;
 
     fprintf(c_file, "/* Generated from %s */\n", filename);
     if(id_str)
-	fprintf(c_file, "/* %s */\n", id_str);
+        fprintf(c_file, "/* %s */\n", id_str);
     fprintf(c_file, "\n");
     fprintf(c_file, "#include <stddef.h>\n");
     fprintf(c_file, "#include <com_err.h>\n");
@@ -90,14 +90,14 @@ generate_c(void)
     fprintf(c_file, "static const char *const %s_error_strings[] = {\n", name);
 
     for(ec = codes, n = 0; ec; ec = ec->next, n++) {
-	while(n < ec->number) {
-	    fprintf(c_file, "\t/* %03d */ \"Reserved %s error (%d)\",\n",
-		    n, name, n);
-	    n++;
+        while(n < ec->number) {
+            fprintf(c_file, "\t/* %03d */ \"Reserved %s error (%d)\",\n",
+                    n, name, n);
+            n++;
 
-	}
-	fprintf(c_file, "\t/* %03d */ N_(\"%s\"),\n",
-		ec->number, ec->string);
+        }
+        fprintf(c_file, "\t/* %03d */ N_(\"%s\"),\n",
+                ec->number, ec->string);
     }
 
     fprintf(c_file, "\tNULL\n");
@@ -106,19 +106,19 @@ generate_c(void)
     fprintf(c_file, "#define num_errors %d\n", number);
     fprintf(c_file, "\n");
     fprintf(c_file,
-	    "void initialize_%s_error_table_r(struct et_list **list)\n",
-	    name);
+            "void initialize_%s_error_table_r(struct et_list **list)\n",
+            name);
     fprintf(c_file, "{\n");
     fprintf(c_file,
-	    "    initialize_error_table_r(list, %s_error_strings, "
-	    "num_errors, ERROR_TABLE_BASE_%s);\n", name, name);
+            "    initialize_error_table_r(list, %s_error_strings, "
+            "num_errors, ERROR_TABLE_BASE_%s);\n", name, name);
     fprintf(c_file, "}\n");
     fprintf(c_file, "\n");
     fprintf(c_file, "void initialize_%s_error_table(void)\n", name);
     fprintf(c_file, "{\n");
     fprintf(c_file,
-	    "    init_error_table(%s_error_strings, ERROR_TABLE_BASE_%s, "
-	    "num_errors);\n", name, name);
+            "    init_error_table(%s_error_strings, ERROR_TABLE_BASE_%s, "
+            "num_errors);\n", name, name);
     fprintf(c_file, "}\n");
 
     fclose(c_file);
@@ -134,16 +134,16 @@ generate_h(void)
     char *p;
 
     if(h_file == NULL)
-	return 1;
+        return 1;
 
     snprintf(fn, sizeof(fn), "__%s__", hfn);
     for(p = fn; *p; p++)
-	if(!isalnum((unsigned char)*p))
-	    *p = '_';
+        if(!isalnum((unsigned char)*p))
+            *p = '_';
 
     fprintf(h_file, "/* Generated from %s */\n", filename);
     if(id_str)
-	fprintf(h_file, "/* %s */\n", id_str);
+        fprintf(h_file, "/* %s */\n", id_str);
     fprintf(h_file, "\n");
     fprintf(h_file, "#ifndef %s\n", fn);
     fprintf(h_file, "#define %s\n", fn);
@@ -151,18 +151,18 @@ generate_h(void)
     fprintf(h_file, "struct et_list;\n");
     fprintf(h_file, "\n");
     fprintf(h_file,
-	    "void initialize_%s_error_table_r(struct et_list **);\n",
-	    name);
+            "void initialize_%s_error_table_r(struct et_list **);\n",
+            name);
     fprintf(h_file, "\n");
     fprintf(h_file, "void initialize_%s_error_table(void);\n", name);
     fprintf(h_file, "#define init_%s_err_tbl initialize_%s_error_table\n",
-	    name, name);
+            name, name);
     fprintf(h_file, "\n");
     fprintf(h_file, "typedef enum %s_error_number{\n", name);
 
     for(ec = codes; ec; ec = ec->next) {
-	fprintf(h_file, "\t%s = %ld%s\n", ec->name, base_id + ec->number,
-		(ec->next != NULL) ? "," : "");
+        fprintf(h_file, "\t%s = %ld%s\n", ec->name, base_id + ec->number,
+                (ec->next != NULL) ? "," : "");
     }
 
     fprintf(h_file, "} %s_error_number;\n", name);
@@ -207,27 +207,27 @@ main(int argc, char **argv)
 
     setprogname(argv[0]);
     if(getarg(args, num_args, argc, argv, &optidx))
-	usage(1);
+        usage(1);
     if(help_flag)
-	usage(0);
+        usage(0);
     if(version_flag) {
-	print_version(NULL);
-	exit(0);
+        print_version(NULL);
+        exit(0);
     }
 
     if(optidx == argc)
-	usage(1);
+        usage(1);
     filename = argv[optidx];
     yyin = fopen(filename, "r");
     if(yyin == NULL)
-	err(1, "%s", filename);
+        err(1, "%s", filename);
 
 
     p = strrchr(filename, rk_PATH_DELIM);
     if(p)
-	p++;
+        p++;
     else
-	p = filename;
+        p = filename;
     strlcpy(Basename, p, sizeof(Basename));
 
     Basename[strcspn(Basename, ".")] = '\0';
@@ -237,7 +237,7 @@ main(int argc, char **argv)
 
     yyparse();
     if(numerror)
-	return 1;
+        return 1;
 
     return generate();
 }

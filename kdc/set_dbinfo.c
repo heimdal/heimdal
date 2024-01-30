@@ -44,21 +44,21 @@ add_db(krb5_context context, struct krb5_kdc_configuration *c,
 
     ptr = realloc(c->db, (c->num_db + 1) * sizeof(*c->db));
     if (ptr == NULL) {
-	krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
-	return ENOMEM;
+        krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
+        return ENOMEM;
     }
     c->db = ptr;
 
     ret = hdb_create(context, &c->db[c->num_db], conf);
     if(ret)
-	return ret;
+        return ret;
 
     c->num_db++;
 
     if (master_key) {
-	ret = hdb_set_master_keyfile(context, c->db[c->num_db - 1], master_key);
-	if (ret)
-	    return ret;
+        ret = hdb_set_master_keyfile(context, c->db[c->num_db - 1], master_key);
+        if (ret)
+            return ret;
     }
 
     return 0;
@@ -74,33 +74,33 @@ krb5_kdc_set_dbinfo(krb5_context context, struct krb5_kdc_configuration *c)
     /* fetch the databases */
     ret = hdb_get_dbinfo(context, &info);
     if (ret)
-	return ret;
+        return ret;
 
     d = NULL;
     while ((d = hdb_dbinfo_get_next(info, d)) != NULL) {
 
-	ret = add_db(context, c,
-		     hdb_dbinfo_get_dbname(context, d),
-		     hdb_dbinfo_get_mkey_file(context, d));
-	if (ret)
-	    goto out;
+        ret = add_db(context, c,
+                     hdb_dbinfo_get_dbname(context, d),
+                     hdb_dbinfo_get_mkey_file(context, d));
+        if (ret)
+            goto out;
 
-	kdc_log(context, c, 3, "label: %s",
-		hdb_dbinfo_get_label(context, d));
-	kdc_log(context, c, 3, "\tdbname: %s",
-		hdb_dbinfo_get_dbname(context, d));
-	kdc_log(context, c, 3, "\tmkey_file: %s",
-		hdb_dbinfo_get_mkey_file(context, d));
-	kdc_log(context, c, 3, "\tacl_file: %s",
-		hdb_dbinfo_get_acl_file(context, d));
+        kdc_log(context, c, 3, "label: %s",
+                hdb_dbinfo_get_label(context, d));
+        kdc_log(context, c, 3, "\tdbname: %s",
+                hdb_dbinfo_get_dbname(context, d));
+        kdc_log(context, c, 3, "\tmkey_file: %s",
+                hdb_dbinfo_get_mkey_file(context, d));
+        kdc_log(context, c, 3, "\tacl_file: %s",
+                hdb_dbinfo_get_acl_file(context, d));
     }
     hdb_free_dbinfo(context, &info);
 
     return 0;
 out:
     for (i = 0; i < c->num_db; i++)
-	if (c->db[i] && c->db[i]->hdb_destroy)
-	    (*c->db[i]->hdb_destroy)(context, c->db[i]);
+        if (c->db[i] && c->db[i]->hdb_destroy)
+            (*c->db[i]->hdb_destroy)(context, c->db[i]);
     c->num_db = 0;
     free(c->db);
     c->db = NULL;

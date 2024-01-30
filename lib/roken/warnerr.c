@@ -43,16 +43,16 @@ rk_warnerr(int doerrno, const char *fmt, va_list ap)
     const char *progname = getprogname();
 
     if(progname != NULL){
-	fprintf(stderr, "%s", progname);
-	if(fmt != NULL || doerrno)
-	    fprintf(stderr, ": ");
+        fprintf(stderr, "%s", progname);
+        if(fmt != NULL || doerrno)
+            fprintf(stderr, ": ");
     }
     if (fmt != NULL){
-	vfprintf(stderr, fmt, ap);
-	if(doerrno)
-	    fprintf(stderr, ": ");
+        vfprintf(stderr, fmt, ap);
+        if(doerrno)
+            fprintf(stderr, ": ");
     }
     if(doerrno)
-	fprintf(stderr, "%s", strerror(sverrno));
+        fprintf(stderr, "%s", strerror(sverrno));
     fprintf(stderr, "\n");
 }

@@ -48,6 +48,6 @@ erealloc (void *ptr, size_t sz)
     void *tmp = realloc (ptr, sz);
 
     if (tmp == NULL && sz != 0)
-	errx (1, "realloc %lu failed", (unsigned long)sz);
+        errx (1, "realloc %lu failed", (unsigned long)sz);
     return tmp;
 }

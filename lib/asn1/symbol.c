@@ -69,8 +69,8 @@ output_name(char *s)
     char *p;
 
     for (p = s; *p; ++p)
-	if (*p == '-' || *p == '.')
-	    *p = '_';
+        if (*p == '-' || *p == '.')
+            *p = '_';
 }
 
 Symbol *
@@ -81,12 +81,12 @@ addsym(char *name)
     key.name = name;
     s = (Symbol *) hashtabsearch(htab, (void *) &key);
     if (s == NULL) {
-	s = (Symbol *) ecalloc(1, sizeof(*s));
-	s->name = name;
-	s->gen_name = estrdup(name);
-	output_name(s->gen_name);
-	s->stype = SUndefined;
-	hashtabadd(htab, s);
+        s = (Symbol *) ecalloc(1, sizeof(*s));
+        s->name = name;
+        s->gen_name = estrdup(name);
+        output_name(s->gen_name);
+        s->stype = SUndefined;
+        hashtabadd(htab, s);
         //HEIM_TAILQ_INSERT_TAIL(&symbols, s, symlist);
         do {
             if (((s)->symlist.tqe_next = (&symbols)->tqh_first) != NULL)
@@ -114,8 +114,8 @@ checkfunc(void *ptr, void *arg)
 {
     Symbol *s = ptr;
     if (s->stype == SUndefined) {
-	lex_error_message("%s is still undefined\n", s->name);
-	*(int *) arg = 1;
+        lex_error_message("%s is still undefined\n", s->name);
+        *(int *) arg = 1;
     }
     return 0;
 }

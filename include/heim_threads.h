@@ -166,17 +166,17 @@ heim_mutex_lock(heim_mutex_t *m)
 
     h = InterlockedCompareExchangePointer(&m->h, m->h, m->h);
     if (h == INVALID_HANDLE_VALUE || h == NULL) {
-	created = 1;
-	new_h = CreateSemaphore(NULL, 0, 1, NULL);
-	if (new_h == INVALID_HANDLE_VALUE)
-	    return EAGAIN;
-	if (InterlockedCompareExchangePointer(&m->h, new_h, h) != h) {
-	    created = 0;
-	    CloseHandle(new_h);
-	}
+        created = 1;
+        new_h = CreateSemaphore(NULL, 0, 1, NULL);
+        if (new_h == INVALID_HANDLE_VALUE)
+            return EAGAIN;
+        if (InterlockedCompareExchangePointer(&m->h, new_h, h) != h) {
+            created = 0;
+            CloseHandle(new_h);
+        }
     }
     if (!created)
-	WaitForSingleObject(m->h, INFINITE);
+        WaitForSingleObject(m->h, INFINITE);
     return 0;
 }
 
@@ -195,7 +195,7 @@ heim_mutex_destroy(heim_mutex_t *m)
 
     h = InterlockedCompareExchangePointer(&m->h, INVALID_HANDLE_VALUE, m->h);
     if (h != INVALID_HANDLE_VALUE)
-	CloseHandle(h);
+        CloseHandle(h);
     return 0;
 }
 
@@ -254,10 +254,10 @@ static inline int
 heim_rwlock_unlock(heim_rwlock_t *l)
 {
     if (l->exclusive) {
-	l->exclusive = 0;
-	ReleaseSRWLockExclusive(&(l)->lock);
+        l->exclusive = 0;
+        ReleaseSRWLockExclusive(&(l)->lock);
     } else {
-	ReleaseSRWLockShared(&(l)->lock);
+        ReleaseSRWLockShared(&(l)->lock);
     }
     return 0;
 }
@@ -273,13 +273,13 @@ heim_rwlock_destroy(heim_rwlock_t *l)
 
 #define HEIMDAL_RWLOCK heim_rwlock_t
 #define HEIMDAL_RWLOCK_INITIALIZER {SRWLOCK_INIT, 0}
-#define	HEIMDAL_RWLOCK_init(l) heim_rwlock_init((l))
-#define	HEIMDAL_RWLOCK_rdlock(l) heim_rwlock_rdlock((l))
-#define	HEIMDAL_RWLOCK_wrlock(l) heim_rwlock_wrlock((l))
-#define	HEIMDAL_RWLOCK_tryrdlock(l) heim_rwlock_tryrdlock((l))
-#define	HEIMDAL_RWLOCK_trywrlock(l) heim_rwlock_trywrlock((l))
-#define	HEIMDAL_RWLOCK_unlock(l) heim_rwlock_unlock((l))
-#define	HEIMDAL_RWLOCK_destroy(l) heim_rwlock_destroy((l))
+#define HEIMDAL_RWLOCK_init(l) heim_rwlock_init((l))
+#define HEIMDAL_RWLOCK_rdlock(l) heim_rwlock_rdlock((l))
+#define HEIMDAL_RWLOCK_wrlock(l) heim_rwlock_wrlock((l))
+#define HEIMDAL_RWLOCK_tryrdlock(l) heim_rwlock_tryrdlock((l))
+#define HEIMDAL_RWLOCK_trywrlock(l) heim_rwlock_trywrlock((l))
+#define HEIMDAL_RWLOCK_unlock(l) heim_rwlock_unlock((l))
+#define HEIMDAL_RWLOCK_destroy(l) heim_rwlock_destroy((l))
 
 #define HEIMDAL_thread_key unsigned long
 #define HEIM_PRIV_thread_key HEIMDAL_thread_key
@@ -306,13 +306,13 @@ heim_rwlock_destroy(heim_rwlock_t *l)
 
 #define HEIMDAL_RWLOCK rwlock_t int
 #define HEIMDAL_RWLOCK_INITIALIZER 0
-#define	HEIMDAL_RWLOCK_init(l) do { } while(0)
-#define	HEIMDAL_RWLOCK_rdlock(l) do { } while(0)
-#define	HEIMDAL_RWLOCK_wrlock(l) do { } while(0)
-#define	HEIMDAL_RWLOCK_tryrdlock(l) do { } while(0)
-#define	HEIMDAL_RWLOCK_trywrlock(l) do { } while(0)
-#define	HEIMDAL_RWLOCK_unlock(l) do { } while(0)
-#define	HEIMDAL_RWLOCK_destroy(l) do { } while(0)
+#define HEIMDAL_RWLOCK_init(l) do { } while(0)
+#define HEIMDAL_RWLOCK_rdlock(l) do { } while(0)
+#define HEIMDAL_RWLOCK_wrlock(l) do { } while(0)
+#define HEIMDAL_RWLOCK_tryrdlock(l) do { } while(0)
+#define HEIMDAL_RWLOCK_trywrlock(l) do { } while(0)
+#define HEIMDAL_RWLOCK_unlock(l) do { } while(0)
+#define HEIMDAL_RWLOCK_destroy(l) do { } while(0)
 
 #define HEIMDAL_internal_thread_key 1
 
@@ -330,13 +330,13 @@ heim_rwlock_destroy(heim_rwlock_t *l)
 
 #define HEIMDAL_RWLOCK rwlock_t int
 #define HEIMDAL_RWLOCK_INITIALIZER 0
-#define	HEIMDAL_RWLOCK_init(l) do { } while(0)
-#define	HEIMDAL_RWLOCK_rdlock(l) do { } while(0)
-#define	HEIMDAL_RWLOCK_wrlock(l) do { } while(0)
-#define	HEIMDAL_RWLOCK_tryrdlock(l) do { } while(0)
-#define	HEIMDAL_RWLOCK_trywrlock(l) do { } while(0)
-#define	HEIMDAL_RWLOCK_unlock(l) do { } while(0)
-#define	HEIMDAL_RWLOCK_destroy(l) do { } while(0)
+#define HEIMDAL_RWLOCK_init(l) do { } while(0)
+#define HEIMDAL_RWLOCK_rdlock(l) do { } while(0)
+#define HEIMDAL_RWLOCK_wrlock(l) do { } while(0)
+#define HEIMDAL_RWLOCK_tryrdlock(l) do { } while(0)
+#define HEIMDAL_RWLOCK_trywrlock(l) do { } while(0)
+#define HEIMDAL_RWLOCK_unlock(l) do { } while(0)
+#define HEIMDAL_RWLOCK_destroy(l) do { } while(0)
 
 #define HEIMDAL_THREAD_ID int
 #define HEIMDAL_THREAD_create(t,f,a) abort()

@@ -48,17 +48,17 @@ check_set_time(krb5_context context)
 
     ret = krb5_set_real_time(context, tv.tv_sec + diff, tv.tv_usec);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_us_timeofday");
+        krb5_err(context, 1, ret, "krb5_us_timeofday");
 
     ret = krb5_us_timeofday(context, &sec, &usec);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_us_timeofday");
+        krb5_err(context, 1, ret, "krb5_us_timeofday");
 
     diff2 = krb5_time_abs(sec, tv.tv_sec);
 
     if (diff2 < 9 || diff > 11)
-	krb5_errx(context, 1, "set time error: diff: %ld",
-		  krb5_time_abs(sec, tv.tv_sec));
+        krb5_errx(context, 1, "set time error: diff: %ld",
+                  krb5_time_abs(sec, tv.tv_sec));
 }
 
 
@@ -71,7 +71,7 @@ main(int argc, char **argv)
 
     ret = krb5_init_context(&context);
     if (ret)
-	errx(1, "krb5_init_context %d", ret);
+        errx(1, "krb5_init_context %d", ret);
 
     check_set_time(context);
     check_set_time(context);

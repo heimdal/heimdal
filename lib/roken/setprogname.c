@@ -49,7 +49,7 @@ setprogname(const char *argv0)
 
     const char *p;
     if(argv0 == NULL)
-	return;
+        return;
     p = strrchr(argv0, '/');
 
 #ifdef BACKSLASH_PATH_DELIM
@@ -63,9 +63,9 @@ setprogname(const char *argv0)
 #endif
 
     if(p == NULL)
-	p = argv0;
+        p = argv0;
     else
-	p++;
+        p++;
 
 #ifdef _WIN32
     {

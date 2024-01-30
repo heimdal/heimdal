@@ -35,11 +35,11 @@
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_build_ap_req (krb5_context context,
-		   krb5_enctype enctype,
-		   krb5_creds *cred,
-		   krb5_flags ap_options,
-		   krb5_data authenticator,
-		   krb5_data *retdata)
+                   krb5_enctype enctype,
+                   krb5_creds *cred,
+                   krb5_flags ap_options,
+                   krb5_data authenticator,
+                   krb5_data *retdata)
 {
     krb5_error_code ret = 0;
     AP_REQ ap;

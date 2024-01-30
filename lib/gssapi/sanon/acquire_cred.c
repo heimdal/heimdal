@@ -35,25 +35,25 @@
 
 OM_uint32 GSSAPI_CALLCONV
 _gss_sanon_acquire_cred_from(OM_uint32 *minor,
-			     gss_const_name_t desired_name,
-			     OM_uint32 time_req,
-			     const gss_OID_set desired_mechs,
-			     gss_cred_usage_t cred_usage,
-			     gss_const_key_value_set_t cred_stor,
-			     gss_cred_id_t *output_cred_handle,
-			     gss_OID_set *actual_mechs,
-			     OM_uint32 *time_rec)
+                             gss_const_name_t desired_name,
+                             OM_uint32 time_req,
+                             const gss_OID_set desired_mechs,
+                             gss_cred_usage_t cred_usage,
+                             gss_const_key_value_set_t cred_stor,
+                             gss_cred_id_t *output_cred_handle,
+                             gss_OID_set *actual_mechs,
+                             OM_uint32 *time_rec)
 {
     *minor = 0;
 
     if (desired_name == GSS_C_NO_NAME ||
-	desired_name == _gss_sanon_anonymous_identity)
-	*output_cred_handle = _gss_sanon_anonymous_cred;
+        desired_name == _gss_sanon_anonymous_identity)
+        *output_cred_handle = _gss_sanon_anonymous_cred;
     else
-	*output_cred_handle = _gss_sanon_non_anonymous_cred;
+        *output_cred_handle = _gss_sanon_non_anonymous_cred;
 
     if (time_rec)
-	*time_rec = GSS_C_INDEFINITE;
+        *time_rec = GSS_C_INDEFINITE;
 
     return GSS_S_COMPLETE;
 }

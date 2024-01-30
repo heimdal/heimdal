@@ -37,8 +37,8 @@ static heim_base_atomic(char *) last_out_name; /* XXX should be thread-specific 
 
 OM_uint32
 _gsskrb5_krb5_ccache_name(OM_uint32 *minor_status,
-			  const char *name,
-			  const char **out_name)
+                          const char *name,
+                          const char **out_name)
 {
     krb5_context context;
     krb5_error_code kret;
@@ -48,31 +48,31 @@ _gsskrb5_krb5_ccache_name(OM_uint32 *minor_status,
     GSSAPI_KRB5_INIT(&context);
 
     if (out_name) {
-	const char *def_name;
+        const char *def_name;
 
-	*out_name = NULL;
+        *out_name = NULL;
 
-	def_name = krb5_cc_default_name(context);
-	if (def_name) {
-	    char *s = strdup(def_name);
-	    if (s) {
-		s = heim_base_exchange_pointer(&last_out_name, s);
-		free(s);
+        def_name = krb5_cc_default_name(context);
+        if (def_name) {
+            char *s = strdup(def_name);
+            if (s) {
+                s = heim_base_exchange_pointer(&last_out_name, s);
+                free(s);
 
-		*out_name = last_out_name;
-	    }
-	}
+                *out_name = last_out_name;
+            }
+        }
 
-	if (*out_name == NULL) {
-	    *minor_status = ENOMEM;
-	    return GSS_S_FAILURE;
-	}
+        if (*out_name == NULL) {
+            *minor_status = ENOMEM;
+            return GSS_S_FAILURE;
+        }
     }
 
     kret = krb5_cc_set_default_name(context, name);
     if (kret) {
-	*minor_status = kret;
-	return GSS_S_FAILURE;
+        *minor_status = kret;
+        return GSS_S_FAILURE;
     }
     return GSS_S_COMPLETE;
 }

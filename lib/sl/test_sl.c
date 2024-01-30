@@ -71,27 +71,27 @@ main(int argc, char **argv)
     int ret, i;
 
     for (i = 0; i < sizeof(lines)/sizeof(lines[0]); i++) {
-	int j, rargc = 0;
-	char **rargv = NULL;
-	char *buf = strdup(lines[i].line);
+        int j, rargc = 0;
+        char **rargv = NULL;
+        char *buf = strdup(lines[i].line);
 
-	ret = sl_make_argv(buf, &rargc, &rargv);
-	if (ret) {
-	    if (!lines[i].ok)
-		goto next;
-	    errx(1, "sl_make_argv test %d failed", i);
-	} else if (!lines[i].ok)
-	    errx(1, "sl_make_argv passed test %d when it shouldn't", i);
-	if (rargc != lines[i].argc)
-	    errx(1, "result argc (%d) != should be argc (%d) for test %d",
-		 rargc, lines[i].argc, i);
-	for (j = 0; j < rargc; j++)
-	    if (strcmp(rargv[j], lines[i].argv[j]) != 0)
-		errx(1, "result argv (%s) != should be argv (%s) for test %d",
-		     rargv[j], lines[i].argv[j], i);
-    next:
-	free(buf);
-	free(rargv);
+        ret = sl_make_argv(buf, &rargc, &rargv);
+        if (ret) {
+            if (!lines[i].ok)
+                goto next;
+            errx(1, "sl_make_argv test %d failed", i);
+        } else if (!lines[i].ok)
+            errx(1, "sl_make_argv passed test %d when it shouldn't", i);
+        if (rargc != lines[i].argc)
+            errx(1, "result argc (%d) != should be argc (%d) for test %d",
+                 rargc, lines[i].argc, i);
+        for (j = 0; j < rargc; j++)
+            if (strcmp(rargv[j], lines[i].argv[j]) != 0)
+                errx(1, "result argv (%s) != should be argv (%s) for test %d",
+                     rargv[j], lines[i].argv[j], i);
+next:
+        free(buf);
+        free(rargv);
     }
 
     return 0;

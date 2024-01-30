@@ -53,51 +53,51 @@ copy_import(void)
     int equal;
 
     maj_stat = gss_acquire_cred(&min_stat, GSS_C_NO_NAME, GSS_C_INDEFINITE,
-				GSS_C_NO_OID_SET, GSS_C_INITIATE,
-				&cred1, NULL, NULL);
+                                GSS_C_NO_OID_SET, GSS_C_INITIATE,
+                                &cred1, NULL, NULL);
     if (maj_stat != GSS_S_COMPLETE)
-	errx(1, "gss_acquire_cred");
+        errx(1, "gss_acquire_cred");
 
     maj_stat = gss_inquire_cred(&min_stat, cred1, &name1, &lifetime1,
-				&usage1, &mechs1);
+                                &usage1, &mechs1);
     if (maj_stat != GSS_S_COMPLETE)
-	errx(1, "gss_inquire_cred");
+        errx(1, "gss_inquire_cred");
 
     ret = krb5_init_context(&context);
     if (ret)
-	errx(1, "krb5_init_context");
+        errx(1, "krb5_init_context");
 
     ret = krb5_cc_new_unique(context, krb5_cc_type_memory, NULL, &id);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_cc_new_unique");
+        krb5_err(context, 1, ret, "krb5_cc_new_unique");
 
     maj_stat = gss_krb5_copy_ccache(&min_stat, context, cred1, id);
     if (maj_stat != GSS_S_COMPLETE)
-	errx(1, "gss_krb5_copy_ccache");
+        errx(1, "gss_krb5_copy_ccache");
 
     maj_stat = gss_krb5_import_cred(&min_stat, id, NULL, NULL, &cred2);
     if (maj_stat != GSS_S_COMPLETE)
-	errx(1, "gss_krb5_import_cred");
+        errx(1, "gss_krb5_import_cred");
 
     maj_stat = gss_inquire_cred(&min_stat, cred2, &name2, &lifetime2,
-				&usage2, &mechs2);
+                                &usage2, &mechs2);
     if (maj_stat != GSS_S_COMPLETE)
-	errx(1, "gss_inquire_cred 2");
+        errx(1, "gss_inquire_cred 2");
 
     maj_stat = gss_compare_name(&min_stat, name1, name2, &equal);
     if (maj_stat != GSS_S_COMPLETE)
-	errx(1, "gss_compare_name");
+        errx(1, "gss_compare_name");
     if (!equal)
-	errx(1, "names not equal");
+        errx(1, "names not equal");
 
     /* This check is racy! */
     if (getenv("TESTS_ENVIRONMENT") == NULL) && lifetime1 != lifetime2)
-	errx(1, "lifetime not equal");
+        errx(1, "lifetime not equal");
     if (lifetime1 != lifetime2)
-	warnx("lifetime not equal");
+        warnx("lifetime not equal");
 
     if (usage1 != usage1)
-	errx(1, "usage not equal");
+        errx(1, "usage not equal");
 
     gss_release_cred(&min_stat, &cred1);
     gss_release_cred(&min_stat, &cred2);
@@ -125,7 +125,7 @@ static void
 usage (int ret)
 {
     arg_printusage (args, sizeof(args)/sizeof(*args),
-		    NULL, "");
+                    NULL, "");
     exit (ret);
 }
 
@@ -136,14 +136,14 @@ main(int argc, char **argv)
 
     setprogname(argv[0]);
     if(getarg(args, sizeof(args) / sizeof(args[0]), argc, argv, &optidx))
-	usage(1);
+        usage(1);
 
     if (help_flag)
-	usage (0);
+        usage (0);
 
     if(version_flag){
-	print_version(NULL);
-	exit(0);
+        print_version(NULL);
+        exit(0);
     }
 
     argc -= optidx;

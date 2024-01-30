@@ -74,43 +74,43 @@ typedef struct _krb5_cc_ops {
     krb5_error_code (*close) NPROTOTYPE((krb5_ccache));
     krb5_error_code (*store) NPROTOTYPE((krb5_ccache, krb5_creds *));
     krb5_error_code (*retrieve) NPROTOTYPE((krb5_ccache, krb5_flags,
-                   krb5_creds *, krb5_creds *));
+                                            krb5_creds *, krb5_creds *));
     krb5_error_code (*get_princ) NPROTOTYPE((krb5_ccache,
-                        krb5_principal *));
+                                             krb5_principal *));
     krb5_error_code (*get_first) NPROTOTYPE((krb5_ccache,
-                        krb5_cc_cursor *));
+                                             krb5_cc_cursor *));
     krb5_error_code (*get_next) NPROTOTYPE((krb5_ccache, krb5_cc_cursor *,
-                   krb5_creds *));
+                                            krb5_creds *));
     krb5_error_code (*end_get) NPROTOTYPE((krb5_ccache, krb5_cc_cursor *));
     krb5_error_code (*remove_cred) NPROTOTYPE((krb5_ccache, krb5_flags,
-                      krb5_creds *));
+                                               krb5_creds *));
     krb5_error_code (*set_flags) NPROTOTYPE((krb5_ccache, krb5_flags));
 } krb5_cc_ops;
 
 typedef struct _krb5_keyblock {
-	krb5_keytype keytype;
-	int length;
-	krb5_octet *contents;
+    krb5_keytype keytype;
+    int length;
+    krb5_octet *contents;
 } krb5_keyblock;
 
 typedef struct _krb5_ticket_times {
-	krb5_timestamp authtime;
-	krb5_timestamp starttime;
-	krb5_timestamp endtime;
-	krb5_timestamp renew_till;
+    krb5_timestamp authtime;
+    krb5_timestamp starttime;
+    krb5_timestamp endtime;
+    krb5_timestamp renew_till;
 } krb5_ticket_times;
 
 typedef krb5_pointer krb5_cc_cursor;
 
 typedef struct _krb5_data {
-   int length;
-   char *data;
+    int length;
+    char *data;
 } krb5_data;
 
 typedef struct _krb5_authdata {
-   int ad_type;
-   int length;
-   krb5_octet *contents;
+    int ad_type;
+    int length;
+    krb5_octet *contents;
 } krb5_authdata;
 
 typedef struct _krb5_creds {

@@ -35,16 +35,16 @@
 
 OM_uint32 GSSAPI_CALLCONV
 _gss_ntlm_export_name
-           (OM_uint32  * minor_status,
-            gss_const_name_t input_name,
-            gss_buffer_t exported_name
-           )
+                      (OM_uint32  * minor_status,
+                       gss_const_name_t input_name,
+                       gss_buffer_t exported_name
+                      )
 {
     if (minor_status)
-	*minor_status = 0;
+        *minor_status = 0;
     if (exported_name) {
-	exported_name->length = 0;
-	exported_name->value = NULL;
+        exported_name->length = 0;
+        exported_name->value = NULL;
     }
     return GSS_S_COMPLETE;
 }

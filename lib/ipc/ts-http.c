@@ -59,9 +59,9 @@ usage(int ret)
 
 static void
 test_service(void *ctx, const heim_idata *req,
-	     const heim_icred cred,
-	     heim_ipc_complete complete,
-	     heim_sipc_call cctx)
+             const heim_icred cred,
+             heim_ipc_complete complete,
+             heim_sipc_call cctx)
 {
     heim_idata rep;
     printf("got request\n");
@@ -84,27 +84,27 @@ setup_sockets(void)
     hints.ai_flags = AI_PASSIVE;
     ret = getaddrinfo(NULL, "8080", &hints, &res0);
     if (ret)
-	errx(1, "%s", gai_strerror(ret));
+        errx(1, "%s", gai_strerror(ret));
 
     for (res = res0; res ; res = res->ai_next) {
-	s = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-	if (s < 0) {
-	    warn("socket");
-	    continue;
-	}
-	socket_set_reuseaddr(s, 1);
-	socket_set_ipv6only(s, 1);
+        s = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+        if (s < 0) {
+            warn("socket");
+            continue;
+        }
+        socket_set_reuseaddr(s, 1);
+        socket_set_ipv6only(s, 1);
 
-	if (bind(s, res->ai_addr, res->ai_addrlen) < 0) {
-	    warn("bind");
-	    close(s);
-	    continue;
-	}
-	listen(s, 5);
-	ret = heim_sipc_stream_listener(s, HEIM_SIPC_TYPE_HTTP,
-					test_service, NULL, &u);
-	if (ret)
-	    errx(1, "heim_sipc_stream_listener: %d", ret);
+        if (bind(s, res->ai_addr, res->ai_addrlen) < 0) {
+            warn("bind");
+            close(s);
+            continue;
+        }
+        listen(s, 5);
+        ret = heim_sipc_stream_listener(s, HEIM_SIPC_TYPE_HTTP,
+                                        test_service, NULL, &u);
+        if (ret)
+            errx(1, "heim_sipc_stream_listener: %d", ret);
     }
     freeaddrinfo(res0);
 }
@@ -118,14 +118,14 @@ main(int argc, char **argv)
     setprogname(argv[0]);
 
     if (getarg(args, num_args, argc, argv, &optidx))
-	usage(1);
+        usage(1);
 
     if (help_flag)
-	usage(0);
+        usage(0);
 
     if (version_flag) {
-	print_version(NULL);
-	exit(0);
+        print_version(NULL);
+        exit(0);
     }
 
     setup_sockets();

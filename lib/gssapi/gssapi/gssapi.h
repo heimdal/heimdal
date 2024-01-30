@@ -787,7 +787,7 @@ gss_oid_to_str(
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_inquire_sec_context_by_oid(
-	    OM_uint32 * minor_status,
+            OM_uint32 * minor_status,
             gss_const_ctx_id_t context_handle,
             const gss_OID desired_object,
             gss_buffer_set_t *data_set
@@ -795,15 +795,15 @@ gss_inquire_sec_context_by_oid(
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_set_sec_context_option (OM_uint32 *minor_status,
-			    gss_ctx_id_t *context_handle,
-			    const gss_OID desired_object,
-			    const gss_buffer_t value);
+                            gss_ctx_id_t *context_handle,
+                            const gss_OID desired_object,
+                            const gss_buffer_t value);
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_set_cred_option (OM_uint32 *minor_status,
-		     gss_cred_id_t *cred_handle,
-		     const gss_OID object,
-		     const gss_buffer_t value);
+                     gss_cred_id_t *cred_handle,
+                     const gss_OID object,
+                     const gss_buffer_t value);
 
 GSSAPI_LIB_FUNCTION int GSSAPI_LIB_CALL
 gss_oid_equal(gss_const_OID a, gss_const_OID b);
@@ -849,13 +849,13 @@ gss_pseudo_random
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_store_cred(OM_uint32         * /* minor_status */,
-	       gss_cred_id_t     /* input_cred_handle */,
-	       gss_cred_usage_t  /* cred_usage */,
-	       const gss_OID     /* desired_mech */,
-	       OM_uint32         /* overwrite_cred */,
-	       OM_uint32         /* default_cred */,
-	       gss_OID_set       * /* elements_stored */,
-	       gss_cred_usage_t  * /* cred_usage_stored */);
+               gss_cred_id_t     /* input_cred_handle */,
+               gss_cred_usage_t  /* cred_usage */,
+               const gss_OID     /* desired_mech */,
+               OM_uint32         /* overwrite_cred */,
+               OM_uint32         /* default_cred */,
+               gss_OID_set       * /* elements_stored */,
+               gss_cred_usage_t  * /* cred_usage_stored */);
 
 
 /*
@@ -934,13 +934,13 @@ GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL gss_unseal
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_encapsulate_token(gss_const_buffer_t /* input_token */,
-		      gss_const_OID /* oid */,
-		      gss_buffer_t /* output_token */);
+                      gss_const_OID /* oid */,
+                      gss_buffer_t /* output_token */);
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_decapsulate_token(gss_const_buffer_t /* input_token */,
-		      gss_const_OID /* oid */,
-		      gss_buffer_t /* output_token */);
+                      gss_const_OID /* oid */,
+                      gss_buffer_t /* output_token */);
 
 
 
@@ -954,37 +954,37 @@ gss_decapsulate_token(gss_const_buffer_t /* input_token */,
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_wrap_iov(OM_uint32 *, gss_ctx_id_t, int, gss_qop_t, int *,
-	     gss_iov_buffer_desc *, int);
+             gss_iov_buffer_desc *, int);
 
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_unwrap_iov(OM_uint32 *, gss_ctx_id_t, int *, gss_qop_t *,
-	       gss_iov_buffer_desc *, int);
+               gss_iov_buffer_desc *, int);
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_wrap_iov_length(OM_uint32 *, gss_ctx_id_t, int, gss_qop_t, int *,
-		    gss_iov_buffer_desc *, int);
+                    gss_iov_buffer_desc *, int);
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_release_iov_buffer(OM_uint32 *, gss_iov_buffer_desc *, int);
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_wrap_aead(OM_uint32 *, gss_ctx_id_t, int, gss_qop_t,
-	      gss_buffer_t, gss_buffer_t, int *, gss_buffer_t);
+              gss_buffer_t, gss_buffer_t, int *, gss_buffer_t);
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_unwrap_aead(OM_uint32 *, gss_ctx_id_t, gss_buffer_t,
-		gss_buffer_t, gss_buffer_t, int *, gss_qop_t *);
+                gss_buffer_t, gss_buffer_t, int *, gss_qop_t *);
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_export_cred(OM_uint32 * /* minor_status */,
-		gss_cred_id_t /* cred_handle */,
-		gss_buffer_t /* cred_token */);
+                gss_cred_id_t /* cred_handle */,
+                gss_buffer_t /* cred_token */);
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_import_cred(OM_uint32 * /* minor_status */,
-		gss_buffer_t /* cred_token */,
-		gss_cred_id_t * /* cred_handle */);
+                gss_buffer_t /* cred_token */,
+                gss_cred_id_t * /* cred_handle */);
 
 /*
  * mech option
@@ -992,7 +992,7 @@ gss_import_cred(OM_uint32 * /* minor_status */,
 
 GSSAPI_LIB_FUNCTION int GSSAPI_LIB_CALL
 gss_mo_set(gss_const_OID mech, gss_const_OID option,
-	   int enable, gss_buffer_t value);
+           int enable, gss_buffer_t value);
 
 GSSAPI_LIB_FUNCTION int GSSAPI_LIB_CALL
 gss_mo_get(gss_const_OID mech, gss_const_OID option, gss_buffer_t value);
@@ -1009,35 +1009,35 @@ gss_mo_name(gss_const_OID mech, gss_const_OID options, gss_buffer_t name);
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_inquire_saslname_for_mech(OM_uint32 *minor_status,
-			      const gss_OID desired_mech,
-			      gss_buffer_t sasl_mech_name,
-			      gss_buffer_t mech_name,
-			      gss_buffer_t mech_description);
+                              const gss_OID desired_mech,
+                              gss_buffer_t sasl_mech_name,
+                              gss_buffer_t mech_name,
+                              gss_buffer_t mech_description);
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_inquire_mech_for_saslname(OM_uint32 *minor_status,
-			      const gss_buffer_t sasl_mech_name,
-			      gss_OID *mech_type);
+                              const gss_buffer_t sasl_mech_name,
+                              gss_OID *mech_type);
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_indicate_mechs_by_attrs(OM_uint32 * minor_status,
-			    gss_const_OID_set desired_mech_attrs,
-			    gss_const_OID_set except_mech_attrs,
-			    gss_const_OID_set critical_mech_attrs,
-			    gss_OID_set *mechs);
+                            gss_const_OID_set desired_mech_attrs,
+                            gss_const_OID_set except_mech_attrs,
+                            gss_const_OID_set critical_mech_attrs,
+                            gss_OID_set *mechs);
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_inquire_attrs_for_mech(OM_uint32 * minor_status,
-			   gss_const_OID mech,
-			   gss_OID_set *mech_attr,
-			   gss_OID_set *known_mech_attrs);
+                           gss_const_OID mech,
+                           gss_OID_set *mech_attr,
+                           gss_OID_set *known_mech_attrs);
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_display_mech_attr(OM_uint32 * minor_status,
-		      gss_const_OID mech_attr,
-		      gss_buffer_t name,
-		      gss_buffer_t short_desc,
-		      gss_buffer_t long_desc);
+                      gss_const_OID mech_attr,
+                      gss_buffer_t name,
+                      gss_buffer_t short_desc,
+                      gss_buffer_t long_desc);
 
 /*
  * Solaris compat
@@ -1251,7 +1251,7 @@ gss_set_log_function(void *ctx, void (*func)(void * ctx, int level, const char *
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_destroy_cred(OM_uint32 *minor_status,
-		 gss_cred_id_t *cred_handle);
+                 gss_cred_id_t *cred_handle);
 
 /*
  * S4UProxy and S4USelf extensions.

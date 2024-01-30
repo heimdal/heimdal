@@ -109,12 +109,12 @@ main(int argc, char **argv)
 
     setprogname(argv[0]);
     if(getarg(getargs, num_args, argc, argv, &optidx))
-	usage(1);
+        usage(1);
     if(help_flag)
-	usage(0);
+        usage(0);
     if(version_flag) {
-	print_version(NULL);
-	exit(0);
+        print_version(NULL);
+        exit(0);
     }
 
     argc -= optidx;
@@ -122,39 +122,39 @@ main(int argc, char **argv)
 
 #ifdef KRB5
     {
-	krb5_error_code ret;
-	krb5_context context;
-	krb5_ccache id;
-	const char *name;
+        krb5_error_code ret;
+        krb5_context context;
+        krb5_ccache id;
+        const char *name;
 
-	ret = krb5_init_context(&context);
-	if (ret) /* XXX should this really call exit ? */
-	    errx(1, "no kerberos 5 support");
+        ret = krb5_init_context(&context);
+        if (ret) /* XXX should this really call exit ? */
+            errx(1, "no kerberos 5 support");
 
-	ret = krb5_cc_new_unique(context, typename_arg, NULL, &id);
-	if (ret)
-	    krb5_err(context, 1, ret, "Failed generating credential cache");
+        ret = krb5_cc_new_unique(context, typename_arg, NULL, &id);
+        if (ret)
+            krb5_err(context, 1, ret, "Failed generating credential cache");
 
-	name = krb5_cc_get_name(context, id);
-	if (name == NULL)
-	    krb5_errx(context, 1, "Generated credential cache have no name");
+        name = krb5_cc_get_name(context, id);
+        if (name == NULL)
+            krb5_errx(context, 1, "Generated credential cache have no name");
 
-	snprintf(tf, sizeof(tf), "%s:%s", krb5_cc_get_type(context, id), name);
+        snprintf(tf, sizeof(tf), "%s:%s", krb5_cc_get_type(context, id), name);
 
-	ret = krb5_cc_close(context, id);
-	if (ret)
-	    krb5_err(context, 1, ret, "Failed closing credential cache");
+        ret = krb5_cc_close(context, id);
+        if (ret)
+            krb5_err(context, 1, ret, "Failed closing credential cache");
 
-	krb5_free_context(context);
+        krb5_free_context(context);
 
-	esetenv("KRB5CCNAME", tf, 1);
+        esetenv("KRB5CCNAME", tf, 1);
     }
 #endif
 
     snprintf (tf, sizeof(tf), "%s_XXXXXX", TKT_ROOT);
     f = mkstemp (tf);
     if (f < 0)
-	err(1, "mkstemp failed");
+        err(1, "mkstemp failed");
     close (f);
     unlink (tf);
     esetenv("KRBTKFILE", tf, 1);
@@ -163,8 +163,8 @@ main(int argc, char **argv)
 
     args = (char **) malloc((argc + 10)*sizeof(char *));
     if (args == NULL)
-	errx (1, "Out of memory allocating %lu bytes",
-	      (unsigned long)((argc + 10)*sizeof(char *)));
+        errx (1, "Out of memory allocating %lu bytes",
+              (unsigned long)((argc + 10)*sizeof(char *)));
 
     if(*argv == NULL) {
         if (roken_get_shell(shellbuf, sizeof(shellbuf)) != NULL)
@@ -172,42 +172,42 @@ main(int argc, char **argv)
         else
             path = strdup("/bin/sh");
     } else {
-	path = strdup(*argv++);
+        path = strdup(*argv++);
     }
     if (path == NULL)
-	errx (1, "Out of memory copying path");
+        errx (1, "Out of memory copying path");
 
     p=strrchr(path, '/');
     if(p)
-	args[i] = strdup(p+1);
+        args[i] = strdup(p+1);
     else
-	args[i] = strdup(path);
+        args[i] = strdup(path);
 
     if (args[i++] == NULL)
-	errx (1, "Out of memory copying arguments");
+        errx (1, "Out of memory copying arguments");
 
     while(*argv)
-	args[i++] = *argv++;
+        args[i++] = *argv++;
 
     args[i++] = NULL;
 
     if(k_hasafs())
-	k_setpag();
+        k_setpag();
 
     unsetenv("PAGPID");
     execvp(path, args);
     if (errno == ENOENT || c_flag) {
-	char **sh_args = malloc ((i + 2) * sizeof(char *));
-	unsigned int j;
+        char **sh_args = malloc ((i + 2) * sizeof(char *));
+        unsigned int j;
 
-	if (sh_args == NULL)
-	    errx (1, "Out of memory copying sh arguments");
-	for (j = 1; j < i; ++j)
-	    sh_args[j + 2] = args[j];
-	sh_args[0] = "sh";
-	sh_args[1] = "-c";
-	sh_args[2] = path;
-	execv ("/bin/sh", sh_args);
+        if (sh_args == NULL)
+            errx (1, "Out of memory copying sh arguments");
+        for (j = 1; j < i; ++j)
+            sh_args[j + 2] = args[j];
+        sh_args[0] = "sh";
+        sh_args[1] = "-c";
+        sh_args[2] = path;
+        execv ("/bin/sh", sh_args);
     }
     err (1, "execvp");
 }

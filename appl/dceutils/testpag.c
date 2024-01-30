@@ -69,82 +69,82 @@ static sigjmp_buf setpag_buf;
 
 static sigtype mysig()
 {
-  siglongjmp(setpag_buf, 1);
+    siglongjmp(setpag_buf, 1);
 }
 
 
 int  krb5_dfs_newpag(new_pag)
-  int new_pag;
+    int new_pag;
 {
-  handler sa1, osa1;
-  handler sa2, osa2;
-  int pag = -1;
+    handler sa1, osa1;
+    handler sa2, osa2;
+    int pag = -1;
 
-  handler_init (sa1, mysig);
-  handler_init (sa2, mysig);
-  handler_swap (SIGSYS, sa1, osa1);
-  handler_swap (SIGSEGV, sa2, osa2);
+    handler_init (sa1, mysig);
+    handler_init (sa2, mysig);
+    handler_swap (SIGSYS, sa1, osa1);
+    handler_swap (SIGSEGV, sa2, osa2);
 
-  if (sigsetjmp(setpag_buf, 1) == 0) {
+    if (sigsetjmp(setpag_buf, 1) == 0) {
 #if defined(_AIX)
-    int (*dpagaix)(int, int, int, int, int, int);
+        int (*dpagaix)(int, int, int, int, int, int);
 
-    if (dpagaix = load(DPAGAIX, 0, 0))
-      pag = (*dpagaix)(AFSCALL_SETPAG, new_pag, 0, 0, 0, 0);
+        if (dpagaix = load(DPAGAIX, 0, 0))
+            pag = (*dpagaix)(AFSCALL_SETPAG, new_pag, 0, 0, 0, 0);
 #else
-    pag = syscall(AFS_SYSCALL,AFSCALL_SETPAG, new_pag, 0, 0, 0, 0);
+        pag = syscall(AFS_SYSCALL,AFSCALL_SETPAG, new_pag, 0, 0, 0, 0);
 #endif
+        handler_set (SIGSYS, osa1);
+        handler_set (SIGSEGV, osa2);
+        return(pag);
+    }
+
+    fprintf(stderr,"Setpag failed with a system error\n");
+    /* syscall failed! return 0 */
     handler_set (SIGSYS, osa1);
     handler_set (SIGSEGV, osa2);
-    return(pag);
-  }
-
-  fprintf(stderr,"Setpag failed with a system error\n");
-  /* syscall failed! return 0 */
-  handler_set (SIGSYS, osa1);
-  handler_set (SIGSEGV, osa2);
-  return(-1);
+    return(-1);
 }
 
 main(argc, argv)
-	int argc;
-	char *argv[];
+        int argc;
+        char *argv[];
 {
-  extern int optind;
-  extern char *optarg;
-  int rv;
-  int rc;
-  unsigned int pag;
-  unsigned int newpag = 0;
-  char ccname[256];
-  int nflag = 0;
+    extern int optind;
+    extern char *optarg;
+    int rv;
+    int rc;
+    unsigned int pag;
+    unsigned int newpag = 0;
+    char ccname[256];
+    int nflag = 0;
 
-  while((rv = getopt(argc,argv,"n:")) != -1) {
-    switch(rv) {
-     case 'n':
-       nflag++;
-       sscanf(optarg,"%8x",&newpag);
-       break;
-     default:
-       printf("Usage: k5dcepagt -n pag \n");
-       exit(1);
+    while((rv = getopt(argc,argv,"n:")) != -1) {
+        switch(rv) {
+            case 'n':
+                nflag++;
+                sscanf(optarg,"%8x",&newpag);
+                break;
+            default:
+                printf("Usage: k5dcepagt -n pag \n");
+                exit(1);
+        }
     }
-  }
 
-  if (nflag) {
-    fprintf (stderr,"calling k5dcepag newpag=%8.8x\n",newpag);
-    pag = krb5_dfs_newpag(newpag);
+    if (nflag) {
+      fprintf (stderr,"calling k5dcepag newpag=%8.8x\n",newpag);
+      pag = krb5_dfs_newpag(newpag);
 
-    fprintf (stderr,"PAG returned = %8.8x\n",pag);
-    if ((pag != 0) && (pag != -1)) {
-      sprintf (ccname,
-        "FILE:/opt/dcelocal/var/security/creds/dcecred_%8.8x",
-        pag);
-      esetenv("KRB5CCNAME",ccname,1);
-      execl("/bin/csh", "csh", NULL);
+        fprintf (stderr,"PAG returned = %8.8x\n",pag);
+        if ((pag != 0) && (pag != -1)) {
+            sprintf (ccname,
+                     "FILE:/opt/dcelocal/var/security/creds/dcecred_%8.8x",
+                     pag);
+            esetenv("KRB5CCNAME",ccname,1);
+            execl("/bin/csh", "csh", NULL);
+        }
+        else {
+            fprintf(stderr," Not a good pag value\n");
+        }
     }
-    else {
-      fprintf(stderr," Not a good pag value\n");
-    }
-  }
 }

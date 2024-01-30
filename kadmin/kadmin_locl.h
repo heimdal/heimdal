@@ -117,7 +117,7 @@ void time_t2str(time_t, char *, size_t, int);
 int  str2time_t (const char *, time_t *);
 int  parse_timet (const char *, krb5_timestamp *, int *, int);
 int  edit_timet (const char *, krb5_timestamp *, int *,
-		 int);
+                 int);
 
 void deltat2str(unsigned, char *, size_t);
 int  str2deltat(const char *, krb5_deltat *);
@@ -127,11 +127,11 @@ int  edit_deltat (const char *, krb5_deltat *, int *, int);
 int edit_entry(kadm5_principal_ent_t, int *, kadm5_principal_ent_t, int);
 void set_defaults(kadm5_principal_ent_t, int *, kadm5_principal_ent_t, int);
 int set_entry(krb5_context, kadm5_principal_ent_t, int *,
-	      const char *, const char *, const char *,
-	      const char *, const char *, const char *);
+              const char *, const char *, const char *,
+              const char *, const char *, const char *);
 int
 foreach_principal(const char *, int (*)(krb5_principal, void*),
-		  const char *, void *);
+                  const char *, void *);
 
 int parse_des_key (const char *, krb5_key_data *, const char **);
 

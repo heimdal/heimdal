@@ -76,40 +76,40 @@ krb5_free_cred_contents (krb5_context context, krb5_creds *c)
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_copy_creds_contents (krb5_context context,
-			  const krb5_creds *incred,
-			  krb5_creds *c)
+                          const krb5_creds *incred,
+                          krb5_creds *c)
 {
     krb5_error_code ret;
 
     memset(c, 0, sizeof(*c));
     ret = krb5_copy_principal (context, incred->client, &c->client);
     if (ret)
-	goto fail;
+        goto fail;
     ret = krb5_copy_principal (context, incred->server, &c->server);
     if (ret)
-	goto fail;
+        goto fail;
     ret = krb5_copy_keyblock_contents (context, &incred->session, &c->session);
     if (ret)
-	goto fail;
+        goto fail;
     c->times = incred->times;
     ret = krb5_data_copy (&c->ticket,
-			  incred->ticket.data,
-			  incred->ticket.length);
+                          incred->ticket.data,
+                          incred->ticket.length);
     if (ret)
-	goto fail;
+        goto fail;
     ret = krb5_data_copy (&c->second_ticket,
-			  incred->second_ticket.data,
-			  incred->second_ticket.length);
+                          incred->second_ticket.data,
+                          incred->second_ticket.length);
     if (ret)
-	goto fail;
+        goto fail;
     ret = copy_AuthorizationData(&incred->authdata, &c->authdata);
     if (ret)
-	goto fail;
+        goto fail;
     ret = krb5_copy_addresses (context,
-			       &incred->addresses,
-			       &c->addresses);
+                               &incred->addresses,
+                               &c->addresses);
     if (ret)
-	goto fail;
+        goto fail;
     c->flags = incred->flags;
     return 0;
 
@@ -133,14 +133,14 @@ fail:
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_copy_creds (krb5_context context,
-		 const krb5_creds *incred,
-		 krb5_creds **outcred)
+                 const krb5_creds *incred,
+                 krb5_creds **outcred)
 {
     krb5_creds *c;
 
     c = calloc(1, sizeof(*c));
     if (c == NULL)
-	return krb5_enomem(context);
+        return krb5_enomem(context);
     *outcred = c;
     return krb5_copy_creds_contents (context, incred, c);
 }
@@ -171,9 +171,9 @@ static krb5_boolean
 krb5_times_equal(const krb5_times *a, const krb5_times *b)
 {
     return a->starttime == b->starttime &&
-	a->authtime == b->authtime &&
-	a->endtime == b->endtime &&
-	a->renew_till == b->renew_till;
+        a->authtime == b->authtime &&
+        a->endtime == b->endtime &&
+        a->renew_till == b->renew_till;
 }
 
 /**
@@ -204,62 +204,62 @@ krb5_times_equal(const krb5_times *a, const krb5_times *b)
 
 KRB5_LIB_FUNCTION krb5_boolean KRB5_LIB_CALL
 krb5_compare_creds(krb5_context context, krb5_flags whichfields,
-		   const krb5_creds * mcreds, const krb5_creds * creds)
+                   const krb5_creds * mcreds, const krb5_creds * creds)
 {
     krb5_boolean match = TRUE;
 
     if (match && mcreds->server) {
-	if (whichfields & (KRB5_TC_DONT_MATCH_REALM | KRB5_TC_MATCH_SRV_NAMEONLY))
-	    match = krb5_principal_compare_any_realm (context, mcreds->server,
-						      creds->server);
-	else
-	    match = krb5_principal_compare (context, mcreds->server,
-					    creds->server);
+        if (whichfields & (KRB5_TC_DONT_MATCH_REALM | KRB5_TC_MATCH_SRV_NAMEONLY))
+            match = krb5_principal_compare_any_realm (context, mcreds->server,
+                                                      creds->server);
+        else
+            match = krb5_principal_compare (context, mcreds->server,
+                                            creds->server);
     }
 
     if (match && mcreds->client) {
-	if(whichfields & KRB5_TC_DONT_MATCH_REALM)
-	    match = krb5_principal_compare_any_realm (context, mcreds->client,
-						      creds->client);
-	else
-	    match = krb5_principal_compare (context, mcreds->client,
-					    creds->client);
+        if(whichfields & KRB5_TC_DONT_MATCH_REALM)
+            match = krb5_principal_compare_any_realm (context, mcreds->client,
+                                                      creds->client);
+        else
+            match = krb5_principal_compare (context, mcreds->client,
+                                            creds->client);
     }
 
     if (match && (whichfields & KRB5_TC_MATCH_KEYTYPE))
         match = mcreds->session.keytype == creds->session.keytype;
 
     if (match && (whichfields & KRB5_TC_MATCH_FLAGS_EXACT))
-	match = mcreds->flags.i == creds->flags.i;
+        match = mcreds->flags.i == creds->flags.i;
 
     if (match && (whichfields & KRB5_TC_MATCH_FLAGS))
-	match = (creds->flags.i & mcreds->flags.i) == mcreds->flags.i;
+        match = (creds->flags.i & mcreds->flags.i) == mcreds->flags.i;
 
     if (match && (whichfields & KRB5_TC_MATCH_TIMES_EXACT))
-	match = krb5_times_equal(&mcreds->times, &creds->times);
+        match = krb5_times_equal(&mcreds->times, &creds->times);
 
     if (match && (whichfields & KRB5_TC_MATCH_TIMES))
-	/* compare only expiration times */
-	match = (mcreds->times.renew_till <= creds->times.renew_till) &&
-	    (mcreds->times.endtime <= creds->times.endtime);
+        /* compare only expiration times */
+        match = (mcreds->times.renew_till <= creds->times.renew_till) &&
+            (mcreds->times.endtime <= creds->times.endtime);
 
     if (match && (whichfields & KRB5_TC_MATCH_AUTHDATA)) {
-	unsigned int i;
-	if(mcreds->authdata.len != creds->authdata.len)
-	    match = FALSE;
-	else
-	    for(i = 0; match && i < mcreds->authdata.len; i++)
-		match = (mcreds->authdata.val[i].ad_type ==
-			 creds->authdata.val[i].ad_type) &&
-		    (krb5_data_cmp(&mcreds->authdata.val[i].ad_data,
-				   &creds->authdata.val[i].ad_data) == 0);
+        unsigned int i;
+        if(mcreds->authdata.len != creds->authdata.len)
+            match = FALSE;
+        else
+            for(i = 0; match && i < mcreds->authdata.len; i++)
+                match = (mcreds->authdata.val[i].ad_type ==
+                         creds->authdata.val[i].ad_type) &&
+                    (krb5_data_cmp(&mcreds->authdata.val[i].ad_data,
+                                   &creds->authdata.val[i].ad_data) == 0);
     }
     if (match && (whichfields & KRB5_TC_MATCH_2ND_TKT))
-	match = (krb5_data_cmp(&mcreds->second_ticket, &creds->second_ticket) == 0);
+        match = (krb5_data_cmp(&mcreds->second_ticket, &creds->second_ticket) == 0);
 
     if (match && (whichfields & KRB5_TC_MATCH_IS_SKEY))
-	match = ((mcreds->second_ticket.length == 0) ==
-		 (creds->second_ticket.length == 0));
+        match = ((mcreds->second_ticket.length == 0) ==
+                 (creds->second_ticket.length == 0));
 
     return match;
 }

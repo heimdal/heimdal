@@ -39,8 +39,8 @@
 
 krb5_error_code
 kcm_ccache_acquire(krb5_context context,
-		   kcm_ccache ccache,
-		   krb5_creds **credp)
+                   kcm_ccache ccache,
+                   krb5_creds **credp)
 {
     krb5_error_code ret = 0;
     krb5_creds cred;
@@ -57,17 +57,17 @@ kcm_ccache_acquire(krb5_context context,
 
     /* We need a cached key or keytab to acquire credentials */
     if (ccache->flags & KCM_FLAGS_USE_CACHED_KEY) {
-	if (ccache->key.keyblock.keyvalue.length == 0)
-	    krb5_abortx(context,
-			"kcm_ccache_acquire: KCM_FLAGS_USE_CACHED_KEY without key");
+        if (ccache->key.keyblock.keyvalue.length == 0)
+            krb5_abortx(context,
+                        "kcm_ccache_acquire: KCM_FLAGS_USE_CACHED_KEY without key");
     } else if (ccache->flags & KCM_FLAGS_USE_KEYTAB) {
-	if (ccache->key.keytab == NULL)
-	    krb5_abortx(context,
-			"kcm_ccache_acquire: KCM_FLAGS_USE_KEYTAB without keytab");
+        if (ccache->key.keytab == NULL)
+            krb5_abortx(context,
+                        "kcm_ccache_acquire: KCM_FLAGS_USE_KEYTAB without keytab");
     } else {
-	kcm_log(0, "Cannot acquire initial credentials for cache %s without key",
-		ccache->name);
-	return KRB5_FCC_INTERNAL;
+        kcm_log(0, "Cannot acquire initial credentials for cache %s without key",
+                ccache->name);
+        return KRB5_FCC_INTERNAL;
     }
 
     HEIMDAL_MUTEX_lock(&ccache->mutex);
@@ -77,52 +77,52 @@ kcm_ccache_acquire(krb5_context context,
 
     /* Now, actually acquire the creds */
     if (ccache->server != NULL) {
-	ret = krb5_unparse_name(context, ccache->server, &in_tkt_service);
-	if (ret) {
-	    estr = krb5_get_error_message(context, ret);
-	    kcm_log(0, "Failed to unparse service principal name for cache %s: %s",
-		    ccache->name, estr);
-	    krb5_free_error_message(context, estr);
-	    goto out;
-	}
+        ret = krb5_unparse_name(context, ccache->server, &in_tkt_service);
+        if (ret) {
+            estr = krb5_get_error_message(context, ret);
+            kcm_log(0, "Failed to unparse service principal name for cache %s: %s",
+                    ccache->name, estr);
+            krb5_free_error_message(context, estr);
+            goto out;
+        }
     }
 
     realm = krb5_principal_get_realm(context, ccache->client);
 
     ret = krb5_get_init_creds_opt_alloc(context, &opt);
     if (ret)
-	goto out;
+        goto out;
     krb5_get_init_creds_opt_set_default_flags(context, "kcm", realm, opt);
     if (ccache->tkt_life != 0)
-	krb5_get_init_creds_opt_set_tkt_life(opt, ccache->tkt_life);
+        krb5_get_init_creds_opt_set_tkt_life(opt, ccache->tkt_life);
     if (ccache->renew_life != 0)
-	krb5_get_init_creds_opt_set_renew_life(opt, ccache->renew_life);
+        krb5_get_init_creds_opt_set_renew_life(opt, ccache->renew_life);
 
     if (ccache->flags & KCM_FLAGS_USE_CACHED_KEY) {
-	ret = krb5_get_init_creds_keyblock(context,
-					   &cred,
-					   ccache->client,
-					   &ccache->key.keyblock,
-					   0,
-					   in_tkt_service,
-					   opt);
+        ret = krb5_get_init_creds_keyblock(context,
+                                           &cred,
+                                           ccache->client,
+                                           &ccache->key.keyblock,
+                                           0,
+                                           in_tkt_service,
+                                           opt);
     } else {
-	/* loosely based on lib/krb5/init_creds_pw.c */
-	ret = krb5_get_init_creds_keytab(context,
-					 &cred,
-					 ccache->client,
-					 ccache->key.keytab,
-					 0,
-					 in_tkt_service,
-					 opt);
+        /* loosely based on lib/krb5/init_creds_pw.c */
+        ret = krb5_get_init_creds_keytab(context,
+                                         &cred,
+                                         ccache->client,
+                                         ccache->key.keytab,
+                                         0,
+                                         in_tkt_service,
+                                         opt);
     }
 
     if (ret) {
-	estr = krb5_get_error_message(context, ret);
-	kcm_log(0, "Failed to acquire credentials for cache %s: %s",
-		ccache->name, estr);
-	krb5_free_error_message(context, estr);
-	goto out;
+        estr = krb5_get_error_message(context, ret);
+        kcm_log(0, "Failed to acquire credentials for cache %s: %s",
+                ccache->name, estr);
+        krb5_free_error_message(context, estr);
+        goto out;
     }
 
     /* Swap them in */
@@ -130,18 +130,18 @@ kcm_ccache_acquire(krb5_context context,
 
     ret = kcm_ccache_store_cred_internal(context, ccache, &cred, 0, credp);
     if (ret) {
-	estr = krb5_get_error_message(context, ret);
-	kcm_log(0, "Failed to store credentials for cache %s: %s",
-		ccache->name, estr);
-	krb5_free_error_message(context, estr);
-	krb5_free_cred_contents(context, &cred);
-	goto out;
+        estr = krb5_get_error_message(context, ret);
+        kcm_log(0, "Failed to store credentials for cache %s: %s",
+                ccache->name, estr);
+        krb5_free_error_message(context, estr);
+        krb5_free_cred_contents(context, &cred);
+        goto out;
     }
 
 out:
     free(in_tkt_service);
     if (opt)
-	krb5_get_init_creds_opt_free(context, opt);
+        krb5_get_init_creds_opt_free(context, opt);
 
     HEIMDAL_MUTEX_unlock(&ccache->mutex);
 

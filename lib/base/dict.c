@@ -54,12 +54,12 @@ dict_dealloc(void *ptr)
     struct hashentry **h, *g, *i;
 
     for (h = dict->tab; h < &dict->tab[dict->size]; ++h) {
-	for (g = h[0]; g; g = i) {
-	    i = g->next;
-	    heim_release(g->key);
-	    heim_release(g->value);
-	    free(g);
-	}
+        for (g = h[0]; g; g = i) {
+            i = g->next;
+            heim_release(g->key);
+            heim_release(g->value);
+            free(g);
+        }
     }
     free(dict->tab);
 }
@@ -81,12 +81,12 @@ isprime(size_t p)
     size_t q, i;
 
     for(i = 2 ; i < p; i++) {
-	q = p / i;
+        q = p / i;
 
-	if (i * q == p)
-	    return 0;
-	if (i * i > p)
-	    return 1;
+        if (i * q == p)
+            return 0;
+        if (i * i > p)
+            return 1;
     }
     return 1;
 }
@@ -95,10 +95,10 @@ static size_t
 findprime(size_t p)
 {
     if (p % 2 == 0)
-	p++;
+        p++;
 
     while (isprime(p) == 0)
-	p += 2;
+        p += 2;
 
     return p;
 }
@@ -120,15 +120,15 @@ heim_dict_create(size_t size)
 
     dict->size = findprime(size);
     if (dict->size == 0) {
-	heim_release(dict);
-	return NULL;
+        heim_release(dict);
+        return NULL;
     }
 
     dict->tab = calloc(dict->size, sizeof(dict->tab[0]));
     if (dict->tab == NULL) {
-	dict->size = 0;
-	heim_release(dict);
-	return NULL;
+        dict->size = 0;
+        heim_release(dict);
+        return NULL;
     }
 
     return dict;
@@ -155,8 +155,8 @@ _search(heim_dict_t dict, heim_object_t ptr)
     struct hashentry *p;
 
     for (p = dict->tab[v % dict->size]; p != NULL; p = p->next)
-	if (heim_cmp(ptr, p->key) == 0)
-	    return p;
+        if (heim_cmp(ptr, p->key) == 0)
+            return p;
 
     return NULL;
 }
@@ -176,7 +176,7 @@ heim_dict_get_value(heim_dict_t dict, heim_object_t key)
     struct hashentry *p;
     p = _search(dict, key);
     if (p == NULL)
-	return NULL;
+        return NULL;
 
     return p->value;
 }
@@ -196,7 +196,7 @@ heim_dict_copy_value(heim_dict_t dict, heim_object_t key)
     struct hashentry *p;
     p = _search(dict, key);
     if (p == NULL)
-	return NULL;
+        return NULL;
 
     return heim_retain(p->value);
 }
@@ -218,26 +218,26 @@ heim_dict_set_value(heim_dict_t dict, heim_object_t key, heim_object_t value)
 
     h = _search(dict, key);
     if (h) {
-	heim_release(h->value);
-	h->value = heim_retain(value);
+        heim_release(h->value);
+        h->value = heim_retain(value);
     } else {
-	uintptr_t v;
+        uintptr_t v;
 
-	h = malloc(sizeof(*h));
-	if (h == NULL)
-	    return ENOMEM;
+        h = malloc(sizeof(*h));
+        if (h == NULL)
+            return ENOMEM;
 
-	h->key = heim_retain(key);
-	h->value = heim_retain(value);
+        h->key = heim_retain(key);
+        h->value = heim_retain(value);
 
-	v = heim_get_hash(key);
+        v = heim_get_hash(key);
 
-	tabptr = &dict->tab[v % dict->size];
-	h->next = *tabptr;
-	*tabptr = h;
-	h->prev = tabptr;
-	if (h->next)
-	    h->next->prev = &h->next;
+        tabptr = &dict->tab[v % dict->size];
+        h->next = *tabptr;
+        *tabptr = h;
+        h->prev = tabptr;
+        if (h->next)
+            h->next->prev = &h->next;
     }
 
     return 0;
@@ -256,13 +256,13 @@ heim_dict_delete_key(heim_dict_t dict, heim_object_t key)
     struct hashentry *h = _search(dict, key);
 
     if (h == NULL)
-	return;
+        return;
 
     heim_release(h->key);
     heim_release(h->value);
 
     if ((*(h->prev) = h->next) != NULL)
-	h->next->prev = h->prev;
+        h->next->prev = h->prev;
 
     free(h);
 }
@@ -281,8 +281,8 @@ heim_dict_iterate_f(heim_dict_t dict, void *arg, heim_dict_iterator_f_t func)
     struct hashentry **h, *g;
 
     for (h = dict->tab; h < &dict->tab[dict->size]; ++h)
-	for (g = *h; g; g = g->next)
-	    func(g->key, g->value, arg);
+        for (g = *h; g; g = g->next)
+            func(g->key, g->value, arg);
 }
 
 #ifdef __BLOCKS__
@@ -299,7 +299,7 @@ heim_dict_iterate(heim_dict_t dict, void (^func)(heim_object_t, heim_object_t))
     struct hashentry **h, *g;
 
     for (h = dict->tab; h < &dict->tab[dict->size]; ++h)
-	for (g = *h; g; g = g->next)
-	    func(g->key, g->value);
+        for (g = *h; g; g = g->next)
+            func(g->key, g->value);
 }
 #endif

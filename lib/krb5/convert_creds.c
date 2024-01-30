@@ -53,12 +53,12 @@
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb524_convert_creds_kdc(krb5_context context,
-			 krb5_creds *in_cred,
-			 struct credentials *v4creds)
+                         krb5_creds *in_cred,
+                         struct credentials *v4creds)
     KRB5_DEPRECATED_FUNCTION("Use X instead")
 {
     krb5_set_error_message(context, EINVAL,
-			   N_("krb524_convert_creds_kdc not supported", ""));
+                           N_("krb524_convert_creds_kdc not supported", ""));
     return EINVAL;
 }
 
@@ -79,13 +79,13 @@ krb524_convert_creds_kdc(krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb524_convert_creds_kdc_ccache(krb5_context context,
-				krb5_ccache ccache,
-				krb5_creds *in_cred,
-				struct credentials *v4creds)
+                                krb5_ccache ccache,
+                                krb5_creds *in_cred,
+                                struct credentials *v4creds)
     KRB5_DEPRECATED_FUNCTION("Use X instead")
 {
     krb5_set_error_message(context, EINVAL,
-			   N_("krb524_convert_creds_kdc_ccache not supported", ""));
+                           N_("krb524_convert_creds_kdc_ccache not supported", ""));
     return EINVAL;
 }
 

@@ -47,17 +47,17 @@ GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_release_name(OM_uint32 *minor_status,
     gss_name_t *input_name)
 {
-	struct _gss_name *name;
+    struct _gss_name *name;
 
-	*minor_status = 0;
+    *minor_status = 0;
 
-	if (input_name == NULL || *input_name == NULL)
-	    return GSS_S_COMPLETE;
+    if (input_name == NULL || *input_name == NULL)
+        return GSS_S_COMPLETE;
 
-	name = (struct _gss_name *) *input_name;
-	_gss_mg_release_name(name);
+    name = (struct _gss_name *) *input_name;
+    _gss_mg_release_name(name);
 
-	*input_name = GSS_C_NO_NAME;
+    *input_name = GSS_C_NO_NAME;
 
-	return (GSS_S_COMPLETE);
+    return (GSS_S_COMPLETE);
 }

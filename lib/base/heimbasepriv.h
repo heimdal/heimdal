@@ -63,12 +63,12 @@ heim_const_type_t _heim_get_isa(heim_object_t);
 
 heim_type_t
 _heim_create_type(const char *name,
-		  heim_type_init init,
-		  heim_type_dealloc dealloc,
-		  heim_type_copy copy,
-		  heim_type_cmp cmp,
-		  heim_type_hash hash,
-		  heim_type_description desc);
+                  heim_type_init init,
+                  heim_type_dealloc dealloc,
+                  heim_type_copy copy,
+                  heim_type_cmp cmp,
+                  heim_type_hash hash,
+                  heim_type_description desc);
 
 heim_object_t
 _heim_alloc_object(heim_const_type_t type, size_t size);

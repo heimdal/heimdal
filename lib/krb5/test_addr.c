@@ -45,26 +45,26 @@ print_addr(krb5_context context, const char *addr)
 
     ret = krb5_parse_address(context, addr, &addresses);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_parse_address");
+        krb5_err(context, 1, ret, "krb5_parse_address");
 
     if (addresses.len < 1)
-	krb5_err(context, 1, ret, "too few addresses");
+        krb5_err(context, 1, ret, "too few addresses");
 
     for (i = 0; i < addresses.len; i++) {
-	krb5_print_address(&addresses.val[i], buf, sizeof(buf), &len);
+        krb5_print_address(&addresses.val[i], buf, sizeof(buf), &len);
 #if 0
-	printf("addr %d: %s (%d/%d)\n", i, buf, (int)len, (int)strlen(buf));
+        printf("addr %d: %s (%d/%d)\n", i, buf, (int)len, (int)strlen(buf));
 #endif
-	if (strlen(buf) > sizeof(buf))
-	    krb5_err(context, 1, ret, "len %d larger then buf %d",
-		     (int)strlen(buf), (int)sizeof(buf));
-	krb5_print_address(&addresses.val[i], buf2, sizeof(buf2), &len);
+        if (strlen(buf) > sizeof(buf))
+            krb5_err(context, 1, ret, "len %d larger then buf %d",
+                     (int)strlen(buf), (int)sizeof(buf));
+        krb5_print_address(&addresses.val[i], buf2, sizeof(buf2), &len);
 #if 0
-	printf("addr %d: %s (%d/%d)\n", i, buf2, (int)len, (int)strlen(buf2));
+        printf("addr %d: %s (%d/%d)\n", i, buf2, (int)len, (int)strlen(buf2));
 #endif
-	if (strlen(buf2) > sizeof(buf2))
-	    krb5_err(context, 1, ret, "len %d larger then buf %d",
-		     (int)strlen(buf2), (int)sizeof(buf2));
+        if (strlen(buf2) > sizeof(buf2))
+            krb5_err(context, 1, ret, "len %d larger then buf %d",
+                     (int)strlen(buf2), (int)sizeof(buf2));
 
     }
     krb5_free_addresses(context, &addresses);
@@ -73,7 +73,7 @@ print_addr(krb5_context context, const char *addr)
 
 static void
 truncated_addr(krb5_context context, const char *addr,
-	       size_t truncate_len, size_t outlen)
+               size_t truncate_len, size_t outlen)
 {
     krb5_addresses addresses;
     krb5_error_code ret;
@@ -84,10 +84,10 @@ truncated_addr(krb5_context context, const char *addr,
 
     ret = krb5_parse_address(context, addr, &addresses);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_parse_address");
+        krb5_err(context, 1, ret, "krb5_parse_address");
 
     if (addresses.len != 1)
-	krb5_err(context, 1, ret, "addresses should be one");
+        krb5_err(context, 1, ret, "addresses should be one");
 
     krb5_print_address(&addresses.val[0], buf, truncate_len, &len);
 
@@ -96,12 +96,12 @@ truncated_addr(krb5_context context, const char *addr,
 #endif
 
     if (truncate_len > strlen(buf) + 1)
-	krb5_err(context, 1, ret, "%s truncate_len %d larger then strlen %d source %s",
-		 buf, (int)truncate_len, (int)strlen(buf), addr);
+        krb5_err(context, 1, ret, "%s truncate_len %d larger then strlen %d source %s",
+                 buf, (int)truncate_len, (int)strlen(buf), addr);
 
     if (outlen != len)
-	krb5_err(context, 1, ret, "%s: outlen %d != len %d",
-		 buf, (int)outlen, (int)strlen(buf));
+        krb5_err(context, 1, ret, "%s: outlen %d != len %d",
+                 buf, (int)outlen, (int)strlen(buf));
 
     krb5_print_address(&addresses.val[0], buf, outlen + 1, &len);
 
@@ -110,9 +110,9 @@ truncated_addr(krb5_context context, const char *addr,
 #endif
 
     if (len != outlen)
-	abort();
+        abort();
     if (strlen(buf) != len)
-	abort();
+        abort();
 
     krb5_free_addresses(context, &addresses);
     free(buf);
@@ -126,36 +126,36 @@ check_truncation(krb5_context context, const char *addr)
     truncated_addr(context, addr, len, len);
 
     for (i = 0; i < len; i++)
-	truncated_addr(context, addr, i, len);
+        truncated_addr(context, addr, i, len);
 }
 
 static void
 match_addr(krb5_context context, const char *range_addr,
-	   const char *one_addr, int match)
+           const char *one_addr, int match)
 {
     krb5_addresses range, one;
     krb5_error_code ret;
 
     ret = krb5_parse_address(context, range_addr, &range);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_parse_address");
+        krb5_err(context, 1, ret, "krb5_parse_address");
 
     if (range.len != 1)
-	krb5_err(context, 1, ret, "wrong num of addresses");
+        krb5_err(context, 1, ret, "wrong num of addresses");
 
     ret = krb5_parse_address(context, one_addr, &one);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_parse_address");
+        krb5_err(context, 1, ret, "krb5_parse_address");
 
     if (one.len != 1)
-	krb5_err(context, 1, ret, "wrong num of addresses");
+        krb5_err(context, 1, ret, "wrong num of addresses");
 
     if (krb5_address_order(context, &range.val[0], &one.val[0]) == 0) {
-	if (!match)
-	    krb5_errx(context, 1, "match when one shouldn't be");
+        if (!match)
+            krb5_errx(context, 1, "match when one shouldn't be");
     } else {
-	if (match)
-	    krb5_errx(context, 1, "no match when one should be");
+        if (match)
+            krb5_errx(context, 1, "no match when one should be");
     }
 
     krb5_free_addresses(context, &range);
@@ -170,13 +170,13 @@ match_addr(krb5_context context, const char *range_addr,
 
 static void
 inv_param_handler(const wchar_t* expression,
-		  const wchar_t* function,
-		  const wchar_t* file,
-		  unsigned int line,
-		  uintptr_t pReserved)
+                  const wchar_t* function,
+                  const wchar_t* file,
+                  unsigned int line,
+                  uintptr_t pReserved)
 {
     printf("Invalid parameter handler invoked for: %S in %S(%d) [%S]\n",
-	   function, file, line, expression);
+           function, file, line, expression);
 }
 
 static _invalid_parameter_handler _inv_old = NULL;
@@ -201,7 +201,7 @@ main(int argc, char **argv)
 
     ret = krb5_init_context(&context);
     if (ret)
-	errx (1, "krb5_init_context failed: %d", ret);
+        errx (1, "krb5_init_context failed: %d", ret);
 
     print_addr(context, "RANGE:127.0.0.0/8");
     print_addr(context, "RANGE:127.0.0.0/24");

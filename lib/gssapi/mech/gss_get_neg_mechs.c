@@ -34,18 +34,18 @@
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_get_neg_mechs(OM_uint32 *minor_status,
-		  gss_const_cred_id_t cred_handle,
-		  gss_OID_set *mechs)
+                  gss_const_cred_id_t cred_handle,
+                  gss_OID_set *mechs)
 {
     struct _gss_cred *cred = (struct _gss_cred *)cred_handle;
 
     if (minor_status == NULL)
-	return GSS_S_CALL_INACCESSIBLE_WRITE;
+        return GSS_S_CALL_INACCESSIBLE_WRITE;
 
     *minor_status = 0;
 
     if (mechs == NULL)
-	return GSS_S_CALL_INACCESSIBLE_WRITE;
+        return GSS_S_CALL_INACCESSIBLE_WRITE;
 
     if (cred->gc_neg_mechs != GSS_C_NO_OID_SET)
         return gss_duplicate_oid_set(minor_status, cred->gc_neg_mechs, mechs);

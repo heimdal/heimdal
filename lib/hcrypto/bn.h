@@ -89,7 +89,7 @@ struct BN_GENCB {
     unsigned int ver;
     void *arg;
     union {
-	int (*cb_2)(int, int, BN_GENCB *);
+        int (*cb_2)(int, int, BN_GENCB *);
     } cb;
 };
 

@@ -99,41 +99,41 @@ main(int argc, char **argv)
 
     ret = krb5_init_context (&context);
     if (ret)
-	errx (1, "krb5_init_context failed: %d", ret);
+        errx (1, "krb5_init_context failed: %d", ret);
 
     /* to enable realm-less principal name above */
 
     krb5_set_default_realm(context, "");
 
     for (t = tests; t->principal_name; ++t) {
-	krb5_keyblock key;
-	krb5_principal principal;
-	int i;
+        krb5_keyblock key;
+        krb5_principal principal;
+        int i;
 
-	ret = krb5_parse_name (context, t->principal_name, &principal);
-	if (ret)
-	    krb5_err (context, 1, ret, "krb5_parse_name %s",
-		      t->principal_name);
-	ret = krb5_string_to_key (context, t->enctype, t->password,
-				  principal, &key);
-	if (ret)
-	    krb5_err (context, 1, ret, "krb5_string_to_key");
-	krb5_free_principal (context, principal);
-	if (memcmp (key.keyvalue.data, t->res, key.keyvalue.length) != 0) {
-	    const unsigned char *p = key.keyvalue.data;
+        ret = krb5_parse_name (context, t->principal_name, &principal);
+        if (ret)
+            krb5_err (context, 1, ret, "krb5_parse_name %s",
+                      t->principal_name);
+        ret = krb5_string_to_key (context, t->enctype, t->password,
+                                  principal, &key);
+        if (ret)
+            krb5_err (context, 1, ret, "krb5_string_to_key");
+        krb5_free_principal (context, principal);
+        if (memcmp (key.keyvalue.data, t->res, key.keyvalue.length) != 0) {
+            const unsigned char *p = key.keyvalue.data;
 
-	    printf ("string_to_key(%s, %s) failed\n",
-		    t->principal_name, t->password);
-	    printf ("should be: ");
-	    for (i = 0; i < key.keyvalue.length; ++i)
-		printf ("%02x", t->res[i]);
-	    printf ("\nresult was: ");
-	    for (i = 0; i < key.keyvalue.length; ++i)
-		printf ("%02x", p[i]);
-	    printf ("\n");
-	    val = 1;
-	}
-	krb5_free_keyblock_contents(context, &key);
+            printf ("string_to_key(%s, %s) failed\n",
+                    t->principal_name, t->password);
+            printf ("should be: ");
+            for (i = 0; i < key.keyvalue.length; ++i)
+                printf ("%02x", t->res[i]);
+            printf ("\nresult was: ");
+            for (i = 0; i < key.keyvalue.length; ++i)
+                printf ("%02x", p[i]);
+            printf ("\n");
+            val = 1;
+        }
+        krb5_free_keyblock_contents(context, &key);
     }
     krb5_free_context(context);
     return val;

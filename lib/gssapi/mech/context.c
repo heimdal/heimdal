@@ -58,12 +58,12 @@ destroy_context(void *ptr)
     OM_uint32 junk;
 
     if (mg == NULL)
-	return;
+        return;
 
     gss_release_buffer(&junk, &mg->min_error);
 
     if (mg->context)
-	krb5_free_context(mg->context);
+        krb5_free_context(mg->context);
 
     free(mg);
 }
@@ -78,36 +78,36 @@ _gss_mechglue_thread(void)
     HEIMDAL_MUTEX_lock(&context_mutex);
 
     if (!created_key) {
-	HEIMDAL_key_create(&context_key, destroy_context, ret);
-	if (ret) {
-	    HEIMDAL_MUTEX_unlock(&context_mutex);
-	    return NULL;
-	}
-	created_key = 1;
+        HEIMDAL_key_create(&context_key, destroy_context, ret);
+        if (ret) {
+            HEIMDAL_MUTEX_unlock(&context_mutex);
+            return NULL;
+        }
+        created_key = 1;
     }
     HEIMDAL_MUTEX_unlock(&context_mutex);
 
     ctx = HEIMDAL_getspecific(context_key);
     if (ctx == NULL) {
 
-	ctx = calloc(1, sizeof(*ctx));
-	if (ctx == NULL)
-	    return NULL;
+        ctx = calloc(1, sizeof(*ctx));
+        if (ctx == NULL)
+            return NULL;
 
-	ret = krb5_init_context(&ctx->context);
-	if (ret) {
-	    free(ctx);
-	    return NULL;
-	}
+        ret = krb5_init_context(&ctx->context);
+        if (ret) {
+            free(ctx);
+            return NULL;
+        }
 
-	krb5_add_et_list(ctx->context, initialize_ngex_error_table_r);
+        krb5_add_et_list(ctx->context, initialize_ngex_error_table_r);
 
-	HEIMDAL_setspecific(context_key, ctx, ret);
-	if (ret) {
-	    krb5_free_context(ctx->context);
-	    free(ctx);
-	    return NULL;
-	}
+        HEIMDAL_setspecific(context_key, ctx, ret);
+        if (ret) {
+            krb5_free_context(ctx->context);
+            free(ctx);
+            return NULL;
+        }
     }
     return ctx;
 }
@@ -124,23 +124,23 @@ _gss_mg_krb5_context(void)
 
 OM_uint32
 _gss_mg_get_error(const gss_OID mech,
-		  OM_uint32 value,
-		  gss_buffer_t string)
+                  OM_uint32 value,
+                  gss_buffer_t string)
 {
     struct mg_thread_ctx *mg;
 
     mg = _gss_mechglue_thread();
     if (mg == NULL)
-	return GSS_S_BAD_STATUS;
+        return GSS_S_BAD_STATUS;
 
     if (value != mg->min_stat || mg->min_error.length == 0) {
-	_mg_buffer_zero(string);
-	return GSS_S_BAD_STATUS;
+        _mg_buffer_zero(string);
+        return GSS_S_BAD_STATUS;
     }
     string->value = malloc(mg->min_error.length);
     if (string->value == NULL) {
-	_mg_buffer_zero(string);
-	return GSS_S_FAILURE;
+        _mg_buffer_zero(string);
+        return GSS_S_FAILURE;
     }
     string->length = mg->min_error.length;
     memcpy(string->value, mg->min_error.value, mg->min_error.length);
@@ -159,11 +159,11 @@ _gss_mg_error(struct gssapi_mech_interface_desc *m, OM_uint32 min)
      * gss_mg_collect_error() by themself.
      */
     if (m->gm_display_status == NULL)
-	return ;
+        return ;
 
     mg = _gss_mechglue_thread();
     if (mg == NULL)
-	return;
+        return;
 
     gss_release_buffer(&minor_status, &mg->min_error);
 
@@ -171,17 +171,17 @@ _gss_mg_error(struct gssapi_mech_interface_desc *m, OM_uint32 min)
     mg->min_stat = min;
 
     major_status = m->gm_display_status(&minor_status,
-					min,
-					GSS_C_MECH_CODE,
-					&m->gm_mech_oid,
-					&message_content,
-					&mg->min_error);
+                                        min,
+                                        GSS_C_MECH_CODE,
+                                        &m->gm_mech_oid,
+                                        &message_content,
+                                        &mg->min_error);
     if (major_status != GSS_S_COMPLETE) {
-	_mg_buffer_zero(&mg->min_error);
+        _mg_buffer_zero(&mg->min_error);
     } else {
-	_gss_mg_log(5, "_gss_mg_error: captured %.*s (%d) from underlying mech %s",
-		    (int)mg->min_error.length, (const char *)mg->min_error.value,
-		    (int)min, m->gm_name);
+        _gss_mg_log(5, "_gss_mg_error: captured %.*s (%d) from underlying mech %s",
+                    (int)mg->min_error.length, (const char *)mg->min_error.value,
+                    (int)min, m->gm_name);
     }
 }
 
@@ -190,14 +190,14 @@ gss_mg_collect_error(gss_OID mech, OM_uint32 maj, OM_uint32 min)
 {
     gssapi_mech_interface m = __gss_get_mechanism(mech);
     if (m == NULL)
-	return;
+        return;
     _gss_mg_error(m, min);
 }
 
 OM_uint32
 gss_mg_set_error_string(gss_OID mech,
-			OM_uint32 maj, OM_uint32 min,
-			const char *fmt, ...)
+                        OM_uint32 maj, OM_uint32 min,
+                        const char *fmt, ...)
 {
     struct mg_thread_ctx *mg;
     char *str = NULL;
@@ -207,24 +207,24 @@ gss_mg_set_error_string(gss_OID mech,
 
     mg = _gss_mechglue_thread();
     if (mg == NULL)
-	return maj;
+        return maj;
 
     va_start(ap, fmt);
     vasprintf_ret = vasprintf(&str, fmt, ap);
     va_end(ap);
 
     if (vasprintf_ret >= 0 && str) {
-	gss_release_buffer(&junk, &mg->min_error);
+        gss_release_buffer(&junk, &mg->min_error);
 
-	mg->mech = mech;
-	mg->min_stat = min;
+        mg->mech = mech;
+        mg->min_stat = min;
 
-	mg->min_error.value = str;
-	mg->min_error.length = strlen(str);
+        mg->min_error.value = str;
+        mg->min_error.length = strlen(str);
 
-	_gss_mg_log(5, "gss_mg_set_error_string: %.*s (%d/%d)",
-		    (int)mg->min_error.length, (const char *)mg->min_error.value,
-		    (int)maj, (int)min);
+        _gss_mg_log(5, "gss_mg_set_error_string: %.*s (%d/%d)",
+                    (int)mg->min_error.length, (const char *)mg->min_error.value,
+                    (int)maj, (int)min);
     }
     return maj;
 }
@@ -236,8 +236,8 @@ void GSSAPI_LIB_CALL
 gss_set_log_function(void *ctx, void (*func)(void * ctx, int level, const char *fmt, va_list))
 {
     if (log_func == NULL) {
-	log_func = func;
-	log_ctx = ctx;
+        log_func = func;
+        log_ctx = ctx;
     }
 }
 
@@ -248,7 +248,7 @@ _gss_mg_log_level(int level)
 
     mg = _gss_mechglue_thread();
     if (mg == NULL)
-	return 0;
+        return 0;
 
     return _krb5_have_debug(mg->context, level);
 }
@@ -264,31 +264,31 @@ _gss_mg_log(int level, const char *fmt, ...)
     va_list ap;
 
     if (!_gss_mg_log_level(level))
-	return;
+        return;
 
     mg = _gss_mechglue_thread();
     if (mg == NULL)
-	return;
+        return;
 
     if (mg->context && _krb5_have_debug(mg->context, level)) {
-	va_start(ap, fmt);
+        va_start(ap, fmt);
         krb5_vlog(mg->context, heim_get_debug_dest(mg->context->hcontext),
                   level, fmt, ap);
-	va_end(ap);
+        va_end(ap);
     }
 
     if (log_func) {
-	va_start(ap, fmt);
-	log_func(log_ctx, level, fmt, ap);
-	va_end(ap);
+        va_start(ap, fmt);
+        log_func(log_ctx, level, fmt, ap);
+        va_end(ap);
     }
 }
 
 void
 _gss_mg_log_name(int level,
-		 struct _gss_name *name,
-		 gss_OID mech_type,
-		 const char *fmt, ...)
+                 struct _gss_name *name,
+                 gss_OID mech_type,
+                 const char *fmt, ...)
 {
     struct _gss_mechanism_name *mn = NULL;
     gssapi_mech_interface m;
@@ -302,40 +302,40 @@ _gss_mg_log_name(int level,
         return;
 
     if (_gss_find_mn(&junk, name, mech_type, &mn) == GSS_S_COMPLETE) {
-	OM_uint32 maj_stat = GSS_S_COMPLETE;
-	gss_buffer_desc namebuf;
-	int ret;
+        OM_uint32 maj_stat = GSS_S_COMPLETE;
+        gss_buffer_desc namebuf;
+        int ret;
 
-	if (mn == NULL) {
-	    namebuf.value = "no name";
-	    namebuf.length = strlen((char *)namebuf.value);
-	} else {
-	    maj_stat = m->gm_display_name(&junk, mn->gmn_name,
-					  &namebuf, NULL);
-	}
-	if (maj_stat == GSS_S_COMPLETE) {
-	    char *str = NULL;
-	    va_list ap;
+        if (mn == NULL) {
+            namebuf.value = "no name";
+            namebuf.length = strlen((char *)namebuf.value);
+        } else {
+            maj_stat = m->gm_display_name(&junk, mn->gmn_name,
+                                          &namebuf, NULL);
+        }
+        if (maj_stat == GSS_S_COMPLETE) {
+            char *str = NULL;
+            va_list ap;
 
-	    va_start(ap, fmt);
-	    ret = vasprintf(&str, fmt, ap);
-	    va_end(ap);
+            va_start(ap, fmt);
+            ret = vasprintf(&str, fmt, ap);
+            va_end(ap);
 
-	    if (ret >= 0 && str)
-	        _gss_mg_log(level, "%s %.*s", str,
-			    (int)namebuf.length, (char *)namebuf.value);
-	    free(str);
-	    if (mn != NULL)
-		gss_release_buffer(&junk, &namebuf);
-	}
+            if (ret >= 0 && str)
+                _gss_mg_log(level, "%s %.*s", str,
+                            (int)namebuf.length, (char *)namebuf.value);
+            free(str);
+            if (mn != NULL)
+                gss_release_buffer(&junk, &namebuf);
+        }
     }
 
 }
 
 void
 _gss_mg_log_cred(int level,
-		 struct _gss_cred *cred,
-		 const char *fmt, ...)
+                 struct _gss_cred *cred,
+                 const char *fmt, ...)
 {
     struct _gss_mechanism_cred *mc;
     char *str;
@@ -350,11 +350,11 @@ _gss_mg_log_cred(int level,
     va_end(ap);
 
     if (ret >=0 && cred) {
-	HEIM_TAILQ_FOREACH(mc, &cred->gc_mc, gmc_link) {
-	    _gss_mg_log(1, "%s: %s", str, mc->gmc_mech->gm_name);
-	}
+        HEIM_TAILQ_FOREACH(mc, &cred->gc_mc, gmc_link) {
+            _gss_mg_log(1, "%s: %s", str, mc->gmc_mech->gm_name);
+        }
     } else {
-	_gss_mg_log(1, "%s: GSS_C_NO_CREDENTIAL", str);
+        _gss_mg_log(1, "%s: GSS_C_NO_CREDENTIAL", str);
     }
     free(str);
 }

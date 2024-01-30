@@ -72,11 +72,11 @@ typedef int
 
 typedef OM_uint32
 (*ntlm_interface_type2)(OM_uint32 *, void *, uint32_t, const char *,
-			const char *, uint32_t *, struct ntlm_buf *);
+                        const char *, uint32_t *, struct ntlm_buf *);
 
 typedef OM_uint32
 (*ntlm_interface_type3)(OM_uint32 *, void *, const struct ntlm_type3 *,
-			struct ntlm_buf *);
+                        struct ntlm_buf *);
 
 typedef void
 (*ntlm_interface_free_buffer)(struct ntlm_buf *);
@@ -124,15 +124,15 @@ typedef struct {
     gss_buffer_desc pac;
 
     union {
-	struct {
-	    struct {
-		uint32_t seq;
-		RC4_KEY key;
-	    } crypto_send, crypto_recv;
-	} v1;
-	struct {
-	    struct ntlmv2_key send, recv;
-	} v2;
+        struct {
+            struct {
+                uint32_t seq;
+                RC4_KEY key;
+            } crypto_send, crypto_recv;
+        } v1;
+        struct {
+            struct ntlmv2_key send, recv;
+        } v2;
     } u;
 } *ntlm_ctx;
 

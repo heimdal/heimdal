@@ -86,13 +86,13 @@
 
 static int
 attr_eq(gss_const_buffer_t attr, const char *aname, size_t aname_len, \
-	int prefix_check)
+        int prefix_check)
 {
     if (attr->length < aname_len)
         return 0;
 
     if (strncmp((char *)attr->value, aname, aname_len) != 0)
-	return 0;
+        return 0;
 
     return prefix_check || attr->length == aname_len;
 }
@@ -498,9 +498,9 @@ _gsskrb5_export_name_composite(OM_uint32 *minor_status,
     exported_name->length = 10 + inner.length + GSS_KRB5_MECHANISM->length;
     exported_name->value  = malloc(exported_name->length);
     if (exported_name->value == NULL) {
-	free(inner.value);
-	*minor_status = ENOMEM;
-	return GSS_S_FAILURE;
+        free(inner.value);
+        *minor_status = ENOMEM;
+        return GSS_S_FAILURE;
     }
 
     /* TOK, MECH_OID_LEN, DER(MECH_OID), NAME_LEN, NAME */
@@ -695,8 +695,8 @@ get_pac(OM_uint32 *minor_status,
     krb5_data_zero(&data);
 
     if (src == NULL ||
-	src->element != choice_PrincipalNameAttrSrc_enc_ticket_part)
-	return GSS_S_UNAVAILABLE;
+        src->element != choice_PrincipalNameAttrSrc_enc_ticket_part)
+        return GSS_S_UNAVAILABLE;
 
     ticket = &src->u.enc_ticket_part;
 
@@ -714,8 +714,8 @@ get_pac(OM_uint32 *minor_status,
                         value ? &data : NULL);
 
     if (value) {
-	value->length = data.length;
-	value->value = data.data;
+        value->length = data.length;
+        value->value = data.data;
     }
 
     *minor_status = kret;
@@ -726,15 +726,15 @@ get_pac(OM_uint32 *minor_status,
 
 static OM_uint32
 get_pac_buffer(OM_uint32 *minor_status,
-	       const CompositePrincipal *name,
-	       gss_const_buffer_t prefix,
-	       gss_const_buffer_t attr,
-	       gss_const_buffer_t frag,
-	       int *authenticated,
-	       int *complete,
-	       gss_buffer_t value,
-	       gss_buffer_t display_value,
-	       int *more)
+               const CompositePrincipal *name,
+               gss_const_buffer_t prefix,
+               gss_const_buffer_t attr,
+               gss_const_buffer_t frag,
+               int *authenticated,
+               int *complete,
+               gss_buffer_t value,
+               gss_buffer_t display_value,
+               int *more)
 {
     krb5_error_code kret;
     krb5_context context;
@@ -745,7 +745,7 @@ get_pac_buffer(OM_uint32 *minor_status,
     krb5_data_zero(&data);
 
     if (prefix->length || !authenticated ||
-	!nameattrs || !nameattrs->pac)
+        !nameattrs || !nameattrs->pac)
         return GSS_S_UNAVAILABLE;
 
     GSSAPI_KRB5_INIT(&context);
@@ -764,11 +764,11 @@ get_pac_buffer(OM_uint32 *minor_status,
         *complete = 1;
 
     kret = _krb5_pac_get_buffer_by_name(context, nameattrs->pac, &suffix,
-					value ? &data : NULL);
+                                        value ? &data : NULL);
 
     if (value) {
-	value->length = data.length;
-	value->value = data.data;
+        value->length = data.length;
+        value->value = data.data;
     }
 
     *minor_status = kret;
@@ -800,13 +800,13 @@ get_authz_data(OM_uint32 *minor_status,
     int64_t n;
 
     if (src) switch (src->element) {
-    case choice_PrincipalNameAttrSrc_enc_ticket_part:
-        ticket = &src->u.enc_ticket_part;
-        break;
-    case choice_PrincipalNameAttrSrc_enc_kdc_rep_part:
-    default:
-        return GSS_S_UNAVAILABLE;
-    }
+            case choice_PrincipalNameAttrSrc_enc_ticket_part:
+                ticket = &src->u.enc_ticket_part;
+                break;
+            case choice_PrincipalNameAttrSrc_enc_kdc_rep_part:
+            default:
+                return GSS_S_UNAVAILABLE;
+        }
 
     if (!nameattrs || !frag->length || frag->length > sizeof(s) - 1)
         return GSS_S_UNAVAILABLE;
@@ -882,13 +882,13 @@ get_ticket_authz_data(OM_uint32 *minor_status,
     size_t sz;
 
     if (src) switch (src->element) {
-    case choice_PrincipalNameAttrSrc_enc_ticket_part:
-        ticket = &src->u.enc_ticket_part;
-        break;
-    case choice_PrincipalNameAttrSrc_enc_kdc_rep_part:
-    default:
-        return GSS_S_UNAVAILABLE;
-    }
+            case choice_PrincipalNameAttrSrc_enc_ticket_part:
+                ticket = &src->u.enc_ticket_part;
+                break;
+            case choice_PrincipalNameAttrSrc_enc_kdc_rep_part:
+            default:
+                return GSS_S_UNAVAILABLE;
+        }
 
     if (!ticket)
         return GSS_S_UNAVAILABLE;
@@ -1038,14 +1038,14 @@ get_transited(OM_uint32 *minor_status,
     size_t sz;
 
     if (src) switch (src->element) {
-    case choice_PrincipalNameAttrSrc_enc_kdc_rep_part:
-        break;
-    case choice_PrincipalNameAttrSrc_enc_ticket_part:
-        ticket = &src->u.enc_ticket_part;
-        break;
-    default:
-        return GSS_S_UNAVAILABLE;
-    }
+            case choice_PrincipalNameAttrSrc_enc_kdc_rep_part:
+                break;
+            case choice_PrincipalNameAttrSrc_enc_ticket_part:
+                ticket = &src->u.enc_ticket_part;
+                break;
+            default:
+                return GSS_S_UNAVAILABLE;
+        }
 
     if (!nameattrs && !ticket)
         return GSS_S_UNAVAILABLE;
@@ -1088,15 +1088,15 @@ get_canonical_name(OM_uint32 *minor_status,
     EncKDCRepPart *kdcrep = NULL;
 
     if (src) switch (src->element) {
-    case choice_PrincipalNameAttrSrc_enc_kdc_rep_part:
-        kdcrep = &src->u.enc_kdc_rep_part;
-        break;
-    case choice_PrincipalNameAttrSrc_enc_ticket_part:
-        ticket = &src->u.enc_ticket_part;
-        break;
-    default:
-        return GSS_S_UNAVAILABLE;
-    }
+            case choice_PrincipalNameAttrSrc_enc_kdc_rep_part:
+                kdcrep = &src->u.enc_kdc_rep_part;
+                break;
+            case choice_PrincipalNameAttrSrc_enc_ticket_part:
+                ticket = &src->u.enc_ticket_part;
+                break;
+            default:
+                return GSS_S_UNAVAILABLE;
+        }
 
     GSSAPI_KRB5_INIT(&context);
 
@@ -1110,9 +1110,9 @@ get_canonical_name(OM_uint32 *minor_status,
                                                   kdcrep->sname,
                                                   kdcrep->srealm);
     } else if (nameattrs && nameattrs->pac &&
-	(_krb5_pac_get_canon_principal(context, nameattrs->pac, &p)) == 0) {
-	if (authenticated)
-	    *authenticated = nameattrs->pac_verified;
+        (_krb5_pac_get_canon_principal(context, nameattrs->pac, &p)) == 0) {
+        if (authenticated)
+            *authenticated = nameattrs->pac_verified;
     } else if (ticket) {
         krb5_data data;
         krb5_pac pac = NULL;

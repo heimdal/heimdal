@@ -141,237 +141,237 @@ loop (unsigned char *buf, size_t len, int indent)
     unsigned char *start_buf = buf;
 
     while (len > 0) {
-	int ret;
-	Der_class class;
-	Der_type type;
-	unsigned int tag;
-	size_t sz;
-	size_t length;
-	size_t loop_length = 0;
-	int end_tag = 0;
-	const char *tagname;
+        int ret;
+        Der_class class;
+        Der_type type;
+        unsigned int tag;
+        size_t sz;
+        size_t length;
+        size_t loop_length = 0;
+        int end_tag = 0;
+        const char *tagname;
 
-	ret = der_get_tag (buf, len, &class, &type, &tag, &sz);
-	if (ret)
-	    errx (1, "der_get_tag: %s", error_message (ret));
-	if (sz > len)
-	    errx (1, "unreasonable length (%u) > %u",
-		  (unsigned)sz, (unsigned)len);
-	buf += sz;
-	len -= sz;
-	if (indent_flag) {
-	    int i;
-	    for (i = 0; i < indent; ++i)
-		printf (" ");
-	}
-	printf ("%s %s ", der_get_class_name(class), der_get_type_name(type));
-	tagname = der_get_tag_name(tag);
-	if (class == ASN1_C_UNIV && tagname != NULL)
-	    printf ("%s = ", tagname);
-	else
-	    printf ("tag %d = ", tag);
-	ret = der_get_length (buf, len, &length, &sz);
-	if (ret)
-	    errx (1, "der_get_tag: %s", error_message (ret));
-	if (sz > len)
-	    errx (1, "unreasonable tag length (%u) > %u",
-		  (unsigned)sz, (unsigned)len);
-	buf += sz;
-	len -= sz;
-	if (length == ASN1_INDEFINITE) {
-	    if ((class == ASN1_C_UNIV && type == PRIM && tag == UT_OctetString) ||
-		(class == ASN1_C_CONTEXT && type == CONS) ||
-		(class == ASN1_C_UNIV && type == CONS && tag == UT_Sequence) ||
-		(class == ASN1_C_UNIV && type == CONS && tag == UT_Set)) {
-		printf("*INDEFINITE FORM*");
-	    } else {
-		fflush(stdout);
-		errx(1, "indef form used on unsupported object");
-	    }
-	    end_tag = 1;
-	    if (indefinite_form_loop > indefinite_form_loop_max)
-		errx(1, "indefinite form used recursively more then %lu "
-		     "times, aborting", indefinite_form_loop_max);
-	    indefinite_form_loop++;
-	    length = len;
-	} else if (length > len) {
-	    printf("\n");
-	    fflush(stdout);
-	    errx (1, "unreasonable inner length (%u) > %u",
-		  (unsigned)length, (unsigned)len);
-	}
-	if (class == ASN1_C_CONTEXT || class == ASN1_C_APPL) {
-	    printf ("%lu bytes [%u]", (unsigned long)length, tag);
-	    if (type == CONS) {
-		printf("\n");
-		loop_length = loop (buf, length, indent + 2);
-	    } else {
-		printf(" IMPLICIT content\n");
-	    }
-	} else if (class == ASN1_C_UNIV) {
-	    switch (tag) {
-	    case UT_EndOfContent:
-		printf (" INDEFINITE length was %lu\n",
-			(unsigned long)(buf - start_buf));
-		break;
-	    case UT_Set :
-	    case UT_Sequence :
-		printf ("%lu bytes {\n", (unsigned long)length);
-		loop_length = loop (buf, length, indent + 2);
-		if (indent_flag) {
-		    int i;
-		    for (i = 0; i < indent; ++i)
-			printf (" ");
-		    printf ("}\n");
-		} else
-		    printf ("} indent = %d\n", indent / 2);
-		break;
-	    case UT_Integer : {
-		int val;
+        ret = der_get_tag (buf, len, &class, &type, &tag, &sz);
+        if (ret)
+            errx (1, "der_get_tag: %s", error_message (ret));
+        if (sz > len)
+            errx (1, "unreasonable length (%u) > %u",
+                  (unsigned)sz, (unsigned)len);
+        buf += sz;
+        len -= sz;
+        if (indent_flag) {
+            int i;
+            for (i = 0; i < indent; ++i)
+                printf (" ");
+        }
+        printf ("%s %s ", der_get_class_name(class), der_get_type_name(type));
+        tagname = der_get_tag_name(tag);
+        if (class == ASN1_C_UNIV && tagname != NULL)
+            printf ("%s = ", tagname);
+        else
+            printf ("tag %d = ", tag);
+        ret = der_get_length (buf, len, &length, &sz);
+        if (ret)
+            errx (1, "der_get_tag: %s", error_message (ret));
+        if (sz > len)
+            errx (1, "unreasonable tag length (%u) > %u",
+                  (unsigned)sz, (unsigned)len);
+        buf += sz;
+        len -= sz;
+        if (length == ASN1_INDEFINITE) {
+            if ((class == ASN1_C_UNIV && type == PRIM && tag == UT_OctetString) ||
+                (class == ASN1_C_CONTEXT && type == CONS) ||
+                (class == ASN1_C_UNIV && type == CONS && tag == UT_Sequence) ||
+                (class == ASN1_C_UNIV && type == CONS && tag == UT_Set)) {
+                printf("*INDEFINITE FORM*");
+            } else {
+                fflush(stdout);
+                errx(1, "indef form used on unsupported object");
+            }
+            end_tag = 1;
+            if (indefinite_form_loop > indefinite_form_loop_max)
+                errx(1, "indefinite form used recursively more then %lu "
+                     "times, aborting", indefinite_form_loop_max);
+            indefinite_form_loop++;
+            length = len;
+        } else if (length > len) {
+            printf("\n");
+            fflush(stdout);
+            errx (1, "unreasonable inner length (%u) > %u",
+                  (unsigned)length, (unsigned)len);
+        }
+        if (class == ASN1_C_CONTEXT || class == ASN1_C_APPL) {
+            printf ("%lu bytes [%u]", (unsigned long)length, tag);
+            if (type == CONS) {
+                printf("\n");
+                loop_length = loop (buf, length, indent + 2);
+            } else {
+                printf(" IMPLICIT content\n");
+            }
+        } else if (class == ASN1_C_UNIV) {
+            switch (tag) {
+                case UT_EndOfContent:
+                    printf (" INDEFINITE length was %lu\n",
+                            (unsigned long)(buf - start_buf));
+                    break;
+                case UT_Set :
+                case UT_Sequence :
+                    printf ("%lu bytes {\n", (unsigned long)length);
+                    loop_length = loop (buf, length, indent + 2);
+                    if (indent_flag) {
+                        int i;
+                        for (i = 0; i < indent; ++i)
+                            printf (" ");
+                        printf ("}\n");
+                    } else
+                        printf ("} indent = %d\n", indent / 2);
+                    break;
+                case UT_Integer : {
+                    int val;
 
-		if (length <= sizeof(val)) {
-		    ret = der_get_integer (buf, length, &val, NULL);
-		    if (ret)
-			errx (1, "der_get_integer: %s", error_message (ret));
-		    printf ("integer %d\n", val);
-		} else {
-		    heim_integer vali;
-		    char *p;
+                    if (length <= sizeof(val)) {
+                        ret = der_get_integer (buf, length, &val, NULL);
+                        if (ret)
+                            errx (1, "der_get_integer: %s", error_message (ret));
+                        printf ("integer %d\n", val);
+                    } else {
+                        heim_integer vali;
+                        char *p;
 
-		    ret = der_get_heim_integer(buf, length, &vali, NULL);
-		    if (ret)
-			errx (1, "der_get_heim_integer: %s",
-			      error_message (ret));
-		    ret = der_print_hex_heim_integer(&vali, &p);
-		    if (ret)
-			errx (1, "der_print_hex_heim_integer: %s",
-			      error_message (ret));
-		    printf ("BIG NUM integer: length %lu %s\n",
-			    (unsigned long)length, p);
-		    free(p);
-		}
-		break;
-	    }
-	    case UT_OctetString : {
-		heim_octet_string str;
-		size_t i;
+                        ret = der_get_heim_integer(buf, length, &vali, NULL);
+                        if (ret)
+                            errx (1, "der_get_heim_integer: %s",
+                                  error_message (ret));
+                        ret = der_print_hex_heim_integer(&vali, &p);
+                        if (ret)
+                            errx (1, "der_print_hex_heim_integer: %s",
+                                  error_message (ret));
+                        printf ("BIG NUM integer: length %lu %s\n",
+                                (unsigned long)length, p);
+                        free(p);
+                    }
+                    break;
+                }
+                case UT_OctetString : {
+                    heim_octet_string str;
+                    size_t i;
 
-		ret = der_get_octet_string (buf, length, &str, NULL);
-		if (ret)
-		    errx (1, "der_get_octet_string: %s", error_message (ret));
-		printf ("(length %lu), ", (unsigned long)length);
+                    ret = der_get_octet_string (buf, length, &str, NULL);
+                    if (ret)
+                        errx (1, "der_get_octet_string: %s", error_message (ret));
+                    printf ("(length %lu), ", (unsigned long)length);
 
-		if (inner_flag) {
-		    Der_class class2;
-		    Der_type type2;
-		    unsigned int tag2;
+                    if (inner_flag) {
+                        Der_class class2;
+                        Der_type type2;
+                        unsigned int tag2;
 
-		    ret = der_get_tag(str.data, str.length,
-				      &class2, &type2, &tag2, &sz);
-		    if (ret || sz > str.length ||
-			type2 != CONS || tag2 != UT_Sequence)
-			goto just_an_octet_string;
+                        ret = der_get_tag(str.data, str.length,
+                                          &class2, &type2, &tag2, &sz);
+                        if (ret || sz > str.length ||
+                            type2 != CONS || tag2 != UT_Sequence)
+                            goto just_an_octet_string;
 
-		    printf("{\n");
-		    loop (str.data, str.length, indent + 2);
-		    for (i = 0; i < indent; ++i)
-			printf (" ");
-		    printf ("}\n");
+                        printf("{\n");
+                        loop (str.data, str.length, indent + 2);
+                        for (i = 0; i < indent; ++i)
+                            printf (" ");
+                        printf ("}\n");
 
-		} else {
-		    unsigned char *uc;
+                    } else {
+                        unsigned char *uc;
 
-		just_an_octet_string:
-		    uc = (unsigned char *)str.data;
-		    for (i = 0; i < min(16,length); ++i)
-			printf ("%02x", uc[i]);
-		    printf ("\n");
-		}
-		free (str.data);
-		break;
-	    }
-	    case UT_IA5String :
-	    case UT_PrintableString : {
-		heim_printable_string str;
-		unsigned char *s;
-		size_t n;
+                    just_an_octet_string:
+                        uc = (unsigned char *)str.data;
+                        for (i = 0; i < min(16,length); ++i)
+                            printf ("%02x", uc[i]);
+                        printf ("\n");
+                    }
+                    free (str.data);
+                    break;
+                }
+                case UT_IA5String :
+                case UT_PrintableString : {
+                    heim_printable_string str;
+                    unsigned char *s;
+                    size_t n;
 
-		memset(&str, 0, sizeof(str));
+                    memset(&str, 0, sizeof(str));
 
-		ret = der_get_printable_string (buf, length, &str, NULL);
-		if (ret)
-		    errx (1, "der_get_general_string: %s",
-			  error_message (ret));
-		s = str.data;
-		printf("\"");
-		for (n = 0; n < str.length; n++) {
-		    if (isprint(s[n]))
-			printf ("%c", s[n]);
-		    else
-			printf ("#%02x", s[n]);
-		}
-		printf("\"\n");
-		der_free_printable_string(&str);
-		break;
-	    }
-	    case UT_GeneralizedTime :
-	    case UT_GeneralString :
-	    case UT_VisibleString :
-	    case UT_UTF8String : {
-		heim_general_string str;
+                    ret = der_get_printable_string (buf, length, &str, NULL);
+                    if (ret)
+                        errx (1, "der_get_general_string: %s",
+                              error_message (ret));
+                    s = str.data;
+                    printf("\"");
+                    for (n = 0; n < str.length; n++) {
+                        if (isprint(s[n]))
+                            printf ("%c", s[n]);
+                        else
+                            printf ("#%02x", s[n]);
+                    }
+                    printf("\"\n");
+                    der_free_printable_string(&str);
+                    break;
+                }
+                case UT_GeneralizedTime :
+                case UT_GeneralString :
+                case UT_VisibleString :
+                case UT_UTF8String : {
+                    heim_general_string str;
 
-		ret = der_get_general_string (buf, length, &str, NULL);
-		if (ret)
-		    errx (1, "der_get_general_string: %s",
-			  error_message (ret));
-		printf ("\"%s\"\n", str);
-		free (str);
-		break;
-	    }
-	    case UT_OID: {
-		heim_oid o;
-		char *p;
+                    ret = der_get_general_string (buf, length, &str, NULL);
+                    if (ret)
+                        errx (1, "der_get_general_string: %s",
+                              error_message (ret));
+                    printf ("\"%s\"\n", str);
+                    free (str);
+                    break;
+                }
+                case UT_OID: {
+                    heim_oid o;
+                    char *p;
 
-		ret = der_get_oid(buf, length, &o, NULL);
-		if (ret)
-		    errx (1, "der_get_oid: %s", error_message (ret));
-		ret = der_print_heim_oid_sym(&o, '.', &p);
-		der_free_oid(&o);
-		if (ret)
-		    errx (1, "der_print_heim_oid_sym: %s", error_message (ret));
-		printf("%s\n", p);
-		free(p);
+                    ret = der_get_oid(buf, length, &o, NULL);
+                    if (ret)
+                        errx (1, "der_get_oid: %s", error_message (ret));
+                    ret = der_print_heim_oid_sym(&o, '.', &p);
+                    der_free_oid(&o);
+                    if (ret)
+                        errx (1, "der_print_heim_oid_sym: %s", error_message (ret));
+                    printf("%s\n", p);
+                    free(p);
 
-		break;
-	    }
-	    case UT_Enumerated: {
-		int num;
+                    break;
+                }
+                case UT_Enumerated: {
+                    int num;
 
-		ret = der_get_integer (buf, length, &num, NULL);
-		if (ret)
-		    errx (1, "der_get_enum: %s", error_message (ret));
+                    ret = der_get_integer (buf, length, &num, NULL);
+                    if (ret)
+                        errx (1, "der_get_enum: %s", error_message (ret));
 
-		printf("%u\n", num);
-		break;
-	    }
-	    default :
-		printf ("%lu bytes\n", (unsigned long)length);
-		break;
-	    }
-	}
-	if (end_tag) {
-	    if (loop_length == 0)
-		errx(1, "zero length INDEFINITE data ? indent = %d\n",
-		     indent / 2);
-	    if (loop_length < length)
-		length = loop_length;
-	    if (indefinite_form_loop == 0)
-		errx(1, "internal error in indefinite form loop detection");
-	    indefinite_form_loop--;
-	} else if (loop_length)
-	    errx(1, "internal error for INDEFINITE form");
-	buf += length;
-	len -= length;
+                    printf("%u\n", num);
+                    break;
+                }
+                default :
+                    printf ("%lu bytes\n", (unsigned long)length);
+                    break;
+            }
+        }
+        if (end_tag) {
+            if (loop_length == 0)
+                errx(1, "zero length INDEFINITE data ? indent = %d\n",
+                     indent / 2);
+            if (loop_length < length)
+                length = loop_length;
+            if (indefinite_form_loop == 0)
+                errx(1, "internal error in indefinite form loop detection");
+            indefinite_form_loop--;
+        } else if (loop_length)
+            errx(1, "internal error for INDEFINITE form");
+        buf += length;
+        len -= length;
     }
     return 0;
 }
@@ -518,63 +518,63 @@ dotype(unsigned char *buf, size_t len, char **argv, size_t *size)
 
         /* XXX Use com_err */
         switch (ret) {
-        case ASN1_BAD_TIMEFORMAT:
-            errx(1, "Could not decode and print data as type %s: "
-                 "Bad time format", typename);
-        case ASN1_MISSING_FIELD:
-            errx(1, "Could not decode and print data as type %s: "
-                 "Missing required field", typename);
-        case ASN1_MISPLACED_FIELD:
-            errx(1, "Could not decode and print data as type %s: "
-                 "Fields out of order", typename);
-        case ASN1_TYPE_MISMATCH:
-            errx(1, "Could not decode and print data as type %s: "
-                 "Type mismatch", typename);
-        case ASN1_OVERFLOW:
-            errx(1, "Could not decode and print data as type %s: "
-                 "DER value too large", typename);
-        case ASN1_OVERRUN:
-            errx(1, "Could not decode and print data as type %s: "
-                 "DER value too short", typename);
-        case ASN1_BAD_ID:
-            errx(1, "Could not decode and print data as type %s: "
-                 "DER tag is unexpected", typename);
-        case ASN1_BAD_LENGTH:
-            errx(1, "Could not decode and print data as type %s: "
-                 "DER length does not match value", typename);
-        case ASN1_BAD_FORMAT:
-        case ASN1_PARSE_ERROR:
-            errx(1, "Could not decode and print data as type %s: "
-                 "DER badly formatted", typename);
-        case ASN1_EXTRA_DATA:
-            errx(1, "Could not decode and print data as type %s: "
-                 "Extra data past end of end structure", typename);
-        case ASN1_BAD_CHARACTER:
-            errx(1, "Could not decode and print data as type %s: "
-                 "Invalid character encoding in string", typename);
-        case ASN1_MIN_CONSTRAINT:
-            errx(1, "Could not decode and print data as type %s: "
-                 "Too few elements", typename);
-        case ASN1_MAX_CONSTRAINT:
-            errx(1, "Could not decode and print data as type %s: "
-                 "Too many elements", typename);
-        case ASN1_EXACT_CONSTRAINT:
-            errx(1, "Could not decode and print data as type %s: "
-                 "Wrong count of elements", typename);
-        case ASN1_INDEF_OVERRUN:
-            errx(1, "Could not decode and print data as type %s: "
-                 "BER indefinte encoding overun", typename);
-        case ASN1_INDEF_UNDERRUN:
-            errx(1, "Could not decode and print data as type %s: "
-                 "BER indefinte encoding underun", typename);
-        case ASN1_GOT_BER:
-            errx(1, "Could not decode and print data as type %s: "
-                 "BER encoding when DER expected", typename);
-        case ASN1_INDEF_EXTRA_DATA:
-            errx(1, "Could not decode and print data as type %s: "
-                 "End-of-contents tag contains data", typename);
-        default:
-            errx(1, "Could not decode and print data as type %s", typename);
+            case ASN1_BAD_TIMEFORMAT:
+                errx(1, "Could not decode and print data as type %s: "
+                     "Bad time format", typename);
+            case ASN1_MISSING_FIELD:
+                errx(1, "Could not decode and print data as type %s: "
+                     "Missing required field", typename);
+            case ASN1_MISPLACED_FIELD:
+                errx(1, "Could not decode and print data as type %s: "
+                     "Fields out of order", typename);
+            case ASN1_TYPE_MISMATCH:
+                errx(1, "Could not decode and print data as type %s: "
+                     "Type mismatch", typename);
+            case ASN1_OVERFLOW:
+                errx(1, "Could not decode and print data as type %s: "
+                     "DER value too large", typename);
+            case ASN1_OVERRUN:
+                errx(1, "Could not decode and print data as type %s: "
+                     "DER value too short", typename);
+            case ASN1_BAD_ID:
+                errx(1, "Could not decode and print data as type %s: "
+                     "DER tag is unexpected", typename);
+            case ASN1_BAD_LENGTH:
+                errx(1, "Could not decode and print data as type %s: "
+                     "DER length does not match value", typename);
+            case ASN1_BAD_FORMAT:
+            case ASN1_PARSE_ERROR:
+                errx(1, "Could not decode and print data as type %s: "
+                     "DER badly formatted", typename);
+            case ASN1_EXTRA_DATA:
+                errx(1, "Could not decode and print data as type %s: "
+                     "Extra data past end of end structure", typename);
+            case ASN1_BAD_CHARACTER:
+                errx(1, "Could not decode and print data as type %s: "
+                     "Invalid character encoding in string", typename);
+            case ASN1_MIN_CONSTRAINT:
+                errx(1, "Could not decode and print data as type %s: "
+                     "Too few elements", typename);
+            case ASN1_MAX_CONSTRAINT:
+                errx(1, "Could not decode and print data as type %s: "
+                     "Too many elements", typename);
+            case ASN1_EXACT_CONSTRAINT:
+                errx(1, "Could not decode and print data as type %s: "
+                     "Wrong count of elements", typename);
+            case ASN1_INDEF_OVERRUN:
+                errx(1, "Could not decode and print data as type %s: "
+                     "BER indefinte encoding overun", typename);
+            case ASN1_INDEF_UNDERRUN:
+                errx(1, "Could not decode and print data as type %s: "
+                     "BER indefinte encoding underun", typename);
+            case ASN1_GOT_BER:
+                errx(1, "Could not decode and print data as type %s: "
+                     "BER encoding when DER expected", typename);
+            case ASN1_INDEF_EXTRA_DATA:
+                errx(1, "Could not decode and print data as type %s: "
+                     "End-of-contents tag contains data", typename);
+            default:
+                errx(1, "Could not decode and print data as type %s", typename);
         }
     }
     return 0;
@@ -590,13 +590,13 @@ doit(char **argv)
     int ret;
 
     if(fd < 0)
-	err(1, "opening %s for read", argv[0]);
+        err(1, "opening %s for read", argv[0]);
     if (fstat (fd, &sb) < 0)
-	err(1, "stat %s", argv[0]);
+        err(1, "stat %s", argv[0]);
     len = sb.st_size;
     buf = emalloc(len);
     if (read(fd, buf, len) != len)
-	errx(1, "read failed");
+        errx(1, "read failed");
     close(fd);
 
     argv++;
@@ -658,12 +658,12 @@ main(int argc, char **argv)
     setprogname(argv[0]);
     initialize_asn1_error_table();
     if (getarg(args, num_args, argc, argv, &optidx))
-	usage(1);
+        usage(1);
     if (help_flag)
-	usage(0);
+        usage(0);
     if (version_flag) {
-	print_version(NULL);
-	exit(0);
+        print_version(NULL);
+        exit(0);
     }
     argv += optidx;
     argc -= optidx;
@@ -687,6 +687,6 @@ main(int argc, char **argv)
     }
 
     if (argc < 1)
-	usage(1);
+        usage(1);
     return doit(argv);
 }

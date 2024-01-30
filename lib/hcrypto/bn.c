@@ -62,8 +62,8 @@ BN_clear(BIGNUM *bn)
 {
     heim_integer *hi = (heim_integer *)bn;
     if (hi->data) {
-	memset(hi->data, 0, hi->length);
-	free(hi->data);
+        memset(hi->data, 0, hi->length);
+        free(hi->data);
     }
     memset(hi, 0, sizeof(*hi));
 }
@@ -79,8 +79,8 @@ BN_dup(const BIGNUM *bn)
 {
     BIGNUM *b = BN_new();
     if (der_copy_heim_integer((const heim_integer *)bn, (heim_integer *)b)) {
-	BN_free(b);
-	return NULL;
+        BN_free(b);
+        return NULL;
     }
     return b;
 }
@@ -94,18 +94,18 @@ int
 BN_num_bits(const BIGNUM *bn)
 {
     static unsigned char num2bits[256] = {
-	0,1,2,2,3,3,3,3,4,4,4,4,4,4,4,4,  5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,
-	6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,  6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,
-	7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,  7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
-	7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,  7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
-	8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,  8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,
-	8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,  8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,
-	8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,  8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,
-	8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,  8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,
+        0,1,2,2,3,3,3,3,4,4,4,4,4,4,4,4,  5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,
+        6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,  6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,
+        7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,  7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
+        7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,  7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
+        8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,  8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,
+        8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,  8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,
+        8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,  8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,
+        8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,  8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,
     };
     const heim_integer *i = (const void *)bn;
     if (i->length == 0)
-	return 0;
+        return 0;
     return (i->length - 1) * 8 + num2bits[((unsigned char *)i->data)[0]];
 }
 
@@ -125,21 +125,21 @@ BN_bin2bn(const void *s, int len, BIGNUM *bn)
     heim_integer *hi = (void *)bn;
 
     if (len < 0)
-	return NULL;
+        return NULL;
 
     if (hi == NULL) {
-	hi = (heim_integer *)BN_new();
-	if (hi == NULL)
-	    return NULL;
+        hi = (heim_integer *)BN_new();
+        if (hi == NULL)
+            return NULL;
     }
     if (hi->data)
-	BN_clear((BIGNUM *)hi);
+        BN_clear((BIGNUM *)hi);
     hi->negative = 0;
     hi->data = malloc(len);
     if (hi->data == NULL && len != 0) {
-	if (bn == NULL)
-	    BN_free((BIGNUM *)hi);
-	return NULL;
+        if (bn == NULL)
+            BN_free((BIGNUM *)hi);
+        return NULL;
     }
     hi->length = len;
     if (len)
@@ -166,24 +166,24 @@ BN_hex2bn(BIGNUM **bnp, const char *in)
     len = strlen(in);
     data = malloc(len);
     if (data == NULL)
-	return 0;
+        return 0;
 
     if (*in == '-') {
-	negative = 1;
-	in++;
+        negative = 1;
+        in++;
     } else
-	negative = 0;
+        negative = 0;
 
     ret = hex_decode(in, data, len);
     if (ret < 0) {
-	free(data);
-	return 0;
+        free(data);
+        return 0;
     }
 
     *bnp = BN_bin2bn(data, ret, NULL);
     free(data);
     if (*bnp == NULL)
-	return 0;
+        return 0;
     BN_set_negative(*bnp, negative);
     return 1;
 }
@@ -199,14 +199,14 @@ BN_bn2hex(const BIGNUM *bn)
     len = BN_num_bytes(bn);
     data = malloc(len);
     if (data == NULL)
-	return 0;
+        return 0;
 
     len = BN_bn2bin(bn, data);
 
     ret = hex_encode(data, len, &str);
     free(data);
     if (ret < 0)
-	return 0;
+        return 0;
 
     return str;
 }
@@ -215,7 +215,7 @@ int
 BN_cmp(const BIGNUM *bn1, const BIGNUM *bn2)
 {
     return der_heim_integer_cmp((const heim_integer *)bn1,
-				(const heim_integer *)bn2);
+                                (const heim_integer *)bn2);
 }
 
 void
@@ -239,7 +239,7 @@ BN_is_bit_set(const BIGNUM *bn, int bit)
     unsigned char *p = hi->data;
 
     if ((bit / 8) >= hi->length || hi->length == 0)
-	return 0;
+        return 0;
 
     return p[hi->length - 1 - (bit / 8)] & is_set[bit % 8];
 }
@@ -251,16 +251,16 @@ BN_set_bit(BIGNUM *bn, int bit)
     unsigned char *p;
 
     if ((bit / 8) > hi->length || hi->length == 0) {
-	size_t len = bit == 0 ? 1 : (bit + 7) / 8;
-	void *d = realloc(hi->data, len);
-	if (d == NULL)
-	    return 0;
-	hi->data = d;
-	p = hi->data;
-	memset(&p[hi->length], 0, len);
-	hi->length = len;
+        size_t len = bit == 0 ? 1 : (bit + 7) / 8;
+        void *d = realloc(hi->data, len);
+        if (d == NULL)
+            return 0;
+        hi->data = d;
+        p = hi->data;
+        memset(&p[hi->length], 0, len);
+        hi->length = len;
     } else
-	p = hi->data;
+        p = hi->data;
 
     p[hi->length - 1 - (bit / 8)] |= is_set[bit % 8];
     return 1;
@@ -273,7 +273,7 @@ BN_clear_bit(BIGNUM *bn, int bit)
     unsigned char *p = hi->data;
 
     if ((bit / 8) > hi->length || hi->length == 0)
-	return 0;
+        return 0;
 
     p[hi->length - 1 - (bit / 8)] &= (unsigned char)(~(is_set[bit % 8]));
 
@@ -288,15 +288,15 @@ BN_set_word(BIGNUM *bn, unsigned long num)
     int i, len;
 
     if (bn == NULL)
-	return 0;
+        return 0;
 
     for (num2 = num, i = 0; num2 > 0; i++)
-	num2 = num2 >> 8;
+        num2 = num2 >> 8;
 
     len = i;
     for (; i > 0; i--) {
-	p[i - 1] = (num & 0xff);
-	num = num >> 8;
+        p[i - 1] = (num & 0xff);
+        num = num >> 8;
     }
 
     bn = BN_bin2bn(p, len, bn);
@@ -311,10 +311,10 @@ BN_get_word(const BIGNUM *bn)
     int i;
 
     if (hi->negative || hi->length > sizeof(num))
-	return ULONG_MAX;
+        return ULONG_MAX;
 
     for (i = 0; i < hi->length; i++)
-	num = ((unsigned char *)hi->data)[i] | (num << 8);
+        num = ((unsigned char *)hi->data)[i] | (num << 8);
     return num;
 }
 
@@ -329,37 +329,37 @@ BN_rand(BIGNUM *bn, int bits, int top, int bottom)
     i->negative = 0;
     i->data = malloc(len);
     if (i->data == NULL && len != 0)
-	return 0;
+        return 0;
     i->length = len;
 
     if (RAND_bytes(i->data, i->length) != 1) {
-	free(i->data);
-	i->data = NULL;
-	return 0;
+        free(i->data);
+        i->data = NULL;
+        return 0;
     }
 
     {
-	size_t j = len * 8;
-	while(j > bits) {
-	    BN_clear_bit(bn, j - 1);
-	    j--;
-	}
+        size_t j = len * 8;
+        while(j > bits) {
+            BN_clear_bit(bn, j - 1);
+            j--;
+        }
     }
 
     if (top == -1) {
-	;
+        ;
     } else if (top == 0 && bits > 0) {
-	BN_set_bit(bn, bits - 1);
+        BN_set_bit(bn, bits - 1);
     } else if (top == 1 && bits > 1) {
-	BN_set_bit(bn, bits - 1);
-	BN_set_bit(bn, bits - 2);
+        BN_set_bit(bn, bits - 1);
+        BN_set_bit(bn, bits - 2);
     } else {
-	BN_clear(bn);
-	return 0;
+        BN_clear(bn);
+        return 0;
     }
 
     if (bottom && bits > 0)
-	BN_set_bit(bn, 0);
+        BN_set_bit(bn, 0);
 
     return 1;
 }
@@ -380,38 +380,38 @@ BN_uadd(BIGNUM *res, const BIGNUM *a, const BIGNUM *b)
     ssize_t len;
 
     if (ai->negative && bi->negative)
-	return 0;
+        return 0;
     if (ai->length < bi->length) {
-	const heim_integer *si = bi;
-	bi = ai; ai = si;
+        const heim_integer *si = bi;
+        bi = ai; ai = si;
     }
 
     ci.negative = 0;
     ci.length = ai->length + 1;
     ci.data = malloc(ci.length);
     if (ci.data == NULL)
-	return 0;
+        return 0;
 
     ap = &((const unsigned char *)ai->data)[ai->length - 1];
     bp = &((const unsigned char *)bi->data)[bi->length - 1];
     cp = &((unsigned char *)ci.data)[ci.length - 1];
 
     for (len = bi->length; len > 0; len--) {
-	carry = *ap + *bp + carry;
-	*cp = carry & 0xff;
-	carry = (carry & ~0xff) ? 1 : 0;
-	ap--; bp--; cp--;
+        carry = *ap + *bp + carry;
+        *cp = carry & 0xff;
+        carry = (carry & ~0xff) ? 1 : 0;
+        ap--; bp--; cp--;
     }
     for (len = ai->length - bi->length; len > 0; len--) {
-	carry = *ap + carry;
-	*cp = carry & 0xff;
-	carry = (carry & ~0xff) ? 1 : 0;
-	ap--; cp--;
+        carry = *ap + carry;
+        *cp = carry & 0xff;
+        carry = (carry & ~0xff) ? 1 : 0;
+        ap--; cp--;
     }
     if (!carry)
-	memmove(cp, cp + 1, --ci.length);
+        memmove(cp, cp + 1, --ci.length);
     else
-	*cp = carry;
+        *cp = carry;
 
     BN_clear(res);
     *((heim_integer *)res) = ci;
@@ -436,7 +436,7 @@ int
 BN_GENCB_call(BN_GENCB *cb, int a, int b)
 {
     if (cb == NULL || cb->cb.cb_2 == NULL)
-	return 1;
+        return 1;
     return cb->cb.cb_2(a, b, cb);
 }
 
@@ -446,14 +446,14 @@ BN_GENCB_call(BN_GENCB *cb, int a, int b)
 
 struct BN_CTX {
     struct {
-	BIGNUM **val;
-	size_t used;
-	size_t len;
+        BIGNUM **val;
+        size_t used;
+        size_t len;
     } bn;
     struct {
-	size_t *val;
-	size_t used;
-	size_t len;
+        size_t *val;
+        size_t used;
+        size_t len;
     } stack;
 };
 
@@ -470,7 +470,7 @@ BN_CTX_free(BN_CTX *c)
 {
     size_t i;
     for (i = 0; i < c->bn.len; i++)
-	BN_free(c->bn.val[i]);
+        BN_free(c->bn.val[i]);
     free(c->bn.val);
     free(c->stack.val);
 }
@@ -479,20 +479,20 @@ BIGNUM *
 BN_CTX_get(BN_CTX *c)
 {
     if (c->bn.used == c->bn.len) {
-	void *ptr;
-	size_t i;
-	c->bn.len += 16;
-	ptr = realloc(c->bn.val, c->bn.len * sizeof(c->bn.val[0]));
-	if (ptr == NULL)
-	    return NULL;
-	c->bn.val = ptr;
-	for (i = c->bn.used; i < c->bn.len; i++) {
-	    c->bn.val[i] = BN_new();
-	    if (c->bn.val[i] == NULL) {
-		c->bn.len = i;
-		return NULL;
-	    }
-	}
+        void *ptr;
+        size_t i;
+        c->bn.len += 16;
+        ptr = realloc(c->bn.val, c->bn.len * sizeof(c->bn.val[0]));
+        if (ptr == NULL)
+            return NULL;
+        c->bn.val = ptr;
+        for (i = c->bn.used; i < c->bn.len; i++) {
+            c->bn.val[i] = BN_new();
+            if (c->bn.val[i] == NULL) {
+                c->bn.len = i;
+                return NULL;
+            }
+        }
     }
     return c->bn.val[c->bn.used++];
 }
@@ -501,12 +501,12 @@ void
 BN_CTX_start(BN_CTX *c)
 {
     if (c->stack.used == c->stack.len) {
-	void *ptr;
-	c->stack.len += 16;
-	ptr = realloc(c->stack.val, c->stack.len * sizeof(c->stack.val[0]));
-	if (ptr == NULL)
-	    abort();
-	c->stack.val = ptr;
+        void *ptr;
+        c->stack.len += 16;
+        ptr = realloc(c->stack.val, c->stack.len * sizeof(c->stack.val[0]));
+        if (ptr == NULL)
+            abort();
+        c->stack.val = ptr;
     }
     c->stack.val[c->stack.used++] = c->bn.used;
 }
@@ -518,10 +518,10 @@ BN_CTX_end(BN_CTX *c)
     size_t i;
 
     if (c->stack.used == 0)
-	abort();
+        abort();
 
     for (i = prev; i < c->bn.used; i++)
-	BN_clear(c->bn.val[i]);
+        BN_clear(c->bn.val[i]);
 
     c->stack.used--;
     c->bn.used = prev;

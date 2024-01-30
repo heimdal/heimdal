@@ -71,10 +71,10 @@ test_match_string(krb5_context context)
     ret = krb5_acl_match_string(context, "foo/bar", "f", "foo/*");
     RETVAL(context, ret, 0, "foo/*");
     ret = krb5_acl_match_string(context, "foo/bar.example.org", "f",
-				"foo/*.example.org");
+                                "foo/*.example.org");
     RETVAL(context, ret, 0, "foo/*.example.org");
     ret = krb5_acl_match_string(context, "foo/bar.example.com", "f",
-				"foo/*.example.org");
+                                "foo/*.example.org");
     RETVAL(context, ret, EACCES, "foo/*.example.com");
 
     ret = krb5_acl_match_string(context, "foo/bar/baz", "f", "foo/*/baz");
@@ -108,7 +108,7 @@ main(int argc, char **argv)
 
     ret = krb5_init_context(&context);
     if (ret)
-	errx (1, "krb5_init_context failed: %d", ret);
+        errx (1, "krb5_init_context failed: %d", ret);
 
     test_match_string(context);
 

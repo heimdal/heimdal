@@ -47,19 +47,19 @@ strsep_copy(const char **stringp, const char *delim, char *buf, size_t len)
     const char *save = *stringp;
     size_t l;
     if(save == NULL)
-	return -1;
+        return -1;
     *stringp = *stringp + strcspn(*stringp, delim);
     l = min(len, (size_t)(*stringp - save));
     if(len > 0) {
-	memcpy(buf, save, l);
-	buf[l] = '\0';
+        memcpy(buf, save, l);
+        buf[l] = '\0';
     }
 
     l = *stringp - save;
     if(**stringp == '\0')
-	*stringp = NULL;
+        *stringp = NULL;
     else
-	(*stringp)++;
+        (*stringp)++;
     return l;
 }
 

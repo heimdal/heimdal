@@ -53,14 +53,14 @@
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_release_cred(OM_uint32 *minor_status, gss_cred_id_t *cred_handle)
 {
-	struct _gss_cred *cred = (struct _gss_cred *) *cred_handle;
+    struct _gss_cred *cred = (struct _gss_cred *) *cred_handle;
 
-	if (cred == NULL)
-	    return (GSS_S_COMPLETE);
+    if (cred == NULL)
+        return (GSS_S_COMPLETE);
 
-	_gss_mg_release_cred(cred);
+    _gss_mg_release_cred(cred);
 
-	*minor_status = 0;
-	*cred_handle = GSS_C_NO_CREDENTIAL;
-	return (GSS_S_COMPLETE);
+    *minor_status = 0;
+    *cred_handle = GSS_C_NO_CREDENTIAL;
+    return (GSS_S_COMPLETE);
 }

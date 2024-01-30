@@ -37,12 +37,12 @@ RCSID("$Id$");
 
 kadm5_ret_t
 kadm5_c_randkey_principal(void *server_handle,
-			  krb5_principal princ,
-			  krb5_boolean keepold,
-			  int n_ks_tuple,
-			  krb5_key_salt_tuple *ks_tuple,
-			  krb5_keyblock **new_keys,
-			  int *n_keys)
+                          krb5_principal princ,
+                          krb5_boolean keepold,
+                          int n_ks_tuple,
+                          krb5_key_salt_tuple *ks_tuple,
+                          krb5_keyblock **new_keys,
+                          int *n_keys)
 {
     kadm5_client_context *context = server_handle;
     kadm5_ret_t ret;
@@ -55,14 +55,14 @@ kadm5_c_randkey_principal(void *server_handle,
 
     ret = _kadm5_connect(server_handle, 1 /* want_write */);
     if (ret)
-	return ret;
+        return ret;
 
     krb5_data_zero(&reply);
 
     sp = krb5_storage_from_mem(buf, sizeof(buf));
     if (sp == NULL) {
-	ret = krb5_enomem(context->context);
-	goto out_keep_error;
+        ret = krb5_enomem(context->context);
+        goto out_keep_error;
     }
 
     /*
@@ -87,67 +87,67 @@ kadm5_c_randkey_principal(void *server_handle,
         ret = krb5_store_principal(sp, princ);
 
     if (ret == 0 && (keepold == TRUE || n_ks_tuple > 0))
-	ret = krb5_store_uint32(sp, keepold);
+        ret = krb5_store_uint32(sp, keepold);
     if (ret == 0 && n_ks_tuple > 0)
-	ret = krb5_store_uint32(sp, n_ks_tuple);
+        ret = krb5_store_uint32(sp, n_ks_tuple);
     for (i = 0; ret == 0 && i < n_ks_tuple; i++) {
-	ret = krb5_store_int32(sp, ks_tuple[i].ks_enctype);
+        ret = krb5_store_int32(sp, ks_tuple[i].ks_enctype);
         if (ret == 0)
             ret = krb5_store_int32(sp, ks_tuple[i].ks_salttype);
     }
     /* Future extensions go here */
     if (ret)
-	goto out;
+        goto out;
 
     ret = _kadm5_client_send(context, sp);
     if (ret)
-	goto out_keep_error;
+        goto out_keep_error;
     ret = _kadm5_client_recv(context, &reply);
     if (ret)
-	goto out_keep_error;
+        goto out_keep_error;
     krb5_storage_free(sp);
     sp = krb5_storage_from_data(&reply);
     if (sp == NULL) {
-	ret = krb5_enomem(context->context);
-	goto out_keep_error;
+        ret = krb5_enomem(context->context);
+        goto out_keep_error;
     }
     ret = krb5_ret_int32(sp, &tmp);
     if (ret == 0)
         ret = tmp;
     if (ret)
-	goto out;
+        goto out;
 
     ret = krb5_ret_int32(sp, &tmp);
     if (ret)
-	goto out;
+        goto out;
     if (tmp < 0) {
-	ret = EOVERFLOW;
-	goto out;
+        ret = EOVERFLOW;
+        goto out;
     }
     k = calloc(tmp, sizeof(*k));
     if (k == NULL) {
-	ret = krb5_enomem(context->context);
-	goto out_keep_error;
+        ret = krb5_enomem(context->context);
+        goto out_keep_error;
     }
     for (i = 0; ret == 0 && i < tmp; i++) {
-	ret = krb5_ret_keyblock(sp, &k[i]);
-	if (ret)
-	    break;
+        ret = krb5_ret_keyblock(sp, &k[i]);
+        if (ret)
+            break;
     }
     if (ret == 0 && n_keys && new_keys) {
-	*n_keys = tmp;
-	*new_keys = k;
+        *n_keys = tmp;
+        *new_keys = k;
     } else {
-	krb5_free_keyblock_contents(context->context, &k[i]);
-	for (; i > 0; i--)
-	    krb5_free_keyblock_contents(context->context, &k[i - 1]);
-	free(k);
+        krb5_free_keyblock_contents(context->context, &k[i]);
+        for (; i > 0; i--)
+            krb5_free_keyblock_contents(context->context, &k[i - 1]);
+        free(k);
     }
 
-  out:
+out:
     krb5_clear_error_message(context->context);
 
-  out_keep_error:
+out_keep_error:
     krb5_storage_free(sp);
     krb5_data_free(&reply);
     return ret;

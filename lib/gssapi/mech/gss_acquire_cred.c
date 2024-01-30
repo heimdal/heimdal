@@ -30,21 +30,21 @@
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_acquire_cred(OM_uint32 *minor_status,
-    gss_const_name_t desired_name,
-    OM_uint32 time_req,
-    const gss_OID_set desired_mechs,
-    gss_cred_usage_t cred_usage,
-    gss_cred_id_t *output_cred_handle,
-    gss_OID_set *actual_mechs,
-    OM_uint32 *time_rec)
+                 gss_const_name_t desired_name,
+                 OM_uint32 time_req,
+                 const gss_OID_set desired_mechs,
+                 gss_cred_usage_t cred_usage,
+                 gss_cred_id_t *output_cred_handle,
+                 gss_OID_set *actual_mechs,
+                 OM_uint32 *time_rec)
 {
     return gss_acquire_cred_from(minor_status,
-				 desired_name,
-				 time_req,
-				 desired_mechs,
-				 cred_usage,
-				 GSS_C_NO_CRED_STORE,
-				 output_cred_handle,
-				 actual_mechs,
-				 time_rec);
+                                 desired_name,
+                                 time_req,
+                                 desired_mechs,
+                                 cred_usage,
+                                 GSS_C_NO_CRED_STORE,
+                                 output_cred_handle,
+                                 actual_mechs,
+                                 time_rec);
 }

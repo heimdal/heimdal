@@ -39,8 +39,8 @@
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_initlog(krb5_context context,
-	     const char *program,
-	     krb5_log_facility **fac)
+             const char *program,
+             krb5_log_facility **fac)
 {
     return heim_initlog(context->hcontext, program, fac);
 }
@@ -54,9 +54,9 @@ struct krb5_addlog_func_wrapper {
 
 static void HEIM_CALLCONV
 krb5_addlog_func_wrapper_log(heim_context hcontext,
-			     const char *prefix,
-			     const char *msg,
-			     void *data)
+                             const char *prefix,
+                             const char *msg,
+                             void *data)
 {
     struct krb5_addlog_func_wrapper *w = data;
 
@@ -88,7 +88,7 @@ krb5_addlog_func(krb5_context context,
 
     w = calloc(1, sizeof(*w));
     if (w == NULL)
-	return krb5_enomem(context);
+        return krb5_enomem(context);
 
     w->context = context;
     w->log_func = log_func;
@@ -110,15 +110,15 @@ krb5_addlog_dest(krb5_context context, krb5_log_facility *f, const char *orig)
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_openlog(krb5_context context,
-	     const char *program,
-	     krb5_log_facility **fac)
+             const char *program,
+             krb5_log_facility **fac)
 {
     krb5_error_code ret;
     char **p;
 
     p = krb5_config_get_strings(context, NULL, "logging", program, NULL);
     if (p == NULL)
-	p = krb5_config_get_strings(context, NULL, "logging", "default", NULL);
+        p = krb5_config_get_strings(context, NULL, "logging", "default", NULL);
     ret = heim_openlog(context->hcontext, program, (const char **)p, fac);
     krb5_config_free_strings(p);
     return ret;
@@ -137,35 +137,35 @@ krb5_closelog(krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_vlog_msg(krb5_context context,
-	      krb5_log_facility *fac,
-	      char **reply,
-	      int level,
-	      const char *fmt,
-	      va_list ap)
-     __attribute__ ((__format__ (__printf__, 5, 0)))
+              krb5_log_facility *fac,
+              char **reply,
+              int level,
+              const char *fmt,
+              va_list ap)
+    __attribute__ ((__format__ (__printf__, 5, 0)))
 {
     return heim_vlog_msg(context->hcontext, fac, reply, level, fmt, ap);
 }
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_vlog(krb5_context context,
-	  krb5_log_facility *fac,
-	  int level,
-	  const char *fmt,
-	  va_list ap)
-     __attribute__ ((__format__ (__printf__, 4, 0)))
+          krb5_log_facility *fac,
+          int level,
+          const char *fmt,
+          va_list ap)
+    __attribute__ ((__format__ (__printf__, 4, 0)))
 {
     return heim_vlog_msg(context->hcontext, fac, NULL, level, fmt, ap);
 }
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_log_msg(krb5_context context,
-	     krb5_log_facility *fac,
-	     int level,
-	     char **reply,
-	     const char *fmt,
-	     ...)
-     __attribute__ ((__format__ (__printf__, 5, 6)))
+             krb5_log_facility *fac,
+             int level,
+             char **reply,
+             const char *fmt,
+             ...)
+    __attribute__ ((__format__ (__printf__, 5, 6)))
 {
     va_list ap;
     krb5_error_code ret;
@@ -179,11 +179,11 @@ krb5_log_msg(krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_log(krb5_context context,
-	 krb5_log_facility *fac,
-	 int level,
-	 const char *fmt,
-	 ...)
-     __attribute__ ((__format__ (__printf__, 4, 5)))
+         krb5_log_facility *fac,
+         int level,
+         const char *fmt,
+         ...)
+    __attribute__ ((__format__ (__printf__, 4, 5)))
 {
     va_list ap;
     krb5_error_code ret;
@@ -196,9 +196,9 @@ krb5_log(krb5_context context,
 
 void KRB5_LIB_FUNCTION
 _krb5_debug(krb5_context context,
-	    int level,
-	    const char *fmt,
-	    ...)
+            int level,
+            const char *fmt,
+            ...)
     __attribute__ ((__format__ (__printf__, 3, 4)))
 {
     va_list ap;
@@ -211,9 +211,9 @@ _krb5_debug(krb5_context context,
 
 void KRB5_LIB_FUNCTION
 krb5_debug(krb5_context context,
-	    int level,
-	    const char *fmt,
-	    ...)
+            int level,
+            const char *fmt,
+            ...)
     __attribute__ ((__format__ (__printf__, 3, 4)))
 {
     va_list ap;
@@ -228,7 +228,7 @@ KRB5_LIB_FUNCTION krb5_boolean KRB5_LIB_CALL
 _krb5_have_debug(krb5_context context, int level)
 {
     if (context == NULL || context->hcontext == NULL)
-	return 0;
+        return 0;
     return heim_have_debug(context->hcontext, level);
 }
 

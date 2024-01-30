@@ -57,8 +57,8 @@ static struct getargs args[] = {
 
 static void
 test_alname(krb5_context context, krb5_const_realm realm,
-	    const char *user, const char *inst,
-	    const char *localuser, int ok)
+            const char *user, const char *inst,
+            const char *localuser, int ok)
 {
     krb5_principal p;
     krb5_error_code ret;
@@ -66,32 +66,32 @@ test_alname(krb5_context context, krb5_const_realm realm,
 
     ret = krb5_make_principal(context, &p, realm, user, inst, NULL);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_build_principal");
+        krb5_err(context, 1, ret, "krb5_build_principal");
 
     ret = krb5_unparse_name(context, p, &princ);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_unparse_name");
+        krb5_err(context, 1, ret, "krb5_unparse_name");
 
     ret = krb5_aname_to_localname(context, p, lname_size, localname);
     krb5_free_principal(context, p);
     if (ret) {
-	if (!ok) {
-	    free(princ);
-	    return;
-	}
-	krb5_err(context, 1, ret, "krb5_aname_to_localname: %s -> %s",
-		 princ, localuser);
+        if (!ok) {
+            free(princ);
+            return;
+        }
+        krb5_err(context, 1, ret, "krb5_aname_to_localname: %s -> %s",
+                 princ, localuser);
     }
     free(princ);
 
     if (strcmp(localname, localuser) != 0) {
-	if (ok)
-	    errx(1, "compared failed %s != %s (should have succeded)",
-		 localname, localuser);
+        if (ok)
+            errx(1, "compared failed %s != %s (should have succeded)",
+                 localname, localuser);
     } else {
-	if (!ok)
-	    errx(1, "compared failed %s == %s (should have failed)",
-		 localname, localuser);
+        if (!ok)
+            errx(1, "compared failed %s == %s (should have failed)",
+                 localname, localuser);
     }
 
 }
@@ -100,9 +100,9 @@ static void
 usage (int ret)
 {
     arg_printusage (args,
-		    sizeof(args)/sizeof(*args),
-		    NULL,
-		    "");
+                    sizeof(args)/sizeof(*args),
+                    NULL,
+                    "");
     exit (ret);
 }
 
@@ -118,14 +118,14 @@ main(int argc, char **argv)
     setprogname(argv[0]);
 
     if(getarg(args, sizeof(args) / sizeof(args[0]), argc, argv, &optidx))
-	usage(1);
+        usage(1);
 
     if (help_flag)
-	usage (0);
+        usage (0);
 
     if(version_flag){
-	print_version(NULL);
-	exit(0);
+        print_version(NULL);
+        exit(0);
     }
 
     argc -= optidx;
@@ -133,69 +133,69 @@ main(int argc, char **argv)
 
     ret = krb5_init_context(&context);
     if (ret)
-	errx (1, "krb5_init_context failed: %d", ret);
+        errx (1, "krb5_init_context failed: %d", ret);
 
     if (simple_flag) {
-	krb5_principal princ;
-	char *unparsed;
-	int status = 0;
+        krb5_principal princ;
+        char *unparsed;
+        int status = 0;
 
-	/* Map then print the result and exit */
-	if (argc != 1)
-	    errx(1, "One argument is required and it must be a principal name");
+        /* Map then print the result and exit */
+        if (argc != 1)
+            errx(1, "One argument is required and it must be a principal name");
 
-	ret = krb5_parse_name(context, argv[0], &princ);
-	if (ret)
-	    krb5_err(context, 1, ret, "krb5_build_principal");
+        ret = krb5_parse_name(context, argv[0], &princ);
+        if (ret)
+            krb5_err(context, 1, ret, "krb5_build_principal");
 
-	ret = krb5_unparse_name(context, princ, &unparsed);
-	if (ret)
-	    krb5_err(context, 1, ret, "krb5_unparse_name");
+        ret = krb5_unparse_name(context, princ, &unparsed);
+        if (ret)
+            krb5_err(context, 1, ret, "krb5_unparse_name");
 
-	if (lname_size_arg > 0 && lname_size_arg < 1024)
-	    lname_size = lname_size_arg;
-	else if (lname_size_arg != 0)
-	    errx(1, "local name size must be between 0 and 1023 (inclusive)");
+        if (lname_size_arg > 0 && lname_size_arg < 1024)
+            lname_size = lname_size_arg;
+        else if (lname_size_arg != 0)
+            errx(1, "local name size must be between 0 and 1023 (inclusive)");
 
-	ret = krb5_aname_to_localname(context, princ, lname_size, localname);
-	if (ret == KRB5_NO_LOCALNAME) {
-	    if (verbose_flag)
-		fprintf(stderr, "No mapping obtained for %s\n", unparsed);
-	    exit(1);
-	}
-	switch (ret) {
-	case KRB5_PLUGIN_NO_HANDLE:
-	    fprintf(stderr, "Error: KRB5_PLUGIN_NO_HANDLE leaked!\n");
-	    status = 2;
-	    break;
-	case KRB5_CONFIG_NOTENUFSPACE:
-	    fprintf(stderr, "Error: lname-size (%lu) too small\n",
-		    (long unsigned)lname_size);
-	    status = 3;
-	    break;
-	case 0:
-	    if (verbose_flag)
-		printf("%s ", unparsed);
-	    printf("%s\n", localname);
-	    break;
-	default:
-	    krb5_err(context, 4, ret, "krb5_aname_to_localname");
-	    break;
-	}
-	free(unparsed);
-	krb5_free_principal(context, princ);
-	krb5_free_context(context);
-	exit(status);
+        ret = krb5_aname_to_localname(context, princ, lname_size, localname);
+        if (ret == KRB5_NO_LOCALNAME) {
+            if (verbose_flag)
+                fprintf(stderr, "No mapping obtained for %s\n", unparsed);
+            exit(1);
+        }
+        switch (ret) {
+            case KRB5_PLUGIN_NO_HANDLE:
+                fprintf(stderr, "Error: KRB5_PLUGIN_NO_HANDLE leaked!\n");
+                status = 2;
+                break;
+            case KRB5_CONFIG_NOTENUFSPACE:
+                fprintf(stderr, "Error: lname-size (%lu) too small\n",
+                        (long unsigned)lname_size);
+                status = 3;
+                break;
+            case 0:
+                if (verbose_flag)
+                    printf("%s ", unparsed);
+                printf("%s\n", localname);
+                break;
+            default:
+                krb5_err(context, 4, ret, "krb5_aname_to_localname");
+                break;
+        }
+        free(unparsed);
+        krb5_free_principal(context, princ);
+        krb5_free_context(context);
+        exit(status);
     }
 
     if (argc != 1)
-	errx(1, "first argument should be a local user that is in root .k5login");
+        errx(1, "first argument should be a local user that is in root .k5login");
 
     user = argv[0];
 
     ret = krb5_get_default_realm(context, &realm);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_get_default_realm");
+        krb5_err(context, 1, ret, "krb5_get_default_realm");
 
     test_alname(context, realm, user, NULL, user, 1);
     test_alname(context, realm, user, "root", "root", 1);
@@ -204,14 +204,14 @@ main(int argc, char **argv)
     test_alname(context, "FOO.BAR.BAZ.KAKA", user, "root", "root", 0);
 
     test_alname(context, realm, user, NULL,
-		"not-same-as-user", 0);
+                "not-same-as-user", 0);
     test_alname(context, realm, user, "root",
-		"not-same-as-user", 0);
+                "not-same-as-user", 0);
 
     test_alname(context, "FOO.BAR.BAZ.KAKA", user, NULL,
-		"not-same-as-user", 0);
+                "not-same-as-user", 0);
     test_alname(context, "FOO.BAR.BAZ.KAKA", user, "root",
-		"not-same-as-user", 0);
+                "not-same-as-user", 0);
 
     krb5_free_context(context);
 

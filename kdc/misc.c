@@ -124,12 +124,12 @@ synthesize_client(krb5_context context,
 
 KDC_LIB_FUNCTION krb5_error_code KDC_LIB_CALL
 _kdc_db_fetch(krb5_context context,
-	      krb5_kdc_configuration *config,
-	      krb5_const_principal principal,
-	      unsigned flags,
-	      krb5uint32 *kvno_ptr,
-	      HDB **db,
-	      hdb_entry **h)
+              krb5_kdc_configuration *config,
+              krb5_const_principal principal,
+              unsigned flags,
+              krb5uint32 *kvno_ptr,
+              HDB **db,
+              hdb_entry **h)
 {
     hdb_entry *ent = NULL;
     krb5_error_code ret = HDB_ERR_NOENTRY;
@@ -147,10 +147,10 @@ _kdc_db_fetch(krb5_context context,
 
     flags |= HDB_F_DECRYPT;
     if (kvno_ptr != NULL && *kvno_ptr != 0) {
-	kvno = *kvno_ptr;
-	flags |= HDB_F_KVNO_SPECIFIED;
+        kvno = *kvno_ptr;
+        flags |= HDB_F_KVNO_SPECIFIED;
     } else {
-	flags |= HDB_F_ALL_KVNOS;
+        flags |= HDB_F_ALL_KVNOS;
     }
 
     ent = calloc(1, sizeof (*ent));
@@ -173,25 +173,25 @@ _kdc_db_fetch(krb5_context context,
     }
 
     for (i = 0; i < config->num_db; i++) {
-	HDB *curdb = config->db[i];
+        HDB *curdb = config->db[i];
 
         if (db)
             *db = curdb;
 
-	ret = curdb->hdb_open(context, curdb, O_RDONLY, 0);
-	if (ret) {
-	    const char *msg = krb5_get_error_message(context, ret);
-	    kdc_log(context, config, 0, "Failed to open database: %s", msg);
-	    krb5_free_error_message(context, msg);
-	    continue;
-	}
+        ret = curdb->hdb_open(context, curdb, O_RDONLY, 0);
+        if (ret) {
+            const char *msg = krb5_get_error_message(context, ret);
+            kdc_log(context, config, 0, "Failed to open database: %s", msg);
+            krb5_free_error_message(context, msg);
+            continue;
+        }
 
         princ = principal;
         if (!(curdb->hdb_capability_flags & HDB_CAP_F_HANDLE_ENTERPRISE_PRINCIPAL) && enterprise_principal)
             princ = enterprise_principal;
 
         ret = hdb_fetch_kvno(context, curdb, princ, flags, 0, 0, kvno, ent);
-	curdb->hdb_close(context, curdb);
+        curdb->hdb_close(context, curdb);
 
         if (ret == HDB_ERR_NOENTRY)
             continue; /* Check the other databases */
@@ -207,38 +207,38 @@ _kdc_db_fetch(krb5_context context,
     }
 
     switch (ret) {
-    case HDB_ERR_WRONG_REALM:
-    case 0:
-        /*
-         * the ent->entry.principal just contains hints for the client
-         * to retry. This is important for enterprise principal routing
-         * between trusts.
-         */
-        *h = ent;
-        ent = NULL;
-        break;
+        case HDB_ERR_WRONG_REALM:
+        case 0:
+            /*
+             * the ent->entry.principal just contains hints for the client
+             * to retry. This is important for enterprise principal routing
+             * between trusts.
+             */
+            *h = ent;
+            ent = NULL;
+            break;
 
-    case HDB_ERR_NOENTRY:
-        if (db)
-            *db = NULL;
-        if ((flags & HDB_F_GET_CLIENT) && (flags & HDB_F_SYNTHETIC_OK) &&
-            config->synthetic_clients) {
-            ret = synthesize_client(context, config, principal, db, h);
-            if (ret) {
-                krb5_set_error_message(context, ret, "could not synthesize "
-                                       "HDB client principal entry");
-                ret = HDB_ERR_NOENTRY;
-                krb5_prepend_error_message(context, ret, "no such entry found in hdb");
+        case HDB_ERR_NOENTRY:
+            if (db)
+                *db = NULL;
+            if ((flags & HDB_F_GET_CLIENT) && (flags & HDB_F_SYNTHETIC_OK) &&
+                config->synthetic_clients) {
+                ret = synthesize_client(context, config, principal, db, h);
+                if (ret) {
+                    krb5_set_error_message(context, ret, "could not synthesize "
+                                           "HDB client principal entry");
+                    ret = HDB_ERR_NOENTRY;
+                    krb5_prepend_error_message(context, ret, "no such entry found in hdb");
+                }
+            } else {
+                krb5_set_error_message(context, ret, "no such entry found in hdb");
             }
-        } else {
-            krb5_set_error_message(context, ret, "no such entry found in hdb");
-        }
-        break;
+            break;
 
-    default:
-        if (db)
-            *db = NULL;
-        break;
+        default:
+            if (db)
+                *db = NULL;
+            break;
     }
 
 out:
@@ -261,65 +261,65 @@ _kdc_free_ent(krb5_context context, HDB *db, hdb_entry *ent)
 
 krb5_error_code
 _kdc_get_preferred_key(krb5_context context,
-		       krb5_kdc_configuration *config,
-		       hdb_entry *h,
-		       const char *name,
-		       krb5_enctype *enctype,
-		       Key **key)
+                       krb5_kdc_configuration *config,
+                       hdb_entry *h,
+                       const char *name,
+                       krb5_enctype *enctype,
+                       Key **key)
 {
     krb5_error_code ret;
     int i;
 
     if (config->use_strongest_server_key) {
-	const krb5_enctype *p = krb5_kerberos_enctypes(context);
+        const krb5_enctype *p = krb5_kerberos_enctypes(context);
 
-	for (i = 0; p[i] != ETYPE_NULL; i++) {
-	    if (krb5_enctype_valid(context, p[i]) != 0 &&
-		!_kdc_is_weak_exception(h->principal, p[i]))
-		continue;
-	    ret = hdb_enctype2key(context, h, NULL, p[i], key);
-	    if (ret != 0)
-		continue;
-	    if (enctype != NULL)
-		*enctype = p[i];
-	    return 0;
-	}
+        for (i = 0; p[i] != ETYPE_NULL; i++) {
+            if (krb5_enctype_valid(context, p[i]) != 0 &&
+                !_kdc_is_weak_exception(h->principal, p[i]))
+                continue;
+            ret = hdb_enctype2key(context, h, NULL, p[i], key);
+            if (ret != 0)
+                continue;
+            if (enctype != NULL)
+                *enctype = p[i];
+            return 0;
+        }
     } else {
-	*key = NULL;
+        *key = NULL;
 
-	for (i = 0; i < h->keys.len; i++) {
-	    if (krb5_enctype_valid(context, h->keys.val[i].key.keytype) != 0 &&
-		!_kdc_is_weak_exception(h->principal, h->keys.val[i].key.keytype))
-		continue;
-	    ret = hdb_enctype2key(context, h, NULL,
-				  h->keys.val[i].key.keytype, key);
-	    if (ret != 0)
-		continue;
-	    if (enctype != NULL)
-		*enctype = (*key)->key.keytype;
-	    return 0;
-	}
+        for (i = 0; i < h->keys.len; i++) {
+            if (krb5_enctype_valid(context, h->keys.val[i].key.keytype) != 0 &&
+                !_kdc_is_weak_exception(h->principal, h->keys.val[i].key.keytype))
+                continue;
+            ret = hdb_enctype2key(context, h, NULL,
+                                  h->keys.val[i].key.keytype, key);
+            if (ret != 0)
+                continue;
+            if (enctype != NULL)
+                *enctype = (*key)->key.keytype;
+            return 0;
+        }
     }
 
     krb5_set_error_message(context, EINVAL,
-			   "No valid kerberos key found for %s", name);
+                           "No valid kerberos key found for %s", name);
     return EINVAL; /* XXX */
 }
 
 krb5_error_code
 _kdc_verify_checksum(krb5_context context,
-		     krb5_crypto crypto,
-		     krb5_key_usage usage,
-		     const krb5_data *data,
-		     Checksum *cksum)
+                     krb5_crypto crypto,
+                     krb5_key_usage usage,
+                     const krb5_data *data,
+                     Checksum *cksum)
 {
     krb5_error_code ret;
 
     ret = krb5_verify_checksum(context, crypto, usage,
-			       data->data, data->length,
-			       cksum);
+                               data->data, data->length,
+                               cksum);
     if (ret == KRB5_PROG_SUMTYPE_NOSUPP)
-	ret = KRB5KDC_ERR_SUMTYPE_NOSUPP;
+        ret = KRB5KDC_ERR_SUMTYPE_NOSUPP;
 
     return ret;
 }
@@ -347,9 +347,9 @@ _kdc_include_pac_p(astgs_request_t r)
             return TRUE;
     }
     if (r->server->flags.no_auth_data_reqd)
-	return FALSE;
+        return FALSE;
     if (r->server->flags.auth_data_reqd)
-	return TRUE;
+        return TRUE;
     if (r->config->disable_pac)
         return FALSE;
 
@@ -368,9 +368,9 @@ _kdc_audit_request(astgs_request_t r)
 
     ret = _kdc_plugin_audit(r);
     if (ret == 0 &&
-	(hdb = r->clientdb ? r->clientdb : r->config->db[0]) &&
-	hdb->hdb_audit)
-	ret = hdb->hdb_audit(r->context, hdb, r->client, (hdb_request_t)r);
+        (hdb = r->clientdb ? r->clientdb : r->config->db[0]) &&
+        hdb->hdb_audit)
+        ret = hdb->hdb_audit(r->context, hdb, r->client, (hdb_request_t)r);
 
     return ret;
 }

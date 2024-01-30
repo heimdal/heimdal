@@ -9,7 +9,7 @@ static heim_base_once_t db_plugins_once = HEIM_BASE_ONCE_INIT;
 
 static krb5_error_code KRB5_LIB_CALL
 db_plugins_plcallback(krb5_context context, const void *plug, void *plugctx,
-		      void *userctx)
+                      void *userctx)
 {
     return 0;
 }
@@ -30,7 +30,7 @@ db_plugins_init(void *arg)
 {
     krb5_context context = arg;
     (void)_krb5_plugin_run_f(context, &db_plugin_data, 0, NULL,
-			     db_plugins_plcallback);
+                             db_plugins_plcallback);
 }
 
 KRB5_LIB_FUNCTION void KRB5_LIB_CALL

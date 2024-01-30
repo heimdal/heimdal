@@ -44,15 +44,15 @@ password_quality(void *opt, int argc, char **argv)
 
     ret = krb5_parse_name(context, argv[0], &principal);
     if(ret){
-	krb5_warn(context, ret, "krb5_parse_name(%s)", argv[0]);
-	return 0;
+        krb5_warn(context, ret, "krb5_parse_name(%s)", argv[0]);
+        return 0;
     }
     pw_data.data = argv[1];
     pw_data.length = strlen(argv[1]);
 
     s = kadm5_check_password_quality (context, principal, &pw_data);
     if (s)
-	krb5_warnx(context, "kadm5_check_password_quality: %s", s);
+        krb5_warnx(context, "kadm5_check_password_quality: %s", s);
 
     krb5_free_principal(context, principal);
 

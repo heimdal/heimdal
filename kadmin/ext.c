@@ -62,11 +62,11 @@ do_ext_keytab(krb5_principal principal, void *data)
 
     ret = kadm5_get_principal(e->kadm_handle, principal, &princ, mask);
     if (ret)
-	return ret;
+        return ret;
 
     ret = krb5_unparse_name(context, principal, &unparsed);
     if (ret)
-	goto out;
+        goto out;
 
     if (!e->random_key_flag) {
         if (princ.n_key_data == 0) {
@@ -92,52 +92,52 @@ do_ext_keytab(krb5_principal principal, void *data)
             krb5_warnx(context, "some keys for %s are corrupted in the HDB",
                        unparsed);
         }
-	keys = calloc(sizeof(*keys), princ.n_key_data);
-	if (keys == NULL) {
-	    ret = krb5_enomem(context);
-	    goto out;
-	}
-	for (i = 0; i < princ.n_key_data; i++) {
-	    krb5_key_data *kd = &princ.key_data[i];
+        keys = calloc(sizeof(*keys), princ.n_key_data);
+        if (keys == NULL) {
+            ret = krb5_enomem(context);
+            goto out;
+        }
+        for (i = 0; i < princ.n_key_data; i++) {
+            krb5_key_data *kd = &princ.key_data[i];
 
             /* Don't extract bogus keys */
             if (kadm5_all_keys_are_bogus(1, kd))
                 continue;
 
-	    keys[i].principal = princ.principal;
-	    keys[i].vno = kd->key_data_kvno;
-	    keys[i].keyblock.keytype = kd->key_data_type[0];
-	    keys[i].keyblock.keyvalue.length = kd->key_data_length[0];
-	    keys[i].keyblock.keyvalue.data = kd->key_data_contents[0];
-	    keys[i].timestamp = time(NULL);
+            keys[i].principal = princ.principal;
+            keys[i].vno = kd->key_data_kvno;
+            keys[i].keyblock.keytype = kd->key_data_type[0];
+            keys[i].keyblock.keyvalue.length = kd->key_data_length[0];
+            keys[i].keyblock.keyvalue.data = kd->key_data_contents[0];
+            keys[i].timestamp = time(NULL);
             n_k++;
-	}
+        }
     } else if (e->random_key_flag) {
         ret = kadm5_randkey_principal_3(e->kadm_handle, principal, e->keep,
                                         e->nkstuple, e->kstuple, &k, &n_k);
-	if (ret)
-	    goto out;
+        if (ret)
+            goto out;
 
-	keys = calloc(sizeof(*keys), n_k);
-	if (keys == NULL) {
-	    ret = krb5_enomem(context);
-	    goto out;
-	}
-	for (i = 0; i < n_k; i++) {
-	    keys[i].principal = principal;
-	    keys[i].vno = princ.kvno + 1; /* XXX get entry again */
-	    keys[i].keyblock = k[i];
-	    keys[i].timestamp = time(NULL);
-	}
+        keys = calloc(sizeof(*keys), n_k);
+        if (keys == NULL) {
+            ret = krb5_enomem(context);
+            goto out;
+        }
+        for (i = 0; i < n_k; i++) {
+            keys[i].principal = principal;
+            keys[i].vno = princ.kvno + 1; /* XXX get entry again */
+            keys[i].keyblock = k[i];
+            keys[i].timestamp = time(NULL);
+        }
     }
 
     if (n_k == 0)
         krb5_warn(context, ret, "no keys written to keytab for %s", unparsed);
 
     for (i = 0; i < n_k; i++) {
-	ret = krb5_kt_add_entry(context, e->keytab, &keys[i]);
-	if (ret)
-	    krb5_warn(context, ret, "krb5_kt_add_entry(%lu)", (unsigned long)i);
+        ret = krb5_kt_add_entry(context, e->keytab, &keys[i]);
+        if (ret)
+            krb5_warn(context, ret, "krb5_kt_add_entry(%lu)", (unsigned long)i);
     }
 
   out:
@@ -145,7 +145,7 @@ do_ext_keytab(krb5_principal principal, void *data)
     if (k) {
         for (i = 0; i < n_k; i++)
             memset(k[i].keyvalue.data, 0, k[i].keyvalue.length);
-	free(k);
+        free(k);
     }
     free(unparsed);
     free(keys);
@@ -186,13 +186,13 @@ ext_keytab(struct ext_keytab_options *opt, int argc, char **argv)
     }
 
     if (opt->keytab_string == NULL)
-	ret = krb5_kt_default(context, &data.keytab);
+        ret = krb5_kt_default(context, &data.keytab);
     else
-	ret = krb5_kt_resolve(context, opt->keytab_string, &data.keytab);
+        ret = krb5_kt_resolve(context, opt->keytab_string, &data.keytab);
 
     if(ret){
-	krb5_warn(context, ret, "krb5_kt_resolve");
-	return 1;
+        krb5_warn(context, ret, "krb5_kt_resolve");
+        return 1;
     }
     enctypes = opt->enctypes_string;
     if (enctypes == NULL || enctypes[0] == '\0')
@@ -209,9 +209,9 @@ ext_keytab(struct ext_keytab_options *opt, int argc, char **argv)
     }
 
     for(i = 0; i < argc; i++) {
-	ret = foreach_principal(argv[i], do_ext_keytab, "ext", &data);
-	if (ret)
-	    break;
+        ret = foreach_principal(argv[i], do_ext_keytab, "ext", &data);
+        if (ret)
+            break;
     }
 
     kadm5_destroy(data.kadm_handle);

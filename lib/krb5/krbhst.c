@@ -795,7 +795,7 @@ kdc_get_next(krb5_context context,
 	return KRB5_KDC_UNREACH;
     }
 
-    if (krb5_config_get_bool(context, NULL, "libdefaults", "block_dns",
+    if (!krb5_config_get_bool(context, NULL, "libdefaults", "block_dns",
 	    NULL) &&
 	context->srv_lookup) {
 	if(kd->sitename && (kd->flags & KD_SITE_SRV_TCP) == 0) {
@@ -869,7 +869,7 @@ admin_get_next(krb5_context context,
 	return KRB5_KDC_UNREACH;
     }
 
-    if (krb5_config_get_bool(context, NULL, "libdefaults", "block_dns",
+    if (!krb5_config_get_bool(context, NULL, "libdefaults", "block_dns",
 	    NULL) &&
 	context->srv_lookup) {
 	if((kd->flags & KD_SRV_TCP) == 0) {
@@ -925,7 +925,7 @@ kpasswd_get_next(krb5_context context,
 	return KRB5_KDC_UNREACH;
     }
 
-    if (krb5_config_get_bool(context, NULL, "libdefaults", "block_dns",
+    if (!krb5_config_get_bool(context, NULL, "libdefaults", "block_dns",
 	    NULL) &&
 	context->srv_lookup) {
 	if((kd->flags & KD_SRV_UDP) == 0) {

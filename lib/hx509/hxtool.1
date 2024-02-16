@@ -173,7 +173,11 @@ If writing, PKCS#12 will be written.
 If reading, PKCS#12 will be expected.
 Note that PKCS#12 support is currently very limited.
 .It DIR:/path
+A directory full of PEM files.
+("Hashed" symlinks will not be listed.)
+.It HASHDIR:/path
 OpenSSL-style hashed directory of trust anchors.
+(Non-hashed symlinks will not be listed.)
 .It KEYCHAIN:system-anchors
 On OS X this refers to the system's trust anchors.
 .It KEYCHAIN:FILE:/path

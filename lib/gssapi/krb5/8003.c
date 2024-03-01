@@ -185,11 +185,12 @@ _gsskrb5_verify_8003_checksum(
 		      OM_uint32 *flags,
 		      krb5_data *fwd_data)
 {
-    unsigned char hash[16];
+    unsigned char hash[16] = { 0, };
     unsigned char *p;
     OM_uint32 length;
     int DlgOpt;
     static unsigned char zeros[16];
+    krb5_boolean check_cb = FALSE;
     krb5_boolean channel_bound = FALSE;
     const Checksum *cksum = authenticator->cksum;
     krb5_boolean client_asserted_cb;
@@ -216,12 +217,33 @@ _gsskrb5_verify_8003_checksum(
 	return GSS_S_FAILURE;
     }
 
-    if (input_chan_bindings != GSS_C_NO_CHANNEL_BINDINGS
-	&& (ct_memcmp(p, zeros, sizeof(zeros)) != 0 || client_asserted_cb)) {
+    if (input_chan_bindings != GSS_C_NO_CHANNEL_BINDINGS) {
+	/*
+	 * If the caller provided non zero channel
+	 * bindings we calculate the hash.
+	 *
+	 * But we only check if
+	 * the client provided
+	 * a non zero hash or KERB_AP_OPTIONS_CBT
+	 */
 	if(hash_input_chan_bindings(input_chan_bindings, hash) != 0) {
 	    *minor_status = 0;
 	    return GSS_S_BAD_BINDINGS;
 	}
+	if (ct_memcmp(p, zeros, sizeof(zeros)) != 0) {
+	    check_cb = TRUE;
+	}
+    }
+    if (client_asserted_cb) {
+	/*
+	 * With KERB_AP_OPTIONS_CBT we always
+	 * check the bindings even with
+	 * 16 zeros on client and server
+	 */
+	check_cb = TRUE;
+    }
+
+    if (check_cb) {
 	if(ct_memcmp(hash, p, sizeof(hash)) != 0) {
 	    *minor_status = 0;
 	    return GSS_S_BAD_BINDINGS;

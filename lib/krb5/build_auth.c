@@ -86,6 +86,7 @@ add_etypelist(krb5_context context,
 
 static krb5_error_code
 add_ap_options(krb5_context context,
+	       krb5_boolean channel_bound,
 	       krb5_authdata *auth_data)
 {
     krb5_error_code ret;
@@ -97,6 +98,9 @@ add_ap_options(krb5_context context,
 					      "libdefaults",
 					      "client_aware_channel_bindings",
 					      NULL);
+
+    if (channel_bound)
+	require_cb = TRUE;
 
     if (!require_cb)
 	return 0;
@@ -117,6 +121,7 @@ add_ap_options(krb5_context context,
 
 static krb5_error_code
 make_ap_authdata(krb5_context context,
+                 krb5_boolean channel_bound,
                  krb5_authdata **auth_data)
 {
     krb5_error_code ret;
@@ -136,7 +141,7 @@ make_ap_authdata(krb5_context context,
      * in the AP authenticator when looking for AD-AP-OPTIONS. Make sure to
      * bundle it together with etypes.
      */
-    ret = add_ap_options(context, &ad);
+    ret = add_ap_options(context, channel_bound, &ad);
     if (ret) {
 	free_AuthorizationData(&ad);
 	return ret;
@@ -165,6 +170,7 @@ _krb5_build_authenticator (krb5_context context,
 			   krb5_enctype enctype,
 			   krb5_creds *cred,
 			   Checksum *cksum,
+			   krb5_boolean channel_bound,
 			   krb5_data *result,
 			   krb5_key_usage usage)
 {
@@ -221,7 +227,9 @@ _krb5_build_authenticator (krb5_context context,
 	     * This is not GSS-API specific, we only enable it for
 	     * GSS for now
 	     */
-	    ret = make_ap_authdata(context, &auth.authorization_data);
+	    ret = make_ap_authdata(context,
+				   channel_bound,
+				   &auth.authorization_data);
 	    if (ret)
 		goto fail;
 	}

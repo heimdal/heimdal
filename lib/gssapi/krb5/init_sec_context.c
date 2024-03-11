@@ -794,6 +794,9 @@ repl_mutual
 		return GSS_S_FAILURE;
 	    }
 	}
+	if (ret != GSS_S_COMPLETE) {
+		return ret;
+	}
 	kret = krb5_rd_rep (context,
 			    ctx->auth_context,
 			    &indata,

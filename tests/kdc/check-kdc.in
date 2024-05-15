@@ -947,11 +947,11 @@ ${kgetcred} --out-cache=${o2cache} --delegation-credential-cache=${ocache} ${ser
 	{ ec=1 ; eval "${testfailed}"; }
 
 echo "test constrained delegation evidence (evidence from AS)"; > messages.log
-# This fails because we don't add PAC ticket-signature in AS-REP (as Windows).
+# This succeeds because we add PAC ticket-signature in AS-REP (as Windows).
 ${kinit} --cache=${ocache} --password-file=${objdir}/barpassword \
 	--forwardable --server=${ps} bar@${R} || \
         { ec=1 ; eval "${testfailed}"; }
-${kgetcred} --delegation-credential-cache=${ocache} ${server}@${R} && \
+${kgetcred} --delegation-credential-cache=${ocache} ${server}@${R} || \
 	{ ec=1 ; eval "${testfailed}"; }
 
 echo "test constrained delegation impersonation (missing PAC)"; > messages.log

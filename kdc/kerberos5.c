@@ -1853,7 +1853,6 @@ generate_pac(astgs_request_t r, const Key *skey, const Key *tkey,
 	     krb5_boolean is_tgs)
 {
     krb5_error_code ret;
-    krb5_data data;
     uint16_t rodc_id;
     krb5_principal client;
     krb5_const_principal canon_princ = NULL;
@@ -1918,18 +1917,18 @@ generate_pac(astgs_request_t r, const Key *skey, const Key *tkey,
 	    return ret;
     }
 
-    ret = _krb5_pac_sign(r->context,
-			 r->pac,
-			 r->et.authtime,
-			 client,
-			 &skey->key, /* Server key */
-			 &tkey->key, /* TGS key */
-			 rodc_id,
-			 NULL, /* UPN */
-			 canon_princ,
-			 FALSE, /* add_full_sig */
-			 is_tgs ? &r->pac_attributes : NULL,
-			 &data);
+    ret = _krb5_kdc_pac_sign_ticket(r->context,
+                                    r->pac,
+                                    client,
+                                    &skey->key, /* Server key */
+                                    &tkey->key, /* TGS key */
+                                    rodc_id,
+                                    NULL, /* UPN */
+                                    canon_princ,
+                                    !is_tgs, /* add_ticket_sig */
+                                    !is_tgs, /* add_full_sig */
+                                    &r->et,
+                                    is_tgs ? &r->pac_attributes : NULL);
     krb5_free_principal(r->context, client);
     krb5_pac_free(r->context, r->pac);
     r->pac = NULL;
@@ -1938,9 +1937,6 @@ generate_pac(astgs_request_t r, const Key *skey, const Key *tkey,
 		   r->cname);
 	return ret;
     }
-    
-    ret = _kdc_tkt_insert_pac(r->context, &r->et, &data);
-    krb5_data_free(&data);
 
     return ret;
 }

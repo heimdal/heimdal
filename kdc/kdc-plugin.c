@@ -51,7 +51,7 @@ static const char *kdc_plugin_deps[] = {
 static struct heim_plugin_data kdc_plugin_data = {
     "krb5",
     "kdc",
-    KRB5_PLUGIN_KDC_VERSION_10,
+    KRB5_PLUGIN_KDC_VERSION_11,
     kdc_plugin_deps,
     kdc_get_instance
 };
@@ -237,6 +237,33 @@ _kdc_referral_policy(astgs_request_t r)
         ret = _krb5_plugin_run_f(r->context, &kdc_plugin_data, 0, r, referral_policy);
 
     return ret;
+}
+
+static krb5_error_code KRB5_LIB_CALL
+hwauth_policy(krb5_context context, const void *plug, void *plugctx, void *userctx)
+{
+    const krb5plugin_kdc_ftable *ft = plug;
+
+    if (ft->hwauth_policy == NULL) {
+        return KRB5_PLUGIN_NO_HANDLE;
+    }
+    return ft->hwauth_policy(rk_UNCONST(plug), userctx);
+}
+
+krb5_error_code
+_kdc_hwauth_policy(astgs_request_t r)
+{
+    krb5_error_code ret = KRB5_PLUGIN_NO_HANDLE;
+
+    if (have_plugin) {
+        ret = _krb5_plugin_run_f(r->context, &kdc_plugin_data, 0, r, hwauth_policy);
+    }
+
+    if (ret != KRB5_PLUGIN_NO_HANDLE) {
+        return ret;
+    }
+
+    return r->client->flags.require_hwauth ? KRB5KDC_ERR_POLICY : 0;
 }
 
 static krb5_error_code KRB5_LIB_CALL

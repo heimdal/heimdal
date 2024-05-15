@@ -2270,12 +2270,12 @@ _kdc_as_rep(astgs_request_t r)
                     ret = KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN;
                     goto out;
                 }
-                if (r->client->flags.require_hwauth &&
-                    !(pat[n].flags & PA_HARDWARE_AUTH)) {
-                    kdc_log(r->context, config, 4, "Hardware authentication required for %s", r->cname);
-
-                    ret = KRB5KDC_ERR_POLICY;
-                    goto out;
+                if (!(pat[n].flags & PA_HARDWARE_AUTH)) {
+                    ret = _kdc_hwauth_policy(r);
+                    if (ret) {
+                        kdc_log(r->context, config, 4, "Hardware authentication required for %s", r->cname);
+                        goto out;
+                    }
                 }
 		kdc_audit_addkv((kdc_request_t)r, KDC_AUDIT_VIS, "pa", "%s",
 				pat[n].name);

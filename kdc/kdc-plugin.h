@@ -96,6 +96,16 @@ typedef krb5_error_code
 (KRB5_CALLCONV *krb5plugin_kdc_referral_policy)(void *, astgs_request_t);
 
 /*
+ * A hardware authentication policy plugin can indicate what is to
+ * happen when a client authenticates using a method other than
+ * hardware authentication. It can return zero to allow the
+ * authentication, or an appropriate error code to deny it.
+ */
+
+typedef krb5_error_code
+(KRB5_CALLCONV *krb5plugin_kdc_hwauth_policy)(void *, astgs_request_t);
+
+/*
  * Update the AS or TGS reply immediately prior to encoding.
  */
 
@@ -117,7 +127,7 @@ typedef krb5_error_code
  * Plugins should carefully check API contract notes for changes
  * between plugin API versions.
  */
-#define KRB5_PLUGIN_KDC_VERSION_10	10
+#define KRB5_PLUGIN_KDC_VERSION_11	11
 
 typedef struct krb5plugin_kdc_ftable {
     HEIM_PLUGIN_FTABLE_COMMON_ELEMENTS(krb5_context);
@@ -125,6 +135,7 @@ typedef struct krb5plugin_kdc_ftable {
     krb5plugin_kdc_pac_verify		pac_verify;
     krb5plugin_kdc_client_access	client_access;
     krb5plugin_kdc_referral_policy	referral_policy;
+    krb5plugin_kdc_hwauth_policy	hwauth_policy;
     krb5plugin_kdc_finalize_reply	finalize_reply;
     krb5plugin_kdc_audit		audit;
 } krb5plugin_kdc_ftable;

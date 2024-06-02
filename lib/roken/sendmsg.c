@@ -101,7 +101,7 @@ sendmsg(rk_socket_t s, const struct msghdr *msg, int flags)
  **********************************************************************/
 
 /**
- * Implementation of sendmsg() for WIN32
+ * Implementation of sendmsg() for WIN32.
  *
  * We are using a contrived definition of msghdr which actually uses
  * an array of ::_WSABUF structures instead of ::iovec .  This allows
@@ -116,9 +116,9 @@ sendmsg(rk_socket_t s, const struct msghdr *msg, int flags)
  *   ::MSG_PARTIAL.
  *
  * @param[in] s The socket to use.
- * @param[in] msg The message
+ * @param[in] msg The message.
  * @param[in] flags Flags.  A combination of ::MSG_DONTROUTE,
- *  ::MSG_OOB and ::MSG_PARTIAL
+ *  ::MSG_OOB and ::MSG_PARTIAL.
  *
  * @return The number of bytes sent, on success.  Or -1 on error.
  */

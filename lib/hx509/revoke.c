@@ -132,7 +132,7 @@ free_ocsp(struct revoke_ocsp *ocsp)
 /**
  * Free a hx509 revocation context.
  *
- * @param ctx context to be freed
+ * @param ctx context to be freed.
  *
  * @ingroup hx509_revoke
  */
@@ -392,8 +392,8 @@ load_ocsp(hx509_context context, struct revoke_ocsp *ocsp)
 /**
  * Add a OCSP file to the revocation context.
  *
- * @param context hx509 context
- * @param ctx hx509 revocation context
+ * @param context hx509 context.
+ * @param ctx hx509 revocation context.
  * @param path path to file that is going to be added to the context.
  *
  * @return An hx509 error code, see hx509_get_error_string().
@@ -628,8 +628,8 @@ load_crl(hx509_context context, const char *path, time_t *t, CRLCertificateList 
 /**
  * Add a CRL file to the revocation context.
  *
- * @param context hx509 context
- * @param ctx hx509 revocation context
+ * @param context hx509 context.
+ * @param ctx hx509 revocation context.
  * @param path path to file that is going to be added to the context.
  *
  * @return An hx509 error code, see hx509_get_error_string().
@@ -695,12 +695,12 @@ hx509_revoke_add_crl(hx509_context context,
  * context. Also need the parent certificate to check the OCSP
  * parent identifier.
  *
- * @param context hx509 context
- * @param ctx hx509 revocation context
- * @param certs
- * @param now
- * @param cert
- * @param parent_cert
+ * @param context hx509 context.
+ * @param ctx hx509 revocation context.
+ * @param certs.
+ * @param now.
+ * @param cert.
+ * @param parent_cert.
  *
  * @return An hx509 error code, see hx509_get_error_string().
  *
@@ -980,12 +980,12 @@ out:
 /**
  * Create an OCSP request for a set of certificates.
  *
- * @param context a hx509 context
- * @param reqcerts list of certificates to request ocsp data for
- * @param pool certificate pool to use when signing
- * @param signer certificate to use to sign the request
+ * @param context a hx509 context.
+ * @param reqcerts list of certificates to request ocsp data for.
+ * @param pool certificate pool to use when signing.
+ * @param signer certificate to use to sign the request.
  * @param digest the signing algorithm in the request, if NULL use the
- * default signature algorithm,
+ * default signature algorithm.
  * @param request the encoded request, free with free_heim_octet_string().
  * @param nonce nonce in the request, free with free_heim_octet_string().
  *
@@ -1232,9 +1232,9 @@ hx509_revoke_print(hx509_context context,
 /**
  * Print the OCSP reply stored in a file.
  *
- * @param context a hx509 context
- * @param path path to a file with a OCSP reply
- * @param out the out FILE descriptor to print the reply on
+ * @param context a hx509 context.
+ * @param path path to a file with a OCSP reply.
+ * @param out the out FILE descriptor to print the reply on.
  *
  * @return An hx509 error code, see hx509_get_error_string().
  *
@@ -1273,12 +1273,12 @@ hx509_revoke_ocsp_print(hx509_context context, const char *path, FILE *out)
  * expired. Doesn't verify signature the OCSP reply or it's done by a
  * authorized sender, that is assumed to be already done.
  *
- * @param context a hx509 context
+ * @param context a hx509 context.
  * @param now the time right now, if 0, use the current time.
- * @param cert the certificate to verify
- * @param flags flags control the behavior
- * @param data pointer to the encode ocsp reply
- * @param length the length of the encode ocsp reply
+ * @param cert the certificate to verify.
+ * @param flags flags control the behavior.
+ * @param data pointer to the encode ocsp reply.
+ * @param length the length of the encode ocsp reply.
  * @param expiration return the time the OCSP will expire and need to
  * be rechecked.
  *
@@ -1441,7 +1441,7 @@ hx509_crl_add_revoked_certs(hx509_context context,
  * Set the lifetime of a CRL context.
  *
  * @param context a hx509 context.
- * @param crl a CRL context
+ * @param crl a CRL context.
  * @param delta delta time the certificate is valid, library adds the
  * current time to this.
  *
@@ -1515,10 +1515,10 @@ add_revoked(hx509_context context, void *ctx, hx509_cert cert)
  * Sign a CRL and return an encode certificate.
  *
  * @param context a hx509 context.
- * @param signer certificate to sign the CRL with
- * @param crl the CRL to sign
+ * @param signer certificate to sign the CRL with.
+ * @param crl the CRL to sign.
  * @param os return the signed and encoded CRL, free with
- * free_heim_octet_string()
+ * free_heim_octet_string().
  *
  * @return An hx509 error code, see hx509_get_error_string().
  *

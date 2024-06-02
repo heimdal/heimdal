@@ -124,7 +124,8 @@ utf8toutf32(const unsigned char **pp, uint32_t *out)
  * the out variable, after processing it will be the length of the out
  * string.
  *
- * @return returns 0 on success, an wind error code otherwise
+ * @return returns 0 on success, an wind error code otherwise.
+ *
  * @ingroup wind
  */
 
@@ -160,7 +161,8 @@ wind_utf8ucs4(const char *in, uint32_t *out, size_t *out_len)
  * @param in an UTF-8 string to convert.
  * @param out_len the length of the resulting UCS4 string.
  *
- * @return returns 0 on success, an wind error code otherwise
+ * @return returns 0 on success, an wind error code otherwise.
+ *
  * @ingroup wind
  */
 
@@ -178,17 +180,16 @@ static const char first_char[4] =
  *
  * @param in an UCS4 string to convert.
  * @param in_len the length input array.
-
  * @param out the resulting UTF-8 string, must be at least
  * wind_ucs4utf8_length() + 1 long (the extra char for the NUL).  If
  * out is NULL, the function will calculate the needed space for the
  * out variable (just like wind_ucs4utf8_length()).
-
  * @param out_len before processing out_len should be the length of
  * the out variable, after processing it will be the length of the out
  * string.
  *
- * @return returns 0 on success, an wind error code otherwise
+ * @return returns 0 on success, an wind error code otherwise.
+ *
  * @ingroup wind
  */
 
@@ -256,7 +257,8 @@ wind_ucs4utf8(const uint32_t *in, size_t in_len, char *out, size_t *out_len)
  * @param in_len the length of UCS4 string to convert.
  * @param out_len the length of the resulting UTF-8 string.
  *
- * @return returns 0 on success, an wind error code otherwise
+ * @return returns 0 on success, an wind error code otherwise.
+ *
  * @ingroup wind
  */
 
@@ -273,9 +275,10 @@ wind_ucs4utf8_length(const uint32_t *in, size_t in_len, size_t *out_len)
  * @param len the length of the input buffer.
  * @param flags Flags to control the behavior of the function.
  * @param out the output UCS2, the array must be at least out/2 long.
- * @param out_len the output length
+ * @param out_len the output length.
  *
  * @return returns 0 on success, an wind error code otherwise.
+ *
  * @ingroup wind
  */
 
@@ -338,9 +341,10 @@ wind_ucs2read(const void *ptr, size_t len, unsigned int *flags,
  * @param flags Flags to control the behavior of the function.
  * @param ptr The input buffer to write to, the array must be at least
  * (in + 1) * 2 bytes long.
- * @param out_len the output length
+ * @param out_len the output length.
  *
  * @return returns 0 on success, an wind error code otherwise.
+ *
  * @ingroup wind
  */
 
@@ -411,7 +415,8 @@ wind_ucs2write(const uint16_t *in, size_t in_len, unsigned int *flags,
  * the out variable, after processing it will be the length of the out
  * string.
  *
- * @return returns 0 on success, an wind error code otherwise
+ * @return returns 0 on success, an wind error code otherwise.
+ *
  * @ingroup wind
  */
 
@@ -465,7 +470,8 @@ wind_utf8ucs2(const char *in, uint16_t *out, size_t *out_len)
  * @param in an UTF-8 string to convert.
  * @param out_len the length of the resulting UCS2 string.
  *
- * @return returns 0 on success, an wind error code otherwise
+ * @return returns 0 on success, an wind error code otherwise.
+ *
  * @ingroup wind
  */
 
@@ -488,7 +494,8 @@ wind_utf8ucs2_length(const char *in, size_t *out_len)
  * the out variable, after processing it will be the length of the out
  * string.
  *
- * @return returns 0 on success, an wind error code otherwise
+ * @return returns 0 on success, an wind error code otherwise.
+ *
  * @ingroup wind
  */
 
@@ -580,7 +587,8 @@ wind_ucs2utf8(const uint16_t *in, size_t in_len, char *out, size_t *out_len)
  * @param in_len an UCS2 string length to convert.
  * @param out_len the length of the resulting UTF-8 string.
  *
- * @return returns 0 on success, an wind error code otherwise
+ * @return returns 0 on success, an wind error code otherwise.
+ *
  * @ingroup wind
  */
 

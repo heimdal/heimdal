@@ -96,11 +96,11 @@ struct heim_type_data _heim_string_object = {
 };
 
 /**
- * Create a string object
+ * Create a string object.
  *
- * @param string the string to create, must be an utf8 string
+ * @param string the string to create, must be an utf8 string.
  *
- * @return string object
+ * @return string object.
  */
 
 heim_string_t
@@ -112,10 +112,10 @@ heim_string_create(const char *string)
 /**
  * Create a string object without copying the source.
  *
- * @param string the string to referenced, must be UTF-8
- * @param dealloc the function to use to release the referece to the string
+ * @param string the string to referenced, must be UTF-8.
+ * @param dealloc the function to use to release the referece to the string.
  *
- * @return string object
+ * @return string object.
  */
 
 heim_string_t
@@ -138,12 +138,12 @@ heim_string_ref_create(const char *string, heim_string_free_f_t dealloc)
 }
 
 /**
- * Create a string object
+ * Create a string object.
  *
- * @param string the string to create, must be an utf8 string
- * @param len the length of the string
+ * @param string the string to create, must be an utf8 string.
+ * @param len the length of the string.
  *
- * @return string object
+ * @return string object.
  */
 
 heim_string_t
@@ -161,12 +161,12 @@ heim_string_create_with_bytes(const void *data, size_t len)
 }
 
 /**
- * Create a string object using a format string
+ * Create a string object using a format string.
  *
- * @param fmt format string
+ * @param fmt format string.
  * @param ...
  *
- * @return string object
+ * @return string object.
  */
 
 heim_string_t
@@ -190,9 +190,9 @@ heim_string_create_with_format(const char *fmt, ...)
 }
 
 /**
- * Return the type ID of string objects
+ * Return the type ID of string objects.
  *
- * @return type id of string objects
+ * @return type id of string objects.
  */
 
 heim_tid_t
@@ -204,9 +204,9 @@ heim_string_get_type_id(void)
 /**
  * Get the string value of the content.
  *
- * @param string the string object to get the value from
+ * @param string the string object to get the value from.
  *
- * @return a utf8 string
+ * @return a utf8 string.
  */
 
 const char *

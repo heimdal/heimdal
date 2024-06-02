@@ -29,7 +29,7 @@
 #include "mech_locl.h"
 
 /**
- * Release a credentials
+ * Release a credentials.
  *
  * Its ok to release the GSS_C_NO_CREDENTIAL/NULL credential, it will
  * return a GSS_S_COMPLETE error code. On return cred_handle is set ot
@@ -42,10 +42,10 @@
  * major = gss_release_cred(&minor, &cred);
  * @endcode
  *
- * @param minor_status minor status return code, mech specific
- * @param cred_handle a pointer to the credential too release
+ * @param minor_status minor status return code, mech specific.
+ * @param cred_handle a pointer to the credential too release.
  *
- * @return an gssapi error code
+ * @return an gssapi error code.
  *
  * @ingroup gssapi
  */

@@ -168,10 +168,10 @@ acl_match_acl(krb5_context context,
  *     string on error: the function will clean up and set the pointer
  *     to NULL.
  *
- * @param context Kerberos 5 context
- * @param string string to match with
- * @param format format to match
- * @param ... parameter to format string
+ * @param context Kerberos 5 context.
+ * @param string string to match with.
+ * @param format format to match.
+ * @param ... parameter to format string.
  *
  * @return Return an error code or 0.
  *

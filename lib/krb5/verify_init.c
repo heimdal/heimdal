@@ -203,10 +203,10 @@ cleanup:
 /**
  * Validate the newly fetch credential, see also krb5_verify_init_creds().
  *
- * @param context a Kerberos 5 context
- * @param creds the credentials to verify
- * @param client the client name to match up
- * @param ccache the credential cache to use
+ * @param context a Kerberos 5 context.
+ * @param creds the credentials to verify.
+ * @param client the client name to match up.
+ * @param ccache the credential cache to use.
  * @param service a service name to use, used with
  *        krb5_sname_to_principal() to build a hostname to use to
  *        verify.

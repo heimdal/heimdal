@@ -108,7 +108,7 @@ DES_new_random_key(DES_cblock *key)
 }
 
 /**
- * Seed the random number generator. Deprecated, use @ref page_rand
+ * Seed the random number generator. Deprecated, use @ref page_rand.
  *
  * @param seed a seed to seed that random number generate with.
  *

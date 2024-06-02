@@ -184,10 +184,12 @@ plugin_register_check_dup(heim_object_t value, void *ctx, int *stop)
 
 /**
  * Register a plugin symbol name of specific type.
- * @param context a Keberos context
- * @param module name of plugin module (e.g., "krb5")
- * @param name name of plugin symbol (e.g., "krb5_plugin_kuserok")
- * @param ftable a pointer to a function pointer table
+ *
+ * @param context a Keberos context.
+ * @param module name of plugin module (e.g., "krb5").
+ * @param name name of plugin symbol (e.g., "krb5_plugin_kuserok").
+ * @param ftable a pointer to a function pointer table.
+ *
  * @return In case of error a non zero error com_err error is returned
  * and the Kerberos error string is set.
  *

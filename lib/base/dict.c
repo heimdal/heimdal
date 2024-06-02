@@ -104,9 +104,9 @@ findprime(size_t p)
 }
 
 /**
- * Allocate an array
+ * Allocate an array.
  *
- * @return A new allocated array, free with heim_release()
+ * @return A new allocated array, free with heim_release().
  */
 
 heim_dict_t
@@ -135,9 +135,9 @@ heim_dict_create(size_t size)
 }
 
 /**
- * Get type id of an dict
+ * Get type id of an dict.
  *
- * @return the type id
+ * @return the type id.
  */
 
 heim_tid_t
@@ -162,12 +162,12 @@ _search(heim_dict_t dict, heim_object_t ptr)
 }
 
 /**
- * Search for element in hash table
+ * Search for element in hash table.
  *
- * @value dict the dict to search in
- * @value key the key to search for
+ * @param dict the dict to search in.
+ * @param key the key to search for.
  *
- * @return a not-retained copy of the value for key or NULL if not found
+ * @return a not-retained copy of the value for key or NULL if not found.
  */
 
 heim_object_t
@@ -182,12 +182,12 @@ heim_dict_get_value(heim_dict_t dict, heim_object_t key)
 }
 
 /**
- * Search for element in hash table
+ * Search for element in hash table.
  *
- * @value dict the dict to search in
- * @value key the key to search for
+ * @param dict the dict to search in.
+ * @param key the key to search for.
  *
- * @return a retained copy of the value for key or NULL if not found
+ * @return a retained copy of the value for key or NULL if not found.
  */
 
 heim_object_t
@@ -202,13 +202,13 @@ heim_dict_copy_value(heim_dict_t dict, heim_object_t key)
 }
 
 /**
- * Add key and value to dict
+ * Add key and value to dict.
  *
- * @value dict the dict to add too
- * @value key the key to add
- * @value value the value to add
+ * @param dict the dict to add too.
+ * @param key the key to add.
+ * @param value the value to add.
  *
- * @return 0 if added, errno if not
+ * @return 0 if added, errno if not.
  */
 
 int
@@ -244,10 +244,10 @@ heim_dict_set_value(heim_dict_t dict, heim_object_t key, heim_object_t value)
 }
 
 /**
- * Delete element with key key
+ * Delete element with key key.
  *
- * @value dict the dict to delete from
- * @value key the key to delete
+ * @param dict the dict to delete from.
+ * @param key the key to delete.
  */
 
 void
@@ -268,11 +268,11 @@ heim_dict_delete_key(heim_dict_t dict, heim_object_t key)
 }
 
 /**
- * Do something for each element
+ * Do something for each element.
  *
- * @value dict the dict to interate over
- * @value func the function to search for
- * @value arg argument to func
+ * @param dict the dict to interate over.
+ * @param func the function to search for.
+ * @param arg argument to func.
  */
 
 void
@@ -287,10 +287,10 @@ heim_dict_iterate_f(heim_dict_t dict, void *arg, heim_dict_iterator_f_t func)
 
 #ifdef __BLOCKS__
 /**
- * Do something for each element
+ * Do something for each element.
  *
- * @value dict the dict to interate over
- * @value func the function to search for
+ * @param dict the dict to interate over.
+ * @param func the function to search for.
  */
 
 void

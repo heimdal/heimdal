@@ -87,7 +87,7 @@ aes_do_cipher(EVP_CIPHER_CTX *ctx,
 }
 
 /**
- * The AES-128 cipher type (hcrypto)
+ * The AES-128 cipher type (hcrypto).
  *
  * @return the AES-128 EVP_CIPHER pointer.
  *
@@ -117,7 +117,7 @@ EVP_hcrypto_aes_128_cbc(void)
 }
 
 /**
- * The AES-192 cipher type (hcrypto)
+ * The AES-192 cipher type (hcrypto).
  *
  * @return the AES-192 EVP_CIPHER pointer.
  *
@@ -146,7 +146,7 @@ EVP_hcrypto_aes_192_cbc(void)
 }
 
 /**
- * The AES-256 cipher type (hcrypto)
+ * The AES-256 cipher type (hcrypto).
  *
  * @return the AES-256 EVP_CIPHER pointer.
  *
@@ -175,7 +175,7 @@ EVP_hcrypto_aes_256_cbc(void)
 }
 
 /**
- * The AES-128 CFB8 cipher type (hcrypto)
+ * The AES-128 CFB8 cipher type (hcrypto).
  *
  * @return the AES-128 EVP_CIPHER pointer.
  *
@@ -205,7 +205,7 @@ EVP_hcrypto_aes_128_cfb8(void)
 }
 
 /**
- * The AES-192 CFB8 cipher type (hcrypto)
+ * The AES-192 CFB8 cipher type (hcrypto).
  *
  * @return the AES-192 EVP_CIPHER pointer.
  *
@@ -234,7 +234,7 @@ EVP_hcrypto_aes_192_cfb8(void)
 }
 
 /**
- * The AES-256 CFB8 cipher type (hcrypto)
+ * The AES-256 CFB8 cipher type (hcrypto).
  *
  * @return the AES-256 EVP_CIPHER pointer.
  *
@@ -263,7 +263,7 @@ EVP_hcrypto_aes_256_cfb8(void)
 }
 
 /**
- * The message digest SHA256 - hcrypto
+ * The message digest SHA256 - hcrypto.
  *
  * @return the message digest type.
  *
@@ -286,7 +286,7 @@ EVP_hcrypto_sha256(void)
 }
 
 /**
- * The message digest SHA384 - hcrypto
+ * The message digest SHA384 - hcrypto.
  *
  * @return the message digest type.
  *
@@ -309,7 +309,7 @@ EVP_hcrypto_sha384(void)
 }
 
 /**
- * The message digest SHA512 - hcrypto
+ * The message digest SHA512 - hcrypto.
  *
  * @return the message digest type.
  *
@@ -332,7 +332,7 @@ EVP_hcrypto_sha512(void)
 }
 
 /**
- * The message digest SHA1 - hcrypto
+ * The message digest SHA1 - hcrypto.
  *
  * @return the message digest type.
  *
@@ -355,7 +355,7 @@ EVP_hcrypto_sha1(void)
 }
 
 /**
- * The message digest MD5 - hcrypto
+ * The message digest MD5 - hcrypto.
  *
  * @return the message digest type.
  *
@@ -378,7 +378,7 @@ EVP_hcrypto_md5(void)
 }
 
 /**
- * The message digest MD4 - hcrypto
+ * The message digest MD4 - hcrypto.
  *
  * @return the message digest type.
  *
@@ -431,7 +431,7 @@ des_cbc_do_cipher(EVP_CIPHER_CTX *ctx,
 }
 
 /**
- * The DES cipher type
+ * The DES cipher type.
  *
  * @return the DES-CBC EVP_CIPHER pointer.
  *
@@ -505,7 +505,7 @@ des_ede3_cbc_do_cipher(EVP_CIPHER_CTX *ctx,
 }
 
 /**
- * The triple DES cipher type - hcrypto
+ * The triple DES cipher type - hcrypto.
  *
  * @return the DES-EDE3-CBC EVP_CIPHER pointer.
  *
@@ -569,7 +569,7 @@ rc2_do_cipher(EVP_CIPHER_CTX *ctx,
 }
 
 /**
- * The RC2 cipher type - hcrypto
+ * The RC2 cipher type - hcrypto.
  *
  * @return the RC2 EVP_CIPHER pointer.
  *
@@ -598,7 +598,7 @@ EVP_hcrypto_rc2_cbc(void)
 }
 
 /**
- * The RC2-40 cipher type
+ * The RC2-40 cipher type.
  *
  * @return the RC2-40 EVP_CIPHER pointer.
  *
@@ -627,7 +627,7 @@ EVP_hcrypto_rc2_40_cbc(void)
 }
 
 /**
- * The RC2-64 cipher type
+ * The RC2-64 cipher type.
  *
  * @return the RC2-64 EVP_CIPHER pointer.
  *
@@ -679,7 +679,7 @@ camellia_do_cipher(EVP_CIPHER_CTX *ctx,
 }
 
 /**
- * The Camellia-128 cipher type - hcrypto
+ * The Camellia-128 cipher type - hcrypto.
  *
  * @return the Camellia-128 EVP_CIPHER pointer.
  *
@@ -708,7 +708,7 @@ EVP_hcrypto_camellia_128_cbc(void)
 }
 
 /**
- * The Camellia-198 cipher type - hcrypto
+ * The Camellia-198 cipher type - hcrypto.
  *
  * @return the Camellia-198 EVP_CIPHER pointer.
  *
@@ -737,7 +737,7 @@ EVP_hcrypto_camellia_192_cbc(void)
 }
 
 /**
- * The Camellia-256 cipher type - hcrypto
+ * The Camellia-256 cipher type - hcrypto.
  *
  * @return the Camellia-256 EVP_CIPHER pointer.
  *

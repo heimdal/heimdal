@@ -117,7 +117,7 @@ print_func(hx509_vprint_func func, void *ctx, const char *fmt, ...)
 /**
  * Print a oid to a string.
  *
- * @param oid oid to print
+ * @param oid oid to print.
  * @param str allocated string, free with hx509_xfree().
  *
  * @return An hx509 error code, see hx509_get_error_string().
@@ -135,7 +135,7 @@ hx509_oid_sprint(const heim_oid *oid, char **str)
  * Print a oid using a hx509_vprint_func function. To print to stdout
  * use hx509_print_stdout().
  *
- * @param oid oid to print
+ * @param oid oid to print.
  * @param func hx509_vprint_func to print with.
  * @param ctx context variable to hx509_vprint_func function.
  *
@@ -906,7 +906,7 @@ struct {
  * @param context A hx509 context.
  * @param ctx a new allocated hx509 validation context, free with
  * hx509_validate_ctx_free().
-
+ *
  * @return An hx509 error code, see hx509_get_error_string().
  *
  * @ingroup hx509_print
@@ -981,7 +981,7 @@ hx509_validate_ctx_free(hx509_validate_ctx ctx)
  * @param context A hx509 context.
  * @param ctx A hx509 validation context.
  * @param cert the cerificate to validate/print.
-
+ *
  * @return An hx509 error code, see hx509_get_error_string().
  *
  * @ingroup hx509_print

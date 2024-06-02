@@ -78,11 +78,11 @@ struct heim_type_data _heim_number_object = {
 };
 
 /**
- * Create a number object
+ * Create a number object.
  *
- * @param the number to contain in the object
+ * @param the number to contain in the object.
  *
- * @return a number object
+ * @return a number object.
  */
 
 heim_number_t
@@ -100,9 +100,9 @@ heim_number_create(int64_t number)
 }
 
 /**
- * Return the type ID of number objects
+ * Return the type ID of number objects.
  *
- * @return type id of number objects
+ * @return type id of number objects.
  */
 
 heim_tid_t
@@ -112,11 +112,11 @@ heim_number_get_type_id(void)
 }
 
 /**
- * Get the int value of the content
+ * Get the int value of the content.
  *
- * @param number the number object to get the value from
+ * @param number the number object to get the value from.
  *
- * @return an int
+ * @return an int.
  */
 
 int

@@ -35,12 +35,12 @@
  *
  * @sa gss_import_name(), @ref internalVSmechname.
  *
- * @param minor_status   minor status code
- * @param input_name     input name in internal name form
- * @param exported_name  output name in contiguos string form
+ * @param minor_status   minor status code.
+ * @param input_name     input name in internal name form.
+ * @param exported_name  output name in contiguos string form.
  *
  * @returns a gss_error code, see gss_display_status() about printing
- *        the error code.
+ *          the error code.
  *
  * @ingroup gssapi
  */

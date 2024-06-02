@@ -107,9 +107,9 @@ static struct hdb_method methods[] = {
  * Returns the Keys of `e' for `kvno', or NULL if not found.  The Keys will
  * remain valid provided that the entry is not mutated.
  *
- * @param context Context
- * @param e The HDB entry
- * @param kvno The kvno
+ * @param context Context.
+ * @param e The HDB entry.
+ * @param kvno The kvno.
  *
  * @return A pointer to the Keys for the requested kvno.
  */
@@ -165,10 +165,10 @@ dequeue_HDB_Ext_KeySet(HDB_Ext_KeySet *data, unsigned int element, hdb_keyset *k
 /**
  * Removes from `e' and optionally outputs the keyset for the requested `kvno'.
  *
- * @param context Context
- * @param e The HDB entry
- * @param kvno The key version number
- * @param ks A pointer to a variable of type hdb_keyset (may be NULL)
+ * @param context Context.
+ * @param e The HDB entry.
+ * @param kvno The key version number.
+ * @param ks A pointer to a variable of type hdb_keyset (may be NULL).
  *
  * @return Zero on success, an error code otherwise.
  */
@@ -229,10 +229,10 @@ hdb_remove_keys(krb5_context context,
  * Removes from `e' and outputs all the base keys for virtual principal and/or
  * key derivation.
  *
- * @param context Context
- * @param e The HDB entry
- * @param ks A pointer to a variable of type HDB_Ext_KeySet
- * @param ckr A pointer to stable (copied) HDB_Ext_KeyRotation
+ * @param context Context.
+ * @param e The HDB entry.
+ * @param ks A pointer to a variable of type HDB_Ext_KeySet.
+ * @param ckr A pointer to stable (copied) HDB_Ext_KeyRotation.
  *
  * @return Zero on success, an error code otherwise.
  */
@@ -278,10 +278,10 @@ _hdb_remove_base_keys(krb5_context context,
  * Removes from `e' and outputs all the base keys for virtual principal and/or
  * key derivation.
  *
- * @param context Context
- * @param e The HDB entry
- * @param is_current_keyset Whether to make the keys the current keys for `e'
- * @param ks A pointer to an hdb_keyset containing the keys to set
+ * @param context Context.
+ * @param e The HDB entry.
+ * @param is_current_keyset Whether to make the keys the current keys for `e'.
+ * @param ks A pointer to an hdb_keyset containing the keys to set.
  *
  * @return Zero on success, an error code otherwise.
  */
@@ -720,9 +720,9 @@ load_config(krb5_context context, HDB *db)
  * ".db".  Also, for backends such as "ldap:" and "ldapi:" the
  * `filename' is more like a URI.
  *
- * @param [in] context Context
- * @param [out] db HDB handle output
- * @param [in] filename The name of the HDB
+ * @param [in] context Context.
+ * @param [out] db HDB handle output.
+ * @param [in] filename The name of the HDB.
  *
  * @return Zero on success else a krb5 error code.
  */

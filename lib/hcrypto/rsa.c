@@ -132,6 +132,7 @@ RSA_new_method(ENGINE *engine)
  * Free an allocation RSA object.
  *
  * @param rsa the RSA object to free.
+ *
  * @ingroup hcrypto_rsa
  */
 
@@ -227,8 +228,8 @@ RSA_set_method(RSA *rsa, const RSA_METHOD *method)
 /**
  * Set the application data for the RSA object.
  *
- * @param rsa the rsa object to set the parameter for
- * @param arg the data object to store
+ * @param rsa the rsa object to set the parameter for.
+ * @param arg the data object to store.
  *
  * @return 1 on success.
  *
@@ -245,9 +246,9 @@ RSA_set_app_data(RSA *rsa, void *arg)
 /**
  * Get the application data for the RSA object.
  *
- * @param rsa the rsa object to get the parameter for
+ * @param rsa the rsa object to get the parameter for.
  *
- * @return the data object
+ * @return the data object.
  *
  * @ingroup hcrypto_rsa
  */

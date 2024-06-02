@@ -186,9 +186,9 @@ heim_ntlm_unparse_flags(uint32_t flags, char *s, size_t len)
 
 
 /**
- * heim_ntlm_free_buf frees the ntlm buffer
+ * heim_ntlm_free_buf frees the ntlm buffer.
  *
- * @param p buffer to be freed
+ * @param p buffer to be freed.
  *
  * @ingroup ntlm_core
  */
@@ -433,9 +433,9 @@ out:
 }
 
 /**
- * Frees the ntlm_targetinfo message
+ * Frees the ntlm_targetinfo message.
  *
- * @param ti targetinfo to be freed
+ * @param ti targetinfo to be freed.
  *
  * @ingroup ntlm_core
  */
@@ -468,7 +468,7 @@ out:
  * Encodes a ntlm_targetinfo message.
  *
  * @param ti the ntlm_targetinfo message to encode.
- * @param ucs2 ignored
+ * @param ucs2 ignored.
  * @param data is the return buffer with the encoded message, should be
  * freed with heim_ntlm_free_buf().
  *
@@ -541,9 +541,9 @@ out:
 }
 
 /**
- * Decodes an NTLM targetinfo message
+ * Decodes an NTLM targetinfo message.
  *
- * @param data input data buffer with the encode NTLM targetinfo message
+ * @param data input data buffer with the encode NTLM targetinfo message.
  * @param ucs2 if the strings should be encoded with ucs2 (selected by flag in message).
  * @param ti the decoded target info, should be freed with heim_ntlm_free_targetinfo().
  *
@@ -645,9 +645,9 @@ encode_os_version(krb5_storage *out)
 }
 
 /**
- * Frees the ntlm_type1 message
+ * Frees the ntlm_type1 message.
  *
- * @param data message to be freed
+ * @param data message to be freed.
  *
  * @ingroup ntlm_core
  */
@@ -808,9 +808,9 @@ out:
 }
 
 /**
- * Frees the ntlm_type2 message
+ * Frees the ntlm_type2 message.
  *
- * @param data message to be freed
+ * @param data message to be freed.
  *
  * @ingroup ntlm_core
  */
@@ -952,9 +952,9 @@ out:
 }
 
 /**
- * Frees the ntlm_type3 message
+ * Frees the ntlm_type3 message.
  *
- * @param data message to be freed
+ * @param data message to be freed.
  *
  * @ingroup ntlm_core
  */
@@ -1053,7 +1053,7 @@ out:
  * Encodes an ntlm_type3 message.
  *
  * @param type3 the ntlm_type3 message to encode.
- * @param data is the return buffer with the encoded message, should be
+ * @param data is the return buffer with the encoded message, should be.
  * @param[out] mic_offset offset of message integrity code
  * freed with heim_ntlm_free_buf().
  *
@@ -1242,11 +1242,11 @@ heim_ntlm_nt_key(const char *password, struct ntlm_buf *key)
 }
 
 /**
- * Calculate NTLMv1 response hash
+ * Calculate NTLMv1 response hash.
  *
- * @param key the ntlm v1 key
- * @param len length of key
- * @param challenge sent by the server
+ * @param key the ntlm v1 key.
+ * @param len length of key.
+ * @param challenge sent by the server.
  * @param answer calculated answer, should be freed with heim_ntlm_free_buf().
  *
  * @return In case of success 0 is return, an errors, a errno in what
@@ -1390,8 +1390,8 @@ heim_ntlm_keyex_wrap(struct ntlm_buf *base_session,
 /**
  * Generates an NTLMv1 session random with assosited session master key.
  *
- * @param key the ntlm v1 key
- * @param len length of key
+ * @param key the ntlm v1 key.
+ * @param len length of key.
  * @param session generated session nonce, should be freed with heim_ntlm_free_buf().
  * @param master calculated session master key, should be freed with heim_ntlm_free_buf().
  *
@@ -1422,9 +1422,9 @@ heim_ntlm_build_ntlm1_master(void *key, size_t len,
 /**
  * Generates an NTLMv2 session random with associated session master key.
  *
- * @param key the NTLMv2 key
- * @param len length of key
- * @param blob the NTLMv2 "blob"
+ * @param key the NTLMv2 key.
+ * @param len length of key.
+ * @param blob the NTLMv2 "blob".
  * @param session generated session nonce, should be freed with heim_ntlm_free_buf().
  * @param master calculated session master key, should be freed with heim_ntlm_free_buf().
  *
@@ -1455,9 +1455,9 @@ heim_ntlm_build_ntlm2_master(void *key, size_t len,
 }
 
 /**
- * Given a key and encrypted session, unwrap the session key
+ * Given a key and encrypted session, unwrap the session key.
  *
- * @param baseKey the sessionBaseKey
+ * @param baseKey the sessionBaseKey.
  * @param encryptedSession encrypted session, type3.session field.
  * @param session generated session nonce, should be freed with heim_ntlm_free_buf().
  *
@@ -1505,12 +1505,12 @@ heim_ntlm_keyex_unwrap(struct ntlm_buf *baseKey,
 /**
  * Generates an NTLMv2 session key.
  *
- * @param key the ntlm key
- * @param len length of key
+ * @param key the ntlm key.
+ * @param len length of key.
  * @param username name of the user, as sent in the message, assumed to be in UTF8.
  * @param target the name of the target, assumed to be in UTF8.
- * @param upper_case_target upper case the target, should not be used only for legacy systems
- * @param ntlmv2 the ntlmv2 session key
+ * @param upper_case_target upper case the target, should not be used only for legacy systems.
+ * @param ntlmv2 the ntlmv2 session key.
  *
  * @return 0 on success, or an error code on failure.
  *
@@ -1578,14 +1578,14 @@ heim_ntlm_ts2unixtime(uint64_t t)
 }
 
 /**
- * Calculate LMv2 response
+ * Calculate LMv2 response.
  *
- * @param key the ntlm key
- * @param len length of key
+ * @param key the ntlm key.
+ * @param len length of key.
  * @param username name of the user, as sent in the message, assumed to be in UTF8.
  * @param target the name of the target, assumed to be in UTF8.
  * @param serverchallenge challenge as sent by the server in the type2 message.
- * @param ntlmv2 calculated session key
+ * @param ntlmv2 calculated session key.
  * @param answer ntlm response answer, should be freed with heim_ntlm_free_buf().
  *
  * @return In case of success 0 is return, an errors, a errno in what
@@ -1627,15 +1627,15 @@ heim_ntlm_calculate_lm2(const void *key, size_t len,
 
 
 /**
- * Calculate NTLMv2 response
+ * Calculate NTLMv2 response.
  *
- * @param key the ntlm key
- * @param len length of key
+ * @param key the ntlm key.
+ * @param len length of key.
  * @param username name of the user, as sent in the message, assumed to be in UTF8.
  * @param target the name of the target, assumed to be in UTF8.
  * @param serverchallenge challenge as sent by the server in the type2 message.
  * @param infotarget infotarget as sent by the server in the type2 message.
- * @param ntlmv2 calculated session key
+ * @param ntlmv2 calculated session key.
  * @param answer ntlm response answer, should be freed with heim_ntlm_free_buf().
  *
  * @return In case of success 0 is return, an errors, a errno in what
@@ -1841,15 +1841,15 @@ out:
 /**
  * Verify NTLMv2 response.
  *
- * @param key the ntlm key
- * @param len length of key
+ * @param key the ntlm key.
+ * @param len length of key.
  * @param username name of the user, as sent in the message, assumed to be in UTF8.
  * @param target the name of the target, assumed to be in UTF8.
- * @param now the time now (0 if the library should pick it up itself)
+ * @param now the time now (0 if the library should pick it up itself).
  * @param serverchallenge challenge as sent by the server in the type2 message.
  * @param answer ntlm response answer, should be freed with heim_ntlm_free_buf().
  * @param infotarget infotarget as sent by the server in the type2 message.
- * @param ntlmv2 calculated session key
+ * @param ntlmv2 calculated session key.
  *
  * @return In case of success 0 is return, an errors, a errno in what
  * went wrong.
@@ -1894,11 +1894,11 @@ heim_ntlm_verify_ntlm2(const void *key, size_t len,
 }
 
 /*
- * Calculate the NTLM2 Session Response
+ * Calculate the NTLM2 Session Response.
  *
- * @param clnt_nonce client nonce
- * @param svr_chal server challage
- * @param ntlm2_hash ntlm hash
+ * @param clnt_nonce client nonce.
+ * @param svr_chal server challage.
+ * @param ntlm2_hash ntlm hash.
  * @param lm The LM response, should be freed with heim_ntlm_free_buf().
  * @param ntlm The NTLM response, should be freed with heim_ntlm_free_buf().
  *
@@ -1956,11 +1956,11 @@ heim_ntlm_calculate_ntlm2_sess(const unsigned char clnt_nonce[8],
 
 
 /*
- * Calculate the NTLM2 Session "Verifier"
+ * Calculate the NTLM2 Session "Verifier".
  *
- * @param clnt_nonce client nonce
- * @param svr_chal server challage
- * @param hash The NTLM session verifier
+ * @param clnt_nonce client nonce.
+ * @param svr_chal server challage.
+ * @param hash The NTLM session verifier.
  *
  * @return In case of success 0 is return, an errors, a errno in what
  * went wrong.
@@ -1993,12 +1993,12 @@ heim_ntlm_calculate_ntlm2_sess_hash(const unsigned char clnt_nonce[8],
 
 
 /*
- * Derive a NTLM2 session key
+ * Derive a NTLM2 session key.
  *
- * @param sessionkey session key from domain controller
- * @param clnt_nonce client nonce
- * @param svr_chal server challenge
- * @param derivedkey salted session key
+ * @param sessionkey session key from domain controller.
+ * @param clnt_nonce client nonce.
+ * @param svr_chal server challenge.
+ * @param derivedkey salted session key.
  *
  * @return In case of success 0 is return, an errors, a errno in what
  * went wrong.

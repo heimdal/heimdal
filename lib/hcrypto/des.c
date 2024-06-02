@@ -110,6 +110,7 @@ static void FP(uint32_t [2]);
  * random key. See @ref des_keygen.
  *
  * @param key key to fixup the parity for.
+ *
  * @ingroup hcrypto_des
  */
 
@@ -171,6 +172,7 @@ static DES_cblock weak_keys[] = {
  * @param key key to check.
  *
  * @return 1 if the key is weak, 0 otherwise.
+ *
  * @ingroup hcrypto_des
  */
 
@@ -194,6 +196,7 @@ DES_is_weak_key(DES_cblock *key)
  * @param ks a key schedule to initialize.
  *
  * @return 0 on success
+ *
  * @ingroup hcrypto_des
  */
 
@@ -213,6 +216,7 @@ DES_set_key(DES_cblock *key, DES_key_schedule *ks)
  * @param ks a key schedule to initialize.
  *
  * @return 0 on success
+ *
  * @ingroup hcrypto_des
  */
 
@@ -290,6 +294,7 @@ DES_set_key_unchecked(DES_cblock *key, DES_key_schedule *ks)
  * @param ks a key schedule to initialize.
  *
  * @return 0 on success, -1 on invalid parity, -2 on weak key.
+ *
  * @ingroup hcrypto_des
  */
 
@@ -315,6 +320,7 @@ DES_set_key_checked(DES_cblock *key, DES_key_schedule *ks)
  * @param ks a key schedule to initialize.
  *
  * @return 0 on success, -1 on invalid parity, -2 on weak key.
+ *
  * @ingroup hcrypto_des
  */
 
@@ -355,10 +361,10 @@ store(const uint32_t v[2], unsigned char *b)
 }
 
 /**
- * Encrypt/decrypt a block using DES. Also called ECB mode
+ * Encrypt/decrypt a block using DES. Also called ECB mode.
  *
- * @param u data to encrypt
- * @param ks key schedule to use
+ * @param u data to encrypt.
+ * @param ks key schedule to use.
  * @param encp if non zero, encrypt. if zero, decrypt.
  *
  * @ingroup hcrypto_des
@@ -375,9 +381,9 @@ DES_encrypt(uint32_t u[2], DES_key_schedule *ks, int encp)
 /**
  * Encrypt/decrypt a block using DES.
  *
- * @param input data to encrypt
- * @param output data to encrypt
- * @param ks key schedule to use
+ * @param input data to encrypt.
+ * @param output data to encrypt.
+ * @param ks key schedule to use.
  * @param encp if non zero, encrypt. if zero, decrypt.
  *
  * @ingroup hcrypto_des
@@ -398,11 +404,11 @@ DES_ecb_encrypt(DES_cblock *input, DES_cblock *output,
  *
  * The IV must always be diffrent for diffrent input data blocks.
  *
- * @param in data to encrypt
- * @param out data to encrypt
- * @param length length of data
- * @param ks key schedule to use
- * @param iv initial vector to use
+ * @param in data to encrypt.
+ * @param out data to encrypt.
+ * @param length length of data.
+ * @param ks key schedule to use.
+ * @param iv initial vector to use.
  * @param encp if non zero, encrypt. if zero, decrypt.
  *
  * @ingroup hcrypto_des
@@ -474,11 +480,11 @@ DES_cbc_encrypt(const void *in, void *out, long length,
  *
  * The IV must always be diffrent for diffrent input data blocks.
  *
- * @param in data to encrypt
- * @param out data to encrypt
- * @param length length of data
- * @param ks key schedule to use
- * @param iv initial vector to use
+ * @param in data to encrypt.
+ * @param out data to encrypt.
+ * @param length length of data.
+ * @param ks key schedule to use.
+ * @param iv initial vector to use.
  * @param encp if non zero, encrypt. if zero, decrypt.
  *
  * @ingroup hcrypto_des
@@ -569,11 +575,11 @@ _des3_encrypt(uint32_t u[2], DES_key_schedule *ks1, DES_key_schedule *ks2,
  * Encrypt/decrypt a block using triple DES using EDE mode,
  * encrypt/decrypt/encrypt.
  *
- * @param input data to encrypt
- * @param output data to encrypt
- * @param ks1 key schedule to use
- * @param ks2 key schedule to use
- * @param ks3 key schedule to use
+ * @param input data to encrypt.
+ * @param output data to encrypt.
+ * @param ks1 key schedule to use.
+ * @param ks2 key schedule to use.
+ * @param ks3 key schedule to use.
  * @param encp if non zero, encrypt. if zero, decrypt.
  *
  * @ingroup hcrypto_des
@@ -599,13 +605,13 @@ DES_ecb3_encrypt(DES_cblock *input,
  *
  * The IV must always be diffrent for diffrent input data blocks.
  *
- * @param in data to encrypt
- * @param out data to encrypt
- * @param length length of data
- * @param ks1 key schedule to use
- * @param ks2 key schedule to use
- * @param ks3 key schedule to use
- * @param iv initial vector to use
+ * @param in data to encrypt.
+ * @param out data to encrypt.
+ * @param length length of data.
+ * @param ks1 key schedule to use.
+ * @param ks2 key schedule to use.
+ * @param ks3 key schedule to use.
+ * @param iv initial vector to use.
  * @param encp if non zero, encrypt. if zero, decrypt.
  *
  * @ingroup hcrypto_des
@@ -679,11 +685,11 @@ DES_ede3_cbc_encrypt(const void *in, void *out,
  *
  * The IV must always be diffrent for diffrent input data blocks.
  *
- * @param in data to encrypt
- * @param out data to encrypt
- * @param length length of data
- * @param ks key schedule to use
- * @param iv initial vector to use
+ * @param in data to encrypt.
+ * @param out data to encrypt.
+ * @param length length of data.
+ * @param ks key schedule to use.
+ * @param iv initial vector to use.
  * @param num offset into in cipher block encryption/decryption stop last time.
  * @param encp if non zero, encrypt. if zero, decrypt.
  *
@@ -758,11 +764,11 @@ DES_cfb64_encrypt(const void *in, void *out,
  *
  * The IV must always be diffrent for diffrent input data blocks.
  *
- * @param in data to checksum
- * @param output the checksum
- * @param length length of data
- * @param ks key schedule to use
- * @param iv initial vector to use
+ * @param in data to checksum.
+ * @param output the checksum.
+ * @param length length of data.
+ * @param ks key schedule to use.
+ * @param iv initial vector to use.
  *
  * @ingroup hcrypto_des
  */
@@ -821,8 +827,8 @@ bitswap8(unsigned char b)
  * Convert a string to a DES key. Use something like
  * PKCS5_PBKDF2_HMAC_SHA1() to create key from passwords.
  *
- * @param str The string to convert to a key
- * @param key the resulting key
+ * @param str The string to convert to a key.
+ * @param key the resulting key.
  *
  * @ingroup hcrypto_des
  */
@@ -862,8 +868,8 @@ DES_string_to_key(const char *str, DES_cblock *key)
  * DES_string_to_key(). Really, go use a really string2key function
  * like PKCS5_PBKDF2_HMAC_SHA1().
  *
- * @param key key to convert to
- * @param prompt prompt to display user
+ * @param key key to convert to.
+ * @param prompt prompt to display user.
  * @param verify prompt twice.
  *
  * @return 1 on success, non 1 on failure.

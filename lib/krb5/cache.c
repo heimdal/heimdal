@@ -109,8 +109,8 @@ cc_get_prefix_ops(krb5_context context,
  * Add a new ccache type with operations `ops', overwriting any
  * existing one if `override'.
  *
- * @param context a Kerberos context
- * @param ops type of plugin symbol
+ * @param context a Kerberos context.
+ * @param ops type of plugin symbol.
  * @param override flag to select if the registration is to overide
  * an existing ops with the same name.
  *
@@ -461,7 +461,7 @@ krb5_cc_new_unique(krb5_context context, const char *type,
 }
 
 /**
- * Return the name of the ccache `id'
+ * Return the name of the ccache `id'.
  *
  * @ingroup krb5_ccache
  */
@@ -482,7 +482,7 @@ krb5_cc_get_name(krb5_context context,
 }
 
 /**
- * Return the name of the ccache collection associated with `id'
+ * Return the name of the ccache collection associated with `id'.
  *
  * @ingroup krb5_ccache
  */
@@ -502,7 +502,7 @@ krb5_cc_get_collection(krb5_context context, krb5_ccache id)
 }
 
 /**
- * Return the name of the subsidiary ccache of `id'
+ * Return the name of the subsidiary ccache of `id'.
  *
  * @ingroup krb5_ccache
  */
@@ -534,11 +534,11 @@ krb5_cc_get_type(krb5_context context,
 }
 
 /**
- * Return the complete resolvable name the cache
-
- * @param context a Kerberos context
- * @param id return pointer to a found credential cache
- * @param str the returned name of a credential cache, free with krb5_xfree()
+ * Return the complete resolvable name the cache.
+ *
+ * @param context a Kerberos context.
+ * @param id return pointer to a found credential cache.
+ * @param str the returned name of a credential cache, free with krb5_xfree().
  *
  * @return Returns 0 or an error (and then *str is set to NULL).
  *
@@ -665,7 +665,7 @@ krb5_cc_switch(krb5_context context, krb5_ccache id)
 }
 
 /**
- * Return true if the default credential cache support switch
+ * Return true if the default credential cache support switch.
  *
  * @ingroup krb5_ccache
  */
@@ -1093,12 +1093,12 @@ krb5_cc_store_cred(krb5_context context,
  * from `id' in `creds'. 'creds' must be free by the caller using
  * krb5_free_cred_contents.
  *
- * @param context A Kerberos 5 context
- * @param id a Kerberos 5 credential cache
+ * @param context A Kerberos 5 context.
+ * @param id a Kerberos 5 credential cache.
  * @param whichfields what fields to use for matching credentials, same
- *        flags as whichfields in krb5_compare_creds()
- * @param mcreds template credential to use for comparing
- * @param creds returned credential, free with krb5_free_cred_contents()
+ *        flags as whichfields in krb5_compare_creds().
+ * @param mcreds template credential to use for comparing.
+ * @param creds returned credential, free with krb5_free_cred_contents().
  *
  * @return Return an error code or 0, see krb5_get_error_message().
  *
@@ -1323,7 +1323,7 @@ krb5_cc_copy_match_f(krb5_context context,
 /**
  * Just like krb5_cc_copy_match_f(), but copy everything.
  *
- * @ingroup @krb5_ccache
+ * @ingroup krb5_ccache
  */
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
@@ -1352,7 +1352,7 @@ krb5_cc_get_version(krb5_context context,
 }
 
 /**
- * Clear `mcreds' so it can be used with krb5_cc_retrieve_cred
+ * Clear `mcreds' so it can be used with krb5_cc_retrieve_cred.
  *
  * @ingroup krb5_ccache
  */
@@ -1449,8 +1449,8 @@ struct krb5_cc_cache_cursor_data {
 /**
  * Start iterating over all caches of specified type. See also
  * krb5_cccol_cursor_new().
-
- * @param context A Kerberos 5 context
+ *
+ * @param context A Kerberos 5 context.
  * @param type optional type to iterate over, if NULL, the default cache is used.
  * @param cursor cursor should be freed with krb5_cc_cache_end_seq_get().
  *
@@ -1505,9 +1505,9 @@ krb5_cc_cache_get_first (krb5_context context,
  * Retrieve the next cache pointed to by (`cursor') in `id'
  * and advance `cursor'.
  *
- * @param context A Kerberos 5 context
- * @param cursor the iterator cursor, returned by krb5_cc_cache_get_first()
- * @param id next ccache
+ * @param context A Kerberos 5 context.
+ * @param cursor the iterator cursor, returned by krb5_cc_cache_get_first().
+ * @param id next ccache.
  *
  * @return Return 0 or an error code. Returns KRB5_CC_END when the end
  *         of caches is reached, see krb5_get_error_message().
@@ -1549,9 +1549,9 @@ krb5_cc_cache_end_seq_get (krb5_context context,
  * `principal' as the default principal. On success, `id' needs to be
  * freed with krb5_cc_close() or krb5_cc_destroy().
  *
- * @param context A Kerberos 5 context
- * @param client The principal to search for
- * @param id the returned credential cache
+ * @param context A Kerberos 5 context.
+ * @param client The principal to search for.
+ * @param id the returned credential cache.
  *
  * @return On failure, error code is returned and `id' is set to NULL.
  *
@@ -1636,10 +1636,10 @@ krb5_cc_cache_match (krb5_context context,
  * Move the content from one credential cache to another. The
  * operation is an atomic switch.
  *
- * @param context a Kerberos context
- * @param from the credential cache to move the content from
- * @param to the credential cache to move the content to
-
+ * @param context a Kerberos context.
+ * @param from the credential cache to move the content from.
+ * @param to the credential cache to move the content to.
+ *
  * @return On sucess, from is destroyed and closed. On failure, error code is
  *         returned and from and to are both still allocated; see
  *         krb5_get_error_message().
@@ -1728,8 +1728,8 @@ build_conf_principals(krb5_context context, krb5_ccache id,
  * principal (generated part of krb5_cc_set_config()). Returns FALSE
  * (zero) if not a configuration principal.
  *
- * @param context a Kerberos context
- * @param principal principal to check if it a configuration principal
+ * @param context a Kerberos context.
+ * @param principal principal to check if it a configuration principal.
  *
  * @ingroup krb5_ccache
  */
@@ -1752,8 +1752,8 @@ krb5_is_config_principal(krb5_context context,
  * Store some configuration for the credential cache in the cache.
  * Existing configuration under the same name is over-written.
  *
- * @param context a Kerberos context
- * @param id the credential cache to store the data for
+ * @param context a Kerberos context.
+ * @param id the credential cache to store the data for.
  * @param principal configuration for a specific principal, if
  * NULL, global for the whole cache.
  * @param name name under which the configuraion is stored.
@@ -1800,12 +1800,13 @@ out:
 /**
  * Get some configuration for the credential cache in the cache.
  *
- * @param context a Kerberos context
- * @param id the credential cache to store the data for
+ * @param context a Kerberos context.
+ * @param id the credential cache to store the data for.
  * @param principal configuration for a specific principal, if
  * NULL, global for the whole cache.
  * @param name name under which the configuraion is stored.
- * @param data data to fetched, free with krb5_data_free()
+ * @param data data to fetched, free with krb5_data_free().
+ *
  * @return 0 on success, KRB5_CC_NOTFOUND or KRB5_CC_END if not found,
  *           or other system error.
  *
@@ -1853,7 +1854,7 @@ struct krb5_cccol_cursor_data {
  * Get a new cache interation cursor that will interate over all
  * credentials caches independent of type.
  *
- * @param context a Kerberos context
+ * @param context a Kerberos context.
  * @param cursor passed into krb5_cccol_cursor_next() and free with krb5_cccol_cursor_free().
  *
  * @return Returns 0 or and error code, see krb5_get_error_message().
@@ -1876,8 +1877,8 @@ krb5_cccol_cursor_new(krb5_context context, krb5_cccol_cursor *cursor)
 /**
  * Get next credential cache from the iteration.
  *
- * @param context A Kerberos 5 context
- * @param cursor the iteration cursor
+ * @param context A Kerberos 5 context.
+ * @param cursor the iteration cursor.
  * @param cache the returned cursor, pointer is set to NULL on failure
  *        and a cache on success. The returned cache needs to be freed
  *        with krb5_cc_close() or destroyed with krb5_cc_destroy().
@@ -1933,7 +1934,7 @@ krb5_cccol_cursor_next(krb5_context context, krb5_cccol_cursor cursor,
 /**
  * End an iteration and free all resources, can be done before end is reached.
  *
- * @param context A Kerberos 5 context
+ * @param context A Kerberos 5 context.
  * @param cursor the iteration cursor to be freed.
  *
  * @return Return 0 or and error, KRB5_CC_END is returned at the end
@@ -1959,10 +1960,10 @@ krb5_cccol_cursor_free(krb5_context context, krb5_cccol_cursor *cursor)
 /**
  * Return the last time the credential cache was modified.
  *
- * @param context A Kerberos 5 context
- * @param id The credential cache to probe
+ * @param context A Kerberos 5 context.
+ * @param id The credential cache to probe.
  * @param mtime the last modification time, set to 0 on error.
-
+ *
  * @return Return 0 or and error. See krb5_get_error_message().
  *
  * @ingroup krb5_ccache
@@ -1988,10 +1989,10 @@ krb5_cc_last_change_time(krb5_context context,
  * can be limited to a specific cache type. If the function return 0
  * and mtime is 0, there was no credentials in the caches.
  *
- * @param context A Kerberos 5 context
+ * @param context A Kerberos 5 context.
  * @param type The credential cache to probe, if NULL, all type are traversed.
  * @param mtime the last modification time, set to 0 on error.
-
+ *
  * @return Return 0 or and error. See krb5_get_error_message().
  *
  * @ingroup krb5_ccache
@@ -2088,14 +2089,14 @@ krb5_cc_set_friendly_name(krb5_context context,
 }
 
 /**
- * Get the lifetime of the initial ticket in the cache
+ * Get the lifetime of the initial ticket in the cache.
  *
  * Get the lifetime of the initial ticket in the cache, if the initial
  * ticket was not found, the error code KRB5_CC_END is returned.
  *
  * @param context A Kerberos 5 context.
- * @param id a credential cache
- * @param t the relative lifetime of the initial ticket
+ * @param id a credential cache.
+ * @param t the relative lifetime of the initial ticket.
  *
  * @return Return an error code or 0, see krb5_get_error_message().
  *
@@ -2178,13 +2179,13 @@ krb5_cc_get_lifetime(krb5_context context, krb5_ccache id, time_t *t)
 }
 
 /**
- * Set the time offset betwen the client and the KDC
+ * Set the time offset betwen the client and the KDC.
  *
  * If the backend doesn't support KDC offset, use the context global setting.
  *
  * @param context A Kerberos 5 context.
- * @param id a credential cache
- * @param offset the offset in seconds
+ * @param id a credential cache.
+ * @param offset the offset in seconds.
  *
  * @return Return an error code or 0, see krb5_get_error_message().
  *
@@ -2204,13 +2205,13 @@ krb5_cc_set_kdc_offset(krb5_context context, krb5_ccache id, krb5_deltat offset)
 }
 
 /**
- * Get the time offset betwen the client and the KDC
+ * Get the time offset betwen the client and the KDC.
  *
  * If the backend doesn't support KDC offset, use the context global setting.
  *
  * @param context A Kerberos 5 context.
- * @param id a credential cache
- * @param offset the offset in seconds
+ * @param id a credential cache.
+ * @param offset the offset in seconds.
  *
  * @return Return an error code or 0, see krb5_get_error_message().
  *

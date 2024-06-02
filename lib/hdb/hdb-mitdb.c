@@ -218,12 +218,12 @@ fix_salt(krb5_context context, hdb_entry *ent, Key *k)
  * This function takes a key from a krb5_storage from an MIT KDB encoded
  * entry and places it in the given Key object.
  *
- * @param context   Context
- * @param entry	    HDB entry
+ * @param context   Context.
+ * @param entry	    HDB entry.
  * @param sp	    krb5_storage with current offset set to the beginning of a
- *		    key
- * @param version   See comments in caller body for the backstory on this
- * @param k	    Key * to load the key into
+ *		    key.
+ * @param version   See comments in caller body for the backstory on this.
+ * @param k	    Key * to load the key into.
  */
 static krb5_error_code
 mdb_keyvalue2key(krb5_context context, hdb_entry *entry, krb5_storage *sp, uint16_t version, Key *k)
@@ -402,10 +402,10 @@ dup_similar_keys(krb5_context context, hdb_entry *entry)
  * This function parses an MIT krb5 encoded KDB entry and fills in the
  * given HDB entry with it.
  *
- * @param context	krb5_context
- * @param data		Encoded MIT KDB entry
- * @param target_kvno	Desired kvno, or 0 for the entry's current kvno
- * @param entry		Desired kvno, or 0 for the entry's current kvno
+ * @param context	krb5_context.
+ * @param data		Encoded MIT KDB entry.
+ * @param target_kvno	Desired kvno, or 0 for the entry's current kvno.
+ * @param entry		Desired kvno, or 0 for the entry's current kvno.
  */
 krb5_error_code
 _hdb_mdb_value2entry(krb5_context context, krb5_data *data,

@@ -38,8 +38,8 @@
  *
  * GSS_C_NO_OID matches nothing, not even it-self.
  *
- * @param a first oid to compare
- * @param b second oid to compare
+ * @param a first oid to compare.
+ * @param b second oid to compare.
  *
  * @return non-zero when both oid are the same OID, zero when they are
  *         not the same.

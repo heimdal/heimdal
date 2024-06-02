@@ -476,8 +476,9 @@ is_plist_file(const char *fname)
  * into one resulting heim_config_section by calling it repeatably.
  *
  * @param context a Kerberos 5 context.
- * @param dname a directory name to a Kerberos configuration file
+ * @param dname a directory name to a Kerberos configuration file.
  * @param res the returned result, must be free with heim_free_config_files().
+ *
  * @return Return an error code or 0, see heim_get_error_message().
  *
  * @ingroup heim_support
@@ -557,8 +558,9 @@ HEIMDAL_THREAD_LOCAL int config_include_depth = 0;
  * resulting heim_config_section by calling it repeatably.
  *
  * @param context a Kerberos 5 context.
- * @param fname a file name to a Kerberos configuration file
+ * @param fname a file name to a Kerberos configuration file.
  * @param res the returned result, must be free with heim_free_config_files().
+ *
  * @return Return an error code or 0, see heim_get_error_message().
  *
  * @ingroup heim_support
@@ -705,8 +707,8 @@ free_binding(heim_context context, heim_config_binding *b)
  * Free configuration file section, the result of
  * heim_config_parse_file() and heim_config_parse_file_multi().
  *
- * @param context A Kerberos 5 context
- * @param s the configuration section to free
+ * @param context A Kerberos 5 context.
+ * @param s the configuration section to free.
  *
  * @return returns 0 on successes, otherwise an error code, see
  *          heim_get_error_message()
@@ -857,10 +859,10 @@ heim_config_vget(heim_context context,
 }
 
 /**
- * Get a list of configuration binding list for more processing
+ * Get a list of configuration binding list for more processing.
  *
  * @param context A Kerberos 5 context.
- * @param c a configuration section, or NULL to use the section from context
+ * @param c a configuration section, or NULL to use the section from context.
  * @param ... a list of names, terminated with NULL.
  *
  * @return NULL if configuration list is not found, a list otherwise
@@ -883,13 +885,13 @@ heim_config_get_list(heim_context context,
 }
 
 /**
- * Get a list of configuration binding list for more processing
+ * Get a list of configuration binding list for more processing.
  *
  * @param context A Kerberos 5 context.
- * @param c a configuration section, or NULL to use the section from context
- * @param args a va_list of arguments
+ * @param c a configuration section, or NULL to use the section from context.
+ * @param args a va_list of arguments.
  *
- * @return NULL if configuration list is not found, a list otherwise
+ * @return NULL if configuration list is not found, a list otherwise.
  *
  * @ingroup heim_support
  */
@@ -909,10 +911,10 @@ heim_config_vget_list(heim_context context,
  * the string.
  *
  * @param context A Kerberos 5 context.
- * @param c a configuration section, or NULL to use the section from context
+ * @param c a configuration section, or NULL to use the section from context.
  * @param ... a list of names, terminated with NULL.
  *
- * @return NULL if configuration string not found, a string otherwise
+ * @return NULL if configuration string not found, a string otherwise.
  *
  * @ingroup heim_support
  */
@@ -935,10 +937,10 @@ heim_config_get_string(heim_context context,
  * Like heim_config_get_string(), but uses a va_list instead of ...
  *
  * @param context A Kerberos 5 context.
- * @param c a configuration section, or NULL to use the section from context
- * @param args a va_list of arguments
+ * @param c a configuration section, or NULL to use the section from context.
+ * @param args a va_list of arguments.
  *
- * @return NULL if configuration string not found, a string otherwise
+ * @return NULL if configuration string not found, a string otherwise.
  *
  * @ingroup heim_support
  */
@@ -956,12 +958,12 @@ heim_config_vget_string(heim_context context,
  * instead return a default value.
  *
  * @param context A Kerberos 5 context.
- * @param c a configuration section, or NULL to use the section from context
+ * @param c a configuration section, or NULL to use the section from context.
  * @param def_value the default value to return if no configuration
  *        found in the database.
- * @param args a va_list of arguments
+ * @param args a va_list of arguments.
  *
- * @return a configuration string
+ * @return a configuration string.
  *
  * @ingroup heim_support
  */
@@ -990,7 +992,7 @@ heim_config_vget_string_default(heim_context context,
  *        found in the database.
  * @param ... a list of names, terminated with NULL.
  *
- * @return a configuration string
+ * @return a configuration string.
  *
  * @ingroup heim_support
  */
@@ -1059,8 +1061,8 @@ next_component_string(char * begin, const char * delims, char **state)
  * heim_config_free_strings().
  *
  * @param context A Kerberos 5 context.
- * @param c a configuration section, or NULL to use the section from context
- * @param args a va_list of arguments
+ * @param c a configuration section, or NULL to use the section from context.
+ * @param args a va_list of arguments.
  *
  * @return TRUE or FALSE
  *
@@ -1123,7 +1125,7 @@ cleanup:
  * heim_config_free_strings().
  *
  * @param context A Kerberos 5 context.
- * @param c a configuration section, or NULL to use the section from context
+ * @param c a configuration section, or NULL to use the section from context.
  * @param ... a list of names, terminated with NULL.
  *
  * @return TRUE or FALSE
@@ -1148,7 +1150,7 @@ heim_config_get_strings(heim_context context,
  * Free the resulting strings from heim_config-get_strings() and
  * heim_config_vget_strings().
  *
- * @param strings strings to free
+ * @param strings strings to free.
  *
  * @ingroup heim_support
  */
@@ -1173,10 +1175,10 @@ heim_config_free_strings(char **strings)
  * non-zero number means TRUE and other value is FALSE.
  *
  * @param context A Kerberos 5 context.
- * @param c a configuration section, or NULL to use the section from context
+ * @param c a configuration section, or NULL to use the section from context.
  * @param def_value the default value to return if no configuration
  *        found in the database.
- * @param args a va_list of arguments
+ * @param args a va_list of arguments.
  *
  * @return TRUE or FALSE
  *
@@ -1204,8 +1206,8 @@ heim_config_vget_bool_default(heim_context context,
  * number means TRUE and other value is FALSE.
  *
  * @param context A Kerberos 5 context.
- * @param c a configuration section, or NULL to use the section from context
- * @param args a va_list of arguments
+ * @param c a configuration section, or NULL to use the section from context.
+ * @param args a va_list of arguments.
  *
  * @return TRUE or FALSE
  *
@@ -1226,7 +1228,7 @@ heim_config_vget_bool(heim_context context,
  * number means TRUE and other value is FALSE.
  *
  * @param context A Kerberos 5 context.
- * @param c a configuration section, or NULL to use the section from context
+ * @param c a configuration section, or NULL to use the section from context.
  * @param def_value the default value to return if no configuration
  *        found in the database.
  * @param ... a list of names, terminated with NULL.
@@ -1259,7 +1261,7 @@ heim_config_get_bool_default(heim_context context,
  * non-zero number means TRUE and other value is FALSE.
  *
  * @param context A Kerberos 5 context.
- * @param c a configuration section, or NULL to use the section from context
+ * @param c a configuration section, or NULL to use the section from context.
  * @param ... a list of names, terminated with NULL.
  *
  * @return TRUE or FALSE
@@ -1287,12 +1289,12 @@ heim_config_get_bool(heim_context context,
  * configuration selection.
  *
  * @param context A Kerberos 5 context.
- * @param c a configuration section, or NULL to use the section from context
+ * @param c a configuration section, or NULL to use the section from context.
  * @param def_value the default value to return if no configuration
  *        found in the database.
- * @param args a va_list of arguments
+ * @param args a va_list of arguments.
  *
- * @return parsed the time (or def_value on parse error)
+ * @return parsed the time (or def_value on parse error).
  *
  * @ingroup heim_support
  */
@@ -1315,10 +1317,10 @@ heim_config_vget_time_default(heim_context context,
  * Get the time from the configuration file using a relative time, for example: 1h30s
  *
  * @param context A Kerberos 5 context.
- * @param c a configuration section, or NULL to use the section from context
- * @param args a va_list of arguments
+ * @param c a configuration section, or NULL to use the section from context.
+ * @param args a va_list of arguments.
  *
- * @return parsed the time or -1 on error
+ * @return parsed the time or -1 on error.
  *
  * @ingroup heim_support
  */
@@ -1335,12 +1337,12 @@ heim_config_vget_time(heim_context context,
  * Get the time from the configuration file using a relative time, for example: 1h30s
  *
  * @param context A Kerberos 5 context.
- * @param c a configuration section, or NULL to use the section from context
+ * @param c a configuration section, or NULL to use the section from context.
  * @param def_value the default value to return if no configuration
  *        found in the database.
  * @param ... a list of names, terminated with NULL.
  *
- * @return parsed the time (or def_value on parse error)
+ * @return parsed the time (or def_value on parse error).
  *
  * @ingroup heim_support
  */
@@ -1364,10 +1366,10 @@ heim_config_get_time_default(heim_context context,
  * Get the time from the configuration file using a relative time, for example: 1h30s
  *
  * @param context A Kerberos 5 context.
- * @param c a configuration section, or NULL to use the section from context
+ * @param c a configuration section, or NULL to use the section from context.
  * @param ... a list of names, terminated with NULL.
  *
- * @return parsed the time or -1 on error
+ * @return parsed the time or -1 on error.
  *
  * @ingroup heim_support
  */

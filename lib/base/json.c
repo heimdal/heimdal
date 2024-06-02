@@ -1288,9 +1288,9 @@ show_printf(void *ctx, const char *str)
 }
 
 /**
- * Dump a heimbase object to stderr (useful from the debugger!)
+ * Dump a heimbase object to stderr (useful from the debugger!).
  *
- * @param obj object to dump using JSON or JSON-like format
+ * @param obj object to dump using JSON or JSON-like format.
  *
  * @addtogroup heimbase
  */

@@ -134,19 +134,19 @@ supplementary_error(OM_uint32 v)
 }
 
 /**
- * Convert a GSS-API status code to text
+ * Convert a GSS-API status code to text.
  *
- * @param minor_status     minor status code
- * @param status_value     status value to convert
+ * @param minor_status     minor status code.
+ * @param status_value     status value to convert.
  * @param status_type      One of:
  *                         GSS_C_GSS_CODE - status_value is a GSS status code,
- *                         GSS_C_MECH_CODE - status_value is a mechanism status code
+ *                         GSS_C_MECH_CODE - status_value is a mechanism status code.
  * @param mech_type        underlying mechanism. Use GSS_C_NO_OID to obtain the
  *                         system default.
  * @param message_context  state information to extract further messages from the
- *                         status_value
+ *                         status_value.
  * @param status_string    the allocated text representation. Release with
- *                         gss_release_buffer()
+ *                         gss_release_buffer().
  *
  * @returns a gss_error code.
  *

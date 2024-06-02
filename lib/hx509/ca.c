@@ -130,7 +130,7 @@ hx509_ca_tbs_free(hx509_ca_tbs *tbs)
  *
  * @param context A hx509 context.
  * @param tbs object to be signed.
- * @param t time the certificated will start to be valid
+ * @param t time the certificated will start to be valid.
  *
  * @return An hx509 error code, see hx509_get_error_string().
  *
@@ -151,7 +151,7 @@ hx509_ca_tbs_set_notBefore(hx509_context context,
  *
  * @param context A hx509 context.
  * @param tbs object to be signed.
- * @param t time when the certificate will expire
+ * @param t time when the certificate will expire.
  *
  * @return An hx509 error code, see hx509_get_error_string().
  *
@@ -429,7 +429,7 @@ hx509_ca_tbs_set_serialnumber(hx509_context context,
  *
  * @param context A hx509 context.
  * @param tbs object to be signed.
- * @param req CSR
+ * @param req CSR.
  *
  * @return An hx509 error code, see hx509_get_error_string().
  *
@@ -1447,8 +1447,8 @@ hx509_ca_tbs_set_subject(hx509_context context,
  *
  * @param context A hx509 context.
  * @param tbs object to be signed.
- * @param issuerUniqueID to be set
- * @param subjectUniqueID to be set
+ * @param issuerUniqueID to be set.
+ * @param subjectUniqueID to be set.
  *
  * @return An hx509 error code, see hx509_get_error_string().
  *
@@ -1525,7 +1525,7 @@ hx509_ca_tbs_get_name(hx509_ca_tbs tbs)
  *
  * @param context A hx509 context.
  * @param tbs object to be signed.
- * @param sigalg signature algorithm to use
+ * @param sigalg signature algorithm to use.
  *
  * @return An hx509 error code, see hx509_get_error_string().
  *

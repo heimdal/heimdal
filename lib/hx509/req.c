@@ -107,11 +107,11 @@ hx509_request_free(hx509_request *reqp)
 }
 
 /**
- * Make the CSR request a CA certificate
+ * Make the CSR request a CA certificate.
  *
  * @param context An hx509 context.
  * @param req The hx509_request to alter.
- * @param pathLenConstraint the pathLenConstraint for the BasicConstraints (optional)
+ * @param pathLenConstraint the pathLenConstraint for the BasicConstraints (optional).
  *
  * @return An hx509 error code, see hx509_get_error_string().
  *
@@ -134,7 +134,7 @@ hx509_request_set_cA(hx509_context context,
 }
 
 /**
- * Make the CSR request an EE (end-entity, i.e., not a CA) certificate
+ * Make the CSR request an EE (end-entity, i.e., not a CA) certificate.
  *
  * @param context An hx509 context.
  * @param req The hx509_request to alter.
@@ -314,7 +314,7 @@ hx509_request_add_eku(hx509_context context,
 /**
  * Add a GeneralName (Jabber ID) subject alternative name to a CSR.
  *
- * XXX Make this take a heim_octet_string, not a GeneralName*.
+ * @todo Make this take a heim_octet_string, not a GeneralName*.
  *
  * @param context An hx509 context.
  * @param req The hx509_request object.
@@ -995,7 +995,7 @@ out:
  * Parse an encoded CSR and verify its self-signature.
  *
  * @param context An hx509 context.
- * @param csr The name of a store containing the CSR ("PKCS10:/path/to/file")
+ * @param csr The name of a store containing the CSR ("PKCS10:/path/to/file").
  * @param req Where to put request object.
  *
  * @return An hx509 error code, see hx509_get_error_string().
@@ -1037,9 +1037,9 @@ hx509_request_parse(hx509_context context,
  *
  * @param context An hx509 context.
  * @param req The hx509_request object.
- * @param idx The index of the EKU (0 for the first) to return
+ * @param idx The index of the EKU (0 for the first) to return.
  * @param out A pointer to a char * variable where the OID will be placed
- *            (caller must free with free())
+ *            (caller must free with free()).
  *
  * @return Zero on success, HX509_NO_ITEM if no such item exists (denoting
  *         iteration end), or an error.
@@ -1161,7 +1161,7 @@ reject_feat(hx509_request req, abitstring a, size_t n, int idx)
  * Authorize issuance of a CA certificate as requested.
  *
  * @param req The hx509_request object.
- * @param pathLenConstraint the pathLenConstraint for the BasicConstraints (optional)
+ * @param pathLenConstraint the pathLenConstraint for the BasicConstraints (optional).
  *
  * @return an hx509 or system error.
  *
@@ -1181,7 +1181,7 @@ hx509_request_authorize_cA(hx509_request req, unsigned *pathLenConstraint)
  * Filter the requested KeyUsage and mark it authorized.
  *
  * @param req The hx509_request object.
- * @param ku Permitted KeyUsage
+ * @param ku Permitted KeyUsage.
  *
  * @ingroup hx509_request
  */
@@ -1199,7 +1199,7 @@ hx509_request_authorize_ku(hx509_request req, KeyUsage ku)
  *
  * @param req The hx509_request object.
  * @param idx The index of an EKU that can be fetched with
- *            hx509_request_get_eku()
+ *            hx509_request_get_eku().
  *
  * @return Zero on success, an error otherwise.
  *
@@ -1216,7 +1216,7 @@ hx509_request_authorize_eku(hx509_request req, size_t idx)
  *
  * @param req The hx509_request object.
  * @param idx The index of an EKU that can be fetched with
- *            hx509_request_get_eku()
+ *            hx509_request_get_eku().
  *
  * @return Zero on success, an error otherwise.
  *
@@ -1233,7 +1233,7 @@ hx509_request_reject_eku(hx509_request req, size_t idx)
  *
  * @param req The hx509_request object.
  * @param idx The index of an EKU that can be fetched with
- *            hx509_request_get_eku()
+ *            hx509_request_get_eku().
  *
  * @return Non-zero if authorized, zero if not.
  *
@@ -1282,7 +1282,7 @@ hx509_request_reject_san(hx509_request req, size_t idx)
  *
  * @param req The hx509_request object.
  * @param idx The index of a SAN that can be fetched with
- *            hx509_request_get_san()
+ *            hx509_request_get_san().
  *
  * @return Non-zero if authorized, zero if not.
  *

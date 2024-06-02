@@ -77,7 +77,6 @@ gss_wrap_iov(OM_uint32 * minor_status,
 /**
  * Decrypt or verifies the signature on the data.
  *
- *
  * @ingroup gssapi
  */
 

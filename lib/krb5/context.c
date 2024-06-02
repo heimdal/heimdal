@@ -446,7 +446,7 @@ init_context_once(void *ctx)
  * /etc/krb5.conf. The structure should be freed by calling
  * krb5_free_context() when it is no longer being used.
  *
- * @param context pointer to returned context
+ * @param context pointer to returned context.
  *
  * @return Returns 0 to indicate success.  Otherwise an errno code is
  * returned.  Failure means either that something bad happened during
@@ -567,7 +567,7 @@ copy_etypes (krb5_context context,
  * Make a copy for the Kerberos 5 context, the new krb5_context shoud
  * be freed with krb5_free_context().
  *
- * @param context the Kerberos context to copy
+ * @param context the Kerberos context to copy.
  * @param out the copy of the Kerberos, set to NULL error.
  *
  * @return Returns 0 to indicate success.  Otherwise an kerberos et
@@ -785,7 +785,7 @@ krb5_prepend_config_files(const char *filelist, char **pq, char ***ret_pp)
 /**
  * Prepend the filename to the global configuration list.
  *
- * @param filelist a filename to add to the default list of filename
+ * @param filelist a filename to add to the default list of filename.
  * @param pfilenames return array of filenames, should be freed with krb5_free_config_files().
  *
  * @return Returns 0 to indicate success.  Otherwise an kerberos et
@@ -983,7 +983,7 @@ krb5_set_default_in_tkt_etypes(krb5_context context,
  * with the KDC, clients and servers.
  *
  * @param context Kerberos 5 context.
- * @param pdu_type request type (AS, TGS or none)
+ * @param pdu_type request type (AS, TGS or none).
  * @param etypes Encryption types, array terminated with
  * ETYPE_NULL(0), caller should free array with krb5_xfree():
  *
@@ -1029,7 +1029,7 @@ krb5_get_default_in_tkt_etypes(krb5_context context,
 /**
  * Init the built-in ets in the Kerberos library.
  *
- * @param context kerberos context to add the ets too
+ * @param context kerberos context to add the ets too.
  *
  * @ingroup krb5
  */
@@ -1100,7 +1100,7 @@ krb5_get_use_admin_kdc (krb5_context context)
  * the client's address list when communicating with the KDC.
  *
  * @param context Kerberos 5 context.
- * @param addresses addreses to add
+ * @param addresses addreses to add.
  *
  * @return Returns 0 to indicate success. Otherwise an kerberos et
  * error code is returned, see krb5_get_error_message().
@@ -1124,7 +1124,7 @@ krb5_add_extra_addresses(krb5_context context, krb5_addresses *addresses)
  * the client's address list when communicating with the KDC.
  *
  * @param context Kerberos 5 context.
- * @param addresses addreses to set
+ * @param addresses addreses to set.
  *
  * @return Returns 0 to indicate success. Otherwise an kerberos et
  * error code is returned, see krb5_get_error_message().
@@ -1158,7 +1158,7 @@ krb5_set_extra_addresses(krb5_context context, const krb5_addresses *addresses)
  * the client's address list when communicating with the KDC.
  *
  * @param context Kerberos 5 context.
- * @param addresses addreses to set
+ * @param addresses addreses to set.
  *
  * @return Returns 0 to indicate success. Otherwise an kerberos et
  * error code is returned, see krb5_get_error_message().
@@ -1181,7 +1181,7 @@ krb5_get_extra_addresses(krb5_context context, krb5_addresses *addresses)
  * underlaying operating system.
  *
  * @param context Kerberos 5 context.
- * @param addresses addreses to ignore
+ * @param addresses addreses to ignore.
  *
  * @return Returns 0 to indicate success. Otherwise an kerberos et
  * error code is returned, see krb5_get_error_message().
@@ -1205,7 +1205,7 @@ krb5_add_ignore_addresses(krb5_context context, krb5_addresses *addresses)
  * underlaying operating system.
  *
  * @param context Kerberos 5 context.
- * @param addresses addreses to ignore
+ * @param addresses addreses to ignore.
  *
  * @return Returns 0 to indicate success. Otherwise an kerberos et
  * error code is returned, see krb5_get_error_message().
@@ -1238,7 +1238,7 @@ krb5_set_ignore_addresses(krb5_context context, const krb5_addresses *addresses)
  * underlaying operating system.
  *
  * @param context Kerberos 5 context.
- * @param addresses list addreses ignored
+ * @param addresses list addreses ignored.
  *
  * @return Returns 0 to indicate success. Otherwise an kerberos et
  * error code is returned, see krb5_get_error_message().
@@ -1354,7 +1354,7 @@ krb5_get_dns_canonicalize_hostname (krb5_context context)
  * @param sec seconds part of offset.
  * @param usec micro seconds part of offset.
  *
- * @return returns zero
+ * @return returns zero.
  *
  * @ingroup krb5
  */
@@ -1376,7 +1376,7 @@ krb5_get_kdc_sec_offset (krb5_context context, int32_t *sec, int32_t *usec)
  * @param sec seconds part of offset.
  * @param usec micro seconds part of offset.
  *
- * @return returns zero
+ * @return returns zero.
  *
  * @ingroup krb5
  */
@@ -1425,11 +1425,11 @@ krb5_set_max_time_skew (krb5_context context, time_t t)
  * Init encryption types in len, val with etypes.
  *
  * @param context Kerberos 5 context.
- * @param pdu_type type of pdu
+ * @param pdu_type type of pdu.
  * @param len output length of val.
  * @param val output array of enctypes.
  * @param etypes etypes to set val and len to, if NULL, use default enctypes.
-
+ *
  * @return Returns 0 to indicate success. Otherwise an kerberos et
  * error code is returned, see krb5_get_error_message().
  *
@@ -1481,9 +1481,10 @@ _krb5_homedir_access(krb5_context context)
  * For home directory access to be allowed, both the global state and
  * the krb5_context state have to be allowed.
  *
- * @param context a Kerberos 5 context or NULL
- * @param allow allow if TRUE home directory
- * @return the old value
+ * @param context a Kerberos 5 context or NULL.
+ * @param allow allow if TRUE home directory.
+ *
+ * @return the old value.
  *
  * @ingroup krb5
  */

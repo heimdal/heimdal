@@ -56,13 +56,13 @@
 #define IPROP_PORT 2121
 
 enum iprop_cmd { I_HAVE = 1,
-		 FOR_YOU = 2,
-		 TELL_YOU_EVERYTHING = 3,
-		 ONE_PRINC = 4,
-		 NOW_YOU_HAVE = 5,
-		 ARE_YOU_THERE = 6,
-		 I_AM_HERE = 7,
-		 YOU_HAVE_LAST_VERSION = 8
+                 FOR_YOU = 2,
+                 TELL_YOU_EVERYTHING = 3,
+                 ONE_PRINC = 4,
+                 NOW_YOU_HAVE = 5,
+                 ARE_YOU_THERE = 6,
+                 I_AM_HERE = 7,
+                 YOU_HAVE_LAST_VERSION = 8
 };
 
 extern sig_atomic_t exit_flag;

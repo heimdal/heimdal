@@ -80,9 +80,9 @@ __warn_references(unvis,
 #define	isoctal(c)	(((u_char)(c)) >= '0' && ((u_char)(c)) <= '7')
 
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
-	rk_strunvis (char *, const char *);
+    rk_strunvis (char *, const char *);
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
-	rk_unvis (char *, int, int *, int);
+    rk_unvis (char *, int, int *, int);
 
 /*
  * unvis - decode characters previously encoded by vis
@@ -92,155 +92,155 @@ ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 rk_unvis(char *cp, int c, int *astate, int flag)
 {
 
-	_DIAGASSERT(cp != NULL);
-	_DIAGASSERT(astate != NULL);
+    _DIAGASSERT(cp != NULL);
+    _DIAGASSERT(astate != NULL);
 
-	if (flag & UNVIS_END) {
-		if (*astate == S_OCTAL2 || *astate == S_OCTAL3) {
-			*astate = S_GROUND;
-			return (UNVIS_VALID);
-		}
-		return (*astate == S_GROUND ? UNVIS_NOCHAR : UNVIS_SYNBAD);
-	}
+    if (flag & UNVIS_END) {
+        if (*astate == S_OCTAL2 || *astate == S_OCTAL3) {
+            *astate = S_GROUND;
+            return (UNVIS_VALID);
+        }
+        return (*astate == S_GROUND ? UNVIS_NOCHAR : UNVIS_SYNBAD);
+    }
 
-	switch (*astate) {
+    switch (*astate) {
 
-	case S_GROUND:
-		*cp = 0;
-		if (c == '\\') {
-			*astate = S_START;
-			return (0);
-		}
-		*cp = c;
-		return (UNVIS_VALID);
+        case S_GROUND:
+            *cp = 0;
+            if (c == '\\') {
+                *astate = S_START;
+                return (0);
+            }
+            *cp = c;
+            return (UNVIS_VALID);
 
-	case S_START:
-		switch(c) {
-		case '\\':
-			*cp = c;
-			*astate = S_GROUND;
-			return (UNVIS_VALID);
-		case '0': case '1': case '2': case '3':
-		case '4': case '5': case '6': case '7':
-			*cp = (c - '0');
-			*astate = S_OCTAL2;
-			return (0);
-		case 'M':
-			*cp = (u_char)0200;
-			*astate = S_META;
-			return (0);
-		case '^':
-			*astate = S_CTRL;
-			return (0);
-		case 'n':
-			*cp = '\n';
-			*astate = S_GROUND;
-			return (UNVIS_VALID);
-		case 'r':
-			*cp = '\r';
-			*astate = S_GROUND;
-			return (UNVIS_VALID);
-		case 'b':
-			*cp = '\b';
-			*astate = S_GROUND;
-			return (UNVIS_VALID);
-		case 'a':
-			*cp = '\007';
-			*astate = S_GROUND;
-			return (UNVIS_VALID);
-		case 'v':
-			*cp = '\v';
-			*astate = S_GROUND;
-			return (UNVIS_VALID);
-		case 't':
-			*cp = '\t';
-			*astate = S_GROUND;
-			return (UNVIS_VALID);
-		case 'f':
-			*cp = '\f';
-			*astate = S_GROUND;
-			return (UNVIS_VALID);
-		case 's':
-			*cp = ' ';
-			*astate = S_GROUND;
-			return (UNVIS_VALID);
-		case 'E':
-			*cp = '\033';
-			*astate = S_GROUND;
-			return (UNVIS_VALID);
-		case '\n':
-			/*
-			 * hidden newline
-			 */
-			*astate = S_GROUND;
-			return (UNVIS_NOCHAR);
-		case '$':
-			/*
-			 * hidden marker
-			 */
-			*astate = S_GROUND;
-			return (UNVIS_NOCHAR);
-		}
-		*astate = S_GROUND;
-		return (UNVIS_SYNBAD);
+        case S_START:
+            switch(c) {
+                case '\\':
+                    *cp = c;
+                    *astate = S_GROUND;
+                    return (UNVIS_VALID);
+                case '0': case '1': case '2': case '3':
+                case '4': case '5': case '6': case '7':
+                    *cp = (c - '0');
+                    *astate = S_OCTAL2;
+                    return (0);
+                case 'M':
+                    *cp = (u_char)0200;
+                    *astate = S_META;
+                    return (0);
+                case '^':
+                    *astate = S_CTRL;
+                    return (0);
+                case 'n':
+                    *cp = '\n';
+                    *astate = S_GROUND;
+                    return (UNVIS_VALID);
+                case 'r':
+                    *cp = '\r';
+                    *astate = S_GROUND;
+                    return (UNVIS_VALID);
+                case 'b':
+                    *cp = '\b';
+                    *astate = S_GROUND;
+                    return (UNVIS_VALID);
+                case 'a':
+                    *cp = '\007';
+                    *astate = S_GROUND;
+                    return (UNVIS_VALID);
+                case 'v':
+                    *cp = '\v';
+                    *astate = S_GROUND;
+                    return (UNVIS_VALID);
+                case 't':
+                    *cp = '\t';
+                    *astate = S_GROUND;
+                    return (UNVIS_VALID);
+                case 'f':
+                    *cp = '\f';
+                    *astate = S_GROUND;
+                    return (UNVIS_VALID);
+                case 's':
+                    *cp = ' ';
+                    *astate = S_GROUND;
+                    return (UNVIS_VALID);
+                case 'E':
+                    *cp = '\033';
+                    *astate = S_GROUND;
+                    return (UNVIS_VALID);
+                case '\n':
+                    /*
+                     * hidden newline
+                     */
+                    *astate = S_GROUND;
+                    return (UNVIS_NOCHAR);
+                case '$':
+                    /*
+                     * hidden marker
+                     */
+                    *astate = S_GROUND;
+                    return (UNVIS_NOCHAR);
+            }
+            *astate = S_GROUND;
+            return (UNVIS_SYNBAD);
 
-	case S_META:
-		if (c == '-')
-			*astate = S_META1;
-		else if (c == '^')
-			*astate = S_CTRL;
-		else {
-			*astate = S_GROUND;
-			return (UNVIS_SYNBAD);
-		}
-		return (0);
+        case S_META:
+            if (c == '-')
+                *astate = S_META1;
+            else if (c == '^')
+                *astate = S_CTRL;
+            else {
+                *astate = S_GROUND;
+                return (UNVIS_SYNBAD);
+            }
+            return (0);
 
-	case S_META1:
-		*astate = S_GROUND;
-		*cp |= c;
-		return (UNVIS_VALID);
+        case S_META1:
+            *astate = S_GROUND;
+            *cp |= c;
+            return (UNVIS_VALID);
 
-	case S_CTRL:
-		if (c == '?')
-			*cp |= 0177;
-		else
-			*cp |= c & 037;
-		*astate = S_GROUND;
-		return (UNVIS_VALID);
+        case S_CTRL:
+            if (c == '?')
+                *cp |= 0177;
+            else
+                *cp |= c & 037;
+            *astate = S_GROUND;
+            return (UNVIS_VALID);
 
-	case S_OCTAL2:	/* second possible octal digit */
-		if (isoctal(c)) {
-			/*
-			 * yes - and maybe a third
-			 */
-			*cp = (*cp << 3) + (c - '0');
-			*astate = S_OCTAL3;
-			return (0);
-		}
-		/*
-		 * no - done with current sequence, push back passed char
-		 */
-		*astate = S_GROUND;
-		return (UNVIS_VALIDPUSH);
+        case S_OCTAL2:  /* second possible octal digit */
+            if (isoctal(c)) {
+                /*
+                 * yes - and maybe a third
+                 */
+                *cp = (*cp << 3) + (c - '0');
+                *astate = S_OCTAL3;
+                return (0);
+            }
+            /*
+             * no - done with current sequence, push back passed char
+             */
+            *astate = S_GROUND;
+            return (UNVIS_VALIDPUSH);
 
-	case S_OCTAL3:	/* third possible octal digit */
-		*astate = S_GROUND;
-		if (isoctal(c)) {
-			*cp = (*cp << 3) + (c - '0');
-			return (UNVIS_VALID);
-		}
-		/*
-		 * we were done, push back passed char
-		 */
-		return (UNVIS_VALIDPUSH);
+        case S_OCTAL3:  /* third possible octal digit */
+            *astate = S_GROUND;
+            if (isoctal(c)) {
+                *cp = (*cp << 3) + (c - '0');
+                return (UNVIS_VALID);
+            }
+            /*
+             * we were done, push back passed char
+             */
+            return (UNVIS_VALIDPUSH);
 
-	default:
-		/*
-		 * decoder in unknown state - (probably uninitialized)
-		 */
-		*astate = S_GROUND;
-		return (UNVIS_SYNBAD);
-	}
+        default:
+            /*
+             * decoder in unknown state - (probably uninitialized)
+             */
+            *astate = S_GROUND;
+            return (UNVIS_SYNBAD);
+    }
 }
 
 /*
@@ -253,31 +253,31 @@ rk_unvis(char *cp, int c, int *astate, int flag)
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 rk_strunvis(char *dst, const char *src)
 {
-	char c;
-	char *start = dst;
-	int state = 0;
+    char c;
+    char *start = dst;
+    int state = 0;
 
-	_DIAGASSERT(src != NULL);
-	_DIAGASSERT(dst != NULL);
+    _DIAGASSERT(src != NULL);
+    _DIAGASSERT(dst != NULL);
 
-	while ((c = *src++) != '\0') {
-	again:
-		switch (rk_unvis(dst, (unsigned char)c, &state, 0)) {
-		case UNVIS_VALID:
-			dst++;
-			break;
-		case UNVIS_VALIDPUSH:
-			dst++;
-			goto again;
-		case 0:
-		case UNVIS_NOCHAR:
-			break;
-		default:
-			return (-1);
-		}
-	}
-	if (unvis(dst, (unsigned char)c, &state, UNVIS_END) == UNVIS_VALID)
-		dst++;
-	*dst = '\0';
-	return (dst - start);
+    while ((c = *src++) != '\0') {
+    again:
+        switch (rk_unvis(dst, (unsigned char)c, &state, 0)) {
+            case UNVIS_VALID:
+                dst++;
+                break;
+            case UNVIS_VALIDPUSH:
+                dst++;
+                goto again;
+            case 0:
+            case UNVIS_NOCHAR:
+                break;
+            default:
+                return (-1);
+        }
+    }
+    if (unvis(dst, (unsigned char)c, &state, UNVIS_END) == UNVIS_VALID)
+        dst++;
+    *dst = '\0';
+    return (dst - start);
 }

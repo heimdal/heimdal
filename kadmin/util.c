@@ -97,10 +97,10 @@ str2attributes(const char *str, krb5_flags *flags)
 
     res = parse_flags (str, kdb_attrs, *flags);
     if (res < 0)
-	return res;
+        return res;
     else {
-	*flags = res;
-	return 0;
+        *flags = res;
+        return 0;
     }
 }
 
@@ -115,14 +115,14 @@ parse_attributes (const char *resp, krb5_flags *attr, int *mask, int bit)
     krb5_flags tmp = *attr;
 
     if (str2attributes(resp, &tmp) == 0) {
-	*attr = tmp;
-	if (mask)
-	    *mask |= bit;
-	return 0;
+        *attr = tmp;
+        if (mask)
+            *mask |= bit;
+        return 0;
     } else if(*resp == '?') {
-	print_flags_table (kdb_attrs, stderr);
+        print_flags_table (kdb_attrs, stderr);
     } else {
-	fprintf (stderr, "Unable to parse \"%s\"\n", resp);
+        fprintf (stderr, "Unable to parse \"%s\"\n", resp);
     }
     return -1;
 }
@@ -137,16 +137,16 @@ edit_attributes (const char *prompt, krb5_flags *attr, int *mask, int bit)
     char buf[1024], resp[1024];
 
     if (mask && (*mask & bit))
-	return 0;
+        return 0;
 
     attributes2str(*attr, buf, sizeof(buf));
     for (;;) {
-	if(get_response("Attributes", buf, resp, sizeof(resp)) != 0)
-	    return 1;
-	if (resp[0] == '\0')
-	    break;
-	if (parse_attributes (resp, attr, mask, bit) == 0)
-	    break;
+        if(get_response("Attributes", buf, resp, sizeof(resp)) != 0)
+            return 1;
+        if (resp[0] == '\0')
+            break;
+        if (parse_attributes (resp, attr, mask, bit) == 0)
+            break;
     }
     return 0;
 }
@@ -157,26 +157,26 @@ edit_attributes (const char *prompt, krb5_flags *attr, int *mask, int bit)
  */
 
 #define VALID_POLICY_NAME_CHARS \
-	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_"
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_"
 
 int
 parse_policy (const char *resp, char **policy, int *mask, int bit)
 {
     if (strspn(resp, VALID_POLICY_NAME_CHARS) == strlen(resp) &&
-	*resp != '\0') {
-	
-	*policy = strdup(resp);
-	if (*policy == NULL) {
-	    fprintf (stderr, "Out of memory");
-	    return -1;
-	}
-	if (mask)
-	    *mask |= bit;
-	return 0;
+        *resp != '\0') {
+
+        *policy = strdup(resp);
+        if (*policy == NULL) {
+            fprintf (stderr, "Out of memory");
+            return -1;
+        }
+        if (mask)
+            *mask |= bit;
+        return 0;
     } else if(*resp == '?') {
-	print_flags_table (kdb_attrs, stderr);
+        print_flags_table (kdb_attrs, stderr);
     } else {
-	fprintf (stderr, "Unable to parse \"%s\"\n", resp);
+        fprintf (stderr, "Unable to parse \"%s\"\n", resp);
     }
     return -1;
 }
@@ -191,17 +191,17 @@ edit_policy (const char *prompt, char **policy, int *mask, int bit)
     char buf[1024], resp[1024];
 
     if (mask && (*mask & bit))
-	return 0;
+        return 0;
 
     buf[0] = '\0';
     strlcpy(buf, "default", sizeof (buf));
     for (;;) {
-	if(get_response("Policy", buf, resp, sizeof(resp)) != 0)
-	    return 1;
-	if (resp[0] == '\0')
-	    break;
-	if (parse_policy (resp, policy, mask, bit) == 0)
-	    break;
+        if(get_response("Policy", buf, resp, sizeof(resp)) != 0)
+            return 1;
+        if (resp[0] == '\0')
+            break;
+        if (parse_policy (resp, policy, mask, bit) == 0)
+            break;
     }
     return 0;
 }
@@ -221,12 +221,12 @@ void
 time_t2str(time_t t, char *str, size_t len, int include_time)
 {
     if(t) {
-	if(include_time)
-	    strftime(str, len, "%Y-%m-%d %H:%M:%S UTC", gmtime(&t));
-	else
-	    strftime(str, len, "%Y-%m-%d", gmtime(&t));
+        if(include_time)
+            strftime(str, len, "%Y-%m-%d %H:%M:%S UTC", gmtime(&t));
+        else
+            strftime(str, len, "%Y-%m-%d", gmtime(&t));
     } else
-	snprintf(str, len, "never");
+        snprintf(str, len, "never");
 }
 
 /*
@@ -244,54 +244,54 @@ str2time_t (const char *str, time_t *t)
     memset (&tm2, 0, sizeof (tm2));
 
     while(isspace((unsigned char)*str))
-	str++;
+        str++;
 
     if (str[0] == '+') {
-	str++;
-	*t = parse_time(str, "month");
-	if (*t < 0)
-	    return -1;
-	*t += time(NULL);
-	return 0;
+        str++;
+        *t = parse_time(str, "month");
+        if (*t < 0)
+            return -1;
+        *t += time(NULL);
+        return 0;
     }
     if (str[0] == '-') {
-	str++;
-	*t = parse_time(str, "month");
-	if (*t < 0)
-	    return -1;
-	*t = time(NULL) - *t;
-	return 0;
+        str++;
+        *t = parse_time(str, "month");
+        if (*t < 0)
+            return -1;
+        *t = time(NULL) - *t;
+        return 0;
     }
 
     if(strcasecmp(str, "never") == 0) {
-	*t = 0;
-	return 0;
+        *t = 0;
+        return 0;
     }
 
     if(strcasecmp(str, "now") == 0) {
-	*t = time(NULL);
-	return 0;
+        *t = time(NULL);
+        return 0;
     }
 
     p = strptime (str, "%Y-%m-%d", &tm);
 
     if (p == NULL)
-	return -1;
+        return -1;
 
     while(isspace((unsigned char)*p))
-	p++;
+        p++;
 
     /* XXX this is really a bit optimistic, we should really complain
        if there was a problem parsing the time */
     if(p[0] != '\0' && strptime (p, "%H:%M:%S", &tm2) != NULL) {
-	tm.tm_hour = tm2.tm_hour;
-	tm.tm_min  = tm2.tm_min;
-	tm.tm_sec  = tm2.tm_sec;
+        tm.tm_hour = tm2.tm_hour;
+        tm.tm_min  = tm2.tm_min;
+        tm.tm_sec  = tm2.tm_sec;
     } else {
-	/* Do it on the end of the day */
-	tm.tm_hour = 23;
-	tm.tm_min  = 59;
-	tm.tm_sec  = 59;
+        /* Do it on the end of the day */
+        tm.tm_hour = 23;
+        tm.tm_min  = 59;
+        tm.tm_sec  = 59;
     }
 
     *t = tm2time (tm, 0);
@@ -308,13 +308,13 @@ parse_timet (const char *resp, krb5_timestamp *value, int *mask, int bit)
     time_t tmp;
 
     if (str2time_t(resp, &tmp) == 0) {
-	*value = tmp;
-	if(mask)
-	    *mask |= bit;
-	return 0;
+        *value = tmp;
+        if(mask)
+            *mask |= bit;
+        return 0;
     }
     if(*resp != '?')
-	fprintf (stderr, "Unable to parse time \"%s\"\n", resp);
+        fprintf (stderr, "Unable to parse time \"%s\"\n", resp);
     fprintf (stderr, "Print date on format YYYY-mm-dd [hh:mm:ss]\n");
     return -1;
 }
@@ -329,15 +329,15 @@ edit_timet (const char *prompt, krb5_timestamp *value, int *mask, int bit)
     char buf[1024], resp[1024];
 
     if (mask && (*mask & bit))
-	return 0;
+        return 0;
 
     time_t2str (*value, buf, sizeof (buf), 0);
 
     for (;;) {
-	if(get_response(prompt, buf, resp, sizeof(resp)) != 0)
-	    return 1;
-	if (parse_timet (resp, value, mask, bit) == 0)
-	    break;
+        if(get_response(prompt, buf, resp, sizeof(resp)) != 0)
+            return 1;
+        if (parse_timet (resp, value, mask, bit) == 0)
+            break;
     }
     return 0;
 }
@@ -362,9 +362,9 @@ deltat2str(unsigned t, char *str, size_t len)
      * for).
      */
     if (t == 0 || t > INT_MAX)
-	snprintf(str, len, "unlimited");
+        snprintf(str, len, "unlimited");
     else
-	unparse_time(t, str, len);
+        unparse_time(t, str, len);
 }
 
 /*
@@ -387,15 +387,15 @@ str2deltat(const char *str, krb5_deltat *delta)
          * We could switch to using `UINT_MAX' or `UINT64_MAX' for "unlimited",
          * but we'd have to continue to treat `0' as special for some time.
          */
-	*delta = 0;
-	return 0;
+        *delta = 0;
+        return 0;
     }
     res = parse_time(str, "day");
     if (res < 0)
-	return res;
+        return res;
     else {
-	*delta = res;
-	return 0;
+        *delta = res;
+        return 0;
     }
 }
 
@@ -410,14 +410,14 @@ parse_deltat (const char *resp, krb5_deltat *value, int *mask, int bit)
     krb5_deltat tmp;
 
     if (str2deltat(resp, &tmp) == 0) {
-	*value = tmp;
-	if (mask)
-	    *mask |= bit;
-	return 0;
+        *value = tmp;
+        if (mask)
+            *mask |= bit;
+        return 0;
     } else if(*resp == '?') {
-	print_time_table (stderr);
+        print_time_table (stderr);
     } else {
-	fprintf (stderr, "Unable to parse time \"%s\"\n", resp);
+        fprintf (stderr, "Unable to parse time \"%s\"\n", resp);
     }
     return -1;
 }
@@ -432,14 +432,14 @@ edit_deltat (const char *prompt, krb5_deltat *value, int *mask, int bit)
     char buf[1024], resp[1024];
 
     if (mask && (*mask & bit))
-	return 0;
+        return 0;
 
     deltat2str(*value, buf, sizeof(buf));
     for (;;) {
-	if(get_response(prompt, buf, resp, sizeof(resp)) != 0)
-	    return 1;
-	if (parse_deltat (resp, value, mask, bit) == 0)
-	    break;
+        if(get_response(prompt, buf, resp, sizeof(resp)) != 0)
+            return 1;
+        if (parse_deltat (resp, value, mask, bit) == 0)
+            break;
     }
     return 0;
 }
@@ -450,72 +450,72 @@ edit_deltat (const char *prompt, krb5_deltat *value, int *mask, int bit)
 
 void
 set_defaults(kadm5_principal_ent_t ent, int *mask,
-	     kadm5_principal_ent_t default_ent, int default_mask)
+             kadm5_principal_ent_t default_ent, int default_mask)
 {
     if (default_ent
-	&& (default_mask & KADM5_MAX_LIFE)
-	&& !(*mask & KADM5_MAX_LIFE))
-	ent->max_life = default_ent->max_life;
+        && (default_mask & KADM5_MAX_LIFE)
+        && !(*mask & KADM5_MAX_LIFE))
+        ent->max_life = default_ent->max_life;
 
     if (default_ent
-	&& (default_mask & KADM5_MAX_RLIFE)
-	&& !(*mask & KADM5_MAX_RLIFE))
-	ent->max_renewable_life = default_ent->max_renewable_life;
+        && (default_mask & KADM5_MAX_RLIFE)
+        && !(*mask & KADM5_MAX_RLIFE))
+        ent->max_renewable_life = default_ent->max_renewable_life;
 
     if (default_ent
-	&& (default_mask & KADM5_PRINC_EXPIRE_TIME)
-	&& !(*mask & KADM5_PRINC_EXPIRE_TIME))
-	ent->princ_expire_time = default_ent->princ_expire_time;
+        && (default_mask & KADM5_PRINC_EXPIRE_TIME)
+        && !(*mask & KADM5_PRINC_EXPIRE_TIME))
+        ent->princ_expire_time = default_ent->princ_expire_time;
 
     if (default_ent
-	&& (default_mask & KADM5_PW_EXPIRATION)
-	&& !(*mask & KADM5_PW_EXPIRATION))
-	ent->pw_expiration = default_ent->pw_expiration;
+        && (default_mask & KADM5_PW_EXPIRATION)
+        && !(*mask & KADM5_PW_EXPIRATION))
+        ent->pw_expiration = default_ent->pw_expiration;
 
     if (default_ent
-	&& (default_mask & KADM5_ATTRIBUTES)
-	&& !(*mask & KADM5_ATTRIBUTES))
-	ent->attributes = default_ent->attributes & ~KRB5_KDB_DISALLOW_ALL_TIX;
+        && (default_mask & KADM5_ATTRIBUTES)
+        && !(*mask & KADM5_ATTRIBUTES))
+        ent->attributes = default_ent->attributes & ~KRB5_KDB_DISALLOW_ALL_TIX;
 
     if (default_ent
-	&& (default_mask & KADM5_POLICY)
-	&& !(*mask & KADM5_POLICY)) {
-	ent->policy = strdup(default_ent->policy);
-	if (ent->policy == NULL)
-	    abort();
+        && (default_mask & KADM5_POLICY)
+        && !(*mask & KADM5_POLICY)) {
+        ent->policy = strdup(default_ent->policy);
+        if (ent->policy == NULL)
+            abort();
     }
 }
 
 int
 edit_entry(kadm5_principal_ent_t ent, int *mask,
-	   kadm5_principal_ent_t default_ent, int default_mask)
+           kadm5_principal_ent_t default_ent, int default_mask)
 {
 
     set_defaults(ent, mask, default_ent, default_mask);
 
     if(edit_deltat ("Max ticket life", &ent->max_life, mask,
-		    KADM5_MAX_LIFE) != 0)
-	return 1;
+                    KADM5_MAX_LIFE) != 0)
+        return 1;
 
     if(edit_deltat ("Max renewable life", &ent->max_renewable_life, mask,
-		    KADM5_MAX_RLIFE) != 0)
-	return 1;
+                    KADM5_MAX_RLIFE) != 0)
+        return 1;
 
     if(edit_timet ("Principal expiration time", &ent->princ_expire_time, mask,
-		   KADM5_PRINC_EXPIRE_TIME) != 0)
-	return 1;
+                   KADM5_PRINC_EXPIRE_TIME) != 0)
+        return 1;
 
     if(edit_timet ("Password expiration time", &ent->pw_expiration, mask,
-		   KADM5_PW_EXPIRATION) != 0)
-	return 1;
+                   KADM5_PW_EXPIRATION) != 0)
+        return 1;
 
     if(edit_attributes ("Attributes", &ent->attributes, mask,
-			KADM5_ATTRIBUTES) != 0)
-	return 1;
+                        KADM5_ATTRIBUTES) != 0)
+        return 1;
 
     if(edit_policy ("Policy", &ent->policy, mask,
-			KADM5_POLICY) != 0)
-	return 1;
+                        KADM5_POLICY) != 0)
+        return 1;
 
     return 0;
 }
@@ -528,57 +528,57 @@ edit_entry(kadm5_principal_ent_t ent, int *mask,
 
 int
 set_entry(krb5_context contextp,
-	  kadm5_principal_ent_t ent,
-	  int *mask,
-	  const char *max_ticket_life,
-	  const char *max_renewable_life,
-	  const char *expiration,
-	  const char *pw_expiration,
-	  const char *attributes,
-	  const char *policy)
+          kadm5_principal_ent_t ent,
+          int *mask,
+          const char *max_ticket_life,
+          const char *max_renewable_life,
+          const char *expiration,
+          const char *pw_expiration,
+          const char *attributes,
+          const char *policy)
 {
     if (max_ticket_life != NULL) {
-	if (parse_deltat (max_ticket_life, &ent->max_life,
-			  mask, KADM5_MAX_LIFE)) {
-	    krb5_warnx (contextp, "unable to parse `%s'", max_ticket_life);
-	    return 1;
-	}
+        if (parse_deltat (max_ticket_life, &ent->max_life,
+                          mask, KADM5_MAX_LIFE)) {
+            krb5_warnx (contextp, "unable to parse `%s'", max_ticket_life);
+            return 1;
+        }
     }
     if (max_renewable_life != NULL) {
-	if (parse_deltat (max_renewable_life, &ent->max_renewable_life,
-			  mask, KADM5_MAX_RLIFE)) {
-	    krb5_warnx (contextp, "unable to parse `%s'", max_renewable_life);
-	    return 1;
-	}
+        if (parse_deltat (max_renewable_life, &ent->max_renewable_life,
+                          mask, KADM5_MAX_RLIFE)) {
+            krb5_warnx (contextp, "unable to parse `%s'", max_renewable_life);
+            return 1;
+        }
     }
 
     if (expiration) {
-	if (parse_timet (expiration, &ent->princ_expire_time,
-			mask, KADM5_PRINC_EXPIRE_TIME)) {
-	    krb5_warnx (contextp, "unable to parse `%s'", expiration);
-	    return 1;
-	}
+        if (parse_timet (expiration, &ent->princ_expire_time,
+                        mask, KADM5_PRINC_EXPIRE_TIME)) {
+            krb5_warnx (contextp, "unable to parse `%s'", expiration);
+            return 1;
+        }
     }
     if (pw_expiration) {
-	if (parse_timet (pw_expiration, &ent->pw_expiration,
-			 mask, KADM5_PW_EXPIRATION)) {
-	    krb5_warnx (contextp, "unable to parse `%s'", pw_expiration);
-	    return 1;
-	}
+        if (parse_timet (pw_expiration, &ent->pw_expiration,
+                         mask, KADM5_PW_EXPIRATION)) {
+            krb5_warnx (contextp, "unable to parse `%s'", pw_expiration);
+            return 1;
+        }
     }
     if (attributes != NULL) {
-	if (parse_attributes (attributes, &ent->attributes,
-			      mask, KADM5_ATTRIBUTES)) {
-	    krb5_warnx (contextp, "unable to parse `%s'", attributes);
-	    return 1;
-	}
+        if (parse_attributes (attributes, &ent->attributes,
+                              mask, KADM5_ATTRIBUTES)) {
+            krb5_warnx (contextp, "unable to parse `%s'", attributes);
+            return 1;
+        }
     }
     if (policy != NULL) {
-	if (parse_policy (policy, &ent->policy,
-			      mask, KADM5_POLICY)) {
-	    krb5_warnx (contextp, "unable to parse `%s'", attributes);
-	    return 1;
-	}
+        if (parse_policy (policy, &ent->policy,
+                              mask, KADM5_POLICY)) {
+            krb5_warnx (contextp, "unable to parse `%s'", attributes);
+            return 1;
+        }
     }
     return 0;
 }
@@ -594,14 +594,14 @@ is_expression(const char *string)
     int quote = 0;
 
     for(p = string; *p; p++) {
-	if(quote) {
-	    quote = 0;
-	    continue;
-	}
-	if(*p == '\\')
-	    quote++;
-	else if(strchr("[]*?", *p) != NULL)
-	    return 1;
+        if(quote) {
+            quote = 0;
+            continue;
+        }
+        if(*p == '\\')
+            quote++;
+        else if(strchr("[]*?", *p) != NULL)
+            return 1;
     }
     return 0;
 }
@@ -639,9 +639,9 @@ foreach_principal_cb(void *data, const char *p)
  */
 int
 foreach_principal(const char *exp_str,
-		  int (*func)(krb5_principal, void*),
-		  const char *funcname,
-		  void *data)
+                  int (*func)(krb5_principal, void*),
+                  const char *funcname,
+                  void *data)
 {
     struct foreach_principal_data d;
     krb5_error_code ret;
@@ -660,7 +660,7 @@ foreach_principal(const char *exp_str,
     d.data = data;
 
     if (is_expr && !go_slow) {
-	ret = kadm5_iter_principals(kadm_handle, exp_str,
+        ret = kadm5_iter_principals(kadm_handle, exp_str,
                                     foreach_principal_cb, &d);
         if (ret == 0)
             return 0;
@@ -729,24 +729,24 @@ get_response(const char *prompt, const char *def, char *buf, size_t len)
 
     osig = signal(SIGINT, interrupt);
     if(setjmp(jmpbuf)) {
-	signal(SIGINT, osig);
-	fprintf(stderr, "\n");
-	return 1;
+        signal(SIGINT, osig);
+        fprintf(stderr, "\n");
+        return 1;
     }
 
     fprintf(stderr, "%s [%s]:", prompt, def);
     if(fgets(buf, len, stdin) == NULL) {
-	int save_errno = errno;
-	if(ferror(stdin))
-	    krb5_err(context, 1, save_errno, "<stdin>");
-	signal(SIGINT, osig);
-	return 1;
+        int save_errno = errno;
+        if(ferror(stdin))
+            krb5_err(context, 1, save_errno, "<stdin>");
+        signal(SIGINT, osig);
+        return 1;
     }
     p = strchr(buf, '\n');
     if(p)
-	*p = '\0';
+        *p = '\0';
     if(strcmp(buf, "") == 0)
-	strlcpy(buf, def, len);
+        strlcpy(buf, def, len);
     signal(SIGINT, osig);
     return 0;
 }
@@ -763,9 +763,9 @@ hex2n (char c)
 
     p = strchr (hexdigits, tolower((unsigned char)c));
     if (p == NULL)
-	return -1;
+        return -1;
     else
-	return p - hexdigits;
+        return p - hexdigits;
 }
 
 /*
@@ -775,43 +775,43 @@ hex2n (char c)
 
 int
 parse_des_key (const char *key_string, krb5_key_data *key_data,
-	       const char **error)
+               const char **error)
 {
     const char *p = key_string;
     unsigned char bits[8];
     int i;
 
     if (strlen (key_string) != 16) {
-	*error = "bad length, should be 16 for DES key";
-	return 1;
+        *error = "bad length, should be 16 for DES key";
+        return 1;
     }
     for (i = 0; i < 8; ++i) {
-	int d1, d2;
+        int d1, d2;
 
-	d1 = hex2n(p[2 * i]);
-	d2 = hex2n(p[2 * i + 1]);
-	if (d1 < 0 || d2 < 0) {
-	    *error = "non-hex character";
-	    return 1;
-	}
-	bits[i] = (d1 << 4) | d2;
+        d1 = hex2n(p[2 * i]);
+        d2 = hex2n(p[2 * i + 1]);
+        if (d1 < 0 || d2 < 0) {
+            *error = "non-hex character";
+            return 1;
+        }
+        bits[i] = (d1 << 4) | d2;
     }
     for (i = 0; i < 3; ++i) {
-	key_data[i].key_data_ver  = 2;
-	key_data[i].key_data_kvno = 0;
-	/* key */
-	key_data[i].key_data_type[0]     = ETYPE_DES_CBC_CRC;
-	key_data[i].key_data_length[0]   = 8;
-	key_data[i].key_data_contents[0] = malloc(8);
-	if (key_data[i].key_data_contents[0] == NULL) {
-	    *error = "malloc";
-	    return ENOMEM;
-	}
-	memcpy (key_data[i].key_data_contents[0], bits, 8);
-	/* salt */
-	key_data[i].key_data_type[1]     = KRB5_PW_SALT;
-	key_data[i].key_data_length[1]   = 0;
-	key_data[i].key_data_contents[1] = NULL;
+        key_data[i].key_data_ver  = 2;
+        key_data[i].key_data_kvno = 0;
+        /* key */
+        key_data[i].key_data_type[0]     = ETYPE_DES_CBC_CRC;
+        key_data[i].key_data_length[0]   = 8;
+        key_data[i].key_data_contents[0] = malloc(8);
+        if (key_data[i].key_data_contents[0] == NULL) {
+            *error = "malloc";
+            return ENOMEM;
+        }
+        memcpy (key_data[i].key_data_contents[0], bits, 8);
+        /* salt */
+        key_data[i].key_data_type[1]     = KRB5_PW_SALT;
+        key_data[i].key_data_length[1]   = 0;
+        key_data[i].key_data_contents[1] = NULL;
     }
     key_data[0].key_data_type[0] = ETYPE_DES_CBC_MD5;
     key_data[1].key_data_type[0] = ETYPE_DES_CBC_MD4;

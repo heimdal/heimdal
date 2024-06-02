@@ -46,15 +46,15 @@ get_check_entry(const char *name, kadm5_principal_ent_rec *ent)
 
     ret = krb5_parse_name(context, name, &principal);
     if (ret) {
-	krb5_warn(context, ret, "krb5_unparse_name: %s", name);
-	return 1;
+        krb5_warn(context, ret, "krb5_unparse_name: %s", name);
+        return 1;
     }
 
     memset(ent, 0, sizeof(*ent));
     ret = kadm5_get_principal(kadm_handle, principal, ent, KADM5_ATTRIBUTES);
     krb5_free_principal(context, principal);
     if(ret)
-	return 1;
+        return 1;
 
     return 0;
 }
@@ -70,28 +70,28 @@ do_check_entry(krb5_principal principal, void *data)
 
     ret = krb5_unparse_name(context, principal, &name);
     if (ret)
-	return 1;
+        return 1;
 
     memset (&princ, 0, sizeof(princ));
     ret = kadm5_get_principal(data, principal, &princ,
-			      KADM5_PRINCIPAL | KADM5_KEY_DATA);
+                              KADM5_PRINCIPAL | KADM5_KEY_DATA);
     if(ret) {
-	krb5_warn(context, ret, "Failed to get principal: %s", name);
-	free(name);
-	return 0;
+        krb5_warn(context, ret, "Failed to get principal: %s", name);
+        free(name);
+        return 0;
     }
 
     for (i = 0; i < princ.n_key_data; i++) {
-	size_t keysize;
-	ret = krb5_enctype_keysize(context,
-				   princ.key_data[i].key_data_type[0],
-				   &keysize);
-	if (ret == 0 && keysize != (size_t)princ.key_data[i].key_data_length[0]) {
-	    krb5_warnx(context,
-		       "Principal %s enctype %d, wrong length: %d\n",
-		       name, princ.key_data[i].key_data_type[0],
-		       princ.key_data[i].key_data_length[0]);
-	}
+        size_t keysize;
+        ret = krb5_enctype_keysize(context,
+                                   princ.key_data[i].key_data_type[0],
+                                   &keysize);
+        if (ret == 0 && keysize != (size_t)princ.key_data[i].key_data_length[0]) {
+            krb5_warnx(context,
+                       "Principal %s enctype %d, wrong length: %d\n",
+                       name, princ.key_data[i].key_data_type[0],
+                       princ.key_data[i].key_data_length[0]);
+        }
     }
 
     free(name);
@@ -110,17 +110,17 @@ check(void *opt, int argc, char **argv)
     int found;
 
     if (argc == 0) {
-	ret = krb5_get_default_realm(context, &realm);
-	if (ret) {
-	    krb5_warn(context, ret, "krb5_get_default_realm");
-	    goto fail;
-	}
+        ret = krb5_get_default_realm(context, &realm);
+        if (ret) {
+            krb5_warn(context, ret, "krb5_get_default_realm");
+            goto fail;
+        }
     } else {
-	realm = strdup(argv[0]);
-	if (realm == NULL) {
-	    krb5_warnx(context, "malloc");
-	    goto fail;
-	}
+        realm = strdup(argv[0]);
+        if (realm == NULL) {
+            krb5_warnx(context, "malloc");
+            goto fail;
+        }
     }
 
     /*
@@ -130,17 +130,17 @@ check(void *opt, int argc, char **argv)
      */
 
     if (asprintf(&p, "%s/%s@%s", KRB5_TGS_NAME, realm, realm) == -1) {
-	krb5_warn(context, errno, "asprintf");
-	goto fail;
+        krb5_warn(context, errno, "asprintf");
+        goto fail;
     }
 
     ret = get_check_entry(p, &ent);
     if (ret) {
-	fprintf(stderr,
-	        "%s does not exist, are you sure %s is a realm in your database?\n",
-	        p, realm);
-	free(p);
-	goto fail;
+        fprintf(stderr,
+                "%s does not exist, are you sure %s is a realm in your database?\n",
+                p, realm);
+        free(p);
+        goto fail;
     }
     free(p);
 
@@ -151,17 +151,17 @@ check(void *opt, int argc, char **argv)
      */
 
     if (asprintf(&p, "kadmin/admin@%s", realm) == -1) {
-	krb5_warn(context, errno, "asprintf");
-	goto fail;
+        krb5_warn(context, errno, "asprintf");
+        goto fail;
     }
 
     ret = get_check_entry(p, &ent);
     if (ret) {
-	fprintf(stderr,
-	        "%s does not exist, there is no way to do remote administration.\n",
-	        p);
-	free(p);
-	goto fail;
+        fprintf(stderr,
+                "%s does not exist, there is no way to do remote administration.\n",
+                p);
+        free(p);
+        goto fail;
     }
     free(p);
 
@@ -172,17 +172,17 @@ check(void *opt, int argc, char **argv)
      */
 
     if (asprintf(&p, "kadmin/changepw@%s", realm) == -1) {
-	krb5_warn(context, errno, "asprintf");
-	goto fail;
+        krb5_warn(context, errno, "asprintf");
+        goto fail;
     }
 
     ret = get_check_entry(p, &ent);
     if (ret) {
-	fprintf(stderr,
-	        "%s does not exist, there is no way to do change password.\n",
-	        p);
-	free(p);
-	goto fail;
+        fprintf(stderr,
+                "%s does not exist, there is no way to do change password.\n",
+                p);
+        free(p);
+        goto fail;
     }
     free(p);
 
@@ -196,26 +196,26 @@ check(void *opt, int argc, char **argv)
      */
 
     if (asprintf(&p, "default@%s", realm) == -1) {
-	krb5_warn(context, errno, "asprintf");
-	goto fail;
+        krb5_warn(context, errno, "asprintf");
+        goto fail;
     }
 
     ret = get_check_entry(p, &ent);
     if (ret == 0) {
-	if ((ent.attributes & KRB5_KDB_DISALLOW_ALL_TIX) == 0) {
-	    fprintf(stderr, "default template entry is not disabled\n");
-	    ret = EINVAL;
-	}
-	kadm5_free_principal_ent(kadm_handle, &ent);
+        if ((ent.attributes & KRB5_KDB_DISALLOW_ALL_TIX) == 0) {
+            fprintf(stderr, "default template entry is not disabled\n");
+            ret = EINVAL;
+        }
+        kadm5_free_principal_ent(kadm_handle, &ent);
 
     } else {
-	ret = 0;
+        ret = 0;
     }
 
     free(p);
 
     if (ret)
-	goto fail;
+        goto fail;
 
     /*
      * Check for duplicate afs keys
@@ -223,39 +223,39 @@ check(void *opt, int argc, char **argv)
 
     p2 = strdup(realm);
     if (p2 == NULL) {
-	krb5_warn(context, errno, "malloc");
-	goto fail;
+        krb5_warn(context, errno, "malloc");
+        goto fail;
     }
     strlwr(p2);
 
     if (asprintf(&p, "afs/%s@%s", p2, realm) == -1) {
-	krb5_warn(context, errno, "asprintf");
-	free(p2);
-	goto fail;
+        krb5_warn(context, errno, "asprintf");
+        free(p2);
+        goto fail;
     }
     free(p2);
 
     ret = get_check_entry(p, &ent);
     free(p);
     if (ret == 0) {
-	kadm5_free_principal_ent(kadm_handle, &ent);
-	found = 1;
+        kadm5_free_principal_ent(kadm_handle, &ent);
+        found = 1;
     } else
-	found = 0;
+        found = 0;
 
     if (asprintf(&p, "afs@%s", realm) == -1) {
-	krb5_warn(context, errno, "asprintf");
-	goto fail;
+        krb5_warn(context, errno, "asprintf");
+        goto fail;
     }
 
     ret = get_check_entry(p, &ent);
     free(p);
     if (ret == 0) {
-	kadm5_free_principal_ent(kadm_handle, &ent);
-	if (found) {
-	    krb5_warnx(context, "afs@REALM and afs/cellname@REALM both exists");
-	    goto fail;
-	}
+        kadm5_free_principal_ent(kadm_handle, &ent);
+        if (found) {
+            krb5_warnx(context, "afs@REALM and afs/cellname@REALM both exists");
+            goto fail;
+        }
     }
 
     ret = kadm5_dup_context(kadm_handle, &inner_kadm_handle);

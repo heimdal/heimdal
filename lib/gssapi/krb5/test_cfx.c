@@ -48,51 +48,51 @@ struct range tests[] = {
 
 static void
 test_range(const struct range *r, int integ,
-	   krb5_context context, krb5_crypto crypto)
+           krb5_context context, krb5_crypto crypto)
 {
     krb5_error_code ret;
     size_t size, rsize;
     struct gsskrb5_ctx ctx;
 
     for (size = r->lower; size < r->upper; size++) {
-	size_t cksumsize;
-	uint16_t padsize;
-	OM_uint32 minor;
-	OM_uint32 max_wrap_size;
+        size_t cksumsize;
+        uint16_t padsize;
+        OM_uint32 minor;
+        OM_uint32 max_wrap_size;
 
-	ctx.crypto = crypto;
+        ctx.crypto = crypto;
 
-	ret = _gssapi_wrap_size_cfx(&minor,
-				    &ctx,
-				    context,
-				    integ,
-				    0,
-				    size,
-				    &max_wrap_size);
-	if (ret)
-	    krb5_errx(context, 1, "_gsskrb5cfx_max_wrap_length_cfx: %d", ret);
-	if (max_wrap_size == 0)
-	    continue;
+        ret = _gssapi_wrap_size_cfx(&minor,
+                                    &ctx,
+                                    context,
+                                    integ,
+                                    0,
+                                    size,
+                                    &max_wrap_size);
+        if (ret)
+            krb5_errx(context, 1, "_gsskrb5cfx_max_wrap_length_cfx: %d", ret);
+        if (max_wrap_size == 0)
+            continue;
 
-	ret = _gsskrb5cfx_wrap_length_cfx(context,
-					  crypto,
-					  integ,
-					  0,
-					  max_wrap_size,
-					  &rsize, &cksumsize, &padsize);
-	if (ret)
-	    krb5_errx(context, 1, "_gsskrb5cfx_wrap_length_cfx: %d", ret);
+        ret = _gsskrb5cfx_wrap_length_cfx(context,
+                                          crypto,
+                                          integ,
+                                          0,
+                                          max_wrap_size,
+                                          &rsize, &cksumsize, &padsize);
+        if (ret)
+            krb5_errx(context, 1, "_gsskrb5cfx_wrap_length_cfx: %d", ret);
 
-	if (size < rsize)
-	    krb5_errx(context, 1,
-		      "size (%d) < rsize (%d) for max_wrap_size %d",
-		      (int)size, (int)rsize, (int)max_wrap_size);
+        if (size < rsize)
+            krb5_errx(context, 1,
+                      "size (%d) < rsize (%d) for max_wrap_size %d",
+                      (int)size, (int)rsize, (int)max_wrap_size);
     }
 }
 
 static void
 test_special(krb5_context context, krb5_crypto crypto,
-	     int integ, size_t testsize)
+             int integ, size_t testsize)
 {
     krb5_error_code ret;
     size_t rsize;
@@ -105,30 +105,30 @@ test_special(krb5_context context, krb5_crypto crypto,
     ctx.crypto = crypto;
 
     ret = _gssapi_wrap_size_cfx(&minor,
-				&ctx,
-				context,
-				integ,
-				0,
-				testsize,
-				&max_wrap_size);
+                                &ctx,
+                                context,
+                                integ,
+                                0,
+                                testsize,
+                                &max_wrap_size);
     if (ret)
-      krb5_errx(context, 1, "_gsskrb5cfx_max_wrap_length_cfx: %d", ret);
+        krb5_errx(context, 1, "_gsskrb5cfx_max_wrap_length_cfx: %d", ret);
     if (ret)
-	krb5_errx(context, 1, "_gsskrb5cfx_max_wrap_length_cfx: %d", ret);
+        krb5_errx(context, 1, "_gsskrb5cfx_max_wrap_length_cfx: %d", ret);
 
     ret = _gsskrb5cfx_wrap_length_cfx(context,
-				      crypto,
-				      integ,
-				      0,
-				      max_wrap_size,
-				      &rsize, &cksumsize, &padsize);
+                                      crypto,
+                                      integ,
+                                      0,
+                                      max_wrap_size,
+                                      &rsize, &cksumsize, &padsize);
     if (ret)
-	krb5_errx(context, 1, "_gsskrb5cfx_wrap_length_cfx: %d", ret);
+        krb5_errx(context, 1, "_gsskrb5cfx_wrap_length_cfx: %d", ret);
 
     if (testsize < rsize)
-	krb5_errx(context, 1,
-		  "testsize (%d) < rsize (%d) for max_wrap_size %d",
-		  (int)testsize, (int)rsize, (int)max_wrap_size);
+        krb5_errx(context, 1,
+                  "testsize (%d) < rsize (%d) for max_wrap_size %d",
+                  (int)testsize, (int)rsize, (int)max_wrap_size);
 }
 
 
@@ -145,24 +145,24 @@ main(int argc, char **argv)
 
     ret = krb5_init_context(&context);
     if (ret)
-	errx(1, "krb5_context_init: %d", ret);
+        errx(1, "krb5_context_init: %d", ret);
 
     ret = krb5_generate_random_keyblock(context,
-					KRB5_ENCTYPE_AES256_CTS_HMAC_SHA1_96,
-					&keyblock);
+                                        KRB5_ENCTYPE_AES256_CTS_HMAC_SHA1_96,
+                                        &keyblock);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_generate_random_keyblock");
+        krb5_err(context, 1, ret, "krb5_generate_random_keyblock");
 
     ret = krb5_crypto_init(context, &keyblock, 0, &crypto);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_crypto_init");
+        krb5_err(context, 1, ret, "krb5_crypto_init");
 
     test_special(context, crypto, 1, 60);
     test_special(context, crypto, 0, 60);
 
     for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++) {
-	test_range(&tests[i], 1, context, crypto);
-	test_range(&tests[i], 0, context, crypto);
+        test_range(&tests[i], 1, context, crypto);
+        test_range(&tests[i], 0, context, crypto);
     }
 
     krb5_free_keyblock_contents(context, &keyblock);

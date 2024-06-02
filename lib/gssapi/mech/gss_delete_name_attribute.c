@@ -34,8 +34,8 @@
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_delete_name_attribute(OM_uint32 *minor_status,
-		          gss_name_t input_name,
-		          gss_buffer_t attr)
+                          gss_name_t input_name,
+                          gss_buffer_t attr)
 {
     OM_uint32 major_status = GSS_S_UNAVAILABLE;
     struct _gss_name *name = (struct _gss_name *) input_name;

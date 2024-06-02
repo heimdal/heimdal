@@ -35,8 +35,8 @@
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_write_message (krb5_context context,
-		    krb5_pointer p_fd,
-		    krb5_data *data)
+                    krb5_pointer p_fd,
+                    krb5_data *data)
 {
     uint32_t len;
     uint8_t buf[4];
@@ -45,26 +45,26 @@ krb5_write_message (krb5_context context,
     len = data->length;
     _krb5_put_int(buf, len, 4);
     if (krb5_net_write (context, p_fd, buf, 4) != 4
-	|| krb5_net_write (context, p_fd, data->data, len) != len) {
-	ret = errno;
-	krb5_set_error_message (context, ret, "write: %s", strerror(ret));
-	return ret;
+        || krb5_net_write (context, p_fd, data->data, len) != len) {
+        ret = errno;
+        krb5_set_error_message (context, ret, "write: %s", strerror(ret));
+        return ret;
     }
     return 0;
 }
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_write_priv_message(krb5_context context,
-			krb5_auth_context ac,
-			krb5_pointer p_fd,
-			krb5_data *data)
+                        krb5_auth_context ac,
+                        krb5_pointer p_fd,
+                        krb5_data *data)
 {
     krb5_error_code ret;
     krb5_data packet;
 
     ret = krb5_mk_priv (context, ac, data, &packet, NULL);
     if(ret)
-	return ret;
+        return ret;
     ret = krb5_write_message(context, p_fd, &packet);
     krb5_data_free(&packet);
     return ret;
@@ -72,15 +72,15 @@ krb5_write_priv_message(krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_write_safe_message(krb5_context context,
-			krb5_auth_context ac,
-			krb5_pointer p_fd,
-			krb5_data *data)
+                        krb5_auth_context ac,
+                        krb5_pointer p_fd,
+                        krb5_data *data)
 {
     krb5_error_code ret;
     krb5_data packet;
     ret = krb5_mk_safe (context, ac, data, &packet, NULL);
     if(ret)
-	return ret;
+        return ret;
     ret = krb5_write_message(context, p_fd, &packet);
     krb5_data_free(&packet);
     return ret;

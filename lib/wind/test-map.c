@@ -65,21 +65,21 @@ try(const struct example *c)
     size_t out_len = c->out_len;
     uint32_t *tmp = malloc(out_len * sizeof(uint32_t));
     if (tmp == NULL && out_len != 0)
-	err(1, "malloc");
+        err(1, "malloc");
     ret = _wind_stringprep_map(c->in, c->in_len, tmp, &out_len, WIND_PROFILE_NAME);
     if (ret) {
-	printf("wind_stringprep_map failed\n");
-	return 1;
+        printf("wind_stringprep_map failed\n");
+        return 1;
     }
     if (out_len != c->out_len) {
-	printf("wrong out len\n");
-	free(tmp);
-	return 1;
+        printf("wrong out len\n");
+        free(tmp);
+        return 1;
     }
     if (memcmp(c->out, tmp, out_len * sizeof(uint32_t)) != 0) {
-	printf("wrong out data\n");
-	free(tmp);
-	return 1;
+        printf("wrong out data\n");
+        free(tmp);
+        return 1;
     }
     free(tmp);
     return 0;
@@ -92,7 +92,7 @@ main(void)
     unsigned failures = 0;
 
     for (i = 0; i < sizeof(cases)/sizeof(cases[0]); ++i)
-	failures += try(&cases[i]);
+        failures += try(&cases[i]);
     return failures != 0;
 }
 

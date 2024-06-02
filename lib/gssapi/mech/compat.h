@@ -83,12 +83,12 @@ typedef OM_uint32 GSSAPI_CALLCONV _gss_add_cred_with_password_t (
  * native Heimdal mechanisms should not use these.
  */
 struct gss_mech_compat_desc_struct {
-	_gss_inquire_saslname_for_mech_t    *gmc_inquire_saslname_for_mech;
-	_gss_inquire_mech_for_saslname_t    *gmc_inquire_mech_for_saslname;
-	_gss_inquire_attrs_for_mech_t       *gmc_inquire_attrs_for_mech;
-	_gss_acquire_cred_with_password_t   *gmc_acquire_cred_with_password;
+    _gss_inquire_saslname_for_mech_t    *gmc_inquire_saslname_for_mech;
+    _gss_inquire_mech_for_saslname_t    *gmc_inquire_mech_for_saslname;
+    _gss_inquire_attrs_for_mech_t       *gmc_inquire_attrs_for_mech;
+    _gss_acquire_cred_with_password_t   *gmc_acquire_cred_with_password;
 #if 0
-	_gss_add_cred_with_password_t       *gmc_add_cred_with_password;
+    _gss_add_cred_with_password_t       *gmc_add_cred_with_password;
 #endif
 };
 

@@ -48,9 +48,9 @@ static void
 usage (int ret)
 {
     arg_printusage (args,
-		    sizeof(args)/sizeof(*args),
-		    NULL,
-		    "principal luser");
+                    sizeof(args)/sizeof(*args),
+                    NULL,
+                    "principal luser");
     exit (ret);
 }
 
@@ -66,14 +66,14 @@ main(int argc, char **argv)
     setprogname(argv[0]);
 
     if(getarg(args, sizeof(args) / sizeof(args[0]), argc, argv, &o))
-	usage(1);
+        usage(1);
 
     if (help_flag)
-	usage (0);
+        usage (0);
 
     if(version_flag){
-	print_version(NULL);
-	exit(0);
+        print_version(NULL);
+        exit(0);
     }
 
     argc -= o;
@@ -81,18 +81,18 @@ main(int argc, char **argv)
 
     ret = krb5_init_context(&context);
     if (ret)
-	errx (1, "krb5_init_context failed: %d", ret);
+        errx (1, "krb5_init_context failed: %d", ret);
 
     if (argc != 2)
-	usage(1);
+        usage(1);
 
     ret = krb5_parse_name(context, argv[0], &principal);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_parse_name");
+        krb5_err(context, 1, ret, "krb5_parse_name");
 
     ret = krb5_unparse_name(context, principal, &p);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_unparse_name");
+        krb5_err(context, 1, ret, "krb5_unparse_name");
 
     ret = krb5_kuserok(context, principal, argv[1]);
 
@@ -103,7 +103,7 @@ main(int argc, char **argv)
     free(p);
 
     if (ret)
-	return 0;
+        return 0;
 
     return 1;
 }

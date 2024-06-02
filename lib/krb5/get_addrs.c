@@ -59,30 +59,30 @@ gethostname_fallback (krb5_context context, krb5_addresses *res)
     }
 
     if (gethostname (hostname, sizeof(hostname))) {
-	ret = errno;
-	krb5_set_error_message(context, ret, "gethostname: %s", strerror(ret));
-	return ret;
+        ret = errno;
+        krb5_set_error_message(context, ret, "gethostname: %s", strerror(ret));
+        return ret;
     }
     hostent = roken_gethostbyname (hostname);
     if (hostent == NULL) {
-	ret = errno;
-	krb5_set_error_message (context, ret, "gethostbyname %s: %s",
-				hostname, strerror(ret));
-	return ret;
+        ret = errno;
+        krb5_set_error_message (context, ret, "gethostbyname %s: %s",
+                                hostname, strerror(ret));
+        return ret;
     }
     res->len = 1;
     res->val = malloc (sizeof(*res->val));
     if (res->val == NULL)
-	return krb5_enomem(context);
+        return krb5_enomem(context);
     res->val[0].addr_type = hostent->h_addrtype;
     res->val[0].address.data = NULL;
     res->val[0].address.length = 0;
     ret = krb5_data_copy (&res->val[0].address,
-			  hostent->h_addr,
-			  hostent->h_length);
+                          hostent->h_addr,
+                          hostent->h_length);
     if (ret) {
-	free (res->val);
-	return ret;
+        free (res->val);
+        return ret;
     }
     return 0;
 }
@@ -109,74 +109,74 @@ find_all_addresses (krb5_context context, krb5_addresses *res, int flags)
     krb5_addresses ignore_addresses;
 
     if (getifaddrs(&ifa0) == -1) {
-	ret = errno;
-	krb5_set_error_message(context, ret, "getifaddrs: %s", strerror(ret));
-	return (ret);
+        ret = errno;
+        krb5_set_error_message(context, ret, "getifaddrs: %s", strerror(ret));
+        return (ret);
     }
 
     memset(&sa_zero, 0, sizeof(sa_zero));
 
     /* First, count all the ifaddrs. */
     for (ifa = ifa0, num = 0; ifa != NULL; ifa = ifa->ifa_next, num++)
-	/* nothing */;
+        /* nothing */;
 
     if (num == 0) {
-	freeifaddrs(ifa0);
-	krb5_set_error_message(context, ENXIO, N_("no addresses found", ""));
-	return (ENXIO);
+        freeifaddrs(ifa0);
+        krb5_set_error_message(context, ENXIO, N_("no addresses found", ""));
+        return (ENXIO);
     }
 
     if (flags & EXTRA_ADDRESSES) {
-	/* we'll remove the addresses we don't care about */
-	ret = krb5_get_ignore_addresses(context, &ignore_addresses);
-	if(ret)
-	    return ret;
+        /* we'll remove the addresses we don't care about */
+        ret = krb5_get_ignore_addresses(context, &ignore_addresses);
+        if(ret)
+            return ret;
     }
 
     /* Allocate storage for them. */
     res->val = calloc(num, sizeof(*res->val));
     if (res->val == NULL) {
-	if (flags & EXTRA_ADDRESSES)
-	    krb5_free_addresses(context, &ignore_addresses);
-	freeifaddrs(ifa0);
-	return krb5_enomem(context);
+        if (flags & EXTRA_ADDRESSES)
+            krb5_free_addresses(context, &ignore_addresses);
+        freeifaddrs(ifa0);
+        return krb5_enomem(context);
     }
 
     /* Now traverse the list. */
     for (ifa = ifa0, idx = 0; ifa != NULL; ifa = ifa->ifa_next) {
-	if ((ifa->ifa_flags & IFF_UP) == 0)
-	    continue;
-	if (ifa->ifa_addr == NULL)
-	    continue;
-	if (memcmp(ifa->ifa_addr, &sa_zero, sizeof(sa_zero)) == 0)
-	    continue;
-	if (krb5_sockaddr_uninteresting(ifa->ifa_addr))
-	    continue;
-	if (krb5_sockaddr_is_loopback(ifa->ifa_addr) && (flags & LOOP) == 0)
-	    /* We'll deal with the LOOP_IF_NONE case later. */
-	    continue;
+        if ((ifa->ifa_flags & IFF_UP) == 0)
+            continue;
+        if (ifa->ifa_addr == NULL)
+            continue;
+        if (memcmp(ifa->ifa_addr, &sa_zero, sizeof(sa_zero)) == 0)
+            continue;
+        if (krb5_sockaddr_uninteresting(ifa->ifa_addr))
+            continue;
+        if (krb5_sockaddr_is_loopback(ifa->ifa_addr) && (flags & LOOP) == 0)
+            /* We'll deal with the LOOP_IF_NONE case later. */
+            continue;
 
-	ret = krb5_sockaddr2address(context, ifa->ifa_addr, &res->val[idx]);
-	if (ret) {
-	    /*
-	     * The most likely error here is going to be "Program
-	     * lacks support for address type".  This is no big
-	     * deal -- just continue, and we'll listen on the
-	     * addresses who's type we *do* support.
-	     */
-	    continue;
-	}
-	/* possibly skip this address? */
-	if((flags & EXTRA_ADDRESSES) &&
-	   krb5_address_search(context, &res->val[idx], &ignore_addresses)) {
-	    krb5_free_address(context, &res->val[idx]);
-	    flags &= ~LOOP_IF_NONE; /* we actually found an address,
+        ret = krb5_sockaddr2address(context, ifa->ifa_addr, &res->val[idx]);
+        if (ret) {
+            /*
+             * The most likely error here is going to be "Program
+             * lacks support for address type".  This is no big
+             * deal -- just continue, and we'll listen on the
+             * addresses who's type we *do* support.
+             */
+            continue;
+        }
+        /* possibly skip this address? */
+        if((flags & EXTRA_ADDRESSES) &&
+           krb5_address_search(context, &res->val[idx], &ignore_addresses)) {
+            krb5_free_address(context, &res->val[idx]);
+            flags &= ~LOOP_IF_NONE; /* we actually found an address,
                                        so don't add any loop-back
                                        addresses */
-	    continue;
-	}
+            continue;
+        }
 
-	idx++;
+        idx++;
     }
 
     /*
@@ -184,42 +184,42 @@ find_all_addresses (krb5_context context, krb5_addresses *res, int flags)
      * the loopback addresses and add them to our list.
      */
     if ((flags & LOOP_IF_NONE) != 0 && idx == 0) {
-	for (ifa = ifa0; ifa != NULL; ifa = ifa->ifa_next) {
-	    if ((ifa->ifa_flags & IFF_UP) == 0)
-		continue;
-	    if (ifa->ifa_addr == NULL)
-		continue;
-	    if (memcmp(ifa->ifa_addr, &sa_zero, sizeof(sa_zero)) == 0)
-		continue;
-	    if (krb5_sockaddr_uninteresting(ifa->ifa_addr))
-		continue;
-	    if (!krb5_sockaddr_is_loopback(ifa->ifa_addr))
-		continue;
-	    if ((ifa->ifa_flags & IFF_LOOPBACK) == 0)
-		/* Presumably loopback addrs are only used on loopback ifs! */
-		continue;
-	    ret = krb5_sockaddr2address(context,
-					ifa->ifa_addr, &res->val[idx]);
-	    if (ret)
-		continue; /* We don't consider this failure fatal */
-	    if((flags & EXTRA_ADDRESSES) &&
-	       krb5_address_search(context, &res->val[idx],
-				   &ignore_addresses)) {
-		krb5_free_address(context, &res->val[idx]);
-		continue;
-	    }
-	    idx++;
-	}
+        for (ifa = ifa0; ifa != NULL; ifa = ifa->ifa_next) {
+            if ((ifa->ifa_flags & IFF_UP) == 0)
+                continue;
+            if (ifa->ifa_addr == NULL)
+                continue;
+            if (memcmp(ifa->ifa_addr, &sa_zero, sizeof(sa_zero)) == 0)
+                continue;
+            if (krb5_sockaddr_uninteresting(ifa->ifa_addr))
+                continue;
+            if (!krb5_sockaddr_is_loopback(ifa->ifa_addr))
+                continue;
+            if ((ifa->ifa_flags & IFF_LOOPBACK) == 0)
+                /* Presumably loopback addrs are only used on loopback ifs! */
+                continue;
+            ret = krb5_sockaddr2address(context,
+                                        ifa->ifa_addr, &res->val[idx]);
+            if (ret)
+                continue; /* We don't consider this failure fatal */
+            if((flags & EXTRA_ADDRESSES) &&
+               krb5_address_search(context, &res->val[idx],
+                                   &ignore_addresses)) {
+                krb5_free_address(context, &res->val[idx]);
+                continue;
+            }
+            idx++;
+        }
     }
 
     if (flags & EXTRA_ADDRESSES)
-	krb5_free_addresses(context, &ignore_addresses);
+        krb5_free_addresses(context, &ignore_addresses);
     freeifaddrs(ifa0);
     if (ret) {
-	free(res->val);
-	res->val = NULL;
+        free(res->val);
+        res->val = NULL;
     } else
-	res->len = idx;        /* Now a count. */
+        res->len = idx;        /* Now a count. */
     return (ret);
 }
 
@@ -232,31 +232,31 @@ get_addrs_int (krb5_context context, krb5_addresses *res, int flags)
     res->val = NULL;
 
     if (flags & SCAN_INTERFACES) {
-	ret = find_all_addresses (context, res, flags);
-	if(ret || res->len == 0)
-	    ret = gethostname_fallback (context, res);
+        ret = find_all_addresses (context, res, flags);
+        if(ret || res->len == 0)
+            ret = gethostname_fallback (context, res);
     } else {
-	ret = 0;
+        ret = 0;
     }
 
     if(ret == 0 && (flags & EXTRA_ADDRESSES)) {
-	krb5_addresses a;
-	/* append user specified addresses */
-	ret = krb5_get_extra_addresses(context, &a);
-	if(ret) {
-	    krb5_free_addresses(context, res);
-	    return ret;
-	}
-	ret = krb5_append_addresses(context, res, &a);
-	if(ret) {
-	    krb5_free_addresses(context, res);
-	    return ret;
-	}
-	krb5_free_addresses(context, &a);
+        krb5_addresses a;
+        /* append user specified addresses */
+        ret = krb5_get_extra_addresses(context, &a);
+        if(ret) {
+            krb5_free_addresses(context, res);
+            return ret;
+        }
+        ret = krb5_append_addresses(context, res, &a);
+        if(ret) {
+            krb5_free_addresses(context, res);
+            return ret;
+        }
+        krb5_free_addresses(context, &a);
     }
     if(res->len == 0) {
-	free(res->val);
-	res->val = NULL;
+        free(res->val);
+        res->val = NULL;
     }
     return ret;
 }
@@ -274,7 +274,7 @@ krb5_get_all_client_addrs (krb5_context context, krb5_addresses *res)
     int flags = LOOP_IF_NONE | EXTRA_ADDRESSES;
 
     if (context->scan_interfaces)
-	flags |= SCAN_INTERFACES;
+        flags |= SCAN_INTERFACES;
 
     return get_addrs_int (context, res, flags);
 }

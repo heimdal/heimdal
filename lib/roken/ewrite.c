@@ -46,6 +46,6 @@ ewrite (int fd, const void *buf, size_t nbytes)
 
     ret = net_write (fd, buf, nbytes);
     if (ret < 0)
-	err (1, "write");
+        err (1, "write");
     return ret;
 }

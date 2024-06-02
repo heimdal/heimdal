@@ -47,31 +47,31 @@ RCSID("$Id$");
 void *
 otp_db_open (void)
 {
-  int lock;
-  int i;
-  void *ret;
+    int lock;
+    int i;
+    void *ret;
 
-  for(i = 0; i < RETRIES; ++i) {
-    struct stat statbuf;
+    for(i = 0; i < RETRIES; ++i) {
+        struct stat statbuf;
 
-    lock = open (OTP_DB_LOCK, O_WRONLY | O_CREAT | O_EXCL, 0666);
-    if (lock >= 0) {
-      close(lock);
-      break;
+        lock = open (OTP_DB_LOCK, O_WRONLY | O_CREAT | O_EXCL, 0666);
+        if (lock >= 0) {
+            close(lock);
+            break;
+        }
+        if (stat (OTP_DB_LOCK, &statbuf) == 0) {
+            if (time(NULL) - statbuf.st_mtime > OTP_DB_TIMEOUT)
+                unlink (OTP_DB_LOCK);
+            else
+                sleep (1);
+        }
     }
-    if (stat (OTP_DB_LOCK, &statbuf) == 0) {
-      if (time(NULL) - statbuf.st_mtime > OTP_DB_TIMEOUT)
-	unlink (OTP_DB_LOCK);
-      else
-	sleep (1);
-    }
-  }
-  if (i == RETRIES)
-    return NULL;
-  ret = dbm_open (OTP_DB, O_RDWR | O_CREAT, 0600);
-  if (ret == NULL)
-    unlink (OTP_DB_LOCK);
-  return ret;
+    if (i == RETRIES)
+        return NULL;
+    ret = dbm_open (OTP_DB, O_RDWR | O_CREAT, 0600);
+    if (ret == NULL)
+        unlink (OTP_DB_LOCK);
+    return ret;
 }
 
 void
@@ -89,13 +89,13 @@ otp_db_close (void *dbm)
 int
 otp_delete (void *v, OtpContext *ctx)
 {
-  DBM *dbm = (DBM *)v;
-  datum key;
+    DBM *dbm = (DBM *)v;
+    datum key;
 
-  key.dsize = strlen(ctx->user);
-  key.dptr  = ctx->user;
+    key.dsize = strlen(ctx->user);
+    key.dptr  = ctx->user;
 
-  return dbm_delete(dbm, key);
+    return dbm_delete(dbm, key);
 }
 
 /*
@@ -105,50 +105,50 @@ otp_delete (void *v, OtpContext *ctx)
 static int
 otp_get_internal (void *v, OtpContext *ctx, int lockp)
 {
-  DBM *dbm = (DBM *)v;
-  datum dat, key;
-  char *p;
-  time_t now, then;
+    DBM *dbm = (DBM *)v;
+    datum dat, key;
+    char *p;
+    time_t now, then;
 
-  key.dsize = strlen(ctx->user);
-  key.dptr  = ctx->user;
+    key.dsize = strlen(ctx->user);
+    key.dptr  = ctx->user;
 
-  dat = dbm_fetch (dbm, key);
-  if (dat.dptr == NULL) {
-    ctx->err = "Entry not found";
-    return -1;
-  }
-  p = dat.dptr;
-
-  memcpy (&then, p, sizeof(then));
-  ctx->lock_time = then;
-  if (lockp) {
-    time(&now);
-    if (then && now - then < OTP_USER_TIMEOUT) {
-      ctx->err = "Entry locked";
-      return -1;
+    dat = dbm_fetch (dbm, key);
+    if (dat.dptr == NULL) {
+        ctx->err = "Entry not found";
+        return -1;
     }
-    memcpy (p, &now, sizeof(now));
-  }
-  p += sizeof(now);
-  ctx->alg = otp_find_alg (p);
-  if (ctx->alg == NULL) {
-    ctx->err = "Bad algorithm";
-    return -1;
-  }
-  p += strlen(p) + 1;
-  {
-    unsigned char *up = (unsigned char *)p;
-    ctx->n = (up[0] << 24) | (up[1] << 16) | (up[2] << 8) | up[3];
-  }
-  p += 4;
-  memcpy (ctx->key, p, OTPKEYSIZE);
-  p += OTPKEYSIZE;
-  strlcpy (ctx->seed, p, sizeof(ctx->seed));
-  if (lockp)
-    return dbm_store (dbm, key, dat, DBM_REPLACE);
-  else
-    return 0;
+    p = dat.dptr;
+
+    memcpy (&then, p, sizeof(then));
+    ctx->lock_time = then;
+    if (lockp) {
+        time(&now);
+        if (then && now - then < OTP_USER_TIMEOUT) {
+            ctx->err = "Entry locked";
+            return -1;
+        }
+        memcpy (p, &now, sizeof(now));
+    }
+    p += sizeof(now);
+    ctx->alg = otp_find_alg (p);
+    if (ctx->alg == NULL) {
+        ctx->err = "Bad algorithm";
+        return -1;
+    }
+    p += strlen(p) + 1;
+    {
+        unsigned char *up = (unsigned char *)p;
+        ctx->n = (up[0] << 24) | (up[1] << 16) | (up[2] << 8) | up[3];
+    }
+    p += 4;
+    memcpy (ctx->key, p, OTPKEYSIZE);
+    p += OTPKEYSIZE;
+    strlcpy (ctx->seed, p, sizeof(ctx->seed));
+    if (lockp)
+        return dbm_store (dbm, key, dat, DBM_REPLACE);
+    else
+i       return 0;
 }
 
 /*
@@ -158,7 +158,7 @@ otp_get_internal (void *v, OtpContext *ctx, int lockp)
 int
 otp_get (void *v, OtpContext *ctx)
 {
-  return otp_get_internal (v, ctx, 1);
+    return otp_get_internal (v, ctx, 1);
 }
 
 /*
@@ -178,56 +178,56 @@ otp_simple_get (void *v, OtpContext *ctx)
 int
 otp_put (void *v, OtpContext *ctx)
 {
-  DBM *dbm = (DBM *)v;
-  datum dat, key;
-  char buf[1024], *p;
-  time_t zero = 0;
-  size_t len, rem;
+    DBM *dbm = (DBM *)v;
+    datum dat, key;
+    char buf[1024], *p;
+    time_t zero = 0;
+    size_t len, rem;
 
-  key.dsize = strlen(ctx->user);
-  key.dptr  = ctx->user;
+    key.dsize = strlen(ctx->user);
+    key.dptr  = ctx->user;
 
-  p = buf;
-  rem = sizeof(buf);
+    p = buf;
+    rem = sizeof(buf);
 
-  if (rem < sizeof(zero))
-      return -1;
-  memcpy (p, &zero, sizeof(zero));
-  p += sizeof(zero);
-  rem -= sizeof(zero);
-  len = strlen(ctx->alg->name) + 1;
+    if (rem < sizeof(zero))
+        return -1;
+    memcpy (p, &zero, sizeof(zero));
+    p += sizeof(zero);
+    rem -= sizeof(zero);
+    len = strlen(ctx->alg->name) + 1;
 
-  if (rem < len)
-      return -1;
-  strlcpy (p, ctx->alg->name, rem);
-  p += len;
-  rem -= len;
+    if (rem < len)
+        return -1;
+    strlcpy (p, ctx->alg->name, rem);
+    p += len;
+    rem -= len;
 
-  if (rem < 4)
-      return -1;
-  {
-    unsigned char *up = (unsigned char *)p;
-    *up++ = (ctx->n >> 24) & 0xFF;
-    *up++ = (ctx->n >> 16) & 0xFF;
-    *up++ = (ctx->n >>  8) & 0xFF;
-    *up++ = (ctx->n >>  0) & 0xFF;
-  }
-  p += 4;
-  rem -= 4;
+    if (rem < 4)
+        return -1;
+    {
+        unsigned char *up = (unsigned char *)p;
+        *up++ = (ctx->n >> 24) & 0xFF;
+        *up++ = (ctx->n >> 16) & 0xFF;
+        *up++ = (ctx->n >>  8) & 0xFF;
+        *up++ = (ctx->n >>  0) & 0xFF;
+    }
+    p += 4;
+    rem -= 4;
 
-  if (rem < OTPKEYSIZE)
-      return -1;
-  memcpy (p, ctx->key, OTPKEYSIZE);
-  p += OTPKEYSIZE;
-  rem -= OTPKEYSIZE;
+    if (rem < OTPKEYSIZE)
+        return -1;
+    memcpy (p, ctx->key, OTPKEYSIZE);
+    p += OTPKEYSIZE;
+    rem -= OTPKEYSIZE;
 
-  len = strlen(ctx->seed) + 1;
-  if (rem < len)
-      return -1;
-  strlcpy (p, ctx->seed, rem);
-  p += len;
-  /* rem -= len; */
-  dat.dptr  = buf;
-  dat.dsize = p - buf;
-  return dbm_store (dbm, key, dat, DBM_REPLACE);
+    len = strlen(ctx->seed) + 1;
+    if (rem < len)
+        return -1;
+    strlcpy (p, ctx->seed, rem);
+    p += len;
+    /* rem -= len; */
+    dat.dptr  = buf;
+    dat.dsize = p - buf;
+    return dbm_store (dbm, key, dat, DBM_REPLACE);
 }

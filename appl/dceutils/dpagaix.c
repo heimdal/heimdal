@@ -11,13 +11,13 @@
  *
  */
 
- int dpagaix(parm1, parm2, parm3, parm4, parm5, parm6)
-   int parm1;
-   int parm2;
-   int parm3;
-   int parm4;
-   int parm5;
-   int parm6;
- {
-   return(kafs_syscall(parm1, parm2, parm3, parm4, parm5, parm6));
- }
+int dpagaix(parm1, parm2, parm3, parm4, parm5, parm6)
+    int parm1;
+    int parm2;
+    int parm3;
+    int parm4;
+    int parm5;
+    int parm6;
+{
+    return(kafs_syscall(parm1, parm2, parm3, parm4, parm5, parm6));
+}

@@ -58,39 +58,39 @@ struct wincng_key {
 
 static int
 wincng_do_cipher(EVP_CIPHER_CTX *ctx,
-		 unsigned char *out,
-		 const unsigned char *in,
-		 unsigned int size)
+                 unsigned char *out,
+                 const unsigned char *in,
+                 unsigned int size)
 {
     struct wincng_key *cng = ctx->cipher_data;
     NTSTATUS status;
     ULONG cbResult;
 
     assert(EVP_CIPHER_CTX_mode(ctx) == EVP_CIPH_STREAM_CIPHER ||
-	   (size % ctx->cipher->block_size) == 0);
+           (size % ctx->cipher->block_size) == 0);
 
     if (ctx->encrypt) {
-	status = BCryptEncrypt(cng->hKey,
-			       (PUCHAR)in,
-			       size,
-			       NULL, /* pPaddingInfo */
-			       ctx->cipher->iv_len ? ctx->iv : NULL,
-			       ctx->cipher->iv_len,
-			       out,
-			       size,
-			       &cbResult,
-			       0);
+        status = BCryptEncrypt(cng->hKey,
+                               (PUCHAR)in,
+                               size,
+                               NULL, /* pPaddingInfo */
+                               ctx->cipher->iv_len ? ctx->iv : NULL,
+                               ctx->cipher->iv_len,
+                               out,
+                               size,
+                               &cbResult,
+                               0);
     } else {
-	status = BCryptDecrypt(cng->hKey,
-			       (PUCHAR)in,
-			       size,
-			       NULL, /* pPaddingInfo */
-			       ctx->cipher->iv_len ? ctx->iv : NULL,
-			       ctx->cipher->iv_len,
-			       out,
-			       size,
-			       &cbResult,
-			       0);
+        status = BCryptDecrypt(cng->hKey,
+                               (PUCHAR)in,
+                               size,
+                               NULL, /* pPaddingInfo */
+                               ctx->cipher->iv_len ? ctx->iv : NULL,
+                               ctx->cipher->iv_len,
+                               out,
+                               size,
+                               &cbResult,
+                               0);
     }
 
     return BCRYPT_SUCCESS(status) && cbResult == size;
@@ -102,8 +102,8 @@ wincng_cleanup(EVP_CIPHER_CTX *ctx)
     struct wincng_key *cng = ctx->cipher_data;
 
     if (cng->hKey) {
-	BCryptDestroyKey(cng->hKey);
-	cng->hKey = (BCRYPT_KEY_HANDLE)0;
+        BCryptDestroyKey(cng->hKey);
+        cng->hKey = (BCRYPT_KEY_HANDLE)0;
     }
     SecureZeroMemory(cng->rgbKeyObject, WINCNG_KEY_OBJECT_SIZE(ctx));
 
@@ -112,7 +112,7 @@ wincng_cleanup(EVP_CIPHER_CTX *ctx)
 
 static int
 wincng_cipher_algorithm_init(EVP_CIPHER *cipher,
-			     LPWSTR pszAlgId)
+                             LPWSTR pszAlgId)
 {
     BCRYPT_ALG_HANDLE hAlgorithm = NULL;
     NTSTATUS status;
@@ -120,79 +120,79 @@ wincng_cipher_algorithm_init(EVP_CIPHER *cipher,
     ULONG cbKeyObject, cbChainingMode, cbData;
 
     if (cipher->app_data)
-	return 1;
+        return 1;
 
     status = BCryptOpenAlgorithmProvider(&hAlgorithm,
-					 pszAlgId,
-					 NULL,
-					 0);
+                                         pszAlgId,
+                                         NULL,
+                                         0);
     if (!BCRYPT_SUCCESS(status))
-	return 0;
+        return 0;
 
     status = BCryptGetProperty(hAlgorithm,
-			       BCRYPT_OBJECT_LENGTH,
-			       (PUCHAR)&cbKeyObject,
-			       sizeof(ULONG),
-			       &cbData,
-			       0);
+                               BCRYPT_OBJECT_LENGTH,
+                               (PUCHAR)&cbKeyObject,
+                               sizeof(ULONG),
+                               &cbData,
+                               0);
     if (!BCRYPT_SUCCESS(status)) {
-	BCryptCloseAlgorithmProvider(hAlgorithm, 0);
-	return 0;
+        BCryptCloseAlgorithmProvider(hAlgorithm, 0);
+        return 0;
     }
 
     cipher->ctx_size = sizeof(struct wincng_key) + cbKeyObject - 1;
 
     switch (cipher->flags & EVP_CIPH_MODE) {
-    case EVP_CIPH_CBC_MODE:
-	pszChainingMode = BCRYPT_CHAIN_MODE_CBC;
-	cbChainingMode = sizeof(BCRYPT_CHAIN_MODE_CBC);
-	break;
-    case EVP_CIPH_CFB8_MODE:
-	pszChainingMode = BCRYPT_CHAIN_MODE_CFB;
-	cbChainingMode = sizeof(BCRYPT_CHAIN_MODE_CFB);
-	break;
-    default:
-	pszChainingMode = NULL;
-	cbChainingMode = 0;
-	break;
+        case EVP_CIPH_CBC_MODE:
+            pszChainingMode = BCRYPT_CHAIN_MODE_CBC;
+            cbChainingMode = sizeof(BCRYPT_CHAIN_MODE_CBC);
+            break;
+        case EVP_CIPH_CFB8_MODE:
+            pszChainingMode = BCRYPT_CHAIN_MODE_CFB;
+            cbChainingMode = sizeof(BCRYPT_CHAIN_MODE_CFB);
+            break;
+        default:
+            pszChainingMode = NULL;
+            cbChainingMode = 0;
+            break;
     }
 
     if (cbChainingMode) {
-	status = BCryptSetProperty(hAlgorithm,
-				   BCRYPT_CHAINING_MODE,
-				   (PUCHAR)pszChainingMode,
-				   cbChainingMode,
-				   0);
-	if (!BCRYPT_SUCCESS(status)) {
-	    BCryptCloseAlgorithmProvider(hAlgorithm, 0);
-	    return 0;
-	}
+        status = BCryptSetProperty(hAlgorithm,
+                                   BCRYPT_CHAINING_MODE,
+                                   (PUCHAR)pszChainingMode,
+                                   cbChainingMode,
+                                   0);
+        if (!BCRYPT_SUCCESS(status)) {
+            BCryptCloseAlgorithmProvider(hAlgorithm, 0);
+            return 0;
+        }
     }
 
     if (wcscmp(pszAlgId, BCRYPT_RC2_ALGORITHM) == 0) {
-	ULONG cbEffectiveKeyLength = EVP_CIPHER_key_length(cipher) * 8;
+        ULONG cbEffectiveKeyLength = EVP_CIPHER_key_length(cipher) * 8;
 
-	status = BCryptSetProperty(hAlgorithm,
-				   BCRYPT_EFFECTIVE_KEY_LENGTH,
-				   (PUCHAR)&cbEffectiveKeyLength,
-				   sizeof(cbEffectiveKeyLength),
-				   0);
-	if (!BCRYPT_SUCCESS(status)) {
-	    BCryptCloseAlgorithmProvider(hAlgorithm, 0);
-	    return 0;
-	}
+        status = BCryptSetProperty(hAlgorithm,
+                                   BCRYPT_EFFECTIVE_KEY_LENGTH,
+                                   (PUCHAR)&cbEffectiveKeyLength,
+                                   sizeof(cbEffectiveKeyLength),
+                                   0);
+        if (!BCRYPT_SUCCESS(status)) {
+            BCryptCloseAlgorithmProvider(hAlgorithm, 0);
+            return 0;
+        }
     }
 
     InterlockedCompareExchangePointerRelease(&cipher->app_data,
-					     hAlgorithm, NULL);
+                                             hAlgorithm, NULL);
     return 1;
 }
 
 static int
 wincng_key_init(EVP_CIPHER_CTX *ctx,
-		const unsigned char *key,
-		const unsigned char *iv,
-		int encp)
+                const unsigned char *key,
+                const unsigned char *iv,
+                int encp)
 {
     struct wincng_key *cng = ctx->cipher_data;
     NTSTATUS status;
@@ -201,7 +201,7 @@ wincng_key_init(EVP_CIPHER_CTX *ctx,
     assert(ctx->cipher != NULL);
 
     if (ctx->cipher->app_data == NULL)
-	return 0;
+        return 0;
 
     wincng_cleanup(ctx);
 
@@ -210,12 +210,12 @@ wincng_key_init(EVP_CIPHER_CTX *ctx,
      * variable length key support.
      */
     status = BCryptGenerateSymmetricKey(ctx->cipher->app_data,
-					&cng->hKey,
-					cng->rgbKeyObject,
-					WINCNG_KEY_OBJECT_SIZE(ctx),
-					(PUCHAR)key,
-					ctx->key_len,
-					0);
+                                        &cng->hKey,
+                                        cng->rgbKeyObject,
+                                        WINCNG_KEY_OBJECT_SIZE(ctx),
+                                        (PUCHAR)key,
+                                        ctx->key_len,
+                                        0);
 
     return BCRYPT_SUCCESS(status);
 }
@@ -271,11 +271,11 @@ wincng_key_init(EVP_CIPHER_CTX *ctx,
  */
 
 WINCNG_CIPHER_ALGORITHM(des_ede3_cbc,
-			BCRYPT_3DES_ALGORITHM,
-			8,
-			24,
-			8,
-			EVP_CIPH_CBC_MODE);
+                        BCRYPT_3DES_ALGORITHM,
+                        8,
+                        24,
+                        8,
+                        EVP_CIPH_CBC_MODE);
 
 /**
  * The DES cipher type (Windows CNG provider)
@@ -286,11 +286,11 @@ WINCNG_CIPHER_ALGORITHM(des_ede3_cbc,
  */
 
 WINCNG_CIPHER_ALGORITHM(des_cbc,
-			BCRYPT_DES_ALGORITHM,
-			8,
-			8,
-			8,
-			EVP_CIPH_CBC_MODE);
+                        BCRYPT_DES_ALGORITHM,
+                        8,
+                        8,
+                        8,
+                        EVP_CIPH_CBC_MODE);
 
 /**
  * The AES-128 cipher type (Windows CNG provider)
@@ -301,11 +301,11 @@ WINCNG_CIPHER_ALGORITHM(des_cbc,
  */
 
 WINCNG_CIPHER_ALGORITHM(aes_128_cbc,
-			BCRYPT_AES_ALGORITHM,
-			16,
-			16,
-			16,
-			EVP_CIPH_CBC_MODE);
+                        BCRYPT_AES_ALGORITHM,
+                        16,
+                        16,
+                        16,
+                        EVP_CIPH_CBC_MODE);
 
 /**
  * The AES-192 cipher type (Windows CNG provider)
@@ -316,11 +316,11 @@ WINCNG_CIPHER_ALGORITHM(aes_128_cbc,
  */
 
 WINCNG_CIPHER_ALGORITHM(aes_192_cbc,
-			BCRYPT_AES_ALGORITHM,
-			16,
-			24,
-			16,
-			EVP_CIPH_CBC_MODE);
+                        BCRYPT_AES_ALGORITHM,
+                        16,
+                        24,
+                        16,
+                        EVP_CIPH_CBC_MODE);
 
 /**
  * The AES-256 cipher type (Windows CNG provider)
@@ -331,11 +331,11 @@ WINCNG_CIPHER_ALGORITHM(aes_192_cbc,
  */
 
 WINCNG_CIPHER_ALGORITHM(aes_256_cbc,
-			BCRYPT_AES_ALGORITHM,
-			16,
-			32,
-			16,
-			EVP_CIPH_CBC_MODE);
+                        BCRYPT_AES_ALGORITHM,
+                        16,
+                        32,
+                        16,
+                        EVP_CIPH_CBC_MODE);
 
 /**
  * The AES-128 CFB8 cipher type (Windows CNG provider)
@@ -346,11 +346,11 @@ WINCNG_CIPHER_ALGORITHM(aes_256_cbc,
  */
 
 WINCNG_CIPHER_ALGORITHM(aes_128_cfb8,
-			BCRYPT_AES_ALGORITHM,
-			16,
-			16,
-			16,
-			EVP_CIPH_CFB8_MODE);
+                        BCRYPT_AES_ALGORITHM,
+                        16,
+                        16,
+                        16,
+                        EVP_CIPH_CFB8_MODE);
 
 /**
  * The AES-192 CFB8 cipher type (Windows CNG provider)
@@ -361,11 +361,11 @@ WINCNG_CIPHER_ALGORITHM(aes_128_cfb8,
  */
 
 WINCNG_CIPHER_ALGORITHM(aes_192_cfb8,
-			BCRYPT_AES_ALGORITHM,
-			16,
-			24,
-			16,
-			EVP_CIPH_CFB8_MODE);
+                        BCRYPT_AES_ALGORITHM,
+                        16,
+                        24,
+                        16,
+                        EVP_CIPH_CFB8_MODE);
 
 /**
  * The AES-256 CFB8 cipher type (Windows CNG provider)
@@ -376,11 +376,11 @@ WINCNG_CIPHER_ALGORITHM(aes_192_cfb8,
  */
 
 WINCNG_CIPHER_ALGORITHM(aes_256_cfb8,
-			BCRYPT_AES_ALGORITHM,
-			16,
-			32,
-			16,
-			EVP_CIPH_CFB8_MODE);
+                        BCRYPT_AES_ALGORITHM,
+                        16,
+                        32,
+                        16,
+                        EVP_CIPH_CFB8_MODE);
 
 /**
  * The RC2 cipher type - Windows CNG
@@ -391,11 +391,11 @@ WINCNG_CIPHER_ALGORITHM(aes_256_cfb8,
  */
 
 WINCNG_CIPHER_ALGORITHM(rc2_cbc,
-			BCRYPT_RC2_ALGORITHM,
-			8,
-			16,
-			8,
-			EVP_CIPH_CBC_MODE);
+                        BCRYPT_RC2_ALGORITHM,
+                        8,
+                        16,
+                        8,
+                        EVP_CIPH_CBC_MODE);
 
 /**
  * The RC2-40 cipher type - Windows CNG
@@ -406,11 +406,11 @@ WINCNG_CIPHER_ALGORITHM(rc2_cbc,
  */
 
 WINCNG_CIPHER_ALGORITHM(rc2_40_cbc,
-			BCRYPT_RC2_ALGORITHM,
-			8,
-			5,
-			8,
-			EVP_CIPH_CBC_MODE);
+                        BCRYPT_RC2_ALGORITHM,
+                        8,
+                        5,
+                        8,
+                        EVP_CIPH_CBC_MODE);
 
 /**
  * The RC2-64 cipher type - Windows CNG
@@ -421,11 +421,11 @@ WINCNG_CIPHER_ALGORITHM(rc2_40_cbc,
  */
 
 WINCNG_CIPHER_ALGORITHM(rc2_64_cbc,
-			BCRYPT_RC2_ALGORITHM,
-			8,
-			8,
-			8,
-			EVP_CIPH_CBC_MODE);
+                        BCRYPT_RC2_ALGORITHM,
+                        8,
+                        8,
+                        8,
+                        EVP_CIPH_CBC_MODE);
 
 /**
  * The Camellia-128 cipher type - CommonCrypto
@@ -466,11 +466,11 @@ WINCNG_CIPHER_ALGORITHM_UNAVAILABLE(camellia_256_cbc);
  */
 
 WINCNG_CIPHER_ALGORITHM(rc4,
-			BCRYPT_RC4_ALGORITHM,
-			1,
-			16,
-			0,
-			EVP_CIPH_STREAM_CIPHER | EVP_CIPH_VARIABLE_LENGTH);
+                        BCRYPT_RC4_ALGORITHM,
+                        1,
+                        16,
+                        0,
+                        EVP_CIPH_STREAM_CIPHER | EVP_CIPH_VARIABLE_LENGTH);
 
 /**
  * The RC4-40 cipher type (Windows CNG provider)
@@ -481,11 +481,11 @@ WINCNG_CIPHER_ALGORITHM(rc4,
  */
 
 WINCNG_CIPHER_ALGORITHM(rc4_40,
-			BCRYPT_RC4_ALGORITHM,
-			1,
-			5,
-			0,
-			EVP_CIPH_STREAM_CIPHER | EVP_CIPH_VARIABLE_LENGTH);
+                        BCRYPT_RC4_ALGORITHM,
+                        1,
+                        5,
+                        0,
+                        EVP_CIPH_STREAM_CIPHER | EVP_CIPH_VARIABLE_LENGTH);
 
 static void
 wincng_cipher_algorithm_cleanup(void)
@@ -517,7 +517,7 @@ struct wincng_md_ctx {
 
 static BCRYPT_ALG_HANDLE
 wincng_md_algorithm_init(EVP_MD *md,
-			 LPCWSTR pszAlgId)
+                         LPCWSTR pszAlgId)
 {
     BCRYPT_ALG_HANDLE hAlgorithm;
     NTSTATUS status;
@@ -525,43 +525,43 @@ wincng_md_algorithm_init(EVP_MD *md,
     ULONG cbHash = 0, cbBlock = 0;
 
     status = BCryptOpenAlgorithmProvider(&hAlgorithm,
-					 pszAlgId,
-					 NULL,
-					 0);
+                                         pszAlgId,
+                                         NULL,
+                                         0);
     if (!BCRYPT_SUCCESS(status))
-	return NULL;
+        return NULL;
 
     status = BCryptGetProperty(hAlgorithm,
-			       BCRYPT_HASH_LENGTH,
-			       (PUCHAR)&cbHash,
-			       sizeof(ULONG),
-			       &cbData,
-			       0);
+                               BCRYPT_HASH_LENGTH,
+                               (PUCHAR)&cbHash,
+                               sizeof(ULONG),
+                               &cbData,
+                               0);
     if (!BCRYPT_SUCCESS(status)) {
-	BCryptCloseAlgorithmProvider(hAlgorithm, 0);
-	return NULL;
+        BCryptCloseAlgorithmProvider(hAlgorithm, 0);
+        return NULL;
     }
 
     status = BCryptGetProperty(hAlgorithm,
-			       BCRYPT_HASH_BLOCK_LENGTH,
-			       (PUCHAR)&cbBlock,
-			       sizeof(ULONG),
-			       &cbData,
-			       0);
+                               BCRYPT_HASH_BLOCK_LENGTH,
+                               (PUCHAR)&cbBlock,
+                               sizeof(ULONG),
+                               &cbData,
+                               0);
     if (!BCRYPT_SUCCESS(status)) {
-	BCryptCloseAlgorithmProvider(hAlgorithm, 0);
-	return NULL;
+        BCryptCloseAlgorithmProvider(hAlgorithm, 0);
+        return NULL;
     }
 
     status = BCryptGetProperty(hAlgorithm,
-			       BCRYPT_OBJECT_LENGTH,
-			       (PUCHAR)&cbHashObject,
-			       sizeof(ULONG),
-			       &cbData,
-			       0);
+                               BCRYPT_OBJECT_LENGTH,
+                               (PUCHAR)&cbHashObject,
+                               sizeof(ULONG),
+                               &cbData,
+                               0);
     if (!BCRYPT_SUCCESS(status)) {
-	BCryptCloseAlgorithmProvider(hAlgorithm, 0);
-	return NULL;
+        BCryptCloseAlgorithmProvider(hAlgorithm, 0);
+        return NULL;
     }
 
     md->hash_size = cbHash;
@@ -576,44 +576,44 @@ wincng_md_cleanup(EVP_MD_CTX *ctx);
 
 static int
 wincng_md_hash_init(BCRYPT_ALG_HANDLE hAlgorithm,
-		    EVP_MD_CTX *ctx)
+                    EVP_MD_CTX *ctx)
 {
     struct wincng_md_ctx *cng = (struct wincng_md_ctx *)ctx;
     NTSTATUS status;
     ULONG cbData, dwFlags = 0;
 
     if (IsWindows8OrGreaterCached()) {
-	if (cng->hHash)
-	    return 1;
-	else
-	    dwFlags |= BCRYPT_HASH_REUSABLE_FLAG;
+        if (cng->hHash)
+            return 1;
+        else
+            dwFlags |= BCRYPT_HASH_REUSABLE_FLAG;
     } else
-	wincng_md_cleanup(ctx);
+        wincng_md_cleanup(ctx);
 
     status = BCryptGetProperty(hAlgorithm,
-			       BCRYPT_OBJECT_LENGTH,
-			       (PUCHAR)&cng->cbHashObject,
-			       sizeof(ULONG),
-			       &cbData,
-			       0);
+                               BCRYPT_OBJECT_LENGTH,
+                               (PUCHAR)&cng->cbHashObject,
+                               sizeof(ULONG),
+                               &cbData,
+                               0);
     if (!BCRYPT_SUCCESS(status))
-	return 0;
+        return 0;
 
     status = BCryptCreateHash(hAlgorithm,
-			      &cng->hHash,
-			      cng->rgbHashObject,
-			      cng->cbHashObject,
-			      NULL,
-			      0,
-			      dwFlags);
+                              &cng->hHash,
+                              cng->rgbHashObject,
+                              cng->cbHashObject,
+                              NULL,
+                              0,
+                              dwFlags);
 
     return BCRYPT_SUCCESS(status);
 }
 
 static int
 wincng_md_update(EVP_MD_CTX *ctx,
-		 const void *data,
-		 size_t length)
+                 const void *data,
+                 size_t length)
 {
     struct wincng_md_ctx *cng = (struct wincng_md_ctx *)ctx;
     NTSTATUS status;
@@ -625,25 +625,25 @@ wincng_md_update(EVP_MD_CTX *ctx,
 
 static int
 wincng_md_final(void *digest,
-		EVP_MD_CTX *ctx)
+                EVP_MD_CTX *ctx)
 {
     struct wincng_md_ctx *cng = (struct wincng_md_ctx *)ctx;
     NTSTATUS status;
     ULONG cbHash, cbData;
 
     status = BCryptGetProperty(cng->hHash,
-			       BCRYPT_HASH_LENGTH,
-			       (PUCHAR)&cbHash,
-			       sizeof(DWORD),
-			       &cbData,
-			       0);
+                               BCRYPT_HASH_LENGTH,
+                               (PUCHAR)&cbHash,
+                               sizeof(DWORD),
+                               &cbData,
+                               0);
     if (!BCRYPT_SUCCESS(status))
-	return 0;
+        return 0;
 
     status = BCryptFinishHash(cng->hHash,
-			      digest,
-			      cbHash,
-			      0);
+                              digest,
+                              cbHash,
+                              0);
 
     return BCRYPT_SUCCESS(status);
 }
@@ -654,8 +654,8 @@ wincng_md_cleanup(EVP_MD_CTX *ctx)
     struct wincng_md_ctx *cng = (struct wincng_md_ctx *)ctx;
 
     if (cng->hHash) {
-	BCryptDestroyHash(cng->hHash);
-	cng->hHash = (BCRYPT_HASH_HANDLE)0;
+        BCryptDestroyHash(cng->hHash);
+        cng->hHash = (BCRYPT_HASH_HANDLE)0;
     }
     SecureZeroMemory(cng->rgbHashObject, cng->cbHashObject);
 

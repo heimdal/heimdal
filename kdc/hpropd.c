@@ -86,200 +86,200 @@ main(int argc, char **argv)
 
     ret = krb5_init_context(&context);
     if (ret)
-	exit(1);
+        exit(1);
 
     ret = krb5_openlog(context, "hpropd", &fac);
     if (ret)
-	errx(1, "krb5_openlog");
+        errx(1, "krb5_openlog");
     krb5_set_warn_dest(context, fac);
 
     if (getarg(args, num_args, argc, argv, &optidx))
-	usage(1);
+        usage(1);
 
     if (local_realm != NULL)
-	krb5_set_default_realm(context, local_realm);
+        krb5_set_default_realm(context, local_realm);
 
     if (help_flag)
-	usage(0);
+        usage(0);
     if (version_flag) {
-	print_version(NULL);
-	exit(0);
+        print_version(NULL);
+        exit(0);
     }
 
     argc -= optidx;
     argv += optidx;
 
     if (argc != 0)
-	usage(1);
+        usage(1);
 
     if (database == NULL)
-	database = hdb_default_db(context);
+        database = hdb_default_db(context);
 
     if (from_stdin) {
-	sock = STDIN_FILENO;
+        sock = STDIN_FILENO;
     } else {
-	struct sockaddr_storage ss;
-	struct sockaddr *sa = (struct sockaddr *)&ss;
-	socklen_t sin_len = sizeof(ss);
-	char addr_name[256];
-	krb5_ticket *ticket;
-	char *server;
+        struct sockaddr_storage ss;
+        struct sockaddr *sa = (struct sockaddr *)&ss;
+        socklen_t sin_len = sizeof(ss);
+        char addr_name[256];
+        krb5_ticket *ticket;
+        char *server;
 
         memset(&ss, 0, sizeof(ss));
-	sock = STDIN_FILENO;
+        sock = STDIN_FILENO;
 #ifdef SUPPORT_INETD
-	if (inetd_flag == -1) {
-	    if (getpeername (sock, sa, &sin_len) < 0) {
-		inetd_flag = 0;
-	    } else {
-		inetd_flag = 1;
-	    }
-	}
+        if (inetd_flag == -1) {
+            if (getpeername (sock, sa, &sin_len) < 0) {
+                inetd_flag = 0;
+            } else {
+                inetd_flag = 1;
+            }
+        }
 #else
-	inetd_flag = 0;
+        inetd_flag = 0;
 #endif
-	if (!inetd_flag) {
-	    mini_inetd (krb5_getportbyname (context, "hprop", "tcp",
-					    HPROP_PORT), &sock);
-	}
-	socket_set_keepalive(sock, 1);
-	sin_len = sizeof(ss);
-	if (getpeername(sock, sa, &sin_len) < 0)
-	    krb5_err(context, 1, errno, "getpeername");
+        if (!inetd_flag) {
+            mini_inetd (krb5_getportbyname (context, "hprop", "tcp",
+                                            HPROP_PORT), &sock);
+        }
+        socket_set_keepalive(sock, 1);
+        sin_len = sizeof(ss);
+        if (getpeername(sock, sa, &sin_len) < 0)
+            krb5_err(context, 1, errno, "getpeername");
 
-	if (inet_ntop(sa->sa_family,
-		      socket_get_address (sa),
-		      addr_name,
-		      sizeof(addr_name)) == NULL)
-	    strlcpy (addr_name, "unknown address",
-		     sizeof(addr_name));
+        if (inet_ntop(sa->sa_family,
+                      socket_get_address (sa),
+                      addr_name,
+                      sizeof(addr_name)) == NULL)
+            strlcpy (addr_name, "unknown address",
+                     sizeof(addr_name));
 
-	krb5_log(context, fac, 0, "Connection from %s", addr_name);
+        krb5_log(context, fac, 0, "Connection from %s", addr_name);
 
-	ret = krb5_kt_register(context, &hdb_get_kt_ops);
-	if (ret)
-	    krb5_err(context, 1, ret, "krb5_kt_register");
+        ret = krb5_kt_register(context, &hdb_get_kt_ops);
+        if (ret)
+            krb5_err(context, 1, ret, "krb5_kt_register");
 
-	if (ktname != NULL) {
-	    ret = krb5_kt_resolve(context, ktname, &keytab);
-	    if (ret)
-		krb5_err (context, 1, ret, "krb5_kt_resolve %s", ktname);
-	} else {
-	    ret = krb5_kt_default (context, &keytab);
-	    if (ret)
-		krb5_err (context, 1, ret, "krb5_kt_default");
-	}
+        if (ktname != NULL) {
+            ret = krb5_kt_resolve(context, ktname, &keytab);
+            if (ret)
+                krb5_err (context, 1, ret, "krb5_kt_resolve %s", ktname);
+        } else {
+            ret = krb5_kt_default (context, &keytab);
+            if (ret)
+                krb5_err (context, 1, ret, "krb5_kt_default");
+        }
 
-	ret = krb5_recvauth(context, &ac, &sock, HPROP_VERSION, NULL,
-			    0, keytab, &ticket);
-	if (ret)
-	    krb5_err(context, 1, ret, "krb5_recvauth");
+        ret = krb5_recvauth(context, &ac, &sock, HPROP_VERSION, NULL,
+                            0, keytab, &ticket);
+        if (ret)
+            krb5_err(context, 1, ret, "krb5_recvauth");
 
-	ret = krb5_unparse_name(context, ticket->server, &server);
-	if (ret)
-	    krb5_err(context, 1, ret, "krb5_unparse_name");
-	if (strncmp(server, "hprop/", 6) != 0)
-	    krb5_errx(context, 1, "ticket not for hprop (%s)", server);
+        ret = krb5_unparse_name(context, ticket->server, &server);
+        if (ret)
+            krb5_err(context, 1, ret, "krb5_unparse_name");
+        if (strncmp(server, "hprop/", 6) != 0)
+            krb5_errx(context, 1, "ticket not for hprop (%s)", server);
 
-	free(server);
-	krb5_free_ticket (context, ticket);
+        free(server);
+        krb5_free_ticket (context, ticket);
 
-	ret = krb5_auth_con_getauthenticator(context, ac, &authent);
-	if (ret)
-	    krb5_err(context, 1, ret, "krb5_auth_con_getauthenticator");
+        ret = krb5_auth_con_getauthenticator(context, ac, &authent);
+        if (ret)
+            krb5_err(context, 1, ret, "krb5_auth_con_getauthenticator");
 
-	ret = krb5_make_principal(context, &c1, NULL, "kadmin", "hprop", NULL);
-	if (ret)
-	    krb5_err(context, 1, ret, "krb5_make_principal");
-	_krb5_principalname2krb5_principal(context, &c2,
-					   authent->cname, authent->crealm);
-	if (!krb5_principal_compare(context, c1, c2)) {
-	    char *s;
-	    ret = krb5_unparse_name(context, c2, &s);
-	    if (ret)
-		s = unparseable_name;
-	    krb5_errx(context, 1, "Unauthorized connection from %s", s);
-	}
-	krb5_free_principal(context, c1);
-	krb5_free_principal(context, c2);
+        ret = krb5_make_principal(context, &c1, NULL, "kadmin", "hprop", NULL);
+        if (ret)
+            krb5_err(context, 1, ret, "krb5_make_principal");
+        _krb5_principalname2krb5_principal(context, &c2,
+                                           authent->cname, authent->crealm);
+        if (!krb5_principal_compare(context, c1, c2)) {
+            char *s;
+            ret = krb5_unparse_name(context, c2, &s);
+            if (ret)
+                s = unparseable_name;
+            krb5_errx(context, 1, "Unauthorized connection from %s", s);
+        }
+        krb5_free_principal(context, c1);
+        krb5_free_principal(context, c2);
 
-	ret = krb5_kt_close(context, keytab);
-	if (ret)
-	    krb5_err(context, 1, ret, "krb5_kt_close");
+        ret = krb5_kt_close(context, keytab);
+        if (ret)
+            krb5_err(context, 1, ret, "krb5_kt_close");
     }
 
     if (asprintf(&tmp_db, "%s~", database) < 0 || tmp_db == NULL)
-	krb5_errx(context, 1, "hdb_create: out of memory");
+        krb5_errx(context, 1, "hdb_create: out of memory");
 
     ret = hdb_create(context, &db, tmp_db);
     if (ret)
-	krb5_err(context, 1, ret, "hdb_create(%s)", tmp_db);
+        krb5_err(context, 1, ret, "hdb_create(%s)", tmp_db);
     ret = db->hdb_open(context, db, O_RDWR | O_CREAT | O_TRUNC, 0600);
     if (ret)
-	krb5_err(context, 1, ret, "hdb_open(%s)", tmp_db);
+        krb5_err(context, 1, ret, "hdb_open(%s)", tmp_db);
 
     nprincs = 0;
     while (1){
-	krb5_data data;
-	hdb_entry entry;
+        krb5_data data;
+        hdb_entry entry;
 
-	if (from_stdin) {
-	    ret = krb5_read_message(context, &sock, &data);
-	    if (ret != 0 && ret != HEIM_ERR_EOF)
-		krb5_err(context, 1, ret, "krb5_read_message");
-	} else {
-	    ret = krb5_read_priv_message(context, ac, &sock, &data);
-	    if (ret)
-		krb5_err(context, 1, ret, "krb5_read_priv_message");
-	}
+        if (from_stdin) {
+            ret = krb5_read_message(context, &sock, &data);
+            if (ret != 0 && ret != HEIM_ERR_EOF)
+                krb5_err(context, 1, ret, "krb5_read_message");
+        } else {
+            ret = krb5_read_priv_message(context, ac, &sock, &data);
+            if (ret)
+                krb5_err(context, 1, ret, "krb5_read_priv_message");
+        }
 
-	if (ret == HEIM_ERR_EOF || data.length == 0) {
-	    if (!from_stdin) {
-		data.data = NULL;
-		data.length = 0;
-		krb5_write_priv_message(context, ac, &sock, &data);
-	    }
-	    break;
-	}
-	memset(&entry, 0, sizeof(entry));
-	ret = hdb_value2entry(context, &data, &entry);
-	krb5_data_free(&data);
-	if (ret)
-	    krb5_err(context, 1, ret, "hdb_value2entry");
-	if (print_dump) {
+        if (ret == HEIM_ERR_EOF || data.length == 0) {
+            if (!from_stdin) {
+                data.data = NULL;
+                data.length = 0;
+                krb5_write_priv_message(context, ac, &sock, &data);
+            }
+            break;
+        }
+        memset(&entry, 0, sizeof(entry));
+        ret = hdb_value2entry(context, &data, &entry);
+        krb5_data_free(&data);
+        if (ret)
+            krb5_err(context, 1, ret, "hdb_value2entry");
+        if (print_dump) {
             struct hdb_print_entry_arg parg;
 
             parg.out = stdout;
             parg.fmt = HDB_DUMP_HEIMDAL;
-	    hdb_print_entry(context, db, &entry, &parg);
+            hdb_print_entry(context, db, &entry, &parg);
         } else {
-	    ret = db->hdb_store(context, db, 0, &entry);
-	    if (ret == HDB_ERR_EXISTS) {
-		char *s;
-		ret = krb5_unparse_name(context, entry.principal, &s);
-		if (ret)
-		    s = strdup(unparseable_name);
-		krb5_warnx(context, "Entry exists: %s", s);
-		free(s);
-	    } else if (ret)
-		krb5_err(context, 1, ret, "db_store");
-	    else
-		nprincs++;
-	}
-	hdb_free_entry(context, db, &entry);
+            ret = db->hdb_store(context, db, 0, &entry);
+            if (ret == HDB_ERR_EXISTS) {
+                char *s;
+                ret = krb5_unparse_name(context, entry.principal, &s);
+                if (ret)
+                    s = strdup(unparseable_name);
+                krb5_warnx(context, "Entry exists: %s", s);
+                free(s);
+            } else if (ret)
+                krb5_err(context, 1, ret, "db_store");
+            else
+                nprincs++;
+        }
+        hdb_free_entry(context, db, &entry);
     }
     if (!print_dump)
-	krb5_log(context, fac, 0, "Received %d principals", nprincs);
+        krb5_log(context, fac, 0, "Received %d principals", nprincs);
 
     ret = db->hdb_close(context, db);
     if (ret)
-	krb5_err(context, 1, ret, "db_close");
+        krb5_err(context, 1, ret, "db_close");
     ret = db->hdb_rename(context, db, database);
     if (ret)
-	krb5_err(context, 1, ret, "db_rename");
+        krb5_err(context, 1, ret, "db_rename");
 
     if (inetd_flag == 0)
-	rk_closesocket(sock);
+        rk_closesocket(sock);
 
     exit(0);
 }

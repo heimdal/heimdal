@@ -122,17 +122,17 @@ main(void)
     unsigned failures = 0;
 
     for (i = 0; i < sizeof(positives)/sizeof(positives[0]); ++i)
-	if (!_wind_stringprep_error(positives[i], WIND_PROFILE_NAME)) {
-	    printf ("code-point 0x%x not marked as prohibited\n",
-		    positives[i]);
-	    ++failures;
-	}
+        if (!_wind_stringprep_error(positives[i], WIND_PROFILE_NAME)) {
+            printf ("code-point 0x%x not marked as prohibited\n",
+                    positives[i]);
+            ++failures;
+        }
 
     for (i = 0; i < sizeof(negatives)/sizeof(negatives[0]); ++i)
-	if (_wind_stringprep_error(negatives[i], WIND_PROFILE_NAME)) {
-	    printf ("code-point 0x%x not marked as non-prohibited\n",
-		    negatives[i]);
-	    ++failures;
-	}
+        if (_wind_stringprep_error(negatives[i], WIND_PROFILE_NAME)) {
+            printf ("code-point 0x%x not marked as non-prohibited\n",
+                    negatives[i]);
+            ++failures;
+        }
     return failures != 0;
 }

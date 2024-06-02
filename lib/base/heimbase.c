@@ -93,15 +93,15 @@ heim_retain(heim_object_t ptr)
     struct heim_base *p;
 
     if (ptr == NULL || heim_base_is_tagged(ptr))
-	return ptr;
+        return ptr;
 
     p = PTR2BASE(ptr);
 
     if (heim_base_atomic_load(&p->ref_cnt) == UINT32_MAX)
-	return ptr;
+        return ptr;
 
     if ((heim_base_atomic_inc_32(&p->ref_cnt) - 1) == 0)
-	heim_abort("resurection");
+        heim_abort("resurection");
     return ptr;
 }
 
@@ -118,32 +118,32 @@ heim_release(void *ptr)
     struct heim_base *p;
 
     if (ptr == NULL || heim_base_is_tagged(ptr))
-	return;
+        return;
 
     p = PTR2BASE(ptr);
 
     if (heim_base_atomic_load(&p->ref_cnt) == UINT32_MAX)
-	return;
+        return;
 
     old = heim_base_atomic_dec_32(&p->ref_cnt) + 1;
 
     if (old > 1)
-	return;
+        return;
 
     if (old == 1) {
-	heim_auto_release_t ar = p->autorelpool;
-	/* remove from autorel pool list */
-	if (ar) {
-	    p->autorelpool = NULL;
-	    HEIMDAL_MUTEX_lock(&ar->pool_mutex);
-	    HEIM_TAILQ_REMOVE(&ar->pool, p, autorel);
-	    HEIMDAL_MUTEX_unlock(&ar->pool_mutex);
-	}
-	if (p->isa->dealloc)
-	    p->isa->dealloc(ptr);
-	free(p);
+        heim_auto_release_t ar = p->autorelpool;
+        /* remove from autorel pool list */
+        if (ar) {
+            p->autorelpool = NULL;
+            HEIMDAL_MUTEX_lock(&ar->pool_mutex);
+            HEIM_TAILQ_REMOVE(&ar->pool, p, autorel);
+            HEIMDAL_MUTEX_unlock(&ar->pool_mutex);
+        }
+        if (p->isa->dealloc)
+            p->isa->dealloc(ptr);
+        free(p);
     } else
-	heim_abort("over release");
+        heim_abort("over release");
 }
 
 /**
@@ -155,7 +155,7 @@ heim_description(heim_object_t ptr)
 {
     struct heim_base *p = PTR2BASE(ptr);
     if (p->isa->desc == NULL)
-	return heim_auto_release(heim_string_ref_create(p->isa->name, NULL));
+        return heim_auto_release(heim_string_ref_create(p->isa->name, NULL));
     return heim_auto_release(p->isa->desc(ptr));
 }
 
@@ -187,9 +187,9 @@ _heim_get_isa(heim_object_t ptr)
 {
     struct heim_base *p;
     if (heim_base_is_tagged(ptr)) {
-	if (heim_base_is_tagged_object(ptr))
-	    return tagged_isa[heim_base_tagged_object_tid(ptr)];
-	heim_abort("not a supported tagged type");
+        if (heim_base_is_tagged_object(ptr))
+            return tagged_isa[heim_base_tagged_object_tid(ptr)];
+        heim_abort("not a supported tagged type");
     }
     p = PTR2BASE(ptr);
     return p->isa;
@@ -223,7 +223,7 @@ heim_get_hash(heim_object_t ptr)
 {
     heim_const_type_t isa = _heim_get_isa(ptr);
     if (isa->hash)
-	return isa->hash(ptr);
+        return isa->hash(ptr);
     return (uintptr_t)ptr;
 }
 
@@ -247,12 +247,12 @@ heim_cmp(heim_object_t a, heim_object_t b)
     tb = heim_get_tid(b);
 
     if (ta != tb)
-	return ta - tb;
+        return ta - tb;
 
     isa = _heim_get_isa(a);
 
     if (isa->cmp)
-	return isa->cmp(a, b);
+        return isa->cmp(a, b);
 
     return (uintptr_t)a - (uintptr_t)b;
 }
@@ -302,7 +302,7 @@ heim_alloc(size_t size, const char *name, heim_type_dealloc dealloc)
 
     struct heim_base_mem *p = calloc(1, size + sizeof(*p));
     if (p == NULL)
-	return NULL;
+        return NULL;
     p->isa = &memory_object;
     p->ref_cnt = 1;
     p->name = name;
@@ -312,18 +312,18 @@ heim_alloc(size_t size, const char *name, heim_type_dealloc dealloc)
 
 heim_type_t
 _heim_create_type(const char *name,
-		  heim_type_init init,
-		  heim_type_dealloc dealloc,
-		  heim_type_copy copy,
-		  heim_type_cmp cmp,
-		  heim_type_hash hash,
-		  heim_type_description desc)
+                  heim_type_init init,
+                  heim_type_dealloc dealloc,
+                  heim_type_copy copy,
+                  heim_type_cmp cmp,
+                  heim_type_hash hash,
+                  heim_type_description desc)
 {
     heim_type_t type;
 
     type = calloc(1, sizeof(*type));
     if (type == NULL)
-	return NULL;
+        return NULL;
 
     type->tid = heim_base_atomic_inc_32(&tidglobal);
     type->name = name;
@@ -343,7 +343,7 @@ _heim_alloc_object(heim_const_type_t type, size_t size)
     /* XXX should use posix_memalign */
     struct heim_base *p = calloc(1, size + sizeof(*p));
     if (p == NULL)
-	return NULL;
+        return NULL;
     p->isa = type;
     p->ref_cnt = 1;
 
@@ -358,7 +358,7 @@ _heim_get_isaextra(heim_object_t ptr, size_t idx)
     heim_assert(ptr != NULL, "internal error");
     p = (struct heim_base *)PTR2BASE(ptr);
     if (p->isa == &memory_object)
-	return NULL;
+        return NULL;
     heim_assert(idx < 3, "invalid private heim_base extra data index");
     return &p->isaextra[idx];
 }
@@ -434,18 +434,18 @@ heim_base_once_f(heim_base_once_t *once, void *ctx, void (*func)(void *))
      * State 2 means that func() has completed execution.
      */
     if (InterlockedCompareExchange(once, 1L, 0L) == 0L) {
-	/* State is now 1 */
-	(*func)(ctx);
-	(void)InterlockedExchange(once, 2L);
-	/* State is now 2 */
+        /* State is now 1 */
+        (*func)(ctx);
+        (void)InterlockedExchange(once, 2L);
+        /* State is now 2 */
     } else {
-	/*
-	 * The InterlockedCompareExchange is being used to fetch
-	 * the current state under a full memory barrier.  As long
-	 * as the current state is 1 continue to spin.
-	 */
-	while (InterlockedCompareExchange(once, 2L, 0L) == 1L)
-	    SwitchToThread();
+        /*
+         * The InterlockedCompareExchange is being used to fetch
+         * the current state under a full memory barrier.  As long
+         * as the current state is 1 continue to spin.
+         */
+        while (InterlockedCompareExchange(once, 2L, 0L) == 1L)
+            SwitchToThread();
     }
 #elif defined(HAVE_DISPATCH_DISPATCH_H)
     dispatch_once_f(once, ctx, func);
@@ -478,25 +478,25 @@ heim_base_once_f(heim_base_once_t *once, void *ctx, void (*func)(void *))
     static HEIMDAL_MUTEX mutex = HEIMDAL_MUTEX_INITIALIZER;
     HEIMDAL_MUTEX_lock(&mutex);
     if (*once == 0) {
-	*once = 1;
-	HEIMDAL_MUTEX_unlock(&mutex);
-	func(ctx);
-	HEIMDAL_MUTEX_lock(&mutex);
-	*once = 2;
-	HEIMDAL_MUTEX_unlock(&mutex);
+        *once = 1;
+        HEIMDAL_MUTEX_unlock(&mutex);
+        func(ctx);
+        HEIMDAL_MUTEX_lock(&mutex);
+        *once = 2;
+        HEIMDAL_MUTEX_unlock(&mutex);
     } else if (*once == 2) {
-	HEIMDAL_MUTEX_unlock(&mutex);
+        HEIMDAL_MUTEX_unlock(&mutex);
     } else {
-	HEIMDAL_MUTEX_unlock(&mutex);
-	while (1) {
-	    struct timeval tv = { 0, 1000 };
-	    select(0, NULL, NULL, NULL, &tv);
-	    HEIMDAL_MUTEX_lock(&mutex);
-	    if (*once == 2)
-		break;
-	    HEIMDAL_MUTEX_unlock(&mutex);
-	}
-	HEIMDAL_MUTEX_unlock(&mutex);
+        HEIMDAL_MUTEX_unlock(&mutex);
+        while (1) {
+            struct timeval tv = { 0, 1000 };
+            select(0, NULL, NULL, NULL, &tv);
+            HEIMDAL_MUTEX_lock(&mutex);
+            if (*once == 2)
+                break;
+            HEIMDAL_MUTEX_unlock(&mutex);
+        }
+        HEIMDAL_MUTEX_unlock(&mutex);
     }
 #endif
 }
@@ -566,7 +566,7 @@ init_ar_tls(void *ptr)
     int ret;
     HEIMDAL_key_create(&ar_key, ar_tls_delete, ret);
     if (ret == 0)
-	ar_created = 1;
+        ar_created = 1;
 }
 
 static struct ar_tls *
@@ -578,19 +578,19 @@ autorel_tls(void)
 
     heim_base_once_f(&once, NULL, init_ar_tls);
     if (!ar_created)
-	return NULL;
+        return NULL;
 
     arp = HEIMDAL_getspecific(ar_key);
     if (arp == NULL) {
 
-	arp = calloc(1, sizeof(*arp));
-	if (arp == NULL)
-	    return NULL;
-	HEIMDAL_setspecific(ar_key, arp, ret);
-	if (ret) {
-	    free(arp);
-	    return NULL;
-	}
+        arp = calloc(1, sizeof(*arp));
+        if (arp == NULL)
+            return NULL;
+        HEIMDAL_setspecific(ar_key, arp, ret);
+        if (ret) {
+            free(arp);
+            return NULL;
+        }
     }
     return arp;
 
@@ -604,16 +604,16 @@ autorel_dealloc(void *ptr)
 
     tls = autorel_tls();
     if (tls == NULL)
-	heim_abort("autorelease pool released on thread w/o autorelease inited");
+        heim_abort("autorelease pool released on thread w/o autorelease inited");
 
     heim_auto_release_drain(ar);
 
     if (!HEIM_TAILQ_EMPTY(&ar->pool))
-	heim_abort("pool not empty after draining");
+        heim_abort("pool not empty after draining");
 
     HEIMDAL_MUTEX_lock(&tls->tls_mutex);
     if (tls->current != ptr)
-	heim_abort("autorelease not releaseing top pool");
+        heim_abort("autorelease not releaseing top pool");
 
     tls->current = ar->parent;
     HEIMDAL_MUTEX_unlock(&tls->tls_mutex);
@@ -658,16 +658,16 @@ heim_auto_release_create(void)
     heim_auto_release_t ar;
 
     if (tls == NULL)
-	heim_abort("Failed to create/get autorelease head");
+        heim_abort("Failed to create/get autorelease head");
 
     ar = _heim_alloc_object(&_heim_autorel_object, sizeof(struct heim_auto_release));
     if (ar) {
-	HEIMDAL_MUTEX_lock(&tls->tls_mutex);
-	if (tls->head == NULL)
-	    tls->head = ar;
-	ar->parent = tls->current;
-	tls->current = ar;
-	HEIMDAL_MUTEX_unlock(&tls->tls_mutex);
+        HEIMDAL_MUTEX_lock(&tls->tls_mutex);
+        if (tls->head == NULL)
+            tls->head = ar;
+        ar->parent = tls->current;
+        tls->current = ar;
+        HEIMDAL_MUTEX_unlock(&tls->tls_mutex);
     }
 
     return ar;
@@ -687,21 +687,21 @@ heim_auto_release(heim_object_t ptr)
     heim_auto_release_t ar;
 
     if (ptr == NULL || heim_base_is_tagged(ptr))
-	return ptr;
+        return ptr;
 
     p = PTR2BASE(ptr);
     tls = autorel_tls();
 
     /* drop from old pool */
     if ((ar = p->autorelpool) != NULL) {
-	HEIMDAL_MUTEX_lock(&ar->pool_mutex);
-	HEIM_TAILQ_REMOVE(&ar->pool, p, autorel);
-	p->autorelpool = NULL;
-	HEIMDAL_MUTEX_unlock(&ar->pool_mutex);
+        HEIMDAL_MUTEX_lock(&ar->pool_mutex);
+        HEIM_TAILQ_REMOVE(&ar->pool, p, autorel);
+        p->autorelpool = NULL;
+        HEIMDAL_MUTEX_unlock(&ar->pool_mutex);
     }
 
     if (tls == NULL || (ar = tls->current) == NULL)
-	heim_abort("no auto relase pool in place, would leak");
+        heim_abort("no auto relase pool in place, would leak");
 
     HEIMDAL_MUTEX_lock(&ar->pool_mutex);
     HEIM_TAILQ_INSERT_HEAD(&ar->pool, p, autorel);
@@ -724,10 +724,10 @@ heim_auto_release_drain(heim_auto_release_t autorel)
 
     HEIMDAL_MUTEX_lock(&autorel->pool_mutex);
     while(!HEIM_TAILQ_EMPTY(&autorel->pool)) {
-	obj = HEIM_TAILQ_FIRST(&autorel->pool);
-	HEIMDAL_MUTEX_unlock(&autorel->pool_mutex);
-	heim_release(BASE2PTR(obj));
-	HEIMDAL_MUTEX_lock(&autorel->pool_mutex);
+        obj = HEIM_TAILQ_FIRST(&autorel->pool);
+        HEIMDAL_MUTEX_unlock(&autorel->pool_mutex);
+        heim_release(BASE2PTR(obj));
+        HEIMDAL_MUTEX_lock(&autorel->pool_mutex);
     }
     HEIMDAL_MUTEX_unlock(&autorel->pool_mutex);
 }
@@ -740,7 +740,7 @@ heim_auto_release_drain(heim_auto_release_t autorel)
 
 static heim_object_t
 heim_path_vget2(heim_object_t ptr, heim_object_t *parent, heim_object_t *key,
-		heim_error_t *error, va_list ap)
+                heim_error_t *error, va_list ap)
 {
     heim_object_t path_element;
     heim_object_t node, next_node;
@@ -749,49 +749,49 @@ heim_path_vget2(heim_object_t ptr, heim_object_t *parent, heim_object_t *key,
     *parent = NULL;
     *key = NULL;
     if (ptr == NULL)
-	return NULL;
+        return NULL;
 
     for (node = ptr; node != NULL; ) {
-	path_element = va_arg(ap, heim_object_t);
-	if (path_element == NULL) {
-	    *parent = node;
-	    *key = path_element;
-	    return node;
-	}
+        path_element = va_arg(ap, heim_object_t);
+        if (path_element == NULL) {
+            *parent = node;
+            *key = path_element;
+            return node;
+        }
 
-	node_type = heim_get_tid(node);
-	switch (node_type) {
-	case HEIM_TID_ARRAY:
-	case HEIM_TID_DICT:
-	case HEIM_TID_DB:
-	    break;
-	default:
-	    if (node == ptr)
-		heim_abort("heim_path_get() only operates on container types");
-	    return NULL;
-	}
+        node_type = heim_get_tid(node);
+        switch (node_type) {
+            case HEIM_TID_ARRAY:
+            case HEIM_TID_DICT:
+            case HEIM_TID_DB:
+                break;
+            default:
+                if (node == ptr)
+                    heim_abort("heim_path_get() only operates on container types");
+                return NULL;
+        }
 
-	if (node_type == HEIM_TID_DICT) {
-	    next_node = heim_dict_get_value(node, path_element);
-	} else if (node_type == HEIM_TID_DB) {
-	    next_node = _heim_db_get_value(node, NULL, path_element, NULL);
-	} else {
-	    int idx = -1;
+        if (node_type == HEIM_TID_DICT) {
+            next_node = heim_dict_get_value(node, path_element);
+        } else if (node_type == HEIM_TID_DB) {
+            next_node = _heim_db_get_value(node, NULL, path_element, NULL);
+        } else {
+            int idx = -1;
 
             /* node_type == HEIM_TID_ARRAY */
-	    if (heim_get_tid(path_element) == HEIM_TID_NUMBER)
-		idx = heim_number_get_int(path_element);
-	    if (idx < 0) {
-		if (error)
-		    *error = heim_error_create(EINVAL,
-					       "heim_path_get() path elements "
-					       "for array nodes must be "
-					       "numeric and positive");
-		return NULL;
-	    }
-	    next_node = heim_array_get_value(node, idx);
-	}
-	node = next_node;
+            if (heim_get_tid(path_element) == HEIM_TID_NUMBER)
+                idx = heim_number_get_int(path_element);
+            if (idx < 0) {
+                if (error)
+                    *error = heim_error_create(EINVAL,
+                                               "heim_path_get() path elements "
+                                               "for array nodes must be "
+                                               "numeric and positive");
+                return NULL;
+            }
+            next_node = heim_array_get_value(node, idx);
+        }
+        node = next_node;
     }
     return NULL;
 }
@@ -856,7 +856,7 @@ heim_path_get(heim_object_t ptr, heim_error_t *error, ...)
     va_list ap;
 
     if (ptr == NULL)
-	return NULL;
+        return NULL;
 
     va_start(ap, error);
     o = heim_path_vget2(ptr, &p, &k, error, ap);
@@ -884,7 +884,7 @@ heim_path_copy(heim_object_t ptr, heim_error_t *error, ...)
     va_list ap;
 
     if (ptr == NULL)
-	return NULL;
+        return NULL;
 
     va_start(ap, error);
     o = heim_retain(heim_path_vget2(ptr, &p, &k, error, ap));
@@ -912,7 +912,7 @@ heim_path_copy(heim_object_t ptr, heim_error_t *error, ...)
 
 int
 heim_path_vcreate(heim_object_t ptr, size_t size, heim_object_t leaf,
-		  heim_error_t *error, va_list ap)
+                  heim_error_t *error, va_list ap)
 {
     heim_object_t path_element = va_arg(ap, heim_object_t);
     heim_object_t next_path_element = NULL;
@@ -922,103 +922,103 @@ heim_path_vcreate(heim_object_t ptr, size_t size, heim_object_t leaf,
     int ret = 0;
 
     if (ptr == NULL)
-	heim_abort("heim_path_vcreate() does not create root nodes");
+        heim_abort("heim_path_vcreate() does not create root nodes");
 
     while (path_element != NULL) {
-	int idx = -1;
+        int idx = -1;
 
-	next_path_element = va_arg(ap, heim_object_t);
-	node_type = heim_get_tid(node);
+        next_path_element = va_arg(ap, heim_object_t);
+        node_type = heim_get_tid(node);
 
-	if (node_type == HEIM_TID_DICT) {
-	    next_node = heim_dict_get_value(node, path_element);
-	} else if (node_type == HEIM_TID_ARRAY) {
-	    if (heim_get_tid(path_element) == HEIM_TID_NUMBER)
-		idx = heim_number_get_int(path_element);
-	    if (idx < 0) {
-		if (error)
-		    *error = heim_error_create(EINVAL,
-					       "heim_path() path elements for "
-					       "array nodes must be numeric "
-					       "and positive");
-		return EINVAL;
-	    }
-	    if (idx < heim_array_get_length(node)) {
-		next_node = heim_array_get_value(node, idx);
-	    } else if (idx == heim_array_get_length(node)) {
-		next_node = NULL;
-	    } else {
-		if (error)
-		    *error = heim_error_create(EINVAL,
-				 "Index for array in path is too large");
-		return EINVAL;
-	    }
-	} else if (node_type == HEIM_TID_DB && next_path_element != NULL) {
-	    if (error)
-		*error = heim_error_create(EINVAL, "Interior node is a DB");
-	    return EINVAL;
-	}
+        if (node_type == HEIM_TID_DICT) {
+            next_node = heim_dict_get_value(node, path_element);
+        } else if (node_type == HEIM_TID_ARRAY) {
+            if (heim_get_tid(path_element) == HEIM_TID_NUMBER)
+                idx = heim_number_get_int(path_element);
+            if (idx < 0) {
+                if (error)
+                    *error = heim_error_create(EINVAL,
+                                               "heim_path() path elements for "
+                                               "array nodes must be numeric "
+                                               "and positive");
+                return EINVAL;
+            }
+            if (idx < heim_array_get_length(node)) {
+                next_node = heim_array_get_value(node, idx);
+            } else if (idx == heim_array_get_length(node)) {
+                next_node = NULL;
+            } else {
+                if (error)
+                    *error = heim_error_create(EINVAL,
+                                 "Index for array in path is too large");
+                return EINVAL;
+            }
+        } else if (node_type == HEIM_TID_DB && next_path_element != NULL) {
+            if (error)
+                *error = heim_error_create(EINVAL, "Interior node is a DB");
+            return EINVAL;
+        }
 
-	if (next_path_element == NULL)
-	    break;
+        if (next_path_element == NULL)
+            break;
 
-	/* Create missing interior node */
-	if (next_node == NULL) {
-	    heim_dict_t new_node;
+        /* Create missing interior node */
+        if (next_node == NULL) {
+            heim_dict_t new_node;
 
-	    new_node = heim_dict_create(size); /* no arrays or DBs, just dicts */
-	    if (new_node == NULL) {
-		ret = ENOMEM;
-		goto err;
-	    }
+            new_node = heim_dict_create(size); /* no arrays or DBs, just dicts */
+            if (new_node == NULL) {
+                ret = ENOMEM;
+                goto err;
+            }
 
-	    if (node_type == HEIM_TID_DICT) {
-		ret = heim_dict_set_value(node, path_element, new_node);
-		next_node = heim_dict_get_value(node, path_element);
-	    } else if (node_type == HEIM_TID_ARRAY &&
-		heim_number_get_int(path_element) <= heim_array_get_length(node)) {
-		ret = heim_array_insert_value(node,
-					      heim_number_get_int(path_element),
-					      new_node);
-		next_node = heim_array_get_value(node, idx);
-	    } else {
-		ret = EINVAL;
-		if (error)
-		    *error = heim_error_create(ret, "Node in path not a "
-					       "container");
-	    }
+            if (node_type == HEIM_TID_DICT) {
+                ret = heim_dict_set_value(node, path_element, new_node);
+                next_node = heim_dict_get_value(node, path_element);
+            } else if (node_type == HEIM_TID_ARRAY &&
+                heim_number_get_int(path_element) <= heim_array_get_length(node)) {
+                ret = heim_array_insert_value(node,
+                                              heim_number_get_int(path_element),
+                                              new_node);
+                next_node = heim_array_get_value(node, idx);
+            } else {
+                ret = EINVAL;
+                if (error)
+                    *error = heim_error_create(ret, "Node in path not a "
+                                               "container");
+            }
 
-	    heim_release(new_node);
-	    if (ret)
-		goto err;
-	}
+            heim_release(new_node);
+            if (ret)
+                goto err;
+        }
 
-	path_element = next_path_element;
-	node = next_node;
-	next_node = NULL;
+        path_element = next_path_element;
+        node = next_node;
+        next_node = NULL;
     }
 
     if (path_element == NULL)
-	goto err;
+        goto err;
 
     /* Add the leaf */
     if (leaf != NULL) {
-	if (node_type == HEIM_TID_DICT)
-	    ret = heim_dict_set_value(node, path_element, leaf);
-	else
-	    ret = heim_array_insert_value(node,
-					  heim_number_get_int(path_element),
-					  leaf);
+        if (node_type == HEIM_TID_DICT)
+            ret = heim_dict_set_value(node, path_element, leaf);
+        else
+            ret = heim_array_insert_value(node,
+                                          heim_number_get_int(path_element),
+                                          leaf);
     }
     return ret;
 
 err:
     if (error && !*error) {
-	if (ret == ENOMEM)
-	    *error = heim_error_create_enomem();
-	else
-	    *error = heim_error_create(ret, "Could not set "
-				       "dict value");
+        if (ret == ENOMEM)
+            *error = heim_error_create_enomem();
+        else
+            *error = heim_error_create(ret, "Could not set "
+                                       "dict value");
     }
     return ret;
 }
@@ -1043,7 +1043,7 @@ err:
 
 int
 heim_path_create(heim_object_t ptr, size_t size, heim_object_t leaf,
-		 heim_error_t *error, ...)
+                 heim_error_t *error, ...)
 {
     va_list ap;
     int ret;
@@ -1071,13 +1071,13 @@ heim_path_vdelete(heim_object_t ptr, heim_error_t *error, va_list ap)
 
     child = heim_path_vget2(ptr, &parent, &key, error, ap);
     if (child != NULL) {
-	if (heim_get_tid(parent) == HEIM_TID_DICT)
-	    heim_dict_delete_key(parent, key);
-	else if (heim_get_tid(parent) == HEIM_TID_DB)
-	    heim_db_delete_key(parent, NULL, key, error);
-	else if (heim_get_tid(parent) == HEIM_TID_ARRAY)
-	    heim_array_delete_value(parent, heim_number_get_int(key));
-	heim_release(child);
+        if (heim_get_tid(parent) == HEIM_TID_DICT)
+            heim_dict_delete_key(parent, key);
+        else if (heim_get_tid(parent) == HEIM_TID_DB)
+            heim_db_delete_key(parent, NULL, key, error);
+        else if (heim_get_tid(parent) == HEIM_TID_ARRAY)
+            heim_array_delete_value(parent, heim_number_get_int(key));
+        heim_release(child);
     }
 }
 

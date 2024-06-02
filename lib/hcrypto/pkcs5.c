@@ -60,10 +60,10 @@
 
 int
 PKCS5_PBKDF2_HMAC(const void * password, size_t password_len,
-		  const void * salt, size_t salt_len,
-		  unsigned long iter,
-		  const EVP_MD *md,
-		  size_t keylen, void *key)
+                  const void * salt, size_t salt_len,
+                  unsigned long iter,
+                  const EVP_MD *md,
+                  size_t keylen, void *key)
 {
     size_t datalen, leftofkey, checksumsize;
     char *data, *tmpcksum;
@@ -74,14 +74,14 @@ PKCS5_PBKDF2_HMAC(const void * password, size_t password_len,
     unsigned int hmacsize;
 
     if (md == NULL)
-	return 0;
+        return 0;
 
     checksumsize = EVP_MD_size(md);
     datalen = salt_len + 4;
 
     tmpcksum = malloc(checksumsize + datalen);
     if (tmpcksum == NULL)
-	return 0;
+        return 0;
 
     data = &tmpcksum[checksumsize];
 
@@ -93,33 +93,33 @@ PKCS5_PBKDF2_HMAC(const void * password, size_t password_len,
     p = key;
 
     while (leftofkey) {
-	int len;
+        int len;
 
-	if (leftofkey > checksumsize)
-	    len = checksumsize;
-	else
-	    len = leftofkey;
+        if (leftofkey > checksumsize)
+            len = checksumsize;
+        else
+            len = leftofkey;
 
-	data[datalen - 4] = (keypart >> 24) & 0xff;
-	data[datalen - 3] = (keypart >> 16) & 0xff;
-	data[datalen - 2] = (keypart >> 8)  & 0xff;
-	data[datalen - 1] = (keypart)       & 0xff;
+        data[datalen - 4] = (keypart >> 24) & 0xff;
+        data[datalen - 3] = (keypart >> 16) & 0xff;
+        data[datalen - 2] = (keypart >> 8)  & 0xff;
+        data[datalen - 1] = (keypart)       & 0xff;
 
-	HMAC(md, password, password_len, data, datalen,
-	     tmpcksum, &hmacsize);
+        HMAC(md, password, password_len, data, datalen,
+             tmpcksum, &hmacsize);
 
-	memcpy(p, tmpcksum, len);
-	for (i = 1; i < iter; i++) {
-	    HMAC(md, password, password_len, tmpcksum, checksumsize,
-		 tmpcksum, &hmacsize);
+        memcpy(p, tmpcksum, len);
+        for (i = 1; i < iter; i++) {
+            HMAC(md, password, password_len, tmpcksum, checksumsize,
+                 tmpcksum, &hmacsize);
 
-	    for (j = 0; j < len; j++)
-		p[j] ^= tmpcksum[j];
-	}
+            for (j = 0; j < len; j++)
+                p[j] ^= tmpcksum[j];
+        }
 
-	p += len;
-	leftofkey -= len;
-	keypart++;
+        p += len;
+        leftofkey -= len;
+        keypart++;
     }
 
     free(tmpcksum);
@@ -144,10 +144,10 @@ PKCS5_PBKDF2_HMAC(const void * password, size_t password_len,
  */
 int
 PKCS5_PBKDF2_HMAC_SHA1(const void * password, size_t password_len,
-		       const void * salt, size_t salt_len,
-		       unsigned long iter,
-		       size_t keylen, void *key)
+                       const void * salt, size_t salt_len,
+                       unsigned long iter,
+                       size_t keylen, void *key)
 {
     return PKCS5_PBKDF2_HMAC(password, password_len, salt, salt_len, iter,
-			     EVP_sha1(), keylen, key);
+                             EVP_sha1(), keylen, key);
 }

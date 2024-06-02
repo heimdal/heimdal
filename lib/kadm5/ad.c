@@ -117,10 +117,10 @@ static Sockbuf_IO ldap_tsasl_io = {
 #ifdef HAVE_TSASL
 static int
 ldap_tsasl_bind_s(LDAP *ld,
-		  LDAP_CONST char *dn,
-		  LDAPControl **serverControls,
-		  LDAPControl **clientControls,
-		  const char *host)
+                  LDAP_CONST char *dn,
+                  LDAPControl **serverControls,
+                  LDAPControl **clientControls,
+                  const char *host)
 {
     char *attrs[] = { "supportedSASLMechanisms", NULL };
     struct tsasl_peer *peer = NULL;
@@ -132,90 +132,90 @@ ldap_tsasl_bind_s(LDAP *ld,
     int ret, rc;
 
     ret = tsasl_peer_init(TSASL_FLAGS_INITIATOR | TSASL_FLAGS_CLEAR,
-			  "ldap", host, &peer);
+                          "ldap", host, &peer);
     if (ret != TSASL_DONE) {
-	rc = LDAP_LOCAL_ERROR;
-	goto out;
+        rc = LDAP_LOCAL_ERROR;
+        goto out;
     }
 
     rc = ldap_search_s(ld, "", LDAP_SCOPE_BASE, NULL, attrs, 0, &m0);
     if (rc != LDAP_SUCCESS)
-	goto out;
+        goto out;
 
     m = ldap_first_entry(ld, m0);
     if (m == NULL) {
-	ldap_msgfree(m0);
-	goto out;
+        ldap_msgfree(m0);
+        goto out;
     }
 
     vals = ldap_get_values(ld, m, "supportedSASLMechanisms");
     if (vals == NULL) {
-	ldap_msgfree(m0);
-	goto out;
+        ldap_msgfree(m0);
+        goto out;
     }
 
     ret = tsasl_find_best_mech(peer, vals, &mech);
     if (ret) {
-	ldap_msgfree(m0);
-	goto out;
+        ldap_msgfree(m0);
+        goto out;
     }
 
     ldap_msgfree(m0);
 
     ret = tsasl_select_mech(peer, mech);
     if (ret != TSASL_DONE) {
-	rc = LDAP_LOCAL_ERROR;
-	goto out;
+        rc = LDAP_LOCAL_ERROR;
+        goto out;
     }
 
     in.tb_data = NULL;
     in.tb_size = 0;
 
     do {
-	ret = tsasl_request(peer, &in, &out);
-	if (in.tb_size != 0) {
-	    free(in.tb_data);
-	    in.tb_data = NULL;
-	    in.tb_size = 0;
-	}
-	if (ret != TSASL_DONE && ret != TSASL_CONTINUE) {
-	    rc = LDAP_AUTH_UNKNOWN;
-	    goto out;
-	}
+        ret = tsasl_request(peer, &in, &out);
+        if (in.tb_size != 0) {
+            free(in.tb_data);
+            in.tb_data = NULL;
+            in.tb_size = 0;
+        }
+        if (ret != TSASL_DONE && ret != TSASL_CONTINUE) {
+            rc = LDAP_AUTH_UNKNOWN;
+            goto out;
+        }
 
-	ccred.bv_val = out.tb_data;
-	ccred.bv_len = out.tb_size;
+        ccred.bv_val = out.tb_data;
+        ccred.bv_len = out.tb_size;
 
-	rc = ldap_sasl_bind_s(ld, dn, mech, &ccred,
-			      serverControls, clientControls, &scred);
-	tsasl_buffer_free(&out);
+        rc = ldap_sasl_bind_s(ld, dn, mech, &ccred,
+                              serverControls, clientControls, &scred);
+        tsasl_buffer_free(&out);
 
-	if (rc != LDAP_SUCCESS && rc != LDAP_SASL_BIND_IN_PROGRESS) {
-	    if(scred && scred->bv_len)
-		ber_bvfree(scred);
-	    goto out;
-	}
+        if (rc != LDAP_SUCCESS && rc != LDAP_SASL_BIND_IN_PROGRESS) {
+            if(scred && scred->bv_len)
+                ber_bvfree(scred);
+            goto out;
+        }
 
-	in.tb_data = malloc(scred->bv_len);
-	if (in.tb_data == NULL) {
-	    rc = LDAP_LOCAL_ERROR;
-	    goto out;
-	}
-	memcpy(in.tb_data, scred->bv_val, scred->bv_len);
-	in.tb_size = scred->bv_len;
-	ber_bvfree(scred);
+        in.tb_data = malloc(scred->bv_len);
+        if (in.tb_data == NULL) {
+            rc = LDAP_LOCAL_ERROR;
+            goto out;
+        }
+        memcpy(in.tb_data, scred->bv_val, scred->bv_len);
+        in.tb_size = scred->bv_len;
+        ber_bvfree(scred);
 
     } while (rc == LDAP_SASL_BIND_IN_PROGRESS);
 
- out:
+out:
     if (rc == LDAP_SUCCESS) {
 #if 0
-	ber_sockbuf_add_io(ld->ld_conns->lconn_sb, &ldap_tsasl_io,
-			   LBER_SBIOD_LEVEL_APPLICATION, peer);
+        ber_sockbuf_add_io(ld->ld_conns->lconn_sb, &ldap_tsasl_io,
+                           LBER_SBIOD_LEVEL_APPLICATION, peer);
 
 #endif
     } else if (peer != NULL)
-	tsasl_peer_free(peer);
+        tsasl_peer_free(peer);
 
     return rc;
 }
@@ -226,18 +226,18 @@ static int
 check_ldap(kadm5_ad_context *context, int ret)
 {
     switch (ret) {
-    case LDAP_SUCCESS:
-	return 0;
-    case LDAP_SERVER_DOWN: {
-	LDAP *lp = CTX2LP(context);
-	ldap_unbind(lp);
-	context->ldap_conn = NULL;
-	free(context->base_dn);
-	context->base_dn = NULL;
-	return 1;
-    }
-    default:
-	return 1;
+        case LDAP_SUCCESS:
+            return 0;
+        case LDAP_SERVER_DOWN: {
+            LDAP *lp = CTX2LP(context);
+            ldap_unbind(lp);
+            context->ldap_conn = NULL;
+            free(context->base_dn);
+            context->base_dn = NULL;
+            return 1;
+        }
+        default:
+            return 1;
     }
 }
 
@@ -251,7 +251,7 @@ laddattr(char ***al, int *attrlen, char *attr)
     char **a;
     a = realloc(*al, (*attrlen + 2) * sizeof(**al));
     if (a == NULL)
-	return;
+        return;
     a[*attrlen] = attr;
     a[*attrlen + 1] = NULL;
     (*attrlen)++;
@@ -263,145 +263,145 @@ _kadm5_ad_connect(void *server_handle)
 {
     kadm5_ad_context *context = server_handle;
     struct {
-	char *server;
-	int port;
+        char *server;
+        int port;
     } *s, *servers = NULL;
     int i, num_servers = 0;
 
     if (context->ldap_conn)
-	return 0;
+        return 0;
 
     {
-	struct dns_reply *r;
-	struct resource_record *rr;
-	char *domain;
+        struct dns_reply *r;
+        struct resource_record *rr;
+        char *domain;
 
-	asprintf(&domain, "_ldap._tcp.%s", context->realm);
-	if (domain == NULL) {
-	    krb5_set_error_message(context->context, KADM5_NO_SRV, "malloc");
-	    return KADM5_NO_SRV;
-	}
+        asprintf(&domain, "_ldap._tcp.%s", context->realm);
+        if (domain == NULL) {
+            krb5_set_error_message(context->context, KADM5_NO_SRV, "malloc");
+            return KADM5_NO_SRV;
+        }
 
-	r = dns_lookup(domain, "SRV");
-	free(domain);
-	if (r == NULL) {
-	    krb5_set_error_message(context->context, KADM5_NO_SRV, "Didn't find ldap dns");
-	    return KADM5_NO_SRV;
-	}
+        r = dns_lookup(domain, "SRV");
+        free(domain);
+        if (r == NULL) {
+            krb5_set_error_message(context->context, KADM5_NO_SRV, "Didn't find ldap dns");
+            return KADM5_NO_SRV;
+        }
 
-	for (rr = r->head ; rr != NULL; rr = rr->next) {
-	    if (rr->type != rk_ns_t_srv)
-		continue;
-	    s = realloc(servers, sizeof(*servers) * (num_servers + 1));
-	    if (s == NULL) {
-		krb5_set_error_message(context->context, KADM5_RPC_ERROR, "malloc");
-		dns_free_data(r);
-		goto fail;
-	    }
-	    servers = s;
-	    num_servers++;
-	    servers[num_servers - 1].port =  rr->u.srv->port;
-	    servers[num_servers - 1].server =  strdup(rr->u.srv->target);
-	}
-	dns_free_data(r);
+        for (rr = r->head ; rr != NULL; rr = rr->next) {
+            if (rr->type != rk_ns_t_srv)
+                continue;
+            s = realloc(servers, sizeof(*servers) * (num_servers + 1));
+            if (s == NULL) {
+                krb5_set_error_message(context->context, KADM5_RPC_ERROR, "malloc");
+                dns_free_data(r);
+                goto fail;
+            }
+            servers = s;
+            num_servers++;
+            servers[num_servers - 1].port =  rr->u.srv->port;
+            servers[num_servers - 1].server =  strdup(rr->u.srv->target);
+        }
+        dns_free_data(r);
     }
 
     if (num_servers == 0) {
-	krb5_set_error_message(context->context, KADM5_NO_SRV, "No AD server found in DNS");
-	return KADM5_NO_SRV;
+        krb5_set_error_message(context->context, KADM5_NO_SRV, "No AD server found in DNS");
+        return KADM5_NO_SRV;
     }
 
     for (i = 0; i < num_servers; i++) {
-	int lret, version = LDAP_VERSION3;
-	LDAP *lp;
+        int lret, version = LDAP_VERSION3;
+        LDAP *lp;
 
-	lp = ldap_init(servers[i].server, servers[i].port);
-	if (lp == NULL)
-	    continue;
+        lp = ldap_init(servers[i].server, servers[i].port);
+        if (lp == NULL)
+            continue;
 
-	if (ldap_set_option(lp, LDAP_OPT_PROTOCOL_VERSION, &version)) {
-	    ldap_unbind(lp);
-	    continue;
-	}
+        if (ldap_set_option(lp, LDAP_OPT_PROTOCOL_VERSION, &version)) {
+            ldap_unbind(lp);
+            continue;
+        }
 
-	if (ldap_set_option(lp, LDAP_OPT_REFERRALS, LDAP_OPT_OFF)) {
-	    ldap_unbind(lp);
-	    continue;
-	}
+        if (ldap_set_option(lp, LDAP_OPT_REFERRALS, LDAP_OPT_OFF)) {
+            ldap_unbind(lp);
+            continue;
+        }
 
 #ifdef HAVE_TSASL
-	lret = ldap_tsasl_bind_s(lp, NULL, NULL, NULL, servers[i].server);
+        lret = ldap_tsasl_bind_s(lp, NULL, NULL, NULL, servers[i].server);
 
 #else
-	lret = ldap_sasl_interactive_bind_s(lp, NULL, NULL, NULL, NULL,
-					    LDAP_SASL_QUIET,
-					    sasl_interact, NULL);
+        lret = ldap_sasl_interactive_bind_s(lp, NULL, NULL, NULL, NULL,
+                                            LDAP_SASL_QUIET,
+                                            sasl_interact, NULL);
 #endif
-	if (lret != LDAP_SUCCESS) {
-	    krb5_set_error_message(context->context, 0,
-				   "Couldn't contact any AD servers: %s",
-				   ldap_err2string(lret));
-	    ldap_unbind(lp);
-	    continue;
-	}
+        if (lret != LDAP_SUCCESS) {
+            krb5_set_error_message(context->context, 0,
+                                   "Couldn't contact any AD servers: %s",
+                                   ldap_err2string(lret));
+            ldap_unbind(lp);
+            continue;
+        }
 
-	context->ldap_conn = lp;
-	break;
+        context->ldap_conn = lp;
+        break;
     }
     if (i >= num_servers) {
-	goto fail;
+        goto fail;
     }
 
     {
-	LDAPMessage *m, *m0;
-	char **attr = NULL;
-	int attrlen = 0;
-	char **vals;
-	int ret;
+        LDAPMessage *m, *m0;
+        char **attr = NULL;
+        int attrlen = 0;
+        char **vals;
+        int ret;
 
-	laddattr(&attr, &attrlen, "defaultNamingContext");
+        laddattr(&attr, &attrlen, "defaultNamingContext");
 
-	ret = ldap_search_s(CTX2LP(context), "", LDAP_SCOPE_BASE,
-			    "objectclass=*", attr, 0, &m);
-	free(attr);
-	if (check_ldap(context, ret))
-	    goto fail;
+        ret = ldap_search_s(CTX2LP(context), "", LDAP_SCOPE_BASE,
+                            "objectclass=*", attr, 0, &m);
+        free(attr);
+        if (check_ldap(context, ret))
+            goto fail;
 
-	if (ldap_count_entries(CTX2LP(context), m) > 0) {
-	    m0 = ldap_first_entry(CTX2LP(context), m);
-	    if (m0 == NULL) {
-		krb5_set_error_message(context->context, KADM5_RPC_ERROR,
-				       "Error in AD ldap responce");
-		ldap_msgfree(m);
-		goto fail;
-	    }
-	    vals = ldap_get_values(CTX2LP(context),
-				   m0, "defaultNamingContext");
-	    if (vals == NULL) {
-		krb5_set_error_message(context->context, KADM5_RPC_ERROR,
-				       "No naming context found");
-		goto fail;
-	    }
-	    context->base_dn = strdup(vals[0]);
-	} else
-	    goto fail;
-	ldap_msgfree(m);
+        if (ldap_count_entries(CTX2LP(context), m) > 0) {
+            m0 = ldap_first_entry(CTX2LP(context), m);
+            if (m0 == NULL) {
+                krb5_set_error_message(context->context, KADM5_RPC_ERROR,
+                                       "Error in AD ldap responce");
+                ldap_msgfree(m);
+                goto fail;
+            }
+            vals = ldap_get_values(CTX2LP(context),
+                                   m0, "defaultNamingContext");
+            if (vals == NULL) {
+                krb5_set_error_message(context->context, KADM5_RPC_ERROR,
+                                       "No naming context found");
+                goto fail;
+            }
+            context->base_dn = strdup(vals[0]);
+        } else
+            goto fail;
+        ldap_msgfree(m);
     }
 
     for (i = 0; i < num_servers; i++)
-	free(servers[i].server);
+        free(servers[i].server);
     free(servers);
 
     return 0;
 
- fail:
+fail:
     for (i = 0; i < num_servers; i++)
-	free(servers[i].server);
+        free(servers[i].server);
     free(servers);
 
     if (context->ldap_conn) {
-	ldap_unbind(CTX2LP(context));
-	context->ldap_conn = NULL;
+        ldap_unbind(CTX2LP(context));
+        context->ldap_conn = NULL;
     }
     return KADM5_RPC_ERROR;
 }
@@ -415,7 +415,7 @@ nt2unixtime(const char *str)
     t = strtoll(str, NULL, 10);
     t = ((t - NTTIME_EPOCH) / (long long)10000000);
     if (t > (((time_t)(~(long long)0)) >> 1))
-	return 0;
+        return 0;
     return (time_t)t;
 }
 
@@ -431,9 +431,9 @@ unix2nttime(time_t unix_time)
 
 static int
 ad_find_entry(kadm5_ad_context *context,
-	      const char *fqdn,
-	      const char *pn,
-	      char **name)
+              const char *fqdn,
+              const char *pn,
+              char **name)
 {
     LDAPMessage *m, *m0;
     char *attr[] = { "distinguishedName", NULL };
@@ -441,37 +441,37 @@ ad_find_entry(kadm5_ad_context *context,
     int ret;
 
     if (name)
-	*name = NULL;
+        *name = NULL;
 
     if (fqdn)
-	asprintf(&filter,
-		 "(&(objectClass=computer)(|(dNSHostName=%s)(servicePrincipalName=%s)))",
-		 fqdn, pn);
+        asprintf(&filter,
+                 "(&(objectClass=computer)(|(dNSHostName=%s)(servicePrincipalName=%s)))",
+                 fqdn, pn);
     else if(pn)
-	asprintf(&filter, "(&(objectClass=account)(userPrincipalName=%s))", pn);
+        asprintf(&filter, "(&(objectClass=account)(userPrincipalName=%s))", pn);
     else
-	return KADM5_RPC_ERROR;
+        return KADM5_RPC_ERROR;
 
     ret = ldap_search_s(CTX2LP(context), CTX2BASE(context),
-			LDAP_SCOPE_SUBTREE,
-			filter, attr, 0, &m);
+                        LDAP_SCOPE_SUBTREE,
+                        filter, attr, 0, &m);
     free(filter);
     if (check_ldap(context, ret))
-	return KADM5_RPC_ERROR;
+        return KADM5_RPC_ERROR;
 
     if (ldap_count_entries(CTX2LP(context), m) > 0) {
-	char **vals;
-	m0 = ldap_first_entry(CTX2LP(context), m);
-	vals = ldap_get_values(CTX2LP(context), m0, "distinguishedName");
-	if (vals == NULL || vals[0] == NULL) {
-	    ldap_msgfree(m);
-	    return KADM5_RPC_ERROR;
-	}
-	if (name)
-	    *name = strdup(vals[0]);
-	ldap_msgfree(m);
+        char **vals;
+        m0 = ldap_first_entry(CTX2LP(context), m);
+        vals = ldap_get_values(CTX2LP(context), m0, "distinguishedName");
+        if (vals == NULL || vals[0] == NULL) {
+            ldap_msgfree(m);
+            return KADM5_RPC_ERROR;
+        }
+        if (name)
+            *name = strdup(vals[0]);
+        ldap_msgfree(m);
     } else
-	return KADM5_UNK_PRINC;
+        return KADM5_UNK_PRINC;
 
     return 0;
 }
@@ -487,32 +487,32 @@ ad_get_cred(kadm5_ad_context *context, const char *password)
     int aret;
 
     if (context->ccache)
-	return 0;
+        return 0;
 
     aret = asprintf(&service, "%s/%s@%s", KRB5_TGS_NAME,
-		    context->realm, context->realm);
+                    context->realm, context->realm);
     if (aret == -1 || service == NULL)
-	return krb5_enomem(context->context);
+        return krb5_enomem(context->context);
 
     ret = _kadm5_c_get_cred_cache(context->context,
-				  context->client_name,
-				  service,
-				  password, krb5_prompter_posix,
-				  NULL, NULL, &cc);
+                                  context->client_name,
+                                  service,
+                                  password, krb5_prompter_posix,
+                                  NULL, NULL, &cc);
     free(service);
     if(ret)
-	return ret; /* XXX */
+        return ret; /* XXX */
     context->ccache = cc;
     return 0;
 }
 
 static kadm5_ret_t
 kadm5_ad_chpass_principal(void *server_handle,
-			  krb5_principal principal,
-			  int keepold,
-			  int n_ks_tuple,
-			  krb5_key_salt_tuple *ks_tuple,
-			  const char *password)
+                          krb5_principal principal,
+                          int keepold,
+                          int n_ks_tuple,
+                          krb5_key_salt_tuple *ks_tuple,
+                          const char *password)
 {
     kadm5_ad_context *context = server_handle;
     krb5_data result_code_string, result_string;
@@ -520,25 +520,25 @@ kadm5_ad_chpass_principal(void *server_handle,
     kadm5_ret_t ret;
 
     if (keepold)
-	return KADM5_KEEPOLD_NOSUPP;
+        return KADM5_KEEPOLD_NOSUPP;
 
     if (n_ks_tuple > 0)
        return KADM5_KS_TUPLE_NOSUPP;
 
     ret = ad_get_cred(context, NULL);
     if (ret)
-	return ret;
+        return ret;
 
     krb5_data_zero (&result_code_string);
     krb5_data_zero (&result_string);
 
     ret = krb5_set_password_using_ccache (context->context,
-					  context->ccache,
-					  password,
-					  principal,
-					  &result_code,
-					  &result_code_string,
-					  &result_string);
+                                          context->ccache,
+                                          password,
+                                          principal,
+                                          &result_code,
+                                          &result_code_string,
+                                          &result_string);
 
     krb5_data_free (&result_code_string);
     krb5_data_free (&result_string);
@@ -557,11 +557,11 @@ get_fqdn(krb5_context context, const krb5_principal p)
 
     s = krb5_principal_get_comp_string(context, p, 0);
     if (p == NULL)
-	return NULL;
+        return NULL;
 
     for (i = 0; i < sizeof(hosttypes)/sizeof(hosttypes[0]); i++) {
-	if (strcasecmp(s, hosttypes[i]) == 0)
-	    return krb5_principal_get_comp_string(context, p, 1);
+        if (strcasecmp(s, hosttypes[i]) == 0)
+            return krb5_principal_get_comp_string(context, p, 1);
     }
     return 0;
 }
@@ -570,11 +570,11 @@ get_fqdn(krb5_context context, const krb5_principal p)
 
 static kadm5_ret_t
 kadm5_ad_create_principal(void *server_handle,
-			  kadm5_principal_ent_t entry,
-			  uint32_t mask,
-			  int n_ks_tuple,
-			  krb5_key_salt_tuple *ks_tuple,
-			  const char *password)
+                          kadm5_principal_ent_t entry,
+                          uint32_t mask,
+                          int n_ks_tuple,
+                          krb5_key_salt_tuple *ks_tuple,
+                          const char *password)
 {
     kadm5_ad_context *context = server_handle;
 
@@ -587,9 +587,9 @@ kadm5_ad_create_principal(void *server_handle,
 #ifdef OPENLDAP
     LDAPMod *attrs[8], rattrs[7], *a;
     char *useraccvals[2] = { NULL, NULL },
-	*samvals[2], *dnsvals[2], *spnvals[5], *upnvals[2], *tv[2];
+        *samvals[2], *dnsvals[2], *spnvals[5], *upnvals[2], *tv[2];
     char *ocvals_spn[] = { "top", "person", "organizationalPerson",
-			   "user", "computer", NULL};
+                           "user", "computer", NULL};
     char *p, *realmless_p, *p_msrealm = NULL, *dn = NULL;
     const char *fqdn;
     char *s, *samname = NULL, *short_spn = NULL;
@@ -597,7 +597,7 @@ kadm5_ad_create_principal(void *server_handle,
     int32_t uf_flags = 0;
 
     if ((mask & KADM5_PRINCIPAL) == 0)
-	return KADM5_BAD_MASK;
+        return KADM5_BAD_MASK;
 
     /*
      * We should get around to implementing this...  At the moment, the
@@ -605,206 +605,206 @@ kadm5_ad_create_principal(void *server_handle,
      * been updated.
      */
     if (n_ks_tuple > 0)
-       return KADM5_KS_TUPLE_NOSUPP;
+        return KADM5_KS_TUPLE_NOSUPP;
 
     for (i = 0; i < sizeof(rattrs)/sizeof(rattrs[0]); i++)
-	attrs[i] = &rattrs[i];
+        attrs[i] = &rattrs[i];
     attrs[i] = NULL;
 
     ret = ad_get_cred(context, NULL);
     if (ret)
-	return ret;
+        return ret;
 
     ret = _kadm5_ad_connect(server_handle);
     if (ret)
-	return ret;
+        return ret;
 
     fqdn = get_fqdn(context->context, entry->principal);
 
     ret = krb5_unparse_name(context->context, entry->principal, &p);
     if (ret)
-	return ret;
+        return ret;
 
     if (ad_find_entry(context, fqdn, p, NULL) == 0) {
-	free(p);
-	return KADM5_DUP;
+        free(p);
+        return KADM5_DUP;
     }
 
     if (mask & KADM5_ATTRIBUTES) {
-	if (entry->attributes & KRB5_KDB_DISALLOW_ALL_TIX)
-	    uf_flags |= UF_ACCOUNTDISABLE|UF_LOCKOUT;
-	if ((entry->attributes & KRB5_KDB_REQUIRES_PRE_AUTH) == 0)
-	    uf_flags |= UF_DONT_REQUIRE_PREAUTH;
-	if (entry->attributes & KRB5_KDB_REQUIRES_HW_AUTH)
-	    uf_flags |= UF_SMARTCARD_REQUIRED;
+        if (entry->attributes & KRB5_KDB_DISALLOW_ALL_TIX)
+            uf_flags |= UF_ACCOUNTDISABLE|UF_LOCKOUT;
+        if ((entry->attributes & KRB5_KDB_REQUIRES_PRE_AUTH) == 0)
+            uf_flags |= UF_DONT_REQUIRE_PREAUTH;
+        if (entry->attributes & KRB5_KDB_REQUIRES_HW_AUTH)
+            uf_flags |= UF_SMARTCARD_REQUIRED;
     }
 
     realmless_p = strdup(p);
     if (realmless_p == NULL) {
-	ret = krb5_enomem(context->context);
-	goto out;
+        ret = krb5_enomem(context->context);
+        goto out;
     }
     s = strrchr(realmless_p, '@');
     if (s)
-	*s = '\0';
+        *s = '\0';
 
     if (fqdn) {
-	/* create computer account */
-	asprintf(&samname, "%s$", fqdn);
-	if (samname == NULL) {
-	    ret = krb5_enomem(context->context);
-	    goto out;
-	}
-	s = strchr(samname, '.');
-	if (s) {
-	    s[0] = '$';
-	    s[1] = '\0';
-	}
+        /* create computer account */
+        asprintf(&samname, "%s$", fqdn);
+        if (samname == NULL) {
+            ret = krb5_enomem(context->context);
+            goto out;
+        }
+        s = strchr(samname, '.');
+        if (s) {
+            s[0] = '$';
+            s[1] = '\0';
+        }
 
-	short_spn = strdup(p);
-	if (short_spn == NULL) {
-	    ret = krb5_enomem(context->context);
-	    goto out;
-	}
-	s = strchr(short_spn, '.');
-	if (s) {
-	    *s = '\0';
-	} else {
-	    free(short_spn);
-	    short_spn = NULL;
-	}
+        short_spn = strdup(p);
+        if (short_spn == NULL) {
+            ret = krb5_enomem(context->context);
+            goto out;
+        }
+        s = strchr(short_spn, '.');
+        if (s) {
+            *s = '\0';
+        } else {
+            free(short_spn);
+            short_spn = NULL;
+        }
 
-	p_msrealm = strdup(p);
-	if (p_msrealm == NULL) {
-	    ret = krb5_enomem(context->context);
-	    goto out;
-	}
-	s = strrchr(p_msrealm, '@');
-	if (s) {
-	    *s = '/';
-	} else {
-	    free(p_msrealm);
-	    p_msrealm = NULL;
-	}
+        p_msrealm = strdup(p);
+        if (p_msrealm == NULL) {
+            ret = krb5_enomem(context->context);
+            goto out;
+        }
+        s = strrchr(p_msrealm, '@');
+        if (s) {
+            *s = '/';
+        } else {
+            free(p_msrealm);
+            p_msrealm = NULL;
+        }
 
-	asprintf(&dn, "cn=%s, cn=Computers, %s", fqdn, CTX2BASE(context));
-	if (dn == NULL) {
-	    ret = krb5_enomem(context->context);
-	    goto out;
-	}
+        asprintf(&dn, "cn=%s, cn=Computers, %s", fqdn, CTX2BASE(context));
+        if (dn == NULL) {
+            ret = krb5_enomem(context->context);
+            goto out;
+        }
 
-	a = &rattrs[0];
-	a->mod_op = LDAP_MOD_ADD;
-	a->mod_type = "objectClass";
-	a->mod_values = ocvals_spn;
-	a++;
+        a = &rattrs[0];
+        a->mod_op = LDAP_MOD_ADD;
+        a->mod_type = "objectClass";
+        a->mod_values = ocvals_spn;
+        a++;
 
-	a->mod_op = LDAP_MOD_ADD;
-	a->mod_type = "userAccountControl";
-	a->mod_values = useraccvals;
-	asprintf(&useraccvals[0], "%d",
-		 uf_flags |
-		 UF_PASSWD_NOT_EXPIRE |
-		 UF_WORKSTATION_TRUST_ACCOUNT);
-	useraccvals[1] = NULL;
-	a++;
+        a->mod_op = LDAP_MOD_ADD;
+        a->mod_type = "userAccountControl";
+        a->mod_values = useraccvals;
+        asprintf(&useraccvals[0], "%d",
+                 uf_flags |
+                 UF_PASSWD_NOT_EXPIRE |
+                 UF_WORKSTATION_TRUST_ACCOUNT);
+        useraccvals[1] = NULL;
+        a++;
 
-	a->mod_op = LDAP_MOD_ADD;
-	a->mod_type = "sAMAccountName";
-	a->mod_values = samvals;
-	samvals[0] = samname;
-	samvals[1] = NULL;
-	a++;
+        a->mod_op = LDAP_MOD_ADD;
+        a->mod_type = "sAMAccountName";
+        a->mod_values = samvals;
+        samvals[0] = samname;
+        samvals[1] = NULL;
+        a++;
 
-	a->mod_op = LDAP_MOD_ADD;
-	a->mod_type = "dNSHostName";
-	a->mod_values = dnsvals;
-	dnsvals[0] = (char *)fqdn;
-	dnsvals[1] = NULL;
-	a++;
+        a->mod_op = LDAP_MOD_ADD;
+        a->mod_type = "dNSHostName";
+        a->mod_values = dnsvals;
+        dnsvals[0] = (char *)fqdn;
+        dnsvals[1] = NULL;
+        a++;
 
-	/* XXX  add even more spn's */
-	a->mod_op = LDAP_MOD_ADD;
-	a->mod_type = "servicePrincipalName";
-	a->mod_values = spnvals;
-	i = 0;
-	spnvals[i++] = p;
-	spnvals[i++] = realmless_p;
-	if (short_spn)
-	    spnvals[i++] = short_spn;
-	if (p_msrealm)
-	    spnvals[i++] = p_msrealm;
-	spnvals[i++] = NULL;
-	a++;
+        /* XXX  add even more spn's */
+        a->mod_op = LDAP_MOD_ADD;
+        a->mod_type = "servicePrincipalName";
+        a->mod_values = spnvals;
+        i = 0;
+        spnvals[i++] = p;
+        spnvals[i++] = realmless_p;
+        if (short_spn)
+            spnvals[i++] = short_spn;
+        if (p_msrealm)
+            spnvals[i++] = p_msrealm;
+        spnvals[i++] = NULL;
+        a++;
 
-	a->mod_op = LDAP_MOD_ADD;
-	a->mod_type = "userPrincipalName";
-	a->mod_values = upnvals;
-	upnvals[0] = p;
-	upnvals[1] = NULL;
-	a++;
+        a->mod_op = LDAP_MOD_ADD;
+        a->mod_type = "userPrincipalName";
+        a->mod_values = upnvals;
+        upnvals[0] = p;
+        upnvals[1] = NULL;
+        a++;
 
-	a->mod_op = LDAP_MOD_ADD;
-	a->mod_type = "accountExpires";
-	a->mod_values = tv;
-	tv[0] = "9223372036854775807"; /* "never" */
-	tv[1] = NULL;
-	a++;
+        a->mod_op = LDAP_MOD_ADD;
+        a->mod_type = "accountExpires";
+        a->mod_values = tv;
+        tv[0] = "9223372036854775807"; /* "never" */
+        tv[1] = NULL;
+        a++;
 
     } else {
-	/* create user account */
+        /* create user account */
 
-	a = &rattrs[0];
-	a->mod_op = LDAP_MOD_ADD;
-	a->mod_type = "userAccountControl";
-	a->mod_values = useraccvals;
-	asprintf(&useraccvals[0], "%d",
-		 uf_flags |
-		 UF_PASSWD_NOT_EXPIRE);
-	useraccvals[1] = NULL;
-	a++;
+        a = &rattrs[0];
+        a->mod_op = LDAP_MOD_ADD;
+        a->mod_type = "userAccountControl";
+        a->mod_values = useraccvals;
+        asprintf(&useraccvals[0], "%d",
+                 uf_flags |
+                 UF_PASSWD_NOT_EXPIRE);
+        useraccvals[1] = NULL;
+        a++;
 
-	a->mod_op = LDAP_MOD_ADD;
-	a->mod_type = "sAMAccountName";
-	a->mod_values = samvals;
-	samvals[0] = realmless_p;
-	samvals[1] = NULL;
-	a++;
+        a->mod_op = LDAP_MOD_ADD;
+        a->mod_type = "sAMAccountName";
+        a->mod_values = samvals;
+        samvals[0] = realmless_p;
+        samvals[1] = NULL;
+        a++;
 
-	a->mod_op = LDAP_MOD_ADD;
-	a->mod_type = "userPrincipalName";
-	a->mod_values = upnvals;
-	upnvals[0] = p;
-	upnvals[1] = NULL;
-	a++;
+        a->mod_op = LDAP_MOD_ADD;
+        a->mod_type = "userPrincipalName";
+        a->mod_values = upnvals;
+        upnvals[0] = p;
+        upnvals[1] = NULL;
+        a++;
 
-	a->mod_op = LDAP_MOD_ADD;
-	a->mod_type = "accountExpires";
-	a->mod_values = tv;
-	tv[0] = "9223372036854775807"; /* "never" */
-	tv[1] = NULL;
-	a++;
+        a->mod_op = LDAP_MOD_ADD;
+        a->mod_type = "accountExpires";
+        a->mod_values = tv;
+        tv[0] = "9223372036854775807"; /* "never" */
+        tv[1] = NULL;
+        a++;
     }
 
     attrs[a - &rattrs[0]] = NULL;
 
     ret = ldap_add_s(CTX2LP(context), dn, attrs);
 
- out:
+out:
     if (useraccvals[0])
-	free(useraccvals[0]);
+        free(useraccvals[0]);
     if (realmless_p)
-	free(realmless_p);
+        free(realmless_p);
     if (samname)
-	free(samname);
+        free(samname);
     if (short_spn)
-	free(short_spn);
+        free(short_spn);
     if (p_msrealm)
-	free(p_msrealm);
+        free(p_msrealm);
     free(p);
 
     if (check_ldap(context, ret))
-	return KADM5_RPC_ERROR;
+        return KADM5_RPC_ERROR;
 
     return 0;
 #else
@@ -824,21 +824,21 @@ kadm5_ad_delete_principal(void *server_handle, krb5_principal principal)
 
     ret = ad_get_cred(context, NULL);
     if (ret)
-	return ret;
+        return ret;
 
     ret = _kadm5_ad_connect(server_handle);
     if (ret)
-	return ret;
+        return ret;
 
     fqdn = get_fqdn(context->context, principal);
 
     ret = krb5_unparse_name(context->context, principal, &p);
     if (ret)
-	return ret;
+        return ret;
 
     if (ad_find_entry(context, fqdn, p, &dn) != 0) {
-	free(p);
-	return KADM5_UNK_PRINC;
+        free(p);
+        return KADM5_UNK_PRINC;
     }
 
     ret = ldap_delete_s(CTX2LP(context), dn);
@@ -847,7 +847,7 @@ kadm5_ad_delete_principal(void *server_handle, krb5_principal principal)
     free(p);
 
     if (check_ldap(context, ret))
-	return KADM5_RPC_ERROR;
+        return KADM5_RPC_ERROR;
     return 0;
 #else
     krb5_set_error_message(context->context, KADM5_RPC_ERROR, "Function not implemented");
@@ -861,22 +861,22 @@ kadm5_ad_destroy(void *server_handle)
     kadm5_ad_context *context = server_handle;
 
     if (context->ccache)
-	krb5_cc_destroy(context->context, context->ccache);
+        krb5_cc_destroy(context->context, context->ccache);
 
 #ifdef OPENLDAP
     {
-	LDAP *lp = CTX2LP(context);
-	if (lp)
-	    ldap_unbind(lp);
-	if (context->base_dn)
-	    free(context->base_dn);
+        LDAP *lp = CTX2LP(context);
+        if (lp)
+            ldap_unbind(lp);
+        if (context->base_dn)
+            free(context->base_dn);
     }
 #endif
     free(context->realm);
     free(context->client_name);
     krb5_free_principal(context->context, context->caller);
     if(context->my_context)
-	krb5_free_context(context->context);
+        krb5_free_context(context->context);
     return 0;
 }
 
@@ -890,9 +890,9 @@ kadm5_ad_flush(void *server_handle)
 
 static kadm5_ret_t
 kadm5_ad_get_principal(void *server_handle,
-		       krb5_principal principal,
-		       kadm5_principal_ent_t entry,
-		       uint32_t mask)
+                       krb5_principal principal,
+                       kadm5_principal_ent_t entry,
+                       uint32_t mask)
 {
     kadm5_ad_context *context = server_handle;
 #ifdef OPENLDAP
@@ -914,11 +914,11 @@ kadm5_ad_get_principal(void *server_handle,
     memset(entry, 0, sizeof(*entry));
 
     if (mask & KADM5_KVNO)
-	laddattr(&attr, &attrlen, "msDS-KeyVersionNumber");
+        laddattr(&attr, &attrlen, "msDS-KeyVersionNumber");
 
     if (mask & KADM5_PRINCIPAL) {
-	laddattr(&attr, &attrlen, "userPrincipalName");
-	laddattr(&attr, &attrlen, "servicePrincipalName");
+        laddattr(&attr, &attrlen, "userPrincipalName");
+        laddattr(&attr, &attrlen, "servicePrincipalName");
     }
     laddattr(&attr, &attrlen, "objectClass");
     laddattr(&attr, &attrlen, "lastLogon");
@@ -934,99 +934,99 @@ kadm5_ad_get_principal(void *server_handle,
     /* replace @ in domain part with a / */
     q = strrchr(p, '@');
     if (q && (p != q && *(q - 1) != '\\'))
-	*q = '/';
+        *q = '/';
 
     asprintf(&filter,
-	     "(|(userPrincipalName=%s)(servicePrincipalName=%s)(servicePrincipalName=%s))",
-	     u, p, u);
+             "(|(userPrincipalName=%s)(servicePrincipalName=%s)(servicePrincipalName=%s))",
+             u, p, u);
     free(p);
     free(u);
 
     ret = ldap_search_s(CTX2LP(context), CTX2BASE(context),
-			LDAP_SCOPE_SUBTREE,
-			filter, attr, 0, &m);
+                        LDAP_SCOPE_SUBTREE,
+                        filter, attr, 0, &m);
     free(attr);
     if (check_ldap(context, ret))
-	return KADM5_RPC_ERROR;
+        return KADM5_RPC_ERROR;
 
     if (ldap_count_entries(CTX2LP(context), m) > 0) {
-	char **vals;
-	m0 = ldap_first_entry(CTX2LP(context), m);
-	if (m0 == NULL) {
-	    ldap_msgfree(m);
-	    goto fail;
-	}
+        char **vals;
+        m0 = ldap_first_entry(CTX2LP(context), m);
+        if (m0 == NULL) {
+            ldap_msgfree(m);
+            goto fail;
+        }
 #if 0
-	vals = ldap_get_values(CTX2LP(context), m0, "servicePrincipalName");
-	if (vals)
-	    printf("servicePrincipalName %s\n", vals[0]);
-	vals = ldap_get_values(CTX2LP(context), m0, "userPrincipalName");
-	if (vals)
-	    printf("userPrincipalName %s\n", vals[0]);
-	vals = ldap_get_values(CTX2LP(context), m0, "userAccountControl");
-	if (vals)
-	    printf("userAccountControl %s\n", vals[0]);
+        vals = ldap_get_values(CTX2LP(context), m0, "servicePrincipalName");
+        if (vals)
+            printf("servicePrincipalName %s\n", vals[0]);
+        vals = ldap_get_values(CTX2LP(context), m0, "userPrincipalName");
+        if (vals)
+            printf("userPrincipalName %s\n", vals[0]);
+        vals = ldap_get_values(CTX2LP(context), m0, "userAccountControl");
+        if (vals)
+            printf("userAccountControl %s\n", vals[0]);
 #endif
-	entry->princ_expire_time = 0;
-	if (mask & KADM5_PRINC_EXPIRE_TIME) {
-	    vals = ldap_get_values(CTX2LP(context), m0, "accountExpires");
-	    if (vals)
-		entry->princ_expire_time = nt2unixtime(vals[0]);
-	}
-	entry->last_success = 0;
-	if (mask & KADM5_LAST_SUCCESS) {
-	    vals = ldap_get_values(CTX2LP(context), m0, "lastLogon");
-	    if (vals)
-		entry->last_success = nt2unixtime(vals[0]);
-	}
-	if (mask & KADM5_LAST_FAILED) {
-	    vals = ldap_get_values(CTX2LP(context), m0, "badPasswordTime");
-	    if (vals)
-		entry->last_failed = nt2unixtime(vals[0]);
-	}
-	if (mask & KADM5_LAST_PWD_CHANGE) {
-	    vals = ldap_get_values(CTX2LP(context), m0, "pwdLastSet");
-	    if (vals)
-		entry->last_pwd_change = nt2unixtime(vals[0]);
-	}
-	if (mask & KADM5_FAIL_AUTH_COUNT) {
-	    vals = ldap_get_values(CTX2LP(context), m0, "badPwdCount");
-	    if (vals)
-		entry->fail_auth_count = atoi(vals[0]);
-	}
- 	if (mask & KADM5_ATTRIBUTES) {
-	    vals = ldap_get_values(CTX2LP(context), m0, "userAccountControl");
-	    if (vals) {
-		uint32_t i;
-		i = atoi(vals[0]);
-		if (i & (UF_ACCOUNTDISABLE|UF_LOCKOUT))
-		    entry->attributes |= KRB5_KDB_DISALLOW_ALL_TIX;
-		if ((i & UF_DONT_REQUIRE_PREAUTH) == 0)
-		    entry->attributes |= KRB5_KDB_REQUIRES_PRE_AUTH;
-		if (i & UF_SMARTCARD_REQUIRED)
-		    entry->attributes |= KRB5_KDB_REQUIRES_HW_AUTH;
-		if ((i & UF_WORKSTATION_TRUST_ACCOUNT) == 0)
-		    entry->attributes |= KRB5_KDB_DISALLOW_SVR;
-	    }
-	}
-	if (mask & KADM5_KVNO) {
-	    vals = ldap_get_values(CTX2LP(context), m0,
-				   "msDS-KeyVersionNumber");
-	    if (vals)
-		entry->kvno = atoi(vals[0]);
-	    else
-		entry->kvno = 0;
-	}
-	ldap_msgfree(m);
+        entry->princ_expire_time = 0;
+        if (mask & KADM5_PRINC_EXPIRE_TIME) {
+            vals = ldap_get_values(CTX2LP(context), m0, "accountExpires");
+            if (vals)
+                entry->princ_expire_time = nt2unixtime(vals[0]);
+        }
+        entry->last_success = 0;
+        if (mask & KADM5_LAST_SUCCESS) {
+            vals = ldap_get_values(CTX2LP(context), m0, "lastLogon");
+            if (vals)
+                entry->last_success = nt2unixtime(vals[0]);
+        }
+        if (mask & KADM5_LAST_FAILED) {
+            vals = ldap_get_values(CTX2LP(context), m0, "badPasswordTime");
+            if (vals)
+                entry->last_failed = nt2unixtime(vals[0]);
+        }
+        if (mask & KADM5_LAST_PWD_CHANGE) {
+            vals = ldap_get_values(CTX2LP(context), m0, "pwdLastSet");
+            if (vals)
+                entry->last_pwd_change = nt2unixtime(vals[0]);
+        }
+        if (mask & KADM5_FAIL_AUTH_COUNT) {
+            vals = ldap_get_values(CTX2LP(context), m0, "badPwdCount");
+            if (vals)
+                entry->fail_auth_count = atoi(vals[0]);
+        }
+        if (mask & KADM5_ATTRIBUTES) {
+            vals = ldap_get_values(CTX2LP(context), m0, "userAccountControl");
+            if (vals) {
+                uint32_t i;
+                i = atoi(vals[0]);
+                if (i & (UF_ACCOUNTDISABLE|UF_LOCKOUT))
+                    entry->attributes |= KRB5_KDB_DISALLOW_ALL_TIX;
+                if ((i & UF_DONT_REQUIRE_PREAUTH) == 0)
+                    entry->attributes |= KRB5_KDB_REQUIRES_PRE_AUTH;
+                if (i & UF_SMARTCARD_REQUIRED)
+                    entry->attributes |= KRB5_KDB_REQUIRES_HW_AUTH;
+                if ((i & UF_WORKSTATION_TRUST_ACCOUNT) == 0)
+                    entry->attributes |= KRB5_KDB_DISALLOW_SVR;
+            }
+        }
+        if (mask & KADM5_KVNO) {
+            vals = ldap_get_values(CTX2LP(context), m0,
+                                   "msDS-KeyVersionNumber");
+            if (vals)
+                entry->kvno = atoi(vals[0]);
+            else
+                entry->kvno = 0;
+        }
+        ldap_msgfree(m);
     } else {
-	return KADM5_UNK_PRINC;
+        return KADM5_UNK_PRINC;
     }
 
     if (mask & KADM5_PRINCIPAL)
-	krb5_copy_principal(context->context, principal, &entry->principal);
+        krb5_copy_principal(context->context, principal, &entry->principal);
 
     return 0;
- fail:
+fail:
     return KADM5_RPC_ERROR;
 #else
     krb5_set_error_message(context->context, KADM5_RPC_ERROR, "Function not implemented");
@@ -1036,9 +1036,9 @@ kadm5_ad_get_principal(void *server_handle,
 
 static kadm5_ret_t
 kadm5_ad_get_principals(void *server_handle,
-			const char *expression,
-			char ***principals,
-			int *count)
+                        const char *expression,
+                        char ***principals,
+                        int *count)
 {
     kadm5_ad_context *context = server_handle;
 
@@ -1051,11 +1051,11 @@ kadm5_ad_get_principals(void *server_handle,
 
     ret = ad_get_cred(context, NULL);
     if (ret)
-	return ret;
+        return ret;
 
     ret = _kadm5_ad_connect(server_handle);
     if (ret)
-	return ret;
+        return ret;
 
     krb5_set_error_message(context->context, KADM5_RPC_ERROR, "Function not implemented");
     return KADM5_RPC_ERROR;
@@ -1067,9 +1067,9 @@ kadm5_ad_get_principals(void *server_handle,
 
 static kadm5_ret_t
 kadm5_ad_iter_principals(void *server_handle,
-			 const char *expression,
-			 int (*cb)(void *, const char *),
-			 void *cbdata)
+                         const char *expression,
+                         int (*cb)(void *, const char *),
+                         void *cbdata)
 {
     kadm5_ad_context *context = server_handle;
 
@@ -1078,11 +1078,11 @@ kadm5_ad_iter_principals(void *server_handle,
 
     ret = ad_get_cred(context, NULL);
     if (ret)
-	return ret;
+        return ret;
 
     ret = _kadm5_ad_connect(server_handle);
     if (ret)
-	return ret;
+        return ret;
 
     krb5_set_error_message(context->context, KADM5_RPC_ERROR, "Function not implemented");
     return KADM5_RPC_ERROR;
@@ -1102,8 +1102,8 @@ kadm5_ad_get_privs(void *server_handle, uint32_t*privs)
 
 static kadm5_ret_t
 kadm5_ad_modify_principal(void *server_handle,
-			  kadm5_principal_ent_t entry,
-			  uint32_t mask)
+                          kadm5_principal_ent_t entry,
+                          uint32_t mask)
 {
     kadm5_ad_context *context = server_handle;
 
@@ -1127,20 +1127,20 @@ kadm5_ad_modify_principal(void *server_handle,
     int i;
 
     for (i = 0; i < sizeof(rattrs)/sizeof(rattrs[0]); i++)
-	attrs[i] = &rattrs[i];
+        attrs[i] = &rattrs[i];
     attrs[i] = NULL;
     a = &rattrs[0];
 
     ret = _kadm5_ad_connect(server_handle);
     if (ret)
-	return ret;
+        return ret;
 
     if (mask & KADM5_KVNO)
-	laddattr(&attr, &attrlen, "msDS-KeyVersionNumber");
+        laddattr(&attr, &attrlen, "msDS-KeyVersionNumber");
     if (mask & KADM5_PRINC_EXPIRE_TIME)
-	laddattr(&attr, &attrlen, "accountExpires");
+        laddattr(&attr, &attrlen, "accountExpires");
     if (mask & KADM5_ATTRIBUTES)
-	laddattr(&attr, &attrlen, "userAccountControl");
+        laddattr(&attr, &attrlen, "userAccountControl");
     laddattr(&attr, &attrlen, "distinguishedName");
 
     krb5_unparse_name(context->context, entry->principal, &p);
@@ -1149,103 +1149,103 @@ kadm5_ad_modify_principal(void *server_handle,
 
     q = strrchr(s, '@');
     if (q && (p != q && *(q - 1) != '\\'))
-	*q = '\0';
+        *q = '\0';
 
     asprintf(&filter,
-	     "(|(userPrincipalName=%s)(servicePrincipalName=%s))",
-	     s, s);
+             "(|(userPrincipalName=%s)(servicePrincipalName=%s))",
+             s, s);
     free(p);
     free(s);
 
     ret = ldap_search_s(CTX2LP(context), CTX2BASE(context),
-			LDAP_SCOPE_SUBTREE,
-			filter, attr, 0, &m);
+                        LDAP_SCOPE_SUBTREE,
+                        filter, attr, 0, &m);
     free(attr);
     free(filter);
     if (check_ldap(context, ret))
-	return KADM5_RPC_ERROR;
+        return KADM5_RPC_ERROR;
 
     if (ldap_count_entries(CTX2LP(context), m) <= 0) {
-	ret = KADM5_RPC_ERROR;
-	goto out;
+        ret = KADM5_RPC_ERROR;
+        goto out;
     }
 
     m0 = ldap_first_entry(CTX2LP(context), m);
 
     if (mask & KADM5_ATTRIBUTES) {
-	int32_t i;
+        int32_t i;
 
-	vals = ldap_get_values(CTX2LP(context), m0, "userAccountControl");
-	if (vals == NULL) {
-	    ret = KADM5_RPC_ERROR;
-	    goto out;
-	}
+        vals = ldap_get_values(CTX2LP(context), m0, "userAccountControl");
+        if (vals == NULL) {
+            ret = KADM5_RPC_ERROR;
+            goto out;
+        }
 
-	i = atoi(vals[0]);
-	if (i == 0)
-	    return KADM5_RPC_ERROR;
+        i = atoi(vals[0]);
+        if (i == 0)
+            return KADM5_RPC_ERROR;
 
-	if (entry->attributes & KRB5_KDB_DISALLOW_ALL_TIX)
-	    i |= (UF_ACCOUNTDISABLE|UF_LOCKOUT);
-	else
-	    i &= ~(UF_ACCOUNTDISABLE|UF_LOCKOUT);
-	if (entry->attributes & KRB5_KDB_REQUIRES_PRE_AUTH)
-	    i &= ~UF_DONT_REQUIRE_PREAUTH;
-	else
-	    i |= UF_DONT_REQUIRE_PREAUTH;
-	if (entry->attributes & KRB5_KDB_REQUIRES_HW_AUTH)
-	    i |= UF_SMARTCARD_REQUIRED;
-	else
-	    i &= ~UF_SMARTCARD_REQUIRED;
-	if (entry->attributes & KRB5_KDB_DISALLOW_SVR)
-	    i &= ~UF_WORKSTATION_TRUST_ACCOUNT;
-	else
-	    i |= UF_WORKSTATION_TRUST_ACCOUNT;
+        if (entry->attributes & KRB5_KDB_DISALLOW_ALL_TIX)
+            i |= (UF_ACCOUNTDISABLE|UF_LOCKOUT);
+        else
+            i &= ~(UF_ACCOUNTDISABLE|UF_LOCKOUT);
+        if (entry->attributes & KRB5_KDB_REQUIRES_PRE_AUTH)
+            i &= ~UF_DONT_REQUIRE_PREAUTH;
+        else
+            i |= UF_DONT_REQUIRE_PREAUTH;
+        if (entry->attributes & KRB5_KDB_REQUIRES_HW_AUTH)
+            i |= UF_SMARTCARD_REQUIRED;
+        else
+            i &= ~UF_SMARTCARD_REQUIRED;
+        if (entry->attributes & KRB5_KDB_DISALLOW_SVR)
+            i &= ~UF_WORKSTATION_TRUST_ACCOUNT;
+        else
+            i |= UF_WORKSTATION_TRUST_ACCOUNT;
 
-	asprintf(&uaf[0], "%d", i);
+        asprintf(&uaf[0], "%d", i);
 
-	a->mod_op = LDAP_MOD_REPLACE;
-	a->mod_type = "userAccountControl";
-	a->mod_values = uaf;
-	a++;
+        a->mod_op = LDAP_MOD_REPLACE;
+        a->mod_type = "userAccountControl";
+        a->mod_values = uaf;
+        a++;
     }
 
     if (mask & KADM5_KVNO) {
-	vals = ldap_get_values(CTX2LP(context), m0, "msDS-KeyVersionNumber");
-	if (vals == NULL) {
-	    entry->kvno = 0;
-	} else {
-	    asprintf(&kvno[0], "%d", entry->kvno);
+        vals = ldap_get_values(CTX2LP(context), m0, "msDS-KeyVersionNumber");
+        if (vals == NULL) {
+            entry->kvno = 0;
+        } else {
+            asprintf(&kvno[0], "%d", entry->kvno);
 
-	    a->mod_op = LDAP_MOD_REPLACE;
-	    a->mod_type = "msDS-KeyVersionNumber";
-	    a->mod_values = kvno;
-	    a++;
-	}
+            a->mod_op = LDAP_MOD_REPLACE;
+            a->mod_type = "msDS-KeyVersionNumber";
+            a->mod_values = kvno;
+            a++;
+        }
     }
 
     if (mask & KADM5_PRINC_EXPIRE_TIME) {
-	long long wt;
-	vals = ldap_get_values(CTX2LP(context), m0, "accountExpires");
-	if (vals == NULL) {
-	    ret = KADM5_RPC_ERROR;
-	    goto out;
-	}
+        long long wt;
+        vals = ldap_get_values(CTX2LP(context), m0, "accountExpires");
+        if (vals == NULL) {
+            ret = KADM5_RPC_ERROR;
+            goto out;
+        }
 
-	wt = unix2nttime(entry->princ_expire_time);
+        wt = unix2nttime(entry->princ_expire_time);
 
-	asprintf(&tv[0], "%llu", wt);
+        asprintf(&tv[0], "%llu", wt);
 
-	a->mod_op = LDAP_MOD_REPLACE;
-	a->mod_type = "accountExpires";
-	a->mod_values = tv;
-	a++;
+        a->mod_op = LDAP_MOD_REPLACE;
+        a->mod_type = "accountExpires";
+        a->mod_values = tv;
+        a++;
     }
 
     vals = ldap_get_values(CTX2LP(context), m0, "distinguishedName");
     if (vals == NULL) {
-	ret = KADM5_RPC_ERROR;
-	goto out;
+        ret = KADM5_RPC_ERROR;
+        goto out;
     }
     dn = vals[0];
 
@@ -1253,17 +1253,17 @@ kadm5_ad_modify_principal(void *server_handle,
 
     ret = ldap_modify_s(CTX2LP(context), dn, attrs);
     if (check_ldap(context, ret))
-	return KADM5_RPC_ERROR;
+        return KADM5_RPC_ERROR;
 
- out:
+out:
     if (m)
-	ldap_msgfree(m);
+        ldap_msgfree(m);
     if (uaf[0])
-	free(uaf[0]);
+        free(uaf[0]);
     if (kvno[0])
-	free(kvno[0]);
+        free(kvno[0]);
     if (tv[0])
-	free(tv[0]);
+        free(tv[0]);
     return ret;
 #else
     krb5_set_error_message(context->context, KADM5_RPC_ERROR, "Function not implemented");
@@ -1274,17 +1274,17 @@ kadm5_ad_modify_principal(void *server_handle,
 /*ARGSUSED*/
 static kadm5_ret_t
 kadm5_ad_randkey_principal(void *server_handle,
-			   krb5_principal principal,
-			   krb5_boolean keepold,
-			   int n_ks_tuple,
-			   krb5_key_salt_tuple *ks_tuple,
-			   krb5_keyblock **keys,
-			   int *n_keys)
+                           krb5_principal principal,
+                           krb5_boolean keepold,
+                           int n_ks_tuple,
+                           krb5_key_salt_tuple *ks_tuple,
+                           krb5_keyblock **keys,
+                           int *n_keys)
 {
     kadm5_ad_context *context = server_handle;
 
     if (keepold)
-	return KADM5_KEEPOLD_NOSUPP;
+        return KADM5_KEEPOLD_NOSUPP;
 
     /*
      * random key
@@ -1300,29 +1300,29 @@ kadm5_ad_randkey_principal(void *server_handle,
     *n_keys = 0;
 
     {
-	char p[64];
-	krb5_generate_random_block(p, sizeof(p));
-	plen = rk_base64_encode(p, sizeof(p), &password);
-	if (plen < 0)
-	    return krb5_enomem(context->context);
+        char p[64];
+        krb5_generate_random_block(p, sizeof(p));
+        plen = rk_base64_encode(p, sizeof(p), &password);
+        if (plen < 0)
+            return krb5_enomem(context->context);
     }
 
     ret = ad_get_cred(context, NULL);
     if (ret) {
-	free(password);
-	return ret;
+        free(password);
+        return ret;
     }
 
     krb5_data_zero(&result_code_string);
     krb5_data_zero(&result_string);
 
     ret = krb5_set_password_using_ccache(context->context,
-					 context->ccache,
-					 password,
-					 principal,
-					 &result_code,
-					 &result_code_string,
-					 &result_string);
+                                         context->ccache,
+                                         password,
+                                         principal,
+                                         &result_code,
+                                         &result_code_string,
+                                         &result_string);
     krb5_data_free(&result_code_string);
     krb5_data_free(&result_string);
 
@@ -1331,7 +1331,7 @@ kadm5_ad_randkey_principal(void *server_handle,
 
     *keys = malloc(sizeof(**keys) * 1);
     if (*keys == NULL) {
-	ret = krb5_enomem(context->context);
+        ret = krb5_enomem(context->context);
         goto out;
     }
     *n_keys = 1;
@@ -1348,7 +1348,7 @@ kadm5_ad_randkey_principal(void *server_handle,
         goto out;
     }
 
- out:
+out:
     memset(password, 0, plen);
     free(password);
     return ret;
@@ -1363,8 +1363,8 @@ kadm5_ad_randkey_principal(void *server_handle,
 
 static kadm5_ret_t
 kadm5_ad_rename_principal(void *server_handle,
-			  krb5_principal from,
-			  krb5_principal to)
+                          krb5_principal from,
+                          krb5_principal to)
 {
     kadm5_ad_context *context = server_handle;
     krb5_set_error_message(context->context, KADM5_RPC_ERROR, "Function not implemented");
@@ -1373,10 +1373,10 @@ kadm5_ad_rename_principal(void *server_handle,
 
 static kadm5_ret_t
 kadm5_ad_chpass_principal_with_key(void *server_handle,
-				   krb5_principal princ,
-				   int keepold,
-				   int n_key_data,
-				   krb5_key_data *key_data)
+                                   krb5_principal princ,
+                                   int keepold,
+                                   int n_key_data,
+                                   krb5_key_data *key_data)
 {
     kadm5_ad_context *context = server_handle;
     krb5_set_error_message(context->context, KADM5_RPC_ERROR, "Function not implemented");
@@ -1422,20 +1422,20 @@ set_funcs(kadm5_ad_context *c)
 
 kadm5_ret_t
 kadm5_ad_init_with_password_ctx(krb5_context context,
-				const char *client_name,
-				const char *password,
-				const char *service_name,
-				kadm5_config_params *realm_params,
-				unsigned long struct_version,
-				unsigned long api_version,
-				void **server_handle)
+                                const char *client_name,
+                                const char *password,
+                                const char *service_name,
+                                kadm5_config_params *realm_params,
+                                unsigned long struct_version,
+                                unsigned long api_version,
+                                void **server_handle)
 {
     kadm5_ret_t ret;
     kadm5_ad_context *ctx;
 
     ctx = malloc(sizeof(*ctx));
     if (ctx == NULL)
-	return krb5_enomem(context);
+        return krb5_enomem(context);
     memset(ctx, 0, sizeof(*ctx));
     set_funcs(ctx);
 
@@ -1444,40 +1444,40 @@ kadm5_ad_init_with_password_ctx(krb5_context context,
 
     ret = krb5_parse_name(ctx->context, client_name, &ctx->caller);
     if(ret) {
-	free(ctx);
-	return ret;
+        free(ctx);
+        return ret;
     }
 
     if(realm_params->mask & KADM5_CONFIG_REALM) {
-	ret = 0;
-	ctx->realm = strdup(realm_params->realm);
-	if (ctx->realm == NULL)
-	    ret = krb5_enomem(context);
+        ret = 0;
+        ctx->realm = strdup(realm_params->realm);
+        if (ctx->realm == NULL)
+            ret = krb5_enomem(context);
     } else
-	ret = krb5_get_default_realm(ctx->context, &ctx->realm);
+        ret = krb5_get_default_realm(ctx->context, &ctx->realm);
     if (ret) {
-	free(ctx);
-	return ret;
+        free(ctx);
+        return ret;
     }
 
     ctx->client_name = strdup(client_name);
 
     if(password != NULL && *password != '\0')
-	ret = ad_get_cred(ctx, password);
+        ret = ad_get_cred(ctx, password);
     else
-	ret = ad_get_cred(ctx, NULL);
+        ret = ad_get_cred(ctx, NULL);
     if(ret) {
-	kadm5_ad_destroy(ctx);
-	free(ctx);
-	return ret;
+        kadm5_ad_destroy(ctx);
+        free(ctx);
+        return ret;
     }
 
 #ifdef OPENLDAP
     ret = _kadm5_ad_connect(ctx);
     if (ret) {
-	kadm5_ad_destroy(ctx);
-	free(ctx);
-	return ret;
+        kadm5_ad_destroy(ctx);
+        free(ctx);
+        return ret;
     }
 #endif
 
@@ -1493,12 +1493,12 @@ kadm5_ad_dup_context(void *in, void **out)
 
 kadm5_ret_t
 kadm5_ad_init_with_password(const char *client_name,
-			    const char *password,
-			    const char *service_name,
-			    kadm5_config_params *realm_params,
-			    unsigned long struct_version,
-			    unsigned long api_version,
-			    void **server_handle)
+                            const char *password,
+                            const char *service_name,
+                            kadm5_config_params *realm_params,
+                            unsigned long struct_version,
+                            unsigned long api_version,
+                            void **server_handle)
 {
     krb5_context context;
     kadm5_ret_t ret;
@@ -1506,18 +1506,18 @@ kadm5_ad_init_with_password(const char *client_name,
 
     ret = krb5_init_context(&context);
     if (ret)
-	return ret;
+        return ret;
     ret = kadm5_ad_init_with_password_ctx(context,
-					  client_name,
-					  password,
-					  service_name,
-					  realm_params,
-					  struct_version,
-					  api_version,
-					  server_handle);
+                                          client_name,
+                                          password,
+                                          service_name,
+                                          realm_params,
+                                          struct_version,
+                                          api_version,
+                                          server_handle);
     if(ret) {
-	krb5_free_context(context);
-	return ret;
+        krb5_free_context(context);
+        return ret;
     }
     ctx = *server_handle;
     ctx->my_context = 1;

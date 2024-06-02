@@ -34,32 +34,32 @@
 
 OM_uint32 GSSAPI_CALLCONV
 _gss_sanon_add_cred_from(OM_uint32 *minor,
-			 gss_cred_id_t input_cred_handle,
-			 gss_const_name_t desired_name,
-			 const gss_OID desired_mech,
-			 gss_cred_usage_t cred_usage,
-			 OM_uint32 initiator_time_req,
-		         OM_uint32 acceptor_time_req,
-			 gss_const_key_value_set_t cred_store,
-			 gss_cred_id_t *output_cred_handle,
-			 gss_OID_set *actual_mechs,
-			 OM_uint32 *initiator_time_rec,
-		         OM_uint32 *acceptor_time_rec)
+                         gss_cred_id_t input_cred_handle,
+                         gss_const_name_t desired_name,
+                         const gss_OID desired_mech,
+                         gss_cred_usage_t cred_usage,
+                         OM_uint32 initiator_time_req,
+                         OM_uint32 acceptor_time_req,
+                         gss_const_key_value_set_t cred_store,
+                         gss_cred_id_t *output_cred_handle,
+                         gss_OID_set *actual_mechs,
+                         OM_uint32 *initiator_time_rec,
+                         OM_uint32 *acceptor_time_rec)
 {
     *minor = 0;
 
     if (output_cred_handle != NULL) {
-	if (desired_name == GSS_C_NO_NAME ||
-	    desired_name == _gss_sanon_anonymous_identity)
-	    *output_cred_handle = _gss_sanon_anonymous_cred;
-	else
-	    *output_cred_handle = _gss_sanon_non_anonymous_cred;
+        if (desired_name == GSS_C_NO_NAME ||
+            desired_name == _gss_sanon_anonymous_identity)
+            *output_cred_handle = _gss_sanon_anonymous_cred;
+        else
+            *output_cred_handle = _gss_sanon_non_anonymous_cred;
     }
 
     if (initiator_time_rec)
-	*initiator_time_rec = GSS_C_INDEFINITE;
+        *initiator_time_rec = GSS_C_INDEFINITE;
     if (acceptor_time_rec)
-	*acceptor_time_rec = GSS_C_INDEFINITE;
+        *acceptor_time_rec = GSS_C_INDEFINITE;
 
     return GSS_S_COMPLETE;
 }

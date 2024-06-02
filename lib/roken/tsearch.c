@@ -20,8 +20,8 @@
 #include <stdlib.h>
 
 typedef struct node {
-  char         *key;
-  struct node  *llink, *rlink;
+    char         *key;
+    struct node  *llink, *rlink;
 } node_t;
 
 /*
@@ -34,33 +34,33 @@ typedef struct node {
 
 ROKEN_LIB_FUNCTION void *
 rk_tsearch(const void *vkey, void **vrootp,
-	int (*compar)(const void *, const void *))
+    int (*compar)(const void *, const void *))
 {
-	node_t *q;
-	node_t **rootp = (node_t **)vrootp;
+    node_t *q;
+    node_t **rootp = (node_t **)vrootp;
 
-	if (rootp == NULL)
-		return NULL;
+    if (rootp == NULL)
+        return NULL;
 
-	while (*rootp != NULL) {	/* Knuth's T1: */
-		int r;
+    while (*rootp != NULL) {	/* Knuth's T1: */
+        int r;
 
-		if ((r = (*compar)(vkey, (*rootp)->key)) == 0)	/* T2: */
-			return *rootp;		/* we found it! */
+        if ((r = (*compar)(vkey, (*rootp)->key)) == 0)	/* T2: */
+            return *rootp;		/* we found it! */
 
-		rootp = (r < 0) ?
-		    &(*rootp)->llink :		/* T3: follow left branch */
-		    &(*rootp)->rlink;		/* T4: follow right branch */
-	}
+        rootp = (r < 0) ?
+            &(*rootp)->llink :		/* T3: follow left branch */
+            &(*rootp)->rlink;		/* T4: follow right branch */
+    }
 
-	q = malloc(sizeof(node_t));		/* T5: key not found */
-	if (q != 0) {				/* make new node */
-		*rootp = q;			/* link new node to old */
-		/* LINTED const castaway ok */
-		q->key = rk_UNCONST(vkey); /* initialize new node */
-		q->llink = q->rlink = NULL;
-	}
-	return q;
+    q = malloc(sizeof(node_t));		/* T5: key not found */
+    if (q != 0) {				/* make new node */
+        *rootp = q;			/* link new node to old */
+        /* LINTED const castaway ok */
+        q->key = rk_UNCONST(vkey); /* initialize new node */
+        q->llink = q->rlink = NULL;
+    }
+    return q;
 }
 
 /*
@@ -71,20 +71,20 @@ rk_tsearch(const void *vkey, void **vrootp,
  */
 static void
 trecurse(const node_t *root, void (*action)(const void *, VISIT, int),
-	 int level)
+         int level)
 {
 
-	if (root->llink == NULL && root->rlink == NULL)
-		(*action)(root, leaf, level);
-	else {
-		(*action)(root, preorder, level);
-		if (root->llink != NULL)
-			trecurse(root->llink, action, level + 1);
-		(*action)(root, postorder, level);
-		if (root->rlink != NULL)
-			trecurse(root->rlink, action, level + 1);
-		(*action)(root, endorder, level);
-	}
+    if (root->llink == NULL && root->rlink == NULL)
+        (*action)(root, leaf, level);
+    else {
+        (*action)(root, preorder, level);
+        if (root->llink != NULL)
+            trecurse(root->llink, action, level + 1);
+        (*action)(root, postorder, level);
+        if (root->rlink != NULL)
+            trecurse(root->rlink, action, level + 1);
+        (*action)(root, endorder, level);
+    }
 }
 
 /*
@@ -97,8 +97,8 @@ ROKEN_LIB_FUNCTION void
 rk_twalk(const void *vroot,
       void (*action)(const void *, VISIT, int))
 {
-	if (vroot != NULL && action != NULL)
-		trecurse(vroot, action, 0);
+    if (vroot != NULL && action != NULL)
+        trecurse(vroot, action, 0);
 }
 
 /*
@@ -110,40 +110,40 @@ rk_twalk(const void *vroot,
  */
 ROKEN_LIB_FUNCTION void *
 rk_tdelete(const void * vkey, void ** vrootp,
-	int (*compar)(const void *, const void *))
+           int (*compar)(const void *, const void *))
 {
-	node_t **rootp = (node_t **)vrootp;
-	node_t *q, *r;
-	int cmp;
+    node_t **rootp = (node_t **)vrootp;
+    node_t *q, *r;
+    int cmp;
 
-	if (rootp == NULL || *rootp == NULL)
-		return NULL;
+    if (rootp == NULL || *rootp == NULL)
+        return NULL;
 
-	while ((cmp = (*compar)(vkey, (*rootp)->key)) != 0) {
-		rootp = (cmp < 0) ?
-		    &(*rootp)->llink :		/* follow llink branch */
-		    &(*rootp)->rlink;		/* follow rlink branch */
-		if (*rootp == NULL)
-			return NULL;		/* key not found */
-	}
-	r = (*rootp)->rlink;			/* D1: */
-	if ((q = (*rootp)->llink) == NULL)	/* Left NULL? */
-		q = r;
-	else if (r != NULL) {			/* Right link is NULL? */
-		if (r->llink == NULL) {		/* D2: Find successor */
-			r->llink = q;
-			q = r;
-		} else {			/* D3: Find NULL link */
-			for (q = r->llink; q->llink != NULL; q = r->llink)
-				r = q;
-			r->llink = q->rlink;
-			q->llink = (*rootp)->llink;
-			q->rlink = (*rootp)->rlink;
-		}
-	}
-	free(*rootp);				/* D4: Free node */
-	*rootp = q;				/* link parent to new node */
-	return *rootp;
+    while ((cmp = (*compar)(vkey, (*rootp)->key)) != 0) {
+        rootp = (cmp < 0) ?
+            &(*rootp)->llink :		/* follow llink branch */
+            &(*rootp)->rlink;		/* follow rlink branch */
+        if (*rootp == NULL)
+            return NULL;		/* key not found */
+    }
+    r = (*rootp)->rlink;			/* D1: */
+    if ((q = (*rootp)->llink) == NULL)	/* Left NULL? */
+        q = r;
+    else if (r != NULL) {			/* Right link is NULL? */
+        if (r->llink == NULL) {		/* D2: Find successor */
+            r->llink = q;
+            q = r;
+        } else {			/* D3: Find NULL link */
+            for (q = r->llink; q->llink != NULL; q = r->llink)
+                r = q;
+            r->llink = q->rlink;
+            q->llink = (*rootp)->llink;
+            q->rlink = (*rootp)->rlink;
+        }
+    }
+    free(*rootp);				/* D4: Free node */
+    *rootp = q;				/* link parent to new node */
+    return *rootp;
 }
 
 /*
@@ -157,19 +157,19 @@ ROKEN_LIB_FUNCTION void *
 rk_tfind(const void *vkey, void * const *vrootp,
       int (*compar)(const void *, const void *))
 {
-	node_t **rootp = (node_t **)vrootp;
+    node_t **rootp = (node_t **)vrootp;
 
-	if (rootp == NULL)
-		return NULL;
+    if (rootp == NULL)
+        return NULL;
 
-	while (*rootp != NULL) {		/* T1: */
-		int r;
+    while (*rootp != NULL) {		/* T1: */
+        int r;
 
-		if ((r = (*compar)(vkey, (*rootp)->key)) == 0)	/* T2: */
-			return *rootp;		/* key found */
-		rootp = (r < 0) ?
-		    &(*rootp)->llink :		/* T3: follow left branch */
-		    &(*rootp)->rlink;		/* T4: follow right branch */
-	}
-	return NULL;
+        if ((r = (*compar)(vkey, (*rootp)->key)) == 0)	/* T2: */
+            return *rootp;		/* key found */
+        rootp = (r < 0) ?
+            &(*rootp)->llink :		/* T3: follow left branch */
+            &(*rootp)->rlink;		/* T4: follow right branch */
+    }
+    return NULL;
 }

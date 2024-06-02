@@ -36,11 +36,11 @@
 OM_uint32 _gss_ntlm_indicate_mechs
 (OM_uint32 * minor_status,
  gss_OID_set * mech_set
-    )
+)
 {
     if (minor_status)
-	*minor_status = 0;
+        *minor_status = 0;
     if (mech_set)
-	*mech_set = GSS_C_NO_OID_SET;
+        *mech_set = GSS_C_NO_OID_SET;
     return GSS_S_COMPLETE;
 }

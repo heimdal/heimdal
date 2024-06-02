@@ -97,14 +97,14 @@ dbm_fetch (DBM *db, datum dkey)
     DATUM2DBT(&dkey, &key);
     if(D(db)->get(D(db),
 #ifdef HAVE_DB3
-	       NULL,
+                  NULL,
 #endif
-	       &key, &value, 0) != 0) {
-	dvalue.dptr = NULL;
-	dvalue.dsize = 0;
+                  &key, &value, 0) != 0) {
+        dvalue.dptr = NULL;
+        dvalue.dsize = 0;
     }
     else
-	DBT2DATUM(&value, &dvalue);
+        DBT2DATUM(&value, &dvalue);
 
     return dvalue;
 }
@@ -116,12 +116,12 @@ dbm_get (DB *db, int flags)
     datum d;
 #ifdef HAVE_DB3
     if(cursor == NULL)
-	db->cursor(db, NULL, &cursor, 0);
+        db->cursor(db, NULL, &cursor, 0);
     if(cursor->c_get(cursor, &key, &value, flags) != 0) {
-	d.dptr = NULL;
-	d.dsize = 0;
+        d.dptr = NULL;
+        d.dsize = 0;
     } else
-	DBT2DATUM(&value, &d);
+        DBT2DATUM(&value, &d);
 #else
     db->seq(db, &key, &value, flags);
     DBT2DATUM(&value, &d);
@@ -157,24 +157,24 @@ dbm_open (const char *file, int flags, mode_t mode)
     DB *db;
     char *fn = malloc(strlen(file) + 4);
     if(fn == NULL)
-	return NULL;
+        return NULL;
     strcpy(fn, file);
     strcat(fn, ".db");
 #ifdef HAVE_DB3
     if (flags & O_CREAT)
-	myflags |= DB_CREATE;
+        myflags |= DB_CREATE;
 
     if (flags & O_EXCL)
-	myflags |= DB_EXCL;
+        myflags |= DB_EXCL;
 
     if (flags & O_RDONLY)
-	myflags |= DB_RDONLY;
+        myflags |= DB_RDONLY;
 
     if (flags & O_TRUNC)
-	myflags |= DB_TRUNCATE;
+        myflags |= DB_TRUNCATE;
     if(db_create(&db, NULL, 0) != 0) {
-	free(fn);
-	return NULL;
+        free(fn);
+        return NULL;
     }
 
 #if (DB_VERSION_MAJOR > 3) && (DB_VERSION_MINOR > 0)
@@ -182,9 +182,9 @@ dbm_open (const char *file, int flags, mode_t mode)
 #else
     if(db->open(db, fn, NULL, DB_BTREE, myflags, mode) != 0) {
 #endif
-	free(fn);
-	db->close(db, 0);
-	return NULL;
+        free(fn);
+        db->close(db, 0);
+        return NULL;
     }
 #else
     db = dbopen(fn, flags, mode, DB_BTREE, NULL);
@@ -200,16 +200,16 @@ dbm_store (DBM *db, datum dkey, datum dvalue, int flags)
     DBT key, value;
     int myflags = 0;
     if((flags & DBM_REPLACE) == 0)
-	myflags |= DB_NOOVERWRITE;
+        myflags |= DB_NOOVERWRITE;
     DATUM2DBT(&dkey, &key);
     DATUM2DBT(&dvalue, &value);
     ret = D(db)->put(D(db),
 #ifdef HAVE_DB3
-		     NULL,
+                     NULL,
 #endif
 &key, &value, myflags);
     if(ret == DB_KEYEXIST)
-	return 1;
+        return 1;
     RETURN(ret);
 }
 

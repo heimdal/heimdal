@@ -361,7 +361,7 @@ make_namespace(krb5_context context, HDB *db, const char *name)
         e.etypes->len = 3;
     if (ret == 0 &&
         (e.etypes->val = calloc(e.etypes->len,
-                                      sizeof(e.etypes->val[0]))) == NULL)
+                                sizeof(e.etypes->val[0]))) == NULL)
         ret = krb5_enomem(context);
     if (ret == 0) {
         e.etypes->val[0] = KRB5_ENCTYPE_AES128_CTS_HMAC_SHA256_128;
@@ -495,11 +495,11 @@ fetch_entries(krb5_context context,
            (sizeof(expected) / sizeof(expected[0])));
 
     switch (t) {
-    case 0: toffset = 1;                         break; /* epoch + 1s */
-    case 1: toffset = 1 + (krs[kr].period >> 1); break; /* epoch + period/2 */
-    case 2: toffset = 1 + (krs[kr].period >> 2); break; /* epoch + period/4 */
-    case 3: toffset = 1 + (krs[kr].period >> 3); break; /* epoch + period/8 */
-    case 4: toffset = 1 - (krs[kr].period >> 3); break; /* epoch - period/8 */
+        case 0: toffset = 1;                         break; /* epoch + 1s */
+        case 1: toffset = 1 + (krs[kr].period >> 1); break; /* epoch + period/2 */
+        case 2: toffset = 1 + (krs[kr].period >> 2); break; /* epoch + period/4 */
+        case 3: toffset = 1 + (krs[kr].period >> 3); break; /* epoch + period/8 */
+        case 4: toffset = 1 - (krs[kr].period >> 3); break; /* epoch - period/8 */
     }
 
     for (i = 0; ret == 0 && i < sizeof(expected) / sizeof(expected[0]); i++) {
@@ -756,7 +756,7 @@ print_em(krb5_context context)
             hex_encode(hist_keys->val[p].keys.val[0].key.keyvalue.data,
                        hist_keys->val[p].keys.val[0].key.keyvalue.length, &x);
             printf("%s %u %s\n", x, hist_keys->val[p].kvno, name);
-	    free(x);
+            free(x);
         }
     }
 }

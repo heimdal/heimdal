@@ -39,8 +39,8 @@ gss_buffer_desc GSSAPI_LIB_VARIABLE __gss_c_attr_local_login_user =  {
 
 static OM_uint32
 mech_authorize_localname(OM_uint32 *minor_status,
-	                 const struct _gss_name *name,
-	                 const struct _gss_name *user)
+                         const struct _gss_name *name,
+                         const struct _gss_name *user)
 {
     OM_uint32 major_status = GSS_S_NAME_NOT_MN;
     struct _gss_mechanism_name *mn;
@@ -69,8 +69,8 @@ mech_authorize_localname(OM_uint32 *minor_status,
  */
 static OM_uint32
 attr_authorize_localname(OM_uint32 *minor_status,
-	                 const struct _gss_name *name,
-	                 const struct _gss_name *user)
+                         const struct _gss_name *name,
+                         const struct _gss_name *user)
 {
     OM_uint32 major_status = GSS_S_UNAVAILABLE;
     int more = -1;
@@ -79,34 +79,34 @@ attr_authorize_localname(OM_uint32 *minor_status,
         return GSS_S_BAD_NAMETYPE;
 
     while (more != 0 && major_status != GSS_S_COMPLETE) {
-	OM_uint32 tmpMajor, tmpMinor;
-	gss_buffer_desc value;
-	gss_buffer_desc display_value;
-	int authenticated = 0, complete = 0;
+        OM_uint32 tmpMajor, tmpMinor;
+        gss_buffer_desc value;
+        gss_buffer_desc display_value;
+        int authenticated = 0, complete = 0;
 
-	tmpMajor = gss_get_name_attribute(minor_status,
-					  (gss_name_t)name,
-					  GSS_C_ATTR_LOCAL_LOGIN_USER,
-					  &authenticated,
-					  &complete,
-					  &value,
-					  &display_value,
-					  &more);
-	if (GSS_ERROR(tmpMajor)) {
-	    major_status = tmpMajor;
-	    break;
-	}
+        tmpMajor = gss_get_name_attribute(minor_status,
+                                          (gss_name_t)name,
+                                          GSS_C_ATTR_LOCAL_LOGIN_USER,
+                                          &authenticated,
+                                          &complete,
+                                          &value,
+                                          &display_value,
+                                          &more);
+        if (GSS_ERROR(tmpMajor)) {
+            major_status = tmpMajor;
+            break;
+        }
 
-	/* If attribute is present, return an authoritative error code. */
-	if (authenticated &&
-	    value.length == user->gn_value.length &&
-	    memcmp(value.value, user->gn_value.value, user->gn_value.length) == 0)
-	    major_status = GSS_S_COMPLETE;
-	else
-	    major_status = GSS_S_UNAUTHORIZED;
+        /* If attribute is present, return an authoritative error code. */
+        if (authenticated &&
+            value.length == user->gn_value.length &&
+            memcmp(value.value, user->gn_value.value, user->gn_value.length) == 0)
+            major_status = GSS_S_COMPLETE;
+        else
+            major_status = GSS_S_UNAUTHORIZED;
 
-	gss_release_buffer(&tmpMinor, &value);
-	gss_release_buffer(&tmpMinor, &display_value);
+        gss_release_buffer(&tmpMinor, &value);
+        gss_release_buffer(&tmpMinor, &display_value);
     }
 
     return major_status;
@@ -114,8 +114,8 @@ attr_authorize_localname(OM_uint32 *minor_status,
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_authorize_localname(OM_uint32 *minor_status,
-	                gss_const_name_t gss_name,
-	                gss_const_name_t gss_user)
+                        gss_const_name_t gss_name,
+                        gss_const_name_t gss_user)
 
 {
     OM_uint32 major_status;
@@ -141,23 +141,23 @@ gss_authorize_localname(OM_uint32 *minor_status,
     /* If mech returns yes, we return yes */
     major_status = mech_authorize_localname(minor_status, name, user);
     if (major_status == GSS_S_COMPLETE)
-	return GSS_S_COMPLETE;
+        return GSS_S_COMPLETE;
     else if (major_status != GSS_S_UNAVAILABLE)
-	mechAvailable = 1;
+        mechAvailable = 1;
 
     /* If attribute exists, it is authoritative */
     major_status = attr_authorize_localname(minor_status, name, user);
     if (major_status == GSS_S_COMPLETE || major_status == GSS_S_UNAUTHORIZED)
-	return major_status;
+        return major_status;
 
     /* If mechanism did not implement SPI, compare the local name */
     if (mechAvailable == 0) {
-	int match = 0;
+        int match = 0;
 
         major_status = gss_compare_name(minor_status, gss_name,
                                         gss_user, &match);
-	if (major_status == GSS_S_COMPLETE && match == 0)
-	    major_status = GSS_S_UNAUTHORIZED;
+        if (major_status == GSS_S_COMPLETE && match == 0)
+            major_status = GSS_S_UNAUTHORIZED;
     }
 
     return major_status;

@@ -100,28 +100,28 @@ RSA_new_method(ENGINE *engine)
 
     rsa = calloc(1, sizeof(*rsa));
     if (rsa == NULL)
-	return NULL;
+        return NULL;
 
     rsa->references = 1;
 
     if (engine) {
-	ENGINE_up_ref(engine);
-	rsa->engine = engine;
+        ENGINE_up_ref(engine);
+        rsa->engine = engine;
     } else {
-	rsa->engine = ENGINE_get_default_RSA();
+        rsa->engine = ENGINE_get_default_RSA();
     }
 
     if (rsa->engine) {
-	rsa->meth = ENGINE_get_RSA(rsa->engine);
-	if (rsa->meth == NULL) {
-	    ENGINE_finish(rsa->engine);
-	    free(rsa);
-	    return 0;
-	}
+        rsa->meth = ENGINE_get_RSA(rsa->engine);
+        if (rsa->meth == NULL) {
+            ENGINE_finish(rsa->engine);
+            free(rsa);
+            return 0;
+        }
     }
 
     if (rsa->meth == NULL)
-	rsa->meth = rk_UNCONST(RSA_get_default_method());
+        rsa->meth = rk_UNCONST(RSA_get_default_method());
 
     (*rsa->meth->init)(rsa);
 
@@ -139,15 +139,15 @@ void
 RSA_free(RSA *rsa)
 {
     if (rsa->references <= 0)
-	abort();
+        abort();
 
     if (--rsa->references > 0)
-	return;
+        return;
 
     (*rsa->meth->finish)(rsa);
 
     if (rsa->engine)
-	ENGINE_finish(rsa->engine);
+        ENGINE_finish(rsa->engine);
 
 #define free_if(f) if (f) { BN_free(f); }
     free_if(rsa->n);
@@ -215,8 +215,8 @@ RSA_set_method(RSA *rsa, const RSA_METHOD *method)
     (*rsa->meth->finish)(rsa);
 
     if (rsa->engine) {
-	ENGINE_finish(rsa->engine);
-	rsa->engine = NULL;
+        ENGINE_finish(rsa->engine);
+        rsa->engine = NULL;
     }
 
     rsa->meth = method;
@@ -273,33 +273,33 @@ RSA_check_key(const RSA *key)
      */
 
     if (rsa->n == NULL)
-	return 0;
+        return 0;
 
     if (rsa->d == NULL &&
-	(rsa->p == NULL || rsa->q || rsa->dmp1 == NULL || rsa->dmq1 == NULL || rsa->iqmp == NULL))
-	return 0;
+        (rsa->p == NULL || rsa->q || rsa->dmp1 == NULL || rsa->dmq1 == NULL || rsa->iqmp == NULL))
+        return 0;
 
     buffer = malloc(RSA_size(rsa));
     if (buffer == NULL)
-	return 0;
+        return 0;
 
     ret = RSA_private_encrypt(sizeof(inbuf), inbuf, buffer,
-			     rsa, RSA_PKCS1_PADDING);
+                             rsa, RSA_PKCS1_PADDING);
     if (ret == -1) {
-	free(buffer);
-	return 0;
+        free(buffer);
+        return 0;
     }
 
     ret = RSA_public_decrypt(ret, buffer, buffer,
-			      rsa, RSA_PKCS1_PADDING);
+                             rsa, RSA_PKCS1_PADDING);
     if (ret == -1) {
-	free(buffer);
-	return 0;
+        free(buffer);
+        return 0;
     }
 
     if (ret == sizeof(inbuf) && ct_memcmp(buffer, inbuf, sizeof(inbuf)) == 0) {
-	free(buffer);
-	return 1;
+        free(buffer);
+        return 1;
     }
     free(buffer);
     return 0;
@@ -340,52 +340,52 @@ static const AlgorithmIdentifier _signature_md5_data = {
 
 int
 RSA_sign(int type, const unsigned char *from, unsigned int flen,
-	 unsigned char *to, unsigned int *tlen, RSA *rsa)
+         unsigned char *to, unsigned int *tlen, RSA *rsa)
 {
     if (rsa->meth->rsa_sign)
-	return rsa->meth->rsa_sign(type, from, flen, to, tlen, rsa);
+        return rsa->meth->rsa_sign(type, from, flen, to, tlen, rsa);
 
     if (rsa->meth->rsa_priv_enc) {
-	heim_octet_string indata;
-	DigestInfo di;
-	size_t size;
-	int ret;
+        heim_octet_string indata;
+        DigestInfo di;
+        size_t size;
+        int ret;
 
-	memset(&di, 0, sizeof(di));
+        memset(&di, 0, sizeof(di));
 
-	if (type == NID_sha1) {
-	    di.digestAlgorithm = _signature_sha1_data;
-	} else if (type == NID_md5) {
-	    di.digestAlgorithm = _signature_md5_data;
-	} else if (type == NID_sha256) {
-	    di.digestAlgorithm = _signature_sha256_data;
-	} else
-	    return -1;
+        if (type == NID_sha1) {
+            di.digestAlgorithm = _signature_sha1_data;
+        } else if (type == NID_md5) {
+            di.digestAlgorithm = _signature_md5_data;
+        } else if (type == NID_sha256) {
+            di.digestAlgorithm = _signature_sha256_data;
+        } else
+            return -1;
 
-	di.digest.data = rk_UNCONST(from);
-	di.digest.length = flen;
+        di.digest.data = rk_UNCONST(from);
+        di.digest.length = flen;
 
-	ASN1_MALLOC_ENCODE(DigestInfo,
-			   indata.data,
-			   indata.length,
-			   &di,
-			   &size,
-			   ret);
-	if (ret)
-	    return ret;
-	if (indata.length != size)
-	    abort();
+        ASN1_MALLOC_ENCODE(DigestInfo,
+                           indata.data,
+                           indata.length,
+                           &di,
+                           &size,
+                           ret);
+        if (ret)
+            return ret;
+        if (indata.length != size)
+            abort();
 
-	ret = rsa->meth->rsa_priv_enc(indata.length, indata.data, to,
-				      rsa, RSA_PKCS1_PADDING);
-	free(indata.data);
-	if (ret > 0) {
-	    *tlen = ret;
-	    ret = 1;
-	} else
-	    ret = 0;
+        ret = rsa->meth->rsa_priv_enc(indata.length, indata.data, to,
+                                      rsa, RSA_PKCS1_PADDING);
+        free(indata.data);
+        if (ret > 0) {
+            *tlen = ret;
+            ret = 1;
+        } else
+            ret = 0;
 
-	return ret;
+        return ret;
     }
 
     return 0;
@@ -393,62 +393,62 @@ RSA_sign(int type, const unsigned char *from, unsigned int flen,
 
 int
 RSA_verify(int type, const unsigned char *from, unsigned int flen,
-	   unsigned char *sigbuf, unsigned int siglen, RSA *rsa)
+           unsigned char *sigbuf, unsigned int siglen, RSA *rsa)
 {
     if (rsa->meth->rsa_verify)
-	return rsa->meth->rsa_verify(type, from, flen, sigbuf, siglen, rsa);
+        return rsa->meth->rsa_verify(type, from, flen, sigbuf, siglen, rsa);
 
     if (rsa->meth->rsa_pub_dec) {
-	const AlgorithmIdentifier *digest_alg;
-	void *data;
-	DigestInfo di;
-	size_t size;
-	int ret, ret2;
+        const AlgorithmIdentifier *digest_alg;
+        void *data;
+        DigestInfo di;
+        size_t size;
+        int ret, ret2;
 
-	data = malloc(RSA_size(rsa));
-	if (data == NULL)
-	    return -1;
+        data = malloc(RSA_size(rsa));
+        if (data == NULL)
+            return -1;
 
-	memset(&di, 0, sizeof(di));
+        memset(&di, 0, sizeof(di));
 
-	ret = rsa->meth->rsa_pub_dec(siglen, sigbuf, data, rsa, RSA_PKCS1_PADDING);
-	if (ret <= 0) {
-	    free(data);
-	    return -2;
-	}
+        ret = rsa->meth->rsa_pub_dec(siglen, sigbuf, data, rsa, RSA_PKCS1_PADDING);
+        if (ret <= 0) {
+            free(data);
+            return -2;
+        }
 
-	ret2 = decode_DigestInfo(data, ret, &di, &size);
-	free(data);
-	if (ret2 != 0)
-	    return -3;
-	if (ret != size) {
-	    free_DigestInfo(&di);
-	    return -4;
-	}
+        ret2 = decode_DigestInfo(data, ret, &di, &size);
+        free(data);
+        if (ret2 != 0)
+            return -3;
+        if (ret != size) {
+            free_DigestInfo(&di);
+            return -4;
+        }
 
-	if (flen != di.digest.length || ct_memcmp(di.digest.data, from, flen) != 0) {
-	    free_DigestInfo(&di);
-	    return -5;
-	}
+        if (flen != di.digest.length || ct_memcmp(di.digest.data, from, flen) != 0) {
+            free_DigestInfo(&di);
+            return -5;
+        }
 
-	if (type == NID_sha1) {
-	    digest_alg = &_signature_sha1_data;
-	} else if (type == NID_md5) {
-	    digest_alg = &_signature_md5_data;
-	} else if (type == NID_sha256) {
-	    digest_alg = &_signature_sha256_data;
-	} else {
-	    free_DigestInfo(&di);
-	    return -1;
-	}
+        if (type == NID_sha1) {
+            digest_alg = &_signature_sha1_data;
+        } else if (type == NID_md5) {
+            digest_alg = &_signature_md5_data;
+        } else if (type == NID_sha256) {
+            digest_alg = &_signature_sha256_data;
+        } else {
+            free_DigestInfo(&di);
+            return -1;
+        }
 
-	ret = der_heim_oid_cmp(&digest_alg->algorithm,
-			       &di.digestAlgorithm.algorithm);
-	free_DigestInfo(&di);
+        ret = der_heim_oid_cmp(&digest_alg->algorithm,
+                               &di.digestAlgorithm.algorithm);
+        free_DigestInfo(&di);
 
-	if (ret != 0)
-	    return 0;
-	return 1;
+        if (ret != 0)
+            return 0;
+        return 1;
     }
 
     return 0;
@@ -473,7 +473,7 @@ int
 RSA_generate_key_ex(RSA *r, int bits, BIGNUM *e, BN_GENCB *cb)
 {
     if (r->meth->rsa_keygen)
-	return (*r->meth->rsa_keygen)(r, bits, e, cb);
+        return (*r->meth->rsa_keygen)(r, bits, e, cb);
     return 0;
 }
 
@@ -549,16 +549,16 @@ d2i_RSAPrivateKey(RSA *rsa, const unsigned char **pp, size_t len)
 
     ret = decode_RSAPrivateKey(*pp, len, &data, &size);
     if (ret)
-	return NULL;
+        return NULL;
 
     *pp += size;
 
     if (k == NULL) {
-	k = RSA_new();
-	if (k == NULL) {
-	    free_RSAPrivateKey(&data);
-	    return NULL;
-	}
+        k = RSA_new();
+        if (k == NULL) {
+            free_RSAPrivateKey(&data);
+            return NULL;
+        }
     }
 
     k->n = _hc_integer_to_BN(&data.modulus, NULL);
@@ -572,10 +572,10 @@ d2i_RSAPrivateKey(RSA *rsa, const unsigned char **pp, size_t len)
     free_RSAPrivateKey(&data);
 
     if (k->n == NULL || k->e == NULL || k->d == NULL || k->p == NULL ||
-	k->q == NULL || k->dmp1 == NULL || k->dmq1 == NULL || k->iqmp == NULL)
+        k->q == NULL || k->dmp1 == NULL || k->dmq1 == NULL || k->iqmp == NULL)
     {
-	RSA_free(k);
-	return NULL;
+        RSA_free(k);
+        return NULL;
     }
 
     return k;
@@ -589,9 +589,9 @@ i2d_RSAPrivateKey(RSA *rsa, unsigned char **pp)
     int ret;
 
     if (rsa->n == NULL || rsa->e == NULL || rsa->d == NULL || rsa->p == NULL ||
-	rsa->q == NULL || rsa->dmp1 == NULL || rsa->dmq1 == NULL ||
-	rsa->iqmp == NULL)
-	return -1;
+        rsa->q == NULL || rsa->dmp1 == NULL || rsa->dmq1 == NULL ||
+        rsa->iqmp == NULL)
+        return -1;
 
     memset(&data, 0, sizeof(data));
 
@@ -604,28 +604,28 @@ i2d_RSAPrivateKey(RSA *rsa, unsigned char **pp)
     ret |= _hc_BN_to_integer(rsa->dmq1, &data.exponent2);
     ret |= _hc_BN_to_integer(rsa->iqmp, &data.coefficient);
     if (ret) {
-	free_RSAPrivateKey(&data);
-	return -1;
+        free_RSAPrivateKey(&data);
+        return -1;
     }
 
     if (pp == NULL) {
-	size = length_RSAPrivateKey(&data);
-	free_RSAPrivateKey(&data);
+        size = length_RSAPrivateKey(&data);
+        free_RSAPrivateKey(&data);
     } else {
-	void *p;
-	size_t len;
+        void *p;
+        size_t len;
 
-	ASN1_MALLOC_ENCODE(RSAPrivateKey, p, len, &data, &size, ret);
-	free_RSAPrivateKey(&data);
-	if (ret)
-	    return -1;
-	if (len != size)
-	    abort();
+        ASN1_MALLOC_ENCODE(RSAPrivateKey, p, len, &data, &size, ret);
+        free_RSAPrivateKey(&data);
+        if (ret)
+            return -1;
+        if (len != size)
+            abort();
 
-	memcpy(*pp, p, size);
-	free(p);
+        memcpy(*pp, p, size);
+        free(p);
 
-	*pp += size;
+        *pp += size;
 
     }
     return size;
@@ -641,30 +641,30 @@ i2d_RSAPublicKey(RSA *rsa, unsigned char **pp)
     memset(&data, 0, sizeof(data));
 
     if (_hc_BN_to_integer(rsa->n, &data.modulus) ||
-	_hc_BN_to_integer(rsa->e, &data.publicExponent))
+        _hc_BN_to_integer(rsa->e, &data.publicExponent))
     {
-	free_RSAPublicKey(&data);
-	return -1;
+        free_RSAPublicKey(&data);
+        return -1;
     }
 
     if (pp == NULL) {
-	size = length_RSAPublicKey(&data);
-	free_RSAPublicKey(&data);
+        size = length_RSAPublicKey(&data);
+        free_RSAPublicKey(&data);
     } else {
-	void *p;
-	size_t len;
+        void *p;
+        size_t len;
 
-	ASN1_MALLOC_ENCODE(RSAPublicKey, p, len, &data, &size, ret);
-	free_RSAPublicKey(&data);
-	if (ret)
-	    return -1;
-	if (len != size)
-	    abort();
+        ASN1_MALLOC_ENCODE(RSAPublicKey, p, len, &data, &size, ret);
+        free_RSAPublicKey(&data);
+        if (ret)
+            return -1;
+        if (len != size)
+            abort();
 
-	memcpy(*pp, p, size);
-	free(p);
+        memcpy(*pp, p, size);
+        free(p);
 
-	*pp += size;
+        *pp += size;
     }
 
     return size;
@@ -680,16 +680,16 @@ d2i_RSAPublicKey(RSA *rsa, const unsigned char **pp, size_t len)
 
     ret = decode_RSAPublicKey(*pp, len, &data, &size);
     if (ret)
-	return NULL;
+        return NULL;
 
     *pp += size;
 
     if (k == NULL) {
-	k = RSA_new();
-	if (k == NULL) {
-	    free_RSAPublicKey(&data);
-	    return NULL;
-	}
+        k = RSA_new();
+        if (k == NULL) {
+            free_RSAPublicKey(&data);
+            return NULL;
+        }
     }
 
     k->n = _hc_integer_to_BN(&data.modulus, NULL);
@@ -698,8 +698,8 @@ d2i_RSAPublicKey(RSA *rsa, const unsigned char **pp, size_t len)
     free_RSAPublicKey(&data);
 
     if (k->n == NULL || k->e == NULL) {
-	RSA_free(k);
-	return NULL;
+        RSA_free(k);
+        return NULL;
     }
 
     return k;

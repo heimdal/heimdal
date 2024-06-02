@@ -201,18 +201,18 @@ _netlogon_alloc_context(OM_uint32 *minor_status,
 
 OM_uint32
 _netlogon_init_sec_context(OM_uint32 * minor_status,
-			   gss_const_cred_id_t initiator_cred_handle,
-			   gss_ctx_id_t * context_handle,
-			   gss_const_name_t target_name,
-			   const gss_OID mech_type,
-			   OM_uint32 req_flags,
-			   OM_uint32 time_req,
-			   const gss_channel_bindings_t input_chan_bindings,
-			   const gss_buffer_t input_token,
-			   gss_OID * actual_mech_type,
-			   gss_buffer_t output_token,
-			   OM_uint32 * ret_flags,
-			   OM_uint32 * time_rec)
+                           gss_const_cred_id_t initiator_cred_handle,
+                           gss_ctx_id_t * context_handle,
+                           gss_const_name_t target_name,
+                           const gss_OID mech_type,
+                           OM_uint32 req_flags,
+                           OM_uint32 time_req,
+                           const gss_channel_bindings_t input_chan_bindings,
+                           const gss_buffer_t input_token,
+                           gss_OID * actual_mech_type,
+                           gss_buffer_t output_token,
+                           OM_uint32 * ret_flags,
+                           OM_uint32 * time_rec)
 {
     const gssnetlogon_cred cred = (const gssnetlogon_cred)initiator_cred_handle;
     gssnetlogon_ctx ctx = (gssnetlogon_ctx)*context_handle;
@@ -241,9 +241,9 @@ _netlogon_init_sec_context(OM_uint32 * minor_status,
         HEIMDAL_MUTEX_lock(&ctx->Mutex);
         *context_handle = (gss_ctx_id_t)ctx;
 
-	ctx->GssFlags = req_flags & (GSS_C_MUTUAL_FLAG | GSS_C_REPLAY_FLAG |
-				     GSS_C_SEQUENCE_FLAG | GSS_C_CONF_FLAG |
-				     GSS_C_INTEG_FLAG | GSS_C_DCE_STYLE);
+        ctx->GssFlags = req_flags & (GSS_C_MUTUAL_FLAG | GSS_C_REPLAY_FLAG |
+                                     GSS_C_SEQUENCE_FLAG | GSS_C_CONF_FLAG |
+                                     GSS_C_INTEG_FLAG | GSS_C_DCE_STYLE);
         ctx->SignatureAlgorithm = cred->SignatureAlgorithm;
         ctx->SealAlgorithm = cred->SealAlgorithm;
 
@@ -270,11 +270,11 @@ _netlogon_init_sec_context(OM_uint32 * minor_status,
     }
 
     if (ret_flags != NULL)
-	*ret_flags = ctx->GssFlags;
+        *ret_flags = ctx->GssFlags;
     if (time_rec != NULL)
-	*time_rec = GSS_C_INDEFINITE;
+        *time_rec = GSS_C_INDEFINITE;
     if (actual_mech_type != NULL)
-	*actual_mech_type = GSS_NETLOGON_MECHANISM;
+        *actual_mech_type = GSS_NETLOGON_MECHANISM;
 
 cleanup:
     HEIMDAL_MUTEX_unlock(&ctx->Mutex);

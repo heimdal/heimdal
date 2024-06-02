@@ -50,7 +50,7 @@ rk_random_init(void)
     srandom(time(NULL));
 #else
 # ifdef HAVE_WIN32_RAND_S
-	hasRand_s = IsWindowsXPOrGreater();
+    hasRand_s = IsWindowsXPOrGreater();
 # endif
     srand (time(NULL));
 #endif
@@ -61,12 +61,12 @@ unsigned int ROKEN_LIB_FUNCTION
 rk_random(void)
 {
     if (hasRand_s) {
-	unsigned int n;
-	int code;
+        unsigned int n;
+        int code;
 
-	code = rand_s(&n);
-	if (code == 0)
-	    return n;
+        code = rand_s(&n);
+        if (code == 0)
+            return n;
     }
 
     return rand();

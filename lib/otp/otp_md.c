@@ -51,13 +51,13 @@ compressmd (OtpKey key, unsigned char *md, size_t len)
 
     memset (p, 0, OTPKEYSIZE);
     while(len) {
-	*p++ ^= *md++;
-	*p++ ^= *md++;
-	*p++ ^= *md++;
-	*p++ ^= *md++;
-	len -= 4;
-	if (p == key + OTPKEYSIZE)
-	    p = key;
+        *p++ ^= *md++;
+        *p++ ^= *md++;
+        *p++ ^= *md++;
+        *p++ ^= *md++;
+        len -= 4;
+        if (p == key + OTPKEYSIZE)
+            p = key;
     }
 }
 
@@ -74,19 +74,19 @@ little_endian(unsigned char *res, size_t len)
     size_t i;
 
     for (i = 0; i < len; i += 4) {
-	t = res[i + 0]; res[i + 0] = res[i + 3]; res[i + 3] = t;
-	t = res[i + 1]; res[i + 1] = res[i + 2]; res[i + 2] = t;
+        t = res[i + 0]; res[i + 0] = res[i + 3]; res[i + 3] = t;
+        t = res[i + 1]; res[i + 1] = res[i + 2]; res[i + 2] = t;
     }
 }
 
 static int
 otp_md_init (OtpKey key,
-	     const char *pwd,
-	     const char *seed,
-	     const EVP_MD *md,
-	     int le,
-	     unsigned char *res,
-	     size_t ressz)
+             const char *pwd,
+             const char *seed,
+             const EVP_MD *md,
+             int le,
+             unsigned char *res,
+             size_t ressz)
 {
     EVP_MD_CTX *ctx;
     char *p;
@@ -95,7 +95,7 @@ otp_md_init (OtpKey key,
     len = strlen(pwd) + strlen(seed);
     p = malloc (len + 1);
     if (p == NULL)
-	return -1;
+        return -1;
     strlcpy (p, seed, len + 1);
     strlwr (p);
     strlcat (p, pwd, len + 1);
@@ -109,7 +109,7 @@ otp_md_init (OtpKey key,
     EVP_MD_CTX_destroy(ctx);
 
     if (le)
-    	little_endian(res, ressz);
+        little_endian(res, ressz);
 
     free (p);
     compressmd (key, res, ressz);
@@ -118,10 +118,10 @@ otp_md_init (OtpKey key,
 
 static int
 otp_md_next (OtpKey key,
-	     const EVP_MD *md,
-	     int le,
-	     unsigned char *res,
-	     size_t ressz)
+             const EVP_MD *md,
+             int le,
+             unsigned char *res,
+             size_t ressz)
 {
     EVP_MD_CTX *ctx;
 
@@ -134,7 +134,7 @@ otp_md_next (OtpKey key,
     EVP_MD_CTX_destroy(ctx);
 
     if (le)
-	little_endian(res, ressz);
+        little_endian(res, ressz);
 
     compressmd (key, res, ressz);
     return 0;
@@ -142,11 +142,11 @@ otp_md_next (OtpKey key,
 
 static int
 otp_md_hash (const char *data,
-	     size_t len,
-	     const EVP_MD *md,
-	     int le,
-	     unsigned char *res,
-	     size_t ressz)
+             size_t len,
+             const EVP_MD *md,
+             int le,
+             unsigned char *res,
+             size_t ressz)
 {
     EVP_MD_CTX *ctx;
     ctx = EVP_MD_CTX_create();
@@ -158,7 +158,7 @@ otp_md_hash (const char *data,
     EVP_MD_CTX_destroy(ctx);
 
     if (le)
-	little_endian(res, ressz);
+        little_endian(res, ressz);
 
     return 0;
 }
@@ -166,66 +166,66 @@ otp_md_hash (const char *data,
 int
 otp_md4_init (OtpKey key, const char *pwd, const char *seed)
 {
-  unsigned char res[16];
-  return otp_md_init (key, pwd, seed, EVP_md4(), 0, res, sizeof(res));
+    unsigned char res[16];
+    return otp_md_init (key, pwd, seed, EVP_md4(), 0, res, sizeof(res));
 }
 
 int
 otp_md4_hash (const char *data,
-	      size_t len,
-	      unsigned char *res)
+              size_t len,
+              unsigned char *res)
 {
-  return otp_md_hash (data, len, EVP_md4(), 0, res, 16);
+    return otp_md_hash (data, len, EVP_md4(), 0, res, 16);
 }
 
 int
 otp_md4_next (OtpKey key)
 {
-  unsigned char res[16];
-  return otp_md_next (key, EVP_md4(), 0, res, sizeof(res));
+    unsigned char res[16];
+    return otp_md_next (key, EVP_md4(), 0, res, sizeof(res));
 }
 
 
 int
 otp_md5_init (OtpKey key, const char *pwd, const char *seed)
 {
-  unsigned char res[16];
-  return otp_md_init (key, pwd, seed, EVP_md5(), 0, res, sizeof(res));
+    unsigned char res[16];
+    return otp_md_init (key, pwd, seed, EVP_md5(), 0, res, sizeof(res));
 }
 
 int
 otp_md5_hash (const char *data,
-	      size_t len,
-	      unsigned char *res)
+              size_t len,
+              unsigned char *res)
 {
-  return otp_md_hash (data, len, EVP_md5(), 0, res, 16);
+    return otp_md_hash (data, len, EVP_md5(), 0, res, 16);
 }
 
 int
 otp_md5_next (OtpKey key)
 {
-  unsigned char res[16];
-  return otp_md_next (key, EVP_md5(), 0, res, sizeof(res));
+    unsigned char res[16];
+    return otp_md_next (key, EVP_md5(), 0, res, sizeof(res));
 }
 
 int
 otp_sha_init (OtpKey key, const char *pwd, const char *seed)
 {
-  unsigned char res[20];
-  return otp_md_init (key, pwd, seed, EVP_sha1(), 1, res, sizeof(res));
+    unsigned char res[20];
+    return otp_md_init (key, pwd, seed, EVP_sha1(), 1, res, sizeof(res));
 }
 
 int
 otp_sha_hash (const char *data,
-	      size_t len,
-	      unsigned char *res)
+              size_t len,
+              unsigned char *res)
 {
-  return otp_md_hash (data, len, EVP_sha1(), 1, res, 20);
+    return otp_md_hash (data, len, EVP_sha1(), 1, res, 20);
 }
 
 int
 otp_sha_next (OtpKey key)
 {
-  unsigned char res[20];
-  return otp_md_next (key, EVP_sha1(), 1, res, sizeof(res));
+    unsigned char res[20];
+    return otp_md_next (key, EVP_sha1(), 1, res, sizeof(res));
 }

@@ -34,10 +34,10 @@
 #include "gsskrb5_locl.h"
 
 OM_uint32 GSSAPI_CALLCONV _gsskrb5_export_name
-           (OM_uint32  * minor_status,
-            gss_const_name_t input_name,
-            gss_buffer_t exported_name
-           )
+                                              (OM_uint32  * minor_status,
+                                               gss_const_name_t input_name,
+                                               gss_buffer_t exported_name
+                                              )
 {
     krb5_context context;
     krb5_const_principal princ = (krb5_const_principal)input_name;
@@ -49,17 +49,17 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_export_name
 
     kret = krb5_unparse_name (context, princ, &name);
     if (kret) {
-	*minor_status = kret;
-	return GSS_S_FAILURE;
+        *minor_status = kret;
+        return GSS_S_FAILURE;
     }
     len = strlen (name);
 
     exported_name->length = 10 + len + GSS_KRB5_MECHANISM->length;
     exported_name->value  = malloc(exported_name->length);
     if (exported_name->value == NULL) {
-	free (name);
-	*minor_status = ENOMEM;
-	return GSS_S_FAILURE;
+        free (name);
+        *minor_status = ENOMEM;
+        return GSS_S_FAILURE;
     }
 
     /* TOK, MECH_OID_LEN, DER(MECH_OID), NAME_LEN, NAME */

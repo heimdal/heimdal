@@ -36,8 +36,8 @@ RCSID("$Id$");
 
 krb5_error_code
 kcm_ccache_refresh(krb5_context context,
-		   kcm_ccache ccache,
-		   krb5_creds **credp)
+                   kcm_ccache ccache,
+                   krb5_creds **credp)
 {
     krb5_error_code ret;
     krb5_creds in, *out;
@@ -51,9 +51,9 @@ kcm_ccache_refresh(krb5_context context,
     KCM_ASSERT_VALID(ccache);
 
     if (ccache->client == NULL) {
-	/* no primary principal */
-	kcm_log(0, "Refresh credentials requested but no client principal");
-	return KRB5_CC_NOTFOUND;
+        /* no primary principal */
+        kcm_log(0, "Refresh credentials requested but no client principal");
+        return KRB5_CC_NOTFOUND;
     }
 
     HEIMDAL_MUTEX_lock(&ccache->mutex);
@@ -65,49 +65,49 @@ kcm_ccache_refresh(krb5_context context,
     in.client = ccache->client;
 
     if (ccache->server != NULL) {
-	ret = krb5_copy_principal(context, ccache->server, &in.server);
-	if (ret) {
-	    estr = krb5_get_error_message(context, ret);
-	    kcm_log(0, "Failed to copy service principal: %s",
-		    estr);
-	    krb5_free_error_message(context, estr);
-	    goto out;
-	}
+        ret = krb5_copy_principal(context, ccache->server, &in.server);
+        if (ret) {
+            estr = krb5_get_error_message(context, ret);
+            kcm_log(0, "Failed to copy service principal: %s",
+                    estr);
+            krb5_free_error_message(context, estr);
+            goto out;
+        }
     } else {
-	realm = krb5_principal_get_realm(context, in.client);
-	ret = krb5_make_principal(context, &in.server, realm,
-				  KRB5_TGS_NAME, realm, NULL);
-	if (ret) {
-	    estr = krb5_get_error_message(context, ret);
-	    kcm_log(0, "Failed to make TGS principal for realm %s: %s",
-		    realm, estr);
-	    krb5_free_error_message(context, estr);
-	    goto out;
-	}
+        realm = krb5_principal_get_realm(context, in.client);
+        ret = krb5_make_principal(context, &in.server, realm,
+                                  KRB5_TGS_NAME, realm, NULL);
+        if (ret) {
+            estr = krb5_get_error_message(context, ret);
+            kcm_log(0, "Failed to make TGS principal for realm %s: %s",
+                    realm, estr);
+            krb5_free_error_message(context, estr);
+            goto out;
+        }
     }
 
     if (ccache->tkt_life)
-	in.times.endtime = time(NULL) + ccache->tkt_life;
+        in.times.endtime = time(NULL) + ccache->tkt_life;
     if (ccache->renew_life)
-	in.times.renew_till = time(NULL) + ccache->renew_life;
+        in.times.renew_till = time(NULL) + ccache->renew_life;
 
     flags.i = 0;
     flags.b.renewable = TRUE;
     flags.b.renew = TRUE;
 
     ret = krb5_get_kdc_cred(context,
-			    &ccdata,
-			    flags,
-			    NULL,
-			    NULL,
-			    &in,
-			    &out);
+                            &ccdata,
+                            flags,
+                            NULL,
+                            NULL,
+                            &in,
+                            &out);
     if (ret) {
-	estr = krb5_get_error_message(context, ret);
-	kcm_log(0, "Failed to renew credentials for cache %s: %s",
-		ccache->name, estr);
-	krb5_free_error_message(context, estr);
-	goto out;
+        estr = krb5_get_error_message(context, ret);
+        kcm_log(0, "Failed to renew credentials for cache %s: %s",
+                ccache->name, estr);
+        krb5_free_error_message(context, estr);
+        goto out;
     }
 
     /* Swap them in */
@@ -115,12 +115,12 @@ kcm_ccache_refresh(krb5_context context,
 
     ret = kcm_ccache_store_cred_internal(context, ccache, out, 0, credp);
     if (ret) {
-	estr = krb5_get_error_message(context, ret);
-	kcm_log(0, "Failed to store credentials for cache %s: %s",
-		ccache->name, estr);
-	krb5_free_error_message(context, estr);
-	krb5_free_creds(context, out);
-	goto out;
+        estr = krb5_get_error_message(context, ret);
+        kcm_log(0, "Failed to store credentials for cache %s: %s",
+                ccache->name, estr);
+        krb5_free_error_message(context, estr);
+        krb5_free_creds(context, out);
+        goto out;
     }
 
     free(out); /* but not contents */

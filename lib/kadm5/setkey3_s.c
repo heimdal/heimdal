@@ -47,40 +47,40 @@ struct setkey_principal_hook_ctx {
 
 static krb5_error_code KRB5_LIB_CALL
 setkey_principal_hook_cb(krb5_context context,
-			 const void *hook,
-			 void *hookctx,
-			 void *userctx)
+                         const void *hook,
+                         void *hookctx,
+                         void *userctx)
 {
     krb5_error_code ret;
     const struct kadm5_hook_ftable *ftable = hook;
     struct setkey_principal_hook_ctx *ctx = userctx;
 
     ret = ftable->set_keys(context, hookctx,
-			   ctx->stage, ctx->code,
-			   ctx->princ, ctx->flags,
-			   ctx->n_ks_tuple, ctx->ks_tuple,
-			   ctx->n_keys, ctx->keys);
+                           ctx->stage, ctx->code,
+                           ctx->princ, ctx->flags,
+                           ctx->n_ks_tuple, ctx->ks_tuple,
+                           ctx->n_keys, ctx->keys);
     if (ret != 0 && ret != KRB5_PLUGIN_NO_HANDLE)
-	_kadm5_s_set_hook_error_message(ctx->context, ret, "setkey",
-					hook, ctx->stage);
+        _kadm5_s_set_hook_error_message(ctx->context, ret, "setkey",
+                                        hook, ctx->stage);
 
     /* only pre-commit plugins can abort */
     if (ret == 0 || ctx->stage == KADM5_HOOK_STAGE_POSTCOMMIT)
-	ret = KRB5_PLUGIN_NO_HANDLE;
+        ret = KRB5_PLUGIN_NO_HANDLE;
 
     return ret;
 }
 
 static kadm5_ret_t
 setkey_principal_hook(kadm5_server_context *context,
-		      enum kadm5_hook_stage stage,
-		      krb5_error_code code,
-		      krb5_const_principal princ,
-		      uint32_t flags,
-		      size_t n_ks_tuple,
-		      krb5_key_salt_tuple *ks_tuple,
-		      size_t n_keys,
-		      krb5_keyblock *keyblocks)
+                      enum kadm5_hook_stage stage,
+                      krb5_error_code code,
+                      krb5_const_principal princ,
+                      uint32_t flags,
+                      size_t n_ks_tuple,
+                      krb5_key_salt_tuple *ks_tuple,
+                      size_t n_keys,
+                      krb5_keyblock *keyblocks)
 {
     krb5_error_code ret;
     struct setkey_principal_hook_ctx ctx;
@@ -96,9 +96,9 @@ setkey_principal_hook(kadm5_server_context *context,
     ctx.keys = keyblocks;
 
     ret = _krb5_plugin_run_f(context->context, &kadm5_hook_plugin_data,
-			     0, &ctx, setkey_principal_hook_cb);
+                             0, &ctx, setkey_principal_hook_cb);
     if (ret == KRB5_PLUGIN_NO_HANDLE)
-	ret = 0;
+        ret = 0;
 
     return ret;
 }
@@ -108,11 +108,11 @@ setkey_principal_hook(kadm5_server_context *context,
  */
 kadm5_ret_t
 kadm5_s_setkey_principal_3(void *server_handle,
-			   krb5_principal princ,
-			   krb5_boolean keepold,
-			   int n_ks_tuple,
-			   krb5_key_salt_tuple *ks_tuple,
-			   krb5_keyblock *keyblocks, int n_keys)
+                           krb5_principal princ,
+                           krb5_boolean keepold,
+                           int n_ks_tuple,
+                           krb5_key_salt_tuple *ks_tuple,
+                           krb5_keyblock *keyblocks, int n_keys)
 {
     kadm5_server_context *context = server_handle;
     hdb_entry ent;
@@ -121,9 +121,9 @@ kadm5_s_setkey_principal_3(void *server_handle,
 
     memset(&ent, 0, sizeof(ent));
     if (!context->keep_open)
-	ret = context->db->hdb_open(context->context, context->db, O_RDWR, 0);
+        ret = context->db->hdb_open(context->context, context->db, O_RDWR, 0);
     if (ret)
-	return ret;
+        return ret;
 
     ret = kadm5_log_init(context);
     if (ret) {
@@ -144,8 +144,8 @@ kadm5_s_setkey_principal_3(void *server_handle,
     }
 
     ret = setkey_principal_hook(context, KADM5_HOOK_STAGE_PRECOMMIT, 0,
-				princ, keepold ? KADM5_HOOK_FLAG_KEEPOLD : 0,
-				n_ks_tuple, ks_tuple, n_keys, keyblocks);
+                                princ, keepold ? KADM5_HOOK_FLAG_KEEPOLD : 0,
+                                n_ks_tuple, ks_tuple, n_keys, keyblocks);
     if (ret) {
         (void) kadm5_log_end(context);
         if (!context->keep_open)
@@ -156,8 +156,8 @@ kadm5_s_setkey_principal_3(void *server_handle,
     if (keepold) {
         ret = hdb_add_current_keys_to_history(context->context, &ent);
     } else
-	ret = hdb_clear_extension(context->context, &ent,
-				  choice_HDB_extension_data_hist_keys);
+        ret = hdb_clear_extension(context->context, &ent,
+                                  choice_HDB_extension_data_hist_keys);
 
     /*
      * Though in practice all real calls to this function will pass an empty
@@ -167,41 +167,41 @@ kadm5_s_setkey_principal_3(void *server_handle,
      * each ks_tuple's enctype matches the corresponding key enctype.
      */
     if (ret == 0) {
-	free_Keys(&ent.keys);
-	for (i = 0; i < n_keys; ++i) {
-	    Key k;
-	    Salt s;
+        free_Keys(&ent.keys);
+        for (i = 0; i < n_keys; ++i) {
+            Key k;
+            Salt s;
 
-	    k.mkvno = 0;
-	    k.key = keyblocks[i];
-	    if (n_ks_tuple == 0)
-		k.salt = 0;
-	    else {
-		if (ks_tuple[i].ks_enctype != keyblocks[i].keytype) {
-		    ret = KADM5_SETKEY3_ETYPE_MISMATCH;
-		    break;
-		}
-		s.type = ks_tuple[i].ks_salttype;
-		s.salt.data = 0;
-		s.opaque = 0;
-		k.salt = &s;
-	    }
-	    if ((ret = add_Keys(&ent.keys, &k)) != 0)
-		break;
-	}
+            k.mkvno = 0;
+            k.key = keyblocks[i];
+            if (n_ks_tuple == 0)
+                k.salt = 0;
+            else {
+                if (ks_tuple[i].ks_enctype != keyblocks[i].keytype) {
+                    ret = KADM5_SETKEY3_ETYPE_MISMATCH;
+                    break;
+                }
+                s.type = ks_tuple[i].ks_salttype;
+                s.salt.data = 0;
+                s.opaque = 0;
+                k.salt = &s;
+            }
+            if ((ret = add_Keys(&ent.keys, &k)) != 0)
+                break;
+        }
     }
 
     if (ret == 0) {
-	ent.kvno++;
-	ent.flags.require_pwchange = 0;
-	hdb_entry_set_pw_change_time(context->context, &ent, 0);
-	hdb_entry_clear_password(context->context, &ent);
+        ent.kvno++;
+        ent.flags.require_pwchange = 0;
+        hdb_entry_set_pw_change_time(context->context, &ent, 0);
+        hdb_entry_clear_password(context->context, &ent);
 
-	if ((ret = hdb_seal_keys(context->context, context->db,
-				 &ent)) == 0
-	    && (ret = _kadm5_set_modifier(context, &ent)) == 0
-	    && (ret = _kadm5_bump_pw_expire(context, &ent)) == 0)
-	    ret = kadm5_log_modify(context, &ent,
+        if ((ret = hdb_seal_keys(context->context, context->db,
+                                 &ent)) == 0
+            && (ret = _kadm5_set_modifier(context, &ent)) == 0
+            && (ret = _kadm5_bump_pw_expire(context, &ent)) == 0)
+            ret = kadm5_log_modify(context, &ent,
                                    KADM5_ATTRIBUTES | KADM5_PRINCIPAL |
                                    KADM5_MOD_NAME | KADM5_MOD_TIME |
                                    KADM5_KEY_DATA | KADM5_KVNO |
@@ -209,12 +209,12 @@ kadm5_s_setkey_principal_3(void *server_handle,
     }
 
     (void) setkey_principal_hook(context, KADM5_HOOK_STAGE_POSTCOMMIT, ret,
-				 princ, keepold, n_ks_tuple, ks_tuple,
-				 n_keys, keyblocks);
+                                 princ, keepold, n_ks_tuple, ks_tuple,
+                                 n_keys, keyblocks);
 
     hdb_free_entry(context->context, context->db, &ent);
     (void) kadm5_log_end(context);
     if (!context->keep_open)
-	context->db->hdb_close(context->context, context->db);
+        context->db->hdb_close(context->context, context->db);
     return _kadm5_error_code(ret);
 }

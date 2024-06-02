@@ -54,98 +54,98 @@ proto (int sock, const char *hostname, const char *service)
 
     addrlen = sizeof(local);
     if (getsockname (sock, (struct sockaddr *)&local, &addrlen) < 0
-	|| addrlen > sizeof(local))
-	err (1, "getsockname(%s)", hostname);
+        || addrlen > sizeof(local))
+        err (1, "getsockname(%s)", hostname);
 
     addrlen = sizeof(remote);
     if (getpeername (sock, (struct sockaddr *)&remote, &addrlen) < 0
-	|| addrlen > sizeof(remote))
-	err (1, "getpeername(%s)", hostname);
+        || addrlen > sizeof(remote))
+        err (1, "getpeername(%s)", hostname);
 
     status = krb5_init_context(&context);
     if (status)
-	errx(1, "krb5_init_context failed: %d", status);
+        errx(1, "krb5_init_context failed: %d", status);
 
     status = krb5_cc_default (context, &ccache);
     if (status)
-	krb5_err(context, 1, status, "krb5_cc_default");
+        krb5_err(context, 1, status, "krb5_cc_default");
 
     status = krb5_auth_con_init (context, &auth_context);
     if (status)
-	krb5_err(context, 1, status, "krb5_auth_con_init");
+        krb5_err(context, 1, status, "krb5_auth_con_init");
 
     status = krb5_sockaddr2address (context, (struct sockaddr *)&local, &local_addr);
     if (status)
-	krb5_err(context, 1, status, "krb5_sockaddr2address(local)");
+        krb5_err(context, 1, status, "krb5_sockaddr2address(local)");
     status = krb5_sockaddr2address (context, (struct sockaddr *)&remote, &remote_addr);
     if (status)
-	krb5_err(context, 1, status, "krb5_sockaddr2address(remote)");
+        krb5_err(context, 1, status, "krb5_sockaddr2address(remote)");
 
     status = krb5_auth_con_setaddrs (context,
-				     auth_context,
-				     &local_addr,
-				     &remote_addr);
+                                     auth_context,
+                                     &local_addr,
+                                     &remote_addr);
     if (status)
-	krb5_err(context, 1, status, "krb5_auth_con_setaddr");
+        krb5_err(context, 1, status, "krb5_auth_con_setaddr");
 
     krb5_cc_clear_mcred(&mcred);
 
     status = krb5_cc_get_principal(context, ccache, &client);
     if(status)
-	krb5_err(context, 1, status, "krb5_cc_get_principal");
+        krb5_err(context, 1, status, "krb5_cc_get_principal");
     status = krb5_make_principal(context, &mcred.server,
-				 krb5_principal_get_realm(context, client),
-				 "krbtgt",
-				 krb5_principal_get_realm(context, client),
-				 NULL);
+                                 krb5_principal_get_realm(context, client),
+                                 "krbtgt",
+                                 krb5_principal_get_realm(context, client),
+                                 NULL);
     if(status)
-	krb5_err(context, 1, status, "krb5_make_principal");
+        krb5_err(context, 1, status, "krb5_make_principal");
     mcred.client = client;
 
     status = krb5_cc_retrieve_cred(context, ccache, 0, &mcred, &cred);
     if(status)
-	krb5_err(context, 1, status, "krb5_cc_retrieve_cred");
+        krb5_err(context, 1, status, "krb5_cc_retrieve_cred");
 
     {
-	char *client_name;
-	krb5_data data;
-	status = krb5_unparse_name(context, cred.client, &client_name);
-	if(status)
-	    krb5_err(context, 1, status, "krb5_unparse_name");
-	data.data = client_name;
-	data.length = strlen(client_name) + 1;
-	status = krb5_write_message(context, &sock, &data);
-	if(status)
-	    krb5_err(context, 1, status, "krb5_write_message");
-	free(client_name);
+        char *client_name;
+        krb5_data data;
+        status = krb5_unparse_name(context, cred.client, &client_name);
+        if(status)
+            krb5_err(context, 1, status, "krb5_unparse_name");
+        data.data = client_name;
+        data.length = strlen(client_name) + 1;
+        status = krb5_write_message(context, &sock, &data);
+        if(status)
+            krb5_err(context, 1, status, "krb5_write_message");
+        free(client_name);
     }
 
     status = krb5_write_message(context, &sock, &cred.ticket);
     if(status)
-	krb5_err(context, 1, status, "krb5_write_message");
+        krb5_err(context, 1, status, "krb5_write_message");
 
     status = krb5_auth_con_setuserkey(context, auth_context, &cred.session);
     if(status)
-	krb5_err(context, 1, status, "krb5_auth_con_setuserkey");
+        krb5_err(context, 1, status, "krb5_auth_con_setuserkey");
 
     status = krb5_recvauth(context, &auth_context, &sock,
-			   VERSION, client, 0, NULL, &ticket);
+                           VERSION, client, 0, NULL, &ticket);
 
     if (status)
-	krb5_err(context, 1, status, "krb5_recvauth");
+        krb5_err(context, 1, status, "krb5_recvauth");
 
     if (ticket->ticket.authorization_data) {
-	AuthorizationData *authz;
-	int i;
+        AuthorizationData *authz;
+        int i;
 
-	printf("Authorization data:\n");
+        printf("Authorization data:\n");
 
-	authz = ticket->ticket.authorization_data;
-	for (i = 0; i < authz->len; i++) {
-	    printf("\ttype %d, length %lu\n",
-		   authz->val[i].ad_type,
-		   (unsigned long)authz->val[i].ad_data.length);
-	}
+        authz = ticket->ticket.authorization_data;
+        for (i = 0; i < authz->len; i++) {
+            printf("\ttype %d, length %lu\n",
+                   authz->val[i].ad_type,
+                   (unsigned long)authz->val[i].ad_data.length);
+        }
     }
 
     data.data   = "hej";
@@ -154,16 +154,16 @@ proto (int sock, const char *hostname, const char *service)
     krb5_data_zero (&packet);
 
     status = krb5_mk_safe (context,
-			   auth_context,
-			   &data,
-			   &packet,
-			   NULL);
+                           auth_context,
+                           &data,
+                           &packet,
+                           NULL);
     if (status)
-	krb5_err(context, 1, status, "krb5_mk_safe");
+        krb5_err(context, 1, status, "krb5_mk_safe");
 
     status = krb5_write_message(context, &sock, &packet);
     if(status)
-	krb5_err(context, 1, status, "krb5_write_message");
+        krb5_err(context, 1, status, "krb5_write_message");
 
     data.data   = "hemligt";
     data.length = 7;
@@ -171,16 +171,16 @@ proto (int sock, const char *hostname, const char *service)
     krb5_data_free (&packet);
 
     status = krb5_mk_priv (context,
-			   auth_context,
-			   &data,
-			   &packet,
-			   NULL);
+                           auth_context,
+                           &data,
+                           &packet,
+                           NULL);
     if (status)
-	krb5_err(context, 1, status, "krb5_mk_priv");
+        krb5_err(context, 1, status, "krb5_mk_priv");
 
     status = krb5_write_message(context, &sock, &packet);
     if(status)
-	krb5_err(context, 1, status, "krb5_write_message");
+        krb5_err(context, 1, status, "krb5_write_message");
     return 0;
 }
 

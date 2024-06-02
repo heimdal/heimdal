@@ -50,7 +50,7 @@ del_entry(void *opt, int argc, char **argv)
     ret = kadm5_dup_context(kadm_handle, &dup_kadm_handle);
 
     for (i = 0; ret == 0 && i < argc; i++)
-	ret = foreach_principal(argv[i], do_del_entry, "del", dup_kadm_handle);
+        ret = foreach_principal(argv[i], do_del_entry, "del", dup_kadm_handle);
 
     if (dup_kadm_handle)
         kadm5_destroy(dup_kadm_handle);

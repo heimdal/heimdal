@@ -44,20 +44,20 @@ readv(int d, const struct iovec *iov, int iovcnt)
     char *buf, *p;
 
     for(i = 0; i < iovcnt; ++i)
-	tot += iov[i].iov_len;
+        tot += iov[i].iov_len;
     buf = malloc(tot);
     if (tot != 0 && buf == NULL) {
-	errno = ENOMEM;
-	return -1;
+        errno = ENOMEM;
+        return -1;
     }
     nb = ret = read (d, buf, tot);
     p = buf;
     while (nb > 0) {
-	ssize_t cnt = min(nb, iov->iov_len);
+        ssize_t cnt = min(nb, iov->iov_len);
 
-	memcpy (iov->iov_base, p, cnt);
-	p += cnt;
-	nb -= cnt;
+        memcpy (iov->iov_base, p, cnt);
+        p += cnt;
+        nb -= cnt;
     }
     free(buf);
     return ret;

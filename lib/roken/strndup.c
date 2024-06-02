@@ -45,8 +45,8 @@ strndup(const char *old, size_t sz)
     char *t    = malloc(len + 1);
 
     if (t != NULL) {
-	memcpy (t, old, len);
-	t[len] = '\0';
+        memcpy (t, old, len);
+        t[len] = '\0';
     }
     return t;
 }

@@ -82,19 +82,19 @@ main(int argc, char **argv)
     setprogname(argv[0]);
 
     if (argc == 2) {
-	if (strcmp(argv[1], "--version") == 0) {
-	    printf("version");
-	    exit(0);
-	}
-	if (strcmp(argv[1], "--help") == 0)
-	    usage(0);
-	usage(1);
+        if (strcmp(argv[1], "--version") == 0) {
+            printf("version");
+            exit(0);
+        }
+        if (strcmp(argv[1], "--help") == 0)
+            usage(0);
+        usage(1);
     } else if (argc == 4 || argc == 5) {
-	block_size = atoi(argv[1]);
-	if (block_size == 0)
-	    errx(1, "invalid blocksize %s", argv[1]);
-	ifn = argv[2];
-	ofn = argv[3];
+        block_size = atoi(argv[1]);
+        if (block_size == 0)
+            errx(1, "invalid blocksize %s", argv[1]);
+        ifn = argv[2];
+        ofn = argv[3];
         if (argc == 5) {
             if (strcmp(argv[4], "pkcs11") == 0)
                 c = hc_EVP_pkcs11_aes_128_cbc();
@@ -110,14 +110,14 @@ main(int argc, char **argv)
                 usage(1);
         }
     } else
-	usage(1);
+        usage(1);
 
     in = fopen(ifn, "r");
     if (in == NULL)
-	errx(1, "failed to open input file");
+        errx(1, "failed to open input file");
     out = fopen(ofn, "w+");
     if (out == NULL)
-	errx(1, "failed to open output file");
+        errx(1, "failed to open output file");
 
     /* Check that key and ivec are long enough */
     assert(EVP_CIPHER_key_length(c) <= sizeof(key));
@@ -139,14 +139,14 @@ main(int argc, char **argv)
 
     /* read in buffer */
     while ((ilen = fread(ibuf, 1, block_size, in)) > 0) {
-	/* encrypto/decrypt */
-	ret = EVP_CipherUpdate(&ctx, obuf, &olen, ibuf, ilen);
-	if (ret != 1) {
-	    EVP_CIPHER_CTX_cleanup(&ctx);
-	    errx(1, "EVP_CipherUpdate failed");
-	}
-	/* write out to output file */
-	fwrite(obuf, 1, olen, out);
+        /* encrypto/decrypt */
+        ret = EVP_CipherUpdate(&ctx, obuf, &olen, ibuf, ilen);
+        if (ret != 1) {
+            EVP_CIPHER_CTX_cleanup(&ctx);
+            errx(1, "EVP_CipherUpdate failed");
+        }
+        /* write out to output file */
+        fwrite(obuf, 1, olen, out);
     }
     /* done reading */
     fclose(in);
@@ -155,7 +155,7 @@ main(int argc, char **argv)
     ret = EVP_CipherFinal_ex(&ctx, obuf, &olen);
     EVP_CIPHER_CTX_cleanup(&ctx);
     if (ret != 1)
-	errx(1, "EVP_CipherFinal_ex failed");
+        errx(1, "EVP_CipherFinal_ex failed");
 
     /* write the last bytes out and close */
     fwrite(obuf, 1, olen, out);

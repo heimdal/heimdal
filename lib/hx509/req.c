@@ -73,7 +73,7 @@ hx509_request_init(hx509_context context, hx509_request *req)
 {
     *req = calloc(1, sizeof(**req));
     if (*req == NULL)
-	return ENOMEM;
+        return ENOMEM;
 
     (*req)->context = context;
     return 0;
@@ -95,7 +95,7 @@ hx509_request_free(hx509_request *reqp)
     if (req == NULL)
         return;
     if (req->name)
-	hx509_name_free(&req->name);
+        hx509_name_free(&req->name);
     free(req->authorized_EKUs.feats);
     free(req->authorized_SANs.feats);
     free_SubjectPublicKeyInfo(&req->key);
@@ -163,15 +163,15 @@ hx509_request_set_eE(hx509_context context, hx509_request req)
  */
 HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_request_set_name(hx509_context context,
-			hx509_request req,
-			hx509_name name)
+                       hx509_request req,
+                       hx509_name name)
 {
     if (req->name)
-	hx509_name_free(&req->name);
+        hx509_name_free(&req->name);
     if (name) {
-	int ret = hx509_name_copy(context, name, &req->name);
-	if (ret)
-	    return ret;
+        int ret = hx509_name_copy(context, name, &req->name);
+        if (ret)
+            return ret;
     }
     return 0;
 }
@@ -189,12 +189,12 @@ hx509_request_set_name(hx509_context context,
  */
 HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_request_get_name(hx509_context context,
-			hx509_request req,
-			hx509_name *name)
+                       hx509_request req,
+                       hx509_name *name)
 {
     if (req->name == NULL) {
-	hx509_set_error_string(context, 0, EINVAL, "Request has no name");
-	return EINVAL;
+        hx509_set_error_string(context, 0, EINVAL, "Request has no name");
+        return EINVAL;
     }
     return hx509_name_copy(context, req->name, name);
 }
@@ -212,8 +212,8 @@ hx509_request_get_name(hx509_context context,
  */
 HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_request_set_SubjectPublicKeyInfo(hx509_context context,
-					hx509_request req,
-					const SubjectPublicKeyInfo *key)
+                                       hx509_request req,
+                                       const SubjectPublicKeyInfo *key)
 {
     free_SubjectPublicKeyInfo(&req->key);
     return copy_SubjectPublicKeyInfo(key, &req->key);
@@ -232,8 +232,8 @@ hx509_request_set_SubjectPublicKeyInfo(hx509_context context,
  */
 HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_request_get_SubjectPublicKeyInfo(hx509_context context,
-					hx509_request req,
-					SubjectPublicKeyInfo *key)
+                                       hx509_request req,
+                                       SubjectPublicKeyInfo *key)
 {
     return copy_SubjectPublicKeyInfo(&req->key, key);
 }
@@ -299,12 +299,12 @@ hx509_request_add_eku(hx509_context context,
 
     val = realloc(req->eku.val, sizeof(req->eku.val[0]) * (req->eku.len + 1));
     if (val == NULL)
-	return ENOMEM;
+        return ENOMEM;
     req->eku.val = val;
 
     ret = der_copy_oid(oid, &req->eku.val[req->eku.len]);
     if (ret)
-	return ret;
+        return ret;
 
     req->eku.len += 1;
 
@@ -718,9 +718,9 @@ hx509_request_to_pkcs10(hx509_context context,
     data.data = NULL;
 
     if (req->name == NULL) {
-	hx509_set_error_string(context, 0, EINVAL,
-			       "PKCS10 needs to have a subject");
-	return EINVAL;
+        hx509_set_error_string(context, 0, EINVAL,
+                               "PKCS10 needs to have a subject");
+        return EINVAL;
     }
 
     memset(&r, 0, sizeof(r));
@@ -728,7 +728,7 @@ hx509_request_to_pkcs10(hx509_context context,
     /* Setup CSR */
     r.certificationRequestInfo.version = pkcs10_v1;
     ret = copy_Name(&req->name->der_name,
-		    &r.certificationRequestInfo.subject);
+                    &r.certificationRequestInfo.subject);
     if (ret == 0)
         ret = copy_SubjectPublicKeyInfo(&req->key,
                                         &r.certificationRequestInfo.subjectPKInfo);
@@ -771,7 +771,7 @@ hx509_request_to_pkcs10(hx509_context context,
         ASN1_MALLOC_ENCODE(CertificationRequestInfo, data.data, data.length,
                            &r.certificationRequestInfo, &size, ret);
     if (ret == 0 && data.length != size)
-	abort();
+        abort();
 
     /* Self-sign CSR body */
     if (ret == 0) {
@@ -788,7 +788,7 @@ hx509_request_to_pkcs10(hx509_context context,
         ASN1_MALLOC_ENCODE(CertificationRequest, request->data, request->length,
                            &r, &size, ret);
     if (ret == 0 && request->length != size)
-	abort();
+        abort();
 
     free_CertificationRequest(&r);
     free_Extensions(&exts);
@@ -1012,16 +1012,16 @@ hx509_request_parse(hx509_context context,
 
     /* XXX Add support for PEM */
     if (strncmp(csr, "PKCS10:", 7) != 0) {
-	hx509_set_error_string(context, 0, HX509_UNSUPPORTED_OPERATION,
+        hx509_set_error_string(context, 0, HX509_UNSUPPORTED_OPERATION,
                                "CSR location does not start with \"PKCS10:\": %s",
                                csr);
-	return HX509_UNSUPPORTED_OPERATION;
+        return HX509_UNSUPPORTED_OPERATION;
     }
 
     ret = rk_undumpdata(csr + 7, &d.data, &d.length);
     if (ret) {
-	hx509_set_error_string(context, 0, ret, "Could not read %s", csr);
-	return ret;
+        hx509_set_error_string(context, 0, ret, "Could not read %s", csr);
+        return ret;
     }
 
     ret = hx509_request_parse_der(context, &d, req);
@@ -1130,13 +1130,13 @@ authorize_feat(hx509_request req, abitstring a, size_t n, int idx)
 
     ret = abitstring_set(a, n, idx);
     switch (ret) {
-    case 0:
-        req->nauthorized++;
-        HEIM_FALLTHROUGH;
-    case -1:
-        return 0;
-    default:
-        return ret;
+        case 0:
+            req->nauthorized++;
+            HEIM_FALLTHROUGH;
+        case -1:
+            return 0;
+        default:
+            return ret;
     }
 }
 
@@ -1147,13 +1147,13 @@ reject_feat(hx509_request req, abitstring a, size_t n, int idx)
 
     ret = abitstring_reset(a, n, idx);
     switch (ret) {
-    case 0:
-        req->nauthorized--;
-        HEIM_FALLTHROUGH;
-    case -1:
-        return 0;
-    default:
-        return ret;
+        case 0:
+            req->nauthorized--;
+            HEIM_FALLTHROUGH;
+        case -1:
+            return 0;
+        default:
+            return ret;
     }
 }
 
@@ -1343,17 +1343,17 @@ san_map_type(GeneralName *san)
     size_t i;
 
     switch (san->element) {
-    case choice_GeneralName_rfc822Name:    return HX509_SAN_TYPE_EMAIL;
-    case choice_GeneralName_dNSName:       return HX509_SAN_TYPE_DNSNAME;
-    case choice_GeneralName_directoryName: return HX509_SAN_TYPE_DN;
-    case choice_GeneralName_registeredID:  return HX509_SAN_TYPE_REGISTERED_ID;
-    case choice_GeneralName_otherName: {
-        for (i = 0; i < sizeof(map)/sizeof(map[0]); i++)
-            if (der_heim_oid_cmp(&san->u.otherName.type_id, map[i].oid) == 0)
-                return map[i].type;
-    }
+        case choice_GeneralName_rfc822Name:    return HX509_SAN_TYPE_EMAIL;
+        case choice_GeneralName_dNSName:       return HX509_SAN_TYPE_DNSNAME;
+        case choice_GeneralName_directoryName: return HX509_SAN_TYPE_DN;
+        case choice_GeneralName_registeredID:  return HX509_SAN_TYPE_REGISTERED_ID;
+        case choice_GeneralName_otherName: {
+            for (i = 0; i < sizeof(map)/sizeof(map[0]); i++)
+                if (der_heim_oid_cmp(&san->u.otherName.type_id, map[i].oid) == 0)
+                    return map[i].type;
+        }
         HEIM_FALLTHROUGH;
-    default:                               return HX509_SAN_TYPE_UNSUPPORTED;
+        default:                               return HX509_SAN_TYPE_UNSUPPORTED;
     }
 }
 
@@ -1379,116 +1379,116 @@ hx509_request_get_san(hx509_request req,
 
     san = &req->san.val[idx];
     switch ((*type = san_map_type(san))) {
-    case HX509_SAN_TYPE_UNSUPPORTED: return 0;
-    case HX509_SAN_TYPE_EMAIL:
-        *out = strndup(san->u.rfc822Name.data,
-                       san->u.rfc822Name.length);
-        break;
-    case HX509_SAN_TYPE_DNSNAME:
-        *out = strndup(san->u.dNSName.data,
-                       san->u.dNSName.length);
-        break;
-    case HX509_SAN_TYPE_DNSSRV: {
-        SRVName name;
-        size_t size;
-        int ret;
+        case HX509_SAN_TYPE_UNSUPPORTED: return 0;
+        case HX509_SAN_TYPE_EMAIL:
+            *out = strndup(san->u.rfc822Name.data,
+                           san->u.rfc822Name.length);
+            break;
+        case HX509_SAN_TYPE_DNSNAME:
+            *out = strndup(san->u.dNSName.data,
+                           san->u.dNSName.length);
+            break;
+        case HX509_SAN_TYPE_DNSSRV: {
+            SRVName name;
+            size_t size;
+            int ret;
 
-        ret = decode_SRVName(san->u.otherName.value.data,
-                             san->u.otherName.value.length, &name, &size);
-        if (ret)
-            return ret;
-        *out = strndup(name.data, name.length);
-        break;
-    }
-    case HX509_SAN_TYPE_PERMANENT_ID: {
-        PermanentIdentifier pi;
-        size_t size;
-        char *s = NULL;
-        int ret;
+            ret = decode_SRVName(san->u.otherName.value.data,
+                                 san->u.otherName.value.length, &name, &size);
+            if (ret)
+                return ret;
+            *out = strndup(name.data, name.length);
+            break;
+        }
+        case HX509_SAN_TYPE_PERMANENT_ID: {
+            PermanentIdentifier pi;
+            size_t size;
+            char *s = NULL;
+            int ret;
 
-        ret = decode_PermanentIdentifier(san->u.otherName.value.data,
-                                         san->u.otherName.value.length,
-                                         &pi, &size);
-        if (ret == 0 && pi.assigner) {
-            ret = der_print_heim_oid(pi.assigner, '.', &s);
+            ret = decode_PermanentIdentifier(san->u.otherName.value.data,
+                                             san->u.otherName.value.length,
+                                             &pi, &size);
+            if (ret == 0 && pi.assigner) {
+                ret = der_print_heim_oid(pi.assigner, '.', &s);
+                if (ret == 0 &&
+                    (pool = rk_strpoolprintf(NULL, "%s", s)) == NULL)
+                    ret = ENOMEM;
+            } else if (ret == 0) {
+                pool = rk_strpoolprintf(NULL, "-");
+            }
             if (ret == 0 &&
-                (pool = rk_strpoolprintf(NULL, "%s", s)) == NULL)
+                (pool = rk_strpoolprintf(pool, "%s%s",
+                                         *pi.identifierValue ? " " : "",
+                                         *pi.identifierValue ? *pi.identifierValue : "")) == NULL)
                 ret = ENOMEM;
-        } else if (ret == 0) {
-            pool = rk_strpoolprintf(NULL, "-");
+            if (ret == 0 && (*out = rk_strpoolcollect(pool)) == NULL)
+                ret = ENOMEM;
+            free_PermanentIdentifier(&pi);
+            free(s);
+            return ret;
         }
-        if (ret == 0 &&
-            (pool = rk_strpoolprintf(pool, "%s%s",
-                                     *pi.identifierValue ? " " : "",
-                                     *pi.identifierValue ? *pi.identifierValue : "")) == NULL)
-            ret = ENOMEM;
-        if (ret == 0 && (*out = rk_strpoolcollect(pool)) == NULL)
-            ret = ENOMEM;
-        free_PermanentIdentifier(&pi);
-        free(s);
-        return ret;
-    }
-    case HX509_SAN_TYPE_HW_MODULE: {
-        HardwareModuleName hn;
-        size_t size;
-        char *s = NULL;
-        int ret;
+        case HX509_SAN_TYPE_HW_MODULE: {
+            HardwareModuleName hn;
+            size_t size;
+            char *s = NULL;
+            int ret;
 
-        ret = decode_HardwareModuleName(san->u.otherName.value.data,
-                                        san->u.otherName.value.length,
-                                        &hn, &size);
-        if (ret == 0 && hn.hwSerialNum.length > 256)
-            hn.hwSerialNum.length = 256;
-        if (ret == 0)
-            ret = der_print_heim_oid(&hn.hwType, '.', &s);
-        if (ret == 0)
-            pool = rk_strpoolprintf(NULL, "%s", s);
-        if (ret == 0 && pool)
-            pool = rk_strpoolprintf(pool, " %.*s",
-                                    (int)hn.hwSerialNum.length,
-                                    (char *)hn.hwSerialNum.data);
-        if (ret == 0 &&
-            (pool == NULL || (*out = rk_strpoolcollect(pool)) == NULL))
-            ret = ENOMEM;
-        free_HardwareModuleName(&hn);
-        return ret;
-    }
-    case HX509_SAN_TYPE_DN: {
-        Name name;
-
-        if (san->u.directoryName.element == choice_Name_rdnSequence) {
-            name.element = choice_Name_rdnSequence;
-            name.u.rdnSequence = san->u.directoryName.u.rdnSequence;
-            return _hx509_Name_to_string(&name, out);
+            ret = decode_HardwareModuleName(san->u.otherName.value.data,
+                                            san->u.otherName.value.length,
+                                            &hn, &size);
+            if (ret == 0 && hn.hwSerialNum.length > 256)
+                hn.hwSerialNum.length = 256;
+            if (ret == 0)
+                ret = der_print_heim_oid(&hn.hwType, '.', &s);
+            if (ret == 0)
+                pool = rk_strpoolprintf(NULL, "%s", s);
+            if (ret == 0 && pool)
+                pool = rk_strpoolprintf(pool, " %.*s",
+                                        (int)hn.hwSerialNum.length,
+                                        (char *)hn.hwSerialNum.data);
+            if (ret == 0 &&
+                (pool == NULL || (*out = rk_strpoolcollect(pool)) == NULL))
+                ret = ENOMEM;
+            free_HardwareModuleName(&hn);
+            return ret;
         }
-        *type = HX509_SAN_TYPE_UNSUPPORTED;
-        return 0;
-    }
-    case HX509_SAN_TYPE_REGISTERED_ID:
-        return der_print_heim_oid(&san->u.registeredID, '.', out);
-    case HX509_SAN_TYPE_XMPP:
-        HEIM_FALLTHROUGH;
-    case HX509_SAN_TYPE_MS_UPN: {
-        int ret;
+        case HX509_SAN_TYPE_DN: {
+            Name name;
 
-        ret = _hx509_unparse_utf8_string_name(req->context, &pool,
-                                              &san->u.otherName.value);
-        if ((*out = rk_strpoolcollect(pool)) == NULL)
-            return hx509_enomem(req->context);
-        return ret;
-    }
-    case HX509_SAN_TYPE_PKINIT: {
-        int ret;
+            if (san->u.directoryName.element == choice_Name_rdnSequence) {
+                name.element = choice_Name_rdnSequence;
+                name.u.rdnSequence = san->u.directoryName.u.rdnSequence;
+                return _hx509_Name_to_string(&name, out);
+            }
+            *type = HX509_SAN_TYPE_UNSUPPORTED;
+            return 0;
+        }
+        case HX509_SAN_TYPE_REGISTERED_ID:
+            return der_print_heim_oid(&san->u.registeredID, '.', out);
+        case HX509_SAN_TYPE_XMPP:
+            HEIM_FALLTHROUGH;
+        case HX509_SAN_TYPE_MS_UPN: {
+            int ret;
 
-        ret = _hx509_unparse_KRB5PrincipalName(req->context, &pool,
-                                               &san->u.otherName.value);
-        if ((*out = rk_strpoolcollect(pool)) == NULL)
-            return hx509_enomem(req->context);
-        return ret;
-    }
-    default:
-        *type = HX509_SAN_TYPE_UNSUPPORTED;
-        return 0;
+            ret = _hx509_unparse_utf8_string_name(req->context, &pool,
+                                                  &san->u.otherName.value);
+            if ((*out = rk_strpoolcollect(pool)) == NULL)
+                return hx509_enomem(req->context);
+            return ret;
+        }
+        case HX509_SAN_TYPE_PKINIT: {
+            int ret;
+
+            ret = _hx509_unparse_KRB5PrincipalName(req->context, &pool,
+                                                   &san->u.otherName.value);
+            if ((*out = rk_strpoolcollect(pool)) == NULL)
+                return hx509_enomem(req->context);
+            return ret;
+        }
+        default:
+            *type = HX509_SAN_TYPE_UNSUPPORTED;
+            return 0;
     }
     if (*out == NULL)
         return ENOMEM;
@@ -1589,14 +1589,14 @@ hx509_request_print(hx509_context context, hx509_request req, FILE *f)
             fprintf(f, "  pathLenConstraint: unspecified\n");
     }
     if (req->name) {
-	char *subject;
-	ret = hx509_name_to_string(req->name, &subject);
-	if (ret) {
-	    hx509_set_error_string(context, 0, ret, "Failed to print name");
-	    return ret;
-	}
+        char *subject;
+        ret = hx509_name_to_string(req->name, &subject);
+        if (ret) {
+            hx509_set_error_string(context, 0, ret, "Failed to print name");
+            return ret;
+        }
         fprintf(f, "  name: %s\n", subject);
-	free(subject);
+        free(subject);
     }
     /* XXX Use hx509_request_get_ku() accessor */
     if ((ku_num = KeyUsage2int(req->ku))) {
@@ -1640,30 +1640,30 @@ hx509_request_print(hx509_context context, hx509_request req, FILE *f)
         if (ret)
             break;
         switch (san_type) {
-        case HX509_SAN_TYPE_EMAIL:
-            fprintf(f, "  san: rfc822Name: %s\n", s);
-            break;
-        case HX509_SAN_TYPE_DNSNAME:
-            fprintf(f, "  san: dNSName: %s\n", s);
-            break;
-        case HX509_SAN_TYPE_DN:
-            fprintf(f, "  san: dn: %s\n", s);
-            break;
-        case HX509_SAN_TYPE_REGISTERED_ID:
-            fprintf(f, "  san: registeredID: %s\n", s);
-            break;
-        case HX509_SAN_TYPE_XMPP:
-            fprintf(f, "  san: xmpp: %s\n", s);
-            break;
-        case HX509_SAN_TYPE_PKINIT:
-            fprintf(f, "  san: pkinit: %s\n", s);
-            break;
-        case HX509_SAN_TYPE_MS_UPN:
-            fprintf(f, "  san: ms-upn: %s\n", s);
-            break;
-        default:
-            fprintf(f, "  san: <SAN type not supported>\n");
-            break;
+            case HX509_SAN_TYPE_EMAIL:
+                fprintf(f, "  san: rfc822Name: %s\n", s);
+                break;
+            case HX509_SAN_TYPE_DNSNAME:
+                fprintf(f, "  san: dNSName: %s\n", s);
+                break;
+            case HX509_SAN_TYPE_DN:
+                fprintf(f, "  san: dn: %s\n", s);
+                break;
+            case HX509_SAN_TYPE_REGISTERED_ID:
+                fprintf(f, "  san: registeredID: %s\n", s);
+                break;
+            case HX509_SAN_TYPE_XMPP:
+                fprintf(f, "  san: xmpp: %s\n", s);
+                break;
+            case HX509_SAN_TYPE_PKINIT:
+                fprintf(f, "  san: pkinit: %s\n", s);
+                break;
+            case HX509_SAN_TYPE_MS_UPN:
+                fprintf(f, "  san: ms-upn: %s\n", s);
+                break;
+            default:
+                fprintf(f, "  san: <SAN type not supported>\n");
+                break;
         }
     }
     if (req->nunsupported_crit) {

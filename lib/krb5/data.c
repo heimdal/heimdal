@@ -77,7 +77,7 @@ krb5_data_free(krb5_data *p)
 
 KRB5_LIB_FUNCTION void KRB5_LIB_CALL
 krb5_free_data(krb5_context context,
-	       krb5_data *p)
+               krb5_data *p)
 {
     krb5_data_free(p);
     free(p);
@@ -100,7 +100,7 @@ krb5_data_alloc(krb5_data *p, int len)
 {
     p->data = malloc(len);
     if(len && p->data == NULL)
-	return ENOMEM;
+        return ENOMEM;
     p->length = len;
     return 0;
 }
@@ -123,7 +123,7 @@ krb5_data_realloc(krb5_data *p, int len)
     void *tmp;
     tmp = realloc(p->data, len);
     if(len && !tmp)
-	return ENOMEM;
+        return ENOMEM;
     p->data = tmp;
     p->length = len;
     return 0;
@@ -146,11 +146,11 @@ KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_data_copy(krb5_data *p, const void *data, size_t len)
 {
     if (len) {
-	if(krb5_data_alloc(p, len))
-	    return ENOMEM;
-	memcpy(p->data,	data, len);
+        if(krb5_data_alloc(p, len))
+            return ENOMEM;
+        memcpy(p->data, data, len);
     } else
-	p->data = NULL;
+        p->data = NULL;
     p->length = len;
     return 0;
 }
@@ -170,18 +170,18 @@ krb5_data_copy(krb5_data *p, const void *data, size_t len)
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_copy_data(krb5_context context,
-	       const krb5_data *indata,
-	       krb5_data **outdata)
+               const krb5_data *indata,
+               krb5_data **outdata)
 {
     krb5_error_code ret;
     ALLOC(*outdata, 1);
     if(*outdata == NULL)
-	return krb5_enomem(context);
+        return krb5_enomem(context);
     ret = der_copy_octet_string(indata, *outdata);
     if(ret) {
-	krb5_clear_error_message (context);
-	free(*outdata);
-	*outdata = NULL;
+        krb5_clear_error_message (context);
+        free(*outdata);
+        *outdata = NULL;
     }
     return ret;
 }
@@ -204,7 +204,7 @@ krb5_data_cmp(const krb5_data *data1, const krb5_data *data2)
     int cmp = memcmp(data1->data, data2->data, len);
 
     if (cmp == 0)
-	return data1->length - data2->length;
+        return data1->length - data2->length;
     return cmp;
 }
 
@@ -223,6 +223,6 @@ KRB5_LIB_FUNCTION int KRB5_LIB_CALL
 krb5_data_ct_cmp(const krb5_data *data1, const krb5_data *data2)
 {
     if (data1->length != data2->length)
-	return data1->length - data2->length;
+        return data1->length - data2->length;
     return ct_memcmp(data1->data, data2->data, data1->length);
 }

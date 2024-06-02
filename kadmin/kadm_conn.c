@@ -50,9 +50,9 @@ add_kadm_port(krb5_context contextp, const char *service, unsigned int port)
     struct kadm_port *p;
     p = malloc(sizeof(*p));
     if(p == NULL) {
-	krb5_warnx(contextp, "failed to allocate %lu bytes\n",
-		   (unsigned long)sizeof(*p));
-	return;
+        krb5_warnx(contextp, "failed to allocate %lu bytes\n",
+                   (unsigned long)sizeof(*p));
+        return;
     }
 
     p->port = strdup(service);
@@ -84,10 +84,10 @@ parse_ports(krb5_context contextp, const char *str)
     char p[128];
 
     while(strsep_copy(&str, " \t", p, sizeof(p)) != -1) {
-	if(strcmp(p, "+") == 0)
-	    add_standard_ports(contextp);
-	else
-	    add_kadm_port(contextp, p, 0);
+        if(strcmp(p, "+") == 0)
+            add_standard_ports(contextp);
+        else
+            add_kadm_port(contextp, p, 0);
     }
 }
 
@@ -103,7 +103,7 @@ sigchld(int sig)
      * children
      */
     while ((waitpid(-1, &status, WNOHANG)) > 0)
-	;
+        ;
     SIGRETURN(0);
 }
 
@@ -111,23 +111,23 @@ static RETSIGTYPE
 terminate(int sig)
 {
     if(getpid() == pgrp) {
-	/* parent */
-	term_flag = 1;
-	signal(sig, SIG_IGN);
-	killpg(pgrp, sig);
+        /* parent */
+        term_flag = 1;
+        signal(sig, SIG_IGN);
+        killpg(pgrp, sig);
     } else {
-	/* child */
-	if(doing_useful_work)
-	    term_flag = 1;
-	else
-	    exit(0);
+        /* child */
+        if(doing_useful_work)
+            term_flag = 1;
+        else
+            exit(0);
     }
     SIGRETURN(0);
 }
 
 static int
 spawn_child(krb5_context contextp, int *socks,
-	    unsigned int num_socks, int this_sock)
+            unsigned int num_socks, int this_sock)
 {
     int e;
     size_t i;
@@ -142,40 +142,40 @@ spawn_child(krb5_context contextp, int *socks,
 
     s = accept(socks[this_sock], sa, &sa_size);
     if(rk_IS_BAD_SOCKET(s)) {
-	krb5_warn(contextp, rk_SOCK_ERRNO, "accept");
-	return 1;
+        krb5_warn(contextp, rk_SOCK_ERRNO, "accept");
+        return 1;
     }
     e = krb5_sockaddr2address(contextp, sa, &addr);
     if(e)
-	krb5_warn(contextp, e, "krb5_sockaddr2address");
+        krb5_warn(contextp, e, "krb5_sockaddr2address");
     else {
-	e = krb5_print_address (&addr, buf, sizeof(buf),
-				&buf_len);
-	if(e)
-	    krb5_warn(contextp, e, "krb5_print_address");
-	else
-	    krb5_warnx(contextp, "connection from %s", buf);
-	krb5_free_address(contextp, &addr);
+        e = krb5_print_address (&addr, buf, sizeof(buf),
+                                &buf_len);
+        if(e)
+            krb5_warn(contextp, e, "krb5_print_address");
+        else
+            krb5_warnx(contextp, "connection from %s", buf);
+        krb5_free_address(contextp, &addr);
     }
 
     pid = fork();
     if(pid == 0) {
-	for(i = 0; i < num_socks; i++)
-	    rk_closesocket(socks[i]);
-	dup2(s, STDIN_FILENO);
-	dup2(s, STDOUT_FILENO);
-	if(s != STDIN_FILENO && s != STDOUT_FILENO)
-	    rk_closesocket(s);
-	return 0;
+        for(i = 0; i < num_socks; i++)
+            rk_closesocket(socks[i]);
+        dup2(s, STDIN_FILENO);
+        dup2(s, STDOUT_FILENO);
+        if(s != STDIN_FILENO && s != STDOUT_FILENO)
+            rk_closesocket(s);
+        return 0;
     } else {
-	rk_closesocket(s);
+        rk_closesocket(s);
     }
     return 1;
 }
 
 static void
 wait_for_connection(krb5_context contextp,
-		    krb5_socket_t *socks, unsigned int num_socks)
+                    krb5_socket_t *socks, unsigned int num_socks)
 {
     unsigned int i;
     int e;
@@ -186,43 +186,43 @@ wait_for_connection(krb5_context contextp,
 
     for(i = 0; i < num_socks; i++) {
 #ifdef FD_SETSIZE
-	if (socks[i] >= FD_SETSIZE)
-	    errx (1, "fd too large");
+        if (socks[i] >= FD_SETSIZE)
+            errx (1, "fd too large");
 #endif
-	FD_SET(socks[i], &orig_read_set);
-	max_fd = max(max_fd, socks[i]);
+        FD_SET(socks[i], &orig_read_set);
+        max_fd = max(max_fd, socks[i]);
     }
 
     pgrp = getpid();
 
     /* systemd may cause setpgid to fail with EPERM */
     if(setpgid(0, pgrp) < 0 && errno != EPERM)
-	err(1, "setpgid");
+        err(1, "setpgid");
 
     signal(SIGTERM, terminate);
     signal(SIGINT, terminate);
     signal(SIGCHLD, sigchld);
 
     while (term_flag == 0) {
-	read_set = orig_read_set;
-	e = select(max_fd + 1, &read_set, NULL, NULL, NULL);
-	if(rk_IS_SOCKET_ERROR(e)) {
-	    if(rk_SOCK_ERRNO != EINTR)
-		krb5_warn(contextp, rk_SOCK_ERRNO, "select");
-	} else if(e == 0)
-	    krb5_warnx(contextp, "select returned 0");
-	else {
-	    for(i = 0; i < num_socks; i++) {
-		if(FD_ISSET(socks[i], &read_set))
-		    if(spawn_child(contextp, socks, num_socks, i) == 0)
-			return;
-	    }
-	}
+        read_set = orig_read_set;
+        e = select(max_fd + 1, &read_set, NULL, NULL, NULL);
+        if(rk_IS_SOCKET_ERROR(e)) {
+            if(rk_SOCK_ERRNO != EINTR)
+                krb5_warn(contextp, rk_SOCK_ERRNO, "select");
+        } else if(e == 0)
+            krb5_warnx(contextp, "select returned 0");
+        else {
+            for(i = 0; i < num_socks; i++) {
+                if(FD_ISSET(socks[i], &read_set))
+                    if(spawn_child(contextp, socks, num_socks, i) == 0)
+                        return;
+            }
+        }
     }
     signal(SIGCHLD, SIG_IGN);
 
     while ((waitpid(-1, &status, WNOHANG)) > 0)
-	;
+        ;
 
     exit(0);
 }
@@ -239,69 +239,69 @@ start_server(krb5_context contextp, const char *port_str)
     int i;
 
     if (port_str == NULL)
-	port_str = "+";
+        port_str = "+";
 
     parse_ports(contextp, port_str);
 
     for(p = kadm_ports; p; p = p->next) {
-	struct addrinfo hints, *ai, *ap;
-	char portstr[32];
-	memset (&hints, 0, sizeof(hints));
-	hints.ai_flags    = AI_PASSIVE;
-	hints.ai_socktype = SOCK_STREAM;
+        struct addrinfo hints, *ai, *ap;
+        char portstr[32];
+        memset (&hints, 0, sizeof(hints));
+        hints.ai_flags    = AI_PASSIVE;
+        hints.ai_socktype = SOCK_STREAM;
 
-	if (krb5_config_get_bool(context, NULL, "libdefaults", "block_dns",
-		NULL)) {
-	    hints.ai_flags &= ~AI_CANONNAME;
-	    hints.ai_flags |= AI_NUMERICHOST|AI_NUMERICSERV;
-	}
-	e = getaddrinfo(NULL, p->port, &hints, &ai);
-	if(e) {
-	    snprintf(portstr, sizeof(portstr), "%u", p->def_port);
-	    e = getaddrinfo(NULL, portstr, &hints, &ai);
-	}
+        if (krb5_config_get_bool(context, NULL, "libdefaults", "block_dns",
+                                 NULL)) {
+            hints.ai_flags &= ~AI_CANONNAME;
+            hints.ai_flags |= AI_NUMERICHOST|AI_NUMERICSERV;
+        }
+        e = getaddrinfo(NULL, p->port, &hints, &ai);
+        if(e) {
+            snprintf(portstr, sizeof(portstr), "%u", p->def_port);
+            e = getaddrinfo(NULL, portstr, &hints, &ai);
+        }
 
-	if(e) {
-	    krb5_warn(contextp, krb5_eai_to_heim_errno(e, errno),
-		      "%s", portstr);
-	    continue;
-	}
-	i = 0;
-	for(ap = ai; ap; ap = ap->ai_next)
-	    i++;
-	tmp = realloc(socks, (num_socks + i) * sizeof(*socks));
-	if(tmp == NULL)
-	    krb5_err(contextp, 1, errno, "failed to reallocate %lu bytes",
-		     (unsigned long)(num_socks + i) * sizeof(*socks));
-	socks = tmp;
-	for(ap = ai; ap; ap = ap->ai_next) {
-	    krb5_socket_t s = socket(ap->ai_family, ap->ai_socktype, ap->ai_protocol);
-	    if(rk_IS_BAD_SOCKET(s)) {
-		krb5_warn(contextp, rk_SOCK_ERRNO, "socket");
-		continue;
-	    }
+        if(e) {
+            krb5_warn(contextp, krb5_eai_to_heim_errno(e, errno),
+                      "%s", portstr);
+            continue;
+        }
+        i = 0;
+        for(ap = ai; ap; ap = ap->ai_next)
+            i++;
+        tmp = realloc(socks, (num_socks + i) * sizeof(*socks));
+        if(tmp == NULL)
+            krb5_err(contextp, 1, errno, "failed to reallocate %lu bytes",
+                     (unsigned long)(num_socks + i) * sizeof(*socks));
+        socks = tmp;
+        for(ap = ai; ap; ap = ap->ai_next) {
+            krb5_socket_t s = socket(ap->ai_family, ap->ai_socktype, ap->ai_protocol);
+            if(rk_IS_BAD_SOCKET(s)) {
+                krb5_warn(contextp, rk_SOCK_ERRNO, "socket");
+                continue;
+            }
 
-	    socket_set_reuseaddr(s, 1);
-	    socket_set_ipv6only(s, 1);
+            socket_set_reuseaddr(s, 1);
+            socket_set_ipv6only(s, 1);
 
-	    if (rk_IS_SOCKET_ERROR(bind (s, ap->ai_addr, ap->ai_addrlen))) {
-		krb5_warn(contextp, rk_SOCK_ERRNO, "bind");
-		rk_closesocket(s);
-		continue;
-	    }
-	    if (rk_IS_SOCKET_ERROR(listen (s, SOMAXCONN))) {
-		krb5_warn(contextp, rk_SOCK_ERRNO, "listen");
-		rk_closesocket(s);
-		continue;
-	    }
+            if (rk_IS_SOCKET_ERROR(bind (s, ap->ai_addr, ap->ai_addrlen))) {
+                krb5_warn(contextp, rk_SOCK_ERRNO, "bind");
+                rk_closesocket(s);
+                continue;
+            }
+            if (rk_IS_SOCKET_ERROR(listen (s, SOMAXCONN))) {
+                krb5_warn(contextp, rk_SOCK_ERRNO, "listen");
+                rk_closesocket(s);
+                continue;
+            }
 
-	    socket_set_keepalive(s, 1);
-	    socks[num_socks++] = s;
-	}
-	freeaddrinfo (ai);
+            socket_set_keepalive(s, 1);
+            socks[num_socks++] = s;
+        }
+        freeaddrinfo (ai);
     }
     if(num_socks == 0)
-	krb5_errx(contextp, 1, "no sockets to listen to - exiting");
+        krb5_errx(contextp, 1, "no sockets to listen to - exiting");
 
     roken_detach_finish(NULL, daemon_child);
 

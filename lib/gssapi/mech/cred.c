@@ -40,42 +40,42 @@
 static OM_uint32
 release_mech_cred(OM_uint32 *minor, struct _gss_mechanism_cred *mc)
 {
-	OM_uint32 major;
+    OM_uint32 major;
 
-        if (mc->gmc_mech->gm_release_cred != NULL)
-		major = mc->gmc_mech->gm_release_cred(minor, &mc->gmc_cred);
-	else
-		major = GSS_S_COMPLETE;
+    if (mc->gmc_mech->gm_release_cred != NULL)
+        major = mc->gmc_mech->gm_release_cred(minor, &mc->gmc_cred);
+    else
+        major = GSS_S_COMPLETE;
 
-	free(mc);
+    free(mc);
 
-	return major;
+    return major;
 }
 
 
 void
 _gss_mg_release_cred(struct _gss_cred *cred)
 {
-	struct _gss_mechanism_cred *mc, *next;
-	OM_uint32 junk;
+    struct _gss_mechanism_cred *mc, *next;
+    OM_uint32 junk;
 
-	HEIM_TAILQ_FOREACH_SAFE(mc, &cred->gc_mc, gmc_link, next) {
-		HEIM_TAILQ_REMOVE(&cred->gc_mc, mc, gmc_link);
-		release_mech_cred(&junk, mc);
-	}
+    HEIM_TAILQ_FOREACH_SAFE(mc, &cred->gc_mc, gmc_link, next) {
+        HEIM_TAILQ_REMOVE(&cred->gc_mc, mc, gmc_link);
+        release_mech_cred(&junk, mc);
+    }
         gss_release_oid_set(&junk, &cred->gc_neg_mechs);
-	free(cred);
+    free(cred);
 }
 
 struct _gss_cred *
 _gss_mg_alloc_cred(void)
 {
-	struct _gss_cred *cred;
-	cred = calloc(1, sizeof(struct _gss_cred));
-	if (cred == NULL)
-		return NULL;
-	HEIM_TAILQ_INIT(&cred->gc_mc);
+    struct _gss_cred *cred;
+    cred = calloc(1, sizeof(struct _gss_cred));
+    if (cred == NULL)
+        return NULL;
+    HEIM_TAILQ_INIT(&cred->gc_mc);
 
-	return cred;
+    return cred;
 }
 

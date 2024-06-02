@@ -68,7 +68,7 @@ kdc_audit_addreason(kdc_request_t r, const char *fmt, ...)
 
 KDC_LIB_FUNCTION void KDC_LIB_CALL
 kdc_audit_vaddkv(kdc_request_t r, int flags, const char *k,
-		  const char *fmt, va_list ap)
+                 const char *fmt, va_list ap)
 	__attribute__ ((__format__ (__printf__, 4, 0)))
 {
     heim_audit_vaddkv((heim_svc_req_desc)r, flags, k, fmt, ap);
@@ -76,7 +76,7 @@ kdc_audit_vaddkv(kdc_request_t r, int flags, const char *k,
 
 KDC_LIB_FUNCTION void KDC_LIB_CALL
 kdc_audit_addkv(kdc_request_t r, int flags, const char *k,
-		 const char *fmt, ...)
+                const char *fmt, ...)
 	__attribute__ ((__format__ (__printf__, 4, 5)))
 {
     va_list ap;
@@ -88,8 +88,8 @@ kdc_audit_addkv(kdc_request_t r, int flags, const char *k,
 
 KDC_LIB_FUNCTION void KDC_LIB_CALL
 kdc_audit_addkv_timediff(kdc_request_t r, const char *k,
-			  const struct timeval *start,
-			  const struct timeval *end)
+                         const struct timeval *start,
+                         const struct timeval *end)
 {
     heim_audit_addkv_timediff((heim_svc_req_desc)r,k, start, end);
 }
@@ -162,73 +162,73 @@ _kdc_audit_trail(kdc_request_t r, krb5_error_code ret)
     /* Get a symbolic name for some error codes */
 #define CASE(x)	case x : retname = #x; break
     switch (ret ? ret : r->error_code) {
-    CASE(ENOMEM);
-    CASE(EACCES);
-    CASE(HDB_ERR_NOT_FOUND_HERE);
-    CASE(HDB_ERR_WRONG_REALM);
-    CASE(HDB_ERR_EXISTS);
-    CASE(HDB_ERR_KVNO_NOT_FOUND);
-    CASE(HDB_ERR_NOENTRY);
-    CASE(HDB_ERR_NO_MKEY);
-    CASE(KRB5KDC_ERR_BADOPTION);
-    CASE(KRB5KDC_ERR_CANNOT_POSTDATE);
-    CASE(KRB5KDC_ERR_CLIENT_NOTYET);
-    CASE(KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN);
-    CASE(KRB5KDC_ERR_ETYPE_NOSUPP);
-    CASE(KRB5KDC_ERR_KEY_EXPIRED);
-    CASE(KRB5KDC_ERR_NAME_EXP);
-    CASE(KRB5KDC_ERR_NEVER_VALID);
-    CASE(KRB5KDC_ERR_NONE);
-    CASE(KRB5KDC_ERR_NULL_KEY);
-    CASE(KRB5KDC_ERR_PADATA_TYPE_NOSUPP);
-    CASE(KRB5KDC_ERR_POLICY);
-    CASE(KRB5KDC_ERR_PREAUTH_FAILED);
-    CASE(KRB5KDC_ERR_PREAUTH_REQUIRED);
-    CASE(KRB5KDC_ERR_SERVER_NOMATCH);
-    CASE(KRB5KDC_ERR_SERVICE_EXP);
-    CASE(KRB5KDC_ERR_SERVICE_NOTYET);
-    CASE(KRB5KDC_ERR_S_PRINCIPAL_UNKNOWN);
-    CASE(KRB5KDC_ERR_TRTYPE_NOSUPP);
-    CASE(KRB5KRB_AP_ERR_BADADDR);
-    CASE(KRB5KRB_AP_ERR_BADDIRECTION);
-    CASE(KRB5KRB_AP_ERR_BAD_INTEGRITY);
-    CASE(KRB5KRB_AP_ERR_BADKEYVER);
-    CASE(KRB5KRB_AP_ERR_BADMATCH);
-    CASE(KRB5KRB_AP_ERR_BADORDER);
-    CASE(KRB5KRB_AP_ERR_BADSEQ);
-    CASE(KRB5KRB_AP_ERR_BADVERSION);
-    CASE(KRB5KRB_AP_ERR_ILL_CR_TKT);
-    CASE(KRB5KRB_AP_ERR_INAPP_CKSUM);
-    CASE(KRB5KRB_AP_ERR_METHOD);
-    CASE(KRB5KRB_AP_ERR_MODIFIED);
-    CASE(KRB5KRB_AP_ERR_MSG_TYPE);
-    CASE(KRB5KRB_AP_ERR_MUT_FAIL);
-    CASE(KRB5KRB_AP_ERR_NOKEY);
-    CASE(KRB5KRB_AP_ERR_NOT_US);
-    CASE(KRB5KRB_AP_ERR_REPEAT);
-    CASE(KRB5KRB_AP_ERR_SKEW);
-    CASE(KRB5KRB_AP_ERR_TKT_EXPIRED);
-    CASE(KRB5KRB_AP_ERR_TKT_INVALID);
-    CASE(KRB5KRB_AP_ERR_TKT_NYV);
-    CASE(KRB5KRB_AP_ERR_V4_REPLY);
-    CASE(KRB5KRB_AP_PATH_NOT_ACCEPTED);
-    CASE(KRB5KRB_AP_WRONG_PRINC);
-    CASE(KRB5KRB_ERR_FIELD_TOOLONG);
-    CASE(KRB5KRB_ERR_GENERIC);
-    CASE(KRB5KRB_ERR_RESPONSE_TOO_BIG);
+        CASE(ENOMEM);
+        CASE(EACCES);
+        CASE(HDB_ERR_NOT_FOUND_HERE);
+        CASE(HDB_ERR_WRONG_REALM);
+        CASE(HDB_ERR_EXISTS);
+        CASE(HDB_ERR_KVNO_NOT_FOUND);
+        CASE(HDB_ERR_NOENTRY);
+        CASE(HDB_ERR_NO_MKEY);
+        CASE(KRB5KDC_ERR_BADOPTION);
+        CASE(KRB5KDC_ERR_CANNOT_POSTDATE);
+        CASE(KRB5KDC_ERR_CLIENT_NOTYET);
+        CASE(KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN);
+        CASE(KRB5KDC_ERR_ETYPE_NOSUPP);
+        CASE(KRB5KDC_ERR_KEY_EXPIRED);
+        CASE(KRB5KDC_ERR_NAME_EXP);
+        CASE(KRB5KDC_ERR_NEVER_VALID);
+        CASE(KRB5KDC_ERR_NONE);
+        CASE(KRB5KDC_ERR_NULL_KEY);
+        CASE(KRB5KDC_ERR_PADATA_TYPE_NOSUPP);
+        CASE(KRB5KDC_ERR_POLICY);
+        CASE(KRB5KDC_ERR_PREAUTH_FAILED);
+        CASE(KRB5KDC_ERR_PREAUTH_REQUIRED);
+        CASE(KRB5KDC_ERR_SERVER_NOMATCH);
+        CASE(KRB5KDC_ERR_SERVICE_EXP);
+        CASE(KRB5KDC_ERR_SERVICE_NOTYET);
+        CASE(KRB5KDC_ERR_S_PRINCIPAL_UNKNOWN);
+        CASE(KRB5KDC_ERR_TRTYPE_NOSUPP);
+        CASE(KRB5KRB_AP_ERR_BADADDR);
+        CASE(KRB5KRB_AP_ERR_BADDIRECTION);
+        CASE(KRB5KRB_AP_ERR_BAD_INTEGRITY);
+        CASE(KRB5KRB_AP_ERR_BADKEYVER);
+        CASE(KRB5KRB_AP_ERR_BADMATCH);
+        CASE(KRB5KRB_AP_ERR_BADORDER);
+        CASE(KRB5KRB_AP_ERR_BADSEQ);
+        CASE(KRB5KRB_AP_ERR_BADVERSION);
+        CASE(KRB5KRB_AP_ERR_ILL_CR_TKT);
+        CASE(KRB5KRB_AP_ERR_INAPP_CKSUM);
+        CASE(KRB5KRB_AP_ERR_METHOD);
+        CASE(KRB5KRB_AP_ERR_MODIFIED);
+        CASE(KRB5KRB_AP_ERR_MSG_TYPE);
+        CASE(KRB5KRB_AP_ERR_MUT_FAIL);
+        CASE(KRB5KRB_AP_ERR_NOKEY);
+        CASE(KRB5KRB_AP_ERR_NOT_US);
+        CASE(KRB5KRB_AP_ERR_REPEAT);
+        CASE(KRB5KRB_AP_ERR_SKEW);
+        CASE(KRB5KRB_AP_ERR_TKT_EXPIRED);
+        CASE(KRB5KRB_AP_ERR_TKT_INVALID);
+        CASE(KRB5KRB_AP_ERR_TKT_NYV);
+        CASE(KRB5KRB_AP_ERR_V4_REPLY);
+        CASE(KRB5KRB_AP_PATH_NOT_ACCEPTED);
+        CASE(KRB5KRB_AP_WRONG_PRINC);
+        CASE(KRB5KRB_ERR_FIELD_TOOLONG);
+        CASE(KRB5KRB_ERR_GENERIC);
+        CASE(KRB5KRB_ERR_RESPONSE_TOO_BIG);
 
-    case 0:
-	retname = "SUCCESS";
-	break;
-    default:
-        retname = NULL;
-	break;
+        case 0:
+            retname = "SUCCESS";
+            break;
+        default:
+            retname = NULL;
+            break;
     }
 
     /* Let's save a few bytes */
 #define PREFIX "KRB5KDC_"
     if (retname && strncmp(PREFIX, retname, strlen(PREFIX)) == 0)
-	retname += strlen(PREFIX);
+        retname += strlen(PREFIX);
 #undef PREFIX
 
     heim_audit_trail((heim_svc_req_desc)r, ret, retname);
@@ -238,9 +238,9 @@ KDC_LIB_FUNCTION void KDC_LIB_CALL
 krb5_kdc_update_time(struct timeval *tv)
 {
     if (tv == NULL)
-	gettimeofday(&_kdc_now, NULL);
+        gettimeofday(&_kdc_now, NULL);
     else
-	_kdc_now = *tv;
+        _kdc_now = *tv;
 }
 
 
@@ -266,7 +266,7 @@ kdc_as_req(kdc_request_t *rptr, int *claim)
 
     ret = decode_AS_REQ(r->request.data, r->request.length, &r->req, &len);
     if (ret)
-	return ret;
+        return ret;
 
     r->reqtype = "AS-REQ";
     r->use_request_t = 1;
@@ -290,7 +290,7 @@ kdc_tgs_req(kdc_request_t *rptr, int *claim)
 
     ret = decode_TGS_REQ(r->request.data, r->request.length, &r->req, &len);
     if (ret)
-	return ret;
+        return ret;
 
     r->reqtype = "TGS-REQ";
     r->use_request_t = 1;
@@ -314,15 +314,15 @@ kdc_digest(kdc_request_t *rptr, int *claim)
     r = *rptr;
 
     ret = decode_DigestREQ(r->request.data, r->request.length,
-			   &digestreq, &len);
+                           &digestreq, &len);
     if (ret)
-	return ret;
+        return ret;
 
     r->use_request_t = 0;
     *claim = 1;
 
     ret = _kdc_do_digest(r->context, r->config, &digestreq,
-			 r->reply, r->from, r->addr);
+                         r->reply, r->from, r->addr);
     free_DigestREQ(&digestreq);
     return ret;
 }
@@ -342,7 +342,7 @@ kdc_kx509(kdc_request_t *rptr, int *claim)
 
     ret = _kdc_try_kx509_request(r);
     if (ret)
-	return ret;
+        return ret;
 
     r->use_request_t = 1;
     r->reqtype = "KX509";
@@ -368,15 +368,15 @@ static struct krb5_kdc_service services[] =  {
 
 static int
 process_request(krb5_context context,
-		krb5_kdc_configuration *config,
-		unsigned int krb5_only,
-		unsigned char *buf,
-		size_t len,
-		krb5_data *reply,
-		krb5_boolean *prependlength,
-		const char *from,
-		struct sockaddr *addr,
-		int datagram_reply)
+                krb5_kdc_configuration *config,
+                unsigned int krb5_only,
+                unsigned char *buf,
+                size_t len,
+                krb5_data *reply,
+                krb5_boolean *prependlength,
+                const char *from,
+                struct sockaddr *addr,
+                int datagram_reply)
 {
     kdc_request_t r;
     krb5_error_code ret;
@@ -385,7 +385,7 @@ process_request(krb5_context context,
 
     r = calloc(sizeof(*r), 1);
     if (!r)
-	return krb5_enomem(context);
+        return krb5_enomem(context);
 
     r->context = context;
     r->hcontext = context->hcontext;
@@ -400,37 +400,37 @@ process_request(krb5_context context,
     r->kv = heim_dict_create(10);
     r->attributes = heim_dict_create(1);
     if (r->kv == NULL || r->attributes == NULL) {
-	heim_release(r->kv);
-	heim_release(r->attributes);
-	free(r);
-	return krb5_enomem(context);
+        heim_release(r->kv);
+        heim_release(r->attributes);
+        free(r);
+        return krb5_enomem(context);
     }
 
     gettimeofday(&r->tv_start, NULL);
 
     for (i = 0; services[i].process != NULL; i++) {
-	if (krb5_only && (services[i].flags & KS_KRB5) == 0)
-	    continue;
-	kdc_log(context, config, 7, "Probing for %s", services[i].name);
-	ret = (*services[i].process)(&r, &claim);
-	if (claim) {
-	    if (prependlength && services[i].flags & KS_NO_LENGTH)
-		*prependlength = 0;
+        if (krb5_only && (services[i].flags & KS_KRB5) == 0)
+            continue;
+        kdc_log(context, config, 7, "Probing for %s", services[i].name);
+        ret = (*services[i].process)(&r, &claim);
+        if (claim) {
+            if (prependlength && services[i].flags & KS_NO_LENGTH)
+                *prependlength = 0;
 
-	    if (r->use_request_t) {
-		gettimeofday(&r->tv_end, NULL);
-		_kdc_audit_trail(r, ret);
-		free(r->cname);
-		free(r->sname);
-		free(r->e_text_buf);
-	    }
+            if (r->use_request_t) {
+                gettimeofday(&r->tv_end, NULL);
+                _kdc_audit_trail(r, ret);
+                free(r->cname);
+                free(r->sname);
+                free(r->e_text_buf);
+            }
 
             heim_release(r->reason);
             heim_release(r->kv);
-	    heim_release(r->attributes);
+            heim_release(r->attributes);
             free(r);
-	    return ret;
-	}
+            return ret;
+        }
     }
 
     heim_release(r->reason);
@@ -447,19 +447,19 @@ process_request(krb5_context context,
 
 KDC_LIB_FUNCTION int KDC_LIB_CALL
 krb5_kdc_process_request(krb5_context context,
-			 krb5_kdc_configuration *config,
-			 unsigned char *buf,
-			 size_t len,
-			 krb5_data *reply,
-			 krb5_boolean *prependlength,
-			 const char *from,
-			 struct sockaddr *addr,
-			 int datagram_reply)
+                         krb5_kdc_configuration *config,
+                         unsigned char *buf,
+                         size_t len,
+                         krb5_data *reply,
+                         krb5_boolean *prependlength,
+                         const char *from,
+                         struct sockaddr *addr,
+                         int datagram_reply)
 {
     return process_request(context, config, 0, buf, len, reply, prependlength,
-			   from, addr, datagram_reply);
+                           from, addr, datagram_reply);
 }
- 
+
 /*
  * handle the request in `buf, len', from `addr' (or `from' as a string),
  * sending a reply in `reply'.
@@ -469,16 +469,16 @@ krb5_kdc_process_request(krb5_context context,
 
 KDC_LIB_FUNCTION int KDC_LIB_CALL
 krb5_kdc_process_krb5_request(krb5_context context,
-			      krb5_kdc_configuration *config,
-			      unsigned char *buf,
-			      size_t len,
-			      krb5_data *reply,
-			      const char *from,
-			      struct sockaddr *addr,
-			      int datagram_reply)
+                              krb5_kdc_configuration *config,
+                              unsigned char *buf,
+                              size_t len,
+                              krb5_data *reply,
+                              const char *from,
+                              struct sockaddr *addr,
+                              int datagram_reply)
 {
     return process_request(context, config, 1, buf, len, reply, NULL,
-			   from, addr, datagram_reply);
+                           from, addr, datagram_reply);
 }
 
 
@@ -488,11 +488,11 @@ krb5_kdc_process_krb5_request(krb5_context context,
 
 KDC_LIB_FUNCTION int KDC_LIB_CALL
 krb5_kdc_save_request(krb5_context context,
-		      const char *fn,
-		      const unsigned char *buf,
-		      size_t len,
-		      const krb5_data *reply,
-		      const struct sockaddr *sa)
+                      const char *fn,
+                      const unsigned char *buf,
+                      size_t len,
+                      const krb5_data *reply,
+                      const struct sockaddr *sa)
 {
     krb5_storage *sp;
     krb5_address a;
@@ -524,12 +524,12 @@ krb5_kdc_save_request(krb5_context context,
     d.length = 0;
     d.data = NULL;
     if (ret == 0) {
-	Der_class cl;
-	Der_type ty;
-	unsigned int tag;
-	ret = der_get_tag (reply->data, reply->length,
-			   &cl, &ty, &tag, NULL);
-	if (ret) {
+        Der_class cl;
+        Der_type ty;
+        unsigned int tag;
+        ret = der_get_tag (reply->data, reply->length,
+                           &cl, &ty, &tag, NULL);
+        if (ret) {
             ret = krb5_store_uint32(sp, 0xffffffff);
             if (ret == 0)
                 ret = krb5_store_uint32(sp, 0xffffffff);
@@ -537,7 +537,7 @@ krb5_kdc_save_request(krb5_context context,
             ret = krb5_store_uint32(sp, MAKE_TAG(cl, ty, 0));
             if (ret == 0)
                 ret = krb5_store_uint32(sp, tag);
-	}
+        }
     }
 
     if (ret == 0)
@@ -553,7 +553,7 @@ krb5_kdc_save_request(krb5_context context,
     if (ret == 0)
         fd = open(fn, O_WRONLY|O_CREAT|O_APPEND, 0600);
     if (fd < 0)
-	krb5_set_error_message(context, ret = errno, "Failed to open: %s", fn);
+        krb5_set_error_message(context, ret = errno, "Failed to open: %s", fn);
     if (ret == 0) {
         sp = krb5_storage_from_fd(fd);
         if (sp == NULL)

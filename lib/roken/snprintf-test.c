@@ -47,14 +47,14 @@ try (const char *format, ...)
     va_start (ap, format);
     ret = rk_vsnprintf (buf1, sizeof(buf1), format, ap);
     if (ret >= sizeof(buf1))
-	errx (1, "increase buf and try again");
+        errx (1, "increase buf and try again");
     va_end (ap);
     va_start (ap, format);
     vsprintf (buf2, format, ap);
     ret = strcmp (buf1, buf2);
     if (ret)
-	printf ("failed: format = \"%s\", \"%s\" != \"%s\"\n",
-		format, buf1, buf2);
+        printf ("failed: format = \"%s\", \"%s\" != \"%s\"\n",
+                format, buf1, buf2);
     va_end (ap);
     return ret;
 }
@@ -67,27 +67,27 @@ cmp_with_sprintf_int (void)
     int i;
 
     for (i = 0; i < sizeof(int_values) / sizeof(int_values[0]); ++i) {
-	tot += try ("%d", int_values[i]);
-	tot += try ("%x", int_values[i]);
-	tot += try ("%X", int_values[i]);
-	tot += try ("%o", int_values[i]);
-	tot += try ("%#x", int_values[i]);
-	tot += try ("%#X", int_values[i]);
-	tot += try ("%#o", int_values[i]);
-	tot += try ("%10d", int_values[i]);
-	tot += try ("%10x", int_values[i]);
-	tot += try ("%10X", int_values[i]);
-	tot += try ("%10o", int_values[i]);
-	tot += try ("%#10x", int_values[i]);
-	tot += try ("%#10X", int_values[i]);
-	tot += try ("%#10o", int_values[i]);
-	tot += try ("%-10d", int_values[i]);
-	tot += try ("%-10x", int_values[i]);
-	tot += try ("%-10X", int_values[i]);
-	tot += try ("%-10o", int_values[i]);
-	tot += try ("%-#10x", int_values[i]);
-	tot += try ("%-#10X", int_values[i]);
-	tot += try ("%-#10o", int_values[i]);
+        tot += try ("%d", int_values[i]);
+        tot += try ("%x", int_values[i]);
+        tot += try ("%X", int_values[i]);
+        tot += try ("%o", int_values[i]);
+        tot += try ("%#x", int_values[i]);
+        tot += try ("%#X", int_values[i]);
+        tot += try ("%#o", int_values[i]);
+        tot += try ("%10d", int_values[i]);
+        tot += try ("%10x", int_values[i]);
+        tot += try ("%10X", int_values[i]);
+        tot += try ("%10o", int_values[i]);
+        tot += try ("%#10x", int_values[i]);
+        tot += try ("%#10X", int_values[i]);
+        tot += try ("%#10o", int_values[i]);
+        tot += try ("%-10d", int_values[i]);
+        tot += try ("%-10x", int_values[i]);
+        tot += try ("%-10X", int_values[i]);
+        tot += try ("%-10o", int_values[i]);
+        tot += try ("%-#10x", int_values[i]);
+        tot += try ("%-#10X", int_values[i]);
+        tot += try ("%-#10o", int_values[i]);
     }
     return tot;
 }
@@ -100,27 +100,27 @@ cmp_with_sprintf_long (void)
     int i;
 
     for (i = 0; i < sizeof(long_values) / sizeof(long_values[0]); ++i) {
-	tot += try ("%ld", long_values[i]);
-	tot += try ("%lx", long_values[i]);
-	tot += try ("%lX", long_values[i]);
-	tot += try ("%lo", long_values[i]);
-	tot += try ("%#lx", long_values[i]);
-	tot += try ("%#lX", long_values[i]);
-	tot += try ("%#lo", long_values[i]);
-	tot += try ("%10ld", long_values[i]);
-	tot += try ("%10lx", long_values[i]);
-	tot += try ("%10lX", long_values[i]);
-	tot += try ("%10lo", long_values[i]);
-	tot += try ("%#10lx", long_values[i]);
-	tot += try ("%#10lX", long_values[i]);
-	tot += try ("%#10lo", long_values[i]);
-	tot += try ("%-10ld", long_values[i]);
-	tot += try ("%-10lx", long_values[i]);
-	tot += try ("%-10lX", long_values[i]);
-	tot += try ("%-10lo", long_values[i]);
-	tot += try ("%-#10lx", long_values[i]);
-	tot += try ("%-#10lX", long_values[i]);
-	tot += try ("%-#10lo", long_values[i]);
+        tot += try ("%ld", long_values[i]);
+        tot += try ("%lx", long_values[i]);
+        tot += try ("%lX", long_values[i]);
+        tot += try ("%lo", long_values[i]);
+        tot += try ("%#lx", long_values[i]);
+        tot += try ("%#lX", long_values[i]);
+        tot += try ("%#lo", long_values[i]);
+        tot += try ("%10ld", long_values[i]);
+        tot += try ("%10lx", long_values[i]);
+        tot += try ("%10lX", long_values[i]);
+        tot += try ("%10lo", long_values[i]);
+        tot += try ("%#10lx", long_values[i]);
+        tot += try ("%#10lX", long_values[i]);
+        tot += try ("%#10lo", long_values[i]);
+        tot += try ("%-10ld", long_values[i]);
+        tot += try ("%-10lx", long_values[i]);
+        tot += try ("%-10lX", long_values[i]);
+        tot += try ("%-10lo", long_values[i]);
+        tot += try ("%-#10lx", long_values[i]);
+        tot += try ("%-#10lX", long_values[i]);
+        tot += try ("%-#10lo", long_values[i]);
     }
     return tot;
 }
@@ -135,34 +135,34 @@ cmp_with_sprintf_long_long (void)
 {
     int tot = 0;
     long long long_long_values[] = {
-	((long long)LONG_MIN) - (sizeof(long long) > sizeof(long)),
+        ((long long)LONG_MIN) - (sizeof(long long) > sizeof(long)),
         LONG_MIN, -17, -1, 0, 1, 17, 4711, 65535, LONG_MAX,
         ((long long)LONG_MAX) + (sizeof(long long) > sizeof(long))
     };
     int i;
 
     for (i = 0; i < sizeof(long_long_values) / sizeof(long_long_values[0]); ++i) {
-	tot += try ("%lld", long_long_values[i]);
-	tot += try ("%llx", long_long_values[i]);
-	tot += try ("%llX", long_long_values[i]);
-	tot += try ("%llo", long_long_values[i]);
-	tot += try ("%#llx", long_long_values[i]);
-	tot += try ("%#llX", long_long_values[i]);
-	tot += try ("%#llo", long_long_values[i]);
-	tot += try ("%10lld", long_long_values[i]);
-	tot += try ("%10llx", long_long_values[i]);
-	tot += try ("%10llX", long_long_values[i]);
-	tot += try ("%10llo", long_long_values[i]);
-	tot += try ("%#10llx", long_long_values[i]);
-	tot += try ("%#10llX", long_long_values[i]);
-	tot += try ("%#10llo", long_long_values[i]);
-	tot += try ("%-10lld", long_long_values[i]);
-	tot += try ("%-10llx", long_long_values[i]);
-	tot += try ("%-10llX", long_long_values[i]);
-	tot += try ("%-10llo", long_long_values[i]);
-	tot += try ("%-#10llx", long_long_values[i]);
-	tot += try ("%-#10llX", long_long_values[i]);
-	tot += try ("%-#10llo", long_long_values[i]);
+        tot += try ("%lld", long_long_values[i]);
+        tot += try ("%llx", long_long_values[i]);
+        tot += try ("%llX", long_long_values[i]);
+        tot += try ("%llo", long_long_values[i]);
+        tot += try ("%#llx", long_long_values[i]);
+        tot += try ("%#llX", long_long_values[i]);
+        tot += try ("%#llo", long_long_values[i]);
+        tot += try ("%10lld", long_long_values[i]);
+        tot += try ("%10llx", long_long_values[i]);
+        tot += try ("%10llX", long_long_values[i]);
+        tot += try ("%10llo", long_long_values[i]);
+        tot += try ("%#10llx", long_long_values[i]);
+        tot += try ("%#10llX", long_long_values[i]);
+        tot += try ("%#10llo", long_long_values[i]);
+        tot += try ("%-10lld", long_long_values[i]);
+        tot += try ("%-10llx", long_long_values[i]);
+        tot += try ("%-10llX", long_long_values[i]);
+        tot += try ("%-10llo", long_long_values[i]);
+        tot += try ("%-#10llx", long_long_values[i]);
+        tot += try ("%-#10llX", long_long_values[i]);
+        tot += try ("%-#10llo", long_long_values[i]);
     }
     return tot;
 }
@@ -175,46 +175,46 @@ cmp_with_sprintf_float (void)
 {
     int tot = 0;
     double double_values[] = {-99999, -999, -17.4, -4.3, -3.0, -1.5, -1,
-			      0, 0.1, 0.2342374852, 0.2340007,
-			      3.1415926, 14.7845, 34.24758, 9999, 9999999};
+                              0, 0.1, 0.2342374852, 0.2340007,
+                              3.1415926, 14.7845, 34.24758, 9999, 9999999};
     int i;
 
     for (i = 0; i < sizeof(double_values) / sizeof(double_values[0]); ++i) {
-	tot += try ("%f", double_values[i]);
-	tot += try ("%10f", double_values[i]);
-	tot += try ("%.2f", double_values[i]);
-	tot += try ("%7.0f", double_values[i]);
-	tot += try ("%5.2f", double_values[i]);
-	tot += try ("%0f", double_values[i]);
-	tot += try ("%#f", double_values[i]);
-	tot += try ("%e", double_values[i]);
-	tot += try ("%10e", double_values[i]);
-	tot += try ("%.2e", double_values[i]);
-	tot += try ("%7.0e", double_values[i]);
-	tot += try ("%5.2e", double_values[i]);
-	tot += try ("%0e", double_values[i]);
-	tot += try ("%#e", double_values[i]);
-	tot += try ("%E", double_values[i]);
-	tot += try ("%10E", double_values[i]);
-	tot += try ("%.2E", double_values[i]);
-	tot += try ("%7.0E", double_values[i]);
-	tot += try ("%5.2E", double_values[i]);
-	tot += try ("%0E", double_values[i]);
-	tot += try ("%#E", double_values[i]);
-	tot += try ("%g", double_values[i]);
-	tot += try ("%10g", double_values[i]);
-	tot += try ("%.2g", double_values[i]);
-	tot += try ("%7.0g", double_values[i]);
-	tot += try ("%5.2g", double_values[i]);
-	tot += try ("%0g", double_values[i]);
-	tot += try ("%#g", double_values[i]);
-	tot += try ("%G", double_values[i]);
-	tot += try ("%10G", double_values[i]);
-	tot += try ("%.2G", double_values[i]);
-	tot += try ("%7.0G", double_values[i]);
-	tot += try ("%5.2G", double_values[i]);
-	tot += try ("%0G", double_values[i]);
-	tot += try ("%#G", double_values[i]);
+        tot += try ("%f", double_values[i]);
+        tot += try ("%10f", double_values[i]);
+        tot += try ("%.2f", double_values[i]);
+        tot += try ("%7.0f", double_values[i]);
+        tot += try ("%5.2f", double_values[i]);
+        tot += try ("%0f", double_values[i]);
+        tot += try ("%#f", double_values[i]);
+        tot += try ("%e", double_values[i]);
+        tot += try ("%10e", double_values[i]);
+        tot += try ("%.2e", double_values[i]);
+        tot += try ("%7.0e", double_values[i]);
+        tot += try ("%5.2e", double_values[i]);
+        tot += try ("%0e", double_values[i]);
+        tot += try ("%#e", double_values[i]);
+        tot += try ("%E", double_values[i]);
+        tot += try ("%10E", double_values[i]);
+        tot += try ("%.2E", double_values[i]);
+        tot += try ("%7.0E", double_values[i]);
+        tot += try ("%5.2E", double_values[i]);
+        tot += try ("%0E", double_values[i]);
+        tot += try ("%#E", double_values[i]);
+        tot += try ("%g", double_values[i]);
+        tot += try ("%10g", double_values[i]);
+        tot += try ("%.2g", double_values[i]);
+        tot += try ("%7.0g", double_values[i]);
+        tot += try ("%5.2g", double_values[i]);
+        tot += try ("%0g", double_values[i]);
+        tot += try ("%#g", double_values[i]);
+        tot += try ("%G", double_values[i]);
+        tot += try ("%10G", double_values[i]);
+        tot += try ("%.2G", double_values[i]);
+        tot += try ("%7.0G", double_values[i]);
+        tot += try ("%5.2G", double_values[i]);
+        tot += try ("%0G", double_values[i]);
+        tot += try ("%#G", double_values[i]);
     }
     return tot;
 }
@@ -236,16 +236,16 @@ test_sizet (void)
 
     for (i = 0; i < sizeof(sizet_values) / sizeof(sizet_values[0]); ++i) {
 #if 0
-	tot += try("%zu", sizet_values[i]);
-	tot += try("%zx", sizet_values[i]);
-	tot += try("%zX", sizet_values[i]);
+        tot += try("%zu", sizet_values[i]);
+        tot += try("%zx", sizet_values[i]);
+        tot += try("%zX", sizet_values[i]);
 #else
-	char buf[256];
-	rk_snprintf(buf, sizeof(buf), "%zu", sizet_values[i]);
-	if (strcmp(buf, result[i]) != 0) {
-	    printf("%s != %s", buf, result[i]);
-	    tot++;
-	}
+        char buf[256];
+        rk_snprintf(buf, sizeof(buf), "%zu", sizet_values[i]);
+        if (strcmp(buf, result[i]) != 0) {
+            printf("%s != %s", buf, result[i]);
+            tot++;
+        }
 #endif
     }
     return tot;

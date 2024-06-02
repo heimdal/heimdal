@@ -99,9 +99,9 @@ int HC_DEPRECATED
 DES_new_random_key(DES_cblock *key)
 {
     do {
-	if (RAND_bytes(key, sizeof(*key)) != 1)
-	    return 1;
-	DES_set_odd_parity(key);
+        if (RAND_bytes(key, sizeof(*key)) != 1)
+            return 1;
+        DES_set_odd_parity(key);
     } while(DES_is_weak_key(key));
 
     return(0);
@@ -134,5 +134,5 @@ void HC_DEPRECATED
 DES_random_key(DES_cblock *key)
 {
     if (DES_new_random_key(key))
-	abort();
+        abort();
 }

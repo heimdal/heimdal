@@ -59,10 +59,10 @@ static const char *session_enc_type = NULL;
 
 static void
 encode_ticket(krb5_context context,
-	      EncryptionKey *skey,
-	      krb5_enctype etype,
-	      int skvno,
-	      krb5_creds *cred)
+              EncryptionKey *skey,
+              krb5_enctype etype,
+              int skvno,
+              krb5_creds *cred)
 {
     size_t len, size;
     char *buf;
@@ -84,11 +84,11 @@ encode_ticket(krb5_context context,
     et.crealm = cred->client->realm;
     et.cname = cred->client->name;
     {
-	krb5_data empty_string;
+        krb5_data empty_string;
 
-	krb5_data_zero(&empty_string);
-	et.transited.tr_type = domain_X500_Compress;
-	et.transited.contents = empty_string;
+        krb5_data_zero(&empty_string);
+        et.transited.tr_type = domain_X500_Compress;
+        et.transited.contents = empty_string;
     }
     et.authtime = cred->times.authtime;
     et.starttime = NULL;
@@ -103,20 +103,20 @@ encode_ticket(krb5_context context,
 
     ASN1_MALLOC_ENCODE(EncTicketPart, buf, len, &et, &size, ret);
     if (ret)
-	krb5_err(context, 1, ret, "EncTicketPart");
+        krb5_err(context, 1, ret, "EncTicketPart");
 
     ret = krb5_crypto_init(context, skey, etype, &crypto);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_crypto_init");
+        krb5_err(context, 1, ret, "krb5_crypto_init");
     ret = krb5_encrypt_EncryptedData(context,
-				      crypto,
-				      KRB5_KU_TICKET,
-				      buf,
-				      len,
-				      skvno,
-				      &ticket.enc_part);
+                                     crypto,
+                                     KRB5_KU_TICKET,
+                                     buf,
+                                     len,
+                                     skvno,
+                                     &ticket.enc_part);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_encrypt_EncryptedData");
+        krb5_err(context, 1, ret, "krb5_encrypt_EncryptedData");
 
     free(buf);
     krb5_crypto_destroy(context, crypto);
@@ -131,7 +131,7 @@ encode_ticket(krb5_context context,
     ASN1_MALLOC_ENCODE(Ticket, cred->ticket.data, cred->ticket.length, &ticket, &size, ret);
     free_EncryptedData(&ticket.enc_part);
     if(ret)
-	krb5_err(context, 1, ret, "encode_Ticket");
+        krb5_err(context, 1, ret, "encode_Ticket");
 }
 
 /*
@@ -152,13 +152,13 @@ create_krb5_tickets(krb5_context context, krb5_keytab kt)
 
     ret = krb5_string_to_enctype(context, enc_type, &etype);
     if (ret)
-	krb5_err (context, 1, ret, "krb5_string_to_enctype (enc-type)");
+        krb5_err (context, 1, ret, "krb5_string_to_enctype (enc-type)");
     ret = krb5_string_to_enctype(context, session_enc_type, &session_etype);
     if (ret)
-	krb5_err (context, 1, ret, "krb5_string_to_enctype (session-enc-type)");
+        krb5_err (context, 1, ret, "krb5_string_to_enctype (session-enc-type)");
     ret = krb5_kt_get_entry(context, kt, server_principal, 0, etype, &entry);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_kt_get_entry (perhaps use different --enc-type)");
+        krb5_err(context, 1, ret, "krb5_kt_get_entry (perhaps use different --enc-type)");
 
     /*
      * setup cred
@@ -169,10 +169,10 @@ create_krb5_tickets(krb5_context context, krb5_keytab kt)
     if (ret == 0)
         ret = krb5_copy_principal(context, server_principal, &cred.server);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_copy_principal");
+        krb5_err(context, 1, ret, "krb5_copy_principal");
     ret = krb5_generate_random_keyblock(context, session_etype, &cred.session);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_generate_random_keyblock");
+        krb5_err(context, 1, ret, "krb5_generate_random_keyblock");
 
     cred.times.authtime = time(NULL);
     cred.times.starttime = time(NULL);
@@ -182,7 +182,7 @@ create_krb5_tickets(krb5_context context, krb5_keytab kt)
 
     ret = krb5_get_all_client_addrs(context, &cred.addresses);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_get_all_client_addrs");
+        krb5_err(context, 1, ret, "krb5_get_all_client_addrs");
     cred.flags.b = ticket_flags;
 
 
@@ -198,13 +198,13 @@ create_krb5_tickets(krb5_context context, krb5_keytab kt)
      */
 
     if (ccache_str) {
-	ret = krb5_cc_resolve(context, ccache_str, &ccache);
-	if (ret)
-	    krb5_err(context, 1, ret, "krb5_cc_resolve");
+        ret = krb5_cc_resolve(context, ccache_str, &ccache);
+        if (ret)
+            krb5_err(context, 1, ret, "krb5_cc_resolve");
     } else {
-	ret = krb5_cc_default(context, &ccache);
-	if (ret)
-	    krb5_err(context, 1, ret, "krb5_cc_default");
+        ret = krb5_cc_default(context, &ccache);
+        if (ret)
+            krb5_err(context, 1, ret, "krb5_cc_default");
     }
 
     if (add_to_ccache) {
@@ -249,7 +249,7 @@ create_krb5_tickets(krb5_context context, krb5_keytab kt)
     }
     ret = krb5_cc_store_cred(context, ccache, &cred);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_cc_store_cred");
+        krb5_err(context, 1, ret, "krb5_cc_store_cred");
 
     krb5_free_cred_contents(context, &cred);
     krb5_cc_close(context, ccache);
@@ -267,42 +267,42 @@ setup_env(krb5_context context, krb5_keytab *kt)
     krb5_error_code ret;
 
     if (keytab_file)
-	ret = krb5_kt_resolve(context, keytab_file, kt);
+        ret = krb5_kt_resolve(context, keytab_file, kt);
     else
-	ret = krb5_kt_default(context, kt);
+        ret = krb5_kt_default(context, kt);
     if (ret)
-	krb5_err(context, 1, ret, "resolving keytab");
+        krb5_err(context, 1, ret, "resolving keytab");
 
     if (client_principal_str == NULL)
-	krb5_errx(context, 1, "missing client principal");
+        krb5_errx(context, 1, "missing client principal");
     ret = krb5_parse_name(context, client_principal_str, &client_principal);
     if (ret)
-	krb5_err(context, 1, ret, "resolving client name");
+        krb5_err(context, 1, ret, "resolving client name");
 
     if (server_principal_str == NULL)
-	krb5_errx(context, 1, "missing server principal");
+        krb5_errx(context, 1, "missing server principal");
     ret = krb5_parse_name(context, server_principal_str, &server_principal);
     if (ret)
-	krb5_err(context, 1, ret, "resolving server name");
+        krb5_err(context, 1, ret, "resolving server name");
 
     /* If no session-enc-type specified on command line and this is an afs */
     /* service ticket, change default of session_enc_type to DES.       */
     if (session_enctype_string == NULL 
-	&& strcmp("afs", *server_principal->name.name_string.val) == 0)
-	session_enc_type = "des-cbc-crc";
+        && strcmp("afs", *server_principal->name.name_string.val) == 0)
+        session_enc_type = "des-cbc-crc";
 
     if (ticket_flags_str) {
-	int ticket_flags_int;
+        int ticket_flags_int;
 
-	ticket_flags_int = parse_flags(ticket_flags_str,
-				       asn1_TicketFlags_units(), 0);
-	if (ticket_flags_int <= 0) {
-	    krb5_warnx(context, "bad ticket flags: `%s'", ticket_flags_str);
-	    print_flags_table(asn1_TicketFlags_units(), stderr);
-	    exit(1);
-	}
-	if (ticket_flags_int)
-	    ticket_flags = int2TicketFlags(ticket_flags_int);
+        ticket_flags_int = parse_flags(ticket_flags_str,
+                                       asn1_TicketFlags_units(), 0);
+        if (ticket_flags_int <= 0) {
+            krb5_warnx(context, "bad ticket flags: `%s'", ticket_flags_str);
+            print_flags_table(asn1_TicketFlags_units(), stderr);
+            exit(1);
+        }
+        if (ticket_flags_int)
+            ticket_flags = int2TicketFlags(ticket_flags_int);
     }
 }
 
@@ -345,9 +345,9 @@ static void
 usage(int ret)
 {
     arg_printusage(args,
-		   sizeof(args) / sizeof(args[0]),
-		   NULL,
-		   "");
+                   sizeof(args) / sizeof(args[0]),
+                   NULL,
+                   "");
     exit(ret);
 }
 
@@ -363,30 +363,30 @@ main(int argc, char **argv)
 
     ret = krb5_init_context(&context);
     if (ret)
-	errx(1, "krb5_init_context failed: %u", ret);
+        errx(1, "krb5_init_context failed: %u", ret);
 
     if (getarg(args, sizeof(args) / sizeof(args[0]), argc, argv, &optidx))
-	usage(1);
+        usage(1);
 
     if (help_flag)
-	usage(0);
+        usage(0);
 
     if (version_flag) {
-	print_version(NULL);
-	return 0;
+        print_version(NULL);
+        return 0;
     }
 
     if (enctype_string)
-	enc_type = enctype_string;
+        enc_type = enctype_string;
     if (session_enctype_string)
-	session_enc_type = session_enctype_string;
+        session_enc_type = session_enctype_string;
     else
-	session_enc_type = enc_type;
+        session_enc_type = enc_type;
 
     setup_env(context, &kt);
 
     if (use_krb5)
-	create_krb5_tickets(context, kt);
+        create_krb5_tickets(context, kt);
 
     krb5_kt_close(context, kt);
     krb5_free_context(context);

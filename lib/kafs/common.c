@@ -49,26 +49,26 @@ static void *kafs_verbose_ctx;
 void
 _kafs_foldup(char *a, const char *b)
 {
-  for (; *b; a++, b++)
-    if (IsAsciiLower(*b))
-      *a = ToAsciiUpper(*b);
-    else
-      *a = *b;
-  *a = '\0';
+    for (; *b; a++, b++)
+        if (IsAsciiLower(*b))
+            *a = ToAsciiUpper(*b);
+        else
+            *a = *b;
+    *a = '\0';
 }
 
 void
 kafs_set_verbose(void (*f)(void *, const char *), void *ctx)
 {
     if (f) {
-	kafs_verbose = f;
-	kafs_verbose_ctx = ctx;
+        kafs_verbose = f;
+        kafs_verbose_ctx = ctx;
     }
 }
 
 int
 kafs_settoken_rxkad(const char *cell, struct ClearToken *ct,
-		    void *ticket, size_t ticket_len)
+                    void *ticket, size_t ticket_len)
 {
     struct ViceIoctl parms;
     char buf[2048], *t;
@@ -129,13 +129,13 @@ _kafs_fixup_viceid(struct ClearToken *ct, uid_t uid)
      */
     if (uid != 0)		/* valid ViceId */
     {
-	if (!ODD(ct->EndTimestamp - ct->BeginTimestamp))
-	    ct->EndTimestamp--;
+        if (!ODD(ct->EndTimestamp - ct->BeginTimestamp))
+            ct->EndTimestamp--;
     }
     else			/* not valid ViceId */
     {
-	if (ODD(ct->EndTimestamp - ct->BeginTimestamp))
-	    ct->EndTimestamp--;
+        if (ODD(ct->EndTimestamp - ct->BeginTimestamp))
+            ct->EndTimestamp--;
     }
 }
 
@@ -148,18 +148,18 @@ dns_find_cell(const char *cell, char *dbserver, size_t len)
     int ok = -1;
     r = rk_dns_lookup(cell, "afsdb");
     if(r){
-	struct rk_resource_record *rr = r->head;
-	while(rr){
-	    if(rr->type == rk_ns_t_afsdb && rr->u.afsdb->preference == 1){
-		strlcpy(dbserver,
-				rr->u.afsdb->domain,
-				len);
-		ok = 0;
-		break;
-	    }
-	    rr = rr->next;
-	}
-	rk_dns_free_data(r);
+        struct rk_resource_record *rr = r->head;
+        while(rr){
+            if(rr->type == rk_ns_t_afsdb && rr->u.afsdb->preference == 1){
+                strlcpy(dbserver,
+                        rr->u.afsdb->domain,
+                        len);
+                ok = 0;
+                break;
+            }
+            rr = rr->next;
+        }
+        rk_dns_free_data(r);
     }
     return ok;
 }
@@ -178,30 +178,30 @@ find_cells(const char *file, char ***cells, int *idx)
 
     f = fopen(file, "r");
     if (f == NULL)
-	return;
+        return;
     while (fgets(cell, sizeof(cell), f)) {
-	char *t;
-	t = cell + strlen(cell);
-	for (; t >= cell; t--)
-	  if (*t == '\n' || *t == '\t' || *t == ' ')
-	    *t = 0;
-	if (cell[0] == '\0' || cell[0] == '#')
-	    continue;
-	for(i = 0; i < ind; i++)
-	    if(strcmp((*cells)[i], cell) == 0)
-		break;
-	if(i == ind){
-	    char **tmp;
+        char *t;
+        t = cell + strlen(cell);
+        for (; t >= cell; t--)
+            if (*t == '\n' || *t == '\t' || *t == ' ')
+                *t = 0;
+        if (cell[0] == '\0' || cell[0] == '#')
+            continue;
+        for(i = 0; i < ind; i++)
+            if(strcmp((*cells)[i], cell) == 0)
+                break;
+        if(i == ind){
+            char **tmp;
 
-	    tmp = realloc(*cells, (ind + 1) * sizeof(**cells));
-	    if (tmp == NULL)
-		break;
-	    *cells = tmp;
-	    (*cells)[ind] = strdup(cell);
-	    if ((*cells)[ind] == NULL)
-		break;
-	    ++ind;
-	}
+            tmp = realloc(*cells, (ind + 1) * sizeof(**cells));
+            if (tmp == NULL)
+                break;
+            *cells = tmp;
+            (*cells)[ind] = strdup(cell);
+            if ((*cells)[ind] == NULL)
+                break;
+            ++ind;
+        }
     }
     fclose(f);
     *idx = ind;
@@ -212,32 +212,32 @@ find_cells(const char *file, char ***cells, int *idx)
  */
 static int
 afslog_cells(struct kafs_data *data, char **cells, int max, uid_t uid,
-	     const char *homedir)
+             const char *homedir)
 {
     int ret = 0;
     int i;
     for (i = 0; i < max; i++) {
         int er = (*data->afslog_uid)(data, cells[i], 0, uid, homedir);
-	if (er)
-	    ret = er;
+        if (er)
+            ret = er;
     }
     return ret;
 }
 
 int
 _kafs_afslog_all_local_cells(struct kafs_data *data,
-			     uid_t uid, const char *homedir)
+                             uid_t uid, const char *homedir)
 {
     int ret;
     char **cells = NULL;
     int idx = 0;
 
     if (homedir == NULL)
-	homedir = getenv("HOME");
+        homedir = getenv("HOME");
     if (homedir != NULL) {
-	char home[MaxPathLen];
-	snprintf(home, sizeof(home), "%s/.TheseCells", homedir);
-	find_cells(home, &cells, &idx);
+        char home[MaxPathLen];
+        snprintf(home, sizeof(home), "%s/.TheseCells", homedir);
+        find_cells(home, &cells, &idx);
     }
     find_cells(_PATH_THESECELLS, &cells, &idx);
     find_cells(_PATH_THISCELL, &cells, &idx);
@@ -254,7 +254,7 @@ _kafs_afslog_all_local_cells(struct kafs_data *data,
 
     ret = afslog_cells(data, cells, idx, uid, homedir);
     while(idx > 0)
-	free(cells[--idx]);
+        free(cells[--idx]);
     free(cells);
     return ret;
 }
@@ -262,7 +262,7 @@ _kafs_afslog_all_local_cells(struct kafs_data *data,
 
 static int
 file_find_cell(struct kafs_data *data,
-	       const char *cell, char **realm, int exact)
+               const char *cell, char **realm, int exact)
 {
     FILE *F;
     char buf[1024];
@@ -270,43 +270,43 @@ file_find_cell(struct kafs_data *data,
     int ret = -1;
 
     if ((F = fopen(_PATH_CELLSERVDB, "r"))
-	|| (F = fopen(_PATH_ARLA_CELLSERVDB, "r"))
-	|| (F = fopen(_PATH_OPENAFS_DEBIAN_CELLSERVDB, "r"))
-	|| (F = fopen(_PATH_OPENAFS_MACOSX_CELLSERVDB, "r"))
-	|| (F = fopen(_PATH_ARLA_DEBIAN_CELLSERVDB, "r"))) {
-	while (fgets(buf, sizeof(buf), F)) {
-	    int cmp;
+        || (F = fopen(_PATH_ARLA_CELLSERVDB, "r"))
+        || (F = fopen(_PATH_OPENAFS_DEBIAN_CELLSERVDB, "r"))
+        || (F = fopen(_PATH_OPENAFS_MACOSX_CELLSERVDB, "r"))
+        || (F = fopen(_PATH_ARLA_DEBIAN_CELLSERVDB, "r"))) {
+        while (fgets(buf, sizeof(buf), F)) {
+            int cmp;
 
-	    if (buf[0] != '>')
-		continue; /* Not a cell name line, try next line */
-	    p = buf;
-	    strsep(&p, " \t\n#");
+            if (buf[0] != '>')
+                continue; /* Not a cell name line, try next line */
+            p = buf;
+            strsep(&p, " \t\n#");
 
-	    if (exact)
-		cmp = strcmp(buf + 1, cell);
-	    else
-		cmp = strncmp(buf + 1, cell, strlen(cell));
+            if (exact)
+                cmp = strcmp(buf + 1, cell);
+            else
+                cmp = strncmp(buf + 1, cell, strlen(cell));
 
-	    if (cmp == 0) {
-		/*
-		 * We found the cell name we're looking for.
-		 * Read next line on the form ip-address '#' hostname
-		 */
-		if (fgets(buf, sizeof(buf), F) == NULL)
-		    break;	/* Read failed, give up */
-		p = strchr(buf, '#');
-		if (p == NULL)
-		    break;	/* No '#', give up */
-		p++;
-		if (buf[strlen(buf) - 1] == '\n')
-		    buf[strlen(buf) - 1] = '\0';
-		*realm = (*data->get_realm)(data, p);
-		if (*realm && **realm != '\0')
-		    ret = 0;
-		break;		/* Won't try any more */
-	    }
-	}
-	fclose(F);
+            if (cmp == 0) {
+                /*
+                 * We found the cell name we're looking for.
+                 * Read next line on the form ip-address '#' hostname
+                 */
+                if (fgets(buf, sizeof(buf), F) == NULL)
+                    break;	/* Read failed, give up */
+                p = strchr(buf, '#');
+                if (p == NULL)
+                    break;	/* No '#', give up */
+                p++;
+                if (buf[strlen(buf) - 1] == '\n')
+                    buf[strlen(buf) - 1] = '\0';
+                *realm = (*data->get_realm)(data, p);
+                if (*realm && **realm != '\0')
+                    ret = 0;
+                break;		/* Won't try any more */
+            }
+        }
+        fclose(F);
     }
     return ret;
 }
@@ -323,45 +323,45 @@ file_find_cell(struct kafs_data *data,
 
 int
 _kafs_realm_of_cell(struct kafs_data *data,
-		    const char *cell, char **realm)
+                    const char *cell, char **realm)
 {
     char buf[1024];
     int ret;
 
     ret = file_find_cell(data, cell, realm, 1);
     if (ret == 0)
-	return ret;
+        return ret;
     if (dns_find_cell(cell, buf, sizeof(buf)) == 0) {
-	*realm = (*data->get_realm)(data, buf);
-	if(*realm != NULL)
-	    return 0;
+        *realm = (*data->get_realm)(data, buf);
+        if(*realm != NULL)
+            return 0;
     }
     return file_find_cell(data, cell, realm, 0);
 }
 
 static int
 _kafs_try_get_cred(struct kafs_data *data, const char *user, const char *cell,
-		   const char *realm, uid_t uid, struct kafs_token *kt)
+                   const char *realm, uid_t uid, struct kafs_token *kt)
 {
     int ret;
 
     ret = (*data->get_cred)(data, user, cell, realm, uid, kt);
     if (kafs_verbose) {
-	const char *estr = (*data->get_error)(data, ret);
-	char *str;
-	int aret;
+        const char *estr = (*data->get_error)(data, ret);
+        char *str;
+        int aret;
 
-	aret = asprintf(&str, "%s tried afs%s%s@%s -> %s (%d)",
-			data->name, cell ? "/" : "",
-			cell ? cell : "", realm, estr ? estr : "unknown", ret);
-	if (aret != -1) {
-	    (*kafs_verbose)(kafs_verbose_ctx, str);
-	    free(str);
-	} else {
-	    (*kafs_verbose)(kafs_verbose_ctx, "out of memory");
-	}
-	if (estr)
-	    (*data->free_error)(data, estr);
+        aret = asprintf(&str, "%s tried afs%s%s@%s -> %s (%d)",
+                        data->name, cell ? "/" : "",
+                        cell ? cell : "", realm, estr ? estr : "unknown", ret);
+        if (aret != -1) {
+            (*kafs_verbose)(kafs_verbose_ctx, str);
+            free(str);
+        } else {
+            (*kafs_verbose)(kafs_verbose_ctx, "out of memory");
+        }
+        if (estr)
+            (*data->free_error)(data, estr);
     }
 
     return ret;
@@ -370,11 +370,11 @@ _kafs_try_get_cred(struct kafs_data *data, const char *user, const char *cell,
 
 int
 _kafs_get_cred(struct kafs_data *data,
-	       const char *cell,
-	       const char *realm_hint,
-	       const char *realm,
-	       uid_t uid,
-	       struct kafs_token *kt)
+               const char *cell,
+               const char *realm_hint,
+               const char *realm,
+               uid_t uid,
+               struct kafs_token *kt)
 {
     int ret = -1;
     char *vl_realm;
@@ -405,12 +405,12 @@ _kafs_get_cred(struct kafs_data *data,
      */
 
     if (realm_hint) {
-	ret = _kafs_try_get_cred(data, AUTH_SUPERUSER,
-				 cell, realm_hint, uid, kt);
-	if (ret == 0) return 0;
-	ret = _kafs_try_get_cred(data, AUTH_SUPERUSER,
-				 NULL, realm_hint, uid, kt);
-	if (ret == 0) return 0;
+        ret = _kafs_try_get_cred(data, AUTH_SUPERUSER,
+                                 cell, realm_hint, uid, kt);
+        if (ret == 0) return 0;
+        ret = _kafs_try_get_cred(data, AUTH_SUPERUSER,
+                                 NULL, realm_hint, uid, kt);
+        if (ret == 0) return 0;
     }
 
     _kafs_foldup(CELL, cell);
@@ -421,7 +421,7 @@ _kafs_get_cred(struct kafs_data *data,
      * Try afs.cell@REALM.
      */
     ret = _kafs_try_get_cred(data, AUTH_SUPERUSER,
-			     cell, realm, uid, kt);
+                             cell, realm, uid, kt);
     if (ret == 0) return 0;
 
     /*
@@ -430,8 +430,8 @@ _kafs_get_cred(struct kafs_data *data,
      */
     if (strcmp(CELL, realm) == 0) {
         ret = _kafs_try_get_cred(data, AUTH_SUPERUSER,
-				 NULL, realm, uid, kt);
-	if (ret == 0) return 0;
+                                 NULL, realm, uid, kt);
+        if (ret == 0) return 0;
     }
 
     /*
@@ -441,10 +441,10 @@ _kafs_get_cred(struct kafs_data *data,
      * Try afs.cell@CELL.
      */
     ret = _kafs_try_get_cred(data, AUTH_SUPERUSER,
-			     NULL, CELL, uid, kt);
+                             NULL, CELL, uid, kt);
     if (ret == 0) return 0;
     ret = _kafs_try_get_cred(data, AUTH_SUPERUSER,
-			     cell, CELL, uid, kt);
+                             cell, CELL, uid, kt);
     if (ret == 0) return 0;
 
     /*
@@ -454,15 +454,15 @@ _kafs_get_cred(struct kafs_data *data,
      * Try afs@VL_REALM???
      */
     if (_kafs_realm_of_cell(data, cell, &vl_realm) == 0
-	&& strcmp(vl_realm, realm) != 0
-	&& strcmp(vl_realm, CELL) != 0) {
-	ret = _kafs_try_get_cred(data, AUTH_SUPERUSER,
-				 cell, vl_realm, uid, kt);
-	if (ret)
-	    ret = _kafs_try_get_cred(data, AUTH_SUPERUSER,
-				     NULL, vl_realm, uid, kt);
-	free(vl_realm);
-	if (ret == 0) return 0;
+        && strcmp(vl_realm, realm) != 0
+        && strcmp(vl_realm, CELL) != 0) {
+        ret = _kafs_try_get_cred(data, AUTH_SUPERUSER,
+                                 cell, vl_realm, uid, kt);
+        if (ret)
+            ret = _kafs_try_get_cred(data, AUTH_SUPERUSER,
+                                     NULL, vl_realm, uid, kt);
+        free(vl_realm);
+        if (ret == 0) return 0;
     }
 
     return ret;

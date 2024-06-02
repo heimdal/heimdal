@@ -45,9 +45,9 @@ static void
 usage (int ret)
 {
     arg_printusage (args,
-		    sizeof(args)/sizeof(*args),
-		    NULL,
-		    "[principal]");
+                    sizeof(args)/sizeof(*args),
+                    NULL,
+                    "[principal]");
     exit (ret);
 }
 
@@ -66,14 +66,14 @@ main(int argc, char **argv)
     setprogname (argv[0]);
 
     if(getarg(args, sizeof(args) / sizeof(args[0]), argc, argv, &optidx))
-	usage(1);
+        usage(1);
 
     if (help_flag)
-	usage (0);
+        usage (0);
 
     if(version_flag) {
-	print_version(NULL);
-	exit(0);
+        print_version(NULL);
+        exit(0);
     }
 
     argc -= optidx;
@@ -81,49 +81,49 @@ main(int argc, char **argv)
 
     ret = krb5_init_context(&context);
     if (ret)
-	errx (1, "krb5_init_context failed: %d", ret);
+        errx (1, "krb5_init_context failed: %d", ret);
 
     ret = krb5_get_init_creds_opt_alloc (context, &get_options);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_get_init_creds_opt_alloc");
+        krb5_err(context, 1, ret, "krb5_get_init_creds_opt_alloc");
 
     krb5_get_init_creds_opt_set_preauth_list (get_options,
-					      pre_auth_types,
-					      1);
+                                              pre_auth_types,
+                                              1);
 
     krb5_verify_init_creds_opt_init (&verify_options);
 
     if (argc) {
-	ret = krb5_parse_name(context, argv[0], &principal);
-	if (ret)
-	    krb5_err(context, 1, ret, "krb5_parse_name: %s", argv[0]);
+        ret = krb5_parse_name(context, argv[0], &principal);
+        if (ret)
+            krb5_err(context, 1, ret, "krb5_parse_name: %s", argv[0]);
     } else {
-	ret = krb5_get_default_principal(context, &principal);
-	if (ret)
-	    krb5_err(context, 1, ret, "krb5_get_default_principal");
+        ret = krb5_get_default_principal(context, &principal);
+        if (ret)
+            krb5_err(context, 1, ret, "krb5_get_default_principal");
 
     }
 
     ret = krb5_get_init_creds_password (context,
-					&cred,
-					principal,
-					NULL,
-					krb5_prompter_posix,
-					NULL,
-					0,
-					NULL,
-					get_options);
+                                        &cred,
+                                        principal,
+                                        NULL,
+                                        krb5_prompter_posix,
+                                        NULL,
+                                        0,
+                                        NULL,
+                                        get_options);
     if (ret)
-	krb5_err(context, 1, ret,  "krb5_get_init_creds");
+        krb5_err(context, 1, ret,  "krb5_get_init_creds");
 
     ret = krb5_verify_init_creds (context,
-				  &cred,
-				  NULL,
-				  NULL,
-				  NULL,
-				  &verify_options);
+                                  &cred,
+                                  NULL,
+                                  NULL,
+                                  NULL,
+                                  &verify_options);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_verify_init_creds");
+        krb5_err(context, 1, ret, "krb5_verify_init_creds");
     krb5_free_cred_contents (context, &cred);
     krb5_free_context (context);
     return 0;

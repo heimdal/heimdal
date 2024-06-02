@@ -60,12 +60,12 @@ typedef unsigned int wind_profile_flags;
 #define WIND_RW_BOM	4
 
 int wind_stringprep(const uint32_t *, size_t,
-		    uint32_t *, size_t *,
-		    wind_profile_flags);
+                    uint32_t *, size_t *,
+                    wind_profile_flags);
 int wind_profile(const char *, wind_profile_flags *);
 
 int wind_punycode_label_toascii(const uint32_t *, size_t,
-				char *, size_t *);
+                                char *, size_t *);
 
 int wind_utf8ucs4(const char *, uint32_t *, size_t *);
 int wind_utf8ucs4_length(const char *, size_t *);

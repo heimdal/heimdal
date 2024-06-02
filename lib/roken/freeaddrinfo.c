@@ -45,10 +45,10 @@ rk_freeaddrinfo(struct addrinfo *ai)
     struct addrinfo *tofree;
 
     while(ai != NULL) {
-	free (ai->ai_canonname);
-	free (ai->ai_addr);
-	tofree = ai;
-	ai = ai->ai_next;
-	free (tofree);
+        free (ai->ai_canonname);
+        free (ai->ai_addr);
+        tofree = ai;
+        ai = ai->ai_next;
+        free (tofree);
     }
 }

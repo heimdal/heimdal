@@ -45,7 +45,7 @@ readline(const char *prompt)
     printf ("%s", prompt);
     fflush (stdout);
     if(fgets(buf, sizeof(buf), stdin) == NULL)
-	return NULL;
+        return NULL;
     buf[strcspn(buf, "\r\n")] = '\0';
     return strdup(buf);
 }
@@ -63,115 +63,115 @@ kswitch(struct kswitch_options *opt, int argc, char **argv)
     krb5_ccache id = NULL;
 
     if (opt->cache_string && opt->principal_string)
-	krb5_errx(heimtools_context, 1,
-		  N_("Both --cache and --principal given, choose one", ""));
+        krb5_errx(heimtools_context, 1,
+                  N_("Both --cache and --principal given, choose one", ""));
 
     if (opt->interactive_flag) {
-	krb5_cc_cache_cursor cursor;
-	krb5_ccache *ids = NULL;
-	size_t i, len = 0;
-	char *name;
-	rtbl_t ct;
+        krb5_cc_cache_cursor cursor;
+        krb5_ccache *ids = NULL;
+        size_t i, len = 0;
+        char *name;
+        rtbl_t ct;
 
-	ct = rtbl_create();
+        ct = rtbl_create();
 
-	rtbl_add_column_by_id(ct, 0, "#", 0);
-	rtbl_add_column_by_id(ct, 1, "Principal", 0);
-	rtbl_set_column_affix_by_id(ct, 1, "    ", "");
+        rtbl_add_column_by_id(ct, 0, "#", 0);
+        rtbl_add_column_by_id(ct, 1, "Principal", 0);
+        rtbl_set_column_affix_by_id(ct, 1, "    ", "");
         rtbl_add_column_by_id(ct, 2, "Type", 0);
         rtbl_set_column_affix_by_id(ct, 2, "  ", "");
 
-	ret = krb5_cc_cache_get_first(heimtools_context, NULL, &cursor);
-	if (ret)
-	    krb5_err(heimtools_context, 1, ret, "krb5_cc_cache_get_first");
+        ret = krb5_cc_cache_get_first(heimtools_context, NULL, &cursor);
+        if (ret)
+            krb5_err(heimtools_context, 1, ret, "krb5_cc_cache_get_first");
 
-	while (krb5_cc_cache_next(heimtools_context, cursor, &id) == 0) {
-	    krb5_principal p = NULL;
-	    char num[10];
+        while (krb5_cc_cache_next(heimtools_context, cursor, &id) == 0) {
+            krb5_principal p = NULL;
+            char num[10];
 
-	    ret = krb5_cc_get_principal(heimtools_context, id, &p);
+            ret = krb5_cc_get_principal(heimtools_context, id, &p);
             if (ret == 0)
                 ret = krb5_unparse_name(heimtools_context, p, &name);
-	    if (ret) {
+            if (ret) {
                 krb5_cc_close(heimtools_context, id);
-		continue;
+                continue;
             }
 
-	    krb5_free_principal(heimtools_context, p);
+            krb5_free_principal(heimtools_context, p);
 
-	    snprintf(num, sizeof(num), "%d", (int)(len + 1));
-	    rtbl_add_column_entry_by_id(ct, 0, num);
-	    rtbl_add_column_entry_by_id(ct, 1, name);
+            snprintf(num, sizeof(num), "%d", (int)(len + 1));
+            rtbl_add_column_entry_by_id(ct, 0, num);
+            rtbl_add_column_entry_by_id(ct, 1, name);
             rtbl_add_column_entry_by_id(ct, 2, krb5_cc_get_type(heimtools_context, id));
-	    free(name);
+            free(name);
 
-	    ids = erealloc(ids, (len + 1) * sizeof(ids[0]));
-	    ids[len] = id;
-	    len++;
-	}
-	krb5_cc_cache_end_seq_get(heimtools_context, cursor);
+            ids = erealloc(ids, (len + 1) * sizeof(ids[0]));
+            ids[len] = id;
+            len++;
+        }
+        krb5_cc_cache_end_seq_get(heimtools_context, cursor);
 
-	rtbl_format(ct, stdout);
-	rtbl_destroy(ct);
+        rtbl_format(ct, stdout);
+        rtbl_destroy(ct);
 
-	name = readline("Select number: ");
-	if (name) {
-	    i = atoi(name);
-	    if (i == 0)
-		krb5_errx(heimtools_context, 1, "Cache number '%s' is invalid", name);
-	    if (i > len)
-		krb5_errx(heimtools_context, 1, "Cache number '%s' is too large", name);
+        name = readline("Select number: ");
+        if (name) {
+            i = atoi(name);
+            if (i == 0)
+                krb5_errx(heimtools_context, 1, "Cache number '%s' is invalid", name);
+            if (i > len)
+                krb5_errx(heimtools_context, 1, "Cache number '%s' is too large", name);
 
-	    id = ids[i - 1];
-	    ids[i - 1] = NULL;
-	    free(name);
-	} else
-	    krb5_errx(heimtools_context, 1, "No cache selected");
-	for (i = 0; i < len; i++)
-	    if (ids[i])
-		krb5_cc_close(heimtools_context, ids[i]);
-	free(ids);
+            id = ids[i - 1];
+            ids[i - 1] = NULL;
+            free(name);
+        } else
+            krb5_errx(heimtools_context, 1, "No cache selected");
+        for (i = 0; i < len; i++)
+            if (ids[i])
+                krb5_cc_close(heimtools_context, ids[i]);
+        free(ids);
     } else if (opt->principal_string) {
-	krb5_principal p;
+        krb5_principal p;
 
-	ret = krb5_parse_name(heimtools_context, opt->principal_string, &p);
-	if (ret)
-	    krb5_err(heimtools_context, 1, ret, "krb5_parse_name: %s",
-		     opt->principal_string);
+        ret = krb5_parse_name(heimtools_context, opt->principal_string, &p);
+        if (ret)
+            krb5_err(heimtools_context, 1, ret, "krb5_parse_name: %s",
+                     opt->principal_string);
 
-	ret = krb5_cc_cache_match(heimtools_context, p, &id);
-	if (ret)
-	    krb5_err(heimtools_context, 1, ret,
-		     N_("Did not find principal: %s", ""),
-		     opt->principal_string);
+        ret = krb5_cc_cache_match(heimtools_context, p, &id);
+        if (ret)
+            krb5_err(heimtools_context, 1, ret,
+                     N_("Did not find principal: %s", ""),
+                     opt->principal_string);
 
-	krb5_free_principal(heimtools_context, p);
+        krb5_free_principal(heimtools_context, p);
 
     } else if (opt->cache_string) {
-	const krb5_cc_ops *ops;
-	char *str;
-	int aret;
+        const krb5_cc_ops *ops;
+        char *str;
+        int aret;
 
-	ops = krb5_cc_get_prefix_ops(heimtools_context, opt->type_string);
-	if (ops == NULL)
-	    krb5_err(heimtools_context, 1, 0, "krb5_cc_get_prefix_ops");
+        ops = krb5_cc_get_prefix_ops(heimtools_context, opt->type_string);
+        if (ops == NULL)
+            krb5_err(heimtools_context, 1, 0, "krb5_cc_get_prefix_ops");
 
-	aret = asprintf(&str, "%s:%s", ops->prefix, opt->cache_string);
-	if (aret == -1)
-	    krb5_errx(heimtools_context, 1, N_("out of memory", ""));
+        aret = asprintf(&str, "%s:%s", ops->prefix, opt->cache_string);
+        if (aret == -1)
+            krb5_errx(heimtools_context, 1, N_("out of memory", ""));
 
-	ret = krb5_cc_resolve(heimtools_context, str, &id);
-	if (ret)
-	    krb5_err(heimtools_context, 1, ret, "krb5_cc_resolve: %s", str);
+        ret = krb5_cc_resolve(heimtools_context, str, &id);
+        if (ret)
+            krb5_err(heimtools_context, 1, ret, "krb5_cc_resolve: %s", str);
 
-	free(str);
+        free(str);
     } else {
-	krb5_errx(heimtools_context, 1, "missing option for kswitch");
+        krb5_errx(heimtools_context, 1, "missing option for kswitch");
     }
 
     ret = krb5_cc_switch(heimtools_context, id);
     if (ret)
-	krb5_err(heimtools_context, 1, ret, "krb5_cc_switch");
+        krb5_err(heimtools_context, 1, ret, "krb5_cc_switch");
 
     krb5_cc_close(heimtools_context, id);
 

@@ -49,6 +49,6 @@ getcwd(char *path, size_t size)
     char *ret;
     ret = getwd(xxx);
     if(ret)
-	strlcpy(path, xxx, size);
+        strlcpy(path, xxx, size);
     return ret;
 }

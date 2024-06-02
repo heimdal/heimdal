@@ -50,27 +50,27 @@ read_words (const char *filename, char ***ret_w)
 
     f = fopen (filename, "r");
     if (f == NULL)
-	err (1, "cannot open %s", filename);
+        err (1, "cannot open %s", filename);
     alloc = n = 0;
     while (fgets (buf, sizeof(buf), f) != NULL) {
-	size_t len;
+        size_t len;
 
-	buf[strcspn(buf, "\r\n")] = '\0';
-	if (n >= alloc) {
-	    alloc = max(alloc + 16, alloc * 2);
-	    w = erealloc (w, alloc * sizeof(char *));
-	}
-	len = strlen(buf);
-	if (wptr + len + 1 >= wend) {
-	    wptr = wbuf = emalloc (WORDBUF_SIZE);
-	    wend = wbuf + WORDBUF_SIZE;
-	}
-	memmove (wptr, buf, len + 1);
-	w[n++] = wptr;
-	wptr += len + 1;
+        buf[strcspn(buf, "\r\n")] = '\0';
+        if (n >= alloc) {
+            alloc = max(alloc + 16, alloc * 2);
+            w = erealloc (w, alloc * sizeof(char *));
+        }
+        len = strlen(buf);
+        if (wptr + len + 1 >= wend) {
+            wptr = wbuf = emalloc (WORDBUF_SIZE);
+            wend = wbuf + WORDBUF_SIZE;
+        }
+        memmove (wptr, buf, len + 1);
+        w[n++] = wptr;
+        wptr += len + 1;
     }
     if (n == 0)
-	errx(1, "%s is an empty file, no words to try", filename);
+        errx(1, "%s is an empty file, no words to try", filename);
     *ret_w = w;
     fclose(f);
     return n;
@@ -95,11 +95,11 @@ add_user (krb5_context ctx, void *hndl, unsigned nwords, char **words)
     memset(&princ, 0, sizeof(princ));
     ret = krb5_parse_name(ctx, name, &princ.principal);
     if (ret)
-	krb5_err(ctx, 1, ret, "krb5_parse_name");
+        krb5_err(ctx, 1, ret, "krb5_parse_name");
 
     ret = kadm5_create_principal (hndl, &princ, mask, name);
     if (ret)
-	krb5_err (ctx, 1, ret, "kadm5_create_principal");
+        krb5_err (ctx, 1, ret, "kadm5_create_principal");
     kadm5_free_principal_ent(hndl, &princ);
     printf ("%s\n", name);
 }
@@ -116,20 +116,20 @@ add_users (const char *filename, unsigned n)
 
     ret = krb5_init_context(&ctx);
     if (ret)
-	errx (1, "krb5_init_context failed: %d", ret);
+        errx (1, "krb5_init_context failed: %d", ret);
     ret = kadm5_s_init_with_password_ctx(ctx,
-					 KADM5_ADMIN_SERVICE,
-					 NULL,
-					 KADM5_ADMIN_SERVICE,
-					 NULL, 0, 0,
-					 &hndl);
+                                         KADM5_ADMIN_SERVICE,
+                                         NULL,
+                                         KADM5_ADMIN_SERVICE,
+                                         NULL, 0, 0,
+                                         &hndl);
     if(ret)
-	krb5_err(ctx, 1, ret, "kadm5_init_with_password");
+        krb5_err(ctx, 1, ret, "kadm5_init_with_password");
 
     nwords = read_words (filename, &words);
 
     for (i = 0; i < n; ++i)
-	add_user (ctx, hndl, nwords, words);
+        add_user (ctx, hndl, nwords, words);
     kadm5_destroy(hndl);
     krb5_free_context(ctx);
     free(words);
@@ -147,9 +147,9 @@ static void
 usage (int ret)
 {
     arg_printusage (args,
-		    sizeof(args)/sizeof(*args),
-		    NULL,
-		    "[filename [n]]");
+                    sizeof(args)/sizeof(*args),
+                    NULL,
+                    "[filename [n]]");
     exit (ret);
 }
 
@@ -162,21 +162,21 @@ main(int argc, char **argv)
 
     setprogname(argv[0]);
     if(getarg(args, sizeof(args) / sizeof(args[0]), argc, argv, &optidx))
-	usage(1);
+        usage(1);
     if (help_flag)
-	usage (0);
+        usage (0);
     if (version_flag) {
-	print_version(NULL);
-	return 0;
+        print_version(NULL);
+        return 0;
     }
     srand (0);
     argc -= optidx;
     argv += optidx;
 
     if (argc > 0) {
-	if (argc > 1)
-	    n = atoi(argv[1]);
-	filename = argv[0];
+        if (argc > 1)
+            n = atoi(argv[1]);
+        filename = argv[0];
     }
 
     add_users (filename, n);

@@ -34,10 +34,10 @@
 #include "gsskrb5_locl.h"
 
 OM_uint32 GSSAPI_CALLCONV _gsskrb5_process_context_token (
-	OM_uint32          *minor_status,
-	gss_const_ctx_id_t context_handle,
-	const gss_buffer_t token_buffer
-    )
+                                                          OM_uint32          *minor_status,
+                                                          gss_const_ctx_id_t context_handle,
+                                                          const gss_buffer_t token_buffer
+                                                         )
 {
     krb5_context context;
     OM_uint32 ret = GSS_S_FAILURE;
@@ -49,18 +49,18 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_process_context_token (
     GSSAPI_KRB5_INIT (&context);
 
     ret = _gsskrb5_verify_mic_internal(minor_status,
-				       (gsskrb5_ctx)context_handle,
-				       context,
-				       token_buffer, &empty_buffer,
-				       GSS_C_QOP_DEFAULT,
-				       "\x01\x02");
+                                       (gsskrb5_ctx)context_handle,
+                                       context,
+                                       token_buffer, &empty_buffer,
+                                       GSS_C_QOP_DEFAULT,
+                                       "\x01\x02");
 
     if (ret == GSS_S_COMPLETE)
-	ret = _gsskrb5_delete_sec_context(minor_status,
-					  rk_UNCONST(&context_handle),
-					  GSS_C_NO_BUFFER);
+        ret = _gsskrb5_delete_sec_context(minor_status,
+                                          rk_UNCONST(&context_handle),
+                                          GSS_C_NO_BUFFER);
     if (ret == GSS_S_COMPLETE)
-	*minor_status = 0;
+        *minor_status = 0;
 
     return ret;
 }

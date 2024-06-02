@@ -104,24 +104,24 @@ typedef void
 
 typedef void
 (*heim_ipc_callback)(void *, const heim_idata *,
-		     const heim_icred, heim_ipc_complete, heim_sipc_call);
+                     const heim_icred, heim_ipc_complete, heim_sipc_call);
 
 
 int
 heim_sipc_launchd_mach_init(const char *, heim_ipc_callback,
-			    void *, heim_sipc *);
+                            void *, heim_sipc *);
 
 int
 heim_sipc_stream_listener(int, int, heim_ipc_callback,
-			  void *, heim_sipc *);
+                          void *, heim_sipc *);
 
 int
 heim_sipc_service_unix(const char *, heim_ipc_callback,
-		       void *, heim_sipc *);
+                       void *, heim_sipc *);
 
 int
 heim_sipc_service_door(const char *, heim_ipc_callback,
-		       void *, heim_sipc *);
+                       void *, heim_sipc *);
 
 void
 heim_sipc_timeout(time_t);

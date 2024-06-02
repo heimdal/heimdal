@@ -46,14 +46,14 @@ rk_freehostent(struct hostent *h)
 
     free (h->h_name);
     if (h->h_aliases != NULL) {
-	for (p = h->h_aliases; *p != NULL; ++p)
-	    free (*p);
-	free (h->h_aliases);
+        for (p = h->h_aliases; *p != NULL; ++p)
+            free (*p);
+        free (h->h_aliases);
     }
     if (h->h_addr_list != NULL) {
-	for (p = h->h_addr_list; *p != NULL; ++p)
-	    free (*p);
-	free (h->h_addr_list);
+        for (p = h->h_addr_list; *p != NULL; ++p)
+            free (*p);
+        free (h->h_addr_list);
     }
     free (h);
 }

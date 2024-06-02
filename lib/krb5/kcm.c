@@ -67,8 +67,8 @@ static heim_ipc kcm_ipc = NULL;
 
 static krb5_error_code
 kcm_send_request(krb5_context context,
-		 krb5_storage *request,
-		 krb5_data *response_data)
+                 krb5_storage *request,
+                 krb5_data *response_data)
 {
     krb5_error_code ret = 0;
     krb5_data request_data;
@@ -77,14 +77,14 @@ kcm_send_request(krb5_context context,
 
     HEIMDAL_MUTEX_lock(&kcm_mutex);
     if (kcm_ipc == NULL)
-	ret = heim_ipc_init_context(kcm_ipc_name, &kcm_ipc);
+        ret = heim_ipc_init_context(kcm_ipc_name, &kcm_ipc);
     HEIMDAL_MUTEX_unlock(&kcm_mutex);
     if (ret)
-	return KRB5_CC_NOSUPP;
+        return KRB5_CC_NOSUPP;
 
     ret = krb5_storage_to_data(request, &request_data);
     if (ret) {
-	return krb5_enomem(context);
+        return krb5_enomem(context);
     }
 
     ret = heim_ipc_call(kcm_ipc, &request_data, response_data, NULL);
@@ -94,8 +94,8 @@ kcm_send_request(krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_kcm_storage_request(krb5_context context,
-			 uint16_t opcode,
-			 krb5_storage **storage_p)
+                         uint16_t opcode,
+                         krb5_storage **storage_p)
 {
     krb5_storage *sp;
     krb5_error_code ret;
@@ -104,25 +104,25 @@ krb5_kcm_storage_request(krb5_context context,
 
     sp = krb5_storage_emem();
     if (sp == NULL)
-	return krb5_enomem(context);
+        return krb5_enomem(context);
 
     /* Send MAJOR | VERSION | OPCODE */
     ret  = krb5_store_int8(sp, KCM_PROTOCOL_VERSION_MAJOR);
     if (ret)
-	goto fail;
+        goto fail;
     ret = krb5_store_int8(sp, KCM_PROTOCOL_VERSION_MINOR);
     if (ret)
-	goto fail;
+        goto fail;
     ret = krb5_store_int16(sp, opcode);
     if (ret)
-	goto fail;
+        goto fail;
 
     *storage_p = sp;
- fail:
+fail:
     if (ret) {
-	krb5_set_error_message(context, ret,
-			       N_("Failed to encode KCM request", ""));
-	krb5_storage_free(sp);
+        krb5_set_error_message(context, ret,
+                               N_("Failed to encode KCM request", ""));
+        krb5_storage_free(sp);
     }
 
     return ret;
@@ -251,7 +251,7 @@ kcm_alloc(krb5_context context,
     if (k == NULL) {
         free(local_def_name);
         free(kcm_def_name);
-	return krb5_enomem(context);
+        return krb5_enomem(context);
     }
     k->name = NULL;
 
@@ -295,9 +295,9 @@ kcm_alloc(krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_kcm_call(krb5_context context,
-	      krb5_storage *request,
-	      krb5_storage **response_p,
-	      krb5_data *response_data_p)
+              krb5_storage *request,
+              krb5_storage **response_p,
+              krb5_data *response_data_p)
 {
     krb5_data response_data;
     krb5_error_code ret;
@@ -305,7 +305,7 @@ krb5_kcm_call(krb5_context context,
     krb5_storage *response;
 
     if (response_p != NULL)
-	*response_p = NULL;
+        *response_p = NULL;
 
     krb5_data_zero(&response_data);
     ret = kcm_send_request(context, request, &response_data);
@@ -316,28 +316,28 @@ krb5_kcm_call(krb5_context context,
 
     response = krb5_storage_from_data(&response_data);
     if (response == NULL) {
-	krb5_data_free(&response_data);
-	return KRB5_CC_IO;
+        krb5_data_free(&response_data);
+        return KRB5_CC_IO;
     }
 
     ret = krb5_ret_int32(response, &status);
     if (ret) {
-	krb5_storage_free(response);
-	krb5_data_free(&response_data);
-	return KRB5_CC_FORMAT;
+        krb5_storage_free(response);
+        krb5_data_free(&response_data);
+        return KRB5_CC_FORMAT;
     }
 
     if (status) {
-	krb5_storage_free(response);
-	krb5_data_free(&response_data);
-	return status;
+        krb5_storage_free(response);
+        krb5_data_free(&response_data);
+        return status;
     }
 
     if (response_p != NULL) {
-	*response_data_p = response_data;
-	*response_p = response;
+        *response_data_p = response_data;
+        *response_p = response;
 
-	return 0;
+        return 0;
     }
 
     krb5_storage_free(response);
@@ -353,17 +353,17 @@ kcm_free(krb5_context context, krb5_ccache *id)
 
     if (k != NULL) {
         free(k->name);
-	memset_s(k, sizeof(*k), 0, sizeof(*k));
-	krb5_data_free(&(*id)->data);
+        memset_s(k, sizeof(*k), 0, sizeof(*k));
+        krb5_data_free(&(*id)->data);
     }
 }
 
 static krb5_error_code KRB5_CALLCONV
 kcm_get_name_2(krb5_context context,
-	       krb5_ccache id,
-	       const char **name,
-	       const char **col,
-	       const char **sub)
+               krb5_ccache id,
+               const char **name,
+               const char **col,
+               const char **sub)
 {
     /*
      * TODO:
@@ -427,35 +427,35 @@ kcm_gen_new(krb5_context context, const krb5_cc_ops *ops, krb5_ccache *id)
 
     ret = kcm_alloc(context, ops, NULL, NULL, id);
     if (ret)
-	return ret;
+        return ret;
 
     k = KCMCACHE(*id);
 
     ret = krb5_kcm_storage_request(context, KCM_OP_GEN_NEW, &request);
     if (ret) {
-	kcm_free(context, id);
-	return ret;
+        kcm_free(context, id);
+        return ret;
     }
 
     ret = krb5_kcm_call(context, request, &response, &response_data);
     if (ret) {
-	krb5_storage_free(request);
-	kcm_free(context, id);
-	return ret;
+        krb5_storage_free(request);
+        kcm_free(context, id);
+        return ret;
     }
 
     free(k->name);
     k->name = NULL;
     ret = krb5_ret_stringz(response, &k->name);
     if (ret)
-	ret = KRB5_CC_IO;
+        ret = KRB5_CC_IO;
 
     krb5_storage_free(request);
     krb5_storage_free(response);
     krb5_data_free(&response_data);
 
     if (ret)
-	kcm_free(context, id);
+        kcm_free(context, id);
 
     return ret;
 }
@@ -482,8 +482,8 @@ kcm_gen_new_api(krb5_context context, krb5_ccache *id)
  */
 static krb5_error_code
 kcm_initialize(krb5_context context,
-	       krb5_ccache id,
-	       krb5_principal primary_principal)
+               krb5_ccache id,
+               krb5_principal primary_principal)
 {
     krb5_error_code ret;
     krb5_kcmcache *k = KCMCACHE(id);
@@ -491,18 +491,18 @@ kcm_initialize(krb5_context context,
 
     ret = krb5_kcm_storage_request(context, KCM_OP_INITIALIZE, &request);
     if (ret)
-	return ret;
+        return ret;
 
     ret = krb5_store_stringz(request, k->name);
     if (ret) {
-	krb5_storage_free(request);
-	return ret;
+        krb5_storage_free(request);
+        return ret;
     }
 
     ret = krb5_store_principal(request, primary_principal);
     if (ret) {
-	krb5_storage_free(request);
-	return ret;
+        krb5_storage_free(request);
+        return ret;
     }
 
     ret = krb5_kcm_call(context, request, NULL, NULL);
@@ -510,14 +510,14 @@ kcm_initialize(krb5_context context,
     krb5_storage_free(request);
 
     if (context->kdc_sec_offset)
-	kcm_set_kdc_offset(context, id, context->kdc_sec_offset);
+        kcm_set_kdc_offset(context, id, context->kdc_sec_offset);
 
     return ret;
 }
 
 static krb5_error_code
 kcm_close(krb5_context context,
-	  krb5_ccache id)
+          krb5_ccache id)
 {
     kcm_free(context, &id);
     return 0;
@@ -532,7 +532,7 @@ kcm_close(krb5_context context,
  */
 static krb5_error_code
 kcm_destroy(krb5_context context,
-	    krb5_ccache id)
+            krb5_ccache id)
 {
     krb5_error_code ret;
     krb5_kcmcache *k = KCMCACHE(id);
@@ -540,12 +540,12 @@ kcm_destroy(krb5_context context,
 
     ret = krb5_kcm_storage_request(context, KCM_OP_DESTROY, &request);
     if (ret)
-	return ret;
+        return ret;
 
     ret = krb5_store_stringz(request, k->name);
     if (ret) {
-	krb5_storage_free(request);
-	return ret;
+        krb5_storage_free(request);
+        return ret;
     }
 
     ret = krb5_kcm_call(context, request, NULL, NULL);
@@ -564,8 +564,8 @@ kcm_destroy(krb5_context context,
  */
 static krb5_error_code
 kcm_store_cred(krb5_context context,
-	       krb5_ccache id,
-	       krb5_creds *creds)
+               krb5_ccache id,
+               krb5_creds *creds)
 {
     krb5_error_code ret;
     krb5_kcmcache *k = KCMCACHE(id);
@@ -573,18 +573,18 @@ kcm_store_cred(krb5_context context,
 
     ret = krb5_kcm_storage_request(context, KCM_OP_STORE, &request);
     if (ret)
-	return ret;
+        return ret;
 
     ret = krb5_store_stringz(request, k->name);
     if (ret) {
-	krb5_storage_free(request);
-	return ret;
+        krb5_storage_free(request);
+        return ret;
     }
 
     ret = krb5_store_creds(request, creds);
     if (ret) {
-	krb5_storage_free(request);
-	return ret;
+        krb5_storage_free(request);
+        return ret;
     }
 
     ret = krb5_kcm_call(context, request, NULL, NULL);
@@ -606,10 +606,10 @@ kcm_store_cred(krb5_context context,
  */
 static krb5_error_code
 kcm_retrieve(krb5_context context,
-	     krb5_ccache id,
-	     krb5_flags which,
-	     const krb5_creds *mcred,
-	     krb5_creds *creds)
+             krb5_ccache id,
+             krb5_flags which,
+             const krb5_creds *mcred,
+             krb5_creds *creds)
 {
     krb5_error_code ret;
     krb5_kcmcache *k = KCMCACHE(id);
@@ -618,35 +618,35 @@ kcm_retrieve(krb5_context context,
 
     ret = krb5_kcm_storage_request(context, KCM_OP_RETRIEVE, &request);
     if (ret)
-	return ret;
+        return ret;
 
     ret = krb5_store_stringz(request, k->name);
     if (ret) {
-	krb5_storage_free(request);
-	return ret;
+        krb5_storage_free(request);
+        return ret;
     }
 
     ret = krb5_store_int32(request, which);
     if (ret) {
-	krb5_storage_free(request);
-	return ret;
+        krb5_storage_free(request);
+        return ret;
     }
 
     ret = krb5_store_creds_tag(request, rk_UNCONST(mcred));
     if (ret) {
-	krb5_storage_free(request);
-	return ret;
+        krb5_storage_free(request);
+        return ret;
     }
 
     ret = krb5_kcm_call(context, request, &response, &response_data);
     if (ret) {
-	krb5_storage_free(request);
-	return ret;
+        krb5_storage_free(request);
+        return ret;
     }
 
     ret = krb5_ret_creds(response, creds);
     if (ret)
-	ret = KRB5_CC_IO;
+        ret = KRB5_CC_IO;
 
     krb5_storage_free(request);
     krb5_storage_free(response);
@@ -665,8 +665,8 @@ kcm_retrieve(krb5_context context,
  */
 static krb5_error_code
 kcm_get_principal(krb5_context context,
-		  krb5_ccache id,
-		  krb5_principal *principal)
+                  krb5_ccache id,
+                  krb5_principal *principal)
 {
     krb5_error_code ret;
     krb5_kcmcache *k = KCMCACHE(id);
@@ -675,23 +675,23 @@ kcm_get_principal(krb5_context context,
 
     ret = krb5_kcm_storage_request(context, KCM_OP_GET_PRINCIPAL, &request);
     if (ret)
-	return ret;
+        return ret;
 
     ret = krb5_store_stringz(request, k->name);
     if (ret) {
-	krb5_storage_free(request);
-	return ret;
+        krb5_storage_free(request);
+        return ret;
     }
 
     ret = krb5_kcm_call(context, request, &response, &response_data);
     if (ret) {
-	krb5_storage_free(request);
-	return ret;
+        krb5_storage_free(request);
+        return ret;
     }
 
     ret = krb5_ret_principal(response, principal);
     if (ret)
-	ret = KRB5_CC_IO;
+        ret = KRB5_CC_IO;
 
     krb5_storage_free(request);
     krb5_storage_free(response);
@@ -710,8 +710,8 @@ kcm_get_principal(krb5_context context,
  */
 static krb5_error_code
 kcm_get_first (krb5_context context,
-	       krb5_ccache id,
-	       krb5_cc_cursor *cursor)
+               krb5_ccache id,
+               krb5_cc_cursor *cursor)
 {
     krb5_error_code ret;
     krb5_kcm_cursor c;
@@ -721,49 +721,49 @@ kcm_get_first (krb5_context context,
 
     ret = krb5_kcm_storage_request(context, KCM_OP_GET_CRED_UUID_LIST, &request);
     if (ret)
-	return ret;
+        return ret;
 
     ret = krb5_store_stringz(request, k->name);
     if (ret) {
-	krb5_storage_free(request);
-	return ret;
+        krb5_storage_free(request);
+        return ret;
     }
 
     ret = krb5_kcm_call(context, request, &response, &response_data);
     krb5_storage_free(request);
     if (ret)
-	return ret;
+        return ret;
 
     c = calloc(1, sizeof(*c));
     if (c == NULL) {
-	ret = krb5_enomem(context);
-	return ret;
+        ret = krb5_enomem(context);
+        return ret;
     }
 
     while (1) {
-	ssize_t sret;
-	kcmuuid_t uuid;
-	void *ptr;
+        ssize_t sret;
+        kcmuuid_t uuid;
+        void *ptr;
 
-	sret = krb5_storage_read(response, &uuid, sizeof(uuid));
-	if (sret == 0) {
-	    ret = 0;
-	    break;
-	} else if (sret != sizeof(uuid)) {
-	    ret = EINVAL;
-	    break;
-	}
+        sret = krb5_storage_read(response, &uuid, sizeof(uuid));
+        if (sret == 0) {
+            ret = 0;
+            break;
+        } else if (sret != sizeof(uuid)) {
+            ret = EINVAL;
+            break;
+        }
 
-	ptr = realloc(c->uuids, sizeof(c->uuids[0]) * (c->length + 1));
-	if (ptr == NULL) {
-	    free(c->uuids);
-	    free(c);
-	    return krb5_enomem(context);
-	}
-	c->uuids = ptr;
+        ptr = realloc(c->uuids, sizeof(c->uuids[0]) * (c->length + 1));
+        if (ptr == NULL) {
+            free(c->uuids);
+            free(c);
+            return krb5_enomem(context);
+        }
+        c->uuids = ptr;
 
-	memcpy(&c->uuids[c->length], &uuid, sizeof(uuid));
-	c->length += 1;
+        memcpy(&c->uuids[c->length], &uuid, sizeof(uuid));
+        c->length += 1;
     }
 
     krb5_storage_free(response);
@@ -772,7 +772,7 @@ kcm_get_first (krb5_context context,
     if (ret) {
         free(c->uuids);
         free(c);
-	return ret;
+        return ret;
     }
 
     *cursor = c;
@@ -790,9 +790,9 @@ kcm_get_first (krb5_context context,
  */
 static krb5_error_code
 kcm_get_next (krb5_context context,
-		krb5_ccache id,
-		krb5_cc_cursor *cursor,
-		krb5_creds *creds)
+              krb5_ccache id,
+              krb5_cc_cursor *cursor,
+              krb5_creds *creds)
 {
     krb5_error_code ret;
     krb5_kcmcache *k = KCMCACHE(id);
@@ -801,40 +801,40 @@ kcm_get_next (krb5_context context,
     krb5_data response_data;
     ssize_t sret;
 
- again:
+again:
 
     if (c->offset >= c->length)
-	return KRB5_CC_END;
+        return KRB5_CC_END;
 
     ret = krb5_kcm_storage_request(context, KCM_OP_GET_CRED_BY_UUID, &request);
     if (ret)
-	return ret;
+        return ret;
 
     ret = krb5_store_stringz(request, k->name);
     if (ret) {
-	krb5_storage_free(request);
-	return ret;
+        krb5_storage_free(request);
+        return ret;
     }
 
     sret = krb5_storage_write(request,
-			      &c->uuids[c->offset],
-			      sizeof(c->uuids[c->offset]));
+                              &c->uuids[c->offset],
+                              sizeof(c->uuids[c->offset]));
     c->offset++;
     if (sret != sizeof(c->uuids[c->offset])) {
-	krb5_storage_free(request);
-	return krb5_enomem(context);
+        krb5_storage_free(request);
+        return krb5_enomem(context);
     }
 
     ret = krb5_kcm_call(context, request, &response, &response_data);
     krb5_storage_free(request);
     if (ret == KRB5_CC_END) {
-	goto again;
+        goto again;
     } else if (ret)
-	return ret;
+        return ret;
 
     ret = krb5_ret_creds(response, creds);
     if (ret)
-	ret = KRB5_CC_IO;
+        ret = KRB5_CC_IO;
 
     krb5_storage_free(response);
     krb5_data_free(&response_data);
@@ -852,8 +852,8 @@ kcm_get_next (krb5_context context,
  */
 static krb5_error_code
 kcm_end_get (krb5_context context,
-	     krb5_ccache id,
-	     krb5_cc_cursor *cursor)
+             krb5_ccache id,
+             krb5_cc_cursor *cursor)
 {
     krb5_kcm_cursor c = KCMCURSOR(*cursor);
 
@@ -876,9 +876,9 @@ kcm_end_get (krb5_context context,
  */
 static krb5_error_code
 kcm_remove_cred(krb5_context context,
-		krb5_ccache id,
-		krb5_flags which,
-		krb5_creds *cred)
+                krb5_ccache id,
+                krb5_flags which,
+                krb5_creds *cred)
 {
     krb5_error_code ret;
     krb5_kcmcache *k = KCMCACHE(id);
@@ -886,24 +886,24 @@ kcm_remove_cred(krb5_context context,
 
     ret = krb5_kcm_storage_request(context, KCM_OP_REMOVE_CRED, &request);
     if (ret)
-	return ret;
+        return ret;
 
     ret = krb5_store_stringz(request, k->name);
     if (ret) {
-	krb5_storage_free(request);
-	return ret;
+        krb5_storage_free(request);
+        return ret;
     }
 
     ret = krb5_store_int32(request, which);
     if (ret) {
-	krb5_storage_free(request);
-	return ret;
+        krb5_storage_free(request);
+        return ret;
     }
 
     ret = krb5_store_creds_tag(request, cred);
     if (ret) {
-	krb5_storage_free(request);
-	return ret;
+        krb5_storage_free(request);
+        return ret;
     }
 
     ret = krb5_kcm_call(context, request, NULL, NULL);
@@ -914,8 +914,8 @@ kcm_remove_cred(krb5_context context,
 
 static krb5_error_code
 kcm_set_flags(krb5_context context,
-	      krb5_ccache id,
-	      krb5_flags flags)
+              krb5_ccache id,
+              krb5_flags flags)
 {
     krb5_error_code ret;
     krb5_kcmcache *k = KCMCACHE(id);
@@ -923,18 +923,18 @@ kcm_set_flags(krb5_context context,
 
     ret = krb5_kcm_storage_request(context, KCM_OP_SET_FLAGS, &request);
     if (ret)
-	return ret;
+        return ret;
 
     ret = krb5_store_stringz(request, k->name);
     if (ret) {
-	krb5_storage_free(request);
-	return ret;
+        krb5_storage_free(request);
+        return ret;
     }
 
     ret = krb5_store_int32(request, flags);
     if (ret) {
-	krb5_storage_free(request);
-	return ret;
+        krb5_storage_free(request);
+        return ret;
     }
 
     ret = krb5_kcm_call(context, request, NULL, NULL);
@@ -945,7 +945,7 @@ kcm_set_flags(krb5_context context,
 
 static int
 kcm_get_version(krb5_context context,
-		krb5_ccache id)
+                krb5_ccache id)
 {
     return 0;
 }
@@ -967,53 +967,53 @@ kcm_get_cache_first(krb5_context context, krb5_cc_cursor *cursor)
 
     c = calloc(1, sizeof(*c));
     if (c == NULL) {
-	ret = krb5_enomem(context);
-	goto out;
+        ret = krb5_enomem(context);
+        goto out;
     }
 
     ret = krb5_kcm_storage_request(context, KCM_OP_GET_CACHE_UUID_LIST, &request);
     if (ret)
-	goto out;
+        goto out;
 
     ret = krb5_kcm_call(context, request, &response, &response_data);
     krb5_storage_free(request);
     if (ret)
-	goto out;
+        goto out;
 
     while (1) {
-	ssize_t sret;
-	kcmuuid_t uuid;
-	void *ptr;
+        ssize_t sret;
+        kcmuuid_t uuid;
+        void *ptr;
 
-	sret = krb5_storage_read(response, &uuid, sizeof(uuid));
-	if (sret == 0) {
-	    ret = 0;
-	    break;
-	} else if (sret != sizeof(uuid)) {
-	    ret = EINVAL;
-	    goto out;
-	}
+        sret = krb5_storage_read(response, &uuid, sizeof(uuid));
+        if (sret == 0) {
+            ret = 0;
+            break;
+        } else if (sret != sizeof(uuid)) {
+            ret = EINVAL;
+            goto out;
+        }
 
-	ptr = realloc(c->uuids, sizeof(c->uuids[0]) * (c->length + 1));
-	if (ptr == NULL) {
-	    ret = krb5_enomem(context);
-	    goto out;
-	}
-	c->uuids = ptr;
+        ptr = realloc(c->uuids, sizeof(c->uuids[0]) * (c->length + 1));
+        if (ptr == NULL) {
+            ret = krb5_enomem(context);
+            goto out;
+        }
+        c->uuids = ptr;
 
-	memcpy(&c->uuids[c->length], &uuid, sizeof(uuid));
-	c->length += 1;
+        memcpy(&c->uuids[c->length], &uuid, sizeof(uuid));
+        c->length += 1;
     }
 
     krb5_storage_free(response);
     krb5_data_free(&response_data);
 
- out:
+out:
     if (ret && c) {
         free(c->uuids);
         free(c);
     } else
-	*cursor = c;
+        *cursor = c;
 
     return ret;
 }
@@ -1035,40 +1035,40 @@ kcm_get_cache_next(krb5_context context, krb5_cc_cursor cursor, const krb5_cc_op
 
     *id = NULL;
 
- again:
+again:
 
     if (c->offset >= c->length)
-	return KRB5_CC_END;
+        return KRB5_CC_END;
 
     ret = krb5_kcm_storage_request(context, KCM_OP_GET_CACHE_BY_UUID, &request);
     if (ret)
-	return ret;
+        return ret;
 
     sret = krb5_storage_write(request,
-			      &c->uuids[c->offset],
-			      sizeof(c->uuids[c->offset]));
+                              &c->uuids[c->offset],
+                              sizeof(c->uuids[c->offset]));
     c->offset++;
     if (sret != sizeof(c->uuids[c->offset])) {
-	krb5_storage_free(request);
-	return krb5_enomem(context);
+        krb5_storage_free(request);
+        return krb5_enomem(context);
     }
 
     ret = krb5_kcm_call(context, request, &response, &response_data);
     krb5_storage_free(request);
     if (ret == KRB5_CC_END)
-	goto again;
+        goto again;
     else if (ret)
-	return ret;
+        return ret;
 
     ret = krb5_ret_stringz(response, &name);
     krb5_storage_free(response);
     krb5_data_free(&response_data);
 
     if (ret == 0) {
-	ret = _krb5_cc_allocate(context, ops, id);
-	if (ret == 0)
-	    ret = kcm_alloc(context, ops, name, NULL, id);
-	krb5_xfree(name);
+        ret = _krb5_cc_allocate(context, ops, id);
+        if (ret == 0)
+            ret = kcm_alloc(context, ops, name, NULL, id);
+        krb5_xfree(name);
     }
 
     return ret;
@@ -1112,18 +1112,18 @@ kcm_move(krb5_context context, krb5_ccache from, krb5_ccache to)
 
     ret = krb5_kcm_storage_request(context, KCM_OP_MOVE_CACHE, &request);
     if (ret)
-	return ret;
+        return ret;
 
     ret = krb5_store_stringz(request, oldk->name);
     if (ret) {
-	krb5_storage_free(request);
-	return ret;
+        krb5_storage_free(request);
+        return ret;
     }
 
     ret = krb5_store_stringz(request, newk->name);
     if (ret) {
-	krb5_storage_free(request);
-	return ret;
+        krb5_storage_free(request);
+        return ret;
     }
     ret = krb5_kcm_call(context, request, NULL, NULL);
 
@@ -1136,7 +1136,7 @@ kcm_move(krb5_context context, krb5_ccache from, krb5_ccache to)
 
 static krb5_error_code
 kcm_get_default_name(krb5_context context, const krb5_cc_ops *ops,
-		     const char *defstr, char **str)
+                     const char *defstr, char **str)
 {
     krb5_error_code ret;
     krb5_storage *request, *response;
@@ -1148,7 +1148,7 @@ kcm_get_default_name(krb5_context context, const krb5_cc_ops *ops,
 
     ret = krb5_kcm_storage_request(context, KCM_OP_GET_DEFAULT_CACHE, &request);
     if (ret)
-	return ret;
+        return ret;
 
     ret = krb5_kcm_call(context, request, &response, &response_data);
     krb5_storage_free(request);
@@ -1162,12 +1162,12 @@ kcm_get_default_name(krb5_context context, const krb5_cc_ops *ops,
     krb5_storage_free(response);
     krb5_data_free(&response_data);
     if (ret)
-	return ret;
+        return ret;
 
     aret = asprintf(str, "%s:%s", ops->prefix, name);
     free(name);
     if (aret == -1 || *str == NULL)
-	return krb5_enomem(context);
+        return krb5_enomem(context);
 
     return 0;
 }
@@ -1176,14 +1176,14 @@ static krb5_error_code
 kcm_get_default_name_api(krb5_context context, char **str)
 {
     return kcm_get_default_name(context, &krb5_akcm_ops,
-				KRB5_DEFAULT_CCNAME_KCM_API, str);
+                                KRB5_DEFAULT_CCNAME_KCM_API, str);
 }
 
 static krb5_error_code
 kcm_get_default_name_kcm(krb5_context context, char **str)
 {
     return kcm_get_default_name(context, &krb5_kcm_ops,
-				KRB5_DEFAULT_CCNAME_KCM_KCM, str);
+                                KRB5_DEFAULT_CCNAME_KCM_KCM, str);
 }
 
 static krb5_error_code
@@ -1195,12 +1195,12 @@ kcm_set_default(krb5_context context, krb5_ccache id)
 
     ret = krb5_kcm_storage_request(context, KCM_OP_SET_DEFAULT_CACHE, &request);
     if (ret)
-	return ret;
+        return ret;
 
     ret = krb5_store_stringz(request, k->name);
     if (ret) {
-	krb5_storage_free(request);
-	return ret;
+        krb5_storage_free(request);
+        return ret;
     }
 
     ret = krb5_kcm_call(context, request, NULL, NULL);
@@ -1225,17 +1225,17 @@ kcm_set_kdc_offset(krb5_context context, krb5_ccache id, krb5_deltat kdc_offset)
 
     ret = krb5_kcm_storage_request(context, KCM_OP_SET_KDC_OFFSET, &request);
     if (ret)
-	return ret;
+        return ret;
 
     ret = krb5_store_stringz(request, k->name);
     if (ret) {
-	krb5_storage_free(request);
-	return ret;
+        krb5_storage_free(request);
+        return ret;
     }
     ret = krb5_store_int32(request, kdc_offset);
     if (ret) {
-	krb5_storage_free(request);
-	return ret;
+        krb5_storage_free(request);
+        return ret;
     }
 
     ret = krb5_kcm_call(context, request, NULL, NULL);
@@ -1255,24 +1255,24 @@ kcm_get_kdc_offset(krb5_context context, krb5_ccache id, krb5_deltat *kdc_offset
 
     ret = krb5_kcm_storage_request(context, KCM_OP_GET_KDC_OFFSET, &request);
     if (ret)
-	return ret;
+        return ret;
 
     ret = krb5_store_stringz(request, k->name);
     if (ret) {
-	krb5_storage_free(request);
-	return ret;
+        krb5_storage_free(request);
+        return ret;
     }
 
     ret = krb5_kcm_call(context, request, &response, &response_data);
     krb5_storage_free(request);
     if (ret)
-	return ret;
+        return ret;
 
     ret = krb5_ret_int32(response, &offset);
     krb5_storage_free(response);
     krb5_data_free(&response_data);
     if (ret)
-	return ret;
+        return ret;
 
     *kdc_offset = offset;
 
@@ -1357,7 +1357,7 @@ _krb5_kcm_is_running(krb5_context context)
 
     ret = kcm_alloc(context, &krb5_kcm_ops, NULL, NULL, &id);
     if (ret)
-	return 0;
+        return 0;
 
     running = (_krb5_kcm_noop(context, id) == 0);
 
@@ -1374,14 +1374,14 @@ _krb5_kcm_is_running(krb5_context context)
  */
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_kcm_noop(krb5_context context,
-	       krb5_ccache id)
+               krb5_ccache id)
 {
     krb5_error_code ret;
     krb5_storage *request;
 
     ret = krb5_kcm_storage_request(context, KCM_OP_NOOP, &request);
     if (ret)
-	return ret;
+        return ret;
 
     ret = krb5_kcm_call(context, request, NULL, NULL);
 
@@ -1402,9 +1402,9 @@ _krb5_kcm_noop(krb5_context context,
  */
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_kcm_get_initial_ticket(krb5_context context,
-			     krb5_ccache id,
-			     krb5_principal server,
-			     krb5_keyblock *key)
+                             krb5_ccache id,
+                             krb5_principal server,
+                             krb5_keyblock *key)
 {
     krb5_kcmcache *k = KCMCACHE(id);
     krb5_error_code ret;
@@ -1412,32 +1412,32 @@ _krb5_kcm_get_initial_ticket(krb5_context context,
 
     ret = krb5_kcm_storage_request(context, KCM_OP_GET_INITIAL_TICKET, &request);
     if (ret)
-	return ret;
+        return ret;
 
     ret = krb5_store_stringz(request, k->name);
     if (ret) {
-	krb5_storage_free(request);
-	return ret;
+        krb5_storage_free(request);
+        return ret;
     }
 
     ret = krb5_store_int8(request, (server == NULL) ? 0 : 1);
     if (ret) {
-	krb5_storage_free(request);
-	return ret;
+        krb5_storage_free(request);
+        return ret;
     }
 
     if (server != NULL) {
-	ret = krb5_store_principal(request, server);
-	if (ret) {
-	    krb5_storage_free(request);
-	    return ret;
-	}
+        ret = krb5_store_principal(request, server);
+        if (ret) {
+            krb5_storage_free(request);
+            return ret;
+        }
     }
 
     ret = krb5_store_keyblock(request, *key);
     if (ret) {
-	krb5_storage_free(request);
-	return ret;
+        krb5_storage_free(request);
+        return ret;
     }
 
     ret = krb5_kcm_call(context, request, NULL, NULL);
@@ -1459,10 +1459,10 @@ _krb5_kcm_get_initial_ticket(krb5_context context,
  */
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_kcm_get_ticket(krb5_context context,
-		     krb5_ccache id,
-		     krb5_kdc_flags flags,
-		     krb5_enctype enctype,
-		     krb5_principal server)
+                     krb5_ccache id,
+                     krb5_kdc_flags flags,
+                     krb5_enctype enctype,
+                     krb5_principal server)
 {
     krb5_error_code ret;
     krb5_kcmcache *k = KCMCACHE(id);
@@ -1470,30 +1470,30 @@ _krb5_kcm_get_ticket(krb5_context context,
 
     ret = krb5_kcm_storage_request(context, KCM_OP_GET_TICKET, &request);
     if (ret)
-	return ret;
+        return ret;
 
     ret = krb5_store_stringz(request, k->name);
     if (ret) {
-	krb5_storage_free(request);
-	return ret;
+        krb5_storage_free(request);
+        return ret;
     }
 
     ret = krb5_store_int32(request, flags.i);
     if (ret) {
-	krb5_storage_free(request);
-	return ret;
+        krb5_storage_free(request);
+        return ret;
     }
 
     ret = krb5_store_int32(request, enctype);
     if (ret) {
-	krb5_storage_free(request);
-	return ret;
+        krb5_storage_free(request);
+        return ret;
     }
 
     ret = krb5_store_principal(request, server);
     if (ret) {
-	krb5_storage_free(request);
-	return ret;
+        krb5_storage_free(request);
+        return ret;
     }
 
     ret = krb5_kcm_call(context, request, NULL, NULL);

@@ -40,11 +40,11 @@
  */
 OM_uint32
 _gss_mg_import_rfc4121_context(OM_uint32 *minor,
-			       uint8_t initiator_flag,
-			       OM_uint32 gss_flags,
-			       int32_t rfc3961_enctype,
-			       gss_const_buffer_t session_key,
-			       gss_ctx_id_t *rfc4121_context_handle)
+                               uint8_t initiator_flag,
+                               OM_uint32 gss_flags,
+                               int32_t rfc3961_enctype,
+                               gss_const_buffer_t session_key,
+                               gss_ctx_id_t *rfc4121_context_handle)
 {
     OM_uint32 major = GSS_S_FAILURE, tmpMinor;
     krb5_storage *sp;
@@ -59,8 +59,8 @@ _gss_mg_import_rfc4121_context(OM_uint32 *minor,
 
     sp = krb5_storage_emem();
     if (sp == NULL) {
-	ret = ENOMEM;
-	goto out;
+        ret = ENOMEM;
+        goto out;
     }
 
     krb5_storage_set_byteorder(sp, KRB5_STORAGE_BYTEORDER_HOST);
@@ -72,39 +72,39 @@ _gss_mg_import_rfc4121_context(OM_uint32 *minor,
      */
     ret = krb5_store_uint8(sp, initiator_flag);
     if (ret != 0)
-	goto out;
+        goto out;
 
     ret = krb5_store_uint32(sp, gss_flags);
     if (ret != 0)
-	goto out;
+        goto out;
 
     ret = krb5_store_int32(sp, rfc3961_enctype);
     if (ret != 0)
-	goto out;
+        goto out;
 
     if (krb5_storage_write(sp, session_key->value, session_key->length)
-	!= session_key->length) {
-	ret = ENOMEM;
-	goto out;
+        != session_key->length) {
+        ret = ENOMEM;
+        goto out;
     }
 
     ret = krb5_storage_to_data(sp, &d);
     if (ret != 0)
-	goto out;
+        goto out;
 
     rfc4121_args.length = d.length;
     rfc4121_args.value = d.data;
 
     major = gss_set_sec_context_option(minor, rfc4121_context_handle,
-				       GSS_KRB5_IMPORT_RFC4121_CONTEXT_X,
-				       &rfc4121_args);
+                                       GSS_KRB5_IMPORT_RFC4121_CONTEXT_X,
+                                       &rfc4121_args);
 
 out:
     _gss_secure_release_buffer(&tmpMinor, &rfc4121_args);
     krb5_storage_free(sp);
 
     if (major == GSS_S_FAILURE && *minor == 0)
-	*minor = ret;
+        *minor = ret;
 
     return major;
 }

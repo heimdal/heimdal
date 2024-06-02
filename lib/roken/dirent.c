@@ -146,7 +146,7 @@ opendir(const char * path)
         struct dirent * e;
 
         if (dp->n_entries == dp->nc_entries) {
-	    struct dirent ** ne;
+            struct dirent ** ne;
 
             dp->nc_entries *= 2;
             ne = realloc(dp->entries, sizeof(dp->entries[0]) * dp->nc_entries);
@@ -157,7 +157,7 @@ opendir(const char * path)
                 goto done;
             }
 
-	    dp->entries = ne;
+            dp->entries = ne;
         }
 
         e = malloc(sizeof(*e) + len * sizeof(char));
@@ -174,7 +174,7 @@ opendir(const char * path)
 
     } while (_findnext(fd_handle, &fd) == 0);
 
- done:
+done:
     if (fd_handle != -1)
         _findclose(fd_handle);
 

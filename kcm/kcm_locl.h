@@ -45,12 +45,12 @@
 
 #define KCM_LOG_REQUEST(_context, _client, _opcode)	do { \
     kcm_log(1, "%s request by process %d/uid %d", \
-	    kcm_op2string(_opcode), (_client)->pid, (_client)->uid); \
+            kcm_op2string(_opcode), (_client)->pid, (_client)->uid); \
     } while (0)
 
-#define KCM_LOG_REQUEST_NAME(_context, _client, _opcode, _name)	do { \
+#define KCM_LOG_REQUEST_NAME(_context, _client, _opcode, _name) do { \
     kcm_log(1, "%s request for cache %s by process %d/uid %d", \
-	    kcm_op2string(_opcode), (_name), (_client)->pid, (_client)->uid); \
+            kcm_op2string(_opcode), (_name), (_client)->pid, (_client)->uid); \
     } while (0)
 
 /* Cache management */
@@ -98,8 +98,8 @@ typedef struct kcm_ccache_data {
     krb5_deltat renew_life;
     int32_t kdc_offset;
     union {
-	krb5_keytab keytab;
-	krb5_keyblock keyblock;
+        krb5_keytab keytab;
+        krb5_keyblock keyblock;
     } key;
     HEIMDAL_MUTEX mutex;
     struct kcm_ccache_data *next;
@@ -107,9 +107,9 @@ typedef struct kcm_ccache_data {
 
 #define KCM_ASSERT_VALID(_ccache)		do { \
     if (((_ccache)->flags & KCM_FLAGS_VALID) == 0) \
-	krb5_abortx(context, "kcm_free_ccache_data: ccache invalid"); \
+        krb5_abortx(context, "kcm_free_ccache_data: ccache invalid"); \
     else if ((_ccache)->refcnt == 0) \
-	krb5_abortx(context, "kcm_free_ccache_data: ccache refcnt == 0"); \
+        krb5_abortx(context, "kcm_free_ccache_data: ccache refcnt == 0"); \
     } while (0)
 
 typedef kcm_ccache_data *kcm_ccache;
@@ -123,11 +123,11 @@ typedef struct kcm_event {
     time_t expire_time;
     time_t backoff_time;
     enum {
-	KCM_EVENT_NONE = 0,
-	KCM_EVENT_ACQUIRE_CREDS,
-	KCM_EVENT_RENEW_CREDS,
-	KCM_EVENT_DESTROY_CREDS,
-	KCM_EVENT_DESTROY_EMPTY_CACHE
+        KCM_EVENT_NONE = 0,
+        KCM_EVENT_ACQUIRE_CREDS,
+        KCM_EVENT_RENEW_CREDS,
+        KCM_EVENT_DESTROY_CREDS,
+        KCM_EVENT_DESTROY_EMPTY_CACHE
     } action;
     kcm_ccache ccache;
     struct kcm_event *next;

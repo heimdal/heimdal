@@ -113,39 +113,39 @@ main(int argc, char **argv)
     setprogname(argv[0]);
 
     if(getarg(args, num_args, argc, argv, &o))
-	krb5_std_usage(1, args, num_args);
+        krb5_std_usage(1, args, num_args);
 
     if(help_flag)
-	krb5_std_usage(0, args, num_args);
+        krb5_std_usage(0, args, num_args);
 
     if(version_flag){
-	print_version(NULL);
-	exit(0);
+        print_version(NULL);
+        exit(0);
     }
 
     ret = krb5_init_context(&context);
     if (ret)
-	errx (1, "krb5_init_context failed: %d", ret);
+        errx (1, "krb5_init_context failed: %d", ret);
 
     check_HDB_EntryOrAlias(context);
 
     ret = hdb_get_dbinfo(context, &info);
     if (ret)
-	krb5_err(context, 1, ret, "hdb_get_dbinfo");
+        krb5_err(context, 1, ret, "hdb_get_dbinfo");
 
     d = NULL;
     while ((d = hdb_dbinfo_get_next(info, d)) != NULL) {
-	const char *s;
-	s = hdb_dbinfo_get_label(context, d);
-	printf("label: %s\n", s ? s : "no label");
-	s = hdb_dbinfo_get_realm(context, d);
-	printf("\trealm: %s\n", s ? s : "no realm");
-	s = hdb_dbinfo_get_dbname(context, d);
-	printf("\tdbname: %s\n", s ? s : "no dbname");
-	s = hdb_dbinfo_get_mkey_file(context, d);
-	printf("\tmkey_file: %s\n", s ? s : "no mkey file");
-	s = hdb_dbinfo_get_acl_file(context, d);
-	printf("\tacl_file: %s\n", s ? s : "no acl file");
+        const char *s;
+        s = hdb_dbinfo_get_label(context, d);
+        printf("label: %s\n", s ? s : "no label");
+        s = hdb_dbinfo_get_realm(context, d);
+        printf("\trealm: %s\n", s ? s : "no realm");
+        s = hdb_dbinfo_get_dbname(context, d);
+        printf("\tdbname: %s\n", s ? s : "no dbname");
+        s = hdb_dbinfo_get_mkey_file(context, d);
+        printf("\tmkey_file: %s\n", s ? s : "no mkey file");
+        s = hdb_dbinfo_get_acl_file(context, d);
+        printf("\tacl_file: %s\n", s ? s : "no acl file");
     }
 
     hdb_free_dbinfo(context, &info);

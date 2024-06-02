@@ -47,22 +47,22 @@ int
 _hc_unix_device_fd(int flags, const char **fn)
 {
     static const char *rnd_devices[] = {
-	"/dev/urandom",
-	"/dev/random",
-	"/dev/srandom",
-	"/dev/arandom",
-	NULL
+        "/dev/urandom",
+        "/dev/random",
+        "/dev/srandom",
+        "/dev/arandom",
+        NULL
     };
     const char **p;
 
     for(p = rnd_devices; *p; p++) {
-	int fd = open(*p, flags | O_NDELAY);
-	if(fd >= 0) {
-	    if (fn)
-		*fn = *p;
-	    rk_cloexec(fd);
-	    return fd;
-	}
+        int fd = open(*p, flags | O_NDELAY);
+        if(fd >= 0) {
+            if (fn)
+                *fn = *p;
+            rk_cloexec(fd);
+            return fd;
+        }
     }
     return -1;
 }
@@ -75,24 +75,24 @@ unix_seed(const void *p, int size)
     int fd;
 
     if (size < 0)
-	return;
+        return;
     else if (size == 0)
-	return;
+        return;
 
     fd = _hc_unix_device_fd(O_RDONLY, NULL);
     if (fd < 0)
-	return;
+        return;
 
     while (size > 0) {
-	count = write(fd, indata, size);
-	if (count < 0 && errno == EINTR)
-	    continue;
-	else if (count <= 0) {
-	    close(fd);
-	    return;
-	}
-	indata += count;
-	size -= count;
+        count = write(fd, indata, size);
+        if (count < 0 && errno == EINTR)
+            continue;
+        else if (count <= 0) {
+            close(fd);
+            return;
+        }
+        indata += count;
+        size -= count;
     }
     close(fd);
 }
@@ -105,24 +105,24 @@ unix_bytes(unsigned char *outdata, int size)
     int fd;
 
     if (size < 0)
-	return 0;
+        return 0;
     else if (size == 0)
-	return 1;
+        return 1;
 
     fd = _hc_unix_device_fd(O_RDONLY, NULL);
     if (fd < 0)
-	return 0;
+        return 0;
 
     while (size > 0) {
-	count = read(fd, outdata, size);
-	if (count < 0 && errno == EINTR)
-	    continue;
-	else if (count <= 0) {
-	    close(fd);
-	    return 0;
-	}
-	outdata += count;
-	size -= count;
+        count = read(fd, outdata, size);
+        if (count < 0 && errno == EINTR)
+            continue;
+        else if (count <= 0) {
+            close(fd);
+            return 0;
+        }
+        outdata += count;
+        size -= count;
     }
     close(fd);
 
@@ -153,7 +153,7 @@ unix_status(void)
 
     fd = _hc_unix_device_fd(O_RDONLY, NULL);
     if (fd < 0)
-	return 0;
+        return 0;
     close(fd);
 
     return 1;

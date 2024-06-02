@@ -64,7 +64,7 @@ mpz2BN(fp_int *s)
     size = fp_unsigned_bin_size(s);
     p = malloc(size);
     if (p == NULL && size != 0)
-	return NULL;
+        return NULL;
     fp_to_unsigned_bin(s, p);
 
     bn = BN_bin2bn(p, size, NULL);
@@ -87,62 +87,62 @@ tfm_dh_generate_key(DH *dh)
     int res;
 
     if (dh->p == NULL || dh->g == NULL)
-	return 0;
+        return 0;
 
     while (times++ < DH_NUM_TRIES) {
-	if (!have_private_key) {
-	    size_t bits = BN_num_bits(dh->p);
+        if (!have_private_key) {
+            size_t bits = BN_num_bits(dh->p);
 
-	    if (dh->priv_key)
-		BN_free(dh->priv_key);
+            if (dh->priv_key)
+                BN_free(dh->priv_key);
 
-	    dh->priv_key = BN_new();
-	    if (dh->priv_key == NULL)
-		return 0;
-	    if (!BN_rand(dh->priv_key, bits - 1, 0, 0)) {
-		BN_clear_free(dh->priv_key);
-		dh->priv_key = NULL;
-		return 0;
-	    }
-	}
-	if (dh->pub_key)
-	    BN_free(dh->pub_key);
+            dh->priv_key = BN_new();
+            if (dh->priv_key == NULL)
+                return 0;
+            if (!BN_rand(dh->priv_key, bits - 1, 0, 0)) {
+                BN_clear_free(dh->priv_key);
+                dh->priv_key = NULL;
+                return 0;
+            }
+        }
+        if (dh->pub_key)
+            BN_free(dh->pub_key);
 
-	fp_init_multi(&pub, &priv_key, &g, &p, NULL);
+        fp_init_multi(&pub, &priv_key, &g, &p, NULL);
 
-	BN2mpz(&priv_key, dh->priv_key);
-	BN2mpz(&g, dh->g);
-	BN2mpz(&p, dh->p);
+        BN2mpz(&priv_key, dh->priv_key);
+        BN2mpz(&g, dh->g);
+        BN2mpz(&p, dh->p);
 
-	res = fp_exptmod(&g, &priv_key, &p, &pub);
+        res = fp_exptmod(&g, &priv_key, &p, &pub);
 
-	fp_zero(&priv_key);
-	fp_zero(&g);
-	fp_zero(&p);
-	if (res != 0)
-	    continue;
+        fp_zero(&priv_key);
+        fp_zero(&g);
+        fp_zero(&p);
+        if (res != 0)
+            continue;
 
-	dh->pub_key = mpz2BN(&pub);
-	fp_zero(&pub);
-	if (dh->pub_key == NULL)
-	    return 0;
+        dh->pub_key = mpz2BN(&pub);
+        fp_zero(&pub);
+        if (dh->pub_key == NULL)
+            return 0;
 
-	if (DH_check_pubkey(dh, dh->pub_key, &codes) && codes == 0)
-	    break;
-	if (have_private_key)
-	    return 0;
+        if (DH_check_pubkey(dh, dh->pub_key, &codes) && codes == 0)
+            break;
+        if (have_private_key)
+            return 0;
     }
 
     if (times >= DH_NUM_TRIES) {
-	if (!have_private_key && dh->priv_key) {
-	    BN_free(dh->priv_key);
-	    dh->priv_key = NULL;
-	}
-	if (dh->pub_key) {
-	    BN_free(dh->pub_key);
-	    dh->pub_key = NULL;
-	}
-	return 0;
+        if (!have_private_key && dh->priv_key) {
+            BN_free(dh->priv_key);
+            dh->priv_key = NULL;
+        }
+        if (dh->pub_key) {
+            BN_free(dh->pub_key);
+            dh->pub_key = NULL;
+        }
+        return 0;
     }
 
     return 1;
@@ -156,7 +156,7 @@ tfm_dh_compute_key(unsigned char *shared, const BIGNUM * pub, DH *dh)
     int ret;
 
     if (dh->pub_key == NULL || dh->g == NULL || dh->priv_key == NULL)
-	return -1;
+        return -1;
 
     fp_init(&p);
     BN2mpz(&p, dh->p);
@@ -166,12 +166,12 @@ tfm_dh_compute_key(unsigned char *shared, const BIGNUM * pub, DH *dh)
 
     /* check if peers pubkey is reasonable */
     if (fp_isneg(&peer_pub)
-	|| fp_cmp(&peer_pub, &p) >= 0
-	|| fp_cmp_d(&peer_pub, 1) <= 0)
+        || fp_cmp(&peer_pub, &p) >= 0
+        || fp_cmp_d(&peer_pub, 1) <= 0)
     {
-	fp_zero(&p);
-	fp_zero(&peer_pub);
-	return -1;
+        fp_zero(&p);
+        fp_zero(&peer_pub);
+        return -1;
     }
 
     fp_init(&priv_key);
@@ -186,7 +186,7 @@ tfm_dh_compute_key(unsigned char *shared, const BIGNUM * pub, DH *dh)
     fp_zero(&priv_key);
 
     if (ret != 0)
-	return -1;
+        return -1;
 
     size = fp_unsigned_bin_size(&s);
     fp_to_unsigned_bin(&s, shared);

@@ -89,8 +89,8 @@ has_small_order(const unsigned char s[32])
 
 static int
 crypto_scalarmult_curve25519_ref10(unsigned char *q,
-				   const unsigned char *n,
-				   const unsigned char *p)
+                                   const unsigned char *n,
+                                   const unsigned char *p)
 {
     unsigned char *t = q;
     unsigned int   i;

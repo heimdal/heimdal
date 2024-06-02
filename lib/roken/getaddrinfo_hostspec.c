@@ -39,9 +39,9 @@
 
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 roken_getaddrinfo_hostspec2(const char *hostspec,
-			    int socktype,
-			    int port,
-			    struct addrinfo **ai)
+                            int socktype,
+                            int port,
+                            struct addrinfo **ai)
 {
     const char *p;
     char portstr[NI_MAXSERV];
@@ -50,16 +50,16 @@ roken_getaddrinfo_hostspec2(const char *hostspec,
     int hostspec_len;
 
     struct hst {
-	const char *prefix;
-	int socktype;
-	int protocol;
-	int port;
+        const char *prefix;
+        int socktype;
+        int protocol;
+        int port;
     } *hstp, hst[] = {
-	{ "http://", SOCK_STREAM, IPPROTO_TCP, 80 },
-	{ "http/", SOCK_STREAM, IPPROTO_TCP, 80 },
-	{ "tcp/", SOCK_STREAM, IPPROTO_TCP, 0 },
-	{ "udp/", SOCK_DGRAM, IPPROTO_UDP, 0 },
-	{ NULL, 0, 0, 0 }
+        { "http://", SOCK_STREAM, IPPROTO_TCP, 80 },
+        { "http/", SOCK_STREAM, IPPROTO_TCP, 80 },
+        { "tcp/", SOCK_STREAM, IPPROTO_TCP, 0 },
+        { "udp/", SOCK_DGRAM, IPPROTO_UDP, 0 },
+        { NULL, 0, 0, 0 }
     };
 
     memset(&hints, 0, sizeof(hints));
@@ -67,24 +67,24 @@ roken_getaddrinfo_hostspec2(const char *hostspec,
     hints.ai_socktype = socktype;
 
     for(hstp = hst; hstp->prefix; hstp++) {
-	if(strncmp(hostspec, hstp->prefix, strlen(hstp->prefix)) == 0) {
-	    hints.ai_socktype = hstp->socktype;
-	    hints.ai_protocol = hstp->protocol;
-	    if(port == 0)
-		port = hstp->port;
-	    hostspec += strlen(hstp->prefix);
-	    break;
-	}
+        if(strncmp(hostspec, hstp->prefix, strlen(hstp->prefix)) == 0) {
+            hints.ai_socktype = hstp->socktype;
+            hints.ai_protocol = hstp->protocol;
+            if(port == 0)
+                port = hstp->port;
+            hostspec += strlen(hstp->prefix);
+            break;
+        }
     }
 
     p = strchr (hostspec, ':');
     if (p != NULL) {
-	char *end;
+        char *end;
 
-	port = strtol (p + 1, &end, 0);
-	hostspec_len = p - hostspec;
+        port = strtol (p + 1, &end, 0);
+        hostspec_len = p - hostspec;
     } else {
-	hostspec_len = strlen(hostspec);
+        hostspec_len = strlen(hostspec);
     }
     snprintf (portstr, sizeof(portstr), "%u", port);
 
@@ -94,8 +94,8 @@ roken_getaddrinfo_hostspec2(const char *hostspec,
 
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 roken_getaddrinfo_hostspec(const char *hostspec,
-			   int port,
-			   struct addrinfo **ai)
+                           int port,
+                           struct addrinfo **ai)
 {
     return roken_getaddrinfo_hostspec2(hostspec, 0, port, ai);
 }

@@ -93,20 +93,20 @@ add_column(struct get_entry_data *data, struct field_name *ff, const char *heade
 {
     struct field_info *f = malloc(sizeof(*f));
     if (f == NULL)
-	return ENOMEM;
+        return ENOMEM;
     f->ff = ff;
     if(header)
-	f->header = strdup(header);
+        f->header = strdup(header);
     else
-	f->header = NULL;
+        f->header = NULL;
     f->next = NULL;
     *data->ctail = f;
     data->ctail = &f->next;
     data->mask |= ff->fieldvalue;
     data->extra_mask |= ff->extra_mask;
     if(data->table != NULL)
-	rtbl_add_column_by_id(data->table, ff->fieldvalue,
-			      header ? header : ff->default_header, ff->flags);
+        rtbl_add_column_by_id(data->table, ff->fieldvalue,
+                              header ? header : ff->default_header, ff->flags);
     return 0;
 }
 
@@ -118,11 +118,11 @@ static int
 cmp_salt (const krb5_salt *salt, const krb5_key_data *k)
 {
     if (salt->salttype != (size_t)k->key_data_type[1])
-	return 1;
+        return 1;
     if (salt->saltvalue.length != (size_t)k->key_data_length[1])
-	return 1;
+        return 1;
     return memcmp (salt->saltvalue.data, k->key_data_contents[1],
-		   salt->saltvalue.length);
+                   salt->saltvalue.length);
 }
 
 static void
@@ -134,12 +134,12 @@ format_keytype(krb5_key_data *k, krb5_salt *def_salt, char *buf, size_t buf_len)
 
     buf[0] = '\0';
     ret = krb5_enctype_to_string (context,
-				  k->key_data_type[0],
-				  &s);
+                                  k->key_data_type[0],
+                                  &s);
     if (ret) {
-	aret = asprintf (&s, "unknown(%d)", k->key_data_type[0]);
-	if (aret == -1)
-	    return;	/* Nothing to do here, we have no way to pass the err */
+        aret = asprintf (&s, "unknown(%d)", k->key_data_type[0]);
+        if (aret == -1)
+            return;	/* Nothing to do here, we have no way to pass the err */
     }
     strlcpy(buf, s, buf_len);
     free(s);
@@ -147,32 +147,32 @@ format_keytype(krb5_key_data *k, krb5_salt *def_salt, char *buf, size_t buf_len)
     strlcat(buf, "(", buf_len);
 
     ret = krb5_salttype_to_string (context,
-				   k->key_data_type[0],
-				   k->key_data_type[1],
-				   &s);
+                                   k->key_data_type[0],
+                                   k->key_data_type[1],
+                                   &s);
     if (ret) {
-	aret = asprintf (&s, "unknown(%d)", k->key_data_type[1]);
-	if (aret == -1)
-	    return;	/* Again, nothing else to do... */
+        aret = asprintf (&s, "unknown(%d)", k->key_data_type[1]);
+        if (aret == -1)
+            return;	/* Again, nothing else to do... */
     }
     strlcat(buf, s, buf_len);
     free(s);
 
     aret = 0;
     if (cmp_salt(def_salt, k) == 0)
-	s = strdup("");
+        s = strdup("");
     else if(k->key_data_length[1] == 0)
-	s = strdup("()");
+        s = strdup("()");
     else
-	aret = asprintf (&s, "(%.*s)", k->key_data_length[1],
-			 (char *)k->key_data_contents[1]);
+        aret = asprintf (&s, "(%.*s)", k->key_data_length[1],
+                         (char *)k->key_data_contents[1]);
     if (aret == -1 || s == NULL)
-	return;		/* Again, nothing else we can do... */
+        return;		/* Again, nothing else we can do... */
     strlcat(buf, s, buf_len);
     free(s);
     aret = asprintf (&s, "[%d]", k->key_data_kvno);
     if (aret == -1)
-	return;
+        return;
     strlcat(buf, ")", buf_len);
 
     strlcat(buf, s, buf_len);
@@ -228,7 +228,7 @@ static void
 format_field(struct get_entry_data *data,
              kadm5_principal_ent_t princ,
              unsigned int field,
-	     unsigned int subfield,
+             unsigned int subfield,
              char *buf,
              size_t buf_len,
              int condensed)
@@ -237,117 +237,117 @@ format_field(struct get_entry_data *data,
 
     switch(field) {
     case KADM5_PRINCIPAL:
-	if(condensed)
-	    krb5_unparse_name_fixed_short(context, princ->principal, buf, buf_len);
-	else
-	    krb5_unparse_name_fixed(context, princ->principal, buf, buf_len);
-	break;
+        if(condensed)
+            krb5_unparse_name_fixed_short(context, princ->principal, buf, buf_len);
+        else
+            krb5_unparse_name_fixed(context, princ->principal, buf, buf_len);
+        break;
 
     case KADM5_PRINC_EXPIRE_TIME:
-	time_t2str(princ->princ_expire_time, buf, buf_len, !condensed);
-	break;
+        time_t2str(princ->princ_expire_time, buf, buf_len, !condensed);
+        break;
 
     case KADM5_PW_EXPIRATION:
-	time_t2str(princ->pw_expiration, buf, buf_len, !condensed);
-	break;
+        time_t2str(princ->pw_expiration, buf, buf_len, !condensed);
+        break;
 
     case KADM5_LAST_PWD_CHANGE:
-	time_t2str(princ->last_pwd_change, buf, buf_len, !condensed);
-	break;
+        time_t2str(princ->last_pwd_change, buf, buf_len, !condensed);
+        break;
 
     case KADM5_MAX_LIFE:
-	deltat2str(princ->max_life, buf, buf_len);
-	break;
+        deltat2str(princ->max_life, buf, buf_len);
+        break;
 
     case KADM5_MAX_RLIFE:
-	deltat2str(princ->max_renewable_life, buf, buf_len);
-	break;
+        deltat2str(princ->max_renewable_life, buf, buf_len);
+        break;
 
     case KADM5_MOD_TIME:
-	time_t2str(princ->mod_date, buf, buf_len, !condensed);
-	break;
+        time_t2str(princ->mod_date, buf, buf_len, !condensed);
+        break;
 
     case KADM5_MOD_NAME:
-	if (princ->mod_name == NULL)
-	    strlcpy(buf, "unknown", buf_len);
-	else if(condensed)
-	    krb5_unparse_name_fixed_short(context, princ->mod_name, buf, buf_len);
-	else
-	    krb5_unparse_name_fixed(context, princ->mod_name, buf, buf_len);
-	break;
+        if (princ->mod_name == NULL)
+            strlcpy(buf, "unknown", buf_len);
+        else if(condensed)
+            krb5_unparse_name_fixed_short(context, princ->mod_name, buf, buf_len);
+        else
+            krb5_unparse_name_fixed(context, princ->mod_name, buf, buf_len);
+        break;
     case KADM5_ATTRIBUTES:
-	attributes2str (princ->attributes, buf, buf_len);
-	break;
+        attributes2str (princ->attributes, buf, buf_len);
+        break;
     case KADM5_KVNO:
-	snprintf(buf, buf_len, "%d", princ->kvno);
-	break;
+        snprintf(buf, buf_len, "%d", princ->kvno);
+        break;
     case KADM5_MKVNO:
-	/* XXX libkadm5srv decrypts the keys, so mkvno is always 0. */
-	strlcpy(buf, "unknown", buf_len);
-	break;
+        /* XXX libkadm5srv decrypts the keys, so mkvno is always 0. */
+        strlcpy(buf, "unknown", buf_len);
+        break;
     case KADM5_LAST_SUCCESS:
-	time_t2str(princ->last_success, buf, buf_len, !condensed);
-	break;
+        time_t2str(princ->last_success, buf, buf_len, !condensed);
+        break;
     case KADM5_LAST_FAILED:
-	time_t2str(princ->last_failed, buf, buf_len, !condensed);
-	break;
+        time_t2str(princ->last_failed, buf, buf_len, !condensed);
+        break;
     case KADM5_FAIL_AUTH_COUNT:
-	snprintf(buf, buf_len, "%d", princ->fail_auth_count);
-	break;
+        snprintf(buf, buf_len, "%d", princ->fail_auth_count);
+        break;
     case KADM5_POLICY:
-	if(princ->policy != NULL)
-	    strlcpy(buf, princ->policy, buf_len);
-	else
-	    strlcpy(buf, "none", buf_len);
-	break;
+        if(princ->policy != NULL)
+            strlcpy(buf, princ->policy, buf_len);
+        else
+            strlcpy(buf, "none", buf_len);
+        break;
     case KADM5_KEY_DATA:{
-	krb5_salt def_salt;
-	int i;
-	char buf2[1024];
+        krb5_salt def_salt;
+        int i;
+        char buf2[1024];
 
-	ret = krb5_get_pw_salt(context, princ->principal, &def_salt);
-	if (ret)
-	    krb5_err(context, 1, ret, "krb5_get_pw_salt");
+        ret = krb5_get_pw_salt(context, princ->principal, &def_salt);
+        if (ret)
+            krb5_err(context, 1, ret, "krb5_get_pw_salt");
 
-	*buf = '\0';
-	for (i = 0; i < princ->n_key_data; ++i) {
-	    format_keytype(&princ->key_data[i], &def_salt, buf2, sizeof(buf2));
-	    if(i > 0)
-		strlcat(buf, ", ", buf_len);
-	    strlcat(buf, buf2, buf_len);
-	}
-	krb5_free_salt (context, def_salt);
-	break;
+        *buf = '\0';
+        for (i = 0; i < princ->n_key_data; ++i) {
+            format_keytype(&princ->key_data[i], &def_salt, buf2, sizeof(buf2));
+            if(i > 0)
+                strlcat(buf, ", ", buf_len);
+            strlcat(buf, buf2, buf_len);
+        }
+        krb5_free_salt (context, def_salt);
+        break;
     }
     case KADM5_TL_DATA: {
-	krb5_tl_data *tl;
+        krb5_tl_data *tl;
 
-	for (tl = princ->tl_data; tl != NULL; tl = tl->tl_data_next)
-	    if ((unsigned)tl->tl_data_type == subfield)
-		break;
-	if (tl == NULL) {
-	    strlcpy(buf, "", buf_len);
-	    break;
-	}
+        for (tl = princ->tl_data; tl != NULL; tl = tl->tl_data_next)
+            if ((unsigned)tl->tl_data_type == subfield)
+                break;
+        if (tl == NULL) {
+            strlcpy(buf, "", buf_len);
+            break;
+        }
 
-	switch (subfield) {
-	case KRB5_TL_PASSWORD:
-	    snprintf(buf, buf_len, "\"%.*s\"",
-		     (int)tl->tl_data_length,
-		     (const char *)tl->tl_data_contents);
-	    break;
-	case KRB5_TL_ETYPES: {
+        switch (subfield) {
+        case KRB5_TL_PASSWORD:
+            snprintf(buf, buf_len, "\"%.*s\"",
+                     (int)tl->tl_data_length,
+                     (const char *)tl->tl_data_contents);
+            break;
+        case KRB5_TL_ETYPES: {
             HDB_EncTypeList etypes;
-	    size_t i, size;
+            size_t i, size;
             char *str;
 
             ret = decode_HDB_EncTypeList(tl->tl_data_contents,
                                          tl->tl_data_length,
                                          &etypes, &size);
-	    if (ret) {
-		snprintf(buf, buf_len, "failed to decode server etypes");
-		break;
-	    }
+            if (ret) {
+                snprintf(buf, buf_len, "failed to decode server etypes");
+                break;
+            }
             buf[0] = '\0';
             for (i = 0; i < etypes.len; i++) {
                 ret = krb5_enctype_to_string(context, etypes.val[i], &str);
@@ -355,45 +355,45 @@ format_field(struct get_entry_data *data,
                     if (i)
                         strlcat(buf, ",", buf_len);
                     strlcat(buf, str, buf_len);
-		    krb5_xfree(str);
+                    krb5_xfree(str);
                 }
             }
             free_HDB_EncTypeList(&etypes);
             break;
         }
-	case KRB5_TL_PKINIT_ACL: {
-	    HDB_Ext_PKINIT_acl acl;
-	    size_t size;
-	    size_t i;
+        case KRB5_TL_PKINIT_ACL: {
+            HDB_Ext_PKINIT_acl acl;
+            size_t size;
+            size_t i;
 
-	    ret = decode_HDB_Ext_PKINIT_acl(tl->tl_data_contents,
-					    tl->tl_data_length,
-					    &acl,
-					    &size);
-	    if (ret) {
-		snprintf(buf, buf_len, "failed to decode ACL");
-		break;
-	    }
+            ret = decode_HDB_Ext_PKINIT_acl(tl->tl_data_contents,
+                                            tl->tl_data_length,
+                                            &acl,
+                                            &size);
+            if (ret) {
+                snprintf(buf, buf_len, "failed to decode ACL");
+                break;
+            }
 
-	    buf[0] = '\0';
-	    for (i = 0; i < acl.len; i++) {
-		strlcat(buf, "subject: ", buf_len);
-		strlcat(buf, acl.val[i].subject, buf_len);
-		if (acl.val[i].issuer) {
-		    strlcat(buf, " issuer:", buf_len);
-		    strlcat(buf, *acl.val[i].issuer, buf_len);
-		}
-		if (acl.val[i].anchor) {
-		    strlcat(buf, " anchor:", buf_len);
-		    strlcat(buf, *acl.val[i].anchor, buf_len);
-		}
-		if (i + 1 < acl.len)
-		    strlcat(buf, ", ", buf_len);
-	    }
-	    free_HDB_Ext_PKINIT_acl(&acl);
-	    break;
-	}
-	case KRB5_TL_KRB5_CONFIG: {
+            buf[0] = '\0';
+            for (i = 0; i < acl.len; i++) {
+                strlcat(buf, "subject: ", buf_len);
+                strlcat(buf, acl.val[i].subject, buf_len);
+                if (acl.val[i].issuer) {
+                    strlcat(buf, " issuer:", buf_len);
+                    strlcat(buf, *acl.val[i].issuer, buf_len);
+                }
+                if (acl.val[i].anchor) {
+                    strlcat(buf, " anchor:", buf_len);
+                    strlcat(buf, *acl.val[i].anchor, buf_len);
+                }
+                if (i + 1 < acl.len)
+                    strlcat(buf, ", ", buf_len);
+            }
+            free_HDB_Ext_PKINIT_acl(&acl);
+            break;
+        }
+        case KRB5_TL_KRB5_CONFIG: {
             char *fname;
 
             fname = write_krb5_config(tl, data->krb5_config_fname, data->n);
@@ -401,44 +401,44 @@ format_field(struct get_entry_data *data,
                 strlcat(buf, fname, buf_len);
                 free(fname);
             }
-	    break;
-	}
-	case KRB5_TL_ALIASES: {
-	    HDB_Ext_Aliases alias;
-	    size_t size;
-	    size_t i;
+            break;
+        }
+        case KRB5_TL_ALIASES: {
+            HDB_Ext_Aliases alias;
+            size_t size;
+            size_t i;
 
-	    ret = decode_HDB_Ext_Aliases(tl->tl_data_contents,
-					 tl->tl_data_length,
-					 &alias,
-					 &size);
-	    if (ret) {
-		snprintf(buf, buf_len, "failed to decode alias");
-		break;
-	    }
-	    buf[0] = '\0';
-	    for (i = 0; i < alias.aliases.len; i++) {
-		char *p;
-		ret = krb5_unparse_name(context, &alias.aliases.val[i], &p);
-		if (ret)
-		    break;
-		if (i > 0)
-		    strlcat(buf, " ", buf_len);
-		strlcat(buf, p, buf_len);
-		free(p);
-	    }
-	    free_HDB_Ext_Aliases(&alias);
-	    break;
-	}
-	default:
-	    snprintf(buf, buf_len, "unknown type %d", subfield);
-	    break;
-	}
-	break;
+            ret = decode_HDB_Ext_Aliases(tl->tl_data_contents,
+                                         tl->tl_data_length,
+                                         &alias,
+                                         &size);
+            if (ret) {
+                snprintf(buf, buf_len, "failed to decode alias");
+                break;
+            }
+            buf[0] = '\0';
+            for (i = 0; i < alias.aliases.len; i++) {
+                char *p;
+                ret = krb5_unparse_name(context, &alias.aliases.val[i], &p);
+                if (ret)
+                    break;
+                if (i > 0)
+                    strlcat(buf, " ", buf_len);
+                strlcat(buf, p, buf_len);
+                free(p);
+            }
+            free_HDB_Ext_Aliases(&alias);
+            break;
+        }
+        default:
+            snprintf(buf, buf_len, "unknown type %d", subfield);
+            break;
+        }
+        break;
     }
     default:
-	strlcpy(buf, "<unknown>", buf_len);
-	break;
+        strlcpy(buf, "<unknown>", buf_len);
+        break;
     }
 }
 
@@ -451,7 +451,7 @@ print_entry_short(struct get_entry_data *data, kadm5_principal_ent_t princ)
     for(f = data->chead; f != NULL; f = f->next) {
         format_field(data, princ, f->ff->fieldvalue, f->ff->subvalue, buf,
                      sizeof(buf), 1);
-	rtbl_add_column_entry_by_id(data->table, f->ff->fieldvalue, buf);
+        rtbl_add_column_entry_by_id(data->table, f->ff->fieldvalue, buf);
     }
 }
 
@@ -463,14 +463,14 @@ print_entry_long(struct get_entry_data *data, kadm5_principal_ent_t princ)
     int width = 0;
 
     for(f = data->chead; f != NULL; f = f->next) {
-	int w = strlen(f->header ? f->header : f->ff->def_longheader);
-	if(w > width)
-	    width = w;
+        int w = strlen(f->header ? f->header : f->ff->def_longheader);
+        if(w > width)
+            width = w;
     }
     for(f = data->chead; f != NULL; f = f->next) {
         format_field(data, princ, f->ff->fieldvalue, f->ff->subvalue, buf,
                      sizeof(buf), 0);
-	printf("%*s: %s\n", width, f->header ? f->header : f->ff->def_longheader, buf);
+        printf("%*s: %s\n", width, f->header ? f->header : f->ff->def_longheader, buf);
     }
     printf("\n");
 }
@@ -489,8 +489,8 @@ do_get_entry(krb5_principal principal, void *data)
 
     memset(&princ, 0, sizeof(princ));
     ret = kadm5_get_principal(e->kadm_handle, principal,
-			      &princ,
-			      e->mask | e->extra_mask);
+                              &princ,
+                              e->mask | e->extra_mask);
     if (ret == 0) {
         (e->format)(e, &princ);
         kadm5_free_principal_ent(e->kadm_handle, &princ);
@@ -505,9 +505,9 @@ free_columns(struct get_entry_data *data)
 {
     struct field_info *f, *next;
     for(f = data->chead; f != NULL; f = next) {
-	free(f->header);
-	next = f->next;
-	free(f);
+        free(f->header);
+        next = f->next;
+        free(f);
     }
     data->chead = NULL;
     data->ctail = &data->chead;
@@ -521,20 +521,20 @@ setup_columns(struct get_entry_data *data, const char *column_info)
     struct field_name *f;
 
     while(strsep_copy(&column_info, ",", buf, sizeof(buf)) != -1) {
-	q = buf;
-	field = strsep(&q, "=");
-	header = strsep(&q, "=");
-	for(f = field_names; f->fieldname != NULL; f++) {
-	    if(strcasecmp(field, f->fieldname) == 0) {
-		add_column(data, f, header);
-		break;
-	    }
-	}
-	if(f->fieldname == NULL) {
-	    krb5_warnx(context, "unknown field name \"%s\"", field);
-	    free_columns(data);
-	    return -1;
-	}
+        q = buf;
+        field = strsep(&q, "=");
+        header = strsep(&q, "=");
+        for(f = field_names; f->fieldname != NULL; f++) {
+            if(strcasecmp(field, f->fieldname) == 0) {
+                add_column(data, f, header);
+                break;
+            }
+        }
+        if(f->fieldname == NULL) {
+            krb5_warnx(context, "unknown field name \"%s\"", field);
+            free_columns(data);
+            return -1;
+        }
     }
     return 0;
 }
@@ -565,7 +565,7 @@ listit(const char *funcname, int upto, int argc, char **argv)
     krb5_error_code ret, saved_ret = 0;
 
     for (i = 0; i < argc; i++) {
-	ret = foreach_principal(argv[i], do_list_entry, funcname, &upto);
+        ret = foreach_principal(argv[i], do_list_entry, funcname, &upto);
         if (saved_ret == 0 && ret != 0)
             saved_ret = ret;
     }
@@ -583,13 +583,13 @@ getit(struct get_options *opt, const char *name, int argc, char **argv)
     struct get_entry_data data;
 
     if(opt->long_flag == -1 && (opt->short_flag == 1 || opt->terse_flag == 1))
-	opt->long_flag = 0;
+        opt->long_flag = 0;
     if(opt->short_flag == -1 && (opt->long_flag == 1 || opt->terse_flag == 1))
-	opt->short_flag = 0;
+        opt->short_flag = 0;
     if(opt->terse_flag == -1 && (opt->long_flag == 1 || opt->short_flag == 1))
-	opt->terse_flag = 0;
+        opt->terse_flag = 0;
     if(opt->long_flag == 0 && opt->short_flag == 0 && opt->terse_flag == 0)
-	opt->short_flag = 1;
+        opt->short_flag = 1;
 
     if (opt->terse_flag)
         return listit(name, opt->upto_integer, argc, argv);
@@ -608,33 +608,33 @@ getit(struct get_options *opt, const char *name, int argc, char **argv)
     data.n = 0;
 
     if(opt->short_flag) {
-	data.table = rtbl_create();
-	rtbl_set_separator(data.table, "  ");
-	data.format = print_entry_short;
+        data.table = rtbl_create();
+        rtbl_set_separator(data.table, "  ");
+        data.format = print_entry_short;
     } else
-	data.format = print_entry_long;
+        data.format = print_entry_long;
     if(opt->column_info_string == NULL) {
-	if(opt->long_flag)
-	    ret = setup_columns(&data, DEFAULT_COLUMNS_LONG);
-	else
-	    ret = setup_columns(&data, DEFAULT_COLUMNS_SHORT);
+        if(opt->long_flag)
+            ret = setup_columns(&data, DEFAULT_COLUMNS_LONG);
+        else
+            ret = setup_columns(&data, DEFAULT_COLUMNS_SHORT);
     } else
-	ret = setup_columns(&data, opt->column_info_string);
+        ret = setup_columns(&data, opt->column_info_string);
 
     if(ret != 0) {
-	if(data.table != NULL)
-	    rtbl_destroy(data.table);
-	return 0;
+        if(data.table != NULL)
+            rtbl_destroy(data.table);
+        return 0;
     }
 
     for(i = 0; i < argc; i++)
-	ret = foreach_principal(argv[i], do_get_entry, name, &data);
+        ret = foreach_principal(argv[i], do_get_entry, name, &data);
 
     kadm5_destroy(data.kadm_handle);
 
     if(data.table != NULL) {
-	rtbl_format(data.table, stdout);
-	rtbl_destroy(data.table);
+        rtbl_format(data.table, stdout);
+        rtbl_destroy(data.table);
     }
     free_columns(&data);
     return ret != 0;
@@ -652,8 +652,8 @@ list_princs(struct list_options *opt, int argc, char **argv)
     struct get_options get_opt;
 
     if(sizeof(struct get_options) != sizeof(struct list_options)) {
-	krb5_warnx(context, "programmer error: sizeof(struct get_options) != sizeof(struct list_options)");
-	return 0;
+        krb5_warnx(context, "programmer error: sizeof(struct get_options) != sizeof(struct list_options)");
+        return 0;
     }
     memset(&get_opt, 0, sizeof(get_opt));
     get_opt.long_flag = opt->long_flag;

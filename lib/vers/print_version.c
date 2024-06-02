@@ -47,10 +47,10 @@ print_version(const char *progname)
     const char *package_list = heimdal_version;
 
     if(progname == NULL)
-	progname = getprogname();
+        progname = getprogname();
 
     if(*package_list == '\0')
-	package_list = "no version information";
+        package_list = "no version information";
     fprintf(stderr, "%s (%s)\n", progname, package_list);
     fprintf(stderr, "Copyright 1995-2014 Kungliga Tekniska Högskolan\n");
 #ifdef PACKAGE_BUGREPORT

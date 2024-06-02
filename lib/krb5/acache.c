@@ -79,8 +79,8 @@ translate_cc_error(krb5_context context, cc_int32 error)
     size_t i;
     krb5_clear_error_message(context);
     for(i = 0; i < sizeof(cc_errors)/sizeof(cc_errors[0]); i++)
-	if (cc_errors[i].error == error)
-	    return cc_errors[i].ret;
+        if (cc_errors[i].error == error)
+            return cc_errors[i].ret;
     return KRB5_FCC_INTERNAL;
 }
 
@@ -94,23 +94,23 @@ init_ccapi(krb5_context context)
 
     HEIMDAL_MUTEX_lock(&acc_mutex);
     if (init_func) {
-	HEIMDAL_MUTEX_unlock(&acc_mutex);
-	if (context)
-	    krb5_clear_error_message(context);
-	return 0;
+        HEIMDAL_MUTEX_unlock(&acc_mutex);
+        if (context)
+            krb5_clear_error_message(context);
+        return 0;
     }
 
     if (context)
-	lib = krb5_config_get_string(context, NULL,
-				     "libdefaults", "ccapi_library",
-				     NULL);
+        lib = krb5_config_get_string(context, NULL,
+                                     "libdefaults", "ccapi_library",
+                                     NULL);
     if (lib == NULL) {
 #ifdef __APPLE__
-	lib = "/System/Library/Frameworks/Kerberos.framework/Kerberos";
+        lib = "/System/Library/Frameworks/Kerberos.framework/Kerberos";
 #elif defined(_WIN32)
-	lib = "%{LIBDIR}/libkrb5_cc.dll";
+        lib = "%{LIBDIR}/libkrb5_cc.dll";
 #else
-	lib = "%{LIBDIR}/libkrb5_cc.so";
+        lib = "%{LIBDIR}/libkrb5_cc.so";
 #endif
     }
 
@@ -122,25 +122,25 @@ init_ccapi(krb5_context context)
     }
 
     if (cc_handle == NULL) {
-	HEIMDAL_MUTEX_unlock(&acc_mutex);
+        HEIMDAL_MUTEX_unlock(&acc_mutex);
         krb5_set_error_message(context, KRB5_CC_NOSUPP,
                                N_("Failed to load API cache module %s", "file"),
                                lib);
-	return KRB5_CC_NOSUPP;
+        return KRB5_CC_NOSUPP;
     }
 
     init_func = (cc_initialize_func)dlsym(cc_handle, "cc_initialize");
     set_target_uid = (void (KRB5_CALLCONV *)(uid_t))
-	dlsym(cc_handle, "krb5_ipc_client_set_target_uid");
+        dlsym(cc_handle, "krb5_ipc_client_set_target_uid");
     clear_target = (void (KRB5_CALLCONV *)(void))
-	dlsym(cc_handle, "krb5_ipc_client_clear_target");
+        dlsym(cc_handle, "krb5_ipc_client_clear_target");
     HEIMDAL_MUTEX_unlock(&acc_mutex);
     if (init_func == NULL) {
         krb5_set_error_message(context, KRB5_CC_NOSUPP,
                                N_("Failed to find cc_initialize"
                                   "in %s: %s", "file, error"), lib, dlerror());
-	dlclose(cc_handle);
-	return KRB5_CC_NOSUPP;
+        dlclose(cc_handle);
+        return KRB5_CC_NOSUPP;
     }
 
     return 0;
@@ -170,8 +170,8 @@ _heim_krb5_ipc_client_clear_target(void)
 
 static krb5_error_code
 make_cred_from_ccred(krb5_context context,
-		     const cc_credentials_v5_t *incred,
-		     krb5_creds *cred)
+                     const cc_credentials_v5_t *incred,
+                     krb5_creds *cred)
 {
     krb5_error_code ret;
     unsigned int i;
@@ -180,19 +180,19 @@ make_cred_from_ccred(krb5_context context,
 
     ret = krb5_parse_name(context, incred->client, &cred->client);
     if (ret)
-	goto fail;
+        goto fail;
 
     ret = krb5_parse_name(context, incred->server, &cred->server);
     if (ret)
-	goto fail;
+        goto fail;
 
     cred->session.keytype = incred->keyblock.type;
     cred->session.keyvalue.length = incred->keyblock.length;
     cred->session.keyvalue.data = malloc(incred->keyblock.length);
     if (cred->session.keyvalue.data == NULL)
-	goto nomem;
+        goto nomem;
     memcpy(cred->session.keyvalue.data, incred->keyblock.data,
-	   incred->keyblock.length);
+           incred->keyblock.length);
 
     cred->times.authtime = incred->authtime;
     cred->times.starttime = incred->starttime;
@@ -200,16 +200,16 @@ make_cred_from_ccred(krb5_context context,
     cred->times.renew_till = incred->renew_till;
 
     ret = krb5_data_copy(&cred->ticket,
-			 incred->ticket.data,
-			 incred->ticket.length);
+                         incred->ticket.data,
+                         incred->ticket.length);
     if (ret)
-	goto nomem;
+        goto nomem;
 
     ret = krb5_data_copy(&cred->second_ticket,
-			 incred->second_ticket.data,
-			 incred->second_ticket.length);
+                         incred->second_ticket.data,
+                         incred->second_ticket.length);
     if (ret)
-	goto nomem;
+        goto nomem;
 
     cred->authdata.val = NULL;
     cred->authdata.len = 0;
@@ -218,71 +218,71 @@ make_cred_from_ccred(krb5_context context,
     cred->addresses.len = 0;
 
     for (i = 0; incred->authdata && incred->authdata[i]; i++)
-	;
+        ;
 
     if (i) {
-	cred->authdata.val = calloc(i, sizeof(cred->authdata.val[0]));
-	if (cred->authdata.val == NULL)
-	    goto nomem;
-	cred->authdata.len = i;
-	for (i = 0; i < cred->authdata.len; i++) {
-	    cred->authdata.val[i].ad_type = incred->authdata[i]->type;
-	    ret = krb5_data_copy(&cred->authdata.val[i].ad_data,
-				 incred->authdata[i]->data,
-				 incred->authdata[i]->length);
-	    if (ret)
-		goto nomem;
-	}
+        cred->authdata.val = calloc(i, sizeof(cred->authdata.val[0]));
+        if (cred->authdata.val == NULL)
+            goto nomem;
+        cred->authdata.len = i;
+        for (i = 0; i < cred->authdata.len; i++) {
+            cred->authdata.val[i].ad_type = incred->authdata[i]->type;
+            ret = krb5_data_copy(&cred->authdata.val[i].ad_data,
+                                 incred->authdata[i]->data,
+                                 incred->authdata[i]->length);
+            if (ret)
+                goto nomem;
+        }
     }
 
     for (i = 0; incred->addresses && incred->addresses[i]; i++)
-	;
+        ;
 
     if (i) {
-	cred->addresses.val = calloc(i, sizeof(cred->addresses.val[0]));
-	if (cred->addresses.val == NULL)
-	    goto nomem;
-	cred->addresses.len = i;
+        cred->addresses.val = calloc(i, sizeof(cred->addresses.val[0]));
+        if (cred->addresses.val == NULL)
+            goto nomem;
+        cred->addresses.len = i;
 
-	for (i = 0; i < cred->addresses.len; i++) {
-	    cred->addresses.val[i].addr_type = incred->addresses[i]->type;
-	    ret = krb5_data_copy(&cred->addresses.val[i].address,
-				 incred->addresses[i]->data,
-				 incred->addresses[i]->length);
-	    if (ret)
-		goto nomem;
-	}
+        for (i = 0; i < cred->addresses.len; i++) {
+            cred->addresses.val[i].addr_type = incred->addresses[i]->type;
+            ret = krb5_data_copy(&cred->addresses.val[i].address,
+                                 incred->addresses[i]->data,
+                                 incred->addresses[i]->length);
+            if (ret)
+                goto nomem;
+        }
     }
 
     cred->flags.i = 0;
     if (incred->ticket_flags & KRB5_CCAPI_TKT_FLG_FORWARDABLE)
-	cred->flags.b.forwardable = 1;
+        cred->flags.b.forwardable = 1;
     if (incred->ticket_flags & KRB5_CCAPI_TKT_FLG_FORWARDED)
-	cred->flags.b.forwarded = 1;
+        cred->flags.b.forwarded = 1;
     if (incred->ticket_flags & KRB5_CCAPI_TKT_FLG_PROXIABLE)
-	cred->flags.b.proxiable = 1;
+        cred->flags.b.proxiable = 1;
     if (incred->ticket_flags & KRB5_CCAPI_TKT_FLG_PROXY)
-	cred->flags.b.proxy = 1;
+        cred->flags.b.proxy = 1;
     if (incred->ticket_flags & KRB5_CCAPI_TKT_FLG_MAY_POSTDATE)
-	cred->flags.b.may_postdate = 1;
+        cred->flags.b.may_postdate = 1;
     if (incred->ticket_flags & KRB5_CCAPI_TKT_FLG_POSTDATED)
-	cred->flags.b.postdated = 1;
+        cred->flags.b.postdated = 1;
     if (incred->ticket_flags & KRB5_CCAPI_TKT_FLG_INVALID)
-	cred->flags.b.invalid = 1;
+        cred->flags.b.invalid = 1;
     if (incred->ticket_flags & KRB5_CCAPI_TKT_FLG_RENEWABLE)
-	cred->flags.b.renewable = 1;
+        cred->flags.b.renewable = 1;
     if (incred->ticket_flags & KRB5_CCAPI_TKT_FLG_INITIAL)
-	cred->flags.b.initial = 1;
+        cred->flags.b.initial = 1;
     if (incred->ticket_flags & KRB5_CCAPI_TKT_FLG_PRE_AUTH)
-	cred->flags.b.pre_authent = 1;
+        cred->flags.b.pre_authent = 1;
     if (incred->ticket_flags & KRB5_CCAPI_TKT_FLG_HW_AUTH)
-	cred->flags.b.hw_authent = 1;
+        cred->flags.b.hw_authent = 1;
     if (incred->ticket_flags & KRB5_CCAPI_TKT_FLG_TRANSIT_POLICY_CHECKED)
-	cred->flags.b.transited_policy_checked = 1;
+        cred->flags.b.transited_policy_checked = 1;
     if (incred->ticket_flags & KRB5_CCAPI_TKT_FLG_OK_AS_DELEGATE)
-	cred->flags.b.ok_as_delegate = 1;
+        cred->flags.b.ok_as_delegate = 1;
     if (incred->ticket_flags & KRB5_CCAPI_TKT_FLG_ANONYMOUS)
-	cred->flags.b.anonymous = 1;
+        cred->flags.b.anonymous = 1;
 
     return 0;
 
@@ -300,24 +300,24 @@ free_ccred(cc_credentials_v5_t *cred)
     int i;
 
     if (cred->addresses) {
-	for (i = 0; cred->addresses[i] != 0; i++) {
-	    if (cred->addresses[i]->data)
-		free(cred->addresses[i]->data);
-	    free(cred->addresses[i]);
-	}
-	free(cred->addresses);
+        for (i = 0; cred->addresses[i] != 0; i++) {
+            if (cred->addresses[i]->data)
+                free(cred->addresses[i]->data);
+            free(cred->addresses[i]);
+        }
+        free(cred->addresses);
     }
     if (cred->server)
-	free(cred->server);
+        free(cred->server);
     if (cred->client)
-	free(cred->client);
+        free(cred->client);
     memset(cred, 0, sizeof(*cred));
 }
 
 static krb5_error_code
 make_ccred_from_cred(krb5_context context,
-		     const krb5_creds *incred,
-		     cc_credentials_v5_t *cred)
+                     const krb5_creds *incred,
+                     cc_credentials_v5_t *cred)
 {
     krb5_error_code ret;
     size_t i;
@@ -326,11 +326,11 @@ make_ccred_from_cred(krb5_context context,
 
     ret = krb5_unparse_name(context, incred->client, &cred->client);
     if (ret)
-	goto fail;
+        goto fail;
 
     ret = krb5_unparse_name(context, incred->server, &cred->server);
     if (ret)
-	goto fail;
+        goto fail;
 
     cred->keyblock.type = incred->session.keytype;
     cred->keyblock.length = incred->session.keyvalue.length;
@@ -351,63 +351,63 @@ make_ccred_from_cred(krb5_context context,
     cred->authdata = NULL;
 
     cred->addresses = calloc(incred->addresses.len + 1,
-			     sizeof(cred->addresses[0]));
+                             sizeof(cred->addresses[0]));
     if (cred->addresses == NULL) {
 
-	ret = ENOMEM;
-	goto fail;
+        ret = ENOMEM;
+        goto fail;
     }
 
     for (i = 0; i < incred->addresses.len; i++) {
-	cc_data *addr;
-	addr = malloc(sizeof(*addr));
-	if (addr == NULL) {
-	    ret = ENOMEM;
-	    goto fail;
-	}
-	addr->type = incred->addresses.val[i].addr_type;
-	addr->length = incred->addresses.val[i].address.length;
-	addr->data = malloc(addr->length);
-	if (addr->data == NULL) {
-	    free(addr);
-	    ret = ENOMEM;
-	    goto fail;
-	}
-	memcpy(addr->data, incred->addresses.val[i].address.data,
-	       addr->length);
-	cred->addresses[i] = addr;
+        cc_data *addr;
+        addr = malloc(sizeof(*addr));
+        if (addr == NULL) {
+            ret = ENOMEM;
+            goto fail;
+        }
+        addr->type = incred->addresses.val[i].addr_type;
+        addr->length = incred->addresses.val[i].address.length;
+        addr->data = malloc(addr->length);
+        if (addr->data == NULL) {
+            free(addr);
+            ret = ENOMEM;
+            goto fail;
+        }
+        memcpy(addr->data, incred->addresses.val[i].address.data,
+               addr->length);
+        cred->addresses[i] = addr;
     }
     cred->addresses[i] = NULL;
 
     cred->ticket_flags = 0;
     if (incred->flags.b.forwardable)
-	cred->ticket_flags |= KRB5_CCAPI_TKT_FLG_FORWARDABLE;
+        cred->ticket_flags |= KRB5_CCAPI_TKT_FLG_FORWARDABLE;
     if (incred->flags.b.forwarded)
-	cred->ticket_flags |= KRB5_CCAPI_TKT_FLG_FORWARDED;
+        cred->ticket_flags |= KRB5_CCAPI_TKT_FLG_FORWARDED;
     if (incred->flags.b.proxiable)
-	cred->ticket_flags |= KRB5_CCAPI_TKT_FLG_PROXIABLE;
+        cred->ticket_flags |= KRB5_CCAPI_TKT_FLG_PROXIABLE;
     if (incred->flags.b.proxy)
-	cred->ticket_flags |= KRB5_CCAPI_TKT_FLG_PROXY;
+        cred->ticket_flags |= KRB5_CCAPI_TKT_FLG_PROXY;
     if (incred->flags.b.may_postdate)
-	cred->ticket_flags |= KRB5_CCAPI_TKT_FLG_MAY_POSTDATE;
+        cred->ticket_flags |= KRB5_CCAPI_TKT_FLG_MAY_POSTDATE;
     if (incred->flags.b.postdated)
-	cred->ticket_flags |= KRB5_CCAPI_TKT_FLG_POSTDATED;
+        cred->ticket_flags |= KRB5_CCAPI_TKT_FLG_POSTDATED;
     if (incred->flags.b.invalid)
-	cred->ticket_flags |= KRB5_CCAPI_TKT_FLG_INVALID;
+        cred->ticket_flags |= KRB5_CCAPI_TKT_FLG_INVALID;
     if (incred->flags.b.renewable)
-	cred->ticket_flags |= KRB5_CCAPI_TKT_FLG_RENEWABLE;
+        cred->ticket_flags |= KRB5_CCAPI_TKT_FLG_RENEWABLE;
     if (incred->flags.b.initial)
-	cred->ticket_flags |= KRB5_CCAPI_TKT_FLG_INITIAL;
+        cred->ticket_flags |= KRB5_CCAPI_TKT_FLG_INITIAL;
     if (incred->flags.b.pre_authent)
-	cred->ticket_flags |= KRB5_CCAPI_TKT_FLG_PRE_AUTH;
+        cred->ticket_flags |= KRB5_CCAPI_TKT_FLG_PRE_AUTH;
     if (incred->flags.b.hw_authent)
-	cred->ticket_flags |= KRB5_CCAPI_TKT_FLG_HW_AUTH;
+        cred->ticket_flags |= KRB5_CCAPI_TKT_FLG_HW_AUTH;
     if (incred->flags.b.transited_policy_checked)
-	cred->ticket_flags |= KRB5_CCAPI_TKT_FLG_TRANSIT_POLICY_CHECKED;
+        cred->ticket_flags |= KRB5_CCAPI_TKT_FLG_TRANSIT_POLICY_CHECKED;
     if (incred->flags.b.ok_as_delegate)
-	cred->ticket_flags |= KRB5_CCAPI_TKT_FLG_OK_AS_DELEGATE;
+        cred->ticket_flags |= KRB5_CCAPI_TKT_FLG_OK_AS_DELEGATE;
     if (incred->flags.b.anonymous)
-	cred->ticket_flags |= KRB5_CCAPI_TKT_FLG_ANONYMOUS;
+        cred->ticket_flags |= KRB5_CCAPI_TKT_FLG_ANONYMOUS;
 
     return 0;
 
@@ -426,22 +426,22 @@ get_cc_name(krb5_acc *a)
 
     error = (*a->ccache->func->get_name)(a->ccache, &name);
     if (error)
-	return error;
+        return error;
 
     a->cache_name = strdup(name->data);
     (*name->func->release)(name);
     if (a->cache_name == NULL)
-	return ccErrNoMem;
+        return ccErrNoMem;
     return ccNoError;
 }
 
 
 static krb5_error_code KRB5_CALLCONV
 acc_get_name_2(krb5_context context,
-	       krb5_ccache id,
-	       const char **name,
-	       const char **colname,
-	       const char **subsidiary)
+               krb5_ccache id,
+               const char **name,
+               const char **colname,
+               const char **subsidiary)
 {
     krb5_error_code ret = 0;
     krb5_acc *a = ACACHE(id);
@@ -454,14 +454,14 @@ acc_get_name_2(krb5_context context,
     if (subsidiary)
         *subsidiary = NULL;
     if (a->cache_subsidiary == NULL) {
-	krb5_principal principal = NULL;
+        krb5_principal principal = NULL;
 
-	ret = _krb5_get_default_principal_local(context, &principal);
-	if (ret == 0)
+        ret = _krb5_get_default_principal_local(context, &principal);
+        if (ret == 0)
             ret = krb5_unparse_name(context, principal, &a->cache_subsidiary);
-	krb5_free_principal(context, principal);
-	if (ret)
-	    return ret;
+        krb5_free_principal(context, principal);
+        if (ret)
+            return ret;
     }
 
     if (a->cache_name == NULL) {
@@ -492,12 +492,12 @@ acc_alloc(krb5_context context, krb5_ccache *id)
 
     ret = init_ccapi(context);
     if (ret)
-	return ret;
+        return ret;
 
     ret = krb5_data_alloc(&(*id)->data, sizeof(*a));
     if (ret) {
-	krb5_clear_error_message(context);
-	return ret;
+        krb5_clear_error_message(context);
+        return ret;
     }
 
     a = ACACHE(*id);
@@ -508,8 +508,8 @@ acc_alloc(krb5_context context, krb5_ccache *id)
 
     error = (*init_func)(&a->context, ccapi_version_3, NULL, NULL);
     if (error) {
-	krb5_data_free(&(*id)->data);
-	return translate_cc_error(context, error);
+        krb5_data_free(&(*id)->data);
+        return translate_cc_error(context, error);
     }
 
     return 0;
@@ -526,7 +526,7 @@ acc_resolve_2(krb5_context context, krb5_ccache *id, const char *res, const char
 
     ret = acc_alloc(context, id);
     if (ret)
-	return ret;
+        return ret;
 
     a = ACACHE(*id);
 
@@ -543,7 +543,7 @@ acc_resolve_2(krb5_context context, krb5_ccache *id, const char *res, const char
         if (asprintf(&s, "%s%s%s", res && *res ? res : "",
                      res && *res ? ":" : "", sub) == -1 || s == NULL ||
             (a->cache_subsidiary = strdup(sub)) == NULL) {
-	    acc_close(context, *id);
+            acc_close(context, *id);
             free(s);
             return krb5_enomem(context);
         }
@@ -559,8 +559,8 @@ acc_resolve_2(krb5_context context, krb5_ccache *id, const char *res, const char
     if (error == ccErrCCacheNotFound) {
         a->ccache = NULL;
         a->cache_name = NULL;
-	free(s);
-	return 0;
+        free(s);
+        return 0;
     }
     if (error == ccNoError)
         error = get_cc_name(a);
@@ -588,8 +588,8 @@ acc_gen_new(krb5_context context, krb5_ccache *id)
 
 static krb5_error_code KRB5_CALLCONV
 acc_initialize(krb5_context context,
-	       krb5_ccache id,
-	       krb5_principal primary_principal)
+               krb5_ccache id,
+               krb5_principal primary_principal)
 {
     krb5_acc *a = ACACHE(id);
     krb5_error_code ret;
@@ -598,65 +598,65 @@ acc_initialize(krb5_context context,
 
     ret = krb5_unparse_name(context, primary_principal, &name);
     if (ret)
-	return ret;
+        return ret;
 
     if (a->cache_name == NULL) {
-	error = (*a->context->func->create_new_ccache)(a->context,
-						       cc_credentials_v5,
-						       name,
-						       &a->ccache);
-	free(name);
-	if (error == ccNoError)
-	    error = get_cc_name(a);
+        error = (*a->context->func->create_new_ccache)(a->context,
+                                                       cc_credentials_v5,
+                                                       name,
+                                                       &a->ccache);
+        free(name);
+        if (error == ccNoError)
+            error = get_cc_name(a);
     } else {
-	cc_credentials_iterator_t iter;
-	cc_credentials_t ccred;
+        cc_credentials_iterator_t iter;
+        cc_credentials_t ccred;
 
-	error = (*a->ccache->func->new_credentials_iterator)(a->ccache, &iter);
-	if (error) {
-	    free(name);
-	    return translate_cc_error(context, error);
-	}
+        error = (*a->ccache->func->new_credentials_iterator)(a->ccache, &iter);
+        if (error) {
+            free(name);
+            return translate_cc_error(context, error);
+        }
 
-	while (1) {
-	    error = (*iter->func->next)(iter, &ccred);
-	    if (error)
-		break;
-	    (*a->ccache->func->remove_credentials)(a->ccache, ccred);
-	    (*ccred->func->release)(ccred);
-	}
-	(*iter->func->release)(iter);
+        while (1) {
+            error = (*iter->func->next)(iter, &ccred);
+            if (error)
+                break;
+            (*a->ccache->func->remove_credentials)(a->ccache, ccred);
+            (*ccred->func->release)(ccred);
+        }
+        (*iter->func->release)(iter);
 
-	error = (*a->ccache->func->set_principal)(a->ccache,
-						  cc_credentials_v5,
-						  name);
+        error = (*a->ccache->func->set_principal)(a->ccache,
+                                                  cc_credentials_v5,
+                                                  name);
     }
 
     if (error == 0 && context->kdc_sec_offset)
-	error = (*a->ccache->func->set_kdc_time_offset)(a->ccache,
-							cc_credentials_v5,
-							context->kdc_sec_offset);
+        error = (*a->ccache->func->set_kdc_time_offset)(a->ccache,
+                                                        cc_credentials_v5,
+                                                        context->kdc_sec_offset);
 
     return translate_cc_error(context, error);
 }
 
 static krb5_error_code KRB5_CALLCONV
 acc_close(krb5_context context,
-	  krb5_ccache id)
+          krb5_ccache id)
 {
     krb5_acc *a = ACACHE(id);
 
     if (a->ccache) {
-	(*a->ccache->func->release)(a->ccache);
-	a->ccache = NULL;
+        (*a->ccache->func->release)(a->ccache);
+        a->ccache = NULL;
     }
     if (a->cache_name) {
-	free(a->cache_name);
-	a->cache_name = NULL;
+        free(a->cache_name);
+        a->cache_name = NULL;
     }
     if (a->context) {
-	(*a->context->func->release)(a->context);
-	a->context = NULL;
+        (*a->context->func->release)(a->context);
+        a->context = NULL;
     }
     krb5_data_free(&id->data);
     return 0;
@@ -664,26 +664,26 @@ acc_close(krb5_context context,
 
 static krb5_error_code KRB5_CALLCONV
 acc_destroy(krb5_context context,
-	    krb5_ccache id)
+            krb5_ccache id)
 {
     krb5_acc *a = ACACHE(id);
     cc_int32 error = 0;
 
     if (a->ccache) {
-	error = (*a->ccache->func->destroy)(a->ccache);
-	a->ccache = NULL;
+        error = (*a->ccache->func->destroy)(a->ccache);
+        a->ccache = NULL;
     }
     if (a->context) {
-	error = (a->context->func->release)(a->context);
-	a->context = NULL;
+        error = (a->context->func->release)(a->context);
+        a->context = NULL;
     }
     return translate_cc_error(context, error);
 }
 
 static krb5_error_code KRB5_CALLCONV
 acc_store_cred(krb5_context context,
-	       krb5_ccache id,
-	       krb5_creds *creds)
+               krb5_ccache id,
+               krb5_creds *creds)
 {
     krb5_acc *a = ACACHE(id);
     cc_credentials_union cred;
@@ -692,23 +692,23 @@ acc_store_cred(krb5_context context,
     cc_int32 error;
 
     if (a->ccache == NULL) {
-	krb5_set_error_message(context, KRB5_CC_NOTFOUND,
-			       N_("No API credential found", ""));
-	return KRB5_CC_NOTFOUND;
+        krb5_set_error_message(context, KRB5_CC_NOTFOUND,
+                               N_("No API credential found", ""));
+        return KRB5_CC_NOTFOUND;
     }
 
     cred.version = cc_credentials_v5;
     cred.credentials.credentials_v5 = &v5cred;
 
     ret = make_ccred_from_cred(context,
-			       creds,
-			       &v5cred);
+                               creds,
+                               &v5cred);
     if (ret)
-	return ret;
+        return ret;
 
     error = (*a->ccache->func->store_credentials)(a->ccache, &cred);
     if (error)
-	ret = translate_cc_error(context, error);
+        ret = translate_cc_error(context, error);
 
     free_ccred(&v5cred);
 
@@ -717,8 +717,8 @@ acc_store_cred(krb5_context context,
 
 static krb5_error_code KRB5_CALLCONV
 acc_get_principal(krb5_context context,
-		  krb5_ccache id,
-		  krb5_principal *principal)
+                  krb5_ccache id,
+                  krb5_principal *principal)
 {
     krb5_acc *a = ACACHE(id);
     krb5_error_code ret;
@@ -726,16 +726,16 @@ acc_get_principal(krb5_context context,
     cc_string_t name;
 
     if (a->ccache == NULL) {
-	krb5_set_error_message(context, KRB5_CC_NOTFOUND,
-			       N_("No API credential found", ""));
-	return KRB5_CC_NOTFOUND;
+        krb5_set_error_message(context, KRB5_CC_NOTFOUND,
+                               N_("No API credential found", ""));
+        return KRB5_CC_NOTFOUND;
     }
 
     error = (*a->ccache->func->get_principal)(a->ccache,
-					      cc_credentials_v5,
-					      &name);
+                                              cc_credentials_v5,
+                                              &name);
     if (error)
-	return translate_cc_error(context, error);
+        return translate_cc_error(context, error);
 
     ret = krb5_parse_name(context, name->data, principal);
 
@@ -745,23 +745,23 @@ acc_get_principal(krb5_context context,
 
 static krb5_error_code KRB5_CALLCONV
 acc_get_first (krb5_context context,
-	       krb5_ccache id,
-	       krb5_cc_cursor *cursor)
+               krb5_ccache id,
+               krb5_cc_cursor *cursor)
 {
     cc_credentials_iterator_t iter;
     krb5_acc *a = ACACHE(id);
     int32_t error;
 
     if (a->ccache == NULL) {
-	krb5_set_error_message(context, KRB5_CC_NOTFOUND,
-			       N_("No API credential found", ""));
-	return KRB5_CC_NOTFOUND;
+        krb5_set_error_message(context, KRB5_CC_NOTFOUND,
+                               N_("No API credential found", ""));
+        return KRB5_CC_NOTFOUND;
     }
 
     error = (*a->ccache->func->new_credentials_iterator)(a->ccache, &iter);
     if (error) {
-	krb5_clear_error_message(context);
-	return ENOENT;
+        krb5_clear_error_message(context);
+        return ENOENT;
     }
     *cursor = iter;
     return 0;
@@ -770,9 +770,9 @@ acc_get_first (krb5_context context,
 
 static krb5_error_code KRB5_CALLCONV
 acc_get_next (krb5_context context,
-	      krb5_ccache id,
-	      krb5_cc_cursor *cursor,
-	      krb5_creds *creds)
+              krb5_ccache id,
+              krb5_cc_cursor *cursor,
+              krb5_creds *creds)
 {
     cc_credentials_iterator_t iter = *cursor;
     cc_credentials_t cred;
@@ -780,25 +780,25 @@ acc_get_next (krb5_context context,
     int32_t error;
 
     while (1) {
-	error = (*iter->func->next)(iter, &cred);
-	if (error)
-	    return translate_cc_error(context, error);
-	if (cred->data->version == cc_credentials_v5)
-	    break;
-	(*cred->func->release)(cred);
+        error = (*iter->func->next)(iter, &cred);
+        if (error)
+            return translate_cc_error(context, error);
+        if (cred->data->version == cc_credentials_v5)
+            break;
+        (*cred->func->release)(cred);
     }
 
     ret = make_cred_from_ccred(context,
-			       cred->data->credentials.credentials_v5,
-			       creds);
+                               cred->data->credentials.credentials_v5,
+                               creds);
     (*cred->func->release)(cred);
     return ret;
 }
 
 static krb5_error_code KRB5_CALLCONV
 acc_end_get (krb5_context context,
-	     krb5_ccache id,
-	     krb5_cc_cursor *cursor)
+             krb5_ccache id,
+             krb5_cc_cursor *cursor)
 {
     cc_credentials_iterator_t iter = *cursor;
     (*iter->func->release)(iter);
@@ -807,9 +807,9 @@ acc_end_get (krb5_context context,
 
 static krb5_error_code KRB5_CALLCONV
 acc_remove_cred(krb5_context context,
-		krb5_ccache id,
-		krb5_flags which,
-		krb5_creds *cred)
+                krb5_ccache id,
+                krb5_flags which,
+                krb5_creds *cred)
 {
     cc_credentials_iterator_t iter;
     krb5_acc *a = ACACHE(id);
@@ -819,62 +819,62 @@ acc_remove_cred(krb5_context context,
     char *client, *server;
 
     if (a->ccache == NULL) {
-	krb5_set_error_message(context, KRB5_CC_NOTFOUND,
-			       N_("No API credential found", ""));
-	return KRB5_CC_NOTFOUND;
+        krb5_set_error_message(context, KRB5_CC_NOTFOUND,
+                               N_("No API credential found", ""));
+        return KRB5_CC_NOTFOUND;
     }
 
     if (cred->client) {
-	ret = krb5_unparse_name(context, cred->client, &client);
-	if (ret)
-	    return ret;
+        ret = krb5_unparse_name(context, cred->client, &client);
+        if (ret)
+            return ret;
     } else
-	client = NULL;
+        client = NULL;
 
     ret = krb5_unparse_name(context, cred->server, &server);
     if (ret) {
-	free(client);
-	return ret;
+        free(client);
+        return ret;
     }
 
     error = (*a->ccache->func->new_credentials_iterator)(a->ccache, &iter);
     if (error) {
-	free(server);
-	free(client);
-	return translate_cc_error(context, error);
+        free(server);
+        free(client);
+        return translate_cc_error(context, error);
     }
 
     ret = KRB5_CC_NOTFOUND;
     while (1) {
-	cc_credentials_v5_t *v5cred;
+        cc_credentials_v5_t *v5cred;
 
-	error = (*iter->func->next)(iter, &ccred);
-	if (error)
-	    break;
+        error = (*iter->func->next)(iter, &ccred);
+        if (error)
+            break;
 
-	if (ccred->data->version != cc_credentials_v5)
-	    goto next;
+        if (ccred->data->version != cc_credentials_v5)
+            goto next;
 
-	v5cred = ccred->data->credentials.credentials_v5;
+        v5cred = ccred->data->credentials.credentials_v5;
 
-	if (client && strcmp(v5cred->client, client) != 0)
-	    goto next;
+        if (client && strcmp(v5cred->client, client) != 0)
+            goto next;
 
-	if (strcmp(v5cred->server, server) != 0)
-	    goto next;
+        if (strcmp(v5cred->server, server) != 0)
+            goto next;
 
-	(*a->ccache->func->remove_credentials)(a->ccache, ccred);
-	ret = 0;
+        (*a->ccache->func->remove_credentials)(a->ccache, ccred);
+        ret = 0;
     next:
-	(*ccred->func->release)(ccred);
+        (*ccred->func->release)(ccred);
     }
 
     (*iter->func->release)(iter);
 
     if (ret)
-	krb5_set_error_message(context, ret,
-			       N_("Can't find credential %s in cache",
-				 "principal"), server);
+        krb5_set_error_message(context, ret,
+                               N_("Can't find credential %s in cache",
+                                  "principal"), server);
     free(server);
     free(client);
 
@@ -883,15 +883,15 @@ acc_remove_cred(krb5_context context,
 
 static krb5_error_code KRB5_CALLCONV
 acc_set_flags(krb5_context context,
-	      krb5_ccache id,
-	      krb5_flags flags)
+              krb5_ccache id,
+              krb5_flags flags)
 {
     return 0;
 }
 
 static int KRB5_CALLCONV
 acc_get_version(krb5_context context,
-		krb5_ccache id)
+                krb5_ccache id)
 {
     return 0;
 }
@@ -910,24 +910,24 @@ acc_get_cache_first(krb5_context context, krb5_cc_cursor *cursor)
 
     ret = init_ccapi(context);
     if (ret)
-	return ret;
+        return ret;
 
     iter = calloc(1, sizeof(*iter));
     if (iter == NULL)
-	return krb5_enomem(context);
+        return krb5_enomem(context);
 
     error = (*init_func)(&iter->context, ccapi_version_3, NULL, NULL);
     if (error) {
-	free(iter);
-	return translate_cc_error(context, error);
+        free(iter);
+        return translate_cc_error(context, error);
     }
 
     error = (*iter->context->func->new_ccache_iterator)(iter->context,
-							&iter->iter);
+                                                        &iter->iter);
     if (error) {
-	free(iter);
-	krb5_clear_error_message(context);
-	return ENOENT;
+        free(iter);
+        krb5_clear_error_message(context);
+        return ENOENT;
     }
     *cursor = iter;
     return 0;
@@ -944,19 +944,19 @@ acc_get_cache_next(krb5_context context, krb5_cc_cursor cursor, krb5_ccache *id)
 
     error = (*iter->iter->func->next)(iter->iter, &cache);
     if (error)
-	return translate_cc_error(context, error);
+        return translate_cc_error(context, error);
 
     ret = _krb5_cc_allocate(context, &krb5_acc_ops, id);
     if (ret) {
-	(*cache->func->release)(cache);
-	return ret;
+        (*cache->func->release)(cache);
+        return ret;
     }
 
     ret = acc_alloc(context, id);
     if (ret) {
-	(*cache->func->release)(cache);
-	free(*id);
-	return ret;
+        (*cache->func->release)(cache);
+        free(*id);
+        return ret;
     }
 
     a = ACACHE(*id);
@@ -964,9 +964,9 @@ acc_get_cache_next(krb5_context context, krb5_cc_cursor cursor, krb5_ccache *id)
 
     error = get_cc_name(a);
     if (error) {
-	acc_close(context, *id);
-	*id = NULL;
-	return translate_cc_error(context, error);
+        acc_close(context, *id);
+        *id = NULL;
+        return translate_cc_error(context, error);
     }
     return 0;
 }
@@ -993,21 +993,21 @@ acc_move(krb5_context context, krb5_ccache from, krb5_ccache to)
     int32_t error;
 
     if (ato->ccache == NULL) {
-	cc_string_t name;
+        cc_string_t name;
 
-	error = (*afrom->ccache->func->get_principal)(afrom->ccache,
-						      cc_credentials_v5,
-						      &name);
-	if (error)
-	    return translate_cc_error(context, error);
+        error = (*afrom->ccache->func->get_principal)(afrom->ccache,
+                                                      cc_credentials_v5,
+                                                      &name);
+        if (error)
+            return translate_cc_error(context, error);
 
-	error = (*ato->context->func->create_new_ccache)(ato->context,
-							 cc_credentials_v5,
-							 name->data,
-							 &ato->ccache);
-	(*name->func->release)(name);
-	if (error)
-	    return translate_cc_error(context, error);
+        error = (*ato->context->func->create_new_ccache)(ato->context,
+                                                         cc_credentials_v5,
+                                                         name->data,
+                                                         &ato->ccache);
+        (*name->func->release)(name);
+        if (error)
+            return translate_cc_error(context, error);
     }
 
     error = (*ato->ccache->func->move)(afrom->ccache, ato->ccache);
@@ -1027,16 +1027,16 @@ acc_get_default_name(krb5_context context, char **str)
 
     ret = init_ccapi(context);
     if (ret)
-	return ret;
+        return ret;
 
     error = (*init_func)(&cc, ccapi_version_3, NULL, NULL);
     if (error)
-	return translate_cc_error(context, error);
+        return translate_cc_error(context, error);
 
     error = (*cc->func->get_default_ccache_name)(cc, &name);
     if (error) {
-	(*cc->func->release)(cc);
-	return translate_cc_error(context, error);
+        (*cc->func->release)(cc);
+        return translate_cc_error(context, error);
     }
 
     error = asprintf(str, "API:%s", name->data);
@@ -1044,7 +1044,7 @@ acc_get_default_name(krb5_context context, char **str)
     (*cc->func->release)(cc);
 
     if (error < 0 || *str == NULL)
-	return krb5_enomem(context);
+        return krb5_enomem(context);
     return 0;
 }
 
@@ -1055,14 +1055,14 @@ acc_set_default(krb5_context context, krb5_ccache id)
     cc_int32 error;
 
     if (a->ccache == NULL) {
-	krb5_set_error_message(context, KRB5_CC_NOTFOUND,
-			       N_("No API credential found", ""));
-	return KRB5_CC_NOTFOUND;
+        krb5_set_error_message(context, KRB5_CC_NOTFOUND,
+                               N_("No API credential found", ""));
+        return KRB5_CC_NOTFOUND;
     }
 
     error = (*a->ccache->func->set_default)(a->ccache);
     if (error)
-	return translate_cc_error(context, error);
+        return translate_cc_error(context, error);
 
     return 0;
 }
@@ -1075,14 +1075,14 @@ acc_lastchange(krb5_context context, krb5_ccache id, krb5_timestamp *mtime)
     cc_time_t t;
 
     if (a->ccache == NULL) {
-	krb5_set_error_message(context, KRB5_CC_NOTFOUND,
-			       N_("No API credential found", ""));
-	return KRB5_CC_NOTFOUND;
+        krb5_set_error_message(context, KRB5_CC_NOTFOUND,
+                               N_("No API credential found", ""));
+        return KRB5_CC_NOTFOUND;
     }
 
     error = (*a->ccache->func->get_change_time)(a->ccache, &t);
     if (error)
-	return translate_cc_error(context, error);
+        return translate_cc_error(context, error);
 
     *mtime = t;
 

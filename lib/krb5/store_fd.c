@@ -49,19 +49,19 @@ fd_fetch(krb5_storage * sp, void *data, size_t size)
 
     /* similar pattern to net_read() to support pipes */
     while (rem > 0) {
-	count = read (FD(sp), cbuf, rem);
-	if (count < 0) {
-	    if (errno == EINTR)
-		continue;
-	    else if (rem == size)
-		return count;
+        count = read (FD(sp), cbuf, rem);
+        if (count < 0) {
+            if (errno == EINTR)
+                continue;
+            else if (rem == size)
+                return count;
             else
                 return size - rem;
-	} else if (count == 0) {
-	    return count;
-	}
-	cbuf += count;
-	rem -= count;
+        } else if (count == 0) {
+            return count;
+        }
+        cbuf += count;
+        rem -= count;
     }
     return size;
 }
@@ -75,15 +75,15 @@ fd_store(krb5_storage * sp, const void *data, size_t size)
 
     /* similar pattern to net_write() to support pipes */
     while (rem > 0) {
-	count = write(FD(sp), cbuf, rem);
-	if (count < 0) {
-	    if (errno == EINTR)
-		continue;
-	    else
-		return size - rem;
-	}
-	cbuf += count;
-	rem -= count;
+        count = write(FD(sp), cbuf, rem);
+        if (count < 0) {
+            if (errno == EINTR)
+                continue;
+            else
+                return size - rem;
+        }
+        cbuf += count;
+        rem -= count;
     }
     return size;
 }
@@ -100,16 +100,16 @@ fd_trunc(krb5_storage * sp, off_t offset)
     off_t tmpoff;
 
     if (ftruncate(FD(sp), offset) == -1)
-	return errno;
+        return errno;
 
     tmpoff = lseek(FD(sp), 0, SEEK_CUR);
     if (tmpoff == -1)
-	return errno;
+        return errno;
 
     if (tmpoff > offset) {
-	tmpoff = lseek(FD(sp), offset, SEEK_SET);
-	if (tmpoff == -1)
-	    return errno;
+        tmpoff = lseek(FD(sp), offset, SEEK_SET);
+        if (tmpoff == -1)
+            return errno;
     }
 
     return 0;
@@ -119,7 +119,7 @@ static int
 fd_sync(krb5_storage * sp)
 {
     if (fsync(FD(sp)) == -1)
-	return errno;
+        return errno;
     return 0;
 }
 
@@ -166,25 +166,25 @@ krb5_storage_from_fd(int fd_in)
 #endif
 
     if (fd < 0)
-	return NULL;
+        return NULL;
 
     errno = ENOMEM;
     sp = malloc(sizeof(krb5_storage));
     if (sp == NULL) {
-	saved_errno = errno;
-	close(fd);
-	errno = saved_errno;
-	return NULL;
+        saved_errno = errno;
+        close(fd);
+        errno = saved_errno;
+        return NULL;
     }
 
     errno = ENOMEM;
     sp->data = malloc(sizeof(fd_storage));
     if (sp->data == NULL) {
-	saved_errno = errno;
-	close(fd);
-	free(sp);
-	errno = saved_errno;
-	return NULL;
+        saved_errno = errno;
+        close(fd);
+        free(sp);
+        errno = saved_errno;
+        return NULL;
     }
     sp->flags = 0;
     sp->eof_code = HEIM_ERR_EOF;

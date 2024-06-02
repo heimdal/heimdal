@@ -40,8 +40,8 @@ struct assignment {
     char *name;
     enum { a_value, a_assignment } type;
     union {
-	char *value;
-	struct assignment *assignment;
+        char *value;
+        struct assignment *assignment;
     } u;
     unsigned int lineno;
     struct assignment *next;

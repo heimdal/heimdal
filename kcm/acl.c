@@ -36,9 +36,9 @@
 
 krb5_error_code
 kcm_access(krb5_context context,
-	   kcm_client *client,
-	   kcm_operation opcode,
-	   kcm_ccache ccache)
+           kcm_client *client,
+           kcm_operation opcode,
+           kcm_ccache ccache)
 {
     int read_p = 0;
     int write_p = 0;
@@ -60,9 +60,9 @@ kcm_access(krb5_context context,
     case KCM_OP_MOVE_CACHE:
     case KCM_OP_SET_DEFAULT_CACHE:
     case KCM_OP_SET_KDC_OFFSET:
-	write_p = 1;
-	read_p = 0;
-	break;
+        write_p = 1;
+        read_p = 0;
+        break;
     case KCM_OP_NOOP:
     case KCM_OP_GET_NAME:
     case KCM_OP_RESOLVE:
@@ -75,29 +75,29 @@ kcm_access(krb5_context context,
     case KCM_OP_GET_CACHE_BY_UUID:
     case KCM_OP_GET_DEFAULT_CACHE:
     case KCM_OP_GET_KDC_OFFSET:
-	write_p = 0;
-	read_p = 1;
-	break;
+        write_p = 0;
+        read_p = 1;
+        break;
     default:
-	ret = KRB5_FCC_PERM;
-	goto out;
+        ret = KRB5_FCC_PERM;
+        goto out;
     }
 
     if (ccache->flags & KCM_FLAGS_OWNER_IS_SYSTEM) {
-	/* System caches cannot be reinitialized or destroyed by users */
-	if (opcode == KCM_OP_INITIALIZE ||
-	    opcode == KCM_OP_DESTROY ||
-	    opcode == KCM_OP_REMOVE_CRED ||
-	    opcode == KCM_OP_MOVE_CACHE) {
-	    ret = KRB5_FCC_PERM;
-	    goto out;
-	}
+        /* System caches cannot be reinitialized or destroyed by users */
+        if (opcode == KCM_OP_INITIALIZE ||
+            opcode == KCM_OP_DESTROY ||
+            opcode == KCM_OP_REMOVE_CRED ||
+            opcode == KCM_OP_MOVE_CACHE) {
+            ret = KRB5_FCC_PERM;
+            goto out;
+        }
 
-	/* Let root always read system caches */
-	if (CLIENT_IS_ROOT(client)) {
-	    ret = 0;
-	    goto out;
-	}
+        /* Let root always read system caches */
+        if (CLIENT_IS_ROOT(client)) {
+            ret = 0;
+            goto out;
+        }
     }
 
     /* start out with "other" mask */
@@ -105,39 +105,39 @@ kcm_access(krb5_context context,
 
     /* root can do anything */
     if (CLIENT_IS_ROOT(client)) {
-	if (read_p)
-	    mask |= S_IRUSR|S_IRGRP|S_IROTH;
-	if (write_p)
-	    mask |= S_IWUSR|S_IWGRP|S_IWOTH;
+        if (read_p)
+            mask |= S_IRUSR|S_IRGRP|S_IROTH;
+        if (write_p)
+            mask |= S_IWUSR|S_IWGRP|S_IWOTH;
     }
     /* same session same as owner */
     if (kcm_is_same_session(client, ccache->uid, ccache->session)) {
-	if (read_p)
-	    mask |= S_IROTH;
-	if (write_p)
-	    mask |= S_IWOTH;
+        if (read_p)
+            mask |= S_IROTH;
+        if (write_p)
+            mask |= S_IWOTH;
     }
     /* owner */
     if (client->uid == ccache->uid) {
-	if (read_p)
-	    mask |= S_IRUSR;
-	if (write_p)
-	    mask |= S_IWUSR;
+        if (read_p)
+            mask |= S_IRUSR;
+        if (write_p)
+            mask |= S_IWUSR;
     }
     /* group */
     if (client->gid == ccache->gid) {
-	if (read_p)
-	    mask |= S_IRGRP;
-	if (write_p)
-	    mask |= S_IWGRP;
+        if (read_p)
+            mask |= S_IRGRP;
+        if (write_p)
+            mask |= S_IWGRP;
     }
 
     ret = (ccache->mode & mask) ? 0 : KRB5_FCC_PERM;
 
 out:
     if (ret) {
-	kcm_log(2, "Process %d is not permitted to call %s on cache %s",
-		client->pid, kcm_op2string(opcode), ccache->name);
+        kcm_log(2, "Process %d is not permitted to call %s on cache %s",
+                client->pid, kcm_op2string(opcode), ccache->name);
     }
 
     return ret;
@@ -145,21 +145,21 @@ out:
 
 krb5_error_code
 kcm_chmod(krb5_context context,
-	  kcm_client *client,
-	  kcm_ccache ccache,
-	  uint16_t mode)
+          kcm_client *client,
+          kcm_ccache ccache,
+          uint16_t mode)
 {
     KCM_ASSERT_VALID(ccache);
 
     /* System cache mode can only be set at startup */
     if (ccache->flags & KCM_FLAGS_OWNER_IS_SYSTEM)
-	return KRB5_FCC_PERM;
+        return KRB5_FCC_PERM;
 
     if (ccache->uid != client->uid)
-	return KRB5_FCC_PERM;
+        return KRB5_FCC_PERM;
 
     if (ccache->gid != client->gid)
-	return KRB5_FCC_PERM;
+        return KRB5_FCC_PERM;
 
     HEIMDAL_MUTEX_lock(&ccache->mutex);
 
@@ -172,22 +172,22 @@ kcm_chmod(krb5_context context,
 
 krb5_error_code
 kcm_chown(krb5_context context,
-	  kcm_client *client,
-	  kcm_ccache ccache,
-	  uid_t uid,
-	  gid_t gid)
+          kcm_client *client,
+          kcm_ccache ccache,
+          uid_t uid,
+          gid_t gid)
 {
     KCM_ASSERT_VALID(ccache);
 
     /* System cache owner can only be set at startup */
     if (ccache->flags & KCM_FLAGS_OWNER_IS_SYSTEM)
-	return KRB5_FCC_PERM;
+        return KRB5_FCC_PERM;
 
     if (ccache->uid != client->uid)
-	return KRB5_FCC_PERM;
+        return KRB5_FCC_PERM;
 
     if (ccache->gid != client->gid)
-	return KRB5_FCC_PERM;
+        return KRB5_FCC_PERM;
 
     HEIMDAL_MUTEX_lock(&ccache->mutex);
 

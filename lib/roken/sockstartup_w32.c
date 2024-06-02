@@ -45,14 +45,14 @@ rk_WSAStartup(void)
     WSADATA wsad;
 
     if (!WSAStartup( MAKEWORD(2, 2), &wsad )) {
-	if (wsad.wVersion != MAKEWORD(2, 2)) {
-	    /* huh? We can't use 2.2? */
-	    WSACleanup();
-	    return -1;
-	}
+        if (wsad.wVersion != MAKEWORD(2, 2)) {
+            /* huh? We can't use 2.2? */
+            WSACleanup();
+            return -1;
+        }
 
-	InterlockedIncrement(&_startup_count);
-	return 0;
+        InterlockedIncrement(&_startup_count);
+        return 0;
     }
 
     return -1;
@@ -65,11 +65,11 @@ rk_WSACleanup(void)
     LONG l;
 
     if ((l = InterlockedDecrement(&_startup_count)) < 0) {
-	l = InterlockedIncrement(&_startup_count) - 1;
+        l = InterlockedIncrement(&_startup_count) - 1;
     }
 
     if (l >= 0) {
-	return WSACleanup();
+        return WSACleanup();
     }
     return -1;
 }

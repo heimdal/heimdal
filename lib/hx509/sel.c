@@ -40,7 +40,7 @@ _hx509_make_expr(enum hx_expr_op op, void *arg1, void *arg2)
 
     expr = malloc(sizeof(*expr));
     if (expr == NULL)
-	return NULL;
+        return NULL;
     expr->op = op;
     expr->arg1 = arg1;
     expr->arg2 = arg2;
@@ -52,19 +52,19 @@ static const char *
 eval_word(hx509_context context, hx509_env env, struct hx_expr *word)
 {
     switch (word->op) {
-    case expr_STRING:
-	return word->arg1;
-    case expr_VAR:
-	if (word->arg2 == NULL)
-	    return hx509_env_find(context, env, word->arg1);
+        case expr_STRING:
+            return word->arg1;
+        case expr_VAR:
+            if (word->arg2 == NULL)
+                return hx509_env_find(context, env, word->arg1);
 
-	env = hx509_env_find_binding(context, env, word->arg1);
-	if (env == NULL)
-	    return NULL;
+            env = hx509_env_find_binding(context, env, word->arg1);
+            if (env == NULL)
+                return NULL;
 
-	return eval_word(context, env, word->arg2);
-    default:
-	return NULL;
+            return eval_word(context, env, word->arg2);
+        default:
+            return NULL;
     }
 }
 
@@ -74,11 +74,11 @@ find_variable(hx509_context context, hx509_env env, struct hx_expr *word)
     assert(word->op == expr_VAR);
 
     if (word->arg2 == NULL)
-	return hx509_env_find_binding(context, env, word->arg1);
+        return hx509_env_find_binding(context, env, word->arg1);
 
     env = hx509_env_find_binding(context, env, word->arg1);
     if (env == NULL)
-	return NULL;
+        return NULL;
     return find_variable(context, env, word->arg2);
 }
 
@@ -86,71 +86,71 @@ static int
 eval_comp(hx509_context context, hx509_env env, struct hx_expr *expr)
 {
     switch (expr->op) {
-    case comp_NE:
-    case comp_EQ:
-    case comp_TAILEQ: {
-	const char *s1, *s2;
-	int ret;
+        case comp_NE:
+        case comp_EQ:
+        case comp_TAILEQ: {
+            const char *s1, *s2;
+            int ret;
 
-	s1 = eval_word(context, env, expr->arg1);
-	s2 = eval_word(context, env, expr->arg2);
+            s1 = eval_word(context, env, expr->arg1);
+            s2 = eval_word(context, env, expr->arg2);
 
-	if (s1 == NULL || s2 == NULL)
-	    return FALSE;
+            if (s1 == NULL || s2 == NULL)
+                return FALSE;
 
-	if (expr->op == comp_TAILEQ) {
-	    size_t len1 = strlen(s1);
-	    size_t len2 = strlen(s2);
+            if (expr->op == comp_TAILEQ) {
+                size_t len1 = strlen(s1);
+                size_t len2 = strlen(s2);
 
-	    if (len1 < len2)
-		return 0;
-	    ret = strcmp(s1 + (len1 - len2), s2) == 0;
-	} else {
-	    ret = strcmp(s1, s2) == 0;
-	    if (expr->op == comp_NE)
-		ret = !ret;
-	}
-	return ret;
-    }
-    case comp_IN: {
-	struct hx_expr *subexpr;
-	const char *w, *s1;
+                if (len1 < len2)
+                    return 0;
+                ret = strcmp(s1 + (len1 - len2), s2) == 0;
+            } else {
+                ret = strcmp(s1, s2) == 0;
+                if (expr->op == comp_NE)
+                    ret = !ret;
+            }
+            return ret;
+        }
+        case comp_IN: {
+            struct hx_expr *subexpr;
+            const char *w, *s1;
 
-	w = eval_word(context, env, expr->arg1);
+            w = eval_word(context, env, expr->arg1);
 
-	subexpr = expr->arg2;
+            subexpr = expr->arg2;
 
-	if (subexpr->op == expr_WORDS) {
-	    while (subexpr) {
-		s1 = eval_word(context, env, subexpr->arg1);
-		if (strcmp(w, s1) == 0)
-		    return TRUE;
-		subexpr = subexpr->arg2;
-	    }
-	} else if (subexpr->op == expr_VAR) {
-	    hx509_env subenv;
+            if (subexpr->op == expr_WORDS) {
+                while (subexpr) {
+                    s1 = eval_word(context, env, subexpr->arg1);
+                    if (strcmp(w, s1) == 0)
+                        return TRUE;
+                    subexpr = subexpr->arg2;
+                }
+            } else if (subexpr->op == expr_VAR) {
+                hx509_env subenv;
 
-	    subenv = find_variable(context, env, subexpr);
-	    if (subenv == NULL)
-		return FALSE;
+                subenv = find_variable(context, env, subexpr);
+                if (subenv == NULL)
+                    return FALSE;
 
-	    while (subenv) {
-		if (subenv->type != env_string)
-		    continue;
-		if (strcmp(w, subenv->name) == 0)
-		    return TRUE;
-		if (strcmp(w, subenv->u.string) == 0)
-		    return TRUE;
-		subenv = subenv->next;
-	    }
+                while (subenv) {
+                    if (subenv->type != env_string)
+                        continue;
+                    if (strcmp(w, subenv->name) == 0)
+                        return TRUE;
+                    if (strcmp(w, subenv->u.string) == 0)
+                        return TRUE;
+                    subenv = subenv->next;
+                }
 
-	} else
-	    _hx509_abort("hx509 eval IN unknown op: %d", (int)subexpr->op);
+            } else
+                _hx509_abort("hx509 eval IN unknown op: %d", (int)subexpr->op);
 
-	return FALSE;
-    }
-    default:
-	_hx509_abort("hx509 eval expr with unknown op: %d", (int)expr->op);
+            return FALSE;
+        }
+        default:
+            _hx509_abort("hx509 eval expr with unknown op: %d", (int)expr->op);
     }
     return FALSE;
 }
@@ -159,23 +159,23 @@ HX509_LIB_FUNCTION int HX509_LIB_CALL
 _hx509_expr_eval(hx509_context context, hx509_env env, struct hx_expr *expr)
 {
     switch (expr->op) {
-    case op_TRUE:
-	return 1;
-    case op_FALSE:
-	return 0;
-    case op_NOT:
-	return ! _hx509_expr_eval(context, env, expr->arg1);
-    case op_AND:
-	return _hx509_expr_eval(context, env, expr->arg1) &&
-	    _hx509_expr_eval(context, env, expr->arg2);
-    case op_OR:
-	return _hx509_expr_eval(context, env, expr->arg1) ||
-	    _hx509_expr_eval(context, env, expr->arg2);
-    case op_COMP:
-	return eval_comp(context, env, expr->arg1);
-    default:
-	_hx509_abort("hx509 eval expr with unknown op: %d", (int)expr->op);
-	UNREACHABLE(return 0);
+        case op_TRUE:
+            return 1;
+        case op_FALSE:
+            return 0;
+        case op_NOT:
+            return ! _hx509_expr_eval(context, env, expr->arg1);
+        case op_AND:
+            return _hx509_expr_eval(context, env, expr->arg1) &&
+                _hx509_expr_eval(context, env, expr->arg2);
+        case op_OR:
+            return _hx509_expr_eval(context, env, expr->arg1) ||
+                _hx509_expr_eval(context, env, expr->arg2);
+        case op_COMP:
+            return eval_comp(context, env, expr->arg1);
+        default:
+            _hx509_abort("hx509 eval expr with unknown op: %d", (int)expr->op);
+            UNREACHABLE(return 0);
     }
 }
 
@@ -183,23 +183,23 @@ HX509_LIB_FUNCTION void HX509_LIB_CALL
 _hx509_expr_free(struct hx_expr *expr)
 {
     switch (expr->op) {
-    case expr_STRING:
-    case expr_NUMBER:
-	free(expr->arg1);
-	break;
-    case expr_WORDS:
-    case expr_FUNCTION:
-    case expr_VAR:
-	free(expr->arg1);
-	if (expr->arg2)
-	    _hx509_expr_free(expr->arg2);
-	break;
-    default:
-	if (expr->arg1)
-	    _hx509_expr_free(expr->arg1);
-	if (expr->arg2)
-	    _hx509_expr_free(expr->arg2);
-	break;
+        case expr_STRING:
+        case expr_NUMBER:
+            free(expr->arg1);
+            break;
+        case expr_WORDS:
+        case expr_FUNCTION:
+        case expr_VAR:
+            free(expr->arg1);
+            if (expr->arg2)
+                _hx509_expr_free(expr->arg2);
+            break;
+        default:
+            if (expr->arg1)
+                _hx509_expr_free(expr->arg1);
+            if (expr->arg2)
+                _hx509_expr_free(expr->arg2);
+            break;
     }
     free(expr);
 }
@@ -214,8 +214,8 @@ _hx509_expr_parse(const char *buf)
     _hx509_expr_input.expr = NULL;
 
     if (_hx509_expr_input.error) {
-	free(_hx509_expr_input.error);
-	_hx509_expr_input.error = NULL;
+        free(_hx509_expr_input.error);
+        _hx509_expr_input.error = NULL;
     }
 
     yyparse();
@@ -232,9 +232,9 @@ _hx509_expr_parse_error(void)
 void
 _hx509_sel_yyerror (const char *s)
 {
-     if (_hx509_expr_input.error)
-         free(_hx509_expr_input.error);
+    if (_hx509_expr_input.error)
+        free(_hx509_expr_input.error);
 
-     _hx509_expr_input.error = strdup(s);
+    _hx509_expr_input.error = strdup(s);
 }
 

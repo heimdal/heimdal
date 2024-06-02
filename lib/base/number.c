@@ -46,14 +46,14 @@ number_cmp(void *a, void *b)
     int na, nb;
 
     if (heim_base_is_tagged_object(a))
-	na = heim_base_tagged_object_value(a);
+        na = heim_base_tagged_object_value(a);
     else
-	na = *(int *)a;
+        na = *(int *)a;
 
     if (heim_base_is_tagged_object(b))
-	nb = heim_base_tagged_object_value(b);
+        nb = heim_base_tagged_object_value(b);
     else
-	nb = *(int *)b;
+        nb = *(int *)b;
 
     return na - nb;
 }
@@ -62,7 +62,7 @@ static uintptr_t
 number_hash(void *ptr)
 {
     if (heim_base_is_tagged_object(ptr))
-	return heim_base_tagged_object_value(ptr);
+        return heim_base_tagged_object_value(ptr);
     return (uintptr_t)*(int64_t *)ptr;
 }
 
@@ -91,11 +91,11 @@ heim_number_create(int64_t number)
     heim_number_t n;
 
     if (number < 0xffffff && number >= 0)
-	return heim_base_make_tagged_object(number, HEIM_TID_NUMBER);
+        return heim_base_make_tagged_object(number, HEIM_TID_NUMBER);
 
     n = _heim_alloc_object(&_heim_number_object, sizeof(int64_t));
     if (n)
-	*((int64_t *)n) = number;
+        *((int64_t *)n) = number;
     return n;
 }
 
@@ -123,7 +123,7 @@ int
 heim_number_get_int(heim_number_t number)
 {
     if (heim_base_is_tagged_object(number))
-	return heim_base_tagged_object_value(number);
+        return heim_base_tagged_object_value(number);
     return (int)(*(int64_t *)number);
 }
 
@@ -131,6 +131,6 @@ int64_t
 heim_number_get_long(heim_number_t number)
 {
     if (heim_base_is_tagged_object(number))
-	return heim_base_tagged_object_value(number);
+        return heim_base_tagged_object_value(number);
     return *(int64_t *)number;
 }

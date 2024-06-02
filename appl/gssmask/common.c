@@ -42,10 +42,10 @@ store_string(krb5_storage *sp, const char *str)
 
     ret = krb5_store_int32(sp, len);
     if (ret)
-	return ret;
+        return ret;
     ret = krb5_storage_write(sp, str, len);
     if (ret != len)
-	return EINVAL;
+        return EINVAL;
     return 0;
 }
 
@@ -57,24 +57,24 @@ add_list(char ****list, size_t *listlen, char **str, size_t len)
 
     (*list)[*listlen] = ecalloc(len, sizeof(***list));
     for (i = 0; i < len; i++)
-	(*list)[*listlen][i] = str[i];
+        (*list)[*listlen][i] = str[i];
     (*listlen)++;
 }
 
 static void
 permute(char ****list, size_t *listlen,
-	char **str, const int start, const int len)
+        char **str, const int start, const int len)
 {
     int i, j;
 
 #define SWAP(s,i,j) { char *t = str[i]; str[i] = str[j]; str[j] = t; }
 
     for (i = start; i < len - 1; i++) {
-	for (j = i+1; j < len; j++) {
-	    SWAP(str,i,j);
-	    permute(list, listlen, str, i+1, len);
-	    SWAP(str,i,j);
-	}
+        for (j = i+1; j < len; j++) {
+            SWAP(str,i,j);
+            permute(list, listlen, str, i+1, len);
+            SWAP(str,i,j);
+        }
     }
     add_list(list, listlen, str, len);
 }
@@ -89,7 +89,7 @@ permutate_all(struct getarg_strings *strings, size_t *size)
 
     list = ecalloc(strings->num_strings, sizeof(*list));
     for (i = 0; i < strings->num_strings; i++)
-	list[i] = strings->strings[i];
+        list[i] = strings->strings[i];
 
     permute(&all, size, list, 0, strings->num_strings);
     free(list);

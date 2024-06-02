@@ -46,14 +46,14 @@
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_free_host_realm(krb5_context context,
-		     krb5_realm *realmlist)
+                     krb5_realm *realmlist)
 {
     krb5_realm *p;
 
     if(realmlist == NULL)
-	return 0;
+        return 0;
     for (p = realmlist; *p; ++p)
-	free (*p);
+        free (*p);
     free (realmlist);
     return 0;
 }

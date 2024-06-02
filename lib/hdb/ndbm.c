@@ -76,7 +76,7 @@ NDBM_unlock(krb5_context context, HDB *db)
 
 static krb5_error_code
 NDBM_seq(krb5_context context, HDB *db,
-	 unsigned flags, hdb_entry *entry, int first)
+         unsigned flags, hdb_entry *entry, int first)
 
 {
     struct ndbm_db *d = (struct ndbm_db *)db->hdb_db;
@@ -85,11 +85,11 @@ NDBM_seq(krb5_context context, HDB *db,
     krb5_error_code ret = 0;
 
     if(first)
-	key = dbm_firstkey(d->db);
+        key = dbm_firstkey(d->db);
     else
-	key = dbm_nextkey(d->db);
+        key = dbm_nextkey(d->db);
     if(key.dptr == NULL)
-	return HDB_ERR_NOENTRY;
+        return HDB_ERR_NOENTRY;
     key_data.data = key.dptr;
     key_data.length = key.dsize;
     ret = db->hdb_lock(context, db, HDB_RLOCK);
@@ -100,21 +100,21 @@ NDBM_seq(krb5_context context, HDB *db,
     data.length = value.dsize;
     memset(entry, 0, sizeof(*entry));
     if(hdb_value2entry(context, &data, entry))
-	return NDBM_seq(context, db, flags, entry, 0);
+        return NDBM_seq(context, db, flags, entry, 0);
     if (db->hdb_master_key_set && (flags & HDB_F_DECRYPT)) {
-	ret = hdb_unseal_keys (context, db, entry);
-	if (ret)
-	    hdb_free_entry (context, db, entry);
+        ret = hdb_unseal_keys (context, db, entry);
+        if (ret)
+            hdb_free_entry (context, db, entry);
     }
     if (ret == 0 && entry->principal == NULL) {
-	entry->principal = malloc (sizeof(*entry->principal));
-	if (entry->principal == NULL) {
-	    hdb_free_entry (context, db, entry);
-	    ret = ENOMEM;
-	    krb5_set_error_message(context, ret, "malloc: out of memory");
-	} else {
-	    hdb_key2principal (context, &key_data, entry->principal);
-	}
+        entry->principal = malloc (sizeof(*entry->principal));
+        if (entry->principal == NULL) {
+            hdb_free_entry (context, db, entry);
+            ret = ENOMEM;
+            krb5_set_error_message(context, ret, "malloc: out of memory");
+        } else {
+            hdb_key2principal (context, &key_data, entry->principal);
+        }
     }
     return ret;
 }
@@ -141,15 +141,15 @@ open_lock_file(krb5_context context, const char *db_name, int *fd)
 
     /* lock old and new databases */
     if (asprintf(&lock_file, "%s.lock", db_name) == -1) {
-	krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
-	return ENOMEM;
+        krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
+        return ENOMEM;
     }
 
     *fd = open(lock_file, O_RDWR | O_CREAT, 0600);
     if(*fd < 0) {
-	ret = errno;
-	krb5_set_error_message(context, ret, "open(%s): %s", lock_file,
-			       strerror(ret));
+        ret = errno;
+        krb5_set_error_message(context, ret, "open(%s): %s", lock_file,
+                               strerror(ret));
     }
     free(lock_file);
     return ret;
@@ -167,59 +167,59 @@ NDBM_rename(krb5_context context, HDB *db, const char *new_name)
     /* lock old and new databases */
     ret = open_lock_file(context, db->hdb_name, &old_lock_fd);
     if (ret)
-	return ret;
+        return ret;
 
     ret = hdb_lock(old_lock_fd, HDB_WLOCK);
     if(ret) {
-	close(old_lock_fd);
-	return ret;
+        close(old_lock_fd);
+        return ret;
     }
 
     ret = open_lock_file(context, new_name, &new_lock_fd);
     if (ret) {
-	hdb_unlock(old_lock_fd);
-	close(old_lock_fd);
-	return ret;
+        hdb_unlock(old_lock_fd);
+        close(old_lock_fd);
+        return ret;
     }
 
     ret = hdb_lock(new_lock_fd, HDB_WLOCK);
     if(ret) {
-	hdb_unlock(old_lock_fd);
-	close(old_lock_fd);
-	close(new_lock_fd);
-	return ret;
+        hdb_unlock(old_lock_fd);
+        close(old_lock_fd);
+        close(new_lock_fd);
+        return ret;
     }
 
     if (asprintf(&old_dir, "%s.dir", db->hdb_name) == -1) {
-	old_dir = NULL;
-	ret = ENOMEM;
-	goto out;
+        old_dir = NULL;
+        ret = ENOMEM;
+        goto out;
     }
     if (asprintf(&old_pag, "%s.pag", db->hdb_name) == -1) {
-	old_pag = NULL;
-	ret = ENOMEM;
-	goto out;
+        old_pag = NULL;
+        ret = ENOMEM;
+        goto out;
     }
     if (asprintf(&new_dir, "%s.dir", new_name) == -1) {
-	new_dir = NULL;
-	ret = ENOMEM;
-	goto out;
+        new_dir = NULL;
+        ret = ENOMEM;
+        goto out;
     }
     if (asprintf(&new_pag, "%s.pag", new_name) == -1) {
-	new_pag = NULL;
-	ret = ENOMEM;
-	goto out;
+        new_pag = NULL;
+        ret = ENOMEM;
+        goto out;
     }
 
     ret = rename(old_dir, new_dir) || rename(old_pag, new_pag);
     if (ret) {
-	ret = errno;
-	if (ret == 0)
-	    ret = EPERM;
-	krb5_set_error_message(context, ret, "rename: %s", strerror(ret));
+        ret = errno;
+        if (ret == 0)
+            ret = EPERM;
+        krb5_set_error_message(context, ret, "rename: %s", strerror(ret));
     }
 
- out:
+out:
     free(old_dir);
     free(old_pag);
     free(new_dir);
@@ -231,7 +231,7 @@ NDBM_rename(krb5_context context, HDB *db, const char *new_name)
     close(old_lock_fd);
 
     if(ret)
-	return ret;
+        return ret;
 
     free(db->hdb_name);
     db->hdb_name = strdup(new_name);
@@ -249,11 +249,11 @@ NDBM__get(krb5_context context, HDB *db, krb5_data key, krb5_data *reply)
     k.dsize = key.length;
     code = db->hdb_lock(context, db, HDB_RLOCK);
     if(code)
-	return code;
+        return code;
     v = dbm_fetch(d->db, k);
     db->hdb_unlock(context, db);
     if(v.dptr == NULL)
-	return HDB_ERR_NOENTRY;
+        return HDB_ERR_NOENTRY;
 
     krb5_data_copy(reply, v.dptr, v.dsize);
     return 0;
@@ -261,7 +261,7 @@ NDBM__get(krb5_context context, HDB *db, krb5_data key, krb5_data *reply)
 
 static krb5_error_code
 NDBM__put(krb5_context context, HDB *db, int replace,
-	krb5_data key, krb5_data value)
+          krb5_data key, krb5_data value)
 {
 #ifdef WRITE_SUPPORT
     struct ndbm_db *d = (struct ndbm_db *)db->hdb_db;
@@ -275,13 +275,13 @@ NDBM__put(krb5_context context, HDB *db, int replace,
 
     code = db->hdb_lock(context, db, HDB_WLOCK);
     if(code)
-	return code;
+        return code;
     code = dbm_store(d->db, k, v, replace ? DBM_REPLACE : DBM_INSERT);
     db->hdb_unlock(context, db);
     if(code == 1)
-	return HDB_ERR_EXISTS;
+        return HDB_ERR_EXISTS;
     if (code < 0)
-	return code;
+        return code;
     return 0;
 #else
     return HDB_ERR_NO_WRITE_SUPPORT;
@@ -303,7 +303,7 @@ NDBM__del(krb5_context context, HDB *db, krb5_data key)
     code = dbm_delete(d->db, k);
     db->hdb_unlock(context, db);
     if(code < 0)
-	return errno;
+        return errno;
     return 0;
 }
 
@@ -325,63 +325,63 @@ NDBM_open(krb5_context context, HDB *db, int flags, mode_t mode)
     struct ndbm_db *d = malloc(sizeof(*d));
 
     if(d == NULL) {
-	krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
-	return ENOMEM;
+        krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
+        return ENOMEM;
     }
 
     d->db = dbm_open((char*)db->hdb_name, flags, mode);
     if(d->db == NULL){
-	ret = errno;
-	free(d);
-	krb5_set_error_message(context, ret, "dbm_open(%s): %s", db->hdb_name,
-			       strerror(ret));
-	return ret;
+        ret = errno;
+        free(d);
+        krb5_set_error_message(context, ret, "dbm_open(%s): %s", db->hdb_name,
+                               strerror(ret));
+        return ret;
     }
 
     ret = open_lock_file(context, db->hdb_name, &d->lock_fd);
     if (ret) {
-	ret = errno;
-	dbm_close(d->db);
-	free(d);
-	krb5_set_error_message(context, ret, "open(lock file): %s",
-			       strerror(ret));
-	return ret;
+        ret = errno;
+        dbm_close(d->db);
+        free(d);
+        krb5_set_error_message(context, ret, "open(lock file): %s",
+                               strerror(ret));
+        return ret;
     }
 
     db->hdb_db = d;
     if((flags & O_ACCMODE) == O_RDONLY)
-	ret = hdb_check_db_format(context, db);
+        ret = hdb_check_db_format(context, db);
     else
-	ret = hdb_init_db(context, db);
+        ret = hdb_init_db(context, db);
     if(ret == HDB_ERR_NOENTRY)
-	return 0;
+        return 0;
     if (ret) {
-	NDBM_close(context, db);
-	krb5_set_error_message(context, ret, "hdb_open: failed %s database %s",
-			       (flags & O_ACCMODE) == O_RDONLY ?
-			       "checking format of" : "initialize",
-			       db->hdb_name);
+        NDBM_close(context, db);
+        krb5_set_error_message(context, ret, "hdb_open: failed %s database %s",
+                               (flags & O_ACCMODE) == O_RDONLY ?
+                               "checking format of" : "initialize",
+                               db->hdb_name);
     }
     return ret;
 }
 
 krb5_error_code
 hdb_ndbm_create(krb5_context context, HDB **db,
-		const char *filename)
+                const char *filename)
 {
     *db = calloc(1, sizeof(**db));
     if (*db == NULL) {
-	krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
-	return ENOMEM;
+        krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
+        return ENOMEM;
     }
 
     (*db)->hdb_db = NULL;
     (*db)->hdb_name = strdup(filename);
     if ((*db)->hdb_name == NULL) {
-	free(*db);
-	*db = NULL;
-	krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
-	return ENOMEM;
+        free(*db);
+        *db = NULL;
+        krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
+        return ENOMEM;
     }
     (*db)->hdb_master_key_set = 0;
     (*db)->hdb_openp = 0;

@@ -51,22 +51,22 @@ net_write (rk_socket_t fd, const void *buf, size_t nbytes)
     size_t rem = nbytes;
 
     while (rem > 0) {
-	count = write (fd, cbuf, rem);
-	if (count < 0) {
+        count = write (fd, cbuf, rem);
+        if (count < 0) {
             switch (errno) {
-            case EINTR:
-		continue;
+                case EINTR:
+                    continue;
 #if defined(EAGAIN) && EAGAIN != EWOULDBLOCK
-            case EAGAIN:
+                case EAGAIN:
 #endif
-            case EWOULDBLOCK:
-                return nbytes - rem;
-            default:
-		return count;
+                case EWOULDBLOCK:
+                    return nbytes - rem;
+                default:
+                    return count;
             }
-	}
-	cbuf += count;
-	rem -= count;
+        }
+        cbuf += count;
+        rem -= count;
     }
     return nbytes;
 }
@@ -85,48 +85,48 @@ net_write(rk_socket_t sock, const void *buf, size_t nbytes)
 
     while (rem > 0) {
 #ifdef SOCKET_IS_NOT_AN_FD
-	if (use_write)
-	    count = _write (sock, cbuf, rem);
-	else
-	    count = send (sock, cbuf, rem, 0);
+        if (use_write)
+            count = _write (sock, cbuf, rem);
+        else
+            count = send (sock, cbuf, rem, 0);
 
-	if (use_write == 0 &&
-	    rk_IS_SOCKET_ERROR(count) &&
-	    (rk_SOCK_ERRNO == WSANOTINITIALISED ||
+        if (use_write == 0 &&
+            rk_IS_SOCKET_ERROR(count) &&
+            (rk_SOCK_ERRNO == WSANOTINITIALISED ||
              rk_SOCK_ERRNO == WSAENOTSOCK)) {
-	    use_write = 1;
+            use_write = 1;
 
-	    count = _write (sock, cbuf, rem);
-	}
+            count = _write (sock, cbuf, rem);
+        }
 #else
-	count = send (sock, cbuf, rem, 0);
+        count = send (sock, cbuf, rem, 0);
 #endif
-	if (count < 0) {
+        if (count < 0) {
 #ifdef SOCKET_IS_NOT_AN_FD
             if (!use_write) {
                 switch (rk_SOCK_ERRNO) {
-                case WSAEINTR:
-                    continue;
-                case WSAEWOULDBLOCK:
-                    return nbytes - rem;
-                default:
-                    return count;
+                    case WSAEINTR:
+                        continue;
+                    case WSAEWOULDBLOCK:
+                        return nbytes - rem;
+                    default:
+                        return count;
                 }
             } else
 #endif
-	    {
+            {
                 switch (errno) {
-                case EINTR:
-                    continue;
-                case EWOULDBLOCK:
-                    return nbytes - rem;
-                default:
-                    return count;
+                    case EINTR:
+                        continue;
+                    case EWOULDBLOCK:
+                        return nbytes - rem;
+                    default:
+                        return count;
                 }
             }
-	}
-	cbuf += count;
-	rem -= count;
+        }
+        cbuf += count;
+        rem -= count;
     }
     return nbytes;
 }

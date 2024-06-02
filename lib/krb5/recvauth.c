@@ -63,18 +63,18 @@ match_exact(const void *data, const char *appl_version)
  */
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_recvauth(krb5_context context,
-	      krb5_auth_context *auth_context,
-	      krb5_pointer p_fd,
-	      const char *appl_version,
-	      krb5_principal server,
-	      int32_t flags,
-	      krb5_keytab keytab,
-	      krb5_ticket **ticket)
+              krb5_auth_context *auth_context,
+              krb5_pointer p_fd,
+              const char *appl_version,
+              krb5_principal server,
+              int32_t flags,
+              krb5_keytab keytab,
+              krb5_ticket **ticket)
 {
     return krb5_recvauth_match_version(context, auth_context, p_fd,
-				       match_exact, appl_version,
-				       server, flags,
-				       keytab, ticket);
+                                       match_exact, appl_version,
+                                       server, flags,
+                                       keytab, ticket);
 }
 
 /**
@@ -84,15 +84,15 @@ krb5_recvauth(krb5_context context,
  */
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_recvauth_match_version(krb5_context context,
-			    krb5_auth_context *auth_context,
-			    krb5_pointer p_fd,
-			    krb5_boolean (*match_appl_version)(const void *,
-							       const char*),
-			    const void *match_data,
-			    krb5_principal server,
-			    int32_t flags,
-			    krb5_keytab keytab,
-			    krb5_ticket **ticket)
+                            krb5_auth_context *auth_context,
+                            krb5_pointer p_fd,
+                            krb5_boolean (*match_appl_version)(const void *,
+                                                               const char*),
+                            const void *match_data,
+                            krb5_principal server,
+                            int32_t flags,
+                            krb5_keytab keytab,
+                            krb5_ticket **ticket)
 {
     krb5_error_code ret;
     const char *version = KRB5_SENDAUTH_VERSION;
@@ -109,41 +109,41 @@ krb5_recvauth_match_version(krb5_context context,
      */
 
     if (*auth_context == NULL) {
-	ret = krb5_auth_con_init (context, auth_context);
-	if (ret)
-	    return ret;
+        ret = krb5_auth_con_init (context, auth_context);
+        if (ret)
+            return ret;
     }
 
     ret = krb5_auth_con_setaddrs_from_fd (context,
-					  *auth_context,
-					  p_fd);
+                                          *auth_context,
+                                          p_fd);
     if (ret)
-	return ret;
+        return ret;
 
     /*
      * Expect SENDAUTH protocol version.
      */
     if(!(flags & KRB5_RECVAUTH_IGNORE_VERSION)) {
-	n = krb5_net_read (context, p_fd, &len, 4);
-	if (n < 0) {
-	    ret = errno ? errno : EINVAL;
-	    krb5_set_error_message(context, ret, "read: %s", strerror(ret));
-	    return ret;
-	}
-	if (n == 0) {
-	    krb5_set_error_message(context, KRB5_SENDAUTH_BADAUTHVERS,
-				   N_("Failed to receive sendauth data", ""));
-	    return KRB5_SENDAUTH_BADAUTHVERS;
-	}
-	len = ntohl(len);
-	if (len != sizeof(her_version)
-	    || krb5_net_read (context, p_fd, her_version, len) != len
-	    || strncmp (version, her_version, len) != 0) {
-	    repl = 1;
-	    krb5_net_write (context, p_fd, &repl, 1);
-	    krb5_clear_error_message (context);
-	    return KRB5_SENDAUTH_BADAUTHVERS;
-	}
+        n = krb5_net_read (context, p_fd, &len, 4);
+        if (n < 0) {
+            ret = errno ? errno : EINVAL;
+            krb5_set_error_message(context, ret, "read: %s", strerror(ret));
+            return ret;
+        }
+        if (n == 0) {
+            krb5_set_error_message(context, KRB5_SENDAUTH_BADAUTHVERS,
+                                   N_("Failed to receive sendauth data", ""));
+            return KRB5_SENDAUTH_BADAUTHVERS;
+        }
+        len = ntohl(len);
+        if (len != sizeof(her_version)
+            || krb5_net_read (context, p_fd, her_version, len) != len
+            || strncmp (version, her_version, len) != 0) {
+            repl = 1;
+            krb5_net_write (context, p_fd, &repl, 1);
+            krb5_clear_error_message (context);
+            return KRB5_SENDAUTH_BADAUTHVERS;
+        }
     }
 
     /*
@@ -151,13 +151,13 @@ krb5_recvauth_match_version(krb5_context context,
      */
     n = krb5_net_read (context, p_fd, &len, 4);
     if (n < 0) {
-	ret = errno ? errno : EINVAL;
-	krb5_set_error_message(context, ret, "read: %s", strerror(ret));
-	return ret;
+        ret = errno ? errno : EINVAL;
+        krb5_set_error_message(context, ret, "read: %s", strerror(ret));
+        return ret;
     }
     if (n == 0) {
-	krb5_clear_error_message (context);
-	return KRB5_SENDAUTH_BADAPPLVERS;
+        krb5_clear_error_message (context);
+        return KRB5_SENDAUTH_BADAPPLVERS;
     }
     len = ntohl(len);
     if (len > 1024 * 1024) {
@@ -167,19 +167,19 @@ krb5_recvauth_match_version(krb5_context context,
     }
     her_appl_version = malloc (len);
     if (her_appl_version == NULL) {
-	repl = 2;
-	krb5_net_write (context, p_fd, &repl, 1);
-	return krb5_enomem(context);
+        repl = 2;
+        krb5_net_write (context, p_fd, &repl, 1);
+        return krb5_enomem(context);
     }
     if (krb5_net_read (context, p_fd, her_appl_version, len) != len
-	|| !(*match_appl_version)(match_data, her_appl_version)) {
-	repl = 2;
-	krb5_net_write (context, p_fd, &repl, 1);
-	krb5_set_error_message(context, KRB5_SENDAUTH_BADAPPLVERS,
-			       N_("wrong sendauth application version (%s)", ""),
-			       her_appl_version);
-	free (her_appl_version);
-	return KRB5_SENDAUTH_BADAPPLVERS;
+        || !(*match_appl_version)(match_data, her_appl_version)) {
+        repl = 2;
+        krb5_net_write (context, p_fd, &repl, 1);
+        krb5_set_error_message(context, KRB5_SENDAUTH_BADAPPLVERS,
+                               N_("wrong sendauth application version (%s)", ""),
+                               her_appl_version);
+        free (her_appl_version);
+        return KRB5_SENDAUTH_BADAPPLVERS;
     }
     free (her_appl_version);
 
@@ -188,9 +188,9 @@ krb5_recvauth_match_version(krb5_context context,
      */
     repl = 0;
     if (krb5_net_write (context, p_fd, &repl, 1) != 1) {
-	ret = errno ? errno : EINVAL;
-	krb5_set_error_message(context, ret, "write: %s", strerror(ret));
-	return ret;
+        ret = errno ? errno : EINVAL;
+        krb5_set_error_message(context, ret, "write: %s", strerror(ret));
+        return ret;
     }
 
     /*
@@ -204,34 +204,34 @@ krb5_recvauth_match_version(krb5_context context,
     krb5_data_zero (&data);
     ret = krb5_read_message (context, p_fd, &data);
     if (ret)
-	return ret;
+        return ret;
 
     ret = krb5_rd_req (context,
-		       auth_context,
-		       &data,
-		       server,
-		       keytab,
-		       &ap_options,
-		       ticket);
+                       auth_context,
+                       &data,
+                       server,
+                       keytab,
+                       &ap_options,
+                       ticket);
     krb5_data_free (&data);
     if (ret) {
-	krb5_data error_data;
-	krb5_error_code ret2;
+        krb5_data error_data;
+        krb5_error_code ret2;
 
-	ret2 = krb5_mk_error (context,
-			      ret,
-			      NULL,
-			      NULL,
-			      NULL,
-			      server,
-			      NULL,
-			      NULL,
-			      &error_data);
-	if (ret2 == 0) {
-	    krb5_write_message (context, p_fd, &error_data);
-	    krb5_data_free (&error_data);
-	}
-	return ret;
+        ret2 = krb5_mk_error (context,
+                              ret,
+                              NULL,
+                              NULL,
+                              NULL,
+                              server,
+                              NULL,
+                              NULL,
+                              &error_data);
+        if (ret2 == 0) {
+            krb5_write_message (context, p_fd, &error_data);
+            krb5_data_free (&error_data);
+        }
+        return ret;
     }
 
     /*
@@ -239,31 +239,31 @@ krb5_recvauth_match_version(krb5_context context,
      */
     len = 0;
     if (krb5_net_write (context, p_fd, &len, 4) != 4) {
-	ret = errno ? errno : EINVAL;
-	krb5_set_error_message(context, ret, "write: %s", strerror(ret));
-	krb5_free_ticket(context, *ticket);
-	*ticket = NULL;
-	return ret;
+        ret = errno ? errno : EINVAL;
+        krb5_set_error_message(context, ret, "write: %s", strerror(ret));
+        krb5_free_ticket(context, *ticket);
+        *ticket = NULL;
+        return ret;
     }
 
     /*
      * If client requires mutual authentication, send AP_REP.
      */
     if (ap_options & AP_OPTS_MUTUAL_REQUIRED) {
-	ret = krb5_mk_rep (context, *auth_context, &data);
-	if (ret) {
-	    krb5_free_ticket(context, *ticket);
-	    *ticket = NULL;
-	    return ret;
-	}
+        ret = krb5_mk_rep (context, *auth_context, &data);
+        if (ret) {
+            krb5_free_ticket(context, *ticket);
+            *ticket = NULL;
+            return ret;
+        }
 
-	ret = krb5_write_message (context, p_fd, &data);
-	if (ret) {
-	    krb5_free_ticket(context, *ticket);
-	    *ticket = NULL;
-	    return ret;
-	}
-	krb5_data_free (&data);
+        ret = krb5_write_message (context, p_fd, &data);
+        if (ret) {
+            krb5_free_ticket(context, *ticket);
+            *ticket = NULL;
+            return ret;
+        }
+        krb5_data_free (&data);
     }
     return 0;
 }

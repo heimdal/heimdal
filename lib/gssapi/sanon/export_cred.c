@@ -33,8 +33,8 @@
 
 OM_uint32 GSSAPI_CALLCONV
 _gss_sanon_export_cred(OM_uint32 *minor,
-		       gss_cred_id_t input_cred,
-		       gss_buffer_t token)
+                       gss_cred_id_t input_cred,
+                       gss_buffer_t token)
 {
     gss_buffer_desc buf;
     krb5_storage *sp;
@@ -46,20 +46,20 @@ _gss_sanon_export_cred(OM_uint32 *minor,
 
     major = _gss_sanon_export_name(minor, (gss_name_t)input_cred, &buf);
     if (major)
-	return major;
+        return major;
 
     sp = krb5_storage_emem();
     if (sp == NULL) {
-	gss_release_buffer(&junk, &buf);
-	*minor = ENOMEM;
-	return GSS_S_FAILURE;
+        gss_release_buffer(&junk, &buf);
+        *minor = ENOMEM;
+        return GSS_S_FAILURE;
     }
 
     major = _gss_mg_store_oid(minor, sp, GSS_SANON_X25519_MECHANISM);
     if (major) {
-	gss_release_buffer(&junk, &buf);
-	krb5_storage_free(sp);
-	return major;
+        gss_release_buffer(&junk, &buf);
+        krb5_storage_free(sp);
+        return major;
     }
     data_out.length = 0;
     data_out.data = NULL;
@@ -67,10 +67,10 @@ _gss_sanon_export_cred(OM_uint32 *minor,
     data.data = buf.value;
     *minor = krb5_store_data(sp, data);
     if (*minor == 0)
-	*minor = krb5_storage_to_data(sp, &data_out);
+        *minor = krb5_storage_to_data(sp, &data_out);
     if (*minor == 0) {
-	token->value = data_out.data;
-	token->length = data_out.length;
+        token->value = data_out.data;
+        token->length = data_out.length;
     }
     gss_release_buffer(&junk, &buf);
     krb5_storage_free(sp);

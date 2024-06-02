@@ -59,8 +59,8 @@ BN2mpz(fp_int *s, const BIGNUM *bn)
 
 static int
 tfm_rsa_private_calculate(fp_int * in, fp_int * p,  fp_int * q,
-			  fp_int * dmp1, fp_int * dmq1, fp_int * iqmp,
-			  fp_int * out)
+                          fp_int * dmp1, fp_int * dmq1, fp_int * iqmp,
+                          fp_int * out)
 {
     fp_int vp, vq, u;
 
@@ -77,7 +77,7 @@ tfm_rsa_private_calculate(fp_int * in, fp_int * p,  fp_int * q,
     /* u = (vp - vq)C2 mod p. */
     fp_sub(&vp, &vq, &u);
     if (fp_isneg(&u))
-	fp_add(&u, p, &u);
+        fp_add(&u, p, &u);
     fp_mul(&u, iqmp, &u);
     fp_mod(&u, p, &u);
 
@@ -96,7 +96,7 @@ tfm_rsa_private_calculate(fp_int * in, fp_int * p,  fp_int * q,
 
 static int
 tfm_rsa_public_encrypt(int flen, const unsigned char* from,
-			unsigned char* to, RSA* rsa, int padding)
+                       unsigned char* to, RSA* rsa, int padding)
 {
     unsigned char *p, *p0;
     int res;
@@ -104,35 +104,35 @@ tfm_rsa_public_encrypt(int flen, const unsigned char* from,
     fp_int enc, dec, n, e;
 
     if (padding != RSA_PKCS1_PADDING)
-	return -1;
+        return -1;
 
     size = RSA_size(rsa);
 
     if (size < RSA_PKCS1_PADDING_SIZE || size - RSA_PKCS1_PADDING_SIZE < flen)
-	return -2;
+        return -2;
 
     BN2mpz(&n, rsa->n);
     BN2mpz(&e, rsa->e);
 
     p = p0 = malloc(size - 1);
     if (p0 == NULL) {
-	fp_zero_multi(&e, &n, NULL);
-	return -3;
+        fp_zero_multi(&e, &n, NULL);
+        return -3;
     }
 
     padlen = size - flen - 3;
 
     *p++ = 2;
     if (RAND_bytes(p, padlen) != 1) {
-	fp_zero_multi(&e, &n, NULL);
-	free(p0);
-	return -4;
+        fp_zero_multi(&e, &n, NULL);
+        free(p0);
+        return -4;
     }
     while(padlen) {
-	if (*p == 0)
-	    *p = 1;
-	padlen--;
-	p++;
+        if (*p == 0)
+            *p = 1;
+        padlen--;
+        p++;
     }
     *p++ = 0;
     memcpy(p, from, flen);
@@ -148,14 +148,14 @@ tfm_rsa_public_encrypt(int flen, const unsigned char* from,
     fp_zero_multi(&dec, &e, &n, NULL);
 
     if (res != 0)
-	return -4;
+        return -4;
 
     {
-	size_t ssize;
-	ssize = fp_unsigned_bin_size(&enc);
-	assert(size >= ssize);
-	fp_to_unsigned_bin(&enc, to);
-	size = ssize;
+        size_t ssize;
+        ssize = fp_unsigned_bin_size(&enc);
+        assert(size >= ssize);
+        fp_to_unsigned_bin(&enc, to);
+        size = ssize;
     }
     fp_zero(&enc);
 
@@ -164,7 +164,7 @@ tfm_rsa_public_encrypt(int flen, const unsigned char* from,
 
 static int
 tfm_rsa_public_decrypt(int flen, const unsigned char* from,
-		       unsigned char* to, RSA* rsa, int padding)
+                       unsigned char* to, RSA* rsa, int padding)
 {
     unsigned char *p;
     int res;
@@ -172,10 +172,10 @@ tfm_rsa_public_decrypt(int flen, const unsigned char* from,
     fp_int s, us, n, e;
 
     if (padding != RSA_PKCS1_PADDING)
-	return -1;
+        return -1;
 
     if (flen > RSA_size(rsa))
-	return -2;
+        return -2;
 
     BN2mpz(&n, rsa->n);
     BN2mpz(&e, rsa->e);
@@ -183,8 +183,8 @@ tfm_rsa_public_decrypt(int flen, const unsigned char* from,
 #if 0
     /* Check that the exponent is larger then 3 */
     if (mp_int_compare_value(&e, 3) <= 0) {
-	fp_zero_multi(&e, &n, NULL);
-	return -3;
+        fp_zero_multi(&e, &n, NULL);
+        return -3;
     }
 #endif
 
@@ -192,8 +192,8 @@ tfm_rsa_public_decrypt(int flen, const unsigned char* from,
     fp_read_unsigned_bin(&s, rk_UNCONST(from), flen);
 
     if (fp_cmp(&s, &n) >= 0) {
-	fp_zero_multi(&e, &n, NULL);
-	return -4;
+        fp_zero_multi(&e, &n, NULL);
+        return -4;
     }
 
     res = fp_exptmod(&s, &e, &n, &us);
@@ -201,7 +201,7 @@ tfm_rsa_public_decrypt(int flen, const unsigned char* from,
     fp_zero_multi(&s, &e, &n, NULL);
 
     if (res != 0)
-	return -5;
+        return -5;
     p = to;
 
 
@@ -213,15 +213,15 @@ tfm_rsa_public_decrypt(int flen, const unsigned char* from,
 
     /* head zero was skipped by fp_to_unsigned_bin */
     if (*p == 0)
-	return -6;
+        return -6;
     if (*p != 1)
-	return -7;
+        return -7;
     size--; p++;
     while (size && *p == 0xff) {
-	size--; p++;
+        size--; p++;
     }
     if (size == 0 || *p != 0)
-	return -8;
+        return -8;
     size--; p++;
 
     memmove(to, p, size);
@@ -231,7 +231,7 @@ tfm_rsa_public_decrypt(int flen, const unsigned char* from,
 
 static int
 tfm_rsa_private_encrypt(int flen, const unsigned char* from,
-			unsigned char* to, RSA* rsa, int padding)
+                        unsigned char* to, RSA* rsa, int padding)
 {
     unsigned char *p, *p0;
     int res;
@@ -239,12 +239,12 @@ tfm_rsa_private_encrypt(int flen, const unsigned char* from,
     fp_int in, out, n, e;
 
     if (padding != RSA_PKCS1_PADDING)
-	return -1;
+        return -1;
 
     size = RSA_size(rsa);
 
     if (size < RSA_PKCS1_PADDING_SIZE || size - RSA_PKCS1_PADDING_SIZE < flen)
-	return -2;
+        return -2;
 
     p0 = p = malloc(size);
     *p++ = 0;
@@ -264,48 +264,48 @@ tfm_rsa_private_encrypt(int flen, const unsigned char* from,
     free(p0);
 
     if(fp_isneg(&in) || fp_cmp(&in, &n) >= 0) {
-	size = -3;
-	goto out;
+        size = -3;
+        goto out;
     }
 
     if (rsa->p && rsa->q && rsa->dmp1 && rsa->dmq1 && rsa->iqmp) {
-	fp_int p, q, dmp1, dmq1, iqmp;
+        fp_int p, q, dmp1, dmq1, iqmp;
 
-	BN2mpz(&p, rsa->p);
-	BN2mpz(&q, rsa->q);
-	BN2mpz(&dmp1, rsa->dmp1);
-	BN2mpz(&dmq1, rsa->dmq1);
-	BN2mpz(&iqmp, rsa->iqmp);
+        BN2mpz(&p, rsa->p);
+        BN2mpz(&q, rsa->q);
+        BN2mpz(&dmp1, rsa->dmp1);
+        BN2mpz(&dmq1, rsa->dmq1);
+        BN2mpz(&iqmp, rsa->iqmp);
 
-	res = tfm_rsa_private_calculate(&in, &p, &q, &dmp1, &dmq1, &iqmp, &out);
+        res = tfm_rsa_private_calculate(&in, &p, &q, &dmp1, &dmq1, &iqmp, &out);
 
-	fp_zero_multi(&p, &q, &dmp1, &dmq1, &iqmp, NULL);
+        fp_zero_multi(&p, &q, &dmp1, &dmq1, &iqmp, NULL);
 
-	if (res != 0) {
-	    size = -4;
-	    goto out;
-	}
+        if (res != 0) {
+            size = -4;
+            goto out;
+        }
     } else {
-	fp_int d;
+        fp_int d;
 
-	BN2mpz(&d, rsa->d);
-	res = fp_exptmod(&in, &d, &n, &out);
-	fp_zero(&d);
-	if (res != 0) {
-	    size = -5;
-	    goto out;
-	}
+        BN2mpz(&d, rsa->d);
+        res = fp_exptmod(&in, &d, &n, &out);
+        fp_zero(&d);
+        if (res != 0) {
+            size = -5;
+            goto out;
+        }
     }
 
     if (size > 0) {
-	size_t ssize;
-	ssize = fp_unsigned_bin_size(&out);
-	assert(size >= ssize);
-	fp_to_unsigned_bin(&out, to);
-	size = ssize;
+        size_t ssize;
+        ssize = fp_unsigned_bin_size(&out);
+        assert(size >= ssize);
+        fp_to_unsigned_bin(&out, to);
+        size = ssize;
     }
 
- out:
+out:
     fp_zero_multi(&e, &n, &in, &out, NULL);
 
     return size;
@@ -313,7 +313,7 @@ tfm_rsa_private_encrypt(int flen, const unsigned char* from,
 
 static int
 tfm_rsa_private_decrypt(int flen, const unsigned char* from,
-			unsigned char* to, RSA* rsa, int padding)
+                        unsigned char* to, RSA* rsa, int padding)
 {
     unsigned char *ptr;
     int res;
@@ -321,11 +321,11 @@ tfm_rsa_private_decrypt(int flen, const unsigned char* from,
     fp_int in, out, n, e;
 
     if (padding != RSA_PKCS1_PADDING)
-	return -1;
+        return -1;
 
     size = RSA_size(rsa);
     if (flen > size)
-	return -2;
+        return -2;
 
     fp_init_multi(&in, &out, NULL);
 
@@ -335,68 +335,68 @@ tfm_rsa_private_decrypt(int flen, const unsigned char* from,
     fp_read_unsigned_bin(&in, rk_UNCONST(from), flen);
 
     if(fp_isneg(&in) || fp_cmp(&in, &n) >= 0) {
-	size = -2;
-	goto out;
+        size = -2;
+        goto out;
     }
 
     if (rsa->p && rsa->q && rsa->dmp1 && rsa->dmq1 && rsa->iqmp) {
-	fp_int p, q, dmp1, dmq1, iqmp;
+        fp_int p, q, dmp1, dmq1, iqmp;
 
-	BN2mpz(&p, rsa->p);
-	BN2mpz(&q, rsa->q);
-	BN2mpz(&dmp1, rsa->dmp1);
-	BN2mpz(&dmq1, rsa->dmq1);
-	BN2mpz(&iqmp, rsa->iqmp);
+        BN2mpz(&p, rsa->p);
+        BN2mpz(&q, rsa->q);
+        BN2mpz(&dmp1, rsa->dmp1);
+        BN2mpz(&dmq1, rsa->dmq1);
+        BN2mpz(&iqmp, rsa->iqmp);
 
-	res = tfm_rsa_private_calculate(&in, &p, &q, &dmp1, &dmq1, &iqmp, &out);
+        res = tfm_rsa_private_calculate(&in, &p, &q, &dmp1, &dmq1, &iqmp, &out);
 
-	fp_zero_multi(&p, &q, &dmp1, &dmq1, &iqmp, NULL);
+        fp_zero_multi(&p, &q, &dmp1, &dmq1, &iqmp, NULL);
 
-	if (res != 0) {
-	    size = -3;
-	    goto out;
-	}
+        if (res != 0) {
+            size = -3;
+            goto out;
+        }
 
     } else {
-	fp_int d;
+        fp_int d;
 
-	if(fp_isneg(&in) || fp_cmp(&in, &n) >= 0)
-	    return -4;
+        if(fp_isneg(&in) || fp_cmp(&in, &n) >= 0)
+            return -4;
 
-	BN2mpz(&d, rsa->d);
-	res = fp_exptmod(&in, &d, &n, &out);
-	fp_zero(&d);
-	if (res != 0) {
-	    size = -5;
-	    goto out;
-	}
+        BN2mpz(&d, rsa->d);
+        res = fp_exptmod(&in, &d, &n, &out);
+        fp_zero(&d);
+        if (res != 0) {
+            size = -5;
+            goto out;
+        }
     }
 
     ptr = to;
     {
-	size_t ssize;
-	ssize = fp_unsigned_bin_size(&out);
-	assert(size >= ssize);
-	fp_to_unsigned_bin(&out, ptr);
-	size = ssize;
+        size_t ssize;
+        ssize = fp_unsigned_bin_size(&out);
+        assert(size >= ssize);
+        fp_to_unsigned_bin(&out, ptr);
+        size = ssize;
     }
 
     /* head zero was skipped by mp_int_to_unsigned */
     if (*ptr != 2) {
-	size = -6;
-	goto out;
+        size = -6;
+        goto out;
     }
     size--; ptr++;
     while (size && *ptr != 0) {
-	size--; ptr++;
+        size--; ptr++;
     }
     if (size == 0)
-	return -7;
+        return -7;
     size--; ptr++;
 
     memmove(to, ptr, size);
 
- out:
+out:
     fp_zero_multi(&e, &n, &in, &out, NULL);
 
     return size;
@@ -412,7 +412,7 @@ mpz2BN(fp_int *s)
     size = fp_unsigned_bin_size(s);
     p = malloc(size);
     if (p == NULL && size != 0)
-	return NULL;
+        return NULL;
 
     fp_to_unsigned_bin(s, p);
 
@@ -429,10 +429,10 @@ random_num(fp_int *num, size_t len)
     len = (len + 7) / 8;
     p = malloc(len);
     if (p == NULL)
-	return 1;
+        return 1;
     if (RAND_bytes(p, len) != 1) {
-	free(p);
-	return 1;
+        free(p);
+        return 1;
     }
     fp_read_unsigned_bin(num, p, len);
     free(p);
@@ -448,7 +448,7 @@ tfm_rsa_generate_key(RSA *rsa, int bits, BIGNUM *e, BN_GENCB *cb)
     int counter, ret, bitsp;
 
     if (bits < 789)
-	return -1;
+        return -1;
 
     bitsp = (bits + 1) / 2;
 
@@ -461,35 +461,35 @@ tfm_rsa_generate_key(RSA *rsa, int bits, BIGNUM *e, BN_GENCB *cb)
     /* generate p and q so that p != q and bits(pq) ~ bits */
     counter = 0;
     do {
-	BN_GENCB_call(cb, 2, counter++);
-	CHECK(random_num(&p, bitsp), 0);
-	CHECK(fp_find_prime(&p), FP_YES);
+        BN_GENCB_call(cb, 2, counter++);
+        CHECK(random_num(&p, bitsp), 0);
+        CHECK(fp_find_prime(&p), FP_YES);
 
-	fp_sub_d(&p, 1, &t1);
-	fp_gcd(&t1, &el, &t2);
+        fp_sub_d(&p, 1, &t1);
+        fp_gcd(&t1, &el, &t2);
     } while(fp_cmp_d(&t2, 1) != 0);
 
     BN_GENCB_call(cb, 3, 0);
 
     counter = 0;
     do {
-	BN_GENCB_call(cb, 2, counter++);
-	CHECK(random_num(&q, bits - bitsp), 0);
-	CHECK(fp_find_prime(&q), FP_YES);
+        BN_GENCB_call(cb, 2, counter++);
+        CHECK(random_num(&q, bits - bitsp), 0);
+        CHECK(fp_find_prime(&q), FP_YES);
 
-	if (fp_cmp(&p, &q) == 0) /* don't let p and q be the same */
-	    continue;
+        if (fp_cmp(&p, &q) == 0) /* don't let p and q be the same */
+            continue;
 
-	fp_sub_d(&q, 1, &t1);
-	fp_gcd(&t1, &el, &t2);
+        fp_sub_d(&q, 1, &t1);
+        fp_gcd(&t1, &el, &t2);
     } while(fp_cmp_d(&t2, 1) != 0);
 
     /* make p > q */
     if (fp_cmp(&p, &q) < 0) {
-	fp_int c;
-	fp_copy(&p, &c);
-	fp_copy(&q, &p);
-	fp_copy(&c, &q);
+        fp_int c;
+        fp_copy(&p, &c);
+        fp_copy(&q, &p);
+        fp_copy(&c, &q);
     }
 
     BN_GENCB_call(cb, 3, 1);
@@ -525,7 +525,7 @@ tfm_rsa_generate_key(RSA *rsa, int bits, BIGNUM *e, BN_GENCB *cb)
 
 out:
     fp_zero_multi(&el, &p, &q, &n, &d, &dmp1,
-		  &dmq1, &iqmp, &t1, &t2, &t3, NULL);
+                  &dmq1, &iqmp, &t1, &t2, &t3, NULL);
 
     return ret;
 }

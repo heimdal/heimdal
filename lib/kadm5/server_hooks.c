@@ -44,20 +44,20 @@ struct heim_plugin_data kadm5_hook_plugin_data = {
     kadm5_hook_plugin_deps,
     kadm5_get_instance
 };
-    
+
 void
 _kadm5_s_set_hook_error_message(kadm5_server_context *context,
-				krb5_error_code ret,
-				const char *op,
-				const struct kadm5_hook_ftable *hook,
-				enum kadm5_hook_stage stage)
+                                krb5_error_code ret,
+                                const char *op,
+                                const struct kadm5_hook_ftable *hook,
+                                enum kadm5_hook_stage stage)
 {
     assert(ret != 0);
 
     krb5_set_error_message(context->context, ret,
-			       "%s hook `%s' failed %s-commit",
-			       op, hook->name,
-			       stage == KADM5_HOOK_STAGE_PRECOMMIT ? "pre" : "post");
+                           "%s hook `%s' failed %s-commit",
+                           op, hook->name,
+                           stage == KADM5_HOOK_STAGE_PRECOMMIT ? "pre" : "post");
 }
 
 kadm5_ret_t
@@ -67,9 +67,9 @@ _kadm5_s_init_hooks(kadm5_server_context *ctx)
     char **dirs;
 
     dirs = krb5_config_get_strings(context, NULL, "kadmin",
-				   "plugin_dir", NULL);
+                                   "plugin_dir", NULL);
     if (dirs == NULL)
-	return 0;
+        return 0;
 
     _krb5_load_plugins(context, "kadm5", (const char **)dirs);
     krb5_config_free_strings(dirs);
@@ -89,9 +89,9 @@ kadm5_get_instance(const char *libname)
     static const char *instance = "libkadm5";
 
     if (strcmp(libname, "kadm5") == 0)
-	return (uintptr_t)instance;
+        return (uintptr_t)instance;
     else if (strcmp(libname, "krb5") == 0)
-	return krb5_get_instance(libname);
+        return krb5_get_instance(libname);
 
     return 0;
 }

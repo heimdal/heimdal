@@ -42,30 +42,30 @@
  */
 OM_uint32
 __gsskrb5_cred_store_find(OM_uint32 *minor_status,
-			  gss_const_key_value_set_t cred_store,
-			  const char *key,
-			  const char **value)
+                          gss_const_key_value_set_t cred_store,
+                          const char *key,
+                          const char **value)
 {
     size_t i;
 
     *value = NULL;
 
     if (cred_store == GSS_C_NO_CRED_STORE)
-	return GSS_S_COMPLETE;
+        return GSS_S_COMPLETE;
     else if (cred_store->count == 0) {
-	*minor_status = GSS_KRB5_S_G_BAD_USAGE;
-	return GSS_S_NO_CRED;
+        *minor_status = GSS_KRB5_S_G_BAD_USAGE;
+        return GSS_S_NO_CRED;
     }
 
     for (i = 0; i < cred_store->count; i++) {
-	if (strcmp(key, cred_store->elements[i].key) == 0) {
-	    if (*value) {
-		*value = NULL;
-		*minor_status = GSS_KRB5_S_G_BAD_USAGE;
-		return GSS_S_DUPLICATE_ELEMENT;
-	    }
-	    *value = cred_store->elements[i].value;
-	}
+        if (strcmp(key, cred_store->elements[i].key) == 0) {
+            if (*value) {
+                *value = NULL;
+                *minor_status = GSS_KRB5_S_G_BAD_USAGE;
+                return GSS_S_DUPLICATE_ELEMENT;
+            }
+            *value = cred_store->elements[i].value;
+        }
     }
 
     return GSS_S_COMPLETE;
@@ -73,10 +73,10 @@ __gsskrb5_cred_store_find(OM_uint32 *minor_status,
 
 OM_uint32
 __gsskrb5_ccache_lifetime(OM_uint32 *minor_status,
-			  krb5_context context,
-			  krb5_ccache id,
-			  krb5_principal principal,
-			  OM_uint32 *lifetime)
+                          krb5_context context,
+                          krb5_ccache id,
+                          krb5_principal principal,
+                          OM_uint32 *lifetime)
 {
     krb5_error_code kret;
     time_t left;
@@ -97,8 +97,8 @@ __gsskrb5_ccache_lifetime(OM_uint32 *minor_status,
 
 static krb5_error_code
 get_system_keytab(krb5_context context,
-		  gss_const_key_value_set_t cred_store,
-		  krb5_keytab *keytab)
+                  gss_const_key_value_set_t cred_store,
+                  krb5_keytab *keytab)
 {
     krb5_error_code kret;
     const char *cs_ktname;
@@ -109,17 +109,17 @@ get_system_keytab(krb5_context context,
     HEIMDAL_MUTEX_lock(&gssapi_keytab_mutex);
 
     if (cs_ktname)
-	kret = krb5_kt_resolve(context, cs_ktname, keytab);
+        kret = krb5_kt_resolve(context, cs_ktname, keytab);
     else if (_gsskrb5_keytab != NULL) {
-	char *name = NULL;
+        char *name = NULL;
 
-	kret = krb5_kt_get_full_name(context, _gsskrb5_keytab, &name);
-	if (kret == 0) {
-	    kret = krb5_kt_resolve(context, name, keytab);
-	    krb5_xfree(name);
-	}
+        kret = krb5_kt_get_full_name(context, _gsskrb5_keytab, &name);
+        if (kret == 0) {
+            kret = krb5_kt_resolve(context, name, keytab);
+            krb5_xfree(name);
+        }
     } else
-	kret = krb5_kt_default(context, keytab);
+        kret = krb5_kt_default(context, keytab);
 
     HEIMDAL_MUTEX_unlock(&gssapi_keytab_mutex);
 
@@ -128,9 +128,9 @@ get_system_keytab(krb5_context context,
 
 static krb5_error_code
 get_client_keytab(krb5_context context,
-		  gss_const_key_value_set_t cred_store,
-		  krb5_const_principal principal,
-		  krb5_keytab *keytab)
+                  gss_const_key_value_set_t cred_store,
+                  krb5_const_principal principal,
+                  krb5_keytab *keytab)
 {
     krb5_error_code ret;
     const char *cs_ktname;
@@ -139,31 +139,31 @@ get_client_keytab(krb5_context context,
     __gsskrb5_cred_store_find(&tmp, cred_store, "client_keytab", &cs_ktname);
 
     if (cs_ktname)
-	ret = krb5_kt_resolve(context, cs_ktname, keytab);
+        ret = krb5_kt_resolve(context, cs_ktname, keytab);
     else {
-	char *name = NULL;
-	ret = _krb5_kt_client_default_name(context, &name);
-	if (ret == 0)
-	    ret = krb5_kt_resolve(context, name, keytab);
-	krb5_xfree(name);
+        char *name = NULL;
+        ret = _krb5_kt_client_default_name(context, &name);
+        if (ret == 0)
+            ret = krb5_kt_resolve(context, name, keytab);
+        krb5_xfree(name);
     }
 
     if (ret == 0 && principal) {
-	krb5_keytab_entry entry;
+        krb5_keytab_entry entry;
 
-	ret = krb5_kt_get_entry(context, *keytab, principal,
-				 0, 0, &entry);
-	if (ret == 0)
-	    krb5_kt_free_entry(context, &entry);
+        ret = krb5_kt_get_entry(context, *keytab, principal,
+                                 0, 0, &entry);
+        if (ret == 0)
+            krb5_kt_free_entry(context, &entry);
     }
 
     if (ret) {
-	if (*keytab) {
-	    krb5_kt_close(context, *keytab);
-	    *keytab = NULL;
-	}
+        if (*keytab) {
+            krb5_kt_close(context, *keytab);
+            *keytab = NULL;
+        }
 
-	ret = get_system_keytab(context, GSS_C_NO_CRED_STORE, keytab);
+        ret = get_system_keytab(context, GSS_C_NO_CRED_STORE, keytab);
     }
 
     return ret;
@@ -175,13 +175,13 @@ is_valid_password_cred_store(gss_const_key_value_set_t cred_store)
     size_t i;
 
     if (cred_store == GSS_C_NO_CRED_STORE)
-	return TRUE;
+        return TRUE;
 
     /* XXX don't check keytab, someday we will allow password+acceptor creds */
     for (i = 0; i < cred_store->count; i++) {
-	if (strcmp(cred_store->elements[i].key, "ccache") == 0 ||
-	    strcmp(cred_store->elements[i].key, "client_keytab") == 0)
-	    return FALSE;
+        if (strcmp(cred_store->elements[i].key, "ccache") == 0 ||
+            strcmp(cred_store->elements[i].key, "client_keytab") == 0)
+            return FALSE;
     }
 
     return TRUE;
@@ -212,8 +212,8 @@ acquire_cred_with_password(OM_uint32 *minor_status,
     const char *realm;
 
     if (!is_valid_password_cred_store(cred_store)) {
-	*minor_status = GSS_KRB5_S_G_BAD_PASSWORD_CRED_STORE;
-	return GSS_S_NO_CRED;
+        *minor_status = GSS_KRB5_S_G_BAD_PASSWORD_CRED_STORE;
+        return GSS_S_NO_CRED;
     }
 
     if (cred_usage == GSS_C_ACCEPT) {
@@ -296,9 +296,9 @@ end:
     if (ccache != NULL)
         krb5_cc_destroy(context, ccache);
     if (cred.client != NULL)
-	krb5_free_cred_contents(context, &cred);
+        krb5_free_cred_contents(context, &cred);
     if (ret != GSS_S_COMPLETE)
-	*minor_status = kret;
+        *minor_status = kret;
     return (ret);
 }
 
@@ -330,9 +330,9 @@ acquire_initiator_cred(OM_uint32 *minor_status,
     memset(&cred, 0, sizeof(cred));
 
     ret = __gsskrb5_cred_store_find(minor_status, cred_store,
-				    "ccache", &cs_ccache_name);
+                                    "ccache", &cs_ccache_name);
     if (GSS_ERROR(ret))
-	return ret;
+        return ret;
 
     ret = GSS_S_FAILURE;
 
@@ -362,10 +362,10 @@ acquire_initiator_cred(OM_uint32 *minor_status,
          * Not default credential case.  See if we can find a ccache in
          * the cccol for the desired_name.
          */
-	kret = krb5_cc_cache_match(context,
-				   handle->principal,
-				   &ccache);
-	if (kret == 0) {
+        kret = krb5_cc_cache_match(context,
+                                   handle->principal,
+                                   &ccache);
+        if (kret == 0) {
             kret = krb5_cc_get_lifetime(context, ccache, &lifetime);
             if (kret == 0) {
                 if (lifetime > 0)
@@ -373,7 +373,7 @@ acquire_initiator_cred(OM_uint32 *minor_status,
                 else
                     goto try_keytab;
             }
-	}
+        }
         /*
          * Fall through.  We shouldn't find this in the default ccache
          * either, but we'll give it a try, then we'll try using a keytab.
@@ -385,9 +385,9 @@ acquire_initiator_cred(OM_uint32 *minor_status,
      * krb5_cc_cache_match() failed (or found expired).
      */
     if (cs_ccache_name)
-	kret = krb5_cc_resolve(context, cs_ccache_name, &def_ccache);
+        kret = krb5_cc_resolve(context, cs_ccache_name, &def_ccache);
     else
-	kret = krb5_cc_default(context, &def_ccache);
+        kret = krb5_cc_default(context, &def_ccache);
     if (kret != 0)
         goto try_keytab;
     kret = krb5_cc_get_lifetime(context, def_ccache, &lifetime);
@@ -494,13 +494,13 @@ end:
     if (def_ccache != NULL)
         krb5_cc_close(context, def_ccache);
     if (cred.client != NULL)
-	krb5_free_cred_contents(context, &cred);
+        krb5_free_cred_contents(context, &cred);
     if (def_princ != NULL)
-	krb5_free_principal(context, def_princ);
+        krb5_free_principal(context, def_princ);
     if (keytab != NULL)
-	krb5_kt_close(context, keytab);
+        krb5_kt_close(context, keytab);
     if (ret != GSS_S_COMPLETE && kret != 0)
-	*minor_status = kret;
+        *minor_status = kret;
     return (ret);
 }
 
@@ -520,42 +520,42 @@ acquire_acceptor_cred(OM_uint32 * minor_status,
 
     kret = get_system_keytab(context, cred_store, &handle->keytab);
     if (kret)
-	goto end;
+        goto end;
 
     /* check that the requested principal exists in the keytab */
     if (handle->principal) {
-	krb5_keytab_entry entry;
+        krb5_keytab_entry entry;
 
-	kret = krb5_kt_get_entry(context, handle->keytab,
-				 handle->principal, 0, 0, &entry);
-	if (kret)
-	    goto end;
-	krb5_kt_free_entry(context, &entry);
-	ret = GSS_S_COMPLETE;
+        kret = krb5_kt_get_entry(context, handle->keytab,
+                                 handle->principal, 0, 0, &entry);
+        if (kret)
+            goto end;
+        krb5_kt_free_entry(context, &entry);
+        ret = GSS_S_COMPLETE;
     } else {
-	/*
-	 * Check if there is at least one entry in the keytab before
-	 * declaring it as an useful keytab.
-	 */
-	krb5_keytab_entry tmp;
-	krb5_kt_cursor c;
+        /*
+         * Check if there is at least one entry in the keytab before
+         * declaring it as an useful keytab.
+         */
+        krb5_keytab_entry tmp;
+        krb5_kt_cursor c;
 
-	kret = krb5_kt_start_seq_get (context, handle->keytab, &c);
-	if (kret)
-	    goto end;
-	if (krb5_kt_next_entry(context, handle->keytab, &tmp, &c) == 0) {
-	    krb5_kt_free_entry(context, &tmp);
-	    ret = GSS_S_COMPLETE; /* ok found one entry */
-	}
-	krb5_kt_end_seq_get (context, handle->keytab, &c);
+        kret = krb5_kt_start_seq_get (context, handle->keytab, &c);
+        if (kret)
+            goto end;
+        if (krb5_kt_next_entry(context, handle->keytab, &tmp, &c) == 0) {
+            krb5_kt_free_entry(context, &tmp);
+            ret = GSS_S_COMPLETE; /* ok found one entry */
+        }
+        krb5_kt_end_seq_get (context, handle->keytab, &c);
     }
 end:
     if (ret != GSS_S_COMPLETE) {
-	if (handle->keytab != NULL)
-	    krb5_kt_close(context, handle->keytab);
-	if (kret != 0) {
-	    *minor_status = kret;
-	}
+        if (handle->keytab != NULL)
+            krb5_kt_close(context, handle->keytab);
+        if (kret != 0) {
+            *minor_status = kret;
+        }
     }
     return (ret);
 }
@@ -571,7 +571,7 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_acquire_cred_from
  gss_cred_id_t * output_cred_handle,
  gss_OID_set *actual_mechs,
  OM_uint32 *time_rec
-    )
+)
 {
     krb5_context context;
     gsskrb5_cred handle;
@@ -579,30 +579,30 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_acquire_cred_from
     const char *password = NULL;
 
     if (desired_mechs) {
-	int present = 0;
+        int present = 0;
 
-	ret = gss_test_oid_set_member(minor_status, GSS_KRB5_MECHANISM,
-				      desired_mechs, &present);
-	if (ret)
-	    return ret;
-	if (!present) {
-	    *minor_status = 0;
-	    return GSS_S_BAD_MECH;
-	}
+        ret = gss_test_oid_set_member(minor_status, GSS_KRB5_MECHANISM,
+                                      desired_mechs, &present);
+        if (ret)
+            return ret;
+        if (!present) {
+            *minor_status = 0;
+            return GSS_S_BAD_MECH;
+        }
     }
 
     cred_usage &= GSS_C_OPTION_MASK;
 
     if (cred_usage != GSS_C_ACCEPT && cred_usage != GSS_C_INITIATE &&
         cred_usage != GSS_C_BOTH) {
-	*minor_status = GSS_KRB5_S_G_BAD_USAGE;
-	return GSS_S_FAILURE;
+        *minor_status = GSS_KRB5_S_G_BAD_USAGE;
+        return GSS_S_FAILURE;
     }
 
     ret = __gsskrb5_cred_store_find(minor_status, cred_store,
-				    "password", &password);
+                                    "password", &password);
     if (GSS_ERROR(ret))
-	return ret;
+        return ret;
 
     GSSAPI_KRB5_INIT(&context);
 
@@ -610,7 +610,7 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_acquire_cred_from
 
     handle = calloc(1, sizeof(*handle));
     if (handle == NULL) {
-	*minor_status = ENOMEM;
+        *minor_status = ENOMEM;
         return GSS_S_FAILURE;
     }
 
@@ -618,13 +618,13 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_acquire_cred_from
     HEIMDAL_MUTEX_init(&handle->cred_id_mutex);
 
     if (desired_name != GSS_C_NO_NAME) {
-	ret = _gsskrb5_canon_name(minor_status, context,
-				  desired_name, &handle->principal);
-	if (ret) {
-	    HEIMDAL_MUTEX_destroy(&handle->cred_id_mutex);
-	    free(handle);
-	    return ret;
-	}
+        ret = _gsskrb5_canon_name(minor_status, context,
+                                  desired_name, &handle->principal);
+        if (ret) {
+            HEIMDAL_MUTEX_destroy(&handle->cred_id_mutex);
+            free(handle);
+            return ret;
+        }
     }
 
     if (password) {
@@ -644,7 +644,7 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_acquire_cred_from
         if (cred_usage == GSS_C_INITIATE || cred_usage == GSS_C_BOTH) {
             ret = acquire_initiator_cred(minor_status, context, time_req,
                                          desired_mechs, cred_usage,
-					 cred_store, handle);
+                                         cred_store, handle);
             if (ret != GSS_S_COMPLETE) {
                 HEIMDAL_MUTEX_destroy(&handle->cred_id_mutex);
                 krb5_free_principal(context, handle->principal);
@@ -655,7 +655,7 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_acquire_cred_from
         if (cred_usage == GSS_C_ACCEPT || cred_usage == GSS_C_BOTH) {
             ret = acquire_acceptor_cred(minor_status, context, time_req,
                                         desired_mechs, cred_usage,
-					cred_store, handle);
+                                        cred_store, handle);
             if (ret != GSS_S_COMPLETE) {
                 HEIMDAL_MUTEX_destroy(&handle->cred_id_mutex);
                 krb5_free_principal(context, handle->principal);
@@ -666,19 +666,19 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_acquire_cred_from
     }
     ret = gss_create_empty_oid_set(minor_status, &handle->mechanisms);
     if (ret == GSS_S_COMPLETE)
-    	ret = gss_add_oid_set_member(minor_status, GSS_KRB5_MECHANISM,
-				     &handle->mechanisms);
+        ret = gss_add_oid_set_member(minor_status, GSS_KRB5_MECHANISM,
+                                     &handle->mechanisms);
     handle->usage = cred_usage;
     if (ret == GSS_S_COMPLETE)
-	ret = _gsskrb5_inquire_cred(minor_status, (gss_cred_id_t)handle,
-				    NULL, time_rec, NULL, actual_mechs);
+        ret = _gsskrb5_inquire_cred(minor_status, (gss_cred_id_t)handle,
+                                    NULL, time_rec, NULL, actual_mechs);
     if (ret != GSS_S_COMPLETE) {
-	if (handle->mechanisms != NULL)
-	    gss_release_oid_set(NULL, &handle->mechanisms);
-	HEIMDAL_MUTEX_destroy(&handle->cred_id_mutex);
-	krb5_free_principal(context, handle->principal);
-	free(handle);
-	return (ret);
+        if (handle->mechanisms != NULL)
+            gss_release_oid_set(NULL, &handle->mechanisms);
+        HEIMDAL_MUTEX_destroy(&handle->cred_id_mutex);
+        krb5_free_principal(context, handle->principal);
+        free(handle);
+        return (ret);
     }
     *minor_status = 0;
     *output_cred_handle = (gss_cred_id_t)handle;

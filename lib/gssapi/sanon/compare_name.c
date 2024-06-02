@@ -33,9 +33,9 @@
 
 OM_uint32 GSSAPI_CALLCONV
 _gss_sanon_compare_name(OM_uint32 *minor,
-			 gss_const_name_t name1,
-			 gss_const_name_t name2,
-			 int *name_equal)
+                        gss_const_name_t name1,
+                        gss_const_name_t name2,
+                        int *name_equal)
 {
     *minor = 0;
 

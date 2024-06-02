@@ -35,18 +35,18 @@
 
 KRB5_LIB_FUNCTION int KRB5_LIB_CALL
 krb5_getportbyname (krb5_context context,
-		    const char *service,
-		    const char *proto,
-		    int default_port)
+                    const char *service,
+                    const char *proto,
+                    int default_port)
 {
     struct servent *sp;
 
     if ((sp = roken_getservbyname (service, proto)) == NULL) {
 #if 0
-	krb5_warnx(context, "%s/%s unknown service, using default port %d",
-		   service, proto, default_port);
+        krb5_warnx(context, "%s/%s unknown service, using default port %d",
+                   service, proto, default_port);
 #endif
-	return htons(default_port);
+        return htons(default_port);
     } else
-	return sp->s_port;
+        return sp->s_port;
 }

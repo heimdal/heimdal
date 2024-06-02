@@ -46,56 +46,56 @@ copy_cred_element(OM_uint32 *minor_status,
 
     if (m->gm_duplicate_cred) {
         major_status = m->gm_duplicate_cred(minor_status,
-					    mc->gmc_cred, &dup_cred);
+                                            mc->gmc_cred, &dup_cred);
     } else if (m->gm_import_cred && m->gm_export_cred) {
-	gss_buffer_desc export;
+        gss_buffer_desc export;
 
-	major_status = m->gm_export_cred(minor_status, mc->gmc_cred, &export);
-	if (major_status == GSS_S_COMPLETE) {
-	    major_status = m->gm_import_cred(minor_status, &export, &dup_cred);
-	    _gss_secure_release_buffer(&tmp, &export);
-	}
+        major_status = m->gm_export_cred(minor_status, mc->gmc_cred, &export);
+        if (major_status == GSS_S_COMPLETE) {
+            major_status = m->gm_import_cred(minor_status, &export, &dup_cred);
+            _gss_secure_release_buffer(&tmp, &export);
+        }
     } else {
-	struct _gss_mechanism_name mn;
+        struct _gss_mechanism_name mn;
 
-	mn.gmn_mech = m;
-	mn.gmn_mech_oid = mc->gmc_mech_oid;
-	mn.gmn_name = GSS_C_NO_NAME;
+        mn.gmn_mech = m;
+        mn.gmn_mech_oid = mc->gmc_mech_oid;
+        mn.gmn_name = GSS_C_NO_NAME;
 
-	/* This path won't work for ephemeral creds or cred stores */
-	major_status = m->gm_inquire_cred_by_mech(minor_status, mc->gmc_cred,
-						  mc->gmc_mech_oid, &mn.gmn_name,
-						  &initiator_lifetime,
-						  &acceptor_lifetime, &cred_usage);
-	if (major_status == GSS_S_COMPLETE) {
-	    major_status = _gss_mg_add_mech_cred(minor_status,
-						 m,
-						 NULL, /* mc */
-						 &mn,
-						 cred_usage,
-						 initiator_lifetime,
-						 acceptor_lifetime,
-						 GSS_C_NO_CRED_STORE,
-						 &new_mc,
-						 NULL,
-					         NULL);
-	    m->gm_release_name(&tmp, &mn.gmn_name);
-	}
+        /* This path won't work for ephemeral creds or cred stores */
+        major_status = m->gm_inquire_cred_by_mech(minor_status, mc->gmc_cred,
+                                                  mc->gmc_mech_oid, &mn.gmn_name,
+                                                  &initiator_lifetime,
+                                                  &acceptor_lifetime, &cred_usage);
+        if (major_status == GSS_S_COMPLETE) {
+            major_status = _gss_mg_add_mech_cred(minor_status,
+                                                 m,
+                                                 NULL, /* mc */
+                                                 &mn,
+                                                 cred_usage,
+                                                 initiator_lifetime,
+                                                 acceptor_lifetime,
+                                                 GSS_C_NO_CRED_STORE,
+                                                 &new_mc,
+                                                 NULL,
+                                                 NULL);
+            m->gm_release_name(&tmp, &mn.gmn_name);
+        }
     }
 
     if (major_status == GSS_S_COMPLETE) {
-	new_mc = calloc(1, sizeof(*new_mc));
-	if (new_mc == NULL) {
-	    *minor_status = ENOMEM;
-	    m->gm_release_cred(&tmp, &dup_cred);
-	    return GSS_S_FAILURE;
-	}
+        new_mc = calloc(1, sizeof(*new_mc));
+        if (new_mc == NULL) {
+            *minor_status = ENOMEM;
+            m->gm_release_cred(&tmp, &dup_cred);
+            return GSS_S_FAILURE;
+        }
 
-	new_mc->gmc_mech = m;
-	new_mc->gmc_mech_oid = mc->gmc_mech_oid;
-	new_mc->gmc_cred = dup_cred;
+        new_mc->gmc_mech = m;
+        new_mc->gmc_mech_oid = mc->gmc_mech_oid;
+        new_mc->gmc_cred = dup_cred;
 
-	*out = new_mc;
+        *out = new_mc;
     } else
         _gss_mg_error(m, *minor_status);
 
@@ -133,7 +133,7 @@ gss_duplicate_cred(OM_uint32 *minor_status,
     major_status = GSS_S_NO_CRED;
 
     HEIM_TAILQ_FOREACH(mc, &cred->gc_mc, gmc_link) {
-	struct _gss_mechanism_cred *copy_mc;
+        struct _gss_mechanism_cred *copy_mc;
 
         major_status = copy_cred_element(minor_status, mc, &copy_mc);
         if (major_status != GSS_S_COMPLETE)

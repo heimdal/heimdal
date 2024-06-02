@@ -37,9 +37,9 @@ print_data(unsigned char *data, size_t len)
 {
     int i;
     for(i = 0; i < len; i++) {
-	if(i > 0 && (i % 16) == 0)
-	    printf("\n            ");
-	printf("%02x ", data[i]);
+        if(i > 0 && (i % 16) == 0)
+            printf("\n            ");
+        printf("%02x ", data[i]);
     }
     printf("\n");
 }
@@ -50,15 +50,15 @@ compare(const char *name, krb5_storage *sp, void *expected, size_t len)
     int ret = 0;
     krb5_data data;
     if (krb5_storage_to_data(sp, &data))
-	errx(1, "krb5_storage_to_data failed");
+        errx(1, "krb5_storage_to_data failed");
     krb5_storage_free(sp);
     if(data.length != len || memcmp(data.data, expected, len) != 0) {
-	printf("%s mismatch\n", name);
-	printf("  Expected: ");
-	print_data(expected, len);
-	printf("  Actual:   ");
-	print_data(data.data, data.length);
-	ret++;
+        printf("%s mismatch\n", name);
+        printf("  Expected: ");
+        print_data(expected, len);
+        printf("  Actual:   ");
+        print_data(data.data, data.length);
+        ret++;
     }
     krb5_data_free(&data);
     return ret;
@@ -93,13 +93,13 @@ main(int argc, char **argv)
     krb5_storage_set_byteorder(sp, KRB5_STORAGE_BYTEORDER_HOST);
     krb5_store_int32(sp, 0x01020304);
     {
-	int test = 1;
-	void *data;
-	if(*(char*)&test)
-	    data = "\x4\x3\x2\x1";
-	else
-	    data = "\x1\x2\x3\x4";
-	nerr += compare("Integer (host)", sp, data, 4);
+        int test = 1;
+        void *data;
+        if(*(char*)&test)
+            data = "\x4\x3\x2\x1";
+        else
+            data = "\x1\x2\x3\x4";
+        nerr += compare("Integer (host)", sp, data, 4);
     }
 
     sp = krb5_storage_emem();
@@ -107,9 +107,9 @@ main(int argc, char **argv)
     krb5_store_principal(sp, principal);
     krb5_free_principal(context, principal);
     nerr += compare("Principal", sp, "\x0\x0\x0\x1"
-		    "\x0\x0\x0\x1"
-		    "\x0\x0\x0\x4TEST"
-		    "\x0\x0\x0\x6""foobar", 26);
+                    "\x0\x0\x0\x1"
+                    "\x0\x0\x0\x4TEST"
+                    "\x0\x0\x0\x6""foobar", 26);
 
     krb5_free_context(context);
 

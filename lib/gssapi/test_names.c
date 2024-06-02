@@ -68,13 +68,13 @@ gss_print_errors(OM_uint32 stat, gss_OID mech)
         gss_release_buffer(&junk, &buf);
     }
     do {
-	ret = gss_display_status(&junk,
-				 stat,
-				 mech ? GSS_C_MECH_CODE : GSS_C_GSS_CODE,
-				 mech,
-				 &more,
-				 &buf);
-	if (ret != GSS_S_COMPLETE)
+        ret = gss_display_status(&junk,
+                                 stat,
+                                 mech ? GSS_C_MECH_CODE : GSS_C_GSS_CODE,
+                                 mech,
+                                 &more,
+                                 &buf);
+        if (ret != GSS_S_COMPLETE)
             errx(1, "gss_display_status() failed");
         fprintf(stderr, "%.*s\n", (int)buf.length, (char *)buf.value);
         gss_release_buffer(&junk, &buf);
@@ -307,7 +307,7 @@ check_name_attrs(void)
 
     maj = gss_display_name_ext(&min, n, GSS_C_NT_HOSTBASED_SERVICE, &v);
     if (maj)
-	gss_err(1, maj, min, GSS_KRB5_MECHANISM, "display name ext");
+        gss_err(1, maj, min, GSS_KRB5_MECHANISM, "display name ext");
     if (v.length != sizeof("host@somehost.test.h5l.se") - 1 ||
         strncmp(v.value, "host@somehost.test.h5l.se", v.length) != 0)
         errx(1, "display name ext");
@@ -339,7 +339,7 @@ static void
 usage (int ret)
 {
     arg_printusage (args, sizeof(args)/sizeof(*args),
-		    NULL, "service@host");
+                    NULL, "service@host");
     exit (ret);
 }
 
@@ -357,14 +357,14 @@ main(int argc, char **argv)
 
     setprogname(argv[0]);
     if(getarg(args, sizeof(args) / sizeof(args[0]), argc, argv, &optidx))
-	usage(1);
+        usage(1);
 
     if (help_flag)
-	usage (0);
+        usage (0);
 
     if(version_flag){
-	print_version(NULL);
-	exit(0);
+        print_version(NULL);
+        exit(0);
     }
 
     argc -= optidx;
@@ -378,54 +378,54 @@ main(int argc, char **argv)
 
     str = NULL;
     len = asprintf(&str, anon_flag ?
-	"WELLKNOWN@ANONYMOUS" : "ftp@freeze-arrow.mit.edu");
+        "WELLKNOWN@ANONYMOUS" : "ftp@freeze-arrow.mit.edu");
     if (len < 0 || str == NULL)
-	errx(1, "asprintf");
+        errx(1, "asprintf");
 
     name_buffer.value = str;
     name_buffer.length = len;
 
     maj_stat = gss_import_name(&min_stat, &name_buffer,
-			       GSS_C_NT_HOSTBASED_SERVICE,
-			       &name);
+                               GSS_C_NT_HOSTBASED_SERVICE,
+                               &name);
     if (maj_stat != GSS_S_COMPLETE)
-	gss_err(1, maj_stat, min_stat, GSS_C_NO_OID, "import name error");
+        gss_err(1, maj_stat, min_stat, GSS_C_NO_OID, "import name error");
     free(str);
 
     if (anon_flag)
-	mech_oid = GSS_SANON_X25519_MECHANISM;
+        mech_oid = GSS_SANON_X25519_MECHANISM;
     else
-	mech_oid = GSS_KRB5_MECHANISM;
+        mech_oid = GSS_KRB5_MECHANISM;
 
     maj_stat = gss_canonicalize_name (&min_stat,
-				      name,
-				      mech_oid,
-				      &MNname);
+                                      name,
+                                      mech_oid,
+                                      &MNname);
     if (maj_stat != GSS_S_COMPLETE)
-	gss_err(1, maj_stat, min_stat, mech_oid, "canonicalize name error");
+        gss_err(1, maj_stat, min_stat, mech_oid, "canonicalize name error");
 
     maj_stat = gss_export_name(&min_stat,
-			       MNname,
-			       &name_buffer);
+                               MNname,
+                               &name_buffer);
     if (maj_stat != GSS_S_COMPLETE)
-	gss_err(1, maj_stat, min_stat, mech_oid, "export name error");
+        gss_err(1, maj_stat, min_stat, mech_oid, "export name error");
 
     /*
      * Import the exported name and compare
      */
 
     maj_stat = gss_import_name(&min_stat, &name_buffer,
-			       GSS_C_NT_EXPORT_NAME,
-			       &MNname2);
+                               GSS_C_NT_EXPORT_NAME,
+                               &MNname2);
     if (maj_stat != GSS_S_COMPLETE)
-	gss_err(1, maj_stat, min_stat, mech_oid, "export name error");
+        gss_err(1, maj_stat, min_stat, mech_oid, "export name error");
 
 
     maj_stat = gss_compare_name(&min_stat, MNname, MNname2, &equal);
     if (maj_stat != GSS_S_COMPLETE)
-	gss_err(1, maj_stat, min_stat, mech_oid, "compare name error");
+        gss_err(1, maj_stat, min_stat, mech_oid, "compare name error");
     if (equal && anon_flag)
-	errx(1, "names %s equal", anon_flag ? "incorrectly" : "not");
+        errx(1, "names %s equal", anon_flag ? "incorrectly" : "not");
 
     gss_release_name(&min_stat, &MNname2);
     gss_release_buffer(&min_stat, &name_buffer);
@@ -440,49 +440,49 @@ main(int argc, char **argv)
     str = NULL;
     len = asprintf(&str, "lha");
     if (len < 0 || str == NULL)
-	errx(1, "asprintf");
+        errx(1, "asprintf");
 
     name_buffer.value = str;
     name_buffer.length = len;
 
     maj_stat = gss_import_name(&min_stat, &name_buffer,
-			       GSS_C_NO_OID,
-			       &name);
+                               GSS_C_NO_OID,
+                               &name);
     if (maj_stat != GSS_S_COMPLETE)
-	gss_err(1, maj_stat, min_stat, NULL, "import (no oid) name error");
+        gss_err(1, maj_stat, min_stat, NULL, "import (no oid) name error");
 
     maj_stat = gss_import_name(&min_stat, &name_buffer,
-			       GSS_KRB5_NT_USER_NAME,
-			       &MNname);
+                               GSS_KRB5_NT_USER_NAME,
+                               &MNname);
     if (maj_stat != GSS_S_COMPLETE)
-	gss_err(1, maj_stat, min_stat, NULL, "import (krb5 mn) name error");
+        gss_err(1, maj_stat, min_stat, NULL, "import (krb5 mn) name error");
 
     free(str);
 
     maj_stat = gss_compare_name(&min_stat, name, MNname, &equal);
     if (maj_stat != GSS_S_COMPLETE)
-	errx(1, "gss_compare_name");
+        errx(1, "gss_compare_name");
     if (!equal)
-	errx(1, "names not equal");
+        errx(1, "names not equal");
 
     gss_release_name(&min_stat, &MNname);
     gss_release_name(&min_stat, &name);
 
 #if 0
     maj_stat = gss_canonicalize_name (&min_stat,
-				      name,
-				      GSS_SPNEGO_MECHANISM,
-				      &MNname);
+                                      name,
+                                      GSS_SPNEGO_MECHANISM,
+                                      &MNname);
     if (maj_stat != GSS_S_COMPLETE)
-	gss_err(1, maj_stat, min_stat, GSS_SPNEGO_MECHANISM,
+        gss_err(1, maj_stat, min_stat, GSS_SPNEGO_MECHANISM,
                 "canonicalize name error");
 
 
     maj_stat = gss_export_name(&maj_stat,
-			       MNname,
-			       &name_buffer);
+                               MNname,
+                               &name_buffer);
     if (maj_stat != GSS_S_COMPLETE)
-	gss_err(1, maj_stat, min_stat, GSS_SPNEGO_MECHANISM,
+        gss_err(1, maj_stat, min_stat, GSS_SPNEGO_MECHANISM,
                 "export name error (SPNEGO)");
 
     gss_release_name(&min_stat, &MNname);
@@ -490,40 +490,40 @@ main(int argc, char **argv)
 #endif
 
     if (anon_flag) {
-	/* check anonymous name canonicalizes to well known name */
-	gss_OID name_type;
+        /* check anonymous name canonicalizes to well known name */
+        gss_OID name_type;
 
-	name_buffer.length = 0;
-	name_buffer.value = NULL;
+        name_buffer.length = 0;
+        name_buffer.value = NULL;
 
-	maj_stat = gss_import_name(&min_stat, &name_buffer,
-				   GSS_C_NT_ANONYMOUS, &name);
-	if (maj_stat != GSS_S_COMPLETE)
+        maj_stat = gss_import_name(&min_stat, &name_buffer,
+                                   GSS_C_NT_ANONYMOUS, &name);
+        if (maj_stat != GSS_S_COMPLETE)
             gss_err(1, maj_stat, min_stat, GSS_C_NO_OID,
                     "import (anon) name error");
 
-	maj_stat = gss_canonicalize_name(&min_stat, name,
-					 GSS_SANON_X25519_MECHANISM,
-					 &MNname);
-	if (maj_stat != GSS_S_COMPLETE)
+        maj_stat = gss_canonicalize_name(&min_stat, name,
+                                         GSS_SANON_X25519_MECHANISM,
+                                         &MNname);
+        if (maj_stat != GSS_S_COMPLETE)
             gss_err(1, maj_stat, min_stat, GSS_SANON_X25519_MECHANISM,
                     "canonicalize (anon) name error");
 
-	maj_stat = gss_display_name(&min_stat, MNname,
-				    &name_buffer, &name_type);
-	if (maj_stat != GSS_S_COMPLETE)
+        maj_stat = gss_display_name(&min_stat, MNname,
+                                    &name_buffer, &name_type);
+        if (maj_stat != GSS_S_COMPLETE)
             gss_err(1, maj_stat, min_stat, GSS_SANON_X25519_MECHANISM,
                     "display_name (anon) name error");
 
-	if (!gss_oid_equal(name_type, GSS_C_NT_ANONYMOUS))
-	    errx(1, "display name type not anonymous");
-	if (memcmp(name_buffer.value, "WELLKNOWN/ANONYMOUS@WELLKNOWN:ANONYMOUS",
-		   sizeof("WELLKNOWN/ANONYMOUS@WELLKNOWN:ANONYMOUS") - 1) != 0)
-	    errx(1, "display name string not well known anonymous name");
+        if (!gss_oid_equal(name_type, GSS_C_NT_ANONYMOUS))
+            errx(1, "display name type not anonymous");
+        if (memcmp(name_buffer.value, "WELLKNOWN/ANONYMOUS@WELLKNOWN:ANONYMOUS",
+                   sizeof("WELLKNOWN/ANONYMOUS@WELLKNOWN:ANONYMOUS") - 1) != 0)
+            errx(1, "display name string not well known anonymous name");
 
-	gss_release_name(&min_stat, &MNname);
-	gss_release_name(&min_stat, &name);
-	gss_release_buffer(&min_stat, &name_buffer);
+        gss_release_name(&min_stat, &MNname);
+        gss_release_name(&min_stat, &name);
+        gss_release_buffer(&min_stat, &name_buffer);
     }
 
     check_name_attrs();
@@ -581,10 +581,10 @@ make_composite_name(CompositePrincipal *princ, gss_name_t *n)
     export_name_composite(princ, &token);
     maj = gss_import_name(&min, &token, GSS_C_NT_COMPOSITE_EXPORT, n);
     if (maj)
-	gss_err(1, maj, min, GSS_KRB5_MECHANISM, "import composite name");
+        gss_err(1, maj, min, GSS_KRB5_MECHANISM, "import composite name");
     maj = gss_export_name_composite(&min, *n, &exported);
     if (maj)
-	gss_err(1, maj, min, GSS_KRB5_MECHANISM, "export composite name");
+        gss_err(1, maj, min, GSS_KRB5_MECHANISM, "export composite name");
     if (token.length != exported.length ||
         memcmp(token.value, exported.value, token.length) != 0)
         errx(1, "import/export composite token disagreement");
@@ -614,7 +614,7 @@ assert_attr(gss_name_t n,
     maj = gss_get_name_attribute(&min, n, &a, &authenticated, &complete, &v,
                                  &dv, &more);
     if (maj != GSS_S_COMPLETE && maj != exp_maj)
-	gss_err(1, maj, min, GSS_KRB5_MECHANISM,
+        gss_err(1, maj, min, GSS_KRB5_MECHANISM,
                 "import composite name error");
     if (maj == GSS_S_COMPLETE && maj != exp_maj)
         errx(1, "unexpected name attribute %s", aname);
@@ -660,7 +660,7 @@ assert_attr_set(gss_name_t n, gss_buffer_set_t exp_as)
 
     maj = gss_inquire_name(&min, n, &name_is_MN, &MN_mech, &as);
     if (maj)
-	gss_err(1, maj, min, MN_mech, "inquire name");
+        gss_err(1, maj, min, MN_mech, "inquire name");
     for (i = 0; i < as->count && i < exp_as->count; i++) {
         if (as->elements[i].length != exp_as->elements[i].length ||
             memcmp(as->elements[i].value, exp_as->elements[i].value,

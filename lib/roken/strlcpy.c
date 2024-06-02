@@ -57,14 +57,14 @@ strlcpy (char *dst, const char *src, size_t dst_sz)
     size_t n;
 
     for (n = 0; n < dst_sz; n++) {
-	if ((*dst++ = *src++) == '\0')
-	    break;
+        if ((*dst++ = *src++) == '\0')
+            break;
     }
 
     if (n < dst_sz)
-	return n;
+        return n;
     if (n > 0)
-	*(dst - 1) = '\0';
+        *(dst - 1) = '\0';
     return n + strlen (src);
 }
 

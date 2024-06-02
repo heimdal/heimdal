@@ -48,9 +48,9 @@ static void
 usage (int ret)
 {
     arg_printusage (args,
-		    sizeof(args)/sizeof(*args),
-		    NULL,
-		    "hostname");
+                    sizeof(args)/sizeof(*args),
+                    NULL,
+                    "hostname");
     exit (ret);
 }
 
@@ -69,21 +69,21 @@ main(int argc, char **argv)
     setprogname (argv[0]);
 
     if(getarg(args, sizeof(args) / sizeof(args[0]), argc, argv, &optidx))
-	usage(1);
+        usage(1);
 
     if (help_flag)
-	usage (0);
+        usage (0);
 
     if(version_flag){
-	print_version(NULL);
-	exit(0);
+        print_version(NULL);
+        exit(0);
     }
 
     argc -= optidx;
     argv += optidx;
 
     if (argc < 1)
-	usage(1);
+        usage(1);
 
     hostname = argv[0];
 
@@ -91,41 +91,41 @@ main(int argc, char **argv)
 
     ret = krb5_init_context(&context);
     if (ret)
-	errx (1, "krb5_init_context failed: %d", ret);
+        errx (1, "krb5_init_context failed: %d", ret);
 
     ret = krb5_cc_default(context, &id);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_cc_default failed");
+        krb5_err(context, 1, ret, "krb5_cc_default failed");
 
     ret = krb5_auth_con_init(context, &ac);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_auth_con_init failed");
+        krb5_err(context, 1, ret, "krb5_auth_con_init failed");
 
     krb5_auth_con_addflags(context, ac,
-			   KRB5_AUTH_CONTEXT_CLEAR_FORWARDED_CRED, NULL);
+                           KRB5_AUTH_CONTEXT_CLEAR_FORWARDED_CRED, NULL);
 
     ret = krb5_cc_get_principal(context, id, &cred.client);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_cc_get_principal");
+        krb5_err(context, 1, ret, "krb5_cc_get_principal");
 
     ret = krb5_make_principal(context,
-			      &cred.server,
-			      krb5_principal_get_realm(context, cred.client),
-			      KRB5_TGS_NAME,
-			      krb5_principal_get_realm(context, cred.client),
-			      NULL);
+                              &cred.server,
+                              krb5_principal_get_realm(context, cred.client),
+                              KRB5_TGS_NAME,
+                              krb5_principal_get_realm(context, cred.client),
+                              NULL);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_make_principal(server)");
+        krb5_err(context, 1, ret, "krb5_make_principal(server)");
 
     ret = krb5_get_forwarded_creds (context,
-				    ac,
-				    id,
-				    KDC_OPT_FORWARDABLE,
-				    hostname,
-				    &cred,
-				    &data);
+                                    ac,
+                                    id,
+                                    KDC_OPT_FORWARDABLE,
+                                    hostname,
+                                    &cred,
+                                    &data);
     if (ret)
-	krb5_err (context, 1, ret, "krb5_get_forwarded_creds");
+        krb5_err (context, 1, ret, "krb5_get_forwarded_creds");
 
     krb5_data_free(&data);
     krb5_free_context(context);

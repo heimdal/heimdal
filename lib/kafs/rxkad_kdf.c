@@ -88,23 +88,23 @@ rxkad_derive_des_key(const void *in, size_t insize, char out[8])
 
     /* stop when 8 bit counter wraps to 0 */
     for (i = 1; i; i++) {
-	HMAC_CTX_init(&mctx);
-	if (HMAC_Init_ex(&mctx, in, insize, EVP_md5(), NULL) == 0) {
+        HMAC_CTX_init(&mctx);
+        if (HMAC_Init_ex(&mctx, in, insize, EVP_md5(), NULL) == 0) {
             HMAC_CTX_cleanup(&mctx);
             return ENOMEM;
         }
-	HMAC_Update(&mctx, &i, 1);
-	HMAC_Update(&mctx, label, sizeof(label));   /* includes label and separator */
-	HMAC_Update(&mctx, Lbuf, 4);
-	mdsize = sizeof(tmp);
-	HMAC_Final(&mctx, tmp, &mdsize);
+        HMAC_Update(&mctx, &i, 1);
+        HMAC_Update(&mctx, label, sizeof(label));   /* includes label and separator */
+        HMAC_Update(&mctx, Lbuf, 4);
+        mdsize = sizeof(tmp);
+        HMAC_Final(&mctx, tmp, &mdsize);
         HMAC_CTX_cleanup(&mctx);
-	memcpy(ktmp, tmp, 8);
-	DES_set_odd_parity(&ktmp);
-	if (!DES_is_weak_key(&ktmp)) {
-	    memcpy(out, ktmp, 8);
-	    return 0;
-	}
+        memcpy(ktmp, tmp, 8);
+        DES_set_odd_parity(&ktmp);
+        if (!DES_is_weak_key(&ktmp)) {
+            memcpy(out, ktmp, 8);
+            return 0;
+        }
     }
     return KRB5DES_WEAK_KEY;
 }
@@ -129,19 +129,19 @@ compress_parity_bits(void *buffer, size_t *bufsiz)
     int i, j, nk;
 
     if (*bufsiz % 8 != 0)
-	return KRB5_BAD_KEYSIZE;
+        return KRB5_BAD_KEYSIZE;
     cb = (unsigned char *)buffer;
     nk = *bufsiz / 8;
     for (i = 0; i < nk; i++) {
-	tmp = cb[8 * i + 7] >> 1;
-	for (j = 0; j < 7; j++) {
-	    cb[8 * i + j] &= 0xfe;
-	    cb[8 * i + j] |= tmp & 0x1;
-	    tmp >>= 1;
-	}
+        tmp = cb[8 * i + 7] >> 1;
+        for (j = 0; j < 7; j++) {
+            cb[8 * i + j] &= 0xfe;
+            cb[8 * i + j] |= tmp & 0x1;
+            tmp >>= 1;
+        }
     }
     for (i = 1; i < nk; i++)
-	memmove(cb + 7 * i, cb + 8 * i, 7);
+        memmove(cb + 7 * i, cb + 8 * i, 7);
     *bufsiz = 7 * nk;
     return 0;
 }
@@ -175,47 +175,47 @@ compress_parity_bits(void *buffer, size_t *bufsiz)
  */
 int
 _kafs_derive_des_key(krb5_enctype enctype, void *keydata, size_t keylen,
-		     char output[8])
+                     char output[8])
 {
     int ret = 0;
 
     switch ((int)enctype) {
-    case ETYPE_DES_CBC_CRC:
-    case ETYPE_DES_CBC_MD4:
-    case ETYPE_DES_CBC_MD5:
-	if (keylen != 8)
-	    return KRB5_BAD_KEYSIZE;
+        case ETYPE_DES_CBC_CRC:
+        case ETYPE_DES_CBC_MD4:
+        case ETYPE_DES_CBC_MD5:
+            if (keylen != 8)
+                return KRB5_BAD_KEYSIZE;
 
-	/* Extract session key */
-	memcpy(output, keydata, 8);
-	break;
-    case ETYPE_NULL:
-    case 4:
-    case 6:
-    case 8:
-    case 9:
-    case 10:
-    case 11:
-    case 12:
-    case 13:
-    case 14:
-    case 15:
-	return KRB5_PROG_ETYPE_NOSUPP;
-	/*In order to become a "Cryptographic Key" as specified in
-	 * SP800-108, it must be indistinguishable from a random bitstring. */
-    case ETYPE_DES3_CBC_MD5:
-    case ETYPE_OLD_DES3_CBC_SHA1:
-    case ETYPE_DES3_CBC_SHA1:
-	ret = compress_parity_bits(keydata, &keylen);
-	if (ret)
-	    return ret;
-        HEIM_FALLTHROUGH;
-    default:
-	if (enctype < 0)
-	    return KRB5_PROG_ETYPE_NOSUPP;
-	if (keylen < 7)
-	    return KRB5_BAD_KEYSIZE;
-	ret = rxkad_derive_des_key(keydata, keylen, output);
+            /* Extract session key */
+            memcpy(output, keydata, 8);
+            break;
+        case ETYPE_NULL:
+        case 4:
+        case 6:
+        case 8:
+        case 9:
+        case 10:
+        case 11:
+        case 12:
+        case 13:
+        case 14:
+        case 15:
+            return KRB5_PROG_ETYPE_NOSUPP;
+            /*In order to become a "Cryptographic Key" as specified in
+             * SP800-108, it must be indistinguishable from a random bitstring. */
+        case ETYPE_DES3_CBC_MD5:
+        case ETYPE_OLD_DES3_CBC_SHA1:
+        case ETYPE_DES3_CBC_SHA1:
+            ret = compress_parity_bits(keydata, &keylen);
+            if (ret)
+                return ret;
+            HEIM_FALLTHROUGH;
+        default:
+            if (enctype < 0)
+                return KRB5_PROG_ETYPE_NOSUPP;
+            if (keylen < 7)
+                return KRB5_BAD_KEYSIZE;
+            ret = rxkad_derive_des_key(keydata, keylen, output);
     }
     return ret;
 }

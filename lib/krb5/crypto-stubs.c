@@ -83,9 +83,9 @@ krb5_log(krb5_context context,
 
 void KRB5_LIB_FUNCTION
 _krb5_debug(krb5_context context,
-	    int level,
-	    const char *fmt,
-	    ...)
+            int level,
+            const char *fmt,
+            ...)
 {
 }
 

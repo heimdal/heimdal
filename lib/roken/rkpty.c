@@ -101,27 +101,27 @@ open_pty(void)
 #endif
 #if defined(HAVE_OPENPTY) || defined(__osf__) /* XXX */
     if(openpty(&master, &slave, line, 0, 0) == 0)
-	return;
+        return;
 #endif /* HAVE_OPENPTY .... */
 #ifdef STREAMSPTY
     {
-	char *clone[] = {
-	    "/dev/ptc",
-	    "/dev/ptmx",
-	    "/dev/ptm",
-	    "/dev/ptym/clone",
-	    NULL
-	};
-	char **q;
+        char *clone[] = {
+            "/dev/ptc",
+            "/dev/ptmx",
+            "/dev/ptm",
+            "/dev/ptym/clone",
+            NULL
+        };
+        char **q;
 
-	for(q = clone; *q; q++){
-	    master = open(*q, O_RDWR);
-	    if(master >= 0){
+        for(q = clone; *q; q++){
+            master = open(*q, O_RDWR);
+            if(master >= 0){
 #ifdef HAVE_GRANTPT
-		grantpt(master);
+                grantpt(master);
 #endif
 #ifdef HAVE_UNLOCKPT
-		unlockpt(master);
+                unlockpt(master);
 #endif
 #ifdef HAVE_PTSNAME_R
                 if (ptsname_r(master, line, sizeof(line)) == -1)
@@ -135,15 +135,15 @@ open_pty(void)
                     strlcpy(line, s, sizeof(line));
                 }
 #endif
-		slave = open(line, O_RDWR);
-		if (slave < 0)
-		    errx(1, "failed to open slave when using %s", *q);
-		ioctl(slave, I_PUSH, "ptem");
-		ioctl(slave, I_PUSH, "ldterm");
+                slave = open(line, O_RDWR);
+                if (slave < 0)
+                    errx(1, "failed to open slave when using %s", *q);
+                ioctl(slave, I_PUSH, "ptem");
+                ioctl(slave, I_PUSH, "ldterm");
 
-		return;
-	    }
-	}
+                return;
+            }
+        }
     }
 #endif /* STREAMSPTY */
 
@@ -161,7 +161,7 @@ iscmd(const char *buf, const char *s)
 {
     size_t len = strlen(s);
     if (strncmp(buf, s, len) != 0)
-	return NULL;
+        return NULL;
     return estrdup(buf + len);
 }
 
@@ -176,32 +176,32 @@ parse_configuration(const char *fn)
 
     cmd = fopen(fn, "r");
     if (cmd == NULL)
-	err(1, "open: %s", fn);
+        err(1, "open: %s", fn);
 
     while (fgets(s, sizeof(s),  cmd) != NULL) {
 
-	s[strcspn(s, "#\n")] = '\0';
-	lineno++;
+        s[strcspn(s, "#\n")] = '\0';
+        lineno++;
 
-	c = calloc(1, sizeof(*c));
-	if (c == NULL)
-	    errx(1, "malloc");
+        c = calloc(1, sizeof(*c));
+        if (c == NULL)
+            errx(1, "malloc");
 
-	c->lineno = lineno;
-	(*next) = c;
-	next = &(c->next);
+        c->lineno = lineno;
+        (*next) = c;
+        next = &(c->next);
 
-	if ((str = iscmd(s, "expect ")) != NULL) {
-	    c->type = CMD_EXPECT;
-	    c->str = str;
-	} else if ((str = iscmd(s, "send ")) != NULL) {
-	    c->type = CMD_SEND;
-	    c->str = str;
-	} else if ((str = iscmd(s, "password ")) != NULL) {
-	    c->type = CMD_PASSWORD;
-	    c->str = str;
-	} else
-	    errx(1, "Invalid command on line %d: %s", lineno, s);
+        if ((str = iscmd(s, "expect ")) != NULL) {
+            c->type = CMD_EXPECT;
+            c->str = str;
+        } else if ((str = iscmd(s, "send ")) != NULL) {
+            c->type = CMD_SEND;
+            c->str = str;
+        } else if ((str = iscmd(s, "password ")) != NULL) {
+            c->type = CMD_PASSWORD;
+            c->str = str;
+        } else
+            errx(1, "Invalid command on line %d: %s", lineno, s);
     }
 
     fclose(cmd);
@@ -221,91 +221,91 @@ eval_parent(pid_t pid)
     ssize_t sret;
 
     for (c = commands; c != NULL; c = c->next) {
-	switch(c->type) {
-	case CMD_EXPECT:
-	    if (verbose)
-		printf("[expecting %s]", c->str);
-	    len = 0;
-	    alarm(timeout);
-	    while((sret = read(master, &in, sizeof(in))) > 0) {
-		alarm(timeout);
-		printf("%c", in);
-		if (c->str[len] != in) {
-		    len = 0;
-		    continue;
-		}
-		len++;
-		if (c->str[len] == '\0')
-		    break;
-	    }
-	    alarm(0);
-	    if (alarmset == SIGALRM)
-		errx(1, "timeout waiting for %s (line %u)",
-		     c->str, c->lineno);
-	    else if (alarmset)
-		errx(1, "got a signal %d waiting for %s (line %u)",
-		     (int)alarmset, c->str, c->lineno);
-	    if (sret <= 0)
-		errx(1, "end command while waiting for %s (line %u)",
-		     c->str, c->lineno);
-	    break;
-	case CMD_SEND:
-	case CMD_PASSWORD: {
-	    size_t i = 0;
-	    const char *msg = (c->type == CMD_PASSWORD) ? "****" : c->str;
+        switch(c->type) {
+            case CMD_EXPECT:
+                if (verbose)
+                    printf("[expecting %s]", c->str);
+                len = 0;
+                alarm(timeout);
+                while((sret = read(master, &in, sizeof(in))) > 0) {
+                    alarm(timeout);
+                    printf("%c", in);
+                    if (c->str[len] != in) {
+                        len = 0;
+                        continue;
+                    }
+                    len++;
+                    if (c->str[len] == '\0')
+                        break;
+                }
+                alarm(0);
+                if (alarmset == SIGALRM)
+                    errx(1, "timeout waiting for %s (line %u)",
+                         c->str, c->lineno);
+                else if (alarmset)
+                    errx(1, "got a signal %d waiting for %s (line %u)",
+                         (int)alarmset, c->str, c->lineno);
+                if (sret <= 0)
+                    errx(1, "end command while waiting for %s (line %u)",
+                         c->str, c->lineno);
+                break;
+            case CMD_SEND:
+            case CMD_PASSWORD: {
+                size_t i = 0;
+                const char *msg = (c->type == CMD_PASSWORD) ? "****" : c->str;
 
-	    if (verbose)
-		printf("[send %s]", msg);
+                if (verbose)
+                    printf("[send %s]", msg);
 
-	    len = strlen(c->str);
+                len = strlen(c->str);
 
-	    while (i < len) {
-		if (c->str[i] == '\\' && i < len - 1) {
-		    char ctrl;
-		    i++;
-		    switch(c->str[i]) {
-		    case 'n': ctrl = '\n'; break;
-		    case 'r': ctrl = '\r'; break;
-		    case 't': ctrl = '\t'; break;
-		    default:
-			errx(1, "unknown control char %c (line %u)",
-			     c->str[i], c->lineno);
-		    }
-		    if (net_write(master, &ctrl, 1) != 1)
-			errx(1, "command refused input (line %u)", c->lineno);
-		} else {
-		    if (net_write(master, &c->str[i], 1) != 1)
-			errx(1, "command refused input (line %u)", c->lineno);
-		}
-		i++;
-	    }
-	    break;
-	}
-	default:
-	    abort();
-	}
+                while (i < len) {
+                    if (c->str[i] == '\\' && i < len - 1) {
+                        char ctrl;
+                        i++;
+                        switch(c->str[i]) {
+                            case 'n': ctrl = '\n'; break;
+                            case 'r': ctrl = '\r'; break;
+                            case 't': ctrl = '\t'; break;
+                            default:
+                                errx(1, "unknown control char %c (line %u)",
+                                     c->str[i], c->lineno);
+                        }
+                        if (net_write(master, &ctrl, 1) != 1)
+                            errx(1, "command refused input (line %u)", c->lineno);
+                    } else {
+                        if (net_write(master, &c->str[i], 1) != 1)
+                            errx(1, "command refused input (line %u)", c->lineno);
+                    }
+                    i++;
+                }
+                break;
+            }
+            default:
+                abort();
+        }
     }
     while(read(master, &in, sizeof(in)) > 0)
-	printf("%c", in);
+        printf("%c", in);
 
     if (verbose)
-	printf("[end of program]\n");
+        printf("[end of program]\n");
 
     /*
      * Fetch status from child
      */
     {
-	int ret, status;
+        int ret, status;
 
-	ret = waitpid(pid, &status, 0);
-	if (ret == -1)
-	    err(1, "waitpid");
-	if (WIFEXITED(status) && WEXITSTATUS(status))
-	    return WEXITSTATUS(status);
-	else if (WIFSIGNALED(status)) {
-	    printf("killed by signal: %d\n", WTERMSIG(status));
-	    return 1;
-	}
+        ret = waitpid(pid, &status, 0);
+        if (ret == -1)
+            err(1, "waitpid");
+        if (WIFEXITED(status) && WEXITSTATUS(status))
+            return WEXITSTATUS(status);
+        else if (WIFSIGNALED(status)) {
+            printf("killed by signal: %d\n", WTERMSIG(status));
+            return 1;
+        }
     }
     return 0;
 }
@@ -337,21 +337,21 @@ main(int argc, char **argv)
     setprogname(argv[0]);
 
     if(getarg(args, sizeof(args) / sizeof(args[0]), argc, argv, &optidx))
-	usage(1);
+        usage(1);
 
     if (help_flag)
-	usage (0);
+        usage (0);
 
     if (version_flag) {
-	fprintf (stderr, "%s from %s-%s\n", getprogname(), PACKAGE, VERSION);
-	return 0;
+        fprintf (stderr, "%s from %s-%s\n", getprogname(), PACKAGE, VERSION);
+        return 0;
     }
 
     argv += optidx;
     argc -= optidx;
 
     if (argc < 2)
-	usage(1);
+        usage(1);
 
     parse_configuration(argv[0]);
 
@@ -361,32 +361,32 @@ main(int argc, char **argv)
 
     pid = fork();
     switch (pid) {
-    case -1:
-	err(1, "Failed to fork");
-    case 0:
+        case -1:
+            err(1, "Failed to fork");
+        case 0:
 
-	if(setsid()<0)
-	    err(1, "setsid");
+            if(setsid()<0)
+                err(1, "setsid");
 
-	dup2(slave, STDIN_FILENO);
-	dup2(slave, STDOUT_FILENO);
-	dup2(slave, STDERR_FILENO);
-	closefrom(STDERR_FILENO + 1);
+            dup2(slave, STDIN_FILENO);
+            dup2(slave, STDOUT_FILENO);
+            dup2(slave, STDERR_FILENO);
+            closefrom(STDERR_FILENO + 1);
 
-	execvp(argv[0], argv); /* add NULL to end of array ? */
-	err(1, "Failed to exec: %s", argv[0]);
-    default:
-	close(slave);
-	{
-	    struct sigaction sa;
+            execvp(argv[0], argv); /* add NULL to end of array ? */
+            err(1, "Failed to exec: %s", argv[0]);
+        default:
+            close(slave);
+            {
+                struct sigaction sa;
 
-	    sa.sa_handler = caught_signal;
-	    sa.sa_flags = 0;
-	    sigemptyset (&sa.sa_mask);
+                sa.sa_handler = caught_signal;
+                sa.sa_flags = 0;
+                sigemptyset (&sa.sa_mask);
 
-	    sigaction(SIGALRM, &sa, NULL);
-	}
+                sigaction(SIGALRM, &sa, NULL);
+            }
 
-	return eval_parent(pid);
+            return eval_parent(pid);
     }
 }

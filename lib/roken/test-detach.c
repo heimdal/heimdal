@@ -69,14 +69,14 @@ int main(int argc, char **argv)
         n = strtol(argv[2], &ends, 10);
         fd = n;
         if (errno != 0)
-	    err(1, "Usage: test-detach [--daemon-child fd]");
+            err(1, "Usage: test-detach [--daemon-child fd]");
         if (n < 0 || ends == NULL || *ends != '\0' || n != fd)
-	    errx(1, "Usage: test-detach [--daemon-child fd]");
+            errx(1, "Usage: test-detach [--daemon-child fd]");
     } else {
         if (argc == 2)
             /* Make sure we re-exec on the child-side of fork() (not WIN32) */
             putenv("ROKEN_DETACH_USE_EXEC=1");
-	fd = roken_detach_prep(argc, argv, "--daemon-child");
+        fd = roken_detach_prep(argc, argv, "--daemon-child");
         if (fd == -1)
             errx(1, "bad");
     }

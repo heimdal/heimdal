@@ -136,33 +136,8 @@ heim_store_string_to_reg_value(heim_context context,
     }
 
     switch (type) {
-    case REG_SZ:
-    case REG_EXPAND_SZ:
-        rcode = RegSetValueEx(key, valuename, 0, type, data, cb_data);
-        if (rcode)
-        {
-            if (context)
-                heim_set_error_message(context, 0,
-                                       "Unexpected error when setting registry value %s gle 0x%x",
-                                       valuename,
-                                       GetLastError());
-            return -1;
-        }
-        break;
-    case REG_MULTI_SZ:
-        if (separator && *separator)
-        {
-            char *cp;
-
-            if (data != static_buffer)
-                static_buffer[cb_data++] = '\0';
-
-            for ( cp = static_buffer; cp < static_buffer+cb_data; cp++)
-            {
-                if (*cp == *separator)
-                    *cp = '\0';
-            }
-
+        case REG_SZ:
+        case REG_EXPAND_SZ:
             rcode = RegSetValueEx(key, valuename, 0, type, data, cb_data);
             if (rcode)
             {
@@ -173,31 +148,56 @@ heim_store_string_to_reg_value(heim_context context,
                                            GetLastError());
                 return -1;
             }
-        }
-        break;
-    case REG_DWORD:
-        if ( !StrToIntExA( data, STIF_SUPPORT_HEX, &dwData) )
-        {
-            if (context)
-                heim_set_error_message(context, 0,
-                                       "Unexpected error when parsing %s as number gle 0x%x",
-                                       data,
-                                       GetLastError());
-        }
+            break;
+        case REG_MULTI_SZ:
+            if (separator && *separator)
+            {
+                char *cp;
 
-	rcode = RegSetValueEx(key, valuename, 0, type, (BYTE *)&dwData, sizeof(DWORD));
-        if (rcode)
-        {
-            if (context)
-                heim_set_error_message(context, 0,
-                                       "Unexpected error when setting registry value %s gle 0x%x",
-                                       valuename,
-                                       GetLastError());
+                if (data != static_buffer)
+                    static_buffer[cb_data++] = '\0';
+
+                for ( cp = static_buffer; cp < static_buffer+cb_data; cp++)
+                {
+                    if (*cp == *separator)
+                        *cp = '\0';
+                }
+
+                rcode = RegSetValueEx(key, valuename, 0, type, data, cb_data);
+                if (rcode)
+                {
+                    if (context)
+                        heim_set_error_message(context, 0,
+                                               "Unexpected error when setting registry value %s gle 0x%x",
+                                               valuename,
+                                               GetLastError());
+                    return -1;
+                }
+            }
+            break;
+        case REG_DWORD:
+            if ( !StrToIntExA( data, STIF_SUPPORT_HEX, &dwData) )
+            {
+                if (context)
+                    heim_set_error_message(context, 0,
+                                           "Unexpected error when parsing %s as number gle 0x%x",
+                                           data,
+                                           GetLastError());
+            }
+
+            rcode = RegSetValueEx(key, valuename, 0, type, (BYTE *)&dwData, sizeof(DWORD));
+            if (rcode)
+            {
+                if (context)
+                    heim_set_error_message(context, 0,
+                                           "Unexpected error when setting registry value %s gle 0x%x",
+                                           valuename,
+                                           GetLastError());
+                return -1;
+            }
+            break;
+        default:
             return -1;
-        }
-        break;
-    default:
-        return -1;
     }
 
     return 0;
@@ -286,42 +286,42 @@ heim_parse_reg_value_as_multi_string(heim_context context,
      * (due to potentially missing terminating NULs). */
 
     switch (type) {
-    case REG_DWORD:
-        if (cb_data != sizeof(DWORD)) {
+        case REG_DWORD:
+            if (cb_data != sizeof(DWORD)) {
+                if (context)
+                    heim_set_error_message(context, 0,
+                                           "Unexpected size while reading registry value %s",
+                                           valuename);
+                return NULL;
+            }
+            break;
+
+        case REG_SZ:
+        case REG_EXPAND_SZ:
+
+            if (rcode == ERROR_SUCCESS && cb_data > 0 && pbuffer[cb_data - 1] == '\0')
+                goto have_data;
+
+            cb_data += sizeof(char); /* Accout for potential missing NUL
+                                      * terminator. */
+            break;
+
+        case REG_MULTI_SZ:
+
+            if (rcode == ERROR_SUCCESS && cb_data > 0 && pbuffer[cb_data - 1] == '\0' &&
+                (cb_data == 1 || pbuffer[cb_data - 2] == '\0'))
+                goto have_data;
+
+            cb_data += sizeof(char) * 2; /* Potential missing double NUL
+                                          * terminator. */
+            break;
+
+        default:
             if (context)
                 heim_set_error_message(context, 0,
-                                       "Unexpected size while reading registry value %s",
+                                       "Unexpected type while reading registry value %s",
                                        valuename);
             return NULL;
-        }
-        break;
-
-    case REG_SZ:
-    case REG_EXPAND_SZ:
-
-        if (rcode == ERROR_SUCCESS && cb_data > 0 && pbuffer[cb_data - 1] == '\0')
-            goto have_data;
-
-        cb_data += sizeof(char); /* Accout for potential missing NUL
-                                  * terminator. */
-        break;
-
-    case REG_MULTI_SZ:
-
-        if (rcode == ERROR_SUCCESS && cb_data > 0 && pbuffer[cb_data - 1] == '\0' &&
-            (cb_data == 1 || pbuffer[cb_data - 2] == '\0'))
-            goto have_data;
-
-        cb_data += sizeof(char) * 2; /* Potential missing double NUL
-                                      * terminator. */
-        break;
-
-    default:
-        if (context)
-            heim_set_error_message(context, 0,
-                                   "Unexpected type while reading registry value %s",
-                                   valuename);
-        return NULL;
     }
 
     if (cb_data <= sizeof(static_buffer))
@@ -359,87 +359,87 @@ heim_parse_reg_value_as_multi_string(heim_context context,
 
 have_data:
     switch (type) {
-    case REG_DWORD:
-        asprintf(&ret_string, "%d", *((DWORD *) pbuffer));
+        case REG_DWORD:
+            asprintf(&ret_string, "%d", *((DWORD *) pbuffer));
+            break;
+
+        case REG_SZ:
+        {
+            char * str = (char *) pbuffer;
+
+            if (str[cb_data - 1] != '\0') {
+                if (cb_data < cb_alloc)
+                    str[cb_data] = '\0';
+                else
+                    break;
+            }
+
+            if (pbuffer != static_buffer) {
+                ret_string = (char *) pbuffer;
+                pbuffer = NULL;
+            } else {
+                ret_string = strdup((char *) pbuffer);
+            }
+        }
         break;
 
-    case REG_SZ:
-    {
-        char * str = (char *) pbuffer;
+        case REG_EXPAND_SZ:
+        {
+            char    *str = (char *) pbuffer;
+            char    expsz[32768];   /* Size of output buffer for
+                                     * ExpandEnvironmentStrings() is
+                                     * limited to 32K. */
 
-        if (str[cb_data - 1] != '\0') {
-            if (cb_data < cb_alloc)
-                str[cb_data] = '\0';
-            else
-                break;
+            if (str[cb_data - 1] != '\0') {
+                if (cb_data < cb_alloc)
+                    str[cb_data] = '\0';
+                else
+                    break;
+            }
+
+            if (ExpandEnvironmentStrings(str, expsz, sizeof(expsz)/sizeof(char)) != 0) {
+                ret_string = strdup(expsz);
+            } else {
+                if (context)
+                    heim_set_error_message(context, 0,
+                                           "Overflow while expanding environment strings "
+                                           "for registry value %s", valuename);
+            }
         }
+        break;
 
-        if (pbuffer != static_buffer) {
-            ret_string = (char *) pbuffer;
-            pbuffer = NULL;
-        } else {
-            ret_string = strdup((char *) pbuffer);
+        case REG_MULTI_SZ:
+        {
+            char * str = (char *) pbuffer;
+            char * iter;
+
+            str[cb_alloc - 1] = '\0';
+            str[cb_alloc - 2] = '\0';
+
+            for (iter = str; *iter;) {
+                size_t len = strlen(iter);
+
+                iter += len;
+                if (iter[1] != '\0')
+                    *iter++ = *separator;
+                else
+                    break;
+            }
+
+            if (pbuffer != static_buffer) {
+                ret_string = str;
+                pbuffer = NULL;
+            } else {
+                ret_string = strdup(str);
+            }
         }
-    }
-    break;
+        break;
 
-    case REG_EXPAND_SZ:
-    {
-        char    *str = (char *) pbuffer;
-        char    expsz[32768];   /* Size of output buffer for
-                                 * ExpandEnvironmentStrings() is
-                                 * limited to 32K. */
-
-        if (str[cb_data - 1] != '\0') {
-            if (cb_data < cb_alloc)
-                str[cb_data] = '\0';
-            else
-                break;
-        }
-
-        if (ExpandEnvironmentStrings(str, expsz, sizeof(expsz)/sizeof(char)) != 0) {
-            ret_string = strdup(expsz);
-        } else {
+        default:
             if (context)
                 heim_set_error_message(context, 0,
-                                       "Overflow while expanding environment strings "
-                                       "for registry value %s", valuename);
-        }
-    }
-    break;
-
-    case REG_MULTI_SZ:
-    {
-        char * str = (char *) pbuffer;
-        char * iter;
-
-        str[cb_alloc - 1] = '\0';
-        str[cb_alloc - 2] = '\0';
-
-        for (iter = str; *iter;) {
-            size_t len = strlen(iter);
-
-            iter += len;
-            if (iter[1] != '\0')
-                *iter++ = *separator;
-            else
-                break;
-        }
-
-        if (pbuffer != static_buffer) {
-            ret_string = str;
-            pbuffer = NULL;
-        } else {
-            ret_string = strdup(str);
-        }
-    }
-    break;
-
-    default:
-        if (context)
-            heim_set_error_message(context, 0,
-                                   "Unexpected type while reading registry value %s",
-                                   valuename);
+                                       "Unexpected type while reading registry value %s",
+                                       valuename);
     }
 
 done:

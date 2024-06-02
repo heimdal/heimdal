@@ -46,25 +46,25 @@ dump(struct dump_options *opt, int argc, char **argv)
     HDB *db = NULL;
 
     if (!local_flag) {
-	krb5_warnx(context, "dump is only available in local (-l) mode");
-	return 0;
+        krb5_warnx(context, "dump is only available in local (-l) mode");
+        return 0;
     }
 
     db = _kadm5_s_get_db(kadm_handle);
 
     if (argc == 0)
-	f = stdout;
+        f = stdout;
     else
-	f = fopen(argv[0], "w");
+        f = fopen(argv[0], "w");
 
     if (f == NULL) {
-	krb5_warn(context, errno, "open: %s", argv[0]);
-	goto out;
+        krb5_warn(context, errno, "open: %s", argv[0]);
+        goto out;
     }
     ret = db->hdb_open(context, db, O_RDONLY, 0600);
     if (ret) {
-	krb5_warn(context, ret, "hdb_open");
-	goto out;
+        krb5_warn(context, ret, "hdb_open");
+        goto out;
     }
 
     if (!opt->format_string || strcmp(opt->format_string, "Heimdal") == 0) {
@@ -77,11 +77,11 @@ dump(struct dump_options *opt, int argc, char **argv)
     }
     parg.out = f;
     hdb_foreach(context, db, opt->decrypt_flag ? HDB_F_DECRYPT : 0,
-		hdb_print_entry, &parg);
+                hdb_print_entry, &parg);
 
     db->hdb_close(context, db);
 out:
     if(f && f != stdout)
-	fclose(f);
+        fclose(f);
     return 0;
 }

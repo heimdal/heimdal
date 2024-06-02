@@ -127,8 +127,8 @@ unblind(mp_int *out, mp_int *bi, mp_int *n)
 
 static mp_err
 ltm_rsa_private_calculate(mp_int * in, mp_int * p,  mp_int * q,
-			  mp_int * dmp1, mp_int * dmq1, mp_int * iqmp,
-			  mp_int * out)
+                          mp_int * dmp1, mp_int * dmq1, mp_int * iqmp,
+                          mp_int * out)
 {
     mp_err ret;
     mp_int vp, vq, u;
@@ -164,7 +164,7 @@ ltm_rsa_private_calculate(mp_int * in, mp_int * p,  mp_int * q,
 
 static int
 ltm_rsa_public_encrypt(int flen, const unsigned char* from,
-			unsigned char* to, RSA* rsa, int padding)
+                       unsigned char* to, RSA* rsa, int padding)
 {
     unsigned char *p = NULL, *p0 = NULL;
     size_t size, ssize = 0, padlen;
@@ -173,7 +173,7 @@ ltm_rsa_public_encrypt(int flen, const unsigned char* from,
     int where = __LINE__;
 
     if (padding != RSA_PKCS1_PADDING)
-	return -1;
+        return -1;
 
     FIRST(mp_init_multi(&n, &e, &enc, &dec, NULL));
 
@@ -220,7 +220,7 @@ ltm_rsa_public_encrypt(int flen, const unsigned char* from,
 
 static int
 ltm_rsa_public_decrypt(int flen, const unsigned char* from,
-		       unsigned char* to, RSA* rsa, int padding)
+                       unsigned char* to, RSA* rsa, int padding)
 {
     unsigned char *p = NULL;
     mp_err ret;
@@ -229,10 +229,10 @@ ltm_rsa_public_decrypt(int flen, const unsigned char* from,
     int where = __LINE__;
 
     if (padding != RSA_PKCS1_PADDING)
-	return -1;
+        return -1;
 
     if (flen > RSA_size(rsa))
-	return -2;
+        return -2;
 
     FIRST(mp_init_multi(&e, &n, &s, &us, NULL));
     THEN_MP(BN2mpz(&n, rsa->n));
@@ -271,7 +271,7 @@ ltm_rsa_public_decrypt(int flen, const unsigned char* from,
 
 static int
 ltm_rsa_private_encrypt(int flen, const unsigned char* from,
-			unsigned char* to, RSA* rsa, int padding)
+                        unsigned char* to, RSA* rsa, int padding)
 {
     unsigned char *ptr = NULL, *ptr0 = NULL;
     mp_err ret;
@@ -283,13 +283,13 @@ ltm_rsa_private_encrypt(int flen, const unsigned char* from,
     int where = __LINE__;
 
     if (padding != RSA_PKCS1_PADDING)
-	return -1;
+        return -1;
 
     FIRST(mp_init_multi(&e, &n, &in, &out, &b, &bi, NULL));
 
     size = RSA_size(rsa);
     if (size < RSA_PKCS1_PADDING_SIZE || size - RSA_PKCS1_PADDING_SIZE < flen)
-	return -2;
+        return -2;
 
     THEN_ALLOC((ptr0 = ptr = malloc(size)));
     if (ret == MP_OKAY) {
@@ -312,44 +312,44 @@ ltm_rsa_private_encrypt(int flen, const unsigned char* from,
     THEN_IF_MP((mp_isneg(&in) || mp_cmp(&in, &n) >= 0), MP_ERR);
 
     if (blinding) {
-	THEN_MP(setup_blind(&n, &b, &bi));
-	THEN_MP(blind(&in, &b, &e, &n));
-	do_unblind = 1;
+        THEN_MP(setup_blind(&n, &b, &bi));
+        THEN_MP(blind(&in, &b, &e, &n));
+        do_unblind = 1;
     }
 
     if (ret == MP_OKAY && rsa->p && rsa->q && rsa->dmp1 && rsa->dmq1 &&
         rsa->iqmp) {
-	mp_int p, q, dmp1, dmq1, iqmp;
+        mp_int p, q, dmp1, dmq1, iqmp;
 
-	FIRST(mp_init_multi(&p, &q, &dmp1, &dmq1, &iqmp, NULL));
-	THEN_MP(BN2mpz(&p, rsa->p));
-	THEN_MP(BN2mpz(&q, rsa->q));
-	THEN_MP(BN2mpz(&dmp1, rsa->dmp1));
-	THEN_MP(BN2mpz(&dmq1, rsa->dmq1));
-	THEN_MP(BN2mpz(&iqmp, rsa->iqmp));
+        FIRST(mp_init_multi(&p, &q, &dmp1, &dmq1, &iqmp, NULL));
+        THEN_MP(BN2mpz(&p, rsa->p));
+        THEN_MP(BN2mpz(&q, rsa->q));
+        THEN_MP(BN2mpz(&dmp1, rsa->dmp1));
+        THEN_MP(BN2mpz(&dmq1, rsa->dmq1));
+        THEN_MP(BN2mpz(&iqmp, rsa->iqmp));
         THEN_MP(ltm_rsa_private_calculate(&in, &p, &q, &dmp1, &dmq1, &iqmp,
                                           &out));
-	mp_clear_multi(&p, &q, &dmp1, &dmq1, &iqmp, NULL);
-	if (ret != MP_OKAY) goto out;
+        mp_clear_multi(&p, &q, &dmp1, &dmq1, &iqmp, NULL);
+        if (ret != MP_OKAY) goto out;
     } else if (ret == MP_OKAY) {
-	mp_int d;
+        mp_int d;
 
-	THEN_MP(BN2mpz(&d, rsa->d));
-	THEN_MP(mp_exptmod(&in, &d, &n, &out));
-	mp_clear(&d);
-	if (ret != MP_OKAY) goto out;
+        THEN_MP(BN2mpz(&d, rsa->d));
+        THEN_MP(mp_exptmod(&in, &d, &n, &out));
+        mp_clear(&d);
+        if (ret != MP_OKAY) goto out;
     }
 
     if (do_unblind)
-	THEN_MP(unblind(&out, &bi, &n));
+        THEN_MP(unblind(&out, &bi, &n));
 
     if (ret == MP_OKAY && size > 0) {
-	size_t ssize;
+        size_t ssize;
 
-	ssize = mp_ubin_size(&out);
-	assert(size >= ssize);
-	THEN_MP(mp_to_ubin(&out, to, SIZE_MAX, NULL));
-	size = ssize;
+        ssize = mp_ubin_size(&out);
+        assert(size >= ssize);
+        THEN_MP(mp_to_ubin(&out, to, SIZE_MAX, NULL));
+        size = ssize;
     }
 
  out:
@@ -359,7 +359,7 @@ ltm_rsa_private_encrypt(int flen, const unsigned char* from,
 
 static int
 ltm_rsa_private_decrypt(int flen, const unsigned char* from,
-			unsigned char* to, RSA* rsa, int padding)
+                        unsigned char* to, RSA* rsa, int padding)
 {
     unsigned char *ptr;
     size_t size;
@@ -370,11 +370,11 @@ ltm_rsa_private_decrypt(int flen, const unsigned char* from,
     int where = __LINE__;
 
     if (padding != RSA_PKCS1_PADDING)
-	return -1;
+        return -1;
 
     size = RSA_size(rsa);
     if (flen > size)
-	return -2;
+        return -2;
 
     FIRST(mp_init_multi(&in, &n, &e, &out, &b, &bi, NULL));
     THEN_MP(BN2mpz(&n, rsa->n));
@@ -384,36 +384,36 @@ ltm_rsa_private_decrypt(int flen, const unsigned char* from,
     THEN_IF_MP((mp_isneg(&in) || mp_cmp(&in, &n) >= 0), MP_ERR);
 
     if (blinding) {
-	THEN_MP(setup_blind(&n, &b, &bi));
-	THEN_MP(blind(&in, &b, &e, &n));
-	do_unblind = 1;
+        THEN_MP(setup_blind(&n, &b, &bi));
+        THEN_MP(blind(&in, &b, &e, &n));
+        do_unblind = 1;
     }
 
     if (ret == MP_OKAY && rsa->p && rsa->q && rsa->dmp1 && rsa->dmq1 &&
         rsa->iqmp) {
-	mp_int p, q, dmp1, dmq1, iqmp;
+        mp_int p, q, dmp1, dmq1, iqmp;
 
-	THEN_MP(mp_init_multi(&p, &q, &dmp1, &dmq1, &iqmp, NULL));
-	THEN_MP(BN2mpz(&p, rsa->p));
-	THEN_MP(BN2mpz(&q, rsa->q));
-	THEN_MP(BN2mpz(&dmp1, rsa->dmp1));
-	THEN_MP(BN2mpz(&dmq1, rsa->dmq1));
-	THEN_MP(BN2mpz(&iqmp, rsa->iqmp));
-	THEN_MP(ltm_rsa_private_calculate(&in, &p, &q, &dmp1, &dmq1, &iqmp, &out));
-	mp_clear_multi(&p, &q, &dmp1, &dmq1, &iqmp, NULL);
-	if (ret != MP_OKAY) goto out;
+        THEN_MP(mp_init_multi(&p, &q, &dmp1, &dmq1, &iqmp, NULL));
+        THEN_MP(BN2mpz(&p, rsa->p));
+        THEN_MP(BN2mpz(&q, rsa->q));
+        THEN_MP(BN2mpz(&dmp1, rsa->dmp1));
+        THEN_MP(BN2mpz(&dmq1, rsa->dmq1));
+        THEN_MP(BN2mpz(&iqmp, rsa->iqmp));
+        THEN_MP(ltm_rsa_private_calculate(&in, &p, &q, &dmp1, &dmq1, &iqmp, &out));
+        mp_clear_multi(&p, &q, &dmp1, &dmq1, &iqmp, NULL);
+        if (ret != MP_OKAY) goto out;
     } else if (ret == MP_OKAY) {
-	mp_int d;
+        mp_int d;
 
-	THEN_IF_MP((mp_isneg(&in) || mp_cmp(&in, &n) >= 0), MP_ERR);
-	THEN_MP(BN2mpz(&d, rsa->d));
-	THEN_MP(mp_exptmod(&in, &d, &n, &out));
-	mp_clear(&d);
-	if (ret != MP_OKAY) goto out;
+        THEN_IF_MP((mp_isneg(&in) || mp_cmp(&in, &n) >= 0), MP_ERR);
+        THEN_MP(BN2mpz(&d, rsa->d));
+        THEN_MP(mp_exptmod(&in, &d, &n, &out));
+        mp_clear(&d);
+        if (ret != MP_OKAY) goto out;
     }
 
     if (do_unblind)
-	THEN_MP(unblind(&out, &bi, &n));
+        THEN_MP(unblind(&out, &bi, &n));
 
     if (ret == MP_OKAY) {
         size_t ssize;
@@ -423,7 +423,7 @@ ltm_rsa_private_decrypt(int flen, const unsigned char* from,
         assert(size >= ssize);
         ret = mp_to_ubin(&out, ptr, SIZE_MAX, NULL);
         if (ret != MP_OKAY) goto out;
-	size = ssize;
+        size = ssize;
 
         /* head zero was skipped by mp_int_to_unsigned */
         if (*ptr != 2) {
@@ -457,11 +457,11 @@ mpz2BN(mp_int *s)
 
     size = mp_ubin_size(s);
     if (size == 0)
-	return NULL;
+        return NULL;
 
     p = malloc(size);
     if (p == NULL)
-	return NULL;
+        return NULL;
 
     ret = mp_to_ubin(s, p, SIZE_MAX, NULL);
     if (ret == MP_OKAY)
@@ -508,8 +508,8 @@ gen_p(int bits, enum gen_pq_type pq_type, uint8_t nibble_pair, mp_int *p, mp_int
         if (ret == MP_OKAY && res == MP_NO) continue;
 
         /* check gcd(p - 1, e) == 1 */
-	THEN_MP(mp_sub_d(p, 1, &t1));
-	THEN_MP(mp_gcd(&t1, e, &t2));
+        THEN_MP(mp_sub_d(p, 1, &t1));
+        THEN_MP(mp_gcd(&t1, e, &t2));
     } while (ret == MP_OKAY && mp_cmp_d(&t2, 1) != MP_EQ);
 
     mp_clear_multi(&t1, &t2, NULL);
@@ -518,9 +518,9 @@ gen_p(int bits, enum gen_pq_type pq_type, uint8_t nibble_pair, mp_int *p, mp_int
 }
 
 static uint8_t pq_high_nibble_pairs[] = {
-0x9f, 0xad, 0xae, 0xaf, 0xbc, 0xbd, 0xbe, 0xbf, 0xcb, 0xcc, 0xcd, 0xce, 0xcf,
-0xda, 0xdb, 0xdc, 0xdd, 0xde, 0xdf, 0xea, 0xeb, 0xec, 0xed, 0xee, 0xef, 0xf9,
-0xfa, 0xfb, 0xfc, 0xfd, 0xfe, 0xff
+    0x9f, 0xad, 0xae, 0xaf, 0xbc, 0xbd, 0xbe, 0xbf, 0xcb, 0xcc, 0xcd, 0xce, 0xcf,
+    0xda, 0xdb, 0xdc, 0xdd, 0xde, 0xdf, 0xea, 0xeb, 0xec, 0xed, 0xee, 0xef, 0xf9,
+    0xfa, 0xfb, 0xfc, 0xfd, 0xfe, 0xff
 };
 
 static int
@@ -533,7 +533,7 @@ ltm_rsa_generate_key(RSA *rsa, int bits, BIGNUM *e, BN_GENCB *cb)
     int where = __LINE__;
 
     if (bits < 789)
-	return -1;
+        return -1;
 
     bitsp = (bits + 1) / 2;
 
@@ -558,10 +558,10 @@ ltm_rsa_generate_key(RSA *rsa, int bits, BIGNUM *e, BN_GENCB *cb)
 
     /* make p > q */
     if (mp_cmp(&p, &q) < 0) {
-	mp_int c;
-	c = p;
-	p = q;
-	q = c;
+        mp_int c;
+        c = p;
+        p = q;
+        q = c;
     }
 
     BN_GENCB_call(cb, 3, 1);
@@ -596,8 +596,8 @@ ltm_rsa_generate_key(RSA *rsa, int bits, BIGNUM *e, BN_GENCB *cb)
     }
 
     mp_clear_multi(&el, &p, &q, &n, &d,
-		   &dmp1, &dmq1, &iqmp,
-		   &t1, &t2, &t3, NULL);
+                   &dmp1, &dmq1, &iqmp,
+                   &t1, &t2, &t3, NULL);
     return (ret == MP_OKAY) ? 1 : -where;
 }
 

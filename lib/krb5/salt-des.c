@@ -48,17 +48,17 @@
  */
 static void
 krb5_DES_AFS3_CMU_string_to_key (krb5_data pw,
-				 krb5_data cell,
-				 DES_cblock *key)
+                                 krb5_data cell,
+                                 DES_cblock *key)
 {
     char  password[8+1];	/* crypt is limited to 8 chars anyway */
     size_t   i;
 
     for(i = 0; i < 8; i++) {
-	char c = ((i < pw.length) ? ((char*)pw.data)[i] : 0) ^
-	    ((i < cell.length) ?
-	     tolower(((unsigned char*)cell.data)[i]) : 0);
-	password[i] = c ? c : 'X';
+        char c = ((i < pw.length) ? ((char*)pw.data)[i] : 0) ^
+            ((i < cell.length) ?
+             tolower(((unsigned char*)cell.data)[i]) : 0);
+        password[i] = c ? c : 'X';
     }
     password[8] = '\0';
 
@@ -68,7 +68,7 @@ krb5_DES_AFS3_CMU_string_to_key (krb5_data pw,
        bit. This allows ascii characters with a zero MSB to retain as
        much significance as possible. */
     for (i = 0; i < sizeof(DES_cblock); i++)
-	((unsigned char*)key)[i] <<= 1;
+        ((unsigned char*)key)[i] <<= 1;
     DES_set_odd_parity (key);
 }
 
@@ -77,8 +77,8 @@ krb5_DES_AFS3_CMU_string_to_key (krb5_data pw,
  */
 static void
 krb5_DES_AFS3_Transarc_string_to_key (krb5_data pw,
-				      krb5_data cell,
-				      DES_cblock *key)
+                                      krb5_data cell,
+                                      DES_cblock *key)
 {
     DES_key_schedule schedule;
     DES_cblock temp_key;
@@ -88,12 +88,12 @@ krb5_DES_AFS3_Transarc_string_to_key (krb5_data pw,
 
     memcpy(password, pw.data, min(pw.length, sizeof(password)));
     if(pw.length < sizeof(password)) {
-	int len = min(cell.length, sizeof(password) - pw.length);
-	size_t i;
+        int len = min(cell.length, sizeof(password) - pw.length);
+        size_t i;
 
-	memcpy(password + pw.length, cell.data, len);
-	for (i = pw.length; i < pw.length + len; ++i)
-	    password[i] = tolower((unsigned char)password[i]);
+        memcpy(password + pw.length, cell.data, len);
+        for (i = pw.length; i < pw.length + len; ++i)
+            password[i] = tolower((unsigned char)password[i]);
     }
     passlen = min(sizeof(password), pw.length + cell.length);
     memcpy(&ivec, "kerberos", 8);
@@ -116,17 +116,17 @@ krb5_DES_AFS3_Transarc_string_to_key (krb5_data pw,
 
 static krb5_error_code
 DES_AFS3_string_to_key(krb5_context context,
-		       krb5_enctype enctype,
-		       krb5_data password,
-		       krb5_salt salt,
-		       krb5_data opaque,
-		       krb5_keyblock *key)
+                       krb5_enctype enctype,
+                       krb5_data password,
+                       krb5_salt salt,
+                       krb5_data opaque,
+                       krb5_keyblock *key)
 {
     DES_cblock tmp;
     if(password.length > 8)
-	krb5_DES_AFS3_Transarc_string_to_key(password, salt.saltvalue, &tmp);
+        krb5_DES_AFS3_Transarc_string_to_key(password, salt.saltvalue, &tmp);
     else
-	krb5_DES_AFS3_CMU_string_to_key(password, salt.saltvalue, &tmp);
+        krb5_DES_AFS3_CMU_string_to_key(password, salt.saltvalue, &tmp);
     key->keytype = enctype;
     krb5_data_copy(&key->keyvalue, tmp, sizeof(tmp));
     memset(&key, 0, sizeof(key));
@@ -143,37 +143,37 @@ DES_string_to_key_int(unsigned char *data, size_t length, DES_cblock *key)
     unsigned char *p;
 
     unsigned char swap[] = { 0x0, 0x8, 0x4, 0xc, 0x2, 0xa, 0x6, 0xe,
-			     0x1, 0x9, 0x5, 0xd, 0x3, 0xb, 0x7, 0xf };
+                             0x1, 0x9, 0x5, 0xd, 0x3, 0xb, 0x7, 0xf };
     memset(key, 0, 8);
 
     p = (unsigned char*)key;
     for (i = 0; i < length; i++) {
-	unsigned char tmp = data[i];
-	if (!reverse)
-	    *p++ ^= (tmp << 1);
-	else
-	    *--p ^= (swap[tmp & 0xf] << 4) | swap[(tmp & 0xf0) >> 4];
-	if((i % 8) == 7)
-	    reverse = !reverse;
+        unsigned char tmp = data[i];
+        if (!reverse)
+            *p++ ^= (tmp << 1);
+        else
+            *--p ^= (swap[tmp & 0xf] << 4) | swap[(tmp & 0xf0) >> 4];
+        if((i % 8) == 7)
+            reverse = !reverse;
     }
     DES_set_odd_parity(key);
     if(DES_is_weak_key(key))
-	(*key)[7] ^= 0xF0;
+        (*key)[7] ^= 0xF0;
     DES_set_key_unchecked(key, &schedule);
     DES_cbc_cksum((void*)data, key, length, &schedule, key);
     memset(&schedule, 0, sizeof(schedule));
     DES_set_odd_parity(key);
     if(DES_is_weak_key(key))
-	(*key)[7] ^= 0xF0;
+        (*key)[7] ^= 0xF0;
 }
 
 static krb5_error_code
 krb5_DES_string_to_key(krb5_context context,
-		       krb5_enctype enctype,
-		       krb5_data password,
-		       krb5_salt salt,
-		       krb5_data opaque,
-		       krb5_keyblock *key)
+                       krb5_enctype enctype,
+                       krb5_data password,
+                       krb5_salt salt,
+                       krb5_data opaque,
+                       krb5_keyblock *key)
 {
     unsigned char *s;
     size_t len;
@@ -181,18 +181,18 @@ krb5_DES_string_to_key(krb5_context context,
 
 #ifdef ENABLE_AFS_STRING_TO_KEY
     if (opaque.length == 1) {
-	unsigned long v;
-	_krb5_get_int(opaque.data, &v, 1);
-	if (v == 1)
-	    return DES_AFS3_string_to_key(context, enctype, password,
-					  salt, opaque, key);
+        unsigned long v;
+        _krb5_get_int(opaque.data, &v, 1);
+        if (v == 1)
+            return DES_AFS3_string_to_key(context, enctype, password,
+                                          salt, opaque, key);
     }
 #endif
 
     len = password.length + salt.saltvalue.length;
     s = malloc(len);
     if (len > 0 && s == NULL)
-	return krb5_enomem(context);
+        return krb5_enomem(context);
     memcpy(s, password.data, password.length);
     if (salt.saltvalue.length)
         memcpy(s + password.length, salt.saltvalue.data, salt.saltvalue.length);
@@ -207,15 +207,15 @@ krb5_DES_string_to_key(krb5_context context,
 
 struct salt_type _krb5_des_salt[] = {
     {
-	KRB5_PW_SALT,
-	"pw-salt",
-	krb5_DES_string_to_key
+        KRB5_PW_SALT,
+        "pw-salt",
+        krb5_DES_string_to_key
     },
 #ifdef ENABLE_AFS_STRING_TO_KEY
     {
-	KRB5_AFS3_SALT,
-	"afs3-salt",
-	DES_AFS3_string_to_key
+        KRB5_AFS3_SALT,
+        "afs3-salt",
+        DES_AFS3_string_to_key
     },
 #endif
     { 0, NULL, NULL }

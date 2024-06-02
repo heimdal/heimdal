@@ -62,10 +62,10 @@ static int num_clients;
 
 static int
 init_sec_context(struct client *client,
-		 int32_t *hContext, int32_t *hCred,
-		 int32_t flags,
-		 const char *targetname,
-		 const krb5_data *itoken, krb5_data *otoken)
+                 int32_t *hContext, int32_t *hCred,
+                 int32_t flags,
+                 const char *targetname,
+                 const krb5_data *itoken, krb5_data *otoken)
 {
     int32_t val;
     krb5_data_zero(otoken);
@@ -83,11 +83,11 @@ init_sec_context(struct client *client,
 
 static int
 accept_sec_context(struct client *client,
-		   int32_t *hContext,
-		   int32_t flags,
-		   const krb5_data *itoken,
-		   krb5_data *otoken,
-		   int32_t *hDelegCred)
+                   int32_t *hContext,
+                   int32_t flags,
+                   const krb5_data *itoken,
+                   krb5_data *otoken,
+                   int32_t *hDelegCred)
 {
     int32_t val;
     krb5_data_zero(otoken);
@@ -104,10 +104,10 @@ accept_sec_context(struct client *client,
 
 static int
 acquire_cred(struct client *client,
-	     const char *username,
-	     const char *password,
-	     int32_t flags,
-	     int32_t *hCred)
+             const char *username,
+             const char *password,
+             int32_t flags,
+             int32_t *hCred)
 {
     int32_t val;
     put32(client, eAcquireCreds);
@@ -121,7 +121,7 @@ acquire_cred(struct client *client,
 
 static int
 toast_resource(struct client *client,
-	       int32_t hCred)
+               int32_t hCred)
 {
     int32_t val;
     put32(client, eToastResource);
@@ -139,7 +139,7 @@ goodbye(struct client *client)
 
 static int
 get_targetname(struct client *client,
-	       char **target)
+               char **target)
 {
     put32(client, eGetTargetName);
     retstring(client, *target);
@@ -148,7 +148,7 @@ get_targetname(struct client *client,
 
 static int32_t
 encrypt_token(struct client *client, int32_t hContext, int32_t flags,
-	   krb5_data *in, krb5_data *out)
+              krb5_data *in, krb5_data *out)
 {
     int32_t val;
     put32(client, eEncrypt);
@@ -163,7 +163,7 @@ encrypt_token(struct client *client, int32_t hContext, int32_t flags,
 
 static int32_t
 decrypt_token(struct client *client, int32_t hContext, int flags,
-	     krb5_data *in, krb5_data *out)
+              krb5_data *in, krb5_data *out)
 {
     int32_t val;
     put32(client, eDecrypt);
@@ -178,8 +178,8 @@ decrypt_token(struct client *client, int32_t hContext, int flags,
 
 static int32_t
 wrap_token_ext(struct client *client, int32_t hContext, int32_t flags,
-	       int32_t bflags, krb5_data *header, krb5_data *in, krb5_data *trailer,
-	       krb5_data *out)
+               int32_t bflags, krb5_data *header, krb5_data *in, krb5_data *trailer,
+               krb5_data *out)
 {
     int32_t val;
     put32(client, eWrapExt);
@@ -196,8 +196,8 @@ wrap_token_ext(struct client *client, int32_t hContext, int32_t flags,
 
 static int32_t
 unwrap_token_ext(struct client *client, int32_t hContext, int32_t flags,
-	       int32_t bflags, krb5_data *header, krb5_data *in, krb5_data *trailer,
-	       krb5_data *out)
+                 int32_t bflags, krb5_data *header, krb5_data *in, krb5_data *trailer,
+                 krb5_data *out)
 {
     int32_t val;
     put32(client, eUnwrapExt);
@@ -214,7 +214,7 @@ unwrap_token_ext(struct client *client, int32_t hContext, int32_t flags,
 
 static int32_t
 get_mic(struct client *client, int32_t hContext,
-	krb5_data *in, krb5_data *mic)
+        krb5_data *in, krb5_data *mic)
 {
     int32_t val;
     put32(client, eSign);
@@ -229,7 +229,7 @@ get_mic(struct client *client, int32_t hContext,
 
 static int32_t
 verify_mic(struct client *client, int32_t hContext,
-	   krb5_data *in, krb5_data *mic)
+           krb5_data *in, krb5_data *mic)
 {
     int32_t val;
     put32(client, eVerify);
@@ -245,8 +245,8 @@ verify_mic(struct client *client, int32_t hContext,
 
 static int32_t
 get_version_capa(struct client *client,
-		 int32_t *version, int32_t *capa,
-		 char **version_str)
+                 int32_t *version, int32_t *capa,
+                 char **version_str)
 {
     put32(client, eGetVersionAndCapabilities);
     ret32(client, *version);
@@ -257,7 +257,7 @@ get_version_capa(struct client *client,
 
 static int32_t
 get_moniker(struct client *client,
-	    char **moniker)
+            char **moniker)
 {
     put32(client, eGetMoniker);
     retstring(client, *moniker);
@@ -279,20 +279,20 @@ wait_log(struct client *c)
 
     sock = socket(c->sa->sa_family, SOCK_STREAM, 0);
     if (sock == rk_INVALID_SOCKET)
-	err(1, "failed to build socket for %s's logging port", c->moniker);
+        err(1, "failed to build socket for %s's logging port", c->moniker);
 
     sast.ss_family = c->sa->sa_family;
     ret = bind(sock, (struct sockaddr *)&sast, c->salen);
     if (ret < 0)
-	err(1, "failed to bind %s's logging port", c->moniker);
+        err(1, "failed to bind %s's logging port", c->moniker);
 
     if (listen(sock, SOMAXCONN) < 0)
-	err(1, "failed to listen %s's logging port", c->moniker);
+        err(1, "failed to listen %s's logging port", c->moniker);
 
     salen = sizeof(sast);
     ret = getsockname(sock, (struct sockaddr *)&sast, &salen);
     if (ret < 0)
-	err(1, "failed to get address of local socket for %s", c->moniker);
+        err(1, "failed to get address of local socket for %s", c->moniker);
 
     port = socket_get_port((struct sockaddr *)&sast);
 
@@ -302,7 +302,7 @@ wait_log(struct client *c)
     salen = sizeof(sast);
     sock2 = accept(sock, (struct sockaddr *)&sast, &salen);
     if (sock2 == rk_INVALID_SOCKET)
-	err(1, "failed to accept local socket for %s", c->moniker);
+        err(1, "failed to accept local socket for %s", c->moniker);
     rk_closesocket(sock);
 
     return sock2;
@@ -313,8 +313,8 @@ wait_log(struct client *c)
 
 static int
 build_context(struct client *ipeer, struct client *apeer,
-	      int32_t flags, int32_t hCred,
-	      int32_t *iContext, int32_t *aContext, int32_t *hDelegCred)
+              int32_t flags, int32_t hCred,
+              int32_t *iContext, int32_t *aContext, int32_t *hDelegCred)
 {
     int32_t val = GSMERR_ERROR, ic = 0, ac = 0, deleg = 0;
     krb5_data itoken, otoken;
@@ -323,85 +323,85 @@ build_context(struct client *ipeer, struct client *apeer,
     int first_call = 0x80;
 
     if (apeer->target_name == NULL)
-	errx(1, "apeer %s have no target name", apeer->name);
+        errx(1, "apeer %s have no target name", apeer->name);
 
     krb5_data_zero(&itoken);
 
     while (!iDone || !aDone) {
 
-	if (iDone) {
-	    warnx("iPeer already done, aPeer want extra rtt");
-	    val = GSMERR_ERROR;
-	    goto out;
-	}
+        if (iDone) {
+            warnx("iPeer already done, aPeer want extra rtt");
+            val = GSMERR_ERROR;
+            goto out;
+        }
 
-	val = init_sec_context(ipeer, &ic, &hCred, flags|first_call,
-			       apeer->target_name, &itoken, &otoken);
-	step++;
-	switch(val) {
-	case GSMERR_OK:
-	    iDone = 1;
-	    if (aDone)
-		continue;
-	    break;
-	case GSMERR_CONTINUE_NEEDED:
-	    break;
-	default:
-	    warnx("iPeer %s failed with %d (step %d)",
-		  ipeer->name, (int)val, step);
-	    goto out;
-	}
+        val = init_sec_context(ipeer, &ic, &hCred, flags|first_call,
+                               apeer->target_name, &itoken, &otoken);
+        step++;
+        switch(val) {
+        case GSMERR_OK:
+            iDone = 1;
+            if (aDone)
+                continue;
+            break;
+        case GSMERR_CONTINUE_NEEDED:
+            break;
+        default:
+            warnx("iPeer %s failed with %d (step %d)",
+                  ipeer->name, (int)val, step);
+            goto out;
+        }
 
-	if (aDone) {
-	    warnx("aPeer already done, iPeer want extra rtt");
-	    val = GSMERR_ERROR;
-	    goto out;
-	}
+        if (aDone) {
+            warnx("aPeer already done, iPeer want extra rtt");
+            val = GSMERR_ERROR;
+            goto out;
+        }
 
-	val = accept_sec_context(apeer, &ac, flags|first_call,
-				 &otoken, &itoken, &deleg);
-	step++;
-	switch(val) {
-	case GSMERR_OK:
-	    aDone = 1;
-	    if (iDone)
-		continue;
-	    break;
-	case GSMERR_CONTINUE_NEEDED:
-	    break;
-	default:
-	    warnx("aPeer %s failed with %d (step %d)",
-		 apeer->name, (int)val, step);
-	    val = GSMERR_ERROR;
-	    goto out;
-	}
-	first_call = 0;
-	val = GSMERR_OK;
+        val = accept_sec_context(apeer, &ac, flags|first_call,
+                                 &otoken, &itoken, &deleg);
+        step++;
+        switch(val) {
+        case GSMERR_OK:
+            aDone = 1;
+            if (iDone)
+                continue;
+            break;
+        case GSMERR_CONTINUE_NEEDED:
+            break;
+        default:
+            warnx("aPeer %s failed with %d (step %d)",
+                  apeer->name, (int)val, step);
+            val = GSMERR_ERROR;
+            goto out;
+        }
+        first_call = 0;
+        val = GSMERR_OK;
     }
 
     if (iContext == NULL || val != GSMERR_OK) {
-	if (ic)
-	    toast_resource(ipeer, ic);
-	if (iContext)
-	    *iContext = 0;
+        if (ic)
+            toast_resource(ipeer, ic);
+        if (iContext)
+            *iContext = 0;
     } else
-	*iContext = ic;
+        *iContext = ic;
 
     if (aContext == NULL || val != GSMERR_OK) {
-	if (ac)
-	    toast_resource(apeer, ac);
-	if (aContext)
-	    *aContext = 0;
+        if (ac)
+            toast_resource(apeer, ac);
+        if (aContext)
+            *aContext = 0;
     } else
-	*aContext = ac;
+        *aContext = ac;
 
     if (hDelegCred == NULL || val != GSMERR_OK) {
-	if (deleg)
-	    toast_resource(apeer, deleg);
-	if (hDelegCred)
-	    *hDelegCred = 0;
+        if (deleg)
+            toast_resource(apeer, deleg);
+        if (hDelegCred)
+            *hDelegCred = 0;
     } else
-	*hDelegCred = deleg;
+        *hDelegCred = deleg;
 
 out:
     return val;
@@ -420,17 +420,17 @@ test_mic(struct client *c1, int32_t hc1, struct client *c2, int32_t hc2)
 
     val = get_mic(c1, hc1, &msg, &mic);
     if (val)
-	errx(1, "get_mic failed to host: %s", c1->moniker);
+        errx(1, "get_mic failed to host: %s", c1->moniker);
     val = verify_mic(c2, hc2, &msg, &mic);
     if (val)
-	errx(1, "verify_mic failed to host: %s", c2->moniker);
+        errx(1, "verify_mic failed to host: %s", c2->moniker);
 
     krb5_data_free(&mic);
 }
 
 static int32_t
 test_wrap(struct client *c1, int32_t hc1, struct client *c2, int32_t hc2,
-	  int conf)
+          int conf)
 {
     krb5_data msg, wrapped, out;
     int32_t val;
@@ -443,23 +443,23 @@ test_wrap(struct client *c1, int32_t hc1, struct client *c2, int32_t hc2,
 
     val = encrypt_token(c1, hc1, conf, &msg, &wrapped);
     if (val) {
-	warnx("encrypt_token failed to host: %s", c1->moniker);
-	return val;
+        warnx("encrypt_token failed to host: %s", c1->moniker);
+        return val;
     }
     val = decrypt_token(c2, hc2, conf, &wrapped, &out);
     if (val) {
-	krb5_data_free(&wrapped);
-	warnx("decrypt_token failed to host: %s", c2->moniker);
-	return val;
+        krb5_data_free(&wrapped);
+        warnx("decrypt_token failed to host: %s", c2->moniker);
+        return val;
     }
 
     if (msg.length != out.length) {
-	warnx("decrypted'ed token have wrong length (%lu != %lu)",
-	      (unsigned long)msg.length, (unsigned long)out.length);
-	val = GSMERR_ERROR;
+        warnx("decrypted'ed token have wrong length (%lu != %lu)",
+              (unsigned long)msg.length, (unsigned long)out.length);
+        val = GSMERR_ERROR;
     } else if (memcmp(msg.data, out.data, msg.length) != 0) {
-	warnx("decryptd'ed token have wrong data");
-	val = GSMERR_ERROR;
+        warnx("decryptd'ed token have wrong data");
+        val = GSMERR_ERROR;
     }
 
     krb5_data_free(&wrapped);
@@ -469,7 +469,7 @@ test_wrap(struct client *c1, int32_t hc1, struct client *c2, int32_t hc2,
 
 static int32_t
 test_wrap_ext(struct client *c1, int32_t hc1, struct client *c2, int32_t hc2,
-	      int conf, int bflags)
+              int conf, int bflags)
 {
     krb5_data header, msg, trailer, wrapped, out;
     int32_t val;
@@ -488,23 +488,23 @@ test_wrap_ext(struct client *c1, int32_t hc1, struct client *c2, int32_t hc2,
 
     val = wrap_token_ext(c1, hc1, conf, bflags, &header, &msg, &trailer, &wrapped);
     if (val) {
-	warnx("encrypt_token failed to host: %s", c1->moniker);
-	return val;
+        warnx("encrypt_token failed to host: %s", c1->moniker);
+        return val;
     }
     val = unwrap_token_ext(c2, hc2, conf, bflags, &header, &wrapped, &trailer, &out);
     if (val) {
-	krb5_data_free(&wrapped);
-	warnx("decrypt_token failed to host: %s", c2->moniker);
-	return val;
+        krb5_data_free(&wrapped);
+        warnx("decrypt_token failed to host: %s", c2->moniker);
+        return val;
     }
 
     if (msg.length != out.length) {
-	warnx("decrypted'ed token have wrong length (%lu != %lu)",
-	      (unsigned long)msg.length, (unsigned long)out.length);
-	val = GSMERR_ERROR;
+        warnx("decrypted'ed token have wrong length (%lu != %lu)",
+              (unsigned long)msg.length, (unsigned long)out.length);
+        val = GSMERR_ERROR;
     } else if (memcmp(msg.data, out.data, msg.length) != 0) {
-	warnx("decryptd'ed token have wrong data");
-	val = GSMERR_ERROR;
+        warnx("decryptd'ed token have wrong data");
+        val = GSMERR_ERROR;
     }
 
     krb5_data_free(&wrapped);
@@ -520,43 +520,43 @@ test_token(struct client *c1, int32_t hc1, struct client *c2, int32_t hc2, int w
     int i;
 
     for (i = 0; i < 10; i++) {
-	/* mic */
-	test_mic(c1, hc1, c2, hc2);
-	test_mic(c2, hc2, c1, hc1);
+        /* mic */
+        test_mic(c1, hc1, c2, hc2);
+        test_mic(c2, hc2, c1, hc1);
 
-	/* wrap */
-	val = test_wrap(c1, hc1, c2, hc2, 0);
-	if (val) return val;
-	val = test_wrap(c2, hc2, c1, hc1, 0);
-	if (val) return val;
+        /* wrap */
+        val = test_wrap(c1, hc1, c2, hc2, 0);
+        if (val) return val;
+        val = test_wrap(c2, hc2, c1, hc1, 0);
+        if (val) return val;
 
-	val = test_wrap(c1, hc1, c2, hc2, 1);
-	if (val) return val;
-	val = test_wrap(c2, hc2, c1, hc1, 1);
-	if (val) return val;
+        val = test_wrap(c1, hc1, c2, hc2, 1);
+        if (val) return val;
+        val = test_wrap(c2, hc2, c1, hc1, 1);
+        if (val) return val;
 
-	if (wrap_ext) {
-	    /* wrap ext */
-	    val = test_wrap_ext(c1, hc1, c2, hc2, 1, 0);
-	    if (val) return val;
-	    val = test_wrap_ext(c2, hc2, c1, hc1, 1, 0);
-	    if (val) return val;
+        if (wrap_ext) {
+            /* wrap ext */
+            val = test_wrap_ext(c1, hc1, c2, hc2, 1, 0);
+            if (val) return val;
+            val = test_wrap_ext(c2, hc2, c1, hc1, 1, 0);
+            if (val) return val;
 
-	    val = test_wrap_ext(c1, hc1, c2, hc2, 1, 1);
-	    if (val) return val;
-	    val = test_wrap_ext(c2, hc2, c1, hc1, 1, 1);
-	    if (val) return val;
+            val = test_wrap_ext(c1, hc1, c2, hc2, 1, 1);
+            if (val) return val;
+            val = test_wrap_ext(c2, hc2, c1, hc1, 1, 1);
+            if (val) return val;
 
-	    val = test_wrap_ext(c1, hc1, c2, hc2, 0, 0);
-	    if (val) return val;
-	    val = test_wrap_ext(c2, hc2, c1, hc1, 0, 0);
-	    if (val) return val;
+            val = test_wrap_ext(c1, hc1, c2, hc2, 0, 0);
+            if (val) return val;
+            val = test_wrap_ext(c2, hc2, c1, hc1, 0, 0);
+            if (val) return val;
 
-	    val = test_wrap_ext(c1, hc1, c2, hc2, 0, 1);
-	    if (val) return val;
-	    val = test_wrap_ext(c2, hc2, c1, hc1, 0, 1);
-	    if (val) return val;
-	}
+            val = test_wrap_ext(c1, hc1, c2, hc2, 0, 1);
+            if (val) return val;
+            val = test_wrap_ext(c2, hc2, c1, hc1, 0, 1);
+            if (val) return val;
+        }
     }
     return GSMERR_OK;
 }
@@ -570,32 +570,32 @@ log_function(void *ptr)
 
     while (1) {
         if (krb5_ret_int32(c->logsock, &cmd))
-	    goto out;
+            goto out;
 
-	switch (cmd) {
-	case eLogSetMoniker:
-	    if (krb5_ret_string(c->logsock, &file))
-		goto out;
-	    break;
-	case eLogInfo:
-	case eLogFailure:
-	    if (krb5_ret_string(c->logsock, &file))
-		goto out;
-	    if (krb5_ret_int32(c->logsock, &line))
-		goto out;
-	    if (krb5_ret_string(c->logsock, &string))
-		goto out;
-	    printf("%s:%lu: %s\n",
-		   file, (unsigned long)line, string);
-	    fprintf(logfile, "%s:%lu: %s\n",
-		    file, (unsigned long)line, string);
-	    fflush(logfile);
-	    if (krb5_store_int32(c->logsock, 0))
-		goto out;
-	    break;
-	default:
-	    errx(1, "client send bad log command: %d", (int)cmd);
-	}
+        switch (cmd) {
+        case eLogSetMoniker:
+            if (krb5_ret_string(c->logsock, &file))
+                goto out;
+            break;
+        case eLogInfo:
+        case eLogFailure:
+            if (krb5_ret_string(c->logsock, &file))
+                goto out;
+            if (krb5_ret_int32(c->logsock, &line))
+                goto out;
+            if (krb5_ret_string(c->logsock, &string))
+                goto out;
+            printf("%s:%lu: %s\n",
+                    file, (unsigned long)line, string);
+            fprintf(logfile, "%s:%lu: %s\n",
+                    file, (unsigned long)line, string);
+            fflush(logfile);
+            if (krb5_store_int32(c->logsock, 0))
+                goto out;
+            break;
+        default:
+            errx(1, "client send bad log command: %d", (int)cmd);
+        }
     }
 out:
     free(file);
@@ -616,7 +616,7 @@ connect_client(const char *slave)
     name = estrdup(slave);
     port = strchr(name, ':');
     if (port == NULL)
-	errx(1, "port missing from %s", name);
+        errx(1, "port missing from %s", name);
     *port++ = 0;
 
     c->name = estrdup(slave);
@@ -627,66 +627,66 @@ connect_client(const char *slave)
 
     ret = getaddrinfo(name, port, &hints, &res0);
     if (ret)
-	errx(1, "error resolving %s", name);
+        errx(1, "error resolving %s", name);
 
     for (res = res0, sock = rk_INVALID_SOCKET; res; res = res->ai_next) {
-	sock = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-	if (sock == rk_INVALID_SOCKET)
-	    continue;
-	if (connect(sock, res->ai_addr, res->ai_addrlen) < 0) {
-	    rk_closesocket(sock);
-	    sock = rk_INVALID_SOCKET;
-	    continue;
-	}
-	c->sa = ecalloc(1, res->ai_addrlen);
-	memcpy(c->sa, res->ai_addr, res->ai_addrlen);
-	c->salen = res->ai_addrlen;
-	break;  /* okay we got one */
+        sock = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+        if (sock == rk_INVALID_SOCKET)
+            continue;
+        if (connect(sock, res->ai_addr, res->ai_addrlen) < 0) {
+            rk_closesocket(sock);
+            sock = rk_INVALID_SOCKET;
+            continue;
+        }
+        c->sa = ecalloc(1, res->ai_addrlen);
+        memcpy(c->sa, res->ai_addr, res->ai_addrlen);
+        c->salen = res->ai_addrlen;
+        break;  /* okay we got one */
     }
     if (sock == rk_INVALID_SOCKET)
-	err(1, "connect to host: %s", name);
+        err(1, "connect to host: %s", name);
     freeaddrinfo(res0);
 
     c->sock = krb5_storage_from_socket(sock);
     rk_closesocket(sock);
     if (c->sock == NULL)
-	errx(1, "krb5_storage_from_fd");
+        errx(1, "krb5_storage_from_fd");
 
     {
-	int32_t version;
-	char *str = NULL;
-	get_version_capa(c, &version, &c->capabilities, &str);
-	if (str) {
-	    free(str);
-	}
-	if (c->capabilities & HAS_MONIKER)
-	    get_moniker(c, &c->moniker);
-	else
-	    c->moniker = c->name;
-	if (c->capabilities & ISSERVER)
-	    get_targetname(c, &c->target_name);
+        int32_t version;
+        char *str = NULL;
+        get_version_capa(c, &version, &c->capabilities, &str);
+        if (str) {
+            free(str);
+        }
+        if (c->capabilities & HAS_MONIKER)
+            get_moniker(c, &c->moniker);
+        else
+            c->moniker = c->name;
+        if (c->capabilities & ISSERVER)
+            get_targetname(c, &c->target_name);
     }
 
     if (logfile) {
-	printf("starting log socket to client %s\n", c->moniker);
+        printf("starting log socket to client %s\n", c->moniker);
 
-	sock = wait_log(c);
+        sock = wait_log(c);
 
-	c->logsock = krb5_storage_from_socket(sock);
-	rk_closesocket(sock);
-	if (c->logsock == NULL)
-	    errx(1, "failed to create log krb5_storage");
+        c->logsock = krb5_storage_from_socket(sock);
+        rk_closesocket(sock);
+        if (c->logsock == NULL)
+            errx(1, "failed to create log krb5_storage");
 #ifdef ENABLE_PTHREAD_SUPPORT
-	pthread_create(&c->thr, NULL, log_function, c);
+        pthread_create(&c->thr, NULL, log_function, c);
 #else
-	c->child = fork();
-	if (c->child == -1)
-	    errx(1, "failed to fork");
-	else if (c->child == 0) {
-	    log_function(c);
-	    fclose(logfile);
-	    exit(0);
-	}
+        c->child = fork();
+        if (c->child == -1)
+            errx(1, "failed to fork");
+        else if (c->child == 0) {
+            log_function(c);
+            fclose(logfile);
+            exit(0);
+        }
 #endif
    }
 
@@ -704,8 +704,8 @@ get_client(const char *slave)
 {
     size_t i;
     for (i = 0; i < num_clients; i++)
-	if (strcmp(slave, clients[i]->name) == 0)
-	    return clients[i];
+        if (strcmp(slave, clients[i]->name) == 0)
+            return clients[i];
     errx(1, "failed to find client %s", slave);
 }
 
@@ -739,9 +739,9 @@ static void
 usage(int ret)
 {
     arg_printusage (args,
-		    sizeof(args) / sizeof(args[0]),
-		    NULL,
-		    "");
+                    sizeof(args) / sizeof(args[0]),
+                    NULL,
+                    "");
     exit (ret);
 }
 
@@ -758,36 +758,36 @@ main(int argc, char **argv)
     setprogname (argv[0]);
 
     if (getarg (args, sizeof(args) / sizeof(args[0]), argc, argv, &optidx))
-	usage (1);
+        usage (1);
 
     if (help_flag)
-	usage (0);
+        usage (0);
 
     if (version_flag) {
-	print_version (NULL);
-	return 0;
+        print_version (NULL);
+        return 0;
     }
 
     if (optidx != argc)
-	usage (1);
+        usage (1);
 
     if (principals.num_strings == 0)
-	errx(1, "no principals");
+        errx(1, "no principals");
 
     user = estrdup(principals.strings[0]);
     password = strchr(user, ':');
     if (password == NULL)
-	errx(1, "password missing from %s", user);
+        errx(1, "password missing from %s", user);
     *password++ = 0;
 
     if (slaves.num_strings == 0)
-	errx(1, "no principals");
+        errx(1, "no principals");
 
     if (logfile_str) {
-	printf("open logfile %s\n", logfile_str);
-	logfile = fopen(logfile_str, "w+");
-	if (logfile == NULL)
-	    err(1, "failed to open: %s", logfile_str);
+        printf("open logfile %s\n", logfile_str);
+        logfile = fopen(logfile_str, "w+");
+        if (logfile == NULL)
+            err(1, "failed to open: %s", logfile_str);
     }
 
     /*
@@ -802,7 +802,7 @@ main(int argc, char **argv)
 
     printf("Connecting to slaves\n");
     for (i = 0; i < slaves.num_strings; i++)
-	connect_client(slaves.strings[i]);
+        connect_client(slaves.strings[i]);
 
     /*
      * Test acquire credentials
@@ -810,19 +810,19 @@ main(int argc, char **argv)
 
     printf("Test acquire credentials\n");
     for (i = 0; i < slaves.num_strings; i++) {
-	int32_t hCred, val;
+        int32_t hCred, val;
 
-	val = acquire_cred(clients[i], user, password, 1, &hCred);
-	if (val != GSMERR_OK) {
-	    warnx("Failed to acquire_cred on host %s: %d",
-		 clients[i]->moniker, (int)val);
-	    failed = 1;
-	} else
-	    toast_resource(clients[i], hCred);
+        val = acquire_cred(clients[i], user, password, 1, &hCred);
+        if (val != GSMERR_OK) {
+            warnx("Failed to acquire_cred on host %s: %d",
+                  clients[i]->moniker, (int)val);
+            failed = 1;
+        } else
+            toast_resource(clients[i], hCred);
     }
 
     if (failed)
-	goto out;
+        goto out;
 
     /*
      * First test if all slaves can build context to them-self.
@@ -830,52 +830,52 @@ main(int argc, char **argv)
 
     printf("Self context tests\n");
     for (i = 0; i < num_clients; i++) {
-	int32_t hCred, val, delegCred;
-	int32_t clientC, serverC;
-	struct client *c = clients[i];
+        int32_t hCred, val, delegCred;
+        int32_t clientC, serverC;
+        struct client *c = clients[i];
 
-	if (c->target_name == NULL)
-	    continue;
+        if (c->target_name == NULL)
+            continue;
 
-	printf("%s connects to self using %s\n",
-	       c->moniker, c->target_name);
+        printf("%s connects to self using %s\n",
+               c->moniker, c->target_name);
 
-	val = acquire_cred(c, user, password, 1, &hCred);
-	if (val != GSMERR_OK)
-	    errx(1, "failed to acquire_cred: %d", (int)val);
+        val = acquire_cred(c, user, password, 1, &hCred);
+        if (val != GSMERR_OK)
+            errx(1, "failed to acquire_cred: %d", (int)val);
 
-	val = build_context(c, c,
-			    GSS_C_REPLAY_FLAG|GSS_C_SEQUENCE_FLAG|
-			    GSS_C_INTEG_FLAG|GSS_C_CONF_FLAG|
-			    GSS_C_DELEG_FLAG|GSS_C_MUTUAL_FLAG,
-			    hCred, &clientC, &serverC, &delegCred);
-	if (val == GSMERR_OK) {
-	    test_token(c, clientC, c, serverC, wrap_ext);
-	    toast_resource(c, clientC);
-	    toast_resource(c, serverC);
-	    if (delegCred)
-		toast_resource(c, delegCred);
-	} else {
-	    warnx("build_context failed: %d", (int)val);
-	}
-	/*
-	 *
-	 */
+        val = build_context(c, c,
+                            GSS_C_REPLAY_FLAG|GSS_C_SEQUENCE_FLAG|
+                            GSS_C_INTEG_FLAG|GSS_C_CONF_FLAG|
+                            GSS_C_DELEG_FLAG|GSS_C_MUTUAL_FLAG,
+                            hCred, &clientC, &serverC, &delegCred);
+        if (val == GSMERR_OK) {
+            test_token(c, clientC, c, serverC, wrap_ext);
+            toast_resource(c, clientC);
+            toast_resource(c, serverC);
+            if (delegCred)
+                toast_resource(c, delegCred);
+        } else {
+            warnx("build_context failed: %d", (int)val);
+        }
+        /*
+         *
+         */
 
-	val = build_context(c, c,
-			    GSS_C_INTEG_FLAG|GSS_C_CONF_FLAG,
-			    hCred, &clientC, &serverC, &delegCred);
-	if (val == GSMERR_OK) {
-	    test_token(c, clientC, c, serverC, wrap_ext);
-	    toast_resource(c, clientC);
-	    toast_resource(c, serverC);
-	    if (delegCred)
-		toast_resource(c, delegCred);
-	} else {
-	    warnx("build_context failed: %d", (int)val);
-	}
+        val = build_context(c, c,
+                            GSS_C_INTEG_FLAG|GSS_C_CONF_FLAG,
+                            hCred, &clientC, &serverC, &delegCred);
+        if (val == GSMERR_OK) {
+            test_token(c, clientC, c, serverC, wrap_ext);
+            toast_resource(c, clientC);
+            toast_resource(c, serverC);
+            if (delegCred)
+                toast_resource(c, delegCred);
+        } else {
+            warnx("build_context failed: %d", (int)val);
+        }
 
-	toast_resource(c, hCred);
+        toast_resource(c, hCred);
     }
     /*
      * Build contexts though all entries in each lists, including the
@@ -889,54 +889,54 @@ main(int argc, char **argv)
     printf("\"All\" permutation tests\n");
 
     for (i = 0; i < num_list; i++) {
-	int32_t hCred, val, delegCred = 0;
-	int32_t clientC = 0, serverC = 0;
-	struct client *client, *server;
+        int32_t hCred, val, delegCred = 0;
+        int32_t clientC = 0, serverC = 0;
+        struct client *client, *server;
 
-	p = list[i];
+        p = list[i];
 
-	client = get_client(p[0]);
+        client = get_client(p[0]);
 
-	val = acquire_cred(client, user, password, 1, &hCred);
-	if (val != GSMERR_OK)
-	    errx(1, "failed to acquire_cred: %d", (int)val);
+        val = acquire_cred(client, user, password, 1, &hCred);
+        if (val != GSMERR_OK)
+            errx(1, "failed to acquire_cred: %d", (int)val);
 
-	for (j = 1; j < num_clients + 1; j++) {
-	    server = get_client(p[j % num_clients]);
+        for (j = 1; j < num_clients + 1; j++) {
+            server = get_client(p[j % num_clients]);
 
-	    if (server->target_name == NULL)
-		break;
+            if (server->target_name == NULL)
+                break;
 
-	    for (k = 1; k < j; k++)
-		printf("\t");
-	    printf("%s -> %s\n", client->moniker, server->moniker);
+            for (k = 1; k < j; k++)
+                printf("\t");
+            printf("%s -> %s\n", client->moniker, server->moniker);
 
-	    val = build_context(client, server,
-				GSS_C_REPLAY_FLAG|GSS_C_SEQUENCE_FLAG|
-				GSS_C_INTEG_FLAG|GSS_C_CONF_FLAG|
-				GSS_C_DELEG_FLAG|GSS_C_MUTUAL_FLAG,
-				hCred, &clientC, &serverC, &delegCred);
-	    if (val != GSMERR_OK) {
-		warnx("build_context failed: %d", (int)val);
-		break;
-	    }
+            val = build_context(client, server,
+                                GSS_C_REPLAY_FLAG|GSS_C_SEQUENCE_FLAG|
+                                GSS_C_INTEG_FLAG|GSS_C_CONF_FLAG|
+                                GSS_C_DELEG_FLAG|GSS_C_MUTUAL_FLAG,
+                                hCred, &clientC, &serverC, &delegCred);
+            if (val != GSMERR_OK) {
+                warnx("build_context failed: %d", (int)val);
+                break;
+            }
 
-	    val = test_token(client, clientC, server, serverC, wrap_ext);
-	    if (val)
-		break;
+            val = test_token(client, clientC, server, serverC, wrap_ext);
+            if (val)
+                break;
 
-	    toast_resource(client, clientC);
-	    toast_resource(server, serverC);
-	    if (!delegCred) {
-		warnx("no delegated cred on %s", server->moniker);
-		break;
-	    }
-	    toast_resource(client, hCred);
-	    hCred = delegCred;
-	    client = server;
-	}
-	if (hCred)
-	    toast_resource(client, hCred);
+            toast_resource(client, clientC);
+            toast_resource(server, serverC);
+            if (!delegCred) {
+                warnx("no delegated cred on %s", server->moniker);
+                break;
+            }
+            toast_resource(client, hCred);
+            hCred = delegCred;
+            client = server;
+        }
+        if (hCred)
+            toast_resource(client, hCred);
     }
 
     /*
@@ -946,14 +946,14 @@ main(int argc, char **argv)
 out:
     printf("sending goodbye and waiting for log sockets\n");
     for (i = 0; i < num_clients; i++) {
-	goodbye(clients[i]);
-	if (clients[i]->logsock) {
+        goodbye(clients[i]);
+        if (clients[i]->logsock) {
 #ifdef ENABLE_PTHREAD_SUPPORT
-	    pthread_join(&clients[i]->thr, NULL);
+            pthread_join(&clients[i]->thr, NULL);
 #else
-	    waitpid(clients[i]->child, NULL, 0);
+            waitpid(clients[i]->child, NULL, 0);
 #endif
-	}
+        }
     }
 
     printf("done\n");

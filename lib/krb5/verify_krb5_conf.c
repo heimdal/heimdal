@@ -57,9 +57,9 @@ static void
 usage (int ret)
 {
     arg_printusage (args,
-		    sizeof(args)/sizeof(*args),
-		    NULL,
-		    "[config-file]");
+                    sizeof(args)/sizeof(*args),
+                    NULL,
+                    "[config-file]");
     exit (ret);
 }
 
@@ -67,8 +67,8 @@ static int
 check_bytes(krb5_context context, const char *path, char *data)
 {
     if(parse_bytes(data, NULL) == -1) {
-	krb5_warnx(context, "%s: failed to parse \"%s\" as size", path, data);
-	return 1;
+        krb5_warnx(context, "%s: failed to parse \"%s\" as size", path, data);
+        return 1;
     }
     return 0;
 }
@@ -77,8 +77,8 @@ static int
 check_time(krb5_context context, const char *path, char *data)
 {
     if(parse_time(data, NULL) == -1) {
-	krb5_warnx(context, "%s: failed to parse \"%s\" as time", path, data);
-	return 1;
+        krb5_warnx(context, "%s: failed to parse \"%s\" as time", path, data);
+        return 1;
     }
     return 0;
 }
@@ -91,14 +91,14 @@ check_numeric(krb5_context context, const char *path, char *data)
     v = strtol(data, &end, 0);
 
     if ((v == LONG_MIN || v == LONG_MAX) && errno != 0) {
-	krb5_warnx(context, "%s: over/under flow for \"%s\"",
-		   path, data);
-	return 1;
+        krb5_warnx(context, "%s: over/under flow for \"%s\"",
+                   path, data);
+        return 1;
     }
     if(*end != '\0') {
-	krb5_warnx(context, "%s: failed to parse \"%s\" as a number",
-		   path, data);
-	return 1;
+        krb5_warnx(context, "%s: failed to parse \"%s\" as a number",
+                   path, data);
+        return 1;
     }
     return 0;
 }
@@ -112,16 +112,16 @@ check_boolean(krb5_context context, const char *path, char *data)
        strcasecmp(data, "true") == 0 ||
        strcasecmp(data, "no") == 0 ||
        strcasecmp(data, "false") == 0)
-	return 0;
+        return 0;
     v = strtol(data, &end, 0);
     if(*end != '\0') {
-	krb5_warnx(context, "%s: failed to parse \"%s\" as a boolean",
-		   path, data);
-	return 1;
+        krb5_warnx(context, "%s: failed to parse \"%s\" as a boolean",
+                   path, data);
+        return 1;
     }
     if(v != 0 && v != 1)
-	krb5_warnx(context, "%s: numeric value \"%s\" is treated as \"true\"",
-		   path, data);
+        krb5_warnx(context, "%s: numeric value \"%s\" is treated as \"true\"",
+                   path, data);
     return 0;
 }
 
@@ -132,10 +132,10 @@ check_524(krb5_context context, const char *path, char *data)
        strcasecmp(data, "no") == 0 ||
        strcasecmp(data, "2b") == 0 ||
        strcasecmp(data, "local") == 0)
-	return 0;
+        return 0;
 
     krb5_warnx(context, "%s: didn't contain a valid option `%s'",
-	       path, data);
+               path, data);
     return 1;
 }
 
@@ -164,43 +164,43 @@ check_host(krb5_context context, const char *path, char *data)
     /* XXX copied from krbhst.c */
     if (strncmp(p, "http://", 7) == 0){
         p += 7;
-	hints.ai_socktype = SOCK_STREAM;
-	strlcpy(service, "http", sizeof(service));
-	defport = 80;
+        hints.ai_socktype = SOCK_STREAM;
+        strlcpy(service, "http", sizeof(service));
+        defport = 80;
     } else if (strncmp(p, "http/", 5) == 0) {
         p += 5;
-	hints.ai_socktype = SOCK_STREAM;
-	strlcpy(service, "http", sizeof(service));
-	defport = 80;
+        hints.ai_socktype = SOCK_STREAM;
+        strlcpy(service, "http", sizeof(service));
+        defport = 80;
     } else if (strncmp(p, "tcp/", 4) == 0){
         p += 4;
-	hints.ai_socktype = SOCK_STREAM;
-	strlcpy(service, "kerberos", sizeof(service));
-	defport = 88;
+        hints.ai_socktype = SOCK_STREAM;
+        strlcpy(service, "kerberos", sizeof(service));
+        defport = 88;
     } else if (strncmp(p, "udp/", 4) == 0) {
         p += 4;
-	hints.ai_socktype = SOCK_DGRAM;
-	strlcpy(service, "kerberos", sizeof(service));
-	defport = 88;
+        hints.ai_socktype = SOCK_DGRAM;
+        strlcpy(service, "kerberos", sizeof(service));
+        defport = 88;
     } else {
-	hints.ai_socktype = SOCK_DGRAM;
-	strlcpy(service, "kerberos", sizeof(service));
-	defport = 88;
+        hints.ai_socktype = SOCK_DGRAM;
+        strlcpy(service, "kerberos", sizeof(service));
+        defport = 88;
     }
     if (strsep_copy(&p, ":", hostname, sizeof(hostname)) < 0) {
-	return 1;
+        return 1;
     }
     hostname[strcspn(hostname, "/")] = '\0';
     if (p != NULL) {
-	char *end;
-	int tmp = strtol(p, &end, 0);
-	if (end == p) {
-	    krb5_warnx(context, "%s: failed to parse port number in %s",
-		       path, data);
-	    return 1;
-	}
-	defport = tmp;
-	snprintf(service, sizeof(service), "%u", defport);
+        char *end;
+        int tmp = strtol(p, &end, 0);
+        if (end == p) {
+            krb5_warnx(context, "%s: failed to parse port number in %s",
+                       path, data);
+            return 1;
+        }
+        defport = tmp;
+        snprintf(service, sizeof(service), "%u", defport);
     }
     if (krb5_config_get_bool(context, NULL, "libdefaults", "block_dns",
 	    NULL)) {
@@ -209,12 +209,12 @@ check_host(krb5_context context, const char *path, char *data)
     }
     ret = getaddrinfo(hostname, service, &hints, &ai);
     if (ret == EAI_SERVICE && !isdigit((unsigned char)service[0])) {
-	snprintf(service, sizeof(service), "%u", defport);
-	ret = getaddrinfo(hostname, service, &hints, &ai);
+        snprintf(service, sizeof(service), "%u", defport);
+        ret = getaddrinfo(hostname, service, &hints, &ai);
     }
     if (ret != 0) {
-	krb5_warnx(context, "%s: %s (%s)", path, gai_strerror(ret), hostname);
-	return 1;
+        krb5_warnx(context, "%s: %s (%s)", path, gai_strerror(ret), hostname);
+        return 1;
     }
     freeaddrinfo(ai);
     return 0;
@@ -225,9 +225,9 @@ check_directory(krb5_context context, const char *path, char *data)
 {
     DIR *d = opendir(data);
     if (d == NULL) {
-	krb5_warn(context, errno, "%s: could not open directory `%s'",
-		  path, data);
-	return 1;
+        krb5_warn(context, errno, "%s: could not open directory `%s'",
+                  path, data);
+        return 1;
     }
 
     closedir(d);
@@ -238,7 +238,7 @@ static int
 mit_entry(krb5_context context, const char *path, char *data)
 {
     if (warn_mit_syntax_flag)
-	krb5_warnx(context, "%s is only used by MIT Kerberos", path);
+        krb5_warnx(context, "%s is only used by MIT Kerberos", path);
     return 0;
 }
 
@@ -297,7 +297,7 @@ static int
 find_value(const char *s, struct s2i *table)
 {
     while (table->s && strcasecmp(table->s, s) != 0)
-	table++;
+        table++;
     return table->val;
 }
 
@@ -314,61 +314,61 @@ check_log(krb5_context context, const char *path, char *data)
 
     n = sscanf(p, "%d%c%d/", &min, &c, &max);
     if(n == 2){
-	if(ISPATHSEP(c)) {
-	    if(min < 0){
-		max = -min;
-		min = 0;
-	    }else{
-		max = min;
-	    }
-	}
+        if(ISPATHSEP(c)) {
+            if(min < 0){
+                max = -min;
+                min = 0;
+            }else{
+                max = min;
+            }
+        }
     }
     if(n){
 #ifdef _WIN32
-	q = strrchr(p, '\\');
-	if (q != NULL)
-	    p = q;
-	else
+        q = strrchr(p, '\\');
+        if (q != NULL)
+            p = q;
+        else
 #endif
-	p = strchr(p, '/');
-	if(p == NULL) {
-	    krb5_warnx(context, "%s: failed to parse \"%s\"", path, data);
-	    return 1;
-	}
-	p++;
+        p = strchr(p, '/');
+        if(p == NULL) {
+            krb5_warnx(context, "%s: failed to parse \"%s\"", path, data);
+            return 1;
+        }
+        p++;
     }
     if(strcmp(p, "STDERR") == 0 ||
        strcmp(p, "CONSOLE") == 0 ||
        (strncmp(p, "FILE", 4) == 0 && (p[4] == ':' || p[4] == '=')) ||
        (strncmp(p, "DEVICE", 6) == 0 && p[6] == '='))
-	return 0;
+        return 0;
     if(strncmp(p, "SYSLOG", 6) == 0){
-	int ret = 0;
-	char severity[128] = "";
-	char facility[128] = "";
-	p += 6;
-	if(*p != '\0')
-	    p++;
-	if(strsep_copy(&p, ":", severity, sizeof(severity)) != -1)
-	    strsep_copy(&p, ":", facility, sizeof(facility));
-	if(*severity == '\0')
-	    strlcpy(severity, "ERR", sizeof(severity));
- 	if(*facility == '\0')
-	    strlcpy(facility, "AUTH", sizeof(facility));
-	if(find_value(facility, syslogvals) == -1) {
-	    krb5_warnx(context, "%s: unknown syslog facility \"%s\"",
-		       path, facility);
-	    ret++;
-	}
-	if(find_value(severity, syslogvals) == -1) {
-	    krb5_warnx(context, "%s: unknown syslog severity \"%s\"",
-		       path, severity);
-	    ret++;
-	}
-	return ret;
+        int ret = 0;
+        char severity[128] = "";
+        char facility[128] = "";
+        p += 6;
+        if(*p != '\0')
+            p++;
+        if(strsep_copy(&p, ":", severity, sizeof(severity)) != -1)
+            strsep_copy(&p, ":", facility, sizeof(facility));
+        if(*severity == '\0')
+            strlcpy(severity, "ERR", sizeof(severity));
+        if(*facility == '\0')
+            strlcpy(facility, "AUTH", sizeof(facility));
+        if(find_value(facility, syslogvals) == -1) {
+            krb5_warnx(context, "%s: unknown syslog facility \"%s\"",
+                       path, facility);
+            ret++;
+        }
+        if(find_value(severity, syslogvals) == -1) {
+            krb5_warnx(context, "%s: unknown syslog severity \"%s\"",
+                       path, severity);
+            ret++;
+        }
+        return ret;
     }else{
-	krb5_warnx(context, "%s: unknown log type: \"%s\"", path, data);
-	return 1;
+        krb5_warnx(context, "%s: unknown log type: \"%s\"", path, data);
+        return 1;
     }
 }
 
@@ -691,7 +691,7 @@ struct entry toplevel_sections[] = {
 
 static int
 check_section(krb5_context context, const char *path, krb5_config_section *cf,
-	      struct entry *entries)
+              struct entry *entries)
 {
     int error = 0;
     krb5_config_section *p;
@@ -700,31 +700,31 @@ check_section(krb5_context context, const char *path, krb5_config_section *cf,
     char *local;
 
     for(p = cf; p != NULL; p = p->next) {
-	local = NULL;
-	if (asprintf(&local, "%s/%s", path, p->name) < 0 || local == NULL)
-	    errx(1, "out of memory");
-	for(e = entries; e->name != NULL; e++) {
-	    if(*e->name == '\0' || strcmp(e->name, p->name) == 0) {
-		if(e->type != p->type) {
-		    krb5_warnx(context, "%s: unknown or wrong type", local);
-		    error |= 1;
-		} else if(p->type == krb5_config_string && e->check_data != NULL) {
-		    error |= (*(check_func_t)e->check_data)(context, local, p->u.string);
-		} else if(p->type == krb5_config_list && e->check_data != NULL) {
-		    error |= check_section(context, local, p->u.list, e->check_data);
-		}
-		if(e->deprecated) {
-		    krb5_warnx(context, "%s: is a deprecated entry", local);
-		    error |= 1;
-		}
-		break;
-	    }
-	}
-	if(e->name == NULL) {
-	    krb5_warnx(context, "%s: unknown entry", local);
-	    error |= 1;
-	}
-	free(local);
+        local = NULL;
+        if (asprintf(&local, "%s/%s", path, p->name) < 0 || local == NULL)
+            errx(1, "out of memory");
+        for(e = entries; e->name != NULL; e++) {
+            if(*e->name == '\0' || strcmp(e->name, p->name) == 0) {
+                if(e->type != p->type) {
+                    krb5_warnx(context, "%s: unknown or wrong type", local);
+                    error |= 1;
+                } else if(p->type == krb5_config_string && e->check_data != NULL) {
+                    error |= (*(check_func_t)e->check_data)(context, local, p->u.string);
+                } else if(p->type == krb5_config_list && e->check_data != NULL) {
+                    error |= check_section(context, local, p->u.list, e->check_data);
+                }
+                if(e->deprecated) {
+                    krb5_warnx(context, "%s: is a deprecated entry", local);
+                    error |= 1;
+                }
+                break;
+            }
+        }
+        if(e->name == NULL) {
+            krb5_warnx(context, "%s: unknown entry", local);
+            error |= 1;
+        }
+        free(local);
     }
     return error;
 }
@@ -735,21 +735,21 @@ dumpconfig(int level, krb5_config_section *top)
 {
     krb5_config_section *x;
     for(x = top; x; x = x->next) {
-	switch(x->type) {
-	case krb5_config_list:
-	    if(level == 0) {
-		printf("[%s]\n", x->name);
-	    } else {
-		printf("%*s%s = {\n", 4 * level, " ", x->name);
-	    }
-	    dumpconfig(level + 1, x->u.list);
-	    if(level > 0)
-		printf("%*s}\n", 4 * level, " ");
-	    break;
-	case krb5_config_string:
-	    printf("%*s%s = %s\n", 4 * level, " ", x->name, x->u.string);
-	    break;
-	}
+        switch(x->type) {
+            case krb5_config_list:
+                if(level == 0) {
+                    printf("[%s]\n", x->name);
+                } else {
+                    printf("%*s%s = {\n", 4 * level, " ", x->name);
+                }
+                dumpconfig(level + 1, x->u.list);
+                if(level > 0)
+                    printf("%*s}\n", 4 * level, " ");
+                break;
+            case krb5_config_string:
+                printf("%*s%s = %s\n", 4 * level, " ", x->name, x->u.string);
+                break;
+        }
     }
 }
 
@@ -765,19 +765,19 @@ main(int argc, char **argv)
 
     ret = krb5_init_context(&context);
     if (ret == KRB5_CONFIG_BADFORMAT)
-	errx (1, "krb5_init_context failed to parse configuration file");
+        errx (1, "krb5_init_context failed to parse configuration file");
     else if (ret)
-	errx (1, "krb5_init_context failed with %d", ret);
+        errx (1, "krb5_init_context failed with %d", ret);
 
     if(getarg(args, sizeof(args) / sizeof(args[0]), argc, argv, &optidx))
-	usage(1);
+        usage(1);
 
     if (help_flag)
-	usage (0);
+        usage (0);
 
     if(version_flag){
-	print_version(NULL);
-	exit(0);
+        print_version(NULL);
+        exit(0);
     }
 
     argc -= optidx;
@@ -785,17 +785,17 @@ main(int argc, char **argv)
 
     tmp_cf = NULL;
     if(argc == 0)
-	krb5_get_default_config_files(&argv);
+        krb5_get_default_config_files(&argv);
 
     while(*argv) {
-	ret = krb5_config_parse_file_multi(context, *argv, &tmp_cf);
-	if (ret != 0)
-	    krb5_warn (context, ret, "krb5_config_parse_file");
-	argv++;
+        ret = krb5_config_parse_file_multi(context, *argv, &tmp_cf);
+        if (ret != 0)
+            krb5_warn (context, ret, "krb5_config_parse_file");
+        argv++;
     }
 
     if(dumpconfig_flag)
-	dumpconfig(0, tmp_cf);
+        dumpconfig(0, tmp_cf);
 
     return check_section(context, "", tmp_cf, toplevel_sections);
 }

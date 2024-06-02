@@ -44,7 +44,7 @@ do_trans (int sock, gss_ctx_id_t context_hdl)
     OM_uint32 maj_stat, min_stat;
     gss_buffer_desc real_input_token, real_output_token;
     gss_buffer_t input_token = &real_input_token,
-	output_token = &real_output_token;
+        output_token = &real_output_token;
     int conf_flag;
 
     /* get_mic */
@@ -53,12 +53,12 @@ do_trans (int sock, gss_ctx_id_t context_hdl)
     input_token->value  = strdup("hej");
 
     maj_stat = gss_get_mic(&min_stat,
-			   context_hdl,
-			   GSS_C_QOP_DEFAULT,
-			   input_token,
-			   output_token);
+                           context_hdl,
+                           GSS_C_QOP_DEFAULT,
+                           input_token,
+                           output_token);
     if (GSS_ERROR(maj_stat))
-	gss_err (1, min_stat, "gss_get_mic");
+        gss_err (1, min_stat, "gss_get_mic");
 
     write_token (sock, input_token);
     write_token (sock, output_token);
@@ -71,12 +71,12 @@ do_trans (int sock, gss_ctx_id_t context_hdl)
     read_token (sock, output_token);
 
     maj_stat = gss_verify_mic(&min_stat,
-			      context_hdl,
-			      input_token,
-			      output_token,
-			      NULL);
+                              context_hdl,
+                              input_token,
+                              output_token,
+                              NULL);
     if (GSS_ERROR(maj_stat))
-	gss_err (1, min_stat, "gss_verify_mic");
+        gss_err (1, min_stat, "gss_verify_mic");
 
     gss_release_buffer (&min_stat, input_token);
     gss_release_buffer (&min_stat, output_token);
@@ -87,40 +87,40 @@ do_trans (int sock, gss_ctx_id_t context_hdl)
     input_token->value  = "hemligt";
 
     maj_stat = gss_wrap (&min_stat,
-			 context_hdl,
-			 0,
-			 GSS_C_QOP_DEFAULT,
-			 input_token,
-			 NULL,
-			 output_token);
+                         context_hdl,
+                         0,
+                         GSS_C_QOP_DEFAULT,
+                         input_token,
+                         NULL,
+                         output_token);
     if (GSS_ERROR(maj_stat))
-	gss_err (1, min_stat, "gss_wrap");
+        gss_err (1, min_stat, "gss_wrap");
 
     write_token (sock, output_token);
 
     maj_stat = gss_wrap (&min_stat,
-			 context_hdl,
-			 1,
-			 GSS_C_QOP_DEFAULT,
-			 input_token,
-			 NULL,
-			 output_token);
+                         context_hdl,
+                         1,
+                         GSS_C_QOP_DEFAULT,
+                         input_token,
+                         NULL,
+                         output_token);
     if (GSS_ERROR(maj_stat))
-	gss_err (1, min_stat, "gss_wrap");
+        gss_err (1, min_stat, "gss_wrap");
 
     write_token (sock, output_token);
 
     read_token (sock, input_token);
 
     maj_stat = gss_unwrap (&min_stat,
-			   context_hdl,
-			   input_token,
-			   output_token,
-			   &conf_flag,
-			   NULL);
+                           context_hdl,
+                           input_token,
+                           output_token,
+                           &conf_flag,
+                           NULL);
     if(GSS_ERROR(maj_stat))
-	gss_err (1, min_stat, "gss_unwrap");
-	
+        gss_err (1, min_stat, "gss_unwrap");
+
     write_token (sock, output_token);
 
     gss_release_buffer(&min_stat, output_token);
@@ -141,7 +141,7 @@ proto (int sock, const char *hostname, const char *service)
     gss_cred_id_t cred = GSS_C_NO_CREDENTIAL;
     gss_buffer_desc real_input_token, real_output_token;
     gss_buffer_t input_token = &real_input_token,
-	output_token = &real_output_token;
+        output_token = &real_output_token;
     OM_uint32 maj_stat, min_stat;
     gss_name_t server;
     gss_buffer_desc name_token;
@@ -151,18 +151,18 @@ proto (int sock, const char *hostname, const char *service)
     mech_oid = select_mech(mech);
 
     name_token.length = asprintf (&str,
-				  "%s@%s", service, hostname);
+                                  "%s@%s", service, hostname);
     if (str == NULL)
-	errx(1, "malloc - out of memory");
+        errx(1, "malloc - out of memory");
     name_token.value = str;
 
     maj_stat = gss_import_name (&min_stat,
-				&name_token,
-				GSS_C_NT_HOSTBASED_SERVICE,
-				&server);
+                                &name_token,
+                                GSS_C_NT_HOSTBASED_SERVICE,
+                                &server);
     if (GSS_ERROR(maj_stat))
-	gss_err (1, min_stat,
-		 "Error importing name `%s@%s':\n", service, hostname);
+        gss_err (1, min_stat,
+                 "Error importing name `%s@%s':\n", service, hostname);
 
     if (password) {
         gss_buffer_desc pw;
@@ -171,14 +171,14 @@ proto (int sock, const char *hostname, const char *service)
         pw.length = strlen(password);
 
         maj_stat = gss_acquire_cred_with_password(&min_stat,
-						  GSS_C_NO_NAME,
-						  &pw,
-						  GSS_C_INDEFINITE,
-						  GSS_C_NO_OID_SET,
-						  GSS_C_INITIATE,
-						  &cred,
-						  NULL,
-						  NULL);
+                                                  GSS_C_NO_NAME,
+                                                  &pw,
+                                                  GSS_C_INDEFINITE,
+                                                  GSS_C_NO_OID_SET,
+                                                  GSS_C_INITIATE,
+                                                  &cred,
+                                                  NULL,
+                                                  NULL);
         if (GSS_ERROR(maj_stat))
             gss_err (1, min_stat,
                      "Error acquiring default initiator credentials");
@@ -186,13 +186,13 @@ proto (int sock, const char *hostname, const char *service)
 
     addrlen = sizeof(local);
     if (getsockname (sock, (struct sockaddr *)&local, &addrlen) < 0
-	|| addrlen > sizeof(local))
-	err (1, "getsockname(%s)", hostname);
+        || addrlen > sizeof(local))
+        err (1, "getsockname(%s)", hostname);
 
     addrlen = sizeof(remote);
     if (getpeername (sock, (struct sockaddr *)&remote, &addrlen) < 0
-	|| addrlen > sizeof(remote))
-	err (1, "getpeername(%s)", hostname);
+        || addrlen > sizeof(remote))
+        err (1, "getpeername(%s)", hostname);
 
     input_token->length = 0;
     output_token->length = 0;
@@ -228,73 +228,73 @@ proto (int sock, const char *hostname, const char *service)
 #endif
 
     while(!context_established) {
-	maj_stat =
-	    gss_init_sec_context(&min_stat,
-				 cred,
-				 &context_hdl,
-				 server,
-				 mech_oid,
-				 GSS_C_MUTUAL_FLAG | GSS_C_SEQUENCE_FLAG,
-				 0,
-				 NULL,
-				 input_token,
-				 NULL,
-				 output_token,
-				 NULL,
-				 NULL);
-	if (GSS_ERROR(maj_stat))
-	    gss_err (1, min_stat, "gss_init_sec_context");
-	if (output_token->length != 0)
-	    write_token (sock, output_token);
-	if (GSS_ERROR(maj_stat)) {
-	    if (context_hdl != GSS_C_NO_CONTEXT)
-		gss_delete_sec_context (&min_stat,
-					&context_hdl,
-					GSS_C_NO_BUFFER);
-	    break;
-	}
-	if (maj_stat & GSS_S_CONTINUE_NEEDED) {
-	    read_token (sock, input_token);
-	} else {
-	    context_established = 1;
-	}
+        maj_stat =
+            gss_init_sec_context(&min_stat,
+                                 cred,
+                                 &context_hdl,
+                                 server,
+                                 mech_oid,
+                                 GSS_C_MUTUAL_FLAG | GSS_C_SEQUENCE_FLAG,
+                                 0,
+                                 NULL,
+                                 input_token,
+                                 NULL,
+                                 output_token,
+                                 NULL,
+                                 NULL);
+        if (GSS_ERROR(maj_stat))
+            gss_err (1, min_stat, "gss_init_sec_context");
+        if (output_token->length != 0)
+            write_token (sock, output_token);
+        if (GSS_ERROR(maj_stat)) {
+            if (context_hdl != GSS_C_NO_CONTEXT)
+                gss_delete_sec_context (&min_stat,
+                                        &context_hdl,
+                                        GSS_C_NO_BUFFER);
+            break;
+        }
+        if (maj_stat & GSS_S_CONTINUE_NEEDED) {
+            read_token (sock, input_token);
+        } else {
+            context_established = 1;
+        }
 
     }
     if (fork_flag) {
-	pid_t pid;
-	int pipefd[2];
+        pid_t pid;
+        int pipefd[2];
 
-	if (pipe (pipefd) < 0)
-	    err (1, "pipe");
+        if (pipe (pipefd) < 0)
+            err (1, "pipe");
 
-	pid = fork ();
-	if (pid < 0)
-	    err (1, "fork");
-	if (pid != 0) {
-	    gss_buffer_desc buf;
+        pid = fork ();
+        if (pid < 0)
+            err (1, "fork");
+        if (pid != 0) {
+            gss_buffer_desc buf;
 
-	    maj_stat = gss_export_sec_context (&min_stat,
-					       &context_hdl,
-					       &buf);
-	    if (GSS_ERROR(maj_stat))
-		gss_err (1, min_stat, "gss_export_sec_context");
-	    write_token (pipefd[1], &buf);
-	    exit (0);
-	} else {
-	    gss_ctx_id_t context_hdl;
-	    gss_buffer_desc buf;
+            maj_stat = gss_export_sec_context (&min_stat,
+                                               &context_hdl,
+                                               &buf);
+            if (GSS_ERROR(maj_stat))
+                gss_err (1, min_stat, "gss_export_sec_context");
+            write_token (pipefd[1], &buf);
+            exit (0);
+        } else {
+            gss_ctx_id_t context_hdl;
+            gss_buffer_desc buf;
 
-	    close (pipefd[1]);
-	    read_token (pipefd[0], &buf);
-	    close (pipefd[0]);
-	    maj_stat = gss_import_sec_context (&min_stat, &buf, &context_hdl);
-	    if (GSS_ERROR(maj_stat))
-		gss_err (1, min_stat, "gss_import_sec_context");
-	    gss_release_buffer (&min_stat, &buf);
-	    return do_trans (sock, context_hdl);
-	}
+            close (pipefd[1]);
+            read_token (pipefd[0], &buf);
+            close (pipefd[0]);
+            maj_stat = gss_import_sec_context (&min_stat, &buf, &context_hdl);
+            if (GSS_ERROR(maj_stat))
+                gss_err (1, min_stat, "gss_import_sec_context");
+            gss_release_buffer (&min_stat, &buf);
+            return do_trans (sock, context_hdl);
+        }
     } else {
-	return do_trans (sock, context_hdl);
+        return do_trans (sock, context_hdl);
     }
 }
 

@@ -43,7 +43,7 @@ rk_cloexec(int fd)
 
     ret = fcntl(fd, F_GETFD);
     if (ret == -1)
-	return;
+        return;
     if (fcntl(fd, F_SETFD, ret | FD_CLOEXEC) == -1)
         return;
 #endif

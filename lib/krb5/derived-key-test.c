@@ -109,35 +109,35 @@ main(int argc, char **argv)
 
     ret = krb5_init_context (&context);
     if (ret)
-	errx (1, "krb5_init_context failed: %d", ret);
+        errx (1, "krb5_init_context failed: %d", ret);
 
     for (t = tests; t->enctype != 0; ++t) {
-	krb5_keyblock key;
-	krb5_keyblock *dkey;
+        krb5_keyblock key;
+        krb5_keyblock *dkey;
 
-	key.keytype = t->enctype;
-	krb5_enctype_keysize(context, t->enctype, &key.keyvalue.length);
-	key.keyvalue.data   = t->key;
+        key.keytype = t->enctype;
+        krb5_enctype_keysize(context, t->enctype, &key.keyvalue.length);
+        key.keyvalue.data   = t->key;
 
-	ret = krb5_derive_key(context, &key, t->enctype, t->constant,
-			      t->constant_len, &dkey);
-	if (ret)
-	    krb5_err (context, 1, ret, "krb5_derive_key");
-	if (memcmp (dkey->keyvalue.data, t->res, dkey->keyvalue.length) != 0) {
-	    const unsigned char *p = dkey->keyvalue.data;
-	    int i;
+        ret = krb5_derive_key(context, &key, t->enctype, t->constant,
+                              t->constant_len, &dkey);
+        if (ret)
+            krb5_err (context, 1, ret, "krb5_derive_key");
+        if (memcmp (dkey->keyvalue.data, t->res, dkey->keyvalue.length) != 0) {
+            const unsigned char *p = dkey->keyvalue.data;
+            int i;
 
-	    printf ("derive_key failed (enctype %d)\n", t->enctype);
-	    printf ("should be: ");
-	    for (i = 0; i < dkey->keyvalue.length; ++i)
-		printf ("%02x", t->res[i]);
-	    printf ("\nresult was: ");
-	    for (i = 0; i < dkey->keyvalue.length; ++i)
-		printf ("%02x", p[i]);
-	    printf ("\n");
-	    val = 1;
-	}
-	krb5_free_keyblock(context, dkey);
+            printf ("derive_key failed (enctype %d)\n", t->enctype);
+            printf ("should be: ");
+            for (i = 0; i < dkey->keyvalue.length; ++i)
+                printf ("%02x", t->res[i]);
+            printf ("\nresult was: ");
+            for (i = 0; i < dkey->keyvalue.length; ++i)
+                printf ("%02x", p[i]);
+            printf ("\n");
+            val = 1;
+        }
+        krb5_free_keyblock(context, dkey);
     }
     krb5_free_context(context);
 

@@ -62,19 +62,19 @@ main(void)
     unsigned failures = 0;
 
     for (i = 0; i < sizeof(passing_cases)/sizeof(passing_cases[0]); ++i) {
-	const struct test *t = &passing_cases[i];
-	if (_wind_stringprep_testbidi(t->vals, t->len, WIND_PROFILE_NAME)) {
-	    printf ("passing case %u failed\n", i);
-	    ++failures;
-	}
+        const struct test *t = &passing_cases[i];
+        if (_wind_stringprep_testbidi(t->vals, t->len, WIND_PROFILE_NAME)) {
+            printf ("passing case %u failed\n", i);
+            ++failures;
+        }
     }
 
     for (i = 0; i < sizeof(failing_cases)/sizeof(failing_cases[0]); ++i) {
-	const struct test *t = &failing_cases[i];
-	if (!_wind_stringprep_testbidi(t->vals, t->len, WIND_PROFILE_NAME)) {
-	    printf ("failing case %u passed\n", i);
-	    ++failures;
-	}
+        const struct test *t = &failing_cases[i];
+        if (!_wind_stringprep_testbidi(t->vals, t->len, WIND_PROFILE_NAME)) {
+            printf ("failing case %u passed\n", i);
+            ++failures;
+        }
     }
 
     return failures != 0;

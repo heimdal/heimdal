@@ -55,18 +55,18 @@ random_password(char *pw, size_t len)
 {
 #ifdef OTP_STYLE
     {
-	OtpKey newkey;
+        OtpKey newkey;
 
-	krb5_generate_random_block(&newkey, sizeof(newkey));
-	otp_print_stddict (newkey, pw, len);
-	strlwr(pw);
+        krb5_generate_random_block(&newkey, sizeof(newkey));
+        otp_print_stddict (newkey, pw, len);
+        strlwr(pw);
     }
 #else
     char *pass;
     generate_password(&pass, 3,
-		      "abcdefghijklmnopqrstuvwxyz", 7,
-		      "ABCDEFGHIJKLMNOPQRSTUVWXYZ", 2,
-		      "@$%&*()-+=:,/<>1234567890", 1);
+                      "abcdefghijklmnopqrstuvwxyz", 7,
+                      "ABCDEFGHIJKLMNOPQRSTUVWXYZ", 2,
+                      "@$%&*()-+=:,/<>1234567890", 1);
     strlcpy(pw, pass, len);
     len = strlen(pass);
     memset_s(pass, len, 0, len);
@@ -82,8 +82,8 @@ static int
 RND(unsigned char *key, int keylen, int *left)
 {
     if(*left == 0){
-	krb5_generate_random_block(key, keylen);
-	*left = keylen;
+        krb5_generate_random_block(key, keylen);
+        *left = keylen;
     }
     (*left)--;
     return ((unsigned char*)key)[*left];
@@ -113,9 +113,9 @@ static void
 generate_password(char **pw, int num_classes, ...)
 {
     struct {
-	const char *str;
-	int len;
-	int freq;
+        const char *str;
+        int len;
+        int freq;
     } *classes;
     va_list ap;
     int len, i;
@@ -126,34 +126,34 @@ generate_password(char **pw, int num_classes, ...)
 
     classes = malloc(num_classes * sizeof(*classes));
     if(classes == NULL)
-	return;
+        return;
     va_start(ap, num_classes);
     len = 0;
     for(i = 0; i < num_classes; i++){
-	classes[i].str = va_arg(ap, const char*);
-	classes[i].len = strlen(classes[i].str);
-	classes[i].freq = va_arg(ap, int);
-	len += classes[i].freq;
+        classes[i].str = va_arg(ap, const char*);
+        classes[i].len = strlen(classes[i].str);
+        classes[i].freq = va_arg(ap, int);
+        len += classes[i].freq;
     }
     va_end(ap);
     *pw = malloc(len + 1);
     if(*pw == NULL) {
-	free(classes);
-	return;
+        free(classes);
+        return;
     }
     for(i = 0; i < len; i++) {
-	int j;
-	int x = RND(rbuf, sizeof(rbuf), &rleft) % (len - i);
-	int t = 0;
-	for(j = 0; j < num_classes; j++) {
-	    if(x < t + classes[j].freq) {
-		(*pw)[i] = classes[j].str[RND(rbuf, sizeof(rbuf), &rleft)
-					 % classes[j].len];
-		classes[j].freq--;
-		break;
-	    }
-	    t += classes[j].freq;
-	}
+        int j;
+        int x = RND(rbuf, sizeof(rbuf), &rleft) % (len - i);
+        int t = 0;
+        for(j = 0; j < num_classes; j++) {
+            if(x < t + classes[j].freq) {
+                (*pw)[i] = classes[j].str[RND(rbuf, sizeof(rbuf), &rleft)
+                                         % classes[j].len];
+                classes[j].freq--;
+                break;
+            }
+            t += classes[j].freq;
+        }
     }
     (*pw)[len] = '\0';
     memset_s(rbuf, sizeof(rbuf), 0, sizeof(rbuf));

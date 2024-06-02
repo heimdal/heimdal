@@ -41,5 +41,5 @@ ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
 esetenv(const char *var, const char *val, int rewrite)
 {
     if (setenv (rk_UNCONST(var), rk_UNCONST(val), rewrite))
-	errx (1, "failed setting environment variable %s", var);
+        errx (1, "failed setting environment variable %s", var);
 }

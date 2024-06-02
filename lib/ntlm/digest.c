@@ -68,7 +68,7 @@ struct heim_digest_desc {
     char *clientNC;
     char *serverAlgorithm;
     char *auth_id;
-    
+
     /* internally allocated objects returned to caller */
     char *serverChallenge;
     char *clientReply;
@@ -101,7 +101,7 @@ clear_context(heim_digest_t context)
     FREE_AND_CLEAR(context->clientNC);
     FREE_AND_CLEAR(context->serverAlgorithm);
     FREE_AND_CLEAR(context->auth_id);
-    
+
     FREE_AND_CLEAR(context->serverChallenge);
     FREE_AND_CLEAR(context->clientReply);
     FREE_AND_CLEAR(context->serverReply);
@@ -109,7 +109,7 @@ clear_context(heim_digest_t context)
 
 static void
 digest_userhash(const char *user, const char *realm, const char *password,
-		unsigned char md[CC_MD5_DIGEST_LENGTH])
+                unsigned char md[CC_MD5_DIGEST_LENGTH])
 {
     CC_MD5_CTX ctx;
 
@@ -130,43 +130,43 @@ build_A1_hash(heim_digest_t context)
     char *A1;
 
     if (context->flags & F_HAVE_HA1) {
-	memcpy(md, context->SecretHash, sizeof(md));
+        memcpy(md, context->SecretHash, sizeof(md));
     } else if (context->flags & F_HAVE_HASH) {
-	memcpy(md, context->SecretHash, sizeof(md));
+        memcpy(md, context->SecretHash, sizeof(md));
     } else if (context->password) {
-	if (context->clientUsername == NULL)
-	    return NULL;
-	if (context->serverRealm == NULL)
-	    return NULL;
-	digest_userhash(context->clientUsername,
-			context->serverRealm,
-			context->password,
-			md);
+        if (context->clientUsername == NULL)
+            return NULL;
+        if (context->serverRealm == NULL)
+            return NULL;
+        digest_userhash(context->clientUsername,
+                        context->serverRealm,
+                        context->password,
+                        md);
     } else
-	return NULL;
-    
-    if ((context->type == HEIM_DIGEST_TYPE_RFC2617_MD5_SESS || context->type == HEIM_DIGEST_TYPE_RFC2831) && (context->flags & F_HAVE_HA1) == 0) {
-	if (context->serverNonce == NULL)
-	    return NULL;
+        return NULL;
 
-	CC_MD5_Init(&ctx);
-	CC_MD5_Update(&ctx, md, sizeof(md));
-	memset(md, 0, sizeof(md));
-	CC_MD5_Update(&ctx, ":", 1);
-	CC_MD5_Update(&ctx, context->serverNonce, (CC_LONG)strlen(context->serverNonce));
-	if (context->clientNonce) {
-	    CC_MD5_Update(&ctx, ":", 1);
-	    CC_MD5_Update(&ctx, context->clientNonce, (CC_LONG)strlen(context->clientNonce));
-	}
-	if (context->type == HEIM_DIGEST_TYPE_RFC2831 && context->auth_id) {
-	    CC_MD5_Update(&ctx, ":", 1);
-	    CC_MD5_Update(&ctx, context->auth_id, (CC_LONG)strlen(context->auth_id));
-	}
-	CC_MD5_Final(md, &ctx);
+    if ((context->type == HEIM_DIGEST_TYPE_RFC2617_MD5_SESS || context->type == HEIM_DIGEST_TYPE_RFC2831) && (context->flags & F_HAVE_HA1) == 0) {
+        if (context->serverNonce == NULL)
+            return NULL;
+
+        CC_MD5_Init(&ctx);
+        CC_MD5_Update(&ctx, md, sizeof(md));
+        memset(md, 0, sizeof(md));
+        CC_MD5_Update(&ctx, ":", 1);
+        CC_MD5_Update(&ctx, context->serverNonce, (CC_LONG)strlen(context->serverNonce));
+        if (context->clientNonce) {
+            CC_MD5_Update(&ctx, ":", 1);
+            CC_MD5_Update(&ctx, context->clientNonce, (CC_LONG)strlen(context->clientNonce));
+        }
+        if (context->type == HEIM_DIGEST_TYPE_RFC2831 && context->auth_id) {
+            CC_MD5_Update(&ctx, ":", 1);
+            CC_MD5_Update(&ctx, context->auth_id, (CC_LONG)strlen(context->auth_id));
+        }
+        CC_MD5_Final(md, &ctx);
     }
     hex_encode(md, sizeof(md), &A1);
     if (A1)
-      strlwr(A1);
+        strlwr(A1);
 
     return A1;
 }
@@ -177,31 +177,31 @@ build_A2_hash(heim_digest_t context, const char *method)
     unsigned char md[CC_MD5_DIGEST_LENGTH];
     CC_MD5_CTX ctx;
     char *A2;
-  
+
     CC_MD5_Init(&ctx);
     if (method)
-	CC_MD5_Update(&ctx, method, (CC_LONG)strlen(method));
+        CC_MD5_Update(&ctx, method, (CC_LONG)strlen(method));
     CC_MD5_Update(&ctx, ":", 1);
     CC_MD5_Update(&ctx, context->clientURI, (CC_LONG)strlen(context->clientURI));
-	
+
     /* conf|int */
     if (context->type == HEIM_DIGEST_TYPE_RFC2831) {
-	if (strcasecmp(context->clientQOP, "auth-int") == 0 || strcasecmp(context->clientQOP, "auth-conf") == 0) {
-	    /* XXX if we have a body hash, use that */
-	    static char conf_zeros[] = ":00000000000000000000000000000000";
-	    CC_MD5_Update(&ctx, conf_zeros, sizeof(conf_zeros) - 1);
-	}
+        if (strcasecmp(context->clientQOP, "auth-int") == 0 || strcasecmp(context->clientQOP, "auth-conf") == 0) {
+            /* XXX if we have a body hash, use that */
+            static char conf_zeros[] = ":00000000000000000000000000000000";
+            CC_MD5_Update(&ctx, conf_zeros, sizeof(conf_zeros) - 1);
+        }
     } else {
-	/* support auth-int ? */
-	if (context->clientQOP && strcasecmp(context->clientQOP, "auth") != 0)
-	    return NULL;
+        /* support auth-int ? */
+        if (context->clientQOP && strcasecmp(context->clientQOP, "auth") != 0)
+            return NULL;
     }
-	
+
     CC_MD5_Final(md, &ctx);
 
     hex_encode(md, sizeof(md), &A2);
     if (A2)
-      strlwr(A2);
+        strlwr(A2);
 
     return A2;
 }
@@ -221,13 +221,13 @@ free_values(struct md5_value *val)
 {
     struct md5_value *v;
     while(val) {
-	v = val->mv_next;
-	if (val->mv_name)
-	    free(val->mv_name);
-	if (val->mv_value)
-	    free(val->mv_value);
-	free(val);
-	val = v;
+        v = val->mv_next;
+        if (val->mv_name)
+            free(val->mv_name);
+        if (val->mv_value)
+            free(val->mv_value);
+        free(val);
+        val = v;
     }
 }
 
@@ -242,12 +242,12 @@ values_find(struct md5_value **val, const char *v)
     char *str;
 
     while (*val != NULL) {
-	if (strcasecmp(v, (*val)->mv_name) == 0)
-	    break;
-	val = &(*val)->mv_next;
+        if (strcasecmp(v, (*val)->mv_name) == 0)
+            break;
+        val = &(*val)->mv_next;
     }
     if (*val == NULL)
-	return NULL;
+        return NULL;
     cur = *val;
     *val = (*val)->mv_next;
 
@@ -269,100 +269,100 @@ parse_values(const char *string, struct md5_value **val)
     *val = NULL;
 
     if ((str = strdup(string)) == NULL)
-	return ENOMEM;
+        return ENOMEM;
 
     size = strlen(str);
 
     p1 = str;
 
     while (p1 - str < size) {
-	sz = strspn(p1, " \t\n\r,");
-	if (p1[sz] == '\0')
-	    break;
-	p1 += sz;
-	sz = strcspn(p1, " \t\n\r=");
-	if (sz == 0 || p1[sz] == '\0')
-	    goto error;
-	p2 = p1 + sz;
+        sz = strspn(p1, " \t\n\r,");
+        if (p1[sz] == '\0')
+            break;
+        p1 += sz;
+        sz = strcspn(p1, " \t\n\r=");
+        if (sz == 0 || p1[sz] == '\0')
+            goto error;
+        p2 = p1 + sz;
 
-	if ((v = malloc(sizeof(*v))) == NULL)
-	    goto nomem;
-	v->mv_name = v->mv_value = NULL;
-	v->mv_next = *val;
-	*val = v;
-	if ((v->mv_name = malloc(p2 - p1 + 1)) == NULL)
-	    goto nomem;
-	strncpy(v->mv_name, p1, p2 - p1);
-	v->mv_name[p2 - p1] = '\0';
+        if ((v = malloc(sizeof(*v))) == NULL)
+            goto nomem;
+        v->mv_name = v->mv_value = NULL;
+        v->mv_next = *val;
+        *val = v;
+        if ((v->mv_name = malloc(p2 - p1 + 1)) == NULL)
+            goto nomem;
+        strncpy(v->mv_name, p1, p2 - p1);
+        v->mv_name[p2 - p1] = '\0';
 
-	sz = strspn(p2, " \t\n\r");
-	if (p2[sz] == '\0')
-	    goto error;
-	p2 += sz;
+        sz = strspn(p2, " \t\n\r");
+        if (p2[sz] == '\0')
+            goto error;
+        p2 += sz;
 
-	if (*p2 != '=')
-	    goto error;
-	p2++;
+        if (*p2 != '=')
+            goto error;
+        p2++;
 
-	sz = strspn(p2, " \t\n\r");
-	if (p2[sz] == '\0')
-	    goto error;
-	p2 += sz;
-	p1 = p2;
-		
-	if (*p2 == '"') {
-	    p1++;
-	    while (*p2 == '"') {
-		p2++;
-		p2 = strchr(p2, '\"');
-		if (p2 == NULL)
-		    goto error;
-		if (p2[0] == '\0')
-		    goto error;
-		if (p2[-1] != '\\')
-		    break;
-	    }
-	} else {
-	    sz = strcspn(p2, " \t\n\r=,");
-	    p2 += sz;
-	}
+        sz = strspn(p2, " \t\n\r");
+        if (p2[sz] == '\0')
+            goto error;
+        p2 += sz;
+        p1 = p2;
+
+        if (*p2 == '"') {
+            p1++;
+            while (*p2 == '"') {
+                p2++;
+                p2 = strchr(p2, '\"');
+                if (p2 == NULL)
+                    goto error;
+                if (p2[0] == '\0')
+                    goto error;
+                if (p2[-1] != '\\')
+                    break;
+            }
+        } else {
+            sz = strcspn(p2, " \t\n\r=,");
+            p2 += sz;
+        }
 
 #if 0 /* allow empty values */
-	if (p1 == p2)
-	    goto error;
+        if (p1 == p2)
+            goto error;
 #endif
 
-	if ((v->mv_value = malloc(p2 - p1 + 1)) == NULL)
-	    goto nomem;
-	strncpy(v->mv_value, p1, p2 - p1);
-	v->mv_value[p2 - p1] = '\0';
-		
-	if (p2[0] == '\0')
-	    break;
-	if (p2[0] == '"')
-	    p2++;
+        if ((v->mv_value = malloc(p2 - p1 + 1)) == NULL)
+            goto nomem;
+        strncpy(v->mv_value, p1, p2 - p1);
+        v->mv_value[p2 - p1] = '\0';
 
-	sz = strspn(p2, " \t\n\r");
-	if (p2[sz] == '\0')
-	    break;
-	p2 += sz;
+        if (p2[0] == '\0')
+            break;
+        if (p2[0] == '"')
+            p2++;
 
-	if (p2[0] == '\0')
-	    break;
-	if (p2[0] != ',')
-	    goto error;
-	p1 = p2;
+        sz = strspn(p2, " \t\n\r");
+        if (p2[sz] == '\0')
+            break;
+        p2 += sz;
+
+        if (p2[0] == '\0')
+            break;
+        if (p2[0] != ',')
+            goto error;
+        p1 = p2;
     }
 
     free(str);
 
     return 0;
- error:
+error:
     free_values(*val);
     *val = NULL;
     free(str);
     return EINVAL;
- nomem:
+nomem:
     free_values(*val);
     *val = NULL;
     free(str);
@@ -377,11 +377,11 @@ static const char *
 check_prefix(heim_digest_t context, const char *challenge)
 {
     if (strncasecmp(digest_prefix, challenge, sizeof(digest_prefix) - 1) == 0) {
-	
-	challenge += sizeof(digest_prefix) - 1;
-	while (*challenge == 0x20) /* remove extra space */
-	    challenge++;
-	context->flags |= F_USE_PREFIX;
+
+        challenge += sizeof(digest_prefix) - 1;
+        while (*challenge == 0x20) /* remove extra space */
+            challenge++;
+        context->flags |= F_USE_PREFIX;
     }
 
     return challenge;
@@ -398,7 +398,7 @@ heim_digest_create(int server, int type)
 
     context = calloc(1, sizeof(*context));
     if (context == NULL)
-	return NULL;
+        return NULL;
     context->flags |= F_SERVER;
     context->type = type;
 
@@ -410,12 +410,12 @@ generate_nonce(void)
 {
     uint8_t rand[8];
     char *nonce;
-    
+
     if (CCRandomCopyBytes(kCCRandomDefault, rand, sizeof(rand)) != kCCSuccess)
-	return NULL;
-    
+        return NULL;
+
     if (rk_hex_encode(rand, sizeof(rand), &nonce) < 0)
-	return NULL;
+        return NULL;
 
     return nonce;
 }
@@ -436,51 +436,51 @@ const char *
 heim_digest_generate_challenge(heim_digest_t context)
 {
     char *challenge = NULL;
-    
+
     if (context->serverRealm == NULL)
-	return NULL;
-    
+        return NULL;
+
     if (context->serverNonce == NULL) {
-	if ((context->serverNonce = generate_nonce()) == NULL)
-	    return NULL;
+        if ((context->serverNonce = generate_nonce()) == NULL)
+            return NULL;
     }
-    
+
     if (context->serverQOP == NULL) {
-	if ((context->serverQOP = strdup("auth")) == NULL)
-	    return NULL;
+        if ((context->serverQOP = strdup("auth")) == NULL)
+            return NULL;
     }
-    
+
     if (context->serverMaxbuf == NULL) {
-	if ((context->serverMaxbuf = strdup("65536")) == NULL)
-	    return NULL;
+        if ((context->serverMaxbuf = strdup("65536")) == NULL)
+            return NULL;
     }
 
     switch(context->type) {
-	case HEIM_DIGEST_TYPE_RFC2617_MD5:
-	    asprintf(&challenge, "realm=\"%s\",nonce=\"%s\",algorithm=md5,qop=\"%s\"",
-		     context->serverRealm, context->serverNonce,
-		     context->serverQOP);
-	    break;
-	case HEIM_DIGEST_TYPE_RFC2617_MD5_SESS:
-	    asprintf(&challenge, "realm=\"%s\",nonce=\"%s\",algorithm=md5-sess,qop=\"%s\"",
-		     context->serverRealm, context->serverNonce, context->serverQOP);
-	    break;
-	case HEIM_DIGEST_TYPE_RFC2069:
-	    asprintf(&challenge, "realm=\"%s\",nonce=\"%s\"",
-		     context->serverRealm, context->serverNonce);
-	    break;
-	case HEIM_DIGEST_TYPE_AUTO:
-	    context->type = HEIM_DIGEST_TYPE_RFC2831;
+        case HEIM_DIGEST_TYPE_RFC2617_MD5:
+            asprintf(&challenge, "realm=\"%s\",nonce=\"%s\",algorithm=md5,qop=\"%s\"",
+                     context->serverRealm, context->serverNonce,
+                     context->serverQOP);
+            break;
+        case HEIM_DIGEST_TYPE_RFC2617_MD5_SESS:
+            asprintf(&challenge, "realm=\"%s\",nonce=\"%s\",algorithm=md5-sess,qop=\"%s\"",
+                     context->serverRealm, context->serverNonce, context->serverQOP);
+            break;
+        case HEIM_DIGEST_TYPE_RFC2069:
+            asprintf(&challenge, "realm=\"%s\",nonce=\"%s\"",
+                     context->serverRealm, context->serverNonce);
+            break;
+        case HEIM_DIGEST_TYPE_AUTO:
+            context->type = HEIM_DIGEST_TYPE_RFC2831;
             HEIM_FALLTHROUGH;
-	case HEIM_DIGEST_TYPE_RFC2831:
-	    asprintf(&challenge, "realm=\"%s\",nonce=\"%s\",qop=\"%s\",algorithm=md5-sess,charset=utf-8,maxbuf=%s",
-		     context->serverRealm, context->serverNonce, context->serverQOP, context->serverMaxbuf);
-	    break;
+        case HEIM_DIGEST_TYPE_RFC2831:
+            asprintf(&challenge, "realm=\"%s\",nonce=\"%s\",qop=\"%s\",algorithm=md5-sess,charset=utf-8,maxbuf=%s",
+                     context->serverRealm, context->serverNonce, context->serverQOP, context->serverMaxbuf);
+            break;
     }
 
     FREE_AND_CLEAR(context->serverChallenge);
     context->serverChallenge = challenge;
-    
+
     return challenge;
 }
 
@@ -489,12 +489,12 @@ heim_digest_parse_challenge(heim_digest_t context, const char *challenge)
 {
     struct md5_value *val = NULL;
     int ret, type;
-    
+
     challenge = check_prefix(context, challenge);
 
     ret = parse_values(challenge, &val);
     if (ret)
-	goto out;
+        goto out;
 
     ret = 1;
 
@@ -508,29 +508,29 @@ heim_digest_parse_challenge(heim_digest_t context, const char *challenge)
 
     context->serverAlgorithm = values_find(&val, "algorithm");
     if (context->serverAlgorithm == NULL || strcasecmp(context->serverAlgorithm, "md5") == 0) {
-	type = HEIM_DIGEST_TYPE_RFC2617_MD5;
+        type = HEIM_DIGEST_TYPE_RFC2617_MD5;
     } else if (strcasecmp(context->serverAlgorithm, "md5-sess") == 0) {
-	type = HEIM_DIGEST_TYPE_RFC2617_OR_RFC2831;
+        type = HEIM_DIGEST_TYPE_RFC2617_OR_RFC2831;
     } else {
-	goto out;
+        goto out;
     }
 
     context->serverQOP = values_find(&val, "qop");
     if (context->serverQOP == NULL)
-	type = HEIM_DIGEST_TYPE_RFC2069;
-    
+        type = HEIM_DIGEST_TYPE_RFC2069;
+
     context->serverOpaque = values_find(&val, "opaque");
 
     if (context->type != HEIM_DIGEST_TYPE_AUTO && (context->type & type) == 0)
-	goto out;
+        goto out;
     else if (context->type == HEIM_DIGEST_TYPE_AUTO)
-	context->type = type;
+        context->type = type;
 
     ret = 0;
- out:
+out:
     free_values(val);
     if (ret)
-	clear_context(context);
+        clear_context(context);
     return ret;
 }
 
@@ -538,12 +538,12 @@ heim_digest_parse_challenge(heim_digest_t context, const char *challenge)
 static void
 set_auth_method(heim_digest_t context)
 {
-    
+
     if (context->serverMethod == NULL) {
-	if (context->type == HEIM_DIGEST_TYPE_RFC2831)
-	    context->serverMethod = strdup("AUTHENTICATE");
-	else
-	    context->serverMethod = strdup("GET");
+        if (context->type == HEIM_DIGEST_TYPE_RFC2831)
+            context->serverMethod = strdup("AUTHENTICATE");
+        else
+            context->serverMethod = strdup("GET");
     }
 }
 
@@ -558,24 +558,24 @@ heim_digest_parse_response(heim_digest_t context, const char *response)
 
     ret = parse_values(response, &val);
     if (ret)
-	goto out;
+        goto out;
 
     ret = 1;
 
     if (context->type == HEIM_DIGEST_TYPE_AUTO) {
-	goto out;
+        goto out;
     } else if (context->type == HEIM_DIGEST_TYPE_RFC2617_OR_RFC2831) {
-	context->clientURI = values_find(&val, "uri");
-	if (context->clientURI) {
-	    context->type = HEIM_DIGEST_TYPE_RFC2617_MD5_SESS;
-	} else {
-	    context->clientURI = values_find(&val, "digest-uri");
-	    context->type = HEIM_DIGEST_TYPE_RFC2831;
-	}
+        context->clientURI = values_find(&val, "uri");
+        if (context->clientURI) {
+            context->type = HEIM_DIGEST_TYPE_RFC2617_MD5_SESS;
+        } else {
+            context->clientURI = values_find(&val, "digest-uri");
+            context->type = HEIM_DIGEST_TYPE_RFC2831;
+        }
     } else if (context->type == HEIM_DIGEST_TYPE_RFC2831) {
-	context->clientURI = values_find(&val, "digest-uri");
+        context->clientURI = values_find(&val, "digest-uri");
     } else {
-	context->clientURI = values_find(&val, "uri");
+        context->clientURI = values_find(&val, "uri");
     }
 
     if (context->clientURI == NULL)
@@ -587,8 +587,8 @@ heim_digest_parse_response(heim_digest_t context, const char *response)
     /* if client sent realm, make sure its the same of serverRealm if its set */
     context->clientRealm = values_find(&val, "realm");
     if (context->clientRealm && context->serverRealm && strcmp(context->clientRealm, context->serverRealm) != 0)
-	goto out;
-    
+        goto out;
+
     context->clientResponse = values_find(&val, "response");
     if (context->clientResponse == NULL) goto out;
 
@@ -596,54 +596,54 @@ heim_digest_parse_response(heim_digest_t context, const char *response)
     if (nonce == NULL) goto out;
 
     if (strcmp(nonce, context->serverNonce) != 0) {
-	free(nonce);
-	goto out;
+        free(nonce);
+        goto out;
     }
     free(nonce);
 
     if (context->type != HEIM_DIGEST_TYPE_RFC2069) {
 
-	context->clientQOP = values_find(&val, "qop");
-	if (context->clientQOP == NULL) goto out;
-	
-	/*
-	 * If we have serverQOP, lets check that clientQOP exists
-	 * in the list of server entries.
-	 */
-	
-	if (context->serverQOP) {
-	    Boolean found = false;
-	    char *b, *e;
-	    size_t len, clen = strlen(context->clientQOP);
-	    
-	    b = context->serverQOP;
-	    while (b && !found) {
-		e = strchr(b, ',');
-		if (e == NULL)
-		    len = strlen(b);
-		else {
-		    len = e - b;
-		    e += 1;
-		}
-		if (clen == len && strncmp(b, context->clientQOP, len) == 0)
-		    found = true;
-		b = e;
-	    }
-	    if (!found)
-		goto out;
-	}
+        context->clientQOP = values_find(&val, "qop");
+        if (context->clientQOP == NULL) goto out;
 
-	context->clientNC = values_find(&val, "nc");
-	if (context->clientNC == NULL) goto out;
+        /*
+         * If we have serverQOP, lets check that clientQOP exists
+         * in the list of server entries.
+         */
 
-	context->clientNonce = values_find(&val, "cnonce");
-	if (context->clientNonce == NULL) goto out;
+        if (context->serverQOP) {
+            Boolean found = false;
+            char *b, *e;
+            size_t len, clen = strlen(context->clientQOP);
+
+            b = context->serverQOP;
+            while (b && !found) {
+                e = strchr(b, ',');
+                if (e == NULL)
+                    len = strlen(b);
+                else {
+                    len = e - b;
+                    e += 1;
+                }
+                if (clen == len && strncmp(b, context->clientQOP, len) == 0)
+                    found = true;
+                b = e;
+            }
+            if (!found)
+                goto out;
+        }
+
+        context->clientNC = values_find(&val, "nc");
+        if (context->clientNC == NULL) goto out;
+
+        context->clientNonce = values_find(&val, "cnonce");
+        if (context->clientNonce == NULL) goto out;
     }
 
     set_auth_method(context);
 
     ret = 0;
- out:
+out:
     free_values(val);
     return ret;
 }
@@ -678,12 +678,12 @@ build_digest(heim_digest_t context, const char *a1, const char *method)
     CC_MD5_Update(&ctx, ":", 1);
     CC_MD5_Update(&ctx, context->serverNonce, (CC_LONG)strlen(context->serverNonce));
     if (context->type != HEIM_DIGEST_TYPE_RFC2069) {
-	CC_MD5_Update(&ctx, ":", 1);
-	CC_MD5_Update(&ctx, context->clientNC, (CC_LONG)strlen(context->clientNC));
-	CC_MD5_Update(&ctx, ":", 1);
-	CC_MD5_Update(&ctx, context->clientNonce, (CC_LONG)strlen(context->clientNonce));
-	CC_MD5_Update(&ctx, ":", 1);
-	CC_MD5_Update(&ctx, context->clientQOP, (CC_LONG)strlen(context->clientQOP));
+        CC_MD5_Update(&ctx, ":", 1);
+        CC_MD5_Update(&ctx, context->clientNC, (CC_LONG)strlen(context->clientNC));
+        CC_MD5_Update(&ctx, ":", 1);
+        CC_MD5_Update(&ctx, context->clientNonce, (CC_LONG)strlen(context->clientNonce));
+        CC_MD5_Update(&ctx, ":", 1);
+        CC_MD5_Update(&ctx, context->clientQOP, (CC_LONG)strlen(context->clientQOP));
     }
     CC_MD5_Update(&ctx, ":", 1);
     CC_MD5_Update(&ctx, a2, (CC_LONG)strlen(a2));
@@ -702,18 +702,18 @@ static void
 build_server_response(heim_digest_t context, char *a1, char **response)
 {
     char *str;
-    
+
     str = build_digest(context, a1, NULL);
     if (str == NULL)
-	return;
-    
+        return;
+
     FREE_AND_CLEAR(context->serverReply);
     asprintf(&context->serverReply, "%srspauth=%s",
-	     (context->flags & F_USE_PREFIX) ? digest_prefix : "",
-	     str);
+             (context->flags & F_USE_PREFIX) ? digest_prefix : "",
+             str);
     free(str);
     if (response)
-	*response = context->serverReply;
+        *response = context->serverReply;
 }
 
 
@@ -727,101 +727,101 @@ const char *
 heim_digest_create_response(heim_digest_t context, char **response)
 {
     char *a1, *str, *cnonce = NULL, *opaque = NULL, *uri = NULL, *nc = NULL;
-    
-    if (response)
-	*response = NULL;
-    
-    if (context->clientUsername == NULL || context->clientURI == NULL)
-	return NULL;
-    
-    if (context->clientRealm == NULL) {
-	if (context->serverRealm == NULL)
-	    return NULL;
-	if ((context->clientRealm = strdup(context->serverRealm)) == NULL)
-	    return NULL;
-    }
-    
-    if (context->type != HEIM_DIGEST_TYPE_RFC2069) {
-	if (context->clientNC == NULL) {
-	    if ((context->clientNC = strdup("00000001")) == NULL)
-		return NULL;
-	}
-	if (context->clientNonce == NULL) {
-	    if ((context->clientNonce = generate_nonce()) == NULL)
-		return NULL;
-	}
 
-	/**
-	 * If using non RFC2069, appropriate QOP should be set.
-	 *
-	 * Pick QOP from server if not given, if its a list, pick the first entry
-	 */
-	if (context->clientQOP == NULL) {
-	    char *r;
-	    if (context->serverQOP == NULL)
-		return NULL;
-	    r = strchr(context->serverQOP, ',');
-	    if (r == NULL) {
-		if ((context->clientQOP = strdup(context->serverQOP)) == NULL)
-			return NULL;
-	    } else {
-		size_t len = (r - context->serverQOP) + 1;
-		if ((context->clientQOP = malloc(len)) == NULL)
-		    return NULL;
-		strlcpy(context->clientQOP, context->serverQOP, len);
-	    }
-	}
+    if (response)
+        *response = NULL;
+
+    if (context->clientUsername == NULL || context->clientURI == NULL)
+        return NULL;
+
+    if (context->clientRealm == NULL) {
+        if (context->serverRealm == NULL)
+            return NULL;
+        if ((context->clientRealm = strdup(context->serverRealm)) == NULL)
+            return NULL;
     }
-	    
+
+    if (context->type != HEIM_DIGEST_TYPE_RFC2069) {
+        if (context->clientNC == NULL) {
+            if ((context->clientNC = strdup("00000001")) == NULL)
+                return NULL;
+        }
+        if (context->clientNonce == NULL) {
+            if ((context->clientNonce = generate_nonce()) == NULL)
+                return NULL;
+        }
+
+        /**
+         * If using non RFC2069, appropriate QOP should be set.
+         *
+         * Pick QOP from server if not given, if its a list, pick the first entry
+         */
+        if (context->clientQOP == NULL) {
+            char *r;
+            if (context->serverQOP == NULL)
+                return NULL;
+            r = strchr(context->serverQOP, ',');
+            if (r == NULL) {
+                if ((context->clientQOP = strdup(context->serverQOP)) == NULL)
+                        return NULL;
+            } else {
+                size_t len = (r - context->serverQOP) + 1;
+                if ((context->clientQOP = malloc(len)) == NULL)
+                    return NULL;
+                strlcpy(context->clientQOP, context->serverQOP, len);
+            }
+        }
+    }
+
     set_auth_method(context);
-    
+
     a1 = build_A1_hash(context);
     if (a1 == NULL)
-	return NULL;
-    
+        return NULL;
+
     str = build_digest(context, a1, context->serverMethod);
     if (str == NULL) {
-	MEMSET_FREE_AND_CLEAR(a1);
-	return NULL;
+        MEMSET_FREE_AND_CLEAR(a1);
+        return NULL;
     }
-    
+
     MEMSET_FREE_AND_CLEAR(context->clientResponse);
     context->clientResponse = str;
-    
+
     if (context->clientURI) {
-	const char *name = "digest-uri";
-	if (context->type != HEIM_DIGEST_TYPE_RFC2831)
-	    name = "uri";
-	asprintf(&uri, ",%s=\"%s\"", name, context->clientURI);
+        const char *name = "digest-uri";
+        if (context->type != HEIM_DIGEST_TYPE_RFC2831)
+            name = "uri";
+        asprintf(&uri, ",%s=\"%s\"", name, context->clientURI);
     }
-    
+
     if (context->serverOpaque)
-	asprintf(&opaque, ",opaque=\"%s\"", context->serverOpaque);
-    
+        asprintf(&opaque, ",opaque=\"%s\"", context->serverOpaque);
+
     if (context->clientNonce)
-	asprintf(&cnonce, ",cnonce=\"%s\"", context->clientNonce);
+        asprintf(&cnonce, ",cnonce=\"%s\"", context->clientNonce);
 
     if (context->clientNC)
-	asprintf(&nc, ",nc=%s", context->clientNC);
-    
+        asprintf(&nc, ",nc=%s", context->clientNC);
+
     asprintf(&context->clientReply,
-	     "username=%s,realm=%s,nonce=\"%s\",qop=\"%s\"%s%s%s,response=\"%s\"%s",
-	     context->clientUsername, context->clientRealm,
-	     context->serverNonce,
-	     context->clientQOP,
-	     uri ? uri : "",
-	     cnonce ? cnonce : "",
-	     nc ? nc : "",
-	     context->clientResponse,
-	     opaque ? opaque : "");
-    
+             "username=%s,realm=%s,nonce=\"%s\",qop=\"%s\"%s%s%s,response=\"%s\"%s",
+             context->clientUsername, context->clientRealm,
+             context->serverNonce,
+             context->clientQOP,
+             uri ? uri : "",
+             cnonce ? cnonce : "",
+             nc ? nc : "",
+             context->clientResponse,
+             opaque ? opaque : "");
+
     build_server_response(context, a1, response);
     MEMSET_FREE_AND_CLEAR(a1);
     FREE_AND_CLEAR(uri);
     FREE_AND_CLEAR(opaque);
     FREE_AND_CLEAR(cnonce);
     FREE_AND_CLEAR(nc);
-    
+
     return context->clientReply;
 }
 
@@ -833,8 +833,8 @@ heim_digest_verify(heim_digest_t context, char **response)
     int res;
 
     if (response)
-	*response = NULL;
-    
+        *response = NULL;
+
     set_auth_method(context);
 
     a1 = build_A1_hash(context);
@@ -843,15 +843,15 @@ heim_digest_verify(heim_digest_t context, char **response)
 
     str = build_digest(context, a1, context->serverMethod);
     if (str == NULL) {
-	MEMSET_FREE_AND_CLEAR(a1);
-	return ENOMEM;
+        MEMSET_FREE_AND_CLEAR(a1);
+        return ENOMEM;
     }
 
     res = (strcmp(str, context->clientResponse) == 0) ? 0 : EINVAL;
     free(str);
     if (res) {
-	MEMSET_FREE_AND_CLEAR(a1);
-	return res;
+        MEMSET_FREE_AND_CLEAR(a1);
+        return res;
     }
 
     /* build server_response */
@@ -859,7 +859,7 @@ heim_digest_verify(heim_digest_t context, char **response)
     MEMSET_FREE_AND_CLEAR(a1);
     /* XXX break ABI and return internally allocated string instead */
     if (response)
-	*response = strdup(*response);
+        *response = strdup(*response);
 
     return 0;
 }
@@ -875,19 +875,19 @@ const char *
 heim_digest_server_response(heim_digest_t context)
 {
     char *a1;
-    
+
     if (context->serverNonce == NULL)
-	return NULL;
+        return NULL;
     if (context->clientURI == NULL)
-	return NULL;
+        return NULL;
 
     a1 = build_A1_hash(context);
     if (a1 == NULL)
-	return NULL;
-    
+        return NULL;
+
     build_server_response(context, a1, NULL);
     MEMSET_FREE_AND_CLEAR(a1);
-    
+
     return context->serverReply;
 }
 
@@ -935,10 +935,10 @@ heim_digest_get_key(heim_digest_t context, const char *key)
     size_t n;
 
     for (n = 0; n < sizeof(keys) / sizeof(keys[0]); n++) {
-	if (strcasecmp(key, keys[n].name) == 0) {
-	    char **ptr = (char **)((((char *)context) + keys[n].offset));
-	    return *ptr;
-	}
+        if (strcasecmp(key, keys[n].name) == 0) {
+            char **ptr = (char **)((((char *)context) + keys[n].offset));
+            return *ptr;
+        }
     }
     return NULL;
 }
@@ -948,46 +948,46 @@ heim_digest_set_key(heim_digest_t context, const char *key, const char *value)
 {
 
     if (strcmp(key, "password") == 0) {
-	FREE_AND_CLEAR(context->password);
-	if ((context->password = strdup(value)) == NULL)
-	    return ENOMEM;
-	context->flags &= ~(F_HAVE_HASH|F_HAVE_HA1);
+        FREE_AND_CLEAR(context->password);
+        if ((context->password = strdup(value)) == NULL)
+            return ENOMEM;
+        context->flags &= ~(F_HAVE_HASH|F_HAVE_HA1);
     } else if (strcmp(key, "userhash") == 0) {
-	ssize_t ret;
-	FREE_AND_CLEAR(context->password);
+        ssize_t ret;
+        FREE_AND_CLEAR(context->password);
 
-	ret = hex_decode(value, context->SecretHash, sizeof(context->SecretHash));
-	if (ret != sizeof(context->SecretHash))
-	    return EINVAL;
-	context->flags &= ~F_HAVE_HA1;
-	context->flags |= F_HAVE_HASH;
+        ret = hex_decode(value, context->SecretHash, sizeof(context->SecretHash));
+        if (ret != sizeof(context->SecretHash))
+            return EINVAL;
+        context->flags &= ~F_HAVE_HA1;
+        context->flags |= F_HAVE_HASH;
     } else if (strcmp(key, "H(A1)") == 0) {
-	ssize_t ret;
-	FREE_AND_CLEAR(context->password);
-	
-	ret = hex_decode(value, context->SecretHash, sizeof(context->SecretHash));
-	if (ret != sizeof(context->SecretHash))
-	    return EINVAL;
-	context->flags &= ~F_HAVE_HASH;
-	context->flags |= F_HAVE_HA1;
-    } else if (strcmp(key, "method") == 0) {
-	FREE_AND_CLEAR(context->serverMethod);
-	if ((context->serverMethod = strdup(value)) == NULL)
-	    return ENOMEM;
-    } else {
-	size_t n;
+        ssize_t ret;
+        FREE_AND_CLEAR(context->password);
 
-	for (n = 0; n < sizeof(keys) / sizeof(keys[0]); n++) {
-	    if (strcasecmp(key, keys[n].name) == 0) {
-		char **ptr = (char **)((((char *)context) + keys[n].offset));
-		FREE_AND_CLEAR(*ptr);
-		if (((*ptr) = strdup(value)) == NULL)
-		    return ENOMEM;
-		break;
-	    }
-	}
-	if (n == sizeof(keys) / sizeof(keys[0]))
-	    return ENOENT;
+        ret = hex_decode(value, context->SecretHash, sizeof(context->SecretHash));
+        if (ret != sizeof(context->SecretHash))
+            return EINVAL;
+        context->flags &= ~F_HAVE_HASH;
+        context->flags |= F_HAVE_HA1;
+    } else if (strcmp(key, "method") == 0) {
+        FREE_AND_CLEAR(context->serverMethod);
+        if ((context->serverMethod = strdup(value)) == NULL)
+            return ENOMEM;
+    } else {
+        size_t n;
+
+        for (n = 0; n < sizeof(keys) / sizeof(keys[0]); n++) {
+            if (strcasecmp(key, keys[n].name) == 0) {
+                char **ptr = (char **)((((char *)context) + keys[n].offset));
+                FREE_AND_CLEAR(*ptr);
+                if (((*ptr) = strdup(value)) == NULL)
+                    return ENOMEM;
+                break;
+            }
+        }
+        if (n == sizeof(keys) / sizeof(keys[0]))
+            return ENOENT;
     }
     return 0;
 }

@@ -75,7 +75,7 @@ static inline int
 buffer_equal_p(gss_const_buffer_t b1, gss_const_buffer_t b2)
 {
     return b1->length == b2->length &&
-	memcmp(b1->value, b2->value, b2->length) == 0;
+        memcmp(b1->value, b2->value, b2->length) == 0;
 }
 
 /* flags that are valid to be sent from a SAnon initiator in the flags field */

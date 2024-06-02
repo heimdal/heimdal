@@ -79,92 +79,92 @@ main (int argc, char **argv)
     setprogname (argv[0]);
 
     if(getarg(args, num_args, argc, argv, &optidx))
-	usage(1);
+        usage(1);
 
     if (help_flag)
-	usage (0);
+        usage (0);
 
     if(version_flag){
-	print_version(NULL);
-	exit(0);
+        print_version(NULL);
+        exit(0);
     }
 
     argc -= optidx;
     argv += optidx;
 
     if (argc != 0)
-	usage (1);
+        usage (1);
 
     ret = krb5_init_context (&context);
     if (ret)
-	errx (1, "krb5_init_context failed: %d", ret);
+        errx (1, "krb5_init_context failed: %d", ret);
 
     if (all_flag) {
-	krb5_cccol_cursor cursor;
+        krb5_cccol_cursor cursor;
 
-	ret = krb5_cccol_cursor_new (context, &cursor);
-	if (ret)
-	    krb5_err(context, 1, ret, "krb5_cccol_cursor_new");
+        ret = krb5_cccol_cursor_new (context, &cursor);
+        if (ret)
+            krb5_err(context, 1, ret, "krb5_cccol_cursor_new");
 
-	while (krb5_cccol_cursor_next (context, cursor, &ccache) == 0 && ccache != NULL) {
+        while (krb5_cccol_cursor_next (context, cursor, &ccache) == 0 && ccache != NULL) {
 
-	    ret = krb5_cc_destroy (context, ccache);
-	    if (ret) {
-		krb5_warn(context, ret, "krb5_cc_destroy");
-		exit_val = 1;
-	    }
-	}
-	krb5_cccol_cursor_free(context, &cursor);
+            ret = krb5_cc_destroy (context, ccache);
+            if (ret) {
+                krb5_warn(context, ret, "krb5_cc_destroy");
+                exit_val = 1;
+            }
+        }
+        krb5_cccol_cursor_free(context, &cursor);
 
     } else {
-	if(cache == NULL) {
-	    ret = krb5_cc_default(context, &ccache);
-	    if (ret)
-		krb5_err(context, 1, ret, "krb5_cc_default");
-	} else {
-	    ret =  krb5_cc_resolve(context,
-				   cache,
-				   &ccache);
-	    if (ret)
-		krb5_err(context, 1, ret, "krb5_cc_resolve");
-	}
+        if(cache == NULL) {
+            ret = krb5_cc_default(context, &ccache);
+            if (ret)
+                krb5_err(context, 1, ret, "krb5_cc_default");
+        } else {
+            ret =  krb5_cc_resolve(context,
+                                   cache,
+                                   &ccache);
+            if (ret)
+                krb5_err(context, 1, ret, "krb5_cc_resolve");
+        }
 
-	if (ret == 0) {
-	    if (credential) {
-		krb5_creds mcred;
+        if (ret == 0) {
+            if (credential) {
+                krb5_creds mcred;
 
-		krb5_cc_clear_mcred(&mcred);
+                krb5_cc_clear_mcred(&mcred);
 
-		ret = krb5_parse_name(context, credential, &mcred.server);
-		if (ret)
-		    krb5_err(context, 1, ret,
-			     "Can't parse principal %s", credential);
+                ret = krb5_parse_name(context, credential, &mcred.server);
+                if (ret)
+                    krb5_err(context, 1, ret,
+                             "Can't parse principal %s", credential);
 
-		ret = krb5_cc_remove_cred(context, ccache, 0, &mcred);
-		if (ret)
-		    krb5_err(context, 1, ret,
-			     "Failed to remove principal %s", credential);
+                ret = krb5_cc_remove_cred(context, ccache, 0, &mcred);
+                if (ret)
+                    krb5_err(context, 1, ret,
+                             "Failed to remove principal %s", credential);
 
-		krb5_cc_close(context, ccache);
-		krb5_free_principal(context, mcred.server);
-		krb5_free_context(context);
-		return 0;
-	    }
+                krb5_cc_close(context, ccache);
+                krb5_free_principal(context, mcred.server);
+                krb5_free_context(context);
+                return 0;
+            }
 
-	    ret = krb5_cc_destroy (context, ccache);
-	    if (ret) {
-		krb5_warn(context, ret, "krb5_cc_destroy");
-		exit_val = 1;
-	    }
-	}
+            ret = krb5_cc_destroy (context, ccache);
+            if (ret) {
+                krb5_warn(context, ret, "krb5_cc_destroy");
+                exit_val = 1;
+            }
+        }
     }
 
     krb5_free_context (context);
 
 #ifndef NO_AFS
     if (unlog_flag && k_hasafs ()) {
-	if (k_unlog ())
-	    exit_val = 1;
+        if (k_unlog ())
+            exit_val = 1;
     }
 #endif
 

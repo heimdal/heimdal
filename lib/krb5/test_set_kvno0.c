@@ -64,29 +64,29 @@ main(int argc, char **argv)
     if (ret) goto err;
 
     while ((opt = getopt(argc, argv, "c:n")) != -1) {
-	switch (opt) {
-	case 'c':
-	    during = "cc_resolve of source ccache";
-	    ret = krb5_cc_resolve(context, optarg, &src_cc);
-	    if (ret) goto err;
-	    break;
-	case 'n':
-	    make_kvno_absent++;
-	    break;
-	case 'h':
-	default:
-	    fprintf(stderr, "Usage: %s [-n] [-c ccache]\n"
-		    "\tThis utility edits a ccache, setting all ticket\n"
-		    "\tenc_part kvnos to zero or absent (if -n is set).\n",
-		    argv[0]);
-	    return 1;
-	}
+        switch (opt) {
+            case 'c':
+                during = "cc_resolve of source ccache";
+                ret = krb5_cc_resolve(context, optarg, &src_cc);
+                if (ret) goto err;
+                break;
+            case 'n':
+                make_kvno_absent++;
+                break;
+            case 'h':
+            default:
+                fprintf(stderr, "Usage: %s [-n] [-c ccache]\n"
+                        "\tThis utility edits a ccache, setting all ticket\n"
+                        "\tenc_part kvnos to zero or absent (if -n is set).\n",
+                        argv[0]);
+                return 1;
+        }
     }
 
     if (!src_cc) {
-	during = "cc_default";
-	ret = krb5_cc_default(context, &src_cc);
-	if (ret) goto err;
+        during = "cc_default";
+        ret = krb5_cc_default(context, &src_cc);
+        if (ret) goto err;
     }
 
     during = "cc_get_principal";
@@ -94,16 +94,16 @@ main(int argc, char **argv)
     if (ret) goto err;
 
     if (optind != argc) {
-	fprintf(stderr, "Usage: %s [-n] [-c ccache]\n"
-		"\tThis utility edits a ccache, setting all ticket\n"
-		"\tenc_part kvnos to zero or absent (if -n is set).\n",
-		argv[0]);
-	return 1;
+        fprintf(stderr, "Usage: %s [-n] [-c ccache]\n"
+                "\tThis utility edits a ccache, setting all ticket\n"
+                "\tenc_part kvnos to zero or absent (if -n is set).\n",
+                argv[0]);
+        return 1;
     }
 
     during = "cc_new_unique of temporary ccache";
     ret = krb5_cc_new_unique(context, krb5_cc_get_type(context, src_cc),
-			     NULL, &dst_cc);
+                             NULL, &dst_cc);
 
     during = "cc_initialize of temporary ccache";
     ret = krb5_cc_initialize(context, dst_cc, me);
@@ -114,42 +114,42 @@ main(int argc, char **argv)
     if (ret) goto err;
 
     while ((ret = krb5_cc_next_cred(context, src_cc, &cursor, &cred)) == 0) {
-	krb5_data data;
+        krb5_data data;
 
-	during = "decode_Ticket";
-	memset(&t, 0, sizeof (t));
-	ret = decode_Ticket(cred.ticket.data, cred.ticket.length, &t, &len);
-	if (ret == ASN1_MISSING_FIELD) {
+        during = "decode_Ticket";
+        memset(&t, 0, sizeof (t));
+        ret = decode_Ticket(cred.ticket.data, cred.ticket.length, &t, &len);
+        if (ret == ASN1_MISSING_FIELD) {
             krb5_free_cred_contents(context, &cred);
             memset(&cred, 0, sizeof (cred));
-	    continue;
+            continue;
         }
-	if (ret) goto err;
-	if (t.enc_part.kvno) {
-	    *t.enc_part.kvno = 0;
-	    if (make_kvno_absent) {
-		free(t.enc_part.kvno);
-		t.enc_part.kvno = NULL;
-	    }
-	    /*
-	     * The new Ticket has to need less or same space as before, so
-	     * we reuse cred->icket.data.
-	     */
-	    during = "encode_Ticket";
-	    ASN1_MALLOC_ENCODE(Ticket, data.data, data.length, &t, &len, ret);
-	    if (ret) {
-		free_Ticket(&t);
-		goto err;
-	    }
-	    krb5_data_free(&cred.ticket);
-	    cred.ticket = data;
-	}
-	free_Ticket(&t);
-	during = "cc_store_cred";
-	ret = krb5_cc_store_cred(context, dst_cc, &cred);
-	if (ret) goto err;
-	krb5_free_cred_contents(context, &cred);
-	memset(&cred, 0, sizeof (cred));
+        if (ret) goto err;
+        if (t.enc_part.kvno) {
+            *t.enc_part.kvno = 0;
+            if (make_kvno_absent) {
+                free(t.enc_part.kvno);
+                t.enc_part.kvno = NULL;
+            }
+            /*
+             * The new Ticket has to need less or same space as before, so
+             * we reuse cred->icket.data.
+             */
+            during = "encode_Ticket";
+            ASN1_MALLOC_ENCODE(Ticket, data.data, data.length, &t, &len, ret);
+            if (ret) {
+                free_Ticket(&t);
+                goto err;
+            }
+            krb5_data_free(&cred.ticket);
+            cred.ticket = data;
+        }
+        free_Ticket(&t);
+        during = "cc_store_cred";
+        ret = krb5_cc_store_cred(context, dst_cc, &cred);
+        if (ret) goto err;
+        krb5_free_cred_contents(context, &cred);
+        memset(&cred, 0, sizeof (cred));
     }
     during = "cc_next_cred";
     if (ret != KRB5_CC_END) goto err;
@@ -170,12 +170,12 @@ main(int argc, char **argv)
 err:
     (void) krb5_free_principal(context, me);
     if (src_cc)
-	(void) krb5_cc_close(context, src_cc);
+        (void) krb5_cc_close(context, src_cc);
     if (dst_cc)
-	(void) krb5_cc_destroy(context, dst_cc);
+        (void) krb5_cc_destroy(context, dst_cc);
     if (ret) {
-	fprintf(stderr, "Failed while doing %s (%d)\n", during, ret);
-	ret = 1;
+        fprintf(stderr, "Failed while doing %s (%d)\n", during, ret);
+        ret = 1;
     }
     return (ret);
 }

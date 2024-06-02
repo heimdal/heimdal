@@ -168,7 +168,7 @@ struct hc_CIPHER {
 
     int (*init)(EVP_CIPHER_CTX*,const unsigned char*,const unsigned char*,int);
     int (*do_cipher)(EVP_CIPHER_CTX *, unsigned char *,
-		     const unsigned char *, unsigned int);
+                     const unsigned char *, unsigned int);
     int (*cleanup)(EVP_CIPHER_CTX *);
     int ctx_size;
     int (*set_asn1_parameters)(void);
@@ -279,12 +279,12 @@ size_t	EVP_MD_size(const EVP_MD *);
 size_t	EVP_MD_block_size(const EVP_MD *);
 
 const EVP_MD *
-	EVP_MD_CTX_md(EVP_MD_CTX *);
+EVP_MD_CTX_md(EVP_MD_CTX *);
 size_t	EVP_MD_CTX_size(EVP_MD_CTX *);
 size_t	EVP_MD_CTX_block_size(EVP_MD_CTX *);
 
 EVP_MD_CTX *
-	EVP_MD_CTX_create(void);
+EVP_MD_CTX_create(void);
 void	HC_DEPRECATED EVP_MD_CTX_init(EVP_MD_CTX *);
 void	EVP_MD_CTX_destroy(EVP_MD_CTX *);
 int	HC_DEPRECATED EVP_MD_CTX_cleanup(EVP_MD_CTX *);
@@ -299,7 +299,7 @@ int	EVP_Digest(const void *, size_t, void *, unsigned int *,
  */
 
 const EVP_CIPHER *
-	EVP_get_cipherbyname(const char *);
+EVP_get_cipherbyname(const char *);
 
 size_t	EVP_CIPHER_block_size(const EVP_CIPHER *);
 size_t	EVP_CIPHER_key_length(const EVP_CIPHER *);
@@ -310,11 +310,11 @@ int	EVP_CIPHER_CTX_cleanup(EVP_CIPHER_CTX *);
 int	EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *, int);
 int	EVP_CIPHER_CTX_set_padding(EVP_CIPHER_CTX *, int);
 unsigned long
-	EVP_CIPHER_CTX_flags(const EVP_CIPHER_CTX *);
+EVP_CIPHER_CTX_flags(const EVP_CIPHER_CTX *);
 int	EVP_CIPHER_CTX_mode(const EVP_CIPHER_CTX *);
 
 const EVP_CIPHER *
-	EVP_CIPHER_CTX_cipher(EVP_CIPHER_CTX *);
+EVP_CIPHER_CTX_cipher(EVP_CIPHER_CTX *);
 size_t	EVP_CIPHER_CTX_block_size(const EVP_CIPHER_CTX *);
 size_t	EVP_CIPHER_CTX_key_length(const EVP_CIPHER_CTX *);
 size_t	EVP_CIPHER_CTX_iv_length(const EVP_CIPHER_CTX *);

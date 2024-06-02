@@ -35,14 +35,14 @@
 
 OM_uint32 GSSAPI_CALLCONV
 _gss_ntlm_acquire_cred_from(OM_uint32            *min_stat,
-			    gss_const_name_t     desired_name,
-			    OM_uint32            time_req,
-			    const gss_OID_set    desired_mechs,
-			    gss_cred_usage_t     cred_usage,
-			    gss_const_key_value_set_t cred_store,
-			    gss_cred_id_t        *output_cred_handle,
-			    gss_OID_set          *actual_mechs,
-			    OM_uint32            *time_rec)
+                            gss_const_name_t     desired_name,
+                            OM_uint32            time_req,
+                            const gss_OID_set    desired_mechs,
+                            gss_cred_usage_t     cred_usage,
+                            gss_const_key_value_set_t cred_store,
+                            gss_cred_id_t        *output_cred_handle,
+                            gss_OID_set          *actual_mechs,
+                            OM_uint32            *time_rec)
 {
     ntlm_name name = (ntlm_name) desired_name;
     OM_uint32 maj_stat;
@@ -51,37 +51,37 @@ _gss_ntlm_acquire_cred_from(OM_uint32            *min_stat,
     *min_stat = 0;
     *output_cred_handle = GSS_C_NO_CREDENTIAL;
     if (actual_mechs)
-	*actual_mechs = GSS_C_NO_OID_SET;
+        *actual_mechs = GSS_C_NO_OID_SET;
     if (time_rec)
-	*time_rec = GSS_C_INDEFINITE;
+        *time_rec = GSS_C_INDEFINITE;
 
     if (cred_usage == GSS_C_BOTH || cred_usage == GSS_C_ACCEPT) {
-	int ret;
+        int ret;
 
-	maj_stat = _gss_ntlm_allocate_ctx(min_stat, &ctx);
-	if (maj_stat != GSS_S_COMPLETE)
-	    return maj_stat;
+        maj_stat = _gss_ntlm_allocate_ctx(min_stat, &ctx);
+        if (maj_stat != GSS_S_COMPLETE)
+            return maj_stat;
 
-	ret = (*ctx->server->nsi_probe)(min_stat, ctx->ictx, NULL);
-	{
-	    gss_ctx_id_t context = (gss_ctx_id_t)ctx;
-	    OM_uint32 junk;
-	    _gss_ntlm_delete_sec_context(&junk, &context, NULL);
-	}
-	if (ret) {
-	    *min_stat = ret;
-	    return GSS_S_NO_CRED;
-	}
+        ret = (*ctx->server->nsi_probe)(min_stat, ctx->ictx, NULL);
+        {
+            gss_ctx_id_t context = (gss_ctx_id_t)ctx;
+            OM_uint32 junk;
+            _gss_ntlm_delete_sec_context(&junk, &context, NULL);
+        }
+        if (ret) {
+            *min_stat = ret;
+            return GSS_S_NO_CRED;
+        }
     }
     if (cred_usage == GSS_C_BOTH || cred_usage == GSS_C_INITIATE) {
-	ntlm_cred cred;
+        ntlm_cred cred;
 
-	*min_stat = _gss_ntlm_get_user_cred(name, &cred);
-	if (*min_stat)
-	    return GSS_S_NO_CRED;
-	cred->usage = cred_usage;
+        *min_stat = _gss_ntlm_get_user_cred(name, &cred);
+        if (*min_stat)
+            return GSS_S_NO_CRED;
+        cred->usage = cred_usage;
 
-	*output_cred_handle = (gss_cred_id_t)cred;
+        *output_cred_handle = (gss_cred_id_t)cred;
     }
 
     return (GSS_S_COMPLETE);

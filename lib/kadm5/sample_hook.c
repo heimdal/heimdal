@@ -52,20 +52,20 @@ static char sample_data_1, sample_data_2;
 
 static krb5_error_code
 sample_log(krb5_context context,
-	   void *data,
-	   enum kadm5_hook_stage stage,
-	   const char *tag,
-	   krb5_error_code code,
-	   krb5_const_principal princ)
+           void *data,
+           enum kadm5_hook_stage stage,
+           const char *tag,
+           krb5_error_code code,
+           krb5_const_principal princ)
 {
     char *p = NULL;
     int which = 0;
 
     /* verify we get called with the right contex tpointer */
     if (data == &sample_data_1)
-	which = 1;
+        which = 1;
     else if (data == &sample_data_2)
-	which = 2;
+        which = 2;
 
     assert(which != 0);
 
@@ -73,11 +73,11 @@ sample_log(krb5_context context,
     assert(code == 0 || stage == KADM5_HOOK_STAGE_POSTCOMMIT);
 
     if (princ)
-	(void) krb5_unparse_name(context, princ, &p);
+        (void) krb5_unparse_name(context, princ, &p);
 
     krb5_warn(context, code, "sample_hook_%d: %s %s hook princ '%s'", which, tag,
-	      stage == KADM5_HOOK_STAGE_PRECOMMIT ? "pre-commit" : "post-commit",
-	      p != NULL ? p : "<unknown>");
+              stage == KADM5_HOOK_STAGE_PRECOMMIT ? "pre-commit" : "post-commit",
+              p != NULL ? p : "<unknown>");
 
     krb5_xfree(p);
 
@@ -109,107 +109,107 @@ sample_fini(void *data)
 
 static krb5_error_code KRB5_CALLCONV
 sample_chpass_hook(krb5_context context,
-		   void *data,
-		   enum kadm5_hook_stage stage,
-		   krb5_error_code code,
-		   krb5_const_principal princ,
-		   uint32_t flags,
-		   size_t n_ks_tuple,
-		   krb5_key_salt_tuple *ks_tuple,
-		   const char *password)
+                   void *data,
+                   enum kadm5_hook_stage stage,
+                   krb5_error_code code,
+                   krb5_const_principal princ,
+                   uint32_t flags,
+                   size_t n_ks_tuple,
+                   krb5_key_salt_tuple *ks_tuple,
+                   const char *password)
 {
     return sample_log(context, data, stage, "chpass", code, princ);
 }
 
 static krb5_error_code KRB5_CALLCONV
 sample_chpass_with_key_hook(krb5_context context,
-			    void *data,
-			    enum kadm5_hook_stage stage,
-			    krb5_error_code code,
-			    krb5_const_principal princ,
-			    uint32_t flags,
-			    size_t n_key_data,
-			    krb5_key_data *key_data)
+                            void *data,
+                            enum kadm5_hook_stage stage,
+                            krb5_error_code code,
+                            krb5_const_principal princ,
+                            uint32_t flags,
+                            size_t n_key_data,
+                            krb5_key_data *key_data)
 {
     return sample_log(context, data, stage, "chpass_with_key", code, princ);
 }
 
 static krb5_error_code KRB5_CALLCONV
 sample_create_hook(krb5_context context,
-		   void *data,
-		   enum kadm5_hook_stage stage,
-		   krb5_error_code code,
-		   kadm5_principal_ent_t ent,
-		   uint32_t mask,
-		   const char *password)
+                   void *data,
+                   enum kadm5_hook_stage stage,
+                   krb5_error_code code,
+                   kadm5_principal_ent_t ent,
+                   uint32_t mask,
+                   const char *password)
 {
     return sample_log(context, data, stage, "create", code, ent->principal);
 }
 
 static krb5_error_code KRB5_CALLCONV
 sample_modify_hook(krb5_context context,
-		   void *data,
-		   enum kadm5_hook_stage stage,
-		   krb5_error_code code,
-		   kadm5_principal_ent_t ent,
-		   uint32_t mask)
+                   void *data,
+                   enum kadm5_hook_stage stage,
+                   krb5_error_code code,
+                   kadm5_principal_ent_t ent,
+                   uint32_t mask)
 {
     return sample_log(context, data, stage, "modify", code, ent->principal);
 }
 
 static krb5_error_code KRB5_CALLCONV
 sample_delete_hook(krb5_context context,
-		   void *data,
-		   enum kadm5_hook_stage stage,
-		   krb5_error_code code,
-		   krb5_const_principal princ)
+                   void *data,
+                   enum kadm5_hook_stage stage,
+                   krb5_error_code code,
+                   krb5_const_principal princ)
 {
     return sample_log(context, data, stage, "delete", code, princ);
 }
 
 static krb5_error_code KRB5_CALLCONV
 sample_randkey_hook(krb5_context context,
-		    void *data,
-		    enum kadm5_hook_stage stage,
-		    krb5_error_code code,
-		    krb5_const_principal princ)
+                    void *data,
+                    enum kadm5_hook_stage stage,
+                    krb5_error_code code,
+                    krb5_const_principal princ)
 {
     return sample_log(context, data, stage, "randkey", code, princ);
 }
 
 static krb5_error_code KRB5_CALLCONV
 sample_rename_hook(krb5_context context,
-		   void *data,
-		   enum kadm5_hook_stage stage,
-		   krb5_error_code code,
-		   krb5_const_principal source,
-		   krb5_const_principal target)
+                   void *data,
+                   enum kadm5_hook_stage stage,
+                   krb5_error_code code,
+                   krb5_const_principal source,
+                   krb5_const_principal target)
 {
     return sample_log(context, data, stage, "rename", code, source);
 }
 
 static krb5_error_code KRB5_CALLCONV
 sample_set_keys_hook(krb5_context context,
-		     void *data,
-		     enum kadm5_hook_stage stage,
-		     krb5_error_code code,
-		     krb5_const_principal princ,
-		     uint32_t flags,
-		     size_t n_ks_tuple,
-		     krb5_key_salt_tuple *ks_tuple,
-		     size_t n_keys,
-		     krb5_keyblock *keyblocks)
+                     void *data,
+                     enum kadm5_hook_stage stage,
+                     krb5_error_code code,
+                     krb5_const_principal princ,
+                     uint32_t flags,
+                     size_t n_ks_tuple,
+                     krb5_key_salt_tuple *ks_tuple,
+                     size_t n_keys,
+                     krb5_keyblock *keyblocks)
 {
     return sample_log(context, data, stage, "set_keys", code, princ);
 }
 
 static krb5_error_code KRB5_CALLCONV
 sample_prune_hook(krb5_context context,
-		  void *data,
-		  enum kadm5_hook_stage stage,
-		  krb5_error_code code,
-		  krb5_const_principal princ,
-		  int kvno)
+                  void *data,
+                  enum kadm5_hook_stage stage,
+                  krb5_error_code code,
+                  krb5_const_principal princ,
+                  int kvno)
 {
     return sample_log(context, data, stage, "prune", code, princ);
 }
@@ -257,26 +257,26 @@ static const kadm5_hook_ftable *const sample_hooks[] = {
 
 krb5_error_code
 kadm5_hook_plugin_load(krb5_context context,
-		       krb5_get_instance_func_t *get_instance,
-		       size_t *num_hooks,
-		       const kadm5_hook_ftable *const **hooks);
+                       krb5_get_instance_func_t *get_instance,
+                       size_t *num_hooks,
+                       const kadm5_hook_ftable *const **hooks);
 
 static uintptr_t KRB5_LIB_CALL
 sample_hook_get_instance(const char *libname)
 {
     if (strcmp(libname, "kadm5") == 0)
-	return kadm5_get_instance(libname);
+        return kadm5_get_instance(libname);
     else if (strcmp(libname, "krb5") == 0)
-	return krb5_get_instance(libname);
+        return krb5_get_instance(libname);
 
     return 0;
 }
 
 krb5_error_code
 kadm5_hook_plugin_load(krb5_context context,
-		       krb5_get_instance_func_t *get_instance,
-		       size_t *num_hooks,
-		       const kadm5_hook_ftable *const **hooks)
+                       krb5_get_instance_func_t *get_instance,
+                       size_t *num_hooks,
+                       const kadm5_hook_ftable *const **hooks)
 {
     *get_instance = sample_hook_get_instance;
     *num_hooks = sizeof(sample_hooks) / sizeof(sample_hooks[0]);

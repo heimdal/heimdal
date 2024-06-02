@@ -83,57 +83,57 @@ check_rsa(const unsigned char *in, size_t len, RSA *rsa, int padding)
 
     res = malloc(RSA_size(rsa));
     if (res == NULL)
-	errx(1, "res: ENOMEM");
+        errx(1, "res: ENOMEM");
 
     res2 = malloc(RSA_size(rsa));
     if (res2 == NULL)
-	errx(1, "res2: ENOMEM");
+        errx(1, "res2: ENOMEM");
 
     /* signing */
 
     keylen = RSA_private_encrypt(len, in, res, rsa, padding);
     if (keylen <= 0)
-	errx(1, "failed to private encrypt: %d %d", (int)len, (int)keylen);
+        errx(1, "failed to private encrypt: %d %d", (int)len, (int)keylen);
 
     if (keylen > RSA_size(rsa))
-	errx(1, "keylen > RSA_size(rsa)");
+        errx(1, "keylen > RSA_size(rsa)");
 
     keylen = RSA_public_decrypt(keylen, res, res2, rsa, padding);
     if (keylen <= 0)
-	errx(1, "failed to public decrypt: %d", (int)keylen);
+        errx(1, "failed to public decrypt: %d", (int)keylen);
 
     if (keylen != len)
-	errx(1, "output buffer not same length: %d", (int)keylen);
+        errx(1, "output buffer not same length: %d", (int)keylen);
 
     if (memcmp(res2, in, len) != 0)
-	errx(1, "string not the same after decryption");
+        errx(1, "string not the same after decryption");
 
     /* encryption */
 
     keylen = RSA_public_encrypt(len, in, res, rsa, padding);
     if (keylen <= 0)
-	errx(1, "failed to public encrypt: %d", (int)keylen);
+        errx(1, "failed to public encrypt: %d", (int)keylen);
 
     if (keylen > RSA_size(rsa))
-	errx(1, "keylen > RSA_size(rsa)");
+        errx(1, "keylen > RSA_size(rsa)");
 
     keylen = RSA_private_decrypt(keylen, res, res2, rsa, padding);
     if (keylen <= 0)
-	errx(1, "failed to private decrypt: %d", (int)keylen);
+        errx(1, "failed to private decrypt: %d", (int)keylen);
 
     if (keylen != len)
-	errx(1, "output buffer not same length: %d", (int)keylen);
+        errx(1, "output buffer not same length: %d", (int)keylen);
 
     if (memcmp(res2, in, len) != 0)
-	errx(1, "string not the same after decryption");
+        errx(1, "string not the same after decryption");
 
     len2 = keylen;
 
     if (RSA_sign(NID_sha1, in, len, res, &len2, rsa) != 1)
-	errx(1, "RSA_sign failed");
+        errx(1, "RSA_sign failed");
 
     if (RSA_verify(NID_sha1, in, len, res, len2, rsa) != 1)
-	errx(1, "RSA_verify failed");
+        errx(1, "RSA_verify failed");
 
     free(res);
     free(res2);
@@ -156,25 +156,25 @@ read_key(ENGINE *engine, const char *keyfile)
 
     f = fopen(keyfile, "rb");
     if (f == NULL)
-	err(1, "could not open file %s", keyfile);
+        err(1, "could not open file %s", keyfile);
     rk_cloexec_file(f);
 
     size = fread(buf, 1, sizeof(buf), f);
     fclose(f);
     if (size == 0)
-	err(1, "failed to read file %s", keyfile);
+        err(1, "failed to read file %s", keyfile);
     if (size == sizeof(buf))
-	err(1, "key too long in file %s!", keyfile);
+        err(1, "key too long in file %s!", keyfile);
 
     p = buf;
     rsa = d2i_RSAPrivateKey(NULL, &p, size);
     if (rsa == NULL)
-	err(1, "failed to parse key in file %s", keyfile);
+        err(1, "failed to parse key in file %s", keyfile);
 
     RSA_set_method(rsa, ENGINE_get_RSA(engine));
 
     if (!key_blinding)
-	rsa->flags |= RSA_FLAG_NO_BLINDING;
+        rsa->flags |= RSA_FLAG_NO_BLINDING;
 
     return rsa;
 }
@@ -187,9 +187,9 @@ static void
 usage (int ret)
 {
     arg_printusage (args,
-		    sizeof(args)/sizeof(*args),
-		    NULL,
-		    "filename.so");
+                    sizeof(args)/sizeof(*args),
+                    NULL,
+                    "filename.so");
     exit (ret);
 }
 
@@ -203,14 +203,14 @@ main(int argc, char **argv)
     setprogname(argv[0]);
 
     if(getarg(args, sizeof(args) / sizeof(args[0]), argc, argv, &idx))
-	usage(1);
+        usage(1);
 
     if (help_flag)
-	usage(0);
+        usage(0);
 
     if(version_flag){
-	print_version(NULL);
-	exit(0);
+        print_version(NULL);
+        exit(0);
     }
 
     argc -= idx;
@@ -223,172 +223,172 @@ main(int argc, char **argv)
     ENGINE_load_builtin_engines();
 
     if (argc == 0) {
-	engine = ENGINE_by_id("builtin");
+        engine = ENGINE_by_id("builtin");
     } else {
-	engine = ENGINE_by_id(argv[0]);
-	if (engine == NULL)
-	    engine = ENGINE_by_dso(argv[0], id_flag);
+        engine = ENGINE_by_id(argv[0]);
+        if (engine == NULL)
+            engine = ENGINE_by_dso(argv[0], id_flag);
     }
     if (engine == NULL)
-	errx(1, "ENGINE_by_dso failed");
+        errx(1, "ENGINE_by_dso failed");
 
     if (ENGINE_get_RSA(engine) == NULL)
-	return 77;
+        return 77;
 
     printf("rsa %s\n", ENGINE_get_RSA(engine)->name);
 
     if (RAND_status() != 1)
-	errx(77, "no functional random device, refusing to run tests");
+        errx(77, "no functional random device, refusing to run tests");
 
     if (time_keygen) {
-	struct timeval tv1, tv2;
-	BIGNUM *e;
+        struct timeval tv1, tv2;
+        BIGNUM *e;
 
-	rsa = RSA_new_method(engine);
-	if (!key_blinding)
-	    rsa->flags |= RSA_FLAG_NO_BLINDING;
+        rsa = RSA_new_method(engine);
+        if (!key_blinding)
+            rsa->flags |= RSA_FLAG_NO_BLINDING;
 
-	e = BN_new();
-	BN_set_word(e, 0x10001);
+        e = BN_new();
+        BN_set_word(e, 0x10001);
 
-	printf("running keygen with %d loops\n", loops);
+        printf("running keygen with %d loops\n", loops);
 
-	gettimeofday(&tv1, NULL);
+        gettimeofday(&tv1, NULL);
 
-	for (i = 0; i < loops; i++) {
-	    rsa = RSA_new_method(engine);
-	    if (RSA_generate_key_ex(rsa, 1024, e, NULL) != 1)
-		errx(1, "RSA_generate_key_ex");
-	    RSA_free(rsa);
-	}
+        for (i = 0; i < loops; i++) {
+            rsa = RSA_new_method(engine);
+            if (RSA_generate_key_ex(rsa, 1024, e, NULL) != 1)
+                errx(1, "RSA_generate_key_ex");
+            RSA_free(rsa);
+        }
 
-	gettimeofday(&tv2, NULL);
-	timevalsub(&tv2, &tv1);
+        gettimeofday(&tv2, NULL);
+        timevalsub(&tv2, &tv1);
 
-	printf("time %lu.%06lu\n",
-	       (unsigned long)tv2.tv_sec,
-	       (unsigned long)tv2.tv_usec);
+        printf("time %lu.%06lu\n",
+               (unsigned long)tv2.tv_sec,
+               (unsigned long)tv2.tv_usec);
 
-	BN_free(e);
-	ENGINE_finish(engine);
+        BN_free(e);
+        ENGINE_finish(engine);
 
-	return 0;
+        return 0;
     }
 
     if (time_key) {
-	const int size = 20;
-	struct timeval tv1, tv2;
-	unsigned char *p;
+        const int size = 20;
+        struct timeval tv1, tv2;
+        unsigned char *p;
 
-	if (strcmp(time_key, "generate") == 0) {
-	    BIGNUM *e;
+        if (strcmp(time_key, "generate") == 0) {
+            BIGNUM *e;
 
-	    rsa = RSA_new_method(engine);
-	    if (!key_blinding)
-		rsa->flags |= RSA_FLAG_NO_BLINDING;
+            rsa = RSA_new_method(engine);
+            if (!key_blinding)
+                rsa->flags |= RSA_FLAG_NO_BLINDING;
 
-	    e = BN_new();
-	    BN_set_word(e, 0x10001);
+            e = BN_new();
+            BN_set_word(e, 0x10001);
 
-	    if (RSA_generate_key_ex(rsa, 1024, e, NULL) != 1)
-		errx(1, "RSA_generate_key_ex");
+            if (RSA_generate_key_ex(rsa, 1024, e, NULL) != 1)
+                errx(1, "RSA_generate_key_ex");
             BN_free(e);
-	} else {
-	    rsa = read_key(engine, time_key);
-	}
+        } else {
+            rsa = read_key(engine, time_key);
+        }
 
-	p = emalloc(loops * size);
+        p = emalloc(loops * size);
 
-	RAND_bytes(p, loops * size);
+        RAND_bytes(p, loops * size);
 
-	gettimeofday(&tv1, NULL);
-	for (i = 0; i < loops; i++)
-	    check_rsa(p + (i * size), size, rsa, RSA_PKCS1_PADDING);
-	gettimeofday(&tv2, NULL);
+        gettimeofday(&tv1, NULL);
+        for (i = 0; i < loops; i++)
+            check_rsa(p + (i * size), size, rsa, RSA_PKCS1_PADDING);
+        gettimeofday(&tv2, NULL);
 
-	timevalsub(&tv2, &tv1);
+        timevalsub(&tv2, &tv1);
 
-	printf("time %lu.%06lu\n",
-	       (unsigned long)tv2.tv_sec,
-	       (unsigned long)tv2.tv_usec);
+        printf("time %lu.%06lu\n",
+               (unsigned long)tv2.tv_sec,
+               (unsigned long)tv2.tv_usec);
 
-	RSA_free(rsa);
-	ENGINE_finish(engine);
+        RSA_free(rsa);
+        ENGINE_finish(engine);
 
         free(p);
-	return 0;
+        return 0;
     }
 
     if (rsa_key) {
-	rsa = read_key(engine, rsa_key);
+        rsa = read_key(engine, rsa_key);
 
-	/*
-	 * Assuming that you use the RSA key in the distribution, this
-	 * test will generate a signature have a starting zero and thus
-	 * will generate a checksum that is 127 byte instead of the
-	 * checksum that is 128 byte (like the key).
-	 */
-	{
-	    const unsigned char sha1[20] = {
-		0x6d, 0x33, 0xf9, 0x40, 0x75, 0x5b, 0x4e, 0xc5, 0x90, 0x35,
-		0x48, 0xab, 0x75, 0x02, 0x09, 0x76, 0x9a, 0xb4, 0x7d, 0x6b
-	    };
+        /*
+         * Assuming that you use the RSA key in the distribution, this
+         * test will generate a signature have a starting zero and thus
+         * will generate a checksum that is 127 byte instead of the
+         * checksum that is 128 byte (like the key).
+         */
+        {
+            const unsigned char sha1[20] = {
+                0x6d, 0x33, 0xf9, 0x40, 0x75, 0x5b, 0x4e, 0xc5, 0x90, 0x35,
+                0x48, 0xab, 0x75, 0x02, 0x09, 0x76, 0x9a, 0xb4, 0x7d, 0x6b
+            };
 
-	    check_rsa(sha1, sizeof(sha1), rsa, RSA_PKCS1_PADDING);
-	}
+            check_rsa(sha1, sizeof(sha1), rsa, RSA_PKCS1_PADDING);
+        }
 
-	for (i = 0; i < 128; i++) {
-	    unsigned char sha1[20];
+        for (i = 0; i < 128; i++) {
+            unsigned char sha1[20];
 
-	    RAND_bytes(sha1, sizeof(sha1));
-	    check_rsa(sha1, sizeof(sha1), rsa, RSA_PKCS1_PADDING);
-	}
-	for (i = 0; i < 128; i++) {
-	    unsigned char des3[21];
+            RAND_bytes(sha1, sizeof(sha1));
+            check_rsa(sha1, sizeof(sha1), rsa, RSA_PKCS1_PADDING);
+        }
+        for (i = 0; i < 128; i++) {
+            unsigned char des3[21];
 
-	    RAND_bytes(des3, sizeof(des3));
-	    check_rsa(des3, sizeof(des3), rsa, RSA_PKCS1_PADDING);
-	}
-	for (i = 0; i < 128; i++) {
-	    unsigned char aes[32];
+            RAND_bytes(des3, sizeof(des3));
+            check_rsa(des3, sizeof(des3), rsa, RSA_PKCS1_PADDING);
+        }
+        for (i = 0; i < 128; i++) {
+            unsigned char aes[32];
 
-	    RAND_bytes(aes, sizeof(aes));
-	    check_rsa(aes, sizeof(aes), rsa, RSA_PKCS1_PADDING);
-	}
+            RAND_bytes(aes, sizeof(aes));
+            check_rsa(aes, sizeof(aes), rsa, RSA_PKCS1_PADDING);
+        }
 
-	RSA_free(rsa);
+        RSA_free(rsa);
     }
 
     for (i = 0; i < loops; i++) {
-	BN_GENCB cb;
-	BIGNUM *e;
-	unsigned int n;
+        BN_GENCB cb;
+        BIGNUM *e;
+        unsigned int n;
 
-	rsa = RSA_new_method(engine);
-	if (!key_blinding)
-	    rsa->flags |= RSA_FLAG_NO_BLINDING;
+        rsa = RSA_new_method(engine);
+        if (!key_blinding)
+            rsa->flags |= RSA_FLAG_NO_BLINDING;
 
-	e = BN_new();
-	BN_set_word(e, 0x10001);
+        e = BN_new();
+        BN_set_word(e, 0x10001);
 
-	BN_GENCB_set(&cb, cb_func, NULL);
+        BN_GENCB_set(&cb, cb_func, NULL);
 
-	RAND_bytes(&n, sizeof(n));
-	n &= 0x1ff;
-	n += 1024;
+        RAND_bytes(&n, sizeof(n));
+        n &= 0x1ff;
+        n += 1024;
 
-	if (RSA_generate_key_ex(rsa, n, e, &cb) != 1)
-	    errx(1, "RSA_generate_key_ex");
+        if (RSA_generate_key_ex(rsa, n, e, &cb) != 1)
+            errx(1, "RSA_generate_key_ex");
 
-	BN_free(e);
+        BN_free(e);
 
-	for (j = 0; j < 8; j++) {
-	    unsigned char sha1[20];
-	    RAND_bytes(sha1, sizeof(sha1));
-	    check_rsa(sha1, sizeof(sha1), rsa, RSA_PKCS1_PADDING);
-	}
+        for (j = 0; j < 8; j++) {
+            unsigned char sha1[20];
+            RAND_bytes(sha1, sizeof(sha1));
+            check_rsa(sha1, sizeof(sha1), rsa, RSA_PKCS1_PADDING);
+        }
 
-	RSA_free(rsa);
+        RSA_free(rsa);
     }
 
     ENGINE_finish(engine);

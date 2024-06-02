@@ -34,28 +34,28 @@
 #include "ntlm.h"
 
 OM_uint32 GSSAPI_CALLCONV _gss_ntlm_release_cred
-           (OM_uint32 * minor_status,
-            gss_cred_id_t * cred_handle
-           )
+                                                (OM_uint32 * minor_status,
+                                                 gss_cred_id_t * cred_handle
+                                                )
 {
     ntlm_cred cred;
 
     if (minor_status)
-	*minor_status = 0;
+        *minor_status = 0;
 
     if (cred_handle == NULL || *cred_handle == GSS_C_NO_CREDENTIAL)
-	return GSS_S_COMPLETE;
+        return GSS_S_COMPLETE;
 
     cred = (ntlm_cred)*cred_handle;
     *cred_handle = GSS_C_NO_CREDENTIAL;
 
     if (cred->username)
-	free(cred->username);
+        free(cred->username);
     if (cred->domain)
-	free(cred->domain);
+        free(cred->domain);
     if (cred->key.data) {
-	memset(cred->key.data, 0, cred->key.length);
-	free(cred->key.data);
+        memset(cred->key.data, 0, cred->key.length);
+        free(cred->key.data);
     }
 
     memset(cred, 0, sizeof(*cred));

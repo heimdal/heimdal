@@ -50,7 +50,7 @@ RETSIGTYPE
 sigALRM(int sig)
 {
     if (igdata < gsize)
-	gdata[igdata++] ^= counter & 0xff;
+        gdata[igdata++] ^= counter & 0xff;
 
 #ifndef HAVE_SIGACTION
     signal(SIGALRM, sigALRM); /* Reinstall SysV signal handler */
@@ -66,10 +66,10 @@ pacemaker(struct timeval *tv)
     pid_t pid;
     pid = getppid();
     while(1){
-	FD_ZERO(&fds);
-	FD_SET(0, &fds);
-	select(1, &fds, NULL, NULL, tv);
-	kill(pid, SIGALRM);
+        FD_ZERO(&fds);
+        FD_SET(0, &fds);
+        select(1, &fds, NULL, NULL, tv);
+        kill(pid, SIGALRM);
     }
 }
 #endif
@@ -130,19 +130,19 @@ timer_bytes(unsigned char *outdata, int size)
     ochld = signal(SIGCHLD, SIG_IGN);
     pid = fork();
     if(pid == -1){
-	signal(SIGCHLD, ochld != SIG_ERR ? ochld : SIG_DFL);
-	des_not_rand_data(data, size);
-	return;
+        signal(SIGCHLD, ochld != SIG_ERR ? ochld : SIG_DFL);
+        des_not_rand_data(data, size);
+        return;
     }
     if(pid == 0)
-	pacemaker(&tv.it_interval);
+        pacemaker(&tv.it_interval);
 #endif
 
     for(i = 0; i < 4; i++) {
-	for (igdata = 0; igdata < size;) /* igdata++ in sigALRM */
-	    counter++;
-	for (j = 0; j < size; j++) /* Only use 2 bits each lap */
-	    gdata[j] = (gdata[j]>>2) | (gdata[j]<<6);
+        for (igdata = 0; igdata < size;) /* igdata++ in sigALRM */
+            counter++;
+        for (j = 0; j < size; j++) /* Only use 2 bits each lap */
+            gdata[j] = (gdata[j]>>2) | (gdata[j]<<6);
     }
 #ifdef HAVE_SETITIMER
     setitimer(ITIMER_REAL, &otv, 0);

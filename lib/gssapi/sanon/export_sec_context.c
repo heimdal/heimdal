@@ -33,16 +33,16 @@
 
 OM_uint32 GSSAPI_CALLCONV
 _gss_sanon_export_sec_context(OM_uint32 *minor,
-			      gss_ctx_id_t *context_handle,
-			      gss_buffer_t interprocess_token)
+                              gss_ctx_id_t *context_handle,
+                              gss_buffer_t interprocess_token)
 {
     OM_uint32 major;
     const sanon_ctx sc = (sanon_ctx)*context_handle;
 
     if (sc->rfc4121 == GSS_C_NO_CONTEXT) {
         _mg_buffer_zero(interprocess_token);
-	*minor = 0;
-	return GSS_S_UNAVAILABLE;
+        *minor = 0;
+        return GSS_S_UNAVAILABLE;
     }
 
     major = gss_export_sec_context(minor, &sc->rfc4121, interprocess_token);

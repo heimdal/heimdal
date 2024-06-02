@@ -33,7 +33,7 @@
 
 OM_uint32 GSSAPI_CALLCONV
 _gss_sanon_release_name(OM_uint32 *minor,
-			gss_name_t *input_name)
+                        gss_name_t *input_name)
 {
     *minor = 0;
     *input_name = GSS_C_NO_NAME;

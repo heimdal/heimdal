@@ -45,18 +45,18 @@ static char **
 sub (char **argv, int i, int argc, va_list *ap)
 {
     do {
-	if(i == argc) {
-	    /* realloc argv */
-	    char **tmp = realloc(argv, (argc + increment) * sizeof(*argv));
-	    if(tmp == NULL) {
-		free(argv);
-		errno = ENOMEM;
-		return NULL;
-	    }
-	    argv  = tmp;
-	    argc += increment;
-	}
-	argv[i++] = va_arg(*ap, char*);
+        if(i == argc) {
+            /* realloc argv */
+            char **tmp = realloc(argv, (argc + increment) * sizeof(*argv));
+            if(tmp == NULL) {
+                free(argv);
+                errno = ENOMEM;
+                return NULL;
+            }
+            argv  = tmp;
+            argc += increment;
+        }
+        argv[i++] = va_arg(*ap, char*);
     } while(argv[i - 1] != NULL);
     return argv;
 }
@@ -83,7 +83,7 @@ strcollect(char *first, ...)
     char **ret = malloc (initial * sizeof(char *));
 
     if (ret == NULL)
-	return ret;
+        return ret;
 
     ret[0] = first;
     va_start(ap, first);

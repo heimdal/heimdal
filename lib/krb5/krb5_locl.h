@@ -410,7 +410,7 @@ struct krb5_pk_init_ctx_data {
     struct krb5_pk_identity *id;
     enum keyex_enum keyex;
     union {
-	DH *dh;
+        DH *dh;
         void *eckey;
     } u;
     krb5_data *clientDHNonce;

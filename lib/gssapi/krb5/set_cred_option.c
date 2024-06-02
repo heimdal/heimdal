@@ -34,7 +34,7 @@
 
 static OM_uint32
 import_cred(OM_uint32 *minor_status,
-	    krb5_context context,
+            krb5_context context,
             gss_cred_id_t *cred_handle,
             const gss_buffer_t value)
 {
@@ -47,30 +47,30 @@ import_cred(OM_uint32 *minor_status,
     char *str;
 
     if (cred_handle == NULL || *cred_handle != GSS_C_NO_CREDENTIAL) {
-	*minor_status = 0;
-	return GSS_S_FAILURE;
+        *minor_status = 0;
+        return GSS_S_FAILURE;
     }
 
     sp = krb5_storage_from_mem(value->value, value->length);
     if (sp == NULL) {
-	*minor_status = 0;
-	return GSS_S_FAILURE;
+        *minor_status = 0;
+        return GSS_S_FAILURE;
     }
 
     /* credential cache name */
     ret = krb5_ret_string(sp, &str);
     if (ret) {
-	*minor_status = ret;
-	major_stat =  GSS_S_FAILURE;
-	goto out;
+        *minor_status = ret;
+        major_stat =  GSS_S_FAILURE;
+        goto out;
     }
     if (str[0]) {
-	ret = krb5_cc_resolve(context, str, &id);
-	if (ret) {
-	    *minor_status = ret;
-	    major_stat =  GSS_S_FAILURE;
-	    goto out;
-	}
+        ret = krb5_cc_resolve(context, str, &id);
+        if (ret) {
+            *minor_status = ret;
+            major_stat =  GSS_S_FAILURE;
+            goto out;
+        }
     }
     free(str);
     str = NULL;
@@ -78,11 +78,11 @@ import_cred(OM_uint32 *minor_status,
     /* keytab principal name */
     ret = krb5_ret_string(sp, &str);
     if (ret == 0 && str[0])
-	ret = krb5_parse_name(context, str, &keytab_principal);
+        ret = krb5_parse_name(context, str, &keytab_principal);
     if (ret) {
-	*minor_status = ret;
-	major_stat = GSS_S_FAILURE;
-	goto out;
+        *minor_status = ret;
+        major_stat = GSS_S_FAILURE;
+        goto out;
     }
     free(str);
     str = NULL;
@@ -90,34 +90,34 @@ import_cred(OM_uint32 *minor_status,
     /* keytab principal */
     ret = krb5_ret_string(sp, &str);
     if (ret) {
-	*minor_status = ret;
-	major_stat =  GSS_S_FAILURE;
-	goto out;
+        *minor_status = ret;
+        major_stat =  GSS_S_FAILURE;
+        goto out;
     }
     if (str[0]) {
-	ret = krb5_kt_resolve(context, str, &keytab);
-	if (ret) {
-	    *minor_status = ret;
-	    major_stat =  GSS_S_FAILURE;
-	    goto out;
-	}
+        ret = krb5_kt_resolve(context, str, &keytab);
+        if (ret) {
+            *minor_status = ret;
+            major_stat =  GSS_S_FAILURE;
+            goto out;
+        }
     }
     free(str);
     str = NULL;
 
     major_stat = _gsskrb5_krb5_import_cred(minor_status, &id, keytab_principal,
-					   keytab, cred_handle);
+                                           keytab, cred_handle);
 out:
     if (id)
-	krb5_cc_close(context, id);
+        krb5_cc_close(context, id);
     if (keytab_principal)
-	krb5_free_principal(context, keytab_principal);
+        krb5_free_principal(context, keytab_principal);
     if (keytab)
-	krb5_kt_close(context, keytab);
+        krb5_kt_close(context, keytab);
     if (str)
-	free(str);
+        free(str);
     if (sp)
-	krb5_storage_free(sp);
+        krb5_storage_free(sp);
 
     return major_stat;
 }
@@ -125,9 +125,9 @@ out:
 
 static OM_uint32
 allowed_enctypes(OM_uint32 *minor_status,
-		 krb5_context context,
-		 gss_cred_id_t *cred_handle,
-		 const gss_buffer_t value)
+                 krb5_context context,
+                 gss_cred_id_t *cred_handle,
+                 const gss_buffer_t value)
 {
     OM_uint32 major_stat;
     krb5_error_code ret;
@@ -137,49 +137,49 @@ allowed_enctypes(OM_uint32 *minor_status,
     gsskrb5_cred cred;
 
     if (cred_handle == NULL || *cred_handle == GSS_C_NO_CREDENTIAL) {
-	*minor_status = 0;
-	return GSS_S_FAILURE;
+        *minor_status = 0;
+        return GSS_S_FAILURE;
     }
 
     cred = (gsskrb5_cred)*cred_handle;
 
     if ((value->length % 4) != 0) {
-	*minor_status = 0;
-	major_stat = GSS_S_FAILURE;
-	goto out;
+        *minor_status = 0;
+        major_stat = GSS_S_FAILURE;
+        goto out;
     }
 
     /* serialized as int32_t[], but stored as krb5_enctype[] */
     len = value->length / 4;
     enctypes = malloc((len + 1) * sizeof(krb5_enctype));
     if (enctypes == NULL) {
-	*minor_status = ENOMEM;
-	major_stat = GSS_S_FAILURE;
-	goto out;
+        *minor_status = ENOMEM;
+        major_stat = GSS_S_FAILURE;
+        goto out;
     }
 
     sp = krb5_storage_from_mem(value->value, value->length);
     if (sp == NULL) {
-	*minor_status = ENOMEM;
-	major_stat = GSS_S_FAILURE;
-	goto out;
+        *minor_status = ENOMEM;
+        major_stat = GSS_S_FAILURE;
+        goto out;
     }
 
     for (i = 0; i < len; i++) {
-	int32_t e;
+        int32_t e;
 
-	ret = krb5_ret_int32(sp, &e);
-	if (ret) {
-	    *minor_status = ret;
-	    major_stat =  GSS_S_FAILURE;
-	    goto out;
-	}
-	enctypes[i] = e;
+        ret = krb5_ret_int32(sp, &e);
+        if (ret) {
+            *minor_status = ret;
+            major_stat =  GSS_S_FAILURE;
+            goto out;
+        }
+        enctypes[i] = e;
     }
     enctypes[i] = KRB5_ENCTYPE_NULL;
 
     if (cred->enctypes)
-	free(cred->enctypes);
+        free(cred->enctypes);
     cred->enctypes = enctypes;
 
     krb5_storage_free(sp);
@@ -188,24 +188,24 @@ allowed_enctypes(OM_uint32 *minor_status,
 
 out:
     if (sp)
-	krb5_storage_free(sp);
+        krb5_storage_free(sp);
     if (enctypes)
-	free(enctypes);
+        free(enctypes);
 
     return major_stat;
 }
 
 static OM_uint32
 no_ci_flags(OM_uint32 *minor_status,
-	    krb5_context context,
-	    gss_cred_id_t *cred_handle,
-	    const gss_buffer_t value)
+            krb5_context context,
+            gss_cred_id_t *cred_handle,
+            const gss_buffer_t value)
 {
     gsskrb5_cred cred;
 
     if (cred_handle == NULL || *cred_handle == GSS_C_NO_CREDENTIAL) {
-	*minor_status = 0;
-	return GSS_S_FAILURE;
+        *minor_status = 0;
+        return GSS_S_FAILURE;
     }
 
     cred = (gsskrb5_cred)*cred_handle;
@@ -219,28 +219,28 @@ no_ci_flags(OM_uint32 *minor_status,
 
 OM_uint32 GSSAPI_CALLCONV
 _gsskrb5_set_cred_option
-           (OM_uint32 *minor_status,
-            gss_cred_id_t *cred_handle,
-            const gss_OID desired_object,
-            const gss_buffer_t value)
+                         (OM_uint32 *minor_status,
+                          gss_cred_id_t *cred_handle,
+                          const gss_OID desired_object,
+                          const gss_buffer_t value)
 {
     krb5_context context;
 
     GSSAPI_KRB5_INIT (&context);
 
     if (value == GSS_C_NO_BUFFER) {
-	*minor_status = EINVAL;
-	return GSS_S_FAILURE;
+        *minor_status = EINVAL;
+        return GSS_S_FAILURE;
     }
 
     if (gss_oid_equal(desired_object, GSS_KRB5_IMPORT_CRED_X))
-	return import_cred(minor_status, context, cred_handle, value);
+        return import_cred(minor_status, context, cred_handle, value);
 
     if (gss_oid_equal(desired_object, GSS_KRB5_SET_ALLOWABLE_ENCTYPES_X))
-	return allowed_enctypes(minor_status, context, cred_handle, value);
+        return allowed_enctypes(minor_status, context, cred_handle, value);
 
     if (gss_oid_equal(desired_object, GSS_KRB5_CRED_NO_CI_FLAGS_X)) {
-	return no_ci_flags(minor_status, context, cred_handle, value);
+        return no_ci_flags(minor_status, context, cred_handle, value);
     }
 
 

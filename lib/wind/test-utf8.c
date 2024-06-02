@@ -111,63 +111,63 @@ main(void)
     char str[MAX_LENGTH * 4];
 
     for (s = failing_testcases; *s != NULL; ++s) {
-	len = MAX_LENGTH;
-	ret = wind_utf8ucs4(*s, u, &len);
-	if (ret == 0) {
-	    printf("utf8 decode of \"%s\" should have failed\n", *s);
-	    ++failures;
-	}
+        len = MAX_LENGTH;
+        ret = wind_utf8ucs4(*s, u, &len);
+        if (ret == 0) {
+            printf("utf8 decode of \"%s\" should have failed\n", *s);
+            ++failures;
+        }
     }
 
     for (i = 0; i < sizeof(testcases)/sizeof(testcases[0]); ++i) {
-	const struct testcase *t = &testcases[i];
+        const struct testcase *t = &testcases[i];
 
-	ret = wind_utf8ucs4_length(t->utf8_str, &len);
-	if (ret) {
-	    printf("utf8ucs4 length of \"%s\" should have succeeded\n",
-		   t->utf8_str);
-	    ++failures;
-	    continue;
-	}
-	if (len != t->len) {
-	    printf("utf8ucs4_length of \"%s\" has wrong length: "
-		   "expected: %u, actual: %u\n",
-		   t->utf8_str, (unsigned int)t->len, (unsigned int)len);
-	    ++failures;
-	    continue;
-	}
+        ret = wind_utf8ucs4_length(t->utf8_str, &len);
+        if (ret) {
+            printf("utf8ucs4 length of \"%s\" should have succeeded\n",
+                   t->utf8_str);
+            ++failures;
+            continue;
+        }
+        if (len != t->len) {
+            printf("utf8ucs4_length of \"%s\" has wrong length: "
+                   "expected: %u, actual: %u\n",
+                   t->utf8_str, (unsigned int)t->len, (unsigned int)len);
+            ++failures;
+            continue;
+        }
 
-	len = MAX_LENGTH;
-	ret = wind_utf8ucs4(t->utf8_str, u, &len);
-	if (ret) {
-	    printf("utf8 decode of \"%s\" should have succeeded\n",
-		   t->utf8_str);
-	    ++failures;
-	    continue;
-	}
-	if (len != t->len) {
-	    printf("utf8 decode of \"%s\" has wrong length: "
-		   "expected: %u, actual: %u\n",
-		   t->utf8_str, (unsigned int)t->len, (unsigned int)len);
-	    ++failures;
-	    continue;
-	}
-	if (memcmp(t->u, u, len * sizeof(uint32_t)) != 0) {
-	    printf("utf8 decode of \"%s\" has wrong data\n",
-		   t->utf8_str);
-	    ++failures;
-	    continue;
-	}
-	if (t->invalid_ucs2 == 0) {
-	    len2 = sizeof(str);
-	    ret = wind_ucs4utf8(u, len, str, &len2);
-	    if (ret) {
-		printf("ucs4 decode of \"%s\" should have succeeded\n",
-		       t->utf8_str);
-		++failures;
-		continue;
-	    }
-	}
+        len = MAX_LENGTH;
+        ret = wind_utf8ucs4(t->utf8_str, u, &len);
+        if (ret) {
+            printf("utf8 decode of \"%s\" should have succeeded\n",
+                   t->utf8_str);
+            ++failures;
+            continue;
+        }
+        if (len != t->len) {
+            printf("utf8 decode of \"%s\" has wrong length: "
+                   "expected: %u, actual: %u\n",
+                   t->utf8_str, (unsigned int)t->len, (unsigned int)len);
+            ++failures;
+            continue;
+        }
+        if (memcmp(t->u, u, len * sizeof(uint32_t)) != 0) {
+            printf("utf8 decode of \"%s\" has wrong data\n",
+                   t->utf8_str);
+            ++failures;
+            continue;
+        }
+        if (t->invalid_ucs2 == 0) {
+            len2 = sizeof(str);
+            ret = wind_ucs4utf8(u, len, str, &len2);
+            if (ret) {
+                printf("ucs4 decode of \"%s\" should have succeeded\n",
+                       t->utf8_str);
+                ++failures;
+                continue;
+            }
+        }
     }
 
     return failures != 0;

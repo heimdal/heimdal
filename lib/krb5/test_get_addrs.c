@@ -44,8 +44,8 @@ print_addresses (krb5_context context, const krb5_addresses *addrs)
     size_t len;
 
     for (i = 0; i < addrs->len; ++i) {
-	krb5_print_address (&addrs->val[i], buf, sizeof(buf), &len);
-	printf ("%s\n", buf);
+        krb5_print_address (&addrs->val[i], buf, sizeof(buf), &len);
+        printf ("%s\n", buf);
     }
 }
 
@@ -63,9 +63,9 @@ static void
 usage (int ret)
 {
     arg_printusage (args,
-		    sizeof(args)/sizeof(*args),
-		    NULL,
-		    "");
+                    sizeof(args)/sizeof(*args),
+                    NULL,
+                    "");
     exit (ret);
 }
 
@@ -80,30 +80,30 @@ main(int argc, char **argv)
     setprogname (argv[0]);
 
     if(getarg(args, sizeof(args) / sizeof(args[0]), argc, argv, &optidx))
-	usage(1);
+        usage(1);
 
     if (help_flag)
-	usage (0);
+        usage (0);
 
     if(version_flag){
-	print_version(NULL);
-	exit(0);
+        print_version(NULL);
+        exit(0);
     }
 
     ret = krb5_init_context(&context);
     if (ret)
-	errx (1, "krb5_init_context failed: %d", ret);
+        errx (1, "krb5_init_context failed: %d", ret);
 
     ret = krb5_get_all_client_addrs (context, &addrs);
     if (ret)
-	krb5_err (context, 1, ret, "krb5_get_all_client_addrs");
+        krb5_err (context, 1, ret, "krb5_get_all_client_addrs");
     printf ("client addresses\n");
     print_addresses (context, &addrs);
     krb5_free_addresses (context, &addrs);
 
     ret = krb5_get_all_server_addrs (context, &addrs);
     if (ret)
-	krb5_err (context, 1, ret, "krb5_get_all_server_addrs");
+        krb5_err (context, 1, ret, "krb5_get_all_server_addrs");
     printf ("server addresses\n");
     print_addresses (context, &addrs);
     krb5_free_addresses (context, &addrs);

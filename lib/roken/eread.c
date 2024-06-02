@@ -46,6 +46,6 @@ eread (int fd, void *buf, size_t nbytes)
 
     ret = net_read (fd, buf, nbytes);
     if (ret < 0)
-	err (1, "read");
+        err (1, "read");
     return ret;
 }

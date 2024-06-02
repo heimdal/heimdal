@@ -35,16 +35,16 @@
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_duplicate_oid (
-        OM_uint32 *minor_status,
-	gss_OID src_oid,
-	gss_OID *dest_oid
-     )
+                   OM_uint32 *minor_status,
+                   gss_OID src_oid,
+                   gss_OID *dest_oid
+                  )
 {
     *minor_status = 0;
 
     if (src_oid == GSS_C_NO_OID) {
-	*dest_oid = GSS_C_NO_OID;
-	return GSS_S_COMPLETE;
+        *dest_oid = GSS_C_NO_OID;
+        return GSS_S_COMPLETE;
     }
 
     return _gss_intern_oid(minor_status, src_oid, dest_oid);

@@ -32,47 +32,47 @@
 
 gss_cred_id_t
 _gss_mg_find_mech_cred(
-    gss_const_cred_id_t cred_handle,
-    gss_const_OID mech_type)
+                       gss_const_cred_id_t cred_handle,
+                       gss_const_OID mech_type)
 {
-	struct _gss_cred *cred = (struct _gss_cred *)cred_handle;
-	struct _gss_mechanism_cred *mc;
+    struct _gss_cred *cred = (struct _gss_cred *)cred_handle;
+    struct _gss_mechanism_cred *mc;
 
-	if (cred == NULL)
-		return GSS_C_NO_CREDENTIAL;
+    if (cred == NULL)
+        return GSS_C_NO_CREDENTIAL;
 
-	HEIM_TAILQ_FOREACH(mc, &cred->gc_mc, gmc_link) {
-		if (gss_oid_equal(mech_type, mc->gmc_mech_oid))
-			return mc->gmc_cred;
-	}
-	return GSS_C_NO_CREDENTIAL;
+    HEIM_TAILQ_FOREACH(mc, &cred->gc_mc, gmc_link) {
+        if (gss_oid_equal(mech_type, mc->gmc_mech_oid))
+            return mc->gmc_cred;
+    }
+    return GSS_C_NO_CREDENTIAL;
 }
 
 static void
 log_init_sec_context(struct _gss_context *ctx,
-		     struct _gss_name *target,
-		     OM_uint32 req_flags,
-		     struct _gss_cred *cred,
-		     gss_OID mech_type,
-		     gss_buffer_t input_token)
+                     struct _gss_name *target,
+                     OM_uint32 req_flags,
+                     struct _gss_cred *cred,
+                     gss_OID mech_type,
+                     gss_buffer_t input_token)
 {
     gssapi_mech_interface m;
 
     if (ctx)
-	m = ctx->gc_mech;
+        m = ctx->gc_mech;
     else
-	m = __gss_get_mechanism(mech_type);
+        m = __gss_get_mechanism(mech_type);
     if (m == NULL)
-	return;
+        return;
 
     mech_type = &m->gm_mech_oid;
 
     _gss_mg_log(1, "gss_isc: %s %sfirst flags %08x, %s cred, %stoken",
-		m->gm_name,
-		(ctx == NULL) ? "" : "not ",
-		req_flags,
-		(cred != NULL) ? "specific" : "default",
-		(input_token != NULL && input_token->length) ? "" : "no ");
+                m->gm_name,
+                (ctx == NULL) ? "" : "not ",
+                req_flags,
+                (cred != NULL) ? "specific" : "default",
+                (input_token != NULL && input_token->length) ? "" : "no ");
 
     _gss_mg_log_cred(1, cred, "gss_isc cred");
 
@@ -143,139 +143,139 @@ log_init_sec_context(struct _gss_context *ctx,
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_init_sec_context(OM_uint32 * minor_status,
-    gss_const_cred_id_t initiator_cred_handle,
-    gss_ctx_id_t * context_handle,
-    gss_const_name_t target_name,
-    const gss_OID input_mech_type,
-    OM_uint32 req_flags,
-    OM_uint32 time_req,
-    const gss_channel_bindings_t input_chan_bindings,
-    const gss_buffer_t input_token,
-    gss_OID * actual_mech_type,
-    gss_buffer_t output_token,
-    OM_uint32 * ret_flags,
-    OM_uint32 * time_rec)
+                     gss_const_cred_id_t initiator_cred_handle,
+                     gss_ctx_id_t * context_handle,
+                     gss_const_name_t target_name,
+                     const gss_OID input_mech_type,
+                     OM_uint32 req_flags,
+                     OM_uint32 time_req,
+                     const gss_channel_bindings_t input_chan_bindings,
+                     const gss_buffer_t input_token,
+                     gss_OID * actual_mech_type,
+                     gss_buffer_t output_token,
+                     OM_uint32 * ret_flags,
+                     OM_uint32 * time_rec)
 {
-	OM_uint32 major_status;
-	gssapi_mech_interface m;
-        gss_const_name_t mn_inner = GSS_C_NO_NAME;
-	struct _gss_name *name = (struct _gss_name *) target_name;
-	struct _gss_mechanism_name *mn;
-	struct _gss_context *ctx = (struct _gss_context *) *context_handle;
-	gss_const_cred_id_t cred_handle;
-	int allocated_ctx;
-	gss_OID mech_type = input_mech_type;
+    OM_uint32 major_status;
+    gssapi_mech_interface m;
+    gss_const_name_t mn_inner = GSS_C_NO_NAME;
+    struct _gss_name *name = (struct _gss_name *) target_name;
+    struct _gss_mechanism_name *mn;
+    struct _gss_context *ctx = (struct _gss_context *) *context_handle;
+    gss_const_cred_id_t cred_handle;
+    int allocated_ctx;
+    gss_OID mech_type = input_mech_type;
 
-	*minor_status = 0;
+    *minor_status = 0;
 
-	_mg_buffer_zero(output_token);
-	if (actual_mech_type)
-	    *actual_mech_type = GSS_C_NO_OID;
-	if (ret_flags)
-	    *ret_flags = 0;
-	if (time_rec)
-	    *time_rec = 0;
+    _mg_buffer_zero(output_token);
+    if (actual_mech_type)
+        *actual_mech_type = GSS_C_NO_OID;
+    if (ret_flags)
+        *ret_flags = 0;
+    if (time_rec)
+        *time_rec = 0;
 
-	if (mech_type == GSS_C_NO_OID)
-	    mech_type = GSS_KRB5_MECHANISM;
+    if (mech_type == GSS_C_NO_OID)
+        mech_type = GSS_KRB5_MECHANISM;
 
-	_gss_mg_check_name(target_name);
+    _gss_mg_check_name(target_name);
 
-	if (_gss_mg_log_level(1))
-	    log_init_sec_context(ctx, name, req_flags,
-				 (struct _gss_cred *)initiator_cred_handle,
-				 input_mech_type, input_token);
+    if (_gss_mg_log_level(1))
+        log_init_sec_context(ctx, name, req_flags,
+                             (struct _gss_cred *)initiator_cred_handle,
+                             input_mech_type, input_token);
 
-	/*
-	 * If we haven't allocated a context yet, do so now and lookup
-	 * the mechanism switch table. If we have one already, make
-	 * sure we use the same mechanism switch as before.
-	 */
-	if (!ctx) {
-		ctx = malloc(sizeof(struct _gss_context));
-		if (!ctx) {
-			*minor_status = ENOMEM;
-			return (GSS_S_FAILURE);
-		}
-		memset(ctx, 0, sizeof(struct _gss_context));
-		m = ctx->gc_mech = __gss_get_mechanism(mech_type);
-		if (!m) {
-			free(ctx);
-			*minor_status = 0;
-			gss_mg_set_error_string(mech_type, GSS_S_BAD_MECH,
-						*minor_status,
-						"Unsupported mechanism requested");
-			return (GSS_S_BAD_MECH);
-		}
-		allocated_ctx = 1;
-	} else {
-		m = ctx->gc_mech;
-		mech_type = &ctx->gc_mech->gm_mech_oid;
-		allocated_ctx = 0;
-	}
-
-	/*
-	 * Find the MN for this mechanism.
-	 */
-        if ((m->gm_flags & GM_USE_MG_NAME)) {
-            mn_inner = target_name;
-        } else {
-            major_status = _gss_find_mn(minor_status, name, mech_type, &mn);
-            if (major_status != GSS_S_COMPLETE) {
-                    if (allocated_ctx)
-                        free(ctx);
-                    return major_status;
-            }
-            if (mn)
-                mn_inner = mn->gmn_name;
+    /*
+     * If we haven't allocated a context yet, do so now and lookup
+     * the mechanism switch table. If we have one already, make
+     * sure we use the same mechanism switch as before.
+     */
+    if (!ctx) {
+        ctx = malloc(sizeof(struct _gss_context));
+        if (!ctx) {
+            *minor_status = ENOMEM;
+            return (GSS_S_FAILURE);
         }
-
-	/*
-	 * If we have a cred, find the cred for this mechanism.
-	 */
-	if (m->gm_flags & GM_USE_MG_CRED)
-		cred_handle = initiator_cred_handle;
-	else
-		cred_handle = _gss_mg_find_mech_cred(initiator_cred_handle, mech_type);
-
-        if (initiator_cred_handle != GSS_C_NO_CREDENTIAL &&
-            cred_handle == NULL) {
-	    *minor_status = 0;
-            if (allocated_ctx)
-                free(ctx);
-	    gss_mg_set_error_string(mech_type, GSS_S_UNAVAILABLE,
-				    *minor_status,
-				    "Credential for the requested mechanism "
-				    "not found in credential handle");
-            return GSS_S_UNAVAILABLE;
+        memset(ctx, 0, sizeof(struct _gss_context));
+        m = ctx->gc_mech = __gss_get_mechanism(mech_type);
+        if (!m) {
+            free(ctx);
+            *minor_status = 0;
+            gss_mg_set_error_string(mech_type, GSS_S_BAD_MECH,
+                                    *minor_status,
+                                    "Unsupported mechanism requested");
+            return (GSS_S_BAD_MECH);
         }
+        allocated_ctx = 1;
+    } else {
+        m = ctx->gc_mech;
+        mech_type = &ctx->gc_mech->gm_mech_oid;
+        allocated_ctx = 0;
+    }
 
-	major_status = m->gm_init_sec_context(minor_status,
-	    cred_handle,
-	    &ctx->gc_ctx,
-	    mn_inner,
-	    mech_type,
-	    req_flags,
-	    time_req,
-	    input_chan_bindings,
-	    input_token,
-	    actual_mech_type,
-	    output_token,
-	    ret_flags,
-	    time_rec);
+    /*
+     * Find the MN for this mechanism.
+     */
+    if ((m->gm_flags & GM_USE_MG_NAME)) {
+        mn_inner = target_name;
+    } else {
+        major_status = _gss_find_mn(minor_status, name, mech_type, &mn);
+        if (major_status != GSS_S_COMPLETE) {
+                if (allocated_ctx)
+                    free(ctx);
+                return major_status;
+        }
+        if (mn)
+            mn_inner = mn->gmn_name;
+    }
 
-	if (major_status != GSS_S_COMPLETE
-	    && major_status != GSS_S_CONTINUE_NEEDED) {
-		if (allocated_ctx)
-			free(ctx);
-		_mg_buffer_zero(output_token);
-		_gss_mg_error(m, *minor_status);
-	} else {
-		*context_handle = (gss_ctx_id_t) ctx;
-	}
+    /*
+     * If we have a cred, find the cred for this mechanism.
+     */
+    if (m->gm_flags & GM_USE_MG_CRED)
+        cred_handle = initiator_cred_handle;
+    else
+        cred_handle = _gss_mg_find_mech_cred(initiator_cred_handle, mech_type);
 
-	_gss_mg_log(1, "gss_isc: %s maj_stat: %d/%d",
-		    m->gm_name, (int)major_status, (int)*minor_status);
+    if (initiator_cred_handle != GSS_C_NO_CREDENTIAL &&
+        cred_handle == NULL) {
+        *minor_status = 0;
+        if (allocated_ctx)
+            free(ctx);
+        gss_mg_set_error_string(mech_type, GSS_S_UNAVAILABLE,
+                                *minor_status,
+                                "Credential for the requested mechanism "
+                                "not found in credential handle");
+        return GSS_S_UNAVAILABLE;
+    }
 
-	return (major_status);
+    major_status = m->gm_init_sec_context(minor_status,
+                                          cred_handle,
+                                          &ctx->gc_ctx,
+                                          mn_inner,
+                                          mech_type,
+                                          req_flags,
+                                          time_req,
+                                          input_chan_bindings,
+                                          input_token,
+                                          actual_mech_type,
+                                          output_token,
+                                          ret_flags,
+                                          time_rec);
+
+    if (major_status != GSS_S_COMPLETE
+        && major_status != GSS_S_CONTINUE_NEEDED) {
+        if (allocated_ctx)
+            free(ctx);
+        _mg_buffer_zero(output_token);
+        _gss_mg_error(m, *minor_status);
+    } else {
+        *context_handle = (gss_ctx_id_t) ctx;
+    }
+
+    _gss_mg_log(1, "gss_isc: %s maj_stat: %d/%d",
+                m->gm_name, (int)major_status, (int)*minor_status);
+
+    return (major_status);
 }

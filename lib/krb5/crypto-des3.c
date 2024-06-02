@@ -39,24 +39,24 @@
 
 static void
 DES3_random_key(krb5_context context,
-		krb5_keyblock *key)
+                krb5_keyblock *key)
 {
     DES_cblock *k = key->keyvalue.data;
     do {
-	krb5_generate_random_block(k, 3 * sizeof(DES_cblock));
-	DES_set_odd_parity(&k[0]);
-	DES_set_odd_parity(&k[1]);
-	DES_set_odd_parity(&k[2]);
+        krb5_generate_random_block(k, 3 * sizeof(DES_cblock));
+        DES_set_odd_parity(&k[0]);
+        DES_set_odd_parity(&k[1]);
+        DES_set_odd_parity(&k[2]);
     } while(DES_is_weak_key(&k[0]) ||
-	    DES_is_weak_key(&k[1]) ||
-	    DES_is_weak_key(&k[2]));
+            DES_is_weak_key(&k[1]) ||
+            DES_is_weak_key(&k[2]));
 }
 
 static krb5_error_code
 DES3_prf(krb5_context context,
-	 krb5_crypto crypto,
-	 const krb5_data *in,
-	 krb5_data *out)
+         krb5_crypto crypto,
+         const krb5_data *in,
+         krb5_data *out)
 {
     struct _krb5_checksum_type *ct = crypto->et->checksum;
     struct krb5_crypto_iov iov[1];
@@ -67,40 +67,40 @@ DES3_prf(krb5_context context,
     result.cksumtype = ct->type;
     ret = krb5_data_alloc(&result.checksum, ct->checksumsize);
     if (ret) {
-	krb5_set_error_message(context, ret, N_("malloc: out memory", ""));
-	return ret;
+        krb5_set_error_message(context, ret, N_("malloc: out memory", ""));
+        return ret;
     }
 
     iov[0].data = *in;
     iov[0].flags = KRB5_CRYPTO_TYPE_DATA;
     ret = (*ct->checksum)(context, crypto, NULL, 0, iov, 1, &result);
     if (ret) {
-	krb5_data_free(&result.checksum);
-	return ret;
+        krb5_data_free(&result.checksum);
+        return ret;
     }
 
     if (result.checksum.length < crypto->et->blocksize)
-	krb5_abortx(context, "internal prf error");
+        krb5_abortx(context, "internal prf error");
 
     derived = NULL;
     ret = krb5_derive_key(context, crypto->key.key,
-			  crypto->et->type, "prf", 3, &derived);
+                          crypto->et->type, "prf", 3, &derived);
     if (ret)
-	krb5_abortx(context, "krb5_derive_key");
+        krb5_abortx(context, "krb5_derive_key");
 
     ret = krb5_data_alloc(out, crypto->et->prf_length);
     if (ret)
-	krb5_abortx(context, "malloc failed");
+        krb5_abortx(context, "malloc failed");
 
     {
-	const EVP_CIPHER *c = (*crypto->et->keytype->evp)();
-	EVP_CIPHER_CTX ctx;
+        const EVP_CIPHER *c = (*crypto->et->keytype->evp)();
+        EVP_CIPHER_CTX ctx;
 
-	EVP_CIPHER_CTX_init(&ctx); /* ivec all zero */
-	EVP_CipherInit_ex(&ctx, c, NULL, derived->keyvalue.data, NULL, 1);
-	EVP_Cipher(&ctx, out->data, result.checksum.data,
-		   crypto->et->prf_length);
-	EVP_CIPHER_CTX_cleanup(&ctx);
+        EVP_CIPHER_CTX_init(&ctx); /* ivec all zero */
+        EVP_CipherInit_ex(&ctx, c, NULL, derived->keyvalue.data, NULL, 1);
+        EVP_Cipher(&ctx, out->data, result.checksum.data,
+                   crypto->et->prf_length);
+        EVP_CIPHER_CTX_cleanup(&ctx);
     }
 
     krb5_data_free(&result.checksum);
@@ -142,24 +142,24 @@ static struct _krb5_key_type keytype_des3_derived = {
 #ifdef DES3_OLD_ENCTYPE
 static krb5_error_code
 RSA_MD5_DES3_checksum(krb5_context context,
-		      krb5_crypto crypto,
-		      struct _krb5_key_data *key,
-		      unsigned usage,
-		      const struct krb5_crypto_iov *iov,
-		      int niov,
-		      Checksum *C)
+                      krb5_crypto crypto,
+                      struct _krb5_key_data *key,
+                      unsigned usage,
+                      const struct krb5_crypto_iov *iov,
+                      int niov,
+                      Checksum *C)
 {
     return _krb5_des_checksum(context, EVP_md5(), key, iov, niov, C);
 }
 
 static krb5_error_code
 RSA_MD5_DES3_verify(krb5_context context,
-		    krb5_crypto crypto,
-		    struct _krb5_key_data *key,
-		    unsigned usage,
+                    krb5_crypto crypto,
+                    struct _krb5_key_data *key,
+                    unsigned usage,
                     const struct krb5_crypto_iov *iov,
                     int niov,
-		    Checksum *C)
+                    Checksum *C)
 {
     return _krb5_des_verify(context, EVP_md5(), key, iov, niov, C);
 }
@@ -259,9 +259,9 @@ struct _krb5_encryption_type _krb5_enctype_des3_cbc_none = {
 
 void
 _krb5_DES3_random_to_key(krb5_context context,
-			 krb5_keyblock *key,
-			 const void *data,
-			 size_t size)
+                         krb5_keyblock *key,
+                         const void *data,
+                         size_t size)
 {
     unsigned char *x = key->keyvalue.data;
     const u_char *q = data;
@@ -270,23 +270,23 @@ _krb5_DES3_random_to_key(krb5_context context,
 
     memset(key->keyvalue.data, 0, key->keyvalue.length);
     for (i = 0; i < 3; ++i) {
-	unsigned char foo;
-	for (j = 0; j < 7; ++j) {
-	    unsigned char b = q[7 * i + j];
+        unsigned char foo;
+        for (j = 0; j < 7; ++j) {
+            unsigned char b = q[7 * i + j];
 
-	    x[8 * i + j] = b;
-	}
-	foo = 0;
-	for (j = 6; j >= 0; --j) {
-	    foo |= q[7 * i + j] & 1;
-	    foo <<= 1;
-	}
-	x[8 * i + 7] = foo;
+            x[8 * i + j] = b;
+        }
+        foo = 0;
+        for (j = 6; j >= 0; --j) {
+            foo |= q[7 * i + j] & 1;
+            foo <<= 1;
+        }
+        x[8 * i + 7] = foo;
     }
     k = key->keyvalue.data;
     for (i = 0; i < 3; i++) {
-	DES_set_odd_parity(&k[i]);
-	if(DES_is_weak_key(&k[i]))
-	    _krb5_xor8(k[i], (const unsigned char*)"\0\0\0\0\0\0\0\xf0");
+        DES_set_odd_parity(&k[i]);
+        if(DES_is_weak_key(&k[i]))
+            _krb5_xor8(k[i], (const unsigned char*)"\0\0\0\0\0\0\0\xf0");
     }
 }

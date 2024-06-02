@@ -45,33 +45,33 @@
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_wrap_iov(OM_uint32 * minor_status,
-	     gss_ctx_id_t  context_handle,
-	     int conf_req_flag,
-	     gss_qop_t qop_req,
-	     int * conf_state,
-	     gss_iov_buffer_desc *iov,
-	     int iov_count)
+             gss_ctx_id_t  context_handle,
+             int conf_req_flag,
+             gss_qop_t qop_req,
+             int * conf_state,
+             gss_iov_buffer_desc *iov,
+             int iov_count)
 {
-	struct _gss_context *ctx = (struct _gss_context *) context_handle;
-	gssapi_mech_interface m;
+    struct _gss_context *ctx = (struct _gss_context *) context_handle;
+    gssapi_mech_interface m;
 
-	if (minor_status)
-	    *minor_status = 0;
-	if (conf_state)
-	    *conf_state = 0;
-	if (ctx == NULL)
-	    return GSS_S_NO_CONTEXT;
-	if (iov == NULL && iov_count != 0)
-	    return GSS_S_CALL_INACCESSIBLE_READ;
+    if (minor_status)
+        *minor_status = 0;
+    if (conf_state)
+        *conf_state = 0;
+    if (ctx == NULL)
+        return GSS_S_NO_CONTEXT;
+    if (iov == NULL && iov_count != 0)
+        return GSS_S_CALL_INACCESSIBLE_READ;
 
-	m = ctx->gc_mech;
+    m = ctx->gc_mech;
 
-	if (m->gm_wrap_iov == NULL)
-	    return GSS_S_UNAVAILABLE;
+    if (m->gm_wrap_iov == NULL)
+        return GSS_S_UNAVAILABLE;
 
-	return (m->gm_wrap_iov)(minor_status, ctx->gc_ctx,
-				conf_req_flag, qop_req, conf_state,
-				iov, iov_count);
+    return (m->gm_wrap_iov)(minor_status, ctx->gc_ctx,
+                            conf_req_flag, qop_req, conf_state,
+                            iov, iov_count);
 }
 
 /**
@@ -83,34 +83,34 @@ gss_wrap_iov(OM_uint32 * minor_status,
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_unwrap_iov(OM_uint32 *minor_status,
-	       gss_ctx_id_t context_handle,
-	       int *conf_state,
-	       gss_qop_t *qop_state,
-	       gss_iov_buffer_desc *iov,
-	       int iov_count)
+               gss_ctx_id_t context_handle,
+               int *conf_state,
+               gss_qop_t *qop_state,
+               gss_iov_buffer_desc *iov,
+               int iov_count)
 {
-	struct _gss_context *ctx = (struct _gss_context *) context_handle;
-	gssapi_mech_interface m;
+    struct _gss_context *ctx = (struct _gss_context *) context_handle;
+    gssapi_mech_interface m;
 
-	if (minor_status)
-	    *minor_status = 0;
-	if (conf_state)
-	    *conf_state = 0;
-	if (qop_state)
-	    *qop_state = 0;
-	if (ctx == NULL)
-	    return GSS_S_NO_CONTEXT;
-	if (iov == NULL && iov_count != 0)
-	    return GSS_S_CALL_INACCESSIBLE_READ;
+    if (minor_status)
+        *minor_status = 0;
+    if (conf_state)
+        *conf_state = 0;
+    if (qop_state)
+        *qop_state = 0;
+    if (ctx == NULL)
+        return GSS_S_NO_CONTEXT;
+    if (iov == NULL && iov_count != 0)
+        return GSS_S_CALL_INACCESSIBLE_READ;
 
-	m = ctx->gc_mech;
+    m = ctx->gc_mech;
 
-	if (m->gm_unwrap_iov == NULL)
-	    return GSS_S_UNAVAILABLE;
+    if (m->gm_unwrap_iov == NULL)
+        return GSS_S_UNAVAILABLE;
 
-	return (m->gm_unwrap_iov)(minor_status, ctx->gc_ctx,
-				  conf_state, qop_state,
-				  iov, iov_count);
+    return (m->gm_unwrap_iov)(minor_status, ctx->gc_ctx,
+                              conf_state, qop_state,
+                              iov, iov_count);
 }
 
 /**
@@ -126,33 +126,33 @@ gss_unwrap_iov(OM_uint32 *minor_status,
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_wrap_iov_length(OM_uint32 * minor_status,
-		    gss_ctx_id_t context_handle,
-		    int conf_req_flag,
-		    gss_qop_t qop_req,
-		    int *conf_state,
-		    gss_iov_buffer_desc *iov,
-		    int iov_count)
+                    gss_ctx_id_t context_handle,
+                    int conf_req_flag,
+                    gss_qop_t qop_req,
+                    int *conf_state,
+                    gss_iov_buffer_desc *iov,
+                    int iov_count)
 {
-	struct _gss_context *ctx = (struct _gss_context *) context_handle;
-	gssapi_mech_interface m;
+    struct _gss_context *ctx = (struct _gss_context *) context_handle;
+    gssapi_mech_interface m;
 
-	if (minor_status)
-	    *minor_status = 0;
-	if (conf_state)
-	    *conf_state = 0;
-	if (ctx == NULL)
-	    return GSS_S_NO_CONTEXT;
-	if (iov == NULL && iov_count != 0)
-	    return GSS_S_CALL_INACCESSIBLE_READ;
+    if (minor_status)
+        *minor_status = 0;
+    if (conf_state)
+        *conf_state = 0;
+    if (ctx == NULL)
+        return GSS_S_NO_CONTEXT;
+    if (iov == NULL && iov_count != 0)
+        return GSS_S_CALL_INACCESSIBLE_READ;
 
-	m = ctx->gc_mech;
+    m = ctx->gc_mech;
 
-	if (m->gm_wrap_iov_length == NULL)
-	    return GSS_S_UNAVAILABLE;
+    if (m->gm_wrap_iov_length == NULL)
+        return GSS_S_UNAVAILABLE;
 
-	return (m->gm_wrap_iov_length)(minor_status, ctx->gc_ctx,
-				       conf_req_flag, qop_req, conf_state,
-				       iov, iov_count);
+    return (m->gm_wrap_iov_length)(minor_status, ctx->gc_ctx,
+                                   conf_req_flag, qop_req, conf_state,
+                                   iov, iov_count);
 }
 
 /**
@@ -164,22 +164,22 @@ gss_wrap_iov_length(OM_uint32 * minor_status,
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_release_iov_buffer(OM_uint32 *minor_status,
-		       gss_iov_buffer_desc *iov,
-		       int iov_count)
+                       gss_iov_buffer_desc *iov,
+                       int iov_count)
 {
     OM_uint32 junk;
     int i;
 
     if (minor_status)
-	*minor_status = 0;
+        *minor_status = 0;
     if (iov == NULL && iov_count != 0)
-	return GSS_S_CALL_INACCESSIBLE_READ;
+        return GSS_S_CALL_INACCESSIBLE_READ;
 
     for (i = 0; i < iov_count; i++) {
-	if ((iov[i].type & GSS_IOV_BUFFER_FLAG_ALLOCATED) == 0)
-	    continue;
-	gss_release_buffer(&junk, &iov[i].buffer);
-	iov[i].type &= ~GSS_IOV_BUFFER_FLAG_ALLOCATED;
+        if ((iov[i].type & GSS_IOV_BUFFER_FLAG_ALLOCATED) == 0)
+            continue;
+        gss_release_buffer(&junk, &iov[i].buffer);
+        iov[i].type &= ~GSS_IOV_BUFFER_FLAG_ALLOCATED;
     }
     return GSS_S_COMPLETE;
 }
@@ -199,17 +199,17 @@ gss_OID_desc GSSAPI_LIB_VARIABLE __gss_c_attr_stream_sizes_oid_desc =
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_context_query_attributes(OM_uint32 *minor_status,
-			     gss_const_ctx_id_t context_handle,
-			     const gss_OID attribute,
-			     void *data,
-			     size_t len)
+                             gss_const_ctx_id_t context_handle,
+                             const gss_OID attribute,
+                             void *data,
+                             size_t len)
 {
     if (minor_status)
-	*minor_status = 0;
+        *minor_status = 0;
 
     if (gss_oid_equal(GSS_C_ATTR_STREAM_SIZES, attribute)) {
-	memset(data, 0, len);
-	return GSS_S_COMPLETE;
+        memset(data, 0, len);
+        return GSS_S_COMPLETE;
     }
 
     return GSS_S_FAILURE;
@@ -223,7 +223,7 @@ gss_context_query_attributes(OM_uint32 *minor_status,
  */
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_wrap_aead(OM_uint32 *minor_status,
-	      gss_ctx_id_t context_handle,
+              gss_ctx_id_t context_handle,
               int conf_req_flag,
               gss_qop_t qop_req,
               gss_buffer_t input_assoc_buffer,
@@ -242,52 +242,52 @@ gss_wrap_aead(OM_uint32 *minor_status,
 
     iov[1].type = GSS_IOV_BUFFER_TYPE_SIGN_ONLY;
     if (input_assoc_buffer)
-	iov[1].buffer = *input_assoc_buffer;
+        iov[1].buffer = *input_assoc_buffer;
 
     iov[2].type = GSS_IOV_BUFFER_TYPE_DATA;
     if (input_payload_buffer)
-	iov[2].buffer.length = input_payload_buffer->length;
+        iov[2].buffer.length = input_payload_buffer->length;
 
     gss_inquire_context(minor_status, context_handle, NULL, NULL,
-			NULL, NULL, &flags, NULL, NULL);
+                        NULL, NULL, &flags, NULL, NULL);
 
     /* krb5 mech rejects padding/trailer if DCE-style is set */
     iov[3].type = (flags & GSS_C_DCE_STYLE) ? GSS_IOV_BUFFER_TYPE_EMPTY
-					    : GSS_IOV_BUFFER_TYPE_PADDING;
+                                            : GSS_IOV_BUFFER_TYPE_PADDING;
     iov[4].type = (flags & GSS_C_DCE_STYLE) ? GSS_IOV_BUFFER_TYPE_EMPTY
-					    : GSS_IOV_BUFFER_TYPE_TRAILER;
+                                            : GSS_IOV_BUFFER_TYPE_TRAILER;
 
     major_status = gss_wrap_iov_length(minor_status, context_handle,
-				       conf_req_flag, qop_req, conf_state,
-				       iov, 5);
+                                       conf_req_flag, qop_req, conf_state,
+                                       iov, 5);
     if (GSS_ERROR(major_status))
-	return major_status;
+        return major_status;
 
     for (i = 0, output_message_buffer->length = 0; i < 5; i++) {
         if (GSS_IOV_BUFFER_TYPE(iov[i].type) == GSS_IOV_BUFFER_TYPE_SIGN_ONLY)
-	    continue;
+            continue;
 
-	output_message_buffer->length += iov[i].buffer.length;
+        output_message_buffer->length += iov[i].buffer.length;
     }
 
     output_message_buffer->value = malloc(output_message_buffer->length);
     if (output_message_buffer->value == NULL) {
-	*minor_status = ENOMEM;
-	return GSS_S_FAILURE;
+        *minor_status = ENOMEM;
+        return GSS_S_FAILURE;
     }
 
     for (i = 0, p = output_message_buffer->value; i < 5; i++) {
-	if (GSS_IOV_BUFFER_TYPE(iov[i].type) == GSS_IOV_BUFFER_TYPE_SIGN_ONLY)
-	    continue;
-	else if (GSS_IOV_BUFFER_TYPE(iov[i].type) == GSS_IOV_BUFFER_TYPE_DATA)
-	    memcpy(p, input_payload_buffer->value, input_payload_buffer->length);
+        if (GSS_IOV_BUFFER_TYPE(iov[i].type) == GSS_IOV_BUFFER_TYPE_SIGN_ONLY)
+            continue;
+        else if (GSS_IOV_BUFFER_TYPE(iov[i].type) == GSS_IOV_BUFFER_TYPE_DATA)
+            memcpy(p, input_payload_buffer->value, input_payload_buffer->length);
 
-	iov[i].buffer.value = p;
-	p += iov[i].buffer.length;
+        iov[i].buffer.value = p;
+        p += iov[i].buffer.length;
     }
 
     major_status = gss_wrap_iov(minor_status, context_handle, conf_req_flag,
-				qop_req, conf_state, iov, 5);
+                                qop_req, conf_state, iov, 5);
     if (GSS_ERROR(major_status))
         gss_release_buffer(&tmp, output_message_buffer);
 
@@ -302,12 +302,12 @@ gss_wrap_aead(OM_uint32 *minor_status,
  */
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_unwrap_aead(OM_uint32 *minor_status,
-		gss_ctx_id_t context_handle,
-		gss_buffer_t input_message_buffer,
-		gss_buffer_t input_assoc_buffer,
-		gss_buffer_t output_payload_buffer,
-		int *conf_state,
-		gss_qop_t *qop_state)
+                gss_ctx_id_t context_handle,
+                gss_buffer_t input_message_buffer,
+                gss_buffer_t input_assoc_buffer,
+                gss_buffer_t output_payload_buffer,
+                int *conf_state,
+                gss_qop_t *qop_state)
 {
     OM_uint32 major_status, tmp;
     gss_iov_buffer_desc iov[3];
@@ -319,16 +319,16 @@ gss_unwrap_aead(OM_uint32 *minor_status,
 
     iov[1].type = GSS_IOV_BUFFER_TYPE_SIGN_ONLY;
     if (input_assoc_buffer)
-	iov[1].buffer = *input_assoc_buffer;
+        iov[1].buffer = *input_assoc_buffer;
 
     iov[2].type = GSS_IOV_BUFFER_TYPE_DATA | GSS_IOV_BUFFER_FLAG_ALLOCATE;
 
     major_status = gss_unwrap_iov(minor_status, context_handle, conf_state,
-				  qop_state, iov, 3);
+                                  qop_state, iov, 3);
     if (GSS_ERROR(major_status))
-	gss_release_iov_buffer(&tmp, &iov[2], 1);
+        gss_release_iov_buffer(&tmp, &iov[2], 1);
     else
-	*output_payload_buffer = iov[2].buffer;
+        *output_payload_buffer = iov[2].buffer;
 
     return major_status;
 }

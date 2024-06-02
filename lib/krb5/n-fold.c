@@ -40,24 +40,24 @@ rr13(uint8_t *dst1, uint8_t *dst2, uint8_t *src, size_t len)
     const int bits = 13 % len;
 
     for (i = 0; i < bytes; i++) {
-	int bb;
-	int b1, s1, b2, s2;
-	/* calculate first bit position of this byte */
-	bb = 8 * i - bits;
-	while(bb < 0)
-	    bb += len;
-	/* byte offset and shift count */
-	b1 = bb / 8;
-	s1 = bb % 8;
+        int bb;
+        int b1, s1, b2, s2;
+        /* calculate first bit position of this byte */
+        bb = 8 * i - bits;
+        while(bb < 0)
+            bb += len;
+        /* byte offset and shift count */
+        b1 = bb / 8;
+        s1 = bb % 8;
 
-	if (bb + 8 > bytes * 8)
-	    /* watch for wraparound */
-	    s2 = (len + 8 - s1) % 8;
-	else
-	    s2 = 8 - s1;
-	b2 = (b1 + 1) % bytes;
-	dst1[i] = (src[b1] << s1) | (src[b2] >> s2);
-	dst2[i] = dst1[i];
+        if (bb + 8 > bytes * 8)
+            /* watch for wraparound */
+            s2 = (len + 8 - s1) % 8;
+        else
+            s2 = 8 - s1;
+        b2 = (b1 + 1) % bytes;
+        dst1[i] = (src[b1] << s1) | (src[b2] >> s2);
+        dst2[i] = dst1[i];
     }
 
     return;
@@ -77,23 +77,23 @@ add1(uint8_t *a, uint8_t *b, size_t len)
     uint32_t left, right;
 
     for (i = len - 1; (i+1) % 4; i--) {
-	x = a[i] + b[i] + carry;
-	carry = x > 0xff;
-	a[i] = x & 0xff;
+        x = a[i] + b[i] + carry;
+        carry = x > 0xff;
+        a[i] = x & 0xff;
     }
 
     for (i = len / 4 - 1; i >= 0; i--) {
-	left = ntohl(((uint32_t *)a)[i]);
-	right = ntohl(((uint32_t *)b)[i]);
-	x = left + right + carry;
-	carry = x < left || x < right;
-	((uint32_t *)a)[i]  = x;
+        left = ntohl(((uint32_t *)a)[i]);
+        right = ntohl(((uint32_t *)b)[i]);
+        x = left + right + carry;
+        carry = x < left || x < right;
+        ((uint32_t *)a)[i]  = x;
     }
 
     for (i = len - 1; (i+1) % 4; i--) {
-	x = a[i] + carry;
-	carry = x > 0xff;
-	a[i] = x & 0xff;
+        x = a[i] + carry;
+        carry = x > 0xff;
+        a[i] = x & 0xff;
     }
 
     for (i = len / 4 - 1; carry && i >= 0; i--) {
@@ -130,18 +130,18 @@ _krb5_n_fold(const void *str, size_t len, void *key, size_t size)
     memcpy(buf1, str, len);
     memcpy(tmp, buf1, len);
     do {
-	l += len;
-	while(l >= size) {
-	    add1(key, tmp, size);
-	    l -= size;
-	    if(l == 0)
-		break;
-	    memmove(tmp, tmp + size, l);
-	}
-	rr13(tmp + l, buf2, buf1, len * 8);
-	tmpbuf = buf1;
-	buf1 = buf2;
-	buf2 = tmpbuf;
+        l += len;
+        while(l >= size) {
+            add1(key, tmp, size);
+            l -= size;
+            if(l == 0)
+                break;
+            memmove(tmp, tmp + size, l);
+        }
+        rr13(tmp + l, buf2, buf1, len * 8);
+        tmpbuf = buf1;
+        buf1 = buf2;
+        buf2 = tmpbuf;
     } while(l != 0);
 
     memset(tmp, 0, maxlen + 2 * len);

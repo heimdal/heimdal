@@ -30,13 +30,13 @@
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_release_buffer(OM_uint32 *minor_status,
-		   gss_buffer_t buffer)
+                   gss_buffer_t buffer)
 {
 
-	*minor_status = 0;
-	if (buffer->value)
-		free(buffer->value);
-	_mg_buffer_zero(buffer);
+    *minor_status = 0;
+    if (buffer->value)
+        free(buffer->value);
+    _mg_buffer_zero(buffer);
 
-	return (GSS_S_COMPLETE);
+    return (GSS_S_COMPLETE);
 }

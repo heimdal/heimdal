@@ -71,44 +71,44 @@ krb5_error_code store_string(krb5_storage *, const char *);
 #define ret16(_client, num)					\
     do {							\
         if (krb5_ret_int16((_client)->sock, &(num)) != 0)	\
-	    errx(1, "krb5_ret_int16 " #num);		\
+            errx(1, "krb5_ret_int16 " #num);		\
     } while(0)
 
 #define ret32(_client, num)					\
     do {							\
         if (krb5_ret_int32((_client)->sock, &(num)) != 0)	\
-	    errx(1, "krb5_ret_int32 " #num);		\
+            errx(1, "krb5_ret_int32 " #num);		\
     } while(0)
 
 #define retdata(_client, data)					\
     do {							\
         if (krb5_ret_data((_client)->sock, &(data)) != 0)	\
-	    errx(1, "krb5_ret_data " #data);		\
+            errx(1, "krb5_ret_data " #data);		\
     } while(0)
 
 #define retstring(_client, data)					\
     do {							\
         if (krb5_ret_string((_client)->sock, &(data)) != 0)	\
-	    errx(1, "krb5_ret_data " #data);		\
+            errx(1, "krb5_ret_data " #data);		\
     } while(0)
 
 
 #define put32(_client, num)					\
     do {							\
         if (krb5_store_int32((_client)->sock, num) != 0)	\
-	    errx(1, "krb5_store_int32 " #num);	\
+            errx(1, "krb5_store_int32 " #num);	\
     } while(0)
 
 #define putdata(_client, data)					\
     do {							\
         if (krb5_store_data((_client)->sock, data) != 0)	\
-	    errx(1, "krb5_store_data " #data);	\
+            errx(1, "krb5_store_data " #data);	\
     } while(0)
 
 #define putstring(_client, str)					\
     do {							\
         if (store_string((_client)->sock, str) != 0)		\
-	    errx(1, "krb5_store_str " #str);			\
+            errx(1, "krb5_store_str " #str);			\
     } while(0)
 
 char *** permutate_all(struct getarg_strings *, size_t *);

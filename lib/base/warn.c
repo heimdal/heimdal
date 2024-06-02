@@ -40,12 +40,12 @@
 #include <err.h>
 
 static heim_error_code _warnerr(heim_context context, int do_errtext,
-	 heim_error_code code, int level, const char *fmt, va_list ap)
+                                heim_error_code code, int level, const char *fmt, va_list ap)
 	__attribute__ ((__format__ (__printf__, 5, 0)));
 
 static heim_error_code
 _warnerr(heim_context context, int do_errtext,
-	 heim_error_code code, int level, const char *fmt, va_list ap)
+         heim_error_code code, int level, const char *fmt, va_list ap)
 {
     char xfmt[7] = "";
     const char *args[2], **arg;
@@ -56,30 +56,30 @@ _warnerr(heim_context context, int do_errtext,
     args[0] = args[1] = NULL;
     arg = args;
     if(fmt){
-	strlcat(xfmt, "%s", sizeof(xfmt));
-	if(do_errtext)
-	    strlcat(xfmt, ": ", sizeof(xfmt));
-	ret = vasprintf(&msg, fmt, ap);
-	if(ret < 0 || msg == NULL)
-	    return ENOMEM;
-	*arg++ = msg;
+        strlcat(xfmt, "%s", sizeof(xfmt));
+        if(do_errtext)
+            strlcat(xfmt, ": ", sizeof(xfmt));
+        ret = vasprintf(&msg, fmt, ap);
+        if(ret < 0 || msg == NULL)
+            return ENOMEM;
+        *arg++ = msg;
     }
     if (do_errtext) {
-	strlcat(xfmt, "%s", sizeof(xfmt));
+        strlcat(xfmt, "%s", sizeof(xfmt));
 
-	err_str = heim_get_error_message(context, code);
-	if (err_str != NULL) {
-	    *arg = err_str;
-	} else {
-	    *arg= "<unknown error>";
-	}
+        err_str = heim_get_error_message(context, code);
+        if (err_str != NULL) {
+            *arg = err_str;
+        } else {
+            *arg= "<unknown error>";
+        }
     }
 
     if (context && heim_get_warn_dest(context))
         heim_log(context, heim_get_warn_dest(context), level, xfmt, args[0],
                  args[1]);
     else
-	warnx(xfmt, args[0], args[1]);
+        warnx(xfmt, args[0], args[1]);
     free(msg);
     heim_free_error_message(context, err_str);
     return 0;
@@ -109,7 +109,7 @@ _warnerr(heim_context context, int do_errtext,
 
 heim_error_code
 heim_vwarn(heim_context context, heim_error_code code,
-	   const char *fmt, va_list ap)
+           const char *fmt, va_list ap)
      __attribute__ ((__format__ (__printf__, 3, 0)))
 {
     return _warnerr(context, 1, code, 1, fmt, ap);

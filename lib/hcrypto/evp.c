@@ -191,11 +191,11 @@ int
 EVP_MD_CTX_cleanup(EVP_MD_CTX *ctx) HC_DEPRECATED
 {
     if (ctx->md && ctx->md->cleanup) {
-	int ret = (ctx->md->cleanup)(ctx->ptr);
-	if (!ret)
-	    return ret;
+        int ret = (ctx->md->cleanup)(ctx->ptr);
+        if (!ret)
+            return ret;
     } else if (ctx->md) {
-	memset_s(ctx->ptr, ctx->md->ctx_size, 0, ctx->md->ctx_size);
+        memset_s(ctx->ptr, ctx->md->ctx_size, 0, ctx->md->ctx_size);
     }
     ctx->md = NULL;
     ctx->engine = NULL;
@@ -268,15 +268,15 @@ int
 EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *md, ENGINE *engine)
 {
     if (ctx->md != md || ctx->engine != engine) {
-	EVP_MD_CTX_cleanup(ctx);
-	ctx->md = md;
-	ctx->engine = engine;
+        EVP_MD_CTX_cleanup(ctx);
+        ctx->md = md;
+        ctx->engine = engine;
         if (md == NULL)
             return 0;
 
-	ctx->ptr = calloc(1, md->ctx_size);
-	if (ctx->ptr == NULL)
-	    return 0;
+        ctx->ptr = calloc(1, md->ctx_size);
+        if (ctx->ptr == NULL)
+            return 0;
     }
     if (ctx->md == 0)
         return 0;
@@ -320,7 +320,7 @@ EVP_DigestFinal_ex(EVP_MD_CTX *ctx, void *hash, unsigned int *size)
 {
     (ctx->md->final)(hash, ctx->ptr);
     if (size)
-	*size = ctx->md->hash_size;
+        *size = ctx->md->hash_size;
     return 1;
 }
 
@@ -343,23 +343,23 @@ EVP_DigestFinal_ex(EVP_MD_CTX *ctx, void *hash, unsigned int *size)
 
 int
 EVP_Digest(const void *data, size_t dsize, void *hash, unsigned int *hsize,
-	   const EVP_MD *md, ENGINE *engine)
+           const EVP_MD *md, ENGINE *engine)
 {
     EVP_MD_CTX *ctx;
     int ret;
 
     ctx = EVP_MD_CTX_create();
     if (ctx == NULL)
-	return 0;
+        return 0;
     ret = EVP_DigestInit_ex(ctx, md, engine);
     if (ret != 1) {
-	EVP_MD_CTX_destroy(ctx);
-	return ret;
+        EVP_MD_CTX_destroy(ctx);
+        return ret;
     }
     ret = EVP_DigestUpdate(ctx, data, dsize);
     if (ret != 1) {
-	EVP_MD_CTX_destroy(ctx);
-	return ret;
+        EVP_MD_CTX_destroy(ctx);
+        return ret;
     }
     ret = EVP_DigestFinal_ex(ctx, hash, hsize);
     EVP_MD_CTX_destroy(ctx);
@@ -511,13 +511,13 @@ const EVP_MD *
 EVP_md_null(void)
 {
     static const struct hc_evp_md null = {
-	0,
-	0,
-	0,
-	(hc_evp_md_init)null_Init,
-	(hc_evp_md_update)null_Update,
-	(hc_evp_md_final)null_Final,
-	NULL
+        0,
+        0,
+        0,
+        (hc_evp_md_init)null_Init,
+        (hc_evp_md_update)null_Update,
+        (hc_evp_md_final)null_Final,
+        NULL
     };
     return &null;
 }
@@ -599,15 +599,15 @@ int
 EVP_CIPHER_CTX_cleanup(EVP_CIPHER_CTX *c)
 {
     if (c->cipher && c->cipher->cleanup) {
-	int ret = c->cipher->cleanup(c);
-	if (!ret)
-	    return ret;
+        int ret = c->cipher->cleanup(c);
+        if (!ret)
+            return ret;
     }
     if (c->cipher_data) {
         if (c->cipher)
             memset_s(c->cipher_data, c->cipher->ctx_size, 0, c->cipher->ctx_size);
-	free(c->cipher_data);
-	c->cipher_data = NULL;
+        free(c->cipher_data);
+        c->cipher_data = NULL;
     }
     return 1;
 }
@@ -627,8 +627,8 @@ int
 EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *c, int length)
 {
     if ((c->cipher->flags & EVP_CIPH_VARIABLE_LENGTH) && length > 0) {
-	c->key_len = length;
-	return 1;
+        c->key_len = length;
+        return 1;
     }
     return 0;
 }
@@ -786,59 +786,59 @@ EVP_CIPHER_CTX_set_app_data(EVP_CIPHER_CTX *ctx, void *data)
 
 int
 EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *c, ENGINE *engine,
-		  const void *key, const void *iv, int encp)
+                  const void *key, const void *iv, int encp)
 {
     ctx->buf_len = 0;
 
     if (encp == -1)
-	encp = ctx->encrypt;
+        encp = ctx->encrypt;
     else
-	ctx->encrypt = (encp ? 1 : 0);
+        ctx->encrypt = (encp ? 1 : 0);
 
     if (c && (c != ctx->cipher)) {
-	EVP_CIPHER_CTX_cleanup(ctx);
-	ctx->cipher = c;
-	ctx->key_len = c->key_len;
+        EVP_CIPHER_CTX_cleanup(ctx);
+        ctx->cipher = c;
+        ctx->key_len = c->key_len;
 
-	ctx->cipher_data = calloc(1, c->ctx_size);
-	if (ctx->cipher_data == NULL && c->ctx_size != 0)
-	    return 0;
+        ctx->cipher_data = calloc(1, c->ctx_size);
+        if (ctx->cipher_data == NULL && c->ctx_size != 0)
+            return 0;
 
-	/* assume block size is a multiple of 2 */
-	ctx->block_mask = EVP_CIPHER_block_size(c) - 1;
+        /* assume block size is a multiple of 2 */
+        ctx->block_mask = EVP_CIPHER_block_size(c) - 1;
 
         if ((ctx->cipher->flags & EVP_CIPH_CTRL_INIT) &&
             !EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_INIT, 0, NULL))
             return 0;
 
     } else if (ctx->cipher == NULL) {
-	/* reuse of cipher, but not any cipher ever set! */
-	return 0;
+        /* reuse of cipher, but not any cipher ever set! */
+        return 0;
     }
 
     switch (EVP_CIPHER_CTX_mode(ctx)) {
-    case EVP_CIPH_CBC_MODE:
+        case EVP_CIPH_CBC_MODE:
 
-	assert(EVP_CIPHER_CTX_iv_length(ctx) <= sizeof(ctx->iv));
+            assert(EVP_CIPHER_CTX_iv_length(ctx) <= sizeof(ctx->iv));
 
-	if (iv)
-	    memcpy(ctx->oiv, iv, EVP_CIPHER_CTX_iv_length(ctx));
-	memcpy(ctx->iv, ctx->oiv, EVP_CIPHER_CTX_iv_length(ctx));
-	break;
+            if (iv)
+                memcpy(ctx->oiv, iv, EVP_CIPHER_CTX_iv_length(ctx));
+            memcpy(ctx->iv, ctx->oiv, EVP_CIPHER_CTX_iv_length(ctx));
+            break;
 
-    case EVP_CIPH_STREAM_CIPHER:
-	break;
-    case EVP_CIPH_CFB8_MODE:
-	if (iv)
-	    memcpy(ctx->iv, iv, EVP_CIPHER_CTX_iv_length(ctx));
-	break;
+        case EVP_CIPH_STREAM_CIPHER:
+            break;
+        case EVP_CIPH_CFB8_MODE:
+            if (iv)
+                memcpy(ctx->iv, iv, EVP_CIPHER_CTX_iv_length(ctx));
+            break;
 
-    default:
-	return 0;
+        default:
+            return 0;
     }
 
     if (key || (ctx->cipher->flags & EVP_CIPH_ALWAYS_CALL_INIT))
-	return ctx->cipher->init(ctx, key, iv, encp);
+        return ctx->cipher->init(ctx, key, iv, encp);
 
     return 1;
 }
@@ -864,7 +864,7 @@ EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *c, ENGINE *engine,
 
 int
 EVP_CipherUpdate(EVP_CIPHER_CTX *ctx, void *out, int *outlen,
-		 void *in, size_t inlen)
+                 void *in, size_t inlen)
 {
     int ret, left, blocksize;
 
@@ -877,12 +877,12 @@ EVP_CipherUpdate(EVP_CIPHER_CTX *ctx, void *out, int *outlen,
      * data.
      */
     if (ctx->buf_len == 0 && inlen && (inlen & ctx->block_mask) == 0) {
-	ret = (*ctx->cipher->do_cipher)(ctx, out, in, inlen);
-	if (ret == 1)
-	    *outlen = inlen;
+        ret = (*ctx->cipher->do_cipher)(ctx, out, in, inlen);
+        if (ret == 1)
+            *outlen = inlen;
         else
-	    *outlen = 0;
-	return ret;
+            *outlen = 0;
+        return ret;
     }
 
     blocksize = EVP_CIPHER_CTX_block_size(ctx);
@@ -890,30 +890,30 @@ EVP_CipherUpdate(EVP_CIPHER_CTX *ctx, void *out, int *outlen,
     assert(left > 0);
 
     if (ctx->buf_len) {
-	/* If we can't fill one block in the buffer, save the input there */
-	if (inlen < left) {
-	    memcpy(ctx->buf + ctx->buf_len, in, inlen);
-	    ctx->buf_len += inlen;
-	    return 1;
-	}
+        /* If we can't fill one block in the buffer, save the input there */
+        if (inlen < left) {
+            memcpy(ctx->buf + ctx->buf_len, in, inlen);
+            ctx->buf_len += inlen;
+            return 1;
+        }
 
-	/* Fill the buffer and encrypt */
-	memcpy(ctx->buf + ctx->buf_len, in, left);
-	ret = (*ctx->cipher->do_cipher)(ctx, out, ctx->buf, blocksize);
-	memset_s(ctx->buf, blocksize, 0, blocksize);
-	if (ret != 1)
-	    return ret;
+        /* Fill the buffer and encrypt */
+        memcpy(ctx->buf + ctx->buf_len, in, left);
+        ret = (*ctx->cipher->do_cipher)(ctx, out, ctx->buf, blocksize);
+        memset_s(ctx->buf, blocksize, 0, blocksize);
+        if (ret != 1)
+            return ret;
 
-	*outlen += blocksize;
-	inlen -= left;
-	in = ((unsigned char *)in) + left;
-	out = ((unsigned char *)out) + blocksize;
-	ctx->buf_len = 0;
+        *outlen += blocksize;
+        inlen -= left;
+        in = ((unsigned char *)in) + left;
+        out = ((unsigned char *)out) + blocksize;
+        ctx->buf_len = 0;
     }
 
     if (inlen) {
-	ctx->buf_len = (inlen & ctx->block_mask);
-	inlen &= ~ctx->block_mask;
+        ctx->buf_len = (inlen & ctx->block_mask);
+        inlen &= ~ctx->block_mask;
 
         if (inlen) {
             /* Encrypt all the whole blocks of input that we have */
@@ -922,11 +922,11 @@ EVP_CipherUpdate(EVP_CIPHER_CTX *ctx, void *out, int *outlen,
                 return ret;
         }
 
-	*outlen += inlen;
+        *outlen += inlen;
 
         /* Save the tail of the input, if any */
-	in = ((unsigned char *)in) + inlen;
-	memcpy(ctx->buf, in, ctx->buf_len);
+        in = ((unsigned char *)in) + inlen;
+        memcpy(ctx->buf, in, ctx->buf_len);
     }
 
     return 1;
@@ -955,21 +955,21 @@ EVP_CipherFinal_ex(EVP_CIPHER_CTX *ctx, void *out, int *outlen)
     *outlen = 0;
 
     if (ctx->buf_len) {
-	int ret, left, blocksize;
+        int ret, left, blocksize;
 
-	blocksize = EVP_CIPHER_CTX_block_size(ctx);
+        blocksize = EVP_CIPHER_CTX_block_size(ctx);
 
-	left = blocksize - ctx->buf_len;
-	assert(left > 0);
+        left = blocksize - ctx->buf_len;
+        assert(left > 0);
 
-	/* zero fill local buffer */
-	memset(ctx->buf + ctx->buf_len, 0, left);
-	ret = (*ctx->cipher->do_cipher)(ctx, out, ctx->buf, blocksize);
-	memset_s(ctx->buf, blocksize, 0, blocksize);
-	if (ret != 1)
-	    return ret;
+        /* zero fill local buffer */
+        memset(ctx->buf + ctx->buf_len, 0, left);
+        ret = (*ctx->cipher->do_cipher)(ctx, out, ctx->buf, blocksize);
+        memset_s(ctx->buf, blocksize, 0, blocksize);
+        if (ret != 1)
+            return ret;
 
-	*outlen += blocksize;
+        *outlen += blocksize;
     }
 
     return 1;
@@ -998,18 +998,18 @@ EVP_Cipher(EVP_CIPHER_CTX *ctx, void *out, const void *in,size_t size)
 
 static int
 enc_null_init(EVP_CIPHER_CTX *ctx,
-		  const unsigned char * key,
-		  const unsigned char * iv,
-		  int encp)
+              const unsigned char * key,
+              const unsigned char * iv,
+              int encp)
 {
     return 1;
 }
 
 static int
 enc_null_do_cipher(EVP_CIPHER_CTX *ctx,
-	      unsigned char *out,
-	      const unsigned char *in,
-	      unsigned int size)
+                   unsigned char *out,
+                   const unsigned char *in,
+                   unsigned int size)
 {
     memmove(out, in, size);
     return 1;
@@ -1033,19 +1033,19 @@ const EVP_CIPHER *
 EVP_enc_null(void)
 {
     static const EVP_CIPHER enc_null = {
-	0,
-	0,
-	0,
-	0,
-	EVP_CIPH_CBC_MODE,
-	enc_null_init,
-	enc_null_do_cipher,
-	enc_null_cleanup,
-	0,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+        0,
+        0,
+        0,
+        0,
+        EVP_CIPH_CBC_MODE,
+        enc_null_init,
+        enc_null_do_cipher,
+        enc_null_cleanup,
+        0,
+        NULL,
+        NULL,
+        NULL,
+        NULL
     };
     return &enc_null;
 }
@@ -1367,8 +1367,8 @@ EVP_get_cipherbyname(const char *name)
 {
     int i;
     for (i = 0; i < sizeof(cipher_name)/sizeof(cipher_name[0]); i++) {
-	if (strcasecmp(cipher_name[i].name, name) == 0)
-	    return (*cipher_name[i].func)();
+        if (strcasecmp(cipher_name[i].name, name) == 0)
+            return (*cipher_name[i].func)();
     }
     return NULL;
 }
@@ -1404,12 +1404,12 @@ EVP_get_cipherbyname(const char *name)
 
 int
 EVP_BytesToKey(const EVP_CIPHER *type,
-	       const EVP_MD *md,
-	       const void *salt,
-	       const void *data, size_t datalen,
-	       unsigned int count,
-	       void *keydata,
-	       void *ivdata)
+               const EVP_MD *md,
+               const void *salt,
+               const void *data, size_t datalen,
+               unsigned int count,
+               void *keydata,
+               void *ivdata)
 {
     unsigned int ivlen, keylen;
     int first = 0;
@@ -1423,57 +1423,57 @@ EVP_BytesToKey(const EVP_CIPHER *type,
     ivlen = EVP_CIPHER_iv_length(type);
 
     if (data == NULL)
-	return keylen;
+        return keylen;
 
     buf = malloc(EVP_MD_size(md));
     if (buf == NULL)
-	return -1;
+        return -1;
 
     EVP_MD_CTX_init(&c);
 
     first = 1;
     while (1) {
-	EVP_DigestInit_ex(&c, md, NULL);
-	if (!first)
-	    EVP_DigestUpdate(&c, buf, mds);
-	first = 0;
-	EVP_DigestUpdate(&c,data,datalen);
+        EVP_DigestInit_ex(&c, md, NULL);
+        if (!first)
+            EVP_DigestUpdate(&c, buf, mds);
+        first = 0;
+        EVP_DigestUpdate(&c,data,datalen);
 
 #define PKCS5_SALT_LEN 8
 
-	if (salt)
-	    EVP_DigestUpdate(&c, salt, PKCS5_SALT_LEN);
+        if (salt)
+            EVP_DigestUpdate(&c, salt, PKCS5_SALT_LEN);
 
-	EVP_DigestFinal_ex(&c, buf, &mds);
-	assert(mds == EVP_MD_size(md));
+        EVP_DigestFinal_ex(&c, buf, &mds);
+        assert(mds == EVP_MD_size(md));
 
-	for (i = 1; i < count; i++) {
-	    EVP_DigestInit_ex(&c, md, NULL);
-	    EVP_DigestUpdate(&c, buf, mds);
-	    EVP_DigestFinal_ex(&c, buf, &mds);
-	    assert(mds == EVP_MD_size(md));
-	}
+        for (i = 1; i < count; i++) {
+            EVP_DigestInit_ex(&c, md, NULL);
+            EVP_DigestUpdate(&c, buf, mds);
+            EVP_DigestFinal_ex(&c, buf, &mds);
+            assert(mds == EVP_MD_size(md));
+        }
 
-	i = 0;
-	if (keylen) {
-	    size_t sz = min(keylen, mds);
-	    if (key) {
-		memcpy(key, buf, sz);
-		key += sz;
-	    }
-	    keylen -= sz;
-	    i += sz;
-	}
-	if (ivlen && mds > i) {
-	    size_t sz = min(ivlen, (mds - i));
-	    if (iv) {
-		memcpy(iv, &buf[i], sz);
-		iv += sz;
-	    }
-	    ivlen -= sz;
-	}
-	if (keylen == 0 && ivlen == 0)
-	    break;
+        i = 0;
+        if (keylen) {
+            size_t sz = min(keylen, mds);
+            if (key) {
+                memcpy(key, buf, sz);
+                key += sz;
+            }
+            keylen -= sz;
+            i += sz;
+        }
+        if (ivlen && mds > i) {
+            size_t sz = min(ivlen, (mds - i));
+            if (iv) {
+                memcpy(iv, &buf[i], sz);
+                iv += sz;
+            }
+            ivlen -= sz;
+        }
+        if (keylen == 0 && ivlen == 0)
+            break;
     }
 
     EVP_MD_CTX_cleanup(&c);
@@ -1497,9 +1497,9 @@ int
 EVP_CIPHER_CTX_rand_key(EVP_CIPHER_CTX *ctx, void *key)
 {
     if (ctx->cipher->flags & EVP_CIPH_RAND_KEY)
-	return EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_RAND_KEY, 0, key);
+        return EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_RAND_KEY, 0, key);
     if (RAND_bytes(key, ctx->key_len) != 1)
-	return 0;
+        return 0;
     return 1;
 }
 
@@ -1520,7 +1520,7 @@ int
 EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *data)
 {
     if (ctx->cipher == NULL || ctx->cipher->ctrl == NULL)
-	return 0;
+        return 0;
     return (*ctx->cipher->ctrl)(ctx, type, arg, data);
 }
 

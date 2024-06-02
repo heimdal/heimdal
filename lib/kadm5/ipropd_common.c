@@ -51,19 +51,19 @@ setup_signal(void)
 {
 #ifdef HAVE_SIGACTION
     {
-	struct sigaction sa;
+        struct sigaction sa;
 
         memset(&sa, 0, sizeof(sa));
-	sa.sa_flags = 0;
-	sa.sa_handler = sigterm;
-	sigemptyset(&sa.sa_mask);
+        sa.sa_flags = 0;
+        sa.sa_handler = sigterm;
+        sigemptyset(&sa.sa_mask);
 
-	sigaction(SIGINT, &sa, NULL);
-	sigaction(SIGTERM, &sa, NULL);
-	sigaction(SIGXCPU, &sa, NULL);
+        sigaction(SIGINT, &sa, NULL);
+        sigaction(SIGTERM, &sa, NULL);
+        sigaction(SIGXCPU, &sa, NULL);
 
-	sa.sa_handler = SIG_IGN;
-	sigaction(SIGPIPE, &sa, NULL);
+        sa.sa_handler = SIG_IGN;
+        sigaction(SIGPIPE, &sa, NULL);
     }
 #else
     signal(SIGINT, sigterm);
@@ -176,26 +176,26 @@ restarter(krb5_context context, size_t *countp)
         pid = -1;
         if (WIFEXITED(status)) {
             switch (WEXITSTATUS(status)) {
-            case IPROPD_DONE:
-                exit(0);
-            case IPROPD_RESTART_SLOW:
-                if (exit_flag)
-                    exit(1);
-                krb5_warnx(context, "Waiting 2 minutes to restart");
-                sleep(120);
-                continue;
-            case IPROPD_FATAL:
-                krb5_errx(context, WEXITSTATUS(status),
-                         "Sockets and pipes not supported for "
-                         "iprop log files");
-            case IPROPD_RESTART:
-            default:
-                if (exit_flag)
-                    exit(1);
-                /* Add exponential backoff (with max backoff)? */
-                krb5_warnx(context, "Waiting 30 seconds to restart");
-                sleep(30);
-                continue;
+                case IPROPD_DONE:
+                    exit(0);
+                case IPROPD_RESTART_SLOW:
+                    if (exit_flag)
+                        exit(1);
+                    krb5_warnx(context, "Waiting 2 minutes to restart");
+                    sleep(120);
+                    continue;
+                case IPROPD_FATAL:
+                    krb5_errx(context, WEXITSTATUS(status),
+                             "Sockets and pipes not supported for "
+                             "iprop log files");
+                case IPROPD_RESTART:
+                default:
+                    if (exit_flag)
+                        exit(1);
+                    /* Add exponential backoff (with max backoff)? */
+                    krb5_warnx(context, "Waiting 30 seconds to restart");
+                    sleep(30);
+                    continue;
             }
         }
         /* else */
@@ -239,20 +239,20 @@ restarter(krb5_context context, size_t *countp)
         exit(WEXITSTATUS(status));
     if (WIFSIGNALED(status)) {
         switch (WTERMSIG(status)) {
-        case SIGTERM:
-        case SIGXCPU:
-        case SIGINT:
-            exit(0);
-        default:
-            /*
-             * Attempt to set the same exit status for the parent as for
-             * the child.
-             */
-            kill(getpid(), WTERMSIG(status));
-            /*
-             * We can get past the self-kill if we inherited a SIG_IGN
-             * disposition that the child reset to SIG_DFL.
-             */
+            case SIGTERM:
+            case SIGXCPU:
+            case SIGINT:
+                exit(0);
+            default:
+                /*
+                 * Attempt to set the same exit status for the parent as for
+                 * the child.
+                 */
+                kill(getpid(), WTERMSIG(status));
+                /*
+                 * We can get past the self-kill if we inherited a SIG_IGN
+                 * disposition that the child reset to SIG_DFL.
+                 */
         }
     }
     exit(1);

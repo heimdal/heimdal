@@ -100,10 +100,10 @@ p11_module_load(CK_FUNCTION_LIST_PTR_PTR ppFunctionList)
     }
 #ifdef PKCS11_MODULE_PATH
     if (pkcs11_module_handle == NULL) {
-	pkcs11_module_handle =
-	    dlopen(PKCS11_MODULE_PATH,
-		   RTLD_LAZY | RTLD_LOCAL | RTLD_GROUP | RTLD_NODELETE);
-	if (pkcs11_module_handle == NULL)
+        pkcs11_module_handle =
+            dlopen(PKCS11_MODULE_PATH,
+                   RTLD_LAZY | RTLD_LOCAL | RTLD_GROUP | RTLD_NODELETE);
+        if (pkcs11_module_handle == NULL)
             fprintf(stderr, "p11_module_load(%s): %s\n", PKCS11_MODULE_PATH, dlerror());
     }
 #endif
@@ -111,7 +111,7 @@ p11_module_load(CK_FUNCTION_LIST_PTR_PTR ppFunctionList)
         return CKR_LIBRARY_LOAD_FAILED;
 
     C_GetFunctionList_fn = (CK_RV (*)(CK_FUNCTION_LIST_PTR_PTR))
-	dlsym(pkcs11_module_handle, "C_GetFunctionList");
+        dlsym(pkcs11_module_handle, "C_GetFunctionList");
     if (C_GetFunctionList_fn == NULL) {
         dlclose(pkcs11_module_handle);
         return CKR_LIBRARY_LOAD_FAILED;
@@ -203,9 +203,9 @@ p11_session_init(CK_MECHANISM_TYPE mechanismType,
     for (i = 0; i < ulSlotCount; i++) {
         rv = p11_module->C_GetMechanismInfo(pSlotList[i], mechanismType, &info);
         if (rv == CKR_OK) {
-	    *pFlags = info.flags;
-	    break;
-	}
+            *pFlags = info.flags;
+            break;
+        }
     }
 
     if (i == ulSlotCount) {
@@ -233,7 +233,7 @@ p11_mech_available_p(CK_MECHANISM_TYPE mechanismType, CK_FLAGS reqFlags)
 
     rv = p11_session_init(mechanismType, NULL, &flags);
     if (rv != CKR_OK)
-	return 0;
+        return 0;
 
     return (flags & reqFlags) == reqFlags;
 }
@@ -244,28 +244,28 @@ p11_key_type_for_mech(CK_MECHANISM_TYPE mechanismType)
     CK_KEY_TYPE keyType = 0;
 
     switch (mechanismType) {
-    case CKM_RC2_CBC:
-        keyType = CKK_RC2;
-        break;
-    case CKM_RC4:
-        keyType = CKK_RC4;
-        break;
-    case CKM_DES_CBC:
-        keyType = CKK_DES;
-        break;
-    case CKM_DES3_CBC:
-        keyType = CKK_DES3;
-        break;
-    case CKM_AES_CBC:
-    case CKM_AES_CFB8:
-        keyType = CKK_AES;
-        break;
-    case CKM_CAMELLIA_CBC:
-        keyType = CKK_CAMELLIA;
-        break;
-    default:
-        assert(0 && "Unknown PKCS#11 mechanism type");
-        break;
+        case CKM_RC2_CBC:
+            keyType = CKK_RC2;
+            break;
+        case CKM_RC4:
+            keyType = CKK_RC4;
+            break;
+        case CKM_DES_CBC:
+            keyType = CKK_DES;
+            break;
+        case CKM_DES3_CBC:
+            keyType = CKK_DES3;
+            break;
+        case CKM_AES_CBC:
+        case CKM_AES_CFB8:
+            keyType = CKK_AES;
+            break;
+        case CKM_CAMELLIA_CBC:
+            keyType = CKK_CAMELLIA;
+            break;
+        default:
+            assert(0 && "Unknown PKCS#11 mechanism type");
+            break;
     }
 
     return keyType;
@@ -312,10 +312,10 @@ p11_key_init(EVP_CIPHER_CTX *ctx,
         if (rv != CKR_OK)
             goto cleanup;
 
-	if ((flags & (CKF_ENCRYPT|CKF_DECRYPT)) != (CKF_ENCRYPT|CKF_DECRYPT)) {
-	    rv = CKR_MECHANISM_INVALID;
-	    goto cleanup;
-	}
+        if ((flags & (CKF_ENCRYPT|CKF_DECRYPT)) != (CKF_ENCRYPT|CKF_DECRYPT)) {
+            rv = CKR_MECHANISM_INVALID;
+            goto cleanup;
+        }
     }
 
     if (key != NULL) {
@@ -400,18 +400,18 @@ p11_md_hash_init(CK_MECHANISM_TYPE mechanismType, EVP_MD_CTX *ctx)
 
     rv = p11_session_init(mechanismType, &p11ctx->hSession, &flags);
     if (rv != CKR_OK)
-	goto cleanup;
+        goto cleanup;
 
     if ((flags & CKF_DIGEST) != CKF_DIGEST) {
-	rv = CKR_MECHANISM_INVALID;
-	goto cleanup;
+        rv = CKR_MECHANISM_INVALID;
+        goto cleanup;
     }
 
     assert(p11_module != NULL);
 
     rv = p11_module->C_DigestInit(p11ctx->hSession, &mechanism);
 
-  cleanup:
+cleanup:
     return rv == CKR_OK;
 }
 

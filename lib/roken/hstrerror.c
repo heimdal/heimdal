@@ -68,11 +68,11 @@ ROKEN_LIB_FUNCTION const char * ROKEN_LIB_CALL
 hstrerror(int herr)
 {
     if (0 <= herr && herr < h_nerr)
-	return h_errlist[herr];
+        return h_errlist[herr];
     else if(herr == -17)
-	return "unknown error";
+        return "unknown error";
     else
-	return "Error number out of range (hstrerror)";
+        return "Error number out of range (hstrerror)";
 }
 
 #endif

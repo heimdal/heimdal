@@ -51,8 +51,8 @@
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_add_oid_set_member (OM_uint32 * minor_status,
-			const gss_OID member_oid,
-			gss_OID_set * oid_set)
+                        const gss_OID member_oid,
+                        gss_OID_set * oid_set)
 {
     gss_OID tmp, interned_oid;
     size_t n;
@@ -61,24 +61,24 @@ gss_add_oid_set_member (OM_uint32 * minor_status,
 
     res = gss_test_oid_set_member(minor_status, member_oid, *oid_set, &present);
     if (res != GSS_S_COMPLETE)
-	return res;
+        return res;
 
     if (present) {
-	*minor_status = 0;
-	return GSS_S_COMPLETE;
+        *minor_status = 0;
+        return GSS_S_COMPLETE;
     }
 
     n = (*oid_set)->count + 1;
     tmp = realloc ((*oid_set)->elements, n * sizeof(gss_OID_desc));
     if (tmp == NULL) {
-	*minor_status = ENOMEM;
-	return GSS_S_FAILURE;
+        *minor_status = ENOMEM;
+        return GSS_S_FAILURE;
     }
     (*oid_set)->elements = tmp;
 
     res = _gss_intern_oid(minor_status, member_oid, &interned_oid);
     if (res != GSS_S_COMPLETE)
-	return res;
+        return res;
 
     (*oid_set)->count = n;
     (*oid_set)->elements[n-1] = *interned_oid;

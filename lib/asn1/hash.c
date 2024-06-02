@@ -40,12 +40,12 @@
 RCSID("$Id$");
 
 static Hashentry *_search(Hashtab * htab,	/* The hash table */
-			  void *ptr);	/* And key */
+                          void *ptr);   /* And key */
 
 Hashtab *
 hashtabnew(int sz,
-	   int (*cmp) (void *, void *),
-	   unsigned (*hash) (void *))
+           int (*cmp) (void *, void *),
+           unsigned (*hash) (void *))
 {
     Hashtab *htab;
     int i;
@@ -54,10 +54,10 @@ hashtabnew(int sz,
 
     htab = (Hashtab *) malloc(sizeof(Hashtab) + (sz - 1) * sizeof(Hashentry *));
     if (htab == NULL)
-	return NULL;
+        return NULL;
 
     for (i = 0; i < sz; ++i)
-	htab->tab[i] = NULL;
+        htab->tab[i] = NULL;
 
     htab->cmp = cmp;
     htab->hash = hash;
@@ -75,10 +75,10 @@ _search(Hashtab * htab, void *ptr)
     assert(htab && ptr);
 
     for (hptr = htab->tab[(*htab->hash) (ptr) % htab->sz];
-	 hptr;
-	 hptr = hptr->next)
-	if ((*htab->cmp) (ptr, hptr->ptr) == 0)
-	    break;
+         hptr;
+         hptr = hptr->next)
+        if ((*htab->cmp) (ptr, hptr->ptr) == 0)
+            break;
     return hptr;
 }
 
@@ -106,18 +106,18 @@ hashtabadd(Hashtab * htab, void *ptr)
     assert(htab && ptr);
 
     if (h)
-	free((void *) h->ptr);
+        free((void *) h->ptr);
     else {
-	h = (Hashentry *) malloc(sizeof(Hashentry));
-	if (h == NULL) {
-	    return NULL;
-	}
-	tabptr = &htab->tab[(*htab->hash) (ptr) % htab->sz];
-	h->next = *tabptr;
-	*tabptr = h;
-	h->prev = tabptr;
-	if (h->next)
-	    h->next->prev = &h->next;
+        h = (Hashentry *) malloc(sizeof(Hashentry));
+        if (h == NULL) {
+            return NULL;
+        }
+        tabptr = &htab->tab[(*htab->hash) (ptr) % htab->sz];
+        h->next = *tabptr;
+        *tabptr = h;
+        h->prev = tabptr;
+        if (h->next)
+            h->next->prev = &h->next;
     }
     h->ptr = ptr;
     return h;
@@ -134,30 +134,30 @@ _hashtabdel(Hashtab * htab, void *ptr, int freep)
 
     h = _search(htab, ptr);
     if (h) {
-	if (freep)
-	    free(h->ptr);
-	if ((*(h->prev) = h->next))
-	    h->next->prev = h->prev;
-	free(h);
-	return 0;
+        if (freep)
+            free(h->ptr);
+        if ((*(h->prev) = h->next))
+            h->next->prev = h->prev;
+        free(h);
+        return 0;
     } else
-	return -1;
+        return -1;
 }
 
 /* Do something for each element */
 
 void
 hashtabforeach(Hashtab * htab, int (*func) (void *ptr, void *arg),
-	       void *arg)
+               void *arg)
 {
     Hashentry **h, *g;
 
     assert(htab);
 
     for (h = htab->tab; h < &htab->tab[htab->sz]; ++h)
-	for (g = *h; g; g = g->next)
-	    if ((*func) (g->ptr, arg))
-		return;
+        for (g = *h; g; g = g->next)
+            if ((*func) (g->ptr, arg))
+                return;
 }
 
 /* standard hash-functions for strings */
@@ -170,7 +170,7 @@ hashadd(const char *s)
     assert(s);
 
     for (i = 0; *s; ++s)
-	i += *s;
+        i += *s;
     return i;
 }
 
@@ -182,7 +182,7 @@ hashcaseadd(const char *s)
     assert(s);
 
     for (i = 0; *s; ++s)
-	i += toupper((unsigned char)*s);
+        i += toupper((unsigned char)*s);
     return i;
 }
 
@@ -198,9 +198,9 @@ hashjpw(const char *ss)
     const unsigned char *s = (const unsigned char *)ss;
 
     for (; *s; ++s) {
-	h = (h << TWELVE) + *s;
-	if ((g = h & HIGH_BITS))
-	    h = (h ^ (g >> SEVENTYFIVE)) & ~HIGH_BITS;
+        h = (h << TWELVE) + *s;
+        if ((g = h & HIGH_BITS))
+            h = (h ^ (g >> SEVENTYFIVE)) & ~HIGH_BITS;
     }
     return h;
 }

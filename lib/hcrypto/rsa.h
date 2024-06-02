@@ -93,9 +93,9 @@ struct RSA_METHOD {
     int flags;
     char *app_data;
     int (*rsa_sign)(int, const unsigned char *, unsigned int,
-		    unsigned char *, unsigned int *, const RSA *);
+                    unsigned char *, unsigned int *, const RSA *);
     int (*rsa_verify)(int, const unsigned char *, unsigned int,
-		      unsigned char *, unsigned int, const RSA *);
+                      unsigned char *, unsigned int, const RSA *);
     int (*rsa_keygen)(RSA *, int, BIGNUM *, BN_GENCB *);
 };
 
@@ -113,8 +113,8 @@ struct RSA {
     BIGNUM *dmq1;
     BIGNUM *iqmp;
     struct rsa_CRYPTO_EX_DATA {
-	void *sk;
-	int dummy;
+        void *sk;
+        int dummy;
     } ex_data;
     int references;
     int flags;
@@ -169,9 +169,9 @@ int	RSA_public_decrypt(int,const unsigned char*,unsigned char*,RSA *,int);
 int	RSA_private_decrypt(int,const unsigned char*,unsigned char*,RSA *,int);
 
 int RSA_sign(int, const unsigned char *, unsigned int,
-	     unsigned char *, unsigned int *, RSA *);
+             unsigned char *, unsigned int *, RSA *);
 int RSA_verify(int, const unsigned char *, unsigned int,
-	       unsigned char *, unsigned int, RSA *);
+               unsigned char *, unsigned int, RSA *);
 
 int	RSA_generate_key_ex(RSA *, int, BIGNUM *, BN_GENCB *);
 

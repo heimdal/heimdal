@@ -37,24 +37,24 @@
 
 OM_uint32 GSSAPI_CALLCONV
 _gss_ntlm_set_sec_context_option(OM_uint32 *minor_status,
-				 gss_ctx_id_t *context_handle,
-				 const gss_OID object,
-				 const gss_buffer_t value)
+                                 gss_ctx_id_t *context_handle,
+                                 const gss_OID object,
+                                 const gss_buffer_t value)
 {
     ntlm_ctx ctx;
 
     if (context_handle == NULL)
-	return GSS_S_UNAVAILABLE;
+        return GSS_S_UNAVAILABLE;
 
     *minor_status = 0;
 
     ctx = (ntlm_ctx)*context_handle;
     if (ctx == NULL)
-	return GSS_S_NO_CONTEXT;
+        return GSS_S_NO_CONTEXT;
 
     if (gss_oid_equal(object, GSS_C_NTLM_RESET_CRYPTO)) {
-	_gss_ntlm_set_keys(ctx);
-	return GSS_S_COMPLETE;
+        _gss_ntlm_set_keys(ctx);
+        return GSS_S_COMPLETE;
     } else
-	return GSS_S_UNAVAILABLE;
+        return GSS_S_UNAVAILABLE;
 }

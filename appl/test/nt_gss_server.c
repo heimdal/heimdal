@@ -78,66 +78,66 @@ proto (int sock, const char *service)
 
     addrlen = sizeof(local);
     if (getsockname (sock, (struct sockaddr *)&local, &addrlen) < 0
-	|| addrlen != sizeof(local))
-	err (1, "getsockname)");
+        || addrlen != sizeof(local))
+        err (1, "getsockname)");
 
     addrlen = sizeof(remote);
     if (getpeername (sock, (struct sockaddr *)&remote, &addrlen) < 0
-	|| addrlen != sizeof(remote))
-	err (1, "getpeername");
+        || addrlen != sizeof(remote))
+        err (1, "getpeername");
 
     input_token = &real_input_token;
     output_token = &real_output_token;
 
     do {
-	nt_read_token (sock, input_token);
-	maj_stat =
-	    gss_accept_sec_context (&min_stat,
-				    &context_hdl,
-				    GSS_C_NO_CREDENTIAL,
-				    input_token,
-				    GSS_C_NO_CHANNEL_BINDINGS,
-				    &client_name,
-				    NULL,
-				    output_token,
-				    NULL,
-				    NULL,
-				    NULL);
-	if(GSS_ERROR(maj_stat))
-	    gss_err (1, min_stat, "gss_accept_sec_context");
-	if (output_token->length != 0)
-	    nt_write_token (sock, output_token);
-	if (GSS_ERROR(maj_stat)) {
-	    if (context_hdl != GSS_C_NO_CONTEXT)
-		gss_delete_sec_context (&min_stat,
-					&context_hdl,
-					GSS_C_NO_BUFFER);
-	    break;
-	}
+        nt_read_token (sock, input_token);
+        maj_stat =
+            gss_accept_sec_context (&min_stat,
+                                    &context_hdl,
+                                    GSS_C_NO_CREDENTIAL,
+                                    input_token,
+                                    GSS_C_NO_CHANNEL_BINDINGS,
+                                    &client_name,
+                                    NULL,
+                                    output_token,
+                                    NULL,
+                                    NULL,
+                                    NULL);
+        if(GSS_ERROR(maj_stat))
+            gss_err (1, min_stat, "gss_accept_sec_context");
+        if (output_token->length != 0)
+            nt_write_token (sock, output_token);
+        if (GSS_ERROR(maj_stat)) {
+            if (context_hdl != GSS_C_NO_CONTEXT)
+                gss_delete_sec_context (&min_stat,
+                                        &context_hdl,
+                                        GSS_C_NO_BUFFER);
+            break;
+        }
     } while(maj_stat & GSS_S_CONTINUE_NEEDED);
 
     if (auth_file != NULL) {
-	gss_buffer_desc data;
+        gss_buffer_desc data;
 
-	maj_stat = gsskrb5_extract_authz_data_from_sec_context(&min_stat,
-							       context_hdl,
-							       KRB5_AUTHDATA_WIN2K_PAC,
-							       &data);
-	if (maj_stat == GSS_S_COMPLETE) {
-	    rk_dumpdata(auth_file, data.value, data.length);
-	    gss_release_buffer(&min_stat, &data);
-	}
+        maj_stat = gsskrb5_extract_authz_data_from_sec_context(&min_stat,
+                                                               context_hdl,
+                                                               KRB5_AUTHDATA_WIN2K_PAC,
+                                                               &data);
+        if (maj_stat == GSS_S_COMPLETE) {
+            rk_dumpdata(auth_file, data.value, data.length);
+            gss_release_buffer(&min_stat, &data);
+        }
     }
 
     maj_stat = gss_display_name (&min_stat,
-				 client_name,
-				 &name_token,
-				 NULL);
+                                 client_name,
+                                 &name_token,
+                                 NULL);
     if (GSS_ERROR(maj_stat))
-	gss_err (1, min_stat, "gss_display_name");
+        gss_err (1, min_stat, "gss_display_name");
 
     fprintf (stderr, "User is `%.*s'\n", (int)name_token.length,
-	    (char *)name_token.value);
+             (char *)name_token.value);
 
     /* write something back */
 
@@ -161,7 +161,7 @@ doit (int port, const char *service)
 
     sock = socket (AF_INET, SOCK_STREAM, 0);
     if (sock < 0)
-	err (1, "socket");
+        err (1, "socket");
 
     memset (&my_addr, 0, sizeof(my_addr));
     my_addr.sin_family      = AF_INET;
@@ -169,18 +169,18 @@ doit (int port, const char *service)
     my_addr.sin_addr.s_addr = INADDR_ANY;
 
     if (setsockopt (sock, SOL_SOCKET, SO_REUSEADDR,
-		    (void *)&one, sizeof(one)) < 0)
-	warn ("setsockopt SO_REUSEADDR");
+                    (void *)&one, sizeof(one)) < 0)
+        warn ("setsockopt SO_REUSEADDR");
 
     if (bind (sock, (struct sockaddr *)&my_addr, sizeof(my_addr)) < 0)
-	err (1, "bind");
+        err (1, "bind");
 
     if (listen (sock, 1) < 0)
-	err (1, "listen");
+        err (1, "listen");
 
     sock2 = accept (sock, NULL, NULL);
     if (sock2 < 0)
-	err (1, "accept");
+        err (1, "accept");
 
     return proto (sock2, service);
 }
@@ -194,34 +194,34 @@ usage(int code, struct getargs *args, int num_args)
 
 static int
 common_setup(krb5_context *context, int *argc, char **argv,
-	     void (*usage)(int, struct getargs*, int))
+             void (*usage)(int, struct getargs*, int))
 {
     int port = 0;
     *argc = krb5_program_setup(context, *argc, argv, args, num_args, usage);
 
     if(help_flag)
-	(*usage)(0, args, num_args);
+        (*usage)(0, args, num_args);
     if(version_flag) {
-	print_version(NULL);
-	exit(0);
+        print_version(NULL);
+        exit(0);
     }
 
     if(port_str){
-	struct servent *s = roken_getservbyname(port_str, "tcp");
-	if(s)
-	    port = s->s_port;
-	else {
-	    char *ptr;
+        struct servent *s = roken_getservbyname(port_str, "tcp");
+        if(s)
+            port = s->s_port;
+        else {
+            char *ptr;
 
-	    port = strtol (port_str, &ptr, 10);
-	    if (port == 0 && ptr == port_str)
-		errx (1, "Bad port `%s'", port_str);
-	    port = htons(port);
-	}
+            port = strtol (port_str, &ptr, 10);
+            if (port == 0 && ptr == port_str)
+                errx (1, "Bad port `%s'", port_str);
+            port = htons(port);
+        }
     }
 
     if (port == 0)
-	port = krb5_getportbyname (*context, PORT, "tcp", 4711);
+        port = krb5_getportbyname (*context, PORT, "tcp", 4711);
 
     return port;
 }
@@ -231,7 +231,7 @@ setup(krb5_context *context, int argc, char **argv)
 {
     int port = common_setup(context, &argc, argv, usage);
     if(argv[argc] != NULL)
-	usage(1, args, num_args);
+        usage(1, args, num_args);
     return port;
 }
 

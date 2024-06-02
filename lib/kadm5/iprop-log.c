@@ -51,36 +51,36 @@ get_kadmin_context(const char *config_file, char *realm)
     int aret;
 
     if (config_file == NULL) {
-	aret = asprintf(&file, "%s/kdc.conf", hdb_db_dir(context));
-	if (aret == -1 || file == NULL)
-	    errx(1, "out of memory");
-	config_file = file;
+        aret = asprintf(&file, "%s/kdc.conf", hdb_db_dir(context));
+        if (aret == -1 || file == NULL)
+            errx(1, "out of memory");
+        config_file = file;
     }
 
     ret = krb5_prepend_config_files_default(config_file, &files);
     free(file);
     if (ret)
-	krb5_err(context, 1, ret, "getting configuration files");
+        krb5_err(context, 1, ret, "getting configuration files");
 
     ret = krb5_set_config_files(context, files);
     krb5_free_config_files(files);
     if (ret)
-	krb5_err(context, 1, ret, "reading configuration files");
+        krb5_err(context, 1, ret, "reading configuration files");
 
     memset(&conf, 0, sizeof(conf));
     if(realm) {
-	conf.mask |= KADM5_CONFIG_REALM;
-	conf.realm = realm;
+        conf.mask |= KADM5_CONFIG_REALM;
+        conf.realm = realm;
     }
 
     ret = kadm5_init_with_password_ctx (context,
-					KADM5_ADMIN_SERVICE,
-					NULL,
-					KADM5_ADMIN_SERVICE,
-					&conf, 0, 0,
-					&kadm_handle);
+                                        KADM5_ADMIN_SERVICE,
+                                        NULL,
+                                        KADM5_ADMIN_SERVICE,
+                                        &conf, 0, 0,
+                                        &kadm_handle);
     if (ret)
-	krb5_err (context, 1, ret, "kadm5_init_with_password_ctx");
+        krb5_err (context, 1, ret, "kadm5_init_with_password_ctx");
 
     return (kadm5_server_context *)kadm_handle;
 }
@@ -105,12 +105,12 @@ static const char *op_names[] = {
 
 static kadm5_ret_t
 print_entry(kadm5_server_context *server_context,
-	    uint32_t ver,
-	    time_t timestamp,
-	    enum kadm_ops op,
-	    uint32_t len,
-	    krb5_storage *sp,
-	    void *ctx)
+            uint32_t ver,
+            time_t timestamp,
+            enum kadm_ops op,
+            uint32_t len,
+            krb5_storage *sp,
+            void *ctx)
 {
     char t[256];
     const char *entry_kind = ctx;
@@ -129,174 +129,174 @@ print_entry(kadm5_server_context *server_context,
     strftime(t, sizeof(t), "%Y-%m-%d %H:%M:%S", localtime(&timestamp));
 
     if((int)op < (int)kadm_get || (int)op > (int)kadm_nop) {
-	printf("unknown op: %d\n", op);
-	return 0;
+        printf("unknown op: %d\n", op);
+        return 0;
     }
 
     printf ("%s%s: ver = %u, timestamp = %s, len = %u\n",
-	    entry_kind, op_names[op], ver, t, len);
+            entry_kind, op_names[op], ver, t, len);
     switch(op) {
-    case kadm_delete:
-        ret = krb5_ret_principal(sp, &source);
-        if (ret == 0)
-            ret = krb5_unparse_name(scontext, source, &name1);
-        if (ret)
-            krb5_err(scontext, 1, ret, "Failed to read a delete record");
-	printf("    %s\n", name1);
-	free(name1);
-	krb5_free_principal(scontext, source);
-	break;
-    case kadm_rename:
-	ret = krb5_data_alloc(&data, len);
-        if (ret == 0)
+        case kadm_delete:
             ret = krb5_ret_principal(sp, &source);
-        if (ret == 0 && krb5_storage_read(sp, data.data, data.length) == -1)
-            ret = errno;
-        if (ret == 0)
-            ret = hdb_value2entry(scontext, &data, &ent);
-        if (ret == 0)
-            ret = krb5_unparse_name(scontext, source, &name1);
-        if (ret == 0)
-            ret = krb5_unparse_name(scontext, ent.principal, &name2);
-        if (ret)
-            krb5_err(scontext, 1, ret, "Failed to read a rename record");
-	printf("    %s -> %s\n", name1, name2);
-	free(name1);
-	free(name2);
-	krb5_free_principal(scontext, source);
-	free_hdb_entry(&ent);
-	break;
-    case kadm_create:
-	ret = krb5_data_alloc(&data, len);
-        if (ret == 0 && krb5_storage_read(sp, data.data, data.length) == -1)
-            ret = errno;
-        if (ret == 0)
-            ret = hdb_value2entry(scontext, &data, &ent);
-	if (ret)
-            krb5_err(scontext, 1, ret, "Failed to read a create record");
-	mask = ~0;
-	goto foo;
-    case kadm_modify:
-	ret = krb5_data_alloc(&data, len);
-        if (ret == 0)
-            ret = krb5_ret_int32(sp, &mask);
-        if (ret == 0 && krb5_storage_read(sp, data.data, data.length) == -1)
-            ret = errno;
-        if (ret == 0)
-            ret = hdb_value2entry(scontext, &data, &ent);
-	if (ret)
-            krb5_err(scontext, 1, ret, "Failed to read a modify record");
-    foo:
-	if(ent.principal /* mask & KADM5_PRINCIPAL */) {
-	    ret = krb5_unparse_name(scontext, ent.principal, &name1);
-            if (ret)
-                krb5_err(scontext, 1, ret,
-                         "Failed to process a create or modify record");
-	    printf("    principal = %s\n", name1);
-	    free(name1);
-	}
-	if(mask & KADM5_PRINC_EXPIRE_TIME) {
-	    if(ent.valid_end == NULL) {
-		strlcpy(t, "never", sizeof(t));
-	    } else {
-		strftime(t, sizeof(t), "%Y-%m-%d %H:%M:%S",
-			 localtime(ent.valid_end));
-	    }
-	    printf("    expires = %s\n", t);
-	}
-	if(mask & KADM5_PW_EXPIRATION) {
-	    if(ent.pw_end == NULL) {
-		strlcpy(t, "never", sizeof(t));
-	    } else {
-		strftime(t, sizeof(t), "%Y-%m-%d %H:%M:%S",
-			 localtime(ent.pw_end));
-	    }
-	    printf("    password exp = %s\n", t);
-	}
-	if(mask & KADM5_LAST_PWD_CHANGE) {
-	}
-	if(mask & KADM5_ATTRIBUTES) {
-	    unparse_flags(HDBFlags2int(ent.flags),
-			  asn1_HDBFlags_units(), t, sizeof(t));
-	    printf("    attributes = %s\n", t);
-	}
-	if(mask & KADM5_MAX_LIFE) {
-	    if(ent.max_life == NULL)
-		strlcpy(t, "for ever", sizeof(t));
-	    else
-		unparse_time(*ent.max_life, t, sizeof(t));
-	    printf("    max life = %s\n", t);
-	}
-	if(mask & KADM5_MAX_RLIFE) {
-	    if(ent.max_renew == NULL)
-		strlcpy(t, "for ever", sizeof(t));
-	    else
-		unparse_time(*ent.max_renew, t, sizeof(t));
-	    printf("    max rlife = %s\n", t);
-	}
-	if(mask & KADM5_MOD_TIME) {
-	    printf("    mod time\n");
-	}
-	if(mask & KADM5_MOD_NAME) {
-	    printf("    mod name\n");
-	}
-	if(mask & KADM5_KVNO) {
-	    printf("    kvno = %d\n", ent.kvno);
-	}
-	if(mask & KADM5_MKVNO) {
-	    printf("    mkvno\n");
-	}
-	if(mask & KADM5_AUX_ATTRIBUTES) {
-	    printf("    aux attributes\n");
-	}
-	if(mask & KADM5_POLICY) {
-	    printf("    policy\n");
-	}
-	if(mask & KADM5_POLICY_CLR) {
-	    printf("    mod time\n");
-	}
-	if(mask & KADM5_LAST_SUCCESS) {
-	    printf("    last success\n");
-	}
-	if(mask & KADM5_LAST_FAILED) {
-	    printf("    last failed\n");
-	}
-	if(mask & KADM5_FAIL_AUTH_COUNT) {
-	    printf("    fail auth count\n");
-	}
-	if(mask & KADM5_KEY_DATA) {
-	    printf("    key data\n");
-	}
-	if(mask & KADM5_TL_DATA) {
-	    printf("    tl data\n");
-	}
-	free_hdb_entry(&ent);
-	break;
-    case kadm_nop :
-        if (len == 16) {
-            uint64_t off;
-            ret = krb5_ret_uint64(sp, &off);
-            if (ret)
-                krb5_err(scontext, 1, ret, "Failed to read a no-op record");
-            printf("uberblock offset %llu ", (unsigned long long)off);
-        } else {
-            printf("nop");
-        }
-        if (len == 16 || len == 8) {
-            ret = krb5_ret_int32(sp, &nop_time);
             if (ret == 0)
-                ret = krb5_ret_uint32(sp, &nop_ver);
+                ret = krb5_unparse_name(scontext, source, &name1);
             if (ret)
-                krb5_err(scontext, 1, ret, "Failed to read a no-op record");
+                krb5_err(scontext, 1, ret, "Failed to read a delete record");
+            printf("    %s\n", name1);
+            free(name1);
+            krb5_free_principal(scontext, source);
+            break;
+        case kadm_rename:
+            ret = krb5_data_alloc(&data, len);
+            if (ret == 0)
+                ret = krb5_ret_principal(sp, &source);
+            if (ret == 0 && krb5_storage_read(sp, data.data, data.length) == -1)
+                ret = errno;
+            if (ret == 0)
+                ret = hdb_value2entry(scontext, &data, &ent);
+            if (ret == 0)
+                ret = krb5_unparse_name(scontext, source, &name1);
+            if (ret == 0)
+                ret = krb5_unparse_name(scontext, ent.principal, &name2);
+            if (ret)
+                krb5_err(scontext, 1, ret, "Failed to read a rename record");
+            printf("    %s -> %s\n", name1, name2);
+            free(name1);
+            free(name2);
+            krb5_free_principal(scontext, source);
+            free_hdb_entry(&ent);
+            break;
+        case kadm_create:
+            ret = krb5_data_alloc(&data, len);
+            if (ret == 0 && krb5_storage_read(sp, data.data, data.length) == -1)
+                ret = errno;
+            if (ret == 0)
+                ret = hdb_value2entry(scontext, &data, &ent);
+            if (ret)
+                krb5_err(scontext, 1, ret, "Failed to read a create record");
+            mask = ~0;
+            goto foo;
+        case kadm_modify:
+            ret = krb5_data_alloc(&data, len);
+            if (ret == 0)
+                ret = krb5_ret_int32(sp, &mask);
+            if (ret == 0 && krb5_storage_read(sp, data.data, data.length) == -1)
+                ret = errno;
+            if (ret == 0)
+                ret = hdb_value2entry(scontext, &data, &ent);
+            if (ret)
+                krb5_err(scontext, 1, ret, "Failed to read a modify record");
+foo:
+            if(ent.principal /* mask & KADM5_PRINCIPAL */) {
+                ret = krb5_unparse_name(scontext, ent.principal, &name1);
+                if (ret)
+                    krb5_err(scontext, 1, ret,
+                             "Failed to process a create or modify record");
+                printf("    principal = %s\n", name1);
+                free(name1);
+            }
+            if(mask & KADM5_PRINC_EXPIRE_TIME) {
+                if(ent.valid_end == NULL) {
+                    strlcpy(t, "never", sizeof(t));
+                } else {
+                    strftime(t, sizeof(t), "%Y-%m-%d %H:%M:%S",
+                             localtime(ent.valid_end));
+                }
+                printf("    expires = %s\n", t);
+            }
+            if(mask & KADM5_PW_EXPIRATION) {
+                if(ent.pw_end == NULL) {
+                    strlcpy(t, "never", sizeof(t));
+                } else {
+                    strftime(t, sizeof(t), "%Y-%m-%d %H:%M:%S",
+                             localtime(ent.pw_end));
+                }
+                printf("    password exp = %s\n", t);
+            }
+            if(mask & KADM5_LAST_PWD_CHANGE) {
+            }
+            if(mask & KADM5_ATTRIBUTES) {
+                unparse_flags(HDBFlags2int(ent.flags),
+                              asn1_HDBFlags_units(), t, sizeof(t));
+                printf("    attributes = %s\n", t);
+            }
+            if(mask & KADM5_MAX_LIFE) {
+                if(ent.max_life == NULL)
+                    strlcpy(t, "for ever", sizeof(t));
+                else
+                    unparse_time(*ent.max_life, t, sizeof(t));
+                printf("    max life = %s\n", t);
+            }
+            if(mask & KADM5_MAX_RLIFE) {
+                if(ent.max_renew == NULL)
+                    strlcpy(t, "for ever", sizeof(t));
+                else
+                    unparse_time(*ent.max_renew, t, sizeof(t));
+                printf("    max rlife = %s\n", t);
+            }
+            if(mask & KADM5_MOD_TIME) {
+                printf("    mod time\n");
+            }
+            if(mask & KADM5_MOD_NAME) {
+                printf("    mod name\n");
+            }
+            if(mask & KADM5_KVNO) {
+                printf("    kvno = %d\n", ent.kvno);
+            }
+            if(mask & KADM5_MKVNO) {
+                printf("    mkvno\n");
+            }
+            if(mask & KADM5_AUX_ATTRIBUTES) {
+                printf("    aux attributes\n");
+            }
+            if(mask & KADM5_POLICY) {
+                printf("    policy\n");
+            }
+            if(mask & KADM5_POLICY_CLR) {
+                printf("    mod time\n");
+            }
+            if(mask & KADM5_LAST_SUCCESS) {
+                printf("    last success\n");
+            }
+            if(mask & KADM5_LAST_FAILED) {
+                printf("    last failed\n");
+            }
+            if(mask & KADM5_FAIL_AUTH_COUNT) {
+                printf("    fail auth count\n");
+            }
+            if(mask & KADM5_KEY_DATA) {
+                printf("    key data\n");
+            }
+            if(mask & KADM5_TL_DATA) {
+                printf("    tl data\n");
+            }
+            free_hdb_entry(&ent);
+            break;
+        case kadm_nop :
+            if (len == 16) {
+                uint64_t off;
+                ret = krb5_ret_uint64(sp, &off);
+                if (ret)
+                    krb5_err(scontext, 1, ret, "Failed to read a no-op record");
+                printf("uberblock offset %llu ", (unsigned long long)off);
+            } else {
+                printf("nop");
+            }
+            if (len == 16 || len == 8) {
+                ret = krb5_ret_int32(sp, &nop_time);
+                if (ret == 0)
+                    ret = krb5_ret_uint32(sp, &nop_ver);
+                if (ret)
+                    krb5_err(scontext, 1, ret, "Failed to read a no-op record");
 
-            timestamp = nop_time;
-            strftime(t, sizeof(t), "%Y-%m-%d %H:%M:%S", localtime(&timestamp));
-            printf("timestamp %s version %u", t, nop_ver);
-        }
-        printf("\n");
-	break;
-    default:
-        krb5_errx(scontext, 1, "Unknown record type");
+                timestamp = nop_time;
+                strftime(t, sizeof(t), "%Y-%m-%d %H:%M:%S", localtime(&timestamp));
+                printf("timestamp %s version %u", t, nop_ver);
+            }
+            printf("\n");
+            break;
+        default:
+            krb5_errx(scontext, 1, "Unknown record type");
     }
     krb5_data_free(&data);
 
@@ -314,7 +314,7 @@ iprop_dump(struct dump_options *opt, int argc, char **argv)
     char *desc_2nd = "";
 
     server_context = get_kadmin_context(opt->config_file_string,
-					opt->realm_string);
+                                        opt->realm_string);
 
     if (argc > 0) {
         free(server_context->log_context.log_file);
@@ -351,16 +351,16 @@ iprop_dump(struct dump_options *opt, int argc, char **argv)
     ret = kadm5_log_foreach(server_context, iter_opts_1st,
                             NULL, print_entry, desc_1st);
     if (ret)
-	krb5_warn(context, ret, "kadm5_log_foreach");
+        krb5_warn(context, ret, "kadm5_log_foreach");
 
     ret = kadm5_log_foreach(server_context, iter_opts_2nd,
                             NULL, print_entry, desc_2nd);
     if (ret)
-	krb5_warn(context, ret, "kadm5_log_foreach");
+        krb5_warn(context, ret, "kadm5_log_foreach");
 
     ret = kadm5_log_end (server_context);
     if (ret)
-	krb5_warn(context, ret, "kadm5_log_end");
+        krb5_warn(context, ret, "kadm5_log_end");
 
     kadm5_destroy(server_context);
     return 0;
@@ -373,7 +373,7 @@ iprop_truncate(struct truncate_options *opt, int argc, char **argv)
     krb5_error_code ret;
 
     server_context = get_kadmin_context(opt->config_file_string,
-					opt->realm_string);
+                                        opt->realm_string);
 
     if (argc > 0) {
         free(server_context->log_context.log_file);
@@ -405,7 +405,7 @@ iprop_truncate(struct truncate_options *opt, int argc, char **argv)
                                  opt->max_bytes_integer);
     }
     if (ret)
-	krb5_err(context, 1, ret, "kadm5_log_truncate");
+        krb5_err(context, 1, ret, "kadm5_log_truncate");
 
     kadm5_log_signal_master(server_context);
 
@@ -423,7 +423,7 @@ last_version(struct last_version_options *opt, int argc, char **argv)
     size_t i;
 
     server_context = get_kadmin_context(opt->config_file_string,
-					opt->realm_string);
+                                        opt->realm_string);
 
     if (argc == 0) {
         alt_argv[0] = strdup(server_context->log_context.log_file);
@@ -477,7 +477,7 @@ signal_master(struct signal_options *opt, int argc, char **argv)
     kadm5_server_context *server_context;
 
     server_context = get_kadmin_context(opt->config_file_string,
-					opt->realm_string);
+                                        opt->realm_string);
 
     kadm5_log_signal_master(server_context);
 
@@ -494,27 +494,27 @@ int end_version = -1;
 
 static kadm5_ret_t
 apply_entry(kadm5_server_context *server_context,
-	    uint32_t ver,
-	    time_t timestamp,
-	    enum kadm_ops op,
-	    uint32_t len,
-	    krb5_storage *sp,
-	    void *ctx)
+            uint32_t ver,
+            time_t timestamp,
+            enum kadm_ops op,
+            uint32_t len,
+            krb5_storage *sp,
+            void *ctx)
 {
     struct replay_options *opt = ctx;
     krb5_error_code ret;
 
     if((opt->start_version_integer != -1 && ver < (uint32_t)opt->start_version_integer) ||
        (opt->end_version_integer != -1 && ver > (uint32_t)opt->end_version_integer)) {
-	/* XXX skip this entry */
-	return 0;
+        /* XXX skip this entry */
+        return 0;
     }
     printf ("ver %u... ", ver);
     fflush (stdout);
 
     ret = kadm5_log_replay(server_context, op, ver, len, sp);
     if (ret)
-	krb5_warn (server_context->context, ret, "kadm5_log_replay");
+        krb5_warn (server_context->context, ret, "kadm5_log_replay");
 
     printf ("done\n");
 
@@ -528,7 +528,7 @@ iprop_replay(struct replay_options *opt, int argc, char **argv)
     krb5_error_code ret;
 
     server_context = get_kadmin_context(opt->config_file_string,
-					opt->realm_string);
+                                        opt->realm_string);
 
     if (argc > 0) {
         free(server_context->log_context.log_file);
@@ -538,26 +538,26 @@ iprop_replay(struct replay_options *opt, int argc, char **argv)
     }
 
     ret = server_context->db->hdb_open(context,
-				       server_context->db,
-				       O_RDWR | O_CREAT, 0600);
+                                       server_context->db,
+                                       O_RDWR | O_CREAT, 0600);
     if (ret)
-	krb5_err (context, 1, ret, "db->open");
+        krb5_err (context, 1, ret, "db->open");
 
     ret = kadm5_log_init (server_context);
     if (ret)
-	krb5_err (context, 1, ret, "kadm5_log_init");
+        krb5_err (context, 1, ret, "kadm5_log_init");
 
     ret = kadm5_log_foreach(server_context,
                             kadm_forward | kadm_confirmed | kadm_unconfirmed,
                             NULL, apply_entry, opt);
     if(ret)
-	krb5_warn(context, ret, "kadm5_log_foreach");
+        krb5_warn(context, ret, "kadm5_log_foreach");
     ret = kadm5_log_end (server_context);
     if (ret)
-	krb5_warn(context, ret, "kadm5_log_end");
+        krb5_warn(context, ret, "kadm5_log_end");
     ret = server_context->db->hdb_close (context, server_context->db);
     if (ret)
-	krb5_err (context, 1, ret, "db->close");
+        krb5_err (context, 1, ret, "db->close");
 
     kadm5_destroy(server_context);
     return 0;
@@ -581,35 +581,35 @@ int
 help(void *opt, int argc, char **argv)
 {
     if(argc == 0) {
-	sl_help(commands, 1, argv - 1 /* XXX */);
+        sl_help(commands, 1, argv - 1 /* XXX */);
     } else {
-	SL_cmd *c = sl_match (commands, argv[0], 0);
- 	if(c == NULL) {
-	    fprintf (stderr, "No such command: %s. "
-		     "Try \"help\" for a list of commands\n",
-		     argv[0]);
-	} else {
-	    if(c->func) {
-		static char shelp[] = "--help";
-		char *fake[3];
-		fake[0] = argv[0];
-		fake[1] = shelp;
-		fake[2] = NULL;
-		(*c->func)(2, fake);
-		fprintf(stderr, "\n");
-	    }
-	    if(c->help && *c->help)
-		fprintf (stderr, "%s\n", c->help);
-	    if((++c)->name && c->func == NULL) {
-		int f = 0;
-		fprintf (stderr, "Synonyms:");
-		while (c->name && c->func == NULL) {
-		    fprintf (stderr, "%s%s", f ? ", " : " ", (c++)->name);
-		    f = 1;
-		}
-		fprintf (stderr, "\n");
-	    }
-	}
+        SL_cmd *c = sl_match (commands, argv[0], 0);
+        if(c == NULL) {
+            fprintf (stderr, "No such command: %s. "
+                     "Try \"help\" for a list of commands\n",
+                     argv[0]);
+        } else {
+            if(c->func) {
+                static char shelp[] = "--help";
+                char *fake[3];
+                fake[0] = argv[0];
+                fake[1] = shelp;
+                fake[2] = NULL;
+                (*c->func)(2, fake);
+                fprintf(stderr, "\n");
+            }
+            if(c->help && *c->help)
+                fprintf (stderr, "%s\n", c->help);
+            if((++c)->name && c->func == NULL) {
+                int f = 0;
+                fprintf (stderr, "Synonyms:");
+                while (c->name && c->func == NULL) {
+                    fprintf (stderr, "%s%s", f ? ", " : " ", (c++)->name);
+                    f = 1;
+                }
+                fprintf (stderr, "\n");
+            }
+        }
     }
     return 0;
 }
@@ -630,24 +630,24 @@ main(int argc, char **argv)
     setprogname(argv[0]);
 
     if(getarg(args, num_args, argc, argv, &optidx))
-	usage(1);
+        usage(1);
     if(help_flag)
-	usage(0);
+        usage(0);
     if(version_flag) {
-	print_version(NULL);
-	exit(0);
+        print_version(NULL);
+        exit(0);
     }
     argc -= optidx;
     argv += optidx;
     if(argc == 0)
-	usage(1);
+        usage(1);
 
     ret = krb5_init_context(&context);
     if (ret)
-	errx(1, "krb5_init_context failed with: %d\n", ret);
+        errx(1, "krb5_init_context failed with: %d\n", ret);
 
     ret = sl_command(commands, argc, argv);
     if(ret == -1)
-	warnx ("unrecognized command: %s", argv[0]);
+        warnx ("unrecognized command: %s", argv[0]);
     return ret;
 }

@@ -48,7 +48,7 @@ rk_copyhostent(const struct hostent *h)
 
     res = malloc (sizeof (*res));
     if (res == NULL)
-	return NULL;
+        return NULL;
     res->h_name      = NULL;
     res->h_aliases   = NULL;
     res->h_addrtype  = h->h_addrtype;
@@ -56,43 +56,43 @@ rk_copyhostent(const struct hostent *h)
     res->h_addr_list = NULL;
     res->h_name = strdup (h->h_name);
     if (res->h_name == NULL) {
-	freehostent (res);
-	return NULL;
+        freehostent (res);
+        return NULL;
     }
     for (n = 0, p = h->h_aliases; *p != NULL; ++p)
-	++n;
+        ++n;
     res->h_aliases = malloc ((n + 1) * sizeof(*res->h_aliases));
     if (res->h_aliases == NULL) {
-	freehostent (res);
-	return NULL;
+        freehostent (res);
+        return NULL;
     }
     for (i = 0; i < n + 1; ++i)
-	res->h_aliases[i] = NULL;
+        res->h_aliases[i] = NULL;
     for (i = 0; i < n; ++i) {
-	res->h_aliases[i] = strdup (h->h_aliases[i]);
-	if (res->h_aliases[i] == NULL) {
-	    freehostent (res);
-	    return NULL;
-	}
+        res->h_aliases[i] = strdup (h->h_aliases[i]);
+        if (res->h_aliases[i] == NULL) {
+            freehostent (res);
+            return NULL;
+        }
     }
 
     for (n = 0, p = h->h_addr_list; *p != NULL; ++p)
-	++n;
+        ++n;
     res->h_addr_list = malloc ((n + 1) * sizeof(*res->h_addr_list));
     if (res->h_addr_list == NULL) {
-	freehostent (res);
-	return NULL;
+        freehostent (res);
+        return NULL;
     }
     for (i = 0; i < n + 1; ++i) {
-	res->h_addr_list[i] = NULL;
+        res->h_addr_list[i] = NULL;
     }
     for (i = 0; i < n; ++i) {
-	res->h_addr_list[i] = malloc (h->h_length);
-	if (res->h_addr_list[i] == NULL) {
-	    freehostent (res);
-	    return NULL;
-	}
-	memcpy (res->h_addr_list[i], h->h_addr_list[i], h->h_length);
+        res->h_addr_list[i] = malloc (h->h_length);
+        if (res->h_addr_list[i] == NULL) {
+            freehostent (res);
+            return NULL;
+        }
+        memcpy (res->h_addr_list[i], h->h_addr_list[i], h->h_length);
     }
     return res;
 }

@@ -28,9 +28,9 @@
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gssspi_query_mechanism_info(
-    OM_uint32 *minor_status,
-    gss_const_OID mech_type,
-    unsigned char auth_scheme[16])
+                            OM_uint32 *minor_status,
+                            gss_const_OID mech_type,
+                            unsigned char auth_scheme[16])
 {
     OM_uint32 major_status;
     gssapi_mech_interface m;
@@ -38,18 +38,18 @@ gssspi_query_mechanism_info(
     *minor_status = 0;
 
     if (mech_type == GSS_C_NO_OID)
-	return GSS_S_BAD_MECH;
+        return GSS_S_BAD_MECH;
 
     m = __gss_get_mechanism(mech_type);
     if (m == NULL || m->gm_query_mechanism_info == NULL)
-	return GSS_S_BAD_MECH;
+        return GSS_S_BAD_MECH;
 
     major_status = m->gm_query_mechanism_info(minor_status,
-					      mech_type,
-					      auth_scheme);
+                                              mech_type,
+                                              auth_scheme);
 
     if (major_status != GSS_S_COMPLETE)
-	_gss_mg_error(m, *minor_status);
+        _gss_mg_error(m, *minor_status);
 
     return major_status;
 }

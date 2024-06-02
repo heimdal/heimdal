@@ -75,7 +75,7 @@ _krb5_load_ccache_plugins(krb5_context context)
     krb5_error_code userctx = 0;
 
     (void)_krb5_plugin_run_f(context, &ccache_plugin_data, 0,
-			     &userctx, cc_plugin_register_to_context);
+                             &userctx, cc_plugin_register_to_context);
 
     return userctx;
 }

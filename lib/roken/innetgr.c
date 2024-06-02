@@ -37,7 +37,7 @@
 
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 innetgr(const char *netgroup, const char *machine,
-	const char *user, const char *domain)
+        const char *user, const char *domain)
 {
     return 0;
 }

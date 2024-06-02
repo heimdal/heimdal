@@ -40,12 +40,12 @@
 #include <err.h>
 
 static krb5_error_code _warnerr(krb5_context context, int do_errtext,
-	 krb5_error_code code, int level, const char *fmt, va_list ap)
-	__attribute__ ((__format__ (__printf__, 5, 0)));
+                                krb5_error_code code, int level, const char *fmt, va_list ap)
+    __attribute__ ((__format__ (__printf__, 5, 0)));
 
 static krb5_error_code
 _warnerr(krb5_context context, int do_errtext,
-	 krb5_error_code code, int level, const char *fmt, va_list ap)
+         krb5_error_code code, int level, const char *fmt, va_list ap)
 {
     if (do_errtext)
         return heim_vwarn(context ? context->hcontext : NULL, code, fmt, ap);
@@ -76,7 +76,7 @@ _warnerr(krb5_context context, int do_errtext,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_vwarn(krb5_context context, krb5_error_code code,
-	   const char *fmt, va_list ap)
+           const char *fmt, va_list ap)
      __attribute__ ((__format__ (__printf__, 3, 0)))
 {
     return heim_vwarn(context ? context->hcontext : NULL, code, fmt, ap);
@@ -118,7 +118,7 @@ krb5_warn(krb5_context context, krb5_error_code code, const char *fmt, ...)
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_vwarnx(krb5_context context, const char *fmt, va_list ap)
-     __attribute__ ((__format__ (__printf__, 2, 0)))
+    __attribute__ ((__format__ (__printf__, 2, 0)))
 {
     return heim_vwarnx(context ? context->hcontext : NULL, fmt, ap);
 }
@@ -134,7 +134,7 @@ krb5_vwarnx(krb5_context context, const char *fmt, va_list ap)
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_warnx(krb5_context context, const char *fmt, ...)
-     __attribute__ ((__format__ (__printf__, 2, 3)))
+    __attribute__ ((__format__ (__printf__, 2, 3)))
 {
     krb5_error_code ret;
     va_list ap;
@@ -160,8 +160,8 @@ krb5_warnx(krb5_context context, const char *fmt, ...)
 
 KRB5_LIB_NORETURN_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_verr(krb5_context context, int eval, krb5_error_code code,
-	  const char *fmt, va_list ap)
-     __attribute__ ((__noreturn__, __format__ (__printf__, 4, 0)))
+          const char *fmt, va_list ap)
+    __attribute__ ((__noreturn__, __format__ (__printf__, 4, 0)))
 {
     _warnerr(context, 1, code, 0, fmt, ap);
     exit(eval);
@@ -182,8 +182,8 @@ krb5_verr(krb5_context context, int eval, krb5_error_code code,
 
 KRB5_LIB_NORETURN_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_err(krb5_context context, int eval, krb5_error_code code,
-	 const char *fmt, ...)
-     __attribute__ ((__noreturn__, __format__ (__printf__, 4, 5)))
+         const char *fmt, ...)
+    __attribute__ ((__noreturn__, __format__ (__printf__, 4, 5)))
 {
     FUNC_NORET(1, code, 0);
     exit(eval);
@@ -203,7 +203,7 @@ krb5_err(krb5_context context, int eval, krb5_error_code code,
 
 KRB5_LIB_NORETURN_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_verrx(krb5_context context, int eval, const char *fmt, va_list ap)
-     __attribute__ ((__noreturn__, __format__ (__printf__, 3, 0)))
+    __attribute__ ((__noreturn__, __format__ (__printf__, 3, 0)))
 {
     _warnerr(context, 0, 0, 0, fmt, ap);
     exit(eval);
@@ -222,7 +222,7 @@ krb5_verrx(krb5_context context, int eval, const char *fmt, va_list ap)
 
 KRB5_LIB_NORETURN_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_errx(krb5_context context, int eval, const char *fmt, ...)
-     __attribute__ ((__noreturn__, __format__ (__printf__, 3, 4)))
+    __attribute__ ((__noreturn__, __format__ (__printf__, 3, 4)))
 {
     FUNC_NORET(0, 0, 0);
     exit(eval);
@@ -243,8 +243,8 @@ krb5_errx(krb5_context context, int eval, const char *fmt, ...)
 
 KRB5_LIB_NORETURN_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_vabort(krb5_context context, krb5_error_code code,
-	    const char *fmt, va_list ap)
-     __attribute__ ((__noreturn__, __format__ (__printf__, 3, 0)))
+            const char *fmt, va_list ap)
+    __attribute__ ((__noreturn__, __format__ (__printf__, 3, 0)))
 {
     _warnerr(context, 1, code, 0, fmt, ap);
     abort();
@@ -265,7 +265,7 @@ krb5_vabort(krb5_context context, krb5_error_code code,
 
 KRB5_LIB_NORETURN_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_abort(krb5_context context, krb5_error_code code, const char *fmt, ...)
-     __attribute__ ((__noreturn__, __format__ (__printf__, 3, 4)))
+    __attribute__ ((__noreturn__, __format__ (__printf__, 3, 4)))
 {
     FUNC_NORET(1, code, 0);
     abort();
@@ -274,7 +274,7 @@ krb5_abort(krb5_context context, krb5_error_code code, const char *fmt, ...)
 
 KRB5_LIB_NORETURN_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_vabortx(krb5_context context, const char *fmt, va_list ap)
-     __attribute__ ((__noreturn__, __format__ (__printf__, 2, 0)))
+    __attribute__ ((__noreturn__, __format__ (__printf__, 2, 0)))
 {
     _warnerr(context, 0, 0, 0, fmt, ap);
     abort();
@@ -293,7 +293,7 @@ krb5_vabortx(krb5_context context, const char *fmt, va_list ap)
 
 KRB5_LIB_NORETURN_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_abortx(krb5_context context, const char *fmt, ...)
-     __attribute__ ((__noreturn__, __format__ (__printf__, 2, 3)))
+    __attribute__ ((__noreturn__, __format__ (__printf__, 2, 3)))
 {
     FUNC_NORET(0, 0, 0);
     abort();

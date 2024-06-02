@@ -54,30 +54,30 @@ kcm_session_setup_handler(void)
 
     h = au_sdev_open(AU_SDEVF_ALLSESSIONS);
     if (h == NULL)
-	return;
+        return;
 
     bgq = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0);
 
     dispatch_async(bgq, ^{
-	    for (;;) {
-		auditinfo_addr_t aio;
-		int event;
+            for (;;) {
+                auditinfo_addr_t aio;
+                int event;
 
-		if (au_sdev_read_aia(h, &event, &aio) != 0)
-		    continue;
+                if (au_sdev_read_aia(h, &event, &aio) != 0)
+                    continue;
 
-		/*
-		 * Ignore everything but END. This should relly be
-		 * CLOSE but since that is delayed until the credential
-		 * is reused, we can't do that
-		 * */
-		if (event != AUE_SESSION_END)
-		    continue;
+                /*
+                 * Ignore everything but END. This should relly be
+                 * CLOSE but since that is delayed until the credential
+                 * is reused, we can't do that
+                 * */
+                if (event != AUE_SESSION_END)
+                    continue;
 
-		dispatch_async(dispatch_get_main_queue(), ^{
-			kcm_cache_remove_session(aio.ai_asid);
-		    });
-	    }
-	});
+                dispatch_async(dispatch_get_main_queue(), ^{
+                        kcm_cache_remove_session(aio.ai_asid);
+                    });
+            }
+        });
 #endif
 }

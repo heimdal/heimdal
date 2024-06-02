@@ -60,9 +60,9 @@ usage(int ret)
 
 static void
 test_service(void *ctx, const heim_idata *req,
-	     const heim_icred cred,
-	     heim_ipc_complete complete,
-	     heim_sipc_call cctx)
+             const heim_icred cred,
+             heim_ipc_complete complete,
+             heim_sipc_call cctx)
 {
     heim_idata rep;
     char buf[128];
@@ -84,30 +84,30 @@ main(int argc, char **argv)
     setprogname(argv[0]);
 
     if (getarg(args, num_args, argc, argv, &optidx))
-	usage(1);
+        usage(1);
 
     if (help_flag)
-	usage(0);
+        usage(0);
 
     if (version_flag) {
-	print_version(NULL);
-	exit(0);
+        print_version(NULL);
+        exit(0);
     }
 
 #if __APPLE__
     {
-	heim_sipc mach;
-	heim_sipc_launchd_mach_init("org.h5l.test-ipc",
-				    test_service, "MACH", &mach);
+        heim_sipc mach;
+        heim_sipc_launchd_mach_init("org.h5l.test-ipc",
+                                    test_service, "MACH", &mach);
     }
 #endif
     heim_sipc_service_unix("org.h5l.test-ipc",
-			   test_service, "UNIX", &u);
+                           test_service, "UNIX", &u);
 #ifdef HAVE_DOOR_CREATE
     {
         heim_sipc door;
         heim_sipc_service_door("org.h5l.test-ipc",
-			       test_service, "DOOR", &door);
+                               test_service, "DOOR", &door);
     }
 #endif
     heim_ipc_main();

@@ -39,7 +39,7 @@
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_get_default_principal_local (krb5_context context,
-				   krb5_principal *princ)
+                                   krb5_principal *princ)
 {
     const char *user = NULL;
     const char *second_component = NULL;
@@ -76,7 +76,7 @@ _krb5_get_default_principal_local (krb5_context context,
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_get_default_principal (krb5_context context,
-			    krb5_principal *princ)
+                            krb5_principal *princ)
 {
     krb5_error_code ret;
     krb5_ccache id;
@@ -85,10 +85,10 @@ krb5_get_default_principal (krb5_context context,
 
     ret = krb5_cc_default (context, &id);
     if (ret == 0) {
-	ret = krb5_cc_get_principal (context, id, princ);
-	krb5_cc_close (context, id);
-	if (ret == 0)
-	    return 0;
+        ret = krb5_cc_get_principal (context, id, princ);
+        krb5_cc_close (context, id);
+        if (ret == 0)
+            return 0;
     }
 
     return _krb5_get_default_principal_local(context, princ);

@@ -35,20 +35,20 @@
 
 OM_uint32 GSSAPI_CALLCONV
 _gss_ntlm_display_status
-           (OM_uint32		*minor_status,
-	    OM_uint32		 status_value,
-	    int			 status_type,
-	    const gss_OID	 mech_type,
-	    OM_uint32		*message_context,
-	    gss_buffer_t	 status_string)
+                         (OM_uint32		*minor_status,
+                          OM_uint32		 status_value,
+                          int			 status_type,
+                          const gss_OID	 mech_type,
+                          OM_uint32		*message_context,
+                          gss_buffer_t	 status_string)
 {
     if (minor_status)
-	*minor_status = 0;
+        *minor_status = 0;
     if (status_string) {
-	status_string->length = 0;
-	status_string->value = NULL;
+        status_string->length = 0;
+        status_string->value = NULL;
     }
     if (message_context)
-	*message_context = 0;
+        *message_context = 0;
     return GSS_S_COMPLETE;
 }

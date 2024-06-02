@@ -39,12 +39,12 @@
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
 swab (char *from, char *to, int nbytes)
 {
-     while(nbytes >= 2) {
-	  *(to + 1) = *from;
-	  *to = *(from + 1);
-	  to += 2;
-	  from += 2;
-	  nbytes -= 2;
-     }
+    while(nbytes >= 2) {
+        *(to + 1) = *from;
+        *to = *(from + 1);
+        to += 2;
+        from += 2;
+        nbytes -= 2;
+    }
 }
 #endif

@@ -32,27 +32,27 @@
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
 gss_add_cred(OM_uint32 *minor_status,
-    gss_const_cred_id_t input_cred_handle,
-    gss_const_name_t desired_name,
-    const gss_OID desired_mech,
-    gss_cred_usage_t cred_usage,
-    OM_uint32 initiator_time_req,
-    OM_uint32 acceptor_time_req,
-    gss_cred_id_t *output_cred_handle,
-    gss_OID_set *actual_mechs,
-    OM_uint32 *initiator_time_rec,
-    OM_uint32 *acceptor_time_rec)
+             gss_const_cred_id_t input_cred_handle,
+             gss_const_name_t desired_name,
+             const gss_OID desired_mech,
+             gss_cred_usage_t cred_usage,
+             OM_uint32 initiator_time_req,
+             OM_uint32 acceptor_time_req,
+             gss_cred_id_t *output_cred_handle,
+             gss_OID_set *actual_mechs,
+             OM_uint32 *initiator_time_rec,
+             OM_uint32 *acceptor_time_rec)
 {
     return gss_add_cred_from(minor_status,
-			     rk_UNCONST(input_cred_handle),
-			     desired_name,
-			     desired_mech,
-			     cred_usage,
-			     initiator_time_req,
-			     acceptor_time_req,
-			     GSS_C_NO_CRED_STORE,
-			     output_cred_handle,
-			     actual_mechs,
-			     initiator_time_rec,
-			     acceptor_time_rec);
+                             rk_UNCONST(input_cred_handle),
+                             desired_name,
+                             desired_mech,
+                             cred_usage,
+                             initiator_time_req,
+                             acceptor_time_req,
+                             GSS_C_NO_CRED_STORE,
+                             output_cred_handle,
+                             actual_mechs,
+                             initiator_time_rec,
+                             acceptor_time_rec);
 }

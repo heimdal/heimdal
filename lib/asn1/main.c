@@ -340,21 +340,21 @@ main(int argc, char **argv)
 
     setprogname(argv[0]);
     if (getarg(args, num_args, argc, argv, &optidx))
-	usage(1);
+        usage(1);
     if (help_flag)
-	usage(0);
+        usage(0);
     if (version_flag) {
-	print_version(NULL);
-	exit(0);
+        print_version(NULL);
+        exit(0);
     }
     if (argc == optidx) {
         /* Compile the module on stdin */
-	file = "stdin";
-	name = "stdin";
-	yyin = stdin;
+        file = "stdin";
+        name = "stdin";
+        yyin = stdin;
     } else {
         /* Compile a named module */
-	file = argv[optidx];
+        file = argv[optidx];
 
         /*
          * If the .asn1 stem is not given, then assume it, and also assume
@@ -373,45 +373,45 @@ main(int argc, char **argv)
                 err(1, "Out of memory");
             file = s;
         }
-	yyin = fopen (file, "r");
-	if (yyin == NULL)
-	    err (1, "open %s", file);
-	if (argc == optidx + 1) {
-	    char *p;
+        yyin = fopen (file, "r");
+        if (yyin == NULL)
+            err (1, "open %s", file);
+        if (argc == optidx + 1) {
+            char *p;
 
             /* C module name substring not given; derive from file name */
             name = my_basename(estrdup(file));
-	    p = strrchr(name, '.');
-	    if (p)
-		*p = '\0';
-	} else
-	    name = argv[optidx + 1];
+            p = strrchr(name, '.');
+            if (p)
+                *p = '\0';
+        } else
+            name = argv[optidx + 1];
     }
 
     /*
      * Parse extra options file
      */
     if (option_file) {
-	char buf[1024];
+        char buf[1024];
 
         if (opt == NULL &&
             (opt = fopen(option_file, "r")) == NULL)
-	    err(1, "Could not open given option file %s", option_file);
+            err(1, "Could not open given option file %s", option_file);
 
-	arg = calloc(2, sizeof(arg[0]));
-	if (arg == NULL) {
-	    perror("calloc");
-	    exit(1);
-	}
-	arg[0] = option_file;
-	arg[1] = NULL;
-	len = 1;
+        arg = calloc(2, sizeof(arg[0]));
+        if (arg == NULL) {
+            perror("calloc");
+            exit(1);
+        }
+        arg[0] = option_file;
+        arg[1] = NULL;
+        len = 1;
         sz = 2;
 
-	while (fgets(buf, sizeof(buf), opt) != NULL) {
+        while (fgets(buf, sizeof(buf), opt) != NULL) {
             size_t buflen, ws;
 
-	    buf[strcspn(buf, "\n\r")] = '\0';
+            buf[strcspn(buf, "\n\r")] = '\0';
 
             buflen = strlen(buf);
             if ((ws = strspn(buf, " \t")))
@@ -427,33 +427,33 @@ main(int argc, char **argv)
                 }
                 sz += (sz>>1) + 2;
             }
-	    arg[len] = strdup(buf);
-	    if (arg[len] == NULL) {
-		perror("strdup");
-		exit(1);
-	    }
-	    arg[len + 1] = NULL;
-	    len++;
-	}
-	fclose(opt);
+            arg[len] = strdup(buf);
+            if (arg[len] == NULL) {
+                perror("strdup");
+                exit(1);
+            }
+            arg[len + 1] = NULL;
+            len++;
+        }
+        fclose(opt);
 
-	optidx = 0;
-	if(getarg(args, num_args, len, arg, &optidx))
-	    usage(1);
+        optidx = 0;
+        if(getarg(args, num_args, len, arg, &optidx))
+            usage(1);
 
-	if (len != optidx) {
-	    fprintf(stderr, "extra args");
-	    exit(1);
-	}
+        if (len != optidx) {
+            fprintf(stderr, "extra args");
+            exit(1);
+        }
     }
 
     if (fuzzer_flag) {
-	if (!template_flag) {
-	    printf("can't do fuzzer w/o --template");
-	    exit(1);
-	}
+        if (!template_flag) {
+            printf("can't do fuzzer w/o --template");
+            exit(1);
+        }
 #ifdef ASN1_FUZZER
-	fuzzer_string = "_fuzzer";
+        fuzzer_string = "_fuzzer";
 #endif
     }
 
@@ -470,25 +470,25 @@ main(int argc, char **argv)
     init_generate(file, name);
 
     if (one_code_file)
-	generate_header_of_codefile(name);
+        generate_header_of_codefile(name);
 
     initsym ();
     ret = yyparse ();
     if(ret != 0 || error_flag != 0)
-	exit(1);
+        exit(1);
     if (!original_order)
         generate_types();
     if (argc != optidx)
-	fclose(yyin);
+        fclose(yyin);
 
     if (one_code_file)
-	close_codefile();
+        close_codefile();
     close_generate();
 
     if (arg) {
-	for (i = 1; i < len; i++)
-	    free(arg[i]);
-	free(arg);
+        for (i = 1; i < len; i++)
+            free(arg[i]);
+        free(arg);
     }
 
     return 0;

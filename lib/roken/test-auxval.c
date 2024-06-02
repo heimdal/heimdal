@@ -125,11 +125,11 @@ is_special_auxv_p(long type)
 {
 #ifdef AT_HWCAP
     if (type == AT_HWCAP)
-	return 1;
+        return 1;
 #endif
 #ifdef AT_HWCAP2
     if (type == AT_HWCAP2)
-	return 1;
+        return 1;
 #endif
 
     return 0;
@@ -181,8 +181,8 @@ main(int argc, char **argv, char **env)
             if (a[1] != 0)
                 warnx("AT_NULL with non-zero value %lu?!", a[1]);
             continue;
-	} else if (is_special_auxv_p(a[0]))
-	    continue;
+        } else if (is_special_auxv_p(a[0]))
+            continue;
 
         errno = EACCES;
 

@@ -44,19 +44,19 @@ gss_oid_to_str(OM_uint32 *minor_status, gss_OID oid, gss_buffer_t oid_str)
     _mg_buffer_zero(oid_str);
 
     if (oid == GSS_C_NULL_OID)
-	return GSS_S_FAILURE;
+        return GSS_S_FAILURE;
 
     ret = der_get_oid (oid->elements, oid->length, &o, &size);
     if (ret) {
-	*minor_status = ret;
-	return GSS_S_FAILURE;
+        *minor_status = ret;
+        return GSS_S_FAILURE;
     }
 
     ret = der_print_heim_oid(&o, ' ', &p);
     der_free_oid(&o);
     if (ret) {
-	*minor_status = ret;
-	return GSS_S_FAILURE;
+        *minor_status = ret;
+        return GSS_S_FAILURE;
     }
 
     oid_str->value = p;

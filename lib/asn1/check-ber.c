@@ -263,7 +263,7 @@ test_ber(void)
 
     ret = decode_ContentInfo(contentdata, contentlen, &ci, &size);
     if (ret)
-	return 1;
+        return 1;
 
     free_ContentInfo(&ci);
     return 0;

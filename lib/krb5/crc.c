@@ -47,15 +47,15 @@ _krb5_crc_init_table(void)
     if(flag) return;
     poly = CRC_GEN;
     for (i = 0; i < 256; i++) {
-	crc = i;
-	for (j = 8; j > 0; j--) {
-	    if (crc & 1) {
-		crc = (crc >> 1) ^ poly;
-	    } else {
-		crc >>= 1;
-	    }
-	}
-	table[i] = crc;
+        crc = i;
+        for (j = 8; j > 0; j--) {
+            if (crc & 1) {
+                crc = (crc >> 1) ^ poly;
+            } else {
+                crc >>= 1;
+            }
+        }
+        table[i] = crc;
     }
     flag = 1;
 }
@@ -64,6 +64,6 @@ KRB5_LIB_FUNCTION uint32_t KRB5_LIB_CALL
 _krb5_crc_update (const char *p, size_t len, uint32_t res)
 {
     while (len--)
-	res = table[(res ^ *p++) & 0xFF] ^ (res >> 8);
+        res = table[(res ^ *p++) & 0xFF] ^ (res >> 8);
     return res & 0xFFFFFFFF;
 }

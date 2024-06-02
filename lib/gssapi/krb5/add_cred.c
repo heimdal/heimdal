@@ -65,8 +65,8 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_add_cred_from (
 
     if (desired_mech != GSS_C_NO_OID &&
         gss_oid_equal(desired_mech, GSS_KRB5_MECHANISM) == 0) {
-	*minor_status = 0;
-	return GSS_S_BAD_MECH;
+        *minor_status = 0;
+        return GSS_S_BAD_MECH;
     }
 
     if (cred == NULL) {
@@ -77,13 +77,13 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_add_cred_from (
                     "internal error in _gsskrb5_add_cred()");
 
         major = _gsskrb5_acquire_cred_from(minor_status, desired_name,
-					   min(initiator_time_req,
-					       acceptor_time_req),
-					   GSS_C_NO_OID_SET,
-					   cred_usage,
-					   cred_store,
-					   output_cred_handle,
-					   actual_mechs, &lifetime);
+                                           min(initiator_time_req,
+                                               acceptor_time_req),
+                                           GSS_C_NO_OID_SET,
+                                           cred_usage,
+                                           cred_store,
+                                           output_cred_handle,
+                                           actual_mechs, &lifetime);
         if (major != GSS_S_COMPLETE)
             goto failure;
 
@@ -93,14 +93,14 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_add_cred_from (
          * output_cred_handle != NULL.
          */
 
-	HEIMDAL_MUTEX_lock(&cred->cred_id_mutex);
+        HEIMDAL_MUTEX_lock(&cred->cred_id_mutex);
 
         /* Check if requested output usage is compatible with output usage */
-	if (cred->usage != cred_usage && cred->usage != GSS_C_BOTH) {
-	    HEIMDAL_MUTEX_unlock(&cred->cred_id_mutex);
-	    *minor_status = GSS_KRB5_S_G_BAD_USAGE;
-	    return(GSS_S_FAILURE);
-	}
+        if (cred->usage != cred_usage && cred->usage != GSS_C_BOTH) {
+            HEIMDAL_MUTEX_unlock(&cred->cred_id_mutex);
+            *minor_status = GSS_KRB5_S_G_BAD_USAGE;
+            return(GSS_S_FAILURE);
+        }
 
         /* Check that we have the same name */
         if (dname != NULL &&
@@ -127,96 +127,96 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_add_cred_from (
          * GSS_Duplicate_cred() for one mechanism element.
          */
 
-	handle = calloc(1, sizeof(*handle));
-	if (handle == NULL) {
+        handle = calloc(1, sizeof(*handle));
+        if (handle == NULL) {
             if (cred != NULL)
                 HEIMDAL_MUTEX_unlock(&cred->cred_id_mutex);
-	    *minor_status = ENOMEM;
-	    return (GSS_S_FAILURE);
-	}
+            *minor_status = ENOMEM;
+            return (GSS_S_FAILURE);
+        }
 
-	handle->usage = cred_usage;
-	handle->endtime = cred->endtime;
-	handle->principal = NULL;
-	handle->destination_realm = NULL;
-	handle->keytab = NULL;
-	handle->ccache = NULL;
-	handle->mechanisms = NULL;
-	HEIMDAL_MUTEX_init(&handle->cred_id_mutex);
+        handle->usage = cred_usage;
+        handle->endtime = cred->endtime;
+        handle->principal = NULL;
+        handle->destination_realm = NULL;
+        handle->keytab = NULL;
+        handle->ccache = NULL;
+        handle->mechanisms = NULL;
+        HEIMDAL_MUTEX_init(&handle->cred_id_mutex);
 
-	major = GSS_S_FAILURE;
+        major = GSS_S_FAILURE;
 
-	*minor_status = krb5_copy_principal(context, cred->principal,
+        *minor_status = krb5_copy_principal(context, cred->principal,
                                             &handle->principal);
-	if (*minor_status) {
-	    HEIMDAL_MUTEX_unlock(&cred->cred_id_mutex);
-	    free(handle);
-	    return GSS_S_FAILURE;
-	}
+        if (*minor_status) {
+            HEIMDAL_MUTEX_unlock(&cred->cred_id_mutex);
+            free(handle);
+            return GSS_S_FAILURE;
+        }
 
-	if (cred->keytab) {
-	    char *name = NULL;
+        if (cred->keytab) {
+            char *name = NULL;
 
             *minor_status = krb5_kt_get_full_name(context, cred->keytab,
                                                   &name);
-	    if (*minor_status)
-		goto failure;
+            if (*minor_status)
+                goto failure;
 
             *minor_status = krb5_kt_resolve(context, name, &handle->keytab);
-	    krb5_xfree(name);
-	    if (*minor_status)
-		goto failure;
-	}
+            krb5_xfree(name);
+            if (*minor_status)
+                goto failure;
+        }
 
-	if (cred->ccache) {
-	    const char *type, *name;
-	    char *type_name = NULL;
+        if (cred->ccache) {
+            const char *type, *name;
+            char *type_name = NULL;
 
-	    type = krb5_cc_get_type(context, cred->ccache);
-	    if (type == NULL){
-		*minor_status = ENOMEM;
-		goto failure;
-	    }
+            type = krb5_cc_get_type(context, cred->ccache);
+            if (type == NULL){
+                *minor_status = ENOMEM;
+                goto failure;
+            }
 
-	    if (strcmp(type, "MEMORY") == 0) {
-		*minor_status = krb5_cc_new_unique(context, type,
+            if (strcmp(type, "MEMORY") == 0) {
+                *minor_status = krb5_cc_new_unique(context, type,
                                                    NULL, &handle->ccache);
-		if (*minor_status)
-		    goto failure;
+                if (*minor_status)
+                    goto failure;
 
                 *minor_status = krb5_cc_copy_cache(context, cred->ccache,
                                                    handle->ccache);
-		if (*minor_status)
-		    goto failure;
+                if (*minor_status)
+                    goto failure;
 
-	    } else {
-		name = krb5_cc_get_name(context, cred->ccache);
-		if (name == NULL) {
-		    *minor_status = ENOMEM;
-		    goto failure;
-		}
+            } else {
+                name = krb5_cc_get_name(context, cred->ccache);
+                if (name == NULL) {
+                    *minor_status = ENOMEM;
+                    goto failure;
+                }
 
-		if (asprintf(&type_name, "%s:%s", type, name) == -1 ||
+                if (asprintf(&type_name, "%s:%s", type, name) == -1 ||
                     type_name == NULL) {
-		    *minor_status = ENOMEM;
-		    goto failure;
-		}
+                    *minor_status = ENOMEM;
+                    goto failure;
+                }
 
                 *minor_status = krb5_cc_resolve(context, type_name,
                                                 &handle->ccache);
-		free(type_name);
-		if (*minor_status)
-		    goto failure;
-	    }
-	}
-	major = gss_create_empty_oid_set(minor_status, &handle->mechanisms);
-	if (major != GSS_S_COMPLETE)
-	    goto failure;
+                free(type_name);
+                if (*minor_status)
+                    goto failure;
+            }
+        }
+        major = gss_create_empty_oid_set(minor_status, &handle->mechanisms);
+        if (major != GSS_S_COMPLETE)
+            goto failure;
 
-	major = gss_add_oid_set_member(minor_status, GSS_KRB5_MECHANISM,
-				       &handle->mechanisms);
-	if (major != GSS_S_COMPLETE)
-	    goto failure;
+        major = gss_add_oid_set_member(minor_status, GSS_KRB5_MECHANISM,
+                                       &handle->mechanisms);
+        if (major != GSS_S_COMPLETE)
+            goto failure;
 
         HEIMDAL_MUTEX_unlock(&cred->cred_id_mutex);
 
@@ -225,30 +225,30 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_add_cred_from (
         if (major != GSS_S_COMPLETE)
             goto failure;
 
-	*output_cred_handle = (gss_cred_id_t)handle;
+        *output_cred_handle = (gss_cred_id_t)handle;
     }
 
     if (initiator_time_rec)
-	*initiator_time_rec = lifetime;
+        *initiator_time_rec = lifetime;
     if (acceptor_time_rec)
-	*acceptor_time_rec = lifetime;
+        *acceptor_time_rec = lifetime;
 
     *minor_status = 0;
     return major;
 
 failure:
     if (handle) {
-	if (handle->principal)
-	    krb5_free_principal(context, handle->principal);
-	if (handle->keytab)
-	    krb5_kt_close(context, handle->keytab);
-	if (handle->ccache)
-	    krb5_cc_destroy(context, handle->ccache);
-	if (handle->mechanisms)
-	    gss_release_oid_set(NULL, &handle->mechanisms);
-	free(handle);
+        if (handle->principal)
+            krb5_free_principal(context, handle->principal);
+        if (handle->keytab)
+            krb5_kt_close(context, handle->keytab);
+        if (handle->ccache)
+            krb5_cc_destroy(context, handle->ccache);
+        if (handle->mechanisms)
+            gss_release_oid_set(NULL, &handle->mechanisms);
+        free(handle);
     }
     if (cred && output_cred_handle)
-	HEIMDAL_MUTEX_unlock(&cred->cred_id_mutex);
+        HEIMDAL_MUTEX_unlock(&cred->cred_id_mutex);
     return major;
 }

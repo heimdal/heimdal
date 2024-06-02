@@ -76,52 +76,52 @@ get_ccache(krb5_context context, int *destroy, krb5_ccache *id)
     }
 
     ret = krb5_sname_to_principal(context, NULL, "host",
-				  KRB5_NT_SRV_HST, &principal);
+                                  KRB5_NT_SRV_HST, &principal);
     if (ret)
-	goto out;
+        goto out;
 
     ret = krb5_cc_cache_match(context, principal, id);
     if (ret == 0)
-	goto out;
+        goto out;
 
     /* did not find in default credcache, lets try default keytab */
     ret = krb5_kt_default(context, &kt);
     if (ret)
-	goto out;
+        goto out;
 
     /* XXX check in keytab */
     {
-	krb5_get_init_creds_opt *opt;
-	krb5_creds cred;
+        krb5_get_init_creds_opt *opt;
+        krb5_creds cred;
 
-	memset(&cred, 0, sizeof(cred));
+        memset(&cred, 0, sizeof(cred));
 
-	ret = krb5_cc_new_unique(context, "MEMORY", NULL, id);
-	if (ret)
-	    goto out;
-	*destroy = 1;
-	ret = krb5_get_init_creds_opt_alloc(context, &opt);
-	if (ret)
-	    goto out;
-	ret = krb5_get_init_creds_keytab (context,
-					  &cred,
-					  principal,
-					  kt,
-					  0,
-					  NULL,
-					  opt);
-	krb5_get_init_creds_opt_free(context, opt);
-	if (ret)
-	    goto out;
-	ret = krb5_cc_initialize (context, *id, cred.client);
-	if (ret) {
-	    krb5_free_cred_contents (context, &cred);
-	    goto out;
-	}
-	ret = krb5_cc_store_cred (context, *id, &cred);
-	krb5_free_cred_contents (context, &cred);
-	if (ret)
-	    goto out;
+        ret = krb5_cc_new_unique(context, "MEMORY", NULL, id);
+        if (ret)
+            goto out;
+        *destroy = 1;
+        ret = krb5_get_init_creds_opt_alloc(context, &opt);
+        if (ret)
+            goto out;
+        ret = krb5_get_init_creds_keytab (context,
+                                          &cred,
+                                          principal,
+                                          kt,
+                                          0,
+                                          NULL,
+                                          opt);
+        krb5_get_init_creds_opt_free(context, opt);
+        if (ret)
+            goto out;
+        ret = krb5_cc_initialize (context, *id, cred.client);
+        if (ret) {
+            krb5_free_cred_contents (context, &cred);
+            goto out;
+        }
+        ret = krb5_cc_store_cred (context, *id, &cred);
+        krb5_free_cred_contents (context, &cred);
+        if (ret)
+            goto out;
     }
 
     krb5_kt_close(context, kt);
@@ -130,18 +130,18 @@ get_ccache(krb5_context context, int *destroy, krb5_ccache *id)
 
 out:
     if (*id) {
-	if (*destroy)
-	    krb5_cc_destroy(context, *id);
-	else
-	    krb5_cc_close(context, *id);
-	*id = NULL;
+        if (*destroy)
+            krb5_cc_destroy(context, *id);
+        else
+            krb5_cc_close(context, *id);
+        *id = NULL;
     }
 
     if (kt)
-	krb5_kt_close(context, kt);
+        krb5_kt_close(context, kt);
 
     if (principal)
-	krb5_free_principal(context, principal);
+        krb5_free_principal(context, principal);
     return ret;
 }
 
@@ -158,29 +158,29 @@ kdc_alloc(OM_uint32 *minor, void **ctx)
 
     c = calloc(1, sizeof(*c));
     if (c == NULL) {
-	*minor = ENOMEM;
-	return GSS_S_FAILURE;
+        *minor = ENOMEM;
+        return GSS_S_FAILURE;
     }
 
     ret = krb5_init_context(&c->context);
     if (ret) {
-	kdc_destroy(&junk, c);
-	*minor = ret;
-	return GSS_S_FAILURE;
+        kdc_destroy(&junk, c);
+        *minor = ret;
+        return GSS_S_FAILURE;
     }
 
     ret = get_ccache(c->context, &c->destroy, &c->id);
     if (ret) {
-	kdc_destroy(&junk, c);
-	*minor = ret;
-	return GSS_S_FAILURE;
+        kdc_destroy(&junk, c);
+        *minor = ret;
+        return GSS_S_FAILURE;
     }
 
     ret = krb5_ntlm_alloc(c->context, &c->ntlm);
     if (ret) {
-	kdc_destroy(&junk, c);
-	*minor = ret;
-	return GSS_S_FAILURE;
+        kdc_destroy(&junk, c);
+        *minor = ret;
+        return GSS_S_FAILURE;
     }
 
     *ctx = c;
@@ -197,10 +197,10 @@ kdc_probe(OM_uint32 *minor, void *ctx, const char *realm)
 
     ret = krb5_digest_probe(c->context, rk_UNCONST(realm), c->id, &flags);
     if (ret)
-	return ret;
+        return ret;
 
     if ((flags & (1|2|4)) == 0)
-	return EINVAL;
+        return EINVAL;
 
     return 0;
 }
@@ -216,15 +216,15 @@ kdc_destroy(OM_uint32 *minor, void *ctx)
     krb5_data_free(&c->opaque);
     krb5_data_free(&c->sessionkey);
     if (c->ntlm)
-	krb5_ntlm_free(c->context, c->ntlm);
+        krb5_ntlm_free(c->context, c->ntlm);
     if (c->id) {
-	if (c->destroy)
-	    krb5_cc_destroy(c->context, c->id);
-	else
-	    krb5_cc_close(c->context, c->id);
+        if (c->destroy)
+            krb5_cc_destroy(c->context, c->id);
+        else
+            krb5_cc_close(c->context, c->id);
     }
     if (c->context)
-	krb5_free_context(c->context);
+        krb5_free_context(c->context);
     memset(c, 0, sizeof(*c));
     free(c);
 
@@ -237,12 +237,12 @@ kdc_destroy(OM_uint32 *minor, void *ctx)
 
 static OM_uint32
 kdc_type2(OM_uint32 *minor_status,
-	  void *ctx,
-	  uint32_t flags,
-	  const char *hostname,
-	  const char *domain,
-	  uint32_t *ret_flags,
-	  struct ntlm_buf *out)
+          void *ctx,
+          uint32_t flags,
+          const char *hostname,
+          const char *domain,
+          uint32_t *ret_flags,
+          struct ntlm_buf *out)
 {
     struct ntlmkrb5 *c = ctx;
     krb5_error_code ret;
@@ -258,15 +258,15 @@ kdc_type2(OM_uint32 *minor_status,
      * Request data for type 2 packet from the KDC.
      */
     ret = krb5_ntlm_init_request(c->context,
-				 c->ntlm,
-				 NULL,
-				 c->id,
-				 flags,
-				 hostname,
-				 domain);
+                                 c->ntlm,
+                                 NULL,
+                                 c->id,
+                                 flags,
+                                 hostname,
+                                 domain);
     if (ret) {
-	*minor_status = ret;
-	return GSS_S_FAILURE;
+        *minor_status = ret;
+        return GSS_S_FAILURE;
     }
 
     /*
@@ -275,8 +275,8 @@ kdc_type2(OM_uint32 *minor_status,
 
     ret = krb5_ntlm_init_get_opaque(c->context, c->ntlm, &c->opaque);
     if (ret) {
-	*minor_status = ret;
-	return GSS_S_FAILURE;
+        *minor_status = ret;
+        return GSS_S_FAILURE;
     }
 
     /*
@@ -285,36 +285,36 @@ kdc_type2(OM_uint32 *minor_status,
 
     ret = krb5_ntlm_init_get_flags(c->context, c->ntlm, &type2.flags);
     if (ret) {
-	*minor_status = ret;
-	return GSS_S_FAILURE;
+        *minor_status = ret;
+        return GSS_S_FAILURE;
     }
     *ret_flags = type2.flags;
 
     ret = krb5_ntlm_init_get_challenge(c->context, c->ntlm, &challenge);
     if (ret) {
-	*minor_status = ret;
-	return GSS_S_FAILURE;
+        *minor_status = ret;
+        return GSS_S_FAILURE;
     }
 
     if (challenge.length != sizeof(type2.challenge)) {
-	*minor_status = EINVAL;
-	return GSS_S_FAILURE;
+        *minor_status = EINVAL;
+        return GSS_S_FAILURE;
     }
     memcpy(type2.challenge, challenge.data, sizeof(type2.challenge));
     krb5_data_free(&challenge);
 
     ret = krb5_ntlm_init_get_targetname(c->context, c->ntlm,
-					&type2.targetname);
+                                        &type2.targetname);
     if (ret) {
-	*minor_status = ret;
-	return GSS_S_FAILURE;
+        *minor_status = ret;
+        return GSS_S_FAILURE;
     }
 
     ret = krb5_ntlm_init_get_targetinfo(c->context, c->ntlm, &ti);
     if (ret) {
-	free(type2.targetname);
-	*minor_status = ret;
-	return GSS_S_FAILURE;
+        free(type2.targetname);
+        *minor_status = ret;
+        return GSS_S_FAILURE;
     }
 
     type2.targetinfo.data = ti.data;
@@ -324,8 +324,8 @@ kdc_type2(OM_uint32 *minor_status,
     free(type2.targetname);
     krb5_data_free(&ti);
     if (ret) {
-	*minor_status = ret;
-	return GSS_S_FAILURE;
+        *minor_status = ret;
+        return GSS_S_FAILURE;
     }
 
     out->data = data.data;
@@ -340,9 +340,9 @@ kdc_type2(OM_uint32 *minor_status,
 
 static OM_uint32
 kdc_type3(OM_uint32 *minor_status,
-	  void *ctx,
-	  const struct ntlm_type3 *type3,
-	  struct ntlm_buf *sessionkey)
+          void *ctx,
+          const struct ntlm_type3 *type3,
+          struct ntlm_buf *sessionkey)
 {
     struct ntlmkrb5 *c = ctx;
     krb5_error_code ret;
@@ -355,53 +355,53 @@ kdc_type3(OM_uint32 *minor_status,
     ret = krb5_ntlm_req_set_username(c->context, c->ntlm, type3->username);
     if (ret) goto out;
     ret = krb5_ntlm_req_set_targetname(c->context, c->ntlm,
-				       type3->targetname);
+                                       type3->targetname);
     if (ret) goto out;
     ret = krb5_ntlm_req_set_lm(c->context, c->ntlm,
-			       type3->lm.data, type3->lm.length);
+                               type3->lm.data, type3->lm.length);
     if (ret) goto out;
     ret = krb5_ntlm_req_set_ntlm(c->context, c->ntlm,
-				 type3->ntlm.data, type3->ntlm.length);
+                                 type3->ntlm.data, type3->ntlm.length);
     if (ret) goto out;
     ret = krb5_ntlm_req_set_opaque(c->context, c->ntlm, &c->opaque);
     if (ret) goto out;
 
     if (type3->sessionkey.length) {
-	ret = krb5_ntlm_req_set_session(c->context, c->ntlm,
-					type3->sessionkey.data,
-					type3->sessionkey.length);
-	if (ret) goto out;
+        ret = krb5_ntlm_req_set_session(c->context, c->ntlm,
+                                        type3->sessionkey.data,
+                                        type3->sessionkey.length);
+        if (ret) goto out;
     }
 
     /*
      * Verify with the KDC the type3 packet is ok
      */
     ret = krb5_ntlm_request(c->context,
-			    c->ntlm,
-			    NULL,
-			    c->id);
+                            c->ntlm,
+                            NULL,
+                            c->id);
     if (ret)
-	goto out;
+        goto out;
 
     if (krb5_ntlm_rep_get_status(c->context, c->ntlm) != TRUE) {
-	ret = EINVAL;
-	goto out;
+        ret = EINVAL;
+        goto out;
     }
 
     if (type3->sessionkey.length) {
-	ret = krb5_ntlm_rep_get_sessionkey(c->context,
-					   c->ntlm,
-					   &c->sessionkey);
-	if (ret)
-	    goto out;
+        ret = krb5_ntlm_rep_get_sessionkey(c->context,
+                                           c->ntlm,
+                                           &c->sessionkey);
+        if (ret)
+            goto out;
 
-	sessionkey->data = c->sessionkey.data;
-	sessionkey->length = c->sessionkey.length;
+        sessionkey->data = c->sessionkey.data;
+        sessionkey->length = c->sessionkey.length;
     }
 
     return 0;
 
- out:
+out:
     *minor_status = ret;
     return GSS_S_FAILURE;
 }
@@ -414,7 +414,7 @@ static void
 kdc_free_buffer(struct ntlm_buf *sessionkey)
 {
     if (sessionkey->data)
-	free(sessionkey->data);
+        free(sessionkey->data);
     sessionkey->data = NULL;
     sessionkey->length = 0;
 }

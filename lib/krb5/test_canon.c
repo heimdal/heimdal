@@ -68,29 +68,29 @@ main(int argc, char **argv)
     memset(&ktent, 0, sizeof(ktent));
 
     while ((opt = getopt(argc, argv, "hgkc:")) != -1) {
-	switch (opt) {
-	case 'g':
-	    do_get_creds++;
-	    break;
-	case 'k':
-	    do_kt++;
-	    break;
-	case 'c':
-	    cmp_to = optarg;
-	    break;
-	case 'h':
-	default:
-	    fprintf(stderr, "Usage: %s [-g] [-k] [-c compare-to-principal] "
-		    "[principal]\n", argv[0]);
-	    return 1;
-	}
+        switch (opt) {
+            case 'g':
+                do_get_creds++;
+                break;
+            case 'k':
+                do_kt++;
+                break;
+            case 'c':
+                cmp_to = optarg;
+                break;
+            case 'h':
+            default:
+                fprintf(stderr, "Usage: %s [-g] [-k] [-c compare-to-principal] "
+                        "[principal]\n", argv[0]);
+                return 1;
+        }
     }
 
     if (!do_get_creds && !do_kt && !cmp_to)
-	do_get_creds++;
+        do_get_creds++;
 
     if (optind < argc)
-	hostname = argv[optind];
+        hostname = argv[optind];
 
     during = "init_context";
     retval = krb5_init_context(&context);
@@ -106,52 +106,52 @@ main(int argc, char **argv)
     printf("krb5_sname_to_principal() output: %s\n", unparsed);
 
     if (cmp_to) {
-	krb5_boolean eq;
+        krb5_boolean eq;
 
-	during = "parsing principal name for comparison compare";
-	retval = krb5_parse_name(context, cmp_to, &cmp_to_princ);
-	if (retval) goto err;
+        during = "parsing principal name for comparison compare";
+        retval = krb5_parse_name(context, cmp_to, &cmp_to_princ);
+        if (retval) goto err;
 
-	eq = krb5_principal_compare(context, princ, cmp_to_princ);
-	printf("%s %s %s\n", unparsed, eq ? "==" : "!=", cmp_to);
+        eq = krb5_principal_compare(context, princ, cmp_to_princ);
+        printf("%s %s %s\n", unparsed, eq ? "==" : "!=", cmp_to);
     }
 
     if (do_get_creds) {
-	during = "ccdefault";
-	retval = krb5_cc_default(context, &cc);
-	if (retval) goto err;
+        during = "ccdefault";
+        retval = krb5_cc_default(context, &cc);
+        if (retval) goto err;
 
-	during = "ccprinc";
-	retval = krb5_cc_get_principal(context, cc, &me);
-	if (retval) goto err;
+        during = "ccprinc";
+        retval = krb5_cc_get_principal(context, cc, &me);
+        if (retval) goto err;
 
-	memset(&in_creds, 0, sizeof(in_creds));
-	in_creds.client = me;
-	in_creds.server = princ;
+        memset(&in_creds, 0, sizeof(in_creds));
+        in_creds.client = me;
+        in_creds.server = princ;
 
-	during = "getcreds";
-	retval = krb5_get_credentials(context, 0, cc, &in_creds, &out_creds);
-	if (retval) goto err;
+        during = "getcreds";
+        retval = krb5_get_credentials(context, 0, cc, &in_creds, &out_creds);
+        if (retval) goto err;
 
-	during = "unparsing principal name canonicalized by krb5_get_credentials()";
-	retval = krb5_unparse_name(context, in_creds.server, &unparsed_canon);
-	if (retval) goto err;
-	printf("Principal name as canonicalized by krb5_get_credentials() is %s\n", unparsed_canon);
+        during = "unparsing principal name canonicalized by krb5_get_credentials()";
+        retval = krb5_unparse_name(context, in_creds.server, &unparsed_canon);
+        if (retval) goto err;
+        printf("Principal name as canonicalized by krb5_get_credentials() is %s\n", unparsed_canon);
     }
 
     if (do_kt) {
-	during = "getting keytab";
-	retval = krb5_kt_default(context, &kt);
-	if (retval) goto err;
+        during = "getting keytab";
+        retval = krb5_kt_default(context, &kt);
+        if (retval) goto err;
 
-	during = "getting keytab ktent";
-	retval = krb5_kt_get_entry(context, kt, princ, 0, 0, &ktent);
-	if (retval) goto err;
+        during = "getting keytab ktent";
+        retval = krb5_kt_get_entry(context, kt, princ, 0, 0, &ktent);
+        if (retval) goto err;
 
-	during = "unparsing principal name canonicalized by krb5_kt_get_entry()";
-	retval = krb5_unparse_name(context, ktent.principal, &unparsed_canon);
-	if (retval) goto err;
-	printf("Principal name as canonicalized by krb5_kt_get_entry() is %s\n", unparsed_canon);
+        during = "unparsing principal name canonicalized by krb5_kt_get_entry()";
+        retval = krb5_unparse_name(context, ktent.principal, &unparsed_canon);
+        if (retval) goto err;
+        printf("Principal name as canonicalized by krb5_kt_get_entry() is %s\n", unparsed_canon);
     }
 
     ret = 0;
@@ -163,15 +163,15 @@ err:
     krb5_xfree(unparsed);
     krb5_xfree(unparsed_canon);
     if (do_get_creds) {
-	krb5_free_creds(context, out_creds);
-	(void) krb5_cc_close(context, cc);
+        krb5_free_creds(context, out_creds);
+        (void) krb5_cc_close(context, cc);
     }
     krb5_kt_free_entry(context, &ktent);
     if (kt)
-	krb5_kt_close(context, kt);
+        krb5_kt_close(context, kt);
     krb5_free_context(context);
     if (ret)
-	fprintf(stderr, "Failed while doing %s (%d)\n", during, retval);
+        fprintf(stderr, "Failed while doing %s (%d)\n", during, retval);
     return (ret);
 }
 

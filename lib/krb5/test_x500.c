@@ -39,10 +39,10 @@
 
 static void
 check_linear(krb5_context context,
-	     const char *client_realm,
-	     const char *server_realm,
-	     const char *realm,
-	     ...)
+             const char *client_realm,
+             const char *server_realm,
+             const char *realm,
+             ...)
 {
     unsigned int num_inrealms = 0, num_realms = 0, n;
     char **inrealms = NULL;
@@ -56,31 +56,31 @@ check_linear(krb5_context context,
     va_start(va, realm);
 
     while (realm) {
-	inrealms = erealloc(inrealms, (num_inrealms + 2) * sizeof(inrealms[0]));
-	inrealms[num_inrealms] = rk_UNCONST(realm);
-	num_inrealms++;
-	realm = va_arg(va, const char *);
+        inrealms = erealloc(inrealms, (num_inrealms + 2) * sizeof(inrealms[0]));
+        inrealms[num_inrealms] = rk_UNCONST(realm);
+        num_inrealms++;
+        realm = va_arg(va, const char *);
     }
     if (inrealms)
-	inrealms[num_inrealms] = NULL;
+        inrealms[num_inrealms] = NULL;
 
     ret = krb5_domain_x500_encode(inrealms, num_inrealms, &tr);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_domain_x500_encode");
+        krb5_err(context, 1, ret, "krb5_domain_x500_encode");
 
     ret = krb5_domain_x500_decode(context, tr,
-				  &realms, &num_realms,
-				  client_realm, server_realm);
+                                  &realms, &num_realms,
+                                  client_realm, server_realm);
     if (ret)
-	krb5_err(context, 1, ret, "krb5_domain_x500_decode");
+        krb5_err(context, 1, ret, "krb5_domain_x500_decode");
 
     krb5_data_free(&tr);
 
     if (num_inrealms != num_realms)
-	errx(1, "num_inrealms != num_realms");
+        errx(1, "num_inrealms != num_realms");
 
     for(n = 0; n < num_realms; n++)
-	free(realms[n]);
+        free(realms[n]);
     free(realms);
 
     free(inrealms);
@@ -97,7 +97,7 @@ main(int argc, char **argv)
 
     ret = krb5_init_context(&context);
     if (ret)
-	errx(1, "krb5_init_context");
+        errx(1, "krb5_init_context");
 
 
     check_linear(context, "KTH1.SE", "KTH1.SE", NULL);

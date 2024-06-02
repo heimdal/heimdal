@@ -51,8 +51,8 @@ ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
 rk_strpoolfree(struct rk_strpool *p)
 {
     if (p && p->str) {
-	free(p->str);
-	p->str = NULL;
+        free(p->str);
+        p->str = NULL;
     }
     free(p);
 }
@@ -72,13 +72,13 @@ rk_strpoolprintf(struct rk_strpool *p, const char *fmt, ...)
     len = vasprintf(&str, fmt, ap);
     va_end(ap);
     if (str == NULL)
-	return rk_strpoolfree(p), NULL;
+        return rk_strpoolfree(p), NULL;
 
     if (p == NULL) {
-	if ((p = malloc(sizeof(*p))) == NULL)
+        if ((p = malloc(sizeof(*p))) == NULL)
             return free(str), NULL;
-	p->str = str;
-	p->len = p->sz = len;
+        p->str = str;
+        p->len = p->sz = len;
         return p;
     } /* else grow the buffer and append `str', but don't grow too fast */
 
@@ -106,7 +106,7 @@ rk_strpoolcollect(struct rk_strpool *p)
 {
     char *str;
     if (p == NULL)
-	return strdup("");
+        return strdup("");
     str = p->str;
     p->str = NULL;
     free(p);

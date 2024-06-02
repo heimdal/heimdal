@@ -26,8 +26,11 @@ endif
 
 TESTS = test_base
 
+BUILT_SOURCES = $(srcdir)/heimbase-protos.h
+
 if versionscript
-libheimbase_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(srcdir)/version-script.map
+libheimbase_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(builddir)/version-script.map
+BUILT_SOURCES += version-script.map
 endif
 
 libheimbase_la_LIBADD = $(PTHREAD_LIBADD) $(LIB_dlopen) $(LIB_com_err)
@@ -78,13 +81,11 @@ $(srcdir)/heimbase-private.h: $(dist_libheimbase_la_SOURCES)
 
 # install these?
 
-libheimbase_la_DEPENDENCIES = version-script.map
-
 test_base_LDADD = libheimbase.la $(LIB_roken)
 
-CLEANFILES = base64.c test_db.json heim_err.c heim_err.h
+CLEANFILES = $(BUILT_SOURCES) base64.c test_db.json heim_err.c heim_err.h
 
-EXTRA_DIST = NTMakefile version-script.map config_reg.c heim_err.et
+EXTRA_DIST = NTMakefile config_reg.c heim_err.et
 
 dist_include_HEADERS = heimbase-protos.h
 

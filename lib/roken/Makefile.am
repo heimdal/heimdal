@@ -11,10 +11,6 @@ lib_LTLIBRARIES = libroken.la
 libroken_la_LDFLAGS = -version-info 20:0:1
 libroken_la_CPPFLAGS = -DBUILD_ROKEN_LIB
 
-if versionscript
-libroken_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(srcdir)/version-script.map
-endif
-
 AM_CPPFLAGS += $(libroken_la_CPPFLAGS)
 if HAVE_DBHEADER
 AM_CPPFLAGS += -I$(DBHEADER)
@@ -46,7 +42,7 @@ check_PROGRAMS = 				\
 TESTS = $(check_PROGRAMS)
 
 LDADD = libroken.la
-make_roken_LDADD = 
+make_roken_LDADD =
 
 noinst_LTLIBRARIES = libtest.la
 libtest_la_SOURCES = strftime.c strptime.c snprintf.c tsearch.c
@@ -79,13 +75,13 @@ ifaddrs_h = ifaddrs.h
 endif
 
 if have_search_h
-search_h = 
+search_h =
 else
 search_h = search.h
 endif
 
 if have_vis_h
-vis_h = 
+vis_h =
 else
 vis_h = vis.h
 endif
@@ -195,7 +191,7 @@ EXTRA_libroken_la_SOURCES =	\
 	fnmatch.hin		\
 	ifaddrs.hin		\
 	search.hin		\
-	vis.hin	
+	vis.hin
 
 libroken_la_LIBADD = @LTLIBOBJS@ $(LIB_crypt) $(LIB_pidfile)
 if SUNOS
@@ -206,9 +202,14 @@ $(LTLIBOBJS) $(libroken_la_OBJECTS): roken.h $(XHEADERS)
 
 BUILT_SOURCES = roken.h $(err_h) $(fnmatch_h) $(ifaddrs_h) $(search_h) $(vis_h)
 
+if versionscript
+libroken_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(builddir)/version-script.map
+BUILT_SOURCES += version-script.map
+endif
+
 ## these are controlled by configure
 XHEADERS = $(err_h) $(fnmatch_h) $(ifaddrs_h) $(search_h) $(vis_h)
-CLEANFILES += err.h fnmatch.h ifaddrs.h search.h vis.h
+CLEANFILES += version-script.map err.h fnmatch.h ifaddrs.h search.h vis.h
 
 dist_include_HEADERS = 				\
 	base32.h				\
@@ -289,5 +290,4 @@ EXTRA_DIST = \
 	test-auxval.c \
 	test-mem.h \
 	test-mini_inetd.c \
-	win32_alloc.c \
-	version-script.map
+	win32_alloc.c

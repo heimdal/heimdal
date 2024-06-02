@@ -3690,6 +3690,9 @@ krb5_init_creds_get(krb5_context context, krb5_init_creds_context ctx)
 	krb5_sendto_set_hostname(context, stctx, ctx->kdc_hostname);
     if (ctx->sitename)
 	krb5_sendto_set_sitename(context, stctx, ctx->sitename);
+    ret = _krb5_sendto_set_principal(context, stctx, ctx->cred.client);
+    if (ret)
+	goto out;
 
     while (1) {
 	struct timeval nstart, nend;

@@ -383,7 +383,7 @@ process_request(krb5_context context,
     unsigned int i;
     int claim = 0;
 
-    r = calloc(sizeof(*r), 1);
+    r = calloc(1, sizeof(*r));
     if (!r)
 	return krb5_enomem(context);
 
@@ -459,7 +459,7 @@ krb5_kdc_process_request(krb5_context context,
     return process_request(context, config, 0, buf, len, reply, prependlength,
 			   from, addr, datagram_reply);
 }
- 
+
 /*
  * handle the request in `buf, len', from `addr' (or `from' as a string),
  * sending a reply in `reply'.

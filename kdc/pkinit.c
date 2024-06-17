@@ -398,6 +398,7 @@ _kdc_pk_rd_padata(astgs_request_t priv,
     hx509_certs trust_anchors;
     int have_data = 0;
     const HDB_Ext_PKINIT_cert *pc;
+    hx509_revoke_ctx revoke_ctx;
 
     *ret_params = NULL;
 
@@ -458,6 +459,20 @@ _kdc_pk_rd_padata(astgs_request_t priv,
     hx509_verify_set_time(cp->verify_ctx, kdc_time);
     hx509_verify_attach_anchors(cp->verify_ctx, trust_anchors);
     hx509_certs_free(&trust_anchors);
+    
+    if (config->pkinit_kdc_revoke != NULL) {
+	hx509_revoke_init(context->hx509ctx, &revoke_ctx);
+	
+	ret = hx509_revoke_add_crl(context->hx509ctx, revoke_ctx, *config->pkinit_kdc_revoke);
+	if (ret) {
+	    hx509_revoke_free(&revoke_ctx);
+	    krb5_set_error_message(context, ret, "failed to add CRL");
+	    goto out;
+	}
+	
+	hx509_verify_attach_revoke(cp->verify_ctx, revoke_ctx);
+	hx509_revoke_free(&revoke_ctx);
+    }
 
     if (config->pkinit_allow_proxy_certs)
 	hx509_verify_set_proxy_certificate(cp->verify_ctx, 1);

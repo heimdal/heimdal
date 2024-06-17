@@ -983,6 +983,17 @@ fcc_get_first(krb5_context context,
     return 0;
 }
 
+/*
+ * Return true if cred is a removed entry.  We assume that any active entry
+ * with endtime=0 (such as a config entry or gssproxy encrypted credential)
+ * will also have authtime=0.
+ */
+static inline krb5_boolean
+cred_removed(krb5_creds *c)
+{
+    return c->times.endtime == 0 && c->times.authtime != 0;
+}
+
 static krb5_error_code KRB5_CALLCONV
 fcc_get_next (krb5_context context,
 	      krb5_ccache id,
@@ -1011,7 +1022,7 @@ fcc_get_next (krb5_context context,
 	    break;
 	}
 
-	if (creds->times.endtime != 0)
+	if (!cred_removed(creds))
 	    break;
 
 	krb5_free_cred_contents(context, creds);

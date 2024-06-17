@@ -1,0 +1,981 @@
+# Georgian translation for Heimdal.
+# This file is put in the public domain.
+# Ekaterine Papava <papava.e@gtu.ge>, 2024.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Heimdal 1.2.99\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2008-09-07 15:23+0100\n"
+"PO-Revision-Date: 2024-04-03 06:39+0200\n"
+"Last-Translator: Ekaterine Papava <papava.e@gtu.ge>\n"
+"Language-Team: \n"
+"Language: ka\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 3.3.2\n"
+
+#. 000
+#: ../lib/krb5/krb5_err.c:11
+msgid "No error"
+msgstr "შეცდომის გარეშე"
+
+#. 001
+#: ../lib/krb5/krb5_err.c:12
+msgid "Client's entry in database has expired"
+msgstr "ბაზაში კლიენტის ჩანაწერი ვადაგასულია"
+
+#. 002
+#: ../lib/krb5/krb5_err.c:13
+msgid "Server's entry in database has expired"
+msgstr "ბაზაში სერვერის ჩანაწერი ვადაგასულია"
+
+#. 003
+#: ../lib/krb5/krb5_err.c:14
+msgid "Requested protocol version not supported"
+msgstr "მოთხოვნილი პროტოკოლის ვერსია მხარდაუჭერელია"
+
+#. 004
+#: ../lib/krb5/krb5_err.c:15
+msgid "Client's key is encrypted in an old master key"
+msgstr "კლიენტის გასაღები ძველი მთავარი გასაღებია"
+
+#. 005
+#: ../lib/krb5/krb5_err.c:16
+msgid "Server's key is encrypted in an old master key"
+msgstr "სერვერის გასაღები ძველი მთავარი გასაღებია"
+
+#. 006
+#: ../lib/krb5/krb5_err.c:17
+msgid "Client not found in Kerberos database"
+msgstr "კლიენტი Kerberos-ის ბაზაში ვერ ვიპოვე"
+
+#. 007
+#: ../lib/krb5/krb5_err.c:18
+msgid "Server not found in Kerberos database"
+msgstr "სერვერი Kerberos-ის ბაზაში ვერ ვიპოვე"
+
+#. 008
+#: ../lib/krb5/krb5_err.c:19
+msgid "Principal has multiple entries in Kerberos database"
+msgstr "პრინციპალს Kerberos-ის ბაზაში ერთზე მეტი ჩანაწერი გააჩნია"
+
+#. 009
+#: ../lib/krb5/krb5_err.c:20
+msgid "Client or server has a null key"
+msgstr "სერვერის ან კლიენტის გასაღები ნულოვანია"
+
+#. 010
+#: ../lib/krb5/krb5_err.c:21
+msgid "Ticket is ineligible for postdating"
+msgstr "ბილეთი მორიგი რიცხვით ჩაწერისთვის შეუფერებელია"
+
+#. 011
+#: ../lib/krb5/krb5_err.c:22
+msgid "Requested effective lifetime is negative or too short"
+msgstr "მოთხოვნილი ეფექტური სიცოცხლის დრო უარყოფითი ან მეტისმეტად მოკლეა"
+
+#. 012
+#: ../lib/krb5/krb5_err.c:23
+msgid "KDC policy rejects request"
+msgstr "KDC პოლიტიკა მოთხოვნას უარყოფს"
+
+#. 013
+#: ../lib/krb5/krb5_err.c:24
+msgid "KDC can't fulfill requested option"
+msgstr "KDC მოთხოვნილი პარამეტრის შევსება შეუძლებელია"
+
+#. 014
+#: ../lib/krb5/krb5_err.c:25
+msgid "KDC has no support for encryption type"
+msgstr "KDC -ს დაშიფვრის ტიპის მხარდაჭერა არ გააჩნია"
+
+#. 015
+#: ../lib/krb5/krb5_err.c:26
+msgid "KDC has no support for checksum type"
+msgstr "KDC -ს საკონტროლო ჯამის ტიპის მხარდაჭერა არ გააჩნია"
+
+#. 016
+#: ../lib/krb5/krb5_err.c:27
+msgid "KDC has no support for padata type"
+msgstr "KDC -ს padata ტიპის მხარდაჭერა არ გააჩნია"
+
+#. 017
+#: ../lib/krb5/krb5_err.c:28
+msgid "KDC has no support for transited type"
+msgstr "KDC -ს transited ტიპის მხარდაჭერა არ გააჩნია"
+
+#. 018
+#: ../lib/krb5/krb5_err.c:29
+msgid "Clients credentials have been revoked"
+msgstr "კლიენტის ავტორიზაციის დეტალები გაუქმდა"
+
+#. 019
+#: ../lib/krb5/krb5_err.c:30
+msgid "Credentials for server have been revoked"
+msgstr "სერვერის ავტორიზაციის დეტალები გაუქმდა"
+
+#. 020
+#: ../lib/krb5/krb5_err.c:31
+msgid "TGT has been revoked"
+msgstr "TGT გაუქმებულია"
+
+#. 021
+#: ../lib/krb5/krb5_err.c:32
+msgid "Client not yet valid - try again later"
+msgstr "კლიენტი ჯერ არასწორია - მოგვიანებით სცადეთ"
+
+#. 022
+#: ../lib/krb5/krb5_err.c:33
+msgid "Server not yet valid - try again later"
+msgstr "სერვერი ჯერ არასწორია - მოგვიანებით სცადეთ"
+
+#. 023
+#: ../lib/krb5/krb5_err.c:34
+msgid "Password has expired"
+msgstr "პაროლს ვადა გაუვიდა"
+
+#. 024
+#: ../lib/krb5/krb5_err.c:35
+msgid "Preauthentication failed"
+msgstr "პრეავთენტიკაციის შეცდომა"
+
+#. 025
+#: ../lib/krb5/krb5_err.c:36
+msgid "Additional pre-authentication required"
+msgstr "დამატებითი პრე-ავთენტიკაცია აუცილებელია"
+
+#. 026
+#: ../lib/krb5/krb5_err.c:37
+msgid "Requested server and ticket don't match"
+msgstr "მოთხოვნილი სერვერი და ბილეთი არ ემთხვევა"
+
+#. 027
+#: ../lib/krb5/krb5_err.c:38
+msgid "Server principal valid for user2user only"
+msgstr "სერვერის პრინციპალი მხოლოდ მომხმარებლიდან მომხმარებლამდეა ძალაში"
+
+#. 028
+#: ../lib/krb5/krb5_err.c:39
+msgid "KDC Policy rejects transited path"
+msgstr "KDC-ის პოლიტიკა ტრანზიტულ ბილიკს უარყოფს"
+
+#. 029
+#: ../lib/krb5/krb5_err.c:40
+msgid "A service is not available"
+msgstr "სერვისი ხელმიუწვდომელია"
+
+#. 030
+#. 031
+#: ../lib/krb5/krb5_err.c:42
+msgid "Decrypt integrity check failed"
+msgstr "გაშიფვრის მთლიანობის შემოწმების შეცდომა"
+
+#. 032
+#: ../lib/krb5/krb5_err.c:43
+msgid "Ticket expired"
+msgstr "ბილეთი ვადაგასულია"
+
+#. 033
+#: ../lib/krb5/krb5_err.c:44
+msgid "Ticket not yet valid"
+msgstr "ბილეთი ჯერ არასწორია"
+
+#. 034
+#: ../lib/krb5/krb5_err.c:45
+msgid "Request is a replay"
+msgstr "პასუხის მოთხოვნა"
+
+#. 035
+#: ../lib/krb5/krb5_err.c:46
+msgid "The ticket isn't for us"
+msgstr "ბილეტი ჩვენთვის არაა"
+
+#. 036
+#: ../lib/krb5/krb5_err.c:47
+msgid "Ticket/authenticator don't match"
+msgstr "ბილეთი/ავთენტიკატორი არ ემთხვევიან"
+
+#. 037
+#: ../lib/krb5/krb5_err.c:48
+msgid "Clock skew too great"
+msgstr "საათის აცდენა მეტისმეტად დიდია"
+
+#. 038
+#: ../lib/krb5/krb5_err.c:49
+msgid "Incorrect net address"
+msgstr "არასწორი ქსელური მისამართი"
+
+#. 039
+#: ../lib/krb5/krb5_err.c:50
+msgid "Protocol version mismatch"
+msgstr "პროტოკოლის ვერსია არ ემთხვევა"
+
+#. 040
+#: ../lib/krb5/krb5_err.c:51
+msgid "Invalid message type"
+msgstr "შეტყობინების არასწორი ტიპი"
+
+#. 041
+#: ../lib/krb5/krb5_err.c:52
+msgid "Message stream modified"
+msgstr "შეტყობინების ნაკადი შეიცვალა"
+
+#. 042
+#: ../lib/krb5/krb5_err.c:53
+msgid "Message out of order"
+msgstr "შეტყობინება რიგს გარეთაა"
+
+#. 043
+#: ../lib/krb5/krb5_err.c:54
+msgid "Invalid cross-realm ticket"
+msgstr "არასწორი რეალმთშორისი ბილეთი"
+
+#. 044
+#: ../lib/krb5/krb5_err.c:55
+msgid "Key version is not available"
+msgstr "გასაღების ვერსია მიუწვდომელია"
+
+#. 045
+#: ../lib/krb5/krb5_err.c:56
+msgid "Service key not available"
+msgstr "სერვერის გასაღები ხელმიუწვდომელია"
+
+#. 046
+#. 158
+#: ../lib/krb5/krb5_err.c:57 ../lib/krb5/krb5_err.c:169
+msgid "Mutual authentication failed"
+msgstr "ორმხრივი ავთენტიკაციის შეცდომა"
+
+#. 047
+#: ../lib/krb5/krb5_err.c:58
+msgid "Incorrect message direction"
+msgstr "შეტყობინების არასწორი მიმართულება"
+
+#. 048
+#: ../lib/krb5/krb5_err.c:59
+msgid "Alternative authentication method required"
+msgstr "ალტერნატიული ავთენტიკაციის მეთოდი აუცილებელია"
+
+#. 049
+#: ../lib/krb5/krb5_err.c:60
+msgid "Incorrect sequence number in message"
+msgstr "მიმდევრობის არასწორი რიცხვი შეტყობინებაში"
+
+#. 050
+#: ../lib/krb5/krb5_err.c:61
+msgid "Inappropriate type of checksum in message"
+msgstr "საკონტროლო ჯამის შეუთავსებელი ტიპი შეტყობინებაში"
+
+#. 051
+#: ../lib/krb5/krb5_err.c:62
+msgid "Policy rejects transited path"
+msgstr "პოლიტიკა ტრანზიტულ ბილიკს უარყოფს"
+
+#. 052
+#: ../lib/krb5/krb5_err.c:63
+msgid "Response too big for UDP, retry with TCP"
+msgstr "პასუხი UDP-სთვის ძალიან დიდია. TCP-ით სცადეთ"
+
+#. 053
+#. 054
+#. 055
+#. 056
+#. 057
+#. 058
+#. 059
+#. 060
+#: ../lib/krb5/krb5_err.c:71
+msgid "Generic error (see e-text)"
+msgstr "ზოგადი შეცდომა (იხილეთ e-text)"
+
+#. 061
+#: ../lib/krb5/krb5_err.c:72
+msgid "Field is too long for this implementation"
+msgstr "ამ განხორციელებისთვის ველი ძალიან გრძელია"
+
+#. 062
+#: ../lib/krb5/krb5_err.c:73
+msgid "Client not trusted"
+msgstr "კლიენტი სანდო არაა"
+
+#. 063
+#: ../lib/krb5/krb5_err.c:74
+msgid "KDC not trusted"
+msgstr "KDC სანდო არაა"
+
+#. 064
+#: ../lib/krb5/krb5_err.c:75
+msgid "Invalid signature"
+msgstr "არასწორი ხელმოწერა"
+
+#. 065
+#: ../lib/krb5/krb5_err.c:76
+msgid "DH parameters not accepted"
+msgstr "DH პარამეტრები მისაღები არაა"
+
+#. 066
+#. 067
+#. 068
+#: ../lib/krb5/krb5_err.c:79
+msgid "Wrong realm"
+msgstr "არასწორი რეალმი"
+
+#. 069
+#: ../lib/krb5/krb5_err.c:80
+msgid "User to user required"
+msgstr "მომხმარებლისდან მომხმარებლამდე აუცილებელია"
+
+#. 070
+#: ../lib/krb5/krb5_err.c:81
+msgid "Cannot verify certificate"
+msgstr "სერტიფიკატის გადამოწმება შეუძლებელია"
+
+#. 071
+#: ../lib/krb5/krb5_err.c:82
+msgid "Certificate invalid"
+msgstr "სერტიფიკატი არასწორია"
+
+#. 072
+#: ../lib/krb5/krb5_err.c:83
+msgid "Certificate revoked"
+msgstr "სერტიფიკატი გაიწვიეს"
+
+#. 073
+#: ../lib/krb5/krb5_err.c:84
+msgid "Revocation status unknown"
+msgstr "გაუქმების სტატუსი უცნობია"
+
+#. 074
+#: ../lib/krb5/krb5_err.c:85
+msgid "Revocation status unavaible"
+msgstr "გაუქმების სტატუსი მიუწვდომელია"
+
+#. 075
+#: ../lib/krb5/krb5_err.c:86
+msgid "Client name mismatch in certificate"
+msgstr "კლიენტის სახელი არ ემთხვევა სერტიფიკატში"
+
+#. 076
+#: ../lib/krb5/krb5_err.c:87
+msgid "Inconsistent key purpose"
+msgstr "გასაღების დანიშნულება არამდგრადია"
+
+#. 077
+#: ../lib/krb5/krb5_err.c:88
+msgid "Digest in certificate not accepted"
+msgstr "სერტიფიკატის დაიჯესტი მიუღებელია"
+
+#. 078
+#: ../lib/krb5/krb5_err.c:89
+msgid "paChecksum must be included"
+msgstr "paChecksum ჩასმული უნდა იყოს"
+
+#. 079
+#: ../lib/krb5/krb5_err.c:90
+msgid "Digest in signedData not accepted"
+msgstr "დაიჯესტი signedData-ში მისაღები არაა"
+
+#. 080
+#: ../lib/krb5/krb5_err.c:91
+msgid "Public key encryption not supported"
+msgstr "საჯარო გასაღების დაშიფვრა მხარდაუჭერელია"
+
+#. 081
+#. 082
+#. 083
+#. 084
+#. 085
+#. 086
+#. 087
+#. 088
+#. 089
+#. 090
+#. 091
+#. 092
+#. 093
+#. 094
+#. 095
+#. 096
+#. 097
+#. 098
+#. 099
+#. 100
+#. 101
+#. 102
+#. 103
+#. 104
+#. 105
+#. 106
+#. 107
+#. 108
+#. 109
+#. 110
+#. 111
+#. 112
+#. 113
+#. 114
+#. 115
+#. 116
+#. 117
+#. 118
+#. 119
+#. 120
+#. 121
+#. 122
+#. 123
+#. 124
+#. 125
+#. 126
+#. 127
+#. 128
+#: ../lib/krb5/krb5_err.c:139
+msgid "$Id$"
+msgstr "$Id$"
+
+#. 129
+#: ../lib/krb5/krb5_err.c:140
+msgid "Invalid flag for file lock mode"
+msgstr "ფაილის დაბლოკვის რეჟიმის არასწორი ალამი"
+
+#. 130
+#: ../lib/krb5/krb5_err.c:141
+msgid "Cannot read password"
+msgstr "პაროლის წაკითხვის შეცდომა"
+
+#. 131
+#: ../lib/krb5/krb5_err.c:142
+msgid "Password mismatch"
+msgstr "პაროლი არ ემთხვევა"
+
+#. 132
+#: ../lib/krb5/krb5_err.c:143
+msgid "Password read interrupted"
+msgstr "პაროლის წაკითხვა შეწყვეტილია"
+
+#. 133
+#: ../lib/krb5/krb5_err.c:144
+msgid "Invalid character in component name"
+msgstr "არასწორ სიმბოლო კომპონენტის სახელში"
+
+#. 134
+#: ../lib/krb5/krb5_err.c:145
+msgid "Malformed representation of principal"
+msgstr "პრინციპალის წარმოდგენა არასწორია"
+
+#. 135
+#: ../lib/krb5/krb5_err.c:146
+msgid "Can't open/find configuration file"
+msgstr "კონფიგურაციის ფაილის გახსნა/პოვნა შეუძლებელია"
+
+#. 136
+#: ../lib/krb5/krb5_err.c:147
+msgid "Improper format of configuration file"
+msgstr "კონფიგურაციის ფაილის არასწორი ფორმატი"
+
+#. 137
+#: ../lib/krb5/krb5_err.c:148
+msgid "Insufficient space to return complete information"
+msgstr "სრული ინფორმაციის დასაბრუნებლად ადგილი საკმარისი არაა"
+
+#. 138
+#: ../lib/krb5/krb5_err.c:149
+msgid "Invalid message type specified for encoding"
+msgstr "კოდირებისთვის მითითებული შეტყობინების ტიპი არასწორია"
+
+#. 139
+#: ../lib/krb5/krb5_err.c:150
+msgid "Credential cache name malformed"
+msgstr "არასწორად ფორმირებული ავტორიზაციის დეტალების ქეშის სახელი"
+
+#. 140
+#: ../lib/krb5/krb5_err.c:151
+msgid "Unknown credential cache type"
+msgstr "ავტორიზაციის დეტალების ქეშის არასწორი ტიპი"
+
+#. 141
+#: ../lib/krb5/krb5_err.c:152
+msgid "Matching credential not found"
+msgstr "შესაბამისი ავტორიზაციის დეტალები ნაპოვნი არაა"
+
+#. 142
+#: ../lib/krb5/krb5_err.c:153
+msgid "End of credential cache reached"
+msgstr "მივაღწიეთ ავტორიზაციის დეტალების ქეშის ბოლოს"
+
+#. 143
+#: ../lib/krb5/krb5_err.c:154
+msgid "Request did not supply a ticket"
+msgstr "მოთხოვნას ბილეთი არ მოუწოდებია"
+
+#. 144
+#: ../lib/krb5/krb5_err.c:155
+msgid "Wrong principal in request"
+msgstr "მოთხოვნაში მითითებული პრინციპალი არასწორია"
+
+#. 145
+#: ../lib/krb5/krb5_err.c:156
+msgid "Ticket has invalid flag set"
+msgstr "ბილეთზე დაყენებული ალმები არასწორია"
+
+#. 146
+#: ../lib/krb5/krb5_err.c:157
+msgid "Requested principal and ticket don't match"
+msgstr "მოთხოვნილი პრინციპალი და ბილეთი არ ემთხვევა"
+
+#. 147
+#: ../lib/krb5/krb5_err.c:158
+msgid "KDC reply did not match expectations"
+msgstr "KDC-ის პასუხი მოსალოდნელს არ ემთხვევა"
+
+#. 148
+#: ../lib/krb5/krb5_err.c:159
+msgid "Clock skew too great in KDC reply"
+msgstr "KDC-ის პასუხისთვის საათის აცდენა მეტისმეტად დიდია"
+
+#. 149
+#: ../lib/krb5/krb5_err.c:160
+msgid "Client/server realm mismatch in initial ticket request"
+msgstr "ბილეთის საწყის მოთხოვნაში კლიენტისა და სერვერის რეალმები ერთმანეთს არ ემთხვევა"
+
+#. 150
+#: ../lib/krb5/krb5_err.c:161
+msgid "Program lacks support for encryption type"
+msgstr "პროგრამას დაშიფვრის ტიპის მხარდაჭერა არ გააჩნია"
+
+#. 151
+#: ../lib/krb5/krb5_err.c:162
+msgid "Program lacks support for key type"
+msgstr "პროგრამას გასაღების ტიპის მხარდაჭერა არ გააჩნია"
+
+#. 152
+#: ../lib/krb5/krb5_err.c:163
+msgid "Requested encryption type not used in message"
+msgstr "შეტყობინებაში მოთხოვნილი დაშიფვრის ტიპი არ გამოიყენება"
+
+#. 153
+#: ../lib/krb5/krb5_err.c:164
+msgid "Program lacks support for checksum type"
+msgstr "პროგრამას საკონტროლო ჯამის ტიპის მხარდაჭერა არ გააჩნია"
+
+#. 154
+#: ../lib/krb5/krb5_err.c:165
+msgid "Cannot find KDC for requested realm"
+msgstr "მოთხოვნილი რეალმისთვის KDC ვერ ვიპოვე"
+
+#. 155
+#: ../lib/krb5/krb5_err.c:166
+msgid "Kerberos service unknown"
+msgstr "Kerberos -ის უცნობი სერვისი"
+
+#. 156
+#: ../lib/krb5/krb5_err.c:167
+msgid "Cannot contact any KDC for requested realm"
+msgstr "მოთხოვნილი რეალმისთვის ვერც ერთ KDC-ს ვერ დავუკავშირდი"
+
+#. 157
+#: ../lib/krb5/krb5_err.c:168
+msgid "No local name found for principal name"
+msgstr "პრინციპალის სახელისთვის ლოკალური სახელი ვერ ვიპოვე"
+
+#. 159
+#: ../lib/krb5/krb5_err.c:170
+msgid "Replay cache type is already registered"
+msgstr "საპასუხო ქეშის ტიპი უკვე რეგისტრირებულია"
+
+#. 160
+#: ../lib/krb5/krb5_err.c:171
+msgid "No more memory to allocate (in replay cache code)"
+msgstr "გამოსაყოფი მეხსიერება არ არსებობს (პასუხის ქეშის კოდში)"
+
+#. 161
+#: ../lib/krb5/krb5_err.c:172
+msgid "Replay cache type is unknown"
+msgstr "პასუხის ქეშის ტიპი უცნობია"
+
+#. 162
+#: ../lib/krb5/krb5_err.c:173
+msgid "Generic unknown RC error"
+msgstr "ზოგადი უცნობი RC შეცდომა"
+
+#. 163
+#: ../lib/krb5/krb5_err.c:174
+msgid "Message is a replay"
+msgstr "შეტყობინება პასუხია"
+
+#. 164
+#: ../lib/krb5/krb5_err.c:175
+msgid "Replay I/O operation failed XXX"
+msgstr "თავიდან გაშვების შეყვანა/გამოტანის ოპერაცია ჩავარდა XXX"
+
+#. 165
+#: ../lib/krb5/krb5_err.c:176
+msgid "Replay cache type does not support non-volatile storage"
+msgstr "პასუხის ქეშის ტიპს არააქროლადი საცავის მხარდაჭერა არ გააჩნია"
+
+#. 166
+#: ../lib/krb5/krb5_err.c:177
+msgid "Replay cache name parse/format error"
+msgstr "პასუხის ქეშის სახელის დამუშავების/ფორმატის შეცდომა"
+
+#. 167
+#: ../lib/krb5/krb5_err.c:178
+msgid "End-of-file on replay cache I/O"
+msgstr "ფაილის-ბოლო პასუხის ქეშთან მიმოცვლისას"
+
+#. 168
+#: ../lib/krb5/krb5_err.c:179
+msgid "No more memory to allocate (in replay cache I/O code)"
+msgstr "გამოსაყოფი მეხსიერება არ არსებობს (პასუხის ქეშთან მიმოცვლის კოდში)"
+
+#. 169
+#: ../lib/krb5/krb5_err.c:180
+msgid "Permission denied in replay cache code"
+msgstr "პასუხის ქეშის კოდის წვდომა აკრძალულია"
+
+#. 170
+#: ../lib/krb5/krb5_err.c:181
+msgid "I/O error in replay cache i/o code"
+msgstr "მიმოცვლის შეცდომა პასუხის ქეშის მიმოცვლის კოდში"
+
+#. 171
+#: ../lib/krb5/krb5_err.c:182
+msgid "Generic unknown RC/IO error"
+msgstr "ზოგადი უცნობი RC/IO შეცდომა"
+
+#. 172
+#: ../lib/krb5/krb5_err.c:183
+msgid "Insufficient system space to store replay information"
+msgstr "პასუხის ინფორმაციის დასამახსოვრებლად სისტემური ადგილი საკმარისი არაა"
+
+#. 173
+#: ../lib/krb5/krb5_err.c:184
+msgid "Can't open/find realm translation file"
+msgstr "რეალმის თარგმნის ფაილის გახსნის/პოვნის შეცდომა"
+
+#. 174
+#: ../lib/krb5/krb5_err.c:185
+msgid "Improper format of realm translation file"
+msgstr "რეალმის თარგმანის ფაილის არასწორი ფორმატი"
+
+#. 175
+#: ../lib/krb5/krb5_err.c:186
+msgid "Can't open/find lname translation database"
+msgstr "Lname-ის თარგმანის ბაზის პოვნის/გახსნის შეცდომა"
+
+#. 176
+#: ../lib/krb5/krb5_err.c:187
+msgid "No translation available for requested principal"
+msgstr "მოთხოვნილი პრინციპალისთვის თარგმანი არ არსებობს"
+
+#. 177
+#: ../lib/krb5/krb5_err.c:188
+msgid "Improper format of translation database entry"
+msgstr "თარგმანის ბაზის ჩანაწერის არასწორი ფორმატი"
+
+#. 178
+#: ../lib/krb5/krb5_err.c:189
+msgid "Cryptosystem internal error"
+msgstr "კრიპტოსისტემის შიდა შეცდომა"
+
+#. 179
+#: ../lib/krb5/krb5_err.c:190
+msgid "Key table name malformed"
+msgstr "გასაღების ცხრილის სახელი არასწორია"
+
+#. 180
+#: ../lib/krb5/krb5_err.c:191
+msgid "Unknown Key table type"
+msgstr "გასაღების ცხრილის უცნობი ტიპი"
+
+#. 181
+#: ../lib/krb5/krb5_err.c:192
+msgid "Key table entry not found"
+msgstr "გასაღების ცხრილის ჩანაწერი ვერ ვპოვე"
+
+#. 182
+#: ../lib/krb5/krb5_err.c:193
+msgid "End of key table reached"
+msgstr "მიღწეულია გასაღების ცხრილის ბოლო"
+
+#. 183
+#: ../lib/krb5/krb5_err.c:194
+msgid "Cannot write to specified key table"
+msgstr "მითითებული გასაღების ცხრილში ჩაწერის შეცდომა"
+
+#. 184
+#: ../lib/krb5/krb5_err.c:195
+msgid "Error writing to key table"
+msgstr "გასაღებების ცხრილში ჩაწერის შეცდომა"
+
+#. 185
+#: ../lib/krb5/krb5_err.c:196
+msgid "Cannot find ticket for requested realm"
+msgstr "მოთხოვნილი რეალმისთვის ბილეთის პოვნის შეცდომა"
+
+#. 186
+#: ../lib/krb5/krb5_err.c:197
+msgid "DES key has bad parity"
+msgstr "DES გასაღებსი არასწორი პარიტეტი"
+
+#. 187
+#: ../lib/krb5/krb5_err.c:198
+msgid "DES key is a weak key"
+msgstr "DES გასაღები სუსტია"
+
+#. 188
+#: ../lib/krb5/krb5_err.c:199
+msgid "Bad encryption type"
+msgstr "არასწორი დაშიფვრის ტიპი"
+
+#. 189
+#: ../lib/krb5/krb5_err.c:200
+msgid "Key size is incompatible with encryption type"
+msgstr "გასაღების ზომა დაშიფვრის ტიპთან შეუთავსებელია"
+
+#. 190
+#: ../lib/krb5/krb5_err.c:201
+msgid "Message size is incompatible with encryption type"
+msgstr "შეტყობინების ზომა დაშიფვრის ტიპთან შეუთავსებელია"
+
+#. 191
+#: ../lib/krb5/krb5_err.c:202
+msgid "Credentials cache type is already registered."
+msgstr "ავტორიზაციის დეტალების ქეშის ტიპი უკვე რეგისტრირებულია."
+
+#. 192
+#: ../lib/krb5/krb5_err.c:203
+msgid "Key table type is already registered."
+msgstr "გასაღებების ცხრილის ტიპი უკვე რეგისტრირებულია."
+
+#. 193
+#: ../lib/krb5/krb5_err.c:204
+msgid "Credentials cache I/O operation failed XXX"
+msgstr "ავტორიზაციის დეტალების ქეშთან მიმოცვლის ოპერაცია ჩავარდა XXX"
+
+#. 194
+#: ../lib/krb5/krb5_err.c:205
+msgid "Credentials cache file permissions incorrect"
+msgstr "ავტორიზაციის დეტალების ქეშის წვდომები არასწორია"
+
+#. 195
+#: ../lib/krb5/krb5_err.c:206
+msgid "No credentials cache file found"
+msgstr "ავტორიზაციის დეტალების კეშის ფაილი ვერ ვიპოვე"
+
+#. 196
+#: ../lib/krb5/krb5_err.c:207
+msgid "Internal file credentials cache error"
+msgstr "შიდა ფაილის ავტორიზაციის დეტალების ქეშის შეცდომა"
+
+#. 197
+#: ../lib/krb5/krb5_err.c:208
+msgid "Error writing to credentials cache file"
+msgstr "ავტორიზაციის დეტალების ქეშში ჩაწერის შეცდომა"
+
+#. 198
+#: ../lib/krb5/krb5_err.c:209
+msgid "No more memory to allocate (in credentials cache code)"
+msgstr "გამოსაყოფი მეხსიერება აღარ დარჩა (ავტორიზაციის დეტალების ქეშის კოდში)"
+
+#. 199
+#: ../lib/krb5/krb5_err.c:210
+msgid "Bad format in credentials cache"
+msgstr "არასწორი ფორმატი ავტორიზაციის დეტალების კეშში"
+
+#. 200
+#: ../lib/krb5/krb5_err.c:211
+msgid "No credentials found with supported encryption types"
+msgstr "მხარდაჭერილი დაშიფვრის ტიპების მქონე ავტორიზაციის დეტალები ვერ ვიპოვე"
+
+#. 201
+#: ../lib/krb5/krb5_err.c:212
+msgid "Invalid KDC option combination (library internal error)"
+msgstr "KDC-ის პარამეტრების არასწორი კომბინაცია (ბიბლიოთეკის შიდა შეცდომა)"
+
+#. 202
+#: ../lib/krb5/krb5_err.c:213
+msgid "Request missing second ticket"
+msgstr "მოთხოვნას მეორე ბილეთი აკლია"
+
+#. 203
+#: ../lib/krb5/krb5_err.c:214
+msgid "No credentials supplied to library routine"
+msgstr "ბიბლიოთეკის ქვეპროგრამისთვის ავტორიზაციის დეტალები მიწოდებული არაა"
+
+#. 204
+#: ../lib/krb5/krb5_err.c:215
+msgid "Bad sendauth version was sent"
+msgstr "გაგზავნილი sendauth ვერსია არასწორია"
+
+#. 205
+#: ../lib/krb5/krb5_err.c:216
+msgid "Bad application version was sent (via sendauth)"
+msgstr "აპლიკაციის გაგზავნილი ვერსია არასწორია (sendauth-ით)"
+
+#. 206
+#: ../lib/krb5/krb5_err.c:217
+msgid "Bad response (during sendauth exchange)"
+msgstr "არასწორი პასუხი (sendauth-ით გაცვლისას)"
+
+#. 207
+#: ../lib/krb5/krb5_err.c:218
+msgid "Server rejected authentication (during sendauth exchange)"
+msgstr "სერვერმა ავტორიზაცია უარყო (sendauth-ით გაცვლისას)"
+
+#. 208
+#: ../lib/krb5/krb5_err.c:219
+msgid "Unsupported preauthentication type"
+msgstr "პრეავთენტიკაციის მხარდაუჭერელი ტიპი"
+
+#. 209
+#: ../lib/krb5/krb5_err.c:220
+msgid "Required preauthentication key not supplied"
+msgstr "პრეავთენტიკაცის გასაღების მიწოდება აუცილებელია"
+
+#. 210
+#: ../lib/krb5/krb5_err.c:221
+msgid "Generic preauthentication failure"
+msgstr "პრეავთენტიკაციის ზოგადი შეცდომა"
+
+#. 211
+#: ../lib/krb5/krb5_err.c:222
+msgid "Unsupported replay cache format version number"
+msgstr "პასუხის ქეშის ფორმატის ვერსიის ნომერი მხარდაუჭერელია"
+
+#. 212
+#: ../lib/krb5/krb5_err.c:223
+msgid "Unsupported credentials cache format version number"
+msgstr "ავტორიზაციის დეტალების ქეშის ფორმატის ვერსიის არასწორი ნომერი"
+
+#. 213
+#: ../lib/krb5/krb5_err.c:224
+msgid "Unsupported key table format version number"
+msgstr "გასაღებების ცხრილის ფორმატის ვერსიის არასწორი ნომერი"
+
+#. 214
+#: ../lib/krb5/krb5_err.c:225
+msgid "Program lacks support for address type"
+msgstr "პროგრამას მისამართის ტიპის მხარდაჭერა არ გააჩნია"
+
+#. 215
+#: ../lib/krb5/krb5_err.c:226
+msgid "Message replay detection requires rcache parameter"
+msgstr "შეტყობინებაზე პასუხის აღმოჩენას rcache პარამეტრი სჭირდება"
+
+#. 216
+#: ../lib/krb5/krb5_err.c:227
+msgid "Hostname cannot be canonicalized"
+msgstr "ჰოსტის სახელის კანონიკალიზება სეუძლებელია"
+
+#. 217
+#: ../lib/krb5/krb5_err.c:228
+msgid "Cannot determine realm for host"
+msgstr "ჰოსტისთვის რეალმის დადგენის შეცდომა"
+
+#. 218
+#: ../lib/krb5/krb5_err.c:229
+msgid "Conversion to service principal undefined for name type"
+msgstr "სერვისის პრინციპალზე გარდაქმნა სახელის ტიისთვის შეუძლებელია"
+
+#. 219
+#: ../lib/krb5/krb5_err.c:230
+msgid "Initial Ticket response appears to be Version 4"
+msgstr "საწყისი ბილეთის პასუხი მეოთხე ვერსიას წააგავს"
+
+#. 220
+#: ../lib/krb5/krb5_err.c:231
+msgid "Cannot resolve KDC for requested realm"
+msgstr "მოთხოვნილი რეალმისთვის KDC-ის ამოხსნა შეუძლებელია"
+
+#. 221
+#: ../lib/krb5/krb5_err.c:232
+msgid "Requesting ticket can't get forwardable tickets"
+msgstr "მომთხოვნი ბილეთები გადამისამართებადი ბილეთები ვერ იქნება"
+
+#. 222
+#: ../lib/krb5/krb5_err.c:233
+msgid "Bad principal name while trying to forward credentials"
+msgstr "ავტორიზაციის დეტალების გადაგზავნისას პრინციპალის სახელი არასწორია"
+
+#. 223
+#: ../lib/krb5/krb5_err.c:234
+msgid "Looping detected inside krb5_get_in_tkt"
+msgstr "Krb5_get_in_tkt_ის შიგნით მარყუჟი ვიპოვე"
+
+#. 224
+#: ../lib/krb5/krb5_err.c:235
+msgid "Configuration file does not specify default realm"
+msgstr "კონფიგურაციის ფაილში ნაგულისხმები რეალმი მითითებული არაა"
+
+#. 225
+#: ../lib/krb5/krb5_err.c:236
+msgid "Bad SAM flags in obtain_sam_padata"
+msgstr "არასწორი SAM ალმები obtain_sam_padata-ში"
+
+#. 226
+#: ../lib/krb5/krb5_err.c:237
+msgid "Invalid encryption type in SAM challenge"
+msgstr "არასწორი დაშიფვრის ტიპი SAM გამოწვევაში"
+
+#. 227
+#: ../lib/krb5/krb5_err.c:238
+msgid "Missing checksum in SAM challenge"
+msgstr "SAM გამოწვევაში საკონტროლო ჯამი ვერ ვიპოვე"
+
+#. 228
+#: ../lib/krb5/krb5_err.c:239
+msgid "Bad checksum in SAM challenge"
+msgstr "არასწორი საკონტროლო ჯამი SAM გამოწვევაში"
+
+#. 229
+#. 230
+#. 231
+#. 232
+#. 233
+#. 234
+#. 235
+#. 236
+#. 237
+#. 238
+#: ../lib/krb5/krb5_err.c:249
+msgid "Program called an obsolete, deleted function"
+msgstr "პროგრამამ მოძველებული, წაშლილი ფუნქცია გამოიძახა"
+
+#. 239
+#. 240
+#. 241
+#. 242
+#. 243
+#. 244
+#. 245
+#: ../lib/krb5/krb5_err.c:256
+msgid "Invalid key generation parameters from KDC"
+msgstr "KDC-დან მიღებული გასაღების გენერაციის პარამეტრები არასწორია"
+
+#. 246
+#: ../lib/krb5/krb5_err.c:257
+msgid "Service not available"
+msgstr "სერვისი ხელმიუწვდომელია"
+
+#. 247
+#: ../lib/krb5/krb5_err.c:258
+msgid "Credential cache function not supported"
+msgstr "ავტორიზაციის დეტალების კეშის ფუნქცია მხარდაჭერილი არაა"
+
+#. 248
+#: ../lib/krb5/krb5_err.c:259
+msgid "Invalid format of Kerberos lifetime or clock skew string"
+msgstr "Kerberos-ის სიცოცხლის დროის არასწორი ფორმატი ან დროის აცდენა მეტისმეტად დიდია"
+
+#. 249
+#: ../lib/krb5/krb5_err.c:260
+msgid "Supplied data not handled by this plugin"
+msgstr "მოწოდებული მონაცემები ამ დამატების მიერ არ მუშავდება"
+
+#. 250
+#: ../lib/krb5/krb5_err.c:261
+msgid "Plugin does not support the operaton"
+msgstr "დამატებას ოპერაციის მხარდაჭერა არ გააჩნია"

@@ -38,7 +38,6 @@
 
 #include "krb5_locl.h"
 #include <assert.h>
-#include <com_err.h>
 
 static void _krb5_init_ets(krb5_context);
 
@@ -1048,6 +1047,8 @@ _krb5_init_ets(krb5_context context)
 
     heim_add_et_list(context->hcontext, initialize_k524_error_table_r);
     heim_add_et_list(context->hcontext, initialize_k5e1_error_table_r);
+
+	krb5_add_et_list(context, initialize_hdb_error_table_r);
 
 #ifdef COM_ERR_BINDDOMAIN_krb5
     bindtextdomain(COM_ERR_BINDDOMAIN_krb5, HEIMDAL_LOCALEDIR);

@@ -997,15 +997,25 @@ fcc_get_next (krb5_context context,
     if (FCC_CURSOR(*cursor) == NULL)
         return krb5_einval(context, 3);
 
-    FCC_CURSOR(*cursor)->cred_start =
-        krb5_storage_seek(FCC_CURSOR(*cursor)->sp, 0, SEEK_CUR);
+    while (1) {
+	FCC_CURSOR(*cursor)->cred_start =
+	    krb5_storage_seek(FCC_CURSOR(*cursor)->sp, 0, SEEK_CUR);
 
-    ret = krb5_ret_creds(FCC_CURSOR(*cursor)->sp, creds);
-    if (ret)
-	krb5_clear_error_message(context);
+	ret = krb5_ret_creds(FCC_CURSOR(*cursor)->sp, creds);
 
-    FCC_CURSOR(*cursor)->cred_end =
-        krb5_storage_seek(FCC_CURSOR(*cursor)->sp, 0, SEEK_CUR);
+	FCC_CURSOR(*cursor)->cred_end =
+	    krb5_storage_seek(FCC_CURSOR(*cursor)->sp, 0, SEEK_CUR);
+
+	if (ret) {
+	    krb5_clear_error_message(context);
+	    break;
+	}
+
+	if (creds->times.endtime != 0)
+	    break;
+
+	krb5_free_cred_contents(context, creds);
+    }
 
     return ret;
 }

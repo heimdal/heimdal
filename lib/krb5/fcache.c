@@ -1011,7 +1011,7 @@ fcc_get_next (krb5_context context,
 	    break;
 	}
 
-	if (creds->times.endtime != 0)
+	if (creds->times.endtime != 0 || creds->times.authtime != -1)
 	    break;
 
 	krb5_free_cred_contents(context, creds);

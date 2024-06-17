@@ -25,6 +25,7 @@ include @srcdirabs@/include-krb5.conf
         synthetic_clients = true
 	enable_gss_preauth = true
 	gss_mechanisms_allowed = sanon-x25519
+        max-kdc-datagram-reply-length = 1200
 	enable-pkinit = true
 	pkinit_identity = FILE:@srcdir@/../../lib/hx509/data/kdc.crt,@srcdir@/../../lib/hx509/data/kdc.key
 	pkinit_anchors = FILE:@srcdir@/../../lib/hx509/data/ca.crt

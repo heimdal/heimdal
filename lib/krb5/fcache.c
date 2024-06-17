@@ -1088,6 +1088,9 @@ cred_delete(krb5_context context,
      */
     cred->times.endtime = 0;
 
+    /* For compatibility with MIT d3b39a8bac6206b5ea78b0bf6a2958c1df0b0dd5 */
+    cred->times.authtime = -1;
+
     /* ...except for config creds because we don't check their endtimes */
     if (srealm && strcmp(srealm, "X-CACHECONF:") == 0) {
 	ret = krb5_principal_set_realm(context, cred->server, "X-RMED-CONF:");

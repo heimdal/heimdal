@@ -2807,6 +2807,7 @@ out:
     if (r->armor_server)
 	_kdc_free_ent(r->context, r->armor_serverdb, r->armor_server);
     krb5_free_keyblock_contents(r->context, &r->reply_key);
+    krb5_free_keyblock_contents(r->context, &r->enc_ad_key);
     krb5_free_keyblock_contents(r->context, &r->session_key);
     krb5_free_keyblock_contents(r->context, &r->strengthen_key);
     krb5_pac_free(r->context, r->pac);

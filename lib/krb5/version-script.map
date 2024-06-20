@@ -849,6 +849,7 @@ HEIMDAL_KRB5_2.0 {
 		krb5_init_creds_set_service;
 		krb5_init_creds_set_fast_anon_pkinit;
 		_krb5_init_creds_set_fast_anon_pkinit_optimistic;
+		krb5_init_creds_set_fast_ap_armor_service;
 		krb5_init_creds_set_fast_ccache;
 		krb5_init_creds_set_keytab;
 		krb5_init_creds_set_kdc_hostname;

@@ -410,6 +410,8 @@ AC_CONFIG_SUBDIRS([lib/libedit])
 KRB_C_BIGENDIAN
 AC_C_INLINE
 
+rk_NTLM_ESS
+
 dnl AM_C_PROTOTYPES
 
 dnl Checks for typedefs, structures, and compiler characteristics.

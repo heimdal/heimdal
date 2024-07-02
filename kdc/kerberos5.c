@@ -919,6 +919,9 @@ pa_enc_ts_validate(astgs_request_t r, const PA_DATA *pa)
 	goto out;
     }
     free_EncryptedData(&enc_data);
+    if (ret) {
+	goto out;
+    }
     ret = decode_PA_ENC_TS_ENC(ts_data.data,
 			       ts_data.length,
 			       &p,

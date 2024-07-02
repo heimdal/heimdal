@@ -172,10 +172,16 @@ test_BN_import_export(void)
 	p = malloc(len + 1);
 	p[len] = 0xf4;
 	BN_bn2bin(bn, p);
-	if (p[len] != 0xf4)
+	if (p[len] != 0xf4) {
+	    free(p);
+	    BN_free(bn);
 	    return 1;
-	if (memcmp(p, ietests[i].data, ietests[i].len) != 0)
+	}
+	if (memcmp(p, ietests[i].data, ietests[i].len) != 0) {
+	    free(p);
+	    BN_free(bn);
 	    return 1;
+	}
 	free(p);
     }
 

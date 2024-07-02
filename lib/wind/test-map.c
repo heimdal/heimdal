@@ -69,6 +69,7 @@ try(const struct example *c)
     ret = _wind_stringprep_map(c->in, c->in_len, tmp, &out_len, WIND_PROFILE_NAME);
     if (ret) {
 	printf("wind_stringprep_map failed\n");
+	free(tmp);
 	return 1;
     }
     if (out_len != c->out_len) {

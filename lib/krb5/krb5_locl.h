@@ -156,6 +156,7 @@ struct gss_OID_desc_struct;
 #include <krb5_err.h>
 #include <k5e1_err.h>
 #include <asn1_err.h>
+#include <hdb_err.h>
 #ifdef PKINIT
 #include <hx509.h>
 #endif

@@ -1791,3 +1791,303 @@ OM_uint32 _gssapi_verify_mic_cfx(OM_uint32 *minor_status,
 
     return GSS_S_COMPLETE | seq_err;
 }
+
+OM_uint32
+_gssapi_get_mic_iov(
+	OM_uint32 *minor_status,
+	gsskrb5_ctx ctx,
+	krb5_context context,
+	gss_iov_buffer_desc *iov,
+	int iov_count)
+{
+	OM_uint32 major_status, junk;
+	gss_iov_buffer_desc *header, *trailer, *padding;
+	size_t gsshsize;
+	size_t gsstsize, k5tsize;
+	int i;
+	gss_cfx_mic_token token;
+	krb5_error_code ret;
+	int32_t seq_number;
+	unsigned usage;
+	krb5_crypto_iov *data = NULL;
+
+	header = _gk_find_buffer(iov, iov_count, GSS_IOV_BUFFER_TYPE_HEADER);
+	if (header == NULL) {
+		*minor_status = EINVAL;
+		return GSS_S_FAILURE;
+	}
+
+	padding = _gk_find_buffer(iov, iov_count, GSS_IOV_BUFFER_TYPE_PADDING);
+	if (padding != NULL) {
+		padding->buffer.length = 0;
+	}
+
+	trailer = _gk_find_buffer(iov, iov_count, GSS_IOV_BUFFER_TYPE_TRAILER);
+
+	major_status = _gk_verify_buffers(
+		minor_status, ctx, header, padding, trailer, FALSE);
+	if (major_status != GSS_S_COMPLETE) {
+		return major_status;
+	}
+
+	*minor_status = krb5_crypto_length(
+		context, ctx->crypto, KRB5_CRYPTO_TYPE_CHECKSUM, &k5tsize);
+	if (*minor_status) {
+		return GSS_S_FAILURE;
+	}
+
+	gsshsize = sizeof(gss_cfx_mic_token_desc);
+	gsstsize = k5tsize;
+
+	if (trailer == NULL) {
+		gsshsize += gsstsize;
+	} else if (GSS_IOV_BUFFER_FLAGS(trailer->type) & GSS_IOV_BUFFER_FLAG_ALLOCATE) {
+		major_status = _gk_allocate_buffer(minor_status, trailer, gsstsize);
+		if (major_status) {
+			goto failure;
+		}
+	} else if (trailer->buffer.length < gsstsize) {
+		*minor_status = KRB5_BAD_MSIZE;
+		major_status = GSS_S_FAILURE;
+		goto failure;
+	} else {
+		trailer->buffer.length = gsstsize;
+	}
+
+	if (GSS_IOV_BUFFER_FLAGS(header->type) & GSS_IOV_BUFFER_FLAG_ALLOCATE) {
+		major_status = _gk_allocate_buffer(minor_status, header, gsshsize);
+		if (major_status != GSS_S_COMPLETE) {
+			goto failure;
+		}
+	} else if (header->buffer.length < gsshsize) {
+		*minor_status = KRB5_BAD_MSIZE;
+		major_status = GSS_S_FAILURE;
+		goto failure;
+	} else {
+		header->buffer.length = gsshsize;
+	}
+
+	token = (gss_cfx_mic_token)header->buffer.value;
+
+	token->TOK_ID[0] = 0x04;
+	token->TOK_ID[1] = 0x04;
+	token->Flags = 0;
+	memset(token->Filler, 0xFF, 5);
+
+	if ((ctx->more_flags & LOCAL) == 0) {
+		token->Flags |= CFXSentByAcceptor;
+	}
+
+	if (ctx->more_flags & ACCEPTOR_SUBKEY) {
+		token->Flags |= CFXAcceptorSubkey;
+	}
+
+	if (ctx->more_flags & LOCAL) {
+		usage = KRB5_KU_USAGE_INITIATOR_SIGN;
+	} else {
+		usage = KRB5_KU_USAGE_ACCEPTOR_SIGN;
+	}
+
+	HEIMDAL_MUTEX_lock(&ctx->ctx_id_mutex);
+	krb5_auth_con_getlocalseqnumber(context, ctx->auth_context, &seq_number);
+	_gss_mg_encode_be_uint32(0, &token->SND_SEQ[0]);
+	_gss_mg_encode_be_uint32(seq_number, &token->SND_SEQ[4]);
+	krb5_auth_con_setlocalseqnumber(context, ctx->auth_context, ++seq_number);
+	HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
+
+	data = calloc(iov_count + 3, sizeof(data[0]));
+	if (data == NULL) {
+		*minor_status = ENOMEM;
+		major_status = GSS_S_FAILURE;
+		goto failure;
+	}
+
+	/*
+	 * Packet looks like:
+	 * {data | "header" | gss-trailer (krb5 checksum)}
+	 */
+
+	for (i = 0; i < iov_count; i++) {
+		switch (GSS_IOV_BUFFER_TYPE(iov[i].type)) {
+		case GSS_IOV_BUFFER_TYPE_DATA:
+			data[i].flags = KRB5_CRYPTO_TYPE_DATA;
+			break;
+		case GSS_IOV_BUFFER_TYPE_SIGN_ONLY:
+			data[i].flags = KRB5_CRYPTO_TYPE_SIGN_ONLY;
+			break;
+		default:
+			data[i].flags = KRB5_CRYPTO_TYPE_EMPTY;
+			break;
+		}
+		data[i].data.length = iov[i].buffer.length;
+		data[i].data.data = iov[i].buffer.value;
+	}
+
+	data[i].flags = KRB5_CRYPTO_TYPE_DATA;
+	data[i].data.data = header->buffer.value;
+	data[i].data.length = sizeof(gss_cfx_mic_token_desc);
+	i++;
+
+	data[i].flags = KRB5_CRYPTO_TYPE_CHECKSUM;
+	if (trailer) {
+		data[i].data.data = trailer->buffer.value;
+	} else {
+		data[i].data.data =
+			(uint8_t *)header->buffer.value + sizeof(gss_cfx_mic_token_desc);
+	}
+	data[i].data.length = k5tsize;
+	i++;
+
+	ret = krb5_create_checksum_iov(context, ctx->crypto, usage, data, i, NULL);
+	if (ret) {
+		*minor_status = ret;
+		major_status = GSS_S_FAILURE;
+		goto failure;
+	}
+
+	free(data);
+
+	*minor_status = 0;
+	return GSS_S_COMPLETE;
+
+failure:
+	if (data) {
+		free(data);
+	}
+
+	gss_release_iov_buffer(&junk, iov, iov_count);
+
+	return major_status;
+}
+
+OM_uint32
+_gssapi_verify_mic_iov(
+	OM_uint32 *minor_status,
+	gsskrb5_ctx ctx,
+	krb5_context context,
+	gss_iov_buffer_desc *iov,
+	int iov_count,
+	const gss_buffer_t token_buffer)
+{
+	OM_uint32 major_status, junk;
+	int i;
+	gss_cfx_mic_token token;
+	krb5_error_code ret;
+	unsigned usage;
+	krb5_crypto_iov *data = NULL;
+	u_char token_flags;
+	OM_uint32 seq_number_lo, seq_number_hi;
+
+	*minor_status = 0;
+
+	if (token_buffer->length < sizeof(*token)) {
+		return GSS_S_DEFECTIVE_TOKEN;
+	}
+
+	token = (gss_cfx_mic_token)token_buffer->value;
+
+	if (token->TOK_ID[0] != 0x04 || token->TOK_ID[1] != 0x04) {
+		return GSS_S_DEFECTIVE_TOKEN;
+	}
+
+	/* Ignore unknown flags */
+	token_flags = token->Flags & (CFXSentByAcceptor | CFXAcceptorSubkey);
+
+	if (token_flags & CFXSentByAcceptor) {
+		if ((ctx->more_flags & LOCAL) == 0) {
+			return GSS_S_DEFECTIVE_TOKEN;
+		}
+	}
+
+	if (ctx->more_flags & ACCEPTOR_SUBKEY) {
+		if ((token_flags & CFXAcceptorSubkey) == 0) {
+			return GSS_S_DEFECTIVE_TOKEN;
+		}
+	} else {
+		if (token_flags & CFXAcceptorSubkey) {
+			return GSS_S_DEFECTIVE_TOKEN;
+		}
+	}
+
+	if (ct_memcmp(token->Filler, "\xff\xff\xff\xff\xff", 5) != 0) {
+		return GSS_S_DEFECTIVE_TOKEN;
+	}
+
+	/*
+	 * Check sequence number
+	 */
+	_gss_mg_decode_be_uint32(&token->SND_SEQ[0], &seq_number_hi);
+	_gss_mg_decode_be_uint32(&token->SND_SEQ[4], &seq_number_lo);
+	if (seq_number_hi) {
+		*minor_status = ERANGE;
+		return GSS_S_UNSEQ_TOKEN;
+	}
+
+	HEIMDAL_MUTEX_lock(&ctx->ctx_id_mutex);
+	ret = _gssapi_msg_order_check(ctx->order, seq_number_lo);
+	if (ret != 0) {
+		*minor_status = 0;
+		HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
+		return ret;
+	}
+	HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
+
+	if (ctx->more_flags & LOCAL) {
+		usage = KRB5_KU_USAGE_ACCEPTOR_SIGN;
+	} else {
+		usage = KRB5_KU_USAGE_INITIATOR_SIGN;
+	}
+
+	data = calloc(iov_count + 3, sizeof(data[0]));
+	if (data == NULL) {
+		*minor_status = ENOMEM;
+		return GSS_S_FAILURE;
+	}
+
+	for (i = 0; i < iov_count; i++) {
+		switch (GSS_IOV_BUFFER_TYPE(iov[i].type)) {
+		case GSS_IOV_BUFFER_TYPE_DATA:
+			data[i].flags = KRB5_CRYPTO_TYPE_DATA;
+			break;
+		case GSS_IOV_BUFFER_TYPE_SIGN_ONLY:
+			data[i].flags = KRB5_CRYPTO_TYPE_SIGN_ONLY;
+			break;
+		default:
+			data[i].flags = KRB5_CRYPTO_TYPE_EMPTY;
+			break;
+		}
+		data[i].data.length = iov[i].buffer.length;
+		data[i].data.data = iov[i].buffer.value;
+	}
+
+	data[i].flags = KRB5_CRYPTO_TYPE_DATA;
+	data[i].data.data = token_buffer->value;
+	data[i].data.length = sizeof(*token);
+	i++;
+
+	data[i].flags = KRB5_CRYPTO_TYPE_CHECKSUM;
+	data[i].data.data = (uint8_t *)token_buffer->value + sizeof(*token);
+	data[i].data.length = token_buffer->length - sizeof(*token);
+	i++;
+
+	ret = krb5_verify_checksum_iov(context, ctx->crypto, usage, data, i, NULL);
+	if (ret) {
+		*minor_status = ret;
+		major_status = GSS_S_BAD_MIC;
+		goto failure;
+	}
+
+	free(data);
+
+	*minor_status = 0;
+	return GSS_S_COMPLETE;
+
+failure:
+	if (data) {
+		free(data);
+	}
+
+	gss_release_iov_buffer(&junk, iov, iov_count);
+
+	return major_status;
+}

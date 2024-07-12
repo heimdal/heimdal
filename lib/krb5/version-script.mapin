@@ -1,3 +1,5 @@
+#include <config.defs.h>
+
 HEIMDAL_KRB5_2.0 {
 	global:
 		krb524_convert_creds_kdc;
@@ -111,7 +113,6 @@ HEIMDAL_KRB5_2.0 {
 		krb5_cc_move;
 		krb5_cc_new_unique;
 		krb5_cc_next_cred;
-		krb5_cc_next_cred_match;
 		krb5_cc_register;
 		krb5_cc_remove_cred;
 		krb5_cc_resolve;
@@ -345,7 +346,6 @@ HEIMDAL_KRB5_2.0 {
 		krb5_get_in_tkt_with_keytab;
 		krb5_get_in_tkt_with_password;
 		krb5_get_in_tkt_with_skey;
-		krb5_get_init_creds;
 		krb5_get_init_creds_keyblock;
 		krb5_get_init_creds_keytab;
 		krb5_get_init_creds_opt_alloc;
@@ -744,24 +744,24 @@ HEIMDAL_KRB5_2.0 {
 		krb5_cccol_cursor_free;
 		krb5_cccol_get_default_ccname;
 
-		# com_err error tables
+		/* com_err error tables */
 		initialize_krb5_error_table_r;
 		initialize_krb5_error_table;
 		initialize_krb_error_table_r;
 		initialize_krb_error_table;
-		initialize_heim_error_table_r;
-		initialize_heim_error_table;
 		initialize_k524_error_table_r;
 		initialize_k524_error_table;
 		initialize_k5e1_error_table_r;
 		initialize_k5e1_error_table;
 
-		# variables
+		/* variables */
 		krb5_dcc_ops;
 		krb5_mcc_ops;
 		krb5_acc_ops;
 		krb5_fcc_ops;
+#ifdef HAVE_KEYUTILS_H
 		krb5_krcc_ops;
+#endif
 		krb5_scc_ops;
 		krb5_kcm_ops;
 		krb5_wrfkt_ops;
@@ -780,13 +780,13 @@ HEIMDAL_KRB5_2.0 {
 		krb5_cc_type_keyring;
 		krb5_cc_type_scc;
 
-		# shared with HDB
+		/* shared with HDB */
 		_krb5_plugin_run_f;
 		_krb5_enctype_requires_random_salt;
 
-		# Shared with GSSAPI krb5
-		_krb5_crc_init_table;		
-		_krb5_crc_update;		
+		/* Shared with GSSAPI krb5 */
+		_krb5_crc_init_table;
+		_krb5_crc_update;
 		_krb5_get_krbtgt;
 		_krb5_build_authenticator;
 		_krb5_kt_client_default_name;
@@ -794,23 +794,23 @@ HEIMDAL_KRB5_2.0 {
 		_krb5_SP800_108_HMAC_KDF;
 		_krb5_get_ad;
 
-		# Shared with GSSAPI preauth wrapper
+		/* Shared with GSSAPI preauth wrapper */
 		_krb5_init_creds_set_gss_mechanism;
 		_krb5_init_creds_get_gss_mechanism;
 		_krb5_init_creds_set_gss_cred;
 		_krb5_init_creds_get_gss_cred;
 		_krb5_init_creds_init_gss;
 
-		# Private init_creds API
+		/* Private init_creds API */
 		_krb5_init_creds_get_cred_starttime;
 		_krb5_init_creds_get_cred_endtime;
 		_krb5_init_creds_get_cred_client;
 
-		# Shared with libkadm5
+		/* Shared with libkadm5 */
 		_krb5_load_plugins;
 		_krb5_unload_plugins;
 
-		# Shared with libkdc
+		/* Shared with libkdc */
 		_krb5_AES_SHA1_string_to_default_iterator;
 		_krb5_AES_SHA2_string_to_default_iterator;
 		_krb5_dh_group_ok;
@@ -841,7 +841,7 @@ HEIMDAL_KRB5_2.0 {
 		_krb5_make_pa_enc_challenge;
 		_krb5_validate_pa_enc_challenge;
 
-		# kinit helper
+		/* kinit helper */
 		krb5_get_init_creds_opt_set_pkinit_user_certs;
 		krb5_pk_enterprise_cert;
 		krb5_process_last_request;
@@ -864,20 +864,19 @@ HEIMDAL_KRB5_2.0 {
 		krb5_init_creds_free;
 		krb5_init_creds_warn_user;
 
-		# testing
+		/* testing */
 		krb5_time_abs;
-		_krb5_aes_cts_encrypt;
 		_krb5_n_fold;
 		_krb5_expand_default_cc_name;
 		_krb5_expand_path_tokensv;
 		_krb5_expand_path_tokens;
-		
-		# FAST
+
+		/* FAST */
 		_krb5_fast_cf2;
 		_krb5_fast_armor_key;
 		_krb5_fast_explicit_armor_key;
 
-                # TGS
+                /* TGS */
                 _krb5_find_capath;
                 _krb5_free_capath;
 

@@ -8,8 +8,11 @@ AM_LFLAGS = @FLEXNOUNPUTARGS@
 lib_LTLIBRARIES = libcom_err.la
 libcom_err_la_LDFLAGS = -version-info 2:3:1
 
+BUILT_SOURCES =
+
 if versionscript
-libcom_err_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(srcdir)/version-script.map
+libcom_err_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(builddir)/version-script.map
+BUILT_SOURCES += version-script.map
 endif
 
 libcom_err_la_LIBADD = $(LIB_libintl)
@@ -26,8 +29,6 @@ dist_libcom_err_la_SOURCES = error.c com_err.c roken_rename.h
 if do_roken_rename
 nodist_libcom_err_la_SOURCES = snprintf.c strlcpy.c
 endif
-
-libcom_err_la_DEPENDENCIES = version-script.map
 
 $(compile_et_OBJECTS): parse.h parse.c ## XXX broken automake 1.4s
 
@@ -46,5 +47,6 @@ EXTRA_DIST = \
 	com_err.3 \
 	compile_et-version.rc \
 	libcom_err-version.rc \
-	libcom_err-exports.def \
-	version-script.map
+	libcom_err-exports.def
+
+CLEANFILES = $(BUILT_SOURCES)

@@ -292,3 +292,10 @@ if ENABLE_GCOV
 AM_CFLAGS += --coverage --no-inline
 AM_LDFLAGS = -lgcov
 endif
+
+# Just run the C preprocessor on version-script files for
+# conditional exporting of symbols based on ./configure
+# options.
+SUFFIXES += .mapin
+.mapin.map:
+	$(CC) $(DEFAULT_INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) -E -P -x c -o $@ $<

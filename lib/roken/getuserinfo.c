@@ -35,7 +35,7 @@
 #include "roken.h"
 
 #ifdef WIN32
-#include <Shlobj.h>  // need to include definitions of constants
+#include <shlobj.h>  // need to include definitions of constants
 #define SECURITY_WIN32
 #include <security.h>
 #else

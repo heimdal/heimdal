@@ -22,8 +22,11 @@ krb5-types.h: bits$(EXEEXT)
 
 else
 
-krb5-types.h: krb5-types.cross
-	cp $(srcdir)/krb5-types.cross krb5-types.h
+bits$(BUILD_EXEEXT): bits.c
+	$(CC_FOR_BUILD) -o $@ -DHAVE_CONFIG_H -I$(top_builddir)/include $<
+
+krb5-types.h: krb5-types.cross bits$(BUILD_EXEEXT)
+	./bits$(BUILD_EXEEXT) krb5-types.h || cp $(srcdir)/krb5-types.cross krb5-types.h
 
 endif
 

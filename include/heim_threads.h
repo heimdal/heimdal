@@ -145,6 +145,8 @@ typedef unsigned long HEIM_PRIV_thread_key;
 
 #elif defined(_WIN32)
 
+#include <synchapi.h>
+
 typedef struct heim_mutex {
     HANDLE	h;
 } heim_mutex_t;
@@ -206,6 +208,7 @@ heim_mutex_destroy(heim_mutex_t *m)
 #define HEIMDAL_MUTEX_unlock(m) heim_mutex_unlock((m))
 #define HEIMDAL_MUTEX_destroy(m) heim_mutex_destroy((m))
 
+#if _WIN32_WINNT >= 0x0600
 typedef struct heim_rwlock {
     SRWLOCK lock;
     int     exclusive;
@@ -280,6 +283,7 @@ heim_rwlock_destroy(heim_rwlock_t *l)
 #define	HEIMDAL_RWLOCK_trywrlock(l) heim_rwlock_trywrlock((l))
 #define	HEIMDAL_RWLOCK_unlock(l) heim_rwlock_unlock((l))
 #define	HEIMDAL_RWLOCK_destroy(l) heim_rwlock_destroy((l))
+#endif
 
 #define HEIMDAL_thread_key unsigned long
 #define HEIM_PRIV_thread_key HEIMDAL_thread_key

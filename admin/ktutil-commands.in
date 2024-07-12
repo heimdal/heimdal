@@ -255,6 +255,11 @@ command = {
 		type = "flag"
 		help = "output JSON representation"
 	}
+	option = {
+		long = "json-ascii"
+		type = "flag"
+		help = "output JSON representation (ASCII-only)"
+	}
 	max_args = "0"
 	function = "kt_list"
 	help = "Show contents of keytab."

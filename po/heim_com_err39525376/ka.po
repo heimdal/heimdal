@@ -1,0 +1,276 @@
+# Georgian translation for Heimdal.
+# This file is put in the public domain.
+# Ekaterine Papava <papava.e@gtu.ge>, 2024.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Heimdal 1.2.99\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2008-09-07 15:23+0100\n"
+"PO-Revision-Date: 2024-04-03 11:54+0200\n"
+"Last-Translator: Ekaterine Papava <papava.e@gtu.ge>\n"
+"Language-Team: \n"
+"Language: ka\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 3.3.2\n"
+
+#. 000
+#: ../lib/krb5/krb_err.c:11
+msgid "Kerberos 4 successful"
+msgstr "Kerberos 4 წარმატებულია"
+
+#. 001
+#: ../lib/krb5/krb_err.c:12
+msgid "Kerberos 4 principal expired"
+msgstr "Kerberos 4 პრინციპალის ვადა ამოწურულია"
+
+#. 002
+#: ../lib/krb5/krb_err.c:13
+msgid "Kerberos 4 service expired"
+msgstr "Kerberos 4 სერვისის ვადა ამოწურულია"
+
+#. 003
+#: ../lib/krb5/krb_err.c:14
+msgid "Kerberos 4 auth expired"
+msgstr "Kerberos 4 ავთენტიკაციის ვადა ამოწურულია"
+
+#. 004
+#. 005
+#. 006
+#: ../lib/krb5/krb_err.c:15 ../lib/krb5/krb_err.c:16 ../lib/krb5/krb_err.c:17
+msgid "Incorrect Kerberos 4 master key version"
+msgstr "არასწორი Kerberos 4-ის ძირითადი გასაღების ვერსია"
+
+#. 007
+#: ../lib/krb5/krb_err.c:18
+msgid "Kerberos 4 byte order unknown"
+msgstr "Kerberos 4 ბატების მიმმდევრობა უცნობია"
+
+#. 008
+#: ../lib/krb5/krb_err.c:19
+msgid "Kerberos 4 principal unknown"
+msgstr "Kerberos 4 პრინციპალი უცნობია"
+
+#. 009
+#: ../lib/krb5/krb_err.c:20
+msgid "Kerberos 4 principal not unique"
+msgstr "Kerberos 4 პრინციპალი უნიკალური არაა"
+
+#. 010
+#: ../lib/krb5/krb_err.c:21
+msgid "Kerberos 4 principal has null key"
+msgstr "Kerberos 4 პრინციპალის გასაღები ნულოვანია"
+
+#. 011
+#. 012
+#. 013
+#. 014
+#. 015
+#. 016
+#. 017
+#. 018
+#. 019
+#. 020
+#: ../lib/krb5/krb_err.c:31
+msgid "Generic error from KDC (Kerberos 4)"
+msgstr "ზოოგადი შეცდომა KDC-დან (Kerberos 4)"
+
+#. 021
+#: ../lib/krb5/krb_err.c:32
+msgid "Can't read Kerberos 4 ticket file"
+msgstr "ვერ წავიკითხე Kerberos 4-ის ბილეთის ფაილი"
+
+#. 022
+#: ../lib/krb5/krb_err.c:33
+msgid "Can't find Kerberos 4 ticket or TGT"
+msgstr "ვერ ვიპოვე Kerberos 4-ის ბილეთი ან TGT"
+
+#. 023
+#. 024
+#. 025
+#. 026
+#: ../lib/krb5/krb_err.c:37
+msgid "Kerberos 4 TGT Expired"
+msgstr "Kerberos 4 TGT-ის ვადა ამოწურულია"
+
+#. 027
+#. 028
+#. 029
+#. 030
+#. 031
+#: ../lib/krb5/krb_err.c:42
+msgid "Kerberos 4: Can't decode authenticator"
+msgstr "Kerberos 4: ავთენტიკატორის დეკოდირება შეუძლებელია"
+
+#. 032
+#: ../lib/krb5/krb_err.c:43
+msgid "Kerberos 4 ticket expired"
+msgstr "Kerberos 4 ბილეთის ვადა ამოსურულია"
+
+#. 033
+#: ../lib/krb5/krb_err.c:44
+msgid "Kerberos 4 ticket not yet valid"
+msgstr "Kerberos 4 ბილეთი ჯერ არასწორია"
+
+#. 034
+#: ../lib/krb5/krb_err.c:45
+msgid "Kerberos 4: Repeated request"
+msgstr "Kerberos 4: მოთხოვნა გამეორებულია"
+
+#. 035
+#: ../lib/krb5/krb_err.c:46
+msgid "The Kerberos 4 ticket isn't for us"
+msgstr "Kerberos 4 ბილეთი ჩვენთვის არაა"
+
+#. 036
+#: ../lib/krb5/krb_err.c:47
+msgid "Kerberos 4 request inconsistent"
+msgstr "Kerberos 4 მოთხოვნა არამდგრადია"
+
+#. 037
+#: ../lib/krb5/krb_err.c:48
+msgid "Kerberos 4: delta_t too big"
+msgstr "Kerberos 4: delta_t მეტისმეტად დდია"
+
+#. 038
+#: ../lib/krb5/krb_err.c:49
+msgid "Kerberos 4: incorrect net address"
+msgstr "Kerberos 4: არასწორი ქსელური მისამართი"
+
+#. 039
+#: ../lib/krb5/krb_err.c:50
+msgid "Kerberos protocol not version 4"
+msgstr "Kerberos-ის პროტოკოლის ვერსია 4 არაა"
+
+#. 040
+#: ../lib/krb5/krb_err.c:51
+msgid "Kerberos 4: invalid msg type"
+msgstr "Kerberos 4: არასწორი შეტყობინების ტიპი"
+
+#. 041
+#: ../lib/krb5/krb_err.c:52
+msgid "Kerberos 4: message stream modified"
+msgstr "Kerberos 4: შეტყობინების ნაკადი შეიცვალა"
+
+#. 042
+#: ../lib/krb5/krb_err.c:53
+msgid "Kerberos 4: message out of order"
+msgstr "Kerberos 4: შეტყობინება რიგს გარეთაა"
+
+#. 043
+#: ../lib/krb5/krb_err.c:54
+msgid "Kerberos 4: unauthorized request"
+msgstr "Kerberos 4: არაავტორიზებული მოთხოვნა"
+
+#. 044
+#. 045
+#. 046
+#. 047
+#. 048
+#. 049
+#. 050
+#. 051
+#: ../lib/krb5/krb_err.c:62
+msgid "Kerberos 4: current PW is null"
+msgstr "Kerberos 4: მიმდინარე პაროლი ნულოვანია"
+
+#. 052
+#: ../lib/krb5/krb_err.c:63
+msgid "Kerberos 4: Incorrect current password"
+msgstr "Kerberos 4: არასწორი მიმდინარე პაროლი"
+
+#. 053
+#: ../lib/krb5/krb_err.c:64
+msgid "Kerberos 4 protocol error"
+msgstr "Kerberos 4 პროტოკოლის შეცდომა"
+
+#. 054
+#: ../lib/krb5/krb_err.c:65
+msgid "Error returned by KDC (Kerberos 4)"
+msgstr "KDC-ის მიერ დაბრუნებული შეცდომა (Kerberos 4)"
+
+#. 055
+#: ../lib/krb5/krb_err.c:66
+msgid "Null Kerberos 4 ticket returned by KDC"
+msgstr "KDC-ის მიერ დაბრუნებული Kerberos 4 ბილეთი ნულოვანია"
+
+#. 056
+#: ../lib/krb5/krb_err.c:67
+msgid "Kerberos 4: Retry count exceeded"
+msgstr "Kerberos 4: თავიდან ცდების რაოდენობა გადაცილებულია"
+
+#. 057
+#: ../lib/krb5/krb_err.c:68
+msgid "Kerberos 4: Can't send request"
+msgstr "Kerberos 4: მოთხოვნის გაგზავნა შეუძლებელია"
+
+#. 058
+#. 059
+#. 060
+#. 061
+#: ../lib/krb5/krb_err.c:72
+msgid "Kerberos 4: not all tickets returned"
+msgstr "Kerberos 4: ყველა ბილეთი დაბრუნებულია"
+
+#. 062
+#: ../lib/krb5/krb_err.c:73
+msgid "Kerberos 4: incorrect password"
+msgstr "Kerberos 4: არასწორი პაროლი"
+
+#. 063
+#: ../lib/krb5/krb_err.c:74
+msgid "Kerberos 4: Protocol Error"
+msgstr "Kerberos 4: პროტოკოლის შეცდომა"
+
+#. 064
+#. 065
+#. 066
+#. 067
+#. 068
+#. 069
+#. 070
+#: ../lib/krb5/krb_err.c:81
+msgid "Other error in Kerberos 4"
+msgstr "Kerberos 4-ის სხვა შეცდომა"
+
+#. 071
+#: ../lib/krb5/krb_err.c:82
+msgid "Don't have Kerberos 4 ticket-granting ticket"
+msgstr "არ მაქვს Kerberos 4-ის ბილეთის მომნიჭებელი ბილეთი"
+
+#. 072
+#. 073
+#. 074
+#. 075
+#. 076
+#: ../lib/krb5/krb_err.c:87
+msgid "No Kerberos 4 ticket file found"
+msgstr "Kerberos 4 ბილეთის ფაილი ვერ ვიპოვე"
+
+#. 077
+#: ../lib/krb5/krb_err.c:88
+msgid "Couldn't access Kerberos 4 ticket file"
+msgstr "Kerberos 4-ის ბილეთის ფაილთან წვდომა აკრძალულია"
+
+#. 078
+#: ../lib/krb5/krb_err.c:89
+msgid "Couldn't lock Kerberos 4 ticket file"
+msgstr "Kerberos 4-ის ბილეთის ფაილის დაბლოკვა შეუძლებელია"
+
+#. 079
+#: ../lib/krb5/krb_err.c:90
+msgid "Bad Kerberos 4 ticket file format"
+msgstr "არასწორი Kerberos 4-ის ბილეთის ფაილის ფორმატი"
+
+#. 080
+#: ../lib/krb5/krb_err.c:91
+msgid "Kerberos 4: tf_init not called first"
+msgstr "Kerberos 4: tf_init პირველი არ გამოძახებულა"
+
+#. 081
+#: ../lib/krb5/krb_err.c:92
+msgid "Bad Kerberos 4 name format"
+msgstr "არასწორი Kerberos 4 სახელის ფორმატი"

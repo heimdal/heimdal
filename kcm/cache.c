@@ -541,8 +541,17 @@ kcm_ccache_store_cred_internal(krb5_context context,
     struct kcm_creds **c;
     krb5_error_code ret;
 
-    for (c = &ccache->creds; *c != NULL; c = &(*c)->next)
-	;
+    c = &ccache->creds;
+    while (*c != NULL) {
+	if (krb5_compare_creds(context, 0, creds, &(*c)->cred)) {
+	    struct kcm_creds *dup_cred = *c;
+	    *c = dup_cred->next;
+	    krb5_free_cred_contents(context, &dup_cred->cred);
+	    free(dup_cred);
+	} else {
+	    c = &(*c)->next;
+	}
+    }
 
     *c = (struct kcm_creds *)calloc(1, sizeof(**c));
     if (*c == NULL)

@@ -577,19 +577,23 @@ static const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* #undef HAVE_INNETGR */
 
 /* Define to 1 if the system has the type `int16_t'. */
-/* #define HAVE_INT16_T 1 */
+#if (_MSC_VER >= 1600)
+#define HAVE_INT16_T 1
 
 /* Define to 1 if the system has the type `int32_t'. */
-/* #define HAVE_INT32_T 1 */
+#define HAVE_INT32_T 1
 
 /* Define to 1 if the system has the type `int64_t'. */
-/* #define HAVE_INT64_T 1 */
+#define HAVE_INT64_T 1
 
 /* Define to 1 if the system has the type `int8_t'. */
-/* #define HAVE_INT8_T 1 */
+#define HAVE_INT8_T 1
+#endif
 
 /* Define to 1 if you have the <inttypes.h> header file. */
-/* #define HAVE_INTTYPES_H 1 */
+#if (_MSC_VER >= 1800)
+#define HAVE_INTTYPES_H 1
+#endif
 
 /* Define to 1 if you have the <io.h> header file. */
 #define HAVE_IO_H 1
@@ -844,7 +848,9 @@ static const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* #undef HAVE_STANDARDS_H */
 
 /* Define to 1 if you have the <stdint.h> header file. */
-/* #define HAVE_STDINT_H 1 */
+#if (_MSC_VER >= 1600)
+#define HAVE_STDINT_H 1
+#endif
 
 /* Define to 1 if you have the <stdlib.h> header file. */
 #define HAVE_STDLIB_H 1
@@ -1116,17 +1122,19 @@ static const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* Define to 1 if you have the <udb.h> header file. */
 /* #undef HAVE_UDB_H */
 
+#if (_MSC_VER >= 1600)
 /* Define to 1 if the system has the type `uint16_t'. */
-/* #define HAVE_UINT16_T 1 */
+#define HAVE_UINT16_T 1
 
 /* Define to 1 if the system has the type `uint32_t'. */
-/* #define HAVE_UINT32_T 1 */
+#define HAVE_UINT32_T 1
 
 /* Define to 1 if the system has the type `uint64_t'. */
-/* #define HAVE_UINT64_T 1 */
+#define HAVE_UINT64_T 1
 
 /* Define to 1 if the system has the type `uint8_t'. */
-/* #define HAVE_UINT8_T 1 */
+#define HAVE_UINT8_T 1
+#endif
 
 /* Define to 1 if the system has the type `uintptr_t'. */
 #define HAVE_UINTPTR_T 1
@@ -1365,7 +1373,7 @@ static const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* Define if getpwnam_r has POSIX flavour. */
 /* #define POSIX_GETPWNAM_R 1 */
 
-/* Define if getpwnam_r has POSIX flavour. */
+/* Define if getpwuid_r has POSIX flavour. */
 /* #define POSIX_GETPWUID_R 1 */
 
 /* Define if you have the readline package. */

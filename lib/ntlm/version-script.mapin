@@ -1,4 +1,4 @@
-# $Id$
+/* $Id$ */
 
 HEIMDAL_NTLM_1.0 {
 	global:

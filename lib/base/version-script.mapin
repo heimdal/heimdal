@@ -1,3 +1,5 @@
+#include <config.defs.h>
+
 HEIMDAL_BASE_1.0 {
 	global:
 		_bsearch_file;
@@ -5,8 +7,9 @@ HEIMDAL_BASE_1.0 {
 		_bsearch_file_info;
 		_bsearch_file_open;
 		_bsearch_text;
+#ifdef DLFCN_WIN32_SHARED
                 DllMain;
-		et_heim_error_table;
+#endif
 		heim_abort;
 		heim_abortv;
 		heim_add_debug_dest;
@@ -97,7 +100,6 @@ HEIMDAL_BASE_1.0 {
 		heim_data_get_ptr;
 		heim_data_get_type_id;
 		heim_data_ref_create;
-		heim_data_ref_get_type_id;
 		heim_db_begin;
 		heim_db_clone;
 		heim_db_commit;
@@ -197,11 +199,6 @@ HEIMDAL_BASE_1.0 {
 		heim_vset_error_message;
 		heim_vwarn;
 		heim_vwarnx;
-		heim_w32_delete_key;
-		heim_w32_getspecific;
-		heim_w32_key_create;
-		heim_w32_service_thread_detach;
-		heim_w32_setspecific;
 		heim_warn;
 		heim_warnx;
 		initialize_heim_error_table;

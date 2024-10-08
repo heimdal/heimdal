@@ -1,9 +1,7 @@
-# $Id$
+/* $Id$ */
 
 HEIMDAL_KAMD5_SERVER_1.0 {
 	global:
-		kadm5_ad_init_with_password;
-		kadm5_ad_init_with_password_ctx;
 		kadm5_all_keys_are_bogus;
 		kadm5_add_passwd_quality_verifier;
 		kadm5_check_password_quality;

@@ -9,11 +9,14 @@ CHECK_LOCAL = no-check-local
 
 AM_CPPFLAGS += -DHOST=\"$(CANONICAL_HOST)\"
 
-nodist_include_HEADERS = krb5-types.h
+nodist_include_HEADERS = krb5-types.h config.defs.h
 
 noinst_HEADERS = heimqueue.h heim_threads.h crypto-headers.h
 
 EXTRA_DIST = NTMakefile krb5-types.cross config.h.w32
+
+config.defs.h: config.h
+	grep -v '#[[:space:]]*include' config.h > $@
 
 if !CROSS_COMPILE
 
@@ -40,6 +43,7 @@ CLEANFILES =			\
 	com_err.h		\
 	com_right.h		\
 	common_plugin.h		\
+	config.defs.h		\
 	crmf_asn1.h		\
 	crmf_template_asn1.h	\
 	db_plugin.h		\

@@ -37,6 +37,7 @@ asn1_*_asn1.c
 *.log
 *.trs
 *.tmp
+*.map
 
 # Top-level files.
 

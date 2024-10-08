@@ -7,6 +7,8 @@ dist_libheim_ipcs_la_SOURCES = hi_locl.h heim_ipc_types.h server.c common.c
 
 include_HEADERS = heim-ipc.h
 
+BUILT_SOURCES =
+
 ##
 ## Enable when this is not a noinst_ library
 ##
@@ -14,8 +16,9 @@ include_HEADERS = heim-ipc.h
 #libheim_ipcs_la_LDFLAGS = -version-info 0:0:0
 #
 #if versionscript
-#libheim_ipcc_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(srcdir)/version-scriptc.map
-#libheim_ipcs_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(srcdir)/version-scripts.map
+#libheim_ipcc_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(builddir)/version-scriptc.map
+#libheim_ipcs_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(builddir)/version-scripts.map
+#BUILT_SOURCES += version-scriptc.map version-scripts.map
 #endif
 
 libheim_ipcc_la_LIBADD = \
@@ -68,7 +71,7 @@ nodist_libheim_ipcs_la_SOURCES = $(built_ipcs)
 
 libheim_ipcs_la_LIBADD += -lbsm
 
-CLEANFILES = $(built_ipcc) $(built_ipcs)
+CLEANFILES = $(BUILT_SOURCES) $(built_ipcc) $(built_ipcs)
 
 $(srcdir)/client.c: $(built_ipcc)
 $(srcdir)/server.c: $(built_ipcs)

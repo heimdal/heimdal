@@ -35,6 +35,10 @@
 
 #include "roken.h"
 
+#ifndef EAI_SYSTEM
+#define EAI_SYSTEM EAI_FAIL
+#endif
+
 static int
 doit (int af,
       const void *addr,

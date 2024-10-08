@@ -89,7 +89,7 @@ rk_flock(int fd, int operation)
   BOOL rv = FALSE;
   DWORD f = 0;
 
-  hFile = (HANDLE) _get_osfhandle(fd);
+  hFile = (HANDLE) (uintptr_t)_get_osfhandle(fd);
   if (hFile == NULL || hFile == INVALID_HANDLE_VALUE) {
       _set_errno(EBADF);
       return -1;

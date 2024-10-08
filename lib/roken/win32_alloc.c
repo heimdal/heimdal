@@ -46,10 +46,16 @@
  */
 
 ROKEN_LIB_FUNCTION void * ROKEN_LIB_CALL
+rk_calloc(size_t, size_t);
+
+ROKEN_LIB_FUNCTION void * ROKEN_LIB_CALL
 rk_calloc(size_t elements, size_t size)
 {
     return calloc( elements, size);
 }
+
+ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
+rk_free(void *);
 
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
 rk_free(void * ptr)
@@ -58,16 +64,25 @@ rk_free(void * ptr)
 }
 
 ROKEN_LIB_FUNCTION void * ROKEN_LIB_CALL
+rk_malloc(size_t);
+
+ROKEN_LIB_FUNCTION void * ROKEN_LIB_CALL
 rk_malloc(size_t size)
 {
     return malloc( size);
 }
 
 ROKEN_LIB_FUNCTION char * ROKEN_LIB_CALL
+rk_strdup(const char *);
+
+ROKEN_LIB_FUNCTION char * ROKEN_LIB_CALL
 rk_strdup(const char *str)
 {
     return strdup( str);
 }
+
+ROKEN_LIB_FUNCTION unsigned short * ROKEN_LIB_CALL
+rk_wcsdup(const unsigned short *);
 
 ROKEN_LIB_FUNCTION unsigned short * ROKEN_LIB_CALL
 rk_wcsdup(const unsigned short *str)

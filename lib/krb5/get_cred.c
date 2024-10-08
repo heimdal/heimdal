@@ -719,12 +719,54 @@ get_cred_kdc(krb5_context context,
 	memset(&md, 0, sizeof(md));
 
 	if (rep.error.e_data) {
-	    ret = decode_METHOD_DATA(rep.error.e_data->data,
-				     rep.error.e_data->length,
-				     &md, NULL);
+	    KERB_ERROR_DATA error_data;
+
+	    memset(&error_data, 0, sizeof(error_data));
+
+	    /* First try to decode the e-data as KERB-ERROR-DATA. */
+	    ret = decode_KERB_ERROR_DATA(rep.error.e_data->data,
+					 rep.error.e_data->length,
+					 &error_data,
+					 &len);
 	    if (ret) {
-		krb5_set_error_message(context, ret,
-				       N_("Failed to decode METHOD-DATA", ""));
+		/* That failed, so try to decode it as METHOD-DATA. */
+		ret = decode_METHOD_DATA(rep.error.e_data->data,
+					 rep.error.e_data->length,
+					 &md, NULL);
+		if (ret) {
+		    krb5_set_error_message(context, ret,
+					   N_("Failed to decode METHOD-DATA", ""));
+		    goto out;
+		}
+	    } else if (len != rep.error.e_data->length) {
+		/* Trailing data — just ignore the error. */
+		free_KERB_ERROR_DATA(&error_data);
+	    } else {
+		/* OK. */
+
+		/*
+		 * It’s no good calling _krb5_fast_unwrap_error() — if we used
+		 * FAST to send the request, the function will expect to find
+		 * FX-FAST padata in rep.error.edata, and will produce a
+		 * confusing error message when it can’t find any. Instead,
+		 * we’ll try to produce an error message based on what we find
+		 * in KERB-ERROR-DATA, and then return the error code that was
+		 * in the reply.
+		 */
+
+		ret = krb5_error_from_error_data(context,
+						 &rep.error,
+						 in_creds,
+						 &error_data);
+
+		/* log the failure */
+		if (_krb5_have_debug(context, 5)) {
+		    const char *str = krb5_get_error_message(context, ret);
+		    _krb5_debug(context, 5, "get_cred_kdc: KRB-ERROR %d/%s", ret, str);
+		    krb5_free_error_message(context, str);
+		}
+
+		free_KERB_ERROR_DATA(&error_data);
 		goto out;
 	    }
 	}
@@ -739,7 +781,7 @@ get_cred_kdc(krb5_context context,
 	/* log the failure */
 	if (_krb5_have_debug(context, 5)) {
 	    const char *str = krb5_get_error_message(context, ret);
-	    _krb5_debug(context, 5, "parse_tgs_rep: KRB-ERROR %d/%s", ret, str);
+	    _krb5_debug(context, 5, "get_cred_kdc: KRB-ERROR %d/%s", ret, str);
 	    krb5_free_error_message(context, str);
 	}
     } else if(resp.length > 0 && ((char*)resp.data)[0] == 4) {

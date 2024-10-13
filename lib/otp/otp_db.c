@@ -38,12 +38,6 @@ RCSID("$Id$");
 
 #include "otp_locl.h"
 
-#if defined(HAVE_DB_NDBM)
-# include <ndbm.h>
-#elif !defined(HAVE_NDBM)
-# include "ndbm_wrap.h"
-#endif
-
 
 #define RETRIES 5
 

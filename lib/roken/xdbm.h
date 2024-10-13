@@ -47,6 +47,8 @@
 #elif defined(HAVE_NDBM_H)
 #include <ndbm.h>
 #endif
+#else /* !HAVE_NDBM */
+#include "ndbm_wrap.h"
 #endif /* HAVE_NDBM */
 
 #endif /* __XDBM_H__ */

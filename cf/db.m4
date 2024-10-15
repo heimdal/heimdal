@@ -57,6 +57,9 @@ AS_IF([test "x$with_berkeley_db" != xno],
 	           db.h					\
     ])])
 
+dnl detect if compat db_185.h is present
+AC_CHECK_HEADERS([db_185.h])
+
 dnl db_create is used by db3 and db4 and db5 and db6
 
   AC_FIND_FUNC_NO_LIBS(db_create, [$dbheader] db-6 db-5 db4 db3 db, [

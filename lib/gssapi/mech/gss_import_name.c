@@ -44,6 +44,8 @@ _gss_import_export_name(OM_uint32 *minor_status,
 	gss_name_t new_canonical_name;
 	int composite = 0;
 
+	_gss_mg_log(10, "Importing exported name");
+
 	*minor_status = 0;
 	*output_name = 0;
 
@@ -230,6 +232,8 @@ gss_import_name(OM_uint32 *minor_status,
                                                name_type, output_name);
 	}
 
+	_gss_mg_log(10, "Importing name \"%*.s\"", (int)input_name_buffer->length,
+                    (char *)input_name_buffer->value);
 
 	*minor_status = 0;
 	name = _gss_create_name(NULL, NULL);
@@ -261,6 +265,8 @@ gss_import_name(OM_uint32 *minor_status,
 
 	HEIM_TAILQ_FOREACH(m, &_gss_mechs, gm_link) {
 		int present = 0;
+
+                _gss_mg_log(10, "attempting mech \"%s\"", m->gm_mech.gm_name);
 
                 if ((m->gm_mech.gm_flags & GM_USE_MG_NAME))
                     continue;

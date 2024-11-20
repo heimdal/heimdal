@@ -38,6 +38,7 @@ gss_display_name(OM_uint32 *minor_status,
 	struct _gss_name *name = (struct _gss_name *) input_name;
 	struct _gss_mechanism_name *mn;
 
+	_gss_mg_log(10, "gdn: enter gss_display_name: %p", input_name);
 	_mg_buffer_zero(output_name_buffer);
 	if (output_name_type)
 	    *output_name_type = GSS_C_NO_OID;
@@ -68,6 +69,8 @@ gss_display_name(OM_uint32 *minor_status,
 		return (GSS_S_COMPLETE);
 	} else {
 		HEIM_TAILQ_FOREACH(mn, &name->gn_mn, gmn_link) {
+                        _gss_mg_log(10, "gdn: trying mech \"%s\"",
+                                    mn->gmn_mech->gm_name);
 			major_status = mn->gmn_mech->gm_display_name(
 				minor_status, mn->gmn_name,
 				output_name_buffer,

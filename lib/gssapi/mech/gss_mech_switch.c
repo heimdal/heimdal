@@ -336,9 +336,11 @@ _gss_load_mech(void)
 		/*
 		 * Check for duplicates, already loaded mechs.
 		 */
+                _gss_mg_log(10, "loading \"%s\"", name);
 		found = 0;
 		HEIM_TAILQ_FOREACH(m, &_gss_mechs, gm_link) {
 			if (gss_oid_equal(&m->gm_mech.gm_mech_oid, mech_oid)) {
+                                _gss_mg_log(10, "duplicate mech, not loading");
 				found = 1;
 				break;
 			}

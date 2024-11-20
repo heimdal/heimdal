@@ -265,12 +265,14 @@ gss_accept_sec_context(OM_uint32 *minor_status,
 	    *delegated_cred_handle = GSS_C_NO_CREDENTIAL;
 	_mg_buffer_zero(output_token);
 
+        _gss_mg_log(10, "gss-asc: enter ctx=%p", ctx);
         if (!*context_handle) {
                 ctx = calloc(1, sizeof(*ctx));
 		if (!ctx) {
 			*minor_status = ENOMEM;
 			return (GSS_S_DEFECTIVE_TOKEN);
 		}
+                _gss_mg_log(10, "gss-asc: allocated ctx=%p", ctx);
                 *context_handle = (gss_ctx_id_t)ctx;
                 ctx->gc_initial = 1;
         }
@@ -318,6 +320,9 @@ gss_accept_sec_context(OM_uint32 *minor_status,
                             &mech_ret_flags,
                             time_rec,
                             &delegated_mc);
+                        _gss_mg_log(10, "gss-asc: ctx=%p tried \"%s\", "
+                                    "returned %u", ctx, m->gm_name,
+                                    major_status);
                         if (major_status == GSS_S_DEFECTIVE_TOKEN) {
                                 /*
                                  * Try to retain and output one error token for
@@ -360,6 +365,9 @@ gss_accept_sec_context(OM_uint32 *minor_status,
                             &mech_ret_flags,
                             time_rec,
                             &delegated_mc);
+                        _gss_mg_log(10, "gss-asc: ctx=%p tried \"%s\", "
+                                    "returned %u", ctx, m->gm_name,
+                                    major_status);
                         if (major_status == GSS_S_DEFECTIVE_TOKEN) {
                                 if (output_token->length &&
                                     defective_token_error.length == 0) {
@@ -510,7 +518,8 @@ got_one:
 		}
 	}
 
-	_gss_mg_log(10, "gss-asc: return %d/%d", (int)major_status, (int)*minor_status);
+	_gss_mg_log(10, "gss-asc: ctx=%p return %d/%d", ctx,
+	    (int)major_status, (int)*minor_status);
 
 	if (ret_flags)
 	    *ret_flags = mech_ret_flags;

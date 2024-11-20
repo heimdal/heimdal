@@ -28,6 +28,8 @@
 
 #include "mech_locl.h"
 
+#include <vis.h>
+
 static OM_uint32
 _gss_import_export_name(OM_uint32 *minor_status,
     const gss_buffer_t input_name_buffer,
@@ -43,6 +45,8 @@ _gss_import_export_name(OM_uint32 *minor_status,
 	struct _gss_name *name;
 	gss_name_t new_canonical_name;
 	int composite = 0;
+
+	_gss_mg_log(10, "gin: importing exported name");
 
 	*minor_status = 0;
 	*output_name = 0;
@@ -169,6 +173,32 @@ _gss_import_export_name(OM_uint32 *minor_status,
 	return (GSS_S_COMPLETE);
 }
 
+static void
+log_import_name(gss_buffer_t input_name_buffer)
+{
+	char *name;
+	size_t len;
+
+	if (!_gss_mg_log_level(10))
+		return;
+
+	if (input_name_buffer->length > (SIZE_MAX - 1) / 4) {
+		_gss_mg_log(10, "gin: importing name (%zu bytes)",
+		    input_name_buffer->length);
+		return;
+	}
+
+	len = input_name_buffer->length * 4 + 1;
+	name = malloc(len);
+	if (name == NULL)
+		return;
+
+	strsvisx(name, input_name_buffer->value, input_name_buffer->length,
+	    VIS_CSTYLE | VIS_TAB | VIS_NL, "\"");
+	_gss_mg_log(10, "gin: importing name \"%s\"", name);
+	free(name);
+}
+
 /**
  * Convert a GGS-API name from contiguous string to internal form.
  *
@@ -230,6 +260,7 @@ gss_import_name(OM_uint32 *minor_status,
                                                name_type, output_name);
 	}
 
+	log_import_name(input_name_buffer);
 
 	*minor_status = 0;
 	name = _gss_create_name(NULL, NULL);
@@ -261,6 +292,9 @@ gss_import_name(OM_uint32 *minor_status,
 
 	HEIM_TAILQ_FOREACH(m, &_gss_mechs, gm_link) {
 		int present = 0;
+
+                _gss_mg_log(10, "gin: attempting mech \"%s\"",
+                    m->gm_mech.gm_name);
 
                 if ((m->gm_mech.gm_flags & GM_USE_MG_NAME))
                     continue;

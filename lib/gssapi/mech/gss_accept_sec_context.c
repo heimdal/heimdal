@@ -264,7 +264,9 @@ gss_accept_sec_context(OM_uint32 *minor_status,
 	    *delegated_cred_handle = GSS_C_NO_CREDENTIAL;
 	_mg_buffer_zero(output_token);
 
+        _gss_mg_log(10, "gss-asc: enter");
         if (!*context_handle) {
+                _gss_mg_log(10, "gss-asc: allocating new context");
                 ctx = calloc(1, sizeof(*ctx));
 		if (!ctx) {
 			*minor_status = ENOMEM;
@@ -317,6 +319,8 @@ gss_accept_sec_context(OM_uint32 *minor_status,
                             &mech_ret_flags,
                             time_rec,
                             &delegated_mc);
+                        _gss_mg_log(10, "gss-asc: tried \"%s\", returned %u",
+                                    m->gm_name, major_status);
                         if (major_status == GSS_S_DEFECTIVE_TOKEN) {
                                 /*
                                  * Try to retain and output one error token for
@@ -359,6 +363,8 @@ gss_accept_sec_context(OM_uint32 *minor_status,
                             &mech_ret_flags,
                             time_rec,
                             &delegated_mc);
+                        _gss_mg_log(10, "gss-asc: tried \"%s\", returned %u",
+                                    m->gm_name, major_status);
                         if (major_status == GSS_S_DEFECTIVE_TOKEN) {
                                 if (output_token->length &&
                                     defective_token_error.length == 0) {

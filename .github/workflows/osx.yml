@@ -83,7 +83,7 @@ jobs:
                 ulimit -c unlimited
                 PATH=/usr/local/opt/texinfo/bin:$PATH
                 export PATH
-                make -j4
+                V=1 make -j4
             #- name: Setup upterm session
             #  uses: lhotari/action-upterm@v1
             #  with:
@@ -97,11 +97,11 @@ jobs:
                 set -vx
                 sudo lsof -nP -i:49188 || true
                 cd build
-                make check
+                V=1 make check
             - name: Install
               run: |
                 cd build || true
-                make DESTDIR=/tmp/h5l install
+                V=1 make DESTDIR=/tmp/h5l install
                 cd /tmp/h5l
                 tar czf $HOME/heimdal-install-osx.tgz .
             - name: Test logs

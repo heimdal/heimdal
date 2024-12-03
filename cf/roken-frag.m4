@@ -762,6 +762,7 @@ dnl AC_CONFIG_FILES($1/Makefile)
 
 LIB_roken="${LIB_roken} \$(LIB_crypt) \$(LIB_dbopen)"
 
+AC_SUBST(LIBS)dnl
 AC_SUBST(DIR_roken)dnl
 AC_SUBST(LIB_roken)dnl
 AC_SUBST(INCLUDES_roken)dnl

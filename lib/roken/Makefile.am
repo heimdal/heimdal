@@ -197,7 +197,7 @@ EXTRA_libroken_la_SOURCES =	\
 	search.hin		\
 	vis.hin	
 
-libroken_la_LIBADD = @LTLIBOBJS@ $(LIB_crypt) $(LIB_pidfile)
+libroken_la_LIBADD = @LTLIBOBJS@ $(LIB_crypt) $(LIB_pidfile) @LIBS@
 if SUNOS
 libroken_la_LIBADD += -lnsl -lsocket
 endif

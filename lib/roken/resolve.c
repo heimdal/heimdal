@@ -124,7 +124,9 @@ rk_dns_free_data(struct rk_dns_reply *r)
     free (r);
 }
 
+int _resolve_debug0 = 0;
 #ifndef HAVE_WINDNS
+int _resolve_debug1 = 0;
 
 static int
 parse_record(const unsigned char *data, const unsigned char *end_data,
@@ -401,10 +403,12 @@ parse_record(const unsigned char *data, const unsigned char *end_data,
     return 0;
 }
 
-#ifndef TEST_RESOLVE
-static
+int _resolve_debug2 = 0;
+#if 0
+static struct rk_dns_reply*
+#else
+ROKEN_LIB_FUNCTION struct rk_dns_reply * ROKEN_LIB_CALL
 #endif
-struct rk_dns_reply*
 parse_reply(const unsigned char *data, size_t len)
 {
     const unsigned char *p;
@@ -595,6 +599,7 @@ dns_lookup_int(const char *domain, int rr_class, int rr_type)
     return r;
 }
 
+int _resolve_debug3 = 0;
 ROKEN_LIB_FUNCTION struct rk_dns_reply * ROKEN_LIB_CALL
 rk_dns_lookup(const char *domain, const char *type_name)
 {
@@ -622,6 +627,7 @@ compare_srv(const void *a, const void *b)
     return ((*aa)->u.srv->priority - (*bb)->u.srv->priority);
 }
 
+int _resolve_debug4 = 0;
 /* try to rearrange the srv-records by the algorithm in RFC2782 */
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
 rk_dns_srv_order(struct rk_dns_reply *r)
@@ -727,6 +733,7 @@ rk_dns_srv_order(struct rk_dns_reply *r)
 
 #include <WinDNS.h>
 
+int _resolve_debug5 = 0;
 static struct rk_resource_record *
 parse_dns_record(PDNS_RECORD pRec)
 {
@@ -889,6 +896,7 @@ parse_dns_record(PDNS_RECORD pRec)
     return rr;
 }
 
+int _resolve_debug6 = 0;
 ROKEN_LIB_FUNCTION struct rk_dns_reply * ROKEN_LIB_CALL
 rk_dns_lookup(const char *domain, const char *type_name)
 {
@@ -937,6 +945,7 @@ rk_dns_lookup(const char *domain, const char *type_name)
 
 #else /* NOT defined(HAVE_RES_SEARCH) && defined(HAVE_DN_EXPAND) */
 
+int _resolve_debug7 = 0;
 ROKEN_LIB_FUNCTION struct rk_dns_reply * ROKEN_LIB_CALL
 rk_dns_lookup(const char *domain, const char *type_name)
 {

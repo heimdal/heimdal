@@ -111,6 +111,14 @@ jobs:
             - name: Failed Test logs
               if: ${{ failure() }}
               run: |
+                echo ---
+                for i in build/lib/roken//parse_reply_test-parse_reply-test.o build/lib/roken//parse_reply_test-resolve.o; do
+                        echo ---
+                        echo $i
+                        echo ---
+                        nm -p $i || :
+                done
+                echo ---
                 find build -name \*.trs|xargs grep -lw FAIL|sed -e 's/trs$/log/'|xargs cat
             - name: Upload Install Tarball
               uses: actions/upload-artifact@v4

@@ -52,7 +52,7 @@ noinst_LTLIBRARIES = libtest.la
 libtest_la_SOURCES = strftime.c strptime.c snprintf.c tsearch.c
 libtest_la_CFLAGS = -DTEST_SNPRINTF -DTEST_STRPFTIME
 
-parse_reply_test_SOURCES = parse_reply-test.c resolve.c
+parse_reply_test_SOURCES = resolve.c parse_reply-test.c
 parse_reply_test_CFLAGS  = -DTEST_RESOLVE
 
 test_readenv_SOURCES = test-readenv.c test-mem.c

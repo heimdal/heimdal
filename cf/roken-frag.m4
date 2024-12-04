@@ -762,7 +762,7 @@ dnl AC_CONFIG_FILES($1/Makefile)
 
 LIB_roken="${LIB_roken} \$(LIB_crypt) \$(LIB_dbopen)"
 
-echo "LIBS: -lroken will depend on $LIBS"
+echo "LIBS (roken-frag.m4): -lroken will depend on $LIBS"
 
 AC_SUBST(LIBS)dnl
 AC_SUBST(DIR_roken)dnl

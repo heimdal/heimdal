@@ -168,6 +168,13 @@ krb5_sendauth(krb5_context context,
     }
     if (in_creds->ticket.length == 0) {
 	ret = krb5_get_credentials (context, 0, ccache, in_creds, &creds);
+	/*
+	 * If we assigned this_client, then we MUST be in this code
+	 * branch as we do not have a ticket.  The command above is
+	 * the last use of this_client, so we free it immediately.
+	 */
+	krb5_free_principal(context, this_client);
+	this_client = NULL;
 	if (ret) {
 	    if(my_ccache)
 		krb5_cc_close(context, ccache);

@@ -365,7 +365,7 @@ _gss_ntlm_init_sec_context
 
 	type3.username = ctx->client->username;
 	type3.flags = type2.flags;
-	type3.targetname = type2.targetname;
+	type3.targetname = name->domain;
 	type3.ws = rk_UNCONST("workstation");
 
 	/*
@@ -391,24 +391,34 @@ _gss_ntlm_init_sec_context
 						     ctx->client->key.data,
 						     &type3.lm,
 						     &type3.ntlm);
+		if (!ret) {
+#if NTLM_EXTENDED_SESSION_SECURITY
+		    ret = heim_ntlm_build_ntlm2_extended_security_master(
+						     nonce,
+						     type2.challenge,
+						     ctx->client->key.data,
+						     &sessionkey,
+						     &type3.sessionkey);
+#else
+		    ret = heim_ntlm_build_ntlm1_master(ctx->client->key.data,
+						       ctx->client->key.length,
+						       &sessionkey,
+						       &type3.sessionkey);
+#endif
+		}
 	    } else {
 		ret = heim_ntlm_calculate_ntlm1(ctx->client->key.data,
 						ctx->client->key.length,
 						type2.challenge,
 						&type3.ntlm);
 
+		if (!ret) {
+		    ret = heim_ntlm_build_ntlm1_master(ctx->client->key.data,
+						       ctx->client->key.length,
+						       &sessionkey,
+						       &type3.sessionkey);
+		}
 	    }
-	    if (ret) {
-		_gss_ntlm_delete_sec_context(minor_status,context_handle,NULL);
-		heim_ntlm_free_type2(&type2);
-		*minor_status = ret;
-		return GSS_S_FAILURE;
-	    }
-
-	    ret = heim_ntlm_build_ntlm1_master(ctx->client->key.data,
-					       ctx->client->key.length,
-					       &sessionkey,
-					       &type3.sessionkey);
 	    if (ret) {
 		if (type3.lm.data)
 		    free(type3.lm.data);

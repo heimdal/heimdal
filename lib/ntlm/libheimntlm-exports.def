@@ -1,5 +1,6 @@
 EXPORTS
 	heim_ntlm_build_ntlm1_master
+	heim_ntlm_build_ntlm2_extended_security_master
         heim_ntlm_calculate_lm2
 	heim_ntlm_calculate_ntlm1
 	heim_ntlm_calculate_ntlm2

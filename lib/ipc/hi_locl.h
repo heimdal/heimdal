@@ -41,7 +41,7 @@
 #include <sys/un.h>
 #endif
 
-#include <sys/poll.h>
+#include <poll.h>
 
 #include <ctype.h>
 #include <stdio.h>

@@ -125,7 +125,7 @@ rk_freeifaddrs(struct ifaddrs *ifp);
 #include <linux/rtnetlink.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <sys/poll.h>
+#include <poll.h>
 #include <netpacket/packet.h>
 #include <net/ethernet.h>     /* the L2 protocols */
 #include <sys/uio.h>

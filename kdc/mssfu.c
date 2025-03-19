@@ -380,6 +380,19 @@ validate_constrained_delegation(astgs_request_t r)
 	goto out;
     }
 
+    /*
+     * We require that the delegating server (r->client) is local
+     * and was found in the local database.
+     */
+    if (r->client == NULL) {
+	ret = KRB5KDC_ERR_BADOPTION;
+	kdc_audit_addreason((kdc_request_t)r, "Remote delegating server");
+	kdc_log(r->context, r->config, 4,
+		"Constrained delegation without local delegating server, %s/%s",
+		r->cname, r->sname);
+	goto out;
+    }
+
     t = &b->additional_tickets->val[0];
 
     ret = hdb_enctype2key(r->context, r->client,

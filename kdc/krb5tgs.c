@@ -687,6 +687,10 @@ tgs_make_reply(astgs_request_t r,
     et->flags.hw_authent  = tgt->flags.hw_authent;
     et->flags.ok_as_delegate = r->server->flags.ok_as_delegate;
 
+    /* See MS-KILE 3.3.5.7.5 Cross-Domain Trust and Referrals */
+    if (!r->krbtgt->flags.ok_as_delegate)
+	et->flags.ok_as_delegate = 0;
+
     /* See MS-KILE 3.3.5.1 */
     if (!r->server->flags.forwardable)
 	et->flags.forwardable = 0;

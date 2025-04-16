@@ -312,6 +312,11 @@ parse_plist_config(heim_context context, const char *path, heim_config_section *
     CFRelease(url);
     if (s == NULL) {
         heim_clear_error_message(context);
+	if (path[0] != '/') {
+	    char cwd[PATH_MAX];
+	    if (getcwd(cwd, sizeof(cwd)) == NULL)
+		return errno;
+	}
         return ENOMEM;
     }
 

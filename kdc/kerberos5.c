@@ -2075,6 +2075,8 @@ _kdc_as_rep(astgs_request_t r)
 
     memset(rep, 0, sizeof(*rep));
 
+    kdc_audit_setkv_bool((kdc_request_t)r, "udp", r->datagram_reply);
+
     ALLOC(rep->padata);
     if (rep->padata == NULL) {
 	ret = ENOMEM;
@@ -2165,11 +2167,7 @@ _kdc_as_rep(astgs_request_t r)
 	free(fixed_client_name);
 
         r->e_text = NULL;
-	ret = _kdc_fast_mk_error(r, r->rep.padata, r->armor_crypto,
-				 &req->req_body,
-                                 r->error_code = KRB5_KDC_ERR_WRONG_REALM,
-				 r->client->principal, r->server_princ,
-				 NULL, NULL, r->reply);
+        ret = KRB5_KDC_ERR_WRONG_REALM;
 	goto out;
     }
     default:
@@ -2748,41 +2746,62 @@ _kdc_as_rep(astgs_request_t r)
     if (ret)
 	goto out;
 
+
+out:
     /*
-     * Check if message is too large
+     * Check if message is too large.
+     *
+     * Setting [kdc] max-kdc-datagram-reply-length == 0 disables even all
+     * errors over UDP, sending back KRB_ERR_RESPONSE_TOO_BIG instead.
      */
     if (r->datagram_reply && r->reply->length > config->max_datagram_reply_length) {
 	krb5_data_free(r->reply);
 	ret = KRB5KRB_ERR_RESPONSE_TOO_BIG;
+        _kdc_r_log(r, 4, "%s reply too large", ret ? "Error" : "Successful");
 	_kdc_set_e_text(r, "Reply packet too large");
     }
 
-out:
     if (ret) {
 	/* Overwrite ‘error_code’ only if we have an actual error. */
 	r->error_code = ret;
     }
+
     {
 	krb5_error_code ret2 = _kdc_audit_request(r);
 	if (ret2) {
 	    krb5_data_free(r->reply);
-	    ret = ret2;
+	    r->error_code = ret = ret2;
 	}
     }
 
     /*
-     * In case of a non proxy error, build an error message.
+     * From the commit (heimdal Return HDB_ERR_NOT_FOUND_HERE to the caller)
+     * message that introduced the special casing of HDB_ERR_NOT_FOUND_HERE
+     * here:
+     *
+     *   This means that no reply packet should be generated, but that instead
+     *   the user of the libkdc API should forward the packet to a real KDC,
+     *   that has a full database.
      */
-    if (ret != 0 && ret != HDB_ERR_NOT_FOUND_HERE && r->reply->length == 0)
+    if (ret != 0 && ret != HDB_ERR_NOT_FOUND_HERE && r->reply->length == 0) {
+        kdc_log(r->context, config, 5, "as-req: sending error: %d to client",
+                r->error_code);
+        /*
+         * Note that if we're not using FAST then _kdc_fast_mk_error() will
+         * make a non-FAST KRB-ERROR.  It will also make a minimal size
+         * KRB-ERROR if `r->error_code == KRB5KRB_ERR_RESPONSE_TOO_BIG'.
+         */
 	ret = _kdc_fast_mk_error(r,
 				 r->rep.padata,
 			         r->armor_crypto,
 			         &req->req_body,
 			         r->error_code ? r->error_code : ret,
-			         r->client_princ,
+                                 r->error_code == KRB5_KDC_ERR_WRONG_REALM ?
+                                    r->client->principal : r->client_princ,
 			         r->server_princ,
 			         NULL, NULL,
 			         r->reply);
+    }
 
     if (r->pa_used && r->pa_used->cleanup)
 	r->pa_used->cleanup(r);

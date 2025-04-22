@@ -146,8 +146,14 @@ ${context} --client-name=user1@${R} --client-password=u2 \
 ${klist} && { eval "$testfailed"; }
 
 echo "Getting client initial tickets" ; > messages.log
-${kinit} --password-file=${objdir}/foopassword --forwardable user1@${R} || \
+${kinit} --no-pk-anon-fast-armor --password-file=${objdir}/foopassword --forwardable user1@${R} || \
 	{ eval "$testfailed"; }
+
+grep 'AS-REQ KRB5KRB_ERR_RESPONSE_TOO_BIG.*udp=true' messages.log > /dev/null &&
+        { echo "Incorrect KRB_ERR_RESPONSE_TOO_BIG handling"; eval "$testfailed"; }
+
+grep 'AS-REQ SUCCESS.*udp=false' messages.log > /dev/null &&
+        { echo "Incorrect KRB_ERR_RESPONSE_TOO_BIG handling"; eval "$testfailed"; }
 
 echo "======test unreadable/non existant keytab and its error message" ; > messages.log
 ${context} --mech-type=krb5 host@lucid.test.h5l.se || \

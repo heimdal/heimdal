@@ -104,6 +104,7 @@ kgetcred_imp="${kgetcred} -c $cache --out-cache=${ocache}"
 kdestroy="${kdestroy} -c $cache ${afs_no_unlog}"
 kimpersonate="${kimpersonate} -k ${keytab} --ccache=${ocache}"
 test_set_kvno0="${test_set_kvno0} -c $cache"
+test_get_creds="${test_get_creds} -c $cache"
 
 rm -f ${keytabfile}
 rm -f current-db*
@@ -1052,6 +1053,12 @@ ${rkpty} ${kinitpty} ${kinit} pw-expired@${R}|| \
 
 ${kdestroy}
 
+echo "Checking krb5_get_creds()"; > messages.log
+${kinit} --password-file=${objdir}/foopassword foo@$R || \
+	{ ec=1 ; eval "${testfailed}"; }
+${test_get_creds} --service=${server}@${R} || \
+	{ ec=1 ; eval "${testfailed}"; }
+${kdestroy}
 
 echo "killing kdc (${kdcpid}) kpasswdd (${kpasswddpid})"
 sh ${leaks_kill} kdc $kdcpid || exit 1

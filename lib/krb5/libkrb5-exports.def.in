@@ -327,6 +327,7 @@ EXPORTS
 	krb5_get_creds_opt_free
 	krb5_get_creds_opt_set_enctype
 	krb5_get_creds_opt_set_impersonate
+	krb5_get_creds_opt_set_lifetime
 	krb5_get_creds_opt_set_options
 	krb5_get_creds_opt_set_ticket
 	krb5_get_default_config_files

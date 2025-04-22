@@ -14,6 +14,7 @@ noinst_PROGRAMS =				\
 	test_crypto				\
 	test_forward				\
 	test_get_addrs				\
+	test_get_creds				\
 	test_gic				\
 	test_kuserok				\
 	test_renew				\
@@ -283,6 +284,7 @@ ALL_OBJECTS += $(test_alname_OBJECTS)
 ALL_OBJECTS += $(test_crypto_OBJECTS)
 ALL_OBJECTS += $(test_forward_OBJECTS)
 ALL_OBJECTS += $(test_get_addrs_OBJECTS)
+ALL_OBJECTS += $(test_get_creds_OBJECTS)
 ALL_OBJECTS += $(test_gic_OBJECTS)
 ALL_OBJECTS += $(test_kuserok_OBJECTS)
 ALL_OBJECTS += $(test_renew_OBJECTS)

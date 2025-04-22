@@ -97,7 +97,9 @@ static gssapi_mech_interface_desc spnego_mech = {
     _gss_spnego_delete_sec_context,
     _gss_spnego_context_time,
     _gss_spnego_get_mic,
+    NULL, /* gm_get_mic_iov */
     _gss_spnego_verify_mic,
+    NULL, /* gm_verify_mic_iov */
     _gss_spnego_wrap,
     _gss_spnego_unwrap,
     NULL, /* gm_display_status */

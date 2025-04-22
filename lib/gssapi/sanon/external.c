@@ -203,7 +203,9 @@ static gssapi_mech_interface_desc sanon_mech = {
     _gss_sanon_delete_sec_context,
     _gss_sanon_context_time,
     _gss_sanon_get_mic,
+    NULL, /* gm_get_mic_iov */
     _gss_sanon_verify_mic,
+    NULL, /* gm_verify_mic_iov */
     _gss_sanon_wrap,
     _gss_sanon_unwrap,
     _gss_sanon_display_status,

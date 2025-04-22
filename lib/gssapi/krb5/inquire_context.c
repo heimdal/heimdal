@@ -100,11 +100,12 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_inquire_context (
     return GSS_S_COMPLETE;
 
 failed:
+    { OM_uint32 tmp_status;
     if (src_name)
-	_gsskrb5_release_name(NULL, src_name);
+	_gsskrb5_release_name(&tmp_status, src_name);
     if (targ_name)
-	_gsskrb5_release_name(NULL, targ_name);
-
+	_gsskrb5_release_name(&tmp_status, targ_name);
+    }
     HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
     return ret;
 }

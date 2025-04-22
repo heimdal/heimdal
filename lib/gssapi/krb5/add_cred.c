@@ -238,6 +238,7 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_add_cred_from (
 
 failure:
     if (handle) {
+	OM_uint32 tmp_status;
 	if (handle->principal)
 	    krb5_free_principal(context, handle->principal);
 	if (handle->keytab)
@@ -245,7 +246,7 @@ failure:
 	if (handle->ccache)
 	    krb5_cc_destroy(context, handle->ccache);
 	if (handle->mechanisms)
-	    gss_release_oid_set(NULL, &handle->mechanisms);
+	    gss_release_oid_set(&tmp_status, &handle->mechanisms);
 	free(handle);
     }
     if (cred && output_cred_handle)

@@ -167,7 +167,7 @@ do {									\
 	m->gm_mech.gm_ ## name = (_gss_##name##_t *)dlsym(so, "gss_" #name); \
 	if (!m->gm_mech.gm_ ## name ||					\
 	    m->gm_mech.gm_ ##name == gss_ ## name) {			\
-		_gss_mg_log(1, "can't find symbol gss_" #name "\n");	\
+		_gss_mg_log(1, "can't find symbol gss_" #name);		\
 		goto bad;						\
 	}								\
 } while (0)
@@ -336,9 +336,11 @@ _gss_load_mech(void)
 		/*
 		 * Check for duplicates, already loaded mechs.
 		 */
+                _gss_mg_log(10, "loading \"%s\"", name);
 		found = 0;
 		HEIM_TAILQ_FOREACH(m, &_gss_mechs, gm_link) {
 			if (gss_oid_equal(&m->gm_mech.gm_mech_oid, mech_oid)) {
+                                _gss_mg_log(10, "duplicate mech, not loading");
 				found = 1;
 				break;
 			}
@@ -348,7 +350,7 @@ _gss_load_mech(void)
 
 		so = dlopen(lib, RTLD_LAZY | RTLD_LOCAL | RTLD_GROUP);
 		if (so == NULL) {
-			_gss_mg_log(1, "dlopen: %s\n", dlerror());
+			_gss_mg_log(1, "dlopen: %s", dlerror());
 			goto bad;
 		}
 

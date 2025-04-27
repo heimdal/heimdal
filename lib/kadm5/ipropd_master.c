@@ -177,7 +177,10 @@ struct slave {
 typedef struct slave slave;
 
 static int
-check_acl (krb5_context context, const char *name)
+check_acl(krb5_context context,
+          krb5_const_principal client,
+          const char *name,
+          const char *server_realm)
 {
     const char *fn;
     FILE *fp;
@@ -195,17 +198,57 @@ check_acl (krb5_context context, const char *name)
 					"kdc",
 					"iprop-acl",
 					NULL);
-
     fp = fopen (fn, "r");
     free(slavefile);
     if (fp == NULL)
 	return 1;
     while (fgets(buf, sizeof(buf), fp) != NULL) {
 	buf[strcspn(buf, "\r\n")] = '\0';
-	if (strcmp (buf, name) == 0) {
+
+	if (strcmp(buf, name) == 0) {
 	    ret = 0;
 	    break;
 	}
+        if (strchr(buf, '*')) {
+            krb5_principal p = NULL;
+
+            /* Wildcard */
+
+            if (strcmp(buf, "*") == 0 &&
+                /* Just a wildcard as the ACL, check the service and realm */
+                strcmp(krb5_principal_get_realm(context, client),
+                       server_realm) == 0 &&
+                krb5_principal_get_num_comp(context, client) == 2 &&
+                strcmp(krb5_principal_get_comp_string(context, client, 0), "iprop")) {
+
+                ret = 0;
+                break;
+            }
+
+            /* A principal with a wildcard as the ACL */
+            if (krb5_parse_name(context, buf, &p) == 0 &&
+                /* Both have to have two components */
+                krb5_principal_get_num_comp(context, p) == 2 &&
+                krb5_principal_get_num_comp(context, client) == 2 &&
+                /* Realm must match */
+                strcmp(krb5_principal_get_realm(context, p),
+                       krb5_principal_get_realm(context, client)) == 0 &&
+                /* Service must match */
+                strcmp(krb5_principal_get_comp_string(context, p, 0),
+                       krb5_principal_get_comp_string(context, client, 0)) == 0 &&
+                /* Hostname component of ACL must be just a wildcard */
+                strcmp(krb5_principal_get_comp_string(context, p, 0), "*") == 0) {
+
+                /*
+                 * A principal name with the hostname wildcarded, and the
+                 * client principal is for the same service and realm.
+                 */
+                ret = 0;
+                krb5_free_principal(context, p);
+                break;
+            }
+            krb5_free_principal(context, p);
+        }
     }
     fclose (fp);
     return ret;
@@ -348,7 +391,8 @@ add_slave (krb5_context context, krb5_keytab keytab, slave **root,
 	krb5_warn (context, ret, "krb5_unparse_name");
 	goto error;
     }
-    if (check_acl (context, s->name)) {
+    if (check_acl(context, ticket->client, s->name,
+                  krb5_principal_get_realm(context, server))) {
 	krb5_warnx (context, "%s not in acl", s->name);
 	goto error;
     }
@@ -1519,6 +1563,7 @@ static char sHDB[] = "HDBGET:";
 static char *realm;
 static int version_flag;
 static int help_flag;
+static int restarter_flag = 1;
 static char *keytab_str = sHDB;
 static char *database;
 static char *config_file;
@@ -1548,6 +1593,7 @@ static struct getargs args[] = {
       "basename of pidfile; private argument for testing", "NAME" },
     { "hostname", 0, arg_string, rk_UNCONST(&master_hostname),
       "hostname of master (if not same as hostname)", "hostname" },
+    { "restarter", 0, arg_negative_flag, &restarter_flag, NULL, NULL },
     { "verbose", 0, arg_flag, &verbose, NULL, NULL },
     { "version", 0, arg_flag, &version_flag, NULL, NULL },
     { "help", 0, arg_flag, &help_flag, NULL, NULL }
@@ -1684,7 +1730,8 @@ main(int argc, char **argv)
 	       (unsigned long)current_version);
 
     roken_detach_finish(NULL, daemon_child);
-    restarter_fd = restarter(context, NULL);
+    if (restarter_flag)
+        restarter_fd = restarter(context, NULL);
 
     while (exit_flag == 0){
 	slave *p;
@@ -1781,7 +1828,7 @@ main(int argc, char **argv)
 	    }
 	}
 
-        if (ret && FD_ISSET(restarter_fd, &readset)) {
+        if (ret && restarter_fd != -1 && FD_ISSET(restarter_fd, &readset)) {
             exit_flag = SIGTERM;
             break;
         }

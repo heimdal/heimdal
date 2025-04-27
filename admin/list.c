@@ -156,13 +156,18 @@ out:
 
 static int
 do_list1_json(struct list_options *opt,
-              const char *keytab_str,
-              heim_array_t a)
+              const char *keytab_str)
 {
     krb5_error_code ret;
     krb5_keytab keytab;
     krb5_keytab_entry entry;
     krb5_kt_cursor cursor;
+    heim_json_flags_t flags =
+        (HEIM_JSON_F_STRICT | HEIM_JSON_F_INDENT2 | HEIM_JSON_F_NO_DATA_DICT) &
+        ~HEIM_JSON_F_NO_DATA;
+
+    if (opt->json_ascii_flag)
+        flags |= HEIM_JSON_F_ESCAPE_NON_ASCII;
 
     ret = krb5_kt_resolve(context, keytab_str, &keytab);
     if (ret) {
@@ -185,7 +190,6 @@ do_list1_json(struct list_options *opt,
         heim_object_t o;
 	char *s;
 
-        heim_array_append_value(a, d);
         heim_dict_set_value(d, HSTR("keytab"),
                             o = heim_string_create(keytab_str)); heim_release(o);
         heim_dict_set_value(d, HSTR("kvno"), o = heim_number_create(entry.vno));
@@ -236,6 +240,8 @@ do_list1_json(struct list_options *opt,
 	}
 
 	krb5_kt_free_entry(context, &entry);
+        o = heim_json_copy_serialize(d, flags, NULL);
+        printf("%s", heim_string_get_utf8(o));
         heim_release(d);
     }
 
@@ -248,11 +254,7 @@ static int
 do_list_json(struct list_options *opt, const char *keytab_str)
 {
     krb5_error_code ret = 0;
-    heim_json_flags_t flags =
-        (HEIM_JSON_F_STRICT | HEIM_JSON_F_INDENT2 | HEIM_JSON_F_NO_DATA_DICT) &
-        ~HEIM_JSON_F_NO_DATA;
-    heim_array_t a = heim_array_create();
-    heim_string_t s;
+    char buf[1024];
 
     /*
      * Special-case the ANY: keytab type.  What do we get from this?  We get to
@@ -263,24 +265,16 @@ do_list_json(struct list_options *opt, const char *keytab_str)
      * Why strncasecmp() though?  Because do_list() uses it, though it arguably
      * never should have.
      */
-    if (strncasecmp(keytab_str, "ANY:", 4) == 0) {
-	char buf[1024];
+    if (strncasecmp(keytab_str, "ANY:", 4) != 0)
+        return do_list1_json(opt, keytab_str);
 
-	keytab_str += 4;
-	ret = 0;
-	while (strsep_copy((const char**)&keytab_str, ",",
-			   buf, sizeof(buf)) != -1) {
-	    if (do_list1_json(opt, buf, a))
-		ret = 1;
-	}
-    } else {
-        ret = do_list1_json(opt, keytab_str, a);
+
+    keytab_str += 4;
+    while (strsep_copy((const char**)&keytab_str, ",",
+                       buf, sizeof(buf)) != -1) {
+        if (do_list1_json(opt, buf))
+            ret = 1;
     }
-
-    s = heim_json_copy_serialize(a, flags, NULL);
-    printf("%s", heim_string_get_utf8(s));
-    heim_release(a);
-    heim_release(s);
     return ret;
 }
 
@@ -300,7 +294,7 @@ kt_list(struct list_options *opt, int argc, char **argv)
 	}
 	keytab_string = kt;
     }
-    if (opt->json_flag)
+    if (opt->json_flag || opt->json_ascii_flag)
         return do_list_json(opt, keytab_string) != 0;
     return do_list(opt, keytab_string) != 0;
 }

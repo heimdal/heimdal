@@ -416,6 +416,7 @@ dist_gss_token_SOURCES = gss-token.c
 gsstool_LDADD = libgssapi.la \
 	$(top_builddir)/lib/sl/libsl.la \
 	$(top_builddir)/lib/krb5/libkrb5.la \
+	$(top_builddir)/lib/hcrypto/libhcrypto.la \
 	$(LIB_readline) \
 	$(LIB_roken)
 

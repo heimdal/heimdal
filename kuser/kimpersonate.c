@@ -33,6 +33,9 @@
 
 #include "kuser_locl.h"
 #include <parse_units.h>
+#undef HC_DEPRECATED_CRYPTO
+#include "../lib/krb5/krb5_locl.h"
+#include "../lib/krb5/keytab_plugin.h"
 
 static char *client_principal_str = NULL;
 static krb5_principal client_principal;
@@ -306,6 +309,59 @@ setup_env(krb5_context context, krb5_keytab *kt)
     }
 }
 
+static const char *sysplugin_dirs[] =  {
+#ifdef _WIN32
+    "$ORIGIN",
+#else
+    "$ORIGIN/../lib/plugin/krb5",
+#endif
+#ifdef __APPLE__
+    LIBDIR "/plugin/krb5",
+#endif
+    NULL
+};
+
+static krb5_error_code KRB5_CALLCONV
+plcallback(krb5_context kcontext,
+           const void *plug,
+           void *plugctx,
+           void *userctx)
+{
+    /* Registration will have happened in init() */
+    return 0;
+}
+
+static const char *plugin_deps[] = { "krb5", "hdb", NULL };
+
+static struct heim_plugin_data hdb_keytab_plugin = {
+    "krb5",
+    "keytab",
+    1,
+    plugin_deps,
+    krb5_get_instance
+};
+
+static void
+load_plugins(krb5_context context)
+{
+    const char * const *dirs = sysplugin_dirs;
+#ifndef _WIN32
+    char **cfdirs;
+
+    cfdirs = krb5_config_get_strings(context, NULL, "krb5", "plugin_dir", NULL);
+    if (cfdirs)
+        dirs = (const char * const *)cfdirs;
+#endif
+
+    _krb5_load_plugins(context, "krb5", (const char **)dirs);
+    (void) _krb5_plugin_run_f(context, &hdb_keytab_plugin, 0, NULL,
+                              plcallback);
+
+#ifndef _WIN32
+    krb5_config_free_strings(cfdirs);
+#endif
+}
+
 /*
  *
  */
@@ -364,6 +420,7 @@ main(int argc, char **argv)
     ret = krb5_init_context(&context);
     if (ret)
 	errx(1, "krb5_init_context failed: %u", ret);
+    load_plugins(context);
 
     if (getarg(args, sizeof(args) / sizeof(args[0]), argc, argv, &optidx))
 	usage(1);

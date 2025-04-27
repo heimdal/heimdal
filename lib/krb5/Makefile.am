@@ -192,6 +192,7 @@ dist_libkrb5_la_SOURCES =			\
 	keytab_file.c				\
 	keytab_keyfile.c			\
 	keytab_memory.c				\
+	keytab_plugin.h				\
 	krb5_locl.h				\
 	krcache.c				\
 	krbhst.c				\
@@ -404,6 +405,7 @@ krb5_HEADERS = \
 	an2ln_plugin.h \
 	ccache_plugin.h \
 	db_plugin.h \
+	keytab_plugin.h \
 	kuserok_plugin.h \
 	locate_plugin.h \
 	send_to_kdc_plugin.h

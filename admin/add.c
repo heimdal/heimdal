@@ -34,6 +34,7 @@
 #include "ktutil_locl.h"
 #include <heimbase.h>
 #include <base64.h>
+#include <stdio.h>
 
 RCSID("$Id$");
 
@@ -174,7 +175,7 @@ read_file(FILE *f)
     size_t bytes;
     char *res, *end, *p;
 
-    if ((res = malloc(1024)) == NULL)
+    if ((res = calloc(1, 1024)) == NULL)
         err(1, "Out of memory");
     alloced = 1024;
 
@@ -190,6 +191,7 @@ read_file(FILE *f)
             p = tmp + len;
             res = tmp;
             end = res + alloced;
+            memset(p, 0, end - p);
         }
         bytes = fread(p, 1, end - p, f);
         len += bytes;
@@ -224,7 +226,7 @@ json2keytab_entry(heim_dict_t d, krb5_keytab kt, size_t idx)
     memset(&e, 0, sizeof(e));
 
     v = heim_dict_get_value(d, HSTR("timestamp"));
-    if (heim_get_tid(v) != HEIM_TID_NUMBER)
+    if (!v || heim_get_tid(v) != HEIM_TID_NUMBER)
         goto bad;
     u = heim_number_get_long(v);
     e.timestamp = u;
@@ -232,7 +234,7 @@ json2keytab_entry(heim_dict_t d, krb5_keytab kt, size_t idx)
         goto bad;
 
     v = heim_dict_get_value(d, HSTR("kvno"));
-    if (heim_get_tid(v) != HEIM_TID_NUMBER)
+    if (!v || heim_get_tid(v) != HEIM_TID_NUMBER)
         goto bad;
     i = heim_number_get_long(v);
     e.vno = i;
@@ -240,7 +242,7 @@ json2keytab_entry(heim_dict_t d, krb5_keytab kt, size_t idx)
         goto bad;
 
     v = heim_dict_get_value(d, HSTR("enctype_number"));
-    if (heim_get_tid(v) != HEIM_TID_NUMBER)
+    if (!v || heim_get_tid(v) != HEIM_TID_NUMBER)
         goto bad;
     i = heim_number_get_long(v);
     e.keyblock.keytype = i;
@@ -248,8 +250,9 @@ json2keytab_entry(heim_dict_t d, krb5_keytab kt, size_t idx)
         goto bad;
 
     v = heim_dict_get_value(d, HSTR("key"));
-    if (heim_get_tid(v) != HEIM_TID_STRING)
-        goto bad;
+    if (!v || heim_get_tid(v) != HEIM_TID_STRING) {
+        errx(1, "Missing key(s) in keytab import input");
+    }
     {
         const char *s = heim_string_get_utf8(v);
         int declen;
@@ -264,7 +267,7 @@ json2keytab_entry(heim_dict_t d, krb5_keytab kt, size_t idx)
     }
 
     v = heim_dict_get_value(d, HSTR("principal"));
-    if (heim_get_tid(v) != HEIM_TID_STRING)
+    if (!v || heim_get_tid(v) != HEIM_TID_STRING)
         goto bad;
     ret = krb5_parse_name(context, heim_string_get_utf8(v), &e.principal);
     if (ret == 0)
@@ -290,43 +293,56 @@ kt_import(void *opt, int argc, char **argv)
     heim_error_t json_err = NULL;
     heim_json_flags_t flags = HEIM_JSON_F_STRICT;
     FILE *f = argc == 0 ? stdin : fopen(argv[0], "r");
-    size_t alen, i;
-    char *json;
+    const char *json;
+    size_t idx = 0;
+    char *input;
 
     if (f == NULL)
         err(1, "Could not open file %s", argv[0]);
 
-    json = read_file(f);
-    fclose(f);
-    o = heim_json_create(json, 10, flags, &json_err);
-    free(json);
-    if (o == NULL) {
-        if (json_err != NULL) {
-            o = heim_error_copy_string(json_err);
-            if (o)
-                errx(1, "Could not parse JSON: %s", heim_string_get_utf8(o));
-        }
-        errx(1, "Could not parse JSON");
-    }
-
-    if (heim_get_tid(o) != HEIM_TID_ARRAY)
-        errx(1, "JSON text must be an array");
-
-    alen = heim_array_get_length(o);
-    if (alen == 0)
-        errx(1, "Empty JSON array; not overwriting keytab");
-
     if ((kt = ktutil_open_keytab()) == NULL)
-	err(1, "Could not open keytab");
+        err(1, "Could not open keytab");
 
-    for (i = 0; i < alen; i++) {
-        heim_object_t e = heim_array_get_value(o, i);
+    json = input = read_file(f);
+    if (f != stdin)
+	(void) fclose(stdin);
+    do {
+        o = heim_json_create2(json, 10, flags, &json, &json_err);
+        if (o == NULL) {
+            if (json[0] == '\0')
+                break; /* Nothing left to parse */
+            if (json_err != NULL) {
+                o = heim_error_copy_string(json_err);
+                if (o)
+                    errx(1, "Could not parse JSON: %s",
+                         heim_string_get_utf8(o));
+            }
+            errx(1, "Could not parse JSON");
+        }
 
-        if (heim_get_tid(e) != HEIM_TID_DICT)
-            warnx("Element %ld of JSON text array is not an object", (long)i);
-        else
-            json2keytab_entry(heim_array_get_value(o, i), kt, i);
-    }
+        if (heim_get_tid(o) == HEIM_TID_ARRAY) {
+            size_t alen, i;
+
+            alen = heim_array_get_length(o);
+            if (alen == 0)
+                errx(1, "Empty JSON array; not overwriting keytab");
+
+            for (i = 0; i < alen; i++, idx++) {
+                heim_object_t e = heim_array_get_value(o, i);
+
+                if (heim_get_tid(e) != HEIM_TID_DICT)
+                    warnx("Element %ld of JSON text array is not an object", (long)i);
+                else
+                    json2keytab_entry(heim_array_get_value(o, i), kt, i);
+            }
+        } else if (heim_get_tid(o) == HEIM_TID_DICT) {
+            json2keytab_entry(o, kt, idx++);
+        } else {
+            errx(1, "JSON text(s) must be an array of objects, or an object");
+        }
+        heim_release(o);
+    } while (json && *json);
+    free(input);
     ret = krb5_kt_close(context, kt);
     if (ret)
         krb5_warn(context, ret, "Could not write the keytab");

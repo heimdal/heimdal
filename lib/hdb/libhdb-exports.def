@@ -92,8 +92,8 @@ EXPORTS
 	length_HDB_keyset
         initialize_hdb_error_table_r
 
-	hdb_kt_ops
-	hdb_get_kt_ops
+	hdb_kt_ops DATA
+	hdb_get_kt_ops DATA
 
 ; MIT KDB related entries
 	_hdb_mdb_value2entry

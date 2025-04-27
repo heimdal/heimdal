@@ -61,6 +61,19 @@ ldap_c = hdb-ldap.c
 
 !endif
 
+hdb_keytab_plugin_dll = $(BINDIR)\hdb_keytab_plugin.dll
+hdb_keytab_plugin_lib = $(LIBDIR)\hdb_keytab_plugin.lib
+hdb_keytab_plugin_objs = $(OBJ)\hdb_keytab_plugin.obj
+
+$(hdb_keytab_plugin_dll): $(hdb_keytab_plugin_objs)
+	$(DLLGUILINK) -implib:$(hdb_keytab_plugin_lib)
+	$(DLLPREP)
+
+clean::
+	-$(RM) $(hdb_keytab_plugin_dll)
+	-$(RM) $(hdb_keytab_plugin_lib)
+
+
 dist_libhdb_la_SOURCES =			\
 	common.c				\
 	db.c					\

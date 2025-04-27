@@ -665,9 +665,9 @@ encode_utf8(struct parse_ctx *ctx, char **pp, char *pend, int c)
 }
 
 static heim_string_t
-parse_string_error(struct parse_ctx *ctx,
-                   char *freeme,
-                   const char *msg)
+parse_error(struct parse_ctx *ctx,
+            char *freeme,
+            const char *msg)
 {
     free(freeme);
     ctx->error = heim_error_create(EINVAL, "%s at %lu", msg, ctx->lineno);
@@ -686,9 +686,8 @@ parse_string(struct parse_ctx *ctx)
     int binary = 0;
 
     if (*ctx->p != '"')
-        return parse_string_error(ctx, NULL,
-                                  "Expected a JSON string but found "
-                                  "something else");
+        return parse_error(ctx, NULL,
+                           "Expected a JSON string but found something else");
     start = ++(ctx->p);
 
     /* Estimate how many bytes we need to allocate */
@@ -701,7 +700,7 @@ parse_string(struct parse_ctx *ctx)
             break;
     }
     if (ctx->p == ctx->pend)
-        return parse_string_error(ctx, NULL, "Unterminated JSON string");
+        return parse_error(ctx, NULL, "Unterminated JSON string");
 
     ctx->p = start;
     while (ctx->p < ctx->pend) {
@@ -755,12 +754,12 @@ parse_string(struct parse_ctx *ctx)
             /* Check for unescaped ASCII control characters */
             if (c == '\n') {
                 if (strict)
-                    return parse_string_error(ctx, p0,
-                                              "Unescaped newline in JSON string");
+                    return parse_error(ctx, p0,
+                                       "Unescaped newline in JSON string");
                 /* Count the newline but don't add it to the decoding */
                 ctx->lineno++;
             } else if (strict && *ctx->p <= 0x1f) {
-                return parse_string_error(ctx, p0, "Unescaped ASCII control character");
+                return parse_error(ctx, p0, "Unescaped ASCII control character");
             } else if (c == 0) {
                 binary = 1;
             }
@@ -795,10 +794,10 @@ parse_string(struct parse_ctx *ctx)
                 *(p++) = c;
                 ctx->p++;
                 if (ctx->p == ctx->pend)
-                    return parse_string_error(ctx, p0, "Truncated UTF-8");
+                    return parse_error(ctx, p0, "Truncated UTF-8");
                 c = *(ctx->p++);
                 if ((c & 0xc0) != 0x80)
-                    return parse_string_error(ctx, p0, "Truncated UTF-8");
+                    return parse_error(ctx, p0, "Truncated UTF-8");
                 *(p++) = c;
                 continue;
             }
@@ -812,38 +811,31 @@ parse_string(struct parse_ctx *ctx)
                 *(p++) = c;
                 ctx->p++;
                 if (ctx->p == ctx->pend)
-                    return parse_string_error(ctx, p0, "Truncated UTF-8");
+                    return parse_error(ctx, p0, "Truncated UTF-8");
                 c = *(ctx->p++);
                 if ((c & 0xc0) != 0x80)
-                    return parse_string_error(ctx, p0, "Truncated UTF-8");
+                    return parse_error(ctx, p0, "Truncated UTF-8");
                 *(p++) = c;
                 c = *(ctx->p++);
                 if ((c & 0xc0) != 0x80)
-                    return parse_string_error(ctx, p0, "Truncated UTF-8");
+                    return parse_error(ctx, p0, "Truncated UTF-8");
                 *(p++) = c;
                 continue;
             }
             if ((c & 0xf8) == 0xf0)
-                return parse_string_error(ctx, p0, "UTF-8 sequence not "
-                                          "encoded as escaped UTF-16");
+                return parse_error(ctx, p0, "UTF-8 sequence not "
+                                   "encoded as escaped UTF-16");
             if ((c & 0xc0) == 0x80)
-                return parse_string_error(ctx, p0,
-                                          "Invalid UTF-8 "
-                                          "(bare continuation code unit)");
+                return parse_error(ctx, p0, "Invalid UTF-8 "
+                                   "(bare continuation code unit)");
 
-            return parse_string_error(ctx, p0, "Not UTF-8");
+            return parse_error(ctx, p0, "Not UTF-8");
         }
 
         /* Backslash-quoted character */
         ctx->p++;
-        if (ctx->p == ctx->pend) {
-            ctx->error =
-                heim_error_create(EINVAL,
-                                  "Unterminated JSON string at line %lu",
-                                  ctx->lineno);
-            free(p0);
-            return NULL;
-        }
+        if (ctx->p == ctx->pend)
+            return parse_error(ctx, p0, "Unterminated JSON string");
         switch (*ctx->p) {
         /* Simple escapes */
         case  'b': *(p++) = '\b'; ctx->p++; continue;
@@ -878,12 +870,7 @@ parse_string(struct parse_ctx *ctx)
                 ctx->p++;
                 continue;
             }
-            ctx->error =
-                heim_error_create(EINVAL,
-                                  "Invalid backslash escape at line %lu",
-                                  ctx->lineno);
-            free(p0);
-            return NULL;
+            return parse_error(ctx, p0, "Invalid backslash escape");
         }
 
         /* Unicode code point */
@@ -896,7 +883,7 @@ parse_string(struct parse_ctx *ctx)
         cbot = -3;
         ctop = unescape_unicode(ctx);
         if (ctop == -1 && strict)
-            return parse_string_error(ctx, p0, "Invalid escaped Unicode");
+            return parse_error(ctx, p0, "Invalid escaped Unicode");
         if (ctop == -1) {
             /*
              * Not strict; tolerate bad input.
@@ -918,8 +905,8 @@ parse_string(struct parse_ctx *ctx)
         }
         if (ctop < 0xd800) {
             if (!encode_utf8(ctx, &p, pend, ctop))
-                return parse_string_error(ctx, p0,
-                                          "Internal JSON string parse error");
+                return parse_error(ctx, p0,
+                                   "Internal JSON string parse error");
             continue;
         }
 
@@ -944,8 +931,7 @@ parse_string(struct parse_ctx *ctx)
         }
         if (ctop == -1) {
             if (strict)
-                return parse_string_error(ctx, p0,
-                                          "Invalid surrogate pair");
+                return parse_error(ctx, p0, "Invalid surrogate pair");
 
             /*
              * Output "\\u", rewind, output the digits of `ctop'.
@@ -966,8 +952,7 @@ parse_string(struct parse_ctx *ctx)
         ctop -= 0xd800;
         cbot -= 0xdc00;
         if (!encode_utf8(ctx, &p, pend, 0x10000 + ((ctop << 10) | (cbot & 0x3ff))))
-            return parse_string_error(ctx, p0,
-                                      "Internal JSON string parse error");
+            return parse_error(ctx, p0, "Internal JSON string parse error");
     }
 
     if (p0 == NULL)
@@ -1052,11 +1037,19 @@ parse_pair(heim_dict_t dict, struct parse_ctx *ctx)
 	return -1;
     }
 
+    /*
+     * XXX Can't happen that parse_value() returns NULL w/o setting ctx->error!
+     *
+     * Even w/o HEIM_JSON_F_NO_C_NULL parse_value() won't return NULL if it
+     * sees <NULL>.
+     */
     value = parse_value(ctx);
     if (value == NULL &&
 	(ctx->error != NULL || (ctx->flags & HEIM_JSON_F_NO_C_NULL))) {
 	if (ctx->error == NULL)
-	    ctx->error = heim_error_create(EINVAL, "Invalid JSON encoding");
+            /* Dead code */
+	    ctx->error =
+                heim_error_create(EINVAL, "Invalid object key value encoding");
 	heim_release(key);
 	return -1;
     }
@@ -1198,18 +1191,14 @@ parse_value(struct parse_ctx *ctx)
     if (*ctx->p == '"') {
 	return parse_string(ctx);
     } else if (*ctx->p == '{') {
-	if (ctx->depth-- == 1) {
-	    ctx->error = heim_error_create(EINVAL, "JSON object too deep");
-	    return NULL;
-	}
+	if (ctx->depth-- == 1)
+            return parse_error(ctx, NULL, "JSON object too deep");
 	o = parse_dict(ctx);
 	ctx->depth++;
 	return o;
     } else if (*ctx->p == '[') {
-	if (ctx->depth-- == 1) {
-	    ctx->error = heim_error_create(EINVAL, "JSON object too deep");
-	    return NULL;
-	}
+	if (ctx->depth-- == 1)
+            return parse_error(ctx, NULL, "JSON object too deep");
 	o = parse_array(ctx);
 	ctx->depth++;
 	return o;
@@ -1219,6 +1208,7 @@ parse_value(struct parse_ctx *ctx)
 
     len = ctx->pend - ctx->p;
 
+    /* Why do we bother with <NULL>? */
     if ((ctx->flags & HEIM_JSON_F_NO_C_NULL) == 0 &&
 	len >= 6 && memcmp(ctx->p, "<NULL>", 6) == 0) {
 	ctx->p += 6;
@@ -1234,13 +1224,13 @@ parse_value(struct parse_ctx *ctx)
 	return heim_bool_create(0);
     }
 
-    ctx->error = heim_error_create(EINVAL, "unknown char %c at %lu line %lu",
-				   (char)*ctx->p, 
+    ctx->error = heim_error_create(EINVAL,
+                                   "unknown char %c (%d) at offset %lu / line %lu",
+				   (char)*ctx->p, (int)*(ctx->p),
 				   (unsigned long)(ctx->p - ctx->pstart),
 				   ctx->lineno);
     return NULL;
 }
-
 
 heim_object_t
 heim_json_create(const char *string, size_t max_depth, heim_json_flags_t flags,
@@ -1251,13 +1241,45 @@ heim_json_create(const char *string, size_t max_depth, heim_json_flags_t flags,
 }
 
 heim_object_t
+heim_json_create2(const char *string, size_t max_depth, heim_json_flags_t flags,
+                  const char **next, heim_error_t *error)
+{
+    return heim_json_create_with_bytes2(string, strlen(string), max_depth, flags,
+                                        next, error);
+}
+
+heim_object_t
 heim_json_create_with_bytes(const void *data, size_t length, size_t max_depth,
 			    heim_json_flags_t flags, heim_error_t *error)
+{
+    return heim_json_create_with_bytes2(data, length, max_depth, flags, NULL,
+                                        error);
+}
+
+/*
+ * Parse a JSON text at `data' of length `length'.
+ *
+ * Reject JSON texts with depth larger than `max_depth'.
+ *
+ * Use the `HEIM_JSON_F_STRICT' flag to parse strictly.
+ *
+ * Pass in a non-NULL `next' in order to parse "streams" of JSON texts.  On
+ * return `*next' will be set to the start of the next JSON text, to the
+ * location of the parse error or one past it, or to `data + length' if there
+ * are no more JSON texts left to parse.
+ */
+heim_object_t
+heim_json_create_with_bytes2(const void *data, size_t length, size_t max_depth,
+			     heim_json_flags_t flags, const char **next,
+                             heim_error_t *error)
 {
     struct parse_ctx ctx;
     heim_object_t o;
 
     heim_base_once_f(&heim_json_once, NULL, json_init_once);
+
+    if (error)
+        *error = NULL;
 
     ctx.lineno = 1;
     ctx.p = data;
@@ -1267,7 +1289,15 @@ heim_json_create_with_bytes(const void *data, size_t length, size_t max_depth,
     ctx.flags = flags;
     ctx.depth = max_depth;
 
+    if (next && white_spaces(&ctx)) {
+        *next = (char *)ctx.p;
+        return NULL;
+    }
+
     o = parse_value(&ctx);
+
+    if (next)
+        *next = (char *)((ctx.p <= ctx.pend) ? ctx.p : ctx.pend);
 
     if (o == NULL && error) {
 	*error = ctx.error;

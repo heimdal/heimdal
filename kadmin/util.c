@@ -85,6 +85,24 @@ attributes2str(krb5_flags attributes, char *str, size_t len)
     unparse_flags (attributes, kdb_attrs, str, len);
 }
 
+heim_array_t
+attributes2json_array(krb5_flags attributes)
+{
+    heim_array_t a = heim_array_create();
+    size_t i;
+
+    for (i = 0; kdb_attrs[i].name; i++) {
+        if (attributes & kdb_attrs[i].mult) {
+            heim_string_t s;
+            heim_array_append_value(a, s =
+                                    heim_string_create(kdb_attrs[i].name));
+            heim_release(s);
+        }
+    }
+    return a;
+}
+
+
 /*
  * convert the string in `str' into attributes in `flags'
  * return 0 if parsed ok, else -1.

@@ -48,52 +48,56 @@ struct hdb_cursor {
 };
 
 /*
- * the format for HDB keytabs is:
- * HDB:[HDBFORMAT:database-specific-data[:mkey=mkey-file]]
+ * The format for HDB keytabs is:
+ *
+ *    HDBGET:[HDBFORMAT:database-specific-data[:mkey=mkey-file]]
+ *    HDBGET:
+ *    HDB:[HDBFORMAT:database-specific-data[:mkey=mkey-file]]
+ *    HDB::realm=REALM
+ *
+ * E.g.,
+ *
+ *    HDB:mdb:/var/heimdal/heimdal.db
+ *    HDB:mdb:/var/heimdal/heimdal.db:mkey=/var/heimdal/heimdal/mkey
+ *    HDB:db:/var/heimdal/heimdal.db
+ *    HDB::realm=TEST.H5L.SE
+ *
+ * The :realm=REALM variant opens the HDB for the given realm.
+ *
+ * The HDBGET: keytab does not support iteration, and is meant for use by KDC
+ * services.
+ *
+ * The HDB: keytab does support iteration, but one has to name the HDB to use,
+ * and this keytab type should not be used as the keytab for KDC services.  The
+ * HDB: keytab is mostly meant for use with ktutil -k HDB:... list, and is
+ * mostly didactic.
  */
 
 static krb5_error_code KRB5_CALLCONV
 hdb_resolve(krb5_context context, const char *name, krb5_keytab id)
 {
     struct hdb_data *d;
-    const char *db, *mkey;
+    char *mkey;
 
-    d = malloc(sizeof(*d));
+    d = calloc(1, sizeof(*d));
     if(d == NULL) {
 	krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
 	return ENOMEM;
     }
-    db = name;
+    d->dbname = strdup(name);
+    d->mkey = NULL;
     mkey = strstr(name, ":mkey=");
-    if(mkey == NULL || mkey[6] == '\0') {
-	if(*name == '\0')
-	    d->dbname = NULL;
-	else {
-	    d->dbname = strdup(name);
-	    if(d->dbname == NULL) {
-		free(d);
-		krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
-		return ENOMEM;
-	    }
-	}
-	d->mkey = NULL;
-    } else {
-	d->dbname = malloc(mkey - db + 1);
-	if(d->dbname == NULL) {
-	    free(d);
-	    krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
-	    return ENOMEM;
-	}
-	memmove(d->dbname, db, mkey - db);
-	d->dbname[mkey - db] = '\0';
-
-	d->mkey = strdup(mkey + 6);
-	if(d->mkey == NULL) {
-	    free(d->dbname);
-	    free(d);
-	    krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
-	    return ENOMEM;
-	}
+    if (mkey) {
+        mkey[0] = '\0';
+        if (mkey[6]) {
+            d->mkey = strdup(mkey + 6);
+            if(d->mkey == NULL) {
+                free(d->dbname);
+                free(d);
+                krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
+                return ENOMEM;
+            }
+        }
     }
     id->data = d;
     return 0;
@@ -131,12 +135,11 @@ hdb_get_name(krb5_context context,
  */
 
 static krb5_error_code
-find_db (krb5_context context,
-	 char **dbname,
-	 char **mkey,
-	 krb5_const_principal principal)
+find_db(krb5_context context,
+        char **dbname,
+        char **mkey,
+        const char *realm)
 {
-    krb5_const_realm realm = krb5_principal_get_realm(context, principal);
     krb5_error_code ret;
     struct hdb_dbinfo *head, *dbinfo = NULL;
 
@@ -195,8 +198,9 @@ hdb_get_entry(krb5_context context,
 
     memset(&ent, 0, sizeof(ent));
 
-    if (dbname == NULL) {
-	ret = find_db(context, &fdbname, &fmkey, principal);
+    if (dbname == NULL || dbname[0] == '\0') {
+	ret = find_db(context, &fdbname, &fmkey,
+                      krb5_principal_get_realm(context, principal));
 	if (ret)
 	    return ret;
 	dbname = fdbname;
@@ -273,15 +277,23 @@ hdb_start_seq_get(krb5_context context,
     struct hdb_data *d = id->data;
     const char *dbname = d->dbname;
     const char *mkey   = d->mkey;
+    char *fdbname = NULL, *fmkey = NULL;
     HDB *db;
 
-    if (dbname == NULL) {
+    if (dbname == NULL || dbname[0] == '\0') {
 	/*
 	 * We don't support enumerating without being told what
 	 * backend to enumerate on
 	 */
   	ret = KRB5_KT_NOTFOUND;
 	return ret;
+    }
+    if (strncmp(dbname, ":realm=", sizeof(":realm=") - 1) == 0) {
+	ret = find_db(context, &fdbname, &fmkey, dbname + sizeof(":realm=") - 1);
+	if (ret)
+	    return ret;
+	dbname = fdbname;
+	mkey = fmkey;
     }
 
     ret = hdb_create (context, &db, dbname);
@@ -292,6 +304,8 @@ hdb_start_seq_get(krb5_context context,
 	(*db->hdb_destroy)(context, db);
 	return ret;
     }
+    free(fdbname);
+    free(fmkey);
 
     ret = (*db->hdb_open)(context, db, O_RDONLY, 0);
     if (ret) {

@@ -397,15 +397,16 @@ build_auth_pack(krb5_context context,
     if (ret)
 	return ret;
 
-    if (ctx->keyex == USE_DH || ctx->keyex == USE_ECDH) {
+    if (ctx->keyex == USE_DH) {
+        DH *dh;
+        DomainParameters dp;
+        heim_integer dh_pub_key;
 	const char *moduli_file;
 	unsigned long dh_min_bits;
 	krb5_data dhbuf;
 	size_t size = 0;
 
 	krb5_data_zero(&dhbuf);
-
-
 
 	moduli_file = krb5_config_get_string(context, NULL,
 					     "libdefaults",
@@ -422,7 +423,7 @@ build_auth_pack(krb5_context context,
 	if (ret)
 	    return ret;
 
-	ctx->u.dh = DH_new();
+	dh = ctx->u.dh = DH_new();
 	if (ctx->u.dh == NULL)
 	    return krb5_enomem(context);
 
@@ -435,7 +436,6 @@ build_auth_pack(krb5_context context,
 				   N_("pkinit: failed to generate DH key", ""));
 	    return ENOMEM;
 	}
-
 
 	if (1 /* support_cached_dh */) {
 	    ALLOC(a->clientDHNonce, 1);
@@ -457,94 +457,91 @@ build_auth_pack(krb5_context context,
 		return ret;
 	}
 
-	ALLOC(a->clientPublicValue, 1);
-	if (a->clientPublicValue == NULL)
-	    return ENOMEM;
+        ALLOC(a->clientPublicValue, 1);
+        if (a->clientPublicValue == NULL)
+            return ENOMEM;
 
-	if (ctx->keyex == USE_DH) {
-	    DH *dh = ctx->u.dh;
-	    DomainParameters dp;
-	    heim_integer dh_pub_key;
+        ret = der_copy_oid(&asn1_oid_id_dhpublicnumber,
+                           &a->clientPublicValue->algorithm.algorithm);
+        if (ret)
+            return ret;
 
-	    ret = der_copy_oid(&asn1_oid_id_dhpublicnumber,
-			       &a->clientPublicValue->algorithm.algorithm);
-	    if (ret)
-		return ret;
+        memset(&dp, 0, sizeof(dp));
 
-	    memset(&dp, 0, sizeof(dp));
-
-	    ret = BN_to_integer(context, dh->p, &dp.p);
-	    if (ret) {
-		free_DomainParameters(&dp);
-		return ret;
-	    }
-	    ret = BN_to_integer(context, dh->g, &dp.g);
-	    if (ret) {
-		free_DomainParameters(&dp);
-		return ret;
-	    }
-            if (dh->q && BN_num_bits(dh->q)) {
-                /*
-                 * The q parameter is required, but MSFT made it optional.
-                 * It's only required in order to verify the domain parameters
-                 * -- the security of the DH group --, but we validate groups
-                 * against known groups rather than accepting arbitrary groups
-                 * chosen by the peer, so we really don't need to have put it
-                 * on the wire.  Because these are Oakley groups, and the
-                 * primes are Sophie Germain primes, q is p>>1 and we can
-                 * compute it on the fly like MIT Kerberos does, but we'd have
-                 * to implement BN_rshift1().
-                 */
-                dp.q = calloc(1, sizeof(*dp.q));
-                if (dp.q == NULL) {
-                    free_DomainParameters(&dp);
-                    return ENOMEM;
-                }
-                ret = BN_to_integer(context, dh->q, dp.q);
-                if (ret) {
-                    free_DomainParameters(&dp);
-                    return ret;
-                }
+        ret = BN_to_integer(context, dh->p, &dp.p);
+        if (ret) {
+            free_DomainParameters(&dp);
+            return ret;
+        }
+        ret = BN_to_integer(context, dh->g, &dp.g);
+        if (ret) {
+            free_DomainParameters(&dp);
+            return ret;
+        }
+        if (dh->q && BN_num_bits(dh->q)) {
+            /*
+             * The q parameter is required, but MSFT made it optional.
+             * It's only required in order to verify the domain parameters
+             * -- the security of the DH group --, but we validate groups
+             * against known groups rather than accepting arbitrary groups
+             * chosen by the peer, so we really don't need to have put it
+             * on the wire.  Because these are Oakley groups, and the
+             * primes are Sophie Germain primes, q is p>>1 and we can
+             * compute it on the fly like MIT Kerberos does, but we'd have
+             * to implement BN_rshift1().
+             */
+            dp.q = calloc(1, sizeof(*dp.q));
+            if (dp.q == NULL) {
+                free_DomainParameters(&dp);
+                return ENOMEM;
             }
-	    dp.j = NULL;
-	    dp.validationParms = NULL;
-
-	    a->clientPublicValue->algorithm.parameters =
-		malloc(sizeof(*a->clientPublicValue->algorithm.parameters));
-	    if (a->clientPublicValue->algorithm.parameters == NULL) {
-		free_DomainParameters(&dp);
-		return ret;
-	    }
-
-	    ASN1_MALLOC_ENCODE(DomainParameters,
-			       a->clientPublicValue->algorithm.parameters->data,
-			       a->clientPublicValue->algorithm.parameters->length,
-			       &dp, &size, ret);
-	    free_DomainParameters(&dp);
-	    if (ret)
-		return ret;
-	    if (size != a->clientPublicValue->algorithm.parameters->length)
-		krb5_abortx(context, "Internal ASN1 encoder error");
-
-	    ret = BN_to_integer(context, dh->pub_key, &dh_pub_key);
-	    if (ret)
-		return ret;
-
-	    ASN1_MALLOC_ENCODE(DHPublicKey, dhbuf.data, dhbuf.length,
-			       &dh_pub_key, &size, ret);
-	    der_free_heim_integer(&dh_pub_key);
-	    if (ret)
-		return ret;
-	    if (size != dhbuf.length)
-		krb5_abortx(context, "asn1 internal error");
-            a->clientPublicValue->subjectPublicKey.length = dhbuf.length * 8;
-            a->clientPublicValue->subjectPublicKey.data = dhbuf.data;
-	} else if (ctx->keyex == USE_ECDH) {
-            ret = _krb5_build_authpack_subjectPK_EC(context, ctx, a);
-            if (ret)
+            ret = BN_to_integer(context, dh->q, dp.q);
+            if (ret) {
+                free_DomainParameters(&dp);
                 return ret;
-	} else
-	    krb5_abortx(context, "internal error");
+            }
+        }
+        dp.j = NULL;
+        dp.validationParms = NULL;
+
+        a->clientPublicValue->algorithm.parameters =
+            malloc(sizeof(*a->clientPublicValue->algorithm.parameters));
+        if (a->clientPublicValue->algorithm.parameters == NULL) {
+            free_DomainParameters(&dp);
+            return ret;
+        }
+
+        ASN1_MALLOC_ENCODE(DomainParameters,
+                           a->clientPublicValue->algorithm.parameters->data,
+                           a->clientPublicValue->algorithm.parameters->length,
+                           &dp, &size, ret);
+        free_DomainParameters(&dp);
+        if (ret)
+            return ret;
+        if (size != a->clientPublicValue->algorithm.parameters->length)
+            krb5_abortx(context, "Internal ASN1 encoder error");
+
+        ret = BN_to_integer(context, dh->pub_key, &dh_pub_key);
+        if (ret)
+            return ret;
+
+        ASN1_MALLOC_ENCODE(DHPublicKey, dhbuf.data, dhbuf.length,
+                           &dh_pub_key, &size, ret);
+        der_free_heim_integer(&dh_pub_key);
+        if (ret)
+            return ret;
+        if (size != dhbuf.length)
+            krb5_abortx(context, "asn1 internal error");
+        a->clientPublicValue->subjectPublicKey.length = dhbuf.length * 8;
+        a->clientPublicValue->subjectPublicKey.data = dhbuf.data;
+    } else if (ctx->keyex == USE_ECDH) {
+        ALLOC(a->clientPublicValue, 1);
+        if (a->clientPublicValue == NULL)
+            return ENOMEM;
+
+        ret = _krb5_build_authpack_subjectPK_EC(context, ctx, a);
+        if (ret)
+            return ret;
     }
 
     {

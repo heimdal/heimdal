@@ -254,7 +254,7 @@ krb5_kdc_update_time(struct timeval *tv)
 	       sizeof(*RHS) - sizeof(*LHS));		\
     } while (0)
 
-static krb5_error_code
+krb5_error_code
 kdc_as_req(kdc_request_t *rptr, int *claim)
 {
     astgs_request_t r;
@@ -366,7 +366,7 @@ static struct krb5_kdc_service services[] =  {
     { 0, NULL, NULL }
 };
 
-static int
+int
 process_request(krb5_context context,
 		krb5_kdc_configuration *config,
 		unsigned int krb5_only,

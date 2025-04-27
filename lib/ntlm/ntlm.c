@@ -718,6 +718,9 @@ out:
 /**
  * Encodes an ntlm_type1 message.
  *
+ *     [MS-NLMP] 2.2.1.1 NEGOTIATE_MESSAGE
+ *     https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-nlmp/
+ *
  * @param type1 the ntlm_type1 message to encode.
  * @param data is the return buffer with the encoded message, should be
  * freed with heim_ntlm_free_buf().
@@ -738,38 +741,37 @@ heim_ntlm_encode_type1(const struct ntlm_type1 *type1, struct ntlm_buf *data)
     int ucs2 = 0;
 
     flags = type1->flags;
-    base = 16;
+    base = 16 + 2 * SIZE_SEC_BUFFER;
 
     if (flags & NTLM_NEG_UNICODE)
 	ucs2 = 1;
 
-    if (type1->domain) {
-	base += SIZE_SEC_BUFFER;
-	flags |= NTLM_OEM_SUPPLIED_DOMAIN;
-    }
-    if (type1->hostname) {
-	base += SIZE_SEC_BUFFER;
-	flags |= NTLM_OEM_SUPPLIED_WORKSTATION;
-    }
     if (flags & NTLM_NEG_VERSION)
 	base += SIZE_OS_VERSION; /* os */
 
+    /*
+     * Note that [MS-NLMP] 2.2.1.1 specifies that the offset of
+     * of domain and hostname must point to where the data would
+     * be in the payload if it were present.  That is: the offset
+     * must be valid regardless of whether the data is present.
+     */
+
+    domain.offset = base;
     if (type1->domain) {
-	domain.offset = base;
+	flags |= NTLM_OEM_SUPPLIED_DOMAIN;
 	domain.length = len_string(ucs2, type1->domain);
 	domain.allocated = domain.length;
     } else {
-	domain.offset = 0;
 	domain.length = 0;
 	domain.allocated = 0;
     }
 
+    hostname.offset = domain.allocated + domain.offset;
     if (type1->hostname) {
-	hostname.offset = domain.allocated + domain.offset;
+	flags |= NTLM_OEM_SUPPLIED_WORKSTATION;
 	hostname.length = len_string(ucs2, type1->hostname);
 	hostname.allocated = hostname.length;
     } else {
-	hostname.offset = 0;
 	hostname.length = 0;
 	hostname.allocated = 0;
     }
@@ -1281,7 +1283,7 @@ heim_ntlm_calculate_ntlm1(void *key, size_t len,
 }
 
 int
-heim_ntlm_v1_base_session(void *key, size_t len,
+heim_ntlm_v1_base_session(const void *key, size_t len,
 			  struct ntlm_buf *session)
 {
     EVP_MD_CTX *m;
@@ -1415,6 +1417,60 @@ heim_ntlm_build_ntlm1_master(void *key, size_t len,
 
     ret = heim_ntlm_keyex_wrap(&sess, session, master);
     heim_ntlm_free_buf(&sess);
+
+    return ret;
+}
+
+/**
+ * Generates an NTLM2 Extended Security session random with
+ * associated session master key.
+ *
+ * @param clnt_nonce client nonce
+ * @param svr_chal server challage
+ * @param ntlm_hash ntlm hash
+ * @param session generated random session key,
+ *        should be freed with heim_ntlm_free_buf().
+ * @param master encrypted session master key,
+ *        should be freed with heim_ntlm_free_buf().
+ *
+ * @return In case of success 0 is return, an errors, a errno in what
+ * went wrong.
+ */
+int
+heim_ntlm_build_ntlm2_extended_security_master(
+        const unsigned char clnt_nonce[8],
+        const unsigned char svr_chal[8],
+        const unsigned char ntlm_hash[16],
+        struct ntlm_buf *session,
+        struct ntlm_buf *master)
+{
+    int ret;
+    /* NTLMv1 User Session Key*/
+    struct ntlm_buf ntlm1_usk;
+    /* NTLM2 Session Response User Session Key. */
+    struct ntlm_buf ntlm2_sr_usk;
+
+    ret = heim_ntlm_v1_base_session(ntlm_hash, 16, &ntlm1_usk);
+    if (ret)
+        return ret;
+
+    ntlm2_sr_usk.length = NTLM_USER_SESSION_KEY_LENGTH;
+    ntlm2_sr_usk.data = malloc(ntlm2_sr_usk.length);
+    if (ntlm2_sr_usk.data == NULL) {
+        ntlm2_sr_usk.length = 0;
+        heim_ntlm_free_buf(&ntlm1_usk);
+        return ENOMEM;
+    }
+
+    /* NTLM2 (not v2) aka Extended Security. */
+    heim_ntlm_derive_ntlm2_sess(ntlm1_usk.data,
+                                clnt_nonce, 8,
+                                svr_chal,
+                                ntlm2_sr_usk.data);
+    heim_ntlm_free_buf(&ntlm1_usk);
+
+    ret = heim_ntlm_keyex_wrap(&ntlm2_sr_usk, session, master);
+    heim_ntlm_free_buf(&ntlm2_sr_usk);
 
     return ret;
 }

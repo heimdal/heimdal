@@ -177,7 +177,9 @@ INCFILES = 			\
 	$(INCDIR)\roken-common.h	\
 	$(INCDIR)\rtbl.h	\
 	$(INCDIR)\search.h	\
+!ifndef HAVE_STDBOOL_H
 	$(INCDIR)\stdbool.h	\
+!endif
 	$(INCDIR)\syslog.h	\
 	$(INCDIR)\vis.h		\
 	$(INCDIR)\vis-extras.h	\

@@ -379,7 +379,7 @@ endif
 
 # If the default is not templating, then we build a variant of libasn1 that is
 # templated anyways.
-rfc2459_template_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/rfc2459.asn1
+rfc2459_template_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/rfc2459.asn1 $(srcdir)/rfc2459.opt
 	$(ASN1_COMPILE) --one-code-file --template --option-file=$(srcdir)/rfc2459.opt $(srcdir)/rfc2459.asn1 rfc2459_template_asn1 || (rm -f rfc2459_template_asn1_files ; exit 1)
 	@$(CLANG_FORMAT) -style=$(CLANG_FORMAT_STYLE) -i asn1_rfc2459_template_asn1.c
 
@@ -433,7 +433,7 @@ kx509_template_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/kx509.asn1
 	$(ASN1_COMPILE) --one-code-file --template $(srcdir)/kx509.asn1 kx509_template_asn1 || (rm -f kx509_template_asn1_files ; exit 1)
 	@$(CLANG_FORMAT) -style=$(CLANG_FORMAT_STYLE) -i asn1_kx509_template_asn1.c
 
-rfc2459_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/rfc2459.asn1
+rfc2459_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/rfc2459.asn1 $(srcdir)/rfc2459.opt
 	$(ASN1_COMPILE) --one-code-file $(TEMPLATE_OPTION) --option-file=$(srcdir)/rfc2459.opt $(srcdir)/rfc2459.asn1 rfc2459_asn1 || (rm -f rfc2459_asn1_files ; exit 1)
 	@$(CLANG_FORMAT) -style=$(CLANG_FORMAT_STYLE) -i asn1_rfc2459_asn1.c
 

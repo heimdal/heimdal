@@ -21,6 +21,8 @@ HEIMDAL_X509_1.2 {
 		_hx509_make_pkinit_san;
 		_hx509_map_file_os;
 		_hx509_name_from_Name;
+		_hx509_Name_canon4openssl_hash;
+		_hx509_name_openssl_hash;
 		_hx509_ossl_oid2nid;
 		_hx509_private_key_export;
 		_hx509_private_key_exportable;
@@ -211,6 +213,7 @@ HEIMDAL_X509_1.2 {
 		hx509_name_normalize;
 		hx509_name_to_Name;
 		hx509_name_to_string;
+		hx509_name_openssl_hash;
 		hx509_ocsp_request;
 		hx509_ocsp_verify;
 		hx509_oid_print;

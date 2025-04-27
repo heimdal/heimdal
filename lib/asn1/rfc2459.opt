@@ -6,6 +6,7 @@
 --sequence=Extensions
 --sequence=GeneralNames
 --sequence=RDNSequence
+--sequence=RelativeDistinguishedName
 --sequence=Certificates
 --sequence=CertificatePolicies
 --sequence=PolicyQualifierInfos

@@ -709,7 +709,7 @@ cms_create_enveloped(struct cms_envelope_options *opt, int argc, char **argv)
 }
 
 static void
-print_certificate(hx509_context hxcontext, hx509_cert cert, int verbose)
+print_certificate(hx509_context hxcontext, hx509_cert cert, struct print_options *opt)
 {
     const char *fn;
     int ret;
@@ -720,11 +720,40 @@ print_certificate(hx509_context hxcontext, hx509_cert cert, int verbose)
     printf("    private key: %s\n",
 	   _hx509_cert_private_key(cert) ? "yes" : "no");
 
-    ret = hx509_print_cert(hxcontext, cert, stdout);
-    if (ret)
-	errx(1, "failed to print cert");
+    if (opt->hash_flag) {
+	unsigned long hash;
+	hx509_name n = NULL;
 
-    if (verbose) {
+	ret = hx509_cert_get_subject(cert, &n);
+	if (ret == 0)
+	    ret = hx509_name_openssl_hash(n, &hash);
+	if (ret == 0)
+	    printf("    subject hash: %08lx\n", hash);
+	hx509_name_free(&n);
+
+	ret = hx509_cert_get_issuer(cert, &n);
+	if (ret == 0)
+	    ret = hx509_name_openssl_hash(n, &hash);
+	if (ret == 0)
+	    printf("    issuer hash: %08lx\n", hash);
+	hx509_name_free(&n);
+    }
+
+    if (!opt->hash_flag || opt->content_flag) {
+	/*
+	 * We want to print the name hashes and not the details unless
+	 * requested so as to make it easier to script hxtool.
+	 *
+	 * That said, we should really include these hashes in the --raw-json,
+	 * but that would require parsing the JSON output by the ASN.1 library
+	 * to add the hashes.
+	 */
+	ret = hx509_print_cert(hxcontext, cert, stdout);
+	if (ret)
+	    errx(1, "failed to print cert");
+    }
+
+    if (opt->content_flag) {
 	hx509_validate_ctx vctx;
 
 	hx509_validate_ctx_init(hxcontext, &vctx);
@@ -740,8 +769,8 @@ print_certificate(hx509_context hxcontext, hx509_cert cert, int verbose)
 
 
 struct print_s {
+    struct print_options *opt;
     int counter;
-    int verbose;
 };
 
 static int HX509_LIB_CALL
@@ -749,29 +778,26 @@ print_f(hx509_context hxcontext, void *ctx, hx509_cert cert)
 {
     struct print_s *s = ctx;
 
+    if (s->opt->raw_json_flag) {
+        const Certificate *c = NULL;
+        char *json = NULL;
+
+        c = _hx509_get_cert(cert);
+        if (c)
+            json = print_Certificate(c, ASN1_PRINT_INDENT);
+        if (json)
+            printf("%s\n", json);
+        else
+            hx509_err(context, 1, errno, "Could not format certificate as JSON");
+        free(json);
+        return 0;
+    }
+
     printf("cert: %d\n", s->counter++);
-    print_certificate(context, cert, s->verbose);
+    print_certificate(context, cert, s->opt);
 
     return 0;
 }
-
-static int HX509_LIB_CALL
-print_fjson(hx509_context hxcontext, void *ctx, hx509_cert cert)
-{
-    const Certificate *c = NULL;
-    char *json = NULL;
-
-    c = _hx509_get_cert(cert);
-    if (c)
-        json = print_Certificate(c, ASN1_PRINT_INDENT);
-    if (json)
-        printf("%s\n", json);
-    else
-        hx509_err(context, 1, errno, "Could not format certificate as JSON");
-    free(json);
-    return 0;
-}
-
 
 int
 pcert_print(struct print_options *opt, int argc, char **argv)
@@ -780,8 +806,8 @@ pcert_print(struct print_options *opt, int argc, char **argv)
     hx509_lock lock;
     struct print_s s;
 
+    s.opt = opt;
     s.counter = 0;
-    s.verbose = opt->content_flag;
 
     hx509_lock_init(context, &lock);
     lock_strings(lock, &opt->pass_strings);
@@ -794,18 +820,14 @@ pcert_print(struct print_options *opt, int argc, char **argv)
         free(sn);
 	if (ret) {
 	    if (opt->never_fail_flag) {
-		printf("ignoreing failure: %d\n", ret);
+		printf("ignoring failure: %d\n", ret);
 		continue;
 	    }
 	    hx509_err(context, 1, ret, "hx509_certs_init");
 	}
-        if (opt->raw_json_flag) {
-            hx509_certs_iter_f(context, certs, print_fjson, &s);
-        } else {
-            if (opt->info_flag)
-                hx509_certs_info(context, certs, NULL, NULL);
-            hx509_certs_iter_f(context, certs, print_f, &s);
-        }
+        if (opt->info_flag)
+            hx509_certs_info(context, certs, NULL, NULL);
+        hx509_certs_iter_f(context, certs, print_f, &s);
 	hx509_certs_free(&certs);
 	argv++;
     }
@@ -1184,8 +1206,16 @@ query(struct query_options *opt, int argc, char **argv)
 	printf("no match found (%d)\n", ret);
     else {
 	printf("match found\n");
-	if (opt->print_flag)
-	    print_certificate(context, c, 0);
+        if (opt->print_flag    || opt->hash_flag ||
+	    opt->raw_json_flag || opt->content_flag) {
+            struct print_options popt;
+
+            memset(&popt, 0, sizeof(popt));
+            popt.content_flag = opt->content_flag;
+            popt.raw_json_flag = opt->raw_json_flag;
+            popt.hash_flag = opt->hash_flag;
+            print_certificate(context, c, &popt);
+        }
     }
 
     hx509_cert_free(c);

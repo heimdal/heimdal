@@ -241,6 +241,8 @@ dist_libkrb5_la_SOURCES =			\
 	sendauth.c				\
 	set_default_realm.c			\
 	sock_principal.c			\
+	socks4a.c				\
+	socks4a.h				\
 	store.c					\
 	store-int.c				\
 	store-int.h				\

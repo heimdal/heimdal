@@ -149,6 +149,7 @@ libkrb5_OBJS =			\
 	$(OBJ)\sendauth.obj		    \
 	$(OBJ)\set_default_realm.obj	    \
 	$(OBJ)\sock_principal.obj	    \
+	$(OBJ)\socks4a.obj		    \
 	$(OBJ)\sp800-108-kdf.obj	    \
 	$(OBJ)\store.obj		    \
 	$(OBJ)\store-int.obj		    \
@@ -311,6 +312,7 @@ dist_libkrb5_la_SOURCES =			\
 	sendauth.c				\
 	set_default_realm.c			\
 	sock_principal.c			\
+	socks4a.c				\
 	sp800-108-kdf.c				\
 	store.c					\
 	store-int.c				\

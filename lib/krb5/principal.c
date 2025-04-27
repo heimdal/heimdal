@@ -55,6 +55,7 @@ host/admin@H5L.ORG
 #include <arpa/nameser.h>
 #endif
 #include <fnmatch.h>
+#include <vis.h>
 #include "resolve.h"
 
 #define princ_num_comp(P) ((P)->name.name_string.len)
@@ -207,33 +208,126 @@ krb5_principal_get_num_comp(krb5_context context,
  * @ingroup krb5_principal
  */
 
-KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
-krb5_parse_name_flags(krb5_context context,
-		      const char *name,
-		      int flags,
-		      krb5_principal *principal)
+
+#define IN_REALM	0x01
+#define	FIRST_AT	0x02
+
+#ifndef MAX
+#define MAX(x,y)	((x) > (y)) ? (x) : (y)
+#endif
+
+/*
+ * add_bit() is called repeatedly on "tokens" in the principal
+ * which is being parsed.  The separator and &state are passed
+ * in so that add_bit() can keep track of where in the principal
+ * it is.
+ */
+
+static krb5_error_code
+add_bit(krb5_context ctx, krb5_principal *p, int *state, char sep,
+	char *start, char *end)
 {
     krb5_error_code ret;
-    heim_general_string *comp;
-    heim_general_string realm = NULL;
-    int ncomp;
+    heim_general_string *comps;
+    size_t len = end - start;
+    size_t num;
+    char *buf;
 
-    const char *p;
-    char *q;
-    char *s;
-    char *start;
+    if ((*state) & IN_REALM && sep) {
+	ret = KRB5_PARSE_MALFORMED;
+	krb5_set_error_message(ctx, ret, "``%c'' disallowed in realm", sep);
+	return ret;
+    }
 
-    int n;
-    char c;
-    int got_realm = 0;
-    int first_at = 1;
+    buf = malloc(len + 1);
+    if (!buf)
+	return krb5_enomem(ctx);
+    memcpy(buf, start, len);
+    buf[len] = '\0';
+
+    if ((*state) & IN_REALM) {
+	(*p)->realm = buf;
+	return 0;
+    }
+
+    if (sep == '@')
+	(*state) |= IN_REALM;
+
+    num = princ_num_comp(*p);
+
+    comps = realloc((*p)->name.name_string.val,
+		    MAX(2, num + 1) * sizeof(*comps));
+    if (!comps) {
+	free(buf);
+	return krb5_enomem(ctx);
+    }
+    (*p)->name.name_string.val = comps;
+    (*p)->name.name_string.val[num] = buf;
+
+    princ_num_comp(*p)++;
+    return 0;
+}
+
+/*
+ * We use the calling conventions of unvis(3), however, it turns
+ * out that calling unvis(3) is slightly incorrect here because
+ * vis/unvis encode space as "\s" and can't turn "\ " back into
+ * a space.  We also note that keeping track of whether we are
+ * escaped in a macro and failing to call the external function
+ * improves performance significantly.
+ *
+ * 
+ * NOTES:                     
+ *                            
+ * 1.  We bypass unvis() for most characters, but need to ensure
+ *     that our state in 'escaped' is in sync with the unvis()
+ *     state in *ST.  To that end we reset *ST to 0 when manually 
+ *     unescaping SPACE, AT and SLASH.
+ * 
+ * 2.  The unvis() function supports `\ooo` escapes with less than
+ *     three octal digits, when the next character is not an octal
+ *     digit.  Thus, for example, 'foo\12bar' == `foo\012bar'.  When
+ *     an octal escape ends early, unvis() returns the accumulated
+ *     octal character and signals UNVIS_VALIDPUSH.
+ *                                   
+ *     That next character may be a ' ', '@', or '/', which we must
+ *     expose to `unvis()`, even though we want to handle these
+ *     outside of unvis() when directly following a '\\'.  To that             
+ *     end, 'escaped' keeps track of *how many* characters have been
+ *     accumulated so far while parsing an escape, and the exceptions
+ *     are only handled outside unvis() when 'escaped' is equal to 1.          
+ *                                             
+ *     Note that the caller must reset escaped to 0 on UNVIS_VALIDPUSH,        
+ *     If the new non-octal character is a '\\', we'll re?nter unvis(),
+ *     get back UNVIS_NOCHAR and set escaped to 1.
+ */
+
+/* XXXrcd: this makes it a _lot_ faster */
+#define UNVIS(OUT, IN, ST, FLAGS)			\
+	(escaped == 0 && IN != '\\')			\
+	    ? *(OUT) = IN, UNVIS_VALID			\
+	    : (escaped == 1 &&				\
+		(IN == ' ' || IN == '/' || IN == '@'))	\
+		? *(OUT) = IN, *(ST) = 0, UNVIS_VALID	\
+		: unvis(OUT, IN, ST, FLAGS)
+
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+krb5_parse_name_flags(krb5_context context, const char *name,
+		         int flags, krb5_principal *out)
+{
+    krb5_error_code ret;
+    size_t i, j;
+    int state = FIRST_AT;
+    int visstate = 0;
+    char *in;
+    char *pos;
+    char outc;
+    int escaped = 0;
     int no_realm = flags & KRB5_PRINCIPAL_PARSE_NO_REALM;
     int require_realm = flags & KRB5_PRINCIPAL_PARSE_REQUIRE_REALM;
     int enterprise = flags & KRB5_PRINCIPAL_PARSE_ENTERPRISE;
     int ignore_realm = flags & KRB5_PRINCIPAL_PARSE_IGNORE_REALM;
     int no_def_realm = flags & KRB5_PRINCIPAL_PARSE_NO_DEF_REALM;
-
-    *principal = NULL;
 
     if (no_realm && require_realm) {
 	krb5_set_error_message(context, EINVAL,
@@ -242,164 +336,96 @@ krb5_parse_name_flags(krb5_context context,
 	return EINVAL;
     }
 
-    /* count number of component,
-     * enterprise names only have one component
-     */
-    ncomp = 1;
-    if (!enterprise) {
-	for (p = name; *p; p++) {
-	    if (*p=='\\') {
-		if (!p[1]) {
-		    krb5_set_error_message(context, KRB5_PARSE_MALFORMED,
-					   N_("trailing \\ in principal name", ""));
-		    return KRB5_PARSE_MALFORMED;
-		}
-		p++;
-	    } else if (*p == '/')
-		ncomp++;
-	    else if (*p == '@')
-		break;
-	}
-    }
-    comp = calloc(ncomp, sizeof(*comp));
-    if (comp == NULL)
-	return krb5_enomem(context);
+    *out = calloc(1, sizeof(**out));
 
-    n = 0;
-    p = start = q = s = strdup(name);
-    if (start == NULL) {
-	free(comp);
-	return krb5_enomem(context);
-    }
-    while (*p) {
-	c = *p++;
-	if (c == '\\') {
-	    c = *p++;
-	    if (c == 'n')
-		c = '\n';
-	    else if (c == 't')
-		c = '\t';
-	    else if (c == 'b')
-		c = '\b';
-	    else if (c == '0') {
-                /*
-                 * We'll ignore trailing embedded NULs in components and
-                 * realms, but can't support any other embedded NULs.
-                 */
-                while (*p) {
-                    if ((*p == '/' || *p == '@') && !got_realm)
-                        break;
-                    if (*(p++) != '\\' || *(p++) != '0') {
-                        ret = KRB5_PARSE_MALFORMED;
-                        krb5_set_error_message(context, ret,
-                                               N_("embedded NULs in principal "
-                                                  "name not supported", ""));
-                        goto exit;
-                    }
-                }
-                continue;
-            } else if (c == '\0') {
-		ret = KRB5_PARSE_MALFORMED;
-		krb5_set_error_message(context, ret,
-				       N_("trailing \\ in principal name", ""));
-		goto exit;
-	    }
-	} else if (enterprise && first_at) {
-	    if (c == '@')
-		first_at = 0;
-	} else if ((c == '/' && !enterprise) || c == '@') {
-	    if (got_realm) {
-		ret = KRB5_PARSE_MALFORMED;
-		krb5_set_error_message(context, ret,
-				       N_("part after realm in principal name", ""));
-		goto exit;
-	    } else {
-		comp[n] = malloc(q - start + 1);
-		if (comp[n] == NULL) {
-		    ret = krb5_enomem(context);
-		    goto exit;
-		}
-		memcpy(comp[n], start, q - start);
-		comp[n][q - start] = 0;
-		n++;
-	    }
-	    if (c == '@')
-		got_realm = 1;
-	    start = q;
-	    continue;
-	}
-	if (got_realm && (c == '/' || c == '\0')) {
-	    ret = KRB5_PARSE_MALFORMED;
-	    krb5_set_error_message(context, ret,
-				   N_("part after realm in principal name", ""));
-	    goto exit;
-	}
-	*q++ = c;
-    }
-    if (got_realm) {
-	if (no_realm) {
-	    ret = KRB5_PARSE_MALFORMED;
-	    krb5_set_error_message(context, ret,
-				   N_("realm found in 'short' principal "
-				      "expected to be without one", ""));
-	    goto exit;
-	}
-	if (!ignore_realm) {
-	    realm = malloc(q - start + 1);
-	    if (realm == NULL) {
-		ret = krb5_enomem(context);
-		goto exit;
-	    }
-	    memcpy(realm, start, q - start);
-	    realm[q - start] = 0;
-	}
-    } else {
-	if (require_realm) {
-	    ret = KRB5_PARSE_MALFORMED;
-	    krb5_set_error_message(context, ret,
-				   N_("realm NOT found in principal "
-				      "expected to be with one", ""));
-	    goto exit;
-	} else if (no_realm || no_def_realm) {
-	    realm = NULL;
-	} else {
-	    ret = krb5_get_default_realm(context, &realm);
-	    if (ret)
-		goto exit;
-	}
-
-	comp[n] = malloc(q - start + 1);
-	if (comp[n] == NULL) {
-	    ret = krb5_enomem(context);
-	    goto exit;
-	}
-	memcpy(comp[n], start, q - start);
-	comp[n][q - start] = 0;
-	n++;
-    }
-    *principal = calloc(1, sizeof(**principal));
-    if (*principal == NULL) {
+    in = strdup(name);
+    if (!in) {
 	ret = krb5_enomem(context);
-	goto exit;
+	goto out;
     }
-    (*principal)->name.name_string.val = comp;
-    princ_num_comp(*principal) = n;
-    (*principal)->realm = realm;
+
+    for (pos=in, i=0, j=0; in[i]; i++) {
+	switch (UNVIS(&outc, in[i], &visstate, 0)) {
+	case 0:
+	case UNVIS_NOCHAR:
+	    ++escaped;
+	    break;
+	case UNVIS_VALID:
+	    if (!escaped && ((!enterprise && outc == '/') || outc == '@')) {
+		if (enterprise && (state & FIRST_AT)) {
+		    state &= ~FIRST_AT;
+		} else {
+		    ret = add_bit(context, out, &state, outc, pos, &in[j]);
+		    if (ret)
+			goto out;
+		    pos = &in[i];
+		    j = i;
+		    break;
+		}
+	    }
+	    in[j++] = outc;
+	    escaped = 0;
+	    break;
+	case UNVIS_VALIDPUSH:
+	    in[j++] = outc;
+	    i--;
+	    escaped = 0;
+	    break;
+	case UNVIS_SYNBAD:
+	    ret = KRB5_PARSE_MALFORMED;
+	    krb5_set_error_message(context, ret,
+				   N_("Bad character sequence", ""));
+	    goto out;
+	}
+    }
+    ret = add_bit(context, out, &state, 0, pos, &in[j]);
+    if (ret)
+	goto out;
+
+    if ((*out)->realm && no_realm) {
+	ret = KRB5_PARSE_MALFORMED;
+	krb5_set_error_message(context, ret,
+			       N_("realm found in 'short' principal "
+				  "expected to be without one", ""));
+	goto out;
+    }
+
+    if ((*out)->realm && ignore_realm) {
+	free((*out)->realm);
+	(*out)->realm = NULL;
+    }
+
+    if (!(*out)->realm && require_realm) {
+	ret = KRB5_PARSE_MALFORMED;
+	krb5_set_error_message(context, ret,
+			       N_("realm NOT found in principal "
+				  "expected to be with one", ""));
+	goto out;
+    }
+
+    if (!(*out)->realm && !no_realm && !no_def_realm) {
+	ret = krb5_get_default_realm(context, &(*out)->realm);
+	if (ret)
+	    goto out;
+    }
+
     if (enterprise)
-        princ_type(*principal) = KRB5_NT_ENTERPRISE_PRINCIPAL;
+	princ_type(*out) = KRB5_NT_ENTERPRISE_PRINCIPAL;
     else
-        set_default_princ_type(*principal, KRB5_NT_PRINCIPAL);
-    free(s);
-    return 0;
-exit:
-    while (n>0) {
-	free(comp[--n]);
+	set_default_princ_type(*out, KRB5_NT_PRINCIPAL);
+
+out:
+    if (ret) {
+	for (i=0; i < princ_num_comp(*out); i++)
+	    free((*out)->name.name_string.val[i]);
+	free((*out)->name.name_string.val);
+	free((*out)->realm);
+	free(*out);
+	*out = NULL;
     }
-    free(comp);
-    krb5_free_default_realm(context, realm);
-    free(s);
     return ret;
 }
+
 
 /**
  * Parse a name into a krb5_principal structure
@@ -421,26 +447,50 @@ krb5_parse_name(krb5_context context,
     return krb5_parse_name_flags(context, name, 0, principal);
 }
 
-static const char quotable_chars[] = " \n\t\b\\/@";
-static const char replace_chars[] = " ntb\\/@";
 
-#define add_char(BASE, INDEX, LEN, C) do { if((INDEX) < (LEN)) (BASE)[(INDEX)++] = (C); }while(0);
+#define add_char(BASE, INDEX, LEN, C) do {			\
+	    if((INDEX) < (LEN))					\
+		(BASE)[(INDEX)++] = (C);			\
+	} while (0);
+
+#define add_quoted(FLAGS, BASE, INDEX, LEN, C) do {		\
+	    add_char(BASE, INDEX, LEN, '\\');			\
+	    add_char(BASE, INDEX, LEN, C);			\
+	} while (0)
 
 static size_t
-quote_string(const char *s, char *out, size_t idx, size_t len, int display)
+quote_string(const char *s, char *out, size_t idx, size_t len, int flags)
 {
-    const char *p, *q;
-    for(p = s; *p && idx < len; p++){
-	q = strchr(quotable_chars, *p);
-	if (q && display) {
-	    add_char(out, idx, len, replace_chars[q - quotable_chars]);
-	} else if (q) {
-	    add_char(out, idx, len, '\\');
-	    add_char(out, idx, len, replace_chars[q - quotable_chars]);
-	}else
-	    add_char(out, idx, len, *p);
-    }
-    if(idx < len)
+    const char *p;
+
+    if (flags & KRB5_PRINCIPAL_UNPARSE_DISPLAY)
+	return strlcpy(out + idx, s, len - idx) + idx;
+
+    for (p=s; *p && idx < len; p++)
+	switch (*p) {
+	case '\n': add_quoted(flags, out, idx, len, 'n'); break;
+	case '\t': add_quoted(flags, out, idx, len, 't'); break;
+	case '\b': add_quoted(flags, out, idx, len, 'b'); break;
+
+	case '\\':
+	case ' ':
+	case '@':
+	case '/':
+	    add_quoted(flags, out, idx, len, *p);
+	    break;
+
+	default:
+	    if (*p < 32 && !(flags & KRB5_PRINCIPAL_UNPARSE_EXPORT_NAME)) {
+		if (len - idx < 5) {
+		    out[idx] = '\0';
+		    return len;
+		}
+		snprintf(out + idx, 5, "\\%03o", *p);
+		idx += 4;
+	    } else
+		add_char(out, idx, len, *p);
+	}
+    if (idx < len)
 	out[idx] = '\0';
     return idx;
 }
@@ -457,7 +507,6 @@ unparse_name_fixed(krb5_context context,
     size_t i;
     int short_form = (flags & KRB5_PRINCIPAL_UNPARSE_SHORT) != 0;
     int no_realm = (flags & KRB5_PRINCIPAL_UNPARSE_NO_REALM) != 0;
-    int display = (flags & KRB5_PRINCIPAL_UNPARSE_DISPLAY) != 0;
 
     if (name == NULL) {
 	krb5_set_error_message(context, EINVAL,
@@ -485,7 +534,7 @@ unparse_name_fixed(krb5_context context,
     for(i = 0; i < princ_num_comp(principal); i++){
 	if(i)
 	    add_char(name, idx, len, '/');
-	idx = quote_string(princ_ncomp(principal, i), name, idx, len, display);
+	idx = quote_string(princ_ncomp(principal, i), name, idx, len, flags);
 	if(idx == len) {
 	    krb5_set_error_message(context, ERANGE,
 				   N_("Out of space printing principal", ""));
@@ -505,7 +554,7 @@ unparse_name_fixed(krb5_context context,
     }
     if(!short_form && !no_realm) {
 	add_char(name, idx, len, '@');
-	idx = quote_string(princ_realm(principal), name, idx, len, display);
+	idx = quote_string(princ_realm(principal), name, idx, len, flags);
 	if(idx == len) {
 	    krb5_set_error_message(context, ERANGE,
 				   N_("Out of space printing "
@@ -586,39 +635,56 @@ krb5_unparse_name_fixed_flags(krb5_context context,
     return unparse_name_fixed(context, principal, name, len, flags);
 }
 
+/*
+ * encoding_size gives a [slightly pessimistic] approximation
+ * of the size of strnvisx() on the realm and components.  It
+ * is specific to how we are using strnvisx().
+ */
+static inline size_t
+encoding_size(char *str)
+{
+    size_t len = 0;
+    size_t i;
+
+    for (i=0; str[i]; i++)
+	switch (str[i]) {
+	case '@':  case '/':  case '\n':
+	case '\r': case '\f': case '\a':
+	case '\b': case ' ':
+	    len += 2;
+	    break;
+	default:
+	    if (str[i] < 32)
+		len += 4;
+	    else
+		len += 1;
+	}
+
+    return len;
+}
+
 static krb5_error_code
 unparse_name(krb5_context context,
 	     krb5_const_principal principal,
 	     char **name,
 	     int flags)
 {
-    size_t len = 0, plen;
+    size_t len = 1;	/* space for the nul-termination */
     size_t i;
     krb5_error_code ret;
-    /* count length */
-    if (princ_realm(principal)) {
-	plen = strlen(princ_realm(principal));
 
-	if(strcspn(princ_realm(principal), quotable_chars) == plen)
-	    len += plen;
-	else
-	    len += 2*plen;
-	len++; /* '@' */
-    }
-    for(i = 0; i < princ_num_comp(principal); i++){
-	plen = strlen(princ_ncomp(principal, i));
-	if(strcspn(princ_ncomp(principal, i), quotable_chars) == plen)
-	    len += plen;
-	else
-	    len += 2*plen;
-	len++;
-    }
-    len++; /* '\0' */
+    /* count length */
+    if (princ_realm(principal))
+	len += encoding_size(princ_realm(principal)) + 1;
+
+    for (i=0; i < princ_num_comp(principal); i++)
+	len += encoding_size(princ_ncomp(principal, i)) + 1;
+
     *name = malloc(len);
-    if(*name == NULL)
+    if (*name == NULL)
 	return krb5_enomem(context);
     ret = unparse_name_fixed(context, principal, *name, len, flags);
-    if(ret) {
+    if (ret) {
 	free(*name);
 	*name = NULL;
     }

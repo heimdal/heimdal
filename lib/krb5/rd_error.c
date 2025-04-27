@@ -75,51 +75,101 @@ krb5_error_from_rd_error(krb5_context context,
     krb5_error_code ret;
 
     ret = error->error_code;
+    if (ret == 0) {
+	/*
+	 * As we’ve got a KRB-ERROR structure, we should always return a non‐
+	 * zero error code. A KRB-ERROR reply with a error code indicating
+	 * success makes little sense.
+	 */
+	ret = KRB5KRB_ERR_GENERIC;
+    }
     if (error->e_text != NULL) {
 	krb5_set_error_message(context, ret, "%s", *error->e_text);
     } else {
 	char clientname[256], servername[256];
+	krb5_boolean have_clientname = FALSE;
+	krb5_boolean have_servername = FALSE;
 
 	if (creds != NULL) {
-	    krb5_unparse_name_fixed(context, creds->client,
-				    clientname, sizeof(clientname));
-	    krb5_unparse_name_fixed(context, creds->server,
-				    servername, sizeof(servername));
+	    krb5_error_code ret2;
+
+	    ret2 = krb5_unparse_name_fixed(context, creds->client,
+					   clientname, sizeof(clientname));
+	    have_clientname = ret2 == 0;
+
+	    ret2 = krb5_unparse_name_fixed(context, creds->server,
+					   servername, sizeof(servername));
+	    have_servername = ret2 == 0;
 	}
 
 	switch (ret) {
 	case KRB5KDC_ERR_NAME_EXP :
 	    krb5_set_error_message(context, ret,
-				   N_("Client %s%s%s expired", ""),
-				   creds ? "(" : "",
-				   creds ? clientname : "",
-				   creds ? ")" : "");
+				   N_("Client%s%s%s expired", ""),
+				   have_clientname ? " (" : "",
+				   have_clientname ? clientname : "",
+				   have_clientname ? ")" : "");
 	    break;
 	case KRB5KDC_ERR_SERVICE_EXP :
 	    krb5_set_error_message(context, ret,
-				   N_("Server %s%s%s expired", ""),
-				   creds ? "(" : "",
-				   creds ? servername : "",
-				   creds ? ")" : "");
+				   N_("Server%s%s%s expired", ""),
+				   have_servername ? " (" : "",
+				   have_servername ? servername : "",
+				   have_servername ? ")" : "");
 	    break;
 	case KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN :
 	    krb5_set_error_message(context, ret,
-				   N_("Client %s%s%s unknown", ""),
-				   creds ? "(" : "",
-				   creds ? clientname : "",
-				   creds ? ")" : "");
+				   N_("Client%s%s%s unknown", ""),
+				   have_clientname ? " (" : "",
+				   have_clientname ? clientname : "",
+				   have_clientname ? ")" : "");
 	    break;
 	case KRB5KDC_ERR_S_PRINCIPAL_UNKNOWN :
 	    krb5_set_error_message(context, ret,
-				   N_("Server %s%s%s unknown", ""),
-				   creds ? "(" : "",
-				   creds ? servername : "",
-				   creds ? ")" : "");
+				   N_("Server%s%s%s unknown", ""),
+				   have_servername ? " (" : "",
+				   have_servername ? servername : "",
+				   have_servername ? ")" : "");
 	    break;
 	default :
 	    krb5_clear_error_message(context);
 	    break;
 	}
     }
+    return ret;
+}
+
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+krb5_error_from_error_data(krb5_context context,
+			   const krb5_error *error,
+			   const krb5_creds *creds,
+			   const KERB_ERROR_DATA *error_data)
+{
+    krb5_error_code ret;
+
+    ret = krb5_error_from_rd_error(context, error, creds);
+
+    if (error_data->data_type == kERB_ERR_TYPE_EXTENDED &&
+	error_data->data_value->length == 12)
+    {
+	const unsigned char *data = error_data->data_value->data;
+	const char *error_message = NULL;
+	uint32_t status;
+
+	status = ((uint32_t)data[0]) | ((uint32_t)data[1] << 8) |
+	    ((uint32_t)data[2] << 16) | ((uint32_t)data[3]) << 24;
+
+	error_message = krb5_get_error_message(context, ret);
+	if (error_message != NULL) {
+	    krb5_set_error_message(context,
+				   ret,
+				   N_("%s (NT status code 0x%08" PRIx32 ")",
+				      ""),
+				   error_message,
+				   status);
+	    krb5_free_error_message(context, error_message);
+	}
+    }
+
     return ret;
 }

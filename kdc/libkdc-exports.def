@@ -56,6 +56,7 @@ EXPORTS
 	kdc_request_set_canon_client_princ
 	kdc_request_set_client_princ
 	kdc_request_set_cname
+	kdc_request_set_e_data
 	kdc_request_set_error_code
 	kdc_request_set_krbtgt_princ
 	kdc_request_set_pac

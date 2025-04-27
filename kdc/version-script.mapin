@@ -1,4 +1,4 @@
-# $Id$
+/* $Id$ */
 
 HEIMDAL_KDC_1.0 {
 	global:
@@ -97,7 +97,7 @@ HEIMDAL_KDC_1.0 {
 		kdc_number_create;
 		kdc_number_get_value;
 
-		# needed for digest-service
+		/* needed for digest-service */
 		_kdc_db_fetch;
 		_kdc_free_ent;
 	local:

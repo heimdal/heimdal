@@ -262,16 +262,16 @@ dist_libkrb5_la_SOURCES =			\
 nodist_libkrb5_la_SOURCES =			\
 	$(ERR_FILES)
 
-libkrb5_la_DEPENDENCIES =			\
-	version-script.map
-
 libkrb5_la_LDFLAGS = -version-info 26:0:0
 if FRAMEWORK_COREFOUNDATION
 libkrb5_la_LDFLAGS += -framework CoreFoundation
 endif
 
+BUILT_SOURCES =
+
 if versionscript
-libkrb5_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(srcdir)/version-script.map
+libkrb5_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(builddir)/version-script.map
+BUILT_SOURCES += version-script.map
 endif
 
 ALL_OBJECTS  = $(libkrb5_la_OBJECTS)
@@ -413,6 +413,7 @@ build_HEADERZ = \
 	krb_err.h
 
 CLEANFILES = \
+	$(BUILT_SOURCES) \
 	test_config_strings.out \
 	test-store-data \
 	krb5_err.c krb5_err.h \
@@ -437,7 +438,6 @@ EXTRA_DIST = \
 	k5e1_err.et \
 	kx509_err.et \
 	$(man_MANS) \
-	version-script.map \
 	test_config_strings.cfg \
 	krb5.moduli
 

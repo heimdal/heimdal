@@ -9,9 +9,12 @@ lib_LTLIBRARIES = libkadm5srv.la libkadm5clnt.la
 libkadm5srv_la_LDFLAGS = -version-info 8:1:0
 libkadm5clnt_la_LDFLAGS = -version-info 7:1:0
 
+BUILT_SOURCES =
+
 if versionscript
-libkadm5clnt_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(srcdir)/version-script-client.map
-libkadm5srv_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(srcdir)/version-script.map
+libkadm5clnt_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(builddir)/version-script-client.map
+libkadm5srv_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(builddir)/version-script.map
+BUILT_SOURCES += version-script.map version-script-client.map
 endif
 
 sbin_PROGRAMS = iprop-log
@@ -128,9 +131,6 @@ nodist_libkadm5srv_la_SOURCES = 		\
 	kadm5_err.c				\
 	kadm5_err.h
 
-libkadm5srv_la_DEPENDENCIES =			\
-	version-script.map
-
 dist_iprop_log_SOURCES = iprop-log.c
 nodist_iprop_log_SOURCES = iprop-commands.c
 
@@ -178,7 +178,7 @@ $(iprop_log_OBJECTS): iprop-commands.h
 
 client_glue.lo server_glue.lo: $(srcdir)/common_glue.c
 
-CLEANFILES = kadm5_err.c kadm5_err.h iprop-commands.h iprop-commands.c
+CLEANFILES = $(BUILT_SOURCES) kadm5_err.c kadm5_err.h iprop-commands.h iprop-commands.c
 
 # to help stupid solaris make
 
@@ -228,6 +228,4 @@ EXTRA_DIST = \
 	check-cracklib.pl \
 	flush.c \
 	sample_passwd_check.c \
-	sample_hook.c \
-	version-script.map \
-	version-script-client.map
+	sample_hook.c

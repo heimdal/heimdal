@@ -151,7 +151,7 @@ rangematch(const char *pattern, int test, int flags)
 	 * consistency with the regular expression syntax.
 	 * J.T. Conklin (conklin@ngai.kaleida.com)
 	 */
-	if (negate = (*pattern == '!' || *pattern == '^'))
+	if ((negate = (*pattern == '!' || *pattern == '^')))
 		++pattern;
 
 	for (ok = 0; (c = *pattern++) != ']';) {

@@ -54,7 +54,9 @@ static struct gai_error {
 {EAI_NONAME,		"nodename nor servname provided, or not known"},
 {EAI_SERVICE,		"servname not supported for ai_socktype"},
 {EAI_SOCKTYPE,		"ai_socktype not supported"},
+#ifdef EAI_SYSTEM
 {EAI_SYSTEM,		"system error returned in errno"},
+#endif
 {0,			NULL},
 };
 
@@ -62,6 +64,19 @@ static struct gai_error {
  *
  */
 
+#ifdef WIN32
+/* The WIN32 version of this returns char *, not const char * */
+ROKEN_LIB_FUNCTION char * ROKEN_LIB_CALL
+gai_strerror(int ecode)
+{
+    struct gai_error *g;
+
+    for (g = errors; g->str != NULL; ++g)
+	if (g->code == ecode)
+	    return rk_UNCONST(g->str);
+    return rk_UNCONST("unknown error code in gai_strerror");
+}
+#else
 ROKEN_LIB_FUNCTION const char * ROKEN_LIB_CALL
 gai_strerror(int ecode)
 {
@@ -72,3 +87,4 @@ gai_strerror(int ecode)
 	    return g->str;
     return "unknown error code in gai_strerror";
 }
+#endif

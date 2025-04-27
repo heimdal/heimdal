@@ -18,6 +18,7 @@ dnl Checks for programs.
 AC_PROG_CC
 AM_PROG_CC_C_O
 AC_PROG_CPP
+AC_HEIM_PROG_CC_FOR_BUILD
 AM_PATH_PYTHON
 AC_CHECK_PROG(CLANG_FORMAT, clang-format, [clang-format], [no])
 test "$CLANG_FORMAT" = no && CLANG_FORMAT=true
@@ -74,6 +75,13 @@ libdir="$libdir$abilibdirext"
 
 AC_C___ATTRIBUTE__
 
+case "$host" in
+*mingw*) mingw=yes;;
+*) mingw=no;;
+esac
+
+AM_CONDITIONAL(MINGW, test "$mingw" = "yes")
+
 AM_CONDITIONAL(ENABLE_SHARED, test "$enable_shared" = "yes")
 rk_VERSIONSCRIPT
 
@@ -104,6 +112,8 @@ if test "${cross_compiling}" != yes ; then
 
    ASN1_COMPILE_DEP="\$(ASN1_COMPILE)"
    SLC_DEP="\$(SLC)"
+
+   ac_cv_prog_COMPILE_ET=
 else
    ASN1_COMPILE="${with_cross_tools}asn1_compile"
    SLC="${with_cross_tools}slc"
@@ -112,7 +122,6 @@ else
    SLC_DEP=
 
    ac_cv_prog_COMPILE_ET=${with_cross_tools}compile_et
-
 fi
 
 AX_CHECK_COMPILE_FLAG([-Wno-error=enum-conversion],
@@ -385,15 +394,23 @@ AC_SUBST(ENABLE_AFS_STRING_TO_KEY)dnl
 
 rk_CHECK_MAN
 
-rk_TEST_PACKAGE(readline,
-[#include <stdio.h>
-#if defined(HAVE_READLINE_READLINE_H)
-#include <readline/readline.h>
-#elif defined(HAVE_READLINE_H)
-#include <readline.h>
-#endif
-],-lreadline,,, READLINE,, [readline.h readline/readline.h])
+AC_ARG_ENABLE([readline],
+	AS_HELP_STRING([--disable-readline],[if you don't want libreadline to be used]))
+if test "$enable_readline" = yes; then
+    rk_TEST_PACKAGE(readline,
+    [#include <stdio.h>
+    #if defined(HAVE_READLINE_READLINE_H)
+    #include <readline/readline.h>
+    #elif defined(HAVE_READLINE_H)
+    #include <readline.h>
+    #endif
+    ],-lreadline,,, READLINE,, [readline.h readline/readline.h])
+fi
 
+AC_ARG_ENABLE([editline],
+	AS_HELP_STRING([--disable-editline],[if you don't want libeditline to be used]))
+
+if test "$enable_editline" = yes; then
 rk_TEST_PACKAGE(libedit,
 [#include <stdio.h>
 #if defined(HAVE_READLINE_READLINE_H)
@@ -406,6 +423,7 @@ rk_TEST_PACKAGE(libedit,
 ],-ledit,,, READLINE,, [readline.h readline/readline.h editline/readline.h])
 
 AC_CONFIG_SUBDIRS([lib/libedit])
+fi
 
 KRB_C_BIGENDIAN
 AC_C_INLINE
@@ -440,6 +458,7 @@ AC_CHECK_HEADERS([\
 	libutil.h				\
 	limits.h				\
 	maillock.h				\
+	minwindef.h				\
 	netgroup.h				\
 	netinet/in6_machtypes.h			\
 	netinet/tcp.h				\
@@ -587,9 +606,12 @@ AC_CHECK_FUNCS([				\
 	arc4random				\
 	backtrace				\
 	fcntl					\
+	fsync					\
 	fork					\
 	fseeko					\
 	ftello					\
+	getdelim				\
+	getline					\
 	getpeereid				\
 	getpeerucred				\
 	getresgid				\
@@ -649,7 +671,7 @@ AM_CONDITIONAL(KCM, test "$enable_kcm" = yes)
 
 dnl detect keyring on Linux
 if test "$ac_cv_header_keyutils_h" = yes; then
-    AC_CHECK_SIZEOF([key_serial_t],,[
+    AX_COMPILE_CHECK_SIZEOF([key_serial_t],[
 	#ifdef HAVE_INTTYPES_H
 	#include <inttypes.h>
 	#endif
@@ -669,7 +691,11 @@ if test -n "$LIB_add_key"; then
 fi
 AM_CONDITIONAL(HAVE_KEYUTILS, test "$ac_cv_func_keyctl_get_persistent" = yes)
 
-AC_CHECK_SIZEOF([time_t])
+AX_COMPILE_CHECK_SIZEOF([short])
+AX_COMPILE_CHECK_SIZEOF([int])
+AX_COMPILE_CHECK_SIZEOF([long])
+AX_COMPILE_CHECK_SIZEOF([long long])
+AX_COMPILE_CHECK_SIZEOF([time_t])
 
 AX_CHECK_SIGN([time_t],
   [ AC_DEFINE(TIME_T_SIGNED, 1, [Define if time_t is signed]) ],
@@ -679,10 +705,10 @@ AX_CHECK_SIGN([time_t],
 #endif
 ])
 
-
 AC_CHECK_TYPES([int8_t, int16_t, int32_t, int64_t, 
 	u_int8_t, u_int16_t, u_int32_t, u_int64_t,
-	uint8_t, uint16_t, uint32_t, uint64_t],,,[
+	uint8_t, uint16_t, uint32_t, uint64_t,
+        gid_t, uid_t, pid_t],,,[
 #ifdef HAVE_INTTYPES_H
 #include <inttypes.h>
 #endif
@@ -703,7 +729,11 @@ AC_CHECK_TYPES([int8_t, int16_t, int32_t, int64_t,
 rk_FRAMEWORK_SECURITY
 rk_FRAMEWORK_COREFOUNDATION
 
-KRB_READLINE
+if test $enable_readline = yes -o $enable_editline = yes; then
+    KRB_READLINE
+else
+    AM_CONDITIONAL(LIBEDIT, false)
+fi
 
 rk_TELNET
 

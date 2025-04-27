@@ -39,8 +39,8 @@ dnl C types
 
 AC_REQUIRE([AC_TYPE_SIZE_T])
 AC_HAVE_TYPE([ssize_t],[#include <unistd.h>])
-AC_REQUIRE([AC_TYPE_PID_T])
-AC_REQUIRE([AC_TYPE_UID_T])
+dnl AC_REQUIRE([AC_TYPE_PID_T])
+dnl AC_REQUIRE([AC_TYPE_UID_T])
 AC_HAVE_TYPE([long long])
 
 AC_REQUIRE([rk_RETSIGTYPE])
@@ -316,13 +316,6 @@ AC_FIND_IF_NOT_BROKEN(gai_strerror,,
 
 AC_CHECK_LIB(util, emalloc)
 
-case "$host_os" in
-	darwin*)
-		;;
-	*)
-		AC_BROKEN([daemon]) ;;
-esac
-
 AC_BROKEN([					\
 	chown					\
 	copyhostent				\
@@ -507,7 +500,6 @@ AC_NEED_PROTO([#include <stdlib.h>], unsetenv)
 AC_NEED_PROTO([#include <unistd.h>], gethostname)
 AC_NEED_PROTO([#include <unistd.h>], mkstemp)
 AC_NEED_PROTO([#include <unistd.h>], getusershell)
-AC_NEED_PROTO([#include <unistd.h>], daemon)
 
 AC_NEED_PROTO([
 #ifdef HAVE_SYS_TYPES_H

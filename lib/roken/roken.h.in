@@ -52,6 +52,10 @@
 #include <util.h>
 #endif
 
+#ifdef HAVE_MINWINDEF_H
+#include <minwindef.h>
+#endif
+
 # ifndef ROKEN_LIB_FUNCTION
 #  ifdef _WIN32
 #   ifdef ROKEN_LIB_DYNAMIC
@@ -148,7 +152,7 @@
 #endif
 #endif
 
-#ifdef HAVE_WINSOCK
+#if defined(HAVE_WINSOCK2_H) || defined(WIN32)
 /* Declarations for Microsoft Windows */
 
 #include <winsock2.h>
@@ -381,6 +385,7 @@ typedef int ssize_t;
 #endif  /* SSIZE_T_DEFINED */
 #endif  /* HAVE_SSIZE_T */
 
+#include <krb5-types.h>
 #include <roken-common.h>
 
 ROKEN_CPP_START
@@ -500,6 +505,8 @@ rk_strdup(const char *);
 ROKEN_LIB_FUNCTION unsigned short * ROKEN_LIB_CALL
 rk_wcsdup(const unsigned short *);
 
+#elif WIN32 /* So, Mingw -- what else do we need here? */
+#define fsync   _commit
 #endif  /* _MSC_VER */
 
 #ifndef HAVE_MEMMEM
@@ -507,7 +514,7 @@ rk_wcsdup(const unsigned short *);
 ROKEN_LIB_FUNCTION void * ROKEN_LIB_CALL memmem(const void *, size_t, const void *, size_t);
 #endif
 
-#ifdef HAVE_WINSOCK
+#ifdef HAVE_WINSOCK2_H
 
 /* While we are at it, define WinSock specific scatter gather socket
    I/O. */
@@ -529,9 +536,12 @@ struct msghdr {
 #define sendmsg sendmsg_w32
 
 ROKEN_LIB_FUNCTION ssize_t ROKEN_LIB_CALL
-sendmsg_w32(rk_socket_t s, const struct msghdr * msg, int flags);
+sendmsg_w32(rk_socket_t, const struct msghdr *, int);
 
-#endif	/* HAVE_WINSOCK */
+ROKEN_LIB_FUNCTION ssize_t ROKEN_LIB_CALL
+recvmsg(int, struct msghdr *, int);
+
+#endif	/* HAVE_WINSOCK2_H */
 
 #ifndef HAVE_PUTENV
 #define putenv rk_putenv
@@ -556,9 +566,11 @@ ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL unsetenv(const char *);
 #ifndef HAVE_GETUSERSHELL
 #define getusershell rk_getusershell
 #define endusershell rk_endusershell
+#define setusershell rk_setusershell
 #endif
 ROKEN_LIB_FUNCTION char * ROKEN_LIB_CALL getusershell(void);
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL endusershell(void);
+ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL setusershell(void);
 #endif
 
 #if !defined(HAVE_SNPRINTF) || defined(NEED_SNPRINTF_PROTO)
@@ -717,7 +729,7 @@ ROKEN_LIB_FUNCTION const char * ROKEN_LIB_CALL hstrerror(int);
 #endif
 #endif
 
-#if !HAVE_DECL_H_ERRNO
+#if !HAVE_DECL_H_ERRNO && !defined(HAVE_WINSOCK2_H)
 extern int h_errno;
 #endif
 
@@ -747,6 +759,26 @@ ROKEN_LIB_FUNCTION char* ROKEN_LIB_CALL getcwd(char *, size_t);
 
 #ifdef HAVE_PWD_H
 #include <pwd.h>
+#endif
+
+#ifndef HAVE_GETUID
+#define getuid gk_getuid
+ROKEN_LIB_FUNCTION gid_t ROKEN_LIB_CALL getuid(void);
+#endif
+
+#ifndef HAVE_GETEUID
+#define geteuid gk_geteuid
+ROKEN_LIB_FUNCTION uid_t ROKEN_LIB_CALL geteuid(void);
+#endif
+
+#ifndef HAVE_GETGID
+#define getgid gk_getgid
+ROKEN_LIB_FUNCTION gid_t ROKEN_LIB_CALL getgid(void);
+#endif
+
+#ifndef HAVE_GETEGID
+#define getegid rk_getegid
+ROKEN_LIB_FUNCTION gid_t ROKEN_LIB_CALL getegid(void);
 #endif
 
 #ifndef HAVE_SETEUID
@@ -895,7 +927,7 @@ int rk_flock(int fd, int operation);
 #elif defined(HAVE_DIR_D_FD)
 #define dirfd(x) ((x)->d_fd)
 #else
-#ifndef _WIN32 /* Windows code never calls dirfd */
+#ifndef HAVE_WINSOCK2_H /* Windows code never calls dirfd */
 #error Missing dirfd() and ->dd_fd and ->d_fd
 #endif
 #endif
@@ -933,6 +965,20 @@ ROKEN_LIB_FUNCTION char * ROKEN_LIB_CALL
 #ifndef HAVE_SECURE_GETENV
 #undef secure_getenv
 #define secure_getenv(e) rk_secure_getenv(e)
+#endif
+
+#ifndef HAVE_GETDELIM
+#undef getdelim
+#define getdelim rk_getdelim
+ROKEN_LIB_FUNCTION ssize_t ROKEN_LIB_CALL
+    rk_getdelim(char **, size_t *, int, FILE *);
+#endif
+
+#ifndef HAVE_GETLINE
+#undef getline
+#define getline rk_getline
+ROKEN_LIB_FUNCTION ssize_t ROKEN_LIB_CALL
+    rk_getline(char **, size_t *, FILE *);
 #endif
 
 #ifndef HAVE_STRUCT_WINSIZE
@@ -1079,9 +1125,11 @@ ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
 rk_freeaddrinfo(struct addrinfo *);
 
 #ifndef HAVE_GAI_STRERROR
+#if !defined(WIN32) && defined(HAVE_WINSOCK2_H)
 #define gai_strerror rk_gai_strerror
 ROKEN_LIB_FUNCTION const char * ROKEN_LIB_CALL
 gai_strerror(int);
+#endif
 #endif
 
 #ifdef NO_SLEEP
@@ -1354,6 +1402,10 @@ rk_random(void);
 #undef socket
 #define socket(_fam,_type,_prot) rk_socket(_fam,_type,_prot)
 int ROKEN_LIB_FUNCTION rk_socket(int, int, int);
+#endif
+
+#if defined(WIN32) || defined(HAVE_WINSOCK2_H)
+#define MAXHOSTNAMELEN MaxHostNameLen
 #endif
 
 /* Microsoft VC 2010 POSIX definitions */

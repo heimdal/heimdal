@@ -41,10 +41,6 @@ RCSID("$Id$");
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
-#ifdef WIN32
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#endif
 
 #ifdef HAVE_SNPRINTF
 #define BITSIZE(TYPE)							\
@@ -177,11 +173,11 @@ int main(int argc, char **argv)
     fprintf(f, "#include <netinet/in6_machtypes.h>\n");
 #endif
 #ifdef HAVE_SOCKLEN_T
-#ifndef WIN32
-    fprintf(f, "#include <sys/socket.h>\n");
-#else
+#ifdef HAVE_WINSOCK2_H
     fprintf(f, "#include <winsock2.h>\n");
     fprintf(f, "#include <ws2tcpip.h>\n");
+#else
+    fprintf(f, "#include <sys/socket.h>\n");
 #endif
 #endif
     fprintf(f, "\n");
@@ -260,10 +256,24 @@ int main(int argc, char **argv)
 #endif
     fprintf(f, "\n");
 
-#if defined(_WIN32)
+#if defined(HAVE_MINWINDEF_H)
+    fprintf(f, "#include <minwindef.h>\n");
+#endif
+#if defined(HAVE_WINSOCK2_H)
     fprintf(f, "typedef SOCKET krb5_socket_t;\n");
 #else
     fprintf(f, "typedef int krb5_socket_t;\n");
+#endif
+    fprintf(f, "\n");
+
+#if !defined(HAVE_PID_T)
+    fprintf(f, "typedef int pid_t;\n");
+#endif
+#if !defined(HAVE_GID_T)
+    fprintf(f, "typedef int gid_t;\n");
+#endif
+#if !defined(HAVE_UID_T)
+    fprintf(f, "typedef int uid_t;\n");
 #endif
     fprintf(f, "\n");
 

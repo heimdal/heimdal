@@ -21,9 +21,28 @@ AM_CPPFLAGS += -I$(DBHEADER)
 endif
 
 bin_PROGRAMS = rkvis rkbase32 rkbase64
-noinst_PROGRAMS = snprintf-test resolve-test rkpty test-detach test-auxval rtbl timeval
+noinst_PROGRAMS = snprintf-test resolve-test test-detach rtbl timeval
+CHECK_LOCAL = snprintf-test resolve-test make-roken
 
-CHECK_LOCAL = snprintf-test resolve-test rkpty make-roken
+if MINGW
+MINGW_LDADD = -lwsock32
+dlfcn = dlfcn_w32.obj
+signal_c =
+simple_exec_c = simple_exec_w32.c
+sockstartup = sockstartup_w32.c
+win32_alloc = win32_alloc.c
+win32_version = win32_version.c
+else
+noinst_PROGRAMS += rkpty test-auxval
+MINGW_LDADD =
+CHECK_LOCAL += rkpty
+dlfcn =
+signal_c = signal.c
+simple_exec_c = simple_exec.c
+sockstartup =
+win32_alloc =
+win32_version =
+endif
 
 check_PROGRAMS = 				\
 		base32-test			\
@@ -45,7 +64,7 @@ check_PROGRAMS = 				\
 
 TESTS = $(check_PROGRAMS)
 
-LDADD = libroken.la
+LDADD = libroken.la $(MINGW_LDADD)
 make_roken_LDADD = 
 
 noinst_LTLIBRARIES = libtest.la
@@ -108,7 +127,9 @@ rtbl_CPPFLAGS = -DTEST
 
 test_detach_SOURCES = test-detach.c
 
+if !MINGW
 rkpty_LDADD = $(LIB_openpty) $(LDADD)
+endif
 
 parse_time_test_SOURCES = parse_time-test.c test-mem.c
 
@@ -133,6 +154,7 @@ libroken_la_SOURCES =		\
 	clz.c			\
 	ct.c			\
 	detach.c		\
+	$(dlfcn)		\
 	doxygen.c		\
 	dumpdata.c		\
 	environment.c		\
@@ -146,6 +168,7 @@ libroken_la_SOURCES =		\
 	getarg.c		\
 	getauxval.c		\
 	getauxval.h		\
+	getline.c		\
 	getnameinfo_verified.c	\
 	getprogname.c		\
 	getuserinfo.c		\
@@ -173,10 +196,11 @@ libroken_la_SOURCES =		\
 	secure_getenv.c		\
 	secure_getenv.h		\
 	setprogname.c		\
-	signal.c		\
-	simple_exec.c		\
+	$(signal_c)		\
+	$(simple_exec)		\
 	snprintf.c		\
 	socket.c		\
+	$(sockstartup)		\
 	strcollect.c		\
 	strerror_r.c		\
 	strpool.c		\
@@ -187,6 +211,8 @@ libroken_la_SOURCES =		\
 	$(vis_h)		\
 	vis-extras.h		\
 	warnerr.c		\
+	$(win32_alloc)		\
+	$(win32_version)	\
 	write_pid.c		\
 	xfree.c			\
 	xdbm.h
@@ -241,30 +267,35 @@ SUFFIXES += .hin
 .hin.h:
 	cp $< $@
 
-# Make make-roken deprecated in 1.4 when we know that roken-h-process.pl works
-if !CROSS_COMPILE
-
+# Replace make-roken with cf/roken-h-process.pl some day?
 noinst_PROGRAMS += make-roken
 BUILT_SOURCES += make-roken.c
 
 nodist_make_roken_SOURCES = make-roken.c
 
-roken.h: make-roken$(EXEEXT)
-	@./make-roken$(EXEEXT) > tmp.h ;\
+roken.h: make-roken$(BUILD_EXEEXT)
+	./make-roken$(BUILD_EXEEXT) > tmp.h ;\
 	if [ -f roken.h ] && cmp -s tmp.h roken.h ; then rm -f tmp.h ; \
 	else rm -f roken.h; mv tmp.h roken.h; fi
 
 make-roken.c: roken.h.in roken.awk
 	$(AWK) -f $(srcdir)/roken.awk $(srcdir)/roken.h.in > make-roken.c
 
+if MINGW
+make-roken: make-roken.c
+	$(CC_FOR_BUILD) -o $@ -DHAVE_CONFIG_H -DWIN32 -I$(top_builddir)/include $<
+
+make-roken$(EXEEXT): make-roken.c
+	$(CC) -o $@ -DHAVE_CONFIG_H -DWIN32 -I$(top_builddir)/include $<
 else
-
-roken.h: $(top_srcdir)/cf/roken-h-process.pl roken.h.in
-	perl $(top_srcdir)/cf/roken-h-process.pl \
-	-c $(top_builddir)/include/config.h  \
-	-p $(srcdir)/roken.h.in -o roken.h
-
+make-roken: make-roken.c
+	$(CC_FOR_BUILD) -o $@ -DHAVE_CONFIG_H -I$(top_builddir)/include $<
 endif
+
+#roken.h: $(top_srcdir)/cf/roken-h-process.pl roken.h.in
+#	perl $(top_srcdir)/cf/roken-h-process.pl \
+#	-c $(top_builddir)/include/config.h  \
+#	-p $(srcdir)/roken.h.in -o roken.h
 
 
 EXTRA_DIST = \
@@ -280,7 +311,7 @@ EXTRA_DIST = \
 	ndbm_wrap.c \
 	ndbm_wrap.h \
 	rename.c \
-	simple_exec_w32.c \
+	$(simple_exec) \
 	sleep.c \
 	sockstartup_w32.c \
 	stdbool.hin \

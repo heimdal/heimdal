@@ -234,11 +234,11 @@ main(int argc, char **argv)
             argv += 5;
         } else {
 #ifdef TIME_T_SIGNED
-            printf("%s %s %s == %lld\n", argv[0], argv[1], argv[2],
-                   (long long)r);
+            printf("%s %s %s == %" PRId64 "\n", argv[0], argv[1], argv[2],
+                   (int64_t)r);
 #else
-            printf("%s %s %s == %llu\n", argv[0], argv[1], argv[2],
-                   (unsigned long long)r);
+            printf("%s %s %s == %" PRIu64 "\n", argv[0], argv[1], argv[2],
+                   (uint64_t)r);
 #endif
             argc -= 3;
             argv += 3;

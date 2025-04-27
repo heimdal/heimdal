@@ -83,7 +83,7 @@ jobs:
                 ulimit -c unlimited
                 PATH=/usr/local/opt/texinfo/bin:$PATH
                 export PATH
-                make -j4
+                V=1 make -j4
             #- name: Setup upterm session
             #  uses: lhotari/action-upterm@v1
             #  with:
@@ -97,11 +97,11 @@ jobs:
                 set -vx
                 sudo lsof -nP -i:49188 || true
                 cd build
-                make check
+                V=1 make check
             - name: Install
               run: |
                 cd build || true
-                make DESTDIR=/tmp/h5l install
+                V=1 make DESTDIR=/tmp/h5l install
                 cd /tmp/h5l
                 tar czf $HOME/heimdal-install-osx.tgz .
             - name: Test logs
@@ -111,14 +111,22 @@ jobs:
             - name: Failed Test logs
               if: ${{ failure() }}
               run: |
+                echo ---
+                for i in build/lib/roken//parse_reply_test-parse_reply-test.o build/lib/roken//parse_reply_test-resolve.o; do
+                        echo ---
+                        echo $i
+                        echo ---
+                        nm -p $i || :
+                done
+                echo ---
                 find build -name \*.trs|xargs grep -lw FAIL|sed -e 's/trs$/log/'|xargs cat
             - name: Upload Install Tarball
-              uses: actions/upload-artifact@v2
+              uses: actions/upload-artifact@v4
               with:
-                name: Install Tarball
+                name: install-tarball-osx
                 path: '~/heimdal-install-osx.tgz'
             - name: Upload Artifacts
-              uses: actions/upload-artifact@v2
+              uses: actions/upload-artifact@v4
               with:
-                name: Upload Test Logs
+                name: test-logs-osx
                 path: '~/logs-osx.cpio'

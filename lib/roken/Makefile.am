@@ -52,7 +52,7 @@ noinst_LTLIBRARIES = libtest.la
 libtest_la_SOURCES = strftime.c strptime.c snprintf.c tsearch.c
 libtest_la_CFLAGS = -DTEST_SNPRINTF -DTEST_STRPFTIME
 
-parse_reply_test_SOURCES = parse_reply-test.c resolve.c
+parse_reply_test_SOURCES = resolve.c parse_reply-test.c
 parse_reply_test_CFLAGS  = -DTEST_RESOLVE
 parse_reply_test_LDFLAGS = -lresolv
 
@@ -198,7 +198,7 @@ EXTRA_libroken_la_SOURCES =	\
 	search.hin		\
 	vis.hin	
 
-libroken_la_LIBADD = @LTLIBOBJS@ $(LIB_crypt) $(LIB_pidfile)
+libroken_la_LIBADD = @LTLIBOBJS@ $(LIB_crypt) $(LIB_pidfile) @LIBS@
 if SUNOS
 libroken_la_LIBADD += -lnsl -lsocket
 endif

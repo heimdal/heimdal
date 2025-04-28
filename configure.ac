@@ -22,6 +22,9 @@ AM_PATH_PYTHON
 AC_CHECK_PROG(CLANG_FORMAT, clang-format, [clang-format], [no])
 test "$CLANG_FORMAT" = no && CLANG_FORMAT=true
 
+AR_FLAGS="cr"
+AC_SUBST(AR_FLAGS)
+
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
 AC_PREFIX_DEFAULT(/usr/heimdal)

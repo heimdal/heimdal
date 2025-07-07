@@ -497,6 +497,7 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
 lib/hcrypto/test_dh.c
 
 @verbatim
+SPDX-License-Identifier: BSD-3-Clause
 
 Copyright (c) 2007, Novell, Inc.
 Author: Matthias Koenig <mkoenig@suse.de>

@@ -433,6 +433,7 @@ WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 DES core in libhcrypto
 
 @verbatim
+X-SPDX-License-Identifier: LicenseRef-Fedora-Public-Domain - https://gitlab.com/fedora/legal/fedora-license-data/-/issues/671
 
 D3DES (V5.09) - 
 

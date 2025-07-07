@@ -61,6 +61,7 @@ SUCH DAMAGE.
 The parts of the libtelnet that handle Kerberos.
 
 @verbatim
+SPDX-License-Identifier: HPND-export-US
 
 Copyright (C) 1990 by the Massachusetts Institute of Technology
 

@@ -170,6 +170,7 @@ SUCH DAMAGE.
 Tom's fast math (bignum support) and LibTomMath
 
 @verbatim
+X-SPDX-License-Identifier: LicenseRef-Fedora-Public-Domain - https://gitlab.com/fedora/legal/fedora-license-data/-/issues/670
 
 LibTomMath is hereby released into the Public Domain.  
 

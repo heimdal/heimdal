@@ -264,6 +264,7 @@ SUCH DAMAGE.
 Fortuna in libhcrypto
 
 @verbatim
+SPDX-License-Identifier: BSD-2-Clause
 
 Copyright (c) 2005 Marko Kreen
 All rights reserved.

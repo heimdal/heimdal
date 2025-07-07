@@ -183,6 +183,7 @@ LibTomMath is hereby released into the Public Domain.
 GSS-API mechglue layer.
 
 @verbatim
+SPDX-License-Identifier: BSD-2-Clause
 
 Copyright (c) 2005 Doug Rabson
 All rights reserved.

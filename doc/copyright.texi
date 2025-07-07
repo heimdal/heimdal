@@ -366,6 +366,7 @@ POSSIBILITY OF SUCH DAMAGE.
 AES in libhcrypto
 
 @verbatim
+X-SPDX-License-Identifier: LicenseRef-Fedora-Public-Domain
 
 rijndael-alg-fst.c
 

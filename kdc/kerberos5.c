@@ -1837,6 +1837,9 @@ get_pac_attributes(krb5_context context, KDC_REQ *req)
 
     pac_attributes = pacreq.include_pac ? KRB5_PAC_WAS_REQUESTED : 0;
     free_PA_PAC_REQUEST(&pacreq);
+    if (pac_attributes == 0 && context->flags & KRB5_CTX_F_ALWAYS_INCLUDE_PAC) {
+        pac_attributes = KRB5_PAC_WAS_GIVEN_IMPLICITLY;
+    }
     return pac_attributes;
 }
 

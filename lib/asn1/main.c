@@ -487,7 +487,7 @@ main(int argc, char **argv)
 
     if (one_code_file)
 	close_codefile();
-    close_generate();
+    close_generate(am);
 
     yylex_destroy(scanner);
 

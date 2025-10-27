@@ -46,7 +46,6 @@ FILE *symsfile;
 #define STEM "asn1"
 
 static char *template;
-static const char *headerbase = STEM;
 
 /* XXX same as der_length_tag */
 static size_t
@@ -141,13 +140,13 @@ c_init_generate (asn1_module am, const char *filename, const char *base)
 
     am->orig_filename = filename;
     if (base != NULL) {
-	headerbase = strdup(base);
-	if (headerbase == NULL)
+	am->headerbase = strdup(base);
+	if (am->headerbase == NULL)
 	    errx(1, "strdup");
     }
 
     /* JSON file */
-    if (asprintf(&fn, "%s.json", headerbase) < 0 || fn == NULL)
+    if (asprintf(&fn, "%s.json", am->headerbase) < 0 || fn == NULL)
         errx(1, "malloc");
     jsonfile = fopen(fn, "w");
     if (jsonfile == NULL)
@@ -156,9 +155,9 @@ c_init_generate (asn1_module am, const char *filename, const char *base)
     fn = NULL;
 
     /* public header file */
-    if (asprintf(&am->header, "%s.h", headerbase) < 0 || am->header == NULL)
+    if (asprintf(&am->header, "%s.h", am->headerbase) < 0 || am->header == NULL)
 	errx(1, "malloc");
-    if (asprintf(&fn, "%s.h", headerbase) < 0 || fn == NULL)
+    if (asprintf(&fn, "%s.h", am->headerbase) < 0 || fn == NULL)
 	errx(1, "malloc");
     headerfile = fopen (fn, "w");
     if (headerfile == NULL)
@@ -167,9 +166,9 @@ c_init_generate (asn1_module am, const char *filename, const char *base)
     fn = NULL;
 
     /* private header file */
-    if (asprintf(&am->privheader, "%s-priv.h", headerbase) < 0 || am->privheader == NULL)
+    if (asprintf(&am->privheader, "%s-priv.h", am->headerbase) < 0 || am->privheader == NULL)
 	errx(1, "malloc");
-    if (asprintf(&fn, "%s-priv.h", headerbase) < 0 || fn == NULL)
+    if (asprintf(&fn, "%s-priv.h", am->headerbase) < 0 || fn == NULL)
 	errx(1, "malloc");
     privheaderfile = fopen (fn, "w");
     if (privheaderfile == NULL)
@@ -178,7 +177,7 @@ c_init_generate (asn1_module am, const char *filename, const char *base)
     fn = NULL;
 
     /* template file */
-    if (asprintf(&template, "%s-template.c", headerbase) < 0 || template == NULL)
+    if (asprintf(&template, "%s-template.c", am->headerbase) < 0 || template == NULL)
 	errx(1, "malloc");
     fprintf (headerfile,
 	     "/* Generated from %s */\n"
@@ -186,7 +185,7 @@ c_init_generate (asn1_module am, const char *filename, const char *base)
 	     filename);
     fprintf (headerfile,
 	     "#ifndef __%s_h__\n"
-	     "#define __%s_h__\n\n", headerbase, headerbase);
+	     "#define __%s_h__\n\n", am->headerbase, am->headerbase);
     fprintf (headerfile,
 	     "#include <stddef.h>\n"
 	     "#include <stdint.h>\n"
@@ -345,9 +344,9 @@ c_init_generate (asn1_module am, const char *filename, const char *base)
 }
 
 void
-close_generate (void)
+close_generate (asn1_module am)
 {
-    fprintf (headerfile, "#endif /* __%s_h__ */\n", headerbase);
+    fprintf (headerfile, "#endif /* __%s_h__ */\n", am->headerbase);
 
     if (headerfile && fclose(headerfile) == EOF)
         err(1, "writes to public header file failed");
@@ -2093,6 +2092,8 @@ asn1_module new_asn1_module(enum codegen_language lang)
     asn1_module am = calloc(sizeof(struct asn1_module), 1);
     if (am == NULL)
         errx(1, "malloc");
+
+    am->headerbase = STEM;
 
     switch (lang) {
         case CODEGEN_C:

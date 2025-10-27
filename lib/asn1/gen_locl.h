@@ -79,7 +79,7 @@ int objid_cmp(struct objid *, struct objid *);
 
 void c_init_generate (asn1_module, const char *, const char *);
 const char *get_filename (asn1_module);
-void close_generate(void);
+void close_generate(asn1_module am);
 void add_import(const char *);
 void add_export(const char *);
 int is_export(const char *);

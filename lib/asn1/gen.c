@@ -40,7 +40,7 @@ extern int prefix_enum;
 
 RCSID("$Id$");
 
-FILE *oidsfile, *codefile, *logfile, *templatefile;
+FILE *codefile, *logfile, *templatefile;
 FILE *symsfile;
 
 #define STEM "asn1"
@@ -300,8 +300,8 @@ c_init_generate (asn1_module am, const char *filename, const char *base)
 
     if (asprintf(&fn, "%s_oids.c", base) < 0 || fn == NULL)
 	errx(1, "malloc");
-    oidsfile = fopen(fn, "w");
-    if (oidsfile == NULL)
+    am->oidsfile = fopen(fn, "w");
+    if (am->oidsfile == NULL)
 	err (1, "open %s", fn);
     if (asprintf(&fn, "%s_syms.c", base) < 0 || fn == NULL)
 	errx(1, "malloc");
@@ -357,8 +357,8 @@ close_generate (asn1_module am)
     if (!am->jsonfile) abort();
     if (fclose(am->jsonfile) == EOF)
         err(1, "writes to JSON file failed");
-    if (!oidsfile) abort();
-    if (fclose(oidsfile) == EOF)
+    if (!am->oidsfile) abort();
+    if (fclose(am->oidsfile) == EOF)
         err(1, "writes to OIDs file failed");
     if (!symsfile) abort();
     if (fclose(symsfile) == EOF)
@@ -580,7 +580,7 @@ c_generate_constant (asn1_module am, const Symbol *s)
 		 "{ %lu, oid_%s_variable_num };\n\n",
 		 s->gen_name, (unsigned long)len, s->gen_name);
 
-        fprintf(oidsfile, "DEFINE_OID_WITH_NAME(%s)\n", s->gen_name);
+        fprintf(am->oidsfile, "DEFINE_OID_WITH_NAME(%s)\n", s->gen_name);
         if (is_export(s->name))
             fprintf(symsfile, "ASN1_SYM_OID(\"%s\", \"%s\", %s)\n",
                     s->name, s->gen_name, s->gen_name);

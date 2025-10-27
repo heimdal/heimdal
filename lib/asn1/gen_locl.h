@@ -114,13 +114,14 @@ typedef struct asn1_module {
     void (*generate_type) (struct asn1_module *, const Symbol *);
     void (*generate_type_header_forwards) (struct asn1_module *, const Symbol *);
     void (*generate_constant) (struct asn1_module *, const Symbol *);
-    void (*generate_type_encode) (struct asn1_module *, const Symbol *);    
-    void (*generate_type_decode) (struct asn1_module *, const Symbol *);    
-    void (*generate_type_free) (struct asn1_module *, const Symbol *);    
-    void (*generate_type_length) (struct asn1_module *, const Symbol *);    
-    void (*generate_type_print_stub) (struct asn1_module *, const Symbol *);    
-    void (*generate_type_copy) (struct asn1_module *, const Symbol *);    
-    void (*generate_type_seq) (struct asn1_module *, const Symbol *);    
+    void (*generate_type_encode) (struct asn1_module *, const Symbol *);
+    void (*generate_type_decode) (struct asn1_module *, const Symbol *);
+    void (*generate_type_free) (struct asn1_module *, const Symbol *);
+    void (*generate_type_length) (struct asn1_module *, const Symbol *);
+    void (*generate_type_print_stub) (struct asn1_module *, const Symbol *);
+    void (*generate_type_copy) (struct asn1_module *, const Symbol *);
+    void (*generate_type_seq) (struct asn1_module *, const Symbol *);
+    void (*generate_glue) (struct asn1_module *, const Type *, const char*);
 } *asn1_module;
 
 enum codegen_language {
@@ -150,6 +151,8 @@ void generate_types(asn1_module);
     am->generate_type_copy(am, s)
 #define GENERATE_TYPE_SEQ(/* asn1_module */ am, /*const Symbol * */ s) \
     am->generate_type_seq(am, s)
+#define GENERATE_GLUE(/* asn1_module */ am, /*const Type * */ t, /* const char* */ gen_name) \
+    am->generate_glue(am, t, gen_name)
 
 void c_generate_type (asn1_module, const Symbol *);
 void c_generate_type_header_forwards(asn1_module, const Symbol *);
@@ -161,7 +164,7 @@ void c_generate_type_length (asn1_module, const Symbol *);
 void c_generate_type_print_stub(asn1_module, const Symbol *);
 void c_generate_type_copy (asn1_module, const Symbol *);
 void c_generate_type_seq (asn1_module, const Symbol *);
-void generate_glue (const Type *, const char*);
+void c_generate_glue (asn1_module, const Type *, const char*);
 
 const char *classname(Der_class);
 const char *valuename(Der_class, int);

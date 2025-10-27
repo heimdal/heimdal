@@ -132,11 +132,11 @@ generate_units (const Type *t, const char *gen_name)
 }
 
 void
-generate_glue (const Type *t, const char *gen_name)
+c_generate_glue (asn1_module am, const Type *t, const char *gen_name)
 {
     switch(t->type) {
     case TTag:
-	generate_glue(t->subtype, gen_name);
+	GENERATE_GLUE(am, t->subtype, gen_name);
 	break;
     case TBitString : {
         Member *m;

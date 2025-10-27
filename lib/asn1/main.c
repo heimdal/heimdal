@@ -255,7 +255,7 @@ static int prefix_enum;
 int fuzzer_flag;
 static int support_ber;
 int template_flag;
-int rfc1510_bitstring;
+static int rfc1510_bitstring;
 static int one_code_file;
 char *option_file;
 static int parse_units_flag = 1;
@@ -459,7 +459,7 @@ main(int argc, char **argv)
 
     asn1_module am = new_asn1_module(CODEGEN_C, preserve, seq, enum_prefix,
                                      one_code_file, support_ber, parse_units_flag,
-                                     prefix_enum);
+                                     prefix_enum, rfc1510_bitstring);
 
     if (am->preserve.num_strings)
         mergesort_r(am->preserve.strings, am->preserve.num_strings,

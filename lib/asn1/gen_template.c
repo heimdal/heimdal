@@ -1058,7 +1058,7 @@ template_members(asn1_module am,
 
 	fprintf(f, "static const struct asn1_template asn1_%s_%s[] = {\n", basetype, bname);
 	fprintf(f, "/* 0 */ { 0%s, sizeof(%s), ((void *)(uintptr_t)%lu) },\n",
-		rfc1510_bitstring ? "|A1_HBF_RFC1510" : "",
+		am->rfc1510_bitstring ? "|A1_HBF_RFC1510" : "",
 		basetype, (unsigned long)count);
 	i = 1;
 	HEIM_TAILQ_FOREACH(q, &template, members) {

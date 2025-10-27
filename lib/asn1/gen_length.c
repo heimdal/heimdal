@@ -105,7 +105,7 @@ length_type (asn1_module am, const char *name, const Type *t,
 	if (HEIM_TAILQ_EMPTY(t->members))
 	    length_primitive(am, "bit_string", name, variable);
 	else {
-	    if (!rfc1510_bitstring) {
+	    if (!am->rfc1510_bitstring) {
 		Member *m;
 		int pos = HEIM_TAILQ_LAST(t->members, memhead)->val;
 

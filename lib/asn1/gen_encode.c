@@ -176,7 +176,7 @@ encode_type (asn1_module am, const char *name, const Type *t, const char *tmpstr
 
 	fprintf (am->codefile, "{\n"
 		 "unsigned char c = 0;\n");
-	if (!rfc1510_bitstring)
+	if (!am->rfc1510_bitstring)
 	    fprintf (am->codefile,
 		     "int rest = 0;\n"
 		     "int bit_set = 0;\n");
@@ -194,20 +194,20 @@ encode_type (asn1_module am, const char *name, const Type *t, const char *tmpstr
 	 * has to screw it up differently.
 	 */
 	pos = HEIM_TAILQ_LAST(t->members, memhead)->val;
-	if (rfc1510_bitstring) {
+	if (am->rfc1510_bitstring) {
 	    if (pos < 31)
 		pos = 31;
 	}
 
 	HEIM_TAILQ_FOREACH_REVERSE(m, t->members, memhead, members) {
 	    while (m->val / 8 < pos / 8) {
-		if (!rfc1510_bitstring)
+		if (!am->rfc1510_bitstring)
 		    fprintf (am->codefile,
 			     "if (c != 0 || bit_set) {\n");
 		fprintf (am->codefile,
 			 "if (len < 1) return ASN1_OVERFLOW;\n"
 			 "*p-- = c; len--; ret++;\n");
-		if (!rfc1510_bitstring)
+		if (!am->rfc1510_bitstring)
 		    fprintf (am->codefile,
 			     "if (!bit_set) {\n"
 			     "rest = 0;\n"
@@ -231,13 +231,13 @@ encode_type (asn1_module am, const char *name, const Type *t, const char *tmpstr
 		     "}\n");
 	}
 
-	if (!rfc1510_bitstring)
+	if (!am->rfc1510_bitstring)
 	    fprintf (am->codefile,
 		     "if (c != 0 || bit_set) {\n");
 	fprintf (am->codefile,
 		 "if (len < 1) return ASN1_OVERFLOW;\n"
 		 "*p-- = c; len--; ret++;\n");
-	if (!rfc1510_bitstring)
+	if (!am->rfc1510_bitstring)
 	    fprintf (am->codefile,
 		     "if (!bit_set) {\n"
 		     "rest = 0;\n"
@@ -257,7 +257,7 @@ encode_type (asn1_module am, const char *name, const Type *t, const char *tmpstr
 		 "len -= 1;\n"
 		 "ret += 1;\n"
 		 "}\n\n",
-		 rfc1510_bitstring ? "0" : "rest");
+		 am->rfc1510_bitstring ? "0" : "rest");
 	constructed = 0;
 	break;
     }

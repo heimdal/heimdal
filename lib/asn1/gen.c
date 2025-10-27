@@ -2082,7 +2082,8 @@ c_generate_type (asn1_module am, const Symbol *s)
 asn1_module new_asn1_module(enum codegen_language lang, getarg_strings preserve,
                             getarg_strings seq, const char *enum_prefix,
                             unsigned int one_code_file, unsigned int support_ber,
-                            unsigned int parse_units_flag, unsigned int prefix_enum)
+                            unsigned int parse_units_flag, unsigned int prefix_enum,
+                            unsigned int rfc1510_bitstring)
 {
     asn1_module am = calloc(sizeof(struct asn1_module), 1);
     if (am == NULL)
@@ -2094,6 +2095,7 @@ asn1_module new_asn1_module(enum codegen_language lang, getarg_strings preserve,
     am->parse_units_flag = parse_units_flag;
     am->preserve = preserve;
     am->prefix_enum = prefix_enum;
+    am->rfc1510_bitstring = rfc1510_bitstring;
     am->seq = seq;
     am->support_ber = support_ber;
     // am->tlistmaster = HEIM_TAILQ_HEAD_INITIALIZER(tlistmaster);

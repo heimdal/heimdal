@@ -36,11 +36,12 @@
 RCSID("$Id$");
 
 static void
-length_primitive (const char *typename,
+length_primitive (asn1_module am,
+		  const char *typename,
 		  const char *name,
 		  const char *variable)
 {
-    fprintf (codefile, "%s += der_length_%s(%s);\n", variable, typename, name);
+    fprintf (am->codefile, "%s += der_length_%s(%s);\n", variable, typename, name);
 }
 
 /* XXX same as der_length_tag */
@@ -60,69 +61,69 @@ length_tag(unsigned int tag)
 
 
 static int
-length_type (const char *name, const Type *t,
+length_type (asn1_module am, const char *name, const Type *t,
 	     const char *variable, const char *tmpstr)
 {
     switch (t->type) {
     case TType:
 #if 0
-	length_type (name, t->symbol->type);
+	length_type (am, name, t->symbol->type);
 #endif
-	fprintf (codefile, "%s += length_%s(%s);\n",
+	fprintf (am->codefile, "%s += length_%s(%s);\n",
 		 variable, t->symbol->gen_name, name);
 	break;
     case TInteger:
 	if(t->members) {
-	    fprintf(codefile,
+	    fprintf(am->codefile,
 		    "{\n"
 		    "int enumint = *%s;\n", name);
-	    length_primitive ("integer", "&enumint", variable);
-	    fprintf(codefile, "}\n");
+	    length_primitive (am, "integer", "&enumint", variable);
+	    fprintf(am->codefile, "}\n");
 	} else if (t->range == NULL) {
-	    length_primitive ("heim_integer", name, variable);
+	    length_primitive (am, "heim_integer", name, variable);
 	} else if (t->range->min < 0 &&
                    (t->range->min < INT_MIN || t->range->max > INT_MAX)) {
-	    length_primitive ("integer64", name, variable);
+	    length_primitive (am, "integer64", name, variable);
 	} else if (t->range->min < 0) {
-	    length_primitive ("integer", name, variable);
+	    length_primitive (am, "integer", name, variable);
 	} else if (t->range->max > UINT_MAX) {
-	    length_primitive ("unsigned64", name, variable);
+	    length_primitive (am, "unsigned64", name, variable);
 	} else {
-	    length_primitive ("unsigned", name, variable);
+	    length_primitive (am, "unsigned", name, variable);
 	}
 	break;
     case TBoolean:
-	fprintf (codefile, "%s += 1;\n", variable);
+	fprintf (am->codefile, "%s += 1;\n", variable);
 	break;
     case TEnumerated :
-	length_primitive ("enumerated", name, variable);
+	length_primitive (am, "enumerated", name, variable);
 	break;
     case TOctetString:
-	length_primitive ("octet_string", name, variable);
+	length_primitive (am, "octet_string", name, variable);
 	break;
     case TBitString: {
 	if (HEIM_TAILQ_EMPTY(t->members))
-	    length_primitive("bit_string", name, variable);
+	    length_primitive(am, "bit_string", name, variable);
 	else {
 	    if (!rfc1510_bitstring) {
 		Member *m;
 		int pos = HEIM_TAILQ_LAST(t->members, memhead)->val;
 
-		fprintf(codefile,
+		fprintf(am->codefile,
 			"do {\n");
 		HEIM_TAILQ_FOREACH_REVERSE(m, t->members, memhead, members) {
 		    while (m->val / 8 < pos / 8) {
 			pos -= 8;
 		    }
-		    fprintf (codefile,
+		    fprintf (am->codefile,
 			     "if((%s)->%s) { %s += %d; break; }\n",
 			     name, m->gen_name, variable, (pos + 8) / 8);
 		}
-		fprintf(codefile,
+		fprintf(am->codefile,
 			"} while(0);\n");
-		fprintf (codefile, "%s += 1;\n", variable);
+		fprintf (am->codefile, "%s += 1;\n", variable);
 	    } else {
-		fprintf (codefile, "%s += 5;\n", variable);
+		fprintf (am->codefile, "%s += 5;\n", variable);
 	    }
 	}
 	break;
@@ -136,7 +137,7 @@ length_type (const char *name, const Type *t,
 	    break;
 
 	if(t->type == TChoice)
-	    fprintf (codefile, "switch((%s)->element) {\n", name);
+	    fprintf (am->codefile, "switch((%s)->element) {\n", name);
 
 	HEIM_TAILQ_FOREACH(m, t->members, members) {
 	    char *s;
@@ -147,36 +148,36 @@ length_type (const char *name, const Type *t,
 	    }
 
 	    if(t->type == TChoice)
-		fprintf(codefile, "case %s:\n", m->label);
+		fprintf(am->codefile, "case %s:\n", m->label);
 
 	    if (asprintf (&s, "%s(%s)->%s%s",
 			  m->optional ? "" : "&", name,
 			  t->type == TChoice ? "u." : "", m->gen_name) < 0 || s == NULL)
 		errx(1, "malloc");
 	    if (m->optional)
-		fprintf (codefile, "if(%s)", s);
+		fprintf (am->codefile, "if(%s)", s);
 	    else if(m->defval)
-		gen_compare_defval(s + 1, m->defval);
-	    fprintf (codefile, "{\n"
+		GEN_COMPARE_DEFVAL(am, s + 1, m->defval);
+	    fprintf (am->codefile, "{\n"
 		     "size_t %s_oldret = %s;\n"
 		     "%s = 0;\n", tmpstr, variable, variable);
-	    length_type (s, m->type, "ret", m->gen_name);
-	    fprintf (codefile, "ret += %s_oldret;\n", tmpstr);
-	    fprintf (codefile, "}\n");
+	    length_type (am, s, m->type, "ret", m->gen_name);
+	    fprintf (am->codefile, "ret += %s_oldret;\n", tmpstr);
+	    fprintf (am->codefile, "}\n");
 	    free (s);
 	    if(t->type == TChoice)
-		fprintf(codefile, "break;\n");
+		fprintf(am->codefile, "break;\n");
 	}
 	if(t->type == TChoice) {
 	    if (have_ellipsis)
-		fprintf(codefile,
+		fprintf(am->codefile,
 			"case %s:\n"
 			"ret += (%s)->u.%s.length;\n"
 			"break;\n",
 			have_ellipsis->label,
 			name,
 			have_ellipsis->gen_name);
-	    fprintf (codefile, "}\n"); /* switch */
+	    fprintf (am->codefile, "}\n"); /* switch */
 	}
 	break;
     }
@@ -185,27 +186,27 @@ length_type (const char *name, const Type *t,
 	char *n = NULL;
 	char *sname = NULL;
 
-	fprintf (codefile,
+	fprintf (am->codefile,
 		 "{\n"
 		 "size_t %s_oldret = %s;\n"
 		 "unsigned int n_%s;\n"
 		 "%s = 0;\n",
 		 tmpstr, variable, tmpstr, variable);
 
-	fprintf (codefile, "for(n_%s = (%s)->len; n_%s > 0; --n_%s){\n",
+	fprintf (am->codefile, "for(n_%s = (%s)->len; n_%s > 0; --n_%s){\n",
 		 tmpstr, name, tmpstr, tmpstr);
-	fprintf (codefile, "size_t %s_for_oldret = %s;\n"
+	fprintf (am->codefile, "size_t %s_for_oldret = %s;\n"
 		 "%s = 0;\n", tmpstr, variable, variable);
 	if (asprintf (&n, "&(%s)->val[n_%s - 1]", name, tmpstr) < 0  || n == NULL)
 	    errx(1, "malloc");
 	if (asprintf (&sname, "%s_S_Of", tmpstr) < 0 || sname == NULL)
 	    errx(1, "malloc");
-	length_type(n, t->subtype, variable, sname);
-	fprintf (codefile, "%s += %s_for_oldret;\n",
+	length_type(am, n, t->subtype, variable, sname);
+	fprintf (am->codefile, "%s += %s_for_oldret;\n",
 		 variable, tmpstr);
-	fprintf (codefile, "}\n");
+	fprintf (am->codefile, "}\n");
 
-	fprintf (codefile,
+	fprintf (am->codefile,
 		 "%s += %s_oldret;\n"
 		 "}\n", variable, tmpstr);
 	free(n);
@@ -213,37 +214,37 @@ length_type (const char *name, const Type *t,
 	break;
     }
     case TGeneralizedTime:
-	length_primitive ("generalized_time", name, variable);
+	length_primitive (am, "generalized_time", name, variable);
 	break;
     case TGeneralString:
-	length_primitive ("general_string", name, variable);
+	length_primitive (am, "general_string", name, variable);
 	break;
     case TTeletexString:
-	length_primitive ("general_string", name, variable);
+	length_primitive (am, "general_string", name, variable);
 	break;
     case TUTCTime:
-	length_primitive ("utctime", name, variable);
+	length_primitive (am, "utctime", name, variable);
 	break;
     case TUTF8String:
-	length_primitive ("utf8string", name, variable);
+	length_primitive (am, "utf8string", name, variable);
 	break;
     case TPrintableString:
-	length_primitive ("printable_string", name, variable);
+	length_primitive (am, "printable_string", name, variable);
 	break;
     case TIA5String:
-	length_primitive ("ia5_string", name, variable);
+	length_primitive (am, "ia5_string", name, variable);
 	break;
     case TBMPString:
-	length_primitive ("bmp_string", name, variable);
+	length_primitive (am, "bmp_string", name, variable);
 	break;
     case TUniversalString:
-	length_primitive ("universal_string", name, variable);
+	length_primitive (am, "universal_string", name, variable);
 	break;
     case TVisibleString:
-	length_primitive ("visible_string", name, variable);
+	length_primitive (am, "visible_string", name, variable);
 	break;
     case TNull:
-	fprintf (codefile, "/* NULL */\n");
+	fprintf (am->codefile, "/* NULL */\n");
 	break;
     case TTag:{
     	char *tname = NULL;
@@ -254,7 +255,7 @@ length_type (const char *name, const Type *t,
 
 	if (asprintf(&tname, "%s_tag", tmpstr) < 0 || tname == NULL)
 	    errx(1, "malloc");
-	length_type (name, t->subtype, variable, tname);
+	length_type (am, name, t->subtype, variable, tname);
         /* See the comments in encode_type() about IMPLICIT tags */
         if (t->tag.tagenv == TE_IMPLICIT && !prim &&
             t->subtype->type != TSequenceOf && t->subtype->type != TSetOf &&
@@ -275,17 +276,17 @@ length_type (const char *name, const Type *t,
              * use the asn1_tag_length_<TypeName> enum value to avoid having to
              * call der_length_tag() at run-time.
              */
-            fprintf(codefile, "ret += %lu - asn1_tag_length_%s;\n",
+            fprintf(am->codefile, "ret += %lu - asn1_tag_length_%s;\n",
                     (unsigned long)length_tag(t->tag.tagvalue),
                     t->subtype->symbol->gen_name);
         else
-            fprintf(codefile, "ret += %lu + der_length_len (ret);\n",
+            fprintf(am->codefile, "ret += %lu + der_length_len (ret);\n",
                     (unsigned long)length_tag(t->tag.tagvalue));
 	free(tname);
 	break;
     }
     case TOID:
-	length_primitive ("oid", name, variable);
+	length_primitive (am, "oid", name, variable);
 	break;
     default :
 	abort ();
@@ -296,14 +297,14 @@ length_type (const char *name, const Type *t,
 void
 c_generate_type_length (asn1_module am, const Symbol *s)
 {
-    fprintf (codefile,
+    fprintf (am->codefile,
 	     "size_t ASN1CALL\n"
 	     "length_%s(const %s *data)\n"
 	     "{\n"
 	     "size_t ret = 0;\n",
 	     s->gen_name, s->gen_name);
 
-    length_type ("data", s->type, "ret", "Top");
-    fprintf (codefile, "return ret;\n}\n\n");
+    length_type (am, "data", s->type, "ret", "Top");
+    fprintf (am->codefile, "return ret;\n}\n\n");
 }
 

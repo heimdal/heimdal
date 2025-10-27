@@ -430,7 +430,7 @@ SymbolsFromModule: referencenames kw_FROM Identifier objid_opt
 		    for(sl = $1; sl != NULL; sl = sl->next) {
 			Symbol *s = addsym(sl->string);
 			s->stype = Stype;
-			gen_template_import(s);
+			GEN_TEMPLATE_IMPORT(am, s);
 		    }
 		    ADD_IMPORT(am, $3);
 		}
@@ -529,7 +529,7 @@ ObjectSetAssignment
                     s->objectset->symbol = s->objectset->symbol ? s->objectset->symbol : s;
 		    s->objectset->iosclass = $2;
                     validate_object_set($4);
-                    generate_template_objectset_forwards(s);
+                    GENERATE_TEMPLATE_OBJECTSET_FORWARDS(am, s);
 		}
 		;
 

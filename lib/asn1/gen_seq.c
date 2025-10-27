@@ -36,11 +36,11 @@
 RCSID("$Id$");
 
 static FILE *
-get_code_file(void)
+get_code_file(asn1_module am)
 {
     if (!one_code_file && template_flag && templatefile)
         return templatefile;
-    return codefile;
+    return am->codefile;
 }
 
 void
@@ -80,12 +80,12 @@ c_generate_type_seq (asn1_module am, const Symbol *s)
 	     s->gen_name, s->gen_name, subname,
 	     s->gen_name, s->gen_name);
 
-    fprintf (get_code_file(), "int ASN1CALL\n"
+    fprintf (get_code_file(am), "int ASN1CALL\n"
 	     "add_%s(%s *data, const %s *element)\n"
 	     "{\n",
 	     s->gen_name, s->gen_name, subname);
 
-    fprintf (get_code_file(),
+    fprintf (get_code_file(am),
 	     "int ret;\n"
 	     "void *ptr;\n"
 	     "\n"
@@ -99,14 +99,14 @@ c_generate_type_seq (asn1_module am, const Symbol *s)
 	     "return 0;\n",
 	     subname);
 
-    fprintf (get_code_file(), "}\n\n");
+    fprintf (get_code_file(am), "}\n\n");
 
-    fprintf (get_code_file(), "int ASN1CALL\n"
+    fprintf (get_code_file(am), "int ASN1CALL\n"
 	     "remove_%s(%s *data, unsigned int element)\n"
 	     "{\n",
 	     s->gen_name, s->gen_name);
 
-    fprintf (get_code_file(),
+    fprintf (get_code_file(am),
 	     "void *ptr;\n"
 	     "\n"
 	     "if (data->len == 0 || element >= data->len)\n"
@@ -123,5 +123,5 @@ c_generate_type_seq (asn1_module am, const Symbol *s)
 	     "return 0;\n",
 	     subname);
 
-    fprintf (get_code_file(), "}\n\n");
+    fprintf (get_code_file(am), "}\n\n");
 }

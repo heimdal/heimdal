@@ -40,7 +40,7 @@ extern int prefix_enum;
 
 RCSID("$Id$");
 
-FILE *codefile, *logfile, *templatefile;
+FILE *logfile, *templatefile;
 FILE *symsfile;
 
 #define STEM "asn1"
@@ -370,21 +370,21 @@ close_generate (asn1_module am)
 }
 
 void
-gen_assign_defval(const char *var, struct value *val)
+c_gen_assign_defval(asn1_module am, const char *var, struct value *val)
 {
     switch(val->type) {
     case stringvalue:
-	fprintf(codefile, "if((%s = strdup(\"%s\")) == NULL)\nreturn ENOMEM;\n", var, val->u.stringvalue);
+	fprintf(am->codefile, "if((%s = strdup(\"%s\")) == NULL)\nreturn ENOMEM;\n", var, val->u.stringvalue);
 	break;
     case integervalue:
-	fprintf(codefile, "%s = %lld;\n",
+	fprintf(am->codefile, "%s = %lld;\n",
 		var, (long long)val->u.integervalue);
 	break;
     case booleanvalue:
 	if(val->u.booleanvalue)
-	    fprintf(codefile, "%s = 1;\n", var);
+	    fprintf(am->codefile, "%s = 1;\n", var);
 	else
-	    fprintf(codefile, "%s = 0;\n", var);
+	    fprintf(am->codefile, "%s = 0;\n", var);
 	break;
     default:
 	abort();
@@ -392,21 +392,21 @@ gen_assign_defval(const char *var, struct value *val)
 }
 
 void
-gen_compare_defval(const char *var, struct value *val)
+c_gen_compare_defval(asn1_module am, const char *var, struct value *val)
 {
     switch(val->type) {
     case stringvalue:
-	fprintf(codefile, "if(strcmp(%s, \"%s\") != 0)\n", var, val->u.stringvalue);
+	fprintf(am->codefile, "if(strcmp(%s, \"%s\") != 0)\n", var, val->u.stringvalue);
 	break;
     case integervalue:
-	fprintf(codefile, "if(%s != %lld)\n",
+	fprintf(am->codefile, "if(%s != %lld)\n",
 		var, (long long)val->u.integervalue);
 	break;
     case booleanvalue:
 	if(val->u.booleanvalue)
-	    fprintf(codefile, "if(!%s)\n", var);
+	    fprintf(am->codefile, "if(!%s)\n", var);
 	else
-	    fprintf(codefile, "if(%s)\n", var);
+	    fprintf(am->codefile, "if(%s)\n", var);
 	break;
     default:
 	abort();
@@ -418,19 +418,19 @@ c_generate_header_of_codefile(asn1_module am, const char *name)
 {
     char *filename = NULL;
 
-    if (codefile != NULL)
+    if (am->codefile != NULL)
 	abort();
 
     if (asprintf (&filename, "%s_%s.c", STEM, name) < 0 || filename == NULL)
 	errx(1, "malloc");
-    codefile = fopen (filename, "w");
-    if (codefile == NULL)
+    am->codefile = fopen (filename, "w");
+    if (am->codefile == NULL)
 	err (1, "fopen %s", filename);
     if (logfile)
         fprintf(logfile, "%s ", filename);
     free(filename);
     filename = NULL;
-    fprintf (codefile,
+    fprintf (am->codefile,
 	     "/* Generated from %s */\n"
 	     "/* Do not edit */\n\n"
 	     "#if defined(_WIN32) && !defined(ASN1_LIB)\n"
@@ -446,33 +446,33 @@ c_generate_header_of_codefile(asn1_module am, const char *name)
 	     am->orig_filename,
 	     type_file_string);
 
-    fprintf (codefile,
+    fprintf (am->codefile,
 	     "#include \"%s\"\n"
 	     "#include \"%s\"\n",
 	     am->header, am->privheader);
-    fprintf (codefile,
+    fprintf (am->codefile,
 	     "#include <asn1_err.h>\n"
 	     "#include <der.h>\n"
 	     "#include <asn1-template.h>\n\n");
 
     if (parse_units_flag)
-	fprintf (codefile,
+	fprintf (am->codefile,
 		 "#include <parse_units.h>\n\n");
 
 #ifdef _WIN32
-    fprintf(codefile, "#pragma warning(disable: 4101)\n\n");
+    fprintf(am->codefile, "#pragma warning(disable: 4101)\n\n");
 #endif
 }
 
 void
-close_codefile(void)
+close_codefile(asn1_module am)
 {
-    if (codefile == NULL)
+    if (am->codefile == NULL)
 	abort();
 
-    if (fclose(codefile) == EOF)
+    if (fclose(am->codefile) == EOF)
         err(1, "writes to source code file failed");
-    codefile = NULL;
+    am->codefile = NULL;
 }
 
 /* Object identifiers are parsed backwards; this reverses that */
@@ -569,14 +569,14 @@ c_generate_constant (asn1_module am, const Symbol *s)
 	}
         fprintf(am->jsonfile, "]}\n");
 
-	fprintf (codefile, "static unsigned oid_%s_variable_num[%lu] =  {",
+	fprintf (am->codefile, "static unsigned oid_%s_variable_num[%lu] =  {",
 		 s->gen_name, (unsigned long)len);
 	for (i = 0; list[i]; i++) {
-	    fprintf(codefile, "%s %d", i ? "," : "", list[i]->value);
+	    fprintf(am->codefile, "%s %d", i ? "," : "", list[i]->value);
 	}
-	fprintf(codefile, "};\n");
+	fprintf(am->codefile, "};\n");
 
-	fprintf (codefile, "const heim_oid asn1_oid_%s = "
+	fprintf (am->codefile, "const heim_oid asn1_oid_%s = "
 		 "{ %lu, oid_%s_variable_num };\n\n",
 		 s->gen_name, (unsigned long)len, s->gen_name);
 
@@ -605,7 +605,7 @@ c_generate_constant (asn1_module am, const Symbol *s)
 	free(gen_upper);
 
 	if (!one_code_file)
-	    close_codefile();
+	    close_codefile(am);
 
 	break;
     }
@@ -1718,7 +1718,7 @@ declare_type(asn1_module am, const Symbol *s, Type *t, int typedefp)
                     DEF_TYPE_PRESERVE | DEF_TYPE_TYPEDEFP |
                     (s->emitted_declaration ? 0 : DEF_TYPE_EMIT_NAME));
         if (template_flag && !s->emitted_declaration)
-            generate_template_type_forward(s->gen_name);
+            GENERATE_TEMPLATE_TYPE_FORWARD(am, s->gen_name);
         emitted_declaration(s);
         return;
     case TInteger:
@@ -1742,7 +1742,7 @@ declare_type(asn1_module am, const Symbol *s, Type *t, int typedefp)
                     DEF_TYPE_PRESERVE | DEF_TYPE_TYPEDEFP |
                      (s->emitted_declaration ? 0 : DEF_TYPE_EMIT_NAME));
         if (template_flag && !s->emitted_declaration)
-            generate_template_type_forward(s->gen_name);
+            GENERATE_TEMPLATE_TYPE_FORWARD(am, s->gen_name);
         emitted_declaration(s);
         emitted_definition(s);
         return;
@@ -2013,7 +2013,7 @@ c_generate_type_header_forwards(asn1_module am, const Symbol *s)
     declare_type(am, s, s->type, TRUE);
     fprintf(am->headerfile, "\n");
     if (template_flag)
-        generate_template_type_forward(s->gen_name);
+        GENERATE_TEMPLATE_TYPE_FORWARD(am, s->gen_name);
 }
 
 void
@@ -2028,7 +2028,7 @@ c_generate_type (asn1_module am, const Symbol *s)
     generate_type_header(am, s);
 
     if (template_flag)
-	generate_template(s);
+	GENERATE_TEMPLATE(am, s);
 
     if (template_flag == 0 || is_template_compat(s) == 0) {
 	GENERATE_TYPE_ENCODE (am, s);
@@ -2082,8 +2082,8 @@ c_generate_type (asn1_module am, const Symbol *s)
     fprintf(h, "\n\n");
 
     if (!one_code_file) {
-	fprintf(codefile, "\n\n");
-	close_codefile();
+	fprintf(am->codefile, "\n\n");
+	close_codefile(am);
     }
 }
 
@@ -2112,6 +2112,12 @@ asn1_module new_asn1_module(enum codegen_language lang)
             am->generate_header_of_codefile = c_generate_header_of_codefile;
             am->init_generate = c_init_generate;
             am->add_import = c_add_import;
+            am->gen_assign_defval = c_gen_assign_defval;
+            am->gen_compare_defval = c_gen_compare_defval;
+            am->generate_template_type_forward = c_generate_template_type_forward;
+            am->generate_template_objectset_forwards = c_generate_template_objectset_forwards;
+            am->generate_template = c_generate_template;
+            am->gen_template_import = c_gen_template_import;
     };
 
     return am;

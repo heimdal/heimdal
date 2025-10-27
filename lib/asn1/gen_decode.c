@@ -37,17 +37,17 @@
 RCSID("$Id$");
 
 static void
-decode_primitive (const char *typename, const char *name, const char *forwstr)
+decode_primitive (asn1_module am, const char *typename, const char *name, const char *forwstr)
 {
 #if 0
-    fprintf (codefile,
+    fprintf (am->codefile,
 	     "e = decode_%s(p, len, %s, &l);\n"
 	     "%s;\n",
 	     typename,
 	     name,
 	     forwstr);
 #else
-    fprintf (codefile,
+    fprintf (am->codefile,
 	     "e = der_get_%s(p, len, %s, &l);\n"
 	     "if(e) %s;\np += l; len -= l; ret += l;\n",
 	     typename,
@@ -184,25 +184,26 @@ find_tag (asn1_module am, const Type *t,
 }
 
 static void
-range_check(const char *name,
+range_check(asn1_module am,
+	    const char *name,
 	    const char *length,
 	    const char *forwstr,
 	    struct range *r)
 {
     if (r->min == r->max + 2 || r->min < r->max)
-	fprintf (codefile,
+	fprintf (am->codefile,
 		 "if ((%s)->%s > %lld) {\n"
 		 "e = ASN1_MAX_CONSTRAINT; %s;\n"
 		 "}\n",
 		 name, length, (long long)r->max, forwstr);
     if ((r->min - 1 == r->max || r->min < r->max) && r->min > 0)
-	fprintf (codefile,
+	fprintf (am->codefile,
 		 "if ((%s)->%s < %lld) {\n"
 		 "e = ASN1_MIN_CONSTRAINT; %s;\n"
 		 "}\n",
 		 name, length, (long long)r->min, forwstr);
     if (r->max == r->min)
-	fprintf (codefile,
+	fprintf (am->codefile,
 		 "if ((%s)->%s != %lld) {\n"
 		 "e = ASN1_EXACT_CONSTRAINT; %s;\n"
 		 "}\n",
@@ -217,15 +218,15 @@ decode_type(asn1_module am, const char *name, const Type *t, int optional, struc
     switch (t->type) {
     case TType: {
 	if (optional)
-	    fprintf(codefile,
+	    fprintf(am->codefile,
 		    "%s = calloc(1, sizeof(*%s));\n"
 		    "if (%s == NULL) %s;\n",
 		    name, name, name, forwstr);
-	fprintf (codefile,
+	fprintf (am->codefile,
 		 "e = decode_%s(p, len, %s, &l);\n",
 		 t->symbol->gen_name, name);
 	if (optional) {
-	    fprintf (codefile,
+	    fprintf (am->codefile,
 		     "if(e == ASN1_MISSING_FIELD) {\n"
 		     "free(%s);\n"
 		     "%s = NULL;\n"
@@ -235,22 +236,22 @@ decode_type(asn1_module am, const char *name, const Type *t, int optional, struc
 		     "}\n",
 		     name, name, forwstr);
         } else if (defval) {
-            fprintf(codefile,
+            fprintf(am->codefile,
                     "if (e == ASN1_MISSING_FIELD) {\n");
             /*
              * `name' starts with an ampersand here and is not an lvalue.
              * We skip the ampersand and then it is an lvalue.
              */
-            gen_assign_defval(name + 1, defval);
-            fprintf(codefile,
+            GEN_ASSIGN_DEFVAL(am, name + 1, defval);
+            fprintf(am->codefile,
                     "} else if (e) { %s;\n"
                     "} else { p += l; len -= l; ret += l; }\n",
                     forwstr);
 	} else {
-	    fprintf (codefile,
+	    fprintf (am->codefile,
 		     "if(e) %s;\n",
 		     forwstr);
-	    fprintf (codefile,
+	    fprintf (am->codefile,
 		     "p += l; len -= l; ret += l;\n");
 	}
 	break;
@@ -265,76 +266,76 @@ decode_type(asn1_module am, const char *name, const Type *t, int optional, struc
 	     * signness and size on the intertype we cast the result
 	     * too.
 	     */
-	    fprintf(codefile,
+	    fprintf(am->codefile,
 		    "{\n"
 		    "int enumint;\n");
-	    decode_primitive ("integer", "&enumint", forwstr);
-	    fprintf(codefile,
+	    decode_primitive (am, "integer", "&enumint", forwstr);
+	    fprintf(am->codefile,
 		    "*%s = enumint;\n"
 		    "}\n",
 		    name);
 	} else if (t->range == NULL) {
-	    decode_primitive ("heim_integer", name, forwstr);
+	    decode_primitive (am, "heim_integer", name, forwstr);
 	} else if (t->range->min < 0 &&
                    (t->range->min < INT_MIN || t->range->max > INT_MAX)) {
-	    decode_primitive ("integer64", name, forwstr);
+	    decode_primitive (am, "integer64", name, forwstr);
 	} else if (t->range->min < 0) {
-	    decode_primitive ("integer", name, forwstr);
+	    decode_primitive (am, "integer", name, forwstr);
 	} else if (t->range->max > UINT_MAX) {
-	    decode_primitive ("unsigned64", name, forwstr);
+	    decode_primitive (am, "unsigned64", name, forwstr);
 	} else {
-	    decode_primitive ("unsigned", name, forwstr);
+	    decode_primitive (am, "unsigned", name, forwstr);
 	}
 	break;
     case TBoolean:
-      decode_primitive ("boolean", name, forwstr);
+      decode_primitive (am, "boolean", name, forwstr);
       break;
     case TEnumerated:
-	decode_primitive ("enumerated", name, forwstr);
+	decode_primitive (am, "enumerated", name, forwstr);
 	break;
     case TOctetString:
 	if (dertype) {
-	    fprintf(codefile,
+	    fprintf(am->codefile,
 		    "if (%s == CONS) {\n",
 		    dertype);
-	    decode_primitive("octet_string_ber", name, forwstr);
-	    fprintf(codefile,
+	    decode_primitive(am, "octet_string_ber", name, forwstr);
+	    fprintf(am->codefile,
 		    "} else {\n");
 	}
-	decode_primitive ("octet_string", name, forwstr);
+	decode_primitive (am, "octet_string", name, forwstr);
 	if (dertype)
-	    fprintf(codefile, "}\n");
+	    fprintf(am->codefile, "}\n");
 	if (t->range)
-	    range_check(name, "length", forwstr, t->range);
+	    range_check(am, name, "length", forwstr, t->range);
 	break;
     case TBitString: {
 	Member *m;
 	int pos = 0;
 
 	if (HEIM_TAILQ_EMPTY(t->members)) {
-	    decode_primitive ("bit_string", name, forwstr);
+	    decode_primitive (am, "bit_string", name, forwstr);
 	    break;
 	}
-	fprintf(codefile,
+	fprintf(am->codefile,
 		"if (len < 1) return ASN1_OVERRUN;\n"
 		"p++; len--; ret++;\n");
-	fprintf(codefile,
+	fprintf(am->codefile,
 		"do {\n"
 		"if (len < 1) break;\n");
 	HEIM_TAILQ_FOREACH(m, t->members, members) {
 	    while (m->val / 8 > pos / 8) {
-		fprintf (codefile,
+		fprintf (am->codefile,
 			 "p++; len--; ret++;\n"
 			 "if (len < 1) break;\n");
 		pos += 8;
 	    }
-	    fprintf(codefile,
+	    fprintf(am->codefile,
 		    "(%s)->%s = (*p >> %d) & 1;\n",
 		    name, m->gen_name, (int)(7 - m->val % 8));
 	}
-	fprintf(codefile,
+	fprintf(am->codefile,
 		"} while(0);\n");
-	fprintf (codefile,
+	fprintf (am->codefile,
 		 "p += len; ret += len;\n");
 	break;
     }
@@ -381,16 +382,16 @@ decode_type(asn1_module am, const char *name, const Type *t, int optional, struc
 	if(t->members == NULL)
 	    break;
 
-	fprintf(codefile, "{\n");
-	fprintf(codefile, "uint64_t members = 0;\n");
-	fprintf(codefile, "while(len > 0) {\n");
-	fprintf(codefile,
+	fprintf(am->codefile, "{\n");
+	fprintf(am->codefile, "uint64_t members = 0;\n");
+	fprintf(am->codefile, "while(len > 0) {\n");
+	fprintf(am->codefile,
 		"Der_class class;\n"
 		"Der_type type;\n"
 		"unsigned int tag;\n"
 		"e = der_get_tag (p, len, &class, &type, &tag, NULL);\n"
 		"if(e) %s;\n", forwstr);
-	fprintf(codefile, "switch (MAKE_TAG(class, type, tag)) {\n");
+	fprintf(am->codefile, "switch (MAKE_TAG(class, type, tag)) {\n");
 	memno = 0;
 	HEIM_TAILQ_FOREACH(m, t->members, members) {
             Type *mst = m->type; /* Member sub-type */
@@ -402,7 +403,7 @@ decode_type(asn1_module am, const char *name, const Type *t, int optional, struc
             }
 	    assert(mst->type == TTag);
 
-	    fprintf(codefile, "case MAKE_TAG(%s, %s, %s):\n",
+	    fprintf(am->codefile, "case MAKE_TAG(%s, %s, %s):\n",
 		    classname(mst->tag.tagclass),
                     (mst->tag.tagclass == ASN1_C_UNIV || mst->tag.tagenv == TE_IMPLICIT) &&
 		    is_primitive_type(mst->subtype) ? "PRIM" : "CONS",
@@ -411,40 +412,40 @@ decode_type(asn1_module am, const char *name, const Type *t, int optional, struc
 	    if (asprintf (&s, "%s(%s)->%s", m->optional ? "" : "&", name, m->gen_name) < 0 || s == NULL)
 		errx(1, "malloc");
 	    if(m->optional)
-		fprintf(codefile,
+		fprintf(am->codefile,
 			"%s = calloc(1, sizeof(*%s));\n"
 			"if (%s == NULL) { e = ENOMEM; %s; }\n",
 			s, s, s, forwstr);
 	    decode_type (am, s, mst, 0, NULL, forwstr, m->gen_name, NULL, depth + 1);
 	    free (s);
 
-	    fprintf(codefile, "members |= (1ULL << %u);\n", memno);
+	    fprintf(am->codefile, "members |= (1ULL << %u);\n", memno);
 	    memno++;
-	    fprintf(codefile, "break;\n");
+	    fprintf(am->codefile, "break;\n");
 	}
-	fprintf(codefile,
+	fprintf(am->codefile,
 		"default:\n"
 		"return ASN1_MISPLACED_FIELD;\n"
 		"break;\n");
-	fprintf(codefile, "}\n");
-	fprintf(codefile, "}\n");
+	fprintf(am->codefile, "}\n");
+	fprintf(am->codefile, "}\n");
 	memno = 0;
 	HEIM_TAILQ_FOREACH(m, t->members, members) {
 	    char *s;
 
 	    if (asprintf (&s, "%s->%s", name, m->gen_name) < 0 || s == NULL)
 		errx(1, "malloc");
-	    fprintf(codefile, "if((members & (1ULL << %u)) == 0)\n", memno);
+	    fprintf(am->codefile, "if((members & (1ULL << %u)) == 0)\n", memno);
 	    if(m->optional)
-		fprintf(codefile, "%s = NULL;\n", s);
+		fprintf(am->codefile, "%s = NULL;\n", s);
 	    else if(m->defval)
-		gen_assign_defval(s, m->defval);
+		GEN_ASSIGN_DEFVAL(am, s, m->defval);
 	    else
-		fprintf(codefile, "return ASN1_MISSING_FIELD;\n");
+		fprintf(am->codefile, "return ASN1_MISSING_FIELD;\n");
 	    free(s);
 	    memno++;
 	}
-	fprintf(codefile, "}\n");
+	fprintf(am->codefile, "}\n");
 	break;
     }
     case TSetOf:
@@ -452,7 +453,7 @@ decode_type(asn1_module am, const char *name, const Type *t, int optional, struc
 	char *n = NULL;
 	char *sname = NULL;
 
-	fprintf (codefile,
+	fprintf (am->codefile,
 		 "{\n"
 		 "size_t %s_origlen = len;\n"
 		 "size_t %s_oldret = ret;\n"
@@ -468,7 +469,7 @@ decode_type(asn1_module am, const char *name, const Type *t, int optional, struc
 		 name,
 		 name);
 
-	fprintf (codefile,
+	fprintf (am->codefile,
 		 "while(ret < %s_origlen) {\n"
 		 "size_t %s_nlen = %s_olen + sizeof(*((%s)->val));\n"
 		 "if (%s_olen > %s_nlen) { e = ASN1_OVERFLOW; %s; }\n"
@@ -489,7 +490,7 @@ decode_type(asn1_module am, const char *name, const Type *t, int optional, struc
 	if (asprintf (&sname, "%s_s_of", tmpstr) < 0 || sname == NULL)
 	    errx(1, "malloc");
 	decode_type(am, n, t->subtype, 0, NULL, forwstr, sname, NULL, depth + 1);
-	fprintf (codefile,
+	fprintf (am->codefile,
 		 "(%s)->len++;\n"
 		 "len = %s_origlen - ret;\n"
 		 "}\n"
@@ -498,19 +499,19 @@ decode_type(asn1_module am, const char *name, const Type *t, int optional, struc
 		 name,
 		 tmpstr, tmpstr);
 	if (t->range)
-	    range_check(name, "len", forwstr, t->range);
+	    range_check(am, name, "len", forwstr, t->range);
 	free (n);
 	free (sname);
 	break;
     }
     case TGeneralizedTime:
-	decode_primitive ("generalized_time", name, forwstr);
+	decode_primitive (am, "generalized_time", name, forwstr);
 	break;
     case TGeneralString:
-	decode_primitive ("general_string", name, forwstr);
+	decode_primitive (am, "general_string", name, forwstr);
 	break;
     case TTeletexString:
-	decode_primitive ("general_string", name, forwstr);
+	decode_primitive (am, "general_string", name, forwstr);
 	break;
     case TTag:{
     	char *tname = NULL, *typestring = NULL;
@@ -539,25 +540,25 @@ decode_type(asn1_module am, const char *name, const Type *t, int optional, struc
 	if (asprintf(&typestring, "%s_type", tmpstr) < 0 || typestring == NULL)
 	    errx(1, "malloc");
 
-	fprintf(codefile,
+	fprintf(am->codefile,
 		"{\n"
 		"size_t %s_datalen;\n"
 		"Der_type %s;\n",
 		tmpstr, typestring);
         if (replace_tag)
-            fprintf(codefile,
+            fprintf(am->codefile,
                     "const unsigned char *psave%u = p;\n"
                     "unsigned char *pcopy%u;\n"
                     "size_t lensave%u, lsave%u;\n",
                     depth, depth, depth, depth);
         else if (support_ber)
-	    fprintf(codefile,
+	    fprintf(am->codefile,
 		    "int is_indefinite%u;\n", depth);
         if (!replace_tag)
-            fprintf(codefile,
+            fprintf(am->codefile,
                     "size_t %s_oldlen;\n", tmpstr);
 
-	fprintf(codefile, "e = der_match_tag_and_length(p, len, %s, &%s, %s, "
+	fprintf(am->codefile, "e = der_match_tag_and_length(p, len, %s, &%s, %s, "
 		"&%s_datalen, &l);\n",
 		classname(t->tag.tagclass),
 		typestring,
@@ -568,14 +569,14 @@ decode_type(asn1_module am, const char *name, const Type *t, int optional, struc
 	if (!replace_tag && support_ber && t->subtype->type == TOctetString) {
 	    ide = typestring;
 	} else {
-	    fprintf(codefile,
+	    fprintf(am->codefile,
 		    "if (e == 0 && %s != %s) { e = ASN1_BAD_ID; }\n",
 		    typestring,
 		    prim ? "PRIM" : "CONS");
 	}
 
 	if(optional) {
-	    fprintf(codefile,
+	    fprintf(am->codefile,
 		    "if(e) {\n"
 		    "%s = NULL;\n"
 		    "} else {\n"
@@ -587,17 +588,17 @@ decode_type(asn1_module am, const char *name, const Type *t, int optional, struc
 
             if (asprintf(&s, "*(%s)", name) == -1 || s == NULL)
                 return ENOMEM;
-            fprintf(codefile, "if (e && e != ASN1_MISSING_FIELD) %s;\n", forwstr);
-            fprintf(codefile, "if (e == ASN1_MISSING_FIELD) {\n");
-            gen_assign_defval(s, defval);
+            fprintf(am->codefile, "if (e && e != ASN1_MISSING_FIELD) %s;\n", forwstr);
+            fprintf(am->codefile, "if (e == ASN1_MISSING_FIELD) {\n");
+            GEN_ASSIGN_DEFVAL(am, s, defval);
             free(s);
-            fprintf(codefile, "e = 0; l= 0;\n} else {\n");
+            fprintf(am->codefile, "e = 0; l= 0;\n} else {\n");
         } else {
-            fprintf(codefile, "if (e) %s;\n", forwstr);
+            fprintf(am->codefile, "if (e) %s;\n", forwstr);
         }
 
         if (replace_tag)
-            fprintf(codefile,
+            fprintf(am->codefile,
                     "lsave%u = %s_datalen + l;\n"
                     "lensave%u = len;\n"
                     "e = der_replace_tag(p, len, &pcopy%u, &len, asn1_tag_class_%s, %s, asn1_tag_tag_%s);\n"
@@ -608,20 +609,20 @@ decode_type(asn1_module am, const char *name, const Type *t, int optional, struc
                     t->subtype->symbol->gen_name,
                     forwstr, depth);
         else
-            fprintf(codefile,
+            fprintf(am->codefile,
                     "p += l; len -= l; ret += l;\n");
         if (!replace_tag)
-            fprintf(codefile,
+            fprintf(am->codefile,
                     "%s_oldlen = len;\n",
                     tmpstr);
 	if (support_ber && !replace_tag)
-	    fprintf (codefile,
+	    fprintf (am->codefile,
 		     "if((is_indefinite%u = _heim_fix_dce(%s_datalen, &len)) < 0)\n"
 		     "{ e = ASN1_BAD_FORMAT; %s; }\n"
 		     "if (is_indefinite%u) { if (len < 2) { e = ASN1_OVERRUN; %s; } len -= 2; }",
 		     depth, tmpstr, forwstr, depth, forwstr);
 	else if (!replace_tag)
-	    fprintf(codefile,
+	    fprintf(am->codefile,
 		    "if (%s_datalen > len) { e = ASN1_OVERRUN; %s; }\n"
 		    "len = %s_datalen;\n", tmpstr, forwstr, tmpstr);
 	if (asprintf (&tname, "%s_Tag", tmpstr) < 0 || tname == NULL)
@@ -632,14 +633,14 @@ decode_type(asn1_module am, const char *name, const Type *t, int optional, struc
          */
         decode_type(am, name, t->subtype, 0, NULL, forwstr, tname, ide, depth + 1);
         if (replace_tag)
-            fprintf(codefile,
+            fprintf(am->codefile,
                     "p = psave%u + lsave%u;\n"
                     "len = lensave%u - lsave%u;\n"
                     "ret += lsave%u - l;\n"
                     "free(pcopy%u);\n",
                     depth, depth, depth, depth, depth, depth);
         else if(support_ber)
-	    fprintf(codefile,
+	    fprintf(am->codefile,
 		    "if(is_indefinite%u){\n"
 		    "len += 2;\n"
 		    "e = der_match_tag_and_length(p, len, "
@@ -655,14 +656,14 @@ decode_type(asn1_module am, const char *name, const Type *t, int optional, struc
 		    forwstr,
 		    typestring, forwstr);
         if (!replace_tag)
-            fprintf(codefile,
+            fprintf(am->codefile,
                     "len = %s_oldlen - %s_datalen;\n",
                     tmpstr, tmpstr);
 	if (optional)
-	    fprintf(codefile, "}\n");
+	    fprintf(am->codefile, "}\n");
         else if (defval)
-	    fprintf(codefile, "}\n");
-	fprintf(codefile, "}\n");
+	    fprintf(am->codefile, "}\n");
+	fprintf(am->codefile, "}\n");
 	free(tname);
 	free(typestring);
 	break;
@@ -688,13 +689,13 @@ decode_type(asn1_module am, const char *name, const Type *t, int optional, struc
 
 	    find_tag(am, tt, &cl, &ty, &tag);
 
-	    fprintf(codefile,
+	    fprintf(am->codefile,
 		    "%sif (der_match_tag(p, len, %s, %s, %s, NULL) == 0) {\n",
 		    els,
 		    classname(cl),
 		    ty ? "CONS" : "PRIM",
 		    valuename(cl, tag));
-	    fprintf(codefile,
+	    fprintf(am->codefile,
 		    "(%s)->element = %s;\n",
 		    name, m->label);
 	    if (asprintf (&s, "%s(%s)->u.%s", m->optional ? "" : "&",
@@ -703,12 +704,12 @@ decode_type(asn1_module am, const char *name, const Type *t, int optional, struc
             decode_type(am, s, m->type, m->optional, NULL, forwstr, m->gen_name,
                         NULL, depth + 1);
 	    free(s);
-	    fprintf(codefile,
+	    fprintf(am->codefile,
 		    "}\n");
 	    els = "else ";
 	}
 	if (have_ellipsis) {
-	    fprintf(codefile,
+	    fprintf(am->codefile,
 		    "else {\n"
 		    "(%s)->element = %s;\n"
 		    "(%s)->u.%s.data = calloc(1, len);\n"
@@ -728,7 +729,7 @@ decode_type(asn1_module am, const char *name, const Type *t, int optional, struc
 		    name, have_ellipsis->gen_name,
 		    name, have_ellipsis->gen_name);
 	} else {
-	    fprintf(codefile,
+	    fprintf(am->codefile,
 		    "else {\n"
 		    "e = ASN1_PARSE_ERROR;\n"
 		    "%s;\n"
@@ -738,31 +739,31 @@ decode_type(asn1_module am, const char *name, const Type *t, int optional, struc
 	break;
     }
     case TUTCTime:
-	decode_primitive ("utctime", name, forwstr);
+	decode_primitive (am, "utctime", name, forwstr);
 	break;
     case TUTF8String:
-	decode_primitive ("utf8string", name, forwstr);
+	decode_primitive (am, "utf8string", name, forwstr);
 	break;
     case TPrintableString:
-	decode_primitive ("printable_string", name, forwstr);
+	decode_primitive (am, "printable_string", name, forwstr);
 	break;
     case TIA5String:
-	decode_primitive ("ia5_string", name, forwstr);
+	decode_primitive (am, "ia5_string", name, forwstr);
 	break;
     case TBMPString:
-	decode_primitive ("bmp_string", name, forwstr);
+	decode_primitive (am, "bmp_string", name, forwstr);
 	break;
     case TUniversalString:
-	decode_primitive ("universal_string", name, forwstr);
+	decode_primitive (am, "universal_string", name, forwstr);
 	break;
     case TVisibleString:
-	decode_primitive ("visible_string", name, forwstr);
+	decode_primitive (am, "visible_string", name, forwstr);
 	break;
     case TNull:
-	fprintf (codefile, "/* NULL */\n");
+	fprintf (am->codefile, "/* NULL */\n");
 	break;
     case TOID:
-	decode_primitive ("oid", name, forwstr);
+	decode_primitive (am, "oid", name, forwstr);
 	break;
     default :
 	abort ();
@@ -775,7 +776,7 @@ c_generate_type_decode (asn1_module am, const Symbol *s)
 {
     int preserve = preserve_type(s->name) ? TRUE : FALSE;
 
-    fprintf (codefile, "int ASN1CALL\n"
+    fprintf (am->codefile, "int ASN1CALL\n"
 	     "decode_%s(const unsigned char *p HEIMDAL_UNUSED_ATTRIBUTE,"
 	     " size_t len HEIMDAL_UNUSED_ATTRIBUTE, %s *data, size_t *size)\n"
 	     "{\n",
@@ -806,29 +807,29 @@ c_generate_type_decode (asn1_module am, const Symbol *s)
     case TTag:
     case TType:
     case TChoice:
-	fprintf (codefile,
+	fprintf (am->codefile,
 		 "size_t ret = 0;\n"
 		 "size_t l HEIMDAL_UNUSED_ATTRIBUTE;\n"
 		 "int e HEIMDAL_UNUSED_ATTRIBUTE;\n");
 	if (preserve)
-	    fprintf (codefile, "const unsigned char *begin = p;\n");
+	    fprintf (am->codefile, "const unsigned char *begin = p;\n");
 
-	fprintf (codefile, "\n");
-	fprintf (codefile, "memset(data, 0, sizeof(*data));\n"); /* hack to avoid `unused variable' */
+	fprintf (am->codefile, "\n");
+	fprintf (am->codefile, "memset(data, 0, sizeof(*data));\n"); /* hack to avoid `unused variable' */
 
 	decode_type(am, "data", s->type, 0, NULL, "goto fail", "Top", NULL, 1);
 	if (preserve)
-	    fprintf (codefile,
+	    fprintf (am->codefile,
 		     "data->_save.data = calloc(1, ret);\n"
 		     "if (data->_save.data == NULL) { \n"
 		     "e = ENOMEM; goto fail; \n"
 		     "}\n"
 		     "data->_save.length = ret;\n"
 		     "memcpy(data->_save.data, begin, ret);\n");
-	fprintf (codefile,
+	fprintf (am->codefile,
 		 "if(size) *size = ret;\n"
 		 "return 0;\n");
-	fprintf (codefile,
+	fprintf (am->codefile,
 		 "fail:\n"
 		 "free_%s(data);\n"
 		 "return e;\n",
@@ -837,5 +838,5 @@ c_generate_type_decode (asn1_module am, const Symbol *s)
     default:
 	abort ();
     }
-    fprintf (codefile, "}\n\n");
+    fprintf (am->codefile, "}\n\n");
 }

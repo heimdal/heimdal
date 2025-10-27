@@ -35,7 +35,6 @@
 
 #include "gen_locl.h"
 
-extern const char *enum_prefix;
 extern int prefix_enum;
 
 RCSID("$Id$");
@@ -1212,7 +1211,7 @@ define_type(asn1_module am, int level, const char *name, const char *basename,
 	if(t->members) {
             Member *m;
 
-            label_prefix = prefix_enum ? name : (enum_prefix ? enum_prefix : "");
+            label_prefix = prefix_enum ? name : (am->enum_prefix ? am->enum_prefix : "");
             label_prefix_sep = prefix_enum ? "_" : "";
             fprintf (am->headerfile, "enum %s {\n", (opts & DEF_TYPE_TYPEDEFP) ? name : "");
             fprintf(am->jsonfile, "\"ttype\":\"INTEGER\",\"ctype\":\"enum\","
@@ -1361,7 +1360,7 @@ define_type(asn1_module am, int level, const char *name, const char *basename,
         if (t->symbol && t->symbol->emitted_definition)
             break;
 
-        label_prefix = prefix_enum ? name : (enum_prefix ? enum_prefix : "");
+        label_prefix = prefix_enum ? name : (am->enum_prefix ? am->enum_prefix : "");
         label_prefix_sep = prefix_enum ? "_" : "";
 	space(am, level);
 	fprintf (am->headerfile, "enum %s {\n", (opts & DEF_TYPE_TYPEDEFP) ? name : "");
@@ -2082,12 +2081,14 @@ c_generate_type (asn1_module am, const Symbol *s)
     }
 }
 
-asn1_module new_asn1_module(enum codegen_language lang, getarg_strings preserve, getarg_strings seq)
+asn1_module new_asn1_module(enum codegen_language lang, getarg_strings preserve,
+                            getarg_strings seq, const char *enum_prefix)
 {
     asn1_module am = calloc(sizeof(struct asn1_module), 1);
     if (am == NULL)
         errx(1, "malloc");
 
+    am->enum_prefix = enum_prefix;
     am->headerbase = STEM;
     am->preserve = preserve;
     am->seq = seq;

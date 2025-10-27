@@ -253,7 +253,7 @@ static const char *enum_prefix;
 const char *name;
 int prefix_enum;
 int fuzzer_flag;
-int support_ber;
+static int support_ber;
 int template_flag;
 int rfc1510_bitstring;
 static int one_code_file;
@@ -457,7 +457,8 @@ main(int argc, char **argv)
 #endif
     }
 
-    asn1_module am = new_asn1_module(CODEGEN_C, preserve, seq, enum_prefix, one_code_file);
+    asn1_module am = new_asn1_module(CODEGEN_C, preserve, seq, enum_prefix,
+                                     one_code_file, support_ber);
 
     if (am->preserve.num_strings)
         mergesort_r(am->preserve.strings, am->preserve.num_strings,

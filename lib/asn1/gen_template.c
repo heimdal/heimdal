@@ -1610,7 +1610,7 @@ c_generate_template(asn1_module am, const Symbol *s)
 	    s->gen_name,
 	    s->gen_name,
 	    dupname,
-	    support_ber ? "A1_PF_ALLOW_BER" : "0");
+	    am->support_ber ? "A1_PF_ALLOW_BER" : "0");
 
     fprintf(f,
 	    "\n"

@@ -94,7 +94,7 @@ typedef struct asn1_module {
     getarg_strings seq;
     const char *enum_prefix;
     unsigned int one_code_file:1;
-    unsigned int support_ber:1;// TODO
+    unsigned int support_ber:1;
     unsigned int parse_units_flag:1;// TODO
     unsigned int prefix_enum:1; /* Should be a getarg_strings of bitrsting types to do this for */ // TODO
     unsigned int rfc1510_bitstring:1; /* Should be a getarg_strings of bitrsting types to do this for */ // TODO
@@ -126,7 +126,8 @@ enum codegen_language {
 };
 
 asn1_module new_asn1_module(enum codegen_language, getarg_strings,
-                            getarg_strings, const char*, unsigned int);
+                            getarg_strings, const char*, unsigned int,
+                            unsigned int);
 
 #define GENERATE_TYPE(/* asn1_module */ am, /* const Symbol * */ s) \
     am->generate_type(am, s)

@@ -2082,7 +2082,8 @@ c_generate_type (asn1_module am, const Symbol *s)
 }
 
 asn1_module new_asn1_module(enum codegen_language lang, getarg_strings preserve,
-                            getarg_strings seq, const char *enum_prefix, unsigned int one_code_file)
+                            getarg_strings seq, const char *enum_prefix,
+                            unsigned int one_code_file, unsigned int support_ber)
 {
     asn1_module am = calloc(sizeof(struct asn1_module), 1);
     if (am == NULL)
@@ -2093,6 +2094,7 @@ asn1_module new_asn1_module(enum codegen_language lang, getarg_strings preserve,
     am->one_code_file = one_code_file;
     am->preserve = preserve;
     am->seq = seq;
+    am->support_ber = support_ber;
     // am->tlistmaster = HEIM_TAILQ_HEAD_INITIALIZER(tlistmaster);
 
     switch (lang) {

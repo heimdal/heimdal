@@ -551,7 +551,7 @@ decode_type(asn1_module am, const char *name, const Type *t, int optional, struc
                     "unsigned char *pcopy%u;\n"
                     "size_t lensave%u, lsave%u;\n",
                     depth, depth, depth, depth);
-        else if (support_ber)
+        else if (am->support_ber)
 	    fprintf(am->codefile,
 		    "int is_indefinite%u;\n", depth);
         if (!replace_tag)
@@ -566,7 +566,7 @@ decode_type(asn1_module am, const char *name, const Type *t, int optional, struc
 		tmpstr);
 
 	/* XXX hardcode for now */
-	if (!replace_tag && support_ber && t->subtype->type == TOctetString) {
+	if (!replace_tag && am->support_ber && t->subtype->type == TOctetString) {
 	    ide = typestring;
 	} else {
 	    fprintf(am->codefile,
@@ -615,7 +615,7 @@ decode_type(asn1_module am, const char *name, const Type *t, int optional, struc
             fprintf(am->codefile,
                     "%s_oldlen = len;\n",
                     tmpstr);
-	if (support_ber && !replace_tag)
+	if (am->support_ber && !replace_tag)
 	    fprintf (am->codefile,
 		     "if((is_indefinite%u = _heim_fix_dce(%s_datalen, &len)) < 0)\n"
 		     "{ e = ASN1_BAD_FORMAT; %s; }\n"
@@ -639,7 +639,7 @@ decode_type(asn1_module am, const char *name, const Type *t, int optional, struc
                     "ret += lsave%u - l;\n"
                     "free(pcopy%u);\n",
                     depth, depth, depth, depth, depth, depth);
-        else if(support_ber)
+        else if(am->support_ber)
 	    fprintf(am->codefile,
 		    "if(is_indefinite%u){\n"
 		    "len += 2;\n"

@@ -97,27 +97,25 @@ struct sexport {
     struct sexport *next;
 };
 
-static struct sexport *exports = NULL;
-
 void
-add_export (const char *name)
+add_export (asn1_module am, const char *name)
 {
     struct sexport *tmp = emalloc (sizeof(*tmp));
 
     tmp->name   = name;
-    tmp->next   = exports;
-    exports     = tmp;
+    tmp->next   = am->exports;
+    am->exports = tmp;
 }
 
 int
-is_export(const char *name)
+is_export(asn1_module am, const char *name)
 {
     struct sexport *tmp;
 
-    if (exports == NULL) /* no export list, all exported */
+    if (am->exports == NULL) /* no export list, all exported */
 	return 1;
 
-    for (tmp = exports; tmp != NULL; tmp = tmp->next) {
+    for (tmp = am->exports; tmp != NULL; tmp = tmp->next) {
 	if (strcmp(tmp->name, name) == 0) {
 	    tmp->defined = 1;
 	    return 1;
@@ -519,14 +517,14 @@ c_generate_constant (asn1_module am, const Symbol *s)
                 "enum { %s = %lld };\n\n",
                 s->gen_name, s->gen_name, s->gen_name,
                 (long long)s->value->u.integervalue);
-        if (is_export(s->name))
+        if (is_export(am, s->name))
             fprintf(symsfile, "ASN1_SYM_INTVAL(\"%s\", \"%s\", %s, %lld)\n",
                     s->name, s->gen_name, s->gen_name,
                     (long long)s->value->u.integervalue);
         fprintf(am->jsonfile,
                 "{\"name\":\"%s\",\"gen_name\":\"%s\",\"type\":\"INTEGER\","
                 "\"constant\":true,\"exported\":%s,\"value\":%lld}\n",
-                s->name, s->gen_name, is_export(s->name) ? "true" : "false",
+                s->name, s->gen_name, is_export(am, s->name) ? "true" : "false",
                 (long long)s->value->u.integervalue);
 	break;
     case nullvalue:
@@ -553,7 +551,7 @@ c_generate_constant (asn1_module am, const Symbol *s)
                 "{\"name\":\"%s\",\"gen_name\":\"%s\","
                 "\"type\":\"OBJECT IDENTIFIER\","
                 "\"constant\":true,\"exported\":%s,\"value\":[\n",
-                s->name, s->gen_name, is_export(s->name) ? "true" : "false");
+                s->name, s->gen_name, is_export(am, s->name) ? "true" : "false");
 	fprintf (am->headerfile, "/* OBJECT IDENTIFIER %s ::= { ", s->name);
 	for (i = 0; i < len; i++) {
 	    o = list[i];
@@ -580,7 +578,7 @@ c_generate_constant (asn1_module am, const Symbol *s)
 		 s->gen_name, (unsigned long)len, s->gen_name);
 
         fprintf(am->oidsfile, "DEFINE_OID_WITH_NAME(%s)\n", s->gen_name);
-        if (is_export(s->name))
+        if (is_export(am, s->name))
             fprintf(symsfile, "ASN1_SYM_OID(\"%s\", \"%s\", %s)\n",
                     s->name, s->gen_name, s->gen_name);
 
@@ -1191,7 +1189,7 @@ define_type(asn1_module am, int level, const char *name, const char *basename,
     fprintf(am->jsonfile, "{\"name\":\"%s\",\"gen_name\":\"%s\","
             "\"is_type\":true,\"exported\":%s,\"typedef\":%s,",
             basename, name,
-            t->symbol && is_export(t->symbol->name) ? "true" : "false",
+            t->symbol && is_export(am, t->symbol->name) ? "true" : "false",
             (opts & DEF_TYPE_TYPEDEFP) ? "true" : "false");
 
     switch (t->type) {
@@ -1981,7 +1979,7 @@ generate_type_header (asn1_module am, const Symbol *s)
     if (s->emitted_definition)
         return;
 
-    if (is_export(s->name))
+    if (is_export(am, s->name))
         fprintf(symsfile, "ASN1_SYM_TYPE(\"%s\", \"%s\", %s)\n",
                 s->name, s->gen_name, s->gen_name);
 
@@ -2042,7 +2040,7 @@ c_generate_type (asn1_module am, const Symbol *s)
 
     /* generate prototypes */
 
-    if (is_export(s->name)) {
+    if (is_export(am, s->name)) {
 	h = am->headerfile;
 	exp = "ASN1EXP ";
     } else {

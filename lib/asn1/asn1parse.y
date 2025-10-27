@@ -440,7 +440,7 @@ Exports		: kw_EXPORTS referencenames ';'
 		{
 		    struct string_list *sl;
 		    for(sl = $2; sl != NULL; sl = sl->next)
-			add_export(sl->string);
+			add_export(am, sl->string);
 		}
 		| kw_EXPORTS kw_ALL
 		| /* empty */

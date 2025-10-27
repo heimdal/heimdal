@@ -35,8 +35,8 @@
 
 #include <roken.h>
 
-void lex_error_message (const char *, ...)
-__attribute__ ((format (printf, 1, 2)));
+void lex_error_message (void *, const char *, ...)
+__attribute__ ((format (printf, 2, 3)));
 extern int error_flag;
 
 typedef void* yyscan_t;

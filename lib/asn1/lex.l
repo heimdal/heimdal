@@ -269,7 +269,7 @@ WITH			{ return kw_WITH; }
 			  yylval->constant = strtoll((const char *)yytext,
 						   &e, 0);
 			  if(e == y)
-			    lex_error_message("malformed constant (%s)", yytext);
+			    lex_error_message(yyextra, "malformed constant (%s)", yytext);
 			  else
 			    return NUMBER;
 			}
@@ -289,7 +289,7 @@ WITH			{ return kw_WITH; }
 \n			{ ++lineno; }
 \.\.\.			{ return ELLIPSIS; }
 \.\.			{ return RANGE; }
-.			{ lex_error_message("Ignoring char(%c)\n", *yytext); }
+.			{ lex_error_message(yyextra, "Ignoring char(%c)\n", *yytext); }
 %%
 
 int
@@ -299,12 +299,12 @@ yywrap (yyscan_t yyscanner)
 }
 
 void
-lex_error_message (const char *format, ...)
+lex_error_message (void *am, const char *format, ...)
 {
     va_list args;
 
     va_start (args, format);
-    fprintf (stderr, "%s:%d: ", get_filename(), lineno);
+    fprintf (stderr, "%s:%d: ", get_filename(am), lineno);
     vfprintf (stderr, format, args);
     va_end (args);
     error_flag++;

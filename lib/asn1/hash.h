@@ -37,6 +37,9 @@
 
 /* $Id$ */
 
+#ifndef __HASH_H__
+#define __HASH_H__
+
 struct hashentry {		/* Entry in bucket */
      struct hashentry **prev;
      struct hashentry *next;
@@ -72,8 +75,8 @@ int _hashtabdel(Hashtab *htab,	/* The table */
 		int freep);	/* Free data part? */
 
 void hashtabforeach(Hashtab *htab,
-		    int (*func)(void *ptr, void *arg),
-		    void *arg);
+		    int (*func)(void *, void *ptr, void *arg),
+		    void *, void *arg);
 
 unsigned hashadd(const char *s);		/* Standard hash function */
 unsigned hashcaseadd(const char *s);		/* Standard hash function */
@@ -85,3 +88,5 @@ unsigned hashjpw(const char *s);		/* another hash function */
 #define hashtabdel(htab,key)  _hashtabdel(htab,key,FALSE)
 
 #define hashtabfree(htab,key) _hashtabdel(htab,key,TRUE) /* Do! */
+
+#endif    // __HASH_H__

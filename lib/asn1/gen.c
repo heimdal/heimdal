@@ -45,7 +45,6 @@ FILE *symsfile;
 
 #define STEM "asn1"
 
-static const char *orig_filename;
 static char *privheader, *header, *template;
 static const char *headerbase = STEM;
 
@@ -130,17 +129,17 @@ is_export(const char *name)
 }
 
 const char *
-get_filename (void)
+get_filename (asn1_module am)
 {
-    return orig_filename;
+    return am->orig_filename;
 }
 
 void
-init_generate (const char *filename, const char *base)
+c_init_generate (asn1_module am, const char *filename, const char *base)
 {
     char *fn = NULL;
 
-    orig_filename = filename;
+    am->orig_filename = filename;
     if (base != NULL) {
 	headerbase = strdup(base);
 	if (headerbase == NULL)
@@ -416,7 +415,7 @@ gen_compare_defval(const char *var, struct value *val)
 }
 
 void
-generate_header_of_codefile(const char *name)
+c_generate_header_of_codefile(asn1_module am, const char *name)
 {
     char *filename = NULL;
 
@@ -445,7 +444,7 @@ generate_header_of_codefile(const char *name)
 	     "#include <errno.h>\n"
 	     "#include <limits.h>\n"
 	     "#include <%s>\n",
-	     orig_filename,
+	     am->orig_filename,
 	     type_file_string);
 
     fprintf (codefile,
@@ -542,7 +541,7 @@ c_generate_constant (asn1_module am, const Symbol *s)
 	char *gen_upper;
 
 	if (!one_code_file)
-	    generate_header_of_codefile(s->gen_name);
+	    GENERATE_HEADER_OF_CODEFILE(am, s->gen_name);
 
 	list = objid2list(s->value->u.objectidentifiervalue);
 	for (len = 0; list && list[len]; len++)
@@ -2025,7 +2024,7 @@ c_generate_type (asn1_module am, const Symbol *s)
     const char * exp;
 
     if (!one_code_file)
-	generate_header_of_codefile(s->gen_name);
+	GENERATE_HEADER_OF_CODEFILE(am, s->gen_name);
 
     generate_type_header(s);
 
@@ -2109,6 +2108,8 @@ asn1_module new_asn1_module(enum codegen_language lang)
             am->generate_type_copy = c_generate_type_copy;
             am->generate_type_seq = c_generate_type_seq;
             am->generate_glue = c_generate_glue;
+            am->generate_header_of_codefile = c_generate_header_of_codefile;
+            am->init_generate = c_init_generate;
     };
 
     return am;

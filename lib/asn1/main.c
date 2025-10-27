@@ -467,14 +467,14 @@ main(int argc, char **argv)
         mergesort_r(decorate.strings, decorate.num_strings,
                     sizeof(decorate.strings[0]), strcmp4mergesort_r, ":");
 
+    asn1_module am = new_asn1_module(CODEGEN_C);
     yyscan_t scanner;
     yylex_init(&scanner);
     yyset_in(yyin, scanner);
-    init_generate(file, name);
-    asn1_module am = new_asn1_module(CODEGEN_C);
+    INIT_GENERATE(am, file, name);
 
     if (one_code_file)
-	generate_header_of_codefile(name);
+	GENERATE_HEADER_OF_CODEFILE(am, name);
 
     initsym ();
     ret = yyparse (scanner, am);

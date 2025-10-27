@@ -147,8 +147,8 @@ _hashtabdel(Hashtab * htab, void *ptr, int freep)
 /* Do something for each element */
 
 void
-hashtabforeach(Hashtab * htab, int (*func) (void *ptr, void *arg),
-	       void *arg)
+hashtabforeach(Hashtab * htab, int (*func) (void *am, void *ptr, void *arg),
+	       void *am, void *arg)
 {
     Hashentry **h, *g;
 
@@ -156,7 +156,7 @@ hashtabforeach(Hashtab * htab, int (*func) (void *ptr, void *arg),
 
     for (h = htab->tab; h < &htab->tab[htab->sz]; ++h)
 	for (g = *h; g; g = g->next)
-	    if ((*func) (g->ptr, arg))
+	    if ((*func) (am, g->ptr, arg))
 		return;
 }
 

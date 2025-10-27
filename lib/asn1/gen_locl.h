@@ -49,111 +49,14 @@
 #include <err.h>
 #include <roken.h>
 #include <getarg.h>
+#include "gen_module.h"
 #include "hash.h"
 #include "symbol.h"
 #include "asn1-common.h"
 #include "der.h"
 #include "der-private.h"
 
-/*
- * XXX We need to move all module state out of globals and into a struct that
- * we pass around when parsing and compiling a module, and also that we keep on
- * a linked list of parsed modules.
- *
- * This is needed to:
- *
- *  - implement IMPORTS correctly, because we need to know the type of a symbol
- *    in order to emit an extern declaration of it
- *  - implement value parsing
- *  - implement an ASN.1 library that does value parsing
- *
- * Value parsing, in particular, would be fantastic.  We could then have
- * options in hxtool(1) to load arbitrary ASN.1 modules and then parse SAN
- * values given in ASN.1 value syntax on the command-line or in files.  Eat
- * your heart out OpenSSL if we do this!
- *
- * As well we'll need a `-I' option to the compiler so it knows where to find
- * modules to IMPORT FROM.
- */
-typedef struct asn1_module {
-    /* Name of ASN.1 module file: */
-    const char *orig_filename;
-    /* Name of file to always include for common type definitions: */
-    const char *type_file_string;
-    /* Name of public header file for module: */
-    const char *header;
-    /* Name of private header file for module: */
-    const char *privheader;
-    /* Basename of module: */
-    const char *headerbase;
-    /* Open stdio file handles for output: */
-    FILE *jsonfile;
-    FILE *privheaderfile;
-    FILE *headerfile;
-    FILE *oidsfile;
-    FILE *codefile;
-    FILE *logfile;
-    FILE *templatefile;
-    /* Module contents: */
-    struct sexport *exports;
-    struct import *imports;
-    Hashtab *htab;  /* symbols */
-    /* Template state: */
-    struct templatehead *template;
-    struct tlisthead *tlistmaster;
-    /* CLI options and flags needed everywhere: */
-    getarg_strings preserve;
-    getarg_strings seq;
-    const char *enum_prefix;
-    unsigned int one_code_file:1;
-    unsigned int support_ber:1;
-    unsigned int parse_units_flag:1;
-    unsigned int prefix_enum:1; /* Should be a getarg_strings of bitrsting types to do this for */
-    unsigned int rfc1510_bitstring:1; /* Should be a getarg_strings of bitrsting types to do this for */
-
-    void (*generate_type) (struct asn1_module *, const Symbol *);
-    void (*generate_type_header_forwards) (struct asn1_module *, const Symbol *);
-    void (*generate_constant) (struct asn1_module *, const Symbol *);
-    void (*generate_type_encode) (struct asn1_module *, const Symbol *);
-    void (*generate_type_decode) (struct asn1_module *, const Symbol *);
-    void (*generate_type_free) (struct asn1_module *, const Symbol *);
-    void (*generate_type_length) (struct asn1_module *, const Symbol *);
-    void (*generate_type_print_stub) (struct asn1_module *, const Symbol *);
-    void (*generate_type_copy) (struct asn1_module *, const Symbol *);
-    void (*generate_type_seq) (struct asn1_module *, const Symbol *);
-    void (*generate_glue) (struct asn1_module *, const Type *, const char*);
-} *asn1_module;
-
-enum codegen_language {
-    CODEGEN_C = 0
-};
-
-asn1_module new_asn1_module(enum codegen_language);
 void generate_types(asn1_module);
-
-#define GENERATE_TYPE(/* asn1_module */ am, /* const Symbol * */ s) \
-    am->generate_type(am, s)
-#define GENERATE_TYPE_HEADER_FORWARDS(/* asn1_module */ am, /*const Symbol * */ s) \
-    am->generate_type_header_forwards(am, s)
-#define GENERATE_CONSTANT(/* asn1_module */ am, /*const Symbol * */ s) \
-    am->generate_constant(am, s)
-#define GENERATE_TYPE_ENCODE(/* asn1_module */ am, /*const Symbol * */ s) \
-    am->generate_type_encode(am, s)
-#define GENERATE_TYPE_DECODE(/* asn1_module */ am, /*const Symbol * */ s) \
-    am->generate_type_decode(am, s)
-#define GENERATE_TYPE_FREE(/* asn1_module */ am, /*const Symbol * */ s) \
-    am->generate_type_free(am, s)
-#define GENERATE_TYPE_LENGTH(/* asn1_module */ am, /*const Symbol * */ s) \
-    am->generate_type_length(am, s)
-#define GENERATE_TYPE_PRINT_STUB(/* asn1_module */ am, /*const Symbol * */ s) \
-    am->generate_type_print_stub(am, s)
-#define GENERATE_TYPE_COPY(/* asn1_module */ am, /*const Symbol * */ s) \
-    am->generate_type_copy(am, s)
-#define GENERATE_TYPE_SEQ(/* asn1_module */ am, /*const Symbol * */ s) \
-    am->generate_type_seq(am, s)
-#define GENERATE_GLUE(/* asn1_module */ am, /*const Type * */ t, /* const char* */ gen_name) \
-    am->generate_glue(am, t, gen_name)
-
 void c_generate_type (asn1_module, const Symbol *);
 void c_generate_type_header_forwards(asn1_module, const Symbol *);
 void c_generate_constant (asn1_module, const Symbol *);
@@ -174,8 +77,8 @@ void gen_assign_defval(const char *, struct value *);
 
 int objid_cmp(struct objid *, struct objid *);
 
-void init_generate (const char *, const char *);
-const char *get_filename (void);
+void c_init_generate (asn1_module, const char *, const char *);
+const char *get_filename (asn1_module);
 void close_generate(void);
 void add_import(const char *);
 void add_export(const char *);
@@ -203,7 +106,7 @@ struct decoration {
 };
 int decorate_type(const char *, struct decoration *, ssize_t *);
 
-void generate_header_of_codefile(const char *);
+void c_generate_header_of_codefile(asn1_module, const char *);
 void close_codefile(void);
 
 void get_open_type_defn_fields(const Type *, Member **, Member **, Field **,

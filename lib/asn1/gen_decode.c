@@ -57,7 +57,7 @@ decode_primitive (const char *typename, const char *name, const char *forwstr)
 }
 
 static void
-find_tag (const Type *t,
+find_tag (asn1_module am, const Type *t,
 	  Der_class *cl, Der_type *ty, unsigned *tag)
 {
     switch (t->type) {
@@ -145,13 +145,13 @@ find_tag (const Type *t,
     case TType:
 	if ((t->symbol->stype == Stype && t->symbol->type == NULL)
 	    || t->symbol->stype == SUndefined) {
-	    lex_error_message("%s is imported or still undefined, "
+	    lex_error_message(am, "%s is imported or still undefined, "
 			      " can't generate tag checking data in CHOICE "
 			      "without this information",
 			      t->symbol->name);
 	    exit(1);
 	}
-	find_tag(t->symbol->type, cl, ty, tag);
+	find_tag(am, t->symbol->type, cl, ty, tag);
 	return;
     case TUTCTime:
 	*cl  = ASN1_C_UNIV;
@@ -210,7 +210,7 @@ range_check(const char *name,
 }
 
 static int
-decode_type(const char *name, const Type *t, int optional, struct value *defval,
+decode_type(asn1_module am, const char *name, const Type *t, int optional, struct value *defval,
 	    const char *forwstr, const char *tmpstr, const char *dertype,
 	    unsigned int depth)
 {
@@ -353,7 +353,7 @@ decode_type(const char *name, const Type *t, int optional, struct value *defval,
 	    if (asprintf (&s, "%s(%s)->%s", m->optional ? "" : "&",
 			  name, m->gen_name) < 0 || s == NULL)
 		errx(1, "malloc");
-            decode_type(s, m->type, m->optional, m->defval, forwstr,
+            decode_type(am, s, m->type, m->optional, m->defval, forwstr,
                         m->gen_name, NULL, depth + 1);
 	    free (s);
 	}
@@ -415,7 +415,7 @@ decode_type(const char *name, const Type *t, int optional, struct value *defval,
 			"%s = calloc(1, sizeof(*%s));\n"
 			"if (%s == NULL) { e = ENOMEM; %s; }\n",
 			s, s, s, forwstr);
-	    decode_type (s, mst, 0, NULL, forwstr, m->gen_name, NULL, depth + 1);
+	    decode_type (am, s, mst, 0, NULL, forwstr, m->gen_name, NULL, depth + 1);
 	    free (s);
 
 	    fprintf(codefile, "members |= (1ULL << %u);\n", memno);
@@ -488,7 +488,7 @@ decode_type(const char *name, const Type *t, int optional, struct value *defval,
 	    errx(1, "malloc");
 	if (asprintf (&sname, "%s_s_of", tmpstr) < 0 || sname == NULL)
 	    errx(1, "malloc");
-	decode_type(n, t->subtype, 0, NULL, forwstr, sname, NULL, depth + 1);
+	decode_type(am, n, t->subtype, 0, NULL, forwstr, sname, NULL, depth + 1);
 	fprintf (codefile,
 		 "(%s)->len++;\n"
 		 "len = %s_origlen - ret;\n"
@@ -630,7 +630,7 @@ decode_type(const char *name, const Type *t, int optional, struct value *defval,
          * If `replace_tag' then here `p' and `len' will be the copy mutated by
          * der_replace_tag().
          */
-        decode_type(name, t->subtype, 0, NULL, forwstr, tname, ide, depth + 1);
+        decode_type(am, name, t->subtype, 0, NULL, forwstr, tname, ide, depth + 1);
         if (replace_tag)
             fprintf(codefile,
                     "p = psave%u + lsave%u;\n"
@@ -686,7 +686,7 @@ decode_type(const char *name, const Type *t, int optional, struct value *defval,
 		continue;
 	    }
 
-	    find_tag(tt, &cl, &ty, &tag);
+	    find_tag(am, tt, &cl, &ty, &tag);
 
 	    fprintf(codefile,
 		    "%sif (der_match_tag(p, len, %s, %s, %s, NULL) == 0) {\n",
@@ -700,7 +700,7 @@ decode_type(const char *name, const Type *t, int optional, struct value *defval,
 	    if (asprintf (&s, "%s(%s)->u.%s", m->optional ? "" : "&",
 			  name, m->gen_name) < 0 || s == NULL)
 		errx(1, "malloc");
-            decode_type(s, m->type, m->optional, NULL, forwstr, m->gen_name,
+            decode_type(am, s, m->type, m->optional, NULL, forwstr, m->gen_name,
                         NULL, depth + 1);
 	    free(s);
 	    fprintf(codefile,
@@ -816,7 +816,7 @@ c_generate_type_decode (asn1_module am, const Symbol *s)
 	fprintf (codefile, "\n");
 	fprintf (codefile, "memset(data, 0, sizeof(*data));\n"); /* hack to avoid `unused variable' */
 
-	decode_type("data", s->type, 0, NULL, "goto fail", "Top", NULL, 1);
+	decode_type(am, "data", s->type, 0, NULL, "goto fail", "Top", NULL, 1);
 	if (preserve)
 	    fprintf (codefile,
 		     "data->_save.data = calloc(1, ret);\n"

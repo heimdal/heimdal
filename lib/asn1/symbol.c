@@ -110,21 +110,21 @@ getsym(char *name)
 }
 
 static int
-checkfunc(void *ptr, void *arg)
+checkfunc(void *am, void *ptr, void *arg)
 {
     Symbol *s = ptr;
     if (s->stype == SUndefined) {
-	lex_error_message("%s is still undefined\n", s->name);
+	lex_error_message(am, "%s is still undefined\n", s->name);
 	*(int *) arg = 1;
     }
     return 0;
 }
 
 int
-checkundefined(void)
+checkundefined(asn1_module am)
 {
     int f = 0;
-    hashtabforeach(htab, checkfunc, &f);
+    hashtabforeach(htab, checkfunc, am, &f);
     return f;
 }
 
@@ -145,7 +145,7 @@ generate_types(asn1_module am)
 {
     Symbol *s;
 
-    if (checkundefined())
+    if (checkundefined(am))
         errx(1, "Some types are undefined");
     HEIM_TAILQ_FOREACH_REVERSE(s, &symbols, symhead, symlist) {
         if (s->stype == Stype && s->type)

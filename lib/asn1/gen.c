@@ -40,7 +40,7 @@ extern int prefix_enum;
 
 RCSID("$Id$");
 
-FILE *logfile, *templatefile;
+FILE *templatefile;
 FILE *symsfile;
 
 #define STEM "asn1"
@@ -292,8 +292,8 @@ c_init_generate (asn1_module am, const char *filename, const char *base)
     fprintf (am->headerfile, "#endif\n\n");
     if (asprintf(&fn, "%s_files", base) < 0 || fn == NULL)
 	errx(1, "malloc");
-    logfile = fopen(fn, "w");
-    if (logfile == NULL)
+    am->logfile = fopen(fn, "w");
+    if (am->logfile == NULL)
 	err (1, "open %s", fn);
     free(fn);
     fn = NULL;
@@ -363,9 +363,9 @@ close_generate (asn1_module am)
     if (!symsfile) abort();
     if (fclose(symsfile) == EOF)
         err(1, "writes to symbols file failed");
-    if (!logfile) abort();
-    fprintf(logfile, "\n");
-    if (fclose(logfile) == EOF)
+    if (!am->logfile) abort();
+    fprintf(am->logfile, "\n");
+    if (fclose(am->logfile) == EOF)
         err(1, "writes to log file failed");
 }
 
@@ -426,8 +426,8 @@ c_generate_header_of_codefile(asn1_module am, const char *name)
     am->codefile = fopen (filename, "w");
     if (am->codefile == NULL)
 	err (1, "fopen %s", filename);
-    if (logfile)
-        fprintf(logfile, "%s ", filename);
+    if (am->logfile)
+        fprintf(am->logfile, "%s ", filename);
     free(filename);
     filename = NULL;
     fprintf (am->codefile,

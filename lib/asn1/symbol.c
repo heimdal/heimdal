@@ -141,7 +141,7 @@ generate_1type(void *ptr, void *arg)
 #endif
 
 void
-generate_types(void)
+generate_types(asn1_module am)
 {
     Symbol *s;
 
@@ -149,7 +149,7 @@ generate_types(void)
         errx(1, "Some types are undefined");
     HEIM_TAILQ_FOREACH_REVERSE(s, &symbols, symhead, symlist) {
         if (s->stype == Stype && s->type)
-            generate_type(s);
+            GENERATE_TYPE(am, s);
     }
     //hashtabforeach(htab, generate_1type, NULL);
 }

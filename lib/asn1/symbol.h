@@ -260,7 +260,6 @@ Symbol *addsym (char *);
 Symbol *getsym(char *name);
 void output_name (char *);
 int checkundefined(void);
-void generate_types(void);
 void emitted_asn1(const Symbol *);
 void emitted_declaration(const Symbol *);
 void emitted_definition(const Symbol *);

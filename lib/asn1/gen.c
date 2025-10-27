@@ -2019,7 +2019,7 @@ generate_type_header_forwards(const Symbol *s)
 }
 
 void
-generate_type (const Symbol *s)
+c_generate_type (asn1_module am, const Symbol *s)
 {
     FILE *h;
     const char * exp;
@@ -2098,7 +2098,7 @@ asn1_module new_asn1_module(enum codegen_language lang)
     switch (lang) {
         case CODEGEN_C:
         default:
-            break;
+            am->generate_type = c_generate_type;
     };
 
     return am;

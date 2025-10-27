@@ -880,7 +880,7 @@ TypeAssignment	: Identifier EEQUAL Type
 			$3->subtype->symbol = s;
 		    }
 		    if (original_order)
-			generate_type(s);
+			GENERATE_TYPE(am, s);
 		    else
 			generate_type_header_forwards(s);
 		}

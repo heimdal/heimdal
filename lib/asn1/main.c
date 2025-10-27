@@ -481,7 +481,7 @@ main(int argc, char **argv)
     if(ret != 0 || error_flag != 0)
 	exit(1);
     if (!original_order)
-        generate_types();
+        generate_types(am);
     if (argc != optidx)
 	fclose(yyin);
 

@@ -242,7 +242,7 @@ decode_type(asn1_module am, const char *name, const Type *t, int optional, struc
              * `name' starts with an ampersand here and is not an lvalue.
              * We skip the ampersand and then it is an lvalue.
              */
-            GEN_ASSIGN_DEFVAL(am, name + 1, defval);
+            gen_assign_defval(am, name + 1, defval);
             fprintf(am->codefile,
                     "} else if (e) { %s;\n"
                     "} else { p += l; len -= l; ret += l; }\n",
@@ -439,7 +439,7 @@ decode_type(asn1_module am, const char *name, const Type *t, int optional, struc
 	    if(m->optional)
 		fprintf(am->codefile, "%s = NULL;\n", s);
 	    else if(m->defval)
-		GEN_ASSIGN_DEFVAL(am, s, m->defval);
+		gen_assign_defval(am, s, m->defval);
 	    else
 		fprintf(am->codefile, "return ASN1_MISSING_FIELD;\n");
 	    free(s);
@@ -590,7 +590,7 @@ decode_type(asn1_module am, const char *name, const Type *t, int optional, struc
                 return ENOMEM;
             fprintf(am->codefile, "if (e && e != ASN1_MISSING_FIELD) %s;\n", forwstr);
             fprintf(am->codefile, "if (e == ASN1_MISSING_FIELD) {\n");
-            GEN_ASSIGN_DEFVAL(am, s, defval);
+            gen_assign_defval(am, s, defval);
             free(s);
             fprintf(am->codefile, "e = 0; l= 0;\n} else {\n");
         } else {
@@ -772,7 +772,7 @@ decode_type(asn1_module am, const char *name, const Type *t, int optional, struc
 }
 
 void
-c_generate_type_decode (asn1_module am, const Symbol *s)
+generate_type_decode (asn1_module am, const Symbol *s)
 {
     int preserve = preserve_type(am, s->name) ? TRUE : FALSE;
 

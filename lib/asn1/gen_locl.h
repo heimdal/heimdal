@@ -57,30 +57,30 @@
 #include "der-private.h"
 
 void generate_types(asn1_module);
-void c_generate_type (asn1_module, const Symbol *);
-void c_generate_type_header_forwards(asn1_module, const Symbol *);
-void c_generate_constant (asn1_module, const Symbol *);
-void c_generate_type_encode (asn1_module, const Symbol *);
-void c_generate_type_decode (asn1_module, const Symbol *);
-void c_generate_type_free (asn1_module, const Symbol *);
-void c_generate_type_length (asn1_module, const Symbol *);
-void c_generate_type_print_stub(asn1_module, const Symbol *);
-void c_generate_type_copy (asn1_module, const Symbol *);
-void c_generate_type_seq (asn1_module, const Symbol *);
-void c_generate_glue (asn1_module, const Type *, const char*);
+void generate_type (asn1_module, const Symbol *);
+void generate_type_header_forwards(asn1_module, const Symbol *);
+void generate_constant (asn1_module, const Symbol *);
+void generate_type_encode (asn1_module, const Symbol *);
+void generate_type_decode (asn1_module, const Symbol *);
+void generate_type_free (asn1_module, const Symbol *);
+void generate_type_length (asn1_module, const Symbol *);
+void generate_type_print_stub(asn1_module, const Symbol *);
+void generate_type_copy (asn1_module, const Symbol *);
+void generate_type_seq (asn1_module, const Symbol *);
+void generate_glue (asn1_module, const Type *, const char*);
 
 const char *classname(Der_class);
 const char *valuename(Der_class, int);
 
-void c_gen_compare_defval(asn1_module, const char *, struct value *);
-void c_gen_assign_defval(asn1_module, const char *, struct value *);
+void gen_compare_defval(asn1_module, const char *, struct value *);
+void gen_assign_defval(asn1_module, const char *, struct value *);
 
 int objid_cmp(struct objid *, struct objid *);
 
-void c_init_generate (asn1_module, const char *, const char *);
+void init_generate (asn1_module, const char *, const char *);
 const char *get_filename (asn1_module);
 void close_generate(asn1_module am);
-void c_add_import(asn1_module, const char *);
+void add_import(asn1_module, const char *);
 void add_export(asn1_module, const char *);
 int is_export(asn1_module, const char *);
 int yyparse(void *scanner, asn1_module am);
@@ -106,7 +106,7 @@ struct decoration {
 };
 int decorate_type(const char *, struct decoration *, ssize_t *);
 
-void c_generate_header_of_codefile(asn1_module, const char *);
+void generate_header_of_codefile(asn1_module, const char *);
 void close_codefile(asn1_module);
 
 void get_open_type_defn_fields(const Type *, Member **, Member **, Field **,
@@ -115,10 +115,10 @@ void sort_object_set(IOSObjectSet *, Field *, IOSObject ***, size_t *);
 int object_cmp(const void *, const void *);
 
 int is_template_compat (const Symbol *);
-void c_generate_template(asn1_module am, const Symbol *);
-void c_generate_template_type_forward(asn1_module am, const char *);
-void c_generate_template_objectset_forwards(asn1_module, const Symbol *);
-void c_gen_template_import(asn1_module am, const Symbol *);
+void generate_template(asn1_module am, const Symbol *);
+void generate_template_type_forward(asn1_module am, const char *);
+void generate_template_objectset_forwards(asn1_module, const Symbol *);
+void gen_template_import(asn1_module am, const Symbol *);
 
 struct objid **objid2list(struct objid *);
 

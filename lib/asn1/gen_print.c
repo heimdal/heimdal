@@ -34,7 +34,7 @@
 #include "gen_locl.h"
 
 void
-c_generate_type_print_stub(asn1_module am, const Symbol *s)
+generate_type_print_stub(asn1_module am, const Symbol *s)
 {
     fprintf(am->codefile, "char * ASN1CALL\n"
 	    "print_%s(const %s *data, int flags)\n"

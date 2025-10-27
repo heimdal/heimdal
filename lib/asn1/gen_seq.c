@@ -44,7 +44,7 @@ get_code_file(asn1_module am)
 }
 
 void
-c_generate_type_seq (asn1_module am, const Symbol *s)
+generate_type_seq (asn1_module am, const Symbol *s)
 {
     char *subname;
     Type *type;

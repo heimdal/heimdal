@@ -68,7 +68,7 @@ struct import {
 };
 
 void
-c_add_import (asn1_module am, const char *module)
+add_import (asn1_module am, const char *module)
 {
     struct import *tmp = emalloc (sizeof(*tmp));
 
@@ -126,7 +126,7 @@ get_filename (asn1_module am)
 }
 
 void
-c_init_generate (asn1_module am, const char *filename, const char *base)
+init_generate (asn1_module am, const char *filename, const char *base)
 {
     char *fn = NULL;
 
@@ -362,7 +362,7 @@ close_generate (asn1_module am)
 }
 
 void
-c_gen_assign_defval(asn1_module am, const char *var, struct value *val)
+gen_assign_defval(asn1_module am, const char *var, struct value *val)
 {
     switch(val->type) {
     case stringvalue:
@@ -384,7 +384,7 @@ c_gen_assign_defval(asn1_module am, const char *var, struct value *val)
 }
 
 void
-c_gen_compare_defval(asn1_module am, const char *var, struct value *val)
+gen_compare_defval(asn1_module am, const char *var, struct value *val)
 {
     switch(val->type) {
     case stringvalue:
@@ -406,7 +406,7 @@ c_gen_compare_defval(asn1_module am, const char *var, struct value *val)
 }
 
 void
-c_generate_header_of_codefile(asn1_module am, const char *name)
+generate_header_of_codefile(asn1_module am, const char *name)
 {
     char *filename = NULL;
 
@@ -494,7 +494,7 @@ objid2list(struct objid *o)
 }
 
 void
-c_generate_constant (asn1_module am, const Symbol *s)
+generate_constant (asn1_module am, const Symbol *s)
 {
     switch(s->value->type) {
     case booleanvalue:
@@ -532,7 +532,7 @@ c_generate_constant (asn1_module am, const Symbol *s)
 	char *gen_upper;
 
 	if (!am->one_code_file)
-	    GENERATE_HEADER_OF_CODEFILE(am, s->gen_name);
+	    generate_header_of_codefile(am, s->gen_name);
 
 	list = objid2list(s->value->u.objectidentifiervalue);
 	for (len = 0; list && list[len]; len++)
@@ -1710,7 +1710,7 @@ declare_type(asn1_module am, const Symbol *s, Type *t, int typedefp)
                     DEF_TYPE_PRESERVE | DEF_TYPE_TYPEDEFP |
                     (s->emitted_declaration ? 0 : DEF_TYPE_EMIT_NAME));
         if (template_flag && !s->emitted_declaration)
-            GENERATE_TEMPLATE_TYPE_FORWARD(am, s->gen_name);
+            generate_template_type_forward(am, s->gen_name);
         emitted_declaration(s);
         return;
     case TInteger:
@@ -1734,7 +1734,7 @@ declare_type(asn1_module am, const Symbol *s, Type *t, int typedefp)
                     DEF_TYPE_PRESERVE | DEF_TYPE_TYPEDEFP |
                      (s->emitted_declaration ? 0 : DEF_TYPE_EMIT_NAME));
         if (template_flag && !s->emitted_declaration)
-            GENERATE_TEMPLATE_TYPE_FORWARD(am, s->gen_name);
+            generate_template_type_forward(am, s->gen_name);
         emitted_declaration(s);
         emitted_definition(s);
         return;
@@ -2000,38 +2000,38 @@ generate_type_header (asn1_module am, const Symbol *s)
 }
 
 void
-c_generate_type_header_forwards(asn1_module am, const Symbol *s)
+generate_type_header_forwards(asn1_module am, const Symbol *s)
 {
     declare_type(am, s, s->type, TRUE);
     fprintf(am->headerfile, "\n");
     if (template_flag)
-        GENERATE_TEMPLATE_TYPE_FORWARD(am, s->gen_name);
+        generate_template_type_forward(am, s->gen_name);
 }
 
 void
-c_generate_type (asn1_module am, const Symbol *s)
+generate_type (asn1_module am, const Symbol *s)
 {
     FILE *h;
     const char * exp;
 
     if (!am->one_code_file)
-	GENERATE_HEADER_OF_CODEFILE(am, s->gen_name);
+	generate_header_of_codefile(am, s->gen_name);
 
     generate_type_header(am, s);
 
     if (template_flag)
-	GENERATE_TEMPLATE(am, s);
+	generate_template(am, s);
 
     if (template_flag == 0 || is_template_compat(s) == 0) {
-	GENERATE_TYPE_ENCODE (am, s);
-	GENERATE_TYPE_DECODE (am, s);
-	GENERATE_TYPE_FREE (am, s);
-	GENERATE_TYPE_LENGTH (am, s);
-	GENERATE_TYPE_COPY (am, s);
-        GENERATE_TYPE_PRINT_STUB(am, s);
+	generate_type_encode (am, s);
+	generate_type_decode (am, s);
+	generate_type_free (am, s);
+	generate_type_length (am, s);
+	generate_type_copy (am, s);
+        generate_type_print_stub(am, s);
     }
-    GENERATE_TYPE_SEQ (am, s);
-    GENERATE_GLUE (am, s->type, s->gen_name);
+    generate_type_seq (am, s);
+    generate_glue (am, s->type, s->gen_name);
 
     /* generate prototypes */
 
@@ -2099,31 +2099,6 @@ asn1_module new_asn1_module(enum codegen_language lang, getarg_strings preserve,
     am->seq = seq;
     am->support_ber = support_ber;
     // am->tlistmaster = HEIM_TAILQ_HEAD_INITIALIZER(tlistmaster);
-
-    switch (lang) {
-        case CODEGEN_C:
-        default:
-            am->generate_type = c_generate_type;
-            am->generate_type_header_forwards = c_generate_type_header_forwards;
-            am->generate_constant = c_generate_constant;
-            am->generate_type_encode = c_generate_type_encode;
-            am->generate_type_decode = c_generate_type_decode;
-            am->generate_type_free = c_generate_type_free;
-            am->generate_type_length = c_generate_type_length;
-            am->generate_type_print_stub = c_generate_type_print_stub;
-            am->generate_type_copy = c_generate_type_copy;
-            am->generate_type_seq = c_generate_type_seq;
-            am->generate_glue = c_generate_glue;
-            am->generate_header_of_codefile = c_generate_header_of_codefile;
-            am->init_generate = c_init_generate;
-            am->add_import = c_add_import;
-            am->gen_assign_defval = c_gen_assign_defval;
-            am->gen_compare_defval = c_gen_compare_defval;
-            am->generate_template_type_forward = c_generate_template_type_forward;
-            am->generate_template_objectset_forwards = c_generate_template_objectset_forwards;
-            am->generate_template = c_generate_template;
-            am->gen_template_import = c_gen_template_import;
-    };
 
     return am;
 }

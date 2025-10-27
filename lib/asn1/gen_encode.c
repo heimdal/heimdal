@@ -288,7 +288,7 @@ encode_type (asn1_module am, const char *name, const Type *t, const char *tmpstr
 			 "if(%s) ",
 			 s);
 	    else if(m->defval)
-		GEN_COMPARE_DEFVAL(am, s + 1, m->defval);
+		gen_compare_defval(am, s + 1, m->defval);
 	    fprintf (am->codefile, "{\n");
 	    fprintf (am->codefile, "size_t %s_oldret HEIMDAL_UNUSED_ATTRIBUTE = ret;\n", tmpstr);
 	    fprintf (am->codefile, "ret = 0;\n");
@@ -697,7 +697,7 @@ encode_type (asn1_module am, const char *name, const Type *t, const char *tmpstr
 }
 
 void
-c_generate_type_encode (asn1_module am, const Symbol *s)
+generate_type_encode (asn1_module am, const Symbol *s)
 {
     fprintf (am->codefile, "int ASN1CALL\n"
 	     "encode_%s(unsigned char *p HEIMDAL_UNUSED_ATTRIBUTE, size_t len HEIMDAL_UNUSED_ATTRIBUTE,"

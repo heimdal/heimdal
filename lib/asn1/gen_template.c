@@ -1456,7 +1456,7 @@ gen_extern_stubs(FILE *f, const char *name)
 }
 
 void
-c_gen_template_import(asn1_module am, const Symbol *s)
+gen_template_import(asn1_module am, const Symbol *s)
 {
     FILE *f = get_code_file(am);
 
@@ -1467,13 +1467,13 @@ c_gen_template_import(asn1_module am, const Symbol *s)
 }
 
 void
-c_generate_template_type_forward(asn1_module am, const char *name)
+generate_template_type_forward(asn1_module am, const char *name)
 {
     fprintf(get_code_file(am), "extern const struct asn1_template asn1_%s[];\n", name);
 }
 
 void
-c_generate_template_objectset_forwards(asn1_module am, const Symbol *s)
+generate_template_objectset_forwards(asn1_module am, const Symbol *s)
 {
     if (!template_flag)
         return;
@@ -1561,7 +1561,7 @@ generate_template_type(asn1_module am,
 
 
 void
-c_generate_template(asn1_module am, const Symbol *s)
+generate_template(asn1_module am, const Symbol *s)
 {
     FILE *f = get_code_file(am);
     const char *dupname;

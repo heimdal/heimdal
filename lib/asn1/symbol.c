@@ -147,7 +147,7 @@ generate_types(asn1_module am)
         errx(1, "Some types are undefined");
     HEIM_TAILQ_FOREACH_REVERSE(s, &symbols, symhead, symlist) {
         if (s->stype == Stype && s->type)
-            GENERATE_TYPE(am, s);
+            generate_type(am, s);
     }
     //hashtabforeach(am->htab, generate_1type, NULL);
 }

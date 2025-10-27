@@ -157,7 +157,7 @@ length_type (asn1_module am, const char *name, const Type *t,
 	    if (m->optional)
 		fprintf (am->codefile, "if(%s)", s);
 	    else if(m->defval)
-		GEN_COMPARE_DEFVAL(am, s + 1, m->defval);
+		gen_compare_defval(am, s + 1, m->defval);
 	    fprintf (am->codefile, "{\n"
 		     "size_t %s_oldret = %s;\n"
 		     "%s = 0;\n", tmpstr, variable, variable);
@@ -295,7 +295,7 @@ length_type (asn1_module am, const char *name, const Type *t,
 }
 
 void
-c_generate_type_length (asn1_module am, const Symbol *s)
+generate_type_length (asn1_module am, const Symbol *s)
 {
     fprintf (am->codefile,
 	     "size_t ASN1CALL\n"

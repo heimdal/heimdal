@@ -226,7 +226,7 @@ copy_type (asn1_module am, const char *from, const char *to, const Type *t, int 
 }
 
 void
-c_generate_type_copy (asn1_module am, const Symbol *s)
+generate_type_copy (asn1_module am, const Symbol *s)
 {
   struct decoration deco;
   ssize_t more_deco = -1;

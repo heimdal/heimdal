@@ -430,9 +430,9 @@ SymbolsFromModule: referencenames kw_FROM Identifier objid_opt
 		    for(sl = $1; sl != NULL; sl = sl->next) {
 			Symbol *s = addsym(am, sl->string);
 			s->stype = Stype;
-			GEN_TEMPLATE_IMPORT(am, s);
+			gen_template_import(am, s);
 		    }
-		    ADD_IMPORT(am, $3);
+		    add_import(am, $3);
 		}
 		;
 
@@ -529,7 +529,7 @@ ObjectSetAssignment
                     s->objectset->symbol = s->objectset->symbol ? s->objectset->symbol : s;
 		    s->objectset->iosclass = $2;
                     validate_object_set($4);
-                    GENERATE_TEMPLATE_OBJECTSET_FORWARDS(am, s);
+                    generate_template_objectset_forwards(am, s);
 		}
 		;
 
@@ -880,9 +880,9 @@ TypeAssignment	: Identifier EEQUAL Type
 			$3->subtype->symbol = s;
 		    }
 		    if (original_order)
-			GENERATE_TYPE(am, s);
+			generate_type(am, s);
 		    else
-			GENERATE_TYPE_HEADER_FORWARDS(am, s);
+			generate_type_header_forwards(am, s);
 		}
 		;
 
@@ -1500,7 +1500,7 @@ ValueAssignment	: VALUE_IDENTIFIER Type EEQUAL Value
 
 			s->stype = SValue;
 			s->value = $4;
-			GENERATE_CONSTANT (am, s);
+			generate_constant (am, s);
 			/*
 			 * Save this value's name so we can know some name for
 			 * this value wherever _a_ name may be needed for it.

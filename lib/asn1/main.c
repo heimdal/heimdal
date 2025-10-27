@@ -474,10 +474,10 @@ main(int argc, char **argv)
     yyscan_t scanner;
     yylex_init(&scanner);
     yyset_in(yyin, scanner);
-    INIT_GENERATE(am, file, name);
+    init_generate(am, file, name);
 
     if (am->one_code_file)
-	GENERATE_HEADER_OF_CODEFILE(am, name);
+	generate_header_of_codefile(am, name);
 
     initsym (am);
     ret = yyparse (scanner, am);

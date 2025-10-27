@@ -98,27 +98,6 @@ typedef struct asn1_module {
     unsigned int parse_units_flag:1;
     unsigned int prefix_enum:1; /* Should be a getarg_strings of bitrsting types to do this for */
     unsigned int rfc1510_bitstring:1; /* Should be a getarg_strings of bitrsting types to do this for */
-
-    void (*generate_type) (struct asn1_module *, const struct symbol *);
-    void (*generate_type_header_forwards) (struct asn1_module *, const struct symbol *);
-    void (*generate_constant) (struct asn1_module *, const struct symbol *);
-    void (*generate_type_encode) (struct asn1_module *, const struct symbol *);
-    void (*generate_type_decode) (struct asn1_module *, const struct symbol *);
-    void (*generate_type_free) (struct asn1_module *, const struct symbol *);
-    void (*generate_type_length) (struct asn1_module *, const struct symbol *);
-    void (*generate_type_print_stub) (struct asn1_module *, const struct symbol *);
-    void (*generate_type_copy) (struct asn1_module *, const struct symbol *);
-    void (*generate_type_seq) (struct asn1_module *, const struct symbol *);
-    void (*generate_glue) (struct asn1_module *, const struct type *, const char*);
-    void (*generate_header_of_codefile) (struct asn1_module *, const char *);
-    void (*init_generate) (struct asn1_module *, const char *, const char *);
-    void (*add_import) (struct asn1_module *, const char *);
-    void (*gen_assign_defval) (struct asn1_module *, const char *, struct value *);
-    void (*gen_compare_defval) (struct asn1_module *, const char *, struct value *);
-    void (*generate_template_type_forward) (struct asn1_module *, const char *);
-    void (*generate_template_objectset_forwards) (struct asn1_module *, const struct symbol *);
-    void (*generate_template) (struct asn1_module *, const struct symbol *);
-    void (*gen_template_import) (struct asn1_module *, const struct symbol *);
 } *asn1_module;
 
 enum codegen_language {
@@ -129,46 +108,5 @@ asn1_module new_asn1_module(enum codegen_language, getarg_strings,
                             getarg_strings, const char*, unsigned int,
                             unsigned int, unsigned int, unsigned int,
                             unsigned int);
-
-#define GENERATE_TYPE(/* asn1_module */ am, /* const Symbol * */ s) \
-    am->generate_type(am, s)
-#define GENERATE_TYPE_HEADER_FORWARDS(/* asn1_module */ am, /* const Symbol * */ s) \
-    am->generate_type_header_forwards(am, s)
-#define GENERATE_CONSTANT(/* asn1_module */ am, /* const Symbol * */ s) \
-    am->generate_constant(am, s)
-#define GENERATE_TYPE_ENCODE(/* asn1_module */ am, /* const Symbol * */ s) \
-    am->generate_type_encode(am, s)
-#define GENERATE_TYPE_DECODE(/* asn1_module */ am, /* const Symbol * */ s) \
-    am->generate_type_decode(am, s)
-#define GENERATE_TYPE_FREE(/* asn1_module */ am, /* const Symbol * */ s) \
-    am->generate_type_free(am, s)
-#define GENERATE_TYPE_LENGTH(/* asn1_module */ am, /* const Symbol * */ s) \
-    am->generate_type_length(am, s)
-#define GENERATE_TYPE_PRINT_STUB(/* asn1_module */ am, /* const Symbol * */ s) \
-    am->generate_type_print_stub(am, s)
-#define GENERATE_TYPE_COPY(/* asn1_module */ am, /* const Symbol * */ s) \
-    am->generate_type_copy(am, s)
-#define GENERATE_TYPE_SEQ(/* asn1_module */ am, /* const Symbol * */ s) \
-    am->generate_type_seq(am, s)
-#define GENERATE_GLUE(/* asn1_module */ am, /* const Type * */ t, /* const char* */ gen_name) \
-    am->generate_glue(am, t, gen_name)
-#define GENERATE_HEADER_OF_CODEFILE(/* asn1_module */ am, /* const char * */ name) \
-    am->generate_header_of_codefile(am, name)
-#define INIT_GENERATE(/* asn1_module */ am, /* const char * */ filename, /*const char * */ base) \
-    am->init_generate(am, filename, base)
-#define ADD_IMPORT(/* asn1_module */ am, /* const char * */ module) \
-    am->add_import(am, module)
-#define GEN_ASSIGN_DEFVAL(/* asn1_module */ am, /* const char * */ var, /* const char * */ val) \
-    am->gen_assign_defval(am, var, val)
-#define GEN_COMPARE_DEFVAL(/* asn1_module */ am, /* const char * */ var, /* const char * */ val) \
-    am->gen_compare_defval(am, var, val)
-#define GENERATE_TEMPLATE_TYPE_FORWARD(/* asn1_module */ am, /* const char * */ name) \
-    am->generate_template_type_forward(am, name)
-#define GENERATE_TEMPLATE_OBJECTSET_FORWARDS(/* asn1_module */ am, /* const Symbol * */ s) \
-    am->generate_template_objectset_forwards(am, s)
-#define GENERATE_TEMPLATE(/* asn1_module */ am, /* const Symbol * */ s) \
-    am->generate_template(am, s)
-#define GEN_TEMPLATE_IMPORT(/* asn1_module */ am, /* const Symbol * */ s) \
-    am->gen_template_import(am, s)
 
 #endif  // __GEN_MODULE_H__

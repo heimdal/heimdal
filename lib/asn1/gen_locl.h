@@ -119,6 +119,7 @@ typedef struct asn1_module {
     void (*generate_type_free) (struct asn1_module *, const Symbol *);    
     void (*generate_type_length) (struct asn1_module *, const Symbol *);    
     void (*generate_type_print_stub) (struct asn1_module *, const Symbol *);    
+    void (*generate_type_copy) (struct asn1_module *, const Symbol *);    
 } *asn1_module;
 
 enum codegen_language {
@@ -144,6 +145,8 @@ void generate_types(asn1_module);
     am->generate_type_length(am, s)
 #define GENERATE_TYPE_PRINT_STUB(/* asn1_module */ am, /*const Symbol * */ s) \
     am->generate_type_print_stub(am, s)
+#define GENERATE_TYPE_COPY(/* asn1_module */ am, /*const Symbol * */ s) \
+    am->generate_type_copy(am, s)
 
 void c_generate_type (asn1_module, const Symbol *);
 void c_generate_type_header_forwards(asn1_module, const Symbol *);
@@ -153,7 +156,7 @@ void c_generate_type_decode (asn1_module, const Symbol *);
 void c_generate_type_free (asn1_module, const Symbol *);
 void c_generate_type_length (asn1_module, const Symbol *);
 void c_generate_type_print_stub(asn1_module, const Symbol *);
-void generate_type_copy (const Symbol *);
+void c_generate_type_copy (asn1_module, const Symbol *);
 void generate_type_seq (const Symbol *);
 void generate_glue (const Type *, const char*);
 

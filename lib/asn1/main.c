@@ -128,9 +128,9 @@ bsearch_strings(struct getarg_strings *strs, const char *p,
 }
 
 int
-preserve_type(const char *p)
+preserve_type(asn1_module am, const char *p)
 {
-    return bsearch_strings(&preserve, p, '\0', 0) > -1;
+    return bsearch_strings(&am->preserve, p, '\0', 0) > -1;
 }
 
 int
@@ -457,9 +457,12 @@ main(int argc, char **argv)
 #endif
     }
 
-    if (preserve.num_strings)
-        mergesort_r(preserve.strings, preserve.num_strings,
-                    sizeof(preserve.strings[0]), strcmp4mergesort_r, "");
+    asn1_module am = new_asn1_module(CODEGEN_C);
+    am->preserve = preserve;    // TODO find a better way to initialize
+
+    if (am->preserve.num_strings)
+        mergesort_r(am->preserve.strings, am->preserve.num_strings,
+                    sizeof(am->preserve.strings[0]), strcmp4mergesort_r, "");
     if (seq.num_strings)
         mergesort_r(seq.strings, seq.num_strings, sizeof(seq.strings[0]),
                     strcmp4mergesort_r, "");
@@ -467,7 +470,6 @@ main(int argc, char **argv)
         mergesort_r(decorate.strings, decorate.num_strings,
                     sizeof(decorate.strings[0]), strcmp4mergesort_r, ":");
 
-    asn1_module am = new_asn1_module(CODEGEN_C);
     yyscan_t scanner;
     yylex_init(&scanner);
     yyset_in(yyin, scanner);

@@ -774,7 +774,7 @@ decode_type(asn1_module am, const char *name, const Type *t, int optional, struc
 void
 c_generate_type_decode (asn1_module am, const Symbol *s)
 {
-    int preserve = preserve_type(s->name) ? TRUE : FALSE;
+    int preserve = preserve_type(am, s->name) ? TRUE : FALSE;
 
     fprintf (am->codefile, "int ASN1CALL\n"
 	     "decode_%s(const unsigned char *p HEIMDAL_UNUSED_ATTRIBUTE,"

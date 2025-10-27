@@ -1539,7 +1539,7 @@ generate_template_type(asn1_module am,
     fprintf(get_code_file(am), "/* generate_template_type: %s */\n", tl->name);
 
     tlist_header(tl, "{ 0%s%s, sizeof(%s), ((void *)(uintptr_t)%lu) }",
-		 (symname && preserve_type(symname)) ? "|A1_HF_PRESERVE" : "",
+		 (symname && preserve_type(am, symname)) ? "|A1_HF_PRESERVE" : "",
 		 have_ellipsis ? "|A1_HF_ELLIPSIS" : "", szt, tlist_count(tl));
 
     free(szt);

@@ -230,7 +230,7 @@ c_generate_type_copy (asn1_module am, const Symbol *s)
 {
   struct decoration deco;
   ssize_t more_deco = -1;
-  int preserve = preserve_type(s->name) ? TRUE : FALSE;
+  int preserve = preserve_type(am, s->name) ? TRUE : FALSE;
   int save_used_fail = used_fail;
 
   used_fail = 0;

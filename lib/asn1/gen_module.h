@@ -87,17 +87,17 @@ typedef struct asn1_module {
     struct import *imports;
     Hashtab *htab;  /* symbols */
     /* Template state: */
-    struct templatehead *template;
-    struct tlisthead *tlistmaster;
+    struct templatehead *template;  // TODO
+    struct tlisthead *tlistmaster;   // TODO
     /* CLI options and flags needed everywhere: */
     getarg_strings preserve;
-    getarg_strings seq;
-    const char *enum_prefix;
-    unsigned int one_code_file:1;
-    unsigned int support_ber:1;
-    unsigned int parse_units_flag:1;
-    unsigned int prefix_enum:1; /* Should be a getarg_strings of bitrsting types to do this for */
-    unsigned int rfc1510_bitstring:1; /* Should be a getarg_strings of bitrsting types to do this for */
+    getarg_strings seq;// TODO
+    const char *enum_prefix;// TODO
+    unsigned int one_code_file:1;// TODO
+    unsigned int support_ber:1;// TODO
+    unsigned int parse_units_flag:1;// TODO
+    unsigned int prefix_enum:1; /* Should be a getarg_strings of bitrsting types to do this for */ // TODO
+    unsigned int rfc1510_bitstring:1; /* Should be a getarg_strings of bitrsting types to do this for */ // TODO
 
     void (*generate_type) (struct asn1_module *, const struct symbol *);
     void (*generate_type_header_forwards) (struct asn1_module *, const struct symbol *);

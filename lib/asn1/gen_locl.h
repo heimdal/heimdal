@@ -87,7 +87,7 @@ int yyparse(void *scanner, asn1_module am);
 int is_primitive_type(const Type *);
 int is_tagged_type(const Type *);
 
-int preserve_type(const char *);
+int preserve_type(asn1_module am, const char *);
 int seq_type(const char *);
 
 struct decoration {

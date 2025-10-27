@@ -1985,7 +1985,7 @@ generate_type_header (asn1_module am, const Symbol *s)
         fprintf(am->headerfile, "typedef ");
         define_type(am, 0, s->gen_name, s->gen_name, NULL, s->type,
                     DEF_TYPE_TYPEDEFP | DEF_TYPE_EMIT_NAME |
-                    (preserve_type(s->name) ? DEF_TYPE_PRESERVE : 0));
+                    (preserve_type(am, s->name) ? DEF_TYPE_PRESERVE : 0));
     } else if (s->type->type == TType) {
         /* This is a type alias and we've already declared it */
     } else if (s->type->type == TTag &&
@@ -1995,7 +1995,7 @@ generate_type_header (asn1_module am, const Symbol *s)
     } else {
         define_type(am, 0, s->gen_name, s->gen_name, NULL, s->type,
                     DEF_TYPE_TYPEDEFP |
-                    (preserve_type(s->name) ? DEF_TYPE_PRESERVE : 0));
+                    (preserve_type(am, s->name) ? DEF_TYPE_PRESERVE : 0));
     }
     fprintf(am->headerfile, "\n");
 
@@ -2089,6 +2089,7 @@ asn1_module new_asn1_module(enum codegen_language lang)
         errx(1, "malloc");
 
     am->headerbase = STEM;
+    // am->tlistmaster = HEIM_TAILQ_HEAD_INITIALIZER(tlistmaster);
 
     switch (lang) {
         case CODEGEN_C:

@@ -188,7 +188,7 @@ c_generate_type_free (asn1_module am, const Symbol *s)
 {
     struct decoration deco;
     ssize_t more_deco = -1;
-    int preserve = preserve_type(s->name) ? TRUE : FALSE;
+    int preserve = preserve_type(am, s->name) ? TRUE : FALSE;
 
     fprintf (am->codefile, "void ASN1CALL\n"
 	     "free_%s(%s *data)\n"

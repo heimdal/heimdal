@@ -251,7 +251,7 @@ my_basename(const char *fn)
 const char *fuzzer_string = "";
 static const char *enum_prefix;
 const char *name;
-int prefix_enum;
+static int prefix_enum;
 int fuzzer_flag;
 static int support_ber;
 int template_flag;
@@ -458,7 +458,8 @@ main(int argc, char **argv)
     }
 
     asn1_module am = new_asn1_module(CODEGEN_C, preserve, seq, enum_prefix,
-                                     one_code_file, support_ber, parse_units_flag);
+                                     one_code_file, support_ber, parse_units_flag,
+                                     prefix_enum);
 
     if (am->preserve.num_strings)
         mergesort_r(am->preserve.strings, am->preserve.num_strings,

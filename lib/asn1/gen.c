@@ -35,8 +35,6 @@
 
 #include "gen_locl.h"
 
-extern int prefix_enum;
-
 RCSID("$Id$");
 
 FILE *symsfile;
@@ -1211,8 +1209,8 @@ define_type(asn1_module am, int level, const char *name, const char *basename,
 	if(t->members) {
             Member *m;
 
-            label_prefix = prefix_enum ? name : (am->enum_prefix ? am->enum_prefix : "");
-            label_prefix_sep = prefix_enum ? "_" : "";
+            label_prefix = am->prefix_enum ? name : (am->enum_prefix ? am->enum_prefix : "");
+            label_prefix_sep = am->prefix_enum ? "_" : "";
             fprintf (am->headerfile, "enum %s {\n", (opts & DEF_TYPE_TYPEDEFP) ? name : "");
             fprintf(am->jsonfile, "\"ttype\":\"INTEGER\",\"ctype\":\"enum\","
                     "\"members\":[\n");
@@ -1360,8 +1358,8 @@ define_type(asn1_module am, int level, const char *name, const char *basename,
         if (t->symbol && t->symbol->emitted_definition)
             break;
 
-        label_prefix = prefix_enum ? name : (am->enum_prefix ? am->enum_prefix : "");
-        label_prefix_sep = prefix_enum ? "_" : "";
+        label_prefix = am->prefix_enum ? name : (am->enum_prefix ? am->enum_prefix : "");
+        label_prefix_sep = am->prefix_enum ? "_" : "";
 	space(am, level);
 	fprintf (am->headerfile, "enum %s {\n", (opts & DEF_TYPE_TYPEDEFP) ? name : "");
         fprintf(am->jsonfile, "\"ctype\":\"enum %s\",\"extensible\":%s,\"members\":[\n",
@@ -2084,7 +2082,7 @@ c_generate_type (asn1_module am, const Symbol *s)
 asn1_module new_asn1_module(enum codegen_language lang, getarg_strings preserve,
                             getarg_strings seq, const char *enum_prefix,
                             unsigned int one_code_file, unsigned int support_ber,
-                            unsigned int parse_units_flag)
+                            unsigned int parse_units_flag, unsigned int prefix_enum)
 {
     asn1_module am = calloc(sizeof(struct asn1_module), 1);
     if (am == NULL)
@@ -2095,6 +2093,7 @@ asn1_module new_asn1_module(enum codegen_language lang, getarg_strings preserve,
     am->one_code_file = one_code_file;
     am->parse_units_flag = parse_units_flag;
     am->preserve = preserve;
+    am->prefix_enum = prefix_enum;
     am->seq = seq;
     am->support_ber = support_ber;
     // am->tlistmaster = HEIM_TAILQ_HEAD_INITIALIZER(tlistmaster);

@@ -2040,7 +2040,7 @@ c_generate_type (asn1_module am, const Symbol *s)
 	GENERATE_TYPE_COPY (am, s);
         GENERATE_TYPE_PRINT_STUB(am, s);
     }
-    generate_type_seq (s);
+    GENERATE_TYPE_SEQ (am, s);
     generate_glue (s->type, s->gen_name);
 
     /* generate prototypes */
@@ -2107,6 +2107,7 @@ asn1_module new_asn1_module(enum codegen_language lang)
             am->generate_type_length = c_generate_type_length;
             am->generate_type_print_stub = c_generate_type_print_stub;
             am->generate_type_copy = c_generate_type_copy;
+            am->generate_type_seq = c_generate_type_seq;
     };
 
     return am;

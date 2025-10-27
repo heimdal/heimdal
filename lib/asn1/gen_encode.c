@@ -697,7 +697,7 @@ encode_type (const char *name, const Type *t, const char *tmpstr)
 }
 
 void
-generate_type_encode (const Symbol *s)
+c_generate_type_encode (asn1_module am, const Symbol *s)
 {
     fprintf (codefile, "int ASN1CALL\n"
 	     "encode_%s(unsigned char *p HEIMDAL_UNUSED_ATTRIBUTE, size_t len HEIMDAL_UNUSED_ATTRIBUTE,"

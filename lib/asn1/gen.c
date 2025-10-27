@@ -306,7 +306,7 @@ c_init_generate (asn1_module am, const char *filename, const char *base)
     fn = NULL;
 
     /* if one code file, write into the one codefile */
-    if (one_code_file)
+    if (am->one_code_file)
 	return;
 
     am->templatefile = fopen (template, "w");
@@ -533,7 +533,7 @@ c_generate_constant (asn1_module am, const Symbol *s)
 	size_t i, len;
 	char *gen_upper;
 
-	if (!one_code_file)
+	if (!am->one_code_file)
 	    GENERATE_HEADER_OF_CODEFILE(am, s->gen_name);
 
 	list = objid2list(s->value->u.objectidentifiervalue);
@@ -598,7 +598,7 @@ c_generate_constant (asn1_module am, const Symbol *s)
 
 	free(gen_upper);
 
-	if (!one_code_file)
+	if (!am->one_code_file)
 	    close_codefile(am);
 
 	break;
@@ -2016,7 +2016,7 @@ c_generate_type (asn1_module am, const Symbol *s)
     FILE *h;
     const char * exp;
 
-    if (!one_code_file)
+    if (!am->one_code_file)
 	GENERATE_HEADER_OF_CODEFILE(am, s->gen_name);
 
     generate_type_header(am, s);
@@ -2075,14 +2075,14 @@ c_generate_type (asn1_module am, const Symbol *s)
 
     fprintf(h, "\n\n");
 
-    if (!one_code_file) {
+    if (!am->one_code_file) {
 	fprintf(am->codefile, "\n\n");
 	close_codefile(am);
     }
 }
 
 asn1_module new_asn1_module(enum codegen_language lang, getarg_strings preserve,
-                            getarg_strings seq, const char *enum_prefix)
+                            getarg_strings seq, const char *enum_prefix, unsigned int one_code_file)
 {
     asn1_module am = calloc(sizeof(struct asn1_module), 1);
     if (am == NULL)
@@ -2090,6 +2090,7 @@ asn1_module new_asn1_module(enum codegen_language lang, getarg_strings preserve,
 
     am->enum_prefix = enum_prefix;
     am->headerbase = STEM;
+    am->one_code_file = one_code_file;
     am->preserve = preserve;
     am->seq = seq;
     // am->tlistmaster = HEIM_TAILQ_HEAD_INITIALIZER(tlistmaster);

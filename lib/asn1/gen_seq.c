@@ -38,7 +38,7 @@ RCSID("$Id$");
 static FILE *
 get_code_file(asn1_module am)
 {
-    if (!one_code_file && template_flag && am->templatefile)
+    if (!am->one_code_file && template_flag && am->templatefile)
         return am->templatefile;
     return am->codefile;
 }

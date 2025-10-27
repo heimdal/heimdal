@@ -207,7 +207,7 @@ const struct {
 static FILE *
 get_code_file(asn1_module am)
 {
-    if (!one_code_file)
+    if (!am->one_code_file)
 	return am->templatefile;
     return am->codefile;
 }

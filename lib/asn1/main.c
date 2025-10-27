@@ -256,7 +256,7 @@ int fuzzer_flag;
 int support_ber;
 int template_flag;
 int rfc1510_bitstring;
-int one_code_file;
+static int one_code_file;
 char *option_file;
 int parse_units_flag = 1;
 char *type_file_string = "krb5-types.h";
@@ -457,7 +457,7 @@ main(int argc, char **argv)
 #endif
     }
 
-    asn1_module am = new_asn1_module(CODEGEN_C, preserve, seq, enum_prefix);
+    asn1_module am = new_asn1_module(CODEGEN_C, preserve, seq, enum_prefix, one_code_file);
 
     if (am->preserve.num_strings)
         mergesort_r(am->preserve.strings, am->preserve.num_strings,
@@ -474,7 +474,7 @@ main(int argc, char **argv)
     yyset_in(yyin, scanner);
     INIT_GENERATE(am, file, name);
 
-    if (one_code_file)
+    if (am->one_code_file)
 	GENERATE_HEADER_OF_CODEFILE(am, name);
 
     initsym (am);
@@ -486,7 +486,7 @@ main(int argc, char **argv)
     if (argc != optidx)
 	fclose(yyin);
 
-    if (one_code_file)
+    if (am->one_code_file)
 	close_codefile(am);
     close_generate(am);
 

@@ -152,7 +152,7 @@ c_generate_glue (asn1_module am, const Type *t, const char *gen_name)
         }
         generate_2int (am, t, gen_name);
         generate_int2 (am, t, gen_name);
-        if (parse_units_flag)
+        if (am->parse_units_flag)
             generate_units (am, t, gen_name);
 	break;
     }

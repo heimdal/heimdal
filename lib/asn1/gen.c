@@ -449,7 +449,7 @@ c_generate_header_of_codefile(asn1_module am, const char *name)
 	     "#include <der.h>\n"
 	     "#include <asn1-template.h>\n\n");
 
-    if (parse_units_flag)
+    if (am->parse_units_flag)
 	fprintf (am->codefile,
 		 "#include <parse_units.h>\n\n");
 
@@ -2083,7 +2083,8 @@ c_generate_type (asn1_module am, const Symbol *s)
 
 asn1_module new_asn1_module(enum codegen_language lang, getarg_strings preserve,
                             getarg_strings seq, const char *enum_prefix,
-                            unsigned int one_code_file, unsigned int support_ber)
+                            unsigned int one_code_file, unsigned int support_ber,
+                            unsigned int parse_units_flag)
 {
     asn1_module am = calloc(sizeof(struct asn1_module), 1);
     if (am == NULL)
@@ -2092,6 +2093,7 @@ asn1_module new_asn1_module(enum codegen_language lang, getarg_strings preserve,
     am->enum_prefix = enum_prefix;
     am->headerbase = STEM;
     am->one_code_file = one_code_file;
+    am->parse_units_flag = parse_units_flag;
     am->preserve = preserve;
     am->seq = seq;
     am->support_ber = support_ber;

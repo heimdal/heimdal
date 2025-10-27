@@ -126,7 +126,6 @@ extern const char *fuzzer_string;
 extern int template_flag;
 extern int rfc1510_bitstring;
 extern int original_order;
-extern int parse_units_flag;
 extern char *type_file_string;
 
 extern int error_flag;

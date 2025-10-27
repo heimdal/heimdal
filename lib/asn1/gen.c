@@ -2036,7 +2036,7 @@ c_generate_type (asn1_module am, const Symbol *s)
 	GENERATE_TYPE_ENCODE (am, s);
 	GENERATE_TYPE_DECODE (am, s);
 	GENERATE_TYPE_FREE (am, s);
-	generate_type_length (s);
+	GENERATE_TYPE_LENGTH (am, s);
 	generate_type_copy (s);
         generate_type_print_stub(s);
     }
@@ -2104,6 +2104,7 @@ asn1_module new_asn1_module(enum codegen_language lang)
             am->generate_type_encode = c_generate_type_encode;
             am->generate_type_decode = c_generate_type_decode;
             am->generate_type_free = c_generate_type_free;
+            am->generate_type_length = c_generate_type_length;
     };
 
     return am;

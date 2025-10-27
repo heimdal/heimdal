@@ -294,7 +294,7 @@ length_type (const char *name, const Type *t,
 }
 
 void
-generate_type_length (const Symbol *s)
+c_generate_type_length (asn1_module am, const Symbol *s)
 {
     fprintf (codefile,
 	     "size_t ASN1CALL\n"

@@ -1500,7 +1500,7 @@ ValueAssignment	: VALUE_IDENTIFIER Type EEQUAL Value
 
 			s->stype = SValue;
 			s->value = $4;
-			generate_constant (s);
+			GENERATE_CONSTANT (am, s);
 			/*
 			 * Save this value's name so we can know some name for
 			 * this value wherever _a_ name may be needed for it.

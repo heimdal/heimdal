@@ -504,7 +504,7 @@ objid2list(struct objid *o)
 }
 
 void
-generate_constant (const Symbol *s)
+c_generate_constant (asn1_module am, const Symbol *s)
 {
     switch(s->value->type) {
     case booleanvalue:
@@ -2100,6 +2100,7 @@ asn1_module new_asn1_module(enum codegen_language lang)
         default:
             am->generate_type = c_generate_type;
             am->generate_type_header_forwards = c_generate_type_header_forwards;
+            am->generate_constant = c_generate_constant;
     };
 
     return am;

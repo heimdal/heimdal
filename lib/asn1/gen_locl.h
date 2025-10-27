@@ -113,6 +113,7 @@ typedef struct asn1_module {
 
     void (*generate_type) (struct asn1_module *, const Symbol *);
     void (*generate_type_header_forwards) (struct asn1_module *, const Symbol *);
+    void (*generate_constant) (struct asn1_module *, const Symbol *);
 } *asn1_module;
 
 enum codegen_language {
@@ -126,10 +127,12 @@ void generate_types(asn1_module);
     am->generate_type(am, s)
 #define GENERATE_TYPE_HEADER_FORWARDS(/* asn1_module */ am, /*const Symbol * */ s) \
     am->generate_type_header_forwards(am, s)
+#define GENERATE_CONSTANT(/* asn1_module */ am, /*const Symbol * */ s) \
+    am->generate_constant(am, s)
 
 void c_generate_type (asn1_module, const Symbol *);
 void c_generate_type_header_forwards(asn1_module, const Symbol *);
-void generate_constant (const Symbol *);
+void c_generate_constant (asn1_module, const Symbol *);
 void generate_type_encode (const Symbol *);
 void generate_type_decode (const Symbol *);
 void generate_type_free (const Symbol *);

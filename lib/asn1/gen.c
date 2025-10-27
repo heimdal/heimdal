@@ -70,16 +70,14 @@ struct import {
     struct import *next;
 };
 
-static struct import *imports = NULL;
-
 void
 c_add_import (asn1_module am, const char *module)
 {
     struct import *tmp = emalloc (sizeof(*tmp));
 
     tmp->module = module;
-    tmp->next   = imports;
-    imports     = tmp;
+    tmp->next   = am->imports;
+    am->imports     = tmp;
 
     fprintf (am->headerfile, "#include <%s_asn1.h>\n", module);
     fprintf(am->jsonfile, "{\"imports\":\"%s\"}\n", module);

@@ -40,7 +40,7 @@ extern int prefix_enum;
 
 RCSID("$Id$");
 
-FILE *privheaderfile, *headerfile, *oidsfile, *codefile, *logfile, *templatefile;
+FILE *oidsfile, *codefile, *logfile, *templatefile;
 FILE *symsfile;
 
 #define STEM "asn1"
@@ -82,7 +82,7 @@ c_add_import (asn1_module am, const char *module)
     tmp->next   = imports;
     imports     = tmp;
 
-    fprintf (headerfile, "#include <%s_asn1.h>\n", module);
+    fprintf (am->headerfile, "#include <%s_asn1.h>\n", module);
     fprintf(am->jsonfile, "{\"imports\":\"%s\"}\n", module);
 }
 
@@ -159,8 +159,8 @@ c_init_generate (asn1_module am, const char *filename, const char *base)
 	errx(1, "malloc");
     if (asprintf(&fn, "%s.h", am->headerbase) < 0 || fn == NULL)
 	errx(1, "malloc");
-    headerfile = fopen (fn, "w");
-    if (headerfile == NULL)
+    am->headerfile = fopen (fn, "w");
+    if (am->headerfile == NULL)
 	err (1, "open %s", fn);
     free(fn);
     fn = NULL;
@@ -170,8 +170,8 @@ c_init_generate (asn1_module am, const char *filename, const char *base)
 	errx(1, "malloc");
     if (asprintf(&fn, "%s-priv.h", am->headerbase) < 0 || fn == NULL)
 	errx(1, "malloc");
-    privheaderfile = fopen (fn, "w");
-    if (privheaderfile == NULL)
+    am->privheaderfile = fopen (fn, "w");
+    if (am->privheaderfile == NULL)
 	err (1, "open %s", fn);
     free(fn);
     fn = NULL;
@@ -179,21 +179,21 @@ c_init_generate (asn1_module am, const char *filename, const char *base)
     /* template file */
     if (asprintf(&template, "%s-template.c", am->headerbase) < 0 || template == NULL)
 	errx(1, "malloc");
-    fprintf (headerfile,
+    fprintf (am->headerfile,
 	     "/* Generated from %s */\n"
 	     "/* Do not edit */\n\n",
 	     filename);
-    fprintf (headerfile,
+    fprintf (am->headerfile,
 	     "#ifndef __%s_h__\n"
 	     "#define __%s_h__\n\n", am->headerbase, am->headerbase);
-    fprintf (headerfile,
+    fprintf (am->headerfile,
 	     "#include <stddef.h>\n"
 	     "#include <stdint.h>\n"
 	     "#include <time.h>\n\n");
-    fprintf (headerfile,
+    fprintf (am->headerfile,
 	     "#ifndef __asn1_common_definitions__\n"
 	     "#define __asn1_common_definitions__\n\n");
-	fprintf (headerfile,
+	fprintf (am->headerfile,
 		 "#ifndef __HEIM_BASE_DATA__\n"
 		 "#define __HEIM_BASE_DATA__ 1\n"
 		 "struct heim_base_data {\n"
@@ -202,54 +202,54 @@ c_init_generate (asn1_module am, const char *filename, const char *base)
 		 "};\n"
 		 "typedef struct heim_base_data heim_octet_string;\n"
 		 "#endif\n\n");
-    fprintf (headerfile,
+    fprintf (am->headerfile,
 	     "typedef struct heim_integer {\n"
 	     "  size_t length;\n"
 	     "  void *data;\n"
 	     "  int negative;\n"
 	     "} heim_integer;\n\n");
-    fprintf (headerfile,
+    fprintf (am->headerfile,
 	     "typedef char *heim_general_string;\n\n"
 	     );
-    fprintf (headerfile,
+    fprintf (am->headerfile,
 	     "typedef char *heim_utf8_string;\n\n"
 	     );
-    fprintf (headerfile,
+    fprintf (am->headerfile,
 	     "typedef struct heim_base_data heim_printable_string;\n\n"
 	     );
-    fprintf (headerfile,
+    fprintf (am->headerfile,
 	     "typedef struct heim_base_data heim_ia5_string;\n\n"
 	     );
-    fprintf (headerfile,
+    fprintf (am->headerfile,
 	     "typedef struct heim_bmp_string {\n"
 	     "  size_t length;\n"
 	     "  uint16_t *data;\n"
 	     "} heim_bmp_string;\n\n");
-    fprintf (headerfile,
+    fprintf (am->headerfile,
 	     "typedef struct heim_universal_string {\n"
 	     "  size_t length;\n"
 	     "  uint32_t *data;\n"
 	     "} heim_universal_string;\n\n");
-    fprintf (headerfile,
+    fprintf (am->headerfile,
 	     "typedef char *heim_visible_string;\n\n"
 	     );
-    fprintf (headerfile,
+    fprintf (am->headerfile,
 	     "typedef struct heim_oid {\n"
 	     "  size_t length;\n"
 	     "  unsigned *components;\n"
 	     "} heim_oid;\n\n");
-    fprintf (headerfile,
+    fprintf (am->headerfile,
 	     "typedef struct heim_bit_string {\n"
 	     "  size_t length;\n"
 	     "  void *data;\n"
 	     "} heim_bit_string;\n\n");
-    fprintf (headerfile,
+    fprintf (am->headerfile,
 	     "typedef struct heim_base_data heim_any;\n"
 	     "typedef struct heim_base_data heim_any_set;\n"
 	     "typedef struct heim_base_data HEIM_ANY;\n"
 	     "typedef struct heim_base_data HEIM_ANY_SET;\n\n");
 
-    fprintf (headerfile,
+    fprintf (am->headerfile,
              "enum asn1_print_flags {\n"
              "   ASN1_PRINT_INDENT = 1,\n"
              "};\n\n");
@@ -270,7 +270,7 @@ c_init_generate (asn1_module am, const char *filename, const char *base)
 	  "      }                                                        \\\n"
 	  "    }                                                          \\\n"
 	  "  } while (0)\n\n",
-	  headerfile);
+	  am->headerfile);
     fputs("#ifdef _WIN32\n"
 	  "#ifndef ASN1_LIB\n"
 	  "#define ASN1EXP  __declspec(dllimport)\n"
@@ -282,14 +282,14 @@ c_init_generate (asn1_module am, const char *filename, const char *base)
 	  "#define ASN1EXP\n"
 	  "#define ASN1CALL\n"
 	  "#endif\n",
-	  headerfile);
+	  am->headerfile);
     fputs("#ifndef ENOTSUP\n"
 	  "/* Very old MSVC CRTs lack ENOTSUP */\n"
 	  "#define ENOTSUP EINVAL\n"
 	  "#endif\n",
-	  headerfile);
-    fprintf (headerfile, "struct units;\n\n");
-    fprintf (headerfile, "#endif\n\n");
+	  am->headerfile);
+    fprintf (am->headerfile, "struct units;\n\n");
+    fprintf (am->headerfile, "#endif\n\n");
     if (asprintf(&fn, "%s_files", base) < 0 || fn == NULL)
 	errx(1, "malloc");
     logfile = fopen(fn, "w");
@@ -346,11 +346,11 @@ c_init_generate (asn1_module am, const char *filename, const char *base)
 void
 close_generate (asn1_module am)
 {
-    fprintf (headerfile, "#endif /* __%s_h__ */\n", am->headerbase);
+    fprintf (am->headerfile, "#endif /* __%s_h__ */\n", am->headerbase);
 
-    if (headerfile && fclose(headerfile) == EOF)
+    if (am->headerfile && fclose(am->headerfile) == EOF)
         err(1, "writes to public header file failed");
-    if (privheaderfile && fclose(privheaderfile) == EOF)
+    if (am->privheaderfile && fclose(am->privheaderfile) == EOF)
         err(1, "writes to private header file failed");
     if (templatefile && fclose(templatefile) == EOF)
         err(1, "writes to template file failed");
@@ -513,7 +513,7 @@ c_generate_constant (asn1_module am, const Symbol *s)
          * that we want to generate as enums, which causes conflicts for things
          * like ub-name (ub_name).
          */
-        fprintf(headerfile,
+        fprintf(am->headerfile,
                 "#ifdef %s\n"
                 "#undef %s\n"
                 "#endif\n"
@@ -555,10 +555,10 @@ c_generate_constant (asn1_module am, const Symbol *s)
                 "\"type\":\"OBJECT IDENTIFIER\","
                 "\"constant\":true,\"exported\":%s,\"value\":[\n",
                 s->name, s->gen_name, is_export(s->name) ? "true" : "false");
-	fprintf (headerfile, "/* OBJECT IDENTIFIER %s ::= { ", s->name);
+	fprintf (am->headerfile, "/* OBJECT IDENTIFIER %s ::= { ", s->name);
 	for (i = 0; i < len; i++) {
 	    o = list[i];
-	    fprintf(headerfile, "%s(%d) ",
+	    fprintf(am->headerfile, "%s(%d) ",
 		    o->label ? o->label : "label-less", o->value);
             if (o->label == NULL)
                 fprintf(am->jsonfile, "%s{\"label\":null,\"value\":%d}",
@@ -594,8 +594,8 @@ c_generate_constant (asn1_module am, const Symbol *s)
 	for (i = 0; i < len; i++)
 	    gen_upper[i] = toupper((unsigned char)s->gen_name[i]);
 
-	fprintf (headerfile, "} */\n");
-	fprintf (headerfile,
+	fprintf (am->headerfile, "} */\n");
+	fprintf (am->headerfile,
 		 "extern ASN1EXP const heim_oid asn1_oid_%s;\n"
 		 "#define ASN1_OID_%s (&asn1_oid_%s)\n\n",
 		 s->gen_name,
@@ -728,10 +728,10 @@ is_primitive_type(const Type *t)
 }
 
 static void
-space(int level)
+space(asn1_module am, int level)
 {
     while(level-- > 0)
-	fprintf(headerfile, "  ");
+	fprintf(am->headerfile, "  ");
 }
 
 static const char *
@@ -757,60 +757,60 @@ have_ellipsis(Type *t)
 }
 
 static void
-define_asn1 (int level, Type *t)
+define_asn1 (asn1_module am, int level, Type *t)
 {
     switch (t->type) {
     case TType:
         if (!t->symbol && t->typeref.iosclass) {
-            fprintf(headerfile, "%s.&%s",
+            fprintf(am->headerfile, "%s.&%s",
                     t->typeref.iosclass->symbol->name,
                     t->typeref.field->name);
         } else if (t->symbol)
-            fprintf(headerfile, "%s", t->symbol->name);
+            fprintf(am->headerfile, "%s", t->symbol->name);
         else
             abort();
 	break;
     case TInteger:
 	if(t->members == NULL) {
-            fprintf (headerfile, "INTEGER");
+            fprintf (am->headerfile, "INTEGER");
 	    if (t->range)
-		fprintf (headerfile, " (%lld..%lld)",
+		fprintf (am->headerfile, " (%lld..%lld)",
 			 (long long)t->range->min,
 			 (long long)t->range->max);
         } else {
 	    Member *m;
-            fprintf (headerfile, "INTEGER {\n");
+            fprintf (am->headerfile, "INTEGER {\n");
 	    HEIM_TAILQ_FOREACH(m, t->members, members) {
-                space (level + 1);
-		fprintf(headerfile, "%s(%lld)%s\n", m->gen_name,
+                space (am, level + 1);
+		fprintf(am->headerfile, "%s(%lld)%s\n", m->gen_name,
                         (long long)m->val, last_member_p(m));
             }
-	    space(level);
-            fprintf (headerfile, "}");
+	    space(am, level);
+            fprintf (am->headerfile, "}");
         }
 	break;
     case TBoolean:
-	fprintf (headerfile, "BOOLEAN");
+	fprintf (am->headerfile, "BOOLEAN");
 	break;
     case TOctetString:
-	fprintf (headerfile, "OCTET STRING");
+	fprintf (am->headerfile, "OCTET STRING");
 	break;
     case TEnumerated:
     case TBitString: {
 	Member *m;
 
-	space(level);
+	space(am, level);
 	if(t->type == TBitString)
-	    fprintf (headerfile, "BIT STRING {\n");
+	    fprintf (am->headerfile, "BIT STRING {\n");
 	else
-	    fprintf (headerfile, "ENUMERATED {\n");
+	    fprintf (am->headerfile, "ENUMERATED {\n");
 	HEIM_TAILQ_FOREACH(m, t->members, members) {
-	    space(level + 1);
-	    fprintf(headerfile, "%s(%lld)%s\n", m->name,
+	    space(am, level + 1);
+	    fprintf(am->headerfile, "%s(%lld)%s\n", m->name,
                     (long long)m->val, last_member_p(m));
 	}
-	space(level);
-	fprintf (headerfile, "}");
+	space(am, level);
+	fprintf (am->headerfile, "}");
 	break;
     }
     case TChoice:
@@ -820,11 +820,11 @@ define_asn1 (int level, Type *t)
 	size_t max_width = 0;
 
 	if(t->type == TChoice)
-	    fprintf(headerfile, "CHOICE {\n");
+	    fprintf(am->headerfile, "CHOICE {\n");
 	else if(t->type == TSet)
-	    fprintf(headerfile, "SET {\n");
+	    fprintf(am->headerfile, "SET {\n");
 	else
-	    fprintf(headerfile, "SEQUENCE {\n");
+	    fprintf(am->headerfile, "SEQUENCE {\n");
 	HEIM_TAILQ_FOREACH(m, t->members, members) {
 	    if(strlen(m->name) > max_width)
 		max_width = strlen(m->name);
@@ -833,87 +833,87 @@ define_asn1 (int level, Type *t)
 	if(max_width < 16) max_width = 16;
 	HEIM_TAILQ_FOREACH(m, t->members, members) {
 	    size_t width = max_width;
-	    space(level + 1);
+	    space(am, level + 1);
 	    if (m->ellipsis) {
-		fprintf (headerfile, "...");
+		fprintf (am->headerfile, "...");
 	    } else {
-		width -= fprintf(headerfile, "%s", m->name);
-		fprintf(headerfile, "%*s", (int)width, "");
-		define_asn1(level + 1, m->type);
+		width -= fprintf(am->headerfile, "%s", m->name);
+		fprintf(am->headerfile, "%*s", (int)width, "");
+		define_asn1(am, level + 1, m->type);
 		if(m->optional)
-		    fprintf(headerfile, " OPTIONAL");
+		    fprintf(am->headerfile, " OPTIONAL");
 	    }
 	    if(last_member_p(m))
-		fprintf (headerfile, ",");
-	    fprintf (headerfile, "\n");
+		fprintf (am->headerfile, ",");
+	    fprintf (am->headerfile, "\n");
 	}
-	space(level);
-	fprintf (headerfile, "}");
+	space(am, level);
+	fprintf (am->headerfile, "}");
 	break;
     }
     case TSequenceOf:
-	fprintf (headerfile, "SEQUENCE OF ");
-	define_asn1 (0, t->subtype);
+	fprintf (am->headerfile, "SEQUENCE OF ");
+	define_asn1 (am, 0, t->subtype);
 	break;
     case TSetOf:
-	fprintf (headerfile, "SET OF ");
-	define_asn1 (0, t->subtype);
+	fprintf (am->headerfile, "SET OF ");
+	define_asn1 (am, 0, t->subtype);
 	break;
     case TGeneralizedTime:
-	fprintf (headerfile, "GeneralizedTime");
+	fprintf (am->headerfile, "GeneralizedTime");
 	break;
     case TGeneralString:
-	fprintf (headerfile, "GeneralString");
+	fprintf (am->headerfile, "GeneralString");
 	break;
     case TTeletexString:
-	fprintf (headerfile, "TeletexString");
+	fprintf (am->headerfile, "TeletexString");
 	break;
     case TTag: {
 	const char *classnames[] = { "UNIVERSAL ", "APPLICATION ",
 				     "" /* CONTEXT */, "PRIVATE " };
 	if(t->tag.tagclass != ASN1_C_UNIV)
-	    fprintf (headerfile, "[%s%d] ",
+	    fprintf (am->headerfile, "[%s%d] ",
 		     classnames[t->tag.tagclass],
 		     t->tag.tagvalue);
 	if(t->tag.tagenv == TE_IMPLICIT)
-	    fprintf (headerfile, "IMPLICIT ");
-	define_asn1 (level, t->subtype);
+	    fprintf (am->headerfile, "IMPLICIT ");
+	define_asn1 (am, level, t->subtype);
 	break;
     }
     case TUTCTime:
-	fprintf (headerfile, "UTCTime");
+	fprintf (am->headerfile, "UTCTime");
 	break;
     case TUTF8String:
-	space(level);
-	fprintf (headerfile, "UTF8String");
+	space(am, level);
+	fprintf (am->headerfile, "UTF8String");
 	break;
     case TPrintableString:
-	space(level);
-	fprintf (headerfile, "PrintableString");
+	space(am, level);
+	fprintf (am->headerfile, "PrintableString");
 	break;
     case TIA5String:
-	space(level);
-	fprintf (headerfile, "IA5String");
+	space(am, level);
+	fprintf (am->headerfile, "IA5String");
 	break;
     case TBMPString:
-	space(level);
-	fprintf (headerfile, "BMPString");
+	space(am, level);
+	fprintf (am->headerfile, "BMPString");
 	break;
     case TUniversalString:
-	space(level);
-	fprintf (headerfile, "UniversalString");
+	space(am, level);
+	fprintf (am->headerfile, "UniversalString");
 	break;
     case TVisibleString:
-	space(level);
-	fprintf (headerfile, "VisibleString");
+	space(am, level);
+	fprintf (am->headerfile, "VisibleString");
 	break;
     case TOID :
-	space(level);
-	fprintf(headerfile, "OBJECT IDENTIFIER");
+	space(am, level);
+	fprintf(am->headerfile, "OBJECT IDENTIFIER");
 	break;
     case TNull:
-	space(level);
-	fprintf (headerfile, "NULL");
+	space(am, level);
+	fprintf (am->headerfile, "NULL");
 	break;
     default:
 	abort ();
@@ -1109,7 +1109,7 @@ define_open_type(asn1_module am, int level, const char *newbasename, const char 
 
     sort_object_set(os, typeidfield, &objects, &nobjs);
 
-    fprintf(headerfile, "struct {\n");
+    fprintf(am->headerfile, "struct {\n");
     fprintf(am->jsonfile, "{\"opentype\":true,\"arraytype\":%s,",
             is_array_of_open_type ? "true" : "false");
     fprintf(am->jsonfile, "\"classname\":\"%s\",", os->iosclass->symbol->name);
@@ -1120,7 +1120,7 @@ define_open_type(asn1_module am, int level, const char *newbasename, const char 
     fprintf(am->jsonfile, "\"opentypefield\":\"%s\",", opentypefield->name);
 
     /* Iterate objects in the object set, gen enum labels */
-    fprintf(headerfile, "enum { choice_%s_iosnumunknown = 0,\n",
+    fprintf(am->headerfile, "enum { choice_%s_iosnumunknown = 0,\n",
             newbasename);
     fprintf(am->jsonfile, "\"opentypeids\":[");
     for (i = 0; i < nobjs; i++) {
@@ -1130,20 +1130,20 @@ define_open_type(asn1_module am, int level, const char *newbasename, const char 
             if (!of->value || !of->value->s)
                 errx(1, "Unknown value in value field %s of object %s",
                      of->name, objects[i]->symbol->name);
-            fprintf(headerfile, "choice_%s_iosnum_%s,\n",
+            fprintf(am->headerfile, "choice_%s_iosnum_%s,\n",
                     newbasename, of->value->s->gen_name);
             fprintf(am->jsonfile, "\"%s\"", of->value->s->gen_name);
             fprintf(am->jsonfile, "%s", (i + 1) < nobjs ? "," : "");
         }
     }
     fprintf(am->jsonfile, "],\n");
-    fprintf(headerfile, "} element;\n");
+    fprintf(am->headerfile, "} element;\n");
 
     if (is_array_of_open_type)
-        fprintf(headerfile, "unsigned int len;\n");
+        fprintf(am->headerfile, "unsigned int len;\n");
 
     /* Iterate objects in the object set, gen union arms */
-    fprintf(headerfile, "union {\nvoid *_any;\n");
+    fprintf(am->headerfile, "union {\nvoid *_any;\n");
     fprintf(am->jsonfile, "\"members\":[");
     for (i = 0; i < nobjs; i++) {
         HEIM_TAILQ_FOREACH(of, objects[i]->objfields, objfields) {
@@ -1169,10 +1169,10 @@ define_open_type(asn1_module am, int level, const char *newbasename, const char 
     }
     fprintf(am->jsonfile, "]}\n");
     if (is_array_of_open_type) {
-        fprintf(headerfile, "} *val;\n} _ioschoice_%s;\n", opentypemember->gen_name);
+        fprintf(am->headerfile, "} *val;\n} _ioschoice_%s;\n", opentypemember->gen_name);
     } else {
-        fprintf(headerfile, "} u;\n");
-        fprintf(headerfile, "} _ioschoice_%s;\n", opentypemember->gen_name);
+        fprintf(am->headerfile, "} u;\n");
+        fprintf(am->headerfile, "} _ioschoice_%s;\n", opentypemember->gen_name);
     }
     free(objects);
 }
@@ -1197,13 +1197,13 @@ define_type(asn1_module am, int level, const char *name, const char *basename,
 
     switch (t->type) {
     case TType:
-	space(level);
+	space(am, level);
         if (!t->symbol && t->actual_parameter) {
             define_open_type(am, level, newbasename, name, basename, t, t);
         } else if (!t->symbol && pt->actual_parameter) {
             define_open_type(am, level, newbasename, name, basename, pt, t);
         } else if (t->symbol) {
-            fprintf(headerfile, "%s %s;\n", t->symbol->gen_name, name);
+            fprintf(am->headerfile, "%s %s;\n", t->symbol->gen_name, name);
             fprintf(am->jsonfile, "\"ttype\":\"%s\","
                     "\"alias\":true\n", t->symbol->gen_name);
         } else
@@ -1213,52 +1213,52 @@ define_type(asn1_module am, int level, const char *name, const char *basename,
         if (t->symbol && t->symbol->emitted_definition)
             break;
 
-	space(level);
+	space(am, level);
 	if(t->members) {
             Member *m;
 
             label_prefix = prefix_enum ? name : (enum_prefix ? enum_prefix : "");
             label_prefix_sep = prefix_enum ? "_" : "";
-            fprintf (headerfile, "enum %s {\n", (opts & DEF_TYPE_TYPEDEFP) ? name : "");
+            fprintf (am->headerfile, "enum %s {\n", (opts & DEF_TYPE_TYPEDEFP) ? name : "");
             fprintf(am->jsonfile, "\"ttype\":\"INTEGER\",\"ctype\":\"enum\","
                     "\"members\":[\n");
 	    HEIM_TAILQ_FOREACH(m, t->members, members) {
-                space (level + 1);
-                fprintf(headerfile, "%s%s%s = %lld%s\n",
+                space (am, level + 1);
+                fprintf(am->headerfile, "%s%s%s = %lld%s\n",
                         label_prefix, label_prefix_sep,
                         m->gen_name, (long long)m->val, last_member_p(m));
                 fprintf(am->jsonfile, "{\"%s%s%s\":%lld}%s\n",
                         label_prefix, label_prefix_sep,
                         m->gen_name, (long long)m->val, last_member_p(m));
             }
-            fprintf(headerfile, "} %s;\n", name);
+            fprintf(am->headerfile, "} %s;\n", name);
             fprintf(am->jsonfile, "]");
 	} else if (t->range == NULL) {
-            fprintf(headerfile, "heim_integer %s;\n", name);
+            fprintf(am->headerfile, "heim_integer %s;\n", name);
             fprintf(am->jsonfile, "\"ttype\":\"INTEGER\",\"ctype\":\"heim_integer\"");
 	} else if (t->range->min < 0 &&
                    (t->range->min < INT_MIN || t->range->max > INT_MAX)) {
-            fprintf(headerfile, "int64_t %s;\n", name);
+            fprintf(am->headerfile, "int64_t %s;\n", name);
             fprintf(am->jsonfile, "\"ttype\":\"INTEGER\",\"ctype\":\"int64_t\"");
 	} else if (t->range->min < 0) {
-	    fprintf (headerfile, "int %s;\n", name);
+	    fprintf (am->headerfile, "int %s;\n", name);
             fprintf(am->jsonfile, "\"ttype\":\"INTEGER\",\"ctype\":\"int\"");
 	} else if (t->range->max > UINT_MAX) {
-	    fprintf (headerfile, "uint64_t %s;\n", name);
+	    fprintf (am->headerfile, "uint64_t %s;\n", name);
             fprintf(am->jsonfile, "\"ttype\":\"INTEGER\",\"ctype\":\"uint64_t\"");
 	} else {
-	    fprintf (headerfile, "unsigned int %s;\n", name);
+	    fprintf (am->headerfile, "unsigned int %s;\n", name);
             fprintf(am->jsonfile, "\"ttype\":\"INTEGER\",\"ctype\":\"unsigned int\"");
 	}
 	break;
     case TBoolean:
-	space(level);
-	fprintf (headerfile, "int %s;\n", name);
+	space(am, level);
+	fprintf (am->headerfile, "int %s;\n", name);
         fprintf(am->jsonfile, "\"ttype\":\"BOOLEAN\",\"ctype\":\"unsigned int\"");
 	break;
     case TOctetString:
-	space(level);
-	fprintf (headerfile, "heim_octet_string %s;\n", name);
+	space(am, level);
+	fprintf (am->headerfile, "heim_octet_string %s;\n", name);
         fprintf(am->jsonfile, "\"ttype\":\"OCTET STRING\",\"ctype\":\"heim_octet_string\"");
 	break;
     case TBitString: {
@@ -1296,16 +1296,16 @@ define_type(asn1_module am, int level, const char *name, const char *basename,
 	i.members = NULL;
 	i.constraint = NULL;
 
-	space(level);
+	space(am, level);
         fprintf(am->jsonfile, "\"ttype\":\"BIT STRING\",");
 	if(HEIM_TAILQ_EMPTY(t->members)) {
-	    fprintf (headerfile, "heim_bit_string %s;\n", name);
+	    fprintf (am->headerfile, "heim_bit_string %s;\n", name);
             fprintf(am->jsonfile, "\"ctype\":\"heim_bit_string\"");
         } else {
 	    int64_t pos = 0;
 	    getnewbasename(&newbasename, (opts & DEF_TYPE_TYPEDEFP) || level == 0, basename, name);
 
-	    fprintf (headerfile, "struct %s {\n", newbasename);
+	    fprintf (am->headerfile, "struct %s {\n", newbasename);
             fprintf(am->jsonfile, "\"ctype\":\"struct %s\",\"members\":[\n", newbasename);
 	    HEIM_TAILQ_FOREACH(m, t->members, members) {
 		char *n = NULL;
@@ -1352,8 +1352,8 @@ define_type(asn1_module am, int level, const char *name, const char *basename,
 		pos++;
 	    }
 
-	    space(level);
-            fprintf(headerfile, "}%s%s;\n\n",
+	    space(am, level);
+            fprintf(am->headerfile, "}%s%s;\n\n",
                     (opts & DEF_TYPE_EMIT_NAME) ? " " : "",
                     (opts & DEF_TYPE_EMIT_NAME) ? name : "");
             fprintf(am->jsonfile, "]");
@@ -1368,16 +1368,16 @@ define_type(asn1_module am, int level, const char *name, const char *basename,
 
         label_prefix = prefix_enum ? name : (enum_prefix ? enum_prefix : "");
         label_prefix_sep = prefix_enum ? "_" : "";
-	space(level);
-	fprintf (headerfile, "enum %s {\n", (opts & DEF_TYPE_TYPEDEFP) ? name : "");
+	space(am, level);
+	fprintf (am->headerfile, "enum %s {\n", (opts & DEF_TYPE_TYPEDEFP) ? name : "");
         fprintf(am->jsonfile, "\"ctype\":\"enum %s\",\"extensible\":%s,\"members\":[\n",
                 (opts & DEF_TYPE_TYPEDEFP) ? name : "", have_ellipsis(t) ? "true" : "false");
 	HEIM_TAILQ_FOREACH(m, t->members, members) {
-	    space(level + 1);
+	    space(am, level + 1);
 	    if (m->ellipsis) {
-		fprintf (headerfile, "/* ... */\n");
+		fprintf (am->headerfile, "/* ... */\n");
             } else {
-		fprintf(headerfile, "%s%s%s = %lld%s\n",
+		fprintf(am->headerfile, "%s%s%s = %lld%s\n",
                         label_prefix, label_prefix_sep,
                         m->gen_name, (long long)m->val, last_member_p(m));
                 fprintf(am->jsonfile, "{\"%s%s%s\":%lld%s}\n",
@@ -1385,8 +1385,8 @@ define_type(asn1_module am, int level, const char *name, const char *basename,
                         m->gen_name, (long long)m->val, last_member_p(m));
             }
 	}
-	space(level);
-        fprintf(headerfile, "}%s%s;\n\n",
+	space(am, level);
+        fprintf(am->headerfile, "}%s%s;\n\n",
                 (opts & DEF_TYPE_EMIT_NAME) ? " " : "",
                 (opts & DEF_TYPE_EMIT_NAME) ? name : "");
 	fprintf(am->jsonfile, "]");
@@ -1401,16 +1401,16 @@ define_type(asn1_module am, int level, const char *name, const char *basename,
 
 	getnewbasename(&newbasename, (opts & DEF_TYPE_TYPEDEFP) || level == 0, basename, name);
 
-	space(level);
+	space(am, level);
 
-	fprintf (headerfile, "struct %s {\n", newbasename);
+	fprintf (am->headerfile, "struct %s {\n", newbasename);
         fprintf(am->jsonfile, "\"ttype\":\"%s\",\"extensible\":%s,"
                 "\"ctype\":\"struct %s\"",
                 t->type == TSet ? "SET" : "SEQUENCE",
                 have_ellipsis(t) ? "true" : "false", newbasename);
 	if (t->type == TSequence && (opts & DEF_TYPE_PRESERVE)) {
-	    space(level + 1);
-	    fprintf(headerfile, "heim_octet_string _save;\n");
+	    space(am, level + 1);
+	    fprintf(am->headerfile, "heim_octet_string _save;\n");
 	    fprintf(am->jsonfile, ",\"preserve\":true");
 	}
         fprintf(am->jsonfile, ",\"members\":[\n");
@@ -1470,8 +1470,8 @@ define_type(asn1_module am, int level, const char *name, const char *basename,
         }
         while (decorate_type(newbasename, &deco, &more_deco)) {
             decorated++;
-	    space(level + 1);
-            fprintf(headerfile, "%s %s%s;\n", deco.field_type,
+	    space(am, level + 1);
+            fprintf(am->headerfile, "%s %s%s;\n", deco.field_type,
                     deco.opt ? "*" : "", deco.field_name);
             if (deco.first)
                 fprintf(am->jsonfile, ",\"decorate\":[");
@@ -1496,8 +1496,8 @@ define_type(asn1_module am, int level, const char *name, const char *basename,
         }
         if (decorated)
             fprintf(am->jsonfile, "]");
-	space(level);
-        fprintf(headerfile, "}%s%s;\n",
+	space(am, level);
+        fprintf(am->headerfile, "}%s%s;\n",
                 (opts & DEF_TYPE_EMIT_NAME) ? " " : "",
                 (opts & DEF_TYPE_EMIT_NAME) ? name : "");
         free(deco.field_type);
@@ -1514,33 +1514,33 @@ define_type(asn1_module am, int level, const char *name, const char *basename,
 	i.type = TInteger;
 	i.range = &range;
 
-	space(level);
-	fprintf (headerfile, "struct %s {\n", newbasename);
+	space(am, level);
+	fprintf (am->headerfile, "struct %s {\n", newbasename);
         fprintf(am->jsonfile, "\"ttype\":\"%s\",\"ctype\":\"struct %s\",\"members\":[",
                 t->type == TSetOf ? "SET OF" : "SEQUENCE OF", newbasename);
 	define_type(am, level + 1, "len", newbasename, t, &i, DEF_TYPE_NONE);
         fprintf(am->jsonfile, ",");
 	define_type(am, level + 1, "*val", newbasename, t, t->subtype, DEF_TYPE_NONE | DEF_TYPE_EMIT_NAME);
-	space(level);
-        fprintf(headerfile, "}%s%s;\n",
+	space(am, level);
+        fprintf(am->headerfile, "}%s%s;\n",
                 (opts & DEF_TYPE_EMIT_NAME) ? " " : "",
                 (opts & DEF_TYPE_EMIT_NAME) ? name : "");
         fprintf(am->jsonfile, "]");
 	break;
     }
     case TGeneralizedTime:
-	space(level);
-	fprintf (headerfile, "time_t %s;\n", name);
+	space(am, level);
+	fprintf (am->headerfile, "time_t %s;\n", name);
         fprintf(am->jsonfile, "\"ttype\":\"GeneralizedTime\",\"ctype\":\"time_t\"");
 	break;
     case TGeneralString:
-	space(level);
-	fprintf (headerfile, "heim_general_string %s;\n", name);
+	space(am, level);
+	fprintf (am->headerfile, "heim_general_string %s;\n", name);
         fprintf(am->jsonfile, "\"ttype\":\"GeneralString\",\"ctype\":\"heim_general_string\"");
 	break;
     case TTeletexString:
-	space(level);
-	fprintf (headerfile, "heim_general_string %s;\n", name);
+	space(am, level);
+	fprintf (am->headerfile, "heim_general_string %s;\n", name);
         fprintf(am->jsonfile, "\"ttype\":\"TeletexString\",\"ctype\":\"heim_general_string\"");
 	break;
     case TTag:
@@ -1562,43 +1562,43 @@ define_type(asn1_module am, int level, const char *name, const char *basename,
 
 	getnewbasename(&newbasename, (opts & DEF_TYPE_TYPEDEFP) || level == 0, basename, name);
 
-	space(level);
-	fprintf (headerfile, "struct %s {\n", newbasename);
+	space(am, level);
+	fprintf (am->headerfile, "struct %s {\n", newbasename);
         fprintf(am->jsonfile, "\"ttype\":\"CHOICE\",\"ctype\":\"struct %s\"",
                 newbasename);
 	if ((opts & DEF_TYPE_PRESERVE)) {
-	    space(level + 1);
-	    fprintf(headerfile, "heim_octet_string _save;\n");
+	    space(am, level + 1);
+	    fprintf(am->headerfile, "heim_octet_string _save;\n");
 	    fprintf(am->jsonfile, ",\"preserve\":true");
 	}
-	space(level + 1);
-	fprintf (headerfile, "enum %s_enum {\n", newbasename);
+	space(am, level + 1);
+	fprintf (am->headerfile, "enum %s_enum {\n", newbasename);
 	m = have_ellipsis(t);
 	if (m) {
-	    space(level + 2);
-	    fprintf (headerfile, "%s = 0,\n", m->label);
+	    space(am, level + 2);
+	    fprintf (am->headerfile, "%s = 0,\n", m->label);
 	    first = 0;
 	}
         fprintf(am->jsonfile, ",\"extensible\":%s", m ? "true" : "false");
 	HEIM_TAILQ_FOREACH(m, t->members, members) {
-	    space(level + 2);
+	    space(am, level + 2);
 	    if (m->ellipsis)
-		fprintf (headerfile, "/* ... */\n");
+		fprintf (am->headerfile, "/* ... */\n");
 	    else
-		fprintf (headerfile, "%s%s%s\n", m->label,
+		fprintf (am->headerfile, "%s%s%s\n", m->label,
 			 first ? " = 1" : "",
 			 last_member_p(m));
 	    first = 0;
 	}
-	space(level + 1);
-	fprintf (headerfile, "} element;\n");
-	space(level + 1);
-	fprintf (headerfile, "union {\n");
+	space(am, level + 1);
+	fprintf (am->headerfile, "} element;\n");
+	space(am, level + 1);
+	fprintf (am->headerfile, "union {\n");
         fprintf(am->jsonfile, ",\"members\":[\n");
 	HEIM_TAILQ_FOREACH(m, t->members, members) {
 	    if (m->ellipsis) {
-		space(level + 2);
-		fprintf(headerfile, "heim_octet_string asn1_ellipsis;\n");
+		space(am, level + 2);
+		fprintf(am->headerfile, "heim_octet_string asn1_ellipsis;\n");
 	    } else if (m->optional) {
 		char *n = NULL;
 
@@ -1613,14 +1613,14 @@ define_type(asn1_module am, int level, const char *name, const char *basename,
                 fprintf(am->jsonfile, "%s", last_member_p(m));
             }
 	}
-	space(level + 1);
-	fprintf (headerfile, "} u;\n");
+	space(am, level + 1);
+	fprintf (am->headerfile, "} u;\n");
         fprintf(am->jsonfile, "]");
 
         while (decorate_type(newbasename, &deco, &more_deco)) {
             decorated++;
-	    space(level + 1);
-            fprintf(headerfile, "%s %s%s;\n", deco.field_type,
+	    space(am, level + 1);
+            fprintf(am->headerfile, "%s %s%s;\n", deco.field_type,
                     deco.opt ? "*" : "", deco.field_name);
             if (deco.first)
                 fprintf(am->jsonfile, ",\"decorate\":[");
@@ -1646,55 +1646,55 @@ define_type(asn1_module am, int level, const char *name, const char *basename,
         if (decorated)
             fprintf(am->jsonfile, "]");
 
-	space(level);
-        fprintf(headerfile, "}%s%s;\n",
+	space(am, level);
+        fprintf(am->headerfile, "}%s%s;\n",
                 (opts & DEF_TYPE_EMIT_NAME) ? " " : "",
                 (opts & DEF_TYPE_EMIT_NAME) ? name : "");
 	break;
     }
     case TUTCTime:
-	space(level);
-	fprintf (headerfile, "time_t %s;\n", name);
+	space(am, level);
+	fprintf (am->headerfile, "time_t %s;\n", name);
         fprintf(am->jsonfile, "\"ttype\":\"UTCTime\",\"ctype\":\"time_t\"");
 	break;
     case TUTF8String:
-	space(level);
-	fprintf (headerfile, "heim_utf8_string %s;\n", name);
+	space(am, level);
+	fprintf (am->headerfile, "heim_utf8_string %s;\n", name);
         fprintf(am->jsonfile, "\"ttype\":\"UTF8String\",\"ctype\":\"heim_utf8_string\"");
 	break;
     case TPrintableString:
-	space(level);
-	fprintf (headerfile, "heim_printable_string %s;\n", name);
+	space(am, level);
+	fprintf (am->headerfile, "heim_printable_string %s;\n", name);
         fprintf(am->jsonfile, "\"ttype\":\"PrintableString\",\"ctype\":\"heim_printable_string\"");
 	break;
     case TIA5String:
-	space(level);
-	fprintf (headerfile, "heim_ia5_string %s;\n", name);
+	space(am, level);
+	fprintf (am->headerfile, "heim_ia5_string %s;\n", name);
         fprintf(am->jsonfile, "\"ttype\":\"IA5String\",\"ctype\":\"heim_ia5_string\"");
 	break;
     case TBMPString:
-	space(level);
-	fprintf (headerfile, "heim_bmp_string %s;\n", name);
+	space(am, level);
+	fprintf (am->headerfile, "heim_bmp_string %s;\n", name);
         fprintf(am->jsonfile, "\"ttype\":\"BMPString\",\"ctype\":\"heim_bmp_string\"");
 	break;
     case TUniversalString:
-	space(level);
-	fprintf (headerfile, "heim_universal_string %s;\n", name);
+	space(am, level);
+	fprintf (am->headerfile, "heim_universal_string %s;\n", name);
         fprintf(am->jsonfile, "\"ttype\":\"UniversalString\",\"ctype\":\"heim_universal_string\"");
 	break;
     case TVisibleString:
-	space(level);
-	fprintf (headerfile, "heim_visible_string %s;\n", name);
+	space(am, level);
+	fprintf (am->headerfile, "heim_visible_string %s;\n", name);
         fprintf(am->jsonfile, "\"ttype\":\"VisibleString\",\"ctype\":\"heim_visible_string\"");
 	break;
     case TOID :
-	space(level);
-	fprintf (headerfile, "heim_oid %s;\n", name);
+	space(am, level);
+	fprintf (am->headerfile, "heim_oid %s;\n", name);
         fprintf(am->jsonfile, "\"ttype\":\"OBJECT IDENTIFIER\",\"ctype\":\"heim_oid\"");
 	break;
     case TNull:
-	space(level);
-	fprintf (headerfile, "int %s;\n", name);
+	space(am, level);
+	fprintf (am->headerfile, "int %s;\n", name);
         fprintf(am->jsonfile, "\"ttype\":\"NULL\",\"ctype\":\"int\"");
 	break;
     default:
@@ -1710,7 +1710,7 @@ declare_type(asn1_module am, const Symbol *s, Type *t, int typedefp)
     char *newbasename = NULL;
 
     if (typedefp)
-        fprintf(headerfile, "typedef ");
+        fprintf(am->headerfile, "typedef ");
 
     switch (t->type) {
     case TType:
@@ -1762,10 +1762,10 @@ declare_type(asn1_module am, const Symbol *s, Type *t, int typedefp)
         ssize_t more_deco = -1;
 
 	getnewbasename(&newbasename, TRUE, s->gen_name, s->gen_name);
-	fprintf(headerfile, "struct %s %s;\n", newbasename, s->gen_name);
+	fprintf(am->headerfile, "struct %s %s;\n", newbasename, s->gen_name);
         while (decorate_type(newbasename, &deco, &more_deco)) {
             if (deco.header_name)
-                fprintf(headerfile, "#include %s\n", deco.header_name);
+                fprintf(am->headerfile, "#include %s\n", deco.header_name);
             free(deco.field_type);
         }
 	break;
@@ -1773,17 +1773,17 @@ declare_type(asn1_module am, const Symbol *s, Type *t, int typedefp)
     case TSetOf:
     case TSequenceOf:
 	getnewbasename(&newbasename, TRUE, s->gen_name, s->gen_name);
-	fprintf(headerfile, "struct %s %s;\n", newbasename, s->gen_name);
+	fprintf(am->headerfile, "struct %s %s;\n", newbasename, s->gen_name);
 	break;
     case TChoice: {
         struct decoration deco;
         ssize_t more_deco = -1;
 
 	getnewbasename(&newbasename, TRUE, s->gen_name, s->gen_name);
-	fprintf(headerfile, "struct %s %s;\n", newbasename, s->gen_name);
+	fprintf(am->headerfile, "struct %s %s;\n", newbasename, s->gen_name);
         while (decorate_type(newbasename, &deco, &more_deco)) {
             if (deco.header_name)
-                fprintf(headerfile, "#include %s\n", deco.header_name);
+                fprintf(am->headerfile, "#include %s\n", deco.header_name);
             free(deco.field_type);
         }
 	break;
@@ -1924,10 +1924,10 @@ generate_type_header (asn1_module am, const Symbol *s)
      */
     generate_subtypes_header(am, s);
     if (!s->emitted_asn1) {
-        fprintf(headerfile, "/*\n");
-        fprintf(headerfile, "%s ::= ", s->name);
-        define_asn1 (0, s->type);
-        fprintf(headerfile, "\n*/\n\n");
+        fprintf(am->headerfile, "/*\n");
+        fprintf(am->headerfile, "%s ::= ", s->name);
+        define_asn1 (am, 0, s->type);
+        fprintf(am->headerfile, "\n*/\n\n");
         emitted_asn1(s);
     }
 
@@ -1958,7 +1958,7 @@ generate_type_header (asn1_module am, const Symbol *s)
              * This type is ultimately an alias of an imported type, so we don't
              * know its outermost tag here.
              */
-            fprintf(headerfile,
+            fprintf(am->headerfile,
                     "enum { asn1_tag_length_%s = asn1_tag_length_%s,\n"
                     "       asn1_tag_class_%s = asn1_tag_class_%s,\n"
                     "       asn1_tag_tag_%s = asn1_tag_tag_%s };\n",
@@ -1968,7 +1968,7 @@ generate_type_header (asn1_module am, const Symbol *s)
             emitted_tag_enums(s);
         } else if (t->type != TType) {
             /* This type's outermost tag is known here */
-            fprintf(headerfile,
+            fprintf(am->headerfile,
                     "enum { asn1_tag_length_%s = %lu,\n"
                     "       asn1_tag_class_%s = %d,\n"
                     "       asn1_tag_tag_%s = %d };\n",
@@ -1987,7 +1987,7 @@ generate_type_header (asn1_module am, const Symbol *s)
                 s->name, s->gen_name, s->gen_name);
 
     if (!s->emitted_declaration) {
-        fprintf(headerfile, "typedef ");
+        fprintf(am->headerfile, "typedef ");
         define_type(am, 0, s->gen_name, s->gen_name, NULL, s->type,
                     DEF_TYPE_TYPEDEFP | DEF_TYPE_EMIT_NAME |
                     (preserve_type(s->name) ? DEF_TYPE_PRESERVE : 0));
@@ -2002,7 +2002,7 @@ generate_type_header (asn1_module am, const Symbol *s)
                     DEF_TYPE_TYPEDEFP |
                     (preserve_type(s->name) ? DEF_TYPE_PRESERVE : 0));
     }
-    fprintf(headerfile, "\n");
+    fprintf(am->headerfile, "\n");
 
     emitted_definition(s);
 }
@@ -2011,7 +2011,7 @@ void
 c_generate_type_header_forwards(asn1_module am, const Symbol *s)
 {
     declare_type(am, s, s->type, TRUE);
-    fprintf(headerfile, "\n");
+    fprintf(am->headerfile, "\n");
     if (template_flag)
         generate_template_type_forward(s->gen_name);
 }
@@ -2044,10 +2044,10 @@ c_generate_type (asn1_module am, const Symbol *s)
     /* generate prototypes */
 
     if (is_export(s->name)) {
-	h = headerfile;
+	h = am->headerfile;
 	exp = "ASN1EXP ";
     } else {
-	h = privheaderfile;
+	h = am->privheaderfile;
 	exp = "";
     }
 

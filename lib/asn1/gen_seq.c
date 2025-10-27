@@ -74,7 +74,7 @@ c_generate_type_seq (asn1_module am, const Symbol *s)
 
     subname = type->subtype->symbol->gen_name;
 
-    fprintf (headerfile,
+    fprintf (am->headerfile,
 	     "ASN1EXP int   ASN1CALL add_%s  (%s *, const %s *);\n"
 	     "ASN1EXP int   ASN1CALL remove_%s  (%s *, unsigned int);\n",
 	     s->gen_name, s->gen_name, subname,

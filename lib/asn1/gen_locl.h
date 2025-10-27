@@ -122,7 +122,7 @@ void gen_template_import(const Symbol *);
 
 struct objid **objid2list(struct objid *);
 
-extern FILE *privheaderfile, *headerfile, *codefile, *logfile, *templatefile;
+extern FILE *codefile, *logfile, *templatefile;
 extern const char *fuzzer_string;
 extern int support_ber;
 extern int template_flag;

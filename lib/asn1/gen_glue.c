@@ -46,11 +46,11 @@ get_code_file(void)
 }
 
 static void
-generate_2int (const Type *t, const char *gen_name)
+generate_2int (asn1_module am, const Type *t, const char *gen_name)
 {
     Member *m;
 
-    fprintf (headerfile,
+    fprintf (am->headerfile,
 	     "uint64_t %s2int(%s);\n",
 	     gen_name, gen_name);
 
@@ -69,11 +69,11 @@ generate_2int (const Type *t, const char *gen_name)
 }
 
 static void
-generate_int2 (const Type *t, const char *gen_name)
+generate_int2 (asn1_module am, const Type *t, const char *gen_name)
 {
     Member *m;
 
-    fprintf (headerfile,
+    fprintf (am->headerfile,
 	     "%s int2%s(uint64_t);\n",
 	     gen_name, gen_name);
 
@@ -99,11 +99,11 @@ generate_int2 (const Type *t, const char *gen_name)
  */
 
 static void
-generate_units (const Type *t, const char *gen_name)
+generate_units (asn1_module am, const Type *t, const char *gen_name)
 {
     Member *m;
 
-    fprintf (headerfile,
+    fprintf (am->headerfile,
              "const struct units * asn1_%s_units(void);\n",
              gen_name);
 
@@ -150,10 +150,10 @@ c_generate_glue (asn1_module am, const Type *t, const char *gen_name)
                 return;
             }
         }
-        generate_2int (t, gen_name);
-        generate_int2 (t, gen_name);
+        generate_2int (am, t, gen_name);
+        generate_int2 (am, t, gen_name);
         if (parse_units_flag)
-            generate_units (t, gen_name);
+            generate_units (am, t, gen_name);
 	break;
     }
     default :

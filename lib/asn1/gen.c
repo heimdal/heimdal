@@ -45,7 +45,7 @@ FILE *symsfile;
 
 #define STEM "asn1"
 
-static char *privheader, *header, *template;
+static char *privheader, *template;
 static const char *headerbase = STEM;
 
 /* XXX same as der_length_tag */
@@ -156,7 +156,7 @@ c_init_generate (asn1_module am, const char *filename, const char *base)
     fn = NULL;
 
     /* public header file */
-    if (asprintf(&header, "%s.h", headerbase) < 0 || header == NULL)
+    if (asprintf(&am->header, "%s.h", headerbase) < 0 || am->header == NULL)
 	errx(1, "malloc");
     if (asprintf(&fn, "%s.h", headerbase) < 0 || fn == NULL)
 	errx(1, "malloc");
@@ -339,7 +339,7 @@ c_init_generate (asn1_module am, const char *filename, const char *base)
 	     "#include <%s>\n"
 	     "#include <der.h>\n"
 	     "#include <asn1-template.h>\n",
-	     header, privheader);
+	     am->header, privheader);
 
 
 }
@@ -450,7 +450,7 @@ c_generate_header_of_codefile(asn1_module am, const char *name)
     fprintf (codefile,
 	     "#include \"%s\"\n"
 	     "#include \"%s\"\n",
-	     header, privheader);
+	     am->header, privheader);
     fprintf (codefile,
 	     "#include <asn1_err.h>\n"
 	     "#include <der.h>\n"

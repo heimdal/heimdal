@@ -40,7 +40,6 @@ extern int prefix_enum;
 
 RCSID("$Id$");
 
-FILE *templatefile;
 FILE *symsfile;
 
 #define STEM "asn1"
@@ -315,11 +314,11 @@ c_init_generate (asn1_module am, const char *filename, const char *base)
     if (one_code_file)
 	return;
 
-    templatefile = fopen (template, "w");
-    if (templatefile == NULL)
+    am->templatefile = fopen (template, "w");
+    if (am->templatefile == NULL)
 	err (1, "open %s", template);
 
-    fprintf (templatefile,
+    fprintf (am->templatefile,
 	     "/* Generated from %s */\n"
 	     "/* Do not edit */\n\n"
 	     "#include <stdio.h>\n"
@@ -333,7 +332,7 @@ c_init_generate (asn1_module am, const char *filename, const char *base)
 	     filename,
 	     type_file_string);
 
-    fprintf (templatefile,
+    fprintf (am->templatefile,
 	     "#include <%s>\n"
 	     "#include <%s>\n"
 	     "#include <der.h>\n"
@@ -352,7 +351,7 @@ close_generate (asn1_module am)
         err(1, "writes to public header file failed");
     if (am->privheaderfile && fclose(am->privheaderfile) == EOF)
         err(1, "writes to private header file failed");
-    if (templatefile && fclose(templatefile) == EOF)
+    if (am->templatefile && fclose(am->templatefile) == EOF)
         err(1, "writes to template file failed");
     if (!am->jsonfile) abort();
     if (fclose(am->jsonfile) == EOF)

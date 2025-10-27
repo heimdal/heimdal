@@ -111,6 +111,7 @@ typedef struct asn1_module {
     void (*generate_glue) (struct asn1_module *, const struct type *, const char*);
     void (*generate_header_of_codefile) (struct asn1_module *, const char *);
     void (*init_generate) (struct asn1_module *, const char *, const char *);
+    void (*add_import) (struct asn1_module *, const char *);
 } *asn1_module;
 
 enum codegen_language {
@@ -145,6 +146,8 @@ asn1_module new_asn1_module(enum codegen_language);
     am->generate_header_of_codefile(am, name)
 #define INIT_GENERATE(/* asn1_module */ am, /* const char * */ filename, /*const char * */ base) \
     am->init_generate(am, filename, base);
+#define ADD_IMPORT(/* asn1_module */ am, /* const char * */ module) \
+    am->add_import(am, module);
 
 
 #endif  // __GEN_MODULE_H__

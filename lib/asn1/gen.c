@@ -40,7 +40,7 @@ extern int prefix_enum;
 
 RCSID("$Id$");
 
-FILE *jsonfile, *privheaderfile, *headerfile, *oidsfile, *codefile, *logfile, *templatefile;
+FILE *privheaderfile, *headerfile, *oidsfile, *codefile, *logfile, *templatefile;
 FILE *symsfile;
 
 #define STEM "asn1"
@@ -74,7 +74,7 @@ struct import {
 static struct import *imports = NULL;
 
 void
-add_import (const char *module)
+c_add_import (asn1_module am, const char *module)
 {
     struct import *tmp = emalloc (sizeof(*tmp));
 
@@ -83,7 +83,7 @@ add_import (const char *module)
     imports     = tmp;
 
     fprintf (headerfile, "#include <%s_asn1.h>\n", module);
-    fprintf(jsonfile, "{\"imports\":\"%s\"}\n", module);
+    fprintf(am->jsonfile, "{\"imports\":\"%s\"}\n", module);
 }
 
 /*
@@ -148,8 +148,8 @@ c_init_generate (asn1_module am, const char *filename, const char *base)
     /* JSON file */
     if (asprintf(&fn, "%s.json", am->headerbase) < 0 || fn == NULL)
         errx(1, "malloc");
-    jsonfile = fopen(fn, "w");
-    if (jsonfile == NULL)
+    am->jsonfile = fopen(fn, "w");
+    if (am->jsonfile == NULL)
         err(1, "open %s", fn);
     free(fn);
     fn = NULL;
@@ -354,8 +354,8 @@ close_generate (asn1_module am)
         err(1, "writes to private header file failed");
     if (templatefile && fclose(templatefile) == EOF)
         err(1, "writes to template file failed");
-    if (!jsonfile) abort();
-    if (fclose(jsonfile) == EOF)
+    if (!am->jsonfile) abort();
+    if (fclose(am->jsonfile) == EOF)
         err(1, "writes to JSON file failed");
     if (!oidsfile) abort();
     if (fclose(oidsfile) == EOF)
@@ -524,7 +524,7 @@ c_generate_constant (asn1_module am, const Symbol *s)
             fprintf(symsfile, "ASN1_SYM_INTVAL(\"%s\", \"%s\", %s, %lld)\n",
                     s->name, s->gen_name, s->gen_name,
                     (long long)s->value->u.integervalue);
-        fprintf(jsonfile,
+        fprintf(am->jsonfile,
                 "{\"name\":\"%s\",\"gen_name\":\"%s\",\"type\":\"INTEGER\","
                 "\"constant\":true,\"exported\":%s,\"value\":%lld}\n",
                 s->name, s->gen_name, is_export(s->name) ? "true" : "false",
@@ -550,7 +550,7 @@ c_generate_constant (asn1_module am, const Symbol *s)
 	    break;
 	}
 
-        fprintf(jsonfile,
+        fprintf(am->jsonfile,
                 "{\"name\":\"%s\",\"gen_name\":\"%s\","
                 "\"type\":\"OBJECT IDENTIFIER\","
                 "\"constant\":true,\"exported\":%s,\"value\":[\n",
@@ -561,13 +561,13 @@ c_generate_constant (asn1_module am, const Symbol *s)
 	    fprintf(headerfile, "%s(%d) ",
 		    o->label ? o->label : "label-less", o->value);
             if (o->label == NULL)
-                fprintf(jsonfile, "%s{\"label\":null,\"value\":%d}",
+                fprintf(am->jsonfile, "%s{\"label\":null,\"value\":%d}",
                         i ? "," : "", o->value);
             else
-                fprintf(jsonfile, "%s{\"label\":\"%s\",\"value\":%d}",
+                fprintf(am->jsonfile, "%s{\"label\":\"%s\",\"value\":%d}",
                         i ? "," : "", o->label, o->value);
 	}
-        fprintf(jsonfile, "]}\n");
+        fprintf(am->jsonfile, "]}\n");
 
 	fprintf (codefile, "static unsigned oid_%s_variable_num[%lu] =  {",
 		 s->gen_name, (unsigned long)len);
@@ -941,7 +941,7 @@ typedef enum define_type_options {
     DEF_TYPE_TYPEDEFP = 2,
     DEF_TYPE_EMIT_NAME = 4
 } define_type_options;
-static void define_type(int, const char *, const char *, Type *, Type *, define_type_options);
+static void define_type(asn1_module, int, const char *, const char *, Type *, Type *, define_type_options);
 
 /*
  * Get the SET/SEQUENCE member pair and CLASS field pair defining an open type.
@@ -1090,7 +1090,7 @@ get_open_type_defn_fields(const Type *t,
  * we support only one.
  */
 static void
-define_open_type(int level, const char *newbasename, const char *name, const char *basename, Type *pt, Type *t)
+define_open_type(asn1_module am, int level, const char *newbasename, const char *name, const char *basename, Type *pt, Type *t)
 {
     Member *opentypemember, *typeidmember;
     Field *opentypefield, *typeidfield;
@@ -1110,19 +1110,19 @@ define_open_type(int level, const char *newbasename, const char *name, const cha
     sort_object_set(os, typeidfield, &objects, &nobjs);
 
     fprintf(headerfile, "struct {\n");
-    fprintf(jsonfile, "{\"opentype\":true,\"arraytype\":%s,",
+    fprintf(am->jsonfile, "{\"opentype\":true,\"arraytype\":%s,",
             is_array_of_open_type ? "true" : "false");
-    fprintf(jsonfile, "\"classname\":\"%s\",", os->iosclass->symbol->name);
-    fprintf(jsonfile, "\"objectsetname\":\"%s\",", os->symbol->name);
-    fprintf(jsonfile, "\"typeidmember\":\"%s\",", typeidmember->name);
-    fprintf(jsonfile, "\"opentypemember\":\"%s\",", opentypemember->name);
-    fprintf(jsonfile, "\"typeidfield\":\"%s\",", typeidfield->name);
-    fprintf(jsonfile, "\"opentypefield\":\"%s\",", opentypefield->name);
+    fprintf(am->jsonfile, "\"classname\":\"%s\",", os->iosclass->symbol->name);
+    fprintf(am->jsonfile, "\"objectsetname\":\"%s\",", os->symbol->name);
+    fprintf(am->jsonfile, "\"typeidmember\":\"%s\",", typeidmember->name);
+    fprintf(am->jsonfile, "\"opentypemember\":\"%s\",", opentypemember->name);
+    fprintf(am->jsonfile, "\"typeidfield\":\"%s\",", typeidfield->name);
+    fprintf(am->jsonfile, "\"opentypefield\":\"%s\",", opentypefield->name);
 
     /* Iterate objects in the object set, gen enum labels */
     fprintf(headerfile, "enum { choice_%s_iosnumunknown = 0,\n",
             newbasename);
-    fprintf(jsonfile, "\"opentypeids\":[");
+    fprintf(am->jsonfile, "\"opentypeids\":[");
     for (i = 0; i < nobjs; i++) {
         HEIM_TAILQ_FOREACH(of, objects[i]->objfields, objfields) {
             if (strcmp(of->name, typeidfield->name) != 0)
@@ -1132,11 +1132,11 @@ define_open_type(int level, const char *newbasename, const char *name, const cha
                      of->name, objects[i]->symbol->name);
             fprintf(headerfile, "choice_%s_iosnum_%s,\n",
                     newbasename, of->value->s->gen_name);
-            fprintf(jsonfile, "\"%s\"", of->value->s->gen_name);
-            fprintf(jsonfile, "%s", (i + 1) < nobjs ? "," : "");
+            fprintf(am->jsonfile, "\"%s\"", of->value->s->gen_name);
+            fprintf(am->jsonfile, "%s", (i + 1) < nobjs ? "," : "");
         }
     }
-    fprintf(jsonfile, "],\n");
+    fprintf(am->jsonfile, "],\n");
     fprintf(headerfile, "} element;\n");
 
     if (is_array_of_open_type)
@@ -1144,7 +1144,7 @@ define_open_type(int level, const char *newbasename, const char *name, const cha
 
     /* Iterate objects in the object set, gen union arms */
     fprintf(headerfile, "union {\nvoid *_any;\n");
-    fprintf(jsonfile, "\"members\":[");
+    fprintf(am->jsonfile, "\"members\":[");
     for (i = 0; i < nobjs; i++) {
         HEIM_TAILQ_FOREACH(of, objects[i]->objfields, objfields) {
             char *n = NULL;
@@ -1162,12 +1162,12 @@ define_open_type(int level, const char *newbasename, const char *name, const cha
 
             if (asprintf(&n, "*%s", objects[i]->symbol->gen_name) < 0 || n == NULL)
                 err(1, "malloc");
-            define_type(level + 2, n, newbasename, NULL, of->type, DEF_TYPE_NONE);
-            fprintf(jsonfile, "%s", (i + 1) < nobjs ? "," : "");
+            define_type(am, level + 2, n, newbasename, NULL, of->type, DEF_TYPE_NONE);
+            fprintf(am->jsonfile, "%s", (i + 1) < nobjs ? "," : "");
             free(n);
         }
     }
-    fprintf(jsonfile, "]}\n");
+    fprintf(am->jsonfile, "]}\n");
     if (is_array_of_open_type) {
         fprintf(headerfile, "} *val;\n} _ioschoice_%s;\n", opentypemember->gen_name);
     } else {
@@ -1182,14 +1182,14 @@ static const char * const tagclassnames[] = {
 };
 
 static void
-define_type(int level, const char *name, const char *basename,
+define_type(asn1_module am, int level, const char *name, const char *basename,
             Type *pt, Type *t, define_type_options opts)
 {
     const char *label_prefix = NULL;
     const char *label_prefix_sep = NULL;
     char *newbasename = NULL;
 
-    fprintf(jsonfile, "{\"name\":\"%s\",\"gen_name\":\"%s\","
+    fprintf(am->jsonfile, "{\"name\":\"%s\",\"gen_name\":\"%s\","
             "\"is_type\":true,\"exported\":%s,\"typedef\":%s,",
             basename, name,
             t->symbol && is_export(t->symbol->name) ? "true" : "false",
@@ -1199,12 +1199,12 @@ define_type(int level, const char *name, const char *basename,
     case TType:
 	space(level);
         if (!t->symbol && t->actual_parameter) {
-            define_open_type(level, newbasename, name, basename, t, t);
+            define_open_type(am, level, newbasename, name, basename, t, t);
         } else if (!t->symbol && pt->actual_parameter) {
-            define_open_type(level, newbasename, name, basename, pt, t);
+            define_open_type(am, level, newbasename, name, basename, pt, t);
         } else if (t->symbol) {
             fprintf(headerfile, "%s %s;\n", t->symbol->gen_name, name);
-            fprintf(jsonfile, "\"ttype\":\"%s\","
+            fprintf(am->jsonfile, "\"ttype\":\"%s\","
                     "\"alias\":true\n", t->symbol->gen_name);
         } else
             abort();
@@ -1220,46 +1220,46 @@ define_type(int level, const char *name, const char *basename,
             label_prefix = prefix_enum ? name : (enum_prefix ? enum_prefix : "");
             label_prefix_sep = prefix_enum ? "_" : "";
             fprintf (headerfile, "enum %s {\n", (opts & DEF_TYPE_TYPEDEFP) ? name : "");
-            fprintf(jsonfile, "\"ttype\":\"INTEGER\",\"ctype\":\"enum\","
+            fprintf(am->jsonfile, "\"ttype\":\"INTEGER\",\"ctype\":\"enum\","
                     "\"members\":[\n");
 	    HEIM_TAILQ_FOREACH(m, t->members, members) {
                 space (level + 1);
                 fprintf(headerfile, "%s%s%s = %lld%s\n",
                         label_prefix, label_prefix_sep,
                         m->gen_name, (long long)m->val, last_member_p(m));
-                fprintf(jsonfile, "{\"%s%s%s\":%lld}%s\n",
+                fprintf(am->jsonfile, "{\"%s%s%s\":%lld}%s\n",
                         label_prefix, label_prefix_sep,
                         m->gen_name, (long long)m->val, last_member_p(m));
             }
             fprintf(headerfile, "} %s;\n", name);
-            fprintf(jsonfile, "]");
+            fprintf(am->jsonfile, "]");
 	} else if (t->range == NULL) {
             fprintf(headerfile, "heim_integer %s;\n", name);
-            fprintf(jsonfile, "\"ttype\":\"INTEGER\",\"ctype\":\"heim_integer\"");
+            fprintf(am->jsonfile, "\"ttype\":\"INTEGER\",\"ctype\":\"heim_integer\"");
 	} else if (t->range->min < 0 &&
                    (t->range->min < INT_MIN || t->range->max > INT_MAX)) {
             fprintf(headerfile, "int64_t %s;\n", name);
-            fprintf(jsonfile, "\"ttype\":\"INTEGER\",\"ctype\":\"int64_t\"");
+            fprintf(am->jsonfile, "\"ttype\":\"INTEGER\",\"ctype\":\"int64_t\"");
 	} else if (t->range->min < 0) {
 	    fprintf (headerfile, "int %s;\n", name);
-            fprintf(jsonfile, "\"ttype\":\"INTEGER\",\"ctype\":\"int\"");
+            fprintf(am->jsonfile, "\"ttype\":\"INTEGER\",\"ctype\":\"int\"");
 	} else if (t->range->max > UINT_MAX) {
 	    fprintf (headerfile, "uint64_t %s;\n", name);
-            fprintf(jsonfile, "\"ttype\":\"INTEGER\",\"ctype\":\"uint64_t\"");
+            fprintf(am->jsonfile, "\"ttype\":\"INTEGER\",\"ctype\":\"uint64_t\"");
 	} else {
 	    fprintf (headerfile, "unsigned int %s;\n", name);
-            fprintf(jsonfile, "\"ttype\":\"INTEGER\",\"ctype\":\"unsigned int\"");
+            fprintf(am->jsonfile, "\"ttype\":\"INTEGER\",\"ctype\":\"unsigned int\"");
 	}
 	break;
     case TBoolean:
 	space(level);
 	fprintf (headerfile, "int %s;\n", name);
-        fprintf(jsonfile, "\"ttype\":\"BOOLEAN\",\"ctype\":\"unsigned int\"");
+        fprintf(am->jsonfile, "\"ttype\":\"BOOLEAN\",\"ctype\":\"unsigned int\"");
 	break;
     case TOctetString:
 	space(level);
 	fprintf (headerfile, "heim_octet_string %s;\n", name);
-        fprintf(jsonfile, "\"ttype\":\"OCTET STRING\",\"ctype\":\"heim_octet_string\"");
+        fprintf(am->jsonfile, "\"ttype\":\"OCTET STRING\",\"ctype\":\"heim_octet_string\"");
 	break;
     case TBitString: {
 	Member *m;
@@ -1297,16 +1297,16 @@ define_type(int level, const char *name, const char *basename,
 	i.constraint = NULL;
 
 	space(level);
-        fprintf(jsonfile, "\"ttype\":\"BIT STRING\",");
+        fprintf(am->jsonfile, "\"ttype\":\"BIT STRING\",");
 	if(HEIM_TAILQ_EMPTY(t->members)) {
 	    fprintf (headerfile, "heim_bit_string %s;\n", name);
-            fprintf(jsonfile, "\"ctype\":\"heim_bit_string\"");
+            fprintf(am->jsonfile, "\"ctype\":\"heim_bit_string\"");
         } else {
 	    int64_t pos = 0;
 	    getnewbasename(&newbasename, (opts & DEF_TYPE_TYPEDEFP) || level == 0, basename, name);
 
 	    fprintf (headerfile, "struct %s {\n", newbasename);
-            fprintf(jsonfile, "\"ctype\":\"struct %s\",\"members\":[\n", newbasename);
+            fprintf(am->jsonfile, "\"ctype\":\"struct %s\",\"members\":[\n", newbasename);
 	    HEIM_TAILQ_FOREACH(m, t->members, members) {
 		char *n = NULL;
 
@@ -1318,8 +1318,8 @@ define_type(int level, const char *name, const char *basename,
 		    if (asprintf (&n, "_unused%lld:1", (long long)pos) < 0 ||
                         n == NULL)
 			err(1, "malloc");
-		    define_type(level + 1, n, newbasename, NULL, &i, DEF_TYPE_EMIT_NAME);
-                    fprintf(jsonfile, ",");
+		    define_type(am, level + 1, n, newbasename, NULL, &i, DEF_TYPE_EMIT_NAME);
+                    fprintf(am->jsonfile, ",");
 		    free(n);
 		    pos++;
 		}
@@ -1327,8 +1327,8 @@ define_type(int level, const char *name, const char *basename,
 		n = NULL;
 		if (asprintf (&n, "%s:1", m->gen_name) < 0 || n == NULL)
 		    errx(1, "malloc");
-		define_type(level + 1, n, newbasename, NULL, &i, DEF_TYPE_EMIT_NAME);
-                fprintf(jsonfile, "%s", last_member_p(m));
+		define_type(am, level + 1, n, newbasename, NULL, &i, DEF_TYPE_EMIT_NAME);
+                fprintf(am->jsonfile, "%s", last_member_p(m));
 		free (n);
 		n = NULL;
 		pos++;
@@ -1340,14 +1340,14 @@ define_type(int level, const char *name, const char *basename,
             else
                 bitset_size = 32;
             if (pos < bitset_size)
-                fprintf(jsonfile, ",");
+                fprintf(am->jsonfile, ",");
 	    while (pos < bitset_size) {
 		char *n = NULL;
 		if (asprintf (&n, "_unused%lld:1", (long long)pos) < 0 ||
                     n == NULL)
 		    errx(1, "malloc");
-		define_type(level + 1, n, newbasename, NULL, &i, DEF_TYPE_EMIT_NAME);
-                fprintf(jsonfile, "%s", (pos + 1) < bitset_size ? "," : "");
+		define_type(am, level + 1, n, newbasename, NULL, &i, DEF_TYPE_EMIT_NAME);
+                fprintf(am->jsonfile, "%s", (pos + 1) < bitset_size ? "," : "");
 		free(n);
 		pos++;
 	    }
@@ -1356,7 +1356,7 @@ define_type(int level, const char *name, const char *basename,
             fprintf(headerfile, "}%s%s;\n\n",
                     (opts & DEF_TYPE_EMIT_NAME) ? " " : "",
                     (opts & DEF_TYPE_EMIT_NAME) ? name : "");
-            fprintf(jsonfile, "]");
+            fprintf(am->jsonfile, "]");
 	}
 	break;
     }
@@ -1370,7 +1370,7 @@ define_type(int level, const char *name, const char *basename,
         label_prefix_sep = prefix_enum ? "_" : "";
 	space(level);
 	fprintf (headerfile, "enum %s {\n", (opts & DEF_TYPE_TYPEDEFP) ? name : "");
-        fprintf(jsonfile, "\"ctype\":\"enum %s\",\"extensible\":%s,\"members\":[\n",
+        fprintf(am->jsonfile, "\"ctype\":\"enum %s\",\"extensible\":%s,\"members\":[\n",
                 (opts & DEF_TYPE_TYPEDEFP) ? name : "", have_ellipsis(t) ? "true" : "false");
 	HEIM_TAILQ_FOREACH(m, t->members, members) {
 	    space(level + 1);
@@ -1380,7 +1380,7 @@ define_type(int level, const char *name, const char *basename,
 		fprintf(headerfile, "%s%s%s = %lld%s\n",
                         label_prefix, label_prefix_sep,
                         m->gen_name, (long long)m->val, last_member_p(m));
-                fprintf(jsonfile, "{\"%s%s%s\":%lld%s}\n",
+                fprintf(am->jsonfile, "{\"%s%s%s\":%lld%s}\n",
                         label_prefix, label_prefix_sep,
                         m->gen_name, (long long)m->val, last_member_p(m));
             }
@@ -1389,7 +1389,7 @@ define_type(int level, const char *name, const char *basename,
         fprintf(headerfile, "}%s%s;\n\n",
                 (opts & DEF_TYPE_EMIT_NAME) ? " " : "",
                 (opts & DEF_TYPE_EMIT_NAME) ? name : "");
-	fprintf(jsonfile, "]");
+	fprintf(am->jsonfile, "]");
 	break;
     }
     case TSet:
@@ -1404,16 +1404,16 @@ define_type(int level, const char *name, const char *basename,
 	space(level);
 
 	fprintf (headerfile, "struct %s {\n", newbasename);
-        fprintf(jsonfile, "\"ttype\":\"%s\",\"extensible\":%s,"
+        fprintf(am->jsonfile, "\"ttype\":\"%s\",\"extensible\":%s,"
                 "\"ctype\":\"struct %s\"",
                 t->type == TSet ? "SET" : "SEQUENCE",
                 have_ellipsis(t) ? "true" : "false", newbasename);
 	if (t->type == TSequence && (opts & DEF_TYPE_PRESERVE)) {
 	    space(level + 1);
 	    fprintf(headerfile, "heim_octet_string _save;\n");
-	    fprintf(jsonfile, ",\"preserve\":true");
+	    fprintf(am->jsonfile, ",\"preserve\":true");
 	}
-        fprintf(jsonfile, ",\"members\":[\n");
+        fprintf(am->jsonfile, ",\"members\":[\n");
 	HEIM_TAILQ_FOREACH(m, t->members, members) {
 	    if (m->ellipsis) {
 		;
@@ -1449,24 +1449,24 @@ define_type(int level, const char *name, const char *basename,
                 } else
                     namep = m->gen_name;
 
-                fprintf(jsonfile, "{\"name\":\"%s\",\"gen_name\":\"%s\","
+                fprintf(am->jsonfile, "{\"name\":\"%s\",\"gen_name\":\"%s\","
                         "\"optional\":%s,\"defval\":%s,\"type\":",
                         m->name, m->gen_name, m->optional ? "true" : "false", defvalp);
-                define_type(level + 1, namep, newbasename, t, m->type, DEF_TYPE_EMIT_NAME);
-                fprintf(jsonfile, "}%s", last_member_p(m));
+                define_type(am, level + 1, namep, newbasename, t, m->type, DEF_TYPE_EMIT_NAME);
+                fprintf(am->jsonfile, "}%s", last_member_p(m));
 		free (n);
 		free (defval);
 	    } else {
-                fprintf(jsonfile, "{\"name\":\"%s\",\"gen_name\":\"%s\","
+                fprintf(am->jsonfile, "{\"name\":\"%s\",\"gen_name\":\"%s\","
                         "\"optional\":false,\"type\":", m->name, m->gen_name);
-		define_type(level + 1, m->gen_name, newbasename, t, m->type, DEF_TYPE_EMIT_NAME);
-                fprintf(jsonfile, "}%s", last_member_p(m));
+		define_type(am, level + 1, m->gen_name, newbasename, t, m->type, DEF_TYPE_EMIT_NAME);
+                fprintf(am->jsonfile, "}%s", last_member_p(m));
             }
 	}
-        fprintf(jsonfile, "]");
+        fprintf(am->jsonfile, "]");
         if (t->actual_parameter && t->actual_parameter->objects) {
-            fprintf(jsonfile, ",\"opentype\":");
-            define_open_type(level, newbasename, name, basename, t, t);
+            fprintf(am->jsonfile, ",\"opentype\":");
+            define_open_type(am, level, newbasename, name, basename, t, t);
         }
         while (decorate_type(newbasename, &deco, &more_deco)) {
             decorated++;
@@ -1474,8 +1474,8 @@ define_type(int level, const char *name, const char *basename,
             fprintf(headerfile, "%s %s%s;\n", deco.field_type,
                     deco.opt ? "*" : "", deco.field_name);
             if (deco.first)
-                fprintf(jsonfile, ",\"decorate\":[");
-            fprintf(jsonfile, "%s{"
+                fprintf(am->jsonfile, ",\"decorate\":[");
+            fprintf(am->jsonfile, "%s{"
                     "\"type\":\"%s\",\"name\":\"%s\",\"optional\":%s,"
                     "\"external\":%s,\"pointer\":%s,\"void_star\":%s,"
                     "\"struct_star\":%s,"
@@ -1495,7 +1495,7 @@ define_type(int level, const char *name, const char *basename,
                     );
         }
         if (decorated)
-            fprintf(jsonfile, "]");
+            fprintf(am->jsonfile, "]");
 	space(level);
         fprintf(headerfile, "}%s%s;\n",
                 (opts & DEF_TYPE_EMIT_NAME) ? " " : "",
@@ -1516,42 +1516,42 @@ define_type(int level, const char *name, const char *basename,
 
 	space(level);
 	fprintf (headerfile, "struct %s {\n", newbasename);
-        fprintf(jsonfile, "\"ttype\":\"%s\",\"ctype\":\"struct %s\",\"members\":[",
+        fprintf(am->jsonfile, "\"ttype\":\"%s\",\"ctype\":\"struct %s\",\"members\":[",
                 t->type == TSetOf ? "SET OF" : "SEQUENCE OF", newbasename);
-	define_type(level + 1, "len", newbasename, t, &i, DEF_TYPE_NONE);
-        fprintf(jsonfile, ",");
-	define_type(level + 1, "*val", newbasename, t, t->subtype, DEF_TYPE_NONE | DEF_TYPE_EMIT_NAME);
+	define_type(am, level + 1, "len", newbasename, t, &i, DEF_TYPE_NONE);
+        fprintf(am->jsonfile, ",");
+	define_type(am, level + 1, "*val", newbasename, t, t->subtype, DEF_TYPE_NONE | DEF_TYPE_EMIT_NAME);
 	space(level);
         fprintf(headerfile, "}%s%s;\n",
                 (opts & DEF_TYPE_EMIT_NAME) ? " " : "",
                 (opts & DEF_TYPE_EMIT_NAME) ? name : "");
-        fprintf(jsonfile, "]");
+        fprintf(am->jsonfile, "]");
 	break;
     }
     case TGeneralizedTime:
 	space(level);
 	fprintf (headerfile, "time_t %s;\n", name);
-        fprintf(jsonfile, "\"ttype\":\"GeneralizedTime\",\"ctype\":\"time_t\"");
+        fprintf(am->jsonfile, "\"ttype\":\"GeneralizedTime\",\"ctype\":\"time_t\"");
 	break;
     case TGeneralString:
 	space(level);
 	fprintf (headerfile, "heim_general_string %s;\n", name);
-        fprintf(jsonfile, "\"ttype\":\"GeneralString\",\"ctype\":\"heim_general_string\"");
+        fprintf(am->jsonfile, "\"ttype\":\"GeneralString\",\"ctype\":\"heim_general_string\"");
 	break;
     case TTeletexString:
 	space(level);
 	fprintf (headerfile, "heim_general_string %s;\n", name);
-        fprintf(jsonfile, "\"ttype\":\"TeletexString\",\"ctype\":\"heim_general_string\"");
+        fprintf(am->jsonfile, "\"ttype\":\"TeletexString\",\"ctype\":\"heim_general_string\"");
 	break;
     case TTag:
         if (t->implicit_choice) {
-            fprintf(jsonfile, "\"desired_tagenv\":\"IMPLICIT\",");
+            fprintf(am->jsonfile, "\"desired_tagenv\":\"IMPLICIT\",");
         }
-        fprintf(jsonfile, "\"tagclass\":\"%s\",\"tagvalue\":%d,\"tagenv\":\"%s\",\n",
+        fprintf(am->jsonfile, "\"tagclass\":\"%s\",\"tagvalue\":%d,\"tagenv\":\"%s\",\n",
                 tagclassnames[t->tag.tagclass], t->tag.tagvalue,
                 t->tag.tagenv == TE_EXPLICIT ? "EXPLICIT" : "IMPLICIT");
-        fprintf(jsonfile, "\"ttype\":\n");
-        define_type(level, name, basename, t, t->subtype, opts);
+        fprintf(am->jsonfile, "\"ttype\":\n");
+        define_type(am, level, name, basename, t, t->subtype, opts);
 	break;
     case TChoice: {
         struct decoration deco;
@@ -1564,12 +1564,12 @@ define_type(int level, const char *name, const char *basename,
 
 	space(level);
 	fprintf (headerfile, "struct %s {\n", newbasename);
-        fprintf(jsonfile, "\"ttype\":\"CHOICE\",\"ctype\":\"struct %s\"",
+        fprintf(am->jsonfile, "\"ttype\":\"CHOICE\",\"ctype\":\"struct %s\"",
                 newbasename);
 	if ((opts & DEF_TYPE_PRESERVE)) {
 	    space(level + 1);
 	    fprintf(headerfile, "heim_octet_string _save;\n");
-	    fprintf(jsonfile, ",\"preserve\":true");
+	    fprintf(am->jsonfile, ",\"preserve\":true");
 	}
 	space(level + 1);
 	fprintf (headerfile, "enum %s_enum {\n", newbasename);
@@ -1579,7 +1579,7 @@ define_type(int level, const char *name, const char *basename,
 	    fprintf (headerfile, "%s = 0,\n", m->label);
 	    first = 0;
 	}
-        fprintf(jsonfile, ",\"extensible\":%s", m ? "true" : "false");
+        fprintf(am->jsonfile, ",\"extensible\":%s", m ? "true" : "false");
 	HEIM_TAILQ_FOREACH(m, t->members, members) {
 	    space(level + 2);
 	    if (m->ellipsis)
@@ -1594,7 +1594,7 @@ define_type(int level, const char *name, const char *basename,
 	fprintf (headerfile, "} element;\n");
 	space(level + 1);
 	fprintf (headerfile, "union {\n");
-        fprintf(jsonfile, ",\"members\":[\n");
+        fprintf(am->jsonfile, ",\"members\":[\n");
 	HEIM_TAILQ_FOREACH(m, t->members, members) {
 	    if (m->ellipsis) {
 		space(level + 2);
@@ -1604,18 +1604,18 @@ define_type(int level, const char *name, const char *basename,
 
 		if (asprintf (&n, "*%s", m->gen_name) < 0 || n == NULL)
 		    errx(1, "malloc");
-                fprintf(jsonfile, "{\"optional\":");
-		define_type(level + 2, n, newbasename, t, m->type, DEF_TYPE_EMIT_NAME);
-                fprintf(jsonfile, "}%s", last_member_p(m));
+                fprintf(am->jsonfile, "{\"optional\":");
+		define_type(am, level + 2, n, newbasename, t, m->type, DEF_TYPE_EMIT_NAME);
+                fprintf(am->jsonfile, "}%s", last_member_p(m));
 		free (n);
 	    } else {
-		define_type(level + 2, m->gen_name, newbasename, t, m->type, DEF_TYPE_EMIT_NAME);
-                fprintf(jsonfile, "%s", last_member_p(m));
+		define_type(am, level + 2, m->gen_name, newbasename, t, m->type, DEF_TYPE_EMIT_NAME);
+                fprintf(am->jsonfile, "%s", last_member_p(m));
             }
 	}
 	space(level + 1);
 	fprintf (headerfile, "} u;\n");
-        fprintf(jsonfile, "]");
+        fprintf(am->jsonfile, "]");
 
         while (decorate_type(newbasename, &deco, &more_deco)) {
             decorated++;
@@ -1623,8 +1623,8 @@ define_type(int level, const char *name, const char *basename,
             fprintf(headerfile, "%s %s%s;\n", deco.field_type,
                     deco.opt ? "*" : "", deco.field_name);
             if (deco.first)
-                fprintf(jsonfile, ",\"decorate\":[");
-            fprintf(jsonfile, "%s{"
+                fprintf(am->jsonfile, ",\"decorate\":[");
+            fprintf(am->jsonfile, "%s{"
                     "\"type\":\"%s\",\"name\":\"%s\",\"optional\":%s,"
                     "\"external\":%s,\"pointer\":%s,\"void_star\":%s,"
                     "\"struct_star\":%s,"
@@ -1644,7 +1644,7 @@ define_type(int level, const char *name, const char *basename,
                     );
         }
         if (decorated)
-            fprintf(jsonfile, "]");
+            fprintf(am->jsonfile, "]");
 
 	space(level);
         fprintf(headerfile, "}%s%s;\n",
@@ -1655,57 +1655,57 @@ define_type(int level, const char *name, const char *basename,
     case TUTCTime:
 	space(level);
 	fprintf (headerfile, "time_t %s;\n", name);
-        fprintf(jsonfile, "\"ttype\":\"UTCTime\",\"ctype\":\"time_t\"");
+        fprintf(am->jsonfile, "\"ttype\":\"UTCTime\",\"ctype\":\"time_t\"");
 	break;
     case TUTF8String:
 	space(level);
 	fprintf (headerfile, "heim_utf8_string %s;\n", name);
-        fprintf(jsonfile, "\"ttype\":\"UTF8String\",\"ctype\":\"heim_utf8_string\"");
+        fprintf(am->jsonfile, "\"ttype\":\"UTF8String\",\"ctype\":\"heim_utf8_string\"");
 	break;
     case TPrintableString:
 	space(level);
 	fprintf (headerfile, "heim_printable_string %s;\n", name);
-        fprintf(jsonfile, "\"ttype\":\"PrintableString\",\"ctype\":\"heim_printable_string\"");
+        fprintf(am->jsonfile, "\"ttype\":\"PrintableString\",\"ctype\":\"heim_printable_string\"");
 	break;
     case TIA5String:
 	space(level);
 	fprintf (headerfile, "heim_ia5_string %s;\n", name);
-        fprintf(jsonfile, "\"ttype\":\"IA5String\",\"ctype\":\"heim_ia5_string\"");
+        fprintf(am->jsonfile, "\"ttype\":\"IA5String\",\"ctype\":\"heim_ia5_string\"");
 	break;
     case TBMPString:
 	space(level);
 	fprintf (headerfile, "heim_bmp_string %s;\n", name);
-        fprintf(jsonfile, "\"ttype\":\"BMPString\",\"ctype\":\"heim_bmp_string\"");
+        fprintf(am->jsonfile, "\"ttype\":\"BMPString\",\"ctype\":\"heim_bmp_string\"");
 	break;
     case TUniversalString:
 	space(level);
 	fprintf (headerfile, "heim_universal_string %s;\n", name);
-        fprintf(jsonfile, "\"ttype\":\"UniversalString\",\"ctype\":\"heim_universal_string\"");
+        fprintf(am->jsonfile, "\"ttype\":\"UniversalString\",\"ctype\":\"heim_universal_string\"");
 	break;
     case TVisibleString:
 	space(level);
 	fprintf (headerfile, "heim_visible_string %s;\n", name);
-        fprintf(jsonfile, "\"ttype\":\"VisibleString\",\"ctype\":\"heim_visible_string\"");
+        fprintf(am->jsonfile, "\"ttype\":\"VisibleString\",\"ctype\":\"heim_visible_string\"");
 	break;
     case TOID :
 	space(level);
 	fprintf (headerfile, "heim_oid %s;\n", name);
-        fprintf(jsonfile, "\"ttype\":\"OBJECT IDENTIFIER\",\"ctype\":\"heim_oid\"");
+        fprintf(am->jsonfile, "\"ttype\":\"OBJECT IDENTIFIER\",\"ctype\":\"heim_oid\"");
 	break;
     case TNull:
 	space(level);
 	fprintf (headerfile, "int %s;\n", name);
-        fprintf(jsonfile, "\"ttype\":\"NULL\",\"ctype\":\"int\"");
+        fprintf(am->jsonfile, "\"ttype\":\"NULL\",\"ctype\":\"int\"");
 	break;
     default:
 	abort ();
     }
-    fprintf(jsonfile, "}\n");
+    fprintf(am->jsonfile, "}\n");
     free(newbasename);
 }
 
 static void
-declare_type(const Symbol *s, Type *t, int typedefp)
+declare_type(asn1_module am, const Symbol *s, Type *t, int typedefp)
 {
     char *newbasename = NULL;
 
@@ -1714,7 +1714,7 @@ declare_type(const Symbol *s, Type *t, int typedefp)
 
     switch (t->type) {
     case TType:
-        define_type(0, s->gen_name, s->gen_name, NULL, s->type,
+        define_type(am, 0, s->gen_name, s->gen_name, NULL, s->type,
                     DEF_TYPE_PRESERVE | DEF_TYPE_TYPEDEFP |
                     (s->emitted_declaration ? 0 : DEF_TYPE_EMIT_NAME));
         if (template_flag && !s->emitted_declaration)
@@ -1738,7 +1738,7 @@ declare_type(const Symbol *s, Type *t, int typedefp)
     case TVisibleString:
     case TOID :
     case TNull:
-        define_type(0, s->gen_name, s->gen_name, NULL, s->type,
+        define_type(am, 0, s->gen_name, s->gen_name, NULL, s->type,
                     DEF_TYPE_PRESERVE | DEF_TYPE_TYPEDEFP |
                      (s->emitted_declaration ? 0 : DEF_TYPE_EMIT_NAME));
         if (template_flag && !s->emitted_declaration)
@@ -1748,7 +1748,7 @@ declare_type(const Symbol *s, Type *t, int typedefp)
         return;
     case TTag:
         if (!s->emitted_declaration)
-            declare_type(s, t->subtype, FALSE);
+            declare_type(am, s, t->subtype, FALSE);
         emitted_declaration(s);
 	return;
     default:
@@ -1795,11 +1795,11 @@ declare_type(const Symbol *s, Type *t, int typedefp)
     emitted_declaration(s);
 }
 
-static void generate_subtypes_header_helper(const Member *m);
-static void generate_type_header(const Symbol *);
+static void generate_subtypes_header_helper(asn1_module, const Member *m);
+static void generate_type_header(asn1_module, const Symbol *);
 
 static void
-generate_subtypes_header_helper(const Member *m)
+generate_subtypes_header_helper(asn1_module am, const Member *m)
 {
     Member *sm;
     Symbol *s;
@@ -1810,7 +1810,7 @@ generate_subtypes_header_helper(const Member *m)
         !s->emitted_definition) {
         /* A field of some named type; recurse */
         if (!m->optional && !m->defval)
-            generate_type_header(s);
+            generate_type_header(am, s);
         return;
     }
     if (!m->type->subtype && !m->type->members)
@@ -1819,7 +1819,7 @@ generate_subtypes_header_helper(const Member *m)
         m->type->subtype && m->type->subtype->symbol &&
         (s = getsym(m->type->subtype->symbol->name))) {
         if (!m->optional && !m->defval)
-            generate_type_header(s);
+            generate_type_header(am, s);
         return;
     }
     if (m->type->subtype) {
@@ -1833,18 +1833,18 @@ generate_subtypes_header_helper(const Member *m)
         }
         /* A field of some anonymous (inlined) structured type */
         HEIM_TAILQ_FOREACH(sm, m->type->subtype->members, members) {
-            generate_subtypes_header_helper(sm);
+            generate_subtypes_header_helper(am, sm);
         }
     }
     if (m->type->members) {
         HEIM_TAILQ_FOREACH(sm, m->type->members, members) {
-            generate_subtypes_header_helper(sm);
+            generate_subtypes_header_helper(am, sm);
         }
     }
 }
 
 static void
-generate_subtypes_header(const Symbol *s)
+generate_subtypes_header(asn1_module am, const Symbol *s)
 {
     Type *t = s->type;
     Member *m;
@@ -1895,7 +1895,7 @@ generate_subtypes_header(const Symbol *s)
     case TType: {
         Symbol *s2;
         if (t->symbol && (s2 = getsym(t->symbol->name)) != s)
-            generate_type_header(s2);
+            generate_type_header(am, s2);
         return;
     }
     case TSet:
@@ -1905,12 +1905,12 @@ generate_subtypes_header(const Symbol *s)
     }
 
     HEIM_TAILQ_FOREACH(m, t->members, members) {
-        generate_subtypes_header_helper(m);
+        generate_subtypes_header_helper(am, m);
     }
 }
 
 static void
-generate_type_header (const Symbol *s)
+generate_type_header (asn1_module am, const Symbol *s)
 {
     Type *t = s->type;
 
@@ -1922,7 +1922,7 @@ generate_type_header (const Symbol *s)
      * referenced types have had their definitions emitted already if the
      * member fields are not OPTIONAL/DEFAULTed.
      */
-    generate_subtypes_header(s);
+    generate_subtypes_header(am, s);
     if (!s->emitted_asn1) {
         fprintf(headerfile, "/*\n");
         fprintf(headerfile, "%s ::= ", s->name);
@@ -1988,7 +1988,7 @@ generate_type_header (const Symbol *s)
 
     if (!s->emitted_declaration) {
         fprintf(headerfile, "typedef ");
-        define_type(0, s->gen_name, s->gen_name, NULL, s->type,
+        define_type(am, 0, s->gen_name, s->gen_name, NULL, s->type,
                     DEF_TYPE_TYPEDEFP | DEF_TYPE_EMIT_NAME |
                     (preserve_type(s->name) ? DEF_TYPE_PRESERVE : 0));
     } else if (s->type->type == TType) {
@@ -1998,7 +1998,7 @@ generate_type_header (const Symbol *s)
                s->type->subtype->symbol != NULL) {
         /* This is a type alias and we've already declared it */
     } else {
-        define_type(0, s->gen_name, s->gen_name, NULL, s->type,
+        define_type(am, 0, s->gen_name, s->gen_name, NULL, s->type,
                     DEF_TYPE_TYPEDEFP |
                     (preserve_type(s->name) ? DEF_TYPE_PRESERVE : 0));
     }
@@ -2010,7 +2010,7 @@ generate_type_header (const Symbol *s)
 void
 c_generate_type_header_forwards(asn1_module am, const Symbol *s)
 {
-    declare_type(s, s->type, TRUE);
+    declare_type(am, s, s->type, TRUE);
     fprintf(headerfile, "\n");
     if (template_flag)
         generate_template_type_forward(s->gen_name);
@@ -2025,7 +2025,7 @@ c_generate_type (asn1_module am, const Symbol *s)
     if (!one_code_file)
 	GENERATE_HEADER_OF_CODEFILE(am, s->gen_name);
 
-    generate_type_header(s);
+    generate_type_header(am, s);
 
     if (template_flag)
 	generate_template(s);
@@ -2111,6 +2111,7 @@ asn1_module new_asn1_module(enum codegen_language lang)
             am->generate_glue = c_generate_glue;
             am->generate_header_of_codefile = c_generate_header_of_codefile;
             am->init_generate = c_init_generate;
+            am->add_import = c_add_import;
     };
 
     return am;

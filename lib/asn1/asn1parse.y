@@ -365,17 +365,17 @@ ModuleDefinition: Identifier objid_opt kw_DEFINITIONS TagDefault ExtensionDefaul
                     struct objid **o = objid2list($2);
                     size_t i;
 
-                    fprintf(jsonfile,
+                    fprintf(am->jsonfile,
                             "{\"module\":\"%s\",\"tagging\":\"%s\",\"objid\":[", $1,
                             default_tag_env == TE_EXPLICIT ? "explicit" : "implicit");
 
                     for (i = 0; o && o[i]; i++) {
-                        fprintf(jsonfile, "%s{\"value\":%d", i ? "," : "", o[i]->value);
+                        fprintf(am->jsonfile, "%s{\"value\":%d", i ? "," : "", o[i]->value);
                         if (o[i]->label)
-                            fprintf(jsonfile, ",\"label\":\"%s\"", o[i]->label);
-                        fprintf(jsonfile, "}");
+                            fprintf(am->jsonfile, ",\"label\":\"%s\"", o[i]->label);
+                        fprintf(am->jsonfile, "}");
                     }
-                    fprintf(jsonfile, "]}\n");
+                    fprintf(am->jsonfile, "]}\n");
                     free(o);
 		}
 		;
@@ -432,7 +432,7 @@ SymbolsFromModule: referencenames kw_FROM Identifier objid_opt
 			s->stype = Stype;
 			gen_template_import(s);
 		    }
-		    add_import($3);
+		    ADD_IMPORT(am, $3);
 		}
 		;
 

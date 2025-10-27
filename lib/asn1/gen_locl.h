@@ -80,7 +80,7 @@ int objid_cmp(struct objid *, struct objid *);
 void c_init_generate (asn1_module, const char *, const char *);
 const char *get_filename (asn1_module);
 void close_generate(asn1_module am);
-void add_import(const char *);
+void c_add_import(asn1_module, const char *);
 void add_export(const char *);
 int is_export(const char *);
 int yyparse(void *scanner, asn1_module am);
@@ -122,7 +122,7 @@ void gen_template_import(const Symbol *);
 
 struct objid **objid2list(struct objid *);
 
-extern FILE *jsonfile, *privheaderfile, *headerfile, *codefile, *logfile, *templatefile;
+extern FILE *privheaderfile, *headerfile, *codefile, *logfile, *templatefile;
 extern const char *fuzzer_string;
 extern int support_ber;
 extern int template_flag;

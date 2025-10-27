@@ -134,9 +134,9 @@ preserve_type(asn1_module am, const char *p)
 }
 
 int
-seq_type(const char *p)
+seq_type(asn1_module am, const char *p)
 {
-    return bsearch_strings(&seq, p, '\0', 0) > -1;
+    return bsearch_strings(&am->seq, p, '\0', 0) > -1;
 }
 
 /*
@@ -457,14 +457,13 @@ main(int argc, char **argv)
 #endif
     }
 
-    asn1_module am = new_asn1_module(CODEGEN_C);
-    am->preserve = preserve;    // TODO find a better way to initialize
+    asn1_module am = new_asn1_module(CODEGEN_C, preserve, seq);
 
     if (am->preserve.num_strings)
         mergesort_r(am->preserve.strings, am->preserve.num_strings,
                     sizeof(am->preserve.strings[0]), strcmp4mergesort_r, "");
-    if (seq.num_strings)
-        mergesort_r(seq.strings, seq.num_strings, sizeof(seq.strings[0]),
+    if (am->seq.num_strings)
+        mergesort_r(am->seq.strings, am->seq.num_strings, sizeof(am->seq.strings[0]),
                     strcmp4mergesort_r, "");
     if (decorate.num_strings)
         mergesort_r(decorate.strings, decorate.num_strings,

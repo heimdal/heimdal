@@ -49,7 +49,7 @@ c_generate_type_seq (asn1_module am, const Symbol *s)
     char *subname;
     Type *type;
 
-    if (!seq_type(s->name))
+    if (!seq_type(am, s->name))
 	return;
     type = s->type;
     while(type->type == TTag)

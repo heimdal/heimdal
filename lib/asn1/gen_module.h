@@ -91,7 +91,7 @@ typedef struct asn1_module {
     struct tlisthead *tlistmaster;   // TODO
     /* CLI options and flags needed everywhere: */
     getarg_strings preserve;
-    getarg_strings seq;// TODO
+    getarg_strings seq;
     const char *enum_prefix;// TODO
     unsigned int one_code_file:1;// TODO
     unsigned int support_ber:1;// TODO
@@ -125,7 +125,7 @@ enum codegen_language {
     CODEGEN_C = 0
 };
 
-asn1_module new_asn1_module(enum codegen_language);
+asn1_module new_asn1_module(enum codegen_language, getarg_strings, getarg_strings);
 
 #define GENERATE_TYPE(/* asn1_module */ am, /* const Symbol * */ s) \
     am->generate_type(am, s)

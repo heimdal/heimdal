@@ -2082,13 +2082,15 @@ c_generate_type (asn1_module am, const Symbol *s)
     }
 }
 
-asn1_module new_asn1_module(enum codegen_language lang)
+asn1_module new_asn1_module(enum codegen_language lang, getarg_strings preserve, getarg_strings seq)
 {
     asn1_module am = calloc(sizeof(struct asn1_module), 1);
     if (am == NULL)
         errx(1, "malloc");
 
     am->headerbase = STEM;
+    am->preserve = preserve;
+    am->seq = seq;
     // am->tlistmaster = HEIM_TAILQ_HEAD_INITIALIZER(tlistmaster);
 
     switch (lang) {

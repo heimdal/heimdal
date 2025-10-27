@@ -882,7 +882,7 @@ TypeAssignment	: Identifier EEQUAL Type
 		    if (original_order)
 			GENERATE_TYPE(am, s);
 		    else
-			generate_type_header_forwards(s);
+			GENERATE_TYPE_HEADER_FORWARDS(am, s);
 		}
 		;
 

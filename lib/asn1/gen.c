@@ -2010,7 +2010,7 @@ generate_type_header (const Symbol *s)
 }
 
 void
-generate_type_header_forwards(const Symbol *s)
+c_generate_type_header_forwards(asn1_module am, const Symbol *s)
 {
     declare_type(s, s->type, TRUE);
     fprintf(headerfile, "\n");
@@ -2099,6 +2099,7 @@ asn1_module new_asn1_module(enum codegen_language lang)
         case CODEGEN_C:
         default:
             am->generate_type = c_generate_type;
+            am->generate_type_header_forwards = c_generate_type_header_forwards;
     };
 
     return am;

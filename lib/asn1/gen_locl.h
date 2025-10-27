@@ -112,6 +112,7 @@ typedef struct asn1_module {
     unsigned int rfc1510_bitstring:1; /* Should be a getarg_strings of bitrsting types to do this for */
 
     void (*generate_type) (struct asn1_module *, const Symbol *);
+    void (*generate_type_header_forwards) (struct asn1_module *, const Symbol *);
 } *asn1_module;
 
 enum codegen_language {
@@ -123,9 +124,11 @@ void generate_types(asn1_module);
 
 #define GENERATE_TYPE(/* asn1_module */ am, /* const Symbol * */ s) \
     am->generate_type(am, s)
+#define GENERATE_TYPE_HEADER_FORWARDS(/* asn1_module */ am, /*const Symbol * */ s) \
+    am->generate_type_header_forwards(am, s)
 
 void c_generate_type (asn1_module, const Symbol *);
-void generate_type_header_forwards(const Symbol *);
+void c_generate_type_header_forwards(asn1_module, const Symbol *);
 void generate_constant (const Symbol *);
 void generate_type_encode (const Symbol *);
 void generate_type_decode (const Symbol *);

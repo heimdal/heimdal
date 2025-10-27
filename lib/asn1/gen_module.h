@@ -68,9 +68,9 @@ typedef struct asn1_module {
     /* Name of file to always include for common type definitions: */
     const char *type_file_string;
     /* Name of public header file for module: */
-    char *header;
+    const char *header;
     /* Name of private header file for module: */
-    char *privheader;
+    const char *privheader;
     /* Basename of module: */
     const char *headerbase;
     /* Open stdio file handles for output: */

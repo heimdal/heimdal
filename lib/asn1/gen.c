@@ -155,7 +155,7 @@ c_init_generate (asn1_module am, const char *filename, const char *base)
     fn = NULL;
 
     /* public header file */
-    if (asprintf(&am->header, "%s.h", am->headerbase) < 0 || am->header == NULL)
+    if (asprintf((char **)&am->header, "%s.h", am->headerbase) < 0 || am->header == NULL)
 	errx(1, "malloc");
     if (asprintf(&fn, "%s.h", am->headerbase) < 0 || fn == NULL)
 	errx(1, "malloc");
@@ -166,7 +166,7 @@ c_init_generate (asn1_module am, const char *filename, const char *base)
     fn = NULL;
 
     /* private header file */
-    if (asprintf(&am->privheader, "%s-priv.h", am->headerbase) < 0 || am->privheader == NULL)
+    if (asprintf((char **)&am->privheader, "%s-priv.h", am->headerbase) < 0 || am->privheader == NULL)
 	errx(1, "malloc");
     if (asprintf(&fn, "%s-priv.h", am->headerbase) < 0 || fn == NULL)
 	errx(1, "malloc");

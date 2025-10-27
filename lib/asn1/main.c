@@ -457,7 +457,7 @@ main(int argc, char **argv)
 #endif
     }
 
-    asn1_module am = new_asn1_module(CODEGEN_C, preserve, seq, enum_prefix,
+    asn1_module am = new_asn1_module(preserve, seq, enum_prefix,
                                      one_code_file, support_ber, parse_units_flag,
                                      prefix_enum, rfc1510_bitstring);
 

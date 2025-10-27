@@ -35,7 +35,6 @@
 #include <getarg.h>
 #include "lex.h"
 
-extern FILE *yyin;
 
 static getarg_strings preserve;
 static getarg_strings seq;
@@ -332,6 +331,7 @@ main(int argc, char **argv)
     int ret;
     const char *file;
     FILE *opt = NULL;
+    FILE *yyin = NULL;
     int optidx = 0;
     char **arg = NULL;
     size_t len = 0;
@@ -467,13 +467,17 @@ main(int argc, char **argv)
         mergesort_r(decorate.strings, decorate.num_strings,
                     sizeof(decorate.strings[0]), strcmp4mergesort_r, ":");
 
+    yyscan_t scanner;
+    yylex_init(&scanner);
+    yyset_in(yyin, scanner);
     init_generate(file, name);
+    asn1_module am = new_asn1_module(CODEGEN_C);
 
     if (one_code_file)
 	generate_header_of_codefile(name);
 
     initsym ();
-    ret = yyparse ();
+    ret = yyparse (scanner, am);
     if(ret != 0 || error_flag != 0)
 	exit(1);
     if (!original_order)
@@ -484,6 +488,8 @@ main(int argc, char **argv)
     if (one_code_file)
 	close_codefile();
     close_generate();
+
+    yylex_destroy(scanner);
 
     if (arg) {
 	for (i = 1; i < len; i++)

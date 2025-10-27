@@ -2088,3 +2088,18 @@ generate_type (const Symbol *s)
 	close_codefile();
     }
 }
+
+asn1_module new_asn1_module(enum codegen_language lang)
+{
+    asn1_module am = calloc(sizeof(struct asn1_module), 1);
+    if (am == NULL)
+        errx(1, "malloc");
+
+    switch (lang) {
+        case CODEGEN_C:
+        default:
+            break;
+    };
+
+    return am;
+}

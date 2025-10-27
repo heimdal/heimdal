@@ -112,6 +112,11 @@ typedef struct asn1_module {
     unsigned int rfc1510_bitstring:1; /* Should be a getarg_strings of bitrsting types to do this for */
 } *asn1_module;
 
+enum codegen_language {
+    CODEGEN_C = 0
+};
+
+asn1_module new_asn1_module(enum codegen_language);
 void generate_type (const Symbol *);
 void generate_type_header_forwards(const Symbol *);
 void generate_constant (const Symbol *);
@@ -138,7 +143,7 @@ void close_generate(void);
 void add_import(const char *);
 void add_export(const char *);
 int is_export(const char *);
-int yyparse(void);
+int yyparse(void *scanner, asn1_module am);
 int is_primitive_type(const Type *);
 int is_tagged_type(const Type *);
 

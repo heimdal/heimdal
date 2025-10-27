@@ -33,6 +33,13 @@
  */
 
 /* $Id$ */
+%}
+
+%option reentrant
+%option bison-bridge
+%option extra-type="asn1_module"
+
+%{
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -47,9 +54,9 @@
 #endif
 #undef ECHO
 #include "symbol.h"
+#include "gen_locl.h"
 #include "asn1parse.h"
 #include "lex.h"
-#include "gen_locl.h"
 
 static unsigned lineno = 1;
 
@@ -158,7 +165,7 @@ WITH			{ return kw_WITH; }
 --			{
 			    int c, start_lineno = lineno;
 			    int f = 0;
-			    while((c = input()) != EOF) {
+			    while((c = input(yyscanner)) != EOF) {
 				if(f && c == '-')
 				    break;
 				if(c == '-') {
@@ -179,7 +186,7 @@ WITH			{ return kw_WITH; }
 			    int level = 1;
 			    int seen_star = 0;
 			    int seen_slash = 0;
-			    while((c = input()) != EOF) {
+			    while((c = input(yyscanner)) != EOF) {
 				if(c == '/') {
 				    if(seen_star) {
 					if(--level == 0)
@@ -222,7 +229,7 @@ WITH			{ return kw_WITH; }
 			    int f = 0;
 			    int skip_ws = 0;
 
-			    while((c = input()) != EOF) {
+			    while((c = input(yyscanner)) != EOF) {
 				if(isspace(c) && skip_ws) {
 				    if(c == '\n')
 					lineno++;
@@ -254,12 +261,12 @@ WITH			{ return kw_WITH; }
 			    if(c == EOF)
 				unterminated("string", start_lineno);
 			    *p++ = '\0';
-			    yylval.name = estrdup(buf);
+			    yylval->name = estrdup(buf);
 			    return STRING;
 			}
 
 -?0x[0-9A-Fa-f]+|-?[0-9]+ { char *e, *y = yytext;
-			  yylval.constant = strtoll((const char *)yytext,
+			  yylval->constant = strtoll((const char *)yytext,
 						   &e, 0);
 			  if(e == y)
 			    lex_error_message("malformed constant (%s)", yytext);
@@ -267,15 +274,15 @@ WITH			{ return kw_WITH; }
 			    return NUMBER;
 			}
 [_][-A-Z0-9]*		{
-			  yylval.name =  estrdup ((const char *)yytext);
+			  yylval->name =  estrdup ((const char *)yytext);
 			  return CLASS_IDENTIFIER;
 			}
 [A-Z][-A-Za-z0-9_]*	{
-			  yylval.name =  estrdup ((const char *)yytext);
+			  yylval->name =  estrdup ((const char *)yytext);
 			  return TYPE_IDENTIFIER;
 			}
 [a-z][-A-Za-z0-9_]*	{
-			  yylval.name =  estrdup ((const char *)yytext);
+			  yylval->name =  estrdup ((const char *)yytext);
 			  return VALUE_IDENTIFIER;
 			}
 [ \t]			;
@@ -286,7 +293,7 @@ WITH			{ return kw_WITH; }
 %%
 
 int
-yywrap ()
+yywrap (yyscan_t yyscanner)
 {
      return 1;
 }

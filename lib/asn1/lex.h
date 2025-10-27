@@ -39,4 +39,8 @@ void lex_error_message (const char *, ...)
 __attribute__ ((format (printf, 1, 2)));
 extern int error_flag;
 
-int yylex(void);
+typedef void* yyscan_t;
+
+int yylex_init(yyscan_t* scanner);
+int yylex_destroy(yyscan_t scanner);
+void yyset_in(FILE* _in_str, yyscan_t yyscanner);

@@ -35,6 +35,10 @@
 
 /* $Id$ */
 
+%define api.pure full
+%parse-param {void *scanner} {asn1_module am}
+%lex-param {void *scanner}
+
 %{
 
 #include <config.h>
@@ -64,8 +68,8 @@ static void validate_object_set(IOSObjectSet *);
 /*static Type *type_from_object(const char *, const char *);*/
 static struct constraint_spec *new_constraint_spec(enum ctype);
 static Type *new_tag(int tagclass, int tagvalue, int tagenv, Type *oldtype);
-void yyerror (const char *);
-#define yyerror yyerror
+void yyerror (void *scanner, asn1_module am, const char *);
+int yylex(void *yylval_param, void *yyscanner);
 static struct objid *new_objid(const char *label, int value);
 static void add_oid_to_tail(struct objid *, struct objid *);
 static void fix_labels(Symbol *s);
@@ -1768,7 +1772,7 @@ ObjectIdentifierValue: objid
 %%
 
 void
-yyerror (const char *s)
+yyerror (void *scanner, asn1_module am, const char *s)
 {
      lex_error_message ("%s\n", s);
 }

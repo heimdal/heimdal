@@ -2034,7 +2034,7 @@ c_generate_type (asn1_module am, const Symbol *s)
 
     if (template_flag == 0 || is_template_compat(s) == 0) {
 	GENERATE_TYPE_ENCODE (am, s);
-	generate_type_decode (s);
+	GENERATE_TYPE_DECODE (am, s);
 	generate_type_free (s);
 	generate_type_length (s);
 	generate_type_copy (s);
@@ -2102,6 +2102,7 @@ asn1_module new_asn1_module(enum codegen_language lang)
             am->generate_type_header_forwards = c_generate_type_header_forwards;
             am->generate_constant = c_generate_constant;
             am->generate_type_encode = c_generate_type_encode;
+            am->generate_type_decode = c_generate_type_decode;
     };
 
     return am;

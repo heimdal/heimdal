@@ -771,7 +771,7 @@ decode_type(const char *name, const Type *t, int optional, struct value *defval,
 }
 
 void
-generate_type_decode (const Symbol *s)
+c_generate_type_decode (asn1_module am, const Symbol *s)
 {
     int preserve = preserve_type(s->name) ? TRUE : FALSE;
 

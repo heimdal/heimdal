@@ -1801,7 +1801,7 @@ generate_subtypes_header_helper(asn1_module am, const Member *m)
 
     if (m->ellipsis)
         return;
-    if (m->type->symbol && (s = getsym(m->type->symbol->name)) &&
+    if (m->type->symbol && (s = getsym(am, m->type->symbol->name)) &&
         !s->emitted_definition) {
         /* A field of some named type; recurse */
         if (!m->optional && !m->defval)
@@ -1812,7 +1812,7 @@ generate_subtypes_header_helper(asn1_module am, const Member *m)
         return;
     if (m->type->type == TTag &&
         m->type->subtype && m->type->subtype->symbol &&
-        (s = getsym(m->type->subtype->symbol->name))) {
+        (s = getsym(am, m->type->subtype->symbol->name))) {
         if (!m->optional && !m->defval)
             generate_type_header(am, s);
         return;
@@ -1889,7 +1889,7 @@ generate_subtypes_header(asn1_module am, const Symbol *s)
     default: return;
     case TType: {
         Symbol *s2;
-        if (t->symbol && (s2 = getsym(t->symbol->name)) != s)
+        if (t->symbol && (s2 = getsym(am, t->symbol->name)) != s)
             generate_type_header(am, s2);
         return;
     }

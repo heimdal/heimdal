@@ -476,7 +476,7 @@ main(int argc, char **argv)
     if (one_code_file)
 	GENERATE_HEADER_OF_CODEFILE(am, name);
 
-    initsym ();
+    initsym (am);
     ret = yyparse (scanner, am);
     if(ret != 0 || error_flag != 0)
 	exit(1);

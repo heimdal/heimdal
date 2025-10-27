@@ -256,9 +256,9 @@ struct symhead {
 
 extern struct symhead symbols;
 
-void initsym (void);
-Symbol *addsym (char *);
-Symbol *getsym(char *name);
+void initsym (asn1_module);
+Symbol *addsym (asn1_module am, char *);
+Symbol *getsym(asn1_module am, char *name);
 void output_name (char *);
 int checkundefined(asn1_module am);
 void emitted_asn1(const Symbol *);

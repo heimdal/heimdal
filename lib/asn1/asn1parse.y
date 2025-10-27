@@ -63,7 +63,7 @@ static struct fieldhead *add_field_spec(struct fieldhead *, Field *);
 static Field *new_type_field(char *, int, Type *);
 static Field *new_fixed_type_value_field(char *, Type *, int, int, struct value *);
 static Type *parametrize_type(Type *, IOSClass *);
-static Type *type_from_class_field(IOSClass *, const char *);
+static Type *type_from_class_field(asn1_module am, IOSClass *, const char *);
 static void validate_object_set(IOSObjectSet *);
 /*static Type *type_from_object(const char *, const char *);*/
 static struct constraint_spec *new_constraint_spec(enum ctype);
@@ -428,7 +428,7 @@ SymbolsFromModule: referencenames kw_FROM Identifier objid_opt
 		     */
 		    struct string_list *sl;
 		    for(sl = $1; sl != NULL; sl = sl->next) {
-			Symbol *s = addsym(sl->string);
+			Symbol *s = addsym(am, sl->string);
 			s->stype = Stype;
 			GEN_TEMPLATE_IMPORT(am, s);
 		    }
@@ -476,7 +476,7 @@ referencenames	: Identifier ',' referencenames
 DefinedObjectClass
 		: CLASS_IDENTIFIER
 		{
-		    Symbol *s = addsym($1);
+		    Symbol *s = addsym(am, $1);
 		    if(s->stype != Sclass)
 		      lex_error_message (am, "%s is not a class\n", $1);
 		    $$ = s->iosclass;
@@ -485,7 +485,7 @@ DefinedObjectClass
 ObjectClassAssignment
 		: CLASS_IDENTIFIER EEQUAL ObjectClassDefn
 		{
-		    Symbol *s = addsym($1);
+		    Symbol *s = addsym(am, $1);
 		    s->stype = Sclass;
 		    s->iosclass = $3;
 		    s->iosclass->symbol = s;
@@ -493,7 +493,7 @@ ObjectClassAssignment
 		}
 		| CLASS_IDENTIFIER EEQUAL DefinedObjectClass
 		{
-		    Symbol *s = addsym($1);
+		    Symbol *s = addsym(am, $1);
 		    s->stype = Sclass;
 		    s->iosclass = $3;
 		}
@@ -509,7 +509,7 @@ ObjectClassDefn : kw_CLASS '{' FieldSpecList '}'
 
 ObjectAssignment: VALUE_IDENTIFIER DefinedObjectClass EEQUAL Object
 		{
-		    Symbol *s = addsym($1);
+		    Symbol *s = addsym(am, $1);
 		    s->stype = Sobj;
 		    s->object = $4;
 		    s->object->iosclass = $2;
@@ -522,7 +522,7 @@ ObjectAssignment: VALUE_IDENTIFIER DefinedObjectClass EEQUAL Object
 ObjectSetAssignment
 		: TYPE_IDENTIFIER DefinedObjectClass EEQUAL ObjectSet
 		{
-		    Symbol *s = addsym($1);
+		    Symbol *s = addsym(am, $1);
 		    s->stype = Sobjset;
 		    s->iosclass = $2;
 		    s->objectset = $4;
@@ -555,7 +555,7 @@ Object		: DefinedObject
 
 DefinedObject	: VALUE_IDENTIFIER
 		{
-		  Symbol *s = addsym($1);
+		  Symbol *s = addsym(am, $1);
 		  if(s->stype != Sobj)
 		    lex_error_message (am, "%s is not an object\n", $1);
 		  $$ = s->object;
@@ -564,7 +564,7 @@ DefinedObject	: VALUE_IDENTIFIER
 
 DefinedObjectSet: TYPE_IDENTIFIER
 		{
-		  Symbol *s = addsym($1);
+		  Symbol *s = addsym(am, $1);
 		  if(s->stype != Sobjset && s->stype != SUndefined)
 		    lex_error_message (am, "%s is not an object set\n", $1);
 		  $$ = s->objectset;
@@ -864,7 +864,7 @@ FixedTypeValueFieldSpec
 
 TypeAssignment	: Identifier EEQUAL Type
 		{
-		    Symbol *s = addsym($1);
+		    Symbol *s = addsym(am, $1);
 		    s->stype = Stype;
 		    s->type = $3;
 		    fix_labels(s);
@@ -896,7 +896,7 @@ ParameterizedTypeAssignment
 		    if (asprintf(&pname, "%s{%s:x}", $1, $3->symbol->name) == -1 ||
 			pname == NULL)
 			err(1, "Out of memory");
-		    s = addsym(pname);
+		    s = addsym(am, pname);
 		    free($1);
 		    s->stype = Sparamtype;
 		    s->type = parametrize_type($6, $3);
@@ -961,7 +961,7 @@ BuiltinType	: BitStringType
 
 ObjectClassFieldType
 		: DefinedObjectClass '.' '&' Identifier
-		{ $$ = type_from_class_field($1, $4); };
+		{ $$ = type_from_class_field(am, $1, $4); };
 
 BooleanType	: kw_BOOLEAN
 		{
@@ -1203,7 +1203,7 @@ TypeFromObject	: VALUE_IDENTIFIER '.' '&' TYPE_IDENTIFIER
 
 DefinedType	: TYPE_IDENTIFIER
 		{
-		  Symbol *s = addsym($1);
+		  Symbol *s = addsym(am, $1);
 		  $$ = new_type(TType);
 		  if(s->stype != Stype && s->stype != SUndefined)
 		    lex_error_message (am, "%s is not a type\n", $1);
@@ -1234,11 +1234,11 @@ ParameterizedType
 			       $3->iosclass->symbol->name) == -1 ||
 		      pname == NULL)
 		      err(1, "Out of memory");
-		  ps = addsym(pname);
+		  ps = addsym(am, pname);
 		  if (ps->stype != Sparamtype)
 		    lex_error_message (am, "%s is not a parameterized type\n", $1);
 
-		  s = addsym($1);
+		  s = addsym(am, $1);
 		  $$ = ps->type; /* XXX copy, probably */
 		  if (!ps->type)
 		    errx(1, "Wrong class (%s) parameter for parameterized "
@@ -1496,7 +1496,7 @@ tagenv		: /* */
 ValueAssignment	: VALUE_IDENTIFIER Type EEQUAL Value
 		{
 			Symbol *s;
-			s = addsym ($1);
+			s = addsym (am, $1);
 
 			s->stype = SValue;
 			s->value = $4;
@@ -1669,7 +1669,7 @@ objid_element	: Identifier '(' NUMBER ')'
 		}
 		| Identifier
 		{
-		    Symbol *s = addsym($1);
+		    Symbol *s = addsym(am, $1);
 		    if(s->stype != SValue ||
 		       s->value->type != objectidentifiervalue) {
 			lex_error_message(am, "%s is not an object identifier\n",
@@ -1714,7 +1714,7 @@ DefinedValue	: Valuereference
 
 Valuereference	: VALUE_IDENTIFIER
 		{
-			Symbol *s = addsym($1);
+			Symbol *s = addsym(am, $1);
 			if(s->stype != SValue)
 				lex_error_message (am, "%s is not a value\n",
 						s->name);
@@ -1957,7 +1957,7 @@ parametrize_type(Type *t, IOSClass *c)
 }
 
 static Type *
-type_from_class_field(IOSClass *c, const char *n)
+type_from_class_field(asn1_module am, IOSClass *c, const char *n)
 {
     Field *f;
     Type *t;
@@ -1968,7 +1968,7 @@ type_from_class_field(IOSClass *c, const char *n)
 	    if (f->type) {
 		*t = *f->type;
 	    } else {
-		Symbol *s = addsym("HEIM_ANY");
+		Symbol *s = addsym(am, "HEIM_ANY");
 		if(s->stype != Stype && s->stype != SUndefined)
 		    errx(1, "Do not define HEIM_ANY, only import it\n");
 		s->stype = Stype;

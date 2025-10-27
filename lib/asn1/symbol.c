@@ -35,8 +35,6 @@
 #include "lex.h"
 #include "lex.h"
 
-static Hashtab *htab;
-
 struct symhead symbols;
 
 static int
@@ -57,9 +55,9 @@ hash(void *a)
 }
 
 void
-initsym(void)
+initsym(asn1_module am)
 {
-    htab = hashtabnew(101, cmp, hash);
+    am->htab = hashtabnew(101, cmp, hash);
 }
 
 
@@ -74,19 +72,19 @@ output_name(char *s)
 }
 
 Symbol *
-addsym(char *name)
+addsym(asn1_module am, char *name)
 {
     Symbol key, *s;
 
     key.name = name;
-    s = (Symbol *) hashtabsearch(htab, (void *) &key);
+    s = (Symbol *) hashtabsearch(am->htab, (void *) &key);
     if (s == NULL) {
 	s = (Symbol *) ecalloc(1, sizeof(*s));
 	s->name = name;
 	s->gen_name = estrdup(name);
 	output_name(s->gen_name);
 	s->stype = SUndefined;
-	hashtabadd(htab, s);
+	hashtabadd(am->htab, s);
         //HEIM_TAILQ_INSERT_TAIL(&symbols, s, symlist);
         do {
             if (((s)->symlist.tqe_next = (&symbols)->tqh_first) != NULL)
@@ -101,12 +99,12 @@ addsym(char *name)
 }
 
 Symbol *
-getsym(char *name)
+getsym(asn1_module am, char *name)
 {
     Symbol key;
 
     key.name = name;
-    return (Symbol *) hashtabsearch(htab, (void *) &key);
+    return (Symbol *) hashtabsearch(am->htab, (void *) &key);
 }
 
 static int
@@ -124,7 +122,7 @@ int
 checkundefined(asn1_module am)
 {
     int f = 0;
-    hashtabforeach(htab, checkfunc, am, &f);
+    hashtabforeach(am->htab, checkfunc, am, &f);
     return f;
 }
 
@@ -151,7 +149,7 @@ generate_types(asn1_module am)
         if (s->stype == Stype && s->type)
             GENERATE_TYPE(am, s);
     }
-    //hashtabforeach(htab, generate_1type, NULL);
+    //hashtabforeach(am->htab, generate_1type, NULL);
 }
 
 void

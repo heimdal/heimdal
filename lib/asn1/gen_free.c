@@ -184,7 +184,7 @@ free_type (const char *name, const Type *t, int preserve)
 }
 
 void
-generate_type_free (const Symbol *s)
+c_generate_type_free (asn1_module am, const Symbol *s)
 {
     struct decoration deco;
     ssize_t more_deco = -1;

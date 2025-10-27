@@ -59,7 +59,6 @@
  * modules to IMPORT FROM.
  */
 
-struct getarg_strings;
 struct symbol;
 struct type;
 
@@ -69,9 +68,9 @@ typedef struct asn1_module {
     /* Name of file to always include for common type definitions: */
     const char *type_file_string;
     /* Name of public header file for module: */
-    const char *header;
+    char *header;
     /* Name of private header file for module: */
-    const char *privheader;
+    char *privheader;
     /* Basename of module: */
     const char *headerbase;
     /* Open stdio file handles for output: */

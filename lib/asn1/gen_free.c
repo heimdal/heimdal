@@ -196,7 +196,7 @@ generate_type_free (asn1_module am, const Symbol *s)
 	     s->gen_name, s->gen_name);
 
     free_type (am, "data", s->type, preserve);
-    while (decorate_type(s->gen_name, &deco, &more_deco)) {
+    while (decorate_type(am, s->gen_name, &deco, &more_deco)) {
         if (deco.ext && deco.free_function_name == NULL) {
             /* Decorated with field of external type but no free function */
             if (deco.ptr)

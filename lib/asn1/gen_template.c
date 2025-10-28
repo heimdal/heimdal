@@ -1100,7 +1100,7 @@ template_members(asn1_module am,
                                typeidfield, opentypefield, opentypemember,
                                is_array_of_open_type);
 
-        while (decorate_type(basetype, &deco, &more_deco)) {
+        while (decorate_type(am, basetype, &deco, &more_deco)) {
             char *poffset2;
 
             poffset2 = partial_offset(basetype, deco.field_name, 1, isstruct);
@@ -1178,7 +1178,7 @@ template_members(asn1_module am,
                                typeidfield, opentypefield, opentypemember,
                                is_array_of_open_type);
 
-        while (decorate_type(basetype, &deco, &more_deco)) {
+        while (decorate_type(am, basetype, &deco, &more_deco)) {
             char *poffset2;
 
             poffset2 = partial_offset(basetype, deco.field_name, 1, isstruct);
@@ -1380,7 +1380,7 @@ template_members(asn1_module am,
 
 	add_line(temp, "{ A1_OP_CHOICE, %s, %s }", poffset, tname);
 
-        while (decorate_type(basetype, &deco, &more_deco)) {
+        while (decorate_type(am, basetype, &deco, &more_deco)) {
             char *poffset2;
 
             poffset2 = partial_offset(basetype, deco.field_name, 1, isstruct);
@@ -1551,7 +1551,7 @@ generate_template(asn1_module am, const Symbol *s)
 	return;
     }
 
-    while (decorate_type(s->gen_name, &deco, &more_deco)) {
+    while (decorate_type(am, s->gen_name, &deco, &more_deco)) {
         if (!deco.ext)
             continue;
         if (deco.void_star && deco.header_name)

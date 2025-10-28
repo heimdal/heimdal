@@ -116,6 +116,7 @@ typedef struct asn1_module {
     /* Copy state: */
     int used_fail;
     /* CLI options and flags needed everywhere: */
+    getarg_strings decorate;
     getarg_strings preserve;
     getarg_strings seq;
     const char *enum_prefix;
@@ -126,7 +127,7 @@ typedef struct asn1_module {
     unsigned int rfc1510_bitstring:1; /* Should be a getarg_strings of bitrsting types to do this for */
 } *asn1_module;
 
-asn1_module new_asn1_module(getarg_strings, getarg_strings, const char*, unsigned int,
+asn1_module new_asn1_module(getarg_strings, getarg_strings, getarg_strings, const char*, unsigned int,
                             unsigned int, unsigned int, unsigned int, unsigned int);
 
 #endif  // __GEN_MODULE_H__

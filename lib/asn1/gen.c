@@ -1457,7 +1457,7 @@ define_type(asn1_module am, int level, const char *name, const char *basename,
             fprintf(am->jsonfile, ",\"opentype\":");
             define_open_type(am, level, newbasename, name, basename, t, t);
         }
-        while (decorate_type(newbasename, &deco, &more_deco)) {
+        while (decorate_type(am, newbasename, &deco, &more_deco)) {
             decorated++;
 	    space(am, level + 1);
             fprintf(am->headerfile, "%s %s%s;\n", deco.field_type,
@@ -1606,7 +1606,7 @@ define_type(asn1_module am, int level, const char *name, const char *basename,
 	fprintf (am->headerfile, "} u;\n");
         fprintf(am->jsonfile, "]");
 
-        while (decorate_type(newbasename, &deco, &more_deco)) {
+        while (decorate_type(am, newbasename, &deco, &more_deco)) {
             decorated++;
 	    space(am, level + 1);
             fprintf(am->headerfile, "%s %s%s;\n", deco.field_type,
@@ -1752,7 +1752,7 @@ declare_type(asn1_module am, const Symbol *s, Type *t, int typedefp)
 
 	getnewbasename(&newbasename, TRUE, s->gen_name, s->gen_name);
 	fprintf(am->headerfile, "struct %s %s;\n", newbasename, s->gen_name);
-        while (decorate_type(newbasename, &deco, &more_deco)) {
+        while (decorate_type(am, newbasename, &deco, &more_deco)) {
             if (deco.header_name)
                 fprintf(am->headerfile, "#include %s\n", deco.header_name);
             free(deco.field_type);
@@ -1770,7 +1770,7 @@ declare_type(asn1_module am, const Symbol *s, Type *t, int typedefp)
 
 	getnewbasename(&newbasename, TRUE, s->gen_name, s->gen_name);
 	fprintf(am->headerfile, "struct %s %s;\n", newbasename, s->gen_name);
-        while (decorate_type(newbasename, &deco, &more_deco)) {
+        while (decorate_type(am, newbasename, &deco, &more_deco)) {
             if (deco.header_name)
                 fprintf(am->headerfile, "#include %s\n", deco.header_name);
             free(deco.field_type);
@@ -2076,7 +2076,8 @@ generate_type (asn1_module am, const Symbol *s)
     }
 }
 
-asn1_module new_asn1_module(getarg_strings preserve,
+asn1_module new_asn1_module(getarg_strings decorate,
+                            getarg_strings preserve,
                             getarg_strings seq,
                             const char *enum_prefix,
                             unsigned int one_code_file,
@@ -2089,6 +2090,7 @@ asn1_module new_asn1_module(getarg_strings preserve,
     if (am == NULL)
         errx(1, "calloc");
 
+    am->decorate = decorate;
     am->enum_prefix = enum_prefix;
     am->headerbase = STEM;
     am->one_code_file = one_code_file;

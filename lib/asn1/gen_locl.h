@@ -104,7 +104,7 @@ struct decoration {
     unsigned int void_star:1;   /* external, void * */
     unsigned int struct_star:1; /* external, struct foo * */
 };
-int decorate_type(const char *, struct decoration *, ssize_t *);
+int decorate_type(asn1_module, const char *, struct decoration *, ssize_t *);
 
 void generate_header_of_codefile(asn1_module, const char *);
 void close_codefile(asn1_module);

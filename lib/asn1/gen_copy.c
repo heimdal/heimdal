@@ -239,7 +239,7 @@ generate_type_copy (asn1_module am, const Symbol *s)
 	   "memset(to, 0, sizeof(*to));\n",
 	   s->gen_name, s->gen_name, s->gen_name);
   copy_type (am, "from", "to", s->type, preserve);
-  while (decorate_type(s->gen_name, &deco, &more_deco)) {
+  while (decorate_type(am, s->gen_name, &deco, &more_deco)) {
       if (deco.ext && deco.copy_function_name == NULL) {
           /* Decorated with field of external type but no copy function */
           if (deco.ptr)

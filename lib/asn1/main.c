@@ -173,7 +173,7 @@ split_str(const char *s, char sep, char ***fs)
  * functions to copy and free values of that type.
  */
 int
-decorate_type(const char *p, struct decoration *deco, ssize_t *more)
+decorate_type(asn1_module am, const char *p, struct decoration *deco, ssize_t *more)
 {
     ssize_t i;
     char **s[7];
@@ -183,7 +183,7 @@ decorate_type(const char *p, struct decoration *deco, ssize_t *more)
     deco->first = *more == -1;
     deco->decorated = 0;
     deco->field_type = NULL;
-    if ((i = bsearch_strings(&decorate, p, ':', more)) == -1)
+    if ((i = bsearch_strings(&am->decorate, p, ':', more)) == -1)
         return 0;
 
     deco->decorated = 1;
@@ -199,12 +199,12 @@ decorate_type(const char *p, struct decoration *deco, ssize_t *more)
     s[4] = &deco->header_name;
     s[5] = &junk;
     s[6] = NULL;
-    split_str(decorate.strings[i] + strlen(p) + 1, ':', s);
+    split_str(am->decorate.strings[i] + strlen(p) + 1, ':', s);
 
     if (junk || deco->field_type[0] == '\0' || !deco->field_name ||
         deco->field_name[0] == '\0' || deco->field_name[0] == '?') {
         errx(1, "Invalidate type decoration specification: --decorate=\"%s\"",
-              decorate.strings[i]);
+              am->decorate.strings[i]);
     }
     if ((cp = strchr(deco->field_name, '?'))) {
         deco->opt = 1;
@@ -457,7 +457,7 @@ main(int argc, char **argv)
 #endif
     }
 
-    asn1_module am = new_asn1_module(preserve, seq, enum_prefix,
+    asn1_module am = new_asn1_module(decorate, preserve, seq, enum_prefix,
                                      one_code_file, support_ber, parse_units_flag,
                                      prefix_enum, rfc1510_bitstring);
 
@@ -467,9 +467,9 @@ main(int argc, char **argv)
     if (am->seq.num_strings)
         mergesort_r(am->seq.strings, am->seq.num_strings, sizeof(am->seq.strings[0]),
                     strcmp4mergesort_r, "");
-    if (decorate.num_strings)
-        mergesort_r(decorate.strings, decorate.num_strings,
-                    sizeof(decorate.strings[0]), strcmp4mergesort_r, ":");
+    if (am->decorate.num_strings)
+        mergesort_r(am->decorate.strings, am->decorate.num_strings,
+                    sizeof(am->decorate.strings[0]), strcmp4mergesort_r, ":");
 
     yyscan_t scanner;
     yylex_init(&scanner);

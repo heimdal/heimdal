@@ -38,8 +38,6 @@
 
 RCSID("$Id$");
 
-#define STEM "asn1"
-
 /* XXX same as der_length_tag */
 static size_t
 length_tag(unsigned int tag)
@@ -2074,44 +2072,4 @@ generate_type (asn1_module am, const Symbol *s)
 	fprintf(am->codefile, "\n\n");
 	close_codefile(am);
     }
-}
-
-asn1_module new_asn1_module(getarg_strings decorate,
-                            getarg_strings preserve,
-                            getarg_strings seq,
-                            const char *enum_prefix,
-                            unsigned int one_code_file,
-                            unsigned int support_ber,
-                            unsigned int parse_units_flag,
-                            unsigned int prefix_enum,
-                            unsigned int rfc1510_bitstring,
-                            const char *fuzzer_string,
-                            unsigned int template_flag,
-                            unsigned int original_order,
-                            const char *type_file_string)
-{
-    asn1_module am = calloc(sizeof(struct asn1_module), 1);
-    if (am == NULL)
-        errx(1, "calloc");
-
-    am->decorate = decorate;
-    am->enum_prefix = enum_prefix;
-    am->fuzzer_string = fuzzer_string;
-    am->headerbase = STEM;
-    am->one_code_file = one_code_file;
-    am->original_order = original_order;
-    am->parse_units_flag = parse_units_flag;
-    am->preserve = preserve;
-    am->prefix_enum = prefix_enum;
-    am->rfc1510_bitstring = rfc1510_bitstring;
-    am->seq = seq;
-    am->support_ber = support_ber;
-    am->template_flag = template_flag;
-    am->tlistmaster = calloc(sizeof(struct tlisthead), 1);
-    if (am == NULL)
-        errx(1, "calloc");
-    am->tlistmaster->tqh_last = &am->tlistmaster->tqh_first;
-    am->type_file_string = type_file_string;
-
-    return am;
 }

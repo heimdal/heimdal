@@ -131,6 +131,7 @@ asn1_compile_SOURCES = 				\
 	gen_glue.c				\
 	gen_length.c				\
 	gen_locl.h				\
+	gen_module.c            \
 	gen_module.h            \
 	gen_seq.c				\
 	gen_template.c				\

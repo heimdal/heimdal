@@ -35,9 +35,15 @@
 #ifndef __GEN_MODULE_H__
 #define __GEN_MODULE_H__
 
+#include <err.h>
+#include <stdlib.h>
+#include <stdio.h>
 #include "getarg.h"
 #include "hash.h"
 #include "heimqueue.h"
+
+
+#define STEM "asn1"
 
 /*
  * XXX We need to move all module state out of globals and into a struct that

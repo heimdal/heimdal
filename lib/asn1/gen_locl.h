@@ -122,6 +122,4 @@ void gen_template_import(asn1_module am, const Symbol *);
 
 struct objid **objid2list(struct objid *);
 
-extern int error_flag;
-
 #endif /* __GEN_LOCL_H__ */

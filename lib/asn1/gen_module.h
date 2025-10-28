@@ -128,7 +128,8 @@ typedef struct asn1_module {
     unsigned int prefix_enum:1; /* Should be a getarg_strings of bitrsting types to do this for */
     unsigned int rfc1510_bitstring:1; /* Should be a getarg_strings of bitrsting types to do this for */
     unsigned int template_flag:1;
-    unsigned int original_order;
+    unsigned int original_order:1;
+    unsigned int error_flag:1;
 } *asn1_module;
 
 asn1_module new_asn1_module(getarg_strings, getarg_strings, getarg_strings, const char *,

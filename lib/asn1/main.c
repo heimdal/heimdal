@@ -322,8 +322,6 @@ usage(int code)
     exit(code);
 }
 
-int error_flag;
-
 int
 main(int argc, char **argv)
 {
@@ -483,7 +481,7 @@ main(int argc, char **argv)
 
     initsym (am);
     ret = yyparse (scanner, am);
-    if(ret != 0 || error_flag != 0)
+    if(ret != 0 || am->error_flag != 0)
 	exit(1);
     if (!am->original_order)
         generate_types(am);

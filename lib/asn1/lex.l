@@ -307,7 +307,7 @@ lex_error_message (void *am, const char *format, ...)
     fprintf (stderr, "%s:%d: ", get_filename(am), lineno);
     vfprintf (stderr, format, args);
     va_end (args);
-    error_flag++;
+    ((asn1_module) am)->error_flag++;
 }
 
 static void

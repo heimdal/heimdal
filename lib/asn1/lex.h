@@ -37,7 +37,6 @@
 
 void lex_error_message (void *, const char *, ...)
 __attribute__ ((format (printf, 2, 3)));
-extern int error_flag;
 
 typedef void* yyscan_t;
 

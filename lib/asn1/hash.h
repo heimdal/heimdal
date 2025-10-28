@@ -75,8 +75,8 @@ int _hashtabdel(Hashtab *htab,	/* The table */
 		int freep);	/* Free data part? */
 
 void hashtabforeach(Hashtab *htab,
-		    int (*func)(void *, void *ptr, void *arg),
-		    void *, void *arg);
+		    int (*func)(void *am, void *ptr, void *arg),
+		    void *am, void *arg);
 
 unsigned hashadd(const char *s);		/* Standard hash function */
 unsigned hashcaseadd(const char *s);		/* Standard hash function */

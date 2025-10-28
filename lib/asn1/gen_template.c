@@ -263,8 +263,6 @@ static void add_line_pointer_reference(struct templatehead *, const char *, cons
     __attribute__ ((__format__ (__printf__, 4, 5)));
 
 
-static unsigned long numdups = 0;
-
 static struct tlist *
 tlist_new(const char *name)
 {
@@ -384,7 +382,7 @@ tlist_find_dup(asn1_module am, const struct tlist *tl)
 
     HEIM_TAILQ_FOREACH(ql, am->tlistmaster, tmembers) {
 	if (tlist_cmp(am, ql, tl) == 0) {
-	    numdups++;
+	    am->numdups++;
 	    return ql->name;
 	}
     }

@@ -109,8 +109,9 @@ typedef struct asn1_module {
     struct import *imports;
     Hashtab *htab;  /* symbols */
     /* Template state: */
-    struct templatehead *template;  // TODO
+    // struct templatehead *template;  // TODO unneeded?
     struct tlisthead *tlistmaster;
+    unsigned long numdups;
     /* CLI options and flags needed everywhere: */
     getarg_strings preserve;
     getarg_strings seq;

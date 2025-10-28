@@ -879,7 +879,7 @@ TypeAssignment	: Identifier EEQUAL Type
 			$3->subtype->symbol == NULL) {
 			$3->subtype->symbol = s;
 		    }
-		    if (original_order)
+		    if (am->original_order)
 			generate_type(am, s);
 		    else
 			generate_type_header_forwards(am, s);

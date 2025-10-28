@@ -259,7 +259,7 @@ static int one_code_file;
 char *option_file;
 static int parse_units_flag = 1;
 char *type_file_string = "krb5-types.h";
-int original_order;
+static int original_order;
 int version_flag;
 int help_flag;
 struct getargs args[] = {
@@ -461,7 +461,7 @@ main(int argc, char **argv)
     asn1_module am = new_asn1_module(decorate, preserve, seq, enum_prefix,
                                      one_code_file, support_ber, parse_units_flag,
                                      prefix_enum, rfc1510_bitstring, fuzzer_string,
-                                     template_flag);
+                                     template_flag, original_order);
 
     if (am->preserve.num_strings)
         mergesort_r(am->preserve.strings, am->preserve.num_strings,
@@ -485,7 +485,7 @@ main(int argc, char **argv)
     ret = yyparse (scanner, am);
     if(ret != 0 || error_flag != 0)
 	exit(1);
-    if (!original_order)
+    if (!am->original_order)
         generate_types(am);
     if (argc != optidx)
 	fclose(yyin);

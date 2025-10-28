@@ -2086,7 +2086,8 @@ asn1_module new_asn1_module(getarg_strings decorate,
                             unsigned int prefix_enum,
                             unsigned int rfc1510_bitstring,
                             const char *fuzzer_string,
-                            unsigned int template_flag)
+                            unsigned int template_flag,
+                            unsigned int original_order)
 {
     asn1_module am = calloc(sizeof(struct asn1_module), 1);
     if (am == NULL)
@@ -2097,6 +2098,7 @@ asn1_module new_asn1_module(getarg_strings decorate,
     am->fuzzer_string = fuzzer_string;
     am->headerbase = STEM;
     am->one_code_file = one_code_file;
+    am->original_order = original_order;
     am->parse_units_flag = parse_units_flag;
     am->preserve = preserve;
     am->prefix_enum = prefix_enum;

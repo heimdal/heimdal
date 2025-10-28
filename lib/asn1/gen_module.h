@@ -104,6 +104,7 @@ typedef struct asn1_module {
     FILE *codefile;
     FILE *logfile;
     FILE *templatefile;
+    FILE *symsfile;
     /* Module contents: */
     struct sexport *exports;
     struct import *imports;

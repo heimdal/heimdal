@@ -38,8 +38,6 @@
 
 RCSID("$Id$");
 
-FILE *symsfile;
-
 #define STEM "asn1"
 
 /* XXX same as der_length_tag */
@@ -296,8 +294,8 @@ init_generate (asn1_module am, const char *filename, const char *base)
 	err (1, "open %s", fn);
     if (asprintf(&fn, "%s_syms.c", base) < 0 || fn == NULL)
 	errx(1, "malloc");
-    symsfile = fopen(fn, "w");
-    if (symsfile == NULL)
+    am->symsfile = fopen(fn, "w");
+    if (am->symsfile == NULL)
 	err (1, "open %s", fn);
     free(fn);
     fn = NULL;
@@ -351,8 +349,8 @@ close_generate (asn1_module am)
     if (!am->oidsfile) abort();
     if (fclose(am->oidsfile) == EOF)
         err(1, "writes to OIDs file failed");
-    if (!symsfile) abort();
-    if (fclose(symsfile) == EOF)
+    if (!am->symsfile) abort();
+    if (fclose(am->symsfile) == EOF)
         err(1, "writes to symbols file failed");
     if (!am->logfile) abort();
     fprintf(am->logfile, "\n");
@@ -512,7 +510,7 @@ generate_constant (asn1_module am, const Symbol *s)
                 s->gen_name, s->gen_name, s->gen_name,
                 (long long)s->value->u.integervalue);
         if (is_export(am, s->name))
-            fprintf(symsfile, "ASN1_SYM_INTVAL(\"%s\", \"%s\", %s, %lld)\n",
+            fprintf(am->symsfile, "ASN1_SYM_INTVAL(\"%s\", \"%s\", %s, %lld)\n",
                     s->name, s->gen_name, s->gen_name,
                     (long long)s->value->u.integervalue);
         fprintf(am->jsonfile,
@@ -573,7 +571,7 @@ generate_constant (asn1_module am, const Symbol *s)
 
         fprintf(am->oidsfile, "DEFINE_OID_WITH_NAME(%s)\n", s->gen_name);
         if (is_export(am, s->name))
-            fprintf(symsfile, "ASN1_SYM_OID(\"%s\", \"%s\", %s)\n",
+            fprintf(am->symsfile, "ASN1_SYM_OID(\"%s\", \"%s\", %s)\n",
                     s->name, s->gen_name, s->gen_name);
 
 	free(list);
@@ -1974,7 +1972,7 @@ generate_type_header (asn1_module am, const Symbol *s)
         return;
 
     if (is_export(am, s->name))
-        fprintf(symsfile, "ASN1_SYM_TYPE(\"%s\", \"%s\", %s)\n",
+        fprintf(am->symsfile, "ASN1_SYM_TYPE(\"%s\", \"%s\", %s)\n",
                 s->name, s->gen_name, s->gen_name);
 
     if (!s->emitted_declaration) {

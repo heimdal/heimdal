@@ -96,6 +96,8 @@ typedef struct asn1_module {
     const char *headerbase;
     /* Name of template file for module: */
     const char *template_filename;
+    /* Fuzzer string: */
+    const char *fuzzer_string;
     /* Open stdio file handles for output: */
     FILE *jsonfile;
     FILE *privheaderfile;
@@ -127,7 +129,8 @@ typedef struct asn1_module {
     unsigned int rfc1510_bitstring:1; /* Should be a getarg_strings of bitrsting types to do this for */
 } *asn1_module;
 
-asn1_module new_asn1_module(getarg_strings, getarg_strings, getarg_strings, const char*, unsigned int,
-                            unsigned int, unsigned int, unsigned int, unsigned int);
+asn1_module new_asn1_module(getarg_strings, getarg_strings, getarg_strings, const char *,
+                            unsigned int, unsigned int, unsigned int, unsigned int,
+                            unsigned int, const char *);
 
 #endif  // __GEN_MODULE_H__

@@ -248,7 +248,6 @@ my_basename(const char *fn)
     return base;
 }
 
-const char *fuzzer_string = "";
 static const char *enum_prefix;
 const char *name;
 static int prefix_enum;
@@ -447,6 +446,8 @@ main(int argc, char **argv)
 	}
     }
 
+    const char *fuzzer_string = "";
+
     if (fuzzer_flag) {
 	if (!template_flag) {
 	    printf("can't do fuzzer w/o --template");
@@ -459,7 +460,7 @@ main(int argc, char **argv)
 
     asn1_module am = new_asn1_module(decorate, preserve, seq, enum_prefix,
                                      one_code_file, support_ber, parse_units_flag,
-                                     prefix_enum, rfc1510_bitstring);
+                                     prefix_enum, rfc1510_bitstring, fuzzer_string);
 
     if (am->preserve.num_strings)
         mergesort_r(am->preserve.strings, am->preserve.num_strings,

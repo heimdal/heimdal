@@ -1600,7 +1600,7 @@ generate_template(asn1_module am, const Symbol *s)
 	    "\n",
 	    s->gen_name,
 	    s->gen_name,
-	    fuzzer_string,
+	    am->fuzzer_string,
 	    dupname);
 
     fprintf(f,
@@ -1613,7 +1613,7 @@ generate_template(asn1_module am, const Symbol *s)
 	    "\n",
 	    s->gen_name,
 	    s->gen_name,
-	    fuzzer_string,
+	    am->fuzzer_string,
 	    dupname);
 
 

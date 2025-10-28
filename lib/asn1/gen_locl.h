@@ -122,7 +122,6 @@ void gen_template_import(asn1_module am, const Symbol *);
 
 struct objid **objid2list(struct objid *);
 
-extern const char *fuzzer_string;
 extern int template_flag;
 extern int original_order;
 extern char *type_file_string;

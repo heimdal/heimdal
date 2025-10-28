@@ -249,19 +249,19 @@ my_basename(const char *fn)
 }
 
 static const char *enum_prefix;
-const char *name;
+static const char *name;
 static int prefix_enum;
-int fuzzer_flag;
+static int fuzzer_flag;
 static int support_ber;
 static int template_flag;
 static int rfc1510_bitstring;
 static int one_code_file;
-char *option_file;
+static char *option_file;
 static int parse_units_flag = 1;
 static char *type_file_string = "krb5-types.h";
 static int original_order;
-int version_flag;
-int help_flag;
+static int version_flag;
+static int help_flag;
 struct getargs args[] = {
     { "fuzzer", 0, arg_flag, &fuzzer_flag, NULL, NULL },
     { "template", 0, arg_flag, &template_flag, NULL, NULL },
@@ -303,7 +303,7 @@ struct getargs args[] = {
     { "version", 0, arg_flag, &version_flag, NULL, NULL },
     { "help", 0, arg_flag, &help_flag, NULL, NULL }
 };
-int num_args = sizeof(args) / sizeof(args[0]);
+static int num_args = sizeof(args) / sizeof(args[0]);
 
 static void
 usage(int code)

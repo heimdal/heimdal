@@ -33,6 +33,7 @@
  * SUCH DAMAGE.
  */
 
+#include <stdlib.h>
 #include "gen_locl.h"
 
 RCSID("$Id$");
@@ -2090,7 +2091,7 @@ asn1_module new_asn1_module(getarg_strings preserve,
 {
     asn1_module am = calloc(sizeof(struct asn1_module), 1);
     if (am == NULL)
-        errx(1, "malloc");
+        errx(1, "calloc");
 
     am->enum_prefix = enum_prefix;
     am->headerbase = STEM;
@@ -2101,7 +2102,10 @@ asn1_module new_asn1_module(getarg_strings preserve,
     am->rfc1510_bitstring = rfc1510_bitstring;
     am->seq = seq;
     am->support_ber = support_ber;
-    // am->tlistmaster = HEIM_TAILQ_HEAD_INITIALIZER(tlistmaster);
+    am->tlistmaster = calloc(sizeof(struct tlisthead), 1);
+    if (am == NULL)
+        errx(1, "calloc");
+    am->tlistmaster->tqh_last = &am->tlistmaster->tqh_first;
 
     return am;
 }

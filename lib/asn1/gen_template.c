@@ -250,29 +250,10 @@ partial_offset(const char *basetype, const char *name, int need_offset, int isst
     return str;
 }
 
-struct template {
-    char *line;
-    char *tt;
-    char *offset;
-    char *ptr;
-    HEIM_TAILQ_ENTRY(template) members;
-};
-
-HEIM_TAILQ_HEAD(templatehead, template);
-
-struct tlist {
-    char *name;
-    char *header;
-    struct templatehead template;
-    HEIM_TAILQ_ENTRY(tlist) tmembers;
-};
-
-HEIM_TAILQ_HEAD(tlisthead, tlist);
-
 static void tlist_header(struct tlist *, const char *, ...) __attribute__ ((__format__ (__printf__, 2, 3)));
 static struct template *
     add_line(struct templatehead *, const char *, ...) __attribute__ ((__format__ (__printf__, 2, 3)));
-static int tlist_cmp(const struct tlist *, const struct tlist *);
+static int tlist_cmp(asn1_module, const struct tlist *, const struct tlist *);
 
 static void add_line_pointer(struct templatehead *, const char *, const char *, const char *, ...)
     __attribute__ ((__format__ (__printf__, 4, 5)));
@@ -282,7 +263,6 @@ static void add_line_pointer_reference(struct templatehead *, const char *, cons
     __attribute__ ((__format__ (__printf__, 4, 5)));
 
 
-static struct tlisthead tlistmaster = HEIM_TAILQ_HEAD_INITIALIZER(tlistmaster);
 static unsigned long numdups = 0;
 
 static struct tlist *
@@ -317,9 +297,9 @@ tlist_count(struct tlist *tl)
 }
 
 static void
-tlist_add(struct tlist *tl)
+tlist_add(asn1_module am, struct tlist *tl)
 {
-    HEIM_TAILQ_INSERT_TAIL(&tlistmaster, tl, tmembers);
+    HEIM_TAILQ_INSERT_TAIL(am->tlistmaster, tl, tmembers);
 }
 
 static void
@@ -339,10 +319,10 @@ tlist_print(asn1_module am, struct tlist *tl)
 }
 
 static struct tlist *
-tlist_find_by_name(const char *name)
+tlist_find_by_name(asn1_module am, const char *name)
 {
     struct tlist *ql;
-    HEIM_TAILQ_FOREACH(ql, &tlistmaster, tmembers) {
+    HEIM_TAILQ_FOREACH(ql, am->tlistmaster, tmembers) {
 	if (strcmp(ql->name, name) == 0)
 	    return ql;
     }
@@ -350,19 +330,19 @@ tlist_find_by_name(const char *name)
 }
 
 static int
-tlist_cmp_name(const char *tname, const char *qname)
+tlist_cmp_name(asn1_module am, const char *tname, const char *qname)
 {
-    struct tlist *tl = tlist_find_by_name(tname);
-    struct tlist *ql = tlist_find_by_name(qname);
+    struct tlist *tl = tlist_find_by_name(am, tname);
+    struct tlist *ql = tlist_find_by_name(am, qname);
     if (tl == NULL)
 	return 1;
     if (ql == NULL)
 	return -1;
-    return tlist_cmp(tl, ql);
+    return tlist_cmp(am, tl, ql);
 }
 
 static int
-tlist_cmp(const struct tlist *tl, const struct tlist *ql)
+tlist_cmp(asn1_module am, const struct tlist *tl, const struct tlist *ql)
 {
     int ret;
     struct template *t, *q;
@@ -387,7 +367,7 @@ tlist_cmp(const struct tlist *tl, const struct tlist *ql)
 	    if (ret != 0) return ret;
 
 	    if ((ret = strcmp(t->ptr, q->ptr)) != 0 ||
-		(ret = tlist_cmp_name(t->ptr, q->ptr)) != 0)
+		(ret = tlist_cmp_name(am, t->ptr, q->ptr)) != 0)
 		return ret;
 	}
 	q = HEIM_TAILQ_NEXT(q, members);
@@ -398,12 +378,12 @@ tlist_cmp(const struct tlist *tl, const struct tlist *ql)
 
 
 static const char *
-tlist_find_dup(const struct tlist *tl)
+tlist_find_dup(asn1_module am, const struct tlist *tl)
 {
     struct tlist *ql;
 
-    HEIM_TAILQ_FOREACH(ql, &tlistmaster, tmembers) {
-	if (tlist_cmp(ql, tl) == 0) {
+    HEIM_TAILQ_FOREACH(ql, am->tlistmaster, tmembers) {
+	if (tlist_cmp(am, ql, tl) == 0) {
 	    numdups++;
 	    return ql->name;
 	}
@@ -832,7 +812,7 @@ template_object_set(asn1_module am, IOSObjectSet *os, Field *typeidfield, Field 
 
     tlist_header(tl, "{ 0, 0, ((void *)(uintptr_t)%zu) }", nobjs);
     tlist_print(am, tl);
-    tlist_add(tl);
+    tlist_add(am, tl);
     os->symbol->emitted_template = 1;
 }
 
@@ -974,9 +954,9 @@ template_members(asn1_module am,
             }
 	    tlist_header(tl, "{ 0, 0, ((void *)(uintptr_t)%zu) }", nmemb);
             /* XXX Accidentally O(N^2)? */
-            if (!tlist_find_dup(tl)) {
+            if (!tlist_find_dup(am, tl)) {
                 tlist_print(am, tl);
-                tlist_add(tl);
+                tlist_add(am, tl);
             }
             add_line(temp, "{ A1_PARSE_T(A1T_%s), %s, asn1_%s }", itype, poffset, varname);
         } else {
@@ -1545,7 +1525,7 @@ generate_template_type(asn1_module am,
     free(szt);
 
     /* XXX Accidentally O(N^2)? */
-    d = tlist_find_dup(tl);
+    d = tlist_find_dup(am, tl);
     if (d) {
 #if 0
 	if (strcmp(d, tl->name) == 0)
@@ -1555,7 +1535,7 @@ generate_template_type(asn1_module am,
     } else {
 	*dupname = tl->name;
 	tlist_print(am, tl);
-	tlist_add(tl);
+	tlist_add(am, tl);
     }
 }
 

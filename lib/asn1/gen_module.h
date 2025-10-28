@@ -37,6 +37,7 @@
 
 #include "getarg.h"
 #include "hash.h"
+#include "heimqueue.h"
 
 /*
  * XXX We need to move all module state out of globals and into a struct that
@@ -63,6 +64,25 @@ struct symbol;
 struct type;
 struct value;
 
+struct template {
+    char *line;
+    char *tt;
+    char *offset;
+    char *ptr;
+    HEIM_TAILQ_ENTRY(template) members;
+};
+
+HEIM_TAILQ_HEAD(templatehead, template);
+
+struct tlist {
+    char *name;
+    char *header;
+    struct templatehead template;
+    HEIM_TAILQ_ENTRY(tlist) tmembers;
+};
+
+HEIM_TAILQ_HEAD(tlisthead, tlist);
+
 typedef struct asn1_module {
     /* Name of ASN.1 module file: */
     const char *orig_filename;
@@ -88,7 +108,7 @@ typedef struct asn1_module {
     Hashtab *htab;  /* symbols */
     /* Template state: */
     struct templatehead *template;  // TODO
-    struct tlisthead *tlistmaster;   // TODO
+    struct tlisthead *tlistmaster;
     /* CLI options and flags needed everywhere: */
     getarg_strings preserve;
     getarg_strings seq;

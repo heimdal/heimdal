@@ -113,6 +113,8 @@ typedef struct asn1_module {
     // struct templatehead *template;  // TODO unneeded?
     struct tlisthead *tlistmaster;
     unsigned long numdups;
+    /* Copy state: */
+    int used_fail;
     /* CLI options and flags needed everywhere: */
     getarg_strings preserve;
     getarg_strings seq;

@@ -35,14 +35,12 @@
 
 RCSID("$Id$");
 
-static int used_fail;
-
 static void
 copy_primitive (asn1_module am, const char *typename, const char *from, const char *to)
 {
     fprintf (am->codefile, "if(der_copy_%s(%s, %s)) goto fail;\n",
 	     typename, from, to);
-    used_fail++;
+    am->used_fail++;
 }
 
 static void
@@ -55,7 +53,7 @@ copy_type (asn1_module am, const char *from, const char *to, const Type *t, int 
 #endif
 	fprintf (am->codefile, "if(copy_%s(%s, %s)) goto fail;\n",
 		 t->symbol->gen_name, from, to);
-	used_fail++;
+	am->used_fail++;
 	break;
     case TInteger:
 	if (t->range == NULL && t->members == NULL) {
@@ -91,7 +89,7 @@ copy_type (asn1_module am, const char *from, const char *to, const Type *t, int 
 		    "if (ret) goto fail;\n"
 		    "}\n",
 		    from, to);
-	    used_fail++;
+	    am->used_fail++;
 	}
 
 	if(t->type == TChoice) {
@@ -127,7 +125,7 @@ copy_type (asn1_module am, const char *from, const char *to, const Type *t, int 
 		fprintf(am->codefile, "if(%s) {\n", fs);
 		fprintf(am->codefile, "%s = calloc(1, sizeof(*%s));\n", ts, ts);
 		fprintf(am->codefile, "if(%s == NULL) goto fail;\n", ts);
-		used_fail++;
+		am->used_fail++;
 	    }
 	    copy_type (am, fs, ts, m->type, FALSE);
 	    if(m->optional){
@@ -150,7 +148,7 @@ copy_type (asn1_module am, const char *from, const char *to, const Type *t, int 
 			have_ellipsis->label,
 			from, have_ellipsis->gen_name,
 			to, have_ellipsis->gen_name);
-		used_fail++;
+		am->used_fail++;
 	    }
 	    fprintf(am->codefile, "}\n");
 	}
@@ -164,7 +162,7 @@ copy_type (asn1_module am, const char *from, const char *to, const Type *t, int 
 		 "calloc(1, (%s)->len * sizeof(*(%s)->val))) == NULL && (%s)->len != 0)\n",
 		 to, from, to, from);
 	fprintf (am->codefile, "goto fail;\n");
-	used_fail++;
+	am->used_fail++;
 	fprintf(am->codefile,
 		"for((%s)->len = 0; (%s)->len < (%s)->len; (%s)->len++){\n",
 		to, to, from, to);
@@ -231,9 +229,9 @@ generate_type_copy (asn1_module am, const Symbol *s)
   struct decoration deco;
   ssize_t more_deco = -1;
   int preserve = preserve_type(am, s->name) ? TRUE : FALSE;
-  int save_used_fail = used_fail;
+  int save_used_fail = am->used_fail;
 
-  used_fail = 0;
+  am->used_fail = 0;
 
   fprintf (am->codefile, "int ASN1CALL\n"
 	   "copy_%s(const %s *from, %s *to)\n"
@@ -272,12 +270,12 @@ generate_type_copy (asn1_module am, const Symbol *s)
           /* Decorated with required field of ASN.1 type */
           fprintf(am->codefile, "if (copy_%s(&(from)->%s, &(to)->%s)) goto fail;\n", deco.field_type, deco.field_name, deco.field_name);
       }
-      used_fail++;
+      am->used_fail++;
       free(deco.field_type);
   }
   fprintf (am->codefile, "return 0;\n");
 
-  if (used_fail)
+  if (am->used_fail)
       fprintf (am->codefile, "fail:\n"
 	       "free_%s(to);\n"
 	       "return ENOMEM;\n",
@@ -285,6 +283,6 @@ generate_type_copy (asn1_module am, const Symbol *s)
 
   fprintf(am->codefile,
 	  "}\n\n");
-  used_fail = save_used_fail;
+  am->used_fail = save_used_fail;
 }
 

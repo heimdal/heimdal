@@ -94,6 +94,8 @@ typedef struct asn1_module {
     const char *privheader;
     /* Basename of module: */
     const char *headerbase;
+    /* Name of template file for module: */
+    const char *template_filename;
     /* Open stdio file handles for output: */
     FILE *jsonfile;
     FILE *privheaderfile;

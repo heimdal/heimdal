@@ -42,8 +42,6 @@ FILE *symsfile;
 
 #define STEM "asn1"
 
-static char *template;
-
 /* XXX same as der_length_tag */
 static size_t
 length_tag(unsigned int tag)
@@ -170,7 +168,7 @@ init_generate (asn1_module am, const char *filename, const char *base)
     fn = NULL;
 
     /* template file */
-    if (asprintf(&template, "%s-template.c", am->headerbase) < 0 || template == NULL)
+    if (asprintf((char **)&am->template_filename, "%s-template.c", am->headerbase) < 0 || am->template_filename == NULL)
 	errx(1, "malloc");
     fprintf (am->headerfile,
 	     "/* Generated from %s */\n"
@@ -308,9 +306,9 @@ init_generate (asn1_module am, const char *filename, const char *base)
     if (am->one_code_file)
 	return;
 
-    am->templatefile = fopen (template, "w");
+    am->templatefile = fopen (am->template_filename, "w");
     if (am->templatefile == NULL)
-	err (1, "open %s", template);
+	err (1, "open %s", am->template_filename);
 
     fprintf (am->templatefile,
 	     "/* Generated from %s */\n"

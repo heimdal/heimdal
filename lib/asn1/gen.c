@@ -1706,7 +1706,7 @@ declare_type(asn1_module am, const Symbol *s, Type *t, int typedefp)
         define_type(am, 0, s->gen_name, s->gen_name, NULL, s->type,
                     DEF_TYPE_PRESERVE | DEF_TYPE_TYPEDEFP |
                     (s->emitted_declaration ? 0 : DEF_TYPE_EMIT_NAME));
-        if (template_flag && !s->emitted_declaration)
+        if (am->template_flag && !s->emitted_declaration)
             generate_template_type_forward(am, s->gen_name);
         emitted_declaration(s);
         return;
@@ -1730,7 +1730,7 @@ declare_type(asn1_module am, const Symbol *s, Type *t, int typedefp)
         define_type(am, 0, s->gen_name, s->gen_name, NULL, s->type,
                     DEF_TYPE_PRESERVE | DEF_TYPE_TYPEDEFP |
                      (s->emitted_declaration ? 0 : DEF_TYPE_EMIT_NAME));
-        if (template_flag && !s->emitted_declaration)
+        if (am->template_flag && !s->emitted_declaration)
             generate_template_type_forward(am, s->gen_name);
         emitted_declaration(s);
         emitted_definition(s);
@@ -2001,7 +2001,7 @@ generate_type_header_forwards(asn1_module am, const Symbol *s)
 {
     declare_type(am, s, s->type, TRUE);
     fprintf(am->headerfile, "\n");
-    if (template_flag)
+    if (am->template_flag)
         generate_template_type_forward(am, s->gen_name);
 }
 
@@ -2016,10 +2016,10 @@ generate_type (asn1_module am, const Symbol *s)
 
     generate_type_header(am, s);
 
-    if (template_flag)
+    if (am->template_flag)
 	generate_template(am, s);
 
-    if (template_flag == 0 || is_template_compat(s) == 0) {
+    if (am->template_flag == 0 || is_template_compat(s) == 0) {
 	generate_type_encode (am, s);
 	generate_type_decode (am, s);
 	generate_type_free (am, s);
@@ -2085,7 +2085,8 @@ asn1_module new_asn1_module(getarg_strings decorate,
                             unsigned int parse_units_flag,
                             unsigned int prefix_enum,
                             unsigned int rfc1510_bitstring,
-                            const char *fuzzer_string)
+                            const char *fuzzer_string,
+                            unsigned int template_flag)
 {
     asn1_module am = calloc(sizeof(struct asn1_module), 1);
     if (am == NULL)
@@ -2102,6 +2103,7 @@ asn1_module new_asn1_module(getarg_strings decorate,
     am->rfc1510_bitstring = rfc1510_bitstring;
     am->seq = seq;
     am->support_ber = support_ber;
+    am->template_flag = template_flag;
     am->tlistmaster = calloc(sizeof(struct tlisthead), 1);
     if (am == NULL)
         errx(1, "calloc");

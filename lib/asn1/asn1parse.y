@@ -1415,7 +1415,7 @@ TaggedType	: Tag tagenv Type
 			$$ = new_type(TTag);
 			$$->tag = $1;
 			$$->tag.tagenv = $2;
-			if (template_flag) {
+			if (am->template_flag) {
 			    $$->subtype = $3;
 			} else if ($2 == TE_IMPLICIT) {
 			    Type *t = $3;

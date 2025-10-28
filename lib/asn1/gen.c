@@ -320,7 +320,7 @@ init_generate (asn1_module am, const char *filename, const char *base)
 	     "#include <asn1_err.h>\n"
 	     "#include <%s>\n",
 	     filename,
-	     type_file_string);
+	     am->type_file_string);
 
     fprintf (am->templatefile,
 	     "#include <%s>\n"
@@ -433,7 +433,7 @@ generate_header_of_codefile(asn1_module am, const char *name)
 	     "#include <limits.h>\n"
 	     "#include <%s>\n",
 	     am->orig_filename,
-	     type_file_string);
+	     am->type_file_string);
 
     fprintf (am->codefile,
 	     "#include \"%s\"\n"
@@ -2087,7 +2087,8 @@ asn1_module new_asn1_module(getarg_strings decorate,
                             unsigned int rfc1510_bitstring,
                             const char *fuzzer_string,
                             unsigned int template_flag,
-                            unsigned int original_order)
+                            unsigned int original_order,
+                            const char *type_file_string)
 {
     asn1_module am = calloc(sizeof(struct asn1_module), 1);
     if (am == NULL)
@@ -2110,6 +2111,7 @@ asn1_module new_asn1_module(getarg_strings decorate,
     if (am == NULL)
         errx(1, "calloc");
     am->tlistmaster->tqh_last = &am->tlistmaster->tqh_first;
+    am->type_file_string = type_file_string;
 
     return am;
 }

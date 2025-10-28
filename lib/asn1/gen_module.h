@@ -133,6 +133,7 @@ typedef struct asn1_module {
 
 asn1_module new_asn1_module(getarg_strings, getarg_strings, getarg_strings, const char *,
                             unsigned int, unsigned int, unsigned int, unsigned int,
-                            unsigned int, const char *, unsigned int, unsigned int);
+                            unsigned int, const char *, unsigned int, unsigned int,
+                            const char *);
 
 #endif  // __GEN_MODULE_H__

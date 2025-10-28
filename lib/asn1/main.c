@@ -258,7 +258,7 @@ static int rfc1510_bitstring;
 static int one_code_file;
 char *option_file;
 static int parse_units_flag = 1;
-char *type_file_string = "krb5-types.h";
+static char *type_file_string = "krb5-types.h";
 static int original_order;
 int version_flag;
 int help_flag;
@@ -461,7 +461,7 @@ main(int argc, char **argv)
     asn1_module am = new_asn1_module(decorate, preserve, seq, enum_prefix,
                                      one_code_file, support_ber, parse_units_flag,
                                      prefix_enum, rfc1510_bitstring, fuzzer_string,
-                                     template_flag, original_order);
+                                     template_flag, original_order, type_file_string);
 
     if (am->preserve.num_strings)
         mergesort_r(am->preserve.strings, am->preserve.num_strings,

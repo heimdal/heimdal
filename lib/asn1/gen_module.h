@@ -46,9 +46,9 @@
 #define STEM "asn1"
 
 /*
- * XXX We need to move all module state out of globals and into a struct that
- * we pass around when parsing and compiling a module, and also that we keep on
- * a linked list of parsed modules.
+ * XXX All module state was moved out of globals and into a struct that we pass
+ * around when parsing and compiling a module. A future improvement would also
+ * keep the struct on a linked list of parsed modules.
  *
  * This is needed to:
  *

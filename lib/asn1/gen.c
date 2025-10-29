@@ -33,7 +33,6 @@
  * SUCH DAMAGE.
  */
 
-#include <stdlib.h>
 #include "gen_locl.h"
 
 RCSID("$Id$");

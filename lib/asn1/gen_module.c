@@ -30,6 +30,7 @@
  * SUCH DAMAGE.
  */
 
+#include <stdlib.h>
 #include "gen_module.h"
 
 asn1_module new_asn1_module(getarg_strings decorate,

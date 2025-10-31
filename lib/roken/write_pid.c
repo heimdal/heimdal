@@ -56,8 +56,10 @@ pid_file_write(const char *progname)
      * For now we use an environment variable.
      */
     pidfile_dir = secure_getenv("HEIM_PIDFILE_DIR");
+#ifdef WIN32
     if (pidfile_dir == NULL)
-        pidfile_dir = _PATH_VARRUN;
+        pidfile_dir = ".";
+#endif
 
     pidfile_dir_len = strlen(pidfile_dir);
     if (pidfile_dir_len > 1 &&

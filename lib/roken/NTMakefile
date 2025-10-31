@@ -63,7 +63,7 @@ libroken_la_OBJS =			\
 	$(OBJ)\getaddrinfo_hostspec.obj	\
 	$(OBJ)\get_window_size.obj	\
 	$(OBJ)\getarg.obj		\
-	$(OBJ)\getifaddrs_w32.obj	\
+	$(OBJ)\getifaddrs.obj		\
 	$(OBJ)\getnameinfo_verified.obj	\
 	$(OBJ)\getopt.obj		\
 	$(OBJ)\getprogname.obj		\

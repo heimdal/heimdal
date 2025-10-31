@@ -62,6 +62,10 @@ dist_libheimbase_la_SOURCES =	\
 	string.c		\
 	warn.c
 
+if MINGW
+dist_libheimbase_la_SOURCES += config_reg.c
+endif
+
 nodist_libheimbase_la_SOURCES = $(ES) $(ERR_FILES)
 
 $(libheimbase_la_OBJECTS): $(srcdir)/heimbase-protos.h heim_err.h

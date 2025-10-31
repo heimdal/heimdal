@@ -103,7 +103,11 @@ mandoc_template(struct getargs *args,
     printf(".\\\"   * use better macros for arguments (like .Pa for files)\n");
     printf(".\\\"\n");
     t = time(NULL);
+#ifdef WIN32
+    strftime(timestr, sizeof(timestr), "%B %d, %Y", localtime(&t));
+#else
     strftime(timestr, sizeof(timestr), "%B %e, %Y", localtime(&t));
+#endif
     printf(".Dd %s\n", timestr);
     p = strrchr(progname, '/');
     if(p) p++; else p = progname;

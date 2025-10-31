@@ -35,6 +35,10 @@
 
 #include "roken.h"
 
+#ifdef WIN32
+#include <winsock2.h>
+#endif
+
 /*
  * Like write but blocking sockets never return partial data, i.e. we retry on
  * EINTR.  With non-blocking sockets (EWOULDBLOCK or EAGAIN) we return the

@@ -72,6 +72,7 @@ jobs:
                 mkdir %INSTALL_DIR%
                 pacman --noconfirm -S zstd
                 pacman --noconfirm -S autoconf
+                pacman --noconfirm -S autoconf-archive
                 pacman --noconfirm -S automake
                 pacman --noconfirm -S flex
                 pacman --noconfirm -S bison

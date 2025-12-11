@@ -358,3 +358,25 @@ _gsskrb5_verify_mic
 
     return ret;
 }
+
+OM_uint32 GSSAPI_CALLCONV
+_gsskrb5_verify_mic_iov(
+	OM_uint32 * minor_status,
+	gss_const_ctx_id_t context_handle,
+	gss_iov_buffer_desc *iov,
+	int iov_count,
+	const gss_buffer_t token_buffer)
+{
+	krb5_context context;
+	const gsskrb5_ctx ctx = (const gsskrb5_ctx)context_handle;
+
+	GSSAPI_KRB5_INIT(&context);
+
+	if (ctx->more_flags & IS_CFX) {
+		return _gssapi_verify_mic_iov(
+			minor_status, ctx, context, iov, iov_count, token_buffer);
+	} else {
+		*minor_status = 0;
+		return GSS_S_FAILURE;
+	}
+}

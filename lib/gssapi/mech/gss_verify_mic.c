@@ -50,3 +50,29 @@ gss_verify_mic(OM_uint32 *minor_status,
 	return (m->gm_verify_mic(minor_status, ctx->gc_ctx,
 		    message_buffer, token_buffer, qop_state));
 }
+
+GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
+gss_verify_mic_iov(
+	OM_uint32 *minor_status,
+	gss_const_ctx_id_t context_handle,
+	gss_iov_buffer_desc *iov,
+	int iov_count,
+	const gss_buffer_t token_buffer)
+{
+	struct _gss_context *ctx = (struct _gss_context *) context_handle;
+	gssapi_mech_interface m;
+
+	if (ctx == NULL) {
+		*minor_status = 0;
+		return GSS_S_NO_CONTEXT;
+	}
+
+	m = ctx->gc_mech;
+
+	if (m->gm_verify_mic_iov == NULL) {
+		return GSS_S_UNAVAILABLE;
+	}
+
+	return (m->gm_verify_mic_iov(
+		minor_status, ctx->gc_ctx, iov, iov_count, token_buffer));
+}

@@ -518,7 +518,11 @@ _kdc_do_digest(krb5_context context,
 	    goto out;
 	}
 
-	krb5_store_stringz(sp, ireq.u.digestRequest.serverNonce);
+	ret = 	krb5_store_stringz(sp, ireq.u.digestRequest.serverNonce);
+	if (ret) {
+	    krb5_clear_error_message(context);
+	    goto out;
+	}
 
 	if (ireq.u.digestRequest.hostname) {
 	    ret = krb5_store_stringz(sp, *ireq.u.digestRequest.hostname);

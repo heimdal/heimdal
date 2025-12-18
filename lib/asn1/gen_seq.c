@@ -3,6 +3,8 @@
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
+ * Portions Copyright (c) 2025 Jeffrey Kintscher. All rights reserved.
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -36,20 +38,20 @@
 RCSID("$Id$");
 
 static FILE *
-get_code_file(void)
+get_code_file(asn1_module am)
 {
-    if (!one_code_file && template_flag && templatefile)
-        return templatefile;
-    return codefile;
+    if (!am->one_code_file && am->template_flag && am->templatefile)
+        return am->templatefile;
+    return am->codefile;
 }
 
 void
-generate_type_seq (const Symbol *s)
+generate_type_seq (asn1_module am, const Symbol *s)
 {
     char *subname;
     Type *type;
 
-    if (!seq_type(s->name))
+    if (!seq_type(am, s->name))
 	return;
     type = s->type;
     while(type->type == TTag)
@@ -74,18 +76,18 @@ generate_type_seq (const Symbol *s)
 
     subname = type->subtype->symbol->gen_name;
 
-    fprintf (headerfile,
+    fprintf (am->headerfile,
 	     "ASN1EXP int   ASN1CALL add_%s  (%s *, const %s *);\n"
 	     "ASN1EXP int   ASN1CALL remove_%s  (%s *, unsigned int);\n",
 	     s->gen_name, s->gen_name, subname,
 	     s->gen_name, s->gen_name);
 
-    fprintf (get_code_file(), "int ASN1CALL\n"
+    fprintf (get_code_file(am), "int ASN1CALL\n"
 	     "add_%s(%s *data, const %s *element)\n"
 	     "{\n",
 	     s->gen_name, s->gen_name, subname);
 
-    fprintf (get_code_file(),
+    fprintf (get_code_file(am),
 	     "int ret;\n"
 	     "void *ptr;\n"
 	     "\n"
@@ -99,14 +101,14 @@ generate_type_seq (const Symbol *s)
 	     "return 0;\n",
 	     subname);
 
-    fprintf (get_code_file(), "}\n\n");
+    fprintf (get_code_file(am), "}\n\n");
 
-    fprintf (get_code_file(), "int ASN1CALL\n"
+    fprintf (get_code_file(am), "int ASN1CALL\n"
 	     "remove_%s(%s *data, unsigned int element)\n"
 	     "{\n",
 	     s->gen_name, s->gen_name);
 
-    fprintf (get_code_file(),
+    fprintf (get_code_file(am),
 	     "void *ptr;\n"
 	     "\n"
 	     "if (data->len == 0 || element >= data->len)\n"
@@ -123,5 +125,5 @@ generate_type_seq (const Symbol *s)
 	     "return 0;\n",
 	     subname);
 
-    fprintf (get_code_file(), "}\n\n");
+    fprintf (get_code_file(am), "}\n\n");
 }

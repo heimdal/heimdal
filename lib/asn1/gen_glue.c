@@ -5,6 +5,8 @@
  *
  * Portions Copyright (c) 2009 Apple Inc. All rights reserved.
  *
+ * Portions Copyright (c) 2025 Jeffrey Kintscher. All rights reserved.
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -38,46 +40,46 @@
 RCSID("$Id$");
 
 static FILE *
-get_code_file(void)
+get_code_file(asn1_module am)
 {
-    if (!one_code_file && template_flag && templatefile)
-        return templatefile;
-    return codefile;
+    if (!am->one_code_file && am->template_flag && am->templatefile)
+        return am->templatefile;
+    return am->codefile;
 }
 
 static void
-generate_2int (const Type *t, const char *gen_name)
+generate_2int (asn1_module am, const Type *t, const char *gen_name)
 {
     Member *m;
 
-    fprintf (headerfile,
+    fprintf (am->headerfile,
 	     "uint64_t %s2int(%s);\n",
 	     gen_name, gen_name);
 
-    fprintf (get_code_file(),
+    fprintf (get_code_file(am),
 	     "uint64_t %s2int(%s f)\n"
 	     "{\n"
 	     "uint64_t r = 0;\n",
 	     gen_name, gen_name);
 
     HEIM_TAILQ_FOREACH(m, t->members, members) {
-	fprintf (get_code_file(), "if(f.%s) r |= (1ULL << %d);\n",
+	fprintf (get_code_file(am), "if(f.%s) r |= (1ULL << %d);\n",
 		 m->gen_name, (int)m->val);
     }
-    fprintf (get_code_file(), "return r;\n"
+    fprintf (get_code_file(am), "return r;\n"
 	     "}\n\n");
 }
 
 static void
-generate_int2 (const Type *t, const char *gen_name)
+generate_int2 (asn1_module am, const Type *t, const char *gen_name)
 {
     Member *m;
 
-    fprintf (headerfile,
+    fprintf (am->headerfile,
 	     "%s int2%s(uint64_t);\n",
 	     gen_name, gen_name);
 
-    fprintf (get_code_file(),
+    fprintf (get_code_file(am),
 	     "%s int2%s(uint64_t n)\n"
 	     "{\n"
 	     "\t%s flags;\n\n"
@@ -86,11 +88,11 @@ generate_int2 (const Type *t, const char *gen_name)
 
     if(t->members) {
 	HEIM_TAILQ_FOREACH(m, t->members, members) {
-	    fprintf (get_code_file(), "\tflags.%s = (n >> %d) & 1;\n",
+	    fprintf (get_code_file(am), "\tflags.%s = (n >> %d) & 1;\n",
 		     m->gen_name, (int)m->val);
 	}
     }
-    fprintf (get_code_file(), "\treturn flags;\n"
+    fprintf (get_code_file(am), "\treturn flags;\n"
 	     "}\n\n");
 }
 
@@ -99,30 +101,30 @@ generate_int2 (const Type *t, const char *gen_name)
  */
 
 static void
-generate_units (const Type *t, const char *gen_name)
+generate_units (asn1_module am, const Type *t, const char *gen_name)
 {
     Member *m;
 
-    fprintf (headerfile,
+    fprintf (am->headerfile,
              "const struct units * asn1_%s_units(void);\n",
              gen_name);
 
-    fprintf (get_code_file(),
+    fprintf (get_code_file(am),
 	     "static struct units %s_units[] = {\n",
 	     gen_name);
 
     if(t->members) {
 	HEIM_TAILQ_FOREACH_REVERSE(m, t->members, memhead, members) {
-	    fprintf (get_code_file(),
+	    fprintf (get_code_file(am),
 		     "\t{\"%s\",\t1ULL << %d},\n", m->name, (int)m->val);
 	}
     }
 
-    fprintf (get_code_file(),
+    fprintf (get_code_file(am),
 	     "\t{NULL,\t0}\n"
 	     "};\n\n");
 
-    fprintf (get_code_file(),
+    fprintf (get_code_file(am),
              "const struct units * asn1_%s_units(void){\n"
              "return %s_units;\n"
              "}\n\n",
@@ -132,11 +134,11 @@ generate_units (const Type *t, const char *gen_name)
 }
 
 void
-generate_glue (const Type *t, const char *gen_name)
+generate_glue (asn1_module am, const Type *t, const char *gen_name)
 {
     switch(t->type) {
     case TTag:
-	generate_glue(t->subtype, gen_name);
+	generate_glue(am, t->subtype, gen_name);
 	break;
     case TBitString : {
         Member *m;
@@ -150,10 +152,10 @@ generate_glue (const Type *t, const char *gen_name)
                 return;
             }
         }
-        generate_2int (t, gen_name);
-        generate_int2 (t, gen_name);
-        if (parse_units_flag)
-            generate_units (t, gen_name);
+        generate_2int (am, t, gen_name);
+        generate_int2 (am, t, gen_name);
+        if (am->parse_units_flag)
+            generate_units (am, t, gen_name);
 	break;
     }
     default :

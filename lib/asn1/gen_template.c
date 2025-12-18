@@ -5,6 +5,8 @@
  *
  * Portions Copyright (c) 2009 - 2010 Apple Inc. All rights reserved.
  *
+ * Portions Copyright (c) 2025 Jeffrey Kintscher. All rights reserved.
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -44,7 +46,7 @@
 #include <vis-extras.h>
 
 static const char *symbol_name(const char *, const Type *);
-static void generate_template_type(const char *, const char **, const char *, const char *, const char *,
+static void generate_template_type(asn1_module, const char *, const char **, const char *, const char *, const char *,
 				   Type *, int, int, int);
 
 static const char *
@@ -205,11 +207,11 @@ const struct {
 };
 
 static FILE *
-get_code_file(void)
+get_code_file(asn1_module am)
 {
-    if (!one_code_file)
-	return templatefile;
-    return codefile;
+    if (!am->one_code_file)
+	return am->templatefile;
+    return am->codefile;
 }
 
 
@@ -250,29 +252,10 @@ partial_offset(const char *basetype, const char *name, int need_offset, int isst
     return str;
 }
 
-struct template {
-    char *line;
-    char *tt;
-    char *offset;
-    char *ptr;
-    HEIM_TAILQ_ENTRY(template) members;
-};
-
-HEIM_TAILQ_HEAD(templatehead, template);
-
-struct tlist {
-    char *name;
-    char *header;
-    struct templatehead template;
-    HEIM_TAILQ_ENTRY(tlist) tmembers;
-};
-
-HEIM_TAILQ_HEAD(tlisthead, tlist);
-
 static void tlist_header(struct tlist *, const char *, ...) __attribute__ ((__format__ (__printf__, 2, 3)));
 static struct template *
     add_line(struct templatehead *, const char *, ...) __attribute__ ((__format__ (__printf__, 2, 3)));
-static int tlist_cmp(const struct tlist *, const struct tlist *);
+static int tlist_cmp(asn1_module, const struct tlist *, const struct tlist *);
 
 static void add_line_pointer(struct templatehead *, const char *, const char *, const char *, ...)
     __attribute__ ((__format__ (__printf__, 4, 5)));
@@ -281,9 +264,6 @@ static void add_line_string(struct templatehead *, const char *, const char *, c
 static void add_line_pointer_reference(struct templatehead *, const char *, const char *, const char *, ...)
     __attribute__ ((__format__ (__printf__, 4, 5)));
 
-
-static struct tlisthead tlistmaster = HEIM_TAILQ_HEAD_INITIALIZER(tlistmaster);
-static unsigned long numdups = 0;
 
 static struct tlist *
 tlist_new(const char *name)
@@ -317,17 +297,17 @@ tlist_count(struct tlist *tl)
 }
 
 static void
-tlist_add(struct tlist *tl)
+tlist_add(asn1_module am, struct tlist *tl)
 {
-    HEIM_TAILQ_INSERT_TAIL(&tlistmaster, tl, tmembers);
+    HEIM_TAILQ_INSERT_TAIL(am->tlistmaster, tl, tmembers);
 }
 
 static void
-tlist_print(struct tlist *tl)
+tlist_print(asn1_module am, struct tlist *tl)
 {
     struct template *q;
     unsigned int i = 1;
-    FILE *f = get_code_file();
+    FILE *f = get_code_file(am);
 
     fprintf(f, "const struct asn1_template asn1_%s[] = {\n", tl->name);
     fprintf(f, "/* 0 */ %s,\n", tl->header);
@@ -339,10 +319,10 @@ tlist_print(struct tlist *tl)
 }
 
 static struct tlist *
-tlist_find_by_name(const char *name)
+tlist_find_by_name(asn1_module am, const char *name)
 {
     struct tlist *ql;
-    HEIM_TAILQ_FOREACH(ql, &tlistmaster, tmembers) {
+    HEIM_TAILQ_FOREACH(ql, am->tlistmaster, tmembers) {
 	if (strcmp(ql->name, name) == 0)
 	    return ql;
     }
@@ -350,19 +330,19 @@ tlist_find_by_name(const char *name)
 }
 
 static int
-tlist_cmp_name(const char *tname, const char *qname)
+tlist_cmp_name(asn1_module am, const char *tname, const char *qname)
 {
-    struct tlist *tl = tlist_find_by_name(tname);
-    struct tlist *ql = tlist_find_by_name(qname);
+    struct tlist *tl = tlist_find_by_name(am, tname);
+    struct tlist *ql = tlist_find_by_name(am, qname);
     if (tl == NULL)
 	return 1;
     if (ql == NULL)
 	return -1;
-    return tlist_cmp(tl, ql);
+    return tlist_cmp(am, tl, ql);
 }
 
 static int
-tlist_cmp(const struct tlist *tl, const struct tlist *ql)
+tlist_cmp(asn1_module am, const struct tlist *tl, const struct tlist *ql)
 {
     int ret;
     struct template *t, *q;
@@ -387,7 +367,7 @@ tlist_cmp(const struct tlist *tl, const struct tlist *ql)
 	    if (ret != 0) return ret;
 
 	    if ((ret = strcmp(t->ptr, q->ptr)) != 0 ||
-		(ret = tlist_cmp_name(t->ptr, q->ptr)) != 0)
+		(ret = tlist_cmp_name(am, t->ptr, q->ptr)) != 0)
 		return ret;
 	}
 	q = HEIM_TAILQ_NEXT(q, members);
@@ -398,13 +378,13 @@ tlist_cmp(const struct tlist *tl, const struct tlist *ql)
 
 
 static const char *
-tlist_find_dup(const struct tlist *tl)
+tlist_find_dup(asn1_module am, const struct tlist *tl)
 {
     struct tlist *ql;
 
-    HEIM_TAILQ_FOREACH(ql, &tlistmaster, tmembers) {
-	if (tlist_cmp(ql, tl) == 0) {
-	    numdups++;
+    HEIM_TAILQ_FOREACH(ql, am->tlistmaster, tmembers) {
+	if (tlist_cmp(am, ql, tl) == 0) {
+	    am->numdups++;
 	    return ql->name;
 	}
     }
@@ -760,7 +740,7 @@ sort_object_set(IOSObjectSet *os,       /* Object set to sort fields of */
 }
 
 static void
-template_object_set(IOSObjectSet *os, Field *typeidfield, Field *opentypefield)
+template_object_set(asn1_module am, IOSObjectSet *os, Field *typeidfield, Field *opentypefield)
 {
     IOSObject **objects = NULL;
     IOSObject *o;
@@ -831,13 +811,14 @@ template_object_set(IOSObjectSet *os, Field *typeidfield, Field *opentypefield)
     free(objects);
 
     tlist_header(tl, "{ 0, 0, ((void *)(uintptr_t)%zu) }", nobjs);
-    tlist_print(tl);
-    tlist_add(tl);
+    tlist_print(am, tl);
+    tlist_add(am, tl);
     os->symbol->emitted_template = 1;
 }
 
 static void
-template_open_type(struct templatehead *temp,
+template_open_type(asn1_module am,
+                   struct templatehead *temp,
                    const char *basetype,
                    const Type *t,
                    size_t typeididx,
@@ -856,7 +837,7 @@ template_open_type(struct templatehead *temp,
                  basetype, m->gen_name) == -1 || !s)
         err(1, "Out of memory");
 
-    template_object_set(t->actual_parameter, typeidfield, opentypefield);
+    template_object_set(am, t->actual_parameter, typeidfield, opentypefield);
     add_line_pointer(temp, t->actual_parameter->symbol->gen_name, s,
                      /*
                       * We always sort object sets for now as we can't import
@@ -881,7 +862,8 @@ template_names(struct templatehead *temp, const char *basetype, const Type *t)
 }
 
 static void
-template_members(struct templatehead *temp,
+template_members(asn1_module am,
+                 struct templatehead *temp,
                  const char *basetype,
                  const char *name,
                  const Type *t,
@@ -972,9 +954,9 @@ template_members(struct templatehead *temp,
             }
 	    tlist_header(tl, "{ 0, 0, ((void *)(uintptr_t)%zu) }", nmemb);
             /* XXX Accidentally O(N^2)? */
-            if (!tlist_find_dup(tl)) {
-                tlist_print(tl);
-                tlist_add(tl);
+            if (!tlist_find_dup(am, tl)) {
+                tlist_print(am, tl);
+                tlist_add(am, tl);
             }
             add_line(temp, "{ A1_PARSE_T(A1T_%s), %s, asn1_%s }", itype, poffset, varname);
         } else {
@@ -1029,7 +1011,7 @@ template_members(struct templatehead *temp,
 	Member *m;
 	size_t count = 0, i;
 	char *bname = NULL;
-	FILE *f = get_code_file();
+	FILE *f = get_code_file(am);
 	static unsigned long bmember_counter = 0;
 
 	HEIM_TAILQ_INIT(&template);
@@ -1056,7 +1038,7 @@ template_members(struct templatehead *temp,
 
 	fprintf(f, "static const struct asn1_template asn1_%s_%s[] = {\n", basetype, bname);
 	fprintf(f, "/* 0 */ { 0%s, sizeof(%s), ((void *)(uintptr_t)%lu) },\n",
-		rfc1510_bitstring ? "|A1_HBF_RFC1510" : "",
+		am->rfc1510_bitstring ? "|A1_HBF_RFC1510" : "",
 		basetype, (unsigned long)count);
 	i = 1;
 	HEIM_TAILQ_FOREACH(q, &template, members) {
@@ -1087,7 +1069,7 @@ template_members(struct templatehead *temp,
                                       &typeidfield, &opentypefield,
                                       &is_array_of_open_type);
 
-	fprintf(get_code_file(), "/* tset: members isstruct: %d */\n", isstruct);
+	fprintf(get_code_file(am), "/* tset: members isstruct: %d */\n", isstruct);
 
 	HEIM_TAILQ_FOREACH(m, t->members, members) {
 	    char *newbasename = NULL;
@@ -1109,18 +1091,18 @@ template_members(struct templatehead *temp,
             if (m->defval)
                 defval(temp, m);
 
-	    template_members(temp, newbasename, m->gen_name, m->type, m->optional, m->defval ? 1 : 0, 0, isstruct, 1);
+	    template_members(am, temp, newbasename, m->gen_name, m->type, m->optional, m->defval ? 1 : 0, 0, isstruct, 1);
 
 	    free(newbasename);
             i++;
 	}
 
         if (isstruct && t->actual_parameter)
-            template_open_type(temp, basetype, t, typeididx, opentypeidx,
+            template_open_type(am, temp, basetype, t, typeididx, opentypeidx,
                                typeidfield, opentypefield, opentypemember,
                                is_array_of_open_type);
 
-        while (decorate_type(basetype, &deco, &more_deco)) {
+        while (decorate_type(am, basetype, &deco, &more_deco)) {
             char *poffset2;
 
             poffset2 = partial_offset(basetype, deco.field_name, 1, isstruct);
@@ -1165,7 +1147,7 @@ template_members(struct templatehead *temp,
                                       &typeidfield, &opentypefield,
                                       &is_array_of_open_type);
 
-	fprintf(get_code_file(), "/* tsequence: members isstruct: %d */\n", isstruct);
+	fprintf(get_code_file(am), "/* tsequence: members isstruct: %d */\n", isstruct);
 
 	HEIM_TAILQ_FOREACH(m, t->members, members) {
 	    char *newbasename = NULL;
@@ -1187,18 +1169,18 @@ template_members(struct templatehead *temp,
             if (m->defval)
                 defval(temp, m);
             
-	    template_members(temp, newbasename, m->gen_name, m->type, m->optional, m->defval ? 1 : 0, 0, isstruct, 1);
+	    template_members(am, temp, newbasename, m->gen_name, m->type, m->optional, m->defval ? 1 : 0, 0, isstruct, 1);
 
 	    free(newbasename);
             i++;
 	}
 
         if (isstruct && t->actual_parameter)
-            template_open_type(temp, basetype, t, typeididx, opentypeidx,
+            template_open_type(am, temp, basetype, t, typeididx, opentypeidx,
                                typeidfield, opentypefield, opentypemember,
                                is_array_of_open_type);
 
-        while (decorate_type(basetype, &deco, &more_deco)) {
+        while (decorate_type(am, basetype, &deco, &more_deco)) {
             char *poffset2;
 
             poffset2 = partial_offset(basetype, deco.field_name, 1, isstruct);
@@ -1246,7 +1228,7 @@ template_members(struct templatehead *temp,
                 tagimplicit = 1;
         }
 
-	fprintf(get_code_file(), "/* template_members: %s %s %s */\n", basetype, implicit ? "imp" : "exp", tagimplicit ? "imp" : "exp");
+	fprintf(get_code_file(am), "/* template_members: %s %s %s */\n", basetype, implicit ? "imp" : "exp", tagimplicit ? "imp" : "exp");
 
 	if (subtype_is_struct)
 	    sename = basetype;
@@ -1260,7 +1242,7 @@ template_members(struct templatehead *temp,
 	if (asprintf(&elname, "%s_%s", basetype, tname) < 0 || elname == NULL)
 	    errx(1, "malloc");
 
-	generate_template_type(elname, &dupname, NULL, sename, name,
+	generate_template_type(am, elname, &dupname, NULL, sename, name,
 			       t->subtype, 0, subtype_is_struct, 0);
 
 	add_line_pointer(temp, dupname, poffset,
@@ -1309,7 +1291,7 @@ template_members(struct templatehead *temp,
 	if (asprintf(&elname, "%s_%s_%lu", basetype, tname, seof_counter++) < 0 || elname == NULL)
 	    errx(1, "malloc");
 
-	generate_template_type(elname, &dupname, NULL, sename, NULL, t->subtype,
+	generate_template_type(am, elname, &dupname, NULL, sename, NULL, t->subtype,
 			       0, subtype_is_struct, need_offset);
 
 	add_line(temp, "{ %s, %s, asn1_%s }", type, poffset, dupname);
@@ -1323,7 +1305,7 @@ template_members(struct templatehead *temp,
 	struct template *q;
 	size_t count = 0, i;
 	char *tname = NULL;
-	FILE *f = get_code_file();
+	FILE *f = get_code_file(am);
 	Member *m;
 	int ellipsis = 0;
 	char *e;
@@ -1361,7 +1343,7 @@ template_members(struct templatehead *temp,
 		errx(1, "malloc");
 
 
-	    generate_template_type(elname, &dupname, NULL,
+	    generate_template_type(am, elname, &dupname, NULL,
 				   symbol_name(newbasename, m->type),
 				   NULL, m->type, 0, subtype_is_struct, 1);
 
@@ -1400,7 +1382,7 @@ template_members(struct templatehead *temp,
 
 	add_line(temp, "{ A1_OP_CHOICE, %s, %s }", poffset, tname);
 
-        while (decorate_type(basetype, &deco, &more_deco)) {
+        while (decorate_type(am, basetype, &deco, &more_deco)) {
             char *poffset2;
 
             poffset2 = partial_offset(basetype, deco.field_name, 1, isstruct);
@@ -1454,33 +1436,34 @@ gen_extern_stubs(FILE *f, const char *name)
 }
 
 void
-gen_template_import(const Symbol *s)
+gen_template_import(asn1_module am, const Symbol *s)
 {
-    FILE *f = get_code_file();
+    FILE *f = get_code_file(am);
 
-    if (template_flag == 0)
+    if (am->template_flag == 0)
 	return;
 
     gen_extern_stubs(f, s->gen_name);
 }
 
 void
-generate_template_type_forward(const char *name)
+generate_template_type_forward(asn1_module am, const char *name)
 {
-    fprintf(get_code_file(), "extern const struct asn1_template asn1_%s[];\n", name);
+    fprintf(get_code_file(am), "extern const struct asn1_template asn1_%s[];\n", name);
 }
 
 void
-generate_template_objectset_forwards(const Symbol *s)
+generate_template_objectset_forwards(asn1_module am, const Symbol *s)
 {
-    if (!template_flag)
+    if (!am->template_flag)
         return;
-    fprintf(get_code_file(), "extern const struct asn1_template asn1_%s[];\n",
+    fprintf(get_code_file(am), "extern const struct asn1_template asn1_%s[];\n",
             s->gen_name);
 }
 
 static void
-generate_template_type(const char *varname,
+generate_template_type(asn1_module am,
+               const char *varname,
 		       const char **dupname,
 		       const char *symname,
 		       const char *basetype,
@@ -1508,7 +1491,7 @@ generate_template_type(const char *varname,
             implicit = (type->tag.tagenv == TE_IMPLICIT);
     }
 
-    template_members(&tl->template, basetype, name, type, optional, 0,
+    template_members(am, &tl->template, basetype, name, type, optional, 0,
                      implicit, isstruct, need_offset);
 
     /* if its a sequence or set type, check if there is a ellipsis */
@@ -1533,16 +1516,16 @@ generate_template_type(const char *varname,
     if (HEIM_TAILQ_EMPTY(&tl->template) && compact_tag(type)->type != TNull)
 	errx(1, "Tag %s...%s with no content ?", basetype, name ? name : "");
 
-    fprintf(get_code_file(), "/* generate_template_type: %s */\n", tl->name);
+    fprintf(get_code_file(am), "/* generate_template_type: %s */\n", tl->name);
 
     tlist_header(tl, "{ 0%s%s, sizeof(%s), ((void *)(uintptr_t)%lu) }",
-		 (symname && preserve_type(symname)) ? "|A1_HF_PRESERVE" : "",
+		 (symname && preserve_type(am, symname)) ? "|A1_HF_PRESERVE" : "",
 		 have_ellipsis ? "|A1_HF_ELLIPSIS" : "", szt, tlist_count(tl));
 
     free(szt);
 
     /* XXX Accidentally O(N^2)? */
-    d = tlist_find_dup(tl);
+    d = tlist_find_dup(am, tl);
     if (d) {
 #if 0
 	if (strcmp(d, tl->name) == 0)
@@ -1551,16 +1534,16 @@ generate_template_type(const char *varname,
 	*dupname = d;
     } else {
 	*dupname = tl->name;
-	tlist_print(tl);
-	tlist_add(tl);
+	tlist_print(am, tl);
+	tlist_add(am, tl);
     }
 }
 
 
 void
-generate_template(const Symbol *s)
+generate_template(asn1_module am, const Symbol *s)
 {
-    FILE *f = get_code_file();
+    FILE *f = get_code_file(am);
     const char *dupname;
     struct decoration deco;
     ssize_t more_deco = -1;
@@ -1570,7 +1553,7 @@ generate_template(const Symbol *s)
 	return;
     }
 
-    while (decorate_type(s->gen_name, &deco, &more_deco)) {
+    while (decorate_type(am, s->gen_name, &deco, &more_deco)) {
         if (!deco.ext)
             continue;
         if (deco.void_star && deco.header_name)
@@ -1593,7 +1576,7 @@ generate_template(const Symbol *s)
         free(deco.field_type);
     }
 
-    generate_template_type(s->gen_name, &dupname, s->name, s->gen_name, NULL, s->type, 0, 0, 1);
+    generate_template_type(am, s->gen_name, &dupname, s->name, s->gen_name, NULL, s->type, 0, 0, 1);
 
     fprintf(f,
 	    "\n"
@@ -1607,7 +1590,7 @@ generate_template(const Symbol *s)
 	    s->gen_name,
 	    s->gen_name,
 	    dupname,
-	    support_ber ? "A1_PF_ALLOW_BER" : "0");
+	    am->support_ber ? "A1_PF_ALLOW_BER" : "0");
 
     fprintf(f,
 	    "\n"
@@ -1619,7 +1602,7 @@ generate_template(const Symbol *s)
 	    "\n",
 	    s->gen_name,
 	    s->gen_name,
-	    fuzzer_string,
+	    am->fuzzer_string,
 	    dupname);
 
     fprintf(f,
@@ -1632,7 +1615,7 @@ generate_template(const Symbol *s)
 	    "\n",
 	    s->gen_name,
 	    s->gen_name,
-	    fuzzer_string,
+	    am->fuzzer_string,
 	    dupname);
 
 

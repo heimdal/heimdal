@@ -3,6 +3,8 @@
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
+ * Portions Copyright (c) 2025 Jeffrey Kintscher. All rights reserved.
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -147,8 +149,8 @@ _hashtabdel(Hashtab * htab, void *ptr, int freep)
 /* Do something for each element */
 
 void
-hashtabforeach(Hashtab * htab, int (*func) (void *ptr, void *arg),
-	       void *arg)
+hashtabforeach(Hashtab * htab, int (*func) (void *am, void *ptr, void *arg),
+	       void *am, void *arg)
 {
     Hashentry **h, *g;
 
@@ -156,7 +158,7 @@ hashtabforeach(Hashtab * htab, int (*func) (void *ptr, void *arg),
 
     for (h = htab->tab; h < &htab->tab[htab->sz]; ++h)
 	for (g = *h; g; g = g->next)
-	    if ((*func) (g->ptr, arg))
+	    if ((*func) (am, g->ptr, arg))
 		return;
 }
 

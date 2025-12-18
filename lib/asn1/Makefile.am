@@ -4,7 +4,7 @@ include $(top_srcdir)/Makefile.am.common
 
 WFLAGS += $(WFLAGS_ENUM_CONV)
 
-AM_YFLAGS = -d -o asn1parse.c -t
+AM_YFLAGS = -d -o asn1parse.c -t @YACC_REENTRANT_FLAGS@
 
 AM_CPPFLAGS += $(ROKEN_RENAME) -I$(top_builddir)/include -I$(top_srcdir)/lib/base
 
@@ -131,6 +131,8 @@ asn1_compile_SOURCES = 				\
 	gen_glue.c				\
 	gen_length.c				\
 	gen_locl.h				\
+	gen_module.c            \
+	gen_module.h            \
 	gen_seq.c				\
 	gen_template.c				\
 	hash.c					\

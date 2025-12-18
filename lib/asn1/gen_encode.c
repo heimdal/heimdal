@@ -3,6 +3,8 @@
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
+ * Portions Copyright (c) 2025 Jeffrey Kintscher. All rights reserved.
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -49,9 +51,9 @@ length_tag(unsigned int tag)
 }
 
 static void
-encode_primitive (const char *typename, const char *name)
+encode_primitive (asn1_module am, const char *typename, const char *name)
 {
-    fprintf (codefile,
+    fprintf (am->codefile,
 	     "e = der_put_%s(p, len, %s, &l);\n"
 	     "if (e) return e;\np -= l; len -= l; ret += l;\n\n",
 	     typename,
@@ -118,16 +120,16 @@ valuename(Der_class class, int value)
 }
 
 static int
-encode_type (const char *name, const Type *t, const char *tmpstr)
+encode_type (asn1_module am, const char *name, const Type *t, const char *tmpstr)
 {
     int constructed = 1;
 
     switch (t->type) {
     case TType:
 #if 0
-	encode_type (name, t->symbol->type);
+	encode_type (am, name, t->symbol->type);
 #endif
-	fprintf (codefile,
+	fprintf (am->codefile,
 		 "e = encode_%s(p, len, %s, &l);\n"
 		 "if (e) return e;\np -= l; len -= l; ret += l;\n\n",
 		 t->symbol->gen_name, name);
@@ -135,33 +137,33 @@ encode_type (const char *name, const Type *t, const char *tmpstr)
 	break;
     case TInteger:
 	if(t->members) {
-	    fprintf(codefile,
+	    fprintf(am->codefile,
 		    "{\n"
 		    "int enumint = (int)*%s;\n",
 		    name);
-	    encode_primitive("integer", "&enumint");
-	    fprintf(codefile, "}\n;");
+	    encode_primitive(am, "integer", "&enumint");
+	    fprintf(am->codefile, "}\n;");
 	} else if (t->range == NULL) {
-	    encode_primitive("heim_integer", name);
+	    encode_primitive(am, "heim_integer", name);
 	} else if (t->range->min < 0 &&
                    (t->range->min < INT_MIN || t->range->max > INT_MAX)) {
-            encode_primitive("integer64", name);
+            encode_primitive(am, "integer64", name);
 	} else if (t->range->min < 0) {
-            encode_primitive("integer", name);
+            encode_primitive(am, "integer", name);
 	} else if (t->range->max > UINT_MAX) {
-	    encode_primitive("unsigned64", name);
+	    encode_primitive(am, "unsigned64", name);
 	} else {
-	    encode_primitive("unsigned", name);
+	    encode_primitive(am, "unsigned", name);
 	}
 
 	constructed = 0;
 	break;
     case TBoolean:
-	encode_primitive ("boolean", name);
+	encode_primitive (am, "boolean", name);
 	constructed = 0;
 	break;
     case TOctetString:
-	encode_primitive ("octet_string", name);
+	encode_primitive (am, "octet_string", name);
 	constructed = 0;
 	break;
     case TBitString: {
@@ -169,15 +171,15 @@ encode_type (const char *name, const Type *t, const char *tmpstr)
 	int pos;
 
 	if (HEIM_TAILQ_EMPTY(t->members)) {
-	    encode_primitive("bit_string", name);
+	    encode_primitive(am, "bit_string", name);
 	    constructed = 0;
 	    break;
 	}
 
-	fprintf (codefile, "{\n"
+	fprintf (am->codefile, "{\n"
 		 "unsigned char c = 0;\n");
-	if (!rfc1510_bitstring)
-	    fprintf (codefile,
+	if (!am->rfc1510_bitstring)
+	    fprintf (am->codefile,
 		     "int rest = 0;\n"
 		     "int bit_set = 0;\n");
 #if 0
@@ -194,21 +196,21 @@ encode_type (const char *name, const Type *t, const char *tmpstr)
 	 * has to screw it up differently.
 	 */
 	pos = HEIM_TAILQ_LAST(t->members, memhead)->val;
-	if (rfc1510_bitstring) {
+	if (am->rfc1510_bitstring) {
 	    if (pos < 31)
 		pos = 31;
 	}
 
 	HEIM_TAILQ_FOREACH_REVERSE(m, t->members, memhead, members) {
 	    while (m->val / 8 < pos / 8) {
-		if (!rfc1510_bitstring)
-		    fprintf (codefile,
+		if (!am->rfc1510_bitstring)
+		    fprintf (am->codefile,
 			     "if (c != 0 || bit_set) {\n");
-		fprintf (codefile,
+		fprintf (am->codefile,
 			 "if (len < 1) return ASN1_OVERFLOW;\n"
 			 "*p-- = c; len--; ret++;\n");
-		if (!rfc1510_bitstring)
-		    fprintf (codefile,
+		if (!am->rfc1510_bitstring)
+		    fprintf (am->codefile,
 			     "if (!bit_set) {\n"
 			     "rest = 0;\n"
 			     "while(c) { \n"
@@ -219,26 +221,26 @@ encode_type (const char *name, const Type *t, const char *tmpstr)
 			     "bit_set = 1;\n"
 			     "}\n"
 			     "}\n");
-		fprintf (codefile,
+		fprintf (am->codefile,
 			 "c = 0;\n");
 		pos -= 8;
 	    }
-	    fprintf (codefile,
+	    fprintf (am->codefile,
 		     "if((%s)->%s) {\n"
 		     "c |= 1<<%d;\n",
 		     name, m->gen_name, (int)(7 - m->val % 8));
-	    fprintf (codefile,
+	    fprintf (am->codefile,
 		     "}\n");
 	}
 
-	if (!rfc1510_bitstring)
-	    fprintf (codefile,
+	if (!am->rfc1510_bitstring)
+	    fprintf (am->codefile,
 		     "if (c != 0 || bit_set) {\n");
-	fprintf (codefile,
+	fprintf (am->codefile,
 		 "if (len < 1) return ASN1_OVERFLOW;\n"
 		 "*p-- = c; len--; ret++;\n");
-	if (!rfc1510_bitstring)
-	    fprintf (codefile,
+	if (!am->rfc1510_bitstring)
+	    fprintf (am->codefile,
 		     "if (!bit_set) {\n"
 		     "rest = 0;\n"
 		     "if(c) { \n"
@@ -251,18 +253,18 @@ encode_type (const char *name, const Type *t, const char *tmpstr)
 		     "}\n"
 		     "}\n");
 
-	fprintf (codefile,
+	fprintf (am->codefile,
 		 "if (len < 1) return ASN1_OVERFLOW;\n"
 		 "*p-- = %s;\n"
 		 "len -= 1;\n"
 		 "ret += 1;\n"
 		 "}\n\n",
-		 rfc1510_bitstring ? "0" : "rest");
+		 am->rfc1510_bitstring ? "0" : "rest");
 	constructed = 0;
 	break;
     }
     case TEnumerated : {
-	encode_primitive ("enumerated", name);
+	encode_primitive (am, "enumerated", name);
 	constructed = 0;
 	break;
     }
@@ -282,52 +284,52 @@ encode_type (const char *name, const Type *t, const char *tmpstr)
 
 	    if (asprintf (&s, "%s(%s)->%s", m->optional ? "" : "&", name, m->gen_name) < 0 || s == NULL)
 		errx(1, "malloc");
-	    fprintf(codefile, "/* %s */\n", m->name);
+	    fprintf(am->codefile, "/* %s */\n", m->name);
 	    if (m->optional)
-		fprintf (codefile,
+		fprintf (am->codefile,
 			 "if(%s) ",
 			 s);
 	    else if(m->defval)
-		gen_compare_defval(s + 1, m->defval);
-	    fprintf (codefile, "{\n");
-	    fprintf (codefile, "size_t %s_oldret HEIMDAL_UNUSED_ATTRIBUTE = ret;\n", tmpstr);
-	    fprintf (codefile, "ret = 0;\n");
-	    encode_type (s, m->type, m->gen_name);
-	    fprintf (codefile, "ret += %s_oldret;\n", tmpstr);
-	    fprintf (codefile, "}\n");
+		gen_compare_defval(am, s + 1, m->defval);
+	    fprintf (am->codefile, "{\n");
+	    fprintf (am->codefile, "size_t %s_oldret HEIMDAL_UNUSED_ATTRIBUTE = ret;\n", tmpstr);
+	    fprintf (am->codefile, "ret = 0;\n");
+	    encode_type (am, s, m->type, m->gen_name);
+	    fprintf (am->codefile, "ret += %s_oldret;\n", tmpstr);
+	    fprintf (am->codefile, "}\n");
 	    free (s);
 	}
 	break;
     }
     case TSetOf: {
 
-	fprintf(codefile,
+	fprintf(am->codefile,
 		"{\n"
 		"heim_octet_string *val;\n"
 		"size_t elen = 0, totallen = 0;\n"
 		"int eret = 0;\n");
 
-	fprintf(codefile,
+	fprintf(am->codefile,
 		"if ((%s)->len > UINT_MAX/sizeof(val[0]))\n"
 		"return ERANGE;\n",
 		name);
 
-	fprintf(codefile,
+	fprintf(am->codefile,
 		"val = calloc(1, sizeof(val[0]) * (%s)->len);\n"
 		"if (val == NULL && (%s)->len != 0) return ENOMEM;\n",
 		name, name);
 
-	fprintf(codefile,
+	fprintf(am->codefile,
 		"for(i = 0; i < (int)(%s)->len; i++) {\n",
 		name);
 
-	fprintf(codefile,
+	fprintf(am->codefile,
 		"ASN1_MALLOC_ENCODE(%s, val[i].data, "
 		"val[i].length, &(%s)->val[i], &elen, eret);\n",
 		t->subtype->symbol->gen_name,
 		name);
 
-	fprintf(codefile,
+	fprintf(am->codefile,
 		"if(eret) {\n"
 		"i--;\n"
 		"while (i >= 0) {\n"
@@ -340,7 +342,7 @@ encode_type (const char *name, const Type *t, const char *tmpstr)
 		"totallen += elen;\n"
 		"}\n");
 
-	fprintf(codefile,
+	fprintf(am->codefile,
 		"if (totallen > len) {\n"
 		"for (i = 0; i < (int)(%s)->len; i++) {\n"
 		"free(val[i].data);\n"
@@ -350,11 +352,11 @@ encode_type (const char *name, const Type *t, const char *tmpstr)
 		"}\n",
 		name);
 
-	fprintf(codefile,
+	fprintf(am->codefile,
 		"qsort(val, (%s)->len, sizeof(val[0]), _heim_der_set_sort);\n",
 		name);
 
-	fprintf (codefile,
+	fprintf (am->codefile,
 		 "for(i = (int)(%s)->len - 1; i >= 0; --i) {\n"
 		 "p -= val[i].length;\n"
 		 "ret += val[i].length;\n"
@@ -370,7 +372,7 @@ encode_type (const char *name, const Type *t, const char *tmpstr)
 	char *sname = NULL;
 	char *n = NULL;
 
-	fprintf (codefile,
+	fprintf (am->codefile,
 		 "for(i = (int)(%s)->len - 1; i >= 0; --i) {\n"
 		 "size_t %s_for_oldret = ret;\n"
 		 "ret = 0;\n",
@@ -379,8 +381,8 @@ encode_type (const char *name, const Type *t, const char *tmpstr)
 	    errx(1, "malloc");
 	if (asprintf (&sname, "%s_S_Of", tmpstr) < 0 || sname == NULL)
 	    errx(1, "malloc");
-	encode_type (n, t->subtype, sname);
-	fprintf (codefile,
+	encode_type (am, n, t->subtype, sname);
+	fprintf (am->codefile,
 		 "ret += %s_for_oldret;\n"
 		 "}\n",
 		 tmpstr);
@@ -389,15 +391,15 @@ encode_type (const char *name, const Type *t, const char *tmpstr)
 	break;
     }
     case TGeneralizedTime:
-	encode_primitive ("generalized_time", name);
+	encode_primitive (am, "generalized_time", name);
 	constructed = 0;
 	break;
     case TGeneralString:
-	encode_primitive ("general_string", name);
+	encode_primitive (am, "general_string", name);
 	constructed = 0;
 	break;
     case TTeletexString:
-	encode_primitive ("general_string", name);
+	encode_primitive (am, "general_string", name);
 	constructed = 0;
 	break;
     case TTag: {
@@ -460,7 +462,7 @@ encode_type (const char *name, const Type *t, const char *tmpstr)
             replace_tag = is_tagged_type(t->subtype->symbol->type);
 
         if (replace_tag)
-            fprintf(codefile,
+            fprintf(am->codefile,
                     "{ unsigned char *psave_%s = p, *pfree_%s = NULL;\n"
                     "size_t l2_%s, lensave_%s = len;\n"
                     "len = length_%s(%s);\n"
@@ -472,12 +474,12 @@ encode_type (const char *name, const Type *t, const char *tmpstr)
                     t->subtype->symbol->gen_name, name, tmpstr);
 
         /* XXX Currently we generate code that leaks `pfree_%s` here.  */
-	c = encode_type (name, t->subtype, tname);
+	c = encode_type (am, name, t->subtype, tname);
         /* Explicit non-UNIVERSAL tags are always constructed */
         if (!c && t->tag.tagclass != ASN1_C_UNIV && t->tag.tagenv == TE_EXPLICIT)
             c = 1;
         if (replace_tag)
-            fprintf(codefile,
+            fprintf(am->codefile,
                     "if (len) { free(pfree_%s); return EINVAL; }\n"
                     /*
                      * Here we have `p' pointing to one byte before the buffer
@@ -586,7 +588,7 @@ encode_type (const char *name, const Type *t, const char *tmpstr)
                     length_tag(t->tag.tagvalue), t->subtype->symbol->name,
                     tmpstr, tmpstr, length_tag(t->tag.tagvalue), t->subtype->symbol->name);
         else
-            fprintf(codefile,
+            fprintf(am->codefile,
                     "e = der_put_length_and_tag (p, len, ret, %s, %s, %s, &l);\n"
                     "if (e) return e;\np -= l; len -= l; ret += l;\n\n",
                     classname(t->tag.tagclass),
@@ -603,11 +605,11 @@ encode_type (const char *name, const Type *t, const char *tmpstr)
 	if (t->members == NULL)
 	    break;
 
-	fprintf(codefile, "\n");
+	fprintf(am->codefile, "\n");
 
 	if (asprintf (&s, "(%s)", name) < 0 || s == NULL)
 	    errx(1, "malloc");
-	fprintf(codefile, "switch(%s->element) {\n", s);
+	fprintf(am->codefile, "switch(%s->element) {\n", s);
 
 	HEIM_TAILQ_FOREACH_REVERSE(m, t->members, memhead, members) {
 	    char *s2 = NULL;
@@ -617,25 +619,25 @@ encode_type (const char *name, const Type *t, const char *tmpstr)
 		continue;
 	    }
 
-	    fprintf (codefile, "case %s: {", m->label);
+	    fprintf (am->codefile, "case %s: {", m->label);
 	    if (asprintf(&s2, "%s(%s)->u.%s", m->optional ? "" : "&",
 			 s, m->gen_name) < 0 || s2 == NULL)
 		errx(1, "malloc");
 	    if (m->optional)
-		fprintf (codefile, "if(%s) {\n", s2);
-	    fprintf (codefile, "size_t %s_oldret = ret;\n", tmpstr);
-	    fprintf (codefile, "ret = 0;\n");
-	    constructed = encode_type (s2, m->type, m->gen_name);
-	    fprintf (codefile, "ret += %s_oldret;\n", tmpstr);
+		fprintf (am->codefile, "if(%s) {\n", s2);
+	    fprintf (am->codefile, "size_t %s_oldret = ret;\n", tmpstr);
+	    fprintf (am->codefile, "ret = 0;\n");
+	    constructed = encode_type (am, s2, m->type, m->gen_name);
+	    fprintf (am->codefile, "ret += %s_oldret;\n", tmpstr);
 	    if(m->optional)
-		fprintf (codefile, "}\n");
-	    fprintf(codefile, "break;\n");
-	    fprintf(codefile, "}\n");
+		fprintf (am->codefile, "}\n");
+	    fprintf(am->codefile, "break;\n");
+	    fprintf(am->codefile, "}\n");
 	    free (s2);
 	}
 	free (s);
 	if (have_ellipsis) {
-	    fprintf(codefile,
+	    fprintf(am->codefile,
 		    "case %s: {\n"
 		    "if (len < (%s)->u.%s.length)\n"
 		    "return ASN1_OVERFLOW;\n"
@@ -651,43 +653,43 @@ encode_type (const char *name, const Type *t, const char *tmpstr)
 		    name, have_ellipsis->gen_name,
 		    name, have_ellipsis->gen_name);
 	}
-	fprintf(codefile, "};\n");
+	fprintf(am->codefile, "};\n");
 	break;
     }
     case TOID:
-	encode_primitive ("oid", name);
+	encode_primitive (am, "oid", name);
 	constructed = 0;
 	break;
     case TUTCTime:
-	encode_primitive ("utctime", name);
+	encode_primitive (am, "utctime", name);
 	constructed = 0;
 	break;
     case TUTF8String:
-	encode_primitive ("utf8string", name);
+	encode_primitive (am, "utf8string", name);
 	constructed = 0;
 	break;
     case TPrintableString:
-	encode_primitive ("printable_string", name);
+	encode_primitive (am, "printable_string", name);
 	constructed = 0;
 	break;
     case TIA5String:
-	encode_primitive ("ia5_string", name);
+	encode_primitive (am, "ia5_string", name);
 	constructed = 0;
 	break;
     case TBMPString:
-	encode_primitive ("bmp_string", name);
+	encode_primitive (am, "bmp_string", name);
 	constructed = 0;
 	break;
     case TUniversalString:
-	encode_primitive ("universal_string", name);
+	encode_primitive (am, "universal_string", name);
 	constructed = 0;
 	break;
     case TVisibleString:
-	encode_primitive ("visible_string", name);
+	encode_primitive (am, "visible_string", name);
 	constructed = 0;
 	break;
     case TNull:
-	fprintf (codefile, "/* NULL */\n");
+	fprintf (am->codefile, "/* NULL */\n");
 	constructed = 0;
 	break;
     default:
@@ -697,9 +699,9 @@ encode_type (const char *name, const Type *t, const char *tmpstr)
 }
 
 void
-generate_type_encode (const Symbol *s)
+generate_type_encode (asn1_module am, const Symbol *s)
 {
-    fprintf (codefile, "int ASN1CALL\n"
+    fprintf (am->codefile, "int ASN1CALL\n"
 	     "encode_%s(unsigned char *p HEIMDAL_UNUSED_ATTRIBUTE, size_t len HEIMDAL_UNUSED_ATTRIBUTE,"
 	     " const %s *data, size_t *size)\n"
 	     "{\n",
@@ -730,18 +732,18 @@ generate_type_encode (const Symbol *s)
     case TTag:
     case TType:
     case TChoice:
-	fprintf (codefile,
+	fprintf (am->codefile,
 		 "size_t ret HEIMDAL_UNUSED_ATTRIBUTE = 0;\n"
 		 "size_t l HEIMDAL_UNUSED_ATTRIBUTE;\n"
 		 "int i HEIMDAL_UNUSED_ATTRIBUTE, e HEIMDAL_UNUSED_ATTRIBUTE;\n\n");
 
-	encode_type("data", s->type, "Top");
+	encode_type(am, "data", s->type, "Top");
 
-	fprintf (codefile, "*size = ret;\n"
+	fprintf (am->codefile, "*size = ret;\n"
 		 "return 0;\n");
 	break;
     default:
 	abort ();
     }
-    fprintf (codefile, "}\n\n");
+    fprintf (am->codefile, "}\n\n");
 }

@@ -3,6 +3,8 @@
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
+ * Portions Copyright (c) 2025 Jeffrey Kintscher. All rights reserved.
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -34,8 +36,6 @@
 #include "gen_locl.h"
 #include <getarg.h>
 #include "lex.h"
-
-extern FILE *yyin;
 
 static getarg_strings preserve;
 static getarg_strings seq;
@@ -129,15 +129,15 @@ bsearch_strings(struct getarg_strings *strs, const char *p,
 }
 
 int
-preserve_type(const char *p)
+preserve_type(asn1_module am, const char *p)
 {
-    return bsearch_strings(&preserve, p, '\0', 0) > -1;
+    return bsearch_strings(&am->preserve, p, '\0', 0) > -1;
 }
 
 int
-seq_type(const char *p)
+seq_type(asn1_module am, const char *p)
 {
-    return bsearch_strings(&seq, p, '\0', 0) > -1;
+    return bsearch_strings(&am->seq, p, '\0', 0) > -1;
 }
 
 /*
@@ -174,7 +174,7 @@ split_str(const char *s, char sep, char ***fs)
  * functions to copy and free values of that type.
  */
 int
-decorate_type(const char *p, struct decoration *deco, ssize_t *more)
+decorate_type(asn1_module am, const char *p, struct decoration *deco, ssize_t *more)
 {
     ssize_t i;
     char **s[7];
@@ -184,7 +184,7 @@ decorate_type(const char *p, struct decoration *deco, ssize_t *more)
     deco->first = *more == -1;
     deco->decorated = 0;
     deco->field_type = NULL;
-    if ((i = bsearch_strings(&decorate, p, ':', more)) == -1)
+    if ((i = bsearch_strings(&am->decorate, p, ':', more)) == -1)
         return 0;
 
     deco->decorated = 1;
@@ -200,12 +200,12 @@ decorate_type(const char *p, struct decoration *deco, ssize_t *more)
     s[4] = &deco->header_name;
     s[5] = &junk;
     s[6] = NULL;
-    split_str(decorate.strings[i] + strlen(p) + 1, ':', s);
+    split_str(am->decorate.strings[i] + strlen(p) + 1, ':', s);
 
     if (junk || deco->field_type[0] == '\0' || !deco->field_name ||
         deco->field_name[0] == '\0' || deco->field_name[0] == '?') {
         errx(1, "Invalidate type decoration specification: --decorate=\"%s\"",
-              decorate.strings[i]);
+              am->decorate.strings[i]);
     }
     if ((cp = strchr(deco->field_name, '?'))) {
         deco->opt = 1;
@@ -249,21 +249,20 @@ my_basename(const char *fn)
     return base;
 }
 
-const char *fuzzer_string = "";
-const char *enum_prefix;
-const char *name;
-int prefix_enum;
-int fuzzer_flag;
-int support_ber;
-int template_flag;
-int rfc1510_bitstring;
-int one_code_file;
-char *option_file;
-int parse_units_flag = 1;
-char *type_file_string = "krb5-types.h";
-int original_order;
-int version_flag;
-int help_flag;
+static const char *enum_prefix;
+static const char *name;
+static int prefix_enum;
+static int fuzzer_flag;
+static int support_ber;
+static int template_flag;
+static int rfc1510_bitstring;
+static int one_code_file;
+static char *option_file;
+static int parse_units_flag = 1;
+static char *type_file_string = "krb5-types.h";
+static int original_order;
+static int version_flag;
+static int help_flag;
 struct getargs args[] = {
     { "fuzzer", 0, arg_flag, &fuzzer_flag, NULL, NULL },
     { "template", 0, arg_flag, &template_flag, NULL, NULL },
@@ -305,7 +304,7 @@ struct getargs args[] = {
     { "version", 0, arg_flag, &version_flag, NULL, NULL },
     { "help", 0, arg_flag, &help_flag, NULL, NULL }
 };
-int num_args = sizeof(args) / sizeof(args[0]);
+static int num_args = sizeof(args) / sizeof(args[0]);
 
 static void
 usage(int code)
@@ -324,14 +323,13 @@ usage(int code)
     exit(code);
 }
 
-int error_flag;
-
 int
 main(int argc, char **argv)
 {
     int ret;
     const char *file;
     FILE *opt = NULL;
+    FILE *yyin = NULL;
     int optidx = 0;
     char **arg = NULL;
     size_t len = 0;
@@ -447,6 +445,8 @@ main(int argc, char **argv)
 	}
     }
 
+    const char *fuzzer_string = "";
+
     if (fuzzer_flag) {
 	if (!template_flag) {
 	    printf("can't do fuzzer w/o --template");
@@ -457,33 +457,43 @@ main(int argc, char **argv)
 #endif
     }
 
-    if (preserve.num_strings)
-        mergesort_r(preserve.strings, preserve.num_strings,
-                    sizeof(preserve.strings[0]), strcmp4mergesort_r, "");
-    if (seq.num_strings)
-        mergesort_r(seq.strings, seq.num_strings, sizeof(seq.strings[0]),
+    asn1_module am = new_asn1_module(decorate, preserve, seq, enum_prefix,
+                                     one_code_file, support_ber, parse_units_flag,
+                                     prefix_enum, rfc1510_bitstring, fuzzer_string,
+                                     template_flag, original_order, type_file_string);
+
+    if (am->preserve.num_strings)
+        mergesort_r(am->preserve.strings, am->preserve.num_strings,
+                    sizeof(am->preserve.strings[0]), strcmp4mergesort_r, "");
+    if (am->seq.num_strings)
+        mergesort_r(am->seq.strings, am->seq.num_strings, sizeof(am->seq.strings[0]),
                     strcmp4mergesort_r, "");
-    if (decorate.num_strings)
-        mergesort_r(decorate.strings, decorate.num_strings,
-                    sizeof(decorate.strings[0]), strcmp4mergesort_r, ":");
+    if (am->decorate.num_strings)
+        mergesort_r(am->decorate.strings, am->decorate.num_strings,
+                    sizeof(am->decorate.strings[0]), strcmp4mergesort_r, ":");
 
-    init_generate(file, name);
+    yyscan_t scanner;
+    yylex_init(&scanner);
+    yyset_in(yyin, scanner);
+    init_generate(am, file, name);
 
-    if (one_code_file)
-	generate_header_of_codefile(name);
+    if (am->one_code_file)
+	generate_header_of_codefile(am, name);
 
-    initsym ();
-    ret = yyparse ();
-    if(ret != 0 || error_flag != 0)
+    initsym (am);
+    ret = yyparse (scanner, am);
+    if(ret != 0 || am->error_flag != 0)
 	exit(1);
-    if (!original_order)
-        generate_types();
+    if (!am->original_order)
+        generate_types(am);
     if (argc != optidx)
 	fclose(yyin);
 
-    if (one_code_file)
-	close_codefile();
-    close_generate();
+    if (am->one_code_file)
+	close_codefile(am);
+    close_generate(am);
+
+    yylex_destroy(scanner);
 
     if (arg) {
 	for (i = 1; i < len; i++)

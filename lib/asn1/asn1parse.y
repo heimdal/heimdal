@@ -5,6 +5,8 @@
  *
  * Portions Copyright (c) 2009 Apple Inc. All rights reserved.
  *
+ * Portions Copyright (c) 2025 Jeffrey Kintscher. All rights reserved.
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -35,6 +37,10 @@
 
 /* $Id$ */
 
+%define api.pure full
+%parse-param {void *scanner} {asn1_module am}
+%lex-param {void *scanner}
+
 %{
 
 #include <config.h>
@@ -59,13 +65,13 @@ static struct fieldhead *add_field_spec(struct fieldhead *, Field *);
 static Field *new_type_field(char *, int, Type *);
 static Field *new_fixed_type_value_field(char *, Type *, int, int, struct value *);
 static Type *parametrize_type(Type *, IOSClass *);
-static Type *type_from_class_field(IOSClass *, const char *);
+static Type *type_from_class_field(asn1_module am, IOSClass *, const char *);
 static void validate_object_set(IOSObjectSet *);
 /*static Type *type_from_object(const char *, const char *);*/
 static struct constraint_spec *new_constraint_spec(enum ctype);
 static Type *new_tag(int tagclass, int tagvalue, int tagenv, Type *oldtype);
-void yyerror (const char *);
-#define yyerror yyerror
+void yyerror (void *scanner, asn1_module am, const char *);
+int yylex(void *yylval_param, void *yyscanner);
 static struct objid *new_objid(const char *label, int value);
 static void add_oid_to_tail(struct objid *, struct objid *);
 static void fix_labels(Symbol *s);
@@ -361,17 +367,17 @@ ModuleDefinition: Identifier objid_opt kw_DEFINITIONS TagDefault ExtensionDefaul
                     struct objid **o = objid2list($2);
                     size_t i;
 
-                    fprintf(jsonfile,
+                    fprintf(am->jsonfile,
                             "{\"module\":\"%s\",\"tagging\":\"%s\",\"objid\":[", $1,
                             default_tag_env == TE_EXPLICIT ? "explicit" : "implicit");
 
                     for (i = 0; o && o[i]; i++) {
-                        fprintf(jsonfile, "%s{\"value\":%d", i ? "," : "", o[i]->value);
+                        fprintf(am->jsonfile, "%s{\"value\":%d", i ? "," : "", o[i]->value);
                         if (o[i]->label)
-                            fprintf(jsonfile, ",\"label\":\"%s\"", o[i]->label);
-                        fprintf(jsonfile, "}");
+                            fprintf(am->jsonfile, ",\"label\":\"%s\"", o[i]->label);
+                        fprintf(am->jsonfile, "}");
                     }
-                    fprintf(jsonfile, "]}\n");
+                    fprintf(am->jsonfile, "]}\n");
                     free(o);
 		}
 		;
@@ -381,12 +387,12 @@ TagDefault	: kw_EXPLICIT kw_TAGS
 		| kw_IMPLICIT kw_TAGS
 			{ default_tag_env = TE_IMPLICIT; }
 		| kw_AUTOMATIC kw_TAGS
-		      { lex_error_message("automatic tagging is not supported"); }
+		      { lex_error_message(am, "automatic tagging is not supported"); }
 		| /* empty */
 		;
 
 ExtensionDefault: kw_EXTENSIBILITY kw_IMPLIED
-		      { lex_error_message("no extensibility options supported"); }
+		      { lex_error_message(am, "no extensibility options supported"); }
 		| /* empty */
 		;
 
@@ -424,11 +430,11 @@ SymbolsFromModule: referencenames kw_FROM Identifier objid_opt
 		     */
 		    struct string_list *sl;
 		    for(sl = $1; sl != NULL; sl = sl->next) {
-			Symbol *s = addsym(sl->string);
+			Symbol *s = addsym(am, sl->string);
 			s->stype = Stype;
-			gen_template_import(s);
+			gen_template_import(am, s);
 		    }
-		    add_import($3);
+		    add_import(am, $3);
 		}
 		;
 
@@ -436,7 +442,7 @@ Exports		: kw_EXPORTS referencenames ';'
 		{
 		    struct string_list *sl;
 		    for(sl = $2; sl != NULL; sl = sl->next)
-			add_export(sl->string);
+			add_export(am, sl->string);
 		}
 		| kw_EXPORTS kw_ALL
 		| /* empty */
@@ -472,16 +478,16 @@ referencenames	: Identifier ',' referencenames
 DefinedObjectClass
 		: CLASS_IDENTIFIER
 		{
-		    Symbol *s = addsym($1);
+		    Symbol *s = addsym(am, $1);
 		    if(s->stype != Sclass)
-		      lex_error_message ("%s is not a class\n", $1);
+		      lex_error_message (am, "%s is not a class\n", $1);
 		    $$ = s->iosclass;
 		};
 
 ObjectClassAssignment
 		: CLASS_IDENTIFIER EEQUAL ObjectClassDefn
 		{
-		    Symbol *s = addsym($1);
+		    Symbol *s = addsym(am, $1);
 		    s->stype = Sclass;
 		    s->iosclass = $3;
 		    s->iosclass->symbol = s;
@@ -489,7 +495,7 @@ ObjectClassAssignment
 		}
 		| CLASS_IDENTIFIER EEQUAL DefinedObjectClass
 		{
-		    Symbol *s = addsym($1);
+		    Symbol *s = addsym(am, $1);
 		    s->stype = Sclass;
 		    s->iosclass = $3;
 		}
@@ -505,7 +511,7 @@ ObjectClassDefn : kw_CLASS '{' FieldSpecList '}'
 
 ObjectAssignment: VALUE_IDENTIFIER DefinedObjectClass EEQUAL Object
 		{
-		    Symbol *s = addsym($1);
+		    Symbol *s = addsym(am, $1);
 		    s->stype = Sobj;
 		    s->object = $4;
 		    s->object->iosclass = $2;
@@ -518,14 +524,14 @@ ObjectAssignment: VALUE_IDENTIFIER DefinedObjectClass EEQUAL Object
 ObjectSetAssignment
 		: TYPE_IDENTIFIER DefinedObjectClass EEQUAL ObjectSet
 		{
-		    Symbol *s = addsym($1);
+		    Symbol *s = addsym(am, $1);
 		    s->stype = Sobjset;
 		    s->iosclass = $2;
 		    s->objectset = $4;
                     s->objectset->symbol = s->objectset->symbol ? s->objectset->symbol : s;
 		    s->objectset->iosclass = $2;
                     validate_object_set($4);
-                    generate_template_objectset_forwards(s);
+                    generate_template_objectset_forwards(am, s);
 		}
 		;
 
@@ -551,18 +557,18 @@ Object		: DefinedObject
 
 DefinedObject	: VALUE_IDENTIFIER
 		{
-		  Symbol *s = addsym($1);
+		  Symbol *s = addsym(am, $1);
 		  if(s->stype != Sobj)
-		    lex_error_message ("%s is not an object\n", $1);
+		    lex_error_message (am, "%s is not an object\n", $1);
 		  $$ = s->object;
 		}
 		;
 
 DefinedObjectSet: TYPE_IDENTIFIER
 		{
-		  Symbol *s = addsym($1);
+		  Symbol *s = addsym(am, $1);
 		  if(s->stype != Sobjset && s->stype != SUndefined)
-		    lex_error_message ("%s is not an object set\n", $1);
+		    lex_error_message (am, "%s is not an object set\n", $1);
 		  $$ = s->objectset;
 		}
 		;
@@ -860,7 +866,7 @@ FixedTypeValueFieldSpec
 
 TypeAssignment	: Identifier EEQUAL Type
 		{
-		    Symbol *s = addsym($1);
+		    Symbol *s = addsym(am, $1);
 		    s->stype = Stype;
 		    s->type = $3;
 		    fix_labels(s);
@@ -875,10 +881,10 @@ TypeAssignment	: Identifier EEQUAL Type
 			$3->subtype->symbol == NULL) {
 			$3->subtype->symbol = s;
 		    }
-		    if (original_order)
-			generate_type(s);
+		    if (am->original_order)
+			generate_type(am, s);
 		    else
-			generate_type_header_forwards(s);
+			generate_type_header_forwards(am, s);
 		}
 		;
 
@@ -892,7 +898,7 @@ ParameterizedTypeAssignment
 		    if (asprintf(&pname, "%s{%s:x}", $1, $3->symbol->name) == -1 ||
 			pname == NULL)
 			err(1, "Out of memory");
-		    s = addsym(pname);
+		    s = addsym(am, pname);
 		    free($1);
 		    s->stype = Sparamtype;
 		    s->type = parametrize_type($6, $3);
@@ -957,7 +963,7 @@ BuiltinType	: BitStringType
 
 ObjectClassFieldType
 		: DefinedObjectClass '.' '&' Identifier
-		{ $$ = type_from_class_field($1, $4); };
+		{ $$ = type_from_class_field(am, $1, $4); };
 
 BooleanType	: kw_BOOLEAN
 		{
@@ -979,9 +985,9 @@ BooleanType	: kw_BOOLEAN
 range		: IntegerValue RANGE IntegerValue
 		{
 		    if($1->type != integervalue)
-			lex_error_message("Non-integer used in first part of range");
+			lex_error_message(am, "Non-integer used in first part of range");
 		    if($1->type != integervalue)
-			lex_error_message("Non-integer in second part of range");
+			lex_error_message(am, "Non-integer in second part of range");
 		    $$ = ecalloc(1, sizeof(*$$));
 		    $$->min = $1->u.integervalue;
 		    $$->max = $3->u.integervalue;
@@ -989,7 +995,7 @@ range		: IntegerValue RANGE IntegerValue
 		| IntegerValue RANGE kw_MAX
 		{
 		    if($1->type != integervalue)
-			lex_error_message("Non-integer in first part of range");
+			lex_error_message(am, "Non-integer in first part of range");
 		    $$ = ecalloc(1, sizeof(*$$));
 		    $$->min = $1->u.integervalue;
 		    $$->max = INT_MAX;
@@ -997,7 +1003,7 @@ range		: IntegerValue RANGE IntegerValue
 		| kw_MIN RANGE IntegerValue
 		{
 		    if($3->type != integervalue)
-			lex_error_message("Non-integer in second part of range");
+			lex_error_message(am, "Non-integer in second part of range");
 		    $$ = ecalloc(1, sizeof(*$$));
 		    $$->min = INT_MIN;
 		    $$->max = $3->u.integervalue;
@@ -1005,7 +1011,7 @@ range		: IntegerValue RANGE IntegerValue
 		| IntegerValue
 		{
 		    if($1->type != integervalue)
-			lex_error_message("Non-integer used in limit");
+			lex_error_message(am, "Non-integer used in limit");
 		    $$ = ecalloc(1, sizeof(*$$));
 		    $$->min = $1->u.integervalue;
 		    $$->max = $1->u.integervalue;
@@ -1055,7 +1061,7 @@ NamedNumber	: Identifier '(' SignedNumber ')'
 		| Identifier '(' DefinedValue ')'
 		{
 			if ($3->type != integervalue)
-			    lex_error_message("Named number %s not a numeric value",
+			    lex_error_message(am, "Named number %s not a numeric value",
 					      $3->s->name);
 			$$ = emalloc(sizeof(*$$));
 			$$->name = $1;
@@ -1106,7 +1112,7 @@ OctetStringType	: kw_OCTET kw_STRING size
 		    t->range = $3;
 		    if (t->range) {
 			if (t->range->min < 0)
-			    lex_error_message("can't use a negative SIZE range "
+			    lex_error_message(am, "can't use a negative SIZE range "
 					      "length for OCTET STRING");
 		    }
 		    $$ = new_tag(ASN1_C_UNIV, UT_OctetString,
@@ -1148,7 +1154,7 @@ SequenceOfType	: kw_SEQUENCE size kw_OF Type
 		  $$->range = $2;
 		  if ($$->range) {
 		      if ($$->range->min < 0)
-			  lex_error_message("can't use a negative SIZE range "
+			  lex_error_message(am, "can't use a negative SIZE range "
 					    "length for SEQUENCE OF");
 		    }
 
@@ -1199,10 +1205,10 @@ TypeFromObject	: VALUE_IDENTIFIER '.' '&' TYPE_IDENTIFIER
 
 DefinedType	: TYPE_IDENTIFIER
 		{
-		  Symbol *s = addsym($1);
+		  Symbol *s = addsym(am, $1);
 		  $$ = new_type(TType);
 		  if(s->stype != Stype && s->stype != SUndefined)
-		    lex_error_message ("%s is not a type\n", $1);
+		    lex_error_message (am, "%s is not a type\n", $1);
 		  else
 		    $$->symbol = s;
 		}
@@ -1221,7 +1227,7 @@ ParameterizedType
 		  char *pname = NULL;
 
 		  if ($3 == NULL) {
-                    lex_error_message("Unknown ActualParameter object set parametrizing %s\n", $1);
+                    lex_error_message(am, "Unknown ActualParameter object set parametrizing %s\n", $1);
                     exit(1);
                   }
 
@@ -1230,18 +1236,18 @@ ParameterizedType
 			       $3->iosclass->symbol->name) == -1 ||
 		      pname == NULL)
 		      err(1, "Out of memory");
-		  ps = addsym(pname);
+		  ps = addsym(am, pname);
 		  if (ps->stype != Sparamtype)
-		    lex_error_message ("%s is not a parameterized type\n", $1);
+		    lex_error_message (am, "%s is not a parameterized type\n", $1);
 
-		  s = addsym($1);
+		  s = addsym(am, $1);
 		  $$ = ps->type; /* XXX copy, probably */
 		  if (!ps->type)
 		    errx(1, "Wrong class (%s) parameter for parameterized "
 		         "type %s", $3->iosclass->symbol->name, $1);
 		  s->stype = Stype;
 		  if(s->stype != Stype && s->stype != SUndefined)
-		    lex_error_message ("%s is not a type\n", $1);
+		    lex_error_message (am, "%s is not a type\n", $1);
 		  else
 		    $$->symbol = s;
 		  $$->actual_parameter = $3;
@@ -1277,7 +1283,7 @@ ConstrainedType	: UnconstrainedType Constraint
 		    $$ = $1;
                     if ($2->ctype == CT_RANGE) {
                         if ($1->type != TTag || $1->subtype->type != TInteger)
-                            lex_error_message("RANGE constraints apply only to INTEGER types");
+                            lex_error_message(am, "RANGE constraints apply only to INTEGER types");
                         $$->subtype->range = $2->u.range;
                         free($2);
                     } else {
@@ -1326,7 +1332,7 @@ ContentsConstraint: kw_CONTAINING Type
 		| kw_ENCODED kw_BY Value
 		{
 		    if ($3->type != objectidentifiervalue)
-			lex_error_message("Non-OID used in ENCODED BY constraint");
+			lex_error_message(am, "Non-OID used in ENCODED BY constraint");
 		    $$ = new_constraint_spec(CT_CONTENTS);
 		    $$->u.content.type = NULL;
 		    $$->u.content.encoding = $3;
@@ -1334,7 +1340,7 @@ ContentsConstraint: kw_CONTAINING Type
 		| kw_CONTAINING Type kw_ENCODED kw_BY Value
 		{
 		    if ($5->type != objectidentifiervalue)
-			lex_error_message("Non-OID used in ENCODED BY constraint");
+			lex_error_message(am, "Non-OID used in ENCODED BY constraint");
 		    $$ = new_constraint_spec(CT_CONTENTS);
 		    $$->u.content.type = $2;
 		    $$->u.content.encoding = $5;
@@ -1411,7 +1417,7 @@ TaggedType	: Tag tagenv Type
 			$$ = new_type(TTag);
 			$$->tag = $1;
 			$$->tag.tagenv = $2;
-			if (template_flag) {
+			if (am->template_flag) {
 			    $$->subtype = $3;
 			} else if ($2 == TE_IMPLICIT) {
 			    Type *t = $3;
@@ -1492,11 +1498,11 @@ tagenv		: /* */
 ValueAssignment	: VALUE_IDENTIFIER Type EEQUAL Value
 		{
 			Symbol *s;
-			s = addsym ($1);
+			s = addsym (am, $1);
 
 			s->stype = SValue;
 			s->value = $4;
-			generate_constant (s);
+			generate_constant (am, s);
 			/*
 			 * Save this value's name so we can know some name for
 			 * this value wherever _a_ name may be needed for it.
@@ -1665,10 +1671,10 @@ objid_element	: Identifier '(' NUMBER ')'
 		}
 		| Identifier
 		{
-		    Symbol *s = addsym($1);
+		    Symbol *s = addsym(am, $1);
 		    if(s->stype != SValue ||
 		       s->value->type != objectidentifiervalue) {
-			lex_error_message("%s is not an object identifier\n",
+			lex_error_message(am, "%s is not an object identifier\n",
 				      s->name);
 			exit(1);
 		    }
@@ -1710,9 +1716,9 @@ DefinedValue	: Valuereference
 
 Valuereference	: VALUE_IDENTIFIER
 		{
-			Symbol *s = addsym($1);
+			Symbol *s = addsym(am, $1);
 			if(s->stype != SValue)
-				lex_error_message ("%s is not a value\n",
+				lex_error_message (am, "%s is not a value\n",
 						s->name);
 			else
 				$$ = s->value;
@@ -1768,9 +1774,9 @@ ObjectIdentifierValue: objid
 %%
 
 void
-yyerror (const char *s)
+yyerror (void *scanner, asn1_module am, const char *s)
 {
-     lex_error_message ("%s\n", s);
+     lex_error_message (am, "%s\n", s);
 }
 
 static Type *
@@ -1953,7 +1959,7 @@ parametrize_type(Type *t, IOSClass *c)
 }
 
 static Type *
-type_from_class_field(IOSClass *c, const char *n)
+type_from_class_field(asn1_module am, IOSClass *c, const char *n)
 {
     Field *f;
     Type *t;
@@ -1964,7 +1970,7 @@ type_from_class_field(IOSClass *c, const char *n)
 	    if (f->type) {
 		*t = *f->type;
 	    } else {
-		Symbol *s = addsym("HEIM_ANY");
+		Symbol *s = addsym(am, "HEIM_ANY");
 		if(s->stype != Stype && s->stype != SUndefined)
 		    errx(1, "Do not define HEIM_ANY, only import it\n");
 		s->stype = Stype;

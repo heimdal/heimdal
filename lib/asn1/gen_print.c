@@ -3,6 +3,8 @@
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
+ * Portions Copyright (c) 2025 Jeffrey Kintscher. All rights reserved.
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -34,9 +36,9 @@
 #include "gen_locl.h"
 
 void
-generate_type_print_stub(const Symbol *s)
+generate_type_print_stub(asn1_module am, const Symbol *s)
 {
-    fprintf(codefile, "char * ASN1CALL\n"
+    fprintf(am->codefile, "char * ASN1CALL\n"
 	    "print_%s(const %s *data, int flags)\n"
 	    "{ errno = EINVAL; return 0; }\n\n",
 	    s->gen_name, s->gen_name);

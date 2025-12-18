@@ -60,10 +60,25 @@ fi
 
 AC_KRB_PROG_YACC
 dnl AC_PROG_YACC
+AX_YACC_REENTRANT
+if test "x$ax_cv_yacc_api_pure_full" != "xyes" && test "x$YACC_REENTRANT_FLAGS" = "x"; then
+  AC_MSG_ERROR([Insufficient reentrant lexer support detected in $($YACC --version | head -n1).  asn1_compile will fail to build.  Use bison >= 2.7 or byacc >= 20140422])
+fi
 AM_PROG_LEX
 AS_IF([$LEX --nounput -V > /dev/null 2>&1 && test $? -eq 0],
       [AC_SUBST([FLEXNOUNPUTARGS], ["--nounput"])],
       [AC_SUBST([FLEXNOUNPUTARGS], [""])])
+AX_LEXER_REENTRANT
+if test "x$LEX_REENTRANT" != "xyes"; then
+	AC_MSG_ERROR([Rentrant lexer support not found.  asn1_compile will fail to build.  Use flex version >= 2.5.35])
+fi
+AX_LEXER_OPTIONS
+if test "x$LEX_HAS_BISON_BRIDGE" != "xyes"; then
+	AC_MSG_ERROR([lexer does not support the bison-bridge option.  asn1_compile will fail to build.  Use flex version >= 2.5.35])
+fi
+if test "x$LEX_HAS_EXTRA_TYPE" != "xyes"; then
+	AC_MSG_ERROR([lexer does not support the extra-type option.  asn1_compile will fail to build.  Use flex version >= 2.5.35])
+fi
 dnl AC_PROG_RANLIB
 AC_PROG_AWK
 AC_KRB_PROG_LN_S

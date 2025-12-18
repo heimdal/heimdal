@@ -3,6 +3,8 @@
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
+ * Portions Copyright (c) 2025 Jeffrey Kintscher. All rights reserved.
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -36,6 +38,9 @@
  */
 
 /* $Id$ */
+
+#ifndef __HASH_H__
+#define __HASH_H__
 
 struct hashentry {		/* Entry in bucket */
      struct hashentry **prev;
@@ -72,8 +77,8 @@ int _hashtabdel(Hashtab *htab,	/* The table */
 		int freep);	/* Free data part? */
 
 void hashtabforeach(Hashtab *htab,
-		    int (*func)(void *ptr, void *arg),
-		    void *arg);
+		    int (*func)(void *am, void *ptr, void *arg),
+		    void *am, void *arg);
 
 unsigned hashadd(const char *s);		/* Standard hash function */
 unsigned hashcaseadd(const char *s);		/* Standard hash function */
@@ -85,3 +90,5 @@ unsigned hashjpw(const char *s);		/* another hash function */
 #define hashtabdel(htab,key)  _hashtabdel(htab,key,FALSE)
 
 #define hashtabfree(htab,key) _hashtabdel(htab,key,TRUE) /* Do! */
+
+#endif    // __HASH_H__

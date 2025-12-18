@@ -3,6 +3,8 @@
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
+ * Portions Copyright (c) 2025 Jeffrey Kintscher. All rights reserved.
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -35,8 +37,6 @@
 #include "lex.h"
 #include "lex.h"
 
-static Hashtab *htab;
-
 struct symhead symbols;
 
 static int
@@ -57,9 +57,9 @@ hash(void *a)
 }
 
 void
-initsym(void)
+initsym(asn1_module am)
 {
-    htab = hashtabnew(101, cmp, hash);
+    am->htab = hashtabnew(101, cmp, hash);
 }
 
 
@@ -74,19 +74,19 @@ output_name(char *s)
 }
 
 Symbol *
-addsym(char *name)
+addsym(asn1_module am, char *name)
 {
     Symbol key, *s;
 
     key.name = name;
-    s = (Symbol *) hashtabsearch(htab, (void *) &key);
+    s = (Symbol *) hashtabsearch(am->htab, (void *) &key);
     if (s == NULL) {
 	s = (Symbol *) ecalloc(1, sizeof(*s));
 	s->name = name;
 	s->gen_name = estrdup(name);
 	output_name(s->gen_name);
 	s->stype = SUndefined;
-	hashtabadd(htab, s);
+	hashtabadd(am->htab, s);
         //HEIM_TAILQ_INSERT_TAIL(&symbols, s, symlist);
         do {
             if (((s)->symlist.tqe_next = (&symbols)->tqh_first) != NULL)
@@ -101,30 +101,30 @@ addsym(char *name)
 }
 
 Symbol *
-getsym(char *name)
+getsym(asn1_module am, char *name)
 {
     Symbol key;
 
     key.name = name;
-    return (Symbol *) hashtabsearch(htab, (void *) &key);
+    return (Symbol *) hashtabsearch(am->htab, (void *) &key);
 }
 
 static int
-checkfunc(void *ptr, void *arg)
+checkfunc(void *am, void *ptr, void *arg)
 {
     Symbol *s = ptr;
     if (s->stype == SUndefined) {
-	lex_error_message("%s is still undefined\n", s->name);
+	lex_error_message(am, "%s is still undefined\n", s->name);
 	*(int *) arg = 1;
     }
     return 0;
 }
 
 int
-checkundefined(void)
+checkundefined(asn1_module am)
 {
     int f = 0;
-    hashtabforeach(htab, checkfunc, &f);
+    hashtabforeach(am->htab, checkfunc, am, &f);
     return f;
 }
 
@@ -141,17 +141,17 @@ generate_1type(void *ptr, void *arg)
 #endif
 
 void
-generate_types(void)
+generate_types(asn1_module am)
 {
     Symbol *s;
 
-    if (checkundefined())
+    if (checkundefined(am))
         errx(1, "Some types are undefined");
     HEIM_TAILQ_FOREACH_REVERSE(s, &symbols, symhead, symlist) {
         if (s->stype == Stype && s->type)
-            generate_type(s);
+            generate_type(am, s);
     }
-    //hashtabforeach(htab, generate_1type, NULL);
+    //hashtabforeach(am->htab, generate_1type, NULL);
 }
 
 void

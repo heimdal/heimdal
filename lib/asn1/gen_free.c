@@ -3,6 +3,8 @@
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
+ * Portions Copyright (c) 2025 Jeffrey Kintscher. All rights reserved.
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -36,24 +38,24 @@
 RCSID("$Id$");
 
 static void
-free_primitive (const char *typename, const char *name)
+free_primitive (asn1_module am, const char *typename, const char *name)
 {
-    fprintf (codefile, "der_free_%s(%s);\n", typename, name);
+    fprintf (am->codefile, "der_free_%s(%s);\n", typename, name);
 }
 
 static void
-free_type (const char *name, const Type *t, int preserve)
+free_type (asn1_module am, const char *name, const Type *t, int preserve)
 {
     switch (t->type) {
     case TType:
 #if 0
-	free_type (name, t->symbol->type, preserve);
+	free_type (am, name, t->symbol->type, preserve);
 #endif
-	fprintf (codefile, "free_%s(%s);\n", t->symbol->gen_name, name);
+	fprintf (am->codefile, "free_%s(%s);\n", t->symbol->gen_name, name);
 	break;
     case TInteger:
 	if (t->range == NULL && t->members == NULL) {
-	    free_primitive ("heim_integer", name);
+	    free_primitive (am, "heim_integer", name);
 	    break;
 	}
         HEIM_FALLTHROUGH;
@@ -68,14 +70,14 @@ free_type (const char *name, const Type *t, int preserve)
          * of a memset()-to-zero data structure after calling the free
          * functions.
          */
-        fprintf(codefile, "*%s = 0;\n", name);
+        fprintf(am->codefile, "*%s = 0;\n", name);
 	break;
     case TBitString:
 	if (HEIM_TAILQ_EMPTY(t->members))
-	    free_primitive("bit_string", name);
+	    free_primitive(am, "bit_string", name);
 	break;
     case TOctetString:
-	free_primitive ("octet_string", name);
+	free_primitive (am, "octet_string", name);
 	break;
     case TChoice:
     case TSet:
@@ -86,10 +88,10 @@ free_type (const char *name, const Type *t, int preserve)
 	    break;
 
 	if ((t->type == TSequence || t->type == TChoice) && preserve)
-	    fprintf(codefile, "der_free_octet_string(&data->_save);\n");
+	    fprintf(am->codefile, "der_free_octet_string(&data->_save);\n");
 
 	if(t->type == TChoice)
-	    fprintf(codefile, "switch((%s)->element) {\n", name);
+	    fprintf(am->codefile, "switch((%s)->element) {\n", name);
 
 	HEIM_TAILQ_FOREACH(m, t->members, members) {
 	    char *s;
@@ -100,33 +102,33 @@ free_type (const char *name, const Type *t, int preserve)
 	    }
 
 	    if(t->type == TChoice)
-		fprintf(codefile, "case %s:\n", m->label);
+		fprintf(am->codefile, "case %s:\n", m->label);
 	    if (asprintf (&s, "%s(%s)->%s%s",
 			  m->optional ? "" : "&", name,
 			  t->type == TChoice ? "u." : "", m->gen_name) < 0 || s == NULL)
 		errx(1, "malloc");
 	    if(m->optional)
-		fprintf(codefile, "if(%s) {\n", s);
-	    free_type (s, m->type, FALSE);
+		fprintf(am->codefile, "if(%s) {\n", s);
+	    free_type (am, s, m->type, FALSE);
 	    if(m->optional)
-		fprintf(codefile,
+		fprintf(am->codefile,
 			"free(%s);\n"
 			"%s = NULL;\n"
 			"}\n",s, s);
 	    free (s);
 	    if(t->type == TChoice)
-		fprintf(codefile, "break;\n");
+		fprintf(am->codefile, "break;\n");
 	}
 
 	if(t->type == TChoice) {
 	    if (have_ellipsis)
-		fprintf(codefile,
+		fprintf(am->codefile,
 			"case %s:\n"
 			"der_free_octet_string(&(%s)->u.%s);\n"
 			"break;",
 			have_ellipsis->label,
 			name, have_ellipsis->gen_name);
-	    fprintf(codefile, "}\n");
+	    fprintf(am->codefile, "}\n");
         }
 	break;
     }
@@ -134,49 +136,49 @@ free_type (const char *name, const Type *t, int preserve)
     case TSequenceOf: {
 	char *n;
 
-	fprintf (codefile, "if ((%s)->val)\nwhile((%s)->len){\n", name, name);
+	fprintf (am->codefile, "if ((%s)->val)\nwhile((%s)->len){\n", name, name);
 	if (asprintf (&n, "&(%s)->val[(%s)->len-1]", name, name) < 0 || n == NULL)
 	    errx(1, "malloc");
-	free_type(n, t->subtype, FALSE);
-	fprintf(codefile,
+	free_type(am, n, t->subtype, FALSE);
+	fprintf(am->codefile,
 		"(%s)->len--;\n"
 		"} else (%s)->len = 0;\n",
 		name, name);
-	fprintf(codefile,
+	fprintf(am->codefile,
 		"free((%s)->val);\n"
 		"(%s)->val = NULL;\n", name, name);
 	free(n);
 	break;
     }
     case TGeneralString:
-	free_primitive ("general_string", name);
+	free_primitive (am, "general_string", name);
 	break;
     case TTeletexString:
-	free_primitive ("general_string", name);
+	free_primitive (am, "general_string", name);
 	break;
     case TUTF8String:
-	free_primitive ("utf8string", name);
+	free_primitive (am, "utf8string", name);
 	break;
     case TPrintableString:
-	free_primitive ("printable_string", name);
+	free_primitive (am, "printable_string", name);
 	break;
     case TIA5String:
-	free_primitive ("ia5_string", name);
+	free_primitive (am, "ia5_string", name);
 	break;
     case TBMPString:
-	free_primitive ("bmp_string", name);
+	free_primitive (am, "bmp_string", name);
 	break;
     case TUniversalString:
-	free_primitive ("universal_string", name);
+	free_primitive (am, "universal_string", name);
 	break;
     case TVisibleString:
-	free_primitive ("visible_string", name);
+	free_primitive (am, "visible_string", name);
 	break;
     case TTag:
-	free_type (name, t->subtype, preserve);
+	free_type (am, name, t->subtype, preserve);
 	break;
     case TOID :
-	free_primitive ("oid", name);
+	free_primitive (am, "oid", name);
 	break;
     default :
 	abort ();
@@ -184,56 +186,56 @@ free_type (const char *name, const Type *t, int preserve)
 }
 
 void
-generate_type_free (const Symbol *s)
+generate_type_free (asn1_module am, const Symbol *s)
 {
     struct decoration deco;
     ssize_t more_deco = -1;
-    int preserve = preserve_type(s->name) ? TRUE : FALSE;
+    int preserve = preserve_type(am, s->name) ? TRUE : FALSE;
 
-    fprintf (codefile, "void ASN1CALL\n"
+    fprintf (am->codefile, "void ASN1CALL\n"
 	     "free_%s(%s *data)\n"
 	     "{\n",
 	     s->gen_name, s->gen_name);
 
-    free_type ("data", s->type, preserve);
-    while (decorate_type(s->gen_name, &deco, &more_deco)) {
+    free_type (am, "data", s->type, preserve);
+    while (decorate_type(am, s->gen_name, &deco, &more_deco)) {
         if (deco.ext && deco.free_function_name == NULL) {
             /* Decorated with field of external type but no free function */
             if (deco.ptr)
-                fprintf(codefile, "(data)->%s = 0;\n", deco.field_name);
+                fprintf(am->codefile, "(data)->%s = 0;\n", deco.field_name);
             else
-                fprintf(codefile,
+                fprintf(am->codefile,
                         "memset(&(data)->%s, 0, sizeof((data)->%s));\n",
                         deco.field_name, deco.field_name);
         } else if (deco.ext) {
             /* Decorated with field of external type w/ free function */
             if (deco.ptr) {
-                fprintf(codefile, "if ((data)->%s) {\n", deco.field_name);
-                fprintf(codefile, "%s((data)->%s);\n",
+                fprintf(am->codefile, "if ((data)->%s) {\n", deco.field_name);
+                fprintf(am->codefile, "%s((data)->%s);\n",
                         deco.free_function_name, deco.field_name);
-                fprintf(codefile, "(data)->%s = 0;\n", deco.field_name);
-                fprintf(codefile, "}\n");
+                fprintf(am->codefile, "(data)->%s = 0;\n", deco.field_name);
+                fprintf(am->codefile, "}\n");
             } else {
-                fprintf(codefile, "%s(&(data)->%s);\n",
+                fprintf(am->codefile, "%s(&(data)->%s);\n",
                         deco.free_function_name, deco.field_name);
-                fprintf(codefile,
+                fprintf(am->codefile,
                         "memset(&(data)->%s, 0, sizeof((data)->%s));\n",
                         deco.field_name, deco.field_name);
             }
         } else if (deco.opt) {
             /* Decorated with optional field of ASN.1 type */
-            fprintf(codefile, "if ((data)->%s) {\n", deco.field_name);
-            fprintf(codefile, "free_%s((data)->%s);\n",
+            fprintf(am->codefile, "if ((data)->%s) {\n", deco.field_name);
+            fprintf(am->codefile, "free_%s((data)->%s);\n",
                     deco.field_type, deco.field_name);
-            fprintf(codefile, "free((data)->%s);\n", deco.field_name);
-            fprintf(codefile, "(data)->%s = NULL;\n", deco.field_name);
-            fprintf(codefile, "}\n");
+            fprintf(am->codefile, "free((data)->%s);\n", deco.field_name);
+            fprintf(am->codefile, "(data)->%s = NULL;\n", deco.field_name);
+            fprintf(am->codefile, "}\n");
         } else {
             /* Decorated with required field of ASN.1 type */
-            fprintf(codefile, "free_%s(&(data)->%s);\n",
+            fprintf(am->codefile, "free_%s(&(data)->%s);\n",
                     deco.field_type, deco.field_name);
         }
         free(deco.field_type);
     }
-    fprintf (codefile, "}\n\n");
+    fprintf (am->codefile, "}\n\n");
 }

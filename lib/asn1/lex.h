@@ -3,6 +3,8 @@
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
+ * Portions Copyright (c) 2025 Jeffrey Kintscher. All rights reserved.
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -35,8 +37,11 @@
 
 #include <roken.h>
 
-void lex_error_message (const char *, ...)
-__attribute__ ((format (printf, 1, 2)));
-extern int error_flag;
+void lex_error_message (void *, const char *, ...)
+__attribute__ ((format (printf, 2, 3)));
 
-int yylex(void);
+typedef void* yyscan_t;
+
+int yylex_init(yyscan_t* scanner);
+int yylex_destroy(yyscan_t scanner);
+void yyset_in(FILE* _in_str, yyscan_t yyscanner);

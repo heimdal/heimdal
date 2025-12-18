@@ -3,6 +3,8 @@
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
+ * Portions Copyright (c) 2025 Jeffrey Kintscher. All rights reserved.
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -37,6 +39,7 @@
 #define _SYMBOL_H
 
 #include <heimqueue.h>
+#include "gen_module.h"
 
 enum typetype {
     TBitString,
@@ -255,12 +258,11 @@ struct symhead {
 
 extern struct symhead symbols;
 
-void initsym (void);
-Symbol *addsym (char *);
-Symbol *getsym(char *name);
+void initsym (asn1_module);
+Symbol *addsym (asn1_module am, char *);
+Symbol *getsym(asn1_module am, char *name);
 void output_name (char *);
-int checkundefined(void);
-void generate_types(void);
+int checkundefined(asn1_module am);
 void emitted_asn1(const Symbol *);
 void emitted_declaration(const Symbol *);
 void emitted_definition(const Symbol *);

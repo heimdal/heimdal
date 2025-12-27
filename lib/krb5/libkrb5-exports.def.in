@@ -276,6 +276,7 @@ EXPORTS
 	krb5_enctypes_compatible_keys
         krb5_enomem
 	krb5_err
+	krb5_error_from_error_data
 	krb5_error_from_rd_error
 	krb5_errx
 	krb5_expand_hostname

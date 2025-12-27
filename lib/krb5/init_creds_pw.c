@@ -3144,19 +3144,60 @@ init_creds_step(krb5_context context,
 	    memset(&ctx->md, 0, sizeof(ctx->md));
 
 	    if (ctx->error.e_data) {
+		KERB_ERROR_DATA error_data;
 		krb5_error_code ret2;
 
-		ret2 = decode_METHOD_DATA(ctx->error.e_data->data,
-					 ctx->error.e_data->length,
-					 &ctx->md,
-					 NULL);
+		memset(&error_data, 0, sizeof(error_data));
+
+		/* First try to decode the e-data as KERB-ERROR-DATA. */
+		ret2 = decode_KERB_ERROR_DATA(ctx->error.e_data->data,
+					      ctx->error.e_data->length,
+					      &error_data,
+					      &len);
 		if (ret2) {
+		    /* That failed, so try to decode it as METHOD-DATA. */
+		    ret2 = decode_METHOD_DATA(ctx->error.e_data->data,
+					      ctx->error.e_data->length,
+					      &ctx->md,
+					      NULL);
+		    if (ret2) {
+			/*
+			 * Just ignore any error, the error will be pushed
+			 * out from krb5_error_from_rd_error() if there
+			 * was one.
+			 */
+			_krb5_debug(context, 5, N_("Failed to decode METHOD-DATA", ""));
+		    }
+		} else if (len != ctx->error.e_data->length) {
+		    /* Trailing data — just ignore the error. */
+		    free_KERB_ERROR_DATA(&error_data);
+		} else {
+		    /* OK. */
+
 		    /*
-		     * Just ignore any error, the error will be pushed
-		     * out from krb5_error_from_rd_error() if there
-		     * was one.
+		     * It’s no good calling _krb5_fast_unwrap_error() — if we
+		     * used FAST to send the request, the function will expect
+		     * to find FX-FAST padata in rep.error.edata, and will
+		     * produce a confusing error message when it can’t find any.
+		     * Instead, we’ll try to produce an error message based on
+		     * what we find in KERB-ERROR-DATA, and then return the
+		     * error code that was in the reply.
 		     */
-		    _krb5_debug(context, 5, N_("Failed to decode METHOD-DATA", ""));
+
+		    ret = krb5_error_from_error_data(context,
+						     &ctx->error,
+						     &ctx->cred,
+						     &error_data);
+
+		    /* log the failure */
+		    if (_krb5_have_debug(context, 5)) {
+			const char *str = krb5_get_error_message(context, ret);
+			_krb5_debug(context, 5, "krb5_get_init_creds: KRB-ERROR %d/%s", ret, str);
+			krb5_free_error_message(context, str);
+		    }
+
+		    free_KERB_ERROR_DATA(&error_data);
+		    goto out;
 		}
 	    }
 

@@ -423,6 +423,7 @@ process_request(krb5_context context,
 		free(r->cname);
 		free(r->sname);
 		free(r->e_text_buf);
+		krb5_data_free(&r->e_data);
 	    }
 
             heim_release(r->reason);

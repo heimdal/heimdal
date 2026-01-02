@@ -34,12 +34,11 @@ man_MANS = kcm.8
 
 LDADD = $(top_builddir)/lib/hdb/libhdb.la \
 	$(top_builddir)/lib/krb5/libkrb5.la \
-	$(LIB_hcrypto) \
 	$(top_builddir)/lib/asn1/libasn1.la \
-	$(top_builddir)/lib/ntlm/libheimntlm.la \
 	$(top_builddir)/lib/ipc/libheim-ipcs.la \
 	$(LIB_roken) \
 	$(LIB_door_create) \
+	$(LIB_openssl_crypto) \
 	$(LIB_pidfile)
 
 EXTRA_DIST = NTMakefile $(man_MANS)

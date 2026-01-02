@@ -31,7 +31,7 @@
 
 RELDIR=include
 
-SUBDIRS=kadm5 hcrypto gssapi
+SUBDIRS=kadm5 gssapi
 
 !include ../windows/NTMakefile.w32
 !include ../windows/NTMakefile.version
@@ -62,12 +62,10 @@ while(<>) {
     if ("$(KRB5)") { print "#define KRB5 1\n"; }
     if ("$(KRB4)") { print "#define KRB4 1\n"; }
     if ("$(WEAK_CRYPTO)") { print "#define HEIM_WEAK_CRYPTO 1\n"; }
-    if ("$(HCRYPTO_FALLBACK)") { print "#define HCRYPTO_FALLBACK 1\n"; } else { print "#define HCRYPTO_FALLBACK 0\n"; }
     if ("$(PKINIT)") { print "#define PKINIT 1\n"; }
     if ("$(NO_AFS)") { print "#define NO_AFS 1\n"; }
     if ("$(OPENLDAP)") { print "#define OPENLDAP 1\n"; }
     if ("$(OPENLDAP_MODULE)") { print "#define OPENLDAP_MODULE 1\n"; }
-    if ("$(OTP)") { print "#define OTP 1 \n"; }
     if ("$(AUTHENTICATION)") { print "#define AUTHENTICATION 1\n"; }
     if ("$(DIAGNOSTICS)") { print "#define DIAGNOSTICS 1\n"; }
     if ("$(ENCRYPTION)") { print "#define ENCRYPTION 1\n"; }

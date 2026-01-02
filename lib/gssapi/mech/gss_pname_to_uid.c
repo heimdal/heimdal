@@ -32,6 +32,11 @@
 
 #include "mech_locl.h"
 
+/* Windows doesn't have getpwnam or struct passwd */
+#ifdef _WIN32
+#define NO_LOCALNAME 1
+#endif
+
 static OM_uint32
 mech_localname(OM_uint32 *minor_status,
                struct _gss_mechanism_name *mn,

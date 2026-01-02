@@ -37,10 +37,16 @@ objdir="@objdir@"
 
 . ${env_setup}
 
+if [ $# -eq 0 ]; then
+    weak=false
+else
+    weak=true
+fi
+
 KRB5_CONFIG="${1-${objdir}/krb5.conf}"
 export KRB5_CONFIG
 
-testfailed="echo test failed; cat messages.log; exit 1"
+testfailed="echo test failed; exit 1"
 
 # If there is no useful db support compiled in, disable test
 ${have_db} || exit 77
@@ -70,7 +76,7 @@ port=@port@
 pwport=@pwport@
 
 kadmin5="${kadmin} -l -r $R5"
-kadmin="${kadmin} -l -r $R"
+kadmin="${kadmin} -l -A -r $R"
 kdc="${kdc} --addresses=localhost -P $port"
 kpasswdd="${kpasswdd} --addresses=localhost -p $pwport"
 
@@ -151,11 +157,10 @@ add -p foo --use-defaults remove@${R}
 add -p nop --use-defaults ${server}@${R}
 cpw -p bla --keepold ${server}@${R}
 cpw -p kaka --keepold ${server}@${R}
-add -p kaka --use-defaults ${server}-des3@${R}
-add -p kaka --use-defaults kt-des3@${R}
-add -p kaka --use-defaults foo/des3-only@${R}
-add -p kaka --use-defaults bar/des3-only@${R}
-add -p kaka --use-defaults foo/aes-only@${R}
+add -p kaka --use-defaults ${server}-aes@${R}
+add -p kaka --use-defaults kt-aes@${R}
+add -p kaka --use-defaults foo/aes-sha1-only@${R}
+add -p kaka --use-defaults foo/aes-sha2-only@${R}
 add -p sens --use-defaults --attributes=disallow-forwardable sensitive@${R}
 add -p foo --use-defaults ${ps}
 modify --attributes=+trusted-for-delegation ${ps}
@@ -262,29 +267,46 @@ ${EGREP} -v '^FILE:' tempfile | ${EGREP} -v '^Vno' | ${EGREP} -v '^$' | \
 
 
 ${kadmin} get foo@${R} > tempfile || exit 1
-enctypes=`grep Keytypes: tempfile | sed 's/(pw-salt)//g' | sed 's/,//g' | sed 's/Keytypes://' | sed 's/\[[0-9]*\]//g'`
+enctypes=`grep Keytypes: tempfile |
+    sed 's/(pw-salt)//g' |
+    sed 's/(pw-salt([^)]*))//' |
+    sed 's/,//g' |
+    sed 's/Keytypes://' |
+    sed 's/\[[0-9]*\]//g'`
 
-enctype_sans_aes=`echo $enctypes | sed 's/aes[^ ]*//g'`
-enctype_sans_des3=`echo $enctypes | sed 's/des3-cbc-sha1//g'`
+enctype_sans_aes_sha2=`echo $enctypes | sed 's/aes[^ ]*sha384[^ ]*//g'`
+enctype_sans_aes_sha1=`echo $enctypes | sed 's/aes[^ ]*sha1[^ ]*//g'`
 
-echo "deleting all but des enctypes on kt-des3 in keytab"
-${kadmin} ext -k ${keytab} kt-des3@${R} || exit 1
-for a in ${enctype_sans_des3} ; do
-   ${ktutil} -k ${keytab} remove -p kt-des3@${R} -e $a
+echo "deleting all but sha1 enctypes on kt-aes in keytab"
+${kadmin} ext -k ${keytab} kt-aes@${R} || exit 1
+for a in ${enctype_sans_aes_sha1}; do
+    ${ktutil} -k ${keytab} remove -p kt-aes@${R} -e $a
 done
 
 echo "checking globbing keys rules"
-${kadmin} get foo/des3-only@${R} > tempfile || exit 1
-enctypes=`grep Keytypes: tempfile | sed 's/(pw-salt)//g' | sed 's/,//g' | sed 's/Keytypes://' | sed 's/\[[0-9]*\]//g' | sed 's/ //g'`
-if [ X"$enctypes" != Xdes3-cbc-sha1 ] ; then
-    echo "des3 only is not only des3: $enctypes"
+${kadmin} get foo/aes-sha1-only@${R} > tempfile || exit 1
+enctypes=`grep Keytypes: tempfile |
+    sed 's/(pw-salt)//g' |
+    sed 's/(pw-salt([^)]*))//' |
+    sed 's/,//g' |
+    sed 's/Keytypes://' |
+    sed 's/ //g' |
+    sed 's/\[[0-9]*\]//g'`
+if [ X"$enctypes" != Xaes256-cts-hmac-sha1-96 ] ; then
+    echo "aes-sha1 only is not only aes-sha1: $enctypes"
     exit 1
 fi
 
-${kadmin} get foo/aes-only@${R} > tempfile || exit 1
-enctypes=`grep Keytypes: tempfile | sed 's/(pw-salt)//g' | sed 's/,//g' | sed 's/Keytypes://' | sed 's/\[[0-9]*\]//g' | sed 's/ //g'`
-if [ X"$enctypes" != Xaes256-cts-hmac-sha1-96 ] ; then
-    echo "aes only is not only aes: $enctypes"
+${kadmin} get foo/aes-sha2-only@${R} > tempfile || exit 1
+enctypes=`grep Keytypes: tempfile |
+    sed 's/(pw-salt)//g' |
+    sed 's/(pw-salt([^)]*))//' |
+    sed 's/,//g' |
+    sed 's/Keytypes://' |
+    sed 's/ //g' |
+    sed 's/\[[0-9]*\]//g'`
+if [ X"$enctypes" != Xaes256-cts-hmac-sha384-192 ] ; then
+    echo "aes-sha2 only is not only aes-sha2: $enctypes"
     exit 1
 fi
 
@@ -658,8 +680,8 @@ ${klist} | grep "Principal: ${server}" > /dev/null || \
 ${kdestroy}
 
 echo "Getting key for key that are a subset in keytab compared to kdb"
-${kinit} --keytab=${keytab} kt-des3@${R}
-${klist} | grep "Principal: kt-des3" > /dev/null || \
+${kinit} --keytab=${keytab} kt-aes@${R}
+${klist} | grep "Principal: kt-aes" > /dev/null || \
 	{ ec=1 ; eval "${testfailed}"; }
 ${kdestroy}
 
@@ -702,11 +724,11 @@ ${kdestroy}
 ${kadmin} delete rename@${R2} || exit 1
 
 echo deleting all but aes enctypes on krbtgt
-${kadmin} del_enctype krbtgt/${R}@${R} ${enctype_sans_aes} || exit 1
+${kadmin} del_enctype krbtgt/${R}@${R} ${enctype_sans_aes_sha2} || exit 1
 
-echo deleting all but des enctypes on server-des3
-${kadmin} del_enctype ${server}-des3@${R} ${enctype_sans_des3} || exit 1
-${kadmin} ext -k ${keytab} ${server}-des3@${R} || exit 1
+echo deleting all but aes-sha1 enctypes on server-aes
+${kadmin} del_enctype ${server}-aes@${R} ${enctype_sans_aes_sha1} || exit 1
+${kadmin} ext -k ${keytab} ${server}-aes@${R} || exit 1
 
 echo "try all permutations (only aes)"; > messages.log
 for a in $enctypes; do
@@ -720,20 +742,22 @@ for a in $enctypes; do
 		${test_ap_req} ${server}@${R} ${keytab} ${cache} || \
 			{ ec=1 ; eval "${testfailed}"; }
 
-		echo "Getting tickets ($a ->  $b) (server des3 only)"; > messages.log
-		${kgetcred} ${server}-des3@${R} || \
+		echo "Getting tickets ($a ->  $b) (server aes-sha1 only)"; > messages.log
+		${kgetcred} ${server}-aes@${R} || \
 			{ ec=1 ; eval "${testfailed}"; }
-		${test_ap_req} ${server}-des3@${R} ${keytab} ${cache} || \
+		${test_ap_req} ${server}-aes@${R} ${keytab} ${cache} || \
 			{ ec=1 ; eval "${testfailed}"; }
 
 		${kdestroy} --credential=${server}@${R}
-		${kdestroy} --credential=${server}-des3@${R}
+		${kdestroy} --credential=${server}-aes@${R}
 	done
 	${kdestroy}
 done
 
 echo deleting all enctypes on krbtgt
 ${kadmin} del_enctype krbtgt/${R}@${R} aes256-cts-hmac-sha1-96 || \
+	{ ec=1 ; eval "${testfailed}"; }
+${kadmin} del_enctype krbtgt/${R}@${R} aes256-cts-hmac-sha384-192 || \
 	{ ec=1 ; eval "${testfailed}"; }
 echo "try initial ticket w/o and keys on krbtgt"
 ${kinit} --password-file=${objdir}/foopassword foo@${R} 2>/dev/null && \
@@ -748,21 +772,7 @@ ${kdestroy}
 
 rsa=yes
 ecdsa=yes
-pkinit=no
-if ${hxtool} info | grep 'rsa: hx509 null RSA' > /dev/null ; then
-    rsa=no
-fi
-if ${hxtool} info | grep 'rand: not available' > /dev/null ; then
-    rsa=no
-fi
-if ${kinit} --help 2>&1 | grep "CA certificates" > /dev/null; then
-    pkinit=yes
-fi
-
-if ${hxtool} info | grep 'ecdsa: hcrypto null' > /dev/null ; then
-    ecdsa=no
-fi
-
+pkinit=yes
 
 # If we support pkinit and have RSA, lets try that
 if test "$pkinit" = yes -a "$rsa" = yes ; then
@@ -817,9 +827,19 @@ else
 	echo "no pkinit (pkinit: $pkinit, rsa: $rsa)"; > messages.log
 fi
 
+if $weak; then
 echo "test impersonate using rc4 based tgt"; > messages.log
-${kinit} -e arcfour-hmac-md5 --forwardable --password-file=${objdir}/foopassword ${ps} || \
-        { ec=1 ; eval "${testfailed}"; }
+    ${kinit} -e arcfour-hmac-md5 --forwardable --password-file=${objdir}/foopassword ${ps} || \
+            { ec=1 ; eval "${testfailed}"; }
+    ${kgetcred_imp} --impersonate=bar@${R} ${ps} || \
+            { ec=1 ; eval "${testfailed}"; }
+    ${test_ap_req} ${ps} ${keytab} ${ocache} || \
+            { ec=1 ; eval "${testfailed}"; }
+fi
+
+echo "test impersonate"; > messages.log
+${kinit} --forwardable --password-file=${objdir}/foopassword ${ps} || \
+        { bash -i; ec=1 ; eval "${testfailed}"; }
 ${kgetcred_imp} --impersonate=bar@${R} ${ps} || \
         { ec=1 ; eval "${testfailed}"; }
 ${test_ap_req} ${ps} ${keytab} ${ocache} || \

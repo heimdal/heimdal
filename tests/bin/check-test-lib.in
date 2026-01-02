@@ -1,0 +1,125 @@
+#!/bin/sh
+#
+# Test for test-lib.sh infrastructure
+#
+# This script runs check-test-lib-inner and validates that:
+# 1. Both test sections ran
+# 2. The failing section shows command output and messages.log
+# 3. The succeeding section only shows its description
+#
+
+set -e
+
+objdir="@objdir@"
+inner="${objdir}/check-test-lib-inner"
+
+if [ ! -x "$inner" ]; then
+    echo "Inner test script not found: $inner"
+    exit 1
+fi
+
+# Run the inner test, capturing output (it should fail due to section 1)
+set +e
+output=$("$inner" 2>&1)
+rc=$?
+set -e
+
+errors=0
+
+# Check 1: Both test sections should appear
+if echo "$output" | grep -q '\[  1\] Failing test section'; then
+    echo "PASS: Section 1 header found"
+else
+    echo "FAIL: Section 1 header not found"
+    errors=$((errors + 1))
+fi
+
+if echo "$output" | grep -q '\[  2\] Succeeding test section'; then
+    echo "PASS: Section 2 header found"
+else
+    echo "FAIL: Section 2 header not found"
+    errors=$((errors + 1))
+fi
+
+# Check 2: Failing section should show FAILED message
+if echo "$output" | grep -q '=== FAILED.*sh -c'; then
+    echo "PASS: FAILED message found for section 1"
+else
+    echo "FAIL: FAILED message not found for section 1"
+    errors=$((errors + 1))
+fi
+
+# Check 3: Failing section should show shell trace (from test_run_x)
+if echo "$output" | grep -q '=== Shell trace'; then
+    echo "PASS: Shell trace header found"
+else
+    echo "FAIL: Shell trace header not found"
+    errors=$((errors + 1))
+fi
+
+# Check 4: Failing section should show command output
+if echo "$output" | grep -q '=== Command output'; then
+    echo "PASS: Command output header found"
+else
+    echo "FAIL: Command output header not found"
+    errors=$((errors + 1))
+fi
+
+if echo "$output" | grep -q 'command stdout'; then
+    echo "PASS: Command stdout captured"
+else
+    echo "FAIL: Command stdout not captured"
+    errors=$((errors + 1))
+fi
+
+# Check 5: Failing section should show messages.log
+if echo "$output" | grep -q '=== messages.log'; then
+    echo "PASS: messages.log header found"
+else
+    echo "FAIL: messages.log header not found"
+    errors=$((errors + 1))
+fi
+
+if echo "$output" | grep -q 'KDC: some trace output'; then
+    echo "PASS: messages.log content captured"
+else
+    echo "FAIL: messages.log content not captured"
+    errors=$((errors + 1))
+fi
+
+# Check 6: Succeeding section should NOT show command output or failure
+# (The "success output" should not appear since the command succeeded)
+if echo "$output" | grep -q 'success output'; then
+    echo "FAIL: Succeeding section's output should not be shown"
+    errors=$((errors + 1))
+else
+    echo "PASS: Succeeding section's output correctly hidden"
+fi
+
+# Check 7: Should report 1 failed section
+if echo "$output" | grep -q '1 test section(s) failed'; then
+    echo "PASS: Correct failure count reported"
+else
+    echo "FAIL: Incorrect failure count"
+    errors=$((errors + 1))
+fi
+
+# Check 8: Inner script should have exited with non-zero
+if [ $rc -ne 0 ]; then
+    echo "PASS: Inner script exited with non-zero ($rc)"
+else
+    echo "FAIL: Inner script should have exited non-zero"
+    errors=$((errors + 1))
+fi
+
+echo ""
+if [ $errors -eq 0 ]; then
+    echo "All tests passed"
+    exit 0
+else
+    echo "$errors test(s) failed"
+    echo ""
+    echo "=== Full output from inner script ==="
+    echo "$output"
+    exit 1
+fi

@@ -21,9 +21,17 @@ AM_CPPFLAGS += -I$(DBHEADER)
 endif
 
 bin_PROGRAMS = rkvis rkbase32 rkbase64
-noinst_PROGRAMS = snprintf-test resolve-test rkpty test-detach test-auxval rtbl timeval
+noinst_PROGRAMS = snprintf-test resolve-test test-detach test-auxval rtbl timeval
+
+if !WIN32
+noinst_PROGRAMS += rkpty test-auxval
+endif
 
 CHECK_LOCAL = snprintf-test resolve-test rkpty make-roken
+
+if !WIN32
+CHECK_LOCAL += rkpty
+endif
 
 check_PROGRAMS = 				\
 		base32-test			\
@@ -31,7 +39,6 @@ check_PROGRAMS = 				\
 		getaddrinfo-test		\
 		getifaddrs-test			\
 		hex-test			\
-		test-auxval			\
 		test-getuserinfo		\
 		test-readenv			\
 		resolve-test			\
@@ -42,6 +49,10 @@ check_PROGRAMS = 				\
 		strpftime-test			\
 		timeval				\
 		tsearch-test
+
+if !WIN32
+check_PROGRAMS += test-auxval
+endif
 
 TESTS = $(check_PROGRAMS)
 
@@ -108,7 +119,9 @@ rtbl_CPPFLAGS = -DTEST
 
 test_detach_SOURCES = test-detach.c
 
+if !WIN32
 rkpty_LDADD = $(LIB_openpty) $(LDADD)
+endif
 
 parse_time_test_SOURCES = parse_time-test.c test-mem.c
 
@@ -173,8 +186,6 @@ libroken_la_SOURCES =		\
 	secure_getenv.c		\
 	secure_getenv.h		\
 	setprogname.c		\
-	signal.c		\
-	simple_exec.c		\
 	snprintf.c		\
 	socket.c		\
 	strcollect.c		\
@@ -203,13 +214,22 @@ if SUNOS
 libroken_la_LIBADD += -lnsl -lsocket
 endif
 
+if WIN32
+libroken_la_SOURCES += dlfcn_w32.c getifaddrs_w32.c simple_exec_w32.c sockstartup_w32.c syslogc.c win32_version.c
+libroken_la_LIBADD += -lversion -lpsapi
+win32_headers = dirent.h dlfcn.h syslog.h
+else
+libroken_la_SOURCES += signal.c simple_exec.c
+win32_headers =
+endif
+
 $(LTLIBOBJS) $(libroken_la_OBJECTS): roken.h $(XHEADERS)
 
-BUILT_SOURCES = roken.h $(err_h) $(fnmatch_h) $(ifaddrs_h) $(search_h) $(vis_h)
+BUILT_SOURCES = roken.h $(err_h) $(fnmatch_h) $(ifaddrs_h) $(search_h) $(vis_h) $(win32_headers)
 
 ## these are controlled by configure
-XHEADERS = $(err_h) $(fnmatch_h) $(ifaddrs_h) $(search_h) $(vis_h)
-CLEANFILES += err.h fnmatch.h ifaddrs.h search.h vis.h
+XHEADERS = $(err_h) $(fnmatch_h) $(ifaddrs_h) $(search_h) $(vis_h) $(win32_headers)
+CLEANFILES += err.h fnmatch.h ifaddrs.h search.h vis.h dirent.h dlfcn.h syslog.h
 
 dist_include_HEADERS = 				\
 	base32.h				\
@@ -276,10 +296,14 @@ EXTRA_DIST = \
 	dirent-test.c \
 	dlfcn.hin \
 	dlfcn_w32.c \
+	getdelim.c \
 	getifaddrs_w32.c \
+	getline.c \
 	ndbm_wrap.c \
 	ndbm_wrap.h \
 	rename.c \
+	signal.c \
+	simple_exec.c \
 	simple_exec_w32.c \
 	sleep.c \
 	sockstartup_w32.c \
@@ -291,4 +315,5 @@ EXTRA_DIST = \
 	test-mem.h \
 	test-mini_inetd.c \
 	win32_alloc.c \
+	win32_version.c \
 	version-script.map

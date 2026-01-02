@@ -36,12 +36,16 @@
 #include "config.h"
 
 #include <sys/types.h>
+#ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
+#endif
 #ifdef HAVE_SYS_UN_H
 #include <sys/un.h>
 #endif
 
+#ifdef HAVE_SYS_POLL_H
 #include <sys/poll.h>
+#endif
 
 #include <ctype.h>
 #include <stdio.h>

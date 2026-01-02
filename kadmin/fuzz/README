@@ -1,0 +1,81 @@
+Kadmind Fuzzing Corpus
+======================
+
+This directory contains seed inputs for fuzzing kadmind RPC handling.
+
+Usage
+-----
+
+Run kadmind in fuzzing mode:
+
+    ./kadmind --fuzz-stdin < corpus_file.bin > output.bin
+
+Or with a specific realm:
+
+    ./kadmind -r MY.REALM --fuzz-stdin < corpus_file.bin
+
+Message Format
+--------------
+
+Each corpus file contains a length-prefixed message:
+
+    [4-byte big-endian length][message payload]
+
+The message payload starts with a 4-byte command number (kadm_ops enum):
+
+    kadm_get           = 0   - Get principal
+    kadm_delete        = 1   - Delete principal
+    kadm_create        = 2   - Create principal
+    kadm_rename        = 3   - Rename principal
+    kadm_chpass        = 4   - Change password
+    kadm_modify        = 5   - Modify principal
+    kadm_randkey       = 6   - Randomize keys
+    kadm_get_privs     = 7   - Get admin privileges
+    kadm_get_princs    = 8   - List principals
+    kadm_chpass_with_key = 9 - Change password with explicit keys
+    kadm_nop           = 10  - No operation (ping/interrupt)
+    kadm_prune         = 11  - Prune old keys
+
+Corpus Files
+------------
+
+Normal operations:
+  nop_reply.bin              - NOP with reply requested
+  nop_noreply.bin            - NOP without reply (interrupt)
+  get_principal.bin          - GET with basic mask
+  get_principal_all.bin      - GET with all fields
+  delete_principal.bin       - DELETE principal
+  create_principal.bin       - CREATE with minimal fields
+  create_principal_attrs.bin - CREATE with attributes
+  modify_principal.bin       - MODIFY principal
+  rename_principal.bin       - RENAME principal
+  chpass_principal.bin       - CHPASS
+  chpass_principal_keepold.bin - CHPASS keeping old keys
+  randkey_principal.bin      - RANDKEY simple
+  randkey_principal_full.bin - RANDKEY with ks_tuples
+  get_privs.bin              - GET_PRIVS
+  get_princs_all.bin         - LIST all principals
+  get_princs_expr.bin        - LIST with expression
+  get_princs_iter.bin        - LIST with online iteration
+  prune_principal.bin        - PRUNE to specific kvno
+  prune_principal_all.bin    - PRUNE (no kvno)
+  chpass_with_key.bin        - CHPASS_WITH_KEY
+  create_with_tldata.bin     - CREATE with TL_DATA
+  create_empty_password.bin  - CREATE with empty password
+
+Edge cases and malformed inputs:
+  invalid_cmd.bin            - Invalid command number
+  truncated_get.bin          - GET with missing data
+  malformed_principal.bin    - Bad principal encoding
+  long_principal.bin         - Very long principal name
+  many_components.bin        - Principal with many components
+  large_nkeydata.bin         - Large n_key_data (overflow test)
+  negative_nkeydata.bin      - Negative n_key_data
+  empty_message.bin          - Zero-length message
+
+Regenerating
+------------
+
+Run gen_corpus.py to regenerate all corpus files:
+
+    python3 gen_corpus.py

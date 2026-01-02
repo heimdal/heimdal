@@ -228,6 +228,13 @@ der_put_length (unsigned char *p, size_t len, size_t val, size_t *size)
 }
 
 int ASN1CALL
+der_put_null(unsigned char *p, size_t len, const int *v, size_t *size)
+{
+    *size = 0;
+    return 0;
+}
+
+int ASN1CALL
 der_put_boolean(unsigned char *p, size_t len, const int *data, size_t *size)
 {
     *size = 0;

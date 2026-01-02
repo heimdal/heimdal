@@ -41,13 +41,6 @@ stat="--statistic-file=${objdir}/statfile"
 
 hxtool="${TESTS_ENVIRONMENT} ./hxtool ${stat}"
 
-if ${hxtool} info | grep 'rsa: hcrypto null RSA' > /dev/null ; then
-    exit 77
-fi
-if ${hxtool} info | grep 'rand: not available' > /dev/null ; then
-    exit 77
-fi
-
 ${hxtool} request-create \
 	 --subject="CN=Love,DC=it,DC=su,DC=se" \
 	 --key="FILE:$srcdir/data/key.der" \

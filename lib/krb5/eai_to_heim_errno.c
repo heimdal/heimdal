@@ -68,7 +68,7 @@ krb5_eai_to_heim_errno(int eai_errno, int system_error)
     case EAI_NODATA:
 	return HEIM_EAI_NODATA;
 #endif
-#ifdef WSANO_DATA
+#if defined(WSANO_DATA) && (!defined(EAI_NODATA) || WSANO_DATA != EAI_NODATA)
     case WSANO_DATA:
 	return HEIM_EAI_NODATA;
 #endif

@@ -1,6 +1,9 @@
 include $(top_srcdir)/Makefile.am.common
 
 AM_CPPFLAGS += $(INCLUDE_openssl_crypto)
+if WIN32
+AM_CPPFLAGS += -DASN1_LIB
+endif
 
 lib_LTLIBRARIES = libhx509.la libhx509template.la
 libhx509_la_LDFLAGS = -version-info 5:0:0
@@ -27,6 +30,7 @@ dist_libhx509_la_SOURCES = \
 	file.c \
 	hx509.h \
 	hx_locl.h \
+	jose.c \
 	sel.c \
 	sel.h \
 	sel-gram.y \
@@ -58,7 +62,6 @@ libhx509template_la_DEPENDENCIES = version-script.map
 
 libhx509_la_LIBADD = \
 	$(LIB_com_err) \
-	$(LIB_hcrypto) \
 	$(LIB_openssl_crypto) \
 	$(top_builddir)/lib/asn1/libasn1.la \
 	$(top_builddir)/lib/wind/libwind.la \
@@ -68,7 +71,6 @@ libhx509_la_LIBADD = \
 
 libhx509template_la_LIBADD = \
 	$(LIB_com_err) \
-	$(LIB_hcrypto) \
 	$(LIB_openssl_crypto) \
 	$(top_builddir)/lib/asn1/libasn1template.la \
 	$(top_builddir)/lib/wind/libwind.la \
@@ -115,7 +117,7 @@ $(srcdir)/hx509-private.h: $(dist_libhx509_la_SOURCES)
 
 bin_PROGRAMS = hxtool
 
-hxtool-commands.c hxtool-commands.h: hxtool-commands.in $(SLC)
+hxtool-commands.c hxtool-commands.h: hxtool-commands.in $(SLC_DEP)
 	$(heim_verbose)$(SLC) $(srcdir)/hxtool-commands.in
 
 dist_hxtool_SOURCES = hxtool.c
@@ -126,7 +128,8 @@ $(hxtool_OBJECTS): hxtool-commands.h $(nodist_include_HEADERS)
 hxtool_LDADD = \
 	libhx509template.la \
 	$(top_builddir)/lib/asn1/libasn1.la \
-	$(LIB_hcrypto) \
+	$(top_builddir)/lib/base/libheimbase.la \
+	$(LIB_openssl_crypto) \
 	$(LIB_roken) \
 	$(top_builddir)/lib/sl/libsl.la
 
@@ -178,10 +181,10 @@ SCRIPT_TESTS = 			\
 	test_crypto		\
 	test_nist		\
 	test_nist2		\
-	test_pkcs11		\
 	test_java_pkcs11	\
 	test_nist_cert		\
 	test_nist_pkcs12	\
+	test_pkcs12_pbes2	\
 	test_req		\
 	test_windows		\
 	test_query
@@ -245,6 +248,11 @@ test_nist_pkcs12: test_nist_pkcs12.in Makefile
 	$(heim_verbose)chmod +x test_nist_pkcs12.tmp
 	mv test_nist_pkcs12.tmp test_nist_pkcs12
 
+test_pkcs12_pbes2: test_pkcs12_pbes2.in Makefile
+	$(do_subst) < $(srcdir)/test_pkcs12_pbes2.in > test_pkcs12_pbes2.tmp
+	$(heim_verbose)chmod +x test_pkcs12_pbes2.tmp
+	mv test_pkcs12_pbes2.tmp test_pkcs12_pbes2
+
 test_req: test_req.in Makefile
 	$(do_subst) < $(srcdir)/test_req.in > test_req.tmp
 	$(heim_verbose)chmod +x test_req.tmp
@@ -277,6 +285,7 @@ EXTRA_DIST = \
 	test_nist2.in \
 	test_nist_cert.in \
 	test_nist_pkcs12.in \
+	test_pkcs12_pbes2.in \
 	test_pkcs11.in \
 	test_java_pkcs11.in \
 	test_query.in \

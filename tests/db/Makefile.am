@@ -97,9 +97,5 @@ EXTRA_DIST = \
 	add-modify-delete.in \
 	have-db.in \
 	krb5.conf.in \
-	krb5-mit.conf.in \
-	text-dump-0.7 \
-	text-dump-known-ext \
-	text-dump-no-ext \
-	text-dump-unknown-ext
+	krb5-mit.conf.in
 

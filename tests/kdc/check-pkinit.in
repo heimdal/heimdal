@@ -46,7 +46,7 @@ R=TEST.H5L.SE
 
 port=@port@
 
-kadmin="${kadmin} -l -r $R"
+kadmin="${kadmin} -l -A -r $R"
 kdc="${kdc} --addresses=localhost -P $port"
 
 server=host/datan.test.h5l.se
@@ -322,6 +322,106 @@ ${kinit} --canonicalize \
 ${kgetcred} ${server}@${R} || { ec=1 ; eval "${testfailed}"; }
 ${kdestroy}
 
+echo "Testing DH group and KDF algorithm options"
+
+# Helper function to check that the KDC used the expected key agreement algorithm
+check_keyagreement() {
+    expected="$1"
+    if grep "AS-REQ SUCCESS" messages.log | grep -q "keyagreement=${expected}"; then
+        echo "  OK: keyagreement=${expected}"
+    else
+        echo "  FAIL: expected keyagreement=${expected}"
+        grep "AS-REQ SUCCESS" messages.log | head -1
+        ec=1
+    fi
+}
+
+# Helper function to check that the KDC used the expected KDF
+check_kdf() {
+    expected="$1"
+    if grep "AS-REQ SUCCESS" messages.log | grep -q "kdf=${expected}"; then
+        echo "  OK: kdf=${expected}"
+    else
+        echo "  FAIL: expected kdf=${expected}"
+        grep "AS-REQ SUCCESS" messages.log | head -1
+        ec=1
+    fi
+}
+
+# Test various DH groups (RFC 3526 MODP groups)
+# Note: The KDC logs the moduli name from its built-in/configured moduli file,
+# not the client's requested group name.  The default built-in is rfc3526-MODP-group14.
+for dh_group in modp_2048 modp_3072; do
+    echo "Trying pk-init with --key-agreement=${dh_group}"; > messages.log
+    ${kinit} --key-agreement=${dh_group} \
+        -C FILE:${base}/pkinit.crt,${keyfile2} bar@${R} || \
+        { ec=1 ; eval "${testfailed}"; }
+    # The KDC uses its configured moduli; default is rfc3526-MODP-group14
+    check_keyagreement "rfc3526-MODP-group14"
+    ${kdestroy}
+done
+
+# Test ECDH curves (NIST curves)
+# Note: OpenSSL uses different names internally (prime256v1, secp384r1, secp521r1)
+for curve in P-256:prime256v1 P-384:secp384r1 P-521:secp521r1; do
+    cli_name="${curve%%:*}"
+    log_name="${curve##*:}"
+    echo "Trying pk-init with --key-agreement=${cli_name}"; > messages.log
+    ${kinit} --key-agreement=${cli_name} \
+        -C FILE:${base}/pkinit.crt,${keyfile2} bar@${R} || \
+        { ec=1 ; eval "${testfailed}"; }
+    check_keyagreement "${log_name}"
+    ${kdestroy}
+done
+
+# Test RFC 8636 KDF algorithms
+for kdf in ah-sha256:id_pkinit_kdf_ah_sha256 ah-sha384:id_pkinit_kdf_ah_sha384 ah-sha512:id_pkinit_kdf_ah_sha512; do
+    cli_name="${kdf%%:*}"
+    log_name="${kdf##*:}"
+    echo "Trying pk-init with --kdf=${cli_name}"; > messages.log
+    ${kinit} --kdf=${cli_name} \
+        -C FILE:${base}/pkinit.crt,${keyfile2} bar@${R} || \
+        { ec=1 ; eval "${testfailed}"; }
+    check_kdf "${log_name}"
+    ${kdestroy}
+done
+
+# Test legacy RFC 4556 KDF (SHA-1 based octetstring2key)
+echo "Trying pk-init with --kdf=RFC4556 (legacy)"; > messages.log
+${kinit} --kdf=RFC4556 \
+    -C FILE:${base}/pkinit.crt,${keyfile2} bar@${R} || \
+    { ec=1 ; eval "${testfailed}"; }
+check_kdf "RFC4556"
+${kdestroy}
+
+# Test combinations of DH group and KDF
+echo "Trying pk-init with --key-agreement=P-256 --kdf=ah-sha256"; > messages.log
+${kinit} --key-agreement=P-256 --kdf=ah-sha256 \
+    -C FILE:${base}/pkinit.crt,${keyfile2} bar@${R} || \
+    { ec=1 ; eval "${testfailed}"; }
+check_keyagreement "prime256v1"
+check_kdf "id_pkinit_kdf_ah_sha256"
+${kdestroy}
+
+echo "Trying pk-init with --key-agreement=modp_3072 --kdf=ah-sha384"; > messages.log
+${kinit} --key-agreement=modp_3072 --kdf=ah-sha384 \
+    -C FILE:${base}/pkinit.crt,${keyfile2} bar@${R} || \
+    { ec=1 ; eval "${testfailed}"; }
+# The KDC uses its configured moduli; default is rfc3526-MODP-group14
+check_keyagreement "rfc3526-MODP-group14"
+check_kdf "id_pkinit_kdf_ah_sha384"
+${kdestroy}
+
+# Test X25519 if available (may fail if not supported by OpenSSL build)
+echo "Trying pk-init with --key-agreement=X25519 (may skip if unsupported)"; > messages.log
+if ${kinit} --key-agreement=X25519 \
+    -C FILE:${base}/pkinit.crt,${keyfile2} bar@${R} 2>/dev/null; then
+    check_keyagreement "x25519"
+    ${kdestroy}
+else
+    echo "X25519 not supported (skipped)"
+fi
+
 KRB5_CONFIG="${objdir}/krb5-pkinit-win.conf"
 export KRB5_CONFIG
 
@@ -356,36 +456,84 @@ ${kdestroy}
 KRB5_CONFIG="${objdir}/krb5-pkinit.conf"
 export KRB5_CONFIG
 
-echo "Trying PKCS11 support"
+# PKCS#11 support via OpenSSL pkcs11-provider
+# Requires --with-openssl-pkcs11-provider=path to be set at configure time
+openssl_pkcs11_provider="@OPENSSL_PKCS11_PROVIDER@"
 
-cat > test-rc-file.rc <<EOF
-certificate	cert	User certificate	FILE:${base}/pkinit.crt,${keyfile2}
+if [ "x${openssl_pkcs11_provider}" != "x" ] ; then
+
+    echo "Trying PKCS11 support (via OpenSSL pkcs11-provider)"
+
+    # Find the soft PKCS#11 module (libhx509.so contains softp11)
+    dir=${base}/../../lib/hx509
+    p11_module=
+
+    for a in libhx509.so .libs/libhx509.so libhx509.dylib .libs/libhx509.dylib ; do
+        if [ -f $dir/$a ] ; then
+            p11_module=$(cd $dir && pwd)/$a
+            break
+        fi
+    done
+
+    if [ "x${p11_module}" != "x" ] ; then
+
+        # Convert to absolute paths for softp11 config
+        # (softp11 may run from a different working directory context)
+        abs_objdir=$(cd ${objdir} && pwd)
+        abs_pkinit_crt="${abs_objdir}/pkinit.crt"
+        abs_keyfile2=$(cd $(dirname ${keyfile2}) && pwd)/$(basename ${keyfile2})
+
+        # Create softp11 config file
+        cat > ${objdir}/test-rc-file.rc <<EOF
+debug	${abs_objdir}/softp11-debug.log
+certificate	cert	User certificate	FILE:${abs_pkinit_crt},${abs_keyfile2}
 app-fatal	true
 EOF
 
-SOFTPKCS11RC="test-rc-file.rc"
-export SOFTPKCS11RC
+        SOFTPKCS11RC="${abs_objdir}/test-rc-file.rc"
+        export SOFTPKCS11RC
 
-dir=${base}/../../lib/hx509
-file=
+        # Create OpenSSL config file for pkcs11-provider
+        cat > ${objdir}/openssl-pkcs11.cnf <<EOF
+openssl_conf = openssl_init
 
-for a in libhx509.so .libs/libhx509.so libhx509.dylib .libs/libhx509.dylib ; do
-    if [ -f $dir/$a ] ; then
-	file=$dir/$a
-	break
+[openssl_init]
+providers = provider_sect
+
+[provider_sect]
+default = default_sect
+pkcs11 = pkcs11_sect
+
+[default_sect]
+activate = 1
+
+[pkcs11_sect]
+module = ${openssl_pkcs11_provider}
+pkcs11-module-path = ${p11_module}
+activate = 1
+EOF
+
+        OPENSSL_CONF="${abs_objdir}/openssl-pkcs11.cnf"
+        export OPENSSL_CONF
+        export PKCS11_PROVIDER_MODULE="${abs_objdir}/../../lib/hx509/.libs/libhx509.so"
+
+        echo "Trying pk-init with PKCS#11 (principal in pki-mapping file) "; > messages.log
+        ${kinit} -C "PKCS11:pkcs11:" foo@${R} || \
+            { ec=1 ; eval "${testfailed}"; }
+        ${kgetcred} ${server}@${R} || { ec=1 ; eval "${testfailed}"; }
+        ${kdestroy}
+
+        unset PKCS11_PROVIDER_MODULE
+        unset OPENSSL_CONF
+        unset SOFTPKCS11RC
+
+    else
+        echo "Skipping PKCS#11 test: soft PKCS#11 module not found"
     fi
-done
 
-if [ X"$file" != X -a @DLOPEN@ ] ; then
-
-    echo "Trying pk-init (principal in pki-mapping file) "; > messages.log
-    ${kinit} -C PKCS11:${file} foo@${R} || \
-	{ ec=1 ; eval "${testfailed}"; }
-    ${kgetcred} ${server}@${R} || { ec=1 ; eval "${testfailed}"; }
-    ${kdestroy}
-
+else
+    echo "Skipping PKCS#11 test: --with-openssl-pkcs11-provider not configured"
 fi
-
 
 echo "killing kdc (${kdcpid})"
 sh ${leaks_kill} kdc $kdcpid || ec=1

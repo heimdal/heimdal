@@ -1919,6 +1919,7 @@ new_type_field(char *n, int optional, Type *t)
     Field *f;
 
     f = ecalloc(1, sizeof(*f));
+    f->opentype = 1;
     f->optional = optional;
     f->unique = 0;
     f->defval = 0;

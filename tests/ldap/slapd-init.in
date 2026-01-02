@@ -32,10 +32,10 @@ done
 touch modules.conf || exit 1
 
 if ! slapadd -d 0 -f "${srcdir}/slapd.conf" < "${srcdir}/init.ldif"; then
-    echo "moduleload back_bdb.la"   >> modules.conf
+    echo "moduleload back_mdb.la"   >> modules.conf
     if ! slapadd -d 0 -f "${srcdir}/slapd.conf" < "${srcdir}/init.ldif"; then
         echo "modulepath /usr/lib/ldap"  > modules.conf
-        echo "moduleload back_bdb.la"   >> modules.conf
+        echo "moduleload back_mdb.la"   >> modules.conf
         slapadd -d 0 -f "${srcdir}/slapd.conf" < "${srcdir}/init.ldif" || exit 1
     fi
 fi

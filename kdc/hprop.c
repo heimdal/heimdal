@@ -47,6 +47,8 @@ static int decrypt_flag;
 static hdb_master_key mkey5;
 
 static char *source_type;
+static char *ossl_cnf;
+static char *ossl_propq;
 
 static char *local_realm=NULL;
 
@@ -143,6 +145,12 @@ struct getargs args[] = {
     { "encrypt",  'E',  arg_flag,   &encrypt_flag,   "encrypt keys", NULL },
     { "stdout",	  'n',  arg_flag,   &to_stdout, "dump to stdout", NULL },
     { "verbose",  'v',	arg_flag, &verbose_flag, NULL, NULL },
+    { "ossl-cnf",     0,      arg_string, &ossl_cnf,
+      "OpenSSL configuration file", "FILE"
+    },
+    { "ossl-propq",   0,      arg_string, &ossl_propq,
+      "OpenSSL property query string (e.g., provider=pkcs11)", "PROPQ"
+    },
     { "version",   0,	arg_flag, &version_flag, NULL, NULL },
     { "help",     'h',	arg_flag, &help_flag, NULL, NULL }
 };
@@ -421,6 +429,12 @@ main(int argc, char **argv)
     ret = krb5_init_context(&context);
     if(ret)
 	exit(1);
+
+    if (ossl_cnf || ossl_propq) {
+	ret = krb5_set_ossl_cnf_propq(context, ossl_cnf, ossl_propq);
+	if (ret)
+	    krb5_err(context, 1, ret, "krb5_set_ossl_cnf_propq");
+    }
 
     /* We may be reading an old database encrypted with a DES master key. */
     ret = krb5_allow_weak_crypto(context, 1);

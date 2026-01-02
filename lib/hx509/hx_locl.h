@@ -78,13 +78,14 @@
 #define O_BINARY 0
 #endif
 
-/*
- * We use OpenSSL for EC, but to do this we need to disable cross-references
- * between OpenSSL and hcrypto bn.h and such.  Source files that use OpenSSL EC
- * must define HEIM_NO_CRYPTO_HDRS before including this file.
- */
+#ifndef SSIZE_MAX
+#ifdef _WIN64
+#define SSIZE_MAX _I64_MAX
+#else
+#define SSIZE_MAX INT_MAX
+#endif
+#endif
 
-#define HC_DEPRECATED_CRYPTO
 #ifndef HEIM_NO_CRYPTO_HDRS
 #include "crypto-headers.h"
 #endif
@@ -95,6 +96,7 @@ struct hx509_generate_private_context;
 typedef struct hx509_path hx509_path;
 
 #include <heimbase.h>
+#include "heimbase-atomics.h"
 
 #include <hx509.h>
 
@@ -153,7 +155,8 @@ struct hx509_query_data {
 #define HX509_QUERY_MATCH_TIME			0x200000
 #define HX509_QUERY_MATCH_EKU			0x400000
 #define HX509_QUERY_MATCH_EXPR			0x800000
-#define HX509_QUERY_MASK			0xffffff
+#define HX509_QUERY_MATCH_KEY_ALG		0x1000000
+#define HX509_QUERY_MASK			0x1ffffff
     Certificate *subject;
     Certificate *certificate;
     heim_integer *serial;
@@ -169,6 +172,7 @@ struct hx509_query_data {
     time_t timenow;
     heim_oid *eku;
     struct hx_expr *expr;
+    heim_oid *key_alg;
 };
 
 struct hx509_keyset_ops {
@@ -198,6 +202,46 @@ struct _hx509_password {
 
 extern hx509_lock _hx509_empty_lock;
 
+/*
+ * OpenSSL provider context for hx509.
+ * This is used to cache providers and fetched algorithms:
+ * - default: for standard crypto (RSA, EC, AES, SHA, etc.)
+ * - legacy: for weak crypto used in PKCS#12 (RC2, 3DES-CBC, etc.)
+ * - Fetched message digests (EVP_MD) for SHA-512, SHA-384, SHA-256, SHA-1, MD5
+ * - Fetched ciphers (EVP_CIPHER) for RC2, RC4, 3DES-CBC, AES
+ *
+ * Contexts are cached globally in a singly-linked list keyed by (cnf, propq).
+ * This allows sharing across multiple hx509_context instances and avoids
+ * repeated algorithm fetching when propq is set to the same value.
+ */
+typedef struct hx509_context_ossl_data *hx509_context_ossl;
+struct hx509_context_ossl_data {
+    struct hx509_context_ossl_data *next;  /* Next in global cache list */
+    heim_base_atomic(uint32_t) refs;       /* Reference count */
+    char *cnf;                      /* OpenSSL config file path */
+    OSSL_LIB_CTX *libctx;           /* OpenSSL library context */
+    char *propq;                    /* OpenSSL property query string */
+    OSSL_PROVIDER *openssl_def;     /* Default provider for standard crypto */
+    OSSL_PROVIDER *openssl_leg;     /* Legacy provider for weak crypto */
+    /* Message digests */
+    EVP_MD *md5;
+    EVP_MD *sha1;
+    EVP_MD *sha256;
+    EVP_MD *sha384;
+    EVP_MD *sha512;
+    /* Ciphers - legacy/weak (PKCS#12) */
+    EVP_CIPHER *rc2_40_cbc;
+    EVP_CIPHER *rc2_64_cbc;
+    EVP_CIPHER *rc2_cbc;
+    EVP_CIPHER *rc4_40;
+    EVP_CIPHER *rc4;
+    EVP_CIPHER *des_ede3_cbc;
+    /* Ciphers - standard */
+    EVP_CIPHER *aes_128_cbc;
+    EVP_CIPHER *aes_192_cbc;
+    EVP_CIPHER *aes_256_cbc;
+};
+
 struct hx509_context_data {
     struct hx509_keyset_ops **ks_ops;
     int ks_num_ops;
@@ -211,6 +255,7 @@ struct hx509_context_data {
     hx509_certs default_trust_anchors;
     heim_context hcontext;
     heim_config_section *cf;
+    hx509_context_ossl ossl;        /* OpenSSL provider context */
 };
 
 /* _hx509_calculate_path flag field */
@@ -270,15 +315,13 @@ struct hx509_private_key_ops {
 };
 
 struct hx509_private_key {
-    unsigned int ref;
     const struct signature_alg *md;
     const heim_oid *signature_alg;
     union {
-	RSA *rsa;
-	void *keydata;
-        void *ecdsa; /* EC_KEY */
-    } private_key;
+        EVP_PKEY *pkey;
+    } private_key; // XXX Remove the union wrapper
     hx509_private_key_ops *ops;
+    uint32_t ref;
 };
 
 /*
@@ -309,12 +352,14 @@ struct signature_alg {
 			    const struct signature_alg *,
 			    const Certificate *,
 			    const AlgorithmIdentifier *,
+                            const EVP_MD *,
 			    const heim_octet_string *,
 			    const heim_octet_string *);
     int (*create_signature)(hx509_context,
 			    const struct signature_alg *,
 			    const hx509_private_key,
 			    const AlgorithmIdentifier *,
+                            const EVP_MD *,
 			    const heim_octet_string *,
 			    AlgorithmIdentifier *,
 			    heim_octet_string *);

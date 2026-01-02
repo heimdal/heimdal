@@ -56,7 +56,7 @@ keytab="FILE:${keytabfile}"
 keyfile="${hx509_data}/key.der"
 keyfile2="${hx509_data}/key2.der"
 
-kadmin="${kadmin} -l -r $R"
+kadmin="${kadmin} -l -A -r $R"
 
 server=host/datan.test.h5l.se
 

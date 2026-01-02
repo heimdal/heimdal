@@ -67,8 +67,9 @@ EXPORTS
 	kadm5_log_set_version
 	kadm5_log_sharedlock
 	kadm5_log_signal_master
+	kadm5_log_signal_pipe_name
 ;!	kadm5_log_signal_socket
-	kadm5_log_signal_socket_info    ;!
+;!	kadm5_log_signal_socket_info
 	kadm5_log_previous
 	kadm5_log_goto_first
 	kadm5_log_goto_end

@@ -31,7 +31,7 @@
 .\"
 .\" $Id$
 .\"
-.Dd February 22, 2022
+.Dd December 23, 2025
 .Dt HXTOOL 1
 .Os HEIMDAL
 .Sh NAME
@@ -39,91 +39,1093 @@
 .Nd PKIX command-line utility
 .Sh SYNOPSIS
 .Nm
-.Bk -words
 .Oo Fl Fl version Oc
 .Oo Fl Fl help Oc
 .Op Ar sub-command
-.Ek
+.Nm
+.Ic list-oids
+.Nm
+.Ic cms-create-sd
+.Op Fl c Ar certificate-store | Fl Fl certificate Ns = Ns Ar certificate-store
+.Op Fl s Ar signer-friendly-name | Fl Fl signer Ns = Ns Ar signer-friendly-name
+.Op Fl Fl anchors Ns = Ns Ar certificate-store
+.Op Fl Fl pool Ns = Ns Ar certificate-pool
+.Op Fl Fl pass Ns = Ns Ar password
+.Op Fl Fl peer-alg Ns = Ns Ar oid
+.Op Fl Fl content-type Ns = Ns Ar oid
+.Op Fl Fl content-info
+.Op Fl Fl pem
+.Op Fl Fl detached-signature
+.Op Fl Fl signer
+.Op Fl Fl id-by-name
+.Op Fl Fl embedded-certs
+.Op Fl Fl embed-leaf-only
+.Ar in-file out-file
+.Nm
+.Ic cms-verify-sd
+.Op Fl D Ar certificate-store | Fl Fl anchors Ns = Ns Ar certificate-store
+.Op Fl c Ar certificate-store | Fl Fl certificate Ns = Ns Ar certificate-store
+.Op Fl Fl pass Ns = Ns Ar password
+.Op Fl Fl missing-revoke
+.Op Fl Fl content-info
+.Op Fl Fl pem
+.Op Fl Fl signer-allowed
+.Op Fl Fl allow-wrong-oid
+.Op Fl Fl signed-content Ns = Ns Ar value
+.Op Fl Fl oid-sym
+.Ar in-file Op Ar out-file
+.Nm
+.Ic cms-unenvelope
+.Op Fl c Ar certificate-store | Fl Fl certificate Ns = Ns Ar certificate-store
+.Op Fl Fl pass Ns = Ns Ar password
+.Op Fl Fl content-info
+.Op Fl Fl allow-weak-crypto
+.Ar in-file out-file
+.Nm
+.Ic cms-envelope
+.Op Fl c Ar certificate-store | Fl Fl certificate Ns = Ns Ar certificate-store
+.Op Fl Fl pass Ns = Ns Ar password
+.Op Fl Fl encryption-type Ns = Ns Ar enctype
+.Op Fl Fl content-type Ns = Ns Ar oid
+.Op Fl Fl content-info
+.Op Fl Fl allow-weak-crypto
+.Ar in-file out-file
+.Nm
+.Ic verify
+.Op Fl Fl pass Ns = Ns Ar password
+.Op Fl Fl allow-proxy-certificate
+.Op Fl Fl missing-revoke
+.Op Fl Fl time Ns = Ns Ar value
+.Op Fl v | Fl Fl verbose
+.Op Fl Fl max-depth Ns = Ns Ar value
+.Op Fl Fl hostname Ns = Ns Ar value
+.Ar cert:foo chain:cert1 chain:cert2 anchor:anchor1 anchor:anchor2
+.Nm
+.Ic print
+.Op Fl Fl pass Ns = Ns Ar password
+.Op Fl Fl content
+.Op Fl Fl raw-json
+.Op Fl Fl never-fail
+.Op Fl Fl info
+.Ar certificate ...
+.Nm
+.Ic validate
+.Op Fl Fl pass Ns = Ns Ar password
+.Ar certificate ...
+.Nm
+.Ic certificate-copy
+.Op Fl Fl in-pass Ns = Ns Ar password
+.Op Fl Fl out-pass Ns = Ns Ar password
+.Op Fl Fl append
+.Op Fl Fl root-certs
+.Op Fl Fl private-keys
+.Ar in-certificates-1 ... out-certificate
+.Nm
+.Ic ocsp-fetch
+.Op Fl Fl pass Ns = Ns Ar password
+.Op Fl Fl sign Ns = Ns Ar certificate
+.Op Fl Fl url-path Ns = Ns Ar url
+.Op Fl Fl nonce
+.Op Fl Fl pool Ns = Ns Ar certificate-store
+.Ar outfile certs ...
+.Nm
+.Ic ocsp-verify
+.Op Fl Fl ocsp-file Ns = Ns Ar value
+.Ar certificates ...
+.Nm
+.Ic ocsp-print
+.Op Fl Fl verbose
+.Ar ocsp-response-file ...
+.Nm
+.Ic revoke-print
+.Op Fl Fl verbose
+.Ar ocsp/crl files
+.Nm
+.Ic generate-key
+.Op Fl Fl type Ns = Ns Ar value
+.Op Fl Fl key-bits Ns = Ns Ar value
+.Op Fl Fl verbose
+.Ar output-file
+.Nm
+.Ic request-create
+.Op Fl Fl ca
+.Op Fl Fl ca-path-length Ns = Ns Ar value
+.Op Fl Fl ee
+.Op Fl Fl subject Ns = Ns Ar value
+.Op Fl Fl eku Ns = Ns Ar oid-string
+.Op Fl Fl email Ns = Ns Ar value
+.Op Fl Fl jid Ns = Ns Ar value
+.Op Fl Fl dnsname Ns = Ns Ar value
+.Op Fl Fl kerberos Ns = Ns Ar value
+.Op Fl Fl ms-kerberos Ns = Ns Ar value
+.Op Fl Fl registered Ns = Ns Ar value
+.Op Fl Fl dn Ns = Ns Ar value
+.Op Fl Fl type Ns = Ns Ar value
+.Op Fl Fl key Ns = Ns Ar value
+.Op Fl Fl generate-key Ns = Ns Ar value
+.Op Fl Fl key-bits Ns = Ns Ar value
+.Op Fl Fl verbose
+.Ar output-file
+.Nm
+.Ic request-print
+.Op Fl Fl verbose
+.Ar requests ...
+.Nm
+.Ic query
+.Op Fl Fl exact
+.Op Fl Fl private-key
+.Op Fl Fl friendlyname Ns = Ns Ar name
+.Op Fl Fl eku Ns = Ns Ar oid-string
+.Op Fl Fl expr Ns = Ns Ar expression
+.Op Fl Fl keyEncipherment
+.Op Fl Fl digitalSignature
+.Op Fl Fl print
+.Op Fl Fl pass Ns = Ns Ar password
+.Ar certificates ...
+.Nm
+.Ic info
+.Nm
+.Ic random-data
+.Ar bytes
+.Nm
+.Ic crypto-available
+.Op Fl Fl type Ns = Ns Ar value
+.Op Fl Fl oid-syms
+.Nm
+.Ic crypto-select
+.Op Fl Fl type Ns = Ns Ar value
+.Op Fl Fl certificate Ns = Ns Ar value
+.Op Fl Fl peer-cmstype Ns = Ns Ar value
+.Op Fl Fl oid-sym
+.Nm
+.Ic hex
+.Op Fl d | Fl Fl decode
+.Nm
+.Ic certificate-sign
+.Op Fl Fl issue-ca
+.Op Fl Fl issue-proxy
+.Op Fl Fl domain-controller
+.Op Fl Fl subject Ns = Ns Ar value
+.Op Fl Fl ca-certificate Ns = Ns Ar value
+.Op Fl Fl self-signed
+.Op Fl Fl ca-private-key Ns = Ns Ar value
+.Op Fl Fl certificate Ns = Ns Ar value
+.Op Fl Fl type Ns = Ns Ar value
+.Op Fl Fl lifetime Ns = Ns Ar value
+.Op Fl Fl signature-algorithm Ns = Ns Ar value
+.Op Fl Fl serial-number Ns = Ns Ar value
+.Op Fl Fl path-length Ns = Ns Ar value
+.Op Fl Fl eku Ns = Ns Ar oid-string
+.Op Fl Fl ku Ns = Ns Ar value
+.Op Fl Fl hostname Ns = Ns Ar value
+.Op Fl Fl dnssrv Ns = Ns Ar value
+.Op Fl Fl email Ns = Ns Ar value
+.Op Fl Fl pk-init-principal Ns = Ns Ar value
+.Op Fl Fl ms-upn Ns = Ns Ar value
+.Op Fl Fl jid Ns = Ns Ar value
+.Op Fl Fl permanent-id Ns = Ns Ar value
+.Op Fl Fl hardware-module-name Ns = Ns Ar value
+.Op Fl Fl policy Ns = Ns Ar value
+.Op Fl Fl policy-mapping Ns = Ns Ar value
+.Op Fl Fl pkinit-max-life Ns = Ns Ar value
+.Op Fl Fl req Ns = Ns Ar value
+.Op Fl Fl certificate-private-key Ns = Ns Ar value
+.Op Fl Fl generate-key Ns = Ns Ar value
+.Op Fl Fl key-bits Ns = Ns Ar value
+.Op Fl Fl crl-uri Ns = Ns Ar value
+.Op Fl Fl template-certificate Ns = Ns Ar value
+.Op Fl Fl template-fields Ns = Ns Ar value
+.Nm
+.Ic test-crypto
+.Op Fl Fl pass Ns = Ns Ar password
+.Op Fl Fl verbose
+.Ar certificates...
+.Nm
+.Ic statistic-print
+.Op Fl Fl type Ns = Ns Ar value
+.Nm
+.Ic crl-sign
+.Op Fl Fl signer Ns = Ns Ar value
+.Op Fl Fl pass Ns = Ns Ar password
+.Op Fl Fl crl-file Ns = Ns Ar value
+.Op Fl Fl lifetime Ns = Ns Ar value
+.Ar certificates...
+.Nm
+.Ic acert
+.Op Fl v | Fl Fl verbose
+.Op Fl Fl end-entity
+.Op Fl Fl ca
+.Op Fl Fl cert-num Ns = Ns Ar value
+.Op Fl Fl expr Ns = Ns Ar expression
+.Op Fl M Ar EMAIL | Fl Fl has-email-san Ns = Ns Ar EMAIL
+.Op Fl X Ar jabber-address | Fl Fl has-xmpp-san Ns = Ns Ar jabber-address
+-Op Fl U Ar UPN | Fl Fl has-ms-upn-san Ns = Ns Ar UPN
+.Op Fl D Ar FQDN | Fl Fl has-dnsname-san Ns = Ns Ar FQDN
+.Op Fl P Ar PRINCIPAL | Fl Fl has-pkinit-san Ns = Ns Ar PRINCIPAL
+.Op Fl R Ar OID | Fl Fl has-registeredID-san Ns = Ns Ar OID
+.Op Fl E Ar OID | Fl Fl has-eku Ns = Ns Ar OID
+.Op Fl K Ar key usage element | Fl Fl has-ku Ns = Ns Ar key usage element
+.Op Fl Fl exact
+.Op Fl n | Fl Fl valid-now
+.Op Fl Fl valid-at Ns = Ns Ar datetime
+.Op Fl Fl not-after-eq Ns = Ns Ar datetime
+.Op Fl Fl not-after-lt Ns = Ns Ar datetime
+.Op Fl Fl not-after-gt Ns = Ns Ar datetime
+.Op Fl Fl not-before-eq Ns = Ns Ar datetime
+.Op Fl Fl not-before-lt Ns = Ns Ar datetime
+.Op Fl Fl not-before-gt Ns = Ns Ar datetime
+.Op Fl Fl has-private-key
+.Op Fl Fl lacks-private-key
+.Ar certificate-store
+.Nm
+.Ic jwt-sign
+.Op Fl a Ar algorithm | Fl Fl algorithm Ns = Ns Ar algorithm
+.Op Fl k Ar file | Fl Fl private-key Ns = Ns Ar file
+.Op Fl i Ar issuer | Fl Fl issuer Ns = Ns Ar issuer
+.Op Fl s Ar subject | Fl Fl subject Ns = Ns Ar subject
+.Op Fl A Ar audience | Fl Fl audience Ns = Ns Ar audience
+.Op Fl l Ar seconds | Fl Fl lifetime Ns = Ns Ar seconds
+.Op Fl o Ar file | Fl Fl output Ns = Ns Ar file
+.Nm
+.Ic jwt-verify
+.Op Fl k Ar file | Fl Fl public-key Ns = Ns Ar file
+.Op Fl A Ar audience | Fl Fl audience Ns = Ns Ar audience
+.Op Fl t Ar token | Fl Fl token Ns = Ns Ar token
+.Nm
+.Ic pem-to-jwk
+.Op Fl i Ar file | Fl Fl input Ns = Ns Ar file
+.Op Fl o Ar file | Fl Fl output Ns = Ns Ar file
+.Ar Op Ar pem-file
+.Nm
+.Ic help
+.Ar Op Ar command
 .Sh DESCRIPTION
 .Nm
-is a utility for making certificate sigining requests (CSRs),
-displaying CSRs, signing certificates, etc.
-are given, then the value will be parsed and displayed using just
-the self-describing nature of DER.
+is a command-line utility for making certificate signing requests
+(CSRs), displaying CSRs, displaying certificates, signing
+certificates, validating certificates, managing certificate
+revocation lists (CRLs), etc.
 .Pp
-All sub-commands have their own help message, shown when invoked
+Every sub-command has its own help message, shown when invoked
 with the
 .Fl Fl help
 or
 .Fl h
 option.
 .Pp
-Supported commands:
+Many sub-commands' command-line options refer to certificate and
+private key stores, supporting DER, PEM, and PKCS#12 files, as
+well as PKCS#11 hard and soft tokens, and others certificate
+stores.
+See
+.Sx CERTIFICATE STORES
+below for how to refer to certificates and private keys.
+.Sh SUPPORTED COMMANDS
 .Bl -tag -width Ds -offset indent
-.It help
-.It list-oids
-.It verify
+.It Ic list-oids
+List known OIDs.
+.It Ic cms-create-sd , Ic cms-sign
+Wrap a file within a SignedData object.
+.It Ic cms-verify-sd
+Verify a file within a SignedData object.
+.It Ic cms-unenvelope
+Unenvelope a file containing an EnvelopedData object.
+.It Ic cms-envelope
+Envelope a file containing an EnvelopedData object.
+.It Ic verify
 Verify a certificate and its certification path up to a trust
 anchor, possibly checking CRLs.
-.It print
-Prints a human-readable rendering of certificates in a store.
+.It Ic print
+Print a human-readable rendering of certificates in a store.
 See
-.Sx CERTIFICATE STORES.
-.It validate
-Validate a certificate (but not a full chain).
-.It certificate-copy, cc
-Copy ceritificates and possibly private keys from one store to
+.Sx CERTIFICATE STORES .
+.It Ic validate
+Validate content of a certificate (but not a full chain).
+.It Ic certificate-copy , Ic cc
+Copy certificates and possibly private keys from one store to
 another.
 See
-.Sx CERTIFICATE STORES.
-.It ocsp-fetch
-Fetch an OCSP response.
-.It ocsp-verify
-Fetch an OCSP response chain.
-.It ocsp-print
-Prints a human-readable rendering of an OCSP response chain.
-.It revoke-print
-Prints a human-readable rendering of a CRL or OCSP response
-chain.
-.It generate-key
-Generates a private key.
-.It request-create
-Generates a Certificate Signing Request (CSR).
-.It request-print
-Prints a human-readable rendering of a CSR.
-.It query
-Queries a certificate store.
-.It info
-Prints information about supported algorithms.
-.It random-data
-Outputs entropy using a random number generator.
-.It crypto-available
-Tests if a cryptographic algorithm is available.
-.It crypto-select
-Selects a supported cryptographic algorithm given a peer's
-capabilities.
-.It hex
-Hex-encode/decode utility.
-.It certificate-sign, cert-sign, issue-certificate, ca
-Issue a certificate.
-.It crl-sign
-Sign a CRL.
-.It cms-create-sd, cms-sign
-Created a CMS SignedData.
-.It cms-verify-sd
-Verifies a CMS SignedData.
-.It cms-unenvelope
-Extracts enveloped data from a CMS SignedData.
-.It cms-envelope
-Creates an enveloped CMS SignedData.
+.Sx CERTIFICATE STORES .
+.It Ic ocsp-fetch
+Fetch OCSP responses for the given certificates.
+.It Ic ocsp-verify
+Verify that certificates are in OCSP file and valid.
+.It Ic ocsp-print
+Print a human-readable rendering of OCSP responses.
+.It Ic revoke-print
+Print a human-readable rendering of a CRL or OCSP response chain.
+.It Ic generate-key
+Generate a private key.
+.It Ic request-create
+Create a CRMF or PKCS#10 request (CSR).
+.It Ic request-print
+Print a human-readable rendering of a CSR.
+.It Ic query
+Query a certificate store for matching certificates.
+.It Ic info
+Print information about supported algorithms.
+.It Ic random-data
+Generate random bytes and print them to standard output.
+.It Ic crypto-available
+Print available CMS crypto types.
+.It Ic crypto-select
+Print selected CMS type based on peer capabilities.
+.It Ic hex
+Hex-encode or decode input.
+.It Ic certificate-sign , Ic cert-sign , Ic issue-certificate , Ic ca
+Issue a certificate, signing it with a Certification Authority
+(CA) certificate, or self-signing it.
+This can issue End Entity (EE), intermediate Certification
+Authority (CA), and root (self-signed) CA certificates.
+.It Ic test-crypto
+Test crypto system related to the certificates.
+.It Ic statistic-print
+Print statistics.
+.It Ic crl-sign
+Create or update a CRL.
+.It Ic acert
+Assert certificate content (for testing).
+.It Ic jwt-sign
+Create a signed JWT.
+This is used mainly for testing \(em this is not intended for
+implementing a security token service (STS).
+Users who wish to implement an STS should use
+.Xr hx509_jws_sign 3 .
+.It Ic jwt-verify
+Verify a JWT and print claims.
+This is used mainly for testing \(em this is not intended for
+implementing Bearer token acceptors.
+Users who wish to implement Bearer token acceptors should use
+.Xr hx509_jws_verify 3 .
+.It Ic pem-to-jwk
+Convert PEM key to JWK format.
+.It Ic help , Ic \&?
+Show help.
 .El
+.Pp
 Other sub-commands reported by the
-.Nm help
+.Ic help
 sub-command are not stable or fully supported at this time.
+.Sh COMMAND OPTIONS
+.Ss list-oids
+List known OIDs.
+.\"
+.\" TODO: Add description
+.\"
+.Ss cms-create-sd
+Wrap a file within a CMS SignedData object.
+.Bl -tag -width Ds -compact
+.It Fl c Ar certificate-store , Fl Fl certificate Ns = Ns Ar certificate-store
+Certificate stores to pull certificates from.
+.It Fl s Ar signer-friendly-name , Fl Fl signer Ns = Ns Ar signer-friendly-name
+Certificate to sign with.
+.It Fl Fl anchors Ns = Ns Ar certificate-store
+Trust anchors.
+.It Fl Fl pool Ns = Ns Ar certificate-pool
+Certificate store to pull certificates from.
+.It Fl Fl pass Ns = Ns Ar password
+Password, prompter, or environment.
+.It Fl Fl peer-alg Ns = Ns Ar oid
+OID that the peer supports.
+.It Fl Fl content-type Ns = Ns Ar oid
+Content type OID.
+.It Fl Fl content-info
+Wrap output data in a ContentInfo.
+.It Fl Fl pem
+Wrap output data in PEM armor.
+.It Fl Fl detached-signature
+Create a detached signature.
+.It Fl Fl signer
+Do not sign.
+.It Fl Fl id-by-name
+Use subject name for CMS Identifier.
+.It Fl Fl embedded-certs
+Don't embed certificates.
+.It Fl Fl embed-leaf-only
+Only embed leaf certificate.
+.El
+.\"
+.\" TODO: Add description
+.\"
+.Ss cms-verify-sd
+Verify a file within a CMS SignedData object.
+.Bl -tag -width Ds -compact
+.It Fl D Ar certificate-store , Fl Fl anchors Ns = Ns Ar certificate-store
+Trust anchors.
+.It Fl c Ar certificate-store , Fl Fl certificate Ns = Ns Ar certificate-store
+Certificate store to pull certificates from.
+.It Fl Fl pass Ns = Ns Ar password
+Password, prompter, or environment.
+.It Fl Fl missing-revoke
+Missing CRL/OCSP is ok.
+.It Fl Fl content-info
+Unwrap input data that's in a ContentInfo.
+.It Fl Fl pem
+Unwrap input data from PEM armor.
+.It Fl Fl signer-allowed
+Allow no signer.
+.It Fl Fl allow-wrong-oid
+Allow wrong OID flag.
+.It Fl Fl signed-content Ns = Ns Ar value
+File containing content.
+.It Fl Fl oid-sym
+Show symbolic name for OID.
+.El
+.\"
+.\" TODO: Add description
+.\"
+.Ss cms-unenvelope
+Unenvelope a file containing an EnvelopedData object.
+.Bl -tag -width Ds -compact
+.It Fl c Ar certificate-store , Fl Fl certificate Ns = Ns Ar certificate-store
+Certificate used to decrypt the data.
+.It Fl Fl pass Ns = Ns Ar password
+Password, prompter, or environment.
+.It Fl Fl content-info
+Wrapped output data in a ContentInfo.
+.It Fl Fl allow-weak-crypto
+Allow weak crypto.
+.El
+.\"
+.\" TODO: Add description
+.\"
+.Ss cms-envelope
+Envelope a file as an EnvelopedData object.
+.Bl -tag -width Ds -compact
+.It Fl c Ar certificate-store , Fl Fl certificate Ns = Ns Ar certificate-store
+Certificates used to receive the data.
+.It Fl Fl pass Ns = Ns Ar password
+Password, prompter, or environment.
+.It Fl Fl encryption-type Ns = Ns Ar enctype
+Encryption type.
+.It Fl Fl content-type Ns = Ns Ar oid
+Content type OID.
+.It Fl Fl content-info
+Wrap output data in a ContentInfo.
+.It Fl Fl allow-weak-crypto
+Allow weak crypto.
+.El
+.\"
+.\" TODO: Add description
+.\"
+.Ss verify
+Verify certificate chain.
+.Bl -tag -width Ds -compact
+.It Fl Fl pass Ns = Ns Ar password
+Password, prompter, or environment.
+.It Fl Fl allow-proxy-certificate
+Allow proxy certificates.
+.It Fl Fl missing-revoke
+Missing CRL/OCSP is ok.
+.It Fl Fl time Ns = Ns Ar value
+Time when to validate the chain.
+.It Fl v , Fl Fl verbose
+Verbose logging.
+.It Fl Fl max-depth Ns = Ns Ar value
+Maximum search length of certificate trust anchor.
+.It Fl Fl hostname Ns = Ns Ar value
+Match hostname to certificate.
+.El
+.\"
+.\" TODO: Add description
+.\"
+.Ss print
+Print certificates.
+.Bl -tag -width Ds -compact
+.It Fl Fl pass Ns = Ns Ar password
+Password, prompter, or environment.
+.It Fl Fl content
+Print the content of the certificates.
+.It Fl Fl raw-json
+Print the DER content of the certificates as JSON.
+.It Fl Fl never-fail
+Never fail with an error code.
+.It Fl Fl info
+Print information about the certificate store.
+.El
+.Pp
+The
+.Fl Fl pass Ns = Ns Ar password
+option is for PKCS#8 (PEM), PKCS#12 and PKCS#11 stores, and if
+needed and not given, will be prompted for.
+Note that it's not secure to pass passwords as command-line
+arguments on multi-tenant systems.
+.Pp
+The
+.Fl Fl raw-json
+option prints the certificate(s) in the given store as a JSON dump
+of their DER using an experimental (i.e., unstable) schema.
+.Ss validate
+Validate content of certificates.
+.Bl -tag -width Ds -compact
+.It Fl Fl pass Ns = Ns Ar password
+Password, prompter, or environment.
+.El
+.\"
+.\" TODO: Add description
+.\"
+.Ss certificate-copy
+Copy certificates and keys from one store to another.
+.Bl -tag -width Ds -compact
+.It Fl Fl in-pass Ns = Ns Ar password
+Password, prompter, or environment for input store.
+.It Fl Fl out-pass Ns = Ns Ar password
+Password, prompter, or environment for output store.
+.It Fl Fl append
+Append source to destination.
+.It Fl Fl root-certs
+Do not copy root certificates.
+.It Fl Fl private-keys
+Do not copy private keys.
+.El
+.Pp
+Use the
+.Ic certificate-copy
+command to copy certificates from one store to another.
+This is useful for, e.g., converting DER files to PEM or
+vice-versa, removing private keys, adding certificate chains,
+and removing root certificates from chains.
+.Ss ocsp-fetch
+Fetch OCSP responses for the given certificates.
+.Bl -tag -width Ds -compact
+.It Fl Fl pass Ns = Ns Ar password
+Password, prompter, or environment.
+.It Fl Fl sign Ns = Ns Ar certificate
+Certificate used to sign the request.
+.It Fl Fl url-path Ns = Ns Ar url
+Part after host in URL to put in the request.
+.It Fl Fl nonce
+Don't include nonce in request.
+.It Fl Fl pool Ns = Ns Ar certificate-store
+Pool to find parent certificate in.
+.El
+.\"
+.\" TODO: Add description
+.\"
+.Ss ocsp-verify
+Verify OCSP responses.
+.Bl -tag -width Ds -compact
+.It Fl Fl ocsp-file Ns = Ns Ar value
+OCSP file.
+.El
+.\"
+.\" TODO: Add description
+.\"
+.Ss ocsp-print
+Print OCSP responses.
+.Bl -tag -width Ds -compact
+.It Fl Fl verbose
+Verbose output.
+.El
+.\"
+.\" TODO: Add description
+.\"
+.Ss revoke-print
+Print OCSP/CRL files.
+.Bl -tag -width Ds -compact
+.It Fl Fl verbose
+Verbose output.
+.El
+.\"
+.\" TODO: Add description
+.\"
+.Ss generate-key
+Generate a private key.
+.Bl -tag -width Ds -compact
+.It Fl Fl type Ns = Ns Ar value
+Key type.
+.It Fl Fl key-bits Ns = Ns Ar value
+Number of bits in the generated key.
+.It Fl Fl verbose
+Verbose status.
+.El
+.\"
+.\" TODO: Add description
+.\"
+.Ss request-create
+Create a CRMF or PKCS#10 request.
+.Bl -tag -width Ds -compact
+.It Fl Fl ca
+Request CA certificate.
+.It Fl Fl ca-path-length Ns = Ns Ar value
+Path length constraint for CA certificate.
+.It Fl Fl ee
+Include BasicConstraints with cA set to false.
+.It Fl Fl subject Ns = Ns Ar value
+Subject DN.
+.It Fl Fl eku Ns = Ns Ar oid-string
+Add Extended Key Usage OID.
+.It Fl Fl email Ns = Ns Ar value
+Email address in SubjectAltName.
+.It Fl Fl jid Ns = Ns Ar value
+XMPP (Jabber) address in SubjectAltName.
+.It Fl Fl dnsname Ns = Ns Ar value
+Hostname or domainname in SubjectAltName.
+.It Fl Fl kerberos Ns = Ns Ar value
+Kerberos principal name as SubjectAltName.
+.It Fl Fl ms-kerberos Ns = Ns Ar value
+Kerberos principal name as SubjectAltName (Microsoft variant).
+.It Fl Fl registered Ns = Ns Ar value
+Registered object ID as SubjectAltName.
+.It Fl Fl dn Ns = Ns Ar value
+Directory name as SubjectAltName.
+.It Fl Fl type Ns = Ns Ar value
+Type of request CRMF or PKCS10, defaults to PKCS10.
+.It Fl Fl key Ns = Ns Ar value
+Key-pair.
+.It Fl Fl generate-key Ns = Ns Ar value
+Key type.
+.It Fl Fl key-bits Ns = Ns Ar value
+Number of bits in the generated key.
+.It Fl Fl verbose
+Verbose status.
+.El
+.\"
+.\" TODO: Add description
+.\"
+.Ss request-print
+Print requests.
+.Bl -tag -width Ds -compact
+.It Fl Fl verbose
+Verbose printing.
+.El
+.\"
+.\" TODO: Add description
+.\"
+.Ss query
+Query certificates for a match.
+.Bl -tag -width Ds -compact
+.It Fl Fl exact
+Exact match.
+.It Fl Fl private-key
+Search for private key.
+.It Fl Fl friendlyname Ns = Ns Ar name
+Match on friendly name.
+.It Fl Fl eku Ns = Ns Ar oid-string
+Match on EKU.
+.It Fl Fl expr Ns = Ns Ar expression
+Match on expression.
+.It Fl Fl keyEncipherment
+Match keyEncipherment certificates.
+.It Fl Fl digitalSignature
+Match digitalSignature certificates.
+.It Fl Fl print
+Print matches.
+.It Fl Fl pass Ns = Ns Ar password
+Password, prompter, or environment.
+.El
+.\"
+.\" TODO: Add description
+.\"
+.Ss info
+Print information about supported algorithms.
+.\"
+.\" TODO: Add description
+.\"
+.Ss random-data
+Generate random bytes and print them to standard output.
+.\"
+.\" TODO: Add description
+.\"
+.Ss crypto-available
+Print available CMS crypto types.
+.Bl -tag -width Ds -compact
+.It Fl Fl type Ns = Ns Ar value
+Type of CMS algorithm.
+.It Fl Fl oid-syms
+Show symbolic names for OIDs.
+.El
+.\"
+.\" TODO: Add description
+.\"
+.Ss crypto-select
+Print selected CMS type.
+.Bl -tag -width Ds -compact
+.It Fl Fl type Ns = Ns Ar value
+Type of CMS algorithm.
+.It Fl Fl certificate Ns = Ns Ar value
+Source certificate limiting the choices.
+.It Fl Fl peer-cmstype Ns = Ns Ar value
+Peer limiting CMS types.
+.It Fl Fl oid-sym
+Show symbolic name for OID.
+.El
+.\"
+.\" TODO: Add description
+.\"
+.Ss hex
+Encode input to hex.
+.Bl -tag -width Ds -compact
+.It Fl d , Fl Fl decode
+Decode instead of encode.
+.El
+.Ss certificate-sign , Ss cert-sign , Ss issue-certificate , Ss ca
+Issue a certificate, signing it with a Certification Authority
+(CA) certificate, or self-signing it.
+This can issue End Entity (EE), intermediate Certification
+Authority (CA), and root (self-signed) CA certificates.
+This command is intended to be used to operate a CA.
+.Bl -tag -width Ds -compact
+.It Fl Fl issue-ca
+Issue a CA certificate.
+If this option is not used then an EE certificate will be issued.
+.It Fl Fl issue-proxy
+Issue a proxy certificate.
+.It Fl Fl ca-certificate Ns = Ns Ar value
+The certificate of the CA that will sign the certificate to be
+issued.
+For example,
+.Fl Fl ca-private-key Ns = Ns Ar PEM-FILE:/path/to/file ,
+.Fl Fl ca-private-key Ns = Ns Ar DER-FILE:/path/to/file ,
+.Fl Fl ca-private-key Ns = Ns Ar PKCS12:/path/to/file .
+.It Fl Fl self-signed
+Issue a self-signed certificate.
+.It Fl Fl ca-private-key Ns = Ns Ar value
+Private key for the signer of the certificate.
+This is a CA's private key when
+.Fl Fl self-signed
+is not used, or a proxy signer if
+.Fl Fl issue-proxy
+is used.
+For example,
+.Fl Fl ca-private-key Ns = Ns Ar PEM-FILE:/path/to/file ,
+.Fl Fl ca-private-key Ns = Ns Ar DER-FILE:/path/to/file ,
+.Fl Fl ca-private-key Ns = Ns Ar PKCS12:/path/to/file ,
+.Fl Fl ca-private-key Ns = Ns Ar PKCS11:<pkcs11 scheme URI> .
+.It Fl Fl req Ns = Ns Ar value
+A certificate signing request (CSR).
+For example,
+.Fl Fl req Ns = Ns Ar PKCS10:/path/to/file
+where the file contains a DER-encoded PKCS#10
+.Ar CertificationRequest .
+Note that extensions requested by the CSR are ignored, though you
+can view the CSR's requested extensions with the
+.Nm Nm request-print
+command.
+.It Fl Fl type Ns = Ns Ar value
+Types of certificate to issue (can be used more than once).
+Available types:
+.Bl -tag -width Ds -offset indent
+.It Li https-server
+Issue a certificate suitable for an HTTPS server (because it has
+the
+.Sq id-kp-serverAuth
+Extended Key Usage (EKU) object identifier (OID)).
+.It Li https-client
+Issue a certificate suitable for an HTTPS client (because it has
+the
+.Sq id-kp-clientAuth
+EKU).
+.It Li email-client
+Issue a certificate suitable for SUBMIT, IMAP, and S/MIME
+(because it has the
+.Sq id-kp-emailProtection
+EKU).
+.It Li pkinit-client
+Issue a certificate suitable for a PKINIT client user (because it
+has the
+.Sq id-pkinit-KPClientAuth ,
+.Sq id-kp-clientAuth ,
+and
+.Sq id-pkinit-ms-eku ,
+EKUs).
+.It Li pkinit-kdc
+Issue a certificate suitable for a KDC (for PKINIT) (because it
+has the
+.Sq id-pkinig-keyPurposeKdc
+EKU).
+.El
+.It Fl Fl certificate Ns = Ns Ar value
+Where to write the certificate to be issued.
+See
+.Fl Fl ca-certificate Ns = Ns Ar value .
+.It Fl Fl generate-key Ns = Ns Ar value
+Generate a private key of the given type whose public key will be
+the subject public key (SPK) of the certificate to be issued.
+.It Fl Fl key-bits Ns = Ns Ar value
+Number of bits in the generated key.
+Use this when using
+.Fl Fl generate-key Ns = Ns Ar rsa .
+.It Fl Fl certificate-private-key Ns = Ns Ar value
+Where to store the private key, if
+.Fl Fl generate-key Ns = Ns Ar value
+is given, or where to read the private key from.
+See
+.Fl Fl ca-private-key Ns = Ns Ar value .
+.It Fl Fl template-certificate Ns = Ns Ar value
+Use the given certificate as a template.
+See
+.Fl Fl ca-certificate Ns = Ns Ar value .
+.It Fl Fl template-fields Ns = Ns Ar value
+This option can be given multiple times, each one having one of
+the following values indicating that an item from the
+.It Fl Fl crl-uri Ns = Ns Ar value
+URI to certificate revocation list (CRL).
+This will be included in the certificate to be issued, and will
+be used by relying parties to check the revocation status of the
+issued certificate.
+.It Fl Fl policy Ns = Ns Ar value
+Certificate Policy OID and optional URI and/or notice
+(OID:URI<space>notice_text).
+.It Fl Fl policy-mapping Ns = Ns Ar value
+Certificate Policy mapping (OID:OID).
+.It Fl Fl template-certificate Ns = Ns Ar value
+certificate is to be used as part of the template:
+.Bl -tag -width Ds -offset indent
+.It Li ExtendedKeyUsage
+I.e., include the EKU OIDs from the template certificate in the
+certificate to be issued.
+.It Li KeyUsage
+I.e., include the KUs from the template certificate in the
+certificate to be issued.
+.It Li SPKI
+This is useful for issuing additional certificates for the same
+subject public key of an existing certificate.
+.It Li notBefore
+.It Li notAfter
+These copy the corresponding certificate constraints from the
+template.
+(These are not useful.  A future version will add a template
+field value for certificate lifetime where by the difference
+between notAfter and notBefore will be used to set the new
+certificate's notAfter.)
+.It Li pkinitMaxLife
+Take the PKINIT ticket max life extension value from the template
+certificate.
+.It Li subject
+Take the subject name from the template certificate.
+.El
+.It Fl Fl lifetime Ns = Ns Ar value
+Lifetime of to-be-issued certificate.
+.It Fl Fl serial-number Ns = Ns Ar value
+Serial number of certificate.
+(Do not use.
+Allow the CA to choose the serial number randomly instead.)
+.It Fl Fl subject Ns = Ns Ar value
+Subject name of issued certificate.
+The subject name can and should be left empty when subject
+alternative names are included in the certificate.
+.It Fl Fl eku Ns = Ns Ar oid-string
+Add a given Extended Key Usage (EKU) OID.
+Note that the
+.Fl Fl type = Ns Ar TYPE
+option allows for certain EKU OIDs to be added without having to
+name them.
+OIDs can be referenced by name, such as
+.Dq id-pkix-kp-serverAuth
+or as a sequence of numeric arcs separated by spaces or periods.
+E.g.,
+.Fl Fl eku=id-pkix-kp-serverAuth ,
+.Fl Fl eku=1.2.3.4.5.6 .
+.It Fl Fl ku Ns = Ns Ar value
+Key Usage (digitalSignature, keyEncipherment, dataEncipherment,
+keyAgreement, keyCertSign, cRLSign, encipherOnly, decipherOnly).
+.It Fl Fl signature-algorithm Ns = Ns Ar value
+Signature algorithm to use.
+.It Fl Fl path-length Ns = Ns Ar value
+Maximum path length (CA and proxy certificates); use -1 for no
+limit.
+.It Fl Fl hostname Ns = Ns Ar value
+Adds a 
+.Va dNSName
+subject alternative name (SAN) to the certificate to be issued.
+These are the DNS names this certificate is allowed to serve.
+.It Fl Fl dnssrv Ns = Ns Ar value
+Adds a DNS SRV SAN to the certificate to be issued.
+These are the DNS SRV names this certificate is allowed to serve.
+.It Fl Fl email Ns = Ns Ar value
+Adds an
+.Va rfc8222Name
+SAN to the certificate to be issued.
+These are the email addresses assigned to this certificate, which
+can be used for authorization in email-related protocols such as
+SUBMIT, IMAP, and S/MIME.
+.It Fl Fl pk-init-principal Ns = Ns Ar PRINCIPAL-NAME
+Adds a Kerberos principal name SAN to the certificate to be
+issued.
+For
+.Fl Fl type Ns = Ns Ar pkinit-client
+certificates these are the client principals the certificate
+holder can use to get tickets for using PKINIT.
+For
+.Fl Fl type Ns = Ns Ar pkinit-kdc
+certificates these are the service principals (typically
+.Sq krbtgt
+principals) the certificate holder can be a Kerberos
+Authentication Service (AS) for when using PKINIT.
+.It Fl Fl pkinit-max-life Ns = Ns Ar value
+Maximum Kerberos ticket lifetime extension for PKINIT.
+This is a Heimdal-specific certificate extension with OID
+.Ar id-heim-ce-pkinit-princ-max-life
+/
+.Ar 1.2.752.43.16.4
+whose value is a DER-encoded INTEGER count of seconds ranging
+from 0 to 4294967295.
+Kerberos KDCs that support this extension will bound the lifetime
+of any tickets issued to the client to be no more than the
+lifetime in this extension (note that the KDC may further
+restrict the lifetime).
+.It Fl Fl ms-upn Ns = Ns Ar UPN
+Adds a Microsoft user principal name (UPN) SAN to the certificate
+to be issued.
+These are UPNs that the certificate holder can use to get tickets
+for using PKINIT.
+.It Fl Fl jid Ns = Ns Ar value
+Adds an XMPP / Jabber ID SAN to the certificate to be issued.
+These are the names that the certificate holder can use when
+connected to XMPP / Jabber instant messaging.
+.It Fl Fl permanent-id Ns = Ns Ar value
+PermanentIdentifier ([oid]:[serial]).
+.It Fl Fl hardware-module-name Ns = Ns Ar value
+HardwareModuleName (oid:serial).
+.It Fl Fl domain-controller
+Issue a certificate suitable for authenticating an Active
+Directory domain controller.
+.El
+.\"
+.\" TODO: Add description
+.\"
+.Ss test-crypto
+Test crypto system related to the certificates.
+.Bl -tag -width Ds -compact
+.It Fl Fl pass Ns = Ns Ar password
+Password, prompter, or environment.
+.It Fl Fl verbose
+Verbose printing.
+.El
+.\"
+.\" TODO: Add description
+.\"
+.Ss statistic-print
+Print statistics.
+.Bl -tag -width Ds -compact
+.It Fl Fl type Ns = Ns Ar value
+Type of statistics.
+.El
+.\"
+.\" TODO: Add description
+.\"
+.Ss crl-sign
+Create a CRL.
+.Bl -tag -width Ds -compact
+.It Fl Fl signer Ns = Ns Ar value
+Signer certificate.
+.It Fl Fl pass Ns = Ns Ar password
+Password, prompter, or environment.
+.It Fl Fl crl-file Ns = Ns Ar value
+CRL output file.
+.It Fl Fl lifetime Ns = Ns Ar value
+Time the CRL will be valid.
+.El
+.\"
+.\" TODO: Add description
+.\"
+.Ss acert
+Assert certificate content.
+.Bl -tag -width Ds -compact
+.It Fl v , Fl Fl verbose
+Verbose output.
+.It Fl Fl end-entity
+Check the first EE certificate in the store.
+.It Fl Fl ca
+Check the first CA certificate in the store.
+.It Fl Fl cert-num Ns = Ns Ar value
+Check the nth certificate in the store.
+.It Fl Fl expr Ns = Ns Ar expression
+Test the first certificate matching expression.
+.It Fl M Ar email-address , Fl Fl has-email-san Ns = Ns Ar email-address
+Check that cert has email SAN.
+.It Fl X Ar jabber address , Fl Fl has-xmpp-san Ns = Ns Ar jabber address
+Check that cert has XMPP SAN.
+.It Fl U Ar UPN , Fl Fl has-ms-upn-san Ns = Ns Ar UPN
+Check that cert has UPN SAN.
+.It Fl D Ar domainname , Fl Fl has-dnsname-san Ns = Ns Ar domainname
+Check that cert has domainname SAN.
+.It Fl P Ar Kerberos principal name , Fl Fl has-pkinit-san Ns = Ns Ar Kerberos principal name
+Check that cert has PKINIT SAN.
+.It Fl R Ar OID , Fl Fl has-registeredID-san Ns = Ns Ar OID
+Check that cert has registeredID SAN.
+.It Fl E Ar OID , Fl Fl has-eku Ns = Ns Ar OID
+Check that cert has EKU.
+.It Fl K Ar key usage element , Fl Fl has-ku Ns = Ns Ar key usage element
+Check that cert has key usage.
+.It Fl Fl exact
+Check that cert has only given SANs/EKUs/KUs.
+.It Fl n , Fl Fl valid-now
+Check that current time is in certificate's validity period.
+.It Fl Fl valid-at Ns = Ns Ar datetime
+Check that the certificate is valid at given time.
+.It Fl Fl not-after-eq Ns = Ns Ar datetime
+Check that the certificate's notAfter is as given.
+.It Fl Fl not-after-lt Ns = Ns Ar datetime
+Check that the certificate's notAfter is before the given time.
+.It Fl Fl not-after-gt Ns = Ns Ar datetime
+Check that the certificate's notAfter is after the given time.
+.It Fl Fl not-before-eq Ns = Ns Ar datetime
+Check that the certificate's notBefore is as given.
+.It Fl Fl not-before-lt Ns = Ns Ar datetime
+Check that the certificate's notBefore is before the given time.
+.It Fl Fl not-before-gt Ns = Ns Ar datetime
+Check that the certificate's notBefore is after the given time.
+.It Fl Fl has-private-key
+Check that the certificate has a private key.
+.It Fl Fl lacks-private-key
+Check that the certificate does not have a private key.
+.El
+.\"
+.\" TODO: Add description
+.\"
+.Ss jwt-sign
+Create a signed JWT.
+.Bl -tag -width Ds -compact
+.It Fl a Ar algorithm , Fl Fl algorithm Ns = Ns Ar algorithm
+Signature algorithm (RS256, ES256, EdDSA, etc.).
+.It Fl k Ar file , Fl Fl private-key Ns = Ns Ar file
+Private key file (PEM format).
+.It Fl i Ar issuer , Fl Fl issuer Ns = Ns Ar issuer
+Issuer claim (iss).
+.It Fl s Ar subject , Fl Fl subject Ns = Ns Ar subject
+Subject claim (sub).
+.It Fl A Ar audience , Fl Fl audience Ns = Ns Ar audience
+Audience claim (aud).
+.It Fl l Ar seconds , Fl Fl lifetime Ns = Ns Ar seconds
+Token lifetime in seconds.
+.It Fl o Ar file , Fl Fl output Ns = Ns Ar file
+Output file (default: stdout).
+.El
+.\"
+.\" TODO: Add description
+.\"
+.Ss jwt-verify
+Verify a JWT and print claims.
+.Bl -tag -width Ds -compact
+.It Fl k Ar file , Fl Fl public-key Ns = Ns Ar file
+Public key file(s) (PEM format).
+.It Fl A Ar audience , Fl Fl audience Ns = Ns Ar audience
+Required audience.
+.It Fl t Ar token , Fl Fl token Ns = Ns Ar token
+JWT token (or read from stdin).
+.El
+.\"
+.\" TODO: Add description
+.\"
+.Ss pem-to-jwk
+Convert PEM key to JWK format.
+.Bl -tag -width Ds -compact
+.It Fl i Ar file , Fl Fl input Ns = Ns Ar file
+PEM key file.
+.It Fl o Ar file , Fl Fl output Ns = Ns Ar file
+Output file (default: stdout).
+.El
+.\"
+.\" TODO: Add description
+.\"
+.Ss help
+Show help.
 .Sh CERTIFICATE STORES
 Stores of certificates and/or keys have string names that can be
 used with
-.Nm 's
+.Nm Ap s
 commands as well as in various configuration parameters and
 command-line arguments of Heimdal's Kerberos implementation (for
 PKINIT).
@@ -185,98 +1187,12 @@ given slot number, or else the first token found.
 An empty store.
 .It MEMORY:name
 An in-memory only, ephemeral store, usually never used in
-.NM 's
+.Nm Ap s
 commands.
 The MEMORY store name exists primarily for internal
 .Sq hx509
 APIs.
 .El
-.Pp
-Use the
-.Nm certificate-copy
-command to copy certificates from one store to another.
-This is useful for, e.g., converting DER files to PEM or
-vice-versa, removing private keys, adding certificate chains,
-and removing root certificates from chains.
-.Sh CERTIFICATES
-You can validate a certificate with the
-.Nm validate
-sub-command, or verify a certificate and its certification path
-with the
-.Nm verify
-sub-command.
-.Pp
-You can display a certificate using the
-.Nm print 
-sub-command:
-.Pp
-.Nm print
-.Oo options Oc
-.Ar STORE
-.Pp
-Options:
-.Bl -tag -width Ds -offset indent
-.It Fl Fl content
-.It Fl Fl info
-.It Fl Fl never-fail
-.It Fl Fl pass=password
-.It Fl Fl raw-json
-.El
-.Pp
-The
-.Fl Fl pass=password
-option is for PKCS#8 (PEM), PKCS#12 and PKCS#11 stores, and if
-needed and not given, will be prompted for.
-Note that it's not secure to pass passwords as command-line
-arguments on multi-tenant systems.
-.Pp
-The
-.Fl Fl raw-json
-option prints the certificate(s) in the given
-.Ar STORE
-as a JSON dump of their DER using an experimental (i.e.,
-unstable) schema.
-.Sh KEYS
-The
-.Nm generate-key
-sub-command will generate a key.
-.Sh CERTIFICATE SIGNING REQUESTS
-The
-.Nm request-create
-sub-command will create a CSR, and has support for requesting
-subject alternative names and extended key usage extensions.
-See its
-.Fl Fl help
-option, and see
-.Sx EXAMPLES
-below.
-.Pp
-The
-.Nm request-print
-sub-command will display a CSR.
-.Sh CERTIFICATE ISSUANCE / CERTIFICATION AUTHORITY
-The
-.Nm certificate-sign
-sub-command will issue a certificate.
-See its usage message.
-.Sh ONLINE CERTIFICATE STATUS PROTOCOL
-The
-.Nm ocsp-fetch
-sub-command will fetch OCSP Responses for the given
-certificates.
-.Pp
-The
-.Nm ocsp-verify
-sub-command will verify OCSP Responses.
-.Pp
-The
-.Nm ocsp-print
-sub-command will display OCSP Responses.
-.Sh CERTIFICATE REVOCATION LIST
-The
-.Nm crl-sign
-sub-command will add certificates to a certificate revocation
-list.
 .Sh EXAMPLES
 Generate an RSA key:
 .Bd -literal -offset indent
@@ -322,7 +1238,7 @@ PKCS#10 CertificationRequest:
     san: dNSName: foo.test.h5l.se
 .Ed
 .Pp
-Issue a end-entity certificate for an HTTPS server given a CSR:
+Issue an end-entity certificate for an HTTPS server given a CSR:
 .Bd -literal -offset indent
 hxtool issue-certificate                            \\
 	--type=https-server                         \\
@@ -336,7 +1252,7 @@ hxtool issue-certificate                            \\
 .Pp
 Add a chain to a PEM file:
 .Bd -literal -offset indent
-hxtool copy-certificiate    \\
+hxtool certificate-copy     \\
 	--no-private-keys   \\
 	--no-root-certs     \\
 	FILE:ca.pem FILE:ee.pem
@@ -375,6 +1291,5 @@ hxtool issue-certificate                            \\
 	--req=PKCS10:csr.der                        \\
 	--certificate=PEM-FILE:intermediate.pem
 .Ed
-.Pp
 .Sh SEE ALSO
 .Xr openssl 1

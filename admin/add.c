@@ -96,8 +96,8 @@ kt_add(struct add_options *opt, int argc, char **argv)
 	    goto out;
     }
     if(opt->password_string == NULL && opt->random_flag == 0) {
-	if(UI_UTIL_read_pw_string(buf, sizeof(buf), "Password: ",
-				  UI_UTIL_FLAG_VERIFY)) {
+        if(_krb5_UI_UTIL_read_pw_string(buf, sizeof(buf), "Password: ",
+                                        UI_UTIL_FLAG_VERIFY)) {
 	    ret = 1;
 	    goto out;
 	}

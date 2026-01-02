@@ -1,0 +1,5 @@
+--sequence=TD-DH-PARAMETERS
+--sequence=SupportedKDFs
+# RFC 8636 takes an encoded PA-PK-AS-REP as an input, so we need to preserve it
+# on decode on the client side.
+--preserve-binary=PA-PK-AS-REP

@@ -104,8 +104,9 @@ print_heim_any(const heim_any *data, int flags)
         r = rk_strasvis(&s2, s, VIS_CSTYLE|VIS_TAB|VIS_NL, "\"");
     free(s);
     s = NULL;
-    if (r > -1)
-        (void) asprintf(&s, "\"%s\"", s2);
+    if (r > -1 && asprintf(&s, "\"%s\"", s2) < 0) {
+        /* quiet the useless warning */
+    }
     free(s2);
     return s;
 }
@@ -154,8 +155,9 @@ print_HEIM_ANY(const heim_any *data, int flags)
         r = rk_strasvis(&s2, s, VIS_CSTYLE|VIS_TAB|VIS_NL, "\"");
     free(s);
     s = NULL;
-    if (r > -1)
-        (void) asprintf(&s, "\"%s\"", s2);
+    if (r > -1 && asprintf(&s, "\"%s\"", s2) < 0) {
+        /* quiet the useless warning */
+    }
     free(s2);
     return s;
 }
@@ -204,8 +206,9 @@ print_heim_any_set(const heim_any_set *data, int flags)
         r = rk_strasvis(&s2, s, VIS_CSTYLE|VIS_TAB|VIS_NL, "\"");
     free(s);
     s = NULL;
-    if (r > -1)
-        (void) asprintf(&s, "\"%s\"", s2);
+    if (r > -1 && asprintf(&s, "\"%s\"", s2) < 0) {
+        /* quiet the useless warning */
+    }
     free(s2);
     return s;
 }
@@ -260,8 +263,9 @@ print_HEIM_ANY_SET(const heim_any_set *data, int flags)
         r = rk_strasvis(&s2, s, VIS_CSTYLE|VIS_TAB|VIS_NL, "\"");
     free(s);
     s = NULL;
-    if (r > -1)
-        (void) asprintf(&s, "\"%s\"", s2);
+    if (r > -1 && asprintf(&s, "\"%s\"", s2) < 0) {
+        /* quiet the useless warning */
+    }
     free(s2);
     return s;
 }

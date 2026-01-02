@@ -46,7 +46,7 @@ R4=TEST4.H5L.SE
 
 port=@port@
 
-kadmin="${kadmin} -l -r ${R}"
+kadmin="${kadmin} -l -A -r ${R}"
 kdc="${kdc} --addresses=localhost -P $port"
 
 server=host/datan.test4.h5l.se@TEST4.H5L.ORG
@@ -81,6 +81,7 @@ add -p foo --use-defaults foo@${R}
 add -p cross1 --use-defaults krbtgt/${R2}@${R}
 add -p cross2 --use-defaults krbtgt/${R3}@${R2}
 add -p cross3 --use-defaults krbtgt/${R4}@${R3}
+modify --attributes=+ok-as-delegate krbtgt/${R}@${R}
 modify --attributes=+ok-as-delegate krbtgt/${R2}@${R}
 modify --attributes=+ok-as-delegate krbtgt/${R3}@${R2}
 add -p foo --use-defaults host/server.test3.h5l.se@${R3}
@@ -124,11 +125,11 @@ ${kgetcred} host/server.test4.h5l.se@${R4} || { ec=1 ; eval "${testfailed}"; }
 
 
 echo "check result"
-${klist} -v | awk '/Server:.*host.server.test3/{c=8}{if(c-->0){print}}' | grep 'Ticket flags:.*ok-as-delegate' > /dev/null || \
+${klist} -v | awk '/Server:.*host.server.test3/{c=9}{if(c-->0){print}}' | grep 'Ticket flags:.*ok-as-delegate' > /dev/null || \
     { ec=1 ; echo "server.test3 failed";  eval "${testfailed}"; }
-${klist} -v | awk '/Server:.*host.noserver.test3/{c=8}{if(c-->0){print}}' | grep 'Ticket flags:.*ok-as-delegate' 2> /dev/null && \
+${klist} -v | awk '/Server:.*host.noserver.test3/{c=9}{if(c-->0){print}}' | grep 'Ticket flags:.*ok-as-delegate' 2> /dev/null && \
     { ec=1 ; echo "noserver.test3 failed"; eval "${testfailed}"; }
-${klist} -v | awk '/Server:.*host.server.test4/{c=8}{if(c-->0){print}}' | grep 'Ticket flags:.*ok-as-delegate' 2> /dev/null && \
+${klist} -v | awk '/Server:.*host.server.test4/{c=9}{if(c-->0){print}}' | grep 'Ticket flags:.*ok-as-delegate' 2> /dev/null && \
     { ec=1 ; echo "server.test4 failed" ; eval "${testfailed}"; }
 
 ${kdestroy}

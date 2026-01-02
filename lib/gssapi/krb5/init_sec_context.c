@@ -452,6 +452,9 @@ init_auth
 			 ctx->auth_context,
 			 &ctx->kcred->session);
 
+    if (cred && cred->enctypes && cred->enctypes[0] != KRB5_ENCTYPE_NULL)
+        ctx->auth_context->keytype = cred->enctypes[0];
+
     kret = krb5_auth_con_generatelocalsubkey(context,
 					     ctx->auth_context,
 					     &ctx->kcred->session);
@@ -630,6 +633,7 @@ init_auth_restart
     kret = _krb5_build_authenticator(context,
 				     ctx->auth_context,
 				     enctype,
+                                     cred ? cred->enctypes : NULL,
 				     ctx->kcred,
 				     &cksum,
 				     channel_bound,

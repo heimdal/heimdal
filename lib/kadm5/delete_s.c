@@ -101,6 +101,15 @@ kadm5_s_delete_principal(void *server_handle, krb5_principal princ)
 	    krb5_warn(context->context, ret, "opening database");
 	    return ret;
 	}
+
+        if (context->config.mask & KADM5_CONFIG_ASYNC_HDB_WRITES) {
+            ret = context->db->hdb_set_sync(context->context, context->db, 0);
+            if (ret) {
+                krb5_warn(context->context, ret,
+                          "disabling synchronous updates");
+                return ret;
+            }
+        }
     }
 
     ret = kadm5_log_init(context);

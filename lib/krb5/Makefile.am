@@ -5,6 +5,9 @@ include $(top_srcdir)/Makefile.am.common
 WFLAGS += $(WFLAGS_ENUM_CONV)
 
 AM_CPPFLAGS += -I../com_err -I$(srcdir)/../com_err -I../base -I$(srcdir)/../base $(INCLUDE_sqlite3) $(INCLUDE_libintl) $(INCLUDE_openssl_crypto)
+if WIN32
+AM_CPPFLAGS += -DASN1_LIB
+endif
 
 bin_PROGRAMS = verify_krb5_conf
 
@@ -56,7 +59,6 @@ check_PROGRAMS = $(TESTS) test_hostname test_ap-req test_canon test_set_kvno0 \
 		test_mkforwardable
 
 LDADD = libkrb5.la \
-	$(LIB_hcrypto) \
 	$(top_builddir)/lib/asn1/libasn1.la \
 	$(top_builddir)/lib/wind/libwind.la \
 	$(LIB_heimbase) $(LIB_roken)
@@ -67,6 +69,8 @@ else
 test_cc_LDADD = $(LDADD)
 endif
 
+aes_test_LDADD = $(LDADD) $(LIB_openssl_crypto)
+
 if PKINIT
 LIB_pkinit = ../hx509/libhx509.la
 endif
@@ -75,16 +79,19 @@ if have_scc
 use_sqlite = $(LIB_sqlite3)
 endif
 
+if !WIN32
+use_heim_ipc = $(top_builddir)/lib/ipc/libheim-ipcc.la
+endif
+
 libkrb5_la_LIBADD = \
 	$(top_builddir)/lib/asn1/libasn1.la \
-	$(top_builddir)/lib/ipc/libheim-ipcc.la \
+	$(use_heim_ipc) \
 	$(top_builddir)/lib/wind/libwind.la \
 	$(top_builddir)/lib/base/libheimbase.la \
 	$(top_builddir)/lib/hx509/libhx509.la \
 	$(LIB_openssl_crypto) \
 	$(use_sqlite) \
 	$(LIB_com_err) \
-	$(LIB_hcrypto) \
 	$(LIB_libintl) \
 	$(LIBADD_roken) \
 	$(PTHREAD_LIBADD) \
@@ -93,12 +100,11 @@ libkrb5_la_LIBADD = \
 
 librfc3961_la_LIBADD = \
 	$(top_builddir)/lib/asn1/libasn1.la \
-	$(top_builddir)/lib/ipc/libheim-ipcc.la \
+	$(use_heim_ipc) \
 	$(top_builddir)/lib/wind/libwind.la \
 	$(LIB_pkinit) \
 	$(use_sqlite) \
 	$(LIB_com_err) \
-	$(LIB_hcrypto) \
 	$(LIB_libintl) \
 	$(LIBADD_roken) \
 	$(PTHREAD_LIBADD) \
@@ -143,15 +149,14 @@ dist_libkrb5_la_SOURCES =			\
 	copy_host_realm.c			\
 	crc.c					\
 	creds.c					\
+	crypto-des-common.c			\
+	crypto-des.c				\
 	crypto.c				\
 	crypto.h				\
 	crypto-aes-sha1.c			\
 	crypto-aes-sha2.c			\
 	crypto-algs.c				\
 	crypto-arcfour.c			\
-	crypto-des.c				\
-	crypto-des-common.c			\
-	crypto-des3.c				\
 	crypto-evp.c				\
 	crypto-null.c				\
 	crypto-pk.c				\
@@ -162,7 +167,6 @@ dist_libkrb5_la_SOURCES =			\
 	db_plugin.h				\
 	dcache.c				\
 	deprecated.c				\
-	digest.c				\
 	eai_to_heim_errno.c			\
         enomem.c                                \
 	error_string.c				\
@@ -233,8 +237,6 @@ dist_libkrb5_la_SOURCES =			\
 	salt-aes-sha1.c				\
 	salt-aes-sha2.c				\
 	salt-arcfour.c				\
-	salt-des.c				\
-	salt-des3.c				\
 	sp800-108-kdf.c				\
 	scache.c				\
 	send_to_kdc.c				\
@@ -294,15 +296,14 @@ $(ALL_OBJECTS): krb5_err.h k524_err.h k5e1_err.h \
 
 librfc3961_la_SOURCES =				\
 	crc.c					\
+	crypto-des-common.c			\
+	crypto-des.c				\
 	crypto.c				\
 	crypto.h				\
 	crypto-aes-sha1.c			\
 	crypto-aes-sha2.c			\
 	crypto-algs.c				\
 	crypto-arcfour.c			\
-	crypto-des.c				\
-	crypto-des-common.c			\
-	crypto-des3.c				\
 	crypto-evp.c				\
 	crypto-null.c				\
 	crypto-pk.c				\
@@ -317,8 +318,6 @@ librfc3961_la_SOURCES =				\
 	salt-aes-sha1.c				\
 	salt-aes-sha2.c				\
 	salt-arcfour.c				\
-	salt-des.c				\
-	salt-des3.c				\
 	sp800-108-kdf.c				\
 	store-int.c				\
 	warn.c
@@ -327,7 +326,6 @@ test_rfc3961_LDADD = 				\
 	librfc3961.la 				\
 	$(top_builddir)/lib/asn1/libasn1.la	\
 	$(top_builddir)/lib/wind/libwind.la 	\
-	$(LIB_hcrypto)				\
 	$(LIB_roken)
 
 test_plugin_LDFLAGS = -lresolv
@@ -356,7 +354,6 @@ man_MANS =					\
 	krb5_check_transited.3			\
 	krb5_create_checksum.3			\
 	krb5_creds.3				\
-	krb5_digest.3				\
 	krb5_eai_to_heim_errno.3		\
 	krb5_encrypt.3				\
 	krb5_find_padata.3			\

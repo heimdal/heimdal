@@ -6,7 +6,7 @@ include $(top_srcdir)/Makefile.am.common
 
 noinst_DATA = krb5.conf krb5-nodns.conf new_clients_k5.conf mech
 
-SCRIPT_TESTS = check-basic check-nodns check-gss check-gssmask check-context check-spnego check-ntlm check-negoex
+SCRIPT_TESTS = check-basic check-nodns check-gss check-gssmask check-context check-spnego check-negoex
 
 TESTS = $(SCRIPT_TESTS)
 
@@ -17,6 +17,7 @@ port = 49188
 do_subst = srcdirabs=`cd "$(srcdir)"; pwd`; objdirabs=`pwd`; sed \
 	-e 's,[@]srcdir[@],$(srcdir),g' \
 	-e "s,[@]srcdirabs[@],$${srcdirabs},g" \
+	-e 's,[@]top_srcdir[@],$(top_srcdir),g' \
 	-e 's,[@]env_setup[@],$(top_builddir)/tests/bin/setup-env,g' \
 	-e 's,[@]port[@],$(port),g' \
 	-e 's,[@]objdir[@],$(top_builddir)/tests/gss,g' \
@@ -52,11 +53,6 @@ check-nodns: check-nodns.in Makefile
 	chmod +x check-nodns.tmp && \
 	mv check-nodns.tmp check-nodns
 
-check-ntlm: check-ntlm.in Makefile
-	$(do_subst) < $(srcdir)/check-ntlm.in > check-ntlm.tmp && \
-	chmod +x check-ntlm.tmp && \
-	mv check-ntlm.tmp check-ntlm
-
 check-negoex: check-negoex.in Makefile
 	$(do_subst) < $(srcdir)/check-negoex.in > check-negoex.tmp && \
 	chmod +x check-negoex.tmp && \
@@ -91,14 +87,15 @@ CLEANFILES= \
 	mech \
 	current-db* \
 	*.log \
+	*.pid \
 	tempfile \
 	check-basic.tmp \
 	check-nodns.tmp \
 	check-gss.tmp \
 	check-gssmask.tmp \
 	check-spnego.tmp \
-	check-ntlm.tmp \
-	check-context.tmp
+	check-context.tmp \
+	check-negoex.tmp
 
 EXTRA_DIST = \
 	NTMakefile \
@@ -107,11 +104,10 @@ EXTRA_DIST = \
 	check-gss.in \
 	check-gssmask.in \
 	check-spnego.in \
-	check-ntlm.in \
 	check-context.in \
 	check-negoex.in \
-	ntlm-user-file.txt \
 	krb5.conf.in \
+	krb5-nodns.conf.in \
 	include-krb5.conf \
 	new_clients_k5.conf.in \
 	mech.in

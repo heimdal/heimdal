@@ -12,4 +12,12 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 #define MaxHostNameLen (64+4)
 #define MaxPathLen (1024+4)
 
+#ifndef MAXHOSTNAMELEN
+#define MAXHOSTNAMELEN MaxHostNameLen
+#endif
+
+#ifndef MAXPATHLEN
+#define MAXPATHLEN MaxPathLen
+#endif
+
 ])])

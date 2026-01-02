@@ -37,6 +37,12 @@
  * AES
  */
 
+static EVP_CIPHER *
+heim_EVP_aes_128_cbc(krb5_context context)
+{
+    return context->ossl->aes128_cbc;
+}
+
 static struct _krb5_key_type keytype_aes128_sha1 = {
     KRB5_ENCTYPE_AES128_CTS_HMAC_SHA1_96,
     "aes-128",
@@ -48,8 +54,14 @@ static struct _krb5_key_type keytype_aes128_sha1 = {
     _krb5_AES_SHA1_salt,
     NULL,
     _krb5_evp_cleanup,
-    EVP_aes_128_cbc
+    heim_EVP_aes_128_cbc
 };
+
+static EVP_CIPHER *
+heim_EVP_aes_256_cbc(krb5_context context)
+{
+    return context->ossl->aes256_cbc;
+}
 
 static struct _krb5_key_type keytype_aes256_sha1 = {
     KRB5_ENCTYPE_AES256_CTS_HMAC_SHA1_96,
@@ -62,7 +74,7 @@ static struct _krb5_key_type keytype_aes256_sha1 = {
     _krb5_AES_SHA1_salt,
     NULL,
     _krb5_evp_cleanup,
-    EVP_aes_256_cbc
+    heim_EVP_aes_256_cbc
 };
 
 struct _krb5_checksum_type _krb5_checksum_hmac_sha1_aes128 = {
@@ -126,14 +138,14 @@ AES_SHA1_PRF(krb5_context context,
 	krb5_abortx(context, "malloc failed");
 
     {
-	const EVP_CIPHER *c = (*crypto->et->keytype->evp)();
-	EVP_CIPHER_CTX ctx;
+	const EVP_CIPHER *c = (*crypto->et->keytype->evp)(context);
+	EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
 
-	EVP_CIPHER_CTX_init(&ctx); /* ivec all zero */
-	EVP_CipherInit_ex(&ctx, c, NULL, derived->keyvalue.data, NULL, 1);
-	EVP_Cipher(&ctx, out->data, result.checksum.data,
+	EVP_CIPHER_CTX_init(ctx); /* ivec all zero */
+	EVP_CipherInit_ex(ctx, c, NULL, derived->keyvalue.data, NULL, 1);
+	EVP_Cipher(ctx, out->data, result.checksum.data,
 		   crypto->et->blocksize);
-	EVP_CIPHER_CTX_cleanup(&ctx);
+	EVP_CIPHER_CTX_free(ctx);
     }
 
     krb5_data_free(&result.checksum);

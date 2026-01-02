@@ -242,7 +242,7 @@ static struct socket_info *sockets;
 
 static const char *socket_wrapper_dir(void)
 {
-	const char *s = getenv("SOCKET_WRAPPER_DIR");
+	const char *s = secure_getenv("SOCKET_WRAPPER_DIR");
 	if (s == NULL) {
 		return NULL;
 	}
@@ -254,7 +254,7 @@ static const char *socket_wrapper_dir(void)
 
 static unsigned int socket_wrapper_default_iface(void)
 {
-	const char *s = getenv("SOCKET_WRAPPER_DEFAULT_IFACE");
+	const char *s = secure_getenv("SOCKET_WRAPPER_DEFAULT_IFACE");
 	if (s) {
 		unsigned int iface;
 		if (sscanf(s, "%u", &iface) == 1) {
@@ -756,7 +756,7 @@ static const char *socket_wrapper_pcap_file(void)
 		return NULL;
 	}
 
-	s = getenv("SOCKET_WRAPPER_PCAP_FILE");
+	s = secure_getenv("SOCKET_WRAPPER_PCAP_FILE");
 	if (s == NULL) {
 		return NULL;
 	}

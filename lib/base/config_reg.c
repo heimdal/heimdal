@@ -118,7 +118,7 @@ heim_store_string_to_reg_value(heim_context context,
         static_buffer[cb_data++] = '\0';
         if (type == REG_MULTI_SZ)
             static_buffer[cb_data++] = '\0';
-        data = static_buffer;
+        data = (const char *)static_buffer;
     }
 
     if (type == REG_NONE)
@@ -138,7 +138,8 @@ heim_store_string_to_reg_value(heim_context context,
     switch (type) {
     case REG_SZ:
     case REG_EXPAND_SZ:
-        rcode = RegSetValueEx(key, valuename, 0, type, data, cb_data);
+        rcode = RegSetValueEx(key, valuename, 0, type,
+                              (const unsigned char *)data, cb_data);
         if (rcode)
         {
             if (context)
@@ -152,9 +153,9 @@ heim_store_string_to_reg_value(heim_context context,
     case REG_MULTI_SZ:
         if (separator && *separator)
         {
-            char *cp;
+            unsigned char *cp;
 
-            if (data != static_buffer)
+            if (data != (const char *)static_buffer)
                 static_buffer[cb_data++] = '\0';
 
             for ( cp = static_buffer; cp < static_buffer+cb_data; cp++)
@@ -163,7 +164,8 @@ heim_store_string_to_reg_value(heim_context context,
                     *cp = '\0';
             }
 
-            rcode = RegSetValueEx(key, valuename, 0, type, data, cb_data);
+            rcode = RegSetValueEx(key, valuename, 0, type,
+                                  (const unsigned char *)data, cb_data);
             if (rcode)
             {
                 if (context)

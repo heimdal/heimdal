@@ -51,7 +51,7 @@ R2=TEST2.H5L.SE
 port=@port@
 pwport=@pwport@
 
-kadmin="${kadmin} -l -r $R"
+kadmin="${kadmin} -l -A -r $R"
 kdc="${kdc} --addresses=localhost -P $port"
 kpasswdd="${kpasswdd} --addresses=localhost -p $pwport"
 

@@ -273,6 +273,13 @@ init_generate (const char *filename, const char *base)
 	  "    }                                                          \\\n"
 	  "  } while (0)\n\n",
 	  headerfile);
+    fputs("#define ASN1_MALLOC_ENCODE_SAVE(T, S, L, R)                     \\\n"
+          "    do {                                                        \\\n"
+          "        der_free_octet_string(&(S)->_save);                     \\\n"
+          "        ASN1_MALLOC_ENCODE(T, (S)->_save.data,                  \\\n"
+          "                           (S)->_save.length, (S), (L), (R));   \\\n"
+          "    } while (0)\n\n",
+          headerfile);
     fputs("#ifdef _WIN32\n"
 	  "#ifndef ASN1_LIB\n"
 	  "#define ASN1EXP  __declspec(dllimport)\n"
@@ -462,7 +469,9 @@ generate_header_of_codefile(const char *name)
 		 "#include <parse_units.h>\n\n");
 
 #ifdef _WIN32
-    fprintf(codefile, "#pragma warning(disable: 4101)\n\n");
+    fprintf(codefile, "#ifdef _MSC_VER\n");
+    fprintf(codefile, "#pragma warning(disable: 4101)\n");
+    fprintf(codefile, "#endif\n\n");
 #endif
 }
 
@@ -1118,6 +1127,7 @@ define_open_type(int level, const char *newbasename, const char *name, const cha
     fprintf(jsonfile, "\"objectsetname\":\"%s\",", os->symbol->name);
     fprintf(jsonfile, "\"typeidmember\":\"%s\",", typeidmember->name);
     fprintf(jsonfile, "\"opentypemember\":\"%s\",", opentypemember->name);
+    /* XXX We need to include more metadata about the fields */
     fprintf(jsonfile, "\"typeidfield\":\"%s\",", typeidfield->name);
     fprintf(jsonfile, "\"opentypefield\":\"%s\",", opentypefield->name);
 

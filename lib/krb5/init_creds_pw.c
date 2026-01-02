@@ -98,6 +98,7 @@ struct krb5_get_init_creds_ctx {
     struct pa_info_data paid;
 
     METHOD_DATA md;
+    TYPED_DATA td;
     KRB_ERROR error;
     EncKDCRepPart enc_part;
 
@@ -208,6 +209,7 @@ free_init_creds_ctx(krb5_context context, krb5_init_creds_context ctx)
     krb5_data_free(&ctx->req_buffer);
     krb5_free_cred_contents(context, &ctx->cred);
     free_METHOD_DATA(&ctx->md);
+    free_TYPED_DATA(&ctx->td);
     free_EncKDCRepPart(&ctx->enc_part);
     free_KRB_ERROR(&ctx->error);
     free_AS_REQ(&ctx->as_req);
@@ -1160,6 +1162,7 @@ pa_data_to_key_plain(krb5_context context,
 }
 
 struct pkinit_context {
+    unsigned int tries : 4;
     unsigned int win2k : 1;
     unsigned int used_pkinit : 1;
 };
@@ -1171,6 +1174,8 @@ pa_data_to_md_pkinit(krb5_context context,
 		     const krb5_principal client,
 		     int win2k,
 		     krb5_init_creds_context ctx,
+                     krb5_error_code error_code,
+                     TYPED_DATA *td,
 		     METHOD_DATA *md)
 {
     if (ctx->pk_init_ctx == NULL)
@@ -1182,7 +1187,9 @@ pa_data_to_md_pkinit(krb5_context context,
 			      win2k,
 			      &a->req_body,
 			      ctx->pk_nonce,
-			      md);
+                              error_code,
+			      td,
+                              md);
 #else
     krb5_set_error_message(context, EINVAL,
 			   N_("no support for PKINIT compiled in", ""));
@@ -1217,32 +1224,185 @@ pkinit_configure_win(krb5_context context, krb5_init_creds_context ctx, void *pa
     return 0;
 }
 
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+_krb5_typed_data_get_dh_params(krb5_context context,
+                               TYPED_DATA *td,
+                               int td_type,
+                               TD_DH_PARAMETERS **out)
+{
+    krb5_error_code ret;
+    size_t i;
+
+    if (*out) {
+        free_TD_DH_PARAMETERS(*out);
+    }
+    if (td == NULL) {
+        if (*out)
+            free(*out);
+        *out = NULL;
+        return ENOENT;
+    }
+    for (i = 0; i < td->len; i++) {
+        if (td->val[0].data_type != td_type)
+            continue;
+        if (td->val[0].data_value == NULL)
+            continue;
+        if (*out == NULL && (*out = calloc(1, sizeof(**out))) == NULL)
+            return krb5_enomem(context);
+        ret = decode_TD_DH_PARAMETERS(td->val[0].data_value->data,
+                                      td->val[0].data_value->length,
+                                      *out, NULL);
+        if (ret == 0)
+            return 0;
+
+        /*
+         * FIXME: We need a version of _krb5_debug() that takes a
+         *        krb5_error_code.
+         */
+        _krb5_debug(context, 1, "Could not decode TD-DH-PARAMETERS");
+    }
+    return ENOENT;
+}
+
 static krb5_error_code
-pkinit_step(krb5_context context, krb5_init_creds_context ctx, void *pa_ctx, PA_DATA *pa, const AS_REQ *a,
-	    const AS_REP *rep, METHOD_DATA *in_md, METHOD_DATA *out_md)
+pkinit_step(krb5_context context,
+            krb5_init_creds_context ctx,
+            void *pa_ctx,
+            PA_DATA *pa,
+            const AS_REQ *a,
+	    const AS_REP *rep,
+            krb5_error_code error_code,
+            METHOD_DATA *in_md,
+            TYPED_DATA *td,
+            METHOD_DATA *out_md)
 {
     krb5_error_code ret = HEIM_ERR_PA_CANT_CONTINUE;
     struct pkinit_context *pkinit_ctx = pa_ctx;
 
-    if (rep == NULL) {
-	if (pkinit_ctx->used_pkinit) {
+    if (rep == NULL || error_code) {
+	if (pkinit_ctx->tries > 2) {
 	    krb5_set_error_message(context, KRB5_GET_IN_TKT_LOOP,
-				   "Already tried PKINIT(%s), looping",
+				   "Tried PKINIT(%s) too many times",
 				   pkinit_ctx->win2k ? "win2k" : "ietf");
-	} else {
-	    ret = pa_data_to_md_pkinit(context, a, ctx->cred.client,
-				       (pkinit_ctx->win2k != 0),
-				       ctx, out_md);
-	    if (ret == 0)
-		ret = HEIM_ERR_PA_CONTINUE_NEEDED;
+            return error_code ?
+                error_code :
+                KRB5_GET_IN_TKT_LOOP; /* Not the best error code... */
+        }
+        switch (error_code) {
+        case KRB5_KDC_ERR_DH_KEY_PARAMETERS_NOT_ACCEPTED:
+            /*
+             * In PKINIT the client picks a key agreement group/curve and the
+             * KDC can reject it, listing alternatives to try.  That makes this
+             * error retriable: just try a different key agreement group/curve.
+             *
+             * We'll achieve that by stashing away a copy of the offered key
+             * agreement algorithms in the pk_init_ctx.
+             */
+            if (ctx->pk_init_ctx->want_dh_alg) {
+                _krb5_debug(context, 1, "KDC rejected requested key agreement algorithm");
+                krb5_set_error_message(context, error_code,
+                                       "KDC rejected requested key agreement algorithm");
+                return error_code;
+            }
+            _krb5_debug(context, 1, "KDC rejected key agreement algorithm; retrying");
+            ret = _krb5_typed_data_get_dh_params(context, td, td_dh_parameters,
+                                                 &ctx->pk_init_ctx->kdc_dh_algs);
+            if (ret)
+                /* _krb5_typed_data_get_dh_params() will have traced why */
+                return error_code;
+            break;
+        case KRB5_KDC_ERR_NO_ACCEPTABLE_KDF:
+            /*
+             * In PKINIT the server (KDC) picks a KDF to use.  The client tells
+             * it which KDFs it supports.  If the KDC rejects all of the
+             * client's KDFs then there is nothing else to be done other than
+             * to add support for or enable one (or more) of the KDC's
+             * supported KDFs, but we can't do that here.
+             *
+             * FIXME: What we could and should do here is make the error
+             *        message list the KDC's supported KDF OIDs.  Then the user
+             *        would have enough information to act.
+             */
+            _krb5_debug(context, 1, "KDC rejected offered PKINIT KDFs");
+            return error_code;
+        case KRB5_KDC_ERR_CANT_VERIFY_CERTIFICATE:
+            /*
+             * The KDC can't find a validation path for the client's
+             * certificate to a KDC-side trust anchor.  In principle if the
+             * client has multiple certificates then we could use the
+             * associated TYPED-DATA to pick a better certificate and retry.
+             * In practice that's a lot of work for not much gain: the user can
+             * just make sure to have the certificates that will work in the
+             * certificate store provided to kinit or whatever is calling
+             * krb5_get_init_creds*().
+             *
+             * Therefore we do not try to retry in this case.
+             */
+            _krb5_debug(context, 1, "KDC could not verify client certificate (issuer not trusted)");
+            return error_code;
+        case KRB5_KDC_ERR_INVALID_CERTIFICATE:
+            /*
+             * Similar to KRB5_KDC_ERR_CANT_VERIFY_CERTIFICATE, only there was
+             * some other defect with the client's certificate or one of the
+             * intermediates.  We don't try to retry for the same reasons.
+             */
+            _krb5_debug(context, 1, "KDC could not verify client certificate (invalid signature)");
+            return error_code;
+        case KRB5_KDC_ERR_DIGEST_IN_CERT_NOT_ACCEPTED:
+            /*
+             * Similar to KRB5_KDC_ERR_CANT_VERIFY_CERTIFICATE, only there was
+             * some other defect with the client's certificate or one of the
+             * intermediates.
+             *
+             * FIXME: It's possible to retry in this case since all we need to
+             *        do is change the certificate store search criteria.
+             */
+            _krb5_debug(context, 1, "KDC rejected certificate algorithm(s)");
+            return error_code;
+        case KRB5_KDC_ERR_PA_CHECKSUM_MUST_BE_INCLUDED:
+            /* Can't happen now */
+            _krb5_debug(context, 1, "KDC thinks we did not include a PA checksum!");
+            return error_code;
+        case KRB5_KDC_ERR_DIGEST_IN_SIGNED_DATA_NOT_ACCEPTED:
+            /*
+             * Similar to KRB5_KDC_ERR_DH_KEY_PARAMETERS_NOT_ACCEPTED and
+             * eminently retriable.
+             */
+            if (ctx->pk_init_ctx->want_sig_alg) {
+                _krb5_debug(context, 1, "KDC rejected requested signature algorithm");
+                krb5_set_error_message(context, error_code,
+                                       "KDC rejected requested signature algorithm");
+                return error_code;
+            }
+            ret = _krb5_typed_data_get_dh_params(context, td, td_dh_parameters,
+                                                 &ctx->pk_init_ctx->kdc_sig_algs);
+            if (ret)
+                /* _krb5_typed_data_get_dh_params() will have traced why */
+                return error_code;
+            /* FIXME!  Add support for picking a better algorithm! */
+            krb5_set_error_message(context, error_code,
+                                   "KDC rejected requested signature algorithm "
+                                   "(negotiation support incomplete on client s3ide)");
+            return error_code;
+        case 0:
+            break;
+        default:
+            _krb5_debug(context, 1, "Unknown KDC error while trying PKINIT");
+            return error_code;
+        }
+        ret = pa_data_to_md_pkinit(context, a, ctx->cred.client,
+                                   (pkinit_ctx->win2k != 0),
+                                   ctx, error_code, td, out_md);
+        if (ret == 0)
+            ret = HEIM_ERR_PA_CONTINUE_NEEDED;
 
-	    pkinit_ctx->used_pkinit = 1;
-	}
-    } else if (pa) {
+        pkinit_ctx->used_pkinit = 1;
+        pkinit_ctx->tries++;
+    } else if (rep && pa) {
 	ret = _krb5_pk_rd_pa_reply(context,
-				   a->req_body.realm,
 				   ctx->pk_init_ctx,
-				   rep->enc_part.etype,
+				   a,
+				   rep,
 				   ctx->pk_nonce,
 				   &ctx->req_buffer,
 				   pa,
@@ -1371,7 +1531,9 @@ pa_gss_step(krb5_context context,
 	    PA_DATA *pa,
 	    const AS_REQ *a,
 	    const AS_REP *rep,
+            krb5_error_code error_code,
 	    METHOD_DATA *in_md,
+            TYPED_DATA *td,
 	    METHOD_DATA *out_md)
 {
     krb5_error_code ret;
@@ -1583,8 +1745,16 @@ process_pa_info(krb5_context, const krb5_principal, const AS_REQ *, struct pa_in
 
 
 static krb5_error_code
-enc_chal_step(krb5_context context, krb5_init_creds_context ctx, void *pa_ctx, PA_DATA *pa, const AS_REQ *a,
-	      const AS_REP *rep, METHOD_DATA *in_md, METHOD_DATA *out_md)
+enc_chal_step(krb5_context context,
+              krb5_init_creds_context ctx,
+              void *pa_ctx,
+              PA_DATA *pa,
+              const AS_REQ *a,
+	      const AS_REP *rep,
+              krb5_error_code error_code,
+              METHOD_DATA *in_md,
+              TYPED_DATA *td,
+              METHOD_DATA *out_md)
 {
     struct pa_info_data paid, *ppaid;
     krb5_keyblock challengekey;
@@ -1720,10 +1890,16 @@ enc_ts_restart(krb5_context context, krb5_init_creds_context ctx, void *pa_ctx)
 }
 
 static krb5_error_code
-enc_ts_step(krb5_context context, krb5_init_creds_context ctx, void *pa_ctx, PA_DATA *pa,
+enc_ts_step(krb5_context context,
+            krb5_init_creds_context ctx,
+            void *pa_ctx,
+            PA_DATA *pa,
 	    const AS_REQ *a,
 	    const AS_REP *rep,
-	    METHOD_DATA *in_md, METHOD_DATA *out_md)
+            krb5_error_code error_code,
+	    METHOD_DATA *in_md,
+	    TYPED_DATA *td,
+            METHOD_DATA *out_md)
 {
     struct enc_ts_context *pactx = (struct enc_ts_context *)pa_ctx;
     struct pa_info_data paid, *ppaid;
@@ -1849,8 +2025,16 @@ enc_ts_release(void *pa_ctx)
 }
 
 static krb5_error_code
-pa_pac_step(krb5_context context, krb5_init_creds_context ctx, void *pa_ctx, PA_DATA *pa, const AS_REQ *a,
-	    const AS_REP *rep, METHOD_DATA *in_md, METHOD_DATA *out_md)
+pa_pac_step(krb5_context context,
+            krb5_init_creds_context ctx,
+            void *pa_ctx,
+            PA_DATA *pa,
+            const AS_REQ *a,
+	    const AS_REP *rep,
+            krb5_error_code error_code,
+            METHOD_DATA *in_md,
+            TYPED_DATA *td,
+            METHOD_DATA *out_md)
 {
     size_t len = 0, length;
     krb5_error_code ret;
@@ -1881,8 +2065,16 @@ pa_pac_step(krb5_context context, krb5_init_creds_context ctx, void *pa_ctx, PA_
 }
 
 static krb5_error_code
-pa_enc_pa_rep_step(krb5_context context, krb5_init_creds_context ctx, void *pa_ctx, PA_DATA *pa, const AS_REQ *a,
-		   const AS_REP *rep, METHOD_DATA *in_md, METHOD_DATA *out_md)
+pa_enc_pa_rep_step(krb5_context context,
+                   krb5_init_creds_context ctx,
+                   void *pa_ctx,
+                   PA_DATA *pa,
+                   const AS_REQ *a,
+		   const AS_REP *rep,
+                   krb5_error_code error_code,
+                   METHOD_DATA *in_md,
+                   TYPED_DATA *td,
+                   METHOD_DATA *out_md)
 {
     if (ctx->runflags.allow_enc_pa_rep)
 	return krb5_padata_add(context, out_md, KRB5_PADATA_REQ_ENC_PA_REP, NULL, 0);
@@ -1897,7 +2089,9 @@ pa_fx_cookie_step(krb5_context context,
 		  PA_DATA *pa,
 		  const AS_REQ *a,
 		  const AS_REP *rep,
+                  krb5_error_code error_code,
 		  METHOD_DATA *in_md,
+		  TYPED_DATA *td,
 		  METHOD_DATA *out_md)
 {
     krb5_error_code ret;
@@ -1936,7 +2130,7 @@ pa_fx_cookie_step(krb5_context context,
 typedef struct pa_info_data *(*pa_salt_info_f)(krb5_context, const krb5_principal, const AS_REQ *, struct pa_info_data *, heim_octet_string *);
 typedef krb5_error_code (*pa_configure_f)(krb5_context, krb5_init_creds_context, void *);
 typedef krb5_error_code (*pa_restart_f)(krb5_context, krb5_init_creds_context, void *);
-typedef krb5_error_code (*pa_step_f)(krb5_context, krb5_init_creds_context, void *, PA_DATA *, const AS_REQ *, const AS_REP *, METHOD_DATA *, METHOD_DATA *);
+typedef krb5_error_code (*pa_step_f)(krb5_context, krb5_init_creds_context, void *, PA_DATA *, const AS_REQ *, const AS_REP *, krb5_error_code, METHOD_DATA *, TYPED_DATA *, METHOD_DATA *);
 typedef void            (*pa_release_f)(void *);
 
 static const struct patype {
@@ -2137,7 +2331,8 @@ pa_announce(krb5_context context,
 	    continue;
 
 	if (patypes[n].step)
-	    patypes[n].step(context, ctx, NULL, NULL, NULL, NULL, in_md, out_md);
+            patypes[n].step(context, ctx, NULL, NULL, NULL, NULL, 0, in_md,
+                            NULL, out_md);
 	else
 	    ret = krb5_padata_add(context, out_md, patypes[n].type, NULL, 0);
     }
@@ -2250,7 +2445,9 @@ pa_step(krb5_context context,
 	krb5_init_creds_context ctx,
 	const AS_REQ *a,
 	const AS_REP *rep,
+        krb5_error_code error_code,
 	METHOD_DATA *in_md,
+	TYPED_DATA *td,
 	METHOD_DATA *out_md)
 {
     krb5_error_code ret;
@@ -2301,7 +2498,9 @@ pa_step(krb5_context context,
 
     _krb5_debug(context, 5, "Stepping pa-mech: %s", ctx->pa_mech->patype->name);
 
-    ret = ctx->pa_mech->patype->step(context, ctx, (void *)&ctx->pa_mech->pactx[0], pa, a, rep, in_md, out_md);
+    ret = ctx->pa_mech->patype->step(context, ctx,
+                                     (void *)&ctx->pa_mech->pactx[0], pa, a,
+                                     rep, error_code, in_md, td, out_md);
     _krb5_debug(context, 10, "PA type %s returned %d", ctx->pa_mech->patype->name, ret);
     if (ret == 0) {
 	struct pa_auth_mech *next_pa = ctx->pa_mech->next;
@@ -2363,7 +2562,9 @@ process_pa_data_to_md(krb5_context context,
 		      const krb5_creds *creds,
 		      const AS_REQ *a,
 		      krb5_init_creds_context ctx,
+                      krb5_error_code error_code,
 		      METHOD_DATA *in_md,
+		      TYPED_DATA *td,
 		      METHOD_DATA **out_md)
 {
     krb5_error_code ret;
@@ -2377,7 +2578,7 @@ process_pa_data_to_md(krb5_context context,
 
     log_kdc_pa_types(context, in_md);
 
-    ret = pa_step(context, ctx, a, NULL, in_md, *out_md);
+    ret = pa_step(context, ctx, a, NULL, error_code, in_md, td, *out_md);
     if (ret == HEIM_ERR_PA_CONTINUE_NEEDED) {
 	_krb5_debug(context, 0, "pamech need more stepping");
     } else if (ret == 0) {
@@ -2436,7 +2637,7 @@ process_pa_data_to_key(krb5_context context,
 	}
     }
 
-    ret = pa_step(context, ctx, a, rep, rep->padata, NULL);
+    ret = pa_step(context, ctx, a, rep, ctx->error.error_code, rep->padata, &ctx->td, NULL);
     if (ret == HEIM_ERR_PA_CONTINUE_NEEDED) {
 	_krb5_debug(context, 0, "In final stretch and pa require more stepping ?");
 	return ret;
@@ -2963,7 +3164,7 @@ init_creds_step(krb5_context context,
 {
     struct timeval start_time, end_time;
     krb5_data checksum_data;
-    krb5_error_code ret;
+    krb5_error_code ret, ret2;
     size_t len = 0;
     size_t size;
     AS_REQ req2;
@@ -3015,6 +3216,8 @@ init_creds_step(krb5_context context,
 	if (ret == 0) {
 	    unsigned eflags = EXTRACT_TICKET_AS_REQ | EXTRACT_TICKET_TIMESYNC;
 	    krb5_data data;
+
+            ctx->error.error_code = 0;
 
 	    /*
 	     * Unwrap AS-REP
@@ -3140,25 +3343,44 @@ init_creds_step(krb5_context context,
 	     * wrapped version if we are using FAST.
 	     */
 
-	    free_METHOD_DATA(&ctx->md);
-	    memset(&ctx->md, 0, sizeof(ctx->md));
+            switch (ctx->error.error_code) {
+            case KRB5KDC_ERR_PREAUTH_REQUIRED:
+            case KRB5_KDC_ERR_MORE_PREAUTH_DATA_REQUIRED:
+                if (!ctx->error.e_data) {
+                    _krb5_debug(context, 5, "KRB-ERROR missing expected METHOD-DATA in e-data");
+                    break;
+                }
+                free_METHOD_DATA(&ctx->md);
+                memset(&ctx->md, 0, sizeof(ctx->md));
 
-	    if (ctx->error.e_data) {
-		krb5_error_code ret2;
-
-		ret2 = decode_METHOD_DATA(ctx->error.e_data->data,
-					 ctx->error.e_data->length,
-					 &ctx->md,
-					 NULL);
-		if (ret2) {
-		    /*
-		     * Just ignore any error, the error will be pushed
-		     * out from krb5_error_from_rd_error() if there
-		     * was one.
-		     */
-		    _krb5_debug(context, 5, N_("Failed to decode METHOD-DATA", ""));
-		}
-	    }
+                ret2 = decode_METHOD_DATA(ctx->error.e_data->data,
+                                          ctx->error.e_data->length,
+                                          &ctx->md, NULL);
+                /* Just ignore any errors here */
+                if (ret2)
+                    _krb5_debug(context, 5, "Failed to decode METHOD-DATA");
+                break;
+            case KRB5_KDC_ERR_CANT_VERIFY_CERTIFICATE:
+            case KRB5_KDC_ERR_INVALID_CERTIFICATE:
+            case KRB5_KDC_ERR_DIGEST_IN_CERT_NOT_ACCEPTED:
+            case KRB5_KDC_ERR_DH_KEY_PARAMETERS_NOT_ACCEPTED:
+            case KRB5_KDC_ERR_PA_CHECKSUM_MUST_BE_INCLUDED:
+            case KRB5_KDC_ERR_DIGEST_IN_SIGNED_DATA_NOT_ACCEPTED:
+                if (!ctx->error.e_data) {
+                    _krb5_debug(context, 5, "KRB-ERROR missing expected TYPED-DATA in e-data");
+                    break;
+                }
+                free_TYPED_DATA(&ctx->td);
+                memset(&ctx->td, 0, sizeof(ctx->td));
+                ret2 = decode_TYPED_DATA(ctx->error.e_data->data,
+                                         ctx->error.e_data->length,
+                                         &ctx->td, NULL);
+                if (ret2)
+                    _krb5_debug(context, 5, "Failed to decode TYPED-DATA");
+                break;
+            default:
+                break;
+            }
 
 	    /*
 	     * Unwrap KRB-ERROR, we are always calling this so that
@@ -3167,7 +3389,7 @@ init_creds_step(krb5_context context,
 	     * in the KDC).
 	     */
 	    ret = _krb5_fast_unwrap_error(context, ctx->nonce, &ctx->fast_state,
-					  &ctx->md, &ctx->error);
+					  &ctx->md, &ctx->td, &ctx->error);
 	    if (ret)
 		goto out;
 
@@ -3208,6 +3430,15 @@ init_creds_step(krb5_context context,
 					      "options sent by KDC", ""));
 		    goto out;
 		}
+            } else if (ret == KRB5_KDC_ERR_DH_KEY_PARAMETERS_NOT_ACCEPTED) {
+                /*
+                 * Retriable PKINIT error (due to negotiation of algorithms) ->
+                 * retry.
+                 */
+		_krb5_debug(context, 5, "init_creds: retrying PKINIT");
+
+		pa_restart(context, ctx);
+
 	    } else if (ret == KRB5KRB_AP_ERR_SKEW && context->kdc_sec_offset == 0) {
 		/*
 		 * Try adapt to timeskrew when we are using pre-auth, and
@@ -3371,7 +3602,8 @@ init_creds_step(krb5_context context,
      */
 
     ret = process_pa_data_to_md(context, &ctx->cred, &ctx->as_req, ctx,
-				&ctx->md, &ctx->as_req.padata);
+                                ctx->error.error_code, &ctx->md, &ctx->td,
+                                &ctx->as_req.padata);
     if (ret)
 	goto out;
 
@@ -3403,6 +3635,13 @@ init_creds_step(krb5_context context,
 	goto out;
     if(len != ctx->req_buffer.length)
 	krb5_abortx(context, "internal error in ASN.1 encoder");
+
+    /*
+     * Save the encoded AS-REQ where we can find it w/o having to refactor the
+     * pre-auth service API (struct patype).
+     */
+    der_free_octet_string(&ctx->as_req._save);
+    ret = der_copy_octet_string(&ctx->req_buffer, &ctx->as_req._save);
 
     ret = krb5_data_copy(out,
 			 ctx->req_buffer.data,

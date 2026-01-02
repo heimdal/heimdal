@@ -89,7 +89,8 @@ acceptor_approved(OM_uint32 *minor_status,
     if (gss_oid_equal(mech, GSS_NEGOEX_MECHANISM)) {
 	size_t i;
 
-	ret = _gss_spnego_indicate_mechs(minor_status, &oidset);
+        ret = _gss_spnego_indicate_mechs(minor_status, GSS_C_ANON_FLAG,
+                                         &oidset);
 	if (ret != GSS_S_COMPLETE)
 	    return ret;
 
@@ -681,13 +682,43 @@ acceptor_start
 	}
     }
 
-    if (acceptor_cred_handle != GSS_C_NO_CREDENTIAL)
-	ret = _gss_spnego_inquire_cred_mechs(minor_status,
-					     acceptor_cred_handle,
-					     &supported_mechs,
-					     &canonical_order);
-    else
-	ret = _gss_spnego_indicate_mechs(minor_status, &supported_mechs);
+    /*
+     * If the initiator proposed NegoEx, include anonymous mechanisms in
+     * supported_mechs since NegoEx mechanisms like sanon-x25519 may be used.
+     */
+    {
+	OM_uint32 indicate_flags = 0;
+	size_t i;
+
+	for (i = 0; i < ni->mechTypes.len; i++) {
+	    size_t oidlen = der_length_oid(&ni->mechTypes.val[i]);
+	    gss_OID_desc oid;
+	    char oidbuf[64];
+
+            if (oidlen > sizeof(oidbuf))
+                continue;
+
+            oid.length = oidlen;
+            oid.elements = oidbuf;
+
+	    if (der_put_oid((unsigned char *)oidbuf + oidlen - 1,
+			    oidlen, &ni->mechTypes.val[i], &oidlen) == 0 &&
+                gss_oid_equal(&oid, GSS_NEGOEX_MECHANISM)) {
+                indicate_flags |= GSS_C_ANON_FLAG;
+                break;
+	    }
+	}
+
+	if (acceptor_cred_handle != GSS_C_NO_CREDENTIAL)
+	    ret = _gss_spnego_inquire_cred_mechs(minor_status,
+						indicate_flags,
+						acceptor_cred_handle,
+						&supported_mechs,
+						&canonical_order);
+	else
+	    ret = _gss_spnego_indicate_mechs(minor_status, indicate_flags,
+					     &supported_mechs);
+    }
     if (ret != GSS_S_COMPLETE)
 	goto out;
 

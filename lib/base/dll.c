@@ -83,7 +83,9 @@ struct tls_values {
 
 static HEIMDAL_THREAD_LOCAL struct tls_values values;
 
+#ifndef WIN32
 static char dead_key[1];
+#endif
 static void no_dtor(void *d) { (void)d; }
 
 void

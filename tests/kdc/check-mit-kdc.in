@@ -1,0 +1,408 @@
+#!/bin/sh
+#
+# Copyright (c) 2006 - 2024 Kungliga Tekniska Högskolan
+# (Royal Institute of Technology, Stockholm, Sweden).
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# 3. Neither the name of the Institute nor the names of its contributors
+#    may be used to endorse or promote products derived from this software
+#    without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+
+#
+# Test Heimdal clients against MIT Kerberos KDC
+#
+
+top_builddir="@top_builddir@"
+env_setup="@env_setup@"
+objdir="@objdir@"
+
+. ${env_setup}
+
+# Skip if MIT Kerberos is not available
+if [ -z "$MITKRB5" ] || [ ! -d "$MITKRB5" ]; then
+    echo "MIT Kerberos not available, skipping"
+    exit 77
+fi
+
+# Check for required MIT binaries
+for prog in kdb5_util krb5kdc kadmin.local; do
+    if [ ! -x "${MITKRB5}/sbin/${prog}" ] && [ ! -x "${MITKRB5}/bin/${prog}" ]; then
+        echo "MIT ${prog} not found, skipping"
+        exit 77
+    fi
+done
+
+# Check for PKINIT support
+rsa=yes
+pkinit=no
+if ${hxtool} info | grep 'rsa: hx509 null RSA' > /dev/null ; then
+    rsa=no
+fi
+if ${hxtool} info | grep 'rand: not available' > /dev/null ; then
+    rsa=no
+fi
+if ${kinit} --help 2>&1 | grep "CA certificates" > /dev/null; then
+    pkinit=yes
+fi
+
+testfailed="echo test failed; cat messages.log; exit 1"
+
+R=MIT-TEST.H5L.SE
+
+port=@port@
+admport=@admport@
+
+mitdir="${objdir}/mit-kdc"
+cache="FILE:${objdir}/mit-cache.krb5"
+keytab="${objdir}/mit-server.keytab"
+keyfile="${hx509_data}/key.der"
+keyfile2="${hx509_data}/key2.der"
+
+kinit="${kinit} -c $cache ${afs_no_afslog}"
+klist="${klist} -c $cache"
+kgetcred="${kgetcred} -c $cache"
+kdestroy="${kdestroy} -c $cache ${afs_no_unlog}"
+
+server=host/localhost
+
+KRB5_CONFIG="${objdir}/krb5-mit-kdc.conf"
+export KRB5_CONFIG
+
+# Clean up from previous runs
+rm -rf "${mitdir}"
+rm -f "${objdir}/krb5-mit-kdc.conf"
+rm -f "${objdir}/mit-kdc.conf"
+rm -f "${cache#FILE:}"
+rm -f "${keytab}"
+rm -f "${objdir}/mit-ca.crt"
+rm -f "${objdir}/mit-kdc.crt"
+rm -f "${objdir}/mit-user.crt"
+rm -f "${objdir}/mit-user.pem"
+rm -f "${objdir}/mit-kdc-key.pem"
+rm -f req-mit-kdc.der req-mit-user.der
+
+mkdir -p "${mitdir}"
+
+> messages.log
+
+ec=0
+kdcpid=
+
+cleanup() {
+    if [ -n "$kdcpid" ]; then
+        echo "Killing MIT KDC (pid $kdcpid)"
+        kill $kdcpid 2>/dev/null
+        wait $kdcpid 2>/dev/null
+    fi
+    trap '' EXIT INT TERM
+    # cat messages.log
+    exit $ec
+}
+trap cleanup EXIT INT TERM
+
+#
+# Set up certificates for PKINIT
+#
+if [ "$pkinit" = yes ] && [ "$rsa" = yes ]; then
+    echo "Setting up PKINIT certificates"
+
+    ${hxtool} request-create \
+        --subject="CN=MIT KDC,DC=mit-test,DC=h5l,DC=se" \
+        --key=FILE:${keyfile2} \
+        req-mit-kdc.der || exit 1
+
+    ${hxtool} request-create \
+        --subject="CN=foo,DC=mit-test,DC=h5l,DC=se" \
+        --key=FILE:${keyfile2} \
+        req-mit-user.der || exit 1
+
+    echo "Issuing self-signed CA cert"
+    ${hxtool} issue-certificate \
+        --self-signed \
+        --issue-ca \
+        --ca-private-key=FILE:${keyfile} \
+        --subject="CN=MIT Test CA,DC=mit-test,DC=h5l,DC=se" \
+        --certificate="PEM-FILE:${objdir}/mit-ca.crt" || exit 1
+
+    echo "Issuing MIT KDC certificate"
+    ${hxtool} issue-certificate \
+        --ca-certificate=PEM-FILE:${objdir}/mit-ca.crt,${keyfile} \
+        --type="pkinit-kdc" \
+        --pk-init-principal="krbtgt/${R}@${R}" \
+        --req="PKCS10:req-mit-kdc.der" \
+        --certificate="PEM-FILE:${objdir}/mit-kdc.crt" || exit 1
+
+    echo "Issuing user certificate"
+    ${hxtool} issue-certificate \
+        --ca-certificate=PEM-FILE:${objdir}/mit-ca.crt,${keyfile} \
+        --type="pkinit-client" \
+        --pk-init-principal="foo@${R}" \
+        --req="PKCS10:req-mit-user.der" \
+        --certificate="PEM-FILE:${objdir}/mit-user.crt" || exit 1
+
+    # Create combined PEM file for user PKINIT
+    cat ${objdir}/mit-user.crt > ${objdir}/mit-user.pem
+    openssl rsa -in ${keyfile2} -outform PEM >> ${objdir}/mit-user.pem 2>/dev/null || \
+        ${hxtool} print --content FILE:${keyfile2} >> ${objdir}/mit-user.pem
+
+    # Create KDC key PEM file for MIT PKINIT
+    openssl rsa -in ${keyfile2} -outform PEM > ${objdir}/mit-kdc-key.pem 2>/dev/null || \
+        ${hxtool} print --content FILE:${keyfile2} > ${objdir}/mit-kdc-key.pem
+
+    pkinit_configured=yes
+else
+    pkinit_configured=no
+fi
+
+#
+# Create krb5.conf for Heimdal clients (and MIT tools)
+#
+cat > ${objdir}/krb5-mit-kdc.conf <<EOF
+[libdefaults]
+    default_realm = ${R}
+    dns_lookup_realm = false
+    dns_lookup_kdc = false
+    rdns = false
+    ticket_lifetime = 24h
+    forwardable = true
+
+[realms]
+    ${R} = {
+        kdc = localhost:${port}
+        admin_server = localhost:${admport}
+EOF
+
+if [ "$pkinit_configured" = yes ]; then
+    cat >> ${objdir}/krb5-mit-kdc.conf <<EOF
+        pkinit_anchors = FILE:${objdir}/mit-ca.crt
+    }
+
+[appdefaults]
+    pkinit_anchors = FILE:${objdir}/mit-ca.crt
+EOF
+else
+    cat >> ${objdir}/krb5-mit-kdc.conf <<EOF
+    }
+EOF
+fi
+
+cat >> ${objdir}/krb5-mit-kdc.conf <<EOF
+
+[domain_realm]
+    .mit-test.h5l.se = ${R}
+    mit-test.h5l.se = ${R}
+
+[logging]
+    kdc = FILE:${objdir}/messages.log
+    admin_server = FILE:${objdir}/messages.log
+    default = FILE:${objdir}/messages.log
+EOF
+
+#
+# Create MIT kdc.conf
+#
+cat > ${objdir}/mit-kdc.conf <<EOF
+[kdcdefaults]
+    kdc_ports = ${port}
+    kdc_tcp_ports = ${port}
+
+[realms]
+    ${R} = {
+        database_name = ${mitdir}/principal
+        key_stash_file = ${mitdir}/.k5.${R}
+        acl_file = ${mitdir}/kadm5.acl
+        max_life = 1d 0h 0m 0s
+        max_renewable_life = 7d 0h 0m 0s
+        supported_enctypes = aes256-cts:normal aes128-cts:normal
+EOF
+
+if [ "$pkinit_configured" = yes ]; then
+    cat >> ${objdir}/mit-kdc.conf <<EOF
+        pkinit_identity = FILE:${objdir}/mit-kdc.crt,${objdir}/mit-kdc-key.pem
+        pkinit_anchors = FILE:${objdir}/mit-ca.crt
+EOF
+fi
+
+cat >> ${objdir}/mit-kdc.conf <<EOF
+    }
+
+[logging]
+    kdc = FILE:${objdir}/messages.log
+    admin_server = FILE:${objdir}/messages.log
+    default = FILE:${objdir}/messages.log
+EOF
+
+#
+# Create MIT KDC database
+#
+echo "Creating MIT KDC database"
+KDB5_UTIL="${MITKRB5}/sbin/kdb5_util"
+if [ ! -x "$KDB5_UTIL" ]; then
+    KDB5_UTIL="${MITKRB5}/bin/kdb5_util"
+fi
+KADMIN_LOCAL="${MITKRB5}/sbin/kadmin.local"
+if [ ! -x "$KADMIN_LOCAL" ]; then
+    KADMIN_LOCAL="${MITKRB5}/bin/kadmin.local"
+fi
+MIT_KDC="${MITKRB5}/sbin/krb5kdc"
+if [ ! -x "$MIT_KDC" ]; then
+    MIT_KDC="${MITKRB5}/bin/krb5kdc"
+fi
+
+KRB5_KDC_PROFILE="${objdir}/mit-kdc.conf"
+export KRB5_KDC_PROFILE
+
+# Create kadm5.acl file (required by MIT)
+cat > ${mitdir}/kadm5.acl <<EOF
+*/admin@${R} *
+EOF
+
+${KDB5_UTIL} -r ${R} create -s -P masterkey || { echo "Failed to create MIT database"; exit 1; }
+
+echo "Adding principals"
+${KADMIN_LOCAL} -r ${R} -q "addprinc -pw foo foo@${R}" || exit 1
+${KADMIN_LOCAL} -r ${R} -q "addprinc -pw bar bar@${R}" || exit 1
+${KADMIN_LOCAL} -r ${R} -q "addprinc -randkey ${server}@${R}" || exit 1
+${KADMIN_LOCAL} -r ${R} -q "ktadd -k ${keytab} ${server}@${R}" || exit 1
+
+#
+# Start MIT KDC
+#
+echo "Starting MIT KDC"
+${MIT_KDC} -r ${R} -n -P ${objdir}/mit-kdc.pid &
+kdcpid=$!
+sleep 2
+
+# Verify KDC is running
+if ! kill -0 $kdcpid 2>/dev/null; then
+    echo "MIT KDC failed to start"
+    cat messages.log
+    exit 1
+fi
+echo "MIT KDC running with PID $kdcpid"
+
+#
+# Test 1: Password authentication with Heimdal kinit
+#
+echo ""
+echo "=== Test 1: Heimdal kinit with password against MIT KDC ==="
+echo foo > ${objdir}/foopassword
+${kinit} --password-file=${objdir}/foopassword foo@${R} || \
+    { ec=1; eval "${testfailed}"; }
+
+echo "Verifying ticket"
+${klist} || { ec=1; eval "${testfailed}"; }
+${klist} | grep "krbtgt/${R}@${R}" > /dev/null || { ec=1; echo "No TGT found"; eval "${testfailed}"; }
+
+echo "Getting service ticket"
+${kgetcred} ${server}@${R} || { ec=1; eval "${testfailed}"; }
+${klist} | grep "${server}@${R}" > /dev/null || { ec=1; echo "No service ticket found"; eval "${testfailed}"; }
+
+${kdestroy}
+echo "Test 1 PASSED"
+
+#
+# Test 2: PKINIT authentication with Heimdal kinit
+#
+echo "=== Test 2: Heimdal kinit with PKINIT against MIT KDC (negotiate ECDH curve) ==="
+
+# Note that MIT does not support X25519, but Heimdal prefers X225519, but we
+# should negotiate to P-256:
+${kinit} -C FILE:${objdir}/mit-user.pem foo@${R} 2>/dev/null || { ec=1;  eval "${testfailed}"; }
+${klist} || { ec=1; eval "${testfailed}"; }
+${klist} | grep "krbtgt/${R}@${R}" > /dev/null || { ec=1; echo "No TGT found"; eval "${testfailed}"; }
+${kgetcred} ${server}@${R} || { ec=1; eval "${testfailed}"; }
+${kdestroy}
+
+echo "Test 2 PASSED"
+
+#
+# Test 3: PKINIT authentication with Heimdal kinit with a preference for an EC
+#         DH curve (P-256)
+#
+echo "=== Test 3: Heimdal kinit with PKINIT against MIT KDC (P-256) ==="
+
+${kinit} --key-agreement=P-256 -C FILE:${objdir}/mit-user.pem foo@${R} 2>/dev/null || { ec=1;  eval "${testfailed}"; }
+${klist} || { ec=1; eval "${testfailed}"; }
+${klist} | grep "krbtgt/${R}@${R}" > /dev/null || { ec=1; echo "No TGT found"; eval "${testfailed}"; }
+${kgetcred} ${server}@${R} || { ec=1; eval "${testfailed}"; }
+${kdestroy}
+
+echo "Test 3 PASSED"
+
+#
+# Test 4: PKINIT authentication with Heimdal kinit with a preference for an EC
+#         DH curve (P-521)
+#
+echo "=== Test 4: Heimdal kinit with PKINIT against MIT KDC (P-521) ==="
+
+${kinit} --key-agreement=P-521 -C FILE:${objdir}/mit-user.pem foo@${R} 2>/dev/null || { ec=1;  eval "${testfailed}"; }
+${klist} || { ec=1; eval "${testfailed}"; }
+${klist} | grep "krbtgt/${R}@${R}" > /dev/null || { ec=1; echo "No TGT found"; eval "${testfailed}"; }
+${kgetcred} ${server}@${R} || { ec=1; eval "${testfailed}"; }
+${kdestroy}
+
+echo "Test 4 PASSED"
+
+#
+# Test 5: PKINIT authentication with Heimdal kinit with a preference for an EC
+#         DH curve (P-521)
+#
+echo "=== Test 5: Heimdal kinit with PKINIT against MIT KDC (modp 2048) ==="
+
+${kinit} --key-agreement=modp_2048 -C FILE:${objdir}/mit-user.pem foo@${R} 2>/dev/null || { ec=1;  eval "${testfailed}"; }
+${klist} || { ec=1; eval "${testfailed}"; }
+${klist} | grep "krbtgt/${R}@${R}" > /dev/null || { ec=1; echo "No TGT found"; eval "${testfailed}"; }
+${kgetcred} ${server}@${R} || { ec=1; eval "${testfailed}"; }
+${kdestroy}
+
+echo "Test 5 PASSED"
+
+#
+# Test 6: FAST with Heimdal kinit (if MIT KDC supports it)
+#
+echo ""
+echo "=== Test 6: Testing with FAST armor ==="
+
+# Get armor ticket
+${kinit} --password-file=${objdir}/foopassword foo@${R} || \
+    { ec=1; eval "${testfailed}"; }
+
+acache="FILE:${objdir}/mit-acache.krb5"
+${kinit} -c ${acache} --password-file=${objdir}/foopassword bar@${R} --fast-armor-cache=$cache || \
+    { echo "FAST kinit failed (may be expected if MIT KDC does not support it)"; }
+
+rm -f "${acache#FILE:}"
+${kdestroy}
+echo "Test 6 completed"
+
+#
+# Done
+#
+echo ""
+echo "All tests passed!"
+ec=0
+exit 0

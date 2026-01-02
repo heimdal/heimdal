@@ -70,7 +70,9 @@ kadm5_s_init_with_context(krb5_context context,
     assert(stash_file != NULL);
     assert(ctx->config.acl_file != NULL);
     assert(ctx->log_context.log_file != NULL);
-#ifndef NO_UNIX_SOCKETS
+#if defined(_WIN32) && defined(NO_UNIX_SOCKETS)
+    assert(ctx->log_context.signal_pipe_name != NULL);
+#elif !defined(NO_UNIX_SOCKETS)
     assert(ctx->log_context.socket_name.sun_path[0] != '\0');
 #else
     assert(ctx->log_context.socket_info != NULL);
@@ -87,7 +89,13 @@ kadm5_s_init_with_context(krb5_context context,
 
     ctx->log_context.log_fd = -1;
 
-#ifndef NO_UNIX_SOCKETS
+#if defined(_WIN32) && defined(NO_UNIX_SOCKETS)
+    /*
+     * Windows with named pipes: no persistent socket needed.
+     * We connect to the named pipe on demand in kadm5_log_signal_master().
+     */
+    ctx->log_context.socket_fd = rk_INVALID_SOCKET;
+#elif !defined(NO_UNIX_SOCKETS)
     ctx->log_context.socket_fd = socket(AF_UNIX, SOCK_DGRAM, 0);
 #else
     ctx->log_context.socket_fd = socket(ctx->log_context.socket_info->ai_family,

@@ -44,10 +44,10 @@ _krb5_aes_sha2_md_for_enctype(krb5_context context,
 {
     switch (enctype) {
     case ETYPE_AES128_CTS_HMAC_SHA256_128:
-	*md = EVP_sha256();
+	*md = context->ossl->sha256;
 	break;
     case ETYPE_AES256_CTS_HMAC_SHA384_192:
-	*md = EVP_sha384();
+	*md = context->ossl->sha384;
 	break;
     default:
 	return KRB5_PROG_ETYPE_NOSUPP;
@@ -75,7 +75,7 @@ SP_HMAC_SHA2_checksum(krb5_context context,
 	return ret;
 
     ret = _krb5_evp_hmac_iov(context, crypto, key, iov, niov, hmac,
-                             &hmaclen, md, NULL);
+                             &hmaclen, md);
     if (ret)
         return ret;
 
@@ -84,6 +84,12 @@ SP_HMAC_SHA2_checksum(krb5_context context,
     memcpy(result->checksum.data, hmac, result->checksum.length);
 
     return 0;
+}
+
+static EVP_CIPHER *
+heim_EVP_aes_128_cbc(krb5_context context)
+{
+    return context->ossl->aes128_cbc;
 }
 
 static struct _krb5_key_type keytype_aes128_sha2 = {
@@ -97,8 +103,14 @@ static struct _krb5_key_type keytype_aes128_sha2 = {
     _krb5_AES_SHA2_salt,
     NULL,
     _krb5_evp_cleanup,
-    EVP_aes_128_cbc
+    heim_EVP_aes_128_cbc
 };
+
+static EVP_CIPHER *
+heim_EVP_aes_256_cbc(krb5_context context)
+{
+    return context->ossl->aes256_cbc;
+}
 
 static struct _krb5_key_type keytype_aes256_sha2 = {
     KRB5_ENCTYPE_AES256_CTS_HMAC_SHA384_192,
@@ -111,7 +123,7 @@ static struct _krb5_key_type keytype_aes256_sha2 = {
     _krb5_AES_SHA2_salt,
     NULL,
     _krb5_evp_cleanup,
-    EVP_aes_256_cbc
+    heim_EVP_aes_256_cbc
 };
 
 struct _krb5_checksum_type _krb5_checksum_hmac_sha256_128_aes128 = {
@@ -170,7 +182,8 @@ struct _krb5_encryption_type _krb5_enctype_aes128_cts_hmac_sha256_128 = {
     "aes128-cts-sha256",
     16,
     1,
-    16,
+    16, // XXX WTF this is meant to be sizeof(struct _krb5_evp_schedule), which is 16 but ugh.
+        //     Let's just get rid of this field.
     &keytype_aes128_sha2,
     NULL, /* should never be called */
     &_krb5_checksum_hmac_sha256_128_aes128,

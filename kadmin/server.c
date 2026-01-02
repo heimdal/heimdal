@@ -34,6 +34,8 @@
 #include "kadmin_locl.h"
 #include <krb5-private.h>
 
+extern int async_flag;
+
 static kadm5_ret_t check_aliases(kadm5_server_context *,
                                  kadm5_principal_ent_rec *,
                                  kadm5_principal_ent_rec *);
@@ -94,8 +96,10 @@ iter_cb_send_now(struct iter_cb_data *d)
             d->stop = 1;
             d->ret = krb5_read_priv_message(d->context, d->ac, &d->fd, &out);
             krb5_data_free(&out);
-            if (d->ret == HEIM_ERR_EOF)
-                exit(0);
+            if (d->ret == HEIM_ERR_EOF) {
+                /* Client disconnected - return to let thread exit cleanly */
+                return d->ret;
+            }
         }
     }
     d->i = 0;
@@ -177,9 +181,9 @@ iter_cb(void *cbdata, const char *p)
 }
 
 static kadm5_ret_t
-kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
-		 krb5_data *in, krb5_auth_context ac, int fd,
-                 krb5_data *out, int readonly)
+kadmind_dispatch_int(void *kadm_handlep, krb5_boolean initial,
+		     krb5_data *in, krb5_auth_context ac, int fd,
+		     krb5_data *out, int readonly)
 {
     kadm5_ret_t ret = 0;
     kadm5_ret_t ret_sp = 0;
@@ -451,8 +455,11 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
             goto fail;
         }
         ret = krb5_ret_principal(sp, &princ);
-        if (ret == 0)
-            ret = krb5_ret_int32(sp, &kvno);
+        if (ret) {
+            ret_sp = krb5_store_int32(rsp, KADM5_FAILURE);
+            goto fail;
+        }
+        ret = krb5_ret_int32(sp, &kvno);
         if (ret == HEIM_ERR_EOF) {
             kvno = 0;
         } else if (ret) {
@@ -526,12 +533,20 @@ kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
             goto fail;
         }
 	ret = krb5_ret_principal(sp, &princ);
-        if (ret == 0)
-            ret = krb5_ret_string(sp, &password);
-        if (ret == 0)
-            ret = krb5_ret_int32(sp, &keepold);
-        if (ret == HEIM_ERR_EOF)
+        if (ret) {
+            ret_sp = krb5_store_int32(rsp, KADM5_FAILURE);
+            goto fail;
+        }
+        ret = krb5_ret_string(sp, &password);
+        if (ret) {
+            ret_sp = krb5_store_int32(rsp, KADM5_FAILURE);
+            goto fail;
+        }
+        ret = krb5_ret_int32(sp, &keepold);
+        if (ret == HEIM_ERR_EOF) {
+            keepold = 0;
             ret = 0;
+        }
         if (ret == 0) {
             ret = krb5_unparse_name_fixed(contextp->context, princ, name, sizeof(name));
             if (ret == 0)
@@ -892,6 +907,18 @@ fail:
     return 0;
 }
 
+/*
+ * Public wrapper for fuzzing - doesn't require auth_context or fd.
+ * The online LIST protocol (which needs ac and fd) is disabled when fd < 0.
+ */
+kadm5_ret_t
+kadmind_dispatch(void *kadm_handlep, krb5_boolean initial,
+		 krb5_data *in, krb5_data *out, int readonly)
+{
+    return kadmind_dispatch_int(kadm_handlep, initial, in, NULL, -1, out,
+				readonly);
+}
+
 struct iter_aliases_ctx {
     HDB_Ext_Aliases aliases;
     krb5_tl_data *tl;
@@ -1024,23 +1051,30 @@ v5_loop (krb5_context contextp,
     for (;;) {
 	doing_useful_work = 0;
 	if(term_flag)
-	    exit(0);
+	    return;
 	ret = krb5_read_priv_message(contextp, ac, &fd, &in);
 	if(ret == HEIM_ERR_EOF)
-	    exit(0);
-	if(ret)
-	    krb5_err(contextp, 1, ret, "krb5_read_priv_message");
+	    return;
+	if(ret) {
+	    krb5_warn(contextp, ret, "krb5_read_priv_message");
+	    return;
+	}
 	doing_useful_work = 1;
-        ret = kadmind_dispatch(kadm_handlep, initial, &in, ac, fd, &out,
-                               readonly);
-	if (ret)
-	    krb5_err(contextp, 1, ret, "kadmind_dispatch");
+        ret = kadmind_dispatch_int(kadm_handlep, initial, &in, ac, fd, &out,
+				   readonly);
+	if (ret) {
+	    krb5_warn(contextp, ret, "kadmind_dispatch");
+	    krb5_data_free(&in);
+	    return;
+	}
 	krb5_data_free(&in);
         if (out.length)
             ret = krb5_write_priv_message(contextp, ac, &fd, &out);
 	krb5_data_free(&out);
-	if(ret)
-	    krb5_err(contextp, 1, ret, "krb5_write_priv_message");
+	if(ret) {
+	    krb5_warn(contextp, ret, "krb5_write_priv_message");
+	    return;
+	}
     }
 }
 
@@ -1076,18 +1110,18 @@ handle_v5(krb5_context contextp,
 				      NULL, KRB5_RECVAUTH_IGNORE_VERSION,
 				      keytab, &ticket);
     if (ret) {
-	krb5_err(contextp, 1, ret, "krb5_recvauth");
+	krb5_warn(contextp, ret, "krb5_recvauth");
         return;
     }
     ret = krb5_unparse_name(contextp, ticket->server, &server_name);
     if (ret) {
-	krb5_err(contextp, 1, ret, "krb5_unparse_name");
+	krb5_warn(contextp, ret, "krb5_unparse_name");
         krb5_free_ticket(contextp, ticket);
         return;
     }
     if (strncmp(server_name, KADM5_ADMIN_SERVICE,
                      strlen(KADM5_ADMIN_SERVICE)) != 0) {
-        krb5_errx(contextp, 1, "ticket for strange principal (%s)", server_name);
+        krb5_warnx(contextp, "ticket for strange principal (%s)", server_name);
         krb5_free_ticket(contextp, ticket);
         free(server_name);
         return;
@@ -1100,24 +1134,26 @@ handle_v5(krb5_context contextp,
 	krb5_data params;
 	ret = krb5_read_priv_message(contextp, ac, &fd, &params);
 	if (ret) {
-	    krb5_err(contextp, 1, ret, "krb5_read_priv_message");
+	    krb5_warn(contextp, ret, "krb5_read_priv_message");
             krb5_free_ticket(contextp, ticket);
             return;
         }
 	ret = _kadm5_unmarshal_params(contextp, &params, &realm_params);
         if (ret) {
-	    krb5_err(contextp, 1, ret,
+	    krb5_warn(contextp, ret,
                       "Could not read or parse kadm5 parameters");
             krb5_free_ticket(contextp, ticket);
             return;
         }
+        if (async_flag)
+            realm_params.mask |= KADM5_CONFIG_ASYNC_HDB_WRITES;
     }
 
     initial = ticket->ticket.flags.initial;
     ret = krb5_unparse_name(contextp, ticket->client, &client);
     krb5_free_ticket(contextp, ticket);
     if (ret) {
-	krb5_err(contextp, 1, ret, "krb5_unparse_name");
+	krb5_warn(contextp, ret, "krb5_unparse_name");
         return;
     }
     ret = kadm5_s_init_with_password_ctx(contextp,
@@ -1128,7 +1164,7 @@ handle_v5(krb5_context contextp,
 					 0, 0,
 					 &kadm_handlep);
     if (ret) {
-	krb5_err(contextp, 1, ret, "kadm5_init_with_password_ctx");
+	krb5_warn(contextp, ret, "kadm5_init_with_password_ctx");
         return;
     }
     v5_loop(contextp, ac, initial, kadm_handlep, fd, readonly);
@@ -1146,18 +1182,24 @@ kadmind_loop(krb5_context contextp,
 
     n = krb5_net_read(contextp, &sock, buf, 4);
     if(n == 0)
-	exit(0);
-    if(n < 0)
-	krb5_err(contextp, 1, errno, "read");
+	return 0;
+    if(n < 0) {
+	krb5_warn(contextp, errno, "read");
+	return errno;
+    }
     _krb5_get_int(buf, &len, 4);
 
     if (len == sizeof(KRB5_SENDAUTH_VERSION)) {
 
 	n = krb5_net_read(contextp, &sock, buf + 4, len);
-	if (n < 0)
-	    krb5_err (contextp, 1, errno, "reading sendauth version");
-	if (n == 0)
-	    krb5_errx (contextp, 1, "EOF reading sendauth version");
+	if (n < 0) {
+	    krb5_warn(contextp, errno, "reading sendauth version");
+	    return errno;
+	}
+	if (n == 0) {
+	    krb5_warnx(contextp, "EOF reading sendauth version");
+	    return 0;
+	}
 
 	if(memcmp(buf + 4, KRB5_SENDAUTH_VERSION, len) == 0) {
 	    handle_v5(contextp, keytab, sock, readonly);

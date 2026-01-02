@@ -335,19 +335,35 @@ _kdc_find_etype(astgs_request_t r, uint32_t flags,
 		continue;
 
 	    key = NULL;
-	    while (ret != 0 &&
-                   hdb_next_enctype2key(r->context, princ, NULL,
-					etypes[i], &key) == 0) {
-		if (key->key.keyvalue.length == 0) {
-		    ret = KRB5KDC_ERR_NULL_KEY;
-		    continue;
-		}
-                enctype = etypes[i];
-		ret = 0;
-		if (is_preauth && ret_key != NULL &&
-		    !is_good_salt_p(&def_salt, key))
-		    continue;
-	    }
+            if (!is_preauth && !(flags & KFE_USE_CLIENT) && princ->etypes) {
+                /*
+                 * Use the etypes list from the server's HDB entry instead
+                 * of deriving it from its long-term keys.  This allows an
+                 * entry to have just one long-term key but record support
+                 * for multiple enctypes.
+                 */
+                for (m = 0; m < princ->etypes->len; m++) {
+                    if (etypes[i] == princ->etypes->val[m]) {
+                        enctype = etypes[i];
+                        ret = 0;
+                        break;
+                    }
+                }
+            } else {
+                while (ret != 0 &&
+                       hdb_next_enctype2key(r->context, princ, NULL,
+                                            etypes[i], &key) == 0) {
+                    if (key->key.keyvalue.length == 0) {
+                        ret = KRB5KDC_ERR_NULL_KEY;
+                        continue;
+                    }
+                    enctype = etypes[i];
+                    ret = 0;
+                    if (is_preauth && ret_key != NULL &&
+                        !is_good_salt_p(&def_salt, key))
+                        continue;
+                }
+            }
 	}
     }
 
@@ -2207,6 +2223,7 @@ _kdc_as_rep(astgs_request_t r)
      * intersection of the client's requested enctypes and the server's (like a
      * root krbtgt, but not necessarily) etypes from its HDB entry.
      */
+    kdc_log(r->context, config, 4, "Client send %llu etypes", (unsigned long long)b->etype.len);
     ret = _kdc_find_etype(r, (is_tgs ?  KFE_IS_TGS:0) | KFE_USE_CLIENT,
 			  b->etype.val, b->etype.len,
 			  &r->sessionetype, NULL, NULL);

@@ -34,7 +34,7 @@
 #include "kuser_locl.h"
 #include "heimtools-commands.h"
 
-#ifdef HAVE_READLINE
+#if defined(HAVE_READLINE) && !defined(_WIN32)
 char *readline(const char *prompt);
 #else
 

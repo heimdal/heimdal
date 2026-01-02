@@ -50,7 +50,7 @@ fi
 
 port=@port@
 
-kadmin="${TESTS_ENVIRONMENT} ../../kadmin/kadmin -l -r $R"
+kadmin="${TESTS_ENVIRONMENT} ../../kadmin/kadmin -l -A -r $R"
 replay="${TESTS_ENVIRONMENT} ../../kdc/kdc-replay"
 
 if [ -f ${objdir}/${tst}.cf ]; then

@@ -339,3 +339,13 @@ der_print_heim_oid_sym(const heim_oid *oid, char delim, char **strp)
     free(s1);
     return 0;
 }
+
+void
+der_show_heim_oid_sym(const heim_oid *oid, FILE *f)
+{
+    char *s = NULL;
+
+    (void) der_print_heim_oid_sym(oid, ' ', &s);
+    (void) fprintf(f ? f : stderr, "OID is: %s\n", s);
+    free(s);
+}

@@ -37,7 +37,7 @@
 
 #ifndef HAVE_GETEGID
 
-ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
+ROKEN_LIB_FUNCTION gid_t ROKEN_LIB_CALL
 getegid(void)
 {
     return getgid();

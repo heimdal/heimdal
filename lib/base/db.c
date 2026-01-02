@@ -1538,7 +1538,11 @@ json_db_sync(void *db, heim_error_t *error)
     heim_release(json);
     if (bytes != len)
 	return errno ? errno : EIO;
+#ifdef WIN32
+    ret = _commit(fd);
+#else
     ret = fsync(fd);
+#endif
     if (ret)
 	return ret;
 

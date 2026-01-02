@@ -62,7 +62,10 @@ destroy_kadm5_log_context (kadm5_log_context *c)
     free(c->log_file);
     if (c->socket_fd != rk_INVALID_SOCKET)
         rk_closesocket(c->socket_fd);
-#ifdef NO_UNIX_SOCKETS
+#if defined(_WIN32) && defined(NO_UNIX_SOCKETS)
+    free(c->signal_pipe_name);
+    c->signal_pipe_name = NULL;
+#elif defined(NO_UNIX_SOCKETS)
     if (c->socket_info) {
 	freeaddrinfo(c->socket_info);
 	c->socket_info = NULL;

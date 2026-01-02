@@ -144,13 +144,33 @@ heim_error_createv(int error_code, const char *fmt, va_list ap)
 heim_string_t
 heim_error_copy_string(heim_error_t error)
 {
+    heim_string_t acc = NULL;
+    heim_error_t e = error;
+
     if (heim_get_tid(error) != HEIM_TID_ERROR) {
 	if (heim_get_tid(error) == heim_number_get_type_id())
 	    return __heim_string_constant(strerror(heim_number_get_int((heim_number_t)error)));
 	heim_abort("invalid heim_error_t");
     }
-    /* XXX concat all strings */
-    return heim_retain(error->msg);
+    /* concat all strings */
+    while (e) {
+        heim_string_t n;
+        const char *s;
+
+        if (acc == NULL) {
+            acc = heim_retain(error->msg);
+            e = e->next;
+            continue;
+        }
+        if ((s = heim_string_get_utf8(e->msg))) {
+            n = heim_string_create_with_format("%s: %s",
+                                               heim_string_get_utf8(acc), s);
+            heim_release(acc);
+            acc = n;
+        }
+        e = e->next;
+    }
+    return acc;
 }
 
 int

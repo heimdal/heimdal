@@ -35,6 +35,9 @@
 #include <getarg.h>
 #include <parse_bytes.h>
 #include <err.h>
+#ifdef HAVE_SYSLOG_H
+#include <syslog.h>
+#endif
 
 /* verify krb5.conf */
 static int dumpconfig_flag = 0;

@@ -729,7 +729,7 @@ get_cred_kdc(krb5_context context,
 	    }
 	}
 
-	ret = _krb5_fast_unwrap_error(context, nonce, fast_state, &md, &rep.error);
+	ret = _krb5_fast_unwrap_error(context, nonce, fast_state, &md, NULL, &rep.error);
 	free_METHOD_DATA(&md);
 	if (ret)
 	    goto out;

@@ -32,17 +32,18 @@ SignatureAlgorithmIdentifier ::= AlgorithmIdentifier
 ContentType ::= OBJECT IDENTIFIER
 MessageDigest ::= OCTET STRING
 
-ContentInfo ::= SEQUENCE {
-	contentType ContentType,
-	content [0] EXPLICIT HEIM_ANY OPTIONAL --  DEFINED BY contentType
-}
-
 EncapsulatedContentInfo ::= SEQUENCE {
 	eContentType ContentType,
 	eContent [0] EXPLICIT OCTET STRING OPTIONAL
 }
 
-CertificateSet ::= SET OF HEIM_ANY
+CertificateChoices ::= CHOICE {
+    certificate Certificate,
+    any HEIM_ANY
+}
+
+-- Really, for us this is strictly a Certificate.  See RFC 5911.
+CertificateSet ::= SET OF CertificateChoices
 
 CertificateList ::= Certificate
 
@@ -145,5 +146,62 @@ CMSRC2CBCParameter ::= SEQUENCE {
 }
 
 CMSCBCParameter ::= OCTET STRING
+
+-- We don't have a) a builtin TYPE-IDENTIFIER class, b) class equality
+-- assignment yet!
+_CONTENT-TYPE ::= CLASS {
+        &id OBJECT IDENTIFIER UNIQUE,
+        &Type OPTIONAL
+}
+
+ContentInfo{_CONTENT-TYPE:ContentSet} ::= SEQUENCE {
+    contentType     _CONTENT-TYPE.&id({ContentSet}),
+    content         [0] EXPLICIT _CONTENT-TYPE.&Type({ContentSet}{@contentType}) OPTIONAL
+}
+
+-- Content Type Object Identifiers and Objects
+
+id-ct-contentInfo OBJECT IDENTIFIER ::= { iso(1) member-body(2)
+ us(840) rsadsi(113549) pkcs(1) pkcs9(9) smime(16) ct(1) 6 }
+
+id-data OBJECT IDENTIFIER ::= { iso(1) member-body(2)
+ us(840) rsadsi(113549) pkcs(1) pkcs7(7) 1 }
+
+OctetString ::= OCTET STRING -- workaround compiler bug
+ct-Data _CONTENT-TYPE ::= { &id id-data, &Type OctetString }
+
+id-signedData OBJECT IDENTIFIER ::= { iso(1) member-body(2)
+ us(840) rsadsi(113549) pkcs(1) pkcs7(7) 2 }
+
+ct-SignedData _CONTENT-TYPE ::= { &id id-signedData, &Type SignedData }
+
+id-envelopedData OBJECT IDENTIFIER ::= { iso(1) member-body(2)
+ us(840) rsadsi(113549) pkcs(1) pkcs7(7) 3 }
+
+ct-EnvelopedData _CONTENT-TYPE ::= { &id id-envelopedData, &Type EnvelopedData }
+
+id-digestedData OBJECT IDENTIFIER ::= { iso(1) member-body(2)
+ us(840) rsadsi(113549) pkcs(1) pkcs7(7) 5 }
+-- ct-DigestedData _CONTENT-TYPE ::= { &id id-digestedData, &Type DigestedData }
+
+id-encryptedData OBJECT IDENTIFIER ::= { iso(1) member-body(2)
+ us(840) rsadsi(113549) pkcs(1) pkcs7(7) 6 }
+
+-- ct-EncryptedData _CONTENT-TYPE ::= { &id id-encryptedData, &Type EncryptedData }
+
+id-ct-authData OBJECT IDENTIFIER ::= { iso(1) member-body(2)
+us(840) rsadsi(113549) pkcs(1) pkcs-9(9) smime(16) ct(1) 2 }
+
+-- ct-AuthenticatedData _CONTENT-TYPE ::=
+--     { &id id-ct-authData, &Type AuthenticatedData }
+
+ContentSet _CONTENT-TYPE ::= {
+      --  Define the set of content types to be recognized.
+      ct-Data | ct-SignedData | ct-EnvelopedData
+      -- | ct-EncryptedData
+      -- | ct-AuthenticatedData | ct-DigestedData
+}
+
+ContentInfo ::= ContentInfo{ContentSet}
 
 END

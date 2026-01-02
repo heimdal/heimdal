@@ -63,7 +63,8 @@ libhx509_la_OBJS =			\
 	$(OBJ)\print.obj		\
 	$(OBJ)\softp11.obj		\
 	$(OBJ)\req.obj			\
-	$(OBJ)\revoke.obj
+	$(OBJ)\revoke.obj		\
+	$(OBJ)\jose.obj
 
 $(LIBHX509): $(libhx509_la_OBJS)
 	$(LIBCON)
@@ -100,7 +101,8 @@ dist_libhx509_la_SOURCES =	\
 	$(SRCDIR)\softp11.c	\
 	$(SRCDIR)\ref\pkcs11.h	\
 	$(SRCDIR)\req.c		\
-	$(SRCDIR)\revoke.c
+	$(SRCDIR)\revoke.c	\
+	$(SRCDIR)\jose.c
 
 {}.c{$(OBJ)}.obj::
 	$(C2OBJ_P) -DBUILD_HX509_LIB -DASN1_LIB
@@ -127,7 +129,7 @@ $(OBJ)\hxtool-commands.c $(OBJ)\hxtool-commands.h: hxtool-commands.in $(SLC)
 	cd $(SRCDIR)
 
 $(BINDIR)\hxtool.exe: $(OBJ)\tool\hxtool.obj $(OBJ)\tool\hxtool-commands.obj $(LIBHEIMDAL) $(OBJ)\hxtool-version.res
-	$(EXECONLINK) $(LIBHEIMDAL) $(LIBROKEN) $(LIBSL) $(LIBVERS) $(LIBCOMERR) $(LIB_openssl_crypto)
+	$(EXECONLINK) $(LIBHEIMDAL) $(LIBHEIMBASE) $(LIBROKEN) $(LIBSL) $(LIBVERS) $(LIBCOMERR) $(LIB_openssl_crypto)
 	$(EXEPREP)
 
 $(OBJ)\hx509-protos.h:

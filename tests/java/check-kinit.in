@@ -53,7 +53,7 @@ keytab="FILE:${keytabfile}"
 cache="FILE:${objdir}/cache.krb5"
 
 kinit="${TESTS_ENVIRONMENT} ../../kuser/kinit -c $cache ${afs_no_afslog}"
-kadmin="${TESTS_ENVIRONMENT} ../../kadmin/kadmin -l -r $R"
+kadmin="${TESTS_ENVIRONMENT} ../../kadmin/kadmin -l -A -r $R"
 kdc="${TESTS_ENVIRONMENT} ../../kdc/kdc --addresses=127.0.0.1 -P $port"
 gssclient="${TESTS_ENVIRONMENT} ../../appl/test/gssapi_client"
 

@@ -95,7 +95,7 @@ release_all_mechs(gssspnego_ctx ctx, krb5_context context)
 	prev = mech;
     }
     if (prev)
-	_gss_negoex_release_auth_mech(context, mech);
+	_gss_negoex_release_auth_mech(context, prev);
 
     HEIM_TAILQ_INIT(&ctx->negoex_mechs);
 }

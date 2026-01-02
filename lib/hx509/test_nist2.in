@@ -49,13 +49,6 @@ hxtool="${TESTS_ENVIRONMENT} ./hxtool ${stat}"
 # nistzip is not distributed part of the distribution
 test -f "$nistzip" || exit 77
 
-if ${hxtool} info | grep 'rsa: hcrypto null RSA' > /dev/null ; then
-    exit 77
-fi
-if ${hxtool} info | grep 'rand: not available' > /dev/null ; then
-    exit 77
-fi
-
 #--------- Try to find unzip
 
 oldifs=$IFS

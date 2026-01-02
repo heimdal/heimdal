@@ -172,6 +172,7 @@ EXPORTS
 	hx509_context_free
 	hx509_context_init
 	hx509_context_set_missing_revoke
+	hx509_context_set_ossl_cnf_propq
 	hx509_crl_add_revoked_certs
 	hx509_crl_alloc
 	hx509_crl_free
@@ -257,6 +258,7 @@ EXPORTS
 	hx509_query_match_expr
 	hx509_query_match_friendly_name
 	hx509_query_match_issuer_serial
+	hx509_query_match_key_algorithm
 	hx509_query_match_option
 	hx509_query_statistic_file
 	hx509_query_unparse_stats
@@ -269,6 +271,8 @@ EXPORTS
 	hx509_revoke_verify
 	hx509_set_error_string
 	hx509_set_error_stringv
+	hx509_signature_ed25519
+	hx509_signature_ed448
 	hx509_signature_md5
 	hx509_signature_rsa
 	hx509_signature_rsa_with_md5
@@ -300,6 +304,15 @@ EXPORTS
 	hx509_verify_signature
 	hx509_xfree
 	initialize_hx_error_table_r
+
+; JWT/JWS/JWK functions
+	hx509_jwk_to_json
+	hx509_jws_sign
+	hx509_jws_verify
+	hx509_jwt_sign
+	hx509_jwt_verify
+	hx509_pem_to_jwk
+	hx509_pem_to_jwk_json
 
 ; pkcs11 symbols
 	C_GetFunctionList

@@ -34,7 +34,6 @@
 #include "kuser_locl.h"
 #include "heimtools-commands.h"
 #include <kx509_asn1.h>
-#undef HC_DEPRECATED_CRYPTO
 #include "../lib/hx509/hx_locl.h"
 #include "../lib/krb5/krb5_locl.h"
 #include "hx509-private.h"

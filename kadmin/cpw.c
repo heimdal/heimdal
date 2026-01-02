@@ -39,24 +39,39 @@ struct cpw_entry_data {
     int random_key;
     int random_password;
     char *password;
+    const char *enctypes;
     krb5_key_data *key_data;
     void *kadm_handle;
 };
 
 static int
-set_random_key(void *dup_kadm_handle, krb5_principal principal, int keepold)
+set_random_key(void *dup_kadm_handle,
+               krb5_principal principal,
+               const char *enctypes,
+               int keepold)
 {
     krb5_error_code ret;
+    krb5_key_salt_tuple *key_salt_tuples = NULL;
+    size_t nkey_salt_tuples = 0;
     int i;
     krb5_keyblock *keys;
     int num_keys;
 
-    ret = kadm5_randkey_principal_3(dup_kadm_handle, principal, keepold, 0,
-                                    NULL, &keys, &num_keys);
+    if (enctypes) {
+        ret = krb5_string_to_keysalts2(context, enctypes, &nkey_salt_tuples,
+                                       &key_salt_tuples);
+        if (ret)
+            return ret;
+    }
+
+    ret = kadm5_randkey_principal_3(dup_kadm_handle, principal, keepold,
+                                    nkey_salt_tuples, key_salt_tuples, &keys,
+                                    &num_keys);
     if(ret)
 	return ret;
     for(i = 0; i < num_keys; i++)
 	krb5_free_keyblock_contents(context, &keys[i]);
+    free(key_salt_tuples);
     free(keys);
     return 0;
 }
@@ -64,9 +79,12 @@ set_random_key(void *dup_kadm_handle, krb5_principal principal, int keepold)
 static int
 set_random_password(void *dup_kadm_handle,
                     krb5_principal principal,
+                    const char *enctypes,
                     int keepold)
 {
     krb5_error_code ret;
+    krb5_key_salt_tuple *key_salt_tuples = NULL;
+    size_t nkey_salt_tuples = 0;
     char pw[128];
     char *princ_name;
 
@@ -74,11 +92,19 @@ set_random_password(void *dup_kadm_handle,
     if (ret)
 	return ret;
 
+    if (enctypes) {
+        ret = krb5_string_to_keysalts2(context, enctypes, &nkey_salt_tuples,
+                                       &key_salt_tuples);
+        if (ret)
+            return ret;
+    }
+
     random_password(pw, sizeof(pw));
-    ret = kadm5_chpass_principal_3(dup_kadm_handle, principal, keepold, 0,
-                                   NULL, pw);
+    ret = kadm5_chpass_principal_3(dup_kadm_handle, principal, keepold,
+                                   nkey_salt_tuples, key_salt_tuples, pw);
     if (ret == 0)
 	printf ("%s's password set to \"%s\"\n", princ_name, pw);
+    free(key_salt_tuples);
     free(princ_name);
     memset_s(pw, sizeof(pw), 0, sizeof(pw));
     return ret;
@@ -87,10 +113,13 @@ set_random_password(void *dup_kadm_handle,
 static int
 set_password(void *dup_kadm_handle,
              krb5_principal principal,
+             const char *enctypes,
              char *password,
              int keepold)
 {
     krb5_error_code ret = 0;
+    krb5_key_salt_tuple *key_salt_tuples = NULL;
+    size_t nkey_salt_tuples = 0;
     char pwbuf[128];
     int aret;
 
@@ -105,19 +134,29 @@ set_password(void *dup_kadm_handle,
 	free (princ_name);
 	if (aret == -1)
 	    return ENOMEM;
-	ret = UI_UTIL_read_pw_string(pwbuf, sizeof(pwbuf), prompt,
-				     UI_UTIL_FLAG_VERIFY |
-				     UI_UTIL_FLAG_VERIFY_SILENT);
+	ret = _krb5_UI_UTIL_read_pw_string(pwbuf, sizeof(pwbuf), prompt,
+                                           UI_UTIL_FLAG_VERIFY |
+                                           UI_UTIL_FLAG_VERIFY_SILENT);
 	free (prompt);
 	if(ret){
             return KRB5_LIBOS_BADPWDMATCH;
 	}
 	password = pwbuf;
     }
+
+    if (enctypes) {
+        ret = krb5_string_to_keysalts2(context, enctypes, &nkey_salt_tuples,
+                                       &key_salt_tuples);
+        if (ret)
+            return ret;
+    }
+
     if(ret == 0)
-        ret = kadm5_chpass_principal_3(dup_kadm_handle, principal, keepold, 0,
-                                       NULL, password);
+        ret = kadm5_chpass_principal_3(dup_kadm_handle, principal, keepold,
+                                       nkey_salt_tuples, key_salt_tuples,
+                                       password);
     memset_s(pwbuf, sizeof(pwbuf), 0, sizeof(pwbuf));
+    free(key_salt_tuples);
     return ret;
 }
 
@@ -140,13 +179,13 @@ do_cpw_entry(krb5_principal principal, void *data)
     struct cpw_entry_data *e = data;
 
     if (e->random_key)
-	return set_random_key(e->kadm_handle, principal, e->keepold);
+	return set_random_key(e->kadm_handle, principal, e->enctypes, e->keepold);
     else if (e->random_password)
-	return set_random_password(e->kadm_handle, principal, e->keepold);
+	return set_random_password(e->kadm_handle, principal, e->enctypes, e->keepold);
     else if (e->key_data)
 	return set_key_data(e->kadm_handle, principal, e->key_data, e->keepold);
     else
-	return set_password(e->kadm_handle, principal, e->password, e->keepold);
+	return set_password(e->kadm_handle, principal, e->enctypes, e->password, e->keepold);
 }
 
 int
@@ -164,6 +203,7 @@ cpw_entry(struct passwd_options *opt, int argc, char **argv)
     ret = kadm5_dup_context(kadm_handle, &data.kadm_handle);
     if (ret)
         krb5_err(context, 1, ret, "Could not duplicate kadmin connection");
+    data.enctypes = opt->enctypes_string;
     data.random_key = opt->random_key_flag;
     data.random_password = opt->random_password_flag;
     data.password = opt->password_string;

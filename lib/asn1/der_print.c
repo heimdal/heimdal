@@ -45,6 +45,12 @@ der_print_general_string(const heim_general_string *str, int flags)
 }
 
 char * ASN1CALL
+der_print_null(const int *i, int flags)
+{
+    return strdup("null");
+}
+
+char * ASN1CALL
 der_print_boolean(const int *i, int flags)
 {
     return *i ? strdup("true") : strdup("false");

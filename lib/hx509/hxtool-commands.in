@@ -1079,6 +1079,114 @@ command = {
         help = "Assert certificate content"
 }
 command = {
+	name = "jwt-sign"
+	option = {
+		long = "algorithm"
+		short = "a"
+		type = "string"
+		argument = "algorithm"
+		help = "signature algorithm (RS256, ES256, EdDSA, etc.)"
+		default = "RS256"
+	}
+	option = {
+		long = "private-key"
+		short = "k"
+		type = "string"
+		argument = "file"
+		help = "private key file (PEM format)"
+	}
+	option = {
+		long = "issuer"
+		short = "i"
+		type = "string"
+		argument = "issuer"
+		help = "issuer claim (iss)"
+	}
+	option = {
+		long = "subject"
+		short = "s"
+		type = "string"
+		argument = "subject"
+		help = "subject claim (sub)"
+	}
+	option = {
+		long = "audience"
+		short = "A"
+		type = "string"
+		argument = "audience"
+		help = "audience claim (aud)"
+	}
+	option = {
+		long = "lifetime"
+		short = "l"
+		type = "integer"
+		argument = "seconds"
+		help = "token lifetime in seconds"
+		default = "3600"
+	}
+	option = {
+		long = "output"
+		short = "o"
+		type = "string"
+		argument = "file"
+		help = "output file (default: stdout)"
+	}
+	min_args = "0"
+	max_args = "0"
+	help = "Create a signed JWT"
+	function = "jwt_sign"
+}
+command = {
+	name = "jwt-verify"
+	option = {
+		long = "public-key"
+		short = "k"
+		type = "strings"
+		argument = "file"
+		help = "public key file(s) (PEM format)"
+	}
+	option = {
+		long = "audience"
+		short = "A"
+		type = "string"
+		argument = "audience"
+		help = "required audience"
+	}
+	option = {
+		long = "token"
+		short = "t"
+		type = "string"
+		argument = "token"
+		help = "JWT token (or read from stdin)"
+	}
+	min_args = "0"
+	max_args = "0"
+	help = "Verify a JWT and print claims"
+	function = "jwt_verify"
+}
+command = {
+	name = "pem-to-jwk"
+	option = {
+		long = "input"
+		short = "i"
+		type = "string"
+		argument = "file"
+		help = "PEM key file"
+	}
+	option = {
+		long = "output"
+		short = "o"
+		type = "string"
+		argument = "file"
+		help = "output file (default: stdout)"
+	}
+	min_args = "0"
+	max_args = "1"
+	argument = "[pem-file]"
+	help = "Convert PEM key to JWK format"
+	function = "pem_to_jwk"
+}
+command = {
 	name = "help"
 	name = "?"
 	argument = "[command]"

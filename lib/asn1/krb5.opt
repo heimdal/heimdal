@@ -5,5 +5,11 @@
 --sequence=ETYPE-INFO
 --sequence=ETYPE-INFO2
 --preserve-binary=KDC-REQ-BODY
+# We need to preserve KDC-REQ for, e.g., RFC 8636, where the KDF takes the
+# encoded AS-REQ (which is a KDC-REQ) as an input, so we'll a) use the _save
+# field of the generated KDC_REQ to store that encoded AS-REQ on the client
+# side, and b) because we'll be saving it on decode in the _save field we can
+# also use it on the KDC side.
+--preserve-binary=KDC-REQ
 --decorate=PrincipalNameAttrs:void *:pac
 --decorate=Principal:PrincipalNameAttrs:nameattrs?

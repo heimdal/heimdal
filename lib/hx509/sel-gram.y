@@ -78,6 +78,9 @@
 %token <string> STRING
 %token <string> IDENTIFIER
 
+%destructor { _hx509_expr_free($$); } <expr>
+%destructor { free($$); } <string>
+
 %left '!'
 %left kw_AND
 %left kw_OR

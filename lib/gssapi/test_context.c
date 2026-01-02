@@ -37,7 +37,6 @@
 #include <gssapi.h>
 #include <gssapi_krb5.h>
 #include <gssapi_spnego.h>
-#include <gssapi_ntlm.h>
 #include "test_common.h"
 
 #ifdef NOTYET
@@ -82,6 +81,8 @@ static int token_split  = 0;
 static int version_flag = 0;
 static int verbose_flag = 0;
 static int help_flag	= 0;
+static int threaded_flag = 0;
+static int num_threads = 8;
 static int i_channel_bound = 0;
 static char *i_channel_bindings = NULL;
 static char *a_channel_bindings = NULL;
@@ -932,6 +933,8 @@ static struct getargs args[] = {
     {"token-split",	0, arg_integer, &token_split, "bytes", NULL },
     {"on-behalf-of",	0, arg_string, &on_behalf_of_string, "principal",
         "send authenticator authz-data AD-ON-BEHALF-OF" },
+    {"threaded",	0,	arg_flag,	&threaded_flag, "run threaded test", NULL },
+    {"num-threads",	0,	arg_integer,	&num_threads, "number of threads for --threaded", NULL },
     {"version",	0,	arg_flag,	&version_flag, "print version", NULL },
     {"verbose",	'v',	arg_flag,	&verbose_flag, "verbose", NULL },
     {"help",	0,	arg_flag,	&help_flag,  NULL, NULL }
@@ -943,6 +946,98 @@ usage (int ret)
     arg_printusage (args, sizeof(args)/sizeof(*args),
 		    NULL, "service@host");
     exit (ret);
+}
+
+/*
+ * Threaded test for exercising concurrent GSS context establishment.
+ * This helps detect race conditions in context/credential handling.
+ */
+
+struct threaded_test_args {
+    gss_OID mechoid;
+    gss_OID nameoid;
+    const char *target;
+    gss_cred_id_t client_cred;
+    int thread_num;
+    int iterations;
+    int failed;
+};
+
+static void *
+threaded_test_worker(void *arg)
+{
+    struct threaded_test_args *ta = arg;
+    gss_ctx_id_t sctx = GSS_C_NO_CONTEXT;
+    gss_ctx_id_t cctx = GSS_C_NO_CONTEXT;
+    gss_OID actual_mech = GSS_C_NO_OID;
+    gss_cred_id_t deleg_cred = GSS_C_NO_CREDENTIAL;
+    OM_uint32 min_stat;
+    int i;
+
+    for (i = 0; i < ta->iterations; i++) {
+        if (verbose_flag)
+            printf("thread %d: iteration %d/%d\n",
+                   ta->thread_num, i + 1, ta->iterations);
+
+        sctx = GSS_C_NO_CONTEXT;
+        cctx = GSS_C_NO_CONTEXT;
+        deleg_cred = GSS_C_NO_CREDENTIAL;
+
+        loop(ta->mechoid, ta->nameoid, ta->target, ta->client_cred,
+             &sctx, &cctx, &actual_mech, &deleg_cred);
+
+        gss_delete_sec_context(&min_stat, &cctx, NULL);
+        gss_delete_sec_context(&min_stat, &sctx, NULL);
+        gss_release_cred(&min_stat, &deleg_cred);
+    }
+
+    return NULL;
+}
+
+static int
+run_threaded_test(gss_OID mechoid, gss_OID nameoid, const char *target,
+                  gss_cred_id_t client_cred, int nthreads, int iterations)
+{
+    HEIMDAL_THREAD_ID *threads;
+    struct threaded_test_args *thread_args;
+    int i, ret = 0;
+
+    if (verbose_flag)
+        printf("running threaded test: %d threads, %d iterations each\n",
+               nthreads, iterations);
+
+    threads = calloc(nthreads, sizeof(*threads));
+    thread_args = calloc(nthreads, sizeof(*thread_args));
+    if (threads == NULL || thread_args == NULL)
+        errx(1, "out of memory");
+
+    for (i = 0; i < nthreads; i++) {
+        thread_args[i].mechoid = mechoid;
+        thread_args[i].nameoid = nameoid;
+        thread_args[i].target = target;
+        thread_args[i].client_cred = client_cred;
+        thread_args[i].thread_num = i;
+        thread_args[i].iterations = iterations;
+        thread_args[i].failed = 0;
+
+        if (HEIMDAL_THREAD_create(&threads[i], threaded_test_worker,
+                           &thread_args[i]) != 0)
+            errx(1, "HEIMDAL_THREAD_create failed for thread %d", i);
+    }
+
+    for (i = 0; i < nthreads; i++) {
+        HEIMDAL_THREAD_join(threads[i], NULL);
+        if (thread_args[i].failed)
+            ret = 1;
+    }
+
+    free(threads);
+    free(thread_args);
+
+    if (verbose_flag)
+        printf("threaded test %s\n", ret ? "FAILED" : "completed");
+
+    return ret;
 }
 
 int
@@ -1005,27 +1100,6 @@ main(int argc, char **argv)
 	mechoid = string_to_oid(mech_string);
 
     if (mechs_string == NULL) {
-        /*
-         * We ought to be able to use the OID set of the one mechanism
-         * OID given.  But there's some breakage that conspires to make
-         * that fail though it should succeed:
-         *
-         *  - the NTLM gss_acquire_cred() refuses to work with
-         *    desired_name == GSS_C_NO_NAME
-         *  - gss_acquire_cred() with desired_mechs == GSS_C_NO_OID_SET
-         *    does work here because we happen to have Kerberos
-         *    credentials in check-ntlm, and the subsequent
-         *    gss_init_sec_context() call finds no cred element for NTLM
-         *    but plows on anyways, surprisingly enough, and then the
-         *    NTLM gss_init_sec_context() just works.
-         *
-         * In summary, there's some breakage in gss_init_sec_context()
-         * and some breakage in NTLM that conspires against us here.
-         *
-         * We work around this in check-ntlm and check-spnego by adding
-         * --client-name=user1@${R} to the invocations of this test
-         * program that require it.
-         */
         oids[0] = *mechoid;
         mechoid_descs.elements = &oids[0];
         mechoid_descs.count = 1;
@@ -1175,6 +1249,21 @@ main(int argc, char **argv)
 	if (maj_stat)
 	    errx(1, "gss_krb5_set_allowable_enctypes: %s",
 		 gssapi_err(maj_stat, min_stat, GSS_C_NO_OID));
+    }
+
+    if (threaded_flag) {
+	int iterations = max_loops > 0 ? max_loops : 10;
+	int ret;
+
+	ret = run_threaded_test(mechoid, nameoid, argv[0], client_cred,
+				num_threads, iterations);
+	gss_release_cred(&min_stat, &client_cred);
+	gss_release_oid_set(&min_stat, &actual_mechs);
+	if (mechoids != GSS_C_NO_OID_SET && mechoids != &mechoid_descs)
+	    gss_release_oid_set(&min_stat, &mechoids);
+	empty_release();
+	krb5_free_context(context);
+	return ret;
     }
 
     loop(mechoid, nameoid, argv[0], client_cred,

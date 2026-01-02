@@ -37,6 +37,8 @@
 #include <gssapi_krb5.h>
 #include <gssapi_spnego.h>
 
+extern int async_flag;
+
 #define CHECK(x)							\
 	do {								\
 		int __r;						\
@@ -1029,6 +1031,8 @@ process_stream(krb5_context contextp,
 						     0, 0,
 						     &server_handle);
 		INSIST(ret == 0);
+                if (async_flag)
+                    realm_params.mask |= KADM5_CONFIG_ASYNC_HDB_WRITES;
 	    }
 
 	    INSIST(gctx.ctx != GSS_C_NO_CONTEXT);

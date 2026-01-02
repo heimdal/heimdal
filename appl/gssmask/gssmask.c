@@ -1180,6 +1180,9 @@ static int version_flag;
 static int help_flag;
 static char *logfile_str;
 static char *moniker_str;
+static int detach_flag;
+static int daemon_child_fd = -1;
+static char *pidfile_str;
 
 static int port = 4711;
 
@@ -1192,6 +1195,12 @@ struct getargs args[] = {
       "number-of-service" },
     { "moniker", 0,  arg_string,	&moniker_str,	"nickname",
       "name" },
+    { "detach", 0, arg_flag,		&detach_flag,	"detach from console",
+      NULL },
+    { "daemon-child", 0, arg_integer,	&daemon_child_fd, "private argument, do not use",
+      NULL },
+    { "pidfile", 0, arg_string,		&pidfile_str,	"write pid to file",
+      "file" },
     { "version", 0,  arg_flag,		&version_flag,	"Print version",
       NULL },
     { "help",	 0,  arg_flag,		&help_flag,	NULL,
@@ -1213,6 +1222,11 @@ main(int argc, char **argv)
 {
     int optidx	= 0;
     krb5_error_code ret;
+    struct addrinfo *ai, hints;
+    char portstr[NI_MAXSERV];
+    rk_socket_t *fds;
+    int num_fds;
+    int error;
 
     setprogname (argv[0]);
 
@@ -1238,6 +1252,9 @@ main(int argc, char **argv)
 	    errx (1, "Bad port `%s'", port_str);
     }
 
+    if (detach_flag && daemon_child_fd == -1)
+	daemon_child_fd = roken_detach_prep(argc, argv, "--daemon-child");
+
     ret = krb5_init_context(&context);
     if (ret)
 	errx(1, "Error initializing kerberos: %d", ret);
@@ -1252,7 +1269,26 @@ main(int argc, char **argv)
 	    err(1, "error opening %s", lf);
     }
 
-    mini_inetd(htons(port), NULL);
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_flags    = AI_PASSIVE;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_family   = PF_UNSPEC;
+
+    snprintf(portstr, sizeof(portstr), "%d", port);
+
+    error = getaddrinfo(NULL, portstr, &hints, &ai);
+    if (error)
+	errx(1, "getaddrinfo: %s", gai_strerror(error));
+
+    mini_inetd_addrinfo_listen(ai, &fds, &num_fds);
+    freeaddrinfo(ai);
+
+    if (pidfile_str)
+	rk_pidfile(pidfile_str);
+
+    roken_detach_finish(NULL, daemon_child_fd);
+
+    mini_inetd_accept(fds, num_fds, NULL);
     fprintf(logfile, "connected\n");
 
     {

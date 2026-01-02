@@ -100,9 +100,6 @@
 #include <der.h>
 #include <gssapi/gssapi.h>
 
-#ifndef NO_NTLM
-#include <heimntlm.h>
-#endif
 #include <kdc.h>
 #include <kdc-plugin.h>
 #include <kdc-audit.h>

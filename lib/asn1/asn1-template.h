@@ -180,6 +180,7 @@
 #define A1_OS_IS_SORTED		(0x01000000)
 #define A1_OS_OT_IS_ARRAY	(0x02000000)
 #define A1_OTI_IS_INTEGER	(0x04000000)
+#define A1_OTF_IS_OPTIONAL	(0x08000000) /* Open type field is optional */
 
 
 struct asn1_template {
@@ -232,6 +233,7 @@ enum template_types {
     A1T_BOOLEAN,
     A1T_OID,
     A1T_TELETEX_STRING,
+    A1T_NULL,
     A1T_NUM_ENTRY
 };
 

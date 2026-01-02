@@ -489,6 +489,7 @@ addBag(hx509_context context,
 	return ENOMEM;
     }
     as->val = ptr;
+    memset(&as->val[as->len], 0, sizeof(as->val[0]));
 
     ret = der_copy_oid(oid, &as->val[as->len].contentType);
     if (ret) {

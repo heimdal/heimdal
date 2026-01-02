@@ -100,6 +100,7 @@
 #include <err.h>
 #include <getarg.h>
 #include <krb5.h>
+#include <krb5_locl.h>
 #include "crypto-headers.h" /* for des_read_pw_string */
 
 #endif /* __KPASSWD_LOCL_H__ */

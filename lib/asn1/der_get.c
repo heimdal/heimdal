@@ -159,6 +159,14 @@ der_get_length (const unsigned char *p, size_t len,
 }
 
 int ASN1CALL
+der_get_null(const unsigned char *p, size_t len, int *data, size_t *size)
+{
+    *data = 0;
+    *size = 0;
+    return 0;
+}
+
+int ASN1CALL
 der_get_boolean(const unsigned char *p, size_t len, int *data, size_t *size)
 {
     if(len < 1)

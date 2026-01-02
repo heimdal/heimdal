@@ -33,7 +33,6 @@
  */
 
 #include "kcm_locl.h"
-#include <heimntlm.h>
 
 static void
 kcm_drop_default_cache(krb5_context context, kcm_client *client, char *name);
@@ -1224,28 +1223,6 @@ kcm_op_set_kdc_offset(krb5_context context,
     return ret;
 }
 
-struct kcm_ntlm_cred {
-    kcmuuid_t uuid;
-    char *user;
-    char *domain;
-    krb5_data nthash;
-    uid_t uid;
-    pid_t session;
-    struct kcm_ntlm_cred *next;
-};
-
-static struct kcm_ntlm_cred *ntlm_head;
-
-static void
-free_cred(struct kcm_ntlm_cred *cred)
-{
-    free(cred->user);
-    free(cred->domain);
-    krb5_data_free(&cred->nthash);
-    free(cred);
-}
-
-
 /*
  * name
  * domain
@@ -1255,20 +1232,6 @@ free_cred(struct kcm_ntlm_cred *cred)
  *   uuid
  */
 
-static struct kcm_ntlm_cred *
-find_ntlm_cred(const char *user, const char *domain, kcm_client *client)
-{
-    struct kcm_ntlm_cred *c;
-
-    for (c = ntlm_head; c != NULL; c = c->next)
-	if ((user[0] == '\0' || strcmp(user, c->user) == 0) &&
-	    (domain == NULL || strcmp(domain, c->domain) == 0) &&
-	    kcm_is_same_session(client, c->uid, c->session))
-	    return c;
-
-    return NULL;
-}
-
 static krb5_error_code
 kcm_op_add_ntlm_cred(krb5_context context,
 		     kcm_client *client,
@@ -1276,52 +1239,10 @@ kcm_op_add_ntlm_cred(krb5_context context,
 		     krb5_storage *request,
 		     krb5_storage *response)
 {
-    struct kcm_ntlm_cred *cred, *c;
-    krb5_error_code ret;
-
-    cred = calloc(1, sizeof(*cred));
-    if (cred == NULL)
-	return ENOMEM;
-
-    RAND_bytes(cred->uuid, sizeof(cred->uuid));
-
-    ret = krb5_ret_stringz(request, &cred->user);
-    if (ret)
-	goto error;
-
-    ret = krb5_ret_stringz(request, &cred->domain);
-    if (ret)
-	goto error;
-
-    ret = krb5_ret_data(request, &cred->nthash);
-    if (ret)
-	goto error;
-
-    /* search for dups */
-    c = find_ntlm_cred(cred->user, cred->domain, client);
-    if (c) {
-	krb5_data hash = c->nthash;
-	c->nthash = cred->nthash;
-	cred->nthash = hash;
-	free_cred(cred);
-	cred = c;
-    } else {
-	cred->next = ntlm_head;
-	ntlm_head = cred;
-    }
-
-    cred->uid = client->uid;
-    cred->session = client->session;
-
     /* write response */
-    (void)krb5_storage_write(response, &cred->uuid, sizeof(cred->uuid));
+    (void)krb5_storage_write(response, "not supported", sizeof("not supported"));
 
-    return 0;
-
- error:
-    free_cred(cred);
-
-    return ret;
+    return ENOTSUP;
 }
 
 /*
@@ -1339,33 +1260,7 @@ kcm_op_have_ntlm_cred(krb5_context context,
 		     krb5_storage *request,
 		     krb5_storage *response)
 {
-    struct kcm_ntlm_cred *c;
-    char *user = NULL, *domain = NULL;
-    krb5_error_code ret;
-
-    ret = krb5_ret_stringz(request, &user);
-    if (ret)
-	goto error;
-
-    ret = krb5_ret_stringz(request, &domain);
-    if (ret)
-	goto error;
-
-    if (domain[0] == '\0') {
-	free(domain);
-	domain = NULL;
-    }
-
-    c = find_ntlm_cred(user, domain, client);
-    if (c == NULL)
-	ret = ENOENT;
-
- error:
-    free(user);
-    if (domain)
-	free(domain);
-
-    return ret;
+    return ENOTSUP;
 }
 
 /*
@@ -1383,35 +1278,7 @@ kcm_op_del_ntlm_cred(krb5_context context,
 		     krb5_storage *request,
 		     krb5_storage *response)
 {
-    struct kcm_ntlm_cred **cp, *c;
-    char *user = NULL, *domain = NULL;
-    krb5_error_code ret;
-
-    ret = krb5_ret_stringz(request, &user);
-    if (ret)
-	goto error;
-
-    ret = krb5_ret_stringz(request, &domain);
-    if (ret)
-	goto error;
-
-    for (cp = &ntlm_head; *cp != NULL; cp = &(*cp)->next) {
-	if (strcmp(user, (*cp)->user) == 0 && strcmp(domain, (*cp)->domain) == 0 &&
-	    kcm_is_same_session(client, (*cp)->uid, (*cp)->session))
-	{
-	    c = *cp;
-	    *cp = c->next;
-
-	    free_cred(c);
-	    break;
-	}
-    }
-
- error:
-    free(user);
-    free(domain);
-
-    return ret;
+    return ENOTSUP;
 }
 
 /*
@@ -1439,218 +1306,7 @@ kcm_op_do_ntlm(krb5_context context,
 	       krb5_storage *request,
 	       krb5_storage *response)
 {
-    struct kcm_ntlm_cred *c;
-    struct ntlm_type2 type2;
-    struct ntlm_type3 type3;
-    char *user = NULL, *domain = NULL;
-    struct ntlm_buf ndata, sessionkey;
-    krb5_data data;
-    krb5_error_code ret;
-    uint32_t flags = 0;
-
-    memset(&type2, 0, sizeof(type2));
-    memset(&type3, 0, sizeof(type3));
-    sessionkey.data = NULL;
-    sessionkey.length = 0;
-
-    ret = krb5_ret_stringz(request, &user);
-    if (ret)
-	goto error;
-
-    ret = krb5_ret_stringz(request, &domain);
-    if (ret)
-	goto error;
-
-    if (domain[0] == '\0') {
-	free(domain);
-	domain = NULL;
-    }
-
-    c = find_ntlm_cred(user, domain, client);
-    if (c == NULL) {
-	ret = EINVAL;
-	goto error;
-    }
-
-    ret = krb5_ret_data(request, &data);
-    if (ret)
-	goto error;
-
-    ndata.data = data.data;
-    ndata.length = data.length;
-
-    ret = heim_ntlm_decode_type2(&ndata, &type2);
-    krb5_data_free(&data);
-    if (ret)
-	goto error;
-
-    if (domain && strcmp(domain, type2.targetname) == 0) {
-	ret = EINVAL;
-	goto error;
-    }
-
-    type3.username = c->user;
-    type3.flags = type2.flags;
-    type3.targetname = type2.targetname;
-    type3.ws = rk_UNCONST("workstation");
-
-    /*
-     * NTLM Version 1 if no targetinfo buffer.
-     */
-
-    if (1 || type2.targetinfo.length == 0) {
-	struct ntlm_buf tmpsesskey;
-
-	if (type2.flags & NTLM_NEG_NTLM2_SESSION) {
-	    unsigned char nonce[8];
-
-	    if (RAND_bytes(nonce, sizeof(nonce)) != 1) {
-		ret = EINVAL;
-		goto error;
-	    }
-
-	    ret = heim_ntlm_calculate_ntlm2_sess(nonce,
-						 type2.challenge,
-						 c->nthash.data,
-						 &type3.lm,
-						 &type3.ntlm);
-	} else {
-	    ret = heim_ntlm_calculate_ntlm1(c->nthash.data,
-					    c->nthash.length,
-					    type2.challenge,
-					    &type3.ntlm);
-
-	}
-	if (ret)
-	    goto error;
-
-	ret = heim_ntlm_build_ntlm1_master(c->nthash.data,
-					   c->nthash.length,
-					   &tmpsesskey,
-					   &type3.sessionkey);
-	if (ret) {
-	    if (type3.lm.data)
-		free(type3.lm.data);
-	    if (type3.ntlm.data)
-		free(type3.ntlm.data);
-	    goto error;
-	}
-
-	free(tmpsesskey.data);
-	flags |= NTLM_FLAG_SESSIONKEY;
-#if 0
-    } else {
-	struct ntlm_buf sessionkey;
-	unsigned char ntlmv2[16];
-	struct ntlm_targetinfo ti;
-
-	/* verify infotarget */
-
-	ret = heim_ntlm_decode_targetinfo(&type2.targetinfo, 1, &ti);
-	if(ret) {
-	    _gss_ntlm_delete_sec_context(minor_status,
-					 context_handle, NULL);
-	    *minor_status = ret;
-	    return GSS_S_FAILURE;
-	}
-
-	if (ti.domainname && strcmp(ti.domainname, name->domain) != 0) {
-	    _gss_ntlm_delete_sec_context(minor_status,
-					 context_handle, NULL);
-	    *minor_status = EINVAL;
-	    return GSS_S_FAILURE;
-	}
-
-	ret = heim_ntlm_calculate_ntlm2(ctx->client->key.data,
-					ctx->client->key.length,
-					type3.username,
-					name->domain,
-					type2.challenge,
-					&type2.targetinfo,
-					ntlmv2,
-					&type3.ntlm);
-	if (ret) {
-	    _gss_ntlm_delete_sec_context(minor_status,
-					 context_handle, NULL);
-	    *minor_status = ret;
-	    return GSS_S_FAILURE;
-	}
-
-	ret = heim_ntlm_build_ntlm1_master(ntlmv2, sizeof(ntlmv2),
-					   &sessionkey,
-					   &type3.sessionkey);
-	memset(ntlmv2, 0, sizeof(ntlmv2));
-	if (ret) {
-	    _gss_ntlm_delete_sec_context(minor_status,
-					 context_handle, NULL);
-	    *minor_status = ret;
-	    return GSS_S_FAILURE;
-	}
-
-	flags |= NTLM_FLAG_NTLM2_SESSION |
-	         NTLM_FLAG_SESSION;
-
-	if (type3.flags & NTLM_NEG_KEYEX)
-	    flags |= NTLM_FLAG_KEYEX;
-
-	ret = krb5_data_copy(&ctx->sessionkey,
-			     sessionkey.data, sessionkey.length);
-	free(sessionkey.data);
-	if (ret) {
-	    _gss_ntlm_delete_sec_context(minor_status,
-					 context_handle, NULL);
-	    *minor_status = ret;
-	    return GSS_S_FAILURE;
-	}
-#endif
-    }
-
-#if 0
-    if (flags & NTLM_FLAG_NTLM2_SESSION) {
-	_gss_ntlm_set_key(&ctx->u.v2.send, 0, (ctx->flags & NTLM_NEG_KEYEX),
-			  ctx->sessionkey.data,
-			  ctx->sessionkey.length);
-	_gss_ntlm_set_key(&ctx->u.v2.recv, 1, (ctx->flags & NTLM_NEG_KEYEX),
-			  ctx->sessionkey.data,
-			  ctx->sessionkey.length);
-    } else {
-	flags |= NTLM_FLAG_SESSION;
-	RC4_set_key(&ctx->u.v1.crypto_recv.key,
-		    ctx->sessionkey.length,
-		    ctx->sessionkey.data);
-	RC4_set_key(&ctx->u.v1.crypto_send.key,
-		    ctx->sessionkey.length,
-		    ctx->sessionkey.data);
-    }
-#endif
-
-    ret = heim_ntlm_encode_type3(&type3, &ndata, NULL);
-    if (ret)
-	goto error;
-
-    data.data = ndata.data;
-    data.length = ndata.length;
-    ret = krb5_store_data(response, data);
-    heim_ntlm_free_buf(&ndata);
-    if (ret) goto error;
-
-    ret = krb5_store_int32(response, flags);
-    if (ret) goto error;
-
-    data.data = sessionkey.data;
-    data.length = sessionkey.length;
-
-    ret = krb5_store_data(response, data);
-    if (ret) goto error;
-
- error:
-    free(type3.username);
-    heim_ntlm_free_type2(&type2);
-    free(user);
-    if (domain)
-	free(domain);
-
-    return ret;
+    return ENOTSUP;
 }
 
 
@@ -1669,24 +1325,7 @@ kcm_op_get_ntlm_user_list(krb5_context context,
 			  krb5_storage *request,
 			  krb5_storage *response)
 {
-    struct kcm_ntlm_cred *c;
-    krb5_error_code ret;
-
-    for (c = ntlm_head; c != NULL; c = c->next) {
-	if (!kcm_is_same_session(client, c->uid, c->session))
-	    continue;
-
-	ret = krb5_store_uint32(response, 1);
-	if (ret)
-	    return ret;
-	ret = krb5_store_stringz(response, c->user);
-	if (ret)
-	    return ret;
-	ret = krb5_store_stringz(response, c->domain);
-	if (ret)
-	    return ret;
-    }
-    return krb5_store_uint32(response, 0);
+    return ENOTSUP;
 }
 
 /*

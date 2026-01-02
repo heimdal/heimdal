@@ -84,9 +84,6 @@
 #ifdef HAVE_SYS_IOCCOM_H
 #include <sys/ioccom.h>
 #endif
-#ifndef NO_AFS
-#include <kafs.h>
-#endif
 #include "crypto-headers.h" /* for UI_UTIL_read_pw_string */
 
 #include <rtbl.h>

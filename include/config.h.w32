@@ -520,9 +520,6 @@ static const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* Define if you have the function `getuid'. */
 /* #define HAVE_GETUID 1 */
 
-/* Define if you have the function `getusershell'. */
-/* #define HAVE_GETUSERSHELL 1 */
-
 /* Define to 1 if you have the `grantpt' function. */
 /* #define HAVE_GRANTPT 1 */
 
@@ -692,9 +689,6 @@ static const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 
 /* Define to 1 if you have the `openpty' function. */
 /* #define HAVE_OPENPTY 1 */
-
-/* define to 1 to use openssl's libcrypto as a (default) backend for libhcrypto */
-/* #undef HAVE_HCRYPTO_W_OPENSSL */
 
 /* Define to enable basic OSF C2 support. */
 /* #undef HAVE_OSFC2 */

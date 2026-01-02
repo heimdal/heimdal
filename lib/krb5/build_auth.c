@@ -51,6 +51,7 @@ add_auth_data(krb5_context context,
 
 static krb5_error_code
 add_etypelist(krb5_context context,
+              krb5_enctype *allowed_enctypes,
 	      krb5_authdata *auth_data)
 {
     AuthorizationDataElement ade;
@@ -58,12 +59,26 @@ add_etypelist(krb5_context context,
     krb5_error_code ret;
     krb5_data e;
     size_t len = 0;
+    size_t i;
 
-    ret = _krb5_init_etype(context, KRB5_PDU_NONE,
-			   &etypes.len, &etypes.val,
-			   NULL);
-    if (ret)
-	return ret;
+    if (allowed_enctypes) {
+        while (allowed_enctypes[len] != KRB5_ENCTYPE_NULL)
+            len++;
+    }
+
+    if (len) {
+        if ((etypes.val = calloc(len, sizeof(etypes.val[0]))) == NULL)
+            return krb5_enomem(context);
+        for (i = 0; i < len; i++)
+            etypes.val[i] = allowed_enctypes[0];
+        etypes.len = len;
+    } else {
+        ret = _krb5_init_etype(context, KRB5_PDU_NONE,
+                               &etypes.len, &etypes.val,
+                               NULL);
+        if (ret)
+            return ret;
+    }
 
     ASN1_MALLOC_ENCODE(EtypeList, e.data, e.length, &etypes, &len, ret);
     if (ret) {
@@ -122,6 +137,7 @@ add_ap_options(krb5_context context,
 static krb5_error_code
 make_ap_authdata(krb5_context context,
                  krb5_boolean channel_bound,
+                 krb5_enctype *allowed_enctypes,
                  krb5_authdata **auth_data)
 {
     krb5_error_code ret;
@@ -132,7 +148,7 @@ make_ap_authdata(krb5_context context,
     ad.len = 0;
     ad.val = NULL;
 
-    ret = add_etypelist(context, &ad);
+    ret = add_etypelist(context, allowed_enctypes, &ad);
     if (ret)
 	return ret;
 
@@ -168,6 +184,7 @@ KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_build_authenticator (krb5_context context,
 			   krb5_auth_context auth_context,
 			   krb5_enctype enctype,
+			   krb5_enctype *allowed_enctypes,
 			   krb5_creds *cred,
 			   Checksum *cksum,
 			   krb5_boolean channel_bound,
@@ -229,6 +246,7 @@ _krb5_build_authenticator (krb5_context context,
 	     */
 	    ret = make_ap_authdata(context,
 				   channel_bound,
+                                   allowed_enctypes,
 				   &auth.authorization_data);
 	    if (ret)
 		goto fail;

@@ -190,6 +190,25 @@ heim_string_create_with_format(const char *fmt, ...)
 }
 
 /**
+ * Concatenate two strings
+ *
+ * @param left
+ * @param sep
+ * @param right
+ *
+ * @return string object
+ */
+
+heim_string_t
+heim_string_concat(heim_string_t left, const char *sep, heim_string_t right)
+{
+    const char *sleft = heim_string_get_utf8(left);
+    const char *sright = heim_string_get_utf8(right);
+
+    return heim_string_create_with_format("%s%s%s", sleft, sep, sright);
+}
+
+/**
  * Return the type ID of string objects
  *
  * @return type id of string objects

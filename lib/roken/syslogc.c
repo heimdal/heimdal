@@ -36,6 +36,7 @@
 #include <config.h>
 
 #include <roken.h>
+#include <syslog.h>
 
 #define SYSLOG_DGRAM_SIZE 1024
 
@@ -278,7 +279,7 @@ setlogmask( int mask )
  * Generate a log message using FMT string and option arguments.
  */
 ROKEN_LIB_FUNCTION void
-syslog( int pri, char* fmt, ... )
+syslog(int pri, const char* fmt, ...)
 {
     va_list ap;
 
@@ -293,7 +294,7 @@ syslog( int pri, char* fmt, ... )
  * Generate a log message using FMT and using arguments pointed to by AP.
  */
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
-vsyslog( int pri, char* fmt, va_list ap )
+vsyslog(int pri, const char *fmt, va_list ap)
 {
     static char *month[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
                             "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };

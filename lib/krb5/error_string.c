@@ -76,6 +76,27 @@ krb5_set_error_message(krb5_context context, krb5_error_code ret,
     va_end(ap);
 }
 
+KRB5_LIB_FUNCTION int KRB5_LIB_CALL
+_krb5_set_error_message_openssl(krb5_context context, krb5_error_code ret,
+		       const char *fmt, ...)
+    __attribute__ ((__format__ (__printf__, 3, 4)))
+{
+    va_list ap;
+    char *omsg;
+
+    if (context == NULL)
+        return ret;
+
+    omsg = _krb5_openssl_errors();
+    krb5_set_error_message(context, ret, "OpenSSL error:\n%s", omsg);
+
+    va_start(ap, fmt);
+    krb5_vprepend_error_message(context, ret, fmt, ap);
+    va_end(ap);
+    free(omsg);
+    return ret;
+}
+
 /**
  * Set the context full error string for a specific error code.
  *
@@ -233,4 +254,39 @@ krb5_get_err_text(krb5_context context, krb5_error_code code)
     KRB5_DEPRECATED_FUNCTION("Use krb5_get_error_message instead")
 {
     return krb5_get_error_message(context, code);
+}
+
+struct krb5_ossl_err_buf {
+    size_t len;
+    char *s;
+};
+
+static int err_append_cb(const char *s, size_t len, void *u)
+{
+    struct krb5_ossl_err_buf *b = u;
+    char *tmp;
+
+    if ((tmp = realloc(b->s, b->len + len + 1)) == NULL)
+        return 0;
+
+    memcpy(tmp + b->len, s, len);
+    tmp[b->len + len] = '\0';
+    b->s = tmp;
+    b->len += len;
+    return 1;
+}
+
+KRB5_LIB_FUNCTION char * KRB5_LIB_CALL
+_krb5_openssl_errors(void)
+{
+    struct krb5_ossl_err_buf b;
+
+    if (ERR_peek_last_error() == 0)
+        return NULL;
+
+    /* NOTE: Dequeues the errors */
+    b.s = NULL;
+    b.len = 0;
+    ERR_print_errors_cb(err_append_cb, &b);
+    return b.s;
 }

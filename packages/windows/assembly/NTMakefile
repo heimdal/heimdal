@@ -58,13 +58,11 @@ ASMKRBMAN=$(ASMKRBNAME).manifest
 ASMKRBBINS=\
 	$(ASMKRBDIR)\heimdal.dll	\
 	$(ASMKRBDIR)\com_err.dll	\
-	$(ASMKRBDIR)\heimntlm.dll	\
 	$(ASMKRBDIR)\gssapi.dll		\
 	$(ASMKRBDIR)\libhdb.dll		\
 	$(ASMKRBDIR)\libkadm5srv.dll	\
 	$(ASMKRBDIR)\heimdal.pdb	\
 	$(ASMKRBDIR)\com_err.pdb	\
-	$(ASMKRBDIR)\heimntlm.pdb	\
 	$(ASMKRBDIR)\gssapi.pdb		\
 	$(ASMKRBDIR)\libhdb.pdb		\
 	$(ASMKRBDIR)\libkadm5srv.pdb

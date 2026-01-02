@@ -1000,7 +1000,7 @@ random_to_key(krb5_context context)
     krb5_keyblock key;
 
     ret = krb5_random_to_key(context,
-			     ETYPE_DES3_CBC_SHA1,
+			     ETYPE_AES128_CTS_HMAC_SHA256_128,
 			     "\x21\x39\x04\x58\x6A\xBD\x7F"
 			     "\x21\x39\x04\x58\x6A\xBD\x7F"
 			     "\x21\x39\x04\x58\x6A\xBD\x7F",
@@ -1010,14 +1010,13 @@ random_to_key(krb5_context context)
 	krb5_warn(context, ret, "random_to_key");
 	return 1;
     }
-    if (key.keyvalue.length != 24)
+    if (key.keyvalue.length != 16)
 	return 1;
 
     if (memcmp(key.keyvalue.data,
-	       "\x20\x38\x04\x58\x6b\xbc\x7f\xc7"
-	       "\x20\x38\x04\x58\x6b\xbc\x7f\xc7"
-	       "\x20\x38\x04\x58\x6b\xbc\x7f\xc7",
-	       24) != 0)
+               "\x21\x39\x04\x58\x6a\xbd\x7f\x21"
+               "\x39\x04\x58\x6a\xbd\x7f\x21\x39",
+	       16) != 0)
 	return 1;
 
     krb5_free_keyblock_contents(context, &key);

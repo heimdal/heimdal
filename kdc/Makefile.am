@@ -5,13 +5,14 @@ include $(top_srcdir)/Makefile.am.common
 WFLAGS += $(WFLAGS_ENUM_CONV)
 
 AM_CPPFLAGS += $(INCLUDE_libintl) $(INCLUDE_openssl_crypto) -I$(srcdir)/../lib/krb5
+if WIN32
+AM_CPPFLAGS += -DASN1_LIB -DNO_POSIX_LINKS
+endif
 
-lib_LTLIBRARIES = ipc_csr_authorizer.la \
-		  negotiate_token_validator.la \
-		  libkdc.la
-
-if HAVE_CJWT
-lib_LTLIBRARIES += cjwt_token_validator.la
+lib_LTLIBRARIES = libkdc.la
+if !WIN32
+# ipc_csr_authorizer uses lib/ipc which requires Unix domain sockets
+lib_LTLIBRARIES += ipc_csr_authorizer.la
 endif
 if OPENLDAP
 lib_LTLIBRARIES += altsecid_gss_preauth_authorizer.la
@@ -22,8 +23,13 @@ bin_PROGRAMS = string2key
 
 sbin_PROGRAMS = kstash
 
-libexec_PROGRAMS = hprop hpropd kdc digest-service \
-		   test_token_validator test_csr_authorizer test_kdc_ca
+libexec_PROGRAMS = hprop hpropd kdc \
+		   test_token_validator test_kdc_ca \
+		   test_jwt_validator
+if !WIN32
+# test_csr_authorizer uses lib/ipc which requires Unix domain sockets
+libexec_PROGRAMS += test_csr_authorizer
+endif
 
 noinst_PROGRAMS = kdc-replay kdc-tester
 
@@ -36,7 +42,9 @@ kstash_SOURCES = kstash.c headers.h
 
 string2key_SOURCES = string2key.c headers.h
 
+# bx509d and httpkadmind are HTTP servers that require Unix sockets
 if HAVE_MICROHTTPD
+if !WIN32
 bx509d_SOURCES = bx509d.c
 bx509d_CPPFLAGS = $(AM_CPPFLAGS) $(MICROHTTPD_CFLAGS)
 bx509d_LDADD =	-ldl \
@@ -45,7 +53,7 @@ bx509d_LDADD =	-ldl \
 		 $(MICROHTTPD_LIBS) \
 		 $(LIB_roken) \
 		 $(LIB_heimbase) \
-		 $(LIB_hcrypto) \
+		 $(LIB_openssl_crypto) \
 		 $(top_builddir)/lib/sl/libsl.la \
 		 $(top_builddir)/lib/asn1/libasn1.la \
 		 $(top_builddir)/lib/krb5/libkrb5.la \
@@ -63,7 +71,7 @@ httpkadmind_LDADD =	-ldl \
 		 $(MICROHTTPD_LIBS) \
 		 $(LIB_roken) \
 		 $(LIB_heimbase) \
-		 $(LIB_hcrypto) \
+		 $(LIB_openssl_crypto) \
 		 $(top_builddir)/lib/sl/libsl.la \
 		 $(top_builddir)/lib/asn1/libasn1.la \
 		 $(top_builddir)/lib/krb5/libkrb5.la \
@@ -71,9 +79,7 @@ httpkadmind_LDADD =	-ldl \
 		 $(top_builddir)/lib/gssapi/libgssapi.la
 libexec_PROGRAMS += httpkadmind
 endif
-
-digest_service_SOURCES = \
-	digest-service.c
+endif
 
 kdc_SOURCES = connect.c	\
 	config.c	\
@@ -87,16 +93,8 @@ kdc_tester_SOURCES = \
 test_token_validator_SOURCES = test_token_validator.c
 test_csr_authorizer_SOURCES = test_csr_authorizer.c
 test_kdc_ca_SOURCES = test_kdc_ca.c
+test_jwt_validator_SOURCES = test_jwt_validator.c jwt_validator.c
 
-# Token plugins (for bx509d)
-if HAVE_CJWT
-cjwt_token_validator_la_SOURCES = cjwt_token_validator.c
-cjwt_token_validator_la_CFLAGS = $(CJSON_CFLAGS) $(CJWT_CFLAGS)
-cjwt_token_validator_la_LDFLAGS = -module $(CJSON_LIBS) $(CJWT_LIBS)
-endif
-
-negotiate_token_validator_la_SOURCES = negotiate_token_validator.c
-negotiate_token_validator_la_LDFLAGS = -module $(LIB_gssapi)
 # CSR Authorizer plugins (for kdc/kx509 and bx509d)
 ipc_csr_authorizer_la_SOURCES = ipc_csr_authorizer.c
 ipc_csr_authorizer_la_LDFLAGS = -module	\
@@ -120,18 +118,18 @@ libkdc_la_SOURCES = 		\
 	default_config.c 	\
 	ca.c			\
 	set_dbinfo.c	 	\
-	digest.c		\
 	fast.c			\
 	kdc_locl.h		\
 	kerberos5.c		\
 	krb5tgs.c		\
 	pkinit.c		\
-	pkinit-ec.c		\
 	mssfu.c			\
 	log.c			\
 	misc.c			\
 	kx509.c			\
 	token_validator.c	\
+	jwt_validator.c		\
+	jwt_validator.h		\
 	csr_authorizer.c	\
 	process.c		\
 	kdc-plugin.c		\
@@ -150,15 +148,13 @@ ALL_OBJECTS += $(string2key_OBJECTS)
 ALL_OBJECTS += $(kstash_OBJECTS)
 ALL_OBJECTS += $(hprop_OBJECTS)
 ALL_OBJECTS += $(hpropd_OBJECTS)
-ALL_OBJECTS += $(digest_service_OBJECTS)
 ALL_OBJECTS += $(bx509d_OBJECTS)
 ALL_OBJECTS += $(httpkadmind_OBJECTS)
-ALL_OBJECTS += $(cjwt_token_validator_la_OBJECTS)
 ALL_OBJECTS += $(test_token_validator_OBJECTS)
 ALL_OBJECTS += $(test_csr_authorizer_OBJECTS)
 ALL_OBJECTS += $(test_kdc_ca_OBJECTS)
+ALL_OBJECTS += $(test_jwt_validator_OBJECTS)
 ALL_OBJECTS += $(ipc_csr_authorizer_la_OBJECTS)
-ALL_OBJECTS += $(negotiate_token_validator_la_OBJECTS)
 
 $(ALL_OBJECTS): $(KDC_PROTOS)
 
@@ -181,7 +177,6 @@ hprop_LDADD = \
 	$(top_builddir)/lib/hdb/libhdb.la \
 	$(top_builddir)/lib/krb5/libkrb5.la \
 	$(LIB_kdb)  \
-	$(LIB_hcrypto) \
 	$(top_builddir)/lib/asn1/libasn1.la \
 	$(LIB_roken) \
 	$(DB3LIB) $(DB1LIB) $(LMDBLIB) $(NDBMLIB)
@@ -190,7 +185,6 @@ hpropd_LDADD = \
 	$(top_builddir)/lib/hdb/libhdb.la \
 	$(top_builddir)/lib/krb5/libkrb5.la \
 	$(LIB_kdb)  \
-	$(LIB_hcrypto) \
 	$(top_builddir)/lib/asn1/libasn1.la \
 	$(LIB_roken) \
 	$(DB3LIB) $(DB1LIB) $(LMDBLIB) $(NDBMLIB)
@@ -206,8 +200,6 @@ libkdc_la_LIBADD = \
 	$(top_builddir)/lib/gssapi/libgssapi.la \
 	$(top_builddir)/lib/gss_preauth/libgss_preauth.la \
 	$(LIB_kdb)  \
-	$(top_builddir)/lib/ntlm/libheimntlm.la \
-	$(LIB_hcrypto) \
 	$(LIB_openssl_crypto) \
 	$(top_builddir)/lib/asn1/libasn1.la \
 	$(LIB_roken) \
@@ -215,7 +207,6 @@ libkdc_la_LIBADD = \
 
 LDADD = $(top_builddir)/lib/hdb/libhdb.la \
 	$(top_builddir)/lib/krb5/libkrb5.la \
-	$(LIB_hcrypto) \
 	$(top_builddir)/lib/asn1/libasn1.la \
 	$(LIB_roken) \
 	$(DB3LIB) $(DB1LIB) $(LMDBLIB) $(NDBMLIB)
@@ -227,11 +218,6 @@ kdc_LDFLAGS = -framework SystemConfiguration -framework CoreFoundation
 endif
 kdc_CFLAGS = $(CAPNG_CFLAGS)
 
-digest_service_LDADD = \
-	libkdc.la \
-	$(top_builddir)/lib/ntlm/libheimntlm.la \
-	$(top_builddir)/lib/ipc/libheim-ipcs.la \
-	$(LDADD) $(LIB_pidfile)
 kdc_replay_LDADD = libkdc.la $(LDADD) $(LIB_pidfile)
 kdc_tester_LDADD = libkdc.la $(LDADD) $(LIB_pidfile) $(LIB_heimbase)
 test_token_validator_LDADD = libkdc.la $(LDADD) $(LIB_pidfile) $(LIB_heimbase) $(LIB_gssapi)
@@ -242,13 +228,14 @@ test_csr_authorizer_LDADD = libkdc.la \
 			    $(LIB_heimbase) \
 			    $(top_builddir)/lib/ipc/libheim-ipcs.la
 test_kdc_ca_LDADD = libkdc.la $(top_builddir)/lib/hx509/libhx509.la $(LDADD) $(LIB_pidfile) $(LIB_heimbase)
+test_jwt_validator_LDADD = libkdc.la $(LDADD) $(LIB_pidfile) $(LIB_heimbase) $(LIB_openssl_crypto)
 
 include_HEADERS = kdc.h $(srcdir)/kdc-protos.h
 
 noinst_HEADERS = $(srcdir)/kdc-private.h
 
 krb5dir = $(includedir)/krb5
-krb5_HEADERS = kdc-audit.h kdc-plugin.h kdc-accessors.h token_validator_plugin.h csr_authorizer_plugin.h gss_preauth_authorizer_plugin.h
+krb5_HEADERS = kdc-audit.h kdc-plugin.h kdc-accessors.h csr_authorizer_plugin.h gss_preauth_authorizer_plugin.h
 
 build_HEADERZ = $(krb5_HEADERS) # XXX
 

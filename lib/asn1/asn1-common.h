@@ -75,13 +75,24 @@ enum asn1_print_flags {
     }                                                          \
   } while (0)
 
-#ifdef _WIN32
+#define ASN1_MALLOC_ENCODE_SAVE(T, S, L, R)                     \
+    do {                                                        \
+        der_free_octet_string(&(S)->_save);                     \
+        ASN1_MALLOC_ENCODE(T, (S)->_save.data,                  \
+                           (S)->_save.length, (S), (L), (R));   \
+    } while (0)
+
+#if defined(_WIN32) && !defined(__MINGW32__)
 #ifndef ASN1_LIB
 #define ASN1EXP  __declspec(dllimport)
 #else
 #define ASN1EXP
 #endif
 #define ASN1CALL __stdcall
+#elif defined(_WIN32)
+/* MinGW - static linking, use __cdecl */
+#define ASN1EXP
+#define ASN1CALL __cdecl
 #else
 #define ASN1EXP
 #define ASN1CALL

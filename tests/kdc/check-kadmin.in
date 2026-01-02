@@ -51,7 +51,7 @@ cache="FILE:${objdir}/cache.krb5"
 
 kadmin="${kadmin} -r $R"
 kdc="${kdc} --addresses=localhost -P $port"
-kadmind="${kadmind} -p $admport"
+kadmind="${kadmind} -A -p $admport"
 
 server=host/datan.test.h5l.se
 

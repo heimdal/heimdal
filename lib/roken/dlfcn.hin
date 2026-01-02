@@ -69,6 +69,8 @@ extern "C" {
 /* All symbols are not made available for relocation processing by other modules. */
 #define RTLD_LOCAL  (1 << 2)
 
+#define RTLD_GROUP  0
+
 /* These two were added in The Open Group Base Specifications Issue 6.
  * Note: All other RTLD_* flags in any dlfcn.h are not standard compliant.
  */

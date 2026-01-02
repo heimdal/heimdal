@@ -167,6 +167,129 @@ rk_base64_decode(const char *str, void *data)
     return q - (unsigned char *) data;
 }
 
+/*
+ * Base64URL encoding/decoding (RFC 4648 Section 5)
+ *
+ * Uses '-' and '_' instead of '+' and '/', and omits padding.
+ * This is the encoding used by JWT/JWS (RFC 7515).
+ */
+
+#define base64url_chars "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
+
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
+rk_base64url_encode(const void *data, int size, char **str)
+{
+    char *s, *p;
+    int i;
+    int c;
+    const unsigned char *q;
+
+    if (size > INT_MAX/4 || size < 0) {
+	*str = NULL;
+        errno = ERANGE;
+	return -1;
+    }
+
+    p = s = (char *) malloc(size * 4 / 3 + 4);
+    if (p == NULL) {
+        *str = NULL;
+	return -1;
+    }
+    q = (const unsigned char *) data;
+
+    for (i = 0; i < size;) {
+	c = q[i++];
+	c *= 256;
+	if (i < size)
+	    c += q[i];
+	i++;
+	c *= 256;
+	if (i < size)
+	    c += q[i];
+	i++;
+	p[0] = base64url_chars[(c & 0x00fc0000) >> 18];
+	p[1] = base64url_chars[(c & 0x0003f000) >> 12];
+	/* Omit padding characters */
+	if (i > size + 1) {
+	    p += 2;
+	    break;
+	}
+	p[2] = base64url_chars[(c & 0x00000fc0) >> 6];
+	if (i > size) {
+	    p += 3;
+	    break;
+	}
+	p[3] = base64url_chars[(c & 0x0000003f) >> 0];
+	p += 4;
+    }
+    *p = 0;
+    *str = s;
+    return (int) strlen(s);
+}
+
+static int
+pos_url(char c)
+{
+    if (c >= 'A' && c <= 'Z')
+	return c - 'A';
+    if (c >= 'a' && c <= 'z')
+	return ('Z' + 1 - 'A') + c - 'a';
+    if (c >= '0' && c <= '9')
+	return ('Z' + 1 - 'A') + ('z' + 1 - 'a') + c - '0';
+    if (c == '-')
+	return 62;
+    if (c == '_')
+	return 63;
+    return -1;
+}
+
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
+rk_base64url_decode(const char *str, void *data)
+{
+    const char *p;
+    unsigned char *q;
+    int i;
+    unsigned int val;
+    int marker;
+
+    q = data;
+
+    for (p = str; *p && pos_url(*p) != -1; ) {
+	val = 0;
+	marker = 0;
+
+	/* Decode up to 4 characters, handling missing padding */
+	for (i = 0; i < 4; i++) {
+	    val *= 64;
+	    if (*p && pos_url(*p) != -1) {
+		val += pos_url(*p);
+		p++;
+	    } else {
+		/* Implicit padding */
+		marker++;
+	    }
+	}
+
+	*q++ = (val >> 16) & 0xff;
+	if (marker < 2)
+	    *q++ = (val >> 8) & 0xff;
+	if (marker < 1)
+	    *q++ = val & 0xff;
+    }
+
+    /* Check for invalid trailing characters */
+    if (*p != '\0') {
+	errno = EINVAL;
+	return -1;
+    }
+
+    if (q - (unsigned char *) data > INT_MAX) {
+        errno = EOVERFLOW;
+        return -1;
+    }
+    return q - (unsigned char *) data;
+}
+
 #ifdef TEST
 static int decode_flag;
 static int help_flag;

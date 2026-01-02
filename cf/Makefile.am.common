@@ -269,6 +269,11 @@ check-valgrind:
 	tsrcdir=`cd $(top_srcdir) && pwd` ; \
 	env TESTS_ENVIRONMENT="$${tsrcdir}/cf/maybe-valgrind.sh -s $${tsrcdir} -o $${tobjdir}" make check
 
+check-helgrind:
+	tobjdir=`cd $(top_builddir) && pwd` ; \
+	tsrcdir=`cd $(top_srcdir) && pwd` ; \
+	env TESTS_ENVIRONMENT="$${tsrcdir}/cf/maybe-helgrind.sh -s $${tsrcdir} -o $${tobjdir}" make check
+
 #
 # Target to please samba build farm, builds distfiles in-tree.
 # Will break when automake changes...

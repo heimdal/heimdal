@@ -98,6 +98,11 @@ AC_CHECK_HEADERS([\
 	util.h					\
 ])
 
+dnl Define HAVE_WINSOCK when winsock2.h is available (for roken.h.in)
+if test "$ac_cv_header_winsock2_h" = yes; then
+    AC_DEFINE([HAVE_WINSOCK], 1, [Define if you have winsock])
+fi
+
 AC_HAVE_TYPE([auxv_t],[#ifdef HAVE_AUXV_H
 #include <auxv.h>
 #endif
@@ -320,7 +325,6 @@ case "$host_os" in
 	darwin*)
 		;;
 	*)
-		AC_BROKEN([daemon]) ;;
 esac
 
 AC_BROKEN([					\
@@ -338,18 +342,19 @@ AC_BROKEN([					\
 	fnmatch					\
 	freehostent				\
 	getcwd					\
+	getdelim				\
 	getdtablesize				\
 	getegid					\
 	geteuid					\
 	getgid					\
 	gethostname				\
+	getline					\
 	getifaddrs				\
 	getipnodebyaddr				\
 	getipnodebyname				\
 	getopt					\
 	gettimeofday				\
 	getuid					\
-	getusershell				\
 	initgroups				\
 	innetgr					\
 	localtime_r				\
@@ -506,8 +511,6 @@ AC_NEED_PROTO([#include <stdlib.h>], setenv)
 AC_NEED_PROTO([#include <stdlib.h>], unsetenv)
 AC_NEED_PROTO([#include <unistd.h>], gethostname)
 AC_NEED_PROTO([#include <unistd.h>], mkstemp)
-AC_NEED_PROTO([#include <unistd.h>], getusershell)
-AC_NEED_PROTO([#include <unistd.h>], daemon)
 
 AC_NEED_PROTO([
 #ifdef HAVE_SYS_TYPES_H

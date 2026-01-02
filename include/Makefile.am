@@ -2,7 +2,7 @@
 
 include $(top_srcdir)/Makefile.am.common
 
-SUBDIRS = kadm5 hcrypto gssapi
+SUBDIRS = kadm5 gssapi
 
 noinst_PROGRAMS = bits
 CHECK_LOCAL = no-check-local
@@ -15,17 +15,8 @@ noinst_HEADERS = heimqueue.h heim_threads.h crypto-headers.h
 
 EXTRA_DIST = NTMakefile krb5-types.cross config.h.w32
 
-if !CROSS_COMPILE
-
 krb5-types.h: bits$(EXEEXT)
-	./bits$(EXEEXT) krb5-types.h
-
-else
-
-krb5-types.h: krb5-types.cross
-	cp $(srcdir)/krb5-types.cross krb5-types.h
-
-endif
+	$(WINE) ./bits$(EXEEXT) krb5-types.h
 
 CLEANFILES =			\
 	an2ln_plugin.h		\
@@ -69,8 +60,6 @@ CLEANFILES =			\
 	heimbase.h		\
 	heimbase-svc.h		\
 	heimbase-protos.h	\
-	heimntlm-protos.h	\
-	heimntlm.h		\
 	hex.h			\
 	hx509-private.h		\
 	hx509-protos.h		\
@@ -98,10 +87,8 @@ CLEANFILES =			\
 	kx509_err.h		\
 	locate_plugin.h		\
 	login-protos.h		\
-	ntlm_err.h		\
 	ocsp_asn1.h		\
 	ocsp_template_asn1.h	\
-	otp.h			\
 	parse_bytes.h		\
 	parse_time.h		\
 	parse_units.h		\
@@ -137,9 +124,7 @@ CLEANFILES =			\
 	kdc-audit.h		\
 	csr_authorizer_plugin.h	\
 	gss_preauth_authorizer_plugin.h	\
-	token_validator_plugin.h	\
 	xdbm.h			\
-	x25519_ref10.h		\
 	x690sample_asn1.h	\
 	x690sample_template_asn1.h
 

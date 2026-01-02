@@ -842,7 +842,35 @@ void
 kadm5_log_signal_master(kadm5_server_context *context)
 {
     kadm5_log_context *log_context = &context->log_context;
-#ifndef NO_UNIX_SOCKETS
+#if defined(_WIN32) && defined(NO_UNIX_SOCKETS)
+    /*
+     * Windows: Connect to named pipe, write version, disconnect.
+     * This is a fire-and-forget signal to ipropd-master.
+     */
+    HANDLE hPipe;
+    DWORD written;
+    const char *pipe_name = log_context->signal_pipe_name;
+
+    if (pipe_name == NULL)
+        pipe_name = KADM5_SIGNAL_PIPE_NAME;
+
+    hPipe = CreateFileA(pipe_name,
+                        GENERIC_WRITE,
+                        0,              /* no sharing */
+                        NULL,           /* default security */
+                        OPEN_EXISTING,
+                        0,              /* default attributes */
+                        NULL);
+    if (hPipe == INVALID_HANDLE_VALUE)
+        return; /* ipropd-master not running, ignore */
+
+    (void) WriteFile(hPipe,
+                     &log_context->version,
+                     sizeof(log_context->version),
+                     &written,
+                     NULL);
+    CloseHandle(hPipe);
+#elif !defined(NO_UNIX_SOCKETS)
     (void) sendto(log_context->socket_fd,
                   (void *)&log_context->version,
                   sizeof(log_context->version),
@@ -2678,7 +2706,24 @@ truncate_if_needed(kadm5_server_context *context)
     return ret == EINVAL ? 0 : ret;
 }
 
-#ifndef NO_UNIX_SOCKETS
+#if defined(_WIN32) && defined(NO_UNIX_SOCKETS)
+
+/*
+ * Windows: Return the named pipe path for the signal pipe.
+ * Can be configured in krb5.conf under [kdc] signal_pipe.
+ */
+const char *
+kadm5_log_signal_pipe_name(krb5_context context)
+{
+    return krb5_config_get_string_default(context,
+					  NULL,
+					  KADM5_SIGNAL_PIPE_NAME,
+					  "kdc",
+					  "signal_pipe",
+					  NULL);
+}
+
+#elif !defined(NO_UNIX_SOCKETS)
 
 static char *default_signal = NULL;
 static HEIMDAL_MUTEX signal_mutex = HEIMDAL_MUTEX_INITIALIZER;
@@ -2703,7 +2748,7 @@ kadm5_log_signal_socket(krb5_context context)
 					  NULL);
 }
 
-#else  /* NO_UNIX_SOCKETS */
+#else  /* NO_UNIX_SOCKETS (non-Windows) */
 
 #define SIGNAL_SOCKET_HOST "127.0.0.1"
 #define SIGNAL_SOCKET_PORT "12701"

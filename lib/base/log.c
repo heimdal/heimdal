@@ -42,6 +42,7 @@
 #include <stdarg.h>
 #include <vis.h>
 #include <base64.h>
+#include <syslog.h>
 
 struct heim_log_facility_internal {
     int min;
@@ -388,19 +389,25 @@ heim_addlog_dest(heim_context context, heim_log_facility *f, const char *orig)
 #endif
             p = strchr(p, '/');
         if (p == NULL) {
-            heim_set_error_message(context, EINVAL /*XXX HEIM_ERR_LOG_PARSE*/,
-                                   N_("failed to parse \"%s\"", ""), orig);
-            return EINVAL /*XXX HEIM_ERR_LOG_PARSE*/;
+            heim_set_error_message(context, HEIM_ERR_LOG_PARSE,
+                                   "failed to parse \"%s\"", orig);
+            return HEIM_ERR_LOG_PARSE;
         }
         p++;
+    } else {
+        max = 5;
     }
     if (strcmp(p, "STDERR") == 0) {
         ret = open_file(context, f, min, max, NULL, "a", stderr,
                         FILEDISP_KEEPOPEN, 0);
     } else if (strcmp(p, "CONSOLE") == 0) {
-        /* XXX WIN32 */
+#ifdef _WIN32
+        ret = open_file(context, f, min, max, "CON", "w", NULL,
+                        FILEDISP_KEEPOPEN, 0);
+#else
         ret = open_file(context, f, min, max, "/dev/console", "w", NULL,
                         FILEDISP_KEEPOPEN, 0);
+#endif
     } else if (strncmp(p, "EFILE:", 5) == 0) {
         ret = open_file(context, f, min, max, p + sizeof("EFILE:") - 1, "a",
                         NULL, FILEDISP_IFEXISTS | FILEDISP_REOPEN, 1);
@@ -433,9 +440,8 @@ heim_addlog_dest(heim_context context, heim_log_facility *f, const char *orig)
             strlcpy(facility, "AUTH", sizeof(facility));
         ret = open_syslog(context, f, min, max, severity, facility);
     } else {
-        ret = EINVAL; /*XXX HEIM_ERR_LOG_PARSE*/
-        heim_set_error_message(context, ret,
-                               N_("unknown log type: %s", ""), p);
+        ret = open_file(context, f, min, max, p, "a",
+                        NULL, FILEDISP_REOPEN, 1);
     }
     return ret;
 }

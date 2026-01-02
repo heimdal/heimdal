@@ -47,6 +47,7 @@
 #define HEIM_THREADS_H 1
 
 #include <errno.h>
+#include <stdlib.h>
 
 #ifdef _MSC_VER
 
@@ -103,6 +104,8 @@ typedef unsigned long HEIM_PRIV_thread_key;
 
 #define HEIMDAL_THREAD_ID thr_t
 #define HEIMDAL_THREAD_create(t,f,a) thr_create((t), 0, (f), (a))
+#define HEIMDAL_THREAD_join(t,r) thr_join((t), 0, (r))
+#define HEIMDAL_THREAD_detach(t) /* Solaris threads: already detached or ignore */
 
 #elif defined(ENABLE_PTHREAD_SUPPORT) && (!defined(__NetBSD__) || __NetBSD_Version__ >= 299001200)
 
@@ -142,8 +145,30 @@ typedef unsigned long HEIM_PRIV_thread_key;
 
 #define HEIMDAL_THREAD_ID pthread_t
 #define HEIMDAL_THREAD_create(t,f,a) pthread_create((t), 0, (f), (a))
+#define HEIMDAL_THREAD_join(t,r) pthread_join((t), (r))
+#define HEIMDAL_THREAD_detach(t) pthread_detach((t))
+
+/* Condition variables for pthreads - use regular mutex with condvars */
+#define HEIMDAL_COND_MUTEX pthread_mutex_t
+#define HEIMDAL_COND_MUTEX_INITIALIZER PTHREAD_MUTEX_INITIALIZER
+#define HEIMDAL_COND_MUTEX_init(m) pthread_mutex_init((m), NULL)
+#define HEIMDAL_COND_MUTEX_lock(m) pthread_mutex_lock((m))
+#define HEIMDAL_COND_MUTEX_unlock(m) pthread_mutex_unlock((m))
+#define HEIMDAL_COND_MUTEX_destroy(m) pthread_mutex_destroy((m))
+
+#define HEIMDAL_COND pthread_cond_t
+#define HEIMDAL_COND_INITIALIZER PTHREAD_COND_INITIALIZER
+#define HEIMDAL_COND_init(c) pthread_cond_init((c), NULL)
+#define HEIMDAL_COND_wait(c,m) pthread_cond_wait((c), (m))
+#define HEIMDAL_COND_signal(c) pthread_cond_signal((c))
+#define HEIMDAL_COND_broadcast(c) pthread_cond_broadcast((c))
+#define HEIMDAL_COND_destroy(c) pthread_cond_destroy((c))
 
 #elif defined(_WIN32)
+
+#if defined(__MINGW32__) || defined(__MINGW64__)
+#include <synchapi.h>
+#endif
 
 typedef struct heim_mutex {
     HANDLE	h;
@@ -281,6 +306,98 @@ heim_rwlock_destroy(heim_rwlock_t *l)
 #define	HEIMDAL_RWLOCK_unlock(l) heim_rwlock_unlock((l))
 #define	HEIMDAL_RWLOCK_destroy(l) heim_rwlock_destroy((l))
 
+/*
+ * Condition variables for Windows.
+ * Note: Windows CONDITION_VARIABLE requires CRITICAL_SECTION or SRWLOCK,
+ * not the semaphore-based heim_mutex_t. So we provide a separate
+ * CRITICAL_SECTION-based mutex type for use with condition variables.
+ */
+typedef struct heim_cond_mutex {
+    CRITICAL_SECTION cs;
+} heim_cond_mutex_t;
+
+typedef CONDITION_VARIABLE heim_cond_t;
+
+static inline int
+heim_cond_mutex_init(heim_cond_mutex_t *m)
+{
+    InitializeCriticalSection(&m->cs);
+    return 0;
+}
+
+static inline int
+heim_cond_mutex_lock(heim_cond_mutex_t *m)
+{
+    EnterCriticalSection(&m->cs);
+    return 0;
+}
+
+static inline int
+heim_cond_mutex_unlock(heim_cond_mutex_t *m)
+{
+    LeaveCriticalSection(&m->cs);
+    return 0;
+}
+
+static inline int
+heim_cond_mutex_destroy(heim_cond_mutex_t *m)
+{
+    DeleteCriticalSection(&m->cs);
+    return 0;
+}
+
+static inline int
+heim_cond_init(heim_cond_t *c)
+{
+    InitializeConditionVariable(c);
+    return 0;
+}
+
+static inline int
+heim_cond_wait(heim_cond_t *c, heim_cond_mutex_t *m)
+{
+    if (SleepConditionVariableCS(c, &m->cs, INFINITE))
+        return 0;
+    return EINVAL;
+}
+
+static inline int
+heim_cond_signal(heim_cond_t *c)
+{
+    WakeConditionVariable(c);
+    return 0;
+}
+
+static inline int
+heim_cond_broadcast(heim_cond_t *c)
+{
+    WakeAllConditionVariable(c);
+    return 0;
+}
+
+static inline int
+heim_cond_destroy(heim_cond_t *c)
+{
+    /* Windows condition variables don't need explicit destruction */
+    (void)c;
+    return 0;
+}
+
+#define HEIMDAL_COND_MUTEX heim_cond_mutex_t
+#define HEIMDAL_COND_MUTEX_INITIALIZER { 0 }
+#define HEIMDAL_COND_MUTEX_init(m) heim_cond_mutex_init((m))
+#define HEIMDAL_COND_MUTEX_lock(m) heim_cond_mutex_lock((m))
+#define HEIMDAL_COND_MUTEX_unlock(m) heim_cond_mutex_unlock((m))
+#define HEIMDAL_COND_MUTEX_destroy(m) heim_cond_mutex_destroy((m))
+
+#define HEIMDAL_COND heim_cond_t
+#define HEIMDAL_COND_INITIALIZER CONDITION_VARIABLE_INIT
+#define HEIMDAL_COND_init(c) heim_cond_init((c))
+#define HEIMDAL_COND_wait(c,m) heim_cond_wait((c), (m))
+#define HEIMDAL_COND_signal(c) heim_cond_signal((c))
+#define HEIMDAL_COND_broadcast(c) heim_cond_broadcast((c))
+#define HEIMDAL_COND_destroy(c) heim_cond_destroy((c))
+
 #define HEIMDAL_thread_key unsigned long
 #define HEIM_PRIV_thread_key HEIMDAL_thread_key
 #define HEIMDAL_key_create(k,d,r) do { r = heim_w32_key_create(k,d); } while(0)
@@ -288,9 +405,76 @@ heim_rwlock_destroy(heim_rwlock_t *l)
 #define HEIMDAL_getspecific(k) (heim_w32_getspecific(k))
 #define HEIMDAL_key_delete(k) (heim_w32_delete_key(k))
 
-#define HEIMDAL_THREAD_ID DWORD
-#define HEIMDAL_THREAD_create(t,f,a) \
-    ((CreateThread(0, 0, (f), (a), 0, (t)) == INVALID_HANDLE_VALUE) ? EINVAL : 0)
+typedef struct heim_thread {
+    HANDLE handle;
+    DWORD id;
+} heim_thread_t;
+
+/*
+ * Thread function wrapper to convert pthreads-style signature to Windows.
+ * pthreads: void* func(void*)
+ * Windows:  DWORD WINAPI func(LPVOID)
+ */
+typedef void *(*heim_thread_func_t)(void *);
+
+struct heim_thread_wrapper_arg {
+    heim_thread_func_t func;
+    void *arg;
+};
+
+static DWORD WINAPI
+heim_thread_wrapper(LPVOID arg)
+{
+    struct heim_thread_wrapper_arg *wa = arg;
+    heim_thread_func_t func = wa->func;
+    void *real_arg = wa->arg;
+    free(wa);
+    (void)func(real_arg);
+    return 0;
+}
+
+static inline int
+heim_thread_create(heim_thread_t *t, heim_thread_func_t f, void *a)
+{
+    struct heim_thread_wrapper_arg *wa;
+    wa = malloc(sizeof(*wa));
+    if (wa == NULL)
+        return ENOMEM;
+    wa->func = f;
+    wa->arg = a;
+    t->handle = CreateThread(NULL, 0, heim_thread_wrapper, wa, 0, &t->id);
+    if (t->handle == NULL || t->handle == INVALID_HANDLE_VALUE) {
+        free(wa);
+        return EINVAL;
+    }
+    return 0;
+}
+
+static inline int
+heim_thread_join(heim_thread_t t, void **retval)
+{
+    DWORD ret;
+    DWORD exitcode;
+
+    ret = WaitForSingleObject(t.handle, INFINITE);
+    if (ret != WAIT_OBJECT_0) {
+        CloseHandle(t.handle);
+        return EINVAL;
+    }
+    if (retval) {
+        if (GetExitCodeThread(t.handle, &exitcode))
+            *retval = (void *)(uintptr_t)exitcode;
+        else
+            *retval = NULL;
+    }
+    CloseHandle(t.handle);
+    return 0;
+}
+
+#define HEIMDAL_THREAD_ID heim_thread_t
+#define HEIMDAL_THREAD_create(t,f,a) heim_thread_create((t), (f), (a))
+#define HEIMDAL_THREAD_join(t,r) heim_thread_join((t), (r))
+#define HEIMDAL_THREAD_detach(t) CloseHandle((t).handle)
 
 #elif defined(HEIMDAL_DEBUG_THREADS)
 
@@ -318,6 +502,8 @@ heim_rwlock_destroy(heim_rwlock_t *l)
 
 #define HEIMDAL_THREAD_ID int
 #define HEIMDAL_THREAD_create(t,f,a) abort()
+#define HEIMDAL_THREAD_join(t,r) abort()
+#define HEIMDAL_THREAD_detach(t) abort()
 
 #else /* no thread support, no debug case */
 
@@ -340,6 +526,8 @@ heim_rwlock_destroy(heim_rwlock_t *l)
 
 #define HEIMDAL_THREAD_ID int
 #define HEIMDAL_THREAD_create(t,f,a) abort()
+#define HEIMDAL_THREAD_join(t,r) abort()
+#define HEIMDAL_THREAD_detach(t) abort()
 
 #define HEIMDAL_internal_thread_key 1
 

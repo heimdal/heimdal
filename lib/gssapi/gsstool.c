@@ -40,7 +40,6 @@
 #include <gssapi.h>
 #include <gssapi_krb5.h>
 #include <gssapi_spnego.h>
-#include <gssapi_ntlm.h>
 #include <err.h>
 #include <getarg.h>
 #include <rtbl.h>

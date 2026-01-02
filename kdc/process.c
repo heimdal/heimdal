@@ -301,34 +301,6 @@ kdc_tgs_req(kdc_request_t *rptr, int *claim)
     return ret;
 }
 
-#ifdef DIGEST
-
-static krb5_error_code
-kdc_digest(kdc_request_t *rptr, int *claim)
-{
-    kdc_request_t r;
-    DigestREQ digestreq;
-    krb5_error_code ret;
-    size_t len;
-
-    r = *rptr;
-
-    ret = decode_DigestREQ(r->request.data, r->request.length,
-			   &digestreq, &len);
-    if (ret)
-	return ret;
-
-    r->use_request_t = 0;
-    *claim = 1;
-
-    ret = _kdc_do_digest(r->context, r->config, &digestreq,
-			 r->reply, r->from, r->addr);
-    free_DigestREQ(&digestreq);
-    return ret;
-}
-
-#endif
-
 #ifdef KX509
 
 static krb5_error_code
@@ -357,9 +329,6 @@ kdc_kx509(kdc_request_t *rptr, int *claim)
 static struct krb5_kdc_service services[] =  {
     { KS_KRB5, "AS-REQ",	kdc_as_req },
     { KS_KRB5, "TGS-REQ",	kdc_tgs_req },
-#ifdef DIGEST
-    { 0,	"DIGEST",	kdc_digest },
-#endif
 #ifdef KX509
     { 0,	"KX509",	kdc_kx509 },
 #endif

@@ -88,6 +88,11 @@ struct asn1_type_func asn1_template_prim[A1T_NUM_ENTRY] = {
     },
     el(oid, heim_oid),
     el(general_string, heim_general_string),
+    { (asn1_type_encode)der_put_null, (asn1_type_decode)der_get_null,
+      (asn1_type_length)der_length_null, (asn1_type_copy)der_copy_integer,
+      (asn1_type_release)der_free_integer, (asn1_type_print)der_print_null,
+      sizeof(int)
+    },
 #undef el
 #undef elber
 };
@@ -632,9 +637,36 @@ _asn1_decode_open_type(const struct asn1_template *t,
          *              ...
          *          } ...
          *      }
+         *
+         * Of course, the open type member could be OPTIONAL, in which case we
+         * will have:
+         *
+         *      typedef struct SingleAttribute {
+         *          heim_oid type;
+         * -------->HEIM_ANY *value; // HERE
+         *          struct {
+         *              ...
+         *          } ...
+         *      }
+         *
+         * and we'll have to dereference that value pointer if it's not NULL.
          */
-        const struct heim_base_data *d = DPOC(data, topentype->offset);
+        const struct heim_base_data *d;
         void *o;
+
+        if (t->tt & A1_OTF_IS_OPTIONAL) {
+            struct heim_base_data *const *od = DPOC(data, topentype->offset);
+
+            if (*od == NULL)
+                /*
+                 * Nothing to do.  The user has to check the open type field
+                 * before they check the _ios_choice field.
+                 */
+                return 0;
+            d = *od;
+        } else {
+            d = DPOC(data, topentype->offset);
+        }
 
         if (d->data && d->length) {
             if ((o = calloc(1, tactual_type->offset)) == NULL)
@@ -2432,7 +2464,7 @@ _asn1_print_open_type(const struct asn1_template *t, /* object set template */
 
     /* XXX We assume sizeof(enum) == sizeof(int) */
     if (!*elementp || *elementp >= A1_HEADER_LEN(tos) + 1) {
-        r = rk_strpoolprintf(r, ",%s\"_%s_choice\":\"_ERROR_DECODING_\"",
+        r = rk_strpoolprintf(r, ",%s\"_%s_choice\":\"<type not recognized or error decoding value of open type>\"",
                              indents ? indents : "", opentype_name);
         free(indents);
         return r;
@@ -2448,10 +2480,8 @@ _asn1_print_open_type(const struct asn1_template *t, /* object set template */
     }
 
     if (!(t->tt & A1_OS_OT_IS_ARRAY)) {
-        dp = DPOC(data, t->offset + sizeof(*elementp));
-        while (sizeof(void *) != sizeof(*elementp) &&
-               ((uintptr_t)dp) % sizeof(void *) != 0)
-            dp = (void *)(((char *)dp) + sizeof(*elementp));
+        unsigned align = 8 - ((t->offset + sizeof(*elementp)) & 0x7);
+        dp = DPOC(data, t->offset + sizeof(*elementp) + align);
         if (*dp) {
             struct rk_strpool *r2 = NULL;
             char *s = NULL;

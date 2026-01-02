@@ -199,7 +199,7 @@ ext_keytab(struct ext_keytab_options *opt, int argc, char **argv)
         enctypes = krb5_config_get_string(context, NULL, "libdefaults",
                                           "supported_enctypes", NULL);
     if (enctypes == NULL || enctypes[0] == '\0')
-        enctypes = "aes128-cts-hmac-sha1-96";
+        enctypes = "aes256-cts-hmac-sha1-96 aes256-cts-hmac-sha384-192";
     ret = krb5_string_to_keysalts2(context, enctypes, &data.nkstuple,
                                    &data.kstuple);
     if (ret) {

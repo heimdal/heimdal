@@ -41,13 +41,6 @@ stat="--statistic-file=${objdir}/statfile"
 
 hxtool="${TESTS_ENVIRONMENT} ./hxtool ${stat}"
 
-if ${hxtool} info | grep 'rsa: hcrypto null RSA' > /dev/null ; then
-    exit 77
-fi
-if ${hxtool} info | grep 'rand: not available' > /dev/null ; then
-    exit 77
-fi
-
 echo "Create trust anchor"
 ${hxtool} issue-certificate \
     --self-signed \

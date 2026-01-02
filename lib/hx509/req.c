@@ -775,11 +775,30 @@ hx509_request_to_pkcs10(hx509_context context,
 
     /* Self-sign CSR body */
     if (ret == 0) {
-        ret = _hx509_create_signature_bitstring(context, signer,
-                                                _hx509_crypto_default_sig_alg,
-                                                &data,
-                                                &r.signatureAlgorithm,
-                                                &r.signature);
+        const AlgorithmIdentifier *sigalg;
+        heim_oid key_oid;
+
+        /*
+         * Select signature algorithm based on the key type.
+         * For EdDSA keys, the signature OID is the same as the key OID.
+         * For RSA keys, use the default (RSA with SHA-256).
+         */
+        ret = _hx509_private_key_oid(context, signer, &key_oid);
+        if (ret == 0) {
+            if (der_heim_oid_cmp(&key_oid, ASN1_OID_ID_ED25519) == 0)
+                sigalg = hx509_signature_ed25519();
+            else if (der_heim_oid_cmp(&key_oid, ASN1_OID_ID_ED448) == 0)
+                sigalg = hx509_signature_ed448();
+            else
+                sigalg = _hx509_crypto_default_sig_alg;
+            der_free_oid(&key_oid);
+
+            ret = _hx509_create_signature_bitstring(context, signer,
+                                                    sigalg,
+                                                    &data,
+                                                    &r.signatureAlgorithm,
+                                                    &r.signature);
+        }
     }
     free(data.data);
 

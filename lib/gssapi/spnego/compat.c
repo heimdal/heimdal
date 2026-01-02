@@ -403,10 +403,11 @@ _gss_spnego_indicate_mechtypelist (OM_uint32 *minor_status,
     mechtypelist->val = NULL;
 
     if (cred_handle != GSS_C_NO_CREDENTIAL)
-	ret = _gss_spnego_inquire_cred_mechs(minor_status, cred_handle,
+	ret = _gss_spnego_inquire_cred_mechs(minor_status, req_flags, cred_handle,
 					     &supported_mechs, &canonical_order);
     else
-	ret = _gss_spnego_indicate_mechs(minor_status, &supported_mechs);
+        ret = _gss_spnego_indicate_mechs(minor_status, req_flags,
+                                         &supported_mechs);
     if (ret != GSS_S_COMPLETE)
 	return ret;
 
@@ -595,19 +596,24 @@ _gss_spnego_log_mechTypes(MechTypeList *mechTypes)
 
 OM_uint32
 _gss_spnego_indicate_mechs(OM_uint32 *minor_status,
+                           OM_uint32 req_flags,
 			   gss_OID_set *mechs_p)
 {
-    gss_OID_desc oids[3];
+    gss_OID_desc oids[5];
     gss_OID_set_desc except;
+    except.elements = oids;
 
     *mechs_p = GSS_C_NO_OID_SET;
 
     oids[0] = *GSS_C_MA_DEPRECATED;
     oids[1] = *GSS_C_MA_NOT_DFLT_MECH;
     oids[2] = *GSS_C_MA_MECH_NEGO;
-
-    except.count = sizeof(oids) / sizeof(oids[0]);
-    except.elements = oids;
+    except.count = sizeof(oids) / sizeof(oids[0]) - 2;
+    if ((req_flags & GSS_C_ANON_FLAG) == 0) {
+        oids[3] = *GSS_C_MA_AUTH_INIT_ANON;
+        oids[4] = *GSS_C_MA_AUTH_TARG_ANON;
+        except.count = sizeof(oids) / sizeof(oids[0]);
+    }
 
     return gss_indicate_mechs_by_attrs(minor_status,
 				       GSS_C_NO_OID_SET,
@@ -622,6 +628,7 @@ _gss_spnego_indicate_mechs(OM_uint32 *minor_status,
 
 OM_uint32
 _gss_spnego_inquire_cred_mechs(OM_uint32 *minor_status,
+                               OM_uint32 req_flags,
 			       gss_const_cred_id_t cred,
 			       gss_OID_set *mechs_p,
 			       int *canonical_order)
@@ -648,7 +655,32 @@ _gss_spnego_inquire_cred_mechs(OM_uint32 *minor_status,
     heim_assert(cred_mechs != GSS_C_NO_OID_SET && cred_mechs->count > 0,
 		"gss_inquire_cred succeeded but returned no mechanisms");
 
-    ret = _gss_spnego_indicate_mechs(minor_status, &negotiable_mechs);
+    /*
+     * If gss_set_neg_mechs() was called and included an anonymous mechanism,
+     * add GSS_C_ANON_FLAG so it won't be filtered out by _gss_spnego_indicate_mechs().
+     */
+    if (*canonical_order && (req_flags & GSS_C_ANON_FLAG) == 0) {
+	for (i = 0; i < cred_mechs->count; i++) {
+	    gss_OID_set mech_attrs = GSS_C_NO_OID_SET;
+	    int present = 0;
+
+	    ret = gss_inquire_attrs_for_mech(minor_status,
+					     &cred_mechs->elements[i],
+					     &mech_attrs, NULL);
+	    if (ret == GSS_S_COMPLETE) {
+		gss_test_oid_set_member(&junk, GSS_C_MA_AUTH_INIT_ANON,
+					mech_attrs, &present);
+		gss_release_oid_set(&junk, &mech_attrs);
+	    }
+	    if (present) {
+		req_flags |= GSS_C_ANON_FLAG;
+		break;
+	    }
+	}
+    }
+
+    ret = _gss_spnego_indicate_mechs(minor_status, req_flags,
+                                     &negotiable_mechs);
     if (ret != GSS_S_COMPLETE)
 	goto out;
 

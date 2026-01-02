@@ -84,6 +84,7 @@ try_decrypt(hx509_context context,
 	    size_t len)
 {
     heim_octet_string clear;
+    EVP_CIPHER_CTX *ctx = NULL;
     size_t keylen;
     void *key;
     int ret;
@@ -115,13 +116,17 @@ try_decrypt(hx509_context context,
     }
     clear.length = len;
 
-    {
-	EVP_CIPHER_CTX ctx;
-	EVP_CIPHER_CTX_init(&ctx);
-	EVP_CipherInit_ex(&ctx, c, NULL, key, ivdata, 0);
-	EVP_Cipher(&ctx, clear.data, cipher, len);
-	EVP_CIPHER_CTX_cleanup(&ctx);
+    if ((ctx = EVP_CIPHER_CTX_new()) == NULL ||
+        EVP_CipherInit_ex(ctx, c, NULL, key, ivdata, 0) <= 0 ||
+        EVP_Cipher(ctx, clear.data, cipher, len) <= 0) {
+        hx509_set_error_string(context, 0, ENOMEM,
+                               "Out of memory to decrypt for private key");
+        ret = ENOMEM;
+        free(clear.data);
+        goto out;
     }
+    EVP_CIPHER_CTX_free(ctx);
+    ctx = NULL;
 
     if (!(flags & HX509_CERTS_NO_PRIVATE_KEYS))
         ret = _hx509_collector_private_key_add(context, collector, alg, NULL,
@@ -130,6 +135,7 @@ try_decrypt(hx509_context context,
     memset_s(clear.data, clear.length, 0, clear.length);
     free(clear.data);
 out:
+    EVP_CIPHER_CTX_free(ctx);
     memset_s(key, keylen, 0, keylen);
     free(key);
     return ret;
@@ -321,9 +327,7 @@ struct pem_formats {
     { "CERTIFICATE", parse_certificate, NULL },
     { "PRIVATE KEY", parse_pkcs8_private_key, NULL },
     { "RSA PRIVATE KEY", parse_pem_private_key, hx509_signature_rsa },
-#ifdef HAVE_HCRYPTO_W_OPENSSL
     { "EC PRIVATE KEY", parse_pem_private_key, hx509_signature_ecPublicKey }
-#endif
 };
 
 

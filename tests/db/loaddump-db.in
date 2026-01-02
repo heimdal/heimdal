@@ -42,7 +42,7 @@ objdir="@objdir@"
 
 R=EXAMPLE.ORG
 
-kadmin="../../kadmin/kadmin -l -r $R"
+kadmin="../../kadmin/kadmin -l -A -r $R"
 kstash="../../kdc/kstash"
 hprop="../../kdc/hprop"
 hpropd="../../kdc/hpropd"
@@ -74,61 +74,24 @@ ${kadmin} dump out-current-db2  || exit 1
 sort out-current-db2 > out-current-db2-sort 
 cmp out-current-db-sort out-current-db2-sort || exit 1
 
-rm -f current-db*
+# We no longer test the upgrade path from pre 7.8.
 
-# check with no extensions
-${kadmin} load ${srcdir}/text-dump-0.7  || exit 1
-${propdb} > db-dump.tmp|| exit 1
-rm -f current-db*
-${propddb} < db-dump.tmp || exit 1
-${kadmin} dump | sort | sed 's/[0-9]* -$//' > out-text-dump-0.7  || exit 1
-sort < ${srcdir}/text-dump-0.7 | \
-    sed 's/[0-9]*$//' > out-text-dump-0.7-orig  || exit 1
-cmp out-text-dump-0.7-orig out-text-dump-0.7 || exit 1
-
-# check with no extensions
-${kadmin} load ${srcdir}/text-dump-no-ext  || exit 1
-${propdb} > db-dump.tmp || exit 1
-${propddb} < db-dump.tmp || exit 1
-${kadmin} dump | sort | \
-    awk '{$11=""; print;}' > out-text-dump-no-ext  || exit 1
-sort < ${srcdir}/text-dump-no-ext | \
-    awk '{$11=""; print;}' > out-text-dump-no-ext-orig || exit 1
-cmp out-text-dump-no-ext-orig out-text-dump-no-ext || exit 1
-
-# check with known extensions
-${kadmin} load ${srcdir}/text-dump-known-ext  || exit 1
-${propdb} > db-dump.tmp || exit 1
-${propddb} < db-dump.tmp || exit 1
-${kadmin} dump | sort | \
-    awk '{$11=""; print;}' > out-text-dump-known-ext  || exit 1
-sort < ${srcdir}/text-dump-known-ext | \
-    awk '{$11=""; print;}' > out-text-dump-known-ext-orig || exit 1
-cmp out-text-dump-known-ext-orig out-text-dump-known-ext || exit 1
-
-# check with unknown extensions
-${kadmin} load ${srcdir}/text-dump-unknown-ext  || exit 1
-${propdb} > db-dump.tmp || exit 1
-${propddb} < db-dump.tmp || exit 1
-${kadmin} dump | sort | \
-    awk '{$11=""; print;}' > out-text-dump-unknown-ext  || exit 1
-sort < ${srcdir}/text-dump-unknown-ext | \
-    awk '{$11=""; print;}' > out-text-dump-unknown-ext-orig || exit 1
-cmp out-text-dump-unknown-ext-orig out-text-dump-unknown-ext || exit 1
-
+# use a master key
+${kadmin} dump | sort |
+    awk '{$11=""; print;}' > dump-no-mkey
 ${kstash} -e aes256-cts-hmac-sha1-96 --random-key -k ./mkey.file >/dev/null 2>/dev/null || exit 1
-
-# remove masterkey
-${kadmin} load ${srcdir}/text-dump-0.7  || exit 1
-${propdb} > db-dump.tmp|| exit 1
+${propdb} -m mkey.file -E > db-dump.tmp || exit 1
 ${propddb} < db-dump.tmp || exit 1
+${kadmin} dump > dump-w-mkey
+# remove master key
 ${propdb} -m mkey.file -D > db-dump.tmp || exit 1
 mv mkey.file mkey.file.no || exit 1
 ${propddb} < db-dump.tmp || exit 1
 ${kadmin} dump | sort | \
-    awk '{$11=""; print;}' > out-text-dump-0.7  || exit 1
-sort < ${srcdir}/text-dump-unknown-ext | \
-    awk '{$11=""; print;}' > out-text-dump-0.7-orig || exit 1
-cmp out-text-dump-0.7 out-text-dump-0.7-orig || exit 1
+    awk '{$11=""; print;}' > dump-no-mkey2  || exit 1
+# check that w/o mkey it's the same before and after
+cmp dump-no-mkey dump-no-mkey2 || exit 1
+# check that dump-w-mkey is from dump-no-mkey
+cmp dump-w-mkey dump-no-mkey2 && exit 1
 
 exit 0

@@ -68,6 +68,124 @@ accept_it (rk_socket_t s, rk_socket_t *ret_socket)
 }
 
 /**
+ * Create listening sockets on specified addresses
+ *
+ * Creates and binds sockets for the specified addresses, then listens
+ * on them.  Returns the listening sockets via \a ret_fds and the count
+ * via \a ret_num.  The caller is responsible for freeing \a ret_fds.
+ *
+ * This function is intended for use with mini_inetd_accept() to allow
+ * signaling readiness between the listen and accept phases (e.g., for
+ * daemonization).
+ *
+ * @param[in] ai Addresses to listen on
+ * @param[out] ret_fds Receives array of listening sockets
+ * @param[out] ret_num Receives number of sockets in array
+ *
+ * @see mini_inetd_accept()
+ */
+ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
+mini_inetd_addrinfo_listen (struct addrinfo *ai,
+			    rk_socket_t **ret_fds,
+			    int *ret_num)
+{
+    struct addrinfo *a;
+    int nalloc, i;
+    rk_socket_t *fds;
+
+    for (nalloc = 0, a = ai; a != NULL; a = a->ai_next)
+	++nalloc;
+
+    fds = malloc (nalloc * sizeof(*fds));
+    if (fds == NULL) {
+	errx (1, "mini_inetd: out of memory");
+	UNREACHABLE(return);
+    }
+
+    for (i = 0, a = ai; a != NULL; a = a->ai_next) {
+	fds[i] = socket (a->ai_family, a->ai_socktype, a->ai_protocol);
+	if (rk_IS_BAD_SOCKET(fds[i]))
+	    continue;
+	socket_set_reuseaddr (fds[i], 1);
+	socket_set_ipv6only(fds[i], 1);
+	if (rk_IS_SOCKET_ERROR(bind (fds[i], a->ai_addr, a->ai_addrlen))) {
+	    warn ("bind af = %d", a->ai_family);
+	    rk_closesocket(fds[i]);
+	    fds[i] = rk_INVALID_SOCKET;
+	    continue;
+	}
+	if (rk_IS_SOCKET_ERROR(listen (fds[i], SOMAXCONN))) {
+	    warn ("listen af = %d", a->ai_family);
+	    rk_closesocket(fds[i]);
+	    fds[i] = rk_INVALID_SOCKET;
+	    continue;
+	}
+	++i;
+    }
+    if (i == 0)
+	errx (1, "no sockets");
+
+    *ret_fds = fds;
+    *ret_num = i;
+}
+
+/**
+ * Accept a connection on listening sockets
+ *
+ * Waits for and accepts a connection on one of the listening sockets
+ * created by mini_inetd_addrinfo_listen().  On return, all listening
+ * sockets are closed and the \a fds array is freed.
+ *
+ * If the \a ret_socket parameter is \a NULL, on return STDIN and STDOUT
+ * will be connected to the accepted socket.  If the \a ret_socket
+ * parameter is non-NULL, the accepted socket will be returned in
+ * *ret_socket and STDIN/STDOUT will be left unmodified.
+ *
+ * @param[in] fds Array of listening sockets (freed by this function)
+ * @param[in] num Number of sockets in array
+ * @param[out] ret_socket If non-NULL receives the accepted socket.
+ *
+ * @see mini_inetd_addrinfo_listen()
+ */
+ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
+mini_inetd_accept (rk_socket_t *fds, int num, rk_socket_t *ret_socket)
+{
+    int ret;
+    int i;
+    fd_set orig_read_set, read_set;
+    rk_socket_t max_fd = (rk_socket_t)-1;
+
+    FD_ZERO(&orig_read_set);
+
+    for (i = 0; i < num; ++i) {
+#ifndef NO_LIMIT_FD_SETSIZE
+	if (fds[i] >= FD_SETSIZE)
+	    errx (1, "fd too large");
+#endif
+	FD_SET(fds[i], &orig_read_set);
+	max_fd = max(max_fd, fds[i]);
+    }
+
+    do {
+	read_set = orig_read_set;
+
+	ret = select (max_fd + 1, &read_set, NULL, NULL, NULL);
+	if (rk_IS_SOCKET_ERROR(ret) && rk_SOCK_ERRNO != EINTR)
+	    err (1, "select");
+    } while (ret <= 0);
+
+    for (i = 0; i < num; ++i)
+	if (FD_ISSET (fds[i], &read_set)) {
+	    accept_it (fds[i], ret_socket);
+	    for (i = 0; i < num; ++i)
+	      rk_closesocket(fds[i]);
+	    free(fds);
+	    return;
+	}
+    abort ();
+}
+
+/**
  * Listen on a specified addresses
  *
  * Listens on the specified addresses for incoming connections.  If
@@ -88,71 +206,11 @@ accept_it (rk_socket_t s, rk_socket_t *ret_socket)
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
 mini_inetd_addrinfo (struct addrinfo *ai, rk_socket_t *ret_socket)
 {
-    int ret;
-    struct addrinfo *a;
-    int n, nalloc, i;
     rk_socket_t *fds;
-    fd_set orig_read_set, read_set;
-    rk_socket_t max_fd = (rk_socket_t)-1;
+    int num;
 
-    for (nalloc = 0, a = ai; a != NULL; a = a->ai_next)
-	++nalloc;
-
-    fds = malloc (nalloc * sizeof(*fds));
-    if (fds == NULL) {
-	errx (1, "mini_inetd: out of memory");
-	UNREACHABLE(return);
-    }
-
-    FD_ZERO(&orig_read_set);
-
-    for (i = 0, a = ai; a != NULL; a = a->ai_next) {
-	fds[i] = socket (a->ai_family, a->ai_socktype, a->ai_protocol);
-	if (rk_IS_BAD_SOCKET(fds[i]))
-	    continue;
-	socket_set_reuseaddr (fds[i], 1);
-	socket_set_ipv6only(fds[i], 1);
-	if (rk_IS_SOCKET_ERROR(bind (fds[i], a->ai_addr, a->ai_addrlen))) {
-	    warn ("bind af = %d", a->ai_family);
-	    rk_closesocket(fds[i]);
-	    fds[i] = rk_INVALID_SOCKET;
-	    continue;
-	}
-	if (rk_IS_SOCKET_ERROR(listen (fds[i], SOMAXCONN))) {
-	    warn ("listen af = %d", a->ai_family);
-	    rk_closesocket(fds[i]);
-	    fds[i] = rk_INVALID_SOCKET;
-	    continue;
-	}
-#ifndef NO_LIMIT_FD_SETSIZE
-	if (fds[i] >= FD_SETSIZE)
-	    errx (1, "fd too large");
-#endif
-	FD_SET(fds[i], &orig_read_set);
-	max_fd = max(max_fd, fds[i]);
-	++i;
-    }
-    if (i == 0)
-	errx (1, "no sockets");
-    n = i;
-
-    do {
-	read_set = orig_read_set;
-
-	ret = select (max_fd + 1, &read_set, NULL, NULL, NULL);
-	if (rk_IS_SOCKET_ERROR(ret) && rk_SOCK_ERRNO != EINTR)
-	    err (1, "select");
-    } while (ret <= 0);
-
-    for (i = 0; i < n; ++i)
-	if (FD_ISSET (fds[i], &read_set)) {
-	    accept_it (fds[i], ret_socket);
-	    for (i = 0; i < n; ++i)
-	      rk_closesocket(fds[i]);
-	    free(fds);
-	    return;
-	}
-    abort ();
+    mini_inetd_addrinfo_listen(ai, &fds, &num);
+    mini_inetd_accept(fds, num, ret_socket);
 }
 
 /**

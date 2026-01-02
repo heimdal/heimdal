@@ -1,0 +1,193 @@
+#!/bin/sh
+#
+# Copyright (c) 2006 - 2024 Kungliga Tekniska Högskolan
+# (Royal Institute of Technology, Stockholm, Sweden).
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# 3. Neither the name of the Institute nor the names of its contributors
+#    may be used to endorse or promote products derived from this software
+#    without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+
+#
+# Test older Heimdal clients against current (newer) Heimdal KDC
+#
+
+top_builddir="@top_builddir@"
+env_setup="@env_setup@"
+objdir="@objdir@"
+
+. ${env_setup}
+
+# Skip if older Heimdal is not available
+OLD_HEIMDAL="@OLD_HEIMDAL@"
+if [ -z "$OLD_HEIMDAL" ] || [ ! -d "$OLD_HEIMDAL" ]; then
+    echo "Older Heimdal not available (use --with-older-heimdal=PATH), skipping"
+    exit 77
+fi
+
+# Check for required older Heimdal binaries
+for prog in kinit klist kgetcred kdestroy; do
+    if [ ! -x "${OLD_HEIMDAL}/bin/${prog}" ]; then
+        echo "Older Heimdal ${prog} not found at ${OLD_HEIMDAL}/bin/${prog}, skipping"
+        exit 77
+    fi
+done
+
+# If there is no useful db support compiled in, disable test
+${have_db} || exit 77
+
+testfailed="echo test failed; cat messages.log; exit 1"
+
+R=TEST.H5L.SE
+
+port=@port@
+
+# Use current (new) kadmin and kdc
+kadmin="${kadmin} -l -r $R"
+kdc="${kdc} --addresses=localhost -P $port"
+
+# Use older Heimdal client tools
+old_kinit="${OLD_HEIMDAL}/bin/kinit"
+old_klist="${OLD_HEIMDAL}/bin/klist"
+old_kgetcred="${OLD_HEIMDAL}/bin/kgetcred"
+old_kdestroy="${OLD_HEIMDAL}/bin/kdestroy"
+
+server=host/datan.test.h5l.se
+cache="FILE:${objdir}/old-cache.krb5"
+
+KRB5_CONFIG="${objdir}/krb5.conf"
+export KRB5_CONFIG
+
+# Clean up from previous runs
+rm -f ${keytabfile}
+rm -f current-db*
+rm -f out-*
+rm -f mkey.file*
+rm -f "${cache#FILE:}"
+
+> messages.log
+
+echo "Creating database"
+${kadmin} <<EOF || exit 1
+init --realm-max-ticket-life=1day --realm-max-renewable-life=1month ${R}
+add -p foo --use-defaults foo@${R}
+add -p foo --use-defaults ${server}@${R}
+check ${R}
+EOF
+
+echo foo > ${objdir}/foopassword
+echo bar > ${objdir}/barpassword
+
+ec=0
+kdcpid=
+
+cleanup() {
+    if [ -n "$kdcpid" ]; then
+        echo "Killing KDC (pid $kdcpid)"
+        kill $kdcpid 2>/dev/null
+        wait $kdcpid 2>/dev/null
+    fi
+    trap '' EXIT INT TERM
+    cat messages.log
+    exit $ec
+}
+trap cleanup EXIT INT TERM
+
+echo "Starting current (new) KDC"
+${kdc} --detach --testing || { echo "KDC failed to start"; cat messages.log; exit 1; }
+kdcpid=`getpid kdc`
+echo "KDC running with PID $kdcpid"
+
+#
+# Test 1: Password authentication with older kinit
+#
+echo ""
+echo "=== Test 1: Older Heimdal kinit with password against current KDC ==="
+
+# Use rkpty to provide password interactively
+kinitpty=${objdir}/foopassword.rkpty
+cat > ${kinitpty} <<EOF
+expect Password
+password foo\n
+EOF
+
+${rkpty} ${kinitpty} ${old_kinit} -c ${cache} foo@${R} >/dev/null || \
+    { ec=1; eval "${testfailed}"; }
+
+echo "Verifying ticket with older klist"
+${old_klist} -c ${cache} || { ec=1; eval "${testfailed}"; }
+${old_klist} -c ${cache} | grep "krbtgt/${R}@${R}" > /dev/null || \
+    { ec=1; echo "No TGT found"; eval "${testfailed}"; }
+
+echo "Test 1 PASSED"
+
+#
+# Test 2: Get service ticket with older kgetcred
+#
+echo ""
+echo "=== Test 2: Older Heimdal kgetcred against current KDC ==="
+
+${old_kgetcred} -c ${cache} ${server}@${R} || { ec=1; eval "${testfailed}"; }
+${old_klist} -c ${cache} | grep "${server}@${R}" > /dev/null || \
+    { ec=1; echo "No service ticket found"; eval "${testfailed}"; }
+
+echo "Test 2 PASSED"
+
+#
+# Test 3: Verify tickets with current klist
+#
+echo ""
+echo "=== Test 3: Verify older client tickets with current klist ==="
+
+${klist} -c ${cache} || { ec=1; eval "${testfailed}"; }
+
+echo "Test 3 PASSED"
+
+#
+# Test 4: Wrong password should fail
+#
+echo ""
+echo "=== Test 4: Older kinit with wrong password should fail ==="
+
+cat > ${kinitpty} <<EOF
+expect Password
+password wrong\n
+EOF
+
+${rkpty} ${kinitpty} ${old_kinit} -c ${cache} foo@${R} >/dev/null 2>&1 && \
+    { ec=1; echo "kinit with wrong password should have failed"; eval "${testfailed}"; }
+
+echo "Test 4 PASSED"
+
+#
+# Clean up
+#
+${old_kdestroy} -c ${cache} 2>/dev/null
+
+echo ""
+echo "All tests passed!"
+ec=0
+exit 0

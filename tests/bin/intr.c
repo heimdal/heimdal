@@ -5,11 +5,13 @@
 #include <time.h>
 
 static int help_flag;
+static int version_flag;
 static int timeout = 3;
 
 static struct getargs args[] = {
     { "help", 'h', arg_flag, &help_flag, NULL, NULL },
-    { "timeout", 't', arg_integer, &timeout, NULL, NULL }
+    { "timeout", 't', arg_integer, &timeout, NULL, NULL },
+    { "version", 0, arg_flag, &version_flag, "Print version", NULL },
 };
 
 static int nargs = sizeof(args) / sizeof(args[0]);
@@ -44,6 +46,11 @@ main(int argc, char **argv)
 
     if (help_flag)
         usage(0);
+
+    if (version_flag) {
+        print_version (NULL);
+        return 0;
+    }
 
     argc -= optidx;
     argv += optidx;

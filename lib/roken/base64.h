@@ -52,4 +52,15 @@ rk_base64_encode(const void *, int, char **);
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 rk_base64_decode(const char *, void *);
 
+/*
+ * Base64URL encoding/decoding (RFC 4648 Section 5)
+ * Uses '-' and '_' instead of '+' and '/', omits padding.
+ * Used by JWT/JWS (RFC 7515).
+ */
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
+rk_base64url_encode(const void *, int, char **);
+
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
+rk_base64url_decode(const char *, void *);
+
 #endif

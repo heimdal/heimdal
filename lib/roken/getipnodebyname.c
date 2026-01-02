@@ -35,7 +35,7 @@
 
 #include "roken.h"
 
-#ifndef HAVE_H_ERRNO
+#if !defined(HAVE_H_ERRNO) && !defined(__MINGW32__) && !defined(__MINGW64__)
 static int h_errno = NO_RECOVERY;
 #endif
 

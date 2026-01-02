@@ -76,10 +76,9 @@ win32_getLibraryVersion(const char *libname, char **outname, char **outversion)
     if ( hPSAPI == NULL )
 	return -1;
 
-    if (((FARPROC) pGetModuleFileNameExA =
-	  GetProcAddress( hPSAPI, "GetModuleFileNameExA" )) == NULL ||
-	 ((FARPROC) pEnumProcessModules =
-	   GetProcAddress( hPSAPI, "EnumProcessModules" )) == NULL)
+    pGetModuleFileNameExA = (void *)GetProcAddress( hPSAPI, "GetModuleFileNameExA" );
+    pEnumProcessModules = (void *)GetProcAddress( hPSAPI, "EnumProcessModules" );
+    if (pGetModuleFileNameExA == NULL || pEnumProcessModules == NULL)
     {
 	goto out;
     }

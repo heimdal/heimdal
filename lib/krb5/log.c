@@ -224,6 +224,36 @@ krb5_debug(krb5_context context,
     va_end(ap);
 }
 
+void KRB5_LIB_FUNCTION
+_krb5_debug_openssl(krb5_context context,
+                    int level,
+                    const char *fmt,
+                    ...)
+    __attribute__ ((__format__ (__printf__, 3, 4)))
+{
+    va_list ap;
+    char *fmt2 = NULL;
+    char *omsg;
+
+    va_start(ap, fmt);
+    if (!context || !context->hcontext) {
+        va_end(ap);
+        return;
+    }
+    if ((omsg = _krb5_openssl_errors())) {
+        if (asprintf(&fmt2, "%s: %s", fmt, omsg) < 0 || fmt2 == NULL) {
+            heim_vdebug(context->hcontext, level, fmt, ap);
+        } else {
+            heim_vdebug(context->hcontext, level, fmt2, ap);
+        }
+    } else {
+        heim_vdebug(context->hcontext, level, fmt, ap);
+    }
+    va_end(ap);
+    free(omsg);
+    free(fmt2);
+}
+
 KRB5_LIB_FUNCTION krb5_boolean KRB5_LIB_CALL
 _krb5_have_debug(krb5_context context, int level)
 {

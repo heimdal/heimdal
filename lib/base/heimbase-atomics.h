@@ -36,6 +36,12 @@
 #ifndef HEIM_BASE_ATOMICS_H
 #define HEIM_BASE_ATOMICS_H 1
 
+#if defined(__has_include)
+# if __has_include(<stdatomic.h>)
+#  define HEIM_HAVE_STDATOMIC 1
+# endif
+#endif
+
 #include <stdint.h>
 
 /*
@@ -54,14 +60,27 @@
 
 #define heim_base_atomic(T)		_Atomic(T)
 
-#define heim_base_atomic_inc_32(x)	(atomic_fetch_add((x), 1) + 1)
-#define heim_base_atomic_dec_32(x)	(atomic_fetch_sub((x), 1) - 1)
-#define heim_base_atomic_inc_64(x)	(atomic_fetch_add((x), 1) + 1)
-#define heim_base_atomic_dec_64(x)	(atomic_fetch_sub((x), 1) - 1)
+/*
+ * These have to be inlined functions instead of macros as otherwise we get
+ * errors when the caller ignores the result of these.
+ */
+static inline uint32_t heim_base_atomic_inc_32(heim_base_atomic(uint32_t)*x)
+    { return atomic_fetch_add((x), 1) + 1; }
+static inline uint32_t heim_base_atomic_dec_32(heim_base_atomic(uint32_t)*x)
+    { return atomic_fetch_sub((x), 1) - 1; }
+static inline uint64_t heim_base_atomic_inc_64(heim_base_atomic(uint64_t)*x)
+    { return atomic_fetch_add((x), 1) + 1; }
+static inline uint64_t heim_base_atomic_dec_64(heim_base_atomic(uint64_t)*x)
+    { return atomic_fetch_sub((x), 1) - 1; }
 
 #define heim_base_exchange_pointer(t,v) atomic_exchange((t), (v))
 #define heim_base_exchange_32(t,v)	atomic_exchange((t), (v))
 #define heim_base_exchange_64(t,v)	atomic_exchange((t), (v))
+
+#define heim_base_consumer_barrier()    atomic_thread_fence(memory_order_acquire)
+#define heim_base_producer_barrier()    atomic_thread_fence(memory_order_release)
+#define heim_base_full_barrier()        atomic_thread_fence(memory_order_seq_cst)
+#define heim_base_atomic_barrier()	atomic_thread_fence(memory_order_seq_cst)
 
 /*
  * <stdatomic.h>'s and AIX's CAS functions take a pointer to an expected value
@@ -98,6 +117,9 @@ heim_base_cas_64_(heim_base_atomic(uint64_t)*t, uint64_t e, uint64_t d)
 #elif !defined(HEIM_BASE_ATOMICS_FALLBACK) && defined(__GNUC__) && defined(HAVE___SYNC_ADD_AND_FETCH)
 
 #define heim_base_atomic_barrier()	__sync_synchronize()
+#define heim_base_consumer_barrier()    __sync_synchronize()
+#define heim_base_producer_barrier()    __sync_synchronize()
+#define heim_base_full_barrier()        __sync_synchronize()
 
 #define heim_base_atomic_inc_32(x)	__sync_add_and_fetch((x), 1)
 #define heim_base_atomic_dec_32(x)	__sync_sub_and_fetch((x), 1)
@@ -129,10 +151,14 @@ heim_base_cas_64_(heim_base_atomic(uint64_t)*t, uint64_t e, uint64_t d)
 
 static inline void __heim_base_atomic_barrier(void)
 {
-    __machine_rw_barrier();
+    membar_producer();
+    membar_consumer();
 }
 
-#define heim_base_atomic_barrier()     __heim_base_atomic_barrier()
+#define heim_base_atomic_barrier()      __heim_base_atomic_barrier()
+#define heim_base_consumer_barrier()    membar_consumer()
+#define heim_base_producer_barrier()    membar_producer()
+#define heim_base_full_barrier()        __heim_base_atomic_barrier()
 
 #define heim_base_atomic(T)		volatile T
 
@@ -154,6 +180,9 @@ static inline void __heim_base_atomic_barrier(void)
 #include <sys/atomic_op.h>
 
 #define heim_base_atomic_barrier()	__isync()
+#define heim_base_consumer_barrier()    __isync()
+#define heim_base_producer_barrier()    __isync()
+#define heim_base_full_barrier()        __isync()
 
 #define heim_base_atomic_inc_32(x)	(fetch_and_add((atomic_p)(x),  1) + 1)
 #define heim_base_atomic_dec_32(x)	(fetch_and_add((atomic_p)(x), -1) - 1)
@@ -218,6 +247,9 @@ heim_base_cas_64_(heim_base_atomic(uint64_t)*t, uint64_t e, uint64_t d)
 #elif !defined(HEIM_BASE_ATOMICS_FALLBACK) && defined(_WIN32)
 
 #define heim_base_atomic_barrier()	MemoryBarrier()
+#define heim_base_consumer_barrier()    _ReadBarrier()
+#define heim_base_producer_barrier()    _WriteBarrier()
+#define heim_base_full_barrier()        MemoryBarrier()
 
 #define heim_base_atomic_inc_32(x)	InterlockedIncrement(x)
 #define heim_base_atomic_dec_32(x)	InterlockedDecrement(x)
@@ -236,6 +268,9 @@ heim_base_cas_64_(heim_base_atomic(uint64_t)*t, uint64_t e, uint64_t d)
 
 #define heim_base_atomic(T)		volatile T
 #define heim_base_atomic_barrier()
+#define heim_base_consumer_barrier()
+#define heim_base_producer_barrier()
+#define heim_base_full_barrier()
 #define heim_base_atomic_load(x)	(*(x))
 #define heim_base_atomic_init(t, v)	do { (*(t) = (v)); } while (0)
 #define heim_base_atomic_store(t, v)	do { (*(t) = (v)); } while (0)
@@ -358,6 +393,10 @@ heim_base_cas_64(heim_base_atomic(uint64_t) *target, uint64_t expected,uint64_t 
 
 #ifndef heim_base_atomic_barrier
 static inline void heim_base_atomic_barrier(void) { return; }
+#define heim_base_atomic_barrier()      heim_base_atomic_barrier()
+#define heim_base_consumer_barrier()    heim_base_atomic_barrier()
+#define heim_base_producer_barrier()    heim_base_atomic_barrier()
+#define heim_base_full_barrier()        heim_base_atomic_barrier()
 #endif
 
 #ifndef heim_base_atomic_load

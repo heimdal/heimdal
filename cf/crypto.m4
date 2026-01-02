@@ -6,11 +6,13 @@ dnl - own-built libhcrypto
 
 m4_define([test_headers], [
 		#undef KRB5 /* makes md4.h et al unhappy */
-		#ifdef HAVE_HCRYPTO_W_OPENSSL
 		#ifdef HAVE_SYS_TYPES_H
 		#include <sys/types.h>
 		#endif
 		#include <openssl/evp.h>
+		#include <openssl/provider.h>
+		#include <openssl/encoder.h>
+		#include <openssl/core_names.h>
 		#include <openssl/bn.h>
 		#include <openssl/md4.h>
 		#include <openssl/md5.h>
@@ -27,18 +29,6 @@ m4_define([test_headers], [
 		#include <openssl/rand.h>
 		#include <openssl/hmac.h>
 		#include <openssl/pkcs12.h>
-		#else
-		#include <hcrypto/evp.h>
-		#include <hcrypto/md4.h>
-		#include <hcrypto/md5.h>
-		#include <hcrypto/sha.h>
-		#include <hcrypto/des.h>
-		#include <hcrypto/rc4.h>
-		#include <hcrypto/aes.h>
-		#include <hcrypto/engine.h>
-		#include <hcrypto/hmac.h>
-		#include <hcrypto/pkcs12.h>
-		#endif
 		])
 m4_define([test_body], [
 		void *schedule = 0;
@@ -54,9 +44,7 @@ m4_define([test_body], [
 		EVP_CIPHER_iv_length(((EVP_CIPHER*)0));
 		UI_UTIL_read_pw_string(0,0,0,0);
 		RAND_status();
-		#ifdef HAVE_HCRYPTO_W_OPENSSL
 		EC_KEY_new();
-		#endif
 
 		OpenSSL_add_all_algorithms();
 		AES_encrypt(0,0,0);
@@ -65,25 +53,19 @@ m4_define([test_body], [
 
 AC_DEFUN([KRB_CRYPTO],[
 AC_ARG_WITH([hcrypto-default-backend],
-            AS_HELP_STRING([--with-hcrypto-default-backend=cc|pkcs11_hcrypto|ossl|w32crypto|hcrypto],
+            AS_HELP_STRING([--with-hcrypto-default-backend=ossl],
                            [specify the default hcrypto backend]),
             [
-            CFLAGS="${CFLAGS} -DHCRYPTO_DEF_PROVIDER=${withval}"
-            case "$withval" in
-            cc) AC_DEFINE(HCRYPTO_DEF_PROVIDER, [cc], [Define to one of cc, pkcs11, ossl, w32crypto, or hcrypto to set a default hcrypto provider]);;
-            pkcs11_hcrypto) AC_DEFINE(HCRYPTO_DEF_PROVIDER, [pkcs11_hcrypto], [Define to one of cc, pkcs11, ossl, w32crypto, or hcrypto to set a default hcrypto provider]);;
-            ossl) AC_DEFINE(HCRYPTO_DEF_PROVIDER, [ossl], [Define to one of cc, pkcs11, ossl, w32crypto, or hcrypto to set a default hcrypto provider]);;
-            w32crypto) AC_DEFINE(HCRYPTO_DEF_PROVIDER, [w32crypto], [Define to one of cc, pkcs11, ossl, w32crypto, or hcrypto to set a default hcrypto provider]);;
-            hcrypto) AC_DEFINE(HCRYPTO_DEF_PROVIDER, [hcrypto], [Define to one of cc, pkcs11, ossl, w32crypto, or hcrypto to set a default hcrypto provider]);;
-            *) echo "Invalid hcrypto provider name ($withval)"; exit 5;;
-            esac
-            ],
-            [])
+                if test "$with_val" != ossl -a "$withval" != ""; then
+                    AC_MSG_ERROR([hcrypto has been removed 0])
+                fi
+            ]
+            )
 AC_ARG_WITH([hcrypto-fallback],
             AS_HELP_STRING([--without-hcrypto-fallback],
                            [disable fallback on hcrypto for unavailable algorithms]),
-            [AC_DEFINE([HCRYPTO_FALLBACK],0,[Set to 1 to allow fallback to hcrypto for unavailable algorithms])],
-            [AC_DEFINE([HCRYPTO_FALLBACK],1,[Set to 1 to allow fallback to hcrypto for unavailable algorithms])])
+            [AC_MSG_ERROR([hcrypto has been removed 2])]
+            )
 AC_WITH_ALL([openssl])
 
 AC_MSG_CHECKING([for crypto library])
@@ -105,10 +87,40 @@ if test "$with_openssl" != "no"; then
 	fi
 	if test "$with_openssl_lib" != ""; then
 		LIB_openssl_crypto="-L${with_openssl_lib}"
-        elif test "${with_openssl}" != "/usr" -a -d "${with_openssl}/lib"; then
-                LIB_openssl_crypto="-L${with_openssl}/lib"
+		openssl_libdir="${with_openssl_lib}"
+	elif test "${with_openssl}" != "/usr"; then
+		dnl Detect lib vs lib64: prefer lib64 on 64-bit Linux if it exists
+		dnl and contains libcrypto, otherwise fall back to lib
+		openssl_libdir=""
+		if test -f "${with_openssl}/lib64/libcrypto.so" -o \
+		        -f "${with_openssl}/lib64/libcrypto.dylib"; then
+			openssl_libdir="${with_openssl}/lib64"
+		elif test -f "${with_openssl}/lib/libcrypto.so" -o \
+		          -f "${with_openssl}/lib/libcrypto.dylib"; then
+			openssl_libdir="${with_openssl}/lib"
+		elif test -d "${with_openssl}/lib64"; then
+			openssl_libdir="${with_openssl}/lib64"
+		elif test -d "${with_openssl}/lib"; then
+			openssl_libdir="${with_openssl}/lib"
+		fi
+		if test -n "$openssl_libdir"; then
+			LIB_openssl_crypto="-L${openssl_libdir}"
+		fi
 	fi
-	CFLAGS="-DHAVE_HCRYPTO_W_OPENSSL ${INCLUDE_openssl_crypto} ${CFLAGS}"
+	dnl Add rpath for non-system OpenSSL installations
+	if test -n "$openssl_libdir" -a "$openssl_libdir" != "/usr/lib" -a "$openssl_libdir" != "/usr/lib64"; then
+		case "$host_os" in
+		darwin*)
+			dnl macOS uses -rpath with @loader_path or absolute path
+			LIB_openssl_crypto="${LIB_openssl_crypto} -Wl,-rpath,${openssl_libdir}"
+			;;
+		*)
+			dnl Linux and other ELF systems
+			LIB_openssl_crypto="${LIB_openssl_crypto} -Wl,-rpath,${openssl_libdir}"
+			;;
+		esac
+	fi
+	CFLAGS="${INCLUDE_openssl_crypto} ${CFLAGS}"
         LDFLAGS="${LIB_openssl_crypto} ${LDFLAGS}"
         AC_CHECK_LIB([crypto], [OPENSSL_init],
                      [LIB_openssl_crypto="${LIB_openssl_crypto} -lcrypto"; openssl=yes], [openssl=no], [])
@@ -150,13 +162,6 @@ if test "$with_openssl" != "no"; then
         LDFLAGS="${saved_LDFLAGS}"
 fi
 
-LIB_hcrypto='$(top_builddir)/lib/hcrypto/libhcrypto.la'
-LIB_hcrypto_a='$(top_builddir)/lib/hcrypto/.libs/libhcrypto.a'
-LIB_hcrypto_so='$(top_builddir)/lib/hcrypto/.libs/libhcrypto.so'
-LIB_hcrypto_appl="-lhcrypto"
-
-AC_MSG_RESULT([included libhcrypto])
-
 AC_ARG_WITH(pkcs11-module,
                        AS_HELP_STRING([--with-pkcs11-module=path],
                                       [use PKCS11 module in path]),
@@ -168,15 +173,30 @@ if test "$pkcs11_module" != ""; then
   openssl=no
 fi
 
+dnl Check for OpenSSL PKCS#11 provider (pkcs11-provider project)
+dnl It installs into the OpenSSL modules directory
+openssl_pkcs11_provider=""
 if test "$openssl" = "yes"; then
-  AC_DEFINE([HAVE_HCRYPTO_W_OPENSSL], 1, [define to use openssl's libcrypto as the default backend for libhcrypto])
+    if test -n "$openssl_libdir"; then
+        pkcs11_provider_path="${openssl_libdir}/ossl-modules/pkcs11.so"
+    else
+        pkcs11_provider_path="/usr/lib/ossl-modules/pkcs11.so"
+    fi
+    AC_MSG_CHECKING([for OpenSSL PKCS11 provider])
+    if test -f "$pkcs11_provider_path"; then
+        openssl_pkcs11_provider="$pkcs11_provider_path"
+        AC_MSG_RESULT([$openssl_pkcs11_provider])
+    else
+        AC_MSG_RESULT([not found at $pkcs11_provider_path])
+    fi
 fi
-AM_CONDITIONAL(HAVE_HCRYPTO_W_OPENSSL, test "$openssl" = yes)dnl
+AC_SUBST(OPENSSL_PKCS11_PROVIDER, [$openssl_pkcs11_provider])
+AM_CONDITIONAL([HAVE_OPENSSL_PKCS11_PROVIDER], [test "x$openssl_pkcs11_provider" != "x"])
+
+if test "$openssl" != "yes"; then
+    AC_MSG_ERROR([OpenSSL is required])
+fi
 
 AC_SUBST(INCLUDE_openssl_crypto)
 AC_SUBST(LIB_openssl_crypto)
-AC_SUBST(LIB_hcrypto)
-AC_SUBST(LIB_hcrypto_a)
-AC_SUBST(LIB_hcrypto_so)
-AC_SUBST(LIB_hcrypto_appl)
 ])

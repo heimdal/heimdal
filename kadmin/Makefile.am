@@ -2,10 +2,14 @@
 
 include $(top_srcdir)/Makefile.am.common
 
-AM_CPPFLAGS += $(INCLUDE_libintl) $(INCLUDE_readline) -I$(srcdir)/../lib/krb5 -I$(top_builddir)/include/gssapi
+AM_CPPFLAGS += $(INCLUDE_libintl) $(INCLUDE_readline) $(INCLUDE_openssl_crypto) -I$(srcdir)/../lib/krb5 -I$(top_builddir)/include/gssapi
+if WIN32
+AM_CPPFLAGS += -DASN1_LIB -DNO_UNIX_SOCKETS -DNO_POSIX_LINKS
+endif
 
 bin_PROGRAMS = kadmin
 
+# kadmind now works on Windows using threads instead of fork
 libexec_PROGRAMS = kadmind
 
 man_MANS = kadmin.1 kadmind.8
@@ -63,7 +67,6 @@ check_PROGRAMS = $(TESTS)
 LDADD_common = \
 	$(top_builddir)/lib/hdb/libhdb.la \
 	$(top_builddir)/lib/krb5/libkrb5.la \
-	$(LIB_hcrypto) \
 	$(top_builddir)/lib/asn1/libasn1.la \
 	$(LIB_roken) \
 	$(DB3LIB) $(DB1LIB) $(LMDBLIB) $(NDBMLIB)

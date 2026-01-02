@@ -60,8 +60,8 @@ expand_temp_folder(heim_context context, PTYPE param, const char *postfix,
 
     if (!GetTempPath(sizeof(tpath)/sizeof(tpath[0]), tpath)) {
         heim_set_error_message(context, EINVAL,
-                               "Failed to get temporary path (GLE=%d)",
-                               GetLastError());
+                               "Failed to get temporary path (GLE=%lu)",
+                               (unsigned long)GetLastError());
         return EINVAL;
     }
 
@@ -170,7 +170,7 @@ expand_userid(heim_context context, PTYPE param, const char *postfix,
 
         if (le != 0) {
             heim_set_error_message(context, rv,
-                                   "Can't open thread token (GLE=%d)", le);
+                                   "Can't open thread token (GLE=%lu)", le);
             goto _exit;
         }
     }
@@ -178,7 +178,7 @@ expand_userid(heim_context context, PTYPE param, const char *postfix,
     if (!GetTokenInformation(hToken, TokenOwner, NULL, 0, &len)) {
         if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) {
             heim_set_error_message(context, rv,
-                                   "Unexpected error reading token information (GLE=%d)",
+                                   "Unexpected error reading token information (GLE=%lu)",
                                    GetLastError());
             goto _exit;
         }
@@ -201,14 +201,14 @@ expand_userid(heim_context context, PTYPE param, const char *postfix,
 
     if (!GetTokenInformation(hToken, TokenOwner, pOwner, len, &len)) {
         heim_set_error_message(context, rv,
-                               "GetTokenInformation() failed. GLE=%d",
+                               "GetTokenInformation() failed. GLE=%lu",
                                GetLastError());
         goto _exit;
     }
 
     if (!ConvertSidToStringSid(pOwner->Owner, &strSid)) {
         heim_set_error_message(context, rv,
-                               "Can't convert SID to string. GLE=%d",
+                               "Can't convert SID to string. GLE=%lu",
                                GetLastError());
         goto _exit;
     }
@@ -456,8 +456,8 @@ static const struct {
     {"USERCONFIG", SPECIAL(expand_home)}, /* same as %{HOME} on not-Windows */
     {"euid", SPECIAL(expand_euid)},
     {"ruid", SPECIAL(expand_userid)},
-    {"loginname", SPECIAL(expand_loginname)},
 #endif
+    {"loginname", SPECIAL(expand_loginname)},
     {"username", SPECIAL(expand_username)},
     {"TEMP", SPECIAL(expand_temp_folder)},
     {"USERID", SPECIAL(expand_userid)},

@@ -132,6 +132,7 @@ struct iosclassfield {
     unsigned long id;
     unsigned int optional:1;
     unsigned int unique:1;
+    unsigned int opentype:1;
 };
 
 typedef struct iosclassfield Field;

@@ -51,10 +51,10 @@ krb5_prompter_posix (krb5_context context,
 	fflush(stderr);
     for (i = 0; i < num_prompts; ++i) {
 	if (prompts[i].hidden) {
-	    if(UI_UTIL_read_pw_string(prompts[i].reply->data,
-				  prompts[i].reply->length,
-				  prompts[i].prompt,
-				  0))
+	    if (_krb5_UI_UTIL_read_pw_string(prompts[i].reply->data,
+                                             prompts[i].reply->length,
+                                             prompts[i].prompt,
+                                             0))
 	       return 1;
 	} else {
 	    char *s = prompts[i].reply->data;

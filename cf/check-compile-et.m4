@@ -96,7 +96,7 @@ elif test "${krb_cv_com_err}" = "cross"; then
     COMPILE_ET="${ac_cv_prog_COMPILE_ET}"
     localcomerr=yes
 else
-    COMPILE_ET="\$(top_builddir)/lib/com_err/compile_et"
+    COMPILE_ET="\$(WINE) \$(top_builddir)/lib/com_err/compile_et\$(EXEEXT)"
     DIR_com_err="com_err"
     LIB_com_err="\$(top_builddir)/lib/com_err/libcom_err.la"
     LIB_com_err_a="\$(top_builddir)/lib/com_err/.libs/libcom_err.a"

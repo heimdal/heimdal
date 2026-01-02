@@ -50,10 +50,121 @@ const char *master_hostname;
 const char *pidfile_basename;
 static char hostname[128];
 
+#if defined(_WIN32) && defined(NO_UNIX_SOCKETS)
+
+/*
+ * Windows named pipe signal mechanism.
+ *
+ * Since select() doesn't work with named pipes, we use a bridge approach:
+ * - Create a local UDP socket for the main select() loop
+ * - Create a named pipe server in a separate thread
+ * - When the pipe receives a signal, forward it to the UDP socket
+ *
+ * This allows the existing select()-based main loop to remain unchanged.
+ */
+
+static krb5_socket_t signal_bridge_fd = -1;
+static struct sockaddr_in signal_bridge_addr;
+static HANDLE signal_pipe_thread = NULL;
+static volatile int signal_pipe_running = 0;
+
+static DWORD WINAPI
+signal_pipe_thread_func(LPVOID arg)
+{
+    krb5_context context = (krb5_context)arg;
+    const char *pipe_name = kadm5_log_signal_pipe_name(context);
+    HANDLE hPipe;
+
+    while (signal_pipe_running) {
+        hPipe = CreateNamedPipeA(
+            pipe_name,
+            PIPE_ACCESS_INBOUND,
+            PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
+            PIPE_UNLIMITED_INSTANCES,
+            sizeof(uint32_t),
+            sizeof(uint32_t),
+            1000,  /* timeout in ms */
+            NULL); /* default security */
+
+        if (hPipe == INVALID_HANDLE_VALUE) {
+            Sleep(1000);
+            continue;
+        }
+
+        /* Wait for a client to connect */
+        if (ConnectNamedPipe(hPipe, NULL) || GetLastError() == ERROR_PIPE_CONNECTED) {
+            uint32_t vers;
+            DWORD bytesRead;
+
+            if (ReadFile(hPipe, &vers, sizeof(vers), &bytesRead, NULL) &&
+                bytesRead == sizeof(vers)) {
+                /* Forward the signal to the bridge socket */
+                sendto(signal_bridge_fd, (char *)&vers, sizeof(vers), 0,
+                       (struct sockaddr *)&signal_bridge_addr,
+                       sizeof(signal_bridge_addr));
+            }
+            DisconnectNamedPipe(hPipe);
+        }
+        CloseHandle(hPipe);
+    }
+    return 0;
+}
+
+static krb5_socket_t
+make_signal_socket(krb5_context context)
+{
+    krb5_socket_t fd;
+    struct sockaddr_in addr;
+    socklen_t addrlen = sizeof(addr);
+
+    /* Create a local UDP socket to receive forwarded signals */
+    fd = socket(AF_INET, SOCK_DGRAM, 0);
+    if (rk_IS_BAD_SOCKET(fd))
+        krb5_err(context, 1, rk_SOCK_ERRNO, "socket AF_INET");
+
+    memset(&addr, 0, sizeof(addr));
+    addr.sin_family = AF_INET;
+    addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    addr.sin_port = 0; /* Let OS assign a port */
+
+    if (bind(fd, (struct sockaddr *)&addr, sizeof(addr)) < 0)
+        krb5_err(context, 1, rk_SOCK_ERRNO, "bind");
+
+    /* Get the assigned port */
+    if (getsockname(fd, (struct sockaddr *)&addr, &addrlen) < 0)
+        krb5_err(context, 1, rk_SOCK_ERRNO, "getsockname");
+
+    /* Save for the pipe thread to send to */
+    signal_bridge_fd = fd;
+    signal_bridge_addr = addr;
+
+    /* Start the named pipe server thread */
+    signal_pipe_running = 1;
+    signal_pipe_thread = CreateThread(NULL, 0, signal_pipe_thread_func,
+                                      context, 0, NULL);
+    if (signal_pipe_thread == NULL)
+        krb5_err(context, 1, GetLastError(), "CreateThread for signal pipe");
+
+    return fd;
+}
+
+static void
+stop_signal_pipe_thread(void)
+{
+    if (signal_pipe_thread != NULL) {
+        signal_pipe_running = 0;
+        /* The thread will exit on its next timeout */
+        WaitForSingleObject(signal_pipe_thread, 5000);
+        CloseHandle(signal_pipe_thread);
+        signal_pipe_thread = NULL;
+    }
+}
+
+#elif !defined(NO_UNIX_SOCKETS)
+
 static krb5_socket_t
 make_signal_socket (krb5_context context)
 {
-#ifndef NO_UNIX_SOCKETS
     struct sockaddr_un addr;
     const char *fn;
     krb5_socket_t fd;
@@ -70,7 +181,13 @@ make_signal_socket (krb5_context context)
     if (bind (fd, (struct sockaddr *)&addr, sizeof(addr)) < 0)
 	krb5_err (context, 1, errno, "bind %s", addr.sun_path);
     return fd;
-#else
+}
+
+#else  /* NO_UNIX_SOCKETS (non-Windows) */
+
+static krb5_socket_t
+make_signal_socket (krb5_context context)
+{
     struct addrinfo *ai = NULL;
     krb5_socket_t fd;
 
@@ -83,8 +200,9 @@ make_signal_socket (krb5_context context)
     if (rk_IS_SOCKET_ERROR( bind (fd, ai->ai_addr, ai->ai_addrlen) ))
 	krb5_err (context, 1, rk_SOCK_ERRNO, "bind");
     return fd;
-#endif
 }
+
+#endif
 
 static krb5_socket_t
 make_listen_socket (krb5_context context, const char *port_str)
@@ -1523,6 +1641,8 @@ static char *keytab_str = sHDB;
 static char *database;
 static char *config_file;
 static char *port_str;
+static char *ossl_cnf;
+static char *ossl_propq;
 static int detach_from_console;
 static int daemon_child = -1;
 
@@ -1548,6 +1668,12 @@ static struct getargs args[] = {
       "basename of pidfile; private argument for testing", "NAME" },
     { "hostname", 0, arg_string, rk_UNCONST(&master_hostname),
       "hostname of master (if not same as hostname)", "hostname" },
+    { "ossl-cnf",     0,      arg_string, &ossl_cnf,
+      "OpenSSL configuration file", "FILE"
+    },
+    { "ossl-propq",   0,      arg_string, &ossl_propq,
+      "OpenSSL property query string (e.g., provider=pkcs11)", "PROPQ"
+    },
     { "verbose", 0, arg_flag, &verbose, NULL, NULL },
     { "version", 0, arg_flag, &version_flag, NULL, NULL },
     { "help", 0, arg_flag, &help_flag, NULL, NULL }
@@ -1607,6 +1733,12 @@ main(int argc, char **argv)
     ret = krb5_init_context(&context);
     if (ret)
         errx(1, "krb5_init_context failed: %d", ret);
+
+    if (ossl_cnf || ossl_propq) {
+        ret = krb5_set_ossl_cnf_propq(context, ossl_cnf, ossl_propq);
+        if (ret)
+            krb5_err(context, 1, ret, "krb5_set_ossl_cnf_propq");
+    }
 
     setup_signal();
 
@@ -1787,7 +1919,9 @@ main(int argc, char **argv)
         }
 
 	if (ret && FD_ISSET(signal_fd, &readset)) {
-#ifndef NO_UNIX_SOCKETS
+#if defined(_WIN32) && defined(NO_UNIX_SOCKETS)
+	    struct sockaddr_in peer_addr;
+#elif !defined(NO_UNIX_SOCKETS)
 	    struct sockaddr_un peer_addr;
 #else
 	    struct sockaddr_storage peer_addr;
@@ -1885,6 +2019,10 @@ main(int argc, char **argv)
 		   getprogname(), (long)exit_flag);
 
     write_master_down(context);
+
+#if defined(_WIN32) && defined(NO_UNIX_SOCKETS)
+    stop_signal_pipe_thread();
+#endif
 
     return 0;
 }

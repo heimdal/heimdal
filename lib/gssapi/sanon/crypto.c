@@ -220,14 +220,34 @@ _gss_sanon_pseudo_random(OM_uint32 *minor,
 OM_uint32
 _gss_sanon_curve25519_base(OM_uint32 *minor, sanon_ctx sc)
 {
-    krb5_generate_random_block(sc->sk, crypto_scalarmult_curve25519_BYTES);
+    OM_uint32 maj = GSS_S_FAILURE;
+    EVP_PKEY_CTX *kctx = NULL;
+    EVP_PKEY *pkey = NULL;
+    size_t pklen = X25519_LEN, sklen = X25519_LEN;
 
-    if (crypto_scalarmult_curve25519_base(sc->pk, sc->sk) != 0) {
-	*minor = EINVAL;
-	return GSS_S_FAILURE;
+    /* Create an X25519 keypair */
+    if ((kctx = EVP_PKEY_CTX_new_from_name(NULL, "X25519", NULL)) == NULL ||
+        EVP_PKEY_keygen_init(kctx) <= 0 ||
+        EVP_PKEY_keygen(kctx, &pkey) <= 0) {
+        EVP_PKEY_CTX_free(kctx);
+        *minor = ENOMEM; // XXX
+        return GSS_S_FAILURE;
     }
 
-    return GSS_S_COMPLETE;
+    /* Export raw public & private (32 bytes each) into sc->pk / sc->sk */
+    if (EVP_PKEY_get_raw_public_key(pkey, sc->pk, &pklen) != 1 ||
+        pklen != X25519_LEN ||
+        EVP_PKEY_get_raw_private_key(pkey, sc->sk, &sklen) != 1 ||
+        sklen != X25519_LEN) {
+        *minor = EINVAL; // XXX
+    } else {
+        *minor = 0;
+        maj = GSS_S_COMPLETE;
+    }
+
+    EVP_PKEY_free(pkey);
+    EVP_PKEY_CTX_free(kctx);
+    return maj;
 }
 
 /*
@@ -243,18 +263,46 @@ _gss_sanon_curve25519(OM_uint32 *minor,
 		      const gss_channel_bindings_t input_chan_bindings,
 		      gss_buffer_t session_key)
 {
-    uint8_t shared[crypto_scalarmult_curve25519_BYTES], *p;
+    uint8_t shared[X25519_LEN], *p;
+    size_t shlen = X25519_LEN;
     krb5_error_code ret;
     krb5_context context;
     krb5_data kdf_K1, kdf_label, kdf_context, keydata;
+    EVP_PKEY *sk, *peer;
+    EVP_PKEY_CTX *dctx;
 
     _mg_buffer_zero(session_key);
 
-    if (pk == GSS_C_NO_BUFFER || pk->length != crypto_scalarmult_curve25519_BYTES)
+    if (pk == GSS_C_NO_BUFFER || pk->length != X25519_LEN)
 	return GSS_S_DEFECTIVE_TOKEN;
 
-    if (crypto_scalarmult_curve25519(shared, sc->sk, pk->value) != 0)
-	return GSS_S_FAILURE;
+    sk = EVP_PKEY_new_raw_private_key_ex(NULL, "X25519", NULL, sc->sk,
+                                         X25519_LEN);
+    peer = EVP_PKEY_new_raw_public_key_ex(NULL,  "X25519", NULL,
+                                          (const unsigned char *)pk->value,
+                                          X25519_LEN);
+    if (sk == NULL || peer == NULL) {
+        *minor = EINVAL;
+        EVP_PKEY_free(sk);
+        return GSS_S_FAILURE;
+    }
+
+    if ((dctx = EVP_PKEY_CTX_new_from_pkey(NULL, sk, NULL)) == NULL ||
+        EVP_PKEY_derive_init(dctx) != 1 ||
+        EVP_PKEY_derive_set_peer(dctx, peer) != 1 ||
+        EVP_PKEY_derive(dctx, shared, &shlen) != 1 ||
+        shlen != X25519_LEN)
+    {
+        *minor = EINVAL;
+        EVP_PKEY_CTX_free(dctx);
+        EVP_PKEY_free(peer);
+        EVP_PKEY_free(sk);
+        return GSS_S_FAILURE;
+    }
+
+    EVP_PKEY_CTX_free(dctx);
+    EVP_PKEY_free(peer);
+    EVP_PKEY_free(sk);
 
     ret = krb5_init_context(&context);
     if (ret != 0) {
@@ -269,7 +317,7 @@ _gss_sanon_curve25519(OM_uint32 *minor,
     kdf_label.length = sizeof("sanon-x25519") - 1;
 
     ret = krb5_data_alloc(&kdf_context,
-			  2 * crypto_scalarmult_curve25519_BYTES + 8 +
+			  2 * X25519_LEN + 8 +
 			  (input_chan_bindings ? input_chan_bindings->application_data.length : 0));
     if (ret != 0) {
 	krb5_free_context(context);

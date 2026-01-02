@@ -740,10 +740,12 @@ any_to_certs(hx509_context context, const SignedData *sd, hx509_certs certs)
 	heim_error_t error;
 	hx509_cert c;
 
-	c = hx509_cert_init_data(context,
-				 sd->certificates->val[i].data,
-				 sd->certificates->val[i].length,
-				 &error);
+        if (sd->certificates->val[i].element !=
+            choice_CertificateChoices_certificate)
+            continue;
+        c = hx509_cert_init(context,
+                            &sd->certificates->val[i].u.certificate,
+                            &error);
 	if (c == NULL) {
 	    ret = heim_error_get_code(error);
 	    heim_release(error);
@@ -1004,6 +1006,7 @@ hx509_cms_verify_signed_ext(hx509_context context,
 	    ret = _hx509_verify_signature(context,
 					  NULL,
 					  &signer_info->digestAlgorithm,
+                                          NULL,
 					  content,
 					  &os);
 	    der_free_octet_string(&os);
@@ -1079,11 +1082,12 @@ hx509_cms_verify_signed_ext(hx509_context context,
 	    der_free_oid(&decode_oid);
 
 	if (ret == 0) {
-	    ret = hx509_verify_signature(context,
-					 cert,
-					 &signer_info->signatureAlgorithm,
-					 &signed_data,
-					 &signer_info->signature);
+	    ret = _hx509_verify_signature(context,
+                                         cert,
+                                         &signer_info->signatureAlgorithm,
+					 &signer_info->digestAlgorithm,
+                                         &signed_data,
+                                         &signer_info->signature);
 	    if (ret)
 		hx509_set_error_string(context, HX509_ERROR_APPEND, ret,
 				       "Failed to verify signature in "
@@ -1345,6 +1349,7 @@ sig_process(hx509_context context, void *ctx, hx509_cert cert)
 	ret = _hx509_create_signature(context,
 				      NULL,
 				      &digest,
+                                      NULL,
 				      &sigctx->content,
 				      NULL,
 				      &sig);
@@ -1429,6 +1434,7 @@ sig_process(hx509_context context, void *ctx, hx509_cert cert)
 	ret = _hx509_create_signature(context,
 				      _hx509_cert_private_key(cert),
 				      &sigalg,
+                                      &digest,
 				      &sigdata,
 				      &signer_info->signatureAlgorithm,
 				      &signer_info->signature);
@@ -1484,20 +1490,27 @@ cert_process(hx509_context context, void *ctx, hx509_cert cert)
 {
     struct sigctx *sigctx = ctx;
     const unsigned int i = sigctx->sd.certificates->len;
+    Certificate cc, *c;
     void *ptr;
     int ret;
+
+    if ((c = _hx509_get_cert(cert)) == NULL)
+        return 0;
+
+    memset(&cc, 0, sizeof(cc));
+    ret = copy_Certificate(c, &cc);
+    if (ret)
+        return ret;
+
 
     ptr = realloc(sigctx->sd.certificates->val,
 		  (i + 1) * sizeof(sigctx->sd.certificates->val[0]));
     if (ptr == NULL)
 	return ENOMEM;
     sigctx->sd.certificates->val = ptr;
-
-    ret = hx509_cert_binary(context, cert,
-			    &sigctx->sd.certificates->val[i]);
-    if (ret == 0)
-	sigctx->sd.certificates->len++;
-
+    sigctx->sd.certificates->val[i].element = choice_CertificateChoices_certificate;
+    sigctx->sd.certificates->val[i].u.certificate = cc;
+    sigctx->sd.certificates->len++;
     return ret;
 }
 

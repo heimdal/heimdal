@@ -640,6 +640,12 @@ fast_unwrap_request(astgs_request_t r,
 	goto out;
 
     if (r->explicit_armor_present) {
+	if (tgs_ac->remote_subkey == NULL) {
+	    kdc_log(r->context, r->config, 2,
+		    "FAST TGS armor remote subkey missing");
+	    ret = KRB5KDC_ERR_PREAUTH_FAILED;
+	    goto out;
+	}
 	ret = _krb5_fast_explicit_armor_key(r->context,
 					    &armorkey,
 					    tgs_ac->remote_subkey,

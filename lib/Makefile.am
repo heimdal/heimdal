@@ -1,12 +1,7 @@
-# $Id$
-
 include $(top_srcdir)/Makefile.am.common
 
 if LIBEDIT
 dir_editline = libedit
-endif
-if OTP
-dir_otp = otp
 endif
 if DCE
 dir_dce = kdfs
@@ -20,8 +15,8 @@ endif
 if MAINTAINER_MODE
 dir_sqlite = sqlite
 endif
-if !NO_AFS
-dir_afs = kafs
+if !WIN32
+dir_ipc = ipc
 endif
 
 SUBDIRS = \
@@ -34,17 +29,13 @@ SUBDIRS = \
 	wind \
 	asn1 \
 	$(dir_sqlite) \
-	hcrypto \
-	ipc \
+	$(dir_ipc) \
 	hx509 \
 	krb5 \
-	ntlm \
-	$(dir_afs) \
 	gssapi \
 	gss_preauth \
 	hdb \
 	kadm5 \
-	$(dir_otp) \
 	$(dir_dce)
 
 EXTRA_DIST = NTMakefile heimdal

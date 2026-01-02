@@ -158,6 +158,7 @@ _key_schedule(krb5_context context,
 	key->schedule = NULL;
 	return ret;
     }
+    memset(key->schedule->data, 0, kt->schedule_size);
     (*kt->schedule)(context, kt, key);
     return 0;
 }
@@ -223,6 +224,7 @@ _krb5_internal_hmac_iov(krb5_context context,
     size_t key_len;
     size_t i;
 
+    // XXX Switch to using OpenSSL 3.x APIs!
     ipad = malloc(cm->blocksize);
     if (ipad == NULL)
 	return ENOMEM;
@@ -338,6 +340,49 @@ krb5_hmac(krb5_context context,
     return ret;
 }
 
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+_krb5_hmac_start_ossl(const unsigned char *key, size_t keylen,
+                      const EVP_MD *md, EVP_MAC_CTX **ctx)
+{
+    const char *mdname = EVP_MD_get0_name(md); // can't be NULL can it
+    OSSL_PARAM params[] = {
+        OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST, (char *)mdname, 0),
+        OSSL_PARAM_END
+    };
+    EVP_MAC *mac;
+
+    *ctx = NULL;
+    mac = EVP_MAC_fetch(NULL, "HMAC", NULL); // can't be NULL
+    if ((*ctx = EVP_MAC_CTX_new(mac)) == NULL ||
+        EVP_MAC_init(*ctx, key, keylen, params) != 1) {
+        EVP_MAC_free(mac);
+        return ENOMEM;
+    }
+
+    return 0;
+}
+
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+_krb5_hmac_ossl(const unsigned char *key, size_t keylen,
+                const unsigned char *in, unsigned int inlen,
+                unsigned char *out, size_t *outlen,
+                const EVP_MD *md)
+{
+    EVP_MAC_CTX *ctx;
+    int ret;
+
+    ret = _krb5_hmac_start_ossl(key, keylen, md, &ctx);
+    if (ret)
+        return ret;
+
+    if (EVP_MAC_update(ctx, in, inlen) != 1 ||
+        EVP_MAC_final(ctx, out, outlen, *outlen) != 1)
+        ret = KRB5_CRYPTO_INTERNAL;
+
+    EVP_MAC_CTX_free(ctx);
+    return ret;
+}
+
 krb5_error_code
 _krb5_SP_HMAC_SHA1_checksum(krb5_context context,
 			    krb5_crypto crypto,
@@ -352,7 +397,7 @@ _krb5_SP_HMAC_SHA1_checksum(krb5_context context,
     unsigned int hmaclen = sizeof(hmac);
 
     ret = _krb5_evp_hmac_iov(context, crypto, key, iov, niov, hmac, &hmaclen,
-                             EVP_sha1(), NULL);
+                             EVP_sha1());
     if (ret)
         return ret;
 
@@ -378,7 +423,7 @@ _krb5_SP_HMAC_SHA1_verify(krb5_context context,
     krb5_data data;
 
     ret = _krb5_evp_hmac_iov(context, crypto, key, iov, niov, hmac, &hmaclen,
-                             EVP_sha1(), NULL);
+                             EVP_sha1());
     if (ret)
         return ret;
 
@@ -2362,10 +2407,7 @@ derive_key_rfc3961(krb5_context context,
 	}
     }
 
-    if (kt->type == KRB5_ENCTYPE_OLD_DES3_CBC_SHA1)
-	_krb5_DES3_random_to_key(context, key->key, k, nblocks * et->blocksize);
-    else
-	memcpy(key->key->keyvalue.data, k, key->key->keyvalue.length);
+    memcpy(key->key->keyvalue.data, k, key->key->keyvalue.length);
 
  out:
     if (k) {
@@ -2642,7 +2684,7 @@ krb5_crypto_destroy(krb5_context context,
 	EVP_MD_CTX_destroy(crypto->mdctx);
 
     if (crypto->hmacctx)
-	HMAC_CTX_free(crypto->hmacctx);
+	EVP_MAC_CTX_free(crypto->hmacctx);
 
     free (crypto);
     return 0;

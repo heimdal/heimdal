@@ -46,13 +46,6 @@ stat="--statistic-file=${objdir}/statfile"
 
 hxtool="${TESTS_ENVIRONMENT} ./hxtool ${stat}"
 
-if ${hxtool} info | grep 'rsa: hcrypto null RSA' > /dev/null ; then
-    exit 77
-fi
-if ${hxtool} info | grep 'rand: not available' > /dev/null ; then
-    exit 77
-fi
-
 if [ ! -d "$nistdir" ] ; then
     ( mkdir "$nistdir" &&  cd "$nistdir" && unzip "$nistzip" ) >/dev/null || \
 	{ rm -rf "$nistdir" ; exit 1; }

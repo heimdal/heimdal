@@ -42,8 +42,7 @@ SBINPROGRAMS=$(SBINDIR)\kstash.exe
 LIBEXECPROGRAMS= \
 	$(LIBEXECDIR)\hprop.exe \
 	$(LIBEXECDIR)\hpropd.exe \
-	$(LIBEXECDIR)\kdc.exe \
-#	$(LIBEXECDIR)\digest-service.exe
+	$(LIBEXECDIR)\kdc.exe
 
 NOINST_PROGRAMS=$(OBJ)\kdc-replay.exe
 
@@ -83,10 +82,6 @@ $(BINDIR)\string2key.exe: $(OBJ)\string2key.obj $(BIN_LIBS) $(OBJ)\string2key-ve
 	$(EXECONLINK)
 	$(EXEPREP)
 
-$(BINDIR)\digest-service.exe: $(OBJ)\digest-service.obj $(BIN_LIBS)
-	$(EXECONLINK)
-	$(EXEPREP)
-
 $(LIBEXECDIR)\kdc.exe: \
 		$(OBJ)\connect.obj $(OBJ)\config.obj $(OBJ)\announce.obj \
 		$(OBJ)\main.obj $(OBJ)\kdc-version.res \
@@ -99,17 +94,16 @@ LIBKDC_OBJS=\
 	$(OBJ)\ca.obj			\
 	$(OBJ)\kx509.obj		\
 	$(OBJ)\set_dbinfo.obj		\
-	$(OBJ)\digest.obj		\
 	$(OBJ)\fast.obj			\
 	$(OBJ)\kerberos5.obj		\
 	$(OBJ)\krb5tgs.obj		\
 	$(OBJ)\pkinit.obj		\
-	$(OBJ)\pkinit-ec.obj		\
-	$(OBJ)\mssfu.obj			\
+	$(OBJ)\mssfu.obj		\
 	$(OBJ)\log.obj			\
 	$(OBJ)\misc.obj			\
 	$(OBJ)\kx509.obj		\
 	$(OBJ)\token_validator.obj	\
+	$(OBJ)\jwt_validator.obj	\
 	$(OBJ)\csr_authorizer.obj	\
 	$(OBJ)\process.obj		\
 	$(OBJ)\kdc-plugin.obj		\
@@ -121,7 +115,6 @@ LIBKDC_LIBS=\
 	$(LIBGSSAPI)		\
 	$(LIBHEIMBASE)		\
 	$(LIBHEIMDAL)		\
-	$(LIBHEIMNTLM)		\
 	$(LIB_openssl_crypto)	\
 	$(LIBROKEN)
 
@@ -140,18 +133,17 @@ libkdc_la_SOURCES = 		\
 	default_config.c 	\
 	ca.c			\
 	set_dbinfo.c	 	\
-	digest.c		\
 	fast.c			\
 	kdc_locl.h		\
 	kerberos5.c		\
 	krb5tgs.c		\
 	pkinit.c		\
-	pkinit-ec.c		\
 	mssfu.c			\
 	log.c			\
 	misc.c			\
 	kx509.c			\
 	token_validator.c	\
+	jwt_validator.c		\
 	csr_authorizer.c	\
 	process.c		\
 	kdc-plugin.c		\

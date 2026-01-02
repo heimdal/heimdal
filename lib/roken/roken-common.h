@@ -94,26 +94,6 @@
 #define FALSE 0
 #endif
 
-#ifndef LOG_DAEMON
-#define openlog(id,option,facility) openlog((id),(option))
-#define	LOG_DAEMON	0
-#endif
-#ifndef LOG_ODELAY
-#define LOG_ODELAY 0
-#endif
-#ifndef LOG_NDELAY
-#define LOG_NDELAY 0x08
-#endif
-#ifndef LOG_CONS
-#define LOG_CONS 0
-#endif
-#ifndef LOG_AUTH
-#define LOG_AUTH 0
-#endif
-#ifndef LOG_AUTHPRIV
-#define LOG_AUTHPRIV LOG_AUTH
-#endif
-
 #ifndef F_OK
 #define F_OK 0
 #endif
@@ -226,6 +206,11 @@
 
 #endif /* EAI_NONAME */
 
+/* EAI_SYSTEM may not be defined even when EAI_NONAME is (e.g., Windows) */
+#ifndef EAI_SYSTEM
+#define EAI_SYSTEM     11	/* system error returned in errno */
+#endif
+
 /* flags for getaddrinfo() */
 
 #ifndef AI_PASSIVE
@@ -300,8 +285,9 @@
 #define __attribute__(x)
 #endif
 
+#ifndef WIN32
 /*
- * for dlopen(3)
+ * For dlopen(3).  For WIN32 builds we get these from our dlfcn.h.
  */
 #ifndef RTLD_LAZY
 #define RTLD_LAZY 0
@@ -325,6 +311,7 @@
 
 #ifndef RTLD_NODELETE
 #define RTLD_NODELETE 0
+#endif
 #endif
 
 ROKEN_CPP_START

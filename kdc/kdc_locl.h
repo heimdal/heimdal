@@ -120,6 +120,7 @@ struct krb5_kdc_configuration {
     unsigned int pkinit_max_life_from_cert_extension : 1;
     krb5_timestamp pkinit_max_life_from_cert;
     krb5_timestamp pkinit_max_life_bound;
+    char **pkinit_kdc_key_algorithms;   /* preferred certificate key algorithms */
     krb5_timestamp synthetic_clients_max_life;
     krb5_timestamp synthetic_clients_max_renew;
 
@@ -230,8 +231,6 @@ extern int daemon_child;
 extern int do_bonjour;
 
 extern int testing_flag;
-
-extern const struct units _kdc_digestunits[];
 
 #define KDC_LOG_FILE		"kdc.log"
 

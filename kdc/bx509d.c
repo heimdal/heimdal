@@ -128,7 +128,6 @@
 
 #include <microhttpd.h>
 #include "kdc_locl.h"
-#include "token_validator_plugin.h"
 #include <getarg.h>
 #include <roken.h>
 #include <krb5.h>
@@ -293,8 +292,12 @@ static const char *priv_key_file;
 static const char *cache_dir;
 static const char *csrf_key_file;
 static char *impersonation_key_fn;
+static const char *impersonation_key_type;
+static int impersonation_key_bits;
+static const char *ossl_cnf;
+static const char *ossl_propq;
 
-static char csrf_key[16];
+static unsigned char csrf_key[16];
 
 static krb5_error_code resp(struct bx509_request_desc *, int,
                             enum MHD_ResponseMemoryMode, const char *,
@@ -382,20 +385,37 @@ generate_key(hx509_context context,
     hx509_private_key key = NULL;
     hx509_certs certs = NULL;
     hx509_cert cert = NULL;
+    const heim_oid *key_oid;
     int ret;
 
-    if (strcmp(gen_type, "rsa") != 0)
-        errx(1, "Only RSA keys are supported at this time");
+    /* Map key type string to OID */
+    if (gen_type == NULL || strcasecmp(gen_type, "rsa") == 0) {
+        key_oid = ASN1_OID_ID_PKCS1_RSAENCRYPTION;
+        if (gen_bits == 0)
+            gen_bits = 2048;
+    } else if (strcasecmp(gen_type, "ec") == 0 ||
+               strcasecmp(gen_type, "ecdsa") == 0) {
+        key_oid = ASN1_OID_ID_ECPUBLICKEY;
+        if (gen_bits == 0)
+            gen_bits = 256;  /* P-256 by default */
+    } else if (strcasecmp(gen_type, "ed25519") == 0) {
+        key_oid = ASN1_OID_ID_ED25519;
+        gen_bits = 0;  /* Ed25519 has fixed size */
+    } else if (strcasecmp(gen_type, "ed448") == 0) {
+        key_oid = ASN1_OID_ID_ED448;
+        gen_bits = 0;  /* Ed448 has fixed size */
+    } else {
+        errx(1, "Unsupported key type: %s (supported: rsa, ec, ed25519, ed448)",
+             gen_type);
+    }
 
     if (asprintf(fn, "PEM-FILE:%s/.%s_priv_key.pem",
                  cache_dir, key_name) == -1 ||
         *fn == NULL)
         err(1, "Could not set up private key for %s", key_name);
 
-    ret = _hx509_generate_private_key_init(context,
-                                           ASN1_OID_ID_PKCS1_RSAENCRYPTION,
-                                           &key_gen_ctx);
-    if (ret == 0)
+    ret = _hx509_generate_private_key_init(context, key_oid, &key_gen_ctx);
+    if (ret == 0 && gen_bits > 0)
         ret = _hx509_generate_private_key_bits(context, key_gen_ctx, gen_bits);
     if (ret == 0)
         ret = _hx509_generate_private_key(context, key_gen_ctx, &key);
@@ -2333,35 +2353,31 @@ mac_csrf_token(struct bx509_request_desc *r, krb5_storage *sp)
 {
     krb5_error_code ret;
     krb5_data data;
-    char mac[EVP_MAX_MD_SIZE];
-    unsigned int maclen = sizeof(mac);
-    HMAC_CTX *ctx = NULL;
+    unsigned char mac[EVP_MAX_MD_SIZE];
+    size_t maclen = sizeof(mac);
+    EVP_MAC_CTX *ctx = NULL;
 
     ret = krb5_storage_to_data(sp, &data);
-    if (ret == 0 && (ctx = HMAC_CTX_new()) == NULL)
-            ret = krb5_enomem(r->context);
+    if (ret == 0)
+        ret = _krb5_hmac_start_ossl(csrf_key, sizeof(csrf_key),
+                                    EVP_sha256(), &ctx);
+    if (ret == ENOMEM)
+        ret = krb5_enomem(r->context);
     /* HMAC the token body and the client principal name */
-    if (ret == 0) {
-        if (HMAC_Init_ex(ctx, csrf_key, sizeof(csrf_key),
-                         EVP_sha256(),
-                         NULL) == 0) {
-            HMAC_CTX_cleanup(ctx);
-            ret = krb5_enomem(r->context);
-        } else {
-            HMAC_Update(ctx, data.data, data.length);
-            if (r->cname)
-                HMAC_Update(ctx, r->cname, strlen(r->cname));
-            HMAC_Final(ctx, mac, &maclen);
-            HMAC_CTX_cleanup(ctx);
-            krb5_data_free(&data);
-            data.length = maclen;
-            data.data = mac;
-            if (krb5_storage_write(sp, mac, maclen) != maclen)
-                ret = krb5_enomem(r->context);
-        }
-    }
-    if (ctx)
-        HMAC_CTX_free(ctx);
+    if (ret == 0)
+        ret = (EVP_MAC_update(ctx, data.data, data.length) == 1) ? 0 : EINVAL;
+    if (ret == 0 && r->cname)
+        ret = (EVP_MAC_update(ctx,
+                              (unsigned char *)r->cname,
+                              strlen(r->cname)) == 1) ? 0 : EINVAL;
+    if (ret == 0)
+        ret = (EVP_MAC_final(ctx, mac, &maclen, maclen) == 1) ? 0 : EINVAL;
+    EVP_MAC_CTX_free(ctx);
+    krb5_data_free(&data);
+    data.length = maclen;
+    data.data = mac;
+    if (krb5_storage_write(sp, mac, maclen) != maclen)
+        ret = krb5_enomem(r->context);
     return ret;
 }
 
@@ -2742,6 +2758,14 @@ static struct getargs args[] = {
         "private key file path (PEM)", "HX509-STORE" },
     { "thread-per-client", 't', arg_flag, &thread_per_client_flag,
         "thread per-client", "use thread per-client" },
+    { "impersonation-key-type", 0, arg_string, &impersonation_key_type,
+        "impersonation key type (rsa, ec, ed25519, ed448)", "TYPE" },
+    { "impersonation-key-bits", 0, arg_integer, &impersonation_key_bits,
+        "impersonation key size/curve (default: 2048 for RSA, 256 for EC)", "BITS" },
+    { "ossl-cnf", 0, arg_string, &ossl_cnf,
+        "OpenSSL configuration file", "FILE" },
+    { "ossl-propq", 0, arg_string, &ossl_propq,
+        "OpenSSL property query string (e.g., provider=pkcs11)", "PROPQ" },
     { "verbose", 'v', arg_counter, &verbose_counter, "verbose", "run verbosely" }
 };
 
@@ -2921,6 +2945,12 @@ main(int argc, char **argv)
     if ((errno = get_krb5_context(&context)))
         err(1, "Could not init krb5 context");
 
+    if (ossl_cnf || ossl_propq) {
+        ret = krb5_set_ossl_cnf_propq(context, ossl_cnf, ossl_propq);
+        if (ret)
+            krb5_err(context, 1, ret, "krb5_set_ossl_cnf_propq");
+    }
+
     bx509_openlog(context, "bx509d", &logfac);
     krb5_set_log_dest(context, logfac);
     load_plugins(context);
@@ -2986,7 +3016,27 @@ main(int argc, char **argv)
         setenv("TMPDIR", cache_dir, 1);
     }
 
-    generate_key(context->hx509ctx, "impersonation", "rsa", 2048, &impersonation_key_fn);
+    /*
+     * Get impersonation key configuration from command line or krb5.conf.
+     * Supported key types: rsa, ec (ecdsa), ed25519, ed448
+     * For RSA: bits is key size (default 2048)
+     * For EC: bits is curve size (256=P-256, 384=P-384, 521=P-521, default 256)
+     * For EdDSA: bits is ignored
+     */
+    if (impersonation_key_type == NULL)
+        impersonation_key_type = krb5_config_get_string(context, NULL, "bx509d",
+                                                        "impersonation_key_type",
+                                                        NULL);
+    if (impersonation_key_bits == 0)
+        impersonation_key_bits = krb5_config_get_int_default(context, NULL, 0,
+                                                             "bx509d",
+                                                             "impersonation_key_bits",
+                                                             NULL);
+
+    generate_key(context->hx509ctx, "impersonation",
+                 impersonation_key_type,
+                 (unsigned long)impersonation_key_bits,
+                 &impersonation_key_fn);
 
 again:
     if (cert_file && !priv_key_file)

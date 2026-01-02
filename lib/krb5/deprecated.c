@@ -199,7 +199,7 @@ krb5_password_key_proc (krb5_context context,
     if (*key == NULL)
 	return krb5_enomem(context);
     if (password == NULL) {
-	if(UI_UTIL_read_pw_string (buf, sizeof(buf), "Password: ", 0)) {
+	if (_krb5_UI_UTIL_read_pw_string(buf, sizeof(buf), "Password: ", 0)) {
 	    free (*key);
 	    krb5_clear_error_message(context);
 	    return KRB5_LIBOS_PWDINTR;

@@ -1,21 +1,4 @@
 EXPORTS
-	_asn1_decode_top
-	_asn1_encode
-	_asn1_length
-	_asn1_free_top
-	_asn1_copy_top
-	_asn1_bmember_isset_bit
-	_asn1_bmember_put_bit
-	_asn1_copy
-	_asn1_copy_top
-	_asn1_decode
-	_asn1_decode_top
-	_asn1_encode
-	_asn1_free
-	_asn1_free_top
-	_asn1_length
-	_asn1_print_top
-	_asn1_sizeofType
 	add_AttributeValues
 	add_AuthorizationData
 	add_CertificatePolicies
@@ -31,14 +14,680 @@ EXPORTS
 	add_PolicyQualifierInfos
 	add_Principals
 	add_RDNSequence
+	add_SupportedKDFs
+	add_TD_DH_PARAMETERS
 	APOptions2int
+	asn1_AccessDescription	DATA
+	asn1_AccessDescription_seofTstruct_18	DATA
+	asn1_AccessDescription_tag__181	DATA
+	asn1_AD_AND_OR	DATA
+	asn1_AD_AND_OR_tag__293	DATA
+	asn1_AD_IF_RELEVANT	DATA
+	asn1_AD_INITIAL_VERIFIED_CAS	DATA
+	asn1_AD_KDCIssued	DATA
+	asn1_AD_KDCIssued_tag__288	DATA
+	asn1_AD_LoginAlias	DATA
+	asn1_AD_LoginAlias_tag__346	DATA
+	asn1_AD_MANDATORY_FOR_KDC	DATA
+	asn1_AlgorithmIdentifier	DATA
+	asn1_AlgorithmIdentifier_tag__21	DATA
+	asn1_AliasIA5String	DATA
+	asn1_AliasPrintableString	DATA
+	asn1_AliasUTF8String	DATA
+	asn1_APOptions	DATA
+	asn1_APOptions_tag__26	DATA
 	asn1_APOptions_units
+	asn1_AP_REP	DATA
+	asn1_AP_REP_tag__198	DATA
+	asn1_AP_REP_tag__199	DATA
+	asn1_AP_REQ	DATA
+	asn1_AP_REQ_tag__191	DATA
+	asn1_AP_REQ_tag__192	DATA
+	asn1_AP_REQ_tag_ap_options_195	DATA
+	asn1_AS_REP	DATA
+	asn1_AS_REP_tag__187	DATA
+	asn1_AS_REQ	DATA
+	asn1_AS_REQ_tag__160	DATA
+	asn1_Attribute	DATA
+	asn1_Attribute_seofTstruct_0	DATA
+	asn1_Attribute_seofTstruct_3	DATA
+	asn1_AttributeSet	DATA
+	asn1_AttributeSet_seofTstruct_21	DATA
+	asn1_AttributeSet_tag__232	DATA
+	asn1_AttributeSet_tag_values_234	DATA
+	asn1_Attribute_tag__30	DATA
+	asn1_AttributeTypeAndValue	DATA
+	asn1_AttributeTypeAndValue_seofTstruct_1	DATA
+	asn1_AttributeTypeAndValue_tag__31	DATA
+	asn1_AttributeType	DATA
+	asn1_AttributeValue	DATA
+	asn1_AttributeValues	DATA
+	asn1_AttributeValue_seofTstruct_0	DATA
+	asn1_AttributeValues_tag__29	DATA
+	asn1_AUTHDATA_TYPE	DATA
+	asn1_AUTHDATA_TYPE_enum_names	DATA
+	asn1_AUTHDATA_TYPE_tag__3	DATA
+	asn1_Authenticator	DATA
+	asn1_Authenticator_tag__107	DATA
+	asn1_Authenticator_tag__108	DATA
+	asn1_Authenticator_tag_cksum_112	DATA
+	asn1_Authenticator_tag_seq_number_116	DATA
+	asn1_AuthorityInfoAccessSyntax	DATA
+	asn1_AuthorityInfoAccessSyntax_tag__183	DATA
+	asn1_AuthorityKeyIdentifier	DATA
+	asn1_AuthorityKeyIdentifier_tag__98	DATA
+	asn1_AuthorityKeyIdentifier_tag_authorityCertIssuer_101	DATA
+	asn1_AuthorityKeyIdentifier_tag_authorityCertIssuer_102	DATA
+	asn1_AuthorizationData	DATA
+	asn1_AuthorizationDataElement	DATA
+	asn1_AuthorizationDataElement_seofTstruct_2	DATA
+	asn1_AuthorizationDataElement_tag__21	DATA
+	asn1_AuthorizationData_tag__25	DATA
+	asn1_AuthPack	DATA
+	asn1_AuthPack_supportedCMSTypes_2	DATA
+	asn1_AuthPack_tag__35	DATA
+	asn1_AuthPack_tag_clientDHNonce_40	DATA
+	asn1_AuthPack_tag_clientPublicValue_37	DATA
+	asn1_AuthPack_tag_pkAuthenticator_36	DATA
+	asn1_AuthPack_tag_supportedCMSTypes_38	DATA
+	asn1_AuthPack_tag_supportedCMSTypes_39	DATA
+	asn1_AuthPack_tag_supportedKDFs_41	DATA
+	asn1_AuthPack_Win2k	DATA
+	asn1_AuthPack_Win2k_tag__69	DATA
+	asn1_AuthPack_Win2k_tag_pkAuthenticator_70	DATA
+	asn1_BaseDistance	DATA
+	asn1_BasicConstraints	DATA
+	asn1_BasicConstraints_tag__105	DATA
+	_asn1_bmember_isset_bit
+	_asn1_bmember_put_bit
+	asn1_CertExtensions	DATA
+	asn1_CertificateChoices_choice_any	DATA
+	asn1_CertificateChoices_choice_certificate	DATA
+	asn1_CertificateChoices	DATA
+	asn1_CertificateChoices_seofTstruct_1	DATA
+	asn1_Certificate	DATA
+	asn1_CertificateList	DATA
+	asn1_CertificateList_seofTstruct_2	DATA
+	asn1_CertificatePolicies	DATA
+	asn1_CertificatePolicies_tag__85	DATA
+	asn1_CertificateRevocationLists	DATA
+	asn1_CertificateRevocationLists_tag__8	DATA
+	asn1_Certificates	DATA
+	asn1_Certificate_seofTstruct_4	DATA
+	asn1_CertificateSerialNumber	DATA
+	asn1_CertificateSet	DATA
+	asn1_CertificateSet_tag__7	DATA
+	asn1_Certificates_tag__55	DATA
+	asn1_Certificate_tag__53	DATA
+	asn1_CertificationRequest	DATA
+	asn1_CertificationRequestInfo_attributes_0	DATA
+	asn1_CertificationRequestInfo	DATA
+	asn1_CertificationRequestInfo_tag__1	DATA
+	asn1_CertificationRequestInfo_tag_attributes_2	DATA
+	asn1_CertificationRequestInfo_tag_attributes_3	DATA
+	asn1_CertificationRequest_tag__4	DATA
+	asn1_CertPolicyId	DATA
+	asn1_ChangePasswdDataMS	DATA
+	asn1_ChangePasswdDataMS_tag__282	DATA
+	asn1_Checksum	DATA
+	asn1_Checksum_tag__66	DATA
+	asn1_Checksum_tag_cksumtype_67	DATA
+	asn1_CKSUMTYPE	DATA
+	asn1_CKSUMTYPE_enum_names	DATA
+	asn1_CKSUMTYPE_tag__4	DATA
+	asn1_CMSAttributes	DATA
+	asn1_CMSAttributes_tag__11	DATA
+	asn1_CMSCBCParameter	DATA
+	asn1_CMSEncryptedData	DATA
+	asn1_CMSEncryptedData_tag__31	DATA
+	asn1_CMSEncryptedData_tag_unprotectedAttrs_32	DATA
+	asn1_CMSIdentifier_choice_issuerAndSerialNumber	DATA
+	asn1_CMSIdentifier_choice_subjectKeyIdentifier	DATA
+	asn1_CMSIdentifier	DATA
+	asn1_CMSRC2CBCParameter	DATA
+	asn1_CMSRC2CBCParameter_tag__36	DATA
+	asn1_CMSVersion	DATA
+	asn1_CMSVersion_enum_names	DATA
+	asn1_CMSVersion_tag__0	DATA
+	asn1_CommonCriteriaMeasures	DATA
+	asn1_CommonCriteriaMeasures_tag__214	DATA
+	asn1_CommonCriteriaMeasures_tag_profileUri_220	DATA
+	asn1_CommonCriteriaMeasures_tag_strengthOfFunction_217	DATA
+	asn1_CommunityIdentifier_choice_hwModuleList	DATA
+	asn1_CommunityIdentifier	DATA
+	asn1_CommunityIdentifiers	DATA
+	asn1_CommunityIdentifier_seofTstruct_4	DATA
+	asn1_CommunityIdentifiers_tag__24	DATA
+	asn1_CompositePrincipal	DATA
+	asn1_CompositePrincipal_tag__98	DATA
+	asn1_CompositePrincipal_tag__99	DATA
+	asn1_CompositePrincipal_tag_nameattrs_102	DATA
+	asn1_ContentEncryptionAlgorithmIdentifier	DATA
+	asn1_ContentInfo	DATA
+	asn1_ContentInfo_seofTstruct_0	DATA
+	asn1_ContentInfo_tag__41	DATA
+	asn1_ContentSet	DATA
+	asn1_ContentType	DATA
+	_asn1_copy
+	_asn1_copy_top
+	asn1_CPSuri	DATA
+	asn1_CRIAttributes	DATA
+	asn1_CRIAttributeSet	DATA
+	asn1_CRIAttributeSet_tag__6	DATA
+	asn1_CRIAttributeSet_tag_values_8	DATA
+	asn1_CRIAttributeSet_values_1	DATA
+	asn1_CRIExtensions	DATA
+	asn1_CRLCertificateList	DATA
+	asn1_CRLCertificateList_tag__167	DATA
+	asn1_CRLDistributionPoints	DATA
+	asn1_CRLDistributionPoints_tag__128	DATA
+	asn1_CRLReason	DATA
+	asn1_CRLReason_enum_names	DATA
+	asn1_CRLReason_tag__169	DATA
+	asn1_CurrentFWConfig	DATA
+	asn1_CurrentFWConfig_tag__37	DATA
+	_asn1_decode
+	_asn1_decode_top
+	asn1_DecryptKeyIdentifier	DATA
+	asn1_DHNonce	DATA
+	asn1_DHParameter	DATA
+	asn1_DHParameter_tag__15	DATA
+	asn1_DHPublicKey	DATA
+	asn1_DHRepInfo	DATA
+	asn1_DHRepInfo_tag__43	DATA
+	asn1_DHRepInfo_tag__48	DATA
+	asn1_DigestAlgorithmIdentifier	DATA
+	asn1_DigestAlgorithmIdentifiers	DATA
+	asn1_DigestAlgorithmIdentifier_seofTstruct_0	DATA
+	asn1_DigestAlgorithmIdentifiers_tag__1	DATA
+	asn1_DigestError	DATA
+	asn1_DigestError_tag__132	DATA
+	asn1_DigestError_tag__40	DATA
+	asn1_DigestInfo	DATA
+	asn1_DigestInfo_tag__161	DATA
+	asn1_DigestInit	DATA
+	asn1_DigestInitReply	DATA
+	asn1_DigestInitReply_tag__133	DATA
+	asn1_DigestInitReply_tag__9	DATA
+	asn1_DigestInit_tag__121	DATA
+	asn1_DigestInit_tag__1	DATA
+	asn1_DigestInit_tag_channel_3	DATA
+	asn1_DigestInit_tag_channel_4	DATA
+	asn1_DigestInit_tag_hostname_7	DATA
+	asn1_DigestREP	DATA
+	asn1_DigestRepInner_choice_error	DATA
+	asn1_DigestRepInner_choice_initReply	DATA
+	asn1_DigestRepInner_choice_ntlmInitReply	DATA
+	asn1_DigestRepInner_choice_ntlmResponse	DATA
+	asn1_DigestRepInner_choice_response	DATA
+	asn1_DigestRepInner_choice_supportedMechs	DATA
+	asn1_DigestRepInner	DATA
+	asn1_DigestREP_tag__138	DATA
+	asn1_DigestREP_tag__139	DATA
+	asn1_DigestREQ	DATA
+	asn1_DigestReqInner_choice_digestRequest	DATA
+	asn1_DigestReqInner_choice_init	DATA
+	asn1_DigestReqInner_choice_ntlmInit	DATA
+	asn1_DigestReqInner_choice_ntlmRequest	DATA
+	asn1_DigestReqInner_choice_supportedMechs	DATA
+	asn1_DigestReqInner	DATA
+	asn1_DigestREQ_tag__127	DATA
+	asn1_DigestREQ_tag__128	DATA
+	asn1_DigestREQ_tag_innerReq_131	DATA
+	asn1_DigestRequest	DATA
+	asn1_DigestRequest_tag__122	DATA
+	asn1_DigestRequest_tag__14	DATA
+	asn1_DigestRequest_tag_authentication_user_21	DATA
+	asn1_DigestResponse	DATA
+	asn1_DigestResponse_tag__134	DATA
+	asn1_DigestResponse_tag__43	DATA
+	asn1_DigestResponse_tag_channel_50	DATA
+	asn1_DigestResponse_tag_channel_51	DATA
+	asn1_DigestResponse_tag_tickets_47	DATA
+	asn1_DigestResponse_tag_tickets_48	DATA
+	asn1_DigestResponse_tickets_0	DATA
+	asn1_DigestTypes	DATA
+	asn1_DigestTypes_tag__0	DATA
+	asn1_DigestTypes_tag__137	DATA
 	asn1_DigestTypes_units
+	asn1_DirectoryString_choice_bmpString	DATA
+	asn1_DirectoryString_choice_ia5String	DATA
+	asn1_DirectoryString_choice_printableString	DATA
+	asn1_DirectoryString_choice_teletexString	DATA
+	asn1_DirectoryString_choice_universalString	DATA
+	asn1_DirectoryString_choice_utf8String	DATA
+	asn1_DirectoryString	DATA
+	asn1_DisplayText_choice_visibleString	DATA
+	asn1_DisplayText	DATA
+	asn1_DistributionPoint	DATA
+	asn1_DistributionPointName_choice_fullName	DATA
+	asn1_DistributionPointName_choice_nameRelativeToCRLIssuer	DATA
+	asn1_DistributionPointName	DATA
+	asn1_DistributionPointReasonFlags	DATA
+	asn1_DistributionPointReasonFlags_tag__120	DATA
 	asn1_DistributionPointReasonFlags_units
+	asn1_DistributionPoint_seofTstruct_16	DATA
+	asn1_DistributionPoint_tag__124	DATA
+	asn1_DistributionPoint_tag_cRLIssuer_127	DATA
+	asn1_DistributionPoint_tag_distributionPoint_125	DATA
+	asn1_DistributionPoint_tag_reasons_126	DATA
+	asn1_DomainParameters	DATA
+	asn1_DomainParameters_tag__10	DATA
+	asn1_DSAParams	DATA
+	asn1_DSAParams_tag__3	DATA
+	asn1_DSAPublicKey	DATA
+	asn1_DSASigValue	DATA
+	asn1_DSASigValue_tag__129	DATA
+	asn1_ECDSA_Sig_Value	DATA
+	asn1_ECDSA_Sig_Value_tag__145	DATA
+	asn1_ECParameters_choice_namedCurve	DATA
+	asn1_ECParameters	DATA
+	asn1_ECPoint	DATA
+	asn1_EKCertificateGenerationLocation	DATA
+	asn1_EKGenerationLocation	DATA
+	asn1_EKGenerationLocation_enum_names	DATA
+	asn1_EKGenerationLocation_tag__206	DATA
+	asn1_EKGenerationType	DATA
+	asn1_EKGenerationType_enum_names	DATA
+	asn1_EKGenerationType_tag__205	DATA
+	asn1_EncAPRepPart	DATA
+	asn1_EncAPRepPart_tag__203	DATA
+	asn1_EncAPRepPart_tag__204	DATA
+	asn1_EncapsulatedContentInfo	DATA
+	asn1_EncapsulatedContentInfo_tag__4	DATA
+	asn1_EncapsulatedContentInfo_tag_eContent_5	DATA
+	asn1_EncASRepPart	DATA
+	asn1_EncKDCRepPart	DATA
+	asn1_EncKDCRepPart_tag__70	DATA
+	asn1_EncKDCRepPart_tag__84	DATA
+	asn1_EncKDCRepPart_tag_encrypted_pa_data_83	DATA
+	asn1_EncKDCRepPart_tag_last_req_72	DATA
+	asn1_EncKrbCredPart	DATA
+	asn1_EncKrbCredPart_tag__256	DATA
+	asn1_EncKrbCredPart_tag__257	DATA
+	asn1_EncKrbCredPart_tag_ticket_info_258	DATA
+	asn1_EncKrbCredPart_tag_ticket_info_259	DATA
+	asn1_EncKrbCredPart_ticket_info_14	DATA
+	asn1_EncKrbPrivPart	DATA
+	asn1_EncKrbPrivPart_tag__228	DATA
+	asn1_EncKrbPrivPart_tag__229	DATA
+	_asn1_encode
+	asn1_EncryptedContent	DATA
+	asn1_EncryptedContentInfo	DATA
+	asn1_EncryptedContentInfo_tag__27	DATA
+	asn1_EncryptedData	DATA
+	asn1_EncryptedData_tag__34	DATA
+	asn1_EncryptedData_tag_etype_35	DATA
+	asn1_EncryptedKey	DATA
+	asn1_EncryptionKey	DATA
+	asn1_EncryptionKey_tag__39	DATA
+	asn1_EncTGSRepPart	DATA
+	asn1_EncTicketPart	DATA
+	asn1_EncTicketPart_tag__53	DATA
+	asn1_EncTicketPart_tag__54	DATA
+	asn1_EncTicketPart_tag__85	DATA
+	asn1_EncTicketPart_tag_authorization_data_65	DATA
+	asn1_EncTicketPart_tag_caddr_64	DATA
+	asn1_EncTicketPart_tag_flags_55	DATA
+	asn1_EncTicketPart_tag_key_56	DATA
+	asn1_EncTicketPart_tag_transited_59	DATA
+	asn1_ENCTYPE	DATA
+	asn1_ENCTYPE_enum_names	DATA
+	asn1_ENCTYPE_tag__5	DATA
+	asn1_EnvelopedData	DATA
+	asn1_EnvelopedData_tag__33	DATA
+	asn1_EnvelopedData_tag_originatorInfo_34	DATA
+	asn1_ETYPE_INFO2	DATA
+	asn1_ETYPE_INFO2_ENTRY	DATA
+	asn1_ETYPE_INFO2_ENTRY_seofTstruct_6	DATA
+	asn1_ETYPE_INFO2_ENTRY_tag__128	DATA
+	asn1_ETYPE_INFO2_ENTRY_tag_salt_130	DATA
+	asn1_ETYPE_INFO2_tag__133	DATA
+	asn1_ETYPE_INFO	DATA
+	asn1_ETYPE_INFO_ENTRY	DATA
+	asn1_ETYPE_INFO_ENTRY_seofTstruct_5	DATA
+	asn1_ETYPE_INFO_ENTRY_tag__122	DATA
+	asn1_ETYPE_INFO_tag__127	DATA
+	asn1_EtypeList	DATA
+	asn1_EvaluationAssuranceLevel	DATA
+	asn1_EvaluationAssuranceLevel_enum_names	DATA
+	asn1_EvaluationAssuranceLevel_tag__207	DATA
+	asn1_EvaluationStatus	DATA
+	asn1_EvaluationStatus_enum_names	DATA
+	asn1_EvaluationStatus_tag__213	DATA
+	asn1_Extension	DATA
+	asn1_Extensions	DATA
+	asn1_Extension_seofTstruct_3	DATA
+	asn1_Extensions_tag__45	DATA
+	asn1_Extension_tag__41	DATA
+	asn1_ExternalPrincipalIdentifier	DATA
+	asn1_ExternalPrincipalIdentifiers	DATA
+	asn1_ExternalPrincipalIdentifier_seofTstruct_0	DATA
+	asn1_ExternalPrincipalIdentifiers_tag__19	DATA
+	asn1_ExternalPrincipalIdentifier_tag__12	DATA
+	asn1_ExtKeyUsage	DATA
+	asn1_ExtKeyUsage_tag__118	DATA
+	asn1_FastOptions	DATA
+	asn1_FastOptions_tag__357	DATA
 	asn1_FastOptions_units
+	asn1_FIPSLevel	DATA
+	asn1_FIPSLevel_tag__224	DATA
+	asn1_FirmwarePackageIdentifier	DATA
+	asn1_FirmwarePackageIdentifier_tag__7	DATA
+	asn1_FirmwarePackageInfo	DATA
+	asn1_FirmwarePackageInfo_dependencies_5	DATA
+	asn1_FirmwarePackageInfo_tag__25	DATA
+	asn1_FirmwarePackageInfo_tag_dependencies_27	DATA
+	asn1_FirmwarePackageLoadErrorCode	DATA
+	asn1_FirmwarePackageLoadErrorCode_enum_names	DATA
+	asn1_FirmwarePackageLoadErrorCode_tag__35	DATA
+	asn1_FirmwarePackageLoadError_config_6	DATA
+	asn1_FirmwarePackageLoadError	DATA
+	asn1_FirmwarePackageLoadError_tag__39	DATA
+	asn1_FirmwarePackageLoadError_tag_config_42	DATA
+	asn1_FirmwarePackageLoadError_tag_config_43	DATA
+	asn1_FirmwarePackageLoadReceipt	DATA
+	asn1_FirmwarePackageLoadReceipt_tag__29	DATA
+	asn1_FirmwarePkgData	DATA
+	_asn1_free
+	_asn1_free_top
+	asn1_FWErrorVersion	DATA
+	asn1_FWReceiptVersion	DATA
+	asn1_FWReceiptVersion_enum_names	DATA
+	asn1_FWReceiptVersion_tag__28	DATA
+	asn1_GeneralName_choice_directoryName	DATA
+	asn1_GeneralName_choice_dNSName	DATA
+	asn1_GeneralName_choice_iPAddress	DATA
+	asn1_GeneralName_choice_otherName	DATA
+	asn1_GeneralName_choice_registeredID	DATA
+	asn1_GeneralName_choice_rfc822Name	DATA
+	asn1_GeneralName_choice_uniformResourceIdentifier	DATA
+	asn1_GeneralName	DATA
+	asn1_GeneralNames	DATA
+	asn1_GeneralName_seofTstruct_5	DATA
+	asn1_GeneralNames_tag__72	DATA
+	asn1_GeneralName_tag__121	DATA
+	asn1_GeneralSubtree	DATA
+	asn1_GeneralSubtrees	DATA
+	asn1_GeneralSubtree_seofTstruct_11	DATA
+	asn1_GeneralSubtrees_tag__112	DATA
+	asn1_GeneralSubtree_tag__109	DATA
+	asn1_GeneralSubtree_tag_minimum_110	DATA
+	asn1_HardwareModuleName	DATA
+	asn1_HardwareModuleName_tag__172	DATA
+	asn1_HardwareModules	DATA
+	asn1_HardwareModules_hwSerialEntries_3	DATA
+	asn1_HardwareModules_tag__20	DATA
+	asn1_HardwareModules_tag_hwSerialEntries_22	DATA
+	asn1_HardwareSerialEntry_block_tag__17	DATA
+	asn1_HardwareSerialEntry_choice_all	DATA
+	asn1_HardwareSerialEntry_choice_block	DATA
+	asn1_HardwareSerialEntry	DATA
+	asn1_HEIM_ANY_tag__72	DATA
+	asn1_heim_integer_tag__125	DATA
+	asn1_heim_integer_tag__1	DATA
+	asn1_heim_octet_string_tag__68	DATA
+	asn1_heim_oid_seofTstruct_0	DATA
+	asn1_HeimPkinitPrincMaxLifeSecs	DATA
+	asn1_HostAddress	DATA
+	asn1_HostAddresses	DATA
+	asn1_HostAddresses_tag__19	DATA
+	asn1_HostAddress_seofTstruct_1	DATA
+	asn1_HostAddress_tag__15	DATA
+	asn1_HostAddress_tag_address_17	DATA
+	asn1_HostAddress_tag_addr_type_16	DATA
+	asn1_ImplementedCompressAlgorithms	DATA
+	asn1_ImplementedCryptoAlgorithms	DATA
+	asn1_IOSCertificationRequest	DATA
+	asn1_IOSCertificationRequestInfo_attributes_2	DATA
+	asn1_IOSCertificationRequestInfo	DATA
+	asn1_IOSCertificationRequestInfo_tag__9	DATA
+	asn1_IOSCertificationRequestInfo_tag_attributes_10	DATA
+	asn1_IOSCertificationRequestInfo_tag_attributes_11	DATA
+	asn1_IOSCertificationRequest_tag__12	DATA
+	asn1_IssuerAndSerialNumber	DATA
+	asn1_IssuerAndSerialNumber_tag__73	DATA
+	asn1_IssuerAndSerialNumber_tag__9	DATA
+	asn1_KDCDHKeyInfo	DATA
+	asn1_KDCDHKeyInfo_tag__51	DATA
+	asn1_KDCDHKeyInfo_tag_subjectPublicKey_52	DATA
+	asn1_KDCDHKeyInfo_Win2k	DATA
+	asn1_KDCDHKeyInfo_Win2k_tag__87	DATA
+	asn1_KDCDHKeyInfo_Win2k_tag_subjectPublicKey_90	DATA
+	asn1_KDCFastCookie	DATA
+	asn1_KDCFastCookie_tag__393	DATA
+	asn1_KDCFastCookie_tag_version_394	DATA
+	asn1_KDCFastFlags	DATA
+	asn1_KDCFastFlags_tag__385	DATA
 	asn1_KDCFastFlags_units
+	asn1_KDCFastState	DATA
+	asn1_KDCFastState_tag__386	DATA
+	asn1_KDCFastState_tag_expected_pa_types_391	DATA
+	asn1_KDCFastState_tag_expected_pa_types_392	DATA
+	asn1_KDCFastState_tag_expiration_388	DATA
+	asn1_KDCFastState_tag_flags_387	DATA
+	asn1_KDCOptions	DATA
+	asn1_KDCOptions_tag__28	DATA
 	asn1_KDCOptions_units
+	asn1_KDC_PROXY_MESSAGE	DATA
+	asn1_KDC_PROXY_MESSAGE_tag__397	DATA
+	asn1_KDC_PROXY_MESSAGE_tag_dclocator_hint_401	DATA
+	asn1_KDC_REP	DATA
+	asn1_KDC_REP_tag__179	DATA
+	asn1_KDC_REQ_BODY_additional_tickets_10	DATA
+	asn1_KDC_REQ_BODY	DATA
+	asn1_KDC_REQ_BODY_tag__140	DATA
+	asn1_KDC_REQ_BODY_tag_additional_tickets_153	DATA
+	asn1_KDC_REQ_BODY_tag_additional_tickets_154	DATA
+	asn1_KDC_REQ_BODY_tag_etype_149	DATA
+	asn1_KDC_REQ_BODY_tag_etype_150	DATA
+	asn1_KDC_REQ_BODY_tag_kdc_options_141	DATA
+	asn1_KDC_REQ	DATA
+	asn1_KDC_REQ_tag__155	DATA
+	asn1_KDC_REQ_tag_msg_type_157	DATA
+	asn1_KDC_REQ_tag_req_body_159	DATA
+	asn1_KDFAlgorithmId	DATA
+	asn1_KDFAlgorithmId_seofTstruct_1	DATA
+	asn1_KDFAlgorithmId_tag__2	DATA
+	asn1_KDFAlgorithmId_tag_kdf_id_3	DATA
+	asn1_KERB_AD_RESTRICTION_ENTRY	DATA
+	asn1_KERB_AD_RESTRICTION_ENTRY_tag__171	DATA
+	asn1_KERB_AD_RESTRICTION_ENTRY_tag__172	DATA
+	asn1_KERB_ARMOR_SERVICE_REPLY	DATA
+	asn1_KERB_ARMOR_SERVICE_REPLY_tag__444	DATA
+	asn1_KERB_CRED	DATA
+	asn1_KERB_CRED_tag__408	DATA
+	asn1_KERB_CRED_tag_times_412	DATA
+	asn1_KerberosString	DATA
+	asn1_KerberosTime	DATA
+	asn1_KERB_TGS_REP_IN	DATA
+	asn1_KERB_TGS_REP_IN_tag__433	DATA
+	asn1_KERB_TGS_REP_IN_tag_t_438	DATA
+	asn1_KERB_TGS_REP_OUT	DATA
+	asn1_KERB_TGS_REP_OUT_tag__439	DATA
+	asn1_KERB_TGS_REQ_IN	DATA
+	asn1_KERB_TGS_REQ_IN_tag__419	DATA
+	asn1_KERB_TGS_REQ_IN_tag_in_cred_427	DATA
+	asn1_KERB_TGS_REQ_OUT	DATA
+	asn1_KERB_TGS_REQ_OUT_tag__430	DATA
+	asn1_KERB_TGS_REQ_OUT_tag_t_432	DATA
+	asn1_KERB_TIMES	DATA
+	asn1_KERB_TIMES_tag__403	DATA
+	asn1_KeyEncryptionAlgorithmIdentifier	DATA
+	asn1_KeyIdentifier	DATA
+	asn1_KeyTransRecipientInfo	DATA
+	asn1_KeyTransRecipientInfo_tag__24	DATA
+	asn1_KeyUsage	DATA
+	asn1_KeyUsage_tag__73	DATA
 	asn1_KeyUsage_units
+	asn1_KnownAlgorithms	DATA
+	asn1_KnownOtherNameTypes	DATA
+	asn1_KnownPolicyQualifiers	DATA
+	asn1_Krb5Int32	DATA
+	asn1_KRB5PrincipalName	DATA
+	asn1_KRB5PrincipalName_tag__175	DATA
+	asn1_KRB5PrincipalName_tag_principalName_177	DATA
+	asn1_KRB5PrincipalName_tag_realm_176	DATA
+	asn1_Krb5UInt32	DATA
+	asn1_KRB_CRED	DATA
+	asn1_KrbCredInfo	DATA
+	asn1_KrbCredInfo_tag__244	DATA
+	asn1_KRB_CRED_tag__237	DATA
+	asn1_KRB_CRED_tag__238	DATA
+	asn1_KRB_CRED_tag_tickets_241	DATA
+	asn1_KRB_CRED_tag_tickets_242	DATA
+	asn1_KRB_ERROR	DATA
+	asn1_KRB_ERROR_tag__265	DATA
+	asn1_KRB_ERROR_tag__266	DATA
+	asn1_KrbFastArmor	DATA
+	asn1_KrbFastArmoredRep	DATA
+	asn1_KrbFastArmoredRep_tag__382	DATA
+	asn1_KrbFastArmoredRep_tag__384	DATA
+	asn1_KrbFastArmoredReq	DATA
+	asn1_KrbFastArmoredReq_tag__366	DATA
+	asn1_KrbFastArmoredReq_tag__370	DATA
+	asn1_KrbFastArmoredReq_tag_armor_367	DATA
+	asn1_KrbFastArmor_tag__362	DATA
+	asn1_KrbFastFinished	DATA
+	asn1_KrbFastFinished_tag__371	DATA
+	asn1_KrbFastReq	DATA
+	asn1_KrbFastReq_tag__358	DATA
+	asn1_KrbFastReq_tag_fast_options_359	DATA
+	asn1_KrbFastResponse	DATA
+	asn1_KrbFastResponse_tag__377	DATA
+	asn1_KrbFastResponse_tag_finished_380	DATA
+	asn1_KRB_PRIV	DATA
+	asn1_KRB_PRIV_tag__223	DATA
+	asn1_KRB_PRIV_tag__224	DATA
+	asn1_KRB_SAFE_BODY	DATA
+	asn1_KRB_SAFE_BODY_tag__209	DATA
+	asn1_KRB_SAFE	DATA
+	asn1_KRB_SAFE_tag__217	DATA
+	asn1_KRB_SAFE_tag__218	DATA
+	asn1_KRB_SAFE_tag_safe_body_221	DATA
+	asn1_Kx509CSRPlus	DATA
+	asn1_Kx509CSRPlus_tag__1	DATA
+	asn1_Kx509CSRPlus_tag__2	DATA
+	asn1_Kx509ErrorCode	DATA
+	asn1_KX509_ERROR_CODE	DATA
+	asn1_KX509_ERROR_CODE_enum_names	DATA
+	asn1_KX509_ERROR_CODE_tag__0	DATA
+	asn1_Kx509Request	DATA
+	asn1_Kx509Request_tag__4	DATA
+	asn1_Kx509Response	DATA
+	asn1_Kx509Response_tag__9	DATA
+	asn1_Kx509Response_tag_error_code_10	DATA
+	asn1_Kx509Response_tag_e_text_15	DATA
+	asn1_Kx509Response_tag_hash_11	DATA
+	asn1_LastReq	DATA
+	asn1_LastReq_seofTstruct_3	DATA
+	asn1_LastReq_tag__30	DATA
+	asn1_LastReq_val_tag__31	DATA
+	asn1_LastReq_val_tag_lr_type_32	DATA
+	asn1_LastReq_val_tag_lr_value_33	DATA
+	_asn1_length
+	asn1_LR_TYPE	DATA
+	asn1_LR_TYPE_enum_names	DATA
+	asn1_LR_TYPE_tag__29	DATA
+	asn1_MessageDigest	DATA
+	asn1_MESSAGE_TYPE	DATA
+	asn1_MESSAGE_TYPE_enum_names	DATA
+	asn1_MESSAGE_TYPE_tag__1	DATA
+	asn1_METHOD_DATA	DATA
+	asn1_METHOD_DATA_tag__134	DATA
+	asn1_MS_UPN_SAN	DATA
+	asn1_Name_choice_rdnSequence	DATA
+	asn1_NameConstraints	DATA
+	asn1_NameConstraints_tag__113	DATA
+	asn1_NameConstraints_tag_excludedSubtrees_116	DATA
+	asn1_NameConstraints_tag_excludedSubtrees_117	DATA
+	asn1_NameConstraints_tag_permittedSubtrees_114	DATA
+	asn1_NameConstraints_tag_permittedSubtrees_115	DATA
+	asn1_Name	DATA
+	asn1_Name_tag__37	DATA
+	asn1_Name_tag__65	DATA
+	asn1_NAME_TYPE	DATA
+	asn1_NAME_TYPE_enum_names	DATA
+	asn1_NAME_TYPE_tag__0	DATA
+	asn1_NoticeReference	DATA
+	asn1_NoticeReference_noticeNumbers_8	DATA
+	asn1_NoticeReference_tag__91	DATA
+	asn1_NoticeReference_tag_noticeNumbers_92	DATA
+	asn1_NTLMInit	DATA
+	asn1_NTLMInitReply	DATA
+	asn1_NTLMInitReply_tag__135	DATA
+	asn1_NTLMInitReply_tag__63	DATA
+	asn1_NTLMInit_tag__123	DATA
+	asn1_NTLMInit_tag__56	DATA
+	asn1_NTLMInit_tag_flags_57	DATA
+	asn1_NTLMReply	DATA
+	asn1_NTLMReply_tag__114	DATA
+	asn1_NTLMRequest2	DATA
+	asn1_NTLMRequest2_tag__101	DATA
+	asn1_NTLMRequest	DATA
+	asn1_NTLMRequest_tag__124	DATA
+	asn1_NTLMRequest_tag__74	DATA
+	asn1_NTLMResponse	DATA
+	asn1_NTLMResponse_tag__136	DATA
+	asn1_NTLMResponse_tag__91	DATA
+	asn1_NTLMResponse_tag_success_92	DATA
+	asn1_NTLMResponse_tag_tickets_98	DATA
+	asn1_NTLMResponse_tag_tickets_99	DATA
+	asn1_NullType	DATA
+	asn1_OCSPBasicOCSPResponse	DATA
+	asn1_OCSPBasicOCSPResponse_tag__44	DATA
+	asn1_OCSPBasicOCSPResponse_tag_certs_46	DATA
+	asn1_OCSPBasicOCSPResponse_tag_certs_47	DATA
+	asn1_OCSPCertID	DATA
+	asn1_OCSPCertID_tag__9	DATA
+	asn1_OCSPCertStatus_choice_good	DATA
+	asn1_OCSPCertStatus_choice_revoked	DATA
+	asn1_OCSPCertStatus_choice_unknown	DATA
+	asn1_OCSPCertStatus	DATA
+	asn1_OCSPCertStatus_revoked_tag__3	DATA
+	asn1_OCSPCertStatus_revoked_tag__4	DATA
+	asn1_OCSPCertStatus_revoked_tag_revocationReason_6	DATA
+	asn1_OCSPInnerRequest	DATA
+	asn1_OCSPInnerRequest_tag__17	DATA
+	asn1_OCSPKeyHash	DATA
+	asn1_OCSPKeyHash_tag__38	DATA
+	asn1_OCSPRequest	DATA
+	asn1_OCSPRequest_tag__28	DATA
+	asn1_OCSPRequest_tag_optionalSignature_29	DATA
+	asn1_OCSPResponderID_choice_byKey	DATA
+	asn1_OCSPResponderID_choice_byName	DATA
+	asn1_OCSPResponderID	DATA
+	asn1_OCSPResponseBytes	DATA
+	asn1_OCSPResponseBytes_tag__30	DATA
+	asn1_OCSPResponse	DATA
+	asn1_OCSPResponseData	DATA
+	asn1_OCSPResponseData_responses_2	DATA
+	asn1_OCSPResponseData_tag__39	DATA
+	asn1_OCSPResponseData_tag_responses_42	DATA
+	asn1_OCSPResponseStatus	DATA
+	asn1_OCSPResponseStatus_enum_names	DATA
+	asn1_OCSPResponseStatus_tag__33	DATA
+	asn1_OCSPResponse_tag__34	DATA
+	asn1_OCSPResponse_tag_responseBytes_35	DATA
+	asn1_OCSPSignature_certs_1	DATA
+	asn1_OCSPSignature	DATA
+	asn1_OCSPSignature_tag__24	DATA
+	asn1_OCSPSignature_tag_certs_26	DATA
+	asn1_OCSPSignature_tag_certs_27	DATA
+	asn1_OCSPSingleResponse	DATA
+	asn1_OCSPSingleResponse_tag__12	DATA
+	asn1_OCSPSingleResponse_tag_nextUpdate_14	DATA
+	asn1_OCSPSingleResponse_tag_singleExtensions_16	DATA
+	asn1_OCSPTBSRequest	DATA
+	asn1_OCSPTBSRequest_requestList_0	DATA
+	asn1_OCSPTBSRequest_tag__19	DATA
+	asn1_OCSPTBSRequest_tag_requestList_22	DATA
+	asn1_OCSPTBSRequest_tag_requestorName_21	DATA
+	asn1_OCSPTBSRequest_tag_version_20	DATA
+	asn1_OCSPVersion	DATA
+	asn1_OCSPVersion_enum_names	DATA
+	asn1_OCSPVersion_tag__0	DATA
+	asn1_OctetString	DATA
 	asn1_oid_id_aa_communityIdentifiers	DATA
 	asn1_oid_id_aa_decryptKeyID	DATA
 	asn1_oid_id_aa_firmwarePackageID	DATA
@@ -48,8 +697,11 @@ EXPORTS
 	asn1_oid_id_aa_targetHardwareIDs	DATA
 	asn1_oid_id_aa_wrappedFirmwareKey	DATA
 	asn1_oid_id_aes_128_cbc	DATA
+	asn1_oid_id_aes128_CBC	DATA
 	asn1_oid_id_aes_192_cbc	DATA
+	asn1_oid_id_aes192_CBC	DATA
 	asn1_oid_id_aes_256_cbc	DATA
+	asn1_oid_id_aes256_CBC	DATA
 	asn1_oid_id_apple_system_id	DATA
 	asn1_oid_id_at_commonName	DATA
 	asn1_oid_id_at_countryName	DATA
@@ -69,10 +721,14 @@ EXPORTS
 	asn1_oid_id_at_streetAddress	DATA
 	asn1_oid_id_at_surname	DATA
 	asn1_oid_id_at_title	DATA
+	asn1_oid_id_ct_authData	DATA
+	asn1_oid_id_ct_contentInfo	DATA
 	asn1_oid_id_ct_firmwareLoadError	DATA
 	asn1_oid_id_ct_firmwareLoadReceipt	DATA
 	asn1_oid_id_ct_firmwarePackage	DATA
+	asn1_oid_id_data	DATA
 	asn1_oid_id_dhpublicnumber	DATA
+	asn1_oid_id_digestedData	DATA
 	asn1_oid_id_domainComponent	DATA
 	asn1_oid_id_dsa	DATA
 	asn1_oid_id_dsa_with_sha1	DATA
@@ -90,7 +746,17 @@ EXPORTS
 	asn1_oid_id_ec_group_secp521r1	DATA
 	asn1_oid_id_ecMQV	DATA
 	asn1_oid_id_ecPublicKey	DATA
+	asn1_oid_id_Ed25519	DATA
+	asn1_oid_id_Ed448	DATA
+	asn1_oid_id_encryptedData	DATA
+	asn1_oid_id_envelopedData	DATA
+	asn1_oid_id_heim_ce_pkinit_princ_max_life	DATA
+	asn1_oid_id_heim_eku_pkinit_certlife_is_max_life	DATA
 	asn1_oid_id_heim_rsa_pkcs1_x509	DATA
+	asn1_oid_id_hmacWithSHA1	DATA
+	asn1_oid_id_hmacWithSHA256	DATA
+	asn1_oid_id_hmacWithSHA384	DATA
+	asn1_oid_id_hmacWithSHA512	DATA
 	asn1_oid_id_ms_cert_enroll_domaincontroller	DATA
 	asn1_oid_id_msft	DATA
 	asn1_oid_id_msft_kp_msCodeCom	DATA
@@ -106,12 +772,14 @@ EXPORTS
 	asn1_oid_id_nistAlgorithm	DATA
 	asn1_oid_id_nist_sha_algs	DATA
 	asn1_oid_id_on_hardwareModuleName	DATA
+	asn1_oid_id_PBES2	DATA
 	asn1_oid_id_pbeWithSHAAnd128BitRC2_CBC	DATA
 	asn1_oid_id_pbeWithSHAAnd128BitRC4	DATA
 	asn1_oid_id_pbeWithSHAAnd2_KeyTripleDES_CBC	DATA
 	asn1_oid_id_pbeWithSHAAnd3_KeyTripleDES_CBC	DATA
 	asn1_oid_id_pbewithSHAAnd40BitRC2_CBC	DATA
 	asn1_oid_id_pbeWithSHAAnd40BitRC4	DATA
+	asn1_oid_id_PBKDF2	DATA
 	asn1_oid_id_pkauthdata	DATA
 	asn1_oid_id_pkcs12_bagtypes	DATA
 	asn1_oid_id_pkcs12_certBag	DATA
@@ -138,6 +806,7 @@ EXPORTS
 	asn1_oid_id_pkcs3_des_ede3_cbc	DATA
 	asn1_oid_id_pkcs3_rc2_cbc	DATA
 	asn1_oid_id_pkcs3_rc4	DATA
+	asn1_oid_id_pkcs_5	DATA
 	asn1_oid_id_pkcs7	DATA
 	asn1_oid_id_pkcs7_data	DATA
 	asn1_oid_id_pkcs7_digestedData	DATA
@@ -153,6 +822,7 @@ EXPORTS
 	asn1_oid_id_pkcs9_countersignature	DATA
 	asn1_oid_id_pkcs_9	DATA
 	asn1_oid_id_pkcs9_emailAddress	DATA
+	asn1_oid_id_pkcs9_extReq_copy	DATA
 	asn1_oid_id_pkcs9_extReq	DATA
 	asn1_oid_id_pkcs9_messageDigest	DATA
 	asn1_oid_id_pkcs9_signingTime	DATA
@@ -161,6 +831,7 @@ EXPORTS
 	asn1_oid_id_pkinit	DATA
 	asn1_oid_id_pkinit_kdf_ah_sha1	DATA
 	asn1_oid_id_pkinit_kdf_ah_sha256	DATA
+	asn1_oid_id_pkinit_kdf_ah_sha384	DATA
 	asn1_oid_id_pkinit_kdf_ah_sha512	DATA
 	asn1_oid_id_pkinit_kdf	DATA
 	asn1_oid_id_pkinit_ms_eku	DATA
@@ -233,9 +904,12 @@ EXPORTS
 	asn1_oid_id_sha256	DATA
 	asn1_oid_id_sha384	DATA
 	asn1_oid_id_sha512	DATA
+	asn1_oid_id_signedData	DATA
 	asn1_oid_id_Userid	DATA
 	asn1_oid_id_uspkicommon_card_id	DATA
 	asn1_oid_id_uspkicommon_piv_interim	DATA
+	asn1_oid_id_X25519	DATA
+	asn1_oid_id_X448	DATA
 	asn1_oid_id_x509_ce_anyExtendedKeyUsage	DATA
 	asn1_oid_id_x509_ce_authorityKeyIdentifier	DATA
 	asn1_oid_id_x509_ce_basicConstraints	DATA
@@ -279,8 +953,336 @@ EXPORTS
 	asn1_oid_tcg_kp_EKCertificate	DATA
 	asn1_oid_tcg_on_ekPermIdSha256	DATA
 	asn1_oid_tcg_tpm20	DATA
+	asn1_OriginatorInfo	DATA
+	asn1_OriginatorInfo_tag__20	DATA
+	asn1_OtherName	DATA
+	asn1_OtherName_tag__57	DATA
+	asn1_OtherName_tag__60	DATA
+	asn1_OtherName_tag_value_59	DATA
+	asn1_PAC_OPTIONS_FLAGS	DATA
+	asn1_PAC_OPTIONS_FLAGS_tag__168	DATA
+	asn1_PAC_OPTIONS_FLAGS_units
+	asn1_PA_DATA	DATA
+	asn1_PA_DATA_seofTstruct_7	DATA
+	asn1_PA_DATA_tag__118	DATA
+	asn1_PA_DATA_tag_padata_type_119	DATA
+	asn1_PADATA_TYPE	DATA
+	asn1_PADATA_TYPE_enum_names	DATA
+	asn1_PADATA_TYPE_tag__2	DATA
+	asn1_PA_ENC_SAM_RESPONSE_ENC	DATA
+	asn1_PA_ENC_SAM_RESPONSE_ENC_tag__325	DATA
+	asn1_PA_ENC_TS_ENC	DATA
+	asn1_PA_ENC_TS_ENC_tag__162	DATA
+	asn1_PA_FX_FAST_REPLY_choice_armored_data	DATA
+	asn1_PA_FX_FAST_REPLY	DATA
+	asn1_PA_FX_FAST_REQUEST_choice_armored_data	DATA
+	asn1_PA_FX_FAST_REQUEST	DATA
+	asn1_PA_KERB_KEY_LIST_REP	DATA
+	asn1_PA_KERB_KEY_LIST_REQ	DATA
+	asn1_PA_KERB_KEY_LIST_REQ_tag__176	DATA
+	asn1_PA_PAC_OPTIONS	DATA
+	asn1_PA_PAC_OPTIONS_tag__169	DATA
+	asn1_PA_PAC_OPTIONS_tag_flags_170	DATA
+	asn1_PA_PAC_REQUEST	DATA
+	asn1_PA_PAC_REQUEST_tag__165	DATA
+	asn1_PA_PK_AS_REP_BTMM	DATA
+	asn1_PA_PK_AS_REP_BTMM_tag__96	DATA
+	asn1_PA_PK_AS_REP_choice_dhInfo	DATA
+	asn1_PA_PK_AS_REP_choice_encKeyPack	DATA
+	asn1_PA_PK_AS_REP	DATA
+	asn1_PA_PK_AS_REP_Win2k_choice_dhSignedData	DATA
+	asn1_PA_PK_AS_REP_Win2k	DATA
+	asn1_PA_PK_AS_REQ	DATA
+	asn1_PA_PK_AS_REQ_tag__20	DATA
+	asn1_PA_PK_AS_REQ_tag_trustedCertifiers_23	DATA
+	asn1_PA_PK_AS_REQ_Win2k	DATA
+	asn1_PA_PK_AS_REQ_Win2k_tag__74	DATA
+	asn1_PA_PK_AS_REQ_Win2k_tag_trusted_certifiers_77	DATA
+	asn1_PA_PK_AS_REQ_Win2k_tag_trusted_certifiers_78	DATA
+	asn1_PA_PK_AS_REQ_Win2k_trusted_certifiers_5	DATA
+	asn1_ParamOptions	DATA
+	asn1_ParamOptions_enum_names	DATA
+	asn1_ParamOptions_tag__19	DATA
+	asn1_PA_S4U2Self	DATA
+	asn1_PA_S4U2Self_tag__329	DATA
+	asn1_PA_S4U_X509_USER	DATA
+	asn1_PA_S4U_X509_USER_tag__343	DATA
+	asn1_PA_S4U_X509_USER_tag_user_id_344	DATA
+	asn1_PA_SAM_CHALLENGE_2_BODY	DATA
+	asn1_PA_SAM_CHALLENGE_2_BODY_tag__298	DATA
+	asn1_PA_SAM_CHALLENGE_2_BODY_tag_sam_flags_300	DATA
+	asn1_PA_SAM_CHALLENGE_2	DATA
+	asn1_PA_SAM_CHALLENGE_2_tag__314	DATA
+	asn1_PA_SAM_CHALLENGE_2_tag_sam_body_315	DATA
+	asn1_PA_SAM_CHALLENGE_2_tag_sam_cksum_316	DATA
+	asn1_PA_SAM_CHALLENGE_2_tag_sam_cksum_317	DATA
+	asn1_PA_SAM_REDIRECT	DATA
+	asn1_PA_SAM_RESPONSE_2	DATA
+	asn1_PA_SAM_RESPONSE_2_tag__318	DATA
+	asn1_PA_SAM_TYPE	DATA
+	asn1_PA_SAM_TYPE_enum_names	DATA
+	asn1_PA_SAM_TYPE_tag__296	DATA
+	asn1_PA_ServerReferralData	DATA
+	asn1_PA_SERVER_REFERRAL_DATA	DATA
+	asn1_PA_ServerReferralData_tag__352	DATA
+	asn1_PA_SvrReferralData	DATA
+	asn1_PA_SvrReferralData_tag__349	DATA
+	asn1_PBES2_params	DATA
+	asn1_PBES2_params_tag__24	DATA
+	asn1_PBKDF2_params	DATA
+	asn1_PBKDF2_params_tag__20	DATA
+	asn1_PermanentIdentifier	DATA
+	asn1_PermanentIdentifier_tag__178	DATA
+	asn1_PKAuthenticator	DATA
+	asn1_PKAuthenticator_tag__26	DATA
+	asn1_PKAuthenticator_tag_ctime_29	DATA
+	asn1_PKAuthenticator_tag_nonce_30	DATA
+	asn1_PKAuthenticator_Win2k	DATA
+	asn1_PKAuthenticator_Win2k_tag__61	DATA
+	asn1_PKAuthenticator_Win2k_tag_kdcName_62	DATA
+	asn1_PKAuthenticator_Win2k_tag_kdcRealm_63	DATA
+	asn1_PKAuthenticator_Win2k_tag_nonce_67	DATA
+	asn1_PKCS10_Version	DATA
+	asn1_PKCS10_Version_enum_names	DATA
+	asn1_PKCS10_Version_tag__0	DATA
+	asn1_PKCS12_Attribute	DATA
+	asn1_PKCS12_Attributes	DATA
+	asn1_PKCS12_Attribute_seofTstruct_1	DATA
+	asn1_PKCS12_Attributes_tag__8	DATA
+	asn1_PKCS12_Attribute_tag__6	DATA
+	asn1_PKCS12_AuthenticatedSafe	DATA
+	asn1_PKCS12_AuthenticatedSafe_tag__5	DATA
+	asn1_PKCS12_CertBag	DATA
+	asn1_PKCS12_CertBag_tag__13	DATA
+	asn1_PKCS12_MacData	DATA
+	asn1_PKCS12_MacData_tag__0	DATA
+	asn1_PKCS12_OctetString	DATA
+	asn1_PKCS12_PBEParams	DATA
+	asn1_PKCS12_PBEParams_tag__16	DATA
+	asn1_PKCS12_PFX	DATA
+	asn1_PKCS12_PFX_tag__3	DATA
+	asn1_PKCS12_SafeBag	DATA
+	asn1_PKCS12_SafeBag_seofTstruct_2	DATA
+	asn1_PKCS12_SafeBag_tag__9	DATA
+	asn1_PKCS12_SafeBag_tag_bagValue_11	DATA
+	asn1_PKCS12_SafeContents	DATA
+	asn1_PKCS12_SafeContents_tag__12	DATA
+	asn1_PKCS8Attributes	DATA
+	asn1_PKCS8Attributes_tag__1	DATA
+	asn1_PKCS8EncryptedData	DATA
+	asn1_PKCS8EncryptedPrivateKeyInfo	DATA
+	asn1_PKCS8EncryptedPrivateKeyInfo_tag__7	DATA
+	asn1_PKCS8PrivateKeyAlgorithmIdentifier	DATA
+	asn1_PKCS8PrivateKey	DATA
+	asn1_PKCS8PrivateKeyInfo	DATA
+	asn1_PKCS8PrivateKeyInfo_tag__2	DATA
+	asn1_PKCS8PrivateKeyInfo_tag_attributes_4	DATA
+	asn1_PKCS8PrivateKeyInfo_tag_attributes_5	DATA
+	asn1_PKCS9_BMPString	DATA
+	asn1_PKCS9_BMPString_seofTstruct_0	DATA
+	asn1_PKCS9_friendlyName	DATA
+	asn1_PKCS9_friendlyName_tag__1	DATA
+	asn1_PkinitSP80056AOtherInfo	DATA
+	asn1_PkinitSP80056AOtherInfo_tag__99	DATA
+	asn1_PkinitSuppPubInfo	DATA
+	asn1_PkinitSuppPubInfo_tag__108	DATA
+	asn1_PKIXXmppAddr	DATA
+	asn1_PolicyConstraints	DATA
+	asn1_PolicyConstraints_tag__237	DATA
+	asn1_PolicyConstraints_tag_requireExplicitPolicy_238	DATA
+	asn1_PolicyInformation	DATA
+	asn1_PolicyInformation_seofTstruct_7	DATA
+	asn1_PolicyInformation_tag__84	DATA
+	asn1_PolicyMapping	DATA
+	asn1_PolicyMappings	DATA
+	asn1_PolicyMapping_seofTstruct_9	DATA
+	asn1_PolicyMappings_tag__96	DATA
+	asn1_PolicyMapping_tag__95	DATA
+	asn1_PolicyQualifierId	DATA
+	asn1_PolicyQualifierInfo	DATA
+	asn1_PolicyQualifierInfos	DATA
+	asn1_PolicyQualifierInfo_seofTstruct_6	DATA
+	asn1_PolicyQualifierInfos_tag__83	DATA
+	asn1_PolicyQualifierInfo_tag__81	DATA
+	asn1_PreferredOrLegacyPackageIdentifier_choice_legacy	DATA
+	asn1_PreferredOrLegacyPackageIdentifier_choice_preferred	DATA
+	asn1_PreferredOrLegacyPackageIdentifier	DATA
+	asn1_PreferredOrLegacyStalePackageIdentifier_choice_preferredStaleVerNum	DATA
+	asn1_PreferredOrLegacyStalePackageIdentifier	DATA
+	asn1_PreferredPackageIdentifier	DATA
+	asn1_PreferredPackageIdentifier_tag__1	DATA
+	asn1_Principal	DATA
+	asn1_PrincipalNameAttrs	DATA
+	asn1_PrincipalNameAttrSrc_choice_enc_kdc_rep_part	DATA
+	asn1_PrincipalNameAttrSrc_choice_enc_ticket_part	DATA
+	asn1_PrincipalNameAttrSrc	DATA
+	asn1_PrincipalNameAttrs_tag__86	DATA
+	asn1_PrincipalNameAttrs_tag_authenticated_87	DATA
+	asn1_PrincipalNameAttrs_tag_source_89	DATA
+	asn1_PrincipalName	DATA
+	asn1_PrincipalName_name_string_0	DATA
+	asn1_PrincipalName_tag__10	DATA
+	asn1_PrincipalName_tag_name_string_12	DATA
+	asn1_PrincipalName_tag_name_string_13	DATA
+	asn1_PrincipalName_tag_name_type_11	DATA
+	asn1_Principals	DATA
+	asn1_Principal_seofTstruct_4	DATA
+	asn1_Principals_tag__106	DATA
+	asn1_Principal_tag__103	DATA
+	_asn1_print_top
+	asn1_PrivateKeyUsagePeriod	DATA
+	asn1_PrivateKeyUsagePeriod_tag__74	DATA
+	asn1_PROV_SRV_LOCATION	DATA
+	asn1_ProxyCertInfo	DATA
+	asn1_ProxyCertInfo_tag__188	DATA
+	asn1_ProxyPolicy	DATA
+	asn1_ProxyPolicy_tag__185	DATA
+	asn1_RDNSequence	DATA
+	asn1_RDNSequence_tag__33	DATA
+	asn1_Realm	DATA
+	asn1_RecipientIdentifier	DATA
+	asn1_RecipientInfo	DATA
+	asn1_RecipientInfos	DATA
+	asn1_RecipientInfo_seofTstruct_5	DATA
+	asn1_RecipientInfos_tag__25	DATA
+	asn1_RelativeDistinguishedName	DATA
+	asn1_RelativeDistinguishedName_seofTstruct_2	DATA
+	asn1_RelativeDistinguishedName_tag__32	DATA
+	asn1_ReplyKeyPack	DATA
+	asn1_ReplyKeyPack_tag__57	DATA
+	asn1_ReplyKeyPack_tag_asChecksum_59	DATA
+	asn1_ReplyKeyPack_tag_replyKey_58	DATA
+	asn1_ReplyKeyPack_Win2k	DATA
+	asn1_ReplyKeyPack_Win2k_tag__92	DATA
+	asn1_RSAES_OAEP_params	DATA
+	asn1_RSAES_OAEP_params_tag__140	DATA
+	asn1_RSAPrivateKey	DATA
+	asn1_RSAPrivateKey_tag__151	DATA
+	asn1_RSAPublicKey	DATA
+	asn1_RSAPublicKey_tag__148	DATA
+	asn1_RSASSA_PSS_params	DATA
+	asn1_RSASSA_PSS_params_tag__133	DATA
+	asn1_RSASSA_PSS_params_tag_hashAlgorithm_134	DATA
+	asn1_RSASSA_PSS_params_tag_saltLength_136	DATA
+	asn1_S4UUserID	DATA
+	asn1_S4UUserID_tag__335	DATA
+	asn1_S4UUserID_tag_options_341	DATA
+	asn1_SAMFlags	DATA
+	asn1_SAMFlags_tag__297	DATA
 	asn1_SAMFlags_units
+	asn1_SecurityLevel	DATA
+	asn1_SecurityLevel_enum_names	DATA
+	asn1_SecurityLevel_tag__208	DATA
+	asn1_SignatureAlgorithmIdentifier	DATA
+	asn1_SignatureValue	DATA
+	asn1_SignedData	DATA
+	asn1_SignedData_tag__17	DATA
+	asn1_SignedData_tag_certificates_18	DATA
+	asn1_SignedData_tag_crls_19	DATA
+	asn1_SignerIdentifier	DATA
+	asn1_SignerInfo	DATA
+	asn1_SignerInfos	DATA
+	asn1_SignerInfo_seofTstruct_4	DATA
+	asn1_SignerInfos_tag__16	DATA
+	asn1_SignerInfo_tag__13	DATA
+	asn1_SignerInfo_tag_signedAttrs_14	DATA
+	asn1_SingleAttribute	DATA
+	asn1_SingleAttribute_tag__230	DATA
+	_asn1_sizeofType
+	asn1_SkipCerts	DATA
+	asn1_SRVName	DATA
+	asn1_StrengthOfFunction	DATA
+	asn1_StrengthOfFunction_enum_names	DATA
+	asn1_StrengthOfFunction_tag__209	DATA
+	asn1_SubjectDirectoryAttributes	DATA
+	asn1_SubjectDirectoryAttributes_tag__235	DATA
+	asn1_SubjectInfoAccessSyntax	DATA
+	asn1_SubjectKeyIdentifier	DATA
+	asn1_SubjectKeyIdentifier_tag__10	DATA
+	asn1_SubjectPublicKeyInfo	DATA
+	asn1_SubjectPublicKeyInfo_tag__39	DATA
+	asn1_SupportedAttributes	DATA
+	asn1_SupportedKDFs	DATA
+	asn1_SupportedKDFs_tag__34	DATA
+	asn1_TargetHardwareIdentifiers	DATA
+	asn1_TargetHardwareIdentifiers_tag__8	DATA
+	asn1_TBSCertificate	DATA
+	asn1_TBSCertificate_tag__46	DATA
+	asn1_TBSCertificate_tag_extensions_52	DATA
+	asn1_TBSCertificate_tag_issuerUniqueID_48	DATA
+	asn1_TBSCertificate_tag_version_47	DATA
+	asn1_TBSCRLCertList	DATA
+	asn1_TBSCRLCertList_revokedCertificates_val_tag__165	DATA
+	asn1_TBSCRLCertList_seofTstruct_17	DATA
+	asn1_TBSCRLCertList_tag__163	DATA
+	asn1_TBSCRLCertList_tag_revokedCertificates_164	DATA
+	asn1_TD_DH_PARAMETERS	DATA
+	asn1_TD_DH_PARAMETERS_tag__60	DATA
+	asn1_TD_INVALID_CERTIFICATES	DATA
+	asn1_TD_TRUSTED_CERTIFIERS	DATA
+	asn1_template_prim	DATA
+	asn1_TGS_REP	DATA
+	asn1_TGS_REQ	DATA
+	asn1_Ticket	DATA
+	asn1_TicketFlags	DATA
+	asn1_TicketFlags_tag__27	DATA
 	asn1_TicketFlags_units
+	asn1_Ticket_tag__47	DATA
+	asn1_Ticket_tag__48	DATA
+	asn1_Ticket_tag_enc_part_52	DATA
+	asn1_Ticket_tag_realm_50	DATA
+	asn1_Ticket_tag_sname_51	DATA
+	asn1_Time_choice_generalTime	DATA
+	asn1_Time_choice_utcTime	DATA
+	asn1_Time	DATA
+	asn1_TPMSecurityAssertions	DATA
+	asn1_TPMSecurityAssertions_tag__190	DATA
+	asn1_TPMSecurityAssertions_tag_ccInfo_195	DATA
+	asn1_TPMSecurityAssertions_tag_ekCertificateGenerationLocation_194	DATA
+	asn1_TPMSecurityAssertions_tag_ekGenerationLocation_193	DATA
+	asn1_TPMSecurityAssertions_tag_ekGenerationType_192	DATA
+	asn1_TPMSecurityAssertions_tag_fipsLevel_196	DATA
+	asn1_TPMSecurityAssertions_tag_iso9000Certified_197	DATA
+	asn1_TPMSpecification	DATA
+	asn1_TPMSpecification_tag__201	DATA
+	asn1_TPMVersion	DATA
+	asn1_TPMVersion_enum_names	DATA
+	asn1_TPMVersion_tag__227	DATA
+	asn1_TransitedEncoding	DATA
+	asn1_TransitedEncoding_tag__43	DATA
+	asn1_TrustedCA	DATA
+	asn1_TrustedCA_tag__5	DATA
+	asn1_TrustedCA_tag_caName_6	DATA
+	asn1_TrustedCA_tag_certificateSerialNumber_8	DATA
+	asn1_TrustedCA_Win2k_choice_caName	DATA
+	asn1_TrustedCA_Win2k_choice_issuerAndSerial	DATA
+	asn1_TrustedCA_Win2k	DATA
+	asn1_TypedData	DATA
+	asn1_TYPED_DATA	DATA
+	asn1_TypedData_seofTstruct_8	DATA
+	asn1_TypedData_tag__135	DATA
+	asn1_TYPED_DATA_tag__139	DATA
+	asn1_UniqueIdentifier	DATA
+	asn1_UnprotectedAttributes	DATA
+	asn1_URIReference	DATA
+	asn1_URIReference_tag__210	DATA
+	asn1_UserNotice	DATA
+	asn1_UserNotice_tag__94	DATA
+	asn1_ValidationParms	DATA
+	asn1_ValidationParms_tag__7	DATA
+	asn1_Validity	DATA
+	asn1_Validity_tag__37	DATA
+	asn1_VendorLoadErrorCode	DATA
+	asn1_Version	DATA
+	asn1_Version_enum_names	DATA
+	asn1_Version_tag__0	DATA
+	asn1_WrappedFirmwareKey	DATA
+	asn1_X520CommonName	DATA
+	asn1_X520LocalityName	DATA
+	asn1_X520name	DATA
+	asn1_X520OrganizationalUnitName	DATA
+	asn1_X520OrganizationName	DATA
+	asn1_X520StateOrProvinceName	DATA
 	copy_AccessDescription
 	copy_AD_AND_OR
 	copy_AD_IF_RELEVANT
@@ -314,6 +1316,7 @@ EXPORTS
 	copy_BaseDistance
 	copy_BasicConstraints
 	copy_Certificate
+	copy_CertificateChoices
 	copy_CertificateList
 	copy_CertificatePolicies
 	copy_CertificateRevocationLists
@@ -427,6 +1430,7 @@ EXPORTS
 	copy_HEIM_ANY
 	copy_heim_any_set
 	copy_HEIM_ANY_SET
+	copy_HeimPkinitPrincMaxLifeSecs
 	copy_HostAddress
 	copy_HostAddresses
 	copy_ImplementedCompressAlgorithms
@@ -495,6 +1499,7 @@ EXPORTS
 	copy_NTLMRequest
 	copy_NTLMRequest2
 	copy_NTLMResponse
+	copy_NullType
 	copy_OCSPBasicOCSPResponse
 	copy_OCSPCertID
 	copy_OCSPCertStatus
@@ -510,8 +1515,10 @@ EXPORTS
 	copy_OCSPSingleResponse
 	copy_OCSPTBSRequest
 	copy_OCSPVersion
+	copy_OctetString
 	copy_OriginatorInfo
 	copy_OtherName
+	copy_PAC_OPTIONS_FLAGS
 	copy_PA_DATA
 	copy_PADATA_TYPE
 	copy_PA_ENC_SAM_RESPONSE_ENC
@@ -527,8 +1534,9 @@ EXPORTS
 	copy_PA_PK_AS_REP_Win2k
 	copy_PA_PK_AS_REQ
 	copy_PA_PK_AS_REQ_Win2k
-	copy_PA_S4U_X509_USER
+	copy_ParamOptions
 	copy_PA_S4U2Self
+	copy_PA_S4U_X509_USER
 	copy_PA_SAM_CHALLENGE_2
 	copy_PA_SAM_CHALLENGE_2_BODY
 	copy_PA_SAM_REDIRECT
@@ -537,9 +1545,12 @@ EXPORTS
 	copy_PA_ServerReferralData
 	copy_PA_SERVER_REFERRAL_DATA
 	copy_PA_SvrReferralData
+	copy_PBES2_params
+	copy_PBKDF2_params
 	copy_PermanentIdentifier
 	copy_PKAuthenticator
 	copy_PKAuthenticator_Win2k
+	copy_PKCS10_Version
 	copy_PKCS12_Attribute
 	copy_PKCS12_Attributes
 	copy_PKCS12_AuthenticatedSafe
@@ -573,6 +1584,8 @@ EXPORTS
 	copy_PreferredPackageIdentifier
 	copy_Principal
 	copy_PrincipalName
+	copy_PrincipalNameAttrs
+	copy_PrincipalNameAttrSrc
 	copy_Principals
 	copy_PrivateKeyUsagePeriod
 	copy_PROV_SRV_LOCATION
@@ -586,8 +1599,11 @@ EXPORTS
 	copy_RelativeDistinguishedName
 	copy_ReplyKeyPack
 	copy_ReplyKeyPack_Win2k
+	copy_RSAES_OAEP_params
 	copy_RSAPrivateKey
 	copy_RSAPublicKey
+	copy_RSASSA_PSS_params
+	copy_S4UUserID
 	copy_SAMFlags
 	copy_SecurityLevel
 	copy_SignatureAlgorithmIdentifier
@@ -604,6 +1620,7 @@ EXPORTS
 	copy_SubjectInfoAccessSyntax
 	copy_SubjectKeyIdentifier
 	copy_SubjectPublicKeyInfo
+	copy_SupportedKDFs
 	copy_TargetHardwareIdentifiers
 	copy_TBSCertificate
 	copy_TBSCRLCertList
@@ -638,11 +1655,6 @@ EXPORTS
 	copy_X520OrganizationalUnitName
 	copy_X520OrganizationName
 	copy_X520StateOrProvinceName
-	copy_X690SampleChildInformation
-	copy_X690SampleDate
-	copy_X690SampleEmployeeNumber
-	copy_X690SampleName
-	copy_X690SamplePersonnelRecord
 	decode_AccessDescription
 	decode_AD_AND_OR
 	decode_AD_IF_RELEVANT
@@ -676,6 +1688,7 @@ EXPORTS
 	decode_BaseDistance
 	decode_BasicConstraints
 	decode_Certificate
+	decode_CertificateChoices
 	decode_CertificateList
 	decode_CertificatePolicies
 	decode_CertificateRevocationLists
@@ -703,7 +1716,6 @@ EXPORTS
 	decode_ContentType
 	decode_CPSuri
 	decode_CRIAttributeSet
-	decode_CRIExtensions
 	decode_CRIExtensions
 	decode_CRLCertificateList
 	decode_CRLDistributionPoints
@@ -790,13 +1802,12 @@ EXPORTS
 	decode_HEIM_ANY
 	decode_heim_any_set
 	decode_HEIM_ANY_SET
+	decode_HeimPkinitPrincMaxLifeSecs
 	decode_HostAddress
 	decode_HostAddresses
 	decode_ImplementedCompressAlgorithms
 	decode_ImplementedCryptoAlgorithms
 	decode_IOSCertificationRequest
-	decode_IOSCertificationRequest
-	decode_IOSCertificationRequestInfo
 	decode_IOSCertificationRequestInfo
 	decode_IssuerAndSerialNumber
 	decode_KDCDHKeyInfo
@@ -860,6 +1871,7 @@ EXPORTS
 	decode_NTLMRequest
 	decode_NTLMRequest2
 	decode_NTLMResponse
+	decode_NullType
 	decode_OCSPBasicOCSPResponse
 	decode_OCSPCertID
 	decode_OCSPCertStatus
@@ -875,8 +1887,10 @@ EXPORTS
 	decode_OCSPSingleResponse
 	decode_OCSPTBSRequest
 	decode_OCSPVersion
+	decode_OctetString
 	decode_OriginatorInfo
 	decode_OtherName
+	decode_PAC_OPTIONS_FLAGS
 	decode_PA_DATA
 	decode_PADATA_TYPE
 	decode_PA_ENC_SAM_RESPONSE_ENC
@@ -892,8 +1906,9 @@ EXPORTS
 	decode_PA_PK_AS_REP_Win2k
 	decode_PA_PK_AS_REQ
 	decode_PA_PK_AS_REQ_Win2k
-	decode_PA_S4U_X509_USER
+	decode_ParamOptions
 	decode_PA_S4U2Self
+	decode_PA_S4U_X509_USER
 	decode_PA_SAM_CHALLENGE_2
 	decode_PA_SAM_CHALLENGE_2_BODY
 	decode_PA_SAM_REDIRECT
@@ -902,9 +1917,12 @@ EXPORTS
 	decode_PA_ServerReferralData
 	decode_PA_SERVER_REFERRAL_DATA
 	decode_PA_SvrReferralData
+	decode_PBES2_params
+	decode_PBKDF2_params
 	decode_PermanentIdentifier
 	decode_PKAuthenticator
 	decode_PKAuthenticator_Win2k
+	decode_PKCS10_Version
 	decode_PKCS12_Attribute
 	decode_PKCS12_Attributes
 	decode_PKCS12_AuthenticatedSafe
@@ -938,6 +1956,8 @@ EXPORTS
 	decode_PreferredPackageIdentifier
 	decode_Principal
 	decode_PrincipalName
+	decode_PrincipalNameAttrs
+	decode_PrincipalNameAttrSrc
 	decode_Principals
 	decode_PrivateKeyUsagePeriod
 	decode_PROV_SRV_LOCATION
@@ -951,8 +1971,11 @@ EXPORTS
 	decode_RelativeDistinguishedName
 	decode_ReplyKeyPack
 	decode_ReplyKeyPack_Win2k
+	decode_RSAES_OAEP_params
 	decode_RSAPrivateKey
 	decode_RSAPublicKey
+	decode_RSASSA_PSS_params
+	decode_S4UUserID
 	decode_SAMFlags
 	decode_SecurityLevel
 	decode_SignatureAlgorithmIdentifier
@@ -969,6 +1992,7 @@ EXPORTS
 	decode_SubjectInfoAccessSyntax
 	decode_SubjectKeyIdentifier
 	decode_SubjectPublicKeyInfo
+	decode_SupportedKDFs
 	decode_TargetHardwareIdentifiers
 	decode_TBSCertificate
 	decode_TBSCRLCertList
@@ -1003,11 +2027,6 @@ EXPORTS
 	decode_X520OrganizationalUnitName
 	decode_X520OrganizationName
 	decode_X520StateOrProvinceName
-	decode_X690SampleChildInformation
-	decode_X690SampleDate
-	decode_X690SampleEmployeeNumber
-	decode_X690SampleName
-	decode_X690SamplePersonnelRecord
 	der_copy_bit_string
 	der_copy_bmp_string
 	der_copy_generalized_time
@@ -1057,6 +2076,7 @@ EXPORTS
 	der_get_integer
 	der_get_integer64
 	der_get_length
+	der_get_null
 	der_get_octet_string
 	der_get_octet_string_ber
 	der_get_oid
@@ -1091,6 +2111,7 @@ EXPORTS
 	der_length_integer
 	der_length_integer64
 	der_length_len
+	der_length_null
 	der_length_octet_string
 	der_length_oid
 	der_length_printable_string
@@ -1120,6 +2141,7 @@ EXPORTS
 	der_print_ia5_string
 	der_print_integer
 	der_print_integer64
+	der_print_null
 	der_print_octet_string
 	der_print_oid
 	der_print_printable_string
@@ -1140,6 +2162,7 @@ EXPORTS
 	der_put_integer64
 	der_put_length
 	der_put_length_and_tag
+	der_put_null
 	der_put_octet_string
 	der_put_oid
 	der_put_printable_string
@@ -1151,6 +2174,7 @@ EXPORTS
 	der_put_utf8string
 	der_put_visible_string
 	der_replace_tag
+	der_show_heim_oid_sym
 	_der_timegm
 	DigestTypes2int
 	DistributionPointReasonFlags2int
@@ -1187,6 +2211,7 @@ EXPORTS
 	encode_BaseDistance
 	encode_BasicConstraints
 	encode_Certificate
+	encode_CertificateChoices
 	encode_CertificateList
 	encode_CertificatePolicies
 	encode_CertificateRevocationLists
@@ -1214,7 +2239,6 @@ EXPORTS
 	encode_ContentType
 	encode_CPSuri
 	encode_CRIAttributeSet
-	encode_CRIExtensions
 	encode_CRIExtensions
 	encode_CRLCertificateList
 	encode_CRLDistributionPoints
@@ -1301,13 +2325,12 @@ EXPORTS
 	encode_HEIM_ANY
 	encode_heim_any_set
 	encode_HEIM_ANY_SET
+	encode_HeimPkinitPrincMaxLifeSecs
 	encode_HostAddress
 	encode_HostAddresses
 	encode_ImplementedCompressAlgorithms
 	encode_ImplementedCryptoAlgorithms
 	encode_IOSCertificationRequest
-	encode_IOSCertificationRequest
-	encode_IOSCertificationRequestInfo
 	encode_IOSCertificationRequestInfo
 	encode_IssuerAndSerialNumber
 	encode_KDCDHKeyInfo
@@ -1371,6 +2394,7 @@ EXPORTS
 	encode_NTLMRequest
 	encode_NTLMRequest2
 	encode_NTLMResponse
+	encode_NullType
 	encode_OCSPBasicOCSPResponse
 	encode_OCSPCertID
 	encode_OCSPCertStatus
@@ -1386,8 +2410,10 @@ EXPORTS
 	encode_OCSPSingleResponse
 	encode_OCSPTBSRequest
 	encode_OCSPVersion
+	encode_OctetString
 	encode_OriginatorInfo
 	encode_OtherName
+	encode_PAC_OPTIONS_FLAGS
 	encode_PA_DATA
 	encode_PADATA_TYPE
 	encode_PA_ENC_SAM_RESPONSE_ENC
@@ -1403,8 +2429,9 @@ EXPORTS
 	encode_PA_PK_AS_REP_Win2k
 	encode_PA_PK_AS_REQ
 	encode_PA_PK_AS_REQ_Win2k
-	encode_PA_S4U_X509_USER
+	encode_ParamOptions
 	encode_PA_S4U2Self
+	encode_PA_S4U_X509_USER
 	encode_PA_SAM_CHALLENGE_2
 	encode_PA_SAM_CHALLENGE_2_BODY
 	encode_PA_SAM_REDIRECT
@@ -1413,9 +2440,12 @@ EXPORTS
 	encode_PA_ServerReferralData
 	encode_PA_SERVER_REFERRAL_DATA
 	encode_PA_SvrReferralData
+	encode_PBES2_params
+	encode_PBKDF2_params
 	encode_PermanentIdentifier
 	encode_PKAuthenticator
 	encode_PKAuthenticator_Win2k
+	encode_PKCS10_Version
 	encode_PKCS12_Attribute
 	encode_PKCS12_Attributes
 	encode_PKCS12_AuthenticatedSafe
@@ -1449,6 +2479,8 @@ EXPORTS
 	encode_PreferredPackageIdentifier
 	encode_Principal
 	encode_PrincipalName
+	encode_PrincipalNameAttrs
+	encode_PrincipalNameAttrSrc
 	encode_Principals
 	encode_PrivateKeyUsagePeriod
 	encode_PROV_SRV_LOCATION
@@ -1462,8 +2494,11 @@ EXPORTS
 	encode_RelativeDistinguishedName
 	encode_ReplyKeyPack
 	encode_ReplyKeyPack_Win2k
+	encode_RSAES_OAEP_params
 	encode_RSAPrivateKey
 	encode_RSAPublicKey
+	encode_RSASSA_PSS_params
+	encode_S4UUserID
 	encode_SAMFlags
 	encode_SecurityLevel
 	encode_SignatureAlgorithmIdentifier
@@ -1480,6 +2515,7 @@ EXPORTS
 	encode_SubjectInfoAccessSyntax
 	encode_SubjectKeyIdentifier
 	encode_SubjectPublicKeyInfo
+	encode_SupportedKDFs
 	encode_TargetHardwareIdentifiers
 	encode_TBSCertificate
 	encode_TBSCRLCertList
@@ -1514,11 +2550,6 @@ EXPORTS
 	encode_X520OrganizationalUnitName
 	encode_X520OrganizationName
 	encode_X520StateOrProvinceName
-	encode_X690SampleChildInformation
-	encode_X690SampleDate
-	encode_X690SampleEmployeeNumber
-	encode_X690SampleName
-	encode_X690SamplePersonnelRecord
 	FastOptions2int
 	free_AccessDescription
 	free_AD_AND_OR
@@ -1553,6 +2584,7 @@ EXPORTS
 	free_BaseDistance
 	free_BasicConstraints
 	free_Certificate
+	free_CertificateChoices
 	free_CertificateList
 	free_CertificatePolicies
 	free_CertificateRevocationLists
@@ -1580,7 +2612,6 @@ EXPORTS
 	free_ContentType
 	free_CPSuri
 	free_CRIAttributeSet
-	free_CRIExtensions
 	free_CRIExtensions
 	free_CRLCertificateList
 	free_CRLDistributionPoints
@@ -1667,13 +2698,12 @@ EXPORTS
 	free_HEIM_ANY
 	free_heim_any_set
 	free_HEIM_ANY_SET
+	free_HeimPkinitPrincMaxLifeSecs
 	free_HostAddress
 	free_HostAddresses
 	free_ImplementedCompressAlgorithms
 	free_ImplementedCryptoAlgorithms
 	free_IOSCertificationRequest
-	free_IOSCertificationRequest
-	free_IOSCertificationRequestInfo
 	free_IOSCertificationRequestInfo
 	free_IssuerAndSerialNumber
 	free_KDCDHKeyInfo
@@ -1737,6 +2767,7 @@ EXPORTS
 	free_NTLMRequest
 	free_NTLMRequest2
 	free_NTLMResponse
+	free_NullType
 	free_OCSPBasicOCSPResponse
 	free_OCSPCertID
 	free_OCSPCertStatus
@@ -1752,8 +2783,10 @@ EXPORTS
 	free_OCSPSingleResponse
 	free_OCSPTBSRequest
 	free_OCSPVersion
+	free_OctetString
 	free_OriginatorInfo
 	free_OtherName
+	free_PAC_OPTIONS_FLAGS
 	free_PA_DATA
 	free_PADATA_TYPE
 	free_PA_ENC_SAM_RESPONSE_ENC
@@ -1769,8 +2802,9 @@ EXPORTS
 	free_PA_PK_AS_REP_Win2k
 	free_PA_PK_AS_REQ
 	free_PA_PK_AS_REQ_Win2k
-	free_PA_S4U_X509_USER
+	free_ParamOptions
 	free_PA_S4U2Self
+	free_PA_S4U_X509_USER
 	free_PA_SAM_CHALLENGE_2
 	free_PA_SAM_CHALLENGE_2_BODY
 	free_PA_SAM_REDIRECT
@@ -1779,9 +2813,12 @@ EXPORTS
 	free_PA_ServerReferralData
 	free_PA_SERVER_REFERRAL_DATA
 	free_PA_SvrReferralData
+	free_PBES2_params
+	free_PBKDF2_params
 	free_PermanentIdentifier
 	free_PKAuthenticator
 	free_PKAuthenticator_Win2k
+	free_PKCS10_Version
 	free_PKCS12_Attribute
 	free_PKCS12_Attributes
 	free_PKCS12_AuthenticatedSafe
@@ -1815,6 +2852,8 @@ EXPORTS
 	free_PreferredPackageIdentifier
 	free_Principal
 	free_PrincipalName
+	free_PrincipalNameAttrs
+	free_PrincipalNameAttrSrc
 	free_Principals
 	free_PrivateKeyUsagePeriod
 	free_PROV_SRV_LOCATION
@@ -1828,8 +2867,11 @@ EXPORTS
 	free_RelativeDistinguishedName
 	free_ReplyKeyPack
 	free_ReplyKeyPack_Win2k
+	free_RSAES_OAEP_params
 	free_RSAPrivateKey
 	free_RSAPublicKey
+	free_RSASSA_PSS_params
+	free_S4UUserID
 	free_SAMFlags
 	free_SecurityLevel
 	free_SignatureAlgorithmIdentifier
@@ -1846,6 +2888,7 @@ EXPORTS
 	free_SubjectInfoAccessSyntax
 	free_SubjectKeyIdentifier
 	free_SubjectPublicKeyInfo
+	free_SupportedKDFs
 	free_TargetHardwareIdentifiers
 	free_TBSCertificate
 	free_TBSCRLCertList
@@ -1880,11 +2923,6 @@ EXPORTS
 	free_X520OrganizationalUnitName
 	free_X520OrganizationName
 	free_X520StateOrProvinceName
-	free_X690SampleChildInformation
-	free_X690SampleDate
-	free_X690SampleEmployeeNumber
-	free_X690SampleName
-	free_X690SamplePersonnelRecord
 	heim_any_cmp
 	HEIM_ANY_cmp
 	_heim_der_set_sort
@@ -1903,6 +2941,7 @@ EXPORTS
 	int2KDCFastFlags
 	int2KDCOptions
 	int2KeyUsage
+	int2PAC_OPTIONS_FLAGS
 	int2SAMFlags
 	int2TicketFlags
 	KDCFastFlags2int
@@ -1941,6 +2980,7 @@ EXPORTS
 	length_BaseDistance
 	length_BasicConstraints
 	length_Certificate
+	length_CertificateChoices
 	length_CertificateList
 	length_CertificatePolicies
 	length_CertificateRevocationLists
@@ -2054,6 +3094,7 @@ EXPORTS
 	length_HEIM_ANY
 	length_heim_any_set
 	length_HEIM_ANY_SET
+	length_HeimPkinitPrincMaxLifeSecs
 	length_HostAddress
 	length_HostAddresses
 	length_ImplementedCompressAlgorithms
@@ -2122,6 +3163,7 @@ EXPORTS
 	length_NTLMRequest
 	length_NTLMRequest2
 	length_NTLMResponse
+	length_NullType
 	length_OCSPBasicOCSPResponse
 	length_OCSPCertID
 	length_OCSPCertStatus
@@ -2137,8 +3179,10 @@ EXPORTS
 	length_OCSPSingleResponse
 	length_OCSPTBSRequest
 	length_OCSPVersion
+	length_OctetString
 	length_OriginatorInfo
 	length_OtherName
+	length_PAC_OPTIONS_FLAGS
 	length_PA_DATA
 	length_PADATA_TYPE
 	length_PA_ENC_SAM_RESPONSE_ENC
@@ -2154,8 +3198,9 @@ EXPORTS
 	length_PA_PK_AS_REP_Win2k
 	length_PA_PK_AS_REQ
 	length_PA_PK_AS_REQ_Win2k
-	length_PA_S4U_X509_USER
+	length_ParamOptions
 	length_PA_S4U2Self
+	length_PA_S4U_X509_USER
 	length_PA_SAM_CHALLENGE_2
 	length_PA_SAM_CHALLENGE_2_BODY
 	length_PA_SAM_REDIRECT
@@ -2164,9 +3209,12 @@ EXPORTS
 	length_PA_ServerReferralData
 	length_PA_SERVER_REFERRAL_DATA
 	length_PA_SvrReferralData
+	length_PBES2_params
+	length_PBKDF2_params
 	length_PermanentIdentifier
 	length_PKAuthenticator
 	length_PKAuthenticator_Win2k
+	length_PKCS10_Version
 	length_PKCS12_Attribute
 	length_PKCS12_Attributes
 	length_PKCS12_AuthenticatedSafe
@@ -2200,6 +3248,8 @@ EXPORTS
 	length_PreferredPackageIdentifier
 	length_Principal
 	length_PrincipalName
+	length_PrincipalNameAttrs
+	length_PrincipalNameAttrSrc
 	length_Principals
 	length_PrivateKeyUsagePeriod
 	length_PROV_SRV_LOCATION
@@ -2213,8 +3263,11 @@ EXPORTS
 	length_RelativeDistinguishedName
 	length_ReplyKeyPack
 	length_ReplyKeyPack_Win2k
+	length_RSAES_OAEP_params
 	length_RSAPrivateKey
 	length_RSAPublicKey
+	length_RSASSA_PSS_params
+	length_S4UUserID
 	length_SAMFlags
 	length_SecurityLevel
 	length_SignatureAlgorithmIdentifier
@@ -2231,6 +3284,7 @@ EXPORTS
 	length_SubjectInfoAccessSyntax
 	length_SubjectKeyIdentifier
 	length_SubjectPublicKeyInfo
+	length_SupportedKDFs
 	length_TargetHardwareIdentifiers
 	length_TBSCertificate
 	length_TBSCRLCertList
@@ -2265,11 +3319,7 @@ EXPORTS
 	length_X520OrganizationalUnitName
 	length_X520OrganizationName
 	length_X520StateOrProvinceName
-	length_X690SampleChildInformation
-	length_X690SampleDate
-	length_X690SampleEmployeeNumber
-	length_X690SampleName
-	length_X690SamplePersonnelRecord
+	PAC_OPTIONS_FLAGS2int
 	print_AccessDescription
 	print_AD_AND_OR
 	print_AD_IF_RELEVANT
@@ -2303,6 +3353,7 @@ EXPORTS
 	print_BaseDistance
 	print_BasicConstraints
 	print_Certificate
+	print_CertificateChoices
 	print_CertificateList
 	print_CertificatePolicies
 	print_CertificateRevocationLists
@@ -2330,7 +3381,6 @@ EXPORTS
 	print_ContentType
 	print_CPSuri
 	print_CRIAttributeSet
-	print_CRIExtensions
 	print_CRIExtensions
 	print_CRLCertificateList
 	print_CRLDistributionPoints
@@ -2417,13 +3467,12 @@ EXPORTS
 	print_HEIM_ANY
 	print_heim_any_set
 	print_HEIM_ANY_SET
+	print_HeimPkinitPrincMaxLifeSecs
 	print_HostAddress
 	print_HostAddresses
 	print_ImplementedCompressAlgorithms
 	print_ImplementedCryptoAlgorithms
 	print_IOSCertificationRequest
-	print_IOSCertificationRequest
-	print_IOSCertificationRequestInfo
 	print_IOSCertificationRequestInfo
 	print_IssuerAndSerialNumber
 	print_KDCDHKeyInfo
@@ -2437,6 +3486,7 @@ EXPORTS
 	print_KDC_REQ
 	print_KDC_REQ_BODY
 	print_KDFAlgorithmId
+	print_KERB_AD_RESTRICTION_ENTRY
 	print_KERB_ARMOR_SERVICE_REPLY
 	print_KERB_CRED
 	print_KerberosString
@@ -2486,6 +3536,7 @@ EXPORTS
 	print_NTLMRequest
 	print_NTLMRequest2
 	print_NTLMResponse
+	print_NullType
 	print_OCSPBasicOCSPResponse
 	print_OCSPCertID
 	print_OCSPCertStatus
@@ -2501,21 +3552,28 @@ EXPORTS
 	print_OCSPSingleResponse
 	print_OCSPTBSRequest
 	print_OCSPVersion
+	print_OctetString
 	print_OriginatorInfo
 	print_OtherName
+	print_PAC_OPTIONS_FLAGS
 	print_PA_DATA
 	print_PADATA_TYPE
 	print_PA_ENC_SAM_RESPONSE_ENC
 	print_PA_ENC_TS_ENC
 	print_PA_FX_FAST_REPLY
 	print_PA_FX_FAST_REQUEST
+	print_PA_KERB_KEY_LIST_REP
+	print_PA_KERB_KEY_LIST_REQ
+	print_PA_PAC_OPTIONS
 	print_PA_PAC_REQUEST
 	print_PA_PK_AS_REP
 	print_PA_PK_AS_REP_BTMM
 	print_PA_PK_AS_REP_Win2k
 	print_PA_PK_AS_REQ
 	print_PA_PK_AS_REQ_Win2k
+	print_ParamOptions
 	print_PA_S4U2Self
+	print_PA_S4U_X509_USER
 	print_PA_SAM_CHALLENGE_2
 	print_PA_SAM_CHALLENGE_2_BODY
 	print_PA_SAM_REDIRECT
@@ -2524,9 +3582,12 @@ EXPORTS
 	print_PA_ServerReferralData
 	print_PA_SERVER_REFERRAL_DATA
 	print_PA_SvrReferralData
+	print_PBES2_params
+	print_PBKDF2_params
 	print_PermanentIdentifier
 	print_PKAuthenticator
 	print_PKAuthenticator_Win2k
+	print_PKCS10_Version
 	print_PKCS12_Attribute
 	print_PKCS12_Attributes
 	print_PKCS12_AuthenticatedSafe
@@ -2560,6 +3621,8 @@ EXPORTS
 	print_PreferredPackageIdentifier
 	print_Principal
 	print_PrincipalName
+	print_PrincipalNameAttrs
+	print_PrincipalNameAttrSrc
 	print_Principals
 	print_PrivateKeyUsagePeriod
 	print_PROV_SRV_LOCATION
@@ -2573,8 +3636,11 @@ EXPORTS
 	print_RelativeDistinguishedName
 	print_ReplyKeyPack
 	print_ReplyKeyPack_Win2k
+	print_RSAES_OAEP_params
 	print_RSAPrivateKey
 	print_RSAPublicKey
+	print_RSASSA_PSS_params
+	print_S4UUserID
 	print_SAMFlags
 	print_SecurityLevel
 	print_SignatureAlgorithmIdentifier
@@ -2591,6 +3657,7 @@ EXPORTS
 	print_SubjectInfoAccessSyntax
 	print_SubjectKeyIdentifier
 	print_SubjectPublicKeyInfo
+	print_SupportedKDFs
 	print_TargetHardwareIdentifiers
 	print_TBSCertificate
 	print_TBSCRLCertList
@@ -2625,11 +3692,6 @@ EXPORTS
 	print_X520OrganizationalUnitName
 	print_X520OrganizationName
 	print_X520StateOrProvinceName
-	print_X690SampleChildInformation
-	print_X690SampleDate
-	print_X690SampleEmployeeNumber
-	print_X690SampleName
-	print_X690SamplePersonnelRecord
 	remove_AttributeValues
 	remove_AuthorizationData
 	remove_CertificatePolicies
@@ -2645,5 +3707,7 @@ EXPORTS
 	remove_PolicyQualifierInfos
 	remove_Principals
 	remove_RDNSequence
+	remove_SupportedKDFs
+	remove_TD_DH_PARAMETERS
 	SAMFlags2int
 	TicketFlags2int

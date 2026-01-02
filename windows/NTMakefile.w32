@@ -156,13 +156,14 @@ LIGHT=$(LIGHT_CMD) -nologo
 pthreadinc= -I$(PTHREAD_INC)
 !endif
 
+opensslinc= -I$(INCLUDE_openssl_crypto)
+
 #----------------------------------------------------------------
 # Build options
 
-cincdirs=$(cincdirs) -I$(INCDIR) -I$(INCDIR)\krb5 $(pthreadinc)
+cincdirs=$(cincdirs) -I$(INCDIR) -I$(INCDIR)\krb5 $(pthreadinc) $(opensslinc)
 cdefines=$(cdefines) -DHAVE_CONFIG_H
 # Windows CNG provider
-cdefines=$(cdefines) -DHCRYPTO_DEF_PROVIDER=w32crypto
 cdebug=$(cdebug) /Zi
 ldebug=$(ldebug) /DEBUG
 localcflags=$(localcflags) /Oy-
@@ -399,9 +400,6 @@ mkdirs:
 !  if !exist("$(INCDIR)\gssapi")
 	-$(MKDIR) "$(INCDIR)\gssapi"
 !  endif
-!  if !exist("$(INCDIR)\hcrypto")
-	-$(MKDIR) "$(INCDIR)\hcrypto"
-!  endif
 !  if !exist("$(INCDIR)\kadm5")
 	-$(MKDIR) "$(INCDIR)\kadm5"
 !  endif
@@ -569,7 +567,7 @@ DLLPREP_NODIST=\
 ( $(_VC_MANIFEST_EMBED_DLL) && $(_VC_MANIFEST_CLEAN) && $(SYMSTORE_IMPORT) ) || ( $(RM) $@ && exit /b 1 )
 
 DLLPREP_MERGE=\
-( ( $(_MERGE_MANIFEST_DLL) || $(_INSERT_APPMANIFEST_DLL) && $(SYMSTORE_IMPORT) ) && $(_CODESIGN) && $(_CODESIGN_SHA256) ) || ( $(RM) $@ && exit /b 1 )
+( ( $(_MERGE_MANIFEST_DLL) || $(_INSERT_APPMANIFEST_DLL) ) && $(SYMSTORE_IMPORT) && $(_CODESIGN) && $(_CODESIGN_SHA256) ) || ( $(RM) $@ && exit /b 1 )
 
 #----------------------------------------------------------------------
 # Convenience macros for import libraries and assemblies
@@ -581,18 +579,15 @@ LIBCOMERR   =$(LIBDIR)\libcom_err.lib
 LIBEDITLINE =$(LIBDIR)\libeditline.lib
 LIBGSSAPI   =$(LIBDIR)\libgssapi.lib
 LIBGSS_PREAUTH=$(LIBDIR)\libgss_preauth.lib
-LIBHCRYPTO  =$(LIBDIR)\libhcrypto.lib
 LIBHDB	    =$(LIBDIR)\libhdb.lib
 LIBHEIMBASE =$(LIBDIR)\libheimbase.lib
 LIBHEIMDAL  =$(LIBDIR)\heimdal.lib
 LIBHEIMIPCC =$(LIBDIR)\libheim-ipcc.lib
 LIBHEIMIPCS =$(LIBDIR)\libheim-ipcs.lib
-LIBHEIMNTLM =$(LIBDIR)\libheimntlm.lib
 LIBHX509    =$(LIBDIR)\libhx509.lib
 LIBKADM5CLNT=$(LIBDIR)\libkadm5clnt.lib
 LIBKADM5SRV =$(LIBDIR)\libkadm5srv.lib
 LIBKDC	    =$(LIBDIR)\libkdc.lib
-LIBLTM	    =$(LIBDIR)\libltm.lib
 LIBKRB5	    =$(LIBDIR)\libkrb5.lib
 LIBRFC3961  =$(LIBDIR)\librfc3961.lib
 LIBROKEN    =$(LIBDIR)\libroken.lib
@@ -600,7 +595,6 @@ LIBSL	    =$(LIBDIR)\libsl.lib
 LIBSQLITE   =$(LIBDIR)\libsqlite.lib
 LIBVERS	    =$(LIBDIR)\libvers.lib
 LIBWIND	    =$(LIBDIR)\libwind.lib
-LIBX25519   =$(LIBDIR)\libx25519.lib
 
 !ifdef VER_DEBUG
 ASM_DBG=.Debug

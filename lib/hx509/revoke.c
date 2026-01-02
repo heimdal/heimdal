@@ -755,6 +755,7 @@ hx509_revoke_verify(hx509_context context,
 	    ret = _hx509_verify_signature(context,
 					  NULL,
 					  &ocsp->ocsp.tbsResponseData.responses.val[i].certID.hashAlgorithm,
+                                          NULL,
 					  &c->tbsCertificate.issuer._save,
 					  &ocsp->ocsp.tbsResponseData.responses.val[i].certID.issuerNameHash);
 	    if (ret != 0)
@@ -766,6 +767,7 @@ hx509_revoke_verify(hx509_context context,
 	    ret = _hx509_verify_signature(context,
 					  NULL,
 					  &ocsp->ocsp.tbsResponseData.responses.val[j].certID.hashAlgorithm,
+                                          NULL,
 					  &os,
 					  &ocsp->ocsp.tbsResponseData.responses.val[j].certID.issuerKeyHash);
 	    if (ret != 0)
@@ -942,6 +944,7 @@ add_to_req(hx509_context context, void *ptr, hx509_cert cert)
     ret = _hx509_create_signature(context,
 				  NULL,
 				  &one->reqCert.hashAlgorithm,
+                                  NULL,
 				  &c->tbsCertificate.issuer._save,
 				  NULL,
 				  &one->reqCert.issuerNameHash);
@@ -955,6 +958,7 @@ add_to_req(hx509_context context, void *ptr, hx509_cert cert)
     ret = _hx509_create_signature(context,
 				  NULL,
 				  &one->reqCert.hashAlgorithm,
+                                  NULL,
 				  &os,
 				  NULL,
 				  &one->reqCert.issuerKeyHash);
@@ -1323,6 +1327,7 @@ hx509_ocsp_verify(hx509_context context,
 	ret = _hx509_verify_signature(context,
 				      NULL,
 				      &basic.tbsResponseData.responses.val[i].certID.hashAlgorithm,
+                                      NULL,
 				      &c->tbsCertificate.issuer._save,
 				      &basic.tbsResponseData.responses.val[i].certID.issuerNameHash);
 	if (ret != 0)

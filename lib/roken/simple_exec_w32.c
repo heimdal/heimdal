@@ -205,7 +205,7 @@ collect_commandline(const char * fn, va_list * ap)
     return cmd;
 }
 
-ROKEN_LIB_FUNCTION pid_t ROKEN_LIB_CALL
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 pipe_execv(FILE **stdin_fd, FILE **stdout_fd, FILE **stderr_fd,
 	   const char *file, ...)
 {

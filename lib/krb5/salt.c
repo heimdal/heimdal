@@ -309,54 +309,8 @@ krb5_string_to_key_derived(krb5_context context,
 			   krb5_enctype etype,
 			   krb5_keyblock *key)
 {
-    struct _krb5_encryption_type *et = _krb5_find_enctype(etype);
-    krb5_error_code ret;
-    struct _krb5_key_data kd;
-    size_t keylen;
-    u_char *tmp;
-
-    if(et == NULL) {
-	krb5_set_error_message (context, KRB5_PROG_ETYPE_NOSUPP,
-				N_("encryption type %d not supported", ""),
-				etype);
-	return KRB5_PROG_ETYPE_NOSUPP;
-    }
-    keylen = et->keytype->bits / 8;
-
-    ALLOC(kd.key, 1);
-    if (kd.key == NULL)
-	return krb5_enomem(context);
-    ret = krb5_data_alloc(&kd.key->keyvalue, et->keytype->size);
-    if(ret) {
-	free(kd.key);
-	return ret;
-    }
-    kd.key->keytype = etype;
-    tmp = malloc (keylen);
-    if(tmp == NULL) {
-	krb5_free_keyblock(context, kd.key);
-	return krb5_enomem(context);
-    }
-    ret = _krb5_n_fold(str, len, tmp, keylen);
-    if (ret) {
-	free(tmp);
-	krb5_enomem(context);
-	return ret;
-    }
-    kd.schedule = NULL;
-    _krb5_DES3_random_to_key(context, kd.key, tmp, keylen);
-    memset(tmp, 0, keylen);
-    free(tmp);
-    ret = _krb5_derive_key(context,
-			   et,
-			   &kd,
-			   "kerberos", /* XXX well known constant */
-			   strlen("kerberos"));
-    if (ret) {
-	_krb5_free_key_data(context, &kd, et);
-	return ret;
-    }
-    ret = krb5_copy_keyblock_contents(context, kd.key, key);
-    _krb5_free_key_data(context, &kd, et);
-    return ret;
+    krb5_set_error_message (context, KRB5_PROG_ETYPE_NOSUPP,
+                            N_("encryption type %d not supported", ""),
+                            etype);
+    return KRB5_PROG_ETYPE_NOSUPP;
 }

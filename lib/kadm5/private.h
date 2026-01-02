@@ -42,6 +42,10 @@
 #include <sys/un.h>
 #endif
 
+#ifdef _WIN32
+#define KADM5_SIGNAL_PIPE_NAME "\\\\.\\pipe\\heimdal-kadm5-signal"
+#endif
+
 struct kadm_func {
     kadm5_ret_t (*chpass_principal) (void *, krb5_principal, int,
 				     int, krb5_key_salt_tuple*, const char*);
@@ -100,7 +104,10 @@ typedef struct kadm5_log_context {
     int lock_mode;
     uint32_t version;
     time_t last_time;
-#ifndef NO_UNIX_SOCKETS
+#if defined(_WIN32) && defined(NO_UNIX_SOCKETS)
+    /* Windows uses named pipes for signaling - no socket_name needed */
+    char *signal_pipe_name;
+#elif !defined(NO_UNIX_SOCKETS)
     struct sockaddr_un socket_name;
 #else
     struct addrinfo *socket_info;

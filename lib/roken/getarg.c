@@ -103,7 +103,11 @@ mandoc_template(struct getargs *args,
     printf(".\\\"   * use better macros for arguments (like .Pa for files)\n");
     printf(".\\\"\n");
     t = time(NULL);
+#ifdef WIN32
+    strftime(timestr, sizeof(timestr), "%B %d, %Y", localtime(&t));
+#else
     strftime(timestr, sizeof(timestr), "%B %e, %Y", localtime(&t));
+#endif
     printf(".Dd %s\n", timestr);
     p = strrchr(progname, '/');
     if(p) p++; else p = progname;
@@ -331,7 +335,16 @@ add_string(getarg_strings *s, char *value)
 {
     char **strings;
 
-    strings = realloc(s->strings, (s->num_strings + 1) * sizeof(*s->strings));
+    /*
+     * O(N^2) here.  Fortunately counts will generally be low here.
+     *
+     * Either break the ABI by adding an allocated count field to
+     * `getarg_strings`, or use a specific set of counts like 1, 4, 8, 12, 18,
+     * etc., i.e., powers of two for a while then switch to increasing by half.
+     * After some unrealistic number of string arguments switch to incrementing
+     * by 1.
+     */
+    strings = realloc(s->strings, (s->num_strings + 2) * sizeof(*s->strings));
     if (strings == NULL) {
 	free(s->strings);
 	s->strings = NULL;
@@ -340,6 +353,7 @@ add_string(getarg_strings *s, char *value)
     }
     s->strings = strings;
     s->strings[s->num_strings] = value;
+    s->strings[s->num_strings + 1] = NULL; /* NULL-terminator is handy */
     s->num_strings++;
     return 0;
 }

@@ -60,18 +60,22 @@ setup_signal(void)
 
 	sigaction(SIGINT, &sa, NULL);
 	sigaction(SIGTERM, &sa, NULL);
+#ifdef SIGXCPU
 	sigaction(SIGXCPU, &sa, NULL);
+#endif
 
 	sa.sa_handler = SIG_IGN;
+#ifdef SIGPIPE
 	sigaction(SIGPIPE, &sa, NULL);
+#endif
     }
 #else
     signal(SIGINT, sigterm);
     signal(SIGTERM, sigterm);
-#ifndef NO_SIGXCPU
+#if defined(SIGXCPU) && !defined(NO_SIGXCPU)
     signal(SIGXCPU, sigterm);
 #endif
-#ifndef NO_SIGPIPE
+#if defined(SIGPIPE) && !defined(NO_SIGPIPE)
     signal(SIGPIPE, SIG_IGN);
 #endif
 #endif

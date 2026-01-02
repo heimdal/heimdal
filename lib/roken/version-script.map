@@ -20,7 +20,9 @@ HEIMDAL_ROKEN_2.0 {
 		hex_encode;
 		issuid;
 		mini_inetd;
+		mini_inetd_accept;
 		mini_inetd_addrinfo;
+		mini_inetd_addrinfo_listen;
 		net_read;
 		net_write;
 		parse_bytes;
@@ -36,6 +38,8 @@ HEIMDAL_ROKEN_2.0 {
 		rk_base32_encode;
 		rk_base64_decode;
 		rk_base64_encode;
+		rk_base64url_decode;
+		rk_base64url_encode;
 		rk_bswap16;
 		rk_bswap32;
 		rk_bswap64;

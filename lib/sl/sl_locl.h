@@ -42,4 +42,5 @@
 
 #include <roken.h>
 
+#include <getarg.h>
 #include <sl.h>

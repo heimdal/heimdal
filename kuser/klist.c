@@ -36,7 +36,6 @@
 #include "kuser_locl.h"
 #include "parse_units.h"
 #include "heimtools-commands.h"
-#undef HC_DEPRECATED_CRYPTO
 
 static const char *
 printable_time_internal(time_t t, int x)
@@ -341,7 +340,12 @@ print_cred_verbose(krb5_context context, krb5_creds *cred)
     } else {
 	Ticket t;
 	size_t len;
-	char *s;
+	char *s = NULL;
+
+	ret = krb5_enctype_to_string(context, cred->session.keytype, &s);
+	printf(N_("Ticket session etype: %s (%d)\n", ""),
+               ret == 0 ? s : "unknown-enctype", cred->session.keytype);
+        free(s);
 
 	decode_Ticket(cred->ticket.data, cred->ticket.length, &t, &len);
 	ret = krb5_enctype_to_string(context, t.enc_part.etype, &s);
@@ -601,78 +605,6 @@ check_expiration(krb5_context context,
     return 0;
 }
 
-/*
- * Print a list of all AFS tokens
- */
-
-#ifndef NO_AFS
-
-static void
-display_tokens(int do_verbose)
-{
-    uint32_t i;
-    unsigned char t[4096];
-    struct ViceIoctl parms;
-
-    parms.in = (void *)&i;
-    parms.in_size = sizeof(i);
-    parms.out = (void *)t;
-    parms.out_size = sizeof(t);
-
-    for (i = 0;; i++) {
-        int32_t size_secret_tok, size_public_tok;
-        unsigned char *cell;
-	struct ClearToken ct;
-	unsigned char *r = t;
-	struct timeval tv;
-	char buf1[20], buf2[20];
-
-	if(k_pioctl(NULL, VIOCGETTOK, &parms, 0) < 0) {
-	    if(errno == EDOM)
-		break;
-	    continue;
-	}
-	if(parms.out_size > sizeof(t))
-	    continue;
-	if(parms.out_size < sizeof(size_secret_tok))
-	    continue;
-	t[min(parms.out_size,sizeof(t)-1)] = 0;
-	memcpy(&size_secret_tok, r, sizeof(size_secret_tok));
-	/* don't bother about the secret token */
-	r += size_secret_tok + sizeof(size_secret_tok);
-	if (parms.out_size < (r - t) + sizeof(size_public_tok))
-	    continue;
-	memcpy(&size_public_tok, r, sizeof(size_public_tok));
-	r += sizeof(size_public_tok);
-	if (parms.out_size < (r - t) + size_public_tok + sizeof(int32_t))
-	    continue;
-	memcpy(&ct, r, size_public_tok);
-	r += size_public_tok;
-	/* there is a int32_t with length of cellname, but we don't read it */
-	r += sizeof(int32_t);
-	cell = r;
-
-	gettimeofday (&tv, NULL);
-	strlcpy (buf1, printable_time(ct.BeginTimestamp),
-		 sizeof(buf1));
-	if (do_verbose || tv.tv_sec < ct.EndTimestamp)
-	    strlcpy (buf2, printable_time(ct.EndTimestamp),
-		     sizeof(buf2));
-	else
-	    strlcpy (buf2, N_(">>> Expired <<<", ""), sizeof(buf2));
-
-	printf("%s  %s  ", buf1, buf2);
-
-	if ((ct.EndTimestamp - ct.BeginTimestamp) & 1)
-	    printf(N_("User's (AFS ID %d) tokens for %s", ""), ct.ViceId, cell);
-	else
-	    printf(N_("Tokens for %s", ""), cell);
-	if (do_verbose)
-	    printf(" (%d)", ct.AuthHandle);
-	putchar('\n');
-    }
-}
-#endif
 
 /*
  * display the ccache in `cred_cache'
@@ -972,16 +904,6 @@ klist(struct klist_options *opt, int argc, char **argv)
         printf("%s", heim_string_get_utf8(s));
         heim_release(o);
         heim_release(s);
-    }
-
-    if (!do_test) {
-#ifndef NO_AFS
-	if (opt->tokens_flag && k_hasafs()) {
-	    if (opt->v5_flag)
-		printf("\n");
-	    display_tokens(opt->verbose_flag);
-	}
-#endif
     }
 
     return exit_status;

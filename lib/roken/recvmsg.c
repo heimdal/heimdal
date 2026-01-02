@@ -35,6 +35,7 @@
 
 #include "roken.h"
 
+#ifndef HAVE_RECVMSG
 ROKEN_LIB_FUNCTION ssize_t ROKEN_LIB_CALL
 recvmsg(int s, struct msghdr *msg, int flags)
 {
@@ -64,3 +65,4 @@ recvmsg(int s, struct msghdr *msg, int flags)
     free(buf);
     return ret;
 }
+#endif

@@ -115,6 +115,7 @@ _krb5_mk_req_internal(krb5_context context,
     ret = _krb5_build_authenticator(context,
 				    ac,
 				    ac->keyblock->keytype,
+                                    NULL,
 				    in_creds,
 				    c_opt,
 				    FALSE, /* channel_bound */

@@ -96,3 +96,10 @@
 
 [domain_realm]
         . = TEST.H5L.SE
+
+[bx509]
+        realms = {
+                TEST.H5L.SE = {
+                        cjwt_jwk_current = @objdir@/jwt_sign_pub.pem
+                }
+        }

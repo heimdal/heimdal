@@ -45,7 +45,6 @@ BINPROGRAMS=\
 	$(BINDIR)\kdeltkt.exe
 
 LIBEXECPROGRAMS=\
-	$(LIBEXECDIR)\kdigest.exe	\
 	$(LIBEXECDIR)\kimpersonate.exe
 
 NOINSTPROGRAMS=\
@@ -59,7 +58,6 @@ BINLIBS=\
 	$(LIBGSS_PREAUTH) \
 	$(LIBGSSAPI)	\
 	$(LIBHEIMDAL)	\
-	$(LIBHEIMNTLM)	\
 	$(LIBHX509)	\
 !if !defined(NO_AFS)
         $(LIBKAFS)      \
@@ -102,20 +100,6 @@ $(BINDIR)\kdestroy.exe: $(OBJ)\kdestroy.obj $(BINLIBS) $(OBJ)\kdestroy-version.r
 $(BINDIR)\kgetcred.exe: $(OBJ)\kgetcred.obj $(BINLIBS) $(OBJ)\kgetcred-version.res
 	$(EXECONLINK)
 	$(EXEPREP)
-
-
-$(LIBEXECDIR)\kdigest.exe: $(OBJ)\kdigest-commands.obj $(OBJ)\kdigest.obj $(BINLIBS) $(LIBSL) $(OBJ)\kdigest-version.res
-	$(EXECONLINK)
-	$(EXEPREP)
-
-$(OBJ)\kdigest.obj: kdigest.c
-	$(C2OBJ) -I$(OBJ)
-
-$(OBJ)\kdigest-commands.c $(OBJ)\kdigest-commands.h: kdigest-commands.in
-	cd $(OBJ)
-	$(CP) $(SRCDIR)\kdigest-commands.in $(OBJ)
-	$(BINDIR)\slc.exe kdigest-commands.in
-	cd $(SRCDIR)
 
 $(OBJ)\heimtools-commands.c $(OBJ)\heimtools-commands.h: heimtools-commands.in
 	cd $(OBJ)

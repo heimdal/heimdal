@@ -486,6 +486,58 @@ gen_options(struct assignment *opt1, const char *name)
     hprint(0, "};\n");
 }
 
+static int
+count_options(struct assignment *as)
+{
+    struct assignment *tmp;
+    int nargs = 0;
+    for(tmp = find(as, "option"); tmp != NULL; tmp = find_next(tmp, "option"))
+	nargs++;
+    return nargs + 1; /* +1 for help */
+}
+
+static void
+gen_args_array(struct assignment *as, const char *n)
+{
+    struct assignment *tmp;
+
+    cprint(0, "static struct getargs %s_args[] = {\n", n);
+    for(tmp = find(as, "option");
+	tmp != NULL;
+	tmp = find_next(tmp, "option")) {
+	struct assignment *type = find(tmp->u.assignment, "type");
+	struct assignment *lopt = find(tmp->u.assignment, "long");
+	struct assignment *sopt = find(tmp->u.assignment, "short");
+	struct assignment *aarg = find(tmp->u.assignment, "argument");
+	struct assignment *help = find(tmp->u.assignment, "help");
+	struct type_handler *th;
+
+	cprint(1, "{ ");
+	if(lopt)
+	    fprintf(cfile, "\"%s\", ", lopt->u.value);
+	else
+	    fprintf(cfile, "NULL, ");
+	if(sopt)
+	    fprintf(cfile, "'%c', ", *sopt->u.value);
+	else
+	    fprintf(cfile, "0, ");
+	th = find_handler(type);
+	fprintf(cfile, "%s, ", th->getarg_type);
+	fprintf(cfile, "NULL, ");
+	if(help)
+	    fprintf(cfile, "\"%s\", ", help->u.value);
+	else
+	    fprintf(cfile, "NULL, ");
+	if(aarg)
+	    fprintf(cfile, "\"%s\"", aarg->u.value);
+	else
+	    fprintf(cfile, "NULL");
+	fprintf(cfile, " },\n");
+    }
+    cprint(1, "{ \"help\", 'h', arg_flag, NULL, NULL, NULL }\n");
+    cprint(0, "};\n\n");
+}
+
 static void
 gen_wrapper(struct assignment *as)
 {
@@ -519,6 +571,9 @@ gen_wrapper(struct assignment *as)
 	hprint(0, "int %s(void*, int, char **);\n", f);
     }
 
+    /* Generate the static args array */
+    gen_args_array(as, n);
+
     fprintf(cfile, "static int\n");
     fprintf(cfile, "%s_wrap(int argc, char **argv)\n", n);
     fprintf(cfile, "{\n");
@@ -526,43 +581,7 @@ gen_wrapper(struct assignment *as)
 	cprint(1, "struct %s_options opt;\n", n);
     cprint(1, "int ret;\n");
     cprint(1, "int optidx = 0;\n");
-    cprint(1, "struct getargs args[] = {\n");
-    for(tmp = find(as, "option");
-	tmp != NULL;
-	tmp = find_next(tmp, "option")) {
-	struct assignment *type = find(tmp->u.assignment, "type");
-	struct assignment *lopt = find(tmp->u.assignment, "long");
-	struct assignment *sopt = find(tmp->u.assignment, "short");
-	struct assignment *aarg = find(tmp->u.assignment, "argument");
-	struct assignment *help = find(tmp->u.assignment, "help");
-
-	struct type_handler *th;
-
-	cprint(2, "{ ");
-	if(lopt)
-	    fprintf(cfile, "\"%s\", ", lopt->u.value);
-	else
-	    fprintf(cfile, "NULL, ");
-	if(sopt)
-	    fprintf(cfile, "'%c', ", *sopt->u.value);
-	else
-	    fprintf(cfile, "0, ");
-	th = find_handler(type);
-	fprintf(cfile, "%s, ", th->getarg_type);
-	fprintf(cfile, "NULL, ");
-	if(help)
-	    fprintf(cfile, "\"%s\", ", help->u.value);
-	else
-	    fprintf(cfile, "NULL, ");
-	if(aarg) {
-	    fprintf(cfile, "\"%s\"", aarg->u.value);
-            narguments++;
-	} else
-	    fprintf(cfile, "NULL");
-	fprintf(cfile, " },\n");
-    }
-    cprint(2, "{ \"help\", 'h', arg_flag, NULL, NULL, NULL }\n");
-    cprint(1, "};\n");
+    cprint(1, "struct getargs *args = %s_args;\n", n);
     cprint(1, "int help_flag = 0;\n");
 
     for(tmp = find(as, "option");
@@ -696,6 +715,28 @@ char cname[PATH_MAX];
 char hname[PATH_MAX];
 
 static void
+gen_command_info(struct assignment *as)
+{
+    struct assignment *a, *arg;
+    char *n;
+
+    a = find(as, "name");
+    n = strdup(a->u.value);
+    gen_name(n);
+    arg = find(as, "argument");
+
+    cprint(1, "{ \"%s\", ", a->u.value);
+    if (arg)
+	fprintf(cfile, "\"%s\", ", arg->u.value);
+    else
+	fprintf(cfile, "NULL, ");
+    fprintf(cfile, "%s_args, ", n);
+    fprintf(cfile, "%d ", count_options(as));
+    fprintf(cfile, "},\n");
+    free(n);
+}
+
+static void
 gen(struct assignment *as)
 {
     struct assignment *a;
@@ -707,6 +748,7 @@ gen(struct assignment *as)
 
     hprint(0, "#include <stdio.h>\n");
     hprint(0, "#include <sl.h>\n");
+    hprint(0, "#include <getarg.h>\n");
     hprint(0, "\n");
 
 
@@ -717,9 +759,17 @@ gen(struct assignment *as)
     for(a = as; a != NULL; a = a->next)
 	gen_command(a->u.assignment);
     cprint(1, "{ NULL, NULL, NULL, NULL }\n");
+    cprint(0, "};\n\n");
+
+    /* Generate the commands_info array for mandoc generation */
+    cprint(0, "SL_cmd_info commands_info[] = {\n");
+    for(a = as; a != NULL; a = a->next)
+	gen_command_info(a->u.assignment);
+    cprint(1, "{ NULL, NULL, NULL, 0 }\n");
     cprint(0, "};\n");
 
     hprint(0, "extern SL_cmd commands[];\n");
+    hprint(0, "extern SL_cmd_info commands_info[];\n");
 }
 
 int version_flag;

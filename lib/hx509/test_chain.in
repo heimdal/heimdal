@@ -40,12 +40,6 @@ objdir="@objdir@"
 stat="--statistic-file=${objdir}/statfile"
 
 hxtool="${TESTS_ENVIRONMENT} ./hxtool ${stat}"
-if ${hxtool} info | grep 'rsa: hcrypto null RSA' > /dev/null ; then
-    exit 77
-fi
-if ${hxtool} info | grep 'rand: not available' > /dev/null ; then
-    exit 77
-fi
 
 echo "cert -> root"
 ${hxtool} verify --missing-revoke \
@@ -187,19 +181,15 @@ ${hxtool} verify \
     anchor:FILE:$srcdir/data/ca.crt \
     crl:FILE:$srcdir/data/crl1.der > /dev/null && exit 1
 
-if ${hxtool} info | grep 'ecdsa: hcrypto null' > /dev/null ; then
-    echo "not testing ECDSA since hcrypto doesnt support ECDSA"
-else
-    echo "eccert -> root"
-    ${hxtool} verify --missing-revoke \
-	cert:FILE:$srcdir/data/secp256r2TestServer.cert.pem \
-	anchor:FILE:$srcdir/data/secp256r1TestCA.cert.pem > /dev/null || exit 1
-    
-    echo "eccert -> root"
-    ${hxtool} verify --missing-revoke \
-	cert:FILE:$srcdir/data/secp256r2TestClient.cert.pem \
-	anchor:FILE:$srcdir/data/secp256r1TestCA.cert.pem > /dev/null || exit 1
-fi
+echo "eccert -> root"
+${hxtool} verify --missing-revoke \
+    cert:FILE:$srcdir/data/secp256r2TestServer.cert.pem \
+    anchor:FILE:$srcdir/data/secp256r1TestCA.cert.pem > /dev/null || exit 1
+
+echo "eccert -> root"
+${hxtool} verify --missing-revoke \
+    cert:FILE:$srcdir/data/secp256r2TestClient.cert.pem \
+    anchor:FILE:$srcdir/data/secp256r1TestCA.cert.pem > /dev/null || exit 1
 
 echo "proxy cert"
 ${hxtool} verify --missing-revoke \

@@ -771,10 +771,17 @@ mk_kx509_req(krb5_context context,
     krb5_error_code ret = 0;
     krb5_creds this_cred;
     krb5_creds *cred = NULL;
-    HMAC_CTX ctx;
+    EVP_MAC *mac = NULL;
+    EVP_MAC_CTX *ctx = NULL;
+    const EVP_MD *md = EVP_sha1();
+    const char *mdname = EVP_MD_get0_name(md);
     const char *hostname;
+    OSSL_PARAM params[] = {
+        OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST, (char *)mdname, 0),
+        OSSL_PARAM_END
+    };
     char *start_realm = NULL;
-    size_t len = 0;
+    size_t len;
 
     krb5_data_zero(&pre_req);
     memset(&spki, 0, sizeof(spki));
@@ -853,25 +860,41 @@ mk_kx509_req(krb5_context context,
         goto out;
 
     /* Add the the key and HMAC to the message */
-    HMAC_CTX_init(&ctx);
-    if (HMAC_Init_ex(&ctx, kx509_ctx->hmac_key->keyvalue.data,
+    mac = EVP_MAC_fetch(NULL, "HMAC", NULL); // can't be NULL
+    ctx = EVP_MAC_CTX_new(mac);
+    if (EVP_MAC_init(ctx, kx509_ctx->hmac_key->keyvalue.data,
                      kx509_ctx->hmac_key->keyvalue.length,
-                     EVP_sha1(), NULL) == 0) {
-        HMAC_CTX_cleanup(&ctx);
+                     params) != 1) {
         ret = krb5_enomem(context);
     } else {
-        HMAC_Update(&ctx, version_2_0, sizeof(version_2_0));
+        if (EVP_MAC_update(ctx, version_2_0, sizeof(version_2_0)) != 1) {
+            ret = krb5_enomem(context);
+            goto out;
+        }
         if (private_key || kx509_ctx->given_csr.data) {
-            HMAC_Update(&ctx, kx509_req.pk_key.data, kx509_req.pk_key.length);
+            if (EVP_MAC_update(ctx, kx509_req.pk_key.data,
+                               kx509_req.pk_key.length) != 1) {
+                ret = krb5_enomem(context);
+                goto out;
+            }
         } else {
             /* Probe */
-            HMAC_Update(&ctx, kx509_req.authenticator.data, kx509_req.authenticator.length);
+            if (EVP_MAC_update(ctx, kx509_req.authenticator.data,
+                               kx509_req.authenticator.length) != 1) {
+                ret = krb5_enomem(context);
+                goto out;
+            }
         }
-        HMAC_Final(&ctx, kx509_req.pk_hash.data, 0);
-        HMAC_CTX_cleanup(&ctx);
+        if (EVP_MAC_final(ctx, kx509_req.pk_hash.data, &len,
+                          kx509_req.pk_hash.length) != 1) {
+            ret = krb5_enomem(context);
+            goto out;
+        }
+        // assert(len == kx509_req.pk_hash.length);
     }
 
     /* Encode the message, prefix `version_2_0', output the result */
+    len = 0;
     if (ret == 0)
         ASN1_MALLOC_ENCODE(Kx509Request, pre_req.data, pre_req.length, &kx509_req, &len, ret);
     if (ret == 0)
@@ -883,6 +906,8 @@ mk_kx509_req(krb5_context context,
     }
 
 out:
+    EVP_MAC_CTX_free(ctx);
+    EVP_MAC_free(mac);
     free(start_realm);
     free(pre_req.data);
     krb5_free_creds(context, cred);
@@ -972,7 +997,14 @@ rd_kx509_resp(krb5_context context,
     heim_string_t hestr;
     heim_error_t herr = NULL;
     const char *estr;
-    HMAC_CTX ctx;
+    EVP_MAC *mac = NULL;
+    EVP_MAC_CTX *ctx = NULL;
+    const EVP_MD *md = EVP_sha1();
+    const char *mdname = EVP_MD_get0_name(md);
+    OSSL_PARAM params[] = {
+        OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST, (char *)mdname, 0),
+        OSSL_PARAM_END
+    };
     size_t hdr_len = sizeof(version_2_0);
     size_t len;
 
@@ -996,15 +1028,18 @@ rd_kx509_resp(krb5_context context,
         return ret;
     }
 
-    HMAC_CTX_init(&ctx);
-    if (HMAC_Init_ex(&ctx, kx509_ctx->hmac_key->keyvalue.data,
-                     kx509_ctx->hmac_key->keyvalue.length, EVP_sha1(), NULL) == 0) {
+    mac = EVP_MAC_fetch(NULL, "HMAC", NULL); // can't be NULL
+    ctx = EVP_MAC_CTX_new(mac);
+    if (EVP_MAC_init(ctx, kx509_ctx->hmac_key->keyvalue.data,
+                     kx509_ctx->hmac_key->keyvalue.length,
+                     params) != 1) {
+        EVP_MAC_CTX_free(ctx);
+        EVP_MAC_free(mac);
         free_Kx509Response(&r);
-        HMAC_CTX_cleanup(&ctx);
         return krb5_enomem(context);
     }
 
-    HMAC_Update(&ctx, version_2_0, sizeof(version_2_0));
+    EVP_MAC_update(ctx, version_2_0, sizeof(version_2_0));
 
     {
         int32_t t = r.error_code;
@@ -1026,7 +1061,7 @@ rd_kx509_resp(krb5_context context,
         ret = der_put_integer(&encint[sizeof(encint) - 1],
                               sizeof(encint), &t, &k);
         if (ret == 0)
-            HMAC_Update(&ctx, &encint[sizeof(encint)] - k, k);
+            EVP_MAC_update(ctx, &encint[sizeof(encint)] - k, k);
 
         /* Normalize error code */
         if (r.error_code == 0) {
@@ -1056,11 +1091,12 @@ rd_kx509_resp(krb5_context context,
         }
     }
     if (r.certificate)
-        HMAC_Update(&ctx, r.certificate->data, r.certificate->length);
+        EVP_MAC_update(ctx, r.certificate->data, r.certificate->length);
     if (r.e_text)
-        HMAC_Update(&ctx, *r.e_text, strlen(*r.e_text));
-    HMAC_Final(&ctx, &digest, 0);
-    HMAC_CTX_cleanup(&ctx);
+        EVP_MAC_update(ctx, (const unsigned char *)*r.e_text, strlen(*r.e_text));
+    EVP_MAC_final(ctx, digest, &len, sizeof(digest));
+    EVP_MAC_CTX_free(ctx);
+    EVP_MAC_free(mac);
 
     if (r.hash == NULL) {
         /*

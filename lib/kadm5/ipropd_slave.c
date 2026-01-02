@@ -620,19 +620,24 @@ receive_everything(krb5_context context, int fd,
 		krb5_err(context, IPROPD_RESTART_SLOW, ret, "hdb_store");
 
 	    hdb_free_entry(context, mydb, &entry);
-	    krb5_data_free(&data);
-	} else if (opcode == NOW_YOU_HAVE)
-	    ;
-	else
+	} else if (opcode == NOW_YOU_HAVE) {
+	    /* Read vno before freeing data, since sp is backed by data */
+	    krb5_ret_uint32(sp, &vno);
+	    krb5_storage_free(sp);
+	    sp = NULL;
+	} else
 	    krb5_errx(context, 1, "strange opcode %d", opcode);
+        krb5_data_free(&data);
     } while (opcode == ONE_PRINC);
 
     if (opcode != NOW_YOU_HAVE)
         krb5_errx(context, IPROPD_RESTART_SLOW,
                   "receive_everything: strange %d", opcode);
 
-    krb5_ret_uint32(sp, &vno);
-    krb5_storage_free(sp);
+    if (sp) {
+        krb5_storage_free(sp);
+        sp = NULL;
+    }
 
     reinit_log(context, server_context, vno);
 
@@ -647,7 +652,7 @@ receive_everything(krb5_context context, int fd,
     if (ret)
         krb5_err(context, IPROPD_RESTART_SLOW, ret, "db->rename");
 
-
+    ret = mydb->hdb_destroy(context, mydb);
     return 0;
 
  cleanup:
@@ -719,6 +724,8 @@ static char *config_file;
 static int version_flag;
 static int help_flag;
 static char *port_str;
+static char *ossl_cnf;
+static char *ossl_propq;
 static int detach_from_console;
 static int daemon_child = -1;
 
@@ -747,6 +754,12 @@ static struct getargs args[] = {
     { "async-hdb", 'a', arg_flag, &async_hdb, NULL, NULL },
     { "hostname", 0, arg_string, rk_UNCONST(&slave_str),
       "hostname of slave (if not same as hostname)", "hostname" },
+    { "ossl-cnf",     0,      arg_string, &ossl_cnf,
+      "OpenSSL configuration file", "FILE"
+    },
+    { "ossl-propq",   0,      arg_string, &ossl_propq,
+      "OpenSSL property query string (e.g., provider=pkcs11)", "PROPQ"
+    },
     { "verbose", 0, arg_flag, &verbose, NULL, NULL },
     { "version", 0, arg_flag, &version_flag, NULL, NULL },
     { "help", 0, arg_flag, &help_flag, NULL, NULL }
@@ -804,6 +817,12 @@ main(int argc, char **argv)
     ret = krb5_init_context(&context);
     if (ret)
 	errx (1, "krb5_init_context failed: %d", ret);
+
+    if (ossl_cnf || ossl_propq) {
+	ret = krb5_set_ossl_cnf_propq(context, ossl_cnf, ossl_propq);
+	if (ret)
+	    krb5_err(context, 1, ret, "krb5_set_ossl_cnf_propq");
+    }
 
     setup_signal();
 
@@ -1178,7 +1197,7 @@ main(int argc, char **argv)
     }
 
     if (0);
-#ifndef NO_SIGXCPU
+#if defined(SIGXCPU) && !defined(NO_SIGXCPU)
     else if(exit_flag == SIGXCPU)
 	krb5_warnx(context, "%s CPU time limit exceeded", getprogname());
 #endif

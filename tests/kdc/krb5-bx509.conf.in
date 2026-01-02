@@ -85,6 +85,8 @@
 [bx509]
         realms = {
                 TEST.H5L.SE = {
+                        # JWT token validation keys
+                        cjwt_jwk_current = @objdir@/jwt_sign_pub.pem
                         # Default (no cert exts requested)
                         user = {
                                 # Use an issuer for user certs:

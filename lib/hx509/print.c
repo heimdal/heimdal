@@ -1129,12 +1129,14 @@ hx509_validate_cert(hx509_context context,
 						&c->signatureAlgorithm,
 						&c->tbsCertificate._save,
 						&c->signatureValue);
-	if (ret == 0)
+	if (ret == 0) {
 	    validate_print(ctx, HX509_VALIDATE_F_VERBOSE,
 			   "Self-signed certificate was self-signed\n");
-	else
+	} else {
 	    validate_print(ctx, HX509_VALIDATE_F_VALIDATE,
 			   "Self-signed certificate NOT really self-signed!\n");
+	    hx509_clear_error_string(context);
+	}
     }
 
     hx509_name_free(&subject);

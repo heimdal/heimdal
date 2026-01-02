@@ -35,7 +35,7 @@
 #include "roken.h"
 
 #ifdef WIN32
-#include <Shlobj.h>  // need to include definitions of constants
+#include <shlobj.h>  // need to include definitions of constants
 #define SECURITY_WIN32
 #include <security.h>
 #else
@@ -136,7 +136,6 @@ roken_get_homedir(char *home, size_t homesz)
         }
         return home;
     }
-    HEIM_FALLTHROUGH;
 #else
 #ifdef HAVE_GETPWNAM_R
     size_t buflen = 2048;

@@ -47,14 +47,17 @@ static char *fuzz_client_name;
 static char *fuzz_keytab_name;
 static char *fuzz_service_name;
 static char *fuzz_admin_server;
+static int fuzz_stdin_flag;
 #endif
+int async_flag;
 static int help_flag;
 static int version_flag;
 static int debug_flag;
-static int readonly_flag;
+int readonly_flag;
 static char *port_str;
 char *realm;
 int list_chunk_size = -1;
+krb5_keytab keytab;
 
 static int detach_from_console = -1;
 int daemon_child = -1;
@@ -71,6 +74,7 @@ static struct getargs args[] = {
     {	"realm",	'r',	arg_string,   &realm,
 	"realm to use", "realm"
     },
+    {	"async", 'A', arg_flag, &async_flag, "do not fsync HDB writes", NULL },
 #ifdef HAVE_DLOPEN
     { "check-library", 0, arg_string, &check_library,
       "library to load password check function from", "library" },
@@ -106,6 +110,8 @@ static struct getargs args[] = {
 	"Keytab for fuzzing", "KEYTAB" },
     {	"fuzz-server",	0,	arg_string, &fuzz_admin_server,
 	"Name of kadmind self instance", "HOST:PORT" },
+    {	"fuzz-stdin",	0,	arg_flag, &fuzz_stdin_flag,
+	"Read raw kadmin RPCs from stdin (for fuzzing)", NULL },
 #endif
     {	"help",		'h',	arg_flag,   &help_flag, NULL, NULL },
     {	"version",	'v',	arg_flag,   &version_flag, NULL, NULL }
@@ -123,6 +129,7 @@ usage(int ret)
 }
 
 static void *fuzz_thread(void *);
+static void fuzz_stdin(krb5_context);
 
 int
 main(int argc, char **argv)
@@ -132,7 +139,6 @@ main(int argc, char **argv)
     int optidx = 0;
     int i;
     krb5_log_facility *logfacility;
-    krb5_keytab keytab;
     krb5_socket_t sfd = rk_INVALID_SOCKET;
 
     setprogname(argv[0]);
@@ -205,6 +211,15 @@ main(int argc, char **argv)
     ret = kadm5_add_passwd_quality_verifier(context, NULL);
     if (ret)
 	krb5_err(context, 1, ret, "kadm5_add_passwd_quality_verifier");
+
+#ifndef WIN32
+    if (fuzz_stdin_flag) {
+	if(realm)
+	    krb5_set_default_realm(context, realm);
+	fuzz_stdin(context);
+	exit(0);
+    }
+#endif
 
     if(debug_flag) {
 	int debug_port;
@@ -314,5 +329,216 @@ fuzz_thread(void *arg)
     exit(0);
 
     return NULL;
+}
+
+/*
+ * Fuzzing mode: read raw kadmin RPC messages from stdin, process them
+ * with kadmind_dispatch(), and write responses to stdout.
+ *
+ * Message format (both input and output):
+ *   4-byte big-endian length
+ *   N bytes of message data
+ *
+ * This bypasses all Kerberos authentication and encryption, allowing
+ * direct fuzzing of the RPC parsing and handling code.
+ *
+ * A temporary directory is created with an empty HDB database to allow
+ * the fuzzer to exercise database operations.
+ */
+static void
+fuzz_stdin(krb5_context contextp)
+{
+    krb5_error_code ret;
+    kadm5_config_params realm_params;
+    void *kadm_handlep;
+    krb5_data in, out;
+    unsigned char lenbuf[4];
+    uint32_t len;
+    ssize_t n;
+    char tmpdir[] = "/tmp/kadmind-fuzz-XXXXXX";
+    char *dbname = NULL;
+    char *acl_file = NULL;
+    char *stash_file = NULL;
+    int fd;
+
+    /* Create a temporary directory for the fuzz HDB */
+    if (mkdtemp(tmpdir) == NULL)
+	err(1, "mkdtemp");
+
+    /* Set up paths for database files */
+    if (asprintf(&dbname, "%s/heimdal", tmpdir) == -1 ||
+	asprintf(&acl_file, "%s/kadmind.acl", tmpdir) == -1 ||
+	asprintf(&stash_file, "%s/m-key", tmpdir) == -1)
+	errx(1, "out of memory");
+
+    /* Create an empty ACL file (allow all for fuzzing) */
+    fd = open(acl_file, O_CREAT | O_WRONLY | O_TRUNC, 0600);
+    if (fd >= 0) {
+	/* Write a permissive ACL for fuzzing */
+	if (write(fd, "*/admin@* all\n", 14) < 0 ||
+	    write(fd, "*@* all\n", 8) < 0)
+	    warn("write to ACL file");
+	close(fd);
+    }
+
+    /*
+     * Don't create a stash file - hdb_set_master_keyfile() returns success
+     * if the file doesn't exist (ENOENT), which means no master key encryption.
+     * An empty file would cause HEIM_ERR_EOF.
+     */
+
+    memset(&realm_params, 0, sizeof(realm_params));
+    realm_params.mask = KADM5_CONFIG_REALM | KADM5_CONFIG_DBNAME |
+			KADM5_CONFIG_ACL_FILE | KADM5_CONFIG_STASH_FILE;
+    realm_params.realm = realm ? realm : "FUZZ.REALM";
+    realm_params.dbname = dbname;
+    realm_params.acl_file = acl_file;
+    realm_params.stash_file = stash_file;
+
+    /* Set default realm on the context so principal parsing works */
+    ret = krb5_set_default_realm(contextp, realm_params.realm);
+    if (ret)
+	krb5_err(contextp, 1, ret, "krb5_set_default_realm");
+
+    /* Initialize server context with a fake admin client */
+    ret = kadm5_s_init_with_password_ctx(contextp,
+					 KADM5_ADMIN_SERVICE,  /* client */
+					 NULL,                  /* password */
+					 KADM5_ADMIN_SERVICE,  /* service */
+					 &realm_params,
+					 0, 0,
+					 &kadm_handlep);
+    if (ret)
+	krb5_err(contextp, 1, ret, "kadm5_s_init_with_password_ctx");
+
+    /*
+     * Pre-populate the HDB with test principals so fuzzing can exercise
+     * code paths beyond "principal not found" errors.
+     */
+    {
+	kadm5_principal_ent_rec ent;
+	krb5_principal testprinc;
+	const char *test_principals[] = {
+	    "test",
+	    "admin/admin",
+	    "user1",
+	    "user2",
+	    "host/localhost",
+	    "HTTP/www.example.com",
+	    "krbtgt/FUZZ.REALM",
+	    NULL
+	};
+	int i;
+
+	for (i = 0; test_principals[i] != NULL; i++) {
+	    memset(&ent, 0, sizeof(ent));
+	    ret = krb5_parse_name(contextp, test_principals[i], &testprinc);
+	    if (ret)
+		continue;
+	    ent.principal = testprinc;
+	    ent.max_life = 86400;
+	    ent.max_renewable_life = 604800;
+	    /* Create with a simple password - we don't care about security */
+	    (void)kadm5_create_principal(kadm_handlep, &ent,
+					 KADM5_PRINCIPAL | KADM5_MAX_LIFE |
+					 KADM5_MAX_RLIFE,
+					 "fuzzpass");
+	    krb5_free_principal(contextp, testprinc);
+	}
+    }
+
+    /* Read-process-write loop */
+    for (;;) {
+	/* Read 4-byte length prefix */
+	n = read(STDIN_FILENO, lenbuf, 4);
+	if (n == 0)
+	    break;  /* EOF */
+	if (n != 4)
+	    errx(1, "Short read on length prefix");
+
+	len = (lenbuf[0] << 24) | (lenbuf[1] << 16) |
+	      (lenbuf[2] << 8) | lenbuf[3];
+
+	if (len > 10 * 1024 * 1024)
+	    errx(1, "Message too large: %u", len);
+
+	/* Read message body */
+	ret = krb5_data_alloc(&in, len);
+	if (ret)
+	    krb5_err(contextp, 1, ret, "krb5_data_alloc");
+
+	n = read(STDIN_FILENO, in.data, len);
+	if (n != (ssize_t)len)
+	    errx(1, "Short read on message body");
+
+	/* Dispatch the RPC */
+	krb5_data_zero(&out);
+	ret = kadmind_dispatch(kadm_handlep,
+			       TRUE,           /* initial ticket */
+			       &in,
+			       &out,
+			       readonly_flag);
+	krb5_data_free(&in);
+
+	if (ret) {
+	    /* On error, write zero-length response */
+	    memset(lenbuf, 0, 4);
+	    if (write(STDOUT_FILENO, lenbuf, 4) < 0)
+		break;
+	} else {
+	    /* Write response with length prefix */
+	    lenbuf[0] = (out.length >> 24) & 0xff;
+	    lenbuf[1] = (out.length >> 16) & 0xff;
+	    lenbuf[2] = (out.length >> 8) & 0xff;
+	    lenbuf[3] = out.length & 0xff;
+	    if (write(STDOUT_FILENO, lenbuf, 4) < 0)
+		break;
+	    if (out.length > 0 && write(STDOUT_FILENO, out.data, out.length) < 0)
+		break;
+	}
+	krb5_data_free(&out);
+    }
+
+    kadm5_destroy(kadm_handlep);
+
+    /* Clean up temp directory - best effort, don't fail on errors */
+    if (dbname) {
+	char *p;
+	/* Remove database files (sqlite creates multiple files) */
+	if (asprintf(&p, "%s.sqlite3", dbname) != -1) {
+	    (void) unlink(p);
+	    free(p);
+	}
+	if (asprintf(&p, "%s.sqlite3-journal", dbname) != -1) {
+	    (void) unlink(p);
+	    free(p);
+	}
+	if (asprintf(&p, "%s.sqlite3-wal", dbname) != -1) {
+	    (void) unlink(p);
+	    free(p);
+	}
+	if (asprintf(&p, "%s.sqlite3-shm", dbname) != -1) {
+	    (void) unlink(p);
+	    free(p);
+	}
+	free(dbname);
+    }
+    if (acl_file) {
+	(void) unlink(acl_file);
+	free(acl_file);
+    }
+    if (stash_file) {
+	(void) unlink(stash_file);
+	free(stash_file);
+    }
+    /* Remove log file if created */
+    {
+	char *logfile;
+	if (asprintf(&logfile, "%s/log", tmpdir) != -1) {
+	    (void) unlink(logfile);
+	    free(logfile);
+	}
+    }
+    (void) rmdir(tmpdir);
 }
 #endif

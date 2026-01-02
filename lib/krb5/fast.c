@@ -676,11 +676,12 @@ _krb5_fast_unwrap_error(krb5_context context,
 			int32_t nonce,
 			struct krb5_fast_state *state,
 			METHOD_DATA *md,
+			TYPED_DATA *td,
 			KRB_ERROR *error)
 {
     KrbFastResponse fastrep;
     krb5_error_code ret;
-    PA_DATA *pa;
+    PA_DATA *pa = NULL;
     int idx;
 
     if (state->armor_crypto == NULL)
@@ -692,7 +693,8 @@ _krb5_fast_unwrap_error(krb5_context context,
 	_krb5_debug(context, 10, "using FAST without FAST outer error code");
 
     idx = 0;
-    pa = krb5_find_padata(md->val, md->len, KRB5_PADATA_FX_FAST, &idx);
+    if (md)
+        pa = krb5_find_padata(md->val, md->len, KRB5_PADATA_FX_FAST, &idx);
     if (pa == NULL) {
 	/*
 	 * Typically _krb5_fast_wrap_req() has set KRB5_FAST_EXPECTED, which

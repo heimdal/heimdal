@@ -5,7 +5,7 @@ PKCS12 DEFINITIONS ::=
 BEGIN
 
 IMPORTS ContentInfo FROM cms
-	DigestInfo FROM rfc2459
+	DigestInfo, AlgorithmIdentifier FROM rfc2459
 	HEIM_ANY, HEIM_ANY_SET FROM heim;
 
 -- The PFX PDU
@@ -77,5 +77,52 @@ PKCS12-OctetString ::= OCTET STRING
 
 -- KeyBag ::= PrivateKeyInfo
 -- PKCS8ShroudedKeyBag ::= EncryptedPrivateKeyInfo
+
+-- PKCS#5 v2.0/v2.1 (RFC 8018) definitions for modern PKCS#12 PBE
+
+id-pkcs-5 OBJECT IDENTIFIER ::= { iso(1) member-body(2) us(840)
+	rsadsi(113549) pkcs(1) pkcs-5(5) }
+
+id-PBES2 OBJECT IDENTIFIER ::= { id-pkcs-5 13 }
+id-PBKDF2 OBJECT IDENTIFIER ::= { id-pkcs-5 12 }
+
+-- PBKDF2 PRF algorithm OIDs (from RFC 8018, using RSA DigestAlgorithm arc)
+-- id-rsadsi OBJECT IDENTIFIER ::= { 1 2 840 113549 }
+-- id-digestAlgorithm OBJECT IDENTIFIER ::= { id-rsadsi 2 }
+id-hmacWithSHA1   OBJECT IDENTIFIER ::=
+	{ iso(1) member-body(2) us(840) rsadsi(113549) digestAlgorithm(2) 7 }
+id-hmacWithSHA256 OBJECT IDENTIFIER ::=
+	{ iso(1) member-body(2) us(840) rsadsi(113549) digestAlgorithm(2) 9 }
+id-hmacWithSHA384 OBJECT IDENTIFIER ::=
+	{ iso(1) member-body(2) us(840) rsadsi(113549) digestAlgorithm(2) 10 }
+id-hmacWithSHA512 OBJECT IDENTIFIER ::=
+	{ iso(1) member-body(2) us(840) rsadsi(113549) digestAlgorithm(2) 11 }
+
+-- PBES2 encryption scheme OIDs (from RFC 8018 / NIST)
+id-aes128-CBC OBJECT IDENTIFIER ::=
+	{ joint-iso-itu-t(2) country(16) us(840) organization(1)
+	  gov(101) csor(3) nistAlgorithms(4) aes(1) 2 }
+id-aes192-CBC OBJECT IDENTIFIER ::=
+	{ joint-iso-itu-t(2) country(16) us(840) organization(1)
+	  gov(101) csor(3) nistAlgorithms(4) aes(1) 22 }
+id-aes256-CBC OBJECT IDENTIFIER ::=
+	{ joint-iso-itu-t(2) country(16) us(840) organization(1)
+	  gov(101) csor(3) nistAlgorithms(4) aes(1) 42 }
+
+-- PBKDF2-params (RFC 8018, Section A.2)
+-- Note: salt can be CHOICE { specified OCTET STRING, otherSource AlgorithmIdentifier }
+-- but in practice it's always an OCTET STRING, so we simplify
+PBKDF2-params ::= SEQUENCE {
+	salt		OCTET STRING,
+	iterationCount	INTEGER (1..4294967295),
+	keyLength	INTEGER (1..4294967295) OPTIONAL,
+	prf		AlgorithmIdentifier OPTIONAL -- default id-hmacWithSHA1
+}
+
+-- PBES2-params (RFC 8018, Section A.4)
+PBES2-params ::= SEQUENCE {
+	keyDerivationFunc  AlgorithmIdentifier, -- id-PBKDF2
+	encryptionScheme   AlgorithmIdentifier  -- e.g., id-aes256-CBC
+}
 
 END

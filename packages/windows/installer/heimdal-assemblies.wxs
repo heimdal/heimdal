@@ -32,13 +32,11 @@
           <File Name="heimdal.dll" KeyPath="yes" Assembly="win32"
                 AssemblyManifest="id.Heimdal.Kerberos.manifest" />
           <File Name="com_err.dll" />
-          <File Name="heimntlm.dll" />
           <File Name="gssapi.dll" />
 	  <File Name="libhdb.dll" />
 	  <File Name="libkadm5srv.dll" />
           <File Name="heimdal.pdb" />
           <File Name="com_err.pdb" />
-          <File Name="heimntlm.pdb" />
           <File Name="gssapi.pdb" />
 	  <File Name="libhdb.pdb" />
 	  <File Name="libkadm5srv.pdb" />

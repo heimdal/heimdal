@@ -90,6 +90,7 @@ struct {
         "\x24\xd7\xf6\xb6\xba\xe4\xe5\xc0\x0d\x20\x82\xc5\xeb\xab\x36\x72",
 	16
     },
+#if 0
     /* We don't yet have a PRF for 1DES in Heimdal */
     {
 	"key1", "a", ETYPE_DES_CBC_CRC,
@@ -106,6 +107,7 @@ struct {
         "\xf7\x3e\x62\x83\x4f\xe5\x4a\x01",
 	24
     },
+#endif
 };
 
 

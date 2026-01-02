@@ -64,7 +64,6 @@ libkrb5_OBJS =			\
 	$(OBJ)\crypto-arcfour.obj	    \
 	$(OBJ)\crypto-des-common.obj	    \
 	$(OBJ)\crypto-des.obj		    \
-	$(OBJ)\crypto-des3.obj		    \
 	$(OBJ)\crypto-evp.obj		    \
 	$(OBJ)\crypto-null.obj		    \
 	$(OBJ)\crypto-pk.obj		    \
@@ -73,7 +72,6 @@ libkrb5_OBJS =			\
 	$(OBJ)\dcache.obj                   \
 	$(OBJ)\db_plugin.obj		    \
 	$(OBJ)\deprecated.obj		    \
-	$(OBJ)\digest.obj		    \
 	$(OBJ)\dll.obj			    \
 	$(OBJ)\eai_to_heim_errno.obj	    \
         $(OBJ)\enomem.obj                   \
@@ -141,8 +139,6 @@ libkrb5_OBJS =			\
 	$(OBJ)\salt-aes-sha1.obj	    \
 	$(OBJ)\salt-aes-sha2.obj	    \
 	$(OBJ)\salt-arcfour.obj		    \
-	$(OBJ)\salt-des.obj		    \
-	$(OBJ)\salt-des3.obj		    \
 	$(OBJ)\salt.obj			    \
 	$(OBJ)\scache.obj		    \
 	$(OBJ)\send_to_kdc.obj		    \
@@ -226,7 +222,6 @@ dist_libkrb5_la_SOURCES =			\
 	crypto-arcfour.c			\
 	crypto-des.c				\
 	crypto-des-common.c			\
-	crypto-des3.c				\
 	crypto-evp.c				\
 	crypto-pk.c				\
 	crypto-rand.c				\
@@ -235,7 +230,6 @@ dist_libkrb5_la_SOURCES =			\
 	data.c					\
 	dcache.c                                \
 	deprecated.c				\
-	digest.c				\
 	eai_to_heim_errno.c			\
         enomem.c                                \
 	error_string.c				\
@@ -304,8 +298,6 @@ dist_libkrb5_la_SOURCES =			\
 	salt-aes-sha1.c				\
 	salt-aes-sha2.c				\
 	salt-arcfour.c				\
-	salt-des.c				\
-	salt-des3.c				\
 	scache.c				\
 	send_to_kdc.c				\
 	sendauth.c				\
@@ -398,7 +390,6 @@ librfc3961_OBJS=\
 	$(OBJ)\crypto-arcfour.obj	\
 	$(OBJ)\crypto-des.obj		\
 	$(OBJ)\crypto-des-common.obj	\
-	$(OBJ)\crypto-des3.obj		\
 	$(OBJ)\crypto-evp.obj		\
 	$(OBJ)\crypto-null.obj		\
 	$(OBJ)\crypto-pk.obj		\
@@ -412,8 +403,6 @@ librfc3961_OBJS=\
 	$(OBJ)\salt-aes-sha1.obj	\
 	$(OBJ)\salt-aes-sha2.obj	\
 	$(OBJ)\salt-arcfour.obj		\
-	$(OBJ)\salt-des.obj		\
-	$(OBJ)\salt-des3.obj		\
 	$(OBJ)\sp800-108-kdf.obj	\
 	$(OBJ)\store-int.obj		\
 	$(OBJ)\warn.obj
@@ -526,11 +515,11 @@ test-run:
 	cd $(SRCDIR)
 
 $(test_binaries): $$(@R).obj $(LIBHEIMDAL) $(LIBVERS) $(LIBROKEN) $(LIBHEIMBASE)
-	$(EXECONLINK)
+	$(EXECONLINK) $(LIB_openssl_crypto)
 	$(EXEPREP_NODIST)
 
 $(OBJ)\test_rfc3961.exe: $(OBJ)\test_rfc3961.obj $(LIBRFC3961) $(LIBHEIMDAL) $(LIBVERS) $(LIBCOMERR) $(LIBROKEN) $(LIBHEIMBASE)
-	$(EXECONLINK)
+	$(EXECONLINK) $(LIB_openssl_crypto)
 	$(EXEPREP_NODIST)
 
 $(test_binaries:.exe=.obj): $$(@B).c

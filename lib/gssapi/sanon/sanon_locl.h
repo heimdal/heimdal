@@ -36,12 +36,13 @@
 
 #include <krb5_locl.h> /* for _krb5_SP800_108_HMAC_KDF() */
 
-#include <hcrypto/x25519_ref10.h>
-
 #include <gssapi.h>
 #include <gkrb5_err.h> /* for GSS_KRB5_S_XXX */
 
 #include "mech/mech_locl.h"
+
+#define crypto_scalarmult_curve25519_BYTES 32
+#define X25519_LEN 32
 
 typedef struct sanon_ctx_desc {
     /* X25519 ECDH secret key */

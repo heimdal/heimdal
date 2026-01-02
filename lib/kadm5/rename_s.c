@@ -108,6 +108,12 @@ kadm5_s_rename_principal(void *server_handle,
 	ret = context->db->hdb_open(context->context, context->db, O_RDWR, 0);
 	if(ret)
 	    return ret;
+
+        if (context->config.mask & KADM5_CONFIG_ASYNC_HDB_WRITES) {
+            ret = context->db->hdb_set_sync(context->context, context->db, 0);
+            if (ret)
+                return ret;
+        }
     }
 
     ret = kadm5_log_init(context);

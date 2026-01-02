@@ -151,6 +151,7 @@ HEIMDAL_X509_1.2 {
 		hx509_context_free;
 		hx509_context_init;
 		hx509_context_set_missing_revoke;
+		hx509_context_set_ossl_cnf_propq;
 		hx509_crl_add_revoked_certs;
 		hx509_crl_alloc;
 		hx509_crl_free;
@@ -242,6 +243,7 @@ HEIMDAL_X509_1.2 {
 		hx509_query_match_expr;
 		hx509_query_match_friendly_name;
 		hx509_query_match_issuer_serial;
+		hx509_query_match_key_algorithm;
 		hx509_query_match_option;
 		hx509_query_statistic_file;
 		hx509_query_unparse_stats;
@@ -271,6 +273,8 @@ HEIMDAL_X509_1.2 {
 		hx509_revoke_print;
 		hx509_set_error_string;
 		hx509_set_error_stringv;
+		hx509_signature_ed25519;
+		hx509_signature_ed448;
 		hx509_signature_md5;
 		hx509_signature_rsa;
 		hx509_signature_rsa_with_md5;
@@ -311,5 +315,16 @@ HEIMDAL_X509_1.2 {
 HEIMDAL_X509_1.3 {
 	global:
 		hx509_ca_tbs_set_signature_algorithm;
+};
+
+HEIMDAL_X509_1.4 {
+	global:
+		hx509_jwk_to_json;
+		hx509_jws_sign;
+		hx509_jws_verify;
+		hx509_jwt_sign;
+		hx509_jwt_verify;
+		hx509_pem_to_jwk;
+		hx509_pem_to_jwk_json;
 };
 

@@ -304,9 +304,6 @@ _gss_load_mech(void)
 	if (add_builtin(__gss_spnego_initialize()))
             _gss_mg_log(1, "Out of memory while adding builtin SPNEGO "
                         "mechanism to the GSS mechanism switch");
-	if (add_builtin(__gss_ntlm_initialize()))
-            _gss_mg_log(1, "Out of memory while adding builtin NTLM "
-                        "mechanism to the GSS mechanism switch");
 
 #ifdef HAVE_DLOPEN
 	fp = fopen(conf ? conf : _PATH_GSS_MECH, "r");

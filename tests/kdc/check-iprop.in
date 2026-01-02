@@ -197,10 +197,12 @@ check_pidfile_is_dead () {
 
 wait_for_slave () {
     wait_for "iprop versions to change and/or slave to catch up" get_iprop_ver "$@"
+    sleep 1
 }
 
 wait_for_slave2 () {
     wait_for "iprop versions to change and/or second slave to catch up" get_iprop_ver2 "$@"
+    sleep 1
 }
 
 wait_for_master_down () {
@@ -379,7 +381,7 @@ slave_get host/foo@${R} | \
 wait_for_slave2 4
 
 echo "Delete 3DES keys"
-${kadmin} -l del_enctype host/foo@${R} des3-cbc-sha1
+${kadmin} -l del_enctype host/foo@${R} aes256-cts-hmac-sha1-96
 wait_for_slave
 KRB5_CONFIG="${objdir}/krb5-slave.conf" \
 ${kadmin} -l get host/foo@${R} | \
@@ -388,7 +390,7 @@ ${kadmin} -l get host/foo@${R} | \
 ' | ${EGREP} 1234 > /dev/null || exit 1
 KRB5_CONFIG="${objdir}/krb5-slave.conf" \
 ${kadmin} -l get host/foo@${R} | \
-    ${EGREP} 'Keytypes:.*des3-cbc-sha1' > /dev/null && exit 1
+    ${EGREP} 'Keytypes:.*aes256-cts-hmac-sha1-96' > /dev/null && exit 1
 
 echo "Change policy host"
 ${kadmin} -l modify --policy=default host/foo@${R} || exit 1

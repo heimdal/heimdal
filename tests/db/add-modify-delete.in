@@ -46,7 +46,7 @@ db_type=${1:-${default_db_type}}
 
 R=EXAMPLE.ORG
 
-kadmin="${TESTS_ENVIRONMENT} ../../kadmin/kadmin -l -r $R"
+kadmin="${TESTS_ENVIRONMENT} ../../kadmin/kadmin -l -A -r $R"
 iproplog="${TESTS_ENVIRONMENT} ../../lib/kadm5/iprop-log"
 
 KRB5_CONFIG="${objdir}/krb5.conf-${db_type}"

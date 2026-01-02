@@ -1,0 +1,42 @@
+#!/bin/sh
+#
+# Inner test script for testing test-lib.sh
+# This script has two test sections: one that fails and one that succeeds.
+# It's run by check-test-lib which validates the output.
+#
+
+top_srcdir="@top_srcdir@"
+objdir="@objdir@"
+
+# Source test-lib.sh
+. "${top_srcdir}/tests/bin/test-lib.sh"
+
+# Create a fake messages.log in a temp directory
+tmpdir="${TMPDIR:-/tmp}/test-lib-test.$$"
+mkdir -p "$tmpdir"
+cd "$tmpdir"
+
+test_init messages.log
+
+# Section 1: This one will fail
+test_section "Failing test section"
+
+# Simulate some library/KDC output in messages.log
+echo "KDC: some trace output" >> messages.log
+echo "KDC: more trace output" >> messages.log
+
+# Run a command that will fail
+test_run_x sh -c 'echo "command stdout"; echo "command stderr" >&2; exit 1'
+
+# Section 2: This one will succeed
+test_section "Succeeding test section"
+
+# Run a command that succeeds
+test_run sh -c 'echo "success output"; exit 0'
+
+# Clean up
+cd /
+rm -rf "$tmpdir"
+
+test_finish
+exit $?

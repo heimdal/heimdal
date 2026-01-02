@@ -9,7 +9,11 @@ AM_CPPFLAGS += $(INCLUDE_openldap) -DHDB_DB_DIR=\"$(DIR_hdbdir)\"
 AM_CPPFLAGS += -I$(srcdir)/../krb5
 AM_CPPFLAGS += $(INCLUDE_sqlite3)
 AM_CPPFLAGS += $(INCLUDE_libintl)
+AM_CPPFLAGS += $(INCLUDE_openssl_crypto)
 AM_CPPFLAGS += -DHDB_DEFAULT_DB_TYPE=\"$(db_type):\"
+if WIN32
+AM_CPPFLAGS += -DASN1_LIB
+endif
 if HAVE_DBHEADER
 AM_CPPFLAGS += -I$(DBHEADER)
 endif
@@ -55,7 +59,6 @@ CLEANFILES = $(BUILT_SOURCES) $(gen_files_hdb) \
 LDADD = libhdb.la \
 	../krb5/libkrb5.la \
 	../asn1/libasn1.la \
-	$(LIB_hcrypto) \
 	$(LIB_roken) \
 	$(LIB_openldap) \
 	$(LIB_libintl) \
@@ -144,6 +147,15 @@ $(ALL_OBJECTS): $(HDB_PROTOS) hdb_asn1.h hdb_asn1-priv.h hdb_err.h
 
 test_namespace_LDADD = $(LDADD) $(test_hdbkeys_LIBS) $(LIB_heimbase)
 
+# test_concurrency uses pthreads (via heim_threads.h) for threaded mode
+if WIN32
+# On Windows, heim_threads.h uses native Windows threads
+test_concurrency_LDADD = $(LDADD)
+else
+# On Unix, heim_threads.h uses pthreads
+test_concurrency_LDADD = $(LDADD) -lpthread
+endif
+
 $(srcdir)/hdb-protos.h: $(dist_libhdb_la_SOURCES)
 	cd $(srcdir); perl ../../cf/make-proto.pl -q -P comment -o hdb-protos.h $(dist_libhdb_la_SOURCES) || rm -f hdb-protos.h
 
@@ -171,5 +183,5 @@ EXTRA_DIST = \
 	hdb_err.et \
 	hdb.schema \
 	version-script.map \
-	data-mkey.mit.des3.le \
-	data-mkey.mit.des3.be
+	data-mkey.mit.aes256.le \
+	data-mkey.mit.aes256.be

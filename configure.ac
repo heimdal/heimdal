@@ -97,22 +97,84 @@ AC_ARG_WITH(cross-tools,
 	with_cross_tools="${with_cross_tools}/"
 	])
 
+dnl Check for WINE when cross-compiling for Windows
+WINE=""
+if test "${cross_compiling}" = yes ; then
+   case "$host" in
+   *-mingw*|*-windows*)
+      AC_CHECK_PROGS([WINE], [wine64 wine], [])
+      if test -z "$WINE" -a -z "$with_cross_tools"; then
+         AC_MSG_WARN([No wine found; build tools will not run without --with-cross-tools])
+      fi
+      dnl Define _WIN32 and WIN32 for roken-h-process.pl and source code
+      dnl (compiler defines _WIN32, but we need both in config.h)
+      AC_DEFINE([_WIN32], 1, [Define when targeting Windows])
+      AC_DEFINE([WIN32], 1, [Define when targeting Windows])
+      dnl Tell AC_BROKEN we have getifaddrs (we provide getifaddrs_w32.c)
+      dnl Set both the cache variable (so AC_BROKEN skips it) and AC_DEFINE
+      ac_cv_func_getifaddrs=yes
+      AC_DEFINE([HAVE_GETIFADDRS], 1, [Define to 1 because we provide getifaddrs_w32.c])
+      dnl Windows provides these in ws2tcpip.h but configure can't find them
+      dnl due to missing -lws2_32 at check time. Set cache vars for AC_BROKEN.
+      ac_cv_func_freeaddrinfo=yes
+      ac_cv_func_gai_strerror=yes
+      ac_cv_func_getaddrinfo=yes
+      ac_cv_func_getnameinfo=yes
+      ac_cv_func_hstrerror=yes
+      AC_DEFINE([HAVE_FREEADDRINFO], 1, [Define to 1 because Windows provides freeaddrinfo])
+      AC_DEFINE([HAVE_GAI_STRERROR], 1, [Define to 1 because Windows provides gai_strerror])
+      AC_DEFINE([HAVE_GETADDRINFO], 1, [Define to 1 because Windows provides getaddrinfo])
+      AC_DEFINE([HAVE_GETNAMEINFO], 1, [Define to 1 because Windows provides getnameinfo])
+      AC_DEFINE([HAVE_HSTRERROR], 1, [Define to 1 because Windows provides hstrerror])
+      dnl Windows libraries
+      LIBS="$LIBS -lws2_32 -liphlpapi -lshlwapi -lsecur32"
+      dnl Require Vista or later for SRWLock and other APIs
+      CPPFLAGS="$CPPFLAGS -D_WIN32_WINNT=0x0600"
+      CFLAGS="$CFLAGS -Wno-format"
+      dnl For now until we revamp how we set attributes on printf-like functions
+      dnl so we can use __gnu_printf__ when building with MinGW
+      AC_DEFINE([__USE_MINGW_ANSI_STDIO], 1, [Use MinGW ANSI stdio for %zu support])
+      dnl gethostname is declared in winsock2.h, not unistd.h
+      ac_cv_func_gethostname_noproto=no
+      dnl MinGW has conio.h for console I/O (password prompts, etc)
+      AC_DEFINE([HAVE_CONIO_H], 1, [Define to 1 because MinGW has conio.h])
+      dnl Define __MINGW32__ in config.h for roken-h-process.pl to include MinGW blocks
+      AC_DEFINE([__MINGW32__], 1, [Defined when cross-compiling for MinGW])
+      dnl We provide our own syslog.h for Windows
+      AC_DEFINE([HAVE_SYSLOG_H], 1, [Define to 1 because we provide syslog.h for Windows])
+      dnl Disable readline for MinGW (we don't have it, use built-in fallback)
+      ac_cv_lib_readline_readline=no
+      do_win32=yes
+      ;;
+   esac
+fi
+AC_SUBST([WINE])
+AM_CONDITIONAL([WIN32], [test "$do_win32" = yes])
+
 if test "${cross_compiling}" != yes ; then
 
    ASN1_COMPILE="\$(top_builddir)/lib/asn1/asn1_compile\$(EXEEXT)"
-   SLC="\$(top_builddir)/lib/sl/slc"
+   SLC="\$(top_builddir)/lib/sl/slc\$(EXEEXT)"
 
    ASN1_COMPILE_DEP="\$(ASN1_COMPILE)"
    SLC_DEP="\$(SLC)"
 else
-   ASN1_COMPILE="${with_cross_tools}asn1_compile"
-   SLC="${with_cross_tools}slc"
-
-   ASN1_COMPILE_DEP=
-   SLC_DEP=
-
-   ac_cv_prog_COMPILE_ET=${with_cross_tools}compile_et
-
+   if test -n "$with_cross_tools"; then
+      dnl Use pre-built native tools
+      ASN1_COMPILE="${with_cross_tools}asn1_compile"
+      SLC="${with_cross_tools}slc"
+      ASN1_COMPILE_DEP=
+      SLC_DEP=
+      ac_cv_prog_COMPILE_ET=${with_cross_tools}compile_et
+   else
+      dnl Build tools for target and run with WINE
+      ASN1_COMPILE="\$(WINE) \$(top_builddir)/lib/asn1/asn1_compile\$(EXEEXT)"
+      SLC="\$(WINE) \$(top_builddir)/lib/sl/slc\$(EXEEXT)"
+      ASN1_COMPILE_DEP="\$(top_builddir)/lib/asn1/asn1_compile\$(EXEEXT)"
+      SLC_DEP="\$(top_builddir)/lib/sl/slc\$(EXEEXT)"
+      dnl Tell CHECK_COMPILE_ET to use our own compile_et with WINE
+      ac_cv_prog_COMPILE_ET=no
+   fi
 fi
 
 AX_CHECK_COMPILE_FLAG([-Wno-error=enum-conversion],
@@ -264,10 +326,35 @@ AC_SUBST([CJSON_LIBS])
 
 dnl mitkrb5
 AC_ARG_WITH([mitkrb5],
-  AC_HELP_STRING([--with-mitkrb5], [Path to MIT Kerberos for interop testing @<:@default=check@:>@]),
+  AC_HELP_STRING([--with-mitkrb5=PATH], [Path to MIT Kerberos for interop testing]),
   [],
-  [with_mikrb5=check])
-AM_CONDITIONAL([MITKRB5], [test "$with_mitkrb5" != "no"])
+  [with_mitkrb5=no])
+MITKRB5=
+if test "$with_mitkrb5" != "no" && test "$with_mitkrb5" != "yes"; then
+  if test -d "$with_mitkrb5"; then
+    MITKRB5="$with_mitkrb5"
+  else
+    AC_MSG_WARN([MIT Kerberos directory $with_mitkrb5 does not exist])
+  fi
+fi
+AC_SUBST(MITKRB5)
+AM_CONDITIONAL([MITKRB5], [test -n "$MITKRB5"])
+
+dnl older-heimdal (for interop testing)
+AC_ARG_WITH([older-heimdal],
+  AC_HELP_STRING([--with-older-heimdal=PATH], [Path to older version of Heimdal for interop testing]),
+  [],
+  [with_older_heimdal=no])
+OLD_HEIMDAL=
+if test "$with_older_heimdal" != "no" && test "$with_older_heimdal" != "yes"; then
+  if test -d "$with_older_heimdal"; then
+    OLD_HEIMDAL="$with_older_heimdal"
+  else
+    AC_MSG_WARN([Older Heimdal directory $with_older_heimdal does not exist])
+  fi
+fi
+AC_SUBST(OLD_HEIMDAL)
+AM_CONDITIONAL([OLD_HEIMDAL], [test -n "$OLD_HEIMDAL"])
 
 dnl Check for sqlite
 rk_TEST_PACKAGE(sqlite3,
@@ -342,8 +429,14 @@ AC_SUBST(dpagaix_ldadd)
 AC_SUBST(dpagaix_ldflags)
 
 AC_ARG_ENABLE([afs-support],
-	AS_HELP_STRING([--disable-afs-support],[if you don't want support for AFS]))
-if test "$enable_afs_support" = no; then
+	AS_HELP_STRING([--enable-afs-support],[enable support for AFS]),
+                       [enable_afs_support=yes],
+                       [enable_afs_support=no])
+if test "$enable_afs_support" = yes; then
+	NO_AFS="0"
+        AC_MSG_ERROR([AFS no longer supported])
+else
+        # XXX This is pointless now, should be removed
 	AC_DEFINE(NO_AFS, 1, [Define if you don't wan't support for AFS.])
 	NO_AFS="1"
 fi
@@ -358,8 +451,6 @@ rk_ROKEN(lib/roken)
 LIBADD_roken="$LIB_roken"
 AC_SUBST(LIBADD_roken)dnl
 LIB_roken="\$(top_builddir)/lib/vers/libvers.la $LIB_roken"
-
-rk_OTP
 
 rk_LIBDISPATCH
 
@@ -382,6 +473,7 @@ if test "$enable_afs_string_to_key" = "yes"; then
 fi
 AC_SUBST(ENABLE_AFS_STRING_TO_KEY)dnl
 
+KRB_READLINE
 
 rk_CHECK_MAN
 
@@ -405,7 +497,9 @@ rk_TEST_PACKAGE(libedit,
 #endif
 ],-ledit,,, READLINE,, [readline.h readline/readline.h editline/readline.h])
 
-AC_CONFIG_SUBDIRS([lib/libedit])
+if test "$build_libedit" != no; then
+    AC_CONFIG_SUBDIRS([lib/libedit])
+fi
 
 KRB_C_BIGENDIAN
 AC_C_INLINE
@@ -703,8 +797,6 @@ AC_CHECK_TYPES([int8_t, int16_t, int32_t, int64_t,
 rk_FRAMEWORK_SECURITY
 rk_FRAMEWORK_COREFOUNDATION
 
-KRB_READLINE
-
 rk_TELNET
 
 dnl Some operating systems already have com_err and compile_et
@@ -734,23 +826,18 @@ AC_CONFIG_FILES(Makefile 		\
 	etc/Makefile			\
 	include/Makefile		\
 	include/gssapi/Makefile		\
-	include/hcrypto/Makefile	\
 	include/kadm5/Makefile		\
 	lib/Makefile			\
-	lib/base/Makefile			\
+	lib/base/Makefile		\
 	lib/asn1/Makefile		\
 	lib/com_err/Makefile		\
-	lib/hcrypto/Makefile		\
 	lib/hx509/Makefile		\
 	lib/gssapi/Makefile		\
-	lib/ntlm/Makefile		\
 	lib/hdb/Makefile		\
 	lib/ipc/Makefile		\
 	lib/kadm5/Makefile		\
-	lib/kafs/Makefile		\
 	lib/kdfs/Makefile		\
 	lib/krb5/Makefile		\
-	lib/otp/Makefile		\
 	lib/roken/Makefile		\
 	lib/sl/Makefile			\
 	lib/sqlite/Makefile		\
@@ -765,10 +852,8 @@ AC_CONFIG_FILES(Makefile 		\
 	kcm/Makefile			\
 	kdc/Makefile			\
 	appl/Makefile			\
-	appl/afsutil/Makefile		\
 	appl/dbutils/Makefile		\
 	appl/gssmask/Makefile		\
-	appl/otp/Makefile		\
 	appl/test/Makefile		\
 	appl/kf/Makefile		\
 	appl/dceutils/Makefile		\

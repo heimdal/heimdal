@@ -225,6 +225,7 @@ typedef struct _kadm5_policy_ent_t {
 #define KADM5_CONFIG_ENCTYPES			(1 << 18)
 #define KADM5_CONFIG_READONLY_ADMIN_SERVER	(1 << 19)
 #define KADM5_CONFIG_READONLY_KADMIN_PORT	(1 << 20)
+#define KADM5_CONFIG_ASYNC_HDB_WRITES		(1 << 21)
 
 #define KADM5_PRIV_GET		(1 << 0)
 #define KADM5_PRIV_ADD 		(1 << 1)

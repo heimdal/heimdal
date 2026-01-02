@@ -47,7 +47,7 @@ R2=TEST2.H5L.SE
 
 port=@port@
 
-kadmin="${kadmin} -l -r $R"
+kadmin="${kadmin} -l -A -r $R"
 kdc="${kdc} --addresses=localhost -P $port"
 
 afsserver=afs/test.h5l.se

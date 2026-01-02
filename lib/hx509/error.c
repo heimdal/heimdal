@@ -95,6 +95,118 @@ hx509_set_error_stringv(hx509_context context, int flags, int code,
 }
 
 /**
+ * Internal function to get OpenSSL errors as one string, and reset them.
+ *
+ * @return a string that must be freed.
+ *
+ * @ingroup hx509_error
+ */
+
+struct ossl_err_buf {
+    size_t len;
+    char *s;
+    int ret;
+};
+
+static int err_append_cb(const char *s, size_t len, void *u)
+{
+    struct ossl_err_buf *b = u;
+    char *tmp;
+
+    if ((tmp = realloc(b->s, b->len + len + 1)) == NULL) {
+        b->ret = ENOMEM;
+        return 0;
+    }
+
+    memcpy(tmp + b->len, s, len);
+    tmp[b->len + len] = '\0';
+    b->s = tmp;
+    b->len += len;
+    b->ret = 0;
+    return 1;
+}
+
+int
+_hx509_openssl_errors(char **out)
+{
+    struct ossl_err_buf b;
+
+    *out = NULL;
+
+    if (ERR_peek_last_error() == 0)
+        return 0;
+
+    /* NOTE: Dequeues the errors */
+    b.s = NULL;
+    b.len = 0;
+    b.ret = 0;
+    ERR_print_errors_cb(err_append_cb, &b);
+    *out = b.s;
+    return b.ret;
+}
+
+/**
+ * Internal function.  Add an error message to the hx509 context.
+ *
+ * @param context A hx509 context.
+ * @param flags
+ * - HX509_ERROR_APPEND appends the error string to the old messages
+     (code is updated).
+ * @param code error code related to error message
+ * @param fmt error message format
+ * @param ap arguments to error message format
+ *
+ * @ingroup hx509_error
+ */
+
+HX509_LIB_FUNCTION void HX509_LIB_CALL
+_hx509_set_error_stringv_openssl(hx509_context context, int flags, int code,
+                                 const char *fmt, va_list ap)
+{
+    heim_error_t msg, msg2;
+    char *s = NULL;
+    int e;
+
+    if (context == NULL)
+	return;
+
+    e = _hx509_openssl_errors(&s);
+
+    if (e) {
+        msg2 = heim_error_create(e, "(Could not display OpenSSL error)");
+    } else if (s) {
+        msg2 = heim_error_create(e, "OpenSSL error: \n%s", s);
+    } else {
+        msg2 = heim_error_create(e, "(OpenSSL error: <none>)");
+    }
+    free(s);
+
+    msg = heim_error_createv(code, fmt, ap);
+
+    if (msg2 == NULL) {
+        if (msg) {
+            if (flags & HX509_ERROR_APPEND)
+                heim_error_append(msg, context->error);
+            heim_release(context->error);
+            context->error = msg;
+        }
+        return;
+    } else if (msg == NULL) {
+        heim_release(msg2);
+        return;
+    } else {
+        heim_error_append(msg, msg2);
+        heim_release(msg2);
+    }
+
+    if (flags & HX509_ERROR_APPEND) {
+        heim_error_append(msg, context->error);
+	heim_release(context->error);
+    }
+    context->error = msg;
+}
+
+/**
  * See hx509_set_error_stringv().
  *
  * @param context A hx509 context.
@@ -116,6 +228,31 @@ hx509_set_error_string(hx509_context context, int flags, int code,
 
     va_start(ap, fmt);
     hx509_set_error_stringv(context, flags, code, fmt, ap);
+    va_end(ap);
+}
+
+/**
+ * Internal function; see hx509_set_error_stringv().
+ *
+ * @param context A hx509 context.
+ * @param flags
+ * - HX509_ERROR_APPEND appends the error string to the old messages
+     (code is updated).
+ * @param code error code related to error message
+ * @param fmt error message format
+ * @param ... arguments to error message format
+ *
+ * @ingroup hx509_error
+ */
+
+HX509_LIB_FUNCTION void HX509_LIB_CALL
+_hx509_set_error_string_openssl(hx509_context context, int flags, int code,
+		       const char *fmt, ...)
+{
+    va_list ap;
+
+    va_start(ap, fmt);
+    _hx509_set_error_stringv_openssl(context, flags, code, fmt, ap);
     va_end(ap);
 }
 

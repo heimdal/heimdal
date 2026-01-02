@@ -258,6 +258,13 @@ A list of default encryption types to use in TGS requests.  (Default:
 the value of default_etypes.)
 .It Li default_etypes_des = Va etypes ...
 A list of default encryption types to use when requesting a DES credential.
+.It Li openssl_cnf = Va FILE
+Path to OpenSSL configuration to use if not the default.
+.It Li openssl_propq = Va PROPQ
+Property query string for OpenSSL.
+Use this to enable FIPS mode, for example.
+.It Li fips = Va BOOL
+If true this causes the OpenSSL FIPS provider to be loaded.
 .It Li default_keytab_name = Va keytab
 The keytab to use if no other is specified, default is
 .Dq FILE:/etc/krb5.keytab .
@@ -403,6 +410,20 @@ be allowed to run.
 .It Li fcache_strict_checking
 strict checking in FILE credential caches that owner, no symlink and
 permissions is correct.
+.It Li pkinit_prefer_ec = Va BOOL
+If set to true then the client will prefer EC/ECC curves for
+PKINIT key agreement, otherwise it will prefer DH.
+Defaults to true.
+The default curve (see below) is
+.Dq X25519 .
+.It Li pkinit_dh_trust_modp_kdc_choice = Va BOOL
+If set to true and the KDC offers one or more modular DH groups
+not known to the client, then pick the first one, else ignore
+such offers.
+.It Li pkinit_dh_use_modp = Va BOOL
+If set to true and
+.Li pkinit_prefer_ec
+is set to false, then default to using a modp 2048 group.
 .It Li moduli = Va FILE
 Names a file that contains acceptable modular Diffie-Hellman
 groups for PKINIT.
@@ -415,6 +436,51 @@ are comments.
 .It Li pkinit_dh_min_bits = Va NUMBER
 PKINIT client's minimum acceptable modular Diffie-Hellman public
 key size in bits.
+This can be set to curve names like
+.Dq prime256v1
+or
+.Dq P-256
+for NIST P-256,
+.Dq prime384v1
+or
+.Dq P-384
+for NIST P-384,
+.Dq secp521r1
+or
+.Dq P-521
+for NIST P-521,
+.Dq X25519 ,
+and
+.Dq X448.
+It can also be set to a modular DH group size in bits, such as
+.Va 2048 .
+By default the client will prefer
+.Dq X25519 .
+.It Li pkinit_allow_ecdh = {
+.Bl -tag -width "xxx" -offset indent
+.It Va CURVE Li = Va BOOL
+Enables/disables ECDH curves.
+Curve names include
+.Dq prime256v1
+and
+.Dq P-256
+for NIST P-256,
+.Dq prime384v1
+and
+.Dq P-384
+for NIST P-384,
+.Dq secp521r1
+and
+.Dq P-521
+for NIST P-521,
+.Dq X25519 ,
+and
+.Dq X448 .
+.El
+.It Li }
+.It Li pkinit_kdfs = Va KDF-names
+Set to one or more RFC 8636 KDFs that are accepted.
+By default all RFC 8636 KDFs are accepted.
 .It Li enable-kx509 = Va boolean
 Enable use of kx509 so that every TGT that can has a corresponding
 PKIX certificate.  Default: false.
@@ -873,6 +939,15 @@ Enabled by default for now, but in a future release will be
 disabled.
 .It Li enable-pkinit = Va BOOL
 Enable PKINIT (disabled by default).
+.It Li pkinit_allow_rsa_key_transport = Va BOOL
+Enable RSA key transport.
+This is disabled by default as using Diffie-Hellman key agreement
+is more secure.
+.It Li pkinit_enable_rfc4556_kdf-pkinit = Va BOOL
+Enable or disable interoperability with clients that do not
+implement RFC 8636 (PKINIT algorithm agility).
+Note that the RFC 4556 KDF is based on SHA-1, and RFC 4556 has
+security issues that are fixed in RFC 8636.
 .It Li allow-anonymous = Va BOOL
 If the kdc is allowed to hand out anonymous tickets.
 .It Li synthetic_clients = Va BOOL
@@ -955,6 +1030,34 @@ Defaults to
 .It Li pkinit_dh_min_bits = Va NUMBER
 Minimum acceptable modular Diffie-Hellman public key size in
 bits.
+.It Li pkinit_allow_ecdh = {
+.Bl -tag -width "xxx" -offset indent
+.It Va CURVE Li = Va BOOL
+Indicates whether the given curve will be allowed.
+Curve names include
+.Dq prime256v1
+and
+.Dq P-256
+for NIST P-256,
+.Dq prime384v1
+and
+.Dq P-384
+for NIST P-384,
+.Dq secp521r1
+and
+.Dq P-521
+for NIST P-521,
+.Dq X25519 ,
+and
+.Dq X448 .
+.El
+.It Li }
+.It Li pkinit_enable_kdf_ah_sha1 = Va BOOL
+.It Li pkinit_enable_kdf_ah_sha256 = Va BOOL
+.It Li pkinit_enable_kdf_ah_sha384 = Va BOOL
+.It Li pkinit_enable_kdf_ah_sha512 = Va BOOL
+By default all PKINIT KDFs are enabled, but you may disable them
+with these parameters.
 .It Li pkinit_max_life_from_cert_extension = Va BOOL
 If set to
 .Va true
@@ -1308,6 +1411,18 @@ service will include the client's IP address in the TGT it issues
 it.
 Defaults to
 .Va true .
+.It Li impersonation_key_type = Va KEYTYPE
+Specifies what key type to use for PKINIT client certificates for impersonating
+users for the
+.Li /get-tgt
+end-point.
+.It Li impersonation_key_bits = Va NUMBER
+Specifies the key size when the
+.Li impersonation_key_type
+parameter is set to
+.Dq rsa .
+.Va /get-tgt
+end-point.
 .It Li allow_addresses = Va BOOL
 If set to
 .Va true
@@ -1439,8 +1554,24 @@ Per user Heimdal configuration file path.
 Common Heimdal configuration file path.
 .El
 .Sh ENVIRONMENT
-.Ev KRB5_CONFIG
+.Bl -tag -width "xxx" -offset indent
+.It Ev KRB5CCNAME
+names the credentials cache to use.
+.It Ev KRB5_TRACE
+names a file to write tracing messages to.
+See also
+.Xr krb5_openlog 3 .
+.It Ev KRB5_KTNAME
+names the keytab to use (server-side).
+.It Ev KRB5_CLIENT_KTNAME
+names the keytab to use (client-side).
+.It Ev KRB5_OPENSSL_CNF
+names the OpenSSL configuration file to use.
+.It Ev KRB5_OPENSSL_PROPQ
+names the OpenSSL provider property query to use.
+.It Ev KRB5_CONFIG
 points to the configuration file to read.
+.El
 .Sh FILES
 .Bl -tag -width "/etc/krb5.conf"
 .It Pa /etc/krb5.conf

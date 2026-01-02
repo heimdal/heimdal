@@ -1,44 +1,46 @@
-#!/bin/sh
+#!/bin/bash
 #
 # Copyright (c) 2006 Kungliga Tekniska Högskolan
-# (Royal Institute of Technology, Stockholm, Sweden). 
-# All rights reserved. 
+# (Royal Institute of Technology, Stockholm, Sweden).
+# All rights reserved.
 #
-# Redistribution and use in source and binary forms, with or without 
-# modification, are permitted provided that the following conditions 
-# are met: 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
 #
-# 1. Redistributions of source code must retain the above copyright 
-#    notice, this list of conditions and the following disclaimer. 
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
 #
-# 2. Redistributions in binary form must reproduce the above copyright 
-#    notice, this list of conditions and the following disclaimer in the 
-#    documentation and/or other materials provided with the distribution. 
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
 #
-# 3. Neither the name of the Institute nor the names of its contributors 
-#    may be used to endorse or promote products derived from this software 
-#    without specific prior written permission. 
+# 3. Neither the name of the Institute nor the names of its contributors
+#    may be used to endorse or promote products derived from this software
+#    without specific prior written permission.
 #
-# THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND 
-# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-# ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE 
-# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL 
-# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS 
-# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
-# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
-# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY 
-# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
-# SUCH DAMAGE. 
+# THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
 #
 # $Id$
 #
 
+top_srcdir="@top_srcdir@"
 env_setup="@env_setup@"
 srcdir="@srcdir@"
 objdir="@objdir@"
 
 . ${env_setup}
+. ${top_srcdir}/tests/bin/test-lib.sh
 
 # If there is no useful db support compiled in, disable test
 ../db/have-db || exit 77
@@ -50,11 +52,9 @@ port=@port@
 keytabfile=${objdir}/server.keytab
 keytab="FILE:${keytabfile}"
 cache="FILE:krb5ccfile"
-cacheds="FILE:krb5ccfile-ds"
 
 kinit="${TESTS_ENVIRONMENT} ../../kuser/kinit -c $cache ${afs_no_afslog} --forwardable"
-kinitds="${TESTS_ENVIRONMENT} ../../kuser/kinit -c $cacheds ${afs_no_afslog}"
-kadmin="${TESTS_ENVIRONMENT} ../../kadmin/kadmin -l -r $R"
+kadmin="${TESTS_ENVIRONMENT} ../../kadmin/kadmin -l -A -r $R"
 kdc="${TESTS_ENVIRONMENT} ../../kdc/kdc --addresses=localhost -P $port"
 
 context="${TESTS_ENVIRONMENT} ../../lib/gssapi/test_context"
@@ -67,10 +67,6 @@ KRB5_KTNAME="${keytab}"
 export KRB5_KTNAME
 KRB5CCNAME="${cache}"
 export KRB5CCNAME
-NTLM_ACCEPTOR_CCACHE="${cacheds}"
-export NTLM_ACCEPTOR_CCACHE
-NTLM_USER_FILE="${srcdir}/ntlm-user-file.txt"
-export NTLM_USER_FILE
 
 GSSAPI_SPNEGO_NAME=host@host.test.h5l.se
 export GSSAPI_SPNEGO_NAME
@@ -80,10 +76,10 @@ rm -f current-db*
 rm -f out-*
 rm -f mkey.file*
 
-> messages.log
+test_init
 
-echo Creating database
-${kadmin} <<EOF || exit 1
+test_section "Creating database"
+test_run ${kadmin} <<EOF
 init --realm-max-ticket-life=1day --realm-max-renewable-life=1month ${R}
 add -p p1 --use-defaults host/host.test.h5l.se@${R}
 ext -k ${keytab} host/host.test.h5l.se@${R}
@@ -97,8 +93,8 @@ EOF
 echo u1 > ${objdir}/foopassword
 echo ds > ${objdir}/barpassword
 
-echo Starting kdc
-${kdc} --detach --testing || { echo "kdc failed to start"; cat messages.log; exit 1; }
+test_section "Starting kdc"
+test_run ${kdc} --detach --testing
 kdcpid=`getpid kdc`
 
 cleanup() {
@@ -110,57 +106,48 @@ cleanup() {
 }
 trap cleanup EXIT INT TERM
 
-exitcode=0
+test_section "Getting client initial tickets"
+test_run ${kinit} --password-file=${objdir}/foopassword user1@${R}
 
-echo "Getting client initial tickets"
-${kinit} --password-file=${objdir}/foopassword user1@${R} || exitcode=1
-echo "Getting digestserver initial tickets"
-${kinitds} --password-file=${objdir}/barpassword digestserver@${R} || exitcode=1
+test_section "context building for each mech"
 
-echo "======context building for each mech"
-
-for mech in ntlm krb5 ; do 
-    echo "${mech}"
-    ${context} --mech-type=${mech} --ret-mech-type=${mech} \
+for mech in krb5 ; do
+    test_section "${mech}"
+    test_run ${context} --mech-type=${mech} --ret-mech-type=${mech} \
         --client-ccache="${cache}" \
         --gsskrb5-acceptor-identity="${keytab}" \
-        --name-type=hostbased-service host@host.test.h5l.se || \
-	{ exitcode=1 ; echo test failed; }
+        --name-type=hostbased-service host@host.test.h5l.se
 done
 
-echo "spnego"
-${context} \
+test_section "spnego"
+test_run ${context} \
     --client-ccache="${cache}" \
     --mech-type=spnego \
     --ret-mech-type=krb5 \
     --name-type=hostbased-service \
     --export-import-context \
-    host@host.test.h5l.se || \
-    { exitcode=1 ; echo test failed; }
+    host@host.test.h5l.se
 
-echo "spnego (split tokens)"
-${context} \
+test_section "spnego (split tokens)"
+test_run ${context} \
     --token-split=128 \
     --client-ccache="${cache}" \
     --mech-type=spnego \
     --ret-mech-type=krb5 \
     --name-type=hostbased-service \
     --export-import-context \
-    host@host.test.h5l.se || \
-    { exitcode=1 ; echo test failed; }
+    host@host.test.h5l.se
 
-echo "test failure cases"
-${context} --mech-type=ntlm --ret-mech-type=krb5 \
+test_section "test failure cases"
+test_run not ${context} --mech-type=sanon-x25519 --ret-mech-type=krb5 \
     --client-ccache="${cache}" \
-    --name-type=hostbased-service host@host.test.h5l.se 2> /dev/null && \
-    { exitcode=1 ; echo test failed; }
+    --name-type=hostbased-service host@host.test.h5l.se
 
-${context} --mech-type=krb5 --ret-mech-type=ntlm \
+test_run not ${context} --mech-type=krb5 --ret-mech-type=sanon-x25519 \
     --client-ccache="${cache}" \
-    --name-type=hostbased-service host@host.test.h5l.se 2> /dev/null && \
-    { exitcode=1 ; echo test failed; }
+    --name-type=hostbased-service host@host.test.h5l.se
 
-echo "======spnego variants context building"
+test_section "spnego variants context building"
 
 for arg in \
      "" \
@@ -171,67 +158,46 @@ for arg in \
      "--mutual --getverifymic --wrapunwrap" \
     ; do
 
-    echo "no NTLM acceptor cred ${arg}"
-    NTLM_ACCEPTOR_CCACHE="${cacheds}-no"
-    ${context} --mech-type=spnego \
+    test_section "with krb5 creds ${arg}"
+    test_run ${context} --mech-type=spnego \
         $arg \
         --name-type=hostbased-service \
         --ret-mech-type=krb5  \
-        host@host.test.h5l.se || \
-        { exitcode=1 ; echo test failed; }
-    NTLM_ACCEPTOR_CCACHE="${cacheds}"
+        host@host.test.h5l.se
 
-    echo "no NTLM initiator cred ${arg}"
-    NTLM_USER_FILE="${srcdir}/ntlm-user-file.txt-no"
-    ${context} --mech-type=spnego \
-        $arg \
-        --name-type=hostbased-service \
-        --ret-mech-type=krb5 \
-        host@host.test.h5l.se || \
-        { exitcode=1 ; echo test failed; }
-    NTLM_USER_FILE="${srcdir}/ntlm-user-file.txt"
-
-    echo "no krb5 acceptor cred ${arg}"
+    test_section "no krb5 acceptor cred ${arg} (expected failure)"
     KRB5_KTNAME="${keytab}-no"
-    ${context} --mech-type=spnego \
+    test_run not ${context} --mech-type=spnego \
         $arg \
 	--server-no-delegate \
         --name-type=hostbased-service \
-        --ret-mech-type=ntlm \
-        host@host.test.h5l.se || \
-        { exitcode=1 ; echo test failed; }
+        host@host.test.h5l.se
     KRB5_KTNAME="${keytab}"
 
-    echo "no explicit krb5 acceptor cred ${arg}"
-    ${context} --mech-type=spnego \
+    test_section "no explicit krb5 acceptor cred ${arg} (expected failure)"
+    test_run not ${context} --mech-type=spnego \
         $arg \
         --gsskrb5-acceptor-identity="${keytab}-no" \
         --server-no-delegate \
         --name-type=hostbased-service \
-        --ret-mech-type=krb5 \
-        host@host.test.h5l.se 2>/dev/null && \
-        { exitcode=1 ; echo test failed; }
+        host@host.test.h5l.se
 
-    echo "no krb5 initiator cred ${arg}"
+    test_section "no krb5 initiator cred ${arg} (expected failure)"
     KRB5CCNAME="${cache}-no"
-    ${context} --mech-type=spnego \
+    test_run not ${context} --mech-type=spnego \
         $arg \
 	--server-no-delegate \
         --name-type=hostbased-service \
-        --ret-mech-type=ntlm \
-        host@host.test.h5l.se || \
-        { exitcode=1 ; echo test failed; }
+        host@host.test.h5l.se
     KRB5CCNAME="${cache}"
 
-    echo "no explicit krb5 initiator cred ${arg}"
-    ${context} --mech-type=spnego \
+    test_section "no explicit krb5 initiator cred ${arg} (expected failure)"
+    test_run not ${context} --mech-type=spnego \
         $arg \
         --client-ccache="${cache}-no" \
         --server-no-delegate \
         --name-type=hostbased-service \
-        --ret-mech-type=krb5 \
-        host@host.test.h5l.se 2>/dev/null && \
-        { exitcode=1 ; echo test failed; }
+        host@host.test.h5l.se
 
 done
 
@@ -240,6 +206,5 @@ trap "" EXIT
 echo "killing kdc (${kdcpid})"
 kill ${kdcpid} 2> /dev/null
 
-exit $exitcode
-
-
+test_finish
+exit $?

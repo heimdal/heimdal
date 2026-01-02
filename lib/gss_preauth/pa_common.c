@@ -32,7 +32,6 @@
 
 #include <krb5_locl.h>
 #include <mech_locl.h>
-#include <heimntlm.h>
 
 #include "gss-preauth-protos.h"
 #include "gss-preauth-private.h"

@@ -52,6 +52,7 @@ EXTRA_DIST = \
 	cf/roken.m4 \
 	cf/valgrind-suppressions \
 	cf/maybe-valgrind.sh \
+	cf/maybe-helgrind.sh \
 	cf/symbol-version.py \
 	cf/w32-check-exported-symbols.pl \
 	cf/w32-def-from-dll.pl \

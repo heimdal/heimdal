@@ -72,7 +72,7 @@ _krb5_pk_octetstring2key(krb5_context context,
 
     counter = 0;
     offset = 0;
-    do {
+    do { // RFC 4556 octet2string function -- yes, it uses SHA-1; switch to _krb5_pk_kdf()!
 
 	EVP_DigestInit_ex(m, EVP_sha1(), NULL);
 	EVP_DigestUpdate(m, &counter, 1);
@@ -97,7 +97,7 @@ _krb5_pk_octetstring2key(krb5_context context,
     EVP_MD_CTX_destroy(m);
 
     ret = krb5_random_to_key(context, type, keydata, keylen, key);
-    memset_s(keydata, sizeof(keylen), 0, sizeof(keylen));
+    memset_s(keydata, keylen, 0, keylen);
     free(keydata);
     return ret;
 }
@@ -127,13 +127,12 @@ encode_uvinfo(krb5_context context, krb5_const_principal p, krb5_data *data)
 
 static krb5_error_code
 encode_otherinfo(krb5_context context,
-		 const AlgorithmIdentifier *ai,
+		 const heim_oid *ai,
 		 krb5_const_principal client,
 		 krb5_const_principal server,
 		 krb5_enctype enctype,
 		 const krb5_data *as_req,
 		 const krb5_data *pk_as_rep,
-		 const Ticket *ticket,
 		 krb5_data *other)
 {
     PkinitSP80056AOtherInfo otherinfo;
@@ -149,7 +148,6 @@ encode_otherinfo(krb5_context context,
     pubinfo.enctype = enctype;
     pubinfo.as_REQ = *as_req;
     pubinfo.pk_as_rep = *pk_as_rep;
-    pubinfo.ticket = *ticket;
     ASN1_MALLOC_ENCODE(PkinitSuppPubInfo, pub.data, pub.length,
 		       &pubinfo, &size, ret);
     if (ret) {
@@ -171,7 +169,9 @@ encode_otherinfo(krb5_context context,
 	return ret;
     }
 
-    otherinfo.algorithmID = *ai;
+    /* See https://www.rfc-editor.org/errata/eid8639 re: parameters */
+    otherinfo.algorithmID.algorithm = *ai;
+    otherinfo.algorithmID.parameters = NULL;
     otherinfo.suppPubInfo = &pub;
 
     ASN1_MALLOC_ENCODE(PkinitSP80056AOtherInfo, other->data, other->length,
@@ -189,22 +189,69 @@ encode_otherinfo(krb5_context context,
     return 0;
 }
 
+/*
+ * This wrapper around _krb5_pk_kdf() uses the DER encodings of AS_REQ and
+ * PA_PK_AS_REP found in the _save fields of those structures.  It also uses
+ * the client and server principal names from the AS_REQ structure.  It also
+ * uses the server nonce from the PA_PK_AS_REP' dhInfo.  The client nonce
+ * however has to be provided by the caller.
+ */
+KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
+_krb5_pk_kdf2(krb5_context context,
+              const AS_REQ *a,
+              const PA_PK_AS_REP *rep,
+              const void *dhdata,
+              size_t dhsize,
+              krb5_enctype enctype,
+              const heim_octet_string *c_n,
+              krb5_keyblock *key)
+{
+    krb5_error_code ret;
+    krb5_principal c = NULL;
+    krb5_principal s = NULL;
+    const heim_oid *kdf;
+
+    if (rep->element != choice_PA_PK_AS_REP_dhInfo)
+        return EINVAL; /* Doesn't happen */
+
+    kdf = rep->u.dhInfo.kdf ? &rep->u.dhInfo.kdf->kdf_id : NULL;
+
+    ret = _krb5_principalname2krb5_principal(context, &c,
+                                             *(a->req_body.cname),
+                                             a->req_body.realm);
+
+    if (ret == 0)
+        ret = _krb5_principalname2krb5_principal(context, &s,
+                                                 *(a->req_body.sname),
+                                                 a->req_body.realm);
+
+    if (ret == 0)
+        ret = _krb5_pk_kdf(context, kdf, dhdata, dhsize, c, s, enctype, c_n,
+                           rep->u.dhInfo.serverDHNonce, &a->_save, &rep->_save,
+                           NULL, key);
+
+    krb5_free_principal(context, c);
+    krb5_free_principal(context, s);
+    return ret;
+}
 
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 _krb5_pk_kdf(krb5_context context,
-	     const struct AlgorithmIdentifier *ai,
+	     const heim_oid *ai,
 	     const void *dhdata,
 	     size_t dhsize,
 	     krb5_const_principal client,
 	     krb5_const_principal server,
 	     krb5_enctype enctype,
+             const heim_octet_string *c_n,
+             const heim_octet_string *k_n,
 	     const krb5_data *as_req,
 	     const krb5_data *pk_as_rep,
-	     const Ticket *ticket,
+             krb5_data *out,
 	     krb5_keyblock *key)
 {
-    struct _krb5_encryption_type *et;
+    struct _krb5_encryption_type *et = _krb5_find_enctype(enctype);
     krb5_error_code ret;
     krb5_data other;
     size_t keylen, offset;
@@ -212,44 +259,54 @@ _krb5_pk_kdf(krb5_context context,
     unsigned char *keydata;
     unsigned char shaoutput[SHA512_DIGEST_LENGTH];
     const EVP_MD *md;
+    const char *mdname = NULL;
     EVP_MD_CTX *m;
 
-    if (der_heim_oid_cmp(&asn1_oid_id_pkinit_kdf_ah_sha1, &ai->algorithm) == 0) {
-        md = EVP_sha1();
-    } else if (der_heim_oid_cmp(&asn1_oid_id_pkinit_kdf_ah_sha256, &ai->algorithm) == 0) {
-        md = EVP_sha256();
-    } else if (der_heim_oid_cmp(&asn1_oid_id_pkinit_kdf_ah_sha512, &ai->algorithm) == 0) {
-        md = EVP_sha512();
+    if (out) {
+        out->data = NULL;
+        out->length = 0;
+    }
+
+    if (ai == NULL)
+        return _krb5_pk_octetstring2key(context, enctype, dhdata, dhsize,
+                                        NULL, NULL, key);
+    if (der_heim_oid_cmp(&asn1_oid_id_pkinit_kdf_ah_sha1, ai) == 0) {
+        md = context->ossl->sha1;
+        mdname = "SHA-1";
+    } else if (der_heim_oid_cmp(&asn1_oid_id_pkinit_kdf_ah_sha256, ai) == 0) {
+        md = context->ossl->sha256;
+        mdname = "SHA-256";
+    } else if (der_heim_oid_cmp(&asn1_oid_id_pkinit_kdf_ah_sha384, ai) == 0) {
+        md = context->ossl->sha384;
+        mdname = "SHA-384";
+    } else if (der_heim_oid_cmp(&asn1_oid_id_pkinit_kdf_ah_sha512, ai) == 0) {
+        md = context->ossl->sha512;
+        mdname = "SHA-512";
     } else {
 	krb5_set_error_message(context, KRB5_PROG_ETYPE_NOSUPP,
 			       N_("KDF not supported", ""));
 	return KRB5_PROG_ETYPE_NOSUPP;
     }
-    if (ai->parameters != NULL &&
-	(ai->parameters->length != 2 ||
-	 memcmp(ai->parameters->data, "\x05\x00", 2) != 0))
-	{
-	    krb5_set_error_message(context, KRB5_PROG_ETYPE_NOSUPP,
-				   N_("kdf params not NULL or the NULL-type",
-				      ""));
-	    return KRB5_PROG_ETYPE_NOSUPP;
-	}
-
-    et = _krb5_find_enctype(enctype);
-    if(et == NULL) {
-	krb5_set_error_message(context, KRB5_PROG_ETYPE_NOSUPP,
-			       N_("encryption type %d not supported", ""),
-			       enctype);
-	return KRB5_PROG_ETYPE_NOSUPP;
+    if (md == NULL) {
+        krb5_set_error_message(context, KRB5_PROG_ETYPE_NOSUPP,
+                               "Digest %s for negotiated PKINIT KDF is disabled in OpenSSL",
+                               mdname);
+        return KRB5_PROG_ETYPE_NOSUPP;
     }
-    keylen = (et->keytype->bits + 7) / 8;
+
+    if (et)
+        keylen = (et->keytype->bits + 7) / 8;
+    else if (enctype == KRB5_ENCTYPE_DES3_CBC_SHA1)
+        keylen = 21; /* hack to support RFC 8636 test vectors */
+    else
+        return KRB5_PROG_ETYPE_NOSUPP;
 
     keydata = malloc(keylen);
     if (keydata == NULL)
 	return krb5_enomem(context);
 
     ret = encode_otherinfo(context, ai, client, server,
-			   enctype, as_req, pk_as_rep, ticket, &other);
+			   enctype, as_req, pk_as_rep, &other);
     if (ret) {
 	free(keydata);
 	return ret;
@@ -287,9 +344,27 @@ _krb5_pk_kdf(krb5_context context,
     EVP_MD_CTX_destroy(m);
     free(other.data);
 
-    ret = krb5_random_to_key(context, enctype, keydata, keylen, key);
-    memset_s(keydata, sizeof(keylen), 0, sizeof(keylen));
-    free(keydata);
+    if (out) {
+        /*
+         * We have this feature so we can do test vectors for 3DES w/o having
+         * to have a 3DES enctype, as then krb5_random_to_key() would fail with
+         * KRB5_PROG_ETYPE_NOSUPP.
+         */
+        out->data = keydata;
+        out->length = keylen;
+    }
+
+    if (key)
+        ret = krb5_random_to_key(context, enctype, keydata, keylen, key);
+
+    if (ret || out == NULL) {
+        memset_s(keydata, keylen, 0, keylen);
+        free(keydata);
+        if (out) {
+            out->data = NULL;
+            out->length = 0;
+        }
+    }
 
     return ret;
 }

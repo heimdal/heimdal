@@ -38,10 +38,16 @@
 
 #ifndef KRB5_LIB
 #ifndef KRB5_LIB_FUNCTION
-#if defined(_WIN32)
+#if defined(_WIN32) && !defined(__MINGW32__)
+/* MSVC with DLL linkage */
 #define KRB5_LIB_FUNCTION __declspec(dllimport)
 #define KRB5_LIB_CALL __stdcall
 #define KRB5_LIB_VARIABLE __declspec(dllimport)
+#elif defined(_WIN32)
+/* MinGW - static linkage */
+#define KRB5_LIB_FUNCTION
+#define KRB5_LIB_CALL __cdecl
+#define KRB5_LIB_VARIABLE
 #else
 #define KRB5_LIB_FUNCTION
 #define KRB5_LIB_CALL

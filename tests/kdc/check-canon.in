@@ -43,7 +43,7 @@ R3=TEST3.H5L.SE
 
 port=@port@
 
-kadmin="${kadmin} -l -r ${R1}"
+kadmin="${kadmin} -l -A -r ${R1}"
 kdc="${kdc} --addresses=localhost -P $port"
 
 cache="FILE:${objdir}/cache.krb5"

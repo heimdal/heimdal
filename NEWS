@@ -11,17 +11,31 @@ Bug fixes
  - iprop bugs, race conditions, and performance
  - Many misc. bugs
 
+Defaults changes:
+
+ - Default enctypes set to: aes256-cts-hmac-sha1-96 aes256-cts-hmac-sha384-192.
+
 Features:
 
+ - OpenSSL 3.x support (hcrypto has been removed).
+ - OpenSSL 3.x provider support, including propq (for enabling FIPS) and
+   PKCS#11 providers.
+ - PKINIT: RFC 8636 (algorithm agility) implemented.
+ - PKINIT: ECDH w/ NIST and X curves implemented.
+ - PKINIT: Support for ECDSA and EdDSA implemented.
  - KDC: Add FAST support for TGS.
  - KDC: Greatly improved plugin facility for Samba.
  - KDC: Add httpkadmind service providing a subset of kadmin
         functionality over HTTP.
- - KDC: Add support for virtual service principal namespaces.
+ - KDC: Add support for virtual service principal namespaces, which rekey
+        service principals on a clock.
  - KDC: Add support for synthetic client principals that exist if the
         pre-authentication mechanism (e.g., PKINIT) can authenticate
         them, thus not requiring an HDB entry.
- - KDC: Add experimental GSS-API pre-authentication support.
+        Together with virtual service principal namespaces this allows for
+        realms with minimal, primarily read-only HDBs.
+ - KDC: Add experimental GSS-API pre-authentication support for Kerberos KDC
+        exchanges.
  - KDC: Revamp and enhance kx509 support (though bx509d mostly replaces kx509).
  - KDC: Better support for aliases and referrals.
  - KDC: Always return the salt in the PA-ETYPE-INFO[2].
@@ -29,14 +43,18 @@ Features:
  - KDC: allow anonymous AS requests with long-term keys.
  - KDC: Do not include PAC for anonymous AS requests.
  - KDC: Enable keepalive mode on incoming sockets.
- - KDC: Greatly improved logging.
+ - KDC: Greatly improved logging, with one structure log message per-request,
+        with all details as key/value pairs.
  - KDC: Remove KRB5SignedPath, to be replaced with PAC.
  - PKIX: Add bx509d -- an online certification authority (CA) with an HTTP API.
- - kadmin: Add HTTP-based kadmin protocol.
+ - PKIX: Add support elliptic curve signatures (ECDSA and EdDSA).
+ - PKIX: Add support for modern password-based encryption ciphers for PKCS#12.
+ - kadmind: Add httpkadmind, an HTTP-based kadmin protocol.
  - kadmin: Add add_alias, del_alias.
  - kadmin: Add command aliases to man page.
  - kadmin: Add disallow-client attribute.
- - kadmin: add --hdb / -H argument.
+ - kadmin: Improve -e enctype option support.
+ - kadmin: Add --hdb / -H argument.
  - kadmin: Allow enforcing password quality on admin password change.
  - kadmin: Improve ext_keytab usage.
  - kadmin: Selective pruning of historic key for principal.
@@ -59,6 +77,7 @@ Features:
  - klist: Better --json
  - iprop: Many performance and scaling enhancements.
  - iprop: Support hierarchical propagation.
+ - iprop: Support fast full props by using async writes.
  - ASN.1: Document fuzzing process.
  - ASN.1: Complete template backend.
  - ASN.1: Add partial Information Object System support (template backend
@@ -71,30 +90,33 @@ Features:
  - ASN.1: Support circular types.
  - ASN.1: Topographically sort declarations.
  - ASN.1: Proper support for IMPLICIT tags.
- - GSS: Import gss-token(1) command.
  - GSS: Add advanced credential store / load functionality.
+ - GSS: Add gss_acquire_cred_from() and credential store extensions.
  - GSS: Add name attributes support, with support for many basic attributes
         and PAC buffer accessors too.
  - GSS: Add SANON mechanism for anonymous-only key exchange using
-   elliptic curve Diffie-Hellman (ECDH) with Curve25519.
- - GSS: Add gss_acquire_cred_from() and credential store extensions.
+        elliptic curve Diffie-Hellman (ECDH) with Curve25519.
  - GSS: Support fragmented tokens reassembly (for SMB).
  - GSS: Support client keytab.
  - GSS: Add NegoEx support.
- - libhx509: Lots of improvements.
+ - GSS: Import gss-token(1) command.
  - hxtool: Add "acert" (assert cert contents) command
  - hxtool: add cert type: https-negotiate-server
  - hxtool: add generate-key command
  - hxtool: Add OID symbol resolution and printing of OIDs known to hxtool.
  - hxtool: Add print --raw-json option that shows certificates in JSON, with
            all extensions and attributes known to Heimdal fully decoded.
- - hxtool: Improved SAN support.
- - hxtool: Improved CSR support.
+ - hxtool: Greatly improved SAN support.
+ - hxtool: Greatly improved CSR support.
  - Improved plugin interfaces.
- - hcrypto: Add X25519.
- - hcrypto: Better RSA key generation.
- - hcrypto: import libtommath v1.2.0.
  - roken: Add secure_getenv() and issuid(), use them extensively.
+
+Features removed:
+
+ - NTLM support.
+ - "digest" server functionality in KDC (for NTLM).
+ - OTP.
+ - 1DES and 3DES enctypes.
 
 Release Notes - Heimdal - Version Heimdal 7.8
 

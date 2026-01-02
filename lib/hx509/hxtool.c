@@ -42,11 +42,17 @@
 static hx509_context context;
 
 static char *stat_file_string;
+static char *ossl_cnf_string;
+static char *ossl_propq_string;
 static int version_flag;
 static int help_flag;
 
 struct getargs args[] = {
     { "statistic-file", 0, arg_string, &stat_file_string, NULL, NULL },
+    { "ossl-cnf", 0, arg_string, &ossl_cnf_string,
+      "OpenSSL configuration file", "FILE" },
+    { "ossl-propq", 0, arg_string, &ossl_propq_string,
+      "OpenSSL property query string", "PROPQ" },
     { "version", 0, arg_flag, &version_flag, NULL, NULL },
     { "help", 0, arg_flag, &help_flag, NULL, NULL }
 };
@@ -679,7 +685,7 @@ cms_create_enveloped(struct cms_envelope_options *opt, int argc, char **argv)
     ret = hx509_cms_envelope_1(context, flags, cert, p, sz, enctype,
 			       &contentType, &o);
     if (ret)
-	errx(1, "hx509_cms_envelope_1: %d", ret);
+	hx509_err(context, 1, ret, "hx509_cms_envelope_1: %d", ret);
 
     hx509_cert_free(cert);
     hx509_certs_free(&certs);
@@ -1354,7 +1360,7 @@ ocsp_verify(struct ocsp_verify_options *opt, int argc, char **argv)
 
     ret = _hx509_map_file_os(opt->ocsp_file_string, &os);
     if (ret)
-	err(1, "map_file: %s: %d", argv[0], ret);
+	hx509_err(context, 1, ret, "map_file: %s: %d", argv[0], ret);
 
     ret = hx509_certs_init(context, "MEMORY:test-certs", 0, NULL, &certs);
     if (ret) hx509_err(context, 1, ret, "hx509_certs_init: MEMORY");
@@ -1413,14 +1419,22 @@ get_key(const char *fn, const char *type, int optbits,
 
     if (type) {
         struct hx509_generate_private_context *gen_ctx = NULL;
+        const heim_oid *key_oid;
 
-	if (strcasecmp(type, "rsa") != 0)
-	    errx(1, "can only handle rsa keys for now");
+	if (strcasecmp(type, "rsa") == 0) {
+	    key_oid = ASN1_OID_ID_PKCS1_RSAENCRYPTION;
+	} else if (strcasecmp(type, "ec") == 0 || strcasecmp(type, "ecdsa") == 0) {
+	    key_oid = ASN1_OID_ID_ECPUBLICKEY;
+	} else if (strcasecmp(type, "ed25519") == 0) {
+	    key_oid = ASN1_OID_ID_ED25519;
+	} else if (strcasecmp(type, "ed448") == 0) {
+	    key_oid = ASN1_OID_ID_ED448;
+	} else {
+	    errx(1, "unsupported key type: %s (supported: rsa, ec, ed25519, ed448)", type);
+	}
 
-        ret = _hx509_generate_private_key_init(context,
-                                               ASN1_OID_ID_PKCS1_RSAENCRYPTION,
-                                               &gen_ctx);
-        if (ret == 0)
+        ret = _hx509_generate_private_key_init(context, key_oid, &gen_ctx);
+        if (ret == 0 && optbits > 0)
             ret = _hx509_generate_private_key_bits(context, gen_ctx, optbits);
         if (ret == 0)
             ret = _hx509_generate_private_key(context, gen_ctx, signer);
@@ -1455,7 +1469,7 @@ get_key(const char *fn, const char *type, int optbits,
         }
     } else {
         if (fn == NULL)
-            err(1, "no private key");
+            errx(1, "no private key");
         ret = read_private_key(fn, signer);
         if (ret)
             hx509_err(context, 1, ret, "failed to read private key from %s",
@@ -1647,30 +1661,73 @@ int
 info(void *opt, int argc, char **argv)
 {
 
-    ENGINE_add_conf_module();
+    OSSL_LIB_CTX *libctx = NULL;     /* use the default libctx */
+    const char   *propq   = NULL;    /* no property query; change to "fips=yes" if needed */
 
+    /* RSA */
     {
-	const RSA_METHOD *m = RSA_get_default_method();
-	if (m != NULL)
-	    printf("rsa: %s\n", m->name);
+        EVP_KEYMGMT *km = EVP_KEYMGMT_fetch(libctx, "RSA", propq);
+        if (km) {
+            const OSSL_PROVIDER *prov = EVP_KEYMGMT_get0_provider(km);
+            const char *pname = prov ? OSSL_PROVIDER_get0_name(prov) : "unknown";
+            printf("rsa: %s\n", pname);
+            EVP_KEYMGMT_free(km);
+        } else {
+            printf("rsa: unavailable\n");
+        }
     }
+
+    /* DH */
     {
-	const DH_METHOD *m = DH_get_default_method();
-	if (m != NULL)
-	    printf("dh: %s\n", m->name);
+        EVP_KEYMGMT *km = EVP_KEYMGMT_fetch(libctx, "DH", propq);
+        if (km) {
+            const OSSL_PROVIDER *prov = EVP_KEYMGMT_get0_provider(km);
+            const char *pname = prov ? OSSL_PROVIDER_get0_name(prov) : "unknown";
+            printf("dh: %s\n", pname);
+            EVP_KEYMGMT_free(km);
+        } else {
+            printf("dh: unavailable\n");
+        }
     }
-#ifdef HAVE_HCRYPTO_W_OPENSSL
+
+    /* DHX */
     {
-	printf("ecdsa: ECDSA_METHOD-not-export\n");
+        EVP_KEYMGMT *km = EVP_KEYMGMT_fetch(libctx, "DHX", propq);
+        if (km) {
+            const OSSL_PROVIDER *prov = EVP_KEYMGMT_get0_provider(km);
+            const char *pname = prov ? OSSL_PROVIDER_get0_name(prov) : "unknown";
+            printf("dh: %s\n", pname);
+            EVP_KEYMGMT_free(km);
+        } else {
+            printf("dh: unavailable\n");
+        }
     }
-#else
+
+    /* ECDSA (signature algorithm). If not available, fall back to EC key management. */
     {
-	printf("ecdsa: hcrypto null\n");
+        EVP_SIGNATURE *sig = EVP_SIGNATURE_fetch(libctx, "ECDSA", propq);
+        if (sig) {
+            const OSSL_PROVIDER *prov = EVP_SIGNATURE_get0_provider(sig);
+            const char *pname = prov ? OSSL_PROVIDER_get0_name(prov) : "unknown";
+            printf("ecdsa: %s\n", pname);
+            EVP_SIGNATURE_free(sig);
+        } else {
+            EVP_KEYMGMT *ec = EVP_KEYMGMT_fetch(libctx, "EC", propq);
+            if (ec) {
+                const OSSL_PROVIDER *prov = EVP_KEYMGMT_get0_provider(ec);
+                const char *pname = prov ? OSSL_PROVIDER_get0_name(prov) : "unknown";
+                printf("ecdsa: %s\n", pname);
+                EVP_KEYMGMT_free(ec);
+            } else {
+                printf("ecdsa: unavailable\n");
+            }
+        }
     }
-#endif
+
+    /* Random source status (still fine to use in 3.x) */
     {
-	int ret = RAND_status();
-	printf("rand: %s\n", ret == 1 ? "ok" : "not available");
+        int ret = RAND_status();
+        printf("rand: %s\n", ret == 1 ? "ok" : "not available");
     }
 
     return 0;
@@ -2218,8 +2275,16 @@ hxtool_ca(struct certificate_sign_options *opt, int argc, char **argv)
 	    sigalg = hx509_signature_rsa_with_sha1();
 	else if (strcasecmp(opt->signature_algorithm_string, "rsa-with-sha256") == 0)
 	    sigalg = hx509_signature_rsa_with_sha256();
+	else if (strcasecmp(opt->signature_algorithm_string, "rsa-with-sha384") == 0)
+	    sigalg = hx509_signature_rsa_with_sha384();
+	else if (strcasecmp(opt->signature_algorithm_string, "rsa-with-sha512") == 0)
+	    sigalg = hx509_signature_rsa_with_sha512();
+	else if (strcasecmp(opt->signature_algorithm_string, "ed25519") == 0)
+	    sigalg = hx509_signature_ed25519();
+	else if (strcasecmp(opt->signature_algorithm_string, "ed448") == 0)
+	    sigalg = hx509_signature_ed448();
 	else
-	    errx(1, "unsupported sigature algorithm");
+	    errx(1, "unsupported signature algorithm");
 	hx509_ca_tbs_set_signature_algorithm(context, tbs, sigalg);
     }
 
@@ -3201,13 +3266,204 @@ acert(struct acert_options *opt, int argc, char **argv)
 }
 
 /*
+ * JWT / JWS / JWK commands
+ */
+
+static char *
+read_file_to_string(const char *filename)
+{
+    FILE *f;
+    long size;
+    char *data;
+
+    f = fopen(filename, "r");
+    if (f == NULL)
+        return NULL;
+
+    fseek(f, 0, SEEK_END);
+    size = ftell(f);
+    fseek(f, 0, SEEK_SET);
+
+    data = malloc(size + 1);
+    if (data == NULL) {
+        fclose(f);
+        return NULL;
+    }
+
+    if (fread(data, 1, size, f) != (size_t)size) {
+        free(data);
+        fclose(f);
+        return NULL;
+    }
+    data[size] = '\0';
+    fclose(f);
+    return data;
+}
+
+int
+jwt_sign(struct jwt_sign_options *opt, int argc, char **argv)
+{
+    char *pem_key = NULL;
+    char *token = NULL;
+    FILE *out = stdout;
+    int ret;
+
+    if (opt->private_key_string == NULL)
+        errx(1, "--private-key is required");
+
+    pem_key = read_file_to_string(opt->private_key_string);
+    if (pem_key == NULL)
+        err(1, "Could not read private key from %s", opt->private_key_string);
+
+    ret = hx509_jwt_sign(context,
+                         opt->algorithm_string,
+                         pem_key,
+                         opt->issuer_string,
+                         opt->subject_string,
+                         opt->audience_string,
+                         opt->lifetime_integer,
+                         NULL, /* extra_claims */
+                         &token);
+    free(pem_key);
+
+    if (ret)
+        hx509_err(context, 1, ret, "Failed to sign JWT");
+
+    if (opt->output_string) {
+        out = fopen(opt->output_string, "w");
+        if (out == NULL)
+            err(1, "Could not open %s for writing", opt->output_string);
+    }
+
+    fprintf(out, "%s\n", token);
+    free(token);
+
+    if (opt->output_string)
+        fclose(out);
+
+    return 0;
+}
+
+int
+jwt_verify(struct jwt_verify_options *opt, int argc, char **argv)
+{
+    char **pem_keys = NULL;
+    char *token = NULL;
+    heim_dict_t claims = NULL;
+    heim_string_t claims_json = NULL;
+    size_t num_keys = 0;
+    int ret;
+    size_t i;
+
+    if (opt->public_key_strings.num_strings == 0)
+        errx(1, "--public-key is required");
+
+    /* Load all public keys */
+    num_keys = opt->public_key_strings.num_strings;
+    pem_keys = calloc(num_keys, sizeof(char *));
+    if (pem_keys == NULL)
+        err(1, "Out of memory");
+
+    for (i = 0; i < num_keys; i++) {
+        pem_keys[i] = read_file_to_string(opt->public_key_strings.strings[i]);
+        if (pem_keys[i] == NULL)
+            err(1, "Could not read public key from %s",
+                opt->public_key_strings.strings[i]);
+    }
+
+    /* Get token */
+    if (opt->token_string) {
+        token = strdup(opt->token_string);
+    } else {
+        char buf[8192];
+        if (fgets(buf, sizeof(buf), stdin) == NULL)
+            errx(1, "Could not read token from stdin");
+        /* Remove trailing newline */
+        buf[strcspn(buf, "\r\n")] = '\0';
+        token = strdup(buf);
+    }
+
+    if (token == NULL)
+        err(1, "Out of memory");
+
+    /* Verify */
+    ret = hx509_jwt_verify(context,
+                           token,
+                           (const char **)pem_keys,
+                           num_keys,
+                           opt->audience_string,
+                           0, /* use current time */
+                           &claims);
+
+    for (i = 0; i < num_keys; i++)
+        free(pem_keys[i]);
+    free(pem_keys);
+    free(token);
+
+    if (ret)
+        hx509_err(context, 1, ret, "JWT verification failed");
+
+    /* Print claims */
+    claims_json = heim_json_copy_serialize(claims, HEIM_JSON_F_INDENT2, NULL);
+    if (claims_json)
+        printf("%s\n", heim_string_get_utf8(claims_json));
+
+    heim_release(claims_json);
+    heim_release(claims);
+
+    return 0;
+}
+
+int
+pem_to_jwk(struct pem_to_jwk_options *opt, int argc, char **argv)
+{
+    char *pem_key = NULL;
+    char *jwk_json = NULL;
+    const char *input_file;
+    FILE *out = stdout;
+    int ret;
+
+    /* Get input file from option or argument */
+    if (opt->input_string)
+        input_file = opt->input_string;
+    else if (argc > 0)
+        input_file = argv[0];
+    else
+        errx(1, "PEM file required (use --input or provide as argument)");
+
+    pem_key = read_file_to_string(input_file);
+    if (pem_key == NULL)
+        err(1, "Could not read PEM key from %s", input_file);
+
+    ret = hx509_pem_to_jwk_json(context, pem_key, &jwk_json);
+    free(pem_key);
+
+    if (ret)
+        hx509_err(context, 1, ret, "Failed to convert PEM to JWK");
+
+    if (opt->output_string) {
+        out = fopen(opt->output_string, "w");
+        if (out == NULL)
+            err(1, "Could not open %s for writing", opt->output_string);
+    }
+
+    fprintf(out, "%s\n", jwk_json);
+    free(jwk_json);
+
+    if (opt->output_string)
+        fclose(out);
+
+    return 0;
+}
+
+/*
  *
  */
 
 int
 help(void *opt, int argc, char **argv)
 {
-    sl_slc_help(commands, argc, argv);
+    sl_help_ext(commands, commands_info, argc, argv);
     return 0;
 }
 
@@ -3235,6 +3491,13 @@ main(int argc, char **argv)
     ret = hx509_context_init(&context);
     if (ret)
 	errx(1, "hx509_context_init failed with %d", ret);
+
+    if (ossl_cnf_string || ossl_propq_string) {
+        ret = hx509_context_set_ossl_cnf_propq(context, ossl_cnf_string,
+                                               ossl_propq_string);
+	if (ret)
+	    errx(1, "hx509_context_set_ossl_cnf_propq failed with %d", ret);
+    }
 
     if (stat_file_string)
 	hx509_query_statistic_file(context, stat_file_string);

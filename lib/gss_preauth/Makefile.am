@@ -7,7 +7,12 @@ AM_CPPFLAGS +=			    \
     -I$(srcdir)/../gssapi	    \
     -I$(srcdir)/../gssapi/mech	    \
     -I$(top_srcdir)/include/gssapi  \
-    -I$(top_builddir)/include/gssapi
+    -I$(top_builddir)/include/gssapi \
+    $(INCLUDE_openssl_crypto)
+
+if WIN32
+AM_CPPFLAGS += -DASN1_LIB
+endif
 
 noinst_LTLIBRARIES = libgss_preauth.la
 include_HEADERS = $(srcdir)/gss-preauth-protos.h $(srcdir)/gss-preauth-private.h

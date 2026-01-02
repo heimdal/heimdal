@@ -41,6 +41,8 @@ static const char *database;
 static int from_stdin;
 static char *local_realm;
 static char *ktname = NULL;
+static char *ossl_cnf = NULL;
+static char *ossl_propq = NULL;
 
 struct getargs args[] = {
     { "database", 'd', arg_string, rk_UNCONST(&database), "database", "file" },
@@ -52,6 +54,12 @@ struct getargs args[] = {
 #endif
     { "keytab",   'k',	arg_string, &ktname,	"keytab to use for authentication", "keytab" },
     { "realm",   'r',	arg_string, &local_realm, "realm to use", NULL },
+    { "ossl-cnf",     0,      arg_string, &ossl_cnf,
+      "OpenSSL configuration file", "FILE"
+    },
+    { "ossl-propq",   0,      arg_string, &ossl_propq,
+      "OpenSSL property query string (e.g., provider=pkcs11)", "PROPQ"
+    },
     { "version",    0, arg_flag, &version_flag, NULL, NULL },
     { "help",    'h',  arg_flag, &help_flag, NULL, NULL}
 };
@@ -111,6 +119,12 @@ main(int argc, char **argv)
 
     if (argc != 0)
 	usage(1);
+
+    if (ossl_cnf || ossl_propq) {
+	ret = krb5_set_ossl_cnf_propq(context, ossl_cnf, ossl_propq);
+	if (ret)
+	    krb5_err(context, 1, ret, "krb5_set_ossl_cnf_propq");
+    }
 
     if (database == NULL)
 	database = hdb_default_db(context);

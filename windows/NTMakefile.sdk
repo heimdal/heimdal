@@ -57,11 +57,20 @@ NMAKE_WINVER=0x0A00
 !error Unknown value for APPVER
 !endif
 
+!ifdef CC
+cc          = $(CC)
+!else
 cc          = cl
+!endif
 link        = link
 implib      = lib
 
+!if "$(cc)" == "clang-cl"
+# clang-cl: use clang warnings, not MSVC /W4
+cflags      = -c -DCRTAPI1=_cdecl -DCRTAPI2=_cdecl -nologo -Wall -Wno-unknown-pragmas
+!else
 cflags      = -c -DCRTAPI1=_cdecl -DCRTAPI2=_cdecl -nologo -GS -W4
+!endif
 
 !if "$(CPU)" == "i386"
 cflags      = $(cflags) -D_X86_=1

@@ -49,7 +49,7 @@ R=TEST.H5L.SE
 
 port=@port@
 
-kadmin="${kadmin} -l -r $R"
+kadmin="${kadmin} -l -A -r $R"
 kdc="${kdc} --addresses=localhost -P $port"
 
 server=host/datan.test.h5l.se

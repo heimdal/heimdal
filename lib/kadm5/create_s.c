@@ -205,6 +205,14 @@ kadm5_s_create_principal_with_key(void *server_handle,
             hdb_free_entry(context->context, context->db, &ent);
             return ret;
         }
+
+        if (context->config.mask & KADM5_CONFIG_ASYNC_HDB_WRITES) {
+            ret = context->db->hdb_set_sync(context->context, context->db, 0);
+            if (ret) {
+                hdb_free_entry(context->context, context->db, &ent);
+                return ret;
+            }
+        }
     }
 
     ret = kadm5_log_init(context);
@@ -323,6 +331,14 @@ kadm5_s_create_principal(void *server_handle,
         if (ret) {
             hdb_free_entry(context->context, context->db, &ent);
             return ret;
+        }
+
+        if (context->config.mask & KADM5_CONFIG_ASYNC_HDB_WRITES) {
+            ret = context->db->hdb_set_sync(context->context, context->db, 0);
+            if (ret) {
+                hdb_free_entry(context->context, context->db, &ent);
+                return ret;
+            }
         }
     }
 

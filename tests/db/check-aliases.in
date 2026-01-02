@@ -46,7 +46,7 @@ testfailed="echo test failed; cat messages.log; exit 1"
 
 R=TEST.H5L.SE
 
-kadmin="${TESTS_ENVIRONMENT} ../../kadmin/kadmin -l"
+kadmin="${TESTS_ENVIRONMENT} ../../kadmin/kadmin -l -A"
 
 KRB5_CONFIG="${objdir}/krb5.conf-${db_type}"
 export KRB5_CONFIG

@@ -56,6 +56,12 @@ kadm5_s_lock(void *server_handle)
     if (ret)
 	return ret;
 
+    if (context->config.mask & KADM5_CONFIG_ASYNC_HDB_WRITES) {
+        ret = context->db->hdb_set_sync(context->context, context->db, 0);
+	if (ret)
+	    return ret;
+    }
+
     ret = context->db->hdb_lock(context->context, context->db, HDB_WLOCK);
     if (ret) {
         (void) context->db->hdb_close(context->context, context->db);
@@ -116,7 +122,15 @@ set_funcs(kadm5_server_context *c)
     SET(c, dup_context);
 }
 
-#ifndef NO_UNIX_SOCKETS
+#if defined(_WIN32) && defined(NO_UNIX_SOCKETS)
+
+static void
+set_signal_pipe_name(krb5_context context, char **pipe_name)
+{
+    *pipe_name = strdup(kadm5_log_signal_pipe_name(context));
+}
+
+#elif !defined(NO_UNIX_SOCKETS)
 
 static void
 set_socket_name(krb5_context context, struct sockaddr_un *un)
@@ -226,7 +240,9 @@ find_db_spec(kadm5_server_context *ctx)
 	    return krb5_enomem(context);
     }
 
-#ifndef NO_UNIX_SOCKETS
+#if defined(_WIN32) && defined(NO_UNIX_SOCKETS)
+    set_signal_pipe_name(context, &ctx->log_context.signal_pipe_name);
+#elif !defined(NO_UNIX_SOCKETS)
     set_socket_name(context, &ctx->log_context.socket_name);
 #else
     set_socket_info(context, &ctx->log_context.socket_info);

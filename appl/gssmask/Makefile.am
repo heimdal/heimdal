@@ -2,7 +2,11 @@
 
 include $(top_srcdir)/Makefile.am.common
 
-noinst_PROGRAMS = gssmask gssmaestro
+# gssmaestro uses fork/waitpid which don't exist on Windows
+noinst_PROGRAMS = gssmask
+if !WIN32
+noinst_PROGRAMS += gssmaestro
+endif
 
 gssmask_SOURCES = gssmask.c common.c common.h protocol.h
 

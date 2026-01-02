@@ -41,13 +41,6 @@ stat="--statistic-file=${objdir}/statfile"
 
 hxtool="${TESTS_ENVIRONMENT} ./hxtool ${stat}"
 
-if ${hxtool} info | grep 'rsa: hcrypto null RSA' > /dev/null ; then
-    exit 77
-fi
-if ${hxtool} info | grep 'rand: not available' > /dev/null ; then
-    exit 77
-fi
-
 echo "create certificate request"
 ${hxtool} request-create \
 	 --subject="CN=Love,DC=it,DC=su,DC=se" \
@@ -476,5 +469,189 @@ echo "verify certificate"
 ${hxtool} verify --missing-revoke \
 	cert:FILE:cert-ee.pem \
 	anchor:FILE:cert-ca.pem > /dev/null || exit 1
+
+echo "+++++++++++ test Ed25519"
+
+echo "issue self-signed Ed25519 ca cert"
+${hxtool} issue-certificate \
+	  --self-signed \
+	  --issue-ca \
+	  --generate-key=ed25519 \
+	  --signature-algorithm=ed25519 \
+	  --subject="cn=ed25519-ca" \
+	  --certificate="FILE:cert-ed25519-ca.pem" || exit 1
+${hxtool} print --content FILE:cert-ed25519-ca.pem || exit 1
+
+echo "verify Ed25519 CA cert with openssl"
+openssl x509 -in cert-ed25519-ca.pem -noout -text > /dev/null || exit 1
+# Check signature algorithm is ED25519
+openssl x509 -in cert-ed25519-ca.pem -noout -text | grep -q "Signature Algorithm: ED25519" || exit 1
+# Check public key algorithm is ED25519
+openssl x509 -in cert-ed25519-ca.pem -noout -text | grep -q "Public Key Algorithm: ED25519" || exit 1
+
+echo "issue Ed25519 ee cert"
+${hxtool} issue-certificate \
+	  --ca-certificate=FILE:cert-ed25519-ca.pem \
+	  --generate-key=ed25519 \
+	  --signature-algorithm=ed25519 \
+	  --subject="cn=ed25519-ee" \
+	  --certificate="FILE:cert-ed25519-ee.pem" || exit 1
+${hxtool} print --content FILE:cert-ed25519-ee.pem || exit 1
+
+echo "verify Ed25519 EE cert with openssl"
+openssl x509 -in cert-ed25519-ee.pem -noout -text > /dev/null || exit 1
+# Check signature algorithm is ED25519
+openssl x509 -in cert-ed25519-ee.pem -noout -text | grep -q "Signature Algorithm: ED25519" || exit 1
+# Check public key algorithm is ED25519
+openssl x509 -in cert-ed25519-ee.pem -noout -text | grep -q "Public Key Algorithm: ED25519" || exit 1
+
+echo "verify Ed25519 chain with openssl"
+# Extract just the certificate (skip private key)
+openssl x509 -in cert-ed25519-ca.pem -out cert-ed25519-ca-only.pem || exit 1
+openssl x509 -in cert-ed25519-ee.pem -out cert-ed25519-ee-only.pem || exit 1
+openssl verify -CAfile cert-ed25519-ca-only.pem cert-ed25519-ee-only.pem || exit 1
+
+echo "verify Ed25519 certificate"
+${hxtool} verify --missing-revoke \
+	cert:FILE:cert-ed25519-ee.pem \
+	anchor:FILE:cert-ed25519-ca.pem > /dev/null || exit 1
+
+echo "sign CMS signature (Ed25519)"
+${hxtool} cms-create-sd \
+	--certificate=FILE:cert-ed25519-ee.pem \
+	"$srcdir/test_name.c" \
+	sd-ed25519.data > /dev/null || exit 1
+
+echo "verify CMS signature (Ed25519)"
+${hxtool} cms-verify-sd \
+	--missing-revoke \
+	--anchors=FILE:cert-ed25519-ca.pem \
+	sd-ed25519.data sd-ed25519.data.out > /dev/null || exit 1
+cmp "$srcdir/test_name.c" sd-ed25519.data.out || exit 1
+
+echo "+++++++++++ test Ed448"
+
+echo "issue self-signed Ed448 ca cert"
+${hxtool} issue-certificate \
+	  --self-signed \
+	  --issue-ca \
+	  --generate-key=ed448 \
+	  --signature-algorithm=ed448 \
+	  --subject="cn=ed448-ca" \
+	  --certificate="FILE:cert-ed448-ca.pem" || exit 1
+${hxtool} print --content FILE:cert-ed448-ca.pem || exit 1
+
+echo "verify Ed448 CA cert with openssl"
+openssl x509 -in cert-ed448-ca.pem -noout -text > /dev/null || exit 1
+# Check signature algorithm is ED448
+openssl x509 -in cert-ed448-ca.pem -noout -text | grep -q "Signature Algorithm: ED448" || exit 1
+# Check public key algorithm is ED448
+openssl x509 -in cert-ed448-ca.pem -noout -text | grep -q "Public Key Algorithm: ED448" || exit 1
+
+echo "issue Ed448 ee cert"
+${hxtool} issue-certificate \
+	  --ca-certificate=FILE:cert-ed448-ca.pem \
+	  --generate-key=ed448 \
+	  --signature-algorithm=ed448 \
+	  --subject="cn=ed448-ee" \
+	  --certificate="FILE:cert-ed448-ee.pem" || exit 1
+${hxtool} print --content FILE:cert-ed448-ee.pem || exit 1
+
+echo "verify Ed448 EE cert with openssl"
+openssl x509 -in cert-ed448-ee.pem -noout -text > /dev/null || exit 1
+# Check signature algorithm is ED448
+openssl x509 -in cert-ed448-ee.pem -noout -text | grep -q "Signature Algorithm: ED448" || exit 1
+# Check public key algorithm is ED448
+openssl x509 -in cert-ed448-ee.pem -noout -text | grep -q "Public Key Algorithm: ED448" || exit 1
+
+echo "verify Ed448 chain with openssl"
+# Extract just the certificate (skip private key)
+openssl x509 -in cert-ed448-ca.pem -out cert-ed448-ca-only.pem || exit 1
+openssl x509 -in cert-ed448-ee.pem -out cert-ed448-ee-only.pem || exit 1
+openssl verify -CAfile cert-ed448-ca-only.pem cert-ed448-ee-only.pem || exit 1
+
+echo "verify Ed448 certificate"
+${hxtool} verify --missing-revoke \
+	cert:FILE:cert-ed448-ee.pem \
+	anchor:FILE:cert-ed448-ca.pem > /dev/null || exit 1
+
+echo "sign CMS signature (Ed448)"
+${hxtool} cms-create-sd \
+	--certificate=FILE:cert-ed448-ee.pem \
+	"$srcdir/test_name.c" \
+	sd-ed448.data > /dev/null || exit 1
+
+echo "verify CMS signature (Ed448)"
+${hxtool} cms-verify-sd \
+	--missing-revoke \
+	--anchors=FILE:cert-ed448-ca.pem \
+	sd-ed448.data sd-ed448.data.out > /dev/null || exit 1
+cmp "$srcdir/test_name.c" sd-ed448.data.out || exit 1
+
+echo "+++++++++++ test OpenSSL-generated Ed25519 certs"
+
+echo "generate Ed25519 CA key with openssl"
+openssl genpkey -algorithm Ed25519 -out ossl-ed25519-ca.key || exit 1
+
+echo "generate self-signed Ed25519 CA cert with openssl"
+openssl req -new -x509 -key ossl-ed25519-ca.key -out ossl-ed25519-ca.pem \
+	-days 365 -subj "/CN=OpenSSL Ed25519 CA" \
+	-addext "basicConstraints=critical,CA:TRUE" \
+	-addext "keyUsage=critical,keyCertSign,cRLSign" || exit 1
+
+echo "generate Ed25519 EE key with openssl"
+openssl genpkey -algorithm Ed25519 -out ossl-ed25519-ee.key || exit 1
+
+echo "generate Ed25519 EE CSR with openssl"
+openssl req -new -key ossl-ed25519-ee.key -out ossl-ed25519-ee.csr \
+	-subj "/CN=OpenSSL Ed25519 EE" || exit 1
+
+echo "sign Ed25519 EE cert with openssl CA"
+openssl x509 -req -in ossl-ed25519-ee.csr -CA ossl-ed25519-ca.pem \
+	-CAkey ossl-ed25519-ca.key -CAcreateserial \
+	-out ossl-ed25519-ee.pem -days 365 || exit 1
+
+echo "verify OpenSSL Ed25519 CA cert with hxtool"
+${hxtool} verify --missing-revoke \
+	cert:FILE:ossl-ed25519-ca.pem \
+	anchor:FILE:ossl-ed25519-ca.pem > /dev/null || exit 1
+
+echo "verify OpenSSL Ed25519 EE cert with hxtool"
+${hxtool} verify --missing-revoke \
+	cert:FILE:ossl-ed25519-ee.pem \
+	anchor:FILE:ossl-ed25519-ca.pem > /dev/null || exit 1
+
+echo "+++++++++++ test OpenSSL-generated Ed448 certs"
+
+echo "generate Ed448 CA key with openssl"
+openssl genpkey -algorithm Ed448 -out ossl-ed448-ca.key || exit 1
+
+echo "generate self-signed Ed448 CA cert with openssl"
+openssl req -new -x509 -key ossl-ed448-ca.key -out ossl-ed448-ca.pem \
+	-days 365 -subj "/CN=OpenSSL Ed448 CA" \
+	-addext "basicConstraints=critical,CA:TRUE" \
+	-addext "keyUsage=critical,keyCertSign,cRLSign" || exit 1
+
+echo "generate Ed448 EE key with openssl"
+openssl genpkey -algorithm Ed448 -out ossl-ed448-ee.key || exit 1
+
+echo "generate Ed448 EE CSR with openssl"
+openssl req -new -key ossl-ed448-ee.key -out ossl-ed448-ee.csr \
+	-subj "/CN=OpenSSL Ed448 EE" || exit 1
+
+echo "sign Ed448 EE cert with openssl CA"
+openssl x509 -req -in ossl-ed448-ee.csr -CA ossl-ed448-ca.pem \
+	-CAkey ossl-ed448-ca.key -CAcreateserial \
+	-out ossl-ed448-ee.pem -days 365 || exit 1
+
+echo "verify OpenSSL Ed448 CA cert with hxtool"
+${hxtool} verify --missing-revoke \
+	cert:FILE:ossl-ed448-ca.pem \
+	anchor:FILE:ossl-ed448-ca.pem > /dev/null || exit 1
+
+echo "verify OpenSSL Ed448 EE cert with hxtool"
+${hxtool} verify --missing-revoke \
+	cert:FILE:ossl-ed448-ee.pem \
+	anchor:FILE:ossl-ed448-ca.pem > /dev/null || exit 1
 
 exit 0

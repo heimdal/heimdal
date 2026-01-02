@@ -171,7 +171,7 @@ krb5_sendauth(krb5_context context,
 	if (ret) {
 	    if(my_ccache)
 		krb5_cc_close(context, ccache);
-	    return ret;
+	    goto out;
 	}
     } else {
 	creds = in_creds;
@@ -186,19 +186,19 @@ krb5_sendauth(krb5_context context,
 				&ap_req);
 
     if (ret)
-	return ret;
+	goto out;
 
     ret = krb5_write_message (context,
 			      p_fd,
 			      &ap_req);
     if (ret)
-	return ret;
+	goto out;
 
     krb5_data_free (&ap_req);
 
     ret = krb5_read_message (context, p_fd, &error_data);
     if (ret)
-	return ret;
+	goto out;
 
     if (error_data.length != 0) {
 	KRB_ERROR error;
@@ -217,10 +217,10 @@ krb5_sendauth(krb5_context context,
 	    } else {
 		krb5_free_error_contents (context, &error);
 	    }
-	    return ret;
+	    goto out;
 	} else {
 	    krb5_clear_error_message(context);
-	    return ret;
+	    goto out;
 	}
     } else
 	krb5_data_free (&error_data);
@@ -234,13 +234,13 @@ krb5_sendauth(krb5_context context,
 				 p_fd,
 				 &ap_rep);
 	if (ret)
-	    return ret;
+	    goto out;
 
 	ret = krb5_rd_rep (context, *auth_context, &ap_rep,
 			   rep_result ? rep_result : &ignore);
 	krb5_data_free (&ap_rep);
 	if (ret)
-	    return ret;
+	    goto out;
 	if (rep_result == NULL)
 	    krb5_free_ap_rep_enc_part (context, ignore);
     }
@@ -248,6 +248,15 @@ krb5_sendauth(krb5_context context,
     if (out_creds)
         ret = krb5_copy_creds(context, creds, out_creds);
 
+out:
+    /*
+     * this_client is set only when in_creds == NULL and client == NULL,
+     * in which case this_cred.client == this_client.  When creds ==
+     * &this_cred, krb5_free_cred_contents() will free this_client via
+     * this_cred.client.  Otherwise we must free this_client here.
+     */
+    if (creds != &this_cred)
+        krb5_free_principal(context, this_client);
     this_cred.server = NULL;
     if (creds == &this_cred)
         krb5_free_cred_contents(context, creds);

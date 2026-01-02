@@ -43,7 +43,7 @@ jobs:
                 /bin/sh ./autogen.sh
                 mkdir build
                 cd build
-                ../configure --srcdir=`dirname "$PWD"` --enable-maintainer-mode --enable-developer --with-ldap $CONFIGURE_OPTS --prefix=$HOME/inst CFLAGS="-g -ggdb3 -O0 -Wno-error=shadow -Wno-error=bad-function-cast -Wno-error=unused-function -Wno-error=unused-result -Wno-error=deprecated-declarations"
+                ../configure --srcdir=`dirname "$PWD"` --enable-maintainer-mode --enable-developer --with-ldap $CONFIGURE_OPTS --prefix=$HOME/inst CFLAGS="-gdwarf-4 -g -ggdb3 -O0 -Wno-error=shadow -Wno-error=bad-function-cast -Wno-error=unused-function -Wno-error=unused-result -Wno-error=deprecated-declarations"
                 make -j4
             - name: Test
               env:
@@ -51,6 +51,7 @@ jobs:
                 MAKEVARS: ${{ matrix.makevars }}
               run: |
                 cd build
+                sudo sysctl kernel.core_pattern=core.%p || true
                 ulimit -c unlimited
                 make check-valgrind
             - name: Valgrind output

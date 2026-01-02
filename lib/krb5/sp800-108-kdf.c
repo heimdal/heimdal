@@ -56,16 +56,23 @@ _krb5_SP800_108_HMAC_KDF(krb5_context context,
 			 const EVP_MD *md,
 			 krb5_data *kdf_K0)
 {
-    HMAC_CTX c;
+    EVP_MAC *mac = NULL;
+    EVP_MAC_CTX *ctx = NULL;
+    const char *mdname = EVP_MD_get0_name(md);
+    OSSL_PARAM params[] = {
+        OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST, (char *)mdname, 0),
+        OSSL_PARAM_END
+    };
     unsigned char *p = kdf_K0->data;
     size_t i, n, left = kdf_K0->length;
+    size_t h = EVP_MD_size(md);
     unsigned char hmac[EVP_MAX_MD_SIZE];
-    unsigned int h = EVP_MD_size(md);
     const size_t L = kdf_K0->length;
 
     heim_assert(md != NULL, "SP800-108 KDF internal error");
 
-    HMAC_CTX_init(&c);
+    mac = EVP_MAC_fetch(NULL, "HMAC", NULL); // can't be NULL
+    ctx = EVP_MAC_CTX_new(mac);
 
     n = L / h;
 
@@ -73,28 +80,29 @@ _krb5_SP800_108_HMAC_KDF(krb5_context context,
 	unsigned char tmp[4];
 	size_t len;
 
-        if (HMAC_Init_ex(&c, kdf_K1->data, kdf_K1->length, md, NULL) == 0) {
-            HMAC_CTX_cleanup(&c);
+        if (EVP_MAC_init(ctx, kdf_K1->data, kdf_K1->length, params) != 1) {
+            EVP_MAC_CTX_free(ctx);
+            EVP_MAC_free(mac);
             return krb5_enomem(context);
         }
 
 	_krb5_put_int(tmp, i + 1, 4);
-	HMAC_Update(&c, tmp, 4);
-	HMAC_Update(&c, kdf_label->data, kdf_label->length);
-	HMAC_Update(&c, (unsigned char *)"", 1);
+	EVP_MAC_update(ctx, tmp, 4);
+	EVP_MAC_update(ctx, kdf_label->data, kdf_label->length);
+	EVP_MAC_update(ctx, (unsigned char *)"", 1);
 	if (kdf_context)
-	    HMAC_Update(&c, kdf_context->data, kdf_context->length);
+	    EVP_MAC_update(ctx, kdf_context->data, kdf_context->length);
 	_krb5_put_int(tmp, L * 8, 4);
-	HMAC_Update(&c, tmp, 4);
+	EVP_MAC_update(ctx, tmp, 4);
 
-	HMAC_Final(&c, hmac, &h);
+	EVP_MAC_final(ctx, hmac, &h, sizeof(hmac));
 	len = h > left ? left : h;
 	memcpy(p, hmac, len);
 	p += len;
 	left -= len;
     }
 
-    HMAC_CTX_cleanup(&c);
-
+    EVP_MAC_CTX_free(ctx);
+    EVP_MAC_free(mac);
     return 0;
 }

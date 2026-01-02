@@ -136,8 +136,8 @@
 [kadmin]
 	save-password = true
 	default_key_rules = {
-		*/des3-only@* = des3-cbc-sha1:pw-salt
-		*/aes-only@* = aes256-cts-hmac-sha1-96:pw-salt
+               */aes-sha1-only@* = aes256-cts-hmac-sha1-96:pw-salt
+               */aes-sha2-only@* = aes256-cts-hmac-sha384-192:pw-salt
 	}
 	@dk@
 

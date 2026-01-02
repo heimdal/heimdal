@@ -147,7 +147,9 @@ verify_req_hash(krb5_context context,
                 krb5_keyblock *key)
 {
     unsigned char digest[SHA_DIGEST_LENGTH];
-    HMAC_CTX ctx;
+    EVP_MAC_CTX *ctx = NULL;
+    size_t maclen = SHA_DIGEST_LENGTH;
+    int ret;
 
     if (req->pk_hash.length != sizeof(digest)) {
         krb5_set_error_message(context, KRB5KDC_ERR_PREAUTH_FAILED,
@@ -156,21 +158,29 @@ verify_req_hash(krb5_context context,
         return KRB5KDC_ERR_PREAUTH_FAILED;
     }
 
-    HMAC_CTX_init(&ctx);
-    if (HMAC_Init_ex(&ctx, key->keyvalue.data, key->keyvalue.length,
-                     EVP_sha1(), NULL) == 0) {
-        HMAC_CTX_cleanup(&ctx);
-        return krb5_enomem(context);
+    ret = _krb5_hmac_start_ossl(key->keyvalue.data, key->keyvalue.length,
+                                EVP_sha1(), &ctx);
+    if (ret == 0 &&
+        EVP_MAC_update(ctx, version_2_0, sizeof(version_2_0)) != 1) {
+        ret = KRB5KDC_ERR_PREAUTH_FAILED;
     }
-    if (sizeof(digest) != HMAC_size(&ctx))
-        krb5_abortx(context, "runtime error, hmac buffer wrong size in kx509");
-    HMAC_Update(&ctx, version_2_0, sizeof(version_2_0));
-    if (req->pk_key.length)
-        HMAC_Update(&ctx, req->pk_key.data, req->pk_key.length);
-    else
-        HMAC_Update(&ctx, req->authenticator.data, req->authenticator.length);
-    HMAC_Final(&ctx, digest, 0);
-    HMAC_CTX_cleanup(&ctx);
+    if (ret == 0 && req->pk_key.length) {
+        if (EVP_MAC_update(ctx, req->pk_key.data, req->pk_key.length) != 1)
+            ret = KRB5KDC_ERR_PREAUTH_FAILED;
+    } else if (ret == 0) {
+        if (EVP_MAC_update(ctx, req->authenticator.data,
+                           req->authenticator.length) != 1)
+            ret = KRB5KDC_ERR_PREAUTH_FAILED;
+    }
+    if (ret == 0 &&
+        EVP_MAC_final(ctx, digest, &maclen, maclen) != 1)
+        ret = KRB5KDC_ERR_PREAUTH_FAILED;
+    EVP_MAC_CTX_free(ctx);
+    if (ret) {
+        krb5_set_error_message(context, KRB5KDC_ERR_PREAUTH_FAILED,
+                               "kx509 could not compute HMAC");
+        return ret;
+    }
 
     if (ct_memcmp(req->pk_hash.data, digest, sizeof(digest)) != 0) {
         krb5_set_error_message(context, KRB5KDC_ERR_PREAUTH_FAILED,
@@ -188,24 +198,20 @@ calculate_reply_hash(krb5_context context,
                      krb5_keyblock *key,
                      Kx509Response *rep)
 {
-    krb5_error_code ret = 0;
-    HMAC_CTX ctx;
+    krb5_error_code ret;
+    EVP_MAC_CTX *ctx = NULL;
+    size_t maclen = SHA_DIGEST_LENGTH;
 
-    HMAC_CTX_init(&ctx);
-
-    if (HMAC_Init_ex(&ctx, key->keyvalue.data, key->keyvalue.length,
-                     EVP_sha1(), NULL) == 0)
+    ret = _krb5_hmac_start_ossl(key->keyvalue.data, key->keyvalue.length,
+                                EVP_sha1(), &ctx);
+    if (ret)
         ret = krb5_enomem(context);
-
     if (ret == 0)
-        ret = krb5_data_alloc(rep->hash, HMAC_size(&ctx));
-    if (ret) {
-        HMAC_CTX_cleanup(&ctx);
-        return krb5_enomem(context);
-    }
-
-    HMAC_Update(&ctx, version_2_0, sizeof(version_2_0));
-    {
+        ret = krb5_data_alloc(rep->hash, SHA_DIGEST_LENGTH);
+    if (ret == 0 &&
+        EVP_MAC_update(ctx, version_2_0, sizeof(version_2_0)) != 1)
+        ret = EINVAL;
+    if (ret == 0) {
         int32_t t = rep->error_code;
         unsigned char encint[sizeof(t) + 1];
         size_t k;
@@ -224,16 +230,23 @@ calculate_reply_hash(krb5_context context,
          */
         ret = der_put_integer(&encint[sizeof(encint) - 1],
                               sizeof(encint), &t, &k);
-        if (ret == 0)
-            HMAC_Update(&ctx, &encint[sizeof(encint)] - k, k);
+        if (ret == 0 &&
+            EVP_MAC_update(ctx, &encint[sizeof(encint)] - k, k) != 1)
+            ret = EINVAL;
     }
-    if (rep->certificate)
-        HMAC_Update(&ctx, rep->certificate->data, rep->certificate->length);
-    if (rep->e_text)
-        HMAC_Update(&ctx, (unsigned char *)*rep->e_text, strlen(*rep->e_text));
+    if (ret == 0 && rep->certificate &&
+        EVP_MAC_update(ctx, rep->certificate->data,
+                       rep->certificate->length) != 1)
+        ret = EINVAL;
+    if (ret == 0 && rep->e_text && 
+        EVP_MAC_update(ctx, (unsigned char *)*rep->e_text,
+                       strlen(*rep->e_text)) != 1)
+        ret = EINVAL;
 
-    HMAC_Final(&ctx, rep->hash->data, 0);
-    HMAC_CTX_cleanup(&ctx);
+    if (ret == 0 &&
+        EVP_MAC_final(ctx, rep->hash->data, &maclen, maclen) != 1)
+        ret = EINVAL;
+    EVP_MAC_CTX_free(ctx);
 
     return 0;
 }

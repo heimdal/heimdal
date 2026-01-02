@@ -220,7 +220,7 @@ static BOOL MyEnumProcessModules( HANDLE hProcess, HMODULE *lphModule, DWORD cb,
     {
         psapi = LoadLibraryA( "Psapi.dll" );
         if( psapi )
-            EnumProcessModulesPtr = (BOOL (WINAPI *)(HANDLE, HMODULE *, DWORD, LPDWORD)) GetProcAddress( psapi, "EnumProcessModules" );
+            EnumProcessModulesPtr = (BOOL (WINAPI *)(HANDLE, HMODULE *, DWORD, LPDWORD)) (void *) GetProcAddress( psapi, "EnumProcessModules" );
         if( !EnumProcessModulesPtr )
             return 0;
     }

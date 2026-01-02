@@ -58,7 +58,7 @@ R=TEST.H5L.SE
 
 port=@port@
 
-kadmin="${kadmin} -l -r $R --config-file=${KRB5_CONFIG}"
+kadmin="${kadmin} -l -A -r $R --config-file=${KRB5_CONFIG}"
 kdc="${kdc} --addresses=localhost -P $port"
 
 server=host/datan.test.h5l.se

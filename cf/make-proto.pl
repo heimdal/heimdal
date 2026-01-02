@@ -423,28 +423,30 @@ extern \"C\" {
 if ($opt_E) {
     $public_h_header .= "#ifndef $opt_E
  #ifndef ${opt_E}_FUNCTION
-  #if defined(_WIN32)
+  #if defined(_WIN32) && !defined(__MINGW32__)
    #define ${opt_E}_FUNCTION __declspec(dllimport)
   #else
    #define ${opt_E}_FUNCTION
   #endif
  #endif
  #ifndef ${opt_E}_NORETURN_FUNCTION
-  #if defined(_WIN32)
+  #if defined(_WIN32) && !defined(__MINGW32__)
    #define ${opt_E}_NORETURN_FUNCTION __declspec(dllimport noreturn)
   #else
    #define ${opt_E}_NORETURN_FUNCTION
   #endif
  #endif
  #ifndef ${opt_E}_CALL
-  #if defined(_WIN32)
+  #if defined(_WIN32) && !defined(__MINGW32__)
    #define ${opt_E}_CALL __stdcall
+  #elif defined(_WIN32)
+   #define ${opt_E}_CALL __cdecl
   #else
    #define ${opt_E}_CALL
   #endif
  #endif
  #ifndef ${opt_E}_VARIABLE
-  #if defined(_WIN32)
+  #if defined(_WIN32) && !defined(__MINGW32__)
    #define ${opt_E}_VARIABLE __declspec(dllimport)
   #else
    #define ${opt_E}_VARIABLE
@@ -452,31 +454,33 @@ if ($opt_E) {
  #endif
 #endif
 ";
-    
+
     $private_h_header .= "#ifndef $opt_E
  #ifndef ${opt_E}_FUNCTION
-  #if defined(_WIN32)
+  #if defined(_WIN32) && !defined(__MINGW32__)
    #define ${opt_E}_FUNCTION __declspec(dllimport)
   #else
    #define ${opt_E}_FUNCTION
   #endif
  #endif
  #ifndef ${opt_E}_NORETURN_FUNCTION
-  #if defined(_WIN32)
+  #if defined(_WIN32) && !defined(__MINGW32__)
    #define ${opt_E}_NORETURN_FUNCTION __declspec(dllimport noreturn)
   #else
    #define ${opt_E}_NORETURN_FUNCTION
   #endif
  #endif
  #ifndef ${opt_E}_CALL
-  #if defined(_WIN32)
+  #if defined(_WIN32) && !defined(__MINGW32__)
    #define ${opt_E}_CALL __stdcall
+  #elif defined(_WIN32)
+   #define ${opt_E}_CALL __cdecl
   #else
    #define ${opt_E}_CALL
   #endif
  #endif
  #ifndef ${opt_E}_VARIABLE
-  #if defined(_WIN32)
+  #if defined(_WIN32) && !defined(__MINGW32__)
    #define ${opt_E}_VARIABLE __declspec(dllimport)
   #else
    #define ${opt_E}_VARIABLE

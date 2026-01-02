@@ -38,6 +38,7 @@
 static char *config_file;
 static char *keyfile;
 int local_flag;
+static int async_flag;
 static int ad_flag;
 static int help_flag;
 static int version_flag;
@@ -49,6 +50,8 @@ static char *client_name;
 static char *keytab;
 static char *check_library  = NULL;
 static char *check_function = NULL;
+static char *ossl_cnf = NULL;
+static char *ossl_propq = NULL;
 static getarg_strings policy_libraries = { 0, NULL };
 
 static struct getargs args[] = {
@@ -91,6 +94,11 @@ static struct getargs args[] = {
       "password check function to load", "function" },
 #endif
     {	"local", 'l', arg_flag, &local_flag, "local admin mode", NULL },
+    {	"async", 'A', arg_flag, &async_flag, "local admin mode (no fsyncs)", NULL },
+    {	"ossl-cnf", 0, arg_string, &ossl_cnf,
+	"OpenSSL configuration file", "FILE" },
+    {	"ossl-propq", 0, arg_string, &ossl_propq,
+	"OpenSSL property query string (e.g., provider=pkcs11)", "PROPQ" },
     {	"help",		'h',	arg_flag,   &help_flag, NULL, NULL },
     {	"version",	'v',	arg_flag,   &version_flag, NULL, NULL }
 };
@@ -186,6 +194,12 @@ main(int argc, char **argv)
     argc -= optidx;
     argv += optidx;
 
+    if (ossl_cnf || ossl_propq) {
+	ret = krb5_set_ossl_cnf_propq(context, ossl_cnf, ossl_propq);
+	if (ret)
+	    krb5_err(context, 1, ret, "krb5_set_ossl_cnf_propq");
+    }
+
     if (config_file == NULL) {
 	aret = asprintf(&config_file, "%s/kdc.conf", hdb_db_dir(context));
 	if (aret == -1)
@@ -202,6 +216,9 @@ main(int argc, char **argv)
 	krb5_err(context, 1, ret, "reading configuration files");
 
     memset(&conf, 0, sizeof(conf));
+    if (async_flag)
+        conf.mask |= KADM5_CONFIG_ASYNC_HDB_WRITES;
+
     if(realm) {
 	krb5_set_default_realm(context, realm); /* XXX should be fixed
 						   some other way */

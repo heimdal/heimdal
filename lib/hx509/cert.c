@@ -93,12 +93,263 @@ typedef struct hx509_name_constraints {
 #define GeneralSubtrees_SET(g,var) \
 	(g)->len = (var)->len, (g)->val = (var)->val;
 
+/*
+ * OpenSSL provider management for hx509.
+ *
+ * We load both the default and legacy providers during context init:
+ * - default: needed for standard crypto (RSA, EC, AES, SHA, etc.)
+ * - legacy: needed for PKCS#12 weak crypto (RC2, 3DES-CBC, etc.)
+ *
+ * We also fetch and cache commonly used algorithms (EVP_MD, EVP_CIPHER) to
+ * avoid repeated fetching and to ensure proper cleanup.
+ *
+ * Note: In OpenSSL 3.x, explicitly loading any provider on the global context
+ * disables the auto-loading behavior, so we must explicitly load the default
+ * provider when we load the legacy provider.
+ *
+ * Contexts are cached globally in a singly-linked list keyed by (cnf, propq).
+ * This allows sharing across multiple hx509_context instances and avoids
+ * repeated algorithm fetching when propq is set to the same value.
+ */
+
+/* Global cache of OpenSSL contexts, keyed by (cnf, propq) */
+static heim_base_atomic(hx509_context_ossl) cached_ossl_hx509;
+
+/* Helper to compare two nullable strings for equality */
+static int
+str_equal(const char *a, const char *b)
+{
+    if (a == b)
+        return 1;
+    if (a == NULL || b == NULL)
+        return 0;
+    return strcmp(a, b) == 0;
+}
+
+/* Check if an ossl context matches the given (cnf, propq) tuple */
+static int
+ossl_matches(hx509_context_ossl p, const char *cnf, const char *propq)
+{
+    return str_equal(p->cnf, cnf) && str_equal(p->propq, propq);
+}
+
+/*
+ * Create a new OpenSSL context with the given cnf and propq.
+ * Does not add to the global cache.
+ */
+static int
+make_openssl_hx509(hx509_context context,
+                   const char *cnf,
+                   const char *propq,
+                   hx509_context_ossl *osslp)
+{
+    hx509_context_ossl ossl;
+
+    *osslp = NULL;
+
+    if ((ossl = calloc(1, sizeof(*ossl))) == NULL)
+        return ENOMEM;
+    ossl->refs = 1;
+
+    /*
+     * Use the global default library context.  We could make this
+     * configurable via hx509.conf in the future if needed.
+     */
+    ossl->libctx = OSSL_LIB_CTX_get0_global_default();
+
+    /* Store cnf and propq for cache lookup */
+    if (cnf && (ossl->cnf = strdup(cnf)) == NULL) {
+        free(ossl);
+        return ENOMEM;
+    }
+    if (propq && (ossl->propq = strdup(propq)) == NULL) {
+        free(ossl->cnf);
+        free(ossl);
+        return ENOMEM;
+    }
+
+    /*
+     * Load the default provider first - this is required because in OpenSSL
+     * 3.x, explicitly loading any provider disables auto-loading of the
+     * default provider.
+     */
+    ossl->openssl_def = OSSL_PROVIDER_load(ossl->libctx, "default");
+
+    /*
+     * Load the legacy provider for PKCS#12 weak crypto support.
+     * This is needed for algorithms like RC2, 3DES-CBC, etc. that are
+     * commonly used in PKCS#12 files.
+     */
+    ossl->openssl_leg = OSSL_PROVIDER_load(ossl->libctx, "legacy");
+
+    /*
+     * Fetch and cache message digests.
+     * We ignore failures here - the algorithms will be NULL if not available.
+     */
+    ossl->md5    = EVP_MD_fetch(ossl->libctx, "MD5", ossl->propq);
+    ossl->sha1   = EVP_MD_fetch(ossl->libctx, "SHA1", ossl->propq);
+    ossl->sha256 = EVP_MD_fetch(ossl->libctx, "SHA256", ossl->propq);
+    ossl->sha384 = EVP_MD_fetch(ossl->libctx, "SHA384", ossl->propq);
+    ossl->sha512 = EVP_MD_fetch(ossl->libctx, "SHA512", ossl->propq);
+
+    /*
+     * Fetch and cache ciphers - legacy (PKCS#12).
+     * These come from the legacy provider.
+     */
+    ossl->rc2_40_cbc   = EVP_CIPHER_fetch(ossl->libctx, "RC2-40-CBC", ossl->propq);
+    ossl->rc2_64_cbc   = EVP_CIPHER_fetch(ossl->libctx, "RC2-64-CBC", ossl->propq);
+    ossl->rc2_cbc      = EVP_CIPHER_fetch(ossl->libctx, "RC2-CBC", ossl->propq);
+    ossl->rc4_40       = EVP_CIPHER_fetch(ossl->libctx, "RC4-40", ossl->propq);
+    ossl->rc4          = EVP_CIPHER_fetch(ossl->libctx, "RC4", ossl->propq);
+    ossl->des_ede3_cbc = EVP_CIPHER_fetch(ossl->libctx, "DES-EDE3-CBC", ossl->propq);
+
+    /*
+     * Fetch and cache ciphers - standard.
+     */
+    ossl->aes_128_cbc = EVP_CIPHER_fetch(ossl->libctx, "AES-128-CBC", ossl->propq);
+    ossl->aes_192_cbc = EVP_CIPHER_fetch(ossl->libctx, "AES-192-CBC", ossl->propq);
+    ossl->aes_256_cbc = EVP_CIPHER_fetch(ossl->libctx, "AES-256-CBC", ossl->propq);
+
+    *osslp = ossl;
+    return 0;
+}
+
+static void
+free_openssl_hx509(hx509_context_ossl *osslp)
+{
+    hx509_context_ossl p = *osslp;
+
+    *osslp = NULL;
+    if (p == NULL)
+        return;
+
+    /* Decrement refcount; only free if we're the last reference */
+    if (heim_base_atomic_dec_32(&p->refs) != 0)
+        return;
+
+    /* Free fetched message digests */
+    EVP_MD_free(p->md5);
+    EVP_MD_free(p->sha1);
+    EVP_MD_free(p->sha256);
+    EVP_MD_free(p->sha384);
+    EVP_MD_free(p->sha512);
+
+    /* Free fetched ciphers - legacy */
+    EVP_CIPHER_free(p->rc2_40_cbc);
+    EVP_CIPHER_free(p->rc2_64_cbc);
+    EVP_CIPHER_free(p->rc2_cbc);
+    EVP_CIPHER_free(p->rc4_40);
+    EVP_CIPHER_free(p->rc4);
+    EVP_CIPHER_free(p->des_ede3_cbc);
+
+    /* Free fetched ciphers - standard */
+    EVP_CIPHER_free(p->aes_128_cbc);
+    EVP_CIPHER_free(p->aes_192_cbc);
+    EVP_CIPHER_free(p->aes_256_cbc);
+
+    /* Unload providers */
+    if (p->openssl_leg)
+        OSSL_PROVIDER_unload(p->openssl_leg);
+    if (p->openssl_def)
+        OSSL_PROVIDER_unload(p->openssl_def);
+
+    /* Note: we don't free libctx if it's the global default */
+    free(p->cnf);
+    free(p->propq);
+    free(p);
+}
+
+/*
+ * Look up or create an OpenSSL context with the given propq.
+ * The cnf comes from the hx509.conf config file.
+ * Contexts are cached globally and shared via refcounting.
+ */
+static int
+init_openssl_hx509_with_propq(hx509_context context,
+                              const char *cnf,
+                              const char *propq,
+                              hx509_context_ossl *osslp)
+{
+    hx509_context_ossl first, p, ossl;
+    int ret;
+    int done = 0;
+
+    *osslp = NULL;
+
+    /*
+     * Ensure that all writes to the list are visible to us before we
+     * dereference the members of the list.
+     */
+    first = heim_base_atomic_load(&cached_ossl_hx509);
+    heim_base_consumer_barrier();
+    for (p = first; p; p = p->next) {
+        if (ossl_matches(p, cnf, propq)) {
+            (void) heim_base_atomic_inc_32(&p->refs);
+            *osslp = p;
+            return 0;
+        }
+    }
+
+    /* Not found in cache, create a new one */
+    ret = make_openssl_hx509(context, cnf, propq, &ossl);
+    if (ret)
+        return ret;
+
+    /* Finish all stores before we publish */
+    heim_base_producer_barrier();
+
+    while (!done) {
+        hx509_context_ossl old = first;
+
+        /* Try to publish */
+        ossl->next = first;
+        if ((old = heim_base_cas_pointer((void *)&cached_ossl_hx509,
+                                         first, ossl)) == first) {
+            /*
+             * Published!  Take one more ref for the reference from the global
+             * list.
+             */
+            heim_base_consumer_barrier();
+            (void) heim_base_atomic_inc_32(&ossl->refs);
+            *osslp = ossl;
+            return 0;
+        }
+        heim_base_consumer_barrier();
+
+        /* Lost a race; try again */
+        first = old;
+        ossl->next = first;
+        for (p = first; p; p = p->next) {
+            if (ossl_matches(p, cnf, propq)) {
+                (void) heim_base_atomic_inc_32(&p->refs);
+                *osslp = p;
+                free_openssl_hx509(&ossl); /* Found a better one */
+                return 0;
+            }
+        }
+        /* Did not find a better one, so try to publish again */
+    }
+    return 0;
+}
+
+static int
+init_openssl_hx509(hx509_context context, hx509_context_ossl *osslp)
+{
+    const char *cnf =
+        heim_config_get_string_default(context->hcontext, context->cf,
+                                       secure_getenv("HX509_OPENSSL_CNF"),
+                                       "libdefaults", "openssl_cnf",
+                                       NULL);
+    const char *propq =
+        heim_config_get_string_default(context->hcontext, context->cf,
+                                       secure_getenv("HX509_OPENSSL_PROPQ"),
+                                       "libdefaults", "openssl_propq", NULL);
+    return init_openssl_hx509_with_propq(context, cnf, propq, osslp);
+}
+
 static void
 init_context_once(void *ignored)
 {
-
-    ENGINE_add_conf_module();
-    OpenSSL_add_all_algorithms();
 }
 
 /**
@@ -201,6 +452,15 @@ hx509_context_init(hx509_context *contextp)
     initialize_hx_error_table_r(&context->et_list);
     initialize_asn1_error_table_r(&context->et_list);
 
+    /* Initialize OpenSSL provider context (legacy provider for PKCS#12) */
+    if ((ret = init_openssl_hx509(context, &context->ossl))) {
+        free_error_table(context->et_list);
+        heim_config_file_free(context->hcontext, context->cf);
+        heim_context_free(&context->hcontext);
+        free(context);
+        return ret;
+    }
+
 #ifdef HX509_DEFAULT_ANCHORS
     anchors = heim_config_get_string_default(context->hcontext, context->cf,
                                              HX509_DEFAULT_ANCHORS,
@@ -258,6 +518,52 @@ hx509_context_set_missing_revoke(hx509_context context, int flag)
 }
 
 /**
+ * Set the OpenSSL configuration and/or property query string for algorithm
+ * fetching.
+ *
+ * This allows selecting specific provider implementations (e.g., "fips=yes")
+ * and amortizes the cost of OpenSSL algorithm "fetching".
+ *
+ * This function looks up or creates an OpenSSL context with the specified
+ * propq and re-fetches all algorithms using that propq.  Contexts are cached
+ * globally and shared via refcounting.
+ *
+ * This must be called after hx509_context_init() and before any cryptographic
+ * operations using the resulting context.
+ *
+ * @param context hx509 context
+ * @param cnf OpenSSL configuration file (NULL for OpenSSL default)
+ * @param propq OpenSSL property query string (NULL for OpenSSL default)
+ *
+ * @return 0 on success, ENOMEM on allocation failure
+ *
+ * @ingroup hx509
+ */
+
+HX509_LIB_FUNCTION int HX509_LIB_CALL
+hx509_context_set_ossl_cnf_propq(hx509_context context,
+                                 const char *cnf,
+                                 const char *propq)
+{
+    hx509_context_ossl new_ossl = NULL;
+    int ret;
+
+    if (context == NULL)
+        return EINVAL;
+
+    /* Look up or create a cached OpenSSL context with the new propq */
+    ret = init_openssl_hx509_with_propq(context, cnf, propq, &new_ossl);
+    if (ret)
+        return ret;
+
+    /* Release the old context and use the new one */
+    free_openssl_hx509(&context->ossl);
+    context->ossl = new_ossl;
+
+    return 0;
+}
+
+/**
  * Free the context allocated by hx509_context_init().
  *
  * @param context context to be freed.
@@ -281,6 +587,7 @@ hx509_context_free(hx509_context *context)
     if ((*context)->querystat)
 	free((*context)->querystat);
     hx509_certs_free(&(*context)->default_trust_anchors);
+    free_openssl_hx509(&(*context)->ossl);
     heim_config_file_free((*context)->hcontext, (*context)->cf);
     heim_context_free(&(*context)->hcontext);
     memset(*context, 0, sizeof(**context));
@@ -2722,7 +3029,7 @@ hx509_verify_signature(hx509_context context,
 		       const heim_octet_string *data,
 		       const heim_octet_string *sig)
 {
-    return _hx509_verify_signature(context, signer, alg, data, sig);
+    return _hx509_verify_signature(context, signer, alg, NULL, data, sig);
 }
 
 HX509_LIB_FUNCTION int HX509_LIB_CALL
@@ -2743,7 +3050,7 @@ _hx509_verify_signature_bitstring(hx509_context context,
     os.data = sig->data;
     os.length = sig->length / 8;
 
-    return _hx509_verify_signature(context, signer, alg, data, &os);
+    return _hx509_verify_signature(context, signer, alg, NULL, data, &os);
 }
 
 
@@ -3246,6 +3553,42 @@ hx509_query_match_cmp_func(hx509_query *q,
 }
 
 /**
+ * Set the query controller to match certificates with the specified
+ * public key algorithm.
+ *
+ * @param q a hx509 query controller
+ * @param oid the public key algorithm OID to match, or NULL to clear
+ *
+ * @return An hx509 error code, see hx509_get_error_string().
+ *
+ * @ingroup hx509_cert
+ */
+
+HX509_LIB_FUNCTION int HX509_LIB_CALL
+hx509_query_match_key_algorithm(hx509_query *q, const heim_oid *oid)
+{
+    if (q->key_alg) {
+	der_free_oid(q->key_alg);
+	free(q->key_alg);
+	q->key_alg = NULL;
+    }
+    if (oid) {
+	q->key_alg = malloc(sizeof(*q->key_alg));
+	if (q->key_alg == NULL)
+	    return ENOMEM;
+	if (der_copy_oid(oid, q->key_alg)) {
+	    free(q->key_alg);
+	    q->key_alg = NULL;
+	    return ENOMEM;
+	}
+	q->match |= HX509_QUERY_MATCH_KEY_ALG;
+    } else {
+	q->match &= ~HX509_QUERY_MATCH_KEY_ALG;
+    }
+    return 0;
+}
+
+/**
  * Free the query controller.
  *
  * @param context A hx509 context.
@@ -3276,6 +3619,10 @@ hx509_query_free(hx509_context context, hx509_query *q)
 	free(q->friendlyname);
     if (q->expr)
 	_hx509_expr_free(q->expr);
+    if (q->key_alg) {
+	der_free_oid(q->key_alg);
+	free(q->key_alg);
+    }
 
     memset(q, 0, sizeof(*q));
     free(q);
@@ -3393,6 +3740,7 @@ _hx509_query_match_cert(hx509_context context, const hx509_query *q, hx509_cert 
 	ret = _hx509_verify_signature(context,
 				      NULL,
 				      hx509_signature_sha1(),
+                                      NULL,
 				      &os,
 				      q->keyhash_sha1);
 	if (ret != 0)
@@ -3424,6 +3772,14 @@ _hx509_query_match_cert(hx509_context context, const hx509_query *q, hx509_cert 
 	ret = _hx509_expr_eval(context, env, q->expr);
 	hx509_env_free(&env);
 	if (ret == 0)
+	    return 0;
+    }
+
+    if (q->match & HX509_QUERY_MATCH_KEY_ALG) {
+	const AlgorithmIdentifier *alg;
+
+	alg = &c->tbsCertificate.subjectPublicKeyInfo.algorithm;
+	if (der_heim_oid_cmp(&alg->algorithm, q->key_alg) != 0)
 	    return 0;
     }
 
@@ -3849,6 +4205,7 @@ _hx509_cert_to_env(hx509_context context, hx509_cert cert, hx509_env *env)
 	ret = _hx509_create_signature(context,
 				      NULL,
 				      hx509_signature_sha1(),
+                                      NULL,
 				      &os,
 				      NULL,
 				      &sig);

@@ -103,15 +103,29 @@ gss_mo_get(gss_const_OID mech, gss_const_OID option, gss_buffer_t value)
     return GSS_S_UNAVAILABLE;
 }
 
-static void
-add_all_mo(gssapi_mech_interface m, gss_OID_set *options, OM_uint32 mask)
+static OM_uint32
+add_all_mo(OM_uint32 *minor_status,
+           gssapi_mech_interface m,
+           gss_OID_set *options,
+           OM_uint32 mask)
 {
-    OM_uint32 minor;
+    OM_uint32 maj;
     size_t n;
 
-    for (n = 0; n < m->gm_mo_num; n++)
-	if ((m->gm_mo[n].flags & mask) == mask)
-	    gss_add_oid_set_member(&minor, m->gm_mo[n].option, options);
+    if (*options == GSS_C_NO_OID_SET) {
+        maj = gss_create_empty_oid_set(minor_status, options);
+        if (maj != GSS_S_COMPLETE)
+            return maj;
+    }
+    for (n = 0; n < m->gm_mo_num; n++) {
+	if ((m->gm_mo[n].flags & mask) == mask) {
+            maj = gss_add_oid_set_member(minor_status, m->gm_mo[n].option,
+                                         options);
+            if (maj != GSS_S_COMPLETE)
+                return maj;
+        }
+    }
+    return GSS_S_COMPLETE;
 }
 
 GSSAPI_LIB_FUNCTION void GSSAPI_LIB_CALL
@@ -132,7 +146,7 @@ gss_mo_list(gss_const_OID mech, gss_OID_set *options)
     if (major != GSS_S_COMPLETE)
 	return;
 
-    add_all_mo(m, options, 0);
+    (void) add_all_mo(&minor, m, options, 0);
 }
 
 GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL
@@ -404,12 +418,13 @@ test_mech_attrs(gssapi_mech_interface mi,
                 int except)
 {
     size_t n, m;
-    int eq = 0;
 
     if (against_attrs == GSS_C_NO_OID_SET)
         return 1;
 
     for (n = 0; n < against_attrs->count; n++) {
+        int eq = 0;
+
         for (m = 0; m < mi->gm_mo_num; m++) {
             eq = gss_oid_equal(mi->gm_mo[m].option,
                                &against_attrs->elements[n]);
@@ -471,6 +486,10 @@ gss_indicate_mechs_by_attrs(OM_uint32 * minor_status,
                                                     &mech_attrs,
                                                     &known_mech_attrs);
             if (GSS_ERROR(major))
+                continue;
+        } else {
+            major = add_all_mo(minor_status, mi, &mech_attrs, GSS_MO_MA);
+            if (major != GSS_S_COMPLETE)
                 continue;
         }
 
@@ -542,7 +561,7 @@ gss_inquire_attrs_for_mech(OM_uint32 * minor_status,
         } else {
 	    major = gss_create_empty_oid_set(minor_status, mech_attr);
             if (major == GSS_S_COMPLETE)
-	        add_all_mo(m, mech_attr, GSS_MO_MA);
+	        add_all_mo(minor_status, m, mech_attr, GSS_MO_MA);
         }
 	if (GSS_ERROR(major))
 	    return major;
@@ -562,10 +581,13 @@ gss_inquire_attrs_for_mech(OM_uint32 * minor_status,
 
 	_gss_load_mech();
 
-	HEIM_TAILQ_FOREACH(m, &_gss_mechs, gm_link)
-	    add_all_mo(&m->gm_mech, known_mech_attrs, GSS_MO_MA);
+	HEIM_TAILQ_FOREACH(m, &_gss_mechs, gm_link) {
+            major = add_all_mo(minor_status, &m->gm_mech, known_mech_attrs,
+                               GSS_MO_MA);
+            if (major != GSS_S_COMPLETE)
+                return major;
+        }
     }
-
 
     return GSS_S_COMPLETE;
 }

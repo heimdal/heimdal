@@ -31,6 +31,7 @@
  * SUCH DAMAGE.
  */
 
+#if !defined(__MINGW32__) && !defined(__MINGW64__) && !defined(WIN32)
 #include <config.h>
 
 #include "roken.h"
@@ -72,3 +73,4 @@ gai_strerror(int ecode)
 	    return g->str;
     return "unknown error code in gai_strerror";
 }
+#endif

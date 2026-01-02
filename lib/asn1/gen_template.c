@@ -714,10 +714,16 @@ sort_object_set(IOSObjectSet *os,       /* Object set to sort fields of */
 {
     IOSObject **objects;
     IOSObject *o;
+    Field *f;
     size_t i, nobjs = 0;
+    int opentypefield_is_optional = 0;
 
     *objectsp = NULL;
 
+    HEIM_TAILQ_FOREACH(f, os->iosclass->fields, fields) {
+        if (f->opentype && f->optional)
+            opentypefield_is_optional = 1;
+    }
     HEIM_TAILQ_FOREACH(o, os->objects, objects) {
         ObjectField *typeidobjf = NULL;
         ObjectField *of;
@@ -726,7 +732,7 @@ sort_object_set(IOSObjectSet *os,       /* Object set to sort fields of */
             if (strcmp(of->name, typeidfield->name) == 0)
                 typeidobjf = of;
         }
-        if (!typeidobjf) {
+        if (!typeidobjf && !opentypefield_is_optional) {
             warnx("Ignoring incomplete object specification of %s "
                   "(missing type ID field)",
                   o->symbol ? o->symbol->name : "<unknown>");
@@ -764,8 +770,15 @@ template_object_set(IOSObjectSet *os, Field *typeidfield, Field *opentypefield)
 {
     IOSObject **objects = NULL;
     IOSObject *o;
+    Field *f;
     struct tlist *tl;
     size_t nobjs, i;
+    int opentypefield_is_optional = 0;
+
+    HEIM_TAILQ_FOREACH(f, os->iosclass->fields, fields) {
+        if (f->opentype && f->optional)
+            opentypefield_is_optional = 1;
+    }
 
     if (os->symbol->emitted_template)
         return;
@@ -789,7 +802,7 @@ template_object_set(IOSObjectSet *os, Field *typeidfield, Field *opentypefield)
         }
         if (!typeidobjf)
             continue; /* We've warned about this one already when sorting */
-        if (!opentypeobjf) {
+        if (!opentypeobjf && !opentypefield_is_optional) {
             warnx("Ignoring incomplete object specification of %s "
                   "(missing open type field)",
                   o->symbol ? o->symbol->name : "<unknown>");
@@ -820,12 +833,18 @@ template_object_set(IOSObjectSet *os, Field *typeidfield, Field *opentypefield)
                  "for open type type-ID fields");
         }
 
-        if (asprintf(&s, "sizeof(%s)",
-                     opentypeobjf->type->symbol->gen_name) == -1 || !s)
-            err(1, "Out of memory");
-        add_line_pointer_reference(&tl->template,
-                                   opentypeobjf->type->symbol->gen_name, s,
-                                   "A1_OP_OPENTYPE");
+        if (!opentypeobjf) {
+            if (asprintf(&s, "0") == -1 || !s)
+                err(1, "Out of memory");
+            add_line(&tl->template, "{ A1_OP_OPENTYPE, 0, 0 }");
+        } else {
+            if (asprintf(&s, "sizeof(%s)",
+                         opentypeobjf->type->symbol->gen_name) == -1 || !s)
+                err(1, "Out of memory");
+            add_line_pointer_reference(&tl->template,
+                                       opentypeobjf->type->symbol->gen_name, s,
+                                       "A1_OP_OPENTYPE");
+        }
         free(s);
     }
     free(objects);
@@ -862,7 +881,8 @@ template_open_type(struct templatehead *temp,
                       * We always sort object sets for now as we can't import
                       * values yet, so they must all be known.
                       */
-                     "A1_OP_OPENTYPE_OBJSET | A1_OS_IS_SORTED |%s | (%llu << 10) | %llu",
+                     "A1_OP_OPENTYPE_OBJSET | A1_OS_IS_SORTED | %s | %s | (%llu << 10) | %llu",
+                     opentypefield->optional ? "A1_OTF_IS_OPTIONAL" : "0",
                      is_array_of_open_type ? "A1_OS_OT_IS_ARRAY" : "0",
                      (unsigned long long)opentypeidx,
                      (unsigned long long)typeididx);
@@ -1022,6 +1042,7 @@ template_members(struct templatehead *temp,
 	add_line(temp, "{ A1_PARSE_T(A1T_OID), %s, NULL }", poffset);
 	break;
     case TNull:
+	add_line(temp, "{ A1_PARSE_T(A1T_NULL), %s, NULL }", poffset);
 	break;
     case TBitString: {
 	struct templatehead template;
@@ -1175,6 +1196,9 @@ template_members(struct templatehead *temp,
 
             if (typeidmember == m) typeididx = i;
             if (opentypemember == m) opentypeidx = i;
+
+            if (opentypemember && opentypemember == m)
+                m->optional = opentypemember->optional;
 
 	    if (name) {
 		if (asprintf(&newbasename, "%s_%s", basetype, name) < 0)

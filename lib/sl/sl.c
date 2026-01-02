@@ -36,6 +36,17 @@
 #include "sl_locl.h"
 #include <setjmp.h>
 
+static SL_cmd_info *
+find_cmd_info(SL_cmd_info *info, const char *name)
+{
+    if (info == NULL)
+	return NULL;
+    for (; info->name != NULL; info++)
+	if (strcmp(info->name, name) == 0)
+	    return info;
+    return NULL;
+}
+
 static void
 mandoc_template(SL_cmd *cmds,
 		const char *extra_string)
@@ -108,6 +119,156 @@ mandoc_template(SL_cmd *cmds,
     printf(".\\\".Sh BUGS\n");
 }
 
+static void
+mandoc_template_ext(SL_cmd *cmds,
+		    SL_cmd_info *info,
+		    const char *extra_string)
+{
+    SL_cmd *c, *prev;
+    SL_cmd_info *ci;
+    char timestr[64], cmd[64];
+    const char *p;
+    time_t t;
+    int i;
+
+    printf(".\\\" Things to fix:\n");
+    printf(".\\\"   * correct section, and operating system\n");
+    printf(".\\\"   * remove Op from mandatory flags\n");
+    printf(".\\\"   * use better macros for arguments (like .Pa for files)\n");
+    printf(".\\\"\n");
+    t = time(NULL);
+    strftime(timestr, sizeof(timestr), "%b %d, %Y", localtime(&t));
+    printf(".Dd %s\n", timestr);
+#ifdef HAVE_GETPROGNAME
+    p = getprogname();
+#else
+    p = "unknown-application";
+#endif
+    strncpy(cmd, p, sizeof(cmd));
+    cmd[sizeof(cmd)-1] = '\0';
+    strupr(cmd);
+
+    printf(".Dt %s SECTION\n", cmd);
+    printf(".Os OPERATING_SYSTEM\n");
+    printf(".Sh NAME\n");
+    printf(".Nm %s\n", p);
+    printf(".Nd\n");
+    printf("in search of a description\n");
+    printf(".Sh SYNOPSIS\n");
+    printf(".Nm\n");
+    for(c = cmds; c->name; ++c) {
+	if (c->func == NULL)
+	    continue;
+	printf(".Nm\n");
+	printf(".Ic %s\n", c->name);
+	ci = find_cmd_info(info, c->name);
+	if (ci && ci->args) {
+	    for (i = 0; i < ci->nargs; i++) {
+		struct getargs *arg = &ci->args[i];
+		if (arg->long_name == NULL)
+		    continue;
+		/* Skip the implicit --help */
+		if (strcmp(arg->long_name, "help") == 0)
+		    continue;
+		if (arg->type == arg_flag || arg->type == arg_negative_flag) {
+		    if (arg->short_name)
+			printf(".Op Fl %c | Fl \\-%s\n",
+			       arg->short_name, arg->long_name);
+		    else
+			printf(".Op Fl \\-%s\n", arg->long_name);
+		} else {
+		    if (arg->short_name)
+			printf(".Op Fl %c Ar %s | Fl \\-%s Ns = Ns Ar %s\n",
+			       arg->short_name,
+			       arg->arg_help ? arg->arg_help : "value",
+			       arg->long_name,
+			       arg->arg_help ? arg->arg_help : "value");
+		    else
+			printf(".Op Fl \\-%s Ns = Ns Ar %s\n",
+			       arg->long_name,
+			       arg->arg_help ? arg->arg_help : "value");
+		}
+	    }
+	}
+	if (ci && ci->argument)
+	    printf(".Ar %s\n", ci->argument);
+    }
+    if (extra_string && *extra_string)
+	printf (".Ar %s\n", extra_string);
+
+    printf(".Sh DESCRIPTION\n");
+    printf("The following commands are supported:\n");
+    printf(".Bl -tag -width Ds\n");
+    prev = NULL;
+    for(c = cmds; c->name; ++c) {
+	if (c->func) {
+	    if (prev)
+		printf ("\n%s\n", prev->help ? prev->help : "");
+
+	    printf (".It Ic %s", c->name);
+	    prev = c;
+	} else
+	    printf (" , Ic %s", c->name);
+    }
+    if (prev)
+	printf ("\n%s\n", prev->help ? prev->help : "");
+
+    printf(".El\n");
+
+    /* Now output detailed option descriptions for each command */
+    printf(".Sh COMMAND OPTIONS\n");
+    for(c = cmds; c->name; ++c) {
+	if (c->func == NULL)
+	    continue;
+	ci = find_cmd_info(info, c->name);
+	if (ci == NULL || ci->args == NULL || ci->nargs == 0)
+	    continue;
+
+	printf(".Ss %s\n", c->name);
+	printf(".Bl -tag -width Ds -compact\n");
+	for (i = 0; i < ci->nargs; i++) {
+	    struct getargs *arg = &ci->args[i];
+	    if (arg->long_name == NULL)
+		continue;
+	    /* Skip the implicit --help */
+	    if (strcmp(arg->long_name, "help") == 0)
+		continue;
+
+	    if (arg->short_name) {
+		if (arg->type == arg_flag || arg->type == arg_negative_flag)
+		    printf(".It Fl %c , Fl \\-%s\n",
+			   arg->short_name, arg->long_name);
+		else
+		    printf(".It Fl %c Ar %s , Fl \\-%s Ns = Ns Ar %s\n",
+			   arg->short_name,
+			   arg->arg_help ? arg->arg_help : "value",
+			   arg->long_name,
+			   arg->arg_help ? arg->arg_help : "value");
+	    } else {
+		if (arg->type == arg_flag || arg->type == arg_negative_flag)
+		    printf(".It Fl \\-%s\n", arg->long_name);
+		else
+		    printf(".It Fl \\-%s Ns = Ns Ar %s\n",
+			   arg->long_name,
+			   arg->arg_help ? arg->arg_help : "value");
+	    }
+	    if (arg->help)
+		printf("%s\n", arg->help);
+	}
+	printf(".El\n");
+    }
+
+    printf(".\\\".Sh ENVIRONMENT\n");
+    printf(".\\\".Sh FILES\n");
+    printf(".\\\".Sh EXAMPLES\n");
+    printf(".\\\".Sh DIAGNOSTICS\n");
+    printf(".\\\".Sh SEE ALSO\n");
+    printf(".\\\".Sh STANDARDS\n");
+    printf(".\\\".Sh HISTORY\n");
+    printf(".\\\".Sh AUTHORS\n");
+    printf(".\\\".Sh BUGS\n");
+}
+
 SL_cmd *
 sl_match (SL_cmd *cmds, char *cmd, int exactp)
 {
@@ -132,11 +293,25 @@ sl_match (SL_cmd *cmds, char *cmd, int exactp)
 }
 
 void
+sl_help_ext(SL_cmd *cmds, SL_cmd_info *info, int argc, char **argv)
+{
+    if (getenv("SLMANDOC")) {
+        if (info)
+            mandoc_template_ext(cmds, info, NULL);
+        else
+            mandoc_template(cmds, NULL);
+        return;
+    }
+    sl_slc_help(cmds, argc, argv);
+}
+
+void
 sl_help (SL_cmd *cmds, int argc, char **argv)
 {
     SL_cmd *c, *prev_c;
 
-    if (getenv("SLMANDOC")) {
+    if (getenv("SLMANDOC") &&
+        strcmp(getenv("SLMANDOC"), "extended") == 0) {
 	mandoc_template(cmds, NULL);
 	return;
     }
@@ -176,7 +351,7 @@ sl_help (SL_cmd *cmds, int argc, char **argv)
     }
 }
 
-#ifdef HAVE_READLINE
+#if defined(HAVE_READLINE) && !defined(_WIN32)
 
 char *readline(char *prompt);
 void add_history(char *p);

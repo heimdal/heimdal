@@ -33,27 +33,43 @@
 
 #include "krb5_locl.h"
 
-void
+int
 _krb5_evp_schedule(krb5_context context,
 		   struct _krb5_key_type *kt,
 		   struct _krb5_key_data *kd)
 {
     struct _krb5_evp_schedule *key = kd->schedule->data;
-    const EVP_CIPHER *c = (*kt->evp)();
+    const EVP_CIPHER *c = (*kt->evp)(context);
 
-    EVP_CIPHER_CTX_init(&key->ectx);
-    EVP_CIPHER_CTX_init(&key->dctx);
+    if (key->ectx == NULL) {
+        if ((key->ectx = EVP_CIPHER_CTX_new()) == NULL)
+            return krb5_enomem(context);
+        EVP_CIPHER_CTX_init(key->ectx);
+    }
+    if (key->dctx == NULL) {
+        if ((key->dctx = EVP_CIPHER_CTX_new()) == NULL)
+            return krb5_enomem(context);
+        EVP_CIPHER_CTX_init(key->dctx);
+    }
 
-    EVP_CipherInit_ex(&key->ectx, c, NULL, kd->key->keyvalue.data, NULL, 1);
-    EVP_CipherInit_ex(&key->dctx, c, NULL, kd->key->keyvalue.data, NULL, 0);
+    if (EVP_CipherInit_ex(key->ectx, c, NULL,
+                          kd->key->keyvalue.data, NULL, 1) != 1 ||
+        EVP_CipherInit_ex(key->dctx, c, NULL,
+                          kd->key->keyvalue.data, NULL, 0) != 1) {
+        return _krb5_set_error_message_openssl(context, EINVAL,
+                                        "Failed to encrypt");
+    }
+    return 0;
 }
 
 void
 _krb5_evp_cleanup(krb5_context context, struct _krb5_key_data *kd)
 {
     struct _krb5_evp_schedule *key = kd->schedule->data;
-    EVP_CIPHER_CTX_cleanup(&key->ectx);
-    EVP_CIPHER_CTX_cleanup(&key->dctx);
+    EVP_CIPHER_CTX_free(key->ectx);
+    EVP_CIPHER_CTX_free(key->dctx);
+    key->ectx = NULL;
+    key->dctx = NULL;
 }
 
 int
@@ -122,27 +138,62 @@ _krb5_evp_hmac_iov(krb5_context context,
                    int niov,
                    void *hmac,
                    unsigned int *hmaclen,
-                   const EVP_MD *md,
-                   ENGINE *engine)
+                   const EVP_MD *md)
 {
-    HMAC_CTX *ctx;
+    EVP_MAC *mac;
+    EVP_MAC_CTX *ctx;
+    const char *mdname = EVP_MD_get0_name(md); // can't be NULL can it
     krb5_data current = {0, NULL};
+    OSSL_PARAM params[] = {
+        OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST, (char *)mdname, 0),
+        OSSL_PARAM_END
+    };
+    size_t outlen = 0;
+    int ret = EINVAL;
     int i;
 
-    if (crypto != NULL) {
-	if (crypto->hmacctx == NULL)
-	    crypto->hmacctx = HMAC_CTX_new();
-	ctx = crypto->hmacctx;
-    } else {
-	ctx = HMAC_CTX_new();
-    }
-    if (ctx == NULL)
-        return krb5_enomem(context);
+#if 0
+    int dlen = EVP_MD_get_size(md);
 
-    if (HMAC_Init_ex(ctx, key->key->keyvalue.data, key->key->keyvalue.length,
-                     md, engine) == 0) {
-        HMAC_CTX_free(ctx);
-        return krb5_enomem(context);
+    if (mdname == NULL) {
+	krb5_set_error_message(context, EINVAL,
+			       "Unknown digest for HMAC");
+	return EINVAL;
+    }
+    if (dlen < 1) {
+	krb5_set_error_message(context, EINVAL,
+			       "Digest %s length invalid", mdname);
+	return EINVAL;
+    }
+    if (hmaclen < (unsigned int)dlen) {
+	krb5_set_error_message(context, EINVAL,
+			       "HMAC buffer length too small (need %d, got %u)",
+                               dlen, hmaclen);
+	return EINVAL;
+    }
+#endif
+
+    if (crypto != NULL) {
+        if (crypto->mac == NULL)
+            crypto->mac = EVP_MAC_fetch(NULL, "HMAC", NULL); // can't be NULL
+	if (crypto->hmacctx == NULL)
+	    crypto->hmacctx = EVP_MAC_CTX_new(crypto->mac);
+	ctx = crypto->hmacctx;
+        mac = crypto->mac;
+    } else {
+        mac = EVP_MAC_fetch(NULL, "HMAC", NULL); // can't be NULL
+	ctx = EVP_MAC_CTX_new(mac);
+    }
+    if (ctx == NULL) {
+        ret = krb5_enomem(context);
+        goto out;
+    }
+
+    if (EVP_MAC_init(ctx, key->key->keyvalue.data, key->key->keyvalue.length,
+                     params) != 1) {
+        ret = _krb5_set_error_message_openssl(context, KRB5_CRYPTO_INTERNAL,
+                                              "Failed to initialize HMAC");
+        goto out;
     }
 
     for (i = 0; i < niov; i++) {
@@ -151,22 +202,31 @@ _krb5_evp_hmac_iov(krb5_context context,
                 (char *)current.data + current.length == iov[i].data.data) {
 		current.length += iov[i].data.length;
 	    } else {
-		if (current.data)
-		    HMAC_Update(ctx, current.data, current.length);
+		if (current.data &&
+                    EVP_MAC_update(ctx, current.data, current.length) != 1)
+                    goto out;
 		current = iov[i].data;
 	    }
 	}
     }
 
-    if (current.data)
-	HMAC_Update(ctx, current.data, current.length);
+    if (current.data &&
+	EVP_MAC_update(ctx, current.data, current.length) != 1)
+        goto out;
 
-    HMAC_Final(ctx, hmac, hmaclen);
+    if (EVP_MAC_final(ctx, hmac, &outlen, *hmaclen) != 1)
+        goto out;
 
-    if (crypto == NULL)
-        HMAC_CTX_free(ctx);
+    *hmaclen = outlen;
+    ret = 0;
 
-    return 0;
+out:
+    if (crypto == NULL) {
+        EVP_MAC_CTX_free(ctx);
+        EVP_MAC_free(mac);
+    }
+
+    return ret;
 }
 
 krb5_error_code
@@ -180,7 +240,9 @@ _krb5_evp_encrypt(krb5_context context,
 {
     struct _krb5_evp_schedule *ctx = key->schedule->data;
     EVP_CIPHER_CTX *c;
-    c = encryptp ? &ctx->ectx : &ctx->dctx;
+    int ret = 0;
+
+    c = encryptp ? ctx->ectx : ctx->dctx;
     if (ivec == NULL) {
 	/* alloca ? */
 	size_t len2 = EVP_CIPHER_CTX_iv_length(c);
@@ -188,12 +250,17 @@ _krb5_evp_encrypt(krb5_context context,
 	if (loiv == NULL)
 	    return krb5_enomem(context);
 	memset(loiv, 0, len2);
-	EVP_CipherInit_ex(c, NULL, NULL, NULL, loiv, -1);
+	if (EVP_CipherInit_ex(c, NULL, NULL, NULL, loiv, -1) != 1) {
+            ret = _krb5_set_error_message_openssl(context, KRB5_CRYPTO_INTERNAL,
+                                                  "Failed to initialize cipher");
+        }
 	free(loiv);
-    } else
-	EVP_CipherInit_ex(c, NULL, NULL, NULL, ivec, -1);
+    } else if (EVP_CipherInit_ex(c, NULL, NULL, NULL, ivec, -1) != 1) {
+        ret = _krb5_set_error_message_openssl(context, KRB5_CRYPTO_INTERNAL,
+                                              "Failed to initialize cipher");
+    }
     EVP_Cipher(c, data, data, len);
-    return 0;
+    return ret;
 }
 
 struct _krb5_evp_iov_cursor
@@ -370,17 +437,21 @@ _krb5_evp_encrypt_iov(krb5_context context,
     unsigned char tmp[EVP_MAX_BLOCK_LENGTH];
     EVP_CIPHER_CTX *c;
     struct _krb5_evp_iov_cursor cursor;
+    int oret;
 
-    c = encryptp ? &ctx->ectx : &ctx->dctx;
+    c = encryptp ? ctx->ectx : ctx->dctx;
 
     blocksize = EVP_CIPHER_CTX_block_size(c);
 
     blockmask = ~(blocksize - 1);
 
     if (ivec)
-	EVP_CipherInit_ex(c, NULL, NULL, NULL, ivec, -1);
+	oret = EVP_CipherInit_ex(c, NULL, NULL, NULL, ivec, -1);
     else
-	EVP_CipherInit_ex(c, NULL, NULL, NULL, zero_ivec, -1);
+	oret = EVP_CipherInit_ex(c, NULL, NULL, NULL, zero_ivec, -1);
+    if (oret != 1)
+        return _krb5_set_error_message_openssl(context, KRB5_CRYPTO_INTERNAL,
+                                               "Failed to initialize cipher");
 
     _krb5_evp_iov_cursor_init(&cursor, iov, niov);
 
@@ -390,8 +461,11 @@ _krb5_evp_encrypt_iov(krb5_context context,
         wholeblocks = cursor.current.length & ~blockmask;
 
         if (wholeblocks != 0) {
-            EVP_Cipher(c, cursor.current.data,
-                       cursor.current.data, wholeblocks);
+            if (EVP_Cipher(c, cursor.current.data,
+                           cursor.current.data, wholeblocks) != wholeblocks)
+                return _krb5_set_error_message_openssl(context,
+                                                       KRB5_CRYPTO_INTERNAL,
+                                                       "Failed to encrypt");
             _krb5_evp_iov_cursor_advance(&cursor, wholeblocks);
         }
 
@@ -402,7 +476,10 @@ _krb5_evp_encrypt_iov(krb5_context context,
 	     * pointing at where we started */
             _krb5_evp_iov_cursor_fillbuf(&cursor, tmp, blocksize, NULL);
 
-            EVP_Cipher(c, tmp, tmp, blocksize);
+            if (EVP_Cipher(c, tmp, tmp, blocksize) != blocksize)
+                return _krb5_set_error_message_openssl(context,
+                                                       KRB5_CRYPTO_INTERNAL,
+                                                       "Failed to encrypt");
 
             /* Copy the data in tmp back into the iovecs that it came from,
              * advancing the cursor */
@@ -429,9 +506,9 @@ _krb5_evp_encrypt_iov_cts(krb5_context context,
     unsigned char tmp[EVP_MAX_BLOCK_LENGTH], tmp2[EVP_MAX_BLOCK_LENGTH];
     unsigned char tmp3[EVP_MAX_BLOCK_LENGTH], ivec2[EVP_MAX_BLOCK_LENGTH];
     EVP_CIPHER_CTX *c;
-    int i;
+    int oret, i;
 
-    c = encryptp ? &ctx->ectx : &ctx->dctx;
+    c = encryptp ? ctx->ectx : ctx->dctx;
 
     blocksize = EVP_CIPHER_CTX_block_size(c);
     blockmask = ~(blocksize - 1);
@@ -449,9 +526,12 @@ _krb5_evp_encrypt_iov_cts(krb5_context context,
 	                             encryptp, usage, ivec);
 
     if (ivec)
-	EVP_CipherInit_ex(c, NULL, NULL, NULL, ivec, -1);
+	oret = EVP_CipherInit_ex(c, NULL, NULL, NULL, ivec, -1);
     else
-	EVP_CipherInit_ex(c, NULL, NULL, NULL, zero_ivec, -1);
+	oret = EVP_CipherInit_ex(c, NULL, NULL, NULL, zero_ivec, -1);
+    if (oret != 1)
+        return _krb5_set_error_message_openssl(context, EINVAL,
+                                               "Failed to encrypt");
 
     if (encryptp) {
 	/* On our first pass, we want to process everything but the
@@ -476,7 +556,10 @@ _krb5_evp_encrypt_iov_cts(krb5_context context,
     while (remaining > 0) {
 	/* If the iovec has more data than we need, just use it */
 	if (cursor.current.length >= remaining) {
-	    EVP_Cipher(c, cursor.current.data, cursor.current.data, remaining);
+            if (EVP_Cipher(c, cursor.current.data, cursor.current.data,
+                           remaining) != remaining)
+                return _krb5_set_error_message_openssl(context, EINVAL,
+                                                       "Failed to encrypt");
 
 	    if (encryptp) {
 	        /* We've just encrypted the last block of data. Make a copy
@@ -493,8 +576,10 @@ _krb5_evp_encrypt_iov_cts(krb5_context context,
 	    wholeblocks = cursor.current.length & blockmask;
 
 	    if (wholeblocks > 0) {
-		EVP_Cipher(c, cursor.current.data, cursor.current.data,
-		           wholeblocks);
+                if (EVP_Cipher(c, cursor.current.data, cursor.current.data,
+                               wholeblocks) != wholeblocks)
+                    return _krb5_set_error_message_openssl(context, EINVAL,
+                                                           "Failed to encrypt");
 		_krb5_evp_iov_cursor_advance(&cursor, wholeblocks);
 		remaining -= wholeblocks;
 	    }
@@ -506,7 +591,9 @@ _krb5_evp_encrypt_iov_cts(krb5_context context,
 		    lastpos = cursor;
 
 		_krb5_evp_iov_cursor_fillbuf(&cursor, ivec2, blocksize, NULL);
-		EVP_Cipher(c, ivec2, ivec2, blocksize);
+		if (EVP_Cipher(c, ivec2, ivec2, blocksize) != blocksize)
+                    return _krb5_set_error_message_openssl(context, EINVAL,
+                                                           "Failed to encrypt");
 		_krb5_evp_iov_cursor_fillvec(&cursor, ivec2, blocksize);
 
 		remaining -= blocksize;
@@ -525,8 +612,10 @@ _krb5_evp_encrypt_iov_cts(krb5_context context,
 	for (; i < blocksize; i++)
 	    tmp[i] = 0 ^ ivec2[i]; /* XOR 0s if partial block exhausted */
 
-	EVP_CipherInit_ex(c, NULL, NULL, NULL, zero_ivec, -1);
-	EVP_Cipher(c, tmp, tmp, blocksize);
+	if (EVP_CipherInit_ex(c, NULL, NULL, NULL, zero_ivec, -1) != 1 ||
+	    EVP_Cipher(c, tmp, tmp, blocksize) != blocksize)
+            return _krb5_set_error_message_openssl(context, EINVAL,
+                                                   "Failed to encrypt");
 
 	_krb5_evp_iov_cursor_fillvec(&lastpos, tmp, blocksize);
 	_krb5_evp_iov_cursor_fillvec(&cursor, ivec2, partiallen);
@@ -548,14 +637,18 @@ _krb5_evp_encrypt_iov_cts(krb5_context context,
 	   memcpy(ivec2, zero_ivec, blocksize);
     } else {
 	_krb5_evp_iov_cursor_fillbuf(&cursor, ivec2, blocksize, NULL);
-	EVP_Cipher(c, tmp, ivec2, blocksize);
+	if (EVP_Cipher(c, tmp, ivec2, blocksize) != blocksize)
+            return _krb5_set_error_message_openssl(context, EINVAL,
+                                                   "Failed to encrypt");
 	_krb5_evp_iov_cursor_fillvec(&cursor, tmp, blocksize);
     }
 
     lastpos = cursor; /* Remember where the last block is */
     _krb5_evp_iov_cursor_fillbuf(&cursor, tmp, blocksize, &cursor);
-    EVP_CipherInit_ex(c, NULL, NULL, NULL, zero_ivec, -1);
-    EVP_Cipher(c, tmp2, tmp, blocksize); /* tmp eventually becomes output ivec */
+    if (EVP_CipherInit_ex(c, NULL, NULL, NULL, zero_ivec, -1) != 1 ||
+        EVP_Cipher(c, tmp2, tmp, blocksize) != blocksize) /* tmp eventually becomes output ivec */
+        return _krb5_set_error_message_openssl(context, EINVAL,
+                                               "Failed to encrypt");
 
     _krb5_evp_iov_cursor_fillbuf(&cursor, tmp3, partiallen, NULL);
 
@@ -565,8 +658,10 @@ _krb5_evp_encrypt_iov_cts(krb5_context context,
 
     _krb5_evp_iov_cursor_fillvec(&cursor, tmp2, partiallen);
 
-    EVP_CipherInit_ex(c, NULL, NULL, NULL, zero_ivec, -1);
-    EVP_Cipher(c, tmp3, tmp3, blocksize);
+    if (EVP_CipherInit_ex(c, NULL, NULL, NULL, zero_ivec, -1) != 1 ||
+        EVP_Cipher(c, tmp3, tmp3, blocksize) != blocksize)
+        return _krb5_set_error_message_openssl(context, EINVAL,
+                                               "Failed to encrypt");
 
     for (i = 0; i < blocksize; i++)
 	tmp3[i] ^= ivec2[i];
@@ -578,6 +673,36 @@ _krb5_evp_encrypt_iov_cts(krb5_context context,
 
     return 0;
 }
+
+// XXX Maybe use OpenSSL's support for CTS.  The pattern is:
+// (Note that the variant of CTS used in Kerberos is CS3.)
+
+#if 0
+    EVP_CIPHER *cbc = EVP_CIPHER_fetch(libctx, "AES-128-CBC", propq);
+    EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
+  
+    /* init */
+    EVP_EncryptInit_ex2(ctx, cbc, key, iv, NULL);
+  
+    /* CTS, no PKCS#7 padding */
+    EVP_CIPHER_CTX_set_padding(ctx, 0);
+  
+    int cts_mode = OSSL_CIPHER_CTS_MODE_CS3;
+    OSSL_PARAM params[] = {
+        OSSL_PARAM_construct_int(OSSL_CIPHER_PARAM_CTS_MODE, &cts_mode),
+        OSSL_PARAM_END
+    };
+    EVP_CIPHER_CTX_set_params(ctx, params);
+  
+    /* 'in' must already include the confounder block (caller responsibility) */
+    int outl;
+    EVP_EncryptUpdate(ctx, out, &outl, in, inlen);
+    int finl; EVP_EncryptFinal_ex(ctx, out + outl, &finl);
+  
+    /* cleanup */
+    EVP_CIPHER_CTX_free(ctx);
+    EVP_CIPHER_free(cbc);
+#endif
 
 krb5_error_code
 _krb5_evp_encrypt_cts(krb5_context context,
@@ -593,8 +718,9 @@ _krb5_evp_encrypt_cts(krb5_context context,
     unsigned char tmp[EVP_MAX_BLOCK_LENGTH], ivec2[EVP_MAX_BLOCK_LENGTH];
     EVP_CIPHER_CTX *c;
     unsigned char *p;
+    int oret;
 
-    c = encryptp ? &ctx->ectx : &ctx->dctx;
+    c = encryptp ? ctx->ectx : ctx->dctx;
 
     blocksize = EVP_CIPHER_CTX_block_size(c);
 
@@ -603,18 +729,22 @@ _krb5_evp_encrypt_cts(krb5_context context,
 			       "message block too short");
 	return EINVAL;
     } else if (len == blocksize) {
-	EVP_CipherInit_ex(c, NULL, NULL, NULL, zero_ivec, -1);
-	EVP_Cipher(c, data, data, len);
+	if (EVP_CipherInit_ex(c, NULL, NULL, NULL, zero_ivec, -1) != 1 ||
+            EVP_Cipher(c, data, data, len) != len)
+            return _krb5_set_error_message_openssl(context, EINVAL,
+                                                   "Failed to encrypt");
 	return 0;
     }
 
     if (ivec)
-	EVP_CipherInit_ex(c, NULL, NULL, NULL, ivec, -1);
+	oret = EVP_CipherInit_ex(c, NULL, NULL, NULL, ivec, -1);
     else
-	EVP_CipherInit_ex(c, NULL, NULL, NULL, zero_ivec, -1);
+	oret = EVP_CipherInit_ex(c, NULL, NULL, NULL, zero_ivec, -1);
+    if (oret != 1)
+        return _krb5_set_error_message_openssl(context, EINVAL,
+                                               "Failed to encrypt");
 
     if (encryptp) {
-
 	p = data;
 	i = ((len - 1) / blocksize) * blocksize;
 	EVP_Cipher(c, p, p, i);
@@ -627,8 +757,10 @@ _krb5_evp_encrypt_cts(krb5_context context,
 	for (; i < blocksize; i++)
 	    tmp[i] = 0 ^ ivec2[i];
 
-	EVP_CipherInit_ex(c, NULL, NULL, NULL, zero_ivec, -1);
-	EVP_Cipher(c, p, tmp, blocksize);
+	if (EVP_CipherInit_ex(c, NULL, NULL, NULL, zero_ivec, -1) != 1 ||
+            EVP_Cipher(c, p, tmp, blocksize) != blocksize)
+            return _krb5_set_error_message_openssl(context, EINVAL,
+                                                   "Failed to encrypt");
 
 	memcpy(p + blocksize, ivec2, len);
 	if (ivec)
@@ -653,8 +785,10 @@ _krb5_evp_encrypt_cts(krb5_context context,
 	}
 
 	memcpy(tmp, p, blocksize);
-	EVP_CipherInit_ex(c, NULL, NULL, NULL, zero_ivec, -1);
-	EVP_Cipher(c, tmp2, p, blocksize);
+	if (EVP_CipherInit_ex(c, NULL, NULL, NULL, zero_ivec, -1) != 1 ||
+	    EVP_Cipher(c, tmp2, p, blocksize) != blocksize)
+            return _krb5_set_error_message_openssl(context, EINVAL,
+                                                   "Failed to encrypt");
 
 	memcpy(tmp3, p + blocksize, len);
 	memcpy(tmp3 + len, tmp2 + len, blocksize - len); /* xor 0 */
@@ -662,8 +796,10 @@ _krb5_evp_encrypt_cts(krb5_context context,
 	for (i = 0; i < len; i++)
 	    p[i + blocksize] = tmp2[i] ^ tmp3[i];
 
-	EVP_CipherInit_ex(c, NULL, NULL, NULL, zero_ivec, -1);
-	EVP_Cipher(c, p, tmp3, blocksize);
+	if (EVP_CipherInit_ex(c, NULL, NULL, NULL, zero_ivec, -1) != 1 ||
+	    EVP_Cipher(c, p, tmp3, blocksize) != blocksize)
+            return _krb5_set_error_message_openssl(context, EINVAL,
+                                                   "Failed to encrypt");
 
 	for (i = 0; i < blocksize; i++)
 	    p[i] ^= ivec2[i];

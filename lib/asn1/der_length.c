@@ -295,6 +295,12 @@ der_length_utctime (const time_t *t)
 }
 
 size_t ASN1CALL
+der_length_null(const int *k)
+{
+    return 0;
+}
+
+size_t ASN1CALL
 der_length_boolean (const int *k)
 {
     return 1;

@@ -77,11 +77,11 @@ struct _krb5_key_type {
     size_t size;
     size_t schedule_size;
     void (*random_key)(krb5_context, krb5_keyblock*);
-    void (*schedule)(krb5_context, struct _krb5_key_type *, struct _krb5_key_data *);
+    int (*schedule)(krb5_context, struct _krb5_key_type *, struct _krb5_key_data *);
     struct salt_type *string_to_key;
     void (*random_to_key)(krb5_context, krb5_keyblock*, const void*, size_t);
     void (*cleanup)(krb5_context, struct _krb5_key_data *);
-    const EVP_CIPHER *(*evp)(void);
+    EVP_CIPHER *(*evp)(krb5_context);
 };
 
 struct _krb5_checksum_type {
@@ -140,12 +140,7 @@ struct _krb5_encryption_type {
 
 extern struct _krb5_checksum_type _krb5_checksum_none;
 extern struct _krb5_checksum_type _krb5_checksum_crc32;
-extern struct _krb5_checksum_type _krb5_checksum_rsa_md4;
-extern struct _krb5_checksum_type _krb5_checksum_rsa_md4_des;
-extern struct _krb5_checksum_type _krb5_checksum_rsa_md5_des;
-extern struct _krb5_checksum_type _krb5_checksum_rsa_md5_des3;
 extern struct _krb5_checksum_type _krb5_checksum_rsa_md5;
-extern struct _krb5_checksum_type _krb5_checksum_hmac_sha1_des3;
 extern struct _krb5_checksum_type _krb5_checksum_hmac_sha1_aes128;
 extern struct _krb5_checksum_type _krb5_checksum_hmac_sha1_aes256;
 extern struct _krb5_checksum_type _krb5_checksum_hmac_sha256_128_aes128;
@@ -164,9 +159,6 @@ extern int _krb5_num_checksums;
 extern struct salt_type _krb5_AES_SHA1_salt[];
 extern struct salt_type _krb5_AES_SHA2_salt[];
 extern struct salt_type _krb5_arcfour_salt[];
-extern struct salt_type _krb5_des_salt[];
-extern struct salt_type _krb5_des3_salt[];
-extern struct salt_type _krb5_des3_salt_derived[];
 
 /* Encryption types */
 
@@ -174,18 +166,7 @@ extern struct _krb5_encryption_type _krb5_enctype_aes256_cts_hmac_sha1;
 extern struct _krb5_encryption_type _krb5_enctype_aes128_cts_hmac_sha1;
 extern struct _krb5_encryption_type _krb5_enctype_aes128_cts_hmac_sha256_128;
 extern struct _krb5_encryption_type _krb5_enctype_aes256_cts_hmac_sha384_192;
-extern struct _krb5_encryption_type _krb5_enctype_des3_cbc_sha1;
-extern struct _krb5_encryption_type _krb5_enctype_des3_cbc_md5;
-extern struct _krb5_encryption_type _krb5_enctype_des3_cbc_none;
 extern struct _krb5_encryption_type _krb5_enctype_arcfour_hmac_md5;
-extern struct _krb5_encryption_type _krb5_enctype_des_cbc_md5;
-extern struct _krb5_encryption_type _krb5_enctype_old_des3_cbc_sha1;
-extern struct _krb5_encryption_type _krb5_enctype_des_cbc_crc;
-extern struct _krb5_encryption_type _krb5_enctype_des_cbc_md4;
-extern struct _krb5_encryption_type _krb5_enctype_des_cbc_md5;
-extern struct _krb5_encryption_type _krb5_enctype_des_cbc_none;
-extern struct _krb5_encryption_type _krb5_enctype_des_cfb64_none;
-extern struct _krb5_encryption_type _krb5_enctype_des_pcbc_none;
 extern struct _krb5_encryption_type _krb5_enctype_null;
 
 extern struct _krb5_encryption_type *_krb5_etypes[];
@@ -200,23 +181,22 @@ _krb5_crypto_iov_should_sign(const struct krb5_crypto_iov *iov)
             || iov->flags == KRB5_CRYPTO_TYPE_PADDING);
 }
 
-/* NO_HCRYPTO_POLLUTION is defined in pkinit-ec.c.  See commentary there. */
-#ifndef NO_HCRYPTO_POLLUTION
 /* Interface to the EVP crypto layer provided by hcrypto */
 struct _krb5_evp_schedule {
     /*
      * Normally we'd say EVP_CIPHER_CTX here, but!  this header gets
      * included in lib/krb5/pkinit-ec.c
      */
-    EVP_CIPHER_CTX ectx;
-    EVP_CIPHER_CTX dctx;
+    EVP_CIPHER_CTX *ectx;
+    EVP_CIPHER_CTX *dctx;
 };
 
 struct krb5_crypto_data {
     struct _krb5_encryption_type *et;
     struct _krb5_key_data key;
+    EVP_MAC_CTX *hmacctx;
     EVP_MD_CTX *mdctx;
-    HMAC_CTX *hmacctx;
+    EVP_MAC *mac;
     int num_key_usage;
     struct _krb5_key_usage *key_usage;
     krb5_flags flags;
@@ -227,5 +207,3 @@ struct krb5_crypto_data {
  * key material is available.
  */
 #define KRB5_CRYPTO_FLAG_ALLOW_UNKEYED_CHECKSUM		    0x01
-
-#endif

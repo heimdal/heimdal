@@ -261,6 +261,19 @@ typedef unsigned short mode_t;
 
 #endif
 
+/*
+ * MinGW doesn't define uid_t/gid_t (Windows doesn't have Unix user/group IDs).
+ * Define them as unsigned integers so code that references them compiles.
+ * Note: configure may define uid_t/gid_t as macros, but we need proper typedefs
+ * for MinGW to work correctly. The #undef ensures we use the typedef.
+ */
+#if defined(__MINGW32__)
+#undef uid_t
+#undef gid_t
+typedef unsigned int uid_t;
+typedef unsigned int gid_t;
+#endif
+
 #ifdef _AIX
 struct ether_addr;
 struct sockaddr_dl;
@@ -393,6 +406,11 @@ ROKEN_CPP_START
 
 #if !defined(HAVE_SETSID) && defined(HAVE__SETSID)
 #define setsid _setsid
+#endif
+
+#if defined(__MINGW32__)
+/* Mingw provides most POSIX functions, but not fsync */
+#define fsync _commit
 #endif
 
 #ifdef _MSC_VER
@@ -552,15 +570,6 @@ ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL setenv(const char *, const char *, int);
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL unsetenv(const char *);
 #endif
 
-#if !defined(HAVE_GETUSERSHELL) || defined(NEED_GETUSERSHELL_PROTO)
-#ifndef HAVE_GETUSERSHELL
-#define getusershell rk_getusershell
-#define endusershell rk_endusershell
-#endif
-ROKEN_LIB_FUNCTION char * ROKEN_LIB_CALL getusershell(void);
-ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL endusershell(void);
-#endif
-
 #if !defined(HAVE_SNPRINTF) || defined(NEED_SNPRINTF_PROTO)
 #ifndef HAVE_SNPRINTF
 #define snprintf rk_snprintf
@@ -663,6 +672,16 @@ ROKEN_LIB_FUNCTION char * ROKEN_LIB_CALL strsep(char**, const char*);
 ROKEN_LIB_FUNCTION ssize_t ROKEN_LIB_CALL strsep_copy(const char**, const char*, char*, size_t);
 #endif
 
+#ifndef HAVE_GETDELIM
+#define getdelim rk_getdelim
+ROKEN_LIB_FUNCTION ssize_t ROKEN_LIB_CALL getdelim(char**, size_t*, int, FILE*);
+#endif
+
+#ifndef HAVE_GETLINE
+#define getline rk_getline
+ROKEN_LIB_FUNCTION ssize_t ROKEN_LIB_CALL getline(char**, size_t*, FILE*);
+#endif
+
 #ifndef HAVE_STRCASECMP
 #define strcasecmp rk_strcasecmp
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL strcasecmp(const char *, const char *);
@@ -717,7 +736,7 @@ ROKEN_LIB_FUNCTION const char * ROKEN_LIB_CALL hstrerror(int);
 #endif
 #endif
 
-#if !HAVE_DECL_H_ERRNO
+#if !HAVE_DECL_H_ERRNO && !defined(HAVE_WINSOCK)
 extern int h_errno;
 #endif
 
@@ -803,13 +822,6 @@ ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL rk_rename(const char *, const char *);
 #define rk_mkdir(__rk_rn_name, __rk_rn_mode) mkdir(__rk_rn_name,__rk_rn_mode)
 #endif
 
-
-#if !defined(HAVE_DAEMON) || defined(NEED_DAEMON_PROTO)
-#ifndef HAVE_DAEMON
-#define daemon rk_daemon
-#endif
-ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL daemon(int, int);
-#endif
 
 #ifndef HAVE_CHOWN
 #define chown rk_chown
@@ -1078,7 +1090,7 @@ rk_getnameinfo(const struct sockaddr *, socklen_t,
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
 rk_freeaddrinfo(struct addrinfo *);
 
-#ifndef HAVE_GAI_STRERROR
+#if !defined(HAVE_GAI_STRERROR) && !defined(HAVE_WINSOCK)
 #define gai_strerror rk_gai_strerror
 ROKEN_LIB_FUNCTION const char * ROKEN_LIB_CALL
 gai_strerror(int);
@@ -1196,6 +1208,12 @@ extern const char *__progname;
 
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
 mini_inetd_addrinfo (struct addrinfo*, rk_socket_t *);
+
+ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
+mini_inetd_addrinfo_listen (struct addrinfo *, rk_socket_t **, int *);
+
+ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
+mini_inetd_accept (rk_socket_t *, int, rk_socket_t *);
 
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
 mini_inetd (int, rk_socket_t *);
@@ -1350,10 +1368,27 @@ rk_random(void);
 #define twalk(a,b) rk_twalk(a,b)
 #endif
 
+#ifndef HAVE_GETUID
+ROKEN_LIB_FUNCTION uid_t ROKEN_LIB_CALL getuid(void);
+#endif
+#ifndef HAVE_GETGID
+ROKEN_LIB_FUNCTION gid_t ROKEN_LIB_CALL getgid(void);
+#endif
+#ifndef HAVE_GETEUID
+ROKEN_LIB_FUNCTION uid_t ROKEN_LIB_CALL geteuid(void);
+#endif
+#ifndef HAVE_GETEGID
+ROKEN_LIB_FUNCTION gid_t ROKEN_LIB_CALL getegid(void);
+#endif
+
 #if defined(__linux__) && defined(SOCK_CLOEXEC) && !defined(SOCKET_WRAPPER_REPLACE) && !defined(__SOCKET_WRAPPER_H__)
 #undef socket
 #define socket(_fam,_type,_prot) rk_socket(_fam,_type,_prot)
 int ROKEN_LIB_FUNCTION rk_socket(int, int, int);
+#endif
+
+#ifndef HAVE_RECVMSG
+ROKEN_LIB_FUNCTION ssize_t ROKEN_LIB_CALL recvmsg(int, struct msghdr *, int);
 #endif
 
 /* Microsoft VC 2010 POSIX definitions */

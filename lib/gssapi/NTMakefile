@@ -199,40 +199,6 @@ spnegosrc = \
 	spnego/spnego_locl.h \
 	spnego/negoex_locl.h
 
-ntlmsrc = \
-	ntlm/accept_sec_context.c \
-	ntlm/acquire_cred.c \
-	ntlm/add_cred.c \
-	ntlm/canonicalize_name.c \
-	ntlm/compare_name.c \
-	ntlm/context_time.c \
-        ntlm/creds.c \
-	ntlm/crypto.c \
-	ntlm/delete_sec_context.c \
-	ntlm/display_name.c \
-	ntlm/display_status.c \
-	ntlm/duplicate_name.c \
-	ntlm/duplicate_cred.c \
-	ntlm/export_name.c \
-	ntlm/export_sec_context.c \
-	ntlm/external.c \
-	ntlm/ntlm.h \
-	ntlm/import_name.c \
-	ntlm/import_sec_context.c \
-	ntlm/indicate_mechs.c \
-	ntlm/init_sec_context.c \
-	ntlm/inquire_context.c \
-	ntlm/inquire_cred_by_mech.c \
-	ntlm/inquire_mechs_for_name.c \
-	ntlm/inquire_names_for_mech.c \
-        ntlm/inquire_sec_context_by_oid.c \
-        ntlm/iter_cred.c \
-	ntlm/process_context_token.c \
-	ntlm/release_cred.c \
-	ntlm/release_name.c \
-	ntlm/set_sec_context_option.c \
-	ntlm/kdc.c
-
 sanonsrc = \
 	sanon/accept_sec_context.c \
 	sanon/acquire_cred.c \
@@ -264,9 +230,6 @@ sanonsrc = \
 	sanon/process_context_token.c \
 	sanon/release_cred.c \
 	sanon/release_name.c
-
-$(OBJ)\ntlm\ntlm-private.h: $(ntlmsrc)
-	$(PERL) ../../cf/make-proto.pl -q -P remove -p $@ $(ntlmsrc)
 
 $(OBJ)\krb5\gsskrb5-private.h: $(krb5src)
 	$(PERL) ../../cf/make-proto.pl -q -P remove -p $@ $(krb5src)
@@ -307,10 +270,8 @@ INCFILES=				\
     $(INCDIR)\gssapi\gssapi.h		\
     $(INCDIR)\gssapi\gssapi_krb5.h	\
     $(INCDIR)\gssapi\gssapi_oid.h	\
-    $(INCDIR)\gssapi\gssapi_ntlm.h	\
     $(INCDIR)\gssapi\gssapi_spnego.h	\
     $(INCDIR)\gssapi\gkrb5_err.h	\
-    $(OBJ)\ntlm\ntlm-private.h		\
     $(OBJ)\spnego\spnego-private.h	\
     $(OBJ)\sanon\sanon-private.h	\
     $(OBJ)\krb5\gsskrb5-private.h	\
@@ -470,37 +431,6 @@ libgssapi_OBJs = \
 	$(OBJ)\spnego/init_sec_context.obj \
 	$(OBJ)\spnego/negoex_ctx.obj \
 	$(OBJ)\spnego/negoex_util.obj \
-	$(OBJ)\ntlm/accept_sec_context.obj \
-	$(OBJ)\ntlm/acquire_cred.obj \
-	$(OBJ)\ntlm/add_cred.obj \
-	$(OBJ)\ntlm/canonicalize_name.obj \
-	$(OBJ)\ntlm/compare_name.obj \
-	$(OBJ)\ntlm/context_time.obj \
-        $(OBJ)\ntlm/creds.obj \
-	$(OBJ)\ntlm/crypto.obj \
-	$(OBJ)\ntlm/delete_sec_context.obj \
-	$(OBJ)\ntlm/display_name.obj \
-	$(OBJ)\ntlm/display_status.obj \
-	$(OBJ)\ntlm/duplicate_cred.obj \
-	$(OBJ)\ntlm/duplicate_name.obj \
-	$(OBJ)\ntlm/export_name.obj \
-	$(OBJ)\ntlm/export_sec_context.obj \
-	$(OBJ)\ntlm/external.obj \
-	$(OBJ)\ntlm/import_name.obj \
-	$(OBJ)\ntlm/import_sec_context.obj \
-	$(OBJ)\ntlm/indicate_mechs.obj \
-	$(OBJ)\ntlm/init_sec_context.obj \
-	$(OBJ)\ntlm/inquire_context.obj \
-	$(OBJ)\ntlm/inquire_cred_by_mech.obj \
-	$(OBJ)\ntlm/inquire_mechs_for_name.obj \
-	$(OBJ)\ntlm/inquire_names_for_mech.obj \
-        $(OBJ)\ntlm/inquire_sec_context_by_oid.obj \
-        $(OBJ)\ntlm/iter_cred.obj \
-	$(OBJ)\ntlm/process_context_token.obj \
-	$(OBJ)\ntlm/release_cred.obj \
-	$(OBJ)\ntlm/release_name.obj \
-	$(OBJ)\ntlm/set_sec_context_option.obj \
-	$(OBJ)\ntlm/kdc.obj \
 	$(OBJ)\sanon/accept_sec_context.obj \
 	$(OBJ)\sanon/acquire_cred.obj \
 	$(OBJ)\sanon/add_cred.obj \
@@ -550,12 +480,6 @@ GCOPTS=-I$(SRCDIR) -I$(OBJ) -Igssapi -DBUILD_GSSAPI_LIB
 {mech}.c{$(OBJ)\mech}.obj::
 	$(C2OBJ_NP) -Fo$(OBJ)\mech\ -Fd$(OBJ)\mech\ -I$(OBJ)\mech -I$(OBJ)\gssapi $(GCOPTS) -DASN1_LIB
 
-{$(OBJ)\ntlm}.c{$(OBJ)\ntlm}.obj::
-	$(C2OBJ_NP) -Fo$(OBJ)\ntlm\ -Fd$(OBJ)\ntlm\ -I$(OBJ)\ntlm $(GCOPTS)
-
-{ntlm}.c{$(OBJ)\ntlm}.obj::
-	$(C2OBJ_NP) -Fo$(OBJ)\ntlm\ -Fd$(OBJ)\ntlm\ -I$(OBJ)\ntlm $(GCOPTS) -DASN1_LIB
-
 {$(OBJ)\spnego}.c{$(OBJ)\spnego}.obj::
 	$(C2OBJ_NP) -Fo$(OBJ)\spnego\ -Fd$(OBJ)\spnego\ -I$(OBJ)\spnego $(GCOPTS)
 
@@ -584,8 +508,8 @@ LIBGSSAPI_LIBS=\
         $(LIBHEIMBASE)  \
 	$(LIBROKEN)	\
 	$(LIBHEIMDAL)	\
-	$(LIBHEIMNTLM)	\
-	$(LIBCOMERR)
+	$(LIBCOMERR)	\
+	$(LIB_openssl_crypto)
 
 LIBGSSAPI_SDKLIBS=\
 	$(PTHREAD_LIB)  \
@@ -628,9 +552,6 @@ clean::
 prep:: mkdirs-gss
 
 mkdirs-gss:
-!if !exist($(OBJ)\ntlm)
-	$(MKDIR) $(OBJ)\ntlm
-!endif
 !if !exist($(OBJ)\krb5)
 	$(MKDIR) $(OBJ)\krb5
 !endif
@@ -648,7 +569,6 @@ mkdirs-gss:
 !endif
 
 clean::
-	-$(RM) $(OBJ)\ntlm\*.*
 	-$(RM) $(OBJ)\krb5\*.*
 	-$(RM) $(OBJ)\spnego\*.*
 	-$(RM) $(OBJ)\mech\*.*
@@ -676,7 +596,7 @@ $(OBJ)\gss-commands.c $(OBJ)\gss-commands.h: gss-commands.in
                             "\t$(OBJ)\\negoex_err.obj \\\n"
 			    "\t$(OBJ)\\spnego\\asn1_spnego_asn1.obj \\\n"
 			    "\t$(OBJ)\\gssapi\\asn1_gssapi_asn1.obj")
-                    "krb5src" "mechsrc" "spnegosrc" "ntlmsrc")
+                    "krb5src" "mechsrc" "spnegosrc")
 !endif
 
 test-exports:
@@ -692,8 +612,7 @@ TEST_BINARIES=\
 	$(OBJ)\test_acquire_cred.exe	\
 	$(OBJ)\test_cred.exe	\
 	$(OBJ)\test_kcred.exe	\
-	$(OBJ)\test_context.exe	\
-	$(OBJ)\test_ntlm.exe
+	$(OBJ)\test_context.exe
 
 $(OBJ)\test_oid.exe: $(OBJ)\test_oid.obj $(LIBGSSAPI) $(LIBROKEN)
 	$(EXECONLINK)
@@ -723,11 +642,6 @@ $(OBJ)\test_kcred.exe: $(OBJ)\test_kcred.obj $(LIBGSSAPI) $(LIBHEIMDAL)	\
 
 $(OBJ)\test_context.exe: $(OBJ)\test_context.obj $(OBJ)\test_common.obj	\
 		$(LIBGSSAPI) $(LIBHEIMDAL) $(LIBROKEN) $(LIBVERS)
-	$(EXECONLINK)
-	$(EXEPREP_NODIST)
-
-$(OBJ)\test_ntlm.exe: $(OBJ)\test_ntlm.obj $(OBJ)\test_common.obj	\
-		$(LIBGSSAPI) $(LIBHEIMNTLM) $(LIBROKEN) $(LIBVERS)
 	$(EXECONLINK)
 	$(EXEPREP_NODIST)
 

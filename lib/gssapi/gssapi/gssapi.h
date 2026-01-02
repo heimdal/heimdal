@@ -43,10 +43,15 @@
 #include <krb5-types.h>
 
 #ifndef BUILD_GSSAPI_LIB
-#if defined(_WIN32)
+#if defined(_WIN32) && !defined(__MINGW32__)
 #define GSSAPI_LIB_FUNCTION __declspec(dllimport)
 #define GSSAPI_LIB_CALL     __stdcall
 #define GSSAPI_LIB_VARIABLE __declspec(dllimport)
+#elif defined(_WIN32)
+/* MinGW - static linking, use __cdecl */
+#define GSSAPI_LIB_FUNCTION
+#define GSSAPI_LIB_CALL     __cdecl
+#define GSSAPI_LIB_VARIABLE
 #else
 #define GSSAPI_LIB_FUNCTION
 #define GSSAPI_LIB_CALL

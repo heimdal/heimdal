@@ -152,10 +152,10 @@ int main(int argc, char **argv)
 	p = malloc(strlen(argv[1]) + 5);
 	sprintf(p, "__%s__", argv[1]);
 	hb = p;
-	for(; *p; p++){
+	for(; *p; p++)
 	    if(!isalnum((unsigned char)*p))
 		*p = '_';
-	}
+	p = (char *)hb; /* Restore for later free */
 	f = fopen(argv[1], "w");
     }
     fprintf(f, "#ifndef %s\n", hb);
@@ -255,12 +255,14 @@ int main(int argc, char **argv)
     fprintf(f, "#include <unistd.h>\n");
 #endif
     fprintf(f, "typedef ssize_t krb5_ssize_t;\n");
+#elif defined(_WIN64) || defined(TARGET_WIN64)
+    fprintf(f, "typedef int64_t krb5_ssize_t;\n");
 #else
     fprintf(f, "typedef int krb5_ssize_t;\n");
 #endif
     fprintf(f, "\n");
 
-#if defined(_WIN32)
+#if defined(_WIN32) || defined(TARGET_WINDOWS)
     fprintf(f, "typedef SOCKET krb5_socket_t;\n");
 #else
     fprintf(f, "typedef int krb5_socket_t;\n");
@@ -325,5 +327,6 @@ int main(int argc, char **argv)
 
     if (f != stdout)
 	fclose(f);
+    free(p);
     return 0;
 }

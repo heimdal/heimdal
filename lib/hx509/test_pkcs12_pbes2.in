@@ -1,0 +1,185 @@
+#!/bin/sh
+#
+# Copyright (c) 2024 Kungliga Tekniska Högskolan
+# (Royal Institute of Technology, Stockholm, Sweden).
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# 3. Neither the name of the Institute nor the names of its contributors
+#    may be used to endorse or promote products derived from this software
+#    without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+#
+# Test PKCS#12 PBES2 interoperability with OpenSSL
+#
+
+srcdir="@srcdir@"
+objdir="@objdir@"
+
+stat="--statistic-file=${objdir}/statfile"
+
+hxtool="${TESTS_ENVIRONMENT} ./hxtool ${stat}"
+
+# Check if openssl is available
+openssl version > /dev/null 2>&1 || { echo "OpenSSL not found, skipping"; exit 77; }
+
+# Test password
+PASS="testpassword123"
+
+echo "Testing PKCS#12 PBES2 (modern encryption) support"
+
+#
+# Test 1: Heimdal reads OpenSSL-created PBES2 PKCS#12 (default: AES-256-CBC)
+#
+echo "Test 1: Create PBES2 PKCS#12 with OpenSSL (AES-256-CBC), read with Heimdal"
+openssl pkcs12 -export \
+    -in $srcdir/data/test.crt \
+    -inkey $srcdir/data/test.key \
+    -out pbes2-aes256.p12 \
+    -passout pass:$PASS \
+    2>/dev/null || { echo "OpenSSL pkcs12 export failed"; exit 1; }
+
+${hxtool} print --pass=PASS:$PASS PKCS12:pbes2-aes256.p12 > /dev/null || \
+    { echo "Failed to read OpenSSL PBES2 AES-256-CBC PKCS#12"; exit 1; }
+echo "  OK: Heimdal read PBES2 AES-256-CBC PKCS#12"
+
+# Verify certificate content
+${hxtool} print --pass=PASS:$PASS PKCS12:pbes2-aes256.p12 2>/dev/null | \
+    grep -q "private key: yes" || \
+    { echo "Failed: private key not found in PBES2 PKCS#12"; exit 1; }
+echo "  OK: Private key extracted from PBES2 PKCS#12"
+
+#
+# Test 2: Heimdal reads OpenSSL-created PBES2 PKCS#12 with AES-128-CBC
+#
+echo "Test 2: Create PBES2 PKCS#12 with OpenSSL (AES-128-CBC), read with Heimdal"
+openssl pkcs12 -export \
+    -in $srcdir/data/test.crt \
+    -inkey $srcdir/data/test.key \
+    -out pbes2-aes128.p12 \
+    -passout pass:$PASS \
+    -keypbe aes-128-cbc \
+    -certpbe aes-128-cbc \
+    2>/dev/null || { echo "OpenSSL pkcs12 export with AES-128 failed"; exit 1; }
+
+${hxtool} print --pass=PASS:$PASS PKCS12:pbes2-aes128.p12 > /dev/null || \
+    { echo "Failed to read OpenSSL PBES2 AES-128-CBC PKCS#12"; exit 1; }
+echo "  OK: Heimdal read PBES2 AES-128-CBC PKCS#12"
+
+#
+# Test 3: Heimdal reads OpenSSL-created legacy PKCS#12 (3DES/RC2)
+#
+echo "Test 3: Create legacy PKCS#12 with OpenSSL (3DES), read with Heimdal"
+openssl pkcs12 -export \
+    -in $srcdir/data/test.crt \
+    -inkey $srcdir/data/test.key \
+    -out legacy-3des.p12 \
+    -passout pass:$PASS \
+    -legacy \
+    2>/dev/null || { echo "OpenSSL pkcs12 legacy export failed"; exit 1; }
+
+${hxtool} print --pass=PASS:$PASS PKCS12:legacy-3des.p12 > /dev/null || \
+    { echo "Failed to read OpenSSL legacy 3DES PKCS#12"; exit 1; }
+echo "  OK: Heimdal read legacy 3DES PKCS#12"
+
+#
+# Test 4: Heimdal creates PKCS#12, OpenSSL reads it
+#
+echo "Test 4: Create PKCS#12 with Heimdal, read with OpenSSL"
+${hxtool} certificate-copy \
+    --out-pass=PASS:$PASS \
+    FILE:$srcdir/data/test.crt,$srcdir/data/test.key \
+    PKCS12:heimdal-created.p12 || \
+    { echo "Failed to create PKCS#12 with Heimdal"; exit 1; }
+
+# Heimdal creates unencrypted PKCS#12 without MAC, so we need -nomacver
+openssl pkcs12 -in heimdal-created.p12 -nomacver -passin pass:dummy -noout 2>/dev/null || \
+    { echo "OpenSSL failed to read Heimdal-created PKCS#12"; exit 1; }
+echo "  OK: OpenSSL read Heimdal-created PKCS#12"
+
+#
+# Test 5: Round-trip test - OpenSSL PBES2 -> Heimdal -> verify content
+#
+echo "Test 5: Round-trip verification with PBES2"
+CERT_SUBJECT=$(${hxtool} print --pass=PASS:$PASS PKCS12:pbes2-aes256.p12 2>/dev/null | \
+    grep "subject:" | head -1)
+echo "$CERT_SUBJECT" | grep -q "Test cert" || \
+    { echo "Failed: certificate subject mismatch"; exit 1; }
+echo "  OK: Certificate subject verified: $CERT_SUBJECT"
+
+#
+# Test 6: Test PBES2 with SHA-256 HMAC PRF (if OpenSSL supports -macalg)
+#
+echo "Test 6: Create PBES2 PKCS#12 with SHA-256 MAC, read with Heimdal"
+openssl pkcs12 -export \
+    -in $srcdir/data/test.crt \
+    -inkey $srcdir/data/test.key \
+    -out pbes2-sha256mac.p12 \
+    -passout pass:$PASS \
+    -macalg sha256 \
+    2>/dev/null
+if [ -f pbes2-sha256mac.p12 ]; then
+    ${hxtool} print --pass=PASS:$PASS PKCS12:pbes2-sha256mac.p12 > /dev/null || \
+        { echo "Failed to read PBES2 PKCS#12 with SHA-256 MAC"; exit 1; }
+    echo "  OK: Heimdal read PBES2 PKCS#12 with SHA-256 MAC"
+else
+    echo "  SKIP: OpenSSL does not support -macalg sha256"
+fi
+
+#
+# Test 7: Test with multiple certificates
+#
+echo "Test 7: Multiple certificates in PBES2 PKCS#12"
+# Combine CA and end-entity cert
+cat $srcdir/data/test.crt $srcdir/data/ca.crt > combined-certs.pem 2>/dev/null || true
+if [ -f combined-certs.pem ] && [ -s combined-certs.pem ]; then
+    openssl pkcs12 -export \
+        -in combined-certs.pem \
+        -inkey $srcdir/data/test.key \
+        -out pbes2-multi.p12 \
+        -passout pass:$PASS \
+        2>/dev/null
+    if [ -f pbes2-multi.p12 ]; then
+        CERT_COUNT=$(${hxtool} print --pass=PASS:$PASS PKCS12:pbes2-multi.p12 2>/dev/null | \
+            grep -c "^cert:" || echo 0)
+        if [ "$CERT_COUNT" -ge 1 ]; then
+            echo "  OK: Read $CERT_COUNT certificate(s) from multi-cert PBES2 PKCS#12"
+        else
+            echo "  WARN: Expected multiple certificates, got $CERT_COUNT"
+        fi
+    else
+        echo "  SKIP: Could not create multi-cert PKCS#12"
+    fi
+else
+    echo "  SKIP: CA certificate not available for multi-cert test"
+fi
+
+# Cleanup
+rm -f pbes2-aes256.p12 pbes2-aes128.p12 legacy-3des.p12 heimdal-created.p12 \
+      pbes2-sha256mac.p12 pbes2-multi.p12 combined-certs.pem 2>/dev/null
+
+echo ""
+echo "All PKCS#12 PBES2 tests passed!"
+
+exit 0

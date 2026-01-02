@@ -12,11 +12,15 @@ AM_CPPFLAGS += \
 	-I$(srcdir) \
 	-I$(srcdir)/gssapi \
 	-I$(srcdir)/mech \
-	-I$(srcdir)/ntlm \
 	-I$(srcdir)/krb5 \
 	-I$(srcdir)/spnego \
 	-I$(srcdir)/sanon \
-	$(INCLUDE_libintl)
+	$(INCLUDE_libintl) \
+	$(INCLUDE_openssl_crypto)
+
+if WIN32
+AM_CPPFLAGS += -DASN1_LIB
+endif
 
 lib_LTLIBRARIES = libgssapi.la test_negoex_mech.la
 
@@ -186,42 +190,6 @@ spnegosrc = \
 	spnego/negoex_locl.h \
 	$(srcdir)/spnego/spnego-private.h
 
-ntlmsrc = \
-	ntlm/accept_sec_context.c \
-	ntlm/acquire_cred.c \
-	ntlm/add_cred.c \
-	ntlm/canonicalize_name.c \
-	ntlm/compare_name.c \
-	ntlm/context_time.c \
-	ntlm/creds.c \
-	ntlm/crypto.c \
-	ntlm/delete_sec_context.c \
-	ntlm/display_name.c \
-	ntlm/display_status.c \
-	ntlm/duplicate_name.c \
-	ntlm/export_name.c \
-	ntlm/export_sec_context.c \
-	ntlm/external.c \
-	ntlm/ntlm.h \
-	ntlm/import_name.c \
-	ntlm/import_sec_context.c \
-	ntlm/indicate_mechs.c \
-	ntlm/init_sec_context.c \
-	ntlm/inquire_context.c \
-	ntlm/inquire_cred_by_mech.c \
-	ntlm/inquire_mechs_for_name.c \
-	ntlm/inquire_names_for_mech.c \
-	ntlm/inquire_sec_context_by_oid.c \
-	ntlm/iter_cred.c \
-	ntlm/process_context_token.c \
-	ntlm/release_cred.c \
-	ntlm/release_name.c \
-	ntlm/set_sec_context_option.c \
-	ntlm/kdc.c
-
-$(srcdir)/ntlm/ntlm-private.h: $(ntlmsrc)
-	cd $(srcdir) && perl ../../cf/make-proto.pl -q -P comment -p ntlm/ntlm-private.h $(ntlmsrc) || rm -f ntlm/ntlm-private.h
-
 sanonsrc = \
 	sanon/accept_sec_context.c \
 	sanon/acquire_cred.c \
@@ -259,7 +227,6 @@ sanonsrc = \
 dist_libgssapi_la_SOURCES  = \
 	$(krb5src) \
 	$(mechsrc) \
-	$(ntlmsrc) \
 	$(spnegosrc) \
 	$(sanonsrc)
 
@@ -275,11 +242,9 @@ libgssapi_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(srcdir)/version-script.map
 endif
 
 libgssapi_la_LIBADD = \
-	$(top_builddir)/lib/ntlm/libheimntlm.la \
 	$(top_builddir)/lib/krb5/libkrb5.la \
 	$(top_builddir)/lib/asn1/libasn1.la \
 	$(LIB_com_err) \
-	$(LIB_hcrypto) \
 	$(LIBADD_roken)
 
 man_MANS = gssapi.3 gss_acquire_cred.3 mech/mech.5 gss-token.1
@@ -288,7 +253,6 @@ include_HEADERS = gssapi.h
 noinst_HEADERS = \
 	gssapi_asn1.h \
 	gssapi_mech.h \
-	$(srcdir)/ntlm/ntlm-private.h \
 	$(srcdir)/spnego/spnego-private.h \
 	$(srcdir)/sanon/sanon-private.h \
 	$(srcdir)/krb5/gsskrb5-private.h
@@ -296,7 +260,6 @@ noinst_HEADERS = \
 nobase_include_HEADERS = \
 	gssapi/gssapi.h \
 	gssapi/gssapi_krb5.h \
-	gssapi/gssapi_ntlm.h \
 	gssapi/gssapi_oid.h \
 	gssapi/gssapi_spnego.h
 
@@ -321,8 +284,7 @@ spnego_files =					\
 BUILTHEADERS = \
 	$(srcdir)/krb5/gsskrb5-private.h \
 	$(srcdir)/spnego/spnego-private.h \
-	$(srcdir)/sanon/sanon-private.h \
-	$(srcdir)/ntlm/ntlm-private.h
+	$(srcdir)/sanon/sanon-private.h
 
 $(libgssapi_la_OBJECTS): $(BUILTHEADERS)
 $(test_context_OBJECTS): $(BUILTHEADERS)
@@ -384,20 +346,15 @@ test_cfx_SOURCES = krb5/test_cfx.c
 check_PROGRAMS = test_acquire_cred test_acquire_cred_auditdns $(TESTS)
 
 bin_PROGRAMS = gsstool gss-token
-noinst_PROGRAMS = test_cred test_kcred test_context test_ntlm test_add_store_cred
+noinst_PROGRAMS = test_cred test_kcred test_context test_add_store_cred
 
 test_context_SOURCES = test_context.c test_common.c test_common.h
-test_ntlm_SOURCES = test_ntlm.c test_common.c test_common.h
 test_acquire_cred_SOURCES = test_acquire_cred.c test_common.c test_common.h
 test_acquire_cred_auditdns_SOURCES = \
 	test_acquire_cred.c test_common.c test_common.h \
 	../../appl/test/auditdns.c
 
 test_add_store_cred_SOURCES = test_add_store_cred.c
-
-test_ntlm_LDADD = \
-	$(top_builddir)/lib/ntlm/libheimntlm.la \
-	$(LDADD)
 
 LDADD = libgssapi.la \
 	$(top_builddir)/lib/krb5/libkrb5.la \
@@ -434,7 +391,6 @@ EXTRA_DIST = \
 	libgssapi-exports.def \
 	$(man_MANS) \
 	gen-oid.pl \
-	gssapi/gssapi_netlogon.h \
 	krb5/test_acquire_cred.c \
 	krb5/test_cred.c \
 	krb5/test_kcred.c \

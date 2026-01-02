@@ -72,7 +72,7 @@ $(OBJ)\asn1_err.c $(OBJ)\asn1_err.h: asn1_err.et
 	$(BINDIR)\compile_et.exe $(SRCDIR)\asn1_err.et
 	cd $(SRCDIR)
 
-$(BINDIR)\asn1_print.exe: $(OBJ)\asn1_print.obj $(LIBHEIMDAL)
+$(BINDIR)\asn1_print.exe: $(OBJ)\asn1_print.obj $(OBJ)\asn1_x690sample_asn1.s.obj $(LIBHEIMDAL)
 	$(EXECONLINK) $(LIBVERS) $(LIBROKEN) $(LIBCOMERR)
 	$(EXEPREP)
 
@@ -299,9 +299,13 @@ $(OBJ)\asn1_ocsp_asn1.c $(OBJ)\ocsp_asn1.h: $(BINDIR)\asn1_compile.exe ocsp.asn1
 	|| ($(RM) $(OBJ)\ocsp_asn1.h ; exit /b 1)
 	cd $(SRCDIR)
 
-$(OBJ)\asn1_pkinit_asn1.c $(OBJ)\pkinit_asn1.h: $(BINDIR)\asn1_compile.exe pkinit.asn1
+$(OBJ)\asn1_pkinit_asn1.c $(OBJ)\pkinit_asn1.h: $(BINDIR)\asn1_compile.exe pkinit.asn1 pkinit.opt
 	cd $(OBJ)
-	$(BINDIR)\asn1_compile.exe --template --one-code-file $(SRCDIR)\pkinit.asn1 pkinit_asn1 \
+	$(BINDIR)\asn1_compile.exe			\
+		--template				\
+		--one-code-file				\
+		--option-file=$(SRCDIR)\pkinit.opt	\
+		$(SRCDIR)\pkinit.asn1 pkinit_asn1	\
 	|| ($(RM) $(OBJ)\pkinit_asn1.h ; exit /b 1)
 	cd $(SRCDIR)
 
@@ -533,7 +537,8 @@ $(OBJ)\check-der.exe: $(OBJ)\check-der.obj $(OBJ)\check-common.obj \
 	$(EXEPREP_NODIST)
 
 $(OBJ)\check-gen-template.exe: $(OBJ)\check-gen.obj $(OBJ)\check-common.obj \
-		$(LIBHEIMDAL) $(LIBROKEN) $(OBJ)\asn1_test_template_asn1.obj
+		$(LIBHEIMDAL) $(LIBROKEN) $(OBJ)\asn1_test_template_asn1.obj \
+                $(OBJ)\asn1_x690sample_asn1.s.obj
 	$(EXECONLINK)
 	$(EXEPREP_NODIST)
 

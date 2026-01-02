@@ -41,10 +41,23 @@ while (<IN>) {
 	    push @nesting, 1;
 	}
 	next;
+    } elsif (m/\s*#if\s/) {
+	# For config.h parsing, treat #if as unknown (false) to be safe
+	push @nesting, 0;
+	next;
+    } elsif (m/\s*#elif\s/) {
+	# Treat #elif same as #else for nesting purposes
+	my $var = pop @nesting;
+	$var = !$var;
+	push @nesting, $var;
+	next;
     } elsif (m/\s*#else/) {
 	my $var = pop @nesting;
 	$var = !$var;
 	push @nesting, $var;
+	next;
+    } elsif (m/\s*#endif/) {
+	pop @nesting;
 	next;
     } elsif ($nesting[$#nesting] and m/\s*#define\s+(\w+)\s+(\S+)/) {
 	my $res = $2;
@@ -76,7 +89,7 @@ print OUT "\n";
 @nesting = (1);
 
 while (<IN>) {
-    if (m/\s*#ifdef\s+(.*)/) {
+    if (m/\s*#ifdef\s+(\w+)/) {
 	my $var = $1;
 	if (defined $defines{$var}) {
 	    push @nesting, 1;
@@ -84,7 +97,7 @@ while (<IN>) {
 	    push @nesting, 0;
 	}
 	next;
-    } elsif (m/\s*#ifndef\s+(.*)/) {
+    } elsif (m/\s*#ifndef\s+(\w+)/) {
 	my $var = $1;
 	if (defined $defines{$var}) {
 	    push @nesting, 0;
@@ -102,7 +115,7 @@ while (<IN>) {
 	if ($res gt 0) {
 	    $res = -1;
 	} else {
-	    my $res = parse_if($1);
+	    $res = parse_if($1);
 	}
 	push @nesting, $res;
 	next;
@@ -150,10 +163,10 @@ sub parse_if
 	return ((parse_if($1) and parse_if($2)) or (parse_if($3) and parse_if($4)));
     } elsif (m/^([^&]+)\&\&(.*)$/) {
 	print "$1 and $2\n" if ($debug);
-	return parse_if($1) and parse_if($2);
+	return (parse_if($1) && parse_if($2));
     } elsif (m/^([^\|]+)\|\|(.*)$/) {
 	print "$1 or $2\n" if ($debug);
-	return (parse_if($1) or parse_if($2));
+	return (parse_if($1) || parse_if($2));
     } elsif (m/^\s*(\!)?\s*defined\((\w+)\)/) {
 	($neg, $var) = ($1, $2);
 	print "def: ${neg}-defined(${var})\n" if ($debug);

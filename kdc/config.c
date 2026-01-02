@@ -77,6 +77,8 @@ static struct getarg_strings addresses_str;	/* addresses to listen on */
 
 char *runas_string;
 char *chroot_string;
+static char *ossl_cnf;
+static char *ossl_propq;
 
 
 static struct getargs args[] = {
@@ -122,6 +124,12 @@ static struct getargs args[] = {
     },
     {   "chroot",	0,	arg_string, &chroot_string,
 	"chroot directory to run in", NULL
+    },
+    {   "ossl-cnf",	0,	arg_string, &ossl_cnf,
+	"OpenSSL configuration file", "FILE"
+    },
+    {   "ossl-propq",	0,	arg_string, &ossl_propq,
+	"OpenSSL property query string (e.g., provider=pkcs11)", "PROPQ"
     },
     {	"testing",	0,	arg_flag,   &testing_flag, NULL, NULL },
     {	"help",		'h',	arg_flag,   &help_flag, NULL, NULL },
@@ -182,6 +190,12 @@ configure(krb5_context context, int argc, char **argv, int *optidx)
 	printf("builtin hdb backends: %s\n", list);
 	free(list);
 	exit(0);
+    }
+
+    if (ossl_cnf || ossl_propq) {
+	ret = krb5_set_ossl_cnf_propq(context, ossl_cnf, ossl_propq);
+	if (ret)
+	    krb5_err(context, 1, ret, "krb5_set_ossl_cnf_propq");
     }
 
     if(detach_from_console == -1)

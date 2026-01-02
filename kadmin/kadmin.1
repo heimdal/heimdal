@@ -728,7 +728,12 @@ Exits
 This command has the following alias:
 .Nm quit .
 .Ed
-.\".Sh ENVIRONMENT
+.Sh ENVIRONMENT
+.Ev KADMIN_USE_GET_PRINCIPALS
+if set to any non-empty value then it uses a slower RPC to list
+principals when talking to a remote
+.Nm kadmind
+server.
 .\".Sh FILES
 .\".Sh EXAMPLES
 .\".Sh DIAGNOSTICS

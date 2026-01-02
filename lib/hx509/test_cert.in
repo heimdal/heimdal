@@ -38,12 +38,6 @@ srcdir="@srcdir@"
 objdir="@objdir@"
 
 hxtool="${TESTS_ENVIRONMENT} ./hxtool ${stat}"
-if ${hxtool} info | grep 'rsa: hcrypto null RSA' > /dev/null ; then
-    exit 77
-fi
-if ${hxtool} info | grep 'rand: not available' > /dev/null ; then
-    exit 77
-fi
 
 echo "print DIR"
 ${hxtool} print --content DIR:$srcdir/data > /dev/null 2>/dev/null || exit 1

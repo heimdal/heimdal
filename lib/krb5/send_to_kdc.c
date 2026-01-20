@@ -1135,7 +1135,7 @@ submit_request(krb5_context context, krb5_sendto_ctx ctx, krb5_krbhst_info *hi)
     }
 
     if (freeai)
-	freeai = NULL;
+	freeaddrinfo(freeai);
 
     if (submitted_host == 0)
 	return KRB5_KDC_UNREACH;

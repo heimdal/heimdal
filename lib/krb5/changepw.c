@@ -696,7 +696,7 @@ change_password_loop (krb5_context	context,
 		    FD_ZERO(&writefds);
 		    if (_krb5_socks4a_reading(socks4a))
 			FD_SET(sock, &readfds);
-		    if (_krb5_socks4a_reading(socks4a))
+		    if (_krb5_socks4a_writing(socks4a))
 			FD_SET(sock, &writefds);
 		    nready = select(sock + 1, &readfds, &writefds,
 			/*exceptfds*/NULL, /*timeout*/NULL);

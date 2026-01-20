@@ -43,6 +43,7 @@ SCRIPT_TESTS = \
 	check-httpkadmind \
 	check-iprop \
 	check-referral \
+	check-socks \
 	check-tester \
 	check-uu
 
@@ -191,6 +192,11 @@ check-referral: check-referral.in Makefile
 	$(do_subst) < $(srcdir)/check-referral.in > check-referral.tmp && \
 	$(chmod) +x check-referral.tmp && \
 	mv check-referral.tmp check-referral
+
+check-socks: check-socks.in Makefile
+	$(do_subst) < $(srcdir)/check-socks.in > check-socks.tmp && \
+	$(chmod) +x check-socks.tmp && \
+	mv check-socks.tmp check-socks
 
 check-kpasswdd: check-kpasswdd.in Makefile
 	$(do_subst) < $(srcdir)/check-kpasswdd.in > check-kpasswdd.tmp && \
@@ -360,6 +366,7 @@ CLEANFILES= \
 	krb5-httpkadmind.conf \
 	krb5-slave2.conf \
 	krb5-slave.conf \
+	krb5-socks.conf \
 	krb5-weak.conf \
 	krb5.conf \
 	krb5.conf.keys \
@@ -380,6 +387,7 @@ CLEANFILES= \
 	sdb \
 	server.keytab \
 	signal \
+	socksdrawer.out \
 	signal2 \
 	signal3 \
 	tempfile \
@@ -409,6 +417,7 @@ EXTRA_DIST = \
 	check-old-heimdal-client.in \
 	check-pkinit.in \
 	check-referral.in \
+	check-socks.in \
 	check-tester.in \
 	check-uu.in \
 	donotexists.txt \

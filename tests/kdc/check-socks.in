@@ -1,0 +1,176 @@
+#!/bin/sh
+#
+# Copyright (c) 2025 Kungliga Tekniska Högskolan
+# (Royal Institute of Technology, Stockholm, Sweden).
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# 3. Neither the name of the Institute nor the names of its contributors
+#    may be used to endorse or promote products derived from this software
+#    without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+
+top_builddir="@top_builddir@"
+env_setup="@env_setup@"
+objdir="@objdir@"
+
+. ${env_setup}
+
+# Use the main krb5.conf for KDC and admin operations
+KRB5_CONFIG="${objdir}/krb5.conf"
+export KRB5_CONFIG
+
+testfailed="echo test failed; cat messages.log; exit 1"
+
+# If there is no useful db support compiled in, disable test
+${have_db} || exit 77
+
+R=TEST.H5L.SE
+
+port=@port@
+
+kadmin="${kadmin} -l -A -r $R"
+kdc="${kdc} --addresses=localhost -P $port"
+socksdrawer="${top_builddir}/lib/krb5/socksdrawer"
+
+cache="FILE:${objdir}/cache.krb5"
+kdestroy="${kdestroy} -c $cache ${afs_no_unlog}"
+
+rm -f current-db*
+rm -f out-*
+rm -f mkey.file*
+
+> messages.log
+
+echo "Creating database"
+${kadmin} <<EOF || exit 1
+init --realm-max-ticket-life=1day --realm-max-renewable-life=1month ${R}
+add -p foo --use-defaults foo@${R}
+EOF
+
+echo "Doing database check"
+${kadmin} check ${R} || exit 1
+
+echo foo > ${objdir}/foopassword
+
+echo "Starting kdc"
+${kdc} --detach --testing || { echo "kdc failed to start"; cat messages.log; exit 1; }
+kdcpid=`getpid kdc`
+
+# First verify that kinit works without SOCKS (using main krb5.conf)
+echo "Verifying kinit works without SOCKS proxy"
+${kinit} -c ${cache} ${afs_no_afslog} --password-file=${objdir}/foopassword foo@${R} || \
+    { echo "kinit without proxy failed - test setup is broken"; cat messages.log; exit 1; }
+${kdestroy} -c ${cache} ${afs_no_unlog}
+echo "kinit without SOCKS proxy succeeded"
+
+sockspid=
+
+cleanup() {
+    echo "Cleaning up"
+    if [ -n "${kdcpid}" ]; then
+        kill -9 ${kdcpid} 2>/dev/null
+    fi
+    if [ -n "${sockspid}" ]; then
+        kill -9 ${sockspid} 2>/dev/null
+    fi
+    trap '' EXIT INT TERM
+    cat messages.log
+    exit 1
+}
+trap cleanup EXIT INT TERM
+
+ec=0
+
+# Start socksdrawer in the background
+# Arguments: listenport matchhost matchport matchuser host port
+# Use a fake KDC hostname (kdc.invalid) to prove the proxy is being used
+# The proxy will map kdc.invalid:54321 -> localhost:${port}
+echo "Starting socksdrawer"
+${socksdrawer} 0 kdc.invalid 54321 foo@${R} localhost ${port} > ${objdir}/socksdrawer.out &
+sockspid=$!
+sleep 1
+
+# Read the port number that socksdrawer chose
+socksport=`cat ${objdir}/socksdrawer.out`
+if [ -z "${socksport}" ]; then
+    echo "Failed to get SOCKS port from socksdrawer"
+    ec=1
+    eval "${testfailed}"
+fi
+echo "socksdrawer listening on port ${socksport}"
+
+# Create krb5-socks.conf with socks4a_proxy for client operations
+# Use kdc.invalid:54321 as the KDC - this only works through the proxy
+cat > ${objdir}/krb5-socks.conf <<EOF
+[libdefaults]
+	default_realm = TEST.H5L.SE
+	no-addresses = TRUE
+	allow_weak_crypto = false
+	dns_lookup_kdc = no
+	dns_lookup_realm = no
+	socks4a_proxy = 127.0.0.1:${socksport}
+
+[realms]
+	TEST.H5L.SE = {
+		kdc = tcp/kdc.invalid:54321
+	}
+
+[logging]
+	kdc = 0-/FILE:${objdir}/messages.log
+	krb5 = 0-/FILE:${objdir}/messages.log
+	default = 0-/FILE:${objdir}/messages.log
+EOF
+
+# Use the SOCKS-enabled config for client operations
+KRB5_CONFIG="${objdir}/krb5-socks.conf"
+export KRB5_CONFIG
+
+kinit="${kinit} -c $cache ${afs_no_afslog}"
+klist="${klist} -c $cache"
+
+echo "Getting initial tickets through SOCKS4a proxy"
+${kinit} --password-file=${objdir}/foopassword foo@${R} || \
+    { ec=1; eval "${testfailed}"; }
+
+echo "Verifying tickets"
+${klist} || { ec=1; eval "${testfailed}"; }
+
+echo "Destroying tickets"
+${kdestroy} || { ec=1; eval "${testfailed}"; }
+
+echo "Killing socksdrawer"
+kill ${sockspid} 2>/dev/null
+sockspid=
+
+echo "Test that kinit fails without proxy running"
+${kinit} --password-file=${objdir}/foopassword foo@${R} 2>/dev/null && \
+    { echo "kinit should have failed without proxy"; ec=1; eval "${testfailed}"; }
+
+echo "Killing kdc (${kdcpid})"
+sh ${leaks_kill} kdc $kdcpid || exit 1
+
+trap "" EXIT
+
+exit $ec

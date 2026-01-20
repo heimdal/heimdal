@@ -436,7 +436,9 @@ send_stream(krb5_context context, struct host *host)
 {
     ssize_t len;
 
+    _krb5_debug(context, 5, "send_stream: fd=%d len=%lu", host->fd, (unsigned long)host->data.length);
     len = krb5_net_write(context, &host->fd, host->data.data, host->data.length);
+    _krb5_debug(context, 5, "send_stream: wrote %ld bytes", (long)len);
 
     if (len < 0)
 	return errno;
@@ -458,8 +460,13 @@ recv_stream(krb5_context context, struct host *host)
     ssize_t sret;
     int nbytes;
 
-    if (rk_SOCK_IOCTL(host->fd, FIONREAD, &nbytes) != 0 || nbytes <= 0)
+    if (rk_SOCK_IOCTL(host->fd, FIONREAD, &nbytes) != 0 || nbytes <= 0) {
+	_krb5_debug(context, 5, "recv_stream: FIONREAD failed or nbytes=%d, oldlen=%lu",
+	    nbytes, (unsigned long)host->data.length);
 	return HEIM_NET_CONN_REFUSED;
+    }
+    _krb5_debug(context, 5, "recv_stream: fd=%d FIONREAD=%d oldlen=%lu",
+	host->fd, nbytes, (unsigned long)host->data.length);
 
     if (context->max_msg_size - host->data.length < nbytes) {
 	krb5_set_error_message(context, KRB5KRB_ERR_FIELD_TOOLONG,
@@ -476,10 +483,13 @@ recv_stream(krb5_context context, struct host *host)
 
     sret = krb5_net_read(context, &host->fd, ((uint8_t *)host->data.data) + oldlen, nbytes);
     if (sret <= 0) {
+	_krb5_debug(context, 5, "recv_stream: krb5_net_read returned %ld, errno=%d", (long)sret, errno);
 	ret = errno;
 	return ret;
     }
     host->data.length = oldlen + sret;
+    _krb5_debug(context, 5, "recv_stream: read %ld bytes, total len=%lu",
+	(long)sret, (unsigned long)host->data.length);
     /* zero terminate for http transport */
     ((uint8_t *)host->data.data)[host->data.length] = '\0';
 
@@ -749,7 +759,10 @@ recv_tcp(krb5_context context, struct host *host, krb5_data *data)
 	return -1;
 
     _krb5_get_int(host->data.data, &pktlen, 4);
-    
+
+    _krb5_debug(context, 5, "recv_tcp: len=%lu pktlen=%lu",
+	(unsigned long)host->data.length, pktlen);
+
     if (pktlen > host->data.length - 4)
 	return -1;
 
@@ -758,7 +771,7 @@ recv_tcp(krb5_context context, struct host *host, krb5_data *data)
 
     *data = host->data;
     krb5_data_zero(&host->data);
-    
+
     return 0;
 }
 
@@ -891,9 +904,28 @@ eval_host_state(krb5_context context,
 	return 0;
     }
 
-    if (readable) {
+    /* check if there is anything to send */
+    if (writeable && host->state == CONNECTED) {
 
-	debug_host(context, 5, host, "reading packet");
+	ctx->stats.sent_packets++;
+
+	debug_host(context, 5, host, "writing packet fd=%d data_len=%lu",
+	    host->fd, (unsigned long)host->data.length);
+
+	ret = host->fun->send_fn(context, host);
+	if (ret == -1) {
+	    /* not done yet */
+	} else if (ret) {
+	    host_dead(context, host, "host dead, write failed");
+	} else {
+	    host->state = WAITING_REPLY;
+	    return 0; /* wait for next select before reading */
+	}
+    }
+
+    if (readable && host->state == WAITING_REPLY) {
+
+	debug_host(context, 5, host, "reading packet fd=%d", host->fd);
 
 	ret = host->fun->recv_fn(context, host, &ctx->response);
 	if (ret == -1) {
@@ -905,22 +937,6 @@ eval_host_state(krb5_context context,
 	} else {
 	    host_dead(context, host, "host disconnected");
 	}
-    }
-
-    /* check if there is anything to send, state might DEAD after read */
-    if (writeable && host->state == CONNECTED) {
-
-	ctx->stats.sent_packets++;
-
-	debug_host(context, 5, host, "writing packet");
-
-	ret = host->fun->send_fn(context, host);
-	if (ret == -1) {
-	    /* not done yet */
-	} else if (ret) {
-	    host_dead(context, host, "host dead, write failed");
-	} else
-	    host->state = WAITING_REPLY;
     }
 
     return 0;

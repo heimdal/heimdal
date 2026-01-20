@@ -358,7 +358,7 @@ static void
 handleclient(int clientfd, int argc, char **argv)
 {
 	struct socks4a_request req;
-	struct socks4a_request reply;
+	struct socks4a_reply reply;
 	const char *user, *host;
 	uint16_t port;
 	char portstr[sizeof("65536")];

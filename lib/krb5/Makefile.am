@@ -10,6 +10,7 @@ bin_PROGRAMS = verify_krb5_conf
 
 noinst_PROGRAMS =				\
 	krbhst-test				\
+	socksdrawer				\
 	test_alname				\
 	test_crypto				\
 	test_forward				\
@@ -29,6 +30,7 @@ TESTS =						\
 	n-fold-test				\
 	parse-name-test				\
 	pseudo-random-test			\
+	socksdrawer				\
 	store-test				\
 	string-to-key-test			\
 	test_acl				\

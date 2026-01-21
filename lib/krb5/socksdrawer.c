@@ -545,6 +545,23 @@ makenonblocking(int fd)
 		err(EXIT_FAILURE, "fcntl(F_SETFL)");
 }
 
+/*
+ * makeblocking(fd)
+ *
+ *	Make fd blocking.  Fail with err(3) if it can't be done.
+ */
+static void
+makeblocking(int fd)
+{
+	int flags;
+
+	if ((flags = fcntl(fd, F_GETFL)) == -1)
+		err(EXIT_FAILURE, "fcntl(F_GETFL)");
+	flags &= ~O_NONBLOCK;
+	if (fcntl(fd, F_SETFL, flags) == -1)
+		err(EXIT_FAILURE, "fcntl(F_SETFL)");
+}
+
 static int help_flag;
 static int version_flag;
 static struct getargs args[] = {
@@ -757,6 +774,15 @@ main(int argc, char **argv)
 				continue;
 			err(EXIT_FAILURE, "accept");
 		}
+
+		/*
+		 * POSIX leaves it unspecified whether the fd it
+		 * returns is blocking or non-blocking.  Make it
+		 * blocking, since readall/writeall used to read the
+		 * SOCKS4a request and write the SOCKS4a response
+		 * expects that.
+		 */
+		makeblocking(clientfd);
 
 		/*
 		 * Fork a child to handle it; then close the client

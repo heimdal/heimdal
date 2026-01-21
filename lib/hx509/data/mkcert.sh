@@ -1,41 +1,49 @@
-#! /bin/bash
+#! /bin/sh
 
 set -e
 
 DAYS=182500
 
 key() {
-    local key=$1; shift
+    local key="$1"; shift
 
     if [ ! -f "${key}.pem" ]; then
+	openssl ecparam -name prime256v1 |
 	openssl genpkey \
-	    -paramfile <(openssl ecparam -name prime256v1) \
+	    -paramfile /dev/stdin \
 	    -out "${key}.pem"
     fi
 }
 
 req() {
-    local key=$1; shift
-    local dn=$1; shift
+    local key="$1"; shift
+    local dn="$1"; shift
 
+    printf "[req]\n%s\n%s\n[dn]\nCN_default=foo\n" \
+	   "prompt = yes" "distinguished_name = dn" |
     openssl req -new -sha256 -key "${key}.pem" \
-	-config <(printf "[req]\n%s\n%s\n[dn]\nCN_default=foo\n" \
-		   "prompt = yes" "distinguished_name = dn") \
+	-config - \
 	-subj "${dn}"
 }
 
 cert() {
-    local cert=$1; shift
-    local exts=$1; shift
+    local cert="$1"; shift
+    local exts="$1"; shift
 
-    openssl x509 -req -sha256 -out "${cert}.pem" \
-	-extfile <(printf "%s\n" "$exts") "$@"
+    trap 'rm -f mkcert.req' EXIT HUP INT TERM
+    rm -f mkcert.req
+    cat >mkcert.req
+    printf "%s\n" "$exts" |
+    openssl x509 -req -sha256 -in mkcert.req -out "${cert}.pem" \
+	-extfile - "$@"
+    rm -f mkcert.req
+    trap - EXIT HUP INT TERM
 }
 
 genroot() {
-    local dn=$1; shift
-    local key=$1; shift
-    local cert=$1; shift
+    local dn="$1"; shift
+    local key="$1"; shift
+    local cert="$1"; shift
 
     exts=$(printf "%s\n%s\n%s\n%s\n" \
 	   "subjectKeyIdentifier = hash" \
@@ -48,11 +56,11 @@ genroot() {
 }
 
 genee() {
-    local dn=$1; shift
-    local key=$1; shift
-    local cert=$1; shift
-    local cakey=$1; shift
-    local cacert=$1; shift
+    local dn="$1"; shift
+    local key="$1"; shift
+    local cert="$1"; shift
+    local cakey="$1"; shift
+    local cacert="$1"; shift
 
     exts=$(printf "%s\n%s\n%s\n%s\n" \
 	    "subjectKeyIdentifier = hash" \

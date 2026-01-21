@@ -142,7 +142,7 @@ test_section() {
 
     # Get caller location if available (bash only)
     if [ -n "$BASH_VERSION" ]; then
-        line_info=" (${BASH_LINENO[0]})"
+        eval 'line_info=" (${BASH_LINENO[0]})"'
     fi
 
     # Print section header with line number
@@ -164,10 +164,11 @@ test_run() {
     local rc=0
     local cmd_out
     local line_info=""
+    local restore_opts
 
     # Get caller location if available (bash only)
     if [ -n "$BASH_VERSION" ]; then
-        line_info=" (${BASH_SOURCE[1]:-}:${BASH_LINENO[0]:-})"
+        eval 'line_info=" (${BASH_SOURCE[1]:-}:${BASH_LINENO[0]:-})"'
     fi
 
     cmd_out=$(mktemp "${TMPDIR:-/tmp}/test_run.XXXXXX") || {
@@ -178,8 +179,11 @@ test_run() {
     # Run command, capturing stdout and stderr
     if [ "${TEST_VERBOSE:-0}" = "1" ]; then
         # Verbose mode: show output in real-time and capture
+        restore_opts="$(set +o)"
+        set -o pipefail
         "$@" 2>&1 | tee "$cmd_out"
-        rc=${PIPESTATUS[0]:-$?}
+        rc=$?
+        eval "$restore_opts"
     else
         # Normal mode: capture output silently
         "$@" > "$cmd_out" 2>&1
@@ -260,7 +264,7 @@ test_run_x() {
     local line_info=""
 
     if [ -n "$BASH_VERSION" ]; then
-        line_info=" (${BASH_SOURCE[1]:-}:${BASH_LINENO[0]:-})"
+        eval 'line_info=" (${BASH_SOURCE[1]:-}:${BASH_LINENO[0]:-})"'
     fi
 
     cmd_out=$(mktemp "${TMPDIR:-/tmp}/test_out.XXXXXX") || return 1

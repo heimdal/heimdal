@@ -118,7 +118,7 @@ parse_time_string_alloc (time_t **t, const char *s)
  */
 
 static int
-parse_integer(unsigned int *u, const char *s)
+parse_unsigned(unsigned int *u, const char *s)
 {
     if(strcmp(s, "-") == 0)
 	return 0;
@@ -128,17 +128,26 @@ parse_integer(unsigned int *u, const char *s)
 }
 
 static int
-parse_integer_alloc (unsigned int **u, const char *s)
+parse_int(int *u, const char *s)
 {
-    unsigned int tmp;
-    int ret;
+    if(strcmp(s, "-") == 0)
+	return 0;
+    if (sscanf(s, "%u", u) != 1)
+	return -1;
+    return 1;
+}
+
+static int
+parse_int_alloc(int **u, const char *s)
+{
+    int tmp, ret;
 
     *u = NULL;
-    ret = parse_integer (&tmp, s);
+    ret = parse_int(&tmp, s);
     if (ret == 1) {
-	*u = malloc (sizeof (**u));
+	*u = malloc(sizeof (**u));
 	if (*u == NULL)
-	    krb5_errx (context, 1, "malloc: out of memory");
+	    krb5_errx(context, 1, "malloc: out of memory");
 	**u = tmp;
     }
     return ret;
@@ -278,9 +287,9 @@ parse_hdbflags2int(HDBFlags *f, const char *s)
     int ret;
     unsigned int tmp;
 
-    ret = parse_integer (&tmp, s);
+    ret = parse_unsigned(&tmp, s);
     if (ret == 1)
-	*f = int2HDBFlags (tmp);
+	*f = int2HDBFlags(tmp);
     return ret;
 }
 
@@ -560,7 +569,7 @@ doit(const char *filename, int mergep)
 	    continue;
 	}
 
-	if (parse_integer_alloc (&ent.max_life,  e.max_life) == -1) {
+	if (parse_int_alloc(&ent.max_life,  e.max_life) == -1) {
 	    fprintf (stderr, "%s:%d:error parsing lifetime (%s)\n",
 		     filename, lineno, e.max_life);
 	    hdb_free_entry (context, db, &ent);
@@ -568,7 +577,7 @@ doit(const char *filename, int mergep)
 	    continue;
 
 	}
-	if (parse_integer_alloc (&ent.max_renew, e.max_renew) == -1) {
+	if (parse_int_alloc(&ent.max_renew, e.max_renew) == -1) {
 	    fprintf (stderr, "%s:%d:error parsing lifetime (%s)\n",
 		     filename, lineno, e.max_renew);
 	    hdb_free_entry (context, db, &ent);

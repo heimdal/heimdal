@@ -62,6 +62,9 @@
 	H4.H2.TEST.H5L.SE = {
 		kdc = localhost:@port@
 	}
+	TEST-ALIAS.H5L.SE = {
+		kdc = localhost:@port@
+	}
 
 [domain_realm]
 	.test.h5l.se = TEST.H5L.SE
@@ -134,6 +137,9 @@
 	enable_virtual_hostbased_princs = true
 	virtual_hostbased_princ_mindots = 1
 	virtual_hostbased_princ_maxdots = 3
+	realm_aliases = {
+		TEST-ALIAS.H5L.SE = TEST.H5L.SE
+	}
 
 [logging]
 	kdc = 0-/FILE:@objdir@/@messages@.log
@@ -164,6 +170,9 @@
 		SOME-REALM7.UK = SOME-REALM6.US
 		SOME-REALM7.UK = SOME-REALM5.FR
 		SOME-REALM8.UK = SOME-REALM6.US
+	}
+	TEST-ALIAS.H5L.SE = {
+		TEST.H5L.SE = .
 	}
         H4.H2.TEST.H5L.SE = {
                 H1.TEST.H5L.SE = H3.H2.TEST.H5L.SE

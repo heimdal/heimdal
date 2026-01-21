@@ -206,6 +206,8 @@ add -p cross1 --use-defaults krbtgt/${H3}@${H2}
 add -p cross2 --use-defaults krbtgt/${H2}@${H3}
 add -p cross1 --use-defaults krbtgt/${H3}@${H4}
 add -p cross2 --use-defaults krbtgt/${H4}@${H3}
+add -p cross1 --use-defaults krbtgt/${R}@TEST-ALIAS.H5L.SE
+add -p cross2 --use-defaults krbtgt/TEST-ALIAS.H5L.SE@${R}
 add -p foo --use-defaults pw-expire@${R}
 modify --pw-expiration-time=+1day  pw-expire@${R}
 add -p foo --use-defaults pw-expired@${R}
@@ -1025,6 +1027,15 @@ ${kinit} --password-file=${objdir}/foopassword foo-alias@${R} || \
 ${klist} | grep "Principal: foo@${R}" > /dev/null || \
 	{ ec=1 ; eval "${testfailed}"; }
 echo "Getting tickets with aliased client"
+${kgetcred} ${server}@${R} || { ec=1 ; eval "${testfailed}"; }
+${kdestroy}
+
+echo "checking realm alias"; > messages.log
+${kinit} --password-file=${objdir}/foopassword foo@TEST-ALIAS.H5L.SE || \
+	{ ec=1 ; eval "${testfailed}"; }
+${klist} | grep "Principal: foo@TEST-ALIAS.H5L.SE" > /dev/null || \
+	{ ec=1 ; eval "${testfailed}"; }
+echo "Getting tickets with realm-aliased client"
 ${kgetcred} ${server}@${R} || { ec=1 ; eval "${testfailed}"; }
 ${kdestroy}
 

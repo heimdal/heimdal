@@ -100,6 +100,18 @@ hdb_value2entry_alias(krb5_context context, krb5_data *value,
 }
 
 /*
+ * Look up realm alias in [hdb] realm_aliases configuration.
+ * Returns the canonical realm if the given realm is an alias, NULL otherwise.
+ * The returned string is owned by the config and must not be freed.
+ */
+static const char *
+get_realm_alias_target(krb5_context context, const char *realm)
+{
+    return krb5_config_get_string(context, NULL, "hdb", "realm_aliases",
+                                  realm, NULL);
+}
+
+/*
  * Some old databases may not have stored the salt with each key, which will
  * break clients when aliases or canonicalization are used. Generate a
  * default salt based on the real principal name in the entry to handle
@@ -143,36 +155,24 @@ add_default_salts(krb5_context context, HDB *db, hdb_entry *entry)
     return ret;
 }
 
+/*
+ * Core lookup: fetch a principal from the database, following HDB aliases.
+ * Does not handle realm aliasing - that's done by the caller.
+ */
 static krb5_error_code
-fetch_entry_or_alias(krb5_context context,
-                     HDB *db,
-                     krb5_const_principal principal,
-                     unsigned flags,
-                     hdb_entry *entry)
+fetch_entry_or_alias_core(krb5_context context,
+                          HDB *db,
+                          krb5_const_principal principal,
+                          unsigned flags,
+                          hdb_entry *entry)
 {
     HDB_EntryOrAlias eoa;
-    krb5_principal enterprise_principal = NULL;
     krb5_data key, value;
     krb5_error_code ret;
 
     value.length = 0;
     value.data = 0;
     key = value;
-
-    if (principal->name.name_type == KRB5_NT_ENTERPRISE_PRINCIPAL) {
-	if (principal->name.name_string.len != 1) {
-	    ret = KRB5_PARSE_MALFORMED;
-	    krb5_set_error_message(context, ret, "malformed principal: "
-				   "enterprise name with %d name components",
-				   principal->name.name_string.len);
-	    return ret;
-	}
-	ret = krb5_parse_name(context, principal->name.name_string.val[0],
-			      &enterprise_principal);
-	if (ret)
-	    return ret;
-	principal = enterprise_principal;
-    }
 
     ret = hdb_principal2key(context, principal, &key);
     if (ret == 0)
@@ -184,25 +184,94 @@ fetch_entry_or_alias(krb5_context context,
         entry->aliased = 0;
     } else if (ret == 0 && eoa.element == choice_HDB_EntryOrAlias_alias) {
         krb5_data_free(&key);
-	ret = hdb_principal2key(context, eoa.u.alias.principal, &key);
+        ret = hdb_principal2key(context, eoa.u.alias.principal, &key);
         if (ret == 0) {
-	    krb5_data_free(&value);
+            krb5_data_free(&value);
             ret = db->hdb__get(context, db, key, &value);
-	}
+        }
         if (ret == 0)
             /* No alias chaining */
             ret = hdb_value2entry(context, &value, entry);
-	krb5_free_principal(context, eoa.u.alias.principal);
+        krb5_free_principal(context, eoa.u.alias.principal);
         entry->aliased = 1;
     } else if (ret == 0)
         ret = ENOTSUP;
+
+    krb5_data_free(&value);
+    krb5_data_free(&key);
+    return ret;
+}
+
+static krb5_error_code
+fetch_entry_or_alias(krb5_context context,
+                     HDB *db,
+                     krb5_const_principal principal,
+                     unsigned flags,
+                     hdb_entry *entry)
+{
+    krb5_principal enterprise_principal = NULL;
+    krb5_principal canon_principal = NULL;
+    krb5_error_code ret;
+    const char *canon_realm;
+
+    if (principal->name.name_type == KRB5_NT_ENTERPRISE_PRINCIPAL) {
+        if (principal->name.name_string.len != 1) {
+            ret = KRB5_PARSE_MALFORMED;
+            krb5_set_error_message(context, ret, "malformed principal: "
+                                   "enterprise name with %d name components",
+                                   principal->name.name_string.len);
+            return ret;
+        }
+        ret = krb5_parse_name(context, principal->name.name_string.val[0],
+                              &enterprise_principal);
+        if (ret)
+            return ret;
+        principal = enterprise_principal;
+    }
+
+    /* First, try the literal principal as requested */
+    ret = fetch_entry_or_alias_core(context, db, principal, flags, entry);
+
+    /*
+     * If not found and the realm is an alias, try the canonical realm.
+     * This allows whole-realm aliasing via [hdb] realm_aliases config.
+     */
+    if (ret == HDB_ERR_NOENTRY) {
+        canon_realm = get_realm_alias_target(context, principal->realm);
+        if (canon_realm != NULL) {
+            ret = krb5_copy_principal(context, principal, &canon_principal);
+            if (ret == 0)
+                ret = krb5_principal_set_realm(context, canon_principal,
+                                               canon_realm);
+            /*
+             * For krbtgt principals, also translate the realm component in the
+             * name (e.g., krbtgt/ALIAS@ALIAS -> krbtgt/CANONICAL@CANONICAL).
+             */
+            if (ret == 0 &&
+                krb5_principal_get_num_comp(context, canon_principal) == 2 &&
+                strcmp(krb5_principal_get_comp_string(context, canon_principal, 0),
+                       KRB5_TGS_NAME) == 0 &&
+                strcmp(krb5_principal_get_comp_string(context, canon_principal, 1),
+                       principal->realm) == 0) {
+                ret = krb5_principal_set_comp_string(context, canon_principal,
+                                                     1, canon_realm);
+            }
+            if (ret == 0)
+                ret = fetch_entry_or_alias_core(context, db, canon_principal,
+                                                flags, entry);
+            if (ret == 0)
+                entry->aliased = 1;
+            krb5_free_principal(context, canon_principal);
+        }
+    }
+
     if (ret == 0 && enterprise_principal) {
-	/*
-	 * Whilst Windows does not canonicalize enterprise principal names if
-	 * the canonicalize flag is unset, the original specification in
-	 * draft-ietf-krb-wg-kerberos-referrals-03.txt says we should.
-	 */
-	entry->flags.force_canonicalize = 1;
+        /*
+         * Whilst Windows does not canonicalize enterprise principal names if
+         * the canonicalize flag is unset, the original specification in
+         * draft-ietf-krb-wg-kerberos-referrals-03.txt says we should.
+         */
+        entry->flags.force_canonicalize = 1;
     }
 
 #if 0
@@ -217,9 +286,6 @@ fetch_entry_or_alias(krb5_context context,
 #endif
 
     krb5_free_principal(context, enterprise_principal);
-    krb5_data_free(&value);
-    krb5_data_free(&key);
-    principal = enterprise_principal = NULL;
     return ret;
 }
 
@@ -354,14 +420,18 @@ _hdb_fetch_kvno(krb5_context context, HDB *db, krb5_const_principal principal,
             return 0;
 
         /*
-         * For client principal lookups, keep the canonical name so the
-         * client knows their true identity.  For server lookups, use the
+         * For same-realm client principal aliases, keep the canonical name
+         * so the client knows their true identity.
+         *
+         * For realm aliases (different realm) and server lookups, use the
          * alias name so the ticket contains the name the client requested.
+         * This gives "hard alias" semantics for realm aliasing.
          *
          * EPNs are always soft.
          */
-        if ((flags & HDB_F_GET_CLIENT) ||
-            principal->name.name_type == KRB5_NT_ENTERPRISE_PRINCIPAL) {
+        if (same_realm &&
+            ((flags & HDB_F_GET_CLIENT) ||
+             principal->name.name_type == KRB5_NT_ENTERPRISE_PRINCIPAL)) {
             entry->flags.force_canonicalize = 1;
             return 0;
         }

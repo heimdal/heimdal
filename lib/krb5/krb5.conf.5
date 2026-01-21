@@ -1385,6 +1385,47 @@ For example, the
 .Nm "host"
 service can be configured to have the ok-as-delegate flag while
 all others do not.
+.It Li realm_aliases
+This subsection maps alias realm names to canonical realm names.
+When a principal lookup fails for a realm listed here, the lookup
+is retried with the realm replaced by its canonical counterpart.
+For
+.Nm krbtgt
+principals, the second component (the TGT realm) is also
+translated if it matches the alias realm.
+.Pp
+Alias realms use hard-alias semantics: the alias realm name is
+preserved in tickets rather than being replaced by the canonical
+realm.
+This allows clients to obtain tickets using an alias realm name
+while the principals actually reside in the canonical realm's
+database.
+.Pp
+To enable proper cross-realm authentication with alias realms,
+you must also:
+.Bl -bullet -offset indent
+.It
+Add a
+.Li [realms]
+entry for the alias realm pointing to the same KDC.
+.It
+Create cross-realm TGT principals:
+.Nm krbtgt/CANONICAL@ALIAS
+and
+.Nm krbtgt/ALIAS@CANONICAL .
+.It
+Add appropriate
+.Li [capaths]
+entries.
+.El
+.Pp
+Example:
+.Bd -literal -offset indent
+[hdb]
+    realm_aliases = {
+        ALIAS.EXAMPLE.COM = CANONICAL.EXAMPLE.COM
+    }
+.Ed
 .El
 .Pp
 .It Li [bx509]

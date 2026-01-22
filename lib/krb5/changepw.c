@@ -672,13 +672,19 @@ change_password_loop (krb5_context	context,
 	    int replied = 0;
 
 	    sock = socket (a->ai_family, a->ai_socktype | SOCK_CLOEXEC, a->ai_protocol);
-	    if (rk_IS_BAD_SOCKET(sock))
+	    if (rk_IS_BAD_SOCKET(sock)) {
+		ret = rk_SOCK_ERRNO;
+		krb5_set_error_message(context, ret, "socket: %s",
+				       strerror(ret));
 		continue;
+	    }
 	    rk_cloexec(sock);
 
 	    ret = connect(sock, a->ai_addr, a->ai_addrlen);
 	    if (rk_IS_SOCKET_ERROR(ret)) {
-                ret = rk_SOCK_ERRNO;
+		ret = rk_SOCK_ERRNO;
+		krb5_set_error_message(context, ret, "connect: %s",
+				       strerror(ret));
 		rk_closesocket(sock);
 		continue;
 	    }
@@ -770,6 +776,9 @@ change_password_loop (krb5_context	context,
 
 		ret = select (sock + 1, &fdset, NULL, NULL, &tv);
 		if (rk_IS_SOCKET_ERROR(ret) && rk_SOCK_ERRNO != EINTR) {
+		    ret = rk_SOCK_ERRNO;
+		    krb5_set_error_message(context, ret, "select: %s",
+					   strerror(ret));
 		    rk_closesocket(sock);
 		    goto out;
 		}

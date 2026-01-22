@@ -1,8 +1,7 @@
 
-Partial news for a future Heimdal 8.0 release -- but NOTE WELL that this is NOT
-a release at this time!
+Release Notes - Heimdal - Version Heimdal 8.0 (future)
 
-Bug fixes
+ Bug fixes:
 
  - Errors found by the Coverity static analysis.
  - Errors found by the LLVM scan-build static analyzer.
@@ -11,7 +10,7 @@ Bug fixes
  - iprop bugs, race conditions, and performance
  - Many misc. bugs
 
-Defaults changes:
+ Defaults changes:
 
  - Default enctypes set to: aes256-cts-hmac-sha1-96 aes256-cts-hmac-sha384-192.
  - 1DES now disabled by default in the build configuration.
@@ -19,7 +18,7 @@ Defaults changes:
    (Use `--with-3des=no` to disable 3DES.)
    (Use `--with-arcfour` to disable RC4.)
 
-Features:
+ Features:
 
  - OpenSSL 3 support (hcrypto has been removed).
  - OpenSSL 3 provider support, including propq (e.g., for enabling FIPS) and
@@ -119,14 +118,14 @@ Features:
  - Improved plugin interfaces.
  - roken: Add secure_getenv() and issuid(), use them extensively.
 
-Features removed:
+ Features removed:
 
  - NTLM support.
  - "digest" server functionality in KDC (for NTLM).
  - OTP.
  - libhcrypto.
 
-Feature removal warnings:
+ Feature removal warnings:
 
  - 1DES and RC4 may be removed in Heimdal 8.2
 

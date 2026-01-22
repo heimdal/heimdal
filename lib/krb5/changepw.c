@@ -755,7 +755,7 @@ change_password_loop (krb5_context	context,
 					     hi->hostname);
 		    if (ret) {
 			rk_closesocket(sock);
-			goto out;
+			continue;
 		    }
 		}
 

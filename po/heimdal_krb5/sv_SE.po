@@ -453,7 +453,7 @@ msgstr "Meddelandet från %s är för stort"
 
 #: lib/krb5/changepw.c:665
 #, c-format
-msgid "Unable to reach any changepw server  in realm %s"
+msgid "Unable to reach any changepw server in realm %s"
 msgstr "Kan inte nå någon lösenordsbytarserver i realm %s"
 
 #: lib/krb5/convert_creds.c:136

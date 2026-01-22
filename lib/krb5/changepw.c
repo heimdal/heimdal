@@ -814,7 +814,7 @@ change_password_loop (krb5_context	context,
     if (ret == KRB5_KDC_UNREACH) {
 	krb5_set_error_message(context,
 			       ret,
-			       N_("Unable to reach any changepw server "
+			       N_("Unable to reach any changepw server"
 				 " in realm %s", "realm"), realm);
 	*result_code = KRB5_KPASSWD_HARDERROR;
     }

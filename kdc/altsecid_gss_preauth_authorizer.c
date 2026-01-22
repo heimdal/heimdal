@@ -179,8 +179,8 @@ ad_connect(krb5_context context,
         struct rk_resource_record *rr;
         char *domain;
 
-        asprintf(&domain, "_ldap._tcp.%s", realm);
-        if (domain == NULL) {
+        if (asprintf(&domain, "_ldap._tcp.%s", realm) == -1 ||
+            domain == NULL) {
             ret = krb5_enomem(context);
             goto out;
         }
@@ -224,8 +224,8 @@ ad_connect(krb5_context context,
         LDAP *ld;
         char *url = NULL;
 
-        asprintf(&url, "ldap://%s:%d", servers[i].server, servers[i].port);
-        if (url == NULL) {
+        if (asprintf(&url, "ldap://%s:%d", servers[i].server, servers[i].port) == -1 ||
+            url == NULL) {
             ret = krb5_enomem(context);
             goto out;
         }
@@ -281,6 +281,7 @@ ad_lookup(krb5_context context,
           krb5_principal *canon_principal,
           kdc_data_t *requestor_sid)
 {
+    static const char *attrs[] = { "sAMAccountName", "objectSid", NULL };
     krb5_error_code ret;
     OM_uint32 minor;
     const char *mech_type_str, *p;
@@ -288,8 +289,7 @@ ad_lookup(krb5_context context,
     gss_buffer_desc initiator_name_buf = GSS_C_EMPTY_BUFFER;
     LDAPMessage *m = NULL, *m0;
     char *basedn = NULL;
-    int lret;
-    char *attrs[] = { "sAMAccountName", "objectSid", NULL };
+    int lret, aret;
     struct berval **values = NULL;
 
     *canon_principal = NULL;
@@ -309,20 +309,20 @@ ad_lookup(krb5_context context,
         goto out;
 
     if ((p = strrchr(mech_type_str, '-')) != NULL) {
-        asprintf(&filter, "(&(objectClass=user)"
-                 "(|(altSecurityIdentities=%.*s:%.*s)(altSecurityIdentities=%s:%.*s)))",
-                 (int)(p - mech_type_str), mech_type_str,
-                 (int)initiator_name_buf.length, (char *)initiator_name_buf.value,
-                 mech_type_str,
-                 (int)initiator_name_buf.length,
-                 (char *)initiator_name_buf.value);
+        aret = asprintf(&filter, "(&(objectClass=user)"
+                        "(|(altSecurityIdentities=%.*s:%.*s)(altSecurityIdentities=%s:%.*s)))",
+                        (int)(p - mech_type_str), mech_type_str,
+                        (int)initiator_name_buf.length, (char *)initiator_name_buf.value,
+                        mech_type_str,
+                        (int)initiator_name_buf.length,
+                        (char *)initiator_name_buf.value);
     } else {
-        asprintf(&filter, "(&(objectClass=user)(altSecurityIdentities=%s:%.*s))",
-                 mech_type_str,
-                 (int)initiator_name_buf.length,
-                 (char *)initiator_name_buf.value);
+        aret = asprintf(&filter, "(&(objectClass=user)(altSecurityIdentities=%s:%.*s))",
+                        mech_type_str,
+                        (int)initiator_name_buf.length,
+                        (char *)initiator_name_buf.value);
     }
-    if (filter == NULL)
+    if (aret == -1 || filter == NULL)
         goto enomem;
 
     lret = ldap_domain2dn(realm, &basedn);
@@ -330,7 +330,8 @@ ad_lookup(krb5_context context,
         goto out;
 
     lret = ldap_search_ext_s(server->ld, basedn, LDAP_SCOPE_SUBTREE,
-                             filter, attrs, 0,
+                             /* XXX strict aliasing violation */
+                             filter, (char **)rk_UNCONST(attrs), 0,
                              NULL, NULL, NULL, 1, &m);
     if (lret == LDAP_SIZELIMIT_EXCEEDED)
         ret = KRB5KDC_ERR_PRINCIPAL_NOT_UNIQUE;

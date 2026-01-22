@@ -976,10 +976,12 @@ renew_func(void *ptr)
     expire = ticket_lifetime(ctx->context, ctx->ccache, ctx->principal,
 			     server_str, &renew_expire);
 
+    if (ret == 0 && server_str == NULL) {
 #ifndef NO_AFS
-    if (ret == 0 && server_str == NULL && do_afslog && k_hasafs())
-	krb5_afslog(ctx->context, ctx->ccache, NULL, NULL);
+	if (do_afslog && k_hasafs())
+	    krb5_afslog(ctx->context, ctx->ccache, NULL, NULL);
 #endif
+    }
 
     update_siginfo_msg(expire, server_str);
 
@@ -991,7 +993,7 @@ renew_func(void *ptr)
      * for some reason...
      */
 
-    if (expire < 1) {
+    if (ret || expire < 1) {
 	/*
 	 * We can't ask to keep spamming stderr but not syslog, so we warn
 	 * only once.

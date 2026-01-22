@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Kungliga Tekniska Högskolan
+ * Copyright (c) 2009 Kungliga Tekniska Hï¿½gskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -125,23 +125,21 @@ mach_complete_sync(heim_sipc_call ctx, int returnvalue, heim_idata *reply)
     mach_msg_type_number_t replyinCnt;
     heim_ipc_message_outband_t replyout;
     mach_msg_type_number_t replyoutCnt;
-    kern_return_t kr;
+
 
     if (returnvalue) {
 	/* on error, no reply */
 	replyinCnt = 0;
 	replyout = 0; replyoutCnt = 0;
-	kr = KERN_SUCCESS;
     } else if (reply->length < 2048) {
 	replyinCnt = reply->length;
 	memcpy(replyin, reply->data, replyinCnt);
 	replyout = 0; replyoutCnt = 0;
-	kr = KERN_SUCCESS;
     } else {
 	replyinCnt = 0;
-	kr = vm_read(mach_task_self(),
-		     (vm_address_t)reply->data, reply->length,
-		     (vm_address_t *)&replyout, &replyoutCnt);
+	vm_read(mach_task_self(),
+		(vm_address_t)reply->data, reply->length,
+		(vm_address_t *)&replyout, &replyoutCnt);
     }
 
     mheim_ripc_call_reply(s->reply_port, returnvalue,
@@ -162,28 +160,25 @@ mach_complete_async(heim_sipc_call ctx, int returnvalue, heim_idata *reply)
     mach_msg_type_number_t replyinCnt;
     heim_ipc_message_outband_t replyout;
     mach_msg_type_number_t replyoutCnt;
-    kern_return_t kr;
 
     if (returnvalue) {
 	/* on error, no reply */
 	replyinCnt = 0;
 	replyout = 0; replyoutCnt = 0;
-	kr = KERN_SUCCESS;
     } else if (reply->length < 2048) {
 	replyinCnt = reply->length;
 	memcpy(replyin, reply->data, replyinCnt);
 	replyout = 0; replyoutCnt = 0;
-	kr = KERN_SUCCESS;
     } else {
 	replyinCnt = 0;
-	kr = vm_read(mach_task_self(),
-		     (vm_address_t)reply->data, reply->length,
-		     (vm_address_t *)&replyout, &replyoutCnt);
+	vm_read(mach_task_self(),
+		(vm_address_t)reply->data, reply->length,
+		(vm_address_t *)&replyout, &replyoutCnt);
     }
 
-    kr = mheim_aipc_acall_reply(s->reply_port, returnvalue,
-				replyin, replyinCnt,
-				replyout, replyoutCnt);
+    mheim_aipc_acall_reply(s->reply_port, returnvalue,
+			   replyin, replyinCnt,
+			   replyout, replyoutCnt);
     heim_ipc_free_cred(s->cred);
     free(s->req.data);
     free(s);
@@ -1189,4 +1184,3 @@ heim_ipc_main(void)
     process_loop();
 #endif
 }
-

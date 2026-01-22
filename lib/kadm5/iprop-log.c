@@ -377,13 +377,13 @@ iprop_truncate(struct truncate_options *opt, int argc, char **argv)
 
     if (opt->reset_flag) {
         /* First recover unconfirmed records */
-        ret = kadm5_log_init(server_context);
+        ret = kadm5_log_init_recover(server_context);
         if (ret == 0)
             ret = kadm5_log_reinit(server_context, 0);
     } else {
-        ret = kadm5_log_init(server_context);
+        ret = kadm5_log_init_recover(server_context);
         if (ret)
-            krb5_err(context, 1, ret, "kadm5_log_init");
+            krb5_err(context, 1, ret, "kadm5_log_init_recover");
         ret = kadm5_log_truncate(server_context, opt->keep_entries_integer,
                                  opt->max_bytes_integer);
     }

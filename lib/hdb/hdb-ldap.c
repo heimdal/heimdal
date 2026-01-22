@@ -79,7 +79,7 @@ struct hdbldapdb {
  *
  */
 
-static char * krb5kdcentry_attrs[] = {
+static const char * krb5kdcentry_attrs[] = {
     "cn",
     "createTimestamp",
     "creatorsName",
@@ -107,7 +107,7 @@ static char * krb5kdcentry_attrs[] = {
     NULL
 };
 
-static char *krb5principal_attrs[] = {
+static const char *krb5principal_attrs[] = {
     "cn",
     "createTimestamp",
     "creatorsName",
@@ -384,6 +384,8 @@ static int
 bervalstrcmp(struct berval *v, const char *str)
 {
     size_t len = strlen(str);
+    if (v->bv_val == NULL)
+        return 1;
     return (v->bv_len == len) && strncasecmp(str, (char *)v->bv_val, len) == 0;
 }
 
@@ -788,7 +790,8 @@ LDAP_dn2principal(krb5_context context, HDB * db, const char *dn,
 	goto out;
 
     rc = ldap_search_ext_s(HDB2LDAP(db), dn, LDAP_SCOPE_SUBTREE,
-			   filter, krb5principal_attrs, 0,
+                           /* XXX strict aliasing violation */
+                           filter, (char **)rk_UNCONST(krb5principal_attrs), 0,
 			   NULL, NULL, NULL,
 			   0, &res);
     if (check_ldap(context, db, rc)) {
@@ -905,7 +908,8 @@ LDAP__lookup_princ(krb5_context context,
 
     rc = ldap_search_ext_s(HDB2LDAP(db), HDB2BASE(db),
 			   LDAP_SCOPE_SUBTREE, filter,
-			   krb5kdcentry_attrs, 0,
+                           /* XXX strict aliasing violation */
+			   (char **)rk_UNCONST(krb5kdcentry_attrs), 0,
 			   NULL, NULL, NULL,
 			   0, msg);
     if (check_ldap(context, db, rc)) {
@@ -941,7 +945,8 @@ LDAP__lookup_princ(krb5_context context,
 	    goto out;
 
 	rc = ldap_search_ext_s(HDB2LDAP(db), HDB2BASE(db), LDAP_SCOPE_SUBTREE,
-			       filter, krb5kdcentry_attrs, 0,
+                               /* XXX strict aliasing violation */
+			       filter, (char **)rk_UNCONST(krb5kdcentry_attrs), 0,
 			       NULL, NULL, NULL,
 			       0, msg);
 	if (check_ldap(context, db, rc)) {
@@ -1578,7 +1583,8 @@ LDAP_firstkey(krb5_context context, HDB *db, unsigned flags,
     ret = ldap_search_ext(HDB2LDAP(db), HDB2BASE(db),
 			LDAP_SCOPE_SUBTREE,
 			"(|(objectClass=krb5Principal)(objectClass=sambaSamAccount))",
-			krb5kdcentry_attrs, 0,
+                        /* XXX strict aliasing violation */
+			(char **)rk_UNCONST(krb5kdcentry_attrs), 0,
 			NULL, NULL, NULL, 0, &msgid);
     if (ret != LDAP_SUCCESS || msgid < 0)
 	return HDB_ERR_NOENTRY;
@@ -1605,7 +1611,7 @@ LDAP__connect(krb5_context context, HDB * db)
      * credentials instead of empty credentials you will get a SASL
      * bind in progress message.
      */
-    struct berval bv = { 0, "" };
+    struct berval bv = { 0, 0 };
     const char *sasl_method = "EXTERNAL";
     const char *bind_dn = NULL;
 

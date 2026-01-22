@@ -128,7 +128,17 @@ Features removed:
 
 Feature removal warnings:
 
- - 1DES and RC4 may be remove in Heimdal 8.2
+ - 1DES and RC4 may be removed in Heimdal 8.2
+
+ Upgrade considerations:
+
+ - Due to a change in HDB schema operators should check that Heimdal 8.x can
+   dump HDBs modified by Heimdal 7.x before upgrading from 7.x to 8.x.
+
+ Downgrade considerations:
+
+ - Due to a change in HDB schema operators should check that Heimdal 7.x can
+   dump HDBs modified by Heimdal 8.x before downgrading from 8.x to 7.x.
 
 Release Notes - Heimdal - Version Heimdal 7.8
 

@@ -303,6 +303,7 @@ wait_log(struct client *c)
     sock2 = accept(sock, (struct sockaddr *)&sast, &salen);
     if (sock2 == rk_INVALID_SOCKET)
 	err(1, "failed to accept local socket for %s", c->moniker);
+    tcp_nodelay(sock2);
     rk_closesocket(sock);
 
     return sock2;
@@ -638,6 +639,7 @@ connect_client(const char *slave)
 	sock = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
 	if (sock == rk_INVALID_SOCKET)
 	    continue;
+	tcp_nodelay(sock);
 	if (connect(sock, res->ai_addr, res->ai_addrlen) < 0) {
 	    rk_closesocket(sock);
 	    sock = rk_INVALID_SOCKET;

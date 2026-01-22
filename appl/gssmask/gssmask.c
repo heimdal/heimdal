@@ -705,6 +705,7 @@ HandleOP(SetLoggingSocket)
     sock = socket(((struct sockaddr *)&c->sa)->sa_family, SOCK_STREAM, 0);
     if (sock == rk_INVALID_SOCKET)
 	return 0;
+    tcp_nodelay(sock);
 
     ret = connect(sock, (struct sockaddr *)&c->sa, c->salen);
     if (ret < 0) {
@@ -1294,6 +1295,7 @@ main(int argc, char **argv)
     {
 	struct client *c;
 
+	tcp_nodelay(0);
 	c = create_client(0, port, moniker_str);
 	/* close(0); */
 

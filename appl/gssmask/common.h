@@ -46,6 +46,10 @@
 #include <sys/wait.h>
 #endif
 
+#ifdef HAVE_NETINET_TCP_H
+#include <netinet/tcp.h>
+#endif
+
 #include <assert.h>
 #include <krb5.h>
 #include <gssapi/gssapi.h>
@@ -112,3 +116,5 @@ krb5_error_code store_string(krb5_storage *, const char *);
     } while(0)
 
 char *** permutate_all(struct getarg_strings *, size_t *);
+
+void tcp_nodelay(rk_socket_t);

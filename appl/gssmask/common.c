@@ -95,3 +95,13 @@ permutate_all(struct getarg_strings *strings, size_t *size)
     free(list);
     return all;
 }
+
+void
+tcp_nodelay(rk_socket_t sock)
+{
+#ifdef HAVE_NETINET_TCP_H
+    int on = 1;
+
+    (void)setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, &on, sizeof(on));
+#endif
+}

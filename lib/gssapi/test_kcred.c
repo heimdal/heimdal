@@ -46,6 +46,7 @@
 #include <krb5.h>
 #include <err.h>
 #include <getarg.h>
+#include <time.h>
 
 static int version_flag = 0;
 static int help_flag	= 0;
@@ -56,6 +57,7 @@ copy_import(void)
     gss_cred_id_t cred1, cred2;
     OM_uint32 maj_stat, min_stat;
     gss_name_t name1, name2;
+    time_t t1, t2;
     OM_uint32 lifetime1, lifetime2;
     gss_cred_usage_t usage1, usage2;
     gss_OID_set mechs1, mechs2;
@@ -70,6 +72,7 @@ copy_import(void)
     if (maj_stat != GSS_S_COMPLETE)
 	errx(1, "gss_acquire_cred");
 
+    t1 = time(NULL);
     maj_stat = gss_inquire_cred(&min_stat, cred1, &name1, &lifetime1,
 				&usage1, &mechs1);
     if (maj_stat != GSS_S_COMPLETE)
@@ -95,6 +98,7 @@ copy_import(void)
 				&usage2, &mechs2);
     if (maj_stat != GSS_S_COMPLETE)
 	errx(1, "gss_inquire_cred 2");
+    t2 = time(NULL);
 
     maj_stat = gss_compare_name(&min_stat, name1, name2, &equal);
     if (maj_stat != GSS_S_COMPLETE)
@@ -102,17 +106,10 @@ copy_import(void)
     if (!equal)
 	errx(1, "names not equal");
 
-    /*
-     * This check is racy!  It tends to fail when run with valgrind.
-     *
-     * make check-valgrind sets TESTS_ENVIRONMENT in the environment...
-     */
-    if (getenv("TESTS_ENVIRONMENT") == NULL && lifetime1 != lifetime2)
-	errx(1, "lifetime not equal %lu != %lu",
-	     (unsigned long)lifetime1, (unsigned long)lifetime2);
-    if (lifetime1 != lifetime2)
-	warnx("lifetime not equal %lu != %lu",
-              (unsigned long)lifetime1, (unsigned long)lifetime2);
+    if (lifetime1 - lifetime2 > t2 - t1)
+	errx(1, "lifetime mismatch %lu -> %lu (%lu sec elapsed)",
+	     (unsigned long)lifetime1, (unsigned long)lifetime2,
+	     (unsigned long)(t2 - t1));
 
     if (usage1 != usage2) {
 	/* as long any of them is both are everything it ok */
@@ -127,6 +124,7 @@ copy_import(void)
 				&usage2, &mechs2);
     if (maj_stat != GSS_S_COMPLETE)
 	errx(1, "gss_inquire_cred");
+    t2 = time(NULL);
 
     maj_stat = gss_compare_name(&min_stat, name1, name2, &equal);
     if (maj_stat != GSS_S_COMPLETE)
@@ -134,13 +132,10 @@ copy_import(void)
     if (!equal)
 	errx(1, "names not equal");
 
-    /* This check is racy! */
-    if (getenv("TESTS_ENVIRONMENT") == NULL && lifetime1 != lifetime2)
-	errx(1, "lifetime not equal %lu != %lu",
-	     (unsigned long)lifetime1, (unsigned long)lifetime2);
-    if (lifetime1 != lifetime2)
-	warnx("lifetime not equal %lu != %lu",
-              (unsigned long)lifetime1, (unsigned long)lifetime2);
+    if (lifetime1 - lifetime2 > t2 - t1)
+	errx(1, "updated lifetime mismatch %lu -> %lu (%lu sec elapsed)",
+	     (unsigned long)lifetime1, (unsigned long)lifetime2,
+	     (unsigned long)(t2 - t1));
 
     gss_release_cred(&min_stat, &cred1);
     gss_release_cred(&min_stat, &cred2);

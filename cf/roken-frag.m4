@@ -360,6 +360,7 @@ AC_BROKEN([					\
 	mergesort				\
 	mergesort_r				\
 	mkstemp					\
+	pread					\
 	putenv					\
 	rcmd					\
 	readv					\

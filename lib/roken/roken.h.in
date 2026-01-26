@@ -860,6 +860,12 @@ ROKEN_LIB_FUNCTION ssize_t ROKEN_LIB_CALL
 readv(int, const struct iovec *, int);
 #endif
 
+#ifndef HAVE_PREAD
+#define pread rk_pread
+ROKEN_LIB_FUNCTION ssize_t ROKEN_LIB_CALL
+pread(int, void *, size_t, off_t);
+#endif
+
 #ifdef NO_PIDFILES
 #define rk_pidfile(x) ((void) 0)
 #else
@@ -890,6 +896,7 @@ ROKEN_LIB_FUNCTION unsigned short ROKEN_LIB_CALL bswap16(unsigned short);
  * - Fallback to system flock() if available
  * - Fallback to POSIX fcntl() locks for NFS and other filesystems
  */
+#ifndef HAVE_FLOCK
 #ifndef LOCK_SH
 #define LOCK_SH   1		/* Shared lock */
 #endif
@@ -902,6 +909,7 @@ ROKEN_LIB_FUNCTION unsigned short ROKEN_LIB_CALL bswap16(unsigned short);
 #ifndef LOCK_UN
 #define LOCK_UN   8		/* Unlock */
 #endif
+#endif /* !HAVE_FLOCK */
 
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL rk_flock(int fd, int operation);
 #define flock(_x,_y) rk_flock(_x,_y)

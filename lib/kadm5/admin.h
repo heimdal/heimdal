@@ -53,6 +53,17 @@
 #define LOG_VERSION_FIRST 1
 #define LOG_VERSION_UBER  0
 
+#define LOG_HEADER_SZ   ((off_t)(sizeof(uint32_t) * 4))
+#define LOG_TRAILER_SZ  ((off_t)(sizeof(uint32_t) * 2))
+#define LOG_WRAPPER_SZ  ((off_t)(LOG_HEADER_SZ + LOG_TRAILER_SZ))
+#define LOG_UBER_LEN    ((off_t)(sizeof(uint64_t) + sizeof(uint32_t) * 2))
+#define LOG_UBER_SZ     ((off_t)(LOG_WRAPPER_SZ + LOG_UBER_LEN))
+
+struct kadm5_log_snap {
+    char bytes;
+    char buf[LOG_HEADER_SZ];
+};
+
 #include <krb5.h>
 
 #define KRB5_KDB_DISALLOW_POSTDATED	0x00000001

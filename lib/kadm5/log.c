@@ -174,12 +174,6 @@ RCSID("$Id$");
  * will deadlock with ipropd-slave -- don't do that.
  */
 
-#define LOG_HEADER_SZ   ((off_t)(sizeof(uint32_t) * 4))
-#define LOG_TRAILER_SZ  ((off_t)(sizeof(uint32_t) * 2))
-#define LOG_WRAPPER_SZ  ((off_t)(LOG_HEADER_SZ + LOG_TRAILER_SZ))
-#define LOG_UBER_LEN    ((off_t)(sizeof(uint64_t) + sizeof(uint32_t) * 2))
-#define LOG_UBER_SZ     ((off_t)(LOG_WRAPPER_SZ + LOG_UBER_LEN))
-
 #define LOG_NOPEEK 0
 #define LOG_DOPEEK 1
 
@@ -490,12 +484,7 @@ kadm5_log_get_version_fd(kadm5_server_context *server_context, int fd,
 {
     kadm5_ret_t ret = 0;
     krb5_storage *sp;
-    enum kadm_ops op = kadm_get;
-    uint32_t len = 0;
     uint32_t tmp;
-
-    if (fd == -1)
-        return 0; /* /dev/null */
 
     if (tstamp == NULL)
         tstamp = &tmp;
@@ -503,9 +492,40 @@ kadm5_log_get_version_fd(kadm5_server_context *server_context, int fd,
     *ver = 0;
     *tstamp = 0;
 
+    if (fd == -1)
+        fd = server_context->log_context.log_fd;
+
     sp = krb5_storage_from_fd(fd);
     if (sp == NULL)
         return errno ? errno : ENOMEM;
+
+    ret = kadm5_log_get_version_sp(server_context, sp, which, ver, tstamp);
+    krb5_storage_free(sp);
+    return ret;
+}
+
+kadm5_ret_t
+kadm5_log_get_version_sp(kadm5_server_context *server_context, krb5_storage *sp,
+                         int which, uint32_t *ver, uint32_t *tstamp)
+{
+    struct kadm5_log_snap snap;
+    kadm5_ret_t ret = 0;
+    enum kadm_ops op = kadm_get;
+    uint32_t len = 0;
+    uint32_t tmp;
+
+    memset(&snap, 0, sizeof(snap));
+    if (server_context->log_context.lock_mode == LOCK_UN) {
+        ret = kadm5_log_snapshot(server_context, &snap);
+        if (ret)
+            return ret;
+    }
+
+    if (tstamp == NULL)
+        tstamp = &tmp;
+
+    *ver = 0;
+    *tstamp = 0;
 
     switch (which) {
     case LOG_VERSION_LAST:
@@ -531,8 +551,61 @@ kadm5_log_get_version_fd(kadm5_server_context *server_context, int fd,
         break;
     }
 
-    krb5_storage_free(sp);
-    return ret;
+    if (ret || server_context->log_context.lock_mode != LOCK_UN)
+        return ret;
+
+    return kadm5_log_snapshot_verify(server_context, &snap);
+}
+
+/*
+ * For lock-less reading of the log first get a snapshot, then read, then
+ * verify the snapshot before using the data read.  If snapshot verification
+ * fails, start over.
+ *
+ * This will be used in ipropd-master and iprop-log to avoid needing a lock on
+ * the iprop log.  For example, when a client says I_HAVE $ver then the server
+ * gets a snapshot, finds the offset to $ver and the offset to the end of the
+ * log, reads all that into memory, then the server veerifies the snapshot, and
+ * finally it sends the data to client, but if the snapshot verification fails
+ * then the server starts over the process of finding the offset to $ver.
+ *
+ * The way this works is that as long as the log is not rotated and truncated,
+ * then we can expect the header of the first record after the uber-record to
+ * remain the same.
+ */
+kadm5_ret_t
+kadm5_log_snapshot(kadm5_server_context *server_context,
+                   struct kadm5_log_snap *snap)
+{
+    ssize_t bytes;
+
+    snap->bytes = 0;
+
+    bytes = pread(server_context->log_context.log_fd,
+                  snap->buf, sizeof(snap->buf), LOG_UBER_SZ);
+    if (bytes < 0)
+        return errno;
+    if (bytes < LOG_UBER_SZ)
+        return KADM5_LOG_CORRUPT; // XXX Better error pls
+
+    snap->bytes = bytes;
+    return 0;
+}
+
+kadm5_ret_t
+kadm5_log_snapshot_verify(kadm5_server_context *server_context,
+                          struct kadm5_log_snap *snap)
+{
+    struct kadm5_log_snap v;
+    kadm5_ret_t ret;
+
+    ret = kadm5_log_snapshot(server_context, &v);
+    if (ret)
+        return ret;
+
+    if (snap->bytes != v.bytes || memcmp(snap->buf, v.buf, v.bytes) != 0)
+        return EAGAIN;
+    return 0;
 }
 
 /* Get the version of the last confirmed entry in the log */

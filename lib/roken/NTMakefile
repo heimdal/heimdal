@@ -90,6 +90,7 @@ libroken_la_OBJS =			\
 	$(OBJ)\parse_bytes.obj		\
 	$(OBJ)\parse_time.obj		\
 	$(OBJ)\parse_units.obj		\
+	$(OBJ)\pread.obj		\
 	$(OBJ)\realloc.obj		\
 	$(OBJ)\rename.obj		\
 	$(OBJ)\resolve.obj		\

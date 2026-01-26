@@ -107,7 +107,10 @@ wait_for_process_timed(pid_t pid, time_t (*func)(void *),
 		continue;
 	    timeout = (*func)(ptr);
 	    if (timeout == (time_t)-1) {
-		kill(pid, SIGTERM);
+                if (isatty(STDIN_FILENO))
+                    kill(pid, SIGTERM);
+                else
+                    kill(-pid, SIGTERM);
 		continue;
 	    } else if (timeout == (time_t)-2) {
 		ret = SE_E_EXECTIMEOUT;
@@ -252,6 +255,8 @@ simple_execvp_timed(const char *file, char *const args[],
     case -1:
 	return SE_E_FORKFAILED;
     case 0:
+	if (timeout && !isatty(STDIN_FILENO))
+	    setpgid(0, 0);
 	execvp(file, args);
 	exit((errno == ENOENT) ? EX_NOTFOUND : EX_NOEXEC);
     default:
@@ -275,6 +280,8 @@ simple_execve_timed(const char *file, char *const args[], char *const envp[],
     case -1:
 	return SE_E_FORKFAILED;
     case 0:
+	if (timeout && !isatty(STDIN_FILENO))
+	    setpgid(0, 0);
 	execve(file, args, envp);
 	exit((errno == ENOENT) ? EX_NOTFOUND : EX_NOEXEC);
     default:

@@ -917,11 +917,8 @@ nodiffs(krb5_context context, slave *s, uint32_t current_version)
     return 1;
 }
 
-/*
- * Lock the log and return initial version and timestamp
- */
 static int
-get_first(kadm5_server_context *server_context, int log_fd,
+get_first(kadm5_server_context *server_context,
           uint32_t *initial_verp, uint32_t *initial_timep)
 {
     krb5_context context = server_context->context;
@@ -931,19 +928,14 @@ get_first(kadm5_server_context *server_context, int log_fd,
      * We don't want to perform tight retry loops on log access errors, so on
      * error mark the slave dead.  The slave reconnect after a delay...
      */
-    if (flock(log_fd, LOCK_SH) == -1) {
-        krb5_warn(context, errno, "could not obtain shared lock on log file");
-        return -1;
-    }
 
-    ret = kadm5_log_get_version_fd(server_context, log_fd, LOG_VERSION_FIRST,
+    ret = kadm5_log_get_version_fd(server_context, -1, LOG_VERSION_FIRST,
                                    initial_verp, initial_timep);
     if (ret == HEIM_ERR_EOF)
-        ret = kadm5_log_get_version_fd(server_context, log_fd,
+        ret = kadm5_log_get_version_fd(server_context, -1,
                                        LOG_VERSION_UBER, initial_verp,
                                        initial_timep);
     if (ret != 0) {
-        flock(log_fd, LOCK_UN);
         krb5_warn(context, ret, "could not read initial log entry");
         return -1;
     }
@@ -963,8 +955,8 @@ get_first(kadm5_server_context *server_context, int log_fd,
  */
 static off_t
 get_left(kadm5_server_context *server_context, slave *s, krb5_storage *sp,
-         int log_fd, uint32_t current_version,
-         uint32_t *initial_verp, uint32_t *initial_timep)
+         uint32_t current_version, uint32_t *initial_verp,
+         uint32_t *initial_timep)
 {
     krb5_context context = server_context->context;
     off_t pos;
@@ -975,16 +967,13 @@ get_left(kadm5_server_context *server_context, slave *s, krb5_storage *sp,
         uint32_t ver = s->version;
 
         /* This acquires a read lock on success */
-        ret = get_first(server_context, log_fd,
-                        initial_verp, initial_timep);
+        ret = get_first(server_context, initial_verp, initial_timep);
         if (ret != 0)
             return -1;
 
         /* When the slave version is out of range, send the whole database. */
-        if (ver == 0 || ver < *initial_verp || ver > current_version) {
-            flock(log_fd, LOCK_UN);
+        if (ver == 0 || ver < *initial_verp || ver > current_version)
             return 0;
-        }
 
         /* Avoid seeking past the last committed record */
         if (kadm5_log_goto_end(server_context, sp) != 0 ||
@@ -1016,13 +1005,12 @@ get_left(kadm5_server_context *server_context, slave *s, krb5_storage *sp,
             goto err;
 
         /*
-         * Drop the lock and try to find the left entry by seeking backward
-         * from the end of the end of the log.  If we succeed, re-acquire the
-         * lock, update "next_diff", and retry the fast-path.
+         * Slow path: seek backwards, entry by entry, from the end.
+         *
+         * Try to find the left entry by seeking backward from the end of the
+         * end of the log.  If we succeed, re-acquire the lock, update
+         * "next_diff", and retry the fast-path.
          */
-        flock(log_fd, LOCK_UN);
-
-        /* Slow path: seek backwards, entry by entry, from the end */
         for (;;) {
             enum kadm_ops op;
             uint32_t len;
@@ -1070,23 +1058,20 @@ get_left(kadm5_server_context *server_context, slave *s, krb5_storage *sp,
     }
 
  err:
-    flock(log_fd, LOCK_UN);
     return -1;
 }
 
 static off_t
-get_right(krb5_context context, int log_fd, krb5_storage *sp,
-          int lastver, slave *s, off_t left, uint32_t *verp)
+get_right(krb5_context context, krb5_storage *sp, int lastver, slave *s,
+          off_t left, uint32_t *verp)
 {
     int ret = 0;
     int i = 0;
     uint32_t ver = s->version;
     off_t right = krb5_storage_seek(sp, left, SEEK_SET);
 
-    if (right <= 0) {
-        flock(log_fd, LOCK_UN);
+    if (right <= 0)
         return -1;
-    }
 
     /* The "lastver" bound should preclude us reaching EOF */
     for (; ret == 0 && i < SEND_DIFFS_MAX_RECORDS && ver < lastver; ++i) {
@@ -1101,18 +1086,17 @@ get_right(krb5_context context, int log_fd, krb5_storage *sp,
         right = krb5_storage_seek(sp, 0, SEEK_CUR);
     else
         right = -1;
-    if (right <= 0) {
-        flock(log_fd, LOCK_UN);
+    if (right <= 0)
         return -1;
-    }
     *verp = ver;
     return right;
 }
 
-static void
-send_diffs(kadm5_server_context *server_context, slave *s, int log_fd,
+static kadm5_ret_t
+send_diffs(kadm5_server_context *server_context, slave *s,
            const char *database, uint32_t current_version)
 {
+    struct kadm5_log_snap snap;
     krb5_context context = server_context->context;
     krb5_storage *sp;
     uint32_t initial_version;
@@ -1122,25 +1106,31 @@ send_diffs(kadm5_server_context *server_context, slave *s, int log_fd,
     off_t right = 0;
     krb5_ssize_t bytes;
     krb5_data data;
-    int ret = 0;
+    kadm5_ret_t ret = 0;
 
     if (!diffready(context, s) || nodiffs(context, s, current_version))
-        return;
+        return -1;
 
     if (verbose)
         krb5_warnx(context, "sending diffs to live-seeming slave %s", s->name);
 
-    sp = krb5_storage_from_fd(log_fd);
+    ret = kadm5_log_snapshot(server_context, &snap);
+    if (ret) {
+        krb5_warn(context, ret, "Could not get iprop log snapshot");
+        return ret;
+    }
+
+    sp = krb5_storage_from_fd(server_context->log_context.log_fd);
     if (sp == NULL)
         krb5_err(context, IPROPD_RESTART_SLOW, ENOMEM,
                  "send_diffs: out of memory");
 
-    left = get_left(server_context, s, sp, log_fd, current_version,
+    left = get_left(server_context, s, sp, current_version,
                     &initial_version, &initial_tstamp);
     if (left < 0) {
         krb5_storage_free(sp);
         slave_dead(context, s);
-        return;
+        return -1;
     }
 
     if (left == 0) {
@@ -1148,52 +1138,56 @@ send_diffs(kadm5_server_context *server_context, slave *s, int log_fd,
         krb5_storage_free(sp);
         send_complete(context, s, database, current_version,
                       initial_version, initial_tstamp);
-        return;
+        return -1;
     }
 
     /* We still hold the read lock, if right > 0 */
-    right = get_right(server_context->context, log_fd, sp, current_version,
+    right = get_right(server_context->context, sp, current_version,
                       s, left, &ver);
     if (right == left) {
-        flock(log_fd, LOCK_UN);
         krb5_storage_free(sp);
-        return;
+        return -1;
     }
     if (right < left) {
         assert(right < 0);
         krb5_storage_free(sp);
         slave_dead(context, s);
-        return;
+        return -1;
     }
 
     if (krb5_storage_seek(sp, left, SEEK_SET) != left) {
         ret = errno ? errno : EIO;
-        flock(log_fd, LOCK_UN);
         krb5_warn(context, ret, "send_diffs: krb5_storage_seek");
         krb5_storage_free(sp);
         slave_dead(context, s);
-        return;
+        return ret;
     }
 
     ret = krb5_data_alloc(&data, right - left + 4);
     if (ret) {
-        flock(log_fd, LOCK_UN);
         krb5_warn(context, ret, "send_diffs: krb5_data_alloc");
         krb5_storage_free(sp);
         slave_dead(context, s);
-        return;
+        return ret;
     }
 
     bytes = krb5_storage_read(sp, (char *)data.data + 4, data.length - 4);
-    flock(log_fd, LOCK_UN);
     krb5_storage_free(sp);
     if (bytes != data.length - 4)
         krb5_errx(context, IPROPD_RESTART, "locked log truncated???");
 
+    ret = kadm5_log_snapshot_verify(server_context, &snap);
+    if (ret) {
+        if (ret == EAGAIN)
+            krb5_warnx(context, "send_diffs: log rotated");
+        krb5_data_free(&data);
+        return ret;
+    }
+
     sp = krb5_storage_from_data(&data);
     if (sp == NULL) {
         krb5_err(context, IPROPD_RESTART_SLOW, ENOMEM, "out of memory");
-        return;
+        return ENOMEM;
     }
     ret = krb5_store_uint32(sp, FOR_YOU);
     krb5_storage_free(sp);
@@ -1221,10 +1215,10 @@ send_diffs(kadm5_server_context *server_context, slave *s, int log_fd,
         krb5_warn(context, ret, "send_diffs: making or sending "
                   "KRB-PRIV message");
         slave_dead(context, s);
-        return;
+        return ret;
     }
     slave_seen(s);
-    return;
+    return 0;
 }
 
 /* Sensible bound on slave message size */
@@ -1299,7 +1293,7 @@ read_msg(krb5_context context, slave *s, krb5_data *out)
 }
 
 static int
-process_msg(kadm5_server_context *server_context, slave *s, int log_fd,
+process_msg(kadm5_server_context *server_context, slave *s,
 	    const char *database, uint32_t current_version)
 {
     krb5_context context = server_context->context;
@@ -1307,6 +1301,7 @@ process_msg(kadm5_server_context *server_context, slave *s, int log_fd,
     krb5_data out;
     krb5_storage *sp;
     uint32_t tmp;
+    int tries = 3;
 
     ret = read_msg(context, s, &out);
     if (ret) {
@@ -1374,7 +1369,9 @@ process_msg(kadm5_server_context *server_context, slave *s, int log_fd,
 	}
         if ((s->version_ack = tmp) < s->version)
             break;
-        send_diffs(server_context, s, log_fd, database, current_version);
+        do {
+            ret = send_diffs(server_context, s, database, current_version);
+        } while (ret == EAGAIN && tries--);
         break;
     case I_AM_HERE :
         if (verbose)
@@ -1571,7 +1568,6 @@ main(int argc, char **argv)
     kadm5_server_context *server_context;
     kadm5_config_params conf;
     krb5_socket_t signal_fd, listen_fd;
-    int log_fd;
     slave *slaves = NULL;
     uint32_t current_version = 0, old_version = 0;
     krb5_keytab keytab;
@@ -1675,21 +1671,15 @@ main(int argc, char **argv)
 
     server_context = (kadm5_server_context *)kadm_handle;
 
-    log_fd = open (server_context->log_context.log_file, O_RDONLY, 0);
-    if (log_fd < 0)
-	krb5_err (context, 1, errno, "open %s",
-		  server_context->log_context.log_file);
+    if (kadm5_log_init_nolock(server_context) != 0)
+        krb5_err(context, 1, ret, "Could not open iprop log file");
 
-    if (fstat(log_fd, &st) == -1)
+    if (fstat(server_context->log_context.log_fd, &st) == -1)
         krb5_err(context, 1, errno, "stat %s",
                  server_context->log_context.log_file);
 
-    if (flock(log_fd, LOCK_SH) == -1)
-        krb5_err(context, 1, errno, "shared flock %s",
-                 server_context->log_context.log_file);
-    kadm5_log_get_version_fd(server_context, log_fd, LOG_VERSION_LAST,
+    kadm5_log_get_version_fd(server_context, -1, LOG_VERSION_LAST,
                              &current_version, NULL);
-    flock(log_fd, LOCK_UN);
 
     signal_fd = make_signal_socket (context);
     listen_fd = make_listen_socket (context, port_str);
@@ -1706,7 +1696,7 @@ main(int argc, char **argv)
 	int max_fd = 0;
 	struct timeval to = {30, 0};
 	uint32_t vers;
-        struct stat st2;;
+        struct stat st2;
 
 #ifndef NO_LIMIT_FD_SETSIZE
 	if (signal_fd >= FD_SETSIZE || listen_fd >= FD_SETSIZE ||
@@ -1748,36 +1738,23 @@ main(int argc, char **argv)
         }
 
         if (st2.st_dev != st.st_dev || st2.st_ino != st.st_ino) {
-            (void) close(log_fd);
+            kadm5_log_end(server_context);
 
-            log_fd = open(server_context->log_context.log_file, O_RDONLY, 0);
-            if (log_fd < 0)
-                krb5_err(context, IPROPD_RESTART_SLOW, errno, "open %s",
-                          server_context->log_context.log_file);
+            ret = kadm5_log_init_nolock(server_context);
+            if (ret)
+                krb5_err(context, IPROPD_RESTART_SLOW, ret, "Could not open iprop log file");
 
-            if (fstat(log_fd, &st) == -1)
+            if (fstat(server_context->log_context.log_fd, &st) == -1)
                 krb5_err(context, IPROPD_RESTART_SLOW, errno, "stat %s",
                          server_context->log_context.log_file);
 
-            if (flock(log_fd, LOCK_SH) == -1)
-                krb5_err(context, IPROPD_RESTART, errno, "shared flock %s",
-                         server_context->log_context.log_file);
-            kadm5_log_get_version_fd(server_context, log_fd, LOG_VERSION_LAST,
+            kadm5_log_get_version_fd(server_context, -1, LOG_VERSION_LAST,
                                      &current_version, NULL);
-            flock(log_fd, LOCK_UN);
         }
 
 	if (ret == 0) {
-            /* Recover from failed transactions */
-            if (kadm5_log_init_nb(server_context) == 0)
-                kadm5_log_end(server_context);
-
-	    if (flock(log_fd, LOCK_SH) == -1)
-                krb5_err(context, IPROPD_RESTART, errno,
-                         "could not lock log file");
-	    kadm5_log_get_version_fd(server_context, log_fd, LOG_VERSION_LAST,
+	    kadm5_log_get_version_fd(server_context, -1, LOG_VERSION_LAST,
                                      &current_version, NULL);
-	    flock(log_fd, LOCK_UN);
 
 	    if (current_version > old_version) {
                 if (verbose)
@@ -1786,10 +1763,14 @@ main(int argc, char **argv)
                                (unsigned long)old_version,
                                (unsigned long)current_version);
 		for (p = slaves; p != NULL; p = p->next) {
+                    int tries = 3;
+
 		    if (p->flags & SLAVE_F_DEAD)
 			continue;
-		    send_diffs(server_context, p, log_fd, database,
-                               current_version);
+                    do {
+                        ret = send_diffs(server_context, p, database,
+                                         current_version);
+                    } while (ret == EAGAIN && tries--);
 		}
                 old_version = current_version;
 	    }
@@ -1816,12 +1797,8 @@ main(int argc, char **argv)
 	    --ret;
 	    assert(ret >= 0);
 	    old_version = current_version;
-	    if (flock(log_fd, LOCK_SH) == -1)
-                krb5_err(context, IPROPD_RESTART, errno, "shared flock %s",
-                         server_context->log_context.log_file);
-	    kadm5_log_get_version_fd(server_context, log_fd, LOG_VERSION_LAST,
+	    kadm5_log_get_version_fd(server_context, -1, LOG_VERSION_LAST,
                                      &current_version, NULL);
-	    flock(log_fd, LOCK_UN);
 	    if (current_version != old_version) {
                 /*
                  * If current_version < old_version then the log got
@@ -1841,10 +1818,14 @@ main(int argc, char **argv)
                                (unsigned long)old_version,
                                (unsigned long)current_version);
 		for (p = slaves; p != NULL; p = p->next) {
+                    int tries = 3;
+
 		    if (p->flags & SLAVE_F_DEAD)
 			continue;
-		    send_diffs(server_context, p, log_fd, database,
-                               current_version);
+                    do {
+                        ret = send_diffs(server_context, p, database,
+                                         current_version);
+                    } while (ret == EAGAIN && tries--);
 		}
 	    } else {
                 if (verbose)
@@ -1859,8 +1840,12 @@ main(int argc, char **argv)
                 FD_ISSET(p->fd, &writeset) &&
                 ((have_tail(p) && send_tail(context, p) == 0) ||
                  (!have_tail(p) && more_diffs(p)))) {
-                send_diffs(server_context, p, log_fd, database,
-                           current_version);
+                int tries = 3;
+
+                do {
+                    ret = send_diffs(server_context, p, database,
+                                     current_version);
+                } while (ret == EAGAIN && tries--);
             }
         }
 
@@ -1870,7 +1855,7 @@ main(int argc, char **argv)
 	    if (ret && FD_ISSET(p->fd, &readset)) {
 		--ret;
 		assert(ret >= 0);
-                ret = process_msg(server_context, p, log_fd, database,
+                ret = process_msg(server_context, p, database,
                                   current_version);
                 if (ret && ret != EWOULDBLOCK)
 		    slave_dead(context, p);

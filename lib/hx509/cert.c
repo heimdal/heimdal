@@ -1171,6 +1171,30 @@ find_extension_eku(const Certificate *cert, ExtKeyUsage *eku)
 }
 
 static int
+find_extension_ntds_security_extension(const Certificate *subject,
+                                       SidExtension *sid_extension)
+{
+    const Extension *e;
+    size_t size;
+    size_t i = 0;
+    int ret;
+
+    memset(sid_extension, 0, sizeof(*sid_extension));
+
+    e = find_extension(subject, &asn1_oid_szOID_NTDS_CA_SECURITY_EXT, &i);
+    if (e == NULL)
+        return HX509_EXTENSION_NOT_FOUND;
+
+    ret = decode_SidExtension(e->extnValue.data, e->extnValue.length,
+                              sid_extension, &size);
+    if (ret == 0 && size != e->extnValue.length) {
+        free_SidExtension(sid_extension);
+        return HX509_EXTRA_DATA_AFTER_STRUCTURE;
+    }
+    return ret;
+}
+
+static int
 add_to_list(hx509_octet_string_list *list, const heim_octet_string *entry)
 {
     void *p;
@@ -2174,6 +2198,46 @@ hx509_cert_get_subject_unique_id(hx509_context context, hx509_cert p, heim_bit_s
     return get_x_unique_id(context, "subject", p->data->tbsCertificate.subjectUniqueID, subject);
 }
 
+
+/**
+ * Get the Object SID from a certificate's NTDS CA Security Extension.
+ *
+ * @param p a hx509 certificate
+ * @param sid the object SID, free with der_free_octet_string()
+ *
+ * @return An hx509 error code, see hx509_get_error_string(). The
+ * error code HX509_EXTENSION_NOT_FOUND is returned if the certificate
+ * doesn't have an Object SID.
+ *
+ * @ingroup hx509_cert
+ */
+HX509_LIB_FUNCTION int HX509_LIB_CALL
+hx509_cert_get_object_sid(hx509_cert p, ObjectSid *sid)
+{
+    SidExtension e;
+    ObjectSid *s;
+    int ret;
+
+    ret = find_extension_ntds_security_extension(p->data, &e);
+    if (ret)
+        return ret;
+
+    if (e.len != 1 ||
+        e.val[0].element != choice_GeneralName_otherName ||
+        e.val[0].u.otherName._ioschoice_value.element !=
+            choice_OtherName_iosnum_szOID_NTDS_OBJECTSID ||
+        !e.val[0].u.otherName._ioschoice_value.u.on_ntds_objectsid) {
+        ret = HX509_CMS_INVALID_DATA;
+        goto out;
+    }
+
+    s = e.val[0].u.otherName._ioschoice_value.u.on_ntds_objectsid;
+    ret = der_copy_octet_string(s, sid);
+
+out:
+    free_SidExtension(&e);
+    return ret;
+}
 
 HX509_LIB_FUNCTION hx509_private_key HX509_LIB_CALL
 _hx509_cert_private_key(hx509_cert p)

@@ -2063,6 +2063,181 @@ out:
     return ret;
 }
 
+/*
+ * Parse a date/time string in "YYYY-MM-DD [HH:MM:SS]" format.
+ * If only a date is given, defaults to end-of-day (23:59:59).
+ * Returns (time_t)-1 on failure.
+ */
+static time_t
+parse_config_time(const char *str)
+{
+    struct tm tm;
+    const char *p;
+
+    memset(&tm, 0, sizeof(tm));
+    tm.tm_isdst = -1;
+
+    p = strptime(str, "%Y-%m-%d", &tm);
+    if (p == NULL)
+	return (time_t)-1;
+
+    /* Skip optional whitespace between date and time */
+    while (*p == ' ' || *p == '\t')
+	p++;
+
+    if (*p != '\0') {
+	p = strptime(p, "%H:%M:%S", &tm);
+	if (p == NULL)
+	    return (time_t)-1;
+    } else {
+	/* Date only: default to end-of-day */
+	tm.tm_hour = 23;
+	tm.tm_min = 59;
+	tm.tm_sec = 59;
+    }
+
+    return mktime(&tm);
+}
+
+static unsigned int
+parse_mapping_types(krb5_context context, const char *str)
+{
+    static const struct {
+	const char *name;
+	unsigned int bit;
+    } type_map[] = {
+	{ "exact-cert",    PKINIT_MAPPING_EXACT_CERT },
+	{ "pkinit-san",    PKINIT_MAPPING_PKINIT_SAN },
+	{ "ms-upn-san",    PKINIT_MAPPING_MS_UPN_SAN },
+	{ "issuer-serial", PKINIT_MAPPING_ISSUER_SERIAL },
+	{ "object-sid",    PKINIT_MAPPING_OBJECT_SID },
+	{ "pkey-hash",     PKINIT_MAPPING_PKEY_HASH },
+	{ "subject-dn",    PKINIT_MAPPING_SUBJECT_DN },
+	{ "rfc822-san",    PKINIT_MAPPING_RFC822_SAN },
+	{ "ski",           PKINIT_MAPPING_SKI },
+	{ "pki-mapping",   PKINIT_MAPPING_PKI_FILE },
+	{ NULL, 0 }
+    };
+    unsigned int mask = 0;
+    char *copy, *p, *token;
+    size_t i;
+
+    copy = strdup(str);
+    if (copy == NULL)
+	return PKINIT_MAPPING_DEFAULT_STRONG;
+
+    p = copy;
+    while ((token = strsep(&p, " \t")) != NULL) {
+	if (*token == '\0')
+	    continue;
+	for (i = 0; type_map[i].name != NULL; i++) {
+	    if (strcmp(token, type_map[i].name) == 0) {
+		mask |= type_map[i].bit;
+		break;
+	    }
+	}
+	if (type_map[i].name == NULL)
+	    krb5_warnx(context,
+		       "PKINIT: unknown mapping type '%s' in "
+		       "pkinit_mapping_policy", token);
+    }
+    free(copy);
+    return mask;
+}
+
+/*
+ * Check if a mapping type is acceptable for the given certificate.
+ *
+ * When pkinit_require_strong_mapping is set, all weak mappings are rejected.
+ * When pkinit_require_strong_mapping_after (or per-issuer enforce_after) is
+ * set, weak mappings are rejected only for certificates issued on or after
+ * the cutoff date (based on the certificate's notBefore).
+ * When neither is set, all mappings are accepted.
+ */
+static krb5_error_code
+pkinit_check_mapping_policy(astgs_request_t r,
+			    pk_client_params *cp,
+			    unsigned int mapping_type,
+			    const char *mapping_name)
+{
+    krb5_kdc_configuration *config = r->config;
+    struct pkinit_mapping_policy *pol;
+    unsigned int strong_mask;
+    time_t enforce_after = 0;
+    size_t i;
+
+    /* Fast path: no enforcement configured at all */
+    if (!config->pkinit_require_strong_mapping &&
+	config->pkinit_require_strong_mapping_after == 0)
+	return 0;
+
+    pol = &config->pkinit_mapping_policy;
+
+    if (pol->num_rules == 0) {
+	strong_mask = PKINIT_MAPPING_DEFAULT_STRONG;
+    } else {
+	hx509_name issuer_name = NULL;
+
+	(void) hx509_cert_get_issuer(cp->cert, &issuer_name);
+
+	/* Find matching issuer-specific rule */
+	strong_mask = PKINIT_MAPPING_DEFAULT_STRONG;
+	for (i = 0; i < pol->num_rules; i++) {
+	    if (pol->rules[i].issuer_name == NULL)
+		continue;
+	    if (issuer_name &&
+		hx509_name_cmp(issuer_name, pol->rules[i].issuer_name) == 0) {
+		strong_mask = pol->rules[i].strong_mask;
+		enforce_after = pol->rules[i].enforce_after;
+		break;
+	    }
+	}
+	if (i == pol->num_rules) {
+	    /* No issuer-specific rule matched, look for DEFAULT */
+	    for (i = 0; i < pol->num_rules; i++) {
+		if (pol->rules[i].issuer_name == NULL &&
+		    pol->rules[i].issuer_dn == NULL) {
+		    strong_mask = pol->rules[i].strong_mask;
+		    enforce_after = pol->rules[i].enforce_after;
+		    break;
+		}
+	    }
+	}
+	hx509_name_free(&issuer_name);
+    }
+
+    /* Strong mapping: always accept */
+    if (mapping_type & strong_mask)
+	return 0;
+
+    /* Hard enforcement: reject all weak mappings */
+    if (config->pkinit_require_strong_mapping) {
+	kdc_log(r->context, config, 2,
+		"PKINIT mapping '%s' is not strong per issuer policy",
+		mapping_name);
+	return KRB5_KDC_ERR_CERTIFICATE_MISMATCH;
+    }
+
+    /* Date-based enforcement (grace period) */
+    if (enforce_after == 0)
+	enforce_after = config->pkinit_require_strong_mapping_after;
+    if (enforce_after != 0) {
+	time_t not_before = hx509_cert_get_notBefore(cp->cert);
+
+	if (not_before >= enforce_after) {
+	    kdc_log(r->context, config, 2,
+		    "PKINIT mapping '%s' is weak and certificate was issued "
+		    "after enforcement date; rejecting", mapping_name);
+	    return KRB5_KDC_ERR_CERTIFICATE_MISMATCH;
+	}
+	kdc_log(r->context, config, 4,
+		"PKINIT mapping '%s' is weak but certificate predates "
+		"enforcement date; allowing (grace period)", mapping_name);
+    }
+
+    return 0;
+}
+
 krb5_error_code
 _kdc_pk_check_client(astgs_request_t r,
 		     pk_client_params *cp,
@@ -2132,11 +2307,16 @@ _kdc_pk_check_client(astgs_request_t r,
 	    ret = hx509_cert_cmp(cert, cp->cert);
 	    hx509_cert_free(cert);
 	    if (ret == 0) {
-                kdc_audit_addkv((kdc_request_t)r, 0, "authorized_by",
-                                "exact_match_cert");
-		kdc_log(r->context, config, 5,
-			"Found matching PKINIT cert in hdb");
-		return 0;
+		ret = pkinit_check_mapping_policy(r, cp,
+						  PKINIT_MAPPING_EXACT_CERT,
+						  "exact-cert");
+		if (ret == 0) {
+		    kdc_audit_addkv((kdc_request_t)r, 0, "authorized_by",
+				    "exact_match_cert");
+		    kdc_log(r->context, config, 5,
+			    "Found matching PKINIT cert in hdb");
+		    return 0;
+		}
 	    }
 	}
     }
@@ -2148,11 +2328,16 @@ _kdc_pk_check_client(astgs_request_t r,
 			    cp->cert,
 			    client->principal);
 	if (ret == 0) {
-            kdc_audit_addkv((kdc_request_t)r, 0, "authorized_by",
-                            "exact_match_PKINIT_SAN");
-	    kdc_log(r->context, config, 5,
-		    "Found matching PKINIT SAN in certificate");
-	    return 0;
+	    ret = pkinit_check_mapping_policy(r, cp,
+					      PKINIT_MAPPING_PKINIT_SAN,
+					      "pkinit-san");
+	    if (ret == 0) {
+		kdc_audit_addkv((kdc_request_t)r, 0, "authorized_by",
+				"exact_match_PKINIT_SAN");
+		kdc_log(r->context, config, 5,
+			"Found matching PKINIT SAN in certificate");
+		return 0;
+	    }
 	}
 	ret = match_ms_upn_san(r->context, config,
 			       r->context->hx509ctx,
@@ -2160,12 +2345,147 @@ _kdc_pk_check_client(astgs_request_t r,
 			       clientdb,
 			       client);
 	if (ret == 0) {
-            kdc_audit_addkv((kdc_request_t)r, 0, "authorized_by",
-                            "exact_match_UPN_SAN");
-	    kdc_log(r->context, config, 5,
-		    "Found matching MS UPN SAN in certificate");
-	    return 0;
+	    ret = pkinit_check_mapping_policy(r, cp,
+					      PKINIT_MAPPING_MS_UPN_SAN,
+					      "ms-upn-san");
+	    if (ret == 0) {
+		kdc_audit_addkv((kdc_request_t)r, 0, "authorized_by",
+				"exact_match_UPN_SAN");
+		kdc_log(r->context, config, 5,
+			"Found matching MS UPN SAN in certificate");
+		return 0;
+	    }
 	}
+    }
+
+    /* Issuer + serial number matching (KB5014754 strong mapping) */
+    {
+        const HDB_Ext_PKINIT_issuer_serial *is;
+
+        ret = hdb_entry_get_pkinit_issuer_serial(client, &is);
+        if (ret == 0 && is != NULL) {
+            hx509_name issuer;
+            char *issuer_str = NULL;
+            heim_integer serial;
+
+            ret = hx509_cert_get_issuer(cp->cert, &issuer);
+            if (ret == 0) {
+                ret = hx509_name_to_string(issuer, &issuer_str);
+                hx509_name_free(&issuer);
+            }
+            if (ret == 0)
+                ret = hx509_cert_get_serialnumber(cp->cert, &serial);
+            if (ret == 0) {
+                for (i = 0; i < is->len; i++) {
+                    if (strcmp(issuer_str, is->val[i].issuer) != 0)
+                        continue;
+                    if (der_heim_integer_cmp(&serial,
+                                            &is->val[i].serial_number) != 0)
+                        continue;
+                    ret = pkinit_check_mapping_policy(
+                        r, cp, PKINIT_MAPPING_ISSUER_SERIAL, "issuer-serial");
+                    if (ret == 0) {
+                        kdc_audit_addkv((kdc_request_t)r, 0, "authorized_by",
+                                        "issuer_serial_match");
+                        kdc_log(r->context, config, 5,
+                                "Found matching PKINIT issuer+serial");
+                        free(issuer_str);
+                        der_free_heim_integer(&serial);
+                        return 0;
+                    }
+                }
+                der_free_heim_integer(&serial);
+            }
+            free(issuer_str);
+        }
+    }
+
+    /* Object SID matching (KB5014754 strong mapping) */
+    {
+        const HDB_Ext_PKINIT_object_sid *sids;
+
+        ret = hdb_entry_get_pkinit_object_sid(client, &sids);
+        if (ret == 0 && sids != NULL) {
+            ObjectSid cert_sid;
+
+            ret = hx509_cert_get_object_sid(cp->cert, &cert_sid);
+            if (ret == 0) {
+                for (i = 0; i < sids->len; i++) {
+                    if (der_heim_octet_string_cmp(&sids->val[i].sid,
+                                                  &cert_sid) == 0) {
+                        ret = pkinit_check_mapping_policy(
+                            r, cp, PKINIT_MAPPING_OBJECT_SID, "object-sid");
+                        if (ret == 0) {
+                            kdc_audit_addkv((kdc_request_t)r, 0,
+                                            "authorized_by",
+                                            "object_sid_match");
+                            kdc_log(r->context, config, 5,
+                                    "Found matching PKINIT Object SID");
+                            der_free_octet_string(&cert_sid);
+                            return 0;
+                        }
+                    }
+                }
+                der_free_octet_string(&cert_sid);
+            }
+        }
+    }
+
+    /* Public key hash matching (strong) */
+    {
+        const HDB_Ext_PKINIT_hash *ph;
+
+        ret = hdb_entry_get_pkinit_hash(client, &ph);
+        if (ret == 0 && ph != NULL) {
+            SubjectPublicKeyInfo spki;
+
+            ret = hx509_cert_get_SPKI(r->context->hx509ctx, cp->cert, &spki);
+            if (ret == 0) {
+                unsigned char sha1_buf[EVP_MAX_MD_SIZE];
+                unsigned char sha256_buf[EVP_MAX_MD_SIZE];
+                unsigned int sha1_len = 0, sha256_len = 0;
+                const unsigned char *pkey_data;
+                size_t pkey_len;
+
+                pkey_data = spki.subjectPublicKey.data;
+                pkey_len = spki.subjectPublicKey.length / 8;
+
+                EVP_Digest(pkey_data, pkey_len, sha1_buf, &sha1_len,
+                           r->context->ossl->sha1, NULL);
+                EVP_Digest(pkey_data, pkey_len, sha256_buf, &sha256_len,
+                           r->context->ossl->sha256, NULL);
+                free_SubjectPublicKeyInfo(&spki);
+
+                for (i = 0; i < ph->len; i++) {
+                    heim_octet_string computed;
+
+                    if (der_heim_oid_cmp(&ph->val[i].digest_type,
+                            &hx509_signature_sha1()->algorithm) == 0) {
+                        computed.data = sha1_buf;
+                        computed.length = sha1_len;
+                    } else if (der_heim_oid_cmp(&ph->val[i].digest_type,
+                            &hx509_signature_sha256()->algorithm) == 0) {
+                        computed.data = sha256_buf;
+                        computed.length = sha256_len;
+                    } else {
+                        continue;
+                    }
+
+                    if (der_heim_octet_string_cmp(&ph->val[i].digest,
+                                                  &computed) != 0)
+                        continue;
+                    ret = pkinit_check_mapping_policy(
+                        r, cp, PKINIT_MAPPING_PKEY_HASH, "pkey-hash");
+                    if (ret == 0) {
+                        kdc_audit_addkv((kdc_request_t)r, 0, "authorized_by",
+                                        "pkey_hash_match");
+                        kdc_log(r->context, config, 5,
+                                "Found matching PKINIT public key hash");
+                        return 0;
+                    }
+                }
+            }
+        }
     }
 
     ret = hdb_entry_get_pkinit_acl(client, &acl);
@@ -2184,11 +2504,89 @@ _kdc_pk_check_client(astgs_request_t r,
 	    if (acl->val[i].anchor)
 		continue;
 
-            kdc_audit_addkv((kdc_request_t)r, 0, "authorized_by",
-                            "exact_match_cert_name");
-	    kdc_log(r->context, config, 5,
-		    "Found matching PKINIT database ACL");
-	    return 0;
+	    ret = pkinit_check_mapping_policy(r, cp,
+					      PKINIT_MAPPING_SUBJECT_DN,
+					      "subject-dn");
+	    if (ret == 0) {
+		kdc_audit_addkv((kdc_request_t)r, 0, "authorized_by",
+				"exact_match_cert_name");
+		kdc_log(r->context, config, 5,
+			"Found matching PKINIT database ACL");
+		return 0;
+	    }
+	}
+    }
+
+    /* RFC822 (email) SAN matching (KB5014754 weak mapping) */
+    {
+	const HDB_Ext_PKINIT_rfc822 *emails;
+
+	ret = hdb_entry_get_pkinit_rfc822(client, &emails);
+	if (ret == 0 && emails != NULL) {
+	    hx509_san_type san_type;
+	    char *san_val;
+	    size_t j;
+
+	    for (j = 0; ; j++) {
+		ret = hx509_cert_get_san(r->context->hx509ctx,
+					 cp->cert, j, &san_type, &san_val);
+		if (ret)
+		    break;
+		if (san_type != HX509_SAN_TYPE_EMAIL) {
+		    free(san_val);
+		    continue;
+		}
+		for (i = 0; i < emails->len; i++) {
+		    if (strcasecmp(emails->val[i].address, san_val) == 0) {
+			ret = pkinit_check_mapping_policy(
+			    r, cp, PKINIT_MAPPING_RFC822_SAN,
+			    "rfc822-san");
+			if (ret == 0) {
+			    kdc_audit_addkv((kdc_request_t)r, 0,
+					    "authorized_by",
+					    "rfc822_san_match");
+			    kdc_log(r->context, config, 5,
+				    "Found matching PKINIT RFC822 SAN");
+			    free(san_val);
+			    return 0;
+			}
+		    }
+		}
+		free(san_val);
+	    }
+	}
+    }
+
+    /* Subject Key Identifier matching (KB5014754 weak mapping) */
+    {
+	const HDB_Ext_PKINIT_ski *skis;
+
+	ret = hdb_entry_get_pkinit_ski(client, &skis);
+	if (ret == 0 && skis != NULL) {
+	    SubjectKeyIdentifier cert_ski;
+
+	    ret = hx509_cert_get_subject_key_identifier(r->context->hx509ctx,
+							cp->cert,
+							&cert_ski);
+	    if (ret == 0) {
+		for (i = 0; i < skis->len; i++) {
+		    if (der_heim_octet_string_cmp(&skis->val[i].ski,
+						  &cert_ski) == 0)
+		    {
+			ret = pkinit_check_mapping_policy(
+			    r, cp, PKINIT_MAPPING_SKI, "ski");
+			if (ret == 0) {
+			    kdc_audit_addkv((kdc_request_t)r, 0,
+					    "authorized_by", "ski_match");
+			    kdc_log(r->context, config, 5,
+				    "Found matching PKINIT SKI");
+			    free_SubjectKeyIdentifier(&cert_ski);
+			    return 0;
+			}
+		    }
+		}
+		free_SubjectKeyIdentifier(&cert_ski);
+	    }
 	}
     }
 
@@ -2202,17 +2600,29 @@ _kdc_pk_check_client(astgs_request_t r,
 	    continue;
 	if (strcmp(principal_mappings.val[i].subject, *subject_name) != 0)
 	    continue;
-        kdc_audit_addkv((kdc_request_t)r, 0, "authorized_by",
-                        "pkinit_mappings_file");
-	kdc_log(r->context, config, 5,
-		"Found matching PKINIT FILE ACL");
-	return 0;
+	ret = pkinit_check_mapping_policy(r, cp, PKINIT_MAPPING_PKI_FILE,
+					  "pki-mapping");
+	if (ret == 0) {
+	    kdc_audit_addkv((kdc_request_t)r, 0, "authorized_by",
+			    "pkinit_mappings_file");
+	    kdc_log(r->context, config, 5,
+		    "Found matching PKINIT FILE ACL");
+	    return 0;
+	}
     }
 
-    ret = KRB5_KDC_ERR_CLIENT_NAME_MISMATCH;
-    krb5_set_error_message(r->context, ret,
-			  "PKINIT no matching principals for %s",
-			  *subject_name);
+    if (config->pkinit_require_strong_mapping) {
+	ret = KRB5_KDC_ERR_CERTIFICATE_MISMATCH;
+	krb5_set_error_message(r->context, ret,
+			       "PKINIT strong certificate mapping required "
+			       "but no strong mapping matched for %s",
+			       *subject_name);
+    } else {
+	ret = KRB5_KDC_ERR_CLIENT_NAME_MISMATCH;
+	krb5_set_error_message(r->context, ret,
+			       "PKINIT no matching principals for %s",
+			       *subject_name);
+    }
 
     kdc_audit_addkv((kdc_request_t)r, 0, "authorized_by",
                     "denied");
@@ -2421,6 +2831,110 @@ krb5_kdc_pk_initialize(krb5_context context,
 				     "pkinit_allow_proxy_certificate",
 				     NULL))
 	config->pkinit_allow_proxy_certs = 1;
+
+    if (krb5_config_get_bool_default(context,
+                                     NULL,
+                                     FALSE,
+                                     "kdc",
+                                     "pkinit_require_strong_mapping",
+                                     NULL))
+        config->pkinit_require_strong_mapping = 1;
+
+    {
+	const char *s;
+
+	s = krb5_config_get_string(context, NULL, "kdc",
+				   "pkinit_require_strong_mapping_after", NULL);
+	if (s) {
+	    time_t t = parse_config_time(s);
+
+	    if (t == (time_t)-1)
+		krb5_warnx(context,
+			   "PKINIT: failed to parse "
+			   "pkinit_require_strong_mapping_after: %s", s);
+	    else
+		config->pkinit_require_strong_mapping_after = t;
+	}
+    }
+
+    /* Parse per-issuer mapping policy */
+    {
+	const krb5_config_binding *policy_binding;
+
+	policy_binding = krb5_config_get_list(context, NULL,
+					      "kdc",
+					      "pkinit_mapping_policy",
+					      NULL);
+	if (policy_binding) {
+	    const krb5_config_binding *b;
+	    size_t count = 0;
+
+	    for (b = policy_binding; b; b = b->next)
+		if (b->type == krb5_config_list)
+		    count++;
+
+	    if (count > 0) {
+		config->pkinit_mapping_policy.rules =
+		    calloc(count, sizeof(config->pkinit_mapping_policy.rules[0]));
+		if (config->pkinit_mapping_policy.rules == NULL) {
+		    krb5_warnx(context, "PKINIT: out of memory for mapping policy");
+		    return ENOMEM;
+		}
+
+		for (b = policy_binding; b; b = b->next) {
+		    struct pkinit_mapping_rule *rule;
+		    const char *val;
+
+		    if (b->type != krb5_config_list)
+			continue;
+
+		    rule = &config->pkinit_mapping_policy.rules[
+			config->pkinit_mapping_policy.num_rules++];
+
+		    if (strcmp(b->name, "DEFAULT") != 0) {
+			val = krb5_config_get_string(context, b->u.list,
+						     "issuer", NULL);
+			if (val)
+			    rule->issuer_dn = strdup(val);
+			else
+			    rule->issuer_dn = strdup(b->name);
+			if (rule->issuer_dn) {
+			    ret = hx509_parse_name(context->hx509ctx,
+						   rule->issuer_dn,
+						   &rule->issuer_name);
+			    if (ret) {
+				krb5_warnx(context,
+					   "PKINIT: failed to parse issuer "
+					   "DN: %s", rule->issuer_dn);
+				rule->issuer_name = NULL;
+			    }
+			}
+		    }
+		    /* else rule->issuer_dn/issuer_name remain NULL -> DEFAULT */
+
+		    val = krb5_config_get_string(context, b->u.list,
+						 "strong", NULL);
+		    if (val)
+			rule->strong_mask = parse_mapping_types(context, val);
+		    else
+			rule->strong_mask = PKINIT_MAPPING_DEFAULT_STRONG;
+
+		    val = krb5_config_get_string(context, b->u.list,
+						 "enforce_after", NULL);
+		    if (val) {
+			rule->enforce_after = parse_config_time(val);
+			if (rule->enforce_after == (time_t)-1) {
+			    krb5_warnx(context,
+				       "PKINIT: failed to parse "
+				       "enforce_after for rule '%s': %s",
+				       b->name, val);
+			    rule->enforce_after = 0;
+			}
+		    }
+		}
+	    }
+	}
+    }
 
     file = krb5_config_get_string(context,
 				  NULL,

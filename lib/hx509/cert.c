@@ -1295,6 +1295,98 @@ hx509_cert_find_subjectAltName_otherName(hx509_context context,
     }
 }
 
+/**
+ * Return a list of rfc822Name SubjectAltNames (email addresses) from
+ * the certificate.
+ *
+ * The returned list of octet string should be freed with
+ * hx509_free_octet_string_list().
+ *
+ * @param context A hx509 context.
+ * @param cert a hx509 certificate object.
+ * @param list list of matching rfc822Name SubjectAltNames.
+ *
+ * @return An hx509 error code, see hx509_get_error_string().
+ *
+ * @ingroup hx509_cert
+ */
+
+HX509_LIB_FUNCTION int HX509_LIB_CALL
+hx509_cert_find_subjectAltName_rfc822(hx509_context context,
+				      hx509_cert cert,
+				      hx509_octet_string_list *list)
+{
+    GeneralNames sa;
+    int ret;
+    size_t i, j;
+
+    list->val = NULL;
+    list->len = 0;
+
+    i = 0;
+    while (1) {
+	ret = find_extension_subject_alt_name(_hx509_get_cert(cert), &i, &sa);
+	i++;
+	if (ret == HX509_EXTENSION_NOT_FOUND) {
+	    return 0;
+	} else if (ret != 0) {
+	    hx509_set_error_string(context, 0, ret,
+				   "Error searching for RFC822 SAN");
+	    hx509_free_octet_string_list(list);
+	    return ret;
+	}
+
+	for (j = 0; j < sa.len; j++) {
+	    if (sa.val[j].element == choice_GeneralName_rfc822Name) {
+		ret = add_to_list(list, &sa.val[j].u.rfc822Name);
+		if (ret) {
+		    hx509_set_error_string(context, 0, ret,
+					   "Error adding an extra RFC822 "
+					   "SAN to return list");
+		    hx509_free_octet_string_list(list);
+		    free_GeneralNames(&sa);
+		    return ret;
+		}
+	    }
+	}
+	free_GeneralNames(&sa);
+    }
+}
+
+/**
+ * Get the Subject Key Identifier (SKI) from a certificate.
+ *
+ * @param context A hx509 context.
+ * @param cert a hx509 certificate object.
+ * @param ski the Subject Key Identifier, free with free_SubjectKeyIdentifier().
+ *
+ * @return An hx509 error code, see hx509_get_error_string(). The
+ * error code HX509_EXTENSION_NOT_FOUND is returned if the certificate
+ * doesn't have a Subject Key Identifier extension.
+ *
+ * @ingroup hx509_cert
+ */
+
+HX509_LIB_FUNCTION int HX509_LIB_CALL
+hx509_cert_get_subject_key_identifier(hx509_context context,
+				      hx509_cert cert,
+				      SubjectKeyIdentifier *ski)
+{
+    const Extension *e;
+    size_t size;
+    size_t i = 0;
+
+    e = find_extension(cert->data,
+		       &asn1_oid_id_x509_ce_subjectKeyIdentifier,
+		       &i);
+    if (e == NULL)
+	return HX509_EXTENSION_NOT_FOUND;
+
+    return decode_SubjectKeyIdentifier(e->extnValue.data,
+				       e->extnValue.length,
+				       ski,
+				       &size);
+}
 
 static int
 check_key_usage(hx509_context context, const Certificate *cert,

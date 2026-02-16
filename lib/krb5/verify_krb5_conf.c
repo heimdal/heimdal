@@ -556,6 +556,18 @@ struct entry realms_foobar[] = {
 };
 
 
+struct entry pkinit_mapping_rule_entries[] = {
+    { "enforce_after", krb5_config_string, NULL, 0 },
+    { "issuer", krb5_config_string, NULL, 0 },
+    { "strong", krb5_config_string, NULL, 0 },
+    { NULL, 0, NULL, 0 }
+};
+
+struct entry pkinit_mapping_policy_entries[] = {
+    { "", krb5_config_list, pkinit_mapping_rule_entries, 0 },
+    { NULL, 0, NULL, 0 }
+};
+
 struct entry kdc_database_entries[] = {
     { "acl_file", krb5_config_string, NULL, 0 },
     { "dbname", krb5_config_string, NULL, 0 },
@@ -602,9 +614,12 @@ struct entry kdc_entries[] = {
     { "pkinit_identity", krb5_config_string, NULL, 0 },
     { "pkinit_kdc_friendly_name", krb5_config_string, NULL, 0 },
     { "pkinit_kdc_ocsp", krb5_config_string, NULL, 0 },
+    { "pkinit_mapping_policy", krb5_config_list, pkinit_mapping_policy_entries, 0 },
     { "pkinit_mappings_file", krb5_config_string, NULL, 0 },
     { "pkinit_pool", krb5_config_string, NULL, 0 },
     { "pkinit_principal_in_certificate", krb5_config_string, check_boolean, 0 },
+    { "pkinit_require_strong_mapping", krb5_config_string, check_boolean, 0 },
+    { "pkinit_require_strong_mapping_after", krb5_config_string, NULL, 0 },
     { "pkinit_revoke", krb5_config_string, NULL, 0 },
     { "pkinit_win2k_require_binding", krb5_config_string, check_boolean, 0 },
     { "ports", krb5_config_string, NULL, 0 },

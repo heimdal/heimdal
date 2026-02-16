@@ -535,6 +535,210 @@ else
     echo "Skipping PKCS#11 test: --with-openssl-pkcs11-provider not configured"
 fi
 
+echo "--- KB5014754 certificate mapping tests ---"
+
+echo "Issue user certificate with RFC822 SAN"
+${hxtool} request-create \
+	 --subject="CN=mapping-test,DC=test,DC=h5l,DC=se" \
+	 --key=FILE:${keyfile2} \
+	 req-mapping.der || exit 1
+
+${hxtool} issue-certificate \
+	  --ca-certificate=FILE:$objdir/ca.crt,${keyfile} \
+	  --type="pkinit-client" \
+	  --pk-init-principal="bar@TEST.H5L.SE" \
+	  --email="bar@test.h5l.se" \
+	  --req="PKCS10:req-mapping.der" \
+	  --lifetime=7d \
+	  --certificate="FILE:mapping-test.crt" || exit 1
+
+echo "Extract certificate attributes for mapping tests"
+cert_info=$(${hxtool} print --content FILE:${objdir}/mapping-test.crt)
+
+# Get serial number (hex) - "    serial: HEXVALUE"
+cert_serial=$(echo "$cert_info" | grep '    serial:' | head -1 | sed 's/.*serial: *//')
+echo "  serial: ${cert_serial}"
+
+# Get issuer DN - "issuer name: DN" (without quotes, unlike "    issuer:")
+cert_issuer=$(echo "$cert_info" | grep '^issuer name:' | head -1 | sed 's/^issuer name: *//')
+echo "  issuer: ${cert_issuer}"
+
+# Get SKI - "	subject key id: HEXVALUE"
+cert_ski=$(echo "$cert_info" | grep 'subject key id:' | head -1 | sed 's/.*subject key id: *//')
+echo "  ski: ${cert_ski}"
+
+echo "Add principal for mapping tests"
+${kadmin} add -p mapping --use-defaults mapping@${R} || exit 1
+
+echo "Trying pk-init with no mappings at all (should fail)"; > messages.log
+${kinit} -C FILE:${objdir}/mapping-test.crt,${keyfile2} mapping@${R} 2>/dev/null && \
+	{ echo "ERROR: should have been rejected with no mappings"; ec=1 ; eval "${testfailed}"; }
+echo "  ok: correctly rejected with no mappings"
+
+echo "Trying pk-init RFC822 SAN mapping"; > messages.log
+${kadmin} modify --pkinit-rfc822="bar@test.h5l.se" mapping@${R} || exit 1
+${kinit} -C FILE:${objdir}/mapping-test.crt,${keyfile2} mapping@${R} || \
+	{ ec=1 ; eval "${testfailed}"; }
+echo "  ok: RFC822 SAN mapping succeeded"
+${kdestroy}
+
+echo "Trying pk-init SKI mapping"; > messages.log
+if [ -n "${cert_ski}" ]; then
+    ${kadmin} modify --pkinit-rfc822="" --pkinit-ski="${cert_ski}" mapping@${R} || exit 1
+    ${kinit} -C FILE:${objdir}/mapping-test.crt,${keyfile2} mapping@${R} || \
+	    { ec=1 ; eval "${testfailed}"; }
+    echo "  ok: SKI mapping succeeded"
+    ${kdestroy}
+else
+    echo "  skip: no SKI in certificate"
+fi
+
+echo "Trying pk-init issuer+serial mapping"; > messages.log
+if [ -n "${cert_serial}" ] && [ -n "${cert_issuer}" ]; then
+    ${kadmin} modify --pkinit-ski="" --pkinit-issuer-serial="0x${cert_serial}:${cert_issuer}" mapping@${R} || exit 1
+    ${kinit} -C FILE:${objdir}/mapping-test.crt,${keyfile2} mapping@${R} || \
+	    { ec=1 ; eval "${testfailed}"; }
+    echo "  ok: issuer+serial mapping succeeded"
+    ${kdestroy}
+else
+    echo "  skip: could not extract serial or issuer"
+fi
+
+echo "--- Strong mapping enforcement test (backward compat, no policy) ---"
+# Generate a config with pkinit_require_strong_mapping = true but no
+# pkinit_mapping_policy -- should use KB5014754 defaults
+sed 's/enable-pkinit = true/enable-pkinit = true\n\tpkinit_require_strong_mapping = true/' \
+    < ${objdir}/krb5-pkinit.conf > ${objdir}/krb5-pkinit-strong.conf
+
+echo "Restarting kdc with strong mapping ($kdcpid)"
+sh ${leaks_kill} kdc $kdcpid || ec=1
+KRB5_CONFIG="${objdir}/krb5-pkinit-strong.conf"
+${kdc} --detach --testing || { echo "kdc failed to start"; cat messages.log; exit 1; }
+kdcpid=`getpid kdc`
+
+echo "Strong mapping: subject DN ACL (weak) should fail"; > messages.log
+# baz has pkinit-acl set (subject DN match) but no strong mapping
+# This should fail with strong mapping required
+${kinit} -C FILE:${base}/pkinit2.crt,${keyfile2} baz@${R} 2>/dev/null && \
+	{ echo "ERROR: weak mapping should have been rejected"; ec=1 ; eval "${testfailed}"; }
+echo "  ok: weak mapping correctly rejected"
+
+echo "Strong mapping: PKINIT SAN (strong) should succeed"; > messages.log
+${kinit} -C FILE:${base}/pkinit.crt,${keyfile2} bar@${R} || \
+	{ ec=1 ; eval "${testfailed}"; }
+echo "  ok: strong PKINIT SAN mapping succeeded"
+${kdestroy}
+
+echo "Strong mapping: issuer+serial (strong) should succeed"; > messages.log
+if [ -n "${cert_serial}" ] && [ -n "${cert_issuer}" ]; then
+    ${kinit} -C FILE:${objdir}/mapping-test.crt,${keyfile2} mapping@${R} || \
+	    { ec=1 ; eval "${testfailed}"; }
+    echo "  ok: strong issuer+serial mapping succeeded"
+    ${kdestroy}
+else
+    echo "  skip: could not extract serial or issuer"
+fi
+
+echo "killing kdc (${kdcpid})"
+sh ${leaks_kill} kdc $kdcpid || ec=1
+
+echo "--- Per-issuer mapping policy tests ---"
+
+# Generate a config with per-issuer policy that makes rfc822-san strong
+# for the test CA but not in the DEFAULT policy
+sed 's/enable-pkinit = true/enable-pkinit = true\n\tpkinit_require_strong_mapping = true\n\tpkinit_mapping_policy = {\n\t\ttest-ca = {\n\t\t\tissuer = '"${cert_issuer}"'\n\t\t\tstrong = exact-cert pkinit-san ms-upn-san issuer-serial object-sid pkey-hash rfc822-san ski\n\t\t}\n\t\tDEFAULT = {\n\t\t\tstrong = exact-cert pkinit-san ms-upn-san issuer-serial object-sid pkey-hash\n\t\t}\n\t}/' \
+    < ${objdir}/krb5-pkinit.conf > ${objdir}/krb5-pkinit-policy.conf
+
+KRB5_CONFIG="${objdir}/krb5-pkinit-policy.conf"
+${kdc} --detach --testing || { echo "kdc failed to start"; cat messages.log; exit 1; }
+kdcpid=`getpid kdc`
+
+echo "Per-issuer: rfc822 strong for test-ca issuer"; > messages.log
+# Clear all other mappings so we test only rfc822
+# Per-issuer policy includes rfc822-san as strong for this issuer -> should succeed
+${kadmin} modify --pkinit-issuer-serial="" --pkinit-ski="" \
+    --pkinit-rfc822="bar@test.h5l.se" mapping@${R} || exit 1
+${kinit} -C FILE:${objdir}/mapping-test.crt,${keyfile2} mapping@${R} || \
+	{ ec=1 ; eval "${testfailed}"; }
+echo "  ok: rfc822 accepted as strong for test-ca issuer"
+${kdestroy}
+
+echo "Per-issuer: PKINIT SAN (strong in both policies) should succeed"; > messages.log
+${kinit} -C FILE:${base}/pkinit.crt,${keyfile2} bar@${R} || \
+	{ ec=1 ; eval "${testfailed}"; }
+echo "  ok: PKINIT SAN mapping succeeded with per-issuer policy"
+${kdestroy}
+
+echo "Per-issuer: subject DN ACL (weak in all policies) should fail"; > messages.log
+${kinit} -C FILE:${base}/pkinit2.crt,${keyfile2} baz@${R} 2>/dev/null && \
+	{ echo "ERROR: subject-dn should have been rejected"; ec=1 ; eval "${testfailed}"; }
+echo "  ok: subject-dn correctly rejected with per-issuer policy"
+
+echo "killing kdc (${kdcpid})"
+sh ${leaks_kill} kdc $kdcpid || ec=1
+
+echo "--- Date-based strong mapping enforcement (enforce_after) ---"
+
+# Test 1: enforce_after in the past -- cert is "new", weak mappings rejected
+# The test certs were just issued, so any past date will be before notBefore
+sed 's/enable-pkinit = true/enable-pkinit = true\n\tpkinit_require_strong_mapping_after = 2000-01-01/' \
+    < ${objdir}/krb5-pkinit.conf > ${objdir}/krb5-pkinit-enforce-past.conf
+
+KRB5_CONFIG="${objdir}/krb5-pkinit-enforce-past.conf"
+${kdc} --detach --testing || { echo "kdc failed to start"; cat messages.log; exit 1; }
+kdcpid=`getpid kdc`
+
+echo "enforce_after (past): subject DN ACL (weak) should fail"; > messages.log
+${kinit} -C FILE:${base}/pkinit2.crt,${keyfile2} baz@${R} 2>/dev/null && \
+	{ echo "ERROR: weak mapping should have been rejected (enforce_after past)"; ec=1 ; eval "${testfailed}"; }
+echo "  ok: weak mapping correctly rejected (cert issued after cutoff)"
+
+echo "enforce_after (past): PKINIT SAN (strong) should succeed"; > messages.log
+${kinit} -C FILE:${base}/pkinit.crt,${keyfile2} bar@${R} || \
+	{ ec=1 ; eval "${testfailed}"; }
+echo "  ok: strong mapping succeeded with enforce_after"
+${kdestroy}
+
+echo "killing kdc (${kdcpid})"
+sh ${leaks_kill} kdc $kdcpid || ec=1
+
+# Test 2: enforce_after in the future -- cert is "old", weak mappings allowed
+sed 's/enable-pkinit = true/enable-pkinit = true\n\tpkinit_require_strong_mapping_after = 2099-12-31/' \
+    < ${objdir}/krb5-pkinit.conf > ${objdir}/krb5-pkinit-enforce-future.conf
+
+KRB5_CONFIG="${objdir}/krb5-pkinit-enforce-future.conf"
+${kdc} --detach --testing || { echo "kdc failed to start"; cat messages.log; exit 1; }
+kdcpid=`getpid kdc`
+
+echo "enforce_after (future): subject DN ACL (weak) should succeed"; > messages.log
+${kinit} -C FILE:${base}/pkinit2.crt,${keyfile2} baz@${R} || \
+	{ ec=1 ; eval "${testfailed}"; }
+echo "  ok: weak mapping allowed (cert issued before cutoff, grace period)"
+${kdestroy}
+
+echo "enforce_after (future): PKINIT SAN (strong) should succeed"; > messages.log
+${kinit} -C FILE:${base}/pkinit.crt,${keyfile2} bar@${R} || \
+	{ ec=1 ; eval "${testfailed}"; }
+echo "  ok: strong mapping still works with enforce_after"
+${kdestroy}
+
+echo "killing kdc (${kdcpid})"
+sh ${leaks_kill} kdc $kdcpid || ec=1
+
+# Test 3: pkinit_require_strong_mapping overrides enforce_after
+# Even with enforce_after in the future, the hard boolean should reject
+sed 's/enable-pkinit = true/enable-pkinit = true\n\tpkinit_require_strong_mapping = true\n\tpkinit_require_strong_mapping_after = 2099-12-31/' \
+    < ${objdir}/krb5-pkinit.conf > ${objdir}/krb5-pkinit-enforce-override.conf
+
+KRB5_CONFIG="${objdir}/krb5-pkinit-enforce-override.conf"
+${kdc} --detach --testing || { echo "kdc failed to start"; cat messages.log; exit 1; }
+kdcpid=`getpid kdc`
+
+echo "hard override: subject DN ACL (weak) should fail despite future enforce_after"; > messages.log
+${kinit} -C FILE:${base}/pkinit2.crt,${keyfile2} baz@${R} 2>/dev/null && \
+	{ echo "ERROR: hard override should reject weak mapping"; ec=1 ; eval "${testfailed}"; }
+echo "  ok: hard override correctly rejected weak mapping"
+
 echo "killing kdc (${kdcpid})"
 sh ${leaks_kill} kdc $kdcpid || ec=1
 

@@ -1360,26 +1360,112 @@ struct {
     const heim_oid *oid;
     const char *friendly_name;
     other_unparser_f f;
+    hx509_san_type san_type;
 } o_unparsers[] = {
     { &asn1_oid_id_pkinit_san,
         "KerberosPrincipalName",
-        _hx509_unparse_KRB5PrincipalName },
+        _hx509_unparse_KRB5PrincipalName,
+        HX509_SAN_TYPE_PKINIT },
     { &asn1_oid_id_pkix_on_permanentIdentifier,
         "PermanentIdentifier",
-        _hx509_unparse_PermanentIdentifier },
+        _hx509_unparse_PermanentIdentifier,
+        HX509_SAN_TYPE_PERMANENT_ID },
     { &asn1_oid_id_on_hardwareModuleName,
         "HardwareModuleName",
-        _hx509_unparse_HardwareModuleName },
+        _hx509_unparse_HardwareModuleName,
+        HX509_SAN_TYPE_HW_MODULE },
     { &asn1_oid_id_pkix_on_xmppAddr,
         "XMPPName",
-        _hx509_unparse_utf8_string_name },
+        _hx509_unparse_utf8_string_name,
+        HX509_SAN_TYPE_XMPP },
     { &asn1_oid_id_pkinit_ms_san,
         "MSFTKerberosPrincipalName",
-        _hx509_unparse_utf8_string_name },
+        _hx509_unparse_utf8_string_name,
+        HX509_SAN_TYPE_MS_UPN },
     { &asn1_oid_id_pkix_on_dnsSRV,
         "SRVName",
-        _hx509_unparse_ia5_string_name },
+        _hx509_unparse_ia5_string_name,
+        HX509_SAN_TYPE_DNSSRV },
 };
+
+/**
+ * Convert a GeneralName to an hx509_san_type and a string value.
+ *
+ * Returns the value only (no "type: " prefix).  For otherName types
+ * the dispatch goes through o_unparsers[].
+ *
+ * @param context  An hx509 context.
+ * @param san      The GeneralName to convert.
+ * @param type     On success, the SAN type.
+ * @param out      On success, an allocated string (caller frees).
+ *
+ * @return An hx509 error code, see hx509_get_error_string().
+ */
+int
+_hx509_san_to_string(hx509_context context,
+                     GeneralName *san,
+                     hx509_san_type *type,
+                     char **out)
+{
+    struct rk_strpool *pool = NULL;
+    int ret;
+
+    *out = NULL;
+
+    switch (san->element) {
+    case choice_GeneralName_rfc822Name:
+        *type = HX509_SAN_TYPE_EMAIL;
+        *out = strndup(san->u.rfc822Name.data,
+                       san->u.rfc822Name.length);
+        if (*out == NULL)
+            return hx509_enomem(context);
+        return 0;
+    case choice_GeneralName_dNSName:
+        *type = HX509_SAN_TYPE_DNSNAME;
+        *out = strndup(san->u.dNSName.data,
+                       san->u.dNSName.length);
+        if (*out == NULL)
+            return hx509_enomem(context);
+        return 0;
+    case choice_GeneralName_directoryName:
+        if (san->u.directoryName.element == choice_Name_rdnSequence) {
+            Name name;
+
+            *type = HX509_SAN_TYPE_DN;
+            name.element = choice_Name_rdnSequence;
+            name.u.rdnSequence = san->u.directoryName.u.rdnSequence;
+            return _hx509_Name_to_string(&name, out);
+        }
+        *type = HX509_SAN_TYPE_UNSUPPORTED;
+        return 0;
+    case choice_GeneralName_registeredID:
+        *type = HX509_SAN_TYPE_REGISTERED_ID;
+        return der_print_heim_oid(&san->u.registeredID, '.', out);
+    case choice_GeneralName_otherName: {
+        size_t i;
+
+        for (i = 0; i < sizeof(o_unparsers)/sizeof(o_unparsers[0]); i++) {
+            if (der_heim_oid_cmp(&san->u.otherName.type_id,
+                                 o_unparsers[i].oid) == 0) {
+                *type = o_unparsers[i].san_type;
+                ret = o_unparsers[i].f(context, &pool,
+                                       &san->u.otherName.value);
+                if (ret) {
+                    rk_strpoolfree(pool);
+                    return ret;
+                }
+                if ((*out = rk_strpoolcollect(pool)) == NULL)
+                    return hx509_enomem(context);
+                return 0;
+            }
+        }
+    }
+        HEIM_FALLTHROUGH;
+    default:
+        *type = HX509_SAN_TYPE_UNSUPPORTED;
+        return 0;
+    }
+}
 
 /**
  * Unparse the hx509 name in name into a string.

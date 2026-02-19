@@ -107,6 +107,7 @@ HEIMDAL_X509_1.2 {
 		hx509_cert_get_notBefore;
 		hx509_cert_get_object_sid;
 		hx509_cert_get_pkinit_max_life;
+		hx509_cert_get_san;
 		hx509_cert_get_serialnumber;
 		hx509_cert_get_subject;
 		hx509_cert_get_subject_key_identifier;

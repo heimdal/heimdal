@@ -1354,6 +1354,58 @@ hx509_cert_find_subjectAltName_rfc822(hx509_context context,
 }
 
 /**
+ * Return the SubjectAltName at position @idx, converted to an
+ * hx509_san_type and an allocated string.
+ *
+ * SANs are numbered across all SAN extensions in the certificate
+ * starting from 0.  When @idx is past the last SAN, HX509_NO_ITEM
+ * is returned.
+ *
+ * @param context A hx509 context.
+ * @param cert a hx509 certificate object.
+ * @param idx zero-based index of the SAN to retrieve.
+ * @param type on success, receives the SAN type.
+ * @param out on success, an allocated string (caller frees).
+ *
+ * @return An hx509 error code, see hx509_get_error_string().
+ *
+ * @ingroup hx509_cert
+ */
+
+HX509_LIB_FUNCTION int HX509_LIB_CALL
+hx509_cert_get_san(hx509_context context,
+		   hx509_cert cert,
+		   size_t idx,
+		   hx509_san_type *type,
+		   char **out)
+{
+    GeneralNames sa;
+    size_t i = 0, k = 0, j;
+    int ret;
+
+    *out = NULL;
+
+    while (1) {
+	ret = find_extension_subject_alt_name(_hx509_get_cert(cert), &i, &sa);
+	i++;
+	if (ret == HX509_EXTENSION_NOT_FOUND)
+	    return HX509_NO_ITEM;
+	if (ret != 0)
+	    return ret;
+
+	for (j = 0; j < sa.len; j++) {
+	    if (k == idx) {
+		ret = _hx509_san_to_string(context, &sa.val[j], type, out);
+		free_GeneralNames(&sa);
+		return ret;
+	    }
+	    k++;
+	}
+	free_GeneralNames(&sa);
+    }
+}
+
+/**
  * Get the Subject Key Identifier (SKI) from a certificate.
  *
  * @param context A hx509 context.

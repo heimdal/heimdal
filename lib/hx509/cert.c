@@ -1062,19 +1062,33 @@ hx509_verify_ctx_f_allow_best_before_signature_algs(hx509_context ctx,
 	ctx->flags |= HX509_VERIFY_CTX_F_NO_BEST_BEFORE_CHECK;
 }
 
-static const Extension *
-find_extension(const Certificate *cert, const heim_oid *oid, size_t *idx)
+static int
+find_extension(const Certificate *cert, const heim_oid *oid, size_t *idx,
+	       const Extension **ep)
 {
     const TBSCertificate *c = &cert->tbsCertificate;
+    size_t i;
+    int found = 0;
+
+    *ep = NULL;
 
     if (c->version == NULL || *c->version < 2 || c->extensions == NULL)
-	return NULL;
+	return HX509_EXTENSION_NOT_FOUND;
 
-    for (;*idx < c->extensions->len; (*idx)++) {
-	if (der_heim_oid_cmp(&c->extensions->val[*idx].extnID, oid) == 0)
-	    return &c->extensions->val[(*idx)++];
+    for (i = *idx; i < c->extensions->len; i++) {
+	if (der_heim_oid_cmp(&c->extensions->val[i].extnID, oid) == 0) {
+	    if (!found) {
+		*idx = i + 1;
+		*ep = &c->extensions->val[i];
+	    }
+	    found++;
+	}
     }
-    return NULL;
+    switch (found) {
+    case 0:	return HX509_EXTENSION_NOT_FOUND;
+    case 1:	return 0;
+    default:	return HX509_CERTIFICATE_MALFORMED;
+    }
 }
 
 static int
@@ -1084,12 +1098,13 @@ find_extension_auth_key_id(const Certificate *subject,
     const Extension *e;
     size_t size;
     size_t i = 0;
+    int ret;
 
     memset(ai, 0, sizeof(*ai));
 
-    e = find_extension(subject, &asn1_oid_id_x509_ce_authorityKeyIdentifier, &i);
-    if (e == NULL)
-	return HX509_EXTENSION_NOT_FOUND;
+    ret = find_extension(subject, &asn1_oid_id_x509_ce_authorityKeyIdentifier, &i, &e);
+    if (ret)
+	return ret;
 
     return decode_AuthorityKeyIdentifier(e->extnValue.data,
 					 e->extnValue.length,
@@ -1103,12 +1118,13 @@ _hx509_find_extension_subject_key_id(const Certificate *issuer,
     const Extension *e;
     size_t size;
     size_t i = 0;
+    int ret;
 
     memset(si, 0, sizeof(*si));
 
-    e = find_extension(issuer, &asn1_oid_id_x509_ce_subjectKeyIdentifier, &i);
-    if (e == NULL)
-	return HX509_EXTENSION_NOT_FOUND;
+    ret = find_extension(issuer, &asn1_oid_id_x509_ce_subjectKeyIdentifier, &i, &e);
+    if (ret)
+	return ret;
 
     return decode_SubjectKeyIdentifier(e->extnValue.data,
 				       e->extnValue.length,
@@ -1122,12 +1138,13 @@ find_extension_name_constraints(const Certificate *subject,
     const Extension *e;
     size_t size;
     size_t i = 0;
+    int ret;
 
     memset(nc, 0, sizeof(*nc));
 
-    e = find_extension(subject, &asn1_oid_id_x509_ce_nameConstraints, &i);
-    if (e == NULL)
-	return HX509_EXTENSION_NOT_FOUND;
+    ret = find_extension(subject, &asn1_oid_id_x509_ce_nameConstraints, &i, &e);
+    if (ret)
+	return ret;
 
     return decode_NameConstraints(e->extnValue.data,
 				  e->extnValue.length,
@@ -1140,12 +1157,13 @@ find_extension_subject_alt_name(const Certificate *cert, size_t *i,
 {
     const Extension *e;
     size_t size;
+    int ret;
 
     memset(sa, 0, sizeof(*sa));
 
-    e = find_extension(cert, &asn1_oid_id_x509_ce_subjectAltName, i);
-    if (e == NULL)
-	return HX509_EXTENSION_NOT_FOUND;
+    ret = find_extension(cert, &asn1_oid_id_x509_ce_subjectAltName, i, &e);
+    if (ret)
+	return ret;
 
     return decode_GeneralNames(e->extnValue.data,
 			       e->extnValue.length,
@@ -1158,12 +1176,13 @@ find_extension_eku(const Certificate *cert, ExtKeyUsage *eku)
     const Extension *e;
     size_t size;
     size_t i = 0;
+    int ret;
 
     memset(eku, 0, sizeof(*eku));
 
-    e = find_extension(cert, &asn1_oid_id_x509_ce_extKeyUsage, &i);
-    if (e == NULL)
-	return HX509_EXTENSION_NOT_FOUND;
+    ret = find_extension(cert, &asn1_oid_id_x509_ce_extKeyUsage, &i, &e);
+    if (ret)
+	return ret;
 
     return decode_ExtKeyUsage(e->extnValue.data,
 			      e->extnValue.length,
@@ -1181,9 +1200,9 @@ find_extension_ntds_security_extension(const Certificate *subject,
 
     memset(sid_extension, 0, sizeof(*sid_extension));
 
-    e = find_extension(subject, &asn1_oid_szOID_NTDS_CA_SECURITY_EXT, &i);
-    if (e == NULL)
-        return HX509_EXTENSION_NOT_FOUND;
+    ret = find_extension(subject, &asn1_oid_szOID_NTDS_CA_SECURITY_EXT, &i, &e);
+    if (ret)
+        return ret;
 
     ret = decode_SidExtension(e->extnValue.data, e->extnValue.length,
                               sid_extension, &size);
@@ -1267,7 +1286,6 @@ hx509_cert_find_subjectAltName_otherName(hx509_context context,
     i = 0;
     while (1) {
 	ret = find_extension_subject_alt_name(_hx509_get_cert(cert), &i, &sa);
-	i++;
 	if (ret == HX509_EXTENSION_NOT_FOUND) {
 	    return 0;
 	} else if (ret != 0) {
@@ -1326,7 +1344,6 @@ hx509_cert_find_subjectAltName_rfc822(hx509_context context,
     i = 0;
     while (1) {
 	ret = find_extension_subject_alt_name(_hx509_get_cert(cert), &i, &sa);
-	i++;
 	if (ret == HX509_EXTENSION_NOT_FOUND) {
 	    return 0;
 	} else if (ret != 0) {
@@ -1387,7 +1404,6 @@ hx509_cert_get_san(hx509_context context,
 
     while (1) {
 	ret = find_extension_subject_alt_name(_hx509_get_cert(cert), &i, &sa);
-	i++;
 	if (ret == HX509_EXTENSION_NOT_FOUND)
 	    return HX509_NO_ITEM;
 	if (ret != 0)
@@ -1427,12 +1443,13 @@ hx509_cert_get_subject_key_identifier(hx509_context context,
     const Extension *e;
     size_t size;
     size_t i = 0;
+    int ret;
 
-    e = find_extension(cert->data,
+    ret = find_extension(cert->data,
 		       &asn1_oid_id_x509_ce_subjectKeyIdentifier,
-		       &i);
-    if (e == NULL)
-	return HX509_EXTENSION_NOT_FOUND;
+		       &i, &e);
+    if (ret)
+	return ret;
 
     return decode_SubjectKeyIdentifier(e->extnValue.data,
 				       e->extnValue.length,
@@ -1454,8 +1471,8 @@ check_key_usage(hx509_context context, const Certificate *cert,
     if (_hx509_cert_get_version(cert) < 3)
 	return 0;
 
-    e = find_extension(cert, &asn1_oid_id_x509_ce_keyUsage, &i);
-    if (e == NULL) {
+    ret = find_extension(cert, &asn1_oid_id_x509_ce_keyUsage, &i, &e);
+    if (ret == HX509_EXTENSION_NOT_FOUND) {
 	if (req_present) {
 	    hx509_set_error_string(context, 0, HX509_KU_CERT_MISSING,
 				   "Required extension key "
@@ -1464,6 +1481,8 @@ check_key_usage(hx509_context context, const Certificate *cert,
 	}
 	return 0;
     }
+    if (ret)
+	return ret;
 
     ret = decode_KeyUsage(e->extnValue.data, e->extnValue.length, &ku, &size);
     if (ret)
@@ -1515,8 +1534,8 @@ check_basic_constraints(hx509_context context, const Certificate *cert,
     if (_hx509_cert_get_version(cert) < 3)
 	return 0;
 
-    e = find_extension(cert, &asn1_oid_id_x509_ce_basicConstraints, &i);
-    if (e == NULL) {
+    ret = find_extension(cert, &asn1_oid_id_x509_ce_basicConstraints, &i, &e);
+    if (ret == HX509_EXTENSION_NOT_FOUND) {
 	switch(type) {
 	case PROXY_CERT:
 	case EE_CERT:
@@ -1533,6 +1552,8 @@ check_basic_constraints(hx509_context context, const Certificate *cert,
 	}
 	}
     }
+    if (ret)
+	return ret;
 
     ret = decode_BasicConstraints(e->extnValue.data,
 				  e->extnValue.length, &bc,
@@ -1711,11 +1732,13 @@ hx509_cert_is_ca(hx509_context context,
     if (_hx509_cert_get_version(c->data) < 3)
         return certificate_is_self_signed(context, c->data, is_ca);
 
-    e = find_extension(c->data, &asn1_oid_id_x509_ce_basicConstraints, &i);
-    if (e == NULL) {
+    ret = find_extension(c->data, &asn1_oid_id_x509_ce_basicConstraints, &i, &e);
+    if (ret == HX509_EXTENSION_NOT_FOUND) {
         *is_ca = 0;
         return 0;
     }
+    if (ret)
+        return ret;
 
     ret = decode_BasicConstraints(e->extnValue.data,
 				  e->extnValue.length, &bc,
@@ -1865,10 +1888,10 @@ is_proxy_cert(hx509_context context,
     if (rinfo)
 	memset(rinfo, 0, sizeof(*rinfo));
 
-    e = find_extension(cert, &asn1_oid_id_pkix_pe_proxyCertInfo, &i);
-    if (e == NULL) {
+    ret = find_extension(cert, &asn1_oid_id_pkix_pe_proxyCertInfo, &i, &e);
+    if (ret) {
 	hx509_clear_error_string(context);
-	return HX509_EXTENSION_NOT_FOUND;
+	return ret;
     }
 
     ret = decode_ProxyCertInfo(e->extnValue.data,
@@ -2916,6 +2939,7 @@ hx509_verify_path(hx509_context context,
 	    ProxyCertInfo info;
 
 	    if (is_proxy_cert(context, c, &info) == 0) {
+		const Extension *e;
 		size_t j;
 
 		if (info.pCPathLenConstraint != NULL &&
@@ -2932,22 +2956,26 @@ hx509_verify_path(hx509_context context,
 		free_ProxyCertInfo(&info);
 
 		j = 0;
-		if (find_extension(c, &asn1_oid_id_x509_ce_subjectAltName, &j)) {
+		ret = find_extension(c, &asn1_oid_id_x509_ce_subjectAltName, &j, &e);
+		if (ret == 0) {
 		    ret = HX509_PROXY_CERT_INVALID;
 		    hx509_set_error_string(context, 0, ret,
 					   "Proxy certificate has explicitly "
 					   "forbidden subjectAltName");
 		    goto out;
-		}
+		} else if (ret != HX509_EXTENSION_NOT_FOUND)
+		    goto out;
 
 		j = 0;
-		if (find_extension(c, &asn1_oid_id_x509_ce_issuerAltName, &j)) {
+		ret = find_extension(c, &asn1_oid_id_x509_ce_issuerAltName, &j, &e);
+		if (ret == 0) {
 		    ret = HX509_PROXY_CERT_INVALID;
 		    hx509_set_error_string(context, 0, ret,
 					   "Proxy certificate has explicitly "
 					   "forbidden issuerAltName");
 		    goto out;
-		}
+		} else if (ret != HX509_EXTENSION_NOT_FOUND)
+		    goto out;
 
 		/*
 		 * The subject name of the proxy certificate should be
@@ -4216,9 +4244,11 @@ _hx509_cert_get_keyusage(hx509_context context,
     if (_hx509_cert_get_version(cert) < 3)
 	return 0;
 
-    e = find_extension(cert, &asn1_oid_id_x509_ce_keyUsage, &i);
-    if (e == NULL)
+    ret = find_extension(cert, &asn1_oid_id_x509_ce_keyUsage, &i, &e);
+    if (ret == HX509_EXTENSION_NOT_FOUND)
 	return HX509_KU_CERT_MISSING;
+    if (ret)
+	return ret;
 
     ret = decode_KeyUsage(e->extnValue.data, e->extnValue.length, ku, &size);
     if (ret)

@@ -1782,7 +1782,7 @@ server_lookup:
 	    /* Verify the PAC of the TGT. */
 	    ret = _kdc_check_pac(priv, user2user_princ, NULL,
 				 user2user_client, user2user_krbtgt, user2user_krbtgt, user2user_krbtgt,
-				 &uukey->key, &priv->ticket_key->key, &adtkt,
+				 &uukey->key, NULL /* krbtgt_check_key */, &adtkt,
 				 &user2user_kdc_issued, &user2user_pac, NULL, NULL);
 	    _kdc_free_ent(context, user2user_db, user2user_client);
 	    if (ret) {
@@ -1910,7 +1910,7 @@ server_lookup:
     ret = _kdc_check_pac(priv, priv->client_princ, NULL,
 			 priv->client, priv->server,
 			 priv->krbtgt, priv->krbtgt,
-			 &priv->ticket_key->key, &priv->ticket_key->key, tgt,
+			 &priv->ticket_key->key, NULL /* krbtgt_check_key */, tgt,
 			 &kdc_issued, &priv->pac, &priv->canon_client_princ,
 			 &priv->pac_attributes);
     if (ret) {

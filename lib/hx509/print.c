@@ -1120,7 +1120,7 @@ hx509_validate_cert(hx509_context context,
 
     if (!status.selfsigned && !status.haveCRLDP)
 	validate_print(ctx, HX509_VALIDATE_F_VALIDATE,
-		       "Not a CA nor PROXY and doesn't have"
+		       "Not a CA nor PROXY and doesn't have "
 		       "CRL Dist Point\n");
 
     if (status.selfsigned) {

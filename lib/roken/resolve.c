@@ -568,16 +568,18 @@ dns_lookup_int(const char *domain, int rr_class, int rr_type)
 	    fprintf(stderr, "dns_lookup(%s, %d, %s) --> %d\n",
 		    domain, rr_class, rk_dns_type_to_string(rr_type), size);
 	}
-	if (size > len) {
+
+	if ((size == len || size <= 0) && len < rk_DNS_MAX_PACKET_SIZE) {
+	    /* resolver may have a truncated reply or a failure occured */
+	    len *= 2;
+	    if (len > rk_DNS_MAX_PACKET_SIZE)
+		len = rk_DNS_MAX_PACKET_SIZE;
+	} else if (size > len) {
 	    /* resolver thinks it know better, go for it */
 	    len = size;
 	} else if (size > 0) {
 	    /* got a good reply */
 	    break;
-	} else if (size <= 0 && len < rk_DNS_MAX_PACKET_SIZE) {
-	    len *= 2;
-	    if (len > rk_DNS_MAX_PACKET_SIZE)
-		len = rk_DNS_MAX_PACKET_SIZE;
 	} else {
 	    /* the end, leave */
 	    resolve_free_handle(handle);

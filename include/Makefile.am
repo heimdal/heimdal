@@ -9,9 +9,11 @@ CHECK_LOCAL = no-check-local
 
 AM_CPPFLAGS += -DHOST=\"$(CANONICAL_HOST)\"
 
+include_HEADERS = heim_threads.h
+
 nodist_include_HEADERS = krb5-types.h
 
-noinst_HEADERS = heimqueue.h heim_threads.h crypto-headers.h
+noinst_HEADERS = heimqueue.h crypto-headers.h
 
 EXTRA_DIST = NTMakefile krb5-types.cross config.h.w32
 

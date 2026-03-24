@@ -1116,7 +1116,7 @@ krb5_kerberos_enctypes(krb5_context context)
 	ETYPE_NULL
     };
 
-    if (krb5_enctype_valid(context, ETYPE_ARCFOUR_HMAC_MD5))
+    if (krb5_enctype_valid(context, ETYPE_ARCFOUR_HMAC_MD5) == 0)
         return weak;
 
     return strong;

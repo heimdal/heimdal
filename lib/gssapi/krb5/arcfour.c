@@ -308,7 +308,7 @@ _gssapi_get_mic_arcfour(OM_uint32 * minor_status,
     }
     if (EVP_CIPHER_CTX_init(rc4_key) != 1 ||
         EVP_CipherInit_ex(rc4_key, context->ossl->rc4, NULL, k6_data, NULL, 1) != 1 ||
-        EVP_Cipher(rc4_key, p, p, 8) != 1) {
+        EVP_Cipher(rc4_key, p, p, 8) != 8) {
         EVP_CIPHER_CTX_free(rc4_key);
         _krb5_debug_openssl(context, 4, "Could not encrypt with RC4 with OpenSSL");
         *minor_status = KRB5_CRYPTO_INTERNAL;
@@ -392,7 +392,7 @@ _gssapi_verify_mic_arcfour(OM_uint32 * minor_status,
         }
 	if (EVP_CIPHER_CTX_init(rc4_key) != 1 ||
             EVP_CipherInit_ex(rc4_key, context->ossl->rc4, NULL, (void *)k6_data, NULL, 0) != 1 ||
-            EVP_Cipher(rc4_key, SND_SEQ, p, 8) != 1) {
+            EVP_Cipher(rc4_key, SND_SEQ, p, 8) != 8) {
             _krb5_debug_openssl(context, 4, "Could not encrypt with RC4 with OpenSSL");
             *minor_status = KRB5_CRYPTO_INTERNAL;
             return GSS_S_FAILURE;
@@ -553,7 +553,7 @@ _gssapi_wrap_arcfour(OM_uint32 * minor_status,
         }
         if (EVP_CIPHER_CTX_init(rc4_key) != 1 ||
             EVP_CipherInit_ex(rc4_key, context->ossl->rc4, NULL, k6_data, NULL, 1) != 1 ||
-            EVP_Cipher(rc4_key, p0 + 24, p0 + 24, 8 + datalen) != 1) {
+            EVP_Cipher(rc4_key, p0 + 24, p0 + 24, 8 + datalen) != 8 + datalen) {
             EVP_CIPHER_CTX_free(rc4_key);
             _krb5_debug_openssl(context, 4, "Could not encrypt with RC4 with OpenSSL");
             *minor_status = KRB5_CRYPTO_INTERNAL;
@@ -581,7 +581,7 @@ _gssapi_wrap_arcfour(OM_uint32 * minor_status,
         }
 	if (EVP_CIPHER_CTX_init(rc4_key) != 1 ||
             EVP_CipherInit_ex(rc4_key, context->ossl->rc4, NULL, k6_data, NULL, 1) != 1 ||
-            EVP_Cipher(rc4_key, p0 + 8, p0 + 8 /* SND_SEQ */, 8) != 1) {
+            EVP_Cipher(rc4_key, p0 + 8, p0 + 8 /* SND_SEQ */, 8) != 8) {
             EVP_CIPHER_CTX_free(rc4_key);
             _krb5_debug_openssl(context, 4, "Could not encrypt with RC4 with OpenSSL");
             *minor_status = KRB5_CRYPTO_INTERNAL;
@@ -690,7 +690,7 @@ OM_uint32 _gssapi_unwrap_arcfour(OM_uint32 *minor_status,
         }
 	if (EVP_CIPHER_CTX_init(rc4_key) != 1 ||
 	    EVP_CipherInit_ex(rc4_key, context->ossl->rc4, NULL, k6_data, NULL, 1) != 1 ||
-	    EVP_Cipher(rc4_key, SND_SEQ, p0 + 8, 8) != 1) {
+	    EVP_Cipher(rc4_key, SND_SEQ, p0 + 8, 8) != 8) {
             EVP_CIPHER_CTX_free(rc4_key);
             _krb5_debug_openssl(context, 4, "Could not decrypt with RC4 with OpenSSL");
             *minor_status = KRB5_CRYPTO_INTERNAL;
@@ -747,8 +747,8 @@ OM_uint32 _gssapi_unwrap_arcfour(OM_uint32 *minor_status,
         }
 	if (EVP_CIPHER_CTX_init(rc4_key) != 1 ||
             EVP_CipherInit_ex(rc4_key, context->ossl->rc4, NULL, k6_data, NULL, 1) != 1 ||
-            EVP_Cipher(rc4_key, Confounder, p0 + 24, 8) != 1 ||
-            EVP_Cipher(rc4_key, output_message_buffer->value, p0 + GSS_ARCFOUR_WRAP_TOKEN_SIZE, datalen) != 1) {
+            EVP_Cipher(rc4_key, Confounder, p0 + 24, 8) != 8 ||
+            EVP_Cipher(rc4_key, output_message_buffer->value, p0 + GSS_ARCFOUR_WRAP_TOKEN_SIZE, datalen) != datalen) {
             EVP_CIPHER_CTX_free(rc4_key);
             _krb5_debug_openssl(context, 4, "Could not decrypt with RC4 with OpenSSL");
             *minor_status = KRB5_CRYPTO_INTERNAL;
@@ -1149,7 +1149,7 @@ _gssapi_wrap_iov_arcfour(OM_uint32 *minor_status,
 	if (EVP_CIPHER_CTX_init(rc4_key) != 1 ||
             EVP_CipherInit_ex(rc4_key, context->ossl->rc4, NULL, k6_data, NULL, 1) != 1 ||
             /* Confounder */
-            EVP_Cipher(rc4_key, p0 + 24, p0 + 24, 8) != 1) {
+            EVP_Cipher(rc4_key, p0 + 24, p0 + 24, 8) != 8) {
             EVP_CIPHER_CTX_free(rc4_key);
             _krb5_debug_openssl(context, 4, "Could not encrypt with RC4 with OpenSSL");
             *minor_status = KRB5_CRYPTO_INTERNAL;
@@ -1166,7 +1166,7 @@ _gssapi_wrap_iov_arcfour(OM_uint32 *minor_status,
 	    }
 
 	    if (EVP_Cipher(rc4_key, iov[i].buffer.value,
-                           iov[i].buffer.value, iov[i].buffer.length) != 1) {
+                           iov[i].buffer.value, iov[i].buffer.length) != iov[i].buffer.length) {
                 EVP_CIPHER_CTX_free(rc4_key);
                 _krb5_debug_openssl(context, 4, "Could not encrypt with RC4 with OpenSSL");
                 *minor_status = KRB5_CRYPTO_INTERNAL;
@@ -1177,7 +1177,7 @@ _gssapi_wrap_iov_arcfour(OM_uint32 *minor_status,
 	/* Padding */
 	if (padding &&
 	    EVP_Cipher(rc4_key, padding->buffer.value,
-		       padding->buffer.value, padding->buffer.length) != 1) {
+		       padding->buffer.value, padding->buffer.length) != padding->buffer.length) {
             EVP_CIPHER_CTX_free(rc4_key);
             _krb5_debug_openssl(context, 4, "Could not encrypt with RC4 with OpenSSL");
             *minor_status = KRB5_CRYPTO_INTERNAL;
@@ -1206,7 +1206,7 @@ _gssapi_wrap_iov_arcfour(OM_uint32 *minor_status,
         }
         if (EVP_CIPHER_CTX_init(rc4_key) != 1 ||
             EVP_CipherInit_ex(rc4_key, context->ossl->rc4, NULL, k6_data, NULL, 1) != 1 ||
-            EVP_Cipher(rc4_key, p0 + 8, p0 + 8, 8) != 1 /* SND_SEQ */) {
+            EVP_Cipher(rc4_key, p0 + 8, p0 + 8, 8) != 8 /* SND_SEQ */) {
             EVP_CIPHER_CTX_free(rc4_key);
             _krb5_debug_openssl(context, 4, "Could not encrypt with RC4 with OpenSSL");
             *minor_status = KRB5_CRYPTO_INTERNAL;
@@ -1357,7 +1357,7 @@ _gssapi_unwrap_iov_arcfour(OM_uint32 *minor_status,
         }
 	if (EVP_CIPHER_CTX_init(rc4_key) != 1 ||
             EVP_CipherInit_ex(rc4_key, context->ossl->rc4, NULL, k6_data, NULL, 1) != 1 ||
-            EVP_Cipher(rc4_key, snd_seq, p0 + 8, 8) != 1 /* SND_SEQ */) {
+            EVP_Cipher(rc4_key, snd_seq, p0 + 8, 8) != 8 /* SND_SEQ */) {
             EVP_CIPHER_CTX_free(rc4_key);
             _krb5_debug_openssl(context, 4, "Could not decrypt with RC4 with OpenSSL");
             *minor_status = KRB5_CRYPTO_INTERNAL;
@@ -1410,7 +1410,7 @@ _gssapi_unwrap_iov_arcfour(OM_uint32 *minor_status,
 	if (EVP_CIPHER_CTX_init(rc4_key) != 1 ||
             EVP_CipherInit_ex(rc4_key, context->ossl->rc4, NULL, k6_data, NULL, 1) != 1 ||
             /* Confounder */
-            EVP_Cipher(rc4_key, Confounder, p0 + 24, 8) != 1) {
+            EVP_Cipher(rc4_key, Confounder, p0 + 24, 8) != 8) {
             EVP_CIPHER_CTX_free(rc4_key);
             _krb5_debug_openssl(context, 4, "Could not decrypt with RC4 with OpenSSL");
             *minor_status = KRB5_CRYPTO_INTERNAL;
@@ -1427,7 +1427,7 @@ _gssapi_unwrap_iov_arcfour(OM_uint32 *minor_status,
 	    }
 
             if (EVP_Cipher(rc4_key, iov[i].buffer.value,
-                           iov[i].buffer.value, iov[i].buffer.length) != 1) {
+                           iov[i].buffer.value, iov[i].buffer.length) != iov[i].buffer.length) {
                 EVP_CIPHER_CTX_free(rc4_key);
                 _krb5_debug_openssl(context, 4, "Could not decrypt with RC4 with OpenSSL");
                 *minor_status = KRB5_CRYPTO_INTERNAL;
@@ -1438,7 +1438,7 @@ _gssapi_unwrap_iov_arcfour(OM_uint32 *minor_status,
 	/* Padding */
 	if (padding &&
 	    EVP_Cipher(rc4_key, padding->buffer.value,
-		       padding->buffer.value, padding->buffer.length) != 1) {
+		       padding->buffer.value, padding->buffer.length) != padding->buffer.length) {
             EVP_CIPHER_CTX_free(rc4_key);
             _krb5_debug_openssl(context, 4, "Could not encrypt with RC4 with OpenSSL");
             *minor_status = KRB5_CRYPTO_INTERNAL;

@@ -193,7 +193,7 @@ rsa_verify_signature(hx509_context context,
     int ret = HX509_CRYPTO_INTERNAL_ERROR;
 
     ERR_clear_error(); /* Clear any pre-existing errors */
-    md = md ? md : (sig_alg->evp_md ? sig_alg->evp_md() : NULL);
+    md = sig_alg->evp_md ? sig_alg->evp_md() : NULL;
 
     p = signer->tbsCertificate.subjectPublicKeyInfo._save.data;
     size = signer->tbsCertificate.subjectPublicKeyInfo._save.length;
@@ -266,35 +266,33 @@ rsa_create_signature(hx509_context context,
     else
 	sig_oid = signer->signature_alg;
 
-    if (md == NULL) {
-        if (der_heim_oid_cmp(sig_oid, ASN1_OID_ID_PKCS1_SHA512WITHRSAENCRYPTION) == 0) {
-            digest_alg = hx509_signature_sha512();
-        } else if (der_heim_oid_cmp(sig_oid, ASN1_OID_ID_PKCS1_SHA384WITHRSAENCRYPTION) == 0) {
-            digest_alg = hx509_signature_sha384();
-        } else if (der_heim_oid_cmp(sig_oid, ASN1_OID_ID_PKCS1_SHA256WITHRSAENCRYPTION) == 0) {
-            digest_alg = hx509_signature_sha256();
-        } else if (der_heim_oid_cmp(sig_oid, ASN1_OID_ID_PKCS1_SHA1WITHRSAENCRYPTION) == 0) {
-            digest_alg = hx509_signature_sha1();
-        } else if (der_heim_oid_cmp(sig_oid, ASN1_OID_ID_PKCS1_MD5WITHRSAENCRYPTION) == 0) {
-            digest_alg = hx509_signature_md5();
-        } else if (der_heim_oid_cmp(sig_oid, ASN1_OID_ID_PKCS1_MD5WITHRSAENCRYPTION) == 0) {
-            digest_alg = hx509_signature_md5();
-        } else if (der_heim_oid_cmp(sig_oid, ASN1_OID_ID_DSA_WITH_SHA1) == 0) {
-            digest_alg = hx509_signature_sha1();
-        } else if (der_heim_oid_cmp(sig_oid, ASN1_OID_ID_PKCS1_RSAENCRYPTION) == 0) {
-            digest_alg = hx509_signature_sha1();
-        } else if (der_heim_oid_cmp(sig_oid, ASN1_OID_ID_HEIM_RSA_PKCS1_X509) == 0) {
-            digest_alg = NULL;
-        } else // TODO Add ECDSA and EdDSA and PQ hybrids here!
-            return HX509_ALG_NOT_SUPP;
+    if (der_heim_oid_cmp(sig_oid, ASN1_OID_ID_PKCS1_SHA512WITHRSAENCRYPTION) == 0) {
+	digest_alg = hx509_signature_sha512();
+    } else if (der_heim_oid_cmp(sig_oid, ASN1_OID_ID_PKCS1_SHA384WITHRSAENCRYPTION) == 0) {
+	digest_alg = hx509_signature_sha384();
+    } else if (der_heim_oid_cmp(sig_oid, ASN1_OID_ID_PKCS1_SHA256WITHRSAENCRYPTION) == 0) {
+	digest_alg = hx509_signature_sha256();
+    } else if (der_heim_oid_cmp(sig_oid, ASN1_OID_ID_PKCS1_SHA1WITHRSAENCRYPTION) == 0) {
+	digest_alg = hx509_signature_sha1();
+    } else if (der_heim_oid_cmp(sig_oid, ASN1_OID_ID_PKCS1_MD5WITHRSAENCRYPTION) == 0) {
+	digest_alg = hx509_signature_md5();
+    } else if (der_heim_oid_cmp(sig_oid, ASN1_OID_ID_PKCS1_MD5WITHRSAENCRYPTION) == 0) {
+	digest_alg = hx509_signature_md5();
+    } else if (der_heim_oid_cmp(sig_oid, ASN1_OID_ID_DSA_WITH_SHA1) == 0) {
+	digest_alg = hx509_signature_sha1();
+    } else if (der_heim_oid_cmp(sig_oid, ASN1_OID_ID_PKCS1_RSAENCRYPTION) == 0) {
+	digest_alg = hx509_signature_sha1();
+    } else if (der_heim_oid_cmp(sig_oid, ASN1_OID_ID_HEIM_RSA_PKCS1_X509) == 0) {
+	digest_alg = NULL;
+    } else // TODO Add ECDSA and EdDSA and PQ hybrids here!
+	return HX509_ALG_NOT_SUPP;
 
-        if (digest_alg) {
-            const struct signature_alg *d;
+    if (digest_alg) {
+	const struct signature_alg *d;
 
-            if ((d = _hx509_find_sig_alg(&digest_alg->algorithm)) == NULL)
-                return HX509_ALG_NOT_SUPP;
-            md = d->evp_md();
-        }
+	if ((d = _hx509_find_sig_alg(&digest_alg->algorithm)) == NULL)
+	    return HX509_ALG_NOT_SUPP;
+	md = d->evp_md();
     }
 
     if (signatureAlgorithm) {

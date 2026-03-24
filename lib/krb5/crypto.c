@@ -608,8 +608,12 @@ krb5_create_checksum(krb5_context context,
     }
 
     if (arcfour_checksum_p(ct, crypto)) {
+#ifdef HEIM_ARCFOUR
 	keyusage = usage;
 	_krb5_usage2arcfour(context, &keyusage);
+#else
+	return KRB5_PROG_SUMTYPE_NOSUPP;
+#endif /* HEIM_ARCFOUR */
     } else
 	keyusage = CHECKSUM_USAGE(usage);
 
@@ -738,8 +742,12 @@ krb5_verify_checksum(krb5_context context,
     }
 
     if (arcfour_checksum_p(ct, crypto)) {
+#ifdef HEIM_ARCFOUR
 	keyusage = usage;
 	_krb5_usage2arcfour(context, &keyusage);
+#else
+	return KRB5_PROG_SUMTYPE_NOSUPP;
+#endif /* HEIM_ARCFOUR */
     } else
 	keyusage = CHECKSUM_USAGE(usage);
 
@@ -2067,8 +2075,12 @@ krb5_create_checksum_iov(krb5_context context,
     }
 
     if (arcfour_checksum_p(ct, crypto)) {
+#ifdef HEIM_ARCFOUR
 	keyusage = usage;
 	_krb5_usage2arcfour(context, &keyusage);
+#else
+	return KRB5_PROG_SUMTYPE_NOSUPP;
+#endif /* HEIM_ARCFOUR */
     } else
 	keyusage = CHECKSUM_USAGE(usage);
 
@@ -2134,8 +2146,12 @@ krb5_verify_checksum_iov(krb5_context context,
     }
 
     if (arcfour_checksum_p(ct, crypto)) {
+#ifdef HEIM_ARCFOUR
 	keyusage = usage;
 	_krb5_usage2arcfour(context, &keyusage);
+#else
+	return KRB5_PROG_SUMTYPE_NOSUPP;
+#endif /* HEIM_ARCFOUR */
     } else
 	keyusage = CHECKSUM_USAGE(usage);
 

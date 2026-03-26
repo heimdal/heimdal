@@ -1084,13 +1084,6 @@ submit_request(krb5_context context, krb5_sendto_ctx ctx, krb5_krbhst_info *hi)
 	    continue;
 	rk_cloexec(fd);
 
-#ifndef NO_LIMIT_FD_SETSIZE
-	if (fd >= FD_SETSIZE) {
-	    _krb5_debug(context, 0, "fd too large for select");
-	    rk_closesocket(fd);
-	    continue;
-	}
-#endif
 	socket_set_nonblocking(fd, 1);
 
 	host = heim_alloc(sizeof(*host), "sendto-host", deallocate_host);
@@ -1162,9 +1155,11 @@ submit_request(krb5_context context, krb5_sendto_ctx ctx, krb5_krbhst_info *hi)
 struct wait_ctx {
     krb5_context context;
     krb5_sendto_ctx ctx;
-    fd_set rfds;
-    fd_set wfds;
-    rk_socket_t max_fd;
+
+    struct pollfd *pfds;
+    struct host **hosts;
+    nfds_t nfds;
+
     int got_reply;
     time_t timenow;
 };
@@ -1174,6 +1169,8 @@ wait_setup(heim_object_t obj, void *iter_ctx, int *stop)
 {
     struct wait_ctx *wait_ctx = iter_ctx;
     struct host *h = (struct host *)obj;
+
+    short events = 0;
 
     if (h->state == CONNECT) {
 	if (h->timeout >= wait_ctx->timenow)
@@ -1198,31 +1195,32 @@ wait_setup(heim_object_t obj, void *iter_ctx, int *stop)
 	    host_connected(wait_ctx->context, wait_ctx->ctx, h);
 	}
     }
-    
-#ifndef NO_LIMIT_FD_SETSIZE
-    heim_assert(h->fd < FD_SETSIZE, "fd too large");
-#endif
+
     switch (h->state) {
     case WAITING_REPLY:
-	FD_SET(h->fd, &wait_ctx->rfds);
+	events |= POLLIN;
 	break;
     case CONNECTING:
     case CONNECTED:
-	FD_SET(h->fd, &wait_ctx->rfds);
-	FD_SET(h->fd, &wait_ctx->wfds);
+        events |= POLLIN | POLLOUT;
 	break;
     case PROXYING:
 	if (_krb5_socks4a_reading(h->socks4a))
-	    FD_SET(h->fd, &wait_ctx->rfds);
+        events |= POLLIN;
 	if (_krb5_socks4a_writing(h->socks4a))
-	    FD_SET(h->fd, &wait_ctx->wfds);
+        events |= POLLOUT;
 	break;
     default:
 	debug_host(wait_ctx->context, 5, h, "invalid sendto host state");
 	heim_abort("invalid sendto host state");
     }
-    if (h->fd > wait_ctx->max_fd || wait_ctx->max_fd == rk_INVALID_SOCKET)
-	wait_ctx->max_fd = h->fd;
+
+    wait_ctx->pfds[wait_ctx->nfds].fd = h->fd;
+    wait_ctx->pfds[wait_ctx->nfds].events = events;
+    wait_ctx->pfds[wait_ctx->nfds].revents = 0;
+
+    wait_ctx->hosts[wait_ctx->nfds] = h;
+    wait_ctx->nfds++;
 }
 
 static int
@@ -1242,39 +1240,39 @@ wait_accelerate(heim_object_t obj, void *ctx, int *stop)
 }
 
 static void
-wait_process(heim_object_t obj, void *ctx, int *stop)
+wait_process(struct wait_ctx *wait_ctx)
 {
-    struct wait_ctx *wait_ctx = ctx;
-    struct host *h = (struct host *)obj;
-    int readable, writeable;
-    heim_assert(h->state != DEAD, "dead host resurected");
+    for (nfds_t i = 0; i < wait_ctx->nfds; i++) {
+        struct host *h = wait_ctx->hosts[i];
+        struct pollfd *pfd = &wait_ctx->pfds[i];
 
-#ifndef NO_LIMIT_FD_SETSIZE
-    heim_assert(h->fd < FD_SETSIZE, "fd too large");
-#endif
-    readable = FD_ISSET(h->fd, &wait_ctx->rfds);
-    writeable = FD_ISSET(h->fd, &wait_ctx->wfds);
+        int readable = pfd->revents & (POLLIN | POLLERR | POLLHUP | POLLNVAL);
+        int writeable = pfd->revents & POLLOUT;
 
-    if (readable || writeable || h->state == CONNECT)
-	wait_ctx->got_reply |= eval_host_state(wait_ctx->context, wait_ctx->ctx, h, readable, writeable);
+        if (readable || writeable || h->state == CONNECT)
+            wait_ctx->got_reply |= eval_host_state(
+                wait_ctx->context,
+                wait_ctx->ctx,
+                h,
+                readable,
+                writeable
+            );
 
-    /* if there is already a reply, just fall though the array */
-    if (wait_ctx->got_reply)
-	*stop = 1;
+        if (wait_ctx->got_reply)
+            return;
+    }
 }
 
 static krb5_error_code
 wait_response(krb5_context context, int *action, krb5_sendto_ctx ctx)
 {
     struct wait_ctx wait_ctx;
-    struct timeval tv;
     int ret;
+
+    memset(&wait_ctx, 0, sizeof(wait_ctx));
 
     wait_ctx.context = context;
     wait_ctx.ctx = ctx;
-    FD_ZERO(&wait_ctx.rfds);
-    FD_ZERO(&wait_ctx.wfds);
-    wait_ctx.max_fd = rk_INVALID_SOCKET;
 
     /* oh, we have a reply, it must be a plugin that got it for us */
     if (ctx->response.length) {
@@ -1284,10 +1282,8 @@ wait_response(krb5_context context, int *action, krb5_sendto_ctx ctx)
 
     wait_ctx.timenow = time(NULL);
 
-    heim_array_iterate_f(ctx->hosts, &wait_ctx, wait_setup);
-    heim_array_filter_f(ctx->hosts, &wait_ctx, wait_filter_dead);
-
-    if (heim_array_get_length(ctx->hosts) == 0) {
+    size_t max_hosts = heim_array_get_length(ctx->hosts);
+    if (max_hosts == 0) {
 	if (ctx->stateflags & KRBHST_COMPLETED) {
 	    _krb5_debug(context, 5, "no more hosts to send/recv packets to/from "
 			 "trying to pulling more hosts");
@@ -1300,7 +1296,18 @@ wait_response(krb5_context context, int *action, krb5_sendto_ctx ctx)
 	return 0;
     }
 
-    if (wait_ctx.max_fd == rk_INVALID_SOCKET) {
+    wait_ctx.pfds = calloc(max_hosts, sizeof(struct pollfd));
+    wait_ctx.hosts = calloc(max_hosts, sizeof(struct host *));
+    if (!wait_ctx.pfds || !wait_ctx.hosts) {
+        free(wait_ctx.pfds);
+        free(wait_ctx.hosts);
+        return ENOMEM;
+    }
+
+    heim_array_filter_f(ctx->hosts, &wait_ctx, wait_filter_dead);
+    heim_array_iterate_f(ctx->hosts, &wait_ctx, wait_setup);
+
+    if (wait_ctx.nfds == 0) {
 	/*
 	 * If we don't find a host which can make progress, then
 	 * we accelerate the process by moving all of the contestants
@@ -1308,26 +1315,35 @@ wait_response(krb5_context context, int *action, krb5_sendto_ctx ctx)
 	 */
 	_krb5_debug(context, 5, "wait_response: moving the contestants forward");
 	heim_array_iterate_f(ctx->hosts, &wait_ctx, wait_accelerate);
+        free(wait_ctx.pfds);
+        free(wait_ctx.hosts);
 	return 0;
     }
 
-    tv.tv_sec = 1;
-    tv.tv_usec = 0;
+    ret = poll(wait_ctx.pfds, wait_ctx.nfds, 1000); /* 1s */
 
-    ret = select(wait_ctx.max_fd + 1, &wait_ctx.rfds, &wait_ctx.wfds, NULL, &tv);
-    if (ret < 0)
-	return errno;
+    if (ret < 0) {
+        free(wait_ctx.pfds);
+        free(wait_ctx.hosts);
+        return errno;
+    }
     if (ret == 0) {
-	*action = KRB5_SENDTO_TIMEOUT;
-	return 0;
+        *action = KRB5_SENDTO_TIMEOUT;
+        free(wait_ctx.pfds);
+        free(wait_ctx.hosts);
+        return 0;
     }
 
     wait_ctx.got_reply = 0;
-    heim_array_iterate_f(ctx->hosts, &wait_ctx, wait_process);
+    wait_process(&wait_ctx);
+
     if (wait_ctx.got_reply)
 	*action = KRB5_SENDTO_FILTER;
     else
 	*action = KRB5_SENDTO_CONTINUE;
+
+    free(wait_ctx.pfds);
+    free(wait_ctx.hosts);
 
     return 0;
 }

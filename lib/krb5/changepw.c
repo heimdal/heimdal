@@ -704,25 +704,30 @@ change_password_loop (krb5_context	context,
 		 * do the SOCKS4a I/O.
 		 */
 		while (!_krb5_socks4a_connected(socks4a)) {
-		    fd_set readfds, writefds;
+		    struct pollfd pfd;
 		    int nready;
 
-		    FD_ZERO(&readfds);
-		    FD_ZERO(&writefds);
+		    pfd.fd = sock;
+		    pfd.events = 0;
+		    pfd.revents = 0;
+
 		    if (_krb5_socks4a_reading(socks4a))
-			FD_SET(sock, &readfds);
+			pfd.events |= POLLIN;
 		    if (_krb5_socks4a_writing(socks4a))
-			FD_SET(sock, &writefds);
-		    nready = select(sock + 1, &readfds, &writefds,
-			/*exceptfds*/NULL, /*timeout*/NULL);
-		    if (nready == -1) {
+			pfd.events |= POLLOUT;
+
+		    nready = poll(&pfd, 1, -1); /* blocking */
+		    if (nready < 0) {
+                if (errno == EINTR)
+                    continue;
 			ret = errno;
 			break;
 		    }
-		    if (nready <= 0) {
+		    if (nready == 0) {
 			ret = EIO; /* timeout should be impossible */
 			break;
 		    }
+
 		    ret = _krb5_socks4a_io(socks4a);
 		    if (ret)
 			break;
@@ -733,9 +738,6 @@ change_password_loop (krb5_context	context,
 	    }
 
 	    for (i = 0; !done && i < 5; ++i) {
-		fd_set fdset;
-		struct timeval tv;
-
 		if (!replied) {
 		    replied = 0;
 
@@ -753,27 +755,28 @@ change_password_loop (krb5_context	context,
 		    }
 		}
 
-#ifndef NO_LIMIT_FD_SETSIZE
-		if (sock >= FD_SETSIZE) {
-		    ret = ERANGE;
-		    krb5_set_error_message(context, ret,
-					   "fd %d too large", sock);
-		    rk_closesocket (sock);
-		    goto out;
-		}
-#endif
+		struct pollfd pfd;
+		int timeout_ms;
+		timeout_ms = (1 + (1 << i)) * 1000;
 
-		FD_ZERO(&fdset);
-		FD_SET(sock, &fdset);
-		tv.tv_usec = 0;
-		tv.tv_sec  = 1 + (1 << i);
+		pfd.fd = sock;
+		pfd.events = POLLIN;
+		pfd.revents = 0;
 
-		ret = select (sock + 1, &fdset, NULL, NULL, &tv);
-		if (rk_IS_SOCKET_ERROR(ret) && rk_SOCK_ERRNO != EINTR) {
-		    rk_closesocket(sock);
-		    goto out;
+		ret = poll(&pfd, 1, timeout_ms);
+		if (ret < 0) {
+			if (errno == EINTR)
+				continue;
+			rk_closesocket(sock);
+			ret = errno;
+			goto out;
 		}
-		if (ret == 1) {
+
+		if (ret == 0) {
+			ret = KRB5_KDC_UNREACH;
+			continue;
+		}
+		if (pfd.revents & (POLLIN | POLLERR | POLLHUP | POLLNVAL)) {
 		    ret = (*proc->process_rep) (context,
 						auth_context,
 						is_stream,

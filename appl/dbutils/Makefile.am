@@ -10,4 +10,4 @@ man_MANS = bsearch.1
 
 EXTRA_DIST = NTMakefile $(man_MANS)
 
-LDADD = $(LIB_roken) $(LIB_vers) $(LIB_heimbase)
+LDADD = $(LIB_vers) $(LIB_heimbase) $(LIB_roken)

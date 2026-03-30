@@ -400,8 +400,7 @@ entry2mit_string_int(krb5_context context, krb5_storage *sp, hdb_entry *ent)
         hist_keys = &extp->data.u.hist_keys;
 
     for (i = 0; i < ent->keys.len;i++) {
-        if (ent->keys.val[i].key.keytype == ETYPE_DES_CBC_MD4 ||
-            ent->keys.val[i].key.keytype == ETYPE_DES_CBC_MD5)
+        if (!mit_strong_etype(ent->keys.val[i].key.keytype))
             continue;
         num_key_data++;
     }
@@ -451,7 +450,7 @@ entry2mit_string_int(krb5_context context, krb5_storage *sp, hdb_entry *ent)
         krb5_data d;
         time_t val;
         unsigned char *ptr;
-        
+
         ptr = (unsigned char *)&last_pw_chg;
         val = ((unsigned long)ptr[3] << 24) | (ptr[2] << 16)
 	    | (ptr[1] << 8) | ptr[0];

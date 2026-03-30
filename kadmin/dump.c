@@ -72,6 +72,15 @@ dump(struct dump_options *opt, int argc, char **argv)
     } else if (opt->format_string && strcmp(opt->format_string, "MIT") == 0) {
         parg.fmt = HDB_DUMP_MIT;
         fprintf(f, "kdb5_util load_dump version 5\n"); /* 5||6, either way */
+    } else if (opt->format_string) {
+	/* Open the format string as a MIT mkey file. */
+	ret = hdb_read_master_key(context, opt->format_string, &db->hdb_mit_key);
+	if (ret)
+	    krb5_errx(context, 1, "Cannot open MIT mkey file");
+	db->hdb_mit_key_set = 1;
+        parg.fmt = HDB_DUMP_MIT;
+	opt->decrypt_flag = 1;
+        fprintf(f, "kdb5_util load_dump version 5\n"); /* 5||6, either way */
     } else {
         krb5_errx(context, 1, "Supported dump formats: Heimdal and MIT");
     }

@@ -40,12 +40,14 @@
 #include "resolve.h"
 #include "roken.h"
 
+struct rk_dns_reply *__wrap_rk_dns_lookup(const char *domain, const char *type_name);
+
 #if (__STDC_VERSION__ - 0) < 199901L
 # define restrict /* empty */
 #endif
 
 struct rk_dns_reply *
-rk_dns_lookup(const char *domain, const char *type_name)
+__wrap_rk_dns_lookup(const char *domain, const char *type_name)
 {
 
     fprintf(stderr, "DNS leak: %s %s (%s)\n", __func__, domain, type_name);

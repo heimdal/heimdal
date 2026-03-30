@@ -45,6 +45,8 @@ kinit_auditdns_SOURCES = ../../kuser/kinit.c auditdns.c
 
 kinit_auditdns_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)/../../lib/krb5
 
+kinit_auditdns_LDFLAGS = $(WRAP_LDFLAGS)
+
 # sync with kinit_LDADD in kuser/Makefile.am
 if !NO_AFS
 afs_lib = $(LIB_kafs)

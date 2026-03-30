@@ -33,6 +33,19 @@ AC_CANONICAL_HOST
 CANONICAL_HOST=$host
 AC_SUBST(CANONICAL_HOST)
 
+dnl
+dnl this is needed to not wrap calls when building on OS X Builds
+dnl
+case $host_os in
+  darwin*)
+    WRAP_LDFLAGS=""
+    ;;
+  *)
+    WRAP_LDFLAGS="-Wl,--wrap=rk_dns_lookup"
+    ;;
+esac
+AC_SUBST([WRAP_LDFLAGS])
+
 rk_SYS_LARGEFILE
 
 rk_AIX

@@ -418,9 +418,8 @@ entry2mit_string_int(krb5_context context, krb5_storage *sp, hdb_entry *ent)
             if (hist_keys->val[i].kvno >= ent->kvno)
                 continue;
             for (k = 0; k < hist_keys->val[i].keys.len; k++) {
-                if (ent->keys.val[k].key.keytype == ETYPE_DES_CBC_MD4 ||
-                    ent->keys.val[k].key.keytype == ETYPE_DES_CBC_MD5)
-                    continue;
+		if (!mit_strong_etype(ent->keys.val[k].key.keytype))
+		    continue;
                 num_key_data++;
             }
         }
@@ -506,8 +505,7 @@ entry2mit_string_int(krb5_context context, krb5_storage *sp, hdb_entry *ent)
      * the entry's keys -- max kvno is it)
      */
     for (i = 0; i < ent->keys.len; i++) {
-        if (ent->keys.val[i].key.keytype == ETYPE_DES_CBC_MD4 ||
-            ent->keys.val[i].key.keytype == ETYPE_DES_CBC_MD5)
+	if (!mit_strong_etype(ent->keys.val[i].key.keytype))
             continue;
         sz = append_mit_key(context, sp, ent->principal, ent->kvno,
                             &ent->keys.val[i]);
@@ -521,9 +519,8 @@ entry2mit_string_int(krb5_context context, krb5_storage *sp, hdb_entry *ent)
             if (hist_keys->val[k].kvno != ent->kvno - i)
                 continue;
             for (m = 0; m < hist_keys->val[k].keys.len; m++) {
-                if (ent->keys.val[k].key.keytype == ETYPE_DES_CBC_MD4 ||
-                    ent->keys.val[k].key.keytype == ETYPE_DES_CBC_MD5)
-                    continue;
+		if (!mit_strong_etype(ent->keys.val[k].key.keytype))
+		    continue;
                 sz = append_mit_key(context, sp, ent->principal,
                                     hist_keys->val[k].kvno,
                                     &hist_keys->val[k].keys.val[m]);

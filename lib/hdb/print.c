@@ -89,6 +89,10 @@ append_hex(krb5_context context, krb5_storage *sp,
     size_t i;
     char *p;
 
+    /* a zero-length input stil needs to encode to something. force a -1 */
+    if (data->length == 0) {
+	return append_string(context, sp, "-1");
+    }
     p = data->data;
     if (!always_encode) {
         for (i = 0; i < data->length; i++) {

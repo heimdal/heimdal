@@ -408,16 +408,14 @@ entry2mit_string_int(krb5_context context, krb5_storage *sp, hdb_entry *ent)
             continue;
         num_key_data++;
     }
-    if (hist_keys) {
-        for (i = 0; i < hist_keys->len; i++) {
-            /*
-             * MIT uses the highest kvno as the current kvno instead of
-             * tracking kvno separately, so we can't dump keysets with kvno
-             * higher than the entry's kvno.
-             */
-            if (hist_keys->val[i].kvno >= ent->kvno)
-                continue;
-            for (k = 0; k < hist_keys->val[i].keys.len; k++) {
+    for (i = 0; hist_keys && i < ent->kvno; i++) {
+        size_t m;
+
+        /* dump historical keys */
+        for (k = 0; k < hist_keys->len; k++) {
+	    if (hist_keys->val[k].kvno != ent->kvno - i)
+		continue;
+            for (m = 0; m < hist_keys->val[k].keys.len; m++) {
 		if (!mit_strong_etype(ent->keys.val[k].key.keytype))
 		    continue;
                 num_key_data++;

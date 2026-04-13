@@ -402,6 +402,10 @@ rk_TEST_PACKAGE(libedit,
 #endif
 ],-ledit,,, READLINE,, [readline.h readline/readline.h editline/readline.h])
 
+rk_TEST_PACKAGE(linenoise,
+[#include <linenoise.h>
+],-llinenoise,,, LINENOISE,, [linenoise.h])
+
 AC_CONFIG_SUBDIRS([lib/libedit])
 
 KRB_C_BIGENDIAN

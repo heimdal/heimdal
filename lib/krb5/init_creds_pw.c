@@ -3085,6 +3085,9 @@ validate_pkinit_fx(krb5_context context,
 
     heim_assert(ctx->fast_state.reply_key != NULL, "must have a reply key at this stage");
 
+    if (ctx->pk_init_ctx == NULL)
+	return 0
+
     return _krb5_pk_kx_confirm(context,
 			       ctx->pk_init_ctx,
 			       ctx->fast_state.reply_key,

@@ -1762,6 +1762,7 @@ enc_chal_step(krb5_context context,
     krb5_crypto crypto = NULL;
     krb5_enctype aenctype;
     krb5_error_code ret;
+    krb5_boolean local_paid = FALSE;
 
     memset(&paid, 0, sizeof(paid));
 
@@ -1770,6 +1771,7 @@ enc_chal_step(krb5_context context,
     else
 	paid.etype = rep->enc_part.etype;
     ppaid = process_pa_info(context, ctx->cred.client, a, &paid, in_md);
+    local_paid = (ppaid == &paid);
 
     /*
      * If we don't have ppaid, it's because the KDC has not sent any
@@ -1777,11 +1779,28 @@ enc_chal_step(krb5_context context,
      * to send some.
      */
     if (ppaid == NULL) {
-	_krb5_debug(context, 5, "no ppaid found");
-	return HEIM_ERR_PA_CONTINUE_NEEDED;
+	if (rep != NULL && ctx->paid.etype != KRB5_ENCTYPE_NULL)
+	    ppaid = &ctx->paid;
+	else if (rep != NULL) {
+	    _krb5_debug(context, 0,
+			"no paid when building ENC_CHAL reply key");
+	    return HEIM_ERR_PA_CANT_CONTINUE;
+	} else {
+	    _krb5_debug(context, 5, "no ppaid found");
+	    return HEIM_ERR_PA_CONTINUE_NEEDED;
+	}
     }
     if (ppaid->etype == KRB5_ENCTYPE_NULL) {
+	if (local_paid)
+	    free_paid(context, &paid);
 	return HEIM_ERR_PA_CANT_CONTINUE;
+    }
+
+    if (rep == NULL && local_paid) {
+	free_paid(context, &ctx->paid);
+	ctx->paid = *ppaid;
+	ppaid = &ctx->paid;
+	local_paid = FALSE;
     }
 
     if (ctx->fast_state.reply_key)
@@ -1790,7 +1809,8 @@ enc_chal_step(krb5_context context,
     ret = pa_data_to_key_plain(context, ctx->cred.client, ctx,
 			       ppaid->salt, ppaid->s2kparams, ppaid->etype,
 			       &ctx->fast_state.reply_key);
-    free_paid(context, &paid);
+    if (local_paid)
+	free_paid(context, &paid);
     if (ret) {
 	_krb5_debug(context, 5, "enc-chal: failed to build key");
 	return ret;
@@ -3086,7 +3106,7 @@ validate_pkinit_fx(krb5_context context,
     heim_assert(ctx->fast_state.reply_key != NULL, "must have a reply key at this stage");
 
     if (ctx->pk_init_ctx == NULL)
-	return 0
+	return 0;
 
     return _krb5_pk_kx_confirm(context,
 			       ctx->pk_init_ctx,

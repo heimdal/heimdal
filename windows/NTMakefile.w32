@@ -580,7 +580,6 @@ DLLPREP_MERGE=\
 LIBASN1	    =$(LIBDIR)\libasn1.lib
 LIBASN1_S   =$(LIBDIR)\libasn1_s.lib
 LIBCOMERR   =$(LIBDIR)\libcom_err.lib
-LIBEDITLINE =$(LIBDIR)\libeditline.lib
 LIBGSSAPI   =$(LIBDIR)\libgssapi.lib
 LIBGSS_PREAUTH=$(LIBDIR)\libgss_preauth.lib
 LIBHDB	    =$(LIBDIR)\libhdb.lib
@@ -615,4 +614,3 @@ ASM_SPC=.Special
 
 ASMKRBNAME  =Heimdal.Kerberos$(ASM_SPC)$(ASM_PVT)$(ASM_PRE)$(ASM_DBG)
 APPMANIFEST =$(INCDIR)\Heimdal.Application.$(MCPU).manifest
-

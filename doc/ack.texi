@@ -13,9 +13,6 @@ The @code{popper} was also a Berkeley program initially.
 Some of the functions in @file{libroken} also come from Berkeley by way
 of NetBSD/FreeBSD.
 
-@code{editline} was written by Simmule Turner and Rich Salz. Heimdal
-contains a modifed copy.
-
 The @code{getifaddrs} implementation for Linux was written by Hideaki
 YOSHIFUJI for the Usagi project.
 

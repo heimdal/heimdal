@@ -1,8 +1,5 @@
 include $(top_srcdir)/Makefile.am.common
 
-if LIBEDIT
-dir_editline = libedit
-endif
 if DCE
 dir_dce = kdfs
 endif
@@ -21,7 +18,6 @@ SUBDIRS = \
 	vers \
 	$(dir_com_err) \
 	base \
-	$(dir_editline) \
 	sl \
 	wind \
 	asn1 \

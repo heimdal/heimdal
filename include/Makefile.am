@@ -48,7 +48,6 @@ CLEANFILES =			\
 	der.h			\
 	digest_asn1.h 		\
 	digest_template_asn1.h 	\
-	editline.h		\
 	err.h			\
 	getarg.h		\
 	glob.h			\

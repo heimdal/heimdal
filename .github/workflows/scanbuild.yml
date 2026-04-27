@@ -44,8 +44,7 @@ jobs:
                 cd build
                 ../configure --srcdir=`dirname "$PWD"` --enable-maintainer-mode --enable-developer --with-ldap $CONFIGURE_OPTS --prefix=$HOME/inst CFLAGS="-Wno-error=shadow -Wno-error=bad-function-cast -Wno-error=unused-function -Wno-error=unused-result -Wno-error=deprecated-declarations"
                 ulimit -c unlimited
-                # We don't want to scan-build libedit nor SQLite3 because ETOOSLOW
-                (cd lib/libedit && make -j4)
+                # We don't want to scan-build SQLite3 because ETOOSLOW
                 (cd lib/sqlite && make -j4)
                 scan-build --keep-going make -j4
             - name: Test

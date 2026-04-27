@@ -64,32 +64,6 @@ asn1_*_asn1.c
 /tmp.h
 /ylwrap
 
-/lib/libedit/aclocal.m4
-/lib/libedit/autom4te.cache
-/lib/libedit/compile
-/lib/libedit/config.guess
-/lib/libedit/config.h
-/lib/libedit/config.log
-/lib/libedit/config.status
-/lib/libedit/config.sub
-/lib/libedit/configure
-/lib/libedit/depcomp
-/lib/libedit/install-sh
-/lib/libedit/libtool
-/lib/libedit/ltmain.sh
-/lib/libedit/missing
-/lib/libedit/setupbuild.cmd
-/lib/libedit/ylwrap
-/lib/libedit/src/common.h
-/lib/libedit/src/emacs.h
-/lib/libedit/src/fcns.c
-/lib/libedit/src/fcns.h
-/lib/libedit/src/func.h
-/lib/libedit/src/help.c
-/lib/libedit/src/help.h
-/lib/libedit/src/vi.h
-/lib/libedit/stamp-h1
-
 # Files in subdirectories.
 
 /admin/ktutil

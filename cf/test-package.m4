@@ -24,8 +24,8 @@ AC_ARG_WITH($1-config,
 	AS_HELP_STRING([--with-$1-config=path],[config program for $1]))
 
 m4_ifval([$6],
-	m4_define([rk_pkgname], $6),
-	m4_define([rk_pkgname], AS_TR_CPP($1)))
+	[m4_define([rk_pkgname], [$6])],
+	[m4_define([rk_pkgname], [AS_TR_CPP($1)])])
 
 AC_MSG_CHECKING(for $1)
 
@@ -91,7 +91,7 @@ if test "$with_$1" != no; then
 	if test "$[]$1_cflags" -a "$[]$1_libs"; then
 		CFLAGS="$[]$1_cflags $save_CFLAGS"
 		LIBS="$[]$1_libs $save_LIBS"
-		m4_ifval([$8],[AC_CHECK_HEADERS([[$8]])])
+		m4_ifval([$8],[AC_CHECK_HEADERS([$8])])
 		AC_LINK_IFELSE([AC_LANG_PROGRAM([[$2]],[[]])],[
 			INCLUDE_$1="$[]$1_cflags"
 			LIB_$1="$[]$1_libs"
@@ -102,7 +102,7 @@ if test "$with_$1" != no; then
 		ires= lres=
 		for i in $header_dirs; do
 			CFLAGS="-I$i $save_CFLAGS"
-			m4_ifval([$8],[AC_CHECK_HEADERS([[$8]])])
+			m4_ifval([$8],[AC_CHECK_HEADERS([$8])])
 			AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[$2]],[[]])],[ires=$i;break])
 		done
 		for i in $lib_dirs; do

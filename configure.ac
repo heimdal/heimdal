@@ -382,28 +382,6 @@ AC_SUBST(ENABLE_AFS_STRING_TO_KEY)dnl
 
 rk_CHECK_MAN
 
-rk_TEST_PACKAGE(readline,
-[#include <stdio.h>
-#if defined(HAVE_READLINE_READLINE_H)
-#include <readline/readline.h>
-#elif defined(HAVE_READLINE_H)
-#include <readline.h>
-#endif
-],-lreadline,,, READLINE,, [readline.h readline/readline.h])
-
-rk_TEST_PACKAGE(libedit,
-[#include <stdio.h>
-#if defined(HAVE_READLINE_READLINE_H)
-#include <readline/readline.h>
-#elif defined(HAVE_READLINE_H)
-#include <readline.h>
-#elif defined(HAVE_EDITLINE_READLINE_H)
-#include <editline/readline.h>
-#endif
-],-ledit,,, READLINE,, [readline.h readline/readline.h editline/readline.h])
-
-AC_CONFIG_SUBDIRS([lib/libedit])
-
 KRB_C_BIGENDIAN
 AC_C_INLINE
 

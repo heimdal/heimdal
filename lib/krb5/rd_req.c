@@ -850,10 +850,12 @@ krb5_rd_req_ctx(krb5_context context,
 		krb5_rd_req_out_ctx *outctx)
 {
     krb5_error_code ret;
+    krb5_error_code exact_keytab_ret = 0;
     krb5_ap_req ap_req;
     krb5_rd_req_out_ctx o = NULL;
     krb5_keytab id = NULL, keytab = NULL;
     krb5_principal service = NULL;
+    krb5_boolean explicit_server = (server != NULL);
 
     if (outctx)
         *outctx = NULL;
@@ -929,10 +931,8 @@ krb5_rd_req_ctx(krb5_context context,
 				  id,
 				  &o->keyblock);
 	if (ret) {
-	    /* If caller specified a server, fail. */
-	    if (service == NULL && (context->flags & KRB5_CTX_F_RD_REQ_IGNORE) == 0)
-		goto out;
-	    /* Otherwise, fall back to iterating over the keytab. This
+	    exact_keytab_ret = ret;
+	    /* Fall back to iterating over the keytab. This
 	     * have serious performace issues for larger keytab.
 	     */
 	    o->keyblock = NULL;
@@ -964,12 +964,19 @@ krb5_rd_req_ctx(krb5_context context,
 
 	krb5_keytab_entry entry;
 	krb5_kt_cursor cursor;
+	krb5_boolean newer_kvno = FALSE;
+	krb5_boolean have_kvno = FALSE;
+	krb5_boolean scan_explicit_server =
+	    explicit_server &&
+	    (context->flags & KRB5_CTX_F_RD_REQ_IGNORE) == 0;
 	int done = 0, kvno = 0;
 
 	memset(&cursor, 0, sizeof(cursor));
 
-	if (ap_req.ticket.enc_part.kvno)
+	if (ap_req.ticket.enc_part.kvno) {
 	    kvno = *ap_req.ticket.enc_part.kvno;
+	    have_kvno = TRUE;
+	}
 
 	ret = krb5_kt_start_seq_get(context, id, &cursor);
 	if (ret)
@@ -978,6 +985,7 @@ krb5_rd_req_ctx(krb5_context context,
 	done = 0;
 	while (!done) {
 	    krb5_principal p;
+	    krb5_boolean same_server;
 
 	    ret = krb5_kt_next_entry(context, id, &entry, &cursor);
 	    if (ret) {
@@ -986,6 +994,15 @@ krb5_rd_req_ctx(krb5_context context,
 					     kvno);
 		break;
 	    }
+
+	    same_server = krb5_principal_compare(context, entry.principal,
+						 server);
+	    if (scan_explicit_server && !same_server) {
+		krb5_kt_free_entry (context, &entry);
+		continue;
+	    }
+	    if (have_kvno && same_server && entry.vno > kvno)
+		newer_kvno = TRUE;
 
 	    if (entry.keyblock.keytype != ap_req.ticket.enc_part.etype) {
 		krb5_kt_free_entry (context, &entry);
@@ -1033,8 +1050,13 @@ krb5_rd_req_ctx(krb5_context context,
 	    done = 1;
 	}
 	krb5_kt_end_seq_get (context, id, &cursor);
-        if (ret)
-            goto out;
+	if ((ret == KRB5_KT_NOTFOUND || ret == KRB5_KT_END) && newer_kvno)
+	    ret = KRB5KRB_AP_ERR_BADKEYVER;
+	else if ((ret == KRB5_KT_NOTFOUND || ret == KRB5_KT_END) &&
+		 scan_explicit_server && exact_keytab_ret)
+	    ret = exact_keytab_ret;
+	if (ret)
+	    goto out;
     }
 
     if (krb5_ticket_get_authorization_data_type(context, o->ticket,

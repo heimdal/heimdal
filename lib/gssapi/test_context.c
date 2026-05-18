@@ -492,7 +492,10 @@ loop(gss_OID mechoid,
     *actual_mech = actual_mech_server;
 
     if (on_behalf_of_string) {
+        AuthorizationData ad;
         gss_buffer_desc attr, value;
+        size_t count = 0, i;
+        int kret;
 
         attr.value =
             rk_UNCONST(GSS_KRB5_NAME_ATTRIBUTE_BASE_URN "authz-data#580");
@@ -509,6 +512,28 @@ loop(gss_OID mechoid,
                     strlen(on_behalf_of_string)) != 0)
             errx(1, "AD-ON-BEHALF-OF did not match");
         (void) gss_release_buffer(&min_stat, &value);
+
+        attr.value = rk_UNCONST(GSS_KRB5_NAME_ATTRIBUTE_BASE_URN
+                                "authenticator-authz-data");
+        attr.length = sizeof(GSS_KRB5_NAME_ATTRIBUTE_BASE_URN
+                             "authenticator-authz-data") - 1;
+        maj_stat = gss_get_name_attribute(&min_stat, src_name, &attr, NULL,
+                                          NULL, &value, NULL, NULL);
+        if (maj_stat != GSS_S_COMPLETE)
+            errx(1, "gss_get_name_attribute(authenticator-authz-data) "
+                 "failed with %s",
+                 gssapi_err(maj_stat, min_stat, GSS_KRB5_MECHANISM));
+
+        kret = decode_AuthorizationData(value.value, value.length, &ad, NULL);
+        (void) gss_release_buffer(&min_stat, &value);
+        if (kret)
+            errx(1, "Could not decode authenticator authorization data");
+        for (i = 0; i < ad.len; i++)
+            if (ad.val[i].ad_type == KRB5_AUTHDATA_ON_BEHALF_OF)
+                count++;
+        free_AuthorizationData(&ad);
+        if (count != 1)
+            errx(1, "expected one AD-ON-BEHALF-OF element, got %zu", count);
     }
     if (localname_string) {
         gss_buffer_desc lname;

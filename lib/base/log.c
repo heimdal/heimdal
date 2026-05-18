@@ -355,11 +355,12 @@ open_file(heim_context context, heim_log_facility *fac, int min, int max,
     return ret;
 }
 
-heim_error_code
-heim_addlog_dest(heim_context context, heim_log_facility *f, const char *orig)
+static heim_error_code
+addlog_dest(heim_context context, heim_log_facility *f,
+            const char *orig, int default_min, int default_max)
 {
     heim_error_code ret = 0;
-    int min = 0, max = 3, n;
+    int min = default_min, max = default_max, n;
     char c;
     const char *p = orig;
 #ifdef _WIN32
@@ -393,8 +394,6 @@ heim_addlog_dest(heim_context context, heim_log_facility *f, const char *orig)
             return HEIM_ERR_LOG_PARSE;
         }
         p++;
-    } else {
-        max = 5;
     }
     if (strcmp(p, "STDERR") == 0) {
         ret = open_file(context, f, min, max, NULL, "a", stderr,
@@ -443,6 +442,12 @@ heim_addlog_dest(heim_context context, heim_log_facility *f, const char *orig)
                         NULL, FILEDISP_REOPEN, 1);
     }
     return ret;
+}
+
+heim_error_code
+heim_addlog_dest(heim_context context, heim_log_facility *f, const char *orig)
+{
+    return addlog_dest(context, f, orig, 0, 5);
 }
 
 heim_error_code
@@ -648,9 +653,9 @@ heim_add_warn_dest(heim_context context, const char *program,
     return 0;
 }
 
-heim_error_code
-heim_add_debug_dest(heim_context context, const char *program,
-                    const char *log_spec)
+static heim_error_code
+add_debug_dest(heim_context context, const char *program,
+               const char *log_spec, int default_min, int default_max)
 {
     heim_log_facility *fac;
     heim_error_code ret;
@@ -662,10 +667,24 @@ heim_add_debug_dest(heim_context context, const char *program,
         heim_set_debug_dest(context, fac);
     }
 
-    ret = heim_addlog_dest(context, fac, log_spec);
+    ret = addlog_dest(context, fac, log_spec, default_min, default_max);
     if (ret)
         return ret;
     return 0;
+}
+
+heim_error_code
+heim_add_debug_dest(heim_context context, const char *program,
+                    const char *log_spec)
+{
+    return add_debug_dest(context, program, log_spec, 0, 5);
+}
+
+heim_error_code
+heim_add_trace_dest(heim_context context, const char *program,
+                    const char *log_spec)
+{
+    return add_debug_dest(context, program, log_spec, 0, -1);
 }
 
 struct heim_audit_kv_tuple {

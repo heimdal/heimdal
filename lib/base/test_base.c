@@ -143,6 +143,83 @@ test_rwlock(void)
 }
 
 static int
+file_contains(const char *filename, const char *needle)
+{
+    char buf[1024];
+    FILE *f;
+    int found = 0;
+
+    f = fopen(filename, "r");
+    if (f == NULL)
+        return 0;
+
+    while (fgets(buf, sizeof(buf), f) != NULL) {
+        if (strstr(buf, needle) != NULL) {
+            found = 1;
+            break;
+        }
+    }
+    fclose(f);
+    return found;
+}
+
+static int
+test_log_dest(void)
+{
+    const char *normal = "test-log-dest.log";
+    const char *trace = "test-trace-dest.log";
+    const char *explicit = "test-trace-explicit-dest.log";
+    heim_log_facility *fac = NULL;
+    heim_context context;
+    int ret;
+
+    unlink(normal);
+    unlink(trace);
+    unlink(explicit);
+
+    context = heim_context_init();
+    heim_assert(context != NULL, "heim_context_init failed");
+
+    ret = heim_initlog(context, "test_base", &fac);
+    heim_assert(ret == 0, "heim_initlog failed");
+    ret = heim_addlog_dest(context, fac, normal);
+    heim_assert(ret == 0, "heim_addlog_dest failed");
+
+    heim_log(context, fac, 10, "normal level 10");
+    heim_log(context, fac, 5, "normal level 5");
+    heim_closelog(context, fac);
+
+    heim_assert(!file_contains(normal, "normal level 10"),
+                "normal log destination traced level 10 by default");
+    heim_assert(file_contains(normal, "normal level 5"),
+                "normal log destination did not log level 5 by default");
+
+    ret = heim_add_trace_dest(context, "test_base", trace);
+    heim_assert(ret == 0, "heim_add_trace_dest failed");
+    ret = heim_add_trace_dest(context, "test_base",
+                              "5/FILE:test-trace-explicit-dest.log");
+    heim_assert(ret == 0, "heim_add_trace_dest with explicit level failed");
+
+    heim_debug(context, 10, "trace level 10");
+    heim_debug(context, 5, "trace level 5");
+
+    heim_assert(file_contains(trace, "trace level 10"),
+                "trace log destination did not trace level 10 by default");
+    heim_assert(!file_contains(explicit, "trace level 10"),
+                "explicit trace destination ignored its level filter");
+    heim_assert(file_contains(explicit, "trace level 5"),
+                "explicit trace destination did not log matching level");
+
+    heim_context_free(&context);
+
+    unlink(normal);
+    unlink(trace);
+    unlink(explicit);
+
+    return 0;
+}
+
+static int
 test_dict(void)
 {
     heim_dict_t dict;
@@ -1365,6 +1442,7 @@ main(int argc, char **argv)
     res |= test_memory();
     res |= test_mutex();
     res |= test_rwlock();
+    res |= test_log_dest();
     res |= test_dict();
     res |= test_auto_release();
     res |= test_string();

@@ -489,7 +489,7 @@ init_context_from_config_file(krb5_context context)
 
     tmp = secure_getenv("KRB5_TRACE");
     if (tmp)
-        heim_add_debug_dest(context->hcontext, "libkrb5", tmp);
+        heim_add_trace_dest(context->hcontext, "libkrb5", tmp);
     s = krb5_config_get_strings(context, NULL, "logging", "krb5", NULL);
     if (s) {
 	char **p;

@@ -10,6 +10,7 @@ HEIMDAL_BASE_1.0 {
 		heim_abort;
 		heim_abortv;
 		heim_add_debug_dest;
+		heim_add_trace_dest;
 		heim_add_et_list;
 		heim_addlog_dest;
 		heim_addlog_func;

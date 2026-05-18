@@ -95,6 +95,7 @@ Release Notes - Heimdal - Version Heimdal 8.0 (future)
  - ASN.1: Support circular types.
  - ASN.1: Topographically sort declarations.
  - ASN.1: Proper support for IMPLICIT tags.
+ - GSS: Retry after a KRB_AP_ERR_BADKEYVER error token
  - GSS: Add advanced credential store / load functionality.
  - GSS: Add gss_acquire_cred_from() and credential store extensions.
  - GSS: Add name attributes support, with support for many basic attributes

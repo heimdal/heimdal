@@ -90,6 +90,9 @@ ext -k ${keytab} host/lucid.test.h5l.se@${R}
 add -p p1 --use-defaults host/ok-delegate.test.h5l.se@${R}
 mod --attributes=+ok-as-delegate host/ok-delegate.test.h5l.se@${R}
 ext -k ${keytab} host/ok-delegate.test.h5l.se@${R}
+add -p p1 --use-defaults host/kvno-enctype.test.h5l.se@${R}
+del_enctype host/kvno-enctype.test.h5l.se@${R} aes256-cts-hmac-sha1-96 aes128-cts-hmac-sha1-96
+ext -k ${keytab} host/kvno-enctype.test.h5l.se@${R}
 add -p p1 --use-defaults host/short@${R}
 mod --alias=host/long.test.h5l.se@${R} host/short@${R}
 ext -k ${keytab} host/short@${R}
@@ -525,6 +528,108 @@ test_run ${context} \
     --server-time-offset=3600 \
     --max-loops=2 \
     --name-type=hostbased-service host@lucid.test.h5l.se
+
+test_section "Getting stale service ticket for kvno retry"
+test_run ${kdestroy}
+test_run ${kinit} --password-file=${objdir}/foopassword user1@${R}
+test_run ${kgetcred} host/lucid.test.h5l.se@${R}
+
+newkvno_keytabfile=${objdir}/server-newkvno.keytab
+newkvno_keytab="FILE:${newkvno_keytabfile}"
+rm -f ${newkvno_keytabfile}
+
+test_run ${kadmin} <<EOF
+cpw -r host/lucid.test.h5l.se@${R}
+ext -k ${newkvno_keytab} host/lucid.test.h5l.se@${R}
+ext -k ${keytab} host/lucid.test.h5l.se@${R}
+EOF
+test_run ${ktutil} -k ${newkvno_keytab} remove \
+    -p host/lucid.test.h5l.se@${R} -V 1
+
+test_section "Stale service ticket kvno"
+test_run ${context} \
+    --gsskrb5-acceptor-identity="${newkvno_keytabfile}" \
+    --mech-type=krb5 \
+    --mutual-auth \
+    --max-loops=3 \
+    --name-type=hostbased-service host@lucid.test.h5l.se
+${klist} --verbose > stale-kvno-klist.log 2>&1 || \
+    { echo "klist failed"; cat stale-kvno-klist.log; exit 1; }
+awk -v service="Server: host/lucid.test.h5l.se@${R}" '
+    $0 == service { in_service = 1; next }
+    /^Server:/ { in_service = 0 }
+    in_service && /Ticket etype: .*kvno 2/ { found = 1 }
+    END { exit found ? 0 : 1 }
+' stale-kvno-klist.log || \
+    { echo "stale KVNO retry did not refresh service ticket"; \
+      cat stale-kvno-klist.log; exit 1; }
+
+test_section "Getting stale service ticket for kvno and time offset retry"
+test_run ${kdestroy}
+test_run ${kinit} --password-file=${objdir}/foopassword user1@${R}
+test_run ${kgetcred} host/lucid.test.h5l.se@${R}
+
+rm -f ${newkvno_keytabfile}
+test_run ${kadmin} <<EOF
+cpw -r host/lucid.test.h5l.se@${R}
+ext -k ${newkvno_keytab} host/lucid.test.h5l.se@${R}
+ext -k ${keytab} host/lucid.test.h5l.se@${R}
+EOF
+test_run ${ktutil} -k ${newkvno_keytab} remove \
+    -p host/lucid.test.h5l.se@${R} -V 1
+test_run ${ktutil} -k ${newkvno_keytab} remove \
+    -p host/lucid.test.h5l.se@${R} -V 2
+
+test_section "Stale service ticket kvno with server time offset"
+test_run ${context} \
+    --gsskrb5-acceptor-identity="${newkvno_keytabfile}" \
+    --mech-type=krb5 \
+    --mutual-auth \
+    --server-time-offset=3600 \
+    --max-loops=3 \
+    --name-type=hostbased-service host@lucid.test.h5l.se
+${klist} --verbose > stale-kvno-skew-klist.log 2>&1 || \
+    { echo "klist failed"; cat stale-kvno-skew-klist.log; exit 1; }
+awk -v service="Server: host/lucid.test.h5l.se@${R}" '
+    $0 == service { in_service = 1; next }
+    /^Server:/ { in_service = 0 }
+    in_service && /Ticket etype: .*kvno 3/ { found = 1 }
+    END { exit found ? 0 : 1 }
+' stale-kvno-skew-klist.log || \
+    { echo "stale KVNO retry with skew did not refresh service ticket"; \
+      cat stale-kvno-skew-klist.log; exit 1; }
+
+test_section "Getting stale service ticket for changed enctype kvno retry"
+test_run ${kdestroy}
+test_run ${kinit} --password-file=${objdir}/foopassword user1@${R}
+test_run ${kgetcred} host/kvno-enctype.test.h5l.se@${R}
+
+rm -f ${newkvno_keytabfile}
+test_run ${kadmin} <<EOF
+cpw -r -e aes256-cts-hmac-sha1-96 host/kvno-enctype.test.h5l.se@${R}
+ext -k ${newkvno_keytab} host/kvno-enctype.test.h5l.se@${R}
+EOF
+test_run ${ktutil} -k ${newkvno_keytab} remove \
+    -p host/kvno-enctype.test.h5l.se@${R} -V 1
+
+test_section "Stale service ticket kvno with changed enctype"
+test_run ${context} \
+    --gsskrb5-acceptor-identity="${newkvno_keytabfile}" \
+    --mech-type=krb5 \
+    --mutual-auth \
+    --max-loops=3 \
+    --name-type=hostbased-service host@kvno-enctype.test.h5l.se
+${klist} --verbose > stale-kvno-enctype-klist.log 2>&1 || \
+    { echo "klist failed"; cat stale-kvno-enctype-klist.log; exit 1; }
+awk -v service="Server: host/kvno-enctype.test.h5l.se@${R}" '
+    $0 == service { in_service = 1; next }
+    /^Server:/ { in_service = 0 }
+    in_service &&
+        /Ticket etype: aes256-cts-hmac-sha1-96, kvno 2/ { found = 1 }
+    END { exit found ? 0 : 1 }
+' stale-kvno-enctype-klist.log || \
+    { echo "stale KVNO retry did not refresh service ticket with new enctype"; \
+      cat stale-kvno-enctype-klist.log; exit 1; }
 
 test_section "Getting client initial ticket for client time offset"
 test_run ${kinit} --password-file=${objdir}/foopassword user1@${R}

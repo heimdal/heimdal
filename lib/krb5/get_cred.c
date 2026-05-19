@@ -43,6 +43,142 @@ get_cred_kdc_capath(krb5_context, krb5_kdc_flags,
 		    Ticket *, const char *, const char *,
 		    krb5_creds **, krb5_creds ***);
 
+static void
+trace_cred_pair(krb5_context context, const char *prefix, const krb5_creds *cred)
+{
+    char *client = NULL;
+    char *server = NULL;
+    const char *cname = "<unknown client>";
+    const char *sname = "<unknown server>";
+
+    if (!_krb5_have_debug(context, 10))
+	return;
+
+    if (cred->client && krb5_unparse_name(context, cred->client, &client) == 0)
+	cname = client;
+    if (cred->server && krb5_unparse_name(context, cred->server, &server) == 0)
+	sname = server;
+
+    _krb5_debug(context, 10, "%s: %s -> %s", prefix, cname, sname);
+
+    free(client);
+    free(server);
+}
+
+static void
+trace_cc_retrieve_result(krb5_context context,
+			 krb5_ccache ccache,
+			 const krb5_creds *mcreds,
+			 krb5_error_code ret)
+{
+    char *ccname = NULL;
+    char *client = NULL;
+    char *server = NULL;
+    const char *cc = "<unknown ccache>";
+    const char *cname = "<unknown client>";
+    const char *sname = "<unknown server>";
+    const char *str;
+
+    if (!_krb5_have_debug(context, 10))
+	return;
+
+    if (krb5_cc_get_full_name(context, ccache, &ccname) == 0)
+	cc = ccname;
+    if (mcreds->client &&
+	krb5_unparse_name(context, mcreds->client, &client) == 0)
+	cname = client;
+    if (mcreds->server &&
+	krb5_unparse_name(context, mcreds->server, &server) == 0)
+	sname = server;
+
+    str = krb5_get_error_message(context, ret);
+    _krb5_debug(context, 10, "Retrieving %s -> %s from %s with result: %d/%s",
+		cname, sname, cc, ret, str);
+    krb5_free_error_message(context, str);
+
+    free(ccname);
+    free(client);
+    free(server);
+}
+
+static void
+trace_key_enctype(krb5_context context,
+		  const char *prefix,
+		  krb5_enctype enctype)
+{
+    char *ename = NULL;
+
+    if (!_krb5_have_debug(context, 10))
+	return;
+
+    if (krb5_enctype_to_string(context, enctype, &ename) == 0) {
+	_krb5_debug(context, 10, "%s: %s", prefix, ename);
+	free(ename);
+    } else {
+	_krb5_debug(context, 10, "%s: enctype %d", prefix, (int)enctype);
+    }
+}
+
+static void
+trace_etype_list(krb5_context context,
+		 const char *prefix,
+		 const krb5_enctype *etypes,
+		 size_t netypes)
+{
+    char buf[512];
+    size_t i, used = 0;
+
+    if (!_krb5_have_debug(context, 10))
+	return;
+
+    buf[0] = '\0';
+    for (i = 0; i < netypes; i++) {
+	char *ename = NULL;
+
+	if (krb5_enctype_to_string(context, etypes[i], &ename) == 0) {
+	    snprintf(buf + used, sizeof(buf) - used, "%s%s",
+		     used ? ", " : "", ename);
+	    free(ename);
+	} else {
+	    snprintf(buf + used, sizeof(buf) - used, "%s%d",
+		     used ? ", " : "", (int)etypes[i]);
+	}
+	used = strlen(buf);
+	if (used >= sizeof(buf) - 1)
+	    break;
+    }
+
+    _krb5_debug(context, 10, "%s: %s", prefix, buf);
+}
+
+static void
+trace_tgs_reply(krb5_context context, const krb5_creds *cred)
+{
+    char *client = NULL;
+    char *server = NULL;
+    char *etype = NULL;
+    const char *cname = "<unknown client>";
+    const char *sname = "<unknown server>";
+    const char *ename = "<unknown enctype>";
+
+    if (!_krb5_have_debug(context, 10))
+	return;
+
+    if (cred->client && krb5_unparse_name(context, cred->client, &client) == 0)
+	cname = client;
+    if (cred->server && krb5_unparse_name(context, cred->server, &server) == 0)
+	sname = server;
+    if (krb5_enctype_to_string(context, cred->session.keytype, &etype) == 0)
+	ename = etype;
+
+    _krb5_debug(context, 10, "TGS reply is for %s -> %s with session key %s",
+		cname, sname, ename);
+
+    free(client);
+    free(server);
+    free(etype);
+}
+
 /*
  * Take the `body' and encode it into `padata' using the credentials
  * in `creds'.
@@ -369,6 +505,10 @@ init_tgs_req (krb5_context context,
     ret = krb5_auth_con_getlocalsubkey(context, ac, subkey);
     if (ret)
 	goto fail;
+    trace_key_enctype(context, "Generated subkey for TGS request",
+		      (*subkey)->keytype);
+    trace_etype_list(context, "etypes requested in TGS request",
+		     t->req_body.etype.val, t->req_body.etype.len);
 
 fail:
     if (ac)
@@ -751,6 +891,8 @@ get_cred_kdc(krb5_context context,
 				   NULL,
 				   decrypt_tkt_with_subkey,
 				   &state);
+	if (ret == 0)
+	    trace_tgs_reply(context, out_creds);
     } else if(krb5_rd_error(context, &resp, &rep.error) == 0) {
 	METHOD_DATA md;
 
@@ -789,6 +931,11 @@ get_cred_kdc(krb5_context context,
     }
 
 out:
+    if (_krb5_have_debug(context, 10)) {
+	const char *str = krb5_get_error_message(context, ret);
+	_krb5_debug(context, 10, "TGS request result: %d/%s", ret, str);
+	krb5_free_error_message(context, str);
+    }
     krb5_free_kdc_rep(context, &rep);
     if (second_ticket == &second_ticket_data)
 	free_Ticket(&second_ticket_data);
@@ -913,20 +1060,25 @@ not_found(krb5_context context, krb5_const_principal p, krb5_error_code code)
 static krb5_error_code
 find_cred(krb5_context context,
 	  krb5_ccache id,
+	  krb5_const_principal client,
 	  krb5_principal server,
 	  krb5_creds **tgts,
 	  krb5_creds *out_creds)
 {
     krb5_error_code ret;
     krb5_creds mcreds;
+    krb5_creds trace_creds;
 
     krb5_cc_clear_mcred(&mcreds);
     mcreds.server = server;
+    trace_creds = mcreds;
+    trace_creds.client = rk_UNCONST(client);
     krb5_timeofday(context, &mcreds.times.endtime);
     ret = krb5_cc_retrieve_cred(context, id,
 				KRB5_TC_DONT_MATCH_REALM |
 				KRB5_TC_MATCH_TIMES,
 				&mcreds, out_creds);
+    trace_cc_retrieve_result(context, id, &trace_creds, ret);
     if(ret == 0)
 	return 0;
     while(tgts && *tgts){
@@ -1005,9 +1157,12 @@ get_cred_kdc_capath_worker(krb5_context context,
 	 * If we have krbtgt/server_realm@try_realm cached, use it and we're
 	 * done.
 	 */
-	ret = find_cred(context, ccache, tmp_creds.server,
+	ret = find_cred(context, ccache, tmp_creds.client, tmp_creds.server,
 			*ret_tgts, &tgts);
 	if (ret == 0) {
+	    trace_cred_pair(context,
+			    "Starting capath search with cached TGT towards service realm",
+			    &tgts);
 	    /* only allow implicit ok_as_delegate if the realm is the clients realm */
 	    if (strcmp(try_realm, client_realm) != 0
 		 || strcmp(try_realm, server_realm) != 0) {
@@ -1241,12 +1396,15 @@ get_cred_kdc_referral(krb5_context context,
 	    return ret;
         }
 
-	ret = find_cred(context, ccache, tgtname, NULL, &tgt);
+	ret = find_cred(context, ccache, in_creds->client, tgtname, NULL, &tgt);
 	krb5_free_principal(context, tgtname);
 	if (ret) {
             free(start_realm);
 	    return ret;
         }
+	trace_cred_pair(context,
+			"Starting referral chase with cached start-realm TGT",
+			&tgt);
     }
 
     /*
@@ -1544,6 +1702,7 @@ check_cc(krb5_context context, krb5_flags options, krb5_ccache ccache,
                                   KRB5_TC_MATCH_KEYTYPE |
 				  KRB5_TC_MATCH_TIMES)),
 				&mcreds, out_creds);
+    trace_cc_retrieve_result(context, ccache, &mcreds, ret);
 
     if (options & KRB5_GC_ANONYMOUS)
 	krb5_free_principal(context, mcreds.client);

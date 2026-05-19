@@ -34,6 +34,117 @@
 
 #include "krb5_locl.h"
 
+static void
+trace_ap_req_principal(krb5_context context,
+		       const char *prefix,
+		       krb5_const_principal principal)
+{
+    char *name = NULL;
+
+    if (!_krb5_have_debug(context, 10))
+	return;
+
+    if (krb5_unparse_name(context, principal, &name) == 0) {
+	_krb5_debug(context, 10, "%s %s", prefix, name);
+	free(name);
+    } else {
+	_krb5_debug(context, 10, "%s <unknown principal>", prefix);
+    }
+}
+
+static void
+trace_ap_req_pair(krb5_context context,
+		  const char *prefix,
+		  krb5_const_principal client,
+		  krb5_const_principal server)
+{
+    char *cname = NULL;
+    char *sname = NULL;
+    const char *c = "<unknown client>";
+    const char *s = "<unknown server>";
+
+    if (!_krb5_have_debug(context, 10))
+	return;
+
+    if (client && krb5_unparse_name(context, client, &cname) == 0)
+	c = cname;
+    if (server && krb5_unparse_name(context, server, &sname) == 0)
+	s = sname;
+
+    _krb5_debug(context, 10, "%s %s -> %s", prefix, c, s);
+
+    free(cname);
+    free(sname);
+}
+
+static void
+trace_ap_req_enctype(krb5_context context,
+		     const char *prefix,
+		     krb5_enctype enctype)
+{
+    char *ename = NULL;
+
+    if (!_krb5_have_debug(context, 10))
+	return;
+
+    if (krb5_enctype_to_string(context, enctype, &ename) == 0) {
+	_krb5_debug(context, 10, "%s %s", prefix, ename);
+	free(ename);
+    } else {
+	_krb5_debug(context, 10, "%s enctype %d", prefix, (int)enctype);
+    }
+}
+
+static void
+trace_ap_req_keytab_lookup(krb5_context context,
+			   krb5_keytab keytab,
+			   krb5_const_principal server,
+			   int kvno,
+			   krb5_enctype enctype,
+			   krb5_error_code ret)
+{
+    char ktname[1024];
+    char etypebuf[64];
+    char *sname = NULL;
+    char *ename = NULL;
+    const char *s = "<unknown server>";
+    const char *str;
+
+    if (!_krb5_have_debug(context, 10))
+	return;
+
+    if (krb5_kt_get_name(context, keytab, ktname, sizeof(ktname)))
+	strlcpy(ktname, "<unknown keytab>", sizeof(ktname));
+    if (server && krb5_unparse_name(context, server, &sname) == 0)
+	s = sname;
+    if (krb5_enctype_to_string(context, enctype, &ename) == 0)
+	strlcpy(etypebuf, ename, sizeof(etypebuf));
+    else
+	snprintf(etypebuf, sizeof(etypebuf), "%d", (int)enctype);
+
+    str = krb5_get_error_message(context, ret);
+    _krb5_debug(context, 10,
+		"Retrieving acceptor key %s from %s (vno %d, enctype %s) with result: %d/%s",
+		s, ktname, kvno, etypebuf, ret, str);
+    krb5_free_error_message(context, str);
+
+    free(sname);
+    free(ename);
+}
+
+static void
+trace_ap_req_result(krb5_context context, krb5_error_code ret)
+{
+    const char *str;
+
+    if (!_krb5_have_debug(context, 10))
+	return;
+
+    str = krb5_get_error_message(context, ret);
+    _krb5_debug(context, 10, "AP-REQ verification result: %d/%s", ret, str);
+    krb5_free_error_message(context, str);
+}
+
 static krb5_error_code
 decrypt_tkt_enc_part (krb5_context context,
 		      krb5_keyblock *key,
@@ -807,6 +918,8 @@ get_key_from_keytab(krb5_context context,
 			     kvno,
 			     ap_req->ticket.enc_part.etype,
 			     &entry);
+    trace_ap_req_keytab_lookup(context, real_keytab, server, kvno,
+			       ap_req->ticket.enc_part.etype, ret);
     if(ret == 0) {
         ret = krb5_copy_keyblock(context, &entry.keyblock, out_key);
         krb5_kt_free_entry(context, &entry);
@@ -862,6 +975,9 @@ krb5_rd_req_ctx(krb5_context context,
     if (o == NULL)
 	return krb5_enomem(context);
 
+    _krb5_debug(context, 10, "Processing AP-REQ (%lu bytes)",
+		(unsigned long)inbuf->length);
+
     if (*auth_context == NULL) {
 	ret = krb5_auth_con_init(context, auth_context);
 	if (ret)
@@ -879,6 +995,14 @@ krb5_rd_req_ctx(krb5_context context,
 					     ap_req.ticket.realm);
     if (ret)
 	goto out;
+    trace_ap_req_principal(context, "AP-REQ ticket is for", o->server);
+    trace_ap_req_enctype(context, "AP-REQ ticket enctype is",
+			 ap_req.ticket.enc_part.etype);
+    if (ap_req.ticket.enc_part.kvno)
+	_krb5_debug(context, 10, "AP-REQ ticket kvno is %d",
+		    *ap_req.ticket.enc_part.kvno);
+    else
+	_krb5_debug(context, 10, "AP-REQ ticket has no kvno");
 
     if (ap_req.ap_options.use_session_key &&
 	(*auth_context)->keyblock == NULL) {
@@ -956,6 +1080,10 @@ krb5_rd_req_ctx(krb5_context context,
 
 	if (ret)
 	    goto out;
+	trace_ap_req_pair(context, "AP-REQ authenticated",
+			  o->ticket->client, o->ticket->server);
+	trace_ap_req_enctype(context, "AP-REQ ticket session key is",
+			     o->ticket->ticket.key.keytype);
 
     } else {
 	/*
@@ -992,6 +1120,10 @@ krb5_rd_req_ctx(krb5_context context,
 		continue;
 	    }
 
+	    trace_ap_req_principal(context,
+				   "Trying acceptor keytab entry",
+				   entry.principal);
+
 	    ret = krb5_verify_ap_req2(context,
 				      auth_context,
 				      &ap_req,
@@ -1002,6 +1134,7 @@ krb5_rd_req_ctx(krb5_context context,
 				      &o->ticket,
 				      KRB5_KU_AP_REQ_AUTH);
 	    if (ret) {
+		trace_ap_req_result(context, ret);
 		krb5_kt_free_entry (context, &entry);
 		continue;
 	    }
@@ -1031,6 +1164,10 @@ krb5_rd_req_ctx(krb5_context context,
 	    krb5_kt_free_entry (context, &entry);
 
 	    done = 1;
+	    trace_ap_req_pair(context, "AP-REQ authenticated",
+			      o->ticket->client, o->ticket->server);
+	    trace_ap_req_enctype(context, "AP-REQ ticket session key is",
+				 o->ticket->ticket.key.keytype);
 	}
 	krb5_kt_end_seq_get (context, id, &cursor);
         if (ret)
@@ -1063,8 +1200,10 @@ krb5_rd_req_ctx(krb5_context context,
 				  o->ticket->client,
 				  o->keyblock,
 				  NULL);
-            if (ret == 0)
+            if (ret == 0) {
                 o->ticket->client->nameattrs->pac_verified = 1;
+		_krb5_debug(context, 10, "AP-REQ PAC verified");
+	    }
 	    if (ret == 0 && (context->flags & KRB5_CTX_F_REPORT_CANONICAL_CLIENT_NAME)) {
 		krb5_error_code ret2;
 		krb5_principal canon_name;
@@ -1089,6 +1228,7 @@ krb5_rd_req_ctx(krb5_context context,
 	  ret = 0;
     }
 out:
+    trace_ap_req_result(context, ret);
 
     if (ret || outctx == NULL)
 	krb5_rd_req_out_ctx_free(context, o);

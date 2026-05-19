@@ -887,6 +887,63 @@ krb5_cc_default_for(krb5_context context,
                                principal, id);
 }
 
+static void
+trace_cc_initialize(krb5_context context,
+		    krb5_ccache id,
+		    krb5_const_principal principal)
+{
+    char *ccname = NULL;
+    char *princname = NULL;
+    const char *cc = "<unknown ccache>";
+    const char *princ = "<unknown principal>";
+
+    if (!_krb5_have_debug(context, 10))
+	return;
+
+    if (krb5_cc_get_full_name(context, id, &ccname) == 0)
+	cc = ccname;
+    if (krb5_unparse_name(context, principal, &princname) == 0)
+	princ = princname;
+
+    _krb5_debug(context, 10, "Initializing %s with default principal %s",
+		cc, princ);
+
+    free(ccname);
+    free(princname);
+}
+
+static void
+trace_cc_store_cred(krb5_context context,
+		    krb5_ccache id,
+		    const krb5_creds *creds)
+{
+    char *ccname = NULL;
+    char *client = NULL;
+    char *server = NULL;
+    const char *cc = "<unknown ccache>";
+    const char *cname = "<unknown client>";
+    const char *sname = "<unknown server>";
+
+    if (!_krb5_have_debug(context, 10))
+	return;
+
+    if (krb5_cc_get_full_name(context, id, &ccname) == 0)
+	cc = ccname;
+    if (creds->client &&
+	krb5_unparse_name(context, creds->client, &client) == 0)
+	cname = client;
+    if (creds->server &&
+	krb5_unparse_name(context, creds->server, &server) == 0)
+	sname = server;
+
+    _krb5_debug(context, 10, "Storing %s -> %s in %s",
+		cname, sname, cc);
+
+    free(ccname);
+    free(client);
+    free(server);
+}
+
 /**
  * Create a new ccache in `id' for `primary_principal'.
  *
@@ -909,6 +966,7 @@ krb5_cc_initialize(krb5_context context,
         id->cc_initialized = 1;
         id->cc_need_start_realm = 1;
         id->cc_start_tgt_stored = 0;
+	trace_cc_initialize(context, id, primary_principal);
     }
     return ret;
 }
@@ -1050,6 +1108,8 @@ krb5_cc_store_cred(krb5_context context,
     ret = (*id->ops->store)(context, id, creds);
     if (ret)
         return ret;
+
+    trace_cc_store_cred(context, id, creds);
 
     if (id->cc_initialized && !id->cc_start_tgt_stored &&
         id->cc_need_start_realm &&

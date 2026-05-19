@@ -33,3 +33,79 @@ RELDIR=tests\gss
 
 !include ../../windows/NTMakefile.w32 
 
+KDCFREE_REALM=TEST.H5L.SE
+KDCFREE_PASSWORD=kdc-free-test-password
+KDCFREE_CLIENT=user@$(KDCFREE_REALM)
+KDCFREE_SERVICE=host/win-gss.test.h5l.se@$(KDCFREE_REALM)
+KDCFREE_TARGET=host@win-gss.test.h5l.se
+KDCFREE_CONF=$(OBJ)\kdc-free.krb5.conf
+KDCFREE_KEYTAB_FILE=$(OBJ)\kdc-free.keytab
+KDCFREE_CCACHE_FILE=$(OBJ)\kdc-free.ccache
+KDCFREE_KEYTAB=FILE:$(KDCFREE_KEYTAB_FILE)
+KDCFREE_CCACHE=FILE:$(KDCFREE_CCACHE_FILE)
+KDCFREE_NO_KEYTAB_FILE=$(OBJ)\kdc-free-no.keytab
+KDCFREE_NO_CCACHE_FILE=$(OBJ)\kdc-free-no.ccache
+KDCFREE_NO_KEYTAB=FILE:$(KDCFREE_NO_KEYTAB_FILE)
+KDCFREE_NO_CCACHE=FILE:$(KDCFREE_NO_CCACHE_FILE)
+KDCFREE_TEST_CONTEXT=$(OBJDIR)\lib\gssapi\test_context.exe
+
+test-kdc-free-conf: prep
+	@if exist "$(KDCFREE_CONF)" $(RM) "$(KDCFREE_CONF)"
+	@$(ECHO) [libdefaults] > $(KDCFREE_CONF)
+	@$(ECHO) 	default_realm = $(KDCFREE_REALM) >> $(KDCFREE_CONF)
+	@$(ECHO) 	dns_canonicalize_hostname = false >> $(KDCFREE_CONF)
+	@$(ECHO) [domain_realms] >> $(KDCFREE_CONF)
+	@$(ECHO) 	.test.h5l.se = $(KDCFREE_REALM) >> $(KDCFREE_CONF)
+	@$(ECHO) 	test.h5l.se = $(KDCFREE_REALM) >> $(KDCFREE_CONF)
+
+test-kdc-free-clean:
+	@if exist "$(KDCFREE_KEYTAB_FILE)" $(RM) "$(KDCFREE_KEYTAB_FILE)"
+	@if exist "$(KDCFREE_CCACHE_FILE)" $(RM) "$(KDCFREE_CCACHE_FILE)"
+	@if exist "$(KDCFREE_NO_KEYTAB_FILE)" $(RM) "$(KDCFREE_NO_KEYTAB_FILE)"
+	@if exist "$(KDCFREE_NO_CCACHE_FILE)" $(RM) "$(KDCFREE_NO_CCACHE_FILE)"
+
+clean::
+	@if exist "$(KDCFREE_CONF)" $(RM) "$(KDCFREE_CONF)"
+	@if exist "$(KDCFREE_KEYTAB_FILE)" $(RM) "$(KDCFREE_KEYTAB_FILE)"
+	@if exist "$(KDCFREE_CCACHE_FILE)" $(RM) "$(KDCFREE_CCACHE_FILE)"
+	@if exist "$(KDCFREE_NO_KEYTAB_FILE)" $(RM) "$(KDCFREE_NO_KEYTAB_FILE)"
+	@if exist "$(KDCFREE_NO_CCACHE_FILE)" $(RM) "$(KDCFREE_NO_CCACHE_FILE)"
+
+test-kdc-free-sanon:
+	set KRB5_CONFIG=$(KDCFREE_CONF)&& set KRB5CCNAME=$(KDCFREE_NO_CCACHE)&& set KRB5_KTNAME=$(KDCFREE_NO_KEYTAB)&& $(KDCFREE_TEST_CONTEXT) --mech-type=sanon-x25519 --anonymous --ret-mech-type=sanon-x25519 --i-channel-bindings=negoex_sanon_test_h5l_se --a-channel-bindings=negoex_sanon_test_h5l_se --wrapunwrap $(KDCFREE_TARGET)
+	set KRB5_CONFIG=$(KDCFREE_CONF)&& set KRB5CCNAME=$(KDCFREE_NO_CCACHE)&& set KRB5_KTNAME=$(KDCFREE_NO_KEYTAB)&& $(KDCFREE_TEST_CONTEXT) --mech-type=sanon-x25519 --anonymous --ret-mech-type=sanon-x25519 --i-channel-bindings=negoex_sanon_test_h5l_se --a-channel-bindings=negoex_sanon_test_h5l_se --wrapunwrap --iov $(KDCFREE_TARGET)
+	set KRB5_CONFIG=$(KDCFREE_CONF)&& set KRB5CCNAME=$(KDCFREE_NO_CCACHE)&& set KRB5_KTNAME=$(KDCFREE_NO_KEYTAB)&& $(KDCFREE_TEST_CONTEXT) --mech-type=spnego --anonymous --ret-mech-type=sanon-x25519 --i-channel-bindings=negoex_sanon_test_h5l_se --a-channel-bindings=negoex_sanon_test_h5l_se --wrapunwrap $(KDCFREE_TARGET)
+	set KRB5_CONFIG=$(KDCFREE_CONF)&& set KRB5CCNAME=$(KDCFREE_NO_CCACHE)&& set KRB5_KTNAME=$(KDCFREE_NO_KEYTAB)&& $(KDCFREE_TEST_CONTEXT) --mech-type=spnego --anonymous --ret-mech-type=sanon-x25519 --i-channel-bindings=negoex_sanon_test_h5l_se --a-channel-bindings=negoex_sanon_test_h5l_se --wrapunwrap --iov $(KDCFREE_TARGET)
+
+test-kdc-free-aes256-sha1:
+	set KRB5_CONFIG=$(KDCFREE_CONF)&& $(BINDIR)\ktutil.exe -k $(KDCFREE_KEYTAB) add -p $(KDCFREE_SERVICE) -V 1 -e aes256-cts-hmac-sha1-96 -w $(KDCFREE_PASSWORD)
+	set KRB5_CONFIG=$(KDCFREE_CONF)&& $(BINDIR)\kimpersonate.exe --ccache=$(KDCFREE_CCACHE) -k $(KDCFREE_KEYTAB) -s $(KDCFREE_SERVICE) -c $(KDCFREE_CLIENT) -t aes256-cts-hmac-sha1-96
+	set KRB5_CONFIG=$(KDCFREE_CONF)&& $(KDCFREE_TEST_CONTEXT) --client-ccache=$(KDCFREE_CCACHE) --gsskrb5-acceptor-identity=$(KDCFREE_KEYTAB) --no-dns-canonicalize --mech-type=krb5 --ret-mech-type=krb5 --limit-enctype=aes256-cts-hmac-sha1-96 --session-enctype=aes256-cts-hmac-sha1-96 --mutual-auth --wrapunwrap $(KDCFREE_TARGET)
+	set KRB5_CONFIG=$(KDCFREE_CONF)&& $(KDCFREE_TEST_CONTEXT) --client-ccache=$(KDCFREE_CCACHE) --gsskrb5-acceptor-identity=$(KDCFREE_KEYTAB) --no-dns-canonicalize --mech-type=spnego --mech-types=krb5 --ret-mech-type=krb5 --limit-enctype=aes256-cts-hmac-sha1-96 --mutual-auth --wrapunwrap $(KDCFREE_TARGET)
+
+test-kdc-free-aes128-sha1:
+	set KRB5_CONFIG=$(KDCFREE_CONF)&& $(BINDIR)\ktutil.exe -k $(KDCFREE_KEYTAB) add -p $(KDCFREE_SERVICE) -V 1 -e aes128-cts-hmac-sha1-96 -w $(KDCFREE_PASSWORD)
+	set KRB5_CONFIG=$(KDCFREE_CONF)&& $(BINDIR)\kimpersonate.exe --ccache=$(KDCFREE_CCACHE) -k $(KDCFREE_KEYTAB) -s $(KDCFREE_SERVICE) -c $(KDCFREE_CLIENT) -t aes128-cts-hmac-sha1-96
+	set KRB5_CONFIG=$(KDCFREE_CONF)&& $(KDCFREE_TEST_CONTEXT) --client-ccache=$(KDCFREE_CCACHE) --gsskrb5-acceptor-identity=$(KDCFREE_KEYTAB) --no-dns-canonicalize --mech-type=krb5 --ret-mech-type=krb5 --limit-enctype=aes128-cts-hmac-sha1-96 --session-enctype=aes128-cts-hmac-sha1-96 --mutual-auth --wrapunwrap $(KDCFREE_TARGET)
+	set KRB5_CONFIG=$(KDCFREE_CONF)&& $(KDCFREE_TEST_CONTEXT) --client-ccache=$(KDCFREE_CCACHE) --gsskrb5-acceptor-identity=$(KDCFREE_KEYTAB) --no-dns-canonicalize --mech-type=spnego --mech-types=krb5 --ret-mech-type=krb5 --limit-enctype=aes128-cts-hmac-sha1-96 --mutual-auth --wrapunwrap $(KDCFREE_TARGET)
+
+test-kdc-free-aes256-sha2:
+	set KRB5_CONFIG=$(KDCFREE_CONF)&& $(BINDIR)\ktutil.exe -k $(KDCFREE_KEYTAB) add -p $(KDCFREE_SERVICE) -V 1 -e aes256-cts-hmac-sha384-192 -w $(KDCFREE_PASSWORD)
+	set KRB5_CONFIG=$(KDCFREE_CONF)&& $(BINDIR)\kimpersonate.exe --ccache=$(KDCFREE_CCACHE) -k $(KDCFREE_KEYTAB) -s $(KDCFREE_SERVICE) -c $(KDCFREE_CLIENT) -t aes256-cts-hmac-sha384-192
+	set KRB5_CONFIG=$(KDCFREE_CONF)&& $(KDCFREE_TEST_CONTEXT) --client-ccache=$(KDCFREE_CCACHE) --gsskrb5-acceptor-identity=$(KDCFREE_KEYTAB) --no-dns-canonicalize --mech-type=krb5 --ret-mech-type=krb5 --limit-enctype=aes256-cts-hmac-sha384-192 --session-enctype=aes256-cts-hmac-sha384-192 --mutual-auth --wrapunwrap $(KDCFREE_TARGET)
+	set KRB5_CONFIG=$(KDCFREE_CONF)&& $(KDCFREE_TEST_CONTEXT) --client-ccache=$(KDCFREE_CCACHE) --gsskrb5-acceptor-identity=$(KDCFREE_KEYTAB) --no-dns-canonicalize --mech-type=spnego --mech-types=krb5 --ret-mech-type=krb5 --limit-enctype=aes256-cts-hmac-sha384-192 --mutual-auth --wrapunwrap $(KDCFREE_TARGET)
+
+test-kdc-free-aes128-sha2:
+	set KRB5_CONFIG=$(KDCFREE_CONF)&& $(BINDIR)\ktutil.exe -k $(KDCFREE_KEYTAB) add -p $(KDCFREE_SERVICE) -V 1 -e aes128-cts-hmac-sha256-128 -w $(KDCFREE_PASSWORD)
+	set KRB5_CONFIG=$(KDCFREE_CONF)&& $(BINDIR)\kimpersonate.exe --ccache=$(KDCFREE_CCACHE) -k $(KDCFREE_KEYTAB) -s $(KDCFREE_SERVICE) -c $(KDCFREE_CLIENT) -t aes128-cts-hmac-sha256-128
+	set KRB5_CONFIG=$(KDCFREE_CONF)&& $(KDCFREE_TEST_CONTEXT) --client-ccache=$(KDCFREE_CCACHE) --gsskrb5-acceptor-identity=$(KDCFREE_KEYTAB) --no-dns-canonicalize --mech-type=krb5 --ret-mech-type=krb5 --limit-enctype=aes128-cts-hmac-sha256-128 --session-enctype=aes128-cts-hmac-sha256-128 --mutual-auth --wrapunwrap $(KDCFREE_TARGET)
+	set KRB5_CONFIG=$(KDCFREE_CONF)&& $(KDCFREE_TEST_CONTEXT) --client-ccache=$(KDCFREE_CCACHE) --gsskrb5-acceptor-identity=$(KDCFREE_KEYTAB) --no-dns-canonicalize --mech-type=spnego --mech-types=krb5 --ret-mech-type=krb5 --limit-enctype=aes128-cts-hmac-sha256-128 --mutual-auth --wrapunwrap $(KDCFREE_TARGET)
+
+test-kdc-free: test-kdc-free-conf test-kdc-free-clean \
+		test-kdc-free-sanon \
+		test-kdc-free-aes256-sha1 \
+		test-kdc-free-aes128-sha1 \
+		test-kdc-free-aes256-sha2 \
+	test-kdc-free-aes128-sha2
+
+test:: test-kdc-free

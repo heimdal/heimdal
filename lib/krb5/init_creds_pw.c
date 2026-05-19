@@ -131,6 +131,120 @@ free_paid(krb5_context context, struct pa_info_data *ppaid)
     memset(ppaid, 0, sizeof(*ppaid));
 }
 
+static void
+trace_init_creds_client(krb5_context context, krb5_const_principal client)
+{
+    char *name = NULL;
+
+    if (!_krb5_have_debug(context, 10))
+	return;
+
+    if (krb5_unparse_name(context, client, &name) == 0) {
+	_krb5_debug(context, 10, "Getting initial credentials for %s", name);
+	free(name);
+    } else {
+	_krb5_debug(context, 10, "Getting initial credentials");
+    }
+}
+
+static void
+trace_key_enctype(krb5_context context,
+		  const char *what,
+		  krb5_enctype enctype)
+{
+    char *name = NULL;
+
+    if (!_krb5_have_debug(context, 10))
+	return;
+
+    if (krb5_enctype_to_string(context, enctype, &name) == 0) {
+	_krb5_debug(context, 10, "%s: %s", what, name);
+	free(name);
+    } else {
+	_krb5_debug(context, 10, "%s: enctype %d", what, (int)enctype);
+    }
+}
+
+static void
+trace_keytab_lookup(krb5_context context,
+		    krb5_keytab keytab,
+		    krb5_const_principal principal,
+		    krb5_enctype enctype,
+		    krb5_error_code ret)
+{
+    char ktname[1024];
+    char etypebuf[64];
+    char *pname = NULL;
+    char *ename = NULL;
+    const char *princ = "<unknown principal>";
+    const char *str;
+
+    if (!_krb5_have_debug(context, 10))
+	return;
+
+    if (krb5_kt_get_name(context, keytab, ktname, sizeof(ktname)))
+	strlcpy(ktname, "<unknown keytab>", sizeof(ktname));
+    if (krb5_unparse_name(context, principal, &pname) == 0)
+	princ = pname;
+    if (krb5_enctype_to_string(context, enctype, &ename) == 0)
+	strlcpy(etypebuf, ename, sizeof(etypebuf));
+    else
+	snprintf(etypebuf, sizeof(etypebuf), "%d", (int)enctype);
+
+    str = krb5_get_error_message(context, ret);
+    _krb5_debug(context, 10,
+		"Retrieving %s from %s (vno 0, enctype %s) with result: %d/%s",
+		princ, ktname, etypebuf, ret, str);
+    krb5_free_error_message(context, str);
+
+    free(pname);
+    free(ename);
+}
+
+static void
+trace_keytab_entries(krb5_context context,
+		     krb5_keytab keytab,
+		     krb5_const_principal principal,
+		     krb5_enctype *etypes,
+		     size_t netypes)
+{
+    char *pname = NULL;
+    char buf[512];
+    size_t used = 0;
+    size_t i;
+
+    if (!_krb5_have_debug(context, 10) || netypes == 0)
+	return;
+
+    (void)keytab;
+
+    if (krb5_unparse_name(context, principal, &pname) != 0)
+	return;
+
+    buf[0] = '\0';
+    for (i = 0; i < netypes; i++) {
+	char *ename = NULL;
+	int ret;
+
+	ret = krb5_enctype_to_string(context, etypes[i], &ename);
+	if (ret == 0) {
+	    snprintf(buf + used, sizeof(buf) - used, "%s%s",
+		     used ? ", " : "", ename);
+	    free(ename);
+	} else {
+	    snprintf(buf + used, sizeof(buf) - used, "%s%d",
+		     used ? ", " : "", (int)etypes[i]);
+	}
+	used = strlen(buf);
+	if (used >= sizeof(buf) - 1)
+	    break;
+    }
+
+    _krb5_debug(context, 10, "Found entries for %s in keytab: %s",
+		pname, buf);
+    free(pname);
+}
+
 static krb5_error_code KRB5_CALLCONV
 default_s2k_func(krb5_context context, krb5_enctype type,
 		 krb5_const_pointer keyseed,
@@ -2720,6 +2834,8 @@ krb5_init_creds_init(krb5_context context,
 	return ret;
     }
 
+    trace_init_creds_client(context, ctx->cred.client);
+
     /* Set a new nonce. */
     /* FIXME should generate a new nonce for each AS-REQ */
     krb5_generate_random_block (&ctx->nonce, sizeof(ctx->nonce));
@@ -2903,6 +3019,7 @@ keytab_key_proc(krb5_context context, krb5_enctype enctype,
     }
 
     ret = krb5_kt_get_entry (context, keytab, principal, 0, enctype, &entry);
+    trace_keytab_lookup(context, keytab, principal, enctype, ret);
     if (ret == 0) {
         ret = krb5_copy_keyblock(context, &entry.keyblock, key);
         krb5_kt_free_entry(context, &entry);
@@ -3017,6 +3134,8 @@ krb5_init_creds_set_keytab(krb5_context context,
 	if (ctx->etypes)
 	    free(ctx->etypes);
 	ctx->etypes = etypes;
+	trace_keytab_entries(context, keytab, ctx->cred.client, ctx->etypes,
+			     netypes);
     }
 
  out:
@@ -3298,6 +3417,10 @@ init_creds_step(krb5_context context,
 		ret = copy_EncKDCRepPart(&rep.enc_part, &ctx->enc_part);
 	    if (ret == 0)
 		ret = validate_pkinit_fx(context, ctx, &rep.kdc_rep, &ctx->cred.session);
+	    if (ret == 0)
+		trace_key_enctype(context,
+				  "Decrypted AS reply; session key is",
+				  ctx->cred.session.keytype);
 
 	    ctx->as_enctype = ctx->fast_state.reply_key->keytype;
 

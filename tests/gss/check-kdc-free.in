@@ -1,0 +1,126 @@
+#!/bin/sh
+#
+# Copyright (c) 2026 Kungliga Tekniska Högskolan
+# (Royal Institute of Technology, Stockholm, Sweden).
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# 3. Neither the name of the Institute nor the names of its contributors may
+#    be used to endorse or promote products derived from this software without
+#    specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
+# DAMAGE.
+#
+
+top_srcdir="@top_srcdir@"
+env_setup="@env_setup@"
+objdir="@objdir@"
+
+. ${env_setup}
+. ${top_srcdir}/tests/bin/test-lib.sh
+
+R=TEST.H5L.SE
+password=kdc-free-test-password
+client="user@${R}"
+service="host/win-gss.test.h5l.se@${R}"
+target="host@win-gss.test.h5l.se"
+
+keytabfile="${objdir}/kdc-free.keytab"
+keytab="FILE:${keytabfile}"
+cachefile="${objdir}/kdc-free.ccache"
+cache="FILE:${cachefile}"
+nokeytabfile="${objdir}/kdc-free-no.keytab"
+nokeytab="FILE:${nokeytabfile}"
+nocachefile="${objdir}/kdc-free-no.ccache"
+nocache="FILE:${nocachefile}"
+
+ktutil="${TESTS_ENVIRONMENT} ../../admin/ktutil"
+kimpersonate="${TESTS_ENVIRONMENT} ../../kuser/kimpersonate"
+context="${TESTS_ENVIRONMENT} ../../lib/gssapi/test_context"
+
+KRB5_CONFIG="${objdir}/kdc-free.krb5.conf"
+export KRB5_CONFIG
+
+cat > "${KRB5_CONFIG}" <<EOF
+[libdefaults]
+	default_realm = ${R}
+	dns_canonicalize_hostname = false
+[domain_realms]
+	.test.h5l.se = ${R}
+	test.h5l.se = ${R}
+EOF
+
+rm -f "${keytabfile}" "${cachefile}" "${nokeytabfile}" "${nocachefile}"
+
+test_init
+
+test_section "KDC-free GSS SAnon-X25519"
+for mech in sanon-x25519 sanon-x25519iov spnego spnegoiov; do
+    iov=""
+    if [ "$mech" = "sanon-x25519iov" ] ; then
+	mech="sanon-x25519"
+	iov="--iov"
+    fi
+    if [ "$mech" = "spnegoiov" ] ; then
+	mech="spnego"
+	iov="--iov"
+    fi
+
+    test_section "KDC-free GSS ${mech} SAnon-X25519 ${iov}"
+    test_run env KRB5CCNAME="${nocache}" KRB5_KTNAME="${nokeytab}" \
+	${context} --mech-type=${mech} --anonymous \
+	--ret-mech-type=sanon-x25519 \
+	--i-channel-bindings=negoex_sanon_test_h5l_se \
+	--a-channel-bindings=negoex_sanon_test_h5l_se \
+	--wrapunwrap ${iov} "${target}"
+done
+
+for enctype in \
+    aes256-cts-hmac-sha1-96 \
+    aes128-cts-hmac-sha1-96 \
+    aes256-cts-hmac-sha384-192 \
+    aes128-cts-hmac-sha256-128
+do
+    rm -f "${cachefile}"
+
+    test_section "KDC-free GSS krb5 with ${enctype}"
+    test_run ${ktutil} -k "${keytab}" add -p "${service}" -V 1 \
+	-e "${enctype}" -w "${password}" &&
+    test_run ${kimpersonate} --ccache="${cache}" -k "${keytab}" \
+	-s "${service}" -c "${client}" -t "${enctype}" &&
+    test_run ${context} --client-ccache="${cache}" \
+	--gsskrb5-acceptor-identity="${keytab}" \
+	--no-dns-canonicalize --mech-type=krb5 --ret-mech-type=krb5 \
+	--limit-enctype="${enctype}" \
+	--session-enctype="${enctype}" --mutual-auth --wrapunwrap \
+	"${target}"
+
+    test_section "KDC-free GSS SPNEGO with ${enctype}"
+    test_run ${context} --client-ccache="${cache}" \
+	--gsskrb5-acceptor-identity="${keytab}" \
+	--no-dns-canonicalize --mech-type=spnego --mech-types=krb5 \
+	--limit-enctype="${enctype}" \
+	--ret-mech-type=krb5 --mutual-auth --wrapunwrap "${target}"
+done
+
+test_finish

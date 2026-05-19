@@ -6,7 +6,7 @@ include $(top_srcdir)/Makefile.am.common
 
 noinst_DATA = krb5.conf krb5-nodns.conf new_clients_k5.conf mech
 
-SCRIPT_TESTS = check-basic check-nodns check-gss check-gssmask check-context check-spnego check-negoex
+SCRIPT_TESTS = check-basic check-nodns check-gss check-gssmask check-context check-spnego check-negoex check-kdc-free
 
 TESTS = $(SCRIPT_TESTS)
 
@@ -58,6 +58,11 @@ check-negoex: check-negoex.in Makefile
 	chmod +x check-negoex.tmp && \
 	mv check-negoex.tmp check-negoex
 
+check-kdc-free: check-kdc-free.in Makefile
+	$(do_subst) < $(srcdir)/check-kdc-free.in > check-kdc-free.tmp && \
+	chmod +x check-kdc-free.tmp && \
+	mv check-kdc-free.tmp check-kdc-free
+
 krb5.conf: krb5.conf.in Makefile
 	$(do_subst) < $(srcdir)/krb5.conf.in > krb5.conf.tmp && \
 	mv krb5.conf.tmp krb5.conf
@@ -95,7 +100,13 @@ CLEANFILES= \
 	check-gssmask.tmp \
 	check-spnego.tmp \
 	check-context.tmp \
-	check-negoex.tmp
+	check-negoex.tmp \
+	check-kdc-free.tmp \
+	kdc-free.krb5.conf \
+	kdc-free.keytab \
+	kdc-free.ccache \
+	kdc-free-no.keytab \
+	kdc-free-no.ccache
 
 EXTRA_DIST = \
 	NTMakefile \
@@ -106,6 +117,7 @@ EXTRA_DIST = \
 	check-spnego.in \
 	check-context.in \
 	check-negoex.in \
+	check-kdc-free.in \
 	krb5.conf.in \
 	krb5-nodns.conf.in \
 	include-krb5.conf \

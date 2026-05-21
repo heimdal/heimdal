@@ -112,6 +112,16 @@ test_section "copy ccache with gss_store_cred"
 test_run ${test_add_store_cred} --default --overwrite --env ${cache} "${cache2}%{null}"
 test_run ${klist} -c ${cache2}
 
+test_section "copy ccache to MEMORY with gss_store_cred"
+test_run ${test_add_store_cred} --default --overwrite --env \
+    ${cache} MEMORY:gss-store-cred-issue132
+
+test_section "store password-acquired cred with gss_store_cred"
+KRB5CCNAME=MEMORY:gss-store-cred-issue132-default
+test_run ${test_add_store_cred} --store-cred --default --overwrite \
+    --password=upw user@${R} host@host.test.h5l.se
+KRB5CCNAME=${cache}
+
 test_section "keytab"
 test_run ${acquire_cred} \
     --acquire-type=accept \

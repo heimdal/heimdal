@@ -378,6 +378,110 @@ test_cache_remove(krb5_context context, const char *type)
 }
 
 static void
+make_cursor_cred(krb5_context context, krb5_creds *cred, const char *server)
+{
+    krb5_error_code ret;
+
+    memset(cred, 0, sizeof(*cred));
+    ret = krb5_parse_name(context, "lha@SU.SE", &cred->client);
+    if (ret)
+	krb5_err(context, 1, ret, "krb5_parse_name");
+    ret = krb5_parse_name(context, server, &cred->server);
+    if (ret)
+	krb5_err(context, 1, ret, "krb5_parse_name");
+    cred->times.endtime = time(NULL) + 300;
+}
+
+static void
+expect_memory_cursor_invalidated(krb5_context context, krb5_ccache id,
+				 krb5_cc_cursor *cursor, const char *what)
+{
+    krb5_error_code ret;
+    krb5_creds found;
+
+    memset(&found, 0, sizeof(found));
+    ret = krb5_cc_next_cred(context, id, cursor, &found);
+    if (ret == 0) {
+	krb5_free_cred_contents(context, &found);
+	krb5_errx(context, 1,
+		  "MEMORY cursor was not invalidated after %s", what);
+    }
+    if (ret != ENOENT && ret != KRB5_CC_END)
+	krb5_err(context, 1, ret,
+		 "unexpected MEMORY cursor invalidation error after %s", what);
+
+    ret = krb5_cc_end_seq_get(context, id, cursor);
+    if (ret)
+	krb5_err(context, 1, ret, "krb5_cc_end_seq_get");
+}
+
+static void
+test_mcache_cursor_invalidation(krb5_context context)
+{
+    krb5_error_code ret;
+    krb5_ccache id, id2;
+    krb5_cc_cursor cursor;
+    krb5_principal p;
+    krb5_creds cred1, cred2;
+    char *name = NULL;
+
+    ret = krb5_parse_name(context, "lha@SU.SE", &p);
+    if (ret)
+	krb5_err(context, 1, ret, "krb5_parse_name");
+
+    ret = krb5_cc_new_unique(context, krb5_cc_type_memory, NULL, &id);
+    if (ret)
+	krb5_err(context, 1, ret, "krb5_cc_new_unique");
+    if (asprintf(&name, "%s:%s", krb5_cc_get_type(context, id),
+		 krb5_cc_get_name(context, id)) == -1 || name == NULL)
+	krb5_err(context, 1, errno, "asprintf");
+    ret = krb5_cc_resolve(context, name, &id2);
+    free(name);
+    if (ret)
+	krb5_err(context, 1, ret, "krb5_cc_resolve");
+
+    make_cursor_cred(context, &cred1, "krbtgt/SU.SE@SU.SE");
+    make_cursor_cred(context, &cred2, "krbtgt/H5L.SE@SU.SE");
+
+    ret = krb5_cc_initialize(context, id, p);
+    if (ret)
+	krb5_err(context, 1, ret, "krb5_cc_initialize");
+    ret = krb5_cc_store_cred(context, id, &cred1);
+    if (ret)
+	krb5_err(context, 1, ret, "krb5_cc_store_cred");
+    ret = krb5_cc_start_seq_get(context, id, &cursor);
+    if (ret)
+	krb5_err(context, 1, ret, "krb5_cc_start_seq_get");
+    ret = krb5_cc_initialize(context, id2, p);
+    if (ret)
+	krb5_err(context, 1, ret, "krb5_cc_initialize");
+    expect_memory_cursor_invalidated(context, id, &cursor, "initialize");
+
+    ret = krb5_cc_initialize(context, id, p);
+    if (ret)
+	krb5_err(context, 1, ret, "krb5_cc_initialize");
+    ret = krb5_cc_store_cred(context, id, &cred1);
+    if (ret)
+	krb5_err(context, 1, ret, "krb5_cc_store_cred");
+    ret = krb5_cc_store_cred(context, id, &cred2);
+    if (ret)
+	krb5_err(context, 1, ret, "krb5_cc_store_cred");
+    ret = krb5_cc_start_seq_get(context, id, &cursor);
+    if (ret)
+	krb5_err(context, 1, ret, "krb5_cc_start_seq_get");
+    ret = krb5_cc_remove_cred(context, id2, 0, &cred2);
+    if (ret)
+	krb5_err(context, 1, ret, "krb5_cc_remove_cred");
+    expect_memory_cursor_invalidated(context, id, &cursor, "remove");
+
+    krb5_free_cred_contents(context, &cred1);
+    krb5_free_cred_contents(context, &cred2);
+    krb5_cc_destroy(context, id);
+    krb5_cc_close(context, id2);
+    krb5_free_principal(context, p);
+}
+
+static void
 test_mcc_default(void)
 {
     krb5_context context;
@@ -1001,6 +1105,7 @@ main(int argc, char **argv)
 
     test_default_name(context);
     test_mcache(context);
+    test_mcache_cursor_invalidation(context);
     /*
      * XXX Make sure to set default ccache names for each cc type!
      * Otherwise we clobber the user's ccaches.

@@ -10,7 +10,7 @@ do
     set -- "$@" "."
     if [ $# -gt 4 ]
     then
-        kill kill -9 $pid 2> /dev/null
+        kill -9 $pid 2> /dev/null
         break
     fi
     sleep 1

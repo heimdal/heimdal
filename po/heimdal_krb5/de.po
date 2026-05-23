@@ -254,7 +254,7 @@ msgstr "Nachricht von %s zu lang"
 
 #: lib/krb5/changepw.c:654
 #, c-format
-msgid "Unable to reach any changepw server  in realm %s"
+msgid "Unable to reach any changepw server in realm %s"
 msgstr "In Realm %s ist kein Server zum Ändern des Passworts erreichbar."
 
 #: lib/krb5/convert_creds.c:136

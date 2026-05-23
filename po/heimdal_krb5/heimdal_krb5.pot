@@ -461,7 +461,7 @@ msgstr ""
 
 #: lib/krb5/changepw.c:654
 #, c-format
-msgid "Unable to reach any changepw server  in realm %s"
+msgid "Unable to reach any changepw server in realm %s"
 msgstr ""
 
 #: lib/krb5/convert_creds.c:136

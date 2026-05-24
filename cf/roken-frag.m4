@@ -192,7 +192,6 @@ AC_CHECK_FUNCS([				\
 	mkdtemp					\
 	mkostemp				\
 	on_exit					\
-	poll					\
 	random					\
 	secure_getenv				\
 	setprogname				\
@@ -360,6 +359,7 @@ AC_BROKEN([					\
 	mergesort				\
 	mergesort_r				\
 	mkstemp					\
+	poll					\
 	pread					\
 	putenv					\
 	rcmd					\

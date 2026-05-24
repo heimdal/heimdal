@@ -192,6 +192,46 @@ static inline ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL rk_SOCK_INIT(void) {
 
 #endif  /* WinSock */
 
+#ifdef HAVE_POLL_H
+#include <poll.h>
+#else
+/*
+ * poll(2) compatibility.  Windows may provide struct pollfd and the
+ * POLL* constants through winsock2.h even though it has no <poll.h>.
+ */
+typedef unsigned long nfds_t;
+# ifndef POLLIN
+struct pollfd {
+    rk_socket_t fd;
+    short events;
+    short revents;
+};
+# endif
+# ifndef POLLIN
+#  define POLLIN  0x0001
+# endif
+# ifndef POLLPRI
+#  define POLLPRI 0x0002
+# endif
+# ifndef POLLOUT
+#  define POLLOUT 0x0004
+# endif
+# ifndef POLLERR
+#  define POLLERR 0x0008
+# endif
+# ifndef POLLHUP
+#  define POLLHUP 0x0010
+# endif
+# ifndef POLLNVAL
+#  define POLLNVAL 0x0020
+# endif
+#endif
+
+#ifndef HAVE_POLL
+#define poll rk_poll
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL poll(struct pollfd *, nfds_t, int);
+#endif
+
 #ifndef IN_LOOPBACKNET
 #define IN_LOOPBACKNET 127
 #endif

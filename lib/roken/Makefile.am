@@ -38,6 +38,7 @@ check_PROGRAMS = 				\
 		parse_bytes-test		\
 		parse_reply-test		\
 		parse_time-test			\
+		poll-test			\
 		snprintf-test			\
 		strpftime-test			\
 		timeval				\
@@ -282,6 +283,8 @@ EXTRA_DIST = \
 	getline.c \
 	ndbm_wrap.c \
 	ndbm_wrap.h \
+	poll.c \
+	poll-test.c \
 	rename.c \
 	simple_exec_w32.c \
 	sleep.c \

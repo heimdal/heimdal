@@ -90,6 +90,7 @@ libroken_la_OBJS =			\
 	$(OBJ)\parse_bytes.obj		\
 	$(OBJ)\parse_time.obj		\
 	$(OBJ)\parse_units.obj		\
+	$(OBJ)\poll.obj			\
 	$(OBJ)\pread.obj		\
 	$(OBJ)\realloc.obj		\
 	$(OBJ)\rename.obj		\
@@ -214,6 +215,7 @@ TEST_PROGS =			    \
 	$(OBJ)\parse_bytes-test.exe \
 	$(OBJ)\parse_reply-test.exe \
 	$(OBJ)\parse_time-test.exe  \
+	$(OBJ)\poll-test.exe       \
 	$(OBJ)\snprintf-test.exe    \
 	$(OBJ)\strpftime-test.exe   \
 	$(OBJ)\dirent-test.exe	    \
@@ -244,6 +246,9 @@ $(OBJ)\test-readenv.exe: $(OBJ)\test-readenv.obj $(OBJ)\test-mem.obj $(LIBROKEN)
 	$(EXECONLINK)
 
 $(OBJ)\parse_time-test.exe: $(OBJ)\parse_time-test.obj $(OBJ)\test-mem.obj $(LIBROKEN)
+	$(EXECONLINK)
+
+$(OBJ)\poll-test.exe: $(OBJ)\poll-test.obj $(LIBROKEN)
 	$(EXECONLINK)
 
 $(OBJ)\strpftime-test.obj: strpftime-test.c
@@ -307,9 +312,9 @@ test-run:
 # Need to rewrite this test:
 #	-parse_reply-test.exe
 	-parse_time-test.exe
+	poll-test.exe
 	-snprintf-test.exe
 	-strpftime-test.exe
 	cd $(SRCDIR)
 
 test:: test-binaries test-run
-

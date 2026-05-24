@@ -62,6 +62,7 @@ jobs:
                     - name: osx-clang
                       os: macos-latest
                       compiler: clang
+                      configureopts: '--with-libedit=yes'
         steps:
             - name: Install packages
               run: |

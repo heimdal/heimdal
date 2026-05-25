@@ -483,7 +483,7 @@ loop(gss_OID mechoid,
 	    if (*deleg_cred != GSS_C_NO_CREDENTIAL)
 		errx(1, "got delegated cred but didn't expect one");
 	} else if (*deleg_cred == GSS_C_NO_CREDENTIAL)
-	    errx(1, "asked for delegarated cred but did get one");
+	    errx(1, "asked for delegated cred but did get one");
     } else if (*deleg_cred != GSS_C_NO_CREDENTIAL)
 	  errx(1, "got deleg_cred cred but didn't ask");
 

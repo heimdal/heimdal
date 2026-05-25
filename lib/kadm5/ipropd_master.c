@@ -86,37 +86,46 @@ make_signal_socket (krb5_context context)
 #endif
 }
 
+static int
+listen_port(krb5_context context, const char *port_str)
+{
+    int port;
+
+    if (port_str) {
+	port = krb5_getportbyname(context, port_str, "tcp", 0);
+	if (port == 0) {
+	    char *ptr;
+	    long num;
+
+	    num = strtol(port_str, &ptr, 10);
+	    if (num == 0 && ptr == port_str)
+		krb5_errx(context, 1, "bad port `%s'", port_str);
+	    port = htons(num);
+	}
+    } else {
+	port = krb5_getportbyname(context, IPROP_SERVICE,
+				  "tcp", IPROP_PORT);
+    }
+
+    return port;
+}
+
 static krb5_socket_t
-make_listen_socket (krb5_context context, const char *port_str)
+make_listen_socket(krb5_context context, int port)
 {
     krb5_socket_t fd;
     int one = 1;
     struct sockaddr_in addr;
 
-    fd = socket (AF_INET, SOCK_STREAM, 0);
+    fd = socket(AF_INET, SOCK_STREAM, 0);
     if (rk_IS_BAD_SOCKET(fd))
 	krb5_err (context, 1, rk_SOCK_ERRNO, "socket AF_INET");
     (void) setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (void *)&one, sizeof(one));
     memset (&addr, 0, sizeof(addr));
     addr.sin_family = AF_INET;
+    addr.sin_port = port;
+    addr.sin_addr.s_addr = htonl(INADDR_ANY);
 
-    if (port_str) {
-	addr.sin_port = krb5_getportbyname (context,
-					      port_str, "tcp",
-					      0);
-	if (addr.sin_port == 0) {
-	    char *ptr;
-	    long port;
-
-	    port = strtol (port_str, &ptr, 10);
-	    if (port == 0 && ptr == port_str)
-		krb5_errx (context, 1, "bad port `%s'", port_str);
-	    addr.sin_port = htons(port);
-	}
-    } else {
-	addr.sin_port = krb5_getportbyname (context, IPROP_SERVICE,
-					    "tcp", IPROP_PORT);
-    }
     if(bind(fd, (struct sockaddr *)&addr, sizeof(addr)) < 0)
 	krb5_err (context, 1, errno, "bind");
     if (listen(fd, SOMAXCONN) < 0)
@@ -124,10 +133,64 @@ make_listen_socket (krb5_context context, const char *port_str)
     return fd;
 }
 
+#ifdef AF_INET6
+static krb5_socket_t
+make_listen_socket6(krb5_context context, int port)
+{
+    krb5_socket_t fd;
+    int one = 1;
+    struct sockaddr_in6 addr;
+
+    fd = socket(AF_INET6, SOCK_STREAM, 0);
+    if (rk_IS_BAD_SOCKET(fd)) {
+#ifdef EAFNOSUPPORT
+	if (rk_SOCK_ERRNO != EAFNOSUPPORT)
+#endif
+	    krb5_warn(context, rk_SOCK_ERRNO, "socket AF_INET6");
+	return rk_INVALID_SOCKET;
+    }
+    (void) setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (void *)&one, sizeof(one));
+    socket_set_ipv6only(fd, 1);
+    memset(&addr, 0, sizeof(addr));
+    addr.sin6_family = AF_INET6;
+    addr.sin6_port = port;
+    addr.sin6_addr = in6addr_any;
+
+    if (bind(fd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
+	krb5_warn(context, errno, "bind AF_INET6");
+	rk_closesocket(fd);
+	return rk_INVALID_SOCKET;
+    }
+    if (listen(fd, SOMAXCONN) < 0) {
+	krb5_warn (context, errno, "listen AF_INET6");
+	rk_closesocket(fd);
+	return rk_INVALID_SOCKET;
+    }
+    return fd;
+}
+#endif
+
+static void
+make_listen_sockets(krb5_context context, const char *port_str,
+		    krb5_socket_t *fds, int *num_fds)
+{
+    krb5_socket_t fd;
+    int port = listen_port(context, port_str);
+
+    *num_fds = 0;
+
+#ifdef AF_INET6
+    fd = make_listen_socket6(context, port);
+    if (!rk_IS_BAD_SOCKET(fd))
+	fds[(*num_fds)++] = fd;
+#endif
+    fds[(*num_fds)++] = make_listen_socket(context, port);
+}
+
 
 struct slave {
     krb5_socket_t fd;
-    struct sockaddr_in addr;
+    struct sockaddr_storage addr;
     char *name;
     krb5_auth_context ac;
     uint32_t version;
@@ -1614,13 +1677,14 @@ main(int argc, char **argv)
     void *kadm_handle;
     kadm5_server_context *server_context;
     kadm5_config_params conf;
-    krb5_socket_t signal_fd, listen_fd;
+    krb5_socket_t signal_fd, listen_fds[2];
     slave *slaves = NULL;
     uint32_t current_version = 0, old_version = 0;
     krb5_keytab keytab;
     char **files;
     int aret;
     int optidx = 0;
+    int num_listen_fds = 0;
     int restarter_fd = -1;
     struct stat st;
 
@@ -1730,7 +1794,7 @@ main(int argc, char **argv)
                              &current_version, NULL);
 
     signal_fd = make_signal_socket (context);
-    listen_fd = make_listen_socket (context, port_str);
+    make_listen_sockets(context, port_str, listen_fds, &num_listen_fds);
 
     krb5_warnx(context, "ipropd-master started at version: %lu",
 	       (unsigned long)current_version);
@@ -1742,22 +1806,28 @@ main(int argc, char **argv)
 	slave *p;
 	fd_set readset, writeset;
 	int max_fd = 0;
+	int nready;
+	int i;
 	struct timeval to = {30, 0};
 	uint32_t vers;
         struct stat st2;
 
 #ifndef NO_LIMIT_FD_SETSIZE
-	if (signal_fd >= FD_SETSIZE || listen_fd >= FD_SETSIZE ||
-            restarter_fd >= FD_SETSIZE)
+	if (signal_fd >= FD_SETSIZE || restarter_fd >= FD_SETSIZE)
 	    krb5_errx (context, IPROPD_RESTART, "fd too large");
+	for (i = 0; i < num_listen_fds; i++)
+	    if (listen_fds[i] >= FD_SETSIZE)
+		krb5_errx (context, IPROPD_RESTART, "fd too large");
 #endif
 
 	FD_ZERO(&readset);
 	FD_ZERO(&writeset);
 	FD_SET(signal_fd, &readset);
 	max_fd = max(max_fd, signal_fd);
-	FD_SET(listen_fd, &readset);
-	max_fd = max(max_fd, listen_fd);
+	for (i = 0; i < num_listen_fds; i++) {
+	    FD_SET(listen_fds[i], &readset);
+	    max_fd = max(max_fd, listen_fds[i]);
+	}
         if (restarter_fd > -1) {
             FD_SET(restarter_fd, &readset);
             max_fd = max(max_fd, restarter_fd);
@@ -1779,6 +1849,7 @@ main(int argc, char **argv)
 	    else
 		krb5_err (context, IPROPD_RESTART, errno, "select");
 	}
+	nready = ret;
 
         if (stat(server_context->log_context.log_file, &st2) == -1) {
             krb5_warn(context, errno, "could not stat log file by path");
@@ -1801,7 +1872,7 @@ main(int argc, char **argv)
                                      &current_version, NULL);
         }
 
-	if (ret == 0) {
+	if (nready == 0) {
 	    kadm5_log_get_version_fd(server_context, -1, LOG_VERSION_LAST,
                                      &current_version, NULL);
 
@@ -1825,12 +1896,12 @@ main(int argc, char **argv)
 	    }
 	}
 
-        if (ret && FD_ISSET(restarter_fd, &readset)) {
+        if (nready && restarter_fd > -1 && FD_ISSET(restarter_fd, &readset)) {
             exit_flag = SIGTERM;
             break;
         }
 
-	if (ret && FD_ISSET(signal_fd, &readset)) {
+	if (nready && FD_ISSET(signal_fd, &readset)) {
 #ifndef NO_UNIX_SOCKETS
 	    struct sockaddr_un peer_addr;
 #else
@@ -1843,8 +1914,8 @@ main(int argc, char **argv)
 		krb5_warn (context, errno, "recvfrom");
 		continue;
 	    }
-	    --ret;
-	    assert(ret >= 0);
+	    --nready;
+	    assert(nready >= 0);
 	    old_version = current_version;
 	    kadm5_log_get_version_fd(server_context, -1, LOG_VERSION_LAST,
                                      &current_version, NULL);
@@ -1901,9 +1972,9 @@ main(int argc, char **argv)
 	for(p = slaves; p != NULL; p = p->next) {
 	    if (p->flags & SLAVE_F_DEAD)
 	        continue;
-	    if (ret && FD_ISSET(p->fd, &readset)) {
-		--ret;
-		assert(ret >= 0);
+	    if (nready && FD_ISSET(p->fd, &readset)) {
+		--nready;
+		assert(nready >= 0);
                 ret = process_msg(server_context, p, database,
                                   current_version);
                 if (ret && ret != EWOULDBLOCK) {
@@ -1916,10 +1987,12 @@ main(int argc, char **argv)
 		send_are_you_there (context, p);
 	}
 
-	if (ret && FD_ISSET(listen_fd, &readset)) {
-	    add_slave (context, keytab, &slaves, listen_fd);
-	    --ret;
-	    assert(ret >= 0);
+	for (i = 0; nready && i < num_listen_fds; i++) {
+	    if (FD_ISSET(listen_fds[i], &readset)) {
+		add_slave(context, keytab, &slaves, listen_fds[i]);
+		--nready;
+		assert(nready >= 0);
+	    }
 	}
 	write_stats(context, slaves, current_version);
     }

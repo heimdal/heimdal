@@ -63,6 +63,89 @@ test_empty_keytab(krb5_context context, const char *keytab)
 	krb5_err(context, 1, ret, "krb5_kt_close");
 }
 
+static void
+test_verify_user_empty_keytab(krb5_context context, const char *keytab)
+{
+    krb5_error_code ret;
+    krb5_keytab id;
+    krb5_principal principal;
+    krb5_verify_opt opt;
+
+    ret = krb5_kt_resolve(context, keytab, &id);
+    if (ret)
+	krb5_err(context, 1, ret, "krb5_kt_resolve");
+
+    ret = krb5_parse_name(context, "lha@SU.SE", &principal);
+    if (ret)
+	krb5_err(context, 1, ret, "krb5_parse_name");
+
+    krb5_verify_opt_init(&opt);
+    krb5_verify_opt_set_keytab(&opt, id);
+
+    ret = krb5_verify_user_opt(context, principal, "password", &opt);
+    if (ret != KRB5_KT_NOTFOUND)
+	krb5_errx(context, 1,
+		  "krb5_verify_user_opt returned %d, expected %d",
+		  (int)ret, (int)KRB5_KT_NOTFOUND);
+
+    krb5_free_principal(context, principal);
+
+    ret = krb5_kt_close(context, id);
+    if (ret)
+	krb5_err(context, 1, ret, "krb5_kt_close");
+}
+
+static void
+test_verify_user_wrong_keytab(krb5_context context, const char *keytab)
+{
+    krb5_error_code ret;
+    krb5_keytab id;
+    krb5_keytab_entry entry;
+    krb5_principal principal;
+    krb5_verify_opt opt;
+
+    ret = krb5_kt_resolve(context, keytab, &id);
+    if (ret)
+	krb5_err(context, 1, ret, "krb5_kt_resolve");
+
+    memset(&entry, 0, sizeof(entry));
+    ret = krb5_parse_name(context, "not-host/foo@SU.SE", &entry.principal);
+    if (ret)
+	krb5_err(context, 1, ret, "krb5_parse_name");
+    entry.vno = 1;
+    ret = krb5_generate_random_keyblock(context,
+					ETYPE_AES256_CTS_HMAC_SHA1_96,
+					&entry.keyblock);
+    if (ret)
+	krb5_err(context, 1, ret, "krb5_generate_random_keyblock");
+
+    ret = krb5_kt_add_entry(context, id, &entry);
+    if (ret)
+	krb5_err(context, 1, ret, "krb5_kt_add_entry");
+
+    ret = krb5_parse_name(context, "lha@SU.SE", &principal);
+    if (ret)
+	krb5_err(context, 1, ret, "krb5_parse_name");
+
+    krb5_verify_opt_init(&opt);
+    krb5_verify_opt_set_keytab(&opt, id);
+
+    ret = krb5_verify_user_opt(context, principal, "password", &opt);
+    if (ret != KRB5_KT_NOTFOUND)
+	krb5_errx(context, 1,
+		  "krb5_verify_user_opt returned %d, expected %d",
+		  (int)ret, (int)KRB5_KT_NOTFOUND);
+
+    krb5_free_principal(context, principal);
+    krb5_kt_remove_entry(context, id, &entry);
+    krb5_free_principal(context, entry.principal);
+    krb5_free_keyblock_contents(context, &entry.keyblock);
+
+    ret = krb5_kt_close(context, id);
+    if (ret)
+	krb5_err(context, 1, ret, "krb5_kt_close");
+}
+
 /*
  * Test that memory keytab are refcounted.
  */
@@ -280,6 +363,13 @@ main(int argc, char **argv)
 
 	test_empty_keytab(context, "MEMORY:foo");
 	test_empty_keytab(context, "FILE:foo");
+
+	ret = krb5_set_default_realm(context, "SU.SE");
+	if (ret)
+	    krb5_err(context, 1, ret, "krb5_set_default_realm");
+
+	test_verify_user_empty_keytab(context, "MEMORY:verify-user-empty");
+	test_verify_user_wrong_keytab(context, "MEMORY:verify-user-wrong");
 
 	test_memory_keytab(context, "MEMORY:foo", "MEMORY:foo2");
 

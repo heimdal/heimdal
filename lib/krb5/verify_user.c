@@ -34,6 +34,40 @@
 #include "krb5_locl.h"
 
 static krb5_error_code
+check_server_keytab(krb5_context context, krb5_keytab keytab,
+		    const char *service)
+{
+    krb5_error_code ret, ret2;
+    krb5_keytab_entry entry;
+    krb5_keytab kt = keytab;
+    krb5_principal server;
+
+    ret = krb5_sname_to_principal(context, NULL, service, KRB5_NT_SRV_HST,
+				  &server);
+    if (ret)
+	return ret;
+
+    if (kt == NULL) {
+	ret = krb5_kt_default(context, &kt);
+	if (ret)
+	    goto out;
+    }
+
+    ret = krb5_kt_get_entry(context, kt, server, 0, 0, &entry);
+    if (ret == 0)
+	krb5_kt_free_entry(context, &entry);
+    if (keytab == NULL) {
+	ret2 = krb5_kt_close(context, kt);
+	if (ret == 0)
+	    ret = ret2;
+    }
+
+out:
+    krb5_free_principal(context, server);
+    return ret;
+}
+
+static krb5_error_code
 verify_common (krb5_context context,
 	       krb5_principal principal,
 	       krb5_ccache ccache,
@@ -185,7 +219,16 @@ krb5_verify_user_opt(krb5_context context,
 		     const char *password,
 		     krb5_verify_opt *opt)
 {
-    krb5_error_code ret;
+    krb5_error_code ret = 0;
+
+#define OPT(V, D) ((opt && (opt->V)) ? (opt->V) : (D))
+    if (opt == NULL || opt->secure) {
+	ret = check_server_keytab(context, OPT(keytab, NULL),
+				  OPT(service, "host"));
+    }
+#undef OPT
+    if (ret)
+	return ret;
 
     if(opt && (opt->flags & KRB5_VERIFY_LREALMS)) {
 	krb5_realm *realms, *r;

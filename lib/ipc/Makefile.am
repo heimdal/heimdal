@@ -46,14 +46,23 @@ if have_gcd
 # stops building on recent OS X releases unless we disable this warning.
 WFLAGS += -Wno-deprecated-declarations
 
-heim_ipc.h heim_ipcUser.c heim_ipcServer.c heim_ipcServer.h: heim_ipc.defs
+heim_ipc.stamp: heim_ipc.defs
 	mig -header heim_ipc.h -user heim_ipcUser.c -sheader heim_ipcServer.h -server heim_ipcServer.c -I$(srcdir) $(srcdir)/heim_ipc.defs
+	touch $@
 
-heim_ipc_async.h heim_ipc_asyncUser.c heim_ipc_asyncServer.c heim_ipc_asyncServer.h: heim_ipc_async.defs
+heim_ipc.h heim_ipcUser.c heim_ipcServer.c heim_ipcServer.h: heim_ipc.stamp
+
+heim_ipc_async.stamp: heim_ipc_async.defs
 	mig -header heim_ipc_async.h -user heim_ipc_asyncUser.c -sheader heim_ipc_asyncServer.h -server heim_ipc_asyncServer.c -I$(srcdir) $(srcdir)/heim_ipc_async.defs
+	touch $@
 
-heim_ipc_reply.h heim_ipc_replyUser.c: heim_ipc_reply.defs
+heim_ipc_async.h heim_ipc_asyncUser.c heim_ipc_asyncServer.c heim_ipc_asyncServer.h: heim_ipc_async.stamp
+
+heim_ipc_reply.stamp: heim_ipc_reply.defs
 	mig -header heim_ipc_reply.h -user heim_ipc_replyUser.c -sheader /dev/null -server /dev/null -I$(srcdir) $(srcdir)/heim_ipc_reply.defs
+	touch $@
+
+heim_ipc_reply.h heim_ipc_replyUser.c: heim_ipc_reply.stamp
 
 built_ipcc = heim_ipc.h heim_ipcUser.c
 built_ipcc += heim_ipc_asyncServer.c heim_ipc_asyncServer.h
@@ -69,6 +78,7 @@ nodist_libheim_ipcs_la_SOURCES = $(built_ipcs)
 libheim_ipcs_la_LIBADD += -lbsm
 
 CLEANFILES = $(built_ipcc) $(built_ipcs)
+CLEANFILES += heim_ipc.stamp heim_ipc_async.stamp heim_ipc_reply.stamp
 
 $(srcdir)/client.c: $(built_ipcc)
 $(srcdir)/server.c: $(built_ipcs)

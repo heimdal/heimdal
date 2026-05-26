@@ -124,16 +124,14 @@ connect_to_master (krb5_context context, const char *master,
 }
 
 static void
-get_creds(krb5_context context, krb5_ccache *cache, const char *serverhost)
+get_creds(krb5_context context, krb5_ccache *cache)
 {
     krb5_keytab keytab;
     krb5_principal client;
     krb5_error_code ret;
     krb5_get_init_creds_opt *init_opts;
     krb5_creds creds;
-    char *server;
     char keytab_buf[256];
-    int aret;
 
     if (no_keytab_flag) {
         /* We're using an externally refreshed ccache */
@@ -176,13 +174,8 @@ get_creds(krb5_context context, krb5_ccache *cache, const char *serverhost)
     ret = krb5_get_init_creds_opt_alloc(context, &init_opts);
     if (ret) krb5_err(context, 1, ret, "krb5_get_init_creds_opt_alloc");
 
-    aret = asprintf (&server, "%s/%s", IPROP_NAME, serverhost);
-    if (aret == -1 || server == NULL)
-	krb5_errx (context, 1, "malloc: no memory");
-
     ret = krb5_get_init_creds_keytab(context, &creds, client, keytab,
-				     0, server, init_opts);
-    free (server);
+				     0, NULL, init_opts);
     krb5_get_init_creds_opt_free(context, init_opts);
     if(ret) krb5_err(context, 1, ret, "krb5_get_init_creds");
 
@@ -890,7 +883,7 @@ main(int argc, char **argv)
     if (ret)
 	krb5_err(context, 1, ret, "db->close");
 
-    get_creds(context, &ccache, master);
+    get_creds(context, &ccache);
 
     ret = krb5_sname_to_principal (context, master, IPROP_NAME,
 				   KRB5_NT_SRV_HST, &server);
@@ -956,7 +949,7 @@ main(int argc, char **argv)
 	    krb5_auth_con_free(context, auth_context);
 	    auth_context = NULL;
 	}
-        get_creds(context, &ccache, master);
+        get_creds(context, &ccache);
         if (verbose)
             krb5_warnx(context, "authenticating to master");
 	ret = krb5_sendauth (context, &auth_context, &master_fd,

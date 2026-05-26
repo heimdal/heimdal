@@ -55,6 +55,7 @@ ipropport2=@ipropport2@
 cache="FILE:${objdir}/cache.krb5"
 keytabfile=${objdir}/iprop.keytab
 keytab="FILE:${keytabfile}"
+slave_config="${objdir}/krb5-slave-as-is.conf"
 
 kdc="${kdc} --addresses=localhost -P $port"
 kadmin="${kadmin} -r $R"
@@ -216,6 +217,10 @@ wait_for_slave_down () {
 KRB5_CONFIG="${objdir}/krb5.conf"
 export KRB5_CONFIG
 
+# Exercise ipropd-slave with name canonicalization that does not add a realm.
+sed "s/name_canon_rules = as-is:realm=${R}/name_canon_rules = as-is:/" \
+    "${objdir}/krb5-slave.conf" > "${slave_config}" || exit 1
+
 rm -f ${keytabfile}
 rm -f current-db*
 rm -f current*.log
@@ -323,7 +328,7 @@ ipdm=`getpid ipropd-master`
 
 echo "starting slave" ; > messages.log
 env ${HEIM_MALLOC_DEBUG} \
-KRB5_CONFIG="${objdir}/krb5-slave.conf" \
+KRB5_CONFIG="${slave_config}" \
 ${ipropd_slave} || { echo "ipropd-slave failed to start"; exit 1; }
 ipds=`getpid ipropd-slave`
 sh ${wait_kdc} ipropd-slave messages.log 'slave status change: up-to-date' || exit 1
@@ -351,7 +356,7 @@ wait_for "Slave sees new host" get_iprop_ver2 0 || exit 1
 
 # ----------------- checking: pushing lives changes
 
-slave_get() { KRB5_CONFIG="${objdir}/krb5-slave.conf" ${kadmin} -l get "$@"; }
+slave_get() { KRB5_CONFIG="${slave_config}" ${kadmin} -l get "$@"; }
 slave_check_exists() {
     # Creation with a random key is not atomic, there are at present
     # 3 log entries to create a random key principal, the entry is
@@ -383,27 +388,27 @@ wait_for_slave2 4
 echo "Delete 3DES keys"
 ${kadmin} -l del_enctype host/foo@${R} aes256-cts-hmac-sha1-96
 wait_for_slave
-KRB5_CONFIG="${objdir}/krb5-slave.conf" \
+KRB5_CONFIG="${slave_config}" \
 ${kadmin} -l get host/foo@${R} | \
     ${EGREP} Keytypes: | cut -d: -f2 | tr ' ' '
 ' | sed 's/^.*[[]\(.*\)[]].*$/\1/' | grep '[0-9]' | sort -nu | tr -d '
 ' | ${EGREP} 1234 > /dev/null || exit 1
-KRB5_CONFIG="${objdir}/krb5-slave.conf" \
+KRB5_CONFIG="${slave_config}" \
 ${kadmin} -l get host/foo@${R} | \
     ${EGREP} 'Keytypes:.*aes256-cts-hmac-sha1-96' > /dev/null && exit 1
 
 echo "Change policy host"
 ${kadmin} -l modify --policy=default host/foo@${R} || exit 1
 wait_for_slave
-KRB5_CONFIG="${objdir}/krb5-slave.conf" \
+KRB5_CONFIG="${slave_config}" \
 ${kadmin} -l get host/foo@${R} > /dev/null 2>/dev/null || exit 1
 
 echo "Rename host"
 ${kadmin} -l rename host/foo@${R} host/bar@${R} || exit 1
 wait_for_slave
-KRB5_CONFIG="${objdir}/krb5-slave.conf" \
+KRB5_CONFIG="${slave_config}" \
 ${kadmin} -l get host/foo@${R} > /dev/null 2>/dev/null && exit 1
-KRB5_CONFIG="${objdir}/krb5-slave.conf" \
+KRB5_CONFIG="${slave_config}" \
 ${kadmin} -l get host/bar@${R} > /dev/null || exit 1
 
 wait_for_slave2 3
@@ -411,7 +416,7 @@ wait_for_slave2 3
 echo "Delete host"
 ${kadmin} -l delete host/bar@${R} || exit 1
 wait_for_slave
-KRB5_CONFIG="${objdir}/krb5-slave.conf" \
+KRB5_CONFIG="${slave_config}" \
 ${kadmin} -l get host/bar@${R} > /dev/null 2>/dev/null && exit 1
 
 # See note below in LMDB sanity checking
@@ -447,7 +452,7 @@ cp ${objdir}/current.log ${objdir}/current.log.tmp
 echo "starting slave again" ; > messages.log
 > iprop-stats
 env ${HEIM_MALLOC_DEBUG} \
-KRB5_CONFIG="${objdir}/krb5-slave.conf" \
+KRB5_CONFIG="${slave_config}" \
 ${ipropd_slave} || { echo "ipropd-slave failed to start"; exit 1; }
 ipds=`getpid ipropd-slave`
 
@@ -461,7 +466,7 @@ echo "checking for replay problems"
 ${EGREP} 'Entry already exists in database' messages.log && exit 1
 
 echo "compare versions on master and slave logs (no lock)"
-KRB5_CONFIG=${objdir}/krb5-slave.conf \
+KRB5_CONFIG=${slave_config} \
 ${iprop_log} last-version -n > slave-last.tmp
 ${iprop_log} last-version -n > master-last.tmp
 cmp master-last.tmp slave-last.tmp || exit 1
@@ -475,7 +480,7 @@ rm current.slave.log current-db.slave* || exit 1
 rm -f iprop-slave-status
 echo "starting slave" ; > messages.log
 env ${HEIM_MALLOC_DEBUG} \
-KRB5_CONFIG="${objdir}/krb5-slave.conf" \
+KRB5_CONFIG="${slave_config}" \
 ${ipropd_slave} || { echo "ipropd-slave failed to start"; exit 1; }
 ipds=`getpid ipropd-slave`
 wait_for_slave 0
@@ -507,7 +512,7 @@ wait_for_slave_down
 wait_for_master_down
 
 echo "compare versions on master and slave logs"
-KRB5_CONFIG=${objdir}/krb5-slave.conf \
+KRB5_CONFIG=${slave_config} \
 ${iprop_log} last-version > slave-last.tmp
 ${iprop_log} last-version > master-last.tmp
 cmp master-last.tmp slave-last.tmp || exit 1
@@ -526,7 +531,7 @@ ipdm=`getpid ipropd-master`
 
 echo "starting slave" ; > messages.log
 env ${HEIM_MALLOC_DEBUG} \
-KRB5_CONFIG="${objdir}/krb5-slave.conf" \
+KRB5_CONFIG="${slave_config}" \
 ${ipropd_slave} || { echo "ipropd-slave failed to start"; exit 1; }
 ipds=`getpid ipropd-slave`
 wait_for_slave -1
@@ -588,7 +593,7 @@ trap "" EXIT
 $leaked && exit 1
 
 echo "compare versions on master and slave logs"
-KRB5_CONFIG=${objdir}/krb5-slave.conf \
+KRB5_CONFIG=${slave_config} \
 ${iprop_log} last-version > slave-last.tmp
 ${iprop_log} last-version > master-last.tmp
 cmp master-last.tmp slave-last.tmp || exit 1

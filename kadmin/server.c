@@ -603,13 +603,13 @@ kadmind_dispatch_int(void *kadm_handlep, krb5_boolean initial,
 
 	/* n_key_data will be squeezed into an int16_t below. */
 	if (n_key_data < 0 || n_key_data >= 1 << 16 ||
-	    (size_t)n_key_data > UINT_MAX/sizeof(*key_data)) {
+	    (size_t)n_key_data > SIZE_MAX/sizeof(*key_data)) {
             ret_sp = krb5_store_int32(rsp, KADM5_FAILURE);
 	    ret = ERANGE;
 	    goto fail;
 	}
 
-	key_data = malloc (n_key_data * sizeof(*key_data));
+	key_data = calloc(n_key_data, sizeof(*key_data));
 	if (key_data == NULL && n_key_data != 0) {
             ret_sp = krb5_store_int32(rsp, KADM5_FAILURE);
 	    ret = krb5_enomem(contextp->context);
@@ -737,9 +737,11 @@ kadmind_dispatch_int(void *kadm_handlep, krb5_boolean initial,
             if (ret != 0) {
                 ret_sp = krb5_store_int32(rsp, KADM5_FAILURE);
                 free(ks_tuple);
+                ks_tuple = NULL;
                 goto fail;
             }
             ret = krb5_ret_int32(sp, &ks_tuple[i].ks_salttype);
+
             if (ret != 0) {
                 ret_sp = krb5_store_int32(rsp, KADM5_FAILURE);
                 free(ks_tuple);

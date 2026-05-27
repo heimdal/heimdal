@@ -338,7 +338,11 @@ TESTS = test_oid test_names test_cfx
 
 test_cfx_SOURCES = krb5/test_cfx.c
 
-check_PROGRAMS = test_acquire_cred test_acquire_cred_auditdns $(TESTS)
+check_PROGRAMS = test_acquire_cred $(auditdns_programs) $(TESTS)
+
+if ENABLE_SHARED
+auditdns_programs = test_acquire_cred_auditdns
+endif
 
 bin_PROGRAMS = gsstool gss-token
 noinst_PROGRAMS = test_cred test_kcred test_context test_add_store_cred

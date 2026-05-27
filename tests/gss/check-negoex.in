@@ -71,6 +71,9 @@ export GSS_MECH_CONFIG
 
 test_init
 
+test_negoex_mech="${objdir}/../../lib/gssapi/.libs/test_negoex_mech.so"
+
+if test -f "${test_negoex_mech}"; then
 test_section "context building for negoex"
 
 for HOPS in 1 2 3 4 5
@@ -162,6 +165,9 @@ test_run env HOPS=4 KEY=accept-always ${context} \
     --mech-type=spnego --ret-mech-type=test_negoex_1 \
     --name-type=hostbased-service \
     host@host.test.h5l.se
+else
+test_section "test_negoex dynamic mech skipped"
+fi
 
 unset GSS_MECH_CONFIG
 

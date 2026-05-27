@@ -8,7 +8,11 @@ AUTOMAKE_OPTIONS = subdir-objects
 
 noinst_PROGRAMS = tcp_client tcp_server gssapi_server gssapi_client \
 	uu_server uu_client nt_gss_server nt_gss_client http_client \
-	kinit_auditdns
+	$(auditdns_programs)
+
+if ENABLE_SHARED
+auditdns_programs = kinit_auditdns
+endif
 
 tcp_client_SOURCES = tcp_client.c common.c test_locl.h
 

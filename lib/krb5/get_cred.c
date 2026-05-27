@@ -645,7 +645,7 @@ get_cred_kdc(krb5_context context,
 	krb5_sendto_ctx stctx;
 	ret = krb5_sendto_ctx_alloc(context, &stctx);
 	if (ret)
-	    return ret;
+	    goto out;
 	krb5_sendto_ctx_set_func(stctx, _krb5_kdc_retry, NULL);
 
 	if (kdc_hostname)

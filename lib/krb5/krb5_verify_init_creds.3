@@ -91,11 +91,13 @@ cleans the the structure, must be used before trying to pass it in to
 .Fn krb5_verify_init_creds .
 .Pp
 .Fn krb5_verify_init_creds_opt_set_ap_req_nofail
-controls controls the behavior if
+controls the behavior if
 .Fa ap_req_server
-doesn't exists in the local keytab or in the KDC's database, if it's
-true, the error will be ignored.  Note that this use is possible
-insecure.
+does not exist in the local keytab or in the KDC's database.
+If it is true, those errors will not be ignored.
+Errors from AP_REQ verification with a present key, such as an integrity
+check failure, are always returned.
+Note that ignoring the error is possibly insecure.
 .Sh SEE ALSO
 .Xr krb5 3 ,
 .Xr krb5_get_init_creds 3 ,

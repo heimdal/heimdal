@@ -68,6 +68,49 @@ test_time(void)
     return errors;
 }
 
+static int
+test_random_password(void)
+{
+    static const char alphabet[] =
+	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+    char pw[128];
+    char small[5];
+    char zero[1] = { 'x' };
+    size_t i, j;
+    int errors = 0;
+
+    for (i = 0; i < 128; i++) {
+	random_password(pw, sizeof(pw));
+	if (strlen(pw) != 16) {
+	    printf("wrong random password length: %lu\n",
+		   (unsigned long)strlen(pw));
+	    errors++;
+	}
+	for (j = 0; pw[j] != '\0'; j++) {
+	    if (strchr(alphabet, pw[j]) == NULL) {
+		printf("random password contains invalid byte: 0x%02x\n",
+		       (unsigned char)pw[j]);
+		errors++;
+	    }
+	}
+    }
+
+    random_password(small, sizeof(small));
+    if (strlen(small) != sizeof(small) - 1) {
+	printf("wrong short random password length: %lu\n",
+	       (unsigned long)strlen(small));
+	errors++;
+    }
+
+    random_password(zero, 0);
+    if (zero[0] != 'x') {
+	printf("zero-length random password buffer was modified\n");
+	errors++;
+    }
+
+    return errors;
+}
+
 
 int
 main(int argc, char **argv)
@@ -82,9 +125,9 @@ main(int argc, char **argv)
 
     ret = 0;
     ret += test_time();
+    ret += test_random_password();
 
     krb5_free_context(context);
 
     return ret;
 }
-

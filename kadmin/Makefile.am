@@ -54,7 +54,7 @@ kadmind_SOURCES =				\
 
 add_random_users_SOURCES = add-random-users.c
 
-test_util_SOURCES = test_util.c util.c
+test_util_SOURCES = test_util.c util.c random_password.c
 
 TESTS = test_util
 

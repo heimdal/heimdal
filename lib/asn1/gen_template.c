@@ -289,7 +289,11 @@ static struct tlist *
 tlist_new(const char *name)
 {
     struct tlist *tl = calloc(1, sizeof(*tl));
+    if (tl == NULL)
+	errx(1, "malloc");
     tl->name = strdup(name);
+    if (tl->name == NULL)
+	errx(1, "malloc");
     HEIM_TAILQ_INIT(&tl->template);
     return tl;
 }
@@ -421,6 +425,8 @@ add_line(struct templatehead *t, const char *fmt, ...)
 {
     struct template *q = calloc(1, sizeof(*q));
     va_list ap;
+    if (q == NULL)
+	errx(1, "malloc");
     va_start(ap, fmt);
     if (vasprintf(&q->line, fmt, ap) < 0 || q->line == NULL)
 	errx(1, "malloc");

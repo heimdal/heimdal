@@ -95,7 +95,7 @@ rk_dns_type_to_string(int type)
     for(p = stot; p->name; p++)
 	if(type == p->type)
 	    return p->name;
-    return NULL;
+    return "unknown";
 }
 
 #if ((defined(HAVE_RES_SEARCH) || defined(HAVE_RES_NSEARCH)) && defined(HAVE_DN_EXPAND)) || defined(HAVE_WINDNS)

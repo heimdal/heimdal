@@ -612,6 +612,12 @@ osad(const char *s1, const char *s2)
     row0 = calloc(l2 + 1, sizeof(int));
     row1 = calloc(l2 + 1, sizeof(int));
     row2 = calloc(l2 + 1, sizeof(int));
+    if (row0 == NULL || row1 == NULL || row2 == NULL) {
+	free(row0);
+	free(row1);
+	free(row2);
+	return INT_MAX;
+    }
 
     for (j = 0; j < l2 + 1; j++)
         row1[j] = j;

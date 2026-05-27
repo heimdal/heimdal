@@ -599,6 +599,8 @@ generate_constant (const Symbol *s)
 	/* header file */
 
 	gen_upper = strdup(s->gen_name);
+	if (gen_upper == NULL)
+	    errx(1, "malloc");
 	len = strlen(gen_upper);
 	for (i = 0; i < len; i++)
 	    gen_upper[i] = toupper((unsigned char)s->gen_name[i]);

@@ -83,8 +83,25 @@ set_proc(OM_uint32 *minor, gss_buffer_set_t env)
 #ifndef WIN32
     size_t i;
 
-    for (i = 0; i < env->count; i++)
-        putenv(env->elements[i].value);
+    for (i = 0; i < env->count; i++) {
+        char *var = (char *)env->elements[i].value;
+        char *eq  = strchr(var, '=');
+        char *val;
+        int e;
+
+        if (eq == NULL) {
+            *minor = EINVAL;
+            return GSS_S_FAILURE;
+        }
+        val = eq + 1;
+        *eq = '\0';
+        e = setenv(var, val, 1);
+        *eq = '=';
+        if (e != 0) {
+            *minor = errno ? errno : EINVAL;
+            return GSS_S_FAILURE;
+        }
+    }
 #endif
     return GSS_S_COMPLETE;
 }

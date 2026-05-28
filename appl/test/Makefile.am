@@ -43,7 +43,8 @@ nt_gss_server_LDADD = $(nt_gss_client_LDADD)
 
 kinit_auditdns_SOURCES = ../../kuser/kinit.c auditdns.c
 
-kinit_auditdns_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)/../../lib/krb5
+kinit_auditdns_CPPFLAGS = $(AM_CPPFLAGS) -I$(srcdir)/../../lib/krb5 \
+	$(AUDITDNS_CPPFLAGS)
 
 kinit_auditdns_LDFLAGS = $(WRAP_LDFLAGS)
 

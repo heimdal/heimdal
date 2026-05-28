@@ -33,18 +33,28 @@ AC_CANONICAL_HOST
 CANONICAL_HOST=$host
 AC_SUBST(CANONICAL_HOST)
 
-dnl
-dnl this is needed to not wrap calls when building on OS X Builds
-dnl
-case $host_os in
-  darwin*)
-    WRAP_LDFLAGS=""
-    ;;
-  *)
-    WRAP_LDFLAGS="-Wl,--wrap=rk_dns_lookup"
-    ;;
-esac
+WRAP_LDFLAGS=
+AUDITDNS_CPPFLAGS=
+AS_IF([test "x$enable_shared" = xno], [
+    AC_CACHE_CHECK([whether the linker supports --wrap=rk_dns_lookup],
+        [rk_cv_ld_wrap_rk_dns_lookup],
+        [save_LDFLAGS="$LDFLAGS"
+         LDFLAGS="$LDFLAGS -Wl,--wrap=rk_dns_lookup"
+         AC_LINK_IFELSE(
+            [AC_LANG_PROGRAM([[
+void rk_dns_lookup(void);
+void __wrap_rk_dns_lookup(void) {}
+            ]], [[rk_dns_lookup();]])],
+            [rk_cv_ld_wrap_rk_dns_lookup=yes],
+            [rk_cv_ld_wrap_rk_dns_lookup=no])
+         LDFLAGS="$save_LDFLAGS"])
+
+    AS_IF([test "x$rk_cv_ld_wrap_rk_dns_lookup" = xyes],
+          [WRAP_LDFLAGS="-Wl,--wrap=rk_dns_lookup"
+           AUDITDNS_CPPFLAGS="-DAUDITDNS_USE_LD_WRAP"])
+])
 AC_SUBST([WRAP_LDFLAGS])
+AC_SUBST([AUDITDNS_CPPFLAGS])
 
 rk_SYS_LARGEFILE
 

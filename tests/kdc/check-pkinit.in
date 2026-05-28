@@ -195,6 +195,8 @@ ${hxtool} issue-certificate \
 	  --certificate="FILE:kx509-template.crt" || exit 1
 
 echo foo > ${objdir}/foopassword
+sed 's/enable_kx509 = true/enable_kx509 = false/g' \
+    "${objdir}/krb5-pkinit.conf" > "${objdir}/krb5-pkinit-no-kx509.conf" || exit 1
 
 echo Starting kdc ; > messages.log
 KRB5_CONFIG="${objdir}/krb5-pkinit2.conf"
@@ -283,6 +285,26 @@ fi
 echo "Check kx509 certificate acquisition"
 ${kx509} -s || { ec=1 ; eval "${testfailed}"; }
 ${kx509} -o PEM-FILE:${objdir}/kx509.pem || { ec=1 ; eval "${testfailed}"; }
+${kx509} -K FILE:${keyfile2} \
+    -o PEM-FILE:${objdir}/kx509-keyed.pem || { ec=1 ; eval "${testfailed}"; }
+
+echo "Restarting kdc with kx509 disabled ($kdcpid)"
+sh ${leaks_kill} kdc $kdcpid || ec=1
+KRB5_CONFIG="${objdir}/krb5-pkinit-no-kx509.conf"
+${kdc} --detach --testing || { echo "kdc failed to start"; cat messages.log; exit 1; }
+kdcpid=`getpid kdc`
+
+echo "Check kx509 cannot be bypassed when disabled"; > messages.log
+${kx509} -K FILE:${keyfile2} \
+    -o PEM-FILE:${objdir}/kx509-disabled.pem 2>/dev/null && \
+    { echo "kx509 succeeded while [kdc] enable_kx509 was false"; ec=1 ; eval "${testfailed}"; }
+
+echo "Restarting kdc with kx509 enabled ($kdcpid)"
+sh ${leaks_kill} kdc $kdcpid || ec=1
+KRB5_CONFIG="${objdir}/krb5-pkinit.conf"
+${kdc} --detach --testing || { echo "kdc failed to start"; cat messages.log; exit 1; }
+kdcpid=`getpid kdc`
+
 ${kdestroy}
 
 echo "Check PKINIT w/ kx509 certificate"

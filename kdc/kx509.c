@@ -399,7 +399,6 @@ mk_error_response(krb5_context context,
     Kx509Response rep;
     const char *msg;
     char *freeme0 = NULL;
-    char *freeme1 = NULL;
     va_list ap;
 
     if (code != 0) {
@@ -416,9 +415,6 @@ mk_error_response(krb5_context context,
         kdc_audit_vaddreason((kdc_request_t)reqctx, fmt, ap);
         va_end(ap);
     }
-
-    if (!reqctx->config->enable_kx509)
-        code = KRB5KDC_ERR_POLICY;
 
     /* Make sure we only send RFC4120 and friends wire protocol error codes */
     if (code) {
@@ -441,12 +437,6 @@ mk_error_response(krb5_context context,
         msg = freeme0;
     va_end(ap);
 
-    if (!reqctx->config->enable_kx509 &&
-        asprintf(&freeme1, "kx509 service is disabled (%s)", msg) > -1 &&
-        freeme1 != NULL) {
-        msg = freeme1;
-    }
-
     rep.hash = NULL;
     rep.certificate = NULL;
     rep.error_code = code;
@@ -468,7 +458,6 @@ mk_error_response(krb5_context context,
     free(rep.e_text);
     free(rep.hash);
     free(freeme0);
-    free(freeme1);
     return ret;
 }
 
@@ -900,14 +889,15 @@ _kdc_do_kx509(kx509_req_context r)
     if (r->req.authenticator.length == 0) {
         /*
          * Unauthenticated kx509 service availability probe.
-         *
-         * mk_error_response() will check whether the service is enabled and
-         * possibly change the error code and message.
          */
         is_probe = 1;
         kdc_audit_addkv((kdc_request_t)r, 0, "probe", "unauthenticated");
-        ret = mk_error_response(r->context, r, 4, 0,
-                                "kx509 service is available");
+        if (!r->config->enable_kx509)
+            ret = mk_error_response(r->context, r, 4, KRB5KDC_ERR_POLICY,
+                                    "kx509 service is disabled");
+        else
+            ret = mk_error_response(r->context, r, 4, 0,
+                                    "kx509 service is available");
         goto out;
     }
 
@@ -938,6 +928,12 @@ _kdc_do_kx509(kx509_req_context r)
      * Provided we got the session key, errors past this point will be
      * authenticated.
      */
+    if (ret == 0 && !r->config->enable_kx509) {
+        ret = mk_error_response(r->context, r, 4, KRB5KDC_ERR_POLICY,
+                                "kx509 service is disabled");
+        goto out;
+    }
+
     if (ret == 0)
         ret = krb5_ticket_get_client(r->context, ticket, &cprincipal);
 
@@ -983,9 +979,6 @@ _kdc_do_kx509(kx509_req_context r)
     if (r->req.pk_key.length == 0) {
         /*
          * The request is an authenticated kx509 service availability probe.
-         *
-         * mk_error_response() will check whether the service is enabled and
-         * possibly change the error code and message.
          */
         is_probe = 1;
         kdc_audit_addkv((kdc_request_t)r, 0, "probe", "authenticated");

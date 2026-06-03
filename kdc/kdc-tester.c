@@ -50,6 +50,9 @@ int do_bonjour = -1;
 
 static krb5_kdc_configuration *kdc_config;
 static krb5_context kdc_context;
+static int expect_fast_tgs;
+static int expect_no_outer_authdata;
+static int seen_fast_tgs;
 
 static struct sockaddr_storage sa;
 static const char *astr = "0.0.0.0";
@@ -92,7 +95,28 @@ plugin_send_to_realm(krb5_context context,
 		     const krb5_data *in,
 		     krb5_data *out)
 {
+    TGS_REQ tgs_req;
     int ret;
+
+    memset(&tgs_req, 0, sizeof(tgs_req));
+    ret = decode_TGS_REQ(in->data, in->length, &tgs_req, NULL);
+    if (ret == 0) {
+	PA_DATA *pa = NULL;
+	int idx = 0;
+
+	if (tgs_req.padata)
+	    pa = krb5_find_padata(tgs_req.padata->val, tgs_req.padata->len,
+				  KRB5_PADATA_FX_FAST, &idx);
+	if (pa)
+	    seen_fast_tgs = 1;
+	else if (expect_fast_tgs)
+	    krb5_errx(kdc_context, 1, "TGS request was not FAST wrapped");
+	if (expect_no_outer_authdata &&
+	    tgs_req.req_body.enc_authorization_data)
+	    krb5_errx(kdc_context, 1,
+		      "TGS outer request included enc-authorization-data");
+	free_TGS_REQ(&tgs_req);
+    }
 
     krb5_kdc_update_time(NULL);
 
@@ -345,16 +369,24 @@ eval_kinit(heim_dict_t o)
 static void
 eval_kgetcred(heim_dict_t o)
 {
-    heim_string_t server, ccache;
+    heim_string_t server, ccache, authdata;
     krb5_get_creds_opt opt;
-    heim_bool_t nostore;
+    heim_bool_t nostore, require_fast, inner_authdata_only;
     krb5_error_code ret;
     krb5_ccache cc = NULL;
     krb5_principal s;
     krb5_creds *out = NULL;
+    krb5_creds in;
+    krb5_flags options = 0;
+    krb5_kdc_flags flags;
+    const char *getcred_func = "krb5_get_creds";
+    char *save_inner_authdata_only = NULL;
+    krb5_boolean set_inner_authdata_only = FALSE;
 
     if (ptop)
 	ptop->tgs_req++;
+
+    memset(&in, 0, sizeof(in));
 
     server = heim_dict_get_value(o, HSTR("server"));
     if (server == NULL)
@@ -368,6 +400,21 @@ eval_kgetcred(heim_dict_t o)
     if (nostore == NULL)
 	nostore = heim_bool_create(1);
 
+    authdata = heim_dict_get_value(o, HSTR("authdata"));
+    if (authdata) {
+	AuthorizationDataElement ade;
+	const char *s = heim_string_get_utf8(authdata);
+
+	memset(&ade, 0, sizeof(ade));
+	ade.ad_type = 777;
+	ade.ad_data.data = rk_UNCONST(s);
+	ade.ad_data.length = strlen(s);
+
+	ret = add_AuthorizationData(&in.authdata, &ade);
+	if (ret)
+	    krb5_err(kdc_context, 1, ret, "add_AuthorizationData");
+    }
+
     ret = krb5_cc_resolve(kdc_context, heim_string_get_utf8(ccache), &cc);
     if (ret)
 	krb5_err(kdc_context, 1, ret, "krb5_cc_resolve");
@@ -375,20 +422,69 @@ eval_kgetcred(heim_dict_t o)
     ret = krb5_parse_name(kdc_context, heim_string_get_utf8(server), &s);
     if (ret)
 	krb5_err(kdc_context, 1, ret, "krb5_parse_name");
+    in.server = s;
 
     ret = krb5_get_creds_opt_alloc(kdc_context, &opt);
     if (ret)
 	krb5_err(kdc_context, 1, ret, "krb5_get_creds_opt_alloc");
 
-    if (heim_bool_val(nostore))
+    if (heim_bool_val(nostore)) {
 	krb5_get_creds_opt_add_options(kdc_context, opt, KRB5_GC_NO_STORE);
+	options |= KRB5_GC_NO_STORE;
+    }
 
-    ret = krb5_get_creds(kdc_context, opt, cc, s, &out);
+    require_fast = heim_dict_get_value(o, HSTR("require-fast"));
+    expect_fast_tgs = require_fast && heim_bool_val(require_fast);
+    seen_fast_tgs = 0;
+
+    inner_authdata_only = heim_dict_get_value(o, HSTR("fast-inner-authdata-only"));
+    set_inner_authdata_only =
+	inner_authdata_only && heim_bool_val(inner_authdata_only);
+    if (set_inner_authdata_only) {
+	const char *e = getenv("HEIMDAL_TEST_FAST_INNER_AUTHDATA_ONLY");
+
+	if (authdata == NULL)
+	    krb5_errx(kdc_context, 1, "no authdata");
+	if (e) {
+	    save_inner_authdata_only = strdup(e);
+	    if (save_inner_authdata_only == NULL)
+		krb5_err(kdc_context, 1, ENOMEM, "strdup");
+	}
+	if (setenv("HEIMDAL_TEST_FAST_INNER_AUTHDATA_ONLY", "1", 1) != 0)
+	    krb5_err(kdc_context, 1, errno, "setenv");
+    }
+    expect_no_outer_authdata = set_inner_authdata_only;
+
+    if (authdata) {
+	ret = krb5_cc_get_principal(kdc_context, cc, &in.client);
+	if (ret)
+	    krb5_err(kdc_context, 1, ret, "krb5_cc_get_principal");
+	flags.i = 0;
+	getcred_func = "krb5_get_credentials_with_flags";
+	ret = krb5_get_credentials_with_flags(kdc_context, options, flags,
+					      cc, &in, &out);
+    } else {
+	ret = krb5_get_creds(kdc_context, opt, cc, s, &out);
+    }
     if (ret)
-	krb5_err(kdc_context, 1, ret, "krb5_get_creds");
+	krb5_err(kdc_context, 1, ret, "%s", getcred_func);
+    if (expect_fast_tgs && !seen_fast_tgs)
+	krb5_errx(kdc_context, 1, "TGS request did not use FAST");
+    expect_fast_tgs = 0;
+    expect_no_outer_authdata = 0;
+    if (set_inner_authdata_only) {
+	if (save_inner_authdata_only) {
+	    if (setenv("HEIMDAL_TEST_FAST_INNER_AUTHDATA_ONLY",
+		       save_inner_authdata_only, 1) != 0)
+		krb5_err(kdc_context, 1, errno, "setenv");
+	    free(save_inner_authdata_only);
+	} else {
+	    unsetenv("HEIMDAL_TEST_FAST_INNER_AUTHDATA_ONLY");
+	}
+    }
     
     krb5_free_creds(kdc_context, out);
-    krb5_free_principal(kdc_context, s);
+    krb5_free_cred_contents(kdc_context, &in);
     krb5_get_creds_opt_free(kdc_context, opt);
     krb5_cc_close(kdc_context, cc);
 }

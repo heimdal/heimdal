@@ -1,0 +1,20 @@
+[
+	{
+	"op" : "kinit",
+	"client" : "foo@TEST.H5L.SE",
+	"password" : "foo",
+	"ccache" : "MEMORY:fast-inner-authdata-cache"
+	},
+	{
+	"op" : "kgetcred",
+	"server" : "host/datan.test.h5l.se@TEST.H5L.SE",
+	"ccache" : "MEMORY:fast-inner-authdata-cache",
+	"authdata" : "FAST inner TGS authorization data",
+	"require-fast" : true,
+	"fast-inner-authdata-only" : true
+	},
+	{
+	"op" : "kdestroy",
+	"ccache" : "MEMORY:fast-inner-authdata-cache"
+	}
+]

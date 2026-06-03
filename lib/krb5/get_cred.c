@@ -130,6 +130,16 @@ set_auth_data (krb5_context context,
     }
 }
 
+static void
+clear_auth_data(KDC_REQ_BODY *req_body)
+{
+    if (req_body->enc_authorization_data) {
+	free_EncryptedData(req_body->enc_authorization_data);
+	free(req_body->enc_authorization_data);
+	req_body->enc_authorization_data = NULL;
+    }
+}
+
 /*
  * Create a tgs-req in `t' with `addresses', `flags', `second_ticket'
  * (if not-NULL), `in_creds', `krbtgt', and returning the generated
@@ -153,6 +163,7 @@ init_tgs_req (krb5_context context,
     krb5_auth_context ac = NULL;
     krb5_error_code ret = 0;
     krb5_data tgs_req;
+    krb5_boolean fast_inner_authdata_only = FALSE;
 
     krb5_data_zero(&tgs_req);
     memset(t, 0, sizeof(*t));
@@ -259,10 +270,20 @@ init_tgs_req (krb5_context context,
 	    goto fail;
     }
 
-    ret = set_auth_data(context, &t->req_body,
-			&in_creds->authdata, ac->local_subkey);
-    if (ret)
-	goto fail;
+    /*
+     * Test hook: keep the TGS outer body free of enc-authorization-data
+     * while carrying it in the FAST inner body.
+     */
+    fast_inner_authdata_only =
+	state != NULL && in_creds->authdata.len > 0 &&
+	secure_getenv("HEIMDAL_TEST_FAST_INNER_AUTHDATA_ONLY") != NULL;
+
+    if (!fast_inner_authdata_only) {
+	ret = set_auth_data(context, &t->req_body,
+			    &in_creds->authdata, ac->local_subkey);
+	if (ret)
+	    goto fail;
+    }
 
     ret = make_pa_tgs_req(context,
 			  &ac,
@@ -327,9 +348,19 @@ init_tgs_req (krb5_context context,
 	if (ret)
 	    goto fail;
 
+	if (fast_inner_authdata_only) {
+	    ret = set_auth_data(context, &t->req_body,
+				&in_creds->authdata, ac->local_subkey);
+	    if (ret)
+		goto fail;
+	}
+
 	ret = _krb5_fast_wrap_req(context, state, t);
 	if (ret)
 	    goto fail;
+
+	if (fast_inner_authdata_only)
+	    clear_auth_data(&t->req_body);
 
 	/* Its ok if there is no fast in the TGS-REP, older heimdal only support it in the AS code path */
 	state->flags &= ~KRB5_FAST_EXPECTED;

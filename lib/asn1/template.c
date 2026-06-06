@@ -38,6 +38,7 @@
 #include <vis.h>
 #include <vis-extras.h>
 #include <heimbase.h>
+#include <errno.h>
 
 #ifndef ENOTSUP
 /* Very old MSVC CRTs don't have ENOTSUP */

@@ -191,6 +191,7 @@ init_generate (const char *filename, const char *base)
     fprintf (headerfile,
 	     "#include <stddef.h>\n"
 	     "#include <stdint.h>\n"
+	     "#include <errno.h>\n"
 	     "#include <time.h>\n\n");
     fprintf (headerfile,
 	     "#ifndef __asn1_common_definitions__\n"

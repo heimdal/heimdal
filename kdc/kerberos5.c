@@ -37,16 +37,15 @@
 #if SIZEOF_TIME_T == 4
 #define MAX_TIME ((time_t)INT32_MAX)
 #elif SIZEOF_TIME_T == 8
-#define MAX_TIME ((time_t)INT32_MAX)
+#define MAX_TIME ((time_t)INT64_MAX)
 #else
 #error "Unexpected sizeof(time_t)"
 #endif
 #else
-
 #if SIZEOF_TIME_T == 4
-#define MAX_TIME ((time_t)INT32_MAX)
+#define MAX_TIME ((time_t)UINT32_MAX)
 #else
-#define MAX_TIME ((time_t)INT32_MAX)
+#define MAX_TIME ((time_t)UINT64_MAX)
 #endif
 #endif
 

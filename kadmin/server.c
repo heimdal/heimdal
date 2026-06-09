@@ -609,7 +609,7 @@ kadmind_dispatch_int(void *kadm_handlep, krb5_boolean initial,
 	    goto fail;
 	}
 
-	key_data = malloc (n_key_data * sizeof(*key_data));
+	key_data = calloc(n_key_data, sizeof(*key_data));
 	if (key_data == NULL && n_key_data != 0) {
             ret_sp = krb5_store_int32(rsp, KADM5_FAILURE);
 	    ret = krb5_enomem(contextp->context);
@@ -737,9 +737,11 @@ kadmind_dispatch_int(void *kadm_handlep, krb5_boolean initial,
             if (ret != 0) {
                 ret_sp = krb5_store_int32(rsp, KADM5_FAILURE);
                 free(ks_tuple);
+                ks_tuple = NULL;
                 goto fail;
             }
             ret = krb5_ret_int32(sp, &ks_tuple[i].ks_salttype);
+
             if (ret != 0) {
                 ret_sp = krb5_store_int32(rsp, KADM5_FAILURE);
                 free(ks_tuple);

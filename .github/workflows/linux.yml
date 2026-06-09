@@ -5,6 +5,7 @@ on:
       branches:
          - 'master'
          - 'heimdal-7-1-branch'
+         - 'test-ILP32'
       paths:
          - '!docs/**'
          - '!**.md'
@@ -171,3 +172,51 @@ jobs:
               with:
                 name: Test Logs (${{ matrix.name }})
                 path: '~/logs-linux-${{ matrix.compiler }}.tgz'
+
+    linux-i386:
+        # Run if no [only X] tag, or if [only linux] is present (check both push commits and PR titles)
+        if: >-
+            (!contains(github.event.head_commit.message, '[only ') &&
+             !contains(github.event.pull_request.title, '[only ')) ||
+            contains(github.event.head_commit.message, '[only linux]') ||
+            contains(github.event.pull_request.title, '[only linux]')
+        runs-on: ubuntu-22.04
+        steps:
+            - name: Clone repository
+              uses: actions/checkout@v4
+            - name: Build and test on Debian i386
+              run: |
+                docker run --platform linux/386 --rm \
+                    -v "$PWD:/src:ro" \
+                    i386/debian:bookworm \
+                    /bin/bash -euxc '
+                        export DEBIAN_FRONTEND=noninteractive
+                        apt-get update -qq
+                        apt-get install -y --no-install-recommends \
+                            autoconf automake bison build-essential ca-certificates \
+                            comerr-dev curl doxygen flex gdb git iproute2 jq keyutils \
+                            ldap-utils libcap-ng-dev libdb-dev libedit-dev libjson-perl \
+                            libkeyutils-dev libldap2-dev libmicrohttpd-dev libncurses5-dev \
+                            libperl4-corelibs-perl libreadline-dev libsqlite3-dev libssl-dev \
+                            libtool make netbase pkg-config procps python3 ss-dev tar \
+                            texinfo unzip valgrind xz-utils
+
+                        cp -a /src /tmp/heimdal-src
+                        cd /tmp/heimdal-src
+                        /bin/sh ./autogen.sh
+                        mkdir build
+                        cd build
+                        ../configure --srcdir=`dirname "$PWD"` \
+                            --enable-maintainer-mode \
+                            --enable-developer \
+                            --with-ldap \
+                            --with-readline=yes \
+                            --prefix=/tmp/heimdal-i386-inst \
+                            CFLAGS="-Wnonnull -Wno-error=shadow -Wno-error=bad-function-cast -Wno-error=unused-function -Wno-error=unused-result -Wno-error=deprecated-declarations"
+                        make -j4
+                        make check || {
+                            find . -name "*.trs" | xargs grep -lw FAIL | sed -e "s/trs$/log/" | xargs -r cat
+                            exit 1
+                        }
+                        make DESTDIR=/tmp/heimdal-i386-root install
+                    '

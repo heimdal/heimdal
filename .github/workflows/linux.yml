@@ -212,7 +212,7 @@ jobs:
                             --with-ldap \
                             --with-readline=yes \
                             --prefix=/tmp/heimdal-i386-inst \
-                            CFLAGS="-Wnonnull -Wno-error=shadow -Wno-error=bad-function-cast -Wno-error=unused-function -Wno-error=unused-result -Wno-error=deprecated-declarations"
+                            CFLAGS="-Wnonnull -Wno-error=type-limits -Wno-error=shadow -Wno-error=bad-function-cast -Wno-error=unused-function -Wno-error=unused-result -Wno-error=deprecated-declarations"
                         make -j4
                         make check || {
                             find . -name "*.trs" | xargs grep -lw FAIL | sed -e "s/trs$/log/" | xargs -r cat

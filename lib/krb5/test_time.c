@@ -57,8 +57,8 @@ check_set_time(krb5_context context)
     diff2 = krb5_time_abs(sec, tv.tv_sec);
 
     if (diff2 < 9 || diff > 11)
-	krb5_errx(context, 1, "set time error: diff: %ld",
-		  krb5_time_abs(sec, tv.tv_sec));
+	krb5_errx(context, 1, "set time error: diff: %lld",
+		  (long long)krb5_time_abs(sec, tv.tv_sec));
 }
 
 

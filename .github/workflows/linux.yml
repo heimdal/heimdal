@@ -186,7 +186,7 @@ jobs:
               uses: actions/checkout@v4
             - name: Build and test on Debian i386
               run: |
-                docker run --platform linux/386 --rm \
+                docker run --security-opt seccomp=unconfined --platform linux/386 --rm \
                     -v "$PWD:/src:ro" \
                     i386/debian:bookworm \
                     /bin/bash -euxc '
@@ -196,7 +196,7 @@ jobs:
                             autoconf automake bison build-essential ca-certificates \
                             comerr-dev curl doxygen flex gdb git iproute2 jq keyutils \
                             ldap-utils libcap-ng-dev libdb-dev libedit-dev libjson-perl \
-                            libkeyutils-dev libldap2-dev libmicrohttpd-dev libncurses5-dev \
+                            libkeyutils-dev libldap2-dev liblmdb-dev libmicrohttpd-dev libncurses5-dev \
                             libperl4-corelibs-perl libreadline-dev libsqlite3-dev libssl-dev \
                             libtool make netbase pkg-config procps python3 ss-dev tar \
                             texinfo unzip valgrind xz-utils
@@ -211,8 +211,9 @@ jobs:
                             --enable-developer \
                             --with-ldap \
                             --with-readline=yes \
+                            --with-db-type-preference=lmdb \
                             --prefix=/tmp/heimdal-i386-inst \
-                            CFLAGS="-Wnonnull -Wno-error=type-limits -Wno-error=shadow -Wno-error=bad-function-cast -Wno-error=unused-function -Wno-error=unused-result -Wno-error=deprecated-declarations"
+                            CFLAGS="-D_FILE_OFFSET_BITS=64 -D_TIME_BITS=64 -Wnonnull -Wno-error=type-limits -Wno-error=shadow -Wno-error=bad-function-cast -Wno-error=unused-function -Wno-error=unused-result -Wno-error=deprecated-declarations"
                         make -j4
                         make check || {
                             find . -name "*.trs" | xargs grep -lw FAIL | sed -e "s/trs$/log/" | xargs -r cat

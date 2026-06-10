@@ -346,9 +346,8 @@ kadm5_s_create_principal(void *server_handle,
     if (ret)
         goto out;
 
-    free_Keys(&ent.keys);
-
     if (use_pw) {
+        free_Keys(&ent.keys);
         ret = _kadm5_set_keys(context, &ent, n_ks_tuple, ks_tuple, password);
         if (ret)
             goto out2;

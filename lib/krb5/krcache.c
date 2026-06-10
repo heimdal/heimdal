@@ -1193,28 +1193,34 @@ krcc_get_next(krb5_context context,
     if (krcursor == NULL)
 	return KRB5_CC_END;
 
-    if (krcursor->currkey >= krcursor->numkeys)
-	return KRB5_CC_END;
-
-    /*
-     * If we're pointing at the entry with the principal, or at the key
-     * with the time offsets, skip it.
-     */
-    while (krcursor->keys[krcursor->currkey] == krcursor->princ_id ||
-	   krcursor->keys[krcursor->currkey] == krcursor->offsets_id) {
-	krcursor->currkey++;
+    for (;;) {
 	if (krcursor->currkey >= krcursor->numkeys)
 	    return KRB5_CC_END;
-    }
 
-    ret = keyctl_read_krb5_data(krcursor->keys[krcursor->currkey], &payload);
-    if (ret) {
-	_krb5_debug(context, 10, "Error reading key %d: %s\n",
-		    krcursor->keys[krcursor->currkey],
-		    strerror(errno));
-	return ret;
+	/*
+	 * If we're pointing at the entry with the principal, or at the key
+	 * with the time offsets, skip it.
+	 */
+	while (krcursor->keys[krcursor->currkey] == krcursor->princ_id ||
+	       krcursor->keys[krcursor->currkey] == krcursor->offsets_id) {
+	    krcursor->currkey++;
+	    if (krcursor->currkey >= krcursor->numkeys)
+		return KRB5_CC_END;
+	}
+
+	ret = keyctl_read_krb5_data(krcursor->keys[krcursor->currkey],
+				    &payload);
+	krcursor->currkey++;
+	if (ret == KRB5_FCC_NOFILE)
+	    continue;
+	if (ret) {
+	    _krb5_debug(context, 10, "Error reading key %d: %s\n",
+			krcursor->keys[krcursor->currkey - 1],
+			strerror(errno));
+	    return ret;
+	}
+	break;
     }
-    krcursor->currkey++;
 
     sp = krb5_storage_from_data(&payload);
     if (sp == NULL) {

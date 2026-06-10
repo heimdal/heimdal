@@ -336,6 +336,7 @@ EXTRA_DIST = \
 	data/key2.der \
 	data/nist-data \
 	data/nist-data2 \
+	data/notafter-2338.pem \
 	data/no-proxy-test.crt \
 	data/no-proxy-test.key \
 	data/ocsp-req1.der \

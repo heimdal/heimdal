@@ -46,6 +46,21 @@ static const unsigned ndays[2][12] ={
     {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31},
     {31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}};
 
+static time_t
+_clamp_time_t(uint64_t t)
+{
+#if SIZEOF_TIME_T < 8
+#ifdef TIME_T_UNSIGNED
+#define MAX_TIME ((UINT64_C(1) << (SIZEOF_TIME_T * 8)) - 1)
+#else
+#define MAX_TIME ((UINT64_C(1) << ((SIZEOF_TIME_T * 8) - 1)) - 1)
+#endif
+  return t < MAX_TIME ? t : MAX_TIME;
+#else
+  return t;
+#endif
+}
+
 /*
  * This is a simplifed version of timegm(3) that doesn't accept out of
  * bound values that timegm(3) normally accepts but those are not
@@ -55,7 +70,7 @@ static const unsigned ndays[2][12] ={
 time_t
 _der_timegm (struct tm *tm)
 {
-  time_t res = 0;
+  uint64_t res = 0;
   int i;
 
   /*
@@ -89,7 +104,7 @@ _der_timegm (struct tm *tm)
   res += tm->tm_min;
   res *= 60;
   res += tm->tm_sec;
-  return res;
+  return _clamp_time_t(res);
 }
 
 struct tm *

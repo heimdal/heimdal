@@ -47,6 +47,23 @@ for a in $srcdir/data/*.crt; do
     ${hxtool} print --content FILE:"$a" > /dev/null 2>/dev/null
 done
 
+echo "print certificate with 2338 notAfter"
+${hxtool} print --content FILE:$srcdir/data/notafter-2338.pem > cert-2338.tmp || exit 1
+config=$objdir/../../include/config.h
+if grep '^#define SIZEOF_TIME_T 4$' "$config" > /dev/null; then
+    if grep '^#define TIME_T_UNSIGNED' "$config" > /dev/null; then
+	notafter='notAfter  2106-02-07 06:28:15'
+    else
+	notafter='notAfter  2038-01-19 03:14:07'
+    fi
+else
+    notafter='notAfter  2338-01-19 03:14:08'
+fi
+grep "$notafter" cert-2338.tmp > /dev/null || {
+    cat cert-2338.tmp
+    exit 1
+}
+
 echo "print NULL"
 ${hxtool} print --content NULL: > /dev/null || exit 1
 

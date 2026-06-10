@@ -952,7 +952,7 @@ pa_enc_ts_validate(astgs_request_t r, const PA_DATA *pa)
 		   r->cname);
 	goto out;
     }
-    if (labs(kdc_time - p.patimestamp) > r->context->max_skew) {
+    if (krb5_time_abs(kdc_time, p.patimestamp) > r->context->max_skew) {
 	char client_time[100];
 		
 	krb5_format_time(r->context, p.patimestamp,
@@ -962,7 +962,7 @@ pa_enc_ts_validate(astgs_request_t r, const PA_DATA *pa)
 	_kdc_r_log(r, 4, "Too large time skew, "
 		   "client time %s is out by %u > %u seconds -- %s",
 		   client_time,
-		   (unsigned)labs(kdc_time - p.patimestamp),
+		   (unsigned)krb5_time_abs(kdc_time, p.patimestamp),
 		   r->context->max_skew,
 		   r->cname);
 	kdc_audit_setkv_number((kdc_request_t)r, KDC_REQUEST_KV_AUTH_EVENT,

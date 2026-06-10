@@ -1104,7 +1104,8 @@ get_new_tickets(krb5_context context,
     }
 
     if (ticket_life != 0) {
-	if (labs(cred.times.endtime - cred.times.starttime - ticket_life) > 30) {
+	if (krb5_time_abs(cred.times.endtime - cred.times.starttime,
+			  ticket_life) > 30) {
 	    char life[64];
 	    unparse_time_approx(cred.times.endtime - cred.times.starttime,
 				life, sizeof(life));
@@ -1112,7 +1113,8 @@ get_new_tickets(krb5_context context,
 	}
     }
     if (renew_life) {
-	if (labs(cred.times.renew_till - cred.times.starttime - renew) > 30) {
+	if (krb5_time_abs(cred.times.renew_till - cred.times.starttime,
+			  renew) > 30) {
 	    char life[64];
 	    unparse_time_approx(cred.times.renew_till - cred.times.starttime,
 				life, sizeof(life));

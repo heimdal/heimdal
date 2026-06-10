@@ -2484,8 +2484,10 @@ _asn1_print_open_type(const struct asn1_template *t, /* object set template */
     }
 
     if (!(t->tt & A1_OS_OT_IS_ARRAY)) {
-        unsigned align = 8 - ((t->offset + sizeof(*elementp)) & 0x7);
-        dp = DPOC(data, t->offset + sizeof(*elementp) + align);
+        size_t offset = t->offset + sizeof(*elementp);
+
+        offset += (sizeof(void *) - offset % sizeof(void *)) % sizeof(void *);
+        dp = DPOC(data, offset);
         if (*dp) {
             struct rk_strpool *r2 = NULL;
             char *s = NULL;

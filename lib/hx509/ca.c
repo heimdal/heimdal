@@ -66,6 +66,18 @@ struct hx509_ca_tbs {
     AlgorithmIdentifier *sigalg;
 };
 
+static int
+use_utc_time(time_t t)
+{
+    if (t < 1)
+	return 1;
+#if SIZEOF_TIME_T > 4 || defined(TIME_T_UNSIGNED)
+    if ((uint64_t)t >= 2524608000ULL)
+	return 0;
+#endif
+    return 1;
+}
+
 /**
  * Allocate an to-be-signed certificate object that will be converted
  * into an certificate.
@@ -1773,13 +1785,13 @@ ca_sign(hx509_context context,
          *
          * Both, ...u.generalTime and ...u..utcTime are time_t.
          */
-        if (notBefore < 1 || (int64_t)notBefore < 2524608000)
+        if (use_utc_time(notBefore))
             tbsc->validity.notBefore.element = choice_Time_utcTime;
         else
             tbsc->validity.notBefore.element = choice_Time_generalTime;
         tbsc->validity.notBefore.u.generalTime = notBefore;
 
-        if (notAfter < 1 || (int64_t)notAfter < 2524608000)
+        if (use_utc_time(notAfter))
             tbsc->validity.notAfter.element = choice_Time_utcTime;
         else
             tbsc->validity.notAfter.element = choice_Time_generalTime;

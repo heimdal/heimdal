@@ -45,6 +45,19 @@
 #define ENOTSUP EINVAL
 #endif
 
+static int
+int32_ptr_equal(int32_t i, const void *ptr)
+{
+    const intptr_t v = (intptr_t)ptr;
+
+#if INTPTR_MAX > INT32_MAX || INTPTR_MIN < INT32_MIN
+    if (v > INT32_MAX || v < INT32_MIN)
+        return 0;
+#endif
+
+    return i == (int32_t)v;
+}
+
 struct asn1_type_func asn1_template_prim[A1T_NUM_ENTRY] = {
 #define el(name, type) {				\
 	(asn1_type_encode)der_put_##name,		\
@@ -1494,9 +1507,7 @@ _asn1_encode(const struct asn1_template *t, unsigned char *p, size_t len, const 
                 } else if (tdefval->tt & A1_DV_INTEGER32) {
                     const int32_t *i = el;
 
-                    if ((int64_t)(intptr_t)tdefval->ptr <= INT_MAX &&
-                        (int64_t)(intptr_t)tdefval->ptr >= INT_MIN &&
-                        *i == (int32_t)(intptr_t)tdefval->ptr)
+                    if (int32_ptr_equal(*i, tdefval->ptr))
                         break;
                 } else if (tdefval->tt & A1_DV_INTEGER) {
                     const struct heim_integer *i = el;
@@ -1568,9 +1579,7 @@ _asn1_encode(const struct asn1_template *t, unsigned char *p, size_t len, const 
                 } else if (tdefval->tt & A1_DV_INTEGER32) {
                     const int32_t *i = data;
 
-                    if ((int64_t)(intptr_t)tdefval->ptr <= INT_MAX &&
-                        (int64_t)(intptr_t)tdefval->ptr >= INT_MIN &&
-                        *i == (int32_t)(intptr_t)tdefval->ptr)
+                    if (int32_ptr_equal(*i, tdefval->ptr))
                         exclude = 1;
                 } else if (tdefval->tt & A1_DV_INTEGER) {
                     const struct heim_integer *i = data;
@@ -2073,9 +2082,7 @@ _asn1_length(const struct asn1_template *t, const void *data)
                 } else if (tdefval->tt & A1_DV_INTEGER32) {
                     const int32_t *i = el;
 
-                    if ((int64_t)(intptr_t)tdefval->ptr <= INT_MAX &&
-                        (int64_t)(intptr_t)tdefval->ptr >= INT_MIN &&
-                        *i == (int32_t)(intptr_t)tdefval->ptr)
+                    if (int32_ptr_equal(*i, tdefval->ptr))
                         break;
                 } else if (tdefval->tt & A1_DV_INTEGER) {
                     const struct heim_integer *i = el;
@@ -2132,9 +2139,7 @@ _asn1_length(const struct asn1_template *t, const void *data)
                 } else if (tdefval->tt & A1_DV_INTEGER32) {
                     const int32_t *i = data;
 
-                    if ((int64_t)(intptr_t)tdefval->ptr <= INT_MAX &&
-                        (int64_t)(intptr_t)tdefval->ptr >= INT_MIN &&
-                        *i == (int32_t)(intptr_t)tdefval->ptr)
+                    if (int32_ptr_equal(*i, tdefval->ptr))
                         exclude = 1;
                 } else if (tdefval->tt & A1_DV_INTEGER) {
                     const struct heim_integer *i = data;

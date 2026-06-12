@@ -49,14 +49,14 @@ SCRIPT_TESTS = \
 
 TESTS = $(SCRIPT_TESTS)
 
-port = 49188
-admport = 49189
-admport2 = 49190
-pwport = 49191
-restport = 49192
-restport2 = 49193
-ipropport = 49194
-ipropport2 = 49195
+port = 11088
+admport = 11089
+admport2 = 11090
+pwport = 11091
+restport = 11092
+restport2 = 11093
+ipropport = 11094
+ipropport2 = 11095
 pkinit_ticket_max_life_from_cert = 0
 
 if HAVE_DLOPEN

@@ -8,7 +8,7 @@ check_SCRIPTS = $(TESTS) slapd-init
 
 TESTS = check-ldap
 
-port = 49188
+port = 11088
 
 do_subst = sed \
 	-e 's,[@]env_setup[@],$(abs_top_builddir)/tests/bin/setup-env,g' \

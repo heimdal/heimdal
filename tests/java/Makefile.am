@@ -10,7 +10,7 @@ SCRIPT_TESTS = check-kinit
 
 TESTS = $(SCRIPT_TESTS)
 
-port = 49188
+port = 11088
 
 do_subst = sed -e 's,[@]srcdir[@],$(abs_srcdir),g' \
 	-e 's,[@]env_setup[@],$(abs_top_builddir)/tests/bin/setup-env,g' \

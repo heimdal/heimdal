@@ -78,6 +78,7 @@ struct hx509_cert_data {
     unsigned int ref;
     char *friendlyname;
     Certificate *data;
+    heim_octet_string encoding;
     hx509_private_key private_key;
     struct _hx509_cert_attrs attrs;
     hx509_name basename;
@@ -635,6 +636,8 @@ cert_init(hx509_context context, heim_error_t *error)
     cert->release = NULL;
     cert->ctx = NULL;
     cert->data= NULL;
+    cert->encoding.data = NULL;
+    cert->encoding.length = 0;
     return cert;
 }
 
@@ -693,7 +696,23 @@ hx509_cert_copy_no_private_key(hx509_context context,
                                hx509_cert src,
                                heim_error_t *error)
 {
-    return hx509_cert_init(context, src->data, error);
+    hx509_cert cert;
+    int ret;
+
+    cert = hx509_cert_init(context, src->data, error);
+    if (cert == NULL)
+        return NULL;
+
+    ret = der_copy_octet_string(&src->encoding, &cert->encoding);
+    if (ret) {
+        hx509_cert_free(cert);
+        if (error)
+            *error = heim_error_create_enomem();
+        errno = ret;
+        return NULL;
+    }
+
+    return cert;
 }
 
 /**
@@ -747,6 +766,7 @@ hx509_cert_init_data(hx509_context context,
 		     heim_error_t *error)
 {
     hx509_cert cert;
+    heim_octet_string os;
     Certificate t;
     size_t size;
     int ret;
@@ -769,6 +789,19 @@ hx509_cert_init_data(hx509_context context,
 
     cert = hx509_cert_init(context, &t, error);
     free_Certificate(&t);
+    if (cert == NULL)
+	return NULL;
+
+    os.length = len;
+    os.data = rk_UNCONST(ptr);
+    ret = der_copy_octet_string(&os, &cert->encoding);
+    if (ret) {
+	hx509_cert_free(cert);
+	if (error)
+	    *error = heim_error_create_enomem();
+	errno = ret;
+	return NULL;
+    }
     return cert;
 }
 
@@ -824,6 +857,7 @@ hx509_cert_free(hx509_cert cert)
     if (cert->data)
         free_Certificate(cert->data);
     free(cert->data);
+    der_free_octet_string(&cert->encoding);
 
     for (i = 0; i < cert->attrs.len; i++) {
 	der_free_octet_string(&cert->attrs.val[i]->data);
@@ -4056,6 +4090,9 @@ hx509_cert_binary(hx509_context context, hx509_cert c, heim_octet_string *os)
 
     os->data = NULL;
     os->length = 0;
+
+    if (c->encoding.data != NULL)
+	return der_copy_octet_string(&c->encoding, os);
 
     ASN1_MALLOC_ENCODE(Certificate, os->data, os->length,
 		       _hx509_get_cert(c), &size, ret);

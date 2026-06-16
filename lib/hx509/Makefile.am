@@ -169,12 +169,15 @@ fuzz_jose_SOURCES = fuzz_jose.c
 fuzz_jose_LDADD = libhx509.la $(LIB_roken) $(top_builddir)/lib/base/libheimbase.la
 fuzz_jose.$(OBJEXT): $(HX509_PROTOS) $(nodist_include_HEADERS)
 test_expr_LDADD = libhx509.la $(LIB_roken) $(top_builddir)/lib/asn1/libasn1.la
+test_cert_binary_CPPFLAGS = $(AM_CPPFLAGS) -DSRCDIR=\"$(srcdir)\"
+test_cert_binary_LDADD = libhx509.la $(LIB_roken) $(top_builddir)/lib/asn1/libasn1.la
 
 TESTS = $(SCRIPT_TESTS) $(PROGRAM_TESTS)
 
 PROGRAM_TESTS = 		\
 	test_name		\
-	test_expr
+	test_expr		\
+	test_cert_binary
 
 SCRIPT_TESTS = 			\
 	test_ca			\

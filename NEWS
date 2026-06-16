@@ -7,6 +7,7 @@ Release Notes - Heimdal - Version Heimdal 8.0 (future)
  - Errors found by the LLVM scan-build static analyzer.
  - Errors found by the valgrind memory debugger.
  - Fix out-of-tree SQLite3 ccache permissions / umask issues.
+ - Clamp far-future ASN.1 times on 32-bit time_t platforms instead of wrapping.
  - iprop bugs, race conditions, and performance
  - Many misc. bugs
 

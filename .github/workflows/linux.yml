@@ -5,6 +5,7 @@ on:
       branches:
          - 'master'
          - 'heimdal-7-1-branch'
+         - 'test-ILP32'
       paths:
          - '!docs/**'
          - '!**.md'
@@ -171,3 +172,75 @@ jobs:
               with:
                 name: Test Logs (${{ matrix.name }})
                 path: '~/logs-linux-${{ matrix.compiler }}.tgz'
+
+    linux-i386:
+        name: linux-i386 (${{ matrix.name }})
+        # Run if no [only X] tag, or if [only linux] is present (check both push commits and PR titles)
+        if: >-
+            (!contains(github.event.head_commit.message, '[only ') &&
+             !contains(github.event.pull_request.title, '[only ')) ||
+            contains(github.event.head_commit.message, '[only linux]') ||
+            contains(github.event.pull_request.title, '[only linux]')
+        runs-on: ubuntu-22.04
+        strategy:
+            fail-fast: false
+            matrix:
+                include:
+                    - name: time32
+                      image: i386/debian:bookworm
+                      year2038_configure: ""
+                      time_t_size: 4
+                    - name: year2038
+                      image: i386/debian:trixie
+                      year2038_configure: --enable-year2038
+                      time_t_size: 8
+        steps:
+            - name: Clone repository
+              uses: actions/checkout@v4
+            - name: Build and test on Debian i386
+              run: |
+                docker run --security-opt seccomp=unconfined --platform linux/386 --rm \
+                    -v "$PWD:/src:ro" \
+                    -e YEAR2038_CONFIGURE="${{ matrix.year2038_configure }}" \
+                    -e EXPECT_TIME_T_SIZE="${{ matrix.time_t_size }}" \
+                    ${{ matrix.image }} \
+                    /bin/bash -euxc '
+                        export DEBIAN_FRONTEND=noninteractive
+                        apt-get update -qq
+                        apt-get install -y --no-install-recommends \
+                            autoconf automake bison build-essential ca-certificates \
+                            comerr-dev curl doxygen flex gdb git iproute2 jq keyutils \
+                            ldap-utils libcap-ng-dev libdb-dev libedit-dev libjson-perl \
+                            libkeyutils-dev libldap2-dev liblmdb-dev libmicrohttpd-dev libncurses5-dev \
+                            libperl4-corelibs-perl libreadline-dev libsqlite3-dev libssl-dev \
+                            libtool make netbase pkg-config procps python3 ss-dev tar \
+                            texinfo unzip valgrind xz-utils
+
+                        cp -a /src /tmp/heimdal-src
+                        git config --global --add safe.directory /tmp/heimdal-src
+                        cd /tmp/heimdal-src
+                        /bin/sh ./autogen.sh
+                        mkdir build
+                        cd build
+                        ../configure --srcdir=`dirname "$PWD"` \
+                            --enable-maintainer-mode \
+                            --enable-developer \
+                            ${YEAR2038_CONFIGURE} \
+                            --with-ldap \
+                            --with-readline=yes \
+                            --with-db-type-preference=lmdb \
+                            --prefix=/tmp/heimdal-i386-inst \
+                            CFLAGS="-Wnonnull -Wno-error=shadow -Wno-error=bad-function-cast -Wno-error=unused-function -Wno-error=unused-result -Wno-error=deprecated-declarations"
+                        printf "%s\n" \
+                            "#include \"include/config.h\"" \
+                            "#include <stdio.h>" \
+                            "#include <time.h>" \
+                            "int main(void) { unsigned long s = sizeof(time_t); printf(\"sizeof(time_t)=%lu\n\", s); return s == EXPECT_TIME_T_SIZE ? 0 : 1; }" \
+                            > check-time-t.c
+                        cc -I. -I.. -DEXPECT_TIME_T_SIZE="$EXPECT_TIME_T_SIZE" -o check-time-t check-time-t.c
+                        ./check-time-t
+                        make -j4
+                        make -C lib/asn1 check
+                        make -C lib/hx509 check TESTS=test_cert_binary
+                        make DESTDIR=/tmp/heimdal-i386-root install
+                    '

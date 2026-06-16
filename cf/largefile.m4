@@ -19,4 +19,10 @@ if test "$enable_largefile" != no; then
 			[CPPFLAGS="$CPPFLAGS $ac_cv_sys_largefile_opts"])
 	fi
 fi
+if test "$enable_year2038" != no; then
+	if test -n "$ac_cv_sys_year2038_opts"; then
+		AS_CASE([$ac_cv_sys_year2038_opts],[-D_TIME_BITS=*|-D__MINGW_USE_VC2005_COMPAT],
+			[CPPFLAGS="$CPPFLAGS $ac_cv_sys_year2038_opts"])
+	fi
+fi
 ])

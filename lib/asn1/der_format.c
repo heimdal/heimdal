@@ -97,8 +97,10 @@ der_print_hex_heim_integer (const heim_integer *data, char **p)
     if (data->negative) {
 	len = asprintf(&q, "-%s", *p);
 	free(*p);
-	if (len < 0)
+	if (len < 0) {
+	    *p = NULL;
 	    return ENOMEM;
+	}
 	*p = q;
     }
     return 0;

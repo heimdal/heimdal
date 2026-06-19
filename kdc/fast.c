@@ -622,6 +622,7 @@ fast_unwrap_request(astgs_request_t r,
 
     if (ac->remote_subkey == NULL) {
 	krb5_auth_con_free(r->context, ac);
+	ac = NULL;
 	kdc_log(r->context, r->config, 2,
 		"FAST AP-REQ remote subkey missing");
 	ret = KRB5KDC_ERR_PREAUTH_FAILED;

@@ -41,6 +41,7 @@ asn1_*_asn1.c
 # Top-level files.
 
 /.vscode
+/abi-reports/
 /aclocal.m4
 /autom4te.cache
 /compile

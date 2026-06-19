@@ -21,6 +21,8 @@ on:
          - '**.asn1'
          - '**.opt'
          - '**.map'
+         - 'cf/check-library-abi.sh'
+         - 'lib/*/abi/**'
          - '**/COPYING'
          - '**/INSTALL'
          - '**/README*'
@@ -41,6 +43,9 @@ on:
          - '**.py'
          - '**.asn1'
          - '**.opt'
+         - '**.map'
+         - 'cf/check-library-abi.sh'
+         - 'lib/*/abi/**'
          - '**/COPYING'
          - '**/INSTALL'
          - '**/README*'
@@ -63,8 +68,9 @@ jobs:
                     - name: linux-gcc
                       os: ubuntu-22.04
                       compiler: gcc
-                      cflags: '-Wnonnull'
+                      cflags: '-g -Wnonnull'
                       configureopts: '--with-readline=yes'
+                      abi_platform: x86_64-linux-gnu
         steps:
             - name: Clone repository
               uses: actions/checkout@v4
@@ -72,7 +78,7 @@ jobs:
               if: startsWith(matrix.os, 'ubuntu')
               run: |
                 sudo apt-get update -qq
-                sudo apt-get install -y bison comerr-dev flex doxygen
+                sudo apt-get install -y abigail-tools bison comerr-dev flex doxygen
                 sudo apt-get install -y libcap-ng-dev libdb-dev libedit-dev libjson-perl
                 sudo apt-get install -y libldap2-dev libncurses5-dev libperl4-corelibs-perl
                 sudo apt-get install -y libsqlite3-dev libkeyutils-dev libreadline-dev pkg-config python3
@@ -102,6 +108,15 @@ jobs:
                 sudo sysctl kernel.core_pattern=core.%p || true
                 ulimit -c unlimited
                 make check
+            - name: ABI compatibility
+              if: matrix.abi_platform == 'x86_64-linux-gnu'
+              env:
+                ABI_PLATFORM: ${{ matrix.abi_platform }}
+                CC: ${{ matrix.compiler }}
+                MAKEVARS: ${{ matrix.makevars }}
+              run: |
+                cd build
+                make check-abi
             - name: Make Install
               env:
                 CC: ${{ matrix.compiler }}

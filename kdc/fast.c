@@ -460,6 +460,7 @@ fast_unwrap_request(astgs_request_t r,
     char *armor_client_principal_name = NULL;
     char *armor_server_principal_name = NULL;
     PA_FX_FAST_REQUEST fxreq;
+    krb5_auth_context free_ac = NULL;
     krb5_auth_context ac = NULL;
     krb5_ticket *ticket = NULL;
     krb5_flags ap_req_options;
@@ -581,7 +582,7 @@ fast_unwrap_request(astgs_request_t r,
 	    goto out;
 	}
 
-	ret = krb5_verify_ap_req2(r->context, &ac,
+	ret = krb5_verify_ap_req2(r->context, &free_ac,
 				  &ap_req,
 				  armor_server_principal,
 				  &r->armor_key->key,
@@ -592,6 +593,8 @@ fast_unwrap_request(astgs_request_t r,
 	free_AP_REQ(&ap_req);
 	if (ret)
 	    goto out;
+
+        ac = free_ac;
 
 	ret = krb5_unparse_name(r->context, armor_server_principal,
 				&armor_server_principal_name);
@@ -621,8 +624,6 @@ fast_unwrap_request(astgs_request_t r,
 			"<out of memory>");
 
     if (ac->remote_subkey == NULL) {
-	krb5_auth_con_free(r->context, ac);
-	ac = NULL;
 	kdc_log(r->context, r->config, 2,
 		"FAST AP-REQ remote subkey missing");
 	ret = KRB5KDC_ERR_PREAUTH_FAILED;
@@ -748,8 +749,8 @@ fast_unwrap_request(astgs_request_t r,
     kdc_log(r->context, r->config, 5, "Client selected FAST");
 
  out:
-    if (ac && ac != tgs_ac)
-	krb5_auth_con_free(r->context, ac);
+    if (free_ac)
+	krb5_auth_con_free(r->context, free_ac);
 
     krb5_free_principal(r->context, armor_server_principal);
     krb5_xfree(armor_client_principal_name);

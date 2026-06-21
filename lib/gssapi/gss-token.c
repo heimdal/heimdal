@@ -435,11 +435,13 @@ initiate_many(gss_name_t service, int delegate, int negotiate, int memcache,
 }
 
 static int
-accept_one(gss_name_t service, const char *ccname, int negotiate)
+accept_one(gss_name_t service, const char *ccname, const char *localuser,
+    int negotiate)
 {
 	gss_cred_id_t	 cred = NULL;
 	gss_cred_id_t	 deleg_creds = NULL;
-        gss_name_t       client;
+        gss_name_t       client = GSS_C_NO_NAME;
+	gss_name_t	 lname = GSS_C_NO_NAME;
         gss_OID          mech_oid;
         gss_ctx_id_t     ctx = GSS_C_NO_CONTEXT;
         gss_buffer_desc  in = GSS_C_EMPTY_BUFFER;
@@ -495,8 +497,23 @@ accept_one(gss_name_t service, const char *ccname, int negotiate)
 		printf("Authenticated: %.*s\n", (int)dname.length,
 		    (char *)dname.value);
 	(void) gss_release_buffer(&min, &dname);
-	(void) gss_release_name(&min, &client);
-	(void) gss_delete_sec_context(&min, &ctx, GSS_C_NO_BUFFER);
+
+	if (localuser) {
+		gss_buffer_desc lnamebuf;
+
+		lnamebuf.length = strlen(localuser);
+		lnamebuf.value = rk_UNCONST(localuser);
+
+		maj = gss_import_name(&min, &lnamebuf,
+		    GSS_C_NT_USER_NAME, &lname);
+		GBAIL("gss_import_name", maj, min);
+
+		maj = gss_authorize_localname(&min, client, lname);
+		GBAIL("gss_authorize_localname", maj, min);
+
+		if (!nflag)
+			printf("Authorized: %s\n", localuser);
+	}
 
 	if (ccname) {
 #ifdef HAVE_GSS_STORE_CRED_INTO
@@ -532,6 +549,12 @@ bail:
 		gss_release_cred(&min, &cred);
 	if (deleg_creds)
 		gss_release_cred(&min, &deleg_creds);
+	if (lname)
+		gss_release_name(&min, &lname);
+	if (client)
+		gss_release_name(&min, &client);
+	if (ctx != GSS_C_NO_CONTEXT)
+		gss_delete_sec_context(&min, &ctx, GSS_C_NO_BUFFER);
 
 	free(in.value);
 
@@ -585,8 +608,8 @@ usage(int ecode)
 {
 	FILE *f = ecode == 0 ? stdout : stderr;
 	fprintf(f, "Usage: gss-token [-DNn] [-c count] service@host\n");
-	fprintf(f, "       gss-token -r [-Nln] [-C ccache] [-c count] "
-	    "[service@host]\n");
+	fprintf(f, "       gss-token -r [-Nln] [-C ccache] [-L localuser] "
+	    "[-c count] [service@host]\n");
 	exit(ecode);
 }
 
@@ -606,12 +629,14 @@ main(int argc, char **argv)
 	int		 ret = 0;
 	int		 optidx = 0;
 	char		*ccname = NULL;
+	char		*localuser = NULL;
 	char		*mech = NULL;
 	struct getargs	 args[] = {
 	    { "help", 'h', arg_flag, &hflag, NULL, NULL },
 	    { "version", 0, arg_flag, &version_flag, NULL, NULL },
 	    { NULL, 'C', arg_string, &ccname, NULL, NULL },
 	    { NULL, 'D', arg_flag, &Dflag, NULL, NULL },
+	    { NULL, 'L', arg_string, &localuser, NULL, NULL },
 	    { NULL, 'M', arg_flag, &Mflag, NULL, NULL },
 	    { NULL, 'N', arg_flag, &Nflag, NULL, NULL },
 	    { NULL, 'S', arg_integer, &Sflag, NULL, NULL },
@@ -662,6 +687,11 @@ main(int argc, char **argv)
 			    "make sense without -r.\n");
 			usage(1);
 		}
+		if (localuser) {
+			fprintf(stderr, "Specifying a local user doesn't make "
+			    "sense without -r.\n");
+			usage(1);
+		}
 		ret = initiate_many(service, Dflag, Nflag, Mflag, count);
 		goto done;
 	}
@@ -673,7 +703,7 @@ main(int argc, char **argv)
 	}
 
 	do {
-		ret = accept_one(service, ccname, Nflag);
+		ret = accept_one(service, ccname, localuser, Nflag);
 	} while (lflag && !ret && !feof(stdin));
 
 done:

@@ -15,6 +15,7 @@
 .Fl r
 .Op Fl MNln
 .Op Fl C Ar ccache
+.Op Fl L Ar localuser
 .Op Fl S Ar maxsize
 .Op Fl c count
 .Op Fl m mech
@@ -35,6 +36,11 @@ write an accepted delegated credential into
 This only makes sense if
 .Fl r
 is specified.
+.It Fl L Ar localuser
+try to authorize as
+.Ar localuser
+with
+.Fn gss_authorize_localname .
 .It Fl D
 delegate credentials.
 This only makes sense as a client, that is when

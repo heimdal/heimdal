@@ -1081,7 +1081,6 @@ cred_delete(krb5_context context,
     ret = krb5_storage_to_data(sp, &orig_cred_data);
     if (ret)
 	goto out;
-    krb5_storage_free(sp);
 
     cred_data_in_file = malloc(orig_cred_data.length);
     if (cred_data_in_file == NULL)
@@ -1103,6 +1102,7 @@ cred_delete(krb5_context context,
 	    goto out;
     }
 
+    krb5_storage_free(sp);
     sp = krb5_storage_emem();
     if (sp == NULL)
 	goto out;

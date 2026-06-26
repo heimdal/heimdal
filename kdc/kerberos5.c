@@ -366,6 +366,9 @@ _kdc_find_etype(astgs_request_t r, uint32_t flags,
 	}
     }
 
+    if (key == NULL) {
+        ret = KRB5KDC_ERR_NULL_KEY;
+    }
     if (ret == 0 && enctype == ETYPE_NULL) {
         /*
          * if the service principal is one for which there is a known 1DES

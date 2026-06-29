@@ -278,7 +278,7 @@ _hx509_Name_to_string(const Name *n, char **str)
 	    case choice_DirectoryString_bmpString: {
 	        const uint16_t *bmp = ds->u.bmpString.data;
 		size_t bmplen = ds->u.bmpString.length;
-		size_t k;
+		size_t k, sslen;
 
 		ret = wind_ucs2utf8_length(bmp, bmplen, &k);
 		if (ret) {
@@ -288,10 +288,11 @@ _hx509_Name_to_string(const Name *n, char **str)
 		    return ret;
                 }
 
-		ss = malloc(k + 1);
+		sslen = k + 1;
+		ss = malloc(sslen);
 		if (ss == NULL)
 		    _hx509_abort("allocation failure"); /* XXX */
-		ret = wind_ucs2utf8(bmp, bmplen, ss, NULL);
+		ret = wind_ucs2utf8(bmp, bmplen, ss, &sslen);
 		if (ret) {
                     free(oidname);
 		    free(ss);
@@ -310,7 +311,7 @@ _hx509_Name_to_string(const Name *n, char **str)
 	    case choice_DirectoryString_universalString: {
 	        const uint32_t *uni = ds->u.universalString.data;
 		size_t unilen = ds->u.universalString.length;
-		size_t k;
+		size_t k, sslen;
 
 		ret = wind_ucs4utf8_length(uni, unilen, &k);
 		if (ret) {
@@ -320,10 +321,11 @@ _hx509_Name_to_string(const Name *n, char **str)
 		    return ret;
                 }
 
-		ss = malloc(k + 1);
+		sslen = k + 1;
+		ss = malloc(sslen);
 		if (ss == NULL)
 		    _hx509_abort("allocation failure"); /* XXX */
-		ret = wind_ucs4utf8(uni, unilen, ss, NULL);
+		ret = wind_ucs4utf8(uni, unilen, ss, &sslen);
 		if (ret) {
 		    free(ss);
                     free(oidname);

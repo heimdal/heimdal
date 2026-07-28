@@ -1990,7 +1990,7 @@ _asn1_length_open_type(const struct asn1_template *tbase,
             i4 = (intptr_t)t->ptr;
             sz = _asn1_length_open_type_id(ttypeid, &i4);
             i4 = 0;
-            sz -= _asn1_length_open_type_id(ttypeid, &i8);
+            sz -= _asn1_length_open_type_id(ttypeid, &i4);
             break;
         default:
             return 0;

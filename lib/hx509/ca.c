@@ -1204,10 +1204,8 @@ hx509_ca_tbs_add_san_permanentIdentifier_string(hx509_context context,
         free(freeme);
         return EINVAL;
     }
-    if (p) {
-        *(p++) = '\0';
-        id = p;
-    }
+    *(p++) = '\0';
+    id = p;
     if (oidstr[0] != '\0') {
         ret = der_find_heim_oid_by_name(oidstr, &found);
         if (ret) {

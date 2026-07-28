@@ -653,10 +653,11 @@ wrapunwrap_iov(gss_ctx_id_t cctx, gss_ctx_id_t sctx, int flags, gss_OID mechoid)
     gss_iov_buffer_desc iov[6];
     unsigned char *p;
     int iov_len;
-    char header_data[9] = "ABCheader";
-    char trailer_data[10] = "trailerXYZ";
+    char header_data[9] = { 'A', 'B', 'C', 'h', 'e', 'a', 'd', 'e', 'r' };
+    char trailer_data[10] = { 't', 'r', 'a', 'i', 'l', 'e', 'r', 'X', 'Y', 'Z' };
 
-    char token_data[16] = "0123456789abcdef";
+    char token_data[16] = { '0', '1', '2', '3', '4', '5', '6', '7',
+                            '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
 
     memset(&iov, 0, sizeof(iov));
 
@@ -804,8 +805,9 @@ wrapunwrap_aead(gss_ctx_id_t cctx, gss_ctx_id_t sctx, int flags, gss_OID mechoid
     OM_uint32 min_stat, maj_stat;
     gss_qop_t qop_state;
     int conf_state, conf_state2;
-    char assoc_data[9] = "ABCheader";
-    char token_data[16] = "0123456789abcdef";
+    char assoc_data[9] = { 'A', 'B', 'C', 'h', 'e', 'a', 'd', 'e', 'r' };
+    char token_data[16] = { '0', '1', '2', '3', '4', '5', '6', '7',
+                            '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
 
     if (flags & USE_SIGN_ONLY) {
 	assoc.value = assoc_data;

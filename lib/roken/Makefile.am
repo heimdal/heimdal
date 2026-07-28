@@ -4,7 +4,7 @@ include $(top_srcdir)/Makefile.am.common
 
 ACLOCAL_AMFLAGS = -I ../../cf
 
-CLEANFILES = roken.h make-roken.c $(XHEADERS)
+CLEANFILES = roken.h make-roken.c make-roken.i $(XHEADERS)
 
 lib_LTLIBRARIES = libroken.la
 
@@ -23,7 +23,7 @@ endif
 bin_PROGRAMS = rkvis rkbase32 rkbase64
 noinst_PROGRAMS = snprintf-test resolve-test rkpty test-detach test-auxval rtbl timeval
 
-CHECK_LOCAL = snprintf-test resolve-test rkpty make-roken
+CHECK_LOCAL = snprintf-test resolve-test rkpty
 
 check_PROGRAMS = 				\
 		base32-test			\
@@ -243,11 +243,16 @@ SUFFIXES += .hin
 .hin.h:
 	cp $< $@
 
+BUILT_SOURCES += make-roken.c
+
+make-roken.c: roken.h.in roken.awk
+	$(AWK) -f $(srcdir)/roken.awk $(srcdir)/roken.h.in > make-roken.c
+
 # Make make-roken deprecated in 1.4 when we know that roken-h-process.pl works
 if !CROSS_COMPILE
 
+CHECK_LOCAL += make-roken
 noinst_PROGRAMS += make-roken
-BUILT_SOURCES += make-roken.c
 
 nodist_make_roken_SOURCES = make-roken.c
 
@@ -256,15 +261,15 @@ roken.h: make-roken$(EXEEXT)
 	if [ -f roken.h ] && cmp -s tmp.h roken.h ; then rm -f tmp.h ; \
 	else rm -f roken.h; mv tmp.h roken.h; fi
 
-make-roken.c: roken.h.in roken.awk
-	$(AWK) -f $(srcdir)/roken.awk $(srcdir)/roken.h.in > make-roken.c
-
 else
 
-roken.h: $(top_srcdir)/cf/roken-h-process.pl roken.h.in
-	perl $(top_srcdir)/cf/roken-h-process.pl \
-	-c $(top_builddir)/include/config.h  \
-	-p $(srcdir)/roken.h.in -o roken.h
+roken.h: make-roken.c $(top_srcdir)/cf/roken-h-process.pl
+	$(CPP) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
+	    $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) \
+	    make-roken.c > make-roken.i && \
+	perl $(top_srcdir)/cf/roken-h-process.pl < make-roken.i > tmp.h && \
+	mv tmp.h roken.h; \
+	ret=$$?; rm -f make-roken.i tmp.h; exit $$ret
 
 endif
 

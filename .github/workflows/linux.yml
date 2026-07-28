@@ -173,6 +173,141 @@ jobs:
                 name: Test Logs (${{ matrix.name }})
                 path: '~/logs-linux-${{ matrix.compiler }}.tgz'
 
+    linux-aarch64-cross:
+        name: cross build amd64 to aarch64
+        # Run if no [only X] tag, or if [only linux] is present (check both push commits and PR titles)
+        if: >-
+            (!contains(github.event.head_commit.message, '[only ') &&
+             !contains(github.event.pull_request.title, '[only ')) ||
+            contains(github.event.head_commit.message, '[only linux]') ||
+            contains(github.event.pull_request.title, '[only linux]')
+        runs-on: ubuntu-22.04
+        container: debian:trixie
+        env:
+            DEBIAN_FRONTEND: noninteractive
+        steps:
+            - name: Clone repository
+              uses: actions/checkout@v4
+
+            - name: Install packages
+              run: |
+                dpkg --add-architecture arm64
+                apt-get update -qq
+                apt-get install -y --no-install-recommends \
+                    autoconf automake bison build-essential ca-certificates \
+                    crossbuild-essential-arm64 file flex libedit-dev \
+                    libjson-perl libmicrohttpd-dev libncurses-dev \
+                    libsqlite3-dev libssl-dev libtool make netbase perl \
+                    pkg-config python3 texinfo \
+                    libcrypt-dev:arm64 libdb-dev:arm64 libedit-dev:arm64 \
+                    libmicrohttpd-dev:arm64 libncurses-dev:arm64 \
+                    libperl-dev:arm64 libsqlite3-dev:arm64 libssl-dev:arm64
+
+            - name: Generate build system
+              run: /bin/sh ./autogen.sh
+
+            - name: Build native tools
+              run: |
+                mkdir build-tools
+                cd build-tools
+                ../configure --disable-dependency-tracking
+                make -j"$(nproc)"
+
+            - name: Prepare native tools
+              run: |
+                mkdir cross-tools
+                printf '#!/bin/sh\nexec %s/build-tools/lib/asn1/asn1_compile "$@"\n' \
+                    "$GITHUB_WORKSPACE" > cross-tools/asn1_compile
+                printf '#!/bin/sh\nexec %s/build-tools/lib/sl/slc "$@"\n' \
+                    "$GITHUB_WORKSPACE" > cross-tools/slc
+                printf '#!/bin/sh\nexec %s/build-tools/lib/com_err/compile_et "$@"\n' \
+                    "$GITHUB_WORKSPACE" > cross-tools/compile_et
+                chmod 755 cross-tools/*
+
+            - name: Cross build
+              run: |
+                mkdir build-aarch64
+                cd build-aarch64
+                PKG_CONFIG_LIBDIR=/usr/lib/aarch64-linux-gnu/pkgconfig:/usr/share/pkgconfig \
+                CC=aarch64-linux-gnu-gcc \
+                ../configure \
+                    --build="$(../config.guess)" \
+                    --host=aarch64-linux-gnu \
+                    --with-cross-tools="$GITHUB_WORKSPACE/cross-tools" \
+                    --disable-dependency-tracking \
+                    --prefix=/usr
+                make -j"$(nproc)"
+                make DESTDIR="$GITHUB_WORKSPACE/heimdal-aarch64-root" install
+
+            - name: Verify target architecture
+              run: |
+                file heimdal-aarch64-root/usr/bin/kinit
+                file heimdal-aarch64-root/usr/bin/kinit |
+                    grep -q 'ARM aarch64'
+
+            - name: Package cross build
+              run: |
+                tar --exclude=.git --exclude=build-tools --exclude=cross-tools \
+                    -czf /tmp/heimdal-aarch64-build.tar.gz .
+
+            - name: Upload cross build
+              uses: actions/upload-artifact@v4
+              with:
+                name: heimdal-aarch64-build
+                path: /tmp/heimdal-aarch64-build.tar.gz
+
+    linux-aarch64-test:
+        name: test on aarch64
+        needs: linux-aarch64-cross
+        runs-on: ubuntu-24.04-arm
+        container:
+            image: debian:trixie
+            options: --init
+        env:
+            DEBIAN_FRONTEND: noninteractive
+        steps:
+            - name: Install packages
+              run: |
+                apt-get update -qq
+                apt-get install -y --no-install-recommends \
+                    bison build-essential ca-certificates curl file flex gzip jq \
+                    libcrypt-dev libdb-dev libedit-dev libjson-perl \
+                    libmicrohttpd-dev \
+                    libncurses-dev libperl-dev libsqlite3-dev libssl-dev \
+                    libtool make netbase perl pkg-config procps python3 texinfo unzip
+
+            - name: Download cross build
+              uses: actions/download-artifact@v4
+              with:
+                name: heimdal-aarch64-build
+                path: /tmp
+
+            - name: Install cross-built Heimdal
+              run: |
+                tar -xzf /tmp/heimdal-aarch64-build.tar.gz \
+                    -C "$GITHUB_WORKSPACE"
+                cp -a heimdal-aarch64-root/. /
+                ldconfig
+
+            - name: Prepare native tools
+              run: |
+                mkdir cross-tools
+                printf '#!/bin/sh\nexec %s/build-aarch64/lib/asn1/asn1_compile "$@"\n' \
+                    "$GITHUB_WORKSPACE" > cross-tools/asn1_compile
+                printf '#!/bin/sh\nexec %s/build-aarch64/lib/sl/slc "$@"\n' \
+                    "$GITHUB_WORKSPACE" > cross-tools/slc
+                printf '#!/bin/sh\nexec %s/build-aarch64/lib/com_err/compile_et "$@"\n' \
+                    "$GITHUB_WORKSPACE" > cross-tools/compile_et
+                chmod 755 cross-tools/*
+
+            - name: Test cross build
+              run: |
+                test "$(uname -m)" = aarch64
+                file build-aarch64/kuser/.libs/kinit
+                /usr/bin/kinit --version
+                cd build-aarch64
+                make check
+
     linux-i386:
         name: linux-i386 (${{ matrix.name }})
         # Run if no [only X] tag, or if [only linux] is present (check both push commits and PR titles)

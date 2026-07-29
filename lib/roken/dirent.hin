@@ -57,6 +57,15 @@ ROKEN_LIB_FUNCTION DIR * ROKEN_LIB_CALL opendir(const char *);
 
 ROKEN_LIB_FUNCTION struct dirent * ROKEN_LIB_CALL readdir(DIR *);
 
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
+alphasort(const struct dirent **, const struct dirent **);
+
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
+scandir(const char *, struct dirent ***,
+        int (ROKEN_LIB_CALL *)(const struct dirent *),
+        int (ROKEN_LIB_CALL *)(const struct dirent **,
+                               const struct dirent **));
+
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL rewinddir(DIR *);
 
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL seekdir(DIR *, long);

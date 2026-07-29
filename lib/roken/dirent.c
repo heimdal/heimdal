@@ -31,6 +31,7 @@
 
 #include<config.h>
 
+#include <limits.h>
 #include <stdlib.h>
 #include <io.h>
 #include <string.h>
@@ -212,6 +213,101 @@ readdir(DIR * dp)
         return NULL;
 
     return dp->entries[dp->cursor++];
+}
+
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
+alphasort(const struct dirent **a, const struct dirent **b)
+{
+    return strcoll((*a)->d_name, (*b)->d_name);
+}
+
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
+scandir(const char *path, struct dirent ***entries,
+        int (ROKEN_LIB_CALL *selectfn)(const struct dirent *),
+        int (ROKEN_LIB_CALL *compare)(const struct dirent **,
+                                      const struct dirent **))
+{
+    struct dirent **list = NULL;
+    struct dirent *entry;
+    DIR *dp;
+    size_t i, j, n = 0, nalloced = 0;
+    int saved_errno;
+
+    if ((dp = opendir(path)) == NULL)
+        return -1;
+
+    for (;;) {
+        struct dirent *copy;
+        size_t len;
+
+        errno = 0;
+        if ((entry = readdir(dp)) == NULL) {
+            if (errno != 0)
+                goto fail;
+            break;
+        }
+        if (selectfn != NULL && !selectfn(entry))
+            continue;
+
+        len = strlen(entry->d_name);
+        if ((copy = malloc(sizeof(*copy) + len)) == NULL) {
+            errno = ENOMEM;
+            goto fail;
+        }
+        copy->d_ino = entry->d_ino;
+        memcpy(copy->d_name, entry->d_name, len + 1);
+
+        if (n == nalloced) {
+            struct dirent **tmp;
+            size_t growth = 4 + nalloced / 2;
+
+            if (nalloced >= INT_MAX - growth ||
+                nalloced >= (size_t)-1 / sizeof(list[0]) - growth) {
+                free(copy);
+                errno = EOVERFLOW;
+                goto fail;
+            }
+            nalloced += growth;
+            tmp = realloc(list, nalloced * sizeof(list[0]));
+            if (tmp == NULL) {
+                free(copy);
+                errno = ENOMEM;
+                goto fail;
+            }
+
+            list = tmp;
+        }
+        list[n++] = copy;
+    }
+    (void) closedir(dp);
+
+    if (compare != NULL) {
+        for (i = 1; i < n; i++) {
+            struct dirent *e = list[i];
+
+            for (j = i; j > 0; j--) {
+                const struct dirent *a = e;
+                const struct dirent *b = list[j - 1];
+
+                if (compare(&a, &b) >= 0)
+                    break;
+                list[j] = list[j - 1];
+            }
+            list[j] = e;
+        }
+    }
+
+    *entries = list;
+    return (int)n;
+
+fail:
+    saved_errno = errno;
+    (void) closedir(dp);
+    for (i = 0; i < n; i++)
+        free(list[i]);
+    free(list);
+    errno = saved_errno;
+    return -1;
 }
 
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL

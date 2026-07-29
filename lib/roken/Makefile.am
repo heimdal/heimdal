@@ -39,6 +39,7 @@ check_PROGRAMS = 				\
 		parse_reply-test		\
 		parse_time-test			\
 		poll-test			\
+		scandir-test			\
 		snprintf-test			\
 		strpftime-test			\
 		timeval				\

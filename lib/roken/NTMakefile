@@ -216,6 +216,7 @@ TEST_PROGS =			    \
 	$(OBJ)\parse_reply-test.exe \
 	$(OBJ)\parse_time-test.exe  \
 	$(OBJ)\poll-test.exe       \
+	$(OBJ)\scandir-test.exe    \
 	$(OBJ)\snprintf-test.exe    \
 	$(OBJ)\strpftime-test.exe   \
 	$(OBJ)\dirent-test.exe	    \
@@ -249,6 +250,9 @@ $(OBJ)\parse_time-test.exe: $(OBJ)\parse_time-test.obj $(OBJ)\test-mem.obj $(LIB
 	$(EXECONLINK)
 
 $(OBJ)\poll-test.exe: $(OBJ)\poll-test.obj $(LIBROKEN)
+	$(EXECONLINK)
+
+$(OBJ)\scandir-test.exe: $(OBJ)\scandir-test.obj $(LIBROKEN)
 	$(EXECONLINK)
 
 $(OBJ)\strpftime-test.obj: strpftime-test.c
@@ -313,6 +317,7 @@ test-run:
 #	-parse_reply-test.exe
 	-parse_time-test.exe
 	poll-test.exe
+	scandir-test.exe
 	-snprintf-test.exe
 	-strpftime-test.exe
 	cd $(SRCDIR)

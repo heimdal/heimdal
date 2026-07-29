@@ -1429,6 +1429,69 @@ test_atomics(void)
     return 0;
 }
 
+static int
+test_config_dir_order(void)
+{
+    const char *const names[] = { "20.conf", "10.conf" };
+    const char *const values[] = { "twenty", "ten" };
+    char dirname[] = "test_config_dir.XXXXXX";
+    heim_config_section *config = NULL;
+    heim_context context;
+    char **strings;
+    size_t i;
+    int ret;
+
+    if (mkdtemp(dirname) == NULL)
+        err(1, "mkdtemp");
+
+    for (i = 0; i < sizeof(names) / sizeof(names[0]); i++) {
+        char *path = NULL;
+        FILE *f;
+
+        if (asprintf(&path, "%s/%s", dirname, names[i]) == -1 ||
+            path == NULL)
+            err(1, "asprintf");
+        if ((f = fopen(path, "w")) == NULL)
+            err(1, "fopen(%s)", path);
+        if (fprintf(f, "[order]\nvalue = %s\n", values[i]) < 0 ||
+            fclose(f) == EOF)
+            err(1, "write(%s)", path);
+        free(path);
+    }
+
+    context = heim_context_init();
+    heim_assert(context != NULL, "heim_context_init failed");
+
+    ret = heim_config_parse_dir_multi(context, dirname, &config);
+    heim_assert(ret == 0, "heim_config_parse_dir_multi failed");
+
+    strings = heim_config_get_strings(context, config,
+                                      "order", "value", NULL);
+    heim_assert(strings != NULL &&
+                strings[0] != NULL && strcmp(strings[0], "ten") == 0 &&
+                strings[1] != NULL && strcmp(strings[1], "twenty") == 0 &&
+                strings[2] == NULL,
+                "configuration directory order is not lexical");
+    heim_config_free_strings(strings);
+    heim_config_file_free(context, config);
+    heim_context_free(&context);
+
+    for (i = 0; i < sizeof(names) / sizeof(names[0]); i++) {
+        char *path = NULL;
+
+        if (asprintf(&path, "%s/%s", dirname, names[i]) == -1 ||
+            path == NULL)
+            err(1, "asprintf");
+        if (unlink(path) != 0)
+            err(1, "unlink(%s)", path);
+        free(path);
+    }
+    if (rmdir(dirname) != 0)
+        err(1, "rmdir(%s)", dirname);
+
+    return 0;
+}
+
 int
 main(int argc, char **argv)
 {
@@ -1453,6 +1516,7 @@ main(int argc, char **argv)
     res |= test_db("json", argc > 1 ? argv[1] : "test_db.json");
     res |= test_array();
     res |= test_atomics();
+    res |= test_config_dir_order();
 
     return res ? 1 : 0;
 }

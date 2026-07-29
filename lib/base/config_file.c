@@ -491,6 +491,32 @@ is_plist_file(const char *fname)
     return 1;
 }
 
+static int ROKEN_LIB_CALL
+config_file_filter(const struct dirent *entry)
+{
+    const char *p = entry->d_name;
+
+    while (*p) {
+        /*
+         * Here be dragons.  heim_config_parse_file_multi() expands path
+         * tokens.  Because of the limitations here on file naming, we can't
+         * have path tokens in the file name, so we're safe.  Anyone changing
+         * this if condition here should be aware.
+         */
+        if (!isalnum((unsigned char)*p) && *p != '_' && *p != '-' &&
+            strcmp(p, ".conf") != 0)
+            return 0;
+        p++;
+    }
+    return 1;
+}
+
+static int ROKEN_LIB_CALL
+config_file_cmp(const struct dirent **a, const struct dirent **b)
+{
+    return strcmp((*a)->d_name, (*b)->d_name);
+}
+
 /**
  * Parse configuration files in the given directory and add the result
  * into res.  Only files whose names consist only of alphanumeric
@@ -513,51 +539,38 @@ heim_config_parse_dir_multi(heim_context context,
                             const char *dname,
                             heim_config_section **res)
 {
-    struct dirent *entry;
-    heim_error_code ret;
-    DIR *d;
+    struct dirent **entries = NULL;
+    heim_error_code ret = 0;
+    int i, nentries;
 
-    if ((d = opendir(dname)) == NULL)
+    if ((nentries = scandir(dname, &entries, config_file_filter,
+                            config_file_cmp)) < 0)
         return errno;
 
-    while ((entry = readdir(d)) != NULL) {
-        char *p = entry->d_name;
+    for (i = 0; i < nentries; i++) {
+        struct dirent *entry = entries[i];
         char *path;
-        int is_valid = 1;
-
-        while (*p) {
-            /*
-             * Here be dragons.  The call to heim_config_parse_file_multi()
-             * below expands path tokens.  Because of the limitations here
-             * on file naming, we can't have path tokens in the file name,
-             * so we're safe.  Anyone changing this if condition here should
-             * be aware.
-             */
-            if (!isalnum((unsigned char)*p) && *p != '_' && *p != '-' &&
-                strcmp(p, ".conf") != 0) {
-                is_valid = 0;
-                break;
-            }
-            p++;
-        }
-        if (!is_valid)
-            continue;
 
         if (asprintf(&path, "%s/%s", dname, entry->d_name) == -1 ||
             path == NULL) {
-            (void) closedir(d);
-            return heim_enomem(context);
+            ret = heim_enomem(context);
+            goto out;
         }
         ret = heim_config_parse_file_multi(context, path, res);
         free(path);
         if (ret == ENOMEM) {
-            (void) closedir(d);
-            return ENOMEM;
+            ret = ENOMEM;
+            goto out;
         }
         /* Ignore malformed config files so we don't lock out admins, etc... */
     }
-    (void) closedir(d);
-    return 0;
+    ret = 0;
+
+out:
+    for (i = 0; i < nentries; i++)
+        free(entries[i]);
+    free(entries);
+    return ret;
 }
 
 static int

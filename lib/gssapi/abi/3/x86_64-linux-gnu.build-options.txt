@@ -1,0 +1,21 @@
+Baseline: heimdal-7.8.0
+Commit: a6cf94577c0d1e5bca5304342e4ddffb18255afe
+Platform: x86_64-linux-gnu
+
+Generated from a Debian 11 (bullseye) build of the heimdal-7.8.0 tag:
+
+  ./configure --disable-otp --disable-heimdal-documentation \
+      CFLAGS="-g -O0" LIBS=-lcrypt
+
+The retained library was unstripped and contained DWARF debug information:
+
+  SHA256 (libgssapi.so.3) =
+      c0f0abb07db49485ad2c3a946769afb3388c7ce1915769c4d882b943727fe8ed
+
+The ABI XML file was generated with abigail-tools 2.2 on Debian 12
+(bookworm), using:
+
+  --no-corpus-path --no-comp-dir-path --short-locs
+
+  SHA256 (x86_64-linux-gnu.abi) =
+      43dc4202c0a1b0a4c6ffdc50a6583fa053e47fdceee8ab0672305f698b3b50f5

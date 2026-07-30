@@ -84,6 +84,7 @@ mechsrc = \
 	mech/cred.h \
 	mech/cred.c \
 	mech/compat.h \
+	mech/obsolete-symbols.c \
 	mech/doxygen.c \
 	mech/gss_accept_sec_context.c \
 	mech/gss_acquire_cred.c \
@@ -231,6 +232,10 @@ nodist_libgssapi_la_SOURCES  = \
 libgssapi_la_DEPENDENCIES = version-script.map
 
 libgssapi_la_LDFLAGS = -version-info 3:0:0
+
+check-abi: libgssapi.la
+	$(SHELL) $(top_srcdir)/cf/check-library-abi.sh \
+	    $(top_builddir) libgssapi.so $(srcdir)/abi/3
 
 if versionscript
 libgssapi_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(srcdir)/version-script.map
@@ -382,6 +387,7 @@ $(gsstool_OBJECTS): gss-commands.h
 
 EXTRA_DIST = \
 	NTMakefile \
+	abi \
 	libgssapi-version.rc \
 	libgssapi-exports.def \
 	$(man_MANS) \
@@ -399,6 +405,8 @@ EXTRA_DIST = \
 	test_negoex_mech.c \
 	version-script.map \
 	gss-commands.in
+
+.PHONY: check-abi
 
 $(libgssapi_la_OBJECTS): gkrb5_err.h gssapi_asn1.h gssapi_asn1-priv.h
 $(libgssapi_la_OBJECTS): spnego_asn1.h spnego_asn1-priv.h

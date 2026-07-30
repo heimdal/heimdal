@@ -705,6 +705,7 @@ static char *port_str;
 static char *ossl_cnf;
 static char *ossl_propq;
 static int detach_from_console;
+static int run_once;
 static int daemon_child = -1;
 
 static struct getargs args[] = {
@@ -725,6 +726,8 @@ static struct getargs args[] = {
       "port ipropd-slave will connect to", "port"},
     { "detach", 0, arg_flag, &detach_from_console,
       "detach from console", NULL },
+    { "once", '1', arg_flag, &run_once,
+      "exit after catching up with the master", NULL },
     { "daemon-child", 0, arg_integer, &daemon_child,
       "private argument, do not use", NULL },
     { "pidfile-basename", 0, arg_string, &pidfile_basename,
@@ -772,6 +775,7 @@ main(int argc, char **argv)
     time_t reconnect;
     time_t before = 0;
     int restarter_fd = -1;
+    int once_done = FALSE;
 
     const char *master;
 
@@ -906,7 +910,7 @@ main(int argc, char **argv)
     roken_detach_finish(NULL, daemon_child);
     restarter_fd = restarter(context, NULL);
 
-    while (!exit_flag) {
+    while (!exit_flag && !once_done) {
         struct timeval to;
 	time_t now, elapsed;
         fd_set readset;
@@ -976,7 +980,7 @@ main(int argc, char **argv)
 
 	slave_status(context, status_file, "connected to master, waiting instructions");
 
-	while (connected && !exit_flag) {
+	while (connected && !exit_flag && !once_done) {
 	    krb5_data out;
 	    krb5_storage *sp;
 	    uint32_t tmp;
@@ -1128,6 +1132,8 @@ main(int argc, char **argv)
                 if (verbose)
                     krb5_warnx(context, "master tells us we are up to date");
 		is_up_to_date(context, status_file, server_context);
+		if (run_once)
+		    once_done = TRUE;
 		break;
 	    case NOW_YOU_HAVE :
 	    case I_HAVE :
@@ -1142,7 +1148,8 @@ main(int argc, char **argv)
 
 	}
 
-	slave_status(context, status_file, "disconnected from master");
+	if (!once_done)
+	    slave_status(context, status_file, "disconnected from master");
     retry:
 	if (connected == FALSE)
 	    krb5_warnx (context, "disconnected from server");
@@ -1165,7 +1172,8 @@ main(int argc, char **argv)
 	unlink(status_file);
     }
 
-    if (0);
+    if (once_done)
+	krb5_warnx(context, "%s caught up with master", getprogname());
 #ifndef NO_SIGXCPU
     else if(exit_flag == SIGXCPU)
 	krb5_warnx(context, "%s CPU time limit exceeded", getprogname());

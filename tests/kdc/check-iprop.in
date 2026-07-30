@@ -289,6 +289,7 @@ ipropd_slave2=$ipropd_slave
 ipropd_master2=$ipropd_master
 ipropd_slave="${ipropd_slave} --verbose --status-file=iprop-slave-status --port=$ipropport"
 ipropd_slave="${ipropd_slave} --hostname=slave.test.h5l.se -k ${keytab}"
+ipropd_slave_once="${ipropd_slave} --once localhost"
 ipropd_slave="${ipropd_slave} --detach localhost"
 ipropd_master="${ipropd_master} --verbose --hostname=localhost -k ${keytab}"
 ipropd_master="${ipropd_master} --port=$ipropport"
@@ -580,12 +581,20 @@ ${kadmin} -l cpw --random-password user@${R} > /dev/null || exit 1
 wait_for_slave
 wait_for_slave2
 
+echo "checking ipropd-slave --once"
+sh ${leaks_kill} ipropd-slave $ipds || exit 1
+ipds=
+wait_for_slave_down
+env ${HEIM_MALLOC_DEBUG} \
+KRB5_CONFIG="${slave_config}" \
+${ipropd_slave_once} || { echo "ipropd-slave --once failed"; exit 1; }
+
 echo "shutting down all services"
 
 leaked=false
 sh ${leaks_kill} kdc $kdcpid || leaked=true
 sh ${leaks_kill} ipropd-master $ipdm || leaked=true
-sh ${leaks_kill} ipropd-slave $ipds || leaked=true
+test -z "$ipds" || sh ${leaks_kill} ipropd-slave $ipds || leaked=true
 sh ${leaks_kill} ipropd-master $ipdm2 || leaked=true
 sh ${leaks_kill} ipropd-slave $ipds2 || leaked=true
 rm -f iprop-slave-status

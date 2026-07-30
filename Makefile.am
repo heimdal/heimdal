@@ -66,7 +66,8 @@ EXTRA_DIST = \
 # Libraries with a supported ABI opt in here and provide their own
 # check-abi target.
 #
-ABI_CHECK_DIRS =
+ABI_CHECK_DIRS = \
+	lib/gssapi
 
 check-abi: all
 	@status=0; for dir in $(ABI_CHECK_DIRS); do \

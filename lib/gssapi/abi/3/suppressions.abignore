@@ -1,0 +1,49 @@
+# These functions are exported only to support internal testing and are not
+# part of Heimdal's public GSSAPI ABI.
+[suppress_function]
+  name_regexp = ^_(gssapi|gsskrb5cfx)_.*
+  change_kind = all
+
+# Constification reflects behaviour already required by the RFCs and does not
+# change the machine ABI.
+[suppress_function]
+  name = gss_add_buffer_set_member
+  return_type_name = OM_uint32
+  parameter = '0 OM_uint32*
+  parameter = '1 gss_const_buffer_t
+  parameter = '2 gss_buffer_set_t*
+  change_kind = function-subtype-change
+
+[suppress_function]
+  name = gss_duplicate_oid
+  return_type_name = OM_uint32
+  parameter = '0 OM_uint32*
+  parameter = '1 gss_const_OID
+  parameter = '2 gss_OID*
+  change_kind = function-subtype-change
+
+[suppress_function]
+  name = gss_oid_to_str
+  return_type_name = OM_uint32
+  parameter = '0 OM_uint32*
+  parameter = '1 gss_const_OID
+  parameter = '2 gss_buffer_t
+  change_kind = function-subtype-change
+
+# These types are owned by libkrb5 and are only passed by pointer across the
+# GSSAPI boundary.  Their layouts are checked against libkrb5's ABI instead.
+[suppress_type]
+  type_kind = struct
+  name = krb5_ccache_data
+
+[suppress_type]
+  type_kind = struct
+  name = Principal
+
+[suppress_type]
+  type_kind = struct
+  name = krb5_keytab_data
+
+[suppress_type]
+  type_kind = struct
+  name = EncryptionKey

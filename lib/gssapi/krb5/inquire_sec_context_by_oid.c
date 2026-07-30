@@ -290,6 +290,40 @@ static OM_uint32 inquire_sec_context_has_buggy_spnego
     return gss_add_buffer_set_member(minor_status, &buffer, data_set);
 }
 
+extern gss_OID_desc __gss_c_peer_has_updated_spnego_oid_desc;
+#define GSS_C_PEER_HAS_UPDATED_SPNEGO \
+    (&__gss_c_peer_has_updated_spnego_oid_desc)
+
+static OM_uint32
+inquire_sec_context_has_updated_spnego(OM_uint32 *minor_status,
+				       const gsskrb5_ctx context_handle,
+				       gss_buffer_set_t *data_set)
+{
+    int is_updated = 0;
+
+    *minor_status = 0;
+    *data_set = GSS_C_NO_BUFFER_SET;
+
+    HEIMDAL_MUTEX_lock(&context_handle->ctx_id_mutex);
+    is_updated = (context_handle->more_flags & IS_CFX);
+    if (is_updated == 0 && context_handle->auth_context != NULL) {
+	krb5_keyblock *acceptor_subkey;
+
+	if (context_handle->more_flags & LOCAL)
+	    acceptor_subkey = context_handle->auth_context->remote_subkey;
+	else
+	    acceptor_subkey = context_handle->auth_context->local_subkey;
+
+	if (acceptor_subkey != NULL &&
+	    context_handle->auth_context->keyblock != NULL)
+	    is_updated = (acceptor_subkey->keytype !=
+			  context_handle->auth_context->keyblock->keytype);
+    }
+    HEIMDAL_MUTEX_unlock(&context_handle->ctx_id_mutex);
+
+    return is_updated ? GSS_S_COMPLETE : GSS_S_FAILURE;
+}
+
 /*
  *
  */
@@ -551,6 +585,11 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_inquire_sec_context_by_oid
 	return inquire_sec_context_has_buggy_spnego(minor_status,
 						    ctx,
 						    data_set);
+    } else if (gss_oid_equal(desired_object,
+			     GSS_C_PEER_HAS_UPDATED_SPNEGO)) {
+	return inquire_sec_context_has_updated_spnego(minor_status,
+						      ctx,
+						      data_set);
     } else if (gss_oid_equal(desired_object, GSS_KRB5_GET_SUBKEY_X)) {
 	return inquire_sec_context_get_subkey(minor_status,
 					      ctx,
@@ -601,4 +640,3 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_inquire_sec_context_by_oid
 	return GSS_S_FAILURE;
     }
 }
-

@@ -53,6 +53,7 @@
 #include <sys/stat.h>
 #ifndef WIN32
 #include <sys/file.h>
+#include <glob.h>
 #include <locale.h>
 #endif
 #ifdef HAVE_IO_H
@@ -163,12 +164,32 @@ file_contains(const char *filename, const char *needle)
     return found;
 }
 
+#ifndef WIN32
+static size_t
+remove_log_files(const char *pattern)
+{
+    glob_t files;
+    size_t i, n = 0;
+
+    if (glob(pattern, 0, NULL, &files) == 0) {
+        n = files.gl_pathc;
+        for (i = 0; i < n; i++)
+            unlink(files.gl_pathv[i]);
+        globfree(&files);
+    }
+    return n;
+}
+#endif
+
 static int
 test_log_dest(void)
 {
     const char *normal = "test-log-dest.log";
     const char *trace = "test-trace-dest.log";
     const char *explicit = "test-trace-explicit-dest.log";
+#ifndef WIN32
+    const char *rotated = "test-log-reopen-*.log";
+#endif
     heim_log_facility *fac = NULL;
     heim_context context;
     int ret;
@@ -176,6 +197,9 @@ test_log_dest(void)
     unlink(normal);
     unlink(trace);
     unlink(explicit);
+#ifndef WIN32
+    (void) remove_log_files(rotated);
+#endif
 
     context = heim_context_init();
     heim_assert(context != NULL, "heim_context_init failed");
@@ -209,6 +233,21 @@ test_log_dest(void)
                 "explicit trace destination ignored its level filter");
     heim_assert(file_contains(explicit, "trace level 5"),
                 "explicit trace destination did not log matching level");
+
+#ifndef WIN32
+    ret = heim_initlog(context, "test_base", &fac);
+    heim_assert(ret == 0, "heim_initlog failed");
+    ret = heim_addlog_dest(context, fac,
+                           "FILE:test-log-reopen-"
+                           "%{strftime:%Y%m%d%H%M%S}.log");
+    heim_assert(ret == 0, "heim_addlog_dest with strftime failed");
+    heim_log(context, fac, 0, "strftime first");
+    sleep(2);
+    heim_log(context, fac, 0, "strftime second");
+    heim_closelog(context, fac);
+    heim_assert(remove_log_files(rotated) == 2,
+                "reopened log filename was not expanded for each open");
+#endif
 
     heim_context_free(&context);
 

@@ -241,6 +241,7 @@ struct file_data {
 #define FILEDISP_KEEPOPEN       0x1
 #define FILEDISP_REOPEN         0x2
 #define FILEDISP_IFEXISTS       0x4
+    int exp_tokens;
 };
 
 #ifndef O_CLOEXEC
@@ -253,6 +254,7 @@ log_file(heim_context context, const char *timestr, const char *msg, void *data)
     struct timeval tv;
     struct file_data *f = data;
     FILE *logf = f->fd;
+    char *filename = NULL;
     char *msgclean;
     size_t i = 0;
     size_t j;
@@ -279,7 +281,13 @@ log_file(heim_context context, const char *timestr, const char *msg, void *data)
             flags |= O_CREAT;
         }
 
-        fd = open(f->filename, flags, 0666); /* umask best be set */
+        if (f->exp_tokens) {
+            if (heim_expand_path_tokens(context, f->filename, 1,
+                                        &filename, NULL))
+                return;
+        }
+        fd = open(filename ? filename : f->filename, flags, 0666);
+        free(filename);
         if (fd == -1) {
             if (f->disp & FILEDISP_IFEXISTS)
                 gettimeofday(&f->tv, NULL);
@@ -336,10 +344,12 @@ open_file(heim_context context, heim_log_facility *fac, int min, int max,
     fd->mode = mode;
     fd->fd = f;
     fd->disp = disp;
+    fd->exp_tokens = exp_tokens && (disp & FILEDISP_REOPEN);
 
     if (filename) {
-        if (exp_tokens)
-            ret = heim_expand_path_tokens(context, filename, 1, &fd->filename, NULL);
+        if (exp_tokens && !(disp & FILEDISP_REOPEN))
+            ret = heim_expand_path_tokens(context, filename, 1,
+                                          &fd->filename, NULL);
         else if ((fd->filename = strdup(filename)) == NULL)
             ret = heim_enomem(context);
     }

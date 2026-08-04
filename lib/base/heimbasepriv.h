@@ -85,6 +85,11 @@ _heim_make_permanent(heim_object_t ptr);
 heim_data_t
 _heim_db_get_value(heim_db_t, heim_string_t, heim_data_t, heim_error_t *);
 
+struct et_list;
+
+void
+_heim_initialize_heim_error_table_r(struct et_list **);
+
 
 /* tagged tid */
 extern struct heim_type_data _heim_null_object;

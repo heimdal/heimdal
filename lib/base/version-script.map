@@ -139,6 +139,7 @@ HEIMDAL_BASE_1.0 {
 		heim_get_hash;
 		_heim_get_isa;
 		_heim_get_isaextra;
+		_heim_initialize_heim_error_table_r;
 		heim_get_log_dest;
 		heim_get_tid;
 		heim_get_warn_dest;

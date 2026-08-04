@@ -35,6 +35,15 @@
 
 #undef __attribute__
 #define __attribute__(X)
+#undef initialize_heim_error_table_r
+
+void initialize_heim_error_table_r(struct et_list **);
+
+void
+initialize_heim_error_table_r(struct et_list **list)
+{
+    _heim_initialize_heim_error_table_r(list);
+}
 
 heim_context
 heim_context_init(void)

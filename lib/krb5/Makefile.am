@@ -264,8 +264,10 @@ dist_libkrb5_la_SOURCES =			\
 	warn.c					\
 	write_message.c
 
-nodist_libkrb5_la_SOURCES =			\
-	$(ERR_FILES)
+nodist_libkrb5_la_SOURCES = $(ERR_FILES)
+if ENABLE_SHARED
+nodist_libkrb5_la_SOURCES += obsolete-symbols.c
+endif
 
 libkrb5_la_DEPENDENCIES =			\
 	version-script.map
@@ -431,6 +433,7 @@ test_config_strings.out: test_config_strings.cfg
 
 EXTRA_DIST = \
 	NTMakefile \
+	obsolete-symbols.c \
 	dll.c \
 	libkrb5-exports.def.in \
 	verify_krb5_conf-version.rc \

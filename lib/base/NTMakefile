@@ -112,6 +112,12 @@ $(OBJ)\heim_err.c $(OBJ)\heim_err.h: heim_err.et
 	$(BINDIR)\compile_et.exe $(SRCDIR)\heim_err.et
 	cd $(SRCDIR)
 
+$(OBJ)\heim_err.obj: $(OBJ)\heim_err.c
+	$(C2OBJ_C) /Fd$(OBJ)\ /Fo$(OBJ)\ $(extcflags) $(MPOPT) \
+	    /Dinitialize_heim_error_table_r=_heim_initialize_heim_error_table_r @<<
+$**
+<<
+
 test:: test-binaries test-run
 
 test-run:

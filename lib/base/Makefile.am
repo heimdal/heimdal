@@ -31,6 +31,8 @@ libheimbase_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(srcdir)/version-script.map
 endif
 
 libheimbase_la_LIBADD = $(PTHREAD_LIBADD) $(LIB_dlopen) $(LIB_com_err)
+libheimbase_la_CPPFLAGS = $(AM_CPPFLAGS) \
+	-Dinitialize_heim_error_table_r=_heim_initialize_heim_error_table_r
 
 include_HEADERS	= heimbase.h common_plugin.h heimbase-atomics.h heimbase-svc.h
 

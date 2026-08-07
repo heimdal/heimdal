@@ -55,6 +55,7 @@ kdc="${kdc} --addresses=localhost -P $port"
 server=host/datan.test.h5l.se
 cache="FILE:${objdir}/cache.krb5"
 acache="FILE:${objdir}/acache.krb5"
+keytabfile=${objdir}/no-salt.keytab
 
 kinit="${kinit} -c $cache ${afs_no_afslog}"
 akinit="${kinit} -c $acache ${afs_no_afslog}"
@@ -75,6 +76,8 @@ ${kadmin} <<EOF || exit 1
 init --realm-max-ticket-life=1day --realm-max-renewable-life=1month ${R}
 add -p foo --use-defaults foo@${R}
 add -p foo --use-defaults ${server}@${R}
+add -r -e aes256-cts-hmac-sha384-192 --use-defaults foo/no-salt@${R}
+ext -k ${keytabfile} foo/no-salt@${R}
 check ${R}
 EOF
 
@@ -136,6 +139,12 @@ ${klist} --hidden | grep fast_avail > /dev/null || { exit 1; }
 
 echo "Getting service ticket"
 ${kgetcred} ${server}@${R} || { exit 1; }
+${kdestroy}
+
+echo "Getting keytab client tickets with anonymous PKINIT FAST armor"; > messages.log
+${kinit} --pk-anon-fast-armor --use-keytab --keytab=${keytabfile} \
+   foo/no-salt@$R || \
+	{ ec=1 ; eval "${testfailed}"; }
 ${kdestroy}
 
 #

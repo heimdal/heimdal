@@ -54,16 +54,30 @@ roken_detach_prep(int argc, char **argv, const char *special_arg)
     char buf[1];
     char fildes[21];
     int status;
+#ifndef WIN32
+    const char *listen_pid;
+#endif
 
     pipefds[0] = -1;
     pipefds[1] = -1;
+
+#ifndef WIN32
+    listen_pid = getenv("LISTEN_PID");
+    if (listen_pid != NULL &&
+        strtol(listen_pid, NULL, 10) != (long)getpid())
+        listen_pid = NULL;
+#endif
 
 #ifdef WIN32
     if (_pipe(pipefds, 4, _O_NOINHERIT | O_BINARY) == -1)
         err(1, "failed to setup to detach daemon (_pipe failed)");
 #else
-    if (pipe(pipefds) == -1)
-        err(1, "failed to setup to detach daemon (pipe failed)");
+    /*
+     * A socketpair rather than a pipe so that the child can wait for the
+     * parent to exit (see roken_detach_finish()).
+     */
+    if (socketpair(AF_UNIX, SOCK_STREAM, 0, pipefds) == -1)
+        err(1, "failed to setup to detach daemon (socketpair failed)");
 #endif
 
     new_argv = calloc(argc + 3, sizeof(*new_argv));
@@ -114,6 +128,20 @@ roken_detach_prep(int argc, char **argv, const char *special_arg)
 
         (void) close(pipefds[0]);
         pipefds[0] = -1;
+
+        /*
+         * Socket-activated descriptors are only claimed by the process
+         * whose PID is $LISTEN_PID (see sd_listen_fds(3)), so hand them
+         * over to the daemon child.
+         */
+        if (listen_pid != NULL) {
+            char pidbuf[21];
+
+            (void) snprintf(pidbuf, sizeof(pidbuf), "%ld", (long)getpid());
+            if (setenv("LISTEN_PID", pidbuf, 1) == -1)
+                err(1, "failed to setup daemon child (setenv LISTEN_PID)");
+        }
+
         /*
          * Keep stdout/stderr for now so output and errors prior to
          * detach_finish() can be seen by the user.
@@ -140,8 +168,10 @@ roken_detach_prep(int argc, char **argv, const char *special_arg)
     do {
         bytes = read(pipefds[0], buf, sizeof(buf));
     } while (bytes == -1 && errno == EINTR);
-    (void) close(pipefds[0]);
-    pipefds[0] = -1;
+    if (bytes != 1) {
+        (void) close(pipefds[0]);
+        pipefds[0] = -1;
+    }
     if (bytes == -1) {
         /*
          * No need to wait for the process.  We've killed it.  If it
@@ -159,6 +189,21 @@ roken_detach_prep(int argc, char **argv, const char *special_arg)
             errx(SE_PROCSTATUS(status),
                  "daemon child preparation failed (child exited)");
     }
+#ifndef WIN32
+    if (bytes == 1) {
+        /*
+         * The child is ready.  If we're run by a service manager that
+         * implements the sd_notify protocol (e.g., systemd, with
+         * Type=notify, or with Type=forking and NotifyAccess=), tell it so,
+         * and that the child is now the main process, so that our exit is
+         * not taken to be the service's.  We may send this because we are
+         * the main process.  The child waits for us to exit (and so close
+         * pipefds[0]) before it continues, so anything it sends will be
+         * received after this.
+         */
+        (void) rk_sd_notifyf(0, "READY=1\nMAINPID=%ld", (long)child);
+    }
+#endif
     _exit(0);
     /* NOTREACHED */
     return -1;
@@ -208,9 +253,18 @@ roken_detach_finish(const char *dir, int daemon_child_fd)
     } while (bytes == -1 && errno == EINTR);
     if (bytes == -1)
         err(1, "failed to signal parent while detaching");
-    (void) close(pipefds[1]);
     if (bytes != sizeof(buf))
         errx(1, "failed to signal parent while detaching");
+#ifndef WIN32
+    /*
+     * Wait for the parent to exit, so that it can tell the service manager
+     * (if any) that we're the main process before we send it anything.
+     */
+    do {
+        bytes = read(pipefds[1], buf, sizeof(buf));
+    } while (bytes > 0 || (bytes == -1 && errno == EINTR));
+#endif
+    (void) close(pipefds[1]);
 
     fd = open(_PATH_DEVNULL, O_RDWR, 0);
     if (fd == -1)

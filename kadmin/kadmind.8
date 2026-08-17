@@ -137,6 +137,32 @@ special string
 .Dq +
 representing the default port.
 .El
+.Sh SOCKET ACTIVATION
+.Nm
+supports systemd-style socket activation (see
+.Xr sd_listen_fds 3 ) .
+When started with sockets passed in this way it uses them instead of
+creating its own, and the
+.Fl Fl ports
+option is ignored.
+.Pp
+If any of the passed sockets is named
+.Dq kadmind
+(e.g., with
+.Li FileDescriptorName=kadmind
+in the socket unit) then only those sockets are used; otherwise all
+of the passed sockets are used.
+Only listening TCP sockets are used (i.e., the socket unit must use
+.Li Accept=no ,
+the default).
+Sockets of any other type are ignored with a warning, and
+.Nm
+exits with an error if none of the passed sockets are usable.
+.Pp
+Socket activation can be combined with
+.Fl Fl detach ,
+in which case the passed sockets are handed to the detached daemon
+process.
 .\".Sh ENVIRONMENT
 .Sh FILES
 .Pa /var/heimdal/kadmind.acl

@@ -126,6 +126,42 @@ and
 .Xr krb5_openlog 3 .
 The entity used for logging is
 .Nm kdc .
+.Sh SOCKET ACTIVATION
+.Nm
+supports systemd-style socket activation (see
+.Xr sd_listen_fds 3 ) .
+When started with sockets passed in this way it uses them instead of
+creating its own, and the
+.Fl Fl ports
+and
+.Fl Fl addresses
+options are ignored.
+.Pp
+If any of the passed sockets is named
+.Dq kdc
+(e.g., with
+.Li FileDescriptorName=kdc
+in the socket unit) then only those sockets are used; otherwise all
+of the passed sockets are used.
+The KDC accepts UDP sockets and listening TCP sockets (i.e., the
+socket unit must use
+.Li Accept=no ,
+the default).
+Sockets of any other type are ignored with a warning, and
+.Nm
+exits with an error if none of the passed sockets are usable.
+.Pp
+As explained in
+.Sx BUGS ,
+replies to UDP requests must come from the address the request was
+sent to, so on hosts with more than one address configure one
+.Li ListenDatagram=
+socket per address rather than a single wildcard socket.
+.Pp
+Socket activation can be combined with
+.Fl Fl detach ,
+in which case the passed sockets are handed to the detached daemon
+process.
 .Sh CONFIGURATION FILE
 The configuration file has the same syntax as
 .Xr krb5.conf 5 ,

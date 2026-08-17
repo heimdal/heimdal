@@ -181,6 +181,7 @@ wait_for_connection(krb5_context contextp,
     int e;
     fd_set orig_read_set, read_set;
     int status, max_fd = -1;
+    unsigned long nconns = 0;
 
     FD_ZERO(&orig_read_set);
 
@@ -203,6 +204,9 @@ wait_for_connection(krb5_context contextp,
     signal(SIGINT, terminate);
     signal(SIGCHLD, sigchld);
 
+    rk_sd_notify(0, "READY=1");
+    rk_sd_notifyf(0, "STATUS=Serving; %lu connection(s) accepted", nconns);
+
     while (term_flag == 0) {
 	read_set = orig_read_set;
 	e = select(max_fd + 1, &read_set, NULL, NULL, NULL);
@@ -213,12 +217,18 @@ wait_for_connection(krb5_context contextp,
 	    krb5_warnx(contextp, "select returned 0");
 	else {
 	    for(i = 0; i < num_socks; i++) {
-		if(FD_ISSET(socks[i], &read_set))
+		if(FD_ISSET(socks[i], &read_set)) {
 		    if(spawn_child(contextp, socks, num_socks, i) == 0)
 			return;
+                    nconns++;
+                    rk_sd_notifyf(0, "STATUS=Serving; %lu connection(s) accepted", nconns);
+		}
 	    }
 	}
     }
+
+    rk_sd_notify(0, "STOPPING=1");
+
     signal(SIGCHLD, SIG_IGN);
 
     while ((waitpid(-1, &status, WNOHANG)) > 0)

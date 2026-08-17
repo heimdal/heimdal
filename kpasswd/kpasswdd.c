@@ -706,44 +706,83 @@ doit(krb5_keytab keytab, int port)
     struct sockaddr_storage __ss;
     struct sockaddr *sa = (struct sockaddr *)&__ss;
     unsigned long nrequests = 0;
+    int *sd_fds = NULL;
+    int sd_n, j;
 
-    if (explicit_addresses.len) {
-	addrs = explicit_addresses;
-    } else {
-	ret = krb5_get_all_server_addrs(context, &addrs);
-	if (ret)
-	    krb5_err(context, 1, ret, "krb5_get_all_server_addrs");
-    }
-    n = addrs.len;
+    sd_n = rk_sd_listen_fds_named(0, "kpasswdd", RK_SD_DGRAM | RK_SD_INET,
+				  &sd_fds, NULL);
+    if (sd_n < 0)
+	krb5_err(context, 1, errno, "could not use socket-activated sockets");
+    if (sd_n > 0) {
+	sockets = malloc(sd_n * sizeof(*sockets));
+	if (sockets == NULL)
+	    krb5_errx(context, 1, "out of memory");
+	memset(&addrs, 0, sizeof(addrs));
+	addrs.val = calloc(sd_n, sizeof(*addrs.val));
+	if (addrs.val == NULL)
+	    krb5_errx(context, 1, "out of memory");
+	n = 0;
+	maxfd = -1;
+	FD_ZERO(&real_fdset);
+	for (j = 0; j < sd_n; j++) {
+	    int fd = sd_fds[j];
+	    krb5_socklen_t sa_size = sizeof(__ss);
 
-    sockets = malloc(n * sizeof(*sockets));
-    if (sockets == NULL)
-	krb5_errx(context, 1, "out of memory");
-    maxfd = -1;
-    FD_ZERO(&real_fdset);
-    for (i = 0; i < n; ++i) {
-	krb5_socklen_t sa_size = sizeof(__ss);
-
-	krb5_addr2sockaddr(context, &addrs.val[i], sa, &sa_size, port);
-
-	sockets[i] = socket(__ss.ss_family, SOCK_DGRAM, 0);
-	if (sockets[i] < 0)
-	    krb5_err(context, 1, errno, "socket");
-	if (bind(sockets[i], sa, sa_size) < 0) {
-	    char str[128];
-	    size_t len;
-	    int save_errno = errno;
-
-	    ret = krb5_print_address(&addrs.val[i], str, sizeof(str), &len);
+	    if (getsockname(fd, sa, &sa_size) < 0)
+		krb5_err(context, 1, errno,
+			 "getsockname on socket-activated fd %d", fd);
+	    ret = krb5_sockaddr2address(context, sa, &addrs.val[n]);
 	    if (ret)
-		strlcpy(str, "unknown address", sizeof(str));
-	    krb5_warn(context, save_errno, "bind(%s)", str);
-	    continue;
+		krb5_err(context, 1, ret,
+			 "address of socket-activated fd %d", fd);
+	    sockets[n] = fd;
+	    maxfd = max(maxfd, fd);
+	    if (maxfd >= FD_SETSIZE)
+		krb5_errx(context, 1, "fd too large");
+	    FD_SET(fd, &real_fdset);
+	    n++;
 	}
-	maxfd = max(maxfd, sockets[i]);
-	if (maxfd >= FD_SETSIZE)
-	    krb5_errx(context, 1, "fd too large");
-	FD_SET(sockets[i], &real_fdset);
+	addrs.len = n;
+	free(sd_fds);
+    } else {
+	if (explicit_addresses.len) {
+	    addrs = explicit_addresses;
+	} else {
+	    ret = krb5_get_all_server_addrs(context, &addrs);
+	    if (ret)
+		krb5_err(context, 1, ret, "krb5_get_all_server_addrs");
+	}
+	n = addrs.len;
+
+	sockets = malloc(n * sizeof(*sockets));
+	if (sockets == NULL)
+	    krb5_errx(context, 1, "out of memory");
+	maxfd = -1;
+	FD_ZERO(&real_fdset);
+	for (i = 0; i < n; ++i) {
+	    krb5_socklen_t sa_size = sizeof(__ss);
+
+	    krb5_addr2sockaddr(context, &addrs.val[i], sa, &sa_size, port);
+
+	    sockets[i] = socket(__ss.ss_family, SOCK_DGRAM, 0);
+	    if (sockets[i] < 0)
+		krb5_err(context, 1, errno, "socket");
+	    if (bind(sockets[i], sa, sa_size) < 0) {
+		char str[128];
+		size_t len;
+		int save_errno = errno;
+
+		ret = krb5_print_address(&addrs.val[i], str, sizeof(str), &len);
+		if (ret)
+		    strlcpy(str, "unknown address", sizeof(str));
+		krb5_warn(context, save_errno, "bind(%s)", str);
+		continue;
+	    }
+	    maxfd = max(maxfd, sockets[i]);
+	    if (maxfd >= FD_SETSIZE)
+		krb5_errx(context, 1, "fd too large");
+	    FD_SET(sockets[i], &real_fdset);
+	}
     }
 
     if (maxfd == -1)
@@ -751,9 +790,8 @@ doit(krb5_keytab keytab, int port)
 
     roken_detach_finish(NULL, daemon_child);
 
-    rk_sd_notify(0, "READY=1");
-    rk_sd_notifyf(0, "STATUS=Serving; %lu password change request(s) processed",
-		  nrequests);
+    rk_sd_notify(0, "READY=1\n"
+		 "STATUS=Serving; 0 password change request(s) processed");
 
     while (exit_flag == 0) {
 	krb5_ssize_t retx;

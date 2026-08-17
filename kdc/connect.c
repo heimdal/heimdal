@@ -1213,6 +1213,8 @@ start_kdc(krb5_context context,
 
     roken_detach_finish(NULL, daemon_child);
 
+    rk_sd_notify(0, "READY=1\nSTATUS=Serving requests");
+
 #ifdef HAVE_FORK
     if (!testing_flag) {
         /* Note that we might never execute the body of this loop */
@@ -1254,11 +1256,15 @@ start_kdc(krb5_context context,
                 kdc_log(context, config, 3, "KDC worker process started: %d",
                         pid);
                 num_kdcs++;
+                rk_sd_notifyf(0, "STATUS=Serving requests; %d of %d KDC worker "
+                              "process(es) running", num_kdcs, max_kdcs);
                 /* Slow down the creation of KDCs... */
                 select_sleep(12500);
                 break;
             }
         }
+
+        rk_sd_notify(0, "STOPPING=1");
 
         /* Closing these sockets should cause the kids to die... */
 
@@ -1311,11 +1317,13 @@ start_kdc(krb5_context context,
         kdc_log(context, config, 3, "KDC master process exiting");
     } else {
         loop(context, config, &d, &ndescr, -1);
+        rk_sd_notify(0, "STOPPING=1");
         kdc_log(context, config, 3, "KDC exiting");
     }
     free(pids);
 #else
     loop(context, config, &d, &ndescr, -1);
+    rk_sd_notify(0, "STOPPING=1");
     kdc_log(context, config, 3, "KDC exiting");
 #endif
 

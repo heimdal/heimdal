@@ -227,6 +227,24 @@ reinit_descrs (struct descr *d, int n)
 }
 
 /*
+ * Finish setting up the listening socket `s' of the given type and port (in
+ * network byte order) in `d'.  This is everything that can be done after
+ * bind(2) and listen(2), and so is shared by sockets we create and sockets
+ * passed to us via socket activation.
+ */
+
+static void
+finish_socket(struct descr *d, krb5_socket_t s, int type, int port)
+{
+    d->s = s;
+    d->type = type;
+    d->port = port;
+    rk_cloexec(s);
+    socket_set_nonblocking(s, 1);
+    socket_set_keepalive(s, 1);
+}
+
+/*
  * Create the socket (family, type, port) in `d'.  a == NULL is wild.
  */
 
@@ -269,7 +287,6 @@ init_socket(krb5_context context,
 	d->s = rk_INVALID_SOCKET;
 	return;
     }
-    rk_cloexec(d->s);
 #if defined(HAVE_SETSOCKOPT) && defined(SOL_SOCKET) && defined(SO_REUSEADDR)
     {
 	int one = 1;
@@ -277,10 +294,7 @@ init_socket(krb5_context context,
                           sizeof(one));
     }
 #endif
-    d->type = type;
-    d->port = port;
 
-    socket_set_nonblocking(d->s, 1);
 #ifdef HAVE_IPV6
     if (family == AF_INET6 && a == NULL)
         socket_set_ipv6only(d->s, 1);
@@ -298,9 +312,58 @@ init_socket(krb5_context context,
 	d->s = rk_INVALID_SOCKET;
 	return;
     }
-    socket_set_keepalive(d->s, 1);
+    finish_socket(d, d->s, type, port);
     kdc_log(context, config, 3, "listening on %s port %u/%s",
             a_str, ntohs(port), type == SOCK_STREAM ? "tcp" : "udp");
+}
+
+/*
+ * Allocate descriptors for the sockets handed to us via systemd socket
+ * activation and return the number of them (0 if we were not
+ * socket-activated).  See rk_sd_listen_fds_named() for which of the passed
+ * sockets we use.
+ */
+
+static int
+init_sockets_sd(krb5_context context,
+                krb5_kdc_configuration *config,
+                struct descr **desc)
+{
+    struct descr *d;
+    int *fds = NULL, *types = NULL;
+    int n, i;
+
+    n = rk_sd_listen_fds_named(0, "kdc", RK_SD_DGRAM | RK_SD_STREAM | RK_SD_INET,
+                               &fds, &types);
+    if (n < 0)
+        krb5_err(context, 1, errno, "could not use socket-activated sockets");
+    if (n == 0)
+        return 0;
+
+    d = calloc(n, sizeof(*d));
+    if (d == NULL)
+        krb5_errx(context, 1, "malloc(%lu) failed",
+                  (unsigned long)n * sizeof(*d));
+
+    for (i = 0; i < n; i++) {
+        struct sockaddr_storage ss;
+        socklen_t sslen = sizeof(ss);
+        int port = 0;
+
+        if (getsockname(fds[i], (struct sockaddr *)&ss, &sslen) == 0)
+            port = socket_get_port((struct sockaddr *)&ss);
+        init_descr(&d[i]);
+        finish_socket(&d[i], fds[i], types[i], port);
+        kdc_log(context, config, 3,
+                "listening on socket-activated fd %d port %u/%s",
+                fds[i], ntohs(port), (types[i] == SOCK_STREAM) ? "tcp" : "udp");
+    }
+    free(fds);
+    free(types);
+
+    reinit_descrs(d, n);
+    *desc = d;
+    return n;
 }
 
 /*
@@ -1195,7 +1258,9 @@ start_kdc(krb5_context context,
     socket_set_nonblocking(islive[1], 1);
 #endif
 
-    ndescr = init_sockets(context, config, &d);
+    ndescr = init_sockets_sd(context, config, &d);
+    if (ndescr <= 0)
+	ndescr = init_sockets(context, config, &d);
     if(ndescr <= 0)
 	krb5_errx(context, 1, "No sockets!");
 

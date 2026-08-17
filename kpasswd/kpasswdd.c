@@ -701,6 +701,7 @@ doit(krb5_keytab keytab, int port)
     fd_set real_fdset;
     struct sockaddr_storage __ss;
     struct sockaddr *sa = (struct sockaddr *)&__ss;
+    unsigned long nrequests = 0;
 
     if (explicit_addresses.len) {
 	addrs = explicit_addresses;
@@ -740,10 +741,15 @@ doit(krb5_keytab keytab, int port)
 	    krb5_errx(context, 1, "fd too large");
 	FD_SET(sockets[i], &real_fdset);
     }
+
     if (maxfd == -1)
 	krb5_errx(context, 1, "No sockets!");
 
     roken_detach_finish(NULL, daemon_child);
+
+    rk_sd_notify(0, "READY=1");
+    rk_sd_notifyf(0, "STATUS=Serving; %lu password change request(s) processed",
+		  nrequests);
 
     while (exit_flag == 0) {
 	krb5_ssize_t retx;
@@ -774,8 +780,13 @@ doit(krb5_keytab keytab, int port)
 			 &addrs.val[i],
 			 sa, addrlen,
 			 buf, retx);
+		nrequests++;
+		rk_sd_notifyf(0, "STATUS=Serving; %lu password change request(s) "
+			      "processed", nrequests);
 	    }
     }
+
+    rk_sd_notify(0, "STOPPING=1");
 
     for (i = 0; i < n; ++i)
 	close(sockets[i]);

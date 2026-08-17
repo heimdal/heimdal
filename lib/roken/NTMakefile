@@ -96,6 +96,9 @@ libroken_la_OBJS =			\
 	$(OBJ)\rename.obj		\
 	$(OBJ)\resolve.obj		\
 	$(OBJ)\rand.obj			\
+	$(OBJ)\rk_sd_listen_fds_with_names.obj \
+	$(OBJ)\rk_sd_notify.obj		\
+	$(OBJ)\rk_sd_notifyf.obj	\
 	$(OBJ)\roken_gethostby.obj	\
 	$(OBJ)\rtbl.obj			\
 	$(OBJ)\secure_getenv.obj	\

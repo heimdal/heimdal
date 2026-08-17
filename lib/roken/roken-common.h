@@ -78,6 +78,10 @@
 #define STDERR_FILENO 2
 #endif
 
+#ifndef SD_LISTEN_FDS_START
+#define SD_LISTEN_FDS_START 3
+#endif
+
 #ifndef max
 #define max(a,b) (((a)>(b))?(a):(b))
 #endif
@@ -571,6 +575,24 @@ rk_mkdir(const char *, mode_t);
 
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 rk_clzll(uint64_t);
+
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
+rk_sd_notify(int, const char *);
+
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
+rk_sd_notifyf(int, const char *, ...)
+    ROKEN_PRINTF_ATTRIBUTE((__printf__, 2, 3));
+
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
+rk_sd_listen_fds_with_names(int, char ***);
+
+/* Flags for rk_sd_listen_fds_named() */
+#define RK_SD_DGRAM     0x1     /* Accept datagram sockets */
+#define RK_SD_STREAM    0x2     /* Accept listening stream sockets */
+#define RK_SD_INET      0x4     /* Accept only IPv4 and IPv6 sockets */
+
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
+rk_sd_listen_fds_named(int, const char *, int, int **, int **);
 
 ROKEN_CPP_END
 

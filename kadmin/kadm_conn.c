@@ -247,68 +247,93 @@ start_server(krb5_context contextp, const char *port_str)
     krb5_socket_t *socks = NULL, *tmp;
     unsigned int num_socks = 0;
     int i;
+    char **names = NULL;
+    int sd_n, j;
 
-    if (port_str == NULL)
-	port_str = "+";
+    sd_n = rk_sd_listen_fds_with_names(0, &names);
+    if (sd_n < 0)
+        krb5_err(contextp, 1, -sd_n, "rk_sd_listen_fds_with_names");
+    if (sd_n > 0) {
+        socks = malloc(sd_n * sizeof(*socks));
+        if (socks == NULL)
+            krb5_err(contextp, 1, errno, "malloc");
+        for (j = 0; j < sd_n; j++) {
+            if (names != NULL && names[j] != NULL &&
+                strcmp(names[j], "kadmind") == 0) {
+                krb5_socket_t s = SD_LISTEN_FDS_START + j;
 
-    parse_ports(contextp, port_str);
+                socket_set_keepalive(s, 1);
+                socks[num_socks++] = s;
+            }
+        }
+    }
+    for (j = 0; names != NULL && names[j] != NULL; j++)
+        free(names[j]);
+    free(names);
 
-    for(p = kadm_ports; p; p = p->next) {
-	struct addrinfo hints, *ai, *ap;
-	char portstr[32];
-	memset (&hints, 0, sizeof(hints));
-	hints.ai_flags    = AI_PASSIVE;
-	hints.ai_socktype = SOCK_STREAM;
+    if (num_socks == 0) {
+	if (port_str == NULL)
+	    port_str = "+";
 
-	if (krb5_config_get_bool(context, NULL, "libdefaults", "block_dns",
-		NULL)) {
-	    hints.ai_flags &= ~AI_CANONNAME;
-	    hints.ai_flags |= AI_NUMERICHOST|AI_NUMERICSERV;
-	}
-	e = getaddrinfo(NULL, p->port, &hints, &ai);
-	if(e) {
-	    snprintf(portstr, sizeof(portstr), "%u", p->def_port);
-	    e = getaddrinfo(NULL, portstr, &hints, &ai);
-	}
+	parse_ports(contextp, port_str);
 
-	if(e) {
-	    krb5_warn(contextp, krb5_eai_to_heim_errno(e, errno),
-		      "%s", portstr);
-	    continue;
-	}
-	i = 0;
-	for(ap = ai; ap; ap = ap->ai_next)
-	    i++;
-	tmp = realloc(socks, (num_socks + i) * sizeof(*socks));
-	if(tmp == NULL)
-	    krb5_err(contextp, 1, errno, "failed to reallocate %lu bytes",
-		     (unsigned long)(num_socks + i) * sizeof(*socks));
-	socks = tmp;
-	for(ap = ai; ap; ap = ap->ai_next) {
-	    krb5_socket_t s = socket(ap->ai_family, ap->ai_socktype, ap->ai_protocol);
-	    if(rk_IS_BAD_SOCKET(s)) {
-		krb5_warn(contextp, rk_SOCK_ERRNO, "socket");
-		continue;
+	for(p = kadm_ports; p; p = p->next) {
+	    struct addrinfo hints, *ai, *ap;
+	    char portstr[32];
+	    memset (&hints, 0, sizeof(hints));
+	    hints.ai_flags    = AI_PASSIVE;
+	    hints.ai_socktype = SOCK_STREAM;
+
+	    if (krb5_config_get_bool(context, NULL, "libdefaults", "block_dns",
+		    NULL)) {
+		hints.ai_flags &= ~AI_CANONNAME;
+		hints.ai_flags |= AI_NUMERICHOST|AI_NUMERICSERV;
+	    }
+	    e = getaddrinfo(NULL, p->port, &hints, &ai);
+	    if(e) {
+		snprintf(portstr, sizeof(portstr), "%u", p->def_port);
+		e = getaddrinfo(NULL, portstr, &hints, &ai);
 	    }
 
-	    socket_set_reuseaddr(s, 1);
-	    socket_set_ipv6only(s, 1);
-
-	    if (rk_IS_SOCKET_ERROR(bind (s, ap->ai_addr, ap->ai_addrlen))) {
-		krb5_warn(contextp, rk_SOCK_ERRNO, "bind");
-		rk_closesocket(s);
+	    if(e) {
+		krb5_warn(contextp, krb5_eai_to_heim_errno(e, errno),
+			  "%s", portstr);
 		continue;
 	    }
-	    if (rk_IS_SOCKET_ERROR(listen (s, SOMAXCONN))) {
-		krb5_warn(contextp, rk_SOCK_ERRNO, "listen");
-		rk_closesocket(s);
-		continue;
-	    }
+	    i = 0;
+	    for(ap = ai; ap; ap = ap->ai_next)
+		i++;
+	    tmp = realloc(socks, (num_socks + i) * sizeof(*socks));
+	    if(tmp == NULL)
+		krb5_err(contextp, 1, errno, "failed to reallocate %lu bytes",
+			 (unsigned long)(num_socks + i) * sizeof(*socks));
+	    socks = tmp;
+	    for(ap = ai; ap; ap = ap->ai_next) {
+		krb5_socket_t s = socket(ap->ai_family, ap->ai_socktype, ap->ai_protocol);
+		if(rk_IS_BAD_SOCKET(s)) {
+		    krb5_warn(contextp, rk_SOCK_ERRNO, "socket");
+		    continue;
+		}
 
-	    socket_set_keepalive(s, 1);
-	    socks[num_socks++] = s;
+		socket_set_reuseaddr(s, 1);
+		socket_set_ipv6only(s, 1);
+
+		if (rk_IS_SOCKET_ERROR(bind (s, ap->ai_addr, ap->ai_addrlen))) {
+		    krb5_warn(contextp, rk_SOCK_ERRNO, "bind");
+		    rk_closesocket(s);
+		    continue;
+		}
+		if (rk_IS_SOCKET_ERROR(listen (s, SOMAXCONN))) {
+		    krb5_warn(contextp, rk_SOCK_ERRNO, "listen");
+		    rk_closesocket(s);
+		    continue;
+		}
+
+		socket_set_keepalive(s, 1);
+		socks[num_socks++] = s;
+	    }
+	    freeaddrinfo (ai);
 	}
-	freeaddrinfo (ai);
     }
     if(num_socks == 0)
 	krb5_errx(contextp, 1, "no sockets to listen to - exiting");

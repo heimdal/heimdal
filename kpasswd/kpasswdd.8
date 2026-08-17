@@ -93,6 +93,37 @@ Default realm.
 .It Fl p Ar string , Fl Fl port= Ns Ar string
 Port to listen on (default service kpasswd - 464).
 .El
+.Sh SOCKET ACTIVATION
+.Nm
+supports systemd-style socket activation (see
+.Xr sd_listen_fds 3 ) .
+When started with sockets passed in this way it uses them instead of
+creating its own, and the
+.Fl Fl port
+and
+.Fl Fl addresses
+options are ignored.
+.Pp
+If any of the passed sockets is named
+.Dq kpasswdd
+(e.g., with
+.Li FileDescriptorName=kpasswdd
+in the socket unit) then only those sockets are used; otherwise all
+of the passed sockets are used.
+Only UDP sockets are used.
+Sockets of any other type are ignored with a warning, and
+.Nm
+exits with an error if none of the passed sockets are usable.
+.Pp
+Replies must come from the address the request was sent to, so on
+hosts with more than one address configure one
+.Li ListenDatagram=
+socket per address rather than a single wildcard socket.
+.Pp
+Socket activation can be combined with
+.Fl Fl detach ,
+in which case the passed sockets are handed to the detached daemon
+process.
 .Sh DIAGNOSTICS
 If an error occurs, the error message is returned to the user and/or
 logged to syslog.

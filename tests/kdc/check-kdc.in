@@ -77,8 +77,11 @@ pwport=@pwport@
 
 kadmin5="${kadmin} -l -r $R5"
 kadmin="${kadmin} -l -A -r $R"
+tcpkdc="${kdc} --addresses=127.0.0.1 -P $port/tcp"
 kdc="${kdc} --addresses=localhost -P $port"
 kpasswdd="${kpasswdd} --addresses=localhost -p $pwport"
+udp_sink="${objdir}/udp-sink"
+timed_exec="${objdir}/timed-exec"
 
 server=host/datan.test.h5l.se
 server2=host/computer.example.com
@@ -313,6 +316,47 @@ fi
 
 echo foo > ${objdir}/foopassword
 echo notfoo > ${objdir}/notfoopassword
+
+sed "s/kdc = localhost:$port/kdc = 127.0.0.1:$port/" \
+    ${KRB5_CONFIG} > ${objdir}/krb5-udp-tcp.conf
+
+fallback_cleanup() {
+    test -z "${udppid}" || kill ${udppid} 2>/dev/null
+    test -z "${kdcpid}" || kill -9 ${kdcpid} 2>/dev/null
+    trap '' EXIT INT TERM
+    exit 1
+}
+trap fallback_cleanup EXIT INT TERM
+
+echo "Testing quick TCP fallback after UDP port unreachable"; > messages.log
+${tcpkdc} --no-require-preauth --detach --testing ||
+    { echo "kdc failed to start"; cat messages.log; exit 1; }
+kdcpid=`getpid kdc`
+udppid=
+
+KRB5_CONFIG=${objdir}/krb5-udp-tcp.conf \
+    ${timed_exec} 250 ${kinit} \
+    --pk-anon-fast-armor=no \
+    --password-file=${objdir}/foopassword foo@${R} || exit 1
+${klist} > /dev/null || exit 1
+${kdestroy}
+
+echo "Testing TCP fallback after a lost UDP request"
+${udp_sink} $port &
+udppid=$!
+sleep 1
+kill -0 ${udppid} 2>/dev/null || exit 1
+KRB5_CONFIG=${objdir}/krb5-udp-tcp.conf \
+    ${kinit} --pk-anon-fast-armor=no \
+    --password-file=${objdir}/foopassword foo@${R} || exit 1
+${klist} > /dev/null || exit 1
+${kdestroy}
+wait ${udppid} || exit 1
+udppid=
+
+sh ${leaks_kill} kdc ${kdcpid} || exit 1
+kdcpid=
+trap '' EXIT INT TERM
 
 echo Starting kdc ; > messages.log
 env MallocStackLogging=1 MallocStackLoggingNoCompact=1 MallocErrorAbort=1 MallocLogFile=${objdir}/malloc-log \

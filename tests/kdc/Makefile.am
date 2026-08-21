@@ -24,6 +24,8 @@ noinst_DATA = \
 
 check_SCRIPTS = $(SCRIPT_TESTS) 
 
+check_PROGRAMS = timed-exec udp-sink
+
 SCRIPT_TESTS = \
 	check-authz \
 	check-canon \
@@ -123,7 +125,7 @@ check-fast: check-fast.in Makefile
 	$(chmod) +x check-fast.tmp && \
 	mv check-fast.tmp check-fast
 
-check-kdc: check-kdc.in Makefile
+check-kdc: check-kdc.in Makefile timed-exec udp-sink
 	$(do_subst) < $(srcdir)/check-kdc.in > check-kdc.tmp && \
 	$(chmod) +x check-kdc.tmp && \
 	mv check-kdc.tmp check-kdc

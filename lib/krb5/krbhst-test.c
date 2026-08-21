@@ -86,6 +86,28 @@ main(int argc, char **argv)
     ret = krb5_init_context(&context);
     if (ret)
         krb5_err(NULL, 1, ret, "Failed to initialize context");
+    if (argc == 0) {
+	static const int protos[] = { KRB5_KRBHST_UDP, KRB5_KRBHST_TCP };
+	krb5_krbhst_handle handle;
+	krb5_krbhst_info *host;
+
+	ret = krb5_set_config(context,
+	    "[realms]\n"
+	    " TEST = {\n"
+	    "  kdc = kdc.example:1234\n"
+	    " }\n");
+	if (ret)
+	    krb5_err(context, 1, ret, "Could not set test configuration");
+	ret = krb5_krbhst_init(context, "TEST", KRB5_KRBHST_KDC, &handle);
+	if (ret)
+	    krb5_err(context, 1, ret, "Could not init krbhst iterator");
+	for (i = 0; i < sizeof(protos) / sizeof(*protos); i++) {
+	    ret = krb5_krbhst_next(context, handle, &host);
+	    if (ret || host->proto != protos[i])
+		errx(1, "Wrong protocol for host %d", i);
+	}
+	return 0;
+    }
     for(i = 0; i < argc; i++) {
 	krb5_krbhst_handle handle;
 	char host[MAXHOSTNAMELEN];

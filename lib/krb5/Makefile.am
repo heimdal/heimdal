@@ -27,6 +27,7 @@ noinst_LTLIBRARIES =				\
 TESTS =						\
 	aes-test				\
 	derived-key-test			\
+	krbhst-test				\
 	n-fold-test				\
 	parse-name-test				\
 	pseudo-random-test			\

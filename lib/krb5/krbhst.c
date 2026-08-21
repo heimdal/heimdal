@@ -373,6 +373,23 @@ append_host_string(krb5_context context, struct krb5_krbhst_data *kd,
 	return krb5_enomem(context);
 
     append_host_hostinfo(kd, hi);
+
+    /*
+     * If we are a bare host, and are using UDP, add TCP as well so that
+     * we still try TCP in the absence of KRB_ERR_RESPONSE_TOO_BIG.
+     */
+
+    if (strchr(host, '/') != NULL)
+        return 0;
+
+    if (krbhst_get_default_proto(context, kd) != KRB5_KRBHST_UDP)
+        return 0;
+
+    hi = parse_hostspec(context, kd, host, def_port, port);
+    if (hi == NULL)
+        return krb5_enomem(context);
+    hi->proto = KRB5_KRBHST_TCP;
+    append_host_hostinfo(kd, hi);
     return 0;
 }
 

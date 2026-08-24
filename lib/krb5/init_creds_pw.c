@@ -2743,6 +2743,8 @@ krb5_init_creds_init(krb5_context context,
     /* Set a new nonce. */
     /* FIXME should generate a new nonce for each AS-REQ */
     krb5_generate_random_block (&ctx->nonce, sizeof(ctx->nonce));
+    /* We and MIT incorrectly encode nonces as signed, so make sure we use
+     * a non-negative value to avoid interoperability issues. */
     ctx->nonce &= 0x7fffffff;
     /* XXX these just need to be the same when using Windows PK-INIT */
     ctx->pk_nonce = ctx->nonce;

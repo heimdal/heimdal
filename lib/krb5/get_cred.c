@@ -581,7 +581,9 @@ get_cred_kdc(krb5_context context,
     padata.len = 0;
 
     krb5_generate_random_block(&nonce, sizeof(nonce));
-    nonce &= 0xffffffff;
+    /* We and MIT incorrectly encode nonces as signed, so make sure we use
+     * a non-negative value to avoid interoperability issues. */
+    nonce &= 0x7fffffff;
 
     if(flags.b.enc_tkt_in_skey && second_ticket == NULL){
 	ret = decode_Ticket(in_creds->second_ticket.data,

@@ -572,7 +572,7 @@ KDC-REQ-BODY ::= SEQUENCE {
 	from[4]			KerberosTime OPTIONAL,
 	till[5]			KerberosTime OPTIONAL,
 	rtime[6]		KerberosTime OPTIONAL,
-	nonce[7]		Krb5UInt32,
+	nonce[7]		Krb5Int32,
 	etype[8]		SEQUENCE OF ENCTYPE, -- EncryptionType,
 					-- in preference order
 	addresses[9]		HostAddresses OPTIONAL,
@@ -651,7 +651,7 @@ TGS-REP ::= [APPLICATION 13] KDC-REP
 EncKDCRepPart ::= SEQUENCE {
 	key[0]			EncryptionKey,
 	last-req[1]		LastReq,
-	nonce[2]		Krb5UInt32,
+	nonce[2]		Krb5Int32,
 	key-expiration[3]	KerberosTime OPTIONAL,
 	flags[4]		TicketFlags,
 	authtime[5]		KerberosTime,
@@ -741,7 +741,7 @@ KrbCredInfo ::= SEQUENCE {
 
 EncKrbCredPart ::= [APPLICATION 29]   SEQUENCE {
 	ticket-info[0]		SEQUENCE OF KrbCredInfo,
-	nonce[1]		Krb5UInt32 OPTIONAL,
+	nonce[1]		Krb5Int32 OPTIONAL,
 	timestamp[2]		KerberosTime OPTIONAL,
 	usec[3]			Krb5Int32 OPTIONAL,
 	s-address[4]		HostAddress OPTIONAL,
@@ -826,8 +826,8 @@ PA-SAM-CHALLENGE-2-BODY ::= SEQUENCE {
 	sam-challenge[5]	GeneralString OPTIONAL,
 	sam-response-prompt[6]	GeneralString OPTIONAL,
 	sam-pk-for-sad[7]	EncryptionKey OPTIONAL,
-	sam-nonce[8]		Krb5UInt32,
-	sam-etype[9]		Krb5UInt32,
+	sam-nonce[8]		Krb5Int32,
+	sam-etype[9]		Krb5Int32,
 	...
 }
 
@@ -842,12 +842,12 @@ PA-SAM-RESPONSE-2 ::= SEQUENCE {
 	sam-flags[1]		SAMFlags,
 	sam-track-id[2]		GeneralString OPTIONAL,
 	sam-enc-nonce-or-sad[3]	EncryptedData, -- PA-ENC-SAM-RESPONSE-ENC
-	sam-nonce[4]		Krb5UInt32,
+	sam-nonce[4]		Krb5Int32,
 	...
 }
 
 PA-ENC-SAM-RESPONSE-ENC ::= SEQUENCE {
-	sam-nonce[0]		Krb5UInt32,
+	sam-nonce[0]		Krb5Int32,
 	sam-sad[1]		GeneralString OPTIONAL,
 	...
 }

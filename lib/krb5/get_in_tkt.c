@@ -577,7 +577,9 @@ krb5_get_in_cred(krb5_context context,
     opts = int2KDCOptions(options);
 
     krb5_generate_random_block (&nonce, sizeof(nonce));
-    nonce &= 0xffffffff;
+    /* We and MIT incorrectly encode nonces as signed, so make sure we use
+     * a non-negative value to avoid interoperability issues. */
+    nonce &= 0x7fffffff;
 
     do {
 	done = 1;

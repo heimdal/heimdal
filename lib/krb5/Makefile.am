@@ -41,6 +41,7 @@ TESTS =						\
 	test_prf				\
 	test_store				\
 	test_crypto_wrapping			\
+	test_kdc_nonce				\
 	test_keytab				\
 	test_mem				\
 	test_pac				\

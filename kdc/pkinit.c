@@ -1946,9 +1946,10 @@ match_rfc_san(krb5_context context,
     if (ret)
 	goto out;
 
-    for (i = 0; !found && i < list.len; i++) {
-	krb5_principal_data principal;
+    for (i = 0; !found && !ret && i < list.len; i++) {
+	krb5_principal p = NULL;
 	KRB5PrincipalName kn;
+	unsigned int j;
 	size_t size;
 
 	ret = decode_KRB5PrincipalName(list.val[i].data,
@@ -1967,12 +1968,15 @@ match_rfc_san(krb5_context context,
 	    return KRB5_KDC_ERR_CLIENT_NAME_MISMATCH;
 	}
 
-	memset(&principal, 0, sizeof (principal));
-	principal.name = kn.principalName;
-	principal.realm = kn.realm;
-
-	if (krb5_principal_compare(context, &principal, match) == TRUE)
+	ret = krb5_make_principal(context, &p, kn.realm, NULL);
+	krb5_principal_set_type(context, p, kn.principalName.name_type);
+	for (j = 0; ret == 0 && j < kn.principalName.name_string.len; j++)
+	    ret = krb5_principal_set_comp_string(context, p, j,
+                                          kn.principalName.name_string.val[j]);
+	if (ret == 0 &&
+            krb5_principal_compare(context, p, match) == TRUE)
 	    found = 1;
+	krb5_free_principal(context, p);
 	free_KRB5PrincipalName(&kn);
     }
 

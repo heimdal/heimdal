@@ -64,6 +64,10 @@ static struct field_name {
     { "server-keytypes", KADM5_TL_DATA, KRB5_TL_ETYPES, 0, "Server keytypes", "Supported keytypes (servers)", 0 },
     { "password", KADM5_TL_DATA, KRB5_TL_PASSWORD, KADM5_KEY_DATA, "Password", "Password", 0 },
     { "pkinit-acl", KADM5_TL_DATA, KRB5_TL_PKINIT_ACL, 0, "PK-INIT ACL", "PK-INIT ACL", 0 },
+    { "pkinit-issuer-serial", KADM5_TL_DATA, KRB5_TL_PKINIT_ISSUER_SERIAL, 0, "PK-INIT I+S", "PK-INIT Issuer-Serial", 0 },
+    { "pkinit-object-sid", KADM5_TL_DATA, KRB5_TL_PKINIT_OBJECT_SID, 0, "PK-INIT SID", "PK-INIT Object-SID", 0 },
+    { "pkinit-rfc822", KADM5_TL_DATA, KRB5_TL_PKINIT_RFC822, 0, "PK-INIT 822", "PK-INIT RFC822", 0 },
+    { "pkinit-ski", KADM5_TL_DATA, KRB5_TL_PKINIT_SKI, 0, "PK-INIT SKI", "PK-INIT SKI", 0 },
     { "aliases", KADM5_TL_DATA, KRB5_TL_ALIASES, 0, "Aliases", "Aliases", 0 },
     { "hist-kvno-diff-clnt", KADM5_TL_DATA, KRB5_TL_HIST_KVNO_DIFF_CLNT, 0, "Clnt hist keys", "Historic keys allowed for client", 0 },
     { "hist-kvno-diff-svc", KADM5_TL_DATA, KRB5_TL_HIST_KVNO_DIFF_SVC, 0, "Svc hist keys", "Historic keys allowed for service", 0 },
@@ -393,6 +397,112 @@ format_field(struct get_entry_data *data,
 	    free_HDB_Ext_PKINIT_acl(&acl);
 	    break;
 	}
+	case KRB5_TL_PKINIT_ISSUER_SERIAL: {
+	    HDB_Ext_PKINIT_issuer_serial is;
+	    size_t size;
+	    size_t i;
+
+	    ret = decode_HDB_Ext_PKINIT_issuer_serial(tl->tl_data_contents,
+	                                              tl->tl_data_length,
+	                                              &is, &size);
+	    if (ret) {
+		snprintf(buf, buf_len, "failed to decode issuer-serial");
+		break;
+	    }
+	    buf[0] = '\0';
+	    for (i = 0; i < is.len; i++) {
+		char *serial_hex = NULL;
+
+		if (i > 0)
+		    strlcat(buf, ", ", buf_len);
+		hex_encode(is.val[i].serial_number.data,
+		           is.val[i].serial_number.length, &serial_hex);
+		if (serial_hex) {
+		    strlcat(buf, "0x", buf_len);
+		    strlcat(buf, serial_hex, buf_len);
+		    free(serial_hex);
+		}
+		strlcat(buf, ":", buf_len);
+		strlcat(buf, is.val[i].issuer, buf_len);
+	    }
+	    free_HDB_Ext_PKINIT_issuer_serial(&is);
+	    break;
+	}
+	case KRB5_TL_PKINIT_OBJECT_SID: {
+	    HDB_Ext_PKINIT_object_sid sids;
+	    size_t size;
+	    size_t i;
+
+	    ret = decode_HDB_Ext_PKINIT_object_sid(tl->tl_data_contents,
+	                                           tl->tl_data_length,
+	                                           &sids, &size);
+	    if (ret) {
+		snprintf(buf, buf_len, "failed to decode Object-SID");
+		break;
+	    }
+	    buf[0] = '\0';
+	    for (i = 0; i < sids.len; i++) {
+		char *hex = NULL;
+
+		if (i > 0)
+		    strlcat(buf, ", ", buf_len);
+		hex_encode(sids.val[i].sid.data, sids.val[i].sid.length, &hex);
+		if (hex) {
+		    strlcat(buf, hex, buf_len);
+		    free(hex);
+		}
+	    }
+	    free_HDB_Ext_PKINIT_object_sid(&sids);
+	    break;
+	}
+	case KRB5_TL_PKINIT_RFC822: {
+	    HDB_Ext_PKINIT_rfc822 emails;
+	    size_t size;
+	    size_t i;
+
+	    ret = decode_HDB_Ext_PKINIT_rfc822(tl->tl_data_contents,
+	                                       tl->tl_data_length,
+	                                       &emails, &size);
+	    if (ret) {
+		snprintf(buf, buf_len, "failed to decode RFC822");
+		break;
+	    }
+	    buf[0] = '\0';
+	    for (i = 0; i < emails.len; i++) {
+		if (i > 0)
+		    strlcat(buf, ", ", buf_len);
+		strlcat(buf, emails.val[i].address, buf_len);
+	    }
+	    free_HDB_Ext_PKINIT_rfc822(&emails);
+	    break;
+	}
+	case KRB5_TL_PKINIT_SKI: {
+	    HDB_Ext_PKINIT_ski skis;
+	    size_t size;
+	    size_t i;
+
+	    ret = decode_HDB_Ext_PKINIT_ski(tl->tl_data_contents,
+	                                    tl->tl_data_length,
+	                                    &skis, &size);
+	    if (ret) {
+		snprintf(buf, buf_len, "failed to decode SKI");
+		break;
+	    }
+	    buf[0] = '\0';
+	    for (i = 0; i < skis.len; i++) {
+		char *hex = NULL;
+
+		if (i > 0)
+		    strlcat(buf, ", ", buf_len);
+		hex_encode(skis.val[i].ski.data, skis.val[i].ski.length, &hex);
+		if (hex) {
+		    strlcat(buf, hex, buf_len);
+		    free(hex);
+		}
+	    }
+	    free_HDB_Ext_PKINIT_ski(&skis);
+	    break;
+	}
 	case KRB5_TL_KRB5_CONFIG: {
             char *fname;
 
@@ -573,7 +683,7 @@ listit(const char *funcname, int upto, int argc, char **argv)
 }
 
 #define DEFAULT_COLUMNS_SHORT "principal,princ_expire_time,pw_expiration,last_pwd_change,max_life,max_rlife"
-#define DEFAULT_COLUMNS_LONG "principal,princ_expire_time,pw_expiration,last_pwd_change,max_life,max_rlife,kvno,mkvno,last_success,last_failed,fail_auth_count,mod_time,mod_name,attributes,server-keytypes,keytypes,pkinit-acl,aliases"
+#define DEFAULT_COLUMNS_LONG "principal,princ_expire_time,pw_expiration,last_pwd_change,max_life,max_rlife,kvno,mkvno,last_success,last_failed,fail_auth_count,mod_time,mod_name,attributes,server-keytypes,keytypes,pkinit-acl,pkinit-issuer-serial,pkinit-object-sid,pkinit-rfc822,pkinit-ski,aliases"
 
 static int
 getit(struct get_options *opt, const char *name, int argc, char **argv)

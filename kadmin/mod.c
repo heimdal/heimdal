@@ -209,6 +209,379 @@ add_pkinit_acl(krb5_context contextp, kadm5_principal_ent_rec *princ,
     add_tl(princ, KRB5_TL_EXTENSION, &buf);
 }
 
+static void
+add_pkinit_issuer_serial(krb5_context contextp,
+                         kadm5_principal_ent_rec *princ,
+                         struct getarg_strings *strings)
+{
+    krb5_error_code ret;
+    HDB_extension ext;
+    krb5_data buf;
+    size_t size = 0;
+    int i;
+
+    memset(&ext, 0, sizeof(ext));
+    ext.mandatory = FALSE;
+    ext.data.element = choice_HDB_extension_data_pkinit_issuer_serial;
+
+    if (strings->num_strings == 1 && strings->strings[0][0] == '\0') {
+        ext.data.u.pkinit_issuer_serial.val = NULL;
+        ext.data.u.pkinit_issuer_serial.len = 0;
+    } else {
+        for (i = 0; i < strings->num_strings; i++) {
+            HDB_Ext_PKINIT_issuer_serial_entry entry;
+            const char *s = strings->strings[i];
+            char *colon;
+            heim_integer serial;
+            char *serial_str;
+
+            memset(&entry, 0, sizeof(entry));
+            memset(&serial, 0, sizeof(serial));
+
+            /*
+             * Accept two formats:
+             *  - Microsoft: X509:<I>issuer<SR>reversed-hex-serial
+             *  - Heimdal:   serial:issuer-DN
+             */
+            if (strncmp(s, "X509:<I>", 8) == 0) {
+                /* Microsoft format: X509:<I>issuer<SR>serial-hex-reversed */
+                const char *issuer_start = s + 8;
+                const char *sr = strstr(issuer_start, "<SR>");
+                size_t issuer_len, hex_len, j;
+                unsigned char *serial_bytes;
+
+                if (sr == NULL)
+                    errx(1, "Invalid Microsoft issuer-serial format: %s", s);
+                issuer_len = sr - issuer_start;
+                entry.issuer = emalloc(issuer_len + 1);
+                memcpy(entry.issuer, issuer_start, issuer_len);
+                entry.issuer[issuer_len] = '\0';
+
+                /* Parse reversed hex serial */
+                sr += 4; /* skip "<SR>" */
+                hex_len = strlen(sr);
+                if (hex_len % 2 != 0)
+                    errx(1, "Odd hex serial length in: %s", s);
+                serial.length = hex_len / 2;
+                serial_bytes = emalloc(serial.length);
+                /* Microsoft format has bytes reversed */
+                for (j = 0; j < serial.length; j++) {
+                    unsigned int byte;
+                    if (sscanf(sr + j * 2, "%02x", &byte) != 1)
+                        errx(1, "Invalid hex in serial: %s", sr);
+                    serial_bytes[serial.length - 1 - j] = byte;
+                }
+                /* Strip leading zeros */
+                j = 0;
+                while (j < serial.length - 1 && serial_bytes[j] == 0)
+                    j++;
+                serial.data = emalloc(serial.length - j);
+                memcpy(serial.data, serial_bytes + j, serial.length - j);
+                serial.length = serial.length - j;
+                serial.negative = 0;
+                free(serial_bytes);
+            } else {
+                /* Heimdal format: serial:issuer-DN */
+                colon = strchr(s, ':');
+                if (colon == NULL)
+                    errx(1, "Invalid issuer-serial format "
+                         "(expected serial:issuer): %s", s);
+                {
+                    size_t slen = colon - s;
+                    serial_str = emalloc(slen + 1);
+                    memcpy(serial_str, s, slen);
+                    serial_str[slen] = '\0';
+                }
+
+                if (strncmp(serial_str, "0x", 2) == 0 ||
+                    strncmp(serial_str, "0X", 2) == 0) {
+                    /* Hex serial */
+                    const char *hex = serial_str + 2;
+                    size_t hex_len = strlen(hex);
+                    size_t j;
+
+                    serial.length = (hex_len + 1) / 2;
+                    serial.data = ecalloc(1, serial.length);
+                    serial.negative = 0;
+                    for (j = 0; j < hex_len; j++) {
+                        unsigned int nibble;
+                        if (sscanf(hex + j, "%1x", &nibble) != 1)
+                            errx(1, "Invalid hex serial: %s", serial_str);
+                        ((unsigned char *)serial.data)[(j + (hex_len % 2)) / 2] |=
+                            nibble << (((hex_len - 1 - j) % 2) * 4);
+                    }
+                } else {
+                    /* Decimal serial - parse via der_print_heim_oid trick:
+                     * just store as big-endian bytes */
+                    unsigned long long val;
+                    unsigned char tmp[8];
+                    int k, start;
+
+                    errno = 0;
+                    val = strtoull(serial_str, NULL, 10);
+                    if (errno)
+                        errx(1, "Invalid serial number: %s", serial_str);
+                    for (k = 7; k >= 0; k--) {
+                        tmp[k] = val & 0xff;
+                        val >>= 8;
+                    }
+                    start = 0;
+                    while (start < 7 && tmp[start] == 0)
+                        start++;
+                    serial.length = 8 - start;
+                    serial.data = emalloc(serial.length);
+                    serial.negative = 0;
+                    memcpy(serial.data, tmp + start, serial.length);
+                }
+                entry.issuer = estrdup(colon + 1);
+                free(serial_str);
+            }
+            ret = der_copy_heim_integer(&serial, &entry.serial_number);
+            der_free_heim_integer(&serial);
+            if (ret)
+                abort();
+            ret = add_HDB_Ext_PKINIT_issuer_serial(
+                &ext.data.u.pkinit_issuer_serial, &entry);
+            free_HDB_Ext_PKINIT_issuer_serial_entry(&entry);
+            if (ret)
+                abort();
+        }
+    }
+
+    ASN1_MALLOC_ENCODE(HDB_extension, buf.data, buf.length,
+                       &ext, &size, ret);
+    free_HDB_extension(&ext);
+    if (ret)
+        abort();
+    if (buf.length != size)
+        abort();
+
+    add_tl(princ, KRB5_TL_EXTENSION, &buf);
+}
+
+static int
+hex_decode_sid(const char *hex, heim_octet_string *os)
+{
+    size_t len = strlen(hex);
+    size_t i;
+
+    if (len % 2 != 0)
+        return EINVAL;
+    os->length = len / 2;
+    os->data = emalloc(os->length);
+    for (i = 0; i < os->length; i++) {
+        unsigned int byte;
+        if (sscanf(hex + i * 2, "%02x", &byte) != 1) {
+            free(os->data);
+            os->data = NULL;
+            os->length = 0;
+            return EINVAL;
+        }
+        ((unsigned char *)os->data)[i] = byte;
+    }
+    return 0;
+}
+
+/*
+ * Parse "S-1-5-21-..." SID string format into binary SID.
+ * Binary format: revision(1) + sub_auth_count(1) + authority(6 BE) +
+ *                sub_authorities(4*count LE)
+ */
+static int
+parse_sid_string(const char *s, heim_octet_string *os)
+{
+    unsigned long long authority;
+    unsigned long sub_auths[15]; /* max 15 sub-authorities */
+    int n_sub = 0;
+    int revision;
+    unsigned char *p;
+    int i;
+
+    if (strncmp(s, "S-", 2) != 0)
+        return EINVAL;
+    s += 2;
+
+    /* Revision */
+    revision = atoi(s);
+    while (*s && *s != '-') s++;
+    if (*s == '-') s++;
+
+    /* Authority */
+    errno = 0;
+    authority = strtoull(s, NULL, 10);
+    if (errno)
+        return EINVAL;
+    while (*s && *s != '-') s++;
+    if (*s == '-') s++;
+
+    /* Sub-authorities */
+    while (*s && n_sub < 15) {
+        errno = 0;
+        sub_auths[n_sub++] = strtoul(s, NULL, 10);
+        if (errno)
+            return EINVAL;
+        while (*s && *s != '-') s++;
+        if (*s == '-') s++;
+    }
+
+    os->length = 8 + 4 * n_sub;
+    os->data = emalloc(os->length);
+    p = os->data;
+
+    /* Revision (1 byte) */
+    p[0] = revision;
+    /* Sub-authority count (1 byte) */
+    p[1] = n_sub;
+    /* Authority (6 bytes, big-endian) */
+    p[2] = (authority >> 40) & 0xff;
+    p[3] = (authority >> 32) & 0xff;
+    p[4] = (authority >> 24) & 0xff;
+    p[5] = (authority >> 16) & 0xff;
+    p[6] = (authority >> 8) & 0xff;
+    p[7] = authority & 0xff;
+    /* Sub-authorities (4 bytes each, little-endian) */
+    for (i = 0; i < n_sub; i++) {
+        p[8 + i * 4 + 0] = sub_auths[i] & 0xff;
+        p[8 + i * 4 + 1] = (sub_auths[i] >> 8) & 0xff;
+        p[8 + i * 4 + 2] = (sub_auths[i] >> 16) & 0xff;
+        p[8 + i * 4 + 3] = (sub_auths[i] >> 24) & 0xff;
+    }
+    return 0;
+}
+
+static void
+add_pkinit_object_sid(krb5_context contextp,
+                      kadm5_principal_ent_rec *princ,
+                      const char *sid_str)
+{
+    krb5_error_code ret;
+    HDB_extension ext;
+    krb5_data buf;
+    size_t size = 0;
+
+    memset(&ext, 0, sizeof(ext));
+    ext.mandatory = FALSE;
+    ext.data.element = choice_HDB_extension_data_pkinit_object_sid;
+
+    {
+        HDB_Ext_PKINIT_object_sid_entry entry;
+
+        memset(&entry, 0, sizeof(entry));
+        if (strncmp(sid_str, "S-", 2) == 0) {
+            ret = parse_sid_string(sid_str, &entry.sid);
+            if (ret)
+                errx(1, "Invalid SID string: %s", sid_str);
+        } else {
+            ret = hex_decode_sid(sid_str, &entry.sid);
+            if (ret)
+                errx(1, "Invalid hex SID: %s", sid_str);
+        }
+        ret = add_HDB_Ext_PKINIT_object_sid(
+            &ext.data.u.pkinit_object_sid, &entry);
+        free_HDB_Ext_PKINIT_object_sid_entry(&entry);
+        if (ret)
+            abort();
+    }
+
+    ASN1_MALLOC_ENCODE(HDB_extension, buf.data, buf.length,
+                       &ext, &size, ret);
+    free_HDB_extension(&ext);
+    if (ret)
+        abort();
+    if (buf.length != size)
+        abort();
+
+    add_tl(princ, KRB5_TL_EXTENSION, &buf);
+}
+
+static void
+add_pkinit_rfc822(krb5_context contextp,
+                  kadm5_principal_ent_rec *princ,
+                  struct getarg_strings *strings)
+{
+    krb5_error_code ret;
+    HDB_extension ext;
+    krb5_data buf;
+    size_t size = 0;
+    int i;
+
+    memset(&ext, 0, sizeof(ext));
+    ext.mandatory = FALSE;
+    ext.data.element = choice_HDB_extension_data_pkinit_rfc822;
+
+    if (strings->num_strings == 1 && strings->strings[0][0] == '\0') {
+        ext.data.u.pkinit_rfc822.val = NULL;
+        ext.data.u.pkinit_rfc822.len = 0;
+    } else {
+        ext.data.u.pkinit_rfc822.val =
+            calloc(strings->num_strings,
+                   sizeof(ext.data.u.pkinit_rfc822.val[0]));
+        if (ext.data.u.pkinit_rfc822.val == NULL)
+            errx(1, "out of memory");
+        ext.data.u.pkinit_rfc822.len = strings->num_strings;
+
+        for (i = 0; i < strings->num_strings; i++)
+            ext.data.u.pkinit_rfc822.val[i].address = estrdup(strings->strings[i]);
+    }
+
+    ASN1_MALLOC_ENCODE(HDB_extension, buf.data, buf.length,
+                       &ext, &size, ret);
+    free_HDB_extension(&ext);
+    if (ret)
+        abort();
+    if (buf.length != size)
+        abort();
+
+    add_tl(princ, KRB5_TL_EXTENSION, &buf);
+}
+
+static void
+add_pkinit_ski(krb5_context contextp,
+               kadm5_principal_ent_rec *princ,
+               struct getarg_strings *strings)
+{
+    krb5_error_code ret;
+    HDB_extension ext;
+    krb5_data buf;
+    size_t size = 0;
+    int i;
+
+    memset(&ext, 0, sizeof(ext));
+    ext.mandatory = FALSE;
+    ext.data.element = choice_HDB_extension_data_pkinit_ski;
+
+    if (strings->num_strings == 1 && strings->strings[0][0] == '\0') {
+        ext.data.u.pkinit_ski.val = NULL;
+        ext.data.u.pkinit_ski.len = 0;
+    } else {
+        ext.data.u.pkinit_ski.val =
+            calloc(strings->num_strings,
+                   sizeof(ext.data.u.pkinit_ski.val[0]));
+        if (ext.data.u.pkinit_ski.val == NULL)
+            errx(1, "out of memory");
+        ext.data.u.pkinit_ski.len = strings->num_strings;
+
+        for (i = 0; i < strings->num_strings; i++) {
+            heim_octet_string os;
+
+            ret = hex_decode_sid(strings->strings[i], &os);
+            if (ret)
+                errx(1, "Invalid hex SKI: %s", strings->strings[i]);
+            ext.data.u.pkinit_ski.val[i].ski = os;
+        }
+    }
+
+    ASN1_MALLOC_ENCODE(HDB_extension, buf.data, buf.length,
+                       &ext, &size, ret);
+    free_HDB_extension(&ext);
+    if (ret)
+        abort();
+    if (buf.length != size)
+        abort();
+
+    add_tl(princ, KRB5_TL_EXTENSION, &buf);
+}
+
 static krb5_error_code
 add_etypes(krb5_context contextp,
            kadm5_principal_ent_rec *princ,
@@ -345,6 +718,10 @@ do_mod_entry(krb5_principal principal, void *data)
        e->constrained_delegation_strings.num_strings ||
        e->alias_strings.num_strings ||
        e->pkinit_acl_strings.num_strings ||
+       e->pkinit_issuer_serial_strings.num_strings ||
+       e->pkinit_object_sid_string ||
+       e->pkinit_rfc822_strings.num_strings ||
+       e->pkinit_ski_strings.num_strings ||
        e->krb5_config_file_string ||
        e->hist_kvno_diff_clnt_integer != -1 ||
        e->hist_kvno_diff_svc_integer != -1) {
@@ -370,6 +747,24 @@ do_mod_entry(krb5_principal principal, void *data)
 	}
 	if (e->pkinit_acl_strings.num_strings) {
 	    add_pkinit_acl(context, &princ, &e->pkinit_acl_strings);
+	    mask |= KADM5_TL_DATA;
+	}
+	if (e->pkinit_issuer_serial_strings.num_strings) {
+	    add_pkinit_issuer_serial(context, &princ,
+	                             &e->pkinit_issuer_serial_strings);
+	    mask |= KADM5_TL_DATA;
+	}
+	if (e->pkinit_object_sid_string) {
+	    add_pkinit_object_sid(context, &princ,
+	                          e->pkinit_object_sid_string);
+	    mask |= KADM5_TL_DATA;
+	}
+	if (e->pkinit_rfc822_strings.num_strings) {
+	    add_pkinit_rfc822(context, &princ, &e->pkinit_rfc822_strings);
+	    mask |= KADM5_TL_DATA;
+	}
+	if (e->pkinit_ski_strings.num_strings) {
+	    add_pkinit_ski(context, &princ, &e->pkinit_ski_strings);
 	    mask |= KADM5_TL_DATA;
 	}
         if (e->service_enctypes_strings.num_strings) {

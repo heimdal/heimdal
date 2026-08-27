@@ -1096,19 +1096,33 @@ hx509_verify_ctx_f_allow_best_before_signature_algs(hx509_context ctx,
 	ctx->flags |= HX509_VERIFY_CTX_F_NO_BEST_BEFORE_CHECK;
 }
 
-static const Extension *
-find_extension(const Certificate *cert, const heim_oid *oid, size_t *idx)
+static int
+find_extension(const Certificate *cert, const heim_oid *oid, size_t *idx,
+	       const Extension **ep)
 {
     const TBSCertificate *c = &cert->tbsCertificate;
+    size_t i;
+    int found = 0;
+
+    *ep = NULL;
 
     if (c->version == NULL || *c->version < 2 || c->extensions == NULL)
-	return NULL;
+	return HX509_EXTENSION_NOT_FOUND;
 
-    for (;*idx < c->extensions->len; (*idx)++) {
-	if (der_heim_oid_cmp(&c->extensions->val[*idx].extnID, oid) == 0)
-	    return &c->extensions->val[(*idx)++];
+    for (i = *idx; i < c->extensions->len; i++) {
+	if (der_heim_oid_cmp(&c->extensions->val[i].extnID, oid) == 0) {
+	    if (!found) {
+		*idx = i + 1;
+		*ep = &c->extensions->val[i];
+	    }
+	    found++;
+	}
     }
-    return NULL;
+    switch (found) {
+    case 0:	return HX509_EXTENSION_NOT_FOUND;
+    case 1:	return 0;
+    default:	return HX509_CERTIFICATE_MALFORMED;
+    }
 }
 
 static int
@@ -1118,12 +1132,13 @@ find_extension_auth_key_id(const Certificate *subject,
     const Extension *e;
     size_t size;
     size_t i = 0;
+    int ret;
 
     memset(ai, 0, sizeof(*ai));
 
-    e = find_extension(subject, &asn1_oid_id_x509_ce_authorityKeyIdentifier, &i);
-    if (e == NULL)
-	return HX509_EXTENSION_NOT_FOUND;
+    ret = find_extension(subject, &asn1_oid_id_x509_ce_authorityKeyIdentifier, &i, &e);
+    if (ret)
+	return ret;
 
     return decode_AuthorityKeyIdentifier(e->extnValue.data,
 					 e->extnValue.length,
@@ -1137,12 +1152,13 @@ _hx509_find_extension_subject_key_id(const Certificate *issuer,
     const Extension *e;
     size_t size;
     size_t i = 0;
+    int ret;
 
     memset(si, 0, sizeof(*si));
 
-    e = find_extension(issuer, &asn1_oid_id_x509_ce_subjectKeyIdentifier, &i);
-    if (e == NULL)
-	return HX509_EXTENSION_NOT_FOUND;
+    ret = find_extension(issuer, &asn1_oid_id_x509_ce_subjectKeyIdentifier, &i, &e);
+    if (ret)
+	return ret;
 
     return decode_SubjectKeyIdentifier(e->extnValue.data,
 				       e->extnValue.length,
@@ -1156,12 +1172,13 @@ find_extension_name_constraints(const Certificate *subject,
     const Extension *e;
     size_t size;
     size_t i = 0;
+    int ret;
 
     memset(nc, 0, sizeof(*nc));
 
-    e = find_extension(subject, &asn1_oid_id_x509_ce_nameConstraints, &i);
-    if (e == NULL)
-	return HX509_EXTENSION_NOT_FOUND;
+    ret = find_extension(subject, &asn1_oid_id_x509_ce_nameConstraints, &i, &e);
+    if (ret)
+	return ret;
 
     return decode_NameConstraints(e->extnValue.data,
 				  e->extnValue.length,
@@ -1174,12 +1191,13 @@ find_extension_subject_alt_name(const Certificate *cert, size_t *i,
 {
     const Extension *e;
     size_t size;
+    int ret;
 
     memset(sa, 0, sizeof(*sa));
 
-    e = find_extension(cert, &asn1_oid_id_x509_ce_subjectAltName, i);
-    if (e == NULL)
-	return HX509_EXTENSION_NOT_FOUND;
+    ret = find_extension(cert, &asn1_oid_id_x509_ce_subjectAltName, i, &e);
+    if (ret)
+	return ret;
 
     return decode_GeneralNames(e->extnValue.data,
 			       e->extnValue.length,
@@ -1192,16 +1210,41 @@ find_extension_eku(const Certificate *cert, ExtKeyUsage *eku)
     const Extension *e;
     size_t size;
     size_t i = 0;
+    int ret;
 
     memset(eku, 0, sizeof(*eku));
 
-    e = find_extension(cert, &asn1_oid_id_x509_ce_extKeyUsage, &i);
-    if (e == NULL)
-	return HX509_EXTENSION_NOT_FOUND;
+    ret = find_extension(cert, &asn1_oid_id_x509_ce_extKeyUsage, &i, &e);
+    if (ret)
+	return ret;
 
     return decode_ExtKeyUsage(e->extnValue.data,
 			      e->extnValue.length,
 			      eku, &size);
+}
+
+static int
+find_extension_ntds_security_extension(const Certificate *subject,
+                                       SidExtension *sid_extension)
+{
+    const Extension *e;
+    size_t size;
+    size_t i = 0;
+    int ret;
+
+    memset(sid_extension, 0, sizeof(*sid_extension));
+
+    ret = find_extension(subject, &asn1_oid_szOID_NTDS_CA_SECURITY_EXT, &i, &e);
+    if (ret)
+        return ret;
+
+    ret = decode_SidExtension(e->extnValue.data, e->extnValue.length,
+                              sid_extension, &size);
+    if (ret == 0 && size != e->extnValue.length) {
+        free_SidExtension(sid_extension);
+        return HX509_EXTRA_DATA_AFTER_STRUCTURE;
+    }
+    return ret;
 }
 
 static int
@@ -1277,7 +1320,6 @@ hx509_cert_find_subjectAltName_otherName(hx509_context context,
     i = 0;
     while (1) {
 	ret = find_extension_subject_alt_name(_hx509_get_cert(cert), &i, &sa);
-	i++;
 	if (ret == HX509_EXTENSION_NOT_FOUND) {
 	    return 0;
 	} else if (ret != 0) {
@@ -1305,6 +1347,149 @@ hx509_cert_find_subjectAltName_otherName(hx509_context context,
     }
 }
 
+/**
+ * Return a list of rfc822Name SubjectAltNames (email addresses) from
+ * the certificate.
+ *
+ * The returned list of octet string should be freed with
+ * hx509_free_octet_string_list().
+ *
+ * @param context A hx509 context.
+ * @param cert a hx509 certificate object.
+ * @param list list of matching rfc822Name SubjectAltNames.
+ *
+ * @return An hx509 error code, see hx509_get_error_string().
+ *
+ * @ingroup hx509_cert
+ */
+
+HX509_LIB_FUNCTION int HX509_LIB_CALL
+hx509_cert_find_subjectAltName_rfc822(hx509_context context,
+				      hx509_cert cert,
+				      hx509_octet_string_list *list)
+{
+    GeneralNames sa;
+    int ret;
+    size_t i, j;
+
+    list->val = NULL;
+    list->len = 0;
+
+    i = 0;
+    while (1) {
+	ret = find_extension_subject_alt_name(_hx509_get_cert(cert), &i, &sa);
+	if (ret == HX509_EXTENSION_NOT_FOUND) {
+	    return 0;
+	} else if (ret != 0) {
+	    hx509_set_error_string(context, 0, ret,
+				   "Error searching for RFC822 SAN");
+	    hx509_free_octet_string_list(list);
+	    return ret;
+	}
+
+	for (j = 0; j < sa.len; j++) {
+	    if (sa.val[j].element == choice_GeneralName_rfc822Name) {
+		ret = add_to_list(list, &sa.val[j].u.rfc822Name);
+		if (ret) {
+		    hx509_set_error_string(context, 0, ret,
+					   "Error adding an extra RFC822 "
+					   "SAN to return list");
+		    hx509_free_octet_string_list(list);
+		    free_GeneralNames(&sa);
+		    return ret;
+		}
+	    }
+	}
+	free_GeneralNames(&sa);
+    }
+}
+
+/**
+ * Return the SubjectAltName at position @idx, converted to an
+ * hx509_san_type and an allocated string.
+ *
+ * SANs are numbered across all SAN extensions in the certificate
+ * starting from 0.  When @idx is past the last SAN, HX509_NO_ITEM
+ * is returned.
+ *
+ * @param context A hx509 context.
+ * @param cert a hx509 certificate object.
+ * @param idx zero-based index of the SAN to retrieve.
+ * @param type on success, receives the SAN type.
+ * @param out on success, an allocated string (caller frees).
+ *
+ * @return An hx509 error code, see hx509_get_error_string().
+ *
+ * @ingroup hx509_cert
+ */
+
+HX509_LIB_FUNCTION int HX509_LIB_CALL
+hx509_cert_get_san(hx509_context context,
+		   hx509_cert cert,
+		   size_t idx,
+		   hx509_san_type *type,
+		   char **out)
+{
+    GeneralNames sa;
+    size_t i = 0, k = 0, j;
+    int ret;
+
+    *out = NULL;
+
+    while (1) {
+	ret = find_extension_subject_alt_name(_hx509_get_cert(cert), &i, &sa);
+	if (ret == HX509_EXTENSION_NOT_FOUND)
+	    return HX509_NO_ITEM;
+	if (ret != 0)
+	    return ret;
+
+	for (j = 0; j < sa.len; j++) {
+	    if (k == idx) {
+		ret = _hx509_san_to_string(context, &sa.val[j], type, out);
+		free_GeneralNames(&sa);
+		return ret;
+	    }
+	    k++;
+	}
+	free_GeneralNames(&sa);
+    }
+}
+
+/**
+ * Get the Subject Key Identifier (SKI) from a certificate.
+ *
+ * @param context A hx509 context.
+ * @param cert a hx509 certificate object.
+ * @param ski the Subject Key Identifier, free with free_SubjectKeyIdentifier().
+ *
+ * @return An hx509 error code, see hx509_get_error_string(). The
+ * error code HX509_EXTENSION_NOT_FOUND is returned if the certificate
+ * doesn't have a Subject Key Identifier extension.
+ *
+ * @ingroup hx509_cert
+ */
+
+HX509_LIB_FUNCTION int HX509_LIB_CALL
+hx509_cert_get_subject_key_identifier(hx509_context context,
+				      hx509_cert cert,
+				      SubjectKeyIdentifier *ski)
+{
+    const Extension *e;
+    size_t size;
+    size_t i = 0;
+    int ret;
+
+    ret = find_extension(cert->data,
+		       &asn1_oid_id_x509_ce_subjectKeyIdentifier,
+		       &i, &e);
+    if (ret)
+	return ret;
+
+    return decode_SubjectKeyIdentifier(e->extnValue.data,
+				       e->extnValue.length,
+				       ski,
+				       &size);
+}
 
 static int
 check_key_usage(hx509_context context, const Certificate *cert,
@@ -1320,8 +1505,8 @@ check_key_usage(hx509_context context, const Certificate *cert,
     if (_hx509_cert_get_version(cert) < 3)
 	return 0;
 
-    e = find_extension(cert, &asn1_oid_id_x509_ce_keyUsage, &i);
-    if (e == NULL) {
+    ret = find_extension(cert, &asn1_oid_id_x509_ce_keyUsage, &i, &e);
+    if (ret == HX509_EXTENSION_NOT_FOUND) {
 	if (req_present) {
 	    hx509_set_error_string(context, 0, HX509_KU_CERT_MISSING,
 				   "Required extension key "
@@ -1330,6 +1515,8 @@ check_key_usage(hx509_context context, const Certificate *cert,
 	}
 	return 0;
     }
+    if (ret)
+	return ret;
 
     ret = decode_KeyUsage(e->extnValue.data, e->extnValue.length, &ku, &size);
     if (ret)
@@ -1381,8 +1568,8 @@ check_basic_constraints(hx509_context context, const Certificate *cert,
     if (_hx509_cert_get_version(cert) < 3)
 	return 0;
 
-    e = find_extension(cert, &asn1_oid_id_x509_ce_basicConstraints, &i);
-    if (e == NULL) {
+    ret = find_extension(cert, &asn1_oid_id_x509_ce_basicConstraints, &i, &e);
+    if (ret == HX509_EXTENSION_NOT_FOUND) {
 	switch(type) {
 	case PROXY_CERT:
 	case EE_CERT:
@@ -1399,6 +1586,8 @@ check_basic_constraints(hx509_context context, const Certificate *cert,
 	}
 	}
     }
+    if (ret)
+	return ret;
 
     ret = decode_BasicConstraints(e->extnValue.data,
 				  e->extnValue.length, &bc,
@@ -1577,11 +1766,13 @@ hx509_cert_is_ca(hx509_context context,
     if (_hx509_cert_get_version(c->data) < 3)
         return certificate_is_self_signed(context, c->data, is_ca);
 
-    e = find_extension(c->data, &asn1_oid_id_x509_ce_basicConstraints, &i);
-    if (e == NULL) {
+    ret = find_extension(c->data, &asn1_oid_id_x509_ce_basicConstraints, &i, &e);
+    if (ret == HX509_EXTENSION_NOT_FOUND) {
         *is_ca = 0;
         return 0;
     }
+    if (ret)
+        return ret;
 
     ret = decode_BasicConstraints(e->extnValue.data,
 				  e->extnValue.length, &bc,
@@ -1731,10 +1922,10 @@ is_proxy_cert(hx509_context context,
     if (rinfo)
 	memset(rinfo, 0, sizeof(*rinfo));
 
-    e = find_extension(cert, &asn1_oid_id_pkix_pe_proxyCertInfo, &i);
-    if (e == NULL) {
+    ret = find_extension(cert, &asn1_oid_id_pkix_pe_proxyCertInfo, &i, &e);
+    if (ret) {
 	hx509_clear_error_string(context);
-	return HX509_EXTENSION_NOT_FOUND;
+	return ret;
     }
 
     ret = decode_ProxyCertInfo(e->extnValue.data,
@@ -2208,6 +2399,46 @@ hx509_cert_get_subject_unique_id(hx509_context context, hx509_cert p, heim_bit_s
     return get_x_unique_id(context, "subject", p->data->tbsCertificate.subjectUniqueID, subject);
 }
 
+
+/**
+ * Get the Object SID from a certificate's NTDS CA Security Extension.
+ *
+ * @param p a hx509 certificate
+ * @param sid the object SID, free with der_free_octet_string()
+ *
+ * @return An hx509 error code, see hx509_get_error_string(). The
+ * error code HX509_EXTENSION_NOT_FOUND is returned if the certificate
+ * doesn't have an Object SID.
+ *
+ * @ingroup hx509_cert
+ */
+HX509_LIB_FUNCTION int HX509_LIB_CALL
+hx509_cert_get_object_sid(hx509_cert p, ObjectSid *sid)
+{
+    SidExtension e;
+    ObjectSid *s;
+    int ret;
+
+    ret = find_extension_ntds_security_extension(p->data, &e);
+    if (ret)
+        return ret;
+
+    if (e.len != 1 ||
+        e.val[0].element != choice_GeneralName_otherName ||
+        e.val[0].u.otherName._ioschoice_value.element !=
+            choice_OtherName_iosnum_szOID_NTDS_OBJECTSID ||
+        !e.val[0].u.otherName._ioschoice_value.u.on_ntds_objectsid) {
+        ret = HX509_CMS_INVALID_DATA;
+        goto out;
+    }
+
+    s = e.val[0].u.otherName._ioschoice_value.u.on_ntds_objectsid;
+    ret = der_copy_octet_string(s, sid);
+
+out:
+    free_SidExtension(&e);
+    return ret;
+}
 
 HX509_LIB_FUNCTION hx509_private_key HX509_LIB_CALL
 _hx509_cert_private_key(hx509_cert p)
@@ -2742,6 +2973,7 @@ hx509_verify_path(hx509_context context,
 	    ProxyCertInfo info;
 
 	    if (is_proxy_cert(context, c, &info) == 0) {
+		const Extension *e;
 		size_t j;
 
 		if (info.pCPathLenConstraint != NULL &&
@@ -2758,22 +2990,26 @@ hx509_verify_path(hx509_context context,
 		free_ProxyCertInfo(&info);
 
 		j = 0;
-		if (find_extension(c, &asn1_oid_id_x509_ce_subjectAltName, &j)) {
+		ret = find_extension(c, &asn1_oid_id_x509_ce_subjectAltName, &j, &e);
+		if (ret == 0) {
 		    ret = HX509_PROXY_CERT_INVALID;
 		    hx509_set_error_string(context, 0, ret,
 					   "Proxy certificate has explicitly "
 					   "forbidden subjectAltName");
 		    goto out;
-		}
+		} else if (ret != HX509_EXTENSION_NOT_FOUND)
+		    goto out;
 
 		j = 0;
-		if (find_extension(c, &asn1_oid_id_x509_ce_issuerAltName, &j)) {
+		ret = find_extension(c, &asn1_oid_id_x509_ce_issuerAltName, &j, &e);
+		if (ret == 0) {
 		    ret = HX509_PROXY_CERT_INVALID;
 		    hx509_set_error_string(context, 0, ret,
 					   "Proxy certificate has explicitly "
 					   "forbidden issuerAltName");
 		    goto out;
-		}
+		} else if (ret != HX509_EXTENSION_NOT_FOUND)
+		    goto out;
 
 		/*
 		 * The subject name of the proxy certificate should be
@@ -4042,9 +4278,11 @@ _hx509_cert_get_keyusage(hx509_context context,
     if (_hx509_cert_get_version(cert) < 3)
 	return 0;
 
-    e = find_extension(cert, &asn1_oid_id_x509_ce_keyUsage, &i);
-    if (e == NULL)
+    ret = find_extension(cert, &asn1_oid_id_x509_ce_keyUsage, &i, &e);
+    if (ret == HX509_EXTENSION_NOT_FOUND)
 	return HX509_KU_CERT_MISSING;
+    if (ret)
+	return ret;
 
     ret = decode_KeyUsage(e->extnValue.data, e->extnValue.length, ku, &size);
     if (ret)

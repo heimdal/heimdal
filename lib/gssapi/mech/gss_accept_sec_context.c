@@ -161,6 +161,35 @@ log_oid(const char *str, gss_OID mech)
         }
 }
 
+static void
+log_accept_sec_context(struct _gss_context *ctx,
+		       const struct _gss_cred *cred,
+		       gss_buffer_t input_token)
+{
+	size_t input_len = input_token ? input_token->length : 0;
+
+	_gss_mg_log(10,
+	    "gss-asc: enter ctx=%p %sfirst, %s cred, input token %zu bytes",
+	    ctx, (ctx == NULL || ctx->gc_initial) ? "" : "not ",
+	    (cred != NULL) ? "specific" : "default", input_len);
+}
+
+static void
+log_accept_result(gssapi_mech_interface m,
+		  OM_uint32 major_status,
+		  OM_uint32 minor_status,
+		  gss_buffer_t output_token,
+		  OM_uint32 ret_flags)
+{
+	size_t output_len = output_token ? output_token->length : 0;
+
+	_gss_mg_log(10,
+	    "gss-asc: %s maj_stat: %d/%d output token %zu bytes flags %08x",
+	    m ? m->gm_name : "<none>",
+	    (int)major_status, (int)minor_status,
+	    output_len, (unsigned)ret_flags);
+}
+
 static OM_uint32
 choose_mech(struct _gss_context *ctx)
 {
@@ -265,7 +294,8 @@ gss_accept_sec_context(OM_uint32 *minor_status,
 	    *delegated_cred_handle = GSS_C_NO_CREDENTIAL;
 	_mg_buffer_zero(output_token);
 
-        _gss_mg_log(10, "gss-asc: enter ctx=%p", ctx);
+	log_accept_sec_context(ctx, cred, input_token);
+
         if (!*context_handle) {
                 ctx = calloc(1, sizeof(*ctx));
 		if (!ctx) {
@@ -390,6 +420,8 @@ gss_accept_sec_context(OM_uint32 *minor_status,
                 gss_delete_sec_context(&junk, context_handle, NULL);
                 _gss_mg_log(10, "No mechanism accepted the non-standard initial security context token");
                 *output_token = defective_token_error;
+		log_accept_result(NULL, GSS_S_BAD_MECH, *minor_status,
+		    output_token, 0);
                 return GSS_S_BAD_MECH;
         }
 
@@ -406,12 +438,16 @@ gss_accept_sec_context(OM_uint32 *minor_status,
 				    m->gm_name);
 			HEIM_TAILQ_FOREACH(mc, &cred->gc_mc, gmc_link)
 				_gss_mg_log(10, "gss-asc: available creds were %s", mc->gmc_mech->gm_name);
+			log_accept_result(m, GSS_S_BAD_MECH, *minor_status,
+			    output_token, 0);
 			return (GSS_S_BAD_MECH);
 		}
 		acceptor_mc = mc->gmc_cred;
 	} else {
 		acceptor_mc = GSS_C_NO_CREDENTIAL;
 	}
+
+	_gss_mg_log(10, "gss-asc: using mech \"%s\"", m->gm_name);
 
 	mech_ret_flags = 0;
 	major_status = m->gm_accept_sec_context(minor_status,
@@ -432,6 +468,8 @@ got_one:
 	{
 		_gss_mg_error(m, *minor_status);
 		gss_delete_sec_context(&junk, context_handle, NULL);
+		log_accept_result(m, major_status, *minor_status,
+		    output_token, mech_ret_flags);
 		return (major_status);
 	}
 
@@ -518,6 +556,11 @@ got_one:
 		}
 	}
 
+	if (mech_ret_flags & GSS_C_DELEG_FLAG)
+		_gss_mg_log(10, "gss-asc: delegated credentials returned");
+
+	log_accept_result(m, major_status, *minor_status, output_token,
+	    mech_ret_flags);
 	_gss_mg_log(10, "gss-asc: ctx=%p return %d/%d", ctx,
 	    (int)major_status, (int)*minor_status);
 

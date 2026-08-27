@@ -276,6 +276,8 @@ gss_init_sec_context(OM_uint32 * minor_status,
 
 	_gss_mg_log(1, "gss_isc: %s maj_stat: %d/%d",
 		    m->gm_name, (int)major_status, (int)*minor_status);
+	_gss_mg_log(10, "gss_isc: output token %zu bytes flags %08x",
+		    output_token->length, (unsigned)(ret_flags ? *ret_flags : 0));
 
 	return (major_status);
 }

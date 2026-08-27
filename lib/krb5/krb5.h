@@ -400,7 +400,6 @@ typedef const char *krb5_const_realm; /* stupid language */
 #define krb5_realm_length(r) strlen(r)
 #define krb5_realm_data(r) (r)
 
-typedef Principal krb5_principal_data;
 typedef struct Principal *krb5_principal;
 typedef const struct Principal *krb5_const_principal;
 typedef struct Principals *krb5_principals;

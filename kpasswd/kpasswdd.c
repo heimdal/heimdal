@@ -296,13 +296,12 @@ change (krb5_auth_context auth_context,
 	}
 
 	if (chpw.targname) {
-	    krb5_principal_data princ;
+	    char *default_realm = NULL;
+	    char *realm = chpw.targrealm ? *chpw.targrealm : NULL;
+	    unsigned int i;
 
-	    memset(&princ, 0, sizeof (princ));
-	    princ.name = *chpw.targname;
-	    princ.realm = *chpw.targrealm;
-	    if (princ.realm == NULL) {
-		ret = krb5_get_default_realm(context, &princ.realm);
+	    if (realm == NULL) {
+		ret = krb5_get_default_realm(context, &default_realm);
 
 		if (ret) {
 		    krb5_warnx (context,
@@ -313,17 +312,22 @@ change (krb5_auth_context auth_context,
 				"failed to allocate realm");
 		    goto out;
 		}
+		realm = default_realm;
 	    }
-	    ret = krb5_copy_principal(context, &princ, &principal);
-	    if (*chpw.targrealm == NULL)
-		free(princ.realm);
+	    ret = krb5_make_principal(context, &principal, realm, NULL);
+	    krb5_free_default_realm(context, default_realm);
+	    for (i = 0; ret == 0 && i < chpw.targname->name_string.len; i++)
+		ret = krb5_principal_set_comp_string(context, principal, i,
+                                          chpw.targname->name_string.val[i]);
 	    if (ret) {
-		krb5_warn(context, ret, "krb5_copy_principal");
+		krb5_warn(context, ret, "krb5_make_principal");
 		reply_priv(auth_context, s, sa, sa_size,
 			   KRB5_KPASSWD_HARDERROR,
 			   "failed to allocate principal");
 		goto out;
 	    }
+            krb5_principal_set_type(context, principal,
+                                    chpw.targname->name_type);
 	} else
 	    principal = admin_principal;
     } else {
@@ -342,7 +346,7 @@ change (krb5_auth_context auth_context,
 	goto out;
     }
 
-    conf.realm = principal->realm;
+    conf.realm = rk_UNCONST(krb5_principal_get_realm(context, principal));
     conf.mask |= KADM5_CONFIG_REALM;
 
     ret = kadm5_init_with_password_ctx(context,

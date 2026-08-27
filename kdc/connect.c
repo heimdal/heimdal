@@ -296,6 +296,68 @@ init_socket(krb5_context context,
 }
 
 /*
+ * Allocate descriptors for the sockets handed to us via systemd socket
+ * activation whose FileDescriptorName is "kdc", and return then number of
+ * them (0 if we were not socket-activated).
+ */
+
+static int
+init_sockets_sd(krb5_context context,
+                krb5_kdc_configuration *config,
+                struct descr **desc)
+{
+    char **names = NULL;
+    struct descr *d;
+    int n, i, num = 0;
+
+    n = rk_sd_listen_fds_with_names(0, &names);
+    if (n < 0)
+        krb5_err(context, 1, -n, "rk_sd_listen_fds_with_names");
+    if (n == 0)
+        return 0;
+
+    d = malloc(n * sizeof(*d));
+    if (d == NULL)
+        krb5_errx(context, 1, "malloc(%lu) failed",
+                  (unsigned long)n * sizeof(*d));
+
+    for (i = 0; i < n; i++) {
+        int fd = SD_LISTEN_FDS_START + i;
+        int type;
+        socklen_t tlen = sizeof(type);
+
+        if (names == NULL || names[i] == NULL ||
+            strcmp(names[i], "kdc") != 0)
+            continue;
+        if (getsockopt(fd, SOL_SOCKET, SO_TYPE, &type, &tlen) < 0) {
+            krb5_warn(context, errno,
+                      "getsockopt(SO_TYPE) on socket-activated fd %d", fd);
+            continue;
+        }
+        init_descr(&d[num]);
+        d[num].s = fd;
+        d[num].type = type;
+        socket_set_nonblocking(fd, 1);
+        socket_set_keepalive(fd, 1);
+        kdc_log(context, config, 3, "listening on socket-activated fd %d (%s)",
+                fd, (type == SOCK_STREAM) ? "tcp" : "udp");
+        num++;
+    }
+
+    for (i = 0; names != NULL && names[i] != NULL; i++)
+        free(names[i]);
+    free(names);
+
+    if (num == 0) {
+        free(d);
+        return 0;
+    }
+    reinit_descrs(d, num);
+    *desc = d;
+    return num;
+}
+
+/*
  * Allocate descriptors for all the sockets that we should listen on
  * and return the number of them.
  */
@@ -1191,7 +1253,9 @@ start_kdc(krb5_context context,
     socket_set_nonblocking(islive[1], 1);
 #endif
 
-    ndescr = init_sockets(context, config, &d);
+    ndescr = init_sockets_sd(context, config, &d);
+    if (ndescr <= 0)
+	ndescr = init_sockets(context, config, &d);
     if(ndescr <= 0)
 	krb5_errx(context, 1, "No sockets!");
 
@@ -1208,6 +1272,9 @@ start_kdc(krb5_context context,
 #endif
 
     roken_detach_finish(NULL, daemon_child);
+
+    rk_sd_notify(0, "READY=1");
+    rk_sd_notify(0, "STATUS=Serving requests");
 
 #ifdef HAVE_FORK
     if (!testing_flag) {
@@ -1250,11 +1317,15 @@ start_kdc(krb5_context context,
                 kdc_log(context, config, 3, "KDC worker process started: %d",
                         pid);
                 num_kdcs++;
+                rk_sd_notifyf(0, "STATUS=Serving requests; %d of %d KDC worker "
+                              "process(es) running", num_kdcs, max_kdcs);
                 /* Slow down the creation of KDCs... */
                 select_sleep(12500);
                 break;
             }
         }
+
+        rk_sd_notify(0, "STOPPING=1");
 
         /* Closing these sockets should cause the kids to die... */
 
@@ -1307,11 +1378,13 @@ start_kdc(krb5_context context,
         kdc_log(context, config, 3, "KDC master process exiting");
     } else {
         loop(context, config, &d, &ndescr, -1);
+        rk_sd_notify(0, "STOPPING=1");
         kdc_log(context, config, 3, "KDC exiting");
     }
     free(pids);
 #else
     loop(context, config, &d, &ndescr, -1);
+    rk_sd_notify(0, "STOPPING=1");
     kdc_log(context, config, 3, "KDC exiting");
 #endif
 

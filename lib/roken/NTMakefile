@@ -125,6 +125,7 @@ libroken_la_OBJS =			\
 	$(OBJ)\timeval.obj		\
 	$(OBJ)\tm2time.obj		\
 	$(OBJ)\tsearch.obj		\
+	$(OBJ)\unsetenv.obj		\
 	$(OBJ)\unvis.obj		\
 	$(OBJ)\verr.obj			\
 	$(OBJ)\verrx.obj		\

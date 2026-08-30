@@ -296,6 +296,8 @@ typedef enum krb5_key_usage {
     /* fast challenge from client */
     KRB5_KU_ENC_CHALLENGE_KDC = 55,
     /* fast challenge from kdc */
+    KRB5_KU_AS_FRESHNESS = 60,
+    /* Freshness token from KDC */
     KRB5_KU_DIGEST_ENCRYPT = -18,
     /* Encryption key usage used in the digest encryption field */
     KRB5_KU_DIGEST_OPAQUE = -19,

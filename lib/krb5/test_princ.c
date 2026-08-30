@@ -260,6 +260,24 @@ test_princ(krb5_context context)
     free(princ_unparsed);
 
     krb5_free_principal(context, p);
+
+    princ = "test\\nprincipal\\tname@SU.SE";
+    noquote = "test\nprincipal\tname@SU.SE";
+
+    ret = krb5_parse_name_flags(context, princ, 0, &p);
+    if (ret)
+	krb5_err(context, 1, ret, "krb5_parse_name");
+
+    ret = krb5_unparse_name_flags(context, p, KRB5_PRINCIPAL_UNPARSE_DISPLAY,
+				  &princ_unparsed);
+    if (ret)
+	krb5_err(context, 1, ret, "krb5_unparse_name_flags");
+
+    if (strcmp(noquote, princ_unparsed) != 0)
+	krb5_errx(context, 1, "nq whitespace mismatch");
+    free(princ_unparsed);
+
+    krb5_free_principal(context, p);
 }
 
 static void

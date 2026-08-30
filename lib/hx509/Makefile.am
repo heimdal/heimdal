@@ -133,7 +133,7 @@ hxtool_LDADD = \
 CLEANFILES = $(BUILT_SOURCES) sel-gram.c sel-lex.c \
 	$(TESTS) \
 	hxtool-commands.c hxtool-commands.h *.tmp \
-	request.out \
+	req request.out \
 	out.pem out2.pem \
 	sd sd.pem \
 	sd.data sd.data.out \
@@ -143,12 +143,14 @@ CLEANFILES = $(BUILT_SOURCES) sel-gram.c sel-lex.c \
 	cert-sub-ee.pem cert-sub-ca.pem \
 	cert-proxy.der cert-ca.der cert-ee.der pkcs10-request.der \
 	wca.pem wuser.pem wdc.pem wcrl.crl \
+	cacert.pem cakey.pem cert.pem csr.der expected actual key.pem \
 	random-data statfile crl.crl \
 	test p11dbg.log pkcs11.cfg \
 	test-rc-file.rc
 
 clean-local:
 	@echo "cleaning PKITS" ; rm -rf PKITS_data
+	@echo "cleaning anchors" ; rm -rf anchors
 
 #
 # regression tests

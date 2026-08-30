@@ -390,6 +390,16 @@ init_auth
 
     *minor_status = 0;
 
+    if (ctx->ccache && (ctx->more_flags & CLOSE_CCACHE)) {
+	krb5_cc_close(context, ctx->ccache);
+	ctx->ccache = NULL;
+	ctx->more_flags &= ~CLOSE_CCACHE;
+    }
+    if (ctx->source) {
+	krb5_free_principal(context, ctx->source);
+	ctx->source = NULL;
+    }
+
     if (actual_mech_type)
 	*actual_mech_type = GSS_KRB5_MECHANISM;
 
@@ -697,34 +707,62 @@ handle_error_packet(krb5_context context,
 {
     krb5_error_code kret;
     KRB_ERROR error;
+    krb5_boolean retry_badkeyver = FALSE;
 
     kret = krb5_rd_error(context, &indata, &error);
-    if (kret == 0) {
-	kret = krb5_error_from_rd_error(context, &error, NULL);
+    if (kret != 0)
+        return kret;
 
-	/* save the time skrew for this host */
-	if (kret == KRB5KRB_AP_ERR_SKEW) {
-	    krb5_data timedata;
-	    unsigned char p[4];
-	    int32_t t = error.stime - time(NULL);
+    kret = krb5_error_from_rd_error(context, &error, NULL);
+    if (kret == KRB5KRB_AP_ERR_BADKEYVER && error.e_data &&
+	error.e_data->length == sizeof(GSS_KRB5_BADKEYVER_RETRY_E_DATA) - 1 &&
+	memcmp(error.e_data->data, GSS_KRB5_BADKEYVER_RETRY_E_DATA,
+	       sizeof(GSS_KRB5_BADKEYVER_RETRY_E_DATA) - 1) == 0)
+	retry_badkeyver = TRUE;
 
-	    p[0] = (t >> 24) & 0xFF;
-	    p[1] = (t >> 16) & 0xFF;
-	    p[2] = (t >> 8)  & 0xFF;
-	    p[3] = (t >> 0)  & 0xFF;
+    if (ctx->more_flags & RETRIED)
+        goto bail;
 
-	    timedata.data = p;
-	    timedata.length = sizeof(p);
+    /* save the time skrew for this host */
+    if (kret == KRB5KRB_AP_ERR_SKEW ||
+	retry_badkeyver) {
+	krb5_data timedata;
+	unsigned char p[4];
+	int32_t t = error.stime - time(NULL);
 
-	    krb5_cc_set_config(context, ctx->ccache, ctx->target,
-			       "time-offset", &timedata);
+	p[0] = (t >> 24) & 0xFF;
+	p[1] = (t >> 16) & 0xFF;
+	p[2] = (t >> 8)  & 0xFF;
+	p[3] = (t >> 0)  & 0xFF;
 
-	    if ((ctx->more_flags & RETRIED) == 0)
-		 ctx->state = INITIATOR_RESTART;
+	timedata.data = p;
+	timedata.length = sizeof(p);
+
+	(void)krb5_cc_set_config(context, ctx->ccache, ctx->target,
+				 "time-offset", &timedata);
+    }
+
+    switch (kret) {
+    case KRB5KRB_AP_ERR_BADKEYVER:
+	if (!retry_badkeyver)
+	    break;
+	if (ctx->kcred)
+	    kret = krb5_cc_remove_cred(context, ctx->ccache, 0, ctx->kcred);
+	else
+	    kret = 0;
+	if (kret == 0) {
+	    ctx->state = INITIATOR_START;
 	    ctx->more_flags |= RETRIED;
 	}
-	free_KRB_ERROR (&error);
+        break;
+    case KRB5KRB_AP_ERR_SKEW:
+	ctx->state = INITIATOR_RESTART;
+	ctx->more_flags |= RETRIED;
+        break;
     }
+
+bail:
+    free_KRB_ERROR(&error);
     return kret;
 }
 
@@ -736,7 +774,6 @@ repl_mutual
  krb5_context context,
  const gss_OID mech_type,
  OM_uint32 req_flags,
- OM_uint32 time_req,
  const gss_channel_bindings_t input_chan_bindings,
  const gss_buffer_t input_token,
  gss_OID * actual_mech_type,
@@ -969,14 +1006,14 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_init_sec_context
 			  context,
 			  mech_type,
 			  req_flags,
-			  time_req,
 			  input_chan_bindings,
 			  input_token,
 			  actual_mech_type,
 			  output_token,
 			  ret_flags,
 			  time_rec);
-	if (ctx->state == INITIATOR_RESTART)
+	if (ctx->state == INITIATOR_START ||
+	    ctx->state == INITIATOR_RESTART)
 	    goto again;
 	break;
     case INITIATOR_READY:

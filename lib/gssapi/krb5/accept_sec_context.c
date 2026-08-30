@@ -310,7 +310,12 @@ send_error_token(OM_uint32 *minor_status,
     /* this e_data value encodes KERB_AP_ERR_TYPE_SKEW_RECOVERY which
        tells windows to try again with the corrected timestamp. See
        [MS-KILE] 2.2.1 KERB-ERROR-DATA */
-    krb5_data e_data = { 7, rk_UNCONST("\x30\x05\xa1\x03\x02\x01\x02") };
+    krb5_data err_skew = { 7, rk_UNCONST("\x30\x05\xa1\x03\x02\x01\x02") };
+    krb5_data err_badkeyver = {
+	sizeof(GSS_KRB5_BADKEYVER_RETRY_E_DATA) - 1,
+	rk_UNCONST(GSS_KRB5_BADKEYVER_RETRY_E_DATA)
+    };
+    krb5_data *e_data = NULL;
 
     /* build server from request if the acceptor had not selected one */
     if (server == NULL) {
@@ -333,7 +338,12 @@ send_error_token(OM_uint32 *minor_status,
 	server = ap_req_server;
     }
 
-    ret = krb5_mk_error(context, kret, NULL, &e_data, NULL,
+    if (kret == KRB5KRB_AP_ERR_SKEW || kret == KRB5KRB_AP_ERR_TKT_NYV)
+        e_data = &err_skew;
+    else if (kret == KRB5KRB_AP_ERR_BADKEYVER)
+        e_data = &err_badkeyver;
+
+    ret = krb5_mk_error(context, kret, NULL, e_data, NULL,
 			server, NULL, NULL, &outbuf);
     if (ap_req_server)
 	krb5_free_principal(context, ap_req_server);
@@ -456,12 +466,13 @@ gsskrb5_acceptor_start(OM_uint32 * minor_status,
 	krb5_rd_req_in_ctx_free(context, in);
 	if (close_kt)
 	    krb5_kt_close(context, keytab);
-	if (kret == KRB5KRB_AP_ERR_SKEW || kret == KRB5KRB_AP_ERR_TKT_NYV) {
+	if (kret == KRB5KRB_AP_ERR_SKEW ||
+	    kret == KRB5KRB_AP_ERR_TKT_NYV ||
+	    kret == KRB5KRB_AP_ERR_BADKEYVER) {
 	    /*
 	     * No reply in non-MUTUAL mode, but we don't know that its
 	     * non-MUTUAL mode yet, thats inside the 8003 checksum, so
-	     * lets only send the error token on clock skew, that
-	     * limit when send error token for non-MUTUAL.
+	     * lets only send the error token for recoverable errors.
 	     */
             krb5_auth_con_free(context, ctx->auth_context);
             krb5_auth_con_free(context, ctx->deleg_auth_context);

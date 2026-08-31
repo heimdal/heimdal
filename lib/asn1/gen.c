@@ -2050,6 +2050,7 @@ generate_type (const Symbol *s)
 	generate_type_length (s);
 	generate_type_copy (s);
         generate_type_print_stub(s);
+        generate_type_parse_json_stub(s);
     }
     generate_type_seq (s);
     generate_glue (s->type, s->gen_name);
@@ -2089,6 +2090,11 @@ generate_type (const Symbol *s)
 
     fprintf(h,
             "%schar * ASN1CALL print_%s (const %s *, int);\n",
+            exp,
+            s->gen_name, s->gen_name);
+
+    fprintf(h,
+            "%sint    ASN1CALL asn1_parse_%s (const char *, size_t, %s *);\n",
             exp,
             s->gen_name, s->gen_name);
 

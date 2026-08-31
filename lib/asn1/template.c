@@ -37,6 +37,7 @@
 #include <com_err.h>
 #include <vis.h>
 #include <vis-extras.h>
+#include <hex.h>
 #include <heimbase.h>
 #include <errno.h>
 
@@ -2613,10 +2614,19 @@ _asn1_print(const struct asn1_template *t,
         }
         if (nnames &&
             (t->tt & A1_OP_MASK) != A1_OP_TYPE_DECORATE_EXTERN &&
-            (t->tt & A1_OP_MASK) != A1_OP_TYPE_DECORATE)
+            (t->tt & A1_OP_MASK) != A1_OP_TYPE_DECORATE) {
+            int do_redact = (flags & ASN1_PRINT_REDACT) &&
+                            (tnames->tt & A1_NM_REDACT);
             r = rk_strpoolprintf(r, ",%s\"%s\":",
                                  indents ? indents : "",
                                  (const char *)(tnames++)->ptr);
+            if (do_redact) {
+                r = rk_strpoolprintf(r, "\"<REDACTED>\"");
+                t++;
+                elements--;
+                continue;
+            }
+        }
 	switch (t->tt & A1_OP_MASK) {
         case A1_OP_OPENTYPE_OBJSET:
             break;
@@ -2828,6 +2838,1102 @@ _asn1_print_top(const struct asn1_template *t,
     if (r == NULL)
         return NULL;
     return rk_strpoolcollect(r);
+}
+
+/*
+ * JSON-to-C-type parsing: the inverse of _asn1_print().
+ *
+ * Given a heim_object_t (parsed JSON) and a template, populate a C struct.
+ */
+
+static int _asn1_parse_json(const struct asn1_template *, heim_object_t,
+                            void *);
+
+/*
+ * Parse a JSON primitive value into a C type.
+ *
+ * The `type' parameter is one of the A1T_* enum values.  The `el' parameter
+ * points to the field in the output struct.  The `jval' is the JSON value to
+ * parse (a heim_string_t, heim_number_t, heim_bool_t, or heim_null_t).
+ *
+ * For enumerations (A1T_IMEMBER), `t' points to the enum name template for
+ * reverse lookup.
+ */
+static int
+_asn1_parse_json_prim(unsigned int type,
+                      const struct asn1_template *t,
+                      heim_object_t jval,
+                      void *el)
+{
+    heim_tid_t tid = heim_get_tid(jval);
+
+    switch (type) {
+    case A1T_INTEGER: {
+        int *ip = el;
+
+        if (tid != HEIM_TID_NUMBER)
+            return EINVAL;
+        *ip = heim_number_get_int(jval);
+        return 0;
+    }
+    case A1T_INTEGER64: {
+        int64_t *ip = el;
+
+        if (tid != HEIM_TID_NUMBER)
+            return EINVAL;
+        *ip = (int64_t)heim_number_get_long(jval);
+        return 0;
+    }
+    case A1T_UNSIGNED: {
+        unsigned int *up = el;
+
+        if (tid != HEIM_TID_NUMBER)
+            return EINVAL;
+        *up = (unsigned int)heim_number_get_int(jval);
+        return 0;
+    }
+    case A1T_UNSIGNED64: {
+        uint64_t *up = el;
+
+        if (tid != HEIM_TID_NUMBER)
+            return EINVAL;
+        *up = (uint64_t)heim_number_get_long(jval);
+        return 0;
+    }
+    case A1T_BOOLEAN: {
+        int *bp = el;
+
+        if (tid != HEIM_TID_BOOL)
+            return EINVAL;
+        *bp = heim_bool_val(jval) ? 1 : 0;
+        return 0;
+    }
+    case A1T_NULL:
+        return 0;
+    case A1T_IMEMBER: {
+        unsigned int *ip = el;
+
+        /* Try symbolic name lookup first */
+        if (tid == HEIM_TID_STRING && t) {
+            const struct asn1_template *tenum = t;
+            const char *s = heim_string_get_utf8(jval);
+            size_t i;
+
+            for (i = 1; i <= A1_HEADER_LEN(tenum); i++) {
+                if ((tenum[i].tt & A1_OP_MASK) == A1_OP_NAME &&
+                    strcmp(s, (const char *)tenum[i].ptr) == 0) {
+                    *ip = tenum[i].offset;
+                    return 0;
+                }
+            }
+            return EINVAL; /* Unknown enum name */
+        }
+        if (tid != HEIM_TID_NUMBER)
+            return EINVAL;
+        *ip = (unsigned int)heim_number_get_int(jval);
+        return 0;
+    }
+    case A1T_GENERAL_STRING: {
+        heim_general_string *sp = el;
+
+        if (tid != HEIM_TID_STRING)
+            return EINVAL;
+        *sp = strdup(heim_string_get_utf8(jval));
+        return *sp ? 0 : ENOMEM;
+    }
+    case A1T_UTF8_STRING: {
+        heim_utf8_string *sp = el;
+
+        if (tid != HEIM_TID_STRING)
+            return EINVAL;
+        *sp = strdup(heim_string_get_utf8(jval));
+        return *sp ? 0 : ENOMEM;
+    }
+    case A1T_VISIBLE_STRING: {
+        heim_visible_string *sp = el;
+
+        if (tid != HEIM_TID_STRING)
+            return EINVAL;
+        *sp = strdup(heim_string_get_utf8(jval));
+        return *sp ? 0 : ENOMEM;
+    }
+    case A1T_TELETEX_STRING: {
+        /* Stored as heim_general_string */
+        heim_general_string *sp = el;
+
+        if (tid != HEIM_TID_STRING)
+            return EINVAL;
+        *sp = strdup(heim_string_get_utf8(jval));
+        return *sp ? 0 : ENOMEM;
+    }
+    case A1T_PRINTABLE_STRING: {
+        heim_printable_string *ps = el;
+        const char *s;
+        size_t len;
+
+        if (tid != HEIM_TID_STRING)
+            return EINVAL;
+        s = heim_string_get_utf8(jval);
+        len = strlen(s);
+        ps->data = malloc(len);
+        if (!ps->data)
+            return ENOMEM;
+        memcpy(ps->data, s, len);
+        ps->length = len;
+        return 0;
+    }
+    case A1T_IA5_STRING: {
+        heim_ia5_string *ps = el;
+        const char *s;
+        size_t len;
+
+        if (tid != HEIM_TID_STRING)
+            return EINVAL;
+        s = heim_string_get_utf8(jval);
+        len = strlen(s);
+        ps->data = malloc(len);
+        if (!ps->data)
+            return ENOMEM;
+        memcpy(ps->data, s, len);
+        ps->length = len;
+        return 0;
+    }
+    case A1T_OCTET_STRING: {
+        heim_octet_string *os = el;
+        const char *hex;
+        size_t hexlen;
+        ssize_t r;
+
+        if (tid != HEIM_TID_STRING)
+            return EINVAL;
+        hex = heim_string_get_utf8(jval);
+        hexlen = strlen(hex);
+        if (hexlen == 0) {
+            os->data = NULL;
+            os->length = 0;
+            return 0;
+        }
+        os->length = (hexlen + 1) / 2;
+        os->data = malloc(os->length);
+        if (!os->data)
+            return ENOMEM;
+        r = hex_decode(hex, os->data, os->length);
+        if (r < 0) {
+            free(os->data);
+            os->data = NULL;
+            os->length = 0;
+            return EINVAL;
+        }
+        os->length = r;
+        return 0;
+    }
+    case A1T_HEIM_INTEGER: {
+        heim_integer *hi = el;
+        const char *hex;
+
+        if (tid != HEIM_TID_STRING)
+            return EINVAL;
+        hex = heim_string_get_utf8(jval);
+        memset(hi, 0, sizeof(*hi));
+        if (*hex == '-') {
+            hi->negative = 1;
+            hex++;
+        }
+        if (*hex == '\0') {
+            /* Zero */
+            return 0;
+        }
+        {
+            size_t hexlen = strlen(hex);
+            ssize_t r;
+
+            hi->length = (hexlen + 1) / 2;
+            hi->data = malloc(hi->length);
+            if (!hi->data)
+                return ENOMEM;
+            r = hex_decode(hex, hi->data, hi->length);
+            if (r < 0) {
+                free(hi->data);
+                memset(hi, 0, sizeof(*hi));
+                return EINVAL;
+            }
+            hi->length = r;
+        }
+        return 0;
+    }
+    case A1T_HEIM_BIT_STRING: {
+        heim_bit_string *bs = el;
+        const char *s;
+        const char *colon;
+        unsigned int bitlen;
+        size_t hexlen;
+        ssize_t r;
+
+        if (tid != HEIM_TID_STRING)
+            return EINVAL;
+        s = heim_string_get_utf8(jval);
+        /* Format: "bitcount:hexdata" */
+        colon = strchr(s, ':');
+        if (!colon)
+            return EINVAL;
+        bitlen = (unsigned int)strtoul(s, NULL, 10);
+        colon++;
+        hexlen = strlen(colon);
+        bs->length = bitlen;
+        if (hexlen == 0) {
+            bs->data = NULL;
+            return 0;
+        }
+        bs->data = malloc((hexlen + 1) / 2);
+        if (!bs->data)
+            return ENOMEM;
+        r = hex_decode(colon, bs->data, (hexlen + 1) / 2);
+        if (r < 0) {
+            free(bs->data);
+            bs->data = NULL;
+            bs->length = 0;
+            return EINVAL;
+        }
+        return 0;
+    }
+    case A1T_OID: {
+        heim_oid *oid = el;
+        const char *oidstr;
+        heim_object_t oid_val;
+
+        /*
+         * OID is printed as {"_type":"OBJECT IDENTIFIER","oid":"1.2.3",...}
+         * We need to extract the "oid" field.
+         */
+        if (tid == HEIM_TID_DICT) {
+            oid_val = heim_dict_get_value((heim_dict_t)jval, HSTR("oid"));
+            if (!oid_val || heim_get_tid(oid_val) != HEIM_TID_STRING)
+                return EINVAL;
+            oidstr = heim_string_get_utf8(oid_val);
+        } else if (tid == HEIM_TID_STRING) {
+            oidstr = heim_string_get_utf8(jval);
+        } else {
+            return EINVAL;
+        }
+        return der_parse_heim_oid(oidstr, ".", oid);
+    }
+    case A1T_GENERALIZED_TIME:
+    case A1T_UTC_TIME: {
+        time_t *tp = el;
+        const char *s;
+        struct tm tm;
+
+        if (tid != HEIM_TID_STRING)
+            return EINVAL;
+        s = heim_string_get_utf8(jval);
+        memset(&tm, 0, sizeof(tm));
+        /* Parse "YYYY-MM-DDTHH:MM:SSZ" */
+        if (sscanf(s, "%d-%d-%dT%d:%d:%dZ",
+                   &tm.tm_year, &tm.tm_mon, &tm.tm_mday,
+                   &tm.tm_hour, &tm.tm_min, &tm.tm_sec) != 6)
+            return EINVAL;
+        tm.tm_year -= 1900;
+        tm.tm_mon -= 1;
+        *tp = _der_timegm(&tm);
+        return 0;
+    }
+    case A1T_BMP_STRING:
+    case A1T_UNIVERSAL_STRING:
+        /* Not supported for parsing at this time */
+        return ENOTSUP;
+    case A1T_OCTET_STRING_BER:
+        /* Same as OCTET_STRING for JSON purposes */
+        {
+            heim_octet_string *os = el;
+            const char *hex;
+            size_t hexlen;
+            ssize_t r;
+
+            if (tid != HEIM_TID_STRING)
+                return EINVAL;
+            hex = heim_string_get_utf8(jval);
+            hexlen = strlen(hex);
+            if (hexlen == 0) {
+                os->data = NULL;
+                os->length = 0;
+                return 0;
+            }
+            os->length = (hexlen + 1) / 2;
+            os->data = malloc(os->length);
+            if (!os->data)
+                return ENOMEM;
+            r = hex_decode(hex, os->data, os->length);
+            if (r < 0) {
+                free(os->data);
+                os->data = NULL;
+                os->length = 0;
+                return EINVAL;
+            }
+            os->length = r;
+            return 0;
+        }
+    default:
+        return ENOTSUP;
+    }
+}
+
+/*
+ * Look up a field by name in a JSON dict.  Unlike HSTR(), which requires
+ * a string literal, this works with a runtime const char *.
+ */
+static heim_object_t
+_asn1_json_dict_get(heim_dict_t d, const char *name)
+{
+    heim_string_t key = heim_string_create(name);
+    heim_object_t val;
+
+    if (!key)
+        return NULL;
+    val = heim_dict_get_value(d, key);
+    heim_release(key);
+    return val;
+}
+
+/*
+ * Parse an open type value from JSON.
+ *
+ * The JSON printer outputs three keys for each open type field:
+ *
+ *   1. The raw hex field (e.g., "parameters": "0500")
+ *   2. "_<name>_choice": the object set entry name (e.g., "NULL")
+ *   3. "_<name>": the decoded typed value (e.g., null for ASN.1 NULL)
+ *
+ * Regular field parsing handles #1 (hex → heim_any).  This function
+ * handles #2 and #3: it looks up the typed value in the JSON dict,
+ * parses it using the matched type's template, encodes it to DER,
+ * and stores the DER in the heim_any/heim_octet_string field.
+ *
+ * If the raw hex field was already populated by field parsing, this
+ * function does nothing (the DER is already available for
+ * _asn1_decode_open_type() to decode into the typed choice struct).
+ *
+ * This allows hand-written JSON to omit the hex DER field and instead
+ * provide the human-readable typed value directly.
+ */
+static int
+_asn1_parse_open_type_json(const struct asn1_template *t,
+                           const struct asn1_template *tbase,
+                           heim_object_t j,
+                           void *data,
+                           size_t nelements,
+                           size_t nnames,
+                           const struct asn1_template *topentype)
+{
+    const struct asn1_template *tos = t->ptr;
+    const struct asn1_template *tactual_type;
+    size_t opentype_idx = (t->tt >> 10) & ((1 << 10) - 1);
+    const char *opentype_name;
+    char choice_key[256];
+    char value_key[256];
+    heim_object_t jchoice, jvalue;
+    const char *choice_name;
+    struct heim_base_data *os;
+    size_t i, n;
+    void *decoded = NULL;
+    size_t der_len;
+    unsigned char *der_buf = NULL;
+    size_t sz;
+    int ret;
+
+    /* We can only look up synthetic keys in a JSON dict */
+    if (heim_get_tid(j) != HEIM_TID_DICT)
+        return 0;
+
+    /* Check if the raw heim_any field already has data */
+    if (t->tt & A1_OTF_IS_OPTIONAL) {
+        struct heim_base_data **od = DPO(data, topentype->offset);
+
+        if (*od && (*od)->data && (*od)->length)
+            return 0;   /* Already populated from hex decode */
+    } else {
+        os = DPO(data, topentype->offset);
+        if (os->data && os->length)
+            return 0;   /* Already populated from hex decode */
+    }
+
+    /*
+     * Get the open type field name from the A1_OP_NAME entries.
+     * The printer uses: tbase[(nelements - nnames) + 2 + opentype_idx].ptr
+     */
+    opentype_name = (const char *)tbase[(nelements - nnames) + 2 + opentype_idx].ptr;
+    snprintf(choice_key, sizeof(choice_key), "_%s_choice", opentype_name);
+    snprintf(value_key, sizeof(value_key), "_%s", opentype_name);
+
+    /* Look for the synthetic keys in the JSON dict */
+    jchoice = _asn1_json_dict_get((heim_dict_t)j, choice_key);
+    jvalue = _asn1_json_dict_get((heim_dict_t)j, value_key);
+    if (!jchoice || heim_get_tid(jchoice) != HEIM_TID_STRING)
+        return 0;   /* No typed value in JSON */
+
+    /* Find the matching object in the object set by name */
+    choice_name = heim_string_get_utf8(jchoice);
+    n = A1_HEADER_LEN(tos);
+    for (i = 0; i < n; i++) {
+        const char *obj_name = (const char *)tos[3 * i + 2].ptr;
+
+        if (strcmp(obj_name, choice_name) == 0)
+            break;
+    }
+    if (i == n)
+        return 0;   /* Unknown type name, skip */
+
+    tactual_type = &tos[3 * i + 4];
+
+    /*
+     * If the value is null/missing but we matched the choice name, that's
+     * OK for types like ASN.1 NULL.  But we still need to parse+encode.
+     */
+    if (!jvalue || heim_get_tid(jvalue) == HEIM_TID_NULL) {
+        /* Create an empty JSON dict for parsing */
+        jvalue = heim_dict_create(1);
+        if (!jvalue)
+            return ENOMEM;
+    } else {
+        heim_retain(jvalue);
+    }
+
+    /* Parse the typed value from JSON */
+    decoded = calloc(1, tactual_type->offset);
+    if (!decoded) {
+        heim_release(jvalue);
+        return ENOMEM;
+    }
+    ret = _asn1_parse_json(tactual_type->ptr, jvalue, decoded);
+    heim_release(jvalue);
+    if (ret) {
+        _asn1_free(tactual_type->ptr, decoded);
+        free(decoded);
+        return 0;   /* Parse failed, not fatal -- fall back to hex if available */
+    }
+
+    /* Encode the parsed value to DER */
+    der_len = _asn1_length(tactual_type->ptr, decoded);
+    if (der_len > 0) {
+        der_buf = malloc(der_len);
+        if (!der_buf) {
+            _asn1_free(tactual_type->ptr, decoded);
+            free(decoded);
+            return ENOMEM;
+        }
+        ret = _asn1_encode(tactual_type->ptr,
+                           der_buf + der_len - 1, der_len, decoded, &sz);
+        if (ret) {
+            free(der_buf);
+            _asn1_free(tactual_type->ptr, decoded);
+            free(decoded);
+            return 0;   /* Encode failed, not fatal */
+        }
+    } else {
+        sz = 0;
+    }
+
+    _asn1_free(tactual_type->ptr, decoded);
+    free(decoded);
+
+    /* Store the DER in the heim_any/heim_octet_string field */
+    if (t->tt & A1_OTF_IS_OPTIONAL) {
+        struct heim_base_data **od = DPO(data, topentype->offset);
+
+        if (!*od) {
+            *od = calloc(1, sizeof(**od));
+            if (!*od) {
+                free(der_buf);
+                return ENOMEM;
+            }
+        }
+        (*od)->data = der_buf;
+        (*od)->length = sz;
+    } else {
+        os = DPO(data, topentype->offset);
+        free(os->data);
+        os->data = der_buf;
+        os->length = sz;
+    }
+    return 0;
+}
+
+/*
+ * Recursive JSON-to-C-struct parser, the inverse of _asn1_print().
+ *
+ * Walks the template `t' and populates the C struct at `data' from
+ * the JSON object `j'.
+ */
+static int
+_asn1_parse_json(const struct asn1_template *t,
+                 heim_object_t j,
+                 void *data)
+{
+    const struct asn1_template *tbase = t;
+    const struct asn1_template *tnames;
+    const struct asn1_template *tdefval = NULL;
+    size_t nelements = A1_HEADER_LEN(t);
+    size_t elements = nelements;
+    size_t nnames = 0;
+    int ret = 0;
+
+    for (t += nelements; t > tbase && (t->tt & A1_OP_MASK) == A1_OP_NAME; t--)
+        nnames++;
+
+    tnames = tbase + nelements - nnames + 1;
+
+    /* Skip the type name entry */
+    if (nnames)
+        tnames++;
+
+    t = tbase + 1;
+    while (elements && (t->tt & A1_OP_MASK) != A1_OP_NAME) {
+        switch (t->tt & A1_OP_MASK) {
+        case A1_OP_NAME:
+            break;
+        case A1_OP_DEFVAL:
+            tdefval = t;
+            t++;
+            elements--;
+            continue;
+        case A1_OP_OPENTYPE_OBJSET: {
+            size_t opentypeid = t->tt & ((1<<10)-1);
+            size_t opentype = (t->tt >> 10) & ((1<<10)-1);
+            const struct asn1_template *topentype_t =
+                template4member(tbase, opentype);
+
+            /*
+             * First, try to parse from the "_<name>" typed JSON value.
+             * This handles hand-written JSON that provides the decoded
+             * value instead of hex DER.  If the raw hex field was already
+             * populated by regular field parsing, this is a no-op.
+             */
+            ret = _asn1_parse_open_type_json(t, tbase, j, data,
+                                             nelements, nnames,
+                                             topentype_t);
+            if (ret)
+                return ret;
+
+            /*
+             * Now decode the raw DER (from hex or from the above encoding)
+             * into the typed choice struct, just like the DER decoder does.
+             */
+            ret = _asn1_decode_open_type(t, 0, data,
+                                         template4member(tbase, opentypeid),
+                                         topentype_t);
+            if (ret)
+                return ret;
+            t++;
+            elements--;
+            continue;
+        }
+        case A1_OP_TYPE_DECORATE_EXTERN:
+        case A1_OP_TYPE_DECORATE:
+            t++;
+            elements--;
+            continue;
+        default:
+            break;
+        }
+
+        if ((t->tt & A1_OP_MASK) == A1_OP_NAME) {
+            t++;
+            elements--;
+            continue;
+        }
+
+        switch (t->tt & A1_OP_MASK) {
+        case A1_OP_TYPE:
+        case A1_OP_TYPE_EXTERN: {
+            size_t elsize;
+            void *el = DPO(data, t->offset);
+            void **pel = el;
+            heim_object_t jfield = NULL;
+            const char *fname;
+
+            if ((t->tt & A1_OP_MASK) == A1_OP_TYPE)
+                elsize = _asn1_sizeofType(t->ptr);
+            else {
+                const struct asn1_type_func *f = t->ptr;
+                elsize = f->size;
+            }
+
+            /* Look up the field in the JSON dict */
+            if (nnames && heim_get_tid(j) == HEIM_TID_DICT) {
+                fname = (const char *)(tnames++)->ptr;
+                jfield = _asn1_json_dict_get((heim_dict_t)j, fname);
+            } else {
+                jfield = j;
+            }
+
+            if (t->tt & A1_FLAG_OPTIONAL) {
+                if (!jfield || heim_get_tid(jfield) == HEIM_TID_NULL) {
+                    *pel = NULL;
+                    if (t->tt & A1_FLAG_DEFAULT && tdefval) {
+                        /* Apply default value */
+                        *pel = calloc(1, elsize);
+                        if (!*pel)
+                            return ENOMEM;
+                        if (tdefval->tt & A1_DV_BOOLEAN) {
+                            *(int *)*pel = tdefval->ptr ? 1 : 0;
+                        } else if (tdefval->tt & A1_DV_INTEGER64) {
+                            *(int64_t *)*pel = (int64_t)(intptr_t)tdefval->ptr;
+                        } else if (tdefval->tt & A1_DV_INTEGER32) {
+                            *(int32_t *)*pel = (int32_t)(intptr_t)tdefval->ptr;
+                        } else if (tdefval->tt & A1_DV_INTEGER) {
+                            ret = der_copy_heim_integer(tdefval->ptr, *pel);
+                            if (ret) { free(*pel); *pel = NULL; return ret; }
+                        } else if (tdefval->tt & A1_DV_UTF8STRING) {
+                            *(char **)*pel = strdup(tdefval->ptr);
+                            if (!*(char **)*pel) { free(*pel); *pel = NULL; return ENOMEM; }
+                        }
+                    }
+                    break;
+                }
+                *pel = calloc(1, elsize);
+                if (!*pel)
+                    return ENOMEM;
+                el = *pel;
+            } else if (!jfield || heim_get_tid(jfield) == HEIM_TID_NULL) {
+                /* Non-optional field: apply default if available */
+                if (t->tt & A1_FLAG_DEFAULT && tdefval) {
+                    if (tdefval->tt & A1_DV_BOOLEAN) {
+                        *(int *)el = tdefval->ptr ? 1 : 0;
+                    } else if (tdefval->tt & A1_DV_INTEGER64) {
+                        *(int64_t *)el = (int64_t)(intptr_t)tdefval->ptr;
+                    } else if (tdefval->tt & A1_DV_INTEGER32) {
+                        *(int32_t *)el = (int32_t)(intptr_t)tdefval->ptr;
+                    } else if (tdefval->tt & A1_DV_INTEGER) {
+                        ret = der_copy_heim_integer(tdefval->ptr, el);
+                        if (ret)
+                            return ret;
+                    } else if (tdefval->tt & A1_DV_UTF8STRING) {
+                        char **sp = el;
+                        *sp = strdup(tdefval->ptr);
+                        if (!*sp)
+                            return ENOMEM;
+                    }
+                    break;
+                }
+                /* Missing required field */
+                break;
+            }
+
+            if ((t->tt & A1_OP_MASK) == A1_OP_TYPE) {
+                ret = _asn1_parse_json(t->ptr, jfield, el);
+            } else {
+                /*
+                 * External type (e.g., heim_any, heim_any_set).
+                 * The printer outputs hex-encoded DER bytes wrapped in
+                 * quotes via der_print_octet_string() + rk_strasvis().
+                 * Parse the hex string back to binary and decode.
+                 */
+                const struct asn1_type_func *f = t->ptr;
+
+                if (heim_get_tid(jfield) == HEIM_TID_STRING) {
+                    const char *hex = heim_string_get_utf8(jfield);
+                    size_t hexlen = strlen(hex);
+                    size_t binlen = hexlen / 2;
+
+                    if (binlen > 0) {
+                        unsigned char *bin = malloc(binlen);
+
+                        if (!bin) {
+                            ret = ENOMEM;
+                        } else {
+                            ssize_t decoded = hex_decode(hex, bin, binlen);
+
+                            if (decoded < 0) {
+                                free(bin);
+                                ret = ASN1_PARSE_ERROR;
+                            } else {
+                                size_t sz = 0;
+
+                                ret = f->decode(bin, (size_t)decoded, el, &sz);
+                                free(bin);
+                            }
+                        }
+                    } else {
+                        /* Empty hex string -> empty data */
+                        size_t sz = 0;
+                        unsigned char empty = 0;
+
+                        ret = f->decode(&empty, 0, el, &sz);
+                    }
+                } else {
+                    ret = ENOTSUP;
+                }
+            }
+            if (ret && (t->tt & A1_FLAG_OPTIONAL)) {
+                if ((t->tt & A1_OP_MASK) == A1_OP_TYPE)
+                    _asn1_free(t->ptr, el);
+                else {
+                    const struct asn1_type_func *f = t->ptr;
+                    f->release(el);
+                }
+                free(*pel);
+                *pel = NULL;
+                ret = 0;
+            }
+            if (ret)
+                return ret;
+            break;
+        }
+        case A1_OP_PARSE: {
+            unsigned int ptype = A1_PARSE_TYPE(t->tt);
+            void *el = DPO(data, t->offset);
+            heim_object_t jfield = NULL;
+            const char *fname;
+
+            if (ptype >= sizeof(asn1_template_prim)/sizeof(asn1_template_prim[0])) {
+                ABORT_ON_ERROR();
+                return ASN1_PARSE_ERROR;
+            }
+
+            /* Look up the field in the JSON dict */
+            if (nnames && heim_get_tid(j) == HEIM_TID_DICT) {
+                fname = (const char *)(tnames++)->ptr;
+                jfield = _asn1_json_dict_get((heim_dict_t)j, fname);
+            } else {
+                jfield = j;
+            }
+
+            if (!jfield || heim_get_tid(jfield) == HEIM_TID_NULL) {
+                /* Missing or null -- leave as zero-initialized */
+                break;
+            }
+
+            /*
+             * The JSON printer VIS-encodes strings.  For string types we need
+             * to reverse that.  For non-string types (numbers, booleans, OIDs,
+             * hex-encoded values), the JSON parser already gives us what we
+             * need.
+             */
+            if (heim_get_tid(jfield) == HEIM_TID_STRING) {
+                const char *s = heim_string_get_utf8(jfield);
+
+                /*
+                 * The printer uses rk_strasvis() with VIS_CSTYLE for string
+                 * types.  We need to un-vis them.  But hex-encoded data and
+                 * time strings are not vis-encoded (they only contain safe
+                 * chars), so strunvis is safe for all strings.
+                 */
+                switch (ptype) {
+                case A1T_OCTET_STRING:
+                case A1T_OCTET_STRING_BER:
+                case A1T_HEIM_INTEGER:
+                case A1T_HEIM_BIT_STRING:
+                case A1T_OID:
+                case A1T_GENERALIZED_TIME:
+                case A1T_UTC_TIME:
+                    /* These are not vis-encoded */
+                    break;
+                default: {
+                    /*
+                     * String types may be vis-encoded.  Un-vis them.
+                     */
+                    char *unvis = strdup(s);
+
+                    if (!unvis)
+                        return ENOMEM;
+                    if (rk_strunvis(unvis, s) >= 0) {
+                        heim_object_t unvis_str = heim_string_create(unvis);
+                        free(unvis);
+                        if (!unvis_str)
+                            return ENOMEM;
+                        ret = _asn1_parse_json_prim(ptype, t->ptr, unvis_str, el);
+                        heim_release(unvis_str);
+                        goto parse_done;
+                    }
+                    free(unvis);
+                    /* If strunvis fails, fall through to use original */
+                }
+                }
+            }
+            ret = _asn1_parse_json_prim(ptype, t->ptr, jfield, el);
+        parse_done:
+            if (ret)
+                return ret;
+            break;
+        }
+        case A1_OP_TAG: {
+            void *el = DPO(data, t->offset);
+            void **pel = el;
+            heim_object_t jfield = NULL;
+            const char *fname;
+
+            /* Look up the field in the JSON dict */
+            if (nnames && heim_get_tid(j) == HEIM_TID_DICT) {
+                fname = (const char *)(tnames++)->ptr;
+                jfield = _asn1_json_dict_get((heim_dict_t)j, fname);
+            } else {
+                jfield = j;
+            }
+
+            if (t->tt & A1_FLAG_OPTIONAL) {
+                if (!jfield || heim_get_tid(jfield) == HEIM_TID_NULL) {
+                    *pel = NULL;
+                    if (t->tt & A1_FLAG_DEFAULT && tdefval) {
+                        size_t ellen = _asn1_sizeofType(t->ptr);
+                        *pel = calloc(1, ellen);
+                        if (!*pel)
+                            return ENOMEM;
+                        if (tdefval->tt & A1_DV_BOOLEAN) {
+                            *(int *)*pel = tdefval->ptr ? 1 : 0;
+                        } else if (tdefval->tt & A1_DV_INTEGER64) {
+                            *(int64_t *)*pel = (int64_t)(intptr_t)tdefval->ptr;
+                        } else if (tdefval->tt & A1_DV_INTEGER32) {
+                            *(int32_t *)*pel = (int32_t)(intptr_t)tdefval->ptr;
+                        } else if (tdefval->tt & A1_DV_INTEGER) {
+                            ret = der_copy_heim_integer(tdefval->ptr, *pel);
+                            if (ret) { free(*pel); *pel = NULL; return ret; }
+                        } else if (tdefval->tt & A1_DV_UTF8STRING) {
+                            *(char **)*pel = strdup(tdefval->ptr);
+                            if (!*(char **)*pel) { free(*pel); *pel = NULL; return ENOMEM; }
+                        }
+                    }
+                    break;
+                }
+                {
+                    size_t ellen = _asn1_sizeofType(t->ptr);
+                    *pel = calloc(1, ellen);
+                    if (!*pel)
+                        return ENOMEM;
+                    el = *pel;
+                }
+            } else if (!jfield || heim_get_tid(jfield) == HEIM_TID_NULL) {
+                /* Non-optional tag with missing value */
+                if (t->tt & A1_FLAG_DEFAULT && tdefval) {
+                    if (tdefval->tt & A1_DV_BOOLEAN) {
+                        *(int *)el = tdefval->ptr ? 1 : 0;
+                    } else if (tdefval->tt & A1_DV_INTEGER64) {
+                        *(int64_t *)el = (int64_t)(intptr_t)tdefval->ptr;
+                    } else if (tdefval->tt & A1_DV_INTEGER32) {
+                        *(int32_t *)el = (int32_t)(intptr_t)tdefval->ptr;
+                    } else if (tdefval->tt & A1_DV_INTEGER) {
+                        ret = der_copy_heim_integer(tdefval->ptr, el);
+                        if (ret)
+                            return ret;
+                    } else if (tdefval->tt & A1_DV_UTF8STRING) {
+                        char **sp = el;
+                        *sp = strdup(tdefval->ptr);
+                        if (!*sp)
+                            return ENOMEM;
+                    }
+                    break;
+                }
+                break;
+            }
+
+            /* Tags are transparent in JSON -- just recurse */
+            ret = _asn1_parse_json(t->ptr, jfield, el);
+            if (ret && (t->tt & A1_FLAG_OPTIONAL)) {
+                _asn1_free(t->ptr, el);
+                free(*pel);
+                *pel = NULL;
+                ret = 0;
+            }
+            if (ret)
+                return ret;
+            break;
+        }
+        case A1_OP_SETOF:
+        case A1_OP_SEQOF: {
+            struct template_of *el = DPO(data, t->offset);
+            size_t ellen = _asn1_sizeofType(t->ptr);
+            heim_object_t jfield = NULL;
+            const char *fname;
+            size_t alen, i;
+
+            if (nnames && heim_get_tid(j) == HEIM_TID_DICT) {
+                fname = (const char *)(tnames++)->ptr;
+                jfield = _asn1_json_dict_get((heim_dict_t)j, fname);
+            } else {
+                jfield = j;
+            }
+
+            if (!jfield || heim_get_tid(jfield) == HEIM_TID_NULL) {
+                el->len = 0;
+                el->val = NULL;
+                break;
+            }
+            if (heim_get_tid(jfield) != HEIM_TID_ARRAY)
+                return EINVAL;
+
+            alen = heim_array_get_length((heim_array_t)jfield);
+            if (alen == 0) {
+                el->len = 0;
+                el->val = NULL;
+                break;
+            }
+            el->val = calloc(alen, ellen);
+            if (!el->val)
+                return ENOMEM;
+            el->len = alen;
+            for (i = 0; i < alen; i++) {
+                heim_object_t elem = heim_array_get_value((heim_array_t)jfield, i);
+                ret = _asn1_parse_json(t->ptr, elem, DPO(el->val, i * ellen));
+                if (ret)
+                    return ret;
+            }
+            break;
+        }
+        case A1_OP_BMEMBER: {
+            const struct asn1_template *bmember = t->ptr;
+            size_t bsize = bmember->offset;
+            size_t belements = A1_HEADER_LEN(bmember);
+            heim_object_t jfield = NULL;
+            const char *fname;
+            size_t alen, i, bi;
+
+            if (nnames && heim_get_tid(j) == HEIM_TID_DICT) {
+                fname = (const char *)(tnames++)->ptr;
+                jfield = _asn1_json_dict_get((heim_dict_t)j, fname);
+            } else {
+                jfield = j;
+            }
+
+            memset(data, 0, bsize);
+            if (!jfield || heim_get_tid(jfield) == HEIM_TID_NULL)
+                break;
+
+            if (heim_get_tid(jfield) != HEIM_TID_ARRAY)
+                return EINVAL;
+
+            /*
+             * The JSON is an array of bit name strings, e.g. ["bit1","bit2"].
+             * Look up each name in the bmember template and set the bit.
+             */
+            alen = heim_array_get_length((heim_array_t)jfield);
+            for (i = 0; i < alen; i++) {
+                heim_object_t elem = heim_array_get_value((heim_array_t)jfield, i);
+                const char *bitname;
+
+                if (heim_get_tid(elem) != HEIM_TID_STRING)
+                    return EINVAL;
+                bitname = heim_string_get_utf8(elem);
+
+                /* Search for matching bit name in template (entries 1..belements) */
+                for (bi = 1; bi <= belements; bi++) {
+                    if ((bmember[bi].tt & A1_OP_MASK) == A1_OP_NAME &&
+                        strcmp(bitname, (const char *)bmember[bi].ptr) == 0) {
+                        /* Set this bit */
+#ifdef WORDS_BIGENDIAN
+                        *(unsigned int *)data |= (1u << ((bsize * 8) - bmember[bi].offset - 1));
+#else
+                        *(unsigned int *)data |= (1u << bmember[bi].offset);
+#endif
+                        break;
+                    }
+                }
+                if (bi > belements)
+                    return EINVAL; /* Unknown bit name */
+            }
+            break;
+        }
+        case A1_OP_CHOICE: {
+            const struct asn1_template *choice = t->ptr;
+            unsigned int *element = DPO(data, choice->offset);
+            unsigned int nchoices = ((uintptr_t)choice->ptr) >> 1;
+            heim_object_t jfield = NULL;
+            const char *fname;
+
+            if (nnames && heim_get_tid(j) == HEIM_TID_DICT) {
+                fname = (const char *)(tnames++)->ptr;
+                jfield = _asn1_json_dict_get((heim_dict_t)j, fname);
+            } else {
+                jfield = j;
+            }
+
+            if (!jfield || heim_get_tid(jfield) == HEIM_TID_NULL) {
+                *element = 0;
+                break;
+            }
+
+            /*
+             * CHOICE JSON format: {"_choice":"altName","value":...}
+             */
+            if (heim_get_tid(jfield) != HEIM_TID_DICT)
+                return EINVAL;
+
+            {
+                heim_object_t jchoice_name = heim_dict_get_value((heim_dict_t)jfield, HSTR("_choice"));
+                heim_object_t jchoice_val = heim_dict_get_value((heim_dict_t)jfield, HSTR("value"));
+                const char *cname;
+                unsigned int i;
+
+                if (!jchoice_name || heim_get_tid(jchoice_name) != HEIM_TID_STRING)
+                    return EINVAL;
+                cname = heim_string_get_utf8(jchoice_name);
+
+                /* Find the matching choice alternative */
+                for (i = 1; i <= A1_HEADER_LEN(choice); i++) {
+                    const char *altname = (const char *)choice[i + nchoices].ptr;
+
+                    if (!altname)
+                        continue;
+                    if (strcmp(cname, altname) == 0) {
+                        *element = i;
+                        if (jchoice_val) {
+                            ret = _asn1_parse_json(choice[i].ptr, jchoice_val,
+                                                   DPO(data, choice[i].offset));
+                        }
+                        goto choice_done;
+                    }
+                }
+                /* No matching alternative found */
+                *element = 0;
+                return EINVAL;
+            }
+        choice_done:
+            if (ret)
+                return ret;
+            break;
+        }
+        default:
+            ABORT_ON_ERROR();
+            return ASN1_PARSE_ERROR;
+        }
+        tdefval = NULL;
+        t++;
+        elements--;
+    }
+    return ret;
+}
+
+int
+_asn1_parse_json_top(const struct asn1_template *t,
+                     void *j, /* heim_object_t */
+                     void *data)
+{
+    int ret;
+
+    memset(data, 0, t->offset);
+    ret = _asn1_parse_json(t, (heim_object_t)j, data);
+    if (ret)
+        _asn1_free_top(t, data);
+    return ret;
+}
+
+int
+_asn1_parse_json_string_top(const struct asn1_template *t,
+                            const char *jstr,
+                            size_t jlen,
+                            void *data)
+{
+    heim_object_t j;
+    heim_error_t e = NULL;
+    int ret;
+
+    if (jlen == 0)
+        jlen = strlen(jstr);
+    j = heim_json_create_with_bytes(jstr, jlen, 64, 0, &e);
+    if (!j) {
+        heim_release(e);
+        return EINVAL;
+    }
+    ret = _asn1_parse_json_top(t, j, data);
+    heim_release(j);
+    return ret;
 }
 
 /* See commentary in _asn1_decode_open_type() */

@@ -552,6 +552,7 @@ asn1_*_asn1.c
 /lib/wind/test-punycode
 /lib/wind/test-rw
 /lib/wind/test-utf8
+/build
 /out
 /po/gen-po.sh
 /scripts

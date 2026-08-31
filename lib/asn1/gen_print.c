@@ -41,3 +41,12 @@ generate_type_print_stub(const Symbol *s)
 	    "{ errno = EINVAL; return 0; }\n\n",
 	    s->gen_name, s->gen_name);
 }
+
+void
+generate_type_parse_json_stub(const Symbol *s)
+{
+    fprintf(codefile, "int ASN1CALL\n"
+	    "asn1_parse_%s(const char *j, size_t l, %s *d)\n"
+	    "{ return ENOTSUP; }\n\n",
+	    s->gen_name, s->gen_name);
+}

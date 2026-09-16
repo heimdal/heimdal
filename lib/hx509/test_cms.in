@@ -54,6 +54,29 @@ ${hxtool} cms-verify-sd \
     sd.data sd.data.out > /dev/null || { echo Fail at $LINENO; exit 1; }
 cmp "$srcdir/test_chain.in" sd.data.out || { echo Fail at $LINENO; exit 1; }
 
+# Regression for #1421: Windows CNG puts id-ecPublicKey in
+# SignerInfo.signatureAlgorithm instead of ecdsa-with-SHAx.  This is a stored
+# blob because a fixed Heimdal will not generate one (the ecdsa-x509 entry is
+# verify-only).  It must verify, and the content must round-trip.
+echo "verify signed data (id-ecPublicKey signatureAlgorithm, #1421)"
+${hxtool} cms-verify-sd \
+    --missing-revoke \
+    --anchors=FILE:$srcdir/data/secp256r1TestCA.cert.pem \
+    "$srcdir/data/ecdsa-x509-sd.data" ecdsa-x509-sd.out > /dev/null || \
+	{ echo Fail at $LINENO; exit 1; }
+cmp "$srcdir/data/ecdsa-x509-sd.txt" ecdsa-x509-sd.out || { echo Fail at $LINENO; exit 1; }
+
+# Regression for #1421 hardening: the same blob but with id-ecPublicKey also
+# placed in SignerInfo.digestAlgorithm.  id-ecPublicKey resolves to a
+# signature_alg entry that names no digest (evp_md == NULL), so verification
+# must reject it cleanly -- it must not dereference the NULL evp_md and crash.
+echo "verify signed data (id-ecPublicKey digestAlgorithm must fail, not crash)"
+${hxtool} cms-verify-sd \
+    --missing-revoke \
+    --anchors=FILE:$srcdir/data/secp256r1TestCA.cert.pem \
+    "$srcdir/data/ecdsa-x509-sd-baddigest.data" ecdsa-x509-sd-baddigest.out \
+    > /dev/null 2>&1 && { echo Fail at $LINENO; exit 1; }
+
 echo "create signed data"
 ${hxtool} cms-create-sd \
 	--certificate=FILE:$srcdir/data/test.crt,$srcdir/data/test.key \

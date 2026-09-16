@@ -1,0 +1,1 @@
+content for the id-ecPublicKey CMS interop regression test (heimdal #1421)

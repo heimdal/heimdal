@@ -700,6 +700,7 @@ evp_md_verify_signature(hx509_context context,
 extern const struct signature_alg ecdsa_with_sha384_alg;
 extern const struct signature_alg ecdsa_with_sha256_alg;
 extern const struct signature_alg ecdsa_with_sha1_alg;
+extern const struct signature_alg ecdsa_x509_alg;
 
 static const struct signature_alg heim_rsa_pkcs1_x509 = {
     "rsa-pkcs1-x509",
@@ -916,6 +917,7 @@ static const struct signature_alg *sig_algs[] = {
     &ecdsa_with_sha384_alg,
     &ecdsa_with_sha256_alg,
     &ecdsa_with_sha1_alg,
+    &ecdsa_x509_alg,
     &rsa_with_sha512_alg,
     &rsa_with_sha384_alg,
     &rsa_with_sha256_alg,
@@ -957,6 +959,8 @@ alg_for_privatekey(const hx509_private_key pk, int type)
     for (i = 0; sig_algs[i]; i++) {
 	if (sig_algs[i]->key_oid == NULL)
 	    continue;
+	if (sig_algs[i]->create_signature == NULL)
+	    continue; /* verify-only entries cannot sign */
 	if (der_heim_oid_cmp(sig_algs[i]->key_oid, keytype) != 0)
 	    continue;
 	if (pk->ops->available &&
@@ -1066,7 +1070,14 @@ _hx509_verify_signature(hx509_context context,
 	return HX509_SIG_ALG_NO_SUPPORTED;
     }
 
-    evp_md = md ? md->evp_md() : NULL;
+    /*
+     * md may be a verify-only entry that names no digest of its own (e.g.
+     * ecdsa-x509, keyed on id-ecPublicKey, whose evp_md is NULL): a peer can
+     * put such an OID in SignerInfo.digestAlgorithm, so guard the call rather
+     * than dereferencing a NULL evp_md.  The verify_signature handler then
+     * fails cleanly on the missing digest.
+     */
+    evp_md = (md && md->evp_md) ? md->evp_md() : NULL;
 
     sa = _hx509_find_sig_alg(&alg->algorithm);
     if (sa == NULL) {
@@ -1113,7 +1124,8 @@ _hx509_create_signature(hx509_context context,
 	return HX509_SIG_ALG_NO_SUPPORTED;
     }
 
-    evp_md = md ? md->evp_md() : NULL;
+    /* See the matching guard in _hx509_verify_signature(). */
+    evp_md = (md && md->evp_md) ? md->evp_md() : NULL;
 
     sa = _hx509_find_sig_alg(&alg->algorithm);
     if (sa == NULL) {
@@ -1128,6 +1140,11 @@ _hx509_create_signature(hx509_context context,
 	return HX509_CRYPTO_SIG_NO_CONF;
     }
 
+    if (sa->create_signature == NULL) {
+	hx509_set_error_string(context, 0, HX509_ALG_NOT_SUPP,
+	    "signature algorithm is verify-only");
+	return HX509_ALG_NOT_SUPP;
+    }
     return (*sa->create_signature)(context, sa, signer, alg, evp_md, data,
 				   signatureAlgorithm, sig);
 }
@@ -2853,6 +2870,9 @@ hx509_crypto_select(const hx509_context context,
 	    for (j = 0; sig_algs[j]; j++) {
 		if ((sig_algs[j]->flags & bits) != bits)
 		    continue;
+		if ((sig_algs[j]->flags & SIG_PUBLIC_SIG) &&
+		    sig_algs[j]->create_signature == NULL)
+		    continue; /* verify-only entries cannot be selected for signing */
 		if (der_heim_oid_cmp(sig_algs[j]->sig_oid,
 				     &peer->val[i].algorithm) != 0)
 		    continue;
@@ -2924,6 +2944,9 @@ hx509_crypto_available(hx509_context context,
 	    continue;
 	if (sig_algs[i]->sig_alg == NULL)
 	    continue;
+	if ((sig_algs[i]->flags & SIG_PUBLIC_SIG) &&
+	    sig_algs[i]->create_signature == NULL)
+	    continue; /* verify-only signature entries are not offered */
 	if (keytype && sig_algs[i]->key_oid &&
 	    der_heim_oid_cmp(sig_algs[i]->key_oid, keytype))
 	    continue;

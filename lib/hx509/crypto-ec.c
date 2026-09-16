@@ -189,8 +189,38 @@ ecdsa_verify_signature(hx509_context context,
     int groupnid;
     int ret = 0;
 
-    //md = md ? md : signature_alg2digest_evp_md(context, digest_alg);
-    md = signature_alg2digest_evp_md(context, digest_alg);
+    /*
+     * The entry's own digest_alg governs when it has one: in CMS the
+     * SignerInfo.digestAlgorithm (the content digest, delivered here as
+     * 'md') may legitimately differ from the digest named by the signature
+     * algorithm.  Entries like ecdsa_x509_alg have no digest_alg of their
+     * own because their OID (id-ecPublicKey) names no digest; for those the
+     * caller-supplied digest (from SignerInfo.digestAlgorithm) is the only
+     * source.  Note there is no normative license for this: RFC 5753 2.1.1
+     * requires signatureAlgorithm to name ecdsa-with-SHAx.  See the comment
+     * above ecdsa_x509_alg.
+     */
+    if (digest_alg != NULL)
+        md = signature_alg2digest_evp_md(context, digest_alg);
+    if (md == NULL) {
+        hx509_set_error_string(context, 0, HX509_ALG_NOT_SUPP,
+                               "No digest algorithm for ECDSA verification");
+        return HX509_ALG_NOT_SUPP;
+    }
+    /*
+     * When the digest is inferred from SignerInfo.digestAlgorithm (entries
+     * with no digest_alg of their own, i.e. ecdsa-x509), refuse digests
+     * weaker than SHA-256: this path exists for one broken producer and
+     * must not widen ECDSA to MD5/SHA-1.  (This also excludes SHA-224,
+     * which RFC 5753 permits for conformant ECDSA, but a conformant
+     * producer never takes this path and the observed producer uses
+     * SHA-256/384.)
+     */
+    if (digest_alg == NULL && EVP_MD_size(md) < 32) {
+        hx509_set_error_string(context, 0, HX509_ALG_NOT_SUPP,
+                               "Digest too weak for ECDSA verification");
+        return HX509_ALG_NOT_SUPP;
+    }
 
     spi = &signer->tbsCertificate.subjectPublicKeyInfo;
     if (der_heim_oid_cmp(&spi->algorithm.algorithm,
@@ -294,8 +324,13 @@ ecdsa_create_signature(hx509_context context,
     const heim_oid *sig_oid;
     int ret = 0;
 
-    //md = md ? md : signature_alg2digest_evp_md(context, digest_alg);
-    md = signature_alg2digest_evp_md(context, digest_alg);
+    if (digest_alg != NULL)
+        md = signature_alg2digest_evp_md(context, digest_alg);
+    if (md == NULL) {
+        hx509_set_error_string(context, 0, HX509_ALG_NOT_SUPP,
+                               "No digest algorithm for ECDSA signing");
+        return HX509_ALG_NOT_SUPP;
+    }
     sig->data = NULL;
     sig->length = 0;
     if (signer->ops && der_heim_oid_cmp(signer->ops->key_oid, ASN1_OID_ID_ECPUBLICKEY) != 0)
@@ -793,6 +828,39 @@ const struct signature_alg ecdsa_with_sha256_alg = {
     ecdsa_verify_signature,
     ecdsa_create_signature,
     32
+};
+
+/*
+ * Windows CNG fills CMS SignerInfo.signatureAlgorithm with the *key*
+ * algorithm (id-ecPublicKey) instead of an ecdsa-with-SHAx OID when signing
+ * with an EC smart-card key; observed in PKINIT AS-REQs from Windows 10/11,
+ * where it makes EC smart-card logon fail against a Heimdal KDC
+ * (HX509_SIG_ALG_NO_SUPPORTED).
+ *
+ * That behaviour is non-conformant: RFC 5753 2.1.1 (via RFC 5754 3.3)
+ * requires signatureAlgorithm to name one of the ecdsa-with-SHAx OIDs.  For
+ * RSA there is a genuine normative license to use the bare key OID -- RFC
+ * 3370 3.2 makes rsaEncryption a valid signature-value identifier
+ * "regardless of the message digest algorithm employed", which is what the
+ * rsa-pkcs1-x509 entry implements -- but ECDSA has no analogue.  This entry
+ * is therefore a deliberate interop concession, tolerated on receive only:
+ * the digest comes from SignerInfo.digestAlgorithm (passed down as 'md' by
+ * _hx509_verify_signature()), the entry is verify-only so Heimdal never
+ * emits the malformation, and the inferred path refuses digests weaker
+ * than SHA-256 precisely because no spec vouches for it.
+ */
+const struct signature_alg ecdsa_x509_alg = {
+    "ecdsa-x509",
+    ASN1_OID_ID_ECPUBLICKEY,
+    &_hx509_signature_ecPublicKey,
+    ASN1_OID_ID_ECPUBLICKEY,
+    NULL,
+    PROVIDE_CONF|REQUIRE_SIGNER|SIG_PUBLIC_SIG,
+    0,
+    NULL,
+    ecdsa_verify_signature,
+    NULL, /* verify-only: Heimdal must never emit this malformation */
+    0
 };
 
 const struct signature_alg ecdsa_with_sha1_alg = {

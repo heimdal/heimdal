@@ -316,6 +316,9 @@ EXTRA_DIST = \
 	data/nist-result2 \
 	data/n0ll.pem \
 	data/secp256r1TestCA.cert.pem \
+	data/ecdsa-x509-sd.data \
+	data/ecdsa-x509-sd-baddigest.data \
+	data/ecdsa-x509-sd.txt \
 	data/secp256r1TestCA.key.pem \
 	data/secp256r1TestCA.pem \
 	data/secp256r2TestClient.cert.pem \

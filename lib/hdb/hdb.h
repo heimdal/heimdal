@@ -303,6 +303,8 @@ typedef struct HDB {
      * sync and does an fsync().
      */
     krb5_error_code (*hdb_set_sync)(krb5_context, struct HDB *, int);
+    int hdb_mit_key_set;
+    hdb_master_key hdb_mit_key;
 }HDB;
 
 #define HDB_INTERFACE_VERSION	11

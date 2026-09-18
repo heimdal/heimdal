@@ -403,12 +403,12 @@ eval_kgetcred(heim_dict_t o)
     authdata = heim_dict_get_value(o, HSTR("authdata"));
     if (authdata) {
 	AuthorizationDataElement ade;
-	const char *s = heim_string_get_utf8(authdata);
+	const char *hs = heim_string_get_utf8(authdata);
 
 	memset(&ade, 0, sizeof(ade));
 	ade.ad_type = 777;
-	ade.ad_data.data = rk_UNCONST(s);
-	ade.ad_data.length = strlen(s);
+	ade.ad_data.data = rk_UNCONST(hs);
+	ade.ad_data.length = strlen(hs);
 
 	ret = add_AuthorizationData(&in.authdata, &ade);
 	if (ret)

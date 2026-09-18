@@ -41,6 +41,7 @@
 .Nm krb5_get_creds_opt_free ,
 .Nm krb5_get_creds_opt_set_enctype ,
 .Nm krb5_get_creds_opt_set_impersonate ,
+.Nm krb5_get_creds_opt_set_lifetime ,
 .Nm krb5_get_creds_opt_set_options ,
 .Nm krb5_get_creds_opt_set_ticket
 .Nd get credentials from the KDC
@@ -83,6 +84,12 @@ Kerberos 5 Library (libkrb5, -lkrb5)
 .Fa "krb5_context context"
 .Fa "krb5_get_creds_opt opt"
 .Fa "krb5_const_principal self"
+.Fc
+.Ft void
+.Fo krb5_get_creds_opt_set_lifetime
+.Fa "krb5_context context"
+.Fa "krb5_get_creds_opt opt"
+.Fa "krb5_deltat lifetime"
 .Fc
 .Ft void
 .Fo krb5_get_creds_opt_set_options
@@ -164,6 +171,15 @@ sets the principal to impersonate., Returns a ticket that have the
 impersonation principal as a client and the requestor as the
 service. Note that the requested principal have to be the same as the
 client principal in the krbtgt.
+.Pp
+.Fn krb5_get_creds_opt_set_lifetime
+sets the desired lifetime of the ticket, measured from the time of the call to
+.Fn krb5_get_creds .
+The KDC may provide a ticket with a shorter life, as determined by the policy of
+the realm or target principal. If a ticket is present in the
+.Fa ccache
+for the desired principal and the cached ticket has a lifetime that equals or
+exceeds the requested length, the cached ticket will be returned.
 .Pp
 .Fn krb5_get_creds_opt_set_ticket
 sets the extra ticket used in user-to-user or contrained delegation use case.

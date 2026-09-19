@@ -115,8 +115,8 @@ _kdc_tkt_insert_pac(krb5_context context,
 
     heim_assert(tkt->authorization_data->len != 0, "No authorization_data!");
     ade = tkt->authorization_data->val[tkt->authorization_data->len - 1];
-    for (i = 0; i < tkt->authorization_data->len - 1; i++) {
-	tkt->authorization_data->val[i + 1] = tkt->authorization_data->val[i];
+    for (i = tkt->authorization_data->len - 1; i > 0; i--) {
+	tkt->authorization_data->val[i] = tkt->authorization_data->val[i - 1];
     }
     tkt->authorization_data->val[0] = ade;
 

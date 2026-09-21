@@ -170,6 +170,9 @@ libroken_la_SOURCES =		\
 	rand.c			\
 	realloc.c		\
 	resolve.c		\
+	rk_sd_listen_fds_with_names.c \
+	rk_sd_notify.c		\
+	rk_sd_notifyf.c		\
 	roken_gethostby.c	\
 	rtbl.c			\
 	rtbl.h			\

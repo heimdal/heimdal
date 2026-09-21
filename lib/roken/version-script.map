@@ -115,6 +115,9 @@ HEIMDAL_ROKEN_2.0 {
 		rk_read_environment;
 		rk_readv;
 		rk_realloc;
+		rk_sd_listen_fds_with_names;
+		rk_sd_notify;
+		rk_sd_notifyf;
 		rk_secure_getenv;
 		rk_setprogname;
 		rk_simple_execle;

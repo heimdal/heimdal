@@ -35,6 +35,104 @@
 
 RCSID("$Id$");
 
+/* Set by generate_type_free() for use by gen_open_type_free() */
+static const char *current_free_basetype;
+
+/*
+ * Generate code to free decoded open type values in the _ioschoice union.
+ */
+static void
+gen_open_type_free(const char *name, const Type *t)
+{
+    Member *opentypemember = NULL, *typeidmember = NULL;
+    Field *opentypefield = NULL, *typeidfield = NULL;
+    IOSObjectSet *os;
+    IOSObject **objects = NULL;
+    size_t nobjs, i;
+    int is_array_of_open_type = 0;
+
+    if (!t->actual_parameter)
+        return;
+
+    get_open_type_defn_fields(t, &typeidmember, &opentypemember,
+                              &typeidfield, &opentypefield,
+                              &is_array_of_open_type);
+    if (!opentypemember || !typeidmember)
+        return;
+
+    os = t->actual_parameter;
+    sort_object_set(os, typeidfield, &objects, &nobjs);
+    if (nobjs == 0)
+        return;
+
+    fprintf(codefile, "/* Free open type for %s */\n", opentypemember->gen_name);
+    fprintf(codefile, "switch ((%s)->_ioschoice_%s.element) {\n",
+            name, opentypemember->gen_name);
+
+    for (i = 0; i < nobjs; i++) {
+        ObjectField *typeidobjf = NULL, *opentypeobjf = NULL;
+        ObjectField *of;
+
+        HEIM_TAILQ_FOREACH(of, objects[i]->objfields, objfields) {
+            if (strcmp(of->name, typeidfield->name) == 0)
+                typeidobjf = of;
+            else if (strcmp(of->name, opentypefield->name) == 0)
+                opentypeobjf = of;
+        }
+        if (!typeidobjf || !opentypeobjf)
+            continue;
+
+        fprintf(codefile, "case choice_%s_iosnum_%s:\n",
+                current_free_basetype,
+                typeidobjf->value->s->gen_name);
+
+        if (!is_array_of_open_type) {
+            fprintf(codefile,
+                    "if ((%s)->_ioschoice_%s.u.%s) {\n"
+                    "free_%s((%s)->_ioschoice_%s.u.%s);\n"
+                    "free((%s)->_ioschoice_%s.u.%s);\n"
+                    "(%s)->_ioschoice_%s.u.%s = NULL;\n"
+                    "}\n",
+                    name, opentypemember->gen_name,
+                    objects[i]->symbol->gen_name,
+                    opentypeobjf->type->symbol->gen_name,
+                    name, opentypemember->gen_name,
+                    objects[i]->symbol->gen_name,
+                    name, opentypemember->gen_name,
+                    objects[i]->symbol->gen_name,
+                    name, opentypemember->gen_name,
+                    objects[i]->symbol->gen_name);
+        } else {
+            fprintf(codefile,
+                    "if ((%s)->_ioschoice_%s.val) {\n"
+                    "unsigned int ot_i;\n"
+                    "for (ot_i = 0; ot_i < (%s)->_ioschoice_%s.len; ot_i++)\n"
+                    "free_%s(&(%s)->_ioschoice_%s.val[ot_i]);\n"
+                    "free((%s)->_ioschoice_%s.val);\n"
+                    "(%s)->_ioschoice_%s.val = NULL;\n"
+                    "(%s)->_ioschoice_%s.len = 0;\n"
+                    "}\n",
+                    name, opentypemember->gen_name,
+                    name, opentypemember->gen_name,
+                    opentypeobjf->type->symbol->gen_name,
+                    name, opentypemember->gen_name,
+                    name, opentypemember->gen_name,
+                    name, opentypemember->gen_name,
+                    name, opentypemember->gen_name);
+        }
+
+        fprintf(codefile, "break;\n");
+    }
+
+    fprintf(codefile,
+            "default: break;\n"
+            "}\n"
+            "(%s)->_ioschoice_%s.element = 0;\n",
+            name, opentypemember->gen_name);
+
+    free(objects);
+}
+
 static void
 free_primitive (const char *typename, const char *name)
 {
@@ -128,6 +226,8 @@ free_type (const char *name, const Type *t, int preserve)
 			name, have_ellipsis->gen_name);
 	    fprintf(codefile, "}\n");
         }
+	if (t->type == TSequence || t->type == TSet)
+	    gen_open_type_free(name, t);
 	break;
     }
     case TSetOf:
@@ -189,6 +289,8 @@ generate_type_free (const Symbol *s)
     struct decoration deco;
     ssize_t more_deco = -1;
     int preserve = preserve_type(s->name) ? TRUE : FALSE;
+
+    current_free_basetype = s->gen_name;
 
     fprintf (codefile, "void ASN1CALL\n"
 	     "free_%s(%s *data)\n"

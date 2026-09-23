@@ -63,6 +63,7 @@ static int quiet_flag = 0;
 static int print_flag = 1;
 static int test_copy_flag;
 static int test_encode_flag;
+static int test_json_flag;
 static int sequence_flag;
 static int try_all_flag;
 static int indent_flag = 1;
@@ -76,6 +77,7 @@ typedef int (*copyer)(const void *, void *);
 typedef int (*encoder)(unsigned char *, size_t, void *, size_t *);
 typedef int (*decoder)(const unsigned char *, size_t, void *, size_t *);
 typedef char *(*printer)(const void *, int);
+typedef int (*json_parser)(const char *, size_t, void *);
 typedef void (*releaser)(void *);
 const struct types {
     const char *name;
@@ -85,6 +87,7 @@ const struct types {
     decoder decode;
     encoder encode;
     printer print;
+    json_parser parse_json;
     releaser release;
 } types[] = {
 #define ASN1_SYM_INTVAL(n, gn, gns, i)
@@ -99,6 +102,7 @@ const struct types {
         (decoder)decode_ ## gns,        \
         (encoder)encode_ ## gns,        \
         (printer)print_ ## gns,         \
+        (json_parser)asn1_parse_ ## gns, \
         (releaser)free_ ## gns,         \
     },
 #else
@@ -111,6 +115,7 @@ const struct types {
         (decoder)decode_ ## gns,        \
         (encoder)encode_ ## gns,        \
         0,                              \
+        (json_parser)asn1_parse_ ## gns, \
         (releaser)free_ ## gns,         \
     },
 #endif
@@ -495,6 +500,54 @@ dotype(unsigned char *buf, size_t len, char **argv, size_t *size)
                 sorted_types[i].release(vcpy);
                 free(vcpy);
             }
+            if ((test_json_flag || test_encode_flag) &&
+                sorted_types[i].print && sorted_types[i].parse_json) {
+                char *json_str;
+                void *vjson;
+                int jret;
+
+                json_str = sorted_types[i].print(v, 0);
+                if (!json_str)
+                    errx(1, "Could not print %s to JSON", typename);
+                vjson = ecalloc(1, sorted_types[i].sz);
+                jret = sorted_types[i].parse_json(json_str, 0, vjson);
+                if (jret == ENOTSUP) {
+                    /* Type not supported for JSON parsing, skip */
+                    if (!quiet_flag)
+                        fprintf(stderr, "JSON round-trip skipped for %s (ENOTSUP)\n", typename);
+                } else if (jret != 0) {
+                    free(json_str);
+                    sorted_types[i].release(vjson);
+                    free(vjson);
+                    errx(1, "JSON parse of %s failed: %d", typename, jret);
+                } else if (test_encode_flag) {
+                    size_t wants = sorted_types[i].len(vjson);
+                    unsigned char *der2 = emalloc(wants ? wants : 1);
+                    size_t sz2;
+
+                    ret = sorted_types[i].encode(der2 + (wants - 1), wants, vjson, &sz2);
+                    if (ret != 0) {
+                        free(json_str);
+                        sorted_types[i].release(vjson);
+                        free(vjson);
+                        free(der2);
+                        errx(1, "Encoding of JSON-parsed %s failed", typename);
+                    }
+                    if (sz2 != sz || memcmp(buf, der2, sz2) != 0) {
+                        if (!quiet_flag)
+                            fprintf(stderr,
+                                    "JSON round-trip DER mismatch for %s "
+                                    "(original %lu bytes, round-tripped %lu bytes)\n",
+                                    typename, (unsigned long)sz, (unsigned long)sz2);
+                    } else if (!quiet_flag) {
+                        fprintf(stderr, "JSON round-trip OK for %s\n", typename);
+                    }
+                    free(der2);
+                }
+                free(json_str);
+                sorted_types[i].release(vjson);
+                free(vjson);
+            }
         }
         sorted_types[i].release(v);
         free(v);
@@ -634,6 +687,8 @@ struct getargs args[] = {
         "\ttest encode round trip (for memory debugging and fuzzing)", NULL },
     { "test-copy", 0, arg_flag, &test_copy_flag,
         "\ttest copy operation (for memory debugging and fuzzing)", NULL },
+    { "test-json", 0, arg_flag, &test_json_flag,
+        "\ttest JSON round trip (print to JSON, parse back, re-encode)", NULL },
     { "print", 'n', arg_negative_flag, &print_flag,
         "\ttest copy operation (for memory debugging and fuzzing)", NULL },
     { "quiet", 'q', arg_flag, &quiet_flag,

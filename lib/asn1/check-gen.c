@@ -1540,6 +1540,35 @@ test_taglessalloc (void)
 			 cmp_TESTAlloc,
 			 (generic_copy)copy_TESTAlloc);
 
+    /* Test redaction (template backend only; codegen print is a stub) */
+#ifdef ASN1_IOS_SUPPORTED
+    {
+        char *s;
+
+        /* Without redaction, "three":3 should be visible */
+        s = print_TESTAlloc(&c1, 0);
+        if (!s) {
+            ret++;
+        } else {
+            if (!strstr(s, "\"three\":3"))
+                ret++;
+            free(s);
+        }
+
+        /* With ASN1_PRINT_REDACT, "three" should be redacted */
+        s = print_TESTAlloc(&c1, ASN1_PRINT_REDACT);
+        if (!s) {
+            ret++;
+        } else {
+            if (strstr(s, "\"three\":3") != NULL)
+                ret++;
+            if (!strstr(s, "\"three\":\"<REDACTED>\""))
+                ret++;
+            free(s);
+        }
+    }
+#endif
+
     free(c1.tagless);
 
     return ret;

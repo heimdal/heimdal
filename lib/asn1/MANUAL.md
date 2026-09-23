@@ -1252,7 +1252,7 @@ DESCRIPTION
      --help
 
 NOTES
-     Currently only the template backend supports automatic encoding and de‐
+     Both the template and codegen backends support automatic encoding and de‐
      coding of open types via the ASN.1 Information Object System and
      X.681/X.682/X.683 annotations.
 

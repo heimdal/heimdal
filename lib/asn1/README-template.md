@@ -111,10 +111,12 @@ TODO:
     $ # code paths much faster if the input corpus is minimized.
     $ 
     $ mkdir f
-    $ ../../libtool --mode=execute afl-fuzz -i $srcdir/lib/asn1/fuzz-inputs -o $PWD/f ./asn1_print '@@' Certificate
-    $ 
+    $ # --test-encode also exercises JSON round-tripping (print to JSON,
+    $ # parse back, re-encode, compare DER), fuzzing the JSON parser too.
+    $ ../../libtool --mode=execute afl-fuzz -i $srcdir/lib/asn1/fuzz-inputs -o $PWD/f ./asn1_print --test-encode '@@' Certificate
+    $
     $ # Or
-    $ ../../libtool --mode=execute afl-fuzz -i $srcdir/lib/asn1/fuzz-inputs -o $PWD/f ./asn1_print -A '@@'
+    $ ../../libtool --mode=execute afl-fuzz -i $srcdir/lib/asn1/fuzz-inputs -o $PWD/f ./asn1_print --test-encode -A '@@'
     $
     $ # Examine crash reports, if any.  Each crash report consists of an input
     $ # that caused a crash, so run valgrind on each such input:

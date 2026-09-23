@@ -1,0 +1,26 @@
+# kdc.fmt -- Format specifier registry for KDC tracing
+#
+# Header section: configure the generated functions
+# The output_fn template uses CTX, LEVEL, FMT, ... as placeholders.
+
+context_type: astgs_request_t
+output_fn: _kdc_r_log(CTX, LEVEL, FMT, ...)
+guard_fn: CTX != NULL
+extra_args: int level
+# The generated header should be included after kdc_locl.h,
+# kdc_print_helpers.h, and the _kdc_r_log() declaration.
+---
+# specifier         C type
+#
+# Each specifier "foo" requires a helper function:
+#     char *kdc_print_foo(astgs_request_t ctx, <C type> val);
+# The helper must return a malloc'd string (or NULL).
+
+princ               krb5_const_principal
+etype               krb5_enctype
+etypes              "const krb5_enctype *"
+errcode             krb5_error_code
+client              "const char *"
+server              "const char *"
+from                "const char *"
+pa                  "const char *"

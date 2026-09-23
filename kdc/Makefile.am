@@ -124,6 +124,15 @@ libkdc_la_SOURCES = 		\
 
 KDC_PROTOS = $(srcdir)/kdc-protos.h $(srcdir)/kdc-private.h
 
+COMPILE_FMT = $(top_builddir)/lib/base/compile_fmt
+
+# Generated type-safe format functions for KDC tracing
+KDC_FMT_SRCS = $(srcdir)/kerberos5.c $(srcdir)/krb5tgs.c
+kdc_fmt.h: $(srcdir)/kdc.fmt $(KDC_FMT_SRCS) $(COMPILE_FMT)
+	$(COMPILE_FMT) -r $(srcdir)/kdc.fmt -m kdc -o kdc_fmt.h $(KDC_FMT_SRCS)
+
+BUILT_SOURCES = kdc_fmt.h
+
 ALL_OBJECTS  = $(kdc_OBJECTS)
 ALL_OBJECTS += $(kdc_replay_OBJECTS)
 ALL_OBJECTS += $(kdc_tester_OBJECTS)
@@ -143,7 +152,7 @@ ALL_OBJECTS += $(test_kdc_ca_OBJECTS)
 ALL_OBJECTS += $(test_jwt_validator_OBJECTS)
 ALL_OBJECTS += $(ipc_csr_authorizer_la_OBJECTS)
 
-$(ALL_OBJECTS): $(KDC_PROTOS)
+$(ALL_OBJECTS): $(KDC_PROTOS) kdc_fmt.h
 
 libkdc_la_LDFLAGS = -version-info 2:0:0
 
@@ -226,6 +235,8 @@ krb5_HEADERS = kdc-audit.h kdc-plugin.h kdc-accessors.h csr_authorizer_plugin.h 
 
 build_HEADERZ = $(krb5_HEADERS) # XXX
 
+CLEANFILES = kdc_fmt.h
+
 EXTRA_DIST = \
 	hprop-version.rc \
 	hpropd-version.rc \
@@ -234,4 +245,6 @@ EXTRA_DIST = \
 	libkdc-version.rc \
 	string2key-version.rc \
 	libkdc-exports.def \
+	kdc.fmt \
+	kdc_print_helpers.h \
 	NTMakefile $(man_MANS) version-script.map

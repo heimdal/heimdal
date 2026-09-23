@@ -25,11 +25,13 @@ endif
 libasn1_la_LIBADD = \
 	libasn1base.la \
 	@LIB_com_err@ \
+	$(top_builddir)/lib/base/libheimbase.la \
 	$(LIBADD_roken)
 
 libasn1template_la_LIBADD = \
 	libasn1base.la \
 	@LIB_com_err@ \
+	$(top_builddir)/lib/base/libheimbase.la \
 	$(LIBADD_roken)
 
 BUILT_SOURCES =			\

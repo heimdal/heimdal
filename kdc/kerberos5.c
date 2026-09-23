@@ -435,6 +435,9 @@ _kdc_r_log(astgs_request_t r, int level, const char *fmt, ...)
     va_end(ap);
 }
 
+#include "kdc_print_helpers.h"
+#include "kdc_fmt.h"
+
 void
 _kdc_set_const_e_text(astgs_request_t r, const char *e_text)
 {
@@ -561,8 +564,9 @@ pa_pkinit_validate(astgs_request_t r, const PA_DATA *pa)
     if (!r->client->flags.synthetic)
         r->pa_max_life = _kdc_pk_max_life(pkp);
 
-    _kdc_r_log(r, 4, "PKINIT pre-authentication succeeded -- %s using %s",
-	       r->cname, client_cert);
+    kdc_fmt(r, 4, PKINIT_SUCCESS,
+	"PKINIT pre-auth succeeded: %{client} using %{pa}",
+	r->cname, client_cert);
 
     ret = _kdc_pk_mk_pa_reply(r, pkp);
     if (ret) {
@@ -985,12 +989,9 @@ pa_enc_ts_validate(astgs_request_t r, const PA_DATA *pa)
     if (ret)
 	return ret;
 
-    ret = krb5_enctype_to_string(r->context, pa_key->key.keytype, &str);
-    if (ret)
-	str = NULL;
-    _kdc_r_log(r, 4, "ENC-TS Pre-authentication succeeded -- %s using %s",
-	       r->cname, str ? str : "unknown enctype");
-    krb5_xfree(str);
+    kdc_fmt(r, 4, ENCTS_SUCCESS,
+	"ENC-TS pre-auth succeeded: %{client} using %{etype}",
+	r->cname, pa_key->key.keytype);
     kdc_audit_setkv_number((kdc_request_t)r, KDC_REQUEST_KV_PA_ETYPE,
 			   pa_key->key.keytype);
     kdc_audit_setkv_number((kdc_request_t)r, KDC_REQUEST_KV_AUTH_EVENT,
@@ -2151,8 +2152,9 @@ _kdc_as_rep(astgs_request_t r)
 	goto out;
     }
 
-    kdc_log(r->context, config, 4, "AS-REQ %s from %s for %s",
-	    r->cname, r->from, r->sname);
+    kdc_fmt(r, 4, AS_REQ,
+	"AS-REQ %{client} from %{from} for %{server}",
+	r->cname, r->from, r->sname);
 
     is_tgs = krb5_principal_is_krbtgt(r->context, r->server_princ);
 
@@ -2174,17 +2176,9 @@ _kdc_as_rep(astgs_request_t r)
 		r->cname);
 	goto out;
     case HDB_ERR_WRONG_REALM: {
-	char *fixed_client_name = NULL;
-
-	ret = krb5_unparse_name(r->context, r->client->principal,
-				&fixed_client_name);
-	if (ret) {
-	    goto out;
-	}
-
-	kdc_log(r->context, config, 4, "WRONG_REALM - %s -> %s",
-		r->cname, fixed_client_name);
-	free(fixed_client_name);
+	kdc_fmt(r, 4, WRONG_REALM,
+	    "WRONG_REALM - %{client} -> %{princ}",
+	    r->cname, r->client->principal);
 
         r->e_text = NULL;
 	ret = _kdc_fast_mk_error(r, r->rep.padata, r->armor_crypto,

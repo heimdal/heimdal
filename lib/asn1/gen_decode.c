@@ -36,6 +36,211 @@
 
 RCSID("$Id$");
 
+/* Set by generate_type_decode() for use by gen_open_type_decode() */
+static const char *current_decode_basetype;
+
+/*
+ * Generate code to decode open types in SEQUENCE/SET members that have an
+ * associated IOS (Information Object Set) parameter.
+ *
+ * After all SEQUENCE/SET members are decoded, we look up the type-ID field
+ * (OID or integer) in the known object set and, on match, decode the open type
+ * value from the OCTET STRING or HEIM_ANY field into the _ioschoice union.
+ */
+static void
+gen_open_type_decode(const char *name, const Type *t, const char *forwstr)
+{
+    Member *opentypemember = NULL, *typeidmember = NULL;
+    Field *opentypefield = NULL, *typeidfield = NULL;
+    IOSObjectSet *os;
+    IOSObject **objects = NULL;
+    size_t nobjs, i;
+    int is_array_of_open_type = 0;
+    int typeid_is_oid = 0;
+
+    if (!t->actual_parameter)
+        return;
+
+    get_open_type_defn_fields(t, &typeidmember, &opentypemember,
+                              &typeidfield, &opentypefield,
+                              &is_array_of_open_type);
+    if (!opentypemember || !typeidmember)
+        return;
+
+    os = t->actual_parameter;
+    sort_object_set(os, typeidfield, &objects, &nobjs);
+    if (nobjs == 0)
+        return;
+
+    /* Determine whether the type-ID is OID or integer */
+    {
+        ObjectField *of;
+        HEIM_TAILQ_FOREACH(of, objects[0]->objfields, objfields) {
+            if (strcmp(of->name, typeidfield->name) == 0) {
+                if (of->value->type == objectidentifiervalue)
+                    typeid_is_oid = 1;
+                break;
+            }
+        }
+    }
+
+    fprintf(codefile, "/* Open type decode for %s */\n", opentypemember->gen_name);
+    fprintf(codefile, "(%s)->_ioschoice_%s.element = 0;\n",
+            name, opentypemember->gen_name);
+
+    if (!is_array_of_open_type) {
+        /*
+         * Non-array case: single open type value.
+         * We binary-search the sorted object set by type-ID, then decode
+         * the OCTET STRING / HEIM_ANY data into the appropriate union arm.
+         */
+        for (i = 0; i < nobjs; i++) {
+            ObjectField *typeidobjf = NULL, *opentypeobjf = NULL;
+            ObjectField *of;
+
+            HEIM_TAILQ_FOREACH(of, objects[i]->objfields, objfields) {
+                if (strcmp(of->name, typeidfield->name) == 0)
+                    typeidobjf = of;
+                else if (strcmp(of->name, opentypefield->name) == 0)
+                    opentypeobjf = of;
+            }
+            if (!typeidobjf || !opentypeobjf)
+                continue;
+
+            fprintf(codefile, "%sif (",  i == 0 ? "" : "else ");
+
+            if (typeid_is_oid) {
+                fprintf(codefile,
+                        "der_heim_oid_cmp(&(%s)->%s, &asn1_oid_%s) == 0",
+                        name, typeidmember->gen_name,
+                        typeidobjf->value->s->gen_name);
+            } else {
+                fprintf(codefile,
+                        "(%s)->%s == %lld",
+                        name, typeidmember->gen_name,
+                        (long long)typeidobjf->value->u.integervalue);
+            }
+
+            fprintf(codefile, ") {\n");
+
+            /* Set the enum element (1-based, 0 is unknown) */
+            fprintf(codefile,
+                    "(%s)->_ioschoice_%s.element = choice_%s_iosnum_%s;\n",
+                    name, opentypemember->gen_name,
+                    current_decode_basetype,
+                    typeidobjf->value->s->gen_name);
+
+            /* Decode from the open type's OCTET STRING / HEIM_ANY data */
+            fprintf(codefile,
+                    "if ((%s)->%s.length) {\n"
+                    "(%s)->_ioschoice_%s.u.%s = calloc(1, sizeof(*(%s)->_ioschoice_%s.u.%s));\n"
+                    "if ((%s)->_ioschoice_%s.u.%s == NULL) { e = ENOMEM; %s; }\n"
+                    "e = decode_%s((%s)->%s.data, (%s)->%s.length, (%s)->_ioschoice_%s.u.%s, NULL);\n"
+                    "if (e) {\n"
+                    "free((%s)->_ioschoice_%s.u.%s);\n"
+                    "(%s)->_ioschoice_%s.u.%s = NULL;\n"
+                    "(%s)->_ioschoice_%s.element = 0;\n"
+                    "e = 0;\n"
+                    "}\n"
+                    "}\n",
+                    name, opentypemember->gen_name,
+                    name, opentypemember->gen_name,
+                    objects[i]->symbol->gen_name,
+                    name, opentypemember->gen_name,
+                    objects[i]->symbol->gen_name,
+                    name, opentypemember->gen_name,
+                    objects[i]->symbol->gen_name, forwstr,
+                    opentypeobjf->type->symbol->gen_name,
+                    name, opentypemember->gen_name,
+                    name, opentypemember->gen_name,
+                    name, opentypemember->gen_name,
+                    objects[i]->symbol->gen_name,
+                    name, opentypemember->gen_name,
+                    objects[i]->symbol->gen_name,
+                    name, opentypemember->gen_name,
+                    objects[i]->symbol->gen_name,
+                    name, opentypemember->gen_name);
+
+            fprintf(codefile, "}\n");
+        }
+    } else {
+        /*
+         * Array-of-open-type case: SEQUENCE OF / SET OF open type values.
+         * Same lookup logic, then decode each element of the array.
+         */
+        for (i = 0; i < nobjs; i++) {
+            ObjectField *typeidobjf = NULL, *opentypeobjf = NULL;
+            ObjectField *of;
+
+            HEIM_TAILQ_FOREACH(of, objects[i]->objfields, objfields) {
+                if (strcmp(of->name, typeidfield->name) == 0)
+                    typeidobjf = of;
+                else if (strcmp(of->name, opentypefield->name) == 0)
+                    opentypeobjf = of;
+            }
+            if (!typeidobjf || !opentypeobjf)
+                continue;
+
+            fprintf(codefile, "%sif (",  i == 0 ? "" : "else ");
+
+            if (typeid_is_oid) {
+                fprintf(codefile,
+                        "der_heim_oid_cmp(&(%s)->%s, &asn1_oid_%s) == 0",
+                        name, typeidmember->gen_name,
+                        typeidobjf->value->s->gen_name);
+            } else {
+                fprintf(codefile,
+                        "(%s)->%s == %lld",
+                        name, typeidmember->gen_name,
+                        (long long)typeidobjf->value->u.integervalue);
+            }
+
+            fprintf(codefile, ") {\n");
+
+            fprintf(codefile,
+                    "(%s)->_ioschoice_%s.element = choice_%s_iosnum_%s;\n",
+                    name, opentypemember->gen_name,
+                    current_decode_basetype,
+                    typeidobjf->value->s->gen_name);
+
+            /* Allocate and decode the array of open type values */
+            fprintf(codefile,
+                    "(%s)->_ioschoice_%s.len = (%s)->%s.len;\n"
+                    "if ((%s)->%s.len) {\n"
+                    "unsigned int ot_i;\n"
+                    "(%s)->_ioschoice_%s.val = calloc((%s)->%s.len, sizeof((%s)->_ioschoice_%s.val[0]));\n"
+                    "if ((%s)->_ioschoice_%s.val == NULL) { e = ENOMEM; %s; }\n"
+                    "for (ot_i = 0; ot_i < (%s)->%s.len; ot_i++) {\n"
+                    "e = decode_%s((%s)->%s.val[ot_i].data, (%s)->%s.val[ot_i].length,"
+                    " &(%s)->_ioschoice_%s.val[ot_i], NULL);\n"
+                    "if (e) {\n"
+                    "(%s)->_ioschoice_%s.element = 0;\n"
+                    "e = 0;\n"
+                    "break;\n"
+                    "}\n"
+                    "}\n"
+                    "}\n",
+                    name, opentypemember->gen_name,
+                    name, opentypemember->gen_name,
+                    name, opentypemember->gen_name,
+                    name, opentypemember->gen_name,
+                    name, opentypemember->gen_name,
+                    name, opentypemember->gen_name,
+                    name, opentypemember->gen_name, forwstr,
+                    name, opentypemember->gen_name,
+                    opentypeobjf->type->symbol->gen_name,
+                    name, opentypemember->gen_name,
+                    name, opentypemember->gen_name,
+                    name, opentypemember->gen_name,
+                    name, opentypemember->gen_name);
+
+            fprintf(codefile, "}\n");
+        }
+    }
+
+    free(objects);
+}
+
 static void
 decode_primitive (const char *typename, const char *name, const char *forwstr)
 {
@@ -358,6 +563,7 @@ decode_type(const char *name, const Type *t, int optional, struct value *defval,
 	    free (s);
 	}
 
+	gen_open_type_decode(name, t, forwstr);
 	break;
     }
     case TSet: {
@@ -445,6 +651,7 @@ decode_type(const char *name, const Type *t, int optional, struct value *defval,
 	    memno++;
 	}
 	fprintf(codefile, "}\n");
+	gen_open_type_decode(name, t, forwstr);
 	break;
     }
     case TSetOf:
@@ -774,6 +981,8 @@ void
 generate_type_decode (const Symbol *s)
 {
     int preserve = preserve_type(s->name) ? TRUE : FALSE;
+
+    current_decode_basetype = s->gen_name;
 
     fprintf (codefile, "int ASN1CALL\n"
 	     "decode_%s(const unsigned char *p HEIMDAL_UNUSED_ATTRIBUTE,"

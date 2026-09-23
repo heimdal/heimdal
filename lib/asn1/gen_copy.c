@@ -35,7 +35,120 @@
 
 RCSID("$Id$");
 
+/* Set by generate_type_copy() for use by gen_open_type_copy() */
+static const char *current_copy_basetype;
+
 static int used_fail;
+
+/*
+ * Generate code to deep-copy decoded open type values in the _ioschoice union.
+ */
+static void
+gen_open_type_copy(const char *from, const char *to, const Type *t)
+{
+    Member *opentypemember = NULL, *typeidmember = NULL;
+    Field *opentypefield = NULL, *typeidfield = NULL;
+    IOSObjectSet *os;
+    IOSObject **objects = NULL;
+    size_t nobjs, i;
+    int is_array_of_open_type = 0;
+
+    if (!t->actual_parameter)
+        return;
+
+    get_open_type_defn_fields(t, &typeidmember, &opentypemember,
+                              &typeidfield, &opentypefield,
+                              &is_array_of_open_type);
+    if (!opentypemember || !typeidmember)
+        return;
+
+    os = t->actual_parameter;
+    sort_object_set(os, typeidfield, &objects, &nobjs);
+    if (nobjs == 0)
+        return;
+
+    fprintf(codefile, "/* Copy open type for %s */\n", opentypemember->gen_name);
+    fprintf(codefile,
+            "(%s)->_ioschoice_%s.element = (%s)->_ioschoice_%s.element;\n",
+            to, opentypemember->gen_name,
+            from, opentypemember->gen_name);
+    fprintf(codefile, "switch ((%s)->_ioschoice_%s.element) {\n",
+            from, opentypemember->gen_name);
+
+    for (i = 0; i < nobjs; i++) {
+        ObjectField *typeidobjf = NULL, *opentypeobjf = NULL;
+        ObjectField *of;
+
+        HEIM_TAILQ_FOREACH(of, objects[i]->objfields, objfields) {
+            if (strcmp(of->name, typeidfield->name) == 0)
+                typeidobjf = of;
+            else if (strcmp(of->name, opentypefield->name) == 0)
+                opentypeobjf = of;
+        }
+        if (!typeidobjf || !opentypeobjf)
+            continue;
+
+        fprintf(codefile, "case choice_%s_iosnum_%s:\n",
+                current_copy_basetype,
+                typeidobjf->value->s->gen_name);
+
+        if (!is_array_of_open_type) {
+            fprintf(codefile,
+                    "if ((%s)->_ioschoice_%s.u.%s) {\n"
+                    "(%s)->_ioschoice_%s.u.%s = calloc(1, sizeof(*(%s)->_ioschoice_%s.u.%s));\n"
+                    "if ((%s)->_ioschoice_%s.u.%s == NULL) goto fail;\n"
+                    "if (copy_%s((%s)->_ioschoice_%s.u.%s, (%s)->_ioschoice_%s.u.%s)) goto fail;\n"
+                    "}\n",
+                    from, opentypemember->gen_name,
+                    objects[i]->symbol->gen_name,
+                    to, opentypemember->gen_name,
+                    objects[i]->symbol->gen_name,
+                    to, opentypemember->gen_name,
+                    objects[i]->symbol->gen_name,
+                    to, opentypemember->gen_name,
+                    objects[i]->symbol->gen_name,
+                    opentypeobjf->type->symbol->gen_name,
+                    from, opentypemember->gen_name,
+                    objects[i]->symbol->gen_name,
+                    to, opentypemember->gen_name,
+                    objects[i]->symbol->gen_name);
+        } else {
+            fprintf(codefile,
+                    "if ((%s)->_ioschoice_%s.val && (%s)->_ioschoice_%s.len) {\n"
+                    "unsigned int ot_i;\n"
+                    "(%s)->_ioschoice_%s.len = (%s)->_ioschoice_%s.len;\n"
+                    "(%s)->_ioschoice_%s.val = calloc((%s)->_ioschoice_%s.len,"
+                    " sizeof((%s)->_ioschoice_%s.val[0]));\n"
+                    "if ((%s)->_ioschoice_%s.val == NULL) goto fail;\n"
+                    "for (ot_i = 0; ot_i < (%s)->_ioschoice_%s.len; ot_i++) {\n"
+                    "if (copy_%s(&(%s)->_ioschoice_%s.val[ot_i],"
+                    " &(%s)->_ioschoice_%s.val[ot_i])) goto fail;\n"
+                    "}\n"
+                    "}\n",
+                    from, opentypemember->gen_name,
+                    from, opentypemember->gen_name,
+                    to, opentypemember->gen_name,
+                    from, opentypemember->gen_name,
+                    to, opentypemember->gen_name,
+                    from, opentypemember->gen_name,
+                    to, opentypemember->gen_name,
+                    to, opentypemember->gen_name,
+                    from, opentypemember->gen_name,
+                    opentypeobjf->type->symbol->gen_name,
+                    from, opentypemember->gen_name,
+                    to, opentypemember->gen_name);
+        }
+
+        fprintf(codefile, "break;\n");
+        used_fail++;
+    }
+
+    fprintf(codefile,
+            "default: break;\n"
+            "}\n");
+
+    free(objects);
+}
 
 static void
 copy_primitive (const char *typename, const char *from, const char *to)
@@ -154,6 +267,8 @@ copy_type (const char *from, const char *to, const Type *t, int preserve)
 	    }
 	    fprintf(codefile, "}\n");
 	}
+	if (t->type == TSequence || t->type == TSet)
+	    gen_open_type_copy(from, to, t);
 	break;
     }
     case TSetOf:
@@ -233,6 +348,7 @@ generate_type_copy (const Symbol *s)
   int preserve = preserve_type(s->name) ? TRUE : FALSE;
   int save_used_fail = used_fail;
 
+  current_copy_basetype = s->gen_name;
   used_fail = 0;
 
   fprintf (codefile, "int ASN1CALL\n"

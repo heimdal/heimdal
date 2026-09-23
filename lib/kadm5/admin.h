@@ -177,6 +177,10 @@ typedef struct _krb5_tl_data {
 #define KRB5_TL_ETYPES			0x000d
 #define KRB5_TL_KEY_ROTATION		0x000e
 #define KRB5_TL_KRB5_CONFIG		0x000f
+#define KRB5_TL_PKINIT_ISSUER_SERIAL	0x0010
+#define KRB5_TL_PKINIT_OBJECT_SID	0x0011
+#define KRB5_TL_PKINIT_RFC822		0x0012
+#define KRB5_TL_PKINIT_SKI		0x0013
 
 typedef struct _kadm5_principal_ent_t {
     krb5_principal principal;

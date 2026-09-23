@@ -438,6 +438,10 @@ and
 .Op Fl Fl alias= Ns Ar alias-name
 .Op Fl Fl constrained-delegation= Ns Ar principal-name
 .Op Fl Fl pkinit-acl= Ns Ar subject-name
+.Op Fl Fl pkinit-issuer-serial= Ns Ar serial:issuer
+.Op Fl Fl pkinit-object-sid= Ns Ar sid
+.Op Fl Fl pkinit-rfc822= Ns Ar email
+.Op Fl Fl pkinit-ski= Ns Ar hex-ski
 .Op Fl Fl service-enctypes= Ns Ar enctype
 .Op Fl C Ar path | Fl Fl krb5-config-file= Ns Ar path
 .Ar principal...
@@ -533,6 +537,52 @@ PKINIT.
 This option can be given multiple times.
 The PKINIT ACLs set with this option will replace the existing
 ones.
+.Pp
+The
+.Fl Fl pkinit-issuer-serial= Ns Ar serial:issuer
+option binds a certificate issuer and serial number to the principal
+for strong PKINIT certificate mapping (KB5014754).
+This option can be given multiple times.
+Two formats are accepted:
+.Bl -tag -width Ds -offset indent
+.It Heimdal format
+.Ar serial Ns : Ns Ar issuer-DN ,
+where the serial is a decimal number or a
+.Ql 0x Ns
+-prefixed hexadecimal number, and the issuer DN is the string
+representation produced by
+.Xr hxtool 1 .
+.It Microsoft format
+.Ar X509:<I> Ns Ar issuer Ns <SR> Ns Ar reversed-hex-serial ,
+where the serial bytes are in reversed (little-endian) order.
+.El
+.Pp
+The
+.Fl Fl pkinit-object-sid= Ns Ar sid
+option binds an Active Directory Object SID to the principal
+for strong PKINIT certificate mapping (KB5014754).
+The SID may be given as a SID string
+.Pq e.g., Ql S-1-5-21-...
+or as raw hexadecimal.
+Only one Object SID may be set per principal.
+.Pp
+The
+.Fl Fl pkinit-rfc822= Ns Ar email
+option binds an RFC822 (email) Subject Alternative Name to the
+principal for weak PKINIT certificate mapping (KB5014754).
+This option can be given multiple times.
+The comparison with the certificate SAN is case-insensitive.
+.Pp
+The
+.Fl Fl pkinit-ski= Ns Ar hex-ski
+option binds a Subject Key Identifier to the principal for weak
+PKINIT certificate mapping (KB5014754).
+This option can be given multiple times.
+The SKI is specified as a hexadecimal string.
+.Pp
+The PKINIT certificate mapping options set with these flags will
+replace the existing mappings of the corresponding type.
+An empty value clears all mappings of that type.
 .Pp
 The
 .Fl Fl service-enctypes= Ns Ar enctype

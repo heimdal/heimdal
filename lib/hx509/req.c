@@ -1346,173 +1346,29 @@ hx509_request_count_unauthorized(hx509_request req)
     return nrequested - (req->nauthorized + req->ku_are_authorized + req->ca_is_authorized);
 }
 
-static hx509_san_type
-san_map_type(GeneralName *san)
-{
-    static const struct {
-        const heim_oid *oid;
-        hx509_san_type type;
-    } map[] = {
-        { &asn1_oid_id_pkix_on_dnsSRV, HX509_SAN_TYPE_DNSSRV },
-        { &asn1_oid_id_pkinit_san, HX509_SAN_TYPE_PKINIT },
-        { &asn1_oid_id_pkix_on_xmppAddr, HX509_SAN_TYPE_XMPP },
-        { &asn1_oid_id_pkinit_ms_san, HX509_SAN_TYPE_MS_UPN },
-        { &asn1_oid_id_pkix_on_permanentIdentifier, HX509_SAN_TYPE_PERMANENT_ID },
-        { &asn1_oid_id_on_hardwareModuleName, HX509_SAN_TYPE_HW_MODULE },
-    };
-    size_t i;
-
-    switch (san->element) {
-    case choice_GeneralName_rfc822Name:    return HX509_SAN_TYPE_EMAIL;
-    case choice_GeneralName_dNSName:       return HX509_SAN_TYPE_DNSNAME;
-    case choice_GeneralName_directoryName: return HX509_SAN_TYPE_DN;
-    case choice_GeneralName_registeredID:  return HX509_SAN_TYPE_REGISTERED_ID;
-    case choice_GeneralName_otherName: {
-        for (i = 0; i < sizeof(map)/sizeof(map[0]); i++)
-            if (der_heim_oid_cmp(&san->u.otherName.type_id, map[i].oid) == 0)
-                return map[i].type;
-    }
-        HEIM_FALLTHROUGH;
-    default:                               return HX509_SAN_TYPE_UNSUPPORTED;
-    }
-}
-
 /**
- * Return the count of as-yet unauthorized certificate extensions requested.
+ * Return the SAN at the given index in a CSR.
  *
  * @param req The hx509_request object.
+ * @param idx Zero-based index of the SAN to retrieve.
+ * @param type On success, the SAN type.
+ * @param out On success, an allocated string (caller frees).
+ *
+ * @return An hx509 error code, or HX509_NO_ITEM if @idx is past the
+ *         last SAN.
  *
  * @ingroup hx509_request
  */
-HX509_LIB_FUNCTION size_t HX509_LIB_CALL
+HX509_LIB_FUNCTION int HX509_LIB_CALL
 hx509_request_get_san(hx509_request req,
                       size_t idx,
                       hx509_san_type *type,
                       char **out)
 {
-    struct rk_strpool *pool = NULL;
-    GeneralName *san;
-
     *out = NULL;
     if (idx >= req->san.len)
         return HX509_NO_ITEM;
-
-    san = &req->san.val[idx];
-    switch ((*type = san_map_type(san))) {
-    case HX509_SAN_TYPE_UNSUPPORTED: return 0;
-    case HX509_SAN_TYPE_EMAIL:
-        *out = strndup(san->u.rfc822Name.data,
-                       san->u.rfc822Name.length);
-        break;
-    case HX509_SAN_TYPE_DNSNAME:
-        *out = strndup(san->u.dNSName.data,
-                       san->u.dNSName.length);
-        break;
-    case HX509_SAN_TYPE_DNSSRV: {
-        SRVName name;
-        size_t size;
-        int ret;
-
-        ret = decode_SRVName(san->u.otherName.value.data,
-                             san->u.otherName.value.length, &name, &size);
-        if (ret)
-            return ret;
-        *out = strndup(name.data, name.length);
-        break;
-    }
-    case HX509_SAN_TYPE_PERMANENT_ID: {
-        PermanentIdentifier pi;
-        size_t size;
-        char *s = NULL;
-        int ret;
-
-        ret = decode_PermanentIdentifier(san->u.otherName.value.data,
-                                         san->u.otherName.value.length,
-                                         &pi, &size);
-        if (ret == 0 && pi.assigner) {
-            ret = der_print_heim_oid(pi.assigner, '.', &s);
-            if (ret == 0 &&
-                (pool = rk_strpoolprintf(NULL, "%s", s)) == NULL)
-                ret = ENOMEM;
-        } else if (ret == 0) {
-            pool = rk_strpoolprintf(NULL, "-");
-        }
-        if (ret == 0 &&
-            (pool = rk_strpoolprintf(pool, "%s%s",
-                                     *pi.identifierValue ? " " : "",
-                                     *pi.identifierValue ? *pi.identifierValue : "")) == NULL)
-            ret = ENOMEM;
-        if (ret == 0 && (*out = rk_strpoolcollect(pool)) == NULL)
-            ret = ENOMEM;
-        free_PermanentIdentifier(&pi);
-        free(s);
-        return ret;
-    }
-    case HX509_SAN_TYPE_HW_MODULE: {
-        HardwareModuleName hn;
-        size_t size;
-        char *s = NULL;
-        int ret;
-
-        ret = decode_HardwareModuleName(san->u.otherName.value.data,
-                                        san->u.otherName.value.length,
-                                        &hn, &size);
-        if (ret == 0 && hn.hwSerialNum.length > 256)
-            hn.hwSerialNum.length = 256;
-        if (ret == 0)
-            ret = der_print_heim_oid(&hn.hwType, '.', &s);
-        if (ret == 0)
-            pool = rk_strpoolprintf(NULL, "%s", s);
-        if (ret == 0 && pool)
-            pool = rk_strpoolprintf(pool, " %.*s",
-                                    (int)hn.hwSerialNum.length,
-                                    (char *)hn.hwSerialNum.data);
-        if (ret == 0 &&
-            (pool == NULL || (*out = rk_strpoolcollect(pool)) == NULL))
-            ret = ENOMEM;
-        free_HardwareModuleName(&hn);
-        return ret;
-    }
-    case HX509_SAN_TYPE_DN: {
-        Name name;
-
-        if (san->u.directoryName.element == choice_Name_rdnSequence) {
-            name.element = choice_Name_rdnSequence;
-            name.u.rdnSequence = san->u.directoryName.u.rdnSequence;
-            return _hx509_Name_to_string(&name, out);
-        }
-        *type = HX509_SAN_TYPE_UNSUPPORTED;
-        return 0;
-    }
-    case HX509_SAN_TYPE_REGISTERED_ID:
-        return der_print_heim_oid(&san->u.registeredID, '.', out);
-    case HX509_SAN_TYPE_XMPP:
-        HEIM_FALLTHROUGH;
-    case HX509_SAN_TYPE_MS_UPN: {
-        int ret;
-
-        ret = _hx509_unparse_utf8_string_name(req->context, &pool,
-                                              &san->u.otherName.value);
-        if ((*out = rk_strpoolcollect(pool)) == NULL)
-            return hx509_enomem(req->context);
-        return ret;
-    }
-    case HX509_SAN_TYPE_PKINIT: {
-        int ret;
-
-        ret = _hx509_unparse_KRB5PrincipalName(req->context, &pool,
-                                               &san->u.otherName.value);
-        if ((*out = rk_strpoolcollect(pool)) == NULL)
-            return hx509_enomem(req->context);
-        return ret;
-    }
-    default:
-        *type = HX509_SAN_TYPE_UNSUPPORTED;
-        return 0;
-    }
-    if (*out == NULL)
-        return ENOMEM;
-    return 0;
+    return _hx509_san_to_string(req->context, &req->san.val[idx], type, out);
 }
 
 /**

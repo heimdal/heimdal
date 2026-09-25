@@ -227,7 +227,7 @@ reinit_descrs (struct descr *d, int n)
 }
 
 /*
- * Create the socket (family, type, port) in `d'
+ * Create the socket (family, type, port) in `d'.  a == NULL is wild.
  */
 
 static void
@@ -235,14 +235,24 @@ init_socket(krb5_context context,
 	    krb5_kdc_configuration *config,
 	    struct descr *d, krb5_address *a, int family, int type, int port)
 {
-    krb5_error_code ret;
+    krb5_error_code ret = 0;
     struct sockaddr_storage __ss;
     struct sockaddr *sa = (struct sockaddr *)&__ss;
     krb5_socklen_t sa_size = sizeof(__ss);
+    char a_str[256];
+    size_t len;
 
     init_descr (d);
 
-    ret = krb5_addr2sockaddr (context, a, sa, &sa_size, port);
+    if (a) {
+        ret = krb5_addr2sockaddr(context, a, sa, &sa_size, port);
+        krb5_print_address(a, a_str, sizeof(a_str), &len);
+    } else {
+        socket_set_any(sa, family);
+        socket_set_port(sa, port);
+        sa_size = socket_sockaddr_size(sa);
+        strlcpy(a_str, family == AF_INET ? "0.0.0.0" : "::", sizeof(a_str));
+    }
     if (ret) {
 	krb5_warn(context, ret, "krb5_addr2sockaddr");
 	rk_closesocket(d->s);
@@ -271,28 +281,26 @@ init_socket(krb5_context context,
     d->port = port;
 
     socket_set_nonblocking(d->s, 1);
+#ifdef HAVE_IPV6
+    if (family == AF_INET6 && a == NULL)
+        socket_set_ipv6only(d->s, 1);
+#endif
 
     if(rk_IS_SOCKET_ERROR(bind(d->s, sa, sa_size))){
-	char a_str[256];
-	size_t len;
-
-	krb5_print_address (a, a_str, sizeof(a_str), &len);
 	krb5_warn(context, errno, "bind %s/%d", a_str, ntohs(port));
 	rk_closesocket(d->s);
 	d->s = rk_INVALID_SOCKET;
 	return;
     }
     if(type == SOCK_STREAM && rk_IS_SOCKET_ERROR(listen(d->s, SOMAXCONN))){
-	char a_str[256];
-	size_t len;
-
-	krb5_print_address (a, a_str, sizeof(a_str), &len);
 	krb5_warn(context, errno, "listen %s/%d", a_str, ntohs(port));
 	rk_closesocket(d->s);
 	d->s = rk_INVALID_SOCKET;
 	return;
     }
     socket_set_keepalive(d->s, 1);
+    kdc_log(context, config, 3, "listening on %s port %u/%s",
+            a_str, ntohs(port), type == SOCK_STREAM ? "tcp" : "udp");
 }
 
 /*
@@ -324,23 +332,18 @@ init_sockets(krb5_context context,
 	krb5_errx(context, 1, "malloc(%lu) failed",
 		  (unsigned long)num_ports * sizeof(*d));
 
-    for (i = 0; i < num_ports; i++){
-	for (j = 0; j < addresses.len; ++j) {
-	    init_socket(context, config, &d[num], &addresses.val[j],
+    for (i = 0; i < num_ports; i++) {
+        if (!explicit_addresses.len && ports[i].type == SOCK_STREAM) {
+            init_socket(context, config, &d[num], NULL,
 			ports[i].family, ports[i].type, ports[i].port);
-	    if(d[num].s != rk_INVALID_SOCKET){
-		char a_str[80];
-		size_t len;
-
-		krb5_print_address (&addresses.val[j], a_str,
-				    sizeof(a_str), &len);
-
-		kdc_log(context, config, 3, "listening on %s port %u/%s",
-			a_str,
-			ntohs(ports[i].port),
-			(ports[i].type == SOCK_STREAM) ? "tcp" : "udp");
-		/* XXX */
+            if (d[num].s != rk_INVALID_SOCKET)
 		num++;
+        } else {
+            for (j = 0; j < addresses.len; ++j) {
+                init_socket(context, config, &d[num], &addresses.val[j],
+                            ports[i].family, ports[i].type, ports[i].port);
+                if (d[num].s != rk_INVALID_SOCKET)
+                    num++;
 	    }
 	}
     }

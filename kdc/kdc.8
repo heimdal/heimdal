@@ -109,8 +109,9 @@ configuration parameter discussion in
 .Xr krb5.conf 5 .
 .It Fl Fl addresses= Ns Ar list of addresses
 The list of addresses to listen for requests on.
-By default, the kdc will listen on all the locally configured
-addresses.
+By default, the KDC uses wildcard TCP listeners and listens for UDP
+on each locally configured address.
+An explicit address list restricts both TCP and UDP listeners.
 If only a subset is desired, or the automatic detection fails, this
 option might be used.
 .It Fl Fl detach
@@ -211,15 +212,13 @@ An example of a config file:
 .Ed
 .Sh BUGS
 If the machine running the KDC has new addresses added to it, the KDC
-will have to be restarted to listen to them.
-The reason it doesn't just listen to wildcarded (like INADDR_ANY)
-addresses, is that the replies has to come from the same address they
-were sent to, and most OS:es doesn't pass this information to the
-application.
-If your normal mode of operation require that you add and remove
-addresses, the best option is probably to listen to a wildcarded TCP
-socket, and make sure your clients use TCP to connect.
-For instance, this will listen to IPv4 TCP port 88 only:
+will have to be restarted to listen for UDP on them.
+UDP uses individual local addresses so replies come from the same
+address to which the request was sent.
+The default wildcard TCP listeners accept connections on newly added
+addresses without a restart.
+An explicit wildcard can also be configured; for instance, this will
+listen to IPv4 TCP port 88 only:
 .Bd -literal -offset indent
 kdc --addresses=0.0.0.0 --ports="88/tcp"
 .Ed

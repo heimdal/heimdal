@@ -1062,9 +1062,9 @@ kill_kids(pid_t *pids, int max_kids, int sig)
 
     for (i=0; i < max_kids; i++)
 	if (pids[i] > 0)
-	    kill(sig, pids[i]);
+	    kill(pids[i], sig);
     if (bonjour_pid > 0)
-        kill(sig, bonjour_pid);
+        kill(bonjour_pid, sig);
 }
 
 static int

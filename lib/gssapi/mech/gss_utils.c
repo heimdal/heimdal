@@ -135,10 +135,14 @@ _gss_copy_buffer(OM_uint32 *minor_status,
 {
 	size_t len = from_buf->length;
 
+    if (minor_status) {
 	*minor_status = 0;
+    }
 	to_buf->value = malloc(len);
 	if (!to_buf->value) {
+    	if (minor_status) {
 		*minor_status = ENOMEM;
+    	}
 		to_buf->length = 0;
 		return GSS_S_FAILURE;
 	}

@@ -269,7 +269,7 @@ _krb5_pk_kdf(krb5_context context,
 
     if (ai == NULL)
         return _krb5_pk_octetstring2key(context, enctype, dhdata, dhsize,
-                                        NULL, NULL, key);
+                                        c_n, k_n, key);
     if (der_heim_oid_cmp(&asn1_oid_id_pkinit_kdf_ah_sha1, ai) == 0) {
         md = context->ossl->sha1;
         mdname = "SHA-1";

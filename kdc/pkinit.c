@@ -62,6 +62,7 @@ struct pk_client_params {
     const heim_oid *kdf;
     unsigned char *raw_shared_secret;
     size_t raw_shared_secret_len;
+    heim_octet_string *client_dh_nonce;
 };
 
 struct pk_principal_mapping {
@@ -514,6 +515,7 @@ _kdc_pk_free_client_param(krb5_context context, pk_client_params *cp)
 static krb5_error_code
 generate_dh_keyblock(astgs_request_t r,
                      pk_client_params *client_params,
+                     const DHNonce *k_n,
                      void *pk_as_rep,
                      size_t pk_as_rep_len,
                      krb5_enctype enctype)
@@ -560,8 +562,7 @@ generate_dh_keyblock(astgs_request_t r,
                        client_params->raw_shared_secret,
                        client_params->raw_shared_secret_len,
                        r->client_princ, r->server_princ, enctype,
-                       /* We don't support DH key reuse; we expect no nonces */
-                       NULL, NULL,
+                       client_params->client_dh_nonce, k_n,
                        &r->request /* or &r->kdc_req._save */,
                        &rep, NULL, &client_params->reply_key);
     return ret;
@@ -1196,6 +1197,25 @@ _kdc_pk_rd_padata(astgs_request_t priv,
         ret = select_kdf(context, config, &ap, cp);
         if (ret)
             goto out;
+
+        /*
+         * Copy the DH nonce into the out parameters if it is present.
+         */
+        if (ap.clientDHNonce != NULL) {
+            cp->client_dh_nonce = calloc(1, sizeof (*cp->client_dh_nonce));
+            if (cp->client_dh_nonce == NULL) {
+                ret = ENOMEM;
+                free_AuthPack(&ap);
+                goto out;
+            }
+
+            ret = der_copy_octet_string(ap.clientDHNonce, cp->client_dh_nonce);
+            if (ret) {
+                free_AuthPack(&ap);
+                goto out;
+            }
+        }
+
 	free_AuthPack(&ap);
     } else
 	krb5_abortx(context, "internal pkinit error");
@@ -1431,6 +1451,17 @@ pk_mk_pa_reply_dh(krb5_context context,
 
     dh_info.nonce = cp->nonce;
 
+    if (cp->client_dh_nonce) {
+        dh_info.dhKeyExpiration = calloc(1,
+                                         sizeof(*dh_info.dhKeyExpiration));
+        if (dh_info.dhKeyExpiration == NULL) {
+                ret = krb5_enomem(context);
+                goto out;
+        }
+        /* Set the key expiration time to two hours in the future. */
+        *dh_info.dhKeyExpiration = rk_time_add(kdc_time, 2 * 60 * 60);
+    }
+
     ASN1_MALLOC_ENCODE(KDCDHKeyInfo, buf.data, buf.length, &dh_info, &size,
 		       ret);
     if (ret) {
@@ -1636,6 +1667,23 @@ _kdc_pk_mk_pa_reply(astgs_request_t r, pk_client_params *cp)
 	    }
 	    if (rep.u.encKeyPack.length != size)
 		krb5_abortx(r->context, "Internal ASN.1 encoder error");
+
+            if (cp->client_dh_nonce) {
+                rep.u.dhInfo.serverDHNonce = calloc(1, sizeof(*rep.u.dhInfo.serverDHNonce));
+                if (rep.u.dhInfo.serverDHNonce == NULL) {
+                    ret = krb5_enomem(r->context);
+                    free_PA_PK_AS_REP(&rep);
+                    goto out;
+                }
+                ret = krb5_data_alloc(rep.u.dhInfo.serverDHNonce, 40);
+                if (ret) {
+                    free_PA_PK_AS_REP(&rep);
+                    goto out;
+                }
+                krb5_generate_random_block(
+                    rep.u.dhInfo.serverDHNonce->data,
+                    rep.u.dhInfo.serverDHNonce->length);
+            }
         }
 
         /*
@@ -1671,7 +1719,7 @@ _kdc_pk_mk_pa_reply(astgs_request_t r, pk_client_params *cp)
              * Now that we have the PA_PK_AS_REP encoded we can compute the
              * shared secret and derive the reply key from it per RFC 8636.
              */
-            ret = generate_dh_keyblock(r, cp, buf, len, enctype);
+            ret = generate_dh_keyblock(r, cp, rep.u.dhInfo.serverDHNonce, buf, len, enctype);
             if (ret) {
 		free_PA_PK_AS_REP(&rep);
 		goto out;

@@ -79,6 +79,7 @@
 	
 
 [kdc]
+	max-request = 64 kilobyte
 	enable-digest = true
 	allow-anonymous = true
 	digests_allowed = chap-md5,digest-md5,ntlm-v1,ntlm-v1-session,ntlm-v2,ms-chap-v2
@@ -152,6 +153,9 @@
                */aes-sha2-only@* = aes256-cts-hmac-sha384-192:pw-salt
 	}
 	@dk@
+
+[kcm]
+	max-request = 64 kilobyte
 
 [capaths]
 	TEST.H5L.SE = {

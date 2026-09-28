@@ -259,7 +259,7 @@ configure(krb5_context context, int argc, char **argv, int *optidx)
         if (p) {
             int64_t bytes;
 
-            if ((bytes = parse_bytes(max_request_str, NULL)) < 0)
+            if ((bytes = parse_bytes(p, NULL)) < 0)
                 krb5_errx(context, 1, "[kdc] max-request must be non-negative");
 
             if (bytes > MAX_REQUEST_MAX)

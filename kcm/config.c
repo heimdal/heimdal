@@ -383,7 +383,7 @@ kcm_configure(int argc, char **argv)
         if (p) {
             int64_t bytes;
 
-            if ((bytes = parse_bytes(max_request_str, NULL)) < 0)
+            if ((bytes = parse_bytes(p, NULL)) < 0)
                 krb5_errx(kcm_context, 1,
                           "[kcm] max-request size must be non-negative");
             if (bytes > MAX_REQUEST_MAX)

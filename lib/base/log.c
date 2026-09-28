@@ -312,6 +312,7 @@ log_file(heim_context context, const char *timestr, const char *msg, void *data)
         for (i = 0, j = 0; msg[i]; i++)
             if (msg[i] >= 32 || msg[i] == '\t')
                 msgclean[j++] = msg[i];
+        msgclean[j] = '\0';
         fprintf(logf, "%s %s\n", timestr ? timestr : "", msgclean);
         free(msgclean);
     }

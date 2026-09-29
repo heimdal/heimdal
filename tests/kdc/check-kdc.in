@@ -74,10 +74,11 @@ h4=`echo "${H4}" | tr '[A-Z]' '[a-z]'`
 
 port=@port@
 pwport=@pwport@
+fallback_port=@fallback_port@
 
 kadmin5="${kadmin} -l -r $R5"
 kadmin="${kadmin} -l -A -r $R"
-tcpkdc="${kdc} --addresses=127.0.0.1 -P $port/tcp"
+tcpkdc="${kdc} --addresses=127.0.0.1 -P $fallback_port/tcp"
 kdc="${kdc} --addresses=localhost -P $port"
 kpasswdd="${kpasswdd} --addresses=localhost -p $pwport"
 udp_sink="${objdir}/udp-sink"
@@ -317,7 +318,8 @@ fi
 echo foo > ${objdir}/foopassword
 echo notfoo > ${objdir}/notfoopassword
 
-sed "s/kdc = localhost:$port/kdc = 127.0.0.1:$port/" \
+if ! $weak; then
+sed "s/kdc = localhost:$port/kdc = 127.0.0.1:$fallback_port/" \
     ${KRB5_CONFIG} > ${objdir}/krb5-udp-tcp.conf
 
 fallback_cleanup() {
@@ -342,7 +344,7 @@ ${klist} > /dev/null || exit 1
 ${kdestroy}
 
 echo "Testing TCP fallback after a lost UDP request"
-${udp_sink} $port &
+${udp_sink} $fallback_port &
 udppid=$!
 sleep 1
 kill -0 ${udppid} 2>/dev/null || exit 1
@@ -357,6 +359,7 @@ udppid=
 sh ${leaks_kill} kdc ${kdcpid} || exit 1
 kdcpid=
 trap '' EXIT INT TERM
+fi
 
 echo Starting kdc ; > messages.log
 env MallocStackLogging=1 MallocStackLoggingNoCompact=1 MallocErrorAbort=1 MallocLogFile=${objdir}/malloc-log \

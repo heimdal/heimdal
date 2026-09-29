@@ -59,6 +59,7 @@ restport = 11092
 restport2 = 11093
 ipropport = 11094
 ipropport2 = 11095
+fallback_port = 11096
 pkinit_ticket_max_life_from_cert = 0
 
 if HAVE_DLOPEN
@@ -80,6 +81,7 @@ do_subst = $(heim_verbose)sed $(do_dlopen) \
 	-e 's,[@]pwport[@],$(pwport),g' \
 	-e 's,[@]ipropport[@],$(ipropport),g' \
 	-e 's,[@]ipropport2[@],$(ipropport2),g' \
+	-e 's,[@]fallback_port[@],$(fallback_port),g' \
 	-e 's,[@]objdir[@],$(abs_top_builddir)/tests/kdc,g' \
 	-e 's,[@]top_builddir[@],$(abs_top_builddir),g' \
 	-e 's,[@]db_type[@],$(db_type),g' \

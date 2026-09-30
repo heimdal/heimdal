@@ -94,6 +94,26 @@ test_memory(void)
 }
 
 static int
+test_allocation_overflow(void)
+{
+    struct heim_type_data type = { 0 };
+    const char data = 0;
+
+    heim_assert(heim_alloc(SIZE_MAX, "memory", NULL) == NULL,
+                "heim_alloc() accepted an overflowing size");
+    heim_assert(_heim_alloc_object(&type, SIZE_MAX) == NULL,
+                "_heim_alloc_object() accepted an overflowing size");
+    heim_assert(heim_data_create(&data, SIZE_MAX) == NULL,
+                "heim_data_create() accepted an overflowing size");
+    heim_assert(heim_data_ref_create(&data, SIZE_MAX, NULL) == NULL,
+                "heim_data_ref_create() accepted an overflowing size");
+    heim_assert(heim_string_create_with_bytes(&data, SIZE_MAX) == NULL,
+                "heim_string_create_with_bytes() accepted an overflowing size");
+
+    return 0;
+}
+
+static int
 test_mutex(void)
 {
     HEIMDAL_MUTEX m = HEIMDAL_MUTEX_INITIALIZER;
@@ -1564,6 +1584,7 @@ main(int argc, char **argv)
 #endif
 
     res |= test_memory();
+    res |= test_allocation_overflow();
     res |= test_mutex();
     res |= test_rwlock();
     res |= test_log_dest();

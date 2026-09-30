@@ -98,6 +98,11 @@ heim_data_create(const void *data, size_t length)
 {
     heim_octet_string *os;
 
+    if (length > SIZE_MAX - sizeof(*os)) {
+        errno = ENOMEM;
+        return NULL;
+    }
+
     os = _heim_alloc_object(&_heim_data_object, sizeof(*os) + length);
     if (os) {
 	os->data = (uint8_t *)os + sizeof(*os);
@@ -113,6 +118,11 @@ heim_data_ref_create(const void *data, size_t length,
 {
     heim_octet_string *os;
     heim_data_free_f_t *deallocp;
+
+    if (length > SIZE_MAX - sizeof(*os)) {
+        errno = ENOMEM;
+        return NULL;
+    }
 
     os = _heim_alloc_object(&_heim_data_object, sizeof(*os) + length);
     if (os) {

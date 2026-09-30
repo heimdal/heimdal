@@ -151,6 +151,11 @@ heim_string_create_with_bytes(const void *data, size_t len)
 {
     heim_string_t s;
 
+    if (len == SIZE_MAX) {
+        errno = ENOMEM;
+        return NULL;
+    }
+
     s = _heim_alloc_object(&_heim_string_object, len + 1);
     if (s) {
         if (len)

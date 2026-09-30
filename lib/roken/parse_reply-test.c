@@ -51,6 +51,9 @@ static struct testcase {
     unsigned char buf[MAX_BUF];
     size_t buf_len;
 } tests[] = {
+    {{0}, 0},
+    {{0}, 1},
+    {{0}, 12},
     {{0x12, 0x67, 0x84, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00,
      0x03, 'f', 'o', 'o', 0x00,
      0x00, 0x10, 0x00, 0x01,
@@ -63,12 +66,10 @@ static struct testcase {
 #define MAP_FAILED (-1)
 #endif
 
-static sig_atomic_t val = 0;
-
 static RETSIGTYPE
 segv_handler(int sig)
 {
-    val = 1;
+    _exit(sig);
 }
 
 int
@@ -87,7 +88,7 @@ main(int argc, char **argv)
     sa.sa_handler = segv_handler;
     sigaction (SIGSEGV, &sa, NULL);
 
-    for (i = 0; val == 0 && i < sizeof(tests)/sizeof(tests[0]); ++i) {
+    for (i = 0; i < sizeof(tests)/sizeof(tests[0]); ++i) {
 	const struct testcase *t = &tests[i];
 	unsigned char *p1, *p2;
 	int flags;
@@ -121,6 +122,6 @@ main(int argc, char **argv)
 	if (ret < 0)
 	    err (1, "munmap");
     }
-    return val;
+    return 0;
 #endif /* HAVE_MMAP */
 }

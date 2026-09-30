@@ -415,6 +415,9 @@ parse_reply(const unsigned char *data, size_t len)
     struct rk_dns_reply *r;
     struct rk_resource_record **rr;
 
+    if (len < 12)
+	return NULL;
+
     r = calloc(1, sizeof(*r));
     if (r == NULL)
 	return NULL;

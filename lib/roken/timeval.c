@@ -135,7 +135,7 @@ timevalfix(struct timeval *t1)
 {
     if (t1->tv_usec < 0) {
         t1->tv_sec = rk_time_sub(t1->tv_sec, 1);
-        t1->tv_usec = 1000000;
+        t1->tv_usec += 1000000;
     }
     if (t1->tv_usec >= 1000000) {
         t1->tv_sec = rk_time_add(t1->tv_sec, 1);
@@ -171,6 +171,8 @@ timevalsub(struct timeval *t1, const struct timeval *t2)
 int
 main(int argc, char **argv)
 {
+    struct timeval t1 = { 1, 100000 };
+    const struct timeval t2 = { 0, 900000 };
     time_t t, delta, r;
     int e = 0;
 
@@ -246,6 +248,9 @@ main(int argc, char **argv)
     }
 
 #define CHECK(e) do { if (!(e)) errx(1, "Expression not true: " #e "!"); } while (0)
+    timevalsub(&t1, &t2);
+    CHECK(t1.tv_sec == 0);
+    CHECK(t1.tv_usec == 200000);
 #ifdef TIME_T_SIGNED
 #if SIZEOF_TIME_T == 4
     CHECK(rk_time_add(INT32_MIN, -1) == INT32_MIN);

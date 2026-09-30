@@ -238,7 +238,7 @@ heim_array_insert_value(heim_array_t array, size_t idx, heim_object_t object)
      */
     (void) memmove(&array->val[idx + 1], &array->val[idx],
 	           (array->len - idx - 1) * sizeof(array->val[0]));
-    array->val[idx] = heim_retain(object);
+    array->val[idx] = object;
 
     return 0;
 }

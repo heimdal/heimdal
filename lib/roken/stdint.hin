@@ -21,6 +21,9 @@ typedef unsigned long long uint64_t;
 
 #ifdef _MSC_VER
 #include <intsafe.h>
+#ifndef SIZE_MAX
+#define SIZE_MAX SIZE_T_MAX
+#endif
 #else
 #define INT8_MAX 0x7F
 #define INT8_MIN (-INT8_MAX - 1)

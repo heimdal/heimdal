@@ -298,9 +298,16 @@ static const struct heim_type_data memory_object = {
 void *
 heim_alloc(size_t size, const char *name, heim_type_dealloc dealloc)
 {
+    struct heim_base_mem *p;
+
     /* XXX use posix_memalign */
 
-    struct heim_base_mem *p = calloc(1, size + sizeof(*p));
+    if (size > SIZE_MAX - sizeof(*p)) {
+        errno = ENOMEM;
+        return NULL;
+    }
+
+    p = calloc(1, size + sizeof(*p));
     if (p == NULL)
 	return NULL;
     p->isa = &memory_object;
@@ -340,8 +347,16 @@ _heim_create_type(const char *name,
 heim_object_t
 _heim_alloc_object(heim_const_type_t type, size_t size)
 {
+    struct heim_base *p;
+
     /* XXX should use posix_memalign */
-    struct heim_base *p = calloc(1, size + sizeof(*p));
+
+    if (size > SIZE_MAX - sizeof(*p)) {
+        errno = ENOMEM;
+        return NULL;
+    }
+
+    p = calloc(1, size + sizeof(*p));
     if (p == NULL)
 	return NULL;
     p->isa = type;

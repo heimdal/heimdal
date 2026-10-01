@@ -80,7 +80,7 @@ command = {
 		long = "format"
 		short = "f"
 		type = "string"
-		help = "dump format, mit or heimdal (default: heimdal)"
+		help = "dump format, heimdal or mit or path to mit master key (default: heimdal)"
 	}
 	argument = "[dump-file]"
 	min_args = "0"

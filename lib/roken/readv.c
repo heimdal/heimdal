@@ -58,6 +58,7 @@ readv(int d, const struct iovec *iov, int iovcnt)
 	memcpy (iov->iov_base, p, cnt);
 	p += cnt;
 	nb -= cnt;
+	iov++;
     }
     free(buf);
     return ret;

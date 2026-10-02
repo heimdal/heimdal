@@ -404,6 +404,21 @@ debug_host(krb5_context context, int level, struct host *host, const char *fmt, 
     free(text);
 }
 
+static const char *
+host_proto_string(const struct host *host)
+{
+    switch (host->hi->proto) {
+    case KRB5_KRBHST_HTTP:
+	return "http";
+    case KRB5_KRBHST_TCP:
+	return "tcp";
+    case KRB5_KRBHST_UDP:
+	return "udp";
+    default:
+	return "unknown";
+    }
+}
+
 
 static void HEIM_CALLCONV
 deallocate_host(void *ptr)
@@ -909,6 +924,10 @@ eval_host_state(krb5_context context,
 
 	ctx->stats.sent_packets++;
 
+	debug_host(context, 10, host, "Sending %s %s request (%lu bytes)",
+	    (host->tries == host->fun->ntries) ? "initial" : "retry",
+	    host_proto_string(host), (unsigned long)host->data.length);
+
 	debug_host(context, 5, host, "writing packet fd=%d data_len=%lu",
 	    host->fd, (unsigned long)host->data.length);
 
@@ -932,6 +951,8 @@ eval_host_state(krb5_context context,
 	    /* not done yet */
 	} else if (ret == 0) {
 	    /* if recv_foo function returns 0, we have a complete reply */
+	    debug_host(context, 10, host, "Received answer (%lu bytes)",
+		(unsigned long)ctx->response.length);
 	    debug_host(context, 5, host, "host completed");
 	    return 1;
 	} else {
@@ -1402,6 +1423,9 @@ krb5_sendto_context(krb5_context context,
 
     if ((int)send_data->length > context->large_msg_size)
 	ctx->flags |= KRB5_KRBHST_FLAGS_LARGE_MSG;
+
+    _krb5_debug(context, 10, "Sending request (%lu bytes) to %s",
+		(unsigned long)send_data->length, realm);
 
     /* loop until we get back a appropriate response */
 

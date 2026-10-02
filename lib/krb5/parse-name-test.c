@@ -49,6 +49,7 @@ static struct testcase {
     {"\\ ", "\\ @", "", 1, {" "}, FALSE},
     {"\\t", "\\t@", "", 1, {"\t"}, FALSE},
     {"\\b", "\\b@", "", 1, {"\b"}, FALSE},
+    {"\\001", "\\001@", "", 1, {"\001"}, FALSE},
     {"\\\\", "\\\\@", "", 1, {"\\"}, FALSE},
     {"\\/", "\\/@", "", 1, {"/"}, FALSE},
     {"\\@", "\\@@", "", 1, {"@"}, FALSE},
@@ -60,6 +61,32 @@ static struct testcase {
     {"\\@@\\@", "\\@@\\@", "@", 1, {"@"}, TRUE},
     {"a/b/c", "a/b/c@", "", 3, {"a", "b", "c"}, FALSE},
     {NULL, NULL, "", 0, { NULL }, FALSE}};
+
+static void
+test_export_unparse(krb5_context context)
+{
+    krb5_principal princ;
+    krb5_error_code ret;
+    char *s;
+
+    ret = krb5_parse_name(context, "\\001", &princ);
+    if (ret)
+	krb5_err(context, 1, ret, "krb5_parse_name");
+
+    ret = krb5_unparse_name_flags(context, princ,
+				  KRB5_PRINCIPAL_UNPARSE_EXPORT_NAME,
+				  &s);
+    if (ret)
+	krb5_err(context, 1, ret, "krb5_unparse_name_flags");
+
+    if (strcmp(s, "\001@") != 0) {
+	printf("export unparse failed\n");
+	exit(1);
+    }
+
+    free(s);
+    krb5_free_principal(context, princ);
+}
 
 int
 main(int argc, char **argv)
@@ -187,6 +214,7 @@ main(int argc, char **argv)
 	}
 	krb5_free_principal (context, princ);
     }
+    test_export_unparse(context);
     krb5_free_context(context);
     return val;
 }

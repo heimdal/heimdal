@@ -52,6 +52,15 @@
  *
  */
 
+/*
+ * DER SEQUENCE { OBJECT IDENTIFIER 1.2.752.43.13.32 }
+ *
+ * Used as KRB-ERROR e-data to mark KRB_AP_ERR_BADKEYVER as a request to
+ * refresh the service ticket and retry.
+ */
+#define GSS_KRB5_BADKEYVER_RETRY_E_DATA \
+  "\x30\x08\x06\x06\x2a\x85\x70\x2b\x0d\x20"
+
 struct gss_msg_order;
 
 typedef struct gsskrb5_ctx {

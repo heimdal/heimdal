@@ -1615,7 +1615,8 @@ _log_astgs_req(astgs_request_t r, krb5_enctype setype)
 	_kdc_r_log(r, 4, "%s", str);
     free(str);
 
-    kdc_audit_addkv((kdc_request_t)r, 0, "etype", "%d/%d", cetype, setype);
+    kdc_audit_addkv((kdc_request_t)r, 0, "etype", "%d/%d/%d",
+                    cetype, setype, r->et.key.keytype);
 
     {
 	char fixedstr[128];

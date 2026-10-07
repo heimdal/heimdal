@@ -73,8 +73,6 @@ asn1_*_asn1.c
 /appl/dbutils/bsearch
 /appl/gssmask/gssmaestro
 /appl/gssmask/gssmask
-/appl/kf/kf
-/appl/kf/kfd
 /appl/otp/otp
 /appl/otp/otpprint
 /appl/test/gssapi_client

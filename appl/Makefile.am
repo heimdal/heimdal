@@ -9,7 +9,6 @@ SUBDIRS = 					\
 	  dbutils				\
 	  gssmask				\
 	  test					\
-	  kf					\
 	  $(dir_dce)
 
 EXTRA_DIST = NTMakefile

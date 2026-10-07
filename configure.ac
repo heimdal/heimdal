@@ -735,7 +735,6 @@ AC_CONFIG_FILES(Makefile 		\
 	appl/dbutils/Makefile		\
 	appl/gssmask/Makefile		\
 	appl/test/Makefile		\
-	appl/kf/Makefile		\
 	appl/dceutils/Makefile		\
 	tests/Makefile			\
 	tests/bin/Makefile		\

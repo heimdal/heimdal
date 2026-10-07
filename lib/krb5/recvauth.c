@@ -162,7 +162,7 @@ krb5_recvauth_match_version(krb5_context context,
     len = ntohl(len);
     if (len > 1024 * 1024) {
         krb5_set_error_message(context, ret = KRB5_SENDAUTH_REJECTED,
-                               "AP-REQ too long");
+                               "sendauth application version too long");
         return ret;
     }
     her_appl_version = malloc (len);
@@ -202,9 +202,32 @@ krb5_recvauth_match_version(krb5_context context,
      * Expect AP_REQ.
      */
     krb5_data_zero (&data);
-    ret = krb5_read_message (context, p_fd, &data);
+    n = krb5_net_read (context, p_fd, &len, 4);
+    if (n < 0) {
+	ret = errno ? errno : EINVAL;
+	krb5_set_error_message(context, ret, "read: %s", strerror(ret));
+	return ret;
+    }
+    if (n != 4) {
+	krb5_clear_error_message (context);
+	return HEIM_ERR_EOF;
+    }
+    len = ntohl(len);
+    if (len > 1024 * 1024) {
+	krb5_set_error_message(context, ret = KRB5_SENDAUTH_REJECTED,
+			       "AP-REQ too long");
+	return ret;
+    }
+    ret = krb5_data_alloc (&data, len);
     if (ret)
 	return ret;
+    n = krb5_net_read (context, p_fd, data.data, len);
+    if (n != len) {
+	ret = n < 0 ? (errno ? errno : EINVAL) : HEIM_ERR_EOF;
+	krb5_data_free (&data);
+	krb5_clear_error_message (context);
+	return ret;
+    }
 
     ret = krb5_rd_req (context,
 		       auth_context,

@@ -185,7 +185,7 @@ roken_gethostby(const char *hostname)
     }
     free(request);
     while(1) {
-	n = read(s, buf + offset, sizeof(buf) - offset);
+        n = read(s, buf + offset, sizeof(buf) - offset - 1);
 	if(n <= 0)
 	    break;
 	offset += n;

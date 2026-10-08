@@ -1,0 +1,413 @@
+# Georgian translation for Heimdal.
+# This file is put in the public domain.
+# Ekaterine Papava <papava.e@gtu.ge>, 2024.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Heimdal 1.2.99\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2008-12-06 09:51-0800\n"
+"PO-Revision-Date: 2024-04-03 11:20+0200\n"
+"Last-Translator: Ekaterine Papava <papava.e@gtu.ge>\n"
+"Language-Team: \n"
+"Language: ka\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 3.3.2\n"
+
+#: kuser/kgetcred.c:52
+msgid "credential cache to use"
+msgstr "გამოსაყენებელი ავტორიზაციის დეტალების კეში"
+
+#: kuser/kgetcred.c:54
+msgid "credential cache to store credential in"
+msgstr "რომელ ავტორიზაციის დეტალების კეშში შევინახო ეს ავტორიზაციის დეტალი"
+
+#: kuser/kgetcred.c:56
+msgid "where to find the ticket use for delegation"
+msgstr "სად ვიპოვო ბილეთი დელეგაციისთვის"
+
+#: kuser/kgetcred.c:58
+msgid "canonicalize the principal"
+msgstr "საჭიროა პრინციპალის კანონიკალიზაცია"
+
+#: kuser/kgetcred.c:60
+msgid "forwardable ticket requested"
+msgstr "მოთხოვნილია გადამისამართებადი ბილეთი"
+
+#: kuser/kgetcred.c:63
+msgid "encryption type to use"
+msgstr "დაშიფვრის სასურველი ტიპი"
+
+#: kuser/kgetcred.c:65
+msgid "client to impersonate"
+msgstr "თავის გასაღება კლიენტად"
+
+#: kuser/kgetcred.c:135
+#, c-format
+msgid "unrecognized enctype: %s"
+msgstr "უცნობი enctype: %s"
+
+#: kuser/kinit.c:90
+msgid "obtain version 4 TGT"
+msgstr "4 ვერსიის TGT-სის მიღება"
+
+#: kuser/kinit.c:93
+msgid "only convert ticket to version 4"
+msgstr "ბილეთის, მხოლოდ, მეოთხე ვერსიაში გადაყვანა"
+
+#: kuser/kinit.c:96
+msgid "obtain afs tokens"
+msgstr "afs კოდები მიღება"
+
+#: kuser/kinit.c:99
+msgid "credentials cache"
+msgstr "ავტორიზაციის დეტალების კეში"
+
+#: kuser/kinit.c:102
+msgid "get forwardable tickets"
+msgstr "გადამისამართებადი ბილეთების მიღება"
+
+#: kuser/kinit.c:105
+msgid "keytab to use"
+msgstr "გამოსაყენებელი keytab"
+
+#: kuser/kinit.c:108
+msgid "lifetime of tickets"
+msgstr "ბილეთების სიცოცხლის დრო"
+
+#: kuser/kinit.c:111
+msgid "get proxiable tickets"
+msgstr "დაპროქსვადი ბილეთების მიღება"
+
+#: kuser/kinit.c:114
+msgid "renew TGT"
+msgstr "ახალი TGT-ის მიღება"
+
+#: kuser/kinit.c:117
+msgid "get renewable tickets"
+msgstr "განახლებადი ბილეთების მიღება"
+
+#: kuser/kinit.c:120
+msgid "renewable lifetime of tickets"
+msgstr "ბილეთების განახლებადი სიცოცხლის დრო"
+
+#: kuser/kinit.c:123
+msgid "server to get ticket for"
+msgstr "სერვერი, რომლისთვისაც მივიღო კოდი"
+
+#: kuser/kinit.c:126
+msgid "when ticket gets valid"
+msgstr "როცა ბილეთის დრო დადგება"
+
+#: kuser/kinit.c:129
+msgid "get key from keytab"
+msgstr "გასაღების მიღება keytab-დან"
+
+#: kuser/kinit.c:132
+msgid "validate TGT"
+msgstr "'TGT'-ის გადამოწმება"
+
+#: kuser/kinit.c:135
+msgid "encryption types to use"
+msgstr "გამოსაყენებელი დაშიფვრის ტიპები"
+
+#: kuser/kinit.c:138
+msgid "file cache version to create"
+msgstr "შესაქმნელი ფაილის კეშის ვერსია"
+
+#: kuser/kinit.c:141
+msgid "request a ticket with no addresses"
+msgstr "უმისამართო ბილეთის მოთხოვნა"
+
+#: kuser/kinit.c:144
+msgid "include these extra addresses"
+msgstr "ამ დამატებითი მისამართების ჩასმა"
+
+#: kuser/kinit.c:147
+msgid "request an anonymous ticket"
+msgstr "ანონიმური ბილეთის მოთხოვნა"
+
+#: kuser/kinit.c:150
+msgid "request a Windows PAC"
+msgstr "'Windows PAC'-ის მოთხოვნა"
+
+#: kuser/kinit.c:153
+msgid "read the password from a file"
+msgstr "პაროლის წაკითხვა ფაილიდან"
+
+#: kuser/kinit.c:156
+msgid "canonicalize client principal"
+msgstr "კლიენტის პრინციპალის კანონიკალიზაცია"
+
+#: kuser/kinit.c:159
+msgid "principal's public/private/certificate identifier"
+msgstr "პრინციპალის საჯარო/პირადი/სერტიფიკატის იდენტიფიკატორი"
+
+#: kuser/kinit.c:162
+msgid "directory with CA certificates"
+msgstr "საქაღალდე CA სერტიფიკატებით"
+
+#: kuser/kinit.c:165
+msgid "Use RSA encrypted reply (instead of DH)"
+msgstr "RSA-ით დაშიფრული პასუხის გამოყენება (DH-ის მაგიერ)"
+
+#: kuser/kinit.c:168
+msgid "NTLM domain"
+msgstr "NTLM დომენი"
+
+#: kuser/kinit.c:171
+msgid "honor ok-as-delegate on tickets"
+msgstr "ბილეთებზე ok-as-delegate-ის გათვალისწინება"
+
+#: kuser/kinit.c:174
+msgid "only use referrals, no dns canalisation"
+msgstr "მხოლოდ, რეფერალების გამოყენება, dns კანალიზაციის გარეშე"
+
+#: kuser/kinit.c:177
+msgid "get windows behavior"
+msgstr "ფანჯრების ქცევის მიღება"
+
+#: kuser/kinit.c:188 kuser/klist.c:581
+msgid "Usage: "
+msgstr "გამოყენება: "
+
+#: kuser/kinit.c:410
+#, c-format
+msgid "Failed to read password from file %s"
+msgstr "ჩავარდა პაროლის წაკითხვა ფაილიდან %s"
+
+#: kuser/kinit.c:475 kuser/kinit.c:825
+#, c-format
+msgid "unparsable time: %s"
+msgstr "არადამუშავებადი დრო: %s"
+
+#: kuser/kinit.c:533
+#, c-format
+msgid "%s's Password: "
+msgstr "%s-ის პაროლი: "
+
+#: kuser/kinit.c:567
+msgid "Password incorrect"
+msgstr "პაროლი არასწორია"
+
+#: kuser/kinit.c:570
+msgid "Looks like a Kerberos 4 reply"
+msgstr "წააგავს Kerberos 4-ის პასუხს"
+
+#: kuser/kinit.c:581
+#, c-format
+msgid "NOTICE: ticket lifetime is %s"
+msgstr "შენიშვნა: ბილეთის სიცოცხლის დროა %s"
+
+#: kuser/kinit.c:590
+#, c-format
+msgid "NOTICE: ticket renewable lifetime is %s"
+msgstr "შენიშვნა: ბილეთის განახლებადი სიცოცხლის დროა %s"
+
+#: kuser/kinit.c:817
+msgid "resolving credentials cache"
+msgstr "ავტორიზაციის დეტალების კეშის ამოხსნა"
+
+#: kuser/kinit.c:832
+msgid "specifying both extra addresses and no addresses makes no sense"
+msgstr "დამატებითი მისამართების და უმისამართობის ერთდროული მითითება უაზროა"
+
+#: kuser/kinit.c:882
+#, c-format
+msgid "permission denied: %s"
+msgstr "წვდომა აკრძალულია: %s"
+
+#: kuser/kinit.c:884
+#, c-format
+msgid "command not found: %s"
+msgstr "ბრძანება ვერ ვიპოვე: %s"
+
+#: kuser/klist.c:58
+msgid "  Issued"
+msgstr "  გამოცემულია"
+
+#: kuser/klist.c:59
+msgid "  Expires"
+msgstr "  ვადა"
+
+#: kuser/klist.c:60
+msgid "Flags"
+msgstr "ალმები"
+
+#: kuser/klist.c:61
+msgid "  Principal"
+msgstr "  პრინციპალი"
+
+#: kuser/klist.c:62
+msgid "  Principal (kvno)"
+msgstr "  პრინციპალი (kvno)"
+
+#: kuser/klist.c:63
+msgid "  Cache name"
+msgstr "  კეშის სახელი"
+
+#: kuser/klist.c:86
+msgid ">>>Expired<<<"
+msgstr ">>>ვადაამოწურულია<<<"
+
+#: kuser/klist.c:134
+#, c-format
+msgid "Server: %s\n"
+msgstr "სერვერი: %s\n"
+
+#: kuser/klist.c:140
+#, c-format
+msgid "Client: %s\n"
+msgstr "კლიენტი: %s\n"
+
+#: kuser/klist.c:150
+msgid "Ticket etype: "
+msgstr "ბილეთის etype: "
+
+#: kuser/klist.c:155
+#, c-format
+msgid "unknown-enctype(%d)"
+msgstr "უცნობი-enctype(%d)"
+
+#: kuser/klist.c:158
+#, c-format
+msgid ", kvno %d"
+msgstr ", kvno %d"
+
+#: kuser/klist.c:165
+#, c-format
+msgid "Session key: %s\n"
+msgstr "სესიის გასაღები: %s\n"
+
+#: kuser/klist.c:170
+#, c-format
+msgid "Ticket length: %lu\n"
+msgstr "ბილეთის სიგრძე: %lu\n"
+
+#: kuser/klist.c:173
+#, c-format
+msgid "Auth time:  %s\n"
+msgstr "ავტორიზაციის დრო: %s\n"
+
+#: kuser/klist.c:176
+#, c-format
+msgid "Start time: %s\n"
+msgstr "დაწყების დრო: %s\n"
+
+#: kuser/klist.c:178
+#, c-format
+msgid "End time:   %s"
+msgstr "დასრულების დრო:   %s"
+
+#: kuser/klist.c:181
+msgid " (expired)"
+msgstr " (ვადაგასულია)"
+
+#: kuser/klist.c:184
+#, c-format
+msgid "Renew till: %s\n"
+msgstr "განახლების დრო: %s\n"
+
+#: kuser/klist.c:191
+#, c-format
+msgid "Ticket flags: %s\n"
+msgstr "ბილეთის ალმები: %s\n"
+
+#: kuser/klist.c:193
+msgid "Addresses: "
+msgstr "მისამართები: "
+
+#: kuser/klist.c:206
+msgid "addressless"
+msgstr "უმისამართო"
+
+#: kuser/klist.c:236
+msgid "Credentials cache"
+msgstr "ავტორიზაციის დეტალების კეში"
+
+#: kuser/klist.c:239
+msgid "Principal"
+msgstr "პრინციპალი"
+
+#: kuser/klist.c:243
+msgid "Cache version"
+msgstr "ქეშის ვერსია"
+
+#: kuser/klist.c:262
+msgid "KDC time offset"
+msgstr "KDC-ის დროის წანაცვლება"
+
+#: kuser/klist.c:407 kuser/klist.c:519
+msgid ">>> Expired <<<"
+msgstr ">>> ვადაგასულია <<<"
+
+#: kuser/klist.c:412
+#, c-format
+msgid "User's (AFS ID %d) tokens for %s"
+msgstr "მომხმარებლის (AFS ID %d) კოდები %s-სთვის"
+
+#: kuser/klist.c:414
+#, c-format
+msgid "Tokens for %s"
+msgstr "კოდები %s-სთვის"
+
+#: kuser/klist.c:453
+#, c-format
+msgid "No ticket file: %s"
+msgstr "ბილეთის ფაილის გარეშე: %s"
+
+#: kuser/klist.c:554
+msgid "credentials cache to list"
+msgstr "ავტორიზაციის დეტალების კეში ჩამოსათვლელად"
+
+#: kuser/klist.c:556
+msgid "test for having tickets"
+msgstr "ტესტი ბილეთების ქონაზე"
+
+#: kuser/klist.c:559
+msgid "display AFS tokens"
+msgstr "afs კოდების ჩვენება"
+
+#: kuser/klist.c:561
+msgid "display v5 cred cache"
+msgstr "v5 ავტ. დეტალების კეშის ჩვენება"
+
+#: kuser/klist.c:563 kuser/klist.c:565
+msgid "verbose output"
+msgstr "უფრო მეტის ჩვენება"
+
+#: kuser/klist.c:567
+msgid "display hidden credentials"
+msgstr "დამალული ავტ. დეტალების ჩვენება"
+
+#: kuser/klist.c:571 kuser/kswitch.c:56
+msgid "print version"
+msgstr "ვერსიის ბეჭდვა"
+
+#: kuser/kswitch.c:50
+msgid "type of credential cache"
+msgstr "ავტორიზაციის დეტალების კეშის ტიპი"
+
+#: kuser/kswitch.c:52
+msgid "name of credential cache"
+msgstr "ავტორიზაციის დეტალების ქეშის სახელი"
+
+#: kuser/kswitch.c:54
+msgid "name of principal"
+msgstr "პრინციპალის სახელი"
+
+#: kuser/kswitch.c:106
+msgid "Both --cache and --principal given, choose one"
+msgstr "მითითებულია ორივე, --cache და --principal. აირჩიეთ ერთ-ერთი"
+
+#: kuser/kswitch.c:118
+#, c-format
+msgid "Did not find principal: %s"
+msgstr "ვერ ვიპოვე პრინციპალი: %s"
+
+#: kuser/kswitch.c:132
+msgid "out of memory"
+msgstr "paměť vyčerpána"

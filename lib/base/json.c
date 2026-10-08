@@ -570,28 +570,40 @@ is_number(uint8_t n)
 static heim_number_t
 parse_number(struct parse_ctx *ctx)
 {
-    int number = 0, neg = 1;
+    uint64_t number = 0, max = INT64_MAX;
+    int neg = 1;
+    uint8_t digit;
 
     if (ctx->p >= ctx->pend)
 	return NULL;
 
     if (*ctx->p == '-') {
-	if (ctx->p + 1 >= ctx->pend)
-	    return NULL;
 	neg = -1;
+        max++;
 	ctx->p += 1;
     }
 
+    if (ctx->p >= ctx->pend || !is_number(*ctx->p))
+        goto invalid;
+
     while (ctx->p < ctx->pend) {
 	if (is_number(*ctx->p)) {
-	    number = (number * 10) + (*ctx->p - '0');
+            digit = *ctx->p - '0';
+            if (number > (max - digit) / 10)
+                goto invalid;
+            number = (number * 10) + digit;
 	} else {
 	    break;
 	}
 	ctx->p += 1;
     }
+    if (number == (uint64_t)INT64_MAX + 1)
+        return heim_number_create(INT64_MIN);
+    return heim_number_create((int64_t)number * neg);
 
-    return heim_number_create(number * neg);
+invalid:
+    ctx->error = heim_error_create(EINVAL, "Invalid JSON number");
+    return NULL;
 }
 
 /*

@@ -34,6 +34,14 @@ gen_files_hdb = \
 	asn1_HDB_Ext_PKINIT_acl.c \
 	asn1_HDB_Ext_PKINIT_cert.c \
 	asn1_HDB_Ext_PKINIT_hash.c \
+	asn1_HDB_Ext_PKINIT_issuer_serial.c \
+	asn1_HDB_Ext_PKINIT_issuer_serial_entry.c \
+	asn1_HDB_Ext_PKINIT_object_sid.c \
+	asn1_HDB_Ext_PKINIT_object_sid_entry.c \
+	asn1_HDB_Ext_PKINIT_rfc822.c \
+	asn1_HDB_Ext_PKINIT_rfc822_entry.c \
+	asn1_HDB_Ext_PKINIT_ski.c \
+	asn1_HDB_Ext_PKINIT_ski_entry.c \
 	asn1_HDB_EntryOrAlias.c \
 	asn1_HDB_entry_alias.c \
 	asn1_HDB_entry.c \

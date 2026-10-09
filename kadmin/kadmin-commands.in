@@ -578,6 +578,30 @@ command = {
 		help = "aliases"
 	}
 	option = {
+		long = "pkinit-issuer-serial"
+		type = "strings"
+		argument = "serial:issuer"
+		help = "PKINIT issuer+serial mapping (strong)"
+	}
+	option = {
+		long = "pkinit-object-sid"
+		type = "string"
+		argument = "hex-sid"
+		help = "PKINIT object SID (strong)"
+	}
+	option = {
+		long = "pkinit-rfc822"
+		type = "strings"
+		argument = "email"
+		help = "PKINIT RFC822 SAN mapping (weak)"
+	}
+	option = {
+		long = "pkinit-ski"
+		type = "strings"
+		argument = "hex-ski"
+		help = "PKINIT Subject Key Identifier mapping (weak)"
+	}
+	option = {
 		long = "policy"
 		type = "string"
 		argument = "policy"

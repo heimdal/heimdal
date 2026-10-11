@@ -48,22 +48,30 @@ extern char **environ;
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
 unsetenv(const char *name)
 {
-  int len;
+  size_t len;
   const char *np;
-  char **p;
+  char **p, **out;
 
-  if (name == 0 || environ == 0)
+  if (name == NULL || *name == '\0' || environ == NULL)
     return;
 
-  for (np = name; *np && *np != '='; np++)
+  for (np = name; *np != '\0' && *np != '='; np++)
     /* nop */;
-  len = np - name;
+  len = (size_t)(np - name);
 
-  for (p = environ; *p != 0; p++)
+  /*
+   * Compact the environment in place, copying every entry that does not
+   * match down over the ones that do, then terminate the result.
+   *
+   * Drop every match, not just the first: nothing stops a caller from
+   * putenv()ing the same name twice, and a surviving duplicate would still
+   * be found by getenv() after this returns.
+   */
+  for (p = environ, out = environ; *p != NULL; p++) {
     if (strncmp(*p, name, len) == 0 && (*p)[len] == '=')
-      break;
-
-  for (; *p != 0; p++)
-    *p = *(p + 1);
+      continue;
+    *out++ = *p;
+  }
+  *out = NULL;
 }
 

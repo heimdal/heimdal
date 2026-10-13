@@ -37,6 +37,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef AUDITDNS_USE_LD_WRAP
+#define rk_dns_lookup __wrap_rk_dns_lookup
+#endif
+
 #include "resolve.h"
 #include "roken.h"
 

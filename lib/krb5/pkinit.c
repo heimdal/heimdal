@@ -1753,6 +1753,7 @@ pk_rd_pa_reply_dh(krb5_context context,
     }
 
     if (kdc_dh_info.dhKeyExpiration) {
+	krb5_timestamp now;
 	if (k_n == NULL) {
 	    ret = KRB5KRB_ERR_GENERIC;
 	    krb5_set_error_message(context, ret,
@@ -1767,6 +1768,17 @@ pk_rd_pa_reply_dh(krb5_context context,
 				      "client nonce", ""));
 	    goto out;
 	}
+
+        /* Check DH key expiration */
+
+        krb5_timeofday (context, &now);
+
+        if (*kdc_dh_info.dhKeyExpiration < now) {
+            ret = KRB5KRB_AP_ERR_SKEW;
+            krb5_set_error_message(context, ret,
+                                   N_("pkinit; DH key is expired", ""));
+            goto out;
+        }
     } else {
 	if (k_n) {
 	    ret = KRB5KRB_ERR_GENERIC;

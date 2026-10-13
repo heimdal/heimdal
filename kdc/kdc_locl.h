@@ -106,6 +106,7 @@ struct krb5_kdc_configuration {
     unsigned int enable_unarmored_pa_enc_timestamp : 1;
 
     unsigned int enable_pkinit : 1;
+    unsigned int require_pkinit_freshness : 1;
     unsigned int pkinit_princ_in_cert : 1;
     const char *pkinit_kdc_identity;
     const char *pkinit_kdc_anchors;

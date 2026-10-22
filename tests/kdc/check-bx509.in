@@ -894,6 +894,20 @@ if which jq >/dev/null; then
     fi
 fi
 
+echo "Fetch TGTs (batch, missing cname)"
+token=$(KRB5CCNAME=$cache2 $gsstoken HTTP@$server)
+status=`curl -o /dev/null -Lgs -w '%{http_code}'                       \
+             --resolve ${server}:${bx509port}:127.0.0.1                \
+             -H "Authorization: Negotiate $token"                      \
+             "http://${server}:${bx509port}/get-tgts"` || {
+    echo "Failed to reject /get-tgts request with no cname"
+    exit 2
+}
+if test "$status" != 400; then
+    echo "/get-tgts request with no cname returned HTTP $status"
+    exit 2
+fi
+
 echo "Fetch TGTs (batch, authz fail)"
 ${kadmin} modify --max-ticket-life=10d krbtgt/${R}@${R}
 csr_revoke

@@ -2235,6 +2235,10 @@ get_tgts(struct bx509_request_desc *r)
 
         ret = r->error_code;
         if (ret == 0) {
+            if (r->req == NULL) {
+                krb5_free_principal(r->context, p);
+                return bad_400(r, EINVAL, "Missing cname query parameter");
+            }
             /* Use the same configuration as /get-tgt (or should we?) */
             ret = kdc_authorize_csr(r->context, "get-tgt", r->req, p);
 

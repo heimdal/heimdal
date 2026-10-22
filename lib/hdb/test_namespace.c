@@ -441,6 +441,28 @@ static const char *unexpected[] = {
     "HTTP/blah.foo.no.example@BAR.EXAMPLE",
 };
 
+static void
+check_repeated_namespace(krb5_context context, HDB *db)
+{
+    krb5_principal p = NULL;
+    hdb_entry entry;
+    krb5_error_code ret;
+
+    memset(&entry, 0, sizeof(entry));
+    ret = krb5_parse_name(context,
+                          "HTTP/bar.example.foo.bar.example@BAR.EXAMPLE", &p);
+    if (ret == 0)
+        ret = hdb_fetch_kvno(context, db, p, HDB_F_DECRYPT,
+                             krs[1].epoch + 1, 0, 0, &entry);
+    if (ret)
+        krb5_err(context, 1, ret, "repeated namespace test failed");
+    if (!krb5_principal_compare(context, p, entry.principal))
+        krb5_errx(context, 1, "repeated namespace rewrite failed");
+
+    hdb_free_entry(context, db, &entry);
+    krb5_free_principal(context, p);
+}
+
 /*
  * We'll fetch as many entries as we have principal names in `expected[]', for
  * as many KeyRotation periods as we have (between 1 and 3), and for up to 5
@@ -889,6 +911,7 @@ main(int argc, char **argv)
     }
 
     make_namespace(context, db, WK_PREFIX "_/bar.example@BAR.EXAMPLE");
+    check_repeated_namespace(context, db);
 
     fetch_entries(context, db, 1, 0, 0);
     fetch_entries(context, db, 1, 1, 0);

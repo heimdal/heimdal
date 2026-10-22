@@ -2203,6 +2203,13 @@ get_tgts(struct bx509_request_desc *r)
     size_t bodylen;
     void *body;
 
+    /*
+     * Note that MHD_get_connection_values() returns the number of values
+     * iterated over, not MHD_YES/MHD_NO, so we can't use its return value to
+     * detect errors.  Our callbacks record errors in r->error_code and/or
+     * queue a response (r->response) via bad_req().
+     */
+
     /* Prep to authorize */
     ret = krb5_parse_name(r->context, r->cname, &p);
     if (ret)
@@ -2218,6 +2225,10 @@ get_tgts(struct bx509_request_desc *r)
         }
 
         ret = r->error_code;
+        if (ret) {
+            krb5_free_principal(r->context, p);
+            return bad_400(r, ret, "Invalid query parameter");
+        }
     }
     if (ret == 0) {
         /*
@@ -2234,6 +2245,10 @@ get_tgts(struct bx509_request_desc *r)
 
         ret = r->error_code;
         if (ret == 0) {
+            if (r->req == NULL) {
+                krb5_free_principal(r->context, p);
+                return bad_400(r, EINVAL, "Missing cname query parameter");
+            }
             /* Use the same configuration as /get-tgt (or should we?) */
             ret = kdc_authorize_csr(r->context, "get-tgt", r->req, p);
 
@@ -2269,6 +2284,9 @@ get_tgts(struct bx509_request_desc *r)
     krb5_free_principal(r->context, p);
     hx509_request_free(&r->req);
     r->req = NULL;
+
+    if (r->tgts == NULL)
+        return bad_503(r, ret ? ret : EINVAL, "Could not get TGT");
 
     /*
      * get_tgts_param_execute_cb() will write its JSON response to the file

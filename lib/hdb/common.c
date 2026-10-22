@@ -1478,7 +1478,7 @@ rewrite_hostname(krb5_context context,
                  char **s)
 {
     const char *ns_host_part, *wanted_host_part, *found_host_part;
-    const char *p, *r;
+    const char *p;
     size_t ns_host_part_len, wanted_host_part_len;
 
     wanted_host_part = krb5_principal_get_comp_string(context, wanted_princ, 1);
@@ -1494,13 +1494,10 @@ rewrite_hostname(krb5_context context,
     ns_host_part_len = strlen(ns_host_part);
 
     /* Find `ns_host_part' as the tail of `wanted_host_part' */
-    for (r = p = strstr(wanted_host_part, ns_host_part);
-         r && strnlen(r, ns_host_part_len + 1) > ns_host_part_len;
-         p = (r = strstr(r, ns_host_part)) ? r : p)
-        ;
-    if (!p || strnlen(p, ns_host_part_len + 1) != ns_host_part_len)
-        return HDB_ERR_NOENTRY; /* Can't happen */
-    if (p == wanted_host_part || p[-1] != '.')
+    if (wanted_host_part_len <= ns_host_part_len)
+        return HDB_ERR_NOENTRY;
+    p = wanted_host_part + wanted_host_part_len - ns_host_part_len;
+    if (p[-1] != '.' || strcmp(p, ns_host_part) != 0)
         return HDB_ERR_NOENTRY;
 
     found_host_part =

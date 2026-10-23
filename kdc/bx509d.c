@@ -2202,7 +2202,6 @@ get_tgts(struct bx509_request_desc *r)
     krb5_principal p = NULL;
     size_t bodylen;
     void *body;
-    int res = MHD_YES;
 
     /* Prep to authorize */
     ret = krb5_parse_name(r->context, r->cname, &p);
@@ -2211,11 +2210,11 @@ get_tgts(struct bx509_request_desc *r)
     if (ret == 0) {
         /* Extract q-params other than `cname' */
         r->error_code = 0;
-        res = MHD_get_connection_values(r->connection, MHD_GET_ARGUMENT_KIND,
-                                        get_tgt_param_cb, r);
-        if (r->response || res == MHD_NO) {
+        (void) MHD_get_connection_values(r->connection, MHD_GET_ARGUMENT_KIND,
+                                         get_tgt_param_cb, r);
+        if (r->response) {
             krb5_free_principal(r->context, p);
-            return res;
+            return 0;
         }
 
         ret = r->error_code;
@@ -2226,11 +2225,11 @@ get_tgts(struct bx509_request_desc *r)
          * client principal names (calls bad_req()).
          */
         r->error_code = 0;
-        res = MHD_get_connection_values(r->connection, MHD_GET_ARGUMENT_KIND,
-                                        get_tgts_param_authorize_cb, r);
-        if (r->response || res == MHD_NO) {
+        (void) MHD_get_connection_values(r->connection, MHD_GET_ARGUMENT_KIND,
+                                         get_tgts_param_authorize_cb, r);
+        if (r->response) {
             krb5_free_principal(r->context, p);
-            return res;
+            return 0;
         }
 
         ret = r->error_code;
@@ -2259,11 +2258,11 @@ get_tgts(struct bx509_request_desc *r)
          * get_tgts_param_execute_cb() calls bad_req()
          */
         r->error_code = 0;
-        res = MHD_get_connection_values(r->connection, MHD_GET_ARGUMENT_KIND,
-                                        get_tgts_param_execute_cb, r);
-        if (r->response || res == MHD_NO) {
+        (void) MHD_get_connection_values(r->connection, MHD_GET_ARGUMENT_KIND,
+                                         get_tgts_param_execute_cb, r);
+        if (r->response) {
             krb5_free_principal(r->context, p);
-            return res;
+            return 0;
         }
         ret = r->error_code;
     }

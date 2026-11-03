@@ -70,12 +70,12 @@ $(libheimbase_la_OBJECTS): $(srcdir)/heimbase-protos.h heim_err.h
 
 $(srcdir)/heimbase-protos.h: $(dist_libheimbase_la_SOURCES)
 	cd $(srcdir) && \
-	    perl ../../cf/make-proto.pl -q -P comment -o heimbase-protos.h $(dist_libheimbase_la_SOURCES) || \
+	    $(PERL) ../../cf/make-proto.pl -q -P comment -o heimbase-protos.h $(dist_libheimbase_la_SOURCES) || \
 	    rm -f heimbase-protos.h
 
 $(srcdir)/heimbase-private.h: $(dist_libheimbase_la_SOURCES)
 	cd $(srcdir) && \
-	    perl ../../cf/make-proto.pl -q -P comment -p heimbase-private.h $(dist_libheimbase_la_SOURCES) || \
+	    $(PERL) ../../cf/make-proto.pl -q -P comment -p heimbase-private.h $(dist_libheimbase_la_SOURCES) || \
 	    rm -f heimbase-private.h
 
 # install these?

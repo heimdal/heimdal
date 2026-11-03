@@ -330,13 +330,13 @@ gssapi_asn1_files: $(ASN1_COMPILE_DEP) $(srcdir)/mech/gssapi.asn1
 	@$(CLANG_FORMAT) -style=$(CLANG_FORMAT_STYLE) -i $$(cat gssapi_asn1_files)
 
 $(srcdir)/krb5/gsskrb5-private.h:
-	cd $(srcdir) && perl ../../cf/make-proto.pl -q -P comment -p krb5/gsskrb5-private.h $(krb5src) || rm -f krb5/gsskrb5-private.h
+	cd $(srcdir) && $(PERL) ../../cf/make-proto.pl -q -P comment -p krb5/gsskrb5-private.h $(krb5src) || rm -f krb5/gsskrb5-private.h
 
 $(srcdir)/spnego/spnego-private.h:
-	cd $(srcdir) && perl ../../cf/make-proto.pl -q -P comment -p spnego/spnego-private.h $(spnegosrc) || rm -f spnego/spnego-private.h
+	cd $(srcdir) && $(PERL) ../../cf/make-proto.pl -q -P comment -p spnego/spnego-private.h $(spnegosrc) || rm -f spnego/spnego-private.h
 
 $(srcdir)/sanon/sanon-private.h:
-	cd $(srcdir) && perl ../../cf/make-proto.pl -q -P comment -p sanon/sanon-private.h $(sanonsrc) || rm -f sanon/sanon-private.h
+	cd $(srcdir) && $(PERL) ../../cf/make-proto.pl -q -P comment -p sanon/sanon-private.h $(sanonsrc) || rm -f sanon/sanon-private.h
 
 TESTS = test_oid test_names test_cfx
 # test_sequence
@@ -419,8 +419,8 @@ negoex_err.h negoex_err.c: $(srcdir)/spnego/negoex_err.et
 	$(COMPILE_ET) $(srcdir)/spnego/negoex_err.et
 
 $(srcdir)/gssapi/gssapi_oid.h $(srcdir)/mech/gss_oid.c:
-	perl $(srcdir)/gen-oid.pl -b base -h $(srcdir)/oid.txt > $(srcdir)/gssapi/gssapi_oid.h
-	perl $(srcdir)/gen-oid.pl -b base $(srcdir)/oid.txt > $(srcdir)/mech/gss_oid.c
+	$(PERL) $(srcdir)/gen-oid.pl -b base -h $(srcdir)/oid.txt > $(srcdir)/gssapi/gssapi_oid.h
+	$(PERL) $(srcdir)/gen-oid.pl -b base $(srcdir)/oid.txt > $(srcdir)/mech/gss_oid.c
 
 #
 # NegoEx test mechanism, uses decode_GSSAPIContextToken

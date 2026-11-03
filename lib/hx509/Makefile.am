@@ -107,10 +107,10 @@ $(libhx509_la_OBJECTS): $(srcdir)/hx_locl.h
 $(libhx509template_la_OBJECTS): $(srcdir)/hx_locl.h
 
 $(srcdir)/hx509-protos.h: $(dist_libhx509_la_SOURCES)
-	$(heim_verbose)cd $(srcdir) && perl ../../cf/make-proto.pl -R '^(_|^C)' -E HX509_LIB -q -P comment -o hx509-protos.h $(dist_libhx509_la_SOURCES) || rm -f hx509-protos.h
+	$(heim_verbose)cd $(srcdir) && $(PERL) ../../cf/make-proto.pl -R '^(_|^C)' -E HX509_LIB -q -P comment -o hx509-protos.h $(dist_libhx509_la_SOURCES) || rm -f hx509-protos.h
 
 $(srcdir)/hx509-private.h: $(dist_libhx509_la_SOURCES)
-	$(heim_verbose)cd $(srcdir) && perl ../../cf/make-proto.pl -q -P comment -p hx509-private.h $(dist_libhx509_la_SOURCES) || rm -f hx509-private.h
+	$(heim_verbose)cd $(srcdir) && $(PERL) ../../cf/make-proto.pl -q -P comment -p hx509-private.h $(dist_libhx509_la_SOURCES) || rm -f hx509-private.h
 
 bin_PROGRAMS = hxtool
 

@@ -51,9 +51,9 @@ AC_EXEEXT
 dnl
 dnl this is needed when der-protos.h or der-private.h has to be generated
 dnl
+AC_KRB_PROG_PERL
 if ! test -f "$srcdir/lib/asn1/der-protos.h" ||
    ! test -f "$srcdir/lib/asn1/der-private.h"; then
-    AC_KRB_PROG_PERL
     AC_KRB_PERL_MOD(Getopt::Std)
     AC_KRB_PERL_MOD(File::Compare)
 fi

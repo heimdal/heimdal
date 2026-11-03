@@ -69,9 +69,9 @@ doxyout doxygen: base.dxy hdb.dxy hx509.dxy gssapi.dxy krb5.dxy wind.dxy
 		doxygen $$a.dxy; \
 		(cd $(srcdir)/doxyout && \
 		    find $$a/man -name '_*' -type f -print | \
-			perl -lne unlink && \
+			$(PERL) -lne unlink && \
 		    find $$a/html -name 'dir_*.html' -type f -print | \
-			perl -lne unlink && \
+			$(PERL) -lne unlink && \
 		 find $$a/man -type f > $$a/manpages ) ; \
 	done
 

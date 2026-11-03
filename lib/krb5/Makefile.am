@@ -345,10 +345,10 @@ headerdeps = $(dist_libkrb5_la_SOURCES)
 endif
 
 $(srcdir)/krb5-protos.h: $(headerdeps)
-	@cd $(srcdir) && perl ../../cf/make-proto.pl -E KRB5_LIB -q -P comment -o krb5-protos.h $(dist_libkrb5_la_SOURCES) || rm -f krb5-protos.h
+	@cd $(srcdir) && $(PERL) ../../cf/make-proto.pl -E KRB5_LIB -q -P comment -o krb5-protos.h $(dist_libkrb5_la_SOURCES) || rm -f krb5-protos.h
 
 $(srcdir)/krb5-private.h: $(headerdeps)
-	@cd $(srcdir) && perl ../../cf/make-proto.pl -q -P comment -p krb5-private.h $(dist_libkrb5_la_SOURCES) || rm -f krb5-private.h
+	@cd $(srcdir) && $(PERL) ../../cf/make-proto.pl -q -P comment -p krb5-private.h $(dist_libkrb5_la_SOURCES) || rm -f krb5-private.h
 
 man_MANS =					\
 	kerberos.8				\

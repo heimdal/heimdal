@@ -268,7 +268,7 @@ roken.h: make-roken.c $(top_srcdir)/cf/roken-h-process.pl
 	$(CPP) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	    $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) \
 	    make-roken.c > make-roken.i && \
-	perl $(top_srcdir)/cf/roken-h-process.pl < make-roken.i > tmp.h && \
+	$(PERL) $(top_srcdir)/cf/roken-h-process.pl < make-roken.i > tmp.h && \
 	mv tmp.h roken.h; \
 	ret=$$?; rm -f make-roken.i tmp.h; exit $$ret
 

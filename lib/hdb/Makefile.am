@@ -144,10 +144,10 @@ $(ALL_OBJECTS): $(HDB_PROTOS) hdb_asn1.h hdb_asn1-priv.h hdb_err.h
 test_namespace_LDADD = $(LDADD) $(test_hdbkeys_LIBS) $(LIB_heimbase)
 
 $(srcdir)/hdb-protos.h: $(dist_libhdb_la_SOURCES)
-	cd $(srcdir); perl ../../cf/make-proto.pl -q -P comment -o hdb-protos.h $(dist_libhdb_la_SOURCES) || rm -f hdb-protos.h
+	cd $(srcdir); $(PERL) ../../cf/make-proto.pl -q -P comment -o hdb-protos.h $(dist_libhdb_la_SOURCES) || rm -f hdb-protos.h
 
 $(srcdir)/hdb-private.h: $(dist_libhdb_la_SOURCES)
-	cd $(srcdir); perl ../../cf/make-proto.pl -q -P comment -p hdb-private.h $(dist_libhdb_la_SOURCES) || rm -f hdb-private.h
+	cd $(srcdir); $(PERL) ../../cf/make-proto.pl -q -P comment -p hdb-private.h $(dist_libhdb_la_SOURCES) || rm -f hdb-private.h
 
 $(gen_files_hdb) hdb_asn1.h hdb_asn1-priv.h: hdb_asn1_files
 	for genfile in '$(gen_files_hdb)'; do \

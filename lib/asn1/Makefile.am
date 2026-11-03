@@ -568,7 +568,7 @@ ALL_OBJECTS += $(check_template_OBJECTS)
 $(ALL_OBJECTS): $(DER_PROTOS) asn1_err.h
 
 $(srcdir)/der-protos.h: $(dist_libasn1base_la_SOURCES) $(dist_libasn1_la_SOURCES)
-	cd $(srcdir) && perl ../../cf/make-proto.pl -q -P comment -o der-protos.h $(dist_libasn1base_la_SOURCES) $(dist_libasn1_la_SOURCES) || rm -f der-protos.h
+	cd $(srcdir) && $(PERL) ../../cf/make-proto.pl -q -P comment -o der-protos.h $(dist_libasn1base_la_SOURCES) $(dist_libasn1_la_SOURCES) || rm -f der-protos.h
 
 $(srcdir)/der-private.h: $(dist_libasn1base_la_SOURCES) $(dist_libasn1_la_SOURCES)
-	cd $(srcdir) && perl ../../cf/make-proto.pl -q -P comment -p der-private.h $(dist_libasn1base_la_SOURCES) $(dist_libasn1_la_SOURCES) || rm -f der-private.h
+	cd $(srcdir) && $(PERL) ../../cf/make-proto.pl -q -P comment -p der-private.h $(dist_libasn1base_la_SOURCES) $(dist_libasn1_la_SOURCES) || rm -f der-private.h

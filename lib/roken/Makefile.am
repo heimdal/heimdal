@@ -15,6 +15,10 @@ if versionscript
 libroken_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(srcdir)/version-script.map
 endif
 
+check-abi: libroken.la
+	$(SHELL) $(top_srcdir)/cf/check-library-abi.sh \
+	    $(top_builddir) libroken.so $(srcdir)/abi/19
+
 AM_CPPFLAGS += $(libroken_la_CPPFLAGS)
 if HAVE_DBHEADER
 AM_CPPFLAGS += -I$(DBHEADER)
@@ -276,6 +280,7 @@ endif
 
 
 EXTRA_DIST = \
+	abi \
 	NTMakefile \
 	roken.awk roken.h.in \
 	$(man_MANS) \
@@ -304,3 +309,5 @@ EXTRA_DIST = \
 	test-mini_inetd.c \
 	win32_alloc.c \
 	version-script.map
+
+.PHONY: check-abi

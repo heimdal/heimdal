@@ -18,7 +18,7 @@ check_PROGRAMS = test_base
 
 test_base_CFLAGS = -Wno-string-concatenation
 
-libheimbase_la_LDFLAGS = -version-info 1:0:0
+libheimbase_la_LDFLAGS = -version-info 2:0:0
 
 if FRAMEWORK_COREFOUNDATION
 libheimbase_la_LDFLAGS += -framework CoreFoundation
@@ -29,6 +29,10 @@ TESTS = test_base
 if versionscript
 libheimbase_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(srcdir)/version-script.map
 endif
+
+check-abi: libheimbase.la
+	$(SHELL) $(top_srcdir)/cf/check-library-abi.sh \
+	    $(top_builddir) libheimbase.so $(srcdir)/abi/2
 
 libheimbase_la_LIBADD = $(PTHREAD_LIBADD) $(LIB_dlopen) $(LIB_com_err)
 libheimbase_la_CPPFLAGS = $(AM_CPPFLAGS) \
@@ -92,11 +96,13 @@ fuzz_json.$(OBJEXT): $(srcdir)/heimbase-protos.h heim_err.h
 
 CLEANFILES = base64.c test_db.json heim_err.c heim_err.h
 
-EXTRA_DIST = NTMakefile version-script.map config_reg.c heim_err.et
+EXTRA_DIST = NTMakefile abi version-script.map config_reg.c heim_err.et
 
 dist_include_HEADERS = heimbase-protos.h
 
 nodist_include_HEADERS = heim_err.h
+
+.PHONY: check-abi
 
 heim_err.h: heim_err.et
 

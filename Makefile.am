@@ -67,6 +67,7 @@ EXTRA_DIST = \
 # check-abi target.
 #
 ABI_CHECK_DIRS = \
+	lib/base \
 	lib/gssapi \
 	lib/roken
 

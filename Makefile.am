@@ -70,6 +70,7 @@ ABI_CHECK_DIRS = \
 	lib/asn1 \
 	lib/base \
 	lib/gssapi \
+	lib/hx509 \
 	lib/roken
 
 check-abi: all

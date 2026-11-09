@@ -3,8 +3,8 @@ include $(top_srcdir)/Makefile.am.common
 AM_CPPFLAGS += $(INCLUDE_openssl_crypto)
 
 lib_LTLIBRARIES = libhx509.la libhx509template.la
-libhx509_la_LDFLAGS = -version-info 5:0:0
-libhx509template_la_LDFLAGS = -version-info 5:0:0
+libhx509_la_LDFLAGS = -version-info 6:0:0
+libhx509template_la_LDFLAGS = -version-info 6:0:0
 
 BUILT_SOURCES =				\
 	sel-gram.h			\
@@ -84,6 +84,12 @@ if versionscript
 libhx509_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(srcdir)/version-script.map
 libhx509template_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(srcdir)/version-script.map
 endif
+
+check-abi: libhx509.la libhx509template.la
+	$(SHELL) $(top_srcdir)/cf/check-library-abi.sh \
+	    $(top_builddir) \
+	    libhx509.so $(srcdir)/abi/hx509/6 \
+	    libhx509template.so $(srcdir)/abi/template/6
 $(libhx509_la_OBJECTS): $(srcdir)/version-script.map $(nodist_include_HEADERS) $(priv_headers)
 $(libhx509template_la_OBJECTS): $(srcdir)/version-script.map $(nodist_include_HEADERS) $(priv_headers)
 
@@ -275,6 +281,7 @@ test_query: test_query.in Makefile
 	mv test_query.tmp test_query
 
 EXTRA_DIST = \
+	abi \
 	NTMakefile \
 	hxtool-version.rc \
 	libhx509-exports.def \
@@ -415,3 +422,5 @@ EXTRA_DIST = \
 	data/yutaka-pad-ok-ca.pem \
 	data/yutaka-pad-ok-cert.pem \
 	data/yutaka-pad.key
+
+.PHONY: check-abi

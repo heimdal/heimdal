@@ -11,8 +11,8 @@ AM_CPPFLAGS += $(ROKEN_RENAME) -I$(top_builddir)/include -I$(top_srcdir)/lib/bas
 man_MANS = asn1_print.1 asn1_compile.1
 
 lib_LTLIBRARIES = libasn1.la libasn1template.la
-libasn1_la_LDFLAGS = -version-info 8:0:0
-libasn1template_la_LDFLAGS = -version-info 8:0:0
+libasn1_la_LDFLAGS = -version-info 9:0:0
+libasn1template_la_LDFLAGS = -version-info 9:0:0
 
 noinst_LTLIBRARIES = libasn1base.la
 
@@ -20,6 +20,12 @@ if versionscript
 libasn1_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(srcdir)/version-script.map
 libasn1template_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(srcdir)/version-script.map
 endif
+
+check-abi: libasn1.la libasn1template.la
+	$(SHELL) $(top_srcdir)/cf/check-library-abi.sh \
+	    $(top_builddir) \
+	    libasn1.so $(srcdir)/abi/asn1/9 \
+	    libasn1template.so $(srcdir)/abi/template/9
 
 
 libasn1_la_LIBADD = \
@@ -516,6 +522,7 @@ test_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/test.asn1
 
 
 EXTRA_DIST =			\
+	abi			\
 	NTMakefile		\
 	README-template.md	\
 	asn1_compile-version.rc	\
@@ -554,6 +561,8 @@ EXTRA_DIST =			\
 	asn1_print.1		\
 	asn1_compile.1		\
 	version-script.map
+
+.PHONY: check-abi
 
 DER_PROTOS = $(srcdir)/der-protos.h $(srcdir)/der-private.h
 

@@ -77,11 +77,15 @@ endif
 
 
 lib_LTLIBRARIES = libhdb.la $(ldap_so)
-libhdb_la_LDFLAGS = -version-info 11:0:2
+libhdb_la_LDFLAGS = -version-info 12:0:0
 
 if versionscript
 libhdb_la_LDFLAGS += $(LDFLAGS_VERSION_SCRIPT)$(srcdir)/version-script.map
 endif
+
+check-abi: libhdb.la
+	$(SHELL) $(top_srcdir)/cf/check-library-abi.sh \
+	    $(top_builddir) libhdb.so $(srcdir)/abi/12
 
 if HAVE_MITDB
 libhdb_la_LDFLAGS += -L$(MITDB)/lib -Wl,-rpath,$(MITDB)/lib -ldb
@@ -163,6 +167,7 @@ hdb_asn1_files: $(ASN1_COMPILE_DEP) $(srcdir)/hdb.asn1
 hdb_err.h: hdb_err.et
 
 EXTRA_DIST = \
+	abi \
 	NTMakefile \
 	libhdb-version.rc \
 	libhdb-exports.def \
@@ -172,3 +177,5 @@ EXTRA_DIST = \
 	version-script.map \
 	data-mkey.mit.aes256.le \
 	data-mkey.mit.aes256.be
+
+.PHONY: check-abi

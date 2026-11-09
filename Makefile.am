@@ -67,7 +67,8 @@ EXTRA_DIST = \
 # check-abi target.
 #
 ABI_CHECK_DIRS = \
-	lib/gssapi
+	lib/gssapi \
+	lib/roken
 
 check-abi: all
 	@status=0; for dir in $(ABI_CHECK_DIRS); do \

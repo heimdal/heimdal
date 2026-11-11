@@ -1434,7 +1434,7 @@ sig_process(hx509_context context, void *ctx, hx509_cert cert)
 	ret = _hx509_create_signature(context,
 				      _hx509_cert_private_key(cert),
 				      &sigalg,
-                                      &digest,
+				      NULL,
 				      &sigdata,
 				      &signer_info->signatureAlgorithm,
 				      &signer_info->signature);

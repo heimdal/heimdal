@@ -1040,6 +1040,104 @@ PKINIT
 values from the clients' certificates.
 Defaults to
 .Va true .
+.It Li pkinit_require_strong_mapping = Va BOOL
+If
+.Va true
+then only mapping methods listed as strong in the
+.Li pkinit_mapping_policy
+are accepted for PKINIT authentication.
+When no
+.Li pkinit_mapping_policy
+section is configured, the KB5014754 defaults apply:
+exact certificate match, PKINIT SAN, MS UPN SAN, issuer+serial,
+SHA1-PUKEY hash, and Object SID are considered strong.
+See
+.Li pkinit_mapping_policy
+below for per-issuer configuration.
+Defaults to
+.Va false .
+.It Li pkinit_require_strong_mapping_after = Va DATE
+Sets a date-based cutoff for strong mapping enforcement.
+Certificates whose
+.Va notBefore
+is on or after this date must use a strong mapping method;
+certificates issued before this date are allowed to use weak
+mappings (grace period).
+This allows gradual migration to strong mappings per Microsoft
+KB5014754.
+.Pp
+The date format is
+.Dq YYYY-MM-DD
+optionally followed by
+.Dq HH:MM:SS .
+If only a date is given, it defaults to end-of-day (23:59:59).
+.Pp
+When
+.Li pkinit_require_strong_mapping
+is
+.Va true ,
+all weak mappings are rejected regardless of this setting.
+Per-issuer rules may override this global cutoff via
+.Li enforce_after
+in
+.Li pkinit_mapping_policy .
+.It Li pkinit_mapping_policy = {
+Per-issuer policy controlling which PKINIT certificate mapping types
+are considered
+.Dq strong
+when
+.Li pkinit_require_strong_mapping
+or
+.Li pkinit_require_strong_mapping_after
+is set.
+Each named subsection matches certificates by issuer DN.
+The special name
+.Li DEFAULT
+matches when no issuer-specific subsection matches.
+.Bl -tag -width "xxx" -offset indent
+.It Va name Li = {
+A named rule.
+.Bl -tag -width "xxx" -offset indent
+.It Li issuer = Va DN
+The issuer distinguished name to match.
+If omitted, the subsection name is used as the issuer DN.
+.It Li strong = Va TYPES
+A space-separated list of mapping type names considered strong
+for certificates from this issuer.
+Valid names:
+.Va exact-cert ,
+.Va pkinit-san ,
+.Va ms-upn-san ,
+.Va issuer-serial ,
+.Va object-sid ,
+.Va pkey-hash ,
+.Va subject-dn ,
+.Va rfc822-san ,
+.Va ski ,
+.Va pki-mapping .
+.It Li enforce_after = Va DATE
+Per-issuer override for
+.Li pkinit_require_strong_mapping_after .
+Certificates from this issuer whose
+.Va notBefore
+is on or after this date must use a strong mapping;
+older certificates are allowed to use weak mappings.
+The date format is the same as
+.Li pkinit_require_strong_mapping_after .
+If set, this takes precedence over the global value for
+certificates from this issuer.
+.El
+.It Li DEFAULT = {
+Fallback rule when no issuer-specific rule matches.
+Contains
+.Li strong
+and optionally
+.Li enforce_after
+(no
+.Li issuer ) .
+.El
+.El
+}
 .It Li pkinit_dh_min_bits = Va NUMBER
 Minimum acceptable modular Diffie-Hellman public key size in
 bits.

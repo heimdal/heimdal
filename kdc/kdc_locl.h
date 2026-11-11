@@ -66,6 +66,36 @@ struct kdc_request_desc {
 
 struct kdc_patypes;
 
+/* Bitmask of PKINIT mapping types considered "strong" */
+#define PKINIT_MAPPING_EXACT_CERT	0x0001
+#define PKINIT_MAPPING_PKINIT_SAN	0x0002
+#define PKINIT_MAPPING_MS_UPN_SAN	0x0004
+#define PKINIT_MAPPING_ISSUER_SERIAL	0x0008
+#define PKINIT_MAPPING_OBJECT_SID	0x0010
+#define PKINIT_MAPPING_PKEY_HASH	0x0020
+#define PKINIT_MAPPING_SUBJECT_DN	0x0040
+#define PKINIT_MAPPING_RFC822_SAN	0x0080
+#define PKINIT_MAPPING_SKI		0x0100
+#define PKINIT_MAPPING_PKI_FILE		0x0200
+
+/* KB5014754 defaults (when no pkinit_mapping_policy configured) */
+#define PKINIT_MAPPING_DEFAULT_STRONG  \
+    (PKINIT_MAPPING_EXACT_CERT | PKINIT_MAPPING_PKINIT_SAN | \
+     PKINIT_MAPPING_MS_UPN_SAN | PKINIT_MAPPING_ISSUER_SERIAL | \
+     PKINIT_MAPPING_OBJECT_SID | PKINIT_MAPPING_PKEY_HASH)
+
+struct pkinit_mapping_rule {
+    char *issuer_dn;		/* NULL for DEFAULT rule */
+    hx509_name issuer_name;	/* parsed form, NULL for DEFAULT rule */
+    unsigned int strong_mask;	/* bitmask of strong mapping types */
+    time_t enforce_after;	/* per-issuer grace period cutoff, 0 = none */
+};
+
+struct pkinit_mapping_policy {
+    struct pkinit_mapping_rule *rules;
+    size_t num_rules;
+};
+
 struct krb5_kdc_configuration {
     KRB5_KDC_CONFIGURATION_COMMON_ELEMENTS;
 
@@ -116,10 +146,13 @@ struct krb5_kdc_configuration {
     int pkinit_dh_min_bits;
     unsigned int pkinit_require_binding : 1;
     unsigned int pkinit_allow_proxy_certs : 1;
+    unsigned int pkinit_require_strong_mapping : 1;
+    time_t pkinit_require_strong_mapping_after;
     unsigned int synthetic_clients : 1;
     unsigned int pkinit_max_life_from_cert_extension : 1;
     krb5_timestamp pkinit_max_life_from_cert;
     krb5_timestamp pkinit_max_life_bound;
+    struct pkinit_mapping_policy pkinit_mapping_policy;
     krb5_timestamp synthetic_clients_max_life;
     krb5_timestamp synthetic_clients_max_renew;
 

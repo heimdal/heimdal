@@ -228,6 +228,70 @@ hdb_entry_get_pkinit_cert(const hdb_entry *entry, const HDB_Ext_PKINIT_cert **a)
 }
 
 krb5_error_code
+hdb_entry_get_pkinit_issuer_serial(const hdb_entry *entry,
+                                   const HDB_Ext_PKINIT_issuer_serial **a)
+{
+    const HDB_extension *ext;
+
+    ext = hdb_find_extension(entry,
+                             choice_HDB_extension_data_pkinit_issuer_serial);
+    if (ext)
+        *a = &ext->data.u.pkinit_issuer_serial;
+    else
+        *a = NULL;
+
+    return 0;
+}
+
+krb5_error_code
+hdb_entry_get_pkinit_object_sid(const hdb_entry *entry,
+                                const HDB_Ext_PKINIT_object_sid **a)
+{
+    const HDB_extension *ext;
+
+    ext = hdb_find_extension(entry,
+                             choice_HDB_extension_data_pkinit_object_sid);
+    if (ext)
+        *a = &ext->data.u.pkinit_object_sid;
+    else
+        *a = NULL;
+
+    return 0;
+}
+
+krb5_error_code
+hdb_entry_get_pkinit_rfc822(const hdb_entry *entry,
+			    const HDB_Ext_PKINIT_rfc822 **a)
+{
+    const HDB_extension *ext;
+
+    ext = hdb_find_extension(entry,
+			     choice_HDB_extension_data_pkinit_rfc822);
+    if (ext)
+	*a = &ext->data.u.pkinit_rfc822;
+    else
+	*a = NULL;
+
+    return 0;
+}
+
+krb5_error_code
+hdb_entry_get_pkinit_ski(const hdb_entry *entry,
+			 const HDB_Ext_PKINIT_ski **a)
+{
+    const HDB_extension *ext;
+
+    ext = hdb_find_extension(entry,
+			     choice_HDB_extension_data_pkinit_ski);
+    if (ext)
+	*a = &ext->data.u.pkinit_ski;
+    else
+	*a = NULL;
+
+    return 0;
+}
+
+krb5_error_code
 hdb_entry_get_krb5_config(const hdb_entry *entry, heim_octet_string *c)
 {
     const HDB_extension *ext;

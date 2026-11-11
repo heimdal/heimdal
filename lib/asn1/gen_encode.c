@@ -33,6 +33,9 @@
 
 #include "gen_locl.h"
 
+/* Set by generate_type_encode() for use by gen_open_type_encode() */
+static const char *current_encode_basetype;
+
 /* XXX same as der_length_tag */
 static size_t
 length_tag(unsigned int tag)
@@ -46,6 +49,165 @@ length_tag(unsigned int tag)
         len++;
     }
     return len + 1;
+}
+
+/*
+ * Generate code to encode open types in SEQUENCE/SET.
+ *
+ * Before encoding the SEQUENCE members (which happens in reverse order), the
+ * open type value from _ioschoice must be encoded into the OCTET STRING /
+ * HEIM_ANY field, and the type-ID field must be set from the object set.
+ *
+ * This is called from generate_type_encode() at the top level, before the
+ * member encoding begins, since the member encoding will pick up the
+ * populated OCTET STRING / HEIM_ANY and type-ID fields.
+ */
+static void
+gen_open_type_encode(const char *name, const Type *t)
+{
+    Member *opentypemember = NULL, *typeidmember = NULL;
+    Field *opentypefield = NULL, *typeidfield = NULL;
+    IOSObjectSet *os;
+    IOSObject **objects = NULL;
+    size_t nobjs, i;
+    int is_array_of_open_type = 0;
+    int typeid_is_oid = 0;
+
+    if (!t->actual_parameter)
+        return;
+
+    get_open_type_defn_fields(t, &typeidmember, &opentypemember,
+                              &typeidfield, &opentypefield,
+                              &is_array_of_open_type);
+    if (!opentypemember || !typeidmember)
+        return;
+
+    os = t->actual_parameter;
+    sort_object_set(os, typeidfield, &objects, &nobjs);
+    if (nobjs == 0)
+        return;
+
+    /* Determine whether the type-ID is OID or integer */
+    {
+        ObjectField *of;
+        HEIM_TAILQ_FOREACH(of, objects[0]->objfields, objfields) {
+            if (strcmp(of->name, typeidfield->name) == 0) {
+                if (of->value->type == objectidentifiervalue)
+                    typeid_is_oid = 1;
+                break;
+            }
+        }
+    }
+
+    fprintf(codefile, "/* Open type encode for %s */\n", opentypemember->gen_name);
+
+    /*
+     * Generate a switch on _ioschoice_<field>.element.
+     * For each known element value, encode the union value into the
+     * OCTET STRING / HEIM_ANY field and set the type ID.
+     */
+    fprintf(codefile, "switch ((%s)->_ioschoice_%s.element) {\n",
+            name, opentypemember->gen_name);
+
+    for (i = 0; i < nobjs; i++) {
+        ObjectField *typeidobjf = NULL, *opentypeobjf = NULL;
+        ObjectField *of;
+
+        HEIM_TAILQ_FOREACH(of, objects[i]->objfields, objfields) {
+            if (strcmp(of->name, typeidfield->name) == 0)
+                typeidobjf = of;
+            else if (strcmp(of->name, opentypefield->name) == 0)
+                opentypeobjf = of;
+        }
+        if (!typeidobjf || !opentypeobjf)
+            continue;
+
+        fprintf(codefile, "case choice_%s_iosnum_%s: {\n",
+                current_encode_basetype,
+                typeidobjf->value->s->gen_name);
+
+        /* Set the type ID field */
+        if (typeid_is_oid) {
+            fprintf(codefile,
+                    "der_free_oid(&(%s)->%s);\n"
+                    "e = der_copy_oid(&asn1_oid_%s, &(%s)->%s);\n"
+                    "if (e) return e;\n",
+                    name, typeidmember->gen_name,
+                    typeidobjf->value->s->gen_name,
+                    name, typeidmember->gen_name);
+        } else {
+            fprintf(codefile,
+                    "(%s)->%s = %lld;\n",
+                    name, typeidmember->gen_name,
+                    (long long)typeidobjf->value->u.integervalue);
+        }
+
+        if (!is_array_of_open_type) {
+            /* Encode the single open type value */
+            fprintf(codefile,
+                    "if ((%s)->_ioschoice_%s.u.%s) {\n"
+                    "size_t ot_len;\n"
+                    "der_free_octet_string(&(%s)->%s);\n"
+                    "ASN1_MALLOC_ENCODE(%s, (%s)->%s.data, (%s)->%s.length,"
+                    " (%s)->_ioschoice_%s.u.%s, &ot_len, e);\n"
+                    "if (e) return e;\n"
+                    "if ((%s)->%s.length != ot_len) return ASN1_OVERFLOW;\n"
+                    "}\n",
+                    name, opentypemember->gen_name,
+                    objects[i]->symbol->gen_name,
+                    name, opentypemember->gen_name,
+                    opentypeobjf->type->symbol->gen_name,
+                    name, opentypemember->gen_name,
+                    name, opentypemember->gen_name,
+                    name, opentypemember->gen_name,
+                    objects[i]->symbol->gen_name,
+                    name, opentypemember->gen_name);
+        } else {
+            /* Encode the array of open type values */
+            fprintf(codefile,
+                    "if ((%s)->_ioschoice_%s.len && (%s)->_ioschoice_%s.val) {\n"
+                    "unsigned int ot_i;\n"
+                    "size_t ot_len;\n"
+                    /* Free old encoded array */
+                    "for (ot_i = 0; ot_i < (%s)->%s.len; ot_i++)\n"
+                    "  der_free_octet_string(&(%s)->%s.val[ot_i]);\n"
+                    "free((%s)->%s.val);\n"
+                    "(%s)->%s.len = (%s)->_ioschoice_%s.len;\n"
+                    "(%s)->%s.val = calloc((%s)->_ioschoice_%s.len, sizeof((%s)->%s.val[0]));\n"
+                    "if ((%s)->%s.val == NULL) return ENOMEM;\n"
+                    "for (ot_i = 0; ot_i < (%s)->_ioschoice_%s.len; ot_i++) {\n"
+                    "ASN1_MALLOC_ENCODE(%s, (%s)->%s.val[ot_i].data,"
+                    " (%s)->%s.val[ot_i].length,"
+                    " &(%s)->_ioschoice_%s.val[ot_i], &ot_len, e);\n"
+                    "if (e) return e;\n"
+                    "}\n"
+                    "}\n",
+                    name, opentypemember->gen_name,
+                    name, opentypemember->gen_name,
+                    name, opentypemember->gen_name,
+                    name, opentypemember->gen_name,
+                    name, opentypemember->gen_name,
+                    name, opentypemember->gen_name,
+                    name, opentypemember->gen_name,
+                    name, opentypemember->gen_name,
+                    name, opentypemember->gen_name,
+                    name, opentypemember->gen_name,
+                    name, opentypemember->gen_name,
+                    name, opentypemember->gen_name,
+                    opentypeobjf->type->symbol->gen_name,
+                    name, opentypemember->gen_name,
+                    name, opentypemember->gen_name,
+                    name, opentypemember->gen_name);
+        }
+
+        fprintf(codefile, "break;\n}\n");
+    }
+
+    fprintf(codefile,
+            "default: break;\n"
+            "}\n");
+
+    free(objects);
 }
 
 static void
@@ -699,6 +861,8 @@ encode_type (const char *name, const Type *t, const char *tmpstr)
 void
 generate_type_encode (const Symbol *s)
 {
+    current_encode_basetype = s->gen_name;
+
     fprintf (codefile, "int ASN1CALL\n"
 	     "encode_%s(unsigned char *p HEIMDAL_UNUSED_ATTRIBUTE, size_t len HEIMDAL_UNUSED_ATTRIBUTE,"
 	     " const %s *data, size_t *size)\n"
@@ -734,6 +898,31 @@ generate_type_encode (const Symbol *s)
 		 "size_t ret HEIMDAL_UNUSED_ATTRIBUTE = 0;\n"
 		 "size_t l HEIMDAL_UNUSED_ATTRIBUTE;\n"
 		 "int i HEIMDAL_UNUSED_ATTRIBUTE, e HEIMDAL_UNUSED_ATTRIBUTE;\n\n");
+
+	/*
+	 * If this type has open type fields, encode the decoded values into
+	 * the OCTET STRING / HEIM_ANY fields before the main encode.
+	 * We need a non-const pointer for this, same as template backend.
+	 */
+	{
+	    const Type *inner = s->type;
+	    while (inner->type == TTag || inner->type == TType) {
+		if (inner->subtype)
+		    inner = inner->subtype;
+		else if (inner->symbol && inner->symbol->type)
+		    inner = inner->symbol->type;
+		else
+		    break;
+	    }
+	    if ((inner->type == TSequence || inner->type == TSet) &&
+		inner->actual_parameter) {
+		fprintf(codefile,
+			"{ %s *mdata = (%s *)(uintptr_t)data;\n",
+			s->gen_name, s->gen_name);
+		gen_open_type_encode("mdata", inner);
+		fprintf(codefile, "}\n");
+	    }
+	}
 
 	encode_type("data", s->type, "Top");
 

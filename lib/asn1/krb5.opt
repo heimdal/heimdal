@@ -11,5 +11,18 @@
 # side, and b) because we'll be saving it on decode in the _save field we can
 # also use it on the KDC side.
 --preserve-binary=KDC-REQ
+--redact=EncryptionKey.keyvalue
+--redact=EncTicketPart.key
+--redact=EncKDCRepPart.key
+--redact=EncAPRepPart.subkey
+--redact=Authenticator.subkey
+--redact=KrbCredInfo.key
+--redact=KrbFastResponse.strengthen-key
+--redact=KERB-CRED.keyblock
+--redact=KERB-TGS-REQ-OUT.subkey
+--redact=KERB-TGS-REP-IN.subkey
+--redact=KERB-TGS-REP-OUT.subkey
+--redact=KERB-ARMOR-SERVICE-REPLY.armor-key
+--redact=PA-SAM-CHALLENGE-2-BODY.sam-pk-for-sad
 --decorate=PrincipalNameAttrs:void *:pac
 --decorate=Principal:PrincipalNameAttrs:nameattrs?

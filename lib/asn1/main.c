@@ -40,6 +40,7 @@ extern FILE *yyin;
 static getarg_strings preserve;
 static getarg_strings seq;
 static getarg_strings decorate;
+static getarg_strings redact;
 
 static int
 strcmp4mergesort_r(const void *ap, const void *bp, void *d)
@@ -138,6 +139,16 @@ int
 seq_type(const char *p)
 {
     return bsearch_strings(&seq, p, '\0', 0) > -1;
+}
+
+/*
+ * Check if TYPE.member should be redacted.
+ * `p' should be "TYPE.member" with a dot separator.
+ */
+int
+redact_field(const char *p)
+{
+    return bsearch_strings(&redact, p, '\0', 0) > -1;
 }
 
 /*
@@ -287,6 +298,9 @@ struct getargs args[] = {
         "Generate add/remove functions for SEQUENCE OF types", "TYPE" },
     { "decorate", 0, arg_strings, &decorate,
         "Generate private field for SEQUENCE/SET type", "DECORATION" },
+    { "redact", 0, arg_strings, &redact,
+        "Mark a member for redaction in print output (e.g., TYPE.member)",
+        "TYPE.MEMBER" },
     { "one-code-file", 0, arg_flag, &one_code_file, NULL, NULL },
     { "gen-name", 0, arg_string, &name,
         "Name of generated module", "NAME" },
@@ -471,6 +485,23 @@ main(int argc, char **argv)
 	const char *sep = ":";
         mergesort_r(decorate.strings, decorate.num_strings,
                     sizeof(decorate.strings[0]), strcmp4mergesort_r, &sep);
+    }
+    if (redact.num_strings) {
+	const char *sep = ".";
+
+	/*
+	 * Normalize type names: convert hyphens to underscores in the
+	 * TYPE portion (before the dot) to match gen_name conventions.
+	 * Member names (after the dot) keep their ASN.1 hyphens.
+	 */
+	for (i = 0; i < (int)redact.num_strings; i++) {
+	    char *p;
+	    for (p = redact.strings[i]; *p && *p != '.'; p++)
+		if (*p == '-')
+		    *p = '_';
+	}
+        mergesort_r(redact.strings, redact.num_strings,
+                    sizeof(redact.strings[0]), strcmp4mergesort_r, &sep);
     }
 
     init_generate(file, name);

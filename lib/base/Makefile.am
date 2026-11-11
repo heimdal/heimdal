@@ -84,8 +84,12 @@ libheimbase_la_DEPENDENCIES = version-script.map
 
 test_base_LDADD = libheimbase.la $(LIB_roken)
 
-# Fuzzer for JSON parser (build with: make fuzz_json CFLAGS="-fsanitize=fuzzer,address")
-noinst_PROGRAMS = fuzz_json
+# compile_fmt: Compiles format strings into type-safe C functions.
+# Used to generate *_fmt.h headers from .fmt registries and C source files.
+noinst_PROGRAMS = compile_fmt fuzz_json
+
+compile_fmt_SOURCES = compile_fmt.c
+compile_fmt_LDADD =
 fuzz_json_SOURCES = fuzz_json.c
 fuzz_json_LDADD = libheimbase.la $(LIB_roken)
 fuzz_json.$(OBJEXT): $(srcdir)/heimbase-protos.h heim_err.h

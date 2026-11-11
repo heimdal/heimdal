@@ -57,6 +57,7 @@ typedef struct heim_base_data HEIM_ANY_SET;
 
 enum asn1_print_flags {
     ASN1_PRINT_INDENT = 1,
+    ASN1_PRINT_REDACT = 2,
 };
 
 #define ASN1_MALLOC_ENCODE(T, B, BL, S, L, R)                  \

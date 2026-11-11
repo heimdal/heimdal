@@ -96,6 +96,7 @@
  *
  *  0..23 unused
  * 24..27 flags A1_NM_*
+ *     24 A1_NM_REDACT - field should be redacted in print output
  * 28..31 op
  *
  * ptr is const char * pointer to the name as C string
@@ -150,6 +151,9 @@
 #define A1_FLAG_OPTIONAL	(0x01000000)
 #define A1_FLAG_IMPLICIT	(0x02000000)
 #define A1_FLAG_DEFAULT		(0x04000000)
+
+/* Flags for A1_OP_NAME entries (bits 24..27) */
+#define A1_NM_REDACT		(0x01000000)
 
 #define A1_TAG_T(CLASS,TYPE,TAG)	((A1_OP_TAG) | (((CLASS) << 22) | ((TYPE) << 21) | (TAG)))
 #define A1_TAG_CLASS(x)		(((x) >> 22) & 0x3)
@@ -262,6 +266,12 @@ _asn1_free_top(const struct asn1_template *, void *);
 
 char *
 _asn1_print_top(const struct asn1_template *, int, const void *);
+
+int
+_asn1_parse_json_top(const struct asn1_template *, void * /*heim_object_t*/, void *);
+
+int
+_asn1_parse_json_string_top(const struct asn1_template *, const char *, size_t, void *);
 
 int
 _asn1_decode_top (

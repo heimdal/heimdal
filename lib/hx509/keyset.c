@@ -545,8 +545,11 @@ hx509_certs_find(hx509_context context,
 
     _hx509_query_statistic(context, 0, q);
 
-    if (certs->ops->query)
-	return (*certs->ops->query)(context, certs, certs->ops_data, q, r);
+    if (certs->ops->query) {
+	ret = (*certs->ops->query)(context, certs, certs->ops_data, q, r);
+        if (ret == 0 || ret != ENOTSUP)
+            return ret;
+    }
 
     ret = hx509_certs_start_seq(context, certs, &cursor);
     if (ret)

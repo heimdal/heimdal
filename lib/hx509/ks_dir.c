@@ -100,6 +100,64 @@ dir_free(hx509_certs certs, void *data)
 }
 
 static int
+dir_query(hx509_context context, hx509_certs certs, void *data,
+          const hx509_query *q, hx509_cert *out)
+{
+    unsigned long hash;
+    struct stat st;
+    char *dn = data;
+    size_t i;
+    int ret;
+
+    *out = NULL;
+
+    /*
+     * We can only search by subject name; for searches not including by name
+     * we return ENOTSUP so we can fall back on iterating the directory.
+     */
+    if ((q->match & ~(HX509_QUERY_MATCH_SUBJECT_NAME)) ||
+        q->subject_name == NULL)
+        return ENOTSUP;
+
+    ret = _hx509_name_openssl_hash(q->subject_name ?
+                                       q->subject_name :
+                                       q->issuer_name,
+                                   &hash);
+    if (ret)
+        return ret;
+
+    for (i = 0; i < 50; i++) {
+        hx509_certs found_certs = NULL;
+        char *p = NULL;
+        char pathsep;
+
+#ifdef WIN32
+        pathsep = '\\';
+#else
+        pathsep = '/';
+#endif
+
+        if (asprintf(&p, "%s%c%08lx.%d", dn, pathsep, hash, (int)i) == -1 ||
+            p == NULL)
+            return ENOMEM;
+        if (stat(p, &st) != 0)
+            return HX509_CERT_NOT_FOUND;
+        ret = hx509_certs_init(context, p, HX509_CERTS_NO_PRIVATE_KEYS,
+                               NULL, &found_certs);
+        free(p);
+        if (ret)
+            return ret;
+
+        /* Recurse to handle all the remaining bits of the query */
+        ret = hx509_certs_find(context, found_certs, q, out);
+        if (ret == 0 && *out)
+            return 0;
+        hx509_certs_free(&found_certs);
+    }
+    return HX509_CERT_NOT_FOUND;
+}
+
+static int
 dir_iter_start(hx509_context context,
 	       hx509_certs certs, void *data, void **cursor)
 {
@@ -128,17 +186,22 @@ dir_iter_start(hx509_context context,
 }
 
 static int
-dir_iter(hx509_context context,
-	 hx509_certs certs, void *data, void *iter, hx509_cert *cert)
+dir_iter_(hx509_context context,
+          hx509_certs certs,
+          const char *dn,
+          struct dircursor *d,
+          hx509_cert *cert,
+          int hashed)
 {
-    struct dircursor *d = iter;
     int ret = 0;
 
     *cert = NULL;
 
     do {
 	struct dirent *dir;
+        unsigned long hash;
 	char *fn;
+        int n;
 
 	if (d->certs) {
 	    ret = hx509_certs_next_cert(context, d->certs, d->iter, cert);
@@ -164,8 +227,14 @@ dir_iter(hx509_context context,
 	}
 	if (strcmp(dir->d_name, ".") == 0 || strcmp(dir->d_name, "..") == 0)
 	    continue;
+        if (sscanf(dir->d_name, "%08lx.%d", &hash, &n) == 2) {
+            if (!hashed)
+                continue;
+        } else if (hashed) {
+            continue;
+        }
 
-	if (asprintf(&fn, "FILE:%s/%s", (char *)data, dir->d_name) == -1)
+	if (asprintf(&fn, "FILE:%s/%s", dn, dir->d_name) == -1)
 	    return ENOMEM;
 
 	ret = hx509_certs_init(context, fn, 0, NULL, &d->certs);
@@ -187,6 +256,20 @@ dir_iter(hx509_context context,
     return ret;
 }
 
+static int
+dir_iter(hx509_context context,
+	 hx509_certs certs, void *data, void *iter, hx509_cert *cert)
+{
+    return dir_iter_(context, certs, data, iter, cert, 0);
+}
+
+static int
+hashdir_iter(hx509_context context,
+	 hx509_certs certs, void *data, void *iter, hx509_cert *cert)
+{
+    return dir_iter_(context, certs, data, iter, cert, 1);
+}
+
 
 static int
 dir_iter_end(hx509_context context,
@@ -206,7 +289,6 @@ dir_iter_end(hx509_context context,
     return 0;
 }
 
-
 static struct hx509_keyset_ops keyset_dir = {
     "DIR",
     0,
@@ -224,8 +306,26 @@ static struct hx509_keyset_ops keyset_dir = {
     NULL
 };
 
+static struct hx509_keyset_ops keyset_hashdir = {
+    "HASHDIR",
+    0,
+    dir_init,
+    NULL,
+    dir_free,
+    NULL,
+    dir_query,
+    dir_iter_start,
+    hashdir_iter,
+    dir_iter_end,
+    NULL,
+    NULL,
+    NULL,
+    NULL
+};
+
 HX509_LIB_FUNCTION void HX509_LIB_CALL
 _hx509_ks_dir_register(hx509_context context)
 {
     _hx509_ks_register(context, &keyset_dir);
+    _hx509_ks_register(context, &keyset_hashdir);
 }

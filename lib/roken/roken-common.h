@@ -78,6 +78,10 @@
 #define STDERR_FILENO 2
 #endif
 
+#ifndef SD_LISTEN_FDS_START
+#define SD_LISTEN_FDS_START 3
+#endif
+
 #ifndef max
 #define max(a,b) (((a)>(b))?(a):(b))
 #endif
@@ -571,6 +575,16 @@ rk_mkdir(const char *, mode_t);
 
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 rk_clzll(uint64_t);
+
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
+rk_sd_notify(int, const char *);
+
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
+rk_sd_notifyf(int, const char *, ...)
+    ROKEN_PRINTF_ATTRIBUTE((__printf__, 2, 3));
+
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
+rk_sd_listen_fds_with_names(int, char ***);
 
 ROKEN_CPP_END
 

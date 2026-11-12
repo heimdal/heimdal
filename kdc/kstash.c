@@ -43,7 +43,7 @@ static int version_flag;
 static int master_key_fd = -1;
 static int random_key_flag;
 
-static const char *enctype_str = "des3-cbc-sha1";
+static const char *enctype_str = "aes128-cts-hmac-sha1-96";
 
 static struct getargs args[] = {
     { "enctype", 'e', arg_string, rk_UNCONST(&enctype_str), "encryption type",

@@ -109,6 +109,10 @@ mergesort_r(void *base, size_t nmemb, size_t size, cmp_t cmp, void *thunk)
 
 	if (nmemb == 0)
 		return (0);
+        if (nmemb > (SIZE_MAX - PSIZE) / size) {
+                errno = ENOMEM;
+                return (-1);
+        }
 
 	/*
 	 * XXX

@@ -1611,7 +1611,8 @@ LDAP__connect(krb5_context context, HDB * db)
      * credentials instead of empty credentials you will get a SASL
      * bind in progress message.
      */
-    struct berval bv = { 0, 0 };
+    static char empty[1] = "";
+    struct berval bv = { 0, empty };
     const char *sasl_method = "EXTERNAL";
     const char *bind_dn = NULL;
 

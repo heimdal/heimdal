@@ -106,8 +106,8 @@ kt_copy (struct copy_options *opt, int argc, char **argv)
 			   "already exists for %s, keytype %s, kvno %d",
 			   name_str, etype_str, entry.vno);
 	    }
+            krb5_kt_free_entry(context, &dummy);
             if (!opt->copy_duplicates_flag) {
-                krb5_kt_free_entry(context, &dummy);
                 krb5_kt_free_entry (context, &entry);
                 free(name_str);
                 free(etype_str);
@@ -141,6 +141,8 @@ kt_copy (struct copy_options *opt, int argc, char **argv)
 	free(name_str);
 	free(etype_str);
     }
+    if (ret == KRB5_KT_END)
+	ret = 0;
     krb5_kt_end_seq_get (context, src_keytab, &cursor);
 
   out:

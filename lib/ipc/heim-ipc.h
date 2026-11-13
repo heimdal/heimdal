@@ -62,6 +62,9 @@ heim_ipc_cred_get_session(heim_icred);
 void
 heim_ipc_main(void);
 
+void
+heim_ipc_main_exit(void);
+
 heim_isemaphore
 heim_ipc_semaphore_create(long);
 

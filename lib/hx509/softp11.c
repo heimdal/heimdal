@@ -1677,10 +1677,11 @@ C_Verify(CK_SESSION_HANDLE hSession,
 {
     struct session_state *state;
     struct st_object *o;
-    const AlgorithmIdentifier *alg;
+    const Certificate *c;
+    const unsigned char *p;
+    EVP_PKEY_CTX *pctx = NULL;
+    EVP_PKEY *pkey = NULL;
     CK_RV ret;
-    int hret;
-    heim_octet_string data, sig;
 
     INIT_CONTEXT();
     st_logf("Verify\n");
@@ -1688,36 +1689,46 @@ C_Verify(CK_SESSION_HANDLE hSession,
 
     if (state->verify_object == -1)
 	return CKR_ARGUMENTS_BAD;
+    if (pData == NULL || pSignature == NULL)
+	return CKR_ARGUMENTS_BAD;
 
     o = soft_token.object.objs[state->verify_object];
 
     switch(state->verify_mechanism->mechanism) {
     case CKM_RSA_PKCS:
-	alg = hx509_signature_rsa_pkcs1_x509();
+	/*
+	 * CKM_RSA_PKCS: like C_Sign(), this is raw RSA PKCS#1 v1.5 -- the
+	 * data is already a DigestInfo (or whatever the caller wants signed),
+	 * so we must not digest it.
+	 */
+	c = _hx509_get_cert(o->cert);
+	p = c->tbsCertificate.subjectPublicKeyInfo._save.data;
+	pkey = d2i_PUBKEY(NULL, &p,
+			  c->tbsCertificate.subjectPublicKeyInfo._save.length);
+	if (pkey == NULL ||
+	    (pctx = EVP_PKEY_CTX_new(pkey, NULL)) == NULL ||
+	    EVP_PKEY_verify_init(pctx) <= 0 ||
+	    EVP_PKEY_CTX_set_rsa_padding(pctx, RSA_PKCS1_PADDING) <= 0) {
+	    st_logf("Verify: could not set up RSA verification\n");
+	    ret = CKR_DEVICE_ERROR;
+	    goto out;
+	}
+	if (EVP_PKEY_verify(pctx, pSignature, ulSignatureLen,
+			    pData, ulDataLen) != 1) {
+	    st_logf("Verify: signature invalid\n");
+	    ret = CKR_SIGNATURE_INVALID;
+	    goto out;
+	}
+	ret = CKR_OK;
 	break;
     default:
 	ret = CKR_FUNCTION_NOT_SUPPORTED;
-	goto out;
+	break;
     }
-
-    sig.data = pData;
-    sig.length = ulDataLen;
-    data.data = pSignature;
-    data.length = ulSignatureLen;
-
-    hret = _hx509_verify_signature(context,
-				   o->cert,
-				   alg,
-                                   NULL,
-				   &data,
-				   &sig);
-    if (hret) {
-	ret = CKR_GENERAL_ERROR;
-	goto out;
-    }
-    ret = CKR_OK;
 
  out:
+    EVP_PKEY_CTX_free(pctx);
+    EVP_PKEY_free(pkey);
     return ret;
 }
 

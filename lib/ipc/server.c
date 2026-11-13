@@ -36,6 +36,7 @@
 #include "hi_locl.h"
 #include <assert.h>
 #include <err.h>
+#include <signal.h>
 
 #define MAX_PACKET_SIZE (128 * 1024)
 
@@ -962,6 +963,8 @@ handle_write(struct client *c)
 }
 
 
+static volatile sig_atomic_t exit_requested;
+
 #ifndef HAVE_GCD
 
 static void
@@ -971,7 +974,7 @@ process_loop(void)
     unsigned n;
     unsigned num_fds;
 
-    while (num_clients > 0) {
+    while (num_clients > 0 && !exit_requested) {
 
 	fds = malloc(num_clients * sizeof(fds[0]));
 	if(fds == NULL)
@@ -990,11 +993,15 @@ process_loop(void)
 	    fds[n].revents = 0;
 	}
 
-	while (poll(fds, num_fds, -1) == -1) {
+	while (poll(fds, num_fds, -1) == -1 && !exit_requested) {
             if (errno == EINTR || errno == EAGAIN)
                 continue;
             err(1, "poll(2) failed");
         }
+	if (exit_requested) {
+	    free(fds);
+	    break;
+	}
 
 	for (n = 0 ; n < num_fds; n++) {
 	    if (clients[n] == NULL)
@@ -1359,6 +1366,22 @@ void
 heim_sipc_free_context(heim_sipc ctx)
 {
     (ctx->release)(ctx);
+}
+
+/**
+ * Ask heim_ipc_main() to return.
+ *
+ * This is async-signal-safe and meant to be called from a SIGTERM/SIGINT
+ * handler (installed without SA_RESTART) so that servers can exit
+ * normally, running atexit handlers (and flushing coverage data).
+ *
+ * Has no effect when built with GCD, where heim_ipc_main() never returns.
+ */
+
+void
+heim_ipc_main_exit(void)
+{
+    exit_requested = 1;
 }
 
 void

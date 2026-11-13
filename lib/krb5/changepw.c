@@ -282,41 +282,35 @@ process_reply (krb5_context context,
 
     len = 0;
     if (is_stream) {
-	while (len < sizeof(reply)) {
-	    unsigned long size;
+	unsigned long size = 0;
+	ssize_t n;
+	int complete = 0;
 
-	    ret = recvfrom (sock, reply + len, sizeof(reply) - len,
-			    0, NULL, NULL);
-	    if (rk_IS_SOCKET_ERROR(ret)) {
-		save_errno = rk_SOCK_ERRNO;
-		krb5_set_error_message(context, save_errno,
-				       "recvfrom %s: %s",
-				       host, strerror(save_errno));
-		return save_errno;
-	    } else if (ret == 0) {
-		krb5_set_error_message(context, 1,"recvfrom timeout %s", host);
-		return 1;
-	    }
-	    len += ret;
-	    if (len < 4)
-		continue;
+	/* A 4-byte length prefix, then exactly that many bytes of reply */
+	n = net_read(sock, reply, 4);
+	if (n == 4) {
 	    _krb5_get_int(reply, &size, 4);
-	    if (size + 4 < len)
-		continue;
-	    if (sizeof(reply) - 4 < size) {
-		krb5_set_error_message(context, ERANGE, "size from server too large %s", host);
+	    if (size > sizeof(reply)) {
+		krb5_set_error_message(context, ERANGE,
+				       "size from server too large %s", host);
 		return ERANGE;
 	    }
-	    memmove(reply, reply + 4, size);
-	    len = size;
-	    break;
+	    n = net_read(sock, reply, size);
+	    complete = (n >= 0 && (size_t)n == size);
 	}
-	if (len == sizeof(reply)) {
-	    krb5_set_error_message(context, ENOMEM,
-				   N_("Message too large from %s", "host"),
-				   host);
-	    return ENOMEM;
+	if (rk_IS_SOCKET_ERROR(n)) {
+	    save_errno = rk_SOCK_ERRNO;
+	    krb5_set_error_message(context, save_errno,
+				   "recvfrom %s: %s",
+				   host, strerror(save_errno));
+	    return save_errno;
 	}
+	if (!complete) {
+	    krb5_set_error_message(context, 1, "%s closed the connection "
+				   "before sending a whole reply", host);
+	    return 1;
+	}
+	len = size;
     } else {
 	ret = recvfrom (sock, reply, sizeof(reply), 0, NULL, NULL);
 	if (rk_IS_SOCKET_ERROR(ret)) {

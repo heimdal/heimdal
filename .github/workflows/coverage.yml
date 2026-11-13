@@ -19,7 +19,7 @@ jobs:
                 sudo apt-get install -y libcap-ng-dev libdb-dev libedit-dev libjson-perl
                 sudo apt-get install -y libldap2-dev libncurses5-dev libperl4-corelibs-perl
                 sudo apt-get install -y libsqlite3-dev libkeyutils-dev pkg-config python3
-                sudo apt-get install -y ss-dev texinfo unzip netbase keyutils ldap-utils
+                sudo apt-get install -y ss-dev texinfo unzip netbase keyutils ldap-utils slapd
                 sudo apt-get install -y gdb apport curl libmicrohttpd-dev jq valgrind
                 sudo apt-get install -y lcov
                 # Temporary workaround for:
@@ -34,7 +34,16 @@ jobs:
                 /bin/sh ./autogen.sh
                 mkdir build
                 cd build
-                ../configure --srcdir=`dirname "$PWD"` --enable-maintainer-mode --enable-developer --with-ldap --prefix=$HOME/inst CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS"
+                # Use the system SQLite3 (so the bundled lib/sqlite isn't linked
+                # in and counted) and build the OpenLDAP HDB backend (so
+                # tests/ldap/check-ldap runs).  rk_TEST_PACKAGE doesn't know
+                # about multiarch lib dirs, hence the explicit paths.
+                ../configure --srcdir=`dirname "$PWD"` --enable-maintainer-mode --enable-developer \
+                    --with-openldap-include=/usr/include \
+                    --with-openldap-lib=/usr/lib/x86_64-linux-gnu \
+                    --with-sqlite3-include=/usr/include \
+                    --with-sqlite3-lib=/usr/lib/x86_64-linux-gnu \
+                    --prefix=$HOME/inst CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS"
                 make -j4
             - name: Test
               timeout-minutes: 40
@@ -48,8 +57,15 @@ jobs:
                 cd build
                 # Capture coverage data
                 lcov --capture --directory . --output-file coverage.info --ignore-errors source
-                # Remove coverage for system headers and generated files
-                lcov --remove coverage.info '/usr/*' '*/build/*asn1*' '*/build/*_err.*' --output-file coverage.info --ignore-errors unused
+                # Remove coverage for system headers, generated files
+                # (everything under build/: ASN.1, com_err, slc, lex/yacc),
+                # the bundled SQLite3, and code we don't intend to test.
+                lcov --remove coverage.info \
+                    '/usr/*' \
+                    '*/build/*' \
+                    '*/lib/sqlite/*' \
+                    '*/lib/hdb/hdb-mitdb.c' \
+                    --output-file coverage.info --ignore-errors unused
                 # List coverage summary
                 lcov --list coverage.info
             - name: Upload to Coveralls

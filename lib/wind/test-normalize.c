@@ -137,6 +137,91 @@ test(char *buf, unsigned lineno)
     return 0;
 }
 
+/*
+ * Normalize `in' and check the result: either the expected output, or (if
+ * `exp' is NULL) rejection with WIND_ERR_TOO_MANY_COMBINING.
+ */
+static int
+check_nonstarters(const char *name, const uint32_t *in, size_t in_len,
+		  const uint32_t *exp, size_t exp_len)
+{
+    uint32_t out[128];
+    size_t out_len = sizeof(out) / sizeof(out[0]);
+    int ret;
+
+    ret = _wind_stringprep_normalize(in, in_len, out, &out_len);
+    if (exp == NULL) {
+	if (ret == WIND_ERR_TOO_MANY_COMBINING)
+	    return 0;
+	printf("%s: expected WIND_ERR_TOO_MANY_COMBINING, got %d\n", name, ret);
+	return 1;
+    }
+    if (ret) {
+	printf("%s: normalization failed: %d\n", name, ret);
+	return 1;
+    }
+    if (out_len != exp_len ||
+	memcmp(out, exp, exp_len * sizeof(exp[0])) != 0) {
+	printf("%s: wrong output\n", name);
+	dump_vector("Expected", rk_UNCONST(exp), exp_len);
+	dump_vector("Received", out, out_len);
+	return 1;
+    }
+    return 0;
+}
+
+/*
+ * Runs of more than 30 non-starters (the UAX #15 Stream-Safe Text Format
+ * limit) are rejected, so that canonical reordering stays cheap.
+ *
+ * U+0301 and U+0300 have combining class 230, U+0316 has class 220, and none of
+ * them composes with 'x', so the expected output is just the reordered input.
+ */
+static int
+test_nonstarter_limit(void)
+{
+    uint32_t in[100], exp[100];
+    size_t i, n;
+    unsigned failures = 0;
+
+    /* 'x' + 30 marks: [0301 0316 0300] x 10 */
+    in[0] = 'x';
+    for (i = 0; i < 10; i++) {
+	in[1 + 3 * i] = 0x0301;
+	in[2 + 3 * i] = 0x0316;
+	in[3 + 3 * i] = 0x0300;
+    }
+    /*
+     * Expected: 'x', the ten class-220 marks, then the class-230 marks in
+     * their original relative order (canonical ordering is stable).
+     */
+    exp[0] = 'x';
+    for (i = 0; i < 10; i++)
+	exp[1 + i] = 0x0316;
+    for (i = 0; i < 10; i++) {
+	exp[11 + 2 * i] = 0x0301;
+	exp[12 + 2 * i] = 0x0300;
+    }
+    failures += check_nonstarters("30 marks", in, 31, exp, 31);
+
+    /* 31 marks: rejected */
+    in[31] = 0x0301;
+    failures += check_nonstarters("31 marks", in, 32, NULL, 0);
+
+    /* The limit is per run: two runs of 30 separated by a starter are fine */
+    n = 31;
+    memcpy(&in[n], in, 31 * sizeof(in[0]));
+    memcpy(&exp[n], exp, 31 * sizeof(exp[0]));
+    failures += check_nonstarters("two runs of 30", in, 62, exp, 62);
+
+    /* A leading run (no starter) of 31 is also rejected */
+    for (i = 0; i < 31; i++)
+	in[i] = (i % 2) ? 0x0316 : 0x0301;
+    failures += check_nonstarters("leading 31 marks", in, 31, NULL, 0);
+
+    return failures;
+}
+
 int
 main(int argc, char **argv)
 {
@@ -175,5 +260,6 @@ main(int argc, char **argv)
 	failures += test(buf, lineno);
     }
     fclose(f);
+    failures += test_nonstarter_limit();
     return failures != 0;
 }

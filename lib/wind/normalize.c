@@ -173,6 +173,18 @@ swap_char(uint32_t * a, uint32_t * b)
     *b = t;
 }
 
+/*
+ * Maximum number of consecutive non-starters (code points with
+ * Canonical_Combining_Class > 0) accepted after decomposition.
+ *
+ * This is the limit of the Unicode Stream-Safe Text Format (UAX #15, section
+ * 13), chosen there so that no real-world text exceeds it.  It bounds the cost
+ * of the insertion sort in canonical_reorder_sequence(), which is quadratic in
+ * the length of a run: without a limit, one string with tens of thousands of
+ * stacked combining marks costs seconds of CPU to normalize.
+ */
+#define MAX_NONSTARTERS 30
+
 /* Unicode 5.2.0 D109 Canonical Ordering for a sequence of code points
  * that all have Canonical_Combining_Class > 0 */
 static void
@@ -192,7 +204,7 @@ canonical_reorder_sequence(uint32_t * a, size_t len)
     }
 }
 
-static void
+static int
 canonical_reorder(uint32_t *tmp, size_t tmp_len)
 {
     size_t i;
@@ -205,10 +217,13 @@ canonical_reorder(uint32_t *tmp, size_t tmp_len)
 		 j < tmp_len && _wind_combining_class(tmp[j]);
 		 ++j)
 		;
+	    if (j - i > MAX_NONSTARTERS)
+		return WIND_ERR_TOO_MANY_COMBINING;
 	    canonical_reorder_sequence(&tmp[i], j - i);
 	    i = j;
 	}
     }
+    return 0;
 }
 
 static uint32_t
@@ -318,7 +333,11 @@ _wind_stringprep_normalize(const uint32_t *in, size_t in_len,
 	free(tmp);
 	return ret;
     }
-    canonical_reorder(tmp, tmp_len);
+    ret = canonical_reorder(tmp, tmp_len);
+    if (ret) {
+	free(tmp);
+	return ret;
+    }
     ret = combine(tmp, tmp_len, out, out_len);
     free(tmp);
     return ret;

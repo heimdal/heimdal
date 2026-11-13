@@ -147,8 +147,8 @@ _krb5_evp_hmac_iov(krb5_context context,
                    unsigned int *hmaclen,
                    const EVP_MD *md)
 {
-    EVP_MAC *mac;
-    EVP_MAC_CTX *ctx;
+    EVP_MAC *mac = NULL;
+    EVP_MAC_CTX *ctx = NULL;
     const char *mdname = EVP_MD_get0_name(md); // can't be NULL can it
     krb5_data current = {0, NULL};
     OSSL_PARAM params[] = {
@@ -181,24 +181,37 @@ _krb5_evp_hmac_iov(krb5_context context,
 #endif
 
     if (crypto != NULL) {
-        if (crypto->mac == NULL)
-            crypto->mac = EVP_MAC_fetch(context->ossl->libctx, "HMAC",
-                                        context->ossl->propq);
-	if (crypto->hmacctx == NULL)
-	    crypto->hmacctx = EVP_MAC_CTX_new(crypto->mac);
-	ctx = crypto->hmacctx;
         mac = crypto->mac;
-    } else {
-        mac = EVP_MAC_fetch(context->ossl->libctx, "HMAC", context->ossl->propq);
-	ctx = EVP_MAC_CTX_new(mac);
+        ctx = crypto->hmacctx;
+    }
+
+    if (mac == NULL) {
+        mac = EVP_MAC_fetch(context->ossl->libctx, "HMAC",
+                            context->ossl->propq);
+        if (crypto != NULL)
+            crypto->mac = mac;
     }
     if (ctx == NULL) {
-        ret = krb5_enomem(context);
-        goto out;
+        ctx = EVP_MAC_CTX_new(mac);
+        if (ctx == NULL) {
+            ret = krb5_enomem(context);
+            goto out;
+        }
+
+        if (EVP_MAC_CTX_set_params(ctx, params) != 1) {
+            ret = _krb5_set_error_message_openssl(context,
+                                                  KRB5_CRYPTO_INTERNAL,
+                                                  "Failed to set HMAC digest");
+            EVP_MAC_CTX_free(ctx);
+            ctx = NULL;
+            goto out;
+        }
+        if (crypto != NULL)
+            crypto->hmacctx = ctx;
     }
 
     if (EVP_MAC_init(ctx, key->key->keyvalue.data, key->key->keyvalue.length,
-                     params) != 1) {
+                     NULL) != 1) {
         ret = _krb5_set_error_message_openssl(context, KRB5_CRYPTO_INTERNAL,
                                               "Failed to initialize HMAC");
         goto out;

@@ -24,7 +24,7 @@ noinst_PROGRAMS =				\
 noinst_LTLIBRARIES =				\
 	librfc3961.la
 
-TESTS =						\
+PROGRAM_TESTS =					\
 	aes-test				\
 	derived-key-test			\
 	krbhst-test				\
@@ -55,9 +55,13 @@ TESTS =						\
 	test_mcache				\
 	test_x500
 
+SCRIPT_TESTS = check-verify-krb5-conf.sh
+
+TESTS = $(PROGRAM_TESTS) $(SCRIPT_TESTS)
+
 check_DATA = test_config_strings.out
 
-check_PROGRAMS = $(TESTS) test_hostname test_ap-req test_canon test_set_kvno0 \
+check_PROGRAMS = $(PROGRAM_TESTS) test_hostname test_ap-req test_canon test_set_kvno0 \
 		test_mkforwardable
 
 LDADD = libkrb5.la \
@@ -439,6 +443,7 @@ test_config_strings.out: test_config_strings.cfg
 
 EXTRA_DIST = \
 	abi \
+	$(SCRIPT_TESTS) \
 	NTMakefile \
 	obsolete-symbols.c \
 	dll.c \

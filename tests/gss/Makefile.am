@@ -86,6 +86,7 @@ CLEANFILES= \
 	krb5ccfile \
 	krb5ccfile-ds \
 	server.keytab \
+	server-newkvno.keytab \
 	krb5.conf \
 	krb5-nodns.conf \
 	new_clients_k5.conf \

@@ -62,6 +62,8 @@ oid	base	GSS_KRB5_CRED_NO_CI_FLAGS_X		1.2.752.43.13.29
 oid	base	GSS_KRB5_IMPORT_CRED_X			1.2.752.43.13.30
 oid	base	GSS_KRB5_IMPORT_RFC4121_CONTEXT_X	1.2.752.43.13.31
 
+# /* 1.2.752.43.13.32 is the KRB_AP_ERR_BADKEYVER retry e-data marker. */
+
 # /* glue for gss_inquire_saslname_for_mech */
 oid	base	GSS_C_MA_SASL_MECH_NAME			1.2.752.43.13.100
 oid	base	GSS_C_MA_MECH_NAME			1.2.752.43.13.101

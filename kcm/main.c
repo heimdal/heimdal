@@ -52,6 +52,14 @@ sigusr2(int sig)
     kcm_debug_events(kcm_context);
 }
 
+#ifndef HAVE_GCD
+static RETSIGTYPE
+sigterm(int sig)
+{
+    heim_ipc_main_exit();
+}
+#endif
+
 int
 main(int argc, char **argv)
 {
@@ -81,11 +89,22 @@ main(int argc, char **argv)
 
 	sa.sa_handler = SIG_IGN;
 	sigaction(SIGPIPE, &sa, NULL);
+
+#ifndef HAVE_GCD
+	/* No SA_RESTART: we want poll(2) in heim_ipc_main() to see EINTR */
+	sa.sa_handler = sigterm;
+	sigaction(SIGTERM, &sa, NULL);
+	sigaction(SIGINT, &sa, NULL);
+#endif
     }
 #else
     signal(SIGUSR1, sigusr1);
     signal(SIGUSR2, sigusr2);
     signal(SIGPIPE, SIG_IGN);
+#ifndef HAVE_GCD
+    signal(SIGTERM, sigterm);
+    signal(SIGINT, sigterm);
+#endif
 #endif
     if (detach_from_console && !launchd_flag && daemon_child == -1)
         daemon_child = roken_detach_prep(argc, argv, "--daemon-child");

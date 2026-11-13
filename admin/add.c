@@ -169,45 +169,36 @@ kt_add(struct add_options *opt, int argc, char **argv)
 static char *
 read_file(FILE *f)
 {
-    size_t alloced;
+    size_t alloced = 1024;
     size_t len = 0;
     size_t bytes;
-    char *res, *end, *p;
+    char *res;
 
-    if ((res = malloc(1024)) == NULL)
+    if ((res = malloc(alloced)) == NULL)
         err(1, "Out of memory");
-    alloced = 1024;
 
-    end = res + alloced;
-    p = res;
-    do {
-        if (p == end) {
+    for (;;) {
+        /* Always leave room for the NUL terminator */
+        if (alloced - len < 2) {
             char *tmp;
 
-            if ((tmp = realloc(res, alloced + (alloced > 1))) == NULL)
+            if (alloced > SIZE_MAX / 2 ||
+                (tmp = realloc(res, alloced * 2)) == NULL)
                 err(1, "Out of memory");
-            alloced += alloced > 1;
-            p = tmp + len;
             res = tmp;
-            end = res + alloced;
+            alloced *= 2;
         }
-        bytes = fread(p, 1, end - p, f);
+        bytes = fread(res + len, 1, alloced - len - 1, f);
         len += bytes;
-        p += bytes;
-    } while (bytes && !feof(f) && !ferror(f));
+        if (bytes == 0)
+            break;
+    }
 
     if (ferror(f))
         errx(1, "Could not read all input");
-    if (p == end) {
-        char *tmp;
-
-        if ((tmp = strndup(res, len)) == NULL)
-            err(1, "Out of memory");
-        free(res);
-        res = tmp;
-    }
+    res[len] = '\0';
     if (strlen(res) != len)
-        err(1, "Embedded NULs in input!");
+        errx(1, "Embedded NULs in input!");
     return res;
 }
 

@@ -1213,7 +1213,7 @@ define_type(int level, const char *name, const char *basename,
 	space(level);
         if (!t->symbol && t->actual_parameter) {
             define_open_type(level, newbasename, name, basename, t, t);
-        } else if (!t->symbol && pt->actual_parameter) {
+        } else if (!t->symbol && pt && pt->actual_parameter) {
             define_open_type(level, newbasename, name, basename, pt, t);
         } else if (t->symbol) {
             fprintf(headerfile, "%s %s;\n", t->symbol->gen_name, name);

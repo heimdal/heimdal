@@ -1583,12 +1583,21 @@ names the OpenSSL configuration file to use.
 .It Ev KRB5_OPENSSL_PROPQ
 names the OpenSSL provider property query to use.
 .It Ev KRB5_CONFIG
-points to the configuration file to read.
+Specifies a list of configuration files to read.
+The separator is a colon
+.Pq Dq \&:
+on UNIX, and a semicolon
+.Pq Dq \&;
+on Windows.
+The list defaults to the per-user configuration file followed by
+the system configuration file.
 .El
 .Sh FILES
-.Bl -tag -width "/etc/krb5.conf"
+.Bl -tag -width "~/.krb5/config"
+.It Pa ~/.krb5/config
+Per-user configuration file.
 .It Pa /etc/krb5.conf
-configuration file for Kerberos 5.
+System configuration file.
 .El
 .Sh EXAMPLES
 .Bd -literal -offset indent

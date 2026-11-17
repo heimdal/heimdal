@@ -116,6 +116,8 @@ main(int argc, char **argv)
 
     roken_detach_finish(NULL, daemon_child);
 
+    rk_sd_notify(0, "READY=1");
+
     heim_ipc_main();
 
     krb5_free_context(kcm_context);

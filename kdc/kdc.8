@@ -115,7 +115,8 @@ An explicit address list restricts both TCP and UDP listeners.
 If only a subset is desired, or the automatic detection fails, this
 option might be used.
 .It Fl Fl detach
-detach from pty and run as a daemon.
+detach from pty and run as a daemon; see
+.Sx SERVICE MANAGER INTEGRATION .
 .It Fl Fl disable-des
 disable all des encryption types, makes the kdc not use them.
 .El
@@ -126,7 +127,91 @@ and
 .Xr krb5_openlog 3 .
 The entity used for logging is
 .Nm kdc .
-.Sh SOCKET ACTIVATION
+.Sh SERVICE MANAGER INTEGRATION
+.Nm
+can be run by
+.Xr systemd 1
+or a compatible service manager in either of the two ways described
+below, and either way can be combined with socket activation.
+.Ss Type=forking
+When started with
+.Fl Fl detach ,
+the process started by the service manager does not exit until the
+daemon process that it starts is ready to serve requests, so the
+service manager's notion of when
+.Nm
+is ready is accurate.
+The daemon writes its process ID to
+.Pa /var/run/kdc.pid ,
+or to
+.Pa kdc.pid
+in the directory named by the
+.Ev HEIM_PIDFILE_DIR
+environment variable.
+Use this with
+.Li Type=forking
+services, and set
+.Li PIDFile=
+accordingly (e.g.,
+.Li PIDFile=/run/kdc.pid
+where
+.Pa /var/run
+is a symbolic link to
+.Pa /run ) .
+.Ss Type=notify
+When the
+.Ev NOTIFY_SOCKET
+environment variable is set,
+.Nm
+sends
+.Xr sd_notify 3
+messages to the service manager:
+.Li READY=1
+once it is ready to serve requests,
+.Li STATUS=
+messages showing how many KDC worker processes are running, and
+.Li STOPPING=1
+when it begins shutting down.
+Only the master process sends notifications, not the KDC worker
+processes.
+Use this with
+.Li Type=notify
+services, with or without
+.Fl Fl detach .
+With
+.Fl Fl detach ,
+the process started by the service manager waits until the daemon
+process is ready, then sends
+.Li READY=1
+and a
+.Li MAINPID=
+message naming the daemon process, and exits, so the service manager
+tracks the daemon process from then on.
+.Pp
+.Li Type=forking
+services that set
+.Li NotifyAccess=
+also receive these messages (e.g., to show the
+.Li STATUS= ) ;
+use
+.Li NotifyAccess=exec
+or
+.Li NotifyAccess=all ,
+as with
+.Li NotifyAccess=main
+systemd logs that it ignored the startup notification.
+.Pp
+.Nm
+sends notifications only at startup, when it starts KDC worker
+processes, and at shutdown, so they never cause additional wakeups.
+In particular,
+.Nm
+does not send
+.Li WATCHDOG=1
+messages, so do not set
+.Li WatchdogSec=
+for it.
+.Ss Socket activation
 .Nm
 supports systemd-style socket activation (see
 .Xr sd_listen_fds 3 ) .
@@ -143,11 +228,13 @@ If any of the passed sockets is named
 .Li FileDescriptorName=kdc
 in the socket unit) then only those sockets are used; otherwise all
 of the passed sockets are used.
-The KDC accepts UDP sockets and listening TCP sockets (i.e., the
-socket unit must use
+The KDC accepts IPv4 and IPv6 UDP sockets and listening TCP sockets
+(i.e., the socket unit must use
 .Li Accept=no ,
 the default).
-Sockets of any other type are ignored with a warning, and
+Any other passed sockets (e.g., of another type or address family)
+are closed with a warning, sockets not selected by name are closed
+silently, and
 .Nm
 exits with an error if none of the passed sockets are usable.
 .Pp
@@ -158,10 +245,13 @@ sent to, so on hosts with more than one address configure one
 .Li ListenDatagram=
 socket per address rather than a single wildcard socket.
 .Pp
-Socket activation can be combined with
-.Fl Fl detach ,
-in which case the passed sockets are handed to the detached daemon
-process.
+Socket activation works with both
+.Li Type=forking
+and
+.Li Type=notify ;
+with
+.Fl Fl detach
+the passed sockets are handed to the detached daemon process.
 .Sh CONFIGURATION FILE
 The configuration file has the same syntax as
 .Xr krb5.conf 5 ,

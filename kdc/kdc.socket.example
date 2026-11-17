@@ -1,0 +1,29 @@
+# Example systemd socket unit for the Heimdal Kerberos KDC.
+#
+# This file is not installed.  To use it, copy it to
+# /etc/systemd/system/kdc.socket along with kdc.service.example (as
+# kdc.service), adjust both as needed, and enable it with:
+#
+#     systemctl enable --now kdc.socket
+#
+# See "SERVICE MANAGER INTEGRATION" in kdc(8).
+
+[Unit]
+Description=Heimdal Kerberos KDC sockets
+Documentation=man:kdc(8)
+
+[Socket]
+# On hosts with more than one address, replies to UDP requests can come
+# from the wrong address with wildcard sockets; list one ListenDatagram=
+# per address instead (e.g., ListenDatagram=192.0.2.1:88).  See kdc(8).
+ListenDatagram=0.0.0.0:88
+ListenDatagram=[::]:88
+ListenStream=0.0.0.0:88
+ListenStream=[::]:88
+BindIPv6Only=ipv6-only
+# kdc uses the sockets named "kdc", or all of them if none are so named.
+FileDescriptorName=kdc
+# kdc wants the listening sockets; do not set Accept=yes.
+
+[Install]
+WantedBy=sockets.target

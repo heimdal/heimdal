@@ -33,6 +33,7 @@ SCRIPT_TESTS = \
 	check-delegation \
 	check-fast \
 	check-kadmin \
+	check-ktutil \
 	check-hdb-mitdb \
 	check-kdc \
 	check-kdc-weak \
@@ -152,6 +153,11 @@ check-kadmin: check-kadmin.in Makefile
 	$(do_subst) < $(srcdir)/check-kadmin.in > check-kadmin.tmp && \
 	$(chmod) +x check-kadmin.tmp && \
 	mv check-kadmin.tmp check-kadmin
+
+check-ktutil: check-ktutil.in Makefile
+	$(do_subst) < $(srcdir)/check-ktutil.in > check-ktutil.tmp && \
+	$(chmod) +x check-ktutil.tmp && \
+	mv check-ktutil.tmp check-ktutil
 
 check-uu: check-uu.in Makefile
 	$(do_subst) < $(srcdir)/check-uu.in > check-uu.tmp && \
@@ -415,6 +421,7 @@ EXTRA_DIST = \
 	check-httpkadmind.in \
 	check-iprop.in \
 	check-kadmin.in \
+	check-ktutil.in \
 	check-kdc-weak.in \
 	check-kdc.in \
 	check-kinit.in \

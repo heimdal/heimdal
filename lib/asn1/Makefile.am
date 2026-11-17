@@ -103,8 +103,10 @@ noinst_PROGRAMS = asn1_gen
 
 bin_PROGRAMS = asn1_compile asn1_print
 
-TESTS = check-der check-gen check-gen-template check-timegm check-ber check-template
-check_PROGRAMS = $(TESTS)
+PROGRAM_TESTS = check-der check-gen check-gen-template check-timegm check-ber check-template
+SCRIPT_TESTS = check-asn1-print.sh
+TESTS = $(PROGRAM_TESTS) $(SCRIPT_TESTS)
+check_PROGRAMS = $(PROGRAM_TESTS)
 
 AM_TESTS_ENVIRONMENT = HEIM_TOP_SRCDIR='$(top_srcdir)'; export HEIM_TOP_SRCDIR; HEIM_SRCDIR='$(srcdir)'; export HEIM_SRCDIR;
 
@@ -523,6 +525,9 @@ test_asn1_files: asn1_compile$(EXEEXT) $(srcdir)/test.asn1
 
 EXTRA_DIST =			\
 	abi			\
+	$(SCRIPT_TESTS)		\
+	data/test_ios_cert.der	\
+	data/test_ios_cert.json	\
 	NTMakefile		\
 	README-template.md	\
 	asn1_compile-version.rc	\

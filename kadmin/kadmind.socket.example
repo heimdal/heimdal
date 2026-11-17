@@ -1,0 +1,26 @@
+# Example systemd socket unit for the Heimdal Kerberos administration
+# service.
+#
+# This file is not installed.  To use it, copy it to
+# /etc/systemd/system/kadmind.socket along with kadmind.service.example
+# (as kadmind.service), adjust both as needed, and enable it with:
+#
+#     systemctl enable --now kadmind.socket
+#
+# See "SERVICE MANAGER INTEGRATION" in kadmind(8).
+
+[Unit]
+Description=Heimdal Kerberos administration service sockets
+Documentation=man:kadmind(8)
+
+[Socket]
+ListenStream=0.0.0.0:749
+ListenStream=[::]:749
+BindIPv6Only=ipv6-only
+# kadmind uses the sockets named "kadmind", or all of them if none are
+# so named.
+FileDescriptorName=kadmind
+# kadmind wants the listening sockets; do not set Accept=yes.
+
+[Install]
+WantedBy=sockets.target

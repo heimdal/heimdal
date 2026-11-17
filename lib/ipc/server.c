@@ -1062,6 +1062,10 @@ heim_sipc_stream_listener(int fd, int type,
 	free(ct);
 	return EINVAL;
     }
+    if (c == NULL) {
+	free(ct);
+	return ENOMEM;
+    }
 
     ct->mech = c;
     ct->release = socket_release;
@@ -1069,6 +1073,29 @@ heim_sipc_stream_listener(int fd, int type,
     c->unixrights.uid = (uid_t) -1;
     c->unixrights.gid = (gid_t) -1;
     c->unixrights.pid = (pid_t) 0;
+
+    /*
+     * Collect the peer credentials of clients of Unix domain sockets.  This
+     * is done here rather than by heim_sipc_service_unix() so that it also
+     * happens for listening sockets created elsewhere (e.g., passed to us
+     * via socket activation), since services that use the credentials for
+     * access control would not work without them.
+     */
+    {
+	struct sockaddr_storage ss;
+	socklen_t sslen = sizeof(ss);
+
+	memset(&ss, 0, sizeof(ss));
+	if (getsockname(fd, (struct sockaddr *)&ss, &sslen) == 0 &&
+	    ss.ss_family == AF_UNIX) {
+#ifdef LOCAL_CREDS
+	    int one = 1;
+
+	    (void) setsockopt(fd, 0, LOCAL_CREDS, (void *)&one, sizeof(one));
+#endif
+	    c->flags |= UNIX_SOCKET;
+	}
+    }
 
     *ctx = ct;
     return 0;
@@ -1081,7 +1108,7 @@ heim_sipc_service_unix(const char *service,
 {
     struct sockaddr_un un;
     const char *d = secure_getenv("HEIM_IPC_DIR");
-    int fd, ret;
+    int fd;
 
     if (strncasecmp(service, "UNIX:", sizeof("UNIX:") - 1) == 0)
         service += sizeof("UNIX:") - 1;
@@ -1097,12 +1124,6 @@ heim_sipc_service_unix(const char *service,
 	return errno;
 
     socket_set_reuseaddr(fd, 1);
-#ifdef LOCAL_CREDS
-    {
-	int one = 1;
-	(void) setsockopt(fd, 0, LOCAL_CREDS, (void *)&one, sizeof(one));
-    }
-#endif
 
     unlink(un.sun_path);
 
@@ -1118,14 +1139,8 @@ heim_sipc_service_unix(const char *service,
 
     (void) chmod(un.sun_path, 0666);
 
-    ret = heim_sipc_stream_listener(fd, HEIM_SIPC_TYPE_IPC,
-				    callback, user, ctx);
-    if (ret == 0) {
-	struct client *c = (*ctx)->mech;
-	c->flags |= UNIX_SOCKET;
-    }
-
-    return ret;
+    return heim_sipc_stream_listener(fd, HEIM_SIPC_TYPE_IPC,
+				     callback, user, ctx);
 }
 
 #ifdef HAVE_DOOR_CREATE

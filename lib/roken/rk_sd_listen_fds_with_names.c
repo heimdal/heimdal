@@ -193,17 +193,29 @@ check_fd(int fd, int flags, int *typep)
     default:
         return "unsupported socket type";
     }
-    if (flags & RK_SD_INET) {
+    if (flags & (RK_SD_INET | RK_SD_UNIX)) {
+        int inet, unx;
+
         len = sizeof(ss);
         memset(&ss, 0, sizeof(ss));
         if (getsockname(fd, (struct sockaddr *)&ss, &len) == -1)
             return "getsockname() failed";
-        if (ss.ss_family != AF_INET
+        inet = ss.ss_family == AF_INET;
 #ifdef AF_INET6
-            && ss.ss_family != AF_INET6
+        inet = inet || ss.ss_family == AF_INET6;
 #endif
-           )
-            return "not an IPv4 or IPv6 socket";
+#ifdef AF_UNIX
+        unx = ss.ss_family == AF_UNIX;
+#else
+        unx = 0;
+#endif
+        if (!((flags & RK_SD_INET) && inet) && !((flags & RK_SD_UNIX) && unx)) {
+            if (!(flags & RK_SD_UNIX))
+                return "not an IPv4 or IPv6 socket";
+            if (!(flags & RK_SD_INET))
+                return "not a Unix domain socket";
+            return "not an IPv4, IPv6, or Unix domain socket";
+        }
     }
     return NULL;
 }
@@ -215,7 +227,11 @@ check_fd(int fd, int flags, int *typep)
  *
  *  - RK_SD_DGRAM   accept datagram sockets
  *  - RK_SD_STREAM  accept listening stream sockets (i.e., Accept=no)
- *  - RK_SD_INET    accept only IPv4 and IPv6 sockets
+ *  - RK_SD_INET    accept IPv4 and IPv6 sockets
+ *  - RK_SD_UNIX    accept Unix domain sockets
+ *
+ * If neither RK_SD_INET nor RK_SD_UNIX is given then sockets of any address
+ * family are accepted; otherwise only those of the given families are.
  *
  * If any of the passed descriptors is named exactly `name' (systemd's
  * FileDescriptorName=) then only those are selected.  Otherwise all the

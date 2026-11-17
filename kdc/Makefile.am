@@ -234,4 +234,6 @@ EXTRA_DIST = \
 	libkdc-version.rc \
 	string2key-version.rc \
 	libkdc-exports.def \
-	NTMakefile $(man_MANS) version-script.map
+	NTMakefile $(man_MANS) version-script.map \
+	kdc.service.example \
+	kdc.socket.example

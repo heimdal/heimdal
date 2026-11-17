@@ -165,6 +165,15 @@ can be run by
 or a compatible service manager in either of the two ways described
 below, and either way can be combined with socket activation.
 .Pp
+The example unit files
+.Pa kcm.service.example
+and
+.Pa kcm.socket.example
+in the
+.Pa kcm/
+directory of the Heimdal source distribution can be used as a
+starting point.
+.Pp
 .Nm
 keeps credentials in memory only, so stopping or restarting it
 discards all the credential caches it holds.

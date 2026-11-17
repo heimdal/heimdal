@@ -103,6 +103,15 @@ can be run by
 .Xr systemd 1
 or a compatible service manager in either of the two ways described
 below, and either way can be combined with socket activation.
+.Pp
+The example unit files
+.Pa kpasswdd.service.example
+and
+.Pa kpasswdd.socket.example
+in the
+.Pa kpasswd/
+directory of the Heimdal source distribution can be used as a
+starting point.
 .Ss Type=forking
 When started with
 .Fl Fl detach ,

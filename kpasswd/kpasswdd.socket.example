@@ -1,0 +1,30 @@
+# Example systemd socket unit for the Heimdal Kerberos password change
+# service.
+#
+# This file is not installed.  To use it, copy it to
+# /etc/systemd/system/kpasswdd.socket along with
+# kpasswdd.service.example (as kpasswdd.service), adjust both as needed,
+# and enable it with:
+#
+#     systemctl enable --now kpasswdd.socket
+#
+# See "SERVICE MANAGER INTEGRATION" in kpasswdd(8).
+
+[Unit]
+Description=Heimdal Kerberos password change service sockets
+Documentation=man:kpasswdd(8)
+
+[Socket]
+# On hosts with more than one address, replies can come from the wrong
+# address with wildcard sockets; list one ListenDatagram= per address
+# instead (e.g., ListenDatagram=192.0.2.1:464).  See kpasswdd(8).
+ListenDatagram=0.0.0.0:464
+ListenDatagram=[::]:464
+BindIPv6Only=ipv6-only
+# kpasswdd uses the sockets named "kpasswdd", or all of them if none are
+# so named.
+FileDescriptorName=kpasswdd
+# kpasswdd uses UDP sockets only.
+
+[Install]
+WantedBy=sockets.target

@@ -95,4 +95,6 @@ EXTRA_DIST = \
 	kadmin-version.rc \
 	kadmind-version.rc \
 	$(man_MANS) \
+	kadmind.service.example \
+	kadmind.socket.example \
 	kadmin-commands.in

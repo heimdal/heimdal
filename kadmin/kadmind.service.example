@@ -1,0 +1,41 @@
+# Example systemd service unit for the Heimdal Kerberos administration
+# service.
+#
+# This file is not installed.  To use it, copy it to
+# /etc/systemd/system/kadmind.service, fix the path in ExecStart= to
+# match your installation (the default is for --prefix=/usr/heimdal),
+# and adjust as needed.  See "SERVICE MANAGER INTEGRATION" in
+# kadmind(8).
+#
+# This unit is socket-activated by kadmind.socket (see
+# kadmind.socket.example). To have kadmind create its own sockets
+# instead, remove the Requires= and After= lines that refer to
+# kadmind.socket and the Also= line.
+
+[Unit]
+Description=Heimdal Kerberos administration service
+Documentation=man:kadmind(8)
+Requires=kadmind.socket
+After=network.target kadmind.socket
+
+[Service]
+# kadmind reports readiness and status via sd_notify(3).
+Type=notify
+ExecStart=/usr/heimdal/libexec/kadmind
+# Alternatively, rely on kadmind not exiting until its daemon child is
+# ready:
+#Type=forking
+#ExecStart=/usr/heimdal/libexec/kadmind --detach
+#PIDFile=/run/kadmind.pid
+# ...and also accept its STATUS= notifications:
+#NotifyAccess=exec
+Restart=on-failure
+# With socket activation kadmind needs no network access of its own, so
+# it can be run in a private network namespace.  This also prevents
+# outbound connections (e.g., DNS lookups, or LDAP for an LDAP HDB
+# backend), so check that your configuration does not need any first.
+#PrivateNetwork=yes
+
+[Install]
+WantedBy=multi-user.target
+Also=kadmind.socket

@@ -627,7 +627,7 @@ add_new_socket(int fd,
     c->callback = callback;
     c->userctx = userctx;
 
-    socket_set_nonblocking(fd, 1);
+    socket_set_nonblocking(c->fd, 1);
 
 #ifdef HAVE_GCD
     init_globals();
@@ -851,6 +851,12 @@ handle_http_tcp(struct client *c)
 }
 
 
+static int
+nonfatal_errno(int e)
+{
+    return e == EINTR || e == EAGAIN || e == EWOULDBLOCK;
+}
+
 static void
 handle_read(struct client *c)
 {
@@ -874,6 +880,8 @@ handle_read(struct client *c)
     }
 
     len = read(c->fd, c->inmsg + c->ptr, c->len - c->ptr);
+    if (len == -1 && nonfatal_errno(errno))
+        return;
     if (len <= 0) {
 	c->flags |= WAITING_CLOSE;
 	c->flags &= ~WAITING_READ;
@@ -947,6 +955,8 @@ handle_write(struct client *c)
     ssize_t len;
 
     len = write(c->fd, c->outmsg, c->olen);
+    if (len == -1 && nonfatal_errno(errno))
+        return;
     if (len <= 0) {
 	c->flags |= WAITING_CLOSE;
 	c->flags &= ~(WAITING_WRITE);

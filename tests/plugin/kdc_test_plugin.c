@@ -96,7 +96,7 @@ pac_verify(void *ctx,
     if (ret)
 	return ret;
 
-    return krb5_pac_verify(context, *pac, 0, NULL, NULL, &key->key);
+    return krb5_pac_verify(context, *pac, 0, NULL, &key->key, NULL);
 }
 
 static void logit(const char *what, astgs_request_t r)

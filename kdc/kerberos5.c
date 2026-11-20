@@ -1163,7 +1163,7 @@ _kdc_encode_reply(krb5_context context,
 	return ret;
     }
 
-    if (r && r->armor_crypto) {
+    if (r->armor_crypto) {
 	KrbFastFinished finished;
 	krb5_data data;
 

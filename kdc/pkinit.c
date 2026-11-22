@@ -1926,7 +1926,7 @@ out:
     return ret;
 }
 
-static int
+int
 match_rfc_san(krb5_context context,
 	      krb5_kdc_configuration *config,
 	      hx509_context hx509ctx,

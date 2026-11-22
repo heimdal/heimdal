@@ -961,6 +961,10 @@ Enable or disable interoperability with clients that do not
 implement RFC 8636 (PKINIT algorithm agility).
 Note that the RFC 4556 KDF is based on SHA-1, and RFC 4556 has
 security issues that are fixed in RFC 8636.
+.It Li require_pkinit_freshness = Va BOOL
+If PKINIT is enabled, require that PKINIT requests contain a
+freshness token proving recent possession of the private key.
+Disabled by default.
 .It Li allow-anonymous = Va BOOL
 If the kdc is allowed to hand out anonymous tickets.
 .It Li synthetic_clients = Va BOOL

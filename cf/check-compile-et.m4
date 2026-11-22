@@ -22,11 +22,6 @@ error_code CODE2, "CODE2"
 end
 EOF
 if ${COMPILE_ET} conftest_et.et >/dev/null 2>&1; then
-  dnl XXX Some systems have <et/com_err.h>.
-  save_CPPFLAGS="${CPPFLAGS}"
-  if test -d "/usr/include/et"; then
-    CPPFLAGS="-I/usr/include/et ${CPPFLAGS}"
-  fi
   dnl Check that the `prefix' and `index' directives were honored.
   AC_LANG(C)
   AC_RUN_IFELSE([AC_LANG_SOURCE([
@@ -38,7 +33,7 @@ int main(int argc, char **argv){
 #error compile_et does not handle error_table N M
 #endif
 return (CONFTEST_CODE2 - CONFTEST_CODE1) != 127;}
-  ])], [krb_cv_compile_et="yes"],[CPPFLAGS="${save_CPPFLAGS}"],
+  ])], [krb_cv_compile_et="yes"],[CPPFLAGS="${CPPFLAGS}"],
   [krb_cv_compile_et="yes" krb_cv_compile_et_cross=yes] )
 fi
 AC_MSG_RESULT(${krb_cv_compile_et})
@@ -69,7 +64,7 @@ elif test "${krb_cv_compile_et}" = "yes"; then
     p = error_message(0);
     initialize_error_table_r(0,0,0,0);
     com_right_r(0, 0, 0, 0);
-  ]])],[krb_cv_com_err="yes"],[krb_cv_com_err="no"; CPPFLAGS="${save_CPPFLAGS}"])
+  ]])],[krb_cv_com_err="yes"],[krb_cv_com_err="no"; CPPFLAGS="${CPPFLAGS}"])
   AC_MSG_RESULT(${krb_cv_com_err})
   LIBS="${krb_cv_save_LIBS}"
 else

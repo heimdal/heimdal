@@ -4326,9 +4326,9 @@ hx509_print_cert(hx509_context context, hx509_cert cert, FILE *out)
 	if (ret)
 	    return ret;
 	ret = der_print_hex_heim_integer(&serialNumber, &str);
+	der_free_heim_integer(&serialNumber);
 	if (ret)
 	    return ret;
-	der_free_heim_integer(&serialNumber);
 	fprintf(out, "    serial: %s\n", str);
 	free(str);
     }

@@ -13,7 +13,7 @@ if HEIMDAL_DOCUMENTATION
 SUBDIRS+= doc
 endif
 
-
+ARFLAGS = cr
 
 ## ACLOCAL = @ACLOCAL@ -I cf
 ACLOCAL_AMFLAGS = -I cf

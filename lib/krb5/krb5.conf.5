@@ -713,15 +713,25 @@ if the
 is a default realm.
 .El
 .It Li }
-.It Li auth_to_local = HEIMDAL_DEFAULT
-Use the Heimdal default principal to username mapping.
+.It Li auth_to_local = DEFAULT
+Use the MIT default principal to username mapping.
 Applies to principals from the
 .Va REALM
 if and only if
 .Va REALM
 is a default realm.
-.It Li auth_to_local = DEFAULT
-Use the MIT default principal to username mapping.
+.It Li auth_to_local = HEIMDAL_DEFAULT
+Use the Heimdal default principal to username mapping, which is the same as MIT
+but also allows mapping host-based principals for the
+.Va root
+.Sq service
+to the
+.Va root
+user provided that the client principal is in the
+.Va root
+user's
+.Sq .k5login
+file.
 Applies to principals from the
 .Va REALM
 if and only if

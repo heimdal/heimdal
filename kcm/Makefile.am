@@ -41,4 +41,6 @@ LDADD = $(top_builddir)/lib/hdb/libhdb.la \
 	$(LIB_openssl_crypto) \
 	$(LIB_pidfile)
 
-EXTRA_DIST = NTMakefile $(man_MANS)
+EXTRA_DIST = NTMakefile $(man_MANS) \
+	kcm.service.example \
+	kcm.socket.example

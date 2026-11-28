@@ -101,9 +101,33 @@ main(int argc, char **argv)
             krb5_err(kcm_context, 1, ret, "Could not setup launchd service");
     } else {
 	heim_sipc un;
-	ret = heim_sipc_service_unix(service_name, kcm_service, NULL, &un);
-        if (ret)
-            krb5_err(kcm_context, 1, ret, "Could not setup Unix domain socket service");
+	int *sd_fds = NULL;
+	int sd_n, i;
+
+	/*
+	 * If we were socket-activated (e.g., by systemd) use the Unix domain
+	 * socket(s) passed to us instead of creating our own.
+	 */
+	sd_n = rk_sd_listen_fds_named(0, "kcm", RK_SD_STREAM | RK_SD_UNIX,
+				      &sd_fds, NULL);
+	if (sd_n < 0)
+	    krb5_err(kcm_context, 1, errno,
+		     "could not use socket-activated sockets");
+	for (i = 0; i < sd_n; i++) {
+	    ret = heim_sipc_stream_listener(sd_fds[i], HEIM_SIPC_TYPE_IPC,
+					    kcm_service, NULL, &un);
+	    if (ret)
+		krb5_err(kcm_context, 1, ret,
+			 "Could not setup socket-activated service on fd %d",
+			 sd_fds[i]);
+	}
+	free(sd_fds);
+	if (sd_n == 0) {
+	    ret = heim_sipc_service_unix(service_name, kcm_service, NULL, &un);
+	    if (ret)
+		krb5_err(kcm_context, 1, ret,
+			 "Could not setup Unix domain socket service");
+	}
     }
 #ifdef HAVE_DOOR_CREATE
     {
@@ -115,6 +139,8 @@ main(int argc, char **argv)
 #endif
 
     roken_detach_finish(NULL, daemon_child);
+
+    rk_sd_notify(0, "READY=1");
 
     heim_ipc_main();
 

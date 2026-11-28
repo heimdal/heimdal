@@ -1,0 +1,28 @@
+# Example systemd socket unit for the Heimdal credential cache daemon.
+#
+# This file is not installed.  To use it, copy it to
+# /etc/systemd/system/kcm.socket along with kcm.service.example (as
+# kcm.service), adjust both as needed, and enable it with:
+#
+#     systemctl enable --now kcm.socket
+#
+# See "SERVICE MANAGER INTEGRATION" in kcm(8).  Note that SSSD's
+# sssd-kcm uses the same socket path by default; only one of the two
+# can be in use at a time.
+
+[Unit]
+Description=Heimdal Kerberos credential cache daemon socket
+Documentation=man:kcm(8)
+
+[Socket]
+# Where clients look for kcm, unless HEIM_IPC_DIR is set.
+ListenStream=/run/.heim_org.h5l.kcm-socket
+# kcm does its own access control based on the credentials of the
+# connecting process, so the socket must be accessible to all users.
+SocketMode=0666
+# kcm uses the sockets named "kcm", or all of them if none are so named.
+FileDescriptorName=kcm
+# kcm wants the listening socket; do not set Accept=yes.
+
+[Install]
+WantedBy=sockets.target

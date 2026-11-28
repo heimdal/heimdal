@@ -589,7 +589,8 @@ rk_sd_listen_fds_with_names(int, char ***);
 /* Flags for rk_sd_listen_fds_named() */
 #define RK_SD_DGRAM     0x1     /* Accept datagram sockets */
 #define RK_SD_STREAM    0x2     /* Accept listening stream sockets */
-#define RK_SD_INET      0x4     /* Accept only IPv4 and IPv6 sockets */
+#define RK_SD_INET      0x4     /* Accept IPv4 and IPv6 sockets */
+#define RK_SD_UNIX      0x8     /* Accept Unix domain sockets */
 
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 rk_sd_listen_fds_named(int, const char *, int, int **, int **);

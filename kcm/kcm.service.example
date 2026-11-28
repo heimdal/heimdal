@@ -1,0 +1,35 @@
+# Example systemd service unit for the Heimdal credential cache daemon.
+#
+# This file is not installed.  To use it, copy it to
+# /etc/systemd/system/kcm.service, fix the path in ExecStart= to match
+# your installation (the default is for --prefix=/usr/heimdal), and
+# adjust as needed.  See "SERVICE MANAGER INTEGRATION" in kcm(8).
+#
+# This unit is socket-activated by kcm.socket (see kcm.socket.example),
+# so kcm is started when first used.  To have kcm create its own socket
+# instead, remove the Requires= and After= lines that refer to kcm.socket
+# and the Also= line.
+#
+# kcm keeps credentials in memory only: stopping or restarting it
+# discards all the credential caches it holds.
+
+[Unit]
+Description=Heimdal Kerberos credential cache daemon
+Documentation=man:kcm(8)
+Requires=kcm.socket
+After=kcm.socket
+
+[Service]
+# kcm reports readiness via sd_notify(3).
+Type=notify
+ExecStart=/usr/heimdal/libexec/kcm
+# Alternatively, rely on kcm not exiting until its daemon child is
+# ready:
+#Type=forking
+#ExecStart=/usr/heimdal/libexec/kcm --detach
+#PIDFile=/run/kcm.pid
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+Also=kcm.socket

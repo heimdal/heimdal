@@ -173,10 +173,25 @@ main(int argc, char **argv)
 	if (ret != CKR_OK)
 	    return 1;
 
-	ret = (*func->C_Verify)(session, (CK_BYTE *)signature, ck_sigsize,
-				(CK_BYTE *)rk_UNCONST(sighash), strlen(sighash));
+	ret = (*func->C_Verify)(session,
+				(CK_BYTE *)rk_UNCONST(sighash), strlen(sighash),
+				(CK_BYTE *)signature, ck_sigsize);
 	if (ret != CKR_OK) {
 	    printf("message: %d\n", (int)ret);
+	    return 1;
+	}
+
+	/* A corrupted signature must not verify */
+	signature[ck_sigsize / 2] ^= 0x01;
+	ret = (*func->C_VerifyInit)(session, &mechanism, public);
+	if (ret != CKR_OK)
+	    return 1;
+	ret = (*func->C_Verify)(session,
+				(CK_BYTE *)rk_UNCONST(sighash), strlen(sighash),
+				(CK_BYTE *)signature, ck_sigsize);
+	if (ret != CKR_SIGNATURE_INVALID) {
+	    printf("corrupted signature: expected CKR_SIGNATURE_INVALID, got %d\n",
+		   (int)ret);
 	    return 1;
 	}
     }

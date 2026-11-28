@@ -1,0 +1,244 @@
+#!/bin/sh
+#
+# Copyright (c) 2026 Kungliga Tekniska Högskolan
+# (Royal Institute of Technology, Stockholm, Sweden).
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# 3. Neither the name of the Institute nor the names of its contributors
+#    may be used to endorse or promote products derived from this software
+#    without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+
+# Exercise ktutil(1): local keytab manipulation (add, list, copy, merge,
+# purge, remove, rename, import, destroy) and the commands that talk to
+# kadmind (get, change).
+
+top_builddir="@top_builddir@"
+env_setup="@env_setup@"
+objdir="@objdir@"
+srcdir="@srcdir@"
+
+. ${env_setup}
+
+${have_db} || exit 77
+
+R=TEST.H5L.SE
+
+port=@port@
+admport=@admport@
+
+cache="FILE:${objdir}/cache.krb5"
+kt="${objdir}/ktutil-test.keytab"
+kt2="${objdir}/ktutil-test2.keytab"
+kt3="${objdir}/ktutil-test3.keytab"
+
+kadmin="${kadmin} -r $R"
+kdc="${kdc} --addresses=localhost -P $port"
+kadmind="${kadmind} -A -p $admport"
+kinit="${kinit} -c $cache ${afs_no_afslog}"
+kdestroy="${kdestroy} -c $cache ${afs_no_unlog}"
+
+foopassword="fooLongPasswordYo123;"
+
+KRB5_CONFIG="${objdir}/krb5.conf"
+export KRB5_CONFIG
+
+rm -f current-db* out-* mkey.file* messages.log
+rm -f "$kt" "$kt2" "$kt3" "${objdir}/ktutil-test.json"
+
+> messages.log
+
+ec=0
+fail() {
+    echo "FAILED: $*"
+    ec=1
+}
+
+# Count the entries for a principal in a keytab
+nentries() {
+    ${ktutil} -k "$1" list 2>/dev/null | grep -c " $2 " || true
+}
+
+#----------------------------------
+echo "local: add"
+${ktutil} -k "$kt" add -p a@${R} -V 1 -e aes256-cts-hmac-sha1-96 \
+    -w "$foopassword" || fail "add with password"
+${ktutil} -k "$kt" add -p a@${R} -V 2 -e aes128-cts-hmac-sha1-96 -r ||
+    fail "add random"
+${ktutil} -k "$kt" add -p a@${R} -V 3 -e aes256-cts-hmac-sha384-192 \
+    -H -w 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef ||
+    fail "add hex"
+${ktutil} -k "$kt" add -p b@${R} -V 1 -e aes256-cts-hmac-sha1-96 \
+    --no-salt -w "$foopassword" || fail "add unsalted"
+${ktutil} -k "$kt" add -p c@${R} -V 1 -e aes256-cts-hmac-sha1-96 -r ||
+    fail "add c"
+[ "`nentries $kt a@${R}`" -eq 3 ] || fail "expected 3 entries for a@${R}"
+${ktutil} -k "$kt" add -p a@${R} -V 1 -e bogus-enctype -r 2>/dev/null &&
+    fail "add with bogus enctype"
+
+echo "local: list"
+${ktutil} -k "$kt" list --keys --timestamp > out-list || fail "list --keys --timestamp"
+grep "a@${R}" out-list > /dev/null || fail "list output missing a@${R}"
+${ktutil} -v -k "$kt" list > /dev/null || fail "verbose list"
+${ktutil} -k "$kt" list --json --keys > "${objdir}/ktutil-test.json" ||
+    fail "list --json --keys"
+
+echo "local: import"
+${ktutil} -k "$kt3" import "${objdir}/ktutil-test.json" || fail "import"
+${ktutil} -k "$kt" list --keys | sed 1,3d | sort > out-list1
+${ktutil} -k "$kt3" list --keys | sed 1,3d | sort > out-list2
+cmp out-list1 out-list2 > /dev/null || fail "import did not round-trip"
+rm -f "$kt3"
+
+echo "local: copy and merge"
+${ktutil} copy "$kt" "$kt2" || fail "copy"
+[ "`nentries $kt2 a@${R}`" -eq 3 ] || fail "copy lost entries"
+${ktutil} copy "$kt" "$kt2" || fail "copy (again, duplicates skipped)"
+[ "`nentries $kt2 a@${R}`" -eq 3 ] || fail "copy duplicated entries"
+${ktutil} merge --copy-duplicates "$kt" "$kt2" || fail "merge --copy-duplicates"
+[ "`nentries $kt2 a@${R}`" -eq 6 ] || fail "merge --copy-duplicates did not duplicate"
+${ktutil} copy "$kt" "${objdir}/no-such-dir/kt" 2>/dev/null &&
+    fail "copy to unwritable keytab"
+
+echo "local: remove"
+${ktutil} -k "$kt" remove -p a@${R} -V 1 || fail "remove by kvno"
+[ "`nentries $kt a@${R}`" -eq 2 ] || fail "remove -V removed wrong count"
+${ktutil} -k "$kt" remove -p a@${R} -e aes128-cts-hmac-sha1-96 ||
+    fail "remove by enctype"
+[ "`nentries $kt a@${R}`" -eq 1 ] || fail "remove -e removed wrong count"
+${ktutil} -k "$kt" delete -p c@${R} || fail "delete alias"
+[ "`nentries $kt c@${R}`" -eq 0 ] || fail "delete did not remove c@${R}"
+
+echo "local: rename"
+${ktutil} -k "$kt" rename b@${R} b2@${R} || fail "rename"
+[ "`nentries $kt b@${R}`" -eq 0 ] || fail "rename left old name"
+[ "`nentries $kt b2@${R}`" -eq 1 ] || fail "rename lost entry"
+
+echo "local: purge"
+# Nothing is old enough yet
+${ktutil} -k "$kt2" purge --age=1d || fail "purge --age=1d"
+[ "`nentries $kt2 a@${R}`" -eq 6 ] || fail "purge removed young entries"
+# Only the most recent kvno is kept for each principal
+sleep 2
+${ktutil} -k "$kt2" purge --age=1s || fail "purge --age=1s"
+[ "`nentries $kt2 a@${R}`" -eq 2 ] || fail "purge kept old kvnos"
+${ktutil} -k "$kt2" purge --age=bogus 2>/dev/null && fail "purge --age=bogus"
+
+echo "local: destroy"
+${ktutil} -k "$kt2" destroy || fail "destroy"
+[ -f "$kt2" ] && fail "destroy left the keytab"
+rm -f "$kt"
+
+#----------------------------------
+echo Creating database
+${kadmin} -l <<EOF2 || exit 1
+init --realm-max-ticket-life=1day --realm-max-renewable-life=1month ${R}
+add -p "$foopassword" --use-defaults foo/admin@${R}
+add -p "$foopassword" --use-defaults bar@${R}
+add -r --use-defaults host/ktutil.test.h5l.se@${R}
+EOF2
+
+echo "$foopassword" > ${objdir}/foopassword
+
+echo Starting kdc ; > messages.log
+${kdc} --detach --testing || { echo "kdc failed to start"; cat messages.log; exit 1; }
+kdcpid=`getpid kdc`
+
+echo Starting kadmind
+${kadmind} --detach ||
+    { echo "kadmind failed to start"; cat messages.log; exit 1; }
+kadmpid=`getpid kadmind`
+
+cleanup() {
+    echo signal killing kdc
+    kill -9 ${kdcpid} ${kadmpid} 2>/dev/null
+    trap '' EXIT INT TERM
+    cat messages.log
+    exit 1
+}
+trap cleanup EXIT INT TERM
+
+#----------------------------------
+echo "kadmind: get"
+${kinit} --password-file=${objdir}/foopassword \
+    -S kadmin/admin@${R} foo/admin@${R} || exit 1
+env KRB5CCNAME=${cache} \
+${ktutil} -k "$kt" get -p foo/admin@${R} \
+    --admin-server=localhost --server-port=$admport \
+    host/ktutil.test.h5l.se@${R} || fail "get"
+env KRB5CCNAME=${cache} \
+${ktutil} -k "$kt" get -p foo/admin@${R} \
+    --admin-server=localhost --server-port=$admport \
+    -e aes256-cts-hmac-sha1-96 \
+    host/ktutil-new.test.h5l.se@${R} || fail "get (creating)"
+env KRB5CCNAME=${cache} \
+${ktutil} -k "$kt" get -p foo/admin@${R} -r ${R} \
+    --admin-server=localhost --server-port=$admport \
+    --no-change-keys host/ktutil.test.h5l.se@${R} 2>/dev/null
+env KRB5CCNAME=${cache} \
+${ktutil} -k "$kt" get -p foo/admin@${R} --no-create \
+    --admin-server=localhost --server-port=$admport \
+    host/no-such-principal.test.h5l.se@${R} 2>/dev/null &&
+    fail "get of non-existent principal"
+${kdestroy}
+[ "`nentries $kt host/ktutil-new.test.h5l.se@${R}`" -eq 1 ] ||
+    fail "get -e did not add exactly one key"
+${kadmin} -l get host/ktutil-new.test.h5l.se@${R} > /dev/null ||
+    fail "get did not create the principal"
+
+echo "kadmind: verify keytab works"
+${kinit} -k -t "$kt" host/ktutil.test.h5l.se@${R} || fail "kinit with fetched keys"
+${kdestroy}
+
+echo "kadmind: change"
+kvno_before=`${kadmin} -l get host/ktutil.test.h5l.se@${R} | sed -n 's/.*Kvno: *//p'`
+${ktutil} -k "$kt" change --admin-server=localhost --server-port=$admport \
+    -r ${R} host/ktutil.test.h5l.se@${R} || fail "change"
+kvno_after=`${kadmin} -l get host/ktutil.test.h5l.se@${R} | sed -n 's/.*Kvno: *//p'`
+[ "$kvno_after" -gt "$kvno_before" ] || fail "change did not bump the kvno"
+${ktutil} -k "$kt" change --admin-server=localhost --server-port=$admport \
+    -e aes256-cts-hmac-sha1-96 --pruneall host/ktutil.test.h5l.se@${R} ||
+    fail "change -e --pruneall"
+# --pruneall drops the old keys from the KDB (not from the keytab)
+${kadmin} -l get host/ktutil.test.h5l.se@${R} | grep 'Keytypes:' |
+    tr ',' '\n' | grep -c '\[' > out-nkeys
+[ "`cat out-nkeys`" -eq 1 ] || fail "change -e --pruneall kept old KDB keys"
+# With no arguments change does every principal in the keytab
+${ktutil} -k "$kt" change --admin-server=localhost --server-port=$admport ||
+    fail "change (all principals)"
+${kinit} -k -t "$kt" host/ktutil.test.h5l.se@${R} ||
+    fail "kinit with changed keys"
+${kdestroy}
+
+#----------------------------------
+echo "killing kdc (${kdcpid} ${kadmpid})"
+sh ${leaks_kill} kdc $kdcpid || exit 1
+sh ${leaks_kill} kadmind $kadmpid || exit 1
+
+trap "" EXIT
+
+rm -f "$kt" "$kt2" "$kt3" "${objdir}/ktutil-test.json"
+
+exit $ec

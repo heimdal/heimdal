@@ -757,6 +757,8 @@ dumpconfig(int level, krb5_config_section *top)
 int
 main(int argc, char **argv)
 {
+    int using_defaults = 0;
+    int parse_error = 0;
     krb5_context context;
     krb5_error_code ret;
     krb5_config_section *tmp_cf;
@@ -785,18 +787,24 @@ main(int argc, char **argv)
     argv += optidx;
 
     tmp_cf = NULL;
-    if(argc == 0)
+    if(argc == 0) {
 	krb5_get_default_config_files(&argv);
+	using_defaults = 1;
+    }
 
     while(*argv) {
 	ret = krb5_config_parse_file_multi(context, *argv, &tmp_cf);
-	if (ret != 0)
+	if (ret != 0) {
 	    krb5_warn (context, ret, "krb5_config_parse_file");
+	    /* Missing default config files are fine; anything else is not */
+	    if (!using_defaults || ret != ENOENT)
+		parse_error = 1;
+	}
 	argv++;
     }
 
     if(dumpconfig_flag)
 	dumpconfig(0, tmp_cf);
 
-    return check_section(context, "", tmp_cf, toplevel_sections);
+    return check_section(context, "", tmp_cf, toplevel_sections) || parse_error;
 }

@@ -47,8 +47,10 @@ echo "starting slapd"
 slapd_pid=$!
 
 tries=0
-while kill -0 $slapd_pid && [ ! -S ldap-socket ] && 
-      ! ldapsearch -l 2 -w '' -D '' -b "o=TEST,dc=H5L,dc=SE" -s base -H ldapi://.%2Fldap-socket >/dev/null &&
+# slapd creates the socket before it accepts connections, so wait until a
+# search actually works.
+while kill -0 $slapd_pid &&
+      ! ldapsearch -x -l 2 -w '' -D '' -b "o=TEST,dc=H5L,dc=SE" -s base -H ldapi://.%2Fldap-socket >/dev/null 2>&1 &&
       [ $tries -lt 30 ]; do
     sleep 1
     tries=`expr 1 + $tries`

@@ -104,6 +104,11 @@ mod --alias=user1.alias user1@${R}
 add -p p1 --use-defaults host/no-aes.test.h5l.se@${R}
 del_enctype host/no-aes.test.h5l.se@${R} aes256-cts-hmac-sha1-96 aes128-cts-hmac-sha1-96
 ext -k ${keytab} host/no-aes.test.h5l.se@${R}
+add -p p1 --use-defaults host/rc4-only.test.h5l.se@${R}
+add_enctype -r host/rc4-only.test.h5l.se@${R} arcfour-hmac-md5
+del_enctype host/rc4-only.test.h5l.se@${R} aes256-cts-hmac-sha1-96 aes256-cts-hmac-sha384-192
+mod --service-enctypes=arcfour-hmac-md5 host/rc4-only.test.h5l.se@${R}
+ext -k ${keytab} host/rc4-only.test.h5l.se@${R}
 check ${R}
 EOF
 
@@ -437,6 +442,17 @@ test_run ${context} \
     --mutual-auth \
     --name-type=hostbased-service host@no-aes.test.h5l.se
 
+
+test_section "Building context with arcfour-hmac-md5 session key and service key"
+for flags in "" "--dce-style" "--iov" "--dce-style --iov"; do
+    test_run ${context} \
+        --mech-type=krb5 \
+        --mutual-auth \
+        --limit-enctype=arcfour-hmac-md5 \
+        --session-enctype=arcfour-hmac-md5 \
+        --wrapunwrap --getverifymic $flags \
+        --name-type=hostbased-service host@rc4-only.test.h5l.se
+done
 
 test_section "ok-as-delegate"
 
